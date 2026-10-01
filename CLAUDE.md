@@ -1,6 +1,7 @@
 # CLAUDE.md – HA Device Panel
 
-Anweisungen für Claude Code in diesem Repository. Vor jeder Arbeit lesen,
+Anweisungen für Claude Code in diesem Repository. Zuerst `docs/HANDOVER.md`
+(Stand, nächste Schritte, Zweisprachigkeit), dann vor jeder Arbeit lesen,
 zusammen mit `docs/CONCEPT.md`, `docs/LEARNINGS.md` und `docs/DESIGN.md`.
 
 ## Projekt
