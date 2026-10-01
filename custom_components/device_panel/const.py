@@ -16,7 +16,17 @@ PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 PANEL_VERSION = "2"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
+# Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
+# unifi_dynamic. Der Ordner brand/ wird beim Setup als statischer Pfad
+# registriert und ist damit ohne Anmeldung abrufbar, wie /local/. Nur so kann
+# die Companion-App das Bild laden. Nichts zu konfigurieren.
+BRAND_DIR = "brand"
+PUSH_IMAGE_FILE = "icon.png"
+PUSH_IMAGE_URL = f"{STATIC_URL_PATH}/{PUSH_IMAGE_FILE}"
+
 DATA_PANEL_REGISTERED = f"{DOMAIN}_panel_registered"
+# URL des Push-Bilds oder None, wenn es nicht bereitgestellt werden konnte.
+DATA_PUSH_IMAGE = f"{DOMAIN}_push_image"
 DATA_WS_REGISTERED = f"{DOMAIN}_ws_registered"
 
 WS_TYPE_LIST_DEVICES = f"{DOMAIN}/list_devices"

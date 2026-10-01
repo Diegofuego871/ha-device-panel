@@ -17,7 +17,9 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
 from .const import (
+    BRAND_DIR,
     DATA_PANEL_REGISTERED,
+    DATA_PUSH_IMAGE,
     DATA_WS_REGISTERED,
     DOMAIN,
     PANEL_DIR,
@@ -27,12 +29,16 @@ from .const import (
     PANEL_STATIC_URL_PATH,
     PANEL_TITLE,
     PANEL_URL_PATH,
+    PUSH_IMAGE_FILE,
+    PUSH_IMAGE_URL,
+    STATIC_URL_PATH,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    await _async_register_brand_path(hass)
     await _async_register_panel(hass)
     _async_register_websocket_commands(hass)
     return True
@@ -42,6 +48,46 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if hass.data.pop(DATA_PANEL_REGISTERED, None):
         frontend.async_remove_panel(hass, PANEL_URL_PATH)
     return True
+
+
+# ---------------------------------------------------------------------------
+# Mitgeliefertes Bild für Push-Meldungen
+# ---------------------------------------------------------------------------
+
+
+async def _async_register_brand_path(hass: HomeAssistant) -> None:
+    """
+    Macht den Ordner brand/ unter STATIC_URL_PATH abrufbar.
+
+    Statische Pfade werden ohne Authentifizierung ausgeliefert, genau wie
+    /local/. Nur so kann die Companion-App das Bild einer Push-Meldung laden.
+    Läuft einmal pro Home-Assistant-Instanz; der Merker bleibt beim Entladen
+    stehen, weil HA statische Pfade nicht wieder abmelden kann.
+    """
+    if DATA_PUSH_IMAGE in hass.data:
+        return
+
+    brand_path = Path(__file__).parent / BRAND_DIR
+    if not await hass.async_add_executor_job((brand_path / PUSH_IMAGE_FILE).is_file):
+        hass.data[DATA_PUSH_IMAGE] = None
+        _LOGGER.debug("%s fehlt, Push-Meldungen kommen ohne Bild", PUSH_IMAGE_FILE)
+        return
+
+    try:
+        await hass.http.async_register_static_paths(
+            [StaticPathConfig(STATIC_URL_PATH, str(brand_path), True)]
+        )
+    except Exception as err:  # noqa: BLE001 - das Bild ist nur Kosmetik
+        hass.data[DATA_PUSH_IMAGE] = None
+        _LOGGER.warning(
+            "Statischer Pfad %s konnte nicht registriert werden (%s), "
+            "Push-Meldungen kommen ohne Bild",
+            STATIC_URL_PATH,
+            err,
+        )
+        return
+
+    hass.data[DATA_PUSH_IMAGE] = PUSH_IMAGE_URL
 
 
 async def _async_register_panel(hass: HomeAssistant) -> None:

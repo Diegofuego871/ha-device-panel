@@ -26,6 +26,12 @@ Bereich.
 2. "Device Panel" installieren und Home Assistant neu starten.
 3. Einstellungen → Geräte & Dienste → Integration hinzufügen → "Device Panel".
 
+**Vorabversionen:** Versionen mit `b` oder `rc` in der Nummer (zum Beispiel
+`0.1.0b1`) erscheinen als Vorabversion (Pre-release) auf GitHub. HACS
+installiert sie nur, wenn die Entität "Pre-release" am HACS-Gerät dieses
+Repositorys aktiviert und eingeschaltet ist (Einstellungen → Geräte & Dienste
+→ HACS → Gerät "Device Panel"). HACS legt die Entität deaktiviert an.
+
 ### Manuell
 
 `custom_components/device_panel` nach `config/custom_components/` kopieren

@@ -138,9 +138,30 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
 - Verbindungsabbrüche still überbrücken, Polling im Hintergrund pausieren.
 - Statistik-Fenster mit Tabs, Zeitraum 24 Std./7/30 Tage, Loader.
 
+## Push-Meldungen (vorbereitet)
+
+Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
+
+- Bild: `brand/icon.png` (das gewählte Icon) wird beim Setup als statischer
+  Pfad ohne Anmeldung unter `/device_panel/icon.png` ausgeliefert, sonst
+  kann die Companion-App es nicht laden. `hass.data[DATA_PUSH_IMAGE]` hält
+  die URL, oder None, wenn das Bereitstellen scheiterte (dann ohne Bild).
+
+Für den Versand zu übernehmen:
+
+- Zusatzdaten (`notification_data`): `icon_url` = Bild (nur Android zeigt es
+  an), `url` (iOS) und `clickAction` (Android) = Klickziel, z. B. Deep-Link
+  in die Geräteansicht, `tag` = welche Meldungen sich ersetzen, optional
+  `actions`.
+- Versand (`_async_push`): `notify.<dienst>`; lehnt ein Ziel die
+  Zusatzdaten ab (Telegram, E-Mail), einmal ohne `data` wiederholen.
+  notify-Entitäten über `notify.send_message` (nur Titel und Text).
+- Texte in Deutsch und Englisch nach `hass.config.language`.
+- Ziel und Auslöser in den Einstellungen (siehe "Pflicht", Abschnitt 1).
+
 ## Mögliche Erweiterungen (später)
 
-- Push-Benachrichtigung bei Ausfall, mit Aktionen (wie unifi_dynamic).
+- Push-Benachrichtigung bei Ausfall, mit Aktionen (siehe "Push-Meldungen").
 - Binary-Sensor "Geräte ausgefallen" und Sensor "Anzahl ausgefallen" für
   Automationen.
 - Hinweis auf verfügbare Firmware-Updates (update-Entitäten).

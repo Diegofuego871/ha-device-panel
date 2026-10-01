@@ -3,34 +3,43 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.1.0, Projektstart)
+## Stand (0.1.0b1, erste Vorabversion)
 
-- Repository `Diegofuego871/ha-device-panel`, Branch `main`.
+- Repository `Diegofuego871/ha-device-panel`. Die Arbeit seit dem
+  Projektstart liegt auf dem Branch `claude/kind-feynman-dut32g`; `main` ist
+  noch auf dem Stand des Projektstarts (ohne Icon).
 - Grundgerüst lauffähig: Integration `device_panel` (Config-Flow, eine
   Instanz), iframe-Panel in der Seitenleiste, WebSocket
   `device_panel/list_devices`, Tabelle mit allen Geräten (ausgefallene
   zuoberst), Suche, Zähler.
-- CI: Hassfest grün, Panel-Tests (Playwright) grün, Python-Tests
-  (pytest-homeassistant-custom-component) eingerichtet.
-- HACS-Prüfung noch rot (Beschreibung ist gesetzt, 7 von 9 Prüfungen grün):
-  - Topics im Repo fehlen → setzt der Nutzer unter "About"
-    (`home-assistant`, `hacs`, `integration`, `home-assistant-custom`).
-  - Brand-Icon fehlt → `custom_components/device_panel/brand/icon.png` und
-    `logo.png` (256 × 256 bzw. ≥ 256 Höhe, PNG, transparent). Erst
-    Entwürfe als Mockup, Nutzer wählt.
-- Noch kein Release-Tag. Erst nach grüner CI `v0.1.0` erstellen.
+- Icon und Logo: Variante "D mit Puls" (vom Nutzer gewählt). PNGs in
+  `custom_components/device_panel/brand/` (Masse wie unifi_dynamic), Quellen
+  in `docs/brand/` (siehe `docs/DESIGN.md`, Abschnitt "Icon und Logo").
+- Push-Meldungen vorbereitet: `brand/` wird ohne Anmeldung unter
+  `/device_panel/` ausgeliefert, `hass.data[DATA_PUSH_IMAGE]` enthält
+  `/device_panel/icon.png` (für `icon_url`). Der Versand selbst fehlt noch,
+  siehe `docs/CONCEPT.md`, Abschnitt "Push-Meldungen".
+- CI: Python-Tests, Panel-Tests (DE/EN) und Hassfest grün. HACS-Prüfung nur
+  noch rot, solange die Topics fehlen → setzt der Nutzer unter "About"
+  (`home-assistant`, `hacs`, `integration`, `home-assistant-custom`).
+- Releases: Tag `vX.Y.Z` pushen; `.github/workflows/release.yml` legt das
+  GitHub-Release an (Notes aus dem CHANGELOG-Abschnitt, Nummer mit a/b/rc →
+  Vorabversion). Der Tag muss zur Version in `manifest.json` passen, sonst
+  bricht der Workflow ab. Erste Vorabversion: `v0.1.0b1`.
 
 ## Nächste Schritte (Reihenfolge)
 
-1. Icon: 3–4 Entwürfe (hell/dunkel), Nutzer wählt, committen, CI grün.
-2. Release `v0.1.0`, Repo in HACS als benutzerdefiniertes Repository testen.
-3. Offene Entscheide aus `docs/CONCEPT.md` klären (Definition
+1. Branch nach `main` bringen (PR), damit HACS ohne eingeschaltete
+   Vorabversionen denselben Stand bekommt. Danach `0.1.0` als stabile
+   Version, Repo in HACS als benutzerdefiniertes Repository testen.
+2. Offene Entscheide aus `docs/CONCEPT.md` klären (Definition
    "ausgefallen", Schwelle, ausgeblendete Geräte, Recorder-Nachfüllen).
-4. Pflicht-Übernahmen aus unifi_dynamic umsetzen (`docs/CONCEPT.md`,
+3. Pflicht-Übernahmen aus unifi_dynamic umsetzen (`docs/CONCEPT.md`,
    Abschnitt "Pflicht"): Einstellungen im Panel, Update-Bereich mit Beta
    und HACS-Freischalten, Speicher-Konzept Spalten/Handy-Ansicht.
    Vorlagen liegen in `docs/reference/`.
-5. Verfügbarkeitsprotokoll und Geräteansicht mit Statistik.
+4. Verfügbarkeitsprotokoll und Geräteansicht mit Statistik.
+5. Push-Meldungen bei Ausfall (Bild bereits bereitgestellt).
 
 ## Zweisprachigkeit DE/EN (verbindlich)
 

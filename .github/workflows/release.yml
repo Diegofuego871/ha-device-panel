@@ -1,0 +1,57 @@
+name: Release
+
+# Ein Tag vX.Y.Z (oder vX.Y.ZbN / rcN) legt das GitHub-Release an, mit dem
+# passenden Abschnitt aus CHANGELOG.md als Release Notes. Nummern mit a/b/rc
+# werden als Vorabversion ("Pre-release") markiert, sonst als neueste Version.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: GitHub-Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Version prüfen
+        id: version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          manifest=$(python3 -c 'import json; print(json.load(open("custom_components/device_panel/manifest.json"))["version"])')
+          if [ "$version" != "$manifest" ]; then
+            echo "::error::Tag $TAG passt nicht zur Version $manifest in manifest.json"
+            exit 1
+          fi
+          if echo "$version" | grep -Eq '(a|b|rc)[0-9]+$'; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Release Notes aus dem CHANGELOG
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: python3 .github/scripts/changelog_section.py "$VERSION" > notes.md
+
+      - name: Release anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          if [ "$PRERELEASE" = "true" ]; then
+            flag="--prerelease"
+          else
+            flag="--latest"
+          fi
+          gh release create "$TAG" --verify-tag --title "$TAG" --notes-file notes.md $flag

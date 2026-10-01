@@ -54,6 +54,20 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
 - Symbole: Material Design Icons als SVG-Pfade im Code (kein ha-icon im
   iframe).
 
+## Icon und Logo
+
+- Variante "D mit Puls": Buchstabe D mit Herzschlag, gleiches Prinzip wie das
+  U mit WLAN-Bögen bei UniFi Dynamic Clients. Verlauf `#7ADFFD` → `#22A9F9`
+  → `#1C7DF9` von oben links nach unten rechts, transparenter Hintergrund.
+- Logo: Icon oben, darunter "Device" (Montserrat 700, Verlauf `#5BD6FC` →
+  `#1C7DF9`) und "Panel" (Montserrat 500, `#4A5569`).
+- Quellen: `docs/brand/icon.svg`, `docs/brand/logo.svg` (das Logo braucht
+  die Schrift Montserrat, OFL). Daraus `brand/icon.png` 256 × 256,
+  `icon@2x.png` 512 × 512, `logo.png` 256 × 295, `logo@2x.png` 512 × 590,
+  gerendert mit Chromium (transparenter Hintergrund). `tests/test_brand.py`
+  prüft Masse und Alphakanal.
+- `brand/icon.png` ist zugleich das Bild der Push-Meldungen.
+
 ## Layout
 
 - Werkzeugleiste: Logo, Suchfeld ("In allen Spalten suchen…"), Filter,
