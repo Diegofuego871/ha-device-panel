@@ -22,10 +22,14 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 - CI: Python-Tests, Panel-Tests (DE/EN) und Hassfest grün. HACS-Prüfung nur
   noch rot, solange die Topics fehlen → setzt der Nutzer unter "About"
   (`home-assistant`, `hacs`, `integration`, `home-assistant-custom`).
-- Releases: Tag `vX.Y.Z` pushen; `.github/workflows/release.yml` legt das
-  GitHub-Release an (Notes aus dem CHANGELOG-Abschnitt, Nummer mit a/b/rc →
-  Vorabversion). Der Tag muss zur Version in `manifest.json` passen, sonst
-  bricht der Workflow ab. Erste Vorabversion: `v0.1.0b1`.
+- Releases über `.github/workflows/release.yml`: Notes aus dem
+  CHANGELOG-Abschnitt der Version in `manifest.json`, Nummer mit a/b/rc →
+  Vorabversion. Start per "Run workflow" auf `main` (Claude: Werkzeug
+  `actions_run_trigger`, Workflow `release.yml`, Ref `main`) oder durch
+  einen Tag `vX.Y.Z`. Claude-Code-Sessions können keine Tags pushen (403).
+  Gibt es das Release schon, ändert der Lauf nichts.
+- Version `0.1.0b1` ist vorbereitet, aber noch nicht veröffentlicht: Der
+  Workflow braucht den Stand auf `main`.
 
 ## Nächste Schritte (Reihenfolge)
 

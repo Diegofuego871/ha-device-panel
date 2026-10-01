@@ -1,10 +1,19 @@
 name: Release
 
-# Ein Tag vX.Y.Z (oder vX.Y.ZbN / rcN) legt das GitHub-Release an, mit dem
-# passenden Abschnitt aus CHANGELOG.md als Release Notes. Nummern mit a/b/rc
-# werden als Vorabversion ("Pre-release") markiert, sonst als neueste Version.
+# Legt das GitHub-Release zur Version in manifest.json an, mit dem passenden
+# Abschnitt aus CHANGELOG.md als Release Notes. Nummern mit a/b/rc werden als
+# Vorabversion ("Pre-release") markiert, sonst als neueste Version.
+#
+# Zwei Wege:
+# - "Run workflow" auf main: legt den Tag vX.Y.Z am aktuellen Commit an.
+#   Claude-Code-Sessions dürfen keine Tags pushen, können diesen Lauf aber
+#   starten.
+# - Tag vX.Y.Z pushen: Release zu diesem Tag.
+# Gibt es das Release schon (z. B. von Hand angelegt), endet der Lauf ohne
+# Änderung.
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
@@ -23,20 +32,29 @@ jobs:
       - name: Version prüfen
         id: version
         env:
-          TAG: ${{ github.ref_name }}
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          version="${TAG#v}"
-          manifest=$(python3 -c 'import json; print(json.load(open("custom_components/device_panel/manifest.json"))["version"])')
-          if [ "$version" != "$manifest" ]; then
-            echo "::error::Tag $TAG passt nicht zur Version $manifest in manifest.json"
+          version=$(python3 -c 'import json; print(json.load(open("custom_components/device_panel/manifest.json"))["version"])')
+          tag="v$version"
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$REF_NAME" != "main" ]; then
+            echo "::error::Releases nur von main, nicht von $REF_NAME"
+            exit 1
+          fi
+          if [ "$EVENT" = "push" ] && [ "$REF_NAME" != "$tag" ]; then
+            echo "::error::Tag $REF_NAME passt nicht zur Version $version in manifest.json"
             exit 1
           fi
           if echo "$version" | grep -Eq '(a|b|rc)[0-9]+$'; then
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            prerelease=true
           else
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            prerelease=false
           fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+          {
+            echo "version=$version"
+            echo "tag=$tag"
+            echo "prerelease=$prerelease"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Release Notes aus dem CHANGELOG
         env:
@@ -46,12 +64,18 @@ jobs:
       - name: Release anlegen
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ steps.version.outputs.tag }}
           PRERELEASE: ${{ steps.version.outputs.prerelease }}
         run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::notice::Release $TAG gibt es schon, nichts zu tun"
+            exit 0
+          fi
           if [ "$PRERELEASE" = "true" ]; then
             flag="--prerelease"
           else
             flag="--latest"
           fi
-          gh release create "$TAG" --verify-tag --title "$TAG" --notes-file notes.md $flag
+          # Fehlt der Tag, legt gh ihn am geprüften Commit an.
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --notes-file notes.md $flag
