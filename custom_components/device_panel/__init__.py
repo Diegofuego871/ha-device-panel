@@ -12,6 +12,7 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 
+from . import options_api, update_check
 from .availability import RANGES, AvailabilityLog
 from .const import (
     BRAND_DIR,
@@ -45,7 +46,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         log = AvailabilityLog(hass)
         await log.async_start()
         hass.data[DATA_AVAILABILITY] = log
+    await update_check.async_load_panel_settings(hass)
+    update_check.async_start_daily(hass)
+    entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
+
+
+async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Optionen geändert (Panel oder Optionsdialog): kein Reload nötig."""
+    # Tägliche Prüfung ein-/ausgeschaltet: Meldung sofort nachführen.
+    await update_check.async_refresh_issue(hass)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -53,6 +63,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         frontend.async_remove_panel(hass, PANEL_URL_PATH)
     if (log := hass.data.pop(DATA_AVAILABILITY, None)) is not None:
         await log.async_stop()
+    update_check.async_stop_daily(hass)
     return True
 
 
@@ -175,6 +186,106 @@ def _ws_availability(
     connection.send_result(msg["id"], log.history(msg["device_id"], msg["range"]))
 
 
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/version",
+        vol.Optional("force", default=False): bool,
+        vol.Optional("prerelease", default=False): bool,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_version(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """
+    Installierte und neueste veröffentlichte Version (GitHub). Mit
+    prerelease auch die neueste Vorabversion, sofern sie neuer ist als das
+    stabile Release und die installierte Version.
+    """
+    installed = await update_check.async_installed_version(hass)
+    release = await update_check.async_latest_release(hass, force=msg["force"])
+    # Meldung unter "Reparaturen" gleich mitziehen (z. B. nach dem Update weg).
+    await update_check.async_refresh_issue(hass, release)
+    result: dict[str, Any] = {
+        "installed": installed,
+        **release,
+        "prerelease": None,
+        "prerelease_url": None,
+        "panel": update_check.panel_settings(hass),
+    }
+    if msg["prerelease"]:
+        pre = await update_check.async_latest_prerelease(hass, force=msg["force"])
+        candidate = pre.get("prerelease")
+        if (
+            candidate
+            and update_check.compare_versions(candidate, release.get("latest")) > 0
+            and update_check.compare_versions(candidate, installed) > 0
+        ):
+            result["prerelease"] = candidate
+            result["prerelease_url"] = pre.get("prerelease_url")
+        if pre.get("error") and not result.get("error"):
+            result["error"] = pre["error"]
+    connection.send_result(msg["id"], result)
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/set_panel",
+        vol.Optional("prerelease"): bool,
+        vol.Optional("prerelease_hacs"): vol.Any(None, str),
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_set_panel(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Gemeinsame Panel-Einstellungen der Instanz speichern (Vorabversionen)."""
+    values = {k: msg[k] for k in ("prerelease", "prerelease_hacs") if k in msg}
+    connection.send_result(msg["id"], await update_check.async_set_panel_settings(hass, values))
+
+
+def _entry(hass: HomeAssistant) -> ConfigEntry | None:
+    """Der einzige Eintrag (single_config_entry)."""
+    return next(iter(hass.config_entries.async_entries(DOMAIN)), None)
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/get_options"})
+@websocket_api.require_admin
+@callback
+def _ws_get_options(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Einstellungen, dieselben Werte wie im Optionsdialog, dazu die Panel-Einstellungen."""
+    entry = _entry(hass)
+    if entry is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "integration not set up")
+        return
+    connection.send_result(
+        msg["id"], {"values": options_api.current_values(entry), "panel": update_check.panel_settings(hass)}
+    )
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/set_options", vol.Required("values"): dict})
+@websocket_api.require_admin
+@callback
+def _ws_set_options(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Speichert Einstellungen aus dem Panel in die Options des Eintrags."""
+    entry = _entry(hass)
+    if entry is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "integration not set up")
+        return
+    try:
+        changed = options_api.apply_values(hass, entry, msg["values"])
+    except vol.Invalid as err:
+        connection.send_error(msg["id"], websocket_api.ERR_INVALID_FORMAT, str(err))
+        return
+    connection.send_result(msg["id"], {"changed": changed})
+
+
 @callback
 def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     if hass.data.get(DATA_WS_REGISTERED):
@@ -183,3 +294,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_list_devices)
     websocket_api.async_register_command(hass, _ws_device)
     websocket_api.async_register_command(hass, _ws_availability)
+    websocket_api.async_register_command(hass, _ws_version)
+    websocket_api.async_register_command(hass, _ws_set_panel)
+    websocket_api.async_register_command(hass, _ws_get_options)
+    websocket_api.async_register_command(hass, _ws_set_options)

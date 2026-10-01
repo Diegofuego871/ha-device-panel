@@ -34,6 +34,8 @@ const RANGES = ["24h", "7d", "30d"];
 // Datenpunkt, sonst wäre er fast ganz schraffiert (wie unifi_dynamic).
 const ZOOM_SHARE = 0.1;
 const OUTAGE_LIST_MAX = 10;
+// Repository für den Abgleich mit HACS (Update-Entität, Repository-Liste).
+const REPO = "diegofuego871/ha-device-panel";
 
 // innerHTML nur bei echter Änderung ersetzen; Vergleich mit dem zuletzt
 // gesetzten String, nie mit el.innerHTML (siehe LEARNINGS).
@@ -63,6 +65,15 @@ const MDI = {
   update: "M21,10.12H14.22L16.96,7.3C14.23,4.6 9.81,4.5 7.08,7.2C4.35,9.91 4.35,14.28 7.08,17C9.81,19.7 14.23,19.7 16.96,17C18.32,15.65 19,14.08 19,12.1H21C21,14.08 20.12,16.65 18.36,18.39C14.85,21.87 9.15,21.87 5.64,18.39C2.14,14.92 2.11,9.28 5.62,5.81C9.13,2.34 14.76,2.34 18.27,5.81L21,3V10.12M12.5,8V12.25L16,14.33L15.28,15.54L11,13V8H12.5Z",
   alert: "M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z",
   close: "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",
+  gear: "M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z",
+  verOk: "M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z",
+  verUp: "M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M12 7L17 12H14V16H10V12H7L12 7Z",
+  verCheck: "M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z",
+  verDownload: "M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z",
+  flask: "M5,19A1,1 0 0,0 6,20H18A1,1 0 0,0 19,19C19,18.79 18.93,18.59 18.82,18.43L13,8.35V4H11V8.35L5.18,18.43C5.07,18.59 5,18.79 5,19M6,22A3,3 0 0,1 3,19C3,18.4 3.18,17.84 3.5,17.37L9,7.81V6A1,1 0 0,1 8,5V4A2,2 0 0,1 10,2H14A2,2 0 0,1 16,4V5A1,1 0 0,1 15,6V7.81L20.5,17.37C20.82,17.84 21,18.4 21,19A3,3 0 0,1 18,22H6M13,16L14.34,14.66L16.27,18H7.73L10.39,13.39L13,16M12.5,12A0.5,0.5 0 0,1 13,12.5A0.5,0.5 0 0,1 12.5,13A0.5,0.5 0 0,1 12,12.5A0.5,0.5 0 0,1 12.5,12Z",
+  reset: "M12,4C14.1,4 16.1,4.8 17.6,6.3C20.7,9.4 20.7,14.5 17.6,17.6C15.8,19.5 13.3,20.2 10.9,19.9L11.4,17.9C13.1,18.1 14.9,17.5 16.2,16.2C18.5,13.9 18.5,10.1 16.2,7.7C15.1,6.6 13.5,6 12,6V10.6L7,5.6L12,0.6V4M6.3,17.6C3.7,15 3.3,11 5.1,7.9L6.6,9.4C5.5,11.6 5.9,14.4 7.8,16.2C8.3,16.7 8.9,17.1 9.6,17.4L9,19.4C8,19 7.1,18.4 6.3,17.6Z",
+  info: "M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
+  chevronDown: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z",
   open: "M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z",
   chevron: "M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z",
   pulse: "M3,13H5.79L10.1,4.79L11.28,13.75L14.5,9.66L17.83,13H21V15H17L14.67,12.67L9.92,18.73L8.94,11.31L7,15H3V13Z",
@@ -168,6 +179,11 @@ class DevicePanel extends HTMLElement {
     this._detail = null;
     this._statRange = null;
     this._hist = null;
+    // Einstellungen und Versionsprüfung (wie unifi_dynamic)
+    this._settings = null;
+    this._version = null;
+    this._prerelease = false;
+    this._prereleaseHacs = null;
     this._narrowQuery = window.matchMedia(NARROW_QUERY);
   }
 
@@ -177,6 +193,9 @@ class DevicePanel extends HTMLElement {
     if (first) {
       this._build();
       this._fetch();
+    } else if (this._settings) {
+      // HACS meldet Fortschritt und neue Versionen über seine Update-Entität.
+      this._renderSettingsVersion();
     }
   }
 
@@ -212,10 +231,14 @@ class DevicePanel extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>${PANEL_CSS}</style>
       <div class="toolbar">${LOGO}<h1>${escape(this._t("title"))}</h1>
         <label class="searchbox">${mdi("search", 20)}<input class="search" type="search" placeholder="${escape(this._t("search"))}" aria-label="${escape(this._t("search"))}"></label>
+        <button type="button" class="gear-btn" title="${escape(this._t("settingsBtn"))}" aria-label="${escape(this._t("settingsBtn"))}">${mdi("gear", 22)}</button>
       </div>
       <div class="content"><div class="hero"></div><div class="chips"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog>`;
+      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog>
+      <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
+    root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
+    this._bindSettings(root.querySelector("dialog.settings"));
     root.querySelector(".search").addEventListener("input", (ev) => {
       this._search = ev.target.value.trim().toLowerCase();
       this._render();
@@ -1154,6 +1177,623 @@ class DevicePanel extends HTMLElement {
     tip.style.left = `${left}px`;
     tip.style.setProperty("--arrow", `${center - left}px`);
   }
+  // --- Einstellungen (wie unifi_dynamic) ------------------------------------
+  // Dieselben Options wie der Optionsdialog von HA (device_panel/get_options,
+  // set_options) plus die gemeinsamen Panel-Einstellungen (Vorabversionen).
+  // Gespeichert wird erst mit "Speichern"; der Entwurf lebt nur im Dialog.
+
+  async _openSettings() {
+    const dialog = this.shadowRoot.querySelector("dialog.settings");
+    if (!dialog || !this._hass) return;
+    this._settings = { loading: true, error: null, saveError: null, saving: false, data: null, draft: null, open: new Set(), info: new Set() };
+    this._renderSettings();
+    if (!dialog.open) {
+      if (typeof dialog.showModal === "function") dialog.showModal();
+      else dialog.setAttribute("open", "");
+    }
+    this._loadVersion(false);
+    const st = this._settings;
+    try {
+      const data = await this._hass.callWS({ type: "device_panel/get_options" });
+      if (this._settings !== st) return;
+      st.data = data;
+      st.draft = { ...data.values };
+      this._applyPanelSettings(data.panel);
+      // Vorabversionen (ganze Instanz) gelten wie alles andere erst mit "Speichern".
+      st.extraBase = { prerelease: Boolean(this._prerelease) };
+      st.extra = { ...st.extraBase };
+    } catch (err) {
+      if (this._settings !== st) return;
+      st.error = (err && err.message) || String(err);
+    }
+    st.loading = false;
+    this._renderSettings();
+  }
+
+  _closeSettings() {
+    const dialog = this.shadowRoot.querySelector("dialog.settings");
+    this._settings = null;
+    if (dialog?.open) {
+      if (typeof dialog.close === "function") dialog.close();
+      else dialog.removeAttribute("open");
+    }
+  }
+
+  _applyPanelSettings(panel) {
+    if (!panel) return;
+    this._prerelease = panel.prerelease === true;
+    this._prereleaseHacs = panel.prerelease_hacs || null;
+  }
+
+  _settingsEntryChanges() {
+    const st = this._settings;
+    if (!st || !st.draft) return [];
+    return Object.keys(st.draft).filter((k) => st.draft[k] !== st.data.values[k]);
+  }
+
+  _settingsExtraChanges() {
+    const st = this._settings;
+    if (!st || !st.extra) return [];
+    return Object.keys(st.extra).filter((k) => st.extra[k] !== st.extraBase[k]);
+  }
+
+  _settingsChanges() {
+    return [...this._settingsEntryChanges(), ...this._settingsExtraChanges()];
+  }
+
+  // Abschnitte mit ihren Optionen; weitere folgen (Überwachung, Push …).
+  _settingsSections() {
+    return [["updates", ["update_check"]]];
+  }
+
+  _settingsSummary(id, d) {
+    if (id === "updates") return this._t(d.update_check ? "sumUpdatesOn" : "sumUpdatesOff");
+    return "";
+  }
+
+  _renderSettings() {
+    const dialog = this.shadowRoot.querySelector("dialog.settings");
+    const st = this._settings;
+    if (!dialog || !st) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const head = `<div class="dlg-head"><span class="dlg-avatar">${mdi("gear", 28)}</span>
+        <div class="dlg-title"><h2>${escape(t("settingsTitle"))}</h2><div class="dlg-sub">${escape(t("settingsSub"))}</div></div>
+        <button type="button" class="dlg-close" data-set="close" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>`;
+    let body;
+    if (st.loading) body = `<p class="dlg-note">${escape(t("settingsLoading"))}</p>`;
+    else if (st.error) body = `<div class="dlg-error">${escape(t("settingsLoadError"))} ${escape(st.error)}</div>`;
+    else body = this._settingsBodyHtml();
+    const changes = this._settingsChanges();
+    const canSave = !st.loading && !st.error && !st.saving && changes.length > 0;
+    const actions = `<div class="dlg-actions">
+        <span class="set-count">${changes.length ? escape(t("settingsChanges", changes.length)) : ""}</span>
+        <button type="button" class="dlg-btn" data-set="close">${escape(t("settingsCancel"))}</button>
+        <button type="button" class="dlg-btn primary" data-set="save" ${canSave ? "" : "disabled"}>${escape(st.saving ? t("settingsSaving") : t("settingsSave"))}</button></div>`;
+    // Die Versionszeile (.ver-slot) ändert sich oft (Prüfung, HACS) und wird
+    // dann allein ersetzt (_renderSettingsVersion), nicht der ganze Dialog.
+    const html = `${head}<div class="dlg-body">${body}</div>${actions}`;
+    const scroll = dialog.scrollTop;
+    const active = this.shadowRoot.activeElement;
+    const focusSel = active && dialog.contains(active) && active.dataset
+      ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
+        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+      : null;
+    if (!setHtml(dialog, html)) return;
+    // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
+    // ersetzte sie das nächste Teil-Update einmal grundlos (siehe setHtml).
+    const slot = dialog.querySelector(".ver-slot");
+    if (slot) lastHtml.set(slot, this._verSlotHtml);
+    dialog.scrollTop = scroll;
+    if (focusSel) dialog.querySelector(focusSel)?.focus();
+  }
+
+  _settingsBodyHtml() {
+    const st = this._settings;
+    const d = st.draft;
+    const t = (k, ...a) => this._t(k, ...a);
+    const changes = new Set(this._settingsChanges());
+    const infoBtn = (key) =>
+      `<button type="button" class="info-btn${st.info.has(key) ? " on" : ""}" data-set="info" data-key="${key}" title="${escape(t("settingsInfo"))}" aria-label="${escape(t("settingsInfo"))}" aria-expanded="${st.info.has(key)}">${mdi("info", 16)}</button>`;
+    const row = (key, label, control, short, info) => `<div class="opt${changes.has(key) ? " changed" : ""}">
+        <div class="opt-line"><span class="opt-label">${escape(label)}${info ? infoBtn(key) : ""}</span>${control}</div>
+        ${short ? `<div class="opt-short">${escape(short)}</div>` : ""}
+        ${info && st.info.has(key) ? `<div class="opt-info">${escape(info)}</div>` : ""}</div>`;
+    const sw = (key) => `<label class="switch"><input type="checkbox" data-opt="${key}" ${d[key] ? "checked" : ""} aria-label="${escape(t("optUpdateCheck"))}"><span></span></label>`;
+    const fields = {
+      updates: row("update_check", t("optUpdateCheck"), sw("update_check"), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
+    };
+    const titles = { updates: "secUpdates" };
+    return (
+      `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
+      this._settingsSections()
+        .map(([id, keys]) => {
+          const open = st.open.has(id);
+          const changed = keys.some((k) => changes.has(k));
+          return `<section class="set-sec${open ? " open" : ""}">
+            <button type="button" class="set-sec-head" data-set="section" data-id="${id}" aria-expanded="${open}">
+              <span><span class="set-sec-title">${escape(t(titles[id]))}${changed ? `<span class="set-badge">${escape(t("settingsChanged"))}</span>` : ""}</span>
+              <span class="set-sec-sum">${escape(this._settingsSummary(id, d))}</span></span>${mdi("chevronDown", 20)}</button>
+            ${open ? `<div class="set-sec-body">${fields[id]}</div>` : ""}</section>`;
+        })
+        .join("") +
+      (st.saveError ? `<div class="dlg-error">${escape(t("settingsSaveError"))} ${escape(st.saveError)}</div>` : "")
+    );
+  }
+
+  _bindSettings(dialog) {
+    dialog.addEventListener("click", (ev) => {
+      const verBtn = ev.target.closest("[data-ver]");
+      if (verBtn) {
+        if (!verBtn.disabled) this._versionAction(verBtn.dataset.ver);
+        return;
+      }
+      if (ev.target === dialog) {
+        const r = dialog.getBoundingClientRect();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closeSettings();
+        return;
+      }
+      const btn = ev.target.closest("[data-set]");
+      if (!btn || btn.disabled || !this._settings) return;
+      const st = this._settings;
+      const action = btn.dataset.set;
+      if (action === "close") this._closeSettings();
+      else if (action === "save") this._saveSettings();
+      else if (action === "section" || action === "info") {
+        const set = action === "section" ? st.open : st.info;
+        const key = action === "section" ? btn.dataset.id : btn.dataset.key;
+        if (set.has(key)) set.delete(key);
+        else set.add(key);
+        this._renderSettings();
+      }
+    });
+    dialog.addEventListener("change", (ev) => {
+      const key = ev.target.dataset?.opt;
+      if (!key || !this._settings?.draft || ev.target.type !== "checkbox") return;
+      this._settings.draft[key] = ev.target.checked;
+      this._renderSettings();
+    });
+    dialog.addEventListener("close", () => {
+      if (!dialog.open) this._settings = null;
+    });
+  }
+
+  async _saveSettings() {
+    const st = this._settings;
+    if (!st) return;
+    const changes = this._settingsEntryChanges();
+    const extra = this._settingsExtraChanges();
+    if (!changes.length && !extra.length) return;
+    st.saving = true;
+    st.saveError = null;
+    this._renderSettings();
+    try {
+      if (changes.length) {
+        const values = Object.fromEntries(changes.map((k) => [k, st.draft[k]]));
+        await this._hass.callWS({ type: "device_panel/set_options", values });
+      }
+      if (extra.includes("prerelease")) {
+        const panel = await this._hass.callWS({ type: "device_panel/set_panel", prerelease: st.extra.prerelease });
+        this._applyPanelSettings(panel);
+        // Ausgeschaltet: den HACS-Schalter zurücksetzen, falls das Panel ihn
+        // eingeschaltet hat.
+        if (!this._prerelease) await this._disableHacsPrerelease();
+      }
+      this._closeSettings();
+      this._toast(this._t("settingsSaved"));
+    } catch (err) {
+      if (this._settings !== st) return;
+      st.saving = false;
+      st.saveError = (err && err.message) || String(err);
+      this._renderSettings();
+    }
+  }
+
+  _toast(text) {
+    const el = this.shadowRoot.querySelector(".toast");
+    if (!el) return;
+    el.textContent = text;
+    el.hidden = false;
+    window.clearTimeout(this._toastTimer);
+    this._toastTimer = window.setTimeout(() => (el.hidden = true), 3500);
+  }
+
+  // --- Versionsprüfung und Update über HACS (wie unifi_dynamic) -------------
+  // Die neueste Version kommt von HACS (Update-Entität) und zusätzlich von
+  // GitHub (device_panel/version), so klappt die Prüfung auch ohne HACS.
+  // Installieren geht nur über HACS (update.install).
+
+  // Update-Entität von HACS für dieses Repository. Erkannt am Link des
+  // Releases, sonst am Titel bzw. an der Entity-ID, nie an einer festen ID.
+  _hacsUpdateEntity() {
+    const hass = this._hass;
+    if (!hass || !hass.entities || !hass.states) return null;
+    let fallback = null;
+    for (const e of Object.values(hass.entities)) {
+      if (!e || e.platform !== "hacs" || !String(e.entity_id).startsWith("update.")) continue;
+      const st = hass.states[e.entity_id];
+      if (!st) continue;
+      const a = st.attributes || {};
+      if (String(a.release_url || "").toLowerCase().includes(`/${REPO}/`)) return st;
+      const title = String(a.title || "").trim().toLowerCase();
+      if (!fallback && (title === "device panel" || e.entity_id === "update.device_panel_update")) fallback = st;
+    }
+    return fallback;
+  }
+
+  // Versionsvergleich wie im Backend (update_check.compare_versions):
+  // 0.10.0 > 0.9.9, und eine Vorabversion (0.4.0b1) liegt unter der
+  // fertigen (0.4.0), aber über der vorherigen (0.3.2).
+  _versionKey(v) {
+    const m = /^v?(\d+)(?:\.(\d+))?(?:\.(\d+))?[-.]?(?:(alpha|beta|pre|rc|a|b)\.?(\d*))?/i.exec(String(v || "").trim());
+    if (!m) return [0, 0, 0, 3, 0];
+    const rank = { a: 0, alpha: 0, b: 1, beta: 1, pre: 1, rc: 2 };
+    return [+m[1], +(m[2] || 0), +(m[3] || 0), m[4] ? rank[m[4].toLowerCase()] : 3, +(m[5] || 0)];
+  }
+
+  _cmpVersion(a, b) {
+    const x = this._versionKey(a);
+    const y = this._versionKey(b);
+    for (let i = 0; i < 5; i++) if (x[i] !== y[i]) return x[i] > y[i] ? 1 : -1;
+    return 0;
+  }
+
+  _isPrerelease(v) {
+    return Boolean(v) && this._versionKey(v)[3] < 3;
+  }
+
+  // Vorabversion nach Nummer (0.4.0b1) oder weil GitHub genau diese Version
+  // als Pre-Release führt, auch ohne Zusatz in der Nummer.
+  _isPreVersion(ver, d) {
+    if (!ver) return false;
+    if (this._isPrerelease(ver)) return true;
+    return Boolean(d && d.prerelease && this._cmpVersion(ver, d.prerelease) === 0 && (!d.latest || this._cmpVersion(ver, d.latest) > 0));
+  }
+
+  // Schalter "Pre-release" von HACS für dieses Repository: eine Entität am
+  // selben HACS-Gerät wie die Update-Entität. Standardmässig deaktiviert;
+  // deaktiviert heisst: nicht in hass.states.
+  _hacsPreReleaseSwitch() {
+    const hass = this._hass;
+    const upd = this._hacsUpdateEntity();
+    if (!hass || !hass.entities || !upd) return null;
+    const reg = hass.entities[upd.entity_id];
+    const deviceId = reg && reg.device_id;
+    if (!deviceId) return null;
+    const sw = Object.values(hass.entities).find(
+      (e) => e && e.platform === "hacs" && e.device_id === deviceId && String(e.entity_id).startsWith("switch.") && /pre.?release/i.test(`${e.entity_id} ${e.translation_key || ""}`)
+    );
+    // Deaktivierte Entitäten fehlen in hass.entities: dann gilt, was die
+    // Entity-Registry geliefert hat (_loadHacsSwitch).
+    const regSw = !sw && this._hacsSwitchReg && this._hacsSwitchReg.deviceId === deviceId ? this._hacsSwitchReg : null;
+    const entityId = sw ? sw.entity_id : regSw ? regSw.entityId : null;
+    const state = entityId ? hass.states[entityId] : null;
+    return { deviceId, entityId, on: Boolean(state && state.state === "on"), disabled: Boolean(!sw && regSw && regSw.disabled) };
+  }
+
+  async _loadHacsSwitch() {
+    const upd = this._hacsUpdateEntity();
+    const reg = upd && this._hass.entities && this._hass.entities[upd.entity_id];
+    if (!reg || !reg.device_id) return;
+    try {
+      const list = await this._hass.callWS({ type: "config/entity_registry/list" });
+      const e = (Array.isArray(list) ? list : []).find(
+        (x) => x && x.platform === "hacs" && x.device_id === reg.device_id && String(x.entity_id).startsWith("switch.") && /pre.?release/i.test(`${x.entity_id} ${x.translation_key || ""} ${x.original_name || ""}`)
+      );
+      this._hacsSwitchReg = e ? { deviceId: reg.device_id, entityId: e.entity_id, disabled: Boolean(e.disabled_by) } : null;
+    } catch (err) {
+      this._hacsSwitchReg = null;
+    }
+  }
+
+  // "In HACS freischalten": Entität aktivieren (falls nötig), warten, bis
+  // HA sie nach dem Neuladen von HACS freigibt (etwa 30 s), einschalten und
+  // HACS die Versionen neu laden lassen. Nur auf Knopfdruck.
+  async _enableHacsPrerelease() {
+    const v = (this._version = this._version || {});
+    const sw = this._hacsPreReleaseSwitch();
+    if (!sw || !sw.entityId) return;
+    v.hacsEnabling = true;
+    v.hacsError = null;
+    this._renderSettingsVersion();
+    try {
+      if (sw.disabled || !this._hass.states[sw.entityId]) {
+        await this._hass.callWS({ type: "config/entity_registry/update", entity_id: sw.entityId, disabled_by: null });
+        const until = Date.now() + 90000;
+        while (!this._hass.states[sw.entityId] && Date.now() < until) await new Promise((r) => setTimeout(r, 1000));
+        if (!this._hass.states[sw.entityId]) throw new Error(this._t("verPreEnableTimeout"));
+        this._hacsSwitchReg = { ...(this._hacsSwitchReg || {}), deviceId: sw.deviceId, entityId: sw.entityId, disabled: false };
+      }
+      await this._callService("switch", "turn_on", { entity_id: sw.entityId });
+      this._prereleaseHacs = sw.entityId;
+      await this._hass.callWS({ type: "device_panel/set_panel", prerelease_hacs: sw.entityId });
+      await this._refreshHacs();
+    } catch (err) {
+      v.hacsError = (err && err.message) || String(err);
+    }
+    v.hacsEnabling = false;
+    this._renderSettingsVersion();
+    await this._loadVersion(false);
+  }
+
+  // Beim Ausschalten von "Vorabversionen anzeigen": den HACS-Schalter nur
+  // zurücksetzen, wenn das Panel ihn selbst eingeschaltet hat.
+  async _disableHacsPrerelease() {
+    const id = this._prereleaseHacs;
+    if (!id) return;
+    this._prereleaseHacs = null;
+    try {
+      await this._hass.callWS({ type: "device_panel/set_panel", prerelease_hacs: null });
+    } catch (err) {
+      // Nicht kritisch.
+    }
+    const st = this._hass.states[id];
+    if (st && st.state === "on") {
+      try {
+        await this._callService("switch", "turn_off", { entity_id: id });
+        await this._refreshHacs();
+      } catch (err) {
+        // Nicht kritisch: der Schalter bleibt dann in HACS an.
+      }
+    }
+  }
+
+  async _loadVersion(force = false) {
+    const v = (this._version = this._version || {});
+    if (force) {
+      v.checking = true;
+      // Neue Prüfung: alte Meldungen verwerfen, der neue Stand zählt.
+      v.installError = null;
+    }
+    v.error = null;
+    this._renderSettingsVersion();
+    const jobs = [
+      // Vorabversion immer mitabfragen: auch bei ausgeschaltetem Schalter
+      // muss das Panel wissen, welche Version GitHub als Pre-Release führt,
+      // damit es eine solche von HACS gemeldete Version nicht als stabil
+      // anbietet. Angezeigt wird sie nur mit eingeschaltetem Schalter.
+      this._hass.callWS({ type: "device_panel/version", force, prerelease: true }).then(
+        (r) => {
+          v.data = r;
+          if (!this._settings || !this._settings.extra) this._applyPanelSettings(r && r.panel);
+        },
+        (err) => (v.error = (err && err.message) || String(err))
+      ),
+    ];
+    // HACS prüft sonst nur alle paar Tage: auf Knopfdruck sofort neu laden.
+    if (force) jobs.push(this._refreshHacs());
+    await Promise.all(jobs);
+    // GitHub kennt eine neuere Version als HACS: HACS einmal pro Sitzung
+    // auch ohne Knopfdruck nachladen lassen, sonst lässt sie sich nicht über
+    // HACS installieren.
+    const { hacs, a, latest } = this._versionState();
+    if (!force && hacs && !v.hacsRefreshed && latest && (!a.latest_version || this._cmpVersion(latest, a.latest_version) > 0)) {
+      v.hacsRefreshed = true;
+      // Während HACS nachlädt, nicht zum Klick auf "Nach Updates suchen"
+      // auffordern: das Panel erledigt genau das gerade selbst.
+      v.hacsSyncing = true;
+      this._renderSettingsVersion();
+      await this._refreshHacs();
+      // Der neue Stand der Update-Entität kommt etwas nach dem Dienstaufruf:
+      // kurz darauf warten, höchstens 4 Sekunden.
+      const until = Date.now() + 4000;
+      while (Date.now() < until) {
+        const now = this._versionState().a;
+        if (now.latest_version && this._cmpVersion(now.latest_version, latest) >= 0) break;
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      v.hacsSyncing = false;
+    }
+    v.checking = false;
+    if (v.data && v.data.error && !v.data.latest && !v.data.prerelease) v.error = v.data.error;
+    if (this._versionState().betaBlocked) await this._loadHacsSwitch();
+    this._renderSettingsVersion();
+  }
+
+  // Dienst über WebSocket statt hass.callService: der zeigt bei einem
+  // Fehler zusätzlich eine eigene Meldung, hier steht der Fehler in der Zeile.
+  _callService(domain, service, data) {
+    return this._hass.callWS({ type: "call_service", domain, service, service_data: data });
+  }
+
+  // HACS die Versionen des Repositories neu laden lassen (wie sein Menüpunkt
+  // "Informationen aktualisieren"), dann die Update-Entität. Alles
+  // bestmöglich: fehlt ein Befehl in einer HACS-Version, bleibt es beim
+  // Aktualisieren der Entität.
+  async _refreshHacs() {
+    const hacs = this._hacsUpdateEntity();
+    if (!hacs) return;
+    try {
+      const repos = await this._hass.callWS({ type: "hacs/repositories/list" });
+      const list = Array.isArray(repos) ? repos : (repos && repos.repositories) || [];
+      const repo = list.find((r) => String(r.full_name || "").toLowerCase() === REPO);
+      if (repo) await this._hass.callWS({ type: "hacs/repository/refresh", repository: String(repo.id) });
+    } catch (err) {
+      // Älteres oder neueres HACS ohne diese Befehle.
+    }
+    try {
+      await this._callService("homeassistant", "update_entity", { entity_id: hacs.entity_id });
+    } catch (err) {
+      // Nicht kritisch: dann gilt der bisherige Stand von HACS.
+    }
+  }
+
+  _versionState() {
+    const v = this._version || {};
+    const d = v.data || {};
+    const hacs = this._hacsUpdateEntity();
+    const a = (hacs && hacs.attributes) || {};
+    const installed = d.installed || a.installed_version || null;
+    let latest = d.latest || null;
+    let url = d.release_url || null;
+    // Vorabversion nur auf Wunsch und nur, wenn sie neuer ist.
+    if (this._prerelease && d.prerelease && (!latest || this._cmpVersion(d.prerelease, latest) > 0)) {
+      latest = d.prerelease;
+      url = d.prerelease_url || url;
+    }
+    // HACS kennt eine Vorabversion nur mit eingeschaltetem "Pre-release";
+    // ohne unseren Schalter keine Vorabversion von HACS übernehmen.
+    if (a.latest_version && (!latest || this._cmpVersion(a.latest_version, latest) >= 0) && (this._prerelease || !this._isPreVersion(a.latest_version, d))) {
+      latest = a.latest_version;
+      url = a.release_url || url;
+    }
+    const beta = this._isPreVersion(latest, d);
+    const preSwitch = beta && hacs ? this._hacsPreReleaseSwitch() : null;
+    const inProgress = Boolean(hacs && (a.in_progress === true || typeof a.in_progress === "number"));
+    // HACS hat eine neuere Version auf die Platte gelegt, als gerade läuft.
+    const restart = Boolean(hacs && a.installed_version && installed && this._cmpVersion(a.installed_version, installed) > 0);
+    // Installierbar nur, was HACS selbst als neueste Version kennt.
+    let canInstall = Boolean(hacs && a.latest_version && installed && this._cmpVersion(a.latest_version, installed) > 0);
+    // Beta ohne "Pre-release" in HACS: HACS würde die stabile Version (oder
+    // gar nichts) installieren, deshalb sperren und erklären.
+    const betaBlocked = Boolean(beta && hacs && (!preSwitch || !preSwitch.on));
+    if (betaBlocked) canInstall = false;
+    return { v, d, hacs, a, installed, latest, url, inProgress, restart, canInstall, beta, betaBlocked, preSwitch };
+  }
+
+  _versionHtml() {
+    const state = this._versionState();
+    if (!state.installed && !state.v.data && !state.v.error) return "";
+    return this._versionRowHtml(state) + this._prereleaseOptHtml();
+  }
+
+  // Schalter "Vorabversionen anzeigen" unter dem Versionskasten (ganze Instanz).
+  _prereleaseOptHtml() {
+    const st = this._settings;
+    const on = st && st.extra ? Boolean(st.extra.prerelease) : Boolean(this._prerelease);
+    const changed = st && st.extra && st.extra.prerelease !== st.extraBase.prerelease;
+    return `<div class="ver-opt">
+        <div><div class="ver-opt-l">${escape(this._t("verPreToggle"))}${changed ? `<span class="set-badge">${escape(this._t("settingsChanged"))}</span>` : ""}</div><div class="ver-opt-d">${escape(this._t("verPreToggleShort"))}</div></div>
+        <button type="button" class="sw-btn beta${on ? " on" : ""}" role="switch" aria-checked="${on}" data-ver="prerelease" aria-label="${escape(this._t("verPreToggle"))}" ${st && st.extra ? "" : "disabled"}><span></span></button></div>`;
+  }
+
+  _formatRelative(epoch) {
+    if (!epoch) return "";
+    const diff = epoch - Date.now() / 1000;
+    const abs = Math.abs(diff);
+    try {
+      const rtf = new Intl.RelativeTimeFormat(this._locale(), { numeric: "auto" });
+      for (const [unit, secs] of [["day", 86400], ["hour", 3600], ["minute", 60]]) {
+        if (abs >= secs) return rtf.format(Math.round(diff / secs), unit);
+      }
+      return rtf.format(0, "minute");
+    } catch (err) {
+      return "";
+    }
+  }
+
+  _versionRowHtml({ v, d, hacs, a, installed, latest, url, inProgress, restart, canInstall, beta, betaBlocked, preSwitch }) {
+    const t = (k, ...x) => this._t(k, ...x);
+    const row = (cls, iconName, title, sub, right) => `<div class="ver ${cls}">
+        <span class="ver-ic">${mdi(iconName, 20)}</span>
+        <div class="ver-t"><b>${escape(title)}</b><small>${escape(sub)}</small></div>
+        ${right ? `<div class="ver-btns">${right}</div>` : ""}</div>`;
+    const notes = url ? `<a class="ver-link" href="${escape(url)}" target="_blank" rel="noopener">${escape(t("verReleaseNotes"))}${mdi("open", 15)}</a>` : "";
+    if (v.restarting) return row("rst", "reset", t("verRestarting"), t("verRestartSub"), "");
+    if (restart) {
+      return row("rst", "reset", t("verRestartNeeded", a.installed_version), t("verRestartSub"),
+        `<button type="button" class="ver-btn warn" data-ver="restart">${mdi("reset", 16)}${escape(t("verRestart"))}</button>`);
+    }
+    if (inProgress || v.installing) {
+      return `<div class="ver upd"><span class="ver-ic">${mdi("verUp", 20)}</span>
+          <div class="ver-t"><b>${escape(t("verInstalling", v.installing || latest))}</b><small>${escape(t("verInstallingSub"))}</small></div>
+          <div class="ver-prog"><i></i></div></div>`;
+    }
+    if (latest && installed && this._cmpVersion(latest, installed) > 0) {
+      const sub = v.installError
+        ? `${t("verInstallError")} ${v.installError}`
+        : beta && betaBlocked
+          ? `${t("verInstalled", installed)} · ${t("verPreShort")}`
+          : !hacs
+            ? `${t("verInstalledVia", installed, false)} · ${t("verNoHacs")}`
+            : canInstall
+              ? t("verInstalledVia", installed, true)
+              : v.hacsSyncing
+                ? `${t("verInstalledVia", installed, true)} · ${t("verHacsSyncing")}`
+                : `${t("verInstalledVia", installed, true)} · ${t("verHacsPending")}`;
+      // Erneut prüfen geht immer: neben "Aktualisieren" als kompakter
+      // Symbolknopf, sonst mit Beschriftung.
+      const busy = v.checking || v.hacsSyncing ? `disabled aria-busy="true"` : "";
+      const spinOrIcon = v.checking || v.hacsSyncing ? `<span class="ver-spin"></span>` : mdi("verCheck", 16);
+      const checkBtn = canInstall || betaBlocked
+        ? `<button type="button" class="ver-btn icon" data-ver="check" ${busy} title="${escape(t("verCheck"))}" aria-label="${escape(t("verCheck"))}">${spinOrIcon}</button>`
+        : `<button type="button" class="ver-btn" data-ver="check" ${busy}>${spinOrIcon}${escape(t("verCheck"))}</button>`;
+      const installBtn = canInstall
+        ? `<button type="button" class="ver-btn primary" data-ver="install">${mdi("verDownload", 16)}${escape(t("verUpdate"))}</button>`
+        : betaBlocked
+          ? `<button type="button" class="ver-btn primary" disabled>${mdi("verDownload", 16)}${escape(t("verUpdate"))}</button>`
+          : "";
+      const canEnable = Boolean(preSwitch && preSwitch.entityId);
+      const hint = betaBlocked
+        ? `<div class="ver-hint">${escape(t(canEnable ? "verPreHintEnable" : "verPreHint"))}${v.hacsError ? `<div class="ver-hint-err">${escape(t("verPreEnableError"))} ${escape(v.hacsError)}</div>` : ""}<div class="ver-hint-acts">${
+            canEnable
+              ? `<button type="button" class="ver-btn" data-ver="hacs-enable" ${v.hacsEnabling ? 'disabled aria-busy="true"' : ""}>${v.hacsEnabling ? `<span class="ver-spin"></span>${escape(t("verPreEnabling"))}` : `${mdi("flask", 16)}${escape(t("verPreEnable"))}`}</button>`
+              : ""
+          }${preSwitch && preSwitch.deviceId ? `<button type="button" class="ver-hint-link" data-ver="hacs-device" data-device-id="${escape(preSwitch.deviceId)}">${escape(t("verPreHintLink"))}</button>` : ""}</div></div>`
+        : "";
+      const html = row(beta ? "upd beta" : "upd", beta ? "flask" : "verUp", t("verAvailable", latest), sub, `${notes}${checkBtn}${installBtn}`);
+      // Etikett "Beta" in den Titel, Hinweis in den Kasten.
+      return beta ? html.replace("</b>", ` <span class="ver-tag">${escape(t("verBeta"))}</span></b>`).replace(/<\/div>\s*$/, `${hint}</div>`) : html;
+    }
+    const checked = d.checked_at ? t("verChecked", this._formatRelative(d.checked_at)) : "";
+    const err = v.error === "rate_limit" ? t("verRateLimit") : v.error;
+    const sub = v.checking ? t("verCheckingSub") : v.error ? `${t("verCheckError")} ${err}` : [t("verCurrent"), checked].filter(Boolean).join(" · ");
+    // Beschriftung bleibt während der Prüfung gleich, nur das Symbol wird
+    // zum Spinner: so springt die Zeile nicht (Höhe des Blatts auf dem Handy).
+    // Fehlgeschlagene Prüfung nicht mit Häkchen ("aktuell") darstellen.
+    const failed = Boolean(v.error && !v.checking);
+    return row(failed ? "err" : "ok", failed ? "alert" : "verOk", t("verName", installed || "?"), sub,
+      `<button type="button" class="ver-btn" data-ver="check" ${v.checking ? `disabled aria-busy="true" title="${escape(t("verChecking"))}"` : ""}>${v.checking ? `<span class="ver-spin"></span>` : mdi("verCheck", 16)}${escape(t("verCheck"))}</button>`);
+  }
+
+  _renderSettingsVersion() {
+    const slot = this.shadowRoot.querySelector("dialog.settings .ver-slot");
+    if (slot) setHtml(slot, this._versionHtml());
+  }
+
+  async _versionAction(action) {
+    const v = (this._version = this._version || {});
+    if (action === "prerelease") {
+      // Nur Entwurf: gilt nach "Speichern" für die ganze Instanz.
+      const st = this._settings;
+      if (!st || !st.extra) return;
+      st.extra.prerelease = !st.extra.prerelease;
+      this._renderSettings();
+    } else if (action === "hacs-enable") {
+      await this._enableHacsPrerelease();
+    } else if (action === "hacs-device") {
+      const sw = this._hacsPreReleaseSwitch();
+      if (sw && sw.deviceId) {
+        this._closeSettings();
+        this._navigate(`/config/devices/device/${sw.deviceId}`);
+      }
+    } else if (action === "check") {
+      await this._loadVersion(true);
+    } else if (action === "install") {
+      const { hacs, a, canInstall } = this._versionState();
+      if (!hacs || !canInstall || v.installing) return;
+      // Ohne Versionsangabe: HACS installiert seine neueste bekannte Version.
+      v.installing = a.latest_version;
+      v.installError = null;
+      this._renderSettingsVersion();
+      try {
+        await this._callService("update", "install", { entity_id: hacs.entity_id });
+      } catch (err) {
+        v.installError = (err && err.message) || String(err);
+      }
+      v.installing = null;
+      this._renderSettingsVersion();
+    } else if (action === "restart") {
+      if (!window.confirm(this._t("verRestartConfirm"))) return;
+      v.restarting = true;
+      this._renderSettingsVersion();
+      try {
+        await this._callService("homeassistant", "restart", {});
+      } catch (err) {
+        // Die Verbindung bricht beim Neustart ab; ein Fehler hier ist normal.
+      }
+    }
+  }
+
 }
 
 customElements.define("device-panel", DevicePanel);

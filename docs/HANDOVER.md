@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.3.0b1, Vorabversion mit Geräte-Popup und Verfügbarkeitsprotokoll)
+## Stand (0.4.0b1, Vorabversion mit Einstellungen und Updates im Panel)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -13,6 +13,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   Empfang, Hub, Batterie, Update, Typ, Integration mit Eintrag,
   Verfügbarkeit 24 Std., Puls, Sammelausfälle), `device_panel/device`
   (Popup) und `device_panel/availability` (Statistik-Fenster).
+- Einstellungen im Panel (Zahnrad): Versionskasten mit Update über HACS,
+  Vorabversionen, "In HACS freischalten", Abschnitt "Updates" (tägliche
+  Prüfung mit Meldung unter "Reparaturen"). Backend `update_check.py`,
+  `options_api.py`, Optionsdialog in `config_flow.py`; WebSocket
+  `device_panel/version`, `set_panel`, `get_options`, `set_options`.
 - Verfügbarkeitsprotokoll (`availability.py`, `.storage/device_panel.availability`,
   31 Tage), siehe `docs/CONCEPT.md`, "Verfügbarkeitsprotokoll".
 - Panel in Design C: Kopf mit Ring (Ø 24 Std.), Ausfall-Tafel und
@@ -46,13 +51,15 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    (`docs/mockups/panel-v1/`, Bilder 5–8), Überwachung mit vier Ebenen
    (Bild 9, `docs/CONCEPT.md`, "Überwachung einstellen"), ohne HACS nur
    Hinweis wie unifi_dynamic. Offen: Recorder-Nachfüllen (mit Schritt 6).
-2. Fahrplan-Schritte 1, 5 und 6 erledigt (`0.2.0b1`, `0.3.0b1`). Neue
-   Anforderung (Nutzer, 2026-10-01): Integrationen und Gerätetypen in der
-   Konfiguration ausschliessen können; Typ und Integration stehen dafür
-   schon in der Liste. Weiter mit Schritt 2 (Spalten, Sortierung und Filter
-   pro Benutzer, getrennt Desktop/Handy) oder, nach Empfehlung, zuerst
-   Schritt 3/4 (Einstellungsmenü mit Ausschlüssen und Update-Bereich);
-   `docs/CONCEPT.md`, "Pflicht"; Vorlagen in `docs/reference/`.
+2. Fahrplan-Schritte 1, 4, 5 und 6 erledigt (`0.2.0b1` bis `0.4.0b1`),
+   Schritt 3 als Grundgerüst. Neue Anforderung (Nutzer, 2026-10-01):
+   Integrationen und Gerätetypen in der Konfiguration ausschliessen können;
+   Typ und Integration stehen dafür schon in der Liste. Weiter mit den
+   Abschnitten der Einstellungen nach Bild 5 (Ausfall-Erkennung,
+   Integrationen mit Ausschluss, Anzeige) und Schritt 2 (Spalten pro
+   Benutzer); `docs/CONCEPT.md`, "Pflicht"; Vorlagen in `docs/reference/`.
+   Offene Fragen an den Nutzer: Typ-Kategorien für Ausschlüsse passend?
+   Prozentwerte erst ab einer Mindestdauer an Daten zeigen?
 3. Umsetzung nach dem Fahrplan in `docs/CONCEPT.md` (Abschnitt "Fahrplan"),
    der Reihe nach: Geräteliste mit Statistik, Spalten pro Benutzer,
    Einstellungsmenü, Update-Bereich, Geräteansicht, Verfügbarkeitsprotokoll,
@@ -82,8 +89,10 @@ Listenpunkte, Versionen, Link-Fussnoten).
 Panel-Tests prüfen die Ansichten in beiden Sprachen: Der HA-Nachbau nimmt die
 Sprache aus `?lang=de|en`, die Suiten laufen je Sprache auf Desktop und Handy
 und vergleichen die Texte ausgeschrieben (`tests/panel/suites/table-e2e.mjs`,
-`popup-e2e.mjs`). Der Nachbau rechnet Liste, Popup und Verlauf aus einem
-erfundenen Verlauf je Gerät (`HIST` in `sim/ha-sim.html`).
+`popup-e2e.mjs`, `settings-e2e.mjs`; `version-e2e.mjs` nur Deutsch wie in
+unifi_dynamic). Der Nachbau rechnet Liste, Popup und Verlauf aus einem
+erfundenen Verlauf je Gerät (`HIST` in `sim/ha-sim.html`) und simuliert HACS
+(Update-Entität, Schalter "Pre-release", Repository-Befehle).
 Neue Suiten genauso aufbauen. Neue Texte immer in beiden Sprachen im selben
 Commit.
 

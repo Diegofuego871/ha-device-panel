@@ -35,6 +35,8 @@ export const PANEL_CSS = `
   --dp-tier3: #8bc34a;
   --dp-tier2: #eba43f;
   --dp-tier1: #e5625f;
+  /* Vorabversionen (Beta), wie unifi_dynamic */
+  --dp-beta: #a37fe0;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -54,6 +56,9 @@ button { font: inherit; color: inherit; }
 .searchbox { flex: 1; display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 14px; border-radius: 14px;
   background: var(--dp-input); border: 1px solid var(--dp-divider); color: var(--dp-text2); min-width: 0; }
 .search { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--dp-text); font: inherit; height: 100%; }
+.gear-btn { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--dp-divider);
+  background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
+.gear-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
 .content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 20px 16px; }
 /* Kopf, Chips und Fusszeile bleiben beim seitlichen Scrollen der Tabelle stehen. */
 .hero, .chips, .foot { position: sticky; left: 0; }
@@ -210,11 +215,11 @@ svg.strip .s2 { fill: var(--dp-bar-off); }
    Hintergrund, Esc und Fokusfalle liefert der Browser. Auf dem Handy als
    Blatt von unten. Der Dialog scrollt selbst, Kopf und Aktionsleiste
    bleiben per sticky sichtbar (wie unifi_dynamic). */
-dialog.device, dialog.stat-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
+dialog.device, dialog.stat-dlg, dialog.settings { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
   box-shadow: var(--dp-shadow); overflow: auto; overscroll-behavior: contain; max-height: calc(100% - 48px); }
-dialog.device { width: min(640px, calc(100vw - 32px)); }
+dialog.device, dialog.settings { width: min(640px, calc(100vw - 32px)); }
 dialog.stat-dlg { width: min(560px, calc(100vw - 32px)); }
-dialog.device::backdrop { background: rgba(0,0,0,0.5); }
+dialog.device::backdrop, dialog.settings::backdrop { background: rgba(0,0,0,0.5); }
 /* Dialog dahinter stark gedimmt und unscharf, sein X ausgeblendet: so ist
    klar, welches Fenster gerade gilt. */
 dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
@@ -247,6 +252,99 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .dlg-btn { flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 18px;
   border-radius: 12px; border: 1px solid var(--dp-divider); background: none; font-size: 14px; cursor: pointer; }
 .dlg-btn:hover { background: var(--dp-hover); }
+.dlg-btn.primary { border-color: var(--dp-primary); background: var(--dp-primary); color: #fff; font-weight: 500; }
+.dlg-btn.primary:hover { background: color-mix(in srgb, var(--dp-primary) 88%, #000); }
+.dlg-btn:disabled { opacity: .45; cursor: default; }
+.set-count { align-self: center; color: var(--dp-text2); font-size: 12px; white-space: nowrap; }
+.set-count:empty { display: none; }
+
+/* Einstellungen: aufklappbare Abschnitte (wie unifi_dynamic) */
+.set-sec { margin-top: 10px; border: 1px solid var(--dp-divider); border-radius: 14px; overflow: hidden; }
+.set-sec-head { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: none; background: none; text-align: left; cursor: pointer; }
+.set-sec-head > span { flex: 1 1 auto; min-width: 0; }
+.set-sec-head:hover { background: var(--dp-hover); }
+.set-sec-head > svg { color: var(--dp-text2); transition: transform .15s; }
+.set-sec.open .set-sec-head > svg { transform: rotate(180deg); }
+.set-sec-title { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.set-sec-sum { display: block; margin-top: 1px; overflow: hidden; color: var(--dp-text2); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.set-badge { margin-left: 8px; padding: 0 8px; border-radius: 99px; background: var(--dp-primary-soft); color: var(--dp-primary); font-size: 11px; font-weight: 400; }
+.set-sec-title .set-badge { margin-left: 0; }
+.set-sec-body { padding: 2px 14px 10px; border-top: 1px solid var(--dp-divider); }
+.opt { padding: 10px 0; border-bottom: 1px solid var(--dp-divider); }
+.opt:last-child { border-bottom: none; }
+.opt-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
+.opt-label { display: inline-flex; align-items: center; gap: 2px; min-width: 0; }
+.opt-short { margin-top: 3px; color: var(--dp-text2); font-size: 12px; line-height: 1.35; }
+.opt-info { margin-top: 6px; padding: 8px 10px; border-radius: 8px; background: var(--dp-subtle); color: var(--dp-text2); font-size: 12px; line-height: 1.45; }
+.info-btn { display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; border: none; border-radius: 50%; background: none; color: var(--dp-text3); cursor: pointer; }
+.info-btn:hover, .info-btn.on { color: var(--dp-primary); }
+.switch { position: relative; flex: none; width: 36px; height: 20px; }
+.switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.switch span { position: absolute; inset: 0; border-radius: 99px; background: color-mix(in srgb, var(--dp-text) 25%, transparent); pointer-events: none; transition: background .15s; }
+.switch span::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; }
+.switch input:checked + span { background: var(--dp-primary); }
+.switch input:checked + span::after { left: 18px; }
+.switch input:focus-visible + span { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
+.opt.changed .switch span { box-shadow: 0 0 0 2px var(--dp-primary-soft); }
+.sw-btn { position: relative; flex: none; width: 36px; height: 20px; padding: 0; border: none; border-radius: 99px; background: color-mix(in srgb, var(--dp-text) 25%, transparent); cursor: pointer; transition: background .15s; }
+.sw-btn span { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; }
+.sw-btn.on { background: var(--dp-primary); }
+.sw-btn.beta.on { background: var(--dp-beta); }
+.sw-btn.on span { left: 18px; }
+.sw-btn:disabled { opacity: .5; cursor: default; }
+.sw-btn:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
+
+/* Versionszeile oben in den Einstellungen */
+.ver { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 11px 12px 11px 14px; border-radius: 14px; background: var(--dp-subtle); }
+.ver-ic { display: grid; flex: none; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--dp-success-soft); color: var(--dp-success); }
+.ver-t { flex: 1 1 200px; min-width: 0; }
+.ver-t b { font-weight: 500; }
+.ver-t small { display: block; margin-top: 1px; color: var(--dp-text2); font-size: 12px; }
+.ver-btns { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ver-btn { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px; border: 1px solid var(--dp-divider); border-radius: 99px;
+  background: var(--dp-card); font-size: 13px; white-space: nowrap; cursor: pointer; }
+.ver-btn:hover:not(:disabled) { background: var(--dp-hover); }
+.ver-btn:disabled { cursor: default; }
+.ver-btn.icon { justify-content: center; width: 34px; padding: 0; }
+.ver-btn.primary { border-color: var(--dp-primary); background: var(--dp-primary); color: #fff; font-weight: 500; }
+.ver-btn.warn { border-color: var(--dp-warning); background: var(--dp-warning); color: #fff; font-weight: 500; }
+/* Hover darf die Farbe der Hauptknöpfe nicht durch Grau ersetzen. */
+.ver-btn.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--dp-primary) 88%, #000); }
+.ver-btn.warn:hover:not(:disabled) { background: color-mix(in srgb, var(--dp-warning) 88%, #000); }
+.ver-link { display: inline-flex; align-items: center; gap: 5px; padding: 0 6px; color: var(--dp-primary); font-size: 13px; text-decoration: none; white-space: nowrap; }
+.ver.upd { background: color-mix(in srgb, var(--dp-primary) 10%, var(--dp-subtle)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dp-primary) 35%, transparent); }
+.ver.upd .ver-ic { background: var(--dp-primary-soft); color: var(--dp-primary); }
+.ver.beta { background: color-mix(in srgb, var(--dp-beta) 10%, var(--dp-subtle)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dp-beta) 40%, transparent); }
+.ver.beta .ver-ic { background: color-mix(in srgb, var(--dp-beta) 20%, transparent); color: var(--dp-beta); }
+.ver.beta .ver-btn.primary { border-color: var(--dp-beta); background: var(--dp-beta); }
+.ver.beta .ver-btn.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--dp-beta) 88%, #000); }
+.ver.beta .ver-btn.primary:disabled { opacity: .45; }
+.ver-tag { display: inline-block; margin-left: 4px; padding: 0 7px; border-radius: 999px; background: color-mix(in srgb, var(--dp-beta) 20%, transparent);
+  color: var(--dp-beta); font-size: 11px; font-weight: 500; vertical-align: 1px; }
+.ver-hint { flex: 1 1 100%; padding: 9px 11px; border-radius: 10px; background: var(--dp-warning-soft); color: color-mix(in srgb, var(--dp-warning) 80%, var(--dp-text));
+  font-size: 12.5px; line-height: 1.4; }
+.ver-hint-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 8px; }
+.ver-hint-acts .ver-btn { color: var(--dp-text); }
+.ver-hint-err { margin-top: 6px; color: var(--dp-error); }
+.ver-hint-link { padding: 0; border: none; background: none; color: inherit; font-weight: 500; text-decoration: underline; cursor: pointer; }
+.ver-opt { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; padding: 2px 4px 0 14px; }
+.ver-opt-l { font-size: 14px; }
+.ver-opt-d { color: var(--dp-text2); font-size: 12px; }
+.ver.rst { background: color-mix(in srgb, var(--dp-warning) 12%, var(--dp-subtle)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dp-warning) 35%, transparent); }
+.ver.rst .ver-ic { background: var(--dp-warning-soft); color: var(--dp-warning); }
+.ver.err .ver-ic { background: var(--dp-warning-soft); color: var(--dp-warning); }
+.ver-spin { flex: none; box-sizing: border-box; width: 16px; height: 16px; border: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor; border-radius: 50%; animation: ver-spin .8s linear infinite; }
+@keyframes ver-spin { to { transform: rotate(360deg); } }
+.ver-prog { flex: 1 1 100%; height: 4px; overflow: hidden; border-radius: 99px; background: var(--dp-primary-soft); }
+.ver-prog i { display: block; width: 35%; height: 100%; border-radius: 99px; background: var(--dp-primary); animation: ver-prog 1.4s ease-in-out infinite; }
+@keyframes ver-prog { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+@media (prefers-reduced-motion: reduce) { .ver-spin, .ver-prog i { animation: none; } }
+
+/* Kurze Rückmeldung nach dem Speichern */
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 10; padding: 10px 16px;
+  border-radius: 10px; background: #323232; color: #fff; font-size: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+.toast[hidden] { display: none; }
 
 /* Statistik-Kacheln: Tipp öffnet das Statistik-Fenster */
 .st-tiles { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 8px; }
@@ -359,8 +457,15 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .chips { flex-wrap: nowrap; overflow-x: auto; margin: 12px -12px 4px; padding: 0 12px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .foot .tap { display: none; }
-  dialog.device, dialog.stat-dlg { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
+  dialog.device, dialog.stat-dlg, dialog.settings { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
   dialog.device { max-height: 92%; }
+  /* Feste Höhe: sonst springt das Blatt bei jeder Änderung des Inhalts
+     (Prüfung, Abschnitt auf/zu) und gibt kurz den Hintergrund frei. */
+  dialog.settings { height: 92%; max-height: 92%; }
+  dialog.settings[open] { display: flex; flex-direction: column; }
+  dialog.settings[open] > * { flex-shrink: 0; }
+  dialog.settings[open] > .dlg-body { flex-grow: 1; }
+  .toolbar .gear-btn { width: 38px; height: 38px; }
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   .dlg-head { padding: 18px 12px 12px 16px; }
   .dlg-quick { padding: 0 16px 6px; }

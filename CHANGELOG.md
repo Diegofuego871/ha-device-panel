@@ -7,6 +7,33 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.4.0b1] - 2026-10-01
+
+Updates directly from the panel: no detour via HACS for every new release.
+
+### Added
+
+- Settings in the panel (gear icon next to the search), the same options as
+  the options dialog of the integration; everything applies with "Save",
+  "Cancel" discards.
+- Version box at the top of the settings: installed version, newest version
+  (GitHub and HACS), "Check for updates", "Update" via the HACS update
+  entity, progress while HACS downloads, a hint and a button to restart
+  Home Assistant afterwards, and a link to the release notes. If HACS does
+  not know a new version yet, the panel makes HACS reload it.
+- "Show pre-releases" for the whole instance (beta versions in purple). If
+  HACS would not install a pre-release because its "Pre-release" switch is
+  off, "Enable in HACS" enables and switches it on; switching pre-releases
+  off in the panel switches it off again.
+- Option "Check for updates daily" (on by default): a new stable version is
+  reported under Settings → Repairs. Also available in the options dialog
+  of the integration.
+
+### Changed
+
+- As long as the installed version is a pre-release, newer pre-releases are
+  offered by default (until "Show pre-releases" is saved once).
+
 ## [0.3.0b1] - 2026-10-01
 
 Each device gets its own pop-up with statistics, and the list shows where a
@@ -103,6 +130,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.4.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0b1
 [0.3.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.3.0b1
 [0.2.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.2.0b1
 [0.1.0b2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.1.0b2

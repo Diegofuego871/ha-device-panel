@@ -9,5 +9,25 @@
     "abort": {
       "single_instance_allowed": "Device Panel ist bereits eingerichtet."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Einstellungen",
+        "description": "Dieselben Einstellungen gibt es im Panel (Zahnrad), dort zusammen mit den Updates.",
+        "data": {
+          "update_check": "Täglich nach Updates suchen"
+        },
+        "data_description": {
+          "update_check": "Meldet eine neue Version unter Einstellungen → Reparaturen. Vorabversionen werden hier nie gemeldet."
+        }
+      }
+    }
+  },
+  "issues": {
+    "update_available": {
+      "title": "Device Panel {latest} ist verfügbar",
+      "description": "Installiert ist {installed}. Aktualisieren über HACS oder über das Zahnrad im Device Panel (Einstellungen). Die tägliche Prüfung lässt sich in den Optionen der Integration ausschalten."
+    }
   }
 }

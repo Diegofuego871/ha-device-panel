@@ -9,5 +9,25 @@
     "abort": {
       "single_instance_allowed": "Device Panel is already set up."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Settings",
+        "description": "The same settings are available in the panel (gear icon), together with updates.",
+        "data": {
+          "update_check": "Check for updates daily"
+        },
+        "data_description": {
+          "update_check": "Reports a new version under Settings → Repairs. Pre-releases are never reported here."
+        }
+      }
+    }
+  },
+  "issues": {
+    "update_available": {
+      "title": "Device Panel {latest} is available",
+      "description": "Installed is {installed}. Update via HACS or via the gear icon in the Device Panel (Settings). The daily check can be turned off in the options of the integration."
+    }
   }
 }

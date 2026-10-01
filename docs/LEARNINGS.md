@@ -54,6 +54,15 @@ hat dort einen echten Fehler oder Umweg gekostet.
   `original_name` leer) heisst die Hauptentität wie das Gerät. Nicht auf
   `friendly_name` aus dem Zustand verlassen: der fehlt, wenn ein Zustand
   ohne Attribute gesetzt wurde.
+- **GitHub `releases/latest`** antwortet mit 404, solange es nur
+  Vorabversionen gibt. Das ist kein Fehler: dann gibt es eben keine stabile
+  Version (`update_check.async_latest_release`).
+- **Tests ohne Netz:** Die tägliche Versionsprüfung läuft auch beim
+  Aufräumen von `hass` noch an. Der Patch auf `update_check._async_get_json`
+  steht deshalb als erste autouse-Fixture in `tests/conftest.py` (vor allem,
+  was `hass` startet), sonst ist er beim Aufräumen schon weg. Das Modul dort
+  beim Sammeln importieren: später zeigt `custom_components` je nach
+  Reihenfolge auf das Testpaket von HA.
 - **Verfügbarkeitsprotokoll:** gleiche Regel wie die Liste verwenden
   (`device_status`), sonst widersprechen sich Liste und Verlauf. Beim Stoppen
   sofort "keine Daten" schreiben; beim Start die Lücke ab dem letzten
@@ -89,6 +98,12 @@ hat dort einen echten Fehler oder Umweg gekostet.
   mit `transparent`). Kopf, Chips und Fusszeile mit `sticky; left: 0`, damit
   sie beim seitlichen Scrollen stehen bleiben. Gruppenzeilen: Text in einem
   eigenen `sticky`-Element, die Zelle über alle Spalten klebt nicht.
+- **HACS erkennen:** Update-Entität über `hass.entities` (Plattform `hacs`)
+  und den Link `release_url` des Repositorys, nie über eine feste Entity-ID.
+  Der Schalter "Pre-release" hängt am selben HACS-Gerät; ist er deaktiviert,
+  fehlt er in `hass.entities` und steht nur in `config/entity_registry/list`.
+- **Hover und Hauptknöpfe:** Eine allgemeine Hover-Regel (`background`) darf
+  farbige Hauptknöpfe nicht überschreiben; eigene Hover-Regel je Variante.
 - **Entitäts-Dialog von HA** aus dem iframe: `hass-more-info` am Element
   `home-assistant` des Elternfensters auslösen (`bubbles`, `composed`).
 - **CSS-Klassennamen eindeutig halten** (Kollisionen zwischen Tabelle und

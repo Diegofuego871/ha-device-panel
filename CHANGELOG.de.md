@@ -7,6 +7,36 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.4.0b1] - 2026-10-01
+
+Updates direkt aus dem Panel: kein Umweg über HACS für jedes neue Release.
+
+### Hinzugefügt
+
+- Einstellungen im Panel (Zahnrad neben der Suche), dieselben Optionen wie
+  im Optionsdialog der Integration; alles gilt erst mit "Speichern",
+  "Abbrechen" verwirft.
+- Versionskasten oben in den Einstellungen: installierte Version, neueste
+  Version (GitHub und HACS), "Nach Updates suchen", "Aktualisieren" über die
+  Update-Entität von HACS, Fortschritt während HACS herunterlädt, danach
+  Hinweis und Knopf für den Neustart von Home Assistant, Link zu den Release
+  Notes. Kennt HACS eine neue Version noch nicht, lässt das Panel HACS sie
+  nachladen.
+- "Vorabversionen anzeigen" für die ganze Instanz (Beta-Versionen violett).
+  Würde HACS eine Vorabversion nicht installieren, weil sein Schalter
+  "Pre-release" aus ist, aktiviert "In HACS freischalten" ihn und schaltet
+  ihn ein; schaltet man die Vorabversionen im Panel aus, wird er wieder
+  ausgeschaltet.
+- Option "Täglich nach Updates suchen" (Standard an): eine neue stabile
+  Version erscheint unter Einstellungen → Reparaturen. Auch im
+  Optionsdialog der Integration.
+
+### Geändert
+
+- Solange die installierte Version eine Vorabversion ist, werden neuere
+  Vorabversionen standardmässig angeboten (bis "Vorabversionen anzeigen"
+  einmal gespeichert wurde).
+
 ## [0.3.0b1] - 2026-10-01
 
 Jedes Gerät bekommt ein eigenes Popup mit Statistik, und die Liste zeigt, woher
@@ -106,6 +136,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.4.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0b1
 [0.3.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.3.0b1
 [0.2.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.2.0b1
 [0.1.0b2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.1.0b2

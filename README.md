@@ -41,12 +41,16 @@ details such as software version, manufacturer, model and area.
   are shown as "at least" (≥).
 - Availability log for 31 days in its own file (not the recorder). Time when
   Home Assistant was not running counts as "no data", never as an outage.
+- Settings in the panel (gear icon) with updates: check for a new version,
+  update via HACS with one click, restart afterwards, optionally offer
+  pre-releases ("Enable in HACS" switches on the HACS pre-release option).
+  Optional daily check that reports a new version under Settings → Repairs.
 
 ### Planned (see `docs/CONCEPT.md`)
 
 - Columns, sorting and filters per user, separately for desktop and phone.
-- Settings in the panel, updates with pre-releases, flexible monitoring
-  rules (exclude integrations or device types), push notifications.
+- More settings in the panel, flexible monitoring rules (exclude
+  integrations or device types), push notifications.
 
 ## Installation
 
@@ -61,7 +65,11 @@ details such as software version, manufacturer, model and area.
 `0.1.0b2`) are published as GitHub pre-releases. HACS only installs them if
 the "Pre-release" entity on the HACS device of this repository is enabled and
 switched on (Settings → Devices & services → HACS → device "Device Panel").
-HACS creates this entity disabled.
+HACS creates this entity disabled. The panel can do this for you: Settings
+(gear icon) → "Show pre-releases" → "Enable in HACS".
+
+**Updates:** Settings (gear icon) in the panel show the installed and the
+newest version; "Update" installs it via HACS, then restart Home Assistant.
 
 ### Manual
 

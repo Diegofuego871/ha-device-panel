@@ -44,14 +44,18 @@ Bereich.
 - Verfügbarkeitsprotokoll über 31 Tage in einer eigenen Datei (nicht im
   Recorder). Zeit, in der Home Assistant nicht lief, gilt als "keine Daten",
   nie als Ausfall.
+- Einstellungen im Panel (Zahnrad) mit Updates: nach einer neuen Version
+  suchen, mit einem Klick über HACS aktualisieren, danach neu starten,
+  wahlweise Vorabversionen anbieten ("In HACS freischalten" schaltet die
+  Vorabversionen in HACS ein). Auf Wunsch tägliche Prüfung mit Meldung unter
+  Einstellungen → Reparaturen.
 
 ### Geplant (siehe `docs/CONCEPT.md`)
 
 - Spalten, Sortierung und Filter pro Benutzer, getrennt für Desktop und
   Handy.
-- Einstellungen im Panel, Updates mit Vorabversionen, flexible Regeln für
-  die Überwachung (Integrationen oder Gerätetypen ausschliessen),
-  Push-Meldungen.
+- Weitere Einstellungen im Panel, flexible Regeln für die Überwachung
+  (Integrationen oder Gerätetypen ausschliessen), Push-Meldungen.
 
 ## Installation
 
@@ -66,7 +70,13 @@ Bereich.
 `0.1.0b2`) erscheinen als Vorabversion (Pre-release) auf GitHub. HACS
 installiert sie nur, wenn die Entität "Pre-release" am HACS-Gerät dieses
 Repositorys aktiviert und eingeschaltet ist (Einstellungen → Geräte & Dienste
-→ HACS → Gerät "Device Panel"). HACS legt die Entität deaktiviert an.
+→ HACS → Gerät "Device Panel"). HACS legt die Entität deaktiviert an. Das
+Panel kann das übernehmen: Einstellungen (Zahnrad) → "Vorabversionen
+anzeigen" → "In HACS freischalten".
+
+**Updates:** Die Einstellungen (Zahnrad) im Panel zeigen die installierte und
+die neueste Version; "Aktualisieren" installiert sie über HACS, danach Home
+Assistant neu starten.
 
 ### Manuell
 

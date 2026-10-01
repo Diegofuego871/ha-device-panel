@@ -261,12 +261,92 @@
   const params = new URLSearchParams(location.search);
   const language = params.get("lang") || "de";
   if (params.get("theme") === "light") document.documentElement.classList.add("light");
+  // Einstellungen und Updates (wie unifi_dynamic): Stand von GitHub, HACS
+  // (Update-Entität, Schalter "Pre-release"), Optionen und Panel-Einstellungen.
+  window.__version = { installed: "0.4.0", latest: "0.4.0" };
+  window.__pre = null;
+  window.__panelSettings = { prerelease: false, prerelease_hacs: null };
+  window.__opts = { update_check: true };
+  window.__services = [];
+  const pushHass = () => {
+    const ha = document.querySelector("home-assistant").hass;
+    document.querySelector("#panel-frame").contentDocument.querySelector("device-panel").hass = { ...ha };
+  };
+  window.__pushHass = pushHass;
   document.querySelector("home-assistant").hass = {
     language,
     locale: { language },
     connected: true,
+    entities: {},
+    states: {},
     callWS: async (msg) => {
       window.__wsCalls.push(msg);
+      if (msg.type === "call_service") {
+        window.__services.push({ domain: msg.domain, service: msg.service, data: msg.service_data });
+        if (window.__serviceFails) throw new Error(window.__serviceFails);
+        const ha = document.querySelector("home-assistant").hass;
+        // HACS-Schalter "Pre-release"
+        if (msg.domain === "switch" && (msg.service === "turn_on" || msg.service === "turn_off")) {
+          const id = msg.service_data.entity_id;
+          if (ha.states[id]) ha.states[id] = { ...ha.states[id], state: msg.service === "turn_on" ? "on" : "off" };
+          window.__hacsKnowsAfterRefresh = msg.service === "turn_on" ? window.__pre : window.__hacsStable || null;
+          pushHass();
+        }
+        // HACS lädt nach: update_entity übernimmt, was HACS jetzt kennt.
+        if (msg.service === "update_entity" && window.__hacsKnowsAfterRefresh) {
+          const st = ha.states[msg.service_data.entity_id];
+          if (st) st.attributes = { ...st.attributes, latest_version: window.__hacsKnowsAfterRefresh };
+          pushHass();
+        }
+        return null;
+      }
+      if (msg.type === "config/entity_registry/list") return (window.__entReg || []).map((e) => ({ ...e }));
+      if (msg.type === "config/entity_registry/update") {
+        const e = (window.__entReg || []).find((x) => x.entity_id === msg.entity_id);
+        if (e && "disabled_by" in msg) e.disabled_by = msg.disabled_by;
+        // HA lädt HACS nach dem Aktivieren verzögert neu, erst dann gibt es die Entität.
+        setTimeout(() => {
+          const ha = document.querySelector("home-assistant").hass;
+          ha.entities[msg.entity_id] = { entity_id: msg.entity_id, platform: "hacs", device_id: e ? e.device_id : null, translation_key: "pre-release" };
+          ha.states[msg.entity_id] = { entity_id: msg.entity_id, state: "off", attributes: {} };
+          pushHass();
+        }, window.__reloadDelay || 1500);
+        return { entity_entry: e, reload_delay: 30 };
+      }
+      if (msg.type === "hacs/repositories/list") {
+        return [{ id: "987654", full_name: "Diegofuego871/ha-device-panel" }, { id: "9", full_name: "other/repo" }];
+      }
+      if (msg.type === "hacs/repository/refresh") {
+        if (window.__hacsRefreshDelay) await new Promise((r) => setTimeout(r, window.__hacsRefreshDelay));
+        return null;
+      }
+      if (msg.type === "device_panel/version") {
+        if (window.__versionFails) throw new Error("GitHub nicht erreichbar");
+        await new Promise((r) => setTimeout(r, window.__versionDelay || 20));
+        const v = window.__version;
+        const pre = msg.prerelease && window.__pre ? window.__pre : null;
+        return {
+          installed: v.installed, latest: v.latest, release_url: v.latest ? `https://github.com/Diegofuego871/ha-device-panel/releases/tag/v${v.latest}` : null,
+          checked_at: Date.now() / 1000 - (msg.force ? 0 : 3 * 3600), error: window.__versionError || null,
+          prerelease: pre, prerelease_url: pre ? `https://github.com/Diegofuego871/ha-device-panel/releases/tag/v${pre}` : null, panel: { ...window.__panelSettings },
+        };
+      }
+      if (msg.type === "device_panel/set_panel") {
+        if ("prerelease" in msg) window.__panelSettings.prerelease = msg.prerelease;
+        if ("prerelease_hacs" in msg) window.__panelSettings.prerelease_hacs = msg.prerelease_hacs;
+        return { ...window.__panelSettings };
+      }
+      if (msg.type === "device_panel/get_options") {
+        if (window.__getOptsFails) throw new Error("boom");
+        await new Promise((r) => setTimeout(r, 40));
+        return { values: { ...window.__opts }, panel: { ...window.__panelSettings } };
+      }
+      if (msg.type === "device_panel/set_options") {
+        if (window.__setOptsFails) throw new Error(window.__setOptsFails);
+        const changed = Object.keys(msg.values).some((k) => window.__opts[k] !== msg.values[k]);
+        Object.assign(window.__opts, msg.values);
+        return { changed };
+      }
       if (msg.type === "device_panel/list_devices") {
         return {
           devices: window.__devices, integrations, now: new Date().toISOString(), offline_after: 120, battery_low: 15,

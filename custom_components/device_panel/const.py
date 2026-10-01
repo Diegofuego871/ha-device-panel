@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "4"
+PANEL_VERSION = "5"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -42,3 +42,11 @@ FLAKY_OUTAGES = 3
 DATA_AVAILABILITY = f"{DOMAIN}_availability"
 
 WS_TYPE_LIST_DEVICES = f"{DOMAIN}/list_devices"
+
+# Versionsprüfung (GitHub-Releases) und Abgleich mit HACS, wie unifi_dynamic.
+GITHUB_REPO = "Diegofuego871/ha-device-panel"
+STORAGE_VERSION = 1
+# Option: täglich nach Updates suchen und eine neue Version unter
+# "Reparaturen" melden. Standard an, wie in unifi_dynamic.
+CONF_UPDATE_CHECK = "update_check"
+DEFAULT_UPDATE_CHECK = True
