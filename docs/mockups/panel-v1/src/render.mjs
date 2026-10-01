@@ -23,6 +23,7 @@ let extra = [];
 try { extra = (await import("./variantB.mjs")).SCREENS_B || []; } catch {}
 try { extra = extra.concat((await import("./settings.mjs")).SCREENS_S || []); } catch {}
 try { extra = extra.concat((await import("./variantC.mjs")).SCREENS_C || []); } catch (e) { console.error(e); }
+try { extra = extra.concat((await import("./monitoring.mjs")).SCREENS_M || []); } catch (e) { console.error(e); }
 
 // Chromium: eigener Pfad über CHROMIUM_PATH, sonst der von playwright-core installierte.
 const b = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});

@@ -17,6 +17,7 @@ der Bausteine.
 | `6-variante-C-liste.png` | **C (gewählt):** Kopf, Chips und Gruppen aus B, rote Zeilen und Spalten-Popover aus A |
 | `7-variante-C-geraeteansicht.png` | **C:** Geräteansicht mit Tabs (Übersicht aus B, Verlauf aus A), Handy |
 | `8-variante-C-dunkel.png` | **C:** dunkles Design |
+| `9-ueberwachung-regeln.png` | Vorschlag: Überwachung mit Ebenen und Regeln, Regel-Editor, Herkunft der Einstellungen pro Gerät |
 
 Neu rendern (Ergebnis in `src/out/`, nicht im Repository):
 

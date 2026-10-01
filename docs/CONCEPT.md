@@ -78,6 +78,66 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
 | Bluetooth-Empfang und Proxy | `bluetooth.async_last_service_info` (RSSI, Quelle) | geprüft |
 | Thread-Empfang, Zigbee-Route | Matter-Thread-Diagnose, ZHA-Nachbartabelle | offen |
 
+## Überwachung einstellen (Vorschlag, Entscheid offen)
+
+Ziel des Nutzers: sehr flexibel. Weder die Integration allein noch der
+Entitätstyp allein reicht: ZHA hat netzbetriebene Router und schlafende
+Batteriesensoren mit ganz anderem Zeitverhalten; "Schalter" gibt es in
+vielen Integrationen. Deshalb vier Ebenen, je Einstellung gilt die
+genaueste: **Gerät vor Regel vor Integration vor Standard** (Mockup
+`docs/mockups/panel-v1/9-ueberwachung-regeln.png`).
+
+1. **Standard:** alle Geräte, ausgefallen nach 2 Min., Lebenszeichen = alle
+   aktivierten, sichtbaren Entitäten ausser Diagnose/Konfiguration;
+   ein Verbindungssensor (`binary_sensor`, `connectivity`) hat Vorrang.
+2. **Integration:** Tabelle mit Anzeigen, Überwachen, Push, Anhaltend (und
+   optional eigener Schwelle). Reicht für die meisten.
+3. **Regeln:** Bedingungen mit UND verknüpft, Wirkungen nur für das, was die
+   Regel setzt ("unverändert" sonst). Reihenfolge per Ziehen; je
+   Einstellung gewinnt die oberste passende Regel.
+   - Bedingungen: Integration, Bereich, Etage, Label (HA-Labels an Gerät),
+     Entitätstyp (Gerät hat z. B. einen Schalter), Verbindungsart,
+     Stromversorgung (Batterie, wenn eine Entität `device_class: battery`
+     hat), Hersteller, Modell, einzelnes Gerät.
+   - Wirkungen: anzeigen, überwachen, ausgefallen nach, Push (an/aus,
+     sofort), anhaltend, Ruhezeit, Lebenszeichen (welche Entitätstypen
+     zählen).
+   - Vorschau "trifft auf N Geräte zu" mit Namen, Hinweis auf Ausnahmen.
+4. **Gerät:** Ausnahme im Tab "Einstellungen" der Geräteansicht. Dort steht
+   bei jeder Einstellung, woher sie kommt (Standard, Integration ZHA,
+   Regel "…").
+
+Geprüft in HA 2026.2: Geräte haben `labels`, `area_id`, `via_device_id`,
+`entry_type`, `model_id`; Entitäten haben `labels`, `entity_category`,
+`hidden_by`, `original_device_class`.
+
+## Wahrscheinliche Ursache (regelbasiert, ohne KI)
+
+Feste Regeln über Fakten, die HA und das eigene Protokoll liefern; lokal,
+sofort, nachvollziehbar und testbar. Angezeigt werden höchstens zwei
+Ursachen mit "wahrscheinlich" oder "möglich" und den Fakten dahinter; passt
+keine Regel, steht "keine eindeutige Ursache".
+
+| Ursache | Signal | Sicherheit |
+| --- | --- | --- |
+| Integration läuft nicht | Config-Entry nicht `loaded` (`setup_retry`, `setup_error`, `not_loaded`) | sicher |
+| Hub/Bridge ausgefallen | `via_device` zur selben Zeit ausgefallen | hoch |
+| Bluetooth-Proxy | der Proxy, der das Gerät zuletzt sah, ist ausgefallen | hoch |
+| Sammelausfall | ≥ 3 Geräte derselben Integration, desselben Hubs oder derselben Verbindungsart innert 2 Min. | hoch (gemeinsamer Teil) |
+| Batterie | Batterie ≤ 15 % vor dem Ausfall oder stark fallend | mittel bis hoch |
+| Empfang | zuletzt ≤ −80 dBm bzw. LQI ≤ 60, fallender Trend über 7 Tage, viele kurze Unterbrüche | mittel |
+| Cloud-Dienst | Integration mit `iot_class` cloud_*, alle ihre Geräte ausgefallen | mittel |
+| Strom im Bereich | alle netzbetriebenen Geräte eines Bereichs gleichzeitig | niedrig bis mittel |
+| Nach Update | `sw_version` kurz vor dem Ausfall geändert | niedrig |
+
+Was sofort geht (Zustand jetzt): Integration, Hub, Proxy, Batterie jetzt,
+Sammelausfall ab Start des Protokolls. Trends (Empfang, Batterie) brauchen
+ein eigenes Protokoll von Empfang und Batterie (wie `signal_log` in
+unifi_dynamic), also Fahrplan-Schritt 6. Optional später: Zusammenfassung
+über die KI-Aufgaben von HA (`ai_task`), nur wenn der Nutzer dort ein
+Modell eingerichtet hat; nicht als Grundlage (Kosten, Datenschutz, nicht
+vorhersehbar).
+
 ## Datenquellen (alles aus Home Assistant, keine externe API)
 
 | Was | Quelle |
@@ -92,6 +152,9 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
 | Updates verfügbar | Entitäten der Domain `update` am Gerät |
 
 ## Wann gilt ein Gerät als ausgefallen? (zu entscheiden)
+
+Siehe auch "Überwachung einstellen": Schwelle und Lebenszeichen sind dort
+pro Integration, Regel und Gerät einstellbar; hier steht der Standard.
 
 Vorschlag:
 
