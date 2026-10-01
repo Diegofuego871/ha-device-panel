@@ -92,7 +92,10 @@ Begriffe einheitlich halten (Beispiele):
 - Vor UI-Änderungen Mockups (erfundene Daten, Desktop und Handy, Varianten
   mit Empfehlung); der Nutzer entscheidet visuell.
 - Bei Verhaltensänderungen nachfragen, mit Auswirkung und Empfehlung.
-- Nur auf `main` pushen, andere Branches löschen.
+- Nur auf `main` pushen, andere Branches löschen. Pushen ist jederzeit
+  erlaubt; der Nutzer legt Tag und Release mit Ziel `main` an. Übersprungene
+  Versionen: Release Notes fassen alles seit dem letzten Release zusammen
+  (`CLAUDE.md`, "Git und Releases").
 - Jede funktionale Änderung: Version, `PANEL_VERSION`, CHANGELOG DE/EN,
   README DE/EN, Prüfungen, Tests; nach dem Push die Release-Angaben mit
   genauer Version ausgeben (Nutzer legt Tag und Release an).

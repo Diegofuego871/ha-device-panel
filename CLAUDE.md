@@ -50,21 +50,38 @@ Bereich. Vorbild in Aufbau, Arbeitsweise und Design ist die Integration
   Branch, nach `main` bringen und den Branch löschen. Lehnt GitHub den Push
   auf `main` ab, über einen PR mergen und den Branch danach löschen. Remote-
   Branches löschen kann die Session nicht (403): dann den Nutzer bitten.
-- Tags und Releases legt der Nutzer selbst an (Sessions können keine Tags
-  pushen). Nach jedem Push mit neuer Version liefert Claude die
-  Release-Angaben als Text:
+- Tags und Releases legt der Nutzer selbst an, immer mit Ziel `main`
+  (Sessions können keine Tags pushen). Claude darf jederzeit auf `main`
+  pushen, auch bevor der Nutzer den Tag der aktuellen Version angelegt hat.
+  Ob ein Tag existiert, prüft Claude auf GitHub.
+- Korrekturen an einer Version, deren Tag noch nicht existiert, bleiben in
+  derselben Version (CHANGELOG-Abschnitt ergänzen). Neue Funktionen
+  bekommen wie gewohnt eine neue Nummer, auch wenn die vorige noch keinen
+  Tag hat; die vorige wird dann übersprungen.
+- Nach jedem Push, der die Integration ändert (Code, Manifest, CHANGELOG),
+  liefert Claude die Release-Angaben für den aktuellen Stand von `main`:
   - Version (wie in `manifest.json`), Tag und Titel `vX.Y.Z`
   - Ziel: `main` mit Commit-Hash
   - Vorabversion ja (Nummer mit a/b/rc) oder nein
   - Release Notes (Englisch) als Markdown-Codeblock, beginnend mit
-    `## X.Y.Z (JJJJ-MM-TT)`, Inhalt = Abschnitt aus `CHANGELOG.md`
-    (`python3 .github/scripts/changelog_section.py X.Y.Z`).
+    `## X.Y.Z (JJJJ-MM-TT)`. Grundlage ist der Abschnitt aus
+    `CHANGELOG.md` (`python3 .github/scripts/changelog_section.py X.Y.Z`).
+  - **Übersprungene Versionen:** Gibt es zwischen dem letzten
+    veröffentlichten Release und der aktuellen Version Versionen ohne
+    Release, fassen die Notes alles seit dem letzten Release zusammen:
+    Abschnitte aller übersprungenen Versionen zusammengeführt (Added,
+    Changed, Fixed …) und der Satz "Includes the changes from X and Y".
+- Im CHANGELOG (beide Sprachen) bleiben übersprungene Versionen mit eigenem
+  Abschnitt stehen, mit dem Vermerk "Not released" / "Nicht veröffentlicht"
+  und ohne Link-Fussnote. Ausnahme: eine Version ohne eigene Änderungen
+  (wie 0.1.0) entfällt.
 - Veröffentlichte Tags nie ändern: Ist ein Release falsch, neue Version.
 
 ## Bei jeder funktionalen Änderung
 
 1. Version in `manifest.json` erhöhen (SemVer: Patch für Fehler, Minor für
-   Funktionen oder Verhaltensänderungen).
+   Funktionen oder Verhaltensänderungen). Korrekturen an einer Version ohne
+   Tag bleiben in derselben Version (siehe "Git und Releases").
 2. `PANEL_VERSION` in `const.py` erhöhen, sobald sich Dateien unter
    `panel/` ändern (Cache-Buster).
 3. CHANGELOG-Eintrag in `CHANGELOG.md` und `CHANGELOG.de.md` inkl.
