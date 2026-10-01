@@ -49,8 +49,8 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
 4. **Update-Bereich wie unifi_dynamic:** Version, "Nach Updates suchen",
    "Aktualisieren" über die HACS-Update-Entität, Vorabversionen,
    "In HACS freischalten" (Entität "Pre-release" aktivieren, etwa 30 s auf
-   HACS warten, einschalten). Ohne HACS: Hinweis mit Link (wie
-   unifi_dynamic; eigenes Installieren ohne HACS ist offen, siehe unten).
+   HACS warten, einschalten). Ohne HACS: nur Hinweis mit Link, genau wie
+   unifi_dynamic (Nutzer, 2026-10-01).
 5. **Geräteansicht** beim Antippen: Verfügbarkeit mit Zeitstrahl und
    Unterbrüchen, Verbindung und Empfang, Gerätedaten, Entitäten, Platz für
    Einstellungen und Statistiken pro Gerät.
@@ -78,7 +78,7 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
 | Bluetooth-Empfang und Proxy | `bluetooth.async_last_service_info` (RSSI, Quelle) | geprüft |
 | Thread-Empfang, Zigbee-Route | Matter-Thread-Diagnose, ZHA-Nachbartabelle | offen |
 
-## Überwachung einstellen (Vorschlag, Entscheid offen)
+## Überwachung einstellen (vom Nutzer angenommen, 2026-10-01)
 
 Ziel des Nutzers: sehr flexibel. Weder die Integration allein noch der
 Entitätstyp allein reicht: ZHA hat netzbetriebene Router und schlafende
@@ -151,19 +151,18 @@ vorhersehbar).
 | Zustand | State Machine, Ereignis `state_changed` |
 | Updates verfügbar | Entitäten der Domain `update` am Gerät |
 
-## Wann gilt ein Gerät als ausgefallen? (zu entscheiden)
+## Wann gilt ein Gerät als ausgefallen? (Standard, angenommen)
 
 Siehe auch "Überwachung einstellen": Schwelle und Lebenszeichen sind dort
-pro Integration, Regel und Gerät einstellbar; hier steht der Standard.
-
-Vorschlag:
+pro Integration, Regel und Gerät einstellbar; hier steht der Standard
+(Schwelle 2 Min.).
 
 - Gerät **offline**, wenn alle seine aktivierten Entitäten `unavailable`
   sind (Ausnahmen: deaktivierte, versteckte, `diagnostic`-Entitäten zählen
   nicht als Lebenszeichen, wenn es andere gibt).
 - Hat das Gerät eine Konnektivitäts-Entität (`binary_sensor` mit
   `device_class: connectivity`), gilt deren Zustand vorrangig.
-- Kurze Aussetzer unter einer Schwelle (z. B. 60 s, einstellbar) zählen
+- Kurze Aussetzer unter einer Schwelle (Standard 2 Min., einstellbar) zählen
   nicht als Unterbruch; HA-Neustarts zählen nie (Lehre aus unifi_dynamic:
   "keine Daten" ist nicht "offline").
 - Geräte ohne Entitäten oder reine Dienst-Geräte (`entry_type: service`)
@@ -296,8 +295,10 @@ Für den Versand zu übernehmen:
 
 ## Offene Entscheide für den Start
 
-1. Definition "ausgefallen" (siehe oben) und Standard-Schwelle.
-2. Welche Geräte standardmässig ausgeblendet werden.
-3. Recorder-Nachfüllen beim ersten Start: ja/nein.
-4. Domain/Name: `device_panel` / "Device Panel" (HACS-Repo
+1. ~~Definition "ausgefallen" und Standard-Schwelle~~: entschieden (siehe
+   oben, 2 Min.).
+2. ~~Ausgeblendete Geräte~~: entschieden (Dienst-Geräte, deaktivierte
+   Geräte, Geräte ohne Entitäten).
+3. Recorder-Nachfüllen beim ersten Start: ja/nein. Offen, mit Schritt 6.
+4. ~~Domain/Name~~: `device_panel` / "Device Panel" (HACS-Repo
    `ha-device-panel`).

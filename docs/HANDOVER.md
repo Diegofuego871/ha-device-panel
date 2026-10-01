@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.1.0b2, zweite Vorabversion)
+## Stand (0.1.0, erste stabile Version)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -24,20 +24,16 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `CLAUDE.md`, "Git und Releases").
 - `v0.1.0b1` (Vorabversion) zeigt versehentlich auf `8944f3b`, den Stand vor
   Icon und Sprachtests (Manifest 0.1.0). Der Tag bleibt (veröffentlichte Tags
-  nie ändern); `0.1.0b2` ersetzt ihn. Vor der Arbeit prüfen, ob
-  `v0.1.0b2` veröffentlicht ist.
+  nie ändern); `0.1.0b2` ersetzt ihn. `0.1.0` ist die erste stabile Version
+  (gleicher Inhalt wie `0.1.0b2`).
 
 ## Nächste Schritte (Reihenfolge)
 
-1. `0.1.0b2` in HACS testen (Vorabversionen am HACS-Gerät einschalten),
-   danach `0.1.0` als stabile Version.
-2. Design ist entschieden: Variante C (Kombination aus A und B, alle
-   Ideen), siehe `docs/CONCEPT.md`, Abschnitt "Fahrplan", und
-   `docs/mockups/panel-v1/` (Bilder 5–8). Noch offen beim Nutzer:
-   Überwachung mit Ebenen und Regeln (Vorschlag in `docs/CONCEPT.md`,
-   "Überwachung einstellen", Bild 9), Installationen ohne HACS (Vorschlag:
-   nur Hinweis wie unifi_dynamic), `0.1.0` jetzt als stabile Version,
-   Recorder-Nachfüllen beim ersten Start.
+1. Entschieden (Nutzer, 2026-10-01): Design Variante C mit allen Ideen
+   (`docs/mockups/panel-v1/`, Bilder 5–8), Überwachung mit vier Ebenen
+   (Bild 9, `docs/CONCEPT.md`, "Überwachung einstellen"), ohne HACS nur
+   Hinweis wie unifi_dynamic. Offen: Recorder-Nachfüllen (mit Schritt 6).
+2. Fahrplan-Schritt 1 (Geräteliste mit Statistik) in Arbeit als `0.2.0b1`.
 3. Umsetzung nach dem Fahrplan in `docs/CONCEPT.md` (Abschnitt "Fahrplan"),
    der Reihe nach: Geräteliste mit Statistik, Spalten pro Benutzer,
    Einstellungsmenü, Update-Bereich, Geräteansicht, Verfügbarkeitsprotokoll,
