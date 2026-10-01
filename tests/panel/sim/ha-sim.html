@@ -17,10 +17,22 @@
     --error-color: #ef5350;
     --primary-color: #03a9f4;
     --success-color: #43a047;
+    --warning-color: #ff9800;
     --header-height: 56px;
     --sim-safe-top: 47px; /* simuliert den iPhone-Safe-Area-Abstand */
   }
   html, body { margin: 0; height: 100%; background: var(--primary-background-color); }
+  /* Helles Design über ?theme=light */
+  html.light {
+    --primary-background-color: #fafafa;
+    --secondary-background-color: #e5e5e5;
+    --card-background-color: #ffffff;
+    --primary-text-color: #212121;
+    --secondary-text-color: #727272;
+    --disabled-text-color: #bdbdbd;
+    --divider-color: rgba(0, 0, 0, 0.12);
+    --error-color: #db4437;
+  }
   /* Nachbau von hass-subpage im narrow-Modus: fix über den ganzen Viewport,
      Kopfzeile oben (mit Safe-Area-Abstand), iframe füllt den Rest */
   .subpage { position: fixed; inset: 0; display: block; }
@@ -53,37 +65,56 @@
 </home-assistant>
 <script>
   // Erfundene Geräte (nie echte Namen, IPs oder Orte verwenden).
-  const areas = ["Küche", "Wohnzimmer", "Büro", "Garten", null];
-  const makers = [["Beispiel AG", "Licht L1"], ["Muster GmbH", "Sensor S2"], ["Demo Inc.", "Steckdose P3"], [null, null]];
-  const devices = [];
-  for (let i = 0; i < 30; i++) {
-    const [manufacturer, model] = makers[i % makers.length];
-    devices.push({
-      id: "dev-" + i,
-      name: "Gerät " + String(i).padStart(2, "0"),
-      area: areas[i % areas.length],
-      manufacturer,
-      model,
-      sw_version: i % 3 ? "1." + (i % 5) + ".0" : null,
-      hw_version: i % 4 === 0 ? "rev" + (i % 3) : null,
-      integrations: [i % 2 ? "zha" : "shelly"],
-      service: i === 29,
-      entities: 2,
-      online: i % 9 === 4 ? false : i % 13 === 7 ? null : true,
-    });
-  }
+  const now = Date.now();
+  const ago = (min) => new Date(now - min * 60000).toISOString();
+  const dev = (id, name, area, integ, connection, extra = {}) => ({
+    id, name, area, integrations: [integ], connection, service: false, entities: 3, online: true,
+    offline_since: null, since_restart: false, signal: null, via: null, battery: null, update: null,
+    manufacturer: "Beispiel AG", model: "Modell " + id.toUpperCase(), sw_version: "1.0." + id.length, hw_version: null,
+    ...extra,
+  });
+  const off = (min, extra = {}) => ({ online: false, offline_since: ago(min), ...extra });
+  const devices = [
+    dev("a", "Temperatur Keller", "Keller", "bthome", "ble", off(4560, { since_restart: true, battery: { level: 0, low: true }, signal: { kind: "dbm", value: -91 }, via: "Proxy Garage" })),
+    dev("b", "Bewegungsmelder Flur", "Flur", "zha", "zigbee", off(134, { battery: { level: 8, low: true }, signal: { kind: "lqi", value: 38, rssi: -86 }, via: "Steckdose Flur", update: "2.2.0" })),
+    dev("c", "Thermostat Bad", "Bad", "matter", "matter", off(47, { battery: { level: 22, low: false } })),
+    dev("d", "Steckdose Terrasse", "Terrasse", "shelly", "wifi", off(6, { signal: { kind: "dbm", value: -84 } })),
+    dev("e", "Fensterkontakt Küche", "Küche", "zha", "zigbee", { battery: { level: 64, low: false }, signal: { kind: "lqi", value: 61 } }),
+    dev("f", "Präsenzsensor Büro", "Büro", "esphome", "wifi", { signal: { kind: "dbm", value: -79 } }),
+    dev("g", "Deckenlicht Wohnzimmer", "Wohnzimmer", "hue", "zigbee", { via: "Bridge" }),
+    dev("h", "Stromzähler", "Keller", "esphome", "wifi", { signal: { kind: "dbm", value: -61 }, update: "2026.10.0" }),
+    dev("i", "Türschloss Haustür", "Eingang", "matter", "matter", { battery: { level: 81, low: false } }),
+    dev("j", "Heizkörper Kinderzimmer", "Kinderzimmer", "zwave_js", "zwave", { signal: { kind: "dbm", value: -72 }, battery: { level: 67, low: false } }),
+    dev("k", "Steckdose Kaffeemaschine", "Küche", "shelly", "wifi", { signal: { kind: "dbm", value: -55 } }),
+    dev("l", "Rollladen Büro", "Büro", "zha", "zigbee", { signal: { kind: "lqi", value: 168 } }),
+    dev("m", "Rauchmelder Flur", "Flur", "zha", "zigbee", { signal: { kind: "lqi", value: 122 }, battery: { level: 92, low: false } }),
+    dev("n", "NAS", "Keller", "synology_dsm", "network"),
+    dev("o", "Saugroboter", "Wohnzimmer", "roborock", "cloud"),
+    dev("p", "Altgerät", null, "zha", null, { online: null }),
+    dev("q", "Wetterdienst", null, "met", "cloud", { service: true }),
+    dev("r", "Geist", null, "zha", "zigbee", { entities: 0 }),
+  ];
+  const integrations = {
+    bthome: "BTHome", zha: "Zigbee Home Automation", matter: "Matter", shelly: "Shelly", esphome: "ESPHome",
+    hue: "Philips Hue", zwave_js: "Z-Wave", synology_dsm: "Synology DSM", roborock: "Roborock", met: "Meteorologisk institutt (Met.no)",
+  };
   window.__devices = devices;
   window.__wsCalls = [];
   // Sprache der HA-Oberfläche über ?lang=… (Standard Deutsch); HA setzt
   // sie an beiden Stellen, das Panel liest zuerst locale.language.
-  const language = new URLSearchParams(location.search).get("lang") || "de";
+  const params = new URLSearchParams(location.search);
+  const language = params.get("lang") || "de";
+  if (params.get("theme") === "light") document.documentElement.classList.add("light");
   document.querySelector("home-assistant").hass = {
     language,
     locale: { language },
     connected: true,
     callWS: async (msg) => {
       window.__wsCalls.push(msg);
-      if (msg.type === "device_panel/list_devices") return { devices: window.__devices };
+      if (msg.type === "device_panel/list_devices") {
+        return { devices: window.__devices, integrations, now: new Date().toISOString(), offline_after: 120, battery_low: 15 };
+      }
+      if (msg.type === "matter/node_diagnostics") return { network_type: "thread", node_type: "end_device" };
       return {};
     },
   };

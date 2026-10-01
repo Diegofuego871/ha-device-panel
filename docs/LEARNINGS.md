@@ -94,6 +94,19 @@ hat dort einen echten Fehler oder Umweg gekostet.
   `run.mjs` startet Server und alle Suiten, CI führt sie bei jedem Push aus.
 - Screenshots der Suiten nach `tests/panel/output/` (nicht im Repo).
 
+## Prüfung im echten Home Assistant
+
+Der Nachbau ersetzt keinen Test in der echten Oberfläche. In der Session:
+`pip install home-assistant-frontend==<Version aus components/frontend/manifest.json>`,
+Konfiguration mit `frontend:`, `config:` und `demo:` (Demo-Geräte), dazu die
+Pakete aus den Manifesten von `assist_pipeline`, `conversation`, `camera`
+usw., sonst scheitert `get_services` und die Oberfläche bleibt bei "Loading
+data". Ersteinrichtung und Anmeldung über `/api/onboarding/*` und
+`/auth/token`, Integration über `/api/config/config_entries/flow`, Tokens als
+`hassTokens` in `localStorage` (vor dem Test erneuern: das Zugriffstoken
+gilt 30 Min.). Geräte mit `POST /api/states/<entity_id>` auf `unavailable`
+setzen. `recorder/info` scheitert ohne Recorder; das ist harmlos.
+
 ## Release und HACS
 
 - Struktur: `custom_components/<domain>/`, `hacs.json` im Repo-Root,

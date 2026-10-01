@@ -35,7 +35,9 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
 - Einstellungen wie Bild 5 (unifi_dynamic-Aufbau).
 - Handy: Karten wie B.
 
-1. **Geräteliste** mit sinnvollen Spalten: Gerät, Status mit Offline-Dauer,
+1. **Geräteliste** (umgesetzt in 0.2.0b1; bis Schritt 6 zeigt die dritte
+   Kachel "Hinweise" statt des Ausfall-Pulses, Instabil, Gesundheit und
+   Verfügbarkeit 24 Std. folgen mit dem Protokoll) mit sinnvollen Spalten: Gerät, Status mit Offline-Dauer,
    Verbindungsart, Empfang, Integration, Hersteller/Modell, Software (mit
    Update-Hinweis), Batterie, Verfügbarkeit 24 Std. Ausgefallene Geräte
    sehr klar erkennbar und zuoberst; oben sofort die Statistik: wie viele

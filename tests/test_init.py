@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
@@ -19,7 +21,7 @@ async def _setup(hass: HomeAssistant) -> MockConfigEntry:
     return entry
 
 
-async def test_list_devices_status_and_software(hass: HomeAssistant, hass_ws_client) -> None:
+async def test_list_devices_status_and_software(hass: HomeAssistant, hass_ws_client, freezer) -> None:
     await _setup(hass)
     source = MockConfigEntry(domain="test")
     source.add_to_hass(hass)
@@ -36,6 +38,8 @@ async def test_list_devices_status_and_software(hass: HomeAssistant, hass_ws_cli
     e2 = ent_reg.async_get_or_create("sensor", "test", "b1", device_id=down.id)
     hass.states.async_set(e1.entity_id, "on")
     hass.states.async_set(e2.entity_id, STATE_UNAVAILABLE)
+    # Ausgefallen erst nach 2 Min. ohne Lebenszeichen (Standard der Überwachung).
+    freezer.tick(timedelta(minutes=3))
 
     client = await hass_ws_client(hass)
     await client.send_json({"id": 1, "type": f"{DOMAIN}/list_devices"})
@@ -45,6 +49,7 @@ async def test_list_devices_status_and_software(hass: HomeAssistant, hass_ws_cli
     assert by_name["Licht Küche"]["sw_version"] == "1.4.2"
     assert by_name["Licht Küche"]["integrations"] == ["test"]
     assert by_name["Sensor Garten"]["online"] is False
+    assert by_name["Sensor Garten"]["offline_since"]
 
 
 async def test_single_instance(hass: HomeAssistant) -> None:

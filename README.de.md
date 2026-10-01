@@ -9,13 +9,30 @@ Bereich.
 
 > Frühe Entwicklung (0.x). Umfang und Verhalten können sich noch ändern.
 
-## Funktionen (geplant, siehe `docs/CONCEPT.md`)
+## Funktionen
 
-- Tabelle aller Geräte mit Status, Bereich, Integration, Hersteller/Modell
-  und Softwarestand; ausgefallene Geräte zuoberst.
-- Verfügbarkeit pro Gerät für 24 Std. / 7 Tage / 30 Tage, Zahl und Dauer der
-  Unterbrüche, Zeitstrahl.
-- Suche, Filter, sortier- und einstellbare Spalten, Desktop und Handy.
+- Überblick oben: wie viele Geräte online sind, welche gerade ausgefallen
+  sind und seit wann, dazu niedrige Batterien, schwacher Empfang und
+  verfügbare Updates (antippen filtert).
+- Geräteliste in Gruppen: ausgefallen (längste zuerst, rot hervorgehoben),
+  keine Daten und online; auf dem Handy als Karten.
+- Verbindungsart pro Gerät: Zigbee, Z-Wave, Thread, Matter (Thread, WLAN
+  oder LAN), Bluetooth, WLAN, Netzwerk, Cloud; Empfang in dBm oder LQI und
+  der Hub, die Bridge oder der Bluetooth-Proxy dazwischen.
+- Batteriestand, Softwarestand mit Update-Hinweis, Integration, Hersteller
+  und Modell; Suche über alle Spalten, Filter nach Verbindungsart und "Nur
+  Probleme".
+- Ein Gerät gilt als ausgefallen nach 2 Minuten ohne Lebenszeichen. Ein
+  Verbindungssensor entscheidet zuerst; sonst müssen alle normalen Entitäten
+  nicht verfügbar sein. Ausfälle, die kurz nach einem Neustart von Home
+  Assistant begannen, stehen als "mindestens" (≥) da.
+
+### Geplant (siehe `docs/CONCEPT.md`)
+
+- Spalten, Sortierung und Filter pro Benutzer, getrennt für Desktop und
+  Handy.
+- Einstellungen im Panel, Updates mit Vorabversionen, flexible Regeln für
+  die Überwachung, Geräteansicht mit Verlauf, Push-Meldungen.
 
 ## Installation
 

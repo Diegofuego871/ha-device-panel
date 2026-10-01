@@ -8,13 +8,29 @@ details such as software version, manufacturer, model and area.
 
 > Early development (0.x). Scope and behaviour may still change.
 
-## Features (planned, see `docs/CONCEPT.md`)
+## Features
 
-- Table of all devices with status, area, integration, manufacturer/model
-  and software version; devices that are offline are listed first.
-- Availability per device for 24 h / 7 days / 30 days, number and length of
-  outages, timeline.
-- Search, filters, sortable and configurable columns, desktop and phone.
+- Overview at the top: how many devices are online, which ones are offline
+  right now and for how long, plus low batteries, weak signal and available
+  updates (tap to filter).
+- Device list grouped into offline (longest first, highlighted in red), no
+  data and online; cards on the phone.
+- Connection type per device: Zigbee, Z-Wave, Thread, Matter (Thread, Wi-Fi
+  or LAN), Bluetooth, Wi-Fi, network, cloud; signal strength in dBm or LQI
+  and the hub, bridge or Bluetooth proxy in between.
+- Battery level, software version with update hint, integration,
+  manufacturer and model; search across all columns, filters by connection
+  type and "problems only".
+- A device counts as offline after 2 minutes without a sign of life. A
+  connectivity sensor decides first; otherwise all regular entities must be
+  unavailable. Outages that started right after a restart of Home Assistant
+  are shown as "at least" (≥).
+
+### Planned (see `docs/CONCEPT.md`)
+
+- Columns, sorting and filters per user, separately for desktop and phone.
+- Settings in the panel, updates with pre-releases, flexible monitoring
+  rules, device view with history, push notifications.
 
 ## Installation
 

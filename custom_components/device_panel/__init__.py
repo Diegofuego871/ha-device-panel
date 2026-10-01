@@ -10,11 +10,7 @@ import voluptuous as vol
 from homeassistant.components import frontend, websocket_api
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import area_registry as ar
-from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers import entity_registry as er
 
 from .const import (
     BRAND_DIR,
@@ -33,11 +29,13 @@ from .const import (
     PUSH_IMAGE_URL,
     STATIC_URL_PATH,
 )
+from .devices import async_list_devices, async_mark_start
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    async_mark_start(hass)
     await _async_register_brand_path(hass)
     await _async_register_panel(hass)
     _async_register_websocket_commands(hass)
@@ -125,54 +123,14 @@ async def _async_register_panel(hass: HomeAssistant) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _device_online(hass: HomeAssistant, entities: list[er.RegistryEntry]) -> bool | None:
-    """
-    Erster Entwurf (siehe docs/CONCEPT.md, noch zu entscheiden): online, wenn
-    mindestens eine aktivierte Entität nicht "unavailable" ist. None, wenn das
-    Gerät keine Entität mit Zustand hat.
-    """
-    states = [hass.states.get(e.entity_id) for e in entities if not e.disabled_by]
-    states = [s for s in states if s is not None]
-    if not states:
-        return None
-    return any(s.state != STATE_UNAVAILABLE for s in states)
-
-
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/list_devices"})
 @websocket_api.require_admin
-@callback
-def _ws_list_devices(
+@websocket_api.async_response
+async def _ws_list_devices(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
-    """Alle Geräte mit Status, Bereich, Integration und Softwarestand."""
-    dev_reg = dr.async_get(hass)
-    ent_reg = er.async_get(hass)
-    area_reg = ar.async_get(hass)
-    devices: list[dict[str, Any]] = []
-    for device in dev_reg.devices.values():
-        if device.disabled_by:
-            continue
-        entities = er.async_entries_for_device(ent_reg, device.id)
-        area = area_reg.async_get_area(device.area_id) if device.area_id else None
-        domains = sorted(
-            {e.domain for eid in device.config_entries if (e := hass.config_entries.async_get_entry(eid))}
-        )
-        devices.append(
-            {
-                "id": device.id,
-                "name": device.name_by_user or device.name or device.id,
-                "area": area.name if area else None,
-                "manufacturer": device.manufacturer,
-                "model": device.model,
-                "sw_version": device.sw_version,
-                "hw_version": device.hw_version,
-                "integrations": domains,
-                "service": device.entry_type == dr.DeviceEntryType.SERVICE,
-                "entities": len(entities),
-                "online": _device_online(hass, entities),
-            }
-        )
-    connection.send_result(msg["id"], {"devices": devices})
+    """Alle Geräte mit Status, Verbindung, Empfang, Batterie und Softwarestand."""
+    connection.send_result(msg["id"], await async_list_devices(hass))
 
 
 @callback
