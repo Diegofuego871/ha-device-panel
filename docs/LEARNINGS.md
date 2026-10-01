@@ -50,6 +50,14 @@ hat dort einen echten Fehler oder Umweg gekostet.
   `after_dependencies`. Für "nutzen, wenn vorhanden" `after_dependencies`.
   Lokal läuft hassfest nicht, erst in der CI: Manifest bei neuen Importen
   selbst prüfen.
+- **Entitätsname:** Bei `has_entity_name` ohne eigenen Namen (`name` und
+  `original_name` leer) heisst die Hauptentität wie das Gerät. Nicht auf
+  `friendly_name` aus dem Zustand verlassen: der fehlt, wenn ein Zustand
+  ohne Attribute gesetzt wurde.
+- **Verfügbarkeitsprotokoll:** gleiche Regel wie die Liste verwenden
+  (`device_status`), sonst widersprechen sich Liste und Verlauf. Beim Stoppen
+  sofort "keine Daten" schreiben; beim Start die Lücke ab dem letzten
+  Lebenszeichen. Im echten HA geprüft: Ausfall, Rückkehr, Neustart-Lücke.
 
 ## Panel (Frontend)
 
@@ -74,7 +82,15 @@ hat dort einen echten Fehler oder Umweg gekostet.
   iOS unnatürlich an).
 - **Dialoge:** `<dialog>` mit `showModal`, auf dem Handy als Blatt von unten.
   Unter-Fenster (Statistik) dimmen den Dialog dahinter stark und blenden
-  dessen X aus; eigenes X, kein Zurück-Knopf.
+  dessen X aus; eigenes X, kein Zurück-Knopf. Das `close`-Ereignis (auch bei
+  Escape) kommt asynchron: Aufräumen dort, Tests darauf warten lassen.
+- **Fixierte erste Spalte:** `position: sticky; left: -<Innenabstand>` an `th`
+  und `td`, deckende Hintergründe (Farben mit der Kartenfarbe mischen, nicht
+  mit `transparent`). Kopf, Chips und Fusszeile mit `sticky; left: 0`, damit
+  sie beim seitlichen Scrollen stehen bleiben. Gruppenzeilen: Text in einem
+  eigenen `sticky`-Element, die Zelle über alle Spalten klebt nicht.
+- **Entitäts-Dialog von HA** aus dem iframe: `hass-more-info` am Element
+  `home-assistant` des Elternfensters auslösen (`bubbles`, `composed`).
 - **CSS-Klassennamen eindeutig halten** (Kollisionen zwischen Tabelle und
   Dialog haben mehrfach Layouts zerschossen).
 - **Benutzereinstellungen** (Spalten, Sortierung, Filter, Zeitraum) pro
@@ -98,6 +114,12 @@ hat dort einen echten Fehler oder Umweg gekostet.
   echte Klicks/Taps statt `element.click()` wo es um Gesten geht.
   `run.mjs` startet Server und alle Suiten, CI führt sie bei jedem Push aus.
 - Screenshots der Suiten nach `tests/panel/output/` (nicht im Repo).
+- **Nachbau:** keine globalen Funktionen mit Namen von `window`-Eigenschaften
+  (`history`, `location`, `name` …): eine Funktion `history` verdeckte
+  `window.history`, und `pushState` des Panels schlug fehl.
+- **Playwright `click()`** scrollt das Element vorher ins Bild; bei breiten
+  Tabellenzeilen verschiebt das die Tabelle seitlich. Für Prüfungen auf die
+  Scrollposition mit `page.mouse.click(x, y)` klicken.
 
 ## Prüfung im echten Home Assistant
 
@@ -110,7 +132,9 @@ data". Ersteinrichtung und Anmeldung über `/api/onboarding/*` und
 `/auth/token`, Integration über `/api/config/config_entries/flow`, Tokens als
 `hassTokens` in `localStorage` (vor dem Test erneuern: das Zugriffstoken
 gilt 30 Min.). Geräte mit `POST /api/states/<entity_id>` auf `unavailable`
-setzen. `recorder/info` scheitert ohne Recorder; das ist harmlos.
+setzen. `recorder/info` scheitert ohne Recorder; das ist harmlos. Ebenso
+ein `pageerror` "Object" beim Laden, der auch auf `/config/dashboard`
+auftritt (HA-Frontend, nicht das Panel).
 
 ## Release und HACS
 

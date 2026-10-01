@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "3"
+PANEL_VERSION = "4"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -36,5 +36,9 @@ DATA_STARTED_AT = f"{DOMAIN}_started_at"
 # als niedrig.
 OFFLINE_AFTER = 120
 BATTERY_LOW = 15
+# Instabil: so viele Unterbrüche in 24 Std. bei einem Gerät, das gerade online ist.
+FLAKY_OUTAGES = 3
+# Verfügbarkeitsprotokoll (eine Instanz pro HA).
+DATA_AVAILABILITY = f"{DOMAIN}_availability"
 
 WS_TYPE_LIST_DEVICES = f"{DOMAIN}/list_devices"

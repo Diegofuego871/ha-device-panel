@@ -25,12 +25,17 @@ async def setup(hass: HomeAssistant) -> None:
     await hass.async_block_till_done()
 
 
-def _device(hass: HomeAssistant, name: str, domain: str = "test", **kwargs: Any) -> dr.DeviceEntry:
-    source = MockConfigEntry(domain=domain)
+def _device(hass: HomeAssistant, name: str, domain: str = "test", entity: bool = True, **kwargs: Any) -> dr.DeviceEntry:
+    """Gerät mit einer Diagnose-Entität: die Liste zeigt nur Geräte mit Entitäten,
+    und Diagnose zählt nicht als Lebenszeichen, solange es andere gibt."""
+    source = MockConfigEntry(domain=domain, title=f"{domain} Eintrag")
     source.add_to_hass(hass)
-    return dr.async_get(hass).async_get_or_create(
+    device = dr.async_get(hass).async_get_or_create(
         config_entry_id=source.entry_id, identifiers={(domain, name)}, name=name, **kwargs
     )
+    if entity:
+        _entity(hass, device, "sensor", "diag", "ok", entity_category=EntityCategory.DIAGNOSTIC)
+    return device
 
 
 def _entity(hass: HomeAssistant, device: dr.DeviceEntry, domain: str, key: str, state: str, attrs: dict | None = None, **kwargs: Any) -> str:
@@ -87,7 +92,8 @@ async def test_connectivity_unknown_is_not_offline(hass: HomeAssistant, setup, f
 
 
 async def test_no_states_means_no_data(hass: HomeAssistant, setup) -> None:
-    _device(hass, "Leer")
+    empty = _device(hass, "Leer", entity=False)
+    er.async_get(hass).async_get_or_create("sensor", "test", "ohne-zustand", device_id=empty.id)
     assert (await _by_name(hass))["Leer"]["online"] is None
 
 
@@ -150,9 +156,10 @@ async def test_hue_bridge_and_lights(hass: HomeAssistant, setup) -> None:
     bridge = _device(hass, "Bridge", domain="hue", connections={(dr.CONNECTION_NETWORK_MAC, "aa:bb:cc:dd:ee:03")})
     source = MockConfigEntry(domain="hue")
     source.add_to_hass(hass)
-    dr.async_get(hass).async_get_or_create(
+    bulb = dr.async_get(hass).async_get_or_create(
         config_entry_id=source.entry_id, identifiers={("hue", "bulb")}, name="Birne", via_device=("hue", "Bridge")
     )
+    _entity(hass, bulb, "light", "l", "on")
     data = await _by_name(hass)
     assert bridge.name == "Bridge"
     assert data["Bridge"]["connection"] == "network"

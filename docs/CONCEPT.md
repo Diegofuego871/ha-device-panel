@@ -35,9 +35,10 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
 - Einstellungen wie Bild 5 (unifi_dynamic-Aufbau).
 - Handy: Karten wie B.
 
-1. **Geräteliste** (umgesetzt in 0.2.0b1; bis Schritt 6 zeigt die dritte
-   Kachel "Hinweise" statt des Ausfall-Pulses, Instabil, Gesundheit und
-   Verfügbarkeit 24 Std. folgen mit dem Protokoll) mit sinnvollen Spalten: Gerät, Status mit Offline-Dauer,
+1. **Geräteliste** (umgesetzt in 0.2.0b1, erweitert in 0.3.0b1 um
+   Ausfall-Puls, Gruppe Instabil, Verfügbarkeit 24 Std., Typ und Integration
+   mit Eintrag; Hinweise sind seither Chips; Gesundheit folgt) mit
+   sinnvollen Spalten: Gerät, Status mit Offline-Dauer,
    Verbindungsart, Empfang, Integration, Hersteller/Modell, Software (mit
    Update-Hinweis), Batterie, Verfügbarkeit 24 Std. Ausgefallene Geräte
    sehr klar erkennbar und zuoberst; oben sofort die Statistik: wie viele
@@ -55,9 +56,16 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    unifi_dynamic (Nutzer, 2026-10-01).
 5. **Geräteansicht** beim Antippen: Verfügbarkeit mit Zeitstrahl und
    Unterbrüchen, Verbindung und Empfang, Gerätedaten, Entitäten, Platz für
-   Einstellungen und Statistiken pro Gerät.
+   Einstellungen und Statistiken pro Gerät. Umgesetzt in 0.3.0b1 als Popup
+   wie unifi_dynamic (Wunsch des Nutzers, 2026-10-01): Kopf, Statistik-
+   Kacheln (Verfügbarkeit 24 Std., Unterbrüche 7 Tage, Empfang, Batterie),
+   Verbindung, Gerät, Entitäten; ein Tipp auf eine Statistik-Kachel öffnet
+   ein zweites Fenster (Zeitraum 24 Std./7/30 Tage, Zeitstrahl, Liste,
+   Unterbrüche pro Tag). Offen aus Variante C: wahrscheinliche Ursache,
+   Funkweg, Empfangsverlauf, Einstellungen pro Gerät.
 6. **Verfügbarkeitsprotokoll:** Unterbrüche, 24 Std. / 7 / 30 Tage,
    "instabil" bei vielen Unterbrüchen (siehe "Verfügbarkeitsprotokoll").
+   Umgesetzt in 0.3.0b1; Recorder-Nachfüllen offen.
 7. **Push-Meldungen** mit einstellbarem Inhalt wie unifi_dynamic, Klickziel,
    Entwarnung, anhaltende Benachrichtigung (siehe "Push-Meldungen").
 8. **Ideen** (aus den Mockups, vom Nutzer angenommen): Gesundheitswert pro
@@ -108,6 +116,18 @@ genaueste: **Gerät vor Regel vor Integration vor Standard** (Mockup
 4. **Gerät:** Ausnahme im Tab "Einstellungen" der Geräteansicht. Dort steht
    bei jeder Einstellung, woher sie kommt (Standard, Integration ZHA,
    Regel "…").
+
+**Typ und Integration in der Liste** (Wunsch des Nutzers, 2026-10-01): Die
+Liste zeigt pro Gerät den Gerätetyp und die Integration samt Eintrag, damit
+man sieht, worauf ein Ausschluss wirkt. In der Konfiguration sollen sich
+ganze Integrationen (Ebene 2) und Gerätetypen (Bedingung in Ebene 3)
+ausschliessen lassen. Der Typ kommt aus `devices.device_type`: Hub/Bridge,
+wenn andere Geräte über das Gerät verbunden sind; sonst die wichtigste
+Domain der Entitäten (Klima, Schloss, Abdeckung, Roboter, Kamera, Alarm,
+Medien, Ventilator, Licht, Schalter bzw. Steckdose bei `device_class:
+outlet`), dann Binärsensoren nach Klasse (Bewegung, Tür/Fenster, Sicherheit),
+dann Sensor, Taster, Sonstiges. Die Integration ist der primäre Eintrag des
+Geräts (`primary_config_entry`, sonst der erste).
 
 Geprüft in HA 2026.2: Geräte haben `labels`, `area_id`, `via_device_id`,
 `entry_type`, `model_id`; Entitäten haben `labels`, `entity_category`,
@@ -172,10 +192,26 @@ pro Integration, Regel und Gerät einstellbar; hier steht der Standard
 
 ## Verfügbarkeitsprotokoll
 
-- Eigene Datei pro Instanz (`.storage/device_panel_availability`), nicht der
-  Recorder: Wechsel `[zeit, zustand]` pro Gerät, 31 Tage.
+Umgesetzt in 0.3.0b1 (`availability.py`).
+
+- Eigene Datei pro Instanz (`.storage/device_panel.availability`), nicht der
+  Recorder: Wechsel `[zeit, zustand]` pro Gerät, 31 Tage, dazu ein
+  Lebenszeichen (`heartbeat`), mindestens alle 5 Min. geschrieben.
 - Zustand 1 = online, 0 = offline, None = keine Daten (HA lief nicht).
-- Beim Start: Lücke seit dem letzten Lauf als "keine Daten" markieren.
+- Beim Start: Lücke seit dem letzten Lebenszeichen als "keine Daten"
+  markieren; beim Stoppen ab jetzt "keine Daten".
+- Alle 30 s Bewertung mit derselben Regel wie die Liste
+  (`devices.device_status`): Ausfälle unter 2 Min. erscheinen nicht; Beginn
+  ist der echte Wechsel (`last_changed`), Rückkehr der früheste Wechsel der
+  lebenden Entitäten. Anlaufphase 5 Min. nach dem Start: wer darin
+  zurückkommt, hatte keinen Unterbruch.
+- Instabil: online, aber 3 oder mehr Unterbrüche in 24 Std.
+- Sammelausfall: mindestens 3 Geräte, die innert 2 Min. ausfielen; gemeinsame
+  Integration als Hinweis auf die Ursache.
+- WebSocket: `device_panel/list_devices` liefert pro Gerät `avail24`
+  (Kurzfassung und 48 Abschnitte à 30 Min.), dazu `pulse` und `incidents`;
+  `device_panel/device` die Entitäten und Kurzstatistik 24 Std./7 Tage;
+  `device_panel/availability` den Verlauf für 24 Std., 7 oder 30 Tage.
 - Optional einmaliges Nachfüllen aus dem Recorder (History) für die ersten
   Tage nach der Installation.
 - Speichern über `storage_util.PeriodicSaver` (siehe LEARNINGS).

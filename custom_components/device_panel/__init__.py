@@ -12,8 +12,10 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 
+from .availability import RANGES, AvailabilityLog
 from .const import (
     BRAND_DIR,
+    DATA_AVAILABILITY,
     DATA_PANEL_REGISTERED,
     DATA_PUSH_IMAGE,
     DATA_WS_REGISTERED,
@@ -29,7 +31,7 @@ from .const import (
     PUSH_IMAGE_URL,
     STATIC_URL_PATH,
 )
-from .devices import async_list_devices, async_mark_start
+from .devices import async_device_detail, async_list_devices, async_mark_start
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,12 +41,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await _async_register_brand_path(hass)
     await _async_register_panel(hass)
     _async_register_websocket_commands(hass)
+    if DATA_AVAILABILITY not in hass.data:
+        log = AvailabilityLog(hass)
+        await log.async_start()
+        hass.data[DATA_AVAILABILITY] = log
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if hass.data.pop(DATA_PANEL_REGISTERED, None):
         frontend.async_remove_panel(hass, PANEL_URL_PATH)
+    if (log := hass.data.pop(DATA_AVAILABILITY, None)) is not None:
+        await log.async_stop()
     return True
 
 
@@ -130,7 +138,41 @@ async def _ws_list_devices(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
     """Alle Geräte mit Status, Verbindung, Empfang, Batterie und Softwarestand."""
-    connection.send_result(msg["id"], await async_list_devices(hass))
+    connection.send_result(msg["id"], await async_list_devices(hass, hass.data.get(DATA_AVAILABILITY)))
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/device", vol.Required("device_id"): str})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_device(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Details für das Geräte-Popup."""
+    detail = await async_device_detail(hass, msg["device_id"], hass.data.get(DATA_AVAILABILITY))
+    if detail is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
+        return
+    connection.send_result(msg["id"], detail)
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/availability",
+        vol.Required("device_id"): str,
+        vol.Optional("range", default="24h"): vol.In(list(RANGES)),
+    }
+)
+@websocket_api.require_admin
+@callback
+def _ws_availability(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Verlauf für das Statistik-Fenster."""
+    log: AvailabilityLog | None = hass.data.get(DATA_AVAILABILITY)
+    if log is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "availability log not running")
+        return
+    connection.send_result(msg["id"], log.history(msg["device_id"], msg["range"]))
 
 
 @callback
@@ -139,3 +181,5 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
         return
     hass.data[DATA_WS_REGISTERED] = True
     websocket_api.async_register_command(hass, _ws_list_devices)
+    websocket_api.async_register_command(hass, _ws_device)
+    websocket_api.async_register_command(hass, _ws_availability)

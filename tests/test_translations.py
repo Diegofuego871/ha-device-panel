@@ -48,9 +48,12 @@ def test_no_sharp_s() -> None:
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="Node.js fehlt")
 def test_panel_strings_complete() -> None:
+    # Auch verschachtelte Texte (z. B. ranges, entryStates) und die Länge von Listen.
     script = (
         "import(process.argv[1]).then(({ STRINGS }) => {"
-        " const de = Object.keys(STRINGS.de), en = Object.keys(STRINGS.en);"
+        " const keys = (o, p = '') => Object.entries(o).flatMap(([k, v]) =>"
+        "   Array.isArray(v) ? [`${p}${k}[${v.length}]`] : v && typeof v === 'object' ? keys(v, `${p}${k}.`) : [p + k]);"
+        " const de = keys(STRINGS.de), en = keys(STRINGS.en);"
         " console.log(JSON.stringify({ onlyDe: de.filter((k) => !en.includes(k)), onlyEn: en.filter((k) => !de.includes(k)) }));"
         "})"
     )

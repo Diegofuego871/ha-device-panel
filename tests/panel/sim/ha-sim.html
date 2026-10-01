@@ -66,40 +66,196 @@
 <script>
   // Erfundene Geräte (nie echte Namen, IPs oder Orte verwenden).
   const now = Date.now();
+  const nowS = now / 1000;
+  const H = 3600;
+  const D = 86400;
   const ago = (min) => new Date(now - min * 60000).toISOString();
-  const dev = (id, name, area, integ, connection, extra = {}) => ({
-    id, name, area, integrations: [integ], connection, service: false, entities: 3, online: true,
-    offline_since: null, since_restart: false, signal: null, via: null, battery: null, update: null,
-    manufacturer: "Beispiel AG", model: "Modell " + id.toUpperCase(), sw_version: "1.0." + id.length, hw_version: null,
-    ...extra,
+
+  // Erfundener Verlauf je Gerät: Unterbrüche [vor Sekunden, Dauer] (Dauer
+  // gleich "vor" = läuft noch), Lücken ohne Daten (HA aus), Daten seit.
+  // Liste, Popup und Statistik-Fenster rechnen alle daraus, wie das Backend.
+  const HIST = {
+    a: { since: 40 * D, outages: [[4560 * 60, 4560 * 60]] },
+    b: { since: 40 * D, outages: [[134 * 60, 134 * 60], [11 * H, 7 * 60], [3 * D, 20 * 60], [9 * D, 45 * 60]] },
+    c: { since: 40 * D, outages: [[47 * 60, 47 * 60], [2 * D + 5 * H, 15 * 60]], gaps: [[6 * D, 2 * H]] },
+    d: { since: 40 * D, outages: [[6 * 60, 6 * 60]] },
+    e: { since: 40 * D, outages: [[2 * H, 4 * 60], [5 * H, 6 * 60], [11 * H, 5 * 60], [16 * H, 3 * 60], [20 * H, 9 * 60], [4 * D, 10 * 60]] },
+    f: { since: 40 * D, outages: [[3 * H, 3 * 60], [8 * H, 4 * 60], [14 * H, 3 * 60]] },
+    l: { since: 40 * D, outages: [[18 * H, 6 * 60]] },
+    m: { since: 40 * D, outages: [[11 * H, 8 * 60]] },
+    // Erst seit 2 Std. im Protokoll: das Statistik-Fenster zoomt.
+    o: { since: 2 * H, outages: [] },
+  };
+  const OFFLINE = 0;
+  const ONLINE = 1;
+
+  function events(id) {
+    const h = HIST[id] || { since: 40 * D, outages: [] };
+    const list = [[nowS - h.since, ONLINE]];
+    for (const [a, dur] of h.outages) {
+      list.push([nowS - a, OFFLINE]);
+      if (dur < a) list.push([nowS - a + dur, ONLINE]);
+    }
+    for (const [a, dur] of h.gaps || []) list.push([nowS - a, null], [nowS - a + dur, ONLINE]);
+    return list.sort((x, y) => x[0] - y[0]);
+  }
+
+  // Wie availability.segments/summarize/strip im Backend.
+  function segments(evs, start, end) {
+    const out = [];
+    let state = null;
+    let cursor = start;
+    for (const [at, st] of evs) {
+      if (at <= start) { state = st; continue; }
+      if (at >= end) break;
+      if (at > cursor) out.push([cursor, at, state]);
+      cursor = at;
+      state = st;
+    }
+    if (end > cursor) out.push([cursor, end, state]);
+    const merged = [];
+    for (const s of out) {
+      const last = merged[merged.length - 1];
+      if (last && last[2] === s[2] && last[1] === s[0]) last[1] = s[1];
+      else merged.push(s);
+    }
+    return merged;
+  }
+  function summarize(segs) {
+    const on = segs.filter((s) => s[2] === ONLINE).reduce((a, s) => a + s[1] - s[0], 0);
+    const offs = segs.filter((s) => s[2] === OFFLINE);
+    const off = offs.reduce((a, s) => a + s[1] - s[0], 0);
+    if (on + off <= 0) return null;
+    let pct = (on / (on + off)) * 100;
+    if (offs.length && pct > 99.9) pct = 99.9;
+    return {
+      pct: Math.round(pct * 10) / 10, outages: offs.length, offline: Math.round(off), covered: Math.round(on + off),
+      longest: Math.round(Math.max(0, ...offs.map((s) => s[1] - s[0]))),
+    };
+  }
+  function strip(segs, start, end, n = 48) {
+    const size = (end - start) / n;
+    return Array.from({ length: n }, (_, i) => {
+      const a = start + i * size;
+      const b = a + size;
+      let off = 0;
+      let none = 0;
+      for (const [sa, sb, st] of segs) {
+        const o = Math.min(b, sb) - Math.max(a, sa);
+        if (o <= 0) continue;
+        if (st === OFFLINE) off += o;
+        else if (st === null) none += o;
+      }
+      return off > 0 ? 1 : none > size / 2 ? 2 : 0;
+    });
+  }
+  const RANGES = { "24h": D, "7d": 7 * D, "30d": 30 * D };
+  function availHistory(id, range) {
+    const end = Date.now() / 1000;
+    const span = RANGES[range];
+    const start = end - span;
+    const evs = events(id);
+    const segs = segments(evs, start, end);
+    const days = [];
+    if (span > D) {
+      const midnight = new Date(end * 1000);
+      midnight.setHours(0, 0, 0, 0);
+      for (let i = span / D - 1; i >= 0; i--) {
+        const ds = new Date(midnight); ds.setDate(ds.getDate() - i);
+        const de = new Date(ds); de.setDate(de.getDate() + 1);
+        const dsegs = segments(evs, ds / 1000, Math.min(end, de / 1000));
+        const off = dsegs.filter((s) => s[2] === OFFLINE);
+        days.push({ start: ds / 1000, outages: off.length, offline: Math.round(off.reduce((a, s) => a + s[1] - s[0], 0)), nodata: dsegs.every((s) => s[2] === null) });
+      }
+    }
+    return { start, end, first: evs[0] ? evs[0][0] : null, segments: segs, summary: summarize(segs), days };
+  }
+  function avail24(id) {
+    const segs = segments(events(id), nowS - D, nowS);
+    const s = summarize(segs);
+    return s ? { ...s, strip: strip(segs, nowS - D, nowS) } : null;
+  }
+
+  const dev = (id, name, area, integ, connection, type, extra = {}) => ({
+    id, name, area, integrations: [integ], integration: { domain: integ, title: TITLES[integ] || integ }, type, connection,
+    service: false, entities: 3, online: true, offline_since: null, since_restart: false, signal: null, via: null, battery: null,
+    update: null, manufacturer: "Beispiel AG", model: "Modell " + id.toUpperCase(), sw_version: "1.0." + id.length, hw_version: null,
+    avail24: avail24(id), ...extra,
   });
   const off = (min, extra = {}) => ({ online: false, offline_since: ago(min), ...extra });
+  const TITLES = {
+    zha: "Funkstick Erdgeschoss", hue: "Bridge", shelly: "shelly-terrasse", esphome: "stromzaehler", matter: "Matter", bthome: "Temperatur Keller",
+    zwave_js: "Z-Wave", synology_dsm: "nas-keller", roborock: "Konto Haushalt", met: "Zuhause",
+  };
   const devices = [
-    dev("a", "Temperatur Keller", "Keller", "bthome", "ble", off(4560, { since_restart: true, battery: { level: 0, low: true }, signal: { kind: "dbm", value: -91 }, via: "Proxy Garage" })),
-    dev("b", "Bewegungsmelder Flur", "Flur", "zha", "zigbee", off(134, { battery: { level: 8, low: true }, signal: { kind: "lqi", value: 38, rssi: -86 }, via: "Steckdose Flur", update: "2.2.0" })),
-    dev("c", "Thermostat Bad", "Bad", "matter", "matter", off(47, { battery: { level: 22, low: false } })),
-    dev("d", "Steckdose Terrasse", "Terrasse", "shelly", "wifi", off(6, { signal: { kind: "dbm", value: -84 } })),
-    dev("e", "Fensterkontakt Küche", "Küche", "zha", "zigbee", { battery: { level: 64, low: false }, signal: { kind: "lqi", value: 61 } }),
-    dev("f", "Präsenzsensor Büro", "Büro", "esphome", "wifi", { signal: { kind: "dbm", value: -79 } }),
-    dev("g", "Deckenlicht Wohnzimmer", "Wohnzimmer", "hue", "zigbee", { via: "Bridge" }),
-    dev("h", "Stromzähler", "Keller", "esphome", "wifi", { signal: { kind: "dbm", value: -61 }, update: "2026.10.0" }),
-    dev("i", "Türschloss Haustür", "Eingang", "matter", "matter", { battery: { level: 81, low: false } }),
-    dev("j", "Heizkörper Kinderzimmer", "Kinderzimmer", "zwave_js", "zwave", { signal: { kind: "dbm", value: -72 }, battery: { level: 67, low: false } }),
-    dev("k", "Steckdose Kaffeemaschine", "Küche", "shelly", "wifi", { signal: { kind: "dbm", value: -55 } }),
-    dev("l", "Rollladen Büro", "Büro", "zha", "zigbee", { signal: { kind: "lqi", value: 168 } }),
-    dev("m", "Rauchmelder Flur", "Flur", "zha", "zigbee", { signal: { kind: "lqi", value: 122 }, battery: { level: 92, low: false } }),
-    dev("n", "NAS", "Keller", "synology_dsm", "network"),
-    dev("o", "Saugroboter", "Wohnzimmer", "roborock", "cloud"),
-    dev("p", "Altgerät", null, "zha", null, { online: null }),
-    dev("q", "Wetterdienst", null, "met", "cloud", { service: true }),
-    dev("r", "Geist", null, "zha", "zigbee", { entities: 0 }),
+    dev("a", "Temperatur Keller", "Keller", "bthome", "ble", "sensor", off(4560, { since_restart: true, battery: { level: 0, low: true }, signal: { kind: "dbm", value: -91 }, via: "Proxy Garage" })),
+    dev("b", "Bewegungsmelder Flur", "Flur", "zha", "zigbee", "motion", off(134, { battery: { level: 8, low: true }, signal: { kind: "lqi", value: 38, rssi: -86 }, via: "Steckdose Flur", update: "2.2.0" })),
+    dev("c", "Thermostat Bad", "Bad", "matter", "matter", "climate", off(47, { battery: { level: 22, low: false } })),
+    dev("d", "Steckdose Terrasse", "Terrasse", "shelly", "wifi", "outlet", off(6, { signal: { kind: "dbm", value: -84 } })),
+    dev("e", "Fensterkontakt Küche", "Küche", "zha", "zigbee", "contact", { battery: { level: 64, low: false }, signal: { kind: "lqi", value: 61 } }),
+    dev("f", "Präsenzsensor Büro", "Büro", "esphome", "wifi", "motion", { signal: { kind: "dbm", value: -79 } }),
+    dev("g", "Deckenlicht Wohnzimmer", "Wohnzimmer", "hue", "zigbee", "light", { via: "Bridge" }),
+    dev("h", "Stromzähler", "Keller", "esphome", "wifi", "sensor", { signal: { kind: "dbm", value: -61 }, update: "2026.10.0" }),
+    dev("i", "Türschloss Haustür", "Eingang", "matter", "matter", "lock", { battery: { level: 81, low: false } }),
+    dev("j", "Heizkörper Kinderzimmer", "Kinderzimmer", "zwave_js", "zwave", "climate", { signal: { kind: "dbm", value: -72 }, battery: { level: 67, low: false } }),
+    dev("k", "Steckdose Kaffeemaschine", "Küche", "shelly", "wifi", "outlet", { signal: { kind: "dbm", value: -55 } }),
+    dev("l", "Rollladen Büro", "Büro", "zha", "zigbee", "cover", { signal: { kind: "lqi", value: 168 } }),
+    dev("m", "Rauchmelder Flur", "Flur", "zha", "zigbee", "safety", { signal: { kind: "lqi", value: 122 }, battery: { level: 92, low: false } }),
+    dev("n", "NAS", "Keller", "synology_dsm", "network", "other"),
+    dev("o", "Saugroboter", "Wohnzimmer", "roborock", "cloud", "vacuum"),
+    dev("p", "Altgerät", null, "zha", null, "other", { online: null, avail24: null }),
+    dev("q", "Wetterdienst", null, "met", "cloud", "sensor", { service: true }),
+    dev("r", "Geist", null, "zha", "zigbee", "other", { entities: 0 }),
   ];
+  for (const d of devices) d.flaky = Boolean(d.online && d.avail24 && d.avail24.outages >= 3);
   const integrations = {
     bthome: "BTHome", zha: "Zigbee Home Automation", matter: "Matter", shelly: "Shelly", esphome: "ESPHome",
     hue: "Philips Hue", zwave_js: "Z-Wave", synology_dsm: "Synology DSM", roborock: "Roborock", met: "Meteorologisk institutt (Met.no)",
   };
+  // Ausfall-Puls wie im Backend: Geräte mit Unterbruch je 30 Min.
+  function pulse() {
+    const counts = new Array(48).fill(0);
+    const start = nowS - D;
+    for (const d of devices) {
+      for (const [a, b, st] of segments(events(d.id), start, nowS)) {
+        if (st !== OFFLINE) continue;
+        const first = Math.max(0, Math.floor((a - start) / 1800));
+        const last = Math.min(47, Math.floor((b - start - 1e-6) / 1800));
+        for (let i = first; i <= last; i++) counts[i] += 1;
+      }
+    }
+    return counts;
+  }
+  // Sammelausfall: b, e, m (alle Zigbee) vor 11 Std.
+  const incidents = [{ at: nowS - 11 * H, count: 3, names: ["Bewegungsmelder Flur", "Fensterkontakt Küche", "Rauchmelder Flur"], integration: "zha" }];
+
+  // Popup: Entitäten mit Lebenszeichen, Integrationseinträge, Kurzstatistik.
+  function detail(id) {
+    const d = devices.find((x) => x.id === id);
+    if (!d) return null;
+    const main = { motion: "binary_sensor", contact: "binary_sensor", climate: "climate", outlet: "switch", light: "light", lock: "lock", cover: "cover", safety: "binary_sensor", vacuum: "vacuum" }[d.type] || "sensor";
+    const slug = d.name.toLowerCase().replace(/[^a-z]+/g, "_");
+    const entities = [
+      { entity_id: `${main}.${slug}`, name: d.name, state: d.online === false ? "unavailable" : main === "sensor" ? "21.5" : "on", unit: main === "sensor" ? "°C" : null, category: null, liveness: true },
+    ];
+    if (d.battery) entities.push({ entity_id: `sensor.${slug}_batterie`, name: "Batterie", state: d.online === false ? "unavailable" : String(d.battery.level), unit: "%", category: "diagnostic", liveness: false });
+    if (d.signal) entities.push({ entity_id: `sensor.${slug}_signal`, name: "Signal", state: String(d.signal.value), unit: d.signal.kind === "dbm" ? "dBm" : "lqi", category: "diagnostic", liveness: false });
+    const state = id === "a" ? "setup_retry" : "loaded";
+    return {
+      id,
+      entities,
+      config_entries: [{ domain: d.integration.domain, name: integrations[d.integration.domain], title: d.integration.title, state }],
+      identifiers: [`${d.integration.domain}: ${id}`],
+      stats: { "24h": summarize(segments(events(id), nowS - D, nowS)), "7d": summarize(segments(events(id), nowS - 7 * D, nowS)) },
+    };
+  }
+
   window.__devices = devices;
   window.__wsCalls = [];
+  window.__nav = [];
+  window.__moreInfo = [];
+  window.addEventListener("location-changed", () => window.__nav.push(location.pathname));
+  document.querySelector("home-assistant").addEventListener("hass-more-info", (ev) => window.__moreInfo.push(ev.detail.entityId));
   // Sprache der HA-Oberfläche über ?lang=… (Standard Deutsch); HA setzt
   // sie an beiden Stellen, das Panel liest zuerst locale.language.
   const params = new URLSearchParams(location.search);
@@ -112,8 +268,17 @@
     callWS: async (msg) => {
       window.__wsCalls.push(msg);
       if (msg.type === "device_panel/list_devices") {
-        return { devices: window.__devices, integrations, now: new Date().toISOString(), offline_after: 120, battery_low: 15 };
+        return {
+          devices: window.__devices, integrations, now: new Date().toISOString(), offline_after: 120, battery_low: 15,
+          flaky_outages: 3, pulse: pulse(), incidents,
+        };
       }
+      if (msg.type === "device_panel/device") {
+        const data = detail(msg.device_id);
+        if (!data) throw { code: "not_found", message: "Device not found" };
+        return data;
+      }
+      if (msg.type === "device_panel/availability") return availHistory(msg.device_id, msg.range || "24h");
       if (msg.type === "matter/node_diagnostics") return { network_type: "thread", node_type: "end_device" };
       return {};
     },

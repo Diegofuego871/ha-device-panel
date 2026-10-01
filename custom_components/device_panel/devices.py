@@ -10,6 +10,7 @@ Schnittstelle, bleibt das Feld leer, statt dass die Liste scheitert.
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -21,7 +22,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
-from .const import BATTERY_LOW, DATA_STARTED_AT, OFFLINE_AFTER
+from .const import BATTERY_LOW, DATA_STARTED_AT, FLAKY_OUTAGES, OFFLINE_AFTER
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -241,30 +242,111 @@ async def async_integration_info(hass: HomeAssistant, domains: set[str]) -> dict
     return info
 
 
-async def async_list_devices(hass: HomeAssistant) -> dict[str, Any]:
-    """Alle Geräte für das Panel, dazu Integrationsnamen und Serverzeit."""
-    dev_reg = dr.async_get(hass)
+def monitored_devices(hass: HomeAssistant) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:
+    """
+    Geräte, die das Panel zeigt und das Protokoll überwacht: aktiviert, kein
+    Dienst, mindestens eine aktivierte Entität (deaktivierte Entitäten lässt
+    async_entries_for_device ohnehin weg).
+    """
     ent_reg = er.async_get(hass)
+    for device in dr.async_get(hass).devices.values():
+        if device.disabled_by or device.entry_type == dr.DeviceEntryType.SERVICE:
+            continue
+        entries = er.async_entries_for_device(ent_reg, device.id)
+        if entries:
+            yield device, entries
+
+
+def device_back_since(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> datetime | None:
+    """Wann das Gerät wieder ein Lebenszeichen gab: frühester Wechsel der lebenden Entitäten."""
+    relevant, is_connectivity = liveness_entities(entries)
+    dead = (STATE_OFF, STATE_UNAVAILABLE) if is_connectivity else (STATE_UNAVAILABLE,)
+    times = [s.last_changed for e in relevant if (s := hass.states.get(e.entity_id)) is not None and s.state not in dead]
+    return min(times) if times else None
+
+
+# Gerätetyp aus den Entitäten, in dieser Reihenfolge: das Gerät ist, was es
+# vor allem kann (ein Thermostat mit Temperatursensor ist ein Thermostat).
+_TYPE_DOMAINS = (
+    ("climate", "climate"),
+    ("water_heater", "climate"),
+    ("humidifier", "climate"),
+    ("lock", "lock"),
+    ("cover", "cover"),
+    ("valve", "cover"),
+    ("vacuum", "vacuum"),
+    ("lawn_mower", "vacuum"),
+    ("camera", "camera"),
+    ("alarm_control_panel", "alarm"),
+    ("siren", "alarm"),
+    ("media_player", "media"),
+    ("fan", "fan"),
+    ("light", "light"),
+)
+_BINARY_TYPES = {
+    "motion": "motion", "occupancy": "motion", "presence": "motion",
+    "door": "contact", "window": "contact", "opening": "contact", "garage_door": "contact",
+    "smoke": "safety", "gas": "safety", "carbon_monoxide": "safety", "moisture": "safety", "safety": "safety", "heat": "safety",
+}
+DEVICE_TYPES = (
+    "hub", "climate", "lock", "cover", "vacuum", "camera", "alarm", "media", "fan", "light",
+    "outlet", "switch", "motion", "contact", "safety", "sensor", "button", "other",
+)
+
+
+def device_type(hass: HomeAssistant, device: dr.DeviceEntry, entries: list[er.RegistryEntry], hubs: set[str]) -> str:
+    """Typ für Liste und Ausschlüsse (docs/CONCEPT.md, "Überwachung einstellen")."""
+    if device.id in hubs:
+        return "hub"
+    primary = [e for e in entries if e.entity_category is None] or entries
+    domains = {e.domain for e in primary}
+    for domain, kind in _TYPE_DOMAINS:
+        if domain in domains:
+            return kind
+    if "switch" in domains:
+        outlet = any(e.domain == "switch" and _device_class(e, hass.states.get(e.entity_id)) == "outlet" for e in primary)
+        return "outlet" if outlet else "switch"
+    for e in primary:
+        if e.domain == "binary_sensor" and (kind := _BINARY_TYPES.get(str(_device_class(e, hass.states.get(e.entity_id))))):
+            return kind
+    if domains & {"sensor", "binary_sensor"}:
+        return "sensor"
+    if domains & {"button", "event", "scene"}:
+        return "button"
+    return "other"
+
+
+def _primary_entry(hass: HomeAssistant, device: dr.DeviceEntry):
+    entry_id = getattr(device, "primary_config_entry", None) or next(iter(device.config_entries), None)
+    return hass.config_entries.async_get_entry(entry_id) if entry_id else None
+
+
+async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, Any]:
+    """Alle überwachten Geräte für das Panel, dazu Integrationen, Protokoll und Serverzeit."""
+    dev_reg = dr.async_get(hass)
     area_reg = ar.async_get(hass)
     now = dt_util.utcnow()
+    now_ts = now.timestamp()
     started_at: datetime | None = hass.data.get(DATA_STARTED_AT)
 
-    raw: list[tuple[dr.DeviceEntry, list[str]]] = []
+    raw: list[tuple[dr.DeviceEntry, list[er.RegistryEntry], list[str]]] = []
     all_domains: set[str] = set()
-    for device in dev_reg.devices.values():
-        if device.disabled_by:
-            continue
+    hubs: set[str] = set()
+    for device in dr.async_get(hass).devices.values():
+        if device.via_device_id:
+            hubs.add(device.via_device_id)
+    for device, entries in monitored_devices(hass):
         domains = sorted(
             {e.domain for eid in device.config_entries if (e := hass.config_entries.async_get_entry(eid))}
         )
         all_domains.update(domains)
-        raw.append((device, domains))
+        raw.append((device, entries, domains))
     integrations = await async_integration_info(hass, all_domains)
     iot_classes = {d: i["iot_class"] for d, i in integrations.items()}
 
     devices: list[dict[str, Any]] = []
-    for device, domains in raw:
-        entries = er.async_entries_for_device(ent_reg, device.id)
+    names: dict[str, str] = {}
+    for device, entries, domains in raw:
         area = area_reg.async_get_area(device.area_id) if device.area_id else None
         online, since = device_status(hass, entries, now)
         signal = _signal(hass, entries)
@@ -276,18 +358,26 @@ async def async_list_devices(hass: HomeAssistant) -> dict[str, Any]:
             signal, via = _ble_signal(hass, ble)
         if via is None and device.via_device_id and (hub := dev_reg.async_get(device.via_device_id)):
             via = hub.name_by_user or hub.name
+        primary = _primary_entry(hass, device)
+        name = device.name_by_user or device.name or device.id
+        names[device.id] = name
+        avail = None
+        if log is not None:
+            summary = log.device_summary(device.id, 86400, now_ts)
+            avail = {**(summary or {}), "strip": log.device_strip(device.id, now_ts)} if summary else None
         devices.append(
             {
                 "id": device.id,
-                "name": device.name_by_user or device.name or device.id,
+                "name": name,
                 "area": area.name if area else None,
                 "manufacturer": device.manufacturer,
                 "model": device.model,
                 "sw_version": device.sw_version,
                 "hw_version": device.hw_version,
                 "integrations": domains,
-                "service": device.entry_type == dr.DeviceEntryType.SERVICE,
-                "entities": len([e for e in entries if not e.disabled_by]),
+                "integration": {"domain": primary.domain, "title": primary.title} if primary else None,
+                "type": device_type(hass, device, entries, hubs),
+                "entities": len(entries),
                 "online": online,
                 "offline_since": since.isoformat() if since else None,
                 # Ausfall schon vor dem letzten Start: Dauer ist "mindestens".
@@ -297,14 +387,79 @@ async def async_list_devices(hass: HomeAssistant) -> dict[str, Any]:
                 "via": via,
                 "battery": _battery(hass, entries),
                 "update": _update(hass, entries),
+                "avail24": avail,
+                # Instabil: online, aber oft unterbrochen.
+                "flaky": bool(online and avail and avail.get("outages", 0) >= FLAKY_OUTAGES),
             }
         )
-    return {
+    result: dict[str, Any] = {
         "devices": devices,
         "integrations": {d: i["name"] for d, i in integrations.items()},
         "now": now.isoformat(),
         "offline_after": OFFLINE_AFTER,
         "battery_low": BATTERY_LOW,
+        "flaky_outages": FLAKY_OUTAGES,
+        "pulse": None,
+        "incidents": [],
+    }
+    if log is not None:
+        result["pulse"] = log.pulse(now_ts)
+        domain_of = {d["id"]: (d["integration"] or {}).get("domain") for d in devices}
+        result["incidents"] = [
+            {
+                "at": inc["at"],
+                "count": len(inc["devices"]),
+                "names": [names[d] for d in inc["devices"] if d in names][:6],
+                # Gemeinsame Integration als Hinweis auf die Ursache.
+                "integration": common if len({domain_of.get(d) for d in inc["devices"]}) == 1 and (common := domain_of.get(inc["devices"][0])) else None,
+            }
+            for inc in log.incidents(now_ts)
+        ]
+    return result
+
+
+async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = None) -> dict[str, Any] | None:
+    """Für das Geräte-Popup: Entitäten mit Zustand und Lebenszeichen, Integrationen, Kurzstatistik."""
+    device = dr.async_get(hass).async_get(device_id)
+    if device is None:
+        return None
+    entries = er.async_entries_for_device(er.async_get(hass), device_id)
+    relevant, _conn = liveness_entities(entries)
+    relevant_ids = {e.entity_id for e in relevant}
+    device_name = device.name_by_user or device.name
+    entities = []
+    for e in sorted(entries, key=lambda x: (x.entity_category is not None, x.entity_id)):
+        state = hass.states.get(e.entity_id)
+        # Ohne eigenen Namen heisst die Hauptentität wie das Gerät (has_entity_name).
+        own = e.name or e.original_name or (device_name if e.has_entity_name else None)
+        entities.append(
+            {
+                "entity_id": e.entity_id,
+                "name": own or _attr(state, "friendly_name") or e.entity_id,
+                "state": state.state if state else None,
+                "unit": _attr(state, "unit_of_measurement"),
+                "category": e.entity_category.value if e.entity_category else None,
+                "liveness": e.entity_id in relevant_ids,
+            }
+        )
+    entry_ids = list(device.config_entries)
+    domains = {e.domain for eid in entry_ids if (e := hass.config_entries.async_get_entry(eid))}
+    info = await async_integration_info(hass, domains)
+    configs = []
+    for eid in entry_ids:
+        entry = hass.config_entries.async_get_entry(eid)
+        if entry:
+            configs.append({"domain": entry.domain, "name": info.get(entry.domain, {}).get("name", entry.domain), "title": entry.title, "state": entry.state.value})
+    now = dt_util.utcnow().timestamp()
+    return {
+        "id": device.id,
+        "entities": entities,
+        "config_entries": configs,
+        "identifiers": sorted(f"{a}: {b}" for a, b in device.identifiers)[:4],
+        "stats": {
+            "24h": log.device_summary(device.id, 86400, now) if log else None,
+            "7d": log.device_summary(device.id, 7 * 86400, now) if log else None,
+        },
     }
 
 

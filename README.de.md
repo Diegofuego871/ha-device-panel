@@ -11,28 +11,47 @@ Bereich.
 
 ## Funktionen
 
-- Überblick oben: wie viele Geräte online sind, welche gerade ausgefallen
-  sind und seit wann, dazu niedrige Batterien, schwacher Empfang und
-  verfügbare Updates (antippen filtert).
+- Überblick oben: wie viele Geräte online sind, die mittlere Verfügbarkeit
+  der letzten 24 Stunden, welche Geräte gerade ausgefallen sind und seit
+  wann, und ein Ausfall-Puls über 24 Stunden, der auf Sammelausfälle
+  hinweist (mehrere Geräte gleichzeitig, mit gemeinsamer Integration).
 - Geräteliste in Gruppen: ausgefallen (längste zuerst, rot hervorgehoben),
-  keine Daten und online; auf dem Handy als Karten.
+  instabil (3 oder mehr Unterbrüche in 24 Stunden), keine Daten und online;
+  auf dem Handy als Karten. Die Spalte mit dem Gerät bleibt stehen, wenn die
+  Tabelle seitlich scrollt.
+- Spalten für Status, Verbindung, Verfügbarkeit über 24 Stunden (Streifen
+  und Prozent), Typ (z. B. Licht, Steckdose, Bewegung, Tür/Fenster, Klima,
+  Hub/Bridge), Integration mit ihrem Eintrag, Batterie, Hersteller und
+  Modell, Software mit Update-Hinweis.
 - Verbindungsart pro Gerät: Zigbee, Z-Wave, Thread, Matter (Thread, WLAN
   oder LAN), Bluetooth, WLAN, Netzwerk, Cloud; Empfang in dBm oder LQI und
   der Hub, die Bridge oder der Bluetooth-Proxy dazwischen.
-- Batteriestand, Softwarestand mit Update-Hinweis, Integration, Hersteller
-  und Modell; Suche über alle Spalten, Filter nach Verbindungsart und "Nur
-  Probleme".
+- Suche über alle Spalten, Filter nach Verbindungsart, "Nur Probleme",
+  niedriger Batterie, schwachem Empfang und verfügbaren Updates.
+- Popup pro Gerät (wie bei UniFi Dynamic Clients): Verfügbarkeit 24 Stunden,
+  Unterbrüche in 7 Tagen, Empfang und Batterie als Kacheln; Verbindung,
+  Integration (warnt, wenn ihr Eintrag nicht geladen ist), Geräteangaben und
+  alle Entitäten mit Zustand, die für das Lebenszeichen entscheidenden
+  markiert. Ein Tipp auf eine Entität öffnet den Entitäts-Dialog von Home
+  Assistant, ein Knopf die Geräteseite von Home Assistant.
+- Statistik-Fenster aus den Kacheln: Verfügbarkeit über 24 Stunden, 7 oder
+  30 Tage mit Zeitstrahl, jeder Unterbruch mit Zeit und Dauer sowie
+  Unterbrüche pro Tag.
 - Ein Gerät gilt als ausgefallen nach 2 Minuten ohne Lebenszeichen. Ein
   Verbindungssensor entscheidet zuerst; sonst müssen alle normalen Entitäten
   nicht verfügbar sein. Ausfälle, die kurz nach einem Neustart von Home
   Assistant begannen, stehen als "mindestens" (≥) da.
+- Verfügbarkeitsprotokoll über 31 Tage in einer eigenen Datei (nicht im
+  Recorder). Zeit, in der Home Assistant nicht lief, gilt als "keine Daten",
+  nie als Ausfall.
 
 ### Geplant (siehe `docs/CONCEPT.md`)
 
 - Spalten, Sortierung und Filter pro Benutzer, getrennt für Desktop und
   Handy.
 - Einstellungen im Panel, Updates mit Vorabversionen, flexible Regeln für
-  die Überwachung, Geräteansicht mit Verlauf, Push-Meldungen.
+  die Überwachung (Integrationen oder Gerätetypen ausschliessen),
+  Push-Meldungen.
 
 ## Installation
 

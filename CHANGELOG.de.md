@@ -7,6 +7,49 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.3.0b1] - 2026-10-01
+
+Jedes Gerät bekommt ein eigenes Popup mit Statistik, und die Liste zeigt, woher
+ein Gerät kommt und was es ist.
+
+### Hinzugefügt
+
+- Verfügbarkeitsprotokoll: Device Panel hält für jedes überwachte Gerät fest,
+  wann es ausfällt und wann es zurückkommt (31 Tage in einer eigenen Datei,
+  nicht im Recorder). Kurze Aussetzer unter der Schwelle von 2 Minuten
+  zählen nicht; der Beginn eines Ausfalls ist der echte Zeitpunkt, ab dem
+  das Gerät nicht mehr antwortete. Zeit, in der Home Assistant nicht lief,
+  gilt als "keine Daten", nie als Ausfall, und die ersten 5 Minuten nach
+  einem Start sind eine Anlaufphase.
+- Spalten "Typ" (z. B. Licht, Steckdose, Bewegung, Tür/Fenster, Klima,
+  Hub/Bridge), "Integration" mit dem Eintrag, zu dem das Gerät gehört, und
+  "Verfügbarkeit 24 Std." mit einem Streifen der letzten 24 Stunden. Das
+  bereitet vor, später ganze Integrationen oder Gerätetypen auszuschliessen.
+- Gruppe "Instabil": Geräte, die online sind, aber 3 oder mehr Unterbrüche in
+  24 Stunden hatten.
+- Ausfall-Puls: Geräte mit Unterbruch über die letzten 24 Stunden, mit
+  Hinweis, wenn mehrere Geräte gleichzeitig ausfielen (Sammelausfall), samt
+  gemeinsamer Integration.
+- Geräte-Popup (wie bei UniFi Dynamic Clients): Status, Verfügbarkeit 24 Std.,
+  Unterbrüche 7 Tage, Empfang und Batterie als Kacheln; Verbindung,
+  Integration (mit Warnung, wenn ihr Eintrag nicht geladen ist),
+  Geräteangaben und alle Entitäten mit Zustand. Entitäten, die entscheiden,
+  ob das Gerät lebt, sind markiert. Ein Tipp auf eine Entität öffnet den
+  Entitäts-Dialog von Home Assistant; ein Knopf öffnet die Geräteseite von
+  Home Assistant.
+- Statistik-Fenster (öffnet aus den Kacheln): Verfügbarkeit über 24 Stunden,
+  7 oder 30 Tage mit Zeitstrahl (online, ausgefallen, keine Daten), die
+  Unterbrüche mit Zeit und Dauer sowie Unterbrüche pro Tag.
+
+### Geändert
+
+- Niedrige Batterie, schwacher Empfang und Updates sind jetzt Filter-Chips
+  neben "Nur Probleme" (statt einer Kachel oben); "Nur Probleme" umfasst
+  auch instabile Geräte.
+- Die Verfügbarkeit oben ist der Durchschnitt der letzten 24 Stunden, sobald
+  das Protokoll Daten hat.
+- Breite Tabellen scrollen seitlich; die Spalte mit dem Gerät bleibt stehen.
+
 ## [0.2.0b1] - 2026-10-01
 
 Erste Vorabversion der neuen Geräteliste (Design C).
@@ -63,6 +106,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.3.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.3.0b1
 [0.2.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.2.0b1
 [0.1.0b2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.1.0b2
 [0.1.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.1.0b1
