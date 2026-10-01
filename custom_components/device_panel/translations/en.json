@@ -14,12 +14,13 @@
     "step": {
       "init": {
         "title": "Settings",
-        "description": "The same settings are available in the panel (gear icon), together with updates.",
+        "description": "The same settings are available in the panel (gear icon), together with updates. Integrations with battery devices: {battery_domains}.",
         "data": {
           "offline_after": "Offline after",
           "flaky_outages": "Unstable from (outages in 24 hours)",
           "startup_grace": "Grace period after start",
           "battery_low": "Battery low from",
+          "battery_low_integrations": "Battery: own threshold per integration",
           "battery_push": "Battery: push notification",
           "battery_persistent": "Battery: persistent notification",
           "exclude_integrations": "Hide integrations",
@@ -35,6 +36,7 @@
           "flaky_outages": "An online device with this many outages in the last 24 hours is listed as unstable.",
           "startup_grace": "Minutes after Home Assistant starts in which returning devices had no outage. Time when Home Assistant was not running never counts as an outage.",
           "battery_low": "A battery at or below this level counts as low (red in the panel, \"Problems only\").",
+          "battery_low_integrations": "Integration → percent, one per line, e.g. \"zha: 25\". Without an entry the threshold above applies; the device's primary integration counts.",
           "battery_push": "Once per device when it drops below the threshold, to the push target below. Again only after the battery was 5 points above the threshold (e.g. new battery).",
           "battery_persistent": "One notification in Home Assistant listing all devices with a low battery; it disappears once all are above the threshold again.",
           "exclude_integrations": "Devices of these integrations are not shown in the panel and not monitored.",
@@ -46,6 +48,9 @@
           "update_check": "Reports a new version under Settings → Repairs. Pre-releases are never reported here."
         }
       }
+    },
+    "error": {
+      "battery_map": "Each line must be integration: whole number from 5 to 50 (e.g. \"zha: 25\")."
     }
   },
   "issues": {

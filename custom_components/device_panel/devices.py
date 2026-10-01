@@ -25,6 +25,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_BATTERY_LOW,
+    CONF_BATTERY_LOW_INTEGRATIONS,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_FLAKY_OUTAGES,
@@ -39,7 +40,7 @@ from .const import (
     DOMAIN,
     STORAGE_VERSION,
 )
-from .options_api import effective
+from .options_api import battery_threshold, effective
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -212,6 +213,18 @@ def battery(
     if level is not None:
         low = low or level <= threshold
     return {"level": level, "low": low}
+
+
+def has_battery(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> bool:
+    """
+    Gerät mit Batterie-Entität, nach Registry (bzw. Geräteklasse im Zustand),
+    nicht nach dem aktuellen Wert: schlafende oder gerade nicht erreichbare
+    Geräte zählen mit.
+    """
+    return any(
+        not e.disabled_by and e.domain in ("sensor", "binary_sensor") and _device_class(e, hass.states.get(e.entity_id)) == "battery"
+        for e in entries
+    )
 
 
 def _update(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> str | None:
@@ -461,20 +474,41 @@ async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
             by_domain[primary.domain] = by_domain.get(primary.domain, 0) + 1
         kind = effective_type(hass, device, entries, hubs)[0]
         by_type[kind] = by_type.get(kind, 0) + 1
-    info = await async_integration_info(hass, set(by_domain))
-    integrations = [
-        {"domain": d, "name": info.get(d, {}).get("name", d), "devices": n} for d, n in by_domain.items()
-    ]
+    # Eigene Batterie-Schwelle: Integrationen mit Batteriegeräten unter den
+    # überwachten Geräten (Ausblendungen gelten), dazu solche mit eigener
+    # Schwelle ohne Geräte (damit sie sich zurücksetzen lässt).
+    own = opts[CONF_BATTERY_LOW_INTEGRATIONS]
+    bat: dict[str, dict[str, Any]] = {d: {"devices": 0, "weakest": None} for d in own}
+    for device, entries in monitored_devices(hass, opts):
+        if not has_battery(hass, entries) or not (primary := _primary_entry(hass, device)):
+            continue
+        item = bat.setdefault(primary.domain, {"devices": 0, "weakest": None})
+        item["devices"] += 1
+        level = (battery(hass, entries) or {}).get("level")
+        if level is not None and (item["weakest"] is None or level < item["weakest"]):
+            item["weakest"] = level
+    info = await async_integration_info(hass, set(by_domain) | set(bat))
+    name = lambda d: info.get(d, {}).get("name", d)  # noqa: E731
+    integrations = [{"domain": d, "name": name(d), "devices": n} for d, n in by_domain.items()]
     integrations.sort(key=lambda x: (-x["devices"], str(x["name"]).lower()))
+    battery_list = [{"domain": d, "name": name(d), **v} for d, v in bat.items()]
+    battery_list.sort(key=lambda x: (-x["devices"], str(x["name"]).lower()))
     return {
         "integrations": integrations,
         "types": [{"type": t, "devices": by_type.get(t, 0)} for t in DEVICE_TYPES],
+        "battery": battery_list,
     }
 
 
 def _primary_entry(hass: HomeAssistant, device: dr.DeviceEntry):
     entry_id = getattr(device, "primary_config_entry", None) or next(iter(device.config_entries), None)
     return hass.config_entries.async_get_entry(entry_id) if entry_id else None
+
+
+def primary_domain(hass: HomeAssistant, device: dr.DeviceEntry) -> str | None:
+    """Integration, nach der Ausschlüsse und eigene Batterie-Schwellen gehen."""
+    primary = _primary_entry(hass, device)
+    return primary.domain if primary else None
 
 
 async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, Any]:
@@ -545,7 +579,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "connection": _connection(device, domains, entries, signal, iot_classes),
                 "signal": signal,
                 "via": via,
-                "battery": battery(hass, entries, opts[CONF_BATTERY_LOW]),
+                "battery": battery(hass, entries, battery_threshold(opts, primary.domain if primary else None)),
                 "update": _update(hass, entries),
                 "avail24": avail,
                 # Instabil: online, aber oft unterbrochen.

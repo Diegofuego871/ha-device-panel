@@ -286,6 +286,12 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .opt.changed > .opt-line .opt-input { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 .opt.invalid > .opt-line .opt-input { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
 .opt-error { margin-top: 3px; color: var(--dp-error); font-size: 12px; line-height: 1.35; }
+/* Batterie pro Integration: Zeilen wie die Ausschlüsse, Feld rechts. */
+.opt.bat-own { border-bottom: none; padding-bottom: 2px; }
+.ex-row.bat-row .opt-input input { width: 40px; }
+.ex-row.bat-row.changed .opt-input { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
+.ex-row.bat-row.invalid .opt-input { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
+.bat-empty { padding: 4px 0 8px; }
 /* Auswahl (Push-Ziel, Klickziel) wie unifi_dynamic. */
 .opt-select { position: relative; flex: 0 1 260px; min-width: 0; }
 .opt-select select { width: 100%; height: 36px; padding: 0 30px 0 10px; border: 1px solid var(--dp-divider); border-radius: 9px;

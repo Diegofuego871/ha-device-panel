@@ -47,10 +47,11 @@ function setHtml(el, html) {
   return true;
 }
 
+// Für Text und Attribute: auch Anführungszeichen, sonst bricht ein Wert mit
+// " das Attribut ab (abgeschnittene Texte, eingeschleuste Attribute).
+const ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 function escape(value) {
-  const div = document.createElement("div");
-  div.textContent = value == null ? "" : String(value);
-  return div.innerHTML;
+  return (value == null ? "" : String(value)).replace(/[&<>"']/g, (c) => ESCAPES[c]);
 }
 
 // --- Symbole (Material Design Icons als Pfad, Funkarten als Strichzeichnung)
@@ -1320,8 +1321,10 @@ class DevicePanel extends HTMLElement {
   _settingsEntryChanges() {
     const st = this._settings;
     if (!st || !st.draft) return [];
-    // Listen (Ausschlüsse) nach Inhalt vergleichen, nicht nach Referenz.
-    const same = (a, b) => JSON.stringify(Array.isArray(a) ? [...a].sort() : a) === JSON.stringify(Array.isArray(b) ? [...b].sort() : b);
+    // Listen (Ausschlüsse) und Zuordnungen (Batterie pro Integration) nach
+    // Inhalt vergleichen, nicht nach Referenz oder Reihenfolge.
+    const norm = (v) => (Array.isArray(v) ? [...v].sort() : v && typeof v === "object" ? Object.entries(v).sort() : v);
+    const same = (a, b) => JSON.stringify(norm(a)) === JSON.stringify(norm(b));
     return Object.keys(st.draft).filter((k) => !same(st.draft[k], st.data.values[k]));
   }
 
@@ -1340,7 +1343,7 @@ class DevicePanel extends HTMLElement {
   _settingsSections() {
     return [
       ["detection", ["offline_after", "flaky_outages", "startup_grace"]],
-      ["battery", ["battery_low", "battery_push", "battery_persistent"]],
+      ["battery", ["battery_low", "battery_low_integrations", "battery_push", "battery_persistent"]],
       ["integrations", ["exclude_integrations"]],
       ["types", ["exclude_types"]],
       ["push", ["notify_service", "notify_click_target"]],
@@ -1360,7 +1363,26 @@ class DevicePanel extends HTMLElement {
       const v = st.draft[key];
       if (!Number.isInteger(v) || v < min || v > max) errors[key] = this._t("settingsRange", min, max);
     }
+    if (this._batInvalid().length) errors.battery_low_integrations = this._t("settingsRange", ...(st.data.limits?.battery_low || [5, 50]));
     return errors;
+  }
+
+  // Integrationen, deren eigene Batterie-Schwelle ausserhalb des Bereichs liegt.
+  _batInvalid() {
+    const st = this._settings;
+    const [min, max] = st?.data?.limits?.battery_low || [5, 50];
+    return Object.entries(st?.draft?.battery_low_integrations || {})
+      .filter(([, v]) => !Number.isInteger(v) || v < min || v > max)
+      .map(([d]) => d);
+  }
+
+  // Eigene Schwellen für die Zusammenfassung: "Name 25 %", nur gültige.
+  _batOwnSummary(d) {
+    const names = Object.fromEntries((this._settings?.data?.catalog?.battery || []).map((x) => [x.domain, x.name]));
+    const bad = new Set(this._batInvalid());
+    return Object.entries(d.battery_low_integrations || {})
+      .filter(([dom]) => !bad.has(dom))
+      .map(([dom, v]) => `${names[dom] || dom} ${v} %`);
   }
 
   // Typen für die Ausschlüsse: alle mit Geräten, dazu ausgeblendete ohne.
@@ -1381,7 +1403,7 @@ class DevicePanel extends HTMLElement {
     if (id === "battery") {
       const errors = this._settingsErrors();
       const pct = errors.battery_low ? this._settings?.data?.values?.battery_low : d.battery_low;
-      return this._t("sumBattery", pct, Boolean(d.battery_push), Boolean(d.battery_persistent));
+      return this._t("sumBattery", pct, Boolean(d.battery_push), Boolean(d.battery_persistent), this._batOwnSummary(d));
     }
     if (id === "push") {
       const target = d.notify_service && d.notify_service !== "none" ? d.notify_service : "";
@@ -1420,7 +1442,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -1429,6 +1451,33 @@ class DevicePanel extends HTMLElement {
     if (slot) lastHtml.set(slot, this._verSlotHtml);
     dialog.scrollTop = scroll;
     if (focusSel) dialog.querySelector(focusSel)?.focus();
+  }
+
+  // Variante A (docs/mockups/battery-v1): eigene Schwelle nur für
+  // Integrationen mit Batteriegeräten, leer = Standard.
+  _batOwnHtml(d, errors) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    const list = st.data.catalog?.battery || [];
+    const std = errors.battery_low ? st.data.values.battery_low : d.battery_low;
+    const [min, max] = st.data.limits?.battery_low || [5, 50];
+    const own = d.battery_low_integrations || {};
+    const saved = st.data.values.battery_low_integrations || {};
+    const bad = new Set(this._batInvalid());
+    const head = `<div class="opt bat-own"><div class="opt-line"><span class="opt-label">${escape(t("batOwnTitle"))}</span></div>
+      <div class="opt-short" data-bat-short>${escape(t("batOwnShort", std))}</div></div>`;
+    if (!list.length) return head + `<div class="opt-short bat-empty">${escape(t("batOwnEmpty"))}</div>`;
+    const rows = list
+      .map((x) => {
+        const v = own[x.domain];
+        const cls = `${bad.has(x.domain) ? " invalid" : ""}${v !== saved[x.domain] ? " changed" : ""}`;
+        return `<div class="ex-row bat-row${cls}"><span class="ibadge" style="--h:${hue(x.domain)}">${escape(initials(x.name))}</span>
+          <div class="ex-name">${escape(x.name)}<small>${escape(t("batDevices", x.devices, x.weakest))}</small></div>
+          <span class="opt-input"><input type="number" inputmode="numeric" step="1" min="${min}" max="${max}" data-bat="${escape(x.domain)}" value="${escape(v ?? "")}" placeholder="${escape(std)}" aria-label="${escape(`${x.name}: ${t("batOwnCol")}`)}"><span class="unit">%</span></span></div>`;
+      })
+      .join("");
+    return head + `<div class="ex-head"><span>${escape(t("colIntegration"))}</span><span>${escape(t("batOwnCol"))}</span></div>${rows}
+      <div class="opt-error" data-bat-error ${errors.battery_low_integrations ? "" : "hidden"}>${escape(errors.battery_low_integrations || "")}</div>`;
   }
 
   _settingsBodyHtml() {
@@ -1492,7 +1541,8 @@ class DevicePanel extends HTMLElement {
         row("battery_low", t("optBatteryLow"), num("battery_low", t("unitPercent"), t("optBatteryLow")), t("optBatteryLowShort"), null) +
         row("battery_push", t("optBatteryPush"), sw("battery_push", t("optBatteryPush")), d.battery_push && noTarget ? null : t("optBatteryPushShort"), t("optBatteryPushInfo"),
           d.battery_push && noTarget ? t("optBatteryPushNoTarget") : null) +
-        row("battery_persistent", t("optBatteryPersistent"), sw("battery_persistent", t("optBatteryPersistent")), t("optBatteryPersistentShort"), t("optBatteryPersistentInfo")),
+        row("battery_persistent", t("optBatteryPersistent"), sw("battery_persistent", t("optBatteryPersistent")), t("optBatteryPersistentShort"), t("optBatteryPersistentInfo")) +
+        this._batOwnHtml(d, errors),
       integrations: exTable("exclude_integrations", integrations, t("hideIntro")),
       types: exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`),
       push:
@@ -1556,8 +1606,16 @@ class DevicePanel extends HTMLElement {
     dialog.addEventListener("input", (ev) => {
       const st = this._settings;
       const el = ev.target;
-      if (!st?.draft || el.type !== "number" || !el.dataset.opt) return;
-      st.draft[el.dataset.opt] = el.value === "" ? null : Number(el.value);
+      if (!st?.draft || el.type !== "number") return;
+      if (el.dataset.bat) {
+        // Leer = Standard: Eintrag entfernen.
+        const own = { ...(st.draft.battery_low_integrations || {}) };
+        if (el.value === "") delete own[el.dataset.bat];
+        else own[el.dataset.bat] = Number(el.value);
+        st.draft.battery_low_integrations = own;
+      } else if (el.dataset.opt) {
+        st.draft[el.dataset.opt] = el.value === "" ? null : Number(el.value);
+      } else return;
       this._updateSettingsMeta();
     });
     dialog.addEventListener("change", (ev) => {
@@ -1603,6 +1661,24 @@ class DevicePanel extends HTMLElement {
     if (count) count.textContent = changes.length ? this._t("settingsChanges", changes.length) : "";
     const save = dialog.querySelector('[data-set="save"]');
     if (save) save.disabled = st.saving || !changes.length || Object.keys(errors).length > 0;
+    // Batterie pro Integration: Zeilen markieren, Fehlerzeile, Standard als Platzhalter.
+    const bad = new Set(this._batInvalid());
+    const saved = st.data.values.battery_low_integrations || {};
+    const own = st.draft.battery_low_integrations || {};
+    const std = errors.battery_low ? st.data.values.battery_low : st.draft.battery_low;
+    for (const input of dialog.querySelectorAll("input[data-bat]")) {
+      const row = input.closest(".ex-row");
+      row?.classList.toggle("invalid", bad.has(input.dataset.bat));
+      row?.classList.toggle("changed", own[input.dataset.bat] !== saved[input.dataset.bat]);
+      input.placeholder = String(std);
+    }
+    const batErr = dialog.querySelector("[data-bat-error]");
+    if (batErr) {
+      batErr.hidden = !errors.battery_low_integrations;
+      batErr.textContent = errors.battery_low_integrations || "";
+    }
+    const batShort = dialog.querySelector("[data-bat-short]");
+    if (batShort) batShort.textContent = this._t("batOwnShort", std);
     for (const input of dialog.querySelectorAll('input[type="number"][data-opt]')) {
       const key = input.dataset.opt;
       const opt = input.closest(".opt");

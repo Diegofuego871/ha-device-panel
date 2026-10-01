@@ -26,6 +26,8 @@ const TEXT = {
     sumBatOff: "Schwach ab 15 % · keine Meldung", sumBatBoth: "Schwach ab 25 % · Push und anhaltende Benachrichtigung",
     noTarget: "Zuerst unter \"Push-Benachrichtigung\" ein Ziel wählen.", sumPushNone: "Kein Ziel gewählt",
     sumPush: "notify.mobile_app_testhandy · Batterie schwach", notifyNone: "Kein Ziel (keine Push-Meldungen)", entity: "notify.fernseher (Entität)",
+    batTitle: "Eigene Schwelle pro Integration", batZha: "3 Geräte mit Batterie · schwächste 8\u00a0%", rangeBat: "Erlaubt: 5 bis 50",
+    sumBatOwn: "Schwach ab 15 %, Matter 25 % · keine Meldung", batLowShort: "Bis zu diesem Stand rot markiert und unter \"Nur Probleme\".",
   },
   en: {
     gear: "Settings", title: "Settings", sub: "Device Panel · applies to all users", sec: "Updates",
@@ -42,6 +44,8 @@ const TEXT = {
     sumBatOff: "Low from 15 % · no notification", sumBatBoth: "Low from 25 % · push and persistent notification",
     noTarget: "First choose a target under \"Push notification\".", sumPushNone: "No target chosen",
     sumPush: "notify.mobile_app_testhandy · low battery", notifyNone: "No target (no push notifications)", entity: "notify.fernseher (entity)",
+    batTitle: "Own threshold per integration", batZha: "3 devices with battery · weakest 8\u00a0%", rangeBat: "Allowed: 5 to 50",
+    sumBatOwn: "Low from 15 %, Matter 25 % · no notification", batLowShort: "Up to this level marked red and listed under \"Problems only\".",
   },
 };
 
@@ -291,6 +295,46 @@ for (const lang of ["de", "en"]) {
     await (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-opt="notify_click_target"]')`))).asElement().selectOption("panel");
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] Batterie und Push zurück`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify(await p.evaluate(() => [window.__opts.battery_low, window.__opts.battery_push, window.__opts.battery_persistent, window.__opts.notify_service, window.__opts.notify_click_target])) === JSON.stringify([15, false, false, "none", "panel"]) && await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`));
+
+    // Batterie: eigene Schwelle pro Integration (Variante A)
+    const typeIn = async (sel, val) => {
+      const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
+      if (mobile) await h.tap(); else await h.click();
+      await h.fill("");
+      if (val !== "") await h.type(val);
+    };
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    await tap('[data-set="section"][data-id="battery"]');
+    check(`[${tag}] Liste pro Integration`, (await text(".bat-own .opt-label")) === T.batTitle);
+    const batRows = await ev(`return [...r.querySelectorAll("input[data-bat]")].map(i=>i.dataset.bat+":"+i.placeholder+":"+i.value).join(",")`);
+    check(`[${tag}] nur Integrationen mit Batterie, Standard als Platzhalter`, batRows === "zha:15:,matter:15:,bthome:15:,zwave_js:15:", batRows);
+    check(`[${tag}] Zahl und schwächste Batterie`, (await ev(`return r.querySelector('input[data-bat="zha"]').closest(".ex-row").querySelector("small").textContent`)) === T.batZha);
+    await typeIn('input[data-bat="matter"]', "60");
+    check(`[${tag}] 60 ist ungültig`, await ev(`return r.querySelector('input[data-bat="matter"]').closest(".ex-row").classList.contains("invalid")`) && (await text("[data-bat-error]")) === T.rangeBat && await ev(`return r.querySelector('[data-set="save"]').disabled`));
+    await typeIn('input[data-bat="matter"]', "25");
+    check(`[${tag}] gültig: Zusammenfassung, Zähler`, (await text('[data-id="battery"] .set-sec-sum')) === T.sumBatOwn && (await text(".set-count")) === T.one && await ev(`return r.querySelector("[data-bat-error]").hidden && r.activeElement === r.querySelector('input[data-bat="matter"]')`), await text('[data-id="battery"] .set-sec-sum'));
+    // Allgemeine Schwelle ändern: die Platzhalter folgen
+    await typeIn('input[data-opt="battery_low"]', "20");
+    check(`[${tag}] Platzhalter folgt der Schwelle`, (await ev(`return r.querySelector('input[data-bat="zha"]').placeholder`)) === "20");
+    await typeIn('input[data-opt="battery_low"]', "15");
+    // Kurzzeile mit Anführungszeichen bleibt nach der Eingabe ganz (escape
+    // maskierte " nicht, das Attribut brach ab).
+    const shortAfter = await ev(`const o=r.querySelector('input[data-opt="battery_low"]').closest(".opt").querySelector("[data-short]"); return [o.textContent, o.dataset.short]`);
+    check(`[${tag}] Kurzzeile mit Anführungszeichen vollständig`, shortAfter[0] === T.batLowShort && shortAfter[1] === T.batLowShort, JSON.stringify(shortAfter));
+    await ev(`r.querySelector(".bat-own").scrollIntoView({ block: "start" })`);
+    await p.screenshot({ path: `${outDir}/settings-battery-own-${tag.replace("/", "-")}.png` });
+    await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] eigene Schwelle gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low_integrations: { matter: 25 } }), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
+    check(`[${tag}] Liste: Matter-Gerät mit 22 % jetzt schwach`, await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "3"`), await text('.chip.hint[data-hint="battery"] .n'));
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    check(`[${tag}] nach Speichern: Wert steht, Zusammenfassung`, (await text('[data-id="battery"] .set-sec-sum')) === T.sumBatOwn);
+    await tap('[data-set="section"][data-id="battery"]');
+    check(`[${tag}] Wert im Feld`, (await ev(`return r.querySelector('input[data-bat="matter"]').value`)) === "25");
+    await typeIn('input[data-bat="matter"]', "");
+    await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] leer = Standard, gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low_integrations: {} }) && await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`));
 
     // Fehler beim Speichern: Meldung, Dialog bleibt
     await p.evaluate(() => { window.__setOptsFails = "Keine Berechtigung"; });

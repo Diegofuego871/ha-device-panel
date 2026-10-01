@@ -7,7 +7,30 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.8.0] - 2026-10-01
+
+Eigene Batterie-Schwelle pro Integration.
+
+### Hinzugefügt
+
+- Abschnitt "Batterie": "Eigene Schwelle pro Integration" listet nur
+  Integrationen mit Batteriegeräten, mit der Zahl der Geräte und der
+  schwächsten Batterie; ein leeres Feld nimmt die allgemeine Schwelle
+  "Schwach ab". Gilt für die Markierung in der Liste, Push und anhaltende
+  Benachrichtigung; massgebend ist die primäre Integration des Geräts. Eine
+  Integration mit eigener Schwelle bleibt auch ohne Geräte in der Liste,
+  damit sie sich zurücksetzen lässt. Auch im Optionsdialog als Zuordnung
+  (z. B. `zha: 25`).
+
+### Behoben
+
+- Texte mit Anführungszeichen in den Einstellungen wurden nach einer
+  Eingabe abgeschnitten (z. B. die Kurzzeile unter "Schwach ab"); ein Wert
+  mit Anführungszeichen konnte im Panel ein Attribut aufbrechen.
+
 ## [0.7.0] - 2026-10-01
+
+Nicht veröffentlicht; enthalten in 0.8.0.
 
 Batterie-Warnung mit wählbarer Schwelle, als Push-Meldung, als anhaltende
 Benachrichtigung in Home Assistant, beides oder keines. Beide Meldungen sind
@@ -40,7 +63,7 @@ standardmässig aus, damit das Update nicht von selbst zu melden beginnt.
 
 ## [0.6.0] - 2026-10-01
 
-Nicht veröffentlicht; enthalten in 0.7.0.
+Nicht veröffentlicht; enthalten in 0.8.0.
 
 Einstellen, wann ein Gerät als ausgefallen oder instabil gilt, und wählen, ob
 Dienst-Geräte und deaktivierte Geräte in der Liste stehen.
@@ -226,7 +249,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[0.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.7.0
+[0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0
 [0.3.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.3.0b1

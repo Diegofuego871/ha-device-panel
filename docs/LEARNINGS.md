@@ -140,6 +140,11 @@ hat dort einen echten Fehler oder Umweg gekostet.
   Geräteansicht; auf `location-changed` des Elternfensters hören.
 - **Maskieren:** jeder Wert aus Geräte-/Entitätsnamen geht durch `_escape`.
 
+- **`escape` muss auch `"` und `'` maskieren:** `div.textContent` +
+  `innerHTML` maskiert nur `&`, `<`, `>`. In Attributen (`data-short`,
+  `aria-label`, `title`, `value`) brach ein Text mit `"` ab (0.8.0 behoben,
+  Prüfung in `settings-e2e`).
+
 ## Tests
 
 - **Python mit echtem HA:** `pytest-homeassistant-custom-component` (Python

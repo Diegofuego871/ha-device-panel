@@ -197,8 +197,14 @@ export const STRINGS = {
     optShowDisabled: "Deaktivierte Geräte anzeigen",
     optShowDisabledShort: "Eigene Gruppe am Ende der Liste, nicht überwacht.",
     secBattery: "Batterie",
-    sumBattery: (pct, push, persistent) =>
-      `Schwach ab ${pct} % · ${push && persistent ? "Push und anhaltende Benachrichtigung" : push ? "nur Push" : persistent ? "nur anhaltende Benachrichtigung" : "keine Meldung"}`,
+    sumBattery: (pct, push, persistent, own = []) =>
+      `Schwach ab ${pct} %${own.length > 2 ? `, ${own.length} Integrationen eigene` : own.length ? `, ${own.join(", ")}` : ""} · ${push && persistent ? "Push und anhaltende Benachrichtigung" : push ? "nur Push" : persistent ? "nur anhaltende Benachrichtigung" : "keine Meldung"}`,
+    batOwnTitle: "Eigene Schwelle pro Integration",
+    batOwnShort: (std) => `Leer = Standard (${std} %). Gilt für Markierung, Push und anhaltende Benachrichtigung; massgebend ist die primäre Integration des Geräts.`,
+    batOwnCol: "Schwach ab",
+    batOwnEmpty: "Keine Integration mit Batteriegeräten.",
+    batDevices: (n, weakest) =>
+      n ? `${n === 1 ? "1 Gerät" : `${n} Geräte`} mit Batterie${weakest != null ? ` · schwächste ${weakest}\u00a0%` : ""}` : "keine Geräte mit Batterie mehr",
     optBatteryLow: "Schwach ab",
     optBatteryLowShort: "Bis zu diesem Stand rot markiert und unter \"Nur Probleme\".",
     unitPercent: "%",
@@ -476,8 +482,14 @@ export const STRINGS = {
     optShowDisabled: "Show disabled devices",
     optShowDisabledShort: "Own group at the end of the list, not monitored.",
     secBattery: "Battery",
-    sumBattery: (pct, push, persistent) =>
-      `Low from ${pct} % · ${push && persistent ? "push and persistent notification" : push ? "push only" : persistent ? "persistent notification only" : "no notification"}`,
+    sumBattery: (pct, push, persistent, own = []) =>
+      `Low from ${pct} %${own.length > 2 ? `, ${own.length} integrations own` : own.length ? `, ${own.join(", ")}` : ""} · ${push && persistent ? "push and persistent notification" : push ? "push only" : persistent ? "persistent notification only" : "no notification"}`,
+    batOwnTitle: "Own threshold per integration",
+    batOwnShort: (std) => `Empty = default (${std} %). Applies to the marking, push and persistent notification; the device's primary integration counts.`,
+    batOwnCol: "Low from",
+    batOwnEmpty: "No integration with battery devices.",
+    batDevices: (n, weakest) =>
+      n ? `${n === 1 ? "1 device" : `${n} devices`} with battery${weakest != null ? ` · weakest ${weakest}\u00a0%` : ""}` : "no devices with battery anymore",
     optBatteryLow: "Low from",
     optBatteryLowShort: "Up to this level marked red and listed under \"Problems only\".",
     unitPercent: "%",

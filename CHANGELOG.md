@@ -7,7 +7,29 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.8.0] - 2026-10-01
+
+Own battery threshold per integration.
+
+### Added
+
+- Settings section "Battery": "Own threshold per integration" lists only
+  integrations with battery devices, with the number of devices and the
+  weakest battery; an empty field uses the general threshold "Low from". It
+  applies to the marking in the list, push and persistent notification; the
+  device's primary integration counts. An integration with its own
+  threshold stays listed without devices, so it can be reset. Also in the
+  options dialog as a mapping (e.g. `zha: 25`).
+
+### Fixed
+
+- Texts with quotation marks in the settings were cut off after typing
+  (e.g. the short line under "Low from"); a value with quotation marks
+  could break an attribute in the panel.
+
 ## [0.7.0] - 2026-10-01
+
+Not released; included in 0.8.0.
 
 Battery warning with a threshold of your choice, as a push notification, a
 persistent notification in Home Assistant, both or neither. Both
@@ -38,7 +60,7 @@ anything by itself.
 
 ## [0.6.0] - 2026-10-01
 
-Not released; included in 0.7.0.
+Not released; included in 0.8.0.
 
 Set when a device counts as offline or unstable, and choose whether service
 devices and disabled devices appear in the list.
@@ -215,7 +237,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[0.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.7.0
+[0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0
 [0.3.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.3.0b1

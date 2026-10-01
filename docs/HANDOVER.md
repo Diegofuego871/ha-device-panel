@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.7.0, mit Batterie-Warnung und Push-Grundlage)
+## Stand (0.8.0, Batterie-Schwelle auch pro Integration)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -20,7 +20,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   freischalten"; "Ausfall-Erkennung" (Zahlenfelder `offline_after`,
   `flaky_outages`, `startup_grace` mit Bereichen aus `const.INT_RANGES`,
   Prüfung im Panel und im Backend); "Batterie" (`battery_low`,
-  `battery_push`, `battery_persistent`; Überwachung in `battery.py`);
+  `battery_low_integrations` {Domain: %} nach Mockup A in
+  `docs/mockups/battery-v1/`, `battery_push`, `battery_persistent`;
+  Überwachung in `battery.py`);
   "Integrationen" und "Gerätetypen" (Schalter "Anzeigen"; ausgeblendete
   Geräte werden nicht überwacht); "Push-Benachrichtigung"
   (`notify_service`, `notify_click_target`; Versand in `push.py`);
@@ -76,7 +78,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Batterie-Warnung (Wunsch des Nutzers, 2026-10-01: Schwelle wählbar,
    Push und anhaltende Benachrichtigung getrennt wählbar) mit `0.7.0`,
    dabei die Push-Grundlage (Ziel, Klickziel, Versand, Deep-Link
-   `?device=`). Weiter mit Schritt 2 (Spalten pro Benutzer) und Schritt 7
+   `?device=`). Schwelle pro Integration (Nutzer, 2026-10-01: Variante A)
+   mit `0.8.0`. Releases: `0.6.0` und `0.7.0` ohne Release, in `0.8.0`
+   enthalten. Weiter mit Schritt 2 (Spalten pro Benutzer) und Schritt 7
    (Push bei Ausfällen: übrige Felder des Abschnitts "Push-Benachrichtigung",
    Abschnitt "Anhaltende Benachrichtigung", Spalten Push/Anhaltend bei den
    Integrationen nach Bild 5);

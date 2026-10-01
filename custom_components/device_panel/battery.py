@@ -28,6 +28,7 @@ from .const import (
     BATTERY_PUSH_MAX,
     BATTERY_REARM,
     CONF_BATTERY_LOW,
+    CONF_BATTERY_LOW_INTEGRATIONS,
     CONF_BATTERY_PERSISTENT,
     CONF_BATTERY_PUSH,
     CONF_NOTIFY_CLICK,
@@ -37,8 +38,8 @@ from .const import (
     PERSISTENT_BATTERY_ID,
     STORAGE_VERSION,
 )
-from .devices import battery, monitored_devices
-from .options_api import effective
+from .devices import battery, monitored_devices, primary_domain
+from .options_api import battery_threshold, effective
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -118,10 +119,11 @@ class BatteryWatch:
     async def async_check(self) -> None:
         hass = self.hass
         opts = effective(hass)
-        threshold = opts[CONF_BATTERY_LOW]
         area_reg = ar.async_get(hass)
         low: dict[str, dict[str, Any]] = {}
         for device, entries in monitored_devices(hass, opts):
+            # Eigene Schwelle der Integration, sonst die allgemeine.
+            threshold = battery_threshold(opts, primary_domain(hass, device))
             info = battery(hass, entries, threshold)
             known = self._low.get(device.id)
             if info is None:
@@ -194,7 +196,15 @@ class BatteryWatch:
             for d in self._order(low, list(low))
         ]
         message = "\n".join(
-            [push.text(hass, "persistent_intro", threshold=opts[CONF_BATTERY_LOW]), "", *lines, "", push.text(hass, "persistent_outro")]
+            [
+                push.text(hass, "persistent_intro_own")
+                if opts[CONF_BATTERY_LOW_INTEGRATIONS]
+                else push.text(hass, "persistent_intro", threshold=opts[CONF_BATTERY_LOW]),
+                "",
+                *lines,
+                "",
+                push.text(hass, "persistent_outro"),
+            ]
         )
         # Weggeklickt: erst bei einem neu betroffenen Gerät (oder nach Start
         # bzw. geänderten Optionen) wieder zeigen; sonst nur nachführen, wenn

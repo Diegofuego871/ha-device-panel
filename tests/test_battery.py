@@ -217,3 +217,44 @@ async def test_push_options_are_checked(hass: HomeAssistant, watch: BatteryWatch
     assert result["values"]["notify_service"] == "none" and result["values"]["notify_click_target"] == "panel"
     assert result["notify_targets"][0] == {"value": "none", "kind": "none"}
     assert result["limits"]["battery_low"] == [5, 50]
+
+
+async def test_threshold_per_integration(hass: HomeAssistant, watch: BatteryWatch, hass_ws_client) -> None:
+    calls = async_mock_service(hass, "notify", "handy")
+    dev = _device(hass, "Fenster")  # Integration "test"
+    _battery(hass, dev, "25")
+    log = hass.data[DATA_AVAILABILITY]
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/get_options"})
+    battery_list = (await client.receive_json())["result"]["catalog"]["battery"]
+    # Nur Integrationen mit Batteriegeräten, mit Zahl und schwächster Batterie
+    assert battery_list == [{"domain": "test", "name": "test", "devices": 1, "weakest": 25}]
+
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {
+        "battery_push": True, "battery_persistent": True, "notify_service": "notify.handy",
+        "battery_low_integrations": {"test": 30, "zha": 20},
+    }})
+    assert (await client.receive_json())["result"] == {"changed": True}
+    await hass.async_block_till_done()
+    # 25 % liegt unter der eigenen Schwelle 30 %, nicht unter der allgemeinen 15 %
+    assert (await async_list_devices(hass, log))["devices"][0]["battery"]["low"] is True
+    assert len(calls) == 1 and calls[0].data["title"] == "Low battery: Fenster"
+    assert "(threshold per integration)" in _persistent(hass)["message"]
+    # Eigene Schwelle ohne Geräte bleibt in der Liste (zum Zurücksetzen)
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/get_options"})
+    domains = {b["domain"]: b["devices"] for b in (await client.receive_json())["result"]["catalog"]["battery"]}
+    assert domains == {"test": 1, "zha": 0}
+    # Wiederscharf nach der eigenen Schwelle: 33 % (30 + 5 - 2) bleibt schwach
+    hass.states.async_set(next(iter(e.entity_id for e in er.async_entries_for_device(er.async_get(hass), dev.id))), "33")
+    await watch.async_check()
+    assert dev.id in watch.low
+
+
+async def test_battery_map_is_checked(hass: HomeAssistant, watch: BatteryWatch, hass_ws_client) -> None:
+    client = await hass_ws_client(hass)
+    bad = ({"zha": 60}, {"zha": 4}, {"zha": True}, {"Böse Domain": 20}, {"zha": "20"}, ["zha"])
+    for i, value in enumerate(bad, 1):
+        await client.send_json({"id": i, "type": f"{DOMAIN}/set_options", "values": {"battery_low_integrations": value}})
+        assert (await client.receive_json())["error"]["code"] == "invalid_format", value
+    await client.send_json({"id": 20, "type": f"{DOMAIN}/set_options", "values": {"battery_low_integrations": {}}})
+    assert (await client.receive_json())["result"]["changed"] is True

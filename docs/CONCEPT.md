@@ -345,8 +345,12 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   `clickAction`, `tag`, `icon_url`, zweiter Versuch ohne Zusatzdaten,
   notify-Entitäten über `notify.send_message`, Texte DE/EN nach
   `hass.config.language`.
-- Batterie-Warnung (`battery.py`, Abschnitt "Batterie"): Push einmal pro
-  Gerät beim Unterschreiten von "Schwach ab", gemerkt in
+- Batterie-Warnung (`battery.py`, Abschnitt "Batterie"): Schwelle pro Gerät
+  = eigene Schwelle seiner primären Integration (`battery_low_integrations`,
+  seit 0.8.0, Mockup A) oder "Schwach ab". Die Liste dafür zeigt nur
+  Integrationen mit Batteriegeräten (Registry bzw. Geräteklasse, nicht der
+  aktuelle Wert), dazu solche mit eigener Schwelle ohne Geräte. Push einmal
+  pro Gerät beim Unterschreiten, gemerkt in
   `.storage/device_panel.battery`; erneut erst nach `BATTERY_REARM` (5)
   Punkten darüber; keine Werte (nicht erreichbar) ändern nichts; mehr als
   `BATTERY_PUSH_MAX` (3) neue auf einmal = Sammelmeldung; Einschalten oder

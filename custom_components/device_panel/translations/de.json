@@ -14,12 +14,13 @@
     "step": {
       "init": {
         "title": "Einstellungen",
-        "description": "Dieselben Einstellungen gibt es im Panel (Zahnrad), dort zusammen mit den Updates.",
+        "description": "Dieselben Einstellungen gibt es im Panel (Zahnrad), dort zusammen mit den Updates. Integrationen mit Batteriegeräten: {battery_domains}.",
         "data": {
           "offline_after": "Ausgefallen nach",
           "flaky_outages": "Instabil ab (Unterbrüche in 24 Std.)",
           "startup_grace": "Anlaufphase nach dem Start",
           "battery_low": "Batterie schwach ab",
+          "battery_low_integrations": "Batterie: eigene Schwelle pro Integration",
           "battery_push": "Batterie: Push-Meldung",
           "battery_persistent": "Batterie: anhaltende Benachrichtigung",
           "exclude_integrations": "Integrationen ausblenden",
@@ -35,6 +36,7 @@
           "flaky_outages": "Ein Gerät, das online ist, aber in den letzten 24 Stunden so oft unterbrochen war, gilt als instabil.",
           "startup_grace": "Minuten nach dem Start von Home Assistant, in denen zurückkehrende Geräte keinen Unterbruch hatten. Zeit, in der Home Assistant nicht lief, zählt nie als Ausfall.",
           "battery_low": "Eine Batterie bis zu diesem Stand gilt als schwach (rot im Panel, \"Nur Probleme\").",
+          "battery_low_integrations": "Integration → Prozent, eine pro Zeile, z. B. \"zha: 25\". Ohne Eintrag gilt die Schwelle oben; massgebend ist die primäre Integration des Geräts.",
           "battery_push": "Einmal pro Gerät, wenn es unter die Schwelle fällt, an das Push-Ziel unten. Erneut erst, wenn die Batterie zwischendurch 5 Punkte über der Schwelle war (z. B. neue Batterie).",
           "battery_persistent": "Eine Benachrichtigung in Home Assistant mit allen Geräten mit schwacher Batterie; sie verschwindet, wenn alle wieder über der Schwelle sind.",
           "exclude_integrations": "Geräte dieser Integrationen zeigt das Panel nicht, und sie werden nicht überwacht.",
@@ -46,6 +48,9 @@
           "update_check": "Meldet eine neue Version unter Einstellungen → Reparaturen. Vorabversionen werden hier nie gemeldet."
         }
       }
+    },
+    "error": {
+      "battery_map": "Jede Zeile muss Integration: ganze Zahl von 5 bis 50 sein (z. B. \"zha: 25\")."
     }
   },
   "issues": {

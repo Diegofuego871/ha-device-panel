@@ -51,7 +51,9 @@ details such as software version, manufacturer, model and area.
   default 15 %) and how you are told: as a push notification (once per
   device, to a notify service or entity of your choice), as a persistent
   notification in Home Assistant listing all affected devices, both or
-  neither. Tapping a push notification opens the device in the panel.
+  neither. Tapping a push notification opens the device in the panel. The
+  threshold can also be set per integration (only integrations with battery
+  devices are listed).
 - Settings in the panel (gear icon) with updates: check for a new version,
   update via HACS with one click, restart afterwards, optionally offer
   pre-releases ("Enable in HACS" switches on the HACS pre-release option).

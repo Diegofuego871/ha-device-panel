@@ -112,6 +112,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "show_service_devices": False,
         "show_disabled_devices": False,
         "battery_low": 15,
+        "battery_low_integrations": {},
         "battery_push": False,
         "battery_persistent": False,
         "notify_service": "none",
@@ -141,7 +142,7 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
     assert result["step_id"] == "init"
     # Reihenfolge wie im Panel: Ausfall-Erkennung, Batterie, Ausschlüsse, Push, Anzeige, Updates.
     assert [str(k) for k in result["data_schema"].schema] == [
-        "offline_after", "flaky_outages", "startup_grace", "battery_low", "battery_push", "battery_persistent",
+        "offline_after", "flaky_outages", "startup_grace", "battery_low", "battery_low_integrations", "battery_push", "battery_persistent",
         "exclude_integrations", "exclude_types", "notify_service", "notify_click_target",
         "show_service_devices", "show_disabled_devices", "update_check",
     ]
@@ -221,3 +222,15 @@ async def test_options_flow_with_exclusions(hass: HomeAssistant, entry) -> None:
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options["exclude_integrations"] == ["hue"]
     assert entry.options["exclude_types"] == []
+
+
+async def test_options_flow_battery_per_integration(hass: HomeAssistant, entry) -> None:
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    # Ungültig: Fehler am Feld, die Eingaben bleiben stehen
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"battery_low_integrations": {"zha": 60}})
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"battery_low_integrations": "battery_map"}
+    assert "battery_low_integrations" not in entry.options
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"battery_low_integrations": {"zha": 25.0, "bthome": 10}})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options["battery_low_integrations"] == {"bthome": 10, "zha": 25}

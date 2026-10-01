@@ -57,7 +57,8 @@ Bereich.
   pro Gerät, an einen notify-Dienst oder eine notify-Entität nach Wahl), als
   anhaltende Benachrichtigung in Home Assistant mit allen betroffenen
   Geräten, beides oder keines. Ein Tipp auf die Push-Meldung öffnet das
-  Gerät im Panel.
+  Gerät im Panel. Die Schwelle lässt sich auch pro Integration einstellen
+  (aufgeführt sind nur Integrationen mit Batteriegeräten).
 - Einstellungen im Panel (Zahnrad) mit Updates: nach einer neuen Version
   suchen, mit einem Klick über HACS aktualisieren, danach neu starten,
   wahlweise Vorabversionen anbieten ("In HACS freischalten" schaltet die

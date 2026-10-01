@@ -11,6 +11,7 @@ from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
+    ObjectSelector,
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
@@ -19,6 +20,7 @@ from homeassistant.helpers.selector import (
 from .const import (
     CLICK_TARGETS,
     CONF_BATTERY_LOW,
+    CONF_BATTERY_LOW_INTEGRATIONS,
     CONF_BATTERY_PERSISTENT,
     CONF_BATTERY_PUSH,
     CONF_EXCLUDE_INTEGRATIONS,
@@ -36,7 +38,7 @@ from .const import (
     INT_RANGES,
     PANEL_TITLE,
 )
-from .options_api import INT_OPTIONS, current_values, notify_targets
+from .options_api import INT_OPTIONS, battery_map, current_values, notify_targets
 from .push import text
 
 # Einheit der Zahlenfelder im Optionsdialog.
@@ -77,22 +79,31 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
+        errors: dict[str, str] = {}
+        values = current_values(self.config_entry)
         if user_input is not None:
-            # Bestehende Options erhalten, statt sie zu ersetzen. Leere
-            # Mehrfachauswahl muss die alte überschreiben.
-            data = {**self.config_entry.options, **user_input}
-            for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES):
-                data[key] = sorted(set(user_input.get(key) or []))
-            # Das Zahlenfeld liefert Kommazahlen (2.0); gespeichert wird wie
-            # aus dem Panel eine ganze Zahl.
-            for key, _default in INT_OPTIONS:
-                if key in user_input:
-                    data[key] = int(user_input[key])
-            return self.async_create_entry(title="", data=data)
+            try:
+                own = battery_map(user_input.get(CONF_BATTERY_LOW_INTEGRATIONS))
+            except vol.Invalid:
+                own = None
+                errors[CONF_BATTERY_LOW_INTEGRATIONS] = "battery_map"
+            if not errors:
+                # Bestehende Options erhalten, statt sie zu ersetzen. Leere
+                # Mehrfachauswahl muss die alte überschreiben.
+                data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own}
+                for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES):
+                    data[key] = sorted(set(user_input.get(key) or []))
+                # Das Zahlenfeld liefert Kommazahlen (2.0); gespeichert wird wie
+                # aus dem Panel eine ganze Zahl.
+                for key, _default in INT_OPTIONS:
+                    if key in user_input:
+                        data[key] = int(user_input[key])
+                return self.async_create_entry(title="", data=data)
+            # Fehler: die Eingaben bleiben stehen.
+            values = {**values, **user_input}
         # Spät importiert: devices importiert options_api, das hier schon geladen ist.
         from .devices import async_catalog  # noqa: PLC0415
 
-        values = current_values(self.config_entry)
         catalog = await async_catalog(self.hass)
         integrations = [{"value": i["domain"], "label": f"{i['name']} ({i['devices']})"} for i in catalog["integrations"]]
         # Ausgeschlossene Integration ohne Geräte bleibt wählbar.
@@ -106,14 +117,20 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             "missing": lambda t: text(self.hass, "notify_missing", value=t["value"]),
         }
         targets = [{"value": t["value"], "label": labels[t["kind"]](t)} for t in notify_targets(self.hass, values[CONF_NOTIFY_SERVICE])]
+        # Integrationen mit Batteriegeräten als Hinweis zum Feld (Domain = Schlüssel).
+        battery_domains = ", ".join(f"{b['domain']} ({b['name']})" for b in catalog.get("battery", [])) or "–"
         return self.async_show_form(
             step_id="init",
+            errors=errors,
+            description_placeholders={"battery_domains": battery_domains},
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_OFFLINE_AFTER, default=values[CONF_OFFLINE_AFTER]): _number(CONF_OFFLINE_AFTER),
                     vol.Required(CONF_FLAKY_OUTAGES, default=values[CONF_FLAKY_OUTAGES]): _number(CONF_FLAKY_OUTAGES),
                     vol.Required(CONF_STARTUP_GRACE, default=values[CONF_STARTUP_GRACE]): _number(CONF_STARTUP_GRACE),
                     vol.Required(CONF_BATTERY_LOW, default=values[CONF_BATTERY_LOW]): _number(CONF_BATTERY_LOW),
+                    # Eigene Schwelle pro Integration als Zuordnung, z. B. "zha: 25".
+                    vol.Optional(CONF_BATTERY_LOW_INTEGRATIONS, default=values[CONF_BATTERY_LOW_INTEGRATIONS] or {}): ObjectSelector(),
                     vol.Required(CONF_BATTERY_PUSH, default=values[CONF_BATTERY_PUSH]): bool,
                     vol.Required(CONF_BATTERY_PERSISTENT, default=values[CONF_BATTERY_PERSISTENT]): bool,
                     vol.Optional(CONF_EXCLUDE_INTEGRATIONS, default=values[CONF_EXCLUDE_INTEGRATIONS]): SelectSelector(
