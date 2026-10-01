@@ -1,6 +1,10 @@
 {
   "domain": "device_panel",
   "name": "Device Panel",
+  "after_dependencies": [
+    "bluetooth",
+    "zha"
+  ],
   "codeowners": [
     "@Diegofuego871"
   ],

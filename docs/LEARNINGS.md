@@ -45,6 +45,11 @@ hat dort einen echten Fehler oder Umweg gekostet.
   2026.8: `async_get_device_by_identifier`).
 - Mindestversion in `hacs.json` (`homeassistant`) ehrlich setzen und gegen
   die genutzten APIs prüfen.
+- **Andere Integrationen importieren** (z. B. `homeassistant.components.zha`,
+  `bluetooth`): hassfest verlangt sie in `dependencies` oder
+  `after_dependencies`. Für "nutzen, wenn vorhanden" `after_dependencies`.
+  Lokal läuft hassfest nicht, erst in der CI: Manifest bei neuen Importen
+  selbst prüfen.
 
 ## Panel (Frontend)
 
