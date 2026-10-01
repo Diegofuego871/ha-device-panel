@@ -74,8 +74,12 @@
   }
   window.__devices = devices;
   window.__wsCalls = [];
+  // Sprache der HA-Oberfläche über ?lang=… (Standard Deutsch); HA setzt
+  // sie an beiden Stellen, das Panel liest zuerst locale.language.
+  const language = new URLSearchParams(location.search).get("lang") || "de";
   document.querySelector("home-assistant").hass = {
-    language: "de",
+    language,
+    locale: { language },
     connected: true,
     callWS: async (msg) => {
       window.__wsCalls.push(msg);

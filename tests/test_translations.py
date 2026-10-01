@@ -61,3 +61,39 @@ def test_panel_strings_complete() -> None:
     )
     diff = json.loads(result.stdout)
     assert diff == {"onlyDe": [], "onlyEn": []}
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="Node.js fehlt")
+def test_panel_language_selection() -> None:
+    """Deutsch für de und de-*, sonst Englisch (Regel aus docs/HANDOVER.md)."""
+    cases = {
+        "de": "de",
+        "de-CH": "de",
+        "DE-at": "de",
+        "en": "en",
+        "en-GB": "en",
+        "fr": "en",
+        "dev": "en",
+        "": "en",
+    }
+    script = (
+        "import(process.argv[1]).then(({ pickLang }) => {"
+        " const cases = JSON.parse(process.argv[2]);"
+        " const out = {};"
+        " for (const lang of Object.keys(cases)) {"
+        "  out[lang] = [pickLang({ locale: { language: lang } }), pickLang({ language: lang })];"
+        " }"
+        " out.none = [pickLang(null), pickLang({})];"
+        " console.log(JSON.stringify(out));"
+        "})"
+    )
+    result = subprocess.run(
+        ["node", "-e", script, (INTEGRATION / "panel" / "strings.js").as_uri(), json.dumps(cases)],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    got = json.loads(result.stdout)
+    expected = {lang: [want, want] for lang, want in cases.items()}
+    expected["none"] = ["en", "en"]
+    assert got == expected

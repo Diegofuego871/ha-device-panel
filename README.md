@@ -3,7 +3,7 @@
 [Deutsch](README.de.md)
 
 Home Assistant integration (HACS) with a sidebar panel showing **all devices**:
-which ones are down right now, how often and how long devices fail, and
+which ones are offline right now, how often and how long devices fail, and
 details such as software version, manufacturer, model and area.
 
 > Early development (0.x). Scope and behaviour may still change.
@@ -11,7 +11,7 @@ details such as software version, manufacturer, model and area.
 ## Features (planned, see `docs/CONCEPT.md`)
 
 - Table of all devices with status, area, integration, manufacturer/model
-  and software version; devices that are down are listed first.
+  and software version; devices that are offline are listed first.
 - Availability per device for 24 h / 7 days / 30 days, number and length of
   outages, timeline.
 - Search, filters, sortable and configurable columns, desktop and phone.

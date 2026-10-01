@@ -12,8 +12,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   zuoberst), Suche, Zähler.
 - CI: Hassfest grün, Panel-Tests (Playwright) grün, Python-Tests
   (pytest-homeassistant-custom-component) eingerichtet.
-- HACS-Prüfung noch rot:
-  - Beschreibung und Topics im Repo fehlen → setzt der Nutzer unter "About"
+- HACS-Prüfung noch rot (Beschreibung ist gesetzt, 7 von 9 Prüfungen grün):
+  - Topics im Repo fehlen → setzt der Nutzer unter "About"
     (`home-assistant`, `hacs`, `integration`, `home-assistant-custom`).
   - Brand-Icon fehlt → `custom_components/device_panel/brand/icon.png` und
     `logo.png` (256 × 256 bzw. ≥ 256 Höhe, PNG, transparent). Erst
@@ -48,9 +48,13 @@ ist fest im Code.
 | Kommunikation mit dem Nutzer | Chat | Deutsch, Schweizer Rechtschreibung (kein Eszett), Anführungszeichen "" |
 
 Absicherung durch Tests (`tests/test_translations.py`): gleiche Schlüssel DE/EN
-in `translations/` und `strings.js`, `strings.json` = `en.json`, kein Eszett.
-Panel-Tests prüfen wichtige Ansichten in beiden Sprachen. Neue Texte immer
-in beiden Sprachen im selben Commit.
+in `translations/` und `strings.js`, `strings.json` = `en.json`, kein Eszett,
+Sprachwahl `pickLang` (`de`/`de-*` → Deutsch, sonst Englisch).
+Panel-Tests prüfen die Ansichten in beiden Sprachen: Der HA-Nachbau nimmt die
+Sprache aus `?lang=de|en`, die Suiten laufen je Sprache auf Desktop und Handy
+und vergleichen die Texte ausgeschrieben (`tests/panel/suites/table-e2e.mjs`).
+Neue Suiten genauso aufbauen. Neue Texte immer in beiden Sprachen im selben
+Commit.
 
 Begriffe einheitlich halten (Beispiele):
 
