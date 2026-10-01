@@ -6,3 +6,8 @@ __pycache__/
 .pytest_cache/
 tests/panel/node_modules/
 tests/panel/output/
+
+# Mockups: Abhängigkeiten und gerenderte Zwischenstände
+docs/mockups/*/src/node_modules/
+docs/mockups/*/src/out/
+docs/mockups/*/src/package-lock.json

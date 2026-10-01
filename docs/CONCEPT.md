@@ -14,6 +14,54 @@ transparent macht:
 - **Inventar:** Hersteller, Modell, Softwarestand, Hardware-Version, Bereich,
   Integration, Verbindungsart.
 
+## Fahrplan (vom Nutzer festgelegt, der Reihe nach)
+
+Stand 2026-10-01. Mockups dazu: `docs/mockups/panel-v1/` (Variante A nah an
+unifi_dynamic, Variante B "Cockpit"); Entscheid des Nutzers steht aus.
+
+1. **Geräteliste** mit sinnvollen Spalten: Gerät, Status mit Offline-Dauer,
+   Verbindungsart, Empfang, Integration, Hersteller/Modell, Software (mit
+   Update-Hinweis), Batterie, Verfügbarkeit 24 Std. Ausgefallene Geräte
+   sehr klar erkennbar und zuoberst; oben sofort die Statistik: wie viele
+   ausgefallen und seit wann.
+2. **Spalten und Ansicht pro Benutzer:** Spalten ein-/ausblenden und
+   verschieben, Sortierung und Filter gespeichert, getrennt für Desktop und
+   Handy (siehe "Pflicht", Abschnitt 3).
+3. **Einstellungsmenü im Panel**, das alle Optionen der Integration abbildet
+   (siehe "Pflicht", Abschnitt 1). Darin pro Integration: anzeigen, Push,
+   anhaltende Benachrichtigung.
+4. **Update-Bereich wie unifi_dynamic:** Version, "Nach Updates suchen",
+   "Aktualisieren" über die HACS-Update-Entität, Vorabversionen,
+   "In HACS freischalten" (Entität "Pre-release" aktivieren, etwa 30 s auf
+   HACS warten, einschalten). Ohne HACS: Hinweis mit Link (wie
+   unifi_dynamic; eigenes Installieren ohne HACS ist offen, siehe unten).
+5. **Geräteansicht** beim Antippen: Verfügbarkeit mit Zeitstrahl und
+   Unterbrüchen, Verbindung und Empfang, Gerätedaten, Entitäten, Platz für
+   Einstellungen und Statistiken pro Gerät.
+6. **Verfügbarkeitsprotokoll:** Unterbrüche, 24 Std. / 7 / 30 Tage,
+   "instabil" bei vielen Unterbrüchen (siehe "Verfügbarkeitsprotokoll").
+7. **Push-Meldungen** mit einstellbarem Inhalt wie unifi_dynamic, Klickziel,
+   Entwarnung, anhaltende Benachrichtigung (siehe "Push-Meldungen").
+8. **Ideen** (aus den Mockups, einzeln zu entscheiden): Gesundheitswert pro
+   Gerät, Hinweis auf wahrscheinliche Ursache (Batterie, Empfang),
+   Sammelausfall erkennen und zusammenfassen, Ausfall-Puls (Zahl
+   ausgefallener Geräte über 24 Std.), Funkweg (Zigbee-Route, Bluetooth-
+   Proxy), Empfangsverlauf, Stummschalten pro Gerät, Filter nach
+   Verbindungsart.
+
+### Verbindungsart und Empfang: Quellen (geprüft in HA 2026.2)
+
+| Was | Quelle | Sicherheit |
+| --- | --- | --- |
+| Zigbee, Bluetooth, IP | `device.connections` (`zigbee`, `bluetooth`, `mac`) | geprüft |
+| Hub / Bridge | `device.via_device_id` | geprüft |
+| Thread / WLAN / Ethernet bei Matter | WebSocket `matter/node_diagnostics` | geprüft (Befehl existiert), Felder noch nicht |
+| Thread-Rolle bei HomeKit | Sensoren `ThreadStatus` von homekit_controller | geprüft |
+| Zigbee LQI/RSSI | ZHA-Gerätedaten (`lqi`, `rssi`, WebSocket `zha/devices`) | geprüft |
+| WLAN-Empfang | Sensoren mit `device_class: signal_strength` (dBm), z. B. Shelly, ESPHome | geprüft (Shelly) |
+| Bluetooth-Empfang und Proxy | `bluetooth.async_last_service_info` (RSSI, Quelle) | geprüft |
+| Thread-Empfang, Zigbee-Route | Matter-Thread-Diagnose, ZHA-Nachbartabelle | offen |
+
 ## Datenquellen (alles aus Home Assistant, keine externe API)
 
 | Was | Quelle |
