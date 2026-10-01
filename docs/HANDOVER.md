@@ -28,8 +28,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `actions_run_trigger`, Workflow `release.yml`, Ref `main`) oder durch
   einen Tag `vX.Y.Z`. Claude-Code-Sessions können keine Tags pushen (403).
   Gibt es das Release schon, ändert der Lauf nichts.
-- Version `0.1.0b1` ist vorbereitet, aber noch nicht veröffentlicht: Der
-  Workflow braucht den Stand auf `main`.
+- Vorabversion `v0.1.0b1` legt der Nutzer von Hand auf GitHub an (Ziel:
+  Branch `claude/kind-feynman-dut32g`), weil der Workflow den Stand auf
+  `main` braucht. Vor der Arbeit prüfen, ob es das Release gibt.
 
 ## Nächste Schritte (Reihenfolge)
 
