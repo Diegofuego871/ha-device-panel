@@ -107,8 +107,9 @@ hat dort einen echten Fehler oder Umweg gekostet.
   Vorabversionen als GitHub-Pre-Release (Versionsnummer mit `b1`/`rc1`
   macht die Erkennung robuster).
 - Veröffentlichte Tags nie umschreiben.
-- Claude-Code-Sessions können keine Tags pushen (403). Tags und Releases
-  legt deshalb der Nutzer an.
+- Claude-Code-Sessions können keine Tags pushen und keine Remote-Branches
+  löschen (beides 403); der Push auf `main` funktioniert. Tags, Releases und
+  das Löschen von Branches übernimmt deshalb der Nutzer.
 - Beim Anlegen eines Release auf GitHub ist das Ziel standardmässig `main`.
   Liegt der Stand auf einem anderen Branch, zeigt der Tag auf den falschen
   Commit (so geschehen bei `v0.1.0b1`). Deshalb nur auf `main` arbeiten.

@@ -48,7 +48,8 @@ Bereich. Vorbild in Aufbau, Arbeitsweise und Design ist die Integration
 - Nur auf `main` pushen, keine weiteren Branches. Gilt auch, wenn die
   Session einen anderen Branch vorgibt. Liegt Arbeit auf einem anderen
   Branch, nach `main` bringen und den Branch löschen. Lehnt GitHub den Push
-  auf `main` ab, über einen PR mergen und den Branch danach löschen.
+  auf `main` ab, über einen PR mergen und den Branch danach löschen. Remote-
+  Branches löschen kann die Session nicht (403): dann den Nutzer bitten.
 - Tags und Releases legt der Nutzer selbst an (Sessions können keine Tags
   pushen). Nach jedem Push mit neuer Version liefert Claude die
   Release-Angaben als Text:
