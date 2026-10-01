@@ -54,6 +54,12 @@ hat dort einen echten Fehler oder Umweg gekostet.
   `original_name` leer) heisst die Hauptentität wie das Gerät. Nicht auf
   `friendly_name` aus dem Zustand verlassen: der fehlt, wenn ein Zustand
   ohne Attribute gesetzt wurde.
+- **HACS ohne stabiles Release:** Gibt es nur Vorabversionen und ist der
+  Schalter "Pre-release" aus, nimmt HACS den neuesten Commit des
+  Standard-Branches als "Version" (`display_available_version`) und meldet
+  nach jedem Push ein Update. Auch installiert wird dann der Stand von
+  `main`, kein Release. Abhilfe: ein stabiles Release (oder den Schalter
+  einschalten).
 - **GitHub `releases/latest`** antwortet mit 404, solange es nur
   Vorabversionen gibt. Das ist kein Fehler: dann gibt es eben keine stabile
   Version (`update_check.async_latest_release`).

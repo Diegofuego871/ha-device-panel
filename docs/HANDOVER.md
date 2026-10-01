@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.4.0b1, Vorabversion mit Einstellungen und Updates im Panel)
+## Stand (0.4.0, erste stabile Version, mit Einstellungen und Updates im Panel)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -43,7 +43,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   Icon und Sprachtests (Manifest 0.1.0). Der Tag bleibt (veröffentlichte Tags
   nie ändern); `0.1.0b2` ersetzt ihn. `0.1.0` (Commit `ea170ca`) wurde auf
   Wunsch des Nutzers nicht veröffentlicht; die erste stabile Version kommt
-  mit `0.2.0`.
+  mit `0.2.0`. Geändert (Nutzer, 2026-10-01): Die erste stabile Version ist
+  `0.4.0`. `0.4.0b1` hatte keinen Tag und wurde direkt zu `0.4.0`. Grund: Ohne
+  stabiles Release und ohne eingeschalteten Schalter "Pre-release" bietet HACS
+  den neuesten Commit von `main` als Update an (bei jedem Push neu).
 
 ## Nächste Schritte (Reihenfolge)
 
@@ -51,7 +54,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    (`docs/mockups/panel-v1/`, Bilder 5–8), Überwachung mit vier Ebenen
    (Bild 9, `docs/CONCEPT.md`, "Überwachung einstellen"), ohne HACS nur
    Hinweis wie unifi_dynamic. Offen: Recorder-Nachfüllen (mit Schritt 6).
-2. Fahrplan-Schritte 1, 4, 5 und 6 erledigt (`0.2.0b1` bis `0.4.0b1`),
+2. Fahrplan-Schritte 1, 4, 5 und 6 erledigt (`0.2.0b1` bis `0.4.0`),
    Schritt 3 als Grundgerüst. Neue Anforderung (Nutzer, 2026-10-01):
    Integrationen und Gerätetypen in der Konfiguration ausschliessen können;
    Typ und Integration stehen dafür schon in der Liste. Weiter mit den

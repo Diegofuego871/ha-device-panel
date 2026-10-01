@@ -7,9 +7,12 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
-## [0.4.0b1] - 2026-10-01
+## [0.4.0] - 2026-10-01
 
-Updates direkt aus dem Panel: kein Umweg über HACS für jedes neue Release.
+Erste stabile Version, aufbauend auf den Vorabversionen 0.1.0b1 bis 0.3.0b1
+weiter unten. Updates direkt aus dem Panel: kein Umweg über HACS für jedes
+neue Release. HACS bietet Device Panel jetzt auch ohne seinen Schalter
+"Pre-release" an und meldet nicht mehr jeden Commit als Update.
 
 ### Hinzugefügt
 
@@ -136,7 +139,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[0.4.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0b1
+[0.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0
 [0.3.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.3.0b1
 [0.2.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.2.0b1
 [0.1.0b2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.1.0b2

@@ -48,7 +48,7 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    Handy (siehe "Pflicht", Abschnitt 3).
 3. **Einstellungsmenü im Panel**, das alle Optionen der Integration abbildet
    (siehe "Pflicht", Abschnitt 1). Darin pro Integration: anzeigen, Push,
-   anhaltende Benachrichtigung. Grundgerüst umgesetzt in 0.4.0b1 (Zahnrad,
+   anhaltende Benachrichtigung. Grundgerüst umgesetzt in 0.4.0 (Zahnrad,
    Dialog, Speichern/Abbrechen, `get_options`/`set_options`, Optionsdialog
    von HA); bisher nur der Abschnitt "Updates". Weitere Abschnitte nach
    Bild 5 folgen (Ausfall-Erkennung, Integrationen, Push, Anzeige).
@@ -56,7 +56,7 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    "Aktualisieren" über die HACS-Update-Entität, Vorabversionen,
    "In HACS freischalten" (Entität "Pre-release" aktivieren, etwa 30 s auf
    HACS warten, einschalten). Ohne HACS: nur Hinweis mit Link, genau wie
-   unifi_dynamic (Nutzer, 2026-10-01). Umgesetzt in 0.4.0b1 (vom Nutzer
+   unifi_dynamic (Nutzer, 2026-10-01). Umgesetzt in 0.4.0 (vom Nutzer
    vorgezogen, damit er nicht jedes Release über HACS installieren muss).
    Abweichung von unifi_dynamic: GitHub antwortet auf `releases/latest` mit
    404, solange es nur Vorabversionen gibt; das gilt nicht als Fehler. Und
