@@ -40,6 +40,8 @@ standardmässig aus, damit das Update nicht von selbst zu melden beginnt.
 
 ## [0.6.0] - 2026-10-01
 
+Nicht veröffentlicht; enthalten in 0.7.0.
+
 Einstellen, wann ein Gerät als ausgefallen oder instabil gilt, und wählen, ob
 Dienst-Geräte und deaktivierte Geräte in der Liste stehen.
 
@@ -225,7 +227,6 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [0.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.7.0
-[0.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.6.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0
 [0.3.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.3.0b1

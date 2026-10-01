@@ -38,6 +38,8 @@ anything by itself.
 
 ## [0.6.0] - 2026-10-01
 
+Not released; included in 0.7.0.
+
 Set when a device counts as offline or unstable, and choose whether service
 devices and disabled devices appear in the list.
 
@@ -214,7 +216,6 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [0.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.7.0
-[0.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.6.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0
 [0.3.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.3.0b1
