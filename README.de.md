@@ -27,7 +27,7 @@ Bereich.
 3. Einstellungen → Geräte & Dienste → Integration hinzufügen → "Device Panel".
 
 **Vorabversionen:** Versionen mit `b` oder `rc` in der Nummer (zum Beispiel
-`0.1.0b1`) erscheinen als Vorabversion (Pre-release) auf GitHub. HACS
+`0.1.0b2`) erscheinen als Vorabversion (Pre-release) auf GitHub. HACS
 installiert sie nur, wenn die Entität "Pre-release" am HACS-Gerät dieses
 Repositorys aktiviert und eingeschaltet ist (Einstellungen → Geräte & Dienste
 → HACS → Gerät "Device Panel"). HACS legt die Entität deaktiviert an.
@@ -42,6 +42,10 @@ und Home Assistant neu starten.
 - Python mit echtem Home Assistant: `pip install pytest-homeassistant-custom-component`
   (Python 3.13), dann `python -m pytest`.
 - Panel: `cd tests/panel && npm ci && npx playwright-core install chromium && node run.mjs`.
+
+## Änderungen
+
+Siehe [CHANGELOG.de.md](CHANGELOG.de.md).
 
 ## Lizenz
 

@@ -6,6 +6,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -21,13 +23,14 @@ def _version() -> str:
     return json.loads(manifest.read_text(encoding="utf-8"))["version"]
 
 
-def test_changelog_has_current_version() -> None:
-    """Der Release-Workflow bricht ohne Abschnitt ab; das soll schon hier auffallen."""
-    text = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+@pytest.mark.parametrize("name", ["CHANGELOG.md", "CHANGELOG.de.md"])
+def test_changelog_has_current_version(name: str) -> None:
+    """Ohne Abschnitt zur aktuellen Version gibt es keine Release Notes."""
+    text = (ROOT / name).read_text(encoding="utf-8")
     version = _version()
-    assert _section_module().section(text, version), f"kein CHANGELOG-Abschnitt für {version}"
+    assert _section_module().section(text, version), f"kein Abschnitt für {version} in {name}"
     link = f"[{version}]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v{version}"
-    assert link in text, "Link-Fussnote fehlt"
+    assert link in text, f"Link-Fussnote fehlt in {name}"
 
 
 def test_section_stops_at_next_version_and_links() -> None:

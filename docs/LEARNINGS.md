@@ -107,6 +107,8 @@ hat dort einen echten Fehler oder Umweg gekostet.
   Vorabversionen als GitHub-Pre-Release (Versionsnummer mit `b1`/`rc1`
   macht die Erkennung robuster).
 - Veröffentlichte Tags nie umschreiben.
-- Claude-Code-Sessions dürfen nur ihren Branch pushen; ein Tag-Push endet
-  mit 403. Releases deshalb über einen Workflow mit `workflow_dispatch`, den
-  die Session auslösen kann (muss auf dem Standard-Branch liegen).
+- Claude-Code-Sessions können keine Tags pushen (403). Tags und Releases
+  legt deshalb der Nutzer an.
+- Beim Anlegen eines Release auf GitHub ist das Ziel standardmässig `main`.
+  Liegt der Stand auf einem anderen Branch, zeigt der Tag auf den falschen
+  Commit (so geschehen bei `v0.1.0b1`). Deshalb nur auf `main` arbeiten.

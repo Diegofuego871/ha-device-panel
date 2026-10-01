@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -10,6 +11,7 @@ from pathlib import Path
 import pytest
 
 INTEGRATION = Path(__file__).resolve().parents[1] / "custom_components" / "device_panel"
+ROOT = INTEGRATION.parents[1]
 
 
 def _keys(data: dict, prefix: str = "") -> set[str]:
@@ -39,9 +41,8 @@ def test_german_and_english_have_same_keys() -> None:
 
 def test_no_sharp_s() -> None:
     files = [*INTEGRATION.glob("*.py"), *INTEGRATION.glob("translations/*.json"), *INTEGRATION.glob("panel/*.js")]
-    root = INTEGRATION.parents[1]
-    files += [root / "README.de.md", root / "README.md", root / "CHANGELOG.md"]
-    offenders = [str(f.relative_to(root)) for f in files if "\u00df" in f.read_text(encoding="utf-8")]
+    files += [ROOT / name for name in ("README.md", "README.de.md", "CHANGELOG.md", "CHANGELOG.de.md")]
+    offenders = [str(f.relative_to(ROOT)) for f in files if "\u00df" in f.read_text(encoding="utf-8")]
     assert not offenders, f"Eszett statt ss in: {offenders}"
 
 
@@ -97,3 +98,38 @@ def test_panel_language_selection() -> None:
     expected = {lang: [want, want] for lang, want in cases.items()}
     expected["none"] = ["en", "en"]
     assert got == expected
+
+
+def _structure(path: Path) -> list[str]:
+    """
+    Aufbau einer Markdown-Datei ohne den Wortlaut: Überschriften-Ebenen,
+    Listenpunkte, Zitate, Codeblöcke. Versionsüberschriften und
+    Link-Fussnoten im CHANGELOG müssen wörtlich gleich sein.
+    """
+    out: list[str] = []
+    in_code = False
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("```"):
+            in_code = not in_code
+            out.append("code")
+        elif in_code:
+            continue
+        elif line.startswith("## ["):
+            out.append(line)
+        elif match := re.match(r"(#+) ", line):
+            out.append(match.group(1))
+        elif re.match(r"(-|\d+\.) ", line):
+            out.append("item")
+        elif line.startswith(">"):
+            out.append("quote")
+        elif re.match(r"\[[^\]]+\]: ", line):
+            out.append(line)
+    return out
+
+
+@pytest.mark.parametrize(("en", "de"), [("README.md", "README.de.md"), ("CHANGELOG.md", "CHANGELOG.de.md")])
+def test_docs_bilingual(en: str, de: str) -> None:
+    """README und CHANGELOG gibt es in beiden Sprachen, gleich aufgebaut und gegenseitig verlinkt."""
+    assert _structure(ROOT / en) == _structure(ROOT / de)
+    assert f"]({de})" in (ROOT / en).read_text(encoding="utf-8")
+    assert f"]({en})" in (ROOT / de).read_text(encoding="utf-8")

@@ -3,11 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.1.0b1, erste Vorabversion)
+## Stand (0.1.0b2, zweite Vorabversion)
 
-- Repository `Diegofuego871/ha-device-panel`. Die Arbeit seit dem
-  Projektstart liegt auf dem Branch `claude/kind-feynman-dut32g`; `main` ist
-  noch auf dem Stand des Projektstarts (ohne Icon).
+- Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
+  `CLAUDE.md`, "Git und Releases").
 - Grundgerüst lauffähig: Integration `device_panel` (Config-Flow, eine
   Instanz), iframe-Panel in der Seitenleiste, WebSocket
   `device_panel/list_devices`, Tabelle mit allen Geräten (ausgefallene
@@ -19,24 +18,19 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `/device_panel/` ausgeliefert, `hass.data[DATA_PUSH_IMAGE]` enthält
   `/device_panel/icon.png` (für `icon_url`). Der Versand selbst fehlt noch,
   siehe `docs/CONCEPT.md`, Abschnitt "Push-Meldungen".
-- CI: Python-Tests, Panel-Tests (DE/EN) und Hassfest grün. HACS-Prüfung nur
-  noch rot, solange die Topics fehlen → setzt der Nutzer unter "About"
-  (`home-assistant`, `hacs`, `integration`, `home-assistant-custom`).
-- Releases über `.github/workflows/release.yml`: Notes aus dem
-  CHANGELOG-Abschnitt der Version in `manifest.json`, Nummer mit a/b/rc →
-  Vorabversion. Start per "Run workflow" auf `main` (Claude: Werkzeug
-  `actions_run_trigger`, Workflow `release.yml`, Ref `main`) oder durch
-  einen Tag `vX.Y.Z`. Claude-Code-Sessions können keine Tags pushen (403).
-  Gibt es das Release schon, ändert der Lauf nichts.
-- Vorabversion `v0.1.0b1` legt der Nutzer von Hand auf GitHub an (Ziel:
-  Branch `claude/kind-feynman-dut32g`), weil der Workflow den Stand auf
-  `main` braucht. Vor der Arbeit prüfen, ob es das Release gibt.
+- CI: Python-Tests, Panel-Tests (DE/EN), Hassfest und HACS-Prüfung grün
+  (Beschreibung und Topics sind gesetzt).
+- Releases legt der Nutzer an; Claude liefert die Release-Angaben (siehe
+  `CLAUDE.md`, "Git und Releases").
+- `v0.1.0b1` (Vorabversion) zeigt versehentlich auf `8944f3b`, den Stand vor
+  Icon und Sprachtests (Manifest 0.1.0). Der Tag bleibt (veröffentlichte Tags
+  nie ändern); `0.1.0b2` ersetzt ihn. Vor der Arbeit prüfen, ob
+  `v0.1.0b2` veröffentlicht ist.
 
 ## Nächste Schritte (Reihenfolge)
 
-1. Branch nach `main` bringen (PR), damit HACS ohne eingeschaltete
-   Vorabversionen denselben Stand bekommt. Danach `0.1.0` als stabile
-   Version, Repo in HACS als benutzerdefiniertes Repository testen.
+1. `0.1.0b2` in HACS testen (Vorabversionen am HACS-Gerät einschalten),
+   danach `0.1.0` als stabile Version.
 2. Offene Entscheide aus `docs/CONCEPT.md` klären (Definition
    "ausgefallen", Schwelle, ausgeblendete Geräte, Recorder-Nachfüllen).
 3. Pflicht-Übernahmen aus unifi_dynamic umsetzen (`docs/CONCEPT.md`,
@@ -56,14 +50,17 @@ ist fest im Code.
 | Panel | `panel/strings.js` | `STRINGS.de` und `STRINGS.en` mit identischen Schlüsseln; Sprache aus `hass.locale.language` (`de`/`de-*` → Deutsch, sonst Englisch) |
 | HA-Oberfläche (Config-Flow, Optionen, Entitäten, Dienste, Reparaturen) | `strings.json`, `translations/en.json`, `translations/de.json` | `strings.json` identisch mit `en.json`; `de.json` mit denselben Schlüsseln |
 | Serverseitige Texte (Push, Reparaturen mit Platzhaltern, Optionslisten) | Python | `hass.config.language`, `de`/`de-*` → Deutsch, sonst Englisch |
-| README | `README.md` (EN), `README.de.md` (DE) | immer beide gleich nachführen, gegenseitig verlinkt |
-| CHANGELOG, Release Notes | `CHANGELOG.md` | nur Englisch |
+| README | `README.md` (EN), `README.de.md` (DE) | gleicher Aufbau, gegenseitig verlinkt, immer beide im selben Commit |
+| CHANGELOG | `CHANGELOG.md` (EN), `CHANGELOG.de.md` (DE) | gleicher Aufbau (Keep a Changelog), gegenseitig verlinkt, immer beide im selben Commit |
+| Release Notes | Text für den Nutzer | Englisch, aus `CHANGELOG.md` |
 | Code-Kommentare | Python, JS | Deutsch |
 | Kommunikation mit dem Nutzer | Chat | Deutsch, Schweizer Rechtschreibung (kein Eszett), Anführungszeichen "" |
 
 Absicherung durch Tests (`tests/test_translations.py`): gleiche Schlüssel DE/EN
 in `translations/` und `strings.js`, `strings.json` = `en.json`, kein Eszett,
-Sprachwahl `pickLang` (`de`/`de-*` → Deutsch, sonst Englisch).
+Sprachwahl `pickLang` (`de`/`de-*` → Deutsch, sonst Englisch), gleicher
+Aufbau von README und CHANGELOG in beiden Sprachen (Überschriften,
+Listenpunkte, Versionen, Link-Fussnoten).
 Panel-Tests prüfen die Ansichten in beiden Sprachen: Der HA-Nachbau nimmt die
 Sprache aus `?lang=de|en`, die Suiten laufen je Sprache auf Desktop und Handy
 und vergleichen die Texte ausgeschrieben (`tests/panel/suites/table-e2e.mjs`).
@@ -87,7 +84,9 @@ Begriffe einheitlich halten (Beispiele):
 - Vor UI-Änderungen Mockups (erfundene Daten, Desktop und Handy, Varianten
   mit Empfehlung); der Nutzer entscheidet visuell.
 - Bei Verhaltensänderungen nachfragen, mit Auswirkung und Empfehlung.
-- Jede funktionale Änderung: Version, `PANEL_VERSION`, CHANGELOG, README DE/EN,
-  Prüfungen, Tests; nach dem Push Release Notes (EN) als Codeblock ausgeben.
+- Nur auf `main` pushen, andere Branches löschen.
+- Jede funktionale Änderung: Version, `PANEL_VERSION`, CHANGELOG DE/EN,
+  README DE/EN, Prüfungen, Tests; nach dem Push die Release-Angaben mit
+  genauer Version ausgeben (Nutzer legt Tag und Release an).
 - Veröffentlichte Tags nie ändern.
 - Keine Tokens/Keys im Panel; andere Integrationen nur per Knopfdruck ändern.

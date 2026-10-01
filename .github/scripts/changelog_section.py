@@ -1,8 +1,9 @@
 """Gibt den Abschnitt einer Version aus CHANGELOG.md aus (Release Notes).
 
-Aufruf: python3 .github/scripts/changelog_section.py 0.1.0b1
-Endet mit Fehler, wenn die Version fehlt oder ihr Abschnitt leer ist, damit
-nie ein Release ohne Notes entsteht.
+Aufruf: python3 .github/scripts/changelog_section.py 0.1.0b2
+Claude liefert den Text dem Nutzer, der damit das Release anlegt (siehe
+CLAUDE.md, "Git und Releases"). Endet mit Fehler, wenn die Version fehlt
+oder ihr Abschnitt leer ist.
 """
 
 from __future__ import annotations
