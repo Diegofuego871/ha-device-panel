@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Device Panel",
+        "description": "Adds the Device Panel to the sidebar: all devices with outages, availability and software version."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Device Panel is already set up."
+    }
+  }
+}

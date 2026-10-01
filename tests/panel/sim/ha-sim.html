@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- wie im HA-Frontend -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  /* Dunkles Design wie HA es per Variablen am <html> setzt */
+  html {
+    --primary-background-color: #111111;
+    --secondary-background-color: #282828;
+    --card-background-color: #1c1c1c;
+    --primary-text-color: #e1e1e1;
+    --secondary-text-color: #9b9b9b;
+    --disabled-text-color: #6f6f6f;
+    --divider-color: rgba(225, 225, 225, 0.12);
+    --error-color: #ef5350;
+    --primary-color: #03a9f4;
+    --success-color: #43a047;
+    --header-height: 56px;
+    --sim-safe-top: 47px; /* simuliert den iPhone-Safe-Area-Abstand */
+  }
+  html, body { margin: 0; height: 100%; background: var(--primary-background-color); }
+  /* Nachbau von hass-subpage im narrow-Modus: fix über den ganzen Viewport,
+     Kopfzeile oben (mit Safe-Area-Abstand), iframe füllt den Rest */
+  .subpage { position: fixed; inset: 0; display: block; }
+  .sim-toolbar {
+    padding-top: var(--sim-safe-top);
+    height: var(--header-height);
+    display: flex; align-items: center; gap: 12px; padding-left: 12px;
+    color: var(--primary-text-color); font-family: sans-serif; font-size: 20px;
+    border-bottom: 1px solid var(--divider-color);
+    box-sizing: content-box;
+  }
+  .sim-content {
+    height: calc(100% - var(--header-height) - var(--sim-safe-top) - 1px);
+  }
+  iframe { border: 0; display: block; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<home-assistant>
+  <div class="subpage">
+    <div class="sim-toolbar"><span id="sim-menu">☰</span><span>Device Panel</span></div>
+    <div class="sim-content">
+      <!-- exakt HAs IFRAME_SANDBOX -->
+      <iframe id="panel-frame"
+        title="Device Panel"
+        sandbox="allow-forms allow-popups allow-pointer-lock allow-same-origin allow-scripts allow-modals allow-downloads"
+        allow="fullscreen"></iframe>
+    </div>
+  </div>
+</home-assistant>
+<script>
+  // Erfundene Geräte (nie echte Namen, IPs oder Orte verwenden).
+  const areas = ["Küche", "Wohnzimmer", "Büro", "Garten", null];
+  const makers = [["Beispiel AG", "Licht L1"], ["Muster GmbH", "Sensor S2"], ["Demo Inc.", "Steckdose P3"], [null, null]];
+  const devices = [];
+  for (let i = 0; i < 30; i++) {
+    const [manufacturer, model] = makers[i % makers.length];
+    devices.push({
+      id: "dev-" + i,
+      name: "Gerät " + String(i).padStart(2, "0"),
+      area: areas[i % areas.length],
+      manufacturer,
+      model,
+      sw_version: i % 3 ? "1." + (i % 5) + ".0" : null,
+      hw_version: i % 4 === 0 ? "rev" + (i % 3) : null,
+      integrations: [i % 2 ? "zha" : "shelly"],
+      service: i === 29,
+      entities: 2,
+      online: i % 9 === 4 ? false : i % 13 === 7 ? null : true,
+    });
+  }
+  window.__devices = devices;
+  window.__wsCalls = [];
+  document.querySelector("home-assistant").hass = {
+    language: "de",
+    connected: true,
+    callWS: async (msg) => {
+      window.__wsCalls.push(msg);
+      if (msg.type === "device_panel/list_devices") return { devices: window.__devices };
+      return {};
+    },
+  };
+  document.getElementById("panel-frame").src = "/device_panel/panel/panel.html?v=1";
+</script>
+</body>
+</html>

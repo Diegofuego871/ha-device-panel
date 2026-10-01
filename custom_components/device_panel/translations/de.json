@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Device Panel",
+        "description": "Fügt das Device Panel zur Seitenleiste hinzu: alle Geräte mit Ausfällen, Verfügbarkeit und Softwarestand."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Device Panel ist bereits eingerichtet."
+    }
+  }
+}
