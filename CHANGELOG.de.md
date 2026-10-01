@@ -7,6 +7,37 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.5.0] - 2026-10-01
+
+Bestimmen, was das Panel zeigt: ganze Integrationen oder Gerätetypen
+ausblenden und den Typ eines einzelnen Geräts korrigieren.
+
+### Hinzugefügt
+
+- Abschnitte "Integrationen" und "Gerätetypen" in den Einstellungen: jede
+  Integration und jeder Typ mit der Zahl der Geräte und einem Schalter
+  "Anzeigen", dazu "Alle umschalten". Ausgeblendete Geräte zeigt das Panel
+  nicht, und sie werden nicht überwacht (keine Ausfälle, kein Verlauf). Auch
+  im Optionsdialog der Integration ("Integrationen ausblenden",
+  "Gerätetypen ausblenden").
+- Neue Gerätetypen "Handy / Computer" (Companion-App), "Netzwerk" (Router,
+  Access Point, Switch, NAS von Integrationen wie UniFi, FRITZ!Box oder
+  Synology), "Ventil" und "Energie / Zähler" (Geräte, die vor allem
+  Leistung, Energie, Gas oder Wasser messen).
+- Typ eines Geräts im Popup ändern: "Automatisch: …" behält den erkannten
+  Typ, jede andere Wahl bleibt als "von Hand gesetzt" bestehen und gilt
+  auch für die Ausschlüsse.
+
+### Geändert
+
+- Ventile erscheinen nicht mehr als "Rollladen / Abdeckung", sondern als
+  eigener Typ "Ventil".
+- Ausfall-Puls und Sammelausfälle zählen nur noch die Geräte, die das Panel
+  zeigt.
+- Ein Gerät, das nicht mehr überwacht wird (ausgeblendet, deaktiviert,
+  gelöscht), hat ab diesem Moment "keine Daten", statt weiter als online zu
+  gelten.
+
 ## [0.4.0] - 2026-10-01
 
 Erste stabile Version, aufbauend auf den Vorabversionen 0.1.0b1 bis 0.3.0b1
@@ -139,6 +170,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0
 [0.3.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.3.0b1
 [0.2.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.2.0b1

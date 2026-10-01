@@ -136,3 +136,23 @@ def test_docs_bilingual(en: str, de: str) -> None:
     assert _structure(ROOT / en) == _structure(ROOT / de)
     assert f"]({de})" in (ROOT / en).read_text(encoding="utf-8")
     assert f"]({en})" in (ROOT / de).read_text(encoding="utf-8")
+
+
+def test_panel_device_types_match_backend() -> None:
+    """Gerätetypen im Panel (Reihenfolge, Symbole, Texte) wie const.DEVICE_TYPES."""
+    import re
+
+    from custom_components.device_panel.const import DEVICE_TYPES
+
+    js = (INTEGRATION / "panel" / "device-panel.js").read_text(encoding="utf-8")
+    order = re.search(r"const TYPE_ORDER = \[([^\]]*)\]", js).group(1)
+    assert [t.strip().strip('"') for t in order.split(",")] == list(DEVICE_TYPES)
+    icons = re.search(r"const TYPE_ICONS = \{(.*?)\n\};", js, re.S).group(1)
+    assert set(re.findall(r"^  (\w+):", icons, re.M)) == set(DEVICE_TYPES)
+    strings = (INTEGRATION / "panel" / "strings.js").read_text(encoding="utf-8")
+    for kind in DEVICE_TYPES:
+        key = f"type{kind[0].upper()}{kind[1:]}:"
+        assert strings.count(key) == 2, key  # Deutsch und Englisch
+    for lang in ("en", "de"):
+        options = _load(f"translations/{lang}.json")["selector"]["device_type"]["options"]
+        assert list(options) == list(DEVICE_TYPES)

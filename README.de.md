@@ -21,8 +21,9 @@ Bereich.
   Tabelle seitlich scrollt.
 - Spalten für Status, Verbindung, Verfügbarkeit über 24 Stunden (Streifen
   und Prozent), Typ (z. B. Licht, Steckdose, Bewegung, Tür/Fenster, Klima,
-  Hub/Bridge), Integration mit ihrem Eintrag, Batterie, Hersteller und
-  Modell, Software mit Update-Hinweis.
+  Hub/Bridge, Netzwerk, Handy/Computer, Energie/Zähler), Integration mit
+  ihrem Eintrag, Batterie, Hersteller und Modell, Software mit
+  Update-Hinweis.
 - Verbindungsart pro Gerät: Zigbee, Z-Wave, Thread, Matter (Thread, WLAN
   oder LAN), Bluetooth, WLAN, Netzwerk, Cloud; Empfang in dBm oder LQI und
   der Hub, die Bridge oder der Bluetooth-Proxy dazwischen.
@@ -33,7 +34,8 @@ Bereich.
   Integration (warnt, wenn ihr Eintrag nicht geladen ist), Geräteangaben und
   alle Entitäten mit Zustand, die für das Lebenszeichen entscheidenden
   markiert. Ein Tipp auf eine Entität öffnet den Entitäts-Dialog von Home
-  Assistant, ein Knopf die Geräteseite von Home Assistant.
+  Assistant, ein Knopf die Geräteseite von Home Assistant. Hier lässt sich
+  der Typ des Geräts ändern, wenn die Erkennung falsch liegt.
 - Statistik-Fenster aus den Kacheln: Verfügbarkeit über 24 Stunden, 7 oder
   30 Tage mit Zeitstrahl, jeder Unterbruch mit Zeit und Dauer sowie
   Unterbrüche pro Tag.
@@ -44,6 +46,9 @@ Bereich.
 - Verfügbarkeitsprotokoll über 31 Tage in einer eigenen Datei (nicht im
   Recorder). Zeit, in der Home Assistant nicht lief, gilt als "keine Daten",
   nie als Ausfall.
+- Ganze Integrationen oder Gerätetypen ausblenden (Einstellungen im Panel
+  oder Optionsdialog der Integration): ausgeblendete Geräte werden weder
+  gezeigt noch überwacht.
 - Einstellungen im Panel (Zahnrad) mit Updates: nach einer neuen Version
   suchen, mit einem Klick über HACS aktualisieren, danach neu starten,
   wahlweise Vorabversionen anbieten ("In HACS freischalten" schaltet die
@@ -54,8 +59,8 @@ Bereich.
 
 - Spalten, Sortierung und Filter pro Benutzer, getrennt für Desktop und
   Handy.
-- Weitere Einstellungen im Panel, flexible Regeln für die Überwachung
-  (Integrationen oder Gerätetypen ausschliessen), Push-Meldungen.
+- Weitere Einstellungen im Panel (Ausfall-Erkennung, Anzeige),
+  Push-Meldungen.
 
 ## Installation
 

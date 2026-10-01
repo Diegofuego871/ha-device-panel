@@ -135,6 +135,9 @@ hat dort einen echten Fehler oder Umweg gekostet.
   echte Klicks/Taps statt `element.click()` wo es um Gesten geht.
   `run.mjs` startet Server und alle Suiten, CI führt sie bei jedem Push aus.
 - Screenshots der Suiten nach `tests/panel/output/` (nicht im Repo).
+- **Chromium in der Cloud-Session:** Der vorinstallierte Browser passt nicht
+  zur Version von `playwright-core` ("Executable doesn't exist"); statt
+  herunterzuladen `CHROMIUM_PATH=/opt/pw-browsers/chromium node run.mjs`.
 - **Nachbau:** keine globalen Funktionen mit Namen von `window`-Eigenschaften
   (`history`, `location`, `name` …): eine Funktion `history` verdeckte
   `window.history`, und `pushState` des Panels schlug fehl.

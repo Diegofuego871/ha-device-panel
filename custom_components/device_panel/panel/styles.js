@@ -294,6 +294,26 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .sw-btn:disabled { opacity: .5; cursor: default; }
 .sw-btn:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
 
+/* Ausschlüsse: Integrationen und Gerätetypen mit Schalter "Anzeigen" */
+.ex-intro { margin: 8px 0 6px; }
+.ex-head { display: flex; justify-content: space-between; padding: 6px 2px 4px; color: var(--dp-text2); font-size: 11px; font-weight: 500;
+  letter-spacing: .04em; text-transform: uppercase; }
+.ex-row { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 6px 2px; border-bottom: 1px solid var(--dp-divider); }
+.ex-row:last-child { border-bottom: none; }
+.ex-row.ex-all { padding: 6px 10px; margin: 0 -8px 2px; border: none; border-radius: 10px; background: var(--dp-subtle); color: var(--dp-text2); min-height: 40px; }
+.ex-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.ex-name small { display: block; color: var(--dp-text2); font-size: 12px; }
+.ex-row.off .ex-name, .ex-row.off .ibadge { opacity: .55; }
+.ibadge { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: #fff; font-size: 11.5px; font-weight: 600;
+  background: hsl(var(--h, 200) 55% 45%); }
+.ibadge.type { background: var(--dp-subtle); color: var(--dp-text2); }
+/* Typ im Geräte-Popup wählbar */
+.typ-sel { position: relative; display: inline-flex; align-items: center; gap: 6px; max-width: 100%; color: var(--dp-text); }
+.typ-sel > svg:first-child { color: var(--dp-text2); }
+.typ-sel select { min-width: 0; max-width: 100%; height: 30px; padding: 0 26px 0 8px; border: 1px solid var(--dp-divider); border-radius: 8px;
+  background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 14px; appearance: none; -webkit-appearance: none; text-overflow: ellipsis; cursor: pointer; }
+.typ-sel > svg:last-child { position: absolute; right: 4px; color: var(--dp-text2); pointer-events: none; }
+
 /* Versionszeile oben in den Einstellungen */
 .ver { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 11px 12px 11px 14px; border-radius: 14px; background: var(--dp-subtle); }
 .ver-ic { display: grid; flex: none; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--dp-success-soft); color: var(--dp-success); }

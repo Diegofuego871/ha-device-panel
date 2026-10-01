@@ -236,3 +236,106 @@ async def test_ws_device_and_availability(hass: HomeAssistant, setup: Availabili
     assert (await client.receive_json())["error"]["code"] == "not_found"
     await client.send_json({"id": 4, "type": f"{DOMAIN}/availability", "device_id": dev.id, "range": "1y"})
     assert (await client.receive_json())["success"] is False
+
+
+# --- neue Typen, Typ von Hand, Ausschlüsse -------------------------------------
+
+@pytest.mark.parametrize(
+    ("domain", "entities", "expected"),
+    [
+        ("mobile_app", [("sensor", "bat", "80", "battery"), ("device_tracker", "t", "home", None)], "phone"),
+        ("synology_dsm", [("sensor", "cpu", "5", None), ("binary_sensor", "heat", "off", "heat")], "network"),
+        ("test", [("valve", "v", "open", None)], "valve"),
+        ("test", [("sensor", "p", "120", "power"), ("sensor", "e", "5", "energy"), ("sensor", "t", "20", "temperature")], "energy"),
+        ("test", [("sensor", "t", "20", "temperature"), ("sensor", "h", "50", "humidity"), ("sensor", "p", "1", "power")], "sensor"),
+    ],
+)
+async def test_new_device_types(hass: HomeAssistant, setup: AvailabilityLog, domain: str, entities: list, expected: str) -> None:
+    dev = _device(hass, "Gerät", domain=domain)
+    for edomain, key, state, dclass in entities:
+        _entity(hass, dev, edomain, key, state, original_device_class=dclass)
+    data = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}
+    assert data["Gerät"]["type"] == expected
+    assert data["Gerät"]["type_manual"] is False
+
+
+async def test_type_override(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client, hass_storage: dict[str, Any]) -> None:
+    dev = _device(hass, "Zwischenstecker")
+    _entity(hass, dev, "switch", "s", "on")
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_device_type", "device_id": dev.id, "device_type": "outlet"})
+    assert (await client.receive_json())["success"]
+    data = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}["Zwischenstecker"]
+    assert (data["type"], data["type_auto"], data["type_manual"]) == ("outlet", "switch", True)
+    assert hass_storage[f"{DOMAIN}.devices"]["data"] == {"types": {dev.id: "outlet"}}
+    # Zurück auf die Erkennung
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_device_type", "device_id": dev.id, "device_type": None})
+    assert (await client.receive_json())["success"]
+    data = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}["Zwischenstecker"]
+    assert (data["type"], data["type_manual"]) == ("switch", False)
+    # Ungültiger Typ und unbekanntes Gerät
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/set_device_type", "device_id": dev.id, "device_type": "toaster"})
+    assert (await client.receive_json())["success"] is False
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/set_device_type", "device_id": "gibt-es-nicht", "device_type": "light"})
+    assert (await client.receive_json())["error"]["code"] == "not_found"
+
+
+async def test_exclusions(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client, freezer) -> None:
+    lamp = _device(hass, "Lampe", domain="hue")
+    _entity(hass, lamp, "light", "l", "on")
+    phone = _device(hass, "Handy", domain="mobile_app")
+    _entity(hass, phone, "sensor", "bat", "50", original_device_class="battery")
+    plug = _device(hass, "Steckdose")
+    _entity(hass, plug, "switch", "s", "on")
+    setup.evaluate()
+    client = await hass_ws_client(hass)
+
+    # Katalog für die Einstellungen: alle Kandidaten mit Zahl der Geräte
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/get_options"})
+    result = (await client.receive_json())["result"]
+    domains = {i["domain"]: i["devices"] for i in result["catalog"]["integrations"]}
+    types = {t["type"]: t["devices"] for t in result["catalog"]["types"]}
+    assert domains["hue"] == 1 and domains["mobile_app"] == 1
+    assert types["phone"] == 1 and types["light"] == 1 and types["valve"] == 0
+    assert result["values"]["exclude_integrations"] == [] and result["values"]["exclude_types"] == []
+
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {"exclude_integrations": ["hue"], "exclude_types": ["phone"]}})
+    assert (await client.receive_json())["result"] == {"changed": True}
+    names = {d["name"] for d in (await async_list_devices(hass, setup))["devices"]}
+    assert "Lampe" not in names and "Handy" not in names and "Steckdose" in names
+
+    # Ausgeschlossene werden nicht mehr überwacht: ab jetzt "keine Daten".
+    freezer.tick(timedelta(minutes=1))
+    setup.evaluate()
+    assert setup.events(lamp.id)[-1][1] is None
+    assert setup.events(plug.id)[-1][1] == 1
+    # Katalog zählt weiterhin alle (sonst liesse sich nichts zurückholen)
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/get_options"})
+    result = (await client.receive_json())["result"]
+    assert {i["domain"] for i in result["catalog"]["integrations"]} >= {"hue", "mobile_app"}
+    assert result["values"]["exclude_types"] == ["phone"]
+
+    # Ungültige Werte
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/set_options", "values": {"exclude_types": ["toaster"]}})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"
+    await client.send_json({"id": 5, "type": f"{DOMAIN}/set_options", "values": {"exclude_integrations": ["Böse Domain"]}})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"
+
+
+async def test_pulse_and_incidents_only_shown(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client, freezer) -> None:
+    lights = []
+    for i in range(3):
+        dev = _device(hass, f"Zigbee {i}", domain="zha")
+        lights.append(_entity(hass, dev, "light", "l", "on"))
+    setup.evaluate()
+    for light in lights:
+        hass.states.async_set(light, "unavailable")
+    freezer.tick(timedelta(minutes=4))
+    setup.evaluate()
+    assert max((await async_list_devices(hass, setup))["pulse"]) == 3
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_options", "values": {"exclude_integrations": ["zha"]}})
+    await client.receive_json()
+    result = await async_list_devices(hass, setup)
+    assert max(result["pulse"]) == 0
+    assert result["incidents"] == []

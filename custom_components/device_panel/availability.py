@@ -232,6 +232,13 @@ class AvailabilityLog:
                 at = max(at, last[0])
             events.append([min(at, now), state])
             self._saver.schedule()
+        # Nicht mehr überwacht (ausgeschlossen, deaktiviert, gelöscht): ab
+        # jetzt "keine Daten", damit eine spätere Rückkehr nicht als
+        # durchgehend online erscheint.
+        for dev, events in self._events.items():
+            if dev not in seen and events and events[-1][1] is not None:
+                events.append([max(now, events[-1][0]), None])
+                self._saver.schedule()
         if now - self._pruned_at > 3600:
             self._pruned_at = now
             self._prune(now, seen)
@@ -296,13 +303,15 @@ class AvailabilityLog:
             "days": days,
         }
 
-    def pulse(self, now: float | None = None, buckets: int = 48) -> list[int]:
+    def pulse(self, now: float | None = None, buckets: int = 48, only: set[str] | None = None) -> list[int]:
         """Zahl der Geräte mit Unterbruch je Abschnitt der letzten 24 Std."""
         now = now if now is not None else time.time()
         start = now - 86400
         size = 86400 / buckets
         counts = [0] * buckets
-        for events in self._events.values():
+        for dev, events in self._events.items():
+            if only is not None and dev not in only:
+                continue
             for a, b, st in segments(events, start, now):
                 if st != OFFLINE:
                     continue
@@ -312,7 +321,7 @@ class AvailabilityLog:
                     counts[i] += 1
         return counts
 
-    def incidents(self, now: float | None = None, seconds: float = 86400) -> list[dict[str, Any]]:
+    def incidents(self, now: float | None = None, seconds: float = 86400, only: set[str] | None = None) -> list[dict[str, Any]]:
         """
         Sammelausfälle: mindestens INCIDENT_MIN Geräte, die innert
         INCIDENT_WINDOW Sekunden ausfielen. Neueste zuerst.
@@ -321,6 +330,8 @@ class AvailabilityLog:
         start = now - seconds
         starts: list[tuple[float, str]] = []
         for dev, events in self._events.items():
+            if only is not None and dev not in only:
+                continue
             prev = None
             for at, st in events:
                 if st == OFFLINE and prev != OFFLINE and at >= start:

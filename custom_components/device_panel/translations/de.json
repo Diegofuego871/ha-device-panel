@@ -16,10 +16,14 @@
         "title": "Einstellungen",
         "description": "Dieselben Einstellungen gibt es im Panel (Zahnrad), dort zusammen mit den Updates.",
         "data": {
-          "update_check": "Täglich nach Updates suchen"
+          "update_check": "Täglich nach Updates suchen",
+          "exclude_integrations": "Integrationen ausblenden",
+          "exclude_types": "Gerätetypen ausblenden"
         },
         "data_description": {
-          "update_check": "Meldet eine neue Version unter Einstellungen → Reparaturen. Vorabversionen werden hier nie gemeldet."
+          "update_check": "Meldet eine neue Version unter Einstellungen → Reparaturen. Vorabversionen werden hier nie gemeldet.",
+          "exclude_integrations": "Geräte dieser Integrationen zeigt das Panel nicht, und sie werden nicht überwacht.",
+          "exclude_types": "Geräte dieser Typen zeigt das Panel nicht, und sie werden nicht überwacht. Den Typ eines einzelnen Geräts kann man in seinem Popup ändern."
         }
       }
     }
@@ -28,6 +32,34 @@
     "update_available": {
       "title": "Device Panel {latest} ist verfügbar",
       "description": "Installiert ist {installed}. Aktualisieren über HACS oder über das Zahnrad im Device Panel (Einstellungen). Die tägliche Prüfung lässt sich in den Optionen der Integration ausschalten."
+    }
+  },
+  "selector": {
+    "device_type": {
+      "options": {
+        "hub": "Hub / Bridge",
+        "phone": "Handy / Computer",
+        "network": "Netzwerk",
+        "climate": "Klima / Heizung",
+        "lock": "Schloss",
+        "cover": "Rollladen / Abdeckung",
+        "valve": "Ventil",
+        "vacuum": "Roboter",
+        "camera": "Kamera",
+        "alarm": "Alarm / Sirene",
+        "media": "Medien",
+        "fan": "Ventilator",
+        "light": "Licht",
+        "outlet": "Steckdose",
+        "switch": "Schalter",
+        "motion": "Bewegung / Präsenz",
+        "contact": "Tür / Fenster",
+        "safety": "Rauch / Wasser / Gas",
+        "energy": "Energie / Zähler",
+        "sensor": "Sensor",
+        "button": "Taster",
+        "other": "Sonstiges"
+      }
     }
   }
 }

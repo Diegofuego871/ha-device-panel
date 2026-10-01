@@ -7,6 +7,35 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] - 2026-10-01
+
+Choose what the panel shows: hide whole integrations or device types, and
+correct the type of a single device.
+
+### Added
+
+- Settings sections "Integrations" and "Device types": every integration and
+  every type with its number of devices and a "Show" switch, plus "Toggle
+  all". Hidden devices are not shown in the panel and not monitored (no
+  outages, no history). Also available in the options dialog of the
+  integration ("Hide integrations", "Hide device types").
+- New device types "Phone / computer" (Companion app), "Network" (router,
+  access point, switch, NAS of integrations such as UniFi, FRITZ!Box or
+  Synology), "Valve" and "Energy / meter" (devices that mainly measure
+  power, energy, gas or water).
+- Change the type of a device in its pop-up: "Automatic: …" keeps the
+  detected type, any other choice is kept as "set by hand" and also applies
+  to the exclusions.
+
+### Changed
+
+- Valves are no longer listed as "Cover / blind" but as their own type
+  "Valve".
+- The outage pulse and the group outages only count devices the panel
+  shows.
+- A device that is no longer monitored (hidden, disabled, removed) gets "no
+  data" from that moment on instead of continuing as online.
+
 ## [0.4.0] - 2026-10-01
 
 First stable release, building on the pre-releases 0.1.0b1 to 0.3.0b1 below. Updates
@@ -133,6 +162,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0
 [0.3.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.3.0b1
 [0.2.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.2.0b1

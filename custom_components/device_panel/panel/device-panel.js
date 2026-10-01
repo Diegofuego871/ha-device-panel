@@ -80,6 +80,10 @@ const MDI = {
 };
 // Gerätetypen (devices.DEVICE_TYPES), gleiche Schlüssel wie im Backend.
 const TYPE_ICONS = {
+  phone: "M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21A2,2 0 0,0 7,23H17A2,2 0 0,0 19,21V3C19,1.89 18.1,1 17,1Z",
+  valve: "M4 22H2V2H4M22 2H20V22H22M17.24 5.34L13.24 9.34A3 3 0 0 0 9.24 13.34L5.24 17.34L6.66 18.76L10.66 14.76A3 3 0 0 0 14.66 10.76L18.66 6.76Z",
+  energy: "M7,2V13H10V22L17,10H13L17,2H7Z",
+  network: "M5 9C3.9 9 3 9.9 3 11V15C3 16.11 3.9 17 5 17H11V19H10C9.45 19 9 19.45 9 20H2V22H9C9 22.55 9.45 23 10 23H14C14.55 23 15 22.55 15 22H22V20H15C15 19.45 14.55 19 14 19H13V17H19C20.11 17 21 16.11 21 15V11C21 9.9 20.11 9 19 9H5M6 12H8V14H6V12M9.5 12H11.5V14H9.5V12M13 12H15V14H13V12Z",
   hub: "M9,2V8H11V11H5C3.89,11 3,11.89 3,13V16H1V22H7V16H5V13H11V16H9V22H15V16H13V13H19V16H17V22H23V16H21V13C21,11.89 20.11,11 19,11H13V8H15V2H9Z",
   climate: "M16.95,16.95L14.83,14.83C15.55,14.1 16,13.1 16,12C16,11.26 15.79,10.57 15.43,10L17.6,7.81C18.5,9 19,10.43 19,12C19,13.93 18.22,15.68 16.95,16.95M12,5C13.57,5 15,5.5 16.19,6.4L14,8.56C13.43,8.21 12.74,8 12,8A4,4 0 0,0 8,12C8,13.1 8.45,14.1 9.17,14.83L7.05,16.95C5.78,15.68 5,13.93 5,12A7,7 0 0,1 12,5M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12C22,6.47 17.5,2 12,2Z",
   lock: "M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z",
@@ -99,6 +103,8 @@ const TYPE_ICONS = {
   button: "M13 5C15.21 5 17 6.79 17 9C17 10.5 16.2 11.77 15 12.46V11.24C15.61 10.69 16 9.89 16 9C16 7.34 14.66 6 13 6S10 7.34 10 9C10 9.89 10.39 10.69 11 11.24V12.46C9.8 11.77 9 10.5 9 9C9 6.79 10.79 5 13 5M20 20.5C19.97 21.32 19.32 21.97 18.5 22H13C12.62 22 12.26 21.85 12 21.57L8 17.37L8.74 16.6C8.93 16.39 9.2 16.28 9.5 16.28H9.7L12 18V9C12 8.45 12.45 8 13 8S14 8.45 14 9V13.47L15.21 13.6L19.15 15.79C19.68 16.03 20 16.56 20 17.14V20.5M20 2H4C2.9 2 2 2.9 2 4V12C2 13.11 2.9 14 4 14H8V12L4 12L4 4H20L20 12H18V14H20V13.96L20.04 14C21.13 14 22 13.09 22 12V4C22 2.9 21.11 2 20 2Z",
   other: "M11,13.5V21.5H3V13.5H11M12,2L17.5,11H6.5L12,2M17.5,13C20,13 22,15 22,17.5C22,20 20,22 17.5,22C15,22 13,20 13,17.5C13,15 15,13 17.5,13Z",
 };
+// Reihenfolge wie const.DEVICE_TYPES im Backend.
+const TYPE_ORDER = ["hub", "phone", "network", "climate", "lock", "cover", "valve", "vacuum", "camera", "alarm", "media", "fan", "light", "outlet", "switch", "motion", "contact", "safety", "energy", "sensor", "button", "other"];
 const mdiPath = (d, size) =>
   `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="${d}"/></svg>`;
 const mdi = (name, size = 18) => mdiPath(MDI[name], size);
@@ -147,6 +153,18 @@ function ringSvg(pct, size, width) {
     <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--dp-bar-off)" stroke-width="${width}"/>
     <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--dp-success)" stroke-width="${width}" stroke-linecap="round"
       stroke-dasharray="${((c * pct) / 100).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${size / 2} ${size / 2})"/></svg>`;
+}
+
+// Kürzel und Farbton für Integrationen ohne eigenes Symbol (wie im Entwurf).
+function initials(name) {
+  const words = String(name || "").replace(/[^A-Za-z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
+  const text = words.length > 1 ? words[0][0] + words[1][0] : (words[0] || "?").slice(0, 2);
+  return text.toUpperCase();
+}
+function hue(text) {
+  let h = 0;
+  for (const c of String(text)) h = (h * 31 + c.charCodeAt(0)) % 360;
+  return h;
 }
 
 // Verfügbarkeit 24 Std. als Streifen: 0 online, 1 Unterbruch, 2 keine Daten.
@@ -272,6 +290,9 @@ class DevicePanel extends HTMLElement {
         ev.preventDefault();
         ev.target.click();
       }
+    });
+    dlg.addEventListener("change", (ev) => {
+      if (ev.target.matches?.('select[data-dlg="type"]') && this._detailId) this._setDeviceType(this._detailId, ev.target.value || null);
     });
     dlg.addEventListener("close", () => {
       if (!dlg.open) this._resetDevice();
@@ -737,7 +758,25 @@ class DevicePanel extends HTMLElement {
     }
   }
 
+  // Typ von Hand: sofort in der Liste zeigen, dann vom Server bestätigen lassen.
+  async _setDeviceType(id, kind) {
+    const d = this._devices.find((x) => x.id === id);
+    this._typeError = null;
+    try {
+      await this._hass.callWS({ type: "device_panel/set_device_type", device_id: id, device_type: kind });
+      if (d) {
+        d.type = kind || d.type_auto || d.type;
+        d.type_manual = Boolean(kind);
+      }
+    } catch (err) {
+      this._typeError = (err && err.message) || String(err);
+    }
+    this._render();
+    this._fetch();
+  }
+
   _resetDevice() {
+    this._typeError = null;
     this._detailId = null;
     this._detail = null;
     this._hist = null;
@@ -836,8 +875,16 @@ class DevicePanel extends HTMLElement {
   _deviceSectionHtml(d) {
     const text = (v) => (v ? escape(v) : `<span class="t3">–</span>`);
     const sw = `${text(d.sw_version)}${d.update ? `<small class="upd">${escape(this._t("updateTo", d.update))}</small>` : ""}`;
+    // Typ wählbar: automatisch erkannt oder von Hand (für Ausschlüsse, wenn
+    // die Erkennung danebenliegt). Gilt sofort, ohne "Speichern".
+    const opts = [`<option value="" ${d.type_manual ? "" : "selected"}>${escape(this._t("typeAuto", this._t(typeKey(d.type_auto || d.type))))}</option>`]
+      .concat(TYPE_ORDER.map((k) => `<option value="${k}" ${d.type_manual && d.type === k ? "selected" : ""}>${escape(this._t(typeKey(k)))}</option>`))
+      .join("");
+    const typeSel = `<label class="typ-sel">${typeIcon(d.type, 16)}<select data-dlg="type" aria-label="${escape(this._t("typeLabel"))}">${opts}</select>${mdi("chevronDown", 18)}</label>${
+      d.type_manual ? `<small>${escape(this._t("typeManual"))}</small>` : ""
+    }${this._typeError ? `<small class="warn">${escape(this._t("typeSaveError"))} ${escape(this._typeError)}</small>` : ""}`;
     const tiles = [
-      this._tile(this._t("typeLabel"), this._typeHtml(d)),
+      this._tile(this._t("typeLabel"), typeSel),
       this._tile(this._t("manufacturer"), text(d.manufacturer)),
       this._tile(this._t("model"), text(d.model)),
       this._tile(this._t("software"), sw),
@@ -1228,7 +1275,9 @@ class DevicePanel extends HTMLElement {
   _settingsEntryChanges() {
     const st = this._settings;
     if (!st || !st.draft) return [];
-    return Object.keys(st.draft).filter((k) => st.draft[k] !== st.data.values[k]);
+    // Listen (Ausschlüsse) nach Inhalt vergleichen, nicht nach Referenz.
+    const same = (a, b) => JSON.stringify(Array.isArray(a) ? [...a].sort() : a) === JSON.stringify(Array.isArray(b) ? [...b].sort() : b);
+    return Object.keys(st.draft).filter((k) => !same(st.draft[k], st.data.values[k]));
   }
 
   _settingsExtraChanges() {
@@ -1243,11 +1292,26 @@ class DevicePanel extends HTMLElement {
 
   // Abschnitte mit ihren Optionen; weitere folgen (Überwachung, Push …).
   _settingsSections() {
-    return [["updates", ["update_check"]]];
+    return [
+      ["integrations", ["exclude_integrations"]],
+      ["types", ["exclude_types"]],
+      ["updates", ["update_check"]],
+    ];
+  }
+
+  // Typen für die Ausschlüsse: alle mit Geräten, dazu ausgeblendete ohne.
+  _catalogTypes(d) {
+    const types = this._settings?.data?.catalog?.types || [];
+    return types.filter((x) => x.devices > 0 || d.exclude_types.includes(x.type));
   }
 
   _settingsSummary(id, d) {
     if (id === "updates") return this._t(d.update_check ? "sumUpdatesOn" : "sumUpdatesOff");
+    if (id === "integrations") {
+      const list = this._settings?.data?.catalog?.integrations || [];
+      return this._t("sumShown", this._t("sumIntegrations", list.length), d.exclude_integrations.length);
+    }
+    if (id === "types") return this._t("sumShown", this._t("sumTypes", this._catalogTypes(d).length), d.exclude_types.length);
     return "";
   }
 
@@ -1299,10 +1363,36 @@ class DevicePanel extends HTMLElement {
         ${short ? `<div class="opt-short">${escape(short)}</div>` : ""}
         ${info && st.info.has(key) ? `<div class="opt-info">${escape(info)}</div>` : ""}</div>`;
     const sw = (key) => `<label class="switch"><input type="checkbox" data-opt="${key}" ${d[key] ? "checked" : ""} aria-label="${escape(t("optUpdateCheck"))}"><span></span></label>`;
+    // Ausschlüsse als Tabelle: Schalter "Anzeigen" pro Integration bzw. Typ.
+    const exTable = (key, items, intro) => {
+      const hidden = new Set(d[key]);
+      const allShown = items.every((x) => !hidden.has(x.value));
+      const line = (x) => `<div class="ex-row${hidden.has(x.value) ? " off" : ""}">${x.badge}<div class="ex-name">${escape(x.label)}<small>${escape(x.sub)}</small></div>
+          <label class="switch"><input type="checkbox" data-list="${key}" data-value="${escape(x.value)}" ${hidden.has(x.value) ? "" : "checked"} aria-label="${escape(`${t("colShow")}: ${x.label}`)}"><span></span></label></div>`;
+      return `<div class="opt-short ex-intro">${escape(intro)}</div>
+        <div class="ex-head"><span></span><span>${escape(t("colShow"))}</span></div>
+        <div class="ex-row ex-all"><div class="ex-name">${escape(t("toggleAll"))}</div>
+          <label class="switch"><input type="checkbox" data-list-all="${key}" ${allShown ? "checked" : ""} aria-label="${escape(t("toggleAll"))}"><span></span></label></div>
+        ${items.map(line).join("")}`;
+    };
+    const integrations = (st.data.catalog?.integrations || []).map((i) => ({
+      value: i.domain,
+      label: i.name,
+      sub: t("devicesCount", i.devices),
+      badge: `<span class="ibadge" style="--h:${hue(i.domain)}">${escape(initials(i.name))}</span>`,
+    }));
+    const types = this._catalogTypes(d).map((x) => ({
+      value: x.type,
+      label: t(typeKey(x.type)),
+      sub: x.devices ? t("devicesCount", x.devices) : t("typesEmpty"),
+      badge: `<span class="ibadge type">${typeIcon(x.type, 18)}</span>`,
+    }));
     const fields = {
+      integrations: exTable("exclude_integrations", integrations, t("hideIntro")),
+      types: exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`),
       updates: row("update_check", t("optUpdateCheck"), sw("update_check"), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
-    const titles = { updates: "secUpdates" };
+    const titles = { integrations: "secIntegrations", types: "secTypes", updates: "secUpdates" };
     return (
       `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
       this._settingsSections()
@@ -1347,9 +1437,23 @@ class DevicePanel extends HTMLElement {
       }
     });
     dialog.addEventListener("change", (ev) => {
-      const key = ev.target.dataset?.opt;
-      if (!key || !this._settings?.draft || ev.target.type !== "checkbox") return;
-      this._settings.draft[key] = ev.target.checked;
+      const st = this._settings;
+      const el = ev.target;
+      if (!st?.draft || el.type !== "checkbox") return;
+      if (el.dataset.opt) st.draft[el.dataset.opt] = el.checked;
+      else if (el.dataset.list) {
+        // Angezeigt = nicht in der Liste der Ausschlüsse.
+        const list = new Set(st.draft[el.dataset.list]);
+        if (el.checked) list.delete(el.dataset.value);
+        else list.add(el.dataset.value);
+        st.draft[el.dataset.list] = [...list].sort();
+      } else if (el.dataset.listAll) {
+        const key = el.dataset.listAll;
+        const all = key === "exclude_integrations"
+          ? (st.data.catalog?.integrations || []).map((i) => i.domain)
+          : this._catalogTypes(st.draft).map((x) => x.type);
+        st.draft[key] = el.checked ? [] : [...all].sort();
+      } else return;
       this._renderSettings();
     });
     dialog.addEventListener("close", () => {
@@ -1380,6 +1484,8 @@ class DevicePanel extends HTMLElement {
       }
       this._closeSettings();
       this._toast(this._t("settingsSaved"));
+      // Ausschlüsse ändern die Liste sofort.
+      if (changes.some((k) => k.startsWith("exclude_"))) this._fetch();
     } catch (err) {
       if (this._settings !== st) return;
       st.saving = false;

@@ -17,6 +17,8 @@ const TEXT = {
     opt: "Täglich nach Updates suchen", short: "Meldet eine neue Version unter Einstellungen → Reparaturen.", info: "Fragt einmal täglich",
     changed: "geändert", one: "1 Änderung", two: "2 Änderungen", save: "Speichern", cancel: "Abbrechen", saved: "Einstellungen gespeichert.",
     pre: "Vorabversionen anzeigen", loadErr: "Einstellungen konnten nicht geladen werden:", saveErr: "Speichern fehlgeschlagen:", ver: "Device Panel 0.4.0",
+    secInt: "Integrationen", sumInt: "9 Integrationen · alle angezeigt", sumInt1: "9 Integrationen · 1 ausgeblendet", show: "Anzeigen", all: "Alle umschalten",
+    zha: "Zigbee Home Automation", zhaSub: "5 Geräte", secTypes: "Gerätetypen", outlet: "Steckdose", sumTypes1: "11 Typen · 1 ausgeblendet", sumTypesNone: "11 Typen · alle angezeigt", sumTypesAll: "11 Typen · 11 ausgeblendet",
   },
   en: {
     gear: "Settings", title: "Settings", sub: "Device Panel · applies to all users", sec: "Updates",
@@ -24,6 +26,8 @@ const TEXT = {
     opt: "Check for updates daily", short: "Reports a new version under Settings → Repairs.", info: "Queries the published releases",
     changed: "changed", one: "1 change", two: "2 changes", save: "Save", cancel: "Cancel", saved: "Settings saved.",
     pre: "Show pre-releases", loadErr: "Could not load the settings:", saveErr: "Saving failed:", ver: "Device Panel 0.4.0",
+    secInt: "Integrations", sumInt: "9 integrations · all shown", sumInt1: "9 integrations · 1 hidden", show: "Show", all: "Toggle all",
+    zha: "Zigbee Home Automation", zhaSub: "5 devices", secTypes: "Device types", outlet: "Outlet", sumTypes1: "11 types · 1 hidden", sumTypesNone: "11 types · all shown", sumTypesAll: "11 types · 11 hidden",
   },
 };
 
@@ -62,7 +66,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Optionen per WebSocket`, (await calls("device_panel/get_options")).length === 1 && (await calls("device_panel/version")).length >= 1);
     check(`[${tag}] Versionszeile`, (await text("dialog.settings .ver-slot")).includes(T.ver));
     check(`[${tag}] Schalter Vorabversionen`, (await text("dialog.settings .ver-opt-l")) === T.pre && (await ev(`return r.querySelector('[data-ver="prerelease"]').getAttribute("aria-checked")`)) === "false");
-    check(`[${tag}] Abschnitt mit Zusammenfassung`, (await text(".set-sec-title")) === T.sec && (await text(".set-sec-sum")) === T.sumOn, await text(".set-sec-sum"));
+    check(`[${tag}] Abschnitt mit Zusammenfassung`, (await text('[data-id="updates"] .set-sec-title')) === T.sec && (await text('[data-id="updates"] .set-sec-sum')) === T.sumOn, await text('[data-id="updates"] .set-sec-sum'));
     check(`[${tag}] Speichern gesperrt ohne Änderung`, await ev(`return r.querySelector('[data-set="save"]').disabled`) && (await text(".set-count")) === "");
     if (mobile) {
       const geo = await ev(`const d=r.querySelector("dialog.settings").getBoundingClientRect(); return [Math.round(d.left), Math.round(d.width), Math.round(d.bottom), innerWidth, innerHeight]`);
@@ -75,7 +79,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="info"][data-key="update_check"]');
     check(`[${tag}] Info aufgeklappt`, (await text(".opt-info")).startsWith(T.info));
     await tap('.switch input[data-opt="update_check"]');
-    check(`[${tag}] Entwurf: Etikett, Zähler, Zusammenfassung`, (await text(".set-sec-title .set-badge")) === T.changed && (await text(".set-count")) === T.one && (await text(".set-sec-sum")) === T.sumOff);
+    check(`[${tag}] Entwurf: Etikett, Zähler, Zusammenfassung`, (await text('[data-id="updates"] .set-sec-title .set-badge')) === T.changed && (await text(".set-count")) === T.one && (await text('[data-id="updates"] .set-sec-sum')) === T.sumOff);
     await tap('[data-ver="prerelease"]');
     check(`[${tag}] Vorabversionen im Entwurf`, (await text(".set-count")) === T.two && (await text(".ver-opt-l .set-badge")) === T.changed && (await ev(`return r.querySelector('[data-ver="prerelease"]').getAttribute("aria-checked")`)) === "true");
     check(`[${tag}] noch nichts gespeichert`, (await calls("device_panel/set_options")).length === 0 && (await calls("device_panel/set_panel")).length === 0);
@@ -86,7 +90,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Abbrechen schliesst ohne Speichern`, !(await isOpen()) && (await calls("device_panel/set_options")).length === 0 && (await calls("device_panel/set_panel")).length === 0);
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    check(`[${tag}] nach Abbrechen unverändert`, (await text(".set-sec-sum")) === T.sumOn && (await text(".set-count")) === "");
+    check(`[${tag}] nach Abbrechen unverändert`, (await text('[data-id="updates"] .set-sec-sum')) === T.sumOn && (await text(".set-count")) === "");
 
     // Speichern
     await tap('[data-set="section"][data-id="updates"]');
@@ -101,7 +105,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Rückmeldung`, (await ev(`const t=r.querySelector(".toast"); return t.hidden ? "" : t.textContent`)) === T.saved);
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    check(`[${tag}] neuer Stand nach erneutem Öffnen`, (await text(".set-sec-sum")) === T.sumOff && (await ev(`return r.querySelector('[data-ver="prerelease"]').getAttribute("aria-checked")`)) === "true");
+    check(`[${tag}] neuer Stand nach erneutem Öffnen`, (await text('[data-id="updates"] .set-sec-sum')) === T.sumOff && (await ev(`return r.querySelector('[data-ver="prerelease"]').getAttribute("aria-checked")`)) === "true");
 
     // Escape schliesst (nur Tastatur auf dem Desktop), Hintergrund ebenso
     if (!mobile) {
@@ -114,6 +118,43 @@ for (const lang of ["de", "en"]) {
       await p.touchscreen.tap(195, 130);
       check(`[${tag}] Tipp über dem Blatt schliesst`, await wait(`return !r.querySelector("dialog.settings").open`));
     }
+
+    // Ausschlüsse: Integration ausblenden, Liste ohne ihre Geräte
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    check(`[${tag}] Abschnitt Integrationen`, (await text('[data-id="integrations"] .set-sec-title')) === T.secInt && (await text('[data-id="integrations"] .set-sec-sum')) === T.sumInt, await text('[data-id="integrations"] .set-sec-sum'));
+    await tap('[data-set="section"][data-id="integrations"]');
+    const zhaRow = await ev(`const i=r.querySelector('input[data-list="exclude_integrations"][data-value="zha"]'); return i ? i.closest(".ex-row").textContent.replace(/\\s+/g," ").trim() : ""`);
+    check(`[${tag}] Zeile mit Name und Zahl der Geräte`, zhaRow.includes(T.zha) && zhaRow.includes(T.zhaSub), zhaRow);
+    check(`[${tag}] Spalte "${T.show}" und "${T.all}"`, (await text(".ex-head")) === T.show && (await text(".ex-all .ex-name")) === T.all);
+    await tap('input[data-list="exclude_integrations"][data-value="zha"]');
+    check(`[${tag}] Integration im Entwurf ausgeblendet`, (await text('[data-id="integrations"] .set-sec-sum')) === T.sumInt1 && (await text(".set-count")) === T.one && await ev(`return r.querySelector('input[data-value="zha"]').closest(".ex-row").classList.contains("off")`));
+    await p.screenshot({ path: `${outDir}/settings-exclude-${lang}-${mobile ? "mobile" : "desktop"}.png` });
+    await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`));
+    check(`[${tag}] set_options mit Ausschluss`, JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values) === JSON.stringify({ exclude_integrations: ["zha"] }));
+    check(`[${tag}] Liste ohne Zigbee-Geräte`, await wait(`return r.querySelectorAll(".dev").length === 11`), String(await ev(`return r.querySelectorAll(".dev").length`)));
+
+    // Gerätetypen: einzeln und "Alle umschalten", dann Abbrechen
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    await tap('[data-set="section"][data-id="types"]');
+    check(`[${tag}] Abschnitt Gerätetypen`, (await text('[data-id="types"] .set-sec-title')) === T.secTypes);
+    await tap('input[data-list="exclude_types"][data-value="outlet"]');
+    check(`[${tag}] Typ ausgeblendet`, (await text('[data-id="types"] .set-sec-sum')) === T.sumTypes1, await text('[data-id="types"] .set-sec-sum'));
+    // Nicht alle an: "Alle umschalten" ist aus und zeigt beim Antippen alle.
+    await tap('input[data-list-all="exclude_types"]');
+    check(`[${tag}] Alle umschalten zeigt alle`, (await text('[data-id="types"] .set-sec-sum')) === T.sumTypesNone && await ev(`return [...r.querySelectorAll('input[data-list="exclude_types"]')].every(i=>i.checked)`), await text('[data-id="types"] .set-sec-sum'));
+    await tap('input[data-list-all="exclude_types"]');
+    check(`[${tag}] nochmals: alle ausgeblendet`, (await text('[data-id="types"] .set-sec-sum')) === T.sumTypesAll && await ev(`return [...r.querySelectorAll('input[data-list="exclude_types"]')].every(i=>!i.checked)`), await text('[data-id="types"] .set-sec-sum'));
+    await tap('dialog.settings .dlg-actions [data-set="close"]');
+    // Integration wieder einblenden
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    await tap('[data-set="section"][data-id="integrations"]');
+    await tap('input[data-list="exclude_integrations"][data-value="zha"]');
+    await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] wieder eingeblendet`, await wait(`return r.querySelectorAll(".dev").length === 16`));
 
     // Fehler beim Speichern: Meldung, Dialog bleibt
     await p.evaluate(() => { window.__setOptsFails = "Keine Berechtigung"; });

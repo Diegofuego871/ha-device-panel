@@ -11,6 +11,7 @@ from homeassistant.components import frontend, websocket_api
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import device_registry as dr
 
 from . import options_api, update_check
 from .availability import RANGES, AvailabilityLog
@@ -20,6 +21,7 @@ from .const import (
     DATA_PANEL_REGISTERED,
     DATA_PUSH_IMAGE,
     DATA_WS_REGISTERED,
+    DEVICE_TYPES,
     DOMAIN,
     PANEL_DIR,
     PANEL_HTML_FILE,
@@ -32,7 +34,14 @@ from .const import (
     PUSH_IMAGE_URL,
     STATIC_URL_PATH,
 )
-from .devices import async_device_detail, async_list_devices, async_mark_start
+from .devices import (
+    async_catalog,
+    async_device_detail,
+    async_list_devices,
+    async_load_type_overrides,
+    async_mark_start,
+    async_set_type_override,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,6 +55,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         log = AvailabilityLog(hass)
         await log.async_start()
         hass.data[DATA_AVAILABILITY] = log
+    await async_load_type_overrides(hass)
     await update_check.async_load_panel_settings(hass)
     update_check.async_start_daily(hass)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
@@ -253,17 +263,26 @@ def _entry(hass: HomeAssistant) -> ConfigEntry | None:
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/get_options"})
 @websocket_api.require_admin
-@callback
-def _ws_get_options(
+@websocket_api.async_response
+async def _ws_get_options(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
-    """Einstellungen, dieselben Werte wie im Optionsdialog, dazu die Panel-Einstellungen."""
+    """
+    Einstellungen, dieselben Werte wie im Optionsdialog, dazu die
+    Panel-Einstellungen und für die Ausschlüsse alle Integrationen und Typen
+    mit der Zahl ihrer Geräte.
+    """
     entry = _entry(hass)
     if entry is None:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "integration not set up")
         return
     connection.send_result(
-        msg["id"], {"values": options_api.current_values(entry), "panel": update_check.panel_settings(hass)}
+        msg["id"],
+        {
+            "values": options_api.current_values(entry),
+            "panel": update_check.panel_settings(hass),
+            "catalog": await async_catalog(hass),
+        },
     )
 
 
@@ -286,6 +305,26 @@ def _ws_set_options(
     connection.send_result(msg["id"], {"changed": changed})
 
 
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/set_device_type",
+        vol.Required("device_id"): str,
+        vol.Required("device_type"): vol.Any(None, vol.In(DEVICE_TYPES)),
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_set_device_type(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Typ eines Geräts von Hand setzen (None: wieder erkennen lassen)."""
+    if dr.async_get(hass).async_get(msg["device_id"]) is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
+        return
+    await async_set_type_override(hass, msg["device_id"], msg["device_type"])
+    connection.send_result(msg["id"], {"device_type": msg["device_type"]})
+
+
 @callback
 def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     if hass.data.get(DATA_WS_REGISTERED):
@@ -298,3 +337,4 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_set_panel)
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_set_options)
+    websocket_api.async_register_command(hass, _ws_set_device_type)

@@ -24,6 +24,7 @@ const TEXT = {
     legend: ["Online", "Ausgefallen"], tip: "Ausgefallen", days: "Unterbrüche pro Tag", today: "heute", out30: "4 Unterbrüche",
     retry: "wartet auf neuen Versuch", pillA: "Ausgefallen seit ≥ 3 T. 4 Std.", always: "keine Unterbrüche", since: "Daten seit", none: "Keine Daten",
     gone: "Dieses Gerät gibt es nicht mehr oder es wird nicht mehr überwacht.", close: "Schliessen",
+    typeAuto: "Automatisch: Steckdose", manual: "von Hand gesetzt", sw: "Schalter", outlet: "Steckdose", typeErr: "Typ konnte nicht gespeichert werden:",
   },
   en: {
     pill: "Offline for 2 h 14 min", sub: "Motion / presence · Flur", open: "Open device page",
@@ -36,6 +37,7 @@ const TEXT = {
     legend: ["Online", "Offline"], tip: "Offline", days: "Outages per day", today: "today", out30: "4 outages",
     retry: "waiting to retry", pillA: "Offline for ≥ 3 d 4 h", always: "no outages", since: "data since", none: "No data",
     gone: "This device no longer exists or is no longer monitored.", close: "Close",
+    typeAuto: "Automatic: Outlet", manual: "set by hand", sw: "Switch", outlet: "Outlet", typeErr: "Could not save the type:",
   },
 };
 
@@ -199,6 +201,28 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { window.__devices = window.__devices.filter((d) => d.id !== "n"); });
     await f.evaluate(() => document.querySelector("device-panel")._fetch());
     check(`[${tag}] Gerät weg: Hinweis`, await wait(`return r.querySelector("dialog.device .dlg-note")?.textContent === ${JSON.stringify(T.gone)}`));
+    await tap('dialog.device [data-dlg="close"]');
+
+    // Typ von Hand: wählen, sofort in Popup und Liste, zurück auf automatisch
+    await tap(mobile ? '.mrow[data-open="k"]' : 'tr[data-open="k"]');
+    const sel = async (value) => {
+      const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector('dialog.device select[data-dlg="type"]')`))).asElement();
+      await h.selectOption(value);
+    };
+    check(`[${tag}] Typ-Auswahl automatisch`, (await ev(`const s=r.querySelector('dialog.device select[data-dlg="type"]'); return s.value === "" && s.options[0].textContent`)) === T.typeAuto);
+    await sel("switch");
+    const st = await calls("device_panel/set_device_type");
+    check(`[${tag}] set_device_type`, st.at(-1)?.device_id === "k" && st.at(-1)?.device_type === "switch", JSON.stringify(st));
+    check(`[${tag}] von Hand im Popup`, await wait(`return r.querySelector('dialog.device select[data-dlg="type"]').value === "switch" && r.querySelector("dialog.device").textContent.includes(${JSON.stringify(T.manual)})`));
+    const rowType = await ev(`const e=r.querySelector('[data-open="k"]'); return e.textContent`);
+    check(`[${tag}] Liste zeigt neuen Typ`, rowType.includes(T.sw), rowType);
+    await sel("");
+    check(`[${tag}] zurück auf automatisch`, (await calls("device_panel/set_device_type")).at(-1)?.device_type === null && await wait(`return !r.querySelector("dialog.device").textContent.includes(${JSON.stringify(T.manual)})`));
+    await p.evaluate(() => { window.__typeFails = "Keine Berechtigung"; });
+    await sel("light");
+    check(`[${tag}] Fehler beim Typ angezeigt`, await wait(`return (r.querySelector("dialog.device .tile-v small.warn")?.textContent || "").startsWith(${JSON.stringify(T.typeErr)})`));
+    await p.evaluate(() => { window.__typeFails = null; });
+    await p.screenshot({ path: `${outDir}/popup-type-${lang}-${mobile ? "mobile" : "desktop"}.png` });
     await tap('dialog.device [data-dlg="close"]');
 
     // HA-Geräteseite öffnen: Navigation im Elternfenster, Popup zu

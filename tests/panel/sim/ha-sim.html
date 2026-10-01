@@ -207,7 +207,27 @@
     dev("q", "Wetterdienst", null, "met", "cloud", "sensor", { service: true }),
     dev("r", "Geist", null, "zha", "zigbee", "other", { entities: 0 }),
   ];
-  for (const d of devices) d.flaky = Boolean(d.online && d.avail24 && d.avail24.outages >= 3);
+  for (const d of devices) {
+    d.flaky = Boolean(d.online && d.avail24 && d.avail24.outages >= 3);
+    d.type_auto = d.type;
+    d.type_manual = false;
+  }
+  // Wie das Backend: Kandidaten (kein Dienst, mit Entitäten) und Ausschlüsse.
+  const candidates = () => window.__devices.filter((d) => !d.service && d.entities > 0);
+  const shown = () => window.__devices.filter((d) => !(d.integration && window.__opts.exclude_integrations.includes(d.integration.domain)) && !window.__opts.exclude_types.includes(d.type));
+  const TYPE_ORDER = ["hub", "phone", "network", "climate", "lock", "cover", "valve", "vacuum", "camera", "alarm", "media", "fan", "light", "outlet", "switch", "motion", "contact", "safety", "energy", "sensor", "button", "other"];
+  function catalog() {
+    const byDomain = {};
+    const byType = {};
+    for (const d of candidates()) {
+      byDomain[d.integration.domain] = (byDomain[d.integration.domain] || 0) + 1;
+      byType[d.type] = (byType[d.type] || 0) + 1;
+    }
+    return {
+      integrations: Object.entries(byDomain).map(([domain, n]) => ({ domain, name: integrations[domain] || domain, devices: n })).sort((a, b) => b.devices - a.devices || a.name.localeCompare(b.name)),
+      types: TYPE_ORDER.map((t) => ({ type: t, devices: byType[t] || 0 })),
+    };
+  }
   const integrations = {
     bthome: "BTHome", zha: "Zigbee Home Automation", matter: "Matter", shelly: "Shelly", esphome: "ESPHome",
     hue: "Philips Hue", zwave_js: "Z-Wave", synology_dsm: "Synology DSM", roborock: "Roborock", met: "Meteorologisk institutt (Met.no)",
@@ -266,7 +286,7 @@
   window.__version = { installed: "0.4.0", latest: "0.4.0" };
   window.__pre = null;
   window.__panelSettings = { prerelease: false, prerelease_hacs: null };
-  window.__opts = { update_check: true };
+  window.__opts = { update_check: true, exclude_integrations: [], exclude_types: [] };
   window.__services = [];
   const pushHass = () => {
     const ha = document.querySelector("home-assistant").hass;
@@ -339,17 +359,25 @@
       if (msg.type === "device_panel/get_options") {
         if (window.__getOptsFails) throw new Error("boom");
         await new Promise((r) => setTimeout(r, 40));
-        return { values: { ...window.__opts }, panel: { ...window.__panelSettings } };
+        return { values: JSON.parse(JSON.stringify(window.__opts)), panel: { ...window.__panelSettings }, catalog: catalog() };
       }
       if (msg.type === "device_panel/set_options") {
         if (window.__setOptsFails) throw new Error(window.__setOptsFails);
-        const changed = Object.keys(msg.values).some((k) => window.__opts[k] !== msg.values[k]);
+        const changed = Object.keys(msg.values).some((k) => JSON.stringify(window.__opts[k]) !== JSON.stringify(msg.values[k]));
         Object.assign(window.__opts, msg.values);
         return { changed };
       }
+      if (msg.type === "device_panel/set_device_type") {
+        if (window.__typeFails) throw new Error(window.__typeFails);
+        const d = window.__devices.find((x) => x.id === msg.device_id);
+        if (!d) throw { code: "not_found", message: "device not found" };
+        d.type = msg.device_type || d.type_auto;
+        d.type_manual = Boolean(msg.device_type);
+        return { device_type: msg.device_type };
+      }
       if (msg.type === "device_panel/list_devices") {
         return {
-          devices: window.__devices, integrations, now: new Date().toISOString(), offline_after: 120, battery_low: 15,
+          devices: shown(), integrations, now: new Date().toISOString(), offline_after: 120, battery_low: 15,
           flaky_outages: 3, pulse: pulse(), incidents,
         };
       }

@@ -19,8 +19,8 @@ details such as software version, manufacturer, model and area.
   phone. The device column stays in place when the table scrolls sideways.
 - Columns for status, connection, availability over 24 hours (strip and
   percentage), type (e.g. light, outlet, motion, door/window, climate,
-  hub/bridge), integration with its config entry, battery, manufacturer and
-  model, software with update hint.
+  hub/bridge, network, phone/computer, energy/meter), integration with its
+  config entry, battery, manufacturer and model, software with update hint.
 - Connection type per device: Zigbee, Z-Wave, Thread, Matter (Thread, Wi-Fi
   or LAN), Bluetooth, Wi-Fi, network, cloud; signal strength in dBm or LQI
   and the hub, bridge or Bluetooth proxy in between.
@@ -31,7 +31,8 @@ details such as software version, manufacturer, model and area.
   (warns if its config entry is not loaded), device details and all
   entities with their state, the ones that decide whether the device is
   alive marked. Tap an entity for the Home Assistant entity dialog, or open
-  the Home Assistant device page.
+  the Home Assistant device page. The type of the device can be changed
+  here if the detection is wrong.
 - Statistics window from the tiles: availability over 24 hours, 7 or 30 days
   with a timeline, every outage with time and duration, and outages per
   day.
@@ -41,6 +42,9 @@ details such as software version, manufacturer, model and area.
   are shown as "at least" (≥).
 - Availability log for 31 days in its own file (not the recorder). Time when
   Home Assistant was not running counts as "no data", never as an outage.
+- Hide whole integrations or device types (settings in the panel or options
+  dialog of the integration): hidden devices are neither shown nor
+  monitored.
 - Settings in the panel (gear icon) with updates: check for a new version,
   update via HACS with one click, restart afterwards, optionally offer
   pre-releases ("Enable in HACS" switches on the HACS pre-release option).
@@ -49,8 +53,8 @@ details such as software version, manufacturer, model and area.
 ### Planned (see `docs/CONCEPT.md`)
 
 - Columns, sorting and filters per user, separately for desktop and phone.
-- More settings in the panel, flexible monitoring rules (exclude
-  integrations or device types), push notifications.
+- More settings in the panel (outage detection, display), push
+  notifications.
 
 ## Installation
 

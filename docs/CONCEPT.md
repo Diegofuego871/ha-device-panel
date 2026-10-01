@@ -130,12 +130,26 @@ Liste zeigt pro Gerät den Gerätetyp und die Integration samt Eintrag, damit
 man sieht, worauf ein Ausschluss wirkt. In der Konfiguration sollen sich
 ganze Integrationen (Ebene 2) und Gerätetypen (Bedingung in Ebene 3)
 ausschliessen lassen. Der Typ kommt aus `devices.device_type`: Hub/Bridge,
-wenn andere Geräte über das Gerät verbunden sind; sonst die wichtigste
-Domain der Entitäten (Klima, Schloss, Abdeckung, Roboter, Kamera, Alarm,
-Medien, Ventilator, Licht, Schalter bzw. Steckdose bei `device_class:
-outlet`), dann Binärsensoren nach Klasse (Bewegung, Tür/Fenster, Sicherheit),
-dann Sensor, Taster, Sonstiges. Die Integration ist der primäre Eintrag des
-Geräts (`primary_config_entry`, sonst der erste).
+wenn andere Geräte über das Gerät verbunden sind; Handy/Computer bei der
+Companion-App (`mobile_app`); Netzwerk bei Integrationen für Router, Access
+Points, Switches und NAS (`_NETWORK_DOMAINS`, z. B. `unifi`, `fritz`,
+`synology_dsm`); sonst die wichtigste Domain der Entitäten (Klima, Schloss,
+Abdeckung, Ventil, Roboter, Kamera, Alarm, Medien, Ventilator, Licht,
+Schalter bzw. Steckdose bei `device_class: outlet`), dann Binärsensoren nach
+Klasse (Bewegung, Tür/Fenster, Sicherheit), dann Energie/Zähler (mindestens
+die Hälfte der Sensoren misst Leistung, Energie, Gas, Wasser, Strom oder
+Spannung), dann Sensor, Taster, Sonstiges. Die Integration ist der primäre
+Eintrag des Geräts (`primary_config_entry`, sonst der erste).
+
+**Umgesetzt in 0.5.0** (Nutzer, 2026-10-01): ein Typ pro Gerät; im Popup
+lässt er sich von Hand setzen ("Automatisch: …" stellt zurück), gespeichert
+in `.storage/device_panel.devices` und gültig auch für die Ausschlüsse. Die
+Einstellungen (Panel und Optionsdialog) blenden ganze Integrationen
+(primärer Eintrag) oder Typen aus (`exclude_integrations`,
+`exclude_types`). Ausgeblendet heisst: nicht gezeigt und nicht überwacht;
+das Protokoll setzt ab dann "keine Daten", Puls und Sammelausfälle zählen
+nur gezeigte Geräte. Die vollen Ebenen 2 bis 4 (Überwachen, Push, Schwelle
+pro Integration, Regeln) folgen später.
 
 Geprüft in HA 2026.2: Geräte haben `labels`, `area_id`, `via_device_id`,
 `entry_type`, `model_id`; Entitäten haben `labels`, `entity_category`,

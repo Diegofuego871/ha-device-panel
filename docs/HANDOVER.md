@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.4.0, erste stabile Version, mit Einstellungen und Updates im Panel)
+## Stand (0.5.0, mit Ausschlüssen nach Integration und Gerätetyp)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -12,12 +12,17 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `devices.py`: Status nach dem Standard der Überwachung, Verbindungsart,
   Empfang, Hub, Batterie, Update, Typ, Integration mit Eintrag,
   Verfügbarkeit 24 Std., Puls, Sammelausfälle), `device_panel/device`
-  (Popup) und `device_panel/availability` (Statistik-Fenster).
+  (Popup), `device_panel/availability` (Statistik-Fenster) und
+  `device_panel/set_device_type` (Typ von Hand im Popup, Datei
+  `.storage/device_panel.devices`).
 - Einstellungen im Panel (Zahnrad): Versionskasten mit Update über HACS,
-  Vorabversionen, "In HACS freischalten", Abschnitt "Updates" (tägliche
-  Prüfung mit Meldung unter "Reparaturen"). Backend `update_check.py`,
-  `options_api.py`, Optionsdialog in `config_flow.py`; WebSocket
-  `device_panel/version`, `set_panel`, `get_options`, `set_options`.
+  Vorabversionen, "In HACS freischalten", Abschnitte "Integrationen" und
+  "Gerätetypen" (Schalter "Anzeigen"; ausgeblendete Geräte werden nicht
+  überwacht), Abschnitt "Updates" (tägliche Prüfung mit Meldung unter
+  "Reparaturen"). Backend `update_check.py`, `options_api.py`,
+  Optionsdialog in `config_flow.py` mit denselben Ausschlüssen; WebSocket
+  `device_panel/version`, `set_panel`, `get_options` (mit Katalog aller
+  Integrationen und Typen), `set_options`.
 - Verfügbarkeitsprotokoll (`availability.py`, `.storage/device_panel.availability`,
   31 Tage), siehe `docs/CONCEPT.md`, "Verfügbarkeitsprotokoll".
 - Panel in Design C: Kopf mit Ring (Ø 24 Std.), Ausfall-Tafel und
@@ -55,14 +60,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    (Bild 9, `docs/CONCEPT.md`, "Überwachung einstellen"), ohne HACS nur
    Hinweis wie unifi_dynamic. Offen: Recorder-Nachfüllen (mit Schritt 6).
 2. Fahrplan-Schritte 1, 4, 5 und 6 erledigt (`0.2.0b1` bis `0.4.0`),
-   Schritt 3 als Grundgerüst. Neue Anforderung (Nutzer, 2026-10-01):
-   Integrationen und Gerätetypen in der Konfiguration ausschliessen können;
-   Typ und Integration stehen dafür schon in der Liste. Weiter mit den
-   Abschnitten der Einstellungen nach Bild 5 (Ausfall-Erkennung,
-   Integrationen mit Ausschluss, Anzeige) und Schritt 2 (Spalten pro
-   Benutzer); `docs/CONCEPT.md`, "Pflicht"; Vorlagen in `docs/reference/`.
-   Offene Fragen an den Nutzer: Typ-Kategorien für Ausschlüsse passend?
-   Prozentwerte erst ab einer Mindestdauer an Daten zeigen?
+   Schritt 3 als Grundgerüst. Ausschlüsse nach Integration und Gerätetyp
+   mit `0.5.0` erledigt (Nutzer, 2026-10-01: ein Typ pro Gerät, vier neue
+   Typen, Typ im Popup änderbar). Weiter mit den übrigen Abschnitten der
+   Einstellungen nach Bild 5 (Ausfall-Erkennung, Push, Anzeige) und
+   Schritt 2 (Spalten pro Benutzer); `docs/CONCEPT.md`, "Pflicht"; Vorlagen
+   in `docs/reference/`. Offene Frage an den Nutzer: Prozentwerte erst ab
+   einer Mindestdauer an Daten zeigen?
 3. Umsetzung nach dem Fahrplan in `docs/CONCEPT.md` (Abschnitt "Fahrplan"),
    der Reihe nach: Geräteliste mit Statistik, Spalten pro Benutzer,
    Einstellungsmenü, Update-Bereich, Geräteansicht, Verfügbarkeitsprotokoll,

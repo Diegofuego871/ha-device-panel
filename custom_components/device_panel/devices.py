@@ -19,10 +19,21 @@ from homeassistant.core import CoreState, HomeAssistant, State, callback
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers.storage import Store
 from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
-from .const import BATTERY_LOW, DATA_STARTED_AT, FLAKY_OUTAGES, OFFLINE_AFTER
+from .const import (
+    BATTERY_LOW,
+    DATA_STARTED_AT,
+    DATA_TYPE_OVERRIDES,
+    DEVICE_TYPES,
+    DOMAIN,
+    FLAKY_OUTAGES,
+    OFFLINE_AFTER,
+    STORAGE_VERSION,
+)
+from .options_api import exclusions
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -242,11 +253,11 @@ async def async_integration_info(hass: HomeAssistant, domains: set[str]) -> dict
     return info
 
 
-def monitored_devices(hass: HomeAssistant) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:
+def candidate_devices(hass: HomeAssistant) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:
     """
-    Geräte, die das Panel zeigt und das Protokoll überwacht: aktiviert, kein
-    Dienst, mindestens eine aktivierte Entität (deaktivierte Entitäten lässt
-    async_entries_for_device ohnehin weg).
+    Geräte, die überhaupt in Frage kommen: aktiviert, kein Dienst, mindestens
+    eine aktivierte Entität (deaktivierte Entitäten lässt
+    async_entries_for_device ohnehin weg). Ausschlüsse noch nicht abgezogen.
     """
     ent_reg = er.async_get(hass)
     for device in dr.async_get(hass).devices.values():
@@ -255,6 +266,26 @@ def monitored_devices(hass: HomeAssistant) -> Iterator[tuple[dr.DeviceEntry, lis
         entries = er.async_entries_for_device(ent_reg, device.id)
         if entries:
             yield device, entries
+
+
+def hub_ids(hass: HomeAssistant) -> set[str]:
+    """Geräte, über die andere Geräte verbunden sind (Hub, Bridge, Koordinator)."""
+    return {d.via_device_id for d in dr.async_get(hass).devices.values() if d.via_device_id}
+
+
+def monitored_devices(hass: HomeAssistant) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:
+    """
+    Geräte, die das Panel zeigt und das Protokoll überwacht: die Kandidaten
+    ohne ausgeschlossene Integrationen (primärer Eintrag) und Typen.
+    """
+    ex_domains, ex_types = exclusions(hass)
+    hubs = hub_ids(hass) if ex_types else set()
+    for device, entries in candidate_devices(hass):
+        if ex_domains and (primary := _primary_entry(hass, device)) and primary.domain in ex_domains:
+            continue
+        if ex_types and effective_type(hass, device, entries, hubs)[0] in ex_types:
+            continue
+        yield device, entries
 
 
 def device_back_since(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> datetime | None:
@@ -273,7 +304,7 @@ _TYPE_DOMAINS = (
     ("humidifier", "climate"),
     ("lock", "lock"),
     ("cover", "cover"),
-    ("valve", "cover"),
+    ("valve", "valve"),
     ("vacuum", "vacuum"),
     ("lawn_mower", "vacuum"),
     ("camera", "camera"),
@@ -288,16 +319,29 @@ _BINARY_TYPES = {
     "door": "contact", "window": "contact", "opening": "contact", "garage_door": "contact",
     "smoke": "safety", "gas": "safety", "carbon_monoxide": "safety", "moisture": "safety", "safety": "safety", "heat": "safety",
 }
-DEVICE_TYPES = (
-    "hub", "climate", "lock", "cover", "vacuum", "camera", "alarm", "media", "fan", "light",
-    "outlet", "switch", "motion", "contact", "safety", "sensor", "button", "other",
-)
+# Handys, Tablets und Computer mit der Companion-App.
+_PHONE_DOMAINS = {"mobile_app"}
+# Integrationen für Netzwerkgeräte (Router, Access Points, Switches, NAS).
+_NETWORK_DOMAINS = {
+    "asuswrt", "fritz", "huawei_lte", "keenetic_ndms2", "luci", "mikrotik", "netgear", "qnap", "qnap_qsw",
+    "synology_dsm", "tplink_omada", "ubus", "unifi", "upnp", "vodafone_station",
+}
+# Messwerte von Zählern und Energiemessern.
+_ENERGY_CLASSES = {
+    "energy", "power", "gas", "water", "current", "voltage", "apparent_power", "reactive_power", "power_factor",
+}
 
 
 def device_type(hass: HomeAssistant, device: dr.DeviceEntry, entries: list[er.RegistryEntry], hubs: set[str]) -> str:
     """Typ für Liste und Ausschlüsse (docs/CONCEPT.md, "Überwachung einstellen")."""
     if device.id in hubs:
         return "hub"
+    primary_entry = _primary_entry(hass, device)
+    integration = primary_entry.domain if primary_entry else None
+    if integration in _PHONE_DOMAINS:
+        return "phone"
+    if integration in _NETWORK_DOMAINS:
+        return "network"
     primary = [e for e in entries if e.entity_category is None] or entries
     domains = {e.domain for e in primary}
     for domain, kind in _TYPE_DOMAINS:
@@ -309,11 +353,85 @@ def device_type(hass: HomeAssistant, device: dr.DeviceEntry, entries: list[er.Re
     for e in primary:
         if e.domain == "binary_sensor" and (kind := _BINARY_TYPES.get(str(_device_class(e, hass.states.get(e.entity_id))))):
             return kind
+    sensors = [e for e in primary if e.domain == "sensor"]
+    if sensors:
+        # Zähler: mindestens die Hälfte der Messwerte sind Strom, Energie, Gas, Wasser.
+        energy = sum(1 for e in sensors if _device_class(e, hass.states.get(e.entity_id)) in _ENERGY_CLASSES)
+        if energy * 2 >= len(sensors):
+            return "energy"
     if domains & {"sensor", "binary_sensor"}:
         return "sensor"
     if domains & {"button", "event", "scene"}:
         return "button"
     return "other"
+
+
+def effective_type(
+    hass: HomeAssistant, device: dr.DeviceEntry, entries: list[er.RegistryEntry], hubs: set[str]
+) -> tuple[str, str]:
+    """(gültiger Typ, erkannter Typ): ein von Hand gesetzter Typ hat Vorrang."""
+    auto = device_type(hass, device, entries, hubs)
+    manual = type_overrides(hass).get(device.id)
+    return (manual if manual in DEVICE_TYPES else auto), auto
+
+
+# -- Typ von Hand (eigene Datei, eine Instanz pro HA) ---------------------------
+
+_TYPES_STORE_KEY = f"{DOMAIN}.devices"
+
+
+def _types_store(hass: HomeAssistant) -> Store[dict[str, Any]]:
+    return Store(hass, STORAGE_VERSION, _TYPES_STORE_KEY)
+
+
+async def async_load_type_overrides(hass: HomeAssistant) -> None:
+    if DATA_TYPE_OVERRIDES not in hass.data:
+        stored = await _types_store(hass).async_load() or {}
+        raw = stored.get("types") if isinstance(stored, dict) else None
+        hass.data[DATA_TYPE_OVERRIDES] = {
+            str(k): v for k, v in (raw or {}).items() if v in DEVICE_TYPES
+        }
+
+
+@callback
+def type_overrides(hass: HomeAssistant) -> dict[str, str]:
+    return hass.data.get(DATA_TYPE_OVERRIDES) or {}
+
+
+async def async_set_type_override(hass: HomeAssistant, device_id: str, kind: str | None) -> None:
+    """Typ von Hand setzen; None stellt auf die Erkennung zurück."""
+    await async_load_type_overrides(hass)
+    overrides = hass.data[DATA_TYPE_OVERRIDES]
+    if kind is None:
+        overrides.pop(device_id, None)
+    else:
+        overrides[device_id] = kind
+    await _types_store(hass).async_save({"types": dict(overrides)})
+
+
+async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
+    """
+    Für die Ausschlüsse in den Einstellungen: alle Integrationen und Typen der
+    Kandidaten mit der Zahl ihrer Geräte, Ausschlüsse noch nicht abgezogen.
+    """
+    hubs = hub_ids(hass)
+    by_domain: dict[str, int] = {}
+    by_type: dict[str, int] = {}
+    for device, entries in candidate_devices(hass):
+        primary = _primary_entry(hass, device)
+        if primary:
+            by_domain[primary.domain] = by_domain.get(primary.domain, 0) + 1
+        kind = effective_type(hass, device, entries, hubs)[0]
+        by_type[kind] = by_type.get(kind, 0) + 1
+    info = await async_integration_info(hass, set(by_domain))
+    integrations = [
+        {"domain": d, "name": info.get(d, {}).get("name", d), "devices": n} for d, n in by_domain.items()
+    ]
+    integrations.sort(key=lambda x: (-x["devices"], str(x["name"]).lower()))
+    return {
+        "integrations": integrations,
+        "types": [{"type": t, "devices": by_type.get(t, 0)} for t in DEVICE_TYPES],
+    }
 
 
 def _primary_entry(hass: HomeAssistant, device: dr.DeviceEntry):
@@ -331,10 +449,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
 
     raw: list[tuple[dr.DeviceEntry, list[er.RegistryEntry], list[str]]] = []
     all_domains: set[str] = set()
-    hubs: set[str] = set()
-    for device in dr.async_get(hass).devices.values():
-        if device.via_device_id:
-            hubs.add(device.via_device_id)
+    hubs = hub_ids(hass)
     for device, entries in monitored_devices(hass):
         domains = sorted(
             {e.domain for eid in device.config_entries if (e := hass.config_entries.async_get_entry(eid))}
@@ -376,7 +491,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "hw_version": device.hw_version,
                 "integrations": domains,
                 "integration": {"domain": primary.domain, "title": primary.title} if primary else None,
-                "type": device_type(hass, device, entries, hubs),
+                **dict(zip(("type", "type_auto"), effective_type(hass, device, entries, hubs))),
+                "type_manual": device.id in type_overrides(hass),
                 "entities": len(entries),
                 "online": online,
                 "offline_since": since.isoformat() if since else None,
@@ -403,7 +519,9 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         "incidents": [],
     }
     if log is not None:
-        result["pulse"] = log.pulse(now_ts)
+        # Nur die gezeigten Geräte: ausgeschlossene zählen nirgends mit.
+        shown = {d["id"] for d in devices}
+        result["pulse"] = log.pulse(now_ts, only=shown)
         domain_of = {d["id"]: (d["integration"] or {}).get("domain") for d in devices}
         result["incidents"] = [
             {
@@ -413,7 +531,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 # Gemeinsame Integration als Hinweis auf die Ursache.
                 "integration": common if len({domain_of.get(d) for d in inc["devices"]}) == 1 and (common := domain_of.get(inc["devices"][0])) else None,
             }
-            for inc in log.incidents(now_ts)
+            for inc in log.incidents(now_ts, only=shown)
         ]
     return result
 

@@ -102,7 +102,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
     client = await hass_ws_client(hass)
     await client.send_json({"id": 1, "type": f"{DOMAIN}/get_options"})
     result = (await client.receive_json())["result"]
-    assert result["values"] == {CONF_UPDATE_CHECK: True}
+    assert result["values"] == {CONF_UPDATE_CHECK: True, "exclude_integrations": [], "exclude_types": []}
     assert set(result["panel"]) == {"prerelease", "prerelease_hacs"}
 
     await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {CONF_UPDATE_CHECK: False}})
@@ -170,3 +170,21 @@ async def test_github_answers(hass: HomeAssistant, aioclient_mock) -> None:
     aioclient_mock.clear_requests()
     aioclient_mock.get(LATEST, status=403)
     assert await REAL_GET_JSON(hass, LATEST) == (None, "HTTP 403")
+
+
+async def test_options_flow_with_exclusions(hass: HomeAssistant, entry) -> None:
+    source = MockConfigEntry(domain="hue", title="Bridge")
+    source.add_to_hass(hass)
+    from homeassistant.helpers import device_registry as dr, entity_registry as er
+
+    dev = dr.async_get(hass).async_get_or_create(config_entry_id=source.entry_id, identifiers={("hue", "x")}, name="Lampe")
+    er.async_get(hass).async_get_or_create("light", "hue", "x", device_id=dev.id)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    schema = {str(k): k for k in result["data_schema"].schema}
+    assert {"update_check", "exclude_integrations", "exclude_types"} <= set(schema)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_UPDATE_CHECK: True, "exclude_integrations": ["hue"], "exclude_types": []}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options["exclude_integrations"] == ["hue"]
+    assert entry.options["exclude_types"] == []

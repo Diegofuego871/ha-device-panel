@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "5"
+PANEL_VERSION = "6"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -50,3 +50,16 @@ STORAGE_VERSION = 1
 # "Reparaturen" melden. Standard an, wie in unifi_dynamic.
 CONF_UPDATE_CHECK = "update_check"
 DEFAULT_UPDATE_CHECK = True
+
+# Gerätetypen für Liste, Popup und Ausschlüsse (devices.device_type). Die
+# Reihenfolge ist die Anzeigereihenfolge in den Einstellungen.
+DEVICE_TYPES = (
+    "hub", "phone", "network", "climate", "lock", "cover", "valve", "vacuum", "camera", "alarm", "media",
+    "fan", "light", "outlet", "switch", "motion", "contact", "safety", "energy", "sensor", "button", "other",
+)
+# Ausschlüsse (Optionen): Geräte dieser Integrationen bzw. Typen zeigt das
+# Panel nicht, und das Protokoll überwacht sie nicht.
+CONF_EXCLUDE_INTEGRATIONS = "exclude_integrations"
+CONF_EXCLUDE_TYPES = "exclude_types"
+# Von Hand gesetzte Gerätetypen (eigene Datei, eine Instanz pro HA).
+DATA_TYPE_OVERRIDES = f"{DOMAIN}_type_overrides"
