@@ -24,6 +24,9 @@ for (const lang of ["de", "en"]) {
     p.on("pageerror", (e) => errors.push(e.message));
     await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&device=c`);
     const f = await (await p.waitForSelector("#panel-frame")).contentFrame();
+    // Erst prüfen, wenn das Panel im iframe steht und die Liste geladen hat
+    // (in der CI langsamer als lokal; ohne das scheiterte die erste Prüfung).
+    await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
     const text = (sel) => f.evaluate(new Function(`return (${R}.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`));
 
