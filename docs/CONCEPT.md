@@ -16,8 +16,24 @@ transparent macht:
 
 ## Fahrplan (vom Nutzer festgelegt, der Reihe nach)
 
-Stand 2026-10-01. Mockups dazu: `docs/mockups/panel-v1/` (Variante A nah an
-unifi_dynamic, Variante B "Cockpit"); Entscheid des Nutzers steht aus.
+Stand 2026-10-01. Mockups dazu: `docs/mockups/panel-v1/`.
+
+**Design-Entscheid (Nutzer, 2026-10-01): Variante C**, die Kombination aus A
+und B, und alle Ideen aus den Mockups werden verfolgt:
+
+- Kopf aus B: Ring "online von gesamt", Tafel "Gerade ausgefallen" mit
+  Dauer, Ausfall-Puls über 24 Std. mit Hinweis auf Sammelausfälle.
+- Filter-Chips nach Verbindungsart und "Nur Probleme" (B), Ansicht
+  gruppiert (Ausgefallen, Instabil, Online) oder als Liste.
+- Tabelle: ausgefallene Zeilen rot hinterlegt mit Balken links (A), Dauer
+  gross in der Statusspalte (B), alle Spalten über das Spalten-Popover
+  wählbar und verschiebbar (A), getrennt für Desktop und Handy.
+- Geräteansicht mit Tabs (B), auf dem Desktop als Seitenleiste, auf dem
+  Handy als Blatt: Übersicht (Kennzahlen, wahrscheinliche Ursache, Funkweg,
+  Empfangsverlauf), Verlauf (Zeitstrahl und Unterbrüche aus A,
+  Unterbrüche pro Tag über 30 Tage), Verbindung, Entitäten, Einstellungen.
+- Einstellungen wie Bild 5 (unifi_dynamic-Aufbau).
+- Handy: Karten wie B.
 
 1. **Geräteliste** mit sinnvollen Spalten: Gerät, Status mit Offline-Dauer,
    Verbindungsart, Empfang, Integration, Hersteller/Modell, Software (mit
@@ -42,7 +58,7 @@ unifi_dynamic, Variante B "Cockpit"); Entscheid des Nutzers steht aus.
    "instabil" bei vielen Unterbrüchen (siehe "Verfügbarkeitsprotokoll").
 7. **Push-Meldungen** mit einstellbarem Inhalt wie unifi_dynamic, Klickziel,
    Entwarnung, anhaltende Benachrichtigung (siehe "Push-Meldungen").
-8. **Ideen** (aus den Mockups, einzeln zu entscheiden): Gesundheitswert pro
+8. **Ideen** (aus den Mockups, vom Nutzer angenommen): Gesundheitswert pro
    Gerät, Hinweis auf wahrscheinliche Ursache (Batterie, Empfang),
    Sammelausfall erkennen und zusammenfassen, Ausfall-Puls (Zahl
    ausgefallener Geräte über 24 Std.), Funkweg (Zigbee-Route, Bluetooth-

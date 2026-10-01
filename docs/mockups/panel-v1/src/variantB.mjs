@@ -97,14 +97,14 @@ tr.grp small { font-weight: 400; text-transform: none; letter-spacing: 0; margin
 .kv span:first-child { color: var(--text2); }
 `;
 
-const statusB = (d) =>
+export const statusB = (d) =>
   d.status === "off"
     ? `<div class="dur">${d.since}</div><div class="durs">offline</div>`
     : d.status === "flaky"
     ? `<span class="pill flaky">Instabil</span><div class="durs">${d.out}× in 24 Std.</div>`
     : `<span class="pill on"><span class="dot"></span>Online</span>`;
 
-const empB = (d) => {
+export const empB = (d) => {
   const lvl = sigLevel(d.sig);
   if (!lvl) return d.via ? `<div class="emp"><span class="t3">–</span><span class="t2">über ${d.via}</span></div>` : `<span class="t3">–</span>`;
   return `<div class="emp"><span class="sig">${bars(lvl, d.status === "off")} ${sigText(d.sig)}</span>${d.via ? `<span class="t2">über ${d.via}</span>` : ""}</div>`;
@@ -124,7 +124,7 @@ const rowB = (d) => `<tr>
 
 // Ausfall-Puls: Zahl ausgefallener Geräte über 24 Std. (30-Min.-Schritte).
 const PULSE = [1,1,1,1,1,2,1,1,1,1,1,2,1,1,1,1,1,2,1,1,1,1,1,1,7,1,1,1,1,1,1,2,1,1,1,1,2,1,1,1,1,1,2,2,2,2,3,3,4];
-function pulseChart(w, h) {
+export function pulseChart(w, h) {
   const max = 8, n = PULSE.length - 1, pad = 18;
   const x = (i) => (i / n) * (w - 4) + 2, y = (v) => h - pad - (v / max) * (h - pad - 6);
   const pts = PULSE.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
@@ -140,11 +140,11 @@ function pulseChart(w, h) {
     ${labels}</svg>`;
 }
 
-const toolbarB = () => `<div class="tb">${LOGO(32)}<h1>Geräte</h1>
+export const toolbarB = () => `<div class="tb">${LOGO(32)}<h1>Geräte</h1>
   <div class="search">${ic("search", 20)} In allen Spalten suchen…</div>
   <span class="btn">${ic("columns", 18)} Spalten</span><span class="btn round">${ic("cog", 20)}</span></div>`;
 
-const heroB = (chartW = 610) => `<div class="hero">
+export const heroB = (chartW = 610) => `<div class="hero">
   <div class="kt ring-t"><div class="ringwrap">${ring(96.9, 112, 11, "var(--success)")}<div class="c"><div><b>124</b><span>von 128 online</span></div></div></div>
     <div><div class="k">Verfügbarkeit</div><div style="font-size:26px;font-weight:600;margin:6px 0 8px;letter-spacing:-.02em">98,6 %<span class="t2" style="font-size:12px;font-weight:400"> Ø 24 Std.</span></div>
     <div class="lines"><div><i style="background:var(--success)"></i>122 stabil</div><div><i style="background:var(--warning)"></i>2 instabil</div><div><i style="background:var(--error)"></i>4 ausgefallen</div></div></div></div>
@@ -156,7 +156,7 @@ const heroB = (chartW = 610) => `<div class="hero">
       <div class="callout" style="left:${chartW * 0.5 + 16}px;top:4px"><b>03:12 · Sammelausfall</b>6 Zigbee-Geräte gleichzeitig, 3 Min. Vermutlich der Koordinator.</div></div></div>
 </div>`;
 
-const chipsB = () => `<div class="chips"><span class="chip on"><b>Alle</b> <span class="n">${KPI.total}</span></span>
+export const chipsB = () => `<div class="chips"><span class="chip on"><b>Alle</b> <span class="n">${KPI.total}</span></span>
   ${CONN_COUNTS.map(([k, n]) => `<span class="chip">${connIcon(k, 15)} ${CONN[k]} <span class="n">${n}</span></span>`).join("")}
   <span class="vsep"></span><span class="chip">${ic("alert", 15)} Nur Probleme</span><span class="sp"></span>
   <span class="seg"><span class="on">Gruppiert</span><span>Liste</span></span></div>`;
@@ -173,7 +173,7 @@ export function mainB() {
 }
 
 // LQI-Verlauf 7 Tage, fallend.
-function sparkLqi(w, h) {
+export function sparkLqi(w, h) {
   const v = [148, 151, 139, 132, 120, 118, 104, 96, 88, 79, 71, 64, 52, 45, 38];
   const x = (i) => (i / (v.length - 1)) * (w - 8) + 4, y = (q) => h - 16 - ((q - 20) / 160) * (h - 24);
   const line = "M" + v.map((q, i) => `${x(i).toFixed(1)},${y(q).toFixed(1)}`).join(" L");
@@ -184,7 +184,7 @@ function sparkLqi(w, h) {
   ${["Do", "Fr", "Sa", "So", "Mo", "Di", "heute"].map((t, i, a) => `<text x="${(i / (a.length - 1)) * (w - 30) + 14}" y="${h - 2}" font-size="10.5" text-anchor="middle" fill="var(--text2)">${t}</text>`).join("")}</svg>`;
 }
 
-const drawerContent = (narrow = false) => {
+export const drawerContent = (narrow = false) => {
   const d = DEVICES[1];
   return `<div class="dhero"><div class="dhead"><div class="av off">${connIcon("zigbee", 28)}<span class="st"></span></div>
       <div><h2>${d.name}</h2><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="pill off"><span class="dot"></span>Offline</span><span class="t2" style="font-size:13px">Flur · ZHA · Zigbee</span></div></div>
@@ -244,7 +244,7 @@ export const CSS_B_M = `
 .sheet .tabs { overflow: hidden; } .sheet .tabs span { padding: 10px 9px; font-size: 13.5px; }
 `;
 
-const mcard = (d) => `<div class="mc ${d.status === "off" ? "e" : ""}"><div class="av ${d.status === "on" ? "" : d.status}">${connIcon(d.conn, 18)}<span class="st"></span></div>
+export const mcard = (d) => `<div class="mc ${d.status === "off" ? "e" : ""}"><div class="av ${d.status === "on" ? "" : d.status}">${connIcon(d.conn, 18)}<span class="st"></span></div>
   <div><div class="nm">${d.name}</div><div class="sb">${connIcon(d.conn, 13)} ${CONN[d.conn]}${sigLevel(d.sig) ? ` ${bars(sigLevel(d.sig), d.status === "off")} ${sigText(d.sig)}` : ""}</div></div>
   <div class="rt">${d.status === "off" ? `<div class="dur">${d.sinceShort}</div><div class="durs">offline</div>` : `<span class="pill flaky">${d.out}× / 24 Std.</span>`}</div>
   <div class="stripw">${stripSvg(d, 300, 7)}</div></div>`;

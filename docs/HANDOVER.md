@@ -31,10 +31,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 1. `0.1.0b2` in HACS testen (Vorabversionen am HACS-Gerät einschalten),
    danach `0.1.0` als stabile Version.
-2. Design-Entscheid: Mockups in `docs/mockups/panel-v1/` (Variante A nah
-   an unifi_dynamic, Variante B "Cockpit"). Der Nutzer wählt; danach die
-   offenen Entscheide aus `docs/CONCEPT.md` klären (Definition
-   "ausgefallen", Schwelle, ausgeblendete Geräte, Recorder-Nachfüllen).
+2. Design ist entschieden: Variante C (Kombination aus A und B, alle
+   Ideen), siehe `docs/CONCEPT.md`, Abschnitt "Fahrplan", und
+   `docs/mockups/panel-v1/` (Bilder 5–8). Noch offen beim Nutzer: Bedeutung
+   von "Domains" (angenommen: Integrationen), Installationen ohne HACS (Vorschlag:
+   nur Hinweis wie unifi_dynamic), `0.1.0` jetzt als stabile Version, sowie
+   die offenen Entscheide in `docs/CONCEPT.md` (Definition "ausgefallen",
+   Schwelle, ausgeblendete Geräte, Recorder-Nachfüllen).
 3. Umsetzung nach dem Fahrplan in `docs/CONCEPT.md` (Abschnitt "Fahrplan"),
    der Reihe nach: Geräteliste mit Statistik, Spalten pro Benutzer,
    Einstellungsmenü, Update-Bereich, Geräteansicht, Verfügbarkeitsprotokoll,
