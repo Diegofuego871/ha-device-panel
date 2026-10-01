@@ -32,20 +32,6 @@ Erste Vorabversion der neuen Geräteliste (Design C).
   stehen als "mindestens" (≥) da.
 - Zahlen und Uhrzeiten folgen der Home-Assistant-Sprache des Benutzers.
 
-## [0.1.0] - 2026-10-01
-
-Erste stabile Version mit allem aus 0.1.0b1 und 0.1.0b2.
-
-### Hinzugefügt
-
-- Panel in der Seitenleiste mit allen Geräten samt Status, Bereich,
-  Integration, Hersteller/Modell und Softwarestand; ausgefallene Geräte
-  zuoberst; Suche und Statusfilter.
-- Icon und Logo in `brand/` (Home Assistant ab 2026.3 lädt sie lokal).
-- Das Icon wird ohne Anmeldung unter `/device_panel/icon.png` ausgeliefert,
-  bereit für Push-Meldungen in der Companion-App.
-- Durchgehend Deutsch und Englisch.
-
 ## [0.1.0b2] - 2026-10-01
 
 Zweite Vorabversion. Bitte statt 0.1.0b1 verwenden: Jene wurde aus einem
@@ -78,6 +64,5 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [0.2.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.2.0b1
-[0.1.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.1.0
 [0.1.0b2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.1.0b2
 [0.1.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.1.0b1

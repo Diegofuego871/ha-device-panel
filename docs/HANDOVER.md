@@ -29,8 +29,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `CLAUDE.md`, "Git und Releases").
 - `v0.1.0b1` (Vorabversion) zeigt versehentlich auf `8944f3b`, den Stand vor
   Icon und Sprachtests (Manifest 0.1.0). Der Tag bleibt (veröffentlichte Tags
-  nie ändern); `0.1.0b2` ersetzt ihn. `0.1.0` ist die erste stabile Version
-  (gleicher Inhalt wie `0.1.0b2`).
+  nie ändern); `0.1.0b2` ersetzt ihn. `0.1.0` (Commit `ea170ca`) wurde auf
+  Wunsch des Nutzers nicht veröffentlicht; die erste stabile Version kommt
+  mit `0.2.0`.
 
 ## Nächste Schritte (Reihenfolge)
 
