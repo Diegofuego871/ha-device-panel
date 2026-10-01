@@ -226,6 +226,10 @@ class DevicePanel extends HTMLElement {
     document.addEventListener("visibilitychange", this._onVisible);
     this._onNarrow = () => this._render();
     this._narrowQuery.addEventListener("change", this._onNarrow);
+    // Tipp auf eine Meldung, während das Panel schon offen ist: HA ändert
+    // nur die Adresse, das iframe bleibt.
+    this._onLocation = () => this._deepLink();
+    this._topWindow()?.addEventListener("location-changed", this._onLocation);
   }
 
   disconnectedCallback() {
@@ -233,6 +237,33 @@ class DevicePanel extends HTMLElement {
     window.clearInterval(this._tick);
     document.removeEventListener("visibilitychange", this._onVisible);
     this._narrowQuery.removeEventListener("change", this._onNarrow);
+    this._topWindow()?.removeEventListener("location-changed", this._onLocation);
+  }
+
+  _topWindow() {
+    try {
+      return window.parent || window;
+    } catch {
+      return null;
+    }
+  }
+
+  // Deep-Link aus einer Meldung: /device-panel?device=<id> öffnet das Popup.
+  // Der Parameter wird danach entfernt, damit Neuladen es nicht erneut öffnet.
+  _deepLink() {
+    const top = this._topWindow();
+    if (!top || this._loading || this._error) return;
+    let url;
+    try {
+      url = new URL(top.location.href);
+    } catch {
+      return;
+    }
+    const id = url.searchParams.get("device");
+    if (!id) return;
+    url.searchParams.delete("device");
+    top.history.replaceState(top.history.state, "", url.pathname + url.search + url.hash);
+    this._openDevice(id);
   }
 
   // Zahlen und Uhrzeit im Format der HA-Sprache des Benutzers (z. B. de-CH).
@@ -336,12 +367,17 @@ class DevicePanel extends HTMLElement {
       this._serverNow = (Number.isFinite(serverNow) ? serverNow : Date.now()) / 1000;
       this._fetchedAt = new Date();
       this._error = null;
+      this._deepPending = true;
     } catch (err) {
       this._error = (err && err.message) || String(err);
     } finally {
       this._fetching = false;
       this._loading = false;
       this._render();
+      if (this._deepPending) {
+        this._deepPending = false;
+        this._deepLink();
+      }
       this._refineMatter();
       if (this._detailId) {
         this._loadDetail();
@@ -1299,12 +1335,15 @@ class DevicePanel extends HTMLElement {
     return [...this._settingsEntryChanges(), ...this._settingsExtraChanges()];
   }
 
-  // Abschnitte mit ihren Optionen in der Reihenfolge von Bild 5; Push folgt.
+  // Abschnitte mit ihren Optionen in der Reihenfolge von Bild 5, dazu
+  // "Batterie" nach der Ausfall-Erkennung.
   _settingsSections() {
     return [
       ["detection", ["offline_after", "flaky_outages", "startup_grace"]],
+      ["battery", ["battery_low", "battery_push", "battery_persistent"]],
       ["integrations", ["exclude_integrations"]],
       ["types", ["exclude_types"]],
+      ["push", ["notify_service", "notify_click_target"]],
       ["display", ["show_service_devices", "show_disabled_devices"]],
       ["updates", ["update_check"]],
     ];
@@ -1339,6 +1378,15 @@ class DevicePanel extends HTMLElement {
       return this._t("sumDetection", num("offline_after"), num("flaky_outages"), num("startup_grace"));
     }
     if (id === "display") return this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices));
+    if (id === "battery") {
+      const errors = this._settingsErrors();
+      const pct = errors.battery_low ? this._settings?.data?.values?.battery_low : d.battery_low;
+      return this._t("sumBattery", pct, Boolean(d.battery_push), Boolean(d.battery_persistent));
+    }
+    if (id === "push") {
+      const target = d.notify_service && d.notify_service !== "none" ? d.notify_service : "";
+      return this._t("sumPush", target, d.battery_push ? [this._t("pushKindBattery")] : []);
+    }
     if (id === "integrations") {
       const list = this._settings?.data?.catalog?.integrations || [];
       return this._t("sumShown", this._t("sumIntegrations", list.length), d.exclude_integrations.length);
@@ -1393,11 +1441,20 @@ class DevicePanel extends HTMLElement {
       `<button type="button" class="info-btn${st.info.has(key) ? " on" : ""}" data-set="info" data-key="${key}" title="${escape(t("settingsInfo"))}" aria-label="${escape(t("settingsInfo"))}" aria-expanded="${st.info.has(key)}">${mdi("info", 16)}</button>`;
     // Feldzeile: Beschriftung (+ ⓘ), Eingabe, Kurzzeile oder Fehler,
     // aufklappbarer Text. data-short: Kurzzeile zurück, wenn der Fehler weg ist.
-    const row = (key, label, control, short, info) => `<div class="opt${changes.has(key) ? " changed" : ""}${errors[key] ? " invalid" : ""}">
+    const row = (key, label, control, short, info, warn = null) => `<div class="opt${changes.has(key) ? " changed" : ""}${errors[key] ? " invalid" : ""}">
         <div class="opt-line"><span class="opt-label">${escape(label)}${info ? infoBtn(key) : ""}</span>${control}</div>
         ${short || errors[key] ? `<div class="${errors[key] ? "opt-error" : "opt-short"}" data-short="${escape(short || "")}">${escape(errors[key] || short)}</div>` : ""}
+        ${warn ? `<div class="opt-warn">${mdi("alert", 14)}<span>${escape(warn)}</span></div>` : ""}
         ${info && st.info.has(key) ? `<div class="opt-info">${escape(info)}</div>` : ""}</div>`;
     const sw = (key, label) => `<label class="switch"><input type="checkbox" data-opt="${key}" ${d[key] ? "checked" : ""} aria-label="${escape(label)}"><span></span></label>`;
+    const select = (key, options, label) => `<span class="opt-select"><select data-opt="${key}" aria-label="${escape(label)}">${options
+        .map(([v, text]) => `<option value="${escape(v)}"${v === d[key] ? " selected" : ""}>${escape(text)}</option>`)
+        .join("")}</select>${mdi("chevronDown", 18)}</span>`;
+    const targets = (st.data.notify_targets || [{ value: "none", kind: "none" }]).map((x) => [
+      x.value,
+      x.kind === "none" ? t("notifyNone") : x.kind === "entity" ? t("notifyEntity", x.value) : x.kind === "missing" ? t("notifyMissing", x.value) : x.value,
+    ]);
+    const noTarget = !d.notify_service || d.notify_service === "none";
     const num = (key, unit, label) => {
       const [min, max] = st.data.limits?.[key] || [];
       return `<span class="opt-input"><input type="number" inputmode="numeric" step="1" ${min != null ? `min="${min}" max="${max}"` : ""} data-opt="${key}" value="${escape(d[key] ?? "")}" aria-label="${escape(label)}"><span class="unit">${escape(unit)}</span></span>`;
@@ -1431,14 +1488,24 @@ class DevicePanel extends HTMLElement {
         row("offline_after", t("optOfflineAfter"), num("offline_after", t("minuteUnit"), t("optOfflineAfter")), t("optOfflineAfterShort"), t("optOfflineAfterInfo")) +
         row("flaky_outages", t("optFlaky"), num("flaky_outages", t("unitOutages"), t("optFlaky")), t("optFlakyShort"), t("optFlakyInfo")) +
         row("startup_grace", t("optGrace"), num("startup_grace", t("minuteUnit"), t("optGrace")), t("optGraceShort"), t("optGraceInfo")),
+      battery:
+        row("battery_low", t("optBatteryLow"), num("battery_low", t("unitPercent"), t("optBatteryLow")), t("optBatteryLowShort"), null) +
+        row("battery_push", t("optBatteryPush"), sw("battery_push", t("optBatteryPush")), d.battery_push && noTarget ? null : t("optBatteryPushShort"), t("optBatteryPushInfo"),
+          d.battery_push && noTarget ? t("optBatteryPushNoTarget") : null) +
+        row("battery_persistent", t("optBatteryPersistent"), sw("battery_persistent", t("optBatteryPersistent")), t("optBatteryPersistentShort"), t("optBatteryPersistentInfo")),
       integrations: exTable("exclude_integrations", integrations, t("hideIntro")),
       types: exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`),
+      push:
+        row("notify_service", t("optNotifyTarget"), select("notify_service", targets, t("optNotifyTarget")), t("optNotifyTargetShort"), t("optNotifyTargetInfo")) +
+        row("notify_click_target", t("optClick"), select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null),
       display:
         row("show_service_devices", t("optShowService"), sw("show_service_devices", t("optShowService")), t("optShowServiceShort"), t("optShowServiceInfo")) +
         row("show_disabled_devices", t("optShowDisabled"), sw("show_disabled_devices", t("optShowDisabled")), t("optShowDisabledShort"), null),
       updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
-    const titles = { detection: "secDetection", integrations: "secIntegrations", types: "secTypes", display: "secDisplay", updates: "secUpdates" };
+    const titles = {
+      detection: "secDetection", battery: "secBattery", integrations: "secIntegrations", types: "secTypes", push: "secPush", display: "secDisplay", updates: "secUpdates",
+    };
     return (
       `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
       this._settingsSections()
@@ -1496,6 +1563,11 @@ class DevicePanel extends HTMLElement {
     dialog.addEventListener("change", (ev) => {
       const st = this._settings;
       const el = ev.target;
+      if (st?.draft && el.tagName === "SELECT" && el.dataset.opt) {
+        st.draft[el.dataset.opt] = el.value;
+        this._renderSettings();
+        return;
+      }
       if (!st?.draft || el.type !== "checkbox") return;
       if (el.dataset.opt) st.draft[el.dataset.opt] = el.checked;
       else if (el.dataset.list) {
@@ -1582,8 +1654,9 @@ class DevicePanel extends HTMLElement {
       }
       this._closeSettings();
       this._toast(this._t("settingsSaved"));
-      // Erkennung, Ausschlüsse und Anzeige ändern die Liste sofort.
-      if (changes.some((k) => k !== "update_check")) this._fetch();
+      // Erkennung, Batterie-Schwelle, Ausschlüsse und Anzeige ändern die Liste sofort.
+      const quiet = ["update_check", "battery_push", "battery_persistent", "notify_service", "notify_click_target"];
+      if (changes.some((k) => !quiet.includes(k))) this._fetch();
     } catch (err) {
       if (this._settings !== st) return;
       st.saving = false;

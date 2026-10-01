@@ -24,7 +24,7 @@ from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
 from .const import (
-    BATTERY_LOW,
+    CONF_BATTERY_LOW,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_FLAKY_OUTAGES,
@@ -33,6 +33,7 @@ from .const import (
     CONF_SHOW_SERVICE,
     DATA_STARTED_AT,
     DATA_TYPE_OVERRIDES,
+    DEFAULT_BATTERY_LOW,
     DEFAULT_OFFLINE_AFTER,
     DEVICE_TYPES,
     DOMAIN,
@@ -185,7 +186,14 @@ def _ble_signal(hass: HomeAssistant, address: str) -> tuple[dict[str, Any] | Non
         return None, None
 
 
-def _battery(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> dict[str, Any] | None:
+def battery(
+    hass: HomeAssistant, entries: list[er.RegistryEntry], threshold: int = DEFAULT_BATTERY_LOW
+) -> dict[str, Any] | None:
+    """
+    Batterie aus Entitäten: Prozent (Sensor) und/oder "schwach" (Binärsensor).
+    Schwach bis threshold Prozent (Option "Schwach ab") oder wenn der
+    Binärsensor es meldet.
+    """
     level: int | None = None
     low = False
     found = False
@@ -202,7 +210,7 @@ def _battery(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> dict[str, 
     if not found:
         return None
     if level is not None:
-        low = low or level <= BATTERY_LOW
+        low = low or level <= threshold
     return {"level": level, "low": low}
 
 
@@ -537,7 +545,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "connection": _connection(device, domains, entries, signal, iot_classes),
                 "signal": signal,
                 "via": via,
-                "battery": _battery(hass, entries),
+                "battery": battery(hass, entries, opts[CONF_BATTERY_LOW]),
                 "update": _update(hass, entries),
                 "avail24": avail,
                 # Instabil: online, aber oft unterbrochen.
@@ -549,7 +557,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         "integrations": {d: i["name"] for d, i in integrations.items()},
         "now": now.isoformat(),
         "offline_after": offline_after,
-        "battery_low": BATTERY_LOW,
+        "battery_low": opts[CONF_BATTERY_LOW],
         "flaky_outages": flaky_outages,
         "pulse": None,
         "incidents": [],

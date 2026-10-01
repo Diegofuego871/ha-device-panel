@@ -22,7 +22,10 @@ const TEXT = {
     secDet: "Ausfall-Erkennung", sumDet: (m, n) => `Ausgefallen nach ${m} Min. · instabil ab ${n} Unterbrüchen in 24 Std. · Anlaufphase 5 Min.`,
     offLabel: "Ausgefallen nach", offShort: "Minuten ohne Lebenszeichen. Kürzere Aussetzer zählen nicht.", unit: "Min.", range: "Erlaubt: 1 bis 60",
     secDisp: "Anzeige", sumDisp: "Dienst-Geräte und deaktivierte Geräte ausgeblendet", sumDispDis: "Dienst-Geräte ausgeblendet · deaktivierte angezeigt",
-    sumDispBoth: "Dienst-Geräte und deaktivierte Geräte angezeigt", grpDis: "Deaktiviert", ofTotal: "von 17", four: "4 Änderungen",
+    sumDispBoth: "Dienst-Geräte und deaktivierte Geräte angezeigt", grpDis: "Deaktiviert", ofTotal: "von 17", four: "4 Änderungen", five: "5 Änderungen",
+    sumBatOff: "Schwach ab 15 % · keine Meldung", sumBatBoth: "Schwach ab 25 % · Push und anhaltende Benachrichtigung",
+    noTarget: "Zuerst unter \"Push-Benachrichtigung\" ein Ziel wählen.", sumPushNone: "Kein Ziel gewählt",
+    sumPush: "notify.mobile_app_testhandy · Batterie schwach", notifyNone: "Kein Ziel (keine Push-Meldungen)", entity: "notify.fernseher (Entität)",
   },
   en: {
     gear: "Settings", title: "Settings", sub: "Device Panel · applies to all users", sec: "Updates",
@@ -35,7 +38,10 @@ const TEXT = {
     secDet: "Outage detection", sumDet: (m, n) => `Offline after ${m} min · unstable from ${n} outages in 24 h · grace period 5 min`,
     offLabel: "Offline after", offShort: "Minutes without a sign of life. Shorter dropouts are not counted.", unit: "min", range: "Allowed: 1 to 60",
     secDisp: "Display", sumDisp: "Service devices and disabled devices hidden", sumDispDis: "Service devices hidden · disabled shown",
-    sumDispBoth: "Service devices and disabled devices shown", grpDis: "Disabled", ofTotal: "of 17", four: "4 changes",
+    sumDispBoth: "Service devices and disabled devices shown", grpDis: "Disabled", ofTotal: "of 17", four: "4 changes", five: "5 changes",
+    sumBatOff: "Low from 15 % · no notification", sumBatBoth: "Low from 25 % · push and persistent notification",
+    noTarget: "First choose a target under \"Push notification\".", sumPushNone: "No target chosen",
+    sumPush: "notify.mobile_app_testhandy · low battery", notifyNone: "No target (no push notifications)", entity: "notify.fernseher (entity)",
   },
 };
 
@@ -168,7 +174,7 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     const order = await ev(`return [...r.querySelectorAll(".set-sec-head")].map(h=>h.dataset.id).join(",")`);
-    check(`[${tag}] Abschnitte wie Bild 5`, order === "detection,integrations,types,display,updates", order);
+    check(`[${tag}] Abschnitte wie Bild 5`, order === "detection,battery,integrations,types,push,display,updates", order);
     check(`[${tag}] Ausfall-Erkennung zusammengefasst`, (await text('[data-id="detection"] .set-sec-title')) === T.secDet && (await text('[data-id="detection"] .set-sec-sum')) === T.sumDet(2, 3), await text('[data-id="detection"] .set-sec-sum'));
     await tap('[data-set="section"][data-id="detection"]');
     check(`[${tag}] drei Zahlenfelder`, (await ev(`return r.querySelectorAll('.set-sec-body input[type="number"]').length`)) === 3);
@@ -242,6 +248,49 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] vier Änderungen`, (await text(".set-count")) === T.four);
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] Standards wieder`, await wait(`return r.querySelectorAll(".dev").length === 16`) && JSON.stringify(await p.evaluate(() => [window.__opts.offline_after, window.__opts.flaky_outages, window.__opts.show_disabled_devices, window.__opts.show_service_devices])) === "[2,3,false,false]");
+
+    // Batterie und Push-Benachrichtigung
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    check(`[${tag}] Batterie zusammengefasst`, (await text('[data-id="battery"] .set-sec-sum')) === T.sumBatOff, await text('[data-id="battery"] .set-sec-sum'));
+    check(`[${tag}] Push ohne Ziel`, (await text('[data-id="push"] .set-sec-sum')) === T.sumPushNone, await text('[data-id="push"] .set-sec-sum'));
+    await tap('[data-set="section"][data-id="battery"]');
+    await tap('.switch input[data-opt="battery_push"]');
+    check(`[${tag}] Hinweis: Push braucht ein Ziel`, (await text(".opt-warn")) === T.noTarget, await text(".opt-warn"));
+    await tap('.switch input[data-opt="battery_persistent"]');
+    const bat = (await f.evaluateHandle(new Function(`return ${R}.querySelector('input[data-opt="battery_low"]')`))).asElement();
+    if (mobile) await bat.tap(); else await bat.click();
+    await bat.fill("");
+    await bat.type("25");
+    check(`[${tag}] Batterie live`, (await text('[data-id="battery"] .set-sec-sum')) === T.sumBatBoth, await text('[data-id="battery"] .set-sec-sum'));
+    await tap('[data-set="section"][data-id="push"]');
+    const opts = await ev(`return [...r.querySelectorAll('select[data-opt="notify_service"] option')].map(o=>o.textContent)`);
+    check(`[${tag}] Push-Ziele mit Beschriftung`, opts.length === 4 && opts[0] === T.notifyNone && opts[3] === T.entity, JSON.stringify(opts));
+    const sel = (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-opt="notify_service"]')`))).asElement();
+    await sel.selectOption("notify.mobile_app_testhandy");
+    check(`[${tag}] Ziel gewählt: Hinweis weg, Zusammenfassung`, await wait(`return !r.querySelector(".opt-warn")`) && (await text('[data-id="push"] .set-sec-sum')) === T.sumPush, await text('[data-id="push"] .set-sec-sum'));
+    const click = (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-opt="notify_click_target"]')`))).asElement();
+    await click.selectOption("device");
+    check(`[${tag}] fünf Änderungen`, (await text(".set-count")) === T.five, await text(".set-count"));
+    await p.screenshot({ path: `${outDir}/settings-battery-${tag.replace("/", "-")}.png` });
+    await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] Batterie und Push gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low: 25, battery_push: true, battery_persistent: true, notify_service: "notify.mobile_app_testhandy", notify_click_target: "device" }), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
+    check(`[${tag}] Liste mit neuer Schwelle`, await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "3"`), await text('.chip.hint[data-hint="battery"] .n'));
+    // Zurück
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    await tap('[data-set="section"][data-id="battery"]');
+    const bat2 = (await f.evaluateHandle(new Function(`return ${R}.querySelector('input[data-opt="battery_low"]')`))).asElement();
+    if (mobile) await bat2.tap(); else await bat2.click();
+    await bat2.fill("");
+    await bat2.type("15");
+    await tap('.switch input[data-opt="battery_push"]');
+    await tap('.switch input[data-opt="battery_persistent"]');
+    await tap('[data-set="section"][data-id="push"]');
+    await (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-opt="notify_service"]')`))).asElement().selectOption("none");
+    await (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-opt="notify_click_target"]')`))).asElement().selectOption("panel");
+    await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] Batterie und Push zurück`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify(await p.evaluate(() => [window.__opts.battery_low, window.__opts.battery_push, window.__opts.battery_persistent, window.__opts.notify_service, window.__opts.notify_click_target])) === JSON.stringify([15, false, false, "none", "panel"]) && await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`));
 
     // Fehler beim Speichern: Meldung, Dialog bleibt
     await p.evaluate(() => { window.__setOptsFails = "Keine Berechtigung"; });

@@ -334,9 +334,27 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
 - Verbindungsabbrüche still überbrücken, Polling im Hintergrund pausieren.
 - Statistik-Fenster mit Tabs, Zeitraum 24 Std./7/30 Tage, Loader.
 
-## Push-Meldungen (vorbereitet)
+## Push-Meldungen (Grundlage seit 0.7.0)
 
 Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
+
+- Versand in `push.py` (seit 0.7.0, zuerst für die Batterie-Warnung): Ziel
+  `notify_service` (notify-Dienst, Gruppe oder notify-Entität, "none" =
+  aus), Klickziel `notify_click_target` (Gerät im Panel über
+  `/device-panel?device=<id>` oder HA-Geräteseite), Zusatzdaten mit `url`,
+  `clickAction`, `tag`, `icon_url`, zweiter Versuch ohne Zusatzdaten,
+  notify-Entitäten über `notify.send_message`, Texte DE/EN nach
+  `hass.config.language`.
+- Batterie-Warnung (`battery.py`, Abschnitt "Batterie"): Push einmal pro
+  Gerät beim Unterschreiten von "Schwach ab", gemerkt in
+  `.storage/device_panel.battery`; erneut erst nach `BATTERY_REARM` (5)
+  Punkten darüber; keine Werte (nicht erreichbar) ändern nichts; mehr als
+  `BATTERY_PUSH_MAX` (3) neue auf einmal = Sammelmeldung; Einschalten oder
+  neues Ziel meldet die aktuell betroffenen einmal. Anhaltende
+  Benachrichtigung (`persistent_notification`, ID `device_panel_battery`)
+  mit allen betroffenen Geräten, verschwindet, wenn keines mehr betroffen
+  ist; weggeklickt (Callback REMOVED) erst wieder bei einem neuen Gerät,
+  nach geänderten Optionen oder nach dem Start.
 
 - Bild: `brand/icon.png` (das gewählte Icon) wird beim Setup als statischer
   Pfad ohne Anmeldung unter `/device_panel/icon.png` ausgeliefert, sonst
@@ -353,7 +371,9 @@ Für den Versand zu übernehmen:
   Zusatzdaten ab (Telegram, E-Mail), einmal ohne `data` wiederholen.
   notify-Entitäten über `notify.send_message` (nur Titel und Text).
 - Texte in Deutsch und Englisch nach `hass.config.language`.
-- Ziel und Auslöser in den Einstellungen (siehe "Pflicht", Abschnitt 1).
+- Für Ausfälle offen (Schritt 7): Auslöser und Inhalt der Meldung, "Erst
+  melden nach", "Wieder online melden", Sammelausfall, Vorschau, Push und
+  Anhaltend pro Integration (Bild 5).
 
 ## Mögliche Erweiterungen (später)
 

@@ -15,9 +15,12 @@ from homeassistant.helpers import device_registry as dr
 
 from . import options_api, update_check
 from .availability import RANGES, AvailabilityLog
+from .battery import BatteryWatch
 from .const import (
+    CONF_NOTIFY_SERVICE,
     BRAND_DIR,
     DATA_AVAILABILITY,
+    DATA_BATTERY,
     DATA_PANEL_REGISTERED,
     DATA_PUSH_IMAGE,
     DATA_WS_REGISTERED,
@@ -56,6 +59,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await log.async_start()
         hass.data[DATA_AVAILABILITY] = log
     await async_load_type_overrides(hass)
+    if DATA_BATTERY not in hass.data:
+        watch = BatteryWatch(hass)
+        await watch.async_start()
+        hass.data[DATA_BATTERY] = watch
     await update_check.async_load_panel_settings(hass)
     update_check.async_start_daily(hass)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
@@ -66,6 +73,9 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
     """Optionen geändert (Panel oder Optionsdialog): kein Reload nötig."""
     # Tägliche Prüfung ein-/ausgeschaltet: Meldung sofort nachführen.
     await update_check.async_refresh_issue(hass)
+    # Batterie: Schwelle oder Meldungsart geändert, sofort neu prüfen.
+    if (watch := hass.data.get(DATA_BATTERY)) is not None:
+        await watch.async_options_changed()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -73,6 +83,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         frontend.async_remove_panel(hass, PANEL_URL_PATH)
     if (log := hass.data.pop(DATA_AVAILABILITY, None)) is not None:
         await log.async_stop()
+    if (watch := hass.data.pop(DATA_BATTERY, None)) is not None:
+        await watch.async_stop()
     update_check.async_stop_daily(hass)
     return True
 
@@ -283,6 +295,7 @@ async def _ws_get_options(
             "panel": update_check.panel_settings(hass),
             "catalog": await async_catalog(hass),
             "limits": options_api.limits(),
+            "notify_targets": options_api.notify_targets(hass, options_api.current_values(entry)[CONF_NOTIFY_SERVICE]),
         },
     )
 

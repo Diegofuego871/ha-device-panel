@@ -17,9 +17,15 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
+    CLICK_TARGETS,
+    CONF_BATTERY_LOW,
+    CONF_BATTERY_PERSISTENT,
+    CONF_BATTERY_PUSH,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_FLAKY_OUTAGES,
+    CONF_NOTIFY_CLICK,
+    CONF_NOTIFY_SERVICE,
     CONF_OFFLINE_AFTER,
     CONF_SHOW_DISABLED,
     CONF_SHOW_SERVICE,
@@ -30,10 +36,11 @@ from .const import (
     INT_RANGES,
     PANEL_TITLE,
 )
-from .options_api import INT_OPTIONS, current_values
+from .options_api import INT_OPTIONS, current_values, notify_targets
+from .push import text
 
 # Einheit der Zahlenfelder im Optionsdialog.
-_UNITS = {CONF_OFFLINE_AFTER: "min", CONF_STARTUP_GRACE: "min"}
+_UNITS = {CONF_OFFLINE_AFTER: "min", CONF_STARTUP_GRACE: "min", CONF_BATTERY_LOW: "%"}
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -91,6 +98,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         # Ausgeschlossene Integration ohne Geräte bleibt wählbar.
         known = {i["value"] for i in integrations}
         integrations += [{"value": d, "label": d} for d in values[CONF_EXCLUDE_INTEGRATIONS] if d not in known]
+        # Push-Ziele mit Beschriftung in der Sprache der Instanz.
+        labels = {
+            "none": lambda t: text(self.hass, "notify_none"),
+            "service": lambda t: t["value"],
+            "entity": lambda t: text(self.hass, "notify_entity", entity_id=t["value"]),
+            "missing": lambda t: text(self.hass, "notify_missing", value=t["value"]),
+        }
+        targets = [{"value": t["value"], "label": labels[t["kind"]](t)} for t in notify_targets(self.hass, values[CONF_NOTIFY_SERVICE])]
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
@@ -98,6 +113,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Required(CONF_OFFLINE_AFTER, default=values[CONF_OFFLINE_AFTER]): _number(CONF_OFFLINE_AFTER),
                     vol.Required(CONF_FLAKY_OUTAGES, default=values[CONF_FLAKY_OUTAGES]): _number(CONF_FLAKY_OUTAGES),
                     vol.Required(CONF_STARTUP_GRACE, default=values[CONF_STARTUP_GRACE]): _number(CONF_STARTUP_GRACE),
+                    vol.Required(CONF_BATTERY_LOW, default=values[CONF_BATTERY_LOW]): _number(CONF_BATTERY_LOW),
+                    vol.Required(CONF_BATTERY_PUSH, default=values[CONF_BATTERY_PUSH]): bool,
+                    vol.Required(CONF_BATTERY_PERSISTENT, default=values[CONF_BATTERY_PERSISTENT]): bool,
                     vol.Optional(CONF_EXCLUDE_INTEGRATIONS, default=values[CONF_EXCLUDE_INTEGRATIONS]): SelectSelector(
                         SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
                     ),
@@ -105,6 +123,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                         SelectSelectorConfig(
                             options=list(DEVICE_TYPES), multiple=True, mode=SelectSelectorMode.DROPDOWN, translation_key="device_type"
                         )
+                    ),
+                    vol.Required(CONF_NOTIFY_SERVICE, default=values[CONF_NOTIFY_SERVICE]): SelectSelector(
+                        SelectSelectorConfig(options=targets, mode=SelectSelectorMode.DROPDOWN)
+                    ),
+                    vol.Required(CONF_NOTIFY_CLICK, default=values[CONF_NOTIFY_CLICK]): SelectSelector(
+                        SelectSelectorConfig(options=list(CLICK_TARGETS), mode=SelectSelectorMode.DROPDOWN, translation_key="click_target")
                     ),
                     vol.Required(CONF_SHOW_SERVICE, default=values[CONF_SHOW_SERVICE]): bool,
                     vol.Required(CONF_SHOW_DISABLED, default=values[CONF_SHOW_DISABLED]): bool,

@@ -18,14 +18,22 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import (
+    CLICK_PANEL,
+    CLICK_TARGETS,
+    CONF_BATTERY_LOW,
+    CONF_BATTERY_PERSISTENT,
+    CONF_BATTERY_PUSH,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_FLAKY_OUTAGES,
+    CONF_NOTIFY_CLICK,
+    CONF_NOTIFY_SERVICE,
     CONF_OFFLINE_AFTER,
     CONF_SHOW_DISABLED,
     CONF_SHOW_SERVICE,
     CONF_STARTUP_GRACE,
     CONF_UPDATE_CHECK,
+    DEFAULT_BATTERY_LOW,
     DEFAULT_FLAKY_OUTAGES,
     DEFAULT_OFFLINE_AFTER,
     DEFAULT_STARTUP_GRACE,
@@ -33,9 +41,12 @@ from .const import (
     DEVICE_TYPES,
     DOMAIN,
     INT_RANGES,
+    NOTIFY_NONE,
 )
 
 BOOL_OPTIONS: tuple[tuple[str, bool], ...] = (
+    (CONF_BATTERY_PUSH, False),
+    (CONF_BATTERY_PERSISTENT, False),
     (CONF_SHOW_SERVICE, False),
     (CONF_SHOW_DISABLED, False),
     (CONF_UPDATE_CHECK, DEFAULT_UPDATE_CHECK),
@@ -44,10 +55,12 @@ INT_OPTIONS: tuple[tuple[str, int], ...] = (
     (CONF_OFFLINE_AFTER, DEFAULT_OFFLINE_AFTER),
     (CONF_FLAKY_OUTAGES, DEFAULT_FLAKY_OUTAGES),
     (CONF_STARTUP_GRACE, DEFAULT_STARTUP_GRACE),
+    (CONF_BATTERY_LOW, DEFAULT_BATTERY_LOW),
 )
 LIST_OPTIONS = (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES)
 
 _DOMAIN_RE = re.compile(r"^[a-z0-9_]+$")
+_NOTIFY_RE = re.compile(r"^notify\.[a-z0-9_]+$")
 
 
 def _domains(value: Any) -> list[str]:
@@ -60,6 +73,15 @@ def _types(value: Any) -> list[str]:
     if not isinstance(value, list) or not all(v in DEVICE_TYPES for v in value):
         raise vol.Invalid("Liste von Gerätetypen erwartet")
     return sorted(set(value))
+
+
+def _notify_target(value: Any) -> str:
+    text = str(value or "").strip()
+    if not text or text == NOTIFY_NONE:
+        return NOTIFY_NONE
+    if not isinstance(value, str) or not _NOTIFY_RE.match(text):
+        raise vol.Invalid("notify-Dienst oder notify-Entität erwartet")
+    return text
 
 
 def _whole(value: Any) -> int | None:
@@ -88,6 +110,8 @@ PANEL_SCHEMA = vol.Schema(
         **{vol.Optional(key): _int_in(key) for key, _default in INT_OPTIONS},
         vol.Optional(CONF_EXCLUDE_INTEGRATIONS): _domains,
         vol.Optional(CONF_EXCLUDE_TYPES): _types,
+        vol.Optional(CONF_NOTIFY_SERVICE): _notify_target,
+        vol.Optional(CONF_NOTIFY_CLICK): vol.In(CLICK_TARGETS),
     }
 )
 
@@ -104,6 +128,10 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
         {d for d in options.get(CONF_EXCLUDE_INTEGRATIONS) or [] if isinstance(d, str)}
     )
     values[CONF_EXCLUDE_TYPES] = sorted({t for t in options.get(CONF_EXCLUDE_TYPES) or [] if t in DEVICE_TYPES})
+    target = str(options.get(CONF_NOTIFY_SERVICE) or "").strip()
+    values[CONF_NOTIFY_SERVICE] = target if _NOTIFY_RE.match(target) else NOTIFY_NONE
+    click = options.get(CONF_NOTIFY_CLICK)
+    values[CONF_NOTIFY_CLICK] = click if click in CLICK_TARGETS else CLICK_PANEL
     return values
 
 
@@ -121,6 +149,29 @@ def exclusions(hass: HomeAssistant) -> tuple[set[str], set[str]]:
     """Ausgeschlossene Integrationen und Typen."""
     values = effective(hass)
     return set(values[CONF_EXCLUDE_INTEGRATIONS]), set(values[CONF_EXCLUDE_TYPES])
+
+
+def notify_targets(hass: HomeAssistant, current: str) -> list[dict[str, Any]]:
+    """
+    Push-Ziele für Panel und Optionsdialog (wie unifi_dynamic): klassische
+    notify-Dienste (auch Gruppen) und notify-Entitäten. "none" steht vorne.
+    """
+    targets: list[dict[str, Any]] = [{"value": NOTIFY_NONE, "kind": "none"}]
+    known: set[str] = set()
+    for name in sorted(hass.services.async_services_for_domain("notify")):
+        # send_message ist der Dienst der Entitäten, persistent_notification
+        # keine Push-Meldung.
+        if name in ("send_message", "persistent_notification"):
+            continue
+        known.add(f"notify.{name}")
+        targets.append({"value": f"notify.{name}", "kind": "service"})
+    for entity_id in sorted(hass.states.async_entity_ids("notify")):
+        if entity_id not in known:
+            targets.append({"value": entity_id, "kind": "entity"})
+    # Ein früher gewähltes Ziel, das es nicht mehr gibt, bleibt wählbar.
+    if current not in {t["value"] for t in targets}:
+        targets.append({"value": current, "kind": "missing"})
+    return targets
 
 
 def limits() -> dict[str, list[int]]:

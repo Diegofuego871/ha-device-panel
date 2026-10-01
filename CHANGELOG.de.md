@@ -7,6 +7,37 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.7.0] - 2026-10-01
+
+Batterie-Warnung mit wählbarer Schwelle, als Push-Meldung, als anhaltende
+Benachrichtigung in Home Assistant, beides oder keines. Beide Meldungen sind
+standardmässig aus, damit das Update nicht von selbst zu melden beginnt.
+
+### Hinzugefügt
+
+- Abschnitt "Batterie" in den Einstellungen, auch im Optionsdialog:
+  "Schwach ab" (5–50 %, Standard 15 %) statt fest 15 %; gilt für die
+  Markierung in der Liste, den Hinweis "Batterie niedrig" und "Nur
+  Probleme".
+- "Push-Meldung" (Batterie): einmal pro Gerät, wenn es unter die Schwelle
+  fällt, erneut erst, wenn die Batterie zwischendurch 5 Punkte darüber war
+  (z. B. neue Batterie); ein Gerät, das kurz nicht erreichbar ist, wird
+  nicht erneut gemeldet. Mehr als 3 Geräte auf einmal: eine Sammelmeldung.
+  Beim Einschalten kommen die gerade betroffenen Geräte einmal. Übersteht
+  Neustarts ohne Wiederholung.
+- "Anhaltende Benachrichtigung" (Batterie): eine Meldung in Home Assistant
+  mit allen Geräten mit schwacher Batterie, jedes mit Link ins Panel; sie
+  verschwindet von selbst, wenn alle wieder über der Schwelle sind.
+  Weggeklickt bleibt sie weg, bis ein weiteres Gerät dazukommt oder Home
+  Assistant neu startet.
+- Abschnitt "Push-Benachrichtigung" (wie UniFi Dynamic Clients): "Ziel"
+  (notify-Dienst, -Gruppe oder notify-Entität) und "Tipp auf Meldung
+  öffnet" (Gerät im Panel oder Geräteseite von Home Assistant). Ein Hinweis
+  erscheint, wenn Push ohne Ziel eingeschaltet ist. Ziele, die Bild und
+  Klickziel ablehnen, bekommen die Meldung ohne.
+- Link auf ein Gerät: `/device-panel?device=<id>` öffnet sein Popup, auch
+  wenn das Panel schon offen ist.
+
 ## [0.6.0] - 2026-10-01
 
 Einstellen, wann ein Gerät als ausgefallen oder instabil gilt, und wählen, ob
@@ -193,6 +224,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.7.0
 [0.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.6.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0

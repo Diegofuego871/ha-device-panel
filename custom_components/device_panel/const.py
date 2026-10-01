@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "7"
+PANEL_VERSION = "8"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -42,13 +42,37 @@ CONF_FLAKY_OUTAGES = "flaky_outages"
 DEFAULT_FLAKY_OUTAGES = 3
 CONF_STARTUP_GRACE = "startup_grace"
 DEFAULT_STARTUP_GRACE = 5
+# Batterie (Optionen): gilt bis "Schwach ab" (Prozent) als schwach; Meldung
+# wahlweise als Push, als anhaltende Benachrichtigung in HA, beides oder
+# keines (Standard: keines, damit ein Update nicht ungefragt meldet).
+CONF_BATTERY_LOW = "battery_low"
+DEFAULT_BATTERY_LOW = 15
+CONF_BATTERY_PUSH = "battery_push"
+CONF_BATTERY_PERSISTENT = "battery_persistent"
 INT_RANGES = {
     CONF_OFFLINE_AFTER: (1, 60),
     CONF_FLAKY_OUTAGES: (2, 50),
     CONF_STARTUP_GRACE: (0, 30),
+    CONF_BATTERY_LOW: (5, 50),
 }
-# Batterie gilt bis 15 % als niedrig.
-BATTERY_LOW = 15
+# Erst wieder melden, wenn die Batterie zwischendurch so viele Prozentpunkte
+# über der Schwelle war (Batteriewechsel), sonst meldet ein Wert, der um die
+# Schwelle pendelt, immer wieder.
+BATTERY_REARM = 5
+# Mehr neu betroffene Geräte auf einmal: eine Sammelmeldung statt vieler.
+BATTERY_PUSH_MAX = 3
+DATA_BATTERY = f"{DOMAIN}_battery"
+PERSISTENT_BATTERY_ID = f"{DOMAIN}_battery"
+
+# Push (Optionen, wie unifi_dynamic): Ziel ist ein notify-Dienst oder eine
+# notify-Entität; "none" = keine Push-Meldungen. Tipp auf die Meldung öffnet
+# das Gerät im Panel oder die Geräteseite von HA.
+CONF_NOTIFY_SERVICE = "notify_service"
+NOTIFY_NONE = "none"
+CONF_NOTIFY_CLICK = "notify_click_target"
+CLICK_PANEL = "panel"
+CLICK_DEVICE = "device"
+CLICK_TARGETS = (CLICK_PANEL, CLICK_DEVICE)
 # Anzeige (Optionen): Dienst-Geräte (z. B. Sonne, Add-ons) werden dann gezeigt
 # und überwacht, deaktivierte Geräte nur gezeigt (eigene Gruppe).
 CONF_SHOW_SERVICE = "show_service_devices"

@@ -19,8 +19,13 @@
           "offline_after": "Ausgefallen nach",
           "flaky_outages": "Instabil ab (Unterbrüche in 24 Std.)",
           "startup_grace": "Anlaufphase nach dem Start",
+          "battery_low": "Batterie schwach ab",
+          "battery_push": "Batterie: Push-Meldung",
+          "battery_persistent": "Batterie: anhaltende Benachrichtigung",
           "exclude_integrations": "Integrationen ausblenden",
           "exclude_types": "Gerätetypen ausblenden",
+          "notify_service": "Push-Ziel",
+          "notify_click_target": "Tipp auf Meldung öffnet",
           "show_service_devices": "Dienst-Geräte anzeigen",
           "show_disabled_devices": "Deaktivierte Geräte anzeigen",
           "update_check": "Täglich nach Updates suchen"
@@ -29,8 +34,13 @@
           "offline_after": "Minuten ohne Lebenszeichen, bis ein Gerät als ausgefallen gilt. Kürzere Aussetzer zählen nicht.",
           "flaky_outages": "Ein Gerät, das online ist, aber in den letzten 24 Stunden so oft unterbrochen war, gilt als instabil.",
           "startup_grace": "Minuten nach dem Start von Home Assistant, in denen zurückkehrende Geräte keinen Unterbruch hatten. Zeit, in der Home Assistant nicht lief, zählt nie als Ausfall.",
+          "battery_low": "Eine Batterie bis zu diesem Stand gilt als schwach (rot im Panel, \"Nur Probleme\").",
+          "battery_push": "Einmal pro Gerät, wenn es unter die Schwelle fällt, an das Push-Ziel unten. Erneut erst, wenn die Batterie zwischendurch 5 Punkte über der Schwelle war (z. B. neue Batterie).",
+          "battery_persistent": "Eine Benachrichtigung in Home Assistant mit allen Geräten mit schwacher Batterie; sie verschwindet, wenn alle wieder über der Schwelle sind.",
           "exclude_integrations": "Geräte dieser Integrationen zeigt das Panel nicht, und sie werden nicht überwacht.",
           "exclude_types": "Geräte dieser Typen zeigt das Panel nicht, und sie werden nicht überwacht. Den Typ eines einzelnen Geräts kann man in seinem Popup ändern.",
+          "notify_service": "notify-Dienst oder notify-Entität, z. B. die Companion-App des Handys.",
+          "notify_click_target": "Wohin ein Tipp auf eine Push-Meldung zu einem Gerät führt.",
           "show_service_devices": "Dienste einer Integration statt echter Geräte, z. B. Sonne, Wettervorhersage oder Add-ons. Angezeigte Dienst-Geräte werden auch überwacht.",
           "show_disabled_devices": "In einer eigenen Gruppe am Ende der Liste. Sie werden nicht überwacht.",
           "update_check": "Meldet eine neue Version unter Einstellungen → Reparaturen. Vorabversionen werden hier nie gemeldet."
@@ -69,6 +79,12 @@
         "sensor": "Sensor",
         "button": "Taster",
         "other": "Sonstiges"
+      }
+    },
+    "click_target": {
+      "options": {
+        "panel": "Gerät im Panel",
+        "device": "Geräteseite von Home Assistant"
       }
     }
   }

@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.6.0, mit Ausfall-Erkennung und Anzeige in den Einstellungen)
+## Stand (0.7.0, mit Batterie-Warnung und Push-Grundlage)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -19,8 +19,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   Versionskasten mit Update über HACS, Vorabversionen, "In HACS
   freischalten"; "Ausfall-Erkennung" (Zahlenfelder `offline_after`,
   `flaky_outages`, `startup_grace` mit Bereichen aus `const.INT_RANGES`,
-  Prüfung im Panel und im Backend); "Integrationen" und "Gerätetypen"
-  (Schalter "Anzeigen"; ausgeblendete Geräte werden nicht überwacht);
+  Prüfung im Panel und im Backend); "Batterie" (`battery_low`,
+  `battery_push`, `battery_persistent`; Überwachung in `battery.py`);
+  "Integrationen" und "Gerätetypen" (Schalter "Anzeigen"; ausgeblendete
+  Geräte werden nicht überwacht); "Push-Benachrichtigung"
+  (`notify_service`, `notify_click_target`; Versand in `push.py`);
   "Anzeige" (`show_service_devices`, `show_disabled_devices`: deaktivierte
   Geräte in eigener Gruppe, nicht überwacht); "Updates" (tägliche Prüfung
   mit Meldung unter "Reparaturen"). Backend `update_check.py`,
@@ -70,9 +73,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Schritt 3 als Grundgerüst. Ausschlüsse nach Integration und Gerätetyp
    mit `0.5.0` erledigt (Nutzer, 2026-10-01: ein Typ pro Gerät, vier neue
    Typen, Typ im Popup änderbar). Ausfall-Erkennung und Anzeige mit `0.6.0`.
-   Weiter mit Schritt 2 (Spalten pro Benutzer) und Schritt 7 (Push mit den
-   Abschnitten "Push-Benachrichtigung" und "Anhaltende Benachrichtigung"
-   sowie den Spalten Push/Anhaltend bei den Integrationen nach Bild 5);
+   Batterie-Warnung (Wunsch des Nutzers, 2026-10-01: Schwelle wählbar,
+   Push und anhaltende Benachrichtigung getrennt wählbar) mit `0.7.0`,
+   dabei die Push-Grundlage (Ziel, Klickziel, Versand, Deep-Link
+   `?device=`). Weiter mit Schritt 2 (Spalten pro Benutzer) und Schritt 7
+   (Push bei Ausfällen: übrige Felder des Abschnitts "Push-Benachrichtigung",
+   Abschnitt "Anhaltende Benachrichtigung", Spalten Push/Anhaltend bei den
+   Integrationen nach Bild 5);
    `docs/CONCEPT.md`, "Pflicht"; Vorlagen in `docs/reference/`. Offene Frage an den Nutzer: Prozentwerte erst ab
    einer Mindestdauer an Daten zeigen?
 3. Umsetzung nach dem Fahrplan in `docs/CONCEPT.md` (Abschnitt "Fahrplan"),

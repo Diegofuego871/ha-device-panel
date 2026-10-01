@@ -218,7 +218,12 @@
   const candidates = () => window.__devices.filter((d) => d.entities > 0 && (!d.service || window.__opts.show_service_devices) && (!d.disabled || window.__opts.show_disabled_devices));
   const shown = () => candidates().filter((d) => !(d.integration && window.__opts.exclude_integrations.includes(d.integration.domain)) && !window.__opts.exclude_types.includes(d.type));
   // Bereiche der Zahlen wie options_api.limits().
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50] };
+  // Push-Ziele wie options_api.notify_targets (erfunden).
+  const NOTIFY_TARGETS = [
+    { value: "none", kind: "none" }, { value: "notify.mobile_app_testhandy", kind: "service" },
+    { value: "notify.familie", kind: "service" }, { value: "notify.fernseher", kind: "entity" },
+  ];
   const TYPE_ORDER = ["hub", "phone", "network", "climate", "lock", "cover", "valve", "vacuum", "camera", "alarm", "media", "fan", "light", "outlet", "switch", "motion", "contact", "safety", "energy", "sensor", "button", "other"];
   function catalog() {
     const byDomain = {};
@@ -291,7 +296,8 @@
   window.__pre = null;
   window.__panelSettings = { prerelease: false, prerelease_hacs: null };
   window.__opts = {
-    offline_after: 2, flaky_outages: 3, startup_grace: 5, exclude_integrations: [], exclude_types: [],
+    offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_push: false, battery_persistent: false,
+    exclude_integrations: [], exclude_types: [], notify_service: "none", notify_click_target: "panel",
     show_service_devices: false, show_disabled_devices: false, update_check: true,
   };
   window.__services = [];
@@ -366,7 +372,7 @@
       if (msg.type === "device_panel/get_options") {
         if (window.__getOptsFails) throw new Error("boom");
         await new Promise((r) => setTimeout(r, 40));
-        return { values: JSON.parse(JSON.stringify(window.__opts)), panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS };
+        return { values: JSON.parse(JSON.stringify(window.__opts)), panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS, notify_targets: NOTIFY_TARGETS };
       }
       if (msg.type === "device_panel/set_options") {
         if (window.__setOptsFails) throw new Error(window.__setOptsFails);
@@ -374,6 +380,8 @@
           const v = msg.values[k];
           if (k in msg.values && (!Number.isInteger(v) || v < min || v > max)) throw { code: "invalid_format", message: `${k} out of range` };
         }
+        if ("notify_service" in msg.values && msg.values.notify_service !== "none" && !/^notify\.[a-z0-9_]+$/.test(msg.values.notify_service)) throw { code: "invalid_format", message: "notify" };
+        if ("notify_click_target" in msg.values && !["panel", "device"].includes(msg.values.notify_click_target)) throw { code: "invalid_format", message: "click" };
         const changed = Object.keys(msg.values).some((k) => JSON.stringify(window.__opts[k]) !== JSON.stringify(msg.values[k]));
         Object.assign(window.__opts, msg.values);
         return { changed };
@@ -389,9 +397,12 @@
       if (msg.type === "device_panel/list_devices") {
         // Instabil nach der Einstellung "Instabil ab".
         const flakyN = window.__opts.flaky_outages;
+        // Batterie schwach nach "Schwach ab"; Binärsensoren (ohne Prozent) bleiben.
+        const batLow = window.__opts.battery_low;
+        const bat = (b) => (b && b.level != null ? { ...b, low: b.level <= batLow } : b);
         return {
-          devices: shown().map((d) => ({ ...d, flaky: Boolean(d.online && d.avail24 && d.avail24.outages >= flakyN) })),
-          integrations, now: new Date().toISOString(), offline_after: window.__opts.offline_after * 60, battery_low: 15,
+          devices: shown().map((d) => ({ ...d, flaky: Boolean(d.online && d.avail24 && d.avail24.outages >= flakyN), battery: bat(d.battery) })),
+          integrations, now: new Date().toISOString(), offline_after: window.__opts.offline_after * 60, battery_low: batLow,
           flaky_outages: flakyN, pulse: pulse(), incidents,
         };
       }

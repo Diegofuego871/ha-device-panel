@@ -156,3 +156,14 @@ def test_panel_device_types_match_backend() -> None:
     for lang in ("en", "de"):
         options = _load(f"translations/{lang}.json")["selector"]["device_type"]["options"]
         assert list(options) == list(DEVICE_TYPES)
+
+
+def test_push_texts_complete() -> None:
+    """Serverseitige Texte (Push, anhaltende Benachrichtigung): DE und EN gleich."""
+    from custom_components.device_panel.push import TEXTS
+
+    assert set(TEXTS) == {"de", "en"}
+    assert set(TEXTS["de"]) == set(TEXTS["en"])
+    placeholders = lambda s: set(re.findall(r"\{(\w+)\}", s))  # noqa: E731
+    for key in TEXTS["de"]:
+        assert placeholders(TEXTS["de"][key]) == placeholders(TEXTS["en"][key]), key

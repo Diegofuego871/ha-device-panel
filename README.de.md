@@ -52,6 +52,12 @@ Bereich.
   oder Optionsdialog der Integration): ausgeblendete Geräte werden weder
   gezeigt noch überwacht. Wahlweise Dienst-Geräte (z. B. Sonne, Add-ons)
   und deaktivierte Geräte anzeigen (eigene Gruppe, nicht überwacht).
+- Batterie-Warnung: wählen, ab welchem Stand eine Batterie als schwach gilt
+  (5–50 %, Standard 15 %) und wie man es erfährt: als Push-Meldung (einmal
+  pro Gerät, an einen notify-Dienst oder eine notify-Entität nach Wahl), als
+  anhaltende Benachrichtigung in Home Assistant mit allen betroffenen
+  Geräten, beides oder keines. Ein Tipp auf die Push-Meldung öffnet das
+  Gerät im Panel.
 - Einstellungen im Panel (Zahnrad) mit Updates: nach einer neuen Version
   suchen, mit einem Klick über HACS aktualisieren, danach neu starten,
   wahlweise Vorabversionen anbieten ("In HACS freischalten" schaltet die
@@ -62,7 +68,7 @@ Bereich.
 
 - Spalten, Sortierung und Filter pro Benutzer, getrennt für Desktop und
   Handy.
-- Push-Meldungen mit ihren Einstellungen im Panel.
+- Push-Meldungen bei Ausfällen (Ziel und Klickziel gibt es schon).
 
 ## Installation
 

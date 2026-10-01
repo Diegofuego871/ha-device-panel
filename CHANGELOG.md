@@ -7,6 +7,35 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.7.0] - 2026-10-01
+
+Battery warning with a threshold of your choice, as a push notification, a
+persistent notification in Home Assistant, both or neither. Both
+notifications are off by default, so the update does not start sending
+anything by itself.
+
+### Added
+
+- Settings section "Battery", also in the options dialog: "Low from"
+  (5–50 %, default 15 %) instead of the fixed 15 %; it applies to the
+  marking in the list, the hint "Low battery" and "Problems only".
+- "Push notification" (battery): once per device when it drops below the
+  threshold, again only after the battery was 5 points above it in between
+  (e.g. new battery); a device that is briefly unreachable is not reported
+  again. More than 3 devices at once: one summary. Switching it on reports
+  the devices affected right now once. Survives restarts without repeating.
+- "Persistent notification" (battery): one notification in Home Assistant
+  listing all devices with a low battery, each linked to the panel; it
+  disappears by itself once all are above the threshold. Dismissed, it
+  stays away until another device is affected or Home Assistant restarts.
+- Settings section "Push notification" (like UniFi Dynamic Clients):
+  "Target" (notify service, group or notify entity) and "Tapping the
+  notification opens" (device in the panel or Home Assistant device page).
+  A hint appears if push is switched on without a target. Targets that
+  reject image and tap target get the plain message.
+- Link to a device: `/device-panel?device=<id>` opens its pop-up, also when
+  the panel is already open.
+
 ## [0.6.0] - 2026-10-01
 
 Set when a device counts as offline or unstable, and choose whether service
@@ -184,6 +213,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.7.0
 [0.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.6.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0

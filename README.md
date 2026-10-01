@@ -47,6 +47,11 @@ details such as software version, manufacturer, model and area.
   dialog of the integration): hidden devices are neither shown nor
   monitored. Optionally show service devices (e.g. sun, add-ons) and
   disabled devices (own group, not monitored).
+- Battery warning: choose from which level a battery counts as low (5–50 %,
+  default 15 %) and how you are told: as a push notification (once per
+  device, to a notify service or entity of your choice), as a persistent
+  notification in Home Assistant listing all affected devices, both or
+  neither. Tapping a push notification opens the device in the panel.
 - Settings in the panel (gear icon) with updates: check for a new version,
   update via HACS with one click, restart afterwards, optionally offer
   pre-releases ("Enable in HACS" switches on the HACS pre-release option).
@@ -55,7 +60,7 @@ details such as software version, manufacturer, model and area.
 ### Planned (see `docs/CONCEPT.md`)
 
 - Columns, sorting and filters per user, separately for desktop and phone.
-- Push notifications with their settings in the panel.
+- Push notifications for outages (target and tap target already exist).
 
 ## Installation
 

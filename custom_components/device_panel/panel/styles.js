@@ -286,6 +286,17 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .opt.changed > .opt-line .opt-input { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 .opt.invalid > .opt-line .opt-input { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
 .opt-error { margin-top: 3px; color: var(--dp-error); font-size: 12px; line-height: 1.35; }
+/* Auswahl (Push-Ziel, Klickziel) wie unifi_dynamic. */
+.opt-select { position: relative; flex: 0 1 260px; min-width: 0; }
+.opt-select select { width: 100%; height: 36px; padding: 0 30px 0 10px; border: 1px solid var(--dp-divider); border-radius: 9px;
+  background: var(--dp-input); color: var(--dp-text); font: inherit; font-size: 14px; appearance: none; -webkit-appearance: none; text-overflow: ellipsis; }
+.opt-select svg { position: absolute; top: 9px; right: 7px; color: var(--dp-text2); pointer-events: none; }
+.opt-select select:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
+.opt.changed > .opt-line .opt-select select { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
+/* Hinweis, wenn eine Einstellung so noch nichts bewirkt (Push ohne Ziel). */
+.opt-warn { display: flex; align-items: flex-start; gap: 6px; margin-top: 6px; padding: 7px 10px; border-radius: 8px;
+  background: var(--dp-warning-soft); color: color-mix(in srgb, var(--dp-warning) 80%, var(--dp-text)); font-size: 12px; line-height: 1.35; }
+.opt-warn svg { flex: none; margin-top: 1px; }
 .info-btn { display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; border: none; border-radius: 50%; background: none; color: var(--dp-text3); cursor: pointer; }
 .info-btn:hover, .info-btn.on { color: var(--dp-primary); }
 .switch { position: relative; flex: none; width: 36px; height: 20px; }

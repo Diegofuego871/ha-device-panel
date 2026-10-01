@@ -27,6 +27,14 @@ hat dort einen echten Fehler oder Umweg gekostet.
   Entitäten weg; für ein deaktiviertes Gerät `include_disabled_entities=True`
   übergeben, sonst hat es keine Entitäten (Typ, Popup). Zustände gibt es für
   sie nicht.
+- **Anhaltende Benachrichtigung:** `persistent_notification.async_create`
+  mit fester ID ersetzt die Meldung; `async_register_callback` meldet
+  `UpdateType.REMOVED`, wenn der Benutzer sie wegklickt. Sie lebt nur im
+  Speicher: nach einem Neustart neu aufbauen. In `manifest.json` unter
+  `dependencies` (wie unifi_dynamic).
+- **Push in Tests:** `async_mock_service(hass, "notify", "handy")` liefert die
+  Aufrufe; für "lehnt Zusatzdaten ab" einen eigenen Dienst registrieren, der
+  bei `data` eine Ausnahme wirft.
 - **Speichern:** `Store.async_delay_save` entprellt und verschiebt bei jedem
   Aufruf. Bei häufigen Änderungen wird im Betrieb nie geschrieben, nur beim
   Beenden. Immer `storage_util.PeriodicSaver` verwenden (schreibt spätestens
@@ -172,7 +180,12 @@ data". Ersteinrichtung und Anmeldung über `/api/onboarding/*` und
 `/auth/token`, Integration über `/api/config/config_entries/flow`, Tokens als
 `hassTokens` in `localStorage` (vor dem Test erneuern: das Zugriffstoken
 gilt 30 Min.). Geräte mit `POST /api/states/<entity_id>` auf `unavailable`
-setzen. `recorder/info` scheitert ohne Recorder; das ist harmlos. Ebenso
+setzen. Push prüfen: eine kleine eigene Integration in der Test-Konfiguration
+registriert `notify.testhandy` und schreibt jeden Aufruf in eine Datei; eine
+Batterie entsteht, indem man bei einem Demo-Sensor die Geräteklasse in der
+Registry auf `battery` setzt (`config/entity_registry/update`) und den
+Zustand per REST setzt (die Registry-Klasse hat Vorrang vor dem Attribut).
+`recorder/info` scheitert ohne Recorder; das ist harmlos. Ebenso
 ein `pageerror` "Object" beim Laden, der auch auf `/config/dashboard`
 auftritt (HA-Frontend, nicht das Panel).
 
