@@ -27,8 +27,9 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN
+from .const import CONF_OFFLINE_AFTER, CONF_STARTUP_GRACE, DOMAIN
 from .devices import device_back_since, device_status, monitored_devices
+from .options_api import effective
 from .storage_util import PeriodicSaver
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,10 +41,6 @@ EVAL_INTERVAL = timedelta(seconds=30)
 # Spätestens alle 5 Min. schreiben; das gespeicherte Lebenszeichen zeigt nach
 # einem Absturz, bis wann HA sicher lief.
 SAVE_DELAY = 300
-# Anlaufphase nach dem Start: Integrationen brauchen oft Minuten, bis ihre
-# Geräte wieder verfügbar sind. Wer in dieser Zeit zurückkommt, hatte keinen
-# Unterbruch; wer danach noch fehlt, gilt ab dem Start als ausgefallen.
-STARTUP_GRACE = 300
 # Sammelausfall: so viele Geräte innert dieser Zeit.
 INCIDENT_MIN = 3
 INCIDENT_WINDOW = 120
@@ -207,11 +204,17 @@ class AvailabilityLog:
         """Zustand aller überwachten Geräte prüfen und Wechsel festhalten."""
         now = now if now is not None else time.time()
         now_dt = dt_util.utc_from_timestamp(now)
-        in_grace = now - self._started < STARTUP_GRACE
+        opts = effective(self.hass)
+        # Anlaufphase nach dem Start (Option): Integrationen brauchen oft
+        # Minuten, bis ihre Geräte wieder verfügbar sind. Wer in dieser Zeit
+        # zurückkommt, hatte keinen Unterbruch; wer danach noch fehlt, gilt ab
+        # dem Start als ausgefallen.
+        in_grace = now - self._started < opts[CONF_STARTUP_GRACE] * 60
+        offline_after = opts[CONF_OFFLINE_AFTER] * 60
         seen: set[str] = set()
-        for device, entries in monitored_devices(self.hass):
+        for device, entries in monitored_devices(self.hass, opts):
             seen.add(device.id)
-            online, since = device_status(self.hass, entries, now_dt)
+            online, since = device_status(self.hass, entries, now_dt, offline_after)
             state = None if online is None else ONLINE if online else OFFLINE
             events = self._events.setdefault(device.id, [])
             last = events[-1] if events else None

@@ -39,16 +39,19 @@ Bereich.
 - Statistik-Fenster aus den Kacheln: Verfügbarkeit über 24 Stunden, 7 oder
   30 Tage mit Zeitstrahl, jeder Unterbruch mit Zeit und Dauer sowie
   Unterbrüche pro Tag.
-- Ein Gerät gilt als ausgefallen nach 2 Minuten ohne Lebenszeichen. Ein
-  Verbindungssensor entscheidet zuerst; sonst müssen alle normalen Entitäten
-  nicht verfügbar sein. Ausfälle, die kurz nach einem Neustart von Home
-  Assistant begannen, stehen als "mindestens" (≥) da.
+- Ein Gerät gilt als ausgefallen nach 2 Minuten ohne Lebenszeichen
+  (einstellbar unter "Ausfall-Erkennung", wie "instabil ab" und die
+  Anlaufphase nach einem Start). Ein Verbindungssensor entscheidet zuerst;
+  sonst müssen alle normalen Entitäten nicht verfügbar sein. Ausfälle, die
+  kurz nach einem Neustart von Home Assistant begannen, stehen als
+  "mindestens" (≥) da.
 - Verfügbarkeitsprotokoll über 31 Tage in einer eigenen Datei (nicht im
   Recorder). Zeit, in der Home Assistant nicht lief, gilt als "keine Daten",
   nie als Ausfall.
 - Ganze Integrationen oder Gerätetypen ausblenden (Einstellungen im Panel
   oder Optionsdialog der Integration): ausgeblendete Geräte werden weder
-  gezeigt noch überwacht.
+  gezeigt noch überwacht. Wahlweise Dienst-Geräte (z. B. Sonne, Add-ons)
+  und deaktivierte Geräte anzeigen (eigene Gruppe, nicht überwacht).
 - Einstellungen im Panel (Zahnrad) mit Updates: nach einer neuen Version
   suchen, mit einem Klick über HACS aktualisieren, danach neu starten,
   wahlweise Vorabversionen anbieten ("In HACS freischalten" schaltet die
@@ -59,8 +62,7 @@ Bereich.
 
 - Spalten, Sortierung und Filter pro Benutzer, getrennt für Desktop und
   Handy.
-- Weitere Einstellungen im Panel (Ausfall-Erkennung, Anzeige),
-  Push-Meldungen.
+- Push-Meldungen mit ihren Einstellungen im Panel.
 
 ## Installation
 

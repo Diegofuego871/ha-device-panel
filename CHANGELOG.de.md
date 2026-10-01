@@ -7,6 +7,29 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.6.0] - 2026-10-01
+
+Einstellen, wann ein Gerät als ausgefallen oder instabil gilt, und wählen, ob
+Dienst-Geräte und deaktivierte Geräte in der Liste stehen.
+
+### Hinzugefügt
+
+- Abschnitt "Ausfall-Erkennung" in den Einstellungen, auch im Optionsdialog
+  der Integration: "Ausgefallen nach" (1–60 Minuten, Standard 2), "Instabil
+  ab" (2–50 Unterbrüche in 24 Stunden, Standard 3) und "Anlaufphase nach
+  dem Start" (0–30 Minuten, Standard 5, 0 schaltet sie aus). Ein Wert
+  ausserhalb des Bereichs wird rot markiert und lässt sich nicht speichern.
+- Abschnitt "Anzeige", auch im Optionsdialog: "Dienst-Geräte anzeigen"
+  (z. B. Sonne, Wettervorhersage, Add-ons; angezeigte werden auch
+  überwacht) und "Deaktivierte Geräte anzeigen" (eigene Gruppe
+  "Deaktiviert" am Ende der Liste, nicht überwacht, zählt weder oben noch
+  unter "Nur Probleme"). Beides ist wie bisher standardmässig aus.
+
+### Geändert
+
+- Der Optionsdialog zeigt die Einstellungen in derselben Reihenfolge wie
+  das Panel.
+
 ## [0.5.0] - 2026-10-01
 
 Bestimmen, was das Panel zeigt: ganze Integrationen oder Gerätetypen
@@ -170,6 +193,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.6.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0
 [0.3.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.3.0b1

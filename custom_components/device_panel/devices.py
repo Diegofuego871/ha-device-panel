@@ -25,15 +25,20 @@ from homeassistant.util import dt as dt_util
 
 from .const import (
     BATTERY_LOW,
+    CONF_EXCLUDE_INTEGRATIONS,
+    CONF_EXCLUDE_TYPES,
+    CONF_FLAKY_OUTAGES,
+    CONF_OFFLINE_AFTER,
+    CONF_SHOW_DISABLED,
+    CONF_SHOW_SERVICE,
     DATA_STARTED_AT,
     DATA_TYPE_OVERRIDES,
+    DEFAULT_OFFLINE_AFTER,
     DEVICE_TYPES,
     DOMAIN,
-    FLAKY_OUTAGES,
-    OFFLINE_AFTER,
     STORAGE_VERSION,
 )
-from .options_api import exclusions
+from .options_api import effective
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -102,13 +107,17 @@ def liveness_entities(entries: list[er.RegistryEntry]) -> tuple[list[er.Registry
 
 
 def device_status(
-    hass: HomeAssistant, entries: list[er.RegistryEntry], now: datetime
+    hass: HomeAssistant,
+    entries: list[er.RegistryEntry],
+    now: datetime,
+    offline_after: float = DEFAULT_OFFLINE_AFTER * 60,
 ) -> tuple[bool | None, datetime | None]:
     """
     (online, ausgefallen seit). None = keine Daten.
 
-    Ausgefallen erst nach OFFLINE_AFTER: kurze Aussetzer und das Hochfahren
-    der Integrationen nach einem Neustart zählen nicht.
+    Ausgefallen erst nach offline_after Sekunden (Option "Ausgefallen nach"):
+    kurze Aussetzer und das Hochfahren der Integrationen nach einem Neustart
+    zählen nicht.
     """
     relevant, is_connectivity = liveness_entities(entries)
     states = [s for e in relevant if (s := hass.states.get(e.entity_id)) is not None]
@@ -121,7 +130,7 @@ def device_status(
     if len(down) < len(states):
         return True, None
     since = max(s.last_changed for s in down)
-    if now - since < timedelta(seconds=OFFLINE_AFTER):
+    if now - since < timedelta(seconds=offline_after):
         return True, None
     return False, since
 
@@ -253,17 +262,22 @@ async def async_integration_info(hass: HomeAssistant, domains: set[str]) -> dict
     return info
 
 
-def candidate_devices(hass: HomeAssistant) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:
+def candidate_devices(
+    hass: HomeAssistant, *, service: bool = False, disabled: bool = False
+) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:
     """
-    Geräte, die überhaupt in Frage kommen: aktiviert, kein Dienst, mindestens
-    eine aktivierte Entität (deaktivierte Entitäten lässt
-    async_entries_for_device ohnehin weg). Ausschlüsse noch nicht abgezogen.
+    Geräte, die überhaupt in Frage kommen: mindestens eine aktivierte Entität
+    (deaktivierte lässt async_entries_for_device weg), Dienst-Geräte nur mit
+    service, deaktivierte Geräte nur mit disabled (dann mit ihren
+    deaktivierten Entitäten). Ausschlüsse noch nicht abgezogen.
     """
     ent_reg = er.async_get(hass)
     for device in dr.async_get(hass).devices.values():
-        if device.disabled_by or device.entry_type == dr.DeviceEntryType.SERVICE:
+        if device.entry_type == dr.DeviceEntryType.SERVICE and not service:
             continue
-        entries = er.async_entries_for_device(ent_reg, device.id)
+        if device.disabled_by and not disabled:
+            continue
+        entries = er.async_entries_for_device(ent_reg, device.id, include_disabled_entities=bool(device.disabled_by))
         if entries:
             yield device, entries
 
@@ -273,19 +287,34 @@ def hub_ids(hass: HomeAssistant) -> set[str]:
     return {d.via_device_id for d in dr.async_get(hass).devices.values() if d.via_device_id}
 
 
-def monitored_devices(hass: HomeAssistant) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:
-    """
-    Geräte, die das Panel zeigt und das Protokoll überwacht: die Kandidaten
-    ohne ausgeschlossene Integrationen (primärer Eintrag) und Typen.
-    """
-    ex_domains, ex_types = exclusions(hass)
+def _shown(
+    hass: HomeAssistant, opts: dict[str, Any], disabled: bool
+) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:
+    """Kandidaten nach "Anzeige", ohne ausgeschlossene Integrationen (primärer Eintrag) und Typen."""
+    ex_domains = set(opts[CONF_EXCLUDE_INTEGRATIONS])
+    ex_types = set(opts[CONF_EXCLUDE_TYPES])
     hubs = hub_ids(hass) if ex_types else set()
-    for device, entries in candidate_devices(hass):
+    for device, entries in candidate_devices(hass, service=opts[CONF_SHOW_SERVICE], disabled=disabled):
         if ex_domains and (primary := _primary_entry(hass, device)) and primary.domain in ex_domains:
             continue
         if ex_types and effective_type(hass, device, entries, hubs)[0] in ex_types:
             continue
         yield device, entries
+
+
+def monitored_devices(
+    hass: HomeAssistant, opts: dict[str, Any] | None = None
+) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:
+    """Geräte, die das Protokoll überwacht: gezeigt und nicht deaktiviert."""
+    yield from _shown(hass, opts or effective(hass), disabled=False)
+
+
+def listed_devices(
+    hass: HomeAssistant, opts: dict[str, Any] | None = None
+) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:
+    """Geräte, die das Panel zeigt: die überwachten, dazu deaktivierte, wenn eingestellt."""
+    opts = opts or effective(hass)
+    yield from _shown(hass, opts, disabled=opts[CONF_SHOW_DISABLED])
 
 
 def device_back_since(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> datetime | None:
@@ -415,9 +444,10 @@ async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
     Kandidaten mit der Zahl ihrer Geräte, Ausschlüsse noch nicht abgezogen.
     """
     hubs = hub_ids(hass)
+    opts = effective(hass)
     by_domain: dict[str, int] = {}
     by_type: dict[str, int] = {}
-    for device, entries in candidate_devices(hass):
+    for device, entries in candidate_devices(hass, service=opts[CONF_SHOW_SERVICE], disabled=opts[CONF_SHOW_DISABLED]):
         primary = _primary_entry(hass, device)
         if primary:
             by_domain[primary.domain] = by_domain.get(primary.domain, 0) + 1
@@ -446,11 +476,14 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
     now = dt_util.utcnow()
     now_ts = now.timestamp()
     started_at: datetime | None = hass.data.get(DATA_STARTED_AT)
+    opts = effective(hass)
+    offline_after = opts[CONF_OFFLINE_AFTER] * 60
+    flaky_outages = opts[CONF_FLAKY_OUTAGES]
 
     raw: list[tuple[dr.DeviceEntry, list[er.RegistryEntry], list[str]]] = []
     all_domains: set[str] = set()
     hubs = hub_ids(hass)
-    for device, entries in monitored_devices(hass):
+    for device, entries in listed_devices(hass, opts):
         domains = sorted(
             {e.domain for eid in device.config_entries if (e := hass.config_entries.async_get_entry(eid))}
         )
@@ -463,7 +496,9 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
     names: dict[str, str] = {}
     for device, entries, domains in raw:
         area = area_reg.async_get_area(device.area_id) if device.area_id else None
-        online, since = device_status(hass, entries, now)
+        disabled = bool(device.disabled_by)
+        # Deaktiviert: keine Zustände, nicht überwacht.
+        online, since = (None, None) if disabled else device_status(hass, entries, now, offline_after)
         signal = _signal(hass, entries)
         via = None
         if "zha" in domains:
@@ -495,9 +530,10 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "type_manual": device.id in type_overrides(hass),
                 "entities": len(entries),
                 "online": online,
+                "disabled": disabled,
                 "offline_since": since.isoformat() if since else None,
                 # Ausfall schon vor dem letzten Start: Dauer ist "mindestens".
-                "since_restart": bool(since and started_at and since <= started_at + timedelta(seconds=OFFLINE_AFTER)),
+                "since_restart": bool(since and started_at and since <= started_at + timedelta(seconds=offline_after)),
                 "connection": _connection(device, domains, entries, signal, iot_classes),
                 "signal": signal,
                 "via": via,
@@ -505,22 +541,23 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "update": _update(hass, entries),
                 "avail24": avail,
                 # Instabil: online, aber oft unterbrochen.
-                "flaky": bool(online and avail and avail.get("outages", 0) >= FLAKY_OUTAGES),
+                "flaky": bool(online and avail and avail.get("outages", 0) >= flaky_outages),
             }
         )
     result: dict[str, Any] = {
         "devices": devices,
         "integrations": {d: i["name"] for d, i in integrations.items()},
         "now": now.isoformat(),
-        "offline_after": OFFLINE_AFTER,
+        "offline_after": offline_after,
         "battery_low": BATTERY_LOW,
-        "flaky_outages": FLAKY_OUTAGES,
+        "flaky_outages": flaky_outages,
         "pulse": None,
         "incidents": [],
     }
     if log is not None:
-        # Nur die gezeigten Geräte: ausgeschlossene zählen nirgends mit.
-        shown = {d["id"] for d in devices}
+        # Nur die gezeigten, überwachten Geräte: ausgeschlossene und
+        # deaktivierte zählen nicht mit.
+        shown = {d["id"] for d in devices if not d["disabled"]}
         result["pulse"] = log.pulse(now_ts, only=shown)
         domain_of = {d["id"]: (d["integration"] or {}).get("domain") for d in devices}
         result["incidents"] = [
@@ -541,7 +578,9 @@ async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = No
     device = dr.async_get(hass).async_get(device_id)
     if device is None:
         return None
-    entries = er.async_entries_for_device(er.async_get(hass), device_id)
+    entries = er.async_entries_for_device(
+        er.async_get(hass), device_id, include_disabled_entities=bool(device.disabled_by)
+    )
     relevant, _conn = liveness_entities(entries)
     relevant_ids = {e.entity_id for e in relevant}
     device_name = device.name_by_user or device.name

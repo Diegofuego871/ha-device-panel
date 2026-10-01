@@ -339,3 +339,114 @@ async def test_pulse_and_incidents_only_shown(hass: HomeAssistant, setup: Availa
     result = await async_list_devices(hass, setup)
     assert max(result["pulse"]) == 0
     assert result["incidents"] == []
+
+
+async def _set_options(hass: HomeAssistant, hass_ws_client, values: dict[str, Any]) -> dict[str, Any]:
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_options", "values": values})
+    msg = await client.receive_json()
+    await hass.async_block_till_done()
+    return msg
+
+
+async def test_offline_after_option(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client, freezer) -> None:
+    lamp = _device(hass, "Lampe")
+    light = _entity(hass, lamp, "light", "l", "on")
+    setup.evaluate()
+    assert (await _set_options(hass, hass_ws_client, {"offline_after": 10}))["result"] == {"changed": True}
+    hass.states.async_set(light, "unavailable")
+    freezer.tick(timedelta(minutes=5))
+    setup.evaluate()
+    result = await async_list_devices(hass, setup)
+    assert result["offline_after"] == 600
+    assert result["devices"][0]["online"] is True  # nach 5 von 10 Min. noch online
+    assert [e[1] for e in setup.events(lamp.id)] == [1]
+    freezer.tick(timedelta(minutes=6))
+    setup.evaluate()
+    assert (await async_list_devices(hass, setup))["devices"][0]["online"] is False
+    assert setup.events(lamp.id)[-1][1] == 0
+
+
+async def test_flaky_outages_option(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client, freezer) -> None:
+    lamp = _device(hass, "Lampe")
+    light = _entity(hass, lamp, "light", "l", "on")
+    setup.evaluate()
+    for _ in range(2):
+        hass.states.async_set(light, "unavailable")
+        freezer.tick(timedelta(minutes=3))
+        setup.evaluate()
+        hass.states.async_set(light, "on")
+        freezer.tick(timedelta(minutes=1))
+        setup.evaluate()
+    result = await async_list_devices(hass, setup)
+    assert result["devices"][0]["avail24"]["outages"] == 2
+    assert result["devices"][0]["flaky"] is False and result["flaky_outages"] == 3
+    await _set_options(hass, hass_ws_client, {"flaky_outages": 2})
+    result = await async_list_devices(hass, setup)
+    assert result["devices"][0]["flaky"] is True and result["flaky_outages"] == 2
+
+
+@pytest.mark.parametrize(("grace", "recorded"), [(0, True), (10, False)])
+async def test_startup_grace_option(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client, freezer, grace: int, recorded: bool) -> None:
+    await _set_options(hass, hass_ws_client, {"startup_grace": grace})
+    setup._started = time.time()
+    lamp = _device(hass, "Lampe")
+    _entity(hass, lamp, "light", "l", "unavailable")
+    freezer.tick(timedelta(minutes=7))
+    setup.evaluate()
+    # Ohne Anlaufphase gleich ein Ausfall, mit 10 Min. nach 7 Min. noch nicht.
+    assert [e[1] for e in setup.events(lamp.id)] == ([0] if recorded else [])
+
+
+async def test_service_and_disabled_devices(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client) -> None:
+    sun = _device(hass, "Sonne", domain="sun", entry_type=dr.DeviceEntryType.SERVICE)
+    _entity(hass, sun, "sensor", "elev", "12")
+    old = _device(hass, "Alte Lampe", domain="hue")
+    old_light = _entity(hass, old, "light", "l", "on")
+    plug = _device(hass, "Steckdose")
+    _entity(hass, plug, "switch", "s", "on")
+    # Gerät deaktivieren: HA deaktiviert seine Entitäten mit und entfernt den Zustand.
+    dr.async_get(hass).async_update_device(old.id, disabled_by=dr.DeviceEntryDisabler.USER)
+    await hass.async_block_till_done()
+    assert er.async_get(hass).async_get(old_light).disabled_by is er.RegistryEntryDisabler.DEVICE
+    hass.states.async_remove(old_light)
+    setup.evaluate()
+
+    names = {d["name"] for d in (await async_list_devices(hass, setup))["devices"]}
+    assert names == {"Steckdose"}
+
+    await _set_options(hass, hass_ws_client, {"show_service_devices": True, "show_disabled_devices": True})
+    setup.evaluate()
+    devices = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}
+    assert set(devices) == {"Steckdose", "Sonne", "Alte Lampe"}
+    assert devices["Sonne"]["online"] is True and devices["Sonne"]["disabled"] is False
+    assert devices["Alte Lampe"]["disabled"] is True and devices["Alte Lampe"]["online"] is None
+    assert devices["Alte Lampe"]["type"] == "light"  # aus den deaktivierten Entitäten
+    # Dienst-Geräte werden überwacht, deaktivierte nicht.
+    assert [e[1] for e in setup.events(sun.id)] == [1]
+    assert setup.events(old.id) == []
+
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/get_options"})
+    catalog = (await client.receive_json())["result"]["catalog"]
+    assert {i["domain"] for i in catalog["integrations"]} == {"sun", "hue", "test"}
+    # Popup: deaktivierte Entitäten werden gezeigt (ohne Zustand).
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/device", "device_id": old.id})
+    detail = (await client.receive_json())["result"]
+    assert [e["entity_id"] for e in detail["entities"]] == [old_light]
+    assert detail["entities"][0]["state"] is None
+
+
+async def test_number_options_are_checked(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client) -> None:
+    for value in (0, 61, True, 2.5, "3", None):
+        msg = await _set_options(hass, hass_ws_client, {"offline_after": value})
+        assert msg["error"]["code"] == "invalid_format", value
+    assert (await _set_options(hass, hass_ws_client, {"offline_after": 60, "startup_grace": 0}))["result"] == {"changed": True}
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    assert entry.options["offline_after"] == 60 and entry.options["startup_grace"] == 0
+    # Ungültig gespeichert (von Hand): Standard statt Fehler.
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "flaky_outages": "viele", "offline_after": 999})
+    from custom_components.device_panel.options_api import current_values
+
+    values = current_values(entry)
+    assert values["flaky_outages"] == 3 and values["offline_after"] == 2

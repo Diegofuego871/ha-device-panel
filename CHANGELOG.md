@@ -7,6 +7,28 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.6.0] - 2026-10-01
+
+Set when a device counts as offline or unstable, and choose whether service
+devices and disabled devices appear in the list.
+
+### Added
+
+- Settings section "Outage detection", also in the options dialog of the
+  integration: "Offline after" (1–60 minutes, default 2), "Unstable from"
+  (2–50 outages in 24 hours, default 3) and "Grace period after start"
+  (0–30 minutes, default 5, 0 turns it off). A value outside the range is
+  marked in red and cannot be saved.
+- Settings section "Display", also in the options dialog: "Show service
+  devices" (e.g. sun, weather forecast, add-ons; shown devices are also
+  monitored) and "Show disabled devices" (own group "Disabled" at the end
+  of the list, not monitored, not counted at the top or under "Problems
+  only"). Both are off by default, as before.
+
+### Changed
+
+- The options dialog lists the settings in the same order as the panel.
+
 ## [0.5.0] - 2026-10-01
 
 Choose what the panel shows: hide whole integrations or device types, and
@@ -162,6 +184,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.6.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0
 [0.3.0b1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.3.0b1

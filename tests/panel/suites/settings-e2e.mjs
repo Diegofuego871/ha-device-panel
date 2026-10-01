@@ -19,6 +19,10 @@ const TEXT = {
     pre: "Vorabversionen anzeigen", loadErr: "Einstellungen konnten nicht geladen werden:", saveErr: "Speichern fehlgeschlagen:", ver: "Device Panel 0.4.0",
     secInt: "Integrationen", sumInt: "9 Integrationen · alle angezeigt", sumInt1: "9 Integrationen · 1 ausgeblendet", show: "Anzeigen", all: "Alle umschalten",
     zha: "Zigbee Home Automation", zhaSub: "5 Geräte", secTypes: "Gerätetypen", outlet: "Steckdose", sumTypes1: "11 Typen · 1 ausgeblendet", sumTypesNone: "11 Typen · alle angezeigt", sumTypesAll: "11 Typen · 11 ausgeblendet",
+    secDet: "Ausfall-Erkennung", sumDet: (m, n) => `Ausgefallen nach ${m} Min. · instabil ab ${n} Unterbrüchen in 24 Std. · Anlaufphase 5 Min.`,
+    offLabel: "Ausgefallen nach", offShort: "Minuten ohne Lebenszeichen. Kürzere Aussetzer zählen nicht.", unit: "Min.", range: "Erlaubt: 1 bis 60",
+    secDisp: "Anzeige", sumDisp: "Dienst-Geräte und deaktivierte Geräte ausgeblendet", sumDispDis: "Dienst-Geräte ausgeblendet · deaktivierte angezeigt",
+    sumDispBoth: "Dienst-Geräte und deaktivierte Geräte angezeigt", grpDis: "Deaktiviert", ofTotal: "von 17", four: "4 Änderungen",
   },
   en: {
     gear: "Settings", title: "Settings", sub: "Device Panel · applies to all users", sec: "Updates",
@@ -28,6 +32,10 @@ const TEXT = {
     pre: "Show pre-releases", loadErr: "Could not load the settings:", saveErr: "Saving failed:", ver: "Device Panel 0.4.0",
     secInt: "Integrations", sumInt: "9 integrations · all shown", sumInt1: "9 integrations · 1 hidden", show: "Show", all: "Toggle all",
     zha: "Zigbee Home Automation", zhaSub: "5 devices", secTypes: "Device types", outlet: "Outlet", sumTypes1: "11 types · 1 hidden", sumTypesNone: "11 types · all shown", sumTypesAll: "11 types · 11 hidden",
+    secDet: "Outage detection", sumDet: (m, n) => `Offline after ${m} min · unstable from ${n} outages in 24 h · grace period 5 min`,
+    offLabel: "Offline after", offShort: "Minutes without a sign of life. Shorter dropouts are not counted.", unit: "min", range: "Allowed: 1 to 60",
+    secDisp: "Display", sumDisp: "Service devices and disabled devices hidden", sumDispDis: "Service devices hidden · disabled shown",
+    sumDispBoth: "Service devices and disabled devices shown", grpDis: "Disabled", ofTotal: "of 17", four: "4 changes",
   },
 };
 
@@ -155,6 +163,85 @@ for (const lang of ["de", "en"]) {
     await tap('input[data-list="exclude_integrations"][data-value="zha"]');
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] wieder eingeblendet`, await wait(`return r.querySelectorAll(".dev").length === 16`));
+
+    // Ausfall-Erkennung: Zahlenfelder mit Prüfung, Zusammenfassung, Speichern
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    const order = await ev(`return [...r.querySelectorAll(".set-sec-head")].map(h=>h.dataset.id).join(",")`);
+    check(`[${tag}] Abschnitte wie Bild 5`, order === "detection,integrations,types,display,updates", order);
+    check(`[${tag}] Ausfall-Erkennung zusammengefasst`, (await text('[data-id="detection"] .set-sec-title')) === T.secDet && (await text('[data-id="detection"] .set-sec-sum')) === T.sumDet(2, 3), await text('[data-id="detection"] .set-sec-sum'));
+    await tap('[data-set="section"][data-id="detection"]');
+    check(`[${tag}] drei Zahlenfelder`, (await ev(`return r.querySelectorAll('.set-sec-body input[type="number"]').length`)) === 3);
+    check(`[${tag}] Feld mit Einheit und Kurzzeile`, (await text('.opt:has(input[data-opt="offline_after"]) .opt-label')) === T.offLabel && (await text('.opt:has(input[data-opt="offline_after"]) .unit')) === T.unit && (await text('.opt:has(input[data-opt="offline_after"]) .opt-short')) === T.offShort);
+    const num = (await f.evaluateHandle(new Function(`return ${R}.querySelector('input[data-opt="offline_after"]')`))).asElement();
+    if (mobile) await num.tap(); else await num.click();
+    await num.fill("");
+    await num.type("0");
+    check(`[${tag}] 0 ist ungültig`, await ev(`return r.querySelector('input[data-opt="offline_after"]').closest(".opt").classList.contains("invalid")`) && (await text('.opt:has(input[data-opt="offline_after"]) .opt-error')) === T.range, await text('.opt:has(input[data-opt="offline_after"]) .opt-error'));
+    check(`[${tag}] Speichern gesperrt bei Fehler`, await ev(`return r.querySelector('[data-set="save"]').disabled`));
+    check(`[${tag}] Zusammenfassung behält gespeicherten Wert`, (await text('[data-id="detection"] .set-sec-sum')) === T.sumDet(2, 3));
+    await num.fill("");
+    await num.type("1");
+    await num.type("0");
+    check(`[${tag}] Eingabe ohne Sprung: Fokus bleibt im Feld`, await ev(`return r.activeElement === r.querySelector('input[data-opt="offline_after"]') && r.activeElement.value === "10"`));
+    check(`[${tag}] gültig: Kurzzeile zurück, geändert`, (await text('.opt:has(input[data-opt="offline_after"]) .opt-short')) === T.offShort && await ev(`const o=r.querySelector('input[data-opt="offline_after"]').closest(".opt"); return o.classList.contains("changed") && !o.classList.contains("invalid")`));
+    check(`[${tag}] Zusammenfassung, Etikett, Zähler live`, (await text('[data-id="detection"] .set-sec-sum')) === T.sumDet(10, 3) && (await text('[data-id="detection"] .set-badge')) === T.changed && (await text(".set-count")) === T.one && !(await ev(`return r.querySelector('[data-set="save"]').disabled`)));
+    // Instabil ab 50: die instabilen Geräte fallen aus der Gruppe
+    const flakyBefore = await ev(`return r.querySelectorAll(".dev.flaky").length`);
+    const flakyWant = await p.evaluate(() => window.__devices.filter((d) => !d.disabled && !d.service && d.entities > 0 && d.online && d.avail24 && d.avail24.outages >= 50).length);
+    const flaky = (await f.evaluateHandle(new Function(`return ${R}.querySelector('input[data-opt="flaky_outages"]')`))).asElement();
+    if (mobile) await flaky.tap(); else await flaky.click();
+    await flaky.fill("");
+    await flaky.type("50");
+    await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] gespeichert als Zahlen`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ offline_after: 10, flaky_outages: 50 }), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
+    check(`[${tag}] Liste neu: instabil ab 50`, await wait(`return r.querySelectorAll(".dev.flaky").length === ${flakyWant}`) && flakyBefore > 0 && flakyWant === 0, `${flakyBefore} → ${await ev(`return r.querySelectorAll(".dev.flaky").length`)}, erwartet ${flakyWant}`);
+
+    // Anzeige: deaktivierte Geräte als eigene Gruppe am Ende
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    check(`[${tag}] Erkennung nach Speichern`, (await text('[data-id="detection"] .set-sec-sum')) === T.sumDet(10, 50));
+    check(`[${tag}] Anzeige zusammengefasst`, (await text('[data-id="display"] .set-sec-title')) === T.secDisp && (await text('[data-id="display"] .set-sec-sum')) === T.sumDisp);
+    await tap('[data-set="section"][data-id="display"]');
+    await tap('.switch input[data-opt="show_disabled_devices"]');
+    check(`[${tag}] Anzeige live`, (await text('[data-id="display"] .set-sec-sum')) === T.sumDispDis);
+    await tap('.switch input[data-opt="show_service_devices"]');
+    check(`[${tag}] Anzeige live, beide`, (await text('[data-id="display"] .set-sec-sum')) === T.sumDispBoth);
+    await p.screenshot({ path: `${outDir}/settings-detection-${tag.replace("/", "-")}.png` });
+    await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] Gruppe Deaktiviert`, await wait(`return [...r.querySelectorAll(".dev")].some(e=>e.textContent.includes("Alte Lampe"))`) && (await ev(`const g=[...r.querySelectorAll("tr.grp, .gh")].pop(); return g.className.includes(" d") && g.textContent.includes(${JSON.stringify(T.grpDis)})`)), await ev(`return [...r.querySelectorAll("tr.grp, .gh")].map(g=>g.className+":"+g.textContent.trim()).join(" | ")`));
+    check(`[${tag}] Status Deaktiviert`, (await ev(`const e=[...r.querySelectorAll(".dev")].find(e=>e.textContent.includes("Alte Lampe")); return e.querySelector(".pill.none")?.textContent`)) === T.grpDis);
+    // Popup des deaktivierten Geräts: Status und deaktivierte Entitäten
+    const dis = await p.evaluate(() => window.__devices.find((d) => d.disabled).id);
+    await tap(`.dev[data-open="${dis}"]`);
+    check(`[${tag}] Popup deaktiviert`, await wait(`return r.querySelector("dialog.device")?.open && r.querySelector("dialog.device .dlg-sub .pill.none")?.textContent === ${JSON.stringify(T.grpDis)}`), await text("dialog.device .dlg-sub"));
+    await tap('dialog.device [data-dlg="close"]');
+    await wait(`return !r.querySelector("dialog.device").open`);
+    check(`[${tag}] Dienst-Gerät gezeigt`, await ev(`return [...r.querySelectorAll(".dev")].some(e=>e.textContent.includes("Wetterdienst"))`));
+    // 16 + Dienst-Gerät; das deaktivierte zählt im Kopf nicht.
+    check(`[${tag}] Kopf zählt Deaktivierte nicht`, (await text(".ring .c span")).includes(T.ofTotal), await text(".ring .c span"));
+    await tap("[data-problems]");
+    check(`[${tag}] Nur Probleme ohne Deaktivierte`, !(await ev(`return [...r.querySelectorAll(".dev")].some(e=>e.textContent.includes("Alte Lampe"))`)));
+    await tap("[data-problems]");
+    await ev(`[...r.querySelectorAll(".dev")].find(e=>e.textContent.includes("Alte Lampe")).scrollIntoView({ block: "center" })`);
+    await p.screenshot({ path: `${outDir}/list-disabled-${tag.replace("/", "-")}.png` });
+
+    // Zurück auf die Standards
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    await tap('[data-set="section"][data-id="detection"]');
+    for (const [key, val] of [["offline_after", "2"], ["flaky_outages", "3"]]) {
+      const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector('input[data-opt="${key}"]')`))).asElement();
+      if (mobile) await h.tap(); else await h.click();
+      await h.fill("");
+      await h.type(val);
+    }
+    await tap('[data-set="section"][data-id="display"]');
+    await tap('.switch input[data-opt="show_disabled_devices"]');
+    await tap('.switch input[data-opt="show_service_devices"]');
+    check(`[${tag}] vier Änderungen`, (await text(".set-count")) === T.four);
+    await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] Standards wieder`, await wait(`return r.querySelectorAll(".dev").length === 16`) && JSON.stringify(await p.evaluate(() => [window.__opts.offline_after, window.__opts.flaky_outages, window.__opts.show_disabled_devices, window.__opts.show_service_devices])) === "[2,3,false,false]");
 
     // Fehler beim Speichern: Meldung, Dialog bleibt
     await p.evaluate(() => { window.__setOptsFails = "Keine Berechtigung"; });

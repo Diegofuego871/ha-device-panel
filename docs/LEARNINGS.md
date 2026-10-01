@@ -18,6 +18,15 @@ hat dort einen echten Fehler oder Umweg gekostet.
   `require_admin`, einmal pro Instanz registrieren (Flag in `hass.data`).
   Jeden Befehl, der eine Config-Entry-ID annimmt, auf `entry.domain ==
   DOMAIN` prüfen.
+- **Zahlen im Optionsdialog:** `NumberSelector` liefert Kommazahlen (`10.0`);
+  vor dem Speichern in `int` umwandeln, damit Panel und Dialog dieselben
+  Werte schreiben. `unit_of_measurement` nur setzen, wenn es eine Einheit
+  gibt: Das Schema verlangt `str`, `None` scheitert. Ungültige Bereiche
+  lehnt der Selektor selbst ab (`InvalidData`).
+- **Deaktivierte Geräte:** `er.async_entries_for_device` lässt deaktivierte
+  Entitäten weg; für ein deaktiviertes Gerät `include_disabled_entities=True`
+  übergeben, sonst hat es keine Entitäten (Typ, Popup). Zustände gibt es für
+  sie nicht.
 - **Speichern:** `Store.async_delay_save` entprellt und verschiebt bei jedem
   Aufruf. Bei häufigen Änderungen wird im Betrieb nie geschrieben, nur beim
   Beenden. Immer `storage_util.PeriodicSaver` verwenden (schreibt spätestens
@@ -135,6 +144,13 @@ hat dort einen echten Fehler oder Umweg gekostet.
   echte Klicks/Taps statt `element.click()` wo es um Gesten geht.
   `run.mjs` startet Server und alle Suiten, CI führt sie bei jedem Push aus.
 - Screenshots der Suiten nach `tests/panel/output/` (nicht im Repo).
+- **Eingabe in Zahlenfelder:** `ElementHandle` kennt in der verwendeten
+  Version von `playwright-core` kein `pressSequentially` (nur `Locator`);
+  `fill("")` und dann `type("10")` nutzen. Das Panel baut beim Tippen nicht
+  neu auf (nur `_updateSettingsMeta`), sonst spränge der Cursor.
+- **`pkill -f` mit einem Muster, das in der eigenen Befehlszeile steht**
+  (z. B. `http.server 8950`), beendet die eigene Shell (Exit 144). Beenden und
+  Starten in getrennten Aufrufen, wie bei HA.
 - **Chromium in der Cloud-Session:** Der vorinstallierte Browser passt nicht
   zur Version von `playwright-core` ("Executable doesn't exist"); statt
   herunterzuladen `CHROMIUM_PATH=/opt/pw-browsers/chromium node run.mjs`.

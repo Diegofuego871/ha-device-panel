@@ -16,14 +16,24 @@
         "title": "Settings",
         "description": "The same settings are available in the panel (gear icon), together with updates.",
         "data": {
-          "update_check": "Check for updates daily",
+          "offline_after": "Offline after",
+          "flaky_outages": "Unstable from (outages in 24 hours)",
+          "startup_grace": "Grace period after start",
           "exclude_integrations": "Hide integrations",
-          "exclude_types": "Hide device types"
+          "exclude_types": "Hide device types",
+          "show_service_devices": "Show service devices",
+          "show_disabled_devices": "Show disabled devices",
+          "update_check": "Check for updates daily"
         },
         "data_description": {
-          "update_check": "Reports a new version under Settings → Repairs. Pre-releases are never reported here.",
+          "offline_after": "Minutes without a sign of life before a device counts as offline. Shorter dropouts are not counted.",
+          "flaky_outages": "An online device with this many outages in the last 24 hours is listed as unstable.",
+          "startup_grace": "Minutes after Home Assistant starts in which returning devices had no outage. Time when Home Assistant was not running never counts as an outage.",
           "exclude_integrations": "Devices of these integrations are not shown in the panel and not monitored.",
-          "exclude_types": "Devices of these types are not shown in the panel and not monitored. The type of a single device can be changed in its pop-up."
+          "exclude_types": "Devices of these types are not shown in the panel and not monitored. The type of a single device can be changed in its pop-up.",
+          "show_service_devices": "Services of an integration rather than real devices, e.g. sun, weather forecast or add-ons. Shown service devices are monitored too.",
+          "show_disabled_devices": "In their own group at the end of the list. They are not monitored.",
+          "update_check": "Reports a new version under Settings → Repairs. Pre-releases are never reported here."
         }
       }
     }

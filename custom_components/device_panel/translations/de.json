@@ -16,14 +16,24 @@
         "title": "Einstellungen",
         "description": "Dieselben Einstellungen gibt es im Panel (Zahnrad), dort zusammen mit den Updates.",
         "data": {
-          "update_check": "Täglich nach Updates suchen",
+          "offline_after": "Ausgefallen nach",
+          "flaky_outages": "Instabil ab (Unterbrüche in 24 Std.)",
+          "startup_grace": "Anlaufphase nach dem Start",
           "exclude_integrations": "Integrationen ausblenden",
-          "exclude_types": "Gerätetypen ausblenden"
+          "exclude_types": "Gerätetypen ausblenden",
+          "show_service_devices": "Dienst-Geräte anzeigen",
+          "show_disabled_devices": "Deaktivierte Geräte anzeigen",
+          "update_check": "Täglich nach Updates suchen"
         },
         "data_description": {
-          "update_check": "Meldet eine neue Version unter Einstellungen → Reparaturen. Vorabversionen werden hier nie gemeldet.",
+          "offline_after": "Minuten ohne Lebenszeichen, bis ein Gerät als ausgefallen gilt. Kürzere Aussetzer zählen nicht.",
+          "flaky_outages": "Ein Gerät, das online ist, aber in den letzten 24 Stunden so oft unterbrochen war, gilt als instabil.",
+          "startup_grace": "Minuten nach dem Start von Home Assistant, in denen zurückkehrende Geräte keinen Unterbruch hatten. Zeit, in der Home Assistant nicht lief, zählt nie als Ausfall.",
           "exclude_integrations": "Geräte dieser Integrationen zeigt das Panel nicht, und sie werden nicht überwacht.",
-          "exclude_types": "Geräte dieser Typen zeigt das Panel nicht, und sie werden nicht überwacht. Den Typ eines einzelnen Geräts kann man in seinem Popup ändern."
+          "exclude_types": "Geräte dieser Typen zeigt das Panel nicht, und sie werden nicht überwacht. Den Typ eines einzelnen Geräts kann man in seinem Popup ändern.",
+          "show_service_devices": "Dienste einer Integration statt echter Geräte, z. B. Sonne, Wettervorhersage oder Add-ons. Angezeigte Dienst-Geräte werden auch überwacht.",
+          "show_disabled_devices": "In einer eigenen Gruppe am Ende der Liste. Sie werden nicht überwacht.",
+          "update_check": "Meldet eine neue Version unter Einstellungen → Reparaturen. Vorabversionen werden hier nie gemeldet."
         }
       }
     }

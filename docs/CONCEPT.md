@@ -50,8 +50,10 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    (siehe "Pflicht", Abschnitt 1). Darin pro Integration: anzeigen, Push,
    anhaltende Benachrichtigung. Grundgerüst umgesetzt in 0.4.0 (Zahnrad,
    Dialog, Speichern/Abbrechen, `get_options`/`set_options`, Optionsdialog
-   von HA); bisher nur der Abschnitt "Updates". Weitere Abschnitte nach
-   Bild 5 folgen (Ausfall-Erkennung, Integrationen, Push, Anzeige).
+   von HA). Abschnitte "Integrationen" und "Gerätetypen" (Anzeigen) in
+   0.5.0, "Ausfall-Erkennung" und "Anzeige" in 0.6.0. Es fehlen "Push" und
+   "Anhaltende Benachrichtigung" sowie die Spalten Push/Anhaltend bei den
+   Integrationen (mit Schritt 7).
 4. **Update-Bereich wie unifi_dynamic:** Version, "Nach Updates suchen",
    "Aktualisieren" über die HACS-Update-Entität, Vorabversionen,
    "In HACS freischalten" (Entität "Pre-release" aktivieren, etwa 30 s auf
@@ -197,9 +199,13 @@ vorhersehbar).
 
 ## Wann gilt ein Gerät als ausgefallen? (Standard, angenommen)
 
-Siehe auch "Überwachung einstellen": Schwelle und Lebenszeichen sind dort
-pro Integration, Regel und Gerät einstellbar; hier steht der Standard
-(Schwelle 2 Min.).
+Siehe auch "Überwachung einstellen": Schwelle und Lebenszeichen sollen dort
+pro Integration, Regel und Gerät einstellbar werden; hier steht der
+Standard. Seit 0.6.0 gilt für alle Geräte gemeinsam (Abschnitt
+"Ausfall-Erkennung"): "Ausgefallen nach" 1–60 Min. (Standard 2), "Instabil
+ab" 2–50 Unterbrüche in 24 Std. (Standard 3), "Anlaufphase nach dem Start"
+0–30 Min. (Standard 5). Eine neue Schwelle gilt ab dem Speichern; das
+Protokoll schreibt bisherige Unterbrüche nicht um.
 
 - Gerät **offline**, wenn alle seine aktivierten Entitäten `unavailable`
   sind (Ausnahmen: deaktivierte, versteckte, `diagnostic`-Entitäten zählen
@@ -210,7 +216,11 @@ pro Integration, Regel und Gerät einstellbar; hier steht der Standard
   nicht als Unterbruch; HA-Neustarts zählen nie (Lehre aus unifi_dynamic:
   "keine Daten" ist nicht "offline").
 - Geräte ohne Entitäten oder reine Dienst-Geräte (`entry_type: service`)
-  standardmässig ausgeblendet.
+  standardmässig ausgeblendet. Seit 0.6.0 (Abschnitt "Anzeige"): Dienst-
+  Geräte lassen sich zeigen und werden dann wie alle überwacht;
+  deaktivierte Geräte lassen sich zeigen (mit ihren deaktivierten
+  Entitäten), in eigener Gruppe am Ende, nie überwacht und nicht in Kopf,
+  Puls oder "Nur Probleme".
 
 ## Verfügbarkeitsprotokoll
 

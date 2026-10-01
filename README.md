@@ -36,15 +36,17 @@ details such as software version, manufacturer, model and area.
 - Statistics window from the tiles: availability over 24 hours, 7 or 30 days
   with a timeline, every outage with time and duration, and outages per
   day.
-- A device counts as offline after 2 minutes without a sign of life. A
-  connectivity sensor decides first; otherwise all regular entities must be
-  unavailable. Outages that started right after a restart of Home Assistant
-  are shown as "at least" (≥).
+- A device counts as offline after 2 minutes without a sign of life
+  (adjustable under "Outage detection", like "unstable from" and the grace
+  period after a start). A connectivity sensor decides first; otherwise all
+  regular entities must be unavailable. Outages that started right after a
+  restart of Home Assistant are shown as "at least" (≥).
 - Availability log for 31 days in its own file (not the recorder). Time when
   Home Assistant was not running counts as "no data", never as an outage.
 - Hide whole integrations or device types (settings in the panel or options
   dialog of the integration): hidden devices are neither shown nor
-  monitored.
+  monitored. Optionally show service devices (e.g. sun, add-ons) and
+  disabled devices (own group, not monitored).
 - Settings in the panel (gear icon) with updates: check for a new version,
   update via HACS with one click, restart afterwards, optionally offer
   pre-releases ("Enable in HACS" switches on the HACS pre-release option).
@@ -53,8 +55,7 @@ details such as software version, manufacturer, model and area.
 ### Planned (see `docs/CONCEPT.md`)
 
 - Columns, sorting and filters per user, separately for desktop and phone.
-- More settings in the panel (outage detection, display), push
-  notifications.
+- Push notifications with their settings in the panel.
 
 ## Installation
 

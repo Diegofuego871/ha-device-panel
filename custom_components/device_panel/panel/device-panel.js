@@ -324,7 +324,9 @@ class DevicePanel extends HTMLElement {
     this._fetching = true;
     try {
       const result = await this._hass.callWS({ type: "device_panel/list_devices" });
-      this._devices = (result.devices || []).filter((d) => !d.service && d.entities > 0);
+      // Welche Geräte gezeigt werden (Dienst-Geräte, deaktivierte, Ausschlüsse),
+      // entscheidet das Backend nach den Einstellungen.
+      this._devices = result.devices || [];
       this._integrations = result.integrations || {};
       this._flakyOutages = result.flaky_outages || 3;
       this._pulse = Array.isArray(result.pulse) ? result.pulse : null;
@@ -483,7 +485,8 @@ class DevicePanel extends HTMLElement {
 
   _matches(d) {
     if (this._conn !== "all" && this._connOf(d) !== this._conn) return false;
-    if (this._problems && !(d.online !== true || d.flaky || d.battery?.low || isWeak(d.signal))) return false;
+    // Deaktiviert ist kein Problem: nicht überwacht, bewusst abgeschaltet.
+    if (this._problems && (d.disabled || !(d.online !== true || d.flaky || d.battery?.low || isWeak(d.signal)))) return false;
     if (this._hint === "battery" && !d.battery?.low) return false;
     if (this._hint === "signal" && !isWeak(d.signal)) return false;
     if (this._hint === "update" && !d.update) return false;
@@ -502,7 +505,9 @@ class DevicePanel extends HTMLElement {
     if (!root.querySelector(".content")) return;
     const all = this._devices;
     const offline = all.filter((d) => d.online === false).sort((a, b) => Date.parse(a.offline_since) - Date.parse(b.offline_since));
-    setHtml(root.querySelector(".hero"), this._loading ? "" : this._heroHtml(all, offline));
+    // Kopf und Puls nur mit überwachten Geräten; deaktivierte zählen nicht.
+    const monitored = all.filter((d) => !d.disabled);
+    setHtml(root.querySelector(".hero"), this._loading ? "" : this._heroHtml(monitored, offline));
     setHtml(root.querySelector(".chips"), this._loading ? "" : this._chipsHtml(all));
     const rows = all.filter((d) => this._matches(d));
     setHtml(root.querySelector(".list"), this._listHtml(rows));
@@ -628,6 +633,7 @@ class DevicePanel extends HTMLElement {
   }
 
   _statusHtml(d) {
+    if (d.disabled) return `<span class="pill none">${escape(this._t("statusDisabled"))}</span>`;
     if (d.online === false) return `<div class="dur">${this._durationHtml(d)}</div><div class="durs">${escape(this._t("statusOffline"))}</div>`;
     if (d.online == null) return `<span class="pill none">${escape(this._t("statusNoData"))}</span>`;
     if (d.flaky) return `<span class="pill warn">${escape(this._t("statusFlaky"))}</span><div class="durs">${escape(this._t("flakyOutages", d.avail24.outages))}</div>`;
@@ -667,11 +673,14 @@ class DevicePanel extends HTMLElement {
   _groups(rows) {
     const byName = (a, b) => String(a.name).localeCompare(String(b.name));
     const outages = (d) => d.avail24?.outages || 0;
+    const active = rows.filter((d) => !d.disabled);
     return [
-      ["e", this._t("groupOffline"), this._t("groupOfflineHint"), rows.filter((d) => d.online === false).sort((a, b) => Date.parse(a.offline_since) - Date.parse(b.offline_since))],
-      ["w", this._t("groupFlaky"), this._t("groupFlakyHint", this._flakyOutages), rows.filter((d) => d.online === true && d.flaky).sort((a, b) => outages(b) - outages(a) || byName(a, b))],
-      ["n", this._t("groupNoData"), this._t("groupNoDataHint"), rows.filter((d) => d.online == null).sort(byName)],
-      ["", this._t("groupOnline"), null, rows.filter((d) => d.online === true && !d.flaky).sort(byName)],
+      ["e", this._t("groupOffline"), this._t("groupOfflineHint"), active.filter((d) => d.online === false).sort((a, b) => Date.parse(a.offline_since) - Date.parse(b.offline_since))],
+      ["w", this._t("groupFlaky"), this._t("groupFlakyHint", this._flakyOutages), active.filter((d) => d.online === true && d.flaky).sort((a, b) => outages(b) - outages(a) || byName(a, b))],
+      ["n", this._t("groupNoData"), this._t("groupNoDataHint"), active.filter((d) => d.online == null).sort(byName)],
+      ["", this._t("groupOnline"), null, active.filter((d) => d.online === true && !d.flaky).sort(byName)],
+      // Nur mit "Deaktivierte Geräte anzeigen": am Ende, nicht überwacht.
+      ["d", this._t("groupDisabled"), this._t("groupDisabledHint"), rows.filter((d) => d.disabled).sort(byName)],
     ].filter((g) => g[3].length);
   }
 
@@ -946,8 +955,8 @@ class DevicePanel extends HTMLElement {
       if (d.online === false) {
         status = `<span class="pill off"><span class="pd"></span>${escape(this._t("statusOfflinePill", `${d.since_restart ? "≥ " : ""}${this._duration(d.offline_since)}`))}</span>`;
         avatar = "off";
-      } else if (d.online == null) {
-        status = `<span class="pill none">${escape(this._t("statusNoData"))}</span>`;
+      } else if (d.disabled || d.online == null) {
+        status = `<span class="pill none">${escape(this._t(d.disabled ? "statusDisabled" : "statusNoData"))}</span>`;
         avatar = "none";
       } else if (d.flaky) {
         status = `<span class="pill warn">${escape(this._t("statusFlaky"))}</span><span>${escape(this._t("flakyOutages", d.avail24.outages))}</span>`;
@@ -1290,13 +1299,29 @@ class DevicePanel extends HTMLElement {
     return [...this._settingsEntryChanges(), ...this._settingsExtraChanges()];
   }
 
-  // Abschnitte mit ihren Optionen; weitere folgen (Überwachung, Push …).
+  // Abschnitte mit ihren Optionen in der Reihenfolge von Bild 5; Push folgt.
   _settingsSections() {
     return [
+      ["detection", ["offline_after", "flaky_outages", "startup_grace"]],
       ["integrations", ["exclude_integrations"]],
       ["types", ["exclude_types"]],
+      ["display", ["show_service_devices", "show_disabled_devices"]],
       ["updates", ["update_check"]],
     ];
+  }
+
+  // Zahlen ausserhalb des Bereichs (vom Server, wie im Optionsdialog): Feld
+  // rot mit Hinweis, "Speichern" gesperrt.
+  _settingsErrors() {
+    const st = this._settings;
+    const errors = {};
+    if (!st || !st.draft || !st.data) return errors;
+    for (const [key, [min, max]] of Object.entries(st.data.limits || {})) {
+      if (!(key in st.draft)) continue;
+      const v = st.draft[key];
+      if (!Number.isInteger(v) || v < min || v > max) errors[key] = this._t("settingsRange", min, max);
+    }
+    return errors;
   }
 
   // Typen für die Ausschlüsse: alle mit Geräten, dazu ausgeblendete ohne.
@@ -1307,6 +1332,13 @@ class DevicePanel extends HTMLElement {
 
   _settingsSummary(id, d) {
     if (id === "updates") return this._t(d.update_check ? "sumUpdatesOn" : "sumUpdatesOff");
+    if (id === "detection") {
+      // Während der Eingabe ungültig: der gespeicherte Wert gilt weiter.
+      const errors = this._settingsErrors();
+      const num = (k) => (errors[k] ? this._settings?.data?.values?.[k] : d[k]);
+      return this._t("sumDetection", num("offline_after"), num("flaky_outages"), num("startup_grace"));
+    }
+    if (id === "display") return this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices));
     if (id === "integrations") {
       const list = this._settings?.data?.catalog?.integrations || [];
       return this._t("sumShown", this._t("sumIntegrations", list.length), d.exclude_integrations.length);
@@ -1328,7 +1360,7 @@ class DevicePanel extends HTMLElement {
     else if (st.error) body = `<div class="dlg-error">${escape(t("settingsLoadError"))} ${escape(st.error)}</div>`;
     else body = this._settingsBodyHtml();
     const changes = this._settingsChanges();
-    const canSave = !st.loading && !st.error && !st.saving && changes.length > 0;
+    const canSave = !st.loading && !st.error && !st.saving && changes.length > 0 && !Object.keys(this._settingsErrors()).length;
     const actions = `<div class="dlg-actions">
         <span class="set-count">${changes.length ? escape(t("settingsChanges", changes.length)) : ""}</span>
         <button type="button" class="dlg-btn" data-set="close">${escape(t("settingsCancel"))}</button>
@@ -1356,13 +1388,20 @@ class DevicePanel extends HTMLElement {
     const d = st.draft;
     const t = (k, ...a) => this._t(k, ...a);
     const changes = new Set(this._settingsChanges());
+    const errors = this._settingsErrors();
     const infoBtn = (key) =>
       `<button type="button" class="info-btn${st.info.has(key) ? " on" : ""}" data-set="info" data-key="${key}" title="${escape(t("settingsInfo"))}" aria-label="${escape(t("settingsInfo"))}" aria-expanded="${st.info.has(key)}">${mdi("info", 16)}</button>`;
-    const row = (key, label, control, short, info) => `<div class="opt${changes.has(key) ? " changed" : ""}">
+    // Feldzeile: Beschriftung (+ ⓘ), Eingabe, Kurzzeile oder Fehler,
+    // aufklappbarer Text. data-short: Kurzzeile zurück, wenn der Fehler weg ist.
+    const row = (key, label, control, short, info) => `<div class="opt${changes.has(key) ? " changed" : ""}${errors[key] ? " invalid" : ""}">
         <div class="opt-line"><span class="opt-label">${escape(label)}${info ? infoBtn(key) : ""}</span>${control}</div>
-        ${short ? `<div class="opt-short">${escape(short)}</div>` : ""}
+        ${short || errors[key] ? `<div class="${errors[key] ? "opt-error" : "opt-short"}" data-short="${escape(short || "")}">${escape(errors[key] || short)}</div>` : ""}
         ${info && st.info.has(key) ? `<div class="opt-info">${escape(info)}</div>` : ""}</div>`;
-    const sw = (key) => `<label class="switch"><input type="checkbox" data-opt="${key}" ${d[key] ? "checked" : ""} aria-label="${escape(t("optUpdateCheck"))}"><span></span></label>`;
+    const sw = (key, label) => `<label class="switch"><input type="checkbox" data-opt="${key}" ${d[key] ? "checked" : ""} aria-label="${escape(label)}"><span></span></label>`;
+    const num = (key, unit, label) => {
+      const [min, max] = st.data.limits?.[key] || [];
+      return `<span class="opt-input"><input type="number" inputmode="numeric" step="1" ${min != null ? `min="${min}" max="${max}"` : ""} data-opt="${key}" value="${escape(d[key] ?? "")}" aria-label="${escape(label)}"><span class="unit">${escape(unit)}</span></span>`;
+    };
     // Ausschlüsse als Tabelle: Schalter "Anzeigen" pro Integration bzw. Typ.
     const exTable = (key, items, intro) => {
       const hidden = new Set(d[key]);
@@ -1388,11 +1427,18 @@ class DevicePanel extends HTMLElement {
       badge: `<span class="ibadge type">${typeIcon(x.type, 18)}</span>`,
     }));
     const fields = {
+      detection:
+        row("offline_after", t("optOfflineAfter"), num("offline_after", t("minuteUnit"), t("optOfflineAfter")), t("optOfflineAfterShort"), t("optOfflineAfterInfo")) +
+        row("flaky_outages", t("optFlaky"), num("flaky_outages", t("unitOutages"), t("optFlaky")), t("optFlakyShort"), t("optFlakyInfo")) +
+        row("startup_grace", t("optGrace"), num("startup_grace", t("minuteUnit"), t("optGrace")), t("optGraceShort"), t("optGraceInfo")),
       integrations: exTable("exclude_integrations", integrations, t("hideIntro")),
       types: exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`),
-      updates: row("update_check", t("optUpdateCheck"), sw("update_check"), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
+      display:
+        row("show_service_devices", t("optShowService"), sw("show_service_devices", t("optShowService")), t("optShowServiceShort"), t("optShowServiceInfo")) +
+        row("show_disabled_devices", t("optShowDisabled"), sw("show_disabled_devices", t("optShowDisabled")), t("optShowDisabledShort"), null),
+      updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
-    const titles = { integrations: "secIntegrations", types: "secTypes", updates: "secUpdates" };
+    const titles = { detection: "secDetection", integrations: "secIntegrations", types: "secTypes", display: "secDisplay", updates: "secUpdates" };
     return (
       `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
       this._settingsSections()
@@ -1436,6 +1482,17 @@ class DevicePanel extends HTMLElement {
         this._renderSettings();
       }
     });
+    // Zahlen: Entwurf beim Tippen nachführen, aber nur die Anzeige drumherum
+    // anpassen; ein Neuaufbau liesse den Cursor springen (wie unifi_dynamic).
+    // Ihr "change" (beim Verlassen) baut bewusst nichts neu auf, sonst ginge
+    // der Klick verloren, der den Fokus wegnimmt (z. B. auf "Speichern").
+    dialog.addEventListener("input", (ev) => {
+      const st = this._settings;
+      const el = ev.target;
+      if (!st?.draft || el.type !== "number" || !el.dataset.opt) return;
+      st.draft[el.dataset.opt] = el.value === "" ? null : Number(el.value);
+      this._updateSettingsMeta();
+    });
     dialog.addEventListener("change", (ev) => {
       const st = this._settings;
       const el = ev.target;
@@ -1461,12 +1518,53 @@ class DevicePanel extends HTMLElement {
     });
   }
 
+  // Leichte Aktualisierung während der Eingabe: Zähler, "Speichern",
+  // Markierung und Fehlertext der Zahlenfelder, Zusammenfassungen und
+  // Etiketten der Abschnitte, ohne Neuaufbau (Fokus und Cursor bleiben).
+  _updateSettingsMeta() {
+    const dialog = this.shadowRoot.querySelector("dialog.settings");
+    const st = this._settings;
+    if (!dialog || !st?.draft) return;
+    const changes = this._settingsChanges();
+    const errors = this._settingsErrors();
+    const count = dialog.querySelector(".set-count");
+    if (count) count.textContent = changes.length ? this._t("settingsChanges", changes.length) : "";
+    const save = dialog.querySelector('[data-set="save"]');
+    if (save) save.disabled = st.saving || !changes.length || Object.keys(errors).length > 0;
+    for (const input of dialog.querySelectorAll('input[type="number"][data-opt]')) {
+      const key = input.dataset.opt;
+      const opt = input.closest(".opt");
+      if (!opt) continue;
+      opt.classList.toggle("changed", changes.includes(key));
+      opt.classList.toggle("invalid", Boolean(errors[key]));
+      const line = opt.querySelector("[data-short]");
+      if (line) {
+        line.className = errors[key] ? "opt-error" : "opt-short";
+        line.textContent = errors[key] || line.dataset.short;
+      }
+    }
+    for (const [id, keys] of this._settingsSections()) {
+      const head = dialog.querySelector(`[data-set="section"][data-id="${id}"]`);
+      if (!head) continue;
+      head.querySelector(".set-sec-sum").textContent = this._settingsSummary(id, st.draft);
+      const title = head.querySelector(".set-sec-title");
+      let badge = title.querySelector(".set-badge");
+      const changed = keys.some((k) => changes.includes(k));
+      if (changed && !badge) {
+        badge = document.createElement("span");
+        badge.className = "set-badge";
+        badge.textContent = this._t("settingsChanged");
+        title.appendChild(badge);
+      } else if (!changed && badge) badge.remove();
+    }
+  }
+
   async _saveSettings() {
     const st = this._settings;
     if (!st) return;
     const changes = this._settingsEntryChanges();
     const extra = this._settingsExtraChanges();
-    if (!changes.length && !extra.length) return;
+    if ((!changes.length && !extra.length) || Object.keys(this._settingsErrors()).length) return;
     st.saving = true;
     st.saveError = null;
     this._renderSettings();
@@ -1484,8 +1582,8 @@ class DevicePanel extends HTMLElement {
       }
       this._closeSettings();
       this._toast(this._t("settingsSaved"));
-      // Ausschlüsse ändern die Liste sofort.
-      if (changes.some((k) => k.startsWith("exclude_"))) this._fetch();
+      // Erkennung, Ausschlüsse und Anzeige ändern die Liste sofort.
+      if (changes.some((k) => k !== "update_check")) this._fetch();
     } catch (err) {
       if (this._settings !== st) return;
       st.saving = false;

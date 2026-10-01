@@ -269,8 +269,8 @@ async def _ws_get_options(
 ) -> None:
     """
     Einstellungen, dieselben Werte wie im Optionsdialog, dazu die
-    Panel-Einstellungen und für die Ausschlüsse alle Integrationen und Typen
-    mit der Zahl ihrer Geräte.
+    Panel-Einstellungen, für die Ausschlüsse alle Integrationen und Typen
+    mit der Zahl ihrer Geräte und die Bereiche der Zahlen.
     """
     entry = _entry(hass)
     if entry is None:
@@ -282,6 +282,7 @@ async def _ws_get_options(
             "values": options_api.current_values(entry),
             "panel": update_check.panel_settings(hass),
             "catalog": await async_catalog(hass),
+            "limits": options_api.limits(),
         },
     )
 

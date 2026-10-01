@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.5.0, mit Ausschlüssen nach Integration und Gerätetyp)
+## Stand (0.6.0, mit Ausfall-Erkennung und Anzeige in den Einstellungen)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -15,14 +15,21 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   (Popup), `device_panel/availability` (Statistik-Fenster) und
   `device_panel/set_device_type` (Typ von Hand im Popup, Datei
   `.storage/device_panel.devices`).
-- Einstellungen im Panel (Zahnrad): Versionskasten mit Update über HACS,
-  Vorabversionen, "In HACS freischalten", Abschnitte "Integrationen" und
-  "Gerätetypen" (Schalter "Anzeigen"; ausgeblendete Geräte werden nicht
-  überwacht), Abschnitt "Updates" (tägliche Prüfung mit Meldung unter
-  "Reparaturen"). Backend `update_check.py`, `options_api.py`,
-  Optionsdialog in `config_flow.py` mit denselben Ausschlüssen; WebSocket
-  `device_panel/version`, `set_panel`, `get_options` (mit Katalog aller
-  Integrationen und Typen), `set_options`.
+- Einstellungen im Panel (Zahnrad), Reihenfolge nach Bild 5:
+  Versionskasten mit Update über HACS, Vorabversionen, "In HACS
+  freischalten"; "Ausfall-Erkennung" (Zahlenfelder `offline_after`,
+  `flaky_outages`, `startup_grace` mit Bereichen aus `const.INT_RANGES`,
+  Prüfung im Panel und im Backend); "Integrationen" und "Gerätetypen"
+  (Schalter "Anzeigen"; ausgeblendete Geräte werden nicht überwacht);
+  "Anzeige" (`show_service_devices`, `show_disabled_devices`: deaktivierte
+  Geräte in eigener Gruppe, nicht überwacht); "Updates" (tägliche Prüfung
+  mit Meldung unter "Reparaturen"). Backend `update_check.py`,
+  `options_api.py` (`effective(hass)` liefert die wirksamen Werte),
+  Optionsdialog in `config_flow.py` mit denselben Feldern in derselben
+  Reihenfolge; WebSocket `device_panel/version`, `set_panel`, `get_options`
+  (mit Katalog aller Integrationen und Typen sowie `limits`),
+  `set_options`. Welche Geräte gezeigt werden, entscheidet nur das Backend
+  (`devices.listed_devices`, Protokoll `monitored_devices`).
 - Verfügbarkeitsprotokoll (`availability.py`, `.storage/device_panel.availability`,
   31 Tage), siehe `docs/CONCEPT.md`, "Verfügbarkeitsprotokoll".
 - Panel in Design C: Kopf mit Ring (Ø 24 Std.), Ausfall-Tafel und
@@ -62,10 +69,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 2. Fahrplan-Schritte 1, 4, 5 und 6 erledigt (`0.2.0b1` bis `0.4.0`),
    Schritt 3 als Grundgerüst. Ausschlüsse nach Integration und Gerätetyp
    mit `0.5.0` erledigt (Nutzer, 2026-10-01: ein Typ pro Gerät, vier neue
-   Typen, Typ im Popup änderbar). Weiter mit den übrigen Abschnitten der
-   Einstellungen nach Bild 5 (Ausfall-Erkennung, Push, Anzeige) und
-   Schritt 2 (Spalten pro Benutzer); `docs/CONCEPT.md`, "Pflicht"; Vorlagen
-   in `docs/reference/`. Offene Frage an den Nutzer: Prozentwerte erst ab
+   Typen, Typ im Popup änderbar). Ausfall-Erkennung und Anzeige mit `0.6.0`.
+   Weiter mit Schritt 2 (Spalten pro Benutzer) und Schritt 7 (Push mit den
+   Abschnitten "Push-Benachrichtigung" und "Anhaltende Benachrichtigung"
+   sowie den Spalten Push/Anhaltend bei den Integrationen nach Bild 5);
+   `docs/CONCEPT.md`, "Pflicht"; Vorlagen in `docs/reference/`. Offene Frage an den Nutzer: Prozentwerte erst ab
    einer Mindestdauer an Daten zeigen?
 3. Umsetzung nach dem Fahrplan in `docs/CONCEPT.md` (Abschnitt "Fahrplan"),
    der Reihe nach: Geräteliste mit Statistik, Spalten pro Benutzer,

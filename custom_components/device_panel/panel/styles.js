@@ -276,6 +276,16 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .opt-label { display: inline-flex; align-items: center; gap: 2px; min-width: 0; }
 .opt-short { margin-top: 3px; color: var(--dp-text2); font-size: 12px; line-height: 1.35; }
 .opt-info { margin-top: 6px; padding: 8px 10px; border-radius: 8px; background: var(--dp-subtle); color: var(--dp-text2); font-size: 12px; line-height: 1.45; }
+/* Zahlenfeld mit Einheit (wie unifi_dynamic); rot bei Wert ausserhalb des Bereichs. */
+.opt-input { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 6px; height: 36px; padding: 0 10px;
+  border: 1px solid var(--dp-divider); border-radius: 9px; background: var(--dp-input); }
+.opt-input input { width: 56px; border: none; outline: none; background: none; color: var(--dp-text); font: inherit; font-size: 14px;
+  font-variant-numeric: tabular-nums; text-align: right; }
+.opt-input .unit { color: var(--dp-text3); font-size: 12px; white-space: nowrap; }
+.opt-input:focus-within { border-color: var(--dp-primary); }
+.opt.changed > .opt-line .opt-input { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
+.opt.invalid > .opt-line .opt-input { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
+.opt-error { margin-top: 3px; color: var(--dp-error); font-size: 12px; line-height: 1.35; }
 .info-btn { display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; border: none; border-radius: 50%; background: none; color: var(--dp-text3); cursor: pointer; }
 .info-btn:hover, .info-btn.on { color: var(--dp-primary); }
 .switch { position: relative; flex: none; width: 36px; height: 20px; }

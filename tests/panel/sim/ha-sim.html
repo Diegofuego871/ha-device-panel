@@ -178,7 +178,7 @@
 
   const dev = (id, name, area, integ, connection, type, extra = {}) => ({
     id, name, area, integrations: [integ], integration: { domain: integ, title: TITLES[integ] || integ }, type, connection,
-    service: false, entities: 3, online: true, offline_since: null, since_restart: false, signal: null, via: null, battery: null,
+    service: false, disabled: false, entities: 3, online: true, offline_since: null, since_restart: false, signal: null, via: null, battery: null,
     update: null, manufacturer: "Beispiel AG", model: "Modell " + id.toUpperCase(), sw_version: "1.0." + id.length, hw_version: null,
     avail24: avail24(id), ...extra,
   });
@@ -206,15 +206,19 @@
     dev("p", "Altgerät", null, "zha", null, "other", { online: null, avail24: null }),
     dev("q", "Wetterdienst", null, "met", "cloud", "sensor", { service: true }),
     dev("r", "Geist", null, "zha", "zigbee", "other", { entities: 0 }),
+    dev("s", "Alte Lampe", "Estrich", "hue", "zigbee", "light", { disabled: true, online: null, avail24: null }),
   ];
   for (const d of devices) {
     d.flaky = Boolean(d.online && d.avail24 && d.avail24.outages >= 3);
     d.type_auto = d.type;
     d.type_manual = false;
   }
-  // Wie das Backend: Kandidaten (kein Dienst, mit Entitäten) und Ausschlüsse.
-  const candidates = () => window.__devices.filter((d) => !d.service && d.entities > 0);
-  const shown = () => window.__devices.filter((d) => !(d.integration && window.__opts.exclude_integrations.includes(d.integration.domain)) && !window.__opts.exclude_types.includes(d.type));
+  // Wie das Backend: Kandidaten nach "Anzeige" (Dienst-Geräte, deaktivierte,
+  // mit Entitäten), dann die Ausschlüsse.
+  const candidates = () => window.__devices.filter((d) => d.entities > 0 && (!d.service || window.__opts.show_service_devices) && (!d.disabled || window.__opts.show_disabled_devices));
+  const shown = () => candidates().filter((d) => !(d.integration && window.__opts.exclude_integrations.includes(d.integration.domain)) && !window.__opts.exclude_types.includes(d.type));
+  // Bereiche der Zahlen wie options_api.limits().
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30] };
   const TYPE_ORDER = ["hub", "phone", "network", "climate", "lock", "cover", "valve", "vacuum", "camera", "alarm", "media", "fan", "light", "outlet", "switch", "motion", "contact", "safety", "energy", "sensor", "button", "other"];
   function catalog() {
     const byDomain = {};
@@ -286,7 +290,10 @@
   window.__version = { installed: "0.4.0", latest: "0.4.0" };
   window.__pre = null;
   window.__panelSettings = { prerelease: false, prerelease_hacs: null };
-  window.__opts = { update_check: true, exclude_integrations: [], exclude_types: [] };
+  window.__opts = {
+    offline_after: 2, flaky_outages: 3, startup_grace: 5, exclude_integrations: [], exclude_types: [],
+    show_service_devices: false, show_disabled_devices: false, update_check: true,
+  };
   window.__services = [];
   const pushHass = () => {
     const ha = document.querySelector("home-assistant").hass;
@@ -359,10 +366,14 @@
       if (msg.type === "device_panel/get_options") {
         if (window.__getOptsFails) throw new Error("boom");
         await new Promise((r) => setTimeout(r, 40));
-        return { values: JSON.parse(JSON.stringify(window.__opts)), panel: { ...window.__panelSettings }, catalog: catalog() };
+        return { values: JSON.parse(JSON.stringify(window.__opts)), panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS };
       }
       if (msg.type === "device_panel/set_options") {
         if (window.__setOptsFails) throw new Error(window.__setOptsFails);
+        for (const [k, [min, max]] of Object.entries(LIMITS)) {
+          const v = msg.values[k];
+          if (k in msg.values && (!Number.isInteger(v) || v < min || v > max)) throw { code: "invalid_format", message: `${k} out of range` };
+        }
         const changed = Object.keys(msg.values).some((k) => JSON.stringify(window.__opts[k]) !== JSON.stringify(msg.values[k]));
         Object.assign(window.__opts, msg.values);
         return { changed };
@@ -376,9 +387,12 @@
         return { device_type: msg.device_type };
       }
       if (msg.type === "device_panel/list_devices") {
+        // Instabil nach der Einstellung "Instabil ab".
+        const flakyN = window.__opts.flaky_outages;
         return {
-          devices: shown(), integrations, now: new Date().toISOString(), offline_after: 120, battery_low: 15,
-          flaky_outages: 3, pulse: pulse(), incidents,
+          devices: shown().map((d) => ({ ...d, flaky: Boolean(d.online && d.avail24 && d.avail24.outages >= flakyN) })),
+          integrations, now: new Date().toISOString(), offline_after: window.__opts.offline_after * 60, battery_low: 15,
+          flaky_outages: flakyN, pulse: pulse(), incidents,
         };
       }
       if (msg.type === "device_panel/device") {

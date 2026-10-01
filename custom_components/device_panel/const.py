@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "6"
+PANEL_VERSION = "7"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -31,13 +31,28 @@ DATA_WS_REGISTERED = f"{DOMAIN}_ws_registered"
 # Zeitpunkt, an dem die Integration beim Start von HA geladen wurde.
 DATA_STARTED_AT = f"{DOMAIN}_started_at"
 
-# Standard der Überwachung (docs/CONCEPT.md, "Überwachung einstellen"):
-# ausgefallen erst nach 2 Min. ohne Lebenszeichen; Batterie gilt bis 15 %
-# als niedrig.
-OFFLINE_AFTER = 120
+# Ausfall-Erkennung (Optionen, docs/CONCEPT.md, "Überwachung einstellen"):
+# ausgefallen erst nach 2 Min. ohne Lebenszeichen; instabil ab 3 Unterbrüchen
+# in 24 Std. bei einem Gerät, das gerade online ist; Anlaufphase von 5 Min.
+# nach dem Start. Zeiten in Minuten, Bereiche (min, max) gelten für Panel und
+# Optionsdialog.
+CONF_OFFLINE_AFTER = "offline_after"
+DEFAULT_OFFLINE_AFTER = 2
+CONF_FLAKY_OUTAGES = "flaky_outages"
+DEFAULT_FLAKY_OUTAGES = 3
+CONF_STARTUP_GRACE = "startup_grace"
+DEFAULT_STARTUP_GRACE = 5
+INT_RANGES = {
+    CONF_OFFLINE_AFTER: (1, 60),
+    CONF_FLAKY_OUTAGES: (2, 50),
+    CONF_STARTUP_GRACE: (0, 30),
+}
+# Batterie gilt bis 15 % als niedrig.
 BATTERY_LOW = 15
-# Instabil: so viele Unterbrüche in 24 Std. bei einem Gerät, das gerade online ist.
-FLAKY_OUTAGES = 3
+# Anzeige (Optionen): Dienst-Geräte (z. B. Sonne, Add-ons) werden dann gezeigt
+# und überwacht, deaktivierte Geräte nur gezeigt (eigene Gruppe).
+CONF_SHOW_SERVICE = "show_service_devices"
+CONF_SHOW_DISABLED = "show_disabled_devices"
 # Verfügbarkeitsprotokoll (eine Instanz pro HA).
 DATA_AVAILABILITY = f"{DOMAIN}_availability"
 

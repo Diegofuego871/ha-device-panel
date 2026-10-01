@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 from homeassistant.core import HomeAssistant
-from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.data_entry_flow import FlowResultType, InvalidData
 from homeassistant.helpers import issue_registry as ir
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -102,7 +102,17 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
     client = await hass_ws_client(hass)
     await client.send_json({"id": 1, "type": f"{DOMAIN}/get_options"})
     result = (await client.receive_json())["result"]
-    assert result["values"] == {CONF_UPDATE_CHECK: True, "exclude_integrations": [], "exclude_types": []}
+    assert result["values"] == {
+        CONF_UPDATE_CHECK: True,
+        "exclude_integrations": [],
+        "exclude_types": [],
+        "offline_after": 2,
+        "flaky_outages": 3,
+        "startup_grace": 5,
+        "show_service_devices": False,
+        "show_disabled_devices": False,
+    }
+    assert result["limits"] == {"offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30]}
     assert set(result["panel"]) == {"prerelease", "prerelease_hacs"}
 
     await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {CONF_UPDATE_CHECK: False}})
@@ -124,9 +134,26 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "init"
-    result = await hass.config_entries.options.async_configure(result["flow_id"], {CONF_UPDATE_CHECK: False})
+    # Reihenfolge wie im Panel: Ausfall-Erkennung, Ausschlüsse, Anzeige, Updates.
+    assert [str(k) for k in result["data_schema"].schema] == [
+        "offline_after", "flaky_outages", "startup_grace", "exclude_integrations", "exclude_types",
+        "show_service_devices", "show_disabled_devices", "update_check",
+    ]
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_UPDATE_CHECK: False, "offline_after": 10.0, "show_disabled_devices": True}
+    )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options[CONF_UPDATE_CHECK] is False
+    # Ganze Zahlen wie aus dem Panel, nicht 10.0; nicht genannte Felder mit Standard.
+    assert entry.options["offline_after"] == 10 and type(entry.options["offline_after"]) is int
+    assert entry.options["flaky_outages"] == 3 and entry.options["startup_grace"] == 5
+    assert entry.options["show_disabled_devices"] is True and entry.options["show_service_devices"] is False
+
+    # Zu gross: der Selektor lehnt ab, gespeichert bleibt der alte Wert.
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    with pytest.raises(InvalidData):
+        await hass.config_entries.options.async_configure(result["flow_id"], {"offline_after": 61})
+    assert entry.options["offline_after"] == 10
 
 
 async def test_panel_settings_persist(hass: HomeAssistant, entry, hass_ws_client, hass_storage: dict[str, Any]) -> None:
