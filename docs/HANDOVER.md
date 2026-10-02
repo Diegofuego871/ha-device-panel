@@ -117,7 +117,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    (Nutzer: "essentiell"): Ausfalldauer über Neustarts von HA aus dem
    Protokoll statt aus `last_changed`, Ausfall über Lücken zählt einmal,
    kein falsches "online" mehr in den ersten Minuten nach dem Start (siehe
-   `docs/CONCEPT.md`, "Verfügbarkeitsprotokoll", "Ausfall über Lücken"). Entschieden (Nutzer, 2026-10-02): Handy A
+   `docs/CONCEPT.md`, "Verfügbarkeitsprotokoll", "Ausfall über Lücken").
+   Offen (Nutzer, 2026-10-02): Batterie-Warnung für eine ganze Integration
+   ausschalten (`battery_low_integrations` mit Wert `"off"`, Reihenfolge
+   Gerät → Integration → global); Mockups `docs/mockups/battery-v2/`
+   (Empfehlung A, Schalter "Warnung" je Zeile), Entscheid des Nutzers
+   ausstehend; wird `0.14.0`. Entschieden (Nutzer, 2026-10-02): Handy A
    für Spalten und Sortierung (`docs/mockups/view-v1/`), als Nächstes. Weiter mit Schritt 2 (Spalten,
    Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
    am 2026-10-02 nachgefragt; dazu Filter-Chips der Verbindungsart einzeln
