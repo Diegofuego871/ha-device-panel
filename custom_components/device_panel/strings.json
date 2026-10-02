@@ -22,11 +22,17 @@
           "battery_low": "Battery low from",
           "battery_low_integrations": "Battery: own threshold per integration",
           "battery_push": "Battery: push notification",
+          "battery_push_mode": "Battery: time of the push notification",
+          "battery_push_time": "Battery: daily at",
+          "battery_push_daily": "Battery: the daily notification lists",
           "battery_persistent": "Battery: persistent notification",
           "exclude_integrations": "Hide integrations",
           "exclude_types": "Hide device types",
           "notify_service": "Push target",
           "notify_click_target": "Tapping the notification opens",
+          "notify_outage": "Report outages",
+          "notify_online": "Report back online",
+          "notify_group": "Combine group outages",
           "show_service_devices": "Show service devices",
           "show_disabled_devices": "Show disabled devices",
           "update_check": "Check for updates daily"
@@ -38,11 +44,17 @@
           "battery_low": "A battery at or below this level counts as low (red in the panel, \"Problems only\").",
           "battery_low_integrations": "Integration → percent, one per line, e.g. \"zha: 25\". Without an entry the threshold above applies; the device's primary integration counts.",
           "battery_push": "Once per device when it drops below the threshold, to the push target below. Again only after the battery was 5 points above the threshold (e.g. new battery).",
+          "battery_push_mode": "Immediately when a device drops below the threshold, or once a day at the time below.",
+          "battery_push_time": "Local time of the daily notification.",
+          "battery_push_daily": "Only devices that became low since the last notification, or every day all devices with a low battery (reminder).",
           "battery_persistent": "One notification in Home Assistant listing all devices with a low battery; it disappears once all are above the threshold again.",
           "exclude_integrations": "Devices of these integrations are not shown in the panel and not monitored.",
           "exclude_types": "Devices of these types are not shown in the panel and not monitored. The type of a single device can be changed in its pop-up.",
           "notify_service": "notify service or notify entity, e.g. the Companion app of your phone.",
           "notify_click_target": "Where tapping a push notification about a device leads.",
+          "notify_outage": "Immediately as soon as a device counts as offline (see \"Offline after\"), to the push target above.",
+          "notify_online": "All clear as soon as the device is back, with the duration of the outage.",
+          "notify_group": "From 3 devices at once one notification with the probable cause instead of many.",
           "show_service_devices": "Services of an integration rather than real devices, e.g. sun, weather forecast or add-ons. Shown service devices are monitored too.",
           "show_disabled_devices": "In their own group at the end of the list. They are not monitored.",
           "update_check": "Reports a new version under Settings → Repairs. Pre-releases are never reported here."
@@ -90,6 +102,18 @@
       "options": {
         "panel": "Device in the panel",
         "device": "Home Assistant device page"
+      }
+    },
+    "battery_push_mode": {
+      "options": {
+        "instant": "Immediately",
+        "daily": "Once a day"
+      }
+    },
+    "battery_push_daily": {
+      "options": {
+        "new": "Newly affected devices",
+        "all": "All devices with a low battery"
       }
     }
   }

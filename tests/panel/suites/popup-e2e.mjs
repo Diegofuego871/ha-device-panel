@@ -15,7 +15,7 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     pill: "Ausgefallen seit 2 Std. 14 Min.", sub: "Bewegung / Präsenz · Flur", open: "HA-Geräteseite öffnen",
-    secs: ["Statistik", "Verbindung", "Gerät", "Entitäten · 3"],
+    secs: ["Statistik", "Verbindung", "Gerät", "Meldungen für dieses Gerät", "Entitäten · 3"],
     tile24: ["Verfügbarkeit 24 Std.", "90,2%", "2 Unterbrüche · längster 2 Std. 14 Min."],
     tile7: ["Unterbrüche 7 Tage", "3", "zusammen 2 Std. 41 Min."], signal: ["Empfang", "LQI 38", "schwach"], battery: ["Batterie", "8%", "niedrig"],
     update: "Update auf 2.2.0 verfügbar", live: "Lebenszeichen", unavailable: "nicht verfügbar", liveHint: "Markierte Entitäten zeigen, ob das Gerät lebt.",
@@ -28,7 +28,7 @@ const TEXT = {
   },
   en: {
     pill: "Offline for 2 h 14 min", sub: "Motion / presence · Flur", open: "Open device page",
-    secs: ["Statistics", "Connection", "Device", "Entities · 3"],
+    secs: ["Statistics", "Connection", "Device", "Notifications for this device", "Entities · 3"],
     tile24: ["Availability 24 h", "90.2%", "2 outages · longest 2 h 14 min"],
     tile7: ["Outages 7 days", "3", "2 h 41 min in total"], signal: ["Signal", "LQI 38", "weak"], battery: ["Battery", "8%", "low"],
     update: "Update to 2.2.0 available", live: "Sign of life", unavailable: "unavailable", liveHint: "Marked entities show whether the device is alive.",
@@ -139,7 +139,11 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] 7 Tage: Abfrage`, (await calls("device_panel/availability")).at(-1)?.range === "7d");
     check(`[${tag}] 7 Tage: Säulen pro Tag`, (await text("dialog.stat-dlg h3")) === T.days && (await texts("dialog.stat-dlg .daysx span")).at(-1) === T.today);
     check(`[${tag}] 7 Tage: drei Unterbrüche`, (await texts("dialog.stat-dlg .avail-list div")).length === 3);
-    check(`[${tag}] 7 Tage: heute rot (2 Unterbrüche)`, await ev(`const d=r.querySelectorAll("dialog.stat-dlg .days i"); return d[d.length-1].classList.contains("e")`));
+    // Farbe von heute aus denselben Daten wie das Panel: vor 11 Uhr fällt der
+    // Unterbruch von vor 11 Std. auf gestern (die Prüfung hing an der Uhrzeit).
+    const todayOutages = await p.evaluate(() => window.__availHistory("b", "7d").days.at(-1).outages);
+    const todayCls = todayOutages >= 2 ? "e" : todayOutages ? "w" : "";
+    check(`[${tag}] 7 Tage: heute nach Zahl der Unterbrüche gefärbt (${todayOutages})`, await ev(`const d=r.querySelectorAll("dialog.stat-dlg .days i"); return d[d.length-1].className === ${JSON.stringify(todayCls)}`), await ev(`const d=r.querySelectorAll("dialog.stat-dlg .days i"); return d[d.length-1].className`));
     await p.screenshot({ path: `${outDir}/stat-7d-${lang}-${mobile ? "mobile" : "desktop"}.png` });
     await tap('[data-stat="range"][data-range="30d"]');
     check(`[${tag}] 30 Tage: 30 Säulen`, await wait(`return r.querySelectorAll("dialog.stat-dlg .days i").length === 30`));

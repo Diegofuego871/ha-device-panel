@@ -51,8 +51,9 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    anhaltende Benachrichtigung. Grundgerüst umgesetzt in 0.4.0 (Zahnrad,
    Dialog, Speichern/Abbrechen, `get_options`/`set_options`, Optionsdialog
    von HA). Abschnitte "Integrationen" und "Gerätetypen" (Anzeigen) in
-   0.5.0, "Ausfall-Erkennung" und "Anzeige" in 0.6.0. Es fehlen "Push" und
-   "Anhaltende Benachrichtigung" sowie die Spalten Push/Anhaltend bei den
+   0.5.0, "Ausfall-Erkennung" und "Anzeige" in 0.6.0, "Batterie" und
+   "Push-Benachrichtigung" in 0.7.0 bis 0.9.0. Es fehlen "Anhaltende
+   Benachrichtigung" bei Ausfällen sowie die Spalten Push/Anhaltend bei den
    Integrationen (mit Schritt 7).
 4. **Update-Bereich wie unifi_dynamic:** Version, "Nach Updates suchen",
    "Aktualisieren" über die HACS-Update-Entität, Vorabversionen,
@@ -359,6 +360,27 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   mit allen betroffenen Geräten, verschwindet, wenn keines mehr betroffen
   ist; weggeklickt (Callback REMOVED) erst wieder bei einem neuen Gerät,
   nach geänderten Optionen oder nach dem Start.
+- Zeitpunkt des Batterie-Push (seit 0.9.0): `battery_push_mode` sofort oder
+  täglich um `battery_push_time` (lokale Zeit, `async_track_time_change`).
+  Täglich sammelt `pending` die neu schwachen Geräte (gespeichert mit
+  `low`); Inhalt `battery_push_daily` "new" (nur diese) oder "all" (alle
+  schwachen, jeden Tag). Einschalten oder neues Ziel nimmt die gerade
+  betroffenen einmal mit; beim Wechsel auf sofort kommen die wartenden.
+- Pro Gerät (seit 0.9.0, Popup, Variante A in `docs/mockups/notify-v1/`):
+  Batterie-Schwelle des Geräts (Vorrang vor Integration und allgemein) oder
+  "off" (keine Markierung, kein Push, nicht in der anhaltenden
+  Benachrichtigung); Ausfall-/Online-Meldungen aus (`notify_off`), das
+  Gerät bleibt überwacht. Sofort gespeichert in
+  `.storage/device_panel.devices`.
+- Ausfall und Rückkehr (seit 0.9.0, `outage.py`): Das Protokoll meldet
+  Wechsel an Listener; Ausfall sofort bei Erkennung (nach `offline_after`)
+  mit Bereich, Integration und Beginn, Rückkehr mit Dauer, gleicher `tag`
+  pro Gerät (die Rückkehr ersetzt die Ausfall-Meldung). Ab
+  `NOTIFY_GROUP_MIN` (3) im selben Durchlauf eine Sammelmeldung mit
+  vermuteter Ursache (gemeinsame Integration), abschaltbar. Gemeldete
+  Ausfälle in `.storage/device_panel.notify`: kein erneuter Ausfall nach
+  einem Neustart, die Rückkehr kommt trotzdem. Standard: alles aus ausser
+  Sammelausfall.
 
 - Bild: `brand/icon.png` (das gewählte Icon) wird beim Setup als statischer
   Pfad ohne Anmeldung unter `/device_panel/icon.png` ausgeliefert, sonst
@@ -375,13 +397,15 @@ Für den Versand zu übernehmen:
   Zusatzdaten ab (Telegram, E-Mail), einmal ohne `data` wiederholen.
   notify-Entitäten über `notify.send_message` (nur Titel und Text).
 - Texte in Deutsch und Englisch nach `hass.config.language`.
-- Für Ausfälle offen (Schritt 7): Auslöser und Inhalt der Meldung, "Erst
-  melden nach", "Wieder online melden", Sammelausfall, Vorschau, Push und
-  Anhaltend pro Integration (Bild 5).
+- Für Ausfälle offen (Schritt 7): anhaltende Benachrichtigung bei
+  Ausfällen, Vorschau, Push und Anhaltend pro Integration (Bild 5),
+  Aktionen in der Meldung. Umgesetzt in 0.9.0: Ausfall sofort, "Wieder
+  online melden", Sammelausfall, aus pro Gerät.
 
 ## Mögliche Erweiterungen (später)
 
-- Push-Benachrichtigung bei Ausfall, mit Aktionen (siehe "Push-Meldungen").
+- Aktionen in Push-Meldungen (z. B. Gerät stumm schalten), siehe
+  "Push-Meldungen".
 - Binary-Sensor "Geräte ausgefallen" und Sensor "Anzahl ausgefallen" für
   Automationen.
 - Hinweis auf verfügbare Firmware-Updates (update-Entitäten).

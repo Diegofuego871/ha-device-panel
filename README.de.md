@@ -57,8 +57,18 @@ Bereich.
   pro Gerät, an einen notify-Dienst oder eine notify-Entität nach Wahl), als
   anhaltende Benachrichtigung in Home Assistant mit allen betroffenen
   Geräten, beides oder keines. Ein Tipp auf die Push-Meldung öffnet das
-  Gerät im Panel. Die Schwelle lässt sich auch pro Integration einstellen
-  (aufgeführt sind nur Integrationen mit Batteriegeräten).
+  Gerät im Panel. Der Push kommt sofort oder einmal täglich zu einer
+  gewählten Uhrzeit, mit den neu betroffenen oder allen schwachen Geräten.
+  Die Schwelle lässt sich auch pro Integration einstellen (aufgeführt sind
+  nur Integrationen mit Batteriegeräten) und pro Gerät im Popup (eigene
+  Schwelle oder aus).
+- Ausfall-Meldungen: ein Push, sobald ein Gerät als ausgefallen gilt, und
+  auf Wunsch eine Entwarnung, wenn es wieder online ist, mit der Dauer des
+  Ausfalls (sie ersetzt auf dem Handy die Ausfall-Meldung). Mehrere Geräte
+  gleichzeitig ergeben eine Meldung mit vermuteter Ursache. Pro Gerät
+  lassen sie sich im Popup ausschalten, z. B. für ein Ladegerät, das oft
+  absichtlich offline ist; überwacht wird das Gerät weiter. Standardmässig
+  aus.
 - Einstellungen im Panel (Zahnrad) mit Updates: nach einer neuen Version
   suchen, mit einem Klick über HACS aktualisieren, danach neu starten,
   wahlweise Vorabversionen anbieten ("In HACS freischalten" schaltet die
@@ -69,7 +79,6 @@ Bereich.
 
 - Spalten, Sortierung und Filter pro Benutzer, getrennt für Desktop und
   Handy.
-- Push-Meldungen bei Ausfällen (Ziel und Klickziel gibt es schon).
 
 ## Installation
 

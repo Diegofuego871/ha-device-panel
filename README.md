@@ -52,8 +52,16 @@ details such as software version, manufacturer, model and area.
   device, to a notify service or entity of your choice), as a persistent
   notification in Home Assistant listing all affected devices, both or
   neither. Tapping a push notification opens the device in the panel. The
-  threshold can also be set per integration (only integrations with battery
-  devices are listed).
+  push comes immediately or once a day at a chosen time, with the newly
+  affected or all devices with a low battery. The threshold can also be set
+  per integration (only integrations with battery devices are listed) and
+  per device in its pop-up (own threshold or off).
+- Outage notifications: a push as soon as a device counts as offline and,
+  if you like, an all clear when it is back online, with the duration of
+  the outage (it replaces the outage notification on the phone). Several
+  devices at once give one notification with the probable cause. Per
+  device they can be switched off in its pop-up, e.g. for a charger that is
+  often offline on purpose; the device is still monitored. Off by default.
 - Settings in the panel (gear icon) with updates: check for a new version,
   update via HACS with one click, restart afterwards, optionally offer
   pre-releases ("Enable in HACS" switches on the HACS pre-release option).
@@ -62,7 +70,6 @@ details such as software version, manufacturer, model and area.
 ### Planned (see `docs/CONCEPT.md`)
 
 - Columns, sorting and filters per user, separately for desktop and phone.
-- Push notifications for outages (target and tap target already exist).
 
 ## Installation
 

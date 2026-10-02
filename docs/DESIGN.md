@@ -19,6 +19,8 @@ die Screenshots in Diegofuego871/unifi_dynamic (`docs/`).
   --dp-error: var(--error-color, #db4437);
   --dp-hover: color-mix(in srgb, var(--dp-text) 5%, var(--dp-card));
   --dp-subtle: color-mix(in srgb, var(--dp-text) 4%, var(--dp-card));
+  --dp-sec-open: color-mix(in srgb, var(--dp-text) 4.5%, var(--dp-card));
+  --dp-sec-head: color-mix(in srgb, var(--dp-text) 9.5%, var(--dp-card));
   --dp-primary-soft: color-mix(in srgb, var(--dp-primary) 14%, transparent);
   --dp-success-soft: color-mix(in srgb, var(--dp-success) 16%, transparent);
   --dp-warning-soft: color-mix(in srgb, var(--dp-warning) 16%, transparent);
@@ -47,6 +49,10 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
 - Knöpfe: Pill-Form, 36 px rund für Symbolknöpfe (X, Zahnrad).
 - Segment-Schalter (Zeitraum, Tabs): Hintergrund `--dp-subtle`, aktives
   Segment Karte mit leichtem Schatten.
+- Einstellungen, aufgeklappter Abschnitt (seit 0.9.0, Wunsch des Nutzers):
+  Kopf `--dp-sec-head`, Titel fett, Inhalt `--dp-sec-open`, Rand kräftiger;
+  getönte Flächen darin (Info, "Alle umschalten", Typ-Symbol) eine Stufe
+  dunkler (`--dp-sec-head`). Felder bleiben in der Kartenfarbe.
 - Kacheln: Titel 12 px `--dp-text2`, Wert 20–24 px, Untertitel 12 px,
   Chevron unten rechts, wenn antippbar.
 - Kopf von Dialogen: Avatar 44–52 px (Radius 13–15 px, `--dp-primary-soft`,

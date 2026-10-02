@@ -144,6 +144,26 @@ hat dort einen echten Fehler oder Umweg gekostet.
   `innerHTML` maskiert nur `&`, `<`, `>`. In Attributen (`data-short`,
   `aria-label`, `title`, `value`) brach ein Text mit `"` ab (0.8.0 behoben,
   Prüfung in `settings-e2e`).
+- **Fehler-Rahmen gegen "geändert":** `.opt.changed > .opt-line .opt-input`
+  ist spezifischer als `.opt-input.bad`; das Feld blieb trotz Fehler blau.
+  Die Fehlerregel braucht dieselbe Kette (`.opt.changed > .opt-line
+  .opt-input.bad`). Prüfung über die berechnete Rahmenfarbe, nicht nur die
+  Klasse.
+- **Zeitfeld (`input[type=time]`):** liefert "" solange die Eingabe
+  unvollständig ist; wie die Zahlenfelder beim Tippen nur
+  `_updateSettingsMeta` (Markierung, Fehler, Kurzzeile), kein Neuaufbau.
+  Der `TimeSelector` von HA liefert "HH:MM:SS", gespeichert wird "HH:MM".
+  Die Anzeige folgt dem Browser (en-US "08:00 AM", headless Chromium immer
+  so), nicht der Sprache von HA: keine feste Breite (84 px schnitt "AM" ab),
+  `width: auto`. Die Paar-Zeile (Auswahl + Uhrzeit) braucht `flex: 1 1 auto`,
+  sonst rechnet Chrome die Breite des umbrechenden Flex-Containers zu knapp
+  und bricht auch auf dem Desktop um.
+- **Lokale Bereichsprüfung ist kein Speicherfehler:** Im Popup nichts
+  senden, die Eingabe stehen lassen und den Bereich unter dem Feld nennen;
+  "Konnte nicht gespeichert werden" nur für Antworten des Backends.
+- **Zusammenfassungen nicht wie Zustände formulieren:** "Batterie schwach"
+  als Liste eingeschalteter Meldungen las sich wie eine Warnung; mit Verb
+  ("meldet …").
 
 ## Tests
 
@@ -170,6 +190,9 @@ hat dort einen echten Fehler oder Umweg gekostet.
 - **Nachbau:** keine globalen Funktionen mit Namen von `window`-Eigenschaften
   (`history`, `location`, `name` …): eine Funktion `history` verdeckte
   `window.history`, und `pushState` des Panels schlug fehl.
+- **Keine Tageszeit in Erwartungen:** Ob die heutige Säule (7 Tage) rot ist,
+  hing von der Uhrzeit des Laufs ab (vor 11 Uhr falsch). Erwartungen aus den
+  Daten des Nachbaus ableiten (`window.__availHistory`).
 - **Playwright `click()`** scrollt das Element vorher ins Bild; bei breiten
   Tabellenzeilen verschiebt das die Tabelle seitlich. Für Prüfungen auf die
   Scrollposition mit `page.mouse.click(x, y)` klicken.

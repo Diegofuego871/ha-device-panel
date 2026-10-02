@@ -239,7 +239,7 @@ async def test_threshold_per_integration(hass: HomeAssistant, watch: BatteryWatc
     # 25 % liegt unter der eigenen Schwelle 30 %, nicht unter der allgemeinen 15 %
     assert (await async_list_devices(hass, log))["devices"][0]["battery"]["low"] is True
     assert len(calls) == 1 and calls[0].data["title"] == "Low battery: Fenster"
-    assert "(threshold per integration)" in _persistent(hass)["message"]
+    assert "(threshold per integration or device)" in _persistent(hass)["message"]
     # Eigene Schwelle ohne Geräte bleibt in der Liste (zum Zurücksetzen)
     await client.send_json({"id": 3, "type": f"{DOMAIN}/get_options"})
     domains = {b["domain"]: b["devices"] for b in (await client.receive_json())["result"]["catalog"]["battery"]}

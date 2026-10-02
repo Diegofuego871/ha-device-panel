@@ -15,10 +15,19 @@ from homeassistant.helpers.selector import (
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
+    TimeSelector,
 )
 
 from .const import (
     CLICK_TARGETS,
+    CONF_BATTERY_PUSH_DAILY,
+    CONF_BATTERY_PUSH_MODE,
+    CONF_BATTERY_PUSH_TIME,
+    CONF_NOTIFY_GROUP,
+    CONF_NOTIFY_ONLINE,
+    CONF_NOTIFY_OUTAGE,
+    DAILY_CONTENTS,
+    PUSH_MODES,
     CONF_BATTERY_LOW,
     CONF_BATTERY_LOW_INTEGRATIONS,
     CONF_BATTERY_PERSISTENT,
@@ -38,7 +47,7 @@ from .const import (
     INT_RANGES,
     PANEL_TITLE,
 )
-from .options_api import INT_OPTIONS, battery_map, current_values, notify_targets
+from .options_api import INT_OPTIONS, battery_map, current_values, notify_targets, push_time
 from .push import text
 
 # Einheit der Zahlenfelder im Optionsdialog.
@@ -98,6 +107,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 for key, _default in INT_OPTIONS:
                     if key in user_input:
                         data[key] = int(user_input[key])
+                # Zeitfeld liefert "HH:MM:SS"; gespeichert wird "HH:MM" wie im Panel.
+                if CONF_BATTERY_PUSH_TIME in user_input:
+                    data[CONF_BATTERY_PUSH_TIME] = push_time(user_input[CONF_BATTERY_PUSH_TIME])
                 return self.async_create_entry(title="", data=data)
             # Fehler: die Eingaben bleiben stehen.
             values = {**values, **user_input}
@@ -132,6 +144,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     # Eigene Schwelle pro Integration als Zuordnung, z. B. "zha: 25".
                     vol.Optional(CONF_BATTERY_LOW_INTEGRATIONS, default=values[CONF_BATTERY_LOW_INTEGRATIONS] or {}): ObjectSelector(),
                     vol.Required(CONF_BATTERY_PUSH, default=values[CONF_BATTERY_PUSH]): bool,
+                    vol.Required(CONF_BATTERY_PUSH_MODE, default=values[CONF_BATTERY_PUSH_MODE]): SelectSelector(
+                        SelectSelectorConfig(options=list(PUSH_MODES), mode=SelectSelectorMode.DROPDOWN, translation_key="battery_push_mode")
+                    ),
+                    vol.Required(CONF_BATTERY_PUSH_TIME, default=values[CONF_BATTERY_PUSH_TIME]): TimeSelector(),
+                    vol.Required(CONF_BATTERY_PUSH_DAILY, default=values[CONF_BATTERY_PUSH_DAILY]): SelectSelector(
+                        SelectSelectorConfig(options=list(DAILY_CONTENTS), mode=SelectSelectorMode.DROPDOWN, translation_key="battery_push_daily")
+                    ),
                     vol.Required(CONF_BATTERY_PERSISTENT, default=values[CONF_BATTERY_PERSISTENT]): bool,
                     vol.Optional(CONF_EXCLUDE_INTEGRATIONS, default=values[CONF_EXCLUDE_INTEGRATIONS]): SelectSelector(
                         SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
@@ -147,6 +166,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Required(CONF_NOTIFY_CLICK, default=values[CONF_NOTIFY_CLICK]): SelectSelector(
                         SelectSelectorConfig(options=list(CLICK_TARGETS), mode=SelectSelectorMode.DROPDOWN, translation_key="click_target")
                     ),
+                    vol.Required(CONF_NOTIFY_OUTAGE, default=values[CONF_NOTIFY_OUTAGE]): bool,
+                    vol.Required(CONF_NOTIFY_ONLINE, default=values[CONF_NOTIFY_ONLINE]): bool,
+                    vol.Required(CONF_NOTIFY_GROUP, default=values[CONF_NOTIFY_GROUP]): bool,
                     vol.Required(CONF_SHOW_SERVICE, default=values[CONF_SHOW_SERVICE]): bool,
                     vol.Required(CONF_SHOW_DISABLED, default=values[CONF_SHOW_DISABLED]): bool,
                     vol.Required(CONF_UPDATE_CHECK, default=values[CONF_UPDATE_CHECK]): bool,

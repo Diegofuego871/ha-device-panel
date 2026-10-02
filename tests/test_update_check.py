@@ -117,6 +117,12 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "battery_persistent": False,
         "notify_service": "none",
         "notify_click_target": "panel",
+        "notify_outage": False,
+        "notify_online": False,
+        "notify_group": True,
+        "battery_push_mode": "instant",
+        "battery_push_time": "08:00",
+        "battery_push_daily": "new",
     }
     assert result["limits"] == {"offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [5, 50]}
     assert set(result["panel"]) == {"prerelease", "prerelease_hacs"}
@@ -142,9 +148,10 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
     assert result["step_id"] == "init"
     # Reihenfolge wie im Panel: Ausfall-Erkennung, Batterie, Ausschlüsse, Push, Anzeige, Updates.
     assert [str(k) for k in result["data_schema"].schema] == [
-        "offline_after", "flaky_outages", "startup_grace", "battery_low", "battery_low_integrations", "battery_push", "battery_persistent",
+        "offline_after", "flaky_outages", "startup_grace", "battery_low", "battery_low_integrations", "battery_push",
+        "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent",
         "exclude_integrations", "exclude_types", "notify_service", "notify_click_target",
-        "show_service_devices", "show_disabled_devices", "update_check",
+        "notify_outage", "notify_online", "notify_group", "show_service_devices", "show_disabled_devices", "update_check",
     ]
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {CONF_UPDATE_CHECK: False, "offline_after": 10.0, "show_disabled_devices": True}
@@ -234,3 +241,15 @@ async def test_options_flow_battery_per_integration(hass: HomeAssistant, entry) 
     result = await hass.config_entries.options.async_configure(result["flow_id"], {"battery_low_integrations": {"zha": 25.0, "bthome": 10}})
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options["battery_low_integrations"] == {"bthome": 10, "zha": 25}
+
+
+async def test_options_flow_push_time(hass: HomeAssistant, entry) -> None:
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"battery_push_mode": "daily", "battery_push_time": "07:30:00", "battery_push_daily": "all", "notify_outage": True}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    # Zeitfeld "HH:MM:SS" wird wie im Panel als "HH:MM" gespeichert.
+    assert entry.options["battery_push_time"] == "07:30"
+    assert entry.options["battery_push_mode"] == "daily" and entry.options["battery_push_daily"] == "all"
+    assert entry.options["notify_outage"] is True and entry.options["notify_online"] is False

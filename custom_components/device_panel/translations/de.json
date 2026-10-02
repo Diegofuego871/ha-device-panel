@@ -22,11 +22,17 @@
           "battery_low": "Batterie schwach ab",
           "battery_low_integrations": "Batterie: eigene Schwelle pro Integration",
           "battery_push": "Batterie: Push-Meldung",
+          "battery_push_mode": "Batterie: Zeitpunkt der Push-Meldung",
+          "battery_push_time": "Batterie: täglich um",
+          "battery_push_daily": "Batterie: die Tagesmeldung enthält",
           "battery_persistent": "Batterie: anhaltende Benachrichtigung",
           "exclude_integrations": "Integrationen ausblenden",
           "exclude_types": "Gerätetypen ausblenden",
           "notify_service": "Push-Ziel",
           "notify_click_target": "Tipp auf Meldung öffnet",
+          "notify_outage": "Ausfall melden",
+          "notify_online": "Wieder online melden",
+          "notify_group": "Sammelausfall zusammenfassen",
           "show_service_devices": "Dienst-Geräte anzeigen",
           "show_disabled_devices": "Deaktivierte Geräte anzeigen",
           "update_check": "Täglich nach Updates suchen"
@@ -38,11 +44,17 @@
           "battery_low": "Eine Batterie bis zu diesem Stand gilt als schwach (rot im Panel, \"Nur Probleme\").",
           "battery_low_integrations": "Integration → Prozent, eine pro Zeile, z. B. \"zha: 25\". Ohne Eintrag gilt die Schwelle oben; massgebend ist die primäre Integration des Geräts.",
           "battery_push": "Einmal pro Gerät, wenn es unter die Schwelle fällt, an das Push-Ziel unten. Erneut erst, wenn die Batterie zwischendurch 5 Punkte über der Schwelle war (z. B. neue Batterie).",
+          "battery_push_mode": "Sofort, wenn ein Gerät unter die Schwelle fällt, oder einmal täglich zur Uhrzeit unten.",
+          "battery_push_time": "Lokale Uhrzeit der Tagesmeldung.",
+          "battery_push_daily": "Nur Geräte, die seit der letzten Meldung schwach geworden sind, oder jeden Tag alle Geräte mit schwacher Batterie (Erinnerung).",
           "battery_persistent": "Eine Benachrichtigung in Home Assistant mit allen Geräten mit schwacher Batterie; sie verschwindet, wenn alle wieder über der Schwelle sind.",
           "exclude_integrations": "Geräte dieser Integrationen zeigt das Panel nicht, und sie werden nicht überwacht.",
           "exclude_types": "Geräte dieser Typen zeigt das Panel nicht, und sie werden nicht überwacht. Den Typ eines einzelnen Geräts kann man in seinem Popup ändern.",
           "notify_service": "notify-Dienst oder notify-Entität, z. B. die Companion-App des Handys.",
           "notify_click_target": "Wohin ein Tipp auf eine Push-Meldung zu einem Gerät führt.",
+          "notify_outage": "Sofort, sobald ein Gerät als ausgefallen gilt (siehe \"Ausgefallen nach\"), an das Push-Ziel oben.",
+          "notify_online": "Entwarnung, sobald das Gerät zurück ist, mit der Dauer des Ausfalls.",
+          "notify_group": "Ab 3 Geräten gleichzeitig eine Meldung mit vermuteter Ursache statt vieler.",
           "show_service_devices": "Dienste einer Integration statt echter Geräte, z. B. Sonne, Wettervorhersage oder Add-ons. Angezeigte Dienst-Geräte werden auch überwacht.",
           "show_disabled_devices": "In einer eigenen Gruppe am Ende der Liste. Sie werden nicht überwacht.",
           "update_check": "Meldet eine neue Version unter Einstellungen → Reparaturen. Vorabversionen werden hier nie gemeldet."
@@ -90,6 +102,18 @@
       "options": {
         "panel": "Gerät im Panel",
         "device": "Geräteseite von Home Assistant"
+      }
+    },
+    "battery_push_mode": {
+      "options": {
+        "instant": "Sofort",
+        "daily": "Einmal täglich"
+      }
+    },
+    "battery_push_daily": {
+      "options": {
+        "new": "Neu betroffene Geräte",
+        "all": "Alle Geräte mit schwacher Batterie"
       }
     }
   }

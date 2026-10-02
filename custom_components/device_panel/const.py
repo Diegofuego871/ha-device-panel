@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "9"
+PANEL_VERSION = "10"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -74,6 +74,31 @@ PERSISTENT_BATTERY_ID = f"{DOMAIN}_battery"
 CONF_NOTIFY_SERVICE = "notify_service"
 NOTIFY_NONE = "none"
 CONF_NOTIFY_CLICK = "notify_click_target"
+# Push bei Ausfall (sofort, sobald ein Gerät als ausgefallen gilt) und bei
+# Rückkehr, Sammelausfall als eine Meldung; Standard aus, damit ein Update
+# nicht ungefragt meldet. Sammelausfall: ab INCIDENT_MIN Geräten im selben
+# Durchlauf der Erkennung.
+CONF_NOTIFY_OUTAGE = "notify_outage"
+CONF_NOTIFY_ONLINE = "notify_online"
+CONF_NOTIFY_GROUP = "notify_group"
+NOTIFY_GROUP_MIN = 3
+DATA_OUTAGE = f"{DOMAIN}_outage"
+# Batterie-Push: sofort oder einmal täglich um eine Uhrzeit (lokale Zeit),
+# täglich mit den neu betroffenen oder allen schwachen Geräten.
+CONF_BATTERY_PUSH_MODE = "battery_push_mode"
+PUSH_INSTANT = "instant"
+PUSH_DAILY = "daily"
+PUSH_MODES = (PUSH_INSTANT, PUSH_DAILY)
+CONF_BATTERY_PUSH_TIME = "battery_push_time"
+DEFAULT_BATTERY_PUSH_TIME = "08:00"
+CONF_BATTERY_PUSH_DAILY = "battery_push_daily"
+DAILY_NEW = "new"
+DAILY_ALL = "all"
+DAILY_CONTENTS = (DAILY_NEW, DAILY_ALL)
+# Einstellungen pro Gerät (gleiche Datei wie der Typ von Hand): Batterie aus
+# oder eigene Schwelle, Ausfall- und Online-Meldungen aus.
+DATA_DEVICE_SETTINGS = f"{DOMAIN}_device_settings"
+BATTERY_OFF = "off"
 CLICK_PANEL = "panel"
 CLICK_DEVICE = "device"
 CLICK_TARGETS = (CLICK_PANEL, CLICK_DEVICE)

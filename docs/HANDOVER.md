@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.8.0, Batterie-Schwelle auch pro Integration)
+## Stand (0.9.0, Push bei Ausfall und Rückkehr, Batterie täglich, Meldungen pro Gerät)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -12,20 +12,26 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `devices.py`: Status nach dem Standard der Überwachung, Verbindungsart,
   Empfang, Hub, Batterie, Update, Typ, Integration mit Eintrag,
   Verfügbarkeit 24 Std., Puls, Sammelausfälle), `device_panel/device`
-  (Popup), `device_panel/availability` (Statistik-Fenster) und
-  `device_panel/set_device_type` (Typ von Hand im Popup, Datei
-  `.storage/device_panel.devices`).
+  (Popup), `device_panel/availability` (Statistik-Fenster),
+  `device_panel/set_device_type` (Typ von Hand im Popup) und
+  `device_panel/set_device_settings` (Popup "Meldungen für dieses Gerät":
+  Batterie-Schwelle des Geräts oder "off", Ausfall-/Online-Meldungen aus),
+  beides in `.storage/device_panel.devices`.
 - Einstellungen im Panel (Zahnrad), Reihenfolge nach Bild 5:
   Versionskasten mit Update über HACS, Vorabversionen, "In HACS
   freischalten"; "Ausfall-Erkennung" (Zahlenfelder `offline_after`,
   `flaky_outages`, `startup_grace` mit Bereichen aus `const.INT_RANGES`,
   Prüfung im Panel und im Backend); "Batterie" (`battery_low`,
   `battery_low_integrations` {Domain: %} nach Mockup A in
-  `docs/mockups/battery-v1/`, `battery_push`, `battery_persistent`;
-  Überwachung in `battery.py`);
+  `docs/mockups/battery-v1/`, `battery_push` mit `battery_push_mode`
+  sofort/täglich, `battery_push_time` "HH:MM", `battery_push_daily`
+  neu/alle, `battery_persistent`; Überwachung in `battery.py`);
   "Integrationen" und "Gerätetypen" (Schalter "Anzeigen"; ausgeblendete
   Geräte werden nicht überwacht); "Push-Benachrichtigung"
-  (`notify_service`, `notify_click_target`; Versand in `push.py`);
+  (`notify_service`, `notify_click_target`, `notify_outage`,
+  `notify_online`, `notify_group`; Versand in `push.py`, Ausfall und
+  Rückkehr in `outage.py` über einen Listener am Protokoll, gemeldete
+  Ausfälle in `.storage/device_panel.notify`);
   "Anzeige" (`show_service_devices`, `show_disabled_devices`: deaktivierte
   Geräte in eigener Gruppe, nicht überwacht); "Updates" (tägliche Prüfung
   mit Meldung unter "Reparaturen"). Backend `update_check.py`,
@@ -48,10 +54,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 - Icon und Logo: Variante "D mit Puls" (vom Nutzer gewählt). PNGs in
   `custom_components/device_panel/brand/` (Masse wie unifi_dynamic), Quellen
   in `docs/brand/` (siehe `docs/DESIGN.md`, Abschnitt "Icon und Logo").
-- Push-Meldungen vorbereitet: `brand/` wird ohne Anmeldung unter
-  `/device_panel/` ausgeliefert, `hass.data[DATA_PUSH_IMAGE]` enthält
-  `/device_panel/icon.png` (für `icon_url`). Der Versand selbst fehlt noch,
-  siehe `docs/CONCEPT.md`, Abschnitt "Push-Meldungen".
+- Push-Meldungen: Batterie (sofort oder täglich), Ausfall, wieder online,
+  Sammelausfall; `brand/` wird ohne Anmeldung unter `/device_panel/`
+  ausgeliefert (`hass.data[DATA_PUSH_IMAGE]` für `icon_url`). Siehe
+  `docs/CONCEPT.md`, Abschnitt "Push-Meldungen".
 - CI: Python-Tests, Panel-Tests (DE/EN), Hassfest und HACS-Prüfung grün
   (Beschreibung und Topics sind gesetzt).
 - Releases legt der Nutzer an; Claude liefert die Release-Angaben (siehe
@@ -80,10 +86,15 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    dabei die Push-Grundlage (Ziel, Klickziel, Versand, Deep-Link
    `?device=`). Schwelle pro Integration (Nutzer, 2026-10-01: Variante A)
    mit `0.8.0`. Releases: `0.6.0` und `0.7.0` ohne Release, in `0.8.0`
-   enthalten. Weiter mit Schritt 2 (Spalten pro Benutzer) und Schritt 7
-   (Push bei Ausfällen: übrige Felder des Abschnitts "Push-Benachrichtigung",
-   Abschnitt "Anhaltende Benachrichtigung", Spalten Push/Anhaltend bei den
-   Integrationen nach Bild 5);
+   enthalten. Mit `0.9.0` (Nutzer, 2026-10-02): Batterie pro Gerät im Popup
+   (Variante A, `docs/mockups/notify-v1/`), Batterie-Push sofort oder
+   täglich mit Uhrzeit und wählbarem Inhalt, Push bei Ausfall (sofort) und
+   "wieder online", Sammelausfall, Meldungen pro Gerät aus; aufgeklappter
+   Abschnitt der Einstellungen abgesetzt. Weiter mit Schritt 2 (Spalten,
+   Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
+   am 2026-10-02 nachgefragt) und dem Rest von Schritt 7 (anhaltende
+   Benachrichtigung bei Ausfällen, Spalten Push/Anhaltend bei den
+   Integrationen nach Bild 5, Aktionen in Meldungen);
    `docs/CONCEPT.md`, "Pflicht"; Vorlagen in `docs/reference/`. Offene Frage an den Nutzer: Prozentwerte erst ab
    einer Mindestdauer an Daten zeigen?
 3. Umsetzung nach dem Fahrplan in `docs/CONCEPT.md` (Abschnitt "Fahrplan"),

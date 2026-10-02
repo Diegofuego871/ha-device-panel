@@ -16,11 +16,16 @@ from homeassistant.helpers import device_registry as dr
 from . import options_api, update_check
 from .availability import RANGES, AvailabilityLog
 from .battery import BatteryWatch
+from .outage import OutageNotifier
 from .const import (
+    BATTERY_OFF,
+    CONF_BATTERY_LOW,
     CONF_NOTIFY_SERVICE,
+    INT_RANGES,
     BRAND_DIR,
     DATA_AVAILABILITY,
     DATA_BATTERY,
+    DATA_OUTAGE,
     DATA_PANEL_REGISTERED,
     DATA_PUSH_IMAGE,
     DATA_WS_REGISTERED,
@@ -43,6 +48,7 @@ from .devices import (
     async_list_devices,
     async_load_type_overrides,
     async_mark_start,
+    async_set_device_settings,
     async_set_type_override,
 )
 
@@ -54,11 +60,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await _async_register_brand_path(hass)
     await _async_register_panel(hass)
     _async_register_websocket_commands(hass)
+    # Typ von Hand und Einstellungen pro Gerät vor dem Protokoll: beide
+    # entscheiden mit, was überwacht und gemeldet wird.
+    await async_load_type_overrides(hass)
     if DATA_AVAILABILITY not in hass.data:
         log = AvailabilityLog(hass)
         await log.async_start()
         hass.data[DATA_AVAILABILITY] = log
-    await async_load_type_overrides(hass)
+    if DATA_OUTAGE not in hass.data:
+        notifier = OutageNotifier(hass, hass.data[DATA_AVAILABILITY])
+        await notifier.async_start()
+        hass.data[DATA_OUTAGE] = notifier
     if DATA_BATTERY not in hass.data:
         watch = BatteryWatch(hass)
         await watch.async_start()
@@ -81,6 +93,8 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if hass.data.pop(DATA_PANEL_REGISTERED, None):
         frontend.async_remove_panel(hass, PANEL_URL_PATH)
+    if (notifier := hass.data.pop(DATA_OUTAGE, None)) is not None:
+        await notifier.async_stop()
     if (log := hass.data.pop(DATA_AVAILABILITY, None)) is not None:
         await log.async_stop()
     if (watch := hass.data.pop(DATA_BATTERY, None)) is not None:
@@ -339,6 +353,33 @@ async def _ws_set_device_type(
     connection.send_result(msg["id"], {"device_type": msg["device_type"]})
 
 
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/set_device_settings",
+        vol.Required("device_id"): str,
+        # None = wie eingestellt, "off" = Warnung aus, Zahl = eigene Schwelle.
+        vol.Optional("battery"): vol.Any(None, BATTERY_OFF, vol.All(int, vol.Range(*INT_RANGES[CONF_BATTERY_LOW]))),
+        # False = Ausfall- und Online-Meldungen für dieses Gerät aus.
+        vol.Optional("notify"): bool,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_set_device_settings(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Einstellungen eines Geräts (Popup), gelten sofort."""
+    if dr.async_get(hass).async_get(msg["device_id"]) is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
+        return
+    changes = {k: msg[k] for k in ("battery", "notify") if k in msg}
+    await async_set_device_settings(hass, msg["device_id"], **changes)
+    # Batterie-Warnung sofort nachführen (Push, anhaltende Benachrichtigung).
+    if "battery" in changes and (watch := hass.data.get(DATA_BATTERY)) is not None:
+        await watch.async_check()
+    connection.send_result(msg["id"], changes)
+
+
 @callback
 def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     if hass.data.get(DATA_WS_REGISTERED):
@@ -352,3 +393,4 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_set_options)
     websocket_api.async_register_command(hass, _ws_set_device_type)
+    websocket_api.async_register_command(hass, _ws_set_device_settings)

@@ -7,6 +7,44 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.9.0] - 2026-10-02
+
+Push notifications for outages and when devices are back online, the time of
+the battery push, and notification settings per device. All new
+notifications are off by default, so the update does not start sending
+anything by itself.
+
+### Added
+
+- Settings section "Push notification", also in the options dialog:
+  "Report outages" sends a push as soon as a device counts as offline
+  (after "Offline after"), with area, integration and the time it went
+  offline. "Report back online" sends the all clear with the duration of the
+  outage; on the phone it replaces the outage notification. A running
+  outage is not reported again after a restart of Home Assistant, and the
+  all clear still arrives.
+- "Combine group outages" (on by default): 3 or more devices offline in the
+  same check give one notification, with the probable cause if they all
+  belong to the same integration.
+- Section "Battery": "Time of the push notification", immediately or once a
+  day at a chosen time (default 08:00). The daily notification lists the
+  newly affected devices or all devices with a low battery (a reminder
+  every day until the battery is replaced). Switching to "immediately"
+  sends the devices still waiting for the daily notification.
+- Device pop-up "Notifications for this device", saved immediately: battery
+  warning as configured, with an own threshold or off (off also removes
+  the marking in the list); outage and online notifications off for this
+  device, which is still monitored.
+
+### Changed
+
+- The open section in the settings stands out: darker header, bold title,
+  tinted content.
+- The summary of "Push notification" reads "notifies on outage, back
+  online, low battery"; before, "low battery" alone looked like a status.
+- A percentage outside 5–50 in the device pop-up stays in the field with the
+  allowed range below it, instead of being reset.
+
 ## [0.8.0] - 2026-10-01
 
 Own battery threshold per integration.
@@ -237,6 +275,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0
 [0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0

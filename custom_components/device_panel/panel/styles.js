@@ -17,6 +17,9 @@ export const PANEL_CSS = `
   --dp-error: var(--error-color, #db4437);
   --dp-hover: color-mix(in srgb, var(--dp-text) 5%, var(--dp-card));
   --dp-subtle: color-mix(in srgb, var(--dp-text) 4%, var(--dp-card));
+  /* Aufgeklappter Abschnitt der Einstellungen: Inhalt leicht, Kopf deutlich getönt. */
+  --dp-sec-open: color-mix(in srgb, var(--dp-text) 4.5%, var(--dp-card));
+  --dp-sec-head: color-mix(in srgb, var(--dp-text) 9.5%, var(--dp-card));
   --dp-primary-soft: color-mix(in srgb, var(--dp-primary) 14%, transparent);
   --dp-success-soft: color-mix(in srgb, var(--dp-success) 16%, transparent);
   --dp-warning-soft: color-mix(in srgb, var(--dp-warning) 16%, transparent);
@@ -270,6 +273,15 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .set-badge { margin-left: 8px; padding: 0 8px; border-radius: 99px; background: var(--dp-primary-soft); color: var(--dp-primary); font-size: 11px; font-weight: 400; }
 .set-sec-title .set-badge { margin-left: 0; }
 .set-sec-body { padding: 2px 14px 10px; border-top: 1px solid var(--dp-divider); }
+/* Offener Abschnitt: Sonst sieht man in langen Abschnitten kaum, wo man ist.
+   Getönte Flächen im Inhalt (Info, "Alle", Typ-Symbol) eine Stufe dunkler,
+   damit sie sich vom getönten Grund abheben. */
+.set-sec.open { border-color: color-mix(in srgb, var(--dp-text) 26%, transparent); background: var(--dp-sec-open); }
+.set-sec.open .set-sec-head { background: var(--dp-sec-head); }
+.set-sec.open .set-sec-head:hover { background: color-mix(in srgb, var(--dp-text) 12.5%, var(--dp-card)); }
+.set-sec.open .set-sec-title { font-weight: 600; }
+.set-sec.open .set-sec-body { border-top-color: color-mix(in srgb, var(--dp-text) 16%, transparent); }
+.set-sec.open .opt-info, .set-sec.open .ex-row.ex-all, .set-sec.open .ibadge.type { background: var(--dp-sec-head); }
 .opt { padding: 10px 0; border-bottom: 1px solid var(--dp-divider); }
 .opt:last-child { border-bottom: none; }
 .opt-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
@@ -286,6 +298,16 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .opt.changed > .opt-line .opt-input { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 .opt.invalid > .opt-line .opt-input { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
 .opt-error { margin-top: 3px; color: var(--dp-error); font-size: 12px; line-height: 1.35; }
+/* Auswahl plus Uhrzeit nebeneinander (Batterie täglich um …). */
+.opt-pair { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
+.opt-pair .opt-select { flex: 0 1 190px; }
+.opt-input input[type="time"] { width: auto; color-scheme: light dark; text-align: left; }
+/* Fehler schlägt "geändert" (sonst bliebe das Feld im Popup blau). */
+.opt-input.bad, .opt.changed > .opt-line .opt-input.bad { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
+/* Popup: Meldungen für dieses Gerät, Zeilen wie in den Einstellungen. */
+.dev-set { border: 1px solid var(--dp-divider); border-radius: 14px; padding: 2px 14px; }
+.dev-set .opt-sub { margin-top: 6px; }
+.dev-set .opt-sub .opt-label { color: var(--dp-text2); }
 /* Batterie pro Integration: Zeilen wie die Ausschlüsse, Feld rechts. */
 .opt.bat-own { border-bottom: none; padding-bottom: 2px; }
 .ex-row.bat-row .opt-input input { width: 40px; }

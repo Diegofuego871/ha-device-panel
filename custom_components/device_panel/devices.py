@@ -32,12 +32,15 @@ from .const import (
     CONF_OFFLINE_AFTER,
     CONF_SHOW_DISABLED,
     CONF_SHOW_SERVICE,
+    BATTERY_OFF,
+    DATA_DEVICE_SETTINGS,
     DATA_STARTED_AT,
     DATA_TYPE_OVERRIDES,
     DEFAULT_BATTERY_LOW,
     DEFAULT_OFFLINE_AFTER,
     DEVICE_TYPES,
     DOMAIN,
+    INT_RANGES,
     STORAGE_VERSION,
 )
 from .options_api import battery_threshold, effective
@@ -213,6 +216,25 @@ def battery(
     if level is not None:
         low = low or level <= threshold
     return {"level": level, "low": low}
+
+
+def _battery_fields(
+    hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry, entries: list[er.RegistryEntry], domain: str | None
+) -> dict[str, Any]:
+    """
+    Batterie für Liste und Popup: Stand mit wirksamer Schwelle, Einstellung
+    des Geräts und was ohne sie gälte (für "Sonst gilt …").
+    """
+    threshold = device_battery_threshold(hass, opts, device)
+    info = battery(hass, entries, threshold if threshold is not None else -1)
+    own = opts[CONF_BATTERY_LOW_INTEGRATIONS].get(domain) if domain else None
+    return {
+        # Warnung aus: Stand ja, "schwach" nie.
+        "battery": {**info, "low": False} if info and threshold is None else info,
+        "has_battery": has_battery(hass, entries),
+        "battery_setting": device_settings(hass)["battery"].get(device.id),
+        "battery_default": {"pct": own if own is not None else opts[CONF_BATTERY_LOW], "integration": domain if own is not None else None},
+    }
 
 
 def has_battery(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> bool:
@@ -435,12 +457,75 @@ def _types_store(hass: HomeAssistant) -> Store[dict[str, Any]]:
 
 
 async def async_load_type_overrides(hass: HomeAssistant) -> None:
+    """Typ von Hand und Einstellungen pro Gerät (eine Datei) laden."""
     if DATA_TYPE_OVERRIDES not in hass.data:
         stored = await _types_store(hass).async_load() or {}
-        raw = stored.get("types") if isinstance(stored, dict) else None
+        if not isinstance(stored, dict):
+            stored = {}
+        raw = stored.get("types")
         hass.data[DATA_TYPE_OVERRIDES] = {
             str(k): v for k, v in (raw or {}).items() if v in DEVICE_TYPES
         }
+        low, high = INT_RANGES[CONF_BATTERY_LOW]
+        bat = stored.get("battery") if isinstance(stored.get("battery"), dict) else {}
+        hass.data[DATA_DEVICE_SETTINGS] = {
+            "battery": {
+                str(k): v
+                for k, v in bat.items()
+                if v == BATTERY_OFF or (isinstance(v, int) and not isinstance(v, bool) and low <= v <= high)
+            },
+            "notify_off": {str(d) for d in stored.get("notify_off") or [] if isinstance(d, str)},
+        }
+
+
+async def _async_save_devices(hass: HomeAssistant) -> None:
+    settings = device_settings(hass)
+    await _types_store(hass).async_save(
+        {
+            "types": dict(type_overrides(hass)),
+            "battery": dict(settings["battery"]),
+            "notify_off": sorted(settings["notify_off"]),
+        }
+    )
+
+
+@callback
+def device_settings(hass: HomeAssistant) -> dict[str, Any]:
+    """{"battery": {Gerät: Prozent | "off"}, "notify_off": {Gerät, …}}."""
+    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set()}
+
+
+def device_battery_threshold(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry) -> int | None:
+    """
+    Wirksame Batterie-Schwelle eines Geräts: eigene des Geräts, sonst die
+    seiner Integration, sonst die allgemeine; None = Batterie-Warnung aus.
+    """
+    own = device_settings(hass)["battery"].get(device.id)
+    if own == BATTERY_OFF:
+        return None
+    if isinstance(own, int):
+        return own
+    return battery_threshold(opts, primary_domain(hass, device))
+
+
+async def async_set_device_settings(hass: HomeAssistant, device_id: str, **changes: Any) -> None:
+    """
+    Einstellungen eines Geräts: battery=None (wie eingestellt), "off" oder
+    Prozent; notify=True/False (Ausfall- und Online-Meldungen).
+    """
+    await async_load_type_overrides(hass)
+    settings = hass.data[DATA_DEVICE_SETTINGS]
+    if "battery" in changes:
+        if changes["battery"] is None:
+            settings["battery"].pop(device_id, None)
+        else:
+            settings["battery"][device_id] = changes["battery"]
+    if "notify" in changes:
+        if changes["notify"]:
+            settings["notify_off"].discard(device_id)
+        else:
+            settings["notify_off"].add(device_id)
+    await _async_save_devices(hass)
 
 
 @callback
@@ -456,7 +541,7 @@ async def async_set_type_override(hass: HomeAssistant, device_id: str, kind: str
         overrides.pop(device_id, None)
     else:
         overrides[device_id] = kind
-    await _types_store(hass).async_save({"types": dict(overrides)})
+    await _async_save_devices(hass)
 
 
 async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
@@ -579,7 +664,9 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "connection": _connection(device, domains, entries, signal, iot_classes),
                 "signal": signal,
                 "via": via,
-                "battery": battery(hass, entries, battery_threshold(opts, primary.domain if primary else None)),
+                **_battery_fields(hass, opts, device, entries, primary.domain if primary else None),
+                # Ausfall- und Online-Meldungen für dieses Gerät aus.
+                "notify_off": device.id in device_settings(hass)["notify_off"],
                 "update": _update(hass, entries),
                 "avail24": avail,
                 # Instabil: online, aber oft unterbrochen.

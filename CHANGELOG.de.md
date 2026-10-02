@@ -7,6 +7,44 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.9.0] - 2026-10-02
+
+Push bei Ausfall und wenn Geräte wieder online sind, Zeitpunkt der
+Batterie-Push-Meldung und Meldungen pro Gerät. Alle neuen Meldungen sind
+standardmässig aus, das Update verschickt also nicht von sich aus etwas.
+
+### Hinzugefügt
+
+- Abschnitt "Push-Benachrichtigung", auch im Optionsdialog: "Ausfall
+  melden" schickt einen Push, sobald ein Gerät als ausgefallen gilt (nach
+  "Ausgefallen nach"), mit Bereich, Integration und Zeitpunkt des Ausfalls.
+  "Wieder online melden" schickt die Entwarnung mit der Dauer des Ausfalls;
+  auf dem Handy ersetzt sie die Ausfall-Meldung. Ein laufender Ausfall wird
+  nach einem Neustart von Home Assistant nicht erneut gemeldet, die
+  Entwarnung kommt trotzdem.
+- "Sammelausfall zusammenfassen" (standardmässig an): 3 oder mehr Geräte,
+  die im selben Durchlauf ausfallen, ergeben eine Meldung, mit vermuteter
+  Ursache, wenn alle zur selben Integration gehören.
+- Abschnitt "Batterie": "Zeitpunkt der Push-Meldung", sofort oder einmal
+  täglich zu einer gewählten Uhrzeit (Standard 08:00). Die Tagesmeldung
+  enthält die neu betroffenen oder alle schwachen Geräte (jeden Tag als
+  Erinnerung, bis die Batterie gewechselt ist). Beim Wechsel auf "Sofort"
+  kommen die Geräte, die noch auf die Tagesmeldung warten.
+- Popup "Meldungen für dieses Gerät", sofort gespeichert: Batterie-Warnung
+  wie eingestellt, mit eigener Schwelle oder aus (aus entfernt auch die
+  Markierung in der Liste); Ausfall- und Online-Meldungen aus für dieses
+  Gerät, überwacht wird es weiter.
+
+### Geändert
+
+- Der aufgeklappte Abschnitt in den Einstellungen hebt sich ab: Kopf
+  dunkler, Titel fett, Inhalt getönt.
+- Die Zusammenfassung von "Push-Benachrichtigung" lautet "meldet Ausfall,
+  wieder online, schwache Batterie"; vorher sah "Batterie schwach" allein
+  wie ein Zustand aus.
+- Ein Prozentwert ausserhalb von 5–50 im Popup bleibt im Feld stehen, mit
+  dem erlaubten Bereich darunter, statt zurückgesetzt zu werden.
+
 ## [0.8.0] - 2026-10-01
 
 Eigene Batterie-Schwelle pro Integration.
@@ -249,6 +287,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0
 [0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0
 [0.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.4.0

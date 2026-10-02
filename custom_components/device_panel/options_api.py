@@ -20,6 +20,17 @@ from homeassistant.core import HomeAssistant
 from .const import (
     CLICK_PANEL,
     CLICK_TARGETS,
+    CONF_BATTERY_PUSH_DAILY,
+    CONF_BATTERY_PUSH_MODE,
+    CONF_BATTERY_PUSH_TIME,
+    CONF_NOTIFY_GROUP,
+    CONF_NOTIFY_ONLINE,
+    CONF_NOTIFY_OUTAGE,
+    DAILY_CONTENTS,
+    DAILY_NEW,
+    DEFAULT_BATTERY_PUSH_TIME,
+    PUSH_INSTANT,
+    PUSH_MODES,
     CONF_BATTERY_LOW,
     CONF_BATTERY_LOW_INTEGRATIONS,
     CONF_BATTERY_PERSISTENT,
@@ -46,6 +57,9 @@ from .const import (
 )
 
 BOOL_OPTIONS: tuple[tuple[str, bool], ...] = (
+    (CONF_NOTIFY_OUTAGE, False),
+    (CONF_NOTIFY_ONLINE, False),
+    (CONF_NOTIFY_GROUP, True),
     (CONF_BATTERY_PUSH, False),
     (CONF_BATTERY_PERSISTENT, False),
     (CONF_SHOW_SERVICE, False),
@@ -62,6 +76,15 @@ LIST_OPTIONS = (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES)
 
 _DOMAIN_RE = re.compile(r"^[a-z0-9_]+$")
 _NOTIFY_RE = re.compile(r"^notify\.[a-z0-9_]+$")
+_TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+
+
+def push_time(value: Any) -> str:
+    """Uhrzeit "HH:MM" (Sekunden aus dem Zeitfeld von HA werden weggelassen)."""
+    text = str(value or "").strip()[:5] if isinstance(value, str) else ""
+    if not _TIME_RE.match(text):
+        raise vol.Invalid("Uhrzeit HH:MM erwartet")
+    return text
 
 
 def _domains(value: Any) -> list[str]:
@@ -130,6 +153,9 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_BATTERY_LOW_INTEGRATIONS): battery_map,
         vol.Optional(CONF_NOTIFY_SERVICE): _notify_target,
         vol.Optional(CONF_NOTIFY_CLICK): vol.In(CLICK_TARGETS),
+        vol.Optional(CONF_BATTERY_PUSH_MODE): vol.In(PUSH_MODES),
+        vol.Optional(CONF_BATTERY_PUSH_TIME): push_time,
+        vol.Optional(CONF_BATTERY_PUSH_DAILY): vol.In(DAILY_CONTENTS),
     }
 )
 
@@ -155,6 +181,14 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_NOTIFY_SERVICE] = target if _NOTIFY_RE.match(target) else NOTIFY_NONE
     click = options.get(CONF_NOTIFY_CLICK)
     values[CONF_NOTIFY_CLICK] = click if click in CLICK_TARGETS else CLICK_PANEL
+    mode = options.get(CONF_BATTERY_PUSH_MODE)
+    values[CONF_BATTERY_PUSH_MODE] = mode if mode in PUSH_MODES else PUSH_INSTANT
+    try:
+        values[CONF_BATTERY_PUSH_TIME] = push_time(options.get(CONF_BATTERY_PUSH_TIME))
+    except vol.Invalid:
+        values[CONF_BATTERY_PUSH_TIME] = DEFAULT_BATTERY_PUSH_TIME
+    daily = options.get(CONF_BATTERY_PUSH_DAILY)
+    values[CONF_BATTERY_PUSH_DAILY] = daily if daily in DAILY_CONTENTS else DAILY_NEW
     return values
 
 

@@ -1,7 +1,9 @@
 // Einstellungen (Zahnrad): Kopf, Versionszeile, Abschnitt "Updates" mit
 // Info, Entwurf mit Etikett und Zähler, Speichern über set_options und
 // set_panel, Abbrechen verwirft, Fehler beim Laden und Speichern, Escape,
-// Hintergrund. Deutsch und Englisch, Desktop und Handy (Blatt).
+// Hintergrund. Batterie (Zeitpunkt, Uhrzeit, Tagesmeldung, pro Integration)
+// und Push (Ziel, Ausfall, wieder online, Sammelausfall); aufgeklappter
+// Abschnitt abgesetzt. Deutsch und Englisch, Desktop und Handy (Blatt).
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
 
@@ -25,9 +27,13 @@ const TEXT = {
     sumDispBoth: "Dienst-Geräte und deaktivierte Geräte angezeigt", grpDis: "Deaktiviert", ofTotal: "von 17", four: "4 Änderungen", five: "5 Änderungen",
     sumBatOff: "Schwach ab 15 % · keine Meldung", sumBatBoth: "Schwach ab 25 % · Push und anhaltende Benachrichtigung",
     noTarget: "Zuerst unter \"Push-Benachrichtigung\" ein Ziel wählen.", sumPushNone: "Kein Ziel gewählt",
-    sumPush: "notify.mobile_app_testhandy · Batterie schwach", notifyNone: "Kein Ziel (keine Push-Meldungen)", entity: "notify.fernseher (Entität)",
+    sumPush: "notify.mobile_app_testhandy · meldet schwache Batterie", notifyNone: "Kein Ziel (keine Push-Meldungen)", entity: "notify.fernseher (Entität)",
     batTitle: "Eigene Schwelle pro Integration", batZha: "3 Geräte mit Batterie · schwächste 8\u00a0%", rangeBat: "Erlaubt: 5 bis 50",
     sumBatOwn: "Schwach ab 15 %, Matter 25 % · keine Meldung", batLowShort: "Bis zu diesem Stand rot markiert und unter \"Nur Probleme\".",
+    shortInstant: "Sobald ein Gerät unter die Schwelle fällt.", shortDaily: (t) => `Eine Sammelmeldung um ${t}. Ausfälle kommen immer sofort.`, timeErr: "Uhrzeit HH:MM",
+    sumBatDaily: (t) => `Schwach ab 15 % · nur Push (täglich ${t})`, sumBatInstant: "Schwach ab 15 % · nur Push", dailyAll: "Alle schwachen Geräte",
+    sumPushAll: "notify.mobile_app_testhandy · meldet Ausfall, wieder online, schwache Batterie", sumPushNoKind: "notify.mobile_app_testhandy · keine Meldung eingeschaltet",
+    outageShort: "Sofort, sobald ein Gerät als ausgefallen gilt (nach 2 Min. ohne Lebenszeichen).", eight: "8 Änderungen",
   },
   en: {
     gear: "Settings", title: "Settings", sub: "Device Panel · applies to all users", sec: "Updates",
@@ -43,9 +49,13 @@ const TEXT = {
     sumDispBoth: "Service devices and disabled devices shown", grpDis: "Disabled", ofTotal: "of 17", four: "4 changes", five: "5 changes",
     sumBatOff: "Low from 15 % · no notification", sumBatBoth: "Low from 25 % · push and persistent notification",
     noTarget: "First choose a target under \"Push notification\".", sumPushNone: "No target chosen",
-    sumPush: "notify.mobile_app_testhandy · low battery", notifyNone: "No target (no push notifications)", entity: "notify.fernseher (entity)",
+    sumPush: "notify.mobile_app_testhandy · notifies on low battery", notifyNone: "No target (no push notifications)", entity: "notify.fernseher (entity)",
     batTitle: "Own threshold per integration", batZha: "3 devices with battery · weakest 8\u00a0%", rangeBat: "Allowed: 5 to 50",
     sumBatOwn: "Low from 15 %, Matter 25 % · no notification", batLowShort: "Up to this level marked red and listed under \"Problems only\".",
+    shortInstant: "As soon as a device drops below the threshold.", shortDaily: (t) => `One summary at ${t}. Outages are always reported immediately.`, timeErr: "Time HH:MM",
+    sumBatDaily: (t) => `Low from 15 % · push only (daily ${t})`, sumBatInstant: "Low from 15 % · push only", dailyAll: "All devices with a low battery",
+    sumPushAll: "notify.mobile_app_testhandy · notifies on outage, back online, low battery", sumPushNoKind: "notify.mobile_app_testhandy · no notification switched on",
+    outageShort: "Immediately as soon as a device counts as offline (after 2 min without a sign of life).", eight: "8 changes",
   },
 };
 
@@ -94,6 +104,10 @@ for (const lang of ["de", "en"]) {
     // Abschnitt aufklappen, Info, Schalter
     await tap('[data-set="section"][data-id="updates"]');
     check(`[${tag}] aufgeklappt`, (await text(".set-sec-body .opt-label")) === T.opt && (await text(".set-sec-body .opt-short")) === T.short);
+    // Offener Abschnitt sichtbar abgesetzt: Kopf getönt und fett, Rand kräftiger
+    const look = await ev(`const cs=(el)=>getComputedStyle(el); const o=r.querySelector(".set-sec.open"), c=r.querySelector(".set-sec:not(.open)");
+      return [cs(o.querySelector(".set-sec-head")).backgroundColor, cs(c.querySelector(".set-sec-head")).backgroundColor, cs(o).borderTopColor, cs(c).borderTopColor, cs(o.querySelector(".set-sec-title")).fontWeight, cs(o).backgroundColor, cs(c).backgroundColor]`);
+    check(`[${tag}] offener Abschnitt abgesetzt`, look[0] !== look[1] && look[0] !== "rgba(0, 0, 0, 0)" && look[2] !== look[3] && look[4] === "600" && look[5] !== look[6], JSON.stringify(look));
     await tap('[data-set="info"][data-key="update_check"]');
     check(`[${tag}] Info aufgeklappt`, (await text(".opt-info")).startsWith(T.info));
     await tap('.switch input[data-opt="update_check"]');
@@ -295,6 +309,70 @@ for (const lang of ["de", "en"]) {
     await (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-opt="notify_click_target"]')`))).asElement().selectOption("panel");
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] Batterie und Push zurück`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify(await p.evaluate(() => [window.__opts.battery_low, window.__opts.battery_push, window.__opts.battery_persistent, window.__opts.notify_service, window.__opts.notify_click_target])) === JSON.stringify([15, false, false, "none", "panel"]) && await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`));
+
+    // Batterie: Zeitpunkt (sofort/täglich), Uhrzeit, Inhalt der Tagesmeldung;
+    // Push: Ausfall, wieder online, Sammelausfall
+    const pick = async (sel, value) => (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement().selectOption(value);
+    const timeIn = async (val) => {
+      const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector('input[type="time"][data-opt="battery_push_time"]')`))).asElement();
+      if (mobile) await h.tap(); else await h.click();
+      await h.fill(val);
+    };
+    const short = (key) => ev(`const o=r.querySelector('[data-opt="${key}"]').closest(".opt").querySelector("[data-short]"); return o.className + "|" + o.textContent`);
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    await tap('[data-set="section"][data-id="battery"]');
+    check(`[${tag}] Zeitpunkt erst mit Push`, !(await ev(`return !!r.querySelector('select[data-opt="battery_push_mode"]')`)));
+    await tap('.switch input[data-opt="battery_push"]');
+    check(`[${tag}] Zeitpunkt sofort`, await wait(`return r.querySelector('select[data-opt="battery_push_mode"]')?.value === "instant"`) && !(await ev(`return !!r.querySelector('input[type="time"]') || !!r.querySelector('select[data-opt="battery_push_daily"]')`)) && (await short("battery_push_mode")) === `opt-short|${T.shortInstant}`, await short("battery_push_mode"));
+    await pick('select[data-opt="battery_push_mode"]', "daily");
+    check(`[${tag}] täglich: Uhrzeit 08:00, Inhalt neu`, await wait(`return r.querySelector('input[type="time"][data-opt="battery_push_time"]')?.value === "08:00" && r.querySelector('select[data-opt="battery_push_daily"]')?.value === "new"`) && (await short("battery_push_mode")) === `opt-short|${T.shortDaily("08:00")}`, await short("battery_push_mode"));
+    if (!mobile) {
+      // Breit genug für "08:00 AM" (Format des Browsers) und neben der Auswahl
+      const tops = await ev(`return [r.querySelector('select[data-opt="battery_push_mode"]'), r.querySelector('input[type="time"]')].map(e=>Math.round(e.getBoundingClientRect().top + e.getBoundingClientRect().height / 2))`);
+      check(`[${tag}] Auswahl und Uhrzeit in einer Zeile`, Math.abs(tops[0] - tops[1]) <= 3, JSON.stringify(tops));
+    }
+    await timeIn("");
+    check(`[${tag}] leere Uhrzeit: Fehler, Speichern gesperrt`, (await short("battery_push_mode")) === `opt-error|${T.timeErr}` && await ev(`const o=r.querySelector('select[data-opt="battery_push_mode"]').closest(".opt"); return o.classList.contains("invalid") && r.querySelector('[data-set="save"]').disabled`), await short("battery_push_mode"));
+    await timeIn("06:45");
+    check(`[${tag}] Uhrzeit gültig: Kurzzeile, Zusammenfassung, Fokus bleibt`, (await short("battery_push_mode")) === `opt-short|${T.shortDaily("06:45")}` && (await text('[data-id="battery"] .set-sec-sum')) === T.sumBatDaily("06:45") && await ev(`return r.activeElement === r.querySelector('input[type="time"]') && r.querySelector('select[data-opt="battery_push_mode"]').closest(".opt").classList.contains("changed")`), await text('[data-id="battery"] .set-sec-sum'));
+    await pick('select[data-opt="battery_push_daily"]', "all");
+    check(`[${tag}] Inhalt alle`, await wait(`return r.querySelector('select[data-opt="battery_push_daily"]')?.value === "all"`) && (await ev(`const s=r.querySelector('select[data-opt="battery_push_daily"]'); return s.options[s.selectedIndex].textContent`)) === T.dailyAll && (await ev(`return r.querySelector('input[type="time"]').value`)) === "06:45");
+    await tap('[data-set="section"][data-id="push"]');
+    await pick('select[data-opt="notify_service"]', "notify.mobile_app_testhandy");
+    check(`[${tag}] Push: nur Batterie gemeldet`, await wait(`return r.querySelector('[data-id="push"] .set-sec-sum')?.textContent === ${JSON.stringify(T.sumPush)}`), await text('[data-id="push"] .set-sec-sum'));
+    check(`[${tag}] Ausfall: Kurzzeile mit Minuten`, (await short("notify_outage")) === `opt-short|${T.outageShort}`, await short("notify_outage"));
+    check(`[${tag}] Standard: Ausfall und Online aus, Sammelausfall an`, (await ev(`return ["notify_outage","notify_online","notify_group"].map(k=>r.querySelector('input[data-opt="'+k+'"]').checked).join()`)) === "false,false,true");
+    await tap('.switch input[data-opt="notify_outage"]');
+    await tap('.switch input[data-opt="notify_online"]');
+    await tap('.switch input[data-opt="notify_group"]');
+    check(`[${tag}] Push: alle Arten`, (await text('[data-id="push"] .set-sec-sum')) === T.sumPushAll && (await text(".set-count")) === T.eight, `${await text('[data-id="push"] .set-sec-sum')} / ${await text(".set-count")}`);
+    await ev(`r.querySelector('[data-id="push"]').scrollIntoView({ block: "start" })`);
+    await p.screenshot({ path: `${outDir}/settings-notify-${tag.replace("/", "-")}.png` });
+    await tap('dialog.settings [data-set="save"]');
+    const sorted = (o) => JSON.stringify(Object.fromEntries(Object.entries(o || {}).sort()));
+    const expect = { battery_push: true, battery_push_daily: "all", battery_push_mode: "daily", battery_push_time: "06:45", notify_group: false, notify_online: true, notify_outage: true, notify_service: "notify.mobile_app_testhandy" };
+    check(`[${tag}] Zeitpunkt und Meldungen gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && sorted((await calls("device_panel/set_options")).at(-1).values) === sorted(expect), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    check(`[${tag}] nach Speichern: Zusammenfassungen`, (await text('[data-id="battery"] .set-sec-sum')) === T.sumBatDaily("06:45") && (await text('[data-id="push"] .set-sec-sum')) === T.sumPushAll, `${await text('[data-id="battery"] .set-sec-sum')} / ${await text('[data-id="push"] .set-sec-sum')}`);
+    // Zurück: Uhrzeit, Inhalt, sofort, Push aus, Meldungen wie vorher
+    await tap('[data-set="section"][data-id="battery"]');
+    await timeIn("08:00");
+    await pick('select[data-opt="battery_push_daily"]', "new");
+    await wait(`return r.querySelector('select[data-opt="battery_push_daily"]')?.value === "new"`);
+    await pick('select[data-opt="battery_push_mode"]', "instant");
+    check(`[${tag}] sofort: Uhrzeit und Inhalt weg`, await wait(`return !r.querySelector('input[type="time"]') && !r.querySelector('select[data-opt="battery_push_daily"]')`) && (await text('[data-id="battery"] .set-sec-sum')) === T.sumBatInstant, await text('[data-id="battery"] .set-sec-sum'));
+    await tap('.switch input[data-opt="battery_push"]');
+    await tap('[data-set="section"][data-id="push"]');
+    await tap('.switch input[data-opt="notify_outage"]');
+    await tap('.switch input[data-opt="notify_online"]');
+    check(`[${tag}] ohne Arten`, (await text('[data-id="push"] .set-sec-sum')) === T.sumPushNoKind, await text('[data-id="push"] .set-sec-sum'));
+    await tap('.switch input[data-opt="notify_group"]');
+    await pick('select[data-opt="notify_service"]', "none");
+    await wait(`return r.querySelector('select[data-opt="notify_service"]')?.value === "none"`);
+    await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] Zeitpunkt und Meldungen zurück`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify(await p.evaluate(() => ["battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "notify_service", "notify_outage", "notify_online", "notify_group"].map((k) => window.__opts[k]))) === JSON.stringify([false, "instant", "08:00", "new", "none", false, false, true]), JSON.stringify(await p.evaluate(() => window.__opts)));
 
     // Batterie: eigene Schwelle pro Integration (Variante A)
     const typeIn = async (sel, val) => {

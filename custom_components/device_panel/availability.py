@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -120,6 +121,8 @@ class AvailabilityLog:
     """Protokoll aller überwachten Geräte, einmal pro HA-Instanz."""
 
     def __init__(self, hass: HomeAssistant) -> None:
+        # Zuhörer für Wechsel (Meldungen bei Ausfall und Rückkehr).
+        self._listeners: list[Callable[[list[tuple[str, Any, float]]], None]] = []
         self.hass = hass
         self._store: Store[dict[str, Any]] = Store(hass, STORAGE_VERSION, STORAGE_KEY)
         self._saver = PeriodicSaver(self._store, self._data, SAVE_DELAY)
@@ -212,6 +215,9 @@ class AvailabilityLog:
         in_grace = now - self._started < opts[CONF_STARTUP_GRACE] * 60
         offline_after = opts[CONF_OFFLINE_AFTER] * 60
         seen: set[str] = set()
+        # Wechsel für die Meldungen: (Gerät, Zustand, Zeitpunkt); "gone" =
+        # nicht mehr überwacht.
+        changes: list[tuple[str, Any, float]] = []
         for device, entries in monitored_devices(self.hass, opts):
             seen.add(device.id)
             online, since = device_status(self.hass, entries, now_dt, offline_after)
@@ -234,6 +240,8 @@ class AvailabilityLog:
             if last is not None:
                 at = max(at, last[0])
             events.append([min(at, now), state])
+            if state is not None:
+                changes.append((device.id, state, min(at, now)))
             self._saver.schedule()
         # Nicht mehr überwacht (ausgeschlossen, deaktiviert, gelöscht): ab
         # jetzt "keine Daten", damit eine spätere Rückkehr nicht als
@@ -241,12 +249,22 @@ class AvailabilityLog:
         for dev, events in self._events.items():
             if dev not in seen and events and events[-1][1] is not None:
                 events.append([max(now, events[-1][0]), None])
+                changes.append((dev, "gone", now))
                 self._saver.schedule()
+        for listener in list(self._listeners):
+            if changes:
+                listener(changes)
         if now - self._pruned_at > 3600:
             self._pruned_at = now
             self._prune(now, seen)
         # Lebenszeichen regelmässig schreiben, auch ohne Wechsel.
         self._saver.schedule()
+
+    @callback
+    def add_listener(self, listener: Callable[[list[tuple[str, Any, float]]], None]) -> Callable[[], None]:
+        """Wechsel nach jedem Durchlauf melden; gibt die Abmeldung zurück."""
+        self._listeners.append(listener)
+        return lambda: self._listeners.remove(listener)
 
     def _prune(self, now: float, seen: set[str]) -> None:
         cutoff = now - KEEP_DAYS * 86400

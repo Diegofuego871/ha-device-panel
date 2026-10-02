@@ -23,11 +23,22 @@ TEXTS: dict[str, dict[str, str]] = {
         "battery_low": "schwach",
         "persistent_title": "Device Panel: Batterie schwach",
         "persistent_intro": "Diese Geräte haben eine schwache Batterie (bis {threshold} %):",
-        "persistent_intro_own": "Diese Geräte haben eine schwache Batterie (Schwelle je nach Integration):",
+        "persistent_intro_own": "Diese Geräte haben eine schwache Batterie (Schwelle je nach Integration oder Gerät):",
         "persistent_outro": "Die Meldung verschwindet von selbst, wenn alle wieder über der Schwelle sind. Einstellen im Device Panel unter Einstellungen → Batterie.",
         "notify_none": "Keine Push-Meldungen",
         "notify_entity": "{entity_id} (Entität)",
         "notify_missing": "{value} (nicht gefunden)",
+        "outage_title": "Ausgefallen: {name}",
+        "outage_title_many": "Sammelausfall: {count} Geräte",
+        "outage_since": "seit {time}",
+        "outage_cause": "vermutlich {integration}",
+        "online_title": "Wieder online: {name}",
+        "online_title_many": "Wieder online: {count} Geräte",
+        "online_after": "nach {duration}",
+        "dur_days": "{d} T. {h} Std.",
+        "dur_hours": "{h} Std. {m} Min.",
+        "dur_minutes": "{m} Min.",
+        "dur_short": "< 1 Min.",
     },
     "en": {
         "battery_title": "Low battery: {name}",
@@ -35,11 +46,22 @@ TEXTS: dict[str, dict[str, str]] = {
         "battery_low": "low",
         "persistent_title": "Device Panel: low battery",
         "persistent_intro": "These devices have a low battery (up to {threshold} %):",
-        "persistent_intro_own": "These devices have a low battery (threshold per integration):",
+        "persistent_intro_own": "These devices have a low battery (threshold per integration or device):",
         "persistent_outro": "This notification disappears by itself once all of them are above the threshold again. Change it in Device Panel under Settings → Battery.",
         "notify_none": "No push notifications",
         "notify_entity": "{entity_id} (entity)",
         "notify_missing": "{value} (not found)",
+        "outage_title": "Offline: {name}",
+        "outage_title_many": "Group outage: {count} devices",
+        "outage_since": "since {time}",
+        "outage_cause": "probably {integration}",
+        "online_title": "Back online: {name}",
+        "online_title_many": "Back online: {count} devices",
+        "online_after": "after {duration}",
+        "dur_days": "{d} d {h} h",
+        "dur_hours": "{h} h {m} min",
+        "dur_minutes": "{m} min",
+        "dur_short": "< 1 min",
     },
 }
 
@@ -52,6 +74,20 @@ def language(hass: HomeAssistant) -> str:
 
 def text(hass: HomeAssistant, key: str, **kwargs: Any) -> str:
     return TEXTS[language(hass)][key].format(**kwargs)
+
+
+def duration(hass: HomeAssistant, seconds: float) -> str:
+    """Dauer grob wie im Panel: "2 Std. 14 Min.", "3 T. 4 Std."."""
+    minutes = int(seconds // 60)
+    if minutes < 1:
+        return text(hass, "dur_short")
+    if minutes < 60:
+        return text(hass, "dur_minutes", m=minutes)
+    hours, minutes = divmod(minutes, 60)
+    if hours < 24:
+        return text(hass, "dur_hours", h=hours, m=minutes)
+    days, hours = divmod(hours, 24)
+    return text(hass, "dur_days", d=days, h=hours)
 
 
 def panel_url(device_id: str | None = None) -> str:
