@@ -111,6 +111,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "startup_grace": 5,
         "show_service_devices": False,
         "show_disabled_devices": False,
+        "hide_connections": [],
         "battery_low": 15,
         "battery_low_integrations": {},
         "battery_push": False,
@@ -140,6 +141,15 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
     assert (await client.receive_json())["error"]["code"] == "invalid_format"
     await client.send_json({"id": 5, "type": f"{DOMAIN}/set_options", "values": {"gibt_es_nicht": True}})
     assert (await client.receive_json())["error"]["code"] == "invalid_format"
+    # Filter-Chips: nur bekannte Verbindungsarten, sortiert und ohne Doppelte
+    await client.send_json({"id": 6, "type": f"{DOMAIN}/set_options", "values": {"hide_connections": ["thread", "ble", "thread"]}})
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+    assert entry.options["hide_connections"] == ["ble", "thread"]
+    await client.send_json({"id": 7, "type": f"{DOMAIN}/set_options", "values": {"hide_connections": ["funk"]}})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"
+    await client.send_json({"id": 8, "type": f"{DOMAIN}/list_devices"})
+    assert (await client.receive_json())["result"]["hide_connections"] == ["ble", "thread"]
 
 
 async def test_options_flow(hass: HomeAssistant, entry) -> None:
@@ -151,7 +161,8 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
         "offline_after", "flaky_outages", "startup_grace", "battery_low", "battery_low_integrations", "battery_push",
         "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent",
         "exclude_integrations", "exclude_types", "notify_service", "notify_click_target",
-        "notify_outage", "notify_online", "notify_group", "show_service_devices", "show_disabled_devices", "update_check",
+        "notify_outage", "notify_online", "notify_group", "show_service_devices", "show_disabled_devices", "hide_connections",
+        "update_check",
     ]
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {CONF_UPDATE_CHECK: False, "offline_after": 10.0, "show_disabled_devices": True}
@@ -229,6 +240,22 @@ async def test_options_flow_with_exclusions(hass: HomeAssistant, entry) -> None:
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options["exclude_integrations"] == ["hue"]
     assert entry.options["exclude_types"] == []
+
+
+async def test_options_flow_hide_connections(hass: HomeAssistant, entry) -> None:
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"hide_connections": ["thread", "ble", "thread"]})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    # Wie aus dem Panel: sortiert, ohne Doppelte
+    assert entry.options["hide_connections"] == ["ble", "thread"]
+    # Leere Auswahl überschreibt die alte
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"hide_connections": []})
+    assert entry.options["hide_connections"] == []
+    # Unbekannte Verbindungsart lehnt der Selektor ab
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    with pytest.raises(InvalidData):
+        await hass.config_entries.options.async_configure(result["flow_id"], {"hide_connections": ["funk"]})
 
 
 async def test_options_flow_battery_per_integration(hass: HomeAssistant, entry) -> None:

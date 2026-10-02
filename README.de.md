@@ -28,7 +28,9 @@ Bereich.
   oder LAN), Bluetooth, WLAN, Netzwerk, Cloud; Empfang in dBm oder LQI und
   der Hub, die Bridge oder der Bluetooth-Proxy dazwischen.
 - Suche über alle Spalten, Filter nach Verbindungsart, "Nur Probleme",
-  niedriger Batterie, schwachem Empfang und verfügbaren Updates.
+  niedriger Batterie, schwachem Empfang und verfügbaren Updates. Einzelne
+  Chips der Verbindungsart lassen sich in den Einstellungen ausblenden
+  ("Anzeige").
 - Popup pro Gerät (wie bei UniFi Dynamic Clients): Verfügbarkeit 24 Stunden,
   Unterbrüche in 7 Tagen, Empfang und Batterie als Kacheln; Verbindung,
   Integration (warnt, wenn ihr Eintrag nicht geladen ist), Geräteangaben und

@@ -7,7 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.11.0] - 2026-10-02
+
+Filter chips of the connection type can be hidden.
+
+### Added
+
+- Settings section "Display", also in the options dialog: "Filter chips of
+  the connection type". Hide single chips (Zigbee, Wi-Fi, Thread …) above
+  the list for a clearer overview; the devices stay visible. "All",
+  "Problems only" and the hints always stay. Applies to all users. If the
+  filter of a hidden chip is active, it goes back to "All".
+
 ## [0.10.0] - 2026-10-02
+
+Not released; included in 0.11.0.
 
 Settings per device at a glance: marked in the list, filterable and
 resettable in the settings.
@@ -27,7 +41,7 @@ resettable in the settings.
 
 ## [0.9.1] - 2026-10-02
 
-Not released; included in 0.10.0.
+Not released; included in 0.11.0.
 
 ### Changed
 
@@ -310,7 +324,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[0.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.10.0
+[0.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.11.0
 [0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0
 [0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0

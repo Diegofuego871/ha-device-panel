@@ -210,6 +210,8 @@ class DevicePanel extends HTMLElement {
     this._hint = null;
     this._matter = new Map();
     this._flakyOutages = 3;
+    // Chips der Verbindungsart, die nicht erscheinen (Einstellung "Anzeige").
+    this._hideConn = new Set();
     this._pulse = null;
     this._incidents = [];
     // Geräte-Popup und Statistik-Fenster
@@ -402,6 +404,10 @@ class DevicePanel extends HTMLElement {
       this._devices = result.devices || [];
       this._integrations = result.integrations || {};
       this._flakyOutages = result.flaky_outages || 3;
+      this._hideConn = new Set(result.hide_connections || []);
+      // Ausgeblendeter Chip mit aktivem Filter: zurück auf "Alle", sonst
+      // bliebe ein Filter ohne sichtbaren Chip.
+      if (this._hideConn.has(this._conn)) this._conn = "all";
       this._pulse = Array.isArray(result.pulse) ? result.pulse : null;
       this._incidents = result.incidents || [];
       const serverNow = Date.parse(result.now);
@@ -690,7 +696,7 @@ class DevicePanel extends HTMLElement {
     const chip = (key, label, n, icon = "") =>
       `<button type="button" class="chip ${this._conn === key ? "on" : ""}" data-conn="${key}" aria-pressed="${this._conn === key}">${icon}<span>${escape(label)}</span> <span class="n">${n}</span></button>`;
     let html = chip("all", this._t("all"), all.length);
-    for (const [key, n] of types) html += chip(key, this._t(CONN[key].key), n, CONN[key].icon(15));
+    for (const [key, n] of types) if (!this._hideConn.has(key)) html += chip(key, this._t(CONN[key].key), n, CONN[key].icon(15));
     html += `<span class="vsep"></span><button type="button" class="chip ${this._problems ? "on" : ""}" data-problems aria-pressed="${this._problems}">${mdi("alert", 15)}<span>${escape(this._t("onlyProblems"))}</span></button>`;
     // Hinweise als Filter-Chips, nur wenn sie etwas finden (oder aktiv sind).
     const hints = [
@@ -1480,7 +1486,7 @@ class DevicePanel extends HTMLElement {
       ["integrations", ["exclude_integrations"]],
       ["types", ["exclude_types"]],
       ["push", ["notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "reset_notify"]],
-      ["display", ["show_service_devices", "show_disabled_devices"]],
+      ["display", ["show_service_devices", "show_disabled_devices", "hide_connections"]],
       ["updates", ["update_check"]],
     ];
   }
@@ -1521,6 +1527,15 @@ class DevicePanel extends HTMLElement {
       .map(([dom, v]) => `${names[dom] || dom} ${v} %`);
   }
 
+  // Verbindungsarten für die Filter-Chips: alle mit Geräten (wie die Chips,
+  // häufigste zuerst), dazu ausgeblendete ohne Geräte.
+  _connCatalog(d) {
+    const counts = new Map();
+    for (const dev of this._devices) counts.set(this._connOf(dev), (counts.get(this._connOf(dev)) || 0) + 1);
+    for (const key of d.hide_connections || []) if (!counts.has(key) && CONN[key]) counts.set(key, 0);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([key, n]) => ({ value: key, devices: n }));
+  }
+
   // Typen für die Ausschlüsse: alle mit Geräten, dazu ausgeblendete ohne.
   _catalogTypes(d) {
     const types = this._settings?.data?.catalog?.types || [];
@@ -1535,7 +1550,10 @@ class DevicePanel extends HTMLElement {
       const num = (k) => (errors[k] ? this._settings?.data?.values?.[k] : d[k]);
       return this._t("sumDetection", num("offline_after"), num("flaky_outages"), num("startup_grace"));
     }
-    if (id === "display") return this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices));
+    if (id === "display") {
+      const chips = (d.hide_connections || []).length;
+      return this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices)) + (chips ? ` · ${this._t("sumChipsHidden", chips)}` : "");
+    }
     if (id === "battery") {
       const errors = this._settingsErrors();
       const pct = errors.battery_low ? this._settings?.data?.values?.battery_low : d.battery_low;
@@ -1701,6 +1719,12 @@ class DevicePanel extends HTMLElement {
       sub: t("devicesCount", i.devices),
       badge: `<span class="ibadge" style="--h:${hue(i.domain)}">${escape(initials(i.name))}</span>`,
     }));
+    const chips = this._connCatalog(d).map((x) => ({
+      value: x.value,
+      label: t(CONN[x.value].key),
+      sub: x.devices ? t("devicesCount", x.devices) : t("typesEmpty"),
+      badge: `<span class="ibadge type">${CONN[x.value].icon(18)}</span>`,
+    }));
     const types = this._catalogTypes(d).map((x) => ({
       value: x.type,
       label: t(typeKey(x.type)),
@@ -1748,7 +1772,10 @@ class DevicePanel extends HTMLElement {
         this._overridesHtml("notify"),
       display:
         row("show_service_devices", t("optShowService"), sw("show_service_devices", t("optShowService")), t("optShowServiceShort"), t("optShowServiceInfo")) +
-        row("show_disabled_devices", t("optShowDisabled"), sw("show_disabled_devices", t("optShowDisabled")), t("optShowDisabledShort"), null),
+        row("show_disabled_devices", t("optShowDisabled"), sw("show_disabled_devices", t("optShowDisabled")), t("optShowDisabledShort"), null) +
+        // Filter-Chips der Verbindungsart (docs/mockups/view-v2, C): nur die Chips, gilt für alle.
+        `<div class="opt bat-own${changes.has("hide_connections") ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optChips"))}</span></div></div>` +
+        exTable("hide_connections", chips, t("chipsIntro")),
       updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
     const titles = {
@@ -1849,7 +1876,9 @@ class DevicePanel extends HTMLElement {
         const key = el.dataset.listAll;
         const all = key === "exclude_integrations"
           ? (st.data.catalog?.integrations || []).map((i) => i.domain)
-          : this._catalogTypes(st.draft).map((x) => x.type);
+          : key === "hide_connections"
+            ? this._connCatalog(st.draft).map((x) => x.value)
+            : this._catalogTypes(st.draft).map((x) => x.type);
         st.draft[key] = el.checked ? [] : [...all].sort();
       } else return;
       this._renderSettings();

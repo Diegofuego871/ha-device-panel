@@ -191,6 +191,9 @@ export const STRINGS = {
       service === disabled
         ? `Dienst-Geräte und deaktivierte Geräte ${service ? "angezeigt" : "ausgeblendet"}`
         : `Dienst-Geräte ${service ? "angezeigt" : "ausgeblendet"} · deaktivierte ${disabled ? "angezeigt" : "ausgeblendet"}`,
+    sumChipsHidden: (n) => (n === 1 ? "1 Filter-Chip ausgeblendet" : `${n} Filter-Chips ausgeblendet`),
+    optChips: "Filter-Chips der Verbindungsart",
+    chipsIntro: "Welche Chips über der Liste stehen; die Geräte bleiben sichtbar. \"Alle\", \"Nur Probleme\" und die Hinweise bleiben immer. Gilt für alle Benutzer.",
     optShowService: "Dienst-Geräte anzeigen",
     optShowServiceShort: "Dienste einer Integration, z. B. Sonne, Wettervorhersage oder Add-ons.",
     optShowServiceInfo: "Dienst-Geräte sind keine echten Geräte. Angezeigt werden sie wie alle anderen überwacht und zählen in der Statistik mit.",
@@ -524,6 +527,9 @@ export const STRINGS = {
       service === disabled
         ? `Service devices and disabled devices ${service ? "shown" : "hidden"}`
         : `Service devices ${service ? "shown" : "hidden"} · disabled ${disabled ? "shown" : "hidden"}`,
+    sumChipsHidden: (n) => (n === 1 ? "1 filter chip hidden" : `${n} filter chips hidden`),
+    optChips: "Filter chips of the connection type",
+    chipsIntro: "Which chips appear above the list; the devices stay visible. \"All\", \"Problems only\" and the hints always stay. Applies to all users.",
     optShowService: "Show service devices",
     optShowServiceShort: "Services of an integration, e.g. sun, weather forecast or add-ons.",
     optShowServiceInfo: "Service devices are not real devices. When shown, they are monitored like all others and count in the statistics.",

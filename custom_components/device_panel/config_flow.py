@@ -35,6 +35,8 @@ from .const import (
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_FLAKY_OUTAGES,
+    CONF_HIDE_CONNECTIONS,
+    CONNECTION_TYPES,
     CONF_NOTIFY_CLICK,
     CONF_NOTIFY_SERVICE,
     CONF_OFFLINE_AFTER,
@@ -100,7 +102,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 # Bestehende Options erhalten, statt sie zu ersetzen. Leere
                 # Mehrfachauswahl muss die alte überschreiben.
                 data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own}
-                for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES):
+                for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CONNECTIONS):
                     data[key] = sorted(set(user_input.get(key) or []))
                 # Das Zahlenfeld liefert Kommazahlen (2.0); gespeichert wird wie
                 # aus dem Panel eine ganze Zahl.
@@ -171,6 +173,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Required(CONF_NOTIFY_GROUP, default=values[CONF_NOTIFY_GROUP]): bool,
                     vol.Required(CONF_SHOW_SERVICE, default=values[CONF_SHOW_SERVICE]): bool,
                     vol.Required(CONF_SHOW_DISABLED, default=values[CONF_SHOW_DISABLED]): bool,
+                    vol.Optional(CONF_HIDE_CONNECTIONS, default=values[CONF_HIDE_CONNECTIONS]): SelectSelector(
+                        SelectSelectorConfig(
+                            options=list(CONNECTION_TYPES), multiple=True, mode=SelectSelectorMode.DROPDOWN, translation_key="connection"
+                        )
+                    ),
                     vol.Required(CONF_UPDATE_CHECK, default=values[CONF_UPDATE_CHECK]): bool,
                 }
             ),

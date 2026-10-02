@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.10.0, Einstellungen pro Gerät markiert, filterbar, zurücksetzbar)
+## Stand (0.11.0, Filter-Chips der Verbindungsart ausblendbar)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -36,7 +36,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   Rückkehr in `outage.py` über einen Listener am Protokoll, gemeldete
   Ausfälle in `.storage/device_panel.notify`);
   "Anzeige" (`show_service_devices`, `show_disabled_devices`: deaktivierte
-  Geräte in eigener Gruppe, nicht überwacht); "Updates" (tägliche Prüfung
+  Geräte in eigener Gruppe, nicht überwacht; `hide_connections`: Chips der
+  Verbindungsart, die nicht erscheinen, gilt für alle, seit 0.11.0); "Updates" (tägliche Prüfung
   mit Meldung unter "Reparaturen"). Backend `update_check.py`,
   `options_api.py` (`effective(hass)` liefert die wirksamen Werte),
   Optionsdialog in `config_flow.py` mit denselben Feldern in derselben
@@ -99,9 +100,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    (Nutzer, 2026-10-02, `docs/mockups/override-v1/`, Liste A, Einstellungen
    A, Typ von Hand zählt nicht): Symbole je Art beim Namen, Chip "Eigene
    Einstellung", Zurücksetzen einzeln oder alle in "Batterie" und
-   "Push-Benachrichtigung". `0.9.1` ohne Release, in `0.10.0` enthalten.
-   Offen: Entscheid Handy A oder B für Spalten und
-   Sortierung (`docs/mockups/view-v1/`, Empfehlung A). Weiter mit Schritt 2 (Spalten,
+   "Push-Benachrichtigung". Mit `0.11.0` (Nutzer, 2026-10-02,
+   `docs/mockups/view-v2/`, Variante C): Filter-Chips der Verbindungsart
+   global ausblendbar (Einstellungen, "Anzeige"). `0.9.1` und `0.10.0` ohne
+   Release, in `0.11.0` enthalten. Entschieden (Nutzer, 2026-10-02): Handy A
+   für Spalten und Sortierung (`docs/mockups/view-v1/`), als Nächstes. Weiter mit Schritt 2 (Spalten,
    Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
    am 2026-10-02 nachgefragt; dazu Filter-Chips der Verbindungsart einzeln
    ausblendbar und, auf der To-do-Liste, ein Filter nach Bereich, siehe

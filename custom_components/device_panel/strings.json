@@ -35,6 +35,7 @@
           "notify_group": "Combine group outages",
           "show_service_devices": "Show service devices",
           "show_disabled_devices": "Show disabled devices",
+          "hide_connections": "Hide filter chips of the connection type",
           "update_check": "Check for updates daily"
         },
         "data_description": {
@@ -57,6 +58,7 @@
           "notify_group": "From 3 devices at once one notification with the probable cause instead of many.",
           "show_service_devices": "Services of an integration rather than real devices, e.g. sun, weather forecast or add-ons. Shown service devices are monitored too.",
           "show_disabled_devices": "In their own group at the end of the list. They are not monitored.",
+          "hide_connections": "Only the chips above the list; the devices stay visible. \"All\", \"Problems only\" and the hints always stay. Applies to all users.",
           "update_check": "Reports a new version under Settings → Repairs. Pre-releases are never reported here."
         }
       }
@@ -114,6 +116,20 @@
       "options": {
         "new": "Newly affected devices",
         "all": "All devices with a low battery"
+      }
+    },
+    "connection": {
+      "options": {
+        "zigbee": "Zigbee",
+        "thread": "Thread",
+        "zwave": "Z-Wave",
+        "matter": "Matter",
+        "ble": "Bluetooth",
+        "wifi": "Wi-Fi",
+        "ethernet": "LAN",
+        "network": "Network",
+        "cloud": "Cloud",
+        "unknown": "Unknown"
       }
     }
   }

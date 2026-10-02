@@ -46,9 +46,12 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
 2. **Spalten und Ansicht pro Benutzer:** Spalten ein-/ausblenden und
    verschieben, Sortierung und Filter gespeichert, getrennt für Desktop und
    Handy (siehe "Pflicht", Abschnitt 3). Mockups `docs/mockups/view-v1/`.
+   Entschieden: Desktop nach Bild 6, Handy Variante A (ein Blatt "Ansicht").
    Dazu (Nutzer, 2026-10-02): Filter-Chips der Verbindungsart einzeln
    ausblendbar, standardmässig alle sichtbar; "Alle" und die hinteren Chips
    ("Nur Probleme", Hinweise, "Eigene Einstellung") bleiben immer.
+   Umgesetzt in 0.11.0 als globale Einstellung (Variante C in
+   `docs/mockups/view-v2/`, Abschnitt "Anzeige", auch im Optionsdialog).
    **To-do** (Nutzer, 2026-10-02): Filter nach Bereich, damit jeder nach
    seinen Bereichen filtern kann; Form offen, Mockup vor der Umsetzung.
 3. **Einstellungsmenü im Panel**, das alle Optionen der Integration abbildet

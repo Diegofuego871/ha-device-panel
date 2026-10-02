@@ -322,7 +322,7 @@
     offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, battery_push: false, battery_persistent: false,
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
     exclude_integrations: [], exclude_types: [], notify_service: "none", notify_click_target: "panel",
-    notify_outage: false, notify_online: false, notify_group: true,
+    notify_outage: false, notify_online: false, notify_group: true, hide_connections: [],
     show_service_devices: false, show_disabled_devices: false, update_check: true,
   };
   window.__services = [];
@@ -420,6 +420,12 @@
         if ("notify_click_target" in msg.values && !["panel", "device"].includes(msg.values.notify_click_target)) throw { code: "invalid_format", message: "click" };
         if ("battery_push_time" in msg.values && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(msg.values.battery_push_time))) throw { code: "invalid_format", message: "time" };
         if ("battery_push_mode" in msg.values && !["instant", "daily"].includes(msg.values.battery_push_mode)) throw { code: "invalid_format", message: "mode" };
+        if ("hide_connections" in msg.values) {
+          const known = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown"];
+          const v = msg.values.hide_connections;
+          if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "connections" };
+          msg.values.hide_connections = [...new Set(v)].sort();
+        }
         if ("battery_low_integrations" in msg.values) {
           const m = msg.values.battery_low_integrations;
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !Number.isInteger(v) || v < 5 || v > 50)) throw { code: "invalid_format", message: "battery map" };
@@ -480,7 +486,7 @@
             notify_off: window.__devSettings.notifyOff.has(d.id),
           })),
           integrations, now: new Date().toISOString(), offline_after: window.__opts.offline_after * 60, battery_low: batLow,
-          flaky_outages: flakyN, pulse: pulse(), incidents,
+          flaky_outages: flakyN, hide_connections: [...window.__opts.hide_connections], pulse: pulse(), incidents,
         };
       }
       if (msg.type === "device_panel/device") {

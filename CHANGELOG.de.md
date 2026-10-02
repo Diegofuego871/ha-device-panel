@@ -7,7 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.11.0] - 2026-10-02
+
+Filter-Chips der Verbindungsart lassen sich ausblenden.
+
+### Hinzugefügt
+
+- Einstellungen, Abschnitt "Anzeige", auch im Optionsdialog: "Filter-Chips
+  der Verbindungsart". Einzelne Chips (Zigbee, WLAN, Thread …) über der
+  Liste ausblenden, damit es übersichtlicher wird; die Geräte bleiben
+  sichtbar. "Alle", "Nur Probleme" und die Hinweise bleiben immer. Gilt für
+  alle Benutzer. Ist der Filter eines ausgeblendeten Chips aktiv, geht er
+  auf "Alle" zurück.
+
 ## [0.10.0] - 2026-10-02
+
+Nicht veröffentlicht; enthalten in 0.11.0.
 
 Einstellungen pro Gerät auf einen Blick: in der Liste markiert, filterbar
 und in den Einstellungen zurücksetzbar.
@@ -28,7 +43,7 @@ und in den Einstellungen zurücksetzbar.
 
 ## [0.9.1] - 2026-10-02
 
-Nicht veröffentlicht; enthalten in 0.10.0.
+Nicht veröffentlicht; enthalten in 0.11.0.
 
 ### Geändert
 
@@ -323,7 +338,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[0.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.10.0
+[0.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.11.0
 [0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0
 [0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0
