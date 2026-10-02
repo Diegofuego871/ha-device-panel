@@ -11,8 +11,12 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { auto: "Automatisch: Unbekannt", autoThread: "Automatisch: Thread", manual: "von Hand gesetzt", zigbee: "Zigbee", err: "Verbindungsart konnte nicht gespeichert werden:" },
-  en: { auto: "Automatic: Unknown", autoThread: "Automatic: Thread", manual: "set by hand", zigbee: "Zigbee", err: "Could not save the connection type:" },
+  de: { auto: "Automatisch: Unbekannt", autoThread: "Automatisch: Thread", manual: "von Hand gesetzt", zigbee: "Zigbee", err: "Verbindungsart konnte nicht gespeichert werden:",
+    sumAuto: "Automatisch erkannt", sumOne: "1 Integration festgelegt", title: "Verbindungsart pro Integration", shelly: "2 Geräte · erkannt: 2 WLAN", autoOpt: "Automatisch",
+    one: "1 Änderung", integ: "Wie Integration: LAN", byInteg: "für die ganze Integration festgelegt", lan: "LAN" },
+  en: { auto: "Automatic: Unknown", autoThread: "Automatic: Thread", manual: "set by hand", zigbee: "Zigbee", err: "Could not save the connection type:",
+    sumAuto: "Detected automatically", sumOne: "1 integration set", title: "Connection type per integration", shelly: "2 devices · detected: 2 Wi-Fi", autoOpt: "Automatic",
+    one: "1 change", integ: "Same as integration: LAN", byInteg: "set for the whole integration", lan: "LAN" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -73,6 +77,52 @@ for (const lang of ["de", "en"]) {
     await open("c");
     check(`[${tag}] Matter erkannt als Thread`, (await sel()) === `|${T.autoThread}`, await sel());
     await close();
+
+    // Verbindungsart pro Integration (Variante B): gilt für alle ihre Geräte,
+    // von Hand am Gerät geht vor
+    const setCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_options").map((m) => m.values));
+    const text = (s) => ev(`return (r.querySelector(${JSON.stringify(s)})?.textContent || "").replace(/\\s+/g," ").trim()`);
+    const wifiBefore = Number(await chip("wifi"));
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    check(`[${tag}] Abschnitt Verbindungsart`, (await text('[data-id="connections"] .set-sec-sum')) === T.sumAuto, await text('[data-id="connections"] .set-sec-sum'));
+    await tap('[data-set="section"][data-id="connections"]');
+    const shellyRow = await ev(`const s=r.querySelector('select[data-conn-integ="shelly"]'); return s ? [s.closest(".ex-row").querySelector("small").textContent, s.value, s.options[0].textContent, s.options.length] : null`);
+    check(`[${tag}] Zeile mit Erkennung und Auswahl`, (await text(".bat-own .opt-label")) === T.title && JSON.stringify(shellyRow) === JSON.stringify([T.shelly, "", T.autoOpt, 10]), JSON.stringify(shellyRow));
+    const sh = await handle('select[data-conn-integ="shelly"]');
+    await sh.scrollIntoViewIfNeeded();
+    await sh.selectOption("ethernet");
+    check(`[${tag}] Entwurf`, await wait(`return r.querySelector('select[data-conn-integ="shelly"]')?.value === "ethernet"`) && (await text(".set-count")) === T.one && (await text('[data-id="connections"] .set-sec-sum')) === T.sumOne && await ev(`return r.querySelector('select[data-conn-integ="shelly"]').closest(".ex-row").classList.contains("changed")`));
+    if (mobile) {
+      const over = await ev(`const d=r.querySelector("dialog.settings"); return d.scrollWidth - d.clientWidth`);
+      check(`[${tag}] Handy ohne Überlauf`, over <= 1, String(over));
+    }
+    await ev(`r.querySelector('select[data-conn-integ="shelly"]').closest(".ex-row").scrollIntoView({ block: "center" })`);
+    await p.screenshot({ path: `${outDir}/conn-integ-${tag.replace("/", "-")}.png` });
+    await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] gespeichert`, await wait(`return r.querySelector(".set-count")?.classList.contains("saved")`) && JSON.stringify((await setCalls()).at(-1)) === JSON.stringify({ connection_integrations: { shelly: "ethernet" } }), JSON.stringify((await setCalls()).at(-1)));
+    await tap('dialog.settings .dlg-actions [data-set="close"]');
+    check(`[${tag}] Chips folgen`, await wait(`return r.querySelector('.chip[data-conn="ethernet"] .n')?.textContent === "2" && r.querySelector('.chip[data-conn="wifi"] .n')?.textContent === ${JSON.stringify(String(wifiBefore - 2))}`), `${await chip("ethernet")}/${await chip("wifi")}`);
+    check(`[${tag}] Liste zeigt LAN`, (await ev(`return r.querySelector('.dev[data-open="d"]').textContent`)).includes(T.lan));
+    // Popup: "Wie Integration: LAN"; von Hand geht vor, zurück folgt wieder der Integration
+    await open("d");
+    check(`[${tag}] Popup: wie Integration`, (await sel()) === `|${T.integ}` && (await ev(`return r.querySelector('select[data-dlg="conn"]').closest(".tile").textContent`)).includes(T.byInteg), await sel());
+    await (await handle('select[data-dlg="conn"]')).selectOption("wifi");
+    check(`[${tag}] von Hand vor Integration`, await wait(`return r.querySelector('.chip[data-conn="ethernet"] .n')?.textContent === "1"`), await chip("ethernet"));
+    await (await handle('select[data-dlg="conn"]')).selectOption("");
+    check(`[${tag}] zurück: wieder wie Integration`, await wait(`return r.querySelector('.chip[data-conn="ethernet"] .n')?.textContent === "2"`), await chip("ethernet"));
+    await close();
+    // Integration zurück auf Automatisch
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    await tap('[data-set="section"][data-id="connections"]');
+    const sh2 = await handle('select[data-conn-integ="shelly"]');
+    await sh2.scrollIntoViewIfNeeded();
+    await sh2.selectOption("");
+    await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] zurück auf Erkennung`, await wait(`return r.querySelector(".set-count")?.classList.contains("saved")`) && JSON.stringify((await setCalls()).at(-1)) === JSON.stringify({ connection_integrations: {} }));
+    await tap('dialog.settings .dlg-actions [data-set="close"]');
+    check(`[${tag}] Chips wie vorher`, await wait(`return !r.querySelector('.chip[data-conn="ethernet"]') && r.querySelector('.chip[data-conn="wifi"] .n')?.textContent === ${JSON.stringify(String(wifiBefore))}`), `${await chip("wifi")}`);
 
     check(`[${tag}] kein fehlender Text`, !(await ev(`return r.innerHTML.includes("undefined") || r.innerHTML.includes("NaN")`)));
     check(`[${tag}] keine JS-Fehler`, errors.length === 0, errors.join("; "));

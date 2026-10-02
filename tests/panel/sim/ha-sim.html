@@ -322,7 +322,7 @@
     offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, battery_push: false, battery_persistent: false,
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
     exclude_integrations: [], exclude_types: [], notify_service: "none", notify_click_target: "panel",
-    notify_outage: false, notify_online: false, notify_group: true, hide_connections: [], connection_order: [],
+    notify_outage: false, notify_online: false, notify_group: true, hide_connections: [], connection_order: [], connection_integrations: {},
     show_service_devices: false, show_disabled_devices: false, update_check: true,
   };
   window.__services = [];
@@ -441,6 +441,11 @@
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "order" };
           msg.values.connection_order = [...new Set(v)];
         }
+        if ("connection_integrations" in msg.values) {
+          const m = msg.values.connection_integrations;
+          const kinds = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud"];
+          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !kinds.includes(v))) throw { code: "invalid_format", message: "connection map" };
+        }
         if ("battery_low_integrations" in msg.values) {
           const m = msg.values.battery_low_integrations;
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || (v !== "off" && (!Number.isInteger(v) || v < 5 || v > 50)))) throw { code: "invalid_format", message: "battery map" };
@@ -503,7 +508,8 @@
             battery_default: { pct: own[d.integration?.domain] ?? batLow, integration: own[d.integration?.domain] != null ? d.integration.domain : null },
             notify_off: window.__devSettings.notifyOff.has(d.id),
             // Wie das Backend: von Hand vor der Erkennung.
-            connection: window.__connOverrides[d.id] || d.connection,
+            connection: window.__connOverrides[d.id] || (window.__opts.connection_integrations || {})[d.integration?.domain] || d.connection,
+            connection_integration: (window.__opts.connection_integrations || {})[d.integration?.domain] || null,
             connection_auto: d.connection,
             connection_manual: d.id in window.__connOverrides,
           })),

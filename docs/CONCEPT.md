@@ -110,6 +110,7 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
 | Bluetooth-Empfang und Proxy | `bluetooth.async_last_service_info` (RSSI, Quelle) | geprüft |
 | Thread-Empfang, Zigbee-Route | Matter-Thread-Diagnose, ZHA-Nachbartabelle | offen |
 | Verbindungsart von Hand | Popup, `.storage/device_panel.devices` ("connections"), Vorrang vor der Erkennung und der Matter-Diagnose | seit 0.12.0 |
+| Verbindungsart pro Integration | Option `connection_integrations` {Domain: Art} (primäre Integration), Abschnitt "Verbindungsart"; Vorrang: Gerät von Hand, dann Integration, dann Erkennung. Gilt für alle Geräte der Integration, auch richtig erkannte (Nutzer, 2026-10-02, Variante B: viele falsch erkannte, nicht nur unbekannte) | seit 0.16.0 |
 
 ## Überwachung einstellen (vom Nutzer angenommen, 2026-10-01)
 

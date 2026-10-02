@@ -29,6 +29,7 @@ from .const import (
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_CONNECTION_ORDER,
+    CONF_CONNECTION_INTEGRATIONS,
     CONF_HIDE_CONNECTIONS,
     CONNECTION_MANUAL,
     DATA_CONNECTION_OVERRIDES,
@@ -780,6 +781,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
             avail = {**(summary or {}), "strip": log.device_strip(device.id, now_ts)} if summary else None
         auto_conn = _connection(device, domains, entries, signal, iot_classes)
         manual_conn = connection_overrides(hass).get(device.id)
+        # Pro Integration festgelegt (nach der primären Integration, wie die Batterie).
+        integ_conn = opts[CONF_CONNECTION_INTEGRATIONS].get(primary.domain) if primary else None
         devices.append(
             {
                 "id": device.id,
@@ -800,9 +803,11 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "offline_since": since.isoformat() if since else None,
                 # Beginn nicht bekannt (HA lief nicht): Dauer ist "mindestens".
                 "since_at_least": at_least,
-                # Von Hand vor der Erkennung; die Erkennung bleibt für "Automatisch: …".
-                "connection": manual_conn or auto_conn,
+                # Von Hand vor der Integration vor der Erkennung; die Erkennung
+                # bleibt für die Übersicht in den Einstellungen.
+                "connection": manual_conn or integ_conn or auto_conn,
                 "connection_auto": auto_conn,
+                "connection_integration": integ_conn,
                 "connection_manual": manual_conn is not None,
                 "signal": signal,
                 "via": via,

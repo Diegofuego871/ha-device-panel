@@ -7,6 +7,24 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.16.0] - 2026-10-02
+
+Connection type per integration.
+
+### Added
+
+- Settings, new section "Connection type": per integration a selection
+  "Automatic" or a connection type (Zigbee, Thread, Z-Wave, Matter,
+  Bluetooth, Wi-Fi, LAN, Network, Cloud). It applies to all devices of the
+  integration instead of the detection, also to correctly detected ones; a
+  connection type set by hand on the device still comes first. Each row
+  shows what the detection found ("5 devices · detected: 4 Zigbee,
+  1 Unknown"). List, column and filter chips follow it. Also in the options
+  dialog, e.g. "hue: zigbee".
+- Device pop-up, tile "Connection type": without a choice on the device the
+  first option reads "Same as integration: …" with a note when the
+  integration sets it.
+
 ## [0.15.0] - 2026-10-02
 
 Settings stay open after saving; push image no longer cut off.
@@ -423,6 +441,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0
 [0.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.11.0
 [0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0

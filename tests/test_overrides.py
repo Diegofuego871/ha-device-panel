@@ -142,3 +142,33 @@ async def test_connection_by_hand(hass: HomeAssistant, setup, hass_ws_client, ha
     assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_device_connection", device_id=dev.id, connection=None))["success"]
     back = await listed()
     assert (back["connection"], back["connection_manual"]) == (None, False)
+
+
+async def test_connection_per_integration(hass: HomeAssistant, setup, hass_ws_client) -> None:
+    # Zwei Geräte derselben Integration: eines unbekannt, eines als WLAN erkannt
+    plain = _device(hass, "Glücksklee", domain="plant_test")
+    _entity(hass, plain, "sensor", "moist", "40")
+    wifi = _device(hass, "Giesskanne", domain="plant_test", connections={(dr.CONNECTION_NETWORK_MAC, "aa:bb:cc:dd:ee:02")})
+    _entity(hass, wifi, "sensor", "rssi", "-60", original_device_class="signal_strength", unit_of_measurement="dBm")
+    hass.states.async_set(er.async_get(hass).async_get_entity_id("sensor", "test", f"{wifi.id}-rssi"), "-60", {"unit_of_measurement": "dBm"})
+    client = await hass_ws_client(hass)
+    ids = iter(range(1, 100))
+
+    async def listed() -> dict[str, tuple]:
+        await client.send_json({"id": next(ids), "type": f"{DOMAIN}/list_devices"})
+        devs = (await client.receive_json())["result"]["devices"]
+        return {d["name"]: (d["connection"], d["connection_auto"], d["connection_integration"], d["connection_manual"]) for d in devs if d["id"] in (plain.id, wifi.id)}
+
+    assert await listed() == {"Glücksklee": (None, None, None, False), "Giesskanne": ("wifi", "wifi", None, False)}
+    # Pro Integration: gilt für alle ihre Geräte, auch die richtig erkannten (Variante B)
+    assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_options", values={"connection_integrations": {"plant_test": "zigbee"}}))["success"]
+    assert await listed() == {"Glücksklee": ("zigbee", None, "zigbee", False), "Giesskanne": ("zigbee", "wifi", "zigbee", False)}
+    # Von Hand am Gerät geht vor
+    assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_device_connection", device_id=plain.id, connection="ble"))["success"]
+    assert (await listed())["Glücksklee"] == ("ble", None, "zigbee", True)
+    # Ungültig: "unbekannt", fremde Art, schlechte Domain
+    for bad in ({"plant_test": "unknown"}, {"plant_test": "funk"}, {"Böse Domain": "zigbee"}, ["plant_test"]):
+        assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_options", values={"connection_integrations": bad}))["error"]["code"] == "invalid_format", bad
+    # Zurück auf die Erkennung
+    assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_options", values={"connection_integrations": {}}))["success"]
+    assert (await listed())["Giesskanne"] == ("wifi", "wifi", None, False)

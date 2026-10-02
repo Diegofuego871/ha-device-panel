@@ -480,9 +480,11 @@ class DevicePanel extends HTMLElement {
     if (changed) this._render();
   }
 
-  // Von Hand gesetzt: genau diese; sonst die Erkennung, Matter verfeinert.
+  // Von Hand gesetzt: genau diese; sonst die der Integration (gilt für alle
+  // ihre Geräte, Variante B); sonst die Erkennung, Matter verfeinert.
   _connOf(d) {
     if (d.connection_manual) return CONN[d.connection] ? d.connection : "unknown";
+    if (d.connection_integration && CONN[d.connection_integration]) return d.connection_integration;
     return this._connAuto(d);
   }
 
@@ -919,7 +921,7 @@ class DevicePanel extends HTMLElement {
     try {
       await this._hass.callWS({ type: "device_panel/set_device_connection", device_id: id, connection: kind });
       if (d) {
-        d.connection = kind || (d.connection_auto !== undefined ? d.connection_auto : d.connection);
+        d.connection = kind || d.connection_integration || (d.connection_auto !== undefined ? d.connection_auto : d.connection);
         d.connection_manual = Boolean(kind);
       }
     } catch (err) {
@@ -1027,11 +1029,14 @@ class DevicePanel extends HTMLElement {
     const type = this._connOf(d);
     // Verbindungsart wählbar wie der Typ: erkannt oder von Hand, gilt sofort.
     const auto = this._connAuto(d);
-    const opts = [`<option value="" ${d.connection_manual ? "" : "selected"}>${escape(this._t("typeAuto", this._t(CONN[auto].key)))}</option>`]
+    // Ohne Wahl am Gerät gilt die Integration, wenn dort eine festgelegt ist.
+    const integ = d.connection_integration && CONN[d.connection_integration] ? d.connection_integration : null;
+    const autoText = integ ? this._t("connAutoInteg", this._t(CONN[integ].key)) : this._t("typeAuto", this._t(CONN[auto].key));
+    const opts = [`<option value="" ${d.connection_manual ? "" : "selected"}>${escape(autoText)}</option>`]
       .concat(CONN_MANUAL.map((k) => `<option value="${k}" ${d.connection_manual && d.connection === k ? "selected" : ""}>${escape(this._t(CONN[k].key))}</option>`))
       .join("");
     const connSel = `<label class="typ-sel">${CONN[type].icon(16)}<select data-dlg="conn" aria-label="${escape(this._t("connType"))}">${opts}</select>${mdi("chevronDown", 18)}</label>${
-      d.connection_manual ? `<small>${escape(this._t("typeManual"))}</small>` : ""
+      d.connection_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t("connByInteg"))}</small>` : ""
     }${this._connError ? `<small class="warn">${escape(this._t("connSaveError"))} ${escape(this._connError)}</small>` : ""}`;
     const tiles = [this._tile(this._t("connType"), connSel)];
     if (d.via) tiles.push(this._tile(this._t("viaLabel"), escape(d.via)));
@@ -1541,6 +1546,7 @@ class DevicePanel extends HTMLElement {
       ["battery", ["battery_low", "battery_low_integrations", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "reset_battery"]],
       ["integrations", ["exclude_integrations"]],
       ["types", ["exclude_types"]],
+      ["connections", ["connection_integrations"]],
       ["push", ["notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "reset_notify"]],
       ["display", ["show_service_devices", "show_disabled_devices", "hide_connections", "connection_order"]],
       ["updates", ["update_check"]],
@@ -1634,6 +1640,10 @@ class DevicePanel extends HTMLElement {
       return this._t("sumShown", this._t("sumIntegrations", list.length), d.exclude_integrations.length);
     }
     if (id === "types") return this._t("sumShown", this._t("sumTypes", this._catalogTypes(d).length), d.exclude_types.length);
+    if (id === "connections") {
+      const n = Object.keys(d.connection_integrations || {}).length;
+      return n ? this._t("sumConnInteg", n) : this._t("sumConnAuto");
+    }
     return "";
   }
 
@@ -1666,7 +1676,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -1711,6 +1721,48 @@ class DevicePanel extends HTMLElement {
       .join("");
     return head + `<div class="ex-head"><span>${escape(t("colIntegration"))}</span><span>${escape(t("batOwnColMode"))}</span></div>${rows}
       <div class="opt-error" data-bat-error ${errors.battery_low_integrations ? "" : "hidden"}>${escape(errors.battery_low_integrations || "")}</div>`;
+  }
+
+  // Verbindungsart pro Integration (Variante B): gilt für alle Geräte der
+  // Integration statt der Erkennung, von Hand am Gerät geht vor. Je Zeile die
+  // Erkennung als Übersicht, damit man sieht, was sich ändert. Darstellung wie
+  // die Batterie pro Integration (docs/mockups/battery-v2, B).
+  _connIntegHtml(d) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    const own = d.connection_integrations || {};
+    const saved = st.data.values.connection_integrations || {};
+    const groups = new Map();
+    for (const dev of this._devices) {
+      const dom = dev.integration?.domain;
+      if (!dom || dev.disabled) continue;
+      const g = groups.get(dom) || { devices: 0, kinds: new Map() };
+      const kind = this._connAuto(dev);
+      g.devices += 1;
+      g.kinds.set(kind, (g.kinds.get(kind) || 0) + 1);
+      groups.set(dom, g);
+    }
+    // Festgelegt, aber gerade ohne Geräte (z. B. ausgeblendet): bleibt zum Zurücksetzen.
+    for (const dom of Object.keys({ ...own, ...saved })) if (!groups.has(dom)) groups.set(dom, { devices: 0, kinds: new Map() });
+    const names = Object.fromEntries((st.data.catalog?.integrations || []).map((x) => [x.domain, x.name]));
+    const name = (dom) => this._integrations[dom] || names[dom] || dom;
+    const list = [...groups.entries()].sort((a, b) => b[1].devices - a[1].devices || name(a[0]).localeCompare(name(b[0])));
+    const head = `<div class="opt bat-own"><div class="opt-line"><span class="opt-label">${escape(t("connIntegTitle"))}</span></div>
+      <div class="opt-short">${escape(t("connIntegShort"))}</div></div>`;
+    if (!list.length) return head;
+    const rows = list
+      .map(([dom, g]) => {
+        const v = own[dom] || "";
+        const detected = [...g.kinds.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${n} ${t(CONN[k].key)}`).join(", ");
+        const opts = [["", t("connIntegAuto")], ...CONN_MANUAL.map((k) => [k, t(CONN[k].key)])]
+          .map(([val, text]) => `<option value="${val}"${val === v ? " selected" : ""}>${escape(text)}</option>`)
+          .join("");
+        return `<div class="ex-row bat-row conn-row${(own[dom] || null) !== (saved[dom] || null) ? " changed" : ""}"><span class="ibadge" style="--h:${hue(dom)}">${escape(initials(name(dom)))}</span>
+          <div class="ex-name">${escape(name(dom))}<small>${escape(t("connIntegDevices", g.devices, detected))}</small></div>
+          <span class="bat-ctl"><span class="opt-select"><select data-conn-integ="${escape(dom)}" aria-label="${escape(`${name(dom)}: ${t("connType")}`)}">${opts}</select>${mdi("chevronDown", 18)}</span></span></div>`;
+      })
+      .join("");
+    return head + `<div class="ex-head"><span>${escape(t("colIntegration"))}</span><span>${escape(t("connType"))}</span></div>${rows}`;
   }
 
   // Geräte mit eigener Einstellung (Batterie oder Meldungen), einzeln oder
@@ -1842,6 +1894,7 @@ class DevicePanel extends HTMLElement {
         this._overridesHtml("battery"),
       integrations: exTable("exclude_integrations", integrations, t("hideIntro")),
       types: exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`),
+      connections: this._connIntegHtml(d),
       push:
         row("notify_service", t("optNotifyTarget"), select("notify_service", targets, t("optNotifyTarget")), t("optNotifyTargetShort"), t("optNotifyTargetInfo")) +
         row("notify_click_target", t("optClick"), select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null) +
@@ -1861,7 +1914,7 @@ class DevicePanel extends HTMLElement {
       updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
     const titles = {
-      detection: "secDetection", battery: "secBattery", integrations: "secIntegrations", types: "secTypes", push: "secPush", display: "secDisplay", updates: "secUpdates",
+      detection: "secDetection", battery: "secBattery", integrations: "secIntegrations", types: "secTypes", connections: "secConnections", push: "secPush", display: "secDisplay", updates: "secUpdates",
     };
     return (
       `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
@@ -2006,6 +2059,14 @@ class DevicePanel extends HTMLElement {
       const el = ev.target;
       if (st?.draft && el.tagName === "SELECT" && el.dataset.opt) {
         st.draft[el.dataset.opt] = el.value;
+        this._renderSettings();
+        return;
+      }
+      if (st?.draft && el.tagName === "SELECT" && el.dataset.connInteg) {
+        const own = { ...(st.draft.connection_integrations || {}) };
+        if (el.value) own[el.dataset.connInteg] = el.value;
+        else delete own[el.dataset.connInteg];
+        st.draft.connection_integrations = own;
         this._renderSettings();
         return;
       }

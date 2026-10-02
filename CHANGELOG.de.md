@@ -7,6 +7,24 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.16.0] - 2026-10-02
+
+Verbindungsart pro Integration.
+
+### Hinzugefügt
+
+- Einstellungen, neuer Abschnitt "Verbindungsart": pro Integration eine
+  Auswahl "Automatisch" oder eine Verbindungsart (Zigbee, Thread, Z-Wave,
+  Matter, Bluetooth, WLAN, LAN, Netzwerk, Cloud). Sie gilt für alle Geräte
+  der Integration statt der Erkennung, auch für richtig erkannte; eine am
+  Gerät von Hand gesetzte Verbindungsart geht weiterhin vor. Jede Zeile
+  zeigt, was die Erkennung gefunden hat ("5 Geräte · erkannt: 4 Zigbee,
+  1 Unbekannt"). Liste, Spalte und Filter-Chips folgen. Auch im
+  Optionsdialog, z. B. "hue: zigbee".
+- Geräte-Popup, Kachel "Verbindungsart": ohne Wahl am Gerät heisst die
+  erste Option "Wie Integration: …", mit Hinweis, wenn die Integration sie
+  festlegt.
+
 ## [0.15.0] - 2026-10-02
 
 Einstellungen bleiben nach dem Speichern offen; Bild der Push-Meldungen
@@ -444,6 +462,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0
 [0.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.11.0
 [0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0

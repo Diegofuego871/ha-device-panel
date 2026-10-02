@@ -126,7 +126,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Entfernen der Integration löscht ihre Dateien (`async_remove_entry`).
    `0.13.0` ohne Release, in `0.14.0` enthalten. Mit `0.15.0` (Nutzer,
    2026-10-02): Einstellungen bleiben nach "Speichern" offen. `0.12.0` bis
-   `0.14.0` ohne Release, in `0.15.0` enthalten. Entschieden (Nutzer, 2026-10-02): Handy A
+   `0.14.0` ohne Release, in `0.15.0` enthalten (`v0.15.0` veröffentlicht).
+   Mit `0.16.0` (Nutzer, 2026-10-02, Variante B): Verbindungsart pro
+   Integration (`connection_integrations`), neuer Abschnitt "Verbindungsart";
+   Vorrang Gerät von Hand, dann Integration, dann Erkennung. Entschieden (Nutzer, 2026-10-02): Handy A
    für Spalten und Sortierung (`docs/mockups/view-v1/`), als Nächstes. Weiter mit Schritt 2 (Spalten,
    Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
    am 2026-10-02 nachgefragt; dazu Filter-Chips der Verbindungsart einzeln

@@ -113,6 +113,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "show_disabled_devices": False,
         "hide_connections": [],
         "connection_order": [],
+        "connection_integrations": {},
         "battery_low": 15,
         "battery_low_integrations": {},
         "battery_push": False,
@@ -172,7 +173,7 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
         "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent",
         "exclude_integrations", "exclude_types", "notify_service", "notify_click_target",
         "notify_outage", "notify_online", "notify_group", "show_service_devices", "show_disabled_devices", "hide_connections",
-        "connection_order", "update_check",
+        "connection_order", "connection_integrations", "update_check",
     ]
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {CONF_UPDATE_CHECK: False, "offline_after": 10.0, "show_disabled_devices": True}
@@ -266,6 +267,16 @@ async def test_options_flow_hide_connections(hass: HomeAssistant, entry) -> None
     result = await hass.config_entries.options.async_init(entry.entry_id)
     with pytest.raises(InvalidData):
         await hass.config_entries.options.async_configure(result["flow_id"], {"hide_connections": ["funk"]})
+
+
+async def test_options_flow_connection_per_integration(hass: HomeAssistant, entry) -> None:
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    # "unbekannt" ist keine Wahl: Fehler am Feld, nichts gespeichert
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"connection_integrations": {"hue": "unknown"}})
+    assert result["errors"] == {"connection_integrations": "connection_map"}
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"connection_integrations": {"hue": "Zigbee", "esphome": "wifi"}})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options["connection_integrations"] == {"esphome": "wifi", "hue": "zigbee"}
 
 
 async def test_options_flow_connection_order(hass: HomeAssistant, entry) -> None:

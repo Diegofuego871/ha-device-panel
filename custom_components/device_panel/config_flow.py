@@ -35,6 +35,7 @@ from .const import (
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_FLAKY_OUTAGES,
+    CONF_CONNECTION_INTEGRATIONS,
     CONF_CONNECTION_ORDER,
     CONF_HIDE_CONNECTIONS,
     CONNECTION_TYPES,
@@ -50,7 +51,7 @@ from .const import (
     INT_RANGES,
     PANEL_TITLE,
 )
-from .options_api import INT_OPTIONS, battery_map, connection_order, current_values, notify_targets, push_time
+from .options_api import INT_OPTIONS, battery_map, connection_map, connection_order, current_values, notify_targets, push_time
 from .push import text
 
 # Einheit der Zahlenfelder im Optionsdialog.
@@ -99,10 +100,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             except vol.Invalid:
                 own = None
                 errors[CONF_BATTERY_LOW_INTEGRATIONS] = "battery_map"
+            try:
+                conns = connection_map(user_input.get(CONF_CONNECTION_INTEGRATIONS))
+            except vol.Invalid:
+                conns = None
+                errors[CONF_CONNECTION_INTEGRATIONS] = "connection_map"
             if not errors:
                 # Bestehende Options erhalten, statt sie zu ersetzen. Leere
                 # Mehrfachauswahl muss die alte überschreiben.
-                data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own}
+                data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own, CONF_CONNECTION_INTEGRATIONS: conns}
                 for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CONNECTIONS):
                     data[key] = sorted(set(user_input.get(key) or []))
                 # Das Zahlenfeld liefert Kommazahlen (2.0); gespeichert wird wie
@@ -188,6 +194,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                             options=list(CONNECTION_TYPES), multiple=True, mode=SelectSelectorMode.DROPDOWN, translation_key="connection"
                         )
                     ),
+                    # Verbindungsart pro Integration als Zuordnung, z. B. "hue: zigbee".
+                    vol.Optional(CONF_CONNECTION_INTEGRATIONS, default=values[CONF_CONNECTION_INTEGRATIONS] or {}): ObjectSelector(),
                     vol.Required(CONF_UPDATE_CHECK, default=values[CONF_UPDATE_CHECK]): bool,
                 }
             ),

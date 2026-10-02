@@ -38,8 +38,10 @@ from .const import (
     CONF_BATTERY_PUSH,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
+    CONF_CONNECTION_INTEGRATIONS,
     CONF_CONNECTION_ORDER,
     CONF_HIDE_CONNECTIONS,
+    CONNECTION_MANUAL,
     CONNECTION_TYPES,
     CONF_FLAKY_OUTAGES,
     CONF_NOTIFY_CLICK,
@@ -107,6 +109,21 @@ def _connections(value: Any) -> list[str]:
     if not isinstance(value, list) or not all(v in CONNECTION_TYPES for v in value):
         raise vol.Invalid("Liste von Verbindungsarten erwartet")
     return sorted(set(value))
+
+
+def connection_map(value: Any) -> dict[str, str]:
+    """Verbindungsart pro Integration {Domain: Art}; "unbekannt" ist keine Wahl."""
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise vol.Invalid("Zuordnung Integration → Verbindungsart erwartet")
+    out: dict[str, str] = {}
+    for domain, kind in value.items():
+        kind = kind.strip().lower() if isinstance(kind, str) else kind
+        if not isinstance(domain, str) or not _DOMAIN_RE.match(domain) or kind not in CONNECTION_MANUAL:
+            raise vol.Invalid("Integration → Verbindungsart erwartet (zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud)")
+        out[domain] = kind
+    return dict(sorted(out.items()))
 
 
 def connection_order(value: Any) -> list[str]:
@@ -178,6 +195,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_EXCLUDE_TYPES): _types,
         vol.Optional(CONF_HIDE_CONNECTIONS): _connections,
         vol.Optional(CONF_CONNECTION_ORDER): connection_order,
+        vol.Optional(CONF_CONNECTION_INTEGRATIONS): connection_map,
         vol.Optional(CONF_BATTERY_LOW_INTEGRATIONS): battery_map,
         vol.Optional(CONF_NOTIFY_SERVICE): _notify_target,
         vol.Optional(CONF_NOTIFY_CLICK): vol.In(CLICK_TARGETS),
@@ -203,6 +221,10 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_HIDE_CONNECTIONS] = sorted({c for c in options.get(CONF_HIDE_CONNECTIONS) or [] if c in CONNECTION_TYPES})
     # Reihenfolge bleibt, wie gespeichert (nicht sortieren); Unbekanntes fällt weg.
     values[CONF_CONNECTION_ORDER] = list(dict.fromkeys(c for c in options.get(CONF_CONNECTION_ORDER) or [] if c in CONNECTION_TYPES))
+    try:
+        values[CONF_CONNECTION_INTEGRATIONS] = connection_map(options.get(CONF_CONNECTION_INTEGRATIONS))
+    except vol.Invalid:
+        values[CONF_CONNECTION_INTEGRATIONS] = {}
     try:
         values[CONF_BATTERY_LOW_INTEGRATIONS] = battery_map(options.get(CONF_BATTERY_LOW_INTEGRATIONS))
     except vol.Invalid:

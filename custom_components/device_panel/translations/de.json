@@ -37,6 +37,7 @@
           "show_disabled_devices": "Deaktivierte Geräte anzeigen",
           "hide_connections": "Filter-Chips der Verbindungsart ausblenden",
           "connection_order": "Reihenfolge der Chips der Verbindungsart",
+          "connection_integrations": "Verbindungsart pro Integration",
           "update_check": "Täglich nach Updates suchen"
         },
         "data_description": {
@@ -61,12 +62,14 @@
           "show_disabled_devices": "In einer eigenen Gruppe am Ende der Liste. Sie werden nicht überwacht.",
           "hide_connections": "Nur die Chips über der Liste; die Geräte bleiben sichtbar. \"Alle\", \"Nur Probleme\" und die Hinweise bleiben immer. Gilt für alle Benutzer.",
           "connection_order": "In der Reihenfolge der Auswahl; nicht gewählte folgen nach Anzahl der Geräte. Leer = nach Anzahl der Geräte. Im Panel per Griff ziehen.",
+          "connection_integrations": "Integration → Verbindungsart, eine pro Zeile, z. B. \"hue: zigbee\". Gilt für alle Geräte der Integration statt der Erkennung; eine am Gerät von Hand gesetzte Verbindungsart geht vor. Arten: zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud.",
           "update_check": "Meldet eine neue Version unter Einstellungen → Reparaturen. Vorabversionen werden hier nie gemeldet."
         }
       }
     },
     "error": {
-      "battery_map": "Jede Zeile muss Integration: ganze Zahl von 5 bis 50 oder off sein (z. B. \"zha: 25\", \"bthome: off\")."
+      "battery_map": "Jede Zeile muss Integration: ganze Zahl von 5 bis 50 oder off sein (z. B. \"zha: 25\", \"bthome: off\").",
+      "connection_map": "Jede Zeile muss Integration: Verbindungsart sein (zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud)."
     }
   },
   "issues": {
