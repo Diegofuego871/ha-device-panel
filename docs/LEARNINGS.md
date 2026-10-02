@@ -238,8 +238,13 @@ hat dort einen echten Fehler oder Umweg gekostet.
 - **Touch-Gesten mit CDP:** Playwright hat kein Touch-Ziehen;
   `Input.dispatchTouchEvent` (touchStart, mehrere touchMove, touchEnd) über
   `ctx.newCDPSession(page)` erzeugt echte Pointer-Ereignisse vom Typ
-  "touch". Danach kurz warten (500 ms), bis der Dialog neu aufgebaut ist;
-  sofort danach ging der nächste Tipp ins Leere. Positionen erst messen,
+  "touch". Danach 1,5 s warten: Chrome 153 (CI, `chromium-headless-shell`)
+  verschluckt bis knapp 1 s nach so einer Folge den Klick des nächsten
+  Tipps (`pointerdown`/`pointerup` kommen, `click` nicht); Chrome 141 lokal
+  nicht. Kein Fehler des Panels (geprüft: kein Nachlauf-Scrollen, ohne
+  Neuaufbau gleich). CI-Fehler mit der Browser-Version der CI nachstellen:
+  `chrome-headless-shell` von `cdn.playwright.dev` ins Scratchpad laden und
+  über `CHROMIUM_PATH` nutzen. Positionen erst messen,
   nachdem die Liste einmal ins Bild gescrollt ist, sonst verschiebt das
   Scrollen das Ziel.
 - **Playwright `click()`** scrollt das Element vorher ins Bild; bei breiten

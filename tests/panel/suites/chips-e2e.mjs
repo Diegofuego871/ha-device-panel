@@ -110,8 +110,11 @@ for (const lang of ["de", "en"]) {
         for (let i = 1; i <= 8; i++) await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: a.x, y: a.y + ((to.y - a.y) * i) / 8 }] });
         await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
         await cdp.detach();
+        // Chrome 153 (CI) verschluckt bis knapp 1 s nach einer Touch-Folge per
+        // CDP den Klick des nächsten Tipps (pointerdown/up kommen, click nicht).
+        await p.waitForTimeout(1500);
       }
-      // Nach dem Loslassen rendert der Dialog neu; erst dann weiter tippen
+      // Nach dem Loslassen rendert der Dialog neu; erst dann weiter
       await p.waitForTimeout(500);
     };
     await openDisplay();
