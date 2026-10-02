@@ -295,6 +295,11 @@ auftritt (HA-Frontend, nicht das Panel).
 - Struktur: `custom_components/<domain>/`, `hacs.json` im Repo-Root,
   `manifest.json` mit `version`, `documentation`, `issue_tracker`,
   `codeowners`, `iot_class`, `integration_type`.
+- **Bild der Push-Meldung mit Rand:** iOS zeigt `icon_url` als Absender-Bild
+  in einem abgerundeten Quadrat (Android oft rund) und schneidet dabei die
+  Ecken ab. Ein knapp zugeschnittenes Icon verliert sie; eigenes Bild mit
+  rund 20 % Rand. Neuer Dateiname bzw. Pfad, damit kein Zwischenspeicher
+  das alte Bild weiter zeigt.
 - Logo/Icon: `custom_components/<domain>/brand/icon.png` und `logo.png`
   (HA ≥ 2026.3 lädt Brand-Bilder lokal), optional zusätzlich PR an
   home-assistant/brands.

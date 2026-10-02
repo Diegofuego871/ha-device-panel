@@ -19,6 +19,7 @@ from custom_components.device_panel.const import (
 )
 
 BRAND = Path(__file__).resolve().parents[1] / "custom_components" / "device_panel" / "brand"
+PUSH = BRAND.parent / "push"
 
 
 def _png_header(path: Path) -> tuple[int, int, int]:
@@ -45,6 +46,17 @@ def test_brand_images(name: str, size: tuple[int, int]) -> None:
     assert color_type == 6
 
 
+def test_push_image_has_margin() -> None:
+    """
+    Push-Bild mit Rand (iOS schneidet in ein abgerundetes Quadrat): 512 × 512
+    mit Alphakanal. Grösser als das Brand-Icon, damit es auf dem Handy
+    scharf bleibt.
+    """
+    width, height, color_type = _png_header(PUSH / "icon.png")
+    assert (width, height, color_type) == (512, 512, 6)
+    assert (PUSH / "icon.png").read_bytes() != (BRAND / "icon.png").read_bytes()
+
+
 async def _setup(hass: HomeAssistant) -> MockConfigEntry:
     entry = MockConfigEntry(domain=DOMAIN, title="Device Panel")
     entry.add_to_hass(hass)
@@ -61,9 +73,9 @@ async def test_push_image_served_without_login(hass: HomeAssistant, hass_client_
     resp = await client.get(PUSH_IMAGE_URL)
     assert resp.status == 200
     assert resp.content_type == "image/png"
-    assert await resp.read() == (BRAND / "icon.png").read_bytes()
+    assert await resp.read() == (PUSH / "icon.png").read_bytes()
 
-    # /device_panel zeigt auf brand/, /device_panel/panel weiter auf panel/.
+    # /device_panel/push zeigt auf push/, /device_panel/panel weiter auf panel/.
     resp = await client.get(f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}")
     assert resp.status == 200
     assert "<device-panel>" in await resp.text()

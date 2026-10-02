@@ -65,8 +65,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `custom_components/device_panel/brand/` (Masse wie unifi_dynamic), Quellen
   in `docs/brand/` (siehe `docs/DESIGN.md`, Abschnitt "Icon und Logo").
 - Push-Meldungen: Batterie (sofort oder täglich), Ausfall, wieder online,
-  Sammelausfall; `brand/` wird ohne Anmeldung unter `/device_panel/`
-  ausgeliefert (`hass.data[DATA_PUSH_IMAGE]` für `icon_url`). Siehe
+  Sammelausfall; `push/` (Bild mit Rand) wird ohne Anmeldung unter
+  `/device_panel/push/` ausgeliefert (`hass.data[DATA_PUSH_IMAGE]` für `icon_url`). Siehe
   `docs/CONCEPT.md`, Abschnitt "Push-Meldungen".
 - CI: Python-Tests, Panel-Tests (DE/EN), Hassfest und HACS-Prüfung grün
   (Beschreibung und Topics sind gesetzt).

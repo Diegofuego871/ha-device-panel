@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [0.15.0] - 2026-10-02
 
-Settings stay open after saving.
+Settings stay open after saving; push image no longer cut off.
 
 ### Changed
 
@@ -17,6 +17,12 @@ Settings stay open after saving.
   "Saved" next to the buttons and reloads the saved state; open sections
   and the scroll position stay. Without unsaved changes the left button
   reads "Close" instead of "Cancel".
+
+### Fixed
+
+- Push notifications: the "D" symbol was cut off at the corners on the
+  phone (iOS shows the image in a rounded square). Notifications now use
+  their own image with a margin (`/device_panel/push/icon.png`).
 
 ## [0.14.0] - 2026-10-02
 

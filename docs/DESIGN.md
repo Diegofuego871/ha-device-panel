@@ -78,7 +78,10 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   `icon@2x.png` 512 × 512, `logo.png` 256 × 295, `logo@2x.png` 512 × 590,
   gerendert mit Chromium (transparenter Hintergrund). `tests/test_brand.py`
   prüft Masse und Alphakanal.
-- `brand/icon.png` ist zugleich das Bild der Push-Meldungen.
+- Push-Meldungen haben ein eigenes Bild: `push/icon.png` 512 × 512 aus
+  `docs/brand/push.svg` (dieselben Pfade, `viewBox="-4 -4 264 264"`, also
+  rund 20 % Rand). iOS schneidet es in ein abgerundetes Quadrat, Android oft
+  rund; das Brand-Icon selbst bleibt knapp zugeschnitten.
 
 ## Layout
 

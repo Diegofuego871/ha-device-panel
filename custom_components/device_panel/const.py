@@ -21,8 +21,12 @@ PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 # registriert und ist damit ohne Anmeldung abrufbar, wie /local/. Nur so kann
 # die Companion-App das Bild laden. Nichts zu konfigurieren.
 BRAND_DIR = "brand"
+# Eigenes Bild mit Rand: iOS schneidet das Bild einer Push-Meldung in ein
+# abgerundetes Quadrat, das knapp zugeschnittene Brand-Icon verlor die Ecken.
+PUSH_DIR = "push"
 PUSH_IMAGE_FILE = "icon.png"
-PUSH_IMAGE_URL = f"{STATIC_URL_PATH}/{PUSH_IMAGE_FILE}"
+PUSH_STATIC_URL_PATH = f"{STATIC_URL_PATH}/{PUSH_DIR}"
+PUSH_IMAGE_URL = f"{PUSH_STATIC_URL_PATH}/{PUSH_IMAGE_FILE}"
 
 DATA_PANEL_REGISTERED = f"{DOMAIN}_panel_registered"
 # URL des Push-Bilds oder None, wenn es nicht bereitgestellt werden konnte.

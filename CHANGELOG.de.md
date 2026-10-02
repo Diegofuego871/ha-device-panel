@@ -9,7 +9,8 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [0.15.0] - 2026-10-02
 
-Einstellungen bleiben nach dem Speichern offen.
+Einstellungen bleiben nach dem Speichern offen; Bild der Push-Meldungen
+nicht mehr abgeschnitten.
 
 ### Geändert
 
@@ -18,6 +19,13 @@ Einstellungen bleiben nach dem Speichern offen.
   neu; aufgeklappte Abschnitte und die Scrollposition bleiben. Ohne
   ungespeicherte Änderungen heisst der linke Knopf "Schliessen" statt
   "Abbrechen".
+
+### Behoben
+
+- Push-Meldungen: Das "D"-Symbol war auf dem Handy an den Ecken
+  abgeschnitten (iOS zeigt das Bild in einem abgerundeten Quadrat). Die
+  Meldungen haben jetzt ein eigenes Bild mit Rand
+  (`/device_panel/push/icon.png`).
 
 ## [0.14.0] - 2026-10-02
 

@@ -27,7 +27,6 @@ from .const import (
     CONF_BATTERY_LOW,
     CONF_NOTIFY_SERVICE,
     INT_RANGES,
-    BRAND_DIR,
     DATA_AVAILABILITY,
     DATA_BATTERY,
     DATA_CONNECTION_OVERRIDES,
@@ -46,9 +45,10 @@ from .const import (
     PANEL_STATIC_URL_PATH,
     PANEL_TITLE,
     PANEL_URL_PATH,
+    PUSH_DIR,
     PUSH_IMAGE_FILE,
     PUSH_IMAGE_URL,
-    STATIC_URL_PATH,
+    PUSH_STATIC_URL_PATH,
     STORAGE_VERSION,
 )
 from .devices import (
@@ -70,7 +70,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async_mark_start(hass)
-    await _async_register_brand_path(hass)
+    await _async_register_push_path(hass)
     await _async_register_panel(hass)
     _async_register_websocket_commands(hass)
     # Typ von Hand und Einstellungen pro Gerät vor dem Protokoll: beide
@@ -136,9 +136,9 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 # ---------------------------------------------------------------------------
 
 
-async def _async_register_brand_path(hass: HomeAssistant) -> None:
+async def _async_register_push_path(hass: HomeAssistant) -> None:
     """
-    Macht den Ordner brand/ unter STATIC_URL_PATH abrufbar.
+    Macht den Ordner push/ unter PUSH_STATIC_URL_PATH abrufbar.
 
     Statische Pfade werden ohne Authentifizierung ausgeliefert, genau wie
     /local/. Nur so kann die Companion-App das Bild einer Push-Meldung laden.
@@ -148,22 +148,22 @@ async def _async_register_brand_path(hass: HomeAssistant) -> None:
     if DATA_PUSH_IMAGE in hass.data:
         return
 
-    brand_path = Path(__file__).parent / BRAND_DIR
-    if not await hass.async_add_executor_job((brand_path / PUSH_IMAGE_FILE).is_file):
+    push_path = Path(__file__).parent / PUSH_DIR
+    if not await hass.async_add_executor_job((push_path / PUSH_IMAGE_FILE).is_file):
         hass.data[DATA_PUSH_IMAGE] = None
         _LOGGER.debug("%s fehlt, Push-Meldungen kommen ohne Bild", PUSH_IMAGE_FILE)
         return
 
     try:
         await hass.http.async_register_static_paths(
-            [StaticPathConfig(STATIC_URL_PATH, str(brand_path), True)]
+            [StaticPathConfig(PUSH_STATIC_URL_PATH, str(push_path), True)]
         )
     except Exception as err:  # noqa: BLE001 - das Bild ist nur Kosmetik
         hass.data[DATA_PUSH_IMAGE] = None
         _LOGGER.warning(
             "Statischer Pfad %s konnte nicht registriert werden (%s), "
             "Push-Meldungen kommen ohne Bild",
-            STATIC_URL_PATH,
+            PUSH_STATIC_URL_PATH,
             err,
         )
         return

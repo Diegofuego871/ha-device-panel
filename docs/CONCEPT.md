@@ -435,15 +435,18 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   einem Neustart, die Rückkehr kommt trotzdem. Standard: alles aus ausser
   Sammelausfall.
 
-- Bild: `brand/icon.png` (das gewählte Icon) wird beim Setup als statischer
-  Pfad ohne Anmeldung unter `/device_panel/icon.png` ausgeliefert, sonst
-  kann die Companion-App es nicht laden. `hass.data[DATA_PUSH_IMAGE]` hält
+- Bild: `push/icon.png` (das gewählte Icon mit Rand, 512 × 512, Quelle
+  `docs/brand/push.svg`) wird beim Setup als statischer Pfad ohne Anmeldung
+  unter `/device_panel/push/icon.png` ausgeliefert, sonst kann die
+  Companion-App es nicht laden. Bis 0.14.0 war es `brand/icon.png`; iOS
+  schneidet das Bild in ein abgerundetes Quadrat, das knapp zugeschnittene
+  Brand-Icon verlor die Ecken (Nutzer, 2026-10-02). `hass.data[DATA_PUSH_IMAGE]` hält
   die URL, oder None, wenn das Bereitstellen scheiterte (dann ohne Bild).
 
 Für den Versand zu übernehmen:
 
-- Zusatzdaten (`notification_data`): `icon_url` = Bild (nur Android zeigt es
-  an), `url` (iOS) und `clickAction` (Android) = Klickziel, z. B. Deep-Link
+- Zusatzdaten (`notification_data`): `icon_url` = Bild (Android; iOS zeigt es
+  in neueren Versionen als Absender-Bild, beschnitten), `url` (iOS) und `clickAction` (Android) = Klickziel, z. B. Deep-Link
   in die Geräteansicht, `tag` = welche Meldungen sich ersetzen, optional
   `actions`.
 - Versand (`_async_push`): `notify.<dienst>`; lehnt ein Ziel die
