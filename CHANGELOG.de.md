@@ -7,7 +7,29 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.18.0] - 2026-10-02
+
+Verfügbarkeitsprotokoll aus dem Recorder nachgefüllt.
+
+### Hinzugefügt
+
+- Einmal nach dem Update oder der Installation füllt die Integration das
+  Verfügbarkeitsprotokoll aus dem Verlauf des Recorders nach, für die Zeit
+  vor dem ersten Eintrag jedes Geräts, so weit der Recorder Daten hat
+  (Standard 10 Tage, höchstens 31 Tage). Es gilt dieselbe Regel wie bei der
+  laufenden Erkennung: ausgefallen nur, wenn alle Entitäten, die zeigen,
+  dass das Gerät lebt, mindestens "Ausgefallen nach" nicht verfügbar sind,
+  kein Ausfall, wenn das Gerät in der Anlaufphase nach einem Start
+  zurückkommt, und Zeit, in der Home Assistant nicht lief, gilt als "keine
+  Daten". Läuft im Hintergrund zwei Minuten nach dem Start und schickt für
+  vergangene Ausfälle keine Meldungen. Grenzen: höchstens 3 Entitäten pro
+  Gerät, ruhige zuerst (Verbindungssensor, dann alles ausser Sensoren);
+  Entitäten mit sehr vielen Wechseln fallen weg; ein Absturz von Home
+  Assistant erscheint nicht als Lücke.
+
 ## [0.17.0] - 2026-10-02
+
+Nicht veröffentlicht; enthalten in 0.18.0.
 
 Filter folgen der Suche, neuer Chip "Batterie", Verbindungsart von Hand als
 eigene Einstellung.
@@ -492,7 +514,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[0.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.17.0
+[0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0
 [0.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.11.0

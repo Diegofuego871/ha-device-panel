@@ -7,7 +7,28 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.18.0] - 2026-10-02
+
+Availability log filled from the recorder.
+
+### Added
+
+- Once after the update or installation, the availability log is filled
+  from the recorder history for the time before the first entry of each
+  device, as far back as the recorder keeps data (default 10 days, at most
+  31 days). The same rule as the ongoing detection applies: offline only
+  when all entities that show the device is alive are unavailable for at
+  least "Offline after", no outage when the device is back within the grace
+  period after a start, and time when Home Assistant was not running counts
+  as "no data". It runs in the background two minutes after the start and
+  sends no notifications for past outages. Limits: up to 3 entities per
+  device, quiet ones first (connectivity sensor, then everything except
+  sensors); entities with very many changes are skipped; a crash of Home
+  Assistant does not show as a gap.
+
 ## [0.17.0] - 2026-10-02
+
+Not released; included in 0.18.0.
 
 Filters follow the search, new chip "Battery", connection type by hand as
 an own setting.
@@ -469,7 +490,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[0.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.17.0
+[0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0
 [0.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.11.0

@@ -92,7 +92,7 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    Funkweg, Empfangsverlauf, Einstellungen pro Gerät.
 6. **Verfügbarkeitsprotokoll:** Unterbrüche, 24 Std. / 7 / 30 Tage,
    "instabil" bei vielen Unterbrüchen (siehe "Verfügbarkeitsprotokoll").
-   Umgesetzt in 0.3.0b1; Recorder-Nachfüllen offen.
+   Umgesetzt in 0.3.0b1; Recorder-Nachfüllen in 0.18.0.
 7. **Push-Meldungen** mit einstellbarem Inhalt wie unifi_dynamic, Klickziel,
    Entwarnung, anhaltende Benachrichtigung (siehe "Push-Meldungen").
 8. **Ideen** (aus den Mockups, vom Nutzer angenommen): Gesundheitswert pro
@@ -296,8 +296,25 @@ Umgesetzt in 0.3.0b1 (`availability.py`).
   (Kurzfassung und 48 Abschnitte à 30 Min.), dazu `pulse` und `incidents`;
   `device_panel/device` die Entitäten und Kurzstatistik 24 Std./7 Tage;
   `device_panel/availability` den Verlauf für 24 Std., 7 oder 30 Tage.
-- Optional einmaliges Nachfüllen aus dem Recorder (History) für die ersten
-  Tage nach der Installation.
+- Einmaliges Nachfüllen aus dem Recorder (seit 0.18.0, Nutzer, 2026-10-02:
+  "ja übernehmen"; `backfill.py`): zwei Minuten nach dem Start, im
+  Hintergrund über den Executor des Recorders, für jedes überwachte Gerät
+  mit Einträgen die Zeit vor seinem ersten Ereignis (höchstens 31 Tage,
+  praktisch so weit der Recorder reicht, Standard 10 Tage). Regel wie die
+  Bewertung: weg, wenn alle gewählten lebenden Entitäten weg sind
+  (Verbindungssensor: aus oder nicht verfügbar, sonst nicht verfügbar);
+  Ausfall erst ab "Ausgefallen nach"; Anlaufphase ab jedem Start eines
+  Recorder-Laufs; zwischen zwei Läufen "keine Daten". Ein Ausfall, der beim
+  ersten eigenen Ereignis noch läuft (Protokoll beginnt mit "ausgefallen"),
+  zählt auch kürzer. Grenzen für grosse Installationen: höchstens 3
+  Entitäten pro Gerät, ruhige zuerst (Verbindungssensor, dann keine
+  Sensoren, Messwerte wie Leistung zuletzt), Entitäten mit 20 000 oder mehr
+  Wechseln im Zeitraum fallen weg. Ein Absturz erscheint nicht als Lücke
+  (der Recorder schliesst den Lauf erst mit dem nächsten Start). Merker
+  `backfilled` im Protokoll: einmal pro Instanz; ohne Recorder oder während
+  einer Datenbank-Migration kein Merker (später erneut), bei einem Fehler
+  Merker trotzdem (nicht bei jedem Start erneut scheitern). Keine Meldungen
+  für vergangene Ausfälle.
 - Speichern über `storage_util.PeriodicSaver` (siehe LEARNINGS).
 
 ## Panel (Aufbau wie unifi_dynamic)
@@ -488,6 +505,7 @@ Für den Versand zu übernehmen:
    oben, 2 Min.).
 2. ~~Ausgeblendete Geräte~~: entschieden (Dienst-Geräte, deaktivierte
    Geräte, Geräte ohne Entitäten).
-3. Recorder-Nachfüllen beim ersten Start: ja/nein. Offen, mit Schritt 6.
+3. ~~Recorder-Nachfüllen beim ersten Start~~: ja (Nutzer, 2026-10-02),
+   umgesetzt in 0.18.0.
 4. ~~Domain/Name~~: `device_panel` / "Device Panel" (HACS-Repo
    `ha-device-panel`).

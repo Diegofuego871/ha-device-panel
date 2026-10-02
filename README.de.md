@@ -59,7 +59,9 @@ Bereich.
 - Verfügbarkeitsprotokoll über 31 Tage in einer eigenen Datei (nicht im
   Recorder). Zeit, in der Home Assistant nicht lief, gilt als "keine Daten",
   nie als eigener Ausfall; die Balken zeigen sie so. War ein Gerät davor und
-  danach ausgefallen, zählen die Zahlen das als einen Ausfall.
+  danach ausgefallen, zählen die Zahlen das als einen Ausfall. Einmal nach
+  der Installation füllt die Integration das Protokoll aus dem Verlauf des
+  Recorders nach, so weit dieser Daten hat.
 - Ganze Integrationen oder Gerätetypen ausblenden (Einstellungen im Panel
   oder Optionsdialog der Integration): ausgeblendete Geräte werden weder
   gezeigt noch überwacht. Wahlweise Dienst-Geräte (z. B. Sonne, Add-ons)

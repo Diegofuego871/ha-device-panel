@@ -54,7 +54,9 @@ details such as software version, manufacturer, model and area.
 - Availability log for 31 days in its own file (not the recorder). Time when
   Home Assistant was not running counts as "no data", never as an outage of
   its own; the bars show it as such. If a device was offline before and
-  after, the numbers count it as one outage.
+  after, the numbers count it as one outage. Once after the installation
+  the log is filled from the recorder history, as far back as the recorder
+  keeps data.
 - Hide whole integrations or device types (settings in the panel or options
   dialog of the integration): hidden devices are neither shown nor
   monitored. Optionally show service devices (e.g. sun, add-ons) and

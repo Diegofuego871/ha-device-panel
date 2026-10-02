@@ -17,10 +17,14 @@ Zeit ohne Daten zwischen zwei Ausfall-Abschnitten (Neustart, Absturz, eine
 Weile nicht überwacht), läuft der Ausfall durch: Zahlen und Dauer zählen ihn
 einmal, ab dem ersten Abschnitt (bridged). Die Balken zeigen weiter, was HA
 beobachtet hat, die Lücke also als "keine Daten".
+
+Einmal pro Instanz füllt backfill.py die Zeit vor dem ersten Ereignis eines
+Geräts aus dem Recorder nach (Merker "backfilled").
 """
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from collections.abc import Callable
@@ -30,7 +34,7 @@ from typing import Any
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.event import async_call_later, async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
@@ -52,6 +56,9 @@ SAVE_DELAY = 300
 INCIDENT_MIN = 3
 INCIDENT_WINDOW = 120
 RANGES = {"24h": 86400, "7d": 7 * 86400, "30d": 30 * 86400}
+# Nachfüllen aus dem Recorder so lange nach dem Start: nicht mitten in die
+# Last des Hochfahrens.
+BACKFILL_DELAY = 120
 # Anteil online erst ab so viel Daten: nach wenigen Minuten hiesse ein kurzer
 # Unterbruch sonst "50 %". Gleicher Wert im Panel (PCT_MIN_COVERED).
 PCT_MIN_COVERED = 3600
@@ -165,9 +172,17 @@ class AvailabilityLog:
         # Einmal-Listener: nach dem Auslösen nicht mehr abmelden (HA warnt sonst).
         self._unsub_started: CALLBACK_TYPE | None = None
         self._unsub_stop: CALLBACK_TYPE | None = None
+        # Nachfüllen aus dem Recorder: wann erledigt (einmal pro Instanz).
+        self._backfilled: float | None = None
+        self._unsub_backfill: CALLBACK_TYPE | None = None
+        self._backfill_task: asyncio.Task[int] | None = None
+        self._closed = False
 
     def _data(self) -> dict[str, Any]:
-        return {"heartbeat": time.time(), "devices": self._events}
+        data: dict[str, Any] = {"heartbeat": time.time(), "devices": self._events}
+        if self._backfilled is not None:
+            data["backfilled"] = self._backfilled
+        return data
 
     async def async_start(self) -> None:
         try:
@@ -187,6 +202,8 @@ class AvailabilityLog:
                 }
             if isinstance(stored.get("heartbeat"), (int, float)):
                 heartbeat = float(stored["heartbeat"])
+            if isinstance(stored.get("backfilled"), (int, float)):
+                self._backfilled = float(stored["backfilled"])
         # Frühere Versionen schrieben bei jedem Neustart für ausgefallene
         # Geräte ein "online" ohne Dauer (gleiche Zeit wie der folgende
         # Ausfall); es trennte den Ausfall vor dem Neustart von dem danach.
@@ -217,6 +234,57 @@ class AvailabilityLog:
     def _start_ticking(self) -> None:
         self._unsub_tick = async_track_time_interval(self.hass, self._async_tick, EVAL_INTERVAL)
         self.evaluate()
+        if self._backfilled is None and "recorder" in self.hass.config.components:
+            self._unsub_backfill = async_call_later(self.hass, BACKFILL_DELAY, self._on_backfill_timer)
+
+    @callback
+    def _on_backfill_timer(self, _now: datetime) -> None:
+        self._unsub_backfill = None
+        self._backfill_task = self.hass.async_create_background_task(self.async_backfill(), f"{DOMAIN} backfill")
+
+    async def async_backfill(self, now: float | None = None) -> int:
+        """
+        Zeit vor dem ersten Ereignis je Gerät aus dem Recorder nachfüllen,
+        einmal. Gibt die Zahl der ergänzten Geräte zurück. Meldet keine
+        Wechsel an die Zuhörer: es sind vergangene Ereignisse.
+        """
+        from homeassistant.helpers.recorder import async_migration_in_progress  # noqa: PLC0415
+
+        from .backfill import async_backfill  # noqa: PLC0415
+
+        if self._backfilled is not None or "recorder" not in self.hass.config.components:
+            return 0
+        if async_migration_in_progress(self.hass):
+            # Datenbank wird umgebaut: beim nächsten Start erneut.
+            return 0
+        now = now if now is not None else time.time()
+        opts = effective(self.hass)
+        devices = [(device.id, entries) for device, entries in monitored_devices(self.hass, opts)]
+        firsts = {dev: list(evs[0]) for dev, evs in self._events.items() if evs}
+        try:
+            found = await async_backfill(
+                self.hass, devices, firsts, now, KEEP_DAYS, opts[CONF_OFFLINE_AFTER] * 60, opts[CONF_STARTUP_GRACE] * 60
+            )
+        except Exception:  # noqa: BLE001
+            # Nicht bei jedem Start erneut versuchen: ein Fehler hier wiederholt sich.
+            _LOGGER.warning("Nachfüllen aus dem Recorder fehlgeschlagen", exc_info=True)
+            found = {}
+        if self._closed:
+            # Inzwischen entladen (oder entfernt): nichts mehr schreiben.
+            return 0
+        filled = 0
+        for dev, add in found.items():
+            events = self._events.get(dev)
+            if not events:
+                continue
+            add = [e for e in add if e[0] < events[0][0]]
+            if add:
+                self._events[dev] = add + events
+                filled += 1
+        self._backfilled = now
+        _LOGGER.info("Verfügbarkeitsprotokoll aus dem Recorder nachgefüllt: %d Geräte", filled)
+        await self._saver.async_save()
+        return filled
 
     async def _async_tick(self, _now: datetime) -> None:
         self.evaluate()
@@ -227,6 +295,7 @@ class AvailabilityLog:
 
     async def _async_close(self) -> None:
         """Ab jetzt keine Daten; sofort schreiben."""
+        self._closed = True
         now = time.time()
         for events in self._events.values():
             if events and events[-1][1] is not None:
@@ -235,11 +304,13 @@ class AvailabilityLog:
 
     async def async_stop(self) -> None:
         """Beim Entladen: Timer und Listener lösen, Lücke ab jetzt, schreiben."""
-        for name in ("_unsub_tick", "_unsub_started", "_unsub_stop"):
+        for name in ("_unsub_tick", "_unsub_started", "_unsub_stop", "_unsub_backfill"):
             unsub = getattr(self, name)
             if unsub is not None:
                 unsub()
                 setattr(self, name, None)
+        if self._backfill_task is not None and not self._backfill_task.done():
+            self._backfill_task.cancel()
         await self._async_close()
 
     @callback

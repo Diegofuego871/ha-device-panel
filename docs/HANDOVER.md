@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.17.0, Filter und Batterie-Chip)
+## Stand (0.18.0, Recorder-Nachfüllen)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -53,7 +53,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `set_options`. Welche Geräte gezeigt werden, entscheidet nur das Backend
   (`devices.listed_devices`, Protokoll `monitored_devices`).
 - Verfügbarkeitsprotokoll (`availability.py`, `.storage/device_panel.availability`,
-  31 Tage), siehe `docs/CONCEPT.md`, "Verfügbarkeitsprotokoll".
+  31 Tage), siehe `docs/CONCEPT.md`, "Verfügbarkeitsprotokoll". Seit 0.18.0
+  einmal aus dem Recorder nachgefüllt (`backfill.py`, Merker `backfilled`;
+  `recorder` in `after_dependencies`).
 - Panel in Design C: Kopf mit Ring (Ø 24 Std.), Ausfall-Tafel und
   Ausfall-Puls; Chips nach Verbindungsart, "Nur Probleme" und Hinweisen;
   Gruppen ausgefallen, instabil, keine Daten, online; erste Spalte fixiert;
@@ -135,11 +137,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Einstellung" (Symbol, Chip, Zurücksetzen); Chip-Zahlen mit Suche und
    übrigen Filtern, aktiver Chip abwählbar, X im Suchfeld, Chip "Batterie",
    Kopf-Kacheln auf dem Handy gleich hoch, Prozent erst ab 1 Std. Daten
-   (Entscheid Claude, vom Nutzer übertragen). Als Nächstes, vom Nutzer
-   bestätigt: Recorder-Nachfüllen des Protokolls (`0.18.0`), Empfang pro
+   (Entscheid Claude, vom Nutzer übertragen). Mit `0.18.0`: Nachfüllen des
+   Protokolls aus dem Recorder. Als Nächstes, vom Nutzer bestätigt: Empfang pro
    Gerät akzeptieren bzw. eigene Schwelle ("Eigene Einstellung" wie
-   Batterie), Batterie-Verlauf im Popup (24 Std., 7, 30, 90 Tage, Kurve),
-   dann die Backlog-Punkte 2–7 (Spalten pro Benutzer, Bereichsfilter,
+   Batterie), Batterie-Verlauf im Popup (24 Std., 7, 30, 90 Tage, Kurve);
+   Mockups dazu in `docs/mockups/signal-v1/` und
+   `docs/mockups/battery-history-v1/` (Empfehlung jeweils A, Entscheid des
+   Nutzers offen); dann die Backlog-Punkte 2–7 (Spalten pro Benutzer, Bereichsfilter,
    Ausfall-Meldungen erweitert, Überwachungsebenen, Geräteansicht,
    Empfangs- und Batterieprotokoll). Entschieden (Nutzer, 2026-10-02): Handy A
    für Spalten und Sortierung (`docs/mockups/view-v1/`), als Nächstes. Weiter mit Schritt 2 (Spalten,

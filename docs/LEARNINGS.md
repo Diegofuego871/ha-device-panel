@@ -260,6 +260,13 @@ hat dort einen echten Fehler oder Umweg gekostet.
   über `CHROMIUM_PATH` nutzen. Positionen erst messen,
   nachdem die Liste einmal ins Bild gescrollt ist, sonst verschiebt das
   Scrollen das Ziel.
+- **Recorder in Python-Tests:** `recorder_mock` muss vor `hass` entstehen;
+  die automatischen Fixtures in `conftest.py` brauchen `hass` aber schon
+  vorher ("assert not hass_fixture_setup"). Im Testmodul die Fixture
+  `mock_recorder_before_hass` mit `async_test_recorder` überschreiben (so
+  macht es HA selbst). Verlauf in der Vergangenheit: `freezer.move_to`,
+  `hass.states.async_set`, `async_wait_recording_done`. Der Lauf des
+  Recorders beginnt dabei zur echten Zeit, also nach der eingefrorenen.
 - **Playwright `click()`** scrollt das Element vorher ins Bild; bei breiten
   Tabellenzeilen verschiebt das die Tabelle seitlich. Für Prüfungen auf die
   Scrollposition mit `page.mouse.click(x, y)` klicken.
@@ -286,6 +293,14 @@ legt ein Gerät mit einer Lampe an (`should_poll`, alle 10 s), die nicht
 verfügbar ist, solange eine Datei existiert; Datei anlegen, Ausfall
 abwarten, HA stoppen und starten, Liste, Protokoll und Pushes prüfen.
 "Ausgefallen nach" und Anlaufphase auf 1 Min. stellen spart Wartezeit.
+Nachfüllen aus dem Recorder prüfen (0.18.0): `recorder:` in die
+Konfiguration, einen Lauf mit einem Ausfall aufzeichnen, HA stoppen, das
+Protokoll vor einem Zeitpunkt nach dem Ausfall kürzen (wie eine frische
+Installation) und den Merker `backfilled` löschen, starten und 2 Min.
+warten; der Ausfall muss wieder im Protokoll stehen. Achtung: Ein Gerät mit
+einem zweiten lebenden Sensor (z. B. Batterie ohne Kategorie) fällt nie
+ganz aus, live wie beim Nachfüllen; die Kategorie in der Registry
+überschreibt die Integration beim Start, `hidden_by` bleibt.
 `recorder/info` scheitert ohne Recorder; das ist harmlos. Ebenso
 ein `pageerror` "Object" beim Laden, der auch auf `/config/dashboard`
 auftritt (HA-Frontend, nicht das Panel).
