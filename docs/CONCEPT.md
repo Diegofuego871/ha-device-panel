@@ -45,7 +45,12 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    ausgefallen und seit wann.
 2. **Spalten und Ansicht pro Benutzer:** Spalten ein-/ausblenden und
    verschieben, Sortierung und Filter gespeichert, getrennt für Desktop und
-   Handy (siehe "Pflicht", Abschnitt 3).
+   Handy (siehe "Pflicht", Abschnitt 3). Mockups `docs/mockups/view-v1/`.
+   Dazu (Nutzer, 2026-10-02): Filter-Chips der Verbindungsart einzeln
+   ausblendbar, standardmässig alle sichtbar; "Alle" und die hinteren Chips
+   ("Nur Probleme", Hinweise, "Eigene Einstellung") bleiben immer.
+   **To-do** (Nutzer, 2026-10-02): Filter nach Bereich, damit jeder nach
+   seinen Bereichen filtern kann; Form offen, Mockup vor der Umsetzung.
 3. **Einstellungsmenü im Panel**, das alle Optionen der Integration abbildet
    (siehe "Pflicht", Abschnitt 1). Darin pro Integration: anzeigen, Push,
    anhaltende Benachrichtigung. Grundgerüst umgesetzt in 0.4.0 (Zahnrad,

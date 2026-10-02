@@ -103,7 +103,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Offen: Entscheid Handy A oder B für Spalten und
    Sortierung (`docs/mockups/view-v1/`, Empfehlung A). Weiter mit Schritt 2 (Spalten,
    Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
-   am 2026-10-02 nachgefragt) und dem Rest von Schritt 7 (anhaltende
+   am 2026-10-02 nachgefragt; dazu Filter-Chips der Verbindungsart einzeln
+   ausblendbar und, auf der To-do-Liste, ein Filter nach Bereich, siehe
+   `docs/CONCEPT.md`, Fahrplan Schritt 2) und dem Rest von Schritt 7 (anhaltende
    Benachrichtigung bei Ausfällen, Spalten Push/Anhaltend bei den
    Integrationen nach Bild 5, Aktionen in Meldungen);
    `docs/CONCEPT.md`, "Pflicht"; Vorlagen in `docs/reference/`. Offene Frage an den Nutzer: Prozentwerte erst ab
