@@ -146,8 +146,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    wie Batterie), Batterie-Verlauf im Popup (24 Std., 7, 30, 90 Tage,
    Kurve); Mockups dazu in `docs/mockups/signal-v1/` und
    `docs/mockups/battery-history-v1/` (Empfehlung jeweils A, Entscheid des
-   Nutzers offen); dann die Backlog-Punkte 3–7: Filter nach Bereich (Form
-   offen, Mockup vor der Umsetzung), Rest von Schritt 7 (anhaltende
+   Nutzers offen); dann die Backlog-Punkte 3–7: Filter nach Bereich (Mockups
+   in `docs/mockups/area-v1/`, Empfehlung A, Entscheid offen), Rest von Schritt 7 (anhaltende
    Benachrichtigung bei Ausfällen, Spalten Push/Anhaltend bei den
    Integrationen nach Bild 5, Aktionen in Meldungen), Überwachungsebenen,
    Geräteansicht (Ursache, Funkweg, Empfangsverlauf, Gesundheit), Empfangs-

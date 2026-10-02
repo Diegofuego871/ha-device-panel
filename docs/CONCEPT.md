@@ -71,7 +71,8 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    Ein aktiver Chip lässt sich mit einem zweiten Tipp abwählen. Neuer Chip
    "Batterie" (alle Geräte mit Batterie, je Gruppe nach Stand sortiert).
    **To-do** (Nutzer, 2026-10-02): Filter nach Bereich, damit jeder nach
-   seinen Bereichen filtern kann; Form offen, Mockup vor der Umsetzung.
+   seinen Bereichen filtern kann. Mockups `docs/mockups/area-v1/`
+   (Empfehlung A: Chip "Bereich" mit Auswahl nach Etagen), Entscheid offen.
 3. **Einstellungsmenü im Panel**, das alle Optionen der Integration abbildet
    (siehe "Pflicht", Abschnitt 1). Darin pro Integration: anzeigen, Push,
    anhaltende Benachrichtigung. Grundgerüst umgesetzt in 0.4.0 (Zahnrad,
