@@ -7,6 +7,31 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.19.0] - 2026-10-02
+
+Spalten, Sortierung und Ansicht pro Benutzer, getrennt für Desktop und
+Handy.
+
+### Hinzugefügt
+
+- Desktop: Knopf "Spalten" neben der Suche mit allen Spalten: ein- oder
+  ausblenden, in eine eigene Reihenfolge ziehen (auch mit den
+  Pfeiltasten), "Zurücksetzen". Neue, wählbare Spalten: Bereich,
+  Unterbrüche 24 Std., Hub / Bridge.
+- Sortieren per Klick auf den Spaltenkopf: aufsteigend, absteigend, dann
+  wieder Standard (Ausfälle zuerst, längster zuoberst). Geräte ohne Wert
+  bleiben am Ende.
+- "Gruppen | Liste" neben den Filter-Chips: Gruppen halten Ausgefallene,
+  Instabile usw. getrennt und sortieren darin; "Liste" zeigt eine Liste.
+- Handy: Zeile "Sortiert nach" unter den Chips und ein Blatt "Ansicht"
+  (Knopf neben der Suche) mit Sortierung, Richtung, Gruppen oder Liste und
+  den Angaben auf der Karte (ein- und ausblenden, in eine eigene
+  Reihenfolge ziehen).
+- Die Ansicht gilt pro Benutzer, gespeichert in Home Assistant und auf
+  allen Geräten gleich, getrennt für Desktop und Handy: Sortierung,
+  Richtung, Gruppen oder Liste, Spalten bzw. Angaben auf der Karte und die
+  Filter-Chips. Der Suchtext wird nicht gespeichert.
+
 ## [0.18.0] - 2026-10-02
 
 Verfügbarkeitsprotokoll aus dem Recorder nachgefüllt.
@@ -514,6 +539,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.19.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0

@@ -108,6 +108,16 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   (`.chip.zero`, Deckkraft 0.55), zweiter Tipp auf einen aktiven Chip wählt
   ihn ab. Suchfeld mit eigenem X (`.search-clear`, nur mit Eingabe; das X
   des Browsers ist ausgeblendet, iOS zeigt keines).
+- Ansicht (seit 0.19.0, `docs/mockups/view-v1/`): Desktop Knopf "Spalten"
+  (Pille mit Symbol) öffnet ein Popover unter dem Knopf (340 px, Schalter,
+  Griff zum Ziehen, Fusszeile mit Hinweis und "Zurücksetzen"); Klick
+  ausserhalb oder Escape schliesst, ein Klick in die Liste schliesst nur
+  das Popover. Spaltenkopf als Knopf: Sortiersymbol erscheint beim
+  Darüberfahren, die sortierte Spalte in Primärfarbe mit Pfeil.
+  "Gruppen | Liste" als Segment rechts in der Chip-Zeile. Handy: runder
+  Knopf neben der Suche, Zeile "Sortiert nach" unter den Chips, Blatt
+  "Ansicht" (Sortier-Pillen, Richtung, Darstellung, Angaben mit Griff und
+  Schalter, "Zurücksetzen" und "Fertig").
 - Kopf-Kacheln gleich hoch, auch auf dem Handy (Zeile mit `stretch`); der
   Ring bleibt fest und steht in seiner Kachel mittig.
 - Reihenfolge per Ziehen (seit 0.13.0, Chips der Verbindungsart): Griff

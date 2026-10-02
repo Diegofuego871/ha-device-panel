@@ -47,6 +47,16 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    verschieben, Sortierung und Filter gespeichert, getrennt für Desktop und
    Handy (siehe "Pflicht", Abschnitt 3). Mockups `docs/mockups/view-v1/`.
    Entschieden: Desktop nach Bild 6, Handy Variante A (ein Blatt "Ansicht").
+   Umgesetzt in 0.19.0: `frontend/set_user_data` mit Schlüssel
+   `device_panel_view` ({desktop, mobile, updated}; je Sortierung,
+   Richtung, Gruppen/Liste, Spalten bzw. Angaben auf der Karte mit
+   Reihenfolge, Filter-Chips), lokale Kopie in localStorage, der neuere
+   Stand gewinnt, an HA verzögert (400 ms) und gebündelt. Unbekanntes wird
+   beim Laden bereinigt, neue Spalten kommen mit ihrem Standard ans Ende.
+   Änderungen gelten sofort (keine "Speichern"-Taste), wie die Spaltenwahl
+   in unifi_dynamic. Sortierung "Standard" = Folge der Gruppen; eine andere
+   Sortierung gilt innerhalb der Gruppen bzw. über die ganze Liste, Geräte
+   ohne Wert am Ende. Mit Batterie-Chip und Standard-Sortierung nach Stand.
    Dazu (Nutzer, 2026-10-02): Filter-Chips der Verbindungsart einzeln
    ausblendbar, standardmässig alle sichtbar; "Alle" und die hinteren Chips
    ("Nur Probleme", Hinweise, "Eigene Einstellung") bleiben immer.

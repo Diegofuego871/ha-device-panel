@@ -23,7 +23,12 @@ Bereich.
   und Prozent, Prozent ab 1 Stunde Daten), Typ (z. B. Licht, Steckdose, Bewegung, Tür/Fenster, Klima,
   Hub/Bridge, Netzwerk, Handy/Computer, Energie/Zähler), Integration mit
   ihrem Eintrag, Batterie, Hersteller und Modell, Software mit
-  Update-Hinweis.
+  Update-Hinweis; wahlweise Bereich, Unterbrüche in 24 Stunden und Hub /
+  Bridge.
+- Ansicht pro Benutzer, gespeichert in Home Assistant und getrennt für
+  Desktop und Handy: Spalten (Desktop) bzw. Angaben auf der Karte (Handy)
+  wählen und ordnen, nach jeder Spalte sortieren (Klick auf den Kopf),
+  Gruppen oder eine Liste, dazu die aktiven Filter-Chips.
 - Verbindungsart pro Gerät: Zigbee, Z-Wave, Thread, Matter (Thread, WLAN
   oder LAN), Bluetooth, WLAN, Netzwerk, Cloud; Empfang in dBm oder LQI und
   der Hub, die Bridge oder der Bluetooth-Proxy dazwischen.
@@ -97,8 +102,9 @@ Bereich.
 
 ### Geplant (siehe `docs/CONCEPT.md`)
 
-- Spalten, Sortierung und Filter pro Benutzer, getrennt für Desktop und
-  Handy.
+- Filter nach Bereich, Ausfall-Meldungen pro Integration mit Aktionen,
+  Überwachungsebenen mit Regeln, vermutete Ursache und Funkweg in der
+  Geräteansicht.
 
 ## Installation
 

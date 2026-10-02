@@ -137,6 +137,50 @@ button { font: inherit; color: inherit; }
 .chip.on svg, .chip.on .n { color: var(--dp-primary); }
 .vsep { width: 1px; height: 22px; background: var(--dp-divider); margin: 0 2px; }
 
+/* Ansicht pro Benutzer (docs/mockups/view-v1): Knopf "Spalten", Popover,
+   Sortieren im Spaltenkopf, "Gruppen | Liste", Blatt "Ansicht" (Handy). */
+.view-btn { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: 999px;
+  border: 1px solid var(--dp-divider); background: var(--dp-card); color: var(--dp-text2); font: inherit; font-size: 14px; cursor: pointer; }
+.view-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
+.view-btn.on { background: var(--dp-primary-soft); border-color: transparent; color: var(--dp-primary); }
+.cols-pop { position: fixed; z-index: 20; width: 340px; max-height: calc(100vh - 90px); overflow: auto; padding: 14px 8px 10px;
+  border: 1px solid var(--dp-divider); border-radius: 18px; background: var(--dp-card); color: var(--dp-text); box-shadow: 0 12px 34px rgba(0,0,0,.22); }
+.cols-pop[hidden] { display: none; }
+.cols-pop h4 { margin: 0 10px 2px; font-size: 15px; font-weight: 600; }
+.vsub { margin: 0 10px 8px; color: var(--dp-text2); font-size: 12px; line-height: 1.4; }
+.vrow { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 10px 0 4px; border-radius: 10px; background: var(--dp-card); font-size: 14px; }
+.vrow .vl { flex: 1; min-width: 0; }
+.vrow .vl small { margin-left: 6px; color: var(--dp-text3); font-size: 11px; }
+.vrow.off .vl { color: var(--dp-text2); }
+.vrow.fixed .drag-h { cursor: default; opacity: .35; }
+.vrow.fixed .switch { opacity: .45; }
+.vrow.lift { position: relative; z-index: 2; box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+.vfoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; padding: 8px 10px 0;
+  border-top: 1px solid var(--dp-divider); color: var(--dp-text2); font-size: 12px; }
+.vlink { padding: 4px 0; border: 0; background: none; color: var(--dp-primary); font: inherit; font-weight: 500; cursor: pointer; }
+.th-sort { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: inherit; font: inherit;
+  letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.th-sort svg { opacity: 0; transition: opacity .12s; }
+th:hover .th-sort svg, .th-sort:focus-visible svg { opacity: .6; }
+th.sorted, th.sorted .th-sort { color: var(--dp-primary); }
+th.sorted .th-sort svg { opacity: 1; }
+.th-sort:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; border-radius: 4px; }
+.nbad { color: var(--dp-error); font-weight: 500; }
+.chips .vseg { margin-left: auto; }
+.viewline { display: none; }
+.vpills { display: flex; flex-wrap: wrap; gap: 8px; }
+.vpill { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid var(--dp-divider); border-radius: 999px;
+  background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 13.5px; cursor: pointer; }
+.vpill.on { background: var(--dp-primary-soft); border-color: transparent; color: var(--dp-primary); }
+.vline { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; font-size: 14px; }
+.vline.first { margin-top: 0; }
+.vline .seg-sw button { display: inline-flex; align-items: center; gap: 4px; }
+.vnote { margin-top: 6px; color: var(--dp-text2); font-size: 12px; line-height: 1.4; }
+.vnote.top { margin: 0 0 6px; }
+dialog.view .vrow { min-height: 46px; padding-left: 0; border-bottom: 1px solid var(--dp-divider); border-radius: 0; font-size: 14.5px; }
+dialog.view .vrow:last-child { border-bottom: 0; }
+dialog.view .vrow.lift { border-radius: 10px; }
+
 /* Tabelle als Karte. Kein overflow an der Karte: sie würde zum Scroll-
    Container, und die Kopfzeile klebte nicht mehr (siehe LEARNINGS). */
 .tcard { background: var(--dp-card); border-radius: 20px; border: 1px solid var(--dp-divider); width: max-content; min-width: 100%; }
@@ -231,11 +275,11 @@ svg.strip .s2 { fill: var(--dp-bar-off); }
    Hintergrund, Esc und Fokusfalle liefert der Browser. Auf dem Handy als
    Blatt von unten. Der Dialog scrollt selbst, Kopf und Aktionsleiste
    bleiben per sticky sichtbar (wie unifi_dynamic). */
-dialog.device, dialog.stat-dlg, dialog.settings { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
+dialog.device, dialog.stat-dlg, dialog.settings, dialog.view { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
   box-shadow: var(--dp-shadow); overflow: auto; overscroll-behavior: contain; max-height: calc(100% - 48px); }
-dialog.device, dialog.settings { width: min(640px, calc(100vw - 32px)); }
+dialog.device, dialog.settings, dialog.view { width: min(640px, calc(100vw - 32px)); }
 dialog.stat-dlg { width: min(560px, calc(100vw - 32px)); }
-dialog.device::backdrop, dialog.settings::backdrop { background: rgba(0,0,0,0.5); }
+dialog.device::backdrop, dialog.settings::backdrop, dialog.view::backdrop { background: rgba(0,0,0,0.5); }
 /* Dialog dahinter stark gedimmt und unscharf, sein X ausgeblendet: so ist
    klar, welches Fenster gerade gilt. */
 dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
@@ -573,7 +617,17 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .chips { flex-wrap: nowrap; overflow-x: auto; margin: 12px -12px 4px; padding: 0 12px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .foot .tap { display: none; }
-  dialog.device, dialog.stat-dlg, dialog.settings { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
+  dialog.device, dialog.stat-dlg, dialog.settings, dialog.view { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
+  dialog.view { max-height: 92%; }
+  .view-btn { width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 50%; }
+  .view-btn span { display: none; }
+  .viewline { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+  .sort-btn { display: inline-flex; align-items: center; gap: 6px; min-width: 0; height: 32px; padding: 0 10px 0 8px; border: 1px solid var(--dp-divider);
+    border-radius: 999px; background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 13px; cursor: pointer; }
+  .sort-btn span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .sort-btn svg { flex: none; color: var(--dp-primary); }
+  .sort-btn svg:last-child { color: var(--dp-text2); }
+  .viewline .vseg { flex: none; margin-left: auto; }
   dialog.device { max-height: 92%; }
   /* Feste Höhe: sonst springt das Blatt bei jeder Änderung des Inhalts
      (Prüfung, Abschnitt auf/zu) und gibt kurz den Hintergrund frei. */

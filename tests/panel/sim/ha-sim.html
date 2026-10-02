@@ -530,6 +530,18 @@
       }
       if (msg.type === "device_panel/availability") return availHistory(msg.device_id, msg.range || "24h");
       if (msg.type === "matter/node_diagnostics") return { network_type: "thread", node_type: "end_device" };
+      // Benutzerdaten wie frontend/get_user_data und set_user_data; in der
+      // Sitzung des Tabs, damit ein Neuladen den Stand von HA sieht.
+      if (msg.type === "frontend/get_user_data" || msg.type === "frontend/set_user_data") {
+        let data = {};
+        try {
+          data = JSON.parse(sessionStorage.getItem("sim_user_data") || "{}");
+        } catch {}
+        if (msg.type === "frontend/get_user_data") return { value: data[msg.key] ?? null };
+        data[msg.key] = msg.value;
+        sessionStorage.setItem("sim_user_data", JSON.stringify(data));
+        return null;
+      }
       return {};
     },
   };

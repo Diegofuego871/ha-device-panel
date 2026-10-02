@@ -138,21 +138,20 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    übrigen Filtern, aktiver Chip abwählbar, X im Suchfeld, Chip "Batterie",
    Kopf-Kacheln auf dem Handy gleich hoch, Prozent erst ab 1 Std. Daten
    (Entscheid Claude, vom Nutzer übertragen). Mit `0.18.0`: Nachfüllen des
-   Protokolls aus dem Recorder. Als Nächstes, vom Nutzer bestätigt: Empfang pro
-   Gerät akzeptieren bzw. eigene Schwelle ("Eigene Einstellung" wie
-   Batterie), Batterie-Verlauf im Popup (24 Std., 7, 30, 90 Tage, Kurve);
-   Mockups dazu in `docs/mockups/signal-v1/` und
+   Protokolls aus dem Recorder. Mit `0.19.0` (Nutzer, 2026-10-02, Desktop
+   nach Bild 6, Handy A in `docs/mockups/view-v1/`): Spalten, Sortierung,
+   Gruppen oder Liste und Filter-Chips pro Benutzer, getrennt
+   Desktop/Handy (Fahrplan Schritt 2). Als Nächstes, vom Nutzer bestätigt:
+   Empfang pro Gerät akzeptieren bzw. eigene Schwelle ("Eigene Einstellung"
+   wie Batterie), Batterie-Verlauf im Popup (24 Std., 7, 30, 90 Tage,
+   Kurve); Mockups dazu in `docs/mockups/signal-v1/` und
    `docs/mockups/battery-history-v1/` (Empfehlung jeweils A, Entscheid des
-   Nutzers offen); dann die Backlog-Punkte 2–7 (Spalten pro Benutzer, Bereichsfilter,
-   Ausfall-Meldungen erweitert, Überwachungsebenen, Geräteansicht,
-   Empfangs- und Batterieprotokoll). Entschieden (Nutzer, 2026-10-02): Handy A
-   für Spalten und Sortierung (`docs/mockups/view-v1/`), als Nächstes. Weiter mit Schritt 2 (Spalten,
-   Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
-   am 2026-10-02 nachgefragt; dazu Filter-Chips der Verbindungsart einzeln
-   ausblendbar und, auf der To-do-Liste, ein Filter nach Bereich, siehe
-   `docs/CONCEPT.md`, Fahrplan Schritt 2) und dem Rest von Schritt 7 (anhaltende
+   Nutzers offen); dann die Backlog-Punkte 3–7: Filter nach Bereich (Form
+   offen, Mockup vor der Umsetzung), Rest von Schritt 7 (anhaltende
    Benachrichtigung bei Ausfällen, Spalten Push/Anhaltend bei den
-   Integrationen nach Bild 5, Aktionen in Meldungen);
+   Integrationen nach Bild 5, Aktionen in Meldungen), Überwachungsebenen,
+   Geräteansicht (Ursache, Funkweg, Empfangsverlauf, Gesundheit), Empfangs-
+   und Batterieprotokoll;
    `docs/CONCEPT.md`, "Pflicht"; Vorlagen in `docs/reference/`.
 3. Umsetzung nach dem Fahrplan in `docs/CONCEPT.md` (Abschnitt "Fahrplan"),
    der Reihe nach: Geräteliste mit Statistik, Spalten pro Benutzer,

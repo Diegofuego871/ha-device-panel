@@ -20,7 +20,12 @@ details such as software version, manufacturer, model and area.
 - Columns for status, connection, availability over 24 hours (strip and
   percentage, the percentage from 1 hour of data), type (e.g. light, outlet, motion, door/window, climate,
   hub/bridge, network, phone/computer, energy/meter), integration with its
-  config entry, battery, manufacturer and model, software with update hint.
+  config entry, battery, manufacturer and model, software with update hint;
+  optionally area, outages in 24 hours and hub / bridge.
+- View per user, saved in Home Assistant and separate for desktop and
+  phone: choose and order the columns (desktop) or the details on the card
+  (phone), sort by any column (click on the header), groups or one list,
+  and the active filter chips.
 - Connection type per device: Zigbee, Z-Wave, Thread, Matter (Thread, Wi-Fi
   or LAN), Bluetooth, Wi-Fi, network, cloud; signal strength in dBm or LQI
   and the hub, bridge or Bluetooth proxy in between.
@@ -89,7 +94,9 @@ details such as software version, manufacturer, model and area.
 
 ### Planned (see `docs/CONCEPT.md`)
 
-- Columns, sorting and filters per user, separately for desktop and phone.
+- Filter by area, outage notifications per integration with actions,
+  monitoring levels with rules, probable cause and radio path in the device
+  view.
 
 ## Installation
 

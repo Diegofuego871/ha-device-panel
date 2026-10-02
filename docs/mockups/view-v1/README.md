@@ -28,7 +28,13 @@ Panel (Nachbau aus `tests/panel`, erfundene Daten).
 - Neue, standardmässig ausgeblendete Spalten: Bereich, Unterbrüche 24 Std.,
   Hub / Bridge. "Gerät" bleibt fest vorne.
 
-## Empfehlung: Handy A
+## Entscheid (Nutzer, 2026-10-02): Desktop nach Bild 6, Handy A
+
+Umgesetzt in 0.19.0. Auf dem Handy heisst die Sortierung nach dem Namen
+"Name"; "Verbindung" bei den Angaben ist die Zeile mit Funkart und Empfang
+der ausgefallenen und instabilen Geräte (online zeigt das Symbol die Art).
+
+## Empfehlung war: Handy A
 
 Ein Ort für alles, was die Ansicht betrifft, wie das Popover am Desktop;
 die Zeile unter den Chips zeigt jederzeit, wonach sortiert ist, und öffnet

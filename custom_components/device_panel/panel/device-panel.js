@@ -21,6 +21,47 @@ const POLL_INTERVAL_MS = 10000;
 // Dauer-Anzeigen laufen weiter, ohne dafür neu abzufragen.
 const TICK_MS = 30000;
 const NARROW_QUERY = "(max-width: 600px)";
+// Ansicht pro Benutzer (docs/mockups/view-v1): Sortierung, Gruppen oder
+// Liste, Spalten (Desktop) bzw. Angaben auf der Karte (Handy) und die
+// Filter-Chips, getrennt für Desktop und Handy (schmal). Gespeichert in HA
+// (frontend/set_user_data), lokale Kopie in localStorage; beim Laden gewinnt
+// der neuere Stand (wie unifi_dynamic). Der Suchtext gilt nur, solange das
+// Panel offen ist.
+const VIEW_KEY = "device_panel_view";
+const VIEW_SAVE_DELAY_MS = 400;
+// Spalten nach "Gerät" (fest vorne): Schlüssel, Text, Standard sichtbar.
+// Der Schlüssel ist zugleich der Sortierschlüssel der Spalte.
+const COLUMNS = [
+  ["status", "colStatus", true],
+  ["connection", "colConnection", true],
+  ["avail", "colAvail", true],
+  ["type", "colType", true],
+  ["integration", "colIntegration", true],
+  ["battery", "colBattery", true],
+  ["model", "colModel", true],
+  ["software", "colSoftware", true],
+  ["area", "colArea", false],
+  ["outages", "colOutages", false],
+  ["via", "colVia", false],
+];
+// Angaben auf den Karten (Handy), gleiche Schlüssel wie die Spalten.
+const CARD_FIELDS = [
+  ["connection", "colConnection", true],
+  ["type", "colType", true],
+  ["integration", "colIntegration", true],
+  ["area", "colArea", true],
+  ["battery", "colBattery", false],
+  ["avail", "colAvail", false],
+  ["model", "colModel", false],
+  ["software", "colSoftware", false],
+];
+const COL_LABEL = Object.fromEntries([["name", "colName"], ["signal", "sortSignal"], ...COLUMNS.map(([k, label]) => [k, label])]);
+// Im Blatt (Handy) heisst die Sortierung nach dem Namen "Name", nicht "Gerät".
+const SORT_LABEL = { ...COL_LABEL, name: "sortName", default: "sortDefault" };
+// "default": nach Gruppe (Ausfälle zuerst, längste zuoberst).
+const SORT_KEYS = ["default", "name", "signal", ...COLUMNS.map(([k]) => k)];
+// Auf dem Handy wählbar, in dieser Reihenfolge.
+const SORT_MOBILE = ["default", "name", "status", "avail", "battery", "signal", "integration", "type", "area"];
 // Schwacher Empfang (wie die Ursachen-Regeln in docs/CONCEPT.md).
 const WEAK_DBM = -80;
 const WEAK_LQI = 60;
@@ -86,6 +127,11 @@ const MDI = {
   flask: "M5,19A1,1 0 0,0 6,20H18A1,1 0 0,0 19,19C19,18.79 18.93,18.59 18.82,18.43L13,8.35V4H11V8.35L5.18,18.43C5.07,18.59 5,18.79 5,19M6,22A3,3 0 0,1 3,19C3,18.4 3.18,17.84 3.5,17.37L9,7.81V6A1,1 0 0,1 8,5V4A2,2 0 0,1 10,2H14A2,2 0 0,1 16,4V5A1,1 0 0,1 15,6V7.81L20.5,17.37C20.82,17.84 21,18.4 21,19A3,3 0 0,1 18,22H6M13,16L14.34,14.66L16.27,18H7.73L10.39,13.39L13,16M12.5,12A0.5,0.5 0 0,1 13,12.5A0.5,0.5 0 0,1 12.5,13A0.5,0.5 0 0,1 12,12.5A0.5,0.5 0 0,1 12.5,12Z",
   reset: "M12,4C14.1,4 16.1,4.8 17.6,6.3C20.7,9.4 20.7,14.5 17.6,17.6C15.8,19.5 13.3,20.2 10.9,19.9L11.4,17.9C13.1,18.1 14.9,17.5 16.2,16.2C18.5,13.9 18.5,10.1 16.2,7.7C15.1,6.6 13.5,6 12,6V10.6L7,5.6L12,0.6V4M6.3,17.6C3.7,15 3.3,11 5.1,7.9L6.6,9.4C5.5,11.6 5.9,14.4 7.8,16.2C8.3,16.7 8.9,17.1 9.6,17.4L9,19.4C8,19 7.1,18.4 6.3,17.6Z",
   info: "M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
+  cols: "M16,5V18H21V5M4,18H9V5H4M10,18H15V5H10V18Z",
+  sort: "M9,3L5,7H8V14H10V7H13M16,17V10H14V17H11L15,21L19,17H16Z",
+  arrowUp: "M13,20H11V8L5.5,13.5L4.08,12.08L12,4.16L19.92,12.08L18.5,13.5L13,8V20Z",
+  arrowDown: "M11,4H13V16L18.5,10.5L19.92,11.92L12,19.84L4.08,11.92L5.5,10.5L11,16V4Z",
+  check: "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z",
   drag: "M9,3H11V5H9V3M13,3H15V5H13V3M9,7H11V9H9V7M13,7H15V9H13V7M9,11H11V13H9V11M13,11H15V13H13V11M9,15H11V17H9V15M13,15H15V17H13V15M9,19H11V21H9V19M13,19H15V21H13V19Z",
   tune: "M8 13C6.14 13 4.59 14.28 4.14 16H2V18H4.14C4.59 19.72 6.14 21 8 21S11.41 19.72 11.86 18H22V16H11.86C11.41 14.28 9.86 13 8 13M8 19C6.9 19 6 18.1 6 17C6 15.9 6.9 15 8 15S10 15.9 10 17C10 18.1 9.1 19 8 19M19.86 6C19.41 4.28 17.86 3 16 3S12.59 4.28 12.14 6H2V8H12.14C12.59 9.72 14.14 11 16 11S19.41 9.72 19.86 8H22V6H19.86M16 9C14.9 9 14 8.1 14 7C14 5.9 14.9 5 16 5S18 5.9 18 7C18 8.1 17.1 9 16 9Z",
   bellOff: "M20.84,22.73L18.11,20H3V19L5,17V11C5,9.86 5.29,8.73 5.83,7.72L1.11,3L2.39,1.73L22.11,21.46L20.84,22.73M19,15.8V11C19,7.9 16.97,5.17 14,4.29C14,4.19 14,4.1 14,4A2,2 0 0,0 12,2A2,2 0 0,0 10,4C10,4.1 10,4.19 10,4.29C9.39,4.47 8.8,4.74 8.26,5.09L19,15.8M12,23A2,2 0 0,0 14,21H10A2,2 0 0,0 12,23Z",
@@ -164,6 +210,11 @@ function bars(level, dim) {
 }
 const sigText = (sig) => (sig.kind === "dbm" ? `${sig.value} dBm` : `LQI ${sig.value}`);
 const isWeak = (sig) => sigLevel(sig) === 1;
+// Empfang zum Sortieren: Stufe, dann Wert (dBm und LQI je in ihrem Bereich).
+const sigRank = (sig) => {
+  const level = sigLevel(sig);
+  return level ? level * 1000 + (sig.kind === "dbm" ? sig.value + 200 : sig.value) : null;
+};
 // Anteil online erst ab 1 Std. Daten, wie im Backend (availability.PCT_MIN_COVERED).
 const PCT_MIN_COVERED = 3600;
 // Rang für die Sortierung nach Batteriestand: Prozent, "schwach" ohne Zahl
@@ -213,6 +264,48 @@ function orderConns(entries, order) {
 // so lässt sie sich gesammelt bereinigen).
 const hasOverride = (d) => d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual);
 
+const defaultView = () => ({
+  sort: "default",
+  dir: "asc",
+  flat: false,
+  cols: COLUMNS.map(([k, , on]) => [k, on]),
+  fields: CARD_FIELDS.map(([k, , on]) => [k, on]),
+  conn: "all",
+  problems: false,
+  hint: null,
+});
+
+// Gespeicherte Ansicht bereinigen: Unbekanntes fällt weg, neue Spalten
+// kommen mit ihrem Standard ans Ende, ungültige Werte auf den Standard.
+function sanitizeView(raw) {
+  const d = defaultView();
+  if (!raw || typeof raw !== "object") return d;
+  const order = (saved, defs) => {
+    const known = new Set(defs.map(([k]) => k));
+    const out = [];
+    for (const item of Array.isArray(saved) ? saved : []) {
+      if (Array.isArray(item) && known.has(item[0]) && !out.some(([k]) => k === item[0])) out.push([item[0], Boolean(item[1])]);
+    }
+    for (const [k, , on] of defs) if (!out.some(([x]) => x === k)) out.push([k, on]);
+    return out;
+  };
+  return {
+    sort: SORT_KEYS.includes(raw.sort) ? raw.sort : d.sort,
+    dir: raw.dir === "desc" ? "desc" : "asc",
+    flat: Boolean(raw.flat),
+    cols: order(raw.cols, COLUMNS),
+    fields: order(raw.fields, CARD_FIELDS),
+    conn: raw.conn === "all" || (typeof raw.conn === "string" && CONN[raw.conn]) ? raw.conn : "all",
+    problems: Boolean(raw.problems),
+    hint: HINTS.some((h) => h.key === raw.hint) ? raw.hint : null,
+  };
+}
+
+function sanitizeViews(raw) {
+  const r = raw && typeof raw === "object" ? raw : {};
+  return { desktop: sanitizeView(r.desktop), mobile: sanitizeView(r.mobile), updated: Number(r.updated) || 0 };
+}
+
 // Hinweis-Chips: Schlüssel, CSS-Klasse, Symbol, Text und Bedingung.
 // "Batterie" zeigt alle Geräte mit Batterie (Überblick über den Stand).
 const HINTS = [
@@ -235,9 +328,13 @@ class DevicePanel extends HTMLElement {
     this._loading = true;
     this._error = null;
     this._search = "";
-    this._conn = "all";
-    this._problems = false;
-    this._hint = null;
+    // Ansicht pro Benutzer; die Filter-Chips (_conn, _problems, _hint)
+    // stehen darin, je für Desktop und Handy.
+    this._views = { desktop: defaultView(), mobile: defaultView() };
+    this._viewUpdated = 0;
+    this._viewLoaded = false;
+    this._viewDirty = false;
+    this._colsOpen = false;
     this._matter = new Map();
     this._flakyOutages = 3;
     // Chips der Verbindungsart, die nicht erscheinen (Einstellung "Anzeige").
@@ -255,6 +352,105 @@ class DevicePanel extends HTMLElement {
     this._prerelease = false;
     this._prereleaseHacs = null;
     this._narrowQuery = window.matchMedia(NARROW_QUERY);
+    this._loadLocalView();
+  }
+
+  // --- Ansicht pro Benutzer -------------------------------------------------
+
+  get _view() {
+    return this._views[this._narrowQuery.matches ? "mobile" : "desktop"];
+  }
+
+  get _conn() {
+    return this._view.conn;
+  }
+
+  set _conn(value) {
+    this._view.conn = value;
+  }
+
+  get _problems() {
+    return this._view.problems;
+  }
+
+  set _problems(value) {
+    this._view.problems = value;
+  }
+
+  get _hint() {
+    return this._view.hint;
+  }
+
+  set _hint(value) {
+    this._view.hint = value;
+  }
+
+  _loadLocalView() {
+    try {
+      const raw = window.localStorage.getItem(VIEW_KEY);
+      if (raw) this._setViews(JSON.parse(raw));
+    } catch {
+      // Ohne localStorage (privates Fenster) gilt der Standard bis HA antwortet.
+    }
+  }
+
+  _setViews(raw) {
+    const v = sanitizeViews(raw);
+    this._views = { desktop: v.desktop, mobile: v.mobile };
+    this._viewUpdated = v.updated;
+  }
+
+  _viewData() {
+    return { desktop: this._views.desktop, mobile: this._views.mobile, updated: this._viewUpdated };
+  }
+
+  // Nach jeder Änderung: lokal sofort, an HA verzögert und gebündelt.
+  _saveView() {
+    this._viewUpdated = Date.now();
+    this._viewDirty = true;
+    try {
+      window.localStorage.setItem(VIEW_KEY, JSON.stringify(this._viewData()));
+    } catch {
+      // Lokale Kopie ist nur ein Rückfall.
+    }
+    window.clearTimeout(this._viewTimer);
+    this._viewTimer = window.setTimeout(() => this._saveUserView(), VIEW_SAVE_DELAY_MS);
+  }
+
+  async _saveUserView() {
+    if (!this._hass || !this._viewLoaded) return;
+    try {
+      await this._hass.callWS({ type: "frontend/set_user_data", key: VIEW_KEY, value: this._viewData() });
+      this._viewDirty = false;
+    } catch (err) {
+      console.warn("device-panel: Ansicht nicht bei HA gespeichert", err);
+    }
+  }
+
+  // Stand von HA holen: Er gilt, wenn er mindestens so neu ist wie die
+  // lokale Kopie und hier nichts ungespeichert ist; sonst geht die lokale
+  // Kopie an HA. Ohne Speicher bei HA bleibt es bei der lokalen Kopie.
+  async _loadUserView() {
+    let value = null;
+    try {
+      const result = await this._hass.callWS({ type: "frontend/get_user_data", key: VIEW_KEY });
+      value = result ? result.value : null;
+    } catch (err) {
+      console.warn("device-panel: Ansicht von HA nicht verfügbar", err);
+      return;
+    }
+    this._viewLoaded = true;
+    if (value && !this._viewDirty && (Number(value.updated) || 0) >= this._viewUpdated) {
+      this._setViews(value);
+      try {
+        window.localStorage.setItem(VIEW_KEY, JSON.stringify(this._viewData()));
+      } catch {
+        // siehe _saveView
+      }
+      this._render();
+      return;
+    }
+    if (this._viewUpdated) await this._saveUserView();
   }
 
   set hass(hass) {
@@ -262,6 +458,7 @@ class DevicePanel extends HTMLElement {
     this._hass = hass;
     if (first) {
       this._build();
+      this._loadUserView();
       this._fetch();
     } else if (this._settings) {
       // HACS meldet Fortschritt und neue Versionen über seine Update-Entität.
@@ -276,7 +473,12 @@ class DevicePanel extends HTMLElement {
     this._tick = window.setInterval(() => this._hass && this._render(), TICK_MS);
     this._onVisible = () => document.visibilityState === "visible" && this._fetch();
     document.addEventListener("visibilitychange", this._onVisible);
-    this._onNarrow = () => this._render();
+    // Wechsel zwischen Desktop und Handy: andere Ansicht, offene Auswahl zu.
+    this._onNarrow = () => {
+      this._toggleCols(false);
+      this._closeViewSheet();
+      this._render();
+    };
     this._narrowQuery.addEventListener("change", this._onNarrow);
     // Tipp auf eine Meldung, während das Panel schon offen ist: HA ändert
     // nur die Adresse, das iframe bleibt.
@@ -333,10 +535,12 @@ class DevicePanel extends HTMLElement {
       <div class="toolbar">${LOGO}<h1>${escape(this._t("title"))}</h1>
         <label class="searchbox">${mdi("search", 20)}<input class="search" type="search" placeholder="${escape(this._t("search"))}" aria-label="${escape(this._t("search"))}">
           <button type="button" class="search-clear" title="${escape(this._t("searchClear"))}" aria-label="${escape(this._t("searchClear"))}" hidden>${mdi("close", 18)}</button></label>
+        <button type="button" class="view-btn" aria-expanded="false" title="${escape(this._t("viewBtn"))}" aria-label="${escape(this._t("viewBtn"))}">${mdi("cols", 20)}<span>${escape(this._t("viewBtn"))}</span></button>
         <button type="button" class="gear-btn" title="${escape(this._t("settingsBtn"))}" aria-label="${escape(this._t("settingsBtn"))}">${mdi("gear", 22)}</button>
       </div>
-      <div class="content"><div class="hero"></div><div class="chips"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog>
+      <div class="cols-pop" role="dialog" aria-label="${escape(this._t("viewBtn"))}" hidden></div>
+      <div class="content"><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
+      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
@@ -364,14 +568,34 @@ class DevicePanel extends HTMLElement {
         this._openDevice(open.dataset.open);
         return;
       }
+      const sortBtn = ev.target.closest("[data-sort]");
+      if (sortBtn) {
+        this._cycleSort(sortBtn.dataset.sort);
+        return;
+      }
+      const flat = ev.target.closest("[data-flat]");
+      if (flat) {
+        this._setView({ flat: flat.dataset.flat === "1" });
+        return;
+      }
+      if (ev.target.closest("[data-view-open]")) {
+        this._openViewSheet();
+        return;
+      }
       const el = ev.target.closest("[data-conn],[data-problems],[data-hint]");
       if (!el || el.disabled) return;
       // Aktiven Chip erneut antippen hebt den Filter auf.
       if (el.dataset.conn) this._conn = this._conn === el.dataset.conn ? "all" : el.dataset.conn;
       else if (el.dataset.problems !== undefined) this._problems = !this._problems;
       else if (el.dataset.hint) this._hint = this._hint === el.dataset.hint ? null : el.dataset.hint;
+      this._saveView();
       this._render();
     });
+    root.querySelector(".view-btn").addEventListener("click", () => {
+      if (this._narrowQuery.matches) this._openViewSheet();
+      else this._toggleCols(!this._colsOpen);
+    });
+    this._bindViewControls(root.querySelector(".cols-pop"), root.querySelector("dialog.view"));
     // Zeilen und Karten sind keine Buttons (Tabellensemantik); Tastatur
     // deshalb selbst behandeln.
     content.addEventListener("keydown", (ev) => {
@@ -658,6 +882,299 @@ class DevicePanel extends HTMLElement {
       .includes(this._search);
   }
 
+  // --- Ansicht: Spalten, Sortierung, Gruppen/Liste ---------------------------
+
+  // Änderung an der Ansicht: sofort sichtbar und gespeichert (keine
+  // "Speichern"-Taste, wie die Spaltenwahl in unifi_dynamic).
+  _setView(patch) {
+    // Fokus am Schalter bzw. Griff halten: der Neuaufbau ersetzt ihn, und
+    // ohne Fokus im Panel erreichte Escape es nicht mehr (echtes HA).
+    const a = this.shadowRoot.activeElement;
+    const ds = a?.dataset || {};
+    const sel = ds.vtoggle ? `[data-vtoggle="${ds.vtoggle}"][data-key="${ds.key}"]` : ds.vdrag ? `[data-vdrag="${ds.vdrag}"][data-key="${ds.key}"]` : null;
+    Object.assign(this._view, patch);
+    this._saveView();
+    this._render();
+    if (this._colsOpen) this._renderCols();
+    if (this.shadowRoot.querySelector("dialog.view")?.open) this._renderViewSheet();
+    if (sel) this.shadowRoot.querySelector(sel)?.focus({ preventScroll: true });
+  }
+
+  // Klick auf den Spaltenkopf: aufsteigend, absteigend, dann wieder Standard.
+  _cycleSort(key) {
+    const v = this._view;
+    if (v.sort !== key) this._setView({ sort: key, dir: "asc" });
+    else if (v.dir === "asc") this._setView({ dir: "desc" });
+    else this._setView({ sort: "default", dir: "asc" });
+  }
+
+  _sortLabel(key) {
+    return this._t(SORT_LABEL[key]);
+  }
+
+  // Wert zum Sortieren; null = ohne Wert, steht immer am Ende.
+  _sortValue(d, key) {
+    switch (key) {
+      case "name":
+        return String(d.name || "");
+      case "status":
+        return d.disabled ? 4 : d.online === false ? 0 : d.online == null ? 2 : d.flaky ? 1 : 3;
+      case "connection":
+        return this._t(CONN[this._connOf(d)].key);
+      case "avail":
+        return d.avail24?.pct ?? null;
+      case "outages":
+        return d.avail24 ? d.avail24.outages || 0 : null;
+      case "type":
+        return this._t(typeKey(d.type));
+      case "integration":
+        return this._integName(d) || null;
+      case "battery":
+        return d.battery ? batteryRank(d) : null;
+      case "signal":
+        return sigRank(d.signal);
+      case "area":
+        return d.area || null;
+      case "model":
+        return [d.manufacturer, d.model].filter(Boolean).join(" ") || null;
+      case "software":
+        return d.sw_version || null;
+      case "via":
+        return d.via || null;
+      default:
+        return null;
+    }
+  }
+
+  // Vergleich nach der gewählten Sortierung; null bei "Standard".
+  _sortCmp() {
+    const { sort, dir } = this._view;
+    if (sort === "default") return null;
+    const sign = dir === "desc" ? -1 : 1;
+    const byName = (a, b) => String(a.name).localeCompare(String(b.name));
+    return (a, b) => {
+      const x = this._sortValue(a, sort);
+      const y = this._sortValue(b, sort);
+      if (x == null || y == null) return x == null && y == null ? byName(a, b) : x == null ? 1 : -1;
+      const c = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), undefined, { numeric: true });
+      return c ? c * sign : byName(a, b);
+    };
+  }
+
+  _toggleCols(open) {
+    const pop = this.shadowRoot.querySelector(".cols-pop");
+    const btn = this.shadowRoot.querySelector(".view-btn");
+    if (!pop || !btn) return;
+    this._colsOpen = open;
+    btn.classList.toggle("on", open);
+    btn.setAttribute("aria-expanded", String(open));
+    pop.hidden = !open;
+    if (!open) return;
+    this._renderCols();
+    // Unter dem Knopf, rechtsbündig, nie über den Rand hinaus.
+    const b = btn.getBoundingClientRect();
+    pop.style.top = `${Math.round(b.bottom + 8)}px`;
+    pop.style.left = `${Math.max(8, Math.round(b.right - pop.offsetWidth))}px`;
+  }
+
+  // Liste zum Ein-/Ausblenden und Verschieben (Spalten bzw. Angaben).
+  _orderRowsHtml(list, defs, kind) {
+    const label = Object.fromEntries(defs.map(([k, l]) => [k, this._t(l)]));
+    return list
+      .map(
+        ([key, on]) => `<div class="vrow${on ? "" : " off"}" data-key="${key}">
+          <button type="button" class="drag-h" data-vdrag="${kind}" data-key="${key}" title="${escape(this._t("colDragHint"))}" aria-label="${escape(this._t("colDragMove", label[key]))}">${mdi("drag", 18)}</button>
+          <span class="vl">${escape(label[key])}</span>
+          <label class="switch"><input type="checkbox" data-vtoggle="${kind}" data-key="${key}" ${on ? "checked" : ""} aria-label="${escape(label[key])}"><span></span></label></div>`
+      )
+      .join("");
+  }
+
+  _renderCols() {
+    const pop = this.shadowRoot.querySelector(".cols-pop");
+    if (!pop) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    setHtml(
+      pop,
+      `<h4>${escape(t("viewBtn"))}</h4><div class="vsub">${escape(t("viewSubDesktop"))}</div>
+      <div class="vrow fixed"><span class="drag-h" aria-hidden="true">${mdi("drag", 18)}</span><span class="vl">${escape(t("colName"))}<small>${escape(t("colFixed"))}</small></span>
+        <label class="switch"><input type="checkbox" checked disabled aria-label="${escape(t("colName"))}"><span></span></label></div>
+      <div class="vlist" data-vlist="cols">${this._orderRowsHtml(this._view.cols, COLUMNS, "cols")}</div>
+      <div class="vfoot"><span>${escape(t("colDragHint"))}</span><button type="button" class="vlink" data-vreset="cols">${escape(t("viewReset"))}</button></div>`
+    );
+  }
+
+  _openViewSheet() {
+    const dlg = this.shadowRoot.querySelector("dialog.view");
+    if (!dlg) return;
+    this._renderViewSheet();
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+    dlg.scrollTop = 0;
+    // Kein Fokusrahmen beim Öffnen per Tipp (showModal fokussiert den ersten Knopf).
+    if (window.matchMedia?.(TOUCH_QUERY).matches) this.shadowRoot.activeElement?.blur();
+  }
+
+  _closeViewSheet() {
+    const dlg = this.shadowRoot.querySelector("dialog.view");
+    if (dlg?.open) dlg.close();
+  }
+
+  _renderViewSheet() {
+    const dlg = this.shadowRoot.querySelector("dialog.view");
+    if (!dlg) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const v = this._view;
+    const seg = (attr, items, value) =>
+      `<span class="seg-sw" role="group">${items
+        .map(([val, label]) => `<button type="button" data-${attr}="${val}" class="${val === value ? "on" : ""}" aria-pressed="${val === value}">${label}</button>`)
+        .join("")}</span>`;
+    const pills = SORT_MOBILE.map((key) => {
+      const on = v.sort === key;
+      return `<button type="button" class="vpill${on ? " on" : ""}" data-vsort="${key}" aria-pressed="${on}">${on ? mdi("check", 15) : ""}${escape(this._sortLabel(key))}</button>`;
+    }).join("");
+    const body = `<h3>${escape(t("sortBy"))}</h3><div class="vpills">${pills}</div>
+      <div class="vline"><span>${escape(t("sortDir"))}</span>${seg("vdir", [["asc", `${mdi("arrowUp", 14)} ${escape(t("sortAsc"))}`], ["desc", `${mdi("arrowDown", 14)} ${escape(t("sortDesc"))}`]], v.dir)}</div>
+      <h3>${escape(t("viewDisplay"))}</h3>
+      <div class="vline first"><span>${escape(t("viewGroupsOrList"))}</span>${seg("vflat", [["0", escape(t("viewGroups"))], ["1", escape(t("viewList"))]], v.flat ? "1" : "0")}</div>
+      <div class="vnote">${escape(t("viewGroupsNote"))}</div>
+      <h3>${escape(t("viewFields"))}</h3><div class="vnote top">${escape(t("viewFieldsNote"))}</div>
+      <div class="vlist" data-vlist="fields">${this._orderRowsHtml(v.fields, CARD_FIELDS, "fields")}</div>`;
+    const html = `<div class="dlg-head"><span class="dlg-avatar">${mdi("cols", 28)}</span>
+        <div class="dlg-title"><h2>${escape(t("viewTitle"))}</h2><div class="dlg-sub">${escape(t("viewSubMobile"))}</div></div>
+        <button type="button" class="dlg-close" data-vdone title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+      <div class="dlg-body">${body}</div>
+      <div class="dlg-actions"><button type="button" class="dlg-btn" data-vreset="sheet">${escape(t("viewReset"))}</button><button type="button" class="dlg-btn primary" data-vdone>${escape(t("viewDone"))}</button></div>`;
+    // Der Dialog scrollt selbst; Position beim Neuaufbau halten.
+    const scroll = dlg.scrollTop;
+    if (setHtml(dlg, html)) dlg.scrollTop = scroll;
+  }
+
+  // Bedienung von Popover (Desktop) und Blatt (Handy): Schalter, Ziehen am
+  // Griff (Maus und Finger, Pointer-Events), Pfeiltasten, Auswahl.
+  _bindViewControls(pop, sheet) {
+    const listOf = (kind) => (kind === "cols" ? "cols" : "fields");
+    const toggle = (ev) => {
+      const el = ev.target.closest?.("[data-vtoggle]");
+      if (!el) return;
+      const key = listOf(el.dataset.vtoggle);
+      this._setView({ [key]: this._view[key].map(([k, on]) => [k, k === el.dataset.key ? el.checked : on]) });
+    };
+    const reorder = (kind, keys) => {
+      const key = listOf(kind);
+      const map = new Map(this._view[key]);
+      this._setView({ [key]: keys.map((k) => [k, map.get(k)]) });
+    };
+    const keyMove = (ev) => {
+      const h = ev.target.closest?.("[data-vdrag]");
+      if (!h || (ev.key !== "ArrowUp" && ev.key !== "ArrowDown")) return;
+      ev.preventDefault();
+      const kind = h.dataset.vdrag;
+      const keys = this._view[listOf(kind)].map(([k]) => k);
+      const i = keys.indexOf(h.dataset.key);
+      const j = ev.key === "ArrowUp" ? i - 1 : i + 1;
+      if (i < 0 || j < 0 || j >= keys.length) return;
+      [keys[i], keys[j]] = [keys[j], keys[i]];
+      // Fokus bleibt am Griff (_setView), die nächste Pfeiltaste schiebt weiter.
+      reorder(kind, keys);
+    };
+    const drag = (ev, scroller) => {
+      const h = ev.target.closest?.("[data-vdrag]");
+      if (!h || (ev.pointerType === "mouse" && ev.button !== 0)) return;
+      ev.preventDefault();
+      const row = h.closest(".vrow");
+      const box = row?.parentElement;
+      if (!box) return;
+      const win = this.ownerDocument?.defaultView || window;
+      row.classList.add("lift");
+      const move = (e) => {
+        const y = e.clientY;
+        if (scroller) {
+          const sr = scroller.getBoundingClientRect();
+          if (y < sr.top + 50) scroller.scrollTop -= 10;
+          else if (y > sr.bottom - 60) scroller.scrollTop += 10;
+        }
+        const after = [...box.children].find((r) => {
+          if (r === row) return false;
+          const b = r.getBoundingClientRect();
+          return y < b.top + b.height / 2;
+        });
+        if (after) {
+          if (row.nextElementSibling !== after) box.insertBefore(row, after);
+        } else if (box.lastElementChild !== row) box.appendChild(row);
+      };
+      const up = () => {
+        win.removeEventListener("pointermove", move);
+        win.removeEventListener("pointerup", up);
+        win.removeEventListener("pointercancel", up);
+        row.classList.remove("lift");
+        reorder(h.dataset.vdrag, [...box.children].map((r) => r.dataset.key));
+      };
+      win.addEventListener("pointermove", move);
+      win.addEventListener("pointerup", up);
+      win.addEventListener("pointercancel", up);
+    };
+
+    pop.addEventListener("change", toggle);
+    pop.addEventListener("keydown", keyMove);
+    pop.addEventListener("pointerdown", (ev) => drag(ev, null));
+    pop.addEventListener("click", (ev) => {
+      if (ev.target.closest("[data-vreset]")) this._setView({ cols: defaultView().cols });
+    });
+    // Klick ausserhalb oder Escape schliesst das Popover. Ein Klick in die
+    // Liste schliesst nur die Auswahl und öffnet kein Gerät (wie unifi_dynamic).
+    const content = this.shadowRoot.querySelector(".content");
+    this.shadowRoot.addEventListener(
+      "pointerdown",
+      (ev) => {
+        const path = ev.composedPath();
+        if (!this._colsOpen || path.some((el) => el === pop || el?.classList?.contains?.("view-btn"))) return;
+        this._toggleCols(false);
+        if (path.includes(content)) this._swallowUntil = Date.now() + 800;
+      },
+      true
+    );
+    this.shadowRoot.addEventListener(
+      "click",
+      (ev) => {
+        if (!this._swallowUntil) return;
+        const swallow = Date.now() < this._swallowUntil;
+        this._swallowUntil = 0;
+        if (swallow) {
+          ev.stopPropagation();
+          ev.preventDefault();
+        }
+      },
+      true
+    );
+    // Am Fenster: auch wenn der Fokus gerade nicht im Panel liegt.
+    (this.ownerDocument?.defaultView || window).addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape" && this._colsOpen) {
+        this._toggleCols(false);
+        this.shadowRoot.querySelector(".view-btn")?.focus();
+      }
+    });
+
+    sheet.addEventListener("change", toggle);
+    sheet.addEventListener("keydown", keyMove);
+    sheet.addEventListener("pointerdown", (ev) => drag(ev, sheet));
+    sheet.addEventListener("click", (ev) => {
+      // Tipp auf den Hintergrund schliesst wie bei den übrigen Blättern.
+      if (ev.target === sheet) return this._closeViewSheet();
+      const el = ev.target.closest("[data-vsort],[data-vdir],[data-vflat],[data-vreset],[data-vdone]");
+      if (!el) return;
+      if (el.dataset.vsort) this._setView({ sort: el.dataset.vsort, dir: el.dataset.vsort === this._view.sort ? this._view.dir : "asc" });
+      else if (el.dataset.vdir) this._setView({ dir: el.dataset.vdir });
+      else if (el.dataset.vflat) this._setView({ flat: el.dataset.vflat === "1" });
+      else if (el.dataset.vreset !== undefined) {
+        const d = defaultView();
+        this._setView({ sort: d.sort, dir: d.dir, flat: d.flat, fields: d.fields });
+      } else this._closeViewSheet();
+    });
+  }
+
   // --- Liste ----------------------------------------------------------------
 
   _render() {
@@ -669,6 +1186,7 @@ class DevicePanel extends HTMLElement {
     const monitored = all.filter((d) => !d.disabled);
     setHtml(root.querySelector(".hero"), this._loading ? "" : this._heroHtml(monitored, offline));
     setHtml(root.querySelector(".chips"), this._loading ? "" : this._chipsHtml(all));
+    setHtml(root.querySelector(".viewline"), this._loading || !this._narrowQuery.matches ? "" : this._viewLineHtml());
     const rows = all.filter((d) => this._matches(d));
     setHtml(root.querySelector(".list"), this._listHtml(rows));
     const time = this._fetchedAt ? this._fetchedAt.toLocaleTimeString(this._locale(), { hour: "2-digit", minute: "2-digit" }) : "";
@@ -787,7 +1305,27 @@ class DevicePanel extends HTMLElement {
       const n = rest.filter(test).length;
       html += `<button type="button" class="chip hint ${cls} ${on ? "on" : ""} ${n ? "" : "zero"}" data-hint="${key}" aria-pressed="${on}">${mdi(icon, 15)}<span>${escape(this._t(label))}</span> <span class="n">${n}</span></button>`;
     }
+    // Desktop: "Gruppen | Liste" am Ende der Chips; Handy: Zeile darunter.
+    if (!this._narrowQuery.matches) html += this._flatSegHtml();
     return html;
+  }
+
+  _flatSegHtml() {
+    const flat = this._view.flat;
+    return `<span class="seg-sw vseg" role="group">${[["0", "viewGroups"], ["1", "viewList"]]
+      .map(([val, key]) => {
+        const on = (val === "1") === flat;
+        return `<button type="button" data-flat="${val}" class="${on ? "on" : ""}" aria-pressed="${on}">${escape(this._t(key))}</button>`;
+      })
+      .join("")}</span>`;
+  }
+
+  // Handy: "Sortiert nach" unter den Chips; öffnet das Blatt "Ansicht".
+  _viewLineHtml() {
+    const v = this._view;
+    const label = this._sortLabel(v.sort);
+    const dir = v.sort === "default" ? "" : mdi(v.dir === "asc" ? "arrowUp" : "arrowDown", 14);
+    return `<button type="button" class="sort-btn" data-view-open aria-label="${escape(`${this._t("sortBy")}: ${label}`)}">${mdi("sort", 16)}<span>${escape(label)}</span>${dir}${mdi("chevronDown", 16)}</button>${this._flatSegHtml()}`;
   }
 
   _avatar(d, size = 18) {
@@ -853,22 +1391,28 @@ class DevicePanel extends HTMLElement {
     return `${escape(d.sw_version || "–")}${upd}`;
   }
 
+  // Gruppen [Klasse, Titel, Hinweis, Geräte]. Ansicht "Liste": eine
+  // Gruppe ohne Titel. Eine gewählte Sortierung geht vor; sonst sortieren die
+  // Batterie-Chips nach Stand, und jede Gruppe hat ihre eigene Folge.
   _groups(rows) {
     const byName = (a, b) => String(a.name).localeCompare(String(b.name));
     const outages = (d) => d.avail24?.outages || 0;
     const active = rows.filter((d) => !d.disabled);
-    // Batterie-Chips: in jeder Gruppe nach Stand, der tiefste zuerst.
-    const byBattery = this._batterySort() ? (a, b) => batteryRank(a) - batteryRank(b) || byName(a, b) : null;
-    return [
+    const chosen = this._sortCmp() || (this._batterySort() ? (a, b) => batteryRank(a) - batteryRank(b) || byName(a, b) : null);
+    const groups = [
       ["e", this._t("groupOffline"), this._t("groupOfflineHint"), active.filter((d) => d.online === false).sort((a, b) => Date.parse(a.offline_since) - Date.parse(b.offline_since))],
       ["w", this._t("groupFlaky"), this._t("groupFlakyHint", this._flakyOutages), active.filter((d) => d.online === true && d.flaky).sort((a, b) => outages(b) - outages(a) || byName(a, b))],
       ["n", this._t("groupNoData"), this._t("groupNoDataHint"), active.filter((d) => d.online == null).sort(byName)],
       ["", this._t("groupOnline"), null, active.filter((d) => d.online === true && !d.flaky).sort(byName)],
       // Nur mit "Deaktivierte Geräte anzeigen": am Ende, nicht überwacht.
       ["d", this._t("groupDisabled"), this._t("groupDisabledHint"), rows.filter((d) => d.disabled).sort(byName)],
-    ]
-      .filter((g) => g[3].length)
-      .map((g) => (byBattery ? [g[0], g[1], g[2], g[3].sort(byBattery)] : g));
+    ].filter((g) => g[3].length);
+    if (this._view.flat) {
+      // Ohne gewählte Sortierung in der Folge der Gruppen, nur ohne Köpfe.
+      const list = chosen ? [...rows].sort(chosen) : groups.flatMap((g) => g[3]);
+      return list.length ? [["flat", null, null, list]] : [];
+    }
+    return chosen ? groups.map((g) => [g[0], g[1], g[2], [...g[3]].sort(chosen)]) : groups;
   }
 
   _batterySort() {
@@ -883,52 +1427,118 @@ class DevicePanel extends HTMLElement {
   }
 
   _tableHtml(rows) {
-    const cols = ["colName", "colStatus", "colConnection", "colAvail", "colType", "colIntegration", "colBattery", "colModel", "colSoftware"];
-    const head = `<thead><tr>${cols.map((c) => `<th>${escape(this._t(c))}</th>`).join("")}</tr></thead>`;
+    const v = this._view;
+    const keys = v.cols.filter(([, on]) => on).map(([k]) => k);
+    const dash = `<span class="t3">–</span>`;
+    const cell = {
+      status: (d) => this._statusHtml(d),
+      connection: (d) => this._connHtml(d),
+      avail: (d) => this._availHtml(d),
+      type: (d) => this._typeHtml(d),
+      integration: (d) => {
+        const title = this._integTitle(d);
+        return `${escape(this._integName(d) || "–")}${title ? `<span class="sub">${escape(title)}</span>` : ""}`;
+      },
+      battery: (d) => this._batteryHtml(d),
+      model: (d) => `${escape(d.manufacturer || "–")}${d.model ? `<span class="sub">${escape(d.model)}</span>` : ""}`,
+      software: (d) => this._softwareHtml(d),
+      area: (d) => (d.area ? escape(d.area) : dash),
+      outages: (d) => (d.avail24 ? `<span class="${d.avail24.outages ? "nbad" : ""}">${d.avail24.outages || 0}</span>` : dash),
+      via: (d) => (d.via ? escape(d.via) : dash),
+    };
+    // Kopf: Klick sortiert (aufsteigend, absteigend, Standard).
+    const th = (key) => {
+      const sorted = v.sort === key;
+      const label = this._t(COL_LABEL[key]);
+      const icon = sorted ? mdi(v.dir === "asc" ? "arrowUp" : "arrowDown", 14) : mdi("sort", 14);
+      const aria = sorted ? (v.dir === "asc" ? "ascending" : "descending") : "none";
+      return `<th class="${sorted ? "sorted" : ""}" aria-sort="${aria}"><button type="button" class="th-sort" data-sort="${key}" title="${escape(this._t("sortTip", label))}">${escape(label)}${icon}</button></th>`;
+    };
+    const head = `<thead><tr>${["name", ...keys].map(th).join("")}</tr></thead>`;
+    // Bereich unter dem Namen nur, solange er keine eigene Spalte hat.
+    const areaSub = !keys.includes("area");
+    const span = keys.length + 1;
     const body = this._groups(rows)
       .map(([cls, title, hint, list]) =>
-        `<tr class="grp ${cls}"><td colspan="${cols.length}"><span class="gl">${escape(title)} · ${list.length}${hint ? ` <small>${escape(hint)}</small>` : ""}</span></td></tr>` +
+        (title == null ? "" : `<tr class="grp ${cls}"><td colspan="${span}"><span class="gl">${escape(title)} · ${list.length}${hint ? ` <small>${escape(hint)}</small>` : ""}</span></td></tr>`) +
         list
-          .map((d) => {
-            const title = this._integTitle(d);
-            return `<tr class="dev ${d.online === false ? "off" : d.online && d.flaky ? "flaky" : ""}" data-open="${escape(d.id)}" tabindex="0">
-            <td><div class="nc">${this._avatar(d)}<div>${escape(d.name)}${this._overrideHtml(d)}${d.area ? `<span class="sub">${escape(d.area)}</span>` : ""}</div></div></td>
-            <td>${this._statusHtml(d)}</td>
-            <td>${this._connHtml(d)}</td>
-            <td>${this._availHtml(d)}</td>
-            <td>${this._typeHtml(d)}</td>
-            <td>${escape(this._integName(d) || "–")}${title ? `<span class="sub">${escape(title)}</span>` : ""}</td>
-            <td>${this._batteryHtml(d)}</td>
-            <td>${escape(d.manufacturer || "–")}${d.model ? `<span class="sub">${escape(d.model)}</span>` : ""}</td>
-            <td>${this._softwareHtml(d)}</td></tr>`;
-          })
-          .join(""))
+          .map(
+            (d) => `<tr class="dev ${d.online === false ? "off" : d.online && d.flaky ? "flaky" : ""}" data-open="${escape(d.id)}" tabindex="0">
+            <td><div class="nc">${this._avatar(d)}<div>${escape(d.name)}${this._overrideHtml(d)}${areaSub && d.area ? `<span class="sub">${escape(d.area)}</span>` : ""}</div></div></td>
+            ${keys.map((k) => `<td>${cell[k](d)}</td>`).join("")}</tr>`
+          )
+          .join("")
+      )
       .join("");
     return `<div class="tcard"><table>${head}<tbody>${body}</tbody></table></div>`;
+  }
+
+  // Eine Angabe auf der Karte (Handy); leer, wenn das Gerät sie nicht hat.
+  _fieldHtml(d, key) {
+    switch (key) {
+      case "type":
+        return escape(this._t(typeKey(d.type)));
+      case "integration":
+        return escape(this._integName(d) || "");
+      case "area":
+        return escape(d.area || "");
+      case "battery":
+        return d.battery ? this._batteryHtml(d) : "";
+      case "avail":
+        return d.avail24?.pct != null ? escape(this._t("fieldAvail", this._fmtPct(d.avail24.pct))) : "";
+      case "model":
+        return escape([d.manufacturer, d.model].filter(Boolean).join(" "));
+      case "software":
+        return d.sw_version ? escape(this._t("fieldSw", d.sw_version)) : "";
+      default:
+        return "";
+    }
   }
 
   _cardsHtml(rows) {
     // Mit einem Batterie-Chip zeigt jede Karte den Stand.
     const batSort = this._batterySort();
-    const meta = (d) => [this._t(typeKey(d.type)), this._integName(d), d.area].filter(Boolean).map(escape).join(" · ");
+    const fields = this._view.fields.filter(([, on]) => on).map(([k]) => k);
+    const showConn = fields.includes("connection");
+    const metaKeys = fields.filter((k) => k !== "connection");
+    const meta = (d) => metaKeys.map((k) => this._fieldHtml(d, k)).filter(Boolean).join(" · ");
+    const batExtra = batSort && !metaKeys.includes("battery");
+    // Online ohne Auffälligkeit: kompakte Zeile; sonst eine Karte mit Dauer.
+    const compact = (d) => d.online === true && !d.flaky && !d.disabled;
+    const row = (d) => `<div class="mrow dev" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d, 16)}<div>${escape(d.name)}${this._overrideHtml(d)}<span class="sub">${meta(d)}</span></div>
+              <div>${d.battery?.low || batSort ? this._batteryHtml(d) : bars(sigLevel(d.signal), false)}</div></div>`;
+    const card = (d) => {
+      let right = this._statusHtml(d);
+      if (d.online === false) right = `<div class="dur">${this._durationHtml(d, true)}</div><div class="durs">${escape(this._t("statusOffline"))}</div>`;
+      const sb = `${showConn ? this._connHtml(d, false) : ""}${batExtra ? ` ${this._batteryHtml(d)}` : ""}`;
+      const m = meta(d);
+      return `<div class="mc dev ${d.online === false ? "off" : d.flaky ? "flaky" : ""}" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d)}
+            <div><div class="nm">${escape(d.name)}${this._overrideHtml(d)}</div>${sb.trim() ? `<div class="sb">${sb}</div>` : ""}${m ? `<div class="sb2">${m}</div>` : ""}</div>
+            <div class="rt">${right}</div></div>`;
+    };
     return `<div class="cards">${this._groups(rows)
       .map(([cls, title, , list]) => {
-        const head = `<div class="gh ${cls}">${escape(title)} · ${list.length}</div>`;
-        if (cls === "") {
-          return head + `<div class="mlist">${list
-            .map((d) => `<div class="mrow dev" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d, 16)}<div>${escape(d.name)}${this._overrideHtml(d)}<span class="sub">${meta(d)}</span></div>
-              <div>${d.battery?.low || batSort ? this._batteryHtml(d) : bars(sigLevel(d.signal), false)}</div></div>`)
-            .join("")}</div>`;
+        if (title == null) {
+          // Liste: aufeinanderfolgende kompakte Zeilen in einem Block.
+          let html = "";
+          let run = [];
+          const flush = () => {
+            if (run.length) html += `<div class="mlist">${run.map(row).join("")}</div>`;
+            run = [];
+          };
+          for (const d of list) {
+            if (compact(d)) run.push(d);
+            else {
+              flush();
+              html += card(d);
+            }
+          }
+          flush();
+          return html;
         }
-        return head + list
-          .map((d) => {
-            let right = this._statusHtml(d);
-            if (d.online === false) right = `<div class="dur">${this._durationHtml(d, true)}</div><div class="durs">${escape(this._t("statusOffline"))}</div>`;
-            return `<div class="mc dev ${d.online === false ? "off" : d.flaky ? "flaky" : ""}" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d)}
-            <div><div class="nm">${escape(d.name)}${this._overrideHtml(d)}</div><div class="sb">${this._connHtml(d, false)}${batSort ? ` ${this._batteryHtml(d)}` : ""}</div><div class="sb2">${meta(d)}</div></div>
-            <div class="rt">${right}</div></div>`;
-          })
-          .join("");
+        const head = `<div class="gh ${cls}">${escape(title)} · ${list.length}</div>`;
+        if (cls === "") return head + `<div class="mlist">${list.map(row).join("")}</div>`;
+        return head + list.map(card).join("");
       })
       .join("")}</div>`;
   }

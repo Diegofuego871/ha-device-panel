@@ -7,6 +7,28 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.19.0] - 2026-10-02
+
+Columns, sorting and view per user, separately for desktop and phone.
+
+### Added
+
+- Desktop: button "Columns" next to the search with a list of all columns:
+  show or hide, drag into your own order (also with the arrow keys),
+  "Reset". New optional columns: area, outages 24 h, hub / bridge.
+- Sort by clicking a column header: ascending, descending, then back to the
+  default (offline first, longest outage on top). Devices without a value
+  stay at the end.
+- "Groups | List" next to the filter chips: groups keep offline, unstable
+  and other devices apart and sort within them; "List" shows one list.
+- Phone: line "Sorted by" below the chips and a sheet "View" (button next to
+  the search) with sorting, direction, groups or list, and the details on
+  the card (show, hide, drag into your own order).
+- The view is saved per user in Home Assistant, on all devices alike,
+  separately for desktop and phone: sorting, direction, groups or list,
+  columns or card details, and the filter chips. The search text is not
+  saved.
+
 ## [0.18.0] - 2026-10-02
 
 Availability log filled from the recorder.
@@ -490,6 +512,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.19.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0
