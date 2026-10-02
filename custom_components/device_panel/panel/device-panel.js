@@ -86,6 +86,7 @@ const MDI = {
   flask: "M5,19A1,1 0 0,0 6,20H18A1,1 0 0,0 19,19C19,18.79 18.93,18.59 18.82,18.43L13,8.35V4H11V8.35L5.18,18.43C5.07,18.59 5,18.79 5,19M6,22A3,3 0 0,1 3,19C3,18.4 3.18,17.84 3.5,17.37L9,7.81V6A1,1 0 0,1 8,5V4A2,2 0 0,1 10,2H14A2,2 0 0,1 16,4V5A1,1 0 0,1 15,6V7.81L20.5,17.37C20.82,17.84 21,18.4 21,19A3,3 0 0,1 18,22H6M13,16L14.34,14.66L16.27,18H7.73L10.39,13.39L13,16M12.5,12A0.5,0.5 0 0,1 13,12.5A0.5,0.5 0 0,1 12.5,13A0.5,0.5 0 0,1 12,12.5A0.5,0.5 0 0,1 12.5,12Z",
   reset: "M12,4C14.1,4 16.1,4.8 17.6,6.3C20.7,9.4 20.7,14.5 17.6,17.6C15.8,19.5 13.3,20.2 10.9,19.9L11.4,17.9C13.1,18.1 14.9,17.5 16.2,16.2C18.5,13.9 18.5,10.1 16.2,7.7C15.1,6.6 13.5,6 12,6V10.6L7,5.6L12,0.6V4M6.3,17.6C3.7,15 3.3,11 5.1,7.9L6.6,9.4C5.5,11.6 5.9,14.4 7.8,16.2C8.3,16.7 8.9,17.1 9.6,17.4L9,19.4C8,19 7.1,18.4 6.3,17.6Z",
   info: "M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
+  drag: "M9,3H11V5H9V3M13,3H15V5H13V3M9,7H11V9H9V7M13,7H15V9H13V7M9,11H11V13H9V11M13,11H15V13H13V11M9,15H11V17H9V15M13,15H15V17H13V15M9,19H11V21H9V19M13,19H15V21H13V19Z",
   tune: "M8 13C6.14 13 4.59 14.28 4.14 16H2V18H4.14C4.59 19.72 6.14 21 8 21S11.41 19.72 11.86 18H22V16H11.86C11.41 14.28 9.86 13 8 13M8 19C6.9 19 6 18.1 6 17C6 15.9 6.9 15 8 15S10 15.9 10 17C10 18.1 9.1 19 8 19M19.86 6C19.41 4.28 17.86 3 16 3S12.59 4.28 12.14 6H2V8H12.14C12.59 9.72 14.14 11 16 11S19.41 9.72 19.86 8H22V6H19.86M16 9C14.9 9 14 8.1 14 7C14 5.9 14.9 5 16 5S18 5.9 18 7C18 8.1 17.1 9 16 9Z",
   bellOff: "M20.84,22.73L18.11,20H3V19L5,17V11C5,9.86 5.29,8.73 5.83,7.72L1.11,3L2.39,1.73L22.11,21.46L20.84,22.73M19,15.8V11C19,7.9 16.97,5.17 14,4.29C14,4.19 14,4.1 14,4A2,2 0 0,0 12,2A2,2 0 0,0 10,4C10,4.1 10,4.19 10,4.29C9.39,4.47 8.8,4.74 8.26,5.09L19,15.8M12,23A2,2 0 0,0 14,21H10A2,2 0 0,0 12,23Z",
   batteryOff: "M22.11 21.46L2.39 1.73L1.11 3L6 7.89V20.67C6 21.4 6.6 22 7.33 22H16.67C17.4 22 18 21.4 18 20.67V19.89L20.84 22.73L22.11 21.46M16 18H8V9.89L16 17.89V18M8.2 4H9V2H15V4H16.67C17.4 4 18 4.6 18 5.33V15.8L16 13.8V6H10.2L8.2 4Z",
@@ -189,6 +190,16 @@ function hue(text) {
 function stripSvg(strip) {
   const rects = strip.map((v, i) => `<rect x="${i * 2}" y="0" width="1.4" height="14" rx=".5" class="s${v}"/>`).join("");
   return `<svg class="strip" width="${strip.length * 2}" height="14" viewBox="0 0 ${strip.length * 2} 14" aria-hidden="true">${rects}</svg>`;
+}
+
+// Verbindungsarten [[Art, Anzahl], …] in der eingestellten Reihenfolge
+// (Einstellung "Reihenfolge der Chips"); nicht genannte folgen nach Anzahl.
+// Ohne Reihenfolge: häufigste zuerst.
+function orderConns(entries, order) {
+  const byCount = [...entries].sort((a, b) => b[1] - a[1]);
+  if (!order || !order.length) return byCount;
+  const pos = new Map(order.map((k, i) => [k, i]));
+  return byCount.sort((a, b) => (pos.get(a[0]) ?? Infinity) - (pos.get(b[0]) ?? Infinity) || b[1] - a[1]);
 }
 
 // Gerät mit eigener Einstellung (Batterie-Warnung oder Meldungen); der Typ
@@ -408,6 +419,7 @@ class DevicePanel extends HTMLElement {
       this._integrations = result.integrations || {};
       this._flakyOutages = result.flaky_outages || 3;
       this._hideConn = new Set(result.hide_connections || []);
+      this._connOrder = result.connection_order || [];
       // Ausgeblendeter Chip mit aktivem Filter: zurück auf "Alle", sonst
       // bliebe ein Filter ohne sichtbaren Chip.
       if (this._hideConn.has(this._conn)) this._conn = "all";
@@ -703,7 +715,7 @@ class DevicePanel extends HTMLElement {
   _chipsHtml(all) {
     const counts = new Map();
     for (const d of all) counts.set(this._connOf(d), (counts.get(this._connOf(d)) || 0) + 1);
-    const types = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+    const types = orderConns([...counts.entries()], this._connOrder);
     const chip = (key, label, n, icon = "") =>
       `<button type="button" class="chip ${this._conn === key ? "on" : ""}" data-conn="${key}" aria-pressed="${this._conn === key}">${icon}<span>${escape(label)}</span> <span class="n">${n}</span></button>`;
     let html = chip("all", this._t("all"), all.length);
@@ -1491,9 +1503,10 @@ class DevicePanel extends HTMLElement {
     if (!st || !st.draft) return [];
     // Listen (Ausschlüsse) und Zuordnungen (Batterie pro Integration) nach
     // Inhalt vergleichen, nicht nach Referenz oder Reihenfolge.
+    // Ausnahme: die Reihenfolge der Chips, bei ihr zählt genau die Folge.
     const norm = (v) => (Array.isArray(v) ? [...v].sort() : v && typeof v === "object" ? Object.entries(v).sort() : v);
-    const same = (a, b) => JSON.stringify(norm(a)) === JSON.stringify(norm(b));
-    return Object.keys(st.draft).filter((k) => !same(st.draft[k], st.data.values[k]));
+    const same = (k, a, b) => (k === "connection_order" ? JSON.stringify(a || []) === JSON.stringify(b || []) : JSON.stringify(norm(a)) === JSON.stringify(norm(b)));
+    return Object.keys(st.draft).filter((k) => !same(k, st.draft[k], st.data.values[k]));
   }
 
   _settingsExtraChanges() {
@@ -1523,7 +1536,7 @@ class DevicePanel extends HTMLElement {
       ["integrations", ["exclude_integrations"]],
       ["types", ["exclude_types"]],
       ["push", ["notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "reset_notify"]],
-      ["display", ["show_service_devices", "show_disabled_devices", "hide_connections"]],
+      ["display", ["show_service_devices", "show_disabled_devices", "hide_connections", "connection_order"]],
       ["updates", ["update_check"]],
     ];
   }
@@ -1570,7 +1583,7 @@ class DevicePanel extends HTMLElement {
     const counts = new Map();
     for (const dev of this._devices) counts.set(this._connOf(dev), (counts.get(this._connOf(dev)) || 0) + 1);
     for (const key of d.hide_connections || []) if (!counts.has(key) && CONN[key]) counts.set(key, 0);
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([key, n]) => ({ value: key, devices: n }));
+    return orderConns([...counts.entries()], d.connection_order).map(([key, n]) => ({ value: key, devices: n }));
   }
 
   // Typen für die Ausschlüsse: alle mit Geräten, dazu ausgeblendete ohne.
@@ -1589,7 +1602,11 @@ class DevicePanel extends HTMLElement {
     }
     if (id === "display") {
       const chips = (d.hide_connections || []).length;
-      return this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices)) + (chips ? ` · ${this._t("sumChipsHidden", chips)}` : "");
+      return (
+        this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices)) +
+        (chips ? ` · ${this._t("sumChipsHidden", chips)}` : "") +
+        ((d.connection_order || []).length ? ` · ${this._t("sumChipsOrder")}` : "")
+      );
     }
     if (id === "battery") {
       const errors = this._settingsErrors();
@@ -1739,16 +1756,22 @@ class DevicePanel extends HTMLElement {
       return `<span class="opt-input"><input type="number" inputmode="numeric" step="1" ${min != null ? `min="${min}" max="${max}"` : ""} data-opt="${key}" value="${escape(d[key] ?? "")}" aria-label="${escape(label)}"><span class="unit">${escape(unit)}</span></span>`;
     };
     // Ausschlüsse als Tabelle: Schalter "Anzeigen" pro Integration bzw. Typ.
-    const exTable = (key, items, intro) => {
+    // drag: Zeilen mit Griff zum Verschieben (Reihenfolge der Chips).
+    const exTable = (key, items, intro, drag = false) => {
       const hidden = new Set(d[key]);
       const allShown = items.every((x) => !hidden.has(x.value));
-      const line = (x) => `<div class="ex-row${hidden.has(x.value) ? " off" : ""}">${x.badge}<div class="ex-name">${escape(x.label)}<small>${escape(x.sub)}</small></div>
+      const handle = (x) =>
+        drag
+          ? `<button type="button" class="drag-h" data-set="drag" data-key="${escape(x.value)}" title="${escape(t("dragHint"))}" aria-label="${escape(t("dragMove", x.label))}">${mdi("drag", 18)}</button>`
+          : "";
+      const line = (x) => `<div class="ex-row${hidden.has(x.value) ? " off" : ""}">${handle(x)}${x.badge}<div class="ex-name">${escape(x.label)}<small>${escape(x.sub)}</small></div>
           <label class="switch"><input type="checkbox" data-list="${key}" data-value="${escape(x.value)}" ${hidden.has(x.value) ? "" : "checked"} aria-label="${escape(`${t("colShow")}: ${x.label}`)}"><span></span></label></div>`;
+      const rows = items.map(line).join("");
       return `<div class="opt-short ex-intro">${escape(intro)}</div>
         <div class="ex-head"><span></span><span>${escape(t("colShow"))}</span></div>
         <div class="ex-row ex-all"><div class="ex-name">${escape(t("toggleAll"))}</div>
           <label class="switch"><input type="checkbox" data-list-all="${key}" ${allShown ? "checked" : ""} aria-label="${escape(t("toggleAll"))}"><span></span></label></div>
-        ${items.map(line).join("")}`;
+        ${drag ? `<div class="drag-list">${rows}</div>` : rows}`;
     };
     const integrations = (st.data.catalog?.integrations || []).map((i) => ({
       value: i.domain,
@@ -1811,8 +1834,11 @@ class DevicePanel extends HTMLElement {
         row("show_service_devices", t("optShowService"), sw("show_service_devices", t("optShowService")), t("optShowServiceShort"), t("optShowServiceInfo")) +
         row("show_disabled_devices", t("optShowDisabled"), sw("show_disabled_devices", t("optShowDisabled")), t("optShowDisabledShort"), null) +
         // Filter-Chips der Verbindungsart (docs/mockups/view-v2, C): nur die Chips, gilt für alle.
-        `<div class="opt bat-own${changes.has("hide_connections") ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optChips"))}</span></div></div>` +
-        exTable("hide_connections", chips, t("chipsIntro")),
+        `<div class="opt bat-own${changes.has("hide_connections") || changes.has("connection_order") ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optChips"))}</span></div></div>` +
+        exTable("hide_connections", chips, t("chipsIntro"), true) +
+        ((d.connection_order || []).length
+          ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset">${mdi("reset", 15)}${escape(t("chipsOrderReset"))}</button></div>`
+          : ""),
       updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
     const titles = {
@@ -1859,6 +1885,10 @@ class DevicePanel extends HTMLElement {
         if (set.has(key)) set.delete(key);
         else set.add(key);
         this._renderSettings();
+      } else if (action === "drag-reset") {
+        if (!st.draft) return;
+        st.draft.connection_order = [];
+        this._renderSettings();
       } else if (action === "ovr-all" || action === "ovr-one") {
         if (!st.data) return;
         const [kind, id] = btn.dataset.key.split(/:(.*)/s);
@@ -1873,6 +1903,65 @@ class DevicePanel extends HTMLElement {
     // anpassen; ein Neuaufbau liesse den Cursor springen (wie unifi_dynamic).
     // Ihr "change" (beim Verlassen) baut bewusst nichts neu auf, sonst ginge
     // der Klick verloren, der den Fokus wegnimmt (z. B. auf "Speichern").
+    // Reihenfolge der Chips: am Griff ziehen (Maus und Finger, Pointer-Events)
+    // oder mit den Pfeiltasten. Beim Ziehen wird nur umgehängt, kein
+    // Neuaufbau; erst beim Loslassen kommt die Folge in den Entwurf.
+    dialog.addEventListener("pointerdown", (ev) => {
+      const h = ev.target.closest('[data-set="drag"]');
+      if (!h || !this._settings?.draft || (ev.pointerType === "mouse" && ev.button !== 0)) return;
+      ev.preventDefault();
+      const row = h.closest(".ex-row");
+      const box = row?.parentElement;
+      if (!box) return;
+      // Bewegungen am Fenster abhören, nicht am Griff: Das Umhängen der Zeile
+      // im DOM hebt die Zeiger-Bindung an den Griff auf.
+      const win = this.ownerDocument?.defaultView || window;
+      row.classList.add("lift");
+      const move = (e) => {
+        const y = e.clientY;
+        // Am Rand des Dialogs mitscrollen, damit lange Listen gehen.
+        const dr = dialog.getBoundingClientRect();
+        if (y < dr.top + 60) dialog.scrollTop -= 10;
+        else if (y > dr.bottom - 90) dialog.scrollTop += 10;
+        const after = [...box.children].find((r) => {
+          if (r === row) return false;
+          const b = r.getBoundingClientRect();
+          return y < b.top + b.height / 2;
+        });
+        if (after) {
+          if (row.nextElementSibling !== after) box.insertBefore(row, after);
+        } else if (box.lastElementChild !== row) box.appendChild(row);
+      };
+      const up = () => {
+        win.removeEventListener("pointermove", move);
+        win.removeEventListener("pointerup", up);
+        win.removeEventListener("pointercancel", up);
+        row.classList.remove("lift");
+        const st = this._settings;
+        if (!st?.draft) return;
+        const order = [...box.querySelectorAll('[data-set="drag"]')].map((b) => b.dataset.key);
+        if (JSON.stringify(order) !== JSON.stringify(this._connCatalog(st.draft).map((x) => x.value))) {
+          st.draft.connection_order = order;
+        }
+        this._renderSettings();
+      };
+      win.addEventListener("pointermove", move);
+      win.addEventListener("pointerup", up);
+      win.addEventListener("pointercancel", up);
+    });
+    dialog.addEventListener("keydown", (ev) => {
+      const h = ev.target.closest?.('[data-set="drag"]');
+      const st = this._settings;
+      if (!h || !st?.draft || (ev.key !== "ArrowUp" && ev.key !== "ArrowDown")) return;
+      ev.preventDefault();
+      const order = this._connCatalog(st.draft).map((x) => x.value);
+      const i = order.indexOf(h.dataset.key);
+      const j = ev.key === "ArrowUp" ? i - 1 : i + 1;
+      if (i < 0 || j < 0 || j >= order.length) return;
+      [order[i], order[j]] = [order[j], order[i]];
+      st.draft.connection_order = order;
+      this._renderSettings();
+    });
     dialog.addEventListener("input", (ev) => {
       const st = this._settings;
       const el = ev.target;

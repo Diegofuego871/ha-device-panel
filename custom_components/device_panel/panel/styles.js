@@ -372,6 +372,16 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   letter-spacing: .04em; text-transform: uppercase; }
 .ex-row { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 6px 2px; border-bottom: 1px solid var(--dp-divider); }
 .ex-row:last-child { border-bottom: none; }
+/* Griff zum Verschieben (Reihenfolge der Chips); touch-action: none, sonst
+   scrollt der Finger die Seite statt die Zeile zu ziehen. */
+.drag-h { flex: none; display: grid; place-items: center; width: 28px; height: 40px; margin: 0 -4px 0 -6px; border: none; border-radius: 8px;
+  background: none; color: var(--dp-text3); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.drag-h:hover { color: var(--dp-text2); }
+.drag-h:active { cursor: grabbing; }
+.drag-h:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
+.drag-list .ex-row.lift { position: relative; z-index: 2; border-radius: 10px; background: var(--dp-card); box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+.drag-list .ex-row:last-child { border-bottom: none; }
+.drag-reset { display: flex; justify-content: flex-end; padding: 8px 0 2px; }
 .ex-row.ex-all { padding: 6px 10px; margin: 0 -8px 2px; border: none; border-radius: 10px; background: var(--dp-subtle); color: var(--dp-text2); min-height: 40px; }
 .ex-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 .ex-name small { display: block; color: var(--dp-text2); font-size: 12px; }

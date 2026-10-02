@@ -7,7 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.13.0] - 2026-10-02
+
+Order of the connection type chips.
+
+### Added
+
+- Settings section "Display", "Filter chips of the connection type": drag
+  the chips by the handle into your own order (mouse, touch, or arrow keys
+  on the handle). "Sort by number" goes back to the default order (most
+  devices first). Applies to all users, like hiding the chips. Also in the
+  options dialog ("Order of the connection type chips"): chosen types in
+  the order of selection, the others follow by number of devices.
+
 ## [0.12.0] - 2026-10-02
+
+Not released; included in 0.13.0.
 
 Connection type by hand.
 
@@ -337,7 +352,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[0.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.12.0
+[0.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.13.0
 [0.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.11.0
 [0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0
 [0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0

@@ -40,7 +40,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   Ausfälle in `.storage/device_panel.notify`);
   "Anzeige" (`show_service_devices`, `show_disabled_devices`: deaktivierte
   Geräte in eigener Gruppe, nicht überwacht; `hide_connections`: Chips der
-  Verbindungsart, die nicht erscheinen, gilt für alle, seit 0.11.0); "Updates" (tägliche Prüfung
+  Verbindungsart, die nicht erscheinen, gilt für alle, seit 0.11.0;
+  `connection_order`: Reihenfolge dieser Chips, leer = nach Anzahl, nicht
+  genannte folgen nach Anzahl, seit 0.13.0); "Updates" (tägliche Prüfung
   mit Meldung unter "Reparaturen"). Backend `update_check.py`,
   `options_api.py` (`effective(hass)` liefert die wirksamen Werte),
   Optionsdialog in `config_flow.py` mit denselben Feldern in derselben
@@ -109,7 +111,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Release, in `0.11.0` enthalten. Mit `0.12.0` (Nutzer, 2026-10-02):
    Verbindungsart im Popup wählbar wie der Typ, gespeichert in
    `.storage/device_panel.devices` ("connections"); zählt nicht als "Eigene
-   Einstellung" (wie der Typ von Hand). Entschieden (Nutzer, 2026-10-02): Handy A
+   Einstellung" (wie der Typ von Hand). Mit `0.13.0` (Nutzer, 2026-10-02):
+   Reihenfolge der Chips der Verbindungsart per Ziehen in "Anzeige";
+   `0.12.0` ohne Release, in `0.13.0` enthalten. Entschieden (Nutzer, 2026-10-02): Handy A
    für Spalten und Sortierung (`docs/mockups/view-v1/`), als Nächstes. Weiter mit Schritt 2 (Spalten,
    Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
    am 2026-10-02 nachgefragt; dazu Filter-Chips der Verbindungsart einzeln

@@ -177,6 +177,13 @@ hat dort einen echten Fehler oder Umweg gekostet.
 - **Lokale Bereichsprüfung ist kein Speicherfehler:** Im Popup nichts
   senden, die Eingabe stehen lassen und den Bereich unter dem Feld nennen;
   "Konnte nicht gespeichert werden" nur für Antworten des Backends.
+- **Ziehen mit Pointer-Ereignissen, Zuhörer am Fenster:** Wer die Zeile
+  beim Ziehen im DOM verschiebt, verliert `setPointerCapture` am Griff; die
+  Zeile wanderte auf dem Desktop nur eine Position weit (0.13.0).
+  `pointermove`/`pointerup` darum am Fenster (`ownerDocument.defaultView`,
+  im iFrame), `touch-action: none` am Griff, damit der Finger nicht scrollt.
+  Pfeiltasten auf dem Griff für die Tastatur. Erst beim Loslassen in den
+  Entwurf schreiben und neu aufbauen, nie während des Ziehens.
 - **Zusammenfassungen nicht wie Zustände formulieren:** "Batterie schwach"
   als Liste eingeschalteter Meldungen las sich wie eine Warnung; mit Verb
   ("meldet …").
@@ -209,6 +216,13 @@ hat dort einen echten Fehler oder Umweg gekostet.
 - **Keine Tageszeit in Erwartungen:** Ob die heutige Säule (7 Tage) rot ist,
   hing von der Uhrzeit des Laufs ab (vor 11 Uhr falsch). Erwartungen aus den
   Daten des Nachbaus ableiten (`window.__availHistory`).
+- **Touch-Gesten mit CDP:** Playwright hat kein Touch-Ziehen;
+  `Input.dispatchTouchEvent` (touchStart, mehrere touchMove, touchEnd) über
+  `ctx.newCDPSession(page)` erzeugt echte Pointer-Ereignisse vom Typ
+  "touch". Danach kurz warten (500 ms), bis der Dialog neu aufgebaut ist;
+  sofort danach ging der nächste Tipp ins Leere. Positionen erst messen,
+  nachdem die Liste einmal ins Bild gescrollt ist, sonst verschiebt das
+  Scrollen das Ziel.
 - **Playwright `click()`** scrollt das Element vorher ins Bild; bei breiten
   Tabellenzeilen verschiebt das die Tabelle seitlich. Für Prüfungen auf die
   Scrollposition mit `page.mouse.click(x, y)` klicken.

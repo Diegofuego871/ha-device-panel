@@ -322,7 +322,7 @@
     offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, battery_push: false, battery_persistent: false,
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
     exclude_integrations: [], exclude_types: [], notify_service: "none", notify_click_target: "panel",
-    notify_outage: false, notify_online: false, notify_group: true, hide_connections: [],
+    notify_outage: false, notify_online: false, notify_group: true, hide_connections: [], connection_order: [],
     show_service_devices: false, show_disabled_devices: false, update_check: true,
   };
   window.__services = [];
@@ -435,6 +435,12 @@
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "connections" };
           msg.values.hide_connections = [...new Set(v)].sort();
         }
+        if ("connection_order" in msg.values) {
+          const known = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown"];
+          const v = msg.values.connection_order;
+          if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "order" };
+          msg.values.connection_order = [...new Set(v)];
+        }
         if ("battery_low_integrations" in msg.values) {
           const m = msg.values.battery_low_integrations;
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !Number.isInteger(v) || v < 5 || v > 50)) throw { code: "invalid_format", message: "battery map" };
@@ -499,7 +505,7 @@
             connection_manual: d.id in window.__connOverrides,
           })),
           integrations, now: new Date().toISOString(), offline_after: window.__opts.offline_after * 60, battery_low: batLow,
-          flaky_outages: flakyN, hide_connections: [...window.__opts.hide_connections], pulse: pulse(), incidents,
+          flaky_outages: flakyN, hide_connections: [...window.__opts.hide_connections], connection_order: [...window.__opts.connection_order], pulse: pulse(), incidents,
         };
       }
       if (msg.type === "device_panel/device") {

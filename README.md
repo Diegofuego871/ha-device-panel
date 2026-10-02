@@ -25,8 +25,9 @@ details such as software version, manufacturer, model and area.
   or LAN), Bluetooth, Wi-Fi, network, cloud; signal strength in dBm or LQI
   and the hub, bridge or Bluetooth proxy in between.
 - Search across all columns, filters by connection type, "problems only",
-  low battery, weak signal and available updates. Single connection type
-  chips can be hidden in the settings ("Display").
+  low battery, weak signal and available updates. In the settings
+  ("Display"), single connection type chips can be hidden and all of them
+  dragged into your own order.
 - Pop-up per device (like UniFi Dynamic Clients): availability 24 hours,
   outages in 7 days, signal and battery as tiles; connection, integration
   (warns if its config entry is not loaded), device details and all

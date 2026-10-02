@@ -7,7 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.13.0] - 2026-10-02
+
+Reihenfolge der Chips der Verbindungsart.
+
+### Hinzugefügt
+
+- Einstellungen, Abschnitt "Anzeige", "Filter-Chips der Verbindungsart":
+  die Chips am Griff in eine eigene Reihenfolge ziehen (Maus, Finger oder
+  Pfeiltasten auf dem Griff). "Nach Anzahl sortieren" geht zurück auf die
+  Standard-Reihenfolge (meiste Geräte zuerst). Gilt für alle Benutzer, wie
+  das Ausblenden. Auch im Optionsdialog ("Reihenfolge der Chips der
+  Verbindungsart"): gewählte Arten in der Reihenfolge der Auswahl, die
+  übrigen folgen nach Anzahl der Geräte.
+
 ## [0.12.0] - 2026-10-02
+
+Nicht veröffentlicht; enthalten in 0.13.0.
 
 Verbindungsart von Hand.
 
@@ -351,7 +367,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[0.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.12.0
+[0.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.13.0
 [0.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.11.0
 [0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0
 [0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0

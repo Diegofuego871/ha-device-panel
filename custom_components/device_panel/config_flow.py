@@ -35,6 +35,7 @@ from .const import (
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_FLAKY_OUTAGES,
+    CONF_CONNECTION_ORDER,
     CONF_HIDE_CONNECTIONS,
     CONNECTION_TYPES,
     CONF_NOTIFY_CLICK,
@@ -49,7 +50,7 @@ from .const import (
     INT_RANGES,
     PANEL_TITLE,
 )
-from .options_api import INT_OPTIONS, battery_map, current_values, notify_targets, push_time
+from .options_api import INT_OPTIONS, battery_map, connection_order, current_values, notify_targets, push_time
 from .push import text
 
 # Einheit der Zahlenfelder im Optionsdialog.
@@ -109,6 +110,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 for key, _default in INT_OPTIONS:
                     if key in user_input:
                         data[key] = int(user_input[key])
+                # Reihenfolge der Chips: wie gewählt, nicht sortiert; leer = nach Anzahl.
+                data[CONF_CONNECTION_ORDER] = connection_order(list(user_input.get(CONF_CONNECTION_ORDER) or []))
                 # Zeitfeld liefert "HH:MM:SS"; gespeichert wird "HH:MM" wie im Panel.
                 if CONF_BATTERY_PUSH_TIME in user_input:
                     data[CONF_BATTERY_PUSH_TIME] = push_time(user_input[CONF_BATTERY_PUSH_TIME])
@@ -174,6 +177,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Required(CONF_SHOW_SERVICE, default=values[CONF_SHOW_SERVICE]): bool,
                     vol.Required(CONF_SHOW_DISABLED, default=values[CONF_SHOW_DISABLED]): bool,
                     vol.Optional(CONF_HIDE_CONNECTIONS, default=values[CONF_HIDE_CONNECTIONS]): SelectSelector(
+                        SelectSelectorConfig(
+                            options=list(CONNECTION_TYPES), multiple=True, mode=SelectSelectorMode.DROPDOWN, translation_key="connection"
+                        )
+                    ),
+                    # Reihenfolge der Chips: in der Reihenfolge der Auswahl (HA kann hier
+                    # nicht ziehen; im Panel per Griff), leer = nach Anzahl.
+                    vol.Optional(CONF_CONNECTION_ORDER, default=values[CONF_CONNECTION_ORDER]): SelectSelector(
                         SelectSelectorConfig(
                             options=list(CONNECTION_TYPES), multiple=True, mode=SelectSelectorMode.DROPDOWN, translation_key="connection"
                         )

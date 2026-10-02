@@ -112,6 +112,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "show_service_devices": False,
         "show_disabled_devices": False,
         "hide_connections": [],
+        "connection_order": [],
         "battery_low": 15,
         "battery_low_integrations": {},
         "battery_push": False,
@@ -150,6 +151,15 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
     assert (await client.receive_json())["error"]["code"] == "invalid_format"
     await client.send_json({"id": 8, "type": f"{DOMAIN}/list_devices"})
     assert (await client.receive_json())["result"]["hide_connections"] == ["ble", "thread"]
+    # Reihenfolge der Chips: wie gegeben (nicht sortiert), ohne Doppelte
+    await client.send_json({"id": 9, "type": f"{DOMAIN}/set_options", "values": {"connection_order": ["wifi", "zigbee", "wifi"]}})
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+    assert entry.options["connection_order"] == ["wifi", "zigbee"]
+    await client.send_json({"id": 10, "type": f"{DOMAIN}/set_options", "values": {"connection_order": ["funk"]}})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"
+    await client.send_json({"id": 11, "type": f"{DOMAIN}/list_devices"})
+    assert (await client.receive_json())["result"]["connection_order"] == ["wifi", "zigbee"]
 
 
 async def test_options_flow(hass: HomeAssistant, entry) -> None:
@@ -162,7 +172,7 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
         "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent",
         "exclude_integrations", "exclude_types", "notify_service", "notify_click_target",
         "notify_outage", "notify_online", "notify_group", "show_service_devices", "show_disabled_devices", "hide_connections",
-        "update_check",
+        "connection_order", "update_check",
     ]
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {CONF_UPDATE_CHECK: False, "offline_after": 10.0, "show_disabled_devices": True}
@@ -256,6 +266,18 @@ async def test_options_flow_hide_connections(hass: HomeAssistant, entry) -> None
     result = await hass.config_entries.options.async_init(entry.entry_id)
     with pytest.raises(InvalidData):
         await hass.config_entries.options.async_configure(result["flow_id"], {"hide_connections": ["funk"]})
+
+
+async def test_options_flow_connection_order(hass: HomeAssistant, entry) -> None:
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"connection_order": ["wifi", "zigbee", "wifi"]})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    # Reihenfolge der Auswahl bleibt, Doppelte fallen weg
+    assert entry.options["connection_order"] == ["wifi", "zigbee"]
+    # Geleert: nach Anzahl
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    await hass.config_entries.options.async_configure(result["flow_id"], {"connection_order": []})
+    assert entry.options["connection_order"] == []
 
 
 async def test_options_flow_battery_per_integration(hass: HomeAssistant, entry) -> None:

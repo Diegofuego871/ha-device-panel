@@ -52,6 +52,9 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    ("Nur Probleme", Hinweise, "Eigene Einstellung") bleiben immer.
    Umgesetzt in 0.11.0 als globale Einstellung (Variante C in
    `docs/mockups/view-v2/`, Abschnitt "Anzeige", auch im Optionsdialog).
+   Dazu (Nutzer, 2026-10-02) die Reihenfolge der Chips per Ziehen, ebenfalls
+   global (`connection_order`, leer = nach Anzahl der Geräte), umgesetzt in
+   0.13.0.
    **To-do** (Nutzer, 2026-10-02): Filter nach Bereich, damit jeder nach
    seinen Bereichen filtern kann; Form offen, Mockup vor der Umsetzung.
 3. **Einstellungsmenü im Panel**, das alle Optionen der Integration abbildet

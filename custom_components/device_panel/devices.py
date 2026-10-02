@@ -28,6 +28,7 @@ from .const import (
     CONF_BATTERY_LOW_INTEGRATIONS,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
+    CONF_CONNECTION_ORDER,
     CONF_HIDE_CONNECTIONS,
     CONNECTION_MANUAL,
     DATA_CONNECTION_OVERRIDES,
@@ -770,6 +771,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         "flaky_outages": flaky_outages,
         # Chips der Verbindungsart, die das Panel nicht zeigt (gilt für alle).
         "hide_connections": opts[CONF_HIDE_CONNECTIONS],
+        "connection_order": opts[CONF_CONNECTION_ORDER],
         "pulse": None,
         "incidents": [],
     }

@@ -97,6 +97,10 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   sie nicht neu startet.
 - Toasts für Bestätigungen, Fehler im Dialog selbst, nicht als Toast.
 - Alles mit Tastatur bedienbar, `aria-label` auf Symbolknöpfen.
+- Reihenfolge per Ziehen (seit 0.13.0, Chips der Verbindungsart): Griff
+  (zwei Reihen Punkte) links in der Zeile, Zeile hebt sich beim Ziehen ab
+  (`.lift`, Schatten); Pfeiltasten auf dem Griff verschieben um eine
+  Position. Daneben ein Knopf zurück zur Standard-Reihenfolge.
 
 ## Vorgehen bei neuen Ansichten
 

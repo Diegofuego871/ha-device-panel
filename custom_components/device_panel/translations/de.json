@@ -36,6 +36,7 @@
           "show_service_devices": "Dienst-Geräte anzeigen",
           "show_disabled_devices": "Deaktivierte Geräte anzeigen",
           "hide_connections": "Filter-Chips der Verbindungsart ausblenden",
+          "connection_order": "Reihenfolge der Chips der Verbindungsart",
           "update_check": "Täglich nach Updates suchen"
         },
         "data_description": {
@@ -59,6 +60,7 @@
           "show_service_devices": "Dienste einer Integration statt echter Geräte, z. B. Sonne, Wettervorhersage oder Add-ons. Angezeigte Dienst-Geräte werden auch überwacht.",
           "show_disabled_devices": "In einer eigenen Gruppe am Ende der Liste. Sie werden nicht überwacht.",
           "hide_connections": "Nur die Chips über der Liste; die Geräte bleiben sichtbar. \"Alle\", \"Nur Probleme\" und die Hinweise bleiben immer. Gilt für alle Benutzer.",
+          "connection_order": "In der Reihenfolge der Auswahl; nicht gewählte folgen nach Anzahl der Geräte. Leer = nach Anzahl der Geräte. Im Panel per Griff ziehen.",
           "update_check": "Meldet eine neue Version unter Einstellungen → Reparaturen. Vorabversionen werden hier nie gemeldet."
         }
       }
