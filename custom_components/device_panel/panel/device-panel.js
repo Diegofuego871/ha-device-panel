@@ -1549,7 +1549,7 @@ class DevicePanel extends HTMLElement {
   }
 
   // Variante A (docs/mockups/battery-v1): eigene Schwelle nur für
-  // Integrationen mit Batteriegeräten, leer = Standard.
+  // Integrationen mit Batteriegeräten, leer = globaler Wert.
   _batOwnHtml(d, errors) {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
@@ -1735,7 +1735,7 @@ class DevicePanel extends HTMLElement {
       }
       if (!st?.draft || el.type !== "number") return;
       if (el.dataset.bat) {
-        // Leer = Standard: Eintrag entfernen.
+        // Leer = globaler Wert: Eintrag entfernen.
         const own = { ...(st.draft.battery_low_integrations || {}) };
         if (el.value === "") delete own[el.dataset.bat];
         else own[el.dataset.bat] = Number(el.value);
@@ -1788,7 +1788,7 @@ class DevicePanel extends HTMLElement {
     if (count) count.textContent = changes.length ? this._t("settingsChanges", changes.length) : "";
     const save = dialog.querySelector('[data-set="save"]');
     if (save) save.disabled = st.saving || !changes.length || Object.keys(errors).length > 0;
-    // Batterie pro Integration: Zeilen markieren, Fehlerzeile, Standard als Platzhalter.
+    // Batterie pro Integration: Zeilen markieren, Fehlerzeile, globaler Wert als Platzhalter.
     const bad = new Set(this._batInvalid());
     const saved = st.data.values.battery_low_integrations || {};
     const own = st.draft.battery_low_integrations || {};

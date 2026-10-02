@@ -180,7 +180,7 @@ async def test_battery_per_device(hass: HomeAssistant, setup, hass_ws_client) ->
     assert devices["Rauchmelder"]["battery"]["low"] is True
     assert devices["Rauchmelder"]["battery_default"] == {"pct": 15, "integration": None}
     assert devices["Fenster"]["has_battery"] is True
-    # Zurück auf "wie eingestellt"
+    # Zurück auf den globalen Wert
     await client.send_json({"id": 3, "type": f"{DOMAIN}/set_device_settings", "device_id": a.id, "battery": None})
     await client.receive_json()
     await watch.async_check()

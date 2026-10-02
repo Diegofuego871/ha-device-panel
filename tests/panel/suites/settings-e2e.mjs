@@ -386,13 +386,13 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="section"][data-id="battery"]');
     check(`[${tag}] Liste pro Integration`, (await text(".bat-own .opt-label")) === T.batTitle);
     const batRows = await ev(`return [...r.querySelectorAll("input[data-bat]")].map(i=>i.dataset.bat+":"+i.placeholder+":"+i.value).join(",")`);
-    check(`[${tag}] nur Integrationen mit Batterie, Standard als Platzhalter`, batRows === "zha:15:,matter:15:,bthome:15:,zwave_js:15:", batRows);
+    check(`[${tag}] nur Integrationen mit Batterie, globaler Wert als Platzhalter`, batRows === "zha:15:,matter:15:,bthome:15:,zwave_js:15:", batRows);
     check(`[${tag}] Zahl und schwächste Batterie`, (await ev(`return r.querySelector('input[data-bat="zha"]').closest(".ex-row").querySelector("small").textContent`)) === T.batZha);
     await typeIn('input[data-bat="matter"]', "60");
     check(`[${tag}] 60 ist ungültig`, await ev(`return r.querySelector('input[data-bat="matter"]').closest(".ex-row").classList.contains("invalid")`) && (await text("[data-bat-error]")) === T.rangeBat && await ev(`return r.querySelector('[data-set="save"]').disabled`));
     await typeIn('input[data-bat="matter"]', "25");
     check(`[${tag}] gültig: Zusammenfassung, Zähler`, (await text('[data-id="battery"] .set-sec-sum')) === T.sumBatOwn && (await text(".set-count")) === T.one && await ev(`return r.querySelector("[data-bat-error]").hidden && r.activeElement === r.querySelector('input[data-bat="matter"]')`), await text('[data-id="battery"] .set-sec-sum'));
-    // Allgemeine Schwelle ändern: die Platzhalter folgen
+    // Globalen Wert ändern: die Platzhalter folgen
     await typeIn('input[data-opt="battery_low"]', "20");
     check(`[${tag}] Platzhalter folgt der Schwelle`, (await ev(`return r.querySelector('input[data-bat="zha"]').placeholder`)) === "20");
     await typeIn('input[data-opt="battery_low"]', "15");
@@ -412,7 +412,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Wert im Feld`, (await ev(`return r.querySelector('input[data-bat="matter"]').value`)) === "25");
     await typeIn('input[data-bat="matter"]', "");
     await tap('dialog.settings [data-set="save"]');
-    check(`[${tag}] leer = Standard, gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low_integrations: {} }) && await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`));
+    check(`[${tag}] leer = globaler Wert, gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low_integrations: {} }) && await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`));
 
     // Fehler beim Speichern: Meldung, Dialog bleibt
     await p.evaluate(() => { window.__setOptsFails = "Keine Berechtigung"; });

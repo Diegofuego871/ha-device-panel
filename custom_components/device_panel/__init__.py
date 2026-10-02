@@ -357,7 +357,7 @@ async def _ws_set_device_type(
     {
         vol.Required("type"): f"{DOMAIN}/set_device_settings",
         vol.Required("device_id"): str,
-        # None = wie eingestellt, "off" = Warnung aus, Zahl = eigene Schwelle.
+        # None = globaler Wert, "off" = Warnung aus, Zahl = eigene Schwelle.
         vol.Optional("battery"): vol.Any(None, BATTERY_OFF, vol.All(int, vol.Range(*INT_RANGES[CONF_BATTERY_LOW]))),
         # False = Ausfall- und Online-Meldungen für dieses Gerät aus.
         vol.Optional("notify"): bool,

@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.9.1] - 2026-10-02
+
+### Changed
+
+- Device pop-up and settings speak of the global value instead of "as
+  configured": "Global value (15 %)", "Global setting", "Global value:
+  15 %" in the short line, "Empty = global value" for the threshold per
+  integration (also in the options dialog).
+
 ## [0.9.0] - 2026-10-02
 
 Push notifications for outages and when devices are back online, the time of
@@ -275,6 +284,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.9.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.1
 [0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0
 [0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0

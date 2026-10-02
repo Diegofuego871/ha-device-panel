@@ -42,7 +42,7 @@
           "flaky_outages": "Ein Gerät, das online ist, aber in den letzten 24 Stunden so oft unterbrochen war, gilt als instabil.",
           "startup_grace": "Minuten nach dem Start von Home Assistant, in denen zurückkehrende Geräte keinen Unterbruch hatten. Zeit, in der Home Assistant nicht lief, zählt nie als Ausfall.",
           "battery_low": "Eine Batterie bis zu diesem Stand gilt als schwach (rot im Panel, \"Nur Probleme\").",
-          "battery_low_integrations": "Integration → Prozent, eine pro Zeile, z. B. \"zha: 25\". Ohne Eintrag gilt die Schwelle oben; massgebend ist die primäre Integration des Geräts.",
+          "battery_low_integrations": "Integration → Prozent, eine pro Zeile, z. B. \"zha: 25\". Ohne Eintrag gilt der globale Wert (Feld oben); massgebend ist die primäre Integration des Geräts.",
           "battery_push": "Einmal pro Gerät, wenn es unter die Schwelle fällt, an das Push-Ziel unten. Erneut erst, wenn die Batterie zwischendurch 5 Punkte über der Schwelle war (z. B. neue Batterie).",
           "battery_push_mode": "Sofort, wenn ein Gerät unter die Schwelle fällt, oder einmal täglich zur Uhrzeit unten.",
           "battery_push_time": "Lokale Uhrzeit der Tagesmeldung.",

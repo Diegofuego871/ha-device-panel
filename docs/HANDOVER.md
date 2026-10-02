@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.9.0, Push bei Ausfall und Rückkehr, Batterie täglich, Meldungen pro Gerät)
+## Stand (0.9.1, Push bei Ausfall und Rückkehr, Batterie täglich, Meldungen pro Gerät)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -90,7 +90,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    (Variante A, `docs/mockups/notify-v1/`), Batterie-Push sofort oder
    täglich mit Uhrzeit und wählbarem Inhalt, Push bei Ausfall (sofort) und
    "wieder online", Sammelausfall, Meldungen pro Gerät aus; aufgeklappter
-   Abschnitt der Einstellungen abgesetzt. Weiter mit Schritt 2 (Spalten,
+   Abschnitt der Einstellungen abgesetzt. `0.9.1` (Nutzer, 2026-10-02):
+   "globaler Wert" statt "wie eingestellt", überall. Weiter mit Schritt 2 (Spalten,
    Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
    am 2026-10-02 nachgefragt) und dem Rest von Schritt 7 (anhaltende
    Benachrichtigung bei Ausfällen, Spalten Push/Anhaltend bei den

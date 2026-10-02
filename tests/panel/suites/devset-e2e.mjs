@@ -1,5 +1,5 @@
 // Popup "Meldungen für dieses Gerät" (Variante A, docs/mockups/notify-v1):
-// Batterie-Warnung wie eingestellt / eigene Schwelle / aus, Ausfall- und
+// Batterie-Warnung globaler Wert / eigene Schwelle / aus, Ausfall- und
 // Online-Meldungen aus, sofort gespeichert; Eingabe übersteht das Abfragen.
 // Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
@@ -11,11 +11,11 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
-    sec: "Meldungen für dieses Gerät", def: "Wie eingestellt (15 %)", own: "Eigene Schwelle", short: "Sonst gilt 15 % (allgemeine Schwelle).",
+    sec: "Meldungen für dieses Gerät", def: "Globaler Wert (15 %)", own: "Eigene Schwelle", short: "Globaler Wert: 15 %.", notifyOn: "Globale Einstellung",
     range: "Erlaubt: 5 bis 50", notifyOff: "Aus für dieses Gerät", saveErr: "Konnte nicht gespeichert werden:",
   },
   en: {
-    sec: "Notifications for this device", def: "As configured (15 %)", own: "Own threshold", short: "Otherwise 15 % applies (general threshold).",
+    sec: "Notifications for this device", def: "Global value (15 %)", own: "Own threshold", short: "Global value: 15 %.", notifyOn: "Global setting",
     range: "Allowed: 5 to 50", notifyOff: "Off for this device", saveErr: "Could not be saved:",
   },
 };
@@ -50,7 +50,9 @@ for (const lang of ["de", "en"]) {
     // Thermostat Bad (Matter, 22 %): eigene Schwelle 30 %
     await open("c");
     check(`[${tag}] Abschnitt im Popup`, (await ev(`return [...r.querySelectorAll("dialog.device h3")].map(h=>h.textContent.trim())`)).includes(T.sec));
-    check(`[${tag}] Batterie wie eingestellt`, (await ev(`const s=r.querySelector('select[data-dlg="dev-bat"]'); return s.value + "|" + s.options[s.selectedIndex].textContent`)) === `default|${T.def}`);
+    check(`[${tag}] Batterie globaler Wert`, (await ev(`const s=r.querySelector('select[data-dlg="dev-bat"]'); return s.value + "|" + s.options[s.selectedIndex].textContent`)) === `default|${T.def}`);
+    check(`[${tag}] Meldungen: globale Einstellung`, (await ev(`const s=r.querySelector('select[data-dlg="dev-notify"]'); return s.value + "|" + s.options[s.selectedIndex].textContent`)) === `on|${T.notifyOn}`);
+    check(`[${tag}] kein "wie eingestellt" mehr`, !(await ev(`return /wie eingestellt|as configured/i.test(r.querySelector("dialog.device").textContent)`)));
     check(`[${tag}] Kurzzeile`, (await text('select[data-dlg="dev-bat"]').then(() => ev(`return r.querySelector('select[data-dlg="dev-bat"]').closest(".opt").querySelector(".opt-short").textContent`))).startsWith(T.short));
     await (await handle('select[data-dlg="dev-bat"]')).selectOption("own");
     check(`[${tag}] eigene Schwelle beginnt beim geltenden Wert`, await wait(`return r.querySelector('input[data-dlg="dev-bat-pct"]')?.value === "15"`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "c", battery: 15 }), JSON.stringify((await calls()).at(-1)));
@@ -115,7 +117,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Speicherfehler angezeigt`, await wait(`return (r.querySelector("dialog.device .dev-set .opt-error")?.textContent || "").includes("Keine Berechtigung")`) && (await text("dialog.device .dev-set .opt-error")).startsWith(T.saveErr));
     await p.evaluate(() => { window.__devSetFails = null; });
     await close();
-    // Matter zurück auf Standard
+    // Matter zurück auf den globalen Wert
     await open("c");
     await (await handle('select[data-dlg="dev-bat"]')).selectOption("default");
     check(`[${tag}] Matter zurück`, await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`));

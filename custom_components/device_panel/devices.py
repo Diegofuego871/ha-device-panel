@@ -510,7 +510,7 @@ def device_battery_threshold(hass: HomeAssistant, opts: dict[str, Any], device: 
 
 async def async_set_device_settings(hass: HomeAssistant, device_id: str, **changes: Any) -> None:
     """
-    Einstellungen eines Geräts: battery=None (wie eingestellt), "off" oder
+    Einstellungen eines Geräts: battery=None (globaler Wert), "off" oder
     Prozent; notify=True/False (Ausfall- und Online-Meldungen).
     """
     await async_load_type_overrides(hass)
