@@ -239,6 +239,12 @@ Protokoll schreibt bisherige Unterbrüche nicht um.
 
 Umgesetzt in 0.3.0b1 (`availability.py`).
 
+- Entfernen der Integration (seit 0.14.0, Nutzer, 2026-10-02):
+  `async_remove_entry` löscht alle eigenen Dateien (`.storage/device_panel.`
+  `availability`, `devices`, `notify`, `battery`, `panel`) und die geladenen
+  Stände in `hass.data`. Meldungen und Batterie schreiben beim Entladen
+  sofort, damit kein verzögertes Schreiben eine Datei nach dem Löschen neu
+  anlegt.
 - Eigene Datei pro Instanz (`.storage/device_panel.availability`), nicht der
   Recorder: Wechsel `[zeit, zustand]` pro Gerät, 31 Tage, dazu ein
   Lebenszeichen (`heartbeat`), mindestens alle 5 Min. geschrieben.
@@ -380,8 +386,13 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   notify-Entitäten über `notify.send_message`, Texte DE/EN nach
   `hass.config.language`.
 - Batterie-Warnung (`battery.py`, Abschnitt "Batterie"): Schwelle pro Gerät
-  = eigene Schwelle seiner primären Integration (`battery_low_integrations`,
-  seit 0.8.0, Mockup A) oder "Schwach ab". Die Liste dafür zeigt nur
+  = eigene des Geräts (Popup), sonst die seiner primären Integration
+  (`battery_low_integrations`, seit 0.8.0, Mockup A) oder "Schwach ab".
+  Seit 0.14.0 (Nutzer, 2026-10-02, `docs/mockups/battery-v2/`, Variante B)
+  kann eine Integration auch "off" sein: keine Warnung für ihre Geräte, ausser
+  eines hat eine eigene Schwelle. In der Liste je Zeile eine Auswahl wie im
+  Geräte-Popup (Globaler Wert / Eigene Schwelle / Aus), das Zahlenfeld nur
+  bei eigener Schwelle; im Optionsdialog "zha: off" (auch False aus YAML 1.1). Die Liste dafür zeigt nur
   Integrationen mit Batteriegeräten (Registry bzw. Geräteklasse, nicht der
   aktuelle Wert), dazu solche mit eigener Schwelle ohne Geräte. Push einmal
   pro Gerät beim Unterschreiten, gemerkt in

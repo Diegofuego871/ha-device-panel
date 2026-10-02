@@ -497,11 +497,11 @@ def effective_type(
 
 # -- Typ von Hand (eigene Datei, eine Instanz pro HA) ---------------------------
 
-_TYPES_STORE_KEY = f"{DOMAIN}.devices"
+DEVICES_STORE_KEY = f"{DOMAIN}.devices"
 
 
 def _types_store(hass: HomeAssistant) -> Store[dict[str, Any]]:
-    return Store(hass, STORAGE_VERSION, _TYPES_STORE_KEY)
+    return Store(hass, STORAGE_VERSION, DEVICES_STORE_KEY)
 
 
 async def async_load_type_overrides(hass: HomeAssistant) -> None:

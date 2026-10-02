@@ -47,8 +47,8 @@ _TIMER_KEY = f"{DOMAIN}_update_timer"
 # Gemeinsame Panel-Einstellungen der Instanz (nicht pro Benutzer):
 # Vorabversionen anbieten, und welchen HACS-Schalter "Pre-release" das Panel
 # selbst eingeschaltet hat (nur den schaltet es wieder aus).
-_PANEL_KEY = f"{DOMAIN}_panel_settings"
-_PANEL_STORE_KEY = f"{DOMAIN}.panel"
+PANEL_DATA_KEY = f"{DOMAIN}_panel_settings"
+PANEL_STORE_KEY = f"{DOMAIN}.panel"
 PANEL_DEFAULTS: dict[str, Any] = {"prerelease": False, "prerelease_hacs": None}
 ISSUE_ID = "update_available"
 DAILY = timedelta(days=1)
@@ -248,12 +248,12 @@ def async_stop_daily(hass: HomeAssistant) -> None:
 
 
 def _panel_store(hass: HomeAssistant) -> Store[dict[str, Any]]:
-    return Store(hass, STORAGE_VERSION, _PANEL_STORE_KEY)
+    return Store(hass, STORAGE_VERSION, PANEL_STORE_KEY)
 
 
 async def async_load_panel_settings(hass: HomeAssistant) -> dict[str, Any]:
     """Einmal laden und in hass.data halten; danach synchron lesbar."""
-    if _PANEL_KEY not in hass.data:
+    if PANEL_DATA_KEY not in hass.data:
         stored = await _panel_store(hass).async_load() or {}
         # Nie gespeichert: wer eine Vorabversion installiert hat, bekommt
         # auch die nächsten angeboten (sonst fände er bis zum ersten
@@ -262,16 +262,16 @@ async def async_load_panel_settings(hass: HomeAssistant) -> dict[str, Any]:
             prerelease = bool(stored["prerelease"])
         else:
             prerelease = is_prerelease(await async_installed_version(hass))
-        hass.data[_PANEL_KEY] = {
+        hass.data[PANEL_DATA_KEY] = {
             "prerelease": prerelease,
             "prerelease_hacs": str(stored["prerelease_hacs"]) if stored.get("prerelease_hacs") else None,
         }
-    return hass.data[_PANEL_KEY]
+    return hass.data[PANEL_DATA_KEY]
 
 
 @callback
 def panel_settings(hass: HomeAssistant) -> dict[str, Any]:
-    return dict(hass.data.get(_PANEL_KEY) or PANEL_DEFAULTS)
+    return dict(hass.data.get(PANEL_DATA_KEY) or PANEL_DEFAULTS)
 
 
 async def async_set_panel_settings(hass: HomeAssistant, values: dict[str, Any]) -> dict[str, Any]:

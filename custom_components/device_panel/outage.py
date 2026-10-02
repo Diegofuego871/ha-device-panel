@@ -69,6 +69,9 @@ class OutageNotifier:
         if self._unsub is not None:
             self._unsub()
             self._unsub = None
+        # Sofort schreiben: ein verzögerter Termin legte die Datei nach dem
+        # Entfernen der Integration sonst neu an.
+        await self._store.async_save({"offline": self._offline})
 
     @callback
     def _on_changes(self, changes: list[tuple[str, Any, float]]) -> None:

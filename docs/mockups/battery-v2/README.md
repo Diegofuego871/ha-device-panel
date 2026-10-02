@@ -22,7 +22,11 @@ eigene Schwelle von 25 %, BTHome ist aus.
 - Gilt mit "Speichern", wie alle Einstellungen. Im Optionsdialog der
   Integration als `zha: off`.
 
-## Empfehlung: A
+## Entscheid (Nutzer, 2026-10-02): B
+
+Umgesetzt in 0.14.0. Auf dem Handy stehen Auswahl und Feld unter dem Namen.
+
+## Empfehlung war: A
 
 Ein Tipp, kompakt auch auf dem Handy, und dieselbe Bedienung wie die
 Schalter "Anzeigen" bei Integrationen und Gerätetypen; das Zahlenfeld bleibt

@@ -331,10 +331,14 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ovr-x { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border: none; border-radius: 50%; background: none; color: var(--dp-text2); cursor: pointer; }
 .ovr-x:hover { background: var(--dp-hover); color: var(--dp-text); }
 .ovr-x:focus-visible, .ovr-all:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
-/* Batterie pro Integration: Zeilen wie die Ausschlüsse, Feld rechts. */
+/* Batterie pro Integration: Zeilen wie die Ausschlüsse, rechts Auswahl und
+   bei eigener Schwelle das Feld (Variante B, docs/mockups/battery-v2). */
 .opt.bat-own { border-bottom: none; padding-bottom: 2px; }
+.bat-ctl { display: flex; align-items: center; gap: 8px; margin-left: auto; min-width: 0; }
+.bat-ctl .opt-select { flex: 0 0 190px; }
+.bat-ctl .opt-input { flex: none; }
 .ex-row.bat-row .opt-input input { width: 40px; }
-.ex-row.bat-row.changed .opt-input { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
+.ex-row.bat-row.changed .opt-input, .ex-row.bat-row.changed .opt-select select { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 .ex-row.bat-row.invalid .opt-input { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
 .bat-empty { padding: 4px 0 8px; }
 /* Auswahl (Push-Ziel, Klickziel) wie unifi_dynamic. */
@@ -540,6 +544,10 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 }
 
 @media (max-width: 600px) {
+  /* Batterie pro Integration: Auswahl und Feld unter dem Namen. */
+  .ex-row.bat-row { flex-wrap: wrap; }
+  .bat-ctl { flex: 1 1 calc(100% - 42px); margin-left: 42px; }
+  .bat-ctl .opt-select { flex: 1 1 auto; min-width: 0; }
   .toolbar { padding: 10px 12px 8px; gap: 8px; }
   .toolbar h1 { font-size: 18px; }
   .content { padding: 0 12px 12px; }

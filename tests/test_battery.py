@@ -250,9 +250,42 @@ async def test_threshold_per_integration(hass: HomeAssistant, watch: BatteryWatc
     assert dev.id in watch.low
 
 
+async def test_warning_off_per_integration(hass: HomeAssistant, watch: BatteryWatch, hass_ws_client) -> None:
+    calls = async_mock_service(hass, "notify", "handy")
+    window = _device(hass, "Fenster")  # Integration "test"
+    _battery(hass, window, "5")
+    smoke = _device(hass, "Rauchmelder")
+    _battery(hass, smoke, "25")
+    log = hass.data[DATA_AVAILABILITY]
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_options", "values": {
+        "battery_push": True, "battery_persistent": True, "notify_service": "notify.handy",
+        "battery_low_integrations": {"test": "off"},
+    }})
+    assert (await client.receive_json())["result"] == {"changed": True}
+    await hass.async_block_till_done()
+    devices = {d["name"]: d for d in (await async_list_devices(hass, log))["devices"]}
+    # Warnung für die Integration aus: Stand sichtbar, nie "schwach", keine Meldung
+    assert devices["Fenster"]["battery"] == {"level": 5, "low": False}
+    assert devices["Fenster"]["battery_default"] == {"pct": "off", "integration": "test"}
+    assert calls == [] and _persistent(hass) is None
+    # Eigene Schwelle des Geräts geht vor: Rauchmelder warnt ab 30 %
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_device_settings", "device_id": smoke.id, "battery": 30})
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+    await watch.async_check()
+    assert [c.data["title"] for c in calls] == ["Low battery: Rauchmelder"]
+    assert set(watch.low) == {smoke.id}
+    # Gespeichert wie im Panel, auch "OFF" und False (YAML 1.1) als off
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/set_options", "values": {"battery_low_integrations": {"test": "OFF", "zha": False, "hue": 20}}})
+    assert (await client.receive_json())["success"]
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/get_options"})
+    assert (await client.receive_json())["result"]["values"]["battery_low_integrations"] == {"hue": 20, "test": "off", "zha": "off"}
+
+
 async def test_battery_map_is_checked(hass: HomeAssistant, watch: BatteryWatch, hass_ws_client) -> None:
     client = await hass_ws_client(hass)
-    bad = ({"zha": 60}, {"zha": 4}, {"zha": True}, {"Böse Domain": 20}, {"zha": "20"}, ["zha"])
+    bad = ({"zha": 60}, {"zha": 4}, {"zha": True}, {"Böse Domain": 20}, {"zha": "20"}, {"zha": "aus"}, {"Böse Domain": "off"}, ["zha"])
     for i, value in enumerate(bad, 1):
         await client.send_json({"id": i, "type": f"{DOMAIN}/set_options", "values": {"battery_low_integrations": value}})
         assert (await client.receive_json())["error"]["code"] == "invalid_format", value

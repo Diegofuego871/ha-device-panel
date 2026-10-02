@@ -7,7 +7,34 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.14.0] - 2026-10-02
+
+Battery warning off for a whole integration; removing the integration
+deletes its data.
+
+### Added
+
+- Settings section "Battery", list "Own threshold per integration": per
+  integration a selection like in the device pop-up, "Global value",
+  "Own threshold" or "Off". "Off" turns off the battery warning (marking,
+  push, persistent notification) for all devices of the integration; their
+  battery level stays visible. An own threshold on the device still comes
+  first. Also in the options dialog, e.g. "bthome: off".
+- Removing the integration deletes its own files (`.storage/device_panel.*`:
+  availability log, settings per device, reported outages and batteries,
+  shared panel settings), so nothing is left behind. Home Assistant's
+  registries were never changed.
+
+### Changed
+
+- "Own threshold per integration": instead of an empty field for the
+  global value, each row has a selection; the number field appears with
+  "Own threshold". An empty field there is invalid (back to the global
+  value via the selection).
+
 ## [0.13.0] - 2026-10-02
+
+Not released; included in 0.14.0.
 
 Order of the connection type chips; outage duration across restarts of
 Home Assistant.
@@ -47,7 +74,7 @@ Home Assistant.
 
 ## [0.12.0] - 2026-10-02
 
-Not released; included in 0.13.0.
+Not released; included in 0.14.0.
 
 Connection type by hand.
 
@@ -377,7 +404,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[0.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.13.0
+[0.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.14.0
 [0.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.11.0
 [0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0
 [0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0

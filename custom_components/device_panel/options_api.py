@@ -18,6 +18,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import (
+    BATTERY_OFF,
     CLICK_PANEL,
     CLICK_TARGETS,
     CONF_BATTERY_PUSH_DAILY,
@@ -124,18 +125,27 @@ def _notify_target(value: Any) -> str:
     return text
 
 
-def battery_map(value: Any) -> dict[str, int]:
-    """Eigene Batterie-Schwellen {Domain: Prozent}; Bereich wie "Schwach ab"."""
+def battery_map(value: Any) -> dict[str, int | str]:
+    """
+    Eigene Batterie-Schwellen {Domain: Prozent oder "off"}; Bereich wie
+    "Schwach ab", "off" schaltet die Warnung für die Integration aus.
+    """
     low, high = INT_RANGES[CONF_BATTERY_LOW]
     if value is None:
         return {}
     if not isinstance(value, dict):
         raise vol.Invalid("Zuordnung Integration → Prozent erwartet")
-    out: dict[str, int] = {}
+    out: dict[str, int | str] = {}
     for domain, pct in value.items():
+        if not isinstance(domain, str) or not _DOMAIN_RE.match(domain):
+            raise vol.Invalid(f"Integration → ganze Zahl von {low} bis {high} oder off erwartet")
+        # YAML 1.1 (Optionsdialog) liest "off" als False.
+        if pct is False or (isinstance(pct, str) and pct.strip().lower() == BATTERY_OFF):
+            out[domain] = BATTERY_OFF
+            continue
         number = _whole(pct)
-        if not isinstance(domain, str) or not _DOMAIN_RE.match(domain) or number is None or not low <= number <= high:
-            raise vol.Invalid(f"Integration → ganze Zahl von {low} bis {high} erwartet")
+        if number is None or not low <= number <= high:
+            raise vol.Invalid(f"Integration → ganze Zahl von {low} bis {high} oder off erwartet")
         out[domain] = number
     return dict(sorted(out.items()))
 
@@ -252,10 +262,11 @@ def notify_targets(hass: HomeAssistant, current: str) -> list[dict[str, Any]]:
     return targets
 
 
-def battery_threshold(opts: Mapping[str, Any], domain: str | None) -> int:
-    """Wirksame Schwelle für ein Gerät der Integration domain."""
+def battery_threshold(opts: Mapping[str, Any], domain: str | None) -> int | None:
+    """Wirksame Schwelle für ein Gerät der Integration domain; None = Warnung aus."""
     own = opts.get(CONF_BATTERY_LOW_INTEGRATIONS) or {}
-    return own.get(domain, opts[CONF_BATTERY_LOW]) if domain else opts[CONF_BATTERY_LOW]
+    value = own.get(domain, opts[CONF_BATTERY_LOW]) if domain else opts[CONF_BATTERY_LOW]
+    return None if value == BATTERY_OFF else value
 
 
 def limits() -> dict[str, list[int]]:

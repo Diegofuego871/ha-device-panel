@@ -28,8 +28,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   freischalten"; "Ausfall-Erkennung" (Zahlenfelder `offline_after`,
   `flaky_outages`, `startup_grace` mit Bereichen aus `const.INT_RANGES`,
   Prüfung im Panel und im Backend); "Batterie" (`battery_low`,
-  `battery_low_integrations` {Domain: %} nach Mockup A in
-  `docs/mockups/battery-v1/`, `battery_push` mit `battery_push_mode`
+  `battery_low_integrations` {Domain: % oder "off"} nach Mockup A in
+  `docs/mockups/battery-v1/`, seit 0.14.0 Auswahl je Zeile nach Variante B
+  in `docs/mockups/battery-v2/`, `battery_push` mit `battery_push_mode`
   sofort/täglich, `battery_push_time` "HH:MM", `battery_push_daily`
   neu/alle, `battery_persistent`; Überwachung in `battery.py`);
   "Integrationen" und "Gerätetypen" (Schalter "Anzeigen"; ausgeblendete
@@ -118,12 +119,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Protokoll statt aus `last_changed`, Ausfall über Lücken zählt einmal,
    kein falsches "online" mehr in den ersten Minuten nach dem Start (siehe
    `docs/CONCEPT.md`, "Verfügbarkeitsprotokoll", "Ausfall über Lücken").
-   Offen (Nutzer, 2026-10-02): Batterie-Warnung für eine ganze Integration
-   ausschalten (`battery_low_integrations` mit Wert `"off"`, Reihenfolge
-   Gerät → Integration → global); Mockups `docs/mockups/battery-v2/`
-   (Empfehlung A, Schalter "Warnung" je Zeile), Entscheid des Nutzers
-   ausstehend; wird `0.14.0`. Backend fertig als Patch in `docs/wip/`
-   (siehe `docs/wip/README.md`). Entschieden (Nutzer, 2026-10-02): Handy A
+   Mit `0.14.0` (Nutzer, 2026-10-02): Batterie-Warnung für eine ganze
+   Integration aus (`battery_low_integrations` mit Wert `"off"`,
+   Reihenfolge Gerät → Integration → global), Darstellung Variante B aus
+   `docs/mockups/battery-v2/` (Auswahl je Zeile wie im Geräte-Popup);
+   Entfernen der Integration löscht ihre Dateien (`async_remove_entry`).
+   `0.13.0` ohne Release, in `0.14.0` enthalten. Entschieden (Nutzer, 2026-10-02): Handy A
    für Spalten und Sortierung (`docs/mockups/view-v1/`), als Nächstes. Weiter mit Schritt 2 (Spalten,
    Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
    am 2026-10-02 nachgefragt; dazu Filter-Chips der Verbindungsart einzeln

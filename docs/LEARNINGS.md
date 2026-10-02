@@ -110,6 +110,15 @@ hat dort einen echten Fehler oder Umweg gekostet.
   Im echten HA: Testintegration mit Gerät, dessen Verfügbarkeit eine Datei
   steuert (siehe "Prüfung im echten Home Assistant").
 
+- **Dateien beim Entfernen löschen, aber zuerst ausstehend schreiben:**
+  `async_remove_entry` läuft nach dem Entladen. Ein mit `async_delay_save`
+  geplantes Schreiben (Meldungen, Batterie: 1 s) legte die Datei nach dem
+  Löschen neu an, weil `Store.async_remove` nur die eigene Instanz kennt.
+  Darum beim Entladen sofort `async_save` (verwirft den Termin), dann im
+  Entfernen mit neuen `Store`-Instanzen löschen und geladene Stände aus
+  `hass.data` nehmen (sonst brächte ein neues Einrichten ohne Neustart sie
+  zurück). Test: Unterbruch planen, entfernen, Zeit vorspulen, nichts da.
+
 ## Panel (Frontend)
 
 - **Vanilla Web Component**, kein Lit, kein Build, kein CDN. Logik, Texte

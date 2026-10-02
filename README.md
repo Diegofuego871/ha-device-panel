@@ -60,9 +60,10 @@ details such as software version, manufacturer, model and area.
   notification in Home Assistant listing all affected devices, both or
   neither. Tapping a push notification opens the device in the panel. The
   push comes immediately or once a day at a chosen time, with the newly
-  affected or all devices with a low battery. The threshold can also be set
-  per integration (only integrations with battery devices are listed) and
-  per device in its pop-up (own threshold or off).
+  affected or all devices with a low battery. Per integration (only
+  integrations with battery devices are listed) choose the global value, an
+  own threshold or off; per device in its pop-up as well. The device comes
+  first, then the integration, then the global value.
 - Outage notifications: a push as soon as a device counts as offline and,
   if you like, an all clear when it is back online, with the duration of
   the outage (it replaces the outage notification on the phone). Several
@@ -105,6 +106,14 @@ newest version; "Update" installs it via HACS, then restart Home Assistant.
 
 Copy `custom_components/device_panel` to `config/custom_components/` and
 restart Home Assistant.
+
+### Removal
+
+Settings → Devices & services → "Device Panel" → ⋮ → Delete. This also
+deletes the integration's own files (`.storage/device_panel.*`: availability
+log, settings per device, reported outages and batteries, shared panel
+settings). The registries of Home Assistant are never changed by the
+integration. Then remove it in HACS (or delete the folder) and restart.
 
 ## Development and tests
 

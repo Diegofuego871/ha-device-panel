@@ -29,7 +29,8 @@ const TEXT = {
     noTarget: "Zuerst unter \"Push-Benachrichtigung\" ein Ziel wählen.", sumPushNone: "Kein Ziel gewählt",
     sumPush: "notify.mobile_app_testhandy · meldet schwache Batterie", notifyNone: "Kein Ziel (keine Push-Meldungen)", entity: "notify.fernseher (Entität)",
     batTitle: "Eigene Schwelle pro Integration", batZha: "3 Geräte mit Batterie · schwächste 8\u00a0%", rangeBat: "Erlaubt: 5 bis 50",
-    sumBatOwn: "Schwach ab 15 %, Matter 25 % · keine Meldung", batLowShort: "Bis zu diesem Stand rot markiert und unter \"Nur Probleme\".",
+    sumBatOwn: "Schwach ab 15 %, Matter 25 % · keine Meldung", sumBatOwnOff: "Schwach ab 15 %, Matter 25 %, BTHome aus · keine Meldung",
+    batDef: (p) => `Globaler Wert (${p} %)`, batModes: "Globaler Wert (15 %)|Eigene Schwelle|Aus", batWarn: "Warnung", popDefOff: "Globaler Wert (aus)", batLowShort: "Bis zu diesem Stand rot markiert und unter \"Nur Probleme\".",
     shortInstant: "Sobald ein Gerät unter die Schwelle fällt.", shortDaily: (t) => `Eine Sammelmeldung um ${t}. Ausfälle kommen immer sofort.`, timeErr: "Uhrzeit HH:MM",
     sumBatDaily: (t) => `Schwach ab 15 % · nur Push (täglich ${t})`, sumBatInstant: "Schwach ab 15 % · nur Push", dailyAll: "Alle schwachen Geräte",
     sumPushAll: "notify.mobile_app_testhandy · meldet Ausfall, wieder online, schwache Batterie", sumPushNoKind: "notify.mobile_app_testhandy · keine Meldung eingeschaltet",
@@ -51,7 +52,8 @@ const TEXT = {
     noTarget: "First choose a target under \"Push notification\".", sumPushNone: "No target chosen",
     sumPush: "notify.mobile_app_testhandy · notifies on low battery", notifyNone: "No target (no push notifications)", entity: "notify.fernseher (entity)",
     batTitle: "Own threshold per integration", batZha: "3 devices with battery · weakest 8\u00a0%", rangeBat: "Allowed: 5 to 50",
-    sumBatOwn: "Low from 15 %, Matter 25 % · no notification", batLowShort: "Up to this level marked red and listed under \"Problems only\".",
+    sumBatOwn: "Low from 15 %, Matter 25 % · no notification", sumBatOwnOff: "Low from 15 %, Matter 25 %, BTHome off · no notification",
+    batDef: (p) => `Global value (${p} %)`, batModes: "Global value (15 %)|Own threshold|Off", batWarn: "Warning", popDefOff: "Global value (off)", batLowShort: "Up to this level marked red and listed under \"Problems only\".",
     shortInstant: "As soon as a device drops below the threshold.", shortDaily: (t) => `One summary at ${t}. Outages are always reported immediately.`, timeErr: "Time HH:MM",
     sumBatDaily: (t) => `Low from 15 % · push only (daily ${t})`, sumBatInstant: "Low from 15 % · push only", dailyAll: "All devices with a low battery",
     sumPushAll: "notify.mobile_app_testhandy · notifies on outage, back online, low battery", sumPushNoKind: "notify.mobile_app_testhandy · no notification switched on",
@@ -381,45 +383,76 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] Zeitpunkt und Meldungen zurück`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify(await p.evaluate(() => ["battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "notify_service", "notify_outage", "notify_online", "notify_group"].map((k) => window.__opts[k]))) === JSON.stringify([false, "instant", "08:00", "new", "none", false, false, true]), JSON.stringify(await p.evaluate(() => window.__opts)));
 
-    // Batterie: eigene Schwelle pro Integration (Variante A)
+    // Batterie pro Integration: Auswahl je Zeile (Variante B, docs/mockups/battery-v2)
     const typeIn = async (sel, val) => {
       const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
       if (mobile) await h.tap(); else await h.click();
       await h.fill("");
       if (val !== "") await h.type(val);
     };
+    const mode = async (dom, value) => {
+      const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-bat-mode="${dom}"]')`))).asElement();
+      await h.scrollIntoViewIfNeeded();
+      if (mobile) await h.tap(); else await h.click();
+      await h.selectOption(value);
+      await wait(`return r.querySelector('select[data-bat-mode="${dom}"]')?.value === ${JSON.stringify(value)}`);
+    };
+    const modes = () => ev(`return [...r.querySelectorAll("select[data-bat-mode]")].map(s=>s.dataset.batMode+":"+s.value).join(",")`);
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     await tap('[data-set="section"][data-id="battery"]');
-    check(`[${tag}] Liste pro Integration`, (await text(".bat-own .opt-label")) === T.batTitle);
-    const batRows = await ev(`return [...r.querySelectorAll("input[data-bat]")].map(i=>i.dataset.bat+":"+i.placeholder+":"+i.value).join(",")`);
-    check(`[${tag}] nur Integrationen mit Batterie, globaler Wert als Platzhalter`, batRows === "zha:15:,matter:15:,bthome:15:,zwave_js:15:", batRows);
-    check(`[${tag}] Zahl und schwächste Batterie`, (await ev(`return r.querySelector('input[data-bat="zha"]').closest(".ex-row").querySelector("small").textContent`)) === T.batZha);
+    check(`[${tag}] Liste pro Integration`, (await text(".bat-own .opt-label")) === T.batTitle && (await text(".bat-own + .ex-head span:last-child")) === T.batWarn);
+    check(`[${tag}] nur Integrationen mit Batterie, alle auf globalem Wert, kein Feld`, (await modes()) === "zha:default,matter:default,bthome:default,zwave_js:default" && !(await ev(`return !!r.querySelector("input[data-bat]")`)), await modes());
+    check(`[${tag}] Auswahl wie im Geräte-Popup`, (await ev(`return [...r.querySelector('select[data-bat-mode="zha"]').options].map(o=>o.textContent).join("|")`)) === T.batModes);
+    check(`[${tag}] Zahl und schwächste Batterie`, (await ev(`return r.querySelector('select[data-bat-mode="zha"]').closest(".ex-row").querySelector("small").textContent`)) === T.batZha);
+    if (mobile) {
+      // Handy: Auswahl unter dem Namen, nichts ragt seitlich hinaus
+      const lay = await ev(`const row=r.querySelector('select[data-bat-mode="zha"]').closest(".ex-row"); const c=row.querySelector(".bat-ctl").getBoundingClientRect(); const n=row.querySelector(".ex-name").getBoundingClientRect(); const rb=row.getBoundingClientRect(); return [c.top >= n.bottom - 1, c.right <= rb.right + 1, r.querySelector("dialog.settings").scrollWidth <= r.querySelector("dialog.settings").clientWidth]`);
+      check(`[${tag}] Handy: Auswahl unter dem Namen, ohne Überlauf`, lay.every(Boolean), JSON.stringify(lay));
+    }
+    // Eigene Schwelle: Feld erscheint mit dem globalen Wert
+    await mode("matter", "own");
+    check(`[${tag}] eigene Schwelle: Feld mit globalem Wert`, (await ev(`return r.querySelector('input[data-bat="matter"]')?.value`)) === "15" && (await text(".set-count")) === T.one);
     await typeIn('input[data-bat="matter"]', "60");
     check(`[${tag}] 60 ist ungültig`, await ev(`return r.querySelector('input[data-bat="matter"]').closest(".ex-row").classList.contains("invalid")`) && (await text("[data-bat-error]")) === T.rangeBat && await ev(`return r.querySelector('[data-set="save"]').disabled`));
+    await typeIn('input[data-bat="matter"]', "");
+    check(`[${tag}] leer ist ungültig`, await ev(`return r.querySelector('input[data-bat="matter"]').closest(".ex-row").classList.contains("invalid") && r.querySelector('[data-set="save"]').disabled`));
     await typeIn('input[data-bat="matter"]', "25");
     check(`[${tag}] gültig: Zusammenfassung, Zähler`, (await text('[data-id="battery"] .set-sec-sum')) === T.sumBatOwn && (await text(".set-count")) === T.one && await ev(`return r.querySelector("[data-bat-error]").hidden && r.activeElement === r.querySelector('input[data-bat="matter"]')`), await text('[data-id="battery"] .set-sec-sum'));
-    // Globalen Wert ändern: die Platzhalter folgen
+    // Globalen Wert ändern: "Globaler Wert (…)" und Platzhalter folgen ohne Neuaufbau
     await typeIn('input[data-opt="battery_low"]', "20");
-    check(`[${tag}] Platzhalter folgt der Schwelle`, (await ev(`return r.querySelector('input[data-bat="zha"]').placeholder`)) === "20");
+    check(`[${tag}] globaler Wert folgt`, (await ev(`return r.querySelector('select[data-bat-mode="zha"] option[value="default"]').textContent`)) === T.batDef(20) && (await ev(`return r.querySelector('input[data-bat="matter"]').placeholder`)) === "20");
     await typeIn('input[data-opt="battery_low"]', "15");
     // Kurzzeile mit Anführungszeichen bleibt nach der Eingabe ganz (escape
     // maskierte " nicht, das Attribut brach ab).
     const shortAfter = await ev(`const o=r.querySelector('input[data-opt="battery_low"]').closest(".opt").querySelector("[data-short]"); return [o.textContent, o.dataset.short]`);
     check(`[${tag}] Kurzzeile mit Anführungszeichen vollständig`, shortAfter[0] === T.batLowShort && shortAfter[1] === T.batLowShort, JSON.stringify(shortAfter));
+    // BTHome aus: Zeile gedämpft, kein Feld
+    await mode("bthome", "off");
+    check(`[${tag}] aus: kein Feld, Zeile gedämpft, Zusammenfassung`, (await ev(`const row=r.querySelector('select[data-bat-mode="bthome"]').closest(".ex-row"); return row.classList.contains("off") && !row.querySelector("input")`)) && (await text('[data-id="battery"] .set-sec-sum')) === T.sumBatOwnOff && (await text(".set-count")) === T.one, await text('[data-id="battery"] .set-sec-sum'));
     await ev(`r.querySelector(".bat-own").scrollIntoView({ block: "start" })`);
     await p.screenshot({ path: `${outDir}/settings-battery-own-${tag.replace("/", "-")}.png` });
     await tap('dialog.settings [data-set="save"]');
-    check(`[${tag}] eigene Schwelle gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low_integrations: { matter: 25 } }), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
-    check(`[${tag}] Liste: Matter-Gerät mit 22 % jetzt schwach`, await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "3"`), await text('.chip.hint[data-hint="battery"] .n'));
+    check(`[${tag}] eigene Schwelle und aus gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low_integrations: { matter: 25, bthome: "off" } }), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
+    // Matter-Gerät mit 22 % jetzt schwach, BTHome-Gerät (0 %) nicht mehr
+    const lowIds = () => ev(`return r.host._devices.filter((d) => d.battery?.low).map((d) => d.id).sort().join()`);
+    check(`[${tag}] Liste: schwach sind jetzt Matter (22 %) und Zigbee (8 %), nicht BTHome (0 %)`, await wait(`return r.host._devices.filter((d) => d.battery?.low).map((d) => d.id).sort().join() === "b,c"`), await lowIds());
+    // Geräte-Popup des BTHome-Geräts: globaler Wert ist "aus"
+    await tap('.dev[data-open="a"]');
+    await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('select[data-dlg="dev-bat"]')`);
+    check(`[${tag}] Popup: globaler Wert aus`, (await ev(`return r.querySelector('select[data-dlg="dev-bat"] option[value="default"]').textContent`)) === T.popDefOff);
+    await tap('dialog.device [data-dlg="close"]');
+    await wait(`return !r.querySelector("dialog.device").open`);
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    check(`[${tag}] nach Speichern: Wert steht, Zusammenfassung`, (await text('[data-id="battery"] .set-sec-sum')) === T.sumBatOwn);
+    check(`[${tag}] nach Speichern: Zusammenfassung`, (await text('[data-id="battery"] .set-sec-sum')) === T.sumBatOwnOff);
     await tap('[data-set="section"][data-id="battery"]');
-    check(`[${tag}] Wert im Feld`, (await ev(`return r.querySelector('input[data-bat="matter"]').value`)) === "25");
-    await typeIn('input[data-bat="matter"]', "");
+    check(`[${tag}] Werte stehen`, (await modes()) === "zha:default,matter:own,bthome:off,zwave_js:default" && (await ev(`return r.querySelector('input[data-bat="matter"]').value`)) === "25", await modes());
+    // Zurück auf den globalen Wert
+    await mode("matter", "default");
+    await mode("bthome", "default");
     await tap('dialog.settings [data-set="save"]');
-    check(`[${tag}] leer = globaler Wert, gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low_integrations: {} }) && await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`));
+    check(`[${tag}] globaler Wert, gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low_integrations: {} }) && await wait(`return r.host._devices.filter((d) => d.battery?.low).map((d) => d.id).sort().join() === "a,b"`), await lowIds());
 
     // Fehler beim Speichern: Meldung, Dialog bleibt
     await p.evaluate(() => { window.__setOptsFails = "Keine Berechtigung"; });

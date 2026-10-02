@@ -12,10 +12,14 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.storage import Store
 
 from . import options_api, update_check
 from .availability import RANGES, AvailabilityLog
+from .availability import STORAGE_KEY as AVAILABILITY_STORE_KEY
+from .battery import STORE_KEY as BATTERY_STORE_KEY
 from .battery import BatteryWatch
+from .outage import STORE_KEY as NOTIFY_STORE_KEY
 from .outage import OutageNotifier
 from .const import (
     BATTERY_OFF,
@@ -26,9 +30,12 @@ from .const import (
     BRAND_DIR,
     DATA_AVAILABILITY,
     DATA_BATTERY,
+    DATA_CONNECTION_OVERRIDES,
+    DATA_DEVICE_SETTINGS,
     DATA_OUTAGE,
     DATA_PANEL_REGISTERED,
     DATA_PUSH_IMAGE,
+    DATA_TYPE_OVERRIDES,
     DATA_WS_REGISTERED,
     DEVICE_TYPES,
     DOMAIN,
@@ -42,8 +49,10 @@ from .const import (
     PUSH_IMAGE_FILE,
     PUSH_IMAGE_URL,
     STATIC_URL_PATH,
+    STORAGE_VERSION,
 )
 from .devices import (
+    DEVICES_STORE_KEY,
     async_catalog,
     async_device_detail,
     async_device_overrides,
@@ -105,6 +114,21 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await watch.async_stop()
     update_check.async_stop_daily(hass)
     return True
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """
+    Integration entfernt: ihre eigenen Dateien löschen (Entscheid des Nutzers,
+    2026-10-02), damit nichts zurückbleibt. Verfügbarkeitsprotokoll,
+    Einstellungen pro Gerät (Typ, Verbindungsart, Batterie, Meldungen),
+    gemeldete Ausfälle und Batterien, gemeinsame Panel-Einstellungen. HA ruft
+    das erst nach dem Entladen auf; dort wurde alles Ausstehende geschrieben.
+    """
+    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, update_check.PANEL_STORE_KEY):
+        await Store(hass, STORAGE_VERSION, key).async_remove()
+    # Geladene Stände vergessen: ein neues Einrichten ohne Neustart beginnt leer.
+    for key in (DATA_TYPE_OVERRIDES, DATA_DEVICE_SETTINGS, DATA_CONNECTION_OVERRIDES, update_check.PANEL_DATA_KEY):
+        hass.data.pop(key, None)
 
 
 # ---------------------------------------------------------------------------

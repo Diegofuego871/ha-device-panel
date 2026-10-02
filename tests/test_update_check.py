@@ -287,9 +287,10 @@ async def test_options_flow_battery_per_integration(hass: HomeAssistant, entry) 
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"battery_low_integrations": "battery_map"}
     assert "battery_low_integrations" not in entry.options
-    result = await hass.config_entries.options.async_configure(result["flow_id"], {"battery_low_integrations": {"zha": 25.0, "bthome": 10}})
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"battery_low_integrations": {"zha": 25.0, "bthome": 10, "hue": "off"}})
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert entry.options["battery_low_integrations"] == {"bthome": 10, "zha": 25}
+    # "off": Warnung für die Integration aus
+    assert entry.options["battery_low_integrations"] == {"bthome": 10, "hue": "off", "zha": 25}
 
 
 async def test_options_flow_push_time(hass: HomeAssistant, entry) -> None:

@@ -65,9 +65,9 @@ Bereich.
   Geräten, beides oder keines. Ein Tipp auf die Push-Meldung öffnet das
   Gerät im Panel. Der Push kommt sofort oder einmal täglich zu einer
   gewählten Uhrzeit, mit den neu betroffenen oder allen schwachen Geräten.
-  Die Schwelle lässt sich auch pro Integration einstellen (aufgeführt sind
-  nur Integrationen mit Batteriegeräten) und pro Gerät im Popup (eigene
-  Schwelle oder aus).
+  Pro Integration (aufgeführt sind nur Integrationen mit Batteriegeräten)
+  gilt der globale Wert, eine eigene Schwelle oder aus; pro Gerät ebenso im
+  Popup. Das Gerät geht vor, dann die Integration, dann der globale Wert.
 - Ausfall-Meldungen: ein Push, sobald ein Gerät als ausgefallen gilt, und
   auf Wunsch eine Entwarnung, wenn es wieder online ist, mit der Dauer des
   Ausfalls (sie ersetzt auf dem Handy die Ausfall-Meldung). Mehrere Geräte
@@ -115,6 +115,15 @@ Assistant neu starten.
 
 `custom_components/device_panel` nach `config/custom_components/` kopieren
 und Home Assistant neu starten.
+
+### Entfernen
+
+Einstellungen → Geräte & Dienste → "Device Panel" → ⋮ → Löschen. Das löscht
+auch die eigenen Dateien der Integration (`.storage/device_panel.*`:
+Verfügbarkeitsprotokoll, Einstellungen pro Gerät, gemeldete Ausfälle und
+Batterien, gemeinsame Panel-Einstellungen). Die Registries von Home
+Assistant verändert die Integration nie. Danach in HACS entfernen (oder den
+Ordner löschen) und neu starten.
 
 ## Entwicklung und Tests
 

@@ -365,7 +365,8 @@ class DevicePanel extends HTMLElement {
       else if (el.matches?.('select[data-dlg="dev-bat"]')) {
         // Eigene Schwelle: mit dem bisher geltenden Wert beginnen, dann anpassen.
         const d = this._devices.find((x) => x.id === this._detailId);
-        const value = el.value === "own" ? d?.battery_default?.pct ?? 15 : el.value === "off" ? "off" : null;
+        const pct = d?.battery_default?.pct;
+        const value = el.value === "own" ? (Number.isInteger(pct) ? pct : this._batteryLow ?? 15) : el.value === "off" ? "off" : null;
         this._devRangeError = null;
         this._setDeviceSettings(this._detailId, { battery: value });
       } else if (el.matches?.('input[data-dlg="dev-bat-pct"]')) {
@@ -418,6 +419,7 @@ class DevicePanel extends HTMLElement {
       this._devices = result.devices || [];
       this._integrations = result.integrations || {};
       this._flakyOutages = result.flaky_outages || 3;
+      this._batteryLow = result.battery_low;
       this._hideConn = new Set(result.hide_connections || []);
       this._connOrder = result.connection_order || [];
       // Ausgeblendeter Chip mit aktivem Filter: zurück auf "Alle", sonst
@@ -1568,7 +1570,7 @@ class DevicePanel extends HTMLElement {
     const st = this._settings;
     const [min, max] = st?.data?.limits?.battery_low || [5, 50];
     return Object.entries(st?.draft?.battery_low_integrations || {})
-      .filter(([, v]) => !Number.isInteger(v) || v < min || v > max)
+      .filter(([, v]) => v !== "off" && (!Number.isInteger(v) || v < min || v > max))
       .map(([d]) => d);
   }
 
@@ -1578,7 +1580,7 @@ class DevicePanel extends HTMLElement {
     const bad = new Set(this._batInvalid());
     return Object.entries(d.battery_low_integrations || {})
       .filter(([dom]) => !bad.has(dom))
-      .map(([dom, v]) => `${names[dom] || dom} ${v} %`);
+      .map(([dom, v]) => `${names[dom] || dom} ${v === "off" ? this._t("batOffSum") : `${v} %`}`);
   }
 
   // Verbindungsarten für die Filter-Chips: alle mit Geräten (wie die Chips,
@@ -1660,7 +1662,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -1685,16 +1687,25 @@ class DevicePanel extends HTMLElement {
     const head = `<div class="opt bat-own"><div class="opt-line"><span class="opt-label">${escape(t("batOwnTitle"))}</span></div>
       <div class="opt-short" data-bat-short>${escape(t("batOwnShort", std))}</div></div>`;
     if (!list.length) return head + `<div class="opt-short bat-empty">${escape(t("batOwnEmpty"))}</div>`;
+    // Variante B (docs/mockups/battery-v2): Auswahl wie im Geräte-Popup,
+    // das Feld nur bei eigener Schwelle.
     const rows = list
       .map((x) => {
         const v = own[x.domain];
-        const cls = `${bad.has(x.domain) ? " invalid" : ""}${v !== saved[x.domain] ? " changed" : ""}`;
+        const mode = v === "off" ? "off" : v === undefined ? "default" : "own";
+        const cls = `${bad.has(x.domain) ? " invalid" : ""}${v !== saved[x.domain] ? " changed" : ""}${mode === "off" ? " off" : ""}`;
+        const opts = [["default", t("devBatDefault", std)], ["own", t("devBatOwn")], ["off", t("devBatOff")]]
+          .map(([val, text]) => `<option value="${val}"${val === mode ? " selected" : ""}>${escape(text)}</option>`)
+          .join("");
+        const input = mode === "own"
+          ? `<span class="opt-input"><input type="number" inputmode="numeric" step="1" min="${min}" max="${max}" data-bat="${escape(x.domain)}" value="${escape(v ?? "")}" placeholder="${escape(std)}" aria-label="${escape(`${x.name}: ${t("batOwnCol")}`)}"><span class="unit">%</span></span>`
+          : "";
         return `<div class="ex-row bat-row${cls}"><span class="ibadge" style="--h:${hue(x.domain)}">${escape(initials(x.name))}</span>
           <div class="ex-name">${escape(x.name)}<small>${escape(t("batDevices", x.devices, x.weakest))}</small></div>
-          <span class="opt-input"><input type="number" inputmode="numeric" step="1" min="${min}" max="${max}" data-bat="${escape(x.domain)}" value="${escape(v ?? "")}" placeholder="${escape(std)}" aria-label="${escape(`${x.name}: ${t("batOwnCol")}`)}"><span class="unit">%</span></span></div>`;
+          <span class="bat-ctl"><span class="opt-select"><select data-bat-mode="${escape(x.domain)}" aria-label="${escape(`${x.name}: ${t("batOwnColMode")}`)}">${opts}</select>${mdi("chevronDown", 18)}</span>${input}</span></div>`;
       })
       .join("");
-    return head + `<div class="ex-head"><span>${escape(t("colIntegration"))}</span><span>${escape(t("batOwnCol"))}</span></div>${rows}
+    return head + `<div class="ex-head"><span>${escape(t("colIntegration"))}</span><span>${escape(t("batOwnColMode"))}</span></div>${rows}
       <div class="opt-error" data-bat-error ${errors.battery_low_integrations ? "" : "hidden"}>${escape(errors.battery_low_integrations || "")}</div>`;
   }
 
@@ -1976,10 +1987,10 @@ class DevicePanel extends HTMLElement {
       }
       if (!st?.draft || el.type !== "number") return;
       if (el.dataset.bat) {
-        // Leer = globaler Wert: Eintrag entfernen.
+        // Das Feld gibt es nur bei "Eigene Schwelle": leer ist dort ungültig
+        // (zurück auf den globalen Wert geht es über die Auswahl).
         const own = { ...(st.draft.battery_low_integrations || {}) };
-        if (el.value === "") delete own[el.dataset.bat];
-        else own[el.dataset.bat] = Number(el.value);
+        own[el.dataset.bat] = el.value === "" ? null : Number(el.value);
         st.draft.battery_low_integrations = own;
       } else if (el.dataset.opt) {
         st.draft[el.dataset.opt] = el.value === "" ? null : Number(el.value);
@@ -1991,6 +2002,17 @@ class DevicePanel extends HTMLElement {
       const el = ev.target;
       if (st?.draft && el.tagName === "SELECT" && el.dataset.opt) {
         st.draft[el.dataset.opt] = el.value;
+        this._renderSettings();
+        return;
+      }
+      if (st?.draft && el.tagName === "SELECT" && el.dataset.batMode) {
+        const dom = el.dataset.batMode;
+        const own = { ...(st.draft.battery_low_integrations || {}) };
+        const saved = (st.data.values.battery_low_integrations || {})[dom];
+        if (el.value === "default") delete own[dom];
+        else if (el.value === "off") own[dom] = "off";
+        else own[dom] = Number.isInteger(saved) ? saved : Number.isInteger(st.draft.battery_low) ? st.draft.battery_low : st.data.values.battery_low;
+        st.draft.battery_low_integrations = own;
         this._renderSettings();
         return;
       }
@@ -2036,12 +2058,15 @@ class DevicePanel extends HTMLElement {
     const saved = st.data.values.battery_low_integrations || {};
     const own = st.draft.battery_low_integrations || {};
     const std = errors.battery_low ? st.data.values.battery_low : st.draft.battery_low;
-    for (const input of dialog.querySelectorAll("input[data-bat]")) {
-      const row = input.closest(".ex-row");
-      row?.classList.toggle("invalid", bad.has(input.dataset.bat));
-      row?.classList.toggle("changed", own[input.dataset.bat] !== saved[input.dataset.bat]);
-      input.placeholder = String(std);
+    for (const sel of dialog.querySelectorAll("select[data-bat-mode]")) {
+      const dom = sel.dataset.batMode;
+      const row = sel.closest(".ex-row");
+      row?.classList.toggle("invalid", bad.has(dom));
+      row?.classList.toggle("changed", own[dom] !== saved[dom]);
+      const def = sel.querySelector('option[value="default"]');
+      if (def) def.textContent = this._t("devBatDefault", std);
     }
+    for (const input of dialog.querySelectorAll("input[data-bat]")) input.placeholder = String(std);
     const batErr = dialog.querySelector("[data-bat-error]");
     if (batErr) {
       batErr.hidden = !errors.battery_low_integrations;

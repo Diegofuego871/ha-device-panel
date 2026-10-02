@@ -443,7 +443,7 @@
         }
         if ("battery_low_integrations" in msg.values) {
           const m = msg.values.battery_low_integrations;
-          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !Number.isInteger(v) || v < 5 || v > 50)) throw { code: "invalid_format", message: "battery map" };
+          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || (v !== "off" && (!Number.isInteger(v) || v < 5 || v > 50)))) throw { code: "invalid_format", message: "battery map" };
         }
         const changed = Object.keys(msg.values).some((k) => JSON.stringify(window.__opts[k]) !== JSON.stringify(msg.values[k]));
         Object.assign(window.__opts, msg.values);
@@ -488,7 +488,10 @@
           const setting = window.__devSettings.battery[d.id];
           if (!b || b.level == null) return b;
           if (setting === "off") return { ...b, low: false };
-          return { ...b, low: b.level <= (Number.isInteger(setting) ? setting : own[dom] ?? batLow) };
+          const threshold = Number.isInteger(setting) ? setting : own[dom] ?? batLow;
+          // Warnung für die Integration aus: Stand ja, "schwach" nie.
+          if (threshold === "off") return { ...b, low: false };
+          return { ...b, low: b.level <= threshold };
         };
         return {
           devices: shown().map((d) => ({

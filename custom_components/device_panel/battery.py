@@ -161,9 +161,15 @@ class BatteryWatch:
         self._unsubs = []
         if self._shown:
             persistent_notification.async_dismiss(self.hass, PERSISTENT_BATTERY_ID)
+        # Sofort schreiben: ein verzögerter Termin legte die Datei nach dem
+        # Entfernen der Integration sonst neu an.
+        await self._store.async_save(self._data())
+
+    def _data(self) -> dict[str, Any]:
+        return {"low": self._low, "pending": sorted(self._pending)}
 
     def _save(self) -> None:
-        self._store.async_delay_save(lambda: {"low": self._low, "pending": sorted(self._pending)}, 1)
+        self._store.async_delay_save(self._data, 1)
 
     async def async_check(self) -> None:
         hass = self.hass
