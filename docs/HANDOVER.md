@@ -122,7 +122,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    ausschalten (`battery_low_integrations` mit Wert `"off"`, Reihenfolge
    Gerät → Integration → global); Mockups `docs/mockups/battery-v2/`
    (Empfehlung A, Schalter "Warnung" je Zeile), Entscheid des Nutzers
-   ausstehend; wird `0.14.0`. Entschieden (Nutzer, 2026-10-02): Handy A
+   ausstehend; wird `0.14.0`. Backend fertig als Patch in `docs/wip/`
+   (siehe `docs/wip/README.md`). Entschieden (Nutzer, 2026-10-02): Handy A
    für Spalten und Sortierung (`docs/mockups/view-v1/`), als Nächstes. Weiter mit Schritt 2 (Spalten,
    Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
    am 2026-10-02 nachgefragt; dazu Filter-Chips der Verbindungsart einzeln
