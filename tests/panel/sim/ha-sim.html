@@ -328,6 +328,7 @@
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
   window.__devSettings = { battery: {}, notifyOff: new Set() };
+  window.__connOverrides = {};
   const pushHass = () => {
     const ha = document.querySelector("home-assistant").hass;
     document.querySelector("#panel-frame").contentDocument.querySelector("device-panel").hass = { ...ha };
@@ -400,6 +401,14 @@
         if (window.__getOptsFails) throw new Error("boom");
         await new Promise((r) => setTimeout(r, 40));
         return { values: JSON.parse(JSON.stringify(window.__opts)), panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS, notify_targets: NOTIFY_TARGETS, overrides: overrides() };
+      }
+      if (msg.type === "device_panel/set_device_connection") {
+        if (window.__connFails) throw new Error(window.__connFails);
+        if (!devices.some((d) => d.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
+        if (msg.connection !== null && !["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud"].includes(msg.connection)) throw { code: "invalid_format", message: "connection" };
+        if (msg.connection === null) delete window.__connOverrides[msg.device_id];
+        else window.__connOverrides[msg.device_id] = msg.connection;
+        return { connection: msg.connection };
       }
       if (msg.type === "device_panel/reset_device_settings") {
         if (window.__resetFails) throw new Error(window.__resetFails);
@@ -484,6 +493,10 @@
             battery_setting: window.__devSettings.battery[d.id] ?? null,
             battery_default: { pct: own[d.integration?.domain] ?? batLow, integration: own[d.integration?.domain] != null ? d.integration.domain : null },
             notify_off: window.__devSettings.notifyOff.has(d.id),
+            // Wie das Backend: von Hand vor der Erkennung.
+            connection: window.__connOverrides[d.id] || d.connection,
+            connection_auto: d.connection,
+            connection_manual: d.id in window.__connOverrides,
           })),
           integrations, now: new Date().toISOString(), offline_after: window.__opts.offline_after * 60, battery_low: batLow,
           flaky_outages: flakyN, hide_connections: [...window.__opts.hide_connections], pulse: pulse(), incidents,

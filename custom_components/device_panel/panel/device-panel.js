@@ -142,6 +142,8 @@ const CONN = {
   unknown: { key: "connUnknown", icon: (s) => stroke(`<circle cx="12" cy="12" r="9.2"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6M12 16.8v.2"/>`, s) },
 };
 const MATTER_TYPES = { thread: "thread", wifi: "wifi", ethernet: "ethernet" };
+// Wählbar von Hand (Popup): alle ausser "unbekannt" (Fall ohne Erkennung).
+const CONN_MANUAL = Object.keys(CONN).filter((k) => k !== "unknown");
 
 const LOGO = `<svg width="30" height="30" viewBox="22 22 212 212" aria-hidden="true"><defs><linearGradient id="dpg" x1="28" y1="20" x2="228" y2="236" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7ADFFD"/><stop offset=".5" stop-color="#22A9F9"/><stop offset="1" stop-color="#1C7DF9"/></linearGradient></defs><path d="M60 44 H112 A84 84 0 0 1 112 212 H60 Z" fill="none" stroke="url(#dpg)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><path d="M86 128 H104 L118 94 L136 164 L150 128 H168" fill="none" stroke="url(#dpg)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
@@ -348,6 +350,7 @@ class DevicePanel extends HTMLElement {
       const el = ev.target;
       if (!this._detailId) return;
       if (el.matches?.('select[data-dlg="type"]')) this._setDeviceType(this._detailId, el.value || null);
+      else if (el.matches?.('select[data-dlg="conn"]')) this._setDeviceConnection(this._detailId, el.value || null);
       else if (el.matches?.('select[data-dlg="dev-bat"]')) {
         // Eigene Schwelle: mit dem bisher geltenden Wert beginnen, dann anpassen.
         const d = this._devices.find((x) => x.id === this._detailId);
@@ -443,7 +446,8 @@ class DevicePanel extends HTMLElement {
     let changed = false;
     try {
       for (const d of this._devices) {
-        if (d.connection !== "matter") continue;
+        // Auch bei Verbindungsart von Hand: für "Automatisch: …" im Popup.
+        if ((d.connection_auto !== undefined ? d.connection_auto : d.connection) !== "matter") continue;
         const cached = this._matter.get(d.id);
         if (cached && Date.now() - cached.at < MATTER_REFRESH_MS) continue;
         let type = "matter";
@@ -462,9 +466,16 @@ class DevicePanel extends HTMLElement {
     if (changed) this._render();
   }
 
+  // Von Hand gesetzt: genau diese; sonst die Erkennung, Matter verfeinert.
   _connOf(d) {
-    if (d.connection === "matter") return this._matter.get(d.id)?.type || "matter";
-    return CONN[d.connection] ? d.connection : "unknown";
+    if (d.connection_manual) return CONN[d.connection] ? d.connection : "unknown";
+    return this._connAuto(d);
+  }
+
+  _connAuto(d) {
+    const auto = d.connection_auto !== undefined ? d.connection_auto : d.connection;
+    if (auto === "matter") return this._matter.get(d.id)?.type || "matter";
+    return CONN[auto] ? auto : "unknown";
   }
 
   // --- Formatierung ---------------------------------------------------------
@@ -883,6 +894,23 @@ class DevicePanel extends HTMLElement {
     this._fetch();
   }
 
+  // Verbindungsart von Hand: wie der Typ sofort zeigen, dann bestätigen lassen.
+  async _setDeviceConnection(id, kind) {
+    const d = this._devices.find((x) => x.id === id);
+    this._connError = null;
+    try {
+      await this._hass.callWS({ type: "device_panel/set_device_connection", device_id: id, connection: kind });
+      if (d) {
+        d.connection = kind || (d.connection_auto !== undefined ? d.connection_auto : d.connection);
+        d.connection_manual = Boolean(kind);
+      }
+    } catch (err) {
+      this._connError = (err && err.message) || String(err);
+    }
+    this._render();
+    this._fetch();
+  }
+
   // Einstellungen des Geräts: sofort speichern (wie der Typ), dann neu laden.
   async _setDeviceSettings(id, changes) {
     const d = this._devices.find((x) => x.id === id);
@@ -901,6 +929,7 @@ class DevicePanel extends HTMLElement {
   }
 
   _resetDevice() {
+    this._connError = null;
     this._devSetError = null;
     this._devRangeError = null;
     this._typeError = null;
@@ -978,7 +1007,15 @@ class DevicePanel extends HTMLElement {
   _connSectionHtml(d) {
     const detail = this._detail?.id === d.id ? this._detail.data : null;
     const type = this._connOf(d);
-    const tiles = [this._tile(this._t("connType"), `<span class="sig">${CONN[type].icon(16)} ${escape(this._t(CONN[type].key))}</span>`)];
+    // Verbindungsart wählbar wie der Typ: erkannt oder von Hand, gilt sofort.
+    const auto = this._connAuto(d);
+    const opts = [`<option value="" ${d.connection_manual ? "" : "selected"}>${escape(this._t("typeAuto", this._t(CONN[auto].key)))}</option>`]
+      .concat(CONN_MANUAL.map((k) => `<option value="${k}" ${d.connection_manual && d.connection === k ? "selected" : ""}>${escape(this._t(CONN[k].key))}</option>`))
+      .join("");
+    const connSel = `<label class="typ-sel">${CONN[type].icon(16)}<select data-dlg="conn" aria-label="${escape(this._t("connType"))}">${opts}</select>${mdi("chevronDown", 18)}</label>${
+      d.connection_manual ? `<small>${escape(this._t("typeManual"))}</small>` : ""
+    }${this._connError ? `<small class="warn">${escape(this._t("connSaveError"))} ${escape(this._connError)}</small>` : ""}`;
+    const tiles = [this._tile(this._t("connType"), connSel)];
     if (d.via) tiles.push(this._tile(this._t("viaLabel"), escape(d.via)));
     const entries = detail?.config_entries?.length
       ? detail.config_entries

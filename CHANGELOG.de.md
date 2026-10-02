@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.12.0] - 2026-10-02
+
+Verbindungsart von Hand.
+
+### Hinzugefügt
+
+- Geräte-Popup, Kachel "Verbindungsart": wählbar wie der Typ,
+  "Automatisch: <erkannt>" oder eine Verbindungsart (Zigbee, Thread,
+  Z-Wave, Matter, Bluetooth, WLAN, LAN, Netzwerk, Cloud), für Geräte, deren
+  Verbindung nicht erkannt wird (z. B. "Unbekannt"). Gilt sofort und wird
+  von der Integration gespeichert; Liste, Spalte und Filter-Chips folgen.
+  "Automatisch" geht zurück auf die Erkennung.
+
 ## [0.11.0] - 2026-10-02
 
 Filter-Chips der Verbindungsart lassen sich ausblenden.
@@ -338,6 +351,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.12.0
 [0.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.11.0
 [0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0
 [0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0

@@ -19,6 +19,7 @@ from .battery import BatteryWatch
 from .outage import OutageNotifier
 from .const import (
     BATTERY_OFF,
+    CONNECTION_MANUAL,
     CONF_BATTERY_LOW,
     CONF_NOTIFY_SERVICE,
     INT_RANGES,
@@ -50,6 +51,7 @@ from .devices import (
     async_load_type_overrides,
     async_mark_start,
     async_reset_device_settings,
+    async_set_connection_override,
     async_set_device_settings,
     async_set_type_override,
 )
@@ -359,6 +361,27 @@ async def _ws_set_device_type(
 
 @websocket_api.websocket_command(
     {
+        vol.Required("type"): f"{DOMAIN}/set_device_connection",
+        vol.Required("device_id"): str,
+        # None: wieder erkennen lassen.
+        vol.Required("connection"): vol.Any(None, vol.In(CONNECTION_MANUAL)),
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_set_device_connection(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Verbindungsart eines Geräts von Hand setzen (wenn die Erkennung danebenliegt)."""
+    if dr.async_get(hass).async_get(msg["device_id"]) is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
+        return
+    await async_set_connection_override(hass, msg["device_id"], msg["connection"])
+    connection.send_result(msg["id"], {"connection": msg["connection"]})
+
+
+@websocket_api.websocket_command(
+    {
         vol.Required("type"): f"{DOMAIN}/set_device_settings",
         vol.Required("device_id"): str,
         # None = globaler Wert, "off" = Warnung aus, Zahl = eigene Schwelle.
@@ -419,5 +442,6 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_set_options)
     websocket_api.async_register_command(hass, _ws_set_device_type)
+    websocket_api.async_register_command(hass, _ws_set_device_connection)
     websocket_api.async_register_command(hass, _ws_set_device_settings)
     websocket_api.async_register_command(hass, _ws_reset_device_settings)

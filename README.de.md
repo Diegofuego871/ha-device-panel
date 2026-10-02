@@ -37,7 +37,8 @@ Bereich.
   alle Entitäten mit Zustand, die für das Lebenszeichen entscheidenden
   markiert. Ein Tipp auf eine Entität öffnet den Entitäts-Dialog von Home
   Assistant, ein Knopf die Geräteseite von Home Assistant. Hier lässt sich
-  der Typ des Geräts ändern, wenn die Erkennung falsch liegt.
+  der Typ und die Verbindungsart des Geräts ändern, wenn die Erkennung
+  falsch liegt oder nichts findet.
 - Statistik-Fenster aus den Kacheln: Verfügbarkeit über 24 Stunden, 7 oder
   30 Tage mit Zeitstrahl, jeder Unterbruch mit Zeit und Dauer sowie
   Unterbrüche pro Tag.

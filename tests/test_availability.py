@@ -267,7 +267,7 @@ async def test_type_override(hass: HomeAssistant, setup: AvailabilityLog, hass_w
     assert (await client.receive_json())["success"]
     data = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}["Zwischenstecker"]
     assert (data["type"], data["type_auto"], data["type_manual"]) == ("outlet", "switch", True)
-    assert hass_storage[f"{DOMAIN}.devices"]["data"] == {"types": {dev.id: "outlet"}, "battery": {}, "notify_off": []}
+    assert hass_storage[f"{DOMAIN}.devices"]["data"] == {"types": {dev.id: "outlet"}, "battery": {}, "notify_off": [], "connections": {}}
     # Zurück auf die Erkennung
     await client.send_json({"id": 2, "type": f"{DOMAIN}/set_device_type", "device_id": dev.id, "device_type": None})
     assert (await client.receive_json())["success"]

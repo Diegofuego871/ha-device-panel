@@ -32,8 +32,8 @@ details such as software version, manufacturer, model and area.
   (warns if its config entry is not loaded), device details and all
   entities with their state, the ones that decide whether the device is
   alive marked. Tap an entity for the Home Assistant entity dialog, or open
-  the Home Assistant device page. The type of the device can be changed
-  here if the detection is wrong.
+  the Home Assistant device page. The type and the connection type of the
+  device can be changed here if the detection is wrong.
 - Statistics window from the tiles: availability over 24 hours, 7 or 30 days
   with a timeline, every outage with time and duration, and outages per
   day.

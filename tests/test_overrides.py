@@ -113,3 +113,32 @@ async def test_reset_battery_runs_warning(hass: HomeAssistant, setup, hass_ws_cl
     assert [c.data["title"] for c in calls] == ["Low battery: Fenster"]
     # Keine Liste: abgelehnt
     assert (await _ws(client, 3, type=f"{DOMAIN}/reset_device_settings", battery=["x"], notify="kein"))["error"]["code"] == "invalid_format"
+
+
+async def test_connection_by_hand(hass: HomeAssistant, setup, hass_ws_client, hass_storage: dict[str, Any]) -> None:
+    dev = _device(hass, "Glücksklee", domain="plant_test")
+    _entity(hass, dev, "sensor", "moist", "40")
+    client = await hass_ws_client(hass)
+
+    async def listed() -> dict[str, Any]:
+        await client.send_json({"id": next(ids), "type": f"{DOMAIN}/list_devices"})
+        return next(d for d in (await client.receive_json())["result"]["devices"] if d["id"] == dev.id)
+
+    ids = iter(range(1, 100))
+    before = await listed()
+    assert (before["connection"], before["connection_auto"], before["connection_manual"]) == (None, None, False)
+    # Von Hand: Vorrang, Erkennung bleibt sichtbar, gespeichert
+    res = await _ws(client, next(ids), type=f"{DOMAIN}/set_device_connection", device_id=dev.id, connection="ble")
+    assert res["result"] == {"connection": "ble"}
+    after = await listed()
+    assert (after["connection"], after["connection_auto"], after["connection_manual"]) == ("ble", None, True)
+    await hass.async_block_till_done()
+    assert hass_storage[f"{DOMAIN}.devices"]["data"]["connections"] == {dev.id: "ble"}
+    # "Unbekannt" ist keine Wahl, unbekannte Art und Gerät abgelehnt
+    for payload, code in (({"connection": "unknown"}, "invalid_format"), ({"connection": "funk"}, "invalid_format")):
+        assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_device_connection", device_id=dev.id, **payload))["error"]["code"] == code
+    assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_device_connection", device_id="weg", connection="ble"))["error"]["code"] == "not_found"
+    # Zurück auf die Erkennung
+    assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_device_connection", device_id=dev.id, connection=None))["success"]
+    back = await listed()
+    assert (back["connection"], back["connection_manual"]) == (None, False)

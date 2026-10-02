@@ -29,6 +29,8 @@ from .const import (
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_HIDE_CONNECTIONS,
+    CONNECTION_MANUAL,
+    DATA_CONNECTION_OVERRIDES,
     CONF_FLAKY_OUTAGES,
     CONF_OFFLINE_AFTER,
     CONF_SHOW_DISABLED,
@@ -477,6 +479,8 @@ async def async_load_type_overrides(hass: HomeAssistant) -> None:
             },
             "notify_off": {str(d) for d in stored.get("notify_off") or [] if isinstance(d, str)},
         }
+        conns = stored.get("connections") if isinstance(stored.get("connections"), dict) else {}
+        hass.data[DATA_CONNECTION_OVERRIDES] = {str(k): v for k, v in conns.items() if v in CONNECTION_MANUAL}
 
 
 async def _async_save_devices(hass: HomeAssistant) -> None:
@@ -486,6 +490,7 @@ async def _async_save_devices(hass: HomeAssistant) -> None:
             "types": dict(type_overrides(hass)),
             "battery": dict(settings["battery"]),
             "notify_off": sorted(settings["notify_off"]),
+            "connections": dict(connection_overrides(hass)),
         }
     )
 
@@ -587,6 +592,23 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
         ),
         "notify": sorted((items[dev] for dev in settings["notify_off"] if dev in items), key=by_name),
     }
+
+
+@callback
+def connection_overrides(hass: HomeAssistant) -> dict[str, str]:
+    """Verbindungsart von Hand: Gerät → Art (Vorrang vor der Erkennung)."""
+    return hass.data.get(DATA_CONNECTION_OVERRIDES) or {}
+
+
+async def async_set_connection_override(hass: HomeAssistant, device_id: str, kind: str | None) -> None:
+    """Verbindungsart von Hand setzen; None stellt auf die Erkennung zurück."""
+    await async_load_type_overrides(hass)
+    overrides = hass.data[DATA_CONNECTION_OVERRIDES]
+    if kind is None:
+        overrides.pop(device_id, None)
+    else:
+        overrides[device_id] = kind
+    await _async_save_devices(hass)
 
 
 @callback
@@ -703,6 +725,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         if log is not None:
             summary = log.device_summary(device.id, 86400, now_ts)
             avail = {**(summary or {}), "strip": log.device_strip(device.id, now_ts)} if summary else None
+        auto_conn = _connection(device, domains, entries, signal, iot_classes)
+        manual_conn = connection_overrides(hass).get(device.id)
         devices.append(
             {
                 "id": device.id,
@@ -722,7 +746,10 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "offline_since": since.isoformat() if since else None,
                 # Ausfall schon vor dem letzten Start: Dauer ist "mindestens".
                 "since_restart": bool(since and started_at and since <= started_at + timedelta(seconds=offline_after)),
-                "connection": _connection(device, domains, entries, signal, iot_classes),
+                # Von Hand vor der Erkennung; die Erkennung bleibt für "Automatisch: …".
+                "connection": manual_conn or auto_conn,
+                "connection_auto": auto_conn,
+                "connection_manual": manual_conn is not None,
                 "signal": signal,
                 "via": via,
                 **_battery_fields(hass, opts, device, entries, primary.domain if primary else None),

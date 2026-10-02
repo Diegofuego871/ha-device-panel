@@ -106,6 +106,7 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
 | WLAN-Empfang | Sensoren mit `device_class: signal_strength` (dBm), z. B. Shelly, ESPHome | geprüft (Shelly) |
 | Bluetooth-Empfang und Proxy | `bluetooth.async_last_service_info` (RSSI, Quelle) | geprüft |
 | Thread-Empfang, Zigbee-Route | Matter-Thread-Diagnose, ZHA-Nachbartabelle | offen |
+| Verbindungsart von Hand | Popup, `.storage/device_panel.devices` ("connections"), Vorrang vor der Erkennung und der Matter-Diagnose | seit 0.12.0 |
 
 ## Überwachung einstellen (vom Nutzer angenommen, 2026-10-01)
 

@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.11.0, Filter-Chips der Verbindungsart ausblendbar)
+## Stand (0.12.0, Verbindungsart von Hand)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -13,7 +13,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   Empfang, Hub, Batterie, Update, Typ, Integration mit Eintrag,
   Verfügbarkeit 24 Std., Puls, Sammelausfälle), `device_panel/device`
   (Popup), `device_panel/availability` (Statistik-Fenster),
-  `device_panel/set_device_type` (Typ von Hand im Popup) und
+  `device_panel/set_device_type` (Typ von Hand im Popup),
+  `device_panel/set_device_connection` (Verbindungsart von Hand, seit
+  0.12.0; `list_devices` liefert `connection`, `connection_auto`,
+  `connection_manual`) und
   `device_panel/set_device_settings` (Popup "Meldungen für dieses Gerät":
   Batterie-Schwelle des Geräts oder "off", Ausfall-/Online-Meldungen aus),
   beides in `.storage/device_panel.devices`, und
@@ -103,7 +106,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    "Push-Benachrichtigung". Mit `0.11.0` (Nutzer, 2026-10-02,
    `docs/mockups/view-v2/`, Variante C): Filter-Chips der Verbindungsart
    global ausblendbar (Einstellungen, "Anzeige"). `0.9.1` und `0.10.0` ohne
-   Release, in `0.11.0` enthalten. Entschieden (Nutzer, 2026-10-02): Handy A
+   Release, in `0.11.0` enthalten. Mit `0.12.0` (Nutzer, 2026-10-02):
+   Verbindungsart im Popup wählbar wie der Typ, gespeichert in
+   `.storage/device_panel.devices` ("connections"); zählt nicht als "Eigene
+   Einstellung" (wie der Typ von Hand). Entschieden (Nutzer, 2026-10-02): Handy A
    für Spalten und Sortierung (`docs/mockups/view-v1/`), als Nächstes. Weiter mit Schritt 2 (Spalten,
    Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
    am 2026-10-02 nachgefragt; dazu Filter-Chips der Verbindungsart einzeln

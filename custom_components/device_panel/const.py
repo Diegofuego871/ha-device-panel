@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "14"
+PANEL_VERSION = "15"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -133,5 +133,9 @@ CONF_EXCLUDE_TYPES = "exclude_types"
 # "Anzeige", gilt für alle Benutzer). Nur die Chips: Geräte bleiben sichtbar.
 CONF_HIDE_CONNECTIONS = "hide_connections"
 CONNECTION_TYPES = ("zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown")
+# Verbindungsart von Hand (Popup, wie der Typ): alle ausser "unbekannt", das
+# ist der Fall ohne Erkennung, kein Wert zum Wählen.
+CONNECTION_MANUAL = tuple(c for c in CONNECTION_TYPES if c != "unknown")
+DATA_CONNECTION_OVERRIDES = f"{DOMAIN}_connection_overrides"
 # Von Hand gesetzte Gerätetypen (eigene Datei, eine Instanz pro HA).
 DATA_TYPE_OVERRIDES = f"{DOMAIN}_type_overrides"
