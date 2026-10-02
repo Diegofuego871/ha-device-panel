@@ -78,6 +78,7 @@ details such as software version, manufacturer, model and area.
   update via HACS with one click, restart afterwards, optionally offer
   pre-releases ("Enable in HACS" switches on the HACS pre-release option).
   Optional daily check that reports a new version under Settings → Repairs.
+  Everything applies with "Save"; the dialog stays open afterwards.
 
 ### Planned (see `docs/CONCEPT.md`)
 

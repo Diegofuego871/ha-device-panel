@@ -1651,9 +1651,13 @@ class DevicePanel extends HTMLElement {
     else body = this._settingsBodyHtml();
     const changes = this._settingsChanges();
     const canSave = !st.loading && !st.error && !st.saving && changes.length > 0 && !Object.keys(this._settingsErrors()).length;
+    // Nach dem Speichern bleibt der Dialog offen (Wunsch des Nutzers): kurz
+    // "Gespeichert" statt des Zählers; ohne Änderung heisst der Knopf "Schliessen".
+    if (changes.length) st.saved = false;
+    const saved = !changes.length && st.saved;
     const actions = `<div class="dlg-actions">
-        <span class="set-count">${changes.length ? escape(t("settingsChanges", changes.length)) : ""}</span>
-        <button type="button" class="dlg-btn" data-set="close">${escape(t("settingsCancel"))}</button>
+        <span class="set-count${saved ? " saved" : ""}" role="status">${changes.length ? escape(t("settingsChanges", changes.length)) : saved ? escape(t("settingsSavedShort")) : ""}</span>
+        <button type="button" class="dlg-btn" data-set="close">${escape(changes.length ? t("settingsCancel") : t("close"))}</button>
         <button type="button" class="dlg-btn primary" data-set="save" ${canSave ? "" : "disabled"}>${escape(st.saving ? t("settingsSaving") : t("settingsSave"))}</button></div>`;
     // Die Versionszeile (.ver-slot) ändert sich oft (Prüfung, HACS) und wird
     // dann allein ersetzt (_renderSettingsVersion), nicht der ganze Dialog.
@@ -2049,8 +2053,14 @@ class DevicePanel extends HTMLElement {
     if (!dialog || !st?.draft) return;
     const changes = this._settingsChanges();
     const errors = this._settingsErrors();
+    if (changes.length) st.saved = false;
     const count = dialog.querySelector(".set-count");
-    if (count) count.textContent = changes.length ? this._t("settingsChanges", changes.length) : "";
+    if (count) {
+      count.textContent = changes.length ? this._t("settingsChanges", changes.length) : st.saved ? this._t("settingsSavedShort") : "";
+      count.classList.toggle("saved", !changes.length && Boolean(st.saved));
+    }
+    const cancel = dialog.querySelector('.dlg-actions [data-set="close"]');
+    if (cancel) cancel.textContent = changes.length ? this._t("settingsCancel") : this._t("close");
     const save = dialog.querySelector('[data-set="save"]');
     if (save) save.disabled = st.saving || !changes.length || Object.keys(errors).length > 0;
     // Batterie pro Integration: Zeilen markieren, Fehlerzeile, globaler Wert als Platzhalter.
@@ -2141,18 +2151,46 @@ class DevicePanel extends HTMLElement {
         if (!this._prerelease) await this._disableHacsPrerelease();
       }
       if (anyReset) await this._hass.callWS({ type: "device_panel/reset_device_settings", ...resets });
-      this._closeSettings();
-      this._toast(this._t("settingsSaved"));
       // Erkennung, Batterie-Schwelle, Ausschlüsse und Anzeige ändern die Liste sofort.
       const quiet = ["update_check", "battery_push", "battery_persistent", "notify_service", "notify_click_target"];
       // Zurückgesetzte Geräte: Symbole und Batterie-Markierung in der Liste.
       if (anyReset || changes.some((k) => !quiet.includes(k))) this._fetch();
+      await this._reloadSettings(st);
     } catch (err) {
       if (this._settings !== st) return;
       st.saving = false;
       st.saveError = (err && err.message) || String(err);
       this._renderSettings();
     }
+  }
+
+  // Nach dem Speichern: Dialog bleibt offen, mit dem gespeicherten Stand des
+  // Backends (bereinigte Werte, Übersicht der Geräte-Einstellungen, Katalog).
+  // Aufgeklappte Abschnitte und Infos bleiben.
+  async _reloadSettings(st) {
+    let data = null;
+    try {
+      data = await this._hass.callWS({ type: "device_panel/get_options" });
+    } catch (err) {
+      // Gespeichert ist es; ohne neue Daten gilt der Entwurf als Stand.
+      data = { ...st.data, values: { ...st.data.values, ...st.draft } };
+    }
+    if (this._settings !== st) return;
+    st.data = data;
+    st.draft = { ...data.values };
+    if (data.panel) this._applyPanelSettings(data.panel);
+    st.extraBase = { prerelease: Boolean(this._prerelease) };
+    st.extra = { ...st.extraBase };
+    st.resets = { battery: new Set(), notify: new Set() };
+    st.saving = false;
+    st.saved = true;
+    this._renderSettings();
+    window.clearTimeout(this._savedTimer);
+    this._savedTimer = window.setTimeout(() => {
+      if (this._settings !== st || !st.saved) return;
+      st.saved = false;
+      this._updateSettingsMeta();
+    }, 4000);
   }
 
   _toast(text) {

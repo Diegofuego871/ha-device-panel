@@ -7,7 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.15.0] - 2026-10-02
+
+Settings stay open after saving.
+
+### Changed
+
+- Settings in the panel: "Save" no longer closes the dialog. It shows
+  "Saved" next to the buttons and reloads the saved state; open sections
+  and the scroll position stay. Without unsaved changes the left button
+  reads "Close" instead of "Cancel".
+
 ## [0.14.0] - 2026-10-02
+
+Not released; included in 0.15.0.
 
 Battery warning off for a whole integration; removing the integration
 deletes its data.
@@ -34,7 +47,7 @@ deletes its data.
 
 ## [0.13.0] - 2026-10-02
 
-Not released; included in 0.14.0.
+Not released; included in 0.15.0.
 
 Order of the connection type chips; outage duration across restarts of
 Home Assistant.
@@ -74,7 +87,7 @@ Home Assistant.
 
 ## [0.12.0] - 2026-10-02
 
-Not released; included in 0.14.0.
+Not released; included in 0.15.0.
 
 Connection type by hand.
 
@@ -404,7 +417,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[0.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.14.0
+[0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0
 [0.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.11.0
 [0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0
 [0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0

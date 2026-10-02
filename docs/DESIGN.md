@@ -95,7 +95,10 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Tabs und Zeitraum (gemeinsam, pro Benutzer gemerkt).
 - Ladeanimationen (Loader) wählbar, mit gemeinsamem Takt, damit Neuaufbau
   sie nicht neu startet.
-- Toasts für Bestätigungen, Fehler im Dialog selbst, nicht als Toast.
+- Toasts für Bestätigungen, Fehler im Dialog selbst, nicht als Toast. In
+  einem offenen Dialog auch die Bestätigung im Dialog (Einstellungen:
+  "Gespeichert" in Grün neben den Knöpfen, seit 0.15.0); ein Toast läge
+  hinter dem modalen Dialog.
 - Alles mit Tastatur bedienbar, `aria-label` auf Symbolknöpfen.
 - Reihenfolge per Ziehen (seit 0.13.0, Chips der Verbindungsart): Griff
   (zwei Reihen Punkte) links in der Zeile, Zeile hebt sich beim Ziehen ab

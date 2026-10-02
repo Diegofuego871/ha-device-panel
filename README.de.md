@@ -83,7 +83,8 @@ Bereich.
   suchen, mit einem Klick über HACS aktualisieren, danach neu starten,
   wahlweise Vorabversionen anbieten ("In HACS freischalten" schaltet die
   Vorabversionen in HACS ein). Auf Wunsch tägliche Prüfung mit Meldung unter
-  Einstellungen → Reparaturen.
+  Einstellungen → Reparaturen. Alles gilt mit "Speichern"; der Dialog bleibt
+  danach offen.
 
 ### Geplant (siehe `docs/CONCEPT.md`)
 

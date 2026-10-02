@@ -17,7 +17,7 @@ const TEXT = {
     gear: "Einstellungen", title: "Einstellungen", sub: "Device Panel · gilt für alle Benutzer", sec: "Updates",
     sumOn: "Tägliche Prüfung · neue Version unter \"Reparaturen\"", sumOff: "Keine automatische Prüfung",
     opt: "Täglich nach Updates suchen", short: "Meldet eine neue Version unter Einstellungen → Reparaturen.", info: "Fragt einmal täglich",
-    changed: "geändert", one: "1 Änderung", two: "2 Änderungen", save: "Speichern", cancel: "Abbrechen", saved: "Einstellungen gespeichert.",
+    changed: "geändert", one: "1 Änderung", two: "2 Änderungen", save: "Speichern", cancel: "Abbrechen", savedShort: "Gespeichert", closeBtn: "Schliessen",
     pre: "Vorabversionen anzeigen", loadErr: "Einstellungen konnten nicht geladen werden:", saveErr: "Speichern fehlgeschlagen:", ver: "Device Panel 0.4.0",
     secInt: "Integrationen", sumInt: "9 Integrationen · alle angezeigt", sumInt1: "9 Integrationen · 1 ausgeblendet", show: "Anzeigen", all: "Alle umschalten",
     zha: "Zigbee Home Automation", zhaSub: "5 Geräte", secTypes: "Gerätetypen", outlet: "Steckdose", sumTypes1: "11 Typen · 1 ausgeblendet", sumTypesNone: "11 Typen · alle angezeigt", sumTypesAll: "11 Typen · 11 ausgeblendet",
@@ -40,7 +40,7 @@ const TEXT = {
     gear: "Settings", title: "Settings", sub: "Device Panel · applies to all users", sec: "Updates",
     sumOn: "Daily check · new version under \"Repairs\"", sumOff: "No automatic check",
     opt: "Check for updates daily", short: "Reports a new version under Settings → Repairs.", info: "Queries the published releases",
-    changed: "changed", one: "1 change", two: "2 changes", save: "Save", cancel: "Cancel", saved: "Settings saved.",
+    changed: "changed", one: "1 change", two: "2 changes", save: "Save", cancel: "Cancel", savedShort: "Saved", closeBtn: "Close",
     pre: "Show pre-releases", loadErr: "Could not load the settings:", saveErr: "Saving failed:", ver: "Device Panel 0.4.0",
     secInt: "Integrations", sumInt: "9 integrations · all shown", sumInt1: "9 integrations · 1 hidden", show: "Show", all: "Toggle all",
     zha: "Zigbee Home Automation", zhaSub: "5 devices", secTypes: "Device types", outlet: "Outlet", sumTypes1: "11 types · 1 hidden", sumTypesNone: "11 types · all shown", sumTypesAll: "11 types · 11 hidden",
@@ -84,6 +84,10 @@ for (const lang of ["de", "en"]) {
     const isOpen = () => ev(`return r.querySelector("dialog.settings").open`);
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
     const calls = (type) => p.evaluate((t) => window.__wsCalls.filter((m) => m.type === t), type);
+    // Nach dem Speichern bleibt der Dialog offen und zeigt "Gespeichert".
+    const savedOpen = () => wait(`return r.querySelector("dialog.settings").open && r.querySelector(".set-count")?.classList.contains("saved")`);
+    const closeSettings = async () => { await tap('dialog.settings .dlg-actions [data-set="close"]'); return wait(`return !r.querySelector("dialog.settings").open`); };
+    const savedThenClose = async () => (await savedOpen()) && (await closeSettings());
 
     // Zahnrad in der Werkzeugleiste
     check(`[${tag}] Zahnrad mit Beschriftung`, (await ev(`return r.querySelector(".gear-btn").getAttribute("aria-label")`)) === T.gear);
@@ -97,7 +101,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Versionszeile`, (await text("dialog.settings .ver-slot")).includes(T.ver));
     check(`[${tag}] Schalter Vorabversionen`, (await text("dialog.settings .ver-opt-l")) === T.pre && (await ev(`return r.querySelector('[data-ver="prerelease"]').getAttribute("aria-checked")`)) === "false");
     check(`[${tag}] Abschnitt mit Zusammenfassung`, (await text('[data-id="updates"] .set-sec-title')) === T.sec && (await text('[data-id="updates"] .set-sec-sum')) === T.sumOn, await text('[data-id="updates"] .set-sec-sum'));
-    check(`[${tag}] Speichern gesperrt ohne Änderung`, await ev(`return r.querySelector('[data-set="save"]').disabled`) && (await text(".set-count")) === "");
+    check(`[${tag}] Speichern gesperrt ohne Änderung, Knopf "Schliessen"`, await ev(`return r.querySelector('[data-set="save"]').disabled`) && (await text(".set-count")) === "" && (await text('dialog.settings .dlg-actions [data-set="close"]')) === T.closeBtn);
     if (mobile) {
       const geo = await ev(`const d=r.querySelector("dialog.settings").getBoundingClientRect(); return [Math.round(d.left), Math.round(d.width), Math.round(d.bottom), innerWidth, innerHeight]`);
       check(`[${tag}] Blatt von unten über die ganze Breite`, geo[0] === 0 && geo[1] === geo[3] && Math.abs(geo[2] - geo[4]) <= 1, JSON.stringify(geo));
@@ -113,7 +117,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="info"][data-key="update_check"]');
     check(`[${tag}] Info aufgeklappt`, (await text(".opt-info")).startsWith(T.info));
     await tap('.switch input[data-opt="update_check"]');
-    check(`[${tag}] Entwurf: Etikett, Zähler, Zusammenfassung`, (await text('[data-id="updates"] .set-sec-title .set-badge')) === T.changed && (await text(".set-count")) === T.one && (await text('[data-id="updates"] .set-sec-sum')) === T.sumOff);
+    check(`[${tag}] Entwurf: Etikett, Zähler, Zusammenfassung, Knopf "Abbrechen"`, (await text('[data-id="updates"] .set-sec-title .set-badge')) === T.changed && (await text(".set-count")) === T.one && (await text('[data-id="updates"] .set-sec-sum')) === T.sumOff && (await text('dialog.settings .dlg-actions [data-set="close"]')) === T.cancel);
     await tap('[data-ver="prerelease"]');
     check(`[${tag}] Vorabversionen im Entwurf`, (await text(".set-count")) === T.two && (await text(".ver-opt-l .set-badge")) === T.changed && (await ev(`return r.querySelector('[data-ver="prerelease"]').getAttribute("aria-checked")`)) === "true");
     check(`[${tag}] noch nichts gespeichert`, (await calls("device_panel/set_options")).length === 0 && (await calls("device_panel/set_panel")).length === 0);
@@ -131,12 +135,20 @@ for (const lang of ["de", "en"]) {
     await tap('.switch input[data-opt="update_check"]');
     await tap('[data-ver="prerelease"]');
     await tap('dialog.settings [data-set="save"]');
-    check(`[${tag}] gespeichert und geschlossen`, await wait(`return !r.querySelector("dialog.settings").open`));
+    // Dialog bleibt offen: "Gespeichert", Knopf "Schliessen", Abschnitt weiter offen, neuer Stand
+    check(`[${tag}] gespeichert, Dialog bleibt offen`, (await savedOpen()) && (await text(".set-count")) === T.savedShort && (await text('dialog.settings .dlg-actions [data-set="close"]')) === T.closeBtn && await ev(`return r.querySelector('[data-set="save"]').disabled`), `${await text(".set-count")} / ${await text('dialog.settings .dlg-actions [data-set="close"]')}`);
+    await p.screenshot({ path: `${outDir}/settings-saved-${tag.replace("/", "-")}.png` });
+    check(`[${tag}] nach dem Speichern: Abschnitt offen, Stand neu, kein "geändert"`, (await ev(`return r.querySelector('[data-set="section"][data-id="updates"]').getAttribute("aria-expanded")`)) === "true" && (await text('[data-id="updates"] .set-sec-sum')) === T.sumOff && !(await ev(`return !!r.querySelector("dialog.settings .set-badge")`)) && (await ev(`return r.querySelector('[data-ver="prerelease"]').getAttribute("aria-checked")`)) === "true" && (await calls("device_panel/get_options")).length === 3);
     const so = await calls("device_panel/set_options");
     const sp = await calls("device_panel/set_panel");
     check(`[${tag}] set_options nur mit der Änderung`, so.length === 1 && JSON.stringify(so[0].values) === JSON.stringify({ update_check: false }), JSON.stringify(so));
     check(`[${tag}] set_panel mit Vorabversionen`, sp.length === 1 && sp[0].prerelease === true, JSON.stringify(sp));
-    check(`[${tag}] Rückmeldung`, (await ev(`const t=r.querySelector(".toast"); return t.hidden ? "" : t.textContent`)) === T.saved);
+    // Erneut ändern: Zähler statt "Gespeichert", Knopf wieder "Abbrechen"; zurück: weder noch
+    await tap('.switch input[data-opt="update_check"]');
+    check(`[${tag}] erneut geändert`, (await text(".set-count")) === T.one && (await text('dialog.settings .dlg-actions [data-set="close"]')) === T.cancel);
+    await tap('.switch input[data-opt="update_check"]');
+    check(`[${tag}] zurück: kein Zähler, kein "Gespeichert"`, (await text(".set-count")) === "" && (await text('dialog.settings .dlg-actions [data-set="close"]')) === T.closeBtn);
+    check(`[${tag}] "Schliessen" schliesst`, await closeSettings());
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     check(`[${tag}] neuer Stand nach erneutem Öffnen`, (await text('[data-id="updates"] .set-sec-sum')) === T.sumOff && (await ev(`return r.querySelector('[data-ver="prerelease"]').getAttribute("aria-checked")`)) === "true");
@@ -165,7 +177,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Integration im Entwurf ausgeblendet`, (await text('[data-id="integrations"] .set-sec-sum')) === T.sumInt1 && (await text(".set-count")) === T.one && await ev(`return r.querySelector('input[data-value="zha"]').closest(".ex-row").classList.contains("off")`));
     await p.screenshot({ path: `${outDir}/settings-exclude-${lang}-${mobile ? "mobile" : "desktop"}.png` });
     await tap('dialog.settings [data-set="save"]');
-    check(`[${tag}] gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`));
+    check(`[${tag}] gespeichert`, await savedThenClose());
     check(`[${tag}] set_options mit Ausschluss`, JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values) === JSON.stringify({ exclude_integrations: ["zha"] }));
     check(`[${tag}] Liste ohne Zigbee-Geräte`, await wait(`return r.querySelectorAll(".dev").length === 11`), String(await ev(`return r.querySelectorAll(".dev").length`)));
 
@@ -188,6 +200,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="section"][data-id="integrations"]');
     await tap('input[data-list="exclude_integrations"][data-value="zha"]');
     await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] gespeichert, Dialog offen, dann geschlossen`, await savedThenClose());
     check(`[${tag}] wieder eingeblendet`, await wait(`return r.querySelectorAll(".dev").length === 16`));
 
     // Ausfall-Erkennung: Zahlenfelder mit Prüfung, Zusammenfassung, Speichern
@@ -220,7 +233,7 @@ for (const lang of ["de", "en"]) {
     await flaky.fill("");
     await flaky.type("50");
     await tap('dialog.settings [data-set="save"]');
-    check(`[${tag}] gespeichert als Zahlen`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ offline_after: 10, flaky_outages: 50 }), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
+    check(`[${tag}] gespeichert als Zahlen`, await savedThenClose() && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ offline_after: 10, flaky_outages: 50 }), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
     check(`[${tag}] Liste neu: instabil ab 50`, await wait(`return r.querySelectorAll(".dev.flaky").length === ${flakyWant}`) && flakyBefore > 0 && flakyWant === 0, `${flakyBefore} → ${await ev(`return r.querySelectorAll(".dev.flaky").length`)}, erwartet ${flakyWant}`);
 
     // Anzeige: deaktivierte Geräte als eigene Gruppe am Ende
@@ -235,6 +248,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Anzeige live, beide`, (await text('[data-id="display"] .set-sec-sum')) === T.sumDispBoth);
     await p.screenshot({ path: `${outDir}/settings-detection-${tag.replace("/", "-")}.png` });
     await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] gespeichert, Dialog offen, dann geschlossen`, await savedThenClose());
     check(`[${tag}] Gruppe Deaktiviert`, await wait(`return [...r.querySelectorAll(".dev")].some(e=>e.textContent.includes("Alte Lampe"))`) && (await ev(`const g=[...r.querySelectorAll("tr.grp, .gh")].pop(); return g.className.includes(" d") && g.textContent.includes(${JSON.stringify(T.grpDis)})`)), await ev(`return [...r.querySelectorAll("tr.grp, .gh")].map(g=>g.className+":"+g.textContent.trim()).join(" | ")`));
     check(`[${tag}] Status Deaktiviert`, (await ev(`const e=[...r.querySelectorAll(".dev")].find(e=>e.textContent.includes("Alte Lampe")); return e.querySelector(".pill.none")?.textContent`)) === T.grpDis);
     // Popup des deaktivierten Geräts: Status und deaktivierte Entitäten
@@ -267,6 +281,7 @@ for (const lang of ["de", "en"]) {
     await tap('.switch input[data-opt="show_service_devices"]');
     check(`[${tag}] vier Änderungen`, (await text(".set-count")) === T.four);
     await tap('dialog.settings [data-set="save"]');
+    check(`[${tag}] gespeichert, Dialog offen, dann geschlossen`, await savedThenClose());
     check(`[${tag}] Standards wieder`, await wait(`return r.querySelectorAll(".dev").length === 16`) && JSON.stringify(await p.evaluate(() => [window.__opts.offline_after, window.__opts.flaky_outages, window.__opts.show_disabled_devices, window.__opts.show_service_devices])) === "[2,3,false,false]");
 
     // Batterie und Push-Benachrichtigung
@@ -294,7 +309,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] fünf Änderungen`, (await text(".set-count")) === T.five, await text(".set-count"));
     await p.screenshot({ path: `${outDir}/settings-battery-${tag.replace("/", "-")}.png` });
     await tap('dialog.settings [data-set="save"]');
-    check(`[${tag}] Batterie und Push gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low: 25, battery_push: true, battery_persistent: true, notify_service: "notify.mobile_app_testhandy", notify_click_target: "device" }), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
+    check(`[${tag}] Batterie und Push gespeichert`, await savedThenClose() && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low: 25, battery_push: true, battery_persistent: true, notify_service: "notify.mobile_app_testhandy", notify_click_target: "device" }), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
     check(`[${tag}] Liste mit neuer Schwelle`, await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "3"`), await text('.chip.hint[data-hint="battery"] .n'));
     // Zurück
     await tap(".gear-btn");
@@ -310,7 +325,7 @@ for (const lang of ["de", "en"]) {
     await (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-opt="notify_service"]')`))).asElement().selectOption("none");
     await (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-opt="notify_click_target"]')`))).asElement().selectOption("panel");
     await tap('dialog.settings [data-set="save"]');
-    check(`[${tag}] Batterie und Push zurück`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify(await p.evaluate(() => [window.__opts.battery_low, window.__opts.battery_push, window.__opts.battery_persistent, window.__opts.notify_service, window.__opts.notify_click_target])) === JSON.stringify([15, false, false, "none", "panel"]) && await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`));
+    check(`[${tag}] Batterie und Push zurück`, await savedThenClose() && JSON.stringify(await p.evaluate(() => [window.__opts.battery_low, window.__opts.battery_push, window.__opts.battery_persistent, window.__opts.notify_service, window.__opts.notify_click_target])) === JSON.stringify([15, false, false, "none", "panel"]) && await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`));
 
     // Batterie: Zeitpunkt (sofort/täglich), Uhrzeit, Inhalt der Tagesmeldung;
     // Push: Ausfall, wieder online, Sammelausfall
@@ -361,7 +376,7 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.settings [data-set="save"]');
     const sorted = (o) => JSON.stringify(Object.fromEntries(Object.entries(o || {}).sort()));
     const expect = { battery_push: true, battery_push_daily: "all", battery_push_mode: "daily", battery_push_time: "06:45", notify_group: false, notify_online: true, notify_outage: true, notify_service: "notify.mobile_app_testhandy" };
-    check(`[${tag}] Zeitpunkt und Meldungen gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && sorted((await calls("device_panel/set_options")).at(-1).values) === sorted(expect), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
+    check(`[${tag}] Zeitpunkt und Meldungen gespeichert`, await savedThenClose() && sorted((await calls("device_panel/set_options")).at(-1).values) === sorted(expect), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     check(`[${tag}] nach Speichern: Zusammenfassungen`, (await text('[data-id="battery"] .set-sec-sum')) === T.sumBatDaily("06:45") && (await text('[data-id="push"] .set-sec-sum')) === T.sumPushAll, `${await text('[data-id="battery"] .set-sec-sum')} / ${await text('[data-id="push"] .set-sec-sum')}`);
@@ -381,7 +396,7 @@ for (const lang of ["de", "en"]) {
     await pick('select[data-opt="notify_service"]', "none");
     await wait(`return r.querySelector('select[data-opt="notify_service"]')?.value === "none"`);
     await tap('dialog.settings [data-set="save"]');
-    check(`[${tag}] Zeitpunkt und Meldungen zurück`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify(await p.evaluate(() => ["battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "notify_service", "notify_outage", "notify_online", "notify_group"].map((k) => window.__opts[k]))) === JSON.stringify([false, "instant", "08:00", "new", "none", false, false, true]), JSON.stringify(await p.evaluate(() => window.__opts)));
+    check(`[${tag}] Zeitpunkt und Meldungen zurück`, await savedThenClose() && JSON.stringify(await p.evaluate(() => ["battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "notify_service", "notify_outage", "notify_online", "notify_group"].map((k) => window.__opts[k]))) === JSON.stringify([false, "instant", "08:00", "new", "none", false, false, true]), JSON.stringify(await p.evaluate(() => window.__opts)));
 
     // Batterie pro Integration: Auswahl je Zeile (Variante B, docs/mockups/battery-v2)
     const typeIn = async (sel, val) => {
@@ -433,7 +448,7 @@ for (const lang of ["de", "en"]) {
     await ev(`r.querySelector(".bat-own").scrollIntoView({ block: "start" })`);
     await p.screenshot({ path: `${outDir}/settings-battery-own-${tag.replace("/", "-")}.png` });
     await tap('dialog.settings [data-set="save"]');
-    check(`[${tag}] eigene Schwelle und aus gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low_integrations: { matter: 25, bthome: "off" } }), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
+    check(`[${tag}] eigene Schwelle und aus gespeichert`, await savedThenClose() && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low_integrations: { matter: 25, bthome: "off" } }), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));
     // Matter-Gerät mit 22 % jetzt schwach, BTHome-Gerät (0 %) nicht mehr
     const lowIds = () => ev(`return r.host._devices.filter((d) => d.battery?.low).map((d) => d.id).sort().join()`);
     check(`[${tag}] Liste: schwach sind jetzt Matter (22 %) und Zigbee (8 %), nicht BTHome (0 %)`, await wait(`return r.host._devices.filter((d) => d.battery?.low).map((d) => d.id).sort().join() === "b,c"`), await lowIds());
@@ -452,7 +467,7 @@ for (const lang of ["de", "en"]) {
     await mode("matter", "default");
     await mode("bthome", "default");
     await tap('dialog.settings [data-set="save"]');
-    check(`[${tag}] globaler Wert, gespeichert`, await wait(`return !r.querySelector("dialog.settings").open`) && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low_integrations: {} }) && await wait(`return r.host._devices.filter((d) => d.battery?.low).map((d) => d.id).sort().join() === "a,b"`), await lowIds());
+    check(`[${tag}] globaler Wert, gespeichert`, await savedThenClose() && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low_integrations: {} }) && await wait(`return r.host._devices.filter((d) => d.battery?.low).map((d) => d.id).sort().join() === "a,b"`), await lowIds());
 
     // Fehler beim Speichern: Meldung, Dialog bleibt
     await p.evaluate(() => { window.__setOptsFails = "Keine Berechtigung"; });

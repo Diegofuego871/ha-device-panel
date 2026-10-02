@@ -212,6 +212,10 @@ hat dort einen echten Fehler oder Umweg gekostet.
   im iFrame), `touch-action: none` am Griff, damit der Finger nicht scrollt.
   Pfeiltasten auf dem Griff für die Tastatur. Erst beim Loslassen in den
   Entwurf schreiben und neu aufbauen, nie während des Ziehens.
+- **Toast hinter modalem Dialog:** `showModal()` legt den Dialog in die
+  oberste Ebene (top layer); ein Toast im Shadow DOM bleibt dahinter
+  unsichtbar, egal welcher `z-index`. Bleibt ein Dialog nach einer Aktion
+  offen (Einstellungen seit 0.15.0), gehört die Bestätigung in den Dialog.
 - **Zusammenfassungen nicht wie Zustände formulieren:** "Batterie schwach"
   als Liste eingeschalteter Meldungen las sich wie eine Warnung; mit Verb
   ("meldet …").

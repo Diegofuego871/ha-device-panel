@@ -46,7 +46,13 @@ for (const lang of ["de", "en"]) {
       await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
       await tap('[data-set="section"][data-id="display"]');
     };
-    const save = async () => { await tap('dialog.settings [data-set="save"]'); return wait(`return !r.querySelector("dialog.settings").open`); };
+    // Speichern: Dialog bleibt offen ("Gespeichert"), danach schliessen.
+    const save = async () => {
+      await tap('dialog.settings [data-set="save"]');
+      if (!(await wait(`return r.querySelector("dialog.settings").open && r.querySelector(".set-count")?.classList.contains("saved")`))) return false;
+      await tap('dialog.settings .dlg-actions [data-set="close"]');
+      return wait(`return !r.querySelector("dialog.settings").open`);
+    };
 
     const before = await chips();
     check(`[${tag}] Ausgangslage: alle Chips`, before === "all,zigbee,wifi,thread,ble,zwave,network,cloud,unknown", before);

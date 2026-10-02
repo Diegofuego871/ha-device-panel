@@ -314,7 +314,10 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
 
 - Zahnrad öffnet den Dialog "Einstellungen" mit zuklappbaren Abschnitten,
   Zusammenfassung pro Abschnitt, Etikett "geändert", Zähler der Änderungen.
-- Alles gilt erst mit "Speichern", "Abbrechen" verwirft. Dieselben Options wie
+- Alles gilt erst mit "Speichern", "Abbrechen" verwirft. Seit 0.15.0
+  (Nutzer, 2026-10-02) bleibt der Dialog nach "Speichern" offen: "Gespeichert"
+  neben den Knöpfen, gespeicherter Stand neu geladen, aufgeklappte
+  Abschnitte bleiben; ohne Änderung heisst "Abbrechen" "Schliessen". Dieselben Options wie
   der Optionsdialog von HA, keine Kopie: Lesen/Schreiben über WebSocket
   (`get_options`, `set_options`), Wertebereiche einmal zentral
   (`options_api.py`), Reload nur bei Werten, die beim Setup eingefroren sind.

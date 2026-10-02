@@ -266,6 +266,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .dlg-btn:disabled { opacity: .45; cursor: default; }
 .set-count { align-self: center; color: var(--dp-text2); font-size: 12px; white-space: nowrap; }
 .set-count:empty { display: none; }
+.set-count.saved { color: var(--dp-success); font-weight: 500; }
 
 /* Einstellungen: aufklappbare Abschnitte (wie unifi_dynamic) */
 .set-sec { margin-top: 10px; border: 1px solid var(--dp-divider); border-radius: 14px; overflow: hidden; }
