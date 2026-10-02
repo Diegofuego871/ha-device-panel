@@ -91,6 +91,25 @@ hat dort einen echten Fehler oder Umweg gekostet.
   sofort "keine Daten" schreiben; beim Start die Lücke ab dem letzten
   Lebenszeichen. Im echten HA geprüft: Ausfall, Rückkehr, Neustart-Lücke.
 
+- **`last_changed` überlebt keinen Neustart:** Nach dem Start haben alle
+  Zustände `last_changed` = Zeitpunkt, an dem die Entität angelegt wurde.
+  Wer daraus die Ausfalldauer liest, zeigt nach jedem Neustart die Zeit seit
+  dem Start (Fehler bis 0.12.0). Dauer über Neustarts nur aus eigenen Daten
+  (Protokoll: Beginn = erster Ausfall nach der letzten Beobachtung "online",
+  Lücken ohne Daten beenden ihn nicht).
+- **"Kurzer Aussetzer" ist nach dem Start kein Lebenszeichen:** Die Regel
+  "unter der Schwelle gilt als online" machte jedes schon ausgefallene Gerät
+  in den ersten Minuten nach dem Start online (last_changed = Start). Das
+  Protokoll schrieb "online", die Meldung "wieder online" ging hinaus. Ein
+  Zustand "alle Entitäten weg, noch unter der Schwelle" darf nichts
+  schreiben (`devices.device_down_since`).
+- **Neustart-Tests wie beim Hochfahren:** Im Test läuft HA schon; die erste
+  Bewertung kam beim Einrichten, bevor die Meldungen zuhörten, und der
+  Fehler blieb verborgen. `hass.set_state(CoreState.not_running)` vor dem
+  Einrichten, danach `running` und `EVENT_HOMEASSISTANT_STARTED` feuern.
+  Im echten HA: Testintegration mit Gerät, dessen Verfügbarkeit eine Datei
+  steuert (siehe "Prüfung im echten Home Assistant").
+
 ## Panel (Frontend)
 
 - **Vanilla Web Component**, kein Lit, kein Build, kein CDN. Logik, Texte
@@ -243,6 +262,12 @@ registriert `notify.testhandy` und schreibt jeden Aufruf in eine Datei; eine
 Batterie entsteht, indem man bei einem Demo-Sensor die Geräteklasse in der
 Registry auf `battery` setzt (`config/entity_registry/update`) und den
 Zustand per REST setzt (die Registry-Klasse hat Vorrang vor dem Attribut).
+Ausfall über einen Neustart: `POST /api/states` reicht nicht (Demo-Geräte
+sind nach dem Start wieder da). Eine Testintegration mit Konfigurationsfluss
+legt ein Gerät mit einer Lampe an (`should_poll`, alle 10 s), die nicht
+verfügbar ist, solange eine Datei existiert; Datei anlegen, Ausfall
+abwarten, HA stoppen und starten, Liste, Protokoll und Pushes prüfen.
+"Ausgefallen nach" und Anlaufphase auf 1 Min. stellen spart Wartezeit.
 `recorder/info` scheitert ohne Recorder; das ist harmlos. Ebenso
 ein `pageerror` "Object" beim Laden, der auch auf `/config/dashboard`
 auftritt (HA-Frontend, nicht das Panel).

@@ -41,10 +41,15 @@ details such as software version, manufacturer, model and area.
 - A device counts as offline after 2 minutes without a sign of life
   (adjustable under "Outage detection", like "unstable from" and the grace
   period after a start). A connectivity sensor decides first; otherwise all
-  regular entities must be unavailable. Outages that started right after a
-  restart of Home Assistant are shown as "at least" (≥).
+  regular entities must be unavailable. An outage only ends when Home
+  Assistant sees the device online again: its duration runs on across
+  restarts of Home Assistant. "At least" (≥) only when the start is unknown
+  (e.g. the device was online when Home Assistant stopped and gone after the
+  start); the tooltip shows the start.
 - Availability log for 31 days in its own file (not the recorder). Time when
-  Home Assistant was not running counts as "no data", never as an outage.
+  Home Assistant was not running counts as "no data", never as an outage of
+  its own; the bars show it as such. If a device was offline before and
+  after, the numbers count it as one outage.
 - Hide whole integrations or device types (settings in the panel or options
   dialog of the integration): hidden devices are neither shown nor
   monitored. Optionally show service devices (e.g. sun, add-ons) and

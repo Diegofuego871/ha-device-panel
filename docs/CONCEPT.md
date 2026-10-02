@@ -250,9 +250,30 @@ Umgesetzt in 0.3.0b1 (`availability.py`).
   ist der echte Wechsel (`last_changed`), Rückkehr der früheste Wechsel der
   lebenden Entitäten. Anlaufphase 5 Min. nach dem Start: wer darin
   zurückkommt, hatte keinen Unterbruch.
+- **Ausfall über Lücken (seit 0.13.0, Nutzer: "essentiell"):** Ein Ausfall
+  endet erst, wenn HA das Gerät wieder online sieht. `last_changed` beginnt
+  nach jedem Neustart beim Start; massgebend ist darum das Protokoll: Beginn
+  = erster Ausfall nach der letzten Beobachtung "online"
+  (`AvailabilityLog.open_outage`, `devices.outage_start`). Lücken ohne Daten
+  dazwischen (Neustart, Absturz, eine Weile nicht überwacht) beenden ihn
+  nicht. Bedeutung für den Nutzer: "seit HA das Gerät zuletzt online sah".
+  - Sicher (ohne "≥"), wenn HA den Wechsel online → ausgefallen selbst sah.
+  - "Mindestens" (≥), wenn der Beginn in eine Lücke fällt (online beim
+    Stoppen, nach dem Start weg) oder vor dem Protokoll liegt (Beginn kurz
+    nach dem Start von HA, gekürzt nach 31 Tagen).
+  - Zahlen und Dauer (Unterbrüche, längster, Summe, Prozent, pro Tag,
+    instabil, Sammelausfall, Meldungen) zählen einen Ausfall über eine Lücke
+    als einen (`bridged`), die Lücke als Teil davon. Balken, Streifen und
+    Puls zeigen weiter, was HA beobachtet hat, die Lücke als "keine Daten".
+  - Unter "Ausgefallen nach" (alle Entitäten weg, aber noch keine Schwelle)
+    ist ein Gerät weder ausgefallen noch online: Das Protokoll schreibt
+    nichts. Nach einem Neustart sind das die Geräte, die schon vorher
+    fehlten; die Liste zeigt sie gleich als ausgefallen, wenn das Protokoll
+    den Ausfall vor der Lücke kennt.
 - Instabil: online, aber 3 oder mehr Unterbrüche in 24 Std.
 - Sammelausfall: mindestens 3 Geräte, die innert 2 Min. ausfielen; gemeinsame
-  Integration als Hinweis auf die Ursache.
+  Integration als Hinweis auf die Ursache. Ein Ausfall, der über einen
+  Neustart läuft, beginnt beim Start nicht neu.
 - WebSocket: `device_panel/list_devices` liefert pro Gerät `avail24`
   (Kurzfassung und 48 Abschnitte à 30 Min.), dazu `pulse` und `incidents`;
   `device_panel/device` die Entitäten und Kurzstatistik 24 Std./7 Tage;

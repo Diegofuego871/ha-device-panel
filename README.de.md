@@ -45,12 +45,15 @@ Bereich.
 - Ein Gerät gilt als ausgefallen nach 2 Minuten ohne Lebenszeichen
   (einstellbar unter "Ausfall-Erkennung", wie "instabil ab" und die
   Anlaufphase nach einem Start). Ein Verbindungssensor entscheidet zuerst;
-  sonst müssen alle normalen Entitäten nicht verfügbar sein. Ausfälle, die
-  kurz nach einem Neustart von Home Assistant begannen, stehen als
-  "mindestens" (≥) da.
+  sonst müssen alle normalen Entitäten nicht verfügbar sein. Ein Ausfall
+  endet erst, wenn Home Assistant das Gerät wieder online sieht: Seine Dauer
+  läuft über Neustarts von Home Assistant weiter. "Mindestens" (≥) nur, wenn
+  der Beginn nicht bekannt ist (z. B. war das Gerät online, als Home
+  Assistant stoppte, und nach dem Start weg); der Tooltip zeigt den Beginn.
 - Verfügbarkeitsprotokoll über 31 Tage in einer eigenen Datei (nicht im
   Recorder). Zeit, in der Home Assistant nicht lief, gilt als "keine Daten",
-  nie als Ausfall.
+  nie als eigener Ausfall; die Balken zeigen sie so. War ein Gerät davor und
+  danach ausgefallen, zählen die Zahlen das als einen Ausfall.
 - Ganze Integrationen oder Gerätetypen ausblenden (Einstellungen im Panel
   oder Optionsdialog der Integration): ausgeblendete Geräte werden weder
   gezeigt noch überwacht. Wahlweise Dienst-Geräte (z. B. Sonne, Add-ons)

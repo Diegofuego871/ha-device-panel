@@ -178,7 +178,7 @@
 
   const dev = (id, name, area, integ, connection, type, extra = {}) => ({
     id, name, area, integrations: [integ], integration: { domain: integ, title: TITLES[integ] || integ }, type, connection,
-    service: false, disabled: false, entities: 3, online: true, offline_since: null, since_restart: false, signal: null, via: null, battery: null,
+    service: false, disabled: false, entities: 3, online: true, offline_since: null, since_at_least: false, signal: null, via: null, battery: null,
     update: null, manufacturer: "Beispiel AG", model: "Modell " + id.toUpperCase(), sw_version: "1.0." + id.length, hw_version: null,
     avail24: avail24(id), ...extra,
   });
@@ -188,7 +188,7 @@
     zwave_js: "Z-Wave", synology_dsm: "nas-keller", roborock: "Konto Haushalt", met: "Zuhause",
   };
   const devices = [
-    dev("a", "Temperatur Keller", "Keller", "bthome", "ble", "sensor", off(4560, { since_restart: true, battery: { level: 0, low: true }, signal: { kind: "dbm", value: -91 }, via: "Proxy Garage" })),
+    dev("a", "Temperatur Keller", "Keller", "bthome", "ble", "sensor", off(4560, { since_at_least: true, battery: { level: 0, low: true }, signal: { kind: "dbm", value: -91 }, via: "Proxy Garage" })),
     dev("b", "Bewegungsmelder Flur", "Flur", "zha", "zigbee", "motion", off(134, { battery: { level: 8, low: true }, signal: { kind: "lqi", value: 38, rssi: -86 }, via: "Steckdose Flur", update: "2.2.0" })),
     dev("c", "Thermostat Bad", "Bad", "matter", "matter", "climate", off(47, { battery: { level: 22, low: false } })),
     dev("d", "Steckdose Terrasse", "Terrasse", "shelly", "wifi", "outlet", off(6, { signal: { kind: "dbm", value: -84 } })),

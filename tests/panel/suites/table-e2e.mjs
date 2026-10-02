@@ -15,7 +15,7 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     title: "Geräte", search: "In allen Spalten suchen…", ofTotal: "von 16 online", offlineNow: "Gerade ausgefallen",
-    longest: "längster seit 3 T. 4 Std.", lines: ["9 stabil", "2 instabil", "4 ausgefallen", "1 ohne Daten"], avg: "Ø 24 Std.",
+    longest: "längster seit ≥ 3 T. 4 Std.", atLeast: "Mindestens seit ", since: "Ausgefallen seit ", lines: ["9 stabil", "2 instabil", "4 ausgefallen", "1 ohne Daten"], avg: "Ø 24 Std.",
     pulse: "Ausfall-Puls · 24 Std.", incident: "Sammelausfall", incidentText: "3 Geräte gleichzeitig, alle über Zigbee Home Automation.",
     hints: ["Batterie niedrig 2", "Schwacher Empfang 3", "Update verfügbar 2"],
     groups: ["Ausgefallen · 4", "Instabil · 2", "Keine Daten · 1", "Online · 9"], statusOffline: "ausgefallen", wifi: "WLAN", thread: "Thread",
@@ -25,7 +25,7 @@ const TEXT = {
   },
   en: {
     title: "Devices", search: "Search all columns…", ofTotal: "of 16 online", offlineNow: "Offline right now",
-    longest: "longest for 3 d 4 h", lines: ["9 stable", "2 unstable", "4 offline", "1 without data"], avg: "avg. 24 h",
+    longest: "longest for ≥ 3 d 4 h", atLeast: "At least since ", since: "Offline since ", lines: ["9 stable", "2 unstable", "4 offline", "1 without data"], avg: "avg. 24 h",
     pulse: "Outage pulse · 24 h", incident: "Group outage", incidentText: "3 devices at once, all via Zigbee Home Automation.",
     hints: ["Low battery 2", "Weak signal 3", "Update available 2"],
     groups: ["Offline · 4", "Unstable · 2", "No data · 1", "Online · 9"], statusOffline: "offline", wifi: "Wi-Fi", thread: "Thread",
@@ -66,6 +66,9 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Kennzahl Ø 24 Std.`, (await ev(`return r.querySelector(".kt .pct").textContent`)).includes(T.avg));
     check(`[${tag}] Ausfall-Tafel`, hero.includes(T.offlineNow) && hero.includes(T.longest), hero);
     check(`[${tag}] Ausfall vor Neustart als "mindestens"`, await ev(`return [...r.querySelectorAll(".olist b")][0].textContent.startsWith("≥")`));
+    // Tooltip mit dem Beginn: "mindestens" mit Grund, sonst der Zeitpunkt
+    const tips = await ev(`return [...r.querySelectorAll(".olist b > span")].map(s=>s.title)`);
+    check(`[${tag}] Tooltip mit Beginn`, tips.length === 4 && tips[0].startsWith(T.atLeast) && tips[0].includes("Home Assistant") && tips.slice(1).every((x) => x.startsWith(T.since) && /\d/.test(x)), JSON.stringify(tips));
     const pulse = await ev(`return r.querySelector(".kt.pul")?.textContent.replace(/\\s+/g," ") || ""`);
     check(`[${tag}] Ausfall-Puls mit Sammelausfall`, pulse.includes(T.pulse) && pulse.includes(T.incident) && pulse.includes(T.incidentText), pulse);
     check(`[${tag}] Puls-Kurve und Marke`, await ev(`return !!r.querySelector(".pchart path.line") && r.querySelectorAll(".pchart .imark").length === 1`));

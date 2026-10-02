@@ -7,7 +7,9 @@ Ausfall wird sofort gemeldet, sobald das Protokoll ihn erkennt (also nach
 Durchlauf mehrere Geräte aus, kommt wahlweise eine Sammelmeldung mit
 vermuteter Ursache. Welche Geräte gerade als ausgefallen gemeldet sind, steht
 in einer eigenen Datei: Ein Neustart meldet einen laufenden Ausfall nicht
-erneut, und die Rückkehr kommt auch nach einem Neustart. Pro Gerät lassen
+erneut, und die Rückkehr kommt auch nach einem Neustart. Fehlt ein Gerät
+dort, obwohl das Protokoll den Ausfall schon vor einer Lücke kennt (eine
+Weile nicht überwacht), gilt dasselbe. Pro Gerät lassen
 sich die Meldungen ausschalten; überwacht wird das Gerät weiter.
 """
 
@@ -75,8 +77,17 @@ class OutageNotifier:
     async def async_handle(self, changes: list[tuple[str, Any, float]]) -> None:
         went_off: list[tuple[str, float]] = []
         came_back: list[tuple[str, float]] = []
+        dirty = False
         for dev, state, at in changes:
             if state == OFFLINE and dev not in self._offline:
+                start, _seen = self._log.open_outage(dev)
+                if start is not None and start < at:
+                    # Lief schon vor einer Lücke (Neustart, eine Weile nicht
+                    # überwacht): derselbe Ausfall, nicht nochmals melden; die
+                    # Rückkehr nennt die ganze Dauer.
+                    self._offline[dev] = start
+                    dirty = True
+                    continue
                 self._offline[dev] = at
                 went_off.append((dev, at))
             elif state == ONLINE and dev in self._offline:
@@ -84,7 +95,7 @@ class OutageNotifier:
             elif state == "gone":
                 # Nicht mehr überwacht: vergessen, ohne Meldung.
                 self._offline.pop(dev, None)
-        if went_off or came_back or any(state == "gone" for _d, state, _a in changes):
+        if dirty or went_off or came_back or any(state == "gone" for _d, state, _a in changes):
             self._store.async_delay_save(lambda: {"offline": self._offline}, 1)
         opts = effective(self.hass)
         if opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE:

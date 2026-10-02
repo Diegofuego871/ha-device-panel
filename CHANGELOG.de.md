@@ -9,7 +9,8 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [0.13.0] - 2026-10-02
 
-Reihenfolge der Chips der Verbindungsart.
+Reihenfolge der Chips der Verbindungsart; Ausfalldauer über Neustarts von
+Home Assistant.
 
 ### Hinzugefügt
 
@@ -20,6 +21,31 @@ Reihenfolge der Chips der Verbindungsart.
   das Ausblenden. Auch im Optionsdialog ("Reihenfolge der Chips der
   Verbindungsart"): gewählte Arten in der Reihenfolge der Auswahl, die
   übrigen folgen nach Anzahl der Geräte.
+
+### Geändert
+
+- Die Ausfalldauer zeigt ihren Beginn als Tooltip ("Ausgefallen seit …",
+  mit Wochentag, Datum und Uhrzeit); "längster seit" auf der Ausfall-Tafel
+  zeigt ebenfalls "≥", wenn der Beginn unbekannt ist.
+
+### Behoben
+
+- Ausfalldauer nach einem Neustart von Home Assistant: Liste, Ausfall-Tafel,
+  Popup und Meldungen zeigten die Zeit seit dem Neustart statt des echten
+  Ausfalls, oft mit "≥". Ein Ausfall endet jetzt erst, wenn Home Assistant
+  das Gerät wieder online sieht; Zeit ohne Daten dazwischen (Home Assistant
+  lief nicht) beendet ihn nicht. Beginn und Dauer kommen aus dem
+  Verfügbarkeitsprotokoll, auch über mehrere Neustarts. "≥" bleibt nur, wenn
+  der Beginn wirklich unbekannt ist (z. B. war das Gerät online, als Home
+  Assistant stoppte, und nach dem Start weg).
+- Statistik: Ein Ausfall über einen Neustart zählte doppelt (24 Stunden, 7
+  und 30 Tage, "instabil") und konnte beim Start einen falschen
+  Sammelausfall zeigen. Jetzt zählt er einmal; die Balken zeigen die Zeit
+  ohne Daten weiterhin.
+- Nach jedem Neustart galt ein schon ausgefallenes Gerät in den ersten
+  Minuten als online: Das Protokoll schrieb "online", und mit eingeschalteten
+  Meldungen kamen "Wieder online" und ein zweites "Ausgefallen". Solche
+  Einträge früherer Versionen werden beim Laden des Protokolls entfernt.
 
 ## [0.12.0] - 2026-10-02
 

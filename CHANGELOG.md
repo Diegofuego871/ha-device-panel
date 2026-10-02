@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [0.13.0] - 2026-10-02
 
-Order of the connection type chips.
+Order of the connection type chips; outage duration across restarts of
+Home Assistant.
 
 ### Added
 
@@ -19,6 +20,30 @@ Order of the connection type chips.
   devices first). Applies to all users, like hiding the chips. Also in the
   options dialog ("Order of the connection type chips"): chosen types in
   the order of selection, the others follow by number of devices.
+
+### Changed
+
+- The outage duration shows its start as a tooltip ("Offline since …",
+  with weekday, date and time); "longest for" on the outage board also
+  shows "≥" when the start is unknown.
+
+### Fixed
+
+- Outage duration after a restart of Home Assistant: list, outage board,
+  pop-up and notifications showed the time since the restart instead of the
+  real outage, often with "≥". An outage now only ends when Home Assistant
+  sees the device online again; time without data in between (Home
+  Assistant not running) does not end it. Start and duration come from the
+  availability log, also across several restarts. "≥" only remains when the
+  start is really unknown (e.g. the device was online when Home Assistant
+  stopped and gone after the start).
+- Statistics: an outage across a restart counted as two (24 hours, 7 and 30
+  days, "unstable") and could show a false group outage at the start. Now it
+  counts once; the bars still show the time without data.
+- After every restart, a device that was already offline counted as online
+  for the first minutes: the log recorded "online" and, with notifications
+  on, "Back online" and a second "Offline" were sent. Such entries from
+  earlier versions are removed when the log is loaded.
 
 ## [0.12.0] - 2026-10-02
 

@@ -508,9 +508,13 @@ class DevicePanel extends HTMLElement {
     return this._fmtSeconds((Date.now() + this._offset - Date.parse(iso)) / 1000, short);
   }
 
+  // Dauer des Ausfalls, im Tooltip der Beginn (auch über Neustarts von HA).
   _durationHtml(d, short = false) {
     const text = this._duration(d.offline_since, short);
-    return d.since_restart ? `<span title="${escape(this._t("sinceRestart"))}">≥ ${escape(text)}</span>` : escape(text);
+    const at = this._fmtTime(Date.parse(d.offline_since) / 1000, true);
+    return d.since_at_least
+      ? `<span title="${escape(this._t("sinceAtLeast", at))}">≥ ${escape(text)}</span>`
+      : `<span title="${escape(this._t("offlineSinceAt", at))}">${escape(text)}</span>`;
   }
 
   // Prozent mit einer Stelle, 100 ohne.
@@ -652,7 +656,7 @@ class DevicePanel extends HTMLElement {
       ${noData ? line("var(--dp-text3)", this._t("linesNoData", noData)) : ""}</div></div></div>`;
     const off = offline.length
       ? `<div class="kt err"><div class="k"><span class="pulse"></span>${escape(this._t("offlineNow"))}</div>
-        <div class="top"><span class="num">${offline.length}</span><span class="lbl">${escape(this._t("longest", this._duration(offline[0].offline_since)))}</span></div>
+        <div class="top"><span class="num">${offline.length}</span><span class="lbl">${escape(this._t("longest", `${offline[0].since_at_least ? "≥ " : ""}${this._duration(offline[0].offline_since)}`))}</span></div>
         <div class="olist">${offline.slice(0, 4).map((d) => `<button type="button" data-open="${escape(d.id)}"><span>${CONN[this._connOf(d)].icon(16)}</span><span class="name">${escape(d.name)}</span><b>${this._durationHtml(d, true)}</b></button>`).join("")}
         ${offline.length > 4 ? `<div class="more">${escape(this._t("more", offline.length - 4))}</div>` : ""}</div></div>`
       : `<div class="kt"><div class="k">${escape(this._t("offlineNow"))}</div>
@@ -1164,7 +1168,7 @@ class DevicePanel extends HTMLElement {
       let status = `<span class="pill on"><span class="pd"></span>${escape(this._t("statusOnline"))}</span>`;
       let avatar = "";
       if (d.online === false) {
-        status = `<span class="pill off"><span class="pd"></span>${escape(this._t("statusOfflinePill", `${d.since_restart ? "≥ " : ""}${this._duration(d.offline_since)}`))}</span>`;
+        status = `<span class="pill off"><span class="pd"></span>${escape(this._t("statusOfflinePill", `${d.since_at_least ? "≥ " : ""}${this._duration(d.offline_since)}`))}</span>`;
         avatar = "off";
       } else if (d.disabled || d.online == null) {
         status = `<span class="pill none">${escape(this._t(d.disabled ? "statusDisabled" : "statusNoData"))}</span>`;

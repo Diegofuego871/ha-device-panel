@@ -7,7 +7,8 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
-from homeassistant.core import HomeAssistant
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import CoreState, HomeAssistant
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
@@ -152,6 +153,63 @@ async def test_restart_does_not_repeat_outage(hass: HomeAssistant, hass_storage:
     await _tick(hass, log, freezer, 1)
     assert [c.data["title"] for c in calls] == ["Back online: Lampe"]
     assert hass.data[DATA_OUTAGE].offline == {}
+
+
+async def test_restart_keeps_outage_and_duration(hass: HomeAssistant, hass_storage: dict[str, Any], freezer) -> None:
+    # Seit 2 Tagen ausgefallen und gemeldet, dann Neustart von HA
+    calls = async_mock_service(hass, "notify", "handy")
+    lamp = _device(hass, "Lampe")
+    light = _entity(hass, lamp, "light", "l", "unavailable")
+    began = time.time() - 2 * 86400
+    hass_storage[f"{DOMAIN}.availability"] = {
+        "version": 1, "minor_version": 1, "key": f"{DOMAIN}.availability",
+        "data": {"heartbeat": time.time() - 300, "devices": {lamp.id: [[began - 60, 1], [began, 0]]}},
+    }
+    hass_storage[f"{DOMAIN}.notify"] = {"version": 1, "minor_version": 1, "key": f"{DOMAIN}.notify", "data": {"offline": {lamp.id: began}}}
+    entry = MockConfigEntry(domain=DOMAIN, title="Device Panel", options={"notify_service": "notify.handy", "notify_outage": True, "notify_online": True})
+    entry.add_to_hass(hass)
+    # Wie beim Hochfahren: Protokoll und Meldungen stehen, bevor HA läuft;
+    # die erste Bewertung kommt mit "gestartet".
+    hass.set_state(CoreState.not_running)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    hass.set_state(CoreState.running)
+    hass.bus.async_fire(EVENT_HOMEASSISTANT_STARTED)
+    await hass.async_block_till_done()
+    log = hass.data[DATA_AVAILABILITY]
+    # Erste Minuten (unter "Ausgefallen nach", Anlaufphase): kein "wieder online"
+    for _ in range(4):
+        await _tick(hass, log, freezer, 0.5)
+    assert calls == []
+    await _tick(hass, log, freezer, 6)
+    assert calls == []  # derselbe Ausfall, nicht nochmals melden
+    hass.states.async_set(light, "on")
+    await _tick(hass, log, freezer, 0.5)
+    assert [c.data["title"] for c in calls] == ["Back online: Lampe"]
+    assert calls[0].data["message"].startswith("after 2 d")
+
+
+async def test_outage_known_from_log_is_not_repeated(hass: HomeAssistant, setup, freezer) -> None:
+    # Ausgefallen, eine Weile nicht überwacht (vergessen), wieder überwacht
+    # und noch immer aus: derselbe Ausfall, keine zweite Meldung.
+    calls = async_mock_service(hass, "notify", "handy")
+    lamp = _device(hass, "Lampe", domain="hue")
+    light = _entity(hass, lamp, "light", "l", "on")
+    await _options(hass, notify_service="notify.handy", notify_outage=True, notify_online=True)
+    setup.evaluate()
+    hass.states.async_set(light, "unavailable")
+    await _tick(hass, setup, freezer, 3)
+    assert [c.data["title"] for c in calls] == ["Offline: Lampe"]
+    await _options(hass, exclude_integrations=["hue"])
+    await _tick(hass, setup, freezer, 60)
+    assert lamp.id not in hass.data[DATA_OUTAGE].offline
+    await _options(hass, exclude_integrations=[])
+    await _tick(hass, setup, freezer, 1)
+    assert [c.data["title"] for c in calls] == ["Offline: Lampe"]
+    hass.states.async_set(light, "on")
+    await _tick(hass, setup, freezer, 0.5)
+    assert [c.data["title"] for c in calls] == ["Offline: Lampe", "Back online: Lampe"]
+    assert calls[1].data["message"].startswith("after 1 h")
 
 
 def _battery(hass: HomeAssistant, device: dr.DeviceEntry, state: str) -> str:

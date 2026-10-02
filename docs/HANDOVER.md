@@ -113,7 +113,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `.storage/device_panel.devices` ("connections"); zählt nicht als "Eigene
    Einstellung" (wie der Typ von Hand). Mit `0.13.0` (Nutzer, 2026-10-02):
    Reihenfolge der Chips der Verbindungsart per Ziehen in "Anzeige";
-   `0.12.0` ohne Release, in `0.13.0` enthalten. Entschieden (Nutzer, 2026-10-02): Handy A
+   `0.12.0` ohne Release, in `0.13.0` enthalten. Dazu in `0.13.0` behoben
+   (Nutzer: "essentiell"): Ausfalldauer über Neustarts von HA aus dem
+   Protokoll statt aus `last_changed`, Ausfall über Lücken zählt einmal,
+   kein falsches "online" mehr in den ersten Minuten nach dem Start (siehe
+   `docs/CONCEPT.md`, "Verfügbarkeitsprotokoll", "Ausfall über Lücken"). Entschieden (Nutzer, 2026-10-02): Handy A
    für Spalten und Sortierung (`docs/mockups/view-v1/`), als Nächstes. Weiter mit Schritt 2 (Spalten,
    Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
    am 2026-10-02 nachgefragt; dazu Filter-Chips der Verbindungsart einzeln

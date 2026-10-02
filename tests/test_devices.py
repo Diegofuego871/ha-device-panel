@@ -57,7 +57,7 @@ async def test_offline_only_after_two_minutes(hass: HomeAssistant, setup, freeze
     assert lamp_data["online"] is False
     since = dt_util.parse_datetime(lamp_data["offline_since"])
     assert timedelta(minutes=2) < dt_util.utcnow() - since < timedelta(minutes=4)
-    assert lamp_data["since_restart"] is False
+    assert lamp_data["since_at_least"] is False
 
 
 async def test_one_live_entity_keeps_device_online(hass: HomeAssistant, setup, freezer) -> None:
@@ -104,7 +104,7 @@ async def test_offline_before_restart_is_marked(hass: HomeAssistant, setup, free
     freezer.tick(timedelta(minutes=10))
     data = (await _by_name(hass))["Alt"]
     assert data["online"] is False
-    assert data["since_restart"] is True
+    assert data["since_at_least"] is True
 
 
 async def test_battery_signal_update_and_wifi(hass: HomeAssistant, setup) -> None:

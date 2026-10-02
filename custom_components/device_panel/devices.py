@@ -128,20 +128,64 @@ def device_status(
     kurze Aussetzer und das Hochfahren der Integrationen nach einem Neustart
     zählen nicht.
     """
-    relevant, is_connectivity = liveness_entities(entries)
-    states = [s for e in relevant if (s := hass.states.get(e.entity_id)) is not None]
+    states, down = _liveness_states(hass, entries)
     if not states:
         return None, None
-    # Verbindungssensor: "aus" heisst getrennt; "unknown" (z. B. kurz nach
-    # dem Start) ist kein Ausfall.
-    dead = (STATE_OFF, STATE_UNAVAILABLE) if is_connectivity else (STATE_UNAVAILABLE,)
-    down = [s for s in states if s.state in dead]
     if len(down) < len(states):
         return True, None
     since = max(s.last_changed for s in down)
     if now - since < timedelta(seconds=offline_after):
         return True, None
     return False, since
+
+
+def _liveness_states(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> tuple[list[State], list[State]]:
+    """Zustände der lebenden Entitäten und die davon, die weg sind."""
+    relevant, is_connectivity = liveness_entities(entries)
+    states = [s for e in relevant if (s := hass.states.get(e.entity_id)) is not None]
+    # Verbindungssensor: "aus" heisst getrennt; "unknown" (z. B. kurz nach
+    # dem Start) ist kein Ausfall.
+    dead = (STATE_OFF, STATE_UNAVAILABLE) if is_connectivity else (STATE_UNAVAILABLE,)
+    return states, [s for s in states if s.state in dead]
+
+
+def device_down_since(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> datetime | None:
+    """
+    Seit wann alle lebenden Entitäten weg sind, auch unter der Schwelle
+    "Ausgefallen nach"; None, solange eine lebt.
+
+    device_status zählt diese Zeit als online (kurzer Aussetzer). Nach einem
+    Neustart beginnt last_changed aber beim Start: Ein Gerät, das schon vorher
+    fehlte, ist dann kein Aussetzer, und ein Lebenszeichen ist es auch nicht.
+    """
+    states, down = _liveness_states(hass, entries)
+    if not states or len(down) < len(states):
+        return None
+    return max(s.last_changed for s in down)
+
+
+def outage_start(
+    log: Any, device_id: str, since: datetime, started_at: datetime | None, offline_after: float
+) -> tuple[datetime, bool]:
+    """
+    (Beginn des laufenden Ausfalls, nur "mindestens").
+
+    `since` (last_changed) beginnt nach jedem Neustart von HA von vorn. Das
+    Protokoll weiss mehr: Ein Ausfall endet erst, wenn HA das Gerät wieder
+    online sah, Zeiten ohne Daten dazwischen beenden ihn nicht. Sicher ist
+    der Beginn, wenn HA den Wechsel von online zu ausgefallen selbst sah;
+    sonst gilt wie bisher: ein Beginn kurz nach dem Start von HA kommt vom
+    Start selbst und ist nur ein "mindestens".
+    """
+    start, seen = log.open_outage(device_id) if log is not None else (None, False)
+    if start is not None:
+        if start <= since.timestamp():
+            since = dt_util.utc_from_timestamp(start)
+        else:
+            # Protokoll beginnt später (z. B. erst wieder überwacht): last_changed zählt.
+            seen = False
+    at_least = not seen and bool(started_at and since <= started_at + timedelta(seconds=offline_after))
+    return since, at_least
 
 
 def _signal(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> dict[str, Any] | None:
@@ -710,6 +754,14 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         disabled = bool(device.disabled_by)
         # Deaktiviert: keine Zustände, nicht überwacht.
         online, since = (None, None) if disabled else device_status(hass, entries, now, offline_after)
+        if online and log is not None and (down := device_down_since(hass, entries)) is not None:
+            # Unter der Schwelle, aber ausgefallen schon vor einer Lücke (z. B.
+            # die ersten Minuten nach einem Neustart): der Ausfall läuft weiter.
+            if log.open_outage(device.id)[0] is not None:
+                online, since = False, down
+        at_least = False
+        if since is not None:
+            since, at_least = outage_start(log, device.id, since, started_at, offline_after)
         signal = _signal(hass, entries)
         via = None
         if "zha" in domains:
@@ -744,9 +796,10 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "entities": len(entries),
                 "online": online,
                 "disabled": disabled,
+                # Beginn des Ausfalls, auch über Neustarts von HA (outage_start).
                 "offline_since": since.isoformat() if since else None,
-                # Ausfall schon vor dem letzten Start: Dauer ist "mindestens".
-                "since_restart": bool(since and started_at and since <= started_at + timedelta(seconds=offline_after)),
+                # Beginn nicht bekannt (HA lief nicht): Dauer ist "mindestens".
+                "since_at_least": at_least,
                 # Von Hand vor der Erkennung; die Erkennung bleibt für "Automatisch: …".
                 "connection": manual_conn or auto_conn,
                 "connection_auto": auto_conn,

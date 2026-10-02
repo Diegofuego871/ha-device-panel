@@ -11,6 +11,12 @@ Bewertet wird alle 30 s mit derselben Regel wie die Liste
 (devices.device_status): Ausfälle unter der Schwelle erscheinen gar nicht,
 der Beginn eines Ausfalls ist der echte Zeitpunkt (last_changed), nicht der
 der Erkennung.
+
+Ein Ausfall endet erst, wenn HA das Gerät wieder online sieht. Liegt eine
+Zeit ohne Daten zwischen zwei Ausfall-Abschnitten (Neustart, Absturz, eine
+Weile nicht überwacht), läuft der Ausfall durch: Zahlen und Dauer zählen ihn
+einmal, ab dem ersten Abschnitt (bridged). Die Balken zeigen weiter, was HA
+beobachtet hat, die Lücke also als "keine Daten".
 """
 
 from __future__ import annotations
@@ -29,7 +35,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import CONF_OFFLINE_AFTER, CONF_STARTUP_GRACE, DOMAIN
-from .devices import device_back_since, device_status, monitored_devices
+from .devices import device_back_since, device_down_since, device_status, monitored_devices
 from .options_api import effective
 from .storage_util import PeriodicSaver
 
@@ -76,6 +82,26 @@ def segments(events: list[list[Any]], start: float, end: float) -> list[list[Any
         else:
             merged.append(seg)
     return merged
+
+
+def bridged(events: list[list[Any]]) -> list[list[Any]]:
+    """
+    Ereignisse für Zahlen und Dauer: "keine Daten" zwischen zwei Ausfällen
+    fällt weg. HA sah das Gerät in der Lücke nie online; ohne den Schritt
+    zählte jeder Neustart einen laufenden Ausfall doppelt.
+    """
+    out: list[list[Any]] = []
+    for i, event in enumerate(events):
+        if (
+            event[1] is None
+            and out
+            and out[-1][1] == OFFLINE
+            and i + 1 < len(events)
+            and events[i + 1][1] == OFFLINE
+        ):
+            continue
+        out.append(event)
+    return out
 
 
 def summarize(segs: list[list[Any]]) -> dict[str, Any] | None:
@@ -155,6 +181,14 @@ class AvailabilityLog:
                 }
             if isinstance(stored.get("heartbeat"), (int, float)):
                 heartbeat = float(stored["heartbeat"])
+        # Frühere Versionen schrieben bei jedem Neustart für ausgefallene
+        # Geräte ein "online" ohne Dauer (gleiche Zeit wie der folgende
+        # Ausfall); es trennte den Ausfall vor dem Neustart von dem danach.
+        for dev, events in self._events.items():
+            self._events[dev] = [
+                e for i, e in enumerate(events)
+                if not (e[1] == ONLINE and i + 1 < len(events) and events[i + 1][1] == OFFLINE and events[i + 1][0] <= e[0])
+            ]
         # Seit dem letzten Lebenszeichen lief HA nicht (oder stürzte ab):
         # Lücke als "keine Daten" markieren.
         gap = min(heartbeat, now) if heartbeat else now
@@ -226,6 +260,12 @@ class AvailabilityLog:
             last = events[-1] if events else None
             if last is not None and last[1] == state:
                 continue
+            # Alle Entitäten weg, aber noch unter der Schwelle: weder Ausfall
+            # noch Lebenszeichen. Sonst schrieb jeder Neustart für Geräte, die
+            # schon vorher fehlten, ein "online" (last_changed = Start), und
+            # die Meldung "wieder online" ging hinaus.
+            if online and device_down_since(self.hass, entries) is not None:
+                continue
             if last is None and state is None:
                 continue
             if state == OFFLINE:
@@ -283,9 +323,32 @@ class AvailabilityLog:
     def events(self, device_id: str) -> list[list[Any]]:
         return self._events.get(device_id, [])
 
+    def open_outage(self, device_id: str) -> tuple[float | None, bool]:
+        """
+        Laufender Ausfall laut Protokoll: (Beginn, gesehen).
+
+        Beginn ist der erste Ausfall nach der letzten Beobachtung "online";
+        Lücken ohne Daten dazwischen beenden ihn nicht. "gesehen": HA sah den
+        Wechsel von online zu ausgefallen selbst, der Beginn ist also sicher.
+        Ohne Ausfall im Protokoll ist der Beginn None; "gesehen" heisst dann,
+        das letzte Ereignis ist "online" (seit dem Start beobachtet), ein
+        Wechsel danach also einer im laufenden Betrieb.
+        """
+        events = self.events(device_id)
+        start: float | None = None
+        seen = bool(events) and events[-1][1] == ONLINE
+        for i in range(len(events) - 1, -1, -1):
+            at, state = events[i]
+            if state == ONLINE:
+                break
+            if state == OFFLINE:
+                start = at
+                seen = i > 0 and events[i - 1][1] == ONLINE
+        return start, seen
+
     def device_summary(self, device_id: str, seconds: float, now: float | None = None) -> dict[str, Any] | None:
         now = now if now is not None else time.time()
-        return summarize(segments(self.events(device_id), now - seconds, now))
+        return summarize(segments(bridged(self.events(device_id)), now - seconds, now))
 
     def device_strip(self, device_id: str, now: float | None = None, buckets: int = 48) -> list[int]:
         now = now if now is not None else time.time()
@@ -298,7 +361,9 @@ class AvailabilityLog:
         span = RANGES.get(range_key, RANGES["24h"])
         start = now - span
         events = self.events(device_id)
+        # Balken: was HA beobachtet hat; Zahlen: Ausfall über Lücken als einer.
         segs = segments(events, start, now)
+        counted = bridged(events)
         days: list[dict[str, Any]] = []
         if span > 86400:
             local_now = dt_util.as_local(dt_util.utc_from_timestamp(now))
@@ -306,26 +371,29 @@ class AvailabilityLog:
             for i in range(int(span // 86400) - 1, -1, -1):
                 day_start = (midnight - timedelta(days=i)).timestamp()
                 day_end = min(now, (midnight - timedelta(days=i - 1)).timestamp())
-                day_segs = segments(events, day_start, day_end)
-                off = [(a, b) for a, b, s in day_segs if s == OFFLINE]
+                off = [(a, b) for a, b, s in segments(counted, day_start, day_end) if s == OFFLINE]
                 days.append({
                     "start": day_start,
                     # Ein Unterbruch über Mitternacht zählt an beiden Tagen.
                     "outages": len(off),
                     "offline": round(sum(b - a for a, b in off)),
-                    "nodata": all(s is None for _a, _b, s in day_segs),
+                    "nodata": all(s is None for _a, _b, s in segments(events, day_start, day_end)),
                 })
         return {
             "start": start,
             "end": now,
             "first": events[0][0] if events else None,
             "segments": segs,
-            "summary": summarize(segs),
+            "summary": summarize(segments(counted, start, now)),
             "days": days,
         }
 
     def pulse(self, now: float | None = None, buckets: int = 48, only: set[str] | None = None) -> list[int]:
-        """Zahl der Geräte mit Unterbruch je Abschnitt der letzten 24 Std."""
+        """
+        Zahl der Geräte mit Unterbruch je Abschnitt der letzten 24 Std. Ein
+        Bild wie die Balken: was HA beobachtet hat, Lücken ohne Daten zählen
+        nicht.
+        """
         now = now if now is not None else time.time()
         start = now - 86400
         size = 86400 / buckets
@@ -354,7 +422,9 @@ class AvailabilityLog:
             if only is not None and dev not in only:
                 continue
             prev = None
-            for at, st in events:
+            # Ein Ausfall, der über einen Neustart läuft, beginnt nicht neu
+            # (sonst ein falscher Sammelausfall beim Start).
+            for at, st in bridged(events):
                 if st == OFFLINE and prev != OFFLINE and at >= start:
                     starts.append((at, dev))
                 prev = st
