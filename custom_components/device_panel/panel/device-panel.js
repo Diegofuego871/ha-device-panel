@@ -47,6 +47,18 @@ function setHtml(el, html) {
   return true;
 }
 
+// Fokus nach einem Neuaufbau zurückgeben, aber auf Touch-Geräten nicht an
+// Auswahl- und Zeitfelder: iOS öffnet bei Fokus sofort wieder die Auswahl,
+// nach jeder Änderung und jeder Abfrage erneut (Rückmeldung des Nutzers).
+// Mit Maus und Tastatur bleibt der Fokus, wie er war.
+const TOUCH_QUERY = "(pointer: coarse)";
+function refocus(el) {
+  if (!el) return;
+  const picker = el.tagName === "SELECT" || (el.tagName === "INPUT" && (el.type === "time" || el.type === "date"));
+  if (picker && window.matchMedia?.(TOUCH_QUERY).matches) return;
+  el.focus({ preventScroll: true });
+}
+
 // Für Text und Attribute: auch Anführungszeichen, sonst bricht ein Wert mit
 // " das Attribut ab (abgeschnittene Texte, eingeschleuste Attribute).
 const ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -1110,7 +1122,7 @@ class DevicePanel extends HTMLElement {
     const scroll = dlg.scrollTop;
     if (!setHtml(dlg, html)) return;
     dlg.scrollTop = scroll;
-    if (sel) dlg.querySelector(sel)?.focus();
+    if (sel) refocus(dlg.querySelector(sel));
   }
 
   _onDeviceClick(ev) {
@@ -1545,7 +1557,7 @@ class DevicePanel extends HTMLElement {
     const slot = dialog.querySelector(".ver-slot");
     if (slot) lastHtml.set(slot, this._verSlotHtml);
     dialog.scrollTop = scroll;
-    if (focusSel) dialog.querySelector(focusSel)?.focus();
+    if (focusSel) refocus(dialog.querySelector(focusSel));
   }
 
   // Variante A (docs/mockups/battery-v1): eigene Schwelle nur für

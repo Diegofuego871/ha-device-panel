@@ -91,7 +91,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    täglich mit Uhrzeit und wählbarem Inhalt, Push bei Ausfall (sofort) und
    "wieder online", Sammelausfall, Meldungen pro Gerät aus; aufgeklappter
    Abschnitt der Einstellungen abgesetzt. `0.9.1` (Nutzer, 2026-10-02):
-   "globaler Wert" statt "wie eingestellt", überall. Weiter mit Schritt 2 (Spalten,
+   "globaler Wert" statt "wie eingestellt", überall; Auswahl ging auf iOS
+   nach der Wahl sofort wieder auf (Fokus nach Neuaufbau). Weiter mit Schritt 2 (Spalten,
    Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
    am 2026-10-02 nachgefragt) und dem Rest von Schritt 7 (anhaltende
    Benachrichtigung bei Ausfällen, Spalten Push/Anhaltend bei den

@@ -325,7 +325,14 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Zeitpunkt erst mit Push`, !(await ev(`return !!r.querySelector('select[data-opt="battery_push_mode"]')`)));
     await tap('.switch input[data-opt="battery_push"]');
     check(`[${tag}] Zeitpunkt sofort`, await wait(`return r.querySelector('select[data-opt="battery_push_mode"]')?.value === "instant"`) && !(await ev(`return !!r.querySelector('input[type="time"]') || !!r.querySelector('select[data-opt="battery_push_daily"]')`)) && (await short("battery_push_mode")) === `opt-short|${T.shortInstant}`, await short("battery_push_mode"));
-    await pick('select[data-opt="battery_push_mode"]', "daily");
+    const modeSel = (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-opt="battery_push_mode"]')`))).asElement();
+    await modeSel.focus();
+    await modeSel.selectOption("daily");
+    await wait(`return !!r.querySelector('input[type="time"]')`);
+    // Neuaufbau nach der Wahl: auf dem Handy keine fokussierte Auswahl (iOS
+    // öffnete sie sofort wieder), am Desktop bleibt der Fokus.
+    const focused = await ev(`const a=r.activeElement; return a ? a.tagName + ":" + (a.dataset.opt || "") : "none"`);
+    check(`[${tag}] Fokus nach Wahl`, mobile ? !focused.startsWith("SELECT") : focused === "SELECT:battery_push_mode", focused);
     check(`[${tag}] täglich: Uhrzeit 08:00, Inhalt neu`, await wait(`return r.querySelector('input[type="time"][data-opt="battery_push_time"]')?.value === "08:00" && r.querySelector('select[data-opt="battery_push_daily"]')?.value === "new"`) && (await short("battery_push_mode")) === `opt-short|${T.shortDaily("08:00")}`, await short("battery_push_mode"));
     if (!mobile) {
       // Breit genug für "08:00 AM" (Format des Browsers) und neben der Auswahl

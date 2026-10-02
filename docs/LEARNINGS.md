@@ -158,6 +158,14 @@ hat dort einen echten Fehler oder Umweg gekostet.
   `width: auto`. Die Paar-Zeile (Auswahl + Uhrzeit) braucht `flex: 1 1 auto`,
   sonst rechnet Chrome die Breite des umbrechenden Flex-Containers zu knapp
   und bricht auch auf dem Desktop um.
+- **Fokus nach Neuaufbau nie an Auswahlfelder auf Touch-Geräten:** iOS
+  öffnet eine `<select>` (und Zeitfelder), sobald sie per `focus()` den
+  Fokus bekommt. Das Popup und die Einstellungen geben nach dem Neuaufbau
+  den Fokus zurück; das liess die Auswahl nach jeder Wahl und jeder Abfrage
+  wieder aufgehen (0.9.1). `refocus()` lässt Auswahl- und Zeitfelder bei
+  `(pointer: coarse)` aus, sonst `focus({ preventScroll: true })`. Test:
+  vorher fokussieren, wählen, abfragen, dann `activeElement` prüfen
+  (Playwright mit `isMobile`/`hasTouch` meldet `pointer: coarse`).
 - **Lokale Bereichsprüfung ist kein Speicherfehler:** Im Popup nichts
   senden, die Eingabe stehen lassen und den Bereich unter dem Feld nennen;
   "Konnte nicht gespeichert werden" nur für Antworten des Backends.

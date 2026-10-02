@@ -95,8 +95,17 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Batterie aus gespeichert`, await wait(`return r.querySelector('select[data-dlg="dev-bat"]')?.value === "off"`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "a", battery: "off" }));
     check(`[${tag}] Liste: wieder 2 schwache`, await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`), await lowChip());
     // Meldungen aus
-    await (await handle('select[data-dlg="dev-notify"]')).selectOption("off");
+    // Wie ein Benutzer: Auswahl hat den Fokus, dann neue Wahl
+    const notifySel = await handle('select[data-dlg="dev-notify"]');
+    await notifySel.focus();
+    await notifySel.selectOption("off");
     check(`[${tag}] Meldungen aus gespeichert`, await wait(`return r.querySelector('select[data-dlg="dev-notify"]')?.value === "off"`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "a", notify: false }));
+    // Nach dem Neuaufbau (Speichern und Abfrage): auf dem Handy keine fokussierte
+    // Auswahl, sonst öffnet iOS sie sofort wieder; am Desktop bleibt der Fokus.
+    await f.evaluate(() => document.querySelector("device-panel")._fetch());
+    await p.waitForTimeout(400);
+    const focused = await ev(`const a=r.activeElement; return a ? a.tagName + ":" + (a.dataset.dlg || "") : "none"`);
+    check(`[${tag}] Fokus nach Änderung`, mobile ? !focused.startsWith("SELECT") : focused === "SELECT:dev-notify", focused);
     check(`[${tag}] als geändert markiert`, await ev(`return r.querySelector('select[data-dlg="dev-notify"]').closest(".opt").classList.contains("changed")`));
     await close();
     await open("a");

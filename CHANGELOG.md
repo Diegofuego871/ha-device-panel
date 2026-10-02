@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   15 %" in the short line, "Empty = global value" for the threshold per
   integration (also in the options dialog).
 
+### Fixed
+
+- On the phone (iOS) a selection in the device pop-up or in the settings
+  opened again right after choosing, and again after each refresh. After a
+  change the selection now stays closed.
+
 ## [0.9.0] - 2026-10-02
 
 Push notifications for outages and when devices are back online, the time of

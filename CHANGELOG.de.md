@@ -16,6 +16,12 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
   Wert: 15 %" in der Kurzzeile, "Leer = globaler Wert" bei der Schwelle pro
   Integration (auch im Optionsdialog).
 
+### Behoben
+
+- Auf dem Handy (iOS) ging eine Auswahl im Geräte-Popup oder in den
+  Einstellungen nach der Wahl sofort wieder auf, und nach jeder
+  Aktualisierung erneut. Nach einer Änderung bleibt sie jetzt zu.
+
 ## [0.9.0] - 2026-10-02
 
 Push bei Ausfall und wenn Geräte wieder online sind, Zeitpunkt der
