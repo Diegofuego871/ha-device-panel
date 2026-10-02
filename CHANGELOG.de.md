@@ -7,7 +7,28 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.10.0] - 2026-10-02
+
+Einstellungen pro Gerät auf einen Blick: in der Liste markiert, filterbar
+und in den Einstellungen zurücksetzbar.
+
+### Hinzugefügt
+
+- Geräteliste: Ein Gerät mit eigener Einstellung zeigt sie beim Namen, ein
+  Symbol je Art: Batterie mit eigener Schwelle ("30 %"), Batterie-Warnung
+  aus, Ausfall- und Online-Meldungen aus; der Tooltip nennt den Wert und den
+  globalen Wert. Auch auf den Karten am Handy.
+- Chip "Eigene Einstellung" (erscheint, sobald es eine gibt): nur Geräte mit
+  eigener Einstellung.
+- Einstellungen, Abschnitte "Batterie" und "Push-Benachrichtigung": die
+  Geräte mit eigenem Wert (auch ausgeblendete), je mit Bereich und
+  Integration; einzeln zurücksetzen (×, rückgängig möglich) oder "Alle
+  zurücksetzen". Gilt wie alle Einstellungen mit "Speichern", "Abbrechen"
+  verwirft.
+
 ## [0.9.1] - 2026-10-02
+
+Nicht veröffentlicht; enthalten in 0.10.0.
 
 ### Geändert
 
@@ -302,7 +323,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[0.9.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.1
+[0.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.10.0
 [0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0
 [0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0

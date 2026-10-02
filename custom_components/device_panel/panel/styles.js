@@ -125,6 +125,7 @@ button { font: inherit; color: inherit; }
 .chip.hint.b svg { color: var(--dp-error); }
 .chip.hint.s svg { color: var(--dp-warning); }
 .chip.hint.u svg { color: var(--dp-primary); }
+.chip.hint.o svg { color: var(--dp-primary); }
 .chip.on { background: var(--dp-primary-soft); border-color: transparent; color: var(--dp-primary); }
 .chip.on svg, .chip.on .n { color: var(--dp-primary); }
 .vsep { width: 1px; height: 22px; background: var(--dp-divider); margin: 0 2px; }
@@ -205,6 +206,11 @@ svg.strip .s2 { fill: var(--dp-bar-off); }
 .mc.flaky { border-color: color-mix(in srgb, var(--dp-warning) 45%, transparent); background: linear-gradient(90deg, var(--dp-warning-soft), transparent 70%), var(--dp-card); }
 .mc .av { width: 38px; height: 38px; }
 .mc .nm { font-weight: 500; font-size: 14.5px; }
+/* Einstellung pro Gerät beim Namen (docs/mockups/override-v1, A): Primärfarbe
+   wie "geändert" in den Einstellungen. */
+.ovrs { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; vertical-align: -2px; }
+.ovr { display: inline-flex; align-items: center; gap: 2px; height: 18px; padding: 0 5px; border-radius: 6px;
+  background: var(--dp-primary-soft); color: var(--dp-primary); font-size: 11px; font-weight: 500; line-height: 1; white-space: nowrap; }
 .mc .sb { font-size: 12px; color: var(--dp-text2); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .mc .sb2 { font-size: 12px; color: var(--dp-text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mc .rt { text-align: right; }
@@ -308,6 +314,23 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .dev-set { border: 1px solid var(--dp-divider); border-radius: 14px; padding: 2px 14px; }
 .dev-set .opt-sub { margin-top: 6px; }
 .dev-set .opt-sub .opt-label { color: var(--dp-text2); }
+/* Einstellungen: Geräte mit eigenem Wert, einzeln oder alle zurücksetzen. */
+.ovr-all { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--dp-divider);
+  border-radius: 99px; background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer; }
+.ovr-all svg { color: var(--dp-text2); }
+.ovr-all:hover:not(:disabled) { background: var(--dp-hover); }
+.ovr-all:disabled { opacity: .45; cursor: default; }
+.ovr-list { margin-top: 8px; overflow: hidden; border: 1px solid var(--dp-divider); border-radius: 12px; background: var(--dp-card); }
+.ovr-row { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 6px 4px 12px; border-bottom: 1px solid var(--dp-divider); font-size: 13.5px; }
+.ovr-row:last-child { border-bottom: none; }
+.ovr-name { flex: 1; min-width: 0; }
+.ovr-name small { display: block; overflow: hidden; color: var(--dp-text2); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.ovr-val { color: var(--dp-primary); font-weight: 500; white-space: nowrap; }
+.ovr-val s { color: var(--dp-text2); font-weight: 400; }
+.ovr-row.reset .ovr-name { color: var(--dp-text2); }
+.ovr-x { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border: none; border-radius: 50%; background: none; color: var(--dp-text2); cursor: pointer; }
+.ovr-x:hover { background: var(--dp-hover); color: var(--dp-text); }
+.ovr-x:focus-visible, .ovr-all:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
 /* Batterie pro Integration: Zeilen wie die Ausschlüsse, Feld rechts. */
 .opt.bat-own { border-bottom: none; padding-bottom: 2px; }
 .ex-row.bat-row .opt-input input { width: 40px; }

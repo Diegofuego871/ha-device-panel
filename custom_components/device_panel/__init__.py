@@ -45,9 +45,11 @@ from .const import (
 from .devices import (
     async_catalog,
     async_device_detail,
+    async_device_overrides,
     async_list_devices,
     async_load_type_overrides,
     async_mark_start,
+    async_reset_device_settings,
     async_set_device_settings,
     async_set_type_override,
 )
@@ -296,7 +298,8 @@ async def _ws_get_options(
     """
     Einstellungen, dieselben Werte wie im Optionsdialog, dazu die
     Panel-Einstellungen, für die Ausschlüsse alle Integrationen und Typen
-    mit der Zahl ihrer Geräte und die Bereiche der Zahlen.
+    mit der Zahl ihrer Geräte, die Bereiche der Zahlen und die Geräte mit
+    eigener Einstellung (zum Zurücksetzen).
     """
     entry = _entry(hass)
     if entry is None:
@@ -310,6 +313,7 @@ async def _ws_get_options(
             "catalog": await async_catalog(hass),
             "limits": options_api.limits(),
             "notify_targets": options_api.notify_targets(hass, options_api.current_values(entry)[CONF_NOTIFY_SERVICE]),
+            "overrides": await async_device_overrides(hass),
         },
     )
 
@@ -380,6 +384,28 @@ async def _ws_set_device_settings(
     connection.send_result(msg["id"], changes)
 
 
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/reset_device_settings",
+        # Geräte, deren Batterie-Warnung bzw. Meldungen auf den globalen Wert
+        # zurückgehen (Einstellungen, beim Speichern).
+        vol.Optional("battery", default=[]): [str],
+        vol.Optional("notify", default=[]): [str],
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_reset_device_settings(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Einstellungen pro Gerät zurücksetzen, gibt die Zahl der Geräte zurück."""
+    done = await async_reset_device_settings(hass, msg["battery"], msg["notify"])
+    # Batterie-Warnung sofort nachführen (Push, anhaltende Benachrichtigung).
+    if done["battery"] and (watch := hass.data.get(DATA_BATTERY)) is not None:
+        await watch.async_check()
+    connection.send_result(msg["id"], done)
+
+
 @callback
 def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     if hass.data.get(DATA_WS_REGISTERED):
@@ -394,3 +420,4 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_set_options)
     websocket_api.async_register_command(hass, _ws_set_device_type)
     websocket_api.async_register_command(hass, _ws_set_device_settings)
+    websocket_api.async_register_command(hass, _ws_reset_device_settings)

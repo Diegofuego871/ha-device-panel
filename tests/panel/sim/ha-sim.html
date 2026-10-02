@@ -247,6 +247,17 @@
       battery: Object.entries(bat).map(([domain, v]) => ({ domain, name: integrations[domain] || domain, ...v })).sort((a, b) => b.devices - a.devices || a.name.localeCompare(b.name)),
     };
   }
+  // Wie das Backend (devices.async_device_overrides): auch ausgeblendete Geräte, nach Name.
+  function overrides() {
+    const visible = new Set(shown().map((d) => d.id));
+    const info = (d) => ({ id: d.id, name: d.name, area: d.area, integration: integrations[d.integration?.domain] || d.integration?.domain || null, hidden: !visible.has(d.id) });
+    const byName = (a, b) => a.name.localeCompare(b.name);
+    const s = window.__devSettings;
+    return {
+      battery: devices.filter((d) => d.id in s.battery).map((d) => ({ ...info(d), value: s.battery[d.id] })).sort(byName),
+      notify: devices.filter((d) => s.notifyOff.has(d.id)).map(info).sort(byName),
+    };
+  }
   const integrations = {
     bthome: "BTHome", zha: "Zigbee Home Automation", matter: "Matter", shelly: "Shelly", esphome: "ESPHome",
     hue: "Philips Hue", zwave_js: "Z-Wave", synology_dsm: "Synology DSM", roborock: "Roborock", met: "Meteorologisk institutt (Met.no)",
@@ -388,7 +399,16 @@
       if (msg.type === "device_panel/get_options") {
         if (window.__getOptsFails) throw new Error("boom");
         await new Promise((r) => setTimeout(r, 40));
-        return { values: JSON.parse(JSON.stringify(window.__opts)), panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS, notify_targets: NOTIFY_TARGETS };
+        return { values: JSON.parse(JSON.stringify(window.__opts)), panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS, notify_targets: NOTIFY_TARGETS, overrides: overrides() };
+      }
+      if (msg.type === "device_panel/reset_device_settings") {
+        if (window.__resetFails) throw new Error(window.__resetFails);
+        const s = window.__devSettings;
+        let battery = 0;
+        let notify = 0;
+        for (const id of new Set(msg.battery || [])) if (id in s.battery) { delete s.battery[id]; battery++; }
+        for (const id of new Set(msg.notify || [])) if (s.notifyOff.delete(id)) notify++;
+        return { battery, notify };
       }
       if (msg.type === "device_panel/set_options") {
         if (window.__setOptsFails) throw new Error(window.__setOptsFails);

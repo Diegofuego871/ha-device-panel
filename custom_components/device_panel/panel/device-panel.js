@@ -86,6 +86,9 @@ const MDI = {
   flask: "M5,19A1,1 0 0,0 6,20H18A1,1 0 0,0 19,19C19,18.79 18.93,18.59 18.82,18.43L13,8.35V4H11V8.35L5.18,18.43C5.07,18.59 5,18.79 5,19M6,22A3,3 0 0,1 3,19C3,18.4 3.18,17.84 3.5,17.37L9,7.81V6A1,1 0 0,1 8,5V4A2,2 0 0,1 10,2H14A2,2 0 0,1 16,4V5A1,1 0 0,1 15,6V7.81L20.5,17.37C20.82,17.84 21,18.4 21,19A3,3 0 0,1 18,22H6M13,16L14.34,14.66L16.27,18H7.73L10.39,13.39L13,16M12.5,12A0.5,0.5 0 0,1 13,12.5A0.5,0.5 0 0,1 12.5,13A0.5,0.5 0 0,1 12,12.5A0.5,0.5 0 0,1 12.5,12Z",
   reset: "M12,4C14.1,4 16.1,4.8 17.6,6.3C20.7,9.4 20.7,14.5 17.6,17.6C15.8,19.5 13.3,20.2 10.9,19.9L11.4,17.9C13.1,18.1 14.9,17.5 16.2,16.2C18.5,13.9 18.5,10.1 16.2,7.7C15.1,6.6 13.5,6 12,6V10.6L7,5.6L12,0.6V4M6.3,17.6C3.7,15 3.3,11 5.1,7.9L6.6,9.4C5.5,11.6 5.9,14.4 7.8,16.2C8.3,16.7 8.9,17.1 9.6,17.4L9,19.4C8,19 7.1,18.4 6.3,17.6Z",
   info: "M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
+  tune: "M8 13C6.14 13 4.59 14.28 4.14 16H2V18H4.14C4.59 19.72 6.14 21 8 21S11.41 19.72 11.86 18H22V16H11.86C11.41 14.28 9.86 13 8 13M8 19C6.9 19 6 18.1 6 17C6 15.9 6.9 15 8 15S10 15.9 10 17C10 18.1 9.1 19 8 19M19.86 6C19.41 4.28 17.86 3 16 3S12.59 4.28 12.14 6H2V8H12.14C12.59 9.72 14.14 11 16 11S19.41 9.72 19.86 8H22V6H19.86M16 9C14.9 9 14 8.1 14 7C14 5.9 14.9 5 16 5S18 5.9 18 7C18 8.1 17.1 9 16 9Z",
+  bellOff: "M20.84,22.73L18.11,20H3V19L5,17V11C5,9.86 5.29,8.73 5.83,7.72L1.11,3L2.39,1.73L22.11,21.46L20.84,22.73M19,15.8V11C19,7.9 16.97,5.17 14,4.29C14,4.19 14,4.1 14,4A2,2 0 0,0 12,2A2,2 0 0,0 10,4C10,4.1 10,4.19 10,4.29C9.39,4.47 8.8,4.74 8.26,5.09L19,15.8M12,23A2,2 0 0,0 14,21H10A2,2 0 0,0 12,23Z",
+  batteryOff: "M22.11 21.46L2.39 1.73L1.11 3L6 7.89V20.67C6 21.4 6.6 22 7.33 22H16.67C17.4 22 18 21.4 18 20.67V19.89L20.84 22.73L22.11 21.46M16 18H8V9.89L16 17.89V18M8.2 4H9V2H15V4H16.67C17.4 4 18 4.6 18 5.33V15.8L16 13.8V6H10.2L8.2 4Z",
   chevronDown: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z",
   open: "M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z",
   chevron: "M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z",
@@ -185,6 +188,10 @@ function stripSvg(strip) {
   const rects = strip.map((v, i) => `<rect x="${i * 2}" y="0" width="1.4" height="14" rx=".5" class="s${v}"/>`).join("");
   return `<svg class="strip" width="${strip.length * 2}" height="14" viewBox="0 0 ${strip.length * 2} 14" aria-hidden="true">${rects}</svg>`;
 }
+
+// Gerät mit eigener Einstellung (Batterie-Warnung oder Meldungen); der Typ
+// von Hand zählt nicht dazu (Entscheid des Nutzers).
+const hasOverride = (d) => d.battery_setting != null || Boolean(d.notify_off);
 
 class DevicePanel extends HTMLElement {
   constructor() {
@@ -561,6 +568,7 @@ class DevicePanel extends HTMLElement {
     if (this._hint === "battery" && !d.battery?.low) return false;
     if (this._hint === "signal" && !isWeak(d.signal)) return false;
     if (this._hint === "update" && !d.update) return false;
+    if (this._hint === "override" && !hasOverride(d)) return false;
     if (!this._search) return true;
     const integs = (d.integrations || []).map((dom) => this._integrations[dom] || dom);
     return [d.name, d.area, d.manufacturer, d.model, d.sw_version, ...integs, d.integration?.title, this._t(typeKey(d.type)), this._t(CONN[this._connOf(d)].key), d.via]
@@ -689,6 +697,7 @@ class DevicePanel extends HTMLElement {
       ["battery", "b", "battery", "hintBattery", all.filter((d) => d.battery?.low).length],
       ["signal", "s", "signal", "hintSignal", all.filter((d) => isWeak(d.signal)).length],
       ["update", "u", "update", "hintUpdate", all.filter((d) => d.update).length],
+      ["override", "o", "tune", "hintOverride", all.filter(hasOverride).length],
     ];
     for (const [key, cls, icon, label, n] of hints) {
       if (!n && this._hint !== key) continue;
@@ -701,6 +710,19 @@ class DevicePanel extends HTMLElement {
   _avatar(d, size = 18) {
     const cls = d.online === false ? "off" : d.online == null ? "none" : d.flaky ? "warn" : "";
     return `<div class="av ${cls}">${CONN[this._connOf(d)].icon(size)}<span class="dot"></span></div>`;
+  }
+
+  // Einstellungen pro Gerät beim Namen (Variante A, docs/mockups/override-v1):
+  // je Art ein Symbol, Wert und globaler Wert im Tooltip.
+  _overrideHtml(d) {
+    const out = [];
+    const tag = (cls, icon, text, label) =>
+      `<span class="ovr ${cls}" role="img" title="${escape(label)}" aria-label="${escape(label)}">${mdi(icon, 12)}${text ? escape(text) : ""}</span>`;
+    const setting = d.battery_setting;
+    if (setting === "off") out.push(tag("bat-off", "batteryOff", "", this._t("ovrBatOffTip")));
+    else if (Number.isInteger(setting)) out.push(tag("bat", "battery", `${setting} %`, this._t("ovrBatOwnTip", setting, d.battery_default?.pct ?? 15)));
+    if (d.notify_off) out.push(tag("mute", "bellOff", "", this._t("ovrNotifyOffTip")));
+    return out.length ? `<span class="ovrs">${out.join("")}</span>` : "";
   }
 
   _statusHtml(d) {
@@ -772,7 +794,7 @@ class DevicePanel extends HTMLElement {
           .map((d) => {
             const title = this._integTitle(d);
             return `<tr class="dev ${d.online === false ? "off" : d.online && d.flaky ? "flaky" : ""}" data-open="${escape(d.id)}" tabindex="0">
-            <td><div class="nc">${this._avatar(d)}<div>${escape(d.name)}${d.area ? `<span class="sub">${escape(d.area)}</span>` : ""}</div></div></td>
+            <td><div class="nc">${this._avatar(d)}<div>${escape(d.name)}${this._overrideHtml(d)}${d.area ? `<span class="sub">${escape(d.area)}</span>` : ""}</div></div></td>
             <td>${this._statusHtml(d)}</td>
             <td>${this._connHtml(d)}</td>
             <td>${this._availHtml(d)}</td>
@@ -794,7 +816,7 @@ class DevicePanel extends HTMLElement {
         const head = `<div class="gh ${cls}">${escape(title)} · ${list.length}</div>`;
         if (cls === "") {
           return head + `<div class="mlist">${list
-            .map((d) => `<div class="mrow dev" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d, 16)}<div>${escape(d.name)}<span class="sub">${meta(d)}</span></div>
+            .map((d) => `<div class="mrow dev" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d, 16)}<div>${escape(d.name)}${this._overrideHtml(d)}<span class="sub">${meta(d)}</span></div>
               <div>${d.battery?.low ? this._batteryHtml(d) : bars(sigLevel(d.signal), false)}</div></div>`)
             .join("")}</div>`;
         }
@@ -803,7 +825,7 @@ class DevicePanel extends HTMLElement {
             let right = this._statusHtml(d);
             if (d.online === false) right = `<div class="dur">${this._durationHtml(d, true)}</div><div class="durs">${escape(this._t("statusOffline"))}</div>`;
             return `<div class="mc dev ${d.online === false ? "off" : d.flaky ? "flaky" : ""}" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d)}
-            <div><div class="nm">${escape(d.name)}</div><div class="sb">${this._connHtml(d, false)}</div><div class="sb2">${meta(d)}</div></div>
+            <div><div class="nm">${escape(d.name)}${this._overrideHtml(d)}</div><div class="sb">${this._connHtml(d, false)}</div><div class="sb2">${meta(d)}</div></div>
             <div class="rt">${right}</div></div>`;
           })
           .join("");
@@ -1376,7 +1398,12 @@ class DevicePanel extends HTMLElement {
   async _openSettings() {
     const dialog = this.shadowRoot.querySelector("dialog.settings");
     if (!dialog || !this._hass) return;
-    this._settings = { loading: true, error: null, saveError: null, saving: false, data: null, draft: null, open: new Set(), info: new Set() };
+    // resets: Geräte, deren eigene Einstellung beim Speichern auf den globalen
+    // Wert zurückgeht (Variante A, docs/mockups/override-v1).
+    this._settings = {
+      loading: true, error: null, saveError: null, saving: false, data: null, draft: null, open: new Set(), info: new Set(),
+      resets: { battery: new Set(), notify: new Set() },
+    };
     this._renderSettings();
     if (!dialog.open) {
       if (typeof dialog.showModal === "function") dialog.showModal();
@@ -1432,8 +1459,16 @@ class DevicePanel extends HTMLElement {
     return Object.keys(st.extra).filter((k) => st.extra[k] !== st.extraBase[k]);
   }
 
+  // Eine Änderung pro zurückgesetztem Gerät; der Schlüssel ordnet sie dem
+  // Abschnitt zu (Etikett "geändert").
+  _settingsResetChanges() {
+    const st = this._settings;
+    if (!st?.resets) return [];
+    return [...[...st.resets.battery].map(() => "reset_battery"), ...[...st.resets.notify].map(() => "reset_notify")];
+  }
+
   _settingsChanges() {
-    return [...this._settingsEntryChanges(), ...this._settingsExtraChanges()];
+    return [...this._settingsEntryChanges(), ...this._settingsExtraChanges(), ...this._settingsResetChanges()];
   }
 
   // Abschnitte mit ihren Optionen in der Reihenfolge von Bild 5, dazu
@@ -1441,10 +1476,10 @@ class DevicePanel extends HTMLElement {
   _settingsSections() {
     return [
       ["detection", ["offline_after", "flaky_outages", "startup_grace"]],
-      ["battery", ["battery_low", "battery_low_integrations", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent"]],
+      ["battery", ["battery_low", "battery_low_integrations", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "reset_battery"]],
       ["integrations", ["exclude_integrations"]],
       ["types", ["exclude_types"]],
-      ["push", ["notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group"]],
+      ["push", ["notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "reset_notify"]],
       ["display", ["show_service_devices", "show_disabled_devices"]],
       ["updates", ["update_check"]],
     ];
@@ -1587,6 +1622,33 @@ class DevicePanel extends HTMLElement {
       <div class="opt-error" data-bat-error ${errors.battery_low_integrations ? "" : "hidden"}>${escape(errors.battery_low_integrations || "")}</div>`;
   }
 
+  // Geräte mit eigener Einstellung (Batterie oder Meldungen), einzeln oder
+  // alle zurücksetzen; gilt mit "Speichern" (Variante A, docs/mockups/override-v1).
+  _overridesHtml(kind) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    const list = st.data.overrides?.[kind] || [];
+    const marked = st.resets[kind];
+    const all = list.length > 0 && list.every((x) => marked.has(x.id));
+    const pre = kind === "battery" ? "ovrBat" : "ovrNotify";
+    const btn = list.length
+      ? `<button type="button" class="ovr-all" data-set="ovr-all" data-key="${kind}" ${all ? "disabled" : ""}>${mdi("reset", 15)}${escape(t("ovrResetAll"))}</button>`
+      : "";
+    const value = (x) => (kind === "notify" || x.value === "off" ? t("ovrOff") : `${x.value} %`);
+    const rows = list
+      .map((x) => {
+        const on = marked.has(x.id);
+        const sub = [x.area, x.integration, x.hidden ? t("ovrHidden") : null].filter(Boolean).join(" · ");
+        const label = t(on ? "ovrUndo" : "ovrReset", x.name);
+        return `<div class="ovr-row${on ? " reset" : ""}"><span class="ovr-name">${escape(x.name)}${sub ? `<small>${escape(sub)}</small>` : ""}</span>
+          <span class="ovr-val">${on ? `<s>${escape(value(x))}</s> ${escape(t("ovrToGlobal"))}` : escape(value(x))}</span>
+          <button type="button" class="ovr-x" data-set="ovr-one" data-key="${kind}:${escape(x.id)}" title="${escape(label)}" aria-label="${escape(label)}">${mdi(on ? "reset" : "close", 16)}</button></div>`;
+      })
+      .join("");
+    return `<div class="opt ovr-opt${marked.size ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t(`${pre}Title`))}</span>${btn}</div>
+      <div class="opt-short">${escape(t(list.length ? `${pre}Short` : `${pre}Empty`))}</div>${rows ? `<div class="ovr-list">${rows}</div>` : ""}</div>`;
+  }
+
   _settingsBodyHtml() {
     const st = this._settings;
     const d = st.draft;
@@ -1673,7 +1735,8 @@ class DevicePanel extends HTMLElement {
               : "")
           : "") +
         row("battery_persistent", t("optBatteryPersistent"), sw("battery_persistent", t("optBatteryPersistent")), t("optBatteryPersistentShort"), t("optBatteryPersistentInfo")) +
-        this._batOwnHtml(d, errors),
+        this._batOwnHtml(d, errors) +
+        this._overridesHtml("battery"),
       integrations: exTable("exclude_integrations", integrations, t("hideIntro")),
       types: exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`),
       push:
@@ -1681,7 +1744,8 @@ class DevicePanel extends HTMLElement {
         row("notify_click_target", t("optClick"), select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null) +
         row("notify_outage", t("optOutage"), sw("notify_outage", t("optOutage")), t("optOutageShort", st.data.values.offline_after ?? 2), null) +
         row("notify_online", t("optOnline"), sw("notify_online", t("optOnline")), t("optOnlineShort"), null) +
-        row("notify_group", t("optGroup"), sw("notify_group", t("optGroup")), t("optGroupShort"), null),
+        row("notify_group", t("optGroup"), sw("notify_group", t("optGroup")), t("optGroupShort"), null) +
+        this._overridesHtml("notify"),
       display:
         row("show_service_devices", t("optShowService"), sw("show_service_devices", t("optShowService")), t("optShowServiceShort"), t("optShowServiceInfo")) +
         row("show_disabled_devices", t("optShowDisabled"), sw("show_disabled_devices", t("optShowDisabled")), t("optShowDisabledShort"), null),
@@ -1730,6 +1794,14 @@ class DevicePanel extends HTMLElement {
         const key = action === "section" ? btn.dataset.id : btn.dataset.key;
         if (set.has(key)) set.delete(key);
         else set.add(key);
+        this._renderSettings();
+      } else if (action === "ovr-all" || action === "ovr-one") {
+        if (!st.data) return;
+        const [kind, id] = btn.dataset.key.split(/:(.*)/s);
+        const marked = st.resets[kind];
+        if (action === "ovr-all") for (const x of st.data.overrides?.[kind] || []) marked.add(x.id);
+        else if (marked.has(id)) marked.delete(id);
+        else marked.add(id);
         this._renderSettings();
       }
     });
@@ -1866,7 +1938,9 @@ class DevicePanel extends HTMLElement {
     if (!st) return;
     const changes = this._settingsEntryChanges();
     const extra = this._settingsExtraChanges();
-    if ((!changes.length && !extra.length) || Object.keys(this._settingsErrors()).length) return;
+    const resets = { battery: [...st.resets.battery], notify: [...st.resets.notify] };
+    const anyReset = resets.battery.length > 0 || resets.notify.length > 0;
+    if ((!changes.length && !extra.length && !anyReset) || Object.keys(this._settingsErrors()).length) return;
     st.saving = true;
     st.saveError = null;
     this._renderSettings();
@@ -1882,11 +1956,13 @@ class DevicePanel extends HTMLElement {
         // eingeschaltet hat.
         if (!this._prerelease) await this._disableHacsPrerelease();
       }
+      if (anyReset) await this._hass.callWS({ type: "device_panel/reset_device_settings", ...resets });
       this._closeSettings();
       this._toast(this._t("settingsSaved"));
       // Erkennung, Batterie-Schwelle, Ausschlüsse und Anzeige ändern die Liste sofort.
       const quiet = ["update_check", "battery_push", "battery_persistent", "notify_service", "notify_click_target"];
-      if (changes.some((k) => !quiet.includes(k))) this._fetch();
+      // Zurückgesetzte Geräte: Symbole und Batterie-Markierung in der Liste.
+      if (anyReset || changes.some((k) => !quiet.includes(k))) this._fetch();
     } catch (err) {
       if (this._settings !== st) return;
       st.saving = false;

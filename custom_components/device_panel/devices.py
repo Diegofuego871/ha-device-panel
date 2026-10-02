@@ -528,6 +528,66 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
     await _async_save_devices(hass)
 
 
+async def async_reset_device_settings(hass: HomeAssistant, battery: list[str], notify: list[str]) -> dict[str, int]:
+    """
+    Einstellungen mehrerer Geräte auf den globalen Wert zurück (Einstellungen,
+    "Alle zurücksetzen" oder einzeln). Nur die genannten Geräte: ein Wert,
+    der inzwischen dazukam, bleibt. Gibt zurück, wie viele es waren.
+    """
+    await async_load_type_overrides(hass)
+    settings = hass.data[DATA_DEVICE_SETTINGS]
+    done_battery = sum(1 for dev in set(battery) if settings["battery"].pop(dev, None) is not None)
+    done_notify = 0
+    for dev in set(notify):
+        if dev in settings["notify_off"]:
+            settings["notify_off"].discard(dev)
+            done_notify += 1
+    if done_battery or done_notify:
+        await _async_save_devices(hass)
+    return {"battery": done_battery, "notify": done_notify}
+
+
+async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str, Any]]]:
+    """
+    Geräte mit eigener Einstellung, für das Zurücksetzen in den Einstellungen:
+    auch ausgeblendete (hidden), weil ihr Wert gespeichert bleibt. Gelöschte
+    Geräte fehlen hier, ihr Eintrag bleibt aber: HA stellt ein wieder
+    hinzugefügtes Gerät mit derselben ID wieder her.
+    """
+    await async_load_type_overrides(hass)
+    settings = device_settings(hass)
+    dev_reg = dr.async_get(hass)
+    area_reg = ar.async_get(hass)
+    shown = {device.id for device, _entries in listed_devices(hass)}
+    items: dict[str, dict[str, Any]] = {}
+    for dev in {*settings["battery"], *settings["notify_off"]}:
+        device = dev_reg.async_get(dev)
+        if device is None:
+            continue
+        area = area_reg.async_get_area(device.area_id) if device.area_id else None
+        items[dev] = {
+            "id": dev,
+            "name": device.name_by_user or device.name or dev,
+            "area": area.name if area else None,
+            "domain": primary_domain(hass, device),
+            "hidden": dev not in shown,
+        }
+    names = await async_integration_info(hass, {i["domain"] for i in items.values() if i["domain"]})
+    for item in items.values():
+        domain = item.pop("domain")
+        item["integration"] = names.get(domain, {}).get("name", domain) if domain else None
+
+    def by_name(entry: dict[str, Any]) -> str:
+        return str(entry["name"]).casefold()
+
+    return {
+        "battery": sorted(
+            ({**items[dev], "value": value} for dev, value in settings["battery"].items() if dev in items), key=by_name
+        ),
+        "notify": sorted((items[dev] for dev in settings["notify_off"] if dev in items), key=by_name),
+    }
+
+
 @callback
 def type_overrides(hass: HomeAssistant) -> dict[str, str]:
     return hass.data.get(DATA_TYPE_OVERRIDES) or {}

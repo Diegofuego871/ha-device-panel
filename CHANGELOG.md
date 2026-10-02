@@ -7,7 +7,27 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.10.0] - 2026-10-02
+
+Settings per device at a glance: marked in the list, filterable and
+resettable in the settings.
+
+### Added
+
+- Device list: a device with its own setting shows it next to its name, one
+  symbol per kind: battery with its own threshold ("30 %"), battery warning
+  off, outage and online notifications off; the tooltip names the value and
+  the global value. Also on the phone cards.
+- Chip "Own setting" (shown when there is one): only devices with their own
+  setting.
+- Settings, sections "Battery" and "Push notification": the devices with
+  their own value (also hidden ones), each with area and integration; reset
+  one by one (×, undo possible) or "Reset all". Like all settings it applies
+  with "Save", "Cancel" discards it.
+
 ## [0.9.1] - 2026-10-02
+
+Not released; included in 0.10.0.
 
 ### Changed
 
@@ -290,7 +310,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[0.9.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.1
+[0.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.10.0
 [0.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.9.0
 [0.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.8.0
 [0.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.5.0

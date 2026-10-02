@@ -166,6 +166,14 @@ hat dort einen echten Fehler oder Umweg gekostet.
   `(pointer: coarse)` aus, sonst `focus({ preventScroll: true })`. Test:
   vorher fokussieren, wählen, abfragen, dann `activeElement` prüfen
   (Playwright mit `isMobile`/`hasTouch` meldet `pointer: coarse`).
+- **Einstellungen gelöschter Geräte behalten:** HA stellt ein wieder
+  hinzugefügtes Gerät (gleiche Kennungen) mit derselben Geräte-ID her
+  (`deleted_devices`). Darum bleiben Einträge in
+  `.storage/device_panel.devices`; die Übersicht zum Zurücksetzen zeigt nur
+  vorhandene Geräte.
+- **Zurücksetzen mit Geräte-IDs, nicht "alle":** Das Panel schickt die
+  markierten Geräte; ein Wert, den jemand anderes inzwischen gesetzt hat,
+  bleibt stehen.
 - **Lokale Bereichsprüfung ist kein Speicherfehler:** Im Popup nichts
   senden, die Eingabe stehen lassen und den Bereich unter dem Feld nennen;
   "Konnte nicht gespeichert werden" nur für Antworten des Backends.

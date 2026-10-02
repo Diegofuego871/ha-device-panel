@@ -371,7 +371,13 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   "off" (keine Markierung, kein Push, nicht in der anhaltenden
   Benachrichtigung); Ausfall-/Online-Meldungen aus (`notify_off`), das
   Gerät bleibt überwacht. Sofort gespeichert in
-  `.storage/device_panel.devices`.
+  `.storage/device_panel.devices`. Seit 0.10.0 (Variante A in
+  `docs/mockups/override-v1/`): Symbole je Art beim Namen (Liste und
+  Karten), Chip "Eigene Einstellung" als Filter, in den Einstellungen je Art
+  eine Liste der Geräte mit eigenem Wert, einzeln oder alle zurücksetzen
+  (mit "Speichern"). Der Typ von Hand zählt nicht dazu. Gelöschte Geräte
+  behalten ihren Eintrag (HA stellt ein wieder hinzugefügtes Gerät mit
+  derselben ID her).
 - Ausfall und Rückkehr (seit 0.9.0, `outage.py`): Das Protokoll meldet
   Wechsel an Listener; Ausfall sofort bei Erkennung (nach `offline_after`)
   mit Bereich, Integration und Beginn, Rückkehr mit Dauer, gleicher `tag`

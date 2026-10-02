@@ -62,6 +62,10 @@ details such as software version, manufacturer, model and area.
   devices at once give one notification with the probable cause. Per
   device they can be switched off in its pop-up, e.g. for a charger that is
   often offline on purpose; the device is still monitored. Off by default.
+- Settings per device at a glance: a symbol next to the name (own battery
+  threshold, battery warning off, notifications off), the chip "Own
+  setting" shows only those devices, and the settings list them for
+  resetting, one by one or all at once.
 - Settings in the panel (gear icon) with updates: check for a new version,
   update via HACS with one click, restart afterwards, optionally offer
   pre-releases ("Enable in HACS" switches on the HACS pre-release option).

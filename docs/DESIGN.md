@@ -53,6 +53,12 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Kopf `--dp-sec-head`, Titel fett, Inhalt `--dp-sec-open`, Rand kräftiger;
   getönte Flächen darin (Info, "Alle umschalten", Typ-Symbol) eine Stufe
   dunkler (`--dp-sec-head`). Felder bleiben in der Kartenfarbe.
+- Einstellung pro Gerät (seit 0.10.0): kleine Marke `.ovr` beim Namen,
+  Hintergrund `--dp-primary-soft`, Symbol und Text `--dp-primary` (wie
+  "geändert"), je Art ein Symbol: Batterie mit Wert, Batterie
+  durchgestrichen, Glocke durchgestrichen. In den Einstellungen Liste
+  `.ovr-list` wie die Schwellen pro Integration, markierte Zeilen mit
+  durchgestrichenem Wert "→ global" und Rückgängig-Symbol.
 - Kacheln: Titel 12 px `--dp-text2`, Wert 20–24 px, Untertitel 12 px,
   Chevron unten rechts, wenn antippbar.
 - Kopf von Dialogen: Avatar 44–52 px (Radius 13–15 px, `--dp-primary-soft`,

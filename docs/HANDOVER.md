@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.9.1, Push bei Ausfall und Rückkehr, Batterie täglich, Meldungen pro Gerät)
+## Stand (0.10.0, Einstellungen pro Gerät markiert, filterbar, zurücksetzbar)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -16,7 +16,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `device_panel/set_device_type` (Typ von Hand im Popup) und
   `device_panel/set_device_settings` (Popup "Meldungen für dieses Gerät":
   Batterie-Schwelle des Geräts oder "off", Ausfall-/Online-Meldungen aus),
-  beides in `.storage/device_panel.devices`.
+  beides in `.storage/device_panel.devices`, und
+  `device_panel/reset_device_settings` (Einstellungen, beim Speichern: Liste
+  von Geräten je Art auf den globalen Wert; `get_options` liefert dafür
+  `overrides`, auch ausgeblendete Geräte).
 - Einstellungen im Panel (Zahnrad), Reihenfolge nach Bild 5:
   Versionskasten mit Update über HACS, Vorabversionen, "In HACS
   freischalten"; "Ausfall-Erkennung" (Zahlenfelder `offline_after`,
@@ -92,7 +95,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    "wieder online", Sammelausfall, Meldungen pro Gerät aus; aufgeklappter
    Abschnitt der Einstellungen abgesetzt. `0.9.1` (Nutzer, 2026-10-02):
    "globaler Wert" statt "wie eingestellt", überall; Auswahl ging auf iOS
-   nach der Wahl sofort wieder auf (Fokus nach Neuaufbau). Weiter mit Schritt 2 (Spalten,
+   nach der Wahl sofort wieder auf (Fokus nach Neuaufbau). Mit `0.10.0`
+   (Nutzer, 2026-10-02, `docs/mockups/override-v1/`, Liste A, Einstellungen
+   A, Typ von Hand zählt nicht): Symbole je Art beim Namen, Chip "Eigene
+   Einstellung", Zurücksetzen einzeln oder alle in "Batterie" und
+   "Push-Benachrichtigung". `0.9.1` ohne Release, in `0.10.0` enthalten.
+   Offen: Entscheid Handy A oder B für Spalten und
+   Sortierung (`docs/mockups/view-v1/`, Empfehlung A). Weiter mit Schritt 2 (Spalten,
    Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
    am 2026-10-02 nachgefragt) und dem Rest von Schritt 7 (anhaltende
    Benachrichtigung bei Ausfällen, Spalten Push/Anhaltend bei den

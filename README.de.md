@@ -69,6 +69,10 @@ Bereich.
   lassen sie sich im Popup ausschalten, z. B. für ein Ladegerät, das oft
   absichtlich offline ist; überwacht wird das Gerät weiter. Standardmässig
   aus.
+- Einstellungen pro Gerät auf einen Blick: ein Symbol beim Namen (eigene
+  Batterie-Schwelle, Batterie-Warnung aus, Meldungen aus), der Chip "Eigene
+  Einstellung" zeigt nur diese Geräte, und die Einstellungen listen sie zum
+  Zurücksetzen auf, einzeln oder alle auf einmal.
 - Einstellungen im Panel (Zahnrad) mit Updates: nach einer neuen Version
   suchen, mit einem Klick über HACS aktualisieren, danach neu starten,
   wahlweise Vorabversionen anbieten ("In HACS freischalten" schaltet die
