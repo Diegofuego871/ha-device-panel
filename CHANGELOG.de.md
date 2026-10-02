@@ -7,6 +7,36 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.17.0] - 2026-10-02
+
+Filter folgen der Suche, neuer Chip "Batterie", Verbindungsart von Hand als
+eigene Einstellung.
+
+### Hinzugefügt
+
+- Chip "Batterie": alle Geräte mit Batterie, in jeder Gruppe nach Stand
+  sortiert (der tiefste zuerst); auf dem Handy zeigt jede Karte den Stand.
+- Suchfeld: ein Knopf (×) löscht die Suche.
+- Eine am Gerät von Hand gesetzte Verbindungsart gilt als eigene
+  Einstellung: Symbol beim Namen (Tooltip mit dem automatischen Wert), im
+  Chip "Eigene Einstellung" enthalten und in den Einstellungen im Abschnitt
+  "Verbindungsart" zum Zurücksetzen aufgeführt, einzeln oder alle auf
+  einmal.
+
+### Geändert
+
+- Die Zahl auf einem Chip zählt mit der Suche und den übrigen Filtern: so
+  viele Geräte, wie das Antippen zeigt (bisher immer alle Geräte). Chips
+  ohne Treffer bleiben sichtbar, gedämpft, mit 0.
+- Ein aktiver Chip der Verbindungsart lässt sich mit einem zweiten Tipp
+  abwählen ("Alle").
+- Handy: Die Kacheln oben (Verfügbarkeit, gerade ausgefallen, Ausfall-Puls)
+  sind alle gleich hoch.
+- Verfügbarkeit in Prozent erst ab 1 Stunde Daten (Liste, Popup,
+  Statistik-Fenster, Durchschnitt oben). Bisher zeigte ein kurzer Ausfall
+  kurz nach dem Start z. B. "50 %"; jetzt "–" mit dem Hinweis "Prozent ab
+  1 Std. Daten". Unterbrüche und ihre Dauer erscheinen weiterhin.
+
 ## [0.16.0] - 2026-10-02
 
 Verbindungsart pro Integration.
@@ -462,6 +492,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.17.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0
 [0.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.11.0

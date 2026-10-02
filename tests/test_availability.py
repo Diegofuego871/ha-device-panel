@@ -35,7 +35,11 @@ def test_segments_and_summary() -> None:
     assert segs == [[50, 100, 1], [100, 160, 0], [160, 500, 1], [500, 600, None], [600, 700, 1]]
     s = summarize(segs)
     # 490 s online, 60 s offline; die 100 s ohne Daten zählen nicht mit.
-    assert s == {"pct": 89.1, "outages": 1, "longest": 60, "offline": 60, "covered": 550}
+    # Unter 1 Std. Daten kein Anteil: ein kurzer Unterbruch hiesse sonst "50 %".
+    assert s == {"pct": None, "outages": 1, "longest": 60, "offline": 60, "covered": 550}
+    # Dasselbe zehnfach gestreckt: 5500 s Daten, jetzt mit Anteil.
+    big = summarize(segments([[at * 10, st] for at, st in events], 500, 7000))
+    assert big["pct"] == 89.1 and big["covered"] == 5500
 
 
 def test_summary_never_100_with_outage_and_none_without_data() -> None:
@@ -370,7 +374,8 @@ async def test_ws_device_and_availability(hass: HomeAssistant, setup: Availabili
     await client.send_json({"id": 2, "type": f"{DOMAIN}/availability", "device_id": dev.id, "range": "7d"})
     hist = (await client.receive_json())["result"]
     assert len(hist["days"]) == 7
-    assert hist["summary"]["pct"] == 100.0
+    # Erst Sekunden Daten: kein Anteil, aber die Zahlen.
+    assert hist["summary"]["pct"] is None and hist["summary"]["outages"] == 0
     assert hist["end"] - hist["start"] == pytest.approx(7 * 86400)
 
     await client.send_json({"id": 3, "type": f"{DOMAIN}/device", "device_id": "gibt-es-nicht"})

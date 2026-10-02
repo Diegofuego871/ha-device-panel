@@ -55,6 +55,11 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    Dazu (Nutzer, 2026-10-02) die Reihenfolge der Chips per Ziehen, ebenfalls
    global (`connection_order`, leer = nach Anzahl der Geräte), umgesetzt in
    0.13.0.
+   Seit 0.17.0 (Nutzer, 2026-10-02): Die Zahl auf einem Chip zählt mit
+   der Suche und den übrigen Filtern (so viele Zeilen, wie das Antippen
+   zeigt); welche Chips erscheinen, richtet sich weiter nach allen Geräten.
+   Ein aktiver Chip lässt sich mit einem zweiten Tipp abwählen. Neuer Chip
+   "Batterie" (alle Geräte mit Batterie, je Gruppe nach Stand sortiert).
    **To-do** (Nutzer, 2026-10-02): Filter nach Bereich, damit jeder nach
    seinen Bereichen filtern kann; Form offen, Mockup vor der Umsetzung.
 3. **Einstellungsmenü im Panel**, das alle Optionen der Integration abbildet
@@ -272,6 +277,12 @@ Umgesetzt in 0.3.0b1 (`availability.py`).
     instabil, Sammelausfall, Meldungen) zählen einen Ausfall über eine Lücke
     als einen (`bridged`), die Lücke als Teil davon. Balken, Streifen und
     Puls zeigen weiter, was HA beobachtet hat, die Lücke als "keine Daten".
+  - Prozent erst ab 1 Std. Daten im Zeitraum (seit 0.17.0,
+    `availability.PCT_MIN_COVERED`, im Panel gleich): Kurz nach dem ersten
+    Start hiesse ein Unterbruch von einer Minute sonst "50 %". Darunter
+    liefert `summarize` `pct: None`, das Panel zeigt "–" mit Hinweis;
+    Unterbrüche und Dauer erscheinen weiter. Der Durchschnitt oben nimmt
+    nur Geräte mit Prozent, ohne solche den Anteil gerade online.
   - Unter "Ausgefallen nach" (alle Entitäten weg, aber noch keine Schwelle)
     ist ein Gerät weder ausgefallen noch online: Das Protokoll schreibt
     nichts. Nach einem Neustart sind das die Geräte, die schon vorher
@@ -423,7 +434,10 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   `docs/mockups/override-v1/`): Symbole je Art beim Namen (Liste und
   Karten), Chip "Eigene Einstellung" als Filter, in den Einstellungen je Art
   eine Liste der Geräte mit eigenem Wert, einzeln oder alle zurücksetzen
-  (mit "Speichern"). Der Typ von Hand zählt nicht dazu. Gelöschte Geräte
+  (mit "Speichern"). Der Typ von Hand zählt nicht dazu; die Verbindungsart
+  von Hand seit 0.17.0 schon (Nutzer, 2026-10-02: "dann könnte man auch
+  einfach bereinigen"), zurückzusetzen im Abschnitt "Verbindungsart", danach
+  gilt wieder Integration bzw. Erkennung. Gelöschte Geräte
   behalten ihren Eintrag (HA stellt ein wieder hinzugefügtes Gerät mit
   derselben ID her).
 - Ausfall und Rückkehr (seit 0.9.0, `outage.py`): Das Protokoll meldet

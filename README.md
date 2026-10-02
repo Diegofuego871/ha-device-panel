@@ -18,16 +18,19 @@ details such as software version, manufacturer, model and area.
   unstable (3 or more outages in 24 hours), no data and online; cards on the
   phone. The device column stays in place when the table scrolls sideways.
 - Columns for status, connection, availability over 24 hours (strip and
-  percentage), type (e.g. light, outlet, motion, door/window, climate,
+  percentage, the percentage from 1 hour of data), type (e.g. light, outlet, motion, door/window, climate,
   hub/bridge, network, phone/computer, energy/meter), integration with its
   config entry, battery, manufacturer and model, software with update hint.
 - Connection type per device: Zigbee, Z-Wave, Thread, Matter (Thread, Wi-Fi
   or LAN), Bluetooth, Wi-Fi, network, cloud; signal strength in dBm or LQI
   and the hub, bridge or Bluetooth proxy in between.
-- Search across all columns, filters by connection type, "problems only",
-  low battery, weak signal and available updates. In the settings
-  ("Display"), single connection type chips can be hidden and all of them
-  dragged into your own order.
+- Search across all columns (with a button to clear it), filters by
+  connection type, "problems only", battery (all battery devices, sorted by
+  level), low battery, weak signal and available updates. The number on a
+  chip counts with the search and the other filters: as many devices as
+  tapping it shows. Tapping an active chip again turns it off. In the
+  settings ("Display"), single connection type chips can be hidden and all
+  of them dragged into your own order.
 - Pop-up per device (like UniFi Dynamic Clients): availability 24 hours,
   outages in 7 days, signal and battery as tiles; connection, integration
   (warns if its config entry is not loaded), device details and all
@@ -73,9 +76,9 @@ details such as software version, manufacturer, model and area.
   device they can be switched off in its pop-up, e.g. for a charger that is
   often offline on purpose; the device is still monitored. Off by default.
 - Settings per device at a glance: a symbol next to the name (own battery
-  threshold, battery warning off, notifications off), the chip "Own
-  setting" shows only those devices, and the settings list them for
-  resetting, one by one or all at once.
+  threshold, battery warning off, notifications off, connection type set by
+  hand), the chip "Own setting" shows only those devices, and the settings
+  list them for resetting, one by one or all at once.
 - Settings in the panel (gear icon) with updates: check for a new version,
   update via HACS with one click, restart afterwards, optionally offer
   pre-releases ("Enable in HACS" switches on the HACS pre-release option).

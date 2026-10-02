@@ -51,7 +51,7 @@ for (const lang of ["de", "en"]) {
     const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
-    const resets = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/reset_device_settings").map(({ battery, notify }) => ({ battery: [...battery].sort(), notify: [...notify].sort() })));
+    const resets = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/reset_device_settings").map(({ battery, notify, connection }) => ({ battery: [...battery].sort(), notify: [...notify].sort(), connection: [...(connection || [])].sort() })));
     const icons = (id) => ev(`return [...r.querySelectorAll('.dev[data-open="${id}"] .ovr')].map(o => o.className.replace("ovr ", "") + "|" + o.textContent.trim() + "|" + o.getAttribute("title"))`);
     const openSettings = async () => { await tap(".gear-btn"); await wait(`return !!r.querySelector("dialog.settings .set-sec")`); };
 
@@ -99,7 +99,7 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { window.__resetFails = null; });
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] gespeichert, Dialog offen, dann geschlossen`, await wait(`return r.querySelector("dialog.settings").open && r.querySelector(".set-count")?.classList.contains("saved") && !r.querySelector(".ovr-row")?.classList.contains("reset")`) && await (async () => { await tap('dialog.settings .dlg-actions [data-set="close"]'); return wait(`return !r.querySelector("dialog.settings").open`); })());
-    check(`[${tag}] nur die markierten`, JSON.stringify((await resets()).at(-1)) === JSON.stringify({ battery: ["a", "c", "e"], notify: ["d"] }), JSON.stringify(await resets()));
+    check(`[${tag}] nur die markierten`, JSON.stringify((await resets()).at(-1)) === JSON.stringify({ battery: ["a", "c", "e"], notify: ["d"], connection: [] }), JSON.stringify(await resets()));
     check(`[${tag}] Liste ohne die Symbole`, await wait(`return !r.querySelector('.dev[data-open="a"] .ovr') && !r.querySelector('.dev[data-open="c"] .ovr') && !r.querySelector('.dev[data-open="d"] .ovr')`) && (await icons("f")).length === 1);
     check(`[${tag}] Chip zählt nach`, (await text('.chip.hint[data-hint="override"]')) === `${T.chip} 1`, await text('.chip.hint[data-hint="override"]'));
 

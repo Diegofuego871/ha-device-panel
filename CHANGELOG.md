@@ -7,6 +7,34 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.17.0] - 2026-10-02
+
+Filters follow the search, new chip "Battery", connection type by hand as
+an own setting.
+
+### Added
+
+- Chip "Battery": all devices with a battery, in every group sorted by
+  level (lowest first); on the phone every card shows the level.
+- Search field: a button (×) clears the search.
+- A connection type set by hand on the device counts as an own setting:
+  symbol next to the name (tooltip with the automatic value), included in
+  the chip "Own setting", and listed in the settings section "Connection
+  type" for resetting, one by one or all at once.
+
+### Changed
+
+- The number on a chip counts with the search and the other filters: as
+  many devices as tapping it shows (before: always all devices). Chips
+  without a match stay visible, dimmed, with 0.
+- Tapping an active connection type chip again turns it off ("All").
+- Phone: the tiles at the top (availability, offline now, outage pulse)
+  all have the same height.
+- Availability in percent only from 1 hour of data (list, pop-up,
+  statistics window, average at the top). Before, a short outage right
+  after the start showed e.g. "50 %"; now "–" with the note "Percent after
+  1 h of data". Outages and their duration are still shown.
+
 ## [0.16.0] - 2026-10-02
 
 Connection type per integration.
@@ -441,6 +469,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.17.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0
 [0.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.11.0

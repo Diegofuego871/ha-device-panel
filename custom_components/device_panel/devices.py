@@ -580,11 +580,14 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
     await _async_save_devices(hass)
 
 
-async def async_reset_device_settings(hass: HomeAssistant, battery: list[str], notify: list[str]) -> dict[str, int]:
+async def async_reset_device_settings(
+    hass: HomeAssistant, battery: list[str], notify: list[str], connection: list[str] | None = None
+) -> dict[str, int]:
     """
     Einstellungen mehrerer Geräte auf den globalen Wert zurück (Einstellungen,
-    "Alle zurücksetzen" oder einzeln). Nur die genannten Geräte: ein Wert,
-    der inzwischen dazukam, bleibt. Gibt zurück, wie viele es waren.
+    "Alle zurücksetzen" oder einzeln); die Verbindungsart von Hand zurück auf
+    Integration bzw. Erkennung. Nur die genannten Geräte: ein Wert, der
+    inzwischen dazukam, bleibt. Gibt zurück, wie viele es waren.
     """
     await async_load_type_overrides(hass)
     settings = hass.data[DATA_DEVICE_SETTINGS]
@@ -594,9 +597,11 @@ async def async_reset_device_settings(hass: HomeAssistant, battery: list[str], n
         if dev in settings["notify_off"]:
             settings["notify_off"].discard(dev)
             done_notify += 1
-    if done_battery or done_notify:
+    conns = hass.data[DATA_CONNECTION_OVERRIDES]
+    done_conn = sum(1 for dev in set(connection or []) if conns.pop(dev, None) is not None)
+    if done_battery or done_notify or done_conn:
         await _async_save_devices(hass)
-    return {"battery": done_battery, "notify": done_notify}
+    return {"battery": done_battery, "notify": done_notify, "connection": done_conn}
 
 
 async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str, Any]]]:
@@ -611,8 +616,9 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
     dev_reg = dr.async_get(hass)
     area_reg = ar.async_get(hass)
     shown = {device.id for device, _entries in listed_devices(hass)}
+    conns = connection_overrides(hass)
     items: dict[str, dict[str, Any]] = {}
-    for dev in {*settings["battery"], *settings["notify_off"]}:
+    for dev in {*settings["battery"], *settings["notify_off"], *conns}:
         device = dev_reg.async_get(dev)
         if device is None:
             continue
@@ -637,6 +643,8 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
             ({**items[dev], "value": value} for dev, value in settings["battery"].items() if dev in items), key=by_name
         ),
         "notify": sorted((items[dev] for dev in settings["notify_off"] if dev in items), key=by_name),
+        # Verbindungsart von Hand (seit 0.17.0 eine eigene Einstellung wie die anderen).
+        "connection": sorted(({**items[dev], "value": kind} for dev, kind in conns.items() if dev in items), key=by_name),
     }
 
 

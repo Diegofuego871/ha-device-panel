@@ -103,6 +103,13 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   "Gespeichert" in Grün neben den Knöpfen, seit 0.15.0); ein Toast läge
   hinter dem modalen Dialog.
 - Alles mit Tastatur bedienbar, `aria-label` auf Symbolknöpfen.
+- Filter-Chips (seit 0.17.0): Zahl = Zeilen nach dem Antippen (mit Suche
+  und übrigen Filtern), Chip mit 0 bleibt stehen und ist gedämpft
+  (`.chip.zero`, Deckkraft 0.55), zweiter Tipp auf einen aktiven Chip wählt
+  ihn ab. Suchfeld mit eigenem X (`.search-clear`, nur mit Eingabe; das X
+  des Browsers ist ausgeblendet, iOS zeigt keines).
+- Kopf-Kacheln gleich hoch, auch auf dem Handy (Zeile mit `stretch`); der
+  Ring bleibt fest und steht in seiner Kachel mittig.
 - Reihenfolge per Ziehen (seit 0.13.0, Chips der Verbindungsart): Griff
   (zwei Reihen Punkte) links in der Zeile, Zeile hebt sich beim Ziehen ab
   (`.lift`, Schatten); Pfeiltasten auf dem Griff verschieben um eine

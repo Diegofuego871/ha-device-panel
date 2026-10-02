@@ -52,6 +52,9 @@ SAVE_DELAY = 300
 INCIDENT_MIN = 3
 INCIDENT_WINDOW = 120
 RANGES = {"24h": 86400, "7d": 7 * 86400, "30d": 30 * 86400}
+# Anteil online erst ab so viel Daten: nach wenigen Minuten hiesse ein kurzer
+# Unterbruch sonst "50 %". Gleicher Wert im Panel (PCT_MIN_COVERED).
+PCT_MIN_COVERED = 3600
 
 ONLINE, OFFLINE = 1, 0
 
@@ -105,7 +108,10 @@ def bridged(events: list[list[Any]]) -> list[list[Any]]:
 
 
 def summarize(segs: list[list[Any]]) -> dict[str, Any] | None:
-    """Anteil online, Zahl der Unterbrüche, längster und Summe; ohne Daten None."""
+    """
+    Anteil online, Zahl der Unterbrüche, längster und Summe; ohne Daten None.
+    Anteil (pct) None, solange weniger als PCT_MIN_COVERED Daten vorliegen.
+    """
     on = sum(b - a for a, b, s in segs if s == ONLINE)
     off_segs = [(a, b) for a, b, s in segs if s == OFFLINE]
     off = sum(b - a for a, b in off_segs)
@@ -116,7 +122,7 @@ def summarize(segs: list[list[Any]]) -> dict[str, Any] | None:
     if off_segs and pct > 99.9:
         pct = 99.9
     return {
-        "pct": round(pct, 1),
+        "pct": round(pct, 1) if on + off >= PCT_MIN_COVERED else None,
         "outages": len(off_segs),
         "longest": round(max((b - a for a, b in off_segs), default=0)),
         "offline": round(off),

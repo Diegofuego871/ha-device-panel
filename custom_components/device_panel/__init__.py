@@ -438,6 +438,8 @@ async def _ws_set_device_settings(
         # zurückgehen (Einstellungen, beim Speichern).
         vol.Optional("battery", default=[]): [str],
         vol.Optional("notify", default=[]): [str],
+        # Verbindungsart von Hand: zurück auf Integration bzw. Erkennung.
+        vol.Optional("connection", default=[]): [str],
     }
 )
 @websocket_api.require_admin
@@ -446,7 +448,7 @@ async def _ws_reset_device_settings(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
     """Einstellungen pro Gerät zurücksetzen, gibt die Zahl der Geräte zurück."""
-    done = await async_reset_device_settings(hass, msg["battery"], msg["notify"])
+    done = await async_reset_device_settings(hass, msg["battery"], msg["notify"], msg["connection"])
     # Batterie-Warnung sofort nachführen (Push, anhaltende Benachrichtigung).
     if done["battery"] and (watch := hass.data.get(DATA_BATTERY)) is not None:
         await watch.async_check()

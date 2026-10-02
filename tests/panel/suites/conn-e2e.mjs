@@ -13,10 +13,12 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: { auto: "Automatisch: Unbekannt", autoThread: "Automatisch: Thread", manual: "von Hand gesetzt", zigbee: "Zigbee", err: "Verbindungsart konnte nicht gespeichert werden:",
     sumAuto: "Automatisch erkannt", sumOne: "1 Integration festgelegt", title: "Verbindungsart pro Integration", shelly: "2 Geräte · erkannt: 2 WLAN", autoOpt: "Automatisch",
-    one: "1 Änderung", integ: "Wie Integration: LAN", byInteg: "für die ganze Integration festgelegt", lan: "LAN" },
+    one: "1 Änderung", integ: "Wie Integration: LAN", byInteg: "für die ganze Integration festgelegt", lan: "LAN",
+    ovrTip: "Verbindungsart von Hand: Zigbee (sonst Unbekannt)", ovrTitle: "Verbindungsart von Hand auf Geräten", ovrBack: "Zigbee → automatisch" },
   en: { auto: "Automatic: Unknown", autoThread: "Automatic: Thread", manual: "set by hand", zigbee: "Zigbee", err: "Could not save the connection type:",
     sumAuto: "Detected automatically", sumOne: "1 integration set", title: "Connection type per integration", shelly: "2 devices · detected: 2 Wi-Fi", autoOpt: "Automatic",
-    one: "1 change", integ: "Same as integration: LAN", byInteg: "set for the whole integration", lan: "LAN" },
+    one: "1 change", integ: "Same as integration: LAN", byInteg: "set for the whole integration", lan: "LAN",
+    ovrTip: "Connection type set by hand: Zigbee (otherwise Unknown)", ovrTitle: "Connection type set by hand on devices", ovrBack: "Zigbee → automatic" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -122,6 +124,25 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] zurück auf Erkennung`, await wait(`return r.querySelector(".set-count")?.classList.contains("saved")`) && JSON.stringify((await setCalls()).at(-1)) === JSON.stringify({ connection_integrations: {} }));
     await tap('dialog.settings .dlg-actions [data-set="close"]');
+    // Eigene Einstellung (seit 0.17.0): Symbol, Chip, gesammelt zurücksetzen
+    await open("p");
+    await (await handle('select[data-dlg="conn"]')).selectOption("zigbee");
+    await wait(`return r.querySelector('select[data-dlg="conn"]')?.value === "zigbee"`);
+    await close();
+    check(`[${tag}] Symbol in der Liste`, await wait(`return r.querySelector('.dev[data-open="p"] .ovr.conn')?.title === ${JSON.stringify(T.ovrTip)}`), await ev(`return r.querySelector('.dev[data-open="p"] .ovr.conn')?.title || "fehlt"`));
+    check(`[${tag}] Chip "Eigene Einstellung" zählt mit`, await wait(`return !!r.querySelector('.chip.hint[data-hint="override"]')`));
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    await tap('[data-set="section"][data-id="connections"]');
+    check(`[${tag}] Übersicht in "Verbindungsart"`, (await text('[data-key="connection:p"]') === "" || true) && (await ev(`return [...r.querySelectorAll(".ovr-opt .opt-label")].map(e=>e.textContent).includes(${JSON.stringify(T.ovrTitle)}) && !!r.querySelector('[data-key="connection:p"]')`)));
+    await tap('[data-key="connection:p"]');
+    check(`[${tag}] zum Zurücksetzen markiert`, (await ev(`return r.querySelector('[data-key="connection:p"]').closest(".ovr-row").querySelector(".ovr-val").textContent.replace(/\\s+/g," ").trim()`)) === T.ovrBack && (await text(".set-count")) === T.one);
+    await tap('dialog.settings [data-set="save"]');
+    const resetCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/reset_device_settings").map(({ battery, notify, connection }) => ({ battery, notify, connection })));
+    check(`[${tag}] zurückgesetzt`, await wait(`return r.querySelector(".set-count")?.classList.contains("saved")`) && JSON.stringify((await resetCalls()).at(-1)) === JSON.stringify({ battery: [], notify: [], connection: ["p"] }), JSON.stringify((await resetCalls()).at(-1)));
+    await tap('dialog.settings .dlg-actions [data-set="close"]');
+    check(`[${tag}] Symbol weg`, await wait(`return !r.querySelector('.dev[data-open="p"] .ovr.conn')`));
+
     check(`[${tag}] Chips wie vorher`, await wait(`return !r.querySelector('.chip[data-conn="ethernet"]') && r.querySelector('.chip[data-conn="wifi"] .n')?.textContent === ${JSON.stringify(String(wifiBefore))}`), `${await chip("wifi")}`);
 
     check(`[${tag}] kein fehlender Text`, !(await ev(`return r.innerHTML.includes("undefined") || r.innerHTML.includes("NaN")`)));

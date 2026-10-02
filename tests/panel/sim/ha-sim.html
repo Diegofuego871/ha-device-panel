@@ -85,6 +85,8 @@
     m: { since: 40 * D, outages: [[11 * H, 8 * 60]] },
     // Erst seit 2 Std. im Protokoll: das Statistik-Fenster zoomt.
     o: { since: 2 * H, outages: [] },
+    // Erst seit 40 Min.: Prozent noch "–" (ab 1 Std. Daten).
+    k: { since: 40 * 60, outages: [] },
   };
   const OFFLINE = 0;
   const ONLINE = 1;
@@ -129,7 +131,8 @@
     let pct = (on / (on + off)) * 100;
     if (offs.length && pct > 99.9) pct = 99.9;
     return {
-      pct: Math.round(pct * 10) / 10, outages: offs.length, offline: Math.round(off), covered: Math.round(on + off),
+      // Wie das Backend: Anteil erst ab 1 Std. Daten.
+      pct: on + off >= 3600 ? Math.round(pct * 10) / 10 : null, outages: offs.length, offline: Math.round(off), covered: Math.round(on + off),
       longest: Math.round(Math.max(0, ...offs.map((s) => s[1] - s[0]))),
     };
   }
@@ -256,6 +259,7 @@
     return {
       battery: devices.filter((d) => d.id in s.battery).map((d) => ({ ...info(d), value: s.battery[d.id] })).sort(byName),
       notify: devices.filter((d) => s.notifyOff.has(d.id)).map(info).sort(byName),
+      connection: devices.filter((d) => d.id in window.__connOverrides).map((d) => ({ ...info(d), value: window.__connOverrides[d.id] })).sort(byName),
     };
   }
   const integrations = {
@@ -417,7 +421,9 @@
         let notify = 0;
         for (const id of new Set(msg.battery || [])) if (id in s.battery) { delete s.battery[id]; battery++; }
         for (const id of new Set(msg.notify || [])) if (s.notifyOff.delete(id)) notify++;
-        return { battery, notify };
+        let connection = 0;
+        for (const id of new Set(msg.connection || [])) if (id in window.__connOverrides) { delete window.__connOverrides[id]; connection++; }
+        return { battery, notify, connection };
       }
       if (msg.type === "device_panel/set_options") {
         if (window.__setOptsFails) throw new Error(window.__setOptsFails);

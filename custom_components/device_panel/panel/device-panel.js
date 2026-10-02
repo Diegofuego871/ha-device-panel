@@ -164,6 +164,11 @@ function bars(level, dim) {
 }
 const sigText = (sig) => (sig.kind === "dbm" ? `${sig.value} dBm` : `LQI ${sig.value}`);
 const isWeak = (sig) => sigLevel(sig) === 1;
+// Anteil online erst ab 1 Std. Daten, wie im Backend (availability.PCT_MIN_COVERED).
+const PCT_MIN_COVERED = 3600;
+// Rang für die Sortierung nach Batteriestand: Prozent, "schwach" ohne Zahl
+// wie 0 %, Stand unbekannt am Ende.
+const batteryRank = (d) => d.battery?.level ?? (d.battery?.low ? 0 : d.battery ? 101 : 102);
 
 function ringSvg(pct, size, width) {
   const r = (size - width) / 2;
@@ -204,7 +209,19 @@ function orderConns(entries, order) {
 
 // Gerät mit eigener Einstellung (Batterie-Warnung oder Meldungen); der Typ
 // von Hand zählt nicht dazu (Entscheid des Nutzers).
-const hasOverride = (d) => d.battery_setting != null || Boolean(d.notify_off);
+// Seit 0.17.0 zählt auch die Verbindungsart von Hand (Wunsch des Nutzers:
+// so lässt sie sich gesammelt bereinigen).
+const hasOverride = (d) => d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual);
+
+// Hinweis-Chips: Schlüssel, CSS-Klasse, Symbol, Text und Bedingung.
+// "Batterie" zeigt alle Geräte mit Batterie (Überblick über den Stand).
+const HINTS = [
+  { key: "batteries", cls: "ba", icon: "battery", label: "hintBatteries", test: (d) => Boolean(d.battery || d.has_battery) },
+  { key: "battery", cls: "b", icon: "battery", label: "hintBattery", test: (d) => Boolean(d.battery?.low) },
+  { key: "signal", cls: "s", icon: "signal", label: "hintSignal", test: (d) => isWeak(d.signal) },
+  { key: "update", cls: "u", icon: "update", label: "hintUpdate", test: (d) => Boolean(d.update) },
+  { key: "override", cls: "o", icon: "tune", label: "hintOverride", test: hasOverride },
+];
 
 class DevicePanel extends HTMLElement {
   constructor() {
@@ -314,7 +331,8 @@ class DevicePanel extends HTMLElement {
   _build() {
     this.shadowRoot.innerHTML = `<style>${PANEL_CSS}</style>
       <div class="toolbar">${LOGO}<h1>${escape(this._t("title"))}</h1>
-        <label class="searchbox">${mdi("search", 20)}<input class="search" type="search" placeholder="${escape(this._t("search"))}" aria-label="${escape(this._t("search"))}"></label>
+        <label class="searchbox">${mdi("search", 20)}<input class="search" type="search" placeholder="${escape(this._t("search"))}" aria-label="${escape(this._t("search"))}">
+          <button type="button" class="search-clear" title="${escape(this._t("searchClear"))}" aria-label="${escape(this._t("searchClear"))}" hidden>${mdi("close", 18)}</button></label>
         <button type="button" class="gear-btn" title="${escape(this._t("settingsBtn"))}" aria-label="${escape(this._t("settingsBtn"))}">${mdi("gear", 22)}</button>
       </div>
       <div class="content"><div class="hero"></div><div class="chips"></div><div class="list"></div><div class="foot"></div></div>
@@ -323,9 +341,21 @@ class DevicePanel extends HTMLElement {
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
     this._bindSettings(root.querySelector("dialog.settings"));
-    root.querySelector(".search").addEventListener("input", (ev) => {
-      this._search = ev.target.value.trim().toLowerCase();
+    const search = root.querySelector(".search");
+    const clear = root.querySelector(".search-clear");
+    search.addEventListener("input", () => {
+      this._search = search.value.trim().toLowerCase();
+      clear.hidden = !search.value;
       this._render();
+    });
+    clear.addEventListener("click", (ev) => {
+      // Klick im Label fokussiert sonst das Feld und öffnet auf dem Handy die Tastatur.
+      ev.preventDefault();
+      search.value = "";
+      this._search = "";
+      clear.hidden = true;
+      this._render();
+      if (!window.matchMedia?.(TOUCH_QUERY).matches) search.focus();
     });
     const content = root.querySelector(".content");
     content.addEventListener("click", (ev) => {
@@ -336,7 +366,8 @@ class DevicePanel extends HTMLElement {
       }
       const el = ev.target.closest("[data-conn],[data-problems],[data-hint]");
       if (!el || el.disabled) return;
-      if (el.dataset.conn) this._conn = el.dataset.conn;
+      // Aktiven Chip erneut antippen hebt den Filter auf.
+      if (el.dataset.conn) this._conn = this._conn === el.dataset.conn ? "all" : el.dataset.conn;
       else if (el.dataset.problems !== undefined) this._problems = !this._problems;
       else if (el.dataset.hint) this._hint = this._hint === el.dataset.hint ? null : el.dataset.hint;
       this._render();
@@ -599,13 +630,26 @@ class DevicePanel extends HTMLElement {
   }
 
   _matches(d) {
-    if (this._conn !== "all" && this._connOf(d) !== this._conn) return false;
+    return this._connPass(d) && this._problemPass(d) && this._hintPass(d, this._hint) && this._searchPass(d);
+  }
+
+  // Einzelne Filter: Die Zahl auf einem Chip zählt mit allen übrigen Filtern
+  // (auch der Suche), also so viele Zeilen, wie nach dem Antippen erscheinen.
+  _connPass(d) {
+    return this._conn === "all" || this._connOf(d) === this._conn;
+  }
+
+  _problemPass(d) {
     // Deaktiviert ist kein Problem: nicht überwacht, bewusst abgeschaltet.
-    if (this._problems && (d.disabled || !(d.online !== true || d.flaky || d.battery?.low || isWeak(d.signal)))) return false;
-    if (this._hint === "battery" && !d.battery?.low) return false;
-    if (this._hint === "signal" && !isWeak(d.signal)) return false;
-    if (this._hint === "update" && !d.update) return false;
-    if (this._hint === "override" && !hasOverride(d)) return false;
+    return !this._problems || (!d.disabled && (d.online !== true || d.flaky || d.battery?.low || isWeak(d.signal)));
+  }
+
+  _hintPass(d, hint) {
+    if (!hint) return true;
+    return HINTS.find((h) => h.key === hint)?.test(d) ?? true;
+  }
+
+  _searchPass(d) {
     if (!this._search) return true;
     const integs = (d.integrations || []).map((dom) => this._integrations[dom] || dom);
     return [d.name, d.area, d.manufacturer, d.model, d.sw_version, ...integs, d.integration?.title, this._t(typeKey(d.type)), this._t(CONN[this._connOf(d)].key), d.via]
@@ -643,8 +687,8 @@ class DevicePanel extends HTMLElement {
     const noData = all.filter((d) => d.online == null).length;
     const share = all.length ? (online.length / all.length) * 100 : 100;
     // Kennzahl: mittlere Verfügbarkeit der letzten 24 Std. (sobald das
-    // Protokoll Daten hat), sonst der Anteil, der gerade online ist.
-    const withAvail = all.filter((d) => d.avail24);
+    // Protokoll genug Daten hat), sonst der Anteil, der gerade online ist.
+    const withAvail = all.filter((d) => d.avail24?.pct != null);
     let pctHtml = `${escape(this._fmtPct(share))} %`;
     if (withAvail.length) {
       let avg = withAvail.reduce((a, d) => a + d.avail24.pct, 0) / withAvail.length;
@@ -721,25 +765,27 @@ class DevicePanel extends HTMLElement {
   }
 
   _chipsHtml(all) {
+    // Welche Chips erscheinen, richtet sich nach allen Geräten (sonst sprängen
+    // sie beim Tippen); die Zahl nach den übrigen Filtern samt Suche.
+    const present = new Map();
+    for (const d of all) present.set(this._connOf(d), (present.get(this._connOf(d)) || 0) + 1);
+    const types = orderConns([...present.entries()], this._connOrder);
+    const base = all.filter((d) => this._problemPass(d) && this._hintPass(d, this._hint) && this._searchPass(d));
     const counts = new Map();
-    for (const d of all) counts.set(this._connOf(d), (counts.get(this._connOf(d)) || 0) + 1);
-    const types = orderConns([...counts.entries()], this._connOrder);
+    for (const d of base) counts.set(this._connOf(d), (counts.get(this._connOf(d)) || 0) + 1);
     const chip = (key, label, n, icon = "") =>
-      `<button type="button" class="chip ${this._conn === key ? "on" : ""}" data-conn="${key}" aria-pressed="${this._conn === key}">${icon}<span>${escape(label)}</span> <span class="n">${n}</span></button>`;
-    let html = chip("all", this._t("all"), all.length);
-    for (const [key, n] of types) if (!this._hideConn.has(key)) html += chip(key, this._t(CONN[key].key), n, CONN[key].icon(15));
+      `<button type="button" class="chip ${this._conn === key ? "on" : ""} ${n ? "" : "zero"}" data-conn="${key}" aria-pressed="${this._conn === key}">${icon}<span>${escape(label)}</span> <span class="n">${n}</span></button>`;
+    let html = chip("all", this._t("all"), base.length);
+    for (const [key] of types) if (!this._hideConn.has(key)) html += chip(key, this._t(CONN[key].key), counts.get(key) || 0, CONN[key].icon(15));
     html += `<span class="vsep"></span><button type="button" class="chip ${this._problems ? "on" : ""}" data-problems aria-pressed="${this._problems}">${mdi("alert", 15)}<span>${escape(this._t("onlyProblems"))}</span></button>`;
-    // Hinweise als Filter-Chips, nur wenn sie etwas finden (oder aktiv sind).
-    const hints = [
-      ["battery", "b", "battery", "hintBattery", all.filter((d) => d.battery?.low).length],
-      ["signal", "s", "signal", "hintSignal", all.filter((d) => isWeak(d.signal)).length],
-      ["update", "u", "update", "hintUpdate", all.filter((d) => d.update).length],
-      ["override", "o", "tune", "hintOverride", all.filter(hasOverride).length],
-    ];
-    for (const [key, cls, icon, label, n] of hints) {
-      if (!n && this._hint !== key) continue;
+    // Hinweise als Filter-Chips, nur wenn sie bei irgendeinem Gerät zutreffen
+    // (oder aktiv sind).
+    const rest = all.filter((d) => this._connPass(d) && this._problemPass(d) && this._searchPass(d));
+    for (const { key, cls, icon, label, test } of HINTS) {
       const on = this._hint === key;
-      html += `<button type="button" class="chip hint ${cls} ${on ? "on" : ""}" data-hint="${key}" aria-pressed="${on}">${mdi(icon, 15)}<span>${escape(this._t(label))}</span> <span class="n">${n}</span></button>`;
+      if (!on && !all.some(test)) continue;
+      const n = rest.filter(test).length;
+      html += `<button type="button" class="chip hint ${cls} ${on ? "on" : ""} ${n ? "" : "zero"}" data-hint="${key}" aria-pressed="${on}">${mdi(icon, 15)}<span>${escape(this._t(label))}</span> <span class="n">${n}</span></button>`;
     }
     return html;
   }
@@ -759,6 +805,12 @@ class DevicePanel extends HTMLElement {
     if (setting === "off") out.push(tag("bat-off", "batteryOff", "", this._t("ovrBatOffTip")));
     else if (Number.isInteger(setting)) out.push(tag("bat", "battery", `${setting} %`, this._t("ovrBatOwnTip", setting, d.battery_default?.pct ?? 15)));
     if (d.notify_off) out.push(tag("mute", "bellOff", "", this._t("ovrNotifyOffTip")));
+    if (d.connection_manual && CONN[d.connection]) {
+      // Ohne die Wahl am Gerät gälte die Integration, sonst die Erkennung.
+      const base = d.connection_integration && CONN[d.connection_integration] ? d.connection_integration : this._connAuto(d);
+      const label = this._t("ovrConnTip", this._t(CONN[d.connection].key), this._t(CONN[base].key));
+      out.push(`<span class="ovr conn" role="img" title="${escape(label)}" aria-label="${escape(label)}">${CONN[d.connection].icon(12)}</span>`);
+    }
     return out.length ? `<span class="ovrs">${out.join("")}</span>` : "";
   }
 
@@ -781,7 +833,8 @@ class DevicePanel extends HTMLElement {
   _availHtml(d) {
     const a = d.avail24;
     if (!a) return `<span class="t3">–</span>`;
-    return `<span class="avc ${a.outages ? "bad" : ""}">${stripSvg(a.strip || [])}${escape(this._fmtPct(a.pct))} %</span>`;
+    const pct = a.pct != null ? `${escape(this._fmtPct(a.pct))} %` : `<span class="t3" title="${escape(this._t("pctWait"))}">–</span>`;
+    return `<span class="avc ${a.outages ? "bad" : ""}">${stripSvg(a.strip || [])}${pct}</span>`;
   }
 
   _typeHtml(d) {
@@ -804,6 +857,8 @@ class DevicePanel extends HTMLElement {
     const byName = (a, b) => String(a.name).localeCompare(String(b.name));
     const outages = (d) => d.avail24?.outages || 0;
     const active = rows.filter((d) => !d.disabled);
+    // Batterie-Chips: in jeder Gruppe nach Stand, der tiefste zuerst.
+    const byBattery = this._batterySort() ? (a, b) => batteryRank(a) - batteryRank(b) || byName(a, b) : null;
     return [
       ["e", this._t("groupOffline"), this._t("groupOfflineHint"), active.filter((d) => d.online === false).sort((a, b) => Date.parse(a.offline_since) - Date.parse(b.offline_since))],
       ["w", this._t("groupFlaky"), this._t("groupFlakyHint", this._flakyOutages), active.filter((d) => d.online === true && d.flaky).sort((a, b) => outages(b) - outages(a) || byName(a, b))],
@@ -811,7 +866,13 @@ class DevicePanel extends HTMLElement {
       ["", this._t("groupOnline"), null, active.filter((d) => d.online === true && !d.flaky).sort(byName)],
       // Nur mit "Deaktivierte Geräte anzeigen": am Ende, nicht überwacht.
       ["d", this._t("groupDisabled"), this._t("groupDisabledHint"), rows.filter((d) => d.disabled).sort(byName)],
-    ].filter((g) => g[3].length);
+    ]
+      .filter((g) => g[3].length)
+      .map((g) => (byBattery ? [g[0], g[1], g[2], g[3].sort(byBattery)] : g));
+  }
+
+  _batterySort() {
+    return this._hint === "batteries" || this._hint === "battery";
   }
 
   _listHtml(rows) {
@@ -847,6 +908,8 @@ class DevicePanel extends HTMLElement {
   }
 
   _cardsHtml(rows) {
+    // Mit einem Batterie-Chip zeigt jede Karte den Stand.
+    const batSort = this._batterySort();
     const meta = (d) => [this._t(typeKey(d.type)), this._integName(d), d.area].filter(Boolean).map(escape).join(" · ");
     return `<div class="cards">${this._groups(rows)
       .map(([cls, title, , list]) => {
@@ -854,7 +917,7 @@ class DevicePanel extends HTMLElement {
         if (cls === "") {
           return head + `<div class="mlist">${list
             .map((d) => `<div class="mrow dev" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d, 16)}<div>${escape(d.name)}${this._overrideHtml(d)}<span class="sub">${meta(d)}</span></div>
-              <div>${d.battery?.low ? this._batteryHtml(d) : bars(sigLevel(d.signal), false)}</div></div>`)
+              <div>${d.battery?.low || batSort ? this._batteryHtml(d) : bars(sigLevel(d.signal), false)}</div></div>`)
             .join("")}</div>`;
         }
         return head + list
@@ -862,7 +925,7 @@ class DevicePanel extends HTMLElement {
             let right = this._statusHtml(d);
             if (d.online === false) right = `<div class="dur">${this._durationHtml(d, true)}</div><div class="durs">${escape(this._t("statusOffline"))}</div>`;
             return `<div class="mc dev ${d.online === false ? "off" : d.flaky ? "flaky" : ""}" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d)}
-            <div><div class="nm">${escape(d.name)}${this._overrideHtml(d)}</div><div class="sb">${this._connHtml(d, false)}</div><div class="sb2">${meta(d)}</div></div>
+            <div><div class="nm">${escape(d.name)}${this._overrideHtml(d)}</div><div class="sb">${this._connHtml(d, false)}${batSort ? ` ${this._batteryHtml(d)}` : ""}</div><div class="sb2">${meta(d)}</div></div>
             <div class="rt">${right}</div></div>`;
           })
           .join("");
@@ -1000,8 +1063,14 @@ class DevicePanel extends HTMLElement {
       this._statTile(
         "24h",
         this._t("tileAvail"),
-        s24 ? `${escape(this._fmtPct(s24.pct))}<small>%</small>` : `<span class="t3">–</span>`,
-        !s24 ? this._t("statNoData") : s24.outages ? this._t("statOutages", s24.outages, this._fmtSeconds(s24.longest)) : this._t("statNoOutages")
+        s24?.pct != null ? `${escape(this._fmtPct(s24.pct))}<small>%</small>` : `<span class="t3">–</span>`,
+        !s24
+          ? this._t("statNoData")
+          : s24.outages
+            ? this._t("statOutages", s24.outages, this._fmtSeconds(s24.longest))
+            : s24.pct == null
+              ? this._t("pctWait")
+              : this._t("statNoOutages")
       )
     );
     let v7 = `<span class="t3">…</span>`;
@@ -1342,6 +1411,8 @@ class DevicePanel extends HTMLElement {
     // Nie 100 % zeigen, wenn es einen Unterbruch gab (Rundung).
     if (outages.length && pct > 99.9) pct = 99.9;
     const facts = [];
+    const pctOk = on + off >= PCT_MIN_COVERED;
+    if (!pctOk) facts.push(escape(this._t("pctWait")));
     if (!on) facts.push(`<b>${escape(this._t("availNever"))}</b>`);
     else if (!outages.length) facts.push(escape(this._t("availAlways")));
     else {
@@ -1385,7 +1456,7 @@ class DevicePanel extends HTMLElement {
         .map((s) => `<div><span>${escape(this._fmtTime(s[0], withDate))} – ${escape(endLabel(s))}</span><span class="d">${escape(this._fmtSeconds(s[1] - s[0]))}</span></div>`)
         .join("")}${newest.length > OUTAGE_LIST_MAX ? `<p class="avail-more">${escape(this._t("availMore", newest.length - OUTAGE_LIST_MAX))}</p>` : ""}</div>`;
     }
-    const top = `<div class="avail-top"><span class="avail-pct">${escape(this._fmtPct(pct))}<small>%</small></span><span class="avail-facts">${facts.join(" · ")}</span></div>`;
+    const top = `<div class="avail-top"><span class="avail-pct">${pctOk ? `${escape(this._fmtPct(pct))}<small>%</small>` : `<span class="t3">–</span>`}</span><span class="avail-facts">${facts.join(" · ")}</span></div>`;
     return `<div class="avail">${top}
         <div class="avail-barwrap"><div class="avail-bar">${segHtml}<span class="avail-now"></span></div><div class="avail-tip" hidden></div></div>
         <div class="avail-ticks">${ticks}<span class="now-label">${escape(this._t("now"))}</span></div>
@@ -1468,7 +1539,7 @@ class DevicePanel extends HTMLElement {
     // Wert zurückgeht (Variante A, docs/mockups/override-v1).
     this._settings = {
       loading: true, error: null, saveError: null, saving: false, data: null, draft: null, open: new Set(), info: new Set(),
-      resets: { battery: new Set(), notify: new Set() },
+      resets: { battery: new Set(), notify: new Set(), connection: new Set() },
     };
     this._renderSettings();
     if (!dialog.open) {
@@ -1531,7 +1602,11 @@ class DevicePanel extends HTMLElement {
   _settingsResetChanges() {
     const st = this._settings;
     if (!st?.resets) return [];
-    return [...[...st.resets.battery].map(() => "reset_battery"), ...[...st.resets.notify].map(() => "reset_notify")];
+    return [
+      ...[...st.resets.battery].map(() => "reset_battery"),
+      ...[...st.resets.notify].map(() => "reset_notify"),
+      ...[...st.resets.connection].map(() => "reset_connection"),
+    ];
   }
 
   _settingsChanges() {
@@ -1546,7 +1621,7 @@ class DevicePanel extends HTMLElement {
       ["battery", ["battery_low", "battery_low_integrations", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "reset_battery"]],
       ["integrations", ["exclude_integrations"]],
       ["types", ["exclude_types"]],
-      ["connections", ["connection_integrations"]],
+      ["connections", ["connection_integrations", "reset_connection"]],
       ["push", ["notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "reset_notify"]],
       ["display", ["show_service_devices", "show_disabled_devices", "hide_connections", "connection_order"]],
       ["updates", ["update_check"]],
@@ -1773,18 +1848,20 @@ class DevicePanel extends HTMLElement {
     const list = st.data.overrides?.[kind] || [];
     const marked = st.resets[kind];
     const all = list.length > 0 && list.every((x) => marked.has(x.id));
-    const pre = kind === "battery" ? "ovrBat" : "ovrNotify";
+    const pre = { battery: "ovrBat", notify: "ovrNotify", connection: "ovrConn" }[kind];
     const btn = list.length
       ? `<button type="button" class="ovr-all" data-set="ovr-all" data-key="${kind}" ${all ? "disabled" : ""}>${mdi("reset", 15)}${escape(t("ovrResetAll"))}</button>`
       : "";
-    const value = (x) => (kind === "notify" || x.value === "off" ? t("ovrOff") : `${x.value} %`);
+    const value = (x) =>
+      kind === "connection" ? t(CONN[x.value]?.key || "connUnknown") : kind === "notify" || x.value === "off" ? t("ovrOff") : `${x.value} %`;
+    const back = kind === "connection" ? t("ovrToAuto") : t("ovrToGlobal");
     const rows = list
       .map((x) => {
         const on = marked.has(x.id);
         const sub = [x.area, x.integration, x.hidden ? t("ovrHidden") : null].filter(Boolean).join(" · ");
         const label = t(on ? "ovrUndo" : "ovrReset", x.name);
         return `<div class="ovr-row${on ? " reset" : ""}"><span class="ovr-name">${escape(x.name)}${sub ? `<small>${escape(sub)}</small>` : ""}</span>
-          <span class="ovr-val">${on ? `<s>${escape(value(x))}</s> ${escape(t("ovrToGlobal"))}` : escape(value(x))}</span>
+          <span class="ovr-val">${on ? `<s>${escape(value(x))}</s> ${escape(back)}` : escape(value(x))}</span>
           <button type="button" class="ovr-x" data-set="ovr-one" data-key="${kind}:${escape(x.id)}" title="${escape(label)}" aria-label="${escape(label)}">${mdi(on ? "reset" : "close", 16)}</button></div>`;
       })
       .join("");
@@ -1894,7 +1971,7 @@ class DevicePanel extends HTMLElement {
         this._overridesHtml("battery"),
       integrations: exTable("exclude_integrations", integrations, t("hideIntro")),
       types: exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`),
-      connections: this._connIntegHtml(d),
+      connections: this._connIntegHtml(d) + this._overridesHtml("connection"),
       push:
         row("notify_service", t("optNotifyTarget"), select("notify_service", targets, t("optNotifyTarget")), t("optNotifyTargetShort"), t("optNotifyTargetInfo")) +
         row("notify_click_target", t("optClick"), select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null) +
@@ -2193,8 +2270,8 @@ class DevicePanel extends HTMLElement {
     if (!st) return;
     const changes = this._settingsEntryChanges();
     const extra = this._settingsExtraChanges();
-    const resets = { battery: [...st.resets.battery], notify: [...st.resets.notify] };
-    const anyReset = resets.battery.length > 0 || resets.notify.length > 0;
+    const resets = { battery: [...st.resets.battery], notify: [...st.resets.notify], connection: [...st.resets.connection] };
+    const anyReset = resets.battery.length > 0 || resets.notify.length > 0 || resets.connection.length > 0;
     if ((!changes.length && !extra.length && !anyReset) || Object.keys(this._settingsErrors()).length) return;
     st.saving = true;
     st.saveError = null;
@@ -2242,7 +2319,7 @@ class DevicePanel extends HTMLElement {
     if (data.panel) this._applyPanelSettings(data.panel);
     st.extraBase = { prerelease: Boolean(this._prerelease) };
     st.extra = { ...st.extraBase };
-    st.resets = { battery: new Set(), notify: new Set() };
+    st.resets = { battery: new Set(), notify: new Set(), connection: new Set() };
     st.saving = false;
     st.saved = true;
     this._renderSettings();

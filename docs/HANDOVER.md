@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.12.0, Verbindungsart von Hand)
+## Stand (0.17.0, Filter und Batterie-Chip)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -16,13 +16,14 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `device_panel/set_device_type` (Typ von Hand im Popup),
   `device_panel/set_device_connection` (Verbindungsart von Hand, seit
   0.12.0; `list_devices` liefert `connection`, `connection_auto`,
-  `connection_manual`) und
+  `connection_integration`, `connection_manual`) und
   `device_panel/set_device_settings` (Popup "Meldungen für dieses Gerät":
   Batterie-Schwelle des Geräts oder "off", Ausfall-/Online-Meldungen aus),
   beides in `.storage/device_panel.devices`, und
   `device_panel/reset_device_settings` (Einstellungen, beim Speichern: Liste
-  von Geräten je Art auf den globalen Wert; `get_options` liefert dafür
-  `overrides`, auch ausgeblendete Geräte).
+  von Geräten je Art auf den globalen Wert, Arten `battery`, `notify`,
+  `connection`; `get_options` liefert dafür `overrides`, auch ausgeblendete
+  Geräte).
 - Einstellungen im Panel (Zahnrad), Reihenfolge nach Bild 5:
   Versionskasten mit Update über HACS, Vorabversionen, "In HACS
   freischalten"; "Ausfall-Erkennung" (Zahlenfelder `offline_after`,
@@ -129,7 +130,18 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `0.14.0` ohne Release, in `0.15.0` enthalten (`v0.15.0` veröffentlicht).
    Mit `0.16.0` (Nutzer, 2026-10-02, Variante B): Verbindungsart pro
    Integration (`connection_integrations`), neuer Abschnitt "Verbindungsart";
-   Vorrang Gerät von Hand, dann Integration, dann Erkennung. Entschieden (Nutzer, 2026-10-02): Handy A
+   Vorrang Gerät von Hand, dann Integration, dann Erkennung. Mit `0.17.0`
+   (Nutzer, 2026-10-02): Verbindungsart von Hand zählt als "Eigene
+   Einstellung" (Symbol, Chip, Zurücksetzen); Chip-Zahlen mit Suche und
+   übrigen Filtern, aktiver Chip abwählbar, X im Suchfeld, Chip "Batterie",
+   Kopf-Kacheln auf dem Handy gleich hoch, Prozent erst ab 1 Std. Daten
+   (Entscheid Claude, vom Nutzer übertragen). Als Nächstes, vom Nutzer
+   bestätigt: Recorder-Nachfüllen des Protokolls (`0.18.0`), Empfang pro
+   Gerät akzeptieren bzw. eigene Schwelle ("Eigene Einstellung" wie
+   Batterie), Batterie-Verlauf im Popup (24 Std., 7, 30, 90 Tage, Kurve),
+   dann die Backlog-Punkte 2–7 (Spalten pro Benutzer, Bereichsfilter,
+   Ausfall-Meldungen erweitert, Überwachungsebenen, Geräteansicht,
+   Empfangs- und Batterieprotokoll). Entschieden (Nutzer, 2026-10-02): Handy A
    für Spalten und Sortierung (`docs/mockups/view-v1/`), als Nächstes. Weiter mit Schritt 2 (Spalten,
    Sortierung und Filter pro Benutzer, getrennt Desktop/Handy; vom Nutzer
    am 2026-10-02 nachgefragt; dazu Filter-Chips der Verbindungsart einzeln
@@ -137,8 +149,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `docs/CONCEPT.md`, Fahrplan Schritt 2) und dem Rest von Schritt 7 (anhaltende
    Benachrichtigung bei Ausfällen, Spalten Push/Anhaltend bei den
    Integrationen nach Bild 5, Aktionen in Meldungen);
-   `docs/CONCEPT.md`, "Pflicht"; Vorlagen in `docs/reference/`. Offene Frage an den Nutzer: Prozentwerte erst ab
-   einer Mindestdauer an Daten zeigen?
+   `docs/CONCEPT.md`, "Pflicht"; Vorlagen in `docs/reference/`.
 3. Umsetzung nach dem Fahrplan in `docs/CONCEPT.md` (Abschnitt "Fahrplan"),
    der Reihe nach: Geräteliste mit Statistik, Spalten pro Benutzer,
    Einstellungsmenü, Update-Bereich, Geräteansicht, Verfügbarkeitsprotokoll,

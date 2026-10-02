@@ -20,17 +20,21 @@ Bereich.
   auf dem Handy als Karten. Die Spalte mit dem Gerät bleibt stehen, wenn die
   Tabelle seitlich scrollt.
 - Spalten für Status, Verbindung, Verfügbarkeit über 24 Stunden (Streifen
-  und Prozent), Typ (z. B. Licht, Steckdose, Bewegung, Tür/Fenster, Klima,
+  und Prozent, Prozent ab 1 Stunde Daten), Typ (z. B. Licht, Steckdose, Bewegung, Tür/Fenster, Klima,
   Hub/Bridge, Netzwerk, Handy/Computer, Energie/Zähler), Integration mit
   ihrem Eintrag, Batterie, Hersteller und Modell, Software mit
   Update-Hinweis.
 - Verbindungsart pro Gerät: Zigbee, Z-Wave, Thread, Matter (Thread, WLAN
   oder LAN), Bluetooth, WLAN, Netzwerk, Cloud; Empfang in dBm oder LQI und
   der Hub, die Bridge oder der Bluetooth-Proxy dazwischen.
-- Suche über alle Spalten, Filter nach Verbindungsart, "Nur Probleme",
-  niedriger Batterie, schwachem Empfang und verfügbaren Updates. In den
-  Einstellungen ("Anzeige") lassen sich einzelne Chips der Verbindungsart
-  ausblenden und alle in eine eigene Reihenfolge ziehen.
+- Suche über alle Spalten (mit Knopf zum Löschen), Filter nach
+  Verbindungsart, "Nur Probleme", Batterie (alle Batteriegeräte, nach Stand
+  sortiert), niedriger Batterie, schwachem Empfang und verfügbaren Updates.
+  Die Zahl auf einem Chip zählt mit der Suche und den übrigen Filtern: so
+  viele Geräte, wie das Antippen zeigt. Ein aktiver Chip lässt sich mit
+  einem zweiten Tipp abwählen. In den Einstellungen ("Anzeige") lassen sich
+  einzelne Chips der Verbindungsart ausblenden und alle in eine eigene
+  Reihenfolge ziehen.
 - Popup pro Gerät (wie bei UniFi Dynamic Clients): Verfügbarkeit 24 Stunden,
   Unterbrüche in 7 Tagen, Empfang und Batterie als Kacheln; Verbindung,
   Integration (warnt, wenn ihr Eintrag nicht geladen ist), Geräteangaben und
@@ -78,9 +82,10 @@ Bereich.
   absichtlich offline ist; überwacht wird das Gerät weiter. Standardmässig
   aus.
 - Einstellungen pro Gerät auf einen Blick: ein Symbol beim Namen (eigene
-  Batterie-Schwelle, Batterie-Warnung aus, Meldungen aus), der Chip "Eigene
-  Einstellung" zeigt nur diese Geräte, und die Einstellungen listen sie zum
-  Zurücksetzen auf, einzeln oder alle auf einmal.
+  Batterie-Schwelle, Batterie-Warnung aus, Meldungen aus, Verbindungsart von
+  Hand), der Chip "Eigene Einstellung" zeigt nur diese Geräte, und die
+  Einstellungen listen sie zum Zurücksetzen auf, einzeln oder alle auf
+  einmal.
 - Einstellungen im Panel (Zahnrad) mit Updates: nach einer neuen Version
   suchen, mit einem Klick über HACS aktualisieren, danach neu starten,
   wahlweise Vorabversionen anbieten ("In HACS freischalten" schaltet die

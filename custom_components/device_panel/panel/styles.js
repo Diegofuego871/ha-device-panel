@@ -59,6 +59,12 @@ button { font: inherit; color: inherit; }
 .searchbox { flex: 1; display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 14px; border-radius: 14px;
   background: var(--dp-input); border: 1px solid var(--dp-divider); color: var(--dp-text2); min-width: 0; }
 .search { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--dp-text); font: inherit; height: 100%; }
+/* Eigenes X statt des Browser-Knopfs: den zeigt nicht jeder Browser (iOS). */
+.search::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
+.search-clear { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin-right: -8px; padding: 0; border: 0; border-radius: 50%;
+  background: none; color: var(--dp-text2); cursor: pointer; }
+.search-clear:hover { background: var(--dp-hover); color: var(--dp-text); }
+.search-clear[hidden] { display: none; }
 .gear-btn { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--dp-divider);
   background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
 .gear-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
@@ -126,6 +132,7 @@ button { font: inherit; color: inherit; }
 .chip.hint.s svg { color: var(--dp-warning); }
 .chip.hint.u svg { color: var(--dp-primary); }
 .chip.hint.o svg { color: var(--dp-primary); }
+.chip.zero:not(.on) { opacity: .55; }
 .chip.on { background: var(--dp-primary-soft); border-color: transparent; color: var(--dp-primary); }
 .chip.on svg, .chip.on .n { color: var(--dp-primary); }
 .vsep { width: 1px; height: 22px; background: var(--dp-divider); margin: 0 2px; }
@@ -555,8 +562,6 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .hero { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; margin: 0 -12px; padding: 0 12px; scrollbar-width: none; }
   .hero::-webkit-scrollbar { display: none; }
   .hero .kt { min-width: 280px; scroll-snap-align: start; }
-  /* Eigene Höhe je Kachel: sonst wüchse der Ring auf die Höhe des Pulses. */
-  .hero { align-items: flex-start; }
   .hero .kt.pul { min-width: 300px; }
   .pchart { height: 64px; }
   .kt.ring { grid-template-columns: 84px 1fr; }
