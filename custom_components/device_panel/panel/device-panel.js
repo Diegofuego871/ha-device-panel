@@ -226,6 +226,11 @@ const CONN = {
   unknown: { key: "connUnknown", icon: (s) => stroke(`<circle cx="12" cy="12" r="9.2"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6M12 16.8v.2"/>`, s) },
 };
 const MATTER_TYPES = { thread: "thread", wifi: "wifi", ethernet: "ethernet" };
+// Rolle im Thread-Netz aus matter/node_diagnostics (node_type; Werte des
+// Matter-Servers: end_device, sleepy_end_device, routing_end_device für Router
+// und Leader, bridge, unknown). Nur diese drei zeigt das Popup, der Rest
+// bleibt weg (nichts raten).
+const THREAD_ROLES = { routing_end_device: "roleRouter", end_device: "roleEnd", sleepy_end_device: "roleSleepy" };
 // Wählbar von Hand (Popup): alle ausser "unbekannt" (Fall ohne Erkennung).
 const CONN_MANUAL = Object.keys(CONN).filter((k) => k !== "unknown");
 
@@ -973,14 +978,24 @@ class DevicePanel extends HTMLElement {
         const cached = this._matter.get(d.id);
         if (cached && Date.now() - cached.at < MATTER_REFRESH_MS) continue;
         let type = "matter";
+        let role = null;
+        let network = null;
         try {
           const diag = await this._hass.callWS({ type: "matter/node_diagnostics", device_id: d.id });
           type = MATTER_TYPES[String(diag?.network_type ?? "").toLowerCase()] || "matter";
+          // Rolle nur bei Thread, Netzname bei Thread (Netzname) und WLAN (SSID)
+          // (Punkt 4). Zugangsdaten liefert die Diagnose nicht und das Panel
+          // zeigt keine.
+          if (type === "thread") role = THREAD_ROLES[String(diag?.node_type ?? "").toLowerCase()] || null;
+          if (type === "thread" || type === "wifi") {
+            const name = typeof diag?.network_name === "string" ? diag.network_name.trim() : "";
+            network = name || null;
+          }
         } catch (err) {
           // Gerät nicht erreichbar oder Matter-Server weg: Funkart bleibt offen.
         }
-        if (cached?.type !== type) changed = true;
-        this._matter.set(d.id, { type, at: Date.now() });
+        if (cached?.type !== type || cached?.role !== role || cached?.network !== network) changed = true;
+        this._matter.set(d.id, { type, role, network, at: Date.now() });
       }
     } finally {
       this._refining = false;
@@ -2452,6 +2467,11 @@ class DevicePanel extends HTMLElement {
     }${this._connError ? `<small class="warn">${escape(this._t("connSaveError"))} ${escape(this._connError)}</small>` : ""}`;
     const tiles = [this._tile(this._t("connType"), connSel)];
     if (d.via) tiles.push(this._tile(this._t("viaLabel"), escape(d.via)));
+    // Thread-Rolle und Netz aus der Matter-Diagnose (Zusatzangaben, ohne
+    // Einstellung); die Verbindungsart von Hand bleibt davon unberührt.
+    const mat = (d.connection_auto !== undefined ? d.connection_auto : d.connection) === "matter" ? this._matter.get(d.id) : null;
+    if (mat?.role) tiles.push(this._tile(this._t("threadRole"), `${escape(this._t(mat.role))}<small>${escape(this._t(`${mat.role}Hint`))}</small>`));
+    if (mat?.network) tiles.push(this._tile(this._t("threadNet"), `${escape(mat.network)}<small>${escape(this._t("threadNetHint"))}</small>`));
     const entries = detail?.config_entries?.length
       ? detail.config_entries
       : d.integration

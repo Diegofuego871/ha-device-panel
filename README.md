@@ -132,6 +132,9 @@ details such as software version, manufacturer, model and area.
   hand, own signal warning, own "Offline after" or "Don't monitor"), the chip "Own setting" shows only those
   devices, and the settings list them for resetting, one by one or all at
   once.
+- Matter devices: in the pop-up the Thread role (router, end device, sleepy
+  end device) and the network name from the Matter diagnostics, next to the
+  connection type, which can still be set by hand.
 - Origin of every setting in the device pop-up: under each setting a label
   (Default, Integration, Device) and what the default would be. "Offline
   after" can be set per device too (same as the integration, own time or

@@ -767,7 +767,15 @@
         return batteryHistory(d, msg.range || "24h");
       }
       if (msg.type === "device_panel/availability") return availHistory(msg.device_id, msg.range || "24h");
-      if (msg.type === "matter/node_diagnostics") return { network_type: "thread", node_type: "end_device" };
+      if (msg.type === "matter/node_diagnostics") {
+        // Wie die Matter-Diagnose: Funkart, Rolle im Thread-Netz, Netzname;
+        // __matterDiag überschreibt (null = Fehler, Objekt = Antwort).
+        if (window.__matterDiag === null) throw { code: "unknown_error", message: "node offline" };
+        if (window.__matterDiag) return window.__matterDiag;
+        return msg.device_id === "i"
+          ? { network_type: "thread", node_type: "sleepy_end_device", network_name: "Zuhause-Thread" }
+          : { network_type: "thread", node_type: "end_device", network_name: "Zuhause-Thread" };
+      }
       // Benutzerdaten wie frontend/get_user_data und set_user_data; in der
       // Sitzung des Tabs, damit ein Neuladen den Stand von HA sieht.
       if (msg.type === "frontend/get_user_data" || msg.type === "frontend/set_user_data") {

@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.32.0] - 2026-10-03
+
+Thread role and network name for Matter devices.
+
+### Added
+
+- Device pop-up, section "Connection": for Matter devices two more tiles
+  from the Matter diagnostics: "Thread role" (router, end device or sleepy
+  end device, with a short hint) and "Network" (the Thread network name,
+  for Wi-Fi devices the network name of the Wi-Fi). The tiles are
+  additional information: the connection type set by hand (e.g. Thread)
+  stays possible and takes precedence over the detection. Unknown roles,
+  bridges and devices the Matter server cannot reach show no tile.
+
 ## [0.31.0] - 2026-10-03
 
 Origin of every setting in the device pop-up, and "Offline after" per device.
@@ -831,6 +845,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.32.0
 [0.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.31.0
 [0.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.30.0
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0

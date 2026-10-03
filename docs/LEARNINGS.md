@@ -125,6 +125,13 @@ hat dort einen echten Fehler oder Umweg gekostet.
   Status (Liste "ausgefallen", Protokoll "online"). Nicht überwachte Geräte
   gehören in `listed_devices`, nicht in `monitored_devices`.
 
+- Matter-Diagnose (`matter/node_diagnostics`): `node_type` kennt
+  `end_device`, `sleepy_end_device`, `routing_end_device` (Router und
+  Leader), `bridge`, `unknown`; `network_name` ist bei Thread der Netzname,
+  bei WLAN die SSID (aus `lastNetworkID`). Werte vorher im Quelltext von
+  python-matter-server nachlesen (`pip download python-matter-server
+  --no-deps`), nicht raten: "router" gibt es dort nicht.
+
 ## Panel (Frontend)
 
 - **Vanilla Web Component**, kein Lit, kein Build, kein CDN. Logik, Texte

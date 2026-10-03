@@ -7,6 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.32.0] - 2026-10-03
+
+Thread-Rolle und Netzname für Matter-Geräte.
+
+### Hinzugefügt
+
+- Geräte-Popup, Abschnitt "Verbindung": Bei Matter-Geräten zwei weitere
+  Kacheln aus der Matter-Diagnose: "Thread-Rolle" (Router, Endgerät oder
+  schlafendes Endgerät, mit kurzem Hinweis) und "Netz" (der Netzname des
+  Thread-Netzes, bei WLAN-Geräten der Netzname des WLANs). Die Kacheln sind
+  Zusatzangaben: Die Verbindungsart von Hand (z. B. Thread) bleibt möglich
+  und geht vor der Erkennung. Unbekannte Rollen, Bridges und Geräte, die der
+  Matter-Server nicht erreicht, zeigen keine Kachel.
+
 ## [0.31.0] - 2026-10-03
 
 Herkunft jeder Einstellung im Geräte-Popup und "Ausgefallen nach" pro Gerät.
@@ -868,6 +882,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.32.0
 [0.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.31.0
 [0.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.30.0
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0

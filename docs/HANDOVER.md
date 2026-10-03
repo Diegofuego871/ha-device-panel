@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.31.0, Herkunft der Einstellungen im Popup, "Ausgefallen nach" pro Gerät)
+## Stand (0.32.0, Thread-Rolle und Netz im Popup)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -230,9 +230,17 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Einstellung ein Etikett (`.opt-origin`, Klassen `std`/`integ`/`own`)
    mit Standardwert, Erklärung im Tooltip; Auswahl "Wie Integration (…)".
    Die Verbindungsart hat ihre Herkunft schon in der Kachel.
-   Entscheide des Nutzers zu den übrigen Backlog-Punkten (2026-10-03,
-   Fragen einzeln mit Bildern, `docs/mockups/backlog-v1/`), noch
-   umzusetzen als `0.32.0` und `0.33.0`: Punkt 10 Variante A (Knopf "Mit KI
+   Erledigt mit `0.32.0`: Punkt 4 Variante A. Das Panel liest aus
+   `matter/node_diagnostics` (schon für die Funkart) zusätzlich `node_type`
+   (Werte des Matter-Servers `end_device`, `sleepy_end_device`,
+   `routing_end_device` = Router/Leader, `bridge`, `unknown`; geprüft an
+   python-matter-server 8.1.2) und `network_name` (Thread-Netzname bzw.
+   WLAN-SSID); Kacheln "Thread-Rolle" (nur Thread, nur bekannte Rollen) und
+   "Netz" (Thread und WLAN) im Abschnitt "Verbindung"; Zwischenspeicher
+   `_matter` mit `{type, role, network}`. Verbindungsart von Hand hat
+   weiter Vorrang. Nicht an einem echten Matter-Gerät geprüft (im Test-HA
+   gibt es keinen Matter-Server), nur im Nachbau.
+   Noch umzusetzen als `0.33.0`: Punkt 10 Variante A (Knopf "Mit KI
    einschätzen" im Geräte-Popup, `ai_task.async_generate_data`, Einstellung
    standardmässig aus, Auswahl der KI-Aufgabe); Punkt 4 Variante A
    (Thread-Rolle und Netzname aus `matter/node_diagnostics` im Popup;

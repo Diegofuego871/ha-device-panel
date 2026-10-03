@@ -143,6 +143,9 @@ Bereich.
   überwachen"), der Chip "Eigene Einstellung" zeigt nur
   diese Geräte, und die Einstellungen listen sie zum Zurücksetzen auf,
   einzeln oder alle auf einmal.
+- Matter-Geräte: im Popup die Thread-Rolle (Router, Endgerät, schlafendes
+  Endgerät) und der Netzname aus der Matter-Diagnose, neben der
+  Verbindungsart, die weiter von Hand gesetzt werden kann.
 - Herkunft jeder Einstellung im Geräte-Popup: unter jeder Einstellung ein
   Etikett (Standard, Integration, Gerät) und was der Standard wäre.
   "Ausgefallen nach" lässt sich auch pro Gerät setzen (wie Integration,
