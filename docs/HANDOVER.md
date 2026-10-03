@@ -212,7 +212,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    "Ausgefallen nach" pro Gerät); Punkt 10 Variante A (Knopf "Mit KI
    einschätzen" im Geräte-Popup, `ai_task.async_generate_data`, Einstellung
    standardmässig aus, Auswahl der KI-Aufgabe); Punkt 4 Variante A
-   (Thread-Rolle und Netzname aus `matter/node_diagnostics` im Popup).
+   (Thread-Rolle und Netzname aus `matter/node_diagnostics` im Popup;
+   Nutzer: die Verbindungsart von Hand, z. B. Thread, muss weiter gehen
+   und hat Vorrang, die Kacheln sind nur Zusatzangaben).
    Als Nächstes, in dieser Reihenfolge (Nutzer, 2026-10-03):
    b. Erledigt mit `0.26.0`: Puls-Kachel öffnet das Fenster mit den
       Geräten, die in 24 Std. Unterbrüche hatten (`docs/mockups/pulse-v1/`,
