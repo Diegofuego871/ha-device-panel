@@ -33,6 +33,8 @@ Optional AI assessment of a device.
 
 ## [0.32.0] - 2026-10-03
 
+Not released; included in 0.33.0.
+
 Thread role and network name for Matter devices.
 
 ### Added
@@ -46,6 +48,8 @@ Thread role and network name for Matter devices.
   bridges and devices the Matter server cannot reach show no tile.
 
 ## [0.31.0] - 2026-10-03
+
+Not released; included in 0.33.0.
 
 Origin of every setting in the device pop-up, and "Offline after" per device.
 
@@ -68,6 +72,8 @@ Origin of every setting in the device pop-up, and "Offline after" per device.
   excluded from push or persistent notifications.
 
 ## [0.30.0] - 2026-10-03
+
+Not released; included in 0.33.0.
 
 Own "Offline after" per integration, and "Don't monitor".
 
@@ -94,7 +100,7 @@ Own "Offline after" per integration, and "Don't monitor".
 
 ## [0.29.1] - 2026-10-03
 
-Not released; included in 0.30.0.
+Not released; included in 0.33.0.
 
 Clearer "Content of the notification".
 
@@ -870,9 +876,6 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [0.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.0
-[0.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.32.0
-[0.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.31.0
-[0.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.30.0
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0
 [0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0
 [0.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.1

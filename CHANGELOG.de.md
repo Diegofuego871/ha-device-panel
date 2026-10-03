@@ -33,6 +33,8 @@ Optionale KI-Einschätzung eines Geräts.
 
 ## [0.32.0] - 2026-10-03
 
+Nicht veröffentlicht; enthalten in 0.33.0.
+
 Thread-Rolle und Netzname für Matter-Geräte.
 
 ### Hinzugefügt
@@ -46,6 +48,8 @@ Thread-Rolle und Netzname für Matter-Geräte.
   Matter-Server nicht erreicht, zeigen keine Kachel.
 
 ## [0.31.0] - 2026-10-03
+
+Nicht veröffentlicht; enthalten in 0.33.0.
 
 Herkunft jeder Einstellung im Geräte-Popup und "Ausgefallen nach" pro Gerät.
 
@@ -69,6 +73,8 @@ Herkunft jeder Einstellung im Geräte-Popup und "Ausgefallen nach" pro Gerät.
   anhaltender Benachrichtigung ausgenommen ist.
 
 ## [0.30.0] - 2026-10-03
+
+Nicht veröffentlicht; enthalten in 0.33.0.
 
 Eigenes "Ausgefallen nach" pro Integration und "Nicht überwachen".
 
@@ -97,7 +103,7 @@ Eigenes "Ausgefallen nach" pro Integration und "Nicht überwachen".
 
 ## [0.29.1] - 2026-10-03
 
-Nicht veröffentlicht; enthalten in 0.30.0.
+Nicht veröffentlicht; enthalten in 0.33.0.
 
 Verständlicherer "Inhalt der Meldung".
 
@@ -907,9 +913,6 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [0.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.0
-[0.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.32.0
-[0.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.31.0
-[0.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.30.0
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0
 [0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0
 [0.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.1
