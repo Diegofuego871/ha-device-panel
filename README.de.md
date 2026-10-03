@@ -116,7 +116,7 @@ Bereich.
   Assistant alle ausgefallenen Geräte, solange sie ausgefallen sind, mit
   Link zum Gerät. Standardmässig aus.
 - Batterie-Verlauf: Die Kachel "Batterie" im Geräte-Popup zeigt den Stand
-  über 24 Std., 7 Tage, 30 Tage oder 3 Monate als Linie, mit Warnschwelle
+  über 24 Std., 7 Tage, 30 Tage, 3, 6 oder 12 Monate als Linie, mit Warnschwelle
   und Batteriewechseln; aus dem Recorder (Langzeitstatistik auch über
   seine 10 Tage hinaus).
 - Empfang-Warnung pro Gerät im Popup: globaler Wert (unter -80 dBm bzw.

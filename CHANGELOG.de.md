@@ -7,6 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.29.0] - 2026-10-03
+
+Batterie-Verlauf für 6 und 12 Monate.
+
+### Hinzugefügt
+
+- Das Fenster "Batterie" hat zwei weitere Zeiträume: 6 Monate und 12
+  Monate, aus der Langzeitstatistik als Tagesmittel (Monate auf der Achse,
+  Batteriewechsel weiter markiert). Auf dem Handy scrollt die Auswahl der
+  Zeiträume seitlich und holt den gewählten Zeitraum ins Bild.
+
 ## [0.28.0] - 2026-10-03
 
 Fixierter Kopf auf Handy und Desktop.
@@ -789,6 +800,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0
 [0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0
 [0.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.1
 [0.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.0

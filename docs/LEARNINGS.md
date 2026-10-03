@@ -311,6 +311,13 @@ hat dort einen echten Fehler oder Umweg gekostet.
   nie antworten: `_callWithTimeout` (20 s), sonst bliebe `_fetching` für
   immer besetzt. Nachbau: `window.__wsFail` (number, object, empty, text),
   Suite `reconnect-e2e`.
+- **Tagesmittel und Batteriewechsel (0.29.0):** Bei Tagesmitteln
+  verteilt sich ein Sprung (19 → 59 → 98 %) auf zwei Tage und zählte als
+  zwei Wechsel; `changes()` nimmt für `period == "day"` ein Fenster von
+  2 Tagen. Und: sechs Zeiträume in `.seg-sw` machten das Fenster auf dem
+  Handy breiter als den Bildschirm (Inhalt rutschte seitlich weg); die
+  Auswahl `.stat-range` scrollt jetzt selbst, `battery-e2e` prüft
+  `scrollWidth <= clientWidth`.
 - **Hinweis mit Aktion (0.23.0):** `.toast` steht mit `left: 50%` und
   `translateX(-50%)`; ohne `width: max-content` bricht der Text schon bei
   der halben Fensterbreite um.

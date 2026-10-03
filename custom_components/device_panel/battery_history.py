@@ -25,9 +25,12 @@ from homeassistant.util import dt as dt_util
 
 _LOGGER = logging.getLogger(__name__)
 
-RANGES = {"24h": 1, "7d": 7, "30d": 30, "90d": 90}
+RANGES = {"24h": 1, "7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365}
 # Ab so vielen Tagen die Langzeitstatistik (Stundenwerte) statt des Verlaufs.
 STATS_FROM_DAYS = 30
+# Ab so vielen Tagen Tagesmittel statt Stundenmittel (6 und 12 Monate; seit
+# 0.29.0): weniger Zeilen, und mehr als 1000 Punkte zeichnet das Panel nicht.
+DAILY_FROM_DAYS = 180
 # Mehr Punkte zeichnet das Panel nicht sinnvoll; darüber Mittel pro Abschnitt.
 MAX_POINTS = 1000
 CHANGE_JUMP = 30
@@ -71,15 +74,18 @@ def _history(
     return out
 
 
-def _statistics(hass: HomeAssistant, entity_id: str, start: datetime, end: datetime) -> list[tuple[float, float]] | None:
-    """Stundenmittel aus der Langzeitstatistik; None ohne Statistik. Im Executor."""
+def _statistics(
+    hass: HomeAssistant, entity_id: str, start: datetime, end: datetime, period: str = "hour"
+) -> list[tuple[float, float]] | None:
+    """Stunden- oder Tagesmittel aus der Langzeitstatistik; None ohne Statistik. Im Executor."""
     from homeassistant.components.recorder.statistics import statistics_during_period  # noqa: PLC0415
 
-    rows = statistics_during_period(hass, start, end, {entity_id}, "hour", None, {"mean"}).get(entity_id)
+    rows = statistics_during_period(hass, start, end, {entity_id}, period, None, {"mean"}).get(entity_id)
     if not rows:
         return None
-    # Mitte der Stunde: der Wert gilt für die ganze Stunde.
-    return [(float(row["start"]) + 1800, float(row["mean"])) for row in rows if row.get("mean") is not None]
+    # Mitte der Stunde bzw. des Tags: der Wert gilt für den ganzen Abschnitt.
+    half = 43200 if period == "day" else 1800
+    return [(float(row["start"]) + half, float(row["mean"])) for row in rows if row.get("mean") is not None]
 
 
 def held(
@@ -122,11 +128,11 @@ def thin(points: list[tuple[float, float]], start: float, end: float, limit: int
     return out
 
 
-def changes(points: list[tuple[float, float]]) -> list[dict[str, float]]:
+def changes(points: list[tuple[float, float]], window: float = CHANGE_WINDOW) -> list[dict[str, float]]:
     """
     Batteriewechsel: Anstieg um mindestens CHANGE_JUMP Punkte gegenüber dem
-    vorigen Punkt oder innert CHANGE_WINDOW (über zwei Stundenmittel
-    verteilt). "Von" ist der
+    vorigen Punkt oder innert window (über zwei Stundenmittel verteilt; bei
+    Tagesmitteln über zwei Tage, sonst zählte ein Wechsel doppelt). "Von" ist der
     tiefste Wert davor, "auf" der höchste kurz danach, die Zeit die des
     Anstiegs.
     """
@@ -136,13 +142,13 @@ def changes(points: list[tuple[float, float]]) -> list[dict[str, float]]:
         t, v = points[i]
         # Der vorige Punkt zählt immer (Sensoren, die selten melden), dazu
         # alle im Fenster (Stundenmittel, die den Sprung verteilen).
-        before = [points[i - 1][1]] + [pv for pt, pv in points[:i] if t - pt <= CHANGE_WINDOW]
+        before = [points[i - 1][1]] + [pv for pt, pv in points[:i] if t - pt <= window]
         if before and v - min(before) >= CHANGE_JUMP:
             low = min(before)
-            after = [pv for pt, pv in points[i:] if pt - t <= CHANGE_WINDOW]
+            after = [pv for pt, pv in points[i:] if pt - t <= window]
             found.append({"at": t, "from": round(low), "to": round(max(after))})
             # Weiter nach dem Fenster: ein Wechsel zählt einmal.
-            while i < len(points) and points[i][0] - t <= CHANGE_WINDOW:
+            while i < len(points) and points[i][0] - t <= window:
                 i += 1
             continue
         i += 1
@@ -166,6 +172,7 @@ async def async_battery_history(
         "changes": [],
         "threshold": threshold,
         "steady_since": None,
+        "period": "hour",
     }
     state = hass.states.get(entity_id)
     if "recorder" not in hass.config.components:
@@ -181,9 +188,11 @@ async def async_battery_history(
     source = "history"
     try:
         if days >= STATS_FROM_DAYS:
-            points = await instance.async_add_executor_job(_statistics, hass, entity_id, start_dt, end_dt)
+            period = "day" if days >= DAILY_FROM_DAYS else "hour"
+            points = await instance.async_add_executor_job(_statistics, hass, entity_id, start_dt, end_dt, period)
             if points is not None:
                 source = "statistics"
+                result["period"] = period
         if points is None:
             points = await instance.async_add_executor_job(_history, hass, entity_id, start_dt, end_dt)
     except Exception as err:  # noqa: BLE001
@@ -198,6 +207,6 @@ async def async_battery_history(
         return result
     result["source"] = source
     result["first"] = points[0][0]
-    result["changes"] = changes(points)
+    result["changes"] = changes(points, 2 * 86400 + 3600 if result["period"] == "day" else CHANGE_WINDOW)
     result["points"] = [[round(t, 1), round(v, 1)] for t, v in thin(points, start, now)]
     return result

@@ -672,7 +672,11 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 /* Statistik-Fenster */
 .stat-head { align-items: center; }
 .stat-head .dlg-avatar { width: 44px; height: 44px; border-radius: 13px; }
-.stat-range { display: flex; margin: 0 0 12px; }
+/* Sechs Zeiträume (Batterie, seit 0.29.0) passen auf dem Handy nicht nebeneinander:
+   die Auswahl scrollt seitlich, der gewählte Zeitraum wird ins Bild geholt. */
+.stat-range { display: flex; margin: 0 0 12px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.stat-range::-webkit-scrollbar { display: none; }
+.stat-range .seg-sw { flex: none; }
 .seg-sw { display: inline-flex; padding: 2px; border-radius: 99px; background: var(--dp-subtle); }
 .seg-sw button { height: 28px; padding: 0 12px; border: none; border-radius: 99px; background: none; color: var(--dp-text2); font-size: 12.5px; white-space: nowrap; cursor: pointer; }
 .seg-sw button.on { background: var(--dp-card); color: var(--dp-text); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }

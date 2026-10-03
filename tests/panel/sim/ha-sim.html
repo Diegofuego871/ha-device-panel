@@ -194,7 +194,7 @@
   // Langzeitstatistik, sonst aus dem Verlauf.
   window.__batSource = null;
   function batteryHistory(d, range) {
-    const days = { "24h": 1, "7d": 7, "30d": 30, "90d": 90 }[range];
+    const days = { "24h": 1, "7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365 }[range];
     const end = Date.now() / 1000;
     const start = end - days * D;
     const level = d.battery.level;
@@ -206,9 +206,11 @@
       const rate = (100 - level) / ((end - from) / D);
       return Math.min(100, level + rate * (end - t) / D) + wobble;
     };
-    const step = days >= 30 ? H : days === 7 ? 2 * H : H;
+    // 6 und 12 Monate (seit 0.29.0): Tagesmittel
+    const daily = days >= 180;
+    const step = daily ? D : days >= 30 ? H : days === 7 ? 2 * H : H;
     const points = [];
-    for (let t = start + (days >= 30 ? H / 2 : 0); t < end; t += step) points.push([Math.round(t), Math.round(value(t) * 10) / 10]);
+    for (let t = start + (daily ? D / 2 : days >= 30 ? H / 2 : 0); t < end; t += step) points.push([Math.round(t), Math.round(value(t) * 10) / 10]);
     points.push([Math.round(end), level]);
     const changes = changeAt && changeAt >= start ? [{ at: Math.round(changeAt), from: 12, to: 100 }] : [];
     const own = window.__devSettings.battery[d.id];
@@ -216,7 +218,7 @@
     const integ = (window.__opts.battery_low_integrations || {})[dom];
     const threshold = own === "off" || (own == null && integ === "off") ? null : Number.isInteger(own) ? own : integ ?? window.__opts.battery_low;
     const source = window.__batSource || (days >= 30 ? "statistics" : "history");
-    return { entity_id: `sensor.${d.id}_batterie`, start, end, source, points, first: points[0][0], changes, threshold };
+    return { entity_id: `sensor.${d.id}_batterie`, start, end, source, points, first: points[0][0], changes, threshold, period: daily ? "day" : "hour" };
   }
   // Empfangsverlauf wie signal_history.py (erfunden, gleichbleibend):
   // Zigbee (wie ZHA) und Bluetooth aus der eigenen Aufzeichnung (Blöcke mit
@@ -725,7 +727,7 @@
         const d = window.__devices.find((x) => x.id === msg.device_id);
         if (!d) throw { code: "not_found", message: "device not found" };
         if (d.battery?.level == null) throw { code: "not_found", message: "no battery level" };
-        if (!["24h", "7d", "30d", "90d"].includes(msg.range || "24h")) throw { code: "invalid_format", message: "range" };
+        if (!["24h", "7d", "30d", "90d", "180d", "365d"].includes(msg.range || "24h")) throw { code: "invalid_format", message: "range" };
         return batteryHistory(d, msg.range || "24h");
       }
       if (msg.type === "device_panel/availability") return availHistory(msg.device_id, msg.range || "24h");

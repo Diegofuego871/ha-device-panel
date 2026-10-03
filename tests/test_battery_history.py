@@ -130,6 +130,13 @@ async def test_statistics_for_long_ranges(recorder_mock, hass: HomeAssistant, ha
     assert [(c["from"], c["to"]) for c in month["changes"]] == [(18, 100)]
     quarter = (await _ws(client, 2, type=f"{DOMAIN}/battery_history", device_id=dev.id, range="90d"))["result"]
     assert quarter["source"] == "statistics" and quarter["first"] == pytest.approx((top - timedelta(hours=40 * 24)).timestamp() + 1800)
+    assert quarter["period"] == "hour"
+    # 6 und 12 Monate (seit 0.29.0): Tagesmittel, weniger Punkte, Wechsel bleibt erkennbar
+    for i, key in enumerate(("180d", "365d")):
+        long = (await _ws(client, 3 + i, type=f"{DOMAIN}/battery_history", device_id=dev.id, range=key))["result"]
+        assert long["source"] == "statistics" and long["period"] == "day", key
+        assert 40 <= len(long["points"]) <= 44 and long["points"][-1][1] == 64, len(long["points"])
+        assert len(long["changes"]) == 1 and long["changes"][0]["to"] >= 60, long["changes"]
 
 
 async def test_without_recorder(hass: HomeAssistant, hass_ws_client) -> None:

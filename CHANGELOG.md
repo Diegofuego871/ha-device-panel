@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.29.0] - 2026-10-03
+
+Battery history for 6 and 12 months.
+
+### Added
+
+- The window "Battery" has two more periods: 6 months and 12 months, from
+  the long-term statistics as daily means (months on the axis, battery
+  changes still marked). On the phone the period selector scrolls sideways
+  and brings the chosen period into view.
+
 ## [0.28.0] - 2026-10-03
 
 Fixed header on phone and desktop.
@@ -755,6 +766,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0
 [0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0
 [0.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.1
 [0.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.0

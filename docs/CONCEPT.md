@@ -239,7 +239,7 @@ Was sofort geht (Zustand jetzt): Integration, Hub, Proxy, Batterie jetzt,
 Sammelausfall ab Start des Protokolls. Trends (Empfang, Batterie) brauchen
 ein eigenes Protokoll von Empfang und Batterie (wie `signal_log` in
 unifi_dynamic), also Fahrplan-Schritt 6. Umgesetzt: Batterie-Verlauf aus
-dem Recorder (0.22.0); Empfangsverlauf (0.24.0) aus dem Recorder, wenn ein
+dem Recorder (0.22.0, seit 0.29.0 auch 6 und 12 Monate als Tagesmittel); Empfangsverlauf (0.24.0) aus dem Recorder, wenn ein
 Sensor den Empfang liefert, sonst (ZHA, Bluetooth) aus der eigenen
 Aufzeichnung `signal_history.SignalLog` wie `signal_log` in unifi_dynamic
 (Blöcke [Start, Median, Schlechtester, Bester], 5 Min. für 24 Std.,

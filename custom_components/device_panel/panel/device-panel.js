@@ -75,7 +75,7 @@ const DETAIL_MAX_AGE_MS = 30000;
 const HISTORY_MAX_AGE_MS = 60000;
 const RANGES = ["24h", "7d", "30d"];
 // Batterie-Verlauf (seit 0.22.0, docs/mockups/battery-history-v1, A): dazu 3 Monate.
-const BAT_RANGES = ["24h", "7d", "30d", "90d"];
+const BAT_RANGES = ["24h", "7d", "30d", "90d", "180d", "365d"];
 // Kaum Daten im Zeitraum (neu installiert): Zeitstrahl erst ab dem ersten
 // Datenpunkt, sonst wäre er fast ganz schraffiert (wie unifi_dynamic).
 const ZOOM_SHARE = 0.1;
@@ -1067,6 +1067,9 @@ class DevicePanel extends HTMLElement {
           ticks.push({ at: d.getTime() / 1000, label: d.toLocaleDateString(this._locale(), { weekday: "short" }), minor: false });
         } else if (mode === "90d") {
           if (d.getDate() === 1) ticks.push({ at: d.getTime() / 1000, label: d.toLocaleDateString(this._locale(), { month: "long" }), minor: false });
+        } else if (mode === "180d" || mode === "365d") {
+          // 6 und 12 Monate (seit 0.29.0): Monat kurz am Ersten; bei 12 Monaten jeder zweite klein (auf dem Handy ausgeblendet).
+          if (d.getDate() === 1) ticks.push({ at: d.getTime() / 1000, label: d.toLocaleDateString(this._locale(), { month: "short" }), minor: mode === "365d" && d.getMonth() % 2 === 1 });
         } else if (d.getDate() % 5 === 0 && d.getDate() !== 30) {
           ticks.push({ at: d.getTime() / 1000, label: d.toLocaleDateString(this._locale(), { day: "numeric", month: "numeric" }), minor: d.getDate() % 10 !== 0 });
         }
@@ -2782,6 +2785,10 @@ class DevicePanel extends HTMLElement {
       <div class="dlg-body">${sw}${body}</div>`;
     const scroll = dlg.scrollTop;
     if (setHtml(dlg, html)) dlg.scrollTop = scroll;
+    // Gewählter Zeitraum sichtbar, wenn die Auswahl seitlich scrollt (nur die Auswahl, nicht das Fenster).
+    const strip = dlg.querySelector(".stat-range");
+    const on = strip?.querySelector("button.on");
+    if (strip && on && strip.scrollWidth > strip.clientWidth) strip.scrollLeft = Math.max(0, on.offsetLeft - (strip.clientWidth - on.offsetWidth) / 2);
   }
 
   // Zeitstrahl mit Abschnitten online/ausgefallen/keine Daten, Fakten,
@@ -2911,7 +2918,7 @@ class DevicePanel extends HTMLElement {
           .map((c) => `<div><span>${escape(t("batChanged"))}</span><span class="d">${escape(this._fmtTime(c.at, true))} · ${c.from} % → ${c.to} %</span></div>`)
           .join("")}</div>`
       : "";
-    const srcKey = source === "statistics" ? "batSrcStats" : source === "history" ? (range === "30d" || range === "90d" ? "batSrcHistoryLong" : "batSrcHistory") : "batSrcNone";
+    const srcKey = source === "statistics" ? (h.data.period === "day" ? "batSrcStatsDay" : "batSrcStats") : source === "history" ? (["30d", "90d", "180d", "365d"].includes(range) ? "batSrcHistoryLong" : "batSrcHistory") : "batSrcNone";
     return `<div class="avail bh"><div class="avail-top"><span class="avail-pct">${escape(String(Math.round(cur)))}<small>%</small></span><span class="avail-facts">${escape(facts.join(" · "))}</span></div>
         <div class="bh-plot"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}${thr}
           <path class="bh-area" d="${area}"/><path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/>${marks}</svg>${labels}</div>
