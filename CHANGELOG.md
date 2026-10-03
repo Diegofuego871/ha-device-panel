@@ -47,6 +47,11 @@ persistent notification.
   had started before the change overwrote it. Such a result is now
   discarded and the list is requested again. The same applied to the type
   set by hand, the settings per device and saved settings.
+- Availability window: an outage that lasted across restarts of Home
+  Assistant appeared as a new entry after every restart. Outages without
+  "online" in between are now one entry from the start to the end, in the
+  list, the count, the total, the percentage and the tooltip, as in the
+  tiles. The bar still shows the time without data.
 
 ## [0.19.0] - 2026-10-02
 

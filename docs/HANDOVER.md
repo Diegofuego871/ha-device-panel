@@ -155,12 +155,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Aktionen "Öffnen" und "24 Std. stumm", anhaltende Benachrichtigung bei
    Ausfällen; behoben: eine Abfrage, die vor einer eigenen Änderung begann,
    überschrieb sie (Fehlerbericht des Nutzers: Thread von Hand zeigte
-   wieder Matter; `_fetch(true)` verwirft den alten Stand).
+   wieder Matter; `_fetch(true)` verwirft den alten Stand) und die Liste
+   im Statistik-Fenster zeigte einen Ausfall über Neustarts als mehrere
+   Einträge (jetzt `outages` aus `bridged`).
    Als Nächstes, in dieser Reihenfolge (Nutzer, 2026-10-03):
-   a. Unterbrüche über Neustarts zusammenfassen: aufeinanderfolgende
-      Ausfälle, zwischen denen das Gerät nie online war (nur Lücken), in
-      der Liste des Statistik-Fensters als ein Eintrag (Screenshot
-      Wasserlecksensor mit 8 Einträgen).
    b. Puls-Kachel: Popup mit den Geräten, die in 24 Std. Unterbrüche
       hatten.
    c. Einzelne Geräte ausblenden; Liste der ausgeblendeten in den

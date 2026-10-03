@@ -456,12 +456,16 @@ class AvailabilityLog:
                     "offline": round(sum(b - a for a, b in off)),
                     "nodata": all(s is None for _a, _b, s in segments(events, day_start, day_end)),
                 })
+        counted_segs = segments(counted, start, now)
         return {
             "start": start,
             "end": now,
             "first": events[0][0] if events else None,
             "segments": segs,
-            "summary": summarize(segments(counted, start, now)),
+            # Liste der Unterbrüche: über Lücken ohne Daten als einer (sonst
+            # nach jedem Neustart ein neuer Eintrag, Fehlerbericht 0.20.0).
+            "outages": [[a, b] for a, b, s in counted_segs if s == OFFLINE],
+            "summary": summarize(counted_segs),
             "days": days,
         }
 

@@ -2031,19 +2031,22 @@ class DevicePanel extends HTMLElement {
     const key = `${this._detailId}|${range}`;
     if (!h || h.key !== key || (!h.data && h.loading)) return `<div class="avail"><p class="dlg-note">${escape(this._t("loadingDetail"))}</p></div>`;
     if (!h.data) return `<div class="dlg-error">${escape(this._t("error"))} ${escape(h.error || "")}</div>`;
-    const { start, end, segments: segs = [] } = h.data;
+    const { start, end, segments: segs = [], summary } = h.data;
     const span = end - start;
     const sum = (st) => segs.filter((s) => s[2] === st).reduce((a, s) => a + s[1] - s[0], 0);
     const on = sum(1);
-    const off = sum(0);
-    if (!on && !off) return `<div class="avail"><p class="dlg-note">${escape(this._t("statNoData"))}</p></div>`;
+    if (!on && !sum(0)) return `<div class="avail"><p class="dlg-note">${escape(this._t("statNoData"))}</p></div>`;
     const withDate = range !== "24h";
-    const outages = segs.filter((s) => s[2] === 0);
-    let pct = (on / (on + off)) * 100;
+    // Unterbrüche wie die Zahlen im Backend: ein Ausfall über Lücken ohne
+    // Daten (Neustart) ist einer, nicht ein Eintrag pro Neustart. Die Balken
+    // zeigen weiter, was HA beobachtet hat.
+    const outages = Array.isArray(h.data.outages) ? h.data.outages.map(([a, b]) => [a, b, 0]) : segs.filter((s) => s[2] === 0);
+    const off = outages.reduce((a, s) => a + s[1] - s[0], 0);
+    let pct = summary ? summary.pct : (on / (on + off)) * 100;
     // Nie 100 % zeigen, wenn es einen Unterbruch gab (Rundung).
     if (outages.length && pct > 99.9) pct = 99.9;
     const facts = [];
-    const pctOk = on + off >= PCT_MIN_COVERED;
+    const pctOk = summary ? summary.pct != null : on + off >= PCT_MIN_COVERED;
     if (!pctOk) facts.push(escape(this._t("pctWait")));
     if (!on) facts.push(`<b>${escape(this._t("availNever"))}</b>`);
     else if (!outages.length) facts.push(escape(this._t("availAlways")));
@@ -2066,7 +2069,9 @@ class DevicePanel extends HTMLElement {
         const from = Math.max(s[0], viewStart);
         const left = ((from - viewStart) / viewSpan) * 100;
         const width = ((s[1] - from) / viewSpan) * 100;
-        const tip = s[2] === 0 ? ` data-tip="${escape(`${this._fmtTime(s[0], withDate)}–${endLabel(s)}`)}" data-dur="${escape(this._fmtSeconds(s[1] - s[0]))}"` : "";
+        // Tooltip: der ganze Unterbruch, auch wenn eine Lücke ihn teilt.
+        const o = s[2] === 0 ? outages.find((x) => x[0] <= s[0] + 1 && s[1] <= x[1] + 1) || s : null;
+        const tip = o ? ` data-tip="${escape(`${this._fmtTime(o[0], withDate)}–${endLabel(o)}`)}" data-dur="${escape(this._fmtSeconds(o[1] - o[0]))}"` : "";
         return `<span class="seg ${cls[s[2]] || "none"}" style="left:${left.toFixed(3)}%;width:${width.toFixed(3)}%"${tip}></span>`;
       })
       .join("");

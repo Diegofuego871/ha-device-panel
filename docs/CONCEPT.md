@@ -288,6 +288,11 @@ Umgesetzt in 0.3.0b1 (`availability.py`).
     instabil, Sammelausfall, Meldungen) zählen einen Ausfall über eine Lücke
     als einen (`bridged`), die Lücke als Teil davon. Balken, Streifen und
     Puls zeigen weiter, was HA beobachtet hat, die Lücke als "keine Daten".
+  - Liste der Unterbrüche im Statistik-Fenster ebenso (seit 0.20.0,
+    Fehlerbericht des Nutzers: nach jedem Neustart ein neuer Eintrag):
+    `history()` liefert `outages` aus den überbrückten Abschnitten; das
+    Panel nimmt Liste, Zahl, Summe, längsten, Prozent (`summary`) und den
+    Tooltip eines Balkenteils daraus, nicht aus den Rohabschnitten.
   - Prozent erst ab 1 Std. Daten im Zeitraum (seit 0.17.0,
     `availability.PCT_MIN_COVERED`, im Panel gleich): Kurz nach dem ersten
     Start hiesse ein Unterbruch von einer Minute sonst "50 %". Darunter

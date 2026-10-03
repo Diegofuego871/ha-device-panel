@@ -50,6 +50,11 @@ anhaltender Benachrichtigung.
   Ein solches Ergebnis wird jetzt verworfen und die Liste neu abgefragt.
   Dasselbe galt für den Typ von Hand, die Einstellungen pro Gerät und
   gespeicherte Einstellungen.
+- Fenster "Verfügbarkeit": ein Ausfall über Neustarts von Home Assistant
+  erschien nach jedem Neustart als neuer Eintrag. Ausfälle ohne "online"
+  dazwischen sind jetzt ein Eintrag vom Beginn bis zum Ende, in der Liste,
+  der Zahl, der Summe, dem Prozentwert und dem Tooltip, wie in den
+  Kacheln. Der Balken zeigt die Zeit ohne Daten weiterhin.
 
 ## [0.19.0] - 2026-10-02
 

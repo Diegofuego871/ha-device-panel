@@ -77,7 +77,8 @@
   const HIST = {
     a: { since: 40 * D, outages: [[4560 * 60, 4560 * 60]] },
     b: { since: 40 * D, outages: [[134 * 60, 134 * 60], [11 * H, 7 * 60], [3 * D, 20 * 60], [9 * D, 45 * 60]] },
-    c: { since: 40 * D, outages: [[47 * 60, 47 * 60], [2 * D + 5 * H, 15 * 60]], gaps: [[6 * D, 2 * H]] },
+    // Zwei Neustarts während des laufenden Ausfalls (gapsOff): ein Unterbruch.
+    c: { since: 40 * D, outages: [[47 * 60, 47 * 60], [2 * D + 5 * H, 15 * 60]], gaps: [[6 * D, 2 * H]], gapsOff: [[30 * 60, 3 * 60], [15 * 60, 2 * 60]] },
     d: { since: 40 * D, outages: [[6 * 60, 6 * 60]] },
     e: { since: 40 * D, outages: [[2 * H, 4 * 60], [5 * H, 6 * 60], [11 * H, 5 * 60], [16 * H, 3 * 60], [20 * H, 9 * 60], [4 * D, 10 * 60]] },
     f: { since: 40 * D, outages: [[3 * H, 3 * 60], [8 * H, 4 * 60], [14 * H, 3 * 60]] },
@@ -99,7 +100,17 @@
       if (dur < a) list.push([nowS - a + dur, ONLINE]);
     }
     for (const [a, dur] of h.gaps || []) list.push([nowS - a, null], [nowS - a + dur, ONLINE]);
+    for (const [a, dur] of h.gapsOff || []) list.push([nowS - a, null], [nowS - a + dur, OFFLINE]);
     return list.sort((x, y) => x[0] - y[0]);
+  }
+  // Wie availability.bridged: "keine Daten" zwischen zwei Ausfällen fällt weg.
+  function bridged(evs) {
+    const out = [];
+    evs.forEach((e, i) => {
+      if (e[1] === null && out.length && out[out.length - 1][1] === OFFLINE && i + 1 < evs.length && evs[i + 1][1] === OFFLINE) return;
+      out.push(e);
+    });
+    return out;
   }
 
   // Wie availability.segments/summarize/strip im Backend.
@@ -159,6 +170,7 @@
     const start = end - span;
     const evs = events(id);
     const segs = segments(evs, start, end);
+    const counted = segments(bridged(evs), start, end);
     const days = [];
     if (span > D) {
       const midnight = new Date(end * 1000);
@@ -167,16 +179,18 @@
         const ds = new Date(midnight); ds.setDate(ds.getDate() - i);
         const de = new Date(ds); de.setDate(de.getDate() + 1);
         const dsegs = segments(evs, ds / 1000, Math.min(end, de / 1000));
-        const off = dsegs.filter((s) => s[2] === OFFLINE);
+        const off = segments(bridged(evs), ds / 1000, Math.min(end, de / 1000)).filter((s) => s[2] === OFFLINE);
         days.push({ start: ds / 1000, outages: off.length, offline: Math.round(off.reduce((a, s) => a + s[1] - s[0], 0)), nodata: dsegs.every((s) => s[2] === null) });
       }
     }
-    return { start, end, first: evs[0] ? evs[0][0] : null, segments: segs, summary: summarize(segs), days };
+    const outages = counted.filter((s) => s[2] === OFFLINE).map(([a, b]) => [a, b]);
+    return { start, end, first: evs[0] ? evs[0][0] : null, segments: segs, outages, summary: summarize(counted), days };
   }
+  // Wie das Backend: Zahlen über Lücken als ein Ausfall, der Streifen zeigt,
+  // was HA beobachtet hat.
   function avail24(id) {
-    const segs = segments(events(id), nowS - D, nowS);
-    const s = summarize(segs);
-    return s ? { ...s, strip: strip(segs, nowS - D, nowS) } : null;
+    const s = summarize(segments(bridged(events(id)), nowS - D, nowS));
+    return s ? { ...s, strip: strip(segments(events(id), nowS - D, nowS), nowS - D, nowS) } : null;
   }
 
   const dev = (id, name, area, integ, connection, type, extra = {}) => ({

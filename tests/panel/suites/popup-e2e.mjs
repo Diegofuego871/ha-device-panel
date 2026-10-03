@@ -20,7 +20,7 @@ const TEXT = {
     tile7: ["Unterbrüche 7 Tage", "3", "zusammen 2 Std. 41 Min."], signal: ["Empfang", "LQI 38", "schwach"], battery: ["Batterie", "8%", "niedrig"],
     update: "Update auf 2.2.0 verfügbar", live: "Lebenszeichen", unavailable: "nicht verfügbar", liveHint: "Markierte Entitäten zeigen, ob das Gerät lebt.",
     statTitle: "Verfügbarkeit", ranges: ["24 Std.", "7 Tage", "30 Tage"], pct24: "90,2%",
-    facts24: ["2 Unterbrüche", "zusammen 2 Std. 21 Min.", "längster 2 Std. 14 Min."], ongoing: "läuft", dur: "2 Std. 14 Min.", now: "jetzt",
+    facts24: ["2 Unterbrüche", "zusammen 2 Std. 21 Min.", "längster 2 Std. 14 Min."], ongoing: "läuft", dur: "2 Std. 14 Min.", dur47: "47 Min.", one24: "1 Unterbruch", now: "jetzt",
     legend: ["Online", "Ausgefallen"], tip: "Ausgefallen", days: "Unterbrüche pro Tag", today: "heute", out30: "4 Unterbrüche",
     retry: "wartet auf neuen Versuch", pillA: "Ausgefallen seit ≥ 3 T. 4 Std.", always: "keine Unterbrüche", since: "Daten seit", none: "Keine Daten",
     gone: "Dieses Gerät gibt es nicht mehr oder es wird nicht mehr überwacht.", close: "Schliessen",
@@ -33,7 +33,7 @@ const TEXT = {
     tile7: ["Outages 7 days", "3", "2 h 41 min in total"], signal: ["Signal", "LQI 38", "weak"], battery: ["Battery", "8%", "low"],
     update: "Update to 2.2.0 available", live: "Sign of life", unavailable: "unavailable", liveHint: "Marked entities show whether the device is alive.",
     statTitle: "Availability", ranges: ["24 h", "7 days", "30 days"], pct24: "90.2%",
-    facts24: ["2 outages", "2 h 21 min in total", "longest 2 h 14 min"], ongoing: "ongoing", dur: "2 h 14 min", now: "now",
+    facts24: ["2 outages", "2 h 21 min in total", "longest 2 h 14 min"], ongoing: "ongoing", dur: "2 h 14 min", dur47: "47 min", one24: "1 outage", now: "now",
     legend: ["Online", "Offline"], tip: "Offline", days: "Outages per day", today: "today", out30: "4 outages",
     retry: "waiting to retry", pillA: "Offline for ≥ 3 d 4 h", always: "no outages", since: "data since", none: "No data",
     gone: "This device no longer exists or is no longer monitored.", close: "Close",
@@ -195,7 +195,18 @@ for (const lang of ["de", "en"]) {
 
     // Lücke ohne Daten (HA lief nicht)
     await tap(mobile ? '.mc[data-open="c"]' : 'tr[data-open="c"]');
-    await tap('dialog.device [data-dlg="stat"][data-range="7d"]');
+    // Zwei Neustarts während des Ausfalls: ein Eintrag, ganze Dauer, nicht drei
+    await tap('dialog.device [data-dlg="stat"][data-range="24h"]');
+    await wait(`return !!r.querySelector("dialog.stat-dlg .avail-pct")`);
+    const cList = await texts("dialog.stat-dlg .avail-list div");
+    const cBars = await ev(`return r.querySelectorAll("dialog.stat-dlg .avail-bar .seg.off").length`);
+    check(`[${tag}] über Neustarts ein Unterbruch`, cList.length === 1 && cList[0].includes(T.ongoing) && cList[0].endsWith(T.dur47) && cBars === 3 && (await text("dialog.stat-dlg .avail-facts")).includes(T.one24), `${JSON.stringify(cList)} / ${cBars} / ${await text("dialog.stat-dlg .avail-facts")}`);
+    const cSeg = await f.evaluateHandle(new Function(`return ${R}.querySelectorAll("dialog.stat-dlg .seg.off")[1]`));
+    if (mobile) await cSeg.asElement().tap(); else await cSeg.asElement().hover();
+    const cTip = await ev(`const t=r.querySelector("dialog.stat-dlg .avail-tip"); return t.hidden ? "" : t.textContent`);
+    check(`[${tag}] Tooltip eines Teils zeigt den ganzen Unterbruch`, cTip.includes(T.ongoing) && cTip.includes(T.dur47), cTip);
+    await p.screenshot({ path: `${outDir}/stat-restarts-${lang}-${mobile ? "mobile" : "desktop"}.png` });
+    await tap('[data-stat="range"][data-range="7d"]');
     check(`[${tag}] Lücke: schraffiert und in der Legende`, await wait(`return !!r.querySelector("dialog.stat-dlg .seg.none") && r.querySelector("dialog.stat-dlg .avail-legend").textContent.includes(${JSON.stringify(T.none)})`));
     await tap('dialog.stat-dlg [data-stat="close"]');
     await tap('dialog.device [data-dlg="close"]');

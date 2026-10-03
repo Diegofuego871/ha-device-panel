@@ -245,6 +245,9 @@ async def test_outage_runs_through_restart(hass: HomeAssistant, hass_storage: di
     assert week["summary"]["outages"] == 1
     assert week["summary"]["longest"] >= 3 * 86400
     assert [s for _a, _b, s in week["segments"]].count(None) == 2  # Balken: vor dem Protokoll und die Lücke
+    # Liste der Unterbrüche: einer über die Lücke, vom Beginn bis jetzt
+    assert len(week["outages"]) == 1
+    assert abs(week["outages"][0][0] - max(began, week["start"])) < 1 and week["outages"][0][1] == week["end"]
     # Über Mitternacht an jedem Tag einmal, ab dem Tag des Beginns (aus den
     # Daten abgeleitet, nicht aus der Tageszeit des Laufs)
     ends = [day["start"] for day in week["days"][1:]] + [time.time()]
