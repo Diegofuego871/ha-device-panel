@@ -74,13 +74,13 @@ async def test_overrides_listed_and_reset(hass: HomeAssistant, setup, hass_ws_cl
     # Zurücksetzen: nur die genannten, unbekannte zählen nicht
     res = await _ws(client, n, type=f"{DOMAIN}/reset_device_settings", battery=[bad.id, "gibtsnicht"], notify=[lampe.id])
     n += 1
-    assert res["result"] == {"battery": 1, "notify": 1, "connection": 0}
+    assert res["result"] == {"battery": 1, "notify": 1, "connection": 0, "signal": 0}
     over = (await _ws(client, n, type=f"{DOMAIN}/get_options"))["result"]["overrides"]
     n += 1
     assert [i["name"] for i in over["battery"]] == ["Wassersensor"]
     assert [i["name"] for i in over["notify"]] == ["Thermostat"]
     # Leere Anfrage: nichts zu tun
-    assert (await _ws(client, n, type=f"{DOMAIN}/reset_device_settings"))["result"] == {"battery": 0, "notify": 0, "connection": 0}
+    assert (await _ws(client, n, type=f"{DOMAIN}/reset_device_settings"))["result"] == {"battery": 0, "notify": 0, "connection": 0, "signal": 0}
 
 
 async def test_deleted_device_kept_but_not_listed(hass: HomeAssistant, setup, hass_ws_client, hass_storage: dict[str, Any]) -> None:
@@ -89,7 +89,7 @@ async def test_deleted_device_kept_but_not_listed(hass: HomeAssistant, setup, ha
     assert (await _ws(client, 1, type=f"{DOMAIN}/set_device_settings", device_id=gone.id, notify=False))["success"]
     dr.async_get(hass).async_remove_device(gone.id)
     await hass.async_block_till_done()
-    assert (await _ws(client, 2, type=f"{DOMAIN}/get_options"))["result"]["overrides"] == {"battery": [], "notify": [], "connection": []}
+    assert (await _ws(client, 2, type=f"{DOMAIN}/get_options"))["result"]["overrides"] == {"battery": [], "notify": [], "connection": [], "signal": []}
     # Gespeichert bleibt er: HA stellt das Gerät mit derselben ID wieder her
     from custom_components.device_panel.devices import device_settings  # noqa: PLC0415
 
@@ -142,7 +142,7 @@ async def test_connection_by_hand(hass: HomeAssistant, setup, hass_ws_client, ha
     over = (await _ws(client, next(ids), type=f"{DOMAIN}/get_options"))["result"]["overrides"]["connection"]
     assert [(i["name"], i["value"]) for i in over] == [("Glücksklee", "ble")]
     res = await _ws(client, next(ids), type=f"{DOMAIN}/reset_device_settings", connection=[dev.id, "gibtsnicht"])
-    assert res["result"] == {"battery": 0, "notify": 0, "connection": 1}
+    assert res["result"] == {"battery": 0, "notify": 0, "connection": 1, "signal": 0}
     assert (await listed())["connection_manual"] is False
     await hass.async_block_till_done()
     assert hass_storage[f"{DOMAIN}.devices"]["data"]["connections"] == {}
@@ -181,3 +181,54 @@ async def test_connection_per_integration(hass: HomeAssistant, setup, hass_ws_cl
     # Zurück auf die Erkennung
     assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_options", values={"connection_integrations": {}}))["success"]
     assert (await listed())["Giesskanne"] == ("wifi", "wifi", None, False)
+
+
+async def test_signal_setting(hass: HomeAssistant, setup, hass_ws_client, hass_storage: dict[str, Any]) -> None:
+    """Empfang-Warnung pro Gerät (0.21.0, Mockup signal-v1 A): aus oder eigene Schwelle."""
+    sensor = _device(hass, "Präsenzsensor")
+    _entity(hass, sensor, "sensor", "rssi", "-88", original_device_class="signal_strength", unit_of_measurement="dBm")
+    zig = _device(hass, "Kontakt", domain="zha")
+    _entity(hass, zig, "binary_sensor", "c", "off")
+    client = await hass_ws_client(hass)
+    ids = iter(range(1, 100))
+
+    async def setting(dev: str) -> Any:
+        devs = (await _ws(client, next(ids), type=f"{DOMAIN}/list_devices"))["result"]["devices"]
+        return next(d for d in devs if d["id"] == dev)["signal_setting"]
+
+    assert await setting(sensor.id) is None
+    # dBm (negativ) und LQI (positiv), "off"
+    for value in (-93, 50, "off"):
+        assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_device_settings", device_id=sensor.id, signal=value))["success"]
+        assert await setting(sensor.id) == value
+    assert hass_storage[f"{DOMAIN}.devices"]["data"]["signal"] == {sensor.id: "off"}
+    # Ausserhalb der Bereiche abgelehnt
+    for bad in (-120, -30, 0, 201, "aus", True):
+        res = await _ws(client, next(ids), type=f"{DOMAIN}/set_device_settings", device_id=sensor.id, signal=bad)
+        assert res["error"]["code"] == "invalid_format", bad
+    assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_device_settings", device_id=zig.id, signal=40))["success"]
+    over = (await _ws(client, next(ids), type=f"{DOMAIN}/get_options"))["result"]["overrides"]["signal"]
+    assert [(i["name"], i["value"]) for i in over] == [("Kontakt", 40), ("Präsenzsensor", "off")]
+    # Zurücksetzen einzeln und im Popup (None)
+    res = await _ws(client, next(ids), type=f"{DOMAIN}/reset_device_settings", signal=[zig.id, "gibtsnicht"])
+    assert res["result"] == {"battery": 0, "notify": 0, "connection": 0, "signal": 1}
+    assert await setting(zig.id) is None
+    assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_device_settings", device_id=sensor.id, signal=None))["success"]
+    assert await setting(sensor.id) is None
+    # Ohne Eintrag kein Schlüssel in der Datei (wie "notify_mute")
+    assert "signal" not in hass_storage[f"{DOMAIN}.devices"]["data"]
+
+
+async def test_signal_setting_loaded(hass: HomeAssistant, hass_storage: dict[str, Any]) -> None:
+    """Gespeicherte Empfang-Warnung wird geladen, Ungültiges fällt weg."""
+    from custom_components.device_panel.devices import device_settings  # noqa: PLC0415
+
+    hass_storage[f"{DOMAIN}.devices"] = {
+        "version": 1, "key": f"{DOMAIN}.devices",
+        "data": {"types": {}, "battery": {}, "notify_off": [], "connections": {}, "signal": {"a": -95, "b": "off", "c": 0, "d": "x", "e": 120}},
+    }
+    entry = MockConfigEntry(domain=DOMAIN, title="Device Panel")
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert device_settings(hass)["signal"] == {"a": -95, "b": "off", "e": 120}

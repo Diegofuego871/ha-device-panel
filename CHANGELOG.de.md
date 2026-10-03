@@ -7,6 +7,29 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.21.0] - 2026-10-03
+
+Empfang-Warnung pro Gerät und neue Geräte markiert.
+
+### Hinzugefügt
+
+- Geräte-Popup, "Einstellungen für dieses Gerät": "Empfang-Warnung" wie die
+  Batterie-Warnung: globaler Wert (unter -80 dBm bzw. LQI 61), eigene
+  Schwelle "schwach unter" oder aus. Die eigene Schwelle beginnt etwas
+  unter dem heutigen Wert (5 dBm bzw. 10 LQI). Markierung, Chip "Schwacher
+  Empfang" und "Nur Probleme" folgen; sie zählt als eigene Einstellung
+  (Symbol beim Namen, Chip "Eigene Einstellung") und lässt sich in den
+  Einstellungen im Abschnitt "Verbindungsart" zurücksetzen. Für Geräte,
+  die immer schwachen Empfang haben.
+- Neue Geräte: die ersten 3 Tage nach dem Hinzufügen in Home Assistant
+  steht "Neu" beim Namen (Datum im Tooltip), der Chip "Neu" zeigt nur sie.
+  Das Geräte-Popup zeigt "Hinzugefügt" mit Datum.
+
+### Geändert
+
+- Der Abschnitt "Meldungen für dieses Gerät" im Geräte-Popup heisst jetzt
+  "Einstellungen für dieses Gerät".
+
 ## [0.20.0] - 2026-10-03
 
 Ausfall-Meldungen pro Integration, mit Verzögerung, Inhalt, Aktionen und
@@ -590,6 +613,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.21.0
 [0.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.20.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0

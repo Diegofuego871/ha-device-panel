@@ -7,6 +7,28 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.21.0] - 2026-10-03
+
+Weak signal warning per device and new devices marked.
+
+### Added
+
+- Device pop-up, "Settings for this device": "Weak signal warning" like the
+  battery warning: global value (below -80 dBm or LQI 61), own threshold
+  "weak below" or off. The own threshold starts a little below today's
+  value (5 dBm or 10 LQI). Marking, the chip "Weak signal" and "Problems
+  only" follow; it counts as an own setting (symbol next to the name, chip
+  "Own setting") and can be reset in the settings, section "Connection
+  type". For devices that always have a weak signal.
+- New devices: for 3 days after they were added to Home Assistant they
+  show "New" next to the name (date in the tooltip), and the chip "New"
+  shows only them. The device pop-up shows "Added" with the date.
+
+### Changed
+
+- The section "Notifications for this device" in the device pop-up is now
+  called "Settings for this device".
+
 ## [0.20.0] - 2026-10-03
 
 Outage notifications per integration, with delay, content, actions and a
@@ -560,6 +582,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.21.0
 [0.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.20.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0

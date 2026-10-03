@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any
 
+import attr
 import pytest
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
@@ -174,3 +175,19 @@ async def test_response_has_names_and_time(hass: HomeAssistant, setup) -> None:
     assert result["offline_after"] == 120
     assert result["battery_low"] == 15
     assert dt_util.parse_datetime(result["now"]) is not None
+
+
+async def test_new_devices_marked_for_three_days(hass: HomeAssistant, setup, freezer) -> None:
+    """Neu (0.21.0): drei Tage nach dem Anlegen in HA; Geräte von vor HA 2024.7 (1970) nie."""
+    fresh = _device(hass, "Neue Lampe")
+    data = (await _by_name(hass))["Neue Lampe"]
+    assert data["new"] is True
+    assert dt_util.parse_datetime(data["created_at"]) == fresh.created_at
+    freezer.tick(timedelta(days=2, hours=23))
+    assert (await _by_name(hass))["Neue Lampe"]["new"] is True
+    freezer.tick(timedelta(hours=2))
+    assert (await _by_name(hass))["Neue Lampe"]["new"] is False
+    # Alter Eintrag aus der Registry (Migration setzt 1970)
+    dr.async_get(hass).devices[fresh.id] = attr.evolve(fresh, created_at=dt_util.utc_from_timestamp(0))
+    data = (await _by_name(hass))["Neue Lampe"]
+    assert data["created_at"] is None and data["new"] is False

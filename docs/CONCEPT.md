@@ -80,7 +80,10 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    (`docs/mockups/pulse-v1/`), einzelne Geräte ausblenden
    (`docs/mockups/hide-v1/`), Spalten wie HA "Anpassen"
    (`docs/mockups/customize-v1/`); ohne Mockup: neue Geräte 3 Tage
-   markiert, Chip "Neu".
+   markiert, Chip "Neu" (umgesetzt in 0.21.0: `created_at` der
+   Geräte-Registry, `NEW_DEVICE_DAYS`; Geräte von vor HA 2024.7 haben 1970
+   und gelten nie als neu; ein gelöschtes und wieder hinzugefügtes Gerät
+   behält sein altes Datum).
 3. **Einstellungsmenü im Panel**, das alle Optionen der Integration abbildet
    (siehe "Pflicht", Abschnitt 1). Darin pro Integration: anzeigen, Push,
    anhaltende Benachrichtigung. Grundgerüst umgesetzt in 0.4.0 (Zahnrad,
@@ -490,6 +493,16 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   Ausfälle in `.storage/device_panel.notify`: kein erneuter Ausfall nach
   einem Neustart, die Rückkehr kommt trotzdem. Standard: alles aus ausser
   Sammelausfall.
+- Empfang-Warnung pro Gerät (seit 0.21.0, Variante A in
+  `docs/mockups/signal-v1/`): globaler Wert (Panel: schwach unter -80 dBm
+  bzw. LQI 60 und darunter), eigene Schwelle "schwach unter" (dBm -110 bis
+  -40, LQI 1 bis 200; Vorschlag 5 dBm bzw. 10 LQI unter dem heutigen Wert)
+  oder "off". Gespeichert in `.storage/device_panel.devices` ("signal",
+  nur mit Einträgen). Bewertet wird im Panel (`devSigLevel`): "off" nie
+  schwach, sonst Stufe 1 nur unter der Schwelle; Balken, Chip "Schwacher
+  Empfang" und "Nur Probleme" folgen. Zählt als "Eigene Einstellung",
+  zurückzusetzen im Abschnitt "Verbindungsart". Push für schwachen Empfang
+  gibt es nicht.
 - Ausfall-Meldungen nach Bild 5 (seit 0.20.0):
   - "Erst melden nach" (`notify_delay`, 0–60 Min.): fällig, wenn
     Beginn + Wartezeit erreicht ist; Beginn ist der Beginn des Ausfalls im

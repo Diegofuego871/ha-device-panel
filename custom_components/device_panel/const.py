@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "24"
+PANEL_VERSION = "25"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -126,6 +126,16 @@ DAILY_CONTENTS = (DAILY_NEW, DAILY_ALL)
 # oder eigene Schwelle, Ausfall- und Online-Meldungen aus.
 DATA_DEVICE_SETTINGS = f"{DOMAIN}_device_settings"
 BATTERY_OFF = "off"
+# Empfang-Warnung pro Gerät (seit 0.21.0, docs/mockups/signal-v1, A): "off"
+# oder eigene Schwelle "schwach unter"; dBm negativ, LQI positiv. Ohne
+# Eintrag gilt der Standard des Panels (unter -80 dBm bzw. LQI 60 und
+# darunter).
+SIGNAL_OFF = "off"
+# Neue Geräte (seit 0.21.0): so lange nach dem Anlegen in HA markiert, mit
+# eigenem Filter-Chip.
+NEW_DEVICE_DAYS = 3
+SIGNAL_DBM_RANGE = (-110, -40)
+SIGNAL_LQI_RANGE = (1, 200)
 CLICK_PANEL = "panel"
 CLICK_DEVICE = "device"
 CLICK_TARGETS = (CLICK_PANEL, CLICK_DEVICE)

@@ -197,6 +197,8 @@
     id, name, area, integrations: [integ], integration: { domain: integ, title: TITLES[integ] || integ }, type, connection,
     service: false, disabled: false, entities: 3, online: true, offline_since: null, since_at_least: false, signal: null, via: null, battery: null,
     update: null, manufacturer: "Beispiel AG", model: "Modell " + id.toUpperCase(), sw_version: "1.0." + id.length, hw_version: null,
+    // Angelegt vor 200 Tagen; "neu" wie im Backend: höchstens 3 Tage alt.
+    created_at: new Date(now - 200 * D * 1000).toISOString(), new: false,
     avail24: avail24(id), ...extra,
   });
   const off = (min, extra = {}) => ({ online: false, offline_since: ago(min), ...extra });
@@ -215,11 +217,11 @@
     dev("h", "Stromzähler", "Keller", "esphome", "wifi", "sensor", { signal: { kind: "dbm", value: -61 }, update: "2026.10.0" }),
     dev("i", "Türschloss Haustür", "Eingang", "matter", "matter", "lock", { battery: { level: 81, low: false } }),
     dev("j", "Heizkörper Kinderzimmer", "Kinderzimmer", "zwave_js", "zwave", "climate", { signal: { kind: "dbm", value: -72 }, battery: { level: 67, low: false } }),
-    dev("k", "Steckdose Kaffeemaschine", "Küche", "shelly", "wifi", "outlet", { signal: { kind: "dbm", value: -55 } }),
+    dev("k", "Steckdose Kaffeemaschine", "Küche", "shelly", "wifi", "outlet", { signal: { kind: "dbm", value: -55 }, created_at: new Date(now - 50 * 60000).toISOString(), new: true }),
     dev("l", "Rollladen Büro", "Büro", "zha", "zigbee", "cover", { signal: { kind: "lqi", value: 168 } }),
     dev("m", "Rauchmelder Flur", "Flur", "zha", "zigbee", "safety", { signal: { kind: "lqi", value: 122 }, battery: { level: 92, low: false } }),
     dev("n", "NAS", "Keller", "synology_dsm", "network", "other"),
-    dev("o", "Saugroboter", "Wohnzimmer", "roborock", "cloud", "vacuum"),
+    dev("o", "Saugroboter", "Wohnzimmer", "roborock", "cloud", "vacuum", { created_at: new Date(now - 2 * D * 1000).toISOString(), new: true }),
     dev("p", "Altgerät", null, "zha", null, "other", { online: null, avail24: null }),
     dev("q", "Wetterdienst", null, "met", "cloud", "sensor", { service: true }),
     dev("r", "Geist", null, "zha", "zigbee", "other", { entities: 0 }),
@@ -276,6 +278,7 @@
       battery: devices.filter((d) => d.id in s.battery).map((d) => ({ ...info(d), value: s.battery[d.id] })).sort(byName),
       notify: devices.filter((d) => s.notifyOff.has(d.id)).map(info).sort(byName),
       connection: devices.filter((d) => d.id in window.__connOverrides).map((d) => ({ ...info(d), value: window.__connOverrides[d.id] })).sort(byName),
+      signal: devices.filter((d) => d.id in s.signal).map((d) => ({ ...info(d), value: s.signal[d.id] })).sort(byName),
     };
   }
   const integrations = {
@@ -349,7 +352,7 @@
   };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
-  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {} };
+  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {} };
   window.__connOverrides = {};
   const pushHass = () => {
     const ha = document.querySelector("home-assistant").hass;
@@ -441,7 +444,9 @@
         for (const id of new Set(msg.notify || [])) if (s.notifyOff.delete(id)) notify++;
         let connection = 0;
         for (const id of new Set(msg.connection || [])) if (id in window.__connOverrides) { delete window.__connOverrides[id]; connection++; }
-        return { battery, notify, connection };
+        let signal = 0;
+        for (const id of new Set(msg.signal || [])) if (id in s.signal) { delete s.signal[id]; signal++; }
+        return { battery, notify, connection, signal };
       }
       if (msg.type === "device_panel/set_options") {
         if (window.__setOptsFails) throw new Error(window.__setOptsFails);
@@ -499,6 +504,14 @@
           else window.__devSettings.battery[msg.device_id] = v;
           out.battery = v;
         }
+        if ("signal" in msg) {
+          // Wie das Backend: "off" oder dBm -110..-40 bzw. LQI 1..200.
+          const v = msg.signal;
+          if (!(v === null || v === "off" || (Number.isInteger(v) && ((v >= -110 && v <= -40) || (v >= 1 && v <= 200))))) throw { code: "invalid_format", message: "signal" };
+          if (v === null) delete window.__devSettings.signal[msg.device_id];
+          else window.__devSettings.signal[msg.device_id] = v;
+          out.signal = v;
+        }
         if ("notify" in msg) {
           // Jede Wahl hebt "stumm bis" auf (wie das Backend).
           delete window.__devSettings.mute[msg.device_id];
@@ -544,6 +557,7 @@
             battery_default: { pct: own[d.integration?.domain] ?? batLow, integration: own[d.integration?.domain] != null ? d.integration.domain : null },
             notify_off: window.__devSettings.notifyOff.has(d.id),
             notify_mute_until: window.__devSettings.mute[d.id] || null,
+            signal_setting: window.__devSettings.signal[d.id] ?? null,
             // Wie das Backend: von Hand vor der Erkennung.
             connection: window.__connOverrides[d.id] || (window.__opts.connection_integrations || {})[d.integration?.domain] || d.connection,
             connection_integration: (window.__opts.connection_integrations || {})[d.integration?.domain] || null,

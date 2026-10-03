@@ -15,7 +15,7 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     pill: "Ausgefallen seit 2 Std. 14 Min.", sub: "Bewegung / Präsenz · Flur", open: "HA-Geräteseite öffnen",
-    secs: ["Statistik", "Verbindung", "Gerät", "Meldungen für dieses Gerät", "Entitäten · 3"],
+    secs: ["Statistik", "Verbindung", "Gerät", "Einstellungen für dieses Gerät", "Entitäten · 3"],
     tile24: ["Verfügbarkeit 24 Std.", "90,2%", "2 Unterbrüche · längster 2 Std. 14 Min."],
     tile7: ["Unterbrüche 7 Tage", "3", "zusammen 2 Std. 41 Min."], signal: ["Empfang", "LQI 38", "schwach"], battery: ["Batterie", "8%", "niedrig"],
     update: "Update auf 2.2.0 verfügbar", live: "Lebenszeichen", unavailable: "nicht verfügbar", liveHint: "Markierte Entitäten zeigen, ob das Gerät lebt.",
@@ -28,7 +28,7 @@ const TEXT = {
   },
   en: {
     pill: "Offline for 2 h 14 min", sub: "Motion / presence · Flur", open: "Open device page",
-    secs: ["Statistics", "Connection", "Device", "Notifications for this device", "Entities · 3"],
+    secs: ["Statistics", "Connection", "Device", "Settings for this device", "Entities · 3"],
     tile24: ["Availability 24 h", "90.2%", "2 outages · longest 2 h 14 min"],
     tile7: ["Outages 7 days", "3", "2 h 41 min in total"], signal: ["Signal", "LQI 38", "weak"], battery: ["Battery", "8%", "low"],
     update: "Update to 2.2.0 available", live: "Sign of life", unavailable: "unavailable", liveHint: "Marked entities show whether the device is alive.",

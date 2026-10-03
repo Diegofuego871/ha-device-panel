@@ -1,4 +1,4 @@
-// Popup "Meldungen für dieses Gerät" (Variante A, docs/mockups/notify-v1):
+// Popup "Einstellungen für dieses Gerät" (bis 0.20.0 "Meldungen für dieses Gerät"; Variante A, docs/mockups/notify-v1):
 // Batterie-Warnung globaler Wert / eigene Schwelle / aus, Ausfall- und
 // Online-Meldungen aus, sofort gespeichert; Eingabe übersteht das Abfragen.
 // Deutsch und Englisch, Desktop und Handy.
@@ -11,11 +11,11 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
-    sec: "Meldungen für dieses Gerät", def: "Globaler Wert (15 %)", own: "Eigene Schwelle", short: "Globaler Wert: 15 %.", notifyOn: "Globale Einstellung",
+    sec: "Einstellungen für dieses Gerät", def: "Globaler Wert (15 %)", own: "Eigene Schwelle", short: "Globaler Wert: 15 %.", notifyOn: "Globale Einstellung",
     range: "Erlaubt: 5 bis 50", notifyOff: "Aus für dieses Gerät", saveErr: "Konnte nicht gespeichert werden:",
   },
   en: {
-    sec: "Notifications for this device", def: "Global value (15 %)", own: "Own threshold", short: "Global value: 15 %.", notifyOn: "Global setting",
+    sec: "Settings for this device", def: "Global value (15 %)", own: "Own threshold", short: "Global value: 15 %.", notifyOn: "Global setting",
     range: "Allowed: 5 to 50", notifyOff: "Off for this device", saveErr: "Could not be saved:",
   },
 };

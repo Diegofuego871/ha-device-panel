@@ -219,6 +219,15 @@ hat dort einen echten Fehler oder Umweg gekostet.
 - **Zusammenfassungen nicht wie Zustände formulieren:** "Batterie schwach"
   als Liste eingeschalteter Meldungen las sich wie eine Warnung; mit Verb
   ("meldet …").
+- **Negative Zahlen auf dem Handy (0.21.0):** `inputmode="numeric"` zeigt
+  auf iOS nur Ziffern, ohne Minus; für die Empfang-Schwelle in dBm darum
+  `type="number"` ohne `inputmode` (Zahlen- und Zeichentastatur). Auf einem
+  echten iPhone noch nicht geprüft.
+- **Geräte-Registry kennt das Anlegedatum (0.21.0):** `DeviceEntry.created_at`
+  (seit HA 2024.7); ältere Einträge hat die Migration auf 1970 gesetzt. Im
+  Test lässt sich ein Eintrag mit `attr.evolve(device, created_at=…)`
+  ersetzen (private Attribute wie `_suggested_area` verhindern den
+  Konstruktor).
 - **Alter Stand überdeckt eigene Änderung (0.20.0):** `_fetch` lief nie
   doppelt; eine Abfrage, die vor einer Änderung im Popup begonnen hatte,
   lieferte danach den alten Stand und überschrieb die sofort gezeigte Wahl,

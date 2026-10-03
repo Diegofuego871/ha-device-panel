@@ -48,6 +48,10 @@ from .const import (
     DOMAIN,
     INT_RANGES,
     STORAGE_VERSION,
+    SIGNAL_DBM_RANGE,
+    SIGNAL_LQI_RANGE,
+    SIGNAL_OFF,
+    NEW_DEVICE_DAYS,
 )
 from .options_api import battery_threshold, effective
 
@@ -531,6 +535,8 @@ async def async_load_type_overrides(hass: HomeAssistant) -> None:
                 for k, v in (stored.get("notify_mute") or {}).items()
                 if isinstance(v, (int, float)) and not isinstance(v, bool)
             },
+            # Empfang-Warnung: "off" oder eigene Schwelle (seit 0.21.0).
+            "signal": {str(k): v for k, v in (stored.get("signal") or {}).items() if valid_signal_setting(v)},
         }
         conns = stored.get("connections") if isinstance(stored.get("connections"), dict) else {}
         hass.data[DATA_CONNECTION_OVERRIDES] = {str(k): v for k, v in conns.items() if v in CONNECTION_MANUAL}
@@ -547,13 +553,27 @@ async def _async_save_devices(hass: HomeAssistant) -> None:
     # Abgelaufene fallen beim Schreiben weg; ohne Eintrag kein Schlüssel.
     if mute := {d: t for d, t in settings.get("notify_mute", {}).items() if t > time.time()}:
         data["notify_mute"] = mute
+    if settings.get("signal"):
+        data["signal"] = dict(settings["signal"])
     await _types_store(hass).async_save(data)
 
 
 @callback
 def device_settings(hass: HomeAssistant) -> dict[str, Any]:
-    """{"battery": {Gerät: Prozent | "off"}, "notify_off": {Gerät, …}, "notify_mute": {Gerät: bis}}."""
-    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}}
+    """
+    {"battery": {Gerät: Prozent | "off"}, "notify_off": {Gerät, …},
+    "notify_mute": {Gerät: bis}, "signal": {Gerät: Schwelle | "off"}}.
+    """
+    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}}
+
+
+def valid_signal_setting(value: Any) -> bool:
+    """Empfang-Warnung: "off" oder ganze Zahl im Bereich für dBm oder LQI."""
+    if value == SIGNAL_OFF:
+        return True
+    if not isinstance(value, int) or isinstance(value, bool):
+        return False
+    return SIGNAL_DBM_RANGE[0] <= value <= SIGNAL_DBM_RANGE[1] or SIGNAL_LQI_RANGE[0] <= value <= SIGNAL_LQI_RANGE[1]
 
 
 def _iso(ts: float | None) -> str | None:
@@ -589,10 +609,16 @@ def device_battery_threshold(hass: HomeAssistant, opts: dict[str, Any], device: 
 async def async_set_device_settings(hass: HomeAssistant, device_id: str, **changes: Any) -> None:
     """
     Einstellungen eines Geräts: battery=None (globaler Wert), "off" oder
-    Prozent; notify=True/False (Ausfall- und Online-Meldungen).
+    Prozent; notify=True/False (Ausfall- und Online-Meldungen);
+    signal=None (Standard), "off" oder Schwelle "schwach unter".
     """
     await async_load_type_overrides(hass)
     settings = hass.data[DATA_DEVICE_SETTINGS]
+    if "signal" in changes:
+        if changes["signal"] is None:
+            settings.setdefault("signal", {}).pop(device_id, None)
+        else:
+            settings.setdefault("signal", {})[device_id] = changes["signal"]
     if "battery" in changes:
         if changes["battery"] is None:
             settings["battery"].pop(device_id, None)
@@ -609,7 +635,11 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
 
 
 async def async_reset_device_settings(
-    hass: HomeAssistant, battery: list[str], notify: list[str], connection: list[str] | None = None
+    hass: HomeAssistant,
+    battery: list[str],
+    notify: list[str],
+    connection: list[str] | None = None,
+    signal: list[str] | None = None,
 ) -> dict[str, int]:
     """
     Einstellungen mehrerer Geräte auf den globalen Wert zurück (Einstellungen,
@@ -627,9 +657,11 @@ async def async_reset_device_settings(
             done_notify += 1
     conns = hass.data[DATA_CONNECTION_OVERRIDES]
     done_conn = sum(1 for dev in set(connection or []) if conns.pop(dev, None) is not None)
-    if done_battery or done_notify or done_conn:
+    sig = settings.setdefault("signal", {})
+    done_signal = sum(1 for dev in set(signal or []) if sig.pop(dev, None) is not None)
+    if done_battery or done_notify or done_conn or done_signal:
         await _async_save_devices(hass)
-    return {"battery": done_battery, "notify": done_notify, "connection": done_conn}
+    return {"battery": done_battery, "notify": done_notify, "connection": done_conn, "signal": done_signal}
 
 
 async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str, Any]]]:
@@ -646,7 +678,8 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
     shown = {device.id for device, _entries in listed_devices(hass)}
     conns = connection_overrides(hass)
     items: dict[str, dict[str, Any]] = {}
-    for dev in {*settings["battery"], *settings["notify_off"], *conns}:
+    signal = settings.get("signal", {})
+    for dev in {*settings["battery"], *settings["notify_off"], *conns, *signal}:
         device = dev_reg.async_get(dev)
         if device is None:
             continue
@@ -673,6 +706,8 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
         "notify": sorted((items[dev] for dev in settings["notify_off"] if dev in items), key=by_name),
         # Verbindungsart von Hand (seit 0.17.0 eine eigene Einstellung wie die anderen).
         "connection": sorted(({**items[dev], "value": kind} for dev, kind in conns.items() if dev in items), key=by_name),
+        # Empfang-Warnung (seit 0.21.0): "off" oder Schwelle.
+        "signal": sorted(({**items[dev], "value": value} for dev, value in signal.items() if dev in items), key=by_name),
     }
 
 
@@ -845,7 +880,13 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "connection_auto": auto_conn,
                 "connection_integration": integ_conn,
                 "connection_manual": manual_conn is not None,
+                # Angelegt in HA; Geräte aus der Zeit vor HA 2024.7 haben 1970
+                # und gelten nie als neu.
+                "created_at": device.created_at.isoformat() if device.created_at.timestamp() > 0 else None,
+                "new": device.created_at.timestamp() > now_ts - NEW_DEVICE_DAYS * 86400,
                 "signal": signal,
+                # Empfang-Warnung des Geräts: None (Standard), "off" oder Schwelle.
+                "signal_setting": device_settings(hass).get("signal", {}).get(device.id),
                 "via": via,
                 **_battery_fields(hass, opts, device, entries, primary.domain if primary else None),
                 # Ausfall- und Online-Meldungen für dieses Gerät aus.

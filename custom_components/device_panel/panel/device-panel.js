@@ -65,6 +65,9 @@ const SORT_MOBILE = ["default", "name", "status", "avail", "battery", "signal", 
 // Schwacher Empfang (wie die Ursachen-Regeln in docs/CONCEPT.md).
 const WEAK_DBM = -80;
 const WEAK_LQI = 60;
+// Eigene Empfang-Schwelle pro Gerät "schwach unter" (wie const.SIGNAL_*_RANGE).
+const SIG_DBM_RANGE = [-110, -40];
+const SIG_LQI_RANGE = [1, 200];
 // Matter: Funkart (Thread/WLAN/LAN) ändert sich praktisch nie.
 const MATTER_REFRESH_MS = 3600000;
 // Popup: Entitäten und Kurzstatistik höchstens 30 s alt, Verlauf 60 s.
@@ -134,6 +137,8 @@ const MDI = {
   check: "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z",
   drag: "M9,3H11V5H9V3M13,3H15V5H13V3M9,7H11V9H9V7M13,7H15V9H13V7M9,11H11V13H9V11M13,11H15V13H13V11M9,15H11V17H9V15M13,15H15V17H13V15M9,19H11V21H9V19M13,19H15V21H13V19Z",
   tune: "M8 13C6.14 13 4.59 14.28 4.14 16H2V18H4.14C4.59 19.72 6.14 21 8 21S11.41 19.72 11.86 18H22V16H11.86C11.41 14.28 9.86 13 8 13M8 19C6.9 19 6 18.1 6 17C6 15.9 6.9 15 8 15S10 15.9 10 17C10 18.1 9.1 19 8 19M19.86 6C19.41 4.28 17.86 3 16 3S12.59 4.28 12.14 6H2V8H12.14C12.59 9.72 14.14 11 16 11S19.41 9.72 19.86 8H22V6H19.86M16 9C14.9 9 14 8.1 14 7C14 5.9 14.9 5 16 5S18 5.9 18 7C18 8.1 17.1 9 16 9Z",
+  sparkle: "M12,1L9,9L1,12L9,15L12,23L15,15L23,12L15,9L12,1Z",
+  signalOff: "M18,3V16.18L21,19.18V3H18M4.28,5L3,6.27L10.73,14H8V21H11V14.27L13,16.27V21H16V19.27L19.73,23L21,21.72L4.28,5M13,9V11.18L16,14.18V9H13M3,18V21H6V18H3Z",
   bellOff: "M20.84,22.73L18.11,20H3V19L5,17V11C5,9.86 5.29,8.73 5.83,7.72L1.11,3L2.39,1.73L22.11,21.46L20.84,22.73M19,15.8V11C19,7.9 16.97,5.17 14,4.29C14,4.19 14,4.1 14,4A2,2 0 0,0 12,2A2,2 0 0,0 10,4C10,4.1 10,4.19 10,4.29C9.39,4.47 8.8,4.74 8.26,5.09L19,15.8M12,23A2,2 0 0,0 14,21H10A2,2 0 0,0 12,23Z",
   batteryOff: "M22.11 21.46L2.39 1.73L1.11 3L6 7.89V20.67C6 21.4 6.6 22 7.33 22H16.67C17.4 22 18 21.4 18 20.67V19.89L20.84 22.73L22.11 21.46M16 18H8V9.89L16 17.89V18M8.2 4H9V2H15V4H16.67C17.4 4 18 4.6 18 5.33V15.8L16 13.8V6H10.2L8.2 4Z",
   chevronDown: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z",
@@ -213,12 +218,32 @@ function bars(level, dim) {
   return `<svg class="ic" width="17" height="12" viewBox="0 0 17 12" aria-hidden="true">${rects}</svg>`;
 }
 const sigText = (sig) => (sig.kind === "dbm" ? `${sig.value} dBm` : `LQI ${sig.value}`);
-const isWeak = (sig) => sigLevel(sig) === 1;
+// Schwelle als Text: negativ = dBm, positiv = LQI.
+const sigLimitText = (v) => sigText({ kind: v < 0 ? "dbm" : "lqi", value: v });
 // Empfang zum Sortieren: Stufe, dann Wert (dBm und LQI je in ihrem Bereich).
 const sigRank = (sig) => {
   const level = sigLevel(sig);
   return level ? level * 1000 + (sig.kind === "dbm" ? sig.value + 200 : sig.value) : null;
 };
+// Stufe mit der Empfang-Warnung des Geräts (seit 0.21.0, docs/mockups/signal-v1,
+// A): "aus" ist nie schwach, eine eigene Schwelle heisst "schwach unter X";
+// ohne Einstellung der Standard. Schwach bleibt Stufe 1, sonst mindestens 2.
+function devSigLevel(d) {
+  const level = sigLevel(d.signal);
+  const own = d.signal_setting;
+  if (!level || own == null) return level;
+  if (own === "off") return Math.max(level, 2);
+  return d.signal.value < own ? 1 : Math.max(level, 2);
+}
+const devWeak = (d) => devSigLevel(d) === 1;
+// Vorschlag für die eigene Schwelle: 5 dBm bzw. 10 LQI unter dem heutigen
+// Wert, im erlaubten Bereich; ohne Wert der Standard.
+function sigSuggest(sig) {
+  const lqi = sig?.kind === "lqi";
+  const [min, max] = lqi ? SIG_LQI_RANGE : SIG_DBM_RANGE;
+  const base = sig?.value != null ? sig.value - (lqi ? 10 : 5) : lqi ? WEAK_LQI + 1 : WEAK_DBM;
+  return Math.min(max, Math.max(min, Math.round(base)));
+}
 // Anteil online erst ab 1 Std. Daten, wie im Backend (availability.PCT_MIN_COVERED).
 const PCT_MIN_COVERED = 3600;
 // Rang für die Sortierung nach Batteriestand: Prozent, "schwach" ohne Zahl
@@ -266,7 +291,7 @@ function orderConns(entries, order) {
 // von Hand zählt nicht dazu (Entscheid des Nutzers).
 // Seit 0.17.0 zählt auch die Verbindungsart von Hand (Wunsch des Nutzers:
 // so lässt sie sich gesammelt bereinigen).
-const hasOverride = (d) => d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual);
+const hasOverride = (d) => d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual) || d.signal_setting != null;
 
 const defaultView = () => ({
   sort: "default",
@@ -315,9 +340,10 @@ function sanitizeViews(raw) {
 const HINTS = [
   { key: "batteries", cls: "ba", icon: "battery", label: "hintBatteries", test: (d) => Boolean(d.battery || d.has_battery) },
   { key: "battery", cls: "b", icon: "battery", label: "hintBattery", test: (d) => Boolean(d.battery?.low) },
-  { key: "signal", cls: "s", icon: "signal", label: "hintSignal", test: (d) => isWeak(d.signal) },
+  { key: "signal", cls: "s", icon: "signal", label: "hintSignal", test: (d) => devWeak(d) },
   { key: "update", cls: "u", icon: "update", label: "hintUpdate", test: (d) => Boolean(d.update) },
   { key: "override", cls: "o", icon: "tune", label: "hintOverride", test: hasOverride },
+  { key: "new", cls: "nw", icon: "sparkle", label: "hintNew", test: (d) => Boolean(d.new) },
 ];
 
 class DevicePanel extends HTMLElement {
@@ -641,6 +667,25 @@ class DevicePanel extends HTMLElement {
           this._devRangeError = null;
           this._setDeviceSettings(this._detailId, { battery: v });
         }
+      } else if (el.matches?.('select[data-dlg="dev-sig"]')) {
+        // Eigene Schwelle: etwas unter dem heutigen Wert vorschlagen (5 dBm
+        // bzw. 10 LQI), damit das Gerät nicht mehr als schwach gilt.
+        const d = this._devices.find((x) => x.id === this._detailId);
+        let value = el.value === "off" ? "off" : null;
+        if (el.value === "own") value = sigSuggest(d?.signal);
+        this._sigRangeError = null;
+        this._setDeviceSettings(this._detailId, { signal: value });
+      } else if (el.matches?.('input[data-dlg="dev-sig-val"]')) {
+        const v = Number(el.value);
+        const [min, max] = [Number(el.min), Number(el.max)];
+        if (el.value === "" || !Number.isInteger(v) || v < min || v > max) {
+          this._sigRangeError = { value: el.value, message: this._t("settingsRange", min, max) };
+          this._devForce = true;
+          this._renderDevice();
+        } else {
+          this._sigRangeError = null;
+          this._setDeviceSettings(this._detailId, { signal: v });
+        }
       } else if (el.matches?.('select[data-dlg="dev-notify"]') && el.value !== "mute") this._setDeviceSettings(this._detailId, { notify: el.value !== "off" });
     });
     dlg.addEventListener("close", () => {
@@ -883,7 +928,7 @@ class DevicePanel extends HTMLElement {
 
   _problemPass(d) {
     // Deaktiviert ist kein Problem: nicht überwacht, bewusst abgeschaltet.
-    return !this._problems || (!d.disabled && (d.online !== true || d.flaky || d.battery?.low || isWeak(d.signal)));
+    return !this._problems || (!d.disabled && (d.online !== true || d.flaky || d.battery?.low || devWeak(d)));
   }
 
   _hintPass(d, hint) {
@@ -1361,6 +1406,8 @@ class DevicePanel extends HTMLElement {
     if (setting === "off") out.push(tag("bat-off", "batteryOff", "", this._t("ovrBatOffTip")));
     else if (Number.isInteger(setting)) out.push(tag("bat", "battery", `${setting} %`, this._t("ovrBatOwnTip", setting, d.battery_default?.pct ?? 15)));
     if (d.notify_off) out.push(tag("mute", "bellOff", "", this._t("ovrNotifyOffTip")));
+    if (d.signal_setting === "off") out.push(tag("sig-off", "signalOff", "", this._t("ovrSigOffTip")));
+    else if (Number.isInteger(d.signal_setting)) out.push(tag("sig", "signal", "", this._t("ovrSigOwnTip", sigLimitText(d.signal_setting))));
     if (d.connection_manual && CONN[d.connection]) {
       // Ohne die Wahl am Gerät gälte die Integration, sonst die Erkennung.
       const base = d.connection_integration && CONN[d.connection_integration] ? d.connection_integration : this._connAuto(d);
@@ -1368,6 +1415,13 @@ class DevicePanel extends HTMLElement {
       out.push(`<span class="ovr conn" role="img" title="${escape(label)}" aria-label="${escape(label)}">${CONN[d.connection].icon(12)}</span>`);
     }
     return out.length ? `<span class="ovrs">${out.join("")}</span>` : "";
+  }
+
+  // Neu (seit 0.21.0): die ersten 3 Tage nach dem Anlegen in HA (Backend).
+  _newTagHtml(d) {
+    if (!d.new) return "";
+    const at = d.created_at ? this._fmtTime(Date.parse(d.created_at) / 1000, true) : "";
+    return `<span class="new-tag" title="${escape(this._t("newTip", at))}">${escape(this._t("newTag"))}</span>`;
   }
 
   _statusHtml(d) {
@@ -1380,7 +1434,7 @@ class DevicePanel extends HTMLElement {
 
   _connHtml(d, withVia = true) {
     const type = this._connOf(d);
-    const level = sigLevel(d.signal);
+    const level = devSigLevel(d);
     const sig = level ? ` ${bars(level, d.online === false)} <span class="val">${escape(sigText(d.signal))}</span>` : "";
     const via = withVia && d.via ? `<span class="sub">${escape(this._t("via", d.via))}</span>` : "";
     return `<span class="sig">${CONN[type].icon(16)} ${escape(this._t(CONN[type].key))}${sig}</span>${via}`;
@@ -1482,7 +1536,7 @@ class DevicePanel extends HTMLElement {
         list
           .map(
             (d) => `<tr class="dev ${d.online === false ? "off" : d.online && d.flaky ? "flaky" : ""}" data-open="${escape(d.id)}" tabindex="0">
-            <td><div class="nc">${this._avatar(d)}<div>${escape(d.name)}${this._overrideHtml(d)}${areaSub && d.area ? `<span class="sub">${escape(d.area)}</span>` : ""}</div></div></td>
+            <td><div class="nc">${this._avatar(d)}<div>${escape(d.name)}${this._newTagHtml(d)}${this._overrideHtml(d)}${areaSub && d.area ? `<span class="sub">${escape(d.area)}</span>` : ""}</div></div></td>
             ${keys.map((k) => `<td>${cell[k](d)}</td>`).join("")}</tr>`
           )
           .join("")
@@ -1523,15 +1577,15 @@ class DevicePanel extends HTMLElement {
     const batExtra = batSort && !metaKeys.includes("battery");
     // Online ohne Auffälligkeit: kompakte Zeile; sonst eine Karte mit Dauer.
     const compact = (d) => d.online === true && !d.flaky && !d.disabled;
-    const row = (d) => `<div class="mrow dev" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d, 16)}<div>${escape(d.name)}${this._overrideHtml(d)}<span class="sub">${meta(d)}</span></div>
-              <div>${d.battery?.low || batSort ? this._batteryHtml(d) : bars(sigLevel(d.signal), false)}</div></div>`;
+    const row = (d) => `<div class="mrow dev" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d, 16)}<div>${escape(d.name)}${this._newTagHtml(d)}${this._overrideHtml(d)}<span class="sub">${meta(d)}</span></div>
+              <div>${d.battery?.low || batSort ? this._batteryHtml(d) : bars(devSigLevel(d), false)}</div></div>`;
     const card = (d) => {
       let right = this._statusHtml(d);
       if (d.online === false) right = `<div class="dur">${this._durationHtml(d, true)}</div><div class="durs">${escape(this._t("statusOffline"))}</div>`;
       const sb = `${showConn ? this._connHtml(d, false) : ""}${batExtra ? ` ${this._batteryHtml(d)}` : ""}`;
       const m = meta(d);
       return `<div class="mc dev ${d.online === false ? "off" : d.flaky ? "flaky" : ""}" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d)}
-            <div><div class="nm">${escape(d.name)}${this._overrideHtml(d)}</div>${sb.trim() ? `<div class="sb">${sb}</div>` : ""}${m ? `<div class="sb2">${m}</div>` : ""}</div>
+            <div><div class="nm">${escape(d.name)}${this._newTagHtml(d)}${this._overrideHtml(d)}</div>${sb.trim() ? `<div class="sb">${sb}</div>` : ""}${m ? `<div class="sb2">${m}</div>` : ""}</div>
             <div class="rt">${right}</div></div>`;
     };
     return `<div class="cards">${this._groups(rows)
@@ -1631,6 +1685,7 @@ class DevicePanel extends HTMLElement {
       if (d) {
         if ("battery" in changes) d.battery_setting = changes.battery;
         if ("notify" in changes) d.notify_off = !changes.notify;
+        if ("signal" in changes) d.signal_setting = changes.signal;
       }
     } catch (err) {
       this._devSetError = (err && err.message) || String(err);
@@ -1643,6 +1698,7 @@ class DevicePanel extends HTMLElement {
     this._connError = null;
     this._devSetError = null;
     this._devRangeError = null;
+    this._sigRangeError = null;
     this._typeError = null;
     this._detailId = null;
     this._detail = null;
@@ -1711,7 +1767,7 @@ class DevicePanel extends HTMLElement {
       sub7 = s7.outages ? this._t("statTotal", this._fmtSeconds(s7.offline)) : this._t("statNoOutages");
     }
     tiles.push(this._statTile("7d", this._t("tileOutages7"), v7, sub7));
-    const level = sigLevel(d.signal);
+    const level = devSigLevel(d);
     if (level) tiles.push(this._staticTile(this._t("tileSignal"), `${bars(level, d.online === false)}${escape(sigText(d.signal))}`, this._t("tierNames")[level]));
     if (d.battery) {
       const b = d.battery;
@@ -1785,6 +1841,30 @@ class DevicePanel extends HTMLElement {
           : ""
       }<div class="opt-short">${escape(t("devBatShort", def.pct, integ))}</div></div>`;
     }
+    // Empfang-Warnung (Variante A, docs/mockups/signal-v1): globaler Wert,
+    // eigene Schwelle "schwach unter" oder aus; nur mit Empfangswert.
+    const own = d.signal_setting;
+    if (d.signal?.value != null || own != null) {
+      const sigMode = own === "off" ? "off" : Number.isInteger(own) ? "own" : "default";
+      const lqi = d.signal ? d.signal.kind === "lqi" : Number.isInteger(own) && own > 0;
+      const std = lqi ? `LQI ${WEAK_LQI + 1}` : `${WEAK_DBM} dBm`;
+      const [min, max] = lqi ? SIG_LQI_RANGE : SIG_DBM_RANGE;
+      const range = sigMode === "own" ? this._sigRangeError : null;
+      // Ohne inputmode: iOS zeigt bei type=number dann die Tastatur mit Minus.
+      const mode = lqi ? ' inputmode="numeric"' : "";
+      html += `<div class="opt${sigMode !== "default" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devSignal"))}</span>${sel(
+        "dev-sig",
+        [["default", t("devSigDefault", std)], ["own", t("devSigOwn")], ["off", t("devSigOff")]],
+        sigMode,
+        t("devSignal")
+      )}</div>${
+        sigMode === "own"
+          ? `<div class="opt-line opt-sub"><span class="opt-label">${escape(t("devSigLow"))}</span><span class="opt-input${range ? " bad" : ""}"><input type="number"${mode} step="1" min="${min}" max="${max}" data-dlg="dev-sig-val" value="${escape(range ? range.value : own)}" aria-label="${escape(t("devSigLow"))}"><span class="unit">${lqi ? "LQI" : "dBm"}</span></span></div>${
+              range ? `<div class="opt-error" data-dev-range>${escape(range.message)}</div>` : ""
+            }`
+          : ""
+      }<div class="opt-short">${escape(t("devSigShort", d.signal?.value != null ? sigText(d.signal) : null))}</div></div>`;
+    }
     // Stumm (Knopf "24 Std. stumm" in der Meldung): eigene Option mit Ende;
     // "Globale Einstellung" oder "Aus" hebt es auf.
     const muted = d.notify_mute_until && Date.parse(d.notify_mute_until) > Date.now() ? Date.parse(d.notify_mute_until) / 1000 : null;
@@ -1818,6 +1898,7 @@ class DevicePanel extends HTMLElement {
     ];
     if (d.hw_version) tiles.push(this._tile(this._t("hardware"), text(d.hw_version)));
     tiles.push(this._tile(this._t("area"), text(d.area)));
+    if (d.created_at) tiles.push(this._tile(this._t("added"), `${escape(this._fmtTime(Date.parse(d.created_at) / 1000, true))}${d.new ? `<small>${escape(this._t("newTag"))}</small>` : ""}`));
     return `<div class="tiles">${tiles.join("")}</div>`;
   }
 
@@ -1867,6 +1948,7 @@ class DevicePanel extends HTMLElement {
     // Eingabe beim nächsten Abfragen (alle 10 s) verloren.
     const typing = this.shadowRoot.activeElement;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-bat-pct" && typing.value !== String(d.battery_setting)) return;
+    if (!this._devForce && d && typing?.dataset?.dlg === "dev-sig-val" && typing.value !== String(d.signal_setting)) return;
     this._devForce = false;
     let html;
     if (!d) {
@@ -2176,7 +2258,7 @@ class DevicePanel extends HTMLElement {
     // Wert zurückgeht (Variante A, docs/mockups/override-v1).
     this._settings = {
       loading: true, error: null, saveError: null, saving: false, data: null, draft: null, open: new Set(), info: new Set(),
-      resets: { battery: new Set(), notify: new Set(), connection: new Set() },
+      resets: { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set() },
     };
     this._renderSettings();
     if (!dialog.open) {
@@ -2243,6 +2325,7 @@ class DevicePanel extends HTMLElement {
       ...[...st.resets.battery].map(() => "reset_battery"),
       ...[...st.resets.notify].map(() => "reset_notify"),
       ...[...st.resets.connection].map(() => "reset_connection"),
+      ...[...st.resets.signal].map(() => "reset_signal"),
     ];
   }
 
@@ -2258,7 +2341,7 @@ class DevicePanel extends HTMLElement {
       ["battery", ["battery_low", "battery_low_integrations", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "reset_battery"]],
       ["integrations", ["exclude_integrations", "notify_exclude_integrations", "persistent_exclude_integrations"]],
       ["types", ["exclude_types"]],
-      ["connections", ["connection_integrations", "reset_connection"]],
+      ["connections", ["connection_integrations", "reset_connection", "reset_signal"]],
       ["push", ["notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "notify_delay", "notify_fields", "reset_notify"]],
       ["persistent", ["outage_persistent"]],
       ["display", ["show_service_devices", "show_disabled_devices", "hide_connections", "connection_order"]],
@@ -2495,12 +2578,18 @@ class DevicePanel extends HTMLElement {
     const list = st.data.overrides?.[kind] || [];
     const marked = st.resets[kind];
     const all = list.length > 0 && list.every((x) => marked.has(x.id));
-    const pre = { battery: "ovrBat", notify: "ovrNotify", connection: "ovrConn" }[kind];
+    const pre = { battery: "ovrBat", notify: "ovrNotify", connection: "ovrConn", signal: "ovrSig" }[kind];
     const btn = list.length
       ? `<button type="button" class="ovr-all" data-set="ovr-all" data-key="${kind}" ${all ? "disabled" : ""}>${mdi("reset", 15)}${escape(t("ovrResetAll"))}</button>`
       : "";
     const value = (x) =>
-      kind === "connection" ? t(CONN[x.value]?.key || "connUnknown") : kind === "notify" || x.value === "off" ? t("ovrOff") : `${x.value} %`;
+      kind === "connection"
+        ? t(CONN[x.value]?.key || "connUnknown")
+        : kind === "notify" || x.value === "off"
+          ? t("ovrOff")
+          : kind === "signal"
+            ? t("ovrSigValue", sigLimitText(x.value))
+            : `${x.value} %`;
     const back = kind === "connection" ? t("ovrToAuto") : t("ovrToGlobal");
     const rows = list
       .map((x) => {
@@ -2666,7 +2755,7 @@ class DevicePanel extends HTMLElement {
         ["persistent_exclude_integrations", t("colPersistent")],
       ]),
       types: exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`),
-      connections: this._connIntegHtml(d) + this._overridesHtml("connection"),
+      connections: this._connIntegHtml(d) + this._overridesHtml("connection") + this._overridesHtml("signal"),
       push:
         row("notify_service", t("optNotifyTarget"), select("notify_service", targets, t("optNotifyTarget")), t("optNotifyTargetShort"), t("optNotifyTargetInfo")) +
         row("notify_click_target", t("optClick"), select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null) +
@@ -2981,8 +3070,8 @@ class DevicePanel extends HTMLElement {
     if (!st) return;
     const changes = this._settingsEntryChanges();
     const extra = this._settingsExtraChanges();
-    const resets = { battery: [...st.resets.battery], notify: [...st.resets.notify], connection: [...st.resets.connection] };
-    const anyReset = resets.battery.length > 0 || resets.notify.length > 0 || resets.connection.length > 0;
+    const resets = { battery: [...st.resets.battery], notify: [...st.resets.notify], connection: [...st.resets.connection], signal: [...st.resets.signal] };
+    const anyReset = Object.values(resets).some((list) => list.length > 0);
     if ((!changes.length && !extra.length && !anyReset) || Object.keys(this._settingsErrors()).length) return;
     st.saving = true;
     st.saveError = null;
@@ -3030,7 +3119,7 @@ class DevicePanel extends HTMLElement {
     if (data.panel) this._applyPanelSettings(data.panel);
     st.extraBase = { prerelease: Boolean(this._prerelease) };
     st.extra = { ...st.extraBase };
-    st.resets = { battery: new Set(), notify: new Set(), connection: new Set() };
+    st.resets = { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set() };
     st.saving = false;
     st.saved = true;
     this._renderSettings();

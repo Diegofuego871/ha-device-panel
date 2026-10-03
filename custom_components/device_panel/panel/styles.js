@@ -132,6 +132,11 @@ button { font: inherit; color: inherit; }
 .chip.hint.s svg { color: var(--dp-warning); }
 .chip.hint.u svg { color: var(--dp-primary); }
 .chip.hint.o svg { color: var(--dp-primary); }
+.chip.hint.nw svg { color: var(--dp-success); }
+/* Neu (seit 0.21.0): grün wie "online", unterscheidbar von den blauen
+   Symbolen der eigenen Einstellungen. */
+.new-tag { display: inline-flex; align-items: center; height: 18px; margin-left: 8px; padding: 0 6px; border-radius: 6px; vertical-align: 1px;
+  background: var(--dp-success-soft); color: var(--dp-success); font-size: 11px; font-weight: 600; line-height: 1; white-space: nowrap; }
 .chip.zero:not(.on) { opacity: .55; }
 .chip.on { background: var(--dp-primary-soft); border-color: transparent; color: var(--dp-primary); }
 .chip.on svg, .chip.on .n { color: var(--dp-primary); }

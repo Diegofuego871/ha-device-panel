@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.20.0, Ausfall-Meldungen nach Bild 5)
+## Stand (0.21.0, Empfang-Warnung pro Gerät, neue Geräte)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -172,11 +172,15 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
       Bereiche sortierbar, gewählte Bereiche separat einblenden
       (`docs/mockups/area-v2/`, Empfehlung A, zwei offene Fragen im
       README).
-   f. Empfang pro Gerät akzeptieren: Variante A entschieden
-      (`docs/mockups/signal-v1/`).
+   f. Erledigt mit `0.21.0`: Empfang-Warnung pro Gerät (Variante A,
+      `docs/mockups/signal-v1/`), gespeichert in
+      `.storage/device_panel.devices` "signal", `list_devices` liefert
+      `signal_setting`; Bewertung im Panel (`devSigLevel`).
    g. Batterie-Verlauf im Popup: Variante A entschieden
       (`docs/mockups/battery-history-v1/`; Achse 0–100 % empfohlen).
-   h. Neue Geräte die ersten 3 Tage markieren, Chip "Neu".
+   h. Erledigt mit `0.21.0`: neue Geräte 3 Tage markiert, Chip "Neu"
+      (`list_devices`: `created_at`, `new` nach Serverzeit, aus der
+      Geräte-Registry).
    Danach die Backlog-Punkte 5–7: Überwachungsebenen, Geräteansicht
    (Ursache, Funkweg, Empfangsverlauf, Gesundheit), Empfangs- und
    Batterieprotokoll; `docs/CONCEPT.md`, "Pflicht"; Vorlagen in

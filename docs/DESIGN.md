@@ -124,6 +124,9 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   "Anzeigen", "Push", "Anhaltend"): Spalten fester Breite (`.ex-col`,
   72 px, Handy 52 px), Kopf in Grossbuchstaben, darunter "Alle umschalten"
   je Spalte; ausgeblendete Zeile sperrt die übrigen Schalter (gedämpft).
+- Markierung "Neu" (seit 0.21.0): kleines Etikett beim Namen in Grün
+  (`--dp-success`, wie "online"), damit es sich von den blauen Symbolen der
+  eigenen Einstellungen abhebt; Chip "Neu" mit Funkel-Symbol in Grün.
 - Vorschau einer Meldung (seit 0.20.0, "Inhalt der Meldung"): Karte wie
   eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
   Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des

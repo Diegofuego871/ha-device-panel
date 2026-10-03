@@ -92,10 +92,16 @@ details such as software version, manufacturer, model and area.
   Optionally a persistent notification in Home Assistant lists all offline
   devices as long as they are offline, with a link to each device. Off by
   default.
+- Weak signal warning per device, in its pop-up: global value (below
+  -80 dBm or LQI 61), own threshold or off, for devices that always have a
+  weak signal. Marking and the chip "Weak signal" follow.
+- New devices: "New" next to the name for 3 days after they were added to
+  Home Assistant, with their own chip.
 - Settings per device at a glance: a symbol next to the name (own battery
   threshold, battery warning off, notifications off, connection type set by
-  hand), the chip "Own setting" shows only those devices, and the settings
-  list them for resetting, one by one or all at once.
+  hand, own signal warning), the chip "Own setting" shows only those
+  devices, and the settings list them for resetting, one by one or all at
+  once.
 - Settings in the panel (gear icon) with updates: check for a new version,
   update via HACS with one click, restart afterwards, optionally offer
   pre-releases ("Enable in HACS" switches on the HACS pre-release option).

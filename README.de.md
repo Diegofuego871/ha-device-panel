@@ -98,11 +98,16 @@ Bereich.
   Gerät weiter. Auf Wunsch listet eine anhaltende Benachrichtigung in Home
   Assistant alle ausgefallenen Geräte, solange sie ausgefallen sind, mit
   Link zum Gerät. Standardmässig aus.
+- Empfang-Warnung pro Gerät im Popup: globaler Wert (unter -80 dBm bzw.
+  LQI 61), eigene Schwelle oder aus, für Geräte, die immer schwachen
+  Empfang haben. Markierung und Chip "Schwacher Empfang" folgen.
+- Neue Geräte: "Neu" beim Namen in den ersten 3 Tagen nach dem Hinzufügen
+  in Home Assistant, mit eigenem Chip.
 - Einstellungen pro Gerät auf einen Blick: ein Symbol beim Namen (eigene
   Batterie-Schwelle, Batterie-Warnung aus, Meldungen aus, Verbindungsart von
-  Hand), der Chip "Eigene Einstellung" zeigt nur diese Geräte, und die
-  Einstellungen listen sie zum Zurücksetzen auf, einzeln oder alle auf
-  einmal.
+  Hand, eigene Empfang-Warnung), der Chip "Eigene Einstellung" zeigt nur
+  diese Geräte, und die Einstellungen listen sie zum Zurücksetzen auf,
+  einzeln oder alle auf einmal.
 - Einstellungen im Panel (Zahnrad) mit Updates: nach einer neuen Version
   suchen, mit einem Klick über HACS aktualisieren, danach neu starten,
   wahlweise Vorabversionen anbieten ("In HACS freischalten" schaltet die
