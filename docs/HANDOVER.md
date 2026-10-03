@@ -203,9 +203,16 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    wie ZHA/Bluetooth, im Test-HA mit `recorder: exclude` geprüft. Knopf
    "Gerät ausblenden" (Wunsch des Nutzers). Offen: Rückmeldung des
    Nutzers, ob sich der Verlauf jetzt füllt (Sensor und ZHA/Bluetooth).
-   Danach Backlog-Punkte 4 (Matter Thread/WLAN/LAN), 5 (Überwachung pro
-   Integration), 7 (Herkunft jeder Einstellung pro Gerät), 10
-   (KI-Zusammenfassung über `ai_task`) ansehen (Nutzer, 2026-10-03).
+   Entscheide des Nutzers zu den Backlog-Punkten (2026-10-03, Fragen
+   einzeln mit Bildern, `docs/mockups/backlog-v1/`), umzusetzen als
+   `0.28.0`: Punkt 5 Variante B (Spalte "Ausgefallen nach" in der Tabelle
+   "Integrationen", Auswahl mit "Nicht überwachen": Geräte sichtbar, ohne
+   Ausfälle, Statistik und Meldungen); Punkt 7 Variante A (Herkunft
+   Standard/Integration/Gerät unter jeder Einstellung im Popup, dazu
+   "Ausgefallen nach" pro Gerät); Punkt 10 Variante A (Knopf "Mit KI
+   einschätzen" im Geräte-Popup, `ai_task.async_generate_data`, Einstellung
+   standardmässig aus, Auswahl der KI-Aufgabe); Punkt 4 Variante A
+   (Thread-Rolle und Netzname aus `matter/node_diagnostics` im Popup).
    Als Nächstes, in dieser Reihenfolge (Nutzer, 2026-10-03):
    b. Erledigt mit `0.26.0`: Puls-Kachel öffnet das Fenster mit den
       Geräten, die in 24 Std. Unterbrüche hatten (`docs/mockups/pulse-v1/`,
