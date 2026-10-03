@@ -142,6 +142,42 @@ button { font: inherit; color: inherit; }
 .chip.on svg, .chip.on .n { color: var(--dp-primary); }
 .vsep { width: 1px; height: 22px; background: var(--dp-divider); margin: 0 2px; }
 
+/* Filter "Bereich" (seit 0.23.0, docs/mockups/area-v1, A): Chip am Anfang
+   der Zeile, Auswahl als Popover (Desktop) bzw. Blatt (Handy). */
+.chip.area svg:last-child { margin-right: -3px; }
+.chip.area.open:not(.on) { border-color: var(--dp-primary); }
+.chip.area.on { gap: 0; padding: 0 4px 0 0; }
+.area-open { display: inline-flex; align-items: center; gap: 7px; height: 100%; min-width: 0; max-width: 240px; padding: 0 6px 0 12px; border: 0;
+  border-radius: 999px; background: none; color: inherit; font: inherit; cursor: pointer; }
+.area-open .al { overflow: hidden; text-overflow: ellipsis; }
+.area-x { flex: none; display: grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%;
+  background: color-mix(in srgb, var(--dp-primary) 18%, transparent); color: var(--dp-primary); cursor: pointer; }
+.chip.area.on .area-x svg { color: var(--dp-primary); }
+.area-pop { position: fixed; z-index: 20; width: 330px; max-height: min(560px, calc(100vh - 90px)); overflow: auto; padding: 12px 8px 10px;
+  border: 1px solid var(--dp-divider); border-radius: 18px; background: var(--dp-card); color: var(--dp-text); box-shadow: 0 12px 34px rgba(0,0,0,.22); }
+.area-pop[hidden] { display: none; }
+.area-pop h4 { margin: 0 10px 2px; font-size: 15px; font-weight: 600; }
+.area-search { display: flex; align-items: center; gap: 8px; height: 36px; margin: 0 6px 6px; padding: 0 10px; border: 1px solid var(--dp-divider);
+  border-radius: 10px; background: var(--dp-input); color: var(--dp-text2); }
+.area-search input { flex: 1; min-width: 0; border: 0; background: none; color: var(--dp-text); font: inherit; font-size: 14px; outline: none; }
+.afloor, .arow { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 36px; padding: 0 10px; border: 0; border-radius: 10px;
+  background: none; color: var(--dp-text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.afloor { min-height: 34px; margin-top: 2px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--dp-text2); }
+.arow.in { padding-left: 22px; }
+.arow.zero .al, .arow.zero .an { color: var(--dp-text3); }
+.afloor:hover, .arow:hover { background: var(--dp-hover); }
+.afloor:focus-visible, .arow:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
+.afloor .al, .arow .al { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arow .an { color: var(--dp-text3); font-size: 12px; font-variant-numeric: tabular-nums; }
+.abox { flex: none; display: grid; place-items: center; width: 18px; height: 18px; border: 2px solid var(--dp-text3); border-radius: 5px; color: #fff; }
+.abox.on { border-color: var(--dp-primary); background: var(--dp-primary); }
+.abox.part { border-color: var(--dp-primary); background: linear-gradient(var(--dp-primary), var(--dp-primary)) center / 8px 2px no-repeat; }
+.anote { margin: 8px 10px; color: var(--dp-text2); font-size: 13px; }
+.afoot .vlink:disabled { color: var(--dp-text3); cursor: default; }
+dialog.area-sheet .area-search { margin: 0 0 8px; height: 40px; }
+dialog.area-sheet .afloor, dialog.area-sheet .arow { min-height: 44px; padding-left: 4px; padding-right: 4px; }
+dialog.area-sheet .arow.in { padding-left: 16px; }
+
 /* Ansicht pro Benutzer (docs/mockups/view-v1): Knopf "Spalten", Popover,
    Sortieren im Spaltenkopf, "Gruppen | Liste", Blatt "Ansicht" (Handy). */
 .view-btn { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: 999px;
@@ -280,11 +316,12 @@ svg.strip .s2 { fill: var(--dp-bar-off); }
    Hintergrund, Esc und Fokusfalle liefert der Browser. Auf dem Handy als
    Blatt von unten. Der Dialog scrollt selbst, Kopf und Aktionsleiste
    bleiben per sticky sichtbar (wie unifi_dynamic). */
-dialog.device, dialog.stat-dlg, dialog.settings, dialog.view { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
+dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
   box-shadow: var(--dp-shadow); overflow: auto; overscroll-behavior: contain; max-height: calc(100% - 48px); }
 dialog.device, dialog.settings, dialog.view { width: min(640px, calc(100vw - 32px)); }
+dialog.area-sheet { width: min(420px, calc(100vw - 32px)); }
 dialog.stat-dlg { width: min(560px, calc(100vw - 32px)); }
-dialog.device::backdrop, dialog.settings::backdrop, dialog.view::backdrop { background: rgba(0,0,0,0.5); }
+dialog.device::backdrop, dialog.settings::backdrop, dialog.view::backdrop, dialog.area-sheet::backdrop { background: rgba(0,0,0,0.5); }
 /* Dialog dahinter stark gedimmt und unscharf, sein X ausgeblendet: so ist
    klar, welches Fenster gerade gilt. */
 dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
@@ -525,6 +562,13 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 10; padding: 10px 16px;
   border-radius: 10px; background: #323232; color: #fff; font-size: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
 .toast[hidden] { display: none; }
+/* Hinweis mit Aktion (Rückgängig nach dem Ausblenden, seit 0.23.0). */
+.toast.act { display: flex; align-items: center; gap: 14px; width: max-content; max-width: calc(100vw - 32px); padding: 6px 8px 6px 16px; }
+.toast.act[hidden] { display: none; }
+.toast-btn { flex: none; height: 32px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: #8ecbff; font: inherit; font-weight: 600; cursor: pointer; }
+.toast-btn:hover { background: rgba(255,255,255,.1); }
+.dlg-actions.two .dlg-btn { flex: 1 1 0; }
+.hide-btn svg { color: var(--dp-text2); }
 
 /* Statistik-Kacheln: Tipp öffnet das Statistik-Fenster */
 .st-tiles { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 8px; }
@@ -660,8 +704,8 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .chips { flex-wrap: nowrap; overflow-x: auto; margin: 12px -12px 4px; padding: 0 12px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .foot .tap { display: none; }
-  dialog.device, dialog.stat-dlg, dialog.settings, dialog.view { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
-  dialog.view { max-height: 92%; }
+  dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
+  dialog.view, dialog.area-sheet { max-height: 92%; }
   .view-btn { width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 50%; }
   .view-btn span { display: none; }
   .viewline { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }

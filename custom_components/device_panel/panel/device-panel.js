@@ -147,6 +147,9 @@ const MDI = {
   open: "M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z",
   chevron: "M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z",
   pulse: "M3,13H5.79L10.1,4.79L11.28,13.75L14.5,9.66L17.83,13H21V15H17L14.67,12.67L9.92,18.73L8.94,11.31L7,15H3V13Z",
+  eyeOff:
+    "M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.08L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7Z",
+  home: "M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z",
 };
 // Gerätetypen (devices.DEVICE_TYPES), gleiche Schlüssel wie im Backend.
 const TYPE_ICONS = {
@@ -304,7 +307,13 @@ const defaultView = () => ({
   conn: "all",
   problems: false,
   hint: null,
+  // Filter "Bereich" (seit 0.23.0): IDs der Bereiche, AREA_NONE = ohne Bereich.
+  areas: [],
 });
+
+// Pseudo-Bereich für Geräte ohne Bereich (eine echte Bereichs-ID beginnt nie
+// mit "#").
+const AREA_NONE = "#none";
 
 // Gespeicherte Ansicht bereinigen: Unbekanntes fällt weg, neue Spalten
 // kommen mit ihrem Standard ans Ende, ungültige Werte auf den Standard.
@@ -329,6 +338,7 @@ function sanitizeView(raw) {
     conn: raw.conn === "all" || (typeof raw.conn === "string" && CONN[raw.conn]) ? raw.conn : "all",
     problems: Boolean(raw.problems),
     hint: HINTS.some((h) => h.key === raw.hint) ? raw.hint : null,
+    areas: Array.isArray(raw.areas) ? [...new Set(raw.areas.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 64))].sort().slice(0, 500) : [],
   };
 }
 
@@ -371,6 +381,11 @@ class DevicePanel extends HTMLElement {
     this._flakyOutages = 3;
     // Chips der Verbindungsart, die nicht erscheinen (Einstellung "Anzeige").
     this._hideConn = new Set();
+    // Bereiche und Etagen aus HA in ihrer Reihenfolge (Filter "Bereich").
+    this._areas = [];
+    this._floors = [];
+    this._areaQuery = "";
+    this._areaOpen = false;
     this._pulse = null;
     this._incidents = [];
     // Geräte-Popup und Statistik-Fenster
@@ -509,6 +524,7 @@ class DevicePanel extends HTMLElement {
     this._onNarrow = () => {
       this._toggleCols(false);
       this._closeViewSheet();
+      this._closeAreas();
       this._render();
     };
     this._narrowQuery.addEventListener("change", this._onNarrow);
@@ -571,11 +587,19 @@ class DevicePanel extends HTMLElement {
         <button type="button" class="gear-btn" title="${escape(this._t("settingsBtn"))}" aria-label="${escape(this._t("settingsBtn"))}">${mdi("gear", 22)}</button>
       </div>
       <div class="cols-pop" role="dialog" aria-label="${escape(this._t("viewBtn"))}" hidden></div>
+      <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog>
+      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
+    root.querySelector(".toast").addEventListener("click", (ev) => {
+      if (!ev.target.closest("[data-toast-action]") || !this._toastAction) return;
+      const { run } = this._toastAction;
+      this._toastAction = null;
+      ev.currentTarget.hidden = true;
+      run();
+    });
     this._bindSettings(root.querySelector("dialog.settings"));
     const search = root.querySelector(".search");
     const clear = root.querySelector(".search-clear");
@@ -614,6 +638,15 @@ class DevicePanel extends HTMLElement {
         this._openViewSheet();
         return;
       }
+      if (ev.target.closest("[data-area-clear]")) {
+        this._setAreas([]);
+        return;
+      }
+      if (ev.target.closest("[data-area-open]")) {
+        if (this._areaOpen) this._closeAreas();
+        else this._openAreas();
+        return;
+      }
       const el = ev.target.closest("[data-conn],[data-problems],[data-hint]");
       if (!el || el.disabled) return;
       // Aktiven Chip erneut antippen hebt den Filter auf.
@@ -628,6 +661,7 @@ class DevicePanel extends HTMLElement {
       else this._toggleCols(!this._colsOpen);
     });
     this._bindViewControls(root.querySelector(".cols-pop"), root.querySelector("dialog.view"));
+    this._bindAreas(root.querySelector(".area-pop"), root.querySelector("dialog.area-sheet"));
     // Zeilen und Karten sind keine Buttons (Tabellensemantik); Tastatur
     // deshalb selbst behandeln.
     content.addEventListener("keydown", (ev) => {
@@ -737,6 +771,8 @@ class DevicePanel extends HTMLElement {
       this._batteryLow = result.battery_low;
       this._hideConn = new Set(result.hide_connections || []);
       this._connOrder = result.connection_order || [];
+      this._areas = Array.isArray(result.areas) ? result.areas : [];
+      this._floors = Array.isArray(result.floors) ? result.floors : [];
       // Ausgeblendeter Chip mit aktivem Filter: zurück auf "Alle", sonst
       // bliebe ein Filter ohne sichtbaren Chip.
       if (this._hideConn.has(this._conn)) this._conn = "all";
@@ -921,7 +957,27 @@ class DevicePanel extends HTMLElement {
   }
 
   _matches(d) {
-    return this._connPass(d) && this._problemPass(d) && this._hintPass(d, this._hint) && this._searchPass(d);
+    return this._areaPass(d) && this._connPass(d) && this._problemPass(d) && this._hintPass(d, this._hint) && this._searchPass(d);
+  }
+
+  // Gewählte Bereiche, soweit es sie in HA noch gibt; null = kein Filter.
+  // Ein gelöschter Bereich fällt still weg, sonst bliebe die Liste leer.
+  // Zwischengespeichert: _areaPass läuft für jedes Gerät. Beide Listen werden
+  // bei jeder Änderung ersetzt (Auswahl, Abfrage), nie verändert.
+  _areaSel() {
+    const picked = this._view.areas || [];
+    if (this._areaSelFor?.[0] !== picked || this._areaSelFor[1] !== this._areas) {
+      const known = new Set([...this._areas.map((a) => a.id), AREA_NONE]);
+      const sel = picked.filter((id) => known.has(id));
+      this._areaSelFor = [picked, this._areas];
+      this._areaSelSet = sel.length ? new Set(sel) : null;
+    }
+    return this._areaSelSet;
+  }
+
+  _areaPass(d) {
+    const sel = this._areaSel();
+    return !sel || sel.has(d.area_id || AREA_NONE);
   }
 
   // Einzelne Filter: Die Zahl auf einem Chip zählt mit allen übrigen Filtern
@@ -1242,6 +1298,238 @@ class DevicePanel extends HTMLElement {
     });
   }
 
+  // --- Filter "Bereich" (seit 0.23.0, docs/mockups/area-v1, A) -------------
+  // Wählt einen oder mehrere Bereiche (eine Etage wählt alle ihre); die Liste
+  // zeigt nur deren Geräte, die übrigen Chips filtern darin weiter. Der Kopf
+  // (Ring, Ausfälle, Puls) zeigt weiter das ganze Haus. Pro Benutzer in der
+  // Ansicht gespeichert, Desktop und Handy getrennt.
+
+  _setAreas(list) {
+    this._setView({ areas: [...new Set(list)].sort() });
+  }
+
+  // Etagen mit ihren Bereichen in der Reihenfolge aus HA (Einstellungen →
+  // Bereiche, Etagen und Zonen), Bereiche ohne Etage danach, zuletzt "Ohne
+  // Bereich". Nur Bereiche mit Geräten (oder gewählte), damit leere Bereiche
+  // die Auswahl nicht füllen. Zahl je Bereich mit den übrigen Filtern.
+  _areaGroups() {
+    const total = new Map();
+    const count = new Map();
+    for (const d of this._devices) {
+      const id = d.area_id || AREA_NONE;
+      total.set(id, (total.get(id) || 0) + 1);
+      if (this._connPass(d) && this._problemPass(d) && this._hintPass(d, this._hint) && this._searchPass(d)) count.set(id, (count.get(id) || 0) + 1);
+    }
+    const picked = new Set(this._view.areas || []);
+    const show = (id) => total.has(id) || picked.has(id);
+    const item = (a) => ({ id: a.id, name: a.name, n: count.get(a.id) || 0 });
+    const groups = [];
+    for (const f of this._floors) {
+      const items = this._areas.filter((a) => a.floor_id === f.id && show(a.id)).map(item);
+      if (items.length) groups.push({ key: `f:${f.id}`, name: f.name, items });
+    }
+    const floorIds = new Set(this._floors.map((f) => f.id));
+    const loose = this._areas.filter((a) => !floorIds.has(a.floor_id) && show(a.id)).map(item);
+    // Ohne Etagen in HA: Bereiche ohne Überschrift.
+    if (loose.length) groups.push({ key: "loose", name: groups.length ? this._t("areaNoFloor") : null, items: loose });
+    if (show(AREA_NONE)) groups.push({ key: "none", name: null, items: [{ id: AREA_NONE, name: this._t("areaNone"), n: count.get(AREA_NONE) || 0 }] });
+    return groups;
+  }
+
+  // Beschriftung des aktiven Chips: genau eine Etage mit ihrem Namen, ein
+  // oder zwei Bereiche mit Namen, sonst die Zahl.
+  _areaLabel(sel, groups) {
+    for (const g of groups) {
+      if (!g.key.startsWith("f:") || g.items.length !== sel.size) continue;
+      if (g.items.every((x) => sel.has(x.id))) return g.name;
+    }
+    const names = groups.flatMap((g) => g.items).filter((x) => sel.has(x.id)).map((x) => x.name);
+    return names.length && names.length <= 2 && names.length === sel.size ? names.join(", ") : this._t("areaMany", sel.size);
+  }
+
+  _areaChipHtml(all) {
+    const sel = this._areaSel();
+    if (!sel && !this._areas.length) return "";
+    const open = this._areaOpen;
+    if (!sel) {
+      return `<button type="button" class="chip area${open ? " open" : ""}" data-area-open aria-haspopup="dialog" aria-expanded="${open}">${mdi("home", 15)}<span>${escape(this._t("areaChip"))}</span>${mdi("chevronDown", 15)}</button>`;
+    }
+    const label = this._areaLabel(sel, this._areaGroups());
+    const n = all.filter((d) => this._matches(d)).length;
+    return `<span class="chip area on"><button type="button" class="area-open" data-area-open aria-haspopup="dialog" aria-expanded="${open}" title="${escape(`${this._t("areaChip")}: ${label}`)}">${mdi("home", 15)}<span class="al">${escape(label)}</span> <span class="n">${n}</span></button><button type="button" class="area-x" data-area-clear title="${escape(this._t("areaClear"))}" aria-label="${escape(this._t("areaClear"))}">${mdi("close", 13)}</button></span>`;
+  }
+
+  // Desktop: Popover unter dem Chip; Handy: Blatt von unten (wie "Ansicht").
+  _openAreas() {
+    this._areaQuery = "";
+    this._areaOpen = true;
+    const mobile = this._narrowQuery.matches;
+    const t = (k, ...a) => this._t(k, ...a);
+    const many = this._areaGroups().reduce((a, g) => a + g.items.length, 0) > 8;
+    const search = many
+      ? `<label class="area-search">${mdi("search", 16)}<input type="search" data-area-search placeholder="${escape(t("areaSearch"))}" aria-label="${escape(t("areaSearch"))}"></label>`
+      : "";
+    if (mobile) {
+      const dlg = this.shadowRoot.querySelector("dialog.area-sheet");
+      if (!dlg) return;
+      dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("home", 28)}</span>
+          <div class="dlg-title"><h2>${escape(t("areaTitle"))}</h2><div class="dlg-sub">${escape(t("areaSubMobile"))}</div></div>
+          <button type="button" class="dlg-close" data-area-done title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+        <div class="dlg-body">${search}<div class="alist"></div></div>
+        <div class="dlg-actions"><button type="button" class="dlg-btn" data-area-clear>${escape(t("areaShowAll"))}</button><button type="button" class="dlg-btn primary" data-area-done>${escape(t("areaDone"))}</button></div>`;
+      this._renderAreaList();
+      if (!dlg.open) {
+        if (typeof dlg.showModal === "function") dlg.showModal();
+        else dlg.setAttribute("open", "");
+      }
+      dlg.scrollTop = 0;
+      // Kein Fokusrahmen und keine Tastatur beim Öffnen per Tipp.
+      if (window.matchMedia?.(TOUCH_QUERY).matches) this.shadowRoot.activeElement?.blur();
+    } else {
+      const pop = this.shadowRoot.querySelector(".area-pop");
+      if (!pop) return;
+      this._toggleCols(false);
+      pop.innerHTML = `<h4>${escape(t("areaTitle"))}</h4><div class="vsub">${escape(t("areaSub"))}</div>${search}<div class="alist"></div><div class="vfoot afoot"></div>`;
+      pop.hidden = false;
+      this._renderAreaList();
+      this._placeAreas();
+      (pop.querySelector("[data-area-search]") || pop.querySelector(".arow,.afloor"))?.focus({ preventScroll: true });
+    }
+    this._render();
+  }
+
+  // Unter dem Chip, linksbündig, nie über den rechten oder unteren Rand
+  // hinaus (der Chip steht nach dem Kopf oft weit unten); die Liste scrollt.
+  _placeAreas() {
+    const pop = this.shadowRoot.querySelector(".area-pop");
+    const chip = this.shadowRoot.querySelector(".chips .chip.area");
+    if (!pop || pop.hidden || !chip) return;
+    const b = chip.getBoundingClientRect();
+    const width = pop.offsetWidth;
+    const top = Math.round(b.bottom + 8);
+    pop.style.top = `${top}px`;
+    pop.style.left = `${Math.max(8, Math.min(Math.round(b.left), window.innerWidth - width - 8))}px`;
+    pop.style.maxHeight = `${Math.max(220, Math.min(560, window.innerHeight - top - 12))}px`;
+  }
+
+  _closeAreas() {
+    if (!this._areaOpen) return;
+    this._areaOpen = false;
+    const pop = this.shadowRoot.querySelector(".area-pop");
+    if (pop) pop.hidden = true;
+    const dlg = this.shadowRoot.querySelector("dialog.area-sheet");
+    if (dlg?.open) dlg.close();
+    this._render();
+  }
+
+  // Liste der Auswahl (und Fusszeile im Popover) neu; das Suchfeld bleibt,
+  // damit Fokus und Cursor beim Tippen nicht verloren gehen.
+  _renderAreaList() {
+    const box = this.shadowRoot.querySelector(this._narrowQuery.matches ? "dialog.area-sheet .alist" : ".area-pop .alist");
+    if (!box) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const picked = new Set(this._view.areas || []);
+    const all = this._areaGroups();
+    const q = this._areaQuery.trim().toLowerCase();
+    // Suche: eine passende Etage zeigt alle ihre Bereiche.
+    const groups = q
+      ? all
+          .map((g) => (g.name && g.name.toLowerCase().includes(q) ? g : { ...g, items: g.items.filter((x) => x.name.toLowerCase().includes(q)) }))
+          .filter((g) => g.items.length)
+      : all;
+    const check = (state) => `<span class="abox ${state}">${state === "on" ? mdi("check", 14) : ""}</span>`;
+    let html = "";
+    for (const g of groups) {
+      if (g.name) {
+        const n = g.items.filter((x) => picked.has(x.id)).length;
+        const state = n === g.items.length ? "on" : n ? "part" : "";
+        html += `<button type="button" class="afloor" role="checkbox" aria-checked="${state === "on" ? "true" : state ? "mixed" : "false"}" data-area-group="${escape(g.key)}">${check(state)}<span class="al">${escape(g.name)}</span></button>`;
+      }
+      html += g.items
+        .map((x) => {
+          const on = picked.has(x.id);
+          return `<button type="button" class="arow${g.name ? " in" : ""}${x.n ? "" : " zero"}" role="checkbox" aria-checked="${on}" data-area="${escape(x.id)}" data-in="${escape(g.key)}">${check(on ? "on" : "")}<span class="al">${escape(x.name)}</span><span class="an">${x.n}</span></button>`;
+        })
+        .join("");
+    }
+    if (!html) html = `<div class="anote">${escape(t(all.length ? "areaNoMatch" : "areaEmpty"))}</div>`;
+    // Fokus auf der Zeile halten (Tastatur): der Neuaufbau ersetzt sie.
+    const a = this.shadowRoot.activeElement;
+    const sel = a?.dataset?.area !== undefined ? `[data-area="${CSS.escape(a.dataset.area)}"]` : a?.dataset?.areaGroup ? `[data-area-group="${CSS.escape(a.dataset.areaGroup)}"]` : null;
+    if (setHtml(box, html) && sel) box.querySelector(sel)?.focus({ preventScroll: true });
+    const known = all.reduce((n, g) => n + g.items.length, 0);
+    const chosen = all.reduce((n, g) => n + g.items.filter((x) => picked.has(x.id)).length, 0);
+    const foot = this.shadowRoot.querySelector(".area-pop .afoot");
+    if (foot && !this._narrowQuery.matches) {
+      setHtml(foot, `<span>${escape(t("areaCount", chosen, known))}</span><button type="button" class="vlink" data-area-clear ${chosen ? "" : "disabled"}>${escape(t("areaShowAll"))}</button>`);
+    }
+    const clear = this.shadowRoot.querySelector("dialog.area-sheet .dlg-actions [data-area-clear]");
+    if (clear) clear.disabled = !chosen;
+  }
+
+  _bindAreas(pop, sheet) {
+    const onClick = (ev) => {
+      const one = ev.target.closest("[data-area]");
+      const group = ev.target.closest("[data-area-group]");
+      const picked = new Set(this._view.areas || []);
+      if (one) {
+        const id = one.dataset.area;
+        if (picked.has(id)) picked.delete(id);
+        else picked.add(id);
+        this._setAreas([...picked]);
+      } else if (group) {
+        // Etage: alle ihre (sichtbaren) Bereiche an, sind schon alle an: aus.
+        const ids = [...group.parentElement.querySelectorAll(`[data-in="${CSS.escape(group.dataset.areaGroup)}"]`)].map((el) => el.dataset.area);
+        const allOn = ids.every((id) => picked.has(id));
+        for (const id of ids) {
+          if (allOn) picked.delete(id);
+          else picked.add(id);
+        }
+        this._setAreas([...picked]);
+      } else if (ev.target.closest("[data-area-clear]")) this._setAreas([]);
+      else if (ev.target.closest("[data-area-done]")) this._closeAreas();
+    };
+    const onInput = (ev) => {
+      if (!ev.target.matches?.("[data-area-search]")) return;
+      this._areaQuery = ev.target.value;
+      this._renderAreaList();
+    };
+    pop.addEventListener("click", onClick);
+    pop.addEventListener("input", onInput);
+    sheet.addEventListener("click", (ev) => {
+      // Tipp auf den Hintergrund schliesst wie bei den übrigen Blättern.
+      if (ev.target === sheet) return this._closeAreas();
+      onClick(ev);
+    });
+    sheet.addEventListener("input", onInput);
+    sheet.addEventListener("close", () => {
+      if (this._areaOpen && !sheet.open) {
+        this._areaOpen = false;
+        this._render();
+      }
+    });
+    // Klick ausserhalb oder Escape schliesst das Popover; ein Klick in die
+    // Liste öffnet dabei kein Gerät (wie beim Popover "Spalten").
+    const content = this.shadowRoot.querySelector(".content");
+    this.shadowRoot.addEventListener(
+      "pointerdown",
+      (ev) => {
+        if (!this._areaOpen || this._narrowQuery.matches) return;
+        const path = ev.composedPath();
+        if (path.some((el) => el === pop || el?.classList?.contains?.("area"))) return;
+        this._closeAreas();
+        if (path.includes(content)) this._swallowUntil = Date.now() + 800;
+      },
+      true
+    );
+    (this.ownerDocument?.defaultView || window).addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape" && this._areaOpen && !this._narrowQuery.matches) {
+        this._closeAreas();
+        this.shadowRoot.querySelector(".chips [data-area-open]")?.focus();
+      }
+    });
+  }
+
   // --- Liste ----------------------------------------------------------------
 
   _render() {
@@ -1256,6 +1544,10 @@ class DevicePanel extends HTMLElement {
     setHtml(root.querySelector(".viewline"), this._loading || !this._narrowQuery.matches ? "" : this._viewLineHtml());
     const rows = all.filter((d) => this._matches(d));
     setHtml(root.querySelector(".list"), this._listHtml(rows));
+    if (this._areaOpen) {
+      this._renderAreaList();
+      this._placeAreas();
+    }
     const time = this._fetchedAt ? this._fetchedAt.toLocaleTimeString(this._locale(), { hour: "2-digit", minute: "2-digit" }) : "";
     setHtml(
       root.querySelector(".foot"),
@@ -1355,17 +1647,20 @@ class DevicePanel extends HTMLElement {
     const present = new Map();
     for (const d of all) present.set(this._connOf(d), (present.get(this._connOf(d)) || 0) + 1);
     const types = orderConns([...present.entries()], this._connOrder);
-    const base = all.filter((d) => this._problemPass(d) && this._hintPass(d, this._hint) && this._searchPass(d));
+    const base = all.filter((d) => this._areaPass(d) && this._problemPass(d) && this._hintPass(d, this._hint) && this._searchPass(d));
     const counts = new Map();
     for (const d of base) counts.set(this._connOf(d), (counts.get(this._connOf(d)) || 0) + 1);
     const chip = (key, label, n, icon = "") =>
       `<button type="button" class="chip ${this._conn === key ? "on" : ""} ${n ? "" : "zero"}" data-conn="${key}" aria-pressed="${this._conn === key}">${icon}<span>${escape(label)}</span> <span class="n">${n}</span></button>`;
-    let html = chip("all", this._t("all"), base.length);
+    // Bereich zuerst: erst den Bereich wählen, dann mit den Chips filtern.
+    let html = this._areaChipHtml(all);
+    if (html) html += `<span class="vsep"></span>`;
+    html += chip("all", this._t("all"), base.length);
     for (const [key] of types) if (!this._hideConn.has(key)) html += chip(key, this._t(CONN[key].key), counts.get(key) || 0, CONN[key].icon(15));
     html += `<span class="vsep"></span><button type="button" class="chip ${this._problems ? "on" : ""}" data-problems aria-pressed="${this._problems}">${mdi("alert", 15)}<span>${escape(this._t("onlyProblems"))}</span></button>`;
     // Hinweise als Filter-Chips, nur wenn sie bei irgendeinem Gerät zutreffen
     // (oder aktiv sind).
-    const rest = all.filter((d) => this._connPass(d) && this._problemPass(d) && this._searchPass(d));
+    const rest = all.filter((d) => this._areaPass(d) && this._connPass(d) && this._problemPass(d) && this._searchPass(d));
     for (const { key, cls, icon, label, test } of HINTS) {
       const on = this._hint === key;
       if (!on && !all.some(test)) continue;
@@ -1699,6 +1994,7 @@ class DevicePanel extends HTMLElement {
   }
 
   _resetDevice() {
+    this._hideError = null;
     this._connError = null;
     this._devSetError = null;
     this._devRangeError = null;
@@ -1985,8 +2281,10 @@ class DevicePanel extends HTMLElement {
           <h3>${escape(this._t("secDevice"))}</h3>${this._deviceSectionHtml(d)}
           <h3>${escape(this._t("secNotifyDevice"))}</h3>${this._deviceNotifyHtml(d)}
           <h3>${escape(this._t("secEntities", ents.count))}</h3>${ents.html}
+          ${this._hideError ? `<div class="dlg-error">${escape(this._t("hideError"))} ${escape(this._hideError)}</div>` : ""}
         </div>
-        <div class="dlg-actions"><button type="button" class="dlg-btn" data-dlg="close">${escape(this._t("close"))}</button></div>`;
+        <div class="dlg-actions two"><button type="button" class="dlg-btn hide-btn" data-dlg="hide">${mdi("eyeOff", 18)}${escape(this._t("hideDevice"))}</button>
+          <button type="button" class="dlg-btn" data-dlg="close">${escape(this._t("close"))}</button></div>`;
     }
     // Fokus und Scrollposition über den Neuaufbau retten (Abfrage alle 10 s).
     const active = this.shadowRoot.activeElement;
@@ -2020,6 +2318,39 @@ class DevicePanel extends HTMLElement {
       this._navigate(`/config/devices/device/${id}`);
     } else if (action === "stat") this._openStat(btn.dataset.range, btn.dataset.kind);
     else if (action === "more-info") this._openMoreInfo(btn.dataset.entity);
+    else if (action === "hide") this._hideDevice(this._detailId);
+  }
+
+  // Ausblenden (Variante A, docs/mockups/hide-v1): gilt für alle Benutzer,
+  // nicht mehr überwacht, keine Meldungen. Sofort aus der Liste, dann
+  // "Rückgängig" im Hinweis; wieder einblenden auch in den Einstellungen.
+  async _hideDevice(id) {
+    const d = this._devices.find((x) => x.id === id);
+    if (!id || !this._hass) return;
+    const name = d?.name || id;
+    try {
+      await this._hass.callWS({ type: "device_panel/hide_device", device_id: id, hidden: true });
+    } catch (err) {
+      // Der Hinweis läge hinter dem Popup: Fehler im Popup über den Knöpfen.
+      this._hideError = (err && err.message) || String(err);
+      this._renderDevice();
+      return;
+    }
+    this._closeDevice();
+    this._devices = this._devices.filter((x) => x.id !== id);
+    this._render();
+    this._fetch(true);
+    this._toast(this._t("hiddenToast", name), { label: this._t("undo"), run: () => this._unhideDevice(id, name) });
+  }
+
+  async _unhideDevice(id, name) {
+    try {
+      await this._hass.callWS({ type: "device_panel/hide_device", device_id: id, hidden: false });
+      this._toast(this._t("shownToast", name));
+    } catch (err) {
+      this._toast(`${this._t("unhideError")} ${(err && err.message) || String(err)}`);
+    }
+    this._fetch(true);
   }
 
   // Navigation gehört ins Elternfenster (Home Assistant selbst): im iframe
@@ -2422,6 +2753,7 @@ class DevicePanel extends HTMLElement {
       ["push", ["notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "notify_delay", "notify_fields", "reset_notify"]],
       ["persistent", ["outage_persistent"]],
       ["display", ["show_service_devices", "show_disabled_devices", "hide_connections", "connection_order"]],
+      ["hidden", ["exclude_devices"]],
       ["updates", ["update_check"]],
     ];
   }
@@ -2469,6 +2801,13 @@ class DevicePanel extends HTMLElement {
     for (const dev of this._devices) counts.set(this._connOf(dev), (counts.get(this._connOf(dev)) || 0) + 1);
     for (const key of d.hide_connections || []) if (!counts.has(key) && CONN[key]) counts.set(key, 0);
     return orderConns([...counts.entries()], d.connection_order).map(([key, n]) => ({ value: key, devices: n }));
+  }
+
+  // Ausgeblendete Geräte, wie beim Öffnen gespeichert: Wer eines wieder
+  // einschaltet, behält die Zeile bis zum Speichern (sonst verschwände sie
+  // unter dem Finger). Gelöschte Geräte fehlen (Backend).
+  _hiddenCatalog() {
+    return this._settings?.data?.catalog?.hidden_devices || [];
   }
 
   // Typen für die Ausschlüsse: alle mit Geräten, dazu ausgeblendete ohne.
@@ -2522,6 +2861,10 @@ class DevicePanel extends HTMLElement {
       return d.outage_persistent ? this._t("sumPersistentOn", n) : this._t("sumPersistentOff");
     }
     if (id === "types") return this._t("sumShown", this._t("sumTypes", this._catalogTypes(d).length), d.exclude_types.length);
+    if (id === "hidden") {
+      const ex = new Set(d.exclude_devices || []);
+      return this._t("sumHidden", this._hiddenCatalog().filter((x) => ex.has(x.id)).length);
+    }
     if (id === "connections") {
       const n = Object.keys(d.connection_integrations || {}).length;
       return n ? this._t("sumConnInteg", n) : this._t("sumConnAuto");
@@ -2755,7 +3098,7 @@ class DevicePanel extends HTMLElement {
     // ist eine Liste der Ausgeschlossenen; ausgeblendete Zeilen sperren die
     // übrigen Spalten (nicht überwacht, keine Meldungen).
     // drag: Zeilen mit Griff zum Verschieben (Reihenfolge der Chips).
-    const exTable = (key, items, intro, drag = false, cols = null) => {
+    const exTable = (key, items, intro, drag = false, cols = null, allLabel = null) => {
       const columns = cols || [[key, t("colShow")]];
       const multi = columns.length > 1;
       const sets = Object.fromEntries(columns.map(([k]) => [k, new Set(d[k] || [])]));
@@ -2771,11 +3114,11 @@ class DevicePanel extends HTMLElement {
           ${columns.map(([k, label], i) => toggle(k, label, x, i > 0 && hidden.has(x.value))).join("")}</div>`;
       const rows = items.map(line).join("");
       const allRow = columns
-        .map(([k, label]) => cell(`<label class="switch"><input type="checkbox" data-list-all="${k}" ${items.every((x) => !sets[k].has(x.value)) ? "checked" : ""} aria-label="${escape(`${t("toggleAll")}: ${label}`)}"><span></span></label>`))
+        .map(([k, label]) => cell(`<label class="switch"><input type="checkbox" data-list-all="${k}" ${items.every((x) => !sets[k].has(x.value)) ? "checked" : ""} aria-label="${escape(`${allLabel || t("toggleAll")}: ${label}`)}"><span></span></label>`))
         .join("");
       return `<div class="opt-short ex-intro">${escape(intro)}</div>
         <div class="ex-head${multi ? " multi" : ""}"><span></span>${columns.map(([, label]) => (multi ? `<span class="ex-col">${escape(label)}</span>` : `<span>${escape(label)}</span>`)).join("")}</div>
-        <div class="ex-row ex-all"><div class="ex-name">${escape(t("toggleAll"))}</div>${allRow}</div>
+        <div class="ex-row ex-all"><div class="ex-name">${escape(allLabel || t("toggleAll"))}</div>${allRow}</div>
         ${drag ? `<div class="drag-list">${rows}</div>` : rows}`;
     };
     const integrations = (st.data.catalog?.integrations || []).map((i) => ({
@@ -2794,6 +3137,12 @@ class DevicePanel extends HTMLElement {
       value: x.type,
       label: t(typeKey(x.type)),
       sub: x.devices ? t("devicesCount", x.devices) : t("typesEmpty"),
+      badge: `<span class="ibadge type">${typeIcon(x.type, 18)}</span>`,
+    }));
+    const hiddenDevs = this._hiddenCatalog().map((x) => ({
+      value: x.id,
+      label: x.name,
+      sub: [x.area, x.integration].filter(Boolean).join(" · "),
       badge: `<span class="ibadge type">${typeIcon(x.type, 18)}</span>`,
     }));
     const fields = {
@@ -2852,11 +3201,14 @@ class DevicePanel extends HTMLElement {
         ((d.connection_order || []).length
           ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset">${mdi("reset", 15)}${escape(t("chipsOrderReset"))}</button></div>`
           : ""),
+      hidden: hiddenDevs.length
+        ? exTable("exclude_devices", hiddenDevs, t("hiddenIntro"), false, null, t("hiddenShowAll"))
+        : `<div class="opt-short ex-intro">${escape(t("hiddenIntro"))}</div><div class="opt-short hidden-empty">${escape(t("hiddenEmpty"))}</div>`,
       updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
     const titles = {
       detection: "secDetection", battery: "secBattery", integrations: "secIntegrations", types: "secTypes", connections: "secConnections", push: "secPush",
-      persistent: "secPersistent", display: "secDisplay", updates: "secUpdates",
+      persistent: "secPersistent", display: "secDisplay", hidden: "secHidden", updates: "secUpdates",
     };
     return (
       `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
@@ -3039,6 +3391,13 @@ class DevicePanel extends HTMLElement {
         st.draft[el.dataset.list] = [...list].sort();
       } else if (el.dataset.listAll) {
         const key = el.dataset.listAll;
+        if (key === "exclude_devices") {
+          const listed = new Set(this._hiddenCatalog().map((x) => x.id));
+          const keep = (st.draft[key] || []).filter((id) => !listed.has(id));
+          st.draft[key] = (el.checked ? keep : [...keep, ...listed]).sort();
+          this._renderSettings();
+          return;
+        }
         const all = key.endsWith("exclude_integrations")
           ? (st.data.catalog?.integrations || []).map((i) => i.domain)
           : key === "hide_connections"
@@ -3208,13 +3567,20 @@ class DevicePanel extends HTMLElement {
     }, 4000);
   }
 
-  _toast(text) {
+  // action: { label, run } zeigt einen Knopf (z. B. "Rückgängig"); der
+  // Hinweis bleibt dann länger stehen, damit man ihn erreicht.
+  _toast(text, action = null) {
     const el = this.shadowRoot.querySelector(".toast");
     if (!el) return;
-    el.textContent = text;
+    this._toastAction = action;
+    el.innerHTML = `<span>${escape(text)}</span>${action ? `<button type="button" class="toast-btn" data-toast-action>${escape(action.label)}</button>` : ""}`;
+    el.classList.toggle("act", Boolean(action));
     el.hidden = false;
     window.clearTimeout(this._toastTimer);
-    this._toastTimer = window.setTimeout(() => (el.hidden = true), 3500);
+    this._toastTimer = window.setTimeout(() => {
+      el.hidden = true;
+      this._toastAction = null;
+    }, action ? 8000 : 3500);
   }
 
   // --- Versionsprüfung und Update über HACS (wie unifi_dynamic) -------------

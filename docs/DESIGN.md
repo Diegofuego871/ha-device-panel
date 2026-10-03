@@ -136,6 +136,19 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
   Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des
   Inhalts in zwei Spalten, auf dem Handy in einer.
+- Filter "Bereich" (seit 0.23.0, `docs/mockups/area-v1/`, A): Chip mit
+  Haus-Symbol am Anfang der Chip-Zeile, danach ein Trennstrich. Ohne Wahl
+  "Bereich" mit Pfeil nach unten; aktiv in Primärfarbe mit Name (Etage,
+  ein oder zwei Bereiche, sonst "3 Bereiche"), Zahl der Zeilen und rundem
+  × zum Aufheben. Desktop: Popover unter dem Chip (330 px, höchstens bis
+  12 px über den unteren Rand), Handy: Blatt wie "Ansicht" mit "Alle
+  zeigen" und "Fertig". Etage als Überschrift in Grossbuchstaben mit
+  Kästchen (voll, halb mit Strich, leer), Bereiche eingerückt mit Zahl
+  rechts; die ganze Zeile ist der Knopf (`role="checkbox"`).
+- Ausblenden (seit 0.23.0, `docs/mockups/hide-v1/`, A): im Geräte-Popup
+  unten zwei gleich breite Knöpfe "Ausblenden" (Auge durchgestrichen) und
+  "Schliessen". Danach Hinweis unten mit Text und Aktion "Rückgängig"
+  (helles Blau auf dunkel, 8 s statt 3,5 s). Fehler im Popup selbst.
 - Reihenfolge per Ziehen (seit 0.13.0, Chips der Verbindungsart): Griff
   (zwei Reihen Punkte) links in der Zeile, Zeile hebt sich beim Ziehen ab
   (`.lift`, Schatten); Pfeiltasten auf dem Griff verschieben um eine

@@ -70,15 +70,24 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    zeigt); welche Chips erscheinen, richtet sich weiter nach allen Geräten.
    Ein aktiver Chip lässt sich mit einem zweiten Tipp abwählen. Neuer Chip
    "Batterie" (alle Geräte mit Batterie, je Gruppe nach Stand sortiert).
-   **To-do** (Nutzer, 2026-10-02): Filter nach Bereich, damit jeder nach
-   seinen Bereichen filtern kann. Mockups `docs/mockups/area-v1/`
-   (Empfehlung A: Chip "Bereich" mit Auswahl nach Etagen), Entscheid offen.
-   Erweitert (Nutzer, 2026-10-03): Bereiche sortieren und gewählte separat
-   zeigen, Mockups `docs/mockups/area-v2/` (Empfehlung A: "Gruppen |
-   Bereiche | Liste", Reihenfolge per Griff im Chip). Weitere Wünsche vom
-   2026-10-03 mit Mockups: Puls-Fenster mit den Geräten
-   (`docs/mockups/pulse-v1/`), einzelne Geräte ausblenden
-   (`docs/mockups/hide-v1/`), Spalten wie HA "Anpassen"
+   Filter nach Bereich (Nutzer, 2026-10-02/03), umgesetzt in 0.23.0 nach
+   `docs/mockups/area-v1/`, A: Chip "Bereich" am Anfang der Chip-Zeile,
+   Auswahl nach Etagen in der Reihenfolge der Registries (Etage wählt alle
+   ihre Bereiche, Bereiche ohne Etage, "Ohne Bereich"), mehrere Bereiche,
+   Suche ab 9 Bereichen; Bereiche ohne gezeigte Geräte fehlen in der
+   Auswahl. Pro Benutzer in der Ansicht (`areas`, Desktop/Handy getrennt);
+   ein in HA gelöschter Bereich fällt still aus dem Filter. Die übrigen
+   Chips zählen und filtern innerhalb der gewählten Bereiche; der Kopf
+   zeigt das ganze Haus. Nicht weiter verfolgt: Gruppieren und Sortieren
+   nach Bereich (`docs/mockups/area-v2/`); der Nutzer will auswählen, nicht
+   sortieren. Einzelne Geräte ausblenden (Nutzer, 2026-10-03: "komplett
+   ausblenden, weil es Geräte sind, die mich nicht interessieren"),
+   umgesetzt in 0.23.0 nach `docs/mockups/hide-v1/`, A: Knopf im Popup mit
+   "Rückgängig", Option `exclude_devices` wie die Ausschlüsse nach
+   Integration und Typ (nicht überwacht, keine Meldungen, für alle
+   Benutzer), Abschnitt "Ausgeblendete Geräte" zum Wiedereinblenden. Weitere
+   Wünsche vom 2026-10-03 mit Mockups: Puls-Fenster mit den Geräten
+   (`docs/mockups/pulse-v1/`), Spalten wie HA "Anpassen"
    (`docs/mockups/customize-v1/`); ohne Mockup: neue Geräte 3 Tage
    markiert, Chip "Neu" (umgesetzt in 0.21.0: `created_at` der
    Geräte-Registry, `NEW_DEVICE_DAYS`; Geräte von vor HA 2024.7 haben 1970

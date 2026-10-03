@@ -36,6 +36,11 @@ details such as software version, manufacturer, model and area.
   tapping it shows. Tapping an active chip again turns it off. In the
   settings ("Display"), single connection type chips can be hidden and all
   of them dragged into your own order.
+- Filter by area: the chip "Area" at the start of the chip row selects one
+  or more areas or a whole floor (order as set in Home Assistant, "No area"
+  for devices without one). The list shows only their devices, and the
+  other chips filter within them; the header keeps showing the whole home.
+  Saved per user like the view.
 - Pop-up per device (like UniFi Dynamic Clients): availability 24 hours,
   outages in 7 days, signal and battery as tiles; connection, integration
   (warns if its config entry is not loaded), device details and all
@@ -62,9 +67,11 @@ details such as software version, manufacturer, model and area.
   after, the numbers count it as one outage. Once after the installation
   the log is filled from the recorder history, as far back as the recorder
   keeps data.
-- Hide whole integrations or device types (settings in the panel or options
+- Hide single devices (button "Hide" in the device pop-up, with "Undo"),
+  whole integrations or device types (settings in the panel or options
   dialog of the integration): hidden devices are neither shown nor
-  monitored. Optionally show service devices (e.g. sun, add-ons) and
+  monitored and send no notifications. The settings list the hidden
+  devices ("Hidden devices") to show them again. Optionally show service devices (e.g. sun, add-ons) and
   disabled devices (own group, not monitored).
 - Battery warning: choose from which level a battery counts as low (5–50 %,
   default 15 %) and how you are told: as a push notification (once per
@@ -114,8 +121,8 @@ details such as software version, manufacturer, model and area.
 
 ### Planned (see `docs/CONCEPT.md`)
 
-- Filter by area, monitoring levels with rules, probable cause and radio
-  path in the device view.
+- Monitoring levels with rules, probable cause and radio path in the
+  device view.
 
 ## Installation
 

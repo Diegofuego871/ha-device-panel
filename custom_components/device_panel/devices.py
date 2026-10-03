@@ -52,6 +52,7 @@ from .const import (
     SIGNAL_LQI_RANGE,
     SIGNAL_OFF,
     NEW_DEVICE_DAYS,
+    CONF_EXCLUDE_DEVICES,
 )
 from .options_api import battery_threshold, effective
 
@@ -387,11 +388,17 @@ def hub_ids(hass: HomeAssistant) -> set[str]:
 def _shown(
     hass: HomeAssistant, opts: dict[str, Any], disabled: bool
 ) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:
-    """Kandidaten nach "Anzeige", ohne ausgeschlossene Integrationen (primärer Eintrag) und Typen."""
+    """
+    Kandidaten nach "Anzeige", ohne ausgeschlossene Integrationen (primärer
+    Eintrag), Typen und einzeln ausgeblendete Geräte.
+    """
+    ex_devices = set(opts[CONF_EXCLUDE_DEVICES])
     ex_domains = set(opts[CONF_EXCLUDE_INTEGRATIONS])
     ex_types = set(opts[CONF_EXCLUDE_TYPES])
     hubs = hub_ids(hass) if ex_types else set()
     for device, entries in candidate_devices(hass, service=opts[CONF_SHOW_SERVICE], disabled=disabled):
+        if device.id in ex_devices:
+            continue
         if ex_domains and (primary := _primary_entry(hass, device)) and primary.domain in ex_domains:
             continue
         if ex_types and effective_type(hass, device, entries, hubs)[0] in ex_types:
@@ -782,7 +789,64 @@ async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
         "integrations": integrations,
         "types": [{"type": t, "devices": by_type.get(t, 0)} for t in DEVICE_TYPES],
         "battery": battery_list,
+        "hidden_devices": await async_hidden_devices(hass, opts),
     }
+
+
+def area_catalog(hass: HomeAssistant) -> dict[str, list[dict[str, Any]]]:
+    """Bereiche (mit Etage) und Etagen für den Filter, in der Reihenfolge der Registries."""
+    from homeassistant.helpers import floor_registry as fr  # noqa: PLC0415
+
+    floors = [{"id": f.floor_id, "name": f.name, "level": f.level} for f in fr.async_get(hass).async_list_floors()]
+    areas = [{"id": a.id, "name": a.name, "floor_id": a.floor_id} for a in ar.async_get(hass).async_list_areas()]
+    return {"areas": areas, "floors": floors}
+
+
+async def async_hidden_devices(hass: HomeAssistant, opts: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    """
+    Einzeln ausgeblendete Geräte für die Einstellungen (zum Wiedereinblenden):
+    Name, Typ (Symbol), Bereich, Integration. Gelöschte fehlen; ihre ID bleibt
+    gespeichert, weil HA ein wieder hinzugefügtes Gerät mit derselben ID
+    herstellt.
+    """
+    opts = opts or effective(hass)
+    dev_reg = dr.async_get(hass)
+    area_reg = ar.async_get(hass)
+    ent_reg = er.async_get(hass)
+    hubs = hub_ids(hass) if opts[CONF_EXCLUDE_DEVICES] else set()
+    items: list[dict[str, Any]] = []
+    for dev in opts[CONF_EXCLUDE_DEVICES]:
+        device = dev_reg.async_get(dev)
+        if device is None:
+            continue
+        area = area_reg.async_get_area(device.area_id) if device.area_id else None
+        entries = er.async_entries_for_device(ent_reg, device.id, include_disabled_entities=bool(device.disabled_by))
+        items.append({
+            "id": dev,
+            "name": device.name_by_user or device.name or dev,
+            "type": effective_type(hass, device, entries, hubs)[0],
+            "area": area.name if area else None,
+            "domain": primary_domain(hass, device),
+        })
+    names = await async_integration_info(hass, {i["domain"] for i in items if i["domain"]})
+    for item in items:
+        domain = item.pop("domain")
+        item["integration"] = names.get(domain, {}).get("name", domain) if domain else None
+    items.sort(key=lambda x: str(x["name"]).casefold())
+    return items
+
+
+async def async_set_device_hidden(hass: HomeAssistant, device_id: str, hidden: bool) -> bool:
+    """Gerät aus- oder einblenden (Option exclude_devices); True, wenn sich etwas änderte."""
+    entry = next(iter(hass.config_entries.async_entries(DOMAIN)), None)
+    if entry is None:
+        return False
+    current = set(effective(hass)[CONF_EXCLUDE_DEVICES])
+    changed = current | {device_id} if hidden else current - {device_id}
+    if changed == current:
+        return False
+    hass.config_entries.async_update_entry(entry, options={**entry.options, CONF_EXCLUDE_DEVICES: sorted(changed)})
+    return True
 
 
 def _primary_entry(hass: HomeAssistant, device: dr.DeviceEntry):
@@ -859,6 +923,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "id": device.id,
                 "name": name,
                 "area": area.name if area else None,
+                # Für den Filter "Bereich" (seit 0.23.0).
+                "area_id": area.id if area else None,
                 "manufacturer": device.manufacturer,
                 "model": device.model,
                 "sw_version": device.sw_version,
@@ -910,6 +976,9 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         "connection_order": opts[CONF_CONNECTION_ORDER],
         "pulse": None,
         "incidents": [],
+        # Filter "Bereich": Bereiche und Etagen in der Reihenfolge, die man in
+        # HA festlegt (Einstellungen → Bereiche, Etagen und Zonen).
+        **area_catalog(hass),
     }
     if log is not None:
         # Nur die gezeigten, überwachten Geräte: ausgeschlossene und

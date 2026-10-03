@@ -8,6 +8,8 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
+    DeviceSelector,
+    DeviceSelectorConfig,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
@@ -39,6 +41,7 @@ from .const import (
     CONF_BATTERY_PERSISTENT,
     CONF_BATTERY_PUSH,
     CONF_EXCLUDE_INTEGRATIONS,
+    CONF_EXCLUDE_DEVICES,
     CONF_EXCLUDE_TYPES,
     CONF_FLAKY_OUTAGES,
     CONF_CONNECTION_INTEGRATIONS,
@@ -124,7 +127,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 # Bestehende Options erhalten, statt sie zu ersetzen. Leere
                 # Mehrfachauswahl muss die alte überschreiben.
                 data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own, CONF_CONNECTION_INTEGRATIONS: conns}
-                for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CONNECTIONS, CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE):
+                for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_EXCLUDE_DEVICES, CONF_HIDE_CONNECTIONS, CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE):
                     data[key] = sorted(set(user_input.get(key) or []))
                 # Inhalt der Meldung in fester Reihenfolge, wie im Panel.
                 data[CONF_NOTIFY_FIELDS] = notify_fields(list(user_input.get(CONF_NOTIFY_FIELDS) or []))
@@ -197,6 +200,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                             options=list(DEVICE_TYPES), multiple=True, mode=SelectSelectorMode.DROPDOWN, translation_key="device_type"
                         )
                     ),
+                    # Einzeln ausgeblendete Geräte (im Panel: Knopf im Geräte-Popup).
+                    vol.Optional(CONF_EXCLUDE_DEVICES, default=values[CONF_EXCLUDE_DEVICES]): DeviceSelector(DeviceSelectorConfig(multiple=True)),
                     vol.Required(CONF_NOTIFY_SERVICE, default=values[CONF_NOTIFY_SERVICE]): SelectSelector(
                         SelectSelectorConfig(options=targets, mode=SelectSelectorMode.DROPDOWN)
                     ),

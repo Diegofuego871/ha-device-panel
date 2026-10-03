@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "26"
+PANEL_VERSION = "27"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -166,6 +166,10 @@ DEVICE_TYPES = (
 # Panel nicht, und das Protokoll überwacht sie nicht.
 CONF_EXCLUDE_INTEGRATIONS = "exclude_integrations"
 CONF_EXCLUDE_TYPES = "exclude_types"
+# Einzelne Geräte ausgeblendet (seit 0.23.0): nicht gezeigt, nicht überwacht,
+# keine Meldungen; Liste von Geräte-IDs, wieder einzublenden in den
+# Einstellungen ("Ausgeblendete Geräte").
+CONF_EXCLUDE_DEVICES = "exclude_devices"
 # Filter-Chips der Verbindungsart, die das Panel nicht zeigt (Abschnitt
 # "Anzeige", gilt für alle Benutzer). Nur die Chips: Geräte bleiben sichtbar.
 CONF_HIDE_CONNECTIONS = "hide_connections"

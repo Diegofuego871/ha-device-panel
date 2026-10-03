@@ -236,6 +236,19 @@ hat dort einen echten Fehler oder Umweg gekostet.
   Test lässt sich ein Eintrag mit `attr.evolve(device, created_at=…)`
   ersetzen (private Attribute wie `_suggested_area` verhindern den
   Konstruktor).
+- **Globale Klassen im Panel (0.23.0):** `.sub` (Unterzeile in der Liste)
+  setzt `display: block`; als Zusatzklasse an einer Flex-Zeile stapelte sie
+  Kästchen und Name untereinander. Neue Bausteine bekommen eigene,
+  eindeutige Klassen (`.arow.in` statt `.arow.sub`), und jede neue Ansicht
+  wird im Bild geprüft, nicht nur per Test.
+- **Popover unter einem tiefen Anker (0.23.0):** Der Chip "Bereich" steht
+  unter dem Kopf, also weit unten; ein Popover mit fester Höchsthöhe ragte
+  aus dem Fenster, Zeilen darunter waren nicht erreichbar (Playwright:
+  "element is outside of the viewport"). Höhe darum aus dem Platz bis zum
+  unteren Rand (`_placeAreas`).
+- **Hinweis mit Aktion (0.23.0):** `.toast` steht mit `left: 50%` und
+  `translateX(-50%)`; ohne `width: max-content` bricht der Text schon bei
+  der halben Fensterbreite um.
 - **Alter Stand überdeckt eigene Änderung (0.20.0):** `_fetch` lief nie
   doppelt; eine Abfrage, die vor einer Änderung im Popup begonnen hatte,
   lieferte danach den alten Stand und überschrieb die sofort gezeigte Wahl,

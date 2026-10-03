@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.22.0, Batterie-Verlauf)
+## Stand (0.23.0, Geräte ausblenden, Filter Bereich)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -23,7 +23,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `device_panel/reset_device_settings` (Einstellungen, beim Speichern: Liste
   von Geräten je Art auf den globalen Wert, Arten `battery`, `notify`,
   `connection`; `get_options` liefert dafür `overrides`, auch ausgeblendete
-  Geräte).
+  Geräte). Seit 0.23.0 `device_panel/hide_device` (Knopf "Ausblenden" im
+  Popup, Option `exclude_devices`, gilt für alle Benutzer) und in
+  `list_devices` die Bereiche und Etagen in der Reihenfolge der Registries
+  (`areas`, `floors`, je Gerät `area_id`) für den Filter "Bereich".
 - Einstellungen im Panel (Zahnrad), Reihenfolge nach Bild 5:
   Versionskasten mit Update über HACS, Vorabversionen, "In HACS
   freischalten"; "Ausfall-Erkennung" (Zahlenfelder `offline_after`,
@@ -52,7 +55,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   Geräte in eigener Gruppe, nicht überwacht; `hide_connections`: Chips der
   Verbindungsart, die nicht erscheinen, gilt für alle, seit 0.11.0;
   `connection_order`: Reihenfolge dieser Chips, leer = nach Anzahl, nicht
-  genannte folgen nach Anzahl, seit 0.13.0); "Updates" (tägliche Prüfung
+  genannte folgen nach Anzahl, seit 0.13.0); "Ausgeblendete Geräte"
+  (`exclude_devices`, seit 0.23.0: einzeln ausgeblendete Geräte, wie
+  ausgeschlossene Integrationen nicht überwacht; `get_options` liefert sie
+  im Katalog als `hidden_devices`, gelöschte fehlen, ihre ID bleibt
+  gespeichert); "Updates" (tägliche Prüfung
   mit Meldung unter "Reparaturen"). Backend `update_check.py`,
   `options_api.py` (`effective(hass)` liefert die wirksamen Werte),
   Optionsdialog in `config_flow.py` mit denselben Feldern in derselben
@@ -158,21 +165,28 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    überschrieb sie (Fehlerbericht des Nutzers: Thread von Hand zeigte
    wieder Matter; `_fetch(true)` verwirft den alten Stand) und die Liste
    im Statistik-Fenster zeigte einen Ausfall über Neustarts als mehrere
-   Einträge (jetzt `outages` aus `bridged`).
+   Einträge (jetzt `outages` aus `bridged`). `v0.22.0` veröffentlicht.
+   Mit `0.23.0` (Nutzer, 2026-10-03): einzelne Geräte ausblenden (Variante
+   A, `docs/mockups/hide-v1/`; ausgeblendet = ganz weg, nicht überwacht,
+   keine Meldungen) und Filter "Bereich" (Variante A,
+   `docs/mockups/area-v1/`; Nutzer: einen Bereich auswählen, nicht
+   sortieren, und mit den Chips weiter filtern; Design Claude überlassen).
+   Kopf bleibt beim Filter für das ganze Haus (Annahme, dem Nutzer
+   genannt).
    Als Nächstes, in dieser Reihenfolge (Nutzer, 2026-10-03):
    b. Puls-Kachel: Popup mit den Geräten, die in 24 Std. Unterbrüche
       hatten (Mockups `docs/mockups/pulse-v1/`, Empfehlung A, Entscheid
       offen).
-   c. Einzelne Geräte ausblenden; Liste der ausgeblendeten in den
-      Einstellungen zum Wiedereinblenden (`docs/mockups/hide-v1/`,
-      Empfehlung A; offen auch: ausgeblendet = nicht überwacht?).
+   c. Erledigt mit `0.23.0`: einzelne Geräte ausblenden, Liste der
+      ausgeblendeten in den Einstellungen zum Wiedereinblenden
+      (`docs/mockups/hide-v1/`, A; nicht überwacht, keine Meldungen).
    d. Spalten-Dialog wie HA "Anpassen" (Auge, Ziehgriff, "Standard
       wiederherstellen", "Fertig"; `docs/mockups/customize-v1/`,
       Empfehlung A).
-   e. Bereiche: Filter (Mockups `docs/mockups/area-v1/`, Empfehlung A),
-      Bereiche sortierbar, gewählte Bereiche separat einblenden
-      (`docs/mockups/area-v2/`, Empfehlung A, zwei offene Fragen im
-      README).
+   e. Erledigt mit `0.23.0`: Filter "Bereich" (`docs/mockups/area-v1/`,
+      A). Gruppieren und Sortieren nach Bereich (`docs/mockups/area-v2/`)
+      nicht weiter verfolgt: Der Nutzer will Bereiche auswählen, nicht
+      sortieren (2026-10-03).
    f. Erledigt mit `0.21.0`: Empfang-Warnung pro Gerät (Variante A,
       `docs/mockups/signal-v1/`), gespeichert in
       `.storage/device_panel.devices` "signal", `list_devices` liefert

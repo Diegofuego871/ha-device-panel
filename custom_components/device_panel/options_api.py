@@ -44,6 +44,7 @@ from .const import (
     CONF_BATTERY_LOW_INTEGRATIONS,
     CONF_BATTERY_PERSISTENT,
     CONF_BATTERY_PUSH,
+    CONF_EXCLUDE_DEVICES,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_CONNECTION_INTEGRATIONS,
@@ -91,6 +92,8 @@ INT_OPTIONS: tuple[tuple[str, int], ...] = (
 LIST_OPTIONS = (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CONNECTIONS, CONF_CONNECTION_ORDER)
 
 _DOMAIN_RE = re.compile(r"^[a-z0-9_]+$")
+# Geräte-IDs von HA: Hex (uuid4().hex); etwas weiter gefasst für Tests.
+_DEVICE_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 _NOTIFY_RE = re.compile(r"^notify\.[a-z0-9_]+$")
 _TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
@@ -106,6 +109,13 @@ def push_time(value: Any) -> str:
 def _domains(value: Any) -> list[str]:
     if not isinstance(value, list) or not all(isinstance(v, str) and _DOMAIN_RE.match(v) for v in value):
         raise vol.Invalid("Liste von Integrationen (Domains) erwartet")
+    return sorted(set(value))
+
+
+def device_ids(value: Any) -> list[str]:
+    """Liste von Geräte-IDs (ausgeblendete Geräte), sortiert, ohne Doppelte."""
+    if not isinstance(value, list) or not all(isinstance(v, str) and _DEVICE_RE.match(v) for v in value):
+        raise vol.Invalid("Liste von Geräte-IDs erwartet")
     return sorted(set(value))
 
 
@@ -210,6 +220,7 @@ PANEL_SCHEMA = vol.Schema(
         **{vol.Optional(key): _int_in(key) for key, _default in INT_OPTIONS},
         vol.Optional(CONF_EXCLUDE_INTEGRATIONS): _domains,
         vol.Optional(CONF_EXCLUDE_TYPES): _types,
+        vol.Optional(CONF_EXCLUDE_DEVICES): device_ids,
         vol.Optional(CONF_NOTIFY_EXCLUDE): _domains,
         vol.Optional(CONF_PERSISTENT_EXCLUDE): _domains,
         vol.Optional(CONF_NOTIFY_FIELDS): notify_fields,
@@ -238,6 +249,9 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
         {d for d in options.get(CONF_EXCLUDE_INTEGRATIONS) or [] if isinstance(d, str)}
     )
     values[CONF_EXCLUDE_TYPES] = sorted({t for t in options.get(CONF_EXCLUDE_TYPES) or [] if t in DEVICE_TYPES})
+    values[CONF_EXCLUDE_DEVICES] = sorted(
+        {d for d in options.get(CONF_EXCLUDE_DEVICES) or [] if isinstance(d, str) and _DEVICE_RE.match(d)}
+    )
     for key in (CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE):
         values[key] = sorted({d for d in options.get(key) or [] if isinstance(d, str) and _DOMAIN_RE.match(d)})
     fields = options.get(CONF_NOTIFY_FIELDS)

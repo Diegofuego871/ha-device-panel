@@ -7,6 +7,28 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.23.0] - 2026-10-03
+
+Hide single devices and filter by area.
+
+### Added
+
+- Hide single devices: button "Hide" in the device pop-up. A hidden device
+  disappears completely: not in the list or the header, not monitored, no
+  notifications. A note with "Undo" appears afterwards. Applies to all
+  users.
+- Settings, new section "Hidden devices": all hidden devices with name,
+  area and integration, a switch "Show" per device and "Show all", applied
+  with "Save". Also in the options dialog of the integration (field
+  "Hidden devices").
+- Filter "Area": chip at the start of the chip row. Select one or more
+  areas or a whole floor; the list shows only their devices, and the other
+  chips filter within them. Floors and areas in the order set in Home
+  Assistant, areas without a floor and "No area" at the end, the number of
+  devices per area, search from 9 areas. Saved per user, separately for
+  desktop and phone. The header (ring, "Offline right now", pulse) keeps
+  showing the whole home.
+
 ## [0.22.0] - 2026-10-03
 
 Battery history in the device pop-up.
@@ -605,6 +627,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.23.0
 [0.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.22.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0

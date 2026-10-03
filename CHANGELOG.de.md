@@ -7,6 +7,28 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.23.0] - 2026-10-03
+
+Einzelne Geräte ausblenden und nach Bereich filtern.
+
+### Hinzugefügt
+
+- Einzelne Geräte ausblenden: Knopf "Ausblenden" im Geräte-Popup. Ein
+  ausgeblendetes Gerät ist ganz weg: nicht in der Liste und nicht im Kopf,
+  nicht überwacht, keine Meldungen. Danach erscheint ein Hinweis mit
+  "Rückgängig". Gilt für alle Benutzer.
+- Einstellungen, neuer Abschnitt "Ausgeblendete Geräte": alle
+  ausgeblendeten Geräte mit Name, Bereich und Integration, Schalter
+  "Anzeigen" pro Gerät und "Alle einblenden", gilt mit "Speichern". Auch im
+  Optionsdialog der Integration (Feld "Ausgeblendete Geräte").
+- Filter "Bereich": Chip am Anfang der Chip-Zeile. Einen oder mehrere
+  Bereiche oder eine ganze Etage wählen; die Liste zeigt nur deren Geräte,
+  und die übrigen Chips filtern darin weiter. Etagen und Bereiche in der
+  Reihenfolge aus Home Assistant, Bereiche ohne Etage und "Ohne Bereich"
+  am Schluss, Zahl der Geräte je Bereich, Suche ab 9 Bereichen. Pro
+  Benutzer gespeichert, Desktop und Handy getrennt. Der Kopf (Ring,
+  "Gerade ausgefallen", Puls) zeigt weiter das ganze Haus.
+
 ## [0.22.0] - 2026-10-03
 
 Batterie-Verlauf im Geräte-Popup.
@@ -635,6 +657,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.23.0
 [0.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.22.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0

@@ -67,6 +67,7 @@ from .devices import (
     async_mark_start,
     async_reset_device_settings,
     async_set_connection_override,
+    async_set_device_hidden,
     async_set_device_settings,
     async_set_type_override,
     device_battery_threshold,
@@ -482,6 +483,29 @@ async def _ws_set_device_settings(
 
 @websocket_api.websocket_command(
     {
+        vol.Required("type"): f"{DOMAIN}/hide_device",
+        vol.Required("device_id"): str,
+        vol.Required("hidden"): bool,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_hide_device(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """
+    Gerät aus- oder einblenden (Popup, "Rückgängig"); gilt für alle Benutzer
+    und beendet die Überwachung. Einblenden geht auch für gelöschte Geräte.
+    """
+    if msg["hidden"] and dr.async_get(hass).async_get(msg["device_id"]) is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
+        return
+    changed = await async_set_device_hidden(hass, msg["device_id"], msg["hidden"])
+    connection.send_result(msg["id"], {"hidden": msg["hidden"], "changed": changed})
+
+
+@websocket_api.websocket_command(
+    {
         vol.Required("type"): f"{DOMAIN}/reset_device_settings",
         # Geräte, deren Batterie-Warnung bzw. Meldungen auf den globalen Wert
         # zurückgehen (Einstellungen, beim Speichern).
@@ -523,3 +547,4 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_set_device_connection)
     websocket_api.async_register_command(hass, _ws_set_device_settings)
     websocket_api.async_register_command(hass, _ws_reset_device_settings)
+    websocket_api.async_register_command(hass, _ws_hide_device)

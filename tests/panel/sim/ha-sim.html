@@ -223,8 +223,22 @@
     return s ? { ...s, strip: strip(segments(events(id), nowS - D, nowS), nowS - D, nowS) } : null;
   }
 
+  // Etagen und Bereiche (erfunden) in der Reihenfolge, die man in HA
+  // festlegt (Einstellungen → Bereiche, Etagen und Zonen); wie
+  // devices.area_catalog. "Terrasse" ohne Etage, "Garage" ohne Geräte.
+  const FLOORS = [
+    { id: "eg", name: "Erdgeschoss", level: 0 }, { id: "og", name: "Obergeschoss", level: 1 }, { id: "ug", name: "Untergeschoss", level: -1 },
+  ];
+  const AREAS = [
+    ["kueche", "Küche", "eg"], ["wohnzimmer", "Wohnzimmer", "eg"], ["flur", "Flur", "eg"], ["eingang", "Eingang", "eg"],
+    ["bad", "Bad", "og"], ["buero", "Büro", "og"], ["kinderzimmer", "Kinderzimmer", "og"], ["estrich", "Estrich", "og"],
+    ["keller", "Keller", "ug"], ["terrasse", "Terrasse", null], ["garage", "Garage", "ug"],
+  ].map(([id, name, floor_id]) => ({ id, name, floor_id }));
+  window.__areas = AREAS;
+  window.__floors = FLOORS;
+  const areaId = (name) => AREAS.find((a) => a.name === name)?.id || null;
   const dev = (id, name, area, integ, connection, type, extra = {}) => ({
-    id, name, area, integrations: [integ], integration: { domain: integ, title: TITLES[integ] || integ }, type, connection,
+    id, name, area, area_id: areaId(area), integrations: [integ], integration: { domain: integ, title: TITLES[integ] || integ }, type, connection,
     service: false, disabled: false, entities: 3, online: true, offline_since: null, since_at_least: false, signal: null, via: null, battery: null,
     update: null, manufacturer: "Beispiel AG", model: "Modell " + id.toUpperCase(), sw_version: "1.0." + id.length, hw_version: null,
     // Angelegt vor 200 Tagen; "neu" wie im Backend: höchstens 3 Tage alt.
@@ -265,7 +279,7 @@
   // Wie das Backend: Kandidaten nach "Anzeige" (Dienst-Geräte, deaktivierte,
   // mit Entitäten), dann die Ausschlüsse.
   const candidates = () => window.__devices.filter((d) => d.entities > 0 && (!d.service || window.__opts.show_service_devices) && (!d.disabled || window.__opts.show_disabled_devices));
-  const shown = () => candidates().filter((d) => !(d.integration && window.__opts.exclude_integrations.includes(d.integration.domain)) && !window.__opts.exclude_types.includes(d.type));
+  const shown = () => candidates().filter((d) => !(d.integration && window.__opts.exclude_integrations.includes(d.integration.domain)) && !window.__opts.exclude_types.includes(d.type) && !window.__opts.exclude_devices.includes(d.id));
   // Bereiche der Zahlen wie options_api.limits().
   const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50], notify_delay: [0, 60] };
   // Inhalt der Meldung wie options_api.NOTIFY_FIELDS (feste Reihenfolge).
@@ -292,7 +306,14 @@
       item.devices += 1;
       if (d.battery.level != null && (item.weakest == null || d.battery.level < item.weakest)) item.weakest = d.battery.level;
     }
+    // Wie devices.async_hidden_devices: einzeln ausgeblendete, nach Name.
+    const hidden = window.__opts.exclude_devices
+      .map((id) => window.__devices.find((d) => d.id === id))
+      .filter(Boolean)
+      .map((d) => ({ id: d.id, name: d.name, type: d.type, area: d.area, integration: integrations[d.integration?.domain] || d.integration?.domain || null }))
+      .sort((a, b) => a.name.localeCompare(b.name));
     return {
+      hidden_devices: hidden,
       integrations: Object.entries(byDomain).map(([domain, n]) => ({ domain, name: integrations[domain] || domain, devices: n })).sort((a, b) => b.devices - a.devices || a.name.localeCompare(b.name)),
       types: TYPE_ORDER.map((t) => ({ type: t, devices: byType[t] || 0 })),
       battery: Object.entries(bat).map(([domain, v]) => ({ domain, name: integrations[domain] || domain, ...v })).sort((a, b) => b.devices - a.devices || a.name.localeCompare(b.name)),
@@ -374,7 +395,7 @@
   window.__opts = {
     offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, battery_push: false, battery_persistent: false,
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
-    exclude_integrations: [], exclude_types: [], notify_service: "none", notify_click_target: "panel",
+    exclude_integrations: [], exclude_types: [], exclude_devices: [], notify_service: "none", notify_click_target: "panel",
     notify_outage: false, notify_online: false, notify_group: true, hide_connections: [], connection_order: [], connection_integrations: {},
     show_service_devices: false, show_disabled_devices: false, update_check: true,
     notify_delay: 0, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
@@ -510,6 +531,11 @@
           if (!Array.isArray(v) || v.some((x) => !NOTIFY_FIELDS.includes(x))) throw { code: "invalid_format", message: "fields" };
           msg.values.notify_fields = NOTIFY_FIELDS.filter((x) => v.includes(x));
         }
+        if ("exclude_devices" in msg.values) {
+          const v = msg.values.exclude_devices;
+          if (!Array.isArray(v) || v.some((x) => typeof x !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(x))) throw { code: "invalid_format", message: "devices" };
+          msg.values.exclude_devices = [...new Set(v)].sort();
+        }
         for (const key of ["notify_exclude_integrations", "persistent_exclude_integrations"]) {
           const v = msg.values[key];
           if (key in msg.values && (!Array.isArray(v) || v.some((x) => !/^[a-z0-9_]+$/.test(x)))) throw { code: "invalid_format", message: key };
@@ -550,6 +576,17 @@
           out.notify = msg.notify;
         }
         return out;
+      }
+      if (msg.type === "device_panel/hide_device") {
+        // Wie das Backend: Option exclude_devices; Unbekanntes ausblenden geht nicht.
+        if (window.__hideFails) throw new Error(window.__hideFails);
+        const list = new Set(window.__opts.exclude_devices);
+        if (msg.hidden && !window.__devices.some((d) => d.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
+        const before = list.size;
+        if (msg.hidden) list.add(msg.device_id);
+        else list.delete(msg.device_id);
+        window.__opts.exclude_devices = [...list].sort();
+        return { hidden: Boolean(msg.hidden), changed: list.size !== before };
       }
       if (msg.type === "device_panel/set_device_type") {
         if (window.__typeFails) throw new Error(window.__typeFails);
@@ -596,6 +633,7 @@
           })),
           integrations, now: new Date().toISOString(), offline_after: window.__opts.offline_after * 60, battery_low: batLow,
           flaky_outages: flakyN, hide_connections: [...window.__opts.hide_connections], connection_order: [...window.__opts.connection_order], pulse: pulse(), incidents,
+          areas: window.__areas.map((a) => ({ ...a })), floors: window.__floors.map((f) => ({ ...f })),
         };
         // Langsame Antwort mit dem Stand vom Beginn der Abfrage (wie HA bei
         // vielen Geräten): für den Wettlauf mit einer Änderung im Popup.

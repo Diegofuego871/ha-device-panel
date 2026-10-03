@@ -40,6 +40,11 @@ Bereich.
   einem zweiten Tipp abwählen. In den Einstellungen ("Anzeige") lassen sich
   einzelne Chips der Verbindungsart ausblenden und alle in eine eigene
   Reihenfolge ziehen.
+- Filter nach Bereich: Der Chip "Bereich" am Anfang der Chip-Zeile wählt
+  einen oder mehrere Bereiche oder eine ganze Etage (Reihenfolge wie in
+  Home Assistant, "Ohne Bereich" für Geräte ohne). Die Liste zeigt nur
+  deren Geräte, und die übrigen Chips filtern darin weiter; der Kopf zeigt
+  weiter das ganze Haus. Pro Benutzer gespeichert wie die Ansicht.
 - Popup pro Gerät (wie bei UniFi Dynamic Clients): Verfügbarkeit 24 Stunden,
   Unterbrüche in 7 Tagen, Empfang und Batterie als Kacheln; Verbindung,
   Integration (warnt, wenn ihr Eintrag nicht geladen ist), Geräteangaben und
@@ -67,9 +72,12 @@ Bereich.
   danach ausgefallen, zählen die Zahlen das als einen Ausfall. Einmal nach
   der Installation füllt die Integration das Protokoll aus dem Verlauf des
   Recorders nach, so weit dieser Daten hat.
-- Ganze Integrationen oder Gerätetypen ausblenden (Einstellungen im Panel
+- Einzelne Geräte (Knopf "Ausblenden" im Geräte-Popup, mit "Rückgängig"),
+  ganze Integrationen oder Gerätetypen ausblenden (Einstellungen im Panel
   oder Optionsdialog der Integration): ausgeblendete Geräte werden weder
-  gezeigt noch überwacht. Wahlweise Dienst-Geräte (z. B. Sonne, Add-ons)
+  gezeigt noch überwacht und melden nichts. Die Einstellungen führen die
+  ausgeblendeten Geräte auf ("Ausgeblendete Geräte"), um sie wieder
+  einzublenden. Wahlweise Dienst-Geräte (z. B. Sonne, Add-ons)
   und deaktivierte Geräte anzeigen (eigene Gruppe, nicht überwacht).
 - Batterie-Warnung: wählen, ab welchem Stand eine Batterie als schwach gilt
   (5–50 %, Standard 15 %) und wie man es erfährt: als Push-Meldung (einmal
@@ -121,8 +129,8 @@ Bereich.
 
 ### Geplant (siehe `docs/CONCEPT.md`)
 
-- Filter nach Bereich, Überwachungsebenen mit Regeln, vermutete Ursache
-  und Funkweg in der Geräteansicht.
+- Überwachungsebenen mit Regeln, vermutete Ursache und Funkweg in der
+  Geräteansicht.
 
 ## Installation
 
