@@ -1,0 +1,28 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<div class="row">
+<div class="col"><div class="cap">A (Empfehlung): "Mit KI einschätzen" im Geräte-Popup<small>Nur auf Knopfdruck. Das Panel schickt die Fakten des Geräts (Ausfälle, Batterie, Empfang, Hub, Integration, Sammelausfall) an die KI-Aufgabe von HA und zeigt die Antwort.</small></div>
+<div class="dlg"><div class="hd"><div class="av" style="background:#ffebee;color:var(--err)">⦿</div><div><h2>Bewegungsmelder Flur</h2><div class="s"><span style="color:var(--err)">Ausgefallen seit 2 Std.</span> · Bewegung · Flur</div></div><div class="x">✕</div></div>
+<div class="body"><div class="grid2"><div class="tile"><div class="k">Verfügbarkeit 24 Std.</div><div class="v">71 %<small>4 Unterbrüche</small></div></div><div class="tile"><div class="k">Empfang</div><div class="v">LQI 38<small>schwach</small></div></div></div>
+<div class="h3">Einschätzung</div>
+<div class="ai"><div class="t"><span class="spark">✦</span> Wahrscheinlich Empfang</div>
+<p>Der Melder hatte heute 4 kurze Unterbrüche und schwachen Empfang (LQI 38, vor einer Woche 90). Gleichzeitig fielen keine anderen ZHA-Geräte aus, die Batterie steht bei 64 %. Ein Router (z. B. eine Zigbee-Steckdose) in der Nähe oder ein anderer Standort dürfte helfen.</p>
+<div class="src">Erstellt von "OpenAI" (KI-Aufgabe von HA) · 14:32 · <span style="color:var(--p)">Neu erstellen</span></div></div>
+<div class="note" style="margin-top:10px">Gesendet werden Name, Bereich und Werte dieses Geräts, keine Schlüssel oder Zugangsdaten.</div>
+</div><div class="acts"><div class="btn">Gerät ausblenden</div><div class="btn">Schliessen</div></div></div></div>
+
+<div class="col"><div class="cap">B: Zusammenfassung im Fenster "Unterbrüche in 24 Std."<small>Ein Text für das ganze Haus: was auffällt, welche Geräte, welche Integration. Gleicher Knopf, gleiche Quelle.</small></div>
+<div class="dlg"><div class="hd"><div class="av">〰</div><div><h2>Unterbrüche in 24 Std.</h2><div class="s">9 Unterbrüche bei 4 Geräten · zusammen 3 Std. 12 Min.</div></div><div class="x">✕</div></div>
+<div class="body"><div class="tile" style="height:90px;display:grid;place-items:center;color:var(--t3)">Puls (wie heute)</div>
+<div class="h3">Zusammenfassung</div>
+<div class="ai"><div class="t"><span class="spark">✦</span> Zigbee im Erdgeschoss</div>
+<p>3 der 4 Geräte sind ZHA-Geräte im Erdgeschoss; sie fielen um 03:10 gemeinsam aus und kamen nach 12 Min. zurück (Sammelausfall). Das deutet auf den Zigbee-Stick oder einen Neustart hin, nicht auf die Geräte. Der Bewegungsmelder Flur fällt zusätzlich einzeln aus (schwacher Empfang).</p>
+<div class="src">Erstellt von "OpenAI" (KI-Aufgabe von HA) · 14:35 · <span style="color:var(--p)">Neu erstellen</span></div></div>
+</div><div class="acts"><div class="btn">Schliessen</div></div></div></div>
+
+<div class="col"><div class="cap">Einstellungen (A und B)<small>Aus, solange nicht eingeschaltet. Auswahl der KI-Aufgabe (oder die Standard-Aufgabe von HA).</small></div>
+<div class="dlg" style="width:460px"><div class="body" style="padding-top:18px"><div class="sec"><div class="sh"><b>KI-Einschätzung</b><div>aus</div></div><div class="sb">
+<div style="display:flex;justify-content:space-between;align-items:center"><span>Knopf "Mit KI einschätzen" zeigen</span><div class="sw off"></div></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><span>KI-Aufgabe</span><span class="sel" style="width:200px">Standard von HA</span></div>
+<div class="note">Nutzt die KI-Aufgaben von Home Assistant (Einstellungen → System → Allgemein). Je nach Anbieter gehen die Daten in die Cloud und kosten pro Anfrage.</div>
+</div></div></div></div></div>
+</div>
