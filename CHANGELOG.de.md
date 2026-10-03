@@ -9,15 +9,16 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [0.28.0] - 2026-10-03
 
-Fixierter Kopf auf dem Handy.
+Fixierter Kopf auf Handy und Desktop.
 
 ### Geändert
 
-- Handy: Nur noch die Liste scrollt. Sind die Kacheln weggescrollt, bleibt
-  oben eine Zeile stehen ("11 von 16 online · 4 ausgefallen", mit dem
-  Bereich, wenn der Filter gilt); Chips und Sortierung bleiben darunter.
-  Ein Tipp auf die Zeile scrollt zurück zu den Kacheln. Der Desktop bleibt
-  wie er ist.
+- Handy und Desktop, in beiden Ansichten (Gruppen und Liste): Nur noch die
+  Liste scrollt. Sind die Kacheln weggescrollt, bleibt oben eine Zeile
+  stehen ("11 von 16 online · 4 ausgefallen", mit dem Bereich, wenn der
+  Filter gilt); die Chips (auf dem Handy auch die Sortierung) bleiben
+  darunter, und auf dem Desktop klebt die Kopfzeile der Tabelle direkt
+  unter den Chips. Ein Tipp auf die Zeile scrollt zurück zu den Kacheln.
 
 ## [0.27.1] - 2026-10-03
 

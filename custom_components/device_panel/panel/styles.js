@@ -151,7 +151,7 @@ button { font: inherit; color: inherit; }
 .pnote.ok { color: var(--dp-success); }
 
 /* Chips */
-.chips { display: flex; align-items: center; gap: 8px; margin: 14px 0 12px; flex-wrap: wrap; }
+.chips { display: flex; align-items: center; gap: 8px; position: sticky; top: 44px; z-index: 5; margin: 0 -20px; padding: 14px 20px 12px; background: var(--dp-bg); flex-wrap: wrap; }
 .chip { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; border-radius: 999px; background: var(--dp-card);
   border: 1px solid var(--dp-divider); font-size: 13px; white-space: nowrap; cursor: pointer; }
 .chip .n { color: var(--dp-text2); }
@@ -248,7 +248,20 @@ th.sorted .th-sort svg { opacity: 1; }
 .nbad { color: var(--dp-error); font-weight: 500; }
 .chips .vseg { margin-left: auto; }
 .viewline { display: none; }
-.hstrip { display: none; }
+/* Kopf fixieren (seit 0.28.0, docs/mockups/fixed-v1, C; Desktop ebenfalls):
+   Sind die Kacheln weggescrollt, steht oben eine Zeile (44 px), darunter die
+   Chips (und auf dem Handy die Sortierung); die Kopfzeile der Tabelle klebt
+   darunter (--stick-th, vom Panel gemessen). Nur die Liste scrollt. */
+.hstrip { display: block; position: sticky; top: 0; left: 0; height: 0; z-index: 7; margin: 0 -20px; }
+.hs-in { display: none; position: absolute; top: 0; left: 0; right: 0; height: 44px; align-items: center; gap: 8px; padding: 0 20px; border: 0;
+  border-bottom: 1px solid var(--dp-divider); background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.hs-in b { font-size: 17px; font-weight: 600; }
+.hs-in .e { display: inline-flex; align-items: center; gap: 6px; color: var(--dp-error); font-weight: 600; }
+.hs-in .e i { width: 8px; height: 8px; border-radius: 50%; background: var(--dp-error); }
+.hs-in .ok { color: var(--dp-success); font-weight: 500; }
+.hs-in .scope { min-width: 0; overflow: hidden; color: var(--dp-primary); text-overflow: ellipsis; white-space: nowrap; }
+.hs-in .hs-up { margin-left: auto; display: inline-flex; color: var(--dp-text2); transform: rotate(180deg); }
+.content.hs-on .hs-in { display: flex; }
 .vpills { display: flex; flex-wrap: wrap; gap: 8px; }
 .vpill { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid var(--dp-divider); border-radius: 999px;
   background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 13.5px; cursor: pointer; }
@@ -266,7 +279,7 @@ dialog.view .vrow.lift { border-radius: 10px; }
    Container, und die Kopfzeile klebte nicht mehr (siehe LEARNINGS). */
 .tcard { background: var(--dp-card); border-radius: 20px; border: 1px solid var(--dp-divider); width: max-content; min-width: 100%; }
 table { width: 100%; border-collapse: separate; border-spacing: 0; }
-th { position: sticky; top: 0; z-index: 2; background: var(--dp-card); text-align: left; white-space: nowrap; padding: 14px 12px 10px;
+th { position: sticky; top: var(--stick-th, 0px); z-index: 2; background: var(--dp-card); text-align: left; white-space: nowrap; padding: 14px 12px 10px;
   color: var(--dp-text2); font-size: 12px; font-weight: 500; letter-spacing: .03em; text-transform: uppercase; border-bottom: 1px solid var(--dp-divider); }
 th:first-child { border-top-left-radius: 20px; padding-left: 18px; }
 th:last-child { border-top-right-radius: 20px; }
@@ -757,19 +770,8 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .ringwrap .c b { font-size: 19px; }
   .ringwrap .c span { font-size: 10px; max-width: 60px; }
   .pticks .minor, .avail-ticks .minor { display: none; }
-  /* Kopf fixieren (seit 0.28.0, docs/mockups/fixed-v1, C): Zeile oben (44 px),
-     sobald die Kacheln weggescrollt sind, darunter Chips (48 px) und
-     Sortierung; nur die Liste scrollt darunter. */
-  .hstrip { display: block; position: sticky; top: 0; height: 0; z-index: 7; margin: 0 -12px; }
-  .hs-in { display: none; position: absolute; top: 0; left: 0; right: 0; height: 44px; align-items: center; gap: 8px; padding: 0 14px; border: 0;
-    border-bottom: 1px solid var(--dp-divider); background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
-  .hs-in b { font-size: 17px; font-weight: 600; }
-  .hs-in .e { display: inline-flex; align-items: center; gap: 6px; color: var(--dp-error); font-weight: 600; }
-  .hs-in .e i { width: 8px; height: 8px; border-radius: 50%; background: var(--dp-error); }
-  .hs-in .ok { color: var(--dp-success); font-weight: 500; }
-  .hs-in .scope { min-width: 0; overflow: hidden; color: var(--dp-primary); text-overflow: ellipsis; white-space: nowrap; }
-  .hs-in .hs-up { margin-left: auto; display: inline-flex; color: var(--dp-text2); transform: rotate(180deg); }
-  .content.hs-on .hs-in { display: flex; }
+  .hstrip { margin: 0 -12px; }
+  .hs-in { padding: 0 14px; }
   .chips { position: sticky; top: 44px; z-index: 5; box-sizing: border-box; height: 48px; flex-wrap: nowrap; overflow-x: auto; margin: 0 -12px; padding: 12px 12px 4px; background: var(--dp-bg); scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .foot .tap { display: none; }

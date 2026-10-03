@@ -588,6 +588,7 @@ class DevicePanel extends HTMLElement {
 
   disconnectedCallback() {
     this._heroObserver?.disconnect();
+    this._stickyObserver?.disconnect();
     window.clearInterval(this._timer);
     window.clearInterval(this._tick);
     window.clearTimeout(this._retryTimer);
@@ -745,6 +746,13 @@ class DevicePanel extends HTMLElement {
         rootMargin: "-44px 0px 0px 0px",
       });
       this._heroObserver.observe(content.querySelector(".hero"));
+    }
+    // Kopfzeile der Tabelle klebt unter Zeile, Chips (und Sortierung): deren
+    // Höhe wechselt (Chips brechen um), darum messen statt festlegen.
+    if (typeof ResizeObserver === "function") {
+      this._stickyObserver = new ResizeObserver(() => this._syncSticky());
+      this._stickyObserver.observe(content.querySelector(".chips"));
+      this._stickyObserver.observe(content.querySelector(".viewline"));
     }
     content.addEventListener("keydown", (ev) => {
       if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches?.("[data-open]:not(button)")) {
@@ -1680,6 +1688,7 @@ class DevicePanel extends HTMLElement {
     setHtml(root.querySelector(".hstrip"), this._loading ? "" : this._stripHtml(monitored, offline));
     setHtml(root.querySelector(".chips"), this._loading ? "" : this._chipsHtml(all));
     setHtml(root.querySelector(".viewline"), this._loading || !this._narrowQuery.matches ? "" : this._viewLineHtml());
+    this._syncSticky();
     const rows = all.filter((d) => this._matches(d));
     setHtml(root.querySelector(".list"), this._listHtml(rows));
     if (this._areaOpen) {
@@ -1731,7 +1740,17 @@ class DevicePanel extends HTMLElement {
     return ring + off + this._pulseHtml(all);
   }
 
-  // Handy (seit 0.28.0, docs/mockups/fixed-v1, C): Sind die Kacheln weggescrollt,
+  _syncSticky() {
+    const content = this.shadowRoot.querySelector(".content");
+    if (!content) return;
+    const h = (sel) => {
+      const el = content.querySelector(sel);
+      return el && getComputedStyle(el).display !== "none" ? el.offsetHeight : 0;
+    };
+    content.style.setProperty("--stick-th", `${44 + h(".chips") + h(".viewline")}px`);
+  }
+
+  // Fixierter Kopf (seit 0.28.0, docs/mockups/fixed-v1, C): Sind die Kacheln weggescrollt,
   // bleibt eine Zeile oben stehen; Chips und Sortierung darunter. Tipp = zurück.
   _stripHtml(all, offline) {
     const online = all.filter((d) => d.online === true).length;

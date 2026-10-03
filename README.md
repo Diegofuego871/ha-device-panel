@@ -29,8 +29,8 @@ details such as software version, manufacturer, model and area.
   phone: show or hide the columns (desktop, dialog "Customize") or the
   details on the card (phone) with the eye and order them by the handle,
   sort by any column (click on the header), groups or one list, and the
-  active filter chips. On the phone only the list scrolls: chips and
-  sorting stay at the top, the tiles shrink to one line.
+  active filter chips. On phone and desktop only the list scrolls:
+  chips (and sorting) stay at the top, the tiles shrink to one line.
 - Connection type per device: Zigbee, Z-Wave, Thread, Matter (Thread, Wi-Fi
   or LAN), Bluetooth, Wi-Fi, network, cloud; signal strength in dBm or LQI
   and the hub, bridge or Bluetooth proxy in between.

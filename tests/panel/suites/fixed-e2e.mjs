@@ -1,7 +1,8 @@
 // Kopf fixieren auf dem Handy (seit 0.28.0, docs/mockups/fixed-v1, C): Beim
 // Scrollen schrumpfen die Kacheln zu einer Zeile (online, ausgefallen), Chips
 // und Sortierung bleiben darunter stehen, nur die Liste scrollt. Tipp auf die
-// Zeile scrollt zurück. Auf dem Desktop ändert sich nichts.
+// Zeile scrollt zurück. Auch auf dem Desktop (Kopfzeile der
+// Tabelle klebt unter den Chips), in beiden Darstellungen (Gruppen, Liste).
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
 
@@ -29,8 +30,26 @@ for (const lang of ["de", "en"]) {
     const scrollTo = (y) => ev(`r.querySelector(".content").scrollTop = ${y}`);
 
     if (!mobile) {
-      await scrollTo(400);
-      check(`[${tag}] Desktop: keine Zeile, Chips scrollen mit`, !(await ev(`return getComputedStyle(r.querySelector(".hstrip")).display !== "none"`)) && (await ev(`return getComputedStyle(r.querySelector(".chips")).position`)) === "sticky");
+      const content0 = await top();
+      for (const flat of [false, true]) {
+        await ev(`r.host._setFlat ? r.host._setFlat(${flat}) : r.host._setView({ flat: ${flat} })`);
+        await scrollTo(0);
+        await wait(`return r.querySelectorAll(".dev").length > 1`);
+        const name = flat ? "Liste" : "Gruppen";
+        check(`[${tag}] ${name}: oben Kacheln, keine Zeile`, (await rect(".hero")).visible && !(await rect(".hs-in")).visible);
+        await scrollTo(1000);
+        check(`[${tag}] ${name}: Zeile erscheint`, await wait(`return getComputedStyle(r.querySelector(".hs-in")).display === "flex"`));
+        const strip = await rect(".hs-in"), chips = await rect(".chips"), th = await rect("th");
+        check(`[${tag}] ${name}: Zeile ganz oben`, strip.top === content0 && strip.height === 44, JSON.stringify(strip));
+        check(`[${tag}] ${name}: Chips direkt darunter`, chips.top === strip.bottom, JSON.stringify([strip, chips]));
+        check(`[${tag}] ${name}: Tabellenkopf direkt unter den Chips`, th.top === chips.bottom, JSON.stringify([chips, th]));
+        check(`[${tag}] ${name}: Zeilen laufen unter dem Kopf`, await ev(`const t=r.querySelector("th").getBoundingClientRect().bottom; const rows=[...r.querySelectorAll("tr.dev")].map(x=>x.getBoundingClientRect()); return rows.length > 3 && rows.some(x=>x.top < t) && rows.some(x=>x.top > t)`));
+        if (!flat) await p.screenshot({ path: `${outDir}/fixed-${tag.replace("/", "-")}.png` });
+        // Tipp auf die Zeile: zurück
+        await f.evaluateHandle(new Function(`return ${R}.querySelector(".hs-in")`)).then((h) => h.asElement().click());
+        check(`[${tag}] ${name}: Tipp scrollt nach oben`, await wait(`return r.querySelector(".content").scrollTop === 0`));
+      }
+      await ev(`r.host._setView({ flat: false })`);
       check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
       await ctx.close();
       continue;
@@ -50,6 +69,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Liste läuft unter dem Kopf`, await ev(`const l=r.querySelector(".list .dev, .list .card, .list [data-open]"); const h=r.querySelector(".viewline").getBoundingClientRect().bottom; const rows=[...r.querySelectorAll(".list [data-open]")].map(x=>x.getBoundingClientRect()); return rows.some(x=>x.top < h && x.bottom > h) || rows.every(x=>x.bottom <= h || x.top >= h)`));
     await ev(`r.activeElement?.blur()`);
     await p.screenshot({ path: `${outDir}/fixed-${tag.replace("/", "-")}.png` });
+
+    // Darstellung "Liste": dieselbe Anordnung
+    await ev(`r.host._setView({ flat: true })`);
+    await scrollTo(1000);
+    await wait(`return getComputedStyle(r.querySelector(".hs-in")).display === "flex"`);
+    const [s2, c2, l2] = [await rect(".hs-in"), await rect(".chips"), await rect(".viewline")];
+    check(`[${tag}] Liste: Zeile, Chips, Sortierung untereinander`, s2.top === content0 && c2.top === s2.bottom && l2.top === c2.bottom, JSON.stringify([s2, c2, l2]));
+    await ev(`r.host._setView({ flat: false })`);
+    await scrollTo(1000);
 
     // Chips bedienbar unter der Zeile: Tipp auf einen Chip filtert
     const chip = await f.evaluateHandle(new Function(`return ${R}.querySelector('.chip[data-conn="wifi"]')`));

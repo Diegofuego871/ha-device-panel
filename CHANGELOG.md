@@ -9,14 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [0.28.0] - 2026-10-03
 
-Fixed header on the phone.
+Fixed header on phone and desktop.
 
 ### Changed
 
-- Phone: only the list scrolls now. Once the tiles have scrolled away, a
-  line stays at the top ("11 of 16 online · 4 offline", with the area when
-  the filter is on); the chips and the sorting stay below it. Tapping the
-  line scrolls back to the tiles. The desktop is unchanged.
+- Phone and desktop, in both views (groups and list): only the list
+  scrolls now. Once the tiles have scrolled away, a line stays at the top
+  ("11 of 16 online · 4 offline", with the area when the filter is on); the
+  chips (on the phone also the sorting) stay below it, and on the desktop
+  the table header sticks directly under the chips. Tapping the line
+  scrolls back to the tiles.
 
 ## [0.27.1] - 2026-10-03
 
