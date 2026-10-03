@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.28.0] - 2026-10-03
+
+Fixed header on the phone.
+
+### Changed
+
+- Phone: only the list scrolls now. Once the tiles have scrolled away, a
+  line stays at the top ("11 of 16 online · 4 offline", with the area when
+  the filter is on); the chips and the sorting stay below it. Tapping the
+  line scrolls back to the tiles. The desktop is unchanged.
+
 ## [0.27.1] - 2026-10-03
 
 Connection loss no longer shows an error.
@@ -740,6 +751,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0
 [0.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.1
 [0.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.0
 [0.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.26.0

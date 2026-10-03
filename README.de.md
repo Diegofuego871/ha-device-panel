@@ -32,7 +32,9 @@ Bereich.
   Desktop und Handy: Spalten (Desktop, Dialog "Anpassen") bzw. Angaben auf
   der Karte (Handy) mit dem Auge ein- und ausblenden und am Griff ordnen,
   nach jeder Spalte sortieren (Klick auf den Kopf), Gruppen oder eine
-  Liste, dazu die aktiven Filter-Chips.
+  Liste, dazu die aktiven Filter-Chips. Auf dem Handy scrollt nur die
+  Liste: Chips und Sortierung bleiben oben, die Kacheln schrumpfen zu einer
+  Zeile.
 - Verbindungsart pro Gerät: Zigbee, Z-Wave, Thread, Matter (Thread, WLAN
   oder LAN), Bluetooth, WLAN, Netzwerk, Cloud; Empfang in dBm oder LQI und
   der Hub, die Bridge oder der Bluetooth-Proxy dazwischen.

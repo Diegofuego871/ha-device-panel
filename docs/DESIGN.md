@@ -171,6 +171,15 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Aufheben), darunter die Geräte als Zeilen (Symbol, Name, "ausgefallen"
   als kleine rote Pille, Bereich · Integration; rechts Anzahl fett, Dauer
   und Streifen über 24 Std.).
+- Fixierter Kopf auf dem Handy (seit 0.28.0, `docs/mockups/fixed-v1/`, C,
+  Wunsch des Nutzers: nur die Liste scrollt): Sind die Kacheln unter der
+  Zeile weggescrollt, steht oben eine Zeile (44 px, `.hstrip`/`.hs-in`:
+  "N von M online", rot "N ausgefallen" oder grün "Alles online", Bereich,
+  Pfeil nach oben; Tipp scrollt zurück), darunter die Chips (48 px) und die
+  Sortierung, beide `position: sticky` mit deckendem Hintergrund. Ein
+  `IntersectionObserver` auf `.hero` (Rand oben 44 px) setzt `hs-on` am
+  `.content`. Die Höhen sind fest, weil die Versätze der Sticky-Elemente
+  davon abhängen. Desktop unverändert.
 - Kopf mit Filter "Bereich" (seit 0.26.0): Name der Auswahl hinter dem
   Titel jeder Kachel ("· Küche") in Primärfarbe, gekürzt mit "…". In der
   Ring-Kachel (schmale Textspalte) rutscht er unter den Titel, wenn er

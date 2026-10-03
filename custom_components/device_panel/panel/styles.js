@@ -248,6 +248,7 @@ th.sorted .th-sort svg { opacity: 1; }
 .nbad { color: var(--dp-error); font-weight: 500; }
 .chips .vseg { margin-left: auto; }
 .viewline { display: none; }
+.hstrip { display: none; }
 .vpills { display: flex; flex-wrap: wrap; gap: 8px; }
 .vpill { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid var(--dp-divider); border-radius: 999px;
   background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 13.5px; cursor: pointer; }
@@ -756,7 +757,20 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .ringwrap .c b { font-size: 19px; }
   .ringwrap .c span { font-size: 10px; max-width: 60px; }
   .pticks .minor, .avail-ticks .minor { display: none; }
-  .chips { flex-wrap: nowrap; overflow-x: auto; margin: 12px -12px 4px; padding: 0 12px; scrollbar-width: none; }
+  /* Kopf fixieren (seit 0.28.0, docs/mockups/fixed-v1, C): Zeile oben (44 px),
+     sobald die Kacheln weggescrollt sind, darunter Chips (48 px) und
+     Sortierung; nur die Liste scrollt darunter. */
+  .hstrip { display: block; position: sticky; top: 0; height: 0; z-index: 7; margin: 0 -12px; }
+  .hs-in { display: none; position: absolute; top: 0; left: 0; right: 0; height: 44px; align-items: center; gap: 8px; padding: 0 14px; border: 0;
+    border-bottom: 1px solid var(--dp-divider); background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+  .hs-in b { font-size: 17px; font-weight: 600; }
+  .hs-in .e { display: inline-flex; align-items: center; gap: 6px; color: var(--dp-error); font-weight: 600; }
+  .hs-in .e i { width: 8px; height: 8px; border-radius: 50%; background: var(--dp-error); }
+  .hs-in .ok { color: var(--dp-success); font-weight: 500; }
+  .hs-in .scope { min-width: 0; overflow: hidden; color: var(--dp-primary); text-overflow: ellipsis; white-space: nowrap; }
+  .hs-in .hs-up { margin-left: auto; display: inline-flex; color: var(--dp-text2); transform: rotate(180deg); }
+  .content.hs-on .hs-in { display: flex; }
+  .chips { position: sticky; top: 44px; z-index: 5; box-sizing: border-box; height: 48px; flex-wrap: nowrap; overflow-x: auto; margin: 0 -12px; padding: 12px 12px 4px; background: var(--dp-bg); scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .foot .tap { display: none; }
   dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
@@ -764,7 +778,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .pwin .pchart { height: 96px; }
   .view-btn { width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 50%; }
   .view-btn span { display: none; }
-  .viewline { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+  .viewline { display: flex; align-items: center; gap: 8px; position: sticky; top: 92px; z-index: 5; margin: 0 -12px 4px; padding: 0 12px 6px; background: var(--dp-bg); }
   .sort-btn { display: inline-flex; align-items: center; gap: 6px; min-width: 0; height: 32px; padding: 0 10px 0 8px; border: 1px solid var(--dp-divider);
     border-radius: 999px; background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 13px; cursor: pointer; }
   .sort-btn span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }

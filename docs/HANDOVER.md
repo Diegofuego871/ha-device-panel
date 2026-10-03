@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.27.1, Verbindungsverlust ohne Fehlerbild)
+## Stand (0.28.0, fixierter Kopf auf dem Handy)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -205,7 +205,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Nutzers, ob sich der Verlauf jetzt füllt (Sensor und ZHA/Bluetooth).
    Entscheide des Nutzers zu den Backlog-Punkten (2026-10-03, Fragen
    einzeln mit Bildern, `docs/mockups/backlog-v1/`), umzusetzen als
-   `0.28.0`: Punkt 5 Variante B (Spalte "Ausgefallen nach" in der Tabelle
+   `0.29.0`: Punkt 5 Variante B (Spalte "Ausgefallen nach" in der Tabelle
    "Integrationen", Auswahl mit "Nicht überwachen": Geräte sichtbar, ohne
    Ausfälle, Statistik und Meldungen); Punkt 7 Variante A (Herkunft
    Standard/Integration/Gerät unter jeder Einstellung im Popup, dazu

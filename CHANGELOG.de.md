@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.28.0] - 2026-10-03
+
+Fixierter Kopf auf dem Handy.
+
+### Geändert
+
+- Handy: Nur noch die Liste scrollt. Sind die Kacheln weggescrollt, bleibt
+  oben eine Zeile stehen ("11 von 16 online · 4 ausgefallen", mit dem
+  Bereich, wenn der Filter gilt); Chips und Sortierung bleiben darunter.
+  Ein Tipp auf die Zeile scrollt zurück zu den Kacheln. Der Desktop bleibt
+  wie er ist.
+
 ## [0.27.1] - 2026-10-03
 
 Verbindungsverlust zeigt keinen Fehler mehr.
@@ -774,6 +786,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0
 [0.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.1
 [0.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.0
 [0.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.26.0

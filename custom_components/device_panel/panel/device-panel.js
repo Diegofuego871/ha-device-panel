@@ -587,6 +587,7 @@ class DevicePanel extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this._heroObserver?.disconnect();
     window.clearInterval(this._timer);
     window.clearInterval(this._tick);
     window.clearTimeout(this._retryTimer);
@@ -643,7 +644,7 @@ class DevicePanel extends HTMLElement {
         <button type="button" class="gear-btn" title="${escape(this._t("settingsBtn"))}" aria-label="${escape(this._t("settingsBtn"))}">${mdi("gear", 22)}</button>
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
-      <div class="content"><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
+      <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
       <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="cols-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
@@ -701,6 +702,11 @@ class DevicePanel extends HTMLElement {
         this._openPulse();
         return;
       }
+      // Handy: Zeile "online · ausgefallen" bringt zu den Kacheln zurück.
+      if (ev.target.closest("[data-hs-top]")) {
+        content.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
       if (ev.target.closest("[data-area-open]")) {
         if (this._areaOpen) this._closeAreas();
         else this._openAreas();
@@ -731,6 +737,15 @@ class DevicePanel extends HTMLElement {
     this._bindPulse(root.querySelector("dialog.pulse-dlg"));
     // Zeilen und Karten sind keine Buttons (Tabellensemantik); Tastatur
     // deshalb selbst behandeln.
+    // Handy: Kacheln ganz weggescrollt (unter der Zeile oben) -> Zeile zeigen.
+    // Die Zeile selbst ist 44 px hoch, darum der Rand oben.
+    if (typeof IntersectionObserver === "function") {
+      this._heroObserver = new IntersectionObserver(([entry]) => content.classList.toggle("hs-on", !entry.isIntersecting), {
+        root: content,
+        rootMargin: "-44px 0px 0px 0px",
+      });
+      this._heroObserver.observe(content.querySelector(".hero"));
+    }
     content.addEventListener("keydown", (ev) => {
       if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches?.("[data-open]:not(button)")) {
         ev.preventDefault();
@@ -1662,6 +1677,7 @@ class DevicePanel extends HTMLElement {
     // Kopf und Puls nur mit überwachten Geräten; deaktivierte zählen nicht.
     const monitored = scope.filter((d) => !d.disabled);
     setHtml(root.querySelector(".hero"), this._loading ? "" : this._heroHtml(monitored, offline));
+    setHtml(root.querySelector(".hstrip"), this._loading ? "" : this._stripHtml(monitored, offline));
     setHtml(root.querySelector(".chips"), this._loading ? "" : this._chipsHtml(all));
     setHtml(root.querySelector(".viewline"), this._loading || !this._narrowQuery.matches ? "" : this._viewLineHtml());
     const rows = all.filter((d) => this._matches(d));
@@ -1713,6 +1729,16 @@ class DevicePanel extends HTMLElement {
         <div class="top"><span class="num ok">0</span><span class="lbl">${escape(this._t("allOnline"))}</span></div>
         <div class="durs">${escape(this._t("allOnlineSub"))}</div></div>`;
     return ring + off + this._pulseHtml(all);
+  }
+
+  // Handy (seit 0.28.0, docs/mockups/fixed-v1, C): Sind die Kacheln weggescrollt,
+  // bleibt eine Zeile oben stehen; Chips und Sortierung darunter. Tipp = zurück.
+  _stripHtml(all, offline) {
+    const online = all.filter((d) => d.online === true).length;
+    const state = offline.length
+      ? `<span class="e"><i></i>${escape(this._t("linesOffline", offline.length))}</span>`
+      : `<span class="ok">${escape(this._t("allOnline"))}</span>`;
+    return `<button type="button" class="hs-in" data-hs-top aria-label="${escape(this._t("stripTop"))}"><b>${online}</b><span>${escape(this._t("ofTotal", all.length))}</span>${state}${this._scopeHtml()}<span class="hs-up">${mdi("chevronDown", 18)}</span></button>`;
   }
 
   // Mit Filter "Bereich": Name der Auswahl hinter dem Titel einer Kachel.
