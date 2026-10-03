@@ -79,7 +79,7 @@ Bereich.
   danach ausgefallen, zählen die Zahlen das als einen Ausfall. Einmal nach
   der Installation füllt die Integration das Protokoll aus dem Verlauf des
   Recorders nach, so weit dieser Daten hat.
-- Einzelne Geräte (Knopf "Ausblenden" im Geräte-Popup, mit "Rückgängig"),
+- Einzelne Geräte (Knopf "Gerät ausblenden" im Geräte-Popup, mit "Rückgängig"),
   ganze Integrationen oder Gerätetypen ausblenden (Einstellungen im Panel
   oder Optionsdialog der Integration): ausgeblendete Geräte werden weder
   gezeigt noch überwacht und melden nichts. Die Einstellungen führen die
@@ -123,8 +123,10 @@ Bereich.
 - Empfangsverlauf: Die Kachel "Empfang" im Geräte-Popup öffnet den Empfang
   über 24 Std., 7 oder 30 Tage mit Median, schlechtestem und bestem Wert
   und der Schwelle der Warnung. Aus dem Recorder, wenn ein Sensor den
-  Empfang liefert; für ZHA und Bluetooth zeichnet das Panel ihn selbst auf
-  (jede Minute, 31 Tage in einer eigenen Datei).
+  Empfang liefert; für ZHA, Bluetooth und Sensoren, die der Recorder nicht
+  aufzeichnet (in seiner Konfiguration ausgeschlossen), zeichnet das Panel
+  ihn selbst auf (jede Minute, 31 Tage in einer eigenen Datei). Hat sich
+  ein Wert lange nicht geändert, gilt er seit seiner letzten Änderung.
 - Batteriestand als farbiges Symbol mit Füllung: grün, gelbgrün, orange und
   rot, wenn schwach (Schwelle der Batterie-Warnung).
 - Neue Geräte: "Neu" beim Namen in den ersten 3 Tagen nach dem Hinzufügen

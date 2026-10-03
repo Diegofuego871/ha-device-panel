@@ -7,6 +7,30 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.27.0] - 2026-10-03
+
+Signal history fills, button "Hide device".
+
+### Changed
+
+- Signal history: for a sensor the recorder does not record (excluded in
+  its configuration), the panel now records the signal itself, like for
+  ZHA and Bluetooth (every minute while the device is online). The window
+  "Signal" says why.
+- The button in the device pop-up is now called "Hide device" instead of
+  "Hide". On narrow phones the two buttons stay on one line.
+
+### Fixed
+
+- Signal and battery history showed only the point "now" when the
+  recorder had no entry in the period, e.g. because the value had not
+  changed for longer than the recorder keeps data (default 10 days) or the
+  sensor is excluded from the recorder. The current value applies since
+  its last change, so the line now runs from there (at most from the start
+  of the period), with the note "Value unchanged since …".
+- A failed recorder query for the signal or battery history is now logged
+  as a warning instead of only at debug level.
+
 ## [0.26.0] - 2026-10-03
 
 Outage pulse window, header per area, dialog "Customize".
@@ -698,6 +722,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.0
 [0.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.26.0
 [0.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.25.0
 [0.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.23.0

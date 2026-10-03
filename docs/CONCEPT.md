@@ -244,7 +244,10 @@ Sensor den Empfang liefert, sonst (ZHA, Bluetooth) aus der eigenen
 Aufzeichnung `signal_history.SignalLog` wie `signal_log` in unifi_dynamic
 (Blöcke [Start, Median, Schlechtester, Bester], 5 Min. für 24 Std.,
 Stunden für 31 Tage; nur Geräte, die laut Protokoll online sind, weil ZHA
-und Bluetooth den letzten Wert weiter liefern). Optional später: Zusammenfassung
+und Bluetooth den letzten Wert weiter liefern). Seit 0.27.0 auch Sensoren,
+die der Recorder nicht aufzeichnet (`entity_filter` des Recorders), und
+der aktuelle Wert gilt seit `last_changed` (Linie bis jetzt, auch ohne
+Zeile im Recorder). Optional später: Zusammenfassung
 über die KI-Aufgaben von HA (`ai_task`), nur wenn der Nutzer dort ein
 Modell eingerichtet hat; nicht als Grundlage (Kosten, Datenschutz, nicht
 vorhersehbar).

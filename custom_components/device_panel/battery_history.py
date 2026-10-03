@@ -19,7 +19,7 @@ from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
@@ -82,6 +82,30 @@ def _statistics(hass: HomeAssistant, entity_id: str, start: datetime, end: datet
     return [(float(row["start"]) + 1800, float(row["mean"])) for row in rows if row.get("mean") is not None]
 
 
+def held(
+    points: list[tuple[float, float]], state: State | None, parse: Callable[[str], float | None], start: float, now: float
+) -> tuple[list[tuple[float, float]], float | None]:
+    """
+    Punkte bis jetzt ergänzen: Der aktuelle Wert gilt seit last_changed des
+    Zustands. Der Recorder kennt das nicht, wenn sich der Wert lange nicht
+    geändert hat (im Zeitraum keine Zeile, der Stand zu Beginn älter als die
+    Aufbewahrung) oder die letzte Änderung noch nicht geschrieben ist; ohne
+    den Schritt bliebe nur ein Punkt "jetzt" (Fehlerbericht des Nutzers,
+    0.26.0). Gibt die Punkte zurück und, wenn der Recorder im Zeitraum nichts
+    hatte, seit wann der Wert unverändert ist.
+    """
+    value = parse(state.state) if state is not None else None
+    if value is None:
+        return points, None
+    since = state.last_changed.timestamp()
+    steady = since if not points else None
+    if not any(t >= since for t, _v in points):
+        points.append((max(since, start), value))
+    if points[-1][0] < now:
+        points.append((now, value))
+    return points, steady
+
+
 def thin(points: list[tuple[float, float]], start: float, end: float, limit: int = MAX_POINTS) -> list[tuple[float, float]]:
     """Höchstens limit Punkte: Mittel pro gleich langem Abschnitt, letzter Punkt bleibt."""
     if len(points) <= limit:
@@ -141,12 +165,13 @@ async def async_battery_history(
         "first": None,
         "changes": [],
         "threshold": threshold,
+        "steady_since": None,
     }
     state = hass.states.get(entity_id)
-    current = _value(state.state) if state else None
     if "recorder" not in hass.config.components:
-        if current is not None:
-            result["points"] = [[now, current]]
+        # Ohne Recorder bleibt der aktuelle Wert seit seiner letzten Änderung.
+        points, result["steady_since"] = held([], state, _value, start, now)
+        result["points"] = [[round(t, 1), round(v, 1)] for t, v in points]
         return result
     from homeassistant.components.recorder import get_instance  # noqa: PLC0415
 
@@ -162,13 +187,13 @@ async def async_battery_history(
         if points is None:
             points = await instance.async_add_executor_job(_history, hass, entity_id, start_dt, end_dt)
     except Exception as err:  # noqa: BLE001
-        # Recorder nicht bereit oder Abfrage fehlgeschlagen: wie ohne Daten.
-        _LOGGER.debug("Batterie-Verlauf für %s nicht lesbar: %s", entity_id, err)
+        # Recorder nicht bereit oder Abfrage fehlgeschlagen: wie ohne Daten,
+        # aber im Log sichtbar (sonst ist ein leerer Verlauf nicht zu klären).
+        _LOGGER.warning("Batterie-Verlauf für %s nicht lesbar: %s", entity_id, err)
         points = []
     points = sorted(p for p in points if start <= p[0] <= now)
-    # Bis jetzt: der aktuelle Stand als letzter Punkt.
-    if current is not None and (not points or points[-1][0] < now):
-        points.append((now, current))
+    # Bis jetzt: der aktuelle Stand gilt seit seiner letzten Änderung.
+    points, result["steady_since"] = held(points, state, _value, start, now)
     if not points:
         return result
     result["source"] = source

@@ -138,4 +138,5 @@ async def test_without_recorder(hass: HomeAssistant, hass_ws_client) -> None:
     await _setup(hass)
     client = await hass_ws_client(hass)
     res = (await _ws(client, 1, type=f"{DOMAIN}/battery_history", device_id=dev.id, range="7d"))["result"]
-    assert res["source"] == "none" and [v for _t, v in res["points"]] == [80]
+    # Seit 0.26.0: der Wert gilt seit seiner letzten Änderung (zwei Punkte, unverändert seit)
+    assert res["source"] == "none" and [v for _t, v in res["points"]] == [80, 80] and res["steady_since"] is not None

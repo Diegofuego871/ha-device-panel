@@ -13,11 +13,13 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     title: "Empfang", ranges: ["24 Std.", "7 Tage", "30 Tage"], weak: "Schwach unter LQI 60", weakOwn: "Schwach unter -85 dBm", log: "Vom Panel aufgezeichnet, seit ",
+    notRec: "Der Recorder zeichnet den Sensor nicht auf (in seiner Konfiguration ausgeschlossen), deshalb zeichnet ihn das Panel selbst auf.", soon: "Erste Werte nach wenigen Minuten.", steady: "Wert unverändert seit ",
     hist: "Aus dem Verlauf des Recorders (Sensor des Geräts).", stats: "Aus dem Recorder (Langzeitstatistik", empty: "Das Panel zeichnet den Empfang", none: "Für den Empfang dieses Geräts",
     facts: /^Median LQI \d+ · schlechtester LQI \d+ · bester LQI \d+$/, legend: "Median|Spanne schlechtester bis bester Wert", noData: "Keine Daten für diesen Zeitraum.",
   },
   en: {
     title: "Signal", ranges: ["24 h", "7 days", "30 days"], weak: "Weak below LQI 60", weakOwn: "Weak below -85 dBm", log: "Recorded by the panel since ",
+    notRec: "The recorder does not record the sensor (excluded in its configuration), so the panel records it itself.", soon: "First values after a few minutes.", steady: "Value unchanged since ",
     hist: "From the recorder history (sensor of the device).", stats: "From the recorder (long-term statistics", empty: "The panel records the signal", none: "There is no history for the signal",
     facts: /^Median LQI \d+ · worst LQI \d+ · best LQI \d+$/, legend: "Median|Range from worst to best value", noData: "No data for this period.",
   },
@@ -109,6 +111,20 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { window.__sigSource = "none"; });
     await range("24h");
     check(`[${tag}] ohne Verlauf: Hinweis`, (await text("dialog.stat-dlg .bh-src")).startsWith(T.none), await text("dialog.stat-dlg .bh-src"));
+    // Seit 0.27.0 (Fehlerbericht des Nutzers: nur ein Punkt "jetzt"): Sensor, den
+    // der Recorder nicht aufzeichnet, und Wert, der sich lange nicht geändert hat
+    await p.evaluate(() => { window.__sigSource = "not-recorded-empty"; });
+    await range("7d");
+    check(`[${tag}] Recorder ohne Sensor: Hinweis, warum`, (await text("dialog.stat-dlg .bh-src")) === `${T.notRec} ${T.soon}`, await text("dialog.stat-dlg .bh-src"));
+    await p.evaluate(() => { window.__sigSource = "not-recorded"; });
+    await range("24h");
+    check(`[${tag}] Recorder ohne Sensor: eigene Aufzeichnung`, (await text("dialog.stat-dlg .bh-src")).startsWith(T.log) && (await text("dialog.stat-dlg .bh-src")).endsWith(T.notRec), await text("dialog.stat-dlg .bh-src"));
+    await p.evaluate(() => { window.__sigSource = "steady"; });
+    await range("7d");
+    const steady = await ev(`return [r.querySelector("dialog.stat-dlg .bh-line")?.getAttribute("d") || "", r.querySelector("dialog.stat-dlg .bh-src")?.textContent || ""]`);
+    // 7 Tage, unverändert seit 3 Tagen: Linie ab 4/7 der Breite bis jetzt
+    check(`[${tag}] Wert unverändert: Linie ab der letzten Änderung, Hinweis`, steady[0].startsWith("M571.4,") && steady[0].includes("H1000.0") && steady[1].startsWith(`${T.hist} ${T.steady}`), JSON.stringify(steady));
+    if (mobile && lang === "de") await p.screenshot({ path: `${outDir}/sighist-steady-${tag.replace("/", "-")}.png` });
     await p.evaluate(() => { window.__sigSource = null; });
     await tap('dialog.stat-dlg [data-stat="close"]');
     check(`[${tag}] X schliesst nur das Fenster`, await wait(`return !r.querySelector("dialog.stat-dlg").open && r.querySelector("dialog.device").open`));

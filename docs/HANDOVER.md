@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.26.0, Puls-Fenster, Kopf pro Bereich, Dialog "Anpassen")
+## Stand (0.27.0, Empfangsverlauf füllt sich, "Gerät ausblenden")
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -23,7 +23,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `device_panel/reset_device_settings` (Einstellungen, beim Speichern: Liste
   von Geräten je Art auf den globalen Wert, Arten `battery`, `notify`,
   `connection`; `get_options` liefert dafür `overrides`, auch ausgeblendete
-  Geräte). Seit 0.23.0 `device_panel/hide_device` (Knopf "Ausblenden" im
+  Geräte). Seit 0.23.0 `device_panel/hide_device` (Knopf "Gerät ausblenden" im
   Popup, Option `exclude_devices`, gilt für alle Benutzer) und in
   `list_devices` die Bereiche und Etagen in der Reihenfolge der Registries
   (`areas`, `floors`, je Gerät `area_id`) für den Filter "Bereich". Seit
@@ -192,9 +192,20 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    "Ansicht" auf dem Handy mit denselben Augen und Knöpfen), Fenster
    "Empfang" bleibt so, Kopf (Verfügbarkeit, "Gerade ausgefallen", Puls,
    Sammelausfälle) folgt dem Bereichsfilter (nicht mehr das ganze Haus;
-   `incidents[].devices` neu im Ergebnis). Offen: Rückmeldung des Nutzers
-   zum Empfangsverlauf bei ZHA/Bluetooth (nur mit Unit-Tests geprüft, das
-   Test-HA hat keine solchen Geräte).
+   `incidents[].devices` neu im Ergebnis). `v0.26.0` veröffentlicht.
+   Mit `0.27.0` (Fehlerbericht des Nutzers, 2026-10-03: "Empfangsverlauf
+   füllt sich nicht", Bild mit nur einem Punkt "jetzt" bei einem Sensor
+   aus dem Recorder): Ursache beim Nutzer nicht sicher bestimmbar; beide
+   möglichen Fälle abgedeckt. Wert lange unverändert (Recorder ohne Zeile
+   im Zeitraum): Linie ab `last_changed` des Zustands
+   (`battery_history.held`, auch für den Batterie-Verlauf). Sensor im
+   Recorder ausgeschlossen (`signal_history.recorded`): eigene Aufzeichnung
+   wie ZHA/Bluetooth, im Test-HA mit `recorder: exclude` geprüft. Knopf
+   "Gerät ausblenden" (Wunsch des Nutzers). Offen: Rückmeldung des
+   Nutzers, ob sich der Verlauf jetzt füllt (Sensor und ZHA/Bluetooth).
+   Danach Backlog-Punkte 4 (Matter Thread/WLAN/LAN), 5 (Überwachung pro
+   Integration), 7 (Herkunft jeder Einstellung pro Gerät), 10
+   (KI-Zusammenfassung über `ai_task`) ansehen (Nutzer, 2026-10-03).
    Als Nächstes, in dieser Reihenfolge (Nutzer, 2026-10-03):
    b. Erledigt mit `0.26.0`: Puls-Kachel öffnet das Fenster mit den
       Geräten, die in 24 Std. Unterbrüche hatten (`docs/mockups/pulse-v1/`,

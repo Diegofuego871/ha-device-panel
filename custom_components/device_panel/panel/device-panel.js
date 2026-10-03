@@ -2749,7 +2749,7 @@ class DevicePanel extends HTMLElement {
     const key = this._histKey(range);
     if (!h || h.key !== key || (!h.data && h.loading)) return `<div class="avail"><p class="dlg-note">${escape(t("loadingDetail"))}</p></div>`;
     if (!h.data) return `<div class="dlg-error">${escape(t("error"))} ${escape(h.error || "")}</div>`;
-    const { start, end, points = [], changes = [], threshold, source } = h.data;
+    const { start, end, points = [], changes = [], threshold, source, steady_since: steady } = h.data;
     if (!points.length) return `<div class="avail"><p class="dlg-note">${escape(t("batNoData"))}</p></div><p class="dlg-note bh-src">${escape(t("batSrcNone"))}</p>`;
     const span = end - start;
     const x = (at) => Math.max(0, Math.min(1000, ((at - start) / span) * 1000));
@@ -2796,7 +2796,7 @@ class DevicePanel extends HTMLElement {
         <div class="bh-plot"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}${thr}
           <path class="bh-area" d="${area}"/><path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/>${marks}</svg>${labels}</div>
         <div class="avail-ticks bh-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>${list}</div>
-      <p class="dlg-note bh-src">${escape(t(srcKey))}</p>`;
+      <p class="dlg-note bh-src">${escape(t(srcKey) + (steady ? ` ${t("histSteady", this._fmtTime(steady, true))}` : ""))}</p>`;
   }
 
   // Empfang als Kurs (seit 0.24.0, Rahmen wie "Batterie"): Median als Linie,
@@ -2810,12 +2810,15 @@ class DevicePanel extends HTMLElement {
     const key = this._histKey(range);
     if (!h || h.key !== key || (!h.data && h.loading)) return `<div class="avail"><p class="dlg-note">${escape(t("loadingDetail"))}</p></div>`;
     if (!h.data) return `<div class="dlg-error">${escape(t("error"))} ${escape(h.error || "")}</div>`;
-    const { start, end, points = [], kind, source, bucket, first, current } = h.data;
+    const { start, end, points = [], kind, source, bucket, first, current, reason, steady_since: steady } = h.data;
     const note = (text) => `<p class="dlg-note bh-src">${escape(text)}</p>`;
+    // Sensor, den der Recorder nicht aufzeichnet (seit 0.26.0): das Panel zeichnet selbst auf.
+    const why = reason === "not_recorded" ? ` ${t("sigSrcNotRecorded")}` : "";
     if (!points.length || !kind) {
       // Aufzeichnung mit älteren Werten (z. B. seit Tagen ausgefallen): sagen, seit wann.
-      const why = bucket ? (first ? t("sigSrcLog", this._fmtTime(first, true)) : t("sigSrcLogEmpty")) : t("sigSrcNone");
-      return `<div class="avail"><p class="dlg-note">${escape(t("batNoData"))}</p></div>${note(why)}`;
+      const empty = why ? `${why.trim()} ${t("sigSrcSoon")}` : t("sigSrcLogEmpty");
+      const text = bucket ? (first ? t("sigSrcLog", this._fmtTime(first, true)) + why : empty) : t("sigSrcNone");
+      return `<div class="avail"><p class="dlg-note">${escape(t("batNoData"))}</p></div>${note(text)}`;
     }
     const dbm = kind === "dbm";
     const med = points.map((p) => p[1]);
@@ -2878,14 +2881,12 @@ class DevicePanel extends HTMLElement {
     const legend = bucket
       ? `<div class="avail-legend"><span><i class="sg-med"></i>${escape(t("sigLegendMedian"))}</span><span><i class="sg-span"></i>${escape(t("sigLegendSpan"))}</span></div>`
       : "";
+    // Der Recorder hatte im Zeitraum nichts: der Wert gilt seit seiner letzten Änderung.
+    const held = steady ? ` ${t("histSteady", this._fmtTime(steady, true))}` : "";
     const src =
       source === "log"
-        ? t("sigSrcLog", this._fmtTime(first ?? points[0][0], true))
-        : source === "statistics"
-          ? t("sigSrcStats")
-          : range === "30d"
-            ? t("sigSrcHistoryLong")
-            : t("sigSrcHistory");
+        ? t("sigSrcLog", this._fmtTime(first ?? points[0][0], true)) + why
+        : (source === "statistics" ? t("sigSrcStats") : range === "30d" ? t("sigSrcHistoryLong") : t("sigSrcHistory")) + held;
     return `<div class="avail bh sg"><div class="avail-top"><span class="avail-pct sg-cur">${bars(sigLevel({ kind, value: cur }), current == null)}${escape(fmt(cur))}</span><span class="avail-facts">${escape(facts)}</span></div>
         <div class="bh-plot"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}${thr}
           ${band ? `<path class="sg-band" d="${band}"/>` : ""}<path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/></svg>${labels}</div>

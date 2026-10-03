@@ -14,6 +14,8 @@ Zwei Quellen, je nachdem, woher der Wert in der Liste kommt
   zusammengefasst in 5-Minuten-Blöcke (24 Std.) und Stunden (31 Tage).
   Ein Block ist [Start, Median, Schlechtester, Bester]. Kein Block heisst
   keine Messung (offline, ausser Reichweite): im Diagramm eine Lücke.
+- Sensor, den der Recorder nicht aufzeichnet (in dessen Konfiguration
+  ausgeschlossen, oder kein Recorder; seit 0.26.0): wie ZHA und Bluetooth.
 """
 
 from __future__ import annotations
@@ -33,7 +35,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .availability import ONLINE
-from .battery_history import STATS_FROM_DAYS, _history, _statistics, thin
+from .battery_history import STATS_FROM_DAYS, _history, _statistics, held, thin
 from .const import DATA_AVAILABILITY, DOMAIN, STORAGE_VERSION
 from .devices import monitored_devices, signal_sensor, signal_source
 from .options_api import effective
@@ -56,6 +58,19 @@ LOGGED = ("zha", "ble")
 # Plausible Werte; alles andere ist ein Messfehler (z. B. 0 dBm, 127 dBm).
 DBM_RANGE = (-130.0, -1.0)
 LQI_RANGE = (0.0, 255.0)
+
+
+def recorded(hass: HomeAssistant, entity_id: str) -> bool:
+    """Zeichnet der Recorder die Entität auf? Ohne Recorder oder ausgeschlossen nicht."""
+    if "recorder" not in hass.config.components:
+        return False
+    try:
+        from homeassistant.components.recorder import get_instance  # noqa: PLC0415
+
+        entity_filter = get_instance(hass).entity_filter
+    except Exception:  # noqa: BLE001 - Recorder noch nicht bereit: wie bisher fragen
+        return True
+    return entity_filter is None or entity_filter(entity_id)
 
 
 def _plausible(kind: str, value: float) -> bool:
@@ -167,10 +182,13 @@ class SignalLog:
 
     @callback
     def sample(self, now: float | None = None) -> None:
-        """Empfang aller überwachten Geräte mit Wert aus ZHA oder Bluetooth, die gerade online sind."""
+        """
+        Empfang aller überwachten Geräte, die gerade online sind und deren Wert
+        sonst niemand aufzeichnet: ZHA, Bluetooth, Sensor ohne Recorder.
+        """
         now = now if now is not None else time.time()
         log = self.hass.data.get(DATA_AVAILABILITY)
-        recorded = False
+        wrote = False
         for device, entries in monitored_devices(self.hass, effective(self.hass)):
             # Ausgefallen: ZHA und Bluetooth liefern den letzten Wert weiter,
             # er sagt nichts über jetzt.
@@ -179,12 +197,14 @@ class SignalLog:
                 continue
             domains = {e.domain for eid in device.config_entries if (e := self.hass.config_entries.async_get_entry(eid))}
             signal, _via, source = signal_source(self.hass, device, entries, domains)
-            if source not in LOGGED or not signal or signal.get("value") is None:
+            if not signal or signal.get("value") is None:
+                continue
+            if source not in LOGGED and (source is None or recorded(self.hass, source)):
                 continue
             self.record(device.id, signal["kind"], float(signal["value"]), now)
-            recorded = True
+            wrote = True
         self.prune(now)
-        if recorded:
+        if wrote:
             self._saver.schedule()
 
     def record(self, dev: str, kind: str, value: float, now: float) -> None:
@@ -311,6 +331,9 @@ async def async_signal_history(
         "bucket": None,
         "points": [],
         "first": None,
+        # "not_recorded": Sensor, den der Recorder nicht aufzeichnet.
+        "reason": None,
+        "steady_since": None,
     }
     # Ohne aktuellen Wert (ausgefallen): Sensor nach der Registry, sonst die
     # eigene Aufzeichnung, falls es eine gibt.
@@ -320,6 +343,11 @@ async def async_signal_history(
             source, result["kind"] = sensor
         elif log is not None and log.kind(device.id):
             logged = True
+    if source is not None and not logged and not recorded(hass, source):
+        # Der Recorder kennt den Sensor nicht: Verlauf aus der eigenen Aufzeichnung.
+        logged = True
+        result["reason"] = "not_recorded"
+        result["entity_id"] = source
     if logged:
         if log is None:
             return result
@@ -335,7 +363,7 @@ async def async_signal_history(
             # Mitte des Blocks: der Wert gilt für den ganzen Block.
             result["points"] = [[b[0] + bucket / 2, b[1], b[2], b[3]] for b in blocks]
         return result
-    if source is None or "recorder" not in hass.config.components:
+    if source is None:
         return result
     entity_id = source
     result["entity_id"] = entity_id
@@ -354,11 +382,13 @@ async def async_signal_history(
         if points is None:
             points = await instance.async_add_executor_job(_history, hass, entity_id, start_dt, end_dt, parse)
     except Exception as err:  # noqa: BLE001
-        _LOGGER.debug("Empfangsverlauf für %s nicht lesbar: %s", entity_id, err)
+        # Im Log sichtbar: sonst ist ein leerer Verlauf nicht zu klären.
+        _LOGGER.warning("Empfangsverlauf für %s nicht lesbar: %s", entity_id, err)
         points = []
     points = sorted((t, v) for t, v in points if start <= t <= now and _plausible(result["kind"] or "dbm", v))
-    if result["current"] is not None and (not points or points[-1][0] < now):
-        points.append((now, float(result["current"])))
+    # Bis jetzt: der aktuelle Wert gilt seit seiner letzten Änderung, auch
+    # wenn der Recorder dafür keine Zeile mehr hat.
+    points, result["steady_since"] = held(points, hass.states.get(entity_id), parse, start, now)
     if points:
         result["source"] = kind_source
         result["first"] = points[0][0]

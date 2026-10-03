@@ -222,7 +222,9 @@
   // Zigbee (wie ZHA) und Bluetooth aus der eigenen Aufzeichnung (Blöcke mit
   // Median, Schlechtestem, Bestem, Lücken), WLAN und Z-Wave aus dem Recorder
   // (Zustandswechsel; 30 Tage aus der Statistik). __sigSource erzwingt eine
-  // Quelle ("none" = leer, "log-empty" = Aufzeichnung ohne Werte).
+  // Quelle ("none" = leer, "log-empty" = Aufzeichnung ohne Werte; seit 0.27.0
+  // "not-recorded"/"not-recorded-empty" = Sensor, den der Recorder nicht
+  // aufzeichnet, "steady" = Recorder ohne Zeile, Wert seit 3 Tagen gleich).
   window.__sigSource = null;
   function signalHistory(d, range) {
     const span = { "24h": 1, "7d": 7, "30d": 30 }[range] * D;
@@ -230,15 +232,22 @@
     const start = end - span;
     const sig = d.signal;
     const kind = sig?.kind || null;
-    const base = { kind, current: d.online === false || !sig ? null : sig.value, start, end, bucket: null, points: [], first: null, entity_id: null, source: "none" };
-    if (!sig || window.__sigSource === "none") return base;
-    const logged = window.__sigSource === "log-empty" || window.__sigSource === "log" || (!window.__sigSource && ["zigbee", "ble"].includes(d.connection));
+    const forced = window.__sigSource || "";
+    const reason = forced.startsWith("not-recorded") ? "not_recorded" : null;
+    const base = { kind, current: d.online === false || !sig ? null : sig.value, start, end, bucket: null, points: [], first: null, entity_id: null, source: "none", reason, steady_since: null };
+    if (!sig || forced === "none") return base;
+    if (forced === "steady") {
+      // Wie battery_history.held: Linie ab der letzten Änderung (höchstens ab Beginn)
+      const since = end - 3 * D;
+      return { ...base, source: "history", entity_id: `sensor.${d.id}_signal`, points: [[Math.max(start, since), sig.value], [end, sig.value]], first: Math.max(start, since), steady_since: since };
+    }
+    const logged = ["log-empty", "log", "not-recorded", "not-recorded-empty"].includes(forced) || (!forced && ["zigbee", "ble"].includes(d.connection));
     const seed = [...d.id].reduce((a, c) => a + c.charCodeAt(0), 0);
     const wave = (t) => Math.sin(t / 7200 + seed) * (kind === "dbm" ? 4 : 18) + Math.sin(t / 900 + seed * 2) * (kind === "dbm" ? 2 : 8);
     const clamp = (v) => (kind === "dbm" ? Math.max(-110, Math.min(-30, v)) : Math.max(1, Math.min(255, v)));
     if (logged) {
       const bucket = range === "24h" ? 300 : 3600;
-      if (window.__sigSource === "log-empty") return { ...base, bucket };
+      if (forced === "log-empty" || forced === "not-recorded-empty") return { ...base, bucket };
       const points = [];
       // Aufzeichnung seit 9 Tagen; offline: nichts seit dem Ausfall; eine Lücke vor 6 Std.
       const first = end - 9 * D;

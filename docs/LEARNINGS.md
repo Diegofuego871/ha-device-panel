@@ -286,6 +286,21 @@ hat dort einen echten Fehler oder Umweg gekostet.
   der Bereich hinter "Verfügbarkeit" lief bis in den Rand der Kachel.
   `minmax(0, 1fr)` lässt die Spalte schrumpfen. Prüfung in `area-e2e`:
   Abstand des Bereichs zum Rand jeder Kachel mindestens 12 px.
+- **Recorder ohne Zeile im Zeitraum (0.27.0):** Der Recorder schreibt nur
+  Wechsel (`state_changed`), keine gleichen Werte; ein Sensor, der sich
+  länger nicht ändert, als der Recorder aufbewahrt (Standard 10 Tage), hat
+  weder eine Zeile im Zeitraum noch einen Stand zu Beginn.
+  `state_changes_during_period` liefert dann nichts, ebenso für einen in
+  der Konfiguration ausgeschlossenen Sensor (kein `states_meta`). Der
+  Zustand selbst weiss es aber: `last_changed` sagt, seit wann der Wert
+  gilt (`battery_history.held`). Ob der Recorder eine Entität aufzeichnet:
+  `get_instance(hass).entity_filter` (in HA 2026.9 ist `is_entity_recorded`
+  nach `recorder/entity_options.py` gewandert, nicht mehr in
+  `recorder/__init__`).
+- **Lokale Variable verdeckt Funktion (0.27.0):** In `SignalLog.sample`
+  hiess der Merker `recorded` wie die neue Funktion `recorded()`; Python
+  meldete "bool object is not callable" erst zur Laufzeit. Merker heisst
+  jetzt `wrote`. Ein Test über den neuen Pfad hat es gefunden.
 - **Hinweis mit Aktion (0.23.0):** `.toast` steht mit `left: 50%` und
   `translateX(-50%)`; ohne `width: max-content` bricht der Text schon bei
   der halben Fensterbreite um.

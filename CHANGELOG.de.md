@@ -7,6 +7,32 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.27.0] - 2026-10-03
+
+Empfangsverlauf füllt sich, Knopf "Gerät ausblenden".
+
+### Geändert
+
+- Empfangsverlauf: Für einen Sensor, den der Recorder nicht aufzeichnet
+  (in seiner Konfiguration ausgeschlossen), zeichnet das Panel den Empfang
+  jetzt selbst auf, wie bei ZHA und Bluetooth (jede Minute, solange das
+  Gerät online ist). Das Fenster "Empfang" sagt, warum.
+- Der Knopf im Geräte-Popup heisst jetzt "Gerät ausblenden" statt
+  "Ausblenden". Auf schmalen Handys bleiben beide Knöpfe einzeilig.
+
+### Behoben
+
+- Empfangs- und Batterie-Verlauf zeigten nur den Punkt "jetzt", wenn der
+  Recorder im Zeitraum keinen Eintrag hatte, z. B. weil sich der Wert
+  länger nicht geändert hat, als der Recorder Daten aufbewahrt (Standard
+  10 Tage), oder weil der Sensor im Recorder ausgeschlossen ist. Der
+  aktuelle Wert gilt seit seiner letzten Änderung; die Linie beginnt jetzt
+  dort (höchstens am Anfang des Zeitraums), mit dem Hinweis "Wert
+  unverändert seit …".
+- Eine fehlgeschlagene Abfrage des Recorders für den Empfangs- oder
+  Batterie-Verlauf steht jetzt als Warnung im Log statt nur auf Stufe
+  Debug.
+
 ## [0.26.0] - 2026-10-03
 
 Fenster zum Ausfall-Puls, Kopf pro Bereich, Dialog "Anpassen".
@@ -729,6 +755,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.0
 [0.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.26.0
 [0.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.25.0
 [0.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.23.0

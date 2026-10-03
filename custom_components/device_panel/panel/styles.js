@@ -612,7 +612,10 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .toast.act[hidden] { display: none; }
 .toast-btn { flex: none; height: 32px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: #8ecbff; font: inherit; font-weight: 600; cursor: pointer; }
 .toast-btn:hover { background: rgba(255,255,255,.1); }
-.dlg-actions.two .dlg-btn { flex: 1 1 0; }
+/* Zwei gleich breite Knöpfe; passt der Text nicht nebeneinander (schmales
+   Handy), stehen sie untereinander statt umzubrechen. */
+.dlg-actions.two { flex-wrap: wrap; }
+.dlg-actions.two .dlg-btn { flex: 1 1 0; min-width: max-content; padding: 0 14px; white-space: nowrap; }
 .hide-btn svg { color: var(--dp-text2); }
 
 /* Statistik-Kacheln: Tipp öffnet das Statistik-Fenster */

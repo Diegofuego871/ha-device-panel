@@ -1,5 +1,5 @@
 // Einzelne Geräte ausblenden (0.23.0, docs/mockups/hide-v1, A): Knopf
-// "Ausblenden" im Geräte-Popup, danach Hinweis mit "Rückgängig"; Abschnitt
+// "Gerät ausblenden" (bis 0.26.0 "Ausblenden") im Geräte-Popup, danach Hinweis mit "Rückgängig"; Abschnitt
 // "Ausgeblendete Geräte" in den Einstellungen zum Wiedereinblenden (gilt mit
 // "Speichern"). Deutsch und Englisch, Desktop und Handy, echte Klicks/Taps.
 import { chromium } from "playwright-core";
@@ -11,15 +11,15 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
-    hide: "Ausblenden", toast: "Fensterkontakt Küche ausgeblendet", undo: "Rückgängig", shown: "Fensterkontakt Küche wieder eingeblendet",
+    hide: "Gerät ausblenden", toast: "Fensterkontakt Küche ausgeblendet", undo: "Rückgängig", shown: "Fensterkontakt Küche wieder eingeblendet",
     sec: "Ausgeblendete Geräte", sumNone: "Keine ausgeblendet", sumOne: "1 Gerät ausgeblendet", sumTwo: "2 Geräte ausgeblendet",
-    all: "Alle einblenden", sub: "Küche · Zigbee Home Automation", empty: 'Kein Gerät ausgeblendet. Ein Gerät blendest du in seinem Popup mit "Ausblenden" aus.',
+    all: "Alle einblenden", sub: "Küche · Zigbee Home Automation", empty: 'Kein Gerät ausgeblendet. Ein Gerät blendest du in seinem Popup mit "Gerät ausblenden" aus.',
     error: "Ausblenden fehlgeschlagen: Speicher voll",
   },
   en: {
-    hide: "Hide", toast: "Fensterkontakt Küche hidden", undo: "Undo", shown: "Fensterkontakt Küche shown again",
+    hide: "Hide device", toast: "Fensterkontakt Küche hidden", undo: "Undo", shown: "Fensterkontakt Küche shown again",
     sec: "Hidden devices", sumNone: "None hidden", sumOne: "1 device hidden", sumTwo: "2 devices hidden",
-    all: "Show all", sub: "Küche · Zigbee Home Automation", empty: 'No device is hidden. Hide a device in its pop-up with "Hide".',
+    all: "Show all", sub: "Küche · Zigbee Home Automation", empty: 'No device is hidden. Hide a device in its pop-up with "Hide device".',
     error: "Could not hide the device: Speicher voll",
   },
 };
@@ -50,6 +50,9 @@ for (const lang of ["de", "en"]) {
     await tap('.dev[data-open="e"]');
     await wait(`return r.querySelector("dialog.device")?.open`);
     check(`[${tag}] Knopf "${T.hide}" im Popup`, (await text('dialog.device .dlg-actions [data-dlg="hide"]')) === T.hide && !!(await handle('dialog.device .dlg-actions [data-dlg="close"]')));
+    // Einzeilig, auch auf dem Handy (seit 0.27.0 längerer Text): nebeneinander, nicht abgeschnitten
+    const btns = await ev(`return [...r.querySelectorAll("dialog.device .dlg-actions .dlg-btn")].map(b=>{const x=b.getBoundingClientRect(); return [Math.round(x.top), Math.round(x.height), b.scrollWidth <= b.clientWidth]})`);
+    check(`[${tag}] Knöpfe einzeilig nebeneinander`, btns.length === 2 && btns[0][0] === btns[1][0] && btns.every(([, hgt, fits]) => hgt <= 44 && fits), JSON.stringify(btns));
     const widths = await ev(`return [...r.querySelectorAll("dialog.device .dlg-actions .dlg-btn")].map(x=>Math.round(x.getBoundingClientRect().width))`);
     check(`[${tag}] beide Knöpfe gleich breit`, widths.length === 2 && Math.abs(widths[0] - widths[1]) <= 1, JSON.stringify(widths));
     await p.screenshot({ path: `${outDir}/hide-popup-${tag.replace("/", "-")}.png` });

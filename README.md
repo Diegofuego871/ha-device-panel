@@ -73,7 +73,7 @@ details such as software version, manufacturer, model and area.
   after, the numbers count it as one outage. Once after the installation
   the log is filled from the recorder history, as far back as the recorder
   keeps data.
-- Hide single devices (button "Hide" in the device pop-up, with "Undo"),
+- Hide single devices (button "Hide device" in the device pop-up, with "Undo"),
   whole integrations or device types (settings in the panel or options
   dialog of the integration): hidden devices are neither shown nor
   monitored and send no notifications. The settings list the hidden
@@ -114,9 +114,11 @@ details such as software version, manufacturer, model and area.
   weak signal. Marking and the chip "Weak signal" follow.
 - Signal history: the tile "Signal" in the device pop-up opens the signal
   over 24 h, 7 or 30 days with median, worst and best value and the warning
-  threshold. From the recorder when a sensor provides the signal; for ZHA
-  and Bluetooth the panel records it itself (every minute, kept for
-  31 days in its own file).
+  threshold. From the recorder when a sensor provides the signal; for ZHA,
+  Bluetooth and sensors the recorder does not record (excluded in its
+  configuration) the panel records it itself (every minute, kept for
+  31 days in its own file). A value that has not changed for a long time
+  applies since its last change.
 - Battery level as a coloured symbol with fill: green, yellow-green, orange
   and red when low (threshold of the battery warning).
 - New devices: "New" next to the name for 3 days after they were added to

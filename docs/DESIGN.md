@@ -176,7 +176,8 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Ring-Kachel (schmale Textspalte) rutscht er unter den Titel, wenn er
   daneben keinen Platz hat.
 - Ausblenden (seit 0.23.0, `docs/mockups/hide-v1/`, A): im Geräte-Popup
-  unten zwei gleich breite Knöpfe "Ausblenden" (Auge durchgestrichen) und
+  unten zwei gleich breite Knöpfe "Gerät ausblenden" (seit 0.27.0, vorher
+  "Ausblenden"; Auge durchgestrichen) und
   "Schliessen". Danach Hinweis unten mit Text und Aktion "Rückgängig"
   (helles Blau auf dunkel, 8 s statt 3,5 s). Fehler im Popup selbst.
 - Reihenfolge per Ziehen (seit 0.13.0, Chips der Verbindungsart): Griff

@@ -165,3 +165,89 @@ async def test_sensor_from_recorder(recorder_mock, hass: HomeAssistant, hass_ws_
     await async_wait_recording_done(hass)
     week = (await _ws(client, 2, type=f"{DOMAIN}/signal_history", device_id=dev.id, range="7d"))["result"]
     assert week["source"] == "history" and week["current"] is None and [v for _t, v in week["points"]] == [-60, -75, -82]
+
+
+# --- Fehlerbericht 0.26.0: Verlauf zeigte nur "jetzt" ---------------------------
+
+
+def test_held_value_since_last_change(hass: HomeAssistant) -> None:
+    from homeassistant.core import State
+
+    from custom_components.device_panel.battery_history import held
+
+    now = 1_800_000_000.0
+    start = now - 86400
+    parse = signal_history.parser("dbm")
+    # Seit 3 Tagen gleich, Recorder ohne Zeile im Zeitraum: Linie über alles.
+    old = State("sensor.x", "-49", last_changed=dt_util.utc_from_timestamp(now - 3 * 86400))
+    points, steady = held([], old, parse, start, now)
+    assert points == [(start, -49.0), (now, -49.0)] and steady == now - 3 * 86400
+    # Seit 2 Std.: ab dort; die letzte Änderung fehlt im Recorder noch.
+    recent = State("sensor.x", "-60", last_changed=dt_util.utc_from_timestamp(now - 7200))
+    points, steady = held([(start, -70.0)], recent, parse, start, now)
+    assert points == [(start, -70.0), (now - 7200, -60.0), (now, -60.0)] and steady is None
+    # Recorder hat die Änderung: nur bis jetzt verlängern.
+    points, _ = held([(start, -70.0), (now - 7200, -60.0)], recent, parse, start, now)
+    assert points == [(start, -70.0), (now - 7200, -60.0), (now, -60.0)]
+    # Kein brauchbarer Wert (ausgefallen): nichts ergänzen.
+    gone = State("sensor.x", STATE_UNAVAILABLE)
+    assert held([], gone, parse, start, now) == ([], None)
+
+
+async def test_recorder_without_rows_draws_steady_line(recorder_mock, hass: HomeAssistant, hass_ws_client, monkeypatch, freezer) -> None:
+    source = MockConfigEntry(domain="test")
+    source.add_to_hass(hass)
+    dev = dr.async_get(hass).async_get_or_create(config_entry_id=source.entry_id, identifiers={("test", "presence")}, name="Anwesenheit")
+    sensor = er.async_get(hass).async_get_or_create(
+        "sensor", "test", "presence-rssi", device_id=dev.id, original_device_class="signal_strength", unit_of_measurement="dBm"
+    )
+    now = dt_util.utcnow()
+    freezer.move_to(now - timedelta(days=3))
+    hass.states.async_set(sensor.entity_id, "-49", {"device_class": "signal_strength", "unit_of_measurement": "dBm"})
+    await async_wait_recording_done(hass)
+    freezer.move_to(now)
+    await _setup(hass)
+    # Wie beim Nutzer: der Recorder liefert im Zeitraum nichts (Wert seit
+    # Langem gleich, Stand zu Beginn schon gelöscht).
+    monkeypatch.setattr(signal_history, "_history", lambda *_a, **_k: [])
+    client = await hass_ws_client(hass)
+    res = (await _ws(client, 1, type=f"{DOMAIN}/signal_history", device_id=dev.id, range="24h"))["result"]
+    assert res["source"] == "history" and res["reason"] is None
+    assert [v for _t, v in res["points"]] == [-49, -49] and abs(res["points"][0][0] - res["start"]) < 0.1
+    assert abs(res["steady_since"] - (now - timedelta(days=3)).timestamp()) < 1
+
+
+@pytest.mark.parametrize("recorder_config", [{"exclude": {"entity_globs": ["sensor.*_rssi"]}}])
+async def test_sensor_excluded_from_recorder_is_logged(recorder_mock, hass: HomeAssistant, hass_ws_client) -> None:
+    source = MockConfigEntry(domain="test")
+    source.add_to_hass(hass)
+    reg = dr.async_get(hass)
+    dev = reg.async_get_or_create(config_entry_id=source.entry_id, identifiers={("test", "esp")}, name="Dusche")
+    other = reg.async_get_or_create(config_entry_id=source.entry_id, identifiers={("test", "esp2")}, name="Küche")
+    attrs = {"device_class": "signal_strength", "unit_of_measurement": "dBm"}
+    excluded = er.async_get(hass).async_get_or_create(
+        "sensor", "test", "esp-rssi", device_id=dev.id, suggested_object_id="dusche_rssi", original_device_class="signal_strength", unit_of_measurement="dBm"
+    )
+    kept = er.async_get(hass).async_get_or_create(
+        "sensor", "test", "esp2-wifi", device_id=other.id, suggested_object_id="kueche_wifi", original_device_class="signal_strength", unit_of_measurement="dBm"
+    )
+    assert excluded.entity_id == "sensor.dusche_rssi"
+    hass.states.async_set(excluded.entity_id, "-52", attrs)
+    hass.states.async_set(kept.entity_id, "-60", attrs)
+    await async_wait_recording_done(hass)
+    await _setup(hass)
+    assert not signal_history.recorded(hass, excluded.entity_id) and signal_history.recorded(hass, kept.entity_id)
+    hass.data[DATA_AVAILABILITY].evaluate()
+    client = await hass_ws_client(hass)
+    # Noch nichts aufgezeichnet: Hinweis, warum, und keine Recorder-Punkte
+    res = (await _ws(client, 1, type=f"{DOMAIN}/signal_history", device_id=dev.id, range="24h"))["result"]
+    assert res["reason"] == "not_recorded" and res["source"] == "none" and res["bucket"] == BLOCK_SECONDS
+    assert res["entity_id"] == excluded.entity_id
+    # Das Panel zeichnet nur den ausgeschlossenen Sensor auf, nicht den anderen
+    log: SignalLog = hass.data[DATA_SIGNAL]
+    log.sample()
+    assert log.kind(dev.id) == "dbm" and log.kind(other.id) is None
+    res = (await _ws(client, 2, type=f"{DOMAIN}/signal_history", device_id=dev.id, range="24h"))["result"]
+    assert res["source"] == "log" and res["reason"] == "not_recorded" and res["points"][0][1] == -52
+    res = (await _ws(client, 3, type=f"{DOMAIN}/signal_history", device_id=other.id, range="24h"))["result"]
+    assert res["source"] == "history" and res["reason"] is None
