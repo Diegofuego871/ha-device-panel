@@ -229,7 +229,13 @@ keine Regel, steht "keine eindeutige Ursache".
 Was sofort geht (Zustand jetzt): Integration, Hub, Proxy, Batterie jetzt,
 Sammelausfall ab Start des Protokolls. Trends (Empfang, Batterie) brauchen
 ein eigenes Protokoll von Empfang und Batterie (wie `signal_log` in
-unifi_dynamic), also Fahrplan-Schritt 6. Optional später: Zusammenfassung
+unifi_dynamic), also Fahrplan-Schritt 6. Umgesetzt: Batterie-Verlauf aus
+dem Recorder (0.22.0); Empfangsverlauf (0.24.0) aus dem Recorder, wenn ein
+Sensor den Empfang liefert, sonst (ZHA, Bluetooth) aus der eigenen
+Aufzeichnung `signal_history.SignalLog` wie `signal_log` in unifi_dynamic
+(Blöcke [Start, Median, Schlechtester, Bester], 5 Min. für 24 Std.,
+Stunden für 31 Tage; nur Geräte, die laut Protokoll online sind, weil ZHA
+und Bluetooth den letzten Wert weiter liefern). Optional später: Zusammenfassung
 über die KI-Aufgaben von HA (`ai_task`), nur wenn der Nutzer dort ein
 Modell eingerichtet hat; nicht als Grundlage (Kosten, Datenschutz, nicht
 vorhersehbar).

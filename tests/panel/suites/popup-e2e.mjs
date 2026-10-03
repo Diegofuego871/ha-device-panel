@@ -84,8 +84,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Kachel Unterbrüche 7 Tage`, JSON.stringify(tiles[1]) === JSON.stringify(T.tile7), JSON.stringify(tiles[1]));
     check(`[${tag}] Kachel Empfang`, JSON.stringify(tiles[2]) === JSON.stringify(T.signal), JSON.stringify(tiles[2]));
     check(`[${tag}] Kachel Batterie rot`, JSON.stringify(tiles[3]) === JSON.stringify(T.battery) && (await ev(`return !!r.querySelector('dialog.device .st-tile[data-kind="battery"] .st-v.bad')`)), JSON.stringify(tiles[3]));
-    // Seit 0.22.0 öffnet auch die Batterie (mit Prozent) ein Fenster.
-    check(`[${tag}] Statistik- und Batterie-Kacheln tippbar, Empfang nicht`, (await ev(`return [...r.querySelectorAll('dialog.device button.st-tile[data-dlg="stat"]')].map(x=>x.dataset.kind).join()`)) === "avail,avail,battery" && (await ev(`return r.querySelectorAll("dialog.device .st-tile.static").length`)) === 1);
+    // Seit 0.22.0 öffnet auch die Batterie (mit Prozent) ein Fenster, seit 0.24.0 der Empfang.
+    check(`[${tag}] alle Statistik-Kacheln tippbar`, (await ev(`return [...r.querySelectorAll('dialog.device button.st-tile[data-dlg="stat"]')].map(x=>x.dataset.kind).join()`)) === "avail,avail,signal,battery" && (await ev(`return r.querySelectorAll("dialog.device .st-tile.static").length`)) === 0);
 
     // Verbindung, Gerät, Entitäten
     const conn = (await texts("dialog.device .tiles"))[0];

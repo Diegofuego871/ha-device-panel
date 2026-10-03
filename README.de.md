@@ -113,6 +113,13 @@ Bereich.
 - Empfang-Warnung pro Gerät im Popup: globaler Wert (unter -80 dBm bzw.
   LQI 61), eigene Schwelle oder aus, für Geräte, die immer schwachen
   Empfang haben. Markierung und Chip "Schwacher Empfang" folgen.
+- Empfangsverlauf: Die Kachel "Empfang" im Geräte-Popup öffnet den Empfang
+  über 24 Std., 7 oder 30 Tage mit Median, schlechtestem und bestem Wert
+  und der Schwelle der Warnung. Aus dem Recorder, wenn ein Sensor den
+  Empfang liefert; für ZHA und Bluetooth zeichnet das Panel ihn selbst auf
+  (jede Minute, 31 Tage in einer eigenen Datei).
+- Batteriestand als farbiges Symbol mit Füllung: grün, gelbgrün, orange und
+  rot, wenn schwach (Schwelle der Batterie-Warnung).
 - Neue Geräte: "Neu" beim Namen in den ersten 3 Tagen nach dem Hinzufügen
   in Home Assistant, mit eigenem Chip.
 - Einstellungen pro Gerät auf einen Blick: ein Symbol beim Namen (eigene

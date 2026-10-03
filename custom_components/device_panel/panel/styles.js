@@ -275,6 +275,12 @@ tr.dev.flaky td:first-child { box-shadow: inset 4px 0 0 var(--dp-warning); }
 .sig .val { font-size: 12px; color: var(--dp-text2); }
 .bat { display: inline-flex; align-items: center; gap: 3px; }
 .bat.low { color: var(--dp-error); font-weight: 500; }
+/* Batterie farbig nach Stand (seit 0.24.0): Stufen wie der Empfang, rot wie
+   der Text bei "schwach". */
+.bat-ic.t4 { color: var(--dp-tier4); }
+.bat-ic.t3 { color: var(--dp-tier3); }
+.bat-ic.t2 { color: var(--dp-tier2); }
+.bat-ic.t1 { color: var(--dp-error); }
 .typ { display: inline-flex; align-items: center; gap: 7px; }
 .typ svg { color: var(--dp-text2); }
 /* Verfügbarkeit 24 Std.: 48 Abschnitte à 30 Min. */
@@ -641,12 +647,19 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .bh-area { fill: color-mix(in srgb, var(--dp-primary) 18%, transparent); }
 .bh-line { fill: none; stroke: var(--dp-primary); stroke-width: 2; stroke-linejoin: round; }
 .bh-y { position: absolute; left: -44px; width: 38px; transform: translateY(-50%); text-align: right; color: var(--dp-text3); font-size: 11px; }
-.bh-thr-l { position: absolute; left: 6px; margin-bottom: 2px; color: var(--dp-error); font-size: 11.5px; }
+.bh-thr-l { position: absolute; left: 6px; margin-bottom: 2px; padding: 0 4px; border-radius: 4px; color: var(--dp-error); font-size: 11.5px;
+  background: color-mix(in srgb, var(--dp-subtle) 85%, transparent); }
 .bh-chg-l { position: absolute; top: -2px; margin-left: 5px; color: var(--dp-text2); font-size: 11.5px; }
 .bh-dot { position: absolute; right: -5px; width: 10px; height: 10px; border-radius: 50%; transform: translateY(-50%); background: var(--dp-primary);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--dp-primary) 25%, transparent); }
 .bh-ticks { margin-left: 44px; }
 .bh .avail-list { margin-top: 10px; }
+/* Empfang (seit 0.24.0): Spanne aus der eigenen Aufzeichnung als Fläche. */
+.sg-band { fill: color-mix(in srgb, var(--dp-primary) 16%, transparent); }
+.sg-cur { display: inline-flex; align-items: center; gap: 8px; }
+.sg-cur svg { width: 22px; height: 16px; }
+.avail-legend i.sg-med { height: 3px; border-radius: 2px; background: var(--dp-primary); vertical-align: 3px; }
+.avail-legend i.sg-span { background: color-mix(in srgb, var(--dp-primary) 22%, transparent); }
 .bh .avail-list .d { color: var(--dp-text2); }
 .bh-src { margin: 10px 2px 0; }
 .avail-now { position: absolute; top: 0; right: 0; bottom: 0; width: 2px; background: var(--dp-text); }

@@ -236,6 +236,17 @@ hat dort einen echten Fehler oder Umweg gekostet.
   Test lässt sich ein Eintrag mit `attr.evolve(device, created_at=…)`
   ersetzen (private Attribute wie `_suggested_area` verhindern den
   Konstruktor).
+- **Empfang ohne Verlauf im Recorder (0.24.0):** ZHA liefert LQI/RSSI am
+  Geräteobjekt (die Sensoren dafür sind meist deaktiviert), Bluetooth den
+  RSSI aus `async_last_service_info`. Beide stehen nicht im Recorder; der
+  Verlauf braucht eine eigene Aufzeichnung. Beide liefern nach einem Ausfall
+  den letzten Wert weiter: nur aufzeichnen, solange das Protokoll das Gerät
+  online sieht. Für den Verlauf eines ausgefallenen Sensor-Geräts den Sensor
+  nach der Registry suchen (`signal_sensor`), nicht nach dem Zustand.
+- **Tipp-Hervorhebung in Bildschirmfotos (0.24.0):** Auf dem Handy-Nachbau
+  (Touch) zeichnet Chromium die Hervorhebung des angetippten Elements
+  (Kachel im Popup) kurz über dem darüber geöffneten Fenster; im Bild eine
+  fremde Fläche. Kein Fehler des Panels; ohne Tipp geöffnet ist sie weg.
 - **Globale Klassen im Panel (0.23.0):** `.sub` (Unterzeile in der Liste)
   setzt `display: block`; als Zusatzklasse an einer Flex-Zeile stapelte sie
   Kästchen und Name untereinander. Neue Bausteine bekommen eigene,

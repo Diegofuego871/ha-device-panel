@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.23.0, Geräte ausblenden, Filter Bereich)
+## Stand (0.24.0, Empfangsverlauf, Batteriefarben)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -26,7 +26,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   Geräte). Seit 0.23.0 `device_panel/hide_device` (Knopf "Ausblenden" im
   Popup, Option `exclude_devices`, gilt für alle Benutzer) und in
   `list_devices` die Bereiche und Etagen in der Reihenfolge der Registries
-  (`areas`, `floors`, je Gerät `area_id`) für den Filter "Bereich".
+  (`areas`, `floors`, je Gerät `area_id`) für den Filter "Bereich". Seit
+  0.24.0 `device_panel/signal_history` (Fenster "Empfang", 24 Std./7/30
+  Tage): Empfang von einem Sensor aus dem Recorder, für ZHA und Bluetooth
+  aus der eigenen Aufzeichnung `signal_history.SignalLog`
+  (`.storage/device_panel.signal`, jede Minute für überwachte Geräte, die
+  online sind; 5-Min.-Blöcke 24 Std., Stunden 31 Tage; Quelle bestimmt
+  `devices.signal_source`).
 - Einstellungen im Panel (Zahnrad), Reihenfolge nach Bild 5:
   Versionskasten mit Update über HACS, Vorabversionen, "In HACS
   freischalten"; "Ausfall-Erkennung" (Zahlenfelder `offline_after`,
@@ -172,7 +178,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `docs/mockups/area-v1/`; Nutzer: einen Bereich auswählen, nicht
    sortieren, und mit den Chips weiter filtern; Design Claude überlassen).
    Kopf bleibt beim Filter für das ganze Haus (Annahme, dem Nutzer
-   genannt).
+   genannt). `v0.23.0` veröffentlicht. Mit `0.24.0` (Nutzer, 2026-10-03):
+   Batteriesymbol mit Füllung in vier Farben (Skala Claude überlassen:
+   Stufen wie der Empfang, rot = schwach nach der Batterie-Warnung) und
+   Empfangsverlauf per Tipp auf die Kachel "Empfang" (Rahmen wie
+   "Batterie", ohne eigenes Mockup).
    Als Nächstes, in dieser Reihenfolge (Nutzer, 2026-10-03):
    b. Puls-Kachel: Popup mit den Geräten, die in 24 Std. Unterbrüche
       hatten (Mockups `docs/mockups/pulse-v1/`, Empfehlung A, Entscheid

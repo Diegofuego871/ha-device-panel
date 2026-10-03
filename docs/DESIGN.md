@@ -145,6 +145,18 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   zeigen" und "Fertig". Etage als Überschrift in Grossbuchstaben mit
   Kästchen (voll, halb mit Strich, leer), Bereiche eingerückt mit Zahl
   rechts; die ganze Zeile ist der Knopf (`role="checkbox"`).
+- Batterie (seit 0.24.0): Symbol mit Füllstand (Innenraum des Umrisses)
+  in den vier Farben des Empfangs: grün über 50 %, gelbgrün bis 50 %,
+  orange bis 30 %, rot (`--dp-error`, wie der Text) bei "schwach" nach der
+  Batterie-Warnung. Ohne Prozent rot oder grün. Text bleibt neutral, ausser
+  bei "schwach".
+- Empfangsverlauf (seit 0.24.0): Rahmen wie "Batterie" (Kennzahl gross mit
+  Balken, Fakten Median/schlechtester/bester, Kurs, Ticks, Quelle als
+  Kurzzeile). Achse nur Zahlen (dBm -100 bis -40, weiter bei Bedarf; LQI
+  0–255), Schwelle der Empfang-Warnung rot gestrichelt mit Text auf
+  hinterlegtem Feld. Aus der eigenen Aufzeichnung zusätzlich die Spanne als
+  helle Fläche mit Legende und Lücken; aus dem Verlauf des Recorders eine
+  Treppe (Zustände gelten bis zum nächsten Wechsel).
 - Ausblenden (seit 0.23.0, `docs/mockups/hide-v1/`, A): im Geräte-Popup
   unten zwei gleich breite Knöpfe "Ausblenden" (Auge durchgestrichen) und
   "Schliessen". Danach Hinweis unten mit Text und Aktion "Rückgängig"

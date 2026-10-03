@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "27"
+PANEL_VERSION = "28"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -145,6 +145,8 @@ CONF_SHOW_SERVICE = "show_service_devices"
 CONF_SHOW_DISABLED = "show_disabled_devices"
 # Verfügbarkeitsprotokoll (eine Instanz pro HA).
 DATA_AVAILABILITY = f"{DOMAIN}_availability"
+# Eigene Aufzeichnung des Empfangs (ZHA, Bluetooth; seit 0.24.0).
+DATA_SIGNAL = f"{DOMAIN}_signal"
 
 WS_TYPE_LIST_DEVICES = f"{DOMAIN}/list_devices"
 

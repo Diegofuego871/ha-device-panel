@@ -78,7 +78,7 @@ async def test_remove_deletes_own_files(hass: HomeAssistant, hass_ws_client, has
     freezer.tick(timedelta(minutes=3))
     hass.data[DATA_AVAILABILITY].evaluate()
     await hass.async_block_till_done()
-    keys = [f"{DOMAIN}.{k}" for k in ("availability", "devices", "notify", "battery", "panel")]
+    keys = [f"{DOMAIN}.{k}" for k in ("availability", "devices", "notify", "battery", "signal", "panel")]
     await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
     assert all(k in hass_storage for k in keys), [k for k in keys if k not in hass_storage]

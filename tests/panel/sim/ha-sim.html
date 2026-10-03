@@ -218,6 +218,57 @@
     const source = window.__batSource || (days >= 30 ? "statistics" : "history");
     return { entity_id: `sensor.${d.id}_batterie`, start, end, source, points, first: points[0][0], changes, threshold };
   }
+  // Empfangsverlauf wie signal_history.py (erfunden, gleichbleibend):
+  // Zigbee (wie ZHA) und Bluetooth aus der eigenen Aufzeichnung (Blöcke mit
+  // Median, Schlechtestem, Bestem, Lücken), WLAN und Z-Wave aus dem Recorder
+  // (Zustandswechsel; 30 Tage aus der Statistik). __sigSource erzwingt eine
+  // Quelle ("none" = leer, "log-empty" = Aufzeichnung ohne Werte).
+  window.__sigSource = null;
+  function signalHistory(d, range) {
+    const span = { "24h": 1, "7d": 7, "30d": 30 }[range] * D;
+    const end = Date.now() / 1000;
+    const start = end - span;
+    const sig = d.signal;
+    const kind = sig?.kind || null;
+    const base = { kind, current: d.online === false || !sig ? null : sig.value, start, end, bucket: null, points: [], first: null, entity_id: null, source: "none" };
+    if (!sig || window.__sigSource === "none") return base;
+    const logged = window.__sigSource === "log-empty" || window.__sigSource === "log" || (!window.__sigSource && ["zigbee", "ble"].includes(d.connection));
+    const seed = [...d.id].reduce((a, c) => a + c.charCodeAt(0), 0);
+    const wave = (t) => Math.sin(t / 7200 + seed) * (kind === "dbm" ? 4 : 18) + Math.sin(t / 900 + seed * 2) * (kind === "dbm" ? 2 : 8);
+    const clamp = (v) => (kind === "dbm" ? Math.max(-110, Math.min(-30, v)) : Math.max(1, Math.min(255, v)));
+    if (logged) {
+      const bucket = range === "24h" ? 300 : 3600;
+      if (window.__sigSource === "log-empty") return { ...base, bucket };
+      const points = [];
+      // Aufzeichnung seit 9 Tagen; offline: nichts seit dem Ausfall; eine Lücke vor 6 Std.
+      const first = end - 9 * D;
+      const offFrom = d.offline_since ? Date.parse(d.offline_since) / 1000 : Infinity;
+      for (let t = Math.max(start, first) - (Math.max(start, first) % bucket); t < end; t += bucket) {
+        if (t >= offFrom || (t > end - 6 * 3600 && t < end - 5 * 3600)) continue;
+        const med = clamp(Math.round(sig.value + wave(t)));
+        const spread = kind === "dbm" ? 3 + (seed % 4) : 10 + (seed % 15);
+        points.push([t + bucket / 2, med, clamp(med - spread), clamp(med + Math.round(spread / 2))]);
+      }
+      return { ...base, source: points.length ? "log" : "none", bucket, points, first };
+    }
+    const stats = range === "30d";
+    const points = [];
+    if (stats) {
+      // Stundenmittel: nur die langsame Welle (die schnelle mittelt sich weg).
+      for (let t = start - (start % 3600) + 1800; t < end; t += 3600) points.push([t, Math.round(clamp(sig.value + Math.sin(t / 43200 + seed) * (kind === "dbm" ? 4 : 18)) * 10) / 10]);
+    } else {
+      // Zustandswechsel unregelmässig, etwa alle 20 bis 90 Min.
+      let t = start;
+      let i = 0;
+      while (t < end) {
+        points.push([Math.round(t), clamp(Math.round(sig.value + wave(t)))]);
+        t += 1200 + ((seed * 37 + i * 53) % 4200);
+        i += 1;
+      }
+    }
+    if (base.current != null) points.push([end, base.current]);
+    return { ...base, source: stats ? "statistics" : "history", entity_id: `sensor.${d.id}_signal`, points, first: points[0][0] };
+  }
   function avail24(id) {
     const s = summarize(segments(bridged(events(id)), nowS - D, nowS));
     return s ? { ...s, strip: strip(segments(events(id), nowS - D, nowS), nowS - D, nowS) } : null;
@@ -644,6 +695,12 @@
         const data = detail(msg.device_id);
         if (!data) throw { code: "not_found", message: "Device not found" };
         return data;
+      }
+      if (msg.type === "device_panel/signal_history") {
+        const d = window.__devices.find((x) => x.id === msg.device_id);
+        if (!d) throw { code: "not_found", message: "device not found" };
+        if (!["24h", "7d", "30d"].includes(msg.range || "24h")) throw { code: "invalid_format", message: "range" };
+        return signalHistory(d, msg.range || "24h");
       }
       if (msg.type === "device_panel/battery_history") {
         const d = window.__devices.find((x) => x.id === msg.device_id);

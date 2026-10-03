@@ -106,6 +106,13 @@ details such as software version, manufacturer, model and area.
 - Weak signal warning per device, in its pop-up: global value (below
   -80 dBm or LQI 61), own threshold or off, for devices that always have a
   weak signal. Marking and the chip "Weak signal" follow.
+- Signal history: the tile "Signal" in the device pop-up opens the signal
+  over 24 h, 7 or 30 days with median, worst and best value and the warning
+  threshold. From the recorder when a sensor provides the signal; for ZHA
+  and Bluetooth the panel records it itself (every minute, kept for
+  31 days in its own file).
+- Battery level as a coloured symbol with fill: green, yellow-green, orange
+  and red when low (threshold of the battery warning).
 - New devices: "New" next to the name for 3 days after they were added to
   Home Assistant, with their own chip.
 - Settings per device at a glance: a symbol next to the name (own battery

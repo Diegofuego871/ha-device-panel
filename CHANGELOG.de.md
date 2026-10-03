@@ -7,6 +7,30 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.24.0] - 2026-10-03
+
+Farbiges Batteriesymbol und Empfangsverlauf.
+
+### Hinzugefügt
+
+- Ein Tipp auf die Kachel "Empfang" im Geräte-Popup öffnet den Verlauf des
+  Empfangs über 24 Std., 7 Tage und 30 Tage: der Wert als Linie, die
+  Schwelle der Empfang-Warnung gestrichelt, darüber aktueller Wert,
+  Median, schlechtester und bester Wert. Empfang von einem Sensor (z. B.
+  WLAN-RSSI, LQI von Zigbee2MQTT) kommt aus dem Recorder (30 Tage aus der
+  Langzeitstatistik). Für ZHA und Bluetooth, deren Wert direkt aus der
+  Integration kommt, zeichnet das Panel den Empfang jede Minute selbst auf
+  (Median je 5 Min. für 24 Std., je Stunde für 31 Tage, mit der Spanne vom
+  schlechtesten zum besten Wert); dieser Verlauf beginnt mit dem Update.
+  Lücken heissen: Gerät ausgefallen oder nicht empfangen.
+
+### Geändert
+
+- Das Batteriesymbol zeigt den Stand als Füllung und in vier Farben wie die
+  Empfangsbalken: grün über 50 %, gelbgrün bis 50 %, orange bis 30 %, rot,
+  sobald die Batterie als schwach gilt (Schwelle der Batterie-Warnung, wie
+  der Chip "Batterie niedrig"). Auch im Geräte-Popup.
+
 ## [0.23.0] - 2026-10-03
 
 Einzelne Geräte ausblenden und nach Bereich filtern.
@@ -657,6 +681,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.24.0
 [0.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.23.0
 [0.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.22.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0

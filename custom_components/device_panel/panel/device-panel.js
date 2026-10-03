@@ -249,6 +249,27 @@ function sigSuggest(sig) {
   const base = sig?.value != null ? sig.value - (lqi ? 10 : 5) : lqi ? WEAK_LQI + 1 : WEAK_DBM;
   return Math.min(max, Math.max(min, Math.round(base)));
 }
+// Batterie in vier Farbstufen wie der Empfang (seit 0.24.0; Skala vom Nutzer
+// Claude überlassen). Rot heisst "schwach" nach der Batterie-Warnung des
+// Geräts, genau wie der Chip "Batterie niedrig"; sonst nach Stand: bis 30 %
+// orange, bis 50 % gelbgrün, darüber grün. Ohne Prozent: rot oder grün.
+function batTier(b) {
+  if (!b) return null;
+  if (b.low) return 1;
+  if (b.level == null) return 4;
+  return b.level <= 30 ? 2 : b.level <= 50 ? 3 : 4;
+}
+// Symbol mit Füllstand (Innenraum des Umrisses von y 6 bis 20) in der Farbe
+// der Stufe; ein Rest bleibt sichtbar, 0 % ist leer.
+function batIcon(b, size = 14) {
+  const tier = batTier(b);
+  if (!tier) return mdi("battery", size);
+  const pct = b.level != null ? Math.max(0, Math.min(100, b.level)) : b.low ? 10 : 100;
+  const h = pct > 0 ? Math.max(1.5, (14 * pct) / 100) : 0;
+  return `<svg class="ic bat-ic t${tier}" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="${MDI.battery}"/>${
+    h ? `<rect x="8" y="${(20 - h).toFixed(2)}" width="8" height="${h.toFixed(2)}" fill="currentColor"/>` : ""
+  }</svg>`;
+}
 // Anteil online erst ab 1 Std. Daten, wie im Backend (availability.PCT_MIN_COVERED).
 const PCT_MIN_COVERED = 3600;
 // Rang für die Sortierung nach Batteriestand: Prozent, "schwach" ohne Zahl
@@ -1754,7 +1775,7 @@ class DevicePanel extends HTMLElement {
     const b = d.battery;
     if (!b) return `<span class="t3">–</span>`;
     const text = b.level != null ? `${b.level} %` : b.low ? this._t("batteryLow") : "OK";
-    return `<span class="bat ${b.low ? "low" : ""}">${mdi("battery", 14)} ${escape(text)}</span>`;
+    return `<span class="bat ${b.low ? "low" : ""}">${batIcon(b, 14)} ${escape(text)}</span>`;
   }
 
   _softwareHtml(d) {
@@ -2068,10 +2089,11 @@ class DevicePanel extends HTMLElement {
     }
     tiles.push(this._statTile("7d", this._t("tileOutages7"), v7, sub7));
     const level = devSigLevel(d);
-    if (level) tiles.push(this._staticTile(this._t("tileSignal"), `${bars(level, d.online === false)}${escape(sigText(d.signal))}`, this._t("tierNames")[level]));
+    // Tipp öffnet den Verlauf (seit 0.24.0, Wunsch des Nutzers).
+    if (level) tiles.push(this._statTile("24h", this._t("tileSignal"), `${bars(level, d.online === false)}${escape(sigText(d.signal))}`, this._t("tierNames")[level], "signal"));
     if (d.battery) {
       const b = d.battery;
-      const value = b.level != null ? `${escape(String(b.level))}<small>%</small>` : escape(b.low ? this._t("batteryLow") : "OK");
+      const value = `${batIcon(b, 18)}${b.level != null ? `${escape(String(b.level))}<small>%</small>` : escape(b.low ? this._t("batteryLow") : "OK")}`;
       // Mit Prozent: Tipp öffnet den Verlauf; "schwach ja/nein" nur als Kachel.
       if (b.level != null) tiles.push(this._statTile("30d", this._t("tileBattery"), value, b.low ? this._t("batteryLow") : this._t("batHistoryHint"), "battery", b.low));
       else tiles.push(this._staticTile(this._t("tileBattery"), value, "", b.low));
@@ -2379,7 +2401,7 @@ class DevicePanel extends HTMLElement {
   _openStat(range, kind = "avail") {
     const dlg = this.shadowRoot.querySelector("dialog.stat-dlg");
     if (!dlg || !this._detailId) return;
-    this._statKind = kind === "battery" ? "battery" : "avail";
+    this._statKind = kind === "battery" || kind === "signal" ? kind : "avail";
     this._statRange = this._statRanges().includes(range) ? range : "24h";
     // X des Popups dahinter ausblenden: es wirkt sonst, als gehöre es zum
     // Statistik-Fenster (wie unifi_dynamic).
@@ -2417,7 +2439,7 @@ class DevicePanel extends HTMLElement {
     const range = this._statRange;
     if (!id || !range || !this._hass) return;
     const key = this._histKey(range);
-    const type = this._statKind === "battery" ? "device_panel/battery_history" : "device_panel/availability";
+    const type = { battery: "device_panel/battery_history", signal: "device_panel/signal_history" }[this._statKind] || "device_panel/availability";
     const cur = this._hist;
     if (!force && cur && cur.key === key && (cur.loading || Date.now() - cur.at < HISTORY_MAX_AGE_MS)) return;
     const prev = cur && cur.key === key ? cur.data : null;
@@ -2443,14 +2465,17 @@ class DevicePanel extends HTMLElement {
     }
     const range = this._statRange;
     const ranges = this._t("ranges");
-    const battery = this._statKind === "battery";
+    const kind = this._statKind;
     const sw = `<div class="stat-range"><span class="seg-sw" role="group">${this._statRanges().map(
       (r) => `<button type="button" data-stat="range" data-range="${r}" class="${r === range ? "on" : ""}" aria-pressed="${r === range}">${escape(ranges[r])}</button>`
     ).join("")}</span></div>`;
-    const html = `<div class="dlg-head stat-head"><span class="dlg-avatar">${mdi(battery ? "battery" : "pulse", 24)}</span>
-        <div class="dlg-title"><h2>${escape(this._t(battery ? "tileBattery" : "statTitle"))}</h2><div class="dlg-sub">${escape(d.name)}</div></div>
+    const icon = { battery: "battery", signal: "signal" }[kind] || "pulse";
+    const title = { battery: "tileBattery", signal: "tileSignal" }[kind] || "statTitle";
+    const body = kind === "battery" ? this._batteryHistHtml(range) : kind === "signal" ? this._signalHistHtml(range, d) : this._historyHtml(range);
+    const html = `<div class="dlg-head stat-head"><span class="dlg-avatar">${mdi(icon, 24)}</span>
+        <div class="dlg-title"><h2>${escape(this._t(title))}</h2><div class="dlg-sub">${escape(d.name)}</div></div>
         <button type="button" class="dlg-close" data-stat="close" title="${escape(this._t("close"))}" aria-label="${escape(this._t("close"))}">${mdi("close", 18)}</button></div>
-      <div class="dlg-body">${sw}${battery ? this._batteryHistHtml(range) : this._historyHtml(range)}</div>`;
+      <div class="dlg-body">${sw}${body}</div>`;
     const scroll = dlg.scrollTop;
     if (setHtml(dlg, html)) dlg.scrollTop = scroll;
   }
@@ -2588,6 +2613,100 @@ class DevicePanel extends HTMLElement {
           <path class="bh-area" d="${area}"/><path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/>${marks}</svg>${labels}</div>
         <div class="avail-ticks bh-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>${list}</div>
       <p class="dlg-note bh-src">${escape(t(srcKey))}</p>`;
+  }
+
+  // Empfang als Kurs (seit 0.24.0, Rahmen wie "Batterie"): Median als Linie,
+  // aus der eigenen Aufzeichnung dazu die Spanne (schlechtester bis bester
+  // Wert) als Fläche und Lücken, wo nichts empfangen wurde; die Schwelle der
+  // Empfang-Warnung des Geräts gestrichelt. Achse dBm -100 bis -40 (weiter,
+  // wenn Werte darüber hinaus gehen), LQI 0 bis 255.
+  _signalHistHtml(range, d) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const h = this._hist;
+    const key = this._histKey(range);
+    if (!h || h.key !== key || (!h.data && h.loading)) return `<div class="avail"><p class="dlg-note">${escape(t("loadingDetail"))}</p></div>`;
+    if (!h.data) return `<div class="dlg-error">${escape(t("error"))} ${escape(h.error || "")}</div>`;
+    const { start, end, points = [], kind, source, bucket, first, current } = h.data;
+    const note = (text) => `<p class="dlg-note bh-src">${escape(text)}</p>`;
+    if (!points.length || !kind) {
+      // Aufzeichnung mit älteren Werten (z. B. seit Tagen ausgefallen): sagen, seit wann.
+      const why = bucket ? (first ? t("sigSrcLog", this._fmtTime(first, true)) : t("sigSrcLogEmpty")) : t("sigSrcNone");
+      return `<div class="avail"><p class="dlg-note">${escape(t("batNoData"))}</p></div>${note(why)}`;
+    }
+    const dbm = kind === "dbm";
+    const med = points.map((p) => p[1]);
+    const lo = points.map((p) => p[2] ?? p[1]);
+    const hi = points.map((p) => p[3] ?? p[1]);
+    const top = dbm ? Math.max(-40, Math.ceil(Math.max(...hi) / 10) * 10) : 255;
+    const bottom = dbm ? Math.min(-100, Math.floor(Math.min(...lo) / 10) * 10) : 0;
+    const span = end - start;
+    const x = (at) => Math.max(0, Math.min(1000, ((at - start) / span) * 1000));
+    const y = (v) => Math.max(0, Math.min(100, ((top - v) / (top - bottom)) * 100));
+    // Geschütztes Leerzeichen: "-84 dBm" nicht zwischen Zahl und Einheit umbrechen.
+    const fmt = (v) => sigText({ kind, value: Math.round(v) }).replace(" ", "\u00a0");
+    // Läufe ohne Lücke; aus der Aufzeichnung reicht ein Block über seine ganze Länge.
+    const half = bucket ? bucket / 2 : 0;
+    const gap = bucket ? bucket * 1.5 : source === "statistics" ? 5400 : Infinity;
+    const runs = [];
+    points.forEach((p, i) => {
+      if (!i || p[0] - points[i - 1][0] > gap) runs.push([]);
+      runs[runs.length - 1].push(p);
+    });
+    let line = "";
+    let band = "";
+    for (const run of runs) {
+      const a = run[0];
+      const z = run[run.length - 1];
+      if (source === "history") {
+        // Zustände gelten bis zum nächsten Wechsel: Treppe statt Schräge.
+        line += `M${x(a[0]).toFixed(1)},${y(a[1]).toFixed(2)}${run.slice(1).map((p) => ` H${x(p[0]).toFixed(1)} V${y(p[1]).toFixed(2)}`).join("")} `;
+        continue;
+      }
+      const pts = [[a[0] - half, a[1], a[2], a[3]], ...run, [z[0] + half, z[1], z[2], z[3]]];
+      line += `M${pts.map((p) => `${x(p[0]).toFixed(1)},${y(p[1]).toFixed(2)}`).join(" L")} `;
+      if (bucket) {
+        band += `M${pts.map((p) => `${x(p[0]).toFixed(1)},${y(p[3] ?? p[1]).toFixed(2)}`).join(" L")} L${pts
+          .slice()
+          .reverse()
+          .map((p) => `${x(p[0]).toFixed(1)},${y(p[2] ?? p[1]).toFixed(2)}`)
+          .join(" L")} Z `;
+      }
+    }
+    // Schwelle: eigene des Geräts (passende Art), sonst der Standard; "aus" ohne Linie.
+    const own = d.signal_setting;
+    const limit = own === "off" ? null : Number.isInteger(own) && own < 0 === dbm ? own : dbm ? WEAK_DBM : WEAK_LQI;
+    const showLimit = limit != null && limit < top && limit > bottom;
+    const mid = Math.round((top + bottom) / 2);
+    const grid = [top, mid, bottom].map((v) => `<line class="bh-grid" x1="0" x2="1000" y1="${y(v)}" y2="${y(v)}" vector-effect="non-scaling-stroke"/>`).join("");
+    const thr = showLimit ? `<line class="bh-thr" x1="0" x2="1000" y1="${y(limit)}" y2="${y(limit)}" vector-effect="non-scaling-stroke"/>` : "";
+    const cur = current ?? med[med.length - 1];
+    const labels =
+      // Nur Zahlen: "-100 dBm" bräche in der schmalen Spalte um; die Einheit steht oben beim Wert.
+      [top, mid, bottom].map((v) => `<span class="bh-y" style="top:${y(v)}%">${v}</span>`).join("") +
+      (showLimit ? `<span class="bh-thr-l" style="bottom:${100 - y(limit)}%">${escape(t("sigWeakLine", sigText({ kind, value: limit })))}</span>` : "") +
+      (current != null ? `<span class="bh-dot" style="top:${y(current)}%"></span>` : "");
+    const ticks = this._ticks(start, end, range)
+      .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
+      .join("");
+    const sorted = [...med].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    const facts = t("sigFacts", fmt(median), fmt(Math.min(...lo)), fmt(Math.max(...hi)));
+    const legend = bucket
+      ? `<div class="avail-legend"><span><i class="sg-med"></i>${escape(t("sigLegendMedian"))}</span><span><i class="sg-span"></i>${escape(t("sigLegendSpan"))}</span></div>`
+      : "";
+    const src =
+      source === "log"
+        ? t("sigSrcLog", this._fmtTime(first ?? points[0][0], true))
+        : source === "statistics"
+          ? t("sigSrcStats")
+          : range === "30d"
+            ? t("sigSrcHistoryLong")
+            : t("sigSrcHistory");
+    return `<div class="avail bh sg"><div class="avail-top"><span class="avail-pct sg-cur">${bars(sigLevel({ kind, value: cur }), current == null)}${escape(fmt(cur))}</span><span class="avail-facts">${escape(facts)}</span></div>
+        <div class="bh-plot"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}${thr}
+          ${band ? `<path class="sg-band" d="${band}"/>` : ""}<path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/></svg>${labels}</div>
+        <div class="avail-ticks bh-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>${legend}</div>
+      ${note(src)}`;
   }
 
   _daysHtml(days) {

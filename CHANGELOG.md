@@ -7,6 +7,30 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.24.0] - 2026-10-03
+
+Coloured battery symbol and signal history.
+
+### Added
+
+- Tapping the tile "Signal" in the device pop-up opens the signal history
+  for 24 h, 7 days and 30 days: the value as a line, the threshold of the
+  weak signal warning dashed, above it the current value, median, worst
+  and best value. Signal from a sensor (e.g. Wi-Fi RSSI, Zigbee2MQTT LQI)
+  comes from the recorder (30 days from the long-term statistics). For ZHA
+  and Bluetooth, whose value comes directly from the integration, the panel
+  records the signal itself every minute (median per 5 min for 24 h, per
+  hour for 31 days, with the range from worst to best value); this history
+  starts with the update. Gaps mean the device was offline or not
+  received.
+
+### Changed
+
+- The battery symbol shows the level as a fill and in four colours like
+  the signal bars: green above 50 %, yellow-green up to 50 %, orange up to
+  30 %, red when the battery counts as low (threshold of the battery
+  warning, like the chip "Low battery"). Also in the device pop-up.
+
 ## [0.23.0] - 2026-10-03
 
 Hide single devices and filter by area.
@@ -627,6 +651,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.24.0
 [0.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.23.0
 [0.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.22.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0

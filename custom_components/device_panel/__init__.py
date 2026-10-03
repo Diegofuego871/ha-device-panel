@@ -24,6 +24,9 @@ from .battery_history import RANGES as BATTERY_RANGES
 from .battery_history import async_battery_history, battery_entity
 from .outage import STORE_KEY as NOTIFY_STORE_KEY
 from .outage import OutageNotifier
+from .signal_history import RANGES as SIGNAL_RANGES
+from .signal_history import STORAGE_KEY as SIGNAL_STORE_KEY
+from .signal_history import SignalLog, async_signal_history
 from .const import (
     BATTERY_OFF,
     SIGNAL_DBM_RANGE,
@@ -40,6 +43,7 @@ from .const import (
     DATA_OUTAGE,
     DATA_PANEL_REGISTERED,
     DATA_PUSH_IMAGE,
+    DATA_SIGNAL,
     DATA_TYPE_OVERRIDES,
     DATA_WS_REGISTERED,
     DEVICE_TYPES,
@@ -97,6 +101,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         watch = BatteryWatch(hass)
         await watch.async_start()
         hass.data[DATA_BATTERY] = watch
+    if DATA_SIGNAL not in hass.data:
+        signal_log = SignalLog(hass)
+        await signal_log.async_start()
+        hass.data[DATA_SIGNAL] = signal_log
     await update_check.async_load_panel_settings(hass)
     update_check.async_start_daily(hass)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
@@ -124,6 +132,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await log.async_stop()
     if (watch := hass.data.pop(DATA_BATTERY, None)) is not None:
         await watch.async_stop()
+    if (signal_log := hass.data.pop(DATA_SIGNAL, None)) is not None:
+        await signal_log.async_stop()
     update_check.async_stop_daily(hass)
     return True
 
@@ -133,10 +143,11 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     Integration entfernt: ihre eigenen Dateien löschen (Entscheid des Nutzers,
     2026-10-02), damit nichts zurückbleibt. Verfügbarkeitsprotokoll,
     Einstellungen pro Gerät (Typ, Verbindungsart, Batterie, Meldungen),
-    gemeldete Ausfälle und Batterien, gemeinsame Panel-Einstellungen. HA ruft
+    gemeldete Ausfälle und Batterien, Empfangsverlauf, gemeinsame
+    Panel-Einstellungen. HA ruft
     das erst nach dem Entladen auf; dort wurde alles Ausstehende geschrieben.
     """
-    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, update_check.PANEL_STORE_KEY):
+    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, SIGNAL_STORE_KEY, update_check.PANEL_STORE_KEY):
         await Store(hass, STORAGE_VERSION, key).async_remove()
     # Geladene Stände vergessen: ein neues Einrichten ohne Neustart beginnt leer.
     for key in (DATA_TYPE_OVERRIDES, DATA_DEVICE_SETTINGS, DATA_CONNECTION_OVERRIDES, update_check.PANEL_DATA_KEY):
@@ -285,6 +296,26 @@ async def _ws_battery_history(
         return
     threshold = device_battery_threshold(hass, options_api.effective(hass), device)
     connection.send_result(msg["id"], await async_battery_history(hass, entity_id, msg["range"], threshold))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/signal_history",
+        vol.Required("device_id"): str,
+        vol.Optional("range", default="24h"): vol.In(list(SIGNAL_RANGES)),
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_signal_history(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Empfangsverlauf für das Fenster "Empfang" (seit 0.24.0)."""
+    device = dr.async_get(hass).async_get(msg["device_id"])
+    if device is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
+        return
+    connection.send_result(msg["id"], await async_signal_history(hass, hass.data.get(DATA_SIGNAL), device, msg["range"]))
 
 
 @websocket_api.websocket_command(
@@ -548,3 +579,4 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_set_device_settings)
     websocket_api.async_register_command(hass, _ws_reset_device_settings)
     websocket_api.async_register_command(hass, _ws_hide_device)
+    websocket_api.async_register_command(hass, _ws_signal_history)

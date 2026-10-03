@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
@@ -53,8 +54,10 @@ def _value(state: str) -> float | None:
     return value if 0 <= value <= 100 else None
 
 
-def _history(hass: HomeAssistant, entity_id: str, start: datetime, end: datetime) -> list[tuple[float, float]]:
-    """Verlauf (Zeit, Prozent) mit dem Stand zu Beginn. Im Executor."""
+def _history(
+    hass: HomeAssistant, entity_id: str, start: datetime, end: datetime, parse: Callable[[str], float | None] = _value
+) -> list[tuple[float, float]]:
+    """Verlauf (Zeit, Wert) mit dem Stand zu Beginn; parse prüft den Wert (auch für den Empfang). Im Executor."""
     from homeassistant.components.recorder import history  # noqa: PLC0415
 
     states = history.state_changes_during_period(
@@ -62,7 +65,7 @@ def _history(hass: HomeAssistant, entity_id: str, start: datetime, end: datetime
     ).get(entity_id, [])
     out: list[tuple[float, float]] = []
     for state in states:
-        value = _value(state.state)
+        value = parse(state.state)
         if value is not None:
             out.append((max(state.last_changed.timestamp(), start.timestamp()), value))
     return out

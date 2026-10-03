@@ -195,8 +195,18 @@ def outage_start(
     return since, at_least
 
 
-def _signal(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> dict[str, Any] | None:
-    """Empfang aus Entitäten: dBm (WLAN, Z-Wave …) oder LQI (Zigbee2MQTT)."""
+def _signal_kind(entry: er.RegistryEntry, state: State | None) -> str | None:
+    """"dbm" oder "lqi", wenn die Entität den Empfang misst, sonst None."""
+    unit = str(_attr(state, "unit_of_measurement") or entry.unit_of_measurement or "").lower()
+    if _device_class(entry, state) == "signal_strength" and unit == "dbm":
+        return "dbm"
+    if unit == "lqi" or entry.entity_id.endswith(("_lqi", "_linkquality")):
+        return "lqi"
+    return None
+
+
+def _signal_entity(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> tuple[dict[str, Any] | None, str | None]:
+    """Empfang aus Entitäten: dBm (WLAN, Z-Wave …) oder LQI (Zigbee2MQTT), dazu die Entität."""
     for entry in entries:
         if entry.disabled_by or entry.domain != "sensor":
             continue
@@ -204,12 +214,42 @@ def _signal(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> dict[str, A
         value = _number(state)
         if value is None:
             continue
-        unit = str(_attr(state, "unit_of_measurement") or "").lower()
-        if _device_class(entry, state) == "signal_strength" and unit == "dbm":
-            return {"kind": "dbm", "value": round(value)}
-        if unit == "lqi" or entry.entity_id.endswith(("_lqi", "_linkquality")):
-            return {"kind": "lqi", "value": round(value)}
+        if kind := _signal_kind(entry, state):
+            return {"kind": kind, "value": round(value)}, entry.entity_id
+    return None, None
+
+
+def signal_sensor(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> tuple[str, str] | None:
+    """
+    Sensor für den Empfang (Entität, Art), auch wenn er gerade keinen Wert
+    hat: der Verlauf ist gerade bei einem ausgefallenen Gerät gefragt.
+    """
+    for entry in entries:
+        if entry.disabled_by or entry.domain != "sensor":
+            continue
+        if kind := _signal_kind(entry, hass.states.get(entry.entity_id)):
+            return entry.entity_id, kind
     return None
+
+
+def signal_source(
+    hass: HomeAssistant, device: dr.DeviceEntry, entries: list[er.RegistryEntry], domains: list[str] | set[str]
+) -> tuple[dict[str, Any] | None, str | None, str | None]:
+    """
+    (Empfang, Empfänger, Quelle) wie in der Liste: ZHA vor dem Sensor,
+    Bluetooth nur ohne anderen Wert. Quelle ist die Entität des Sensors oder
+    "zha" bzw. "ble" (Wert direkt aus der Integration, ohne Verlauf im
+    Recorder; signal_history zeichnet ihn selbst auf).
+    """
+    signal, source = _signal_entity(hass, entries)
+    via = None
+    if "zha" in domains and (zha := _zha_signal(hass, device.id)):
+        signal, source = zha, "zha"
+    ble = next((c[1] for c in device.connections if c[0] == dr.CONNECTION_BLUETOOTH), None)
+    if ble and not signal:
+        signal, via = _ble_signal(hass, ble)
+        source = "ble" if signal else None
+    return signal, via, source
 
 
 def _zha_signal(hass: HomeAssistant, device_id: str) -> dict[str, Any] | None:
@@ -898,13 +938,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         at_least = False
         if since is not None:
             since, at_least = outage_start(log, device.id, since, started_at, offline_after)
-        signal = _signal(hass, entries)
-        via = None
-        if "zha" in domains:
-            signal = _zha_signal(hass, device.id) or signal
-        ble = next((c[1] for c in device.connections if c[0] == dr.CONNECTION_BLUETOOTH), None)
-        if ble and not signal:
-            signal, via = _ble_signal(hass, ble)
+        signal, via, _source = signal_source(hass, device, entries, domains)
         if via is None and device.via_device_id and (hub := dev_reg.async_get(device.via_device_id)):
             via = hub.name_by_user or hub.name
         primary = _primary_entry(hass, device)
@@ -1008,12 +1042,7 @@ async def async_device_facts(hass: HomeAssistant, device: dr.DeviceEntry, opts: 
     entries = er.async_entries_for_device(er.async_get(hass), device.id)
     domains = sorted({e.domain for eid in device.config_entries if (e := hass.config_entries.async_get_entry(eid))})
     info = await async_integration_info(hass, set(domains))
-    signal = _signal(hass, entries)
-    if "zha" in domains:
-        signal = _zha_signal(hass, device.id) or signal
-    ble = next((c[1] for c in device.connections if c[0] == dr.CONNECTION_BLUETOOTH), None)
-    if ble and not signal:
-        signal, _via = _ble_signal(hass, ble)
+    signal, _via, _source = signal_source(hass, device, entries, domains)
     primary = _primary_entry(hass, device)
     auto = _connection(device, domains, entries, signal, {d: i["iot_class"] for d, i in info.items()})
     integ = opts[CONF_CONNECTION_INTEGRATIONS].get(primary.domain) if primary else None
