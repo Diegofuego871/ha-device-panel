@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "37"
+PANEL_VERSION = "38"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -57,6 +57,14 @@ CONF_BATTERY_PERSISTENT = "battery_persistent"
 # "Schwach ab"; ohne Eintrag gilt der globale Wert. Massgebend ist
 # die primäre Integration des Geräts.
 CONF_BATTERY_LOW_INTEGRATIONS = "battery_low_integrations"
+# Eigenes "Ausgefallen nach" pro Integration {Domain: Minuten oder "off"};
+# ohne Eintrag gilt der globale Wert. "off" = Geräte der Integration bleiben
+# sichtbar, werden aber nicht überwacht (keine Ausfälle, Statistik, Meldungen).
+# Der Bereich ist weiter als beim globalen Wert: Geräte, die nur einmal am
+# Tag melden, brauchen Stunden.
+CONF_OFFLINE_INTEGRATIONS = "offline_after_integrations"
+OFFLINE_INTEGRATION_RANGE = (1, 1440)
+MONITOR_OFF = "off"
 # Push erst nach so vielen Minuten Ausfall (0 = sobald ausgefallen); kurze
 # Aussetzer lösen dann weder Ausfall- noch Online-Meldung aus.
 CONF_NOTIFY_DELAY = "notify_delay"

@@ -129,6 +129,11 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   "Anzeigen", "Push", "Anhaltend"): Spalten fester Breite (`.ex-col`,
   72 px, Handy 52 px), Kopf in Grossbuchstaben, darunter "Alle umschalten"
   je Spalte; ausgeblendete Zeile sperrt die übrigen Schalter (gedämpft).
+  Seit 0.30.0 vierte Spalte "Ausgefallen nach" mit Auswahl (`.ex-col.sel`,
+  156 px, 13 px Schrift, Rand in Primärfarbe bei Änderung); auf dem Handy
+  steht sie unter dem Namen mit der Beschriftung links (Spaltenkopf und
+  "Alle umschalten" entfallen dort). Nicht überwachte Geräte: Gruppe und
+  Pill "Nicht überwacht" (grau, wie "Deaktiviert").
 - Verlauf als Kurs (seit 0.22.0, Fenster "Batterie"): Fläche und Linie in
   Primärfarbe, Gitter bei 0/50/100 %, Schwelle rot gestrichelt mit Text
   links, Wechsel grau gestrichelt mit Text oben, Punkt mit Hof am Ende

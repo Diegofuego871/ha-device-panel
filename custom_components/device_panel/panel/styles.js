@@ -547,6 +547,12 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ex-head.multi > span:first-child { flex: 1; }
 .ex-head.multi .ex-col { text-align: center; }
 .ex-row .switch input:disabled + span { opacity: .35; }
+/* Spalte "Ausgefallen nach" der Integrationen: breiter als die Schalter. */
+.ex-col.sel { width: 156px; }
+.ex-col.sel .opt-select { flex: 1 1 auto; }
+.ex-col.sel .opt-select select { height: 34px; padding-left: 8px; font-size: 13px; }
+.ex-col.sel .ex-lbl { display: none; }
+.ex-col.sel .opt-select.changed select { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 /* Inhalt der Meldung und Vorschau */
 .nf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 24px; margin-top: 8px; }
 .nf-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; font-size: 14px; }
@@ -758,6 +764,12 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .bat-ctl { flex: 1 1 calc(100% - 42px); margin-left: 42px; }
   .bat-ctl .opt-select { flex: 1 1 auto; min-width: 0; }
   .ex-col { width: 52px; }
+  /* Handy: die Auswahl "Ausgefallen nach" steht unter dem Namen, die Spaltenkopf-Zelle entfällt. */
+  .ex-row:has(.ex-col.sel) { flex-wrap: wrap; }
+  .ex-row .ex-col.sel { flex: 1 1 100%; width: auto; margin-left: 42px; justify-content: flex-end; align-items: center; gap: 10px; }
+  .ex-col.sel .ex-lbl { display: block; color: var(--dp-text2); font-size: 12px; }
+  .ex-col.sel .opt-select { flex: 0 0 170px; }
+  .ex-head .ex-col.sel, .ex-row.ex-all .ex-col.sel { display: none; }
   .ex-head.multi { font-size: 10px; letter-spacing: .02em; }
   .nf-grid { grid-template-columns: minmax(0, 1fr); }
   .toolbar { padding: 10px 12px 8px; gap: 8px; }

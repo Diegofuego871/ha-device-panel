@@ -273,7 +273,12 @@ Standard. Seit 0.6.0 gilt für alle Geräte gemeinsam (Abschnitt
 "Ausfall-Erkennung"): "Ausgefallen nach" 1–60 Min. (Standard 2), "Instabil
 ab" 2–50 Unterbrüche in 24 Std. (Standard 3), "Anlaufphase nach dem Start"
 0–30 Min. (Standard 5). Eine neue Schwelle gilt ab dem Speichern; das
-Protokoll schreibt bisherige Unterbrüche nicht um.
+Protokoll schreibt bisherige Unterbrüche nicht um. Seit 0.30.0 kann jede
+Integration ein eigenes "Ausgefallen nach" haben (1–1440 Min., Tabelle
+"Integrationen", Spalte "Ausgefallen nach"; massgebend ist die primäre
+Integration des Geräts) oder "Nicht überwachen": Die Geräte bleiben
+sichtbar (Gruppe "Nicht überwacht"), ohne Status, Ausfälle, Statistik,
+Meldungen und eigene Aufzeichnung des Empfangs.
 
 - Gerät **offline**, wenn alle seine aktivierten Entitäten `unavailable`
   sind (Ausnahmen: deaktivierte, versteckte, `diagnostic`-Entitäten zählen

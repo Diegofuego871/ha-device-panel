@@ -20,6 +20,7 @@
           "flaky_outages": "Unstable from (outages in 24 hours)",
           "startup_grace": "Grace period after start",
           "battery_low": "Battery low from",
+          "offline_after_integrations": "Offline after: own value per integration",
           "battery_low_integrations": "Battery: own threshold per integration",
           "battery_push": "Battery: push notification",
           "battery_push_mode": "Battery: time of the push notification",
@@ -51,6 +52,7 @@
           "flaky_outages": "An online device with this many outages in the last 24 hours is listed as unstable.",
           "startup_grace": "Minutes after Home Assistant starts in which returning devices had no outage. Time when Home Assistant was not running never counts as an outage.",
           "battery_low": "A battery at or below this level counts as low (red in the panel, \"Problems only\").",
+          "offline_after_integrations": "Integration → minutes or off, one per line, e.g. \"zha: 60\" or \"hue: off\" (off: devices stay visible but are not monitored: no outages, statistics or notifications). Without an entry the global value applies; the device's primary integration counts.",
           "battery_low_integrations": "Integration → percent or off, one per line, e.g. \"zha: 25\" or \"bthome: off\" (warning off for this integration). Without an entry the global value (field above) applies; the device's primary integration counts.",
           "battery_push": "Once per device when it drops below the threshold, to the push target below. Again only after the battery was 5 points above the threshold (e.g. new battery).",
           "battery_push_mode": "Immediately when a device drops below the threshold, or once a day at the time below.",
@@ -80,6 +82,7 @@
       }
     },
     "error": {
+      "offline_map": "Each line must be integration: whole number from 1 to 1440 or off (e.g. \"zha: 60\", \"hue: off\").",
       "battery_map": "Each line must be integration: whole number from 5 to 50 or off (e.g. \"zha: 25\", \"bthome: off\").",
       "connection_map": "Each line must be integration: connection type (zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud)."
     }

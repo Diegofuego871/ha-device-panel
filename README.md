@@ -62,7 +62,10 @@ details such as software version, manufacturer, model and area.
   day.
 - A device counts as offline after 2 minutes without a sign of life
   (adjustable under "Outage detection", like "unstable from" and the grace
-  period after a start). A connectivity sensor decides first; otherwise all
+  period after a start). Integrations whose devices report rarely get their
+  own time in the settings (table "Integrations", column "Offline after");
+  "Don't monitor" keeps their devices visible, in a group "Not monitored",
+  without outages, statistics and notifications. A connectivity sensor decides first; otherwise all
   regular entities must be unavailable. An outage only ends when Home
   Assistant sees the device online again: its duration runs on across
   restarts of Home Assistant. "At least" (≥) only when the start is unknown

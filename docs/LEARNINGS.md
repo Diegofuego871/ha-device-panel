@@ -118,6 +118,12 @@ hat dort einen echten Fehler oder Umweg gekostet.
   Entfernen mit neuen `Store`-Instanzen löschen und geladene Stände aus
   `hass.data` nehmen (sonst brächte ein neues Einrichten ohne Neustart sie
   zurück). Test: Unterbruch planen, entfernen, Zeit vorspulen, nichts da.
+- Mehrere Zeiten pro Integration ("Ausgefallen nach"): jede Stelle, die die
+  Schwelle brauchte (Erkennung, Liste, Ausfallbeginn, Nachfüllen aus dem
+  Recorder), muss sie je Gerät holen (`options_api.offline_after_for`);
+  ein globaler Wert, der an einer Stelle übrig bleibt, gibt widersprüchliche
+  Status (Liste "ausgefallen", Protokoll "online"). Nicht überwachte Geräte
+  gehören in `listed_devices`, nicht in `monitored_devices`.
 
 ## Panel (Frontend)
 

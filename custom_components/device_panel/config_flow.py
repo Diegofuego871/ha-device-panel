@@ -51,6 +51,7 @@ from .const import (
     CONF_NOTIFY_CLICK,
     CONF_NOTIFY_SERVICE,
     CONF_OFFLINE_AFTER,
+    CONF_OFFLINE_INTEGRATIONS,
     CONF_SHOW_DISABLED,
     CONF_SHOW_SERVICE,
     CONF_STARTUP_GRACE,
@@ -63,6 +64,7 @@ from .const import (
 from .options_api import (
     INT_OPTIONS,
     battery_map,
+    offline_map,
     connection_map,
     connection_order,
     current_values,
@@ -119,6 +121,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 own = None
                 errors[CONF_BATTERY_LOW_INTEGRATIONS] = "battery_map"
             try:
+                offline = offline_map(user_input.get(CONF_OFFLINE_INTEGRATIONS))
+            except vol.Invalid:
+                offline = None
+                errors[CONF_OFFLINE_INTEGRATIONS] = "offline_map"
+            try:
                 conns = connection_map(user_input.get(CONF_CONNECTION_INTEGRATIONS))
             except vol.Invalid:
                 conns = None
@@ -126,7 +133,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if not errors:
                 # Bestehende Options erhalten, statt sie zu ersetzen. Leere
                 # Mehrfachauswahl muss die alte überschreiben.
-                data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own, CONF_CONNECTION_INTEGRATIONS: conns}
+                data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own, CONF_OFFLINE_INTEGRATIONS: offline, CONF_CONNECTION_INTEGRATIONS: conns}
                 for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_EXCLUDE_DEVICES, CONF_HIDE_CONNECTIONS, CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE):
                     data[key] = sorted(set(user_input.get(key) or []))
                 # Inhalt der Meldung in fester Reihenfolge, wie im Panel.
@@ -171,6 +178,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_OFFLINE_AFTER, default=values[CONF_OFFLINE_AFTER]): _number(CONF_OFFLINE_AFTER),
+                    # Eigenes "Ausgefallen nach" pro Integration, z. B. "zha: 60" oder "hue: off".
+                    vol.Optional(CONF_OFFLINE_INTEGRATIONS, default=values[CONF_OFFLINE_INTEGRATIONS] or {}): ObjectSelector(),
                     vol.Required(CONF_FLAKY_OUTAGES, default=values[CONF_FLAKY_OUTAGES]): _number(CONF_FLAKY_OUTAGES),
                     vol.Required(CONF_STARTUP_GRACE, default=values[CONF_STARTUP_GRACE]): _number(CONF_STARTUP_GRACE),
                     vol.Required(CONF_BATTERY_LOW, default=values[CONF_BATTERY_LOW]): _number(CONF_BATTERY_LOW),

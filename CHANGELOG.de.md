@@ -7,7 +7,36 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.30.0] - 2026-10-03
+
+Eigenes "Ausgefallen nach" pro Integration und "Nicht überwachen".
+
+### Hinzugefügt
+
+- Einstellungen, Abschnitt "Integrationen": Neue Spalte "Ausgefallen nach"
+  mit einer Auswahl pro Integration: Standard, eine feste Zeit (1, 2, 5,
+  10, 15 oder 30 Minuten; 1, 2, 6, 12 oder 24 Stunden) oder "Nicht
+  überwachen". Geräte, die selten melden (z. B. Bluetooth-Sensoren), gelten
+  so nicht schon nach zwei Minuten als ausgefallen. Massgebend ist die
+  primäre Integration des Geräts. Auf dem Handy steht die Auswahl unter dem
+  Namen. Der Optionsdialog von Home Assistant hat dieselbe Einstellung als
+  Zuordnung (`offline_after_integrations`, z. B. `zha: 60` oder
+  `hue: off`, 1 bis 1440 Minuten).
+- "Nicht überwachen": Die Geräte der Integration bleiben sichtbar, in einer
+  eigenen Gruppe "Nicht überwacht" mit dem Status "Nicht überwacht", haben
+  aber keine Ausfälle, keine Verfügbarkeitsstatistik, keine Meldungen
+  (Ausfall oder Batterie) und keine eigene Aufzeichnung des Empfangs, und
+  zählen nicht im Kopf, im Puls der Ausfälle und bei den instabilen
+  Geräten.
+
+### Geändert
+
+- Das Nachfüllen des Verfügbarkeitsprotokolls aus dem Recorder nimmt die
+  Zeit "Ausgefallen nach" der Integration des jeweiligen Geräts.
+
 ## [0.29.1] - 2026-10-03
+
+Nicht veröffentlicht; enthalten in 0.30.0.
 
 Verständlicherer "Inhalt der Meldung".
 
@@ -816,7 +845,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[0.29.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.1
+[0.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.30.0
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0
 [0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0
 [0.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.1

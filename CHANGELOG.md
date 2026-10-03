@@ -7,7 +7,34 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.30.0] - 2026-10-03
+
+Own "Offline after" per integration, and "Don't monitor".
+
+### Added
+
+- Settings, section "Integrations": a new column "Offline after" with a
+  choice per integration: default, a fixed time (1, 2, 5, 10, 15 or 30
+  minutes; 1, 2, 6, 12 or 24 hours) or "Don't monitor". Devices that report
+  rarely (e.g. Bluetooth sensors) no longer count as offline after two
+  minutes. The device's primary integration decides. On the phone the
+  choice sits under the name. The options dialog of Home Assistant has the
+  same setting as a mapping (`offline_after_integrations`, e.g.
+  `zha: 60` or `hue: off`, 1 to 1440 minutes).
+- "Don't monitor": the devices of the integration stay visible, in their own
+  group "Not monitored" with the status "Not monitored", but have no
+  outages, no availability statistics, no notifications (outage or
+  battery) and no own signal recording, and they do not count in the
+  header, the outage pulse or the unstable devices.
+
+### Changed
+
+- The recorder backfill of the availability log uses the "Offline after"
+  time of each device's integration.
+
 ## [0.29.1] - 2026-10-03
+
+Not released; included in 0.30.0.
 
 Clearer "Content of the notification".
 
@@ -782,7 +809,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[0.29.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.1
+[0.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.30.0
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0
 [0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0
 [0.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.1

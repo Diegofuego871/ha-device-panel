@@ -117,6 +117,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "connection_integrations": {},
         "battery_low": 15,
         "battery_low_integrations": {},
+        "offline_after_integrations": {},
         "battery_push": False,
         "battery_persistent": False,
         "notify_service": "none",
@@ -177,7 +178,7 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
     assert result["step_id"] == "init"
     # Reihenfolge wie im Panel: Ausfall-Erkennung, Batterie, Ausschlüsse, Push, Anzeige, Updates.
     assert [str(k) for k in result["data_schema"].schema] == [
-        "offline_after", "flaky_outages", "startup_grace", "battery_low", "battery_low_integrations", "battery_push",
+        "offline_after", "offline_after_integrations", "flaky_outages", "startup_grace", "battery_low", "battery_low_integrations", "battery_push",
         "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent",
         "exclude_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "exclude_types", "exclude_devices",
         "notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "notify_delay",
@@ -307,6 +308,16 @@ async def test_options_flow_connection_order(hass: HomeAssistant, entry) -> None
     result = await hass.config_entries.options.async_init(entry.entry_id)
     await hass.config_entries.options.async_configure(result["flow_id"], {"connection_order": []})
     assert entry.options["connection_order"] == []
+
+
+async def test_options_flow_offline_per_integration(hass: HomeAssistant, entry) -> None:
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"offline_after_integrations": {"zha": 0}})
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"offline_after_integrations": "offline_map"}
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"offline_after_integrations": {"zha": 60.0, "hue": "off"}})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options["offline_after_integrations"] == {"hue": "off", "zha": 60}
 
 
 async def test_options_flow_battery_per_integration(hass: HomeAssistant, entry) -> None:

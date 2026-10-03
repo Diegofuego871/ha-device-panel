@@ -20,6 +20,7 @@
           "flaky_outages": "Instabil ab (Unterbrüche in 24 Std.)",
           "startup_grace": "Anlaufphase nach dem Start",
           "battery_low": "Batterie schwach ab",
+          "offline_after_integrations": "Ausfall: eigenes \"Ausgefallen nach\" pro Integration",
           "battery_low_integrations": "Batterie: eigene Schwelle pro Integration",
           "battery_push": "Batterie: Push-Meldung",
           "battery_push_mode": "Batterie: Zeitpunkt der Push-Meldung",
@@ -51,6 +52,7 @@
           "flaky_outages": "Ein Gerät, das online ist, aber in den letzten 24 Stunden so oft unterbrochen war, gilt als instabil.",
           "startup_grace": "Minuten nach dem Start von Home Assistant, in denen zurückkehrende Geräte keinen Unterbruch hatten. Zeit, in der Home Assistant nicht lief, zählt nie als Ausfall.",
           "battery_low": "Eine Batterie bis zu diesem Stand gilt als schwach (rot im Panel, \"Nur Probleme\").",
+          "offline_after_integrations": "Integration → Minuten oder off, eine pro Zeile, z. B. \"zha: 60\" oder \"hue: off\" (off: Geräte bleiben sichtbar, werden aber nicht überwacht: keine Ausfälle, Statistik oder Meldungen). Ohne Eintrag gilt der globale Wert; massgebend ist die primäre Integration des Geräts.",
           "battery_low_integrations": "Integration → Prozent oder off, eine pro Zeile, z. B. \"zha: 25\" oder \"bthome: off\" (Warnung für diese Integration aus). Ohne Eintrag gilt der globale Wert (Feld oben); massgebend ist die primäre Integration des Geräts.",
           "battery_push": "Einmal pro Gerät, wenn es unter die Schwelle fällt, an das Push-Ziel unten. Erneut erst, wenn die Batterie zwischendurch 5 Punkte über der Schwelle war (z. B. neue Batterie).",
           "battery_push_mode": "Sofort, wenn ein Gerät unter die Schwelle fällt, oder einmal täglich zur Uhrzeit unten.",
@@ -80,6 +82,7 @@
       }
     },
     "error": {
+      "offline_map": "Jede Zeile muss Integration: ganze Zahl von 1 bis 1440 oder off sein (z. B. \"zha: 60\", \"hue: off\").",
       "battery_map": "Jede Zeile muss Integration: ganze Zahl von 5 bis 50 oder off sein (z. B. \"zha: 25\", \"bthome: off\").",
       "connection_map": "Jede Zeile muss Integration: Verbindungsart sein (zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud)."
     }

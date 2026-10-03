@@ -69,7 +69,11 @@ Bereich.
   Unterbrüche pro Tag.
 - Ein Gerät gilt als ausgefallen nach 2 Minuten ohne Lebenszeichen
   (einstellbar unter "Ausfall-Erkennung", wie "instabil ab" und die
-  Anlaufphase nach einem Start). Ein Verbindungssensor entscheidet zuerst;
+  Anlaufphase nach einem Start). Integrationen, deren Geräte selten melden,
+  bekommen in den Einstellungen eine eigene Zeit (Tabelle "Integrationen",
+  Spalte "Ausgefallen nach"); "Nicht überwachen" zeigt ihre Geräte weiter,
+  in einer Gruppe "Nicht überwacht", ohne Ausfälle, Statistik und
+  Meldungen. Ein Verbindungssensor entscheidet zuerst;
   sonst müssen alle normalen Entitäten nicht verfügbar sein. Ein Ausfall
   endet erst, wenn Home Assistant das Gerät wieder online sieht: Seine Dauer
   läuft über Neustarts von Home Assistant weiter. "Mindestens" (≥) nur, wenn

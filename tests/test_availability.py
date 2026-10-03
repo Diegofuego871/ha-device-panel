@@ -543,6 +543,66 @@ async def test_offline_after_option(hass: HomeAssistant, setup: AvailabilityLog,
     assert setup.events(lamp.id)[-1][1] == 0
 
 
+async def test_offline_after_per_integration(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client, freezer) -> None:
+    """Eigenes "Ausgefallen nach" der Integration geht vor dem globalen Wert."""
+    lamp = _device(hass, "Lampe")
+    light = _entity(hass, lamp, "light", "l", "on")
+    other = _device(hass, "Sensor", domain="zha")
+    sensor = _entity(hass, other, "binary_sensor", "s", "on")
+    setup.evaluate()
+    assert (await _set_options(hass, hass_ws_client, {"offline_after_integrations": {"zha": 60}}))["result"] == {"changed": True}
+    hass.states.async_set(light, "unavailable")
+    hass.states.async_set(sensor, "unavailable")
+    freezer.tick(timedelta(minutes=5))
+    setup.evaluate()
+    devices = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}
+    # Global 2 Min.: Lampe ausgefallen; zha 60 Min.: Sensor noch online
+    assert devices["Lampe"]["online"] is False and devices["Lampe"]["offline_after"] == 2
+    assert devices["Sensor"]["online"] is True and devices["Sensor"]["offline_after"] == 60
+    assert setup.events(lamp.id)[-1][1] == 0
+    assert setup.events(other.id)[-1][1] == 1
+    freezer.tick(timedelta(minutes=60))
+    setup.evaluate()
+    assert (await async_list_devices(hass, setup))["devices"][1]["online"] is False
+    assert setup.events(other.id)[-1][1] == 0
+
+
+async def test_unmonitored_integration(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client, freezer) -> None:
+    """"off": sichtbar, aber ohne Status, Ausfälle, Puls und Protokoll."""
+    lamp = _device(hass, "Lampe")
+    light = _entity(hass, lamp, "light", "l", "on")
+    other = _device(hass, "Sensor", domain="zha")
+    sensor = _entity(hass, other, "binary_sensor", "s", "on")
+    setup.evaluate()
+    assert setup.events(other.id)
+    assert (await _set_options(hass, hass_ws_client, {"offline_after_integrations": {"zha": "off"}}))["result"] == {"changed": True}
+    hass.states.async_set(light, "unavailable")
+    hass.states.async_set(sensor, "unavailable")
+    freezer.tick(timedelta(minutes=5))
+    setup.evaluate()
+    result = await async_list_devices(hass, setup)
+    devices = {d["name"]: d for d in result["devices"]}
+    assert devices["Sensor"]["unmonitored"] is True
+    assert devices["Sensor"]["online"] is None and devices["Sensor"]["offline_since"] is None
+    assert devices["Sensor"]["offline_after"] is None
+    assert devices["Lampe"]["unmonitored"] is False and devices["Lampe"]["online"] is False
+    # Nicht mehr überwacht: kein neuer Ausfall im Protokoll, nicht im Puls
+    assert setup.events(other.id)[-1][1] != 0
+    assert max(result["pulse"]) == 1
+
+
+async def test_offline_map_is_checked(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client) -> None:
+    client = await hass_ws_client(hass)
+    bad = ({"zha": 0}, {"zha": 1441}, {"zha": True}, {"Böse Domain": 20}, {"zha": "20"}, {"zha": "aus"}, ["zha"])
+    for i, value in enumerate(bad, 1):
+        await client.send_json({"id": i, "type": f"{DOMAIN}/set_options", "values": {"offline_after_integrations": value}})
+        assert (await client.receive_json())["error"]["code"] == "invalid_format", value
+    await client.send_json({"id": 20, "type": f"{DOMAIN}/set_options", "values": {"offline_after_integrations": {"zha": 1440, "hue": "OFF", "a": False}}})
+    assert (await client.receive_json())["success"]
+    await client.send_json({"id": 21, "type": f"{DOMAIN}/get_options"})
+    assert (await client.receive_json())["result"]["values"]["offline_after_integrations"] == {"a": "off", "hue": "off", "zha": 1440}
+
+
 async def test_flaky_outages_option(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client, freezer) -> None:
     lamp = _device(hass, "Lampe")
     light = _entity(hass, lamp, "light", "l", "on")

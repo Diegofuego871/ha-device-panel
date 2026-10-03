@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.29.1, Vorschau "Inhalt der Meldung" verständlicher)
+## Stand (0.30.0, "Ausgefallen nach" pro Integration)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -45,8 +45,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   neu/alle, `battery_persistent`; Überwachung in `battery.py`);
   "Integrationen" und "Gerätetypen" (Schalter "Anzeigen"; ausgeblendete
   Geräte werden nicht überwacht; bei den Integrationen seit 0.20.0 dazu die
-  Spalten "Push" `notify_exclude_integrations` und "Anhaltend"
-  `persistent_exclude_integrations`); "Push-Benachrichtigung"
+  Spalten "Push" `notify_exclude_integrations`, "Anhaltend"
+  `persistent_exclude_integrations` und "Ausgefallen nach"
+  `offline_after_integrations`, seit 0.30.0); "Push-Benachrichtigung"
   (`notify_service`, `notify_click_target`, `notify_outage`,
   `notify_online`, `notify_group`, seit 0.20.0 `notify_delay` "Erst melden
   nach" und `notify_fields` "Inhalt der Meldung" mit Vorschau; Versand in
@@ -203,11 +204,24 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    wie ZHA/Bluetooth, im Test-HA mit `recorder: exclude` geprüft. Knopf
    "Gerät ausblenden" (Wunsch des Nutzers). Offen: Rückmeldung des
    Nutzers, ob sich der Verlauf jetzt füllt (Sensor und ZHA/Bluetooth).
+   `0.29.1` hat keinen Tag (im CHANGELOG "Nicht veröffentlicht", in 0.30.0
+   enthalten).
+   Erledigt mit `0.30.0`: Punkt 5 Variante B. Option
+   `offline_after_integrations` ({Domain: Minuten 1–1440 oder "off"},
+   `options_api.offline_map`, `offline_after_for(opts, domain)` in
+   Sekunden oder None), Spalte "Ausgefallen nach" in der Tabelle
+   "Integrationen" (Auswahl Standard/1/2/5/10/15/30 Min./1/2/6/12/24
+   Std./Nicht überwachen), Optionsdialog als ObjectSelector. "off":
+   `devices.monitored_devices` lässt die Integration weg (Protokoll,
+   Batterie, Empfang, Meldungen), `listed_devices` behält sie;
+   `list_devices` liefert je Gerät `unmonitored`, `offline_after` (Minuten
+   oder None) und `online` None; Puls und Sammelausfälle zählen sie nicht.
+   Panel: Gruppe und Status "Nicht überwacht", nicht im Kopf. Das
+   Nachfüllen aus dem Recorder (`backfill.async_backfill`) nimmt
+   `offline_after` je Gerät (Dict Gerät → Sekunden).
    Entscheide des Nutzers zu den Backlog-Punkten (2026-10-03, Fragen
-   einzeln mit Bildern, `docs/mockups/backlog-v1/`), umzusetzen als
-   `0.30.0`: Punkt 5 Variante B (Spalte "Ausgefallen nach" in der Tabelle
-   "Integrationen", Auswahl mit "Nicht überwachen": Geräte sichtbar, ohne
-   Ausfälle, Statistik und Meldungen); Punkt 7 Variante A (Herkunft
+   einzeln mit Bildern, `docs/mockups/backlog-v1/`), noch umzusetzen als
+   `0.31.0` bis `0.33.0`: Punkt 7 Variante A (Herkunft
    Standard/Integration/Gerät unter jeder Einstellung im Popup, dazu
    "Ausgefallen nach" pro Gerät); Punkt 10 Variante A (Knopf "Mit KI
    einschätzen" im Geräte-Popup, `ai_task.async_generate_data`, Einstellung

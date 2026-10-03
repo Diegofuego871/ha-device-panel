@@ -39,8 +39,8 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import CONF_OFFLINE_AFTER, CONF_STARTUP_GRACE, DOMAIN
-from .devices import device_back_since, device_down_since, device_status, monitored_devices
-from .options_api import effective
+from .devices import device_back_since, device_down_since, device_status, monitored_devices, primary_domain
+from .options_api import effective, offline_after_for
 from .storage_util import PeriodicSaver
 
 _LOGGER = logging.getLogger(__name__)
@@ -259,11 +259,13 @@ class AvailabilityLog:
             return 0
         now = now if now is not None else time.time()
         opts = effective(self.hass)
-        devices = [(device.id, entries) for device, entries in monitored_devices(self.hass, opts)]
+        monitored = list(monitored_devices(self.hass, opts))
+        devices = [(device.id, entries) for device, entries in monitored]
+        offline_after = {device.id: self._offline_after(opts, device) for device, _entries in monitored}
         firsts = {dev: list(evs[0]) for dev, evs in self._events.items() if evs}
         try:
             found = await async_backfill(
-                self.hass, devices, firsts, now, KEEP_DAYS, opts[CONF_OFFLINE_AFTER] * 60, opts[CONF_STARTUP_GRACE] * 60
+                self.hass, devices, firsts, now, KEEP_DAYS, offline_after, opts[CONF_STARTUP_GRACE] * 60
             )
         except Exception:  # noqa: BLE001
             # Nicht bei jedem Start erneut versuchen: ein Fehler hier wiederholt sich.
@@ -313,6 +315,12 @@ class AvailabilityLog:
             self._backfill_task.cancel()
         await self._async_close()
 
+    def _offline_after(self, opts: dict[str, Any], device: Any) -> float:
+        """"Ausgefallen nach" des Geräts in Sekunden (eigener Wert der Integration oder global)."""
+        # Nicht überwachte Geräte liefert monitored_devices nicht; der globale
+        # Wert ist nur der Rückfall.
+        return offline_after_for(opts, primary_domain(self.hass, device)) or opts[CONF_OFFLINE_AFTER] * 60
+
     @callback
     def evaluate(self, now: float | None = None) -> None:
         """Zustand aller überwachten Geräte prüfen und Wechsel festhalten."""
@@ -324,14 +332,13 @@ class AvailabilityLog:
         # zurückkommt, hatte keinen Unterbruch; wer danach noch fehlt, gilt ab
         # dem Start als ausgefallen.
         in_grace = now - self._started < opts[CONF_STARTUP_GRACE] * 60
-        offline_after = opts[CONF_OFFLINE_AFTER] * 60
         seen: set[str] = set()
         # Wechsel für die Meldungen: (Gerät, Zustand, Zeitpunkt); "gone" =
         # nicht mehr überwacht.
         changes: list[tuple[str, Any, float]] = []
         for device, entries in monitored_devices(self.hass, opts):
             seen.add(device.id)
-            online, since = device_status(self.hass, entries, now_dt, offline_after)
+            online, since = device_status(self.hass, entries, now_dt, self._offline_after(opts, device))
             state = None if online is None else ONLINE if online else OFFLINE
             events = self._events.setdefault(device.id, [])
             last = events[-1] if events else None

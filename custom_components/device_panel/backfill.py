@@ -188,12 +188,13 @@ async def async_backfill(
     first_events: dict[str, list[Any]],
     now: float,
     keep_days: int,
-    offline_after: float,
+    offline_after: dict[str, float],
     grace: float,
 ) -> dict[str, list[list[Any]]]:
     """
     Ereignisse vor dem ersten eigenen Ereignis je Gerät (first_events:
-    Gerät → [Zeit, Zustand]). Geräte ohne eigenes Ereignis bleiben aussen
+    Gerät → [Zeit, Zustand]). offline_after: Gerät → Sekunden, weil es je
+    Integration verschieden sein kann. Geräte ohne eigenes Ereignis bleiben aussen
     vor: ohne Gegenstück im Protokoll hiesse der letzte Zustand sonst "bis
     jetzt".
     """
@@ -222,7 +223,7 @@ async def async_backfill(
                 timelines.append(tl)
         if not timelines:
             continue
-        events = reconstruct(timelines, runs, start_dt.timestamp(), first[0], offline_after, grace, first[1])
+        events = reconstruct(timelines, runs, start_dt.timestamp(), first[0], offline_after[device_id], grace, first[1])
         if events:
             out[device_id] = events
     return out

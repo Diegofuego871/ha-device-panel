@@ -232,6 +232,8 @@ const LOGO = `<svg width="30" height="30" viewBox="22 22 212 212" aria-hidden="t
 // Kleines Logo für die Vorschau einer Push-Meldung.
 const LOGO_SMALL = LOGO.replace('width="30" height="30"', 'width="14" height="14"').replaceAll("dpg", "dpgs");
 // Inhalt einer Ausfall-Meldung in fester Reihenfolge (wie const.NOTIFY_FIELDS).
+// Zeiten der Auswahl "Ausgefallen nach" pro Integration (Minuten, 1 bis 1440).
+const OFFLINE_PRESETS = [1, 2, 5, 10, 15, 30, 60, 120, 360, 720, 1440];
 const NOTIFY_FIELDS = ["area", "integration", "connection", "since", "signal", "battery", "model"];
 
 // Empfang in vier Stufen (gut -> schlecht), Farben wie unifi_dynamic.
@@ -1123,7 +1125,7 @@ class DevicePanel extends HTMLElement {
 
   _problemPass(d) {
     // Deaktiviert ist kein Problem: nicht überwacht, bewusst abgeschaltet.
-    return !this._problems || (!d.disabled && (d.online !== true || d.flaky || d.battery?.low || devWeak(d)));
+    return !this._problems || (!d.disabled && !d.unmonitored && (d.online !== true || d.flaky || d.battery?.low || devWeak(d)));
   }
 
   _hintPass(d, hint) {
@@ -1176,7 +1178,7 @@ class DevicePanel extends HTMLElement {
       case "name":
         return String(d.name || "");
       case "status":
-        return d.disabled ? 4 : d.online === false ? 0 : d.online == null ? 2 : d.flaky ? 1 : 3;
+        return d.disabled || d.unmonitored ? 4 : d.online === false ? 0 : d.online == null ? 2 : d.flaky ? 1 : 3;
       case "connection":
         return this._t(CONN[this._connOf(d)].key);
       case "avail":
@@ -1686,8 +1688,8 @@ class DevicePanel extends HTMLElement {
     // des Nutzers); die übrigen Chips wirken nur auf die Liste.
     const scope = this._areaSel() ? all.filter((d) => this._areaPass(d)) : all;
     const offline = scope.filter((d) => d.online === false).sort((a, b) => Date.parse(a.offline_since) - Date.parse(b.offline_since));
-    // Kopf und Puls nur mit überwachten Geräten; deaktivierte zählen nicht.
-    const monitored = scope.filter((d) => !d.disabled);
+    // Kopf und Puls nur mit überwachten Geräten; deaktivierte und nicht überwachte zählen nicht.
+    const monitored = scope.filter((d) => !d.disabled && !d.unmonitored);
     setHtml(root.querySelector(".hero"), this._loading ? "" : this._heroHtml(monitored, offline));
     setHtml(root.querySelector(".hstrip"), this._loading ? "" : this._stripHtml(monitored, offline));
     setHtml(root.querySelector(".chips"), this._loading ? "" : this._chipsHtml(all));
@@ -1862,7 +1864,7 @@ class DevicePanel extends HTMLElement {
 
   // Geräte im Kopf: mit Filter "Bereich" nur dessen, überwacht (nicht deaktiviert).
   _headDevices() {
-    return this._devices.filter((d) => !d.disabled && (!this._areaSel() || this._areaPass(d)));
+    return this._devices.filter((d) => !d.disabled && !d.unmonitored && (!this._areaSel() || this._areaPass(d)));
   }
 
   // --- Fenster "Unterbrüche in 24 Std." (seit 0.26.0, docs/mockups/pulse-v1, A)
@@ -2053,6 +2055,7 @@ class DevicePanel extends HTMLElement {
 
   _statusHtml(d) {
     if (d.disabled) return `<span class="pill none">${escape(this._t("statusDisabled"))}</span>`;
+    if (d.unmonitored) return `<span class="pill none">${escape(this._t("statusUnmonitored"))}</span>`;
     if (d.online === false) return `<div class="dur">${this._durationHtml(d)}</div><div class="durs">${escape(this._t("statusOffline"))}</div>`;
     if (d.online == null) return `<span class="pill none">${escape(this._t("statusNoData"))}</span>`;
     if (d.flaky) return `<span class="pill warn">${escape(this._t("statusFlaky"))}</span><div class="durs">${escape(this._t("flakyOutages", d.avail24.outages))}</div>`;
@@ -2096,7 +2099,7 @@ class DevicePanel extends HTMLElement {
   _groups(rows) {
     const byName = (a, b) => String(a.name).localeCompare(String(b.name));
     const outages = (d) => d.avail24?.outages || 0;
-    const active = rows.filter((d) => !d.disabled);
+    const active = rows.filter((d) => !d.disabled && !d.unmonitored);
     const chosen = this._sortCmp() || (this._batterySort() ? (a, b) => batteryRank(a) - batteryRank(b) || byName(a, b) : null);
     const groups = [
       ["e", this._t("groupOffline"), this._t("groupOfflineHint"), active.filter((d) => d.online === false).sort((a, b) => Date.parse(a.offline_since) - Date.parse(b.offline_since))],
@@ -2105,6 +2108,8 @@ class DevicePanel extends HTMLElement {
       ["", this._t("groupOnline"), null, active.filter((d) => d.online === true && !d.flaky).sort(byName)],
       // Nur mit "Deaktivierte Geräte anzeigen": am Ende, nicht überwacht.
       ["d", this._t("groupDisabled"), this._t("groupDisabledHint"), rows.filter((d) => d.disabled).sort(byName)],
+      // Integration auf "Nicht überwachen": sichtbar, ohne Status und Meldungen.
+      ["d", this._t("groupUnmonitored"), this._t("groupUnmonitoredHint"), rows.filter((d) => d.unmonitored).sort(byName)],
     ].filter((g) => g[3].length);
     if (this._view.flat) {
       // Ohne gewählte Sortierung in der Folge der Gruppen, nur ohne Köpfe.
@@ -2591,8 +2596,8 @@ class DevicePanel extends HTMLElement {
       if (d.online === false) {
         status = `<span class="pill off"><span class="pd"></span>${escape(this._t("statusOfflinePill", `${d.since_at_least ? "≥ " : ""}${this._duration(d.offline_since)}`))}</span>`;
         avatar = "off";
-      } else if (d.disabled || d.online == null) {
-        status = `<span class="pill none">${escape(this._t(d.disabled ? "statusDisabled" : "statusNoData"))}</span>`;
+      } else if (d.disabled || d.unmonitored || d.online == null) {
+        status = `<span class="pill none">${escape(this._t(d.disabled ? "statusDisabled" : d.unmonitored ? "statusUnmonitored" : "statusNoData"))}</span>`;
         avatar = "none";
       } else if (d.flaky) {
         status = `<span class="pill warn">${escape(this._t("statusFlaky"))}</span><span>${escape(this._t("flakyOutages", d.avail24.outages))}</span>`;
@@ -3178,7 +3183,7 @@ class DevicePanel extends HTMLElement {
     return [
       ["detection", ["offline_after", "flaky_outages", "startup_grace"]],
       ["battery", ["battery_low", "battery_low_integrations", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "reset_battery"]],
-      ["integrations", ["exclude_integrations", "notify_exclude_integrations", "persistent_exclude_integrations"]],
+      ["integrations", ["exclude_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "offline_after_integrations"]],
       ["types", ["exclude_types"]],
       ["connections", ["connection_integrations", "reset_connection", "reset_signal"]],
       ["push", ["notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "notify_delay", "notify_fields", "reset_notify"]],
@@ -3214,6 +3219,23 @@ class DevicePanel extends HTMLElement {
     return Object.entries(st?.draft?.battery_low_integrations || {})
       .filter(([, v]) => v !== "off" && (!Number.isInteger(v) || v < min || v > max))
       .map(([d]) => d);
+  }
+
+  // Auswahl "Ausgefallen nach" einer Integration (Spalte der Tabelle
+  // "Integrationen"): Standard, feste Zeiten, "Nicht überwachen". Ein
+  // gespeicherter Wert ausserhalb der Liste (YAML, Optionsdialog) bleibt wählbar.
+  _offlineSelectHtml(d, x, off) {
+    const saved = this._settings?.data?.values?.offline_after_integrations || {};
+    const own = d.offline_after_integrations || {};
+    const cur = own[x.value];
+    const mins = [...OFFLINE_PRESETS];
+    if (Number.isInteger(cur) && !mins.includes(cur)) mins.push(cur);
+    mins.sort((a, b) => a - b);
+    const pick = cur === undefined ? "default" : String(cur);
+    const opts = [["default", this._t("offlineDefault")], ...mins.map((m) => [String(m), this._t("offlineMin", m)]), ["off", this._t("offlineNone")]];
+    const html = opts.map(([v, l]) => `<option value="${v}" ${v === pick ? "selected" : ""}>${escape(l)}</option>`).join("");
+    const changed = cur !== saved[x.value];
+    return `<span class="ex-col sel"><span class="ex-lbl">${escape(this._t("colOffline"))}</span><span class="opt-select${changed ? " changed" : ""}"><select data-off-mode="${escape(x.value)}" ${off ? "disabled" : ""} aria-label="${escape(`${this._t("colOffline")}: ${x.label}`)}">${html}</select></span></span>`;
   }
 
   // Eigene Schwellen für die Zusammenfassung: "Name 25 %", nur gültige.
@@ -3282,7 +3304,8 @@ class DevicePanel extends HTMLElement {
       const list = this._settings?.data?.catalog?.integrations || [];
       const shown = list.filter((i) => !d.exclude_integrations.includes(i.domain));
       const push = shown.filter((i) => !(d.notify_exclude_integrations || []).includes(i.domain)).length;
-      const sum = this._t("sumShown", this._t("sumIntegrations", list.length), d.exclude_integrations.length);
+      const own = Object.keys(d.offline_after_integrations || {}).length;
+      const sum = this._t("sumShown", this._t("sumIntegrations", list.length), d.exclude_integrations.length) + (own ? ` · ${this._t("sumOwnTime", own)}` : "");
       // "Push für N" nur, wenn es Push-Meldungen gibt (Bild 5).
       return d.notify_service && d.notify_service !== "none" && (d.notify_outage || d.notify_online) ? `${sum} · ${this._t("sumPushFor", push)}` : sum;
     }
@@ -3540,7 +3563,9 @@ class DevicePanel extends HTMLElement {
     // ist eine Liste der Ausgeschlossenen; ausgeblendete Zeilen sperren die
     // übrigen Spalten (nicht überwacht, keine Meldungen).
     // drag: Zeilen mit Griff zum Verschieben (Reihenfolge der Chips).
-    const exTable = (key, items, intro, drag = false, cols = null, allLabel = null) => {
+    // extra: zusätzliche Spalte mit Auswahl {label, html(x, off)} am Ende
+    // ("Ausgefallen nach" der Integrationen).
+    const exTable = (key, items, intro, drag = false, cols = null, allLabel = null, extra = null) => {
       const columns = cols || [[key, t("colShow")]];
       const multi = columns.length > 1;
       const sets = Object.fromEntries(columns.map(([k]) => [k, new Set(d[k] || [])]));
@@ -3553,14 +3578,14 @@ class DevicePanel extends HTMLElement {
       const toggle = (k, label, x, off) =>
         cell(`<label class="switch"><input type="checkbox" data-list="${k}" data-value="${escape(x.value)}" ${sets[k].has(x.value) ? "" : "checked"} ${off ? "disabled" : ""} aria-label="${escape(`${label}: ${x.label}`)}"><span></span></label>`);
       const line = (x) => `<div class="ex-row${hidden.has(x.value) ? " off" : ""}">${handle(x)}${x.badge}<div class="ex-name">${escape(x.label)}<small>${escape(x.sub)}</small></div>
-          ${columns.map(([k, label], i) => toggle(k, label, x, i > 0 && hidden.has(x.value))).join("")}</div>`;
+          ${columns.map(([k, label], i) => toggle(k, label, x, i > 0 && hidden.has(x.value))).join("")}${extra ? extra.html(x, hidden.has(x.value)) : ""}</div>`;
       const rows = items.map(line).join("");
       const allRow = columns
         .map(([k, label]) => cell(`<label class="switch"><input type="checkbox" data-list-all="${k}" ${items.every((x) => !sets[k].has(x.value)) ? "checked" : ""} aria-label="${escape(`${allLabel || t("toggleAll")}: ${label}`)}"><span></span></label>`))
         .join("");
       return `<div class="opt-short ex-intro">${escape(intro)}</div>
-        <div class="ex-head${multi ? " multi" : ""}"><span></span>${columns.map(([, label]) => (multi ? `<span class="ex-col">${escape(label)}</span>` : `<span>${escape(label)}</span>`)).join("")}</div>
-        <div class="ex-row ex-all"><div class="ex-name">${escape(allLabel || t("toggleAll"))}</div>${allRow}</div>
+        <div class="ex-head${multi ? " multi" : ""}"><span></span>${columns.map(([, label]) => (multi ? `<span class="ex-col">${escape(label)}</span>` : `<span>${escape(label)}</span>`)).join("")}${extra ? `<span class="ex-col sel">${escape(extra.label)}</span>` : ""}</div>
+        <div class="ex-row ex-all"><div class="ex-name">${escape(allLabel || t("toggleAll"))}</div>${allRow}${extra ? `<span class="ex-col sel"></span>` : ""}</div>
         ${drag ? `<div class="drag-list">${rows}</div>` : rows}`;
     };
     const integrations = (st.data.catalog?.integrations || []).map((i) => ({
@@ -3621,7 +3646,7 @@ class DevicePanel extends HTMLElement {
         ["exclude_integrations", t("colShow")],
         ["notify_exclude_integrations", t("colPush")],
         ["persistent_exclude_integrations", t("colPersistent")],
-      ]),
+      ], null, { label: t("colOffline"), html: (x, off) => this._offlineSelectHtml(d, x, off) }),
       types: exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`),
       connections: this._connIntegHtml(d) + this._overridesHtml("connection") + this._overridesHtml("signal"),
       push:
@@ -3803,6 +3828,14 @@ class DevicePanel extends HTMLElement {
         if (el.value) own[el.dataset.connInteg] = el.value;
         else delete own[el.dataset.connInteg];
         st.draft.connection_integrations = own;
+        this._renderSettings();
+        return;
+      }
+      if (st?.draft && el.tagName === "SELECT" && el.dataset.offMode) {
+        const own = { ...(st.draft.offline_after_integrations || {}) };
+        if (el.value === "default") delete own[el.dataset.offMode];
+        else own[el.dataset.offMode] = el.value === "off" ? "off" : Number(el.value);
+        st.draft.offline_after_integrations = own;
         this._renderSettings();
         return;
       }

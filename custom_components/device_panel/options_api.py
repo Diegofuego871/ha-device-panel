@@ -19,6 +19,8 @@ from homeassistant.core import HomeAssistant
 
 from .const import (
     BATTERY_OFF,
+    MONITOR_OFF,
+    OFFLINE_INTEGRATION_RANGE,
     CLICK_PANEL,
     CLICK_TARGETS,
     CONF_BATTERY_PUSH_DAILY,
@@ -56,6 +58,7 @@ from .const import (
     CONF_NOTIFY_CLICK,
     CONF_NOTIFY_SERVICE,
     CONF_OFFLINE_AFTER,
+    CONF_OFFLINE_INTEGRATIONS,
     CONF_SHOW_DISABLED,
     CONF_SHOW_SERVICE,
     CONF_STARTUP_GRACE,
@@ -194,6 +197,31 @@ def battery_map(value: Any) -> dict[str, int | str]:
     return dict(sorted(out.items()))
 
 
+def offline_map(value: Any) -> dict[str, int | str]:
+    """
+    Eigenes "Ausgefallen nach" {Domain: Minuten oder "off"}; "off" schaltet die
+    Überwachung der Integration aus (Geräte bleiben sichtbar).
+    """
+    low, high = OFFLINE_INTEGRATION_RANGE
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise vol.Invalid("Zuordnung Integration → Minuten erwartet")
+    out: dict[str, int | str] = {}
+    for domain, minutes in value.items():
+        if not isinstance(domain, str) or not _DOMAIN_RE.match(domain):
+            raise vol.Invalid(f"Integration → ganze Zahl von {low} bis {high} oder off erwartet")
+        # YAML 1.1 (Optionsdialog) liest "off" als False.
+        if minutes is False or (isinstance(minutes, str) and minutes.strip().lower() == MONITOR_OFF):
+            out[domain] = MONITOR_OFF
+            continue
+        number = _whole(minutes)
+        if number is None or not low <= number <= high:
+            raise vol.Invalid(f"Integration → ganze Zahl von {low} bis {high} oder off erwartet")
+        out[domain] = number
+    return dict(sorted(out.items()))
+
+
 def _whole(value: Any) -> int | None:
     """Ganze Zahl oder None. True/False zählen nicht (bool ist in Python ein int)."""
     if isinstance(value, bool) or not isinstance(value, (int, float)) or value != int(value):
@@ -228,6 +256,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_CONNECTION_ORDER): connection_order,
         vol.Optional(CONF_CONNECTION_INTEGRATIONS): connection_map,
         vol.Optional(CONF_BATTERY_LOW_INTEGRATIONS): battery_map,
+        vol.Optional(CONF_OFFLINE_INTEGRATIONS): offline_map,
         vol.Optional(CONF_NOTIFY_SERVICE): _notify_target,
         vol.Optional(CONF_NOTIFY_CLICK): vol.In(CLICK_TARGETS),
         vol.Optional(CONF_BATTERY_PUSH_MODE): vol.In(PUSH_MODES),
@@ -270,6 +299,11 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     except vol.Invalid:
         # Ungültig gespeichert: lieber keine eigenen Schwellen als ein Fehler.
         values[CONF_BATTERY_LOW_INTEGRATIONS] = {}
+    try:
+        values[CONF_OFFLINE_INTEGRATIONS] = offline_map(options.get(CONF_OFFLINE_INTEGRATIONS))
+    except vol.Invalid:
+        # Ungültig gespeichert: lieber überall der globale Wert als ein Fehler.
+        values[CONF_OFFLINE_INTEGRATIONS] = {}
     target = str(options.get(CONF_NOTIFY_SERVICE) or "").strip()
     values[CONF_NOTIFY_SERVICE] = target if _NOTIFY_RE.match(target) else NOTIFY_NONE
     click = options.get(CONF_NOTIFY_CLICK)
@@ -329,6 +363,13 @@ def battery_threshold(opts: Mapping[str, Any], domain: str | None) -> int | None
     own = opts.get(CONF_BATTERY_LOW_INTEGRATIONS) or {}
     value = own.get(domain, opts[CONF_BATTERY_LOW]) if domain else opts[CONF_BATTERY_LOW]
     return None if value == BATTERY_OFF else value
+
+
+def offline_after_for(opts: Mapping[str, Any], domain: str | None) -> float | None:
+    """Wirksames "Ausgefallen nach" in Sekunden für ein Gerät der Integration; None = nicht überwacht."""
+    own = opts.get(CONF_OFFLINE_INTEGRATIONS) or {}
+    value = own.get(domain, opts[CONF_OFFLINE_AFTER]) if domain else opts[CONF_OFFLINE_AFTER]
+    return None if value == MONITOR_OFF else value * 60
 
 
 def limits() -> dict[str, list[int]]:
