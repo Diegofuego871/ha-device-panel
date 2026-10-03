@@ -144,6 +144,10 @@ hat dort einen echten Fehler oder Umweg gekostet.
   Unter-Fenster (Statistik) dimmen den Dialog dahinter stark und blenden
   dessen X aus; eigenes X, kein Zurück-Knopf. Das `close`-Ereignis (auch bei
   Escape) kommt asynchron: Aufräumen dort, Tests darauf warten lassen.
+  `open` ist sofort `false`, was `close` nachführt (z. B. `aria-expanded`
+  am Knopf "Spalten") erst wenige Millisekunden später; `view-e2e` las das
+  in 0.26.0 zu früh und war in CI zeitweise rot. Beides in derselben
+  Warte-Bedingung prüfen.
 - **Fixierte erste Spalte:** `position: sticky; left: -<Innenabstand>` an `th`
   und `td`, deckende Hintergründe (Farben mit der Kartenfarbe mischen, nicht
   mit `transparent`). Kopf, Chips und Fusszeile mit `sticky; left: 0`, damit

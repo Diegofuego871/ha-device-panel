@@ -1,5 +1,6 @@
-// Ansicht pro Benutzer (docs/mockups/view-v1): Desktop mit Popover
-// "Spalten" (ein/aus, ziehen, Pfeiltasten, zurücksetzen), Sortieren im
+// Ansicht pro Benutzer (docs/mockups/view-v1): Desktop mit Dialog
+// "Anpassen" (seit 0.26.0, docs/mockups/customize-v1: Auge, ziehen,
+// Pfeiltasten, Standard wiederherstellen), Sortieren im
 // Spaltenkopf, "Gruppen | Liste"; Handy mit Zeile "Sortiert nach" und Blatt
 // "Ansicht" (Sortierung, Richtung, Darstellung, Angaben auf der Karte).
 // Gespeichert pro Benutzer (frontend/set_user_data), getrennt für Desktop
@@ -115,7 +116,9 @@ for (const lang of ["de", "en"]) {
       await tap(`${D} [data-vtoggle="cols"][data-key="via"]`);
       check(`[${tag}] Fokus bleibt am Auge`, await ev(`return r.activeElement?.dataset.vtoggle === "cols" && r.activeElement?.dataset.key === "via"`));
       await p.keyboard.press("Escape");
-      check(`[${tag}] Escape schliesst`, (await wait(`return !r.querySelector("${D}").open`)) && (await ev(`return r.querySelector(".view-btn").getAttribute("aria-expanded")`)) === "false");
+      // Der Knopf folgt dem Ereignis "close", das nach dem Schliessen
+      // asynchron kommt: beides zusammen abwarten.
+      check(`[${tag}] Escape schliesst`, await wait(`return !r.querySelector("${D}").open && r.querySelector(".view-btn").getAttribute("aria-expanded") === "false"`));
       // Standard wiederherstellen, Fertig
       await tap(".view-btn");
       await wait(`return r.querySelector("${D}").open`);
