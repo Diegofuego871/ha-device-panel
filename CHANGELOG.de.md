@@ -7,6 +7,30 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.33.0] - 2026-10-03
+
+Optionale KI-Einschätzung eines Geräts.
+
+### Hinzugefügt
+
+- Geräte-Popup: ein Knopf "Mit KI einschätzen" unter der Statistik. Auf
+  Knopfdruck (nie von selbst) schickt das Panel die Fakten dieses einen
+  Geräts (Name, Bereich, Typ, Hersteller und Modell, Status und Dauer eines
+  Ausfalls, Verfügbarkeit und Unterbrüche der letzten 24 Stunden, Batterie,
+  Empfang, Hub, Integration, ob andere Geräte der Integration ausgefallen
+  sind, Sammelausfälle, an denen es beteiligt war) an eine KI-Aufgabe von
+  Home Assistant (`ai_task.generate_data`) und zeigt die Antwort als Karte
+  mit Überschrift, Quelle und Zeit sowie "Neu erstellen". Nie gesendet
+  werden Schlüssel, Zugangsdaten, IDs, Adressen und Entitätsnamen. Die
+  Antwort bleibt nur im Panel, sie wird nicht gespeichert. Fehler (keine
+  KI-Aufgabe, Zeitüberschreitung, Fehler der Aufgabe) werden erklärt.
+- Einstellungen, neuer Abschnitt "KI-Einschätzung": standardmässig aus,
+  weil je nach Anbieter die Daten das eigene Netz verlassen und pro Anfrage
+  kosten. Eingeschaltet erscheint der Knopf; die KI-Aufgabe ist wählbar
+  (leer = Standard von Home Assistant). Der Optionsdialog hat dieselben
+  zwei Einstellungen (`ai_assessment`, `ai_task_entity`). Braucht eine
+  KI-Aufgabe in Home Assistant (Einstellungen → System → Allgemein).
+
 ## [0.32.0] - 2026-10-03
 
 Thread-Rolle und Netzname für Matter-Geräte.
@@ -882,6 +906,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.0
 [0.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.32.0
 [0.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.31.0
 [0.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.30.0

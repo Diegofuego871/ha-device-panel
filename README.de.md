@@ -143,6 +143,11 @@ Bereich.
   überwachen"), der Chip "Eigene Einstellung" zeigt nur
   diese Geräte, und die Einstellungen listen sie zum Zurücksetzen auf,
   einzeln oder alle auf einmal.
+- Optionale KI-Einschätzung (standardmässig aus): Ein Knopf "Mit KI
+  einschätzen" im Geräte-Popup schickt auf Knopfdruck die Fakten dieses
+  einen Geräts (keine Schlüssel, keine Zugangsdaten) an eine KI-Aufgabe von
+  Home Assistant und zeigt die Antwort. Die KI-Aufgabe ist in den
+  Einstellungen wählbar.
 - Matter-Geräte: im Popup die Thread-Rolle (Router, Endgerät, schlafendes
   Endgerät) und der Netzname aus der Matter-Diagnose, neben der
   Verbindungsart, die weiter von Hand gesetzt werden kann.

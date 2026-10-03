@@ -265,6 +265,15 @@ vorhersehbar).
 | Zustand | State Machine, Ereignis `state_changed` |
 | Updates verfügbar | Entitäten der Domain `update` am Gerät |
 
+## KI-Einschätzung (seit 0.33.0, Entscheid des Nutzers)
+
+Optional und standardmässig aus. Nur auf Knopfdruck im Geräte-Popup schickt
+das Panel die Fakten eines einzelnen Geräts an eine KI-Aufgabe von Home
+Assistant (`ai_task`) und zeigt die Antwort; nie von selbst, nie für alle
+Geräte, nie mit Schlüsseln, Zugangsdaten, IDs, Adressen oder Entitätsnamen.
+Die Antwort wird nicht gespeichert. Je nach Anbieter verlassen die Fakten
+das eigene Netz: Das steht bei der Einstellung und beim Knopf.
+
 ## Wann gilt ein Gerät als ausgefallen? (Standard, angenommen)
 
 Siehe auch "Überwachung einstellen": Schwelle und Lebenszeichen sollen dort

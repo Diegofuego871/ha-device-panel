@@ -132,6 +132,10 @@ details such as software version, manufacturer, model and area.
   hand, own signal warning, own "Offline after" or "Don't monitor"), the chip "Own setting" shows only those
   devices, and the settings list them for resetting, one by one or all at
   once.
+- Optional AI assessment (off by default): a button "Assess with AI" in the
+  device pop-up sends the facts of that one device (no keys, no
+  credentials) to an AI task of Home Assistant on a button press and shows
+  the answer. The AI task can be chosen in the settings.
 - Matter devices: in the pop-up the Thread role (router, end device, sleepy
   end device) and the network name from the Matter diagnostics, next to the
   connection type, which can still be set by hand.

@@ -134,6 +134,12 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   steht sie unter dem Namen mit der Beschriftung links (Spaltenkopf und
   "Alle umschalten" entfallen dort). Nicht überwachte Geräte: Gruppe und
   Pill "Nicht überwacht" (grau, wie "Deaktiviert").
+- KI-Einschätzung im Popup (seit 0.33.0, A): Abschnitt "Einschätzung"
+  unter der Statistik; Knopf mit Funkel-Symbol (violett), darunter der
+  Hinweis, was gesendet wird; Antwort als Karte (`.ai-card`, Rand und
+  Verlauf in Violett/Primärfarbe, Überschrift fett, Text, Fusszeile "Erstellt
+  von … · Zeit · Neu erstellen"); Wartezustand mit pulsierendem Symbol,
+  bei `prefers-reduced-motion` ohne Animation.
 - Herkunft einer Einstellung im Geräte-Popup (seit 0.31.0,
   `docs/mockups/backlog-v1/`, A): unter der Auswahl eine Zeile `.opt-origin`
   mit Etikett (`.origin`: Standard grau, Integration violett, Gerät in

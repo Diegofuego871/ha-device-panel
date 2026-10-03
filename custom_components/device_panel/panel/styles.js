@@ -445,6 +445,21 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .opt:last-child { border-bottom: none; }
 .opt-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
 .opt-label { display: inline-flex; align-items: center; gap: 2px; min-width: 0; }
+/* KI-Einschätzung im Geräte-Popup (Punkt 10) */
+.ai-box { display: flex; flex-direction: column; gap: 8px; }
+.ai-btn { align-self: flex-start; }
+.ai-btn svg { color: #7c4dff; }
+.ai-card { padding: 12px 14px; border: 1px solid color-mix(in srgb, #7c4dff 28%, var(--dp-divider)); border-radius: 14px;
+  background: linear-gradient(135deg, color-mix(in srgb, #7c4dff 9%, var(--dp-card)), color-mix(in srgb, var(--dp-primary) 7%, var(--dp-card))); }
+.ai-title { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.ai-title svg, .ai-wait svg { flex: none; color: #7c4dff; }
+.ai-text { margin-top: 6px; line-height: 1.45; white-space: pre-line; }
+.ai-foot { margin-top: 8px; color: var(--dp-text2); font-size: 12px; }
+.ai-wait { display: flex; align-items: center; gap: 8px; color: var(--dp-text2); animation: ai-pulse 1.4s ease-in-out infinite; }
+@keyframes ai-pulse { 50% { opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .ai-wait { animation: none; } }
+.linkbtn { padding: 0; border: none; background: none; color: var(--dp-primary); font: inherit; cursor: pointer; }
+.linkbtn:hover { text-decoration: underline; }
 /* Herkunft einer Einstellung im Geräte-Popup (Etikett + Standardwert) */
 .opt-origin { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; color: var(--dp-text2); font-size: 12px; line-height: 1.35; }
 .origin { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 10px; font-size: 11.5px; font-weight: 500; cursor: help; }

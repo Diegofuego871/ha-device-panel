@@ -125,6 +125,13 @@ hat dort einen echten Fehler oder Umweg gekostet.
   Status (Liste "ausgefallen", Protokoll "online"). Nicht überwachte Geräte
   gehören in `listed_devices`, nicht in `monitored_devices`.
 
+- `ai_task` (Home Assistant ab 2025.8): `async_generate_data(hass, task_name=,
+  entity_id=, instructions=)` liefert `.data` (Text ohne `structure`). Ohne
+  `entity_id` gilt die Standard-Aufgabe; ist keine gesetzt, wirft es
+  `HomeAssistantError("No entity_id provided and no preferred entity set")`.
+  Import erst beim Aufruf, damit die Integration auch ohne ai_task läuft;
+  Fehlertexte nicht ins Panel geben, ohne sie zu kürzen (sie können
+  Anbieter-Meldungen enthalten).
 - Matter-Diagnose (`matter/node_diagnostics`): `node_type` kennt
   `end_device`, `sleepy_end_device`, `routing_end_device` (Router und
   Leader), `bridge`, `unknown`; `network_name` ist bei Thread der Netzname,

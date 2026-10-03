@@ -7,6 +7,30 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.33.0] - 2026-10-03
+
+Optional AI assessment of a device.
+
+### Added
+
+- Device pop-up: a button "Assess with AI" below the statistics. On a press
+  (never on its own) the panel sends the facts of that one device (name,
+  area, type, manufacturer and model, status and duration of an outage,
+  availability and interruptions of the last 24 hours, battery, signal,
+  hub, integration, whether other devices of the integration are offline,
+  mass outages it was part of) to an AI task of Home Assistant
+  (`ai_task.generate_data`) and shows the answer as a card with a headline,
+  the source and the time, and "Create again". Never sent: keys,
+  credentials, IDs, addresses, entity names. The answer stays in the panel
+  only, it is not stored. Errors (no AI task, timeout, error of the task)
+  are explained.
+- Settings, new section "AI assessment": off by default, because depending
+  on the provider the data leaves your network and costs per request.
+  Switching it on shows the button; the AI task can be chosen (empty =
+  default of Home Assistant). The options dialog has the same two settings
+  (`ai_assessment`, `ai_task_entity`). Needs an AI task in Home Assistant
+  (Settings → System → General).
+
 ## [0.32.0] - 2026-10-03
 
 Thread role and network name for Matter devices.
@@ -845,6 +869,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.0
 [0.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.32.0
 [0.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.31.0
 [0.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.30.0

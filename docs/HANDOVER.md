@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.32.0, Thread-Rolle und Netz im Popup)
+## Stand (0.33.0, KI-Einschätzung im Popup)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -240,12 +240,20 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `_matter` mit `{type, role, network}`. Verbindungsart von Hand hat
    weiter Vorrang. Nicht an einem echten Matter-Gerät geprüft (im Test-HA
    gibt es keinen Matter-Server), nur im Nachbau.
-   Noch umzusetzen als `0.33.0`: Punkt 10 Variante A (Knopf "Mit KI
-   einschätzen" im Geräte-Popup, `ai_task.async_generate_data`, Einstellung
-   standardmässig aus, Auswahl der KI-Aufgabe); Punkt 4 Variante A
-   (Thread-Rolle und Netzname aus `matter/node_diagnostics` im Popup;
-   Nutzer: die Verbindungsart von Hand, z. B. Thread, muss weiter gehen
-   und hat Vorrang, die Kacheln sind nur Zusatzangaben).
+   Erledigt mit `0.33.0`: Punkt 10 Variante A. Modul `ai_assessment.py`:
+   `build_facts` (Fakten eines Geräts aus `async_list_devices`, ohne IDs,
+   Entitäten, Adressen), `build_instructions` (Englisch, Antwort in der
+   Sprache des Panels, erste Zeile = Überschrift), `_generate` (ruft
+   `ai_task.async_generate_data`, 90 s Zeitlimit, Fehlercodes `no_ai_task`,
+   `timeout`, `failed`; Tests ersetzen es), `async_assess`. WebSocket
+   `device_panel/ai_assess` (nur Admin, nur mit Option `ai_assessment`);
+   Option `ai_task_entity` (leer = Standard von HA); `get_options.catalog.
+   ai_tasks`; `list_devices.ai_assessment`. Panel: Abschnitt
+   "KI-Einschätzung" in den Einstellungen, Knopf und Karte im Popup
+   (Zustand je Gerät nur im Speicher, `_ai`). Nicht gegen einen echten
+   KI-Anbieter geprüft: `tests/test_ai_assessment.py` ruft die echte
+   `ai_task`-Komponente mit einer Ersatz-Entität auf (dafür zuerst
+   `homeassistant` einrichten), im Test-HA nur der Fehlerpfad.
    Als Nächstes, in dieser Reihenfolge (Nutzer, 2026-10-03):
    b. Erledigt mit `0.26.0`: Puls-Kachel öffnet das Fenster mit den
       Geräten, die in 24 Std. Unterbrüche hatten (`docs/mockups/pulse-v1/`,

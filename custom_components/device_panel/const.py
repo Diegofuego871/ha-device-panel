@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "40"
+PANEL_VERSION = "41"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -163,6 +163,13 @@ GITHUB_REPO = "Diegofuego871/ha-device-panel"
 STORAGE_VERSION = 1
 # Option: täglich nach Updates suchen und eine neue Version unter
 # "Reparaturen" melden. Standard an, wie in unifi_dynamic.
+# KI-Einschätzung eines Geräts (seit 0.33.0): Knopf im Geräte-Popup, nur auf
+# Knopfdruck; standardmässig aus, weil je nach Anbieter Daten in die Cloud
+# gehen. Die KI-Aufgabe (ai_task-Entität) ist wählbar, leer = Standard von HA.
+CONF_AI_ASSESSMENT = "ai_assessment"
+CONF_AI_TASK = "ai_task_entity"
+# Antwort der KI abwarten (Sekunden), dann Fehler statt endlosem Warten.
+AI_TIMEOUT = 90
 CONF_UPDATE_CHECK = "update_check"
 DEFAULT_UPDATE_CHECK = True
 

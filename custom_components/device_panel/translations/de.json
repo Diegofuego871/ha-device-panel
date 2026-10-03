@@ -45,6 +45,8 @@
           "hide_connections": "Filter-Chips der Verbindungsart ausblenden",
           "connection_order": "Reihenfolge der Chips der Verbindungsart",
           "connection_integrations": "Verbindungsart pro Integration",
+          "ai_assessment": "KI-Einschätzung: Knopf im Geräte-Popup zeigen",
+          "ai_task_entity": "KI-Aufgabe für die Einschätzung (leer = Standard von Home Assistant)",
           "update_check": "Täglich nach Updates suchen"
         },
         "data_description": {
@@ -77,6 +79,8 @@
           "hide_connections": "Nur die Chips über der Liste; die Geräte bleiben sichtbar. \"Alle\", \"Nur Probleme\" und die Hinweise bleiben immer. Gilt für alle Benutzer.",
           "connection_order": "In der Reihenfolge der Auswahl; nicht gewählte folgen nach Anzahl der Geräte. Leer = nach Anzahl der Geräte. Im Panel per Griff ziehen.",
           "connection_integrations": "Integration → Verbindungsart, eine pro Zeile, z. B. \"hue: zigbee\". Gilt für alle Geräte der Integration statt der Erkennung; eine am Gerät von Hand gesetzte Verbindungsart geht vor. Arten: zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud.",
+          "ai_assessment": "Ohne diesen Schalter hat das Popup keinen Knopf. Nur auf Knopfdruck schickt das Panel Name, Bereich und Werte dieses einen Geräts (keine Schlüssel, keine Zugangsdaten) an die KI-Aufgabe; je nach Anbieter verlassen sie Ihr Netz.",
+          "ai_task_entity": "Optional. Leer lassen für die Standard-KI-Aufgabe von Home Assistant (Einstellungen → System → Allgemein).",
           "update_check": "Meldet eine neue Version unter Einstellungen → Reparaturen. Vorabversionen werden hier nie gemeldet."
         }
       }

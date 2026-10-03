@@ -433,6 +433,9 @@ class DevicePanel extends HTMLElement {
     this._viewDirty = false;
     this._colsOpen = false;
     this._matter = new Map();
+    // KI-Einschätzungen je Gerät (nur im Speicher), Option aus der Geräteliste.
+    this._ai = new Map();
+    this._aiOn = false;
     this._flakyOutages = 3;
     // Chips der Verbindungsart, die nicht erscheinen (Einstellung "Anzeige").
     this._hideConn = new Set();
@@ -888,6 +891,7 @@ class DevicePanel extends HTMLElement {
       this._integrations = result.integrations || {};
       this._flakyOutages = result.flaky_outages || 3;
       this._batteryLow = result.battery_low;
+      this._aiOn = result.ai_assessment === true;
       this._hideConn = new Set(result.hide_connections || []);
       this._connOrder = result.connection_order || [];
       this._areas = Array.isArray(result.areas) ? result.areas : [];
@@ -2691,6 +2695,7 @@ class DevicePanel extends HTMLElement {
         <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device">${mdi("open", 17)}${escape(this._t("openDevicePage"))}</button></div>
         <div class="dlg-body">
           <h3>${escape(this._t("secStats"))}</h3>${this._statTilesHtml(d)}
+          ${this._aiHtml(d)}
           <h3>${escape(this._t("secConnection"))}</h3>${this._connSectionHtml(d)}
           <h3>${escape(this._t("secDevice"))}</h3>${this._deviceSectionHtml(d)}
           <h3>${escape(this._t("secNotifyDevice"))}</h3>${this._deviceNotifyHtml(d)}
@@ -2733,6 +2738,49 @@ class DevicePanel extends HTMLElement {
     } else if (action === "stat") this._openStat(btn.dataset.range, btn.dataset.kind);
     else if (action === "more-info") this._openMoreInfo(btn.dataset.entity);
     else if (action === "hide") this._hideDevice(this._detailId);
+    else if (action === "ai") this._aiAssess(this._detailId);
+  }
+
+  // KI-Einschätzung (Punkt 10, docs/mockups/backlog-v1, A): nur mit
+  // eingeschalteter Option, nur auf Knopfdruck; die Antwort bleibt im Panel
+  // (Speicher), nichts wird gespeichert.
+  _aiHtml(d) {
+    if (!this._aiOn) return "";
+    const t = (k, ...a) => this._t(k, ...a);
+    const st = this._ai.get(d.id);
+    const btn = (label) => `<button type="button" class="qbtn ai-btn" data-dlg="ai">${mdi("sparkle", 16)}${escape(label)}</button>`;
+    let body;
+    if (st?.state === "loading") {
+      body = `<div class="ai-card" aria-busy="true"><div class="ai-wait">${mdi("sparkle", 16)}${escape(t("aiWorking"))}</div></div>`;
+    } else if (st?.state === "done") {
+      const at = this._fmtTime(Date.parse(st.at) / 1000, false);
+      const by = st.source ? t("aiBy", st.source, at) : at;
+      body = `<div class="ai-card"><div class="ai-title">${mdi("sparkle", 16)}${escape(st.title || t("aiTitleDefault"))}</div>
+        <div class="ai-text">${escape(st.text)}</div>
+        <div class="ai-foot">${escape(by)} · <button type="button" class="linkbtn" data-dlg="ai">${escape(t("aiAgain"))}</button></div></div>
+        <div class="opt-short">${escape(t("aiNote"))}</div>`;
+    } else if (st?.state === "error") {
+      body = `<div class="opt-error">${escape(t("aiError", st.error))}</div>${btn(t("aiRetry"))}`;
+    } else {
+      body = `${btn(t("aiButton"))}<div class="opt-short">${escape(t("aiNote"))}</div>`;
+    }
+    return `<h3>${escape(t("secAi"))}</h3><div class="ai-box">${body}</div>`;
+  }
+
+  async _aiAssess(id) {
+    if (!id || this._ai.get(id)?.state === "loading") return;
+    this._ai.set(id, { state: "loading" });
+    this._renderDevice();
+    try {
+      const r = await this._hass.callWS({ type: "device_panel/ai_assess", device_id: id, language: pickLang(this._hass) });
+      this._ai.set(id, { state: "done", title: r.title, text: r.text, source: r.source, at: r.at });
+    } catch (err) {
+      const code = err && typeof err === "object" ? err.code : null;
+      const known = ["disabled", "no_ai_task", "timeout", "failed", "not_found"];
+      this._ai.set(id, { state: "error", error: known.includes(code) ? this._t(`aiErr_${code}`) : errText(err) });
+    }
+    this._devForce = true;
+    this._renderDevice();
   }
 
   // Ausblenden (Variante A, docs/mockups/hide-v1): gilt für alle Benutzer,
@@ -3271,6 +3319,7 @@ class DevicePanel extends HTMLElement {
       ["persistent", ["outage_persistent"]],
       ["display", ["show_service_devices", "show_disabled_devices", "hide_connections", "connection_order"]],
       ["hidden", ["exclude_devices"]],
+      ["ai", ["ai_assessment", "ai_task_entity"]],
       ["updates", ["update_check"]],
     ];
   }
@@ -3352,6 +3401,10 @@ class DevicePanel extends HTMLElement {
 
   _settingsSummary(id, d) {
     if (id === "updates") return this._t(d.update_check ? "sumUpdatesOn" : "sumUpdatesOff");
+    if (id === "ai") {
+      const task = (this._settings?.data?.catalog?.ai_tasks || []).find((x) => x.value === d.ai_task_entity);
+      return d.ai_assessment ? this._t("sumAiOn", task?.name || d.ai_task_entity || "") : this._t("sumAiOff");
+    }
     if (id === "detection") {
       // Während der Eingabe ungültig: der gespeicherte Wert gilt weiter.
       const errors = this._settingsErrors();
@@ -3671,6 +3724,9 @@ class DevicePanel extends HTMLElement {
         <div class="ex-row ex-all"><div class="ex-name">${escape(allLabel || t("toggleAll"))}</div>${allRow}${extra ? `<span class="ex-col sel"></span>` : ""}</div>
         ${drag ? `<div class="drag-list">${rows}</div>` : rows}`;
     };
+    // KI-Aufgaben von HA; eine früher gewählte, die es nicht mehr gibt, bleibt sichtbar.
+    const aiTasks = [...(st.data.catalog?.ai_tasks || [])];
+    if (d.ai_task_entity && !aiTasks.some((x) => x.value === d.ai_task_entity)) aiTasks.push({ value: d.ai_task_entity, name: d.ai_task_entity });
     const integrations = (st.data.catalog?.integrations || []).map((i) => ({
       value: i.domain,
       label: i.name,
@@ -3755,11 +3811,23 @@ class DevicePanel extends HTMLElement {
       hidden: hiddenDevs.length
         ? exTable("exclude_devices", hiddenDevs, t("hiddenIntro"), false, null, t("hiddenShowAll"))
         : `<div class="opt-short ex-intro">${escape(t("hiddenIntro"))}</div><div class="opt-short hidden-empty">${escape(t("hiddenEmpty"))}</div>`,
+      ai:
+        row("ai_assessment", t("optAi"), sw("ai_assessment", t("optAi")), t("optAiShort"), t("optAiInfo")) +
+        (d.ai_assessment
+          ? row(
+              "ai_task_entity",
+              t("optAiTask"),
+              select("ai_task_entity", [["", t("aiTaskDefault")], ...aiTasks.map((x) => [x.value, x.name])], t("optAiTask")),
+              t("optAiTaskShort"),
+              null,
+              (st.data.catalog?.ai_tasks || []).length ? null : t("aiNoTasks")
+            )
+          : ""),
       updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
     const titles = {
       detection: "secDetection", battery: "secBattery", integrations: "secIntegrations", types: "secTypes", connections: "secConnections", push: "secPush",
-      persistent: "secPersistent", display: "secDisplay", hidden: "secHidden", updates: "secUpdates",
+      persistent: "secPersistent", display: "secDisplay", hidden: "secHidden", ai: "secAiSettings", updates: "secUpdates",
     };
     return (
       `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +

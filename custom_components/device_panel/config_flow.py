@@ -10,6 +10,8 @@ from homeassistant.core import callback
 from homeassistant.helpers.selector import (
     DeviceSelector,
     DeviceSelectorConfig,
+    EntitySelector,
+    EntitySelectorConfig,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
@@ -55,6 +57,8 @@ from .const import (
     CONF_SHOW_DISABLED,
     CONF_SHOW_SERVICE,
     CONF_STARTUP_GRACE,
+    CONF_AI_ASSESSMENT,
+    CONF_AI_TASK,
     CONF_UPDATE_CHECK,
     DEVICE_TYPES,
     DOMAIN,
@@ -138,6 +142,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     data[key] = sorted(set(user_input.get(key) or []))
                 # Inhalt der Meldung in fester Reihenfolge, wie im Panel.
                 data[CONF_NOTIFY_FIELDS] = notify_fields(list(user_input.get(CONF_NOTIFY_FIELDS) or []))
+                # Leere Auswahl der KI-Aufgabe überschreibt die alte (Standard von HA).
+                data[CONF_AI_TASK] = user_input.get(CONF_AI_TASK) or ""
                 # Das Zahlenfeld liefert Kommazahlen (2.0); gespeichert wird wie
                 # aus dem Panel eine ganze Zahl.
                 for key, _default in INT_OPTIONS:
@@ -243,6 +249,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     ),
                     # Verbindungsart pro Integration als Zuordnung, z. B. "hue: zigbee".
                     vol.Optional(CONF_CONNECTION_INTEGRATIONS, default=values[CONF_CONNECTION_INTEGRATIONS] or {}): ObjectSelector(),
+                    # KI-Einschätzung im Geräte-Popup: aus, bis eingeschaltet; die
+                    # KI-Aufgabe ist wählbar, leer = Standard von Home Assistant.
+                    vol.Required(CONF_AI_ASSESSMENT, default=values[CONF_AI_ASSESSMENT]): bool,
+                    vol.Optional(CONF_AI_TASK, description={"suggested_value": values[CONF_AI_TASK] or None}): EntitySelector(
+                        EntitySelectorConfig(domain="ai_task")
+                    ),
                     vol.Required(CONF_UPDATE_CHECK, default=values[CONF_UPDATE_CHECK]): bool,
                 }
             ),

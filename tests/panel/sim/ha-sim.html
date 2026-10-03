@@ -378,6 +378,8 @@
       hidden_devices: hidden,
       integrations: Object.entries(byDomain).map(([domain, n]) => ({ domain, name: integrations[domain] || domain, devices: n })).sort((a, b) => b.devices - a.devices || a.name.localeCompare(b.name)),
       types: TYPE_ORDER.map((t) => ({ type: t, devices: byType[t] || 0 })),
+      // KI-Aufgaben von HA (erfunden); __aiTasks = [] für "keine".
+      ai_tasks: window.__aiTasks || [{ value: "ai_task.openai", name: "OpenAI" }, { value: "ai_task.lokal", name: "Lokales Modell" }],
       battery: Object.entries(bat).map(([domain, v]) => ({ domain, name: integrations[domain] || domain, ...v })).sort((a, b) => b.devices - a.devices || a.name.localeCompare(b.name)),
     };
   }
@@ -460,7 +462,7 @@
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
     exclude_integrations: [], exclude_types: [], exclude_devices: [], notify_service: "none", notify_click_target: "panel",
     notify_outage: false, notify_online: false, notify_group: true, hide_connections: [], connection_order: [], connection_integrations: {},
-    show_service_devices: false, show_disabled_devices: false, update_check: true,
+    show_service_devices: false, show_disabled_devices: false, update_check: true, ai_assessment: false, ai_task_entity: "",
     notify_delay: 0, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false,
   };
@@ -665,6 +667,22 @@
         }
         return out;
       }
+      if (msg.type === "device_panel/ai_assess") {
+        // Wie ai_assessment.async_assess; __aiMode: "ok" (Standard), "slow", Fehlercode, "object" (Fehler ohne Text).
+        if (!window.__opts.ai_assessment) throw { code: "disabled", message: "AI assessment is switched off" };
+        if (!window.__devices.find((x) => x.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
+        const mode = window.__aiMode || "ok";
+        if (mode === "slow") await new Promise((r) => setTimeout(r, 1500));
+        if (["no_ai_task", "timeout", "failed"].includes(mode)) throw { code: mode, message: "details" };
+        if (mode === "object") throw 3;
+        const task = window.__opts.ai_task_entity;
+        const source = (window.__aiTasks || [{ value: "ai_task.openai", name: "OpenAI" }, { value: "ai_task.lokal", name: "Lokales Modell" }]).find((x) => x.value === task)?.name || "OpenAI";
+        return {
+          title: msg.language === "de" ? "Wahrscheinlich Empfang" : "Probably reception",
+          text: msg.language === "de" ? "Der Melder hatte heute kurze Unterbrüche und schwachen Empfang. Ein Router in der Nähe dürfte helfen." : "The sensor had short interruptions today and weak reception. A router nearby should help.",
+          source, at: new Date().toISOString(),
+        };
+      }
       if (msg.type === "device_panel/hide_device") {
         // Wie das Backend: Option exclude_devices; Unbekanntes ausblenden geht nicht.
         if (window.__hideFails) throw new Error(window.__hideFails);
@@ -739,6 +757,7 @@
             connection_auto: d.connection,
             connection_manual: d.id in window.__connOverrides,
           })),
+          ai_assessment: Boolean(window.__opts.ai_assessment),
           integrations, now: new Date().toISOString(), offline_after: window.__opts.offline_after * 60, battery_low: batLow,
           flaky_outages: flakyN, hide_connections: [...window.__opts.hide_connections], connection_order: [...window.__opts.connection_order], pulse: pulse(), incidents,
           areas: window.__areas.map((a) => ({ ...a })), floors: window.__floors.map((f) => ({ ...f })),

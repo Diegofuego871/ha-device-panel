@@ -118,6 +118,8 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "battery_low": 15,
         "battery_low_integrations": {},
         "offline_after_integrations": {},
+        "ai_assessment": False,
+        "ai_task_entity": "",
         "battery_push": False,
         "battery_persistent": False,
         "notify_service": "none",
@@ -183,7 +185,7 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
         "exclude_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "exclude_types", "exclude_devices",
         "notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "notify_delay",
         "notify_fields", "outage_persistent", "show_service_devices", "show_disabled_devices", "hide_connections",
-        "connection_order", "connection_integrations", "update_check",
+        "connection_order", "connection_integrations", "ai_assessment", "ai_task_entity", "update_check",
     ]
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {CONF_UPDATE_CHECK: False, "offline_after": 10.0, "show_disabled_devices": True}

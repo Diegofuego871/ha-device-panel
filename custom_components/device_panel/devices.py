@@ -25,6 +25,7 @@ from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    CONF_AI_ASSESSMENT,
     CONF_BATTERY_LOW,
     CONF_BATTERY_LOW_INTEGRATIONS,
     CONF_EXCLUDE_INTEGRATIONS,
@@ -909,6 +910,10 @@ async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
         "types": [{"type": t, "devices": by_type.get(t, 0)} for t in DEVICE_TYPES],
         "battery": battery_list,
         "hidden_devices": await async_hidden_devices(hass, opts),
+        # KI-Aufgaben von Home Assistant zur Auswahl (Einstellungen, "KI-Einschätzung").
+        "ai_tasks": sorted(
+            ({"value": s.entity_id, "name": s.name} for s in hass.states.async_all("ai_task")), key=lambda x: str(x["name"]).lower()
+        ),
     }
 
 
@@ -1096,6 +1101,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         "integrations": {d: i["name"] for d, i in integrations.items()},
         "now": now.isoformat(),
         "offline_after": offline_default,
+        # KI-Einschätzung eingeschaltet: das Popup zeigt den Knopf (seit 0.33.0).
+        "ai_assessment": opts[CONF_AI_ASSESSMENT],
         "battery_low": opts[CONF_BATTERY_LOW],
         "flaky_outages": flaky_outages,
         # Chips der Verbindungsart, die das Panel nicht zeigt (gilt für alle).

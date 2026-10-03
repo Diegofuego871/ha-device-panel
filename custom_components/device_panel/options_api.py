@@ -62,6 +62,8 @@ from .const import (
     CONF_SHOW_DISABLED,
     CONF_SHOW_SERVICE,
     CONF_STARTUP_GRACE,
+    CONF_AI_ASSESSMENT,
+    CONF_AI_TASK,
     CONF_UPDATE_CHECK,
     DEFAULT_BATTERY_LOW,
     DEFAULT_FLAKY_OUTAGES,
@@ -84,6 +86,7 @@ BOOL_OPTIONS: tuple[tuple[str, bool], ...] = (
     (CONF_SHOW_SERVICE, False),
     (CONF_SHOW_DISABLED, False),
     (CONF_UPDATE_CHECK, DEFAULT_UPDATE_CHECK),
+    (CONF_AI_ASSESSMENT, False),
 )
 INT_OPTIONS: tuple[tuple[str, int], ...] = (
     (CONF_OFFLINE_AFTER, DEFAULT_OFFLINE_AFTER),
@@ -98,6 +101,7 @@ _DOMAIN_RE = re.compile(r"^[a-z0-9_]+$")
 # Geräte-IDs von HA: Hex (uuid4().hex); etwas weiter gefasst für Tests.
 _DEVICE_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 _NOTIFY_RE = re.compile(r"^notify\.[a-z0-9_]+$")
+_AI_TASK_RE = re.compile(r"^ai_task\.[a-z0-9_]+$")
 _TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
@@ -161,6 +165,16 @@ def connection_order(value: Any) -> list[str]:
     if not isinstance(value, list) or not all(v in CONNECTION_TYPES for v in value):
         raise vol.Invalid("Liste von Verbindungsarten erwartet")
     return list(dict.fromkeys(value))
+
+
+def _ai_task(value: Any) -> str:
+    """KI-Aufgabe: ai_task-Entität oder leer (= Standard von HA)."""
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if not isinstance(value, str) or not _AI_TASK_RE.match(text):
+        raise vol.Invalid("ai_task-Entität erwartet")
+    return text
 
 
 def _notify_target(value: Any) -> str:
@@ -258,6 +272,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_BATTERY_LOW_INTEGRATIONS): battery_map,
         vol.Optional(CONF_OFFLINE_INTEGRATIONS): offline_map,
         vol.Optional(CONF_NOTIFY_SERVICE): _notify_target,
+        vol.Optional(CONF_AI_TASK): _ai_task,
         vol.Optional(CONF_NOTIFY_CLICK): vol.In(CLICK_TARGETS),
         vol.Optional(CONF_BATTERY_PUSH_MODE): vol.In(PUSH_MODES),
         vol.Optional(CONF_BATTERY_PUSH_TIME): push_time,
@@ -306,6 +321,8 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
         values[CONF_OFFLINE_INTEGRATIONS] = {}
     target = str(options.get(CONF_NOTIFY_SERVICE) or "").strip()
     values[CONF_NOTIFY_SERVICE] = target if _NOTIFY_RE.match(target) else NOTIFY_NONE
+    task = str(options.get(CONF_AI_TASK) or "").strip()
+    values[CONF_AI_TASK] = task if _AI_TASK_RE.match(task) else ""
     click = options.get(CONF_NOTIFY_CLICK)
     values[CONF_NOTIFY_CLICK] = click if click in CLICK_TARGETS else CLICK_PANEL
     mode = options.get(CONF_BATTERY_PUSH_MODE)

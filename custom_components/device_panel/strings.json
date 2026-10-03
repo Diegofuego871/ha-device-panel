@@ -45,6 +45,8 @@
           "hide_connections": "Hide filter chips of the connection type",
           "connection_order": "Order of the connection type chips",
           "connection_integrations": "Connection type per integration",
+          "ai_assessment": "AI assessment: show the button in the device pop-up",
+          "ai_task_entity": "AI task for the assessment (empty = default of Home Assistant)",
           "update_check": "Check for updates daily"
         },
         "data_description": {
@@ -77,6 +79,8 @@
           "hide_connections": "Only the chips above the list; the devices stay visible. \"All\", \"Problems only\" and the hints always stay. Applies to all users.",
           "connection_order": "In the order of selection; types not chosen follow by number of devices. Empty = by number of devices. In the panel, drag by the handle.",
           "connection_integrations": "Integration → connection type, one per line, e.g. \"hue: zigbee\". Applies to all devices of the integration instead of the detection; a connection type set by hand on the device comes first. Types: zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud.",
+          "ai_assessment": "Without this switch the pop-up has no button. Only on a button press the panel sends name, area and values of that one device (no keys, no credentials) to the AI task; depending on the provider they leave your network.",
+          "ai_task_entity": "Optional. Leave empty to use the default AI task of Home Assistant (Settings → System → General).",
           "update_check": "Reports a new version under Settings → Repairs. Pre-releases are never reported here."
         }
       }
