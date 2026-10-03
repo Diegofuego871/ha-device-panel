@@ -94,6 +94,9 @@ async def _ws(client, msg_id: int, **msg: Any) -> dict[str, Any]:
 
 
 async def test_logs_only_online_devices_without_sensor(hass: HomeAssistant, hass_ws_client, monkeypatch, freezer) -> None:
+    # Kurz nach Beginn eines 5-Minuten-Blocks: die drei Messungen landen
+    # sicher im selben Block (sonst hing der Test von der Uhrzeit ab).
+    freezer.move_to(dt_util.utc_from_timestamp(time.time() // BLOCK_SECONDS * BLOCK_SECONDS + 10))
     await _setup(hass)
     source = MockConfigEntry(domain="test")
     source.add_to_hass(hass)
