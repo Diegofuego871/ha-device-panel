@@ -7,6 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.29.1] - 2026-10-03
+
+Verständlicherer "Inhalt der Meldung".
+
+### Behoben
+
+- Einstellungen, "Inhalt der Meldung": Die Vorschau nimmt jetzt das
+  ausgefallene Gerät mit den meisten Angaben, und fehlt dem gezeigten Gerät
+  ein Wert (z. B. der Batteriestand), steht ein Beispielwert in Kursiv.
+  So ändert jeder Schalter die Vorschau sichtbar. Ein Hinweis sagt das; die
+  echte Meldung lässt eine solche Angabe weg.
+- Der Erklärtext sagt, was die Schalter bedeuten: "Batterie" und "Empfang
+  zuletzt" nennen den letzten bekannten Stand des ausgefallenen Geräts,
+  "Offline seit" den Beginn des Ausfalls, und die Warnung bei schwacher
+  Batterie ist eine eigene Meldung.
+
 ## [0.29.0] - 2026-10-03
 
 Batterie-Verlauf für 6 und 12 Monate.
@@ -800,6 +816,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.29.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.1
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0
 [0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0
 [0.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.1

@@ -7,6 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.29.1] - 2026-10-03
+
+Clearer "Content of the notification".
+
+### Fixed
+
+- Settings, "Content of the notification": the preview now picks the
+  offline device with the most details, and where the device shown has no
+  value (e.g. no battery level) it shows an example value in italics, so
+  every switch visibly changes the preview. A note says so; the real
+  notification leaves such a detail out.
+- The explanation says what the switches mean: "Battery" and "Last signal"
+  give the last known value of the device that went offline, "Offline
+  since" the start of the outage, and the low battery warning is a
+  separate notification.
+
 ## [0.29.0] - 2026-10-03
 
 Battery history for 6 and 12 months.
@@ -766,6 +782,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.29.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.1
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0
 [0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0
 [0.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.1

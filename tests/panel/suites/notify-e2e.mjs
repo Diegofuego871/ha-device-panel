@@ -14,12 +14,12 @@ const TEXT = {
   de: {
     persOff: "Aus", persOn: (n) => `Bei Ausfällen · ${n} Integrationen`, int: "9 Integrationen · alle angezeigt", intPush: (n) => `9 Integrationen · alle angezeigt · Push für ${n}`,
     fields: "Bereich|Integration|Verbindungsart|Offline seit|Empfang zuletzt|Batterie|Hersteller / Modell", title: "Ausgefallen: Temperatur Keller",
-    since: /^seit \d\d:\d\d$/, battery: "Batterie 0 %", actions: "Öffnen|24 Std. stumm", range: "Erlaubt: 0 bis 60", outage5: "Sobald ein Gerät 5 Min. ausgefallen ist (siehe \"Erst melden nach\").", muted: /^Stumm bis /, notifyOn: "Globale Einstellung",
+    since: /^seit \d\d:\d\d$/, battery: "Batterie 0 %", actions: "Öffnen|24 Std. stumm", invented: "-72 dBm|64 %", exampleNote: "Kursiv: Beispielwert", range: "Erlaubt: 0 bis 60", outage5: "Sobald ein Gerät 5 Min. ausgefallen ist (siehe \"Erst melden nach\").", muted: /^Stumm bis /, notifyOn: "Globale Einstellung",
   },
   en: {
     persOff: "Off", persOn: (n) => `For outages · ${n} integrations`, int: "9 integrations · all shown", intPush: (n) => `9 integrations · all shown · push for ${n}`,
     fields: "Area|Integration|Connection type|Offline since|Last signal|Battery|Manufacturer / model", title: "Offline: Temperatur Keller",
-    since: /^since \d\d:\d\d( [AP]M)?$/, battery: "battery 0 %", actions: "Open|Mute 24 h", range: "Allowed: 0 to 60", outage5: "As soon as a device has been offline for 5 min (see \"Report only after\").", muted: /^Muted until /, notifyOn: "Global setting",
+    since: /^since \d\d:\d\d( [AP]M)?$/, battery: "battery 0 %", actions: "Open|Mute 24 h", invented: "-72 dBm|64 %", exampleNote: "Italic: example value", range: "Allowed: 0 to 60", outage5: "As soon as a device has been offline for 5 min (see \"Report only after\").", muted: /^Muted until /, notifyOn: "Global setting",
   },
 };
 
@@ -84,6 +84,13 @@ for (const lang of ["de", "en"]) {
     await tap('input[data-nfield="area"]');
     const parts2 = (await pvText()).split(" · ");
     check(`[${tag}] Vorschau folgt dem Inhalt`, parts2.length === 3 && parts2[0] === "BTHome" && T.since.test(parts2[1]) && parts2[2] === T.battery, await pvText());
+    // Hat das Beispielgerät keine Batterie und keinen Empfang: Beispielwerte in Kursiv, mit Hinweis
+    // (seit 0.29.1, Rückmeldung des Nutzers: "Batterie" änderte die Vorschau nicht)
+    await ev(`r.host._devices.forEach((d) => { d.battery = null; d.signal = null; })`);
+    await tap('input[data-nfield="signal"]');
+    const inv = await ev(`return [[...r.querySelectorAll(".pv-text i")].map(x=>x.textContent).join("|"), r.querySelector(".pv .opt-short").textContent.includes(${JSON.stringify(T.exampleNote)})]`);
+    check(`[${tag}] Vorschau: fehlende Angaben als Beispielwert in Kursiv, mit Hinweis`, inv[0] === T.invented && inv[1], JSON.stringify(inv));
+    await tap('input[data-nfield="signal"]');
     check(`[${tag}] Inhalt als geändert markiert`, await ev(`return r.querySelector('input[data-nfield="area"]').closest(".opt").classList.contains("changed")`));
     // Erst melden nach: 0 bis 60
     const delay = await handle('input[data-opt="notify_delay"]');

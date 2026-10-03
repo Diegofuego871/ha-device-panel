@@ -3465,26 +3465,37 @@ class DevicePanel extends HTMLElement {
     const grid = NOTIFY_FIELDS.map(
       (f) => `<label class="nf-item"><span>${escape(t(labels[f]))}</span><span class="switch"><input type="checkbox" data-nfield="${f}" ${on.has(f) ? "checked" : ""} aria-label="${escape(t(labels[f]))}"><span></span></span></label>`
     ).join("");
-    // Beispiel: ein ausgefallenes Gerät, sonst irgendeines, sonst erfunden.
-    const dev = this._devices.find((x) => x.online === false) || this._devices[0] || { name: t("pvSample"), area: null };
+    // Beispiel: das ausgefallene Gerät mit den meisten Angaben (sonst irgendeines,
+    // sonst erfunden), damit jeder Schalter in der Vorschau etwas bewirkt.
+    // Fehlt dem Gerät eine Angabe, steht ein Beispielwert in Kursiv.
+    const score = (x) => [x.area, x.battery?.level != null, x.signal?.value != null, x.connection !== undefined, x.manufacturer || x.model].filter(Boolean).length;
+    const best = (list) => list.slice().sort((a, b) => score(b) - score(a))[0];
+    const offline = this._devices.filter((x) => x.online === false);
+    const dev = (offline.length && best(offline)) || best(this._devices) || { name: t("pvSample"), area: null };
     const since = dev.offline_since ? Date.parse(dev.offline_since) / 1000 : Date.now() / 1000 - 300;
+    let invented = false;
+    const sample = (value, example) => {
+      if (value) return escape(value);
+      invented = true;
+      return `<i>${escape(example)}</i>`;
+    };
     const parts = NOTIFY_FIELDS.filter((f) => on.has(f))
       .map((f) => {
-        if (f === "area") return dev.area;
-        if (f === "integration") return dev.integration ? this._integName(dev) : null;
-        if (f === "connection") return dev.connection !== undefined ? t(CONN[this._connOf(dev)].key) : null;
-        if (f === "since") return t("pvSince", this._fmtTime(since));
-        if (f === "signal") return dev.signal?.value != null ? t("pvSignal", sigText(dev.signal)) : null;
-        if (f === "battery") return dev.battery?.level != null ? t("pvBattery", `${dev.battery.level} %`) : null;
-        if (f === "model") return [dev.manufacturer, dev.model].filter(Boolean).join(" ") || null;
+        if (f === "area") return dev.area ? escape(dev.area) : null;
+        if (f === "integration") return dev.integration ? escape(this._integName(dev)) : null;
+        if (f === "connection") return sample(dev.connection !== undefined && dev.connection ? t(CONN[this._connOf(dev)].key) : "", t("pvSampleConn"));
+        if (f === "since") return escape(t("pvSince", this._fmtTime(since)));
+        if (f === "signal") return dev.signal?.value != null ? escape(t("pvSignal", sigText(dev.signal))) : t("pvSignal", sample("", t("pvSampleSignal")));
+        if (f === "battery") return dev.battery?.level != null ? escape(t("pvBattery", `${dev.battery.level} %`)) : t("pvBattery", sample("", t("pvSampleBattery")));
+        if (f === "model") return sample([dev.manufacturer, dev.model].filter(Boolean).join(" "), t("pvSampleModel"));
         return null;
       })
       .filter(Boolean);
     const preview = d.notify_outage
       ? `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
-          <div class="pv-title">${escape(t("pvTitle", dev.name))}</div><div class="pv-text">${escape(parts.join(" · "))}</div>
+          <div class="pv-title">${escape(t("pvTitle", dev.name))}</div><div class="pv-text">${parts.join(" · ")}</div>
           <div class="pv-actions"><span>${escape(t("pvOpen"))}</span><span>${escape(t("pvMute"))}</span></div></div>
-          <div class="opt-short">${escape(t("pvNote"))}</div></div>`
+          <div class="opt-short">${escape(t("pvNote"))}${invented ? ` ${escape(t("pvExample"))}` : ""}</div></div>`
       : "";
     return `<div class="opt${changes.has("notify_fields") ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optFields"))}</span></div>
       <div class="opt-short">${escape(t("optFieldsShort"))}</div><div class="nf-grid">${grid}</div>${preview}</div>`;

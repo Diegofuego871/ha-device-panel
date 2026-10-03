@@ -318,6 +318,13 @@ hat dort einen echten Fehler oder Umweg gekostet.
   Handy breiter als den Bildschirm (Inhalt rutschte seitlich weg); die
   Auswahl `.stat-range` scrollt jetzt selbst, `battery-e2e` prüft
   `scrollWidth <= clientWidth`.
+- **Vorschau muss jeden Schalter zeigen (0.29.1):** Die Vorschau von
+  "Inhalt der Meldung" nahm das erste ausgefallene Gerät; hatte es keine
+  Batterie, änderte der Schalter "Batterie" nichts und wirkte kaputt
+  (Rückmeldung des Nutzers). Jetzt das Gerät mit den meisten Angaben, fehlende
+  Werte als Beispiel in Kursiv, mit Hinweis. Allgemein: Eine Vorschau mit
+  echten Daten braucht einen Ersatz, wenn die Daten die Einstellung nicht
+  zeigen.
 - **Hinweis mit Aktion (0.23.0):** `.toast` steht mit `left: 50%` und
   `translateX(-50%)`; ohne `width: max-content` bricht der Text schon bei
   der halben Fensterbreite um.
