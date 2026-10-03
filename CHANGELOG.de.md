@@ -7,6 +7,25 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.27.1] - 2026-10-03
+
+Verbindungsverlust zeigt keinen Fehler mehr.
+
+### Behoben
+
+- Nach dem Ruhezustand des Handys zeigte das Panel "Laden fehlgeschlagen:
+  [object Object]" und eine leere Liste. Home Assistant meldet eine
+  verlorene Verbindung nicht als Fehler mit Text, sondern als Zahl oder
+  Objekt, und das Panel verstand es nicht. Jetzt bleibt die Liste stehen,
+  unten steht der Hinweis "Verbindung zu Home Assistant unterbrochen, neuer
+  Versuch …", und das Panel fragt von allein wieder ab (nach 1, 2, 4, 8 s,
+  dann alle 10 s) und sofort, wenn das Handy aufwacht, die Seite
+  zurückkommt oder das Netz wieder da ist. Beim ersten Laden ohne
+  Verbindung bleibt es bei "Geräte werden geladen…" mit demselben Hinweis.
+  Eine Abfrage ohne jede Antwort bricht nach 20 s ab. Echte Fehler behalten
+  ihren Text; unlesbare heissen jetzt "unbekannter Fehler" statt
+  "[object Object]".
+
 ## [0.27.0] - 2026-10-03
 
 Empfangsverlauf füllt sich, Knopf "Gerät ausblenden".
@@ -755,6 +774,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.1
 [0.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.0
 [0.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.26.0
 [0.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.25.0

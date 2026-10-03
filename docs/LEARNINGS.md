@@ -301,6 +301,16 @@ hat dort einen echten Fehler oder Umweg gekostet.
   hiess der Merker `recorded` wie die neue Funktion `recorded()`; Python
   meldete "bool object is not callable" erst zur Laufzeit. Merker heisst
   jetzt `wrote`. Ein Test über den neuen Pfad hat es gefunden.
+- **callWS wirft nicht immer einen Error (0.27.1):** Nach dem Ruhezustand
+  des Handys lehnt HA offene Abfragen mit einer Zahl (`ERR_CONNECTION_LOST`
+  = 3) oder einem Objekt ohne `message` ab; `err.message || String(err)`
+  ergab "[object Object]" (Fehlerbericht des Nutzers). Fehlertext immer
+  über `errText`, Verbindungsfehler über `isConnectionError`: Daten
+  behalten, Hinweis, Wiederholung mit wachsendem Abstand und sofort bei
+  `visibilitychange`, `online`, `pageshow`, `focus`. Eine Abfrage kann auch
+  nie antworten: `_callWithTimeout` (20 s), sonst bliebe `_fetching` für
+  immer besetzt. Nachbau: `window.__wsFail` (number, object, empty, text),
+  Suite `reconnect-e2e`.
 - **Hinweis mit Aktion (0.23.0):** `.toast` steht mit `left: 50%` und
   `translateX(-50%)`; ohne `width: max-content` bricht der Text schon bei
   der halben Fensterbreite um.

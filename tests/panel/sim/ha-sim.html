@@ -478,6 +478,16 @@
     states: {},
     callWS: async (msg) => {
       window.__wsCalls.push(msg);
+      // Verbindung weg (Handy im Ruhezustand): HA wirft keinen Error, sondern
+      // eine Zahl (ERR_CONNECTION_LOST = 3) oder ein Objekt ohne Text;
+      // "hang" antwortet nie. Seit 0.27.1.
+      if (window.__wsFail && msg.type === "device_panel/list_devices") {
+        if (window.__wsFail === "number") throw 3;
+        if (window.__wsFail === "object") throw { code: 3 };
+        if (window.__wsFail === "empty") throw {};
+        if (window.__wsFail === "text") throw new Error("Speicher voll");
+        if (window.__wsFail === "hang") return new Promise(() => {});
+      }
       if (msg.type === "call_service") {
         window.__services.push({ domain: msg.domain, service: msg.service, data: msg.service_data });
         if (window.__serviceFails) throw new Error(window.__serviceFails);

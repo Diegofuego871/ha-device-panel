@@ -7,6 +7,24 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.27.1] - 2026-10-03
+
+Connection loss no longer shows an error.
+
+### Fixed
+
+- After the phone had been asleep, the panel showed "Loading failed:
+  [object Object]" and an empty list. Home Assistant reports a lost
+  connection not as an error with text but as a number or an object, and the
+  panel did not understand it. Now the list stays, a note "Connection to
+  Home Assistant interrupted, trying again …" appears at the bottom, and
+  the panel asks again by itself (after 1, 2, 4, 8 s, then every 10 s) and
+  at once when the phone wakes up, the page comes back or the network
+  returns. On the first load without a connection the panel keeps saying
+  "Loading devices …" with the same note. A query without any answer stops
+  after 20 s. Real errors keep their text; unreadable ones now read
+  "unknown error" instead of "[object Object]".
+
 ## [0.27.0] - 2026-10-03
 
 Signal history fills, button "Hide device".
@@ -722,6 +740,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.1
 [0.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.27.0
 [0.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.26.0
 [0.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.25.0

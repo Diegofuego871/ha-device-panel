@@ -108,6 +108,31 @@ function refocus(el) {
 // Für Text und Attribute: auch Anführungszeichen, sonst bricht ein Wert mit
 // " das Attribut ab (abgeschnittene Texte, eingeschleuste Attribute).
 const ESCAPES = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+// Fehler von callWS: HA wirft nicht immer einen Error. Verbindungsfehler
+// kommen als Zahl (ERR_CONNECTION_LOST = 3), als Ereignis oder als Objekt
+// ohne Text; früher stand dann "[object Object]" im Panel (Fehlerbericht des
+// Nutzers, 2026-10-03, nach dem Aufwachen des Handys).
+const WS_ERRORS = { 1: "Verbindung nicht möglich", 2: "Anmeldung ungültig", 3: "Verbindung verloren", 4: "Host fehlt" };
+function errText(err) {
+  if (err == null) return "";
+  if (typeof err === "string") return err;
+  if (typeof err === "number") return WS_ERRORS[err] || `Fehler ${err}`;
+  if (typeof err.message === "string" && err.message) return err.message;
+  if (typeof err.code === "number") return WS_ERRORS[err.code] || `Fehler ${err.code}`;
+  if (typeof err.code === "string") return err.code;
+  if (typeof err.type === "string") return err.type;
+  return "unbekannter Fehler";
+}
+// Ist die Verbindung zu HA weg (Handy im Ruhezustand, WLAN-Wechsel)? Dann hilft
+// ein erneuter Versuch, kein Fehlerbild.
+function isConnectionError(err) {
+  if (err == null) return true;
+  if (typeof err === "number") return true;
+  if (typeof err.code === "number") return true;
+  if (typeof err.message !== "string") return true;
+  return /connection|closed|disconnect|network|timeout|failed to fetch|load failed/i.test(err.message);
+}
+
 function escape(value) {
   return (value == null ? "" : String(value)).replace(/[&<>"']/g, (c) => ESCAPES[c]);
 }
@@ -540,8 +565,13 @@ class DevicePanel extends HTMLElement {
       if (document.visibilityState !== "hidden") this._fetch();
     }, POLL_INTERVAL_MS);
     this._tick = window.setInterval(() => this._hass && this._render(), TICK_MS);
-    this._onVisible = () => document.visibilityState === "visible" && this._fetch();
+    this._onVisible = () => document.visibilityState === "visible" && this._wake();
     document.addEventListener("visibilitychange", this._onVisible);
+    // Handy wacht auf oder bekommt wieder Netz: sofort neu abfragen.
+    this._onWake = () => this._wake();
+    window.addEventListener("online", this._onWake);
+    window.addEventListener("pageshow", this._onWake);
+    window.addEventListener("focus", this._onWake);
     // Wechsel zwischen Desktop und Handy: andere Ansicht, offene Auswahl zu.
     this._onNarrow = () => {
       this._toggleCols(false);
@@ -559,7 +589,11 @@ class DevicePanel extends HTMLElement {
   disconnectedCallback() {
     window.clearInterval(this._timer);
     window.clearInterval(this._tick);
+    window.clearTimeout(this._retryTimer);
     document.removeEventListener("visibilitychange", this._onVisible);
+    window.removeEventListener("online", this._onWake);
+    window.removeEventListener("pageshow", this._onWake);
+    window.removeEventListener("focus", this._onWake);
     this._narrowQuery.removeEventListener("change", this._onNarrow);
     this._topWindow()?.removeEventListener("location-changed", this._onLocation);
   }
@@ -797,7 +831,7 @@ class DevicePanel extends HTMLElement {
     const seen = this._changes || 0;
     const stale = () => (this._changes || 0) !== seen;
     try {
-      const result = await this._hass.callWS({ type: "device_panel/list_devices" });
+      const result = await this._callWithTimeout({ type: "device_panel/list_devices" });
       if (stale()) return;
       // Welche Geräte gezeigt werden (Dienst-Geräte, deaktivierte, Ausschlüsse),
       // entscheidet das Backend nach den Einstellungen.
@@ -819,9 +853,20 @@ class DevicePanel extends HTMLElement {
       this._serverNow = (Number.isFinite(serverNow) ? serverNow : Date.now()) / 1000;
       this._fetchedAt = new Date();
       this._error = null;
+      this._offline = false;
+      this._retries = 0;
       this._deepPending = true;
     } catch (err) {
-      if (!stale()) this._error = (err && err.message) || String(err);
+      if (!stale()) {
+        if (isConnectionError(err)) {
+          // Verbindung weg: Daten behalten, Hinweis zeigen, bald neu versuchen.
+          this._offline = true;
+          this._error = null;
+          this._scheduleRetry();
+        } else {
+          this._error = errText(err);
+        }
+      }
     } finally {
       this._fetching = false;
       if (stale()) this._fetch();
@@ -829,8 +874,35 @@ class DevicePanel extends HTMLElement {
     }
   }
 
+  // Nach dem Aufwachen ist die Verbindung oft noch zu: lieber gleich den
+  // Hinweis zeigen als einen Fehler, und der Versuch läuft von allein weiter.
+  _wake() {
+    this._retries = 0;
+    this._fetch();
+  }
+
+  // callWS ohne Antwort (Verbindung hängt nach dem Aufwachen) würde _fetching
+  // für immer besetzen; nach 20 s gilt es als Verbindungsfehler.
+  _callWithTimeout(msg, ms = 20000) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = window.setTimeout(() => reject({ code: 3 }), ms);
+    });
+    return Promise.race([this._hass.callWS(msg), timeout]).finally(() => window.clearTimeout(timer));
+  }
+
+  // Erneuter Versuch mit wachsendem Abstand (1, 2, 4, 8 s, dann wie der
+  // Abruf alle 10 s); HA baut die Verbindung nach dem Aufwachen selbst wieder auf.
+  _scheduleRetry() {
+    window.clearTimeout(this._retryTimer);
+    const delay = Math.min(1000 * 2 ** (this._retries || 0), POLL_INTERVAL_MS);
+    this._retries = (this._retries || 0) + 1;
+    this._retryTimer = window.setTimeout(() => this._fetch(), delay);
+  }
+
   _fetched() {
-    this._loading = false;
+    // Offline und noch nie Daten gehabt: weiter "wird geladen" (mit Hinweis), kein Fehlerbild.
+    this._loading = !!this._offline && !this._fetchedAt;
     this._render();
     if (this._deepPending) {
       this._deepPending = false;
@@ -1604,7 +1676,9 @@ class DevicePanel extends HTMLElement {
       root.querySelector(".foot"),
       this._loading || this._error
         ? ""
-        : `<span>${escape(this._t("footer", rows.length, all.length))}${time ? ` · ${escape(this._t("updatedAt", time))}` : ""}</span>${rows.length ? `<span class="tap">${escape(this._t("openDetails"))}</span>` : ""}`
+        : this._offline
+          ? `<span class="offline-note">${escape(this._t("reconnecting"))}</span>`
+          : `<span>${escape(this._t("footer", rows.length, all.length))}${time ? ` · ${escape(this._t("updatedAt", time))}` : ""}</span>${rows.length ? `<span class="tap">${escape(this._t("openDetails"))}</span>` : ""}`
     );
     this._renderDevice();
   }
@@ -1996,7 +2070,7 @@ class DevicePanel extends HTMLElement {
   }
 
   _listHtml(rows) {
-    if (this._loading) return `<div class="note">${escape(this._t("loading"))}</div>`;
+    if (this._loading) return `<div class="note">${escape(this._t(this._offline ? "reconnecting" : "loading"))}</div>`;
     if (this._error) return `<div class="note">${escape(this._t("error"))} ${escape(this._error)}</div>`;
     if (!rows.length) return `<div class="note">${escape(this._t("empty"))}</div>`;
     return this._narrowQuery.matches ? this._cardsHtml(rows) : this._tableHtml(rows);
@@ -2157,7 +2231,7 @@ class DevicePanel extends HTMLElement {
         d.type_manual = Boolean(kind);
       }
     } catch (err) {
-      this._typeError = (err && err.message) || String(err);
+      this._typeError = errText(err);
     }
     this._render();
     this._fetch(true);
@@ -2174,7 +2248,7 @@ class DevicePanel extends HTMLElement {
         d.connection_manual = Boolean(kind);
       }
     } catch (err) {
-      this._connError = (err && err.message) || String(err);
+      this._connError = errText(err);
     }
     this._render();
     this._fetch(true);
@@ -2192,7 +2266,7 @@ class DevicePanel extends HTMLElement {
         if ("signal" in changes) d.signal_setting = changes.signal;
       }
     } catch (err) {
-      this._devSetError = (err && err.message) || String(err);
+      this._devSetError = errText(err);
     }
     this._render();
     this._fetch(true);
@@ -2224,7 +2298,7 @@ class DevicePanel extends HTMLElement {
       this._detail = { id, data, loading: false, at: Date.now() };
     } catch (err) {
       if (this._detailId !== id) return;
-      this._detail = { id, data: prev, loading: false, error: (err && err.message) || String(err), at: Date.now() };
+      this._detail = { id, data: prev, loading: false, error: errText(err), at: Date.now() };
     }
     this._renderDevice();
   }
@@ -2538,7 +2612,7 @@ class DevicePanel extends HTMLElement {
       await this._hass.callWS({ type: "device_panel/hide_device", device_id: id, hidden: true });
     } catch (err) {
       // Der Hinweis läge hinter dem Popup: Fehler im Popup über den Knöpfen.
-      this._hideError = (err && err.message) || String(err);
+      this._hideError = errText(err);
       this._renderDevice();
       return;
     }
@@ -2554,7 +2628,7 @@ class DevicePanel extends HTMLElement {
       await this._hass.callWS({ type: "device_panel/hide_device", device_id: id, hidden: false });
       this._toast(this._t("shownToast", name));
     } catch (err) {
-      this._toast(`${this._t("unhideError")} ${(err && err.message) || String(err)}`);
+      this._toast(`${this._t("unhideError")} ${errText(err)}`);
     }
     this._fetch(true);
   }
@@ -2634,7 +2708,7 @@ class DevicePanel extends HTMLElement {
       this._hist = { key, data, loading: false, at: Date.now() };
     } catch (err) {
       if (this._hist?.key !== key) return;
-      this._hist = { key, data: prev, loading: false, error: (err && err.message) || String(err), at: Date.now() };
+      this._hist = { key, data: prev, loading: false, error: errText(err), at: Date.now() };
     }
     this._renderStat();
   }
@@ -2990,7 +3064,7 @@ class DevicePanel extends HTMLElement {
       st.extra = { ...st.extraBase };
     } catch (err) {
       if (this._settings !== st) return;
-      st.error = (err && err.message) || String(err);
+      st.error = errText(err);
     }
     st.loading = false;
     this._renderSettings();
@@ -3837,7 +3911,7 @@ class DevicePanel extends HTMLElement {
     } catch (err) {
       if (this._settings !== st) return;
       st.saving = false;
-      st.saveError = (err && err.message) || String(err);
+      st.saveError = errText(err);
       this._renderSettings();
     }
   }
@@ -3998,7 +4072,7 @@ class DevicePanel extends HTMLElement {
       await this._hass.callWS({ type: "device_panel/set_panel", prerelease_hacs: sw.entityId });
       await this._refreshHacs();
     } catch (err) {
-      v.hacsError = (err && err.message) || String(err);
+      v.hacsError = errText(err);
     }
     v.hacsEnabling = false;
     this._renderSettingsVersion();
@@ -4046,7 +4120,7 @@ class DevicePanel extends HTMLElement {
           v.data = r;
           if (!this._settings || !this._settings.extra) this._applyPanelSettings(r && r.panel);
         },
-        (err) => (v.error = (err && err.message) || String(err))
+        (err) => (v.error = errText(err))
       ),
     ];
     // HACS prüft sonst nur alle paar Tage: auf Knopfdruck sofort neu laden.
@@ -4268,7 +4342,7 @@ class DevicePanel extends HTMLElement {
       try {
         await this._callService("update", "install", { entity_id: hacs.entity_id });
       } catch (err) {
-        v.installError = (err && err.message) || String(err);
+        v.installError = errText(err);
       }
       v.installing = null;
       this._renderSettingsVersion();
