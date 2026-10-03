@@ -54,6 +54,9 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("dialog.device")?.open`);
     const old = await ev(`const t=[...r.querySelectorAll("dialog.device .tile")].find(x=>x.querySelector(".tile-k")?.textContent.trim()===${JSON.stringify(T.added)}); return t ? t.querySelector(".tile-v").textContent.trim() : ""`);
     check(`[${tag}] ältere Geräte: Datum ohne Neu`, old.length > 4 && !old.endsWith(T.tag), old);
+    // Genaues Datum mit Jahr (seit 0.28.0, Wunsch des Nutzers)
+    const year = await ev(`return String(new Date(r.host._devices.find(d=>d.id==="g").created_at).getFullYear())`);
+    check(`[${tag}] Kachel "${T.added}" zeigt das Jahr ${year}`, old.includes(year) && tile.includes(String(new Date().getFullYear())), `${old} | ${tile}`);
 
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();

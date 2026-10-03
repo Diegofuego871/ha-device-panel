@@ -1014,9 +1014,10 @@ class DevicePanel extends HTMLElement {
   }
 
   // Uhrzeit (Epoch-Sekunden), bei längeren Zeiträumen mit Wochentag und Datum.
-  _fmtTime(sec, withDate = false) {
+  // withYear: genaues Datum mit Jahr (Kachel "Hinzugefügt", seit 0.28.0).
+  _fmtTime(sec, withDate = false, withYear = false) {
     const opts = withDate
-      ? { weekday: "short", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }
+      ? { weekday: "short", day: "numeric", month: "numeric", ...(withYear ? { year: "numeric" } : {}), hour: "2-digit", minute: "2-digit" }
       : { hour: "2-digit", minute: "2-digit" };
     try {
       return new Date(sec * 1000).toLocaleString(this._locale(), opts);
@@ -2043,7 +2044,7 @@ class DevicePanel extends HTMLElement {
   // Neu (seit 0.21.0): die ersten 3 Tage nach dem Anlegen in HA (Backend).
   _newTagHtml(d) {
     if (!d.new) return "";
-    const at = d.created_at ? this._fmtTime(Date.parse(d.created_at) / 1000, true) : "";
+    const at = d.created_at ? this._fmtTime(Date.parse(d.created_at) / 1000, true, true) : "";
     return `<span class="new-tag" title="${escape(this._t("newTip", at))}">${escape(this._t("newTag"))}</span>`;
   }
 
@@ -2525,7 +2526,7 @@ class DevicePanel extends HTMLElement {
     ];
     if (d.hw_version) tiles.push(this._tile(this._t("hardware"), text(d.hw_version)));
     tiles.push(this._tile(this._t("area"), text(d.area)));
-    if (d.created_at) tiles.push(this._tile(this._t("added"), `${escape(this._fmtTime(Date.parse(d.created_at) / 1000, true))}${d.new ? `<small>${escape(this._t("newTag"))}</small>` : ""}`));
+    if (d.created_at) tiles.push(this._tile(this._t("added"), `${escape(this._fmtTime(Date.parse(d.created_at) / 1000, true, true))}${d.new ? `<small>${escape(this._t("newTag"))}</small>` : ""}`));
     return `<div class="tiles">${tiles.join("")}</div>`;
   }
 

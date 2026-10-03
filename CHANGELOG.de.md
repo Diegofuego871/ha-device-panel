@@ -19,6 +19,8 @@ Fixierter Kopf auf Handy und Desktop.
   Filter gilt); die Chips (auf dem Handy auch die Sortierung) bleiben
   darunter, und auf dem Desktop klebt die Kopfzeile der Tabelle direkt
   unter den Chips. Ein Tipp auf die Zeile scrollt zurück zu den Kacheln.
+- Die Kachel "Hinzugefügt" im Geräte-Popup zeigt das Datum mit Jahr
+  (z. B. "Sa., 13.06.2026, 12:56").
 
 ## [0.27.1] - 2026-10-03
 

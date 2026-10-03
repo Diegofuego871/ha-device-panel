@@ -19,6 +19,8 @@ Fixed header on phone and desktop.
   chips (on the phone also the sorting) stay below it, and on the desktop
   the table header sticks directly under the chips. Tapping the line
   scrolls back to the tiles.
+- The tile "Added" in the device pop-up shows the date with the year
+  (e.g. "Sat, 13/06/2026, 12:56").
 
 ## [0.27.1] - 2026-10-03
 
