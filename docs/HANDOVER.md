@@ -160,13 +160,18 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Einträge (jetzt `outages` aus `bridged`).
    Als Nächstes, in dieser Reihenfolge (Nutzer, 2026-10-03):
    b. Puls-Kachel: Popup mit den Geräten, die in 24 Std. Unterbrüche
-      hatten.
+      hatten (Mockups `docs/mockups/pulse-v1/`, Empfehlung A, Entscheid
+      offen).
    c. Einzelne Geräte ausblenden; Liste der ausgeblendeten in den
-      Einstellungen zum Wiedereinblenden.
+      Einstellungen zum Wiedereinblenden (`docs/mockups/hide-v1/`,
+      Empfehlung A; offen auch: ausgeblendet = nicht überwacht?).
    d. Spalten-Dialog wie HA "Anpassen" (Auge, Ziehgriff, "Standard
-      wiederherstellen", "Fertig").
+      wiederherstellen", "Fertig"; `docs/mockups/customize-v1/`,
+      Empfehlung A).
    e. Bereiche: Filter (Mockups `docs/mockups/area-v1/`, Empfehlung A),
-      Bereiche sortierbar, gewählte Bereiche separat einblenden.
+      Bereiche sortierbar, gewählte Bereiche separat einblenden
+      (`docs/mockups/area-v2/`, Empfehlung A, zwei offene Fragen im
+      README).
    f. Empfang pro Gerät akzeptieren: Variante A entschieden
       (`docs/mockups/signal-v1/`).
    g. Batterie-Verlauf im Popup: Variante A entschieden

@@ -73,6 +73,14 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    **To-do** (Nutzer, 2026-10-02): Filter nach Bereich, damit jeder nach
    seinen Bereichen filtern kann. Mockups `docs/mockups/area-v1/`
    (Empfehlung A: Chip "Bereich" mit Auswahl nach Etagen), Entscheid offen.
+   Erweitert (Nutzer, 2026-10-03): Bereiche sortieren und gewählte separat
+   zeigen, Mockups `docs/mockups/area-v2/` (Empfehlung A: "Gruppen |
+   Bereiche | Liste", Reihenfolge per Griff im Chip). Weitere Wünsche vom
+   2026-10-03 mit Mockups: Puls-Fenster mit den Geräten
+   (`docs/mockups/pulse-v1/`), einzelne Geräte ausblenden
+   (`docs/mockups/hide-v1/`), Spalten wie HA "Anpassen"
+   (`docs/mockups/customize-v1/`); ohne Mockup: neue Geräte 3 Tage
+   markiert, Chip "Neu".
 3. **Einstellungsmenü im Panel**, das alle Optionen der Integration abbildet
    (siehe "Pflicht", Abschnitt 1). Darin pro Integration: anzeigen, Push,
    anhaltende Benachrichtigung. Grundgerüst umgesetzt in 0.4.0 (Zahnrad,
