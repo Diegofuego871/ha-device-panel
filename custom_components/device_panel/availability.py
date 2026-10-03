@@ -39,8 +39,8 @@ from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
 from .const import CONF_OFFLINE_AFTER, CONF_STARTUP_GRACE, DOMAIN
-from .devices import device_back_since, device_down_since, device_status, monitored_devices, primary_domain
-from .options_api import effective, offline_after_for
+from .devices import device_back_since, device_down_since, device_offline_after, device_status, monitored_devices
+from .options_api import effective
 from .storage_util import PeriodicSaver
 
 _LOGGER = logging.getLogger(__name__)
@@ -319,7 +319,7 @@ class AvailabilityLog:
         """"Ausgefallen nach" des Geräts in Sekunden (eigener Wert der Integration oder global)."""
         # Nicht überwachte Geräte liefert monitored_devices nicht; der globale
         # Wert ist nur der Rückfall.
-        return offline_after_for(opts, primary_domain(self.hass, device)) or opts[CONF_OFFLINE_AFTER] * 60
+        return device_offline_after(self.hass, opts, device) or opts[CONF_OFFLINE_AFTER] * 60
 
     @callback
     def evaluate(self, now: float | None = None) -> None:

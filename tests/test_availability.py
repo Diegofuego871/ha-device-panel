@@ -591,6 +591,59 @@ async def test_unmonitored_integration(hass: HomeAssistant, setup: AvailabilityL
     assert max(result["pulse"]) == 1
 
 
+async def test_offline_after_per_device(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client, freezer) -> None:
+    """Eigenes "Ausgefallen nach" des Geräts geht vor Integration und global, auch gegen "Nicht überwachen"."""
+    lamp = _device(hass, "Lampe")
+    light = _entity(hass, lamp, "light", "l", "on")
+    other = _device(hass, "Sensor", domain="zha")
+    sensor = _entity(hass, other, "binary_sensor", "s", "on")
+    third = _device(hass, "Dritter", domain="zha")
+    _entity(hass, third, "binary_sensor", "t", "on")
+    setup.evaluate()
+    await _set_options(hass, hass_ws_client, {"offline_after_integrations": {"zha": "off"}})
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_device_settings", "device_id": lamp.id, "offline": 30})
+    assert (await client.receive_json())["result"] == {"offline": 30}
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_device_settings", "device_id": other.id, "offline": 10})
+    assert (await client.receive_json())["success"]
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/set_device_settings", "device_id": third.id, "offline": "off"})
+    assert (await client.receive_json())["success"]
+    hass.states.async_set(light, "unavailable")
+    hass.states.async_set(sensor, "unavailable")
+    freezer.tick(timedelta(minutes=15))
+    setup.evaluate()
+    devices = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}
+    # Lampe: 30 Min. (noch online); Sensor: 10 Min. trotz "off" der Integration (ausgefallen); Dritter: aus
+    assert devices["Lampe"]["online"] is True and devices["Lampe"]["offline_after"] == 30 and devices["Lampe"]["offline_setting"] == 30
+    assert devices["Sensor"]["online"] is False and devices["Sensor"]["offline_after"] == 10 and devices["Sensor"]["unmonitored"] is False
+    assert devices["Dritter"]["unmonitored"] is True and devices["Dritter"]["offline_setting"] == "off"
+    # Ohne Einstellung des Geräts: was gälte
+    assert devices["Sensor"]["offline_default"] == {"minutes": "off", "integration": "zha", "global": 2}
+    assert devices["Lampe"]["offline_default"] == {"minutes": 2, "integration": None, "global": 2}
+    assert setup.events(other.id)[-1][1] == 0
+    # Zurücksetzen: Lampe wieder nach der Integration (global 2 Min.)
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/reset_device_settings", "offline": [lamp.id, "gibtsnicht"]})
+    assert (await client.receive_json())["result"]["offline"] == 1
+    setup.evaluate()
+    assert (await async_list_devices(hass, setup))["devices"][0]["offline_setting"] is None
+    # Prüfung
+    for i, bad in enumerate((0, 1441, True, "aus", 1.5), 10):
+        await client.send_json({"id": i, "type": f"{DOMAIN}/set_device_settings", "device_id": lamp.id, "offline": bad})
+        assert (await client.receive_json())["error"]["code"] == "invalid_format", bad
+
+
+async def test_notify_default_origin(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client) -> None:
+    """Herkunft der Meldungen: Push und Anhaltend je Integration (für das Popup)."""
+    lamp = _device(hass, "Lampe")
+    _entity(hass, lamp, "light", "l", "on")
+    await _set_options(hass, hass_ws_client, {"notify_service": "notify.handy", "notify_outage": True, "outage_persistent": True})
+    default = (await async_list_devices(hass, setup))["devices"][0]["notify_default"]
+    assert default == {"push": True, "persistent": True, "integration": None}
+    await _set_options(hass, hass_ws_client, {"persistent_exclude_integrations": ["test"]})
+    default = (await async_list_devices(hass, setup))["devices"][0]["notify_default"]
+    assert default == {"push": True, "persistent": False, "integration": "test"}
+
+
 async def test_offline_map_is_checked(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client) -> None:
     client = await hass_ws_client(hass)
     bad = ({"zha": 0}, {"zha": 1441}, {"zha": True}, {"Böse Domain": 20}, {"zha": "20"}, {"zha": "aus"}, ["zha"])

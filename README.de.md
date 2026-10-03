@@ -139,9 +139,14 @@ Bereich.
   in Home Assistant, mit eigenem Chip.
 - Einstellungen pro Gerät auf einen Blick: ein Symbol beim Namen (eigene
   Batterie-Schwelle, Batterie-Warnung aus, Meldungen aus, Verbindungsart von
-  Hand, eigene Empfang-Warnung), der Chip "Eigene Einstellung" zeigt nur
+  Hand, eigene Empfang-Warnung, eigenes "Ausgefallen nach" oder "Nicht
+  überwachen"), der Chip "Eigene Einstellung" zeigt nur
   diese Geräte, und die Einstellungen listen sie zum Zurücksetzen auf,
   einzeln oder alle auf einmal.
+- Herkunft jeder Einstellung im Geräte-Popup: unter jeder Einstellung ein
+  Etikett (Standard, Integration, Gerät) und was der Standard wäre.
+  "Ausgefallen nach" lässt sich auch pro Gerät setzen (wie Integration,
+  eigene Zeit oder "Nicht überwachen"); das Gerät geht vor.
 - Einstellungen im Panel (Zahnrad) mit Updates: nach einer neuen Version
   suchen, mit einem Klick über HACS aktualisieren, danach neu starten,
   wahlweise Vorabversionen anbieten ("In HACS freischalten" schaltet die

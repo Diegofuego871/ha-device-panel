@@ -134,6 +134,11 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   steht sie unter dem Namen mit der Beschriftung links (Spaltenkopf und
   "Alle umschalten" entfallen dort). Nicht überwachte Geräte: Gruppe und
   Pill "Nicht überwacht" (grau, wie "Deaktiviert").
+- Herkunft einer Einstellung im Geräte-Popup (seit 0.31.0,
+  `docs/mockups/backlog-v1/`, A): unter der Auswahl eine Zeile `.opt-origin`
+  mit Etikett (`.origin`: Standard grau, Integration violett, Gerät in
+  Primärfarbe; 20 px hoch, Tooltip mit der Erklärung) und dem Standardwert
+  in kleiner grauer Schrift.
 - Verlauf als Kurs (seit 0.22.0, Fenster "Batterie"): Fläche und Linie in
   Primärfarbe, Gitter bei 0/50/100 %, Schwelle rot gestrichelt mit Text
   links, Wechsel grau gestrichelt mit Text oben, Punkt mit Hof am Ende

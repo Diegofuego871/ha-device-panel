@@ -166,6 +166,7 @@ const MDI = {
   tune: "M8 13C6.14 13 4.59 14.28 4.14 16H2V18H4.14C4.59 19.72 6.14 21 8 21S11.41 19.72 11.86 18H22V16H11.86C11.41 14.28 9.86 13 8 13M8 19C6.9 19 6 18.1 6 17C6 15.9 6.9 15 8 15S10 15.9 10 17C10 18.1 9.1 19 8 19M19.86 6C19.41 4.28 17.86 3 16 3S12.59 4.28 12.14 6H2V8H12.14C12.59 9.72 14.14 11 16 11S19.41 9.72 19.86 8H22V6H19.86M16 9C14.9 9 14 8.1 14 7C14 5.9 14.9 5 16 5S18 5.9 18 7C18 8.1 17.1 9 16 9Z",
   sparkle: "M12,1L9,9L1,12L9,15L12,23L15,15L23,12L15,9L12,1Z",
   signalOff: "M18,3V16.18L21,19.18V3H18M4.28,5L3,6.27L10.73,14H8V21H11V14.27L13,16.27V21H16V19.27L19.73,23L21,21.72L4.28,5M13,9V11.18L16,14.18V9H13M3,18V21H6V18H3Z",
+  timer: "M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M19.03,7.39L20.45,5.97C20,5.46 19.55,5 19.04,4.56L17.62,6C16.07,4.74 14.12,4 12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22C17,22 21,17.97 21,13C21,10.88 20.26,8.93 19.03,7.39M11,14H13V8H11M15,1H9V3H15V1Z",
   bellOff: "M20.84,22.73L18.11,20H3V19L5,17V11C5,9.86 5.29,8.73 5.83,7.72L1.11,3L2.39,1.73L22.11,21.46L20.84,22.73M19,15.8V11C19,7.9 16.97,5.17 14,4.29C14,4.19 14,4.1 14,4A2,2 0 0,0 12,2A2,2 0 0,0 10,4C10,4.1 10,4.19 10,4.29C9.39,4.47 8.8,4.74 8.26,5.09L19,15.8M12,23A2,2 0 0,0 14,21H10A2,2 0 0,0 12,23Z",
   batteryOff: "M22.11 21.46L2.39 1.73L1.11 3L6 7.89V20.67C6 21.4 6.6 22 7.33 22H16.67C17.4 22 18 21.4 18 20.67V19.89L20.84 22.73L22.11 21.46M16 18H8V9.89L16 17.89V18M8.2 4H9V2H15V4H16.67C17.4 4 18 4.6 18 5.33V15.8L16 13.8V6H10.2L8.2 4Z",
   chevronDown: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z",
@@ -345,7 +346,7 @@ function orderConns(entries, order) {
 // von Hand zählt nicht dazu (Entscheid des Nutzers).
 // Seit 0.17.0 zählt auch die Verbindungsart von Hand (Wunsch des Nutzers:
 // so lässt sie sich gesammelt bereinigen).
-const hasOverride = (d) => d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual) || d.signal_setting != null;
+const hasOverride = (d) => d.offline_setting != null || d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual) || d.signal_setting != null;
 
 const defaultView = () => ({
   sort: "default",
@@ -797,6 +798,24 @@ class DevicePanel extends HTMLElement {
         } else {
           this._devRangeError = null;
           this._setDeviceSettings(this._detailId, { battery: v });
+        }
+      } else if (el.matches?.('select[data-dlg="dev-off"]')) {
+        // Eigene Zeit: mit dem bisher geltenden Wert beginnen (Minuten; war
+        // die Integration auf "Nicht überwachen", mit dem globalen Wert).
+        const d = this._devices.find((x) => x.id === this._detailId);
+        const start = [d?.offline_after, d?.offline_default?.minutes, d?.offline_default?.global].find((v) => Number.isInteger(v)) ?? 2;
+        this._offRangeError = null;
+        this._setDeviceSettings(this._detailId, { offline: el.value === "own" ? start : el.value === "off" ? "off" : null });
+      } else if (el.matches?.('input[data-dlg="dev-off-min"]')) {
+        const v = Number(el.value);
+        const [min, max] = [1, 1440];
+        if (el.value === "" || !Number.isInteger(v) || v < min || v > max) {
+          this._offRangeError = { value: el.value, message: this._t("settingsRange", min, max) };
+          this._devForce = true;
+          this._renderDevice();
+        } else {
+          this._offRangeError = null;
+          this._setDeviceSettings(this._detailId, { offline: v });
         }
       } else if (el.matches?.('select[data-dlg="dev-sig"]')) {
         // Eigene Schwelle: etwas unter dem heutigen Wert vorschlagen (5 dBm
@@ -2031,6 +2050,8 @@ class DevicePanel extends HTMLElement {
     const out = [];
     const tag = (cls, icon, text, label) =>
       `<span class="ovr ${cls}" role="img" title="${escape(label)}" aria-label="${escape(label)}">${mdi(icon, 12)}${text ? escape(text) : ""}</span>`;
+    if (d.offline_setting === "off") out.push(tag("time-off", "timer", "", this._t("ovrTimeOffTip")));
+    else if (Number.isInteger(d.offline_setting)) out.push(tag("time", "timer", this._t("offlineMin", d.offline_setting), this._t("ovrTimeOwnTip", this._t("offlineMin", d.offline_setting))));
     const setting = d.battery_setting;
     if (setting === "off") out.push(tag("bat-off", "batteryOff", "", this._t("ovrBatOffTip")));
     else if (Number.isInteger(setting)) out.push(tag("bat", "battery", `${setting} %`, this._t("ovrBatOwnTip", setting, d.battery_default?.pct ?? 15)));
@@ -2318,6 +2339,7 @@ class DevicePanel extends HTMLElement {
         if ("battery" in changes) d.battery_setting = changes.battery;
         if ("notify" in changes) d.notify_off = !changes.notify;
         if ("signal" in changes) d.signal_setting = changes.signal;
+        if ("offline" in changes) d.offline_setting = changes.offline;
       }
     } catch (err) {
       this._devSetError = errText(err);
@@ -2332,6 +2354,7 @@ class DevicePanel extends HTMLElement {
     this._devSetError = null;
     this._devRangeError = null;
     this._sigRangeError = null;
+    this._offRangeError = null;
     this._typeError = null;
     this._detailId = null;
     this._detail = null;
@@ -2462,11 +2485,41 @@ class DevicePanel extends HTMLElement {
     const mode = setting === "off" ? "off" : Number.isInteger(setting) ? "own" : "default";
     const range = mode === "own" ? this._devRangeError : null;
     let html = "";
+    // Herkunft unter jeder Einstellung (Variante A, docs/mockups/backlog-v1):
+    // Etikett (Standard / Integration / Gerät) und was ohne die Wahl am Gerät
+    // gälte; der Tooltip trägt die ausführliche Erklärung.
+    const origin = (own, integKey, text, tip) => {
+      const name = integKey ? this._integrations[integKey] || integKey : null;
+      const [cls, label] = own ? ["own", t("originDevice")] : name ? ["integ", t("originIntegration", name)] : ["std", t("originStandard")];
+      return `<div class="opt-origin"><span class="origin ${cls}"${tip ? ` title="${escape(tip)}"` : ""}>${escape(label)}</span><span>${escape(text)}</span></div>`;
+    };
+    // "Ausgefallen nach" pro Gerät (Punkt 7): Standard der Integration, eigene
+    // Zeit in Minuten oder "Nicht überwachen"; das Gerät geht vor.
+    {
+      const od = d.offline_default || { minutes: 2, integration: null, global: 2 };
+      const fmt = (v) => (v === "off" ? t("offlineNone") : t("offlineMin", v));
+      const own = d.offline_setting;
+      const offMode = own === "off" ? "off" : Number.isInteger(own) ? "own" : "default";
+      const offRange = offMode === "own" ? this._offRangeError : null;
+      const defLabel = od.integration ? t("devOffInteg", fmt(od.minutes)) : t("devOffGlobal", fmt(od.minutes));
+      html += `<div class="opt${offMode !== "default" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devOffline"))}</span>${sel(
+        "dev-off",
+        [["default", defLabel], ["own", t("devOffOwn")], ["off", t("devOffNone")]],
+        offMode,
+        t("devOffline")
+      )}</div>${
+        offMode === "own"
+          ? `<div class="opt-line opt-sub"><span class="opt-label">${escape(t("devOffline"))}</span><span class="opt-input${offRange ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="1" max="1440" data-dlg="dev-off-min" value="${escape(offRange ? offRange.value : own)}" aria-label="${escape(t("devOffline"))}"><span class="unit">${escape(t("minuteUnit"))}</span></span></div>${
+              offRange ? `<div class="opt-error" data-dev-range>${escape(offRange.message)}</div>` : ""
+            }`
+          : ""
+      }${origin(offMode !== "default", od.integration, offMode !== "default" || od.integration ? t("originDefaultWould", fmt(od.global)) : "", t("devOffShort"))}</div>`;
+    }
     if (d.has_battery) {
       const integ = def.integration ? this._integrations[def.integration] || def.integration : null;
       html += `<div class="opt${mode !== "default" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devBattery"))}</span>${sel(
         "dev-bat",
-        [["default", t("devBatDefault", def.pct)], ["own", t("devBatOwn")], ["off", t("devBatOff")]],
+        [["default", def.integration ? t("devBatInteg", def.pct) : t("devBatDefault", def.pct)], ["own", t("devBatOwn")], ["off", t("devBatOff")]],
         mode,
         t("devBattery")
       )}</div>${
@@ -2475,7 +2528,7 @@ class DevicePanel extends HTMLElement {
               range ? `<div class="opt-error" data-dev-range>${escape(range.message)}</div>` : ""
             }`
           : ""
-      }<div class="opt-short">${escape(t("devBatShort", def.pct, integ))}</div></div>`;
+      }${origin(mode !== "default", def.integration, mode !== "default" || def.integration ? t("originDefaultWould", this._batteryLow == null ? "15 %" : `${this._batteryLow} %`) : "", t("devBatShort", def.pct, integ))}</div>`;
     }
     // Empfang-Warnung (Variante A, docs/mockups/signal-v1): globaler Wert,
     // eigene Schwelle "schwach unter" oder aus; nur mit Empfangswert.
@@ -2499,18 +2552,24 @@ class DevicePanel extends HTMLElement {
               range ? `<div class="opt-error" data-dev-range>${escape(range.message)}</div>` : ""
             }`
           : ""
-      }<div class="opt-short">${escape(t("devSigShort", d.signal?.value != null ? sigText(d.signal) : null))}</div></div>`;
+      }${origin(sigMode !== "default", null, sigMode !== "default" ? t("originDefaultWould", lqi ? `LQI ${WEAK_LQI + 1}` : `${WEAK_DBM} dBm`) : "", t("devSigShort", d.signal?.value != null ? sigText(d.signal) : null))}</div>`;
     }
     // Stumm (Knopf "24 Std. stumm" in der Meldung): eigene Option mit Ende;
     // "Globale Einstellung" oder "Aus" hebt es auf.
     const muted = d.notify_mute_until && Date.parse(d.notify_mute_until) > Date.now() ? Date.parse(d.notify_mute_until) / 1000 : null;
-    const notifyOpts = [["on", t("devNotifyOn")], ...(muted ? [["mute", t("devNotifyMuted", this._fmtTime(muted, true))]] : []), ["off", t("devNotifyOff")]];
+    const nd = d.notify_default || { push: false, persistent: false, integration: null };
+    const notifyOpts = [["on", nd.integration ? t("devNotifyInteg") : t("devNotifyOn")], ...(muted ? [["mute", t("devNotifyMuted", this._fmtTime(muted, true))]] : []), ["off", t("devNotifyOff")]];
     html += `<div class="opt${d.notify_off || muted ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devNotify"))}</span>${sel(
       "dev-notify",
       notifyOpts,
       d.notify_off ? "off" : muted ? "mute" : "on",
       t("devNotify")
-    )}</div><div class="opt-short">${escape(t("devNotifyShort"))}</div></div>`;
+    )}</div>${origin(
+      Boolean(d.notify_off),
+      nd.integration,
+      d.notify_off ? t("originNotifyOff") : t("originNotify", nd.push, nd.persistent),
+      t("devNotifyShort")
+    )}</div>`;
     if (this._devSetError) html += `<div class="opt-error">${escape(t("devSaveError"))} ${escape(this._devSetError)}</div>`;
     return `<div class="dev-set">${html}</div>`;
   }
@@ -2585,6 +2644,7 @@ class DevicePanel extends HTMLElement {
     const typing = this.shadowRoot.activeElement;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-bat-pct" && typing.value !== String(d.battery_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-sig-val" && typing.value !== String(d.signal_setting)) return;
+    if (!this._devForce && d && typing?.dataset?.dlg === "dev-off-min" && typing.value !== String(d.offline_setting)) return;
     this._devForce = false;
     let html;
     if (!d) {
@@ -3102,7 +3162,7 @@ class DevicePanel extends HTMLElement {
     // Wert zurückgeht (Variante A, docs/mockups/override-v1).
     this._settings = {
       loading: true, error: null, saveError: null, saving: false, data: null, draft: null, open: new Set(), info: new Set(),
-      resets: { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set() },
+      resets: { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set() },
     };
     this._renderSettings();
     if (!dialog.open) {
@@ -3170,6 +3230,7 @@ class DevicePanel extends HTMLElement {
       ...[...st.resets.notify].map(() => "reset_notify"),
       ...[...st.resets.connection].map(() => "reset_connection"),
       ...[...st.resets.signal].map(() => "reset_signal"),
+      ...[...st.resets.offline].map(() => "reset_offline"),
     ];
   }
 
@@ -3181,7 +3242,7 @@ class DevicePanel extends HTMLElement {
   // "Batterie" nach der Ausfall-Erkennung.
   _settingsSections() {
     return [
-      ["detection", ["offline_after", "flaky_outages", "startup_grace"]],
+      ["detection", ["offline_after", "flaky_outages", "startup_grace", "reset_offline"]],
       ["battery", ["battery_low", "battery_low_integrations", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "reset_battery"]],
       ["integrations", ["exclude_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "offline_after_integrations"]],
       ["types", ["exclude_types"]],
@@ -3452,19 +3513,21 @@ class DevicePanel extends HTMLElement {
     const list = st.data.overrides?.[kind] || [];
     const marked = st.resets[kind];
     const all = list.length > 0 && list.every((x) => marked.has(x.id));
-    const pre = { battery: "ovrBat", notify: "ovrNotify", connection: "ovrConn", signal: "ovrSig" }[kind];
+    const pre = { battery: "ovrBat", notify: "ovrNotify", connection: "ovrConn", signal: "ovrSig", offline: "ovrTime" }[kind];
     const btn = list.length
       ? `<button type="button" class="ovr-all" data-set="ovr-all" data-key="${kind}" ${all ? "disabled" : ""}>${mdi("reset", 15)}${escape(t("ovrResetAll"))}</button>`
       : "";
     const value = (x) =>
       kind === "connection"
         ? t(CONN[x.value]?.key || "connUnknown")
+        : kind === "offline"
+          ? x.value === "off" ? t("offlineNone") : t("offlineMin", x.value)
         : kind === "notify" || x.value === "off"
           ? t("ovrOff")
           : kind === "signal"
             ? t("ovrSigValue", sigLimitText(x.value))
             : `${x.value} %`;
-    const back = kind === "connection" ? t("ovrToAuto") : t("ovrToGlobal");
+    const back = kind === "connection" ? t("ovrToAuto") : kind === "offline" ? t("ovrToInteg") : t("ovrToGlobal");
     const rows = list
       .map((x) => {
         const on = marked.has(x.id);
@@ -3616,7 +3679,8 @@ class DevicePanel extends HTMLElement {
       detection:
         row("offline_after", t("optOfflineAfter"), num("offline_after", t("minuteUnit"), t("optOfflineAfter")), t("optOfflineAfterShort"), t("optOfflineAfterInfo")) +
         row("flaky_outages", t("optFlaky"), num("flaky_outages", t("unitOutages"), t("optFlaky")), t("optFlakyShort"), t("optFlakyInfo")) +
-        row("startup_grace", t("optGrace"), num("startup_grace", t("minuteUnit"), t("optGrace")), t("optGraceShort"), t("optGraceInfo")),
+        row("startup_grace", t("optGrace"), num("startup_grace", t("minuteUnit"), t("optGrace")), t("optGraceShort"), t("optGraceInfo")) +
+        this._overridesHtml("offline"),
       battery:
         row("battery_low", t("optBatteryLow"), num("battery_low", t("unitPercent"), t("optBatteryLow")), t("optBatteryLowShort"), null) +
         row("battery_push", t("optBatteryPush"), sw("battery_push", t("optBatteryPush")), d.battery_push && noTarget ? null : t("optBatteryPushShort"), t("optBatteryPushInfo"),
@@ -3981,7 +4045,7 @@ class DevicePanel extends HTMLElement {
     if (!st) return;
     const changes = this._settingsEntryChanges();
     const extra = this._settingsExtraChanges();
-    const resets = { battery: [...st.resets.battery], notify: [...st.resets.notify], connection: [...st.resets.connection], signal: [...st.resets.signal] };
+    const resets = { battery: [...st.resets.battery], notify: [...st.resets.notify], connection: [...st.resets.connection], signal: [...st.resets.signal], offline: [...st.resets.offline] };
     const anyReset = Object.values(resets).some((list) => list.length > 0);
     if ((!changes.length && !extra.length && !anyReset) || Object.keys(this._settingsErrors()).length) return;
     st.saving = true;
@@ -4030,7 +4094,7 @@ class DevicePanel extends HTMLElement {
     if (data.panel) this._applyPanelSettings(data.panel);
     st.extraBase = { prerelease: Boolean(this._prerelease) };
     st.extra = { ...st.extraBase };
-    st.resets = { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set() };
+    st.resets = { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set() };
     st.saving = false;
     st.saved = true;
     this._renderSettings();

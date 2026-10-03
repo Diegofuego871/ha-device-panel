@@ -7,6 +7,28 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.31.0] - 2026-10-03
+
+Origin of every setting in the device pop-up, and "Offline after" per device.
+
+### Added
+
+- Device pop-up, "Settings for this device": under every setting a label
+  shows where the value comes from (Default, Integration with its name, or
+  Device) and what the default would be ("Default would be 2 min"). The
+  explanation moved into the tooltip of the label. The choices say it too:
+  "Same as integration (1 h)" instead of "Global value" when the
+  integration has its own value.
+- New row "Offline after" per device: same as the integration or global
+  value, own time in minutes (1 to 1440) or "Don't monitor". The device
+  comes first, also against "Don't monitor" of its integration. A symbol
+  next to the name and the chip "Own setting" show devices with an own
+  time; in the settings (section "Outage detection") a list resets them to
+  the integration or global value, one by one or all together.
+- Outage notifications show the state of the integration: "Push on ·
+  Persistent off", and "Same as integration" when the integration is
+  excluded from push or persistent notifications.
+
 ## [0.30.0] - 2026-10-03
 
 Own "Offline after" per integration, and "Don't monitor".
@@ -809,6 +831,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.31.0
 [0.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.30.0
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0
 [0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0

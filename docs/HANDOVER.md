@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.30.0, "Ausgefallen nach" pro Integration)
+## Stand (0.31.0, Herkunft der Einstellungen im Popup, "Ausgefallen nach" pro Gerät)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -219,11 +219,20 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Panel: Gruppe und Status "Nicht überwacht", nicht im Kopf. Das
    Nachfüllen aus dem Recorder (`backfill.async_backfill`) nimmt
    `offline_after` je Gerät (Dict Gerät → Sekunden).
-   Entscheide des Nutzers zu den Backlog-Punkten (2026-10-03, Fragen
-   einzeln mit Bildern, `docs/mockups/backlog-v1/`), noch umzusetzen als
-   `0.31.0` bis `0.33.0`: Punkt 7 Variante A (Herkunft
-   Standard/Integration/Gerät unter jeder Einstellung im Popup, dazu
-   "Ausgefallen nach" pro Gerät); Punkt 10 Variante A (Knopf "Mit KI
+   Erledigt mit `0.31.0`: Punkt 7 Variante A. Einstellung "Ausgefallen
+   nach" pro Gerät in `.storage/device_panel.devices` (`offline`: Minuten
+   1–1440 oder "off"; `devices.device_offline_after` = Gerät vor Integration
+   vor global, None = nicht überwacht; `valid_offline_setting`),
+   WebSocket `set_device_settings` (`offline`), `reset_device_settings`
+   (`offline`), `get_options.overrides.offline`; `list_devices` liefert
+   `offline_setting`, `offline_default` ({minutes, integration, global}) und
+   `notify_default` ({push, persistent, integration}). Popup: unter jeder
+   Einstellung ein Etikett (`.opt-origin`, Klassen `std`/`integ`/`own`)
+   mit Standardwert, Erklärung im Tooltip; Auswahl "Wie Integration (…)".
+   Die Verbindungsart hat ihre Herkunft schon in der Kachel.
+   Entscheide des Nutzers zu den übrigen Backlog-Punkten (2026-10-03,
+   Fragen einzeln mit Bildern, `docs/mockups/backlog-v1/`), noch
+   umzusetzen als `0.32.0` und `0.33.0`: Punkt 10 Variante A (Knopf "Mit KI
    einschätzen" im Geräte-Popup, `ai_task.async_generate_data`, Einstellung
    standardmässig aus, Auswahl der KI-Aufgabe); Punkt 4 Variante A
    (Thread-Rolle und Netzname aus `matter/node_diagnostics` im Popup;

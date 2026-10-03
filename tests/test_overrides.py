@@ -74,13 +74,13 @@ async def test_overrides_listed_and_reset(hass: HomeAssistant, setup, hass_ws_cl
     # Zurücksetzen: nur die genannten, unbekannte zählen nicht
     res = await _ws(client, n, type=f"{DOMAIN}/reset_device_settings", battery=[bad.id, "gibtsnicht"], notify=[lampe.id])
     n += 1
-    assert res["result"] == {"battery": 1, "notify": 1, "connection": 0, "signal": 0}
+    assert res["result"] == {"battery": 1, "notify": 1, "connection": 0, "signal": 0, "offline": 0}
     over = (await _ws(client, n, type=f"{DOMAIN}/get_options"))["result"]["overrides"]
     n += 1
     assert [i["name"] for i in over["battery"]] == ["Wassersensor"]
     assert [i["name"] for i in over["notify"]] == ["Thermostat"]
     # Leere Anfrage: nichts zu tun
-    assert (await _ws(client, n, type=f"{DOMAIN}/reset_device_settings"))["result"] == {"battery": 0, "notify": 0, "connection": 0, "signal": 0}
+    assert (await _ws(client, n, type=f"{DOMAIN}/reset_device_settings"))["result"] == {"battery": 0, "notify": 0, "connection": 0, "signal": 0, "offline": 0}
 
 
 async def test_deleted_device_kept_but_not_listed(hass: HomeAssistant, setup, hass_ws_client, hass_storage: dict[str, Any]) -> None:
@@ -89,7 +89,7 @@ async def test_deleted_device_kept_but_not_listed(hass: HomeAssistant, setup, ha
     assert (await _ws(client, 1, type=f"{DOMAIN}/set_device_settings", device_id=gone.id, notify=False))["success"]
     dr.async_get(hass).async_remove_device(gone.id)
     await hass.async_block_till_done()
-    assert (await _ws(client, 2, type=f"{DOMAIN}/get_options"))["result"]["overrides"] == {"battery": [], "notify": [], "connection": [], "signal": []}
+    assert (await _ws(client, 2, type=f"{DOMAIN}/get_options"))["result"]["overrides"] == {"battery": [], "notify": [], "connection": [], "signal": [], "offline": []}
     # Gespeichert bleibt er: HA stellt das Gerät mit derselben ID wieder her
     from custom_components.device_panel.devices import device_settings  # noqa: PLC0415
 
@@ -142,7 +142,7 @@ async def test_connection_by_hand(hass: HomeAssistant, setup, hass_ws_client, ha
     over = (await _ws(client, next(ids), type=f"{DOMAIN}/get_options"))["result"]["overrides"]["connection"]
     assert [(i["name"], i["value"]) for i in over] == [("Glücksklee", "ble")]
     res = await _ws(client, next(ids), type=f"{DOMAIN}/reset_device_settings", connection=[dev.id, "gibtsnicht"])
-    assert res["result"] == {"battery": 0, "notify": 0, "connection": 1, "signal": 0}
+    assert res["result"] == {"battery": 0, "notify": 0, "connection": 1, "signal": 0, "offline": 0}
     assert (await listed())["connection_manual"] is False
     await hass.async_block_till_done()
     assert hass_storage[f"{DOMAIN}.devices"]["data"]["connections"] == {}
@@ -211,7 +211,7 @@ async def test_signal_setting(hass: HomeAssistant, setup, hass_ws_client, hass_s
     assert [(i["name"], i["value"]) for i in over] == [("Kontakt", 40), ("Präsenzsensor", "off")]
     # Zurücksetzen einzeln und im Popup (None)
     res = await _ws(client, next(ids), type=f"{DOMAIN}/reset_device_settings", signal=[zig.id, "gibtsnicht"])
-    assert res["result"] == {"battery": 0, "notify": 0, "connection": 0, "signal": 1}
+    assert res["result"] == {"battery": 0, "notify": 0, "connection": 0, "signal": 1, "offline": 0}
     assert await setting(zig.id) is None
     assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_device_settings", device_id=sensor.id, signal=None))["success"]
     assert await setting(sensor.id) is None

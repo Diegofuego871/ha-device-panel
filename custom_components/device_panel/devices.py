@@ -37,7 +37,15 @@ from .const import (
     CONF_FLAKY_OUTAGES,
     CONF_OFFLINE_AFTER,
     CONF_OFFLINE_INTEGRATIONS,
+    CONF_NOTIFY_EXCLUDE,
+    CONF_NOTIFY_ONLINE,
+    CONF_NOTIFY_OUTAGE,
+    CONF_NOTIFY_SERVICE,
+    CONF_OUTAGE_PERSISTENT,
+    CONF_PERSISTENT_EXCLUDE,
     MONITOR_OFF,
+    NOTIFY_NONE,
+    OFFLINE_INTEGRATION_RANGE,
     CONF_SHOW_DISABLED,
     CONF_SHOW_SERVICE,
     BATTERY_OFF,
@@ -315,6 +323,32 @@ def battery(
     return {"level": level, "low": low}
 
 
+def _offline_default(opts: dict[str, Any], domain: str | None) -> dict[str, Any]:
+    """"Ausgefallen nach" ohne Einstellung des Geräts: Minuten oder "off", dazu die Integration mit eigenem Wert."""
+    own = opts[CONF_OFFLINE_INTEGRATIONS].get(domain) if domain else None
+    return {
+        "minutes": own if own is not None else opts[CONF_OFFLINE_AFTER],
+        "integration": domain if own is not None else None,
+        "global": opts[CONF_OFFLINE_AFTER],
+    }
+
+
+def _notify_default(opts: dict[str, Any], domain: str | None) -> dict[str, Any]:
+    """
+    Push und anhaltende Benachrichtigung bei Ausfall für Geräte der Integration
+    (Optionen, ohne Einstellung des Geräts); "integration" nennt sie, wenn sie
+    von den globalen Schaltern abweicht.
+    """
+    push_on = opts[CONF_NOTIFY_SERVICE] != NOTIFY_NONE and (opts[CONF_NOTIFY_OUTAGE] or opts[CONF_NOTIFY_ONLINE])
+    ex_push = bool(domain) and domain in opts[CONF_NOTIFY_EXCLUDE]
+    ex_pers = bool(domain) and domain in opts[CONF_PERSISTENT_EXCLUDE]
+    return {
+        "push": bool(push_on) and not ex_push,
+        "persistent": bool(opts[CONF_OUTAGE_PERSISTENT]) and not ex_pers,
+        "integration": domain if ex_push or ex_pers else None,
+    }
+
+
 def _battery_fields(
     hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry, entries: list[er.RegistryEntry], domain: str | None
 ) -> dict[str, Any]:
@@ -432,12 +466,12 @@ def _shown(
 ) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:
     """
     Kandidaten nach "Anzeige", ohne ausgeschlossene Integrationen (primärer
-    Eintrag), Typen und einzeln ausgeblendete Geräte. Integrationen mit
-    "Ausgefallen nach" = "off" (Nicht überwachen) fehlen nur ohne unmonitored.
+    Eintrag), Typen und einzeln ausgeblendete Geräte. Geräte mit
+    "Ausgefallen nach" = "off" (Nicht überwachen, am Gerät oder an der
+    Integration) fehlen nur ohne unmonitored.
     """
     ex_devices = set(opts[CONF_EXCLUDE_DEVICES])
     ex_domains = set(opts[CONF_EXCLUDE_INTEGRATIONS])
-    off_domains = set() if unmonitored else {d for d, v in opts[CONF_OFFLINE_INTEGRATIONS].items() if v == MONITOR_OFF}
     ex_types = set(opts[CONF_EXCLUDE_TYPES])
     hubs = hub_ids(hass) if ex_types else set()
     for device, entries in candidate_devices(hass, service=opts[CONF_SHOW_SERVICE], disabled=disabled):
@@ -445,7 +479,7 @@ def _shown(
             continue
         if ex_domains and (primary := _primary_entry(hass, device)) and primary.domain in ex_domains:
             continue
-        if off_domains and (primary := _primary_entry(hass, device)) and primary.domain in off_domains:
+        if not unmonitored and device_offline_after(hass, opts, device) is None:
             continue
         if ex_types and effective_type(hass, device, entries, hubs)[0] in ex_types:
             continue
@@ -590,6 +624,8 @@ async def async_load_type_overrides(hass: HomeAssistant) -> None:
             },
             # Empfang-Warnung: "off" oder eigene Schwelle (seit 0.21.0).
             "signal": {str(k): v for k, v in (stored.get("signal") or {}).items() if valid_signal_setting(v)},
+            # "Ausgefallen nach" des Geräts: Minuten oder "off" (seit 0.31.0).
+            "offline": {str(k): v for k, v in (stored.get("offline") or {}).items() if valid_offline_setting(v)},
         }
         conns = stored.get("connections") if isinstance(stored.get("connections"), dict) else {}
         hass.data[DATA_CONNECTION_OVERRIDES] = {str(k): v for k, v in conns.items() if v in CONNECTION_MANUAL}
@@ -608,6 +644,8 @@ async def _async_save_devices(hass: HomeAssistant) -> None:
         data["notify_mute"] = mute
     if settings.get("signal"):
         data["signal"] = dict(settings["signal"])
+    if settings.get("offline"):
+        data["offline"] = dict(settings["offline"])
     await _types_store(hass).async_save(data)
 
 
@@ -615,9 +653,10 @@ async def _async_save_devices(hass: HomeAssistant) -> None:
 def device_settings(hass: HomeAssistant) -> dict[str, Any]:
     """
     {"battery": {Gerät: Prozent | "off"}, "notify_off": {Gerät, …},
-    "notify_mute": {Gerät: bis}, "signal": {Gerät: Schwelle | "off"}}.
+    "notify_mute": {Gerät: bis}, "signal": {Gerät: Schwelle | "off"},
+    "offline": {Gerät: Minuten | "off"}}.
     """
-    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}}
+    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}}
 
 
 def valid_signal_setting(value: Any) -> bool:
@@ -627,6 +666,28 @@ def valid_signal_setting(value: Any) -> bool:
     if not isinstance(value, int) or isinstance(value, bool):
         return False
     return SIGNAL_DBM_RANGE[0] <= value <= SIGNAL_DBM_RANGE[1] or SIGNAL_LQI_RANGE[0] <= value <= SIGNAL_LQI_RANGE[1]
+
+
+def valid_offline_setting(value: Any) -> bool:
+    """"Ausgefallen nach" des Geräts: "off" (nicht überwachen) oder ganze Minuten im Bereich der Integrationen."""
+    if value == MONITOR_OFF:
+        return True
+    low, high = OFFLINE_INTEGRATION_RANGE
+    return isinstance(value, int) and not isinstance(value, bool) and low <= value <= high
+
+
+def device_offline_after(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry) -> float | None:
+    """
+    Wirksames "Ausgefallen nach" eines Geräts in Sekunden: eigenes des Geräts,
+    sonst das der Integration, sonst das globale; None = nicht überwacht. Das
+    Gerät geht vor, auch gegen "Nicht überwachen" der Integration.
+    """
+    own = device_settings(hass).get("offline", {}).get(device.id)
+    if own == MONITOR_OFF:
+        return None
+    if isinstance(own, int):
+        return own * 60
+    return offline_after_for(opts, primary_domain(hass, device))
 
 
 def _iso(ts: float | None) -> str | None:
@@ -663,10 +724,16 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
     """
     Einstellungen eines Geräts: battery=None (globaler Wert), "off" oder
     Prozent; notify=True/False (Ausfall- und Online-Meldungen);
-    signal=None (Standard), "off" oder Schwelle "schwach unter".
+    signal=None (Standard), "off" oder Schwelle "schwach unter";
+    offline=None (Integration bzw. global), "off" oder Minuten.
     """
     await async_load_type_overrides(hass)
     settings = hass.data[DATA_DEVICE_SETTINGS]
+    if "offline" in changes:
+        if changes["offline"] is None:
+            settings.setdefault("offline", {}).pop(device_id, None)
+        else:
+            settings.setdefault("offline", {})[device_id] = changes["offline"]
     if "signal" in changes:
         if changes["signal"] is None:
             settings.setdefault("signal", {}).pop(device_id, None)
@@ -693,6 +760,7 @@ async def async_reset_device_settings(
     notify: list[str],
     connection: list[str] | None = None,
     signal: list[str] | None = None,
+    offline: list[str] | None = None,
 ) -> dict[str, int]:
     """
     Einstellungen mehrerer Geräte auf den globalen Wert zurück (Einstellungen,
@@ -712,9 +780,11 @@ async def async_reset_device_settings(
     done_conn = sum(1 for dev in set(connection or []) if conns.pop(dev, None) is not None)
     sig = settings.setdefault("signal", {})
     done_signal = sum(1 for dev in set(signal or []) if sig.pop(dev, None) is not None)
-    if done_battery or done_notify or done_conn or done_signal:
+    off = settings.setdefault("offline", {})
+    done_offline = sum(1 for dev in set(offline or []) if off.pop(dev, None) is not None)
+    if done_battery or done_notify or done_conn or done_signal or done_offline:
         await _async_save_devices(hass)
-    return {"battery": done_battery, "notify": done_notify, "connection": done_conn, "signal": done_signal}
+    return {"battery": done_battery, "notify": done_notify, "connection": done_conn, "signal": done_signal, "offline": done_offline}
 
 
 async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str, Any]]]:
@@ -732,7 +802,8 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
     conns = connection_overrides(hass)
     items: dict[str, dict[str, Any]] = {}
     signal = settings.get("signal", {})
-    for dev in {*settings["battery"], *settings["notify_off"], *conns, *signal}:
+    offline = settings.get("offline", {})
+    for dev in {*settings["battery"], *settings["notify_off"], *conns, *signal, *offline}:
         device = dev_reg.async_get(dev)
         if device is None:
             continue
@@ -761,6 +832,8 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
         "connection": sorted(({**items[dev], "value": kind} for dev, kind in conns.items() if dev in items), key=by_name),
         # Empfang-Warnung (seit 0.21.0): "off" oder Schwelle.
         "signal": sorted(({**items[dev], "value": value} for dev, value in signal.items() if dev in items), key=by_name),
+        # "Ausgefallen nach" des Geräts (seit 0.31.0): "off" oder Minuten.
+        "offline": sorted(({**items[dev], "value": value} for dev, value in offline.items() if dev in items), key=by_name),
     }
 
 
@@ -935,8 +1008,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         area = area_reg.async_get_area(device.area_id) if device.area_id else None
         disabled = bool(device.disabled_by)
         primary = _primary_entry(hass, device)
-        # Eigenes "Ausgefallen nach" der Integration; None = nicht überwacht.
-        offline_after = offline_after_for(opts, primary.domain if primary else None)
+        # "Ausgefallen nach": Gerät, Integration oder global; None = nicht überwacht.
+        offline_after = device_offline_after(hass, opts, device)
         unmonitored = offline_after is None
         # Deaktiviert oder nicht überwacht: kein Status, keine Ausfälle.
         online, since = (None, None) if disabled or unmonitored else device_status(hass, entries, now, offline_after)
@@ -984,6 +1057,12 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "unmonitored": unmonitored and not disabled,
                 # Wirksames "Ausgefallen nach" in Minuten (None = nicht überwacht).
                 "offline_after": None if offline_after is None else offline_after // 60,
+                # Einstellung des Geräts (None, "off" oder Minuten) und was ohne
+                # sie gälte, mit der Integration, falls sie einen eigenen Wert hat.
+                "offline_setting": device_settings(hass).get("offline", {}).get(device.id),
+                "offline_default": _offline_default(opts, primary.domain if primary else None),
+                # Ausfall-Meldungen ohne Einstellung des Geräts (Herkunft im Popup).
+                "notify_default": _notify_default(opts, primary.domain if primary else None),
                 # Beginn des Ausfalls, auch über Neustarts von HA (outage_start).
                 "offline_since": since.isoformat() if since else None,
                 # Beginn nicht bekannt (HA lief nicht): Dauer ist "mindestens".

@@ -53,7 +53,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Batterie globaler Wert`, (await ev(`const s=r.querySelector('select[data-dlg="dev-bat"]'); return s.value + "|" + s.options[s.selectedIndex].textContent`)) === `default|${T.def}`);
     check(`[${tag}] Meldungen: globale Einstellung`, (await ev(`const s=r.querySelector('select[data-dlg="dev-notify"]'); return s.value + "|" + s.options[s.selectedIndex].textContent`)) === `on|${T.notifyOn}`);
     check(`[${tag}] kein "wie eingestellt" mehr`, !(await ev(`return /wie eingestellt|as configured/i.test(r.querySelector("dialog.device").textContent)`)));
-    check(`[${tag}] Kurzzeile`, (await text('select[data-dlg="dev-bat"]').then(() => ev(`return r.querySelector('select[data-dlg="dev-bat"]').closest(".opt").querySelector(".opt-short").textContent`))).startsWith(T.short));
+    check(`[${tag}] Kurzzeile`, (await text('select[data-dlg="dev-bat"]').then(() => ev(`return r.querySelector('select[data-dlg="dev-bat"]').closest(".opt").querySelector(".origin").title`))).startsWith(T.short));
     await (await handle('select[data-dlg="dev-bat"]')).selectOption("own");
     check(`[${tag}] eigene Schwelle beginnt beim geltenden Wert`, await wait(`return r.querySelector('input[data-dlg="dev-bat-pct"]')?.value === "15"`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "c", battery: 15 }), JSON.stringify((await calls()).at(-1)));
     const inp = await handle('input[data-dlg="dev-bat-pct"]');

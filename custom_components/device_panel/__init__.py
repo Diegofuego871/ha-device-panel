@@ -75,6 +75,7 @@ from .devices import (
     async_set_device_settings,
     async_set_type_override,
     device_battery_threshold,
+    valid_offline_setting,
     valid_signal_setting,
 )
 
@@ -472,6 +473,13 @@ async def _ws_set_device_connection(
     connection.send_result(msg["id"], {"connection": msg["connection"]})
 
 
+def _offline_setting(value: Any) -> Any:
+    """"Ausgefallen nach" des Geräts: "off" oder Minuten (True zählt nicht als Zahl)."""
+    if not valid_offline_setting(value):
+        raise vol.Invalid("off oder ganze Minuten von 1 bis 1440 erwartet")
+    return value
+
+
 def _signal_setting(value: Any) -> Any:
     """Empfang-Warnung: "off" oder ganze Zahl (kein bool) im Bereich für dBm oder LQI."""
     if not valid_signal_setting(value):
@@ -493,6 +501,9 @@ def _signal_setting(value: Any) -> Any:
         # Empfang-Warnung: None = Standard, "off" = aus, Zahl = schwach unter
         # (dBm negativ, LQI positiv).
         vol.Optional("signal"): vol.Any(None, _signal_setting),
+        # "Ausgefallen nach": None = Integration bzw. global, "off" = nicht
+        # überwachen, Zahl = Minuten.
+        vol.Optional("offline"): vol.Any(None, _offline_setting),
     }
 )
 @websocket_api.require_admin
@@ -504,7 +515,7 @@ async def _ws_set_device_settings(
     if dr.async_get(hass).async_get(msg["device_id"]) is None:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
         return
-    changes = {k: msg[k] for k in ("battery", "notify", "signal") if k in msg}
+    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline") if k in msg}
     await async_set_device_settings(hass, msg["device_id"], **changes)
     # Batterie-Warnung sofort nachführen (Push, anhaltende Benachrichtigung).
     if "battery" in changes and (watch := hass.data.get(DATA_BATTERY)) is not None:
@@ -546,6 +557,8 @@ async def _ws_hide_device(
         vol.Optional("connection", default=[]): [str],
         # Empfang-Warnung: zurück auf den Standard.
         vol.Optional("signal", default=[]): [str],
+        # "Ausgefallen nach" des Geräts: zurück auf Integration bzw. global.
+        vol.Optional("offline", default=[]): [str],
     }
 )
 @websocket_api.require_admin
@@ -554,7 +567,7 @@ async def _ws_reset_device_settings(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
     """Einstellungen pro Gerät zurücksetzen, gibt die Zahl der Geräte zurück."""
-    done = await async_reset_device_settings(hass, msg["battery"], msg["notify"], msg["connection"], msg["signal"])
+    done = await async_reset_device_settings(hass, msg["battery"], msg["notify"], msg["connection"], msg["signal"], msg["offline"])
     # Batterie-Warnung sofort nachführen (Push, anhaltende Benachrichtigung).
     if done["battery"] and (watch := hass.data.get(DATA_BATTERY)) is not None:
         await watch.async_check()

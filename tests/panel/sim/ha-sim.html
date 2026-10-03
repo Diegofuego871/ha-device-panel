@@ -392,6 +392,7 @@
       notify: devices.filter((d) => s.notifyOff.has(d.id)).map(info).sort(byName),
       connection: devices.filter((d) => d.id in window.__connOverrides).map((d) => ({ ...info(d), value: window.__connOverrides[d.id] })).sort(byName),
       signal: devices.filter((d) => d.id in s.signal).map((d) => ({ ...info(d), value: s.signal[d.id] })).sort(byName),
+      offline: devices.filter((d) => d.id in s.offline).map((d) => ({ ...info(d), value: s.offline[d.id] })).sort(byName),
     };
   }
   const integrations = {
@@ -465,7 +466,7 @@
   };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
-  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {} };
+  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {} };
   window.__connOverrides = {};
   const pushHass = () => {
     const ha = document.querySelector("home-assistant").hass;
@@ -569,7 +570,9 @@
         for (const id of new Set(msg.connection || [])) if (id in window.__connOverrides) { delete window.__connOverrides[id]; connection++; }
         let signal = 0;
         for (const id of new Set(msg.signal || [])) if (id in s.signal) { delete s.signal[id]; signal++; }
-        return { battery, notify, connection, signal };
+        let offline = 0;
+        for (const id of new Set(msg.offline || [])) if (id in s.offline) { delete s.offline[id]; offline++; }
+        return { battery, notify, connection, signal, offline };
       }
       if (msg.type === "device_panel/set_options") {
         if (window.__setOptsFails) throw new Error(window.__setOptsFails);
@@ -637,6 +640,14 @@
           else window.__devSettings.battery[msg.device_id] = v;
           out.battery = v;
         }
+        if ("offline" in msg) {
+          // Wie das Backend: "off" oder Minuten 1..1440.
+          const v = msg.offline;
+          if (!(v === null || v === "off" || (Number.isInteger(v) && v >= 1 && v <= 1440))) throw { code: "invalid_format", message: "offline" };
+          if (v === null) delete window.__devSettings.offline[msg.device_id];
+          else window.__devSettings.offline[msg.device_id] = v;
+          out.offline = v;
+        }
         if ("signal" in msg) {
           // Wie das Backend: "off" oder dBm -110..-40 bzw. LQI 1..200.
           const v = msg.signal;
@@ -694,13 +705,26 @@
         // Wie das Backend: Integration auf "off" = sichtbar, ohne Status;
         // sonst eigene Minuten oder der globale Wert.
         const offMap = window.__opts.offline_after_integrations || {};
-        const unmon = (d) => offMap[d.integration?.domain] === "off" && !d.disabled;
+        const devOff = window.__devSettings.offline;
+        // Gerät vor Integration vor global (wie devices.device_offline_after)
+        const offEff = (d) => (d.id in devOff ? devOff[d.id] : offMap[d.integration?.domain] ?? window.__opts.offline_after);
+        const unmon = (d) => offEff(d) === "off" && !d.disabled;
+        const notifyDefault = (d) => {
+          const dom = d.integration?.domain;
+          const exP = window.__opts.notify_exclude_integrations.includes(dom);
+          const exA = window.__opts.persistent_exclude_integrations.includes(dom);
+          const pushOn = window.__opts.notify_service !== "none" && (window.__opts.notify_outage || window.__opts.notify_online);
+          return { push: pushOn && !exP, persistent: Boolean(window.__opts.outage_persistent) && !exA, integration: exP || exA ? dom : null };
+        };
         const res = {
           devices: shown().map((d) => ({
             ...d,
             ...(unmon(d) ? { online: null, offline_since: null, since_at_least: false } : {}),
             unmonitored: unmon(d),
-            offline_after: unmon(d) ? null : offMap[d.integration?.domain] ?? window.__opts.offline_after,
+            offline_after: unmon(d) ? null : offEff(d),
+            offline_setting: devOff[d.id] ?? null,
+            offline_default: { minutes: offMap[d.integration?.domain] ?? window.__opts.offline_after, integration: d.integration?.domain in offMap ? d.integration.domain : null, global: window.__opts.offline_after },
+            notify_default: notifyDefault(d),
             flaky: !unmon(d) && Boolean(d.online && d.avail24 && d.avail24.outages >= flakyN),
             battery: bat(d),
             has_battery: Boolean(d.battery),

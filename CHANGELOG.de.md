@@ -7,6 +7,29 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.31.0] - 2026-10-03
+
+Herkunft jeder Einstellung im Geräte-Popup und "Ausgefallen nach" pro Gerät.
+
+### Hinzugefügt
+
+- Geräte-Popup, "Einstellungen für dieses Gerät": Unter jeder Einstellung
+  zeigt ein Etikett, woher der Wert kommt (Standard, Integration mit Namen
+  oder Gerät), und was der Standard wäre ("Standard wäre 2 Min."). Die
+  Erklärung steht jetzt im Tooltip des Etiketts. Auch die Auswahl sagt es:
+  "Wie Integration (1 Std.)" statt "Globaler Wert", wenn die Integration
+  einen eigenen Wert hat.
+- Neue Zeile "Ausgefallen nach" pro Gerät: wie Integration bzw. globaler
+  Wert, eigene Zeit in Minuten (1 bis 1440) oder "Nicht überwachen". Das
+  Gerät geht vor, auch gegen "Nicht überwachen" der Integration. Ein Symbol
+  beim Namen und der Chip "Eigene Einstellung" zeigen Geräte mit eigener
+  Zeit; in den Einstellungen (Abschnitt "Ausfall-Erkennung") setzt eine
+  Liste sie auf den Wert der Integration bzw. den globalen Wert zurück,
+  einzeln oder alle.
+- Ausfall-Meldungen zeigen den Stand der Integration: "Push an ·
+  Anhaltend aus", und "Wie Integration", wenn die Integration von Push oder
+  anhaltender Benachrichtigung ausgenommen ist.
+
 ## [0.30.0] - 2026-10-03
 
 Eigenes "Ausgefallen nach" pro Integration und "Nicht überwachen".
@@ -845,6 +868,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.31.0
 [0.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.30.0
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0
 [0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0

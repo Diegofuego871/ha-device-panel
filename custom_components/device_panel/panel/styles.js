@@ -445,6 +445,12 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .opt:last-child { border-bottom: none; }
 .opt-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
 .opt-label { display: inline-flex; align-items: center; gap: 2px; min-width: 0; }
+/* Herkunft einer Einstellung im Geräte-Popup (Etikett + Standardwert) */
+.opt-origin { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 6px; color: var(--dp-text2); font-size: 12px; line-height: 1.35; }
+.origin { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 10px; font-size: 11.5px; font-weight: 500; cursor: help; }
+.origin.std { background: var(--dp-subtle); color: var(--dp-text2); }
+.origin.integ { background: color-mix(in srgb, #7c4dff 16%, transparent); color: color-mix(in srgb, #7c4dff 65%, var(--dp-text)); }
+.origin.own { background: var(--dp-primary-soft); color: var(--dp-primary); }
 .opt-short { margin-top: 3px; color: var(--dp-text2); font-size: 12px; line-height: 1.35; }
 .opt-info { margin-top: 6px; padding: 8px 10px; border-radius: 8px; background: var(--dp-subtle); color: var(--dp-text2); font-size: 12px; line-height: 1.45; }
 /* Zahlenfeld mit Einheit (wie unifi_dynamic); rot bei Wert ausserhalb des Bereichs. */

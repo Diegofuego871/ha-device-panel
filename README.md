@@ -129,9 +129,13 @@ details such as software version, manufacturer, model and area.
   Home Assistant, with their own chip.
 - Settings per device at a glance: a symbol next to the name (own battery
   threshold, battery warning off, notifications off, connection type set by
-  hand, own signal warning), the chip "Own setting" shows only those
+  hand, own signal warning, own "Offline after" or "Don't monitor"), the chip "Own setting" shows only those
   devices, and the settings list them for resetting, one by one or all at
   once.
+- Origin of every setting in the device pop-up: under each setting a label
+  (Default, Integration, Device) and what the default would be. "Offline
+  after" can be set per device too (same as the integration, own time or
+  "Don't monitor"); the device comes first.
 - Settings in the panel (gear icon) with updates: check for a new version,
   update via HACS with one click, restart afterwards, optionally offer
   pre-releases ("Enable in HACS" switches on the HACS pre-release option).

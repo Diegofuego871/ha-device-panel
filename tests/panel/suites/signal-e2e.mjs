@@ -67,7 +67,7 @@ for (const lang of ["de", "en"]) {
     // Steckdose Terrasse (-84 dBm, schwach): eigene Schwelle
     await open("d");
     check(`[${tag}] Zeile mit globalem Wert`, (await sel()) === `default|${T.def}` && (await ev(`return [...r.querySelector('select[data-dlg="dev-sig"]').options].map(o=>o.textContent).join("|")`)) === T.modes, await sel());
-    check(`[${tag}] Kurzzeile mit heutigem Wert`, (await ev(`return r.querySelector('select[data-dlg="dev-sig"]').closest(".opt").querySelector(".opt-short").textContent`)).startsWith(T.short));
+    check(`[${tag}] Kurzzeile mit heutigem Wert`, (await ev(`return r.querySelector('select[data-dlg="dev-sig"]').closest(".opt").querySelector(".origin").title`)).startsWith(T.short));
     await (await handle('select[data-dlg="dev-sig"]')).selectOption("own");
     check(`[${tag}] Vorschlag 5 dBm unter heute`, await wait(`return r.querySelector('input[data-dlg="dev-sig-val"]')?.value === "-89"`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "d", signal: -89 }), JSON.stringify((await calls()).at(-1)));
     check(`[${tag}] Feld mit Einheit und Beschriftung`, (await text('.opt-sub:has(input[data-dlg="dev-sig-val"]) .unit')) === "dBm" && (await text('.opt-sub:has(input[data-dlg="dev-sig-val"]) .opt-label')) === T.low);
