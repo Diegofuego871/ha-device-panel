@@ -165,6 +165,8 @@ async def test_option_is_checked_and_listed(hass: HomeAssistant, setup, hass_ws_
 
 async def test_real_ai_task_call(hass: HomeAssistant, setup, hass_ws_client) -> None:
     """Echter Aufruf von ai_task.async_generate_data mit einer Ersatz-Entität: Antwort, Quelle, Anweisung."""
+    # ai_task hängt von conversation ab, das hassil braucht; in der CI fehlt es.
+    pytest.importorskip("hassil")
     from homeassistant.components import ai_task
     from homeassistant.components.ai_task import AITaskEntity, AITaskEntityFeature
     from homeassistant.setup import async_setup_component

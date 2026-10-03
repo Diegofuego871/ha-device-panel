@@ -130,6 +130,9 @@ hat dort einen echten Fehler oder Umweg gekostet.
   `entity_id` gilt die Standard-Aufgabe; ist keine gesetzt, wirft es
   `HomeAssistantError("No entity_id provided and no preferred entity set")`.
   Import erst beim Aufruf, damit die Integration auch ohne ai_task läuft;
+  In der CI fehlt `hassil` (Abhängigkeit von `conversation`, die `ai_task`
+  braucht): der Test mit echter `ai_task`-Komponente überspringt sich dort
+  (`pytest.importorskip("hassil")`), läuft aber lokal.
   Fehlertexte nicht ins Panel geben, ohne sie zu kürzen (sie können
   Anbieter-Meldungen enthalten).
 - Matter-Diagnose (`matter/node_diagnostics`): `node_type` kennt
