@@ -31,6 +31,8 @@ Weak signal warning per device and new devices marked.
 
 ## [0.20.0] - 2026-10-03
 
+Not released; included in 0.21.0.
+
 Outage notifications per integration, with delay, content, actions and a
 persistent notification.
 
@@ -77,7 +79,7 @@ persistent notification.
 
 ## [0.19.0] - 2026-10-02
 
-Not released; included in 0.20.0.
+Not released; included in 0.21.0.
 
 Columns, sorting and view per user, separately for desktop and phone.
 
@@ -583,7 +585,6 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [0.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.21.0
-[0.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.20.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0

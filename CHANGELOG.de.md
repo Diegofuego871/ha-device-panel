@@ -32,6 +32,8 @@ Empfang-Warnung pro Gerät und neue Geräte markiert.
 
 ## [0.20.0] - 2026-10-03
 
+Nicht veröffentlicht; enthalten in 0.21.0.
+
 Ausfall-Meldungen pro Integration, mit Verzögerung, Inhalt, Aktionen und
 anhaltender Benachrichtigung.
 
@@ -81,7 +83,7 @@ anhaltender Benachrichtigung.
 
 ## [0.19.0] - 2026-10-02
 
-Nicht veröffentlicht; enthalten in 0.20.0.
+Nicht veröffentlicht; enthalten in 0.21.0.
 
 Spalten, Sortierung und Ansicht pro Benutzer, getrennt für Desktop und
 Handy.
@@ -614,7 +616,6 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [0.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.21.0
-[0.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.20.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0

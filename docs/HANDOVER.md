@@ -149,8 +149,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Protokolls aus dem Recorder. Mit `0.19.0` (Nutzer, 2026-10-02, Desktop
    nach Bild 6, Handy A in `docs/mockups/view-v1/`): Spalten, Sortierung,
    Gruppen oder Liste und Filter-Chips pro Benutzer, getrennt
-   Desktop/Handy (Fahrplan Schritt 2). `0.19.0` ohne Release, in `0.20.0`
-   enthalten. Mit `0.20.0` (Bild 5): Spalten "Push" und "Anhaltend" bei
+   Desktop/Handy (Fahrplan Schritt 2). `0.19.0` und `0.20.0` ohne
+   Release, in `0.21.0` enthalten. Mit `0.20.0` (Bild 5): Spalten "Push"
+   und "Anhaltend" bei
    den Integrationen, "Erst melden nach", Inhalt der Meldung mit Vorschau,
    Aktionen "Öffnen" und "24 Std. stumm", anhaltende Benachrichtigung bei
    Ausfällen; behoben: eine Abfrage, die vor einer eigenen Änderung begann,
