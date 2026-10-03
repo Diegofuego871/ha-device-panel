@@ -7,7 +7,27 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.22.0] - 2026-10-03
+
+Batterie-Verlauf im Geräte-Popup.
+
+### Hinzugefügt
+
+- Ein Tipp auf die Kachel "Batterie" im Geräte-Popup (Geräte mit Batterie
+  in Prozent) öffnet das Fenster "Batterie" mit 24 Std., 7 Tagen, 30 Tagen
+  und 3 Monaten: der Stand als Linie mit Fläche wie ein Kurs, Achse immer
+  0–100 %, die Warnschwelle gestrichelt, Batteriewechsel markiert und
+  darunter aufgeführt (Sprung um mindestens 30 Punkte nach oben). Oben der
+  aktuelle Stand, die Veränderung seit dem letzten Wechsel und der
+  Verbrauch pro Tag, sonst tiefster und höchster Wert.
+- Quelle ist der Recorder: 24 Std. und 7 Tage aus dem Verlauf, 30 Tage und
+  3 Monate aus der Langzeitstatistik (Stundenwerte, bleiben über die
+  10 Tage des Recorders hinaus). Ohne Statistik (Sensor ohne state_class)
+  gilt der Verlauf, so weit der Recorder Daten hat; das Fenster sagt das.
+
 ## [0.21.0] - 2026-10-03
+
+Nicht veröffentlicht; enthalten in 0.22.0.
 
 Empfang-Warnung pro Gerät und neue Geräte markiert.
 
@@ -32,7 +52,7 @@ Empfang-Warnung pro Gerät und neue Geräte markiert.
 
 ## [0.20.0] - 2026-10-03
 
-Nicht veröffentlicht; enthalten in 0.21.0.
+Nicht veröffentlicht; enthalten in 0.22.0.
 
 Ausfall-Meldungen pro Integration, mit Verzögerung, Inhalt, Aktionen und
 anhaltender Benachrichtigung.
@@ -83,7 +103,7 @@ anhaltender Benachrichtigung.
 
 ## [0.19.0] - 2026-10-02
 
-Nicht veröffentlicht; enthalten in 0.21.0.
+Nicht veröffentlicht; enthalten in 0.22.0.
 
 Spalten, Sortierung und Ansicht pro Benutzer, getrennt für Desktop und
 Handy.
@@ -615,7 +635,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[0.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.21.0
+[0.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.22.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0

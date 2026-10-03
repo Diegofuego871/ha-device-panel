@@ -124,6 +124,11 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   "Anzeigen", "Push", "Anhaltend"): Spalten fester Breite (`.ex-col`,
   72 px, Handy 52 px), Kopf in Grossbuchstaben, darunter "Alle umschalten"
   je Spalte; ausgeblendete Zeile sperrt die übrigen Schalter (gedämpft).
+- Verlauf als Kurs (seit 0.22.0, Fenster "Batterie"): Fläche und Linie in
+  Primärfarbe, Gitter bei 0/50/100 %, Schwelle rot gestrichelt mit Text
+  links, Wechsel grau gestrichelt mit Text oben, Punkt mit Hof am Ende
+  ("jetzt"). Gleicher Rahmen wie "Verfügbarkeit" (Zeitraum oben, Kennzahl
+  gross, Liste unten, Quelle als Kurzzeile).
 - Markierung "Neu" (seit 0.21.0): kleines Etikett beim Namen in Grün
   (`--dp-success`, wie "online"), damit es sich von den blauen Symbolen der
   eigenen Einstellungen abhebt; Chip "Neu" mit Funkel-Symbol in Grün.

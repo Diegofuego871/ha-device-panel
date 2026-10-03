@@ -219,6 +219,14 @@ hat dort einen echten Fehler oder Umweg gekostet.
 - **Zusammenfassungen nicht wie Zustände formulieren:** "Batterie schwach"
   als Liste eingeschalteter Meldungen las sich wie eine Warnung; mit Verb
   ("meldet …").
+- **Langzeitstatistik im Test (0.22.0):** `async_import_statistics` mit
+  `source: "recorder"` und der Entität als `statistic_id` schreibt echte
+  Stundenwerte in die Test-Datenbank (`mean_type`, `unit_class` angeben,
+  sonst Warnung); danach `async_wait_recording_done`. So läuft
+  `statistics_during_period` wie im Betrieb.
+- **Batteriesensoren melden selten (0.22.0):** Zwischen 22 % und 100 %
+  lagen im Test 18 Std.; ein Wechsel nur "innert 3 Std." wurde nicht
+  erkannt. Der vorige Punkt zählt darum immer.
 - **Negative Zahlen auf dem Handy (0.21.0):** `inputmode="numeric"` zeigt
   auf iOS nur Ziffern, ohne Minus; für die Empfang-Schwelle in dBm darum
   `type="number"` ohne `inputmode` (Zahlen- und Zeichentastatur). Auf einem

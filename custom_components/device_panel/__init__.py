@@ -12,6 +12,7 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.storage import Store
 
 from . import options_api, update_check
@@ -19,6 +20,8 @@ from .availability import RANGES, AvailabilityLog
 from .availability import STORAGE_KEY as AVAILABILITY_STORE_KEY
 from .battery import STORE_KEY as BATTERY_STORE_KEY
 from .battery import BatteryWatch
+from .battery_history import RANGES as BATTERY_RANGES
+from .battery_history import async_battery_history, battery_entity
 from .outage import STORE_KEY as NOTIFY_STORE_KEY
 from .outage import OutageNotifier
 from .const import (
@@ -66,6 +69,7 @@ from .devices import (
     async_set_connection_override,
     async_set_device_settings,
     async_set_type_override,
+    device_battery_threshold,
     valid_signal_setting,
 )
 
@@ -255,6 +259,31 @@ def _ws_availability(
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "availability log not running")
         return
     connection.send_result(msg["id"], log.history(msg["device_id"], msg["range"]))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/battery_history",
+        vol.Required("device_id"): str,
+        vol.Optional("range", default="24h"): vol.In(list(BATTERY_RANGES)),
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_battery_history(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Batterie-Verlauf für das Fenster "Batterie" (seit 0.22.0)."""
+    device = dr.async_get(hass).async_get(msg["device_id"])
+    if device is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
+        return
+    entity_id = battery_entity(hass, er.async_entries_for_device(er.async_get(hass), device.id))
+    if entity_id is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "no battery level")
+        return
+    threshold = device_battery_threshold(hass, options_api.effective(hass), device)
+    connection.send_result(msg["id"], await async_battery_history(hass, entity_id, msg["range"], threshold))
 
 
 @websocket_api.websocket_command(
@@ -485,6 +514,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_list_devices)
     websocket_api.async_register_command(hass, _ws_device)
     websocket_api.async_register_command(hass, _ws_availability)
+    websocket_api.async_register_command(hass, _ws_battery_history)
     websocket_api.async_register_command(hass, _ws_version)
     websocket_api.async_register_command(hass, _ws_set_panel)
     websocket_api.async_register_command(hass, _ws_get_options)

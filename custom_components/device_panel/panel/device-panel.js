@@ -74,6 +74,8 @@ const MATTER_REFRESH_MS = 3600000;
 const DETAIL_MAX_AGE_MS = 30000;
 const HISTORY_MAX_AGE_MS = 60000;
 const RANGES = ["24h", "7d", "30d"];
+// Batterie-Verlauf (seit 0.22.0, docs/mockups/battery-history-v1, A): dazu 3 Monate.
+const BAT_RANGES = ["24h", "7d", "30d", "90d"];
 // Kaum Daten im Zeitraum (neu installiert): Zeitstrahl erst ab dem ersten
 // Datenpunkt, sonst wäre er fast ganz schraffiert (wie unifi_dynamic).
 const ZOOM_SHARE = 0.1;
@@ -895,6 +897,8 @@ class DevicePanel extends HTMLElement {
       for (; d.getTime() < end * 1000; d.setDate(d.getDate() + 1)) {
         if (mode === "7d") {
           ticks.push({ at: d.getTime() / 1000, label: d.toLocaleDateString(this._locale(), { weekday: "short" }), minor: false });
+        } else if (mode === "90d") {
+          if (d.getDate() === 1) ticks.push({ at: d.getTime() / 1000, label: d.toLocaleDateString(this._locale(), { month: "long" }), minor: false });
         } else if (d.getDate() % 5 === 0 && d.getDate() !== 30) {
           ticks.push({ at: d.getTime() / 1000, label: d.toLocaleDateString(this._locale(), { day: "numeric", month: "numeric" }), minor: d.getDate() % 10 !== 0 });
         }
@@ -1724,9 +1728,9 @@ class DevicePanel extends HTMLElement {
     this._renderDevice();
   }
 
-  _statTile(range, label, valueHtml, sub) {
-    return `<button type="button" class="st-tile" data-dlg="stat" data-range="${range}">
-      <span class="st-k">${escape(label)}</span><span class="st-v">${valueHtml}</span><span class="st-sub">${escape(sub)}</span>${mdi("chevron", 16).replace('class="ic"', 'class="ic chev"')}</button>`;
+  _statTile(range, label, valueHtml, sub, kind = "avail", bad = false) {
+    return `<button type="button" class="st-tile" data-dlg="stat" data-range="${range}" data-kind="${kind}">
+      <span class="st-k">${escape(label)}</span><span class="st-v${bad ? " bad" : ""}">${valueHtml}</span><span class="st-sub">${escape(sub)}</span>${mdi("chevron", 16).replace('class="ic"', 'class="ic chev"')}</button>`;
   }
 
   _staticTile(label, valueHtml, sub, bad = false) {
@@ -1772,7 +1776,9 @@ class DevicePanel extends HTMLElement {
     if (d.battery) {
       const b = d.battery;
       const value = b.level != null ? `${escape(String(b.level))}<small>%</small>` : escape(b.low ? this._t("batteryLow") : "OK");
-      tiles.push(this._staticTile(this._t("tileBattery"), value, b.low && b.level != null ? this._t("batteryLow") : "", b.low));
+      // Mit Prozent: Tipp öffnet den Verlauf; "schwach ja/nein" nur als Kachel.
+      if (b.level != null) tiles.push(this._statTile("30d", this._t("tileBattery"), value, b.low ? this._t("batteryLow") : this._t("batHistoryHint"), "battery", b.low));
+      else tiles.push(this._staticTile(this._t("tileBattery"), value, "", b.low));
     }
     return `<div class="st-tiles" style="--n:${tiles.length}">${tiles.join("")}</div>`;
   }
@@ -2012,7 +2018,7 @@ class DevicePanel extends HTMLElement {
       const id = this._detailId;
       this._closeDevice();
       this._navigate(`/config/devices/device/${id}`);
-    } else if (action === "stat") this._openStat(btn.dataset.range);
+    } else if (action === "stat") this._openStat(btn.dataset.range, btn.dataset.kind);
     else if (action === "more-info") this._openMoreInfo(btn.dataset.entity);
   }
 
@@ -2039,10 +2045,11 @@ class DevicePanel extends HTMLElement {
 
   // --- Statistik-Fenster (über dem Popup) -----------------------------------
 
-  _openStat(range) {
+  _openStat(range, kind = "avail") {
     const dlg = this.shadowRoot.querySelector("dialog.stat-dlg");
     if (!dlg || !this._detailId) return;
-    this._statRange = RANGES.includes(range) ? range : "24h";
+    this._statKind = kind === "battery" ? "battery" : "avail";
+    this._statRange = this._statRanges().includes(range) ? range : "24h";
     // X des Popups dahinter ausblenden: es wirkt sonst, als gehöre es zum
     // Statistik-Fenster (wie unifi_dynamic).
     this.setAttribute("stat-open", "");
@@ -2053,6 +2060,15 @@ class DevicePanel extends HTMLElement {
     }
     dlg.scrollTop = 0;
     this._loadHistory(true);
+  }
+
+  _statRanges() {
+    return this._statKind === "battery" ? BAT_RANGES : RANGES;
+  }
+
+  // Schlüssel des geladenen Verlaufs: Art, Gerät, Zeitraum.
+  _histKey(range) {
+    return `${this._statKind || "avail"}|${this._detailId}|${range}`;
   }
 
   _closeStat() {
@@ -2069,13 +2085,14 @@ class DevicePanel extends HTMLElement {
     const id = this._detailId;
     const range = this._statRange;
     if (!id || !range || !this._hass) return;
-    const key = `${id}|${range}`;
+    const key = this._histKey(range);
+    const type = this._statKind === "battery" ? "device_panel/battery_history" : "device_panel/availability";
     const cur = this._hist;
     if (!force && cur && cur.key === key && (cur.loading || Date.now() - cur.at < HISTORY_MAX_AGE_MS)) return;
     const prev = cur && cur.key === key ? cur.data : null;
     this._hist = { key, data: prev, loading: true, at: Date.now() };
     try {
-      const data = await this._hass.callWS({ type: "device_panel/availability", device_id: id, range });
+      const data = await this._hass.callWS({ type, device_id: id, range });
       if (this._hist?.key !== key) return;
       this._hist = { key, data, loading: false, at: Date.now() };
     } catch (err) {
@@ -2095,13 +2112,14 @@ class DevicePanel extends HTMLElement {
     }
     const range = this._statRange;
     const ranges = this._t("ranges");
-    const sw = `<div class="stat-range"><span class="seg-sw" role="group">${RANGES.map(
+    const battery = this._statKind === "battery";
+    const sw = `<div class="stat-range"><span class="seg-sw" role="group">${this._statRanges().map(
       (r) => `<button type="button" data-stat="range" data-range="${r}" class="${r === range ? "on" : ""}" aria-pressed="${r === range}">${escape(ranges[r])}</button>`
     ).join("")}</span></div>`;
-    const html = `<div class="dlg-head stat-head"><span class="dlg-avatar">${mdi("pulse", 24)}</span>
-        <div class="dlg-title"><h2>${escape(this._t("statTitle"))}</h2><div class="dlg-sub">${escape(d.name)}</div></div>
+    const html = `<div class="dlg-head stat-head"><span class="dlg-avatar">${mdi(battery ? "battery" : "pulse", 24)}</span>
+        <div class="dlg-title"><h2>${escape(this._t(battery ? "tileBattery" : "statTitle"))}</h2><div class="dlg-sub">${escape(d.name)}</div></div>
         <button type="button" class="dlg-close" data-stat="close" title="${escape(this._t("close"))}" aria-label="${escape(this._t("close"))}">${mdi("close", 18)}</button></div>
-      <div class="dlg-body">${sw}${this._historyHtml(range)}</div>`;
+      <div class="dlg-body">${sw}${battery ? this._batteryHistHtml(range) : this._historyHtml(range)}</div>`;
     const scroll = dlg.scrollTop;
     if (setHtml(dlg, html)) dlg.scrollTop = scroll;
   }
@@ -2110,7 +2128,7 @@ class DevicePanel extends HTMLElement {
   // Liste der Unterbrüche; ab 7 Tagen Säulen "Unterbrüche pro Tag".
   _historyHtml(range) {
     const h = this._hist;
-    const key = `${this._detailId}|${range}`;
+    const key = this._histKey(range);
     if (!h || h.key !== key || (!h.data && h.loading)) return `<div class="avail"><p class="dlg-note">${escape(this._t("loadingDetail"))}</p></div>`;
     if (!h.data) return `<div class="dlg-error">${escape(this._t("error"))} ${escape(h.error || "")}</div>`;
     const { start, end, segments: segs = [], summary } = h.data;
@@ -2180,6 +2198,65 @@ class DevicePanel extends HTMLElement {
         <div class="avail-barwrap"><div class="avail-bar">${segHtml}<span class="avail-now"></span></div><div class="avail-tip" hidden></div></div>
         <div class="avail-ticks">${ticks}<span class="now-label">${escape(this._t("now"))}</span></div>
         ${legend}${list}</div>${this._daysHtml(h.data.days || [])}`;
+  }
+
+  // Batterie-Verlauf wie ein Kurs (Variante A): Linie mit Fläche, Achse
+  // immer 0–100 % (Schwelle sichtbar, Zeiträume vergleichbar), Schwelle
+  // gestrichelt, Batteriewechsel markiert und darunter aufgeführt.
+  _batteryHistHtml(range) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const h = this._hist;
+    const key = this._histKey(range);
+    if (!h || h.key !== key || (!h.data && h.loading)) return `<div class="avail"><p class="dlg-note">${escape(t("loadingDetail"))}</p></div>`;
+    if (!h.data) return `<div class="dlg-error">${escape(t("error"))} ${escape(h.error || "")}</div>`;
+    const { start, end, points = [], changes = [], threshold, source } = h.data;
+    if (!points.length) return `<div class="avail"><p class="dlg-note">${escape(t("batNoData"))}</p></div><p class="dlg-note bh-src">${escape(t("batSrcNone"))}</p>`;
+    const span = end - start;
+    const x = (at) => Math.max(0, Math.min(1000, ((at - start) / span) * 1000));
+    const y = (v) => 100 - Math.max(0, Math.min(100, v));
+    const cur = points[points.length - 1][1];
+    const vals = points.map((p) => p[1]);
+    const fmt = (v) => this._fmtPct(Math.round(v * 10) / 10);
+    const facts = [];
+    const last = changes[changes.length - 1];
+    if (last) {
+      facts.push(t("batSince", Math.round(cur - last.to), this._fmtDate(last.at)));
+      const days = (end - last.at) / 86400;
+      if (days >= 1 && last.to > cur) facts.push(t("batPerDay", fmt((last.to - cur) / days)));
+    } else {
+      facts.push(t("batMinMax", Math.round(Math.min(...vals)), Math.round(Math.max(...vals))));
+      const days = (end - points[0][0]) / 86400;
+      const drop = points[0][1] - cur;
+      if (range !== "24h" && days >= 1 && drop >= 1) facts.push(t("batPerDay", fmt(drop / days)));
+    }
+    const line = points.map(([at, v], i) => `${i ? "L" : "M"}${x(at).toFixed(1)},${y(v).toFixed(2)}`).join(" ");
+    const area = `${line} L${x(points[points.length - 1][0]).toFixed(1)},100 L${x(points[0][0]).toFixed(1)},100 Z`;
+    const grid = [0, 50, 100].map((v) => `<line class="bh-grid" x1="0" x2="1000" y1="${y(v)}" y2="${y(v)}" vector-effect="non-scaling-stroke"/>`).join("");
+    const thr = Number.isInteger(threshold)
+      ? `<line class="bh-thr" x1="0" x2="1000" y1="${y(threshold)}" y2="${y(threshold)}" vector-effect="non-scaling-stroke"/>`
+      : "";
+    const marks = changes.map((c) => `<line class="bh-chg" x1="${x(c.at).toFixed(1)}" x2="${x(c.at).toFixed(1)}" y1="0" y2="100" vector-effect="non-scaling-stroke"/>`).join("");
+    const labels =
+      [100, 50, 0].map((v) => `<span class="bh-y" style="top:${y(v)}%">${v} %</span>`).join("") +
+      (Number.isInteger(threshold) ? `<span class="bh-thr-l" style="bottom:${threshold}%">${escape(t("batThreshold", threshold))}</span>` : "") +
+      changes.map((c) => `<span class="bh-chg-l" style="left:${(x(c.at) / 10).toFixed(2)}%">${escape(t("batChange"))}</span>`).join("") +
+      `<span class="bh-dot" style="top:${y(cur)}%"></span>`;
+    const ticks = this._ticks(start, end, range)
+      .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
+      .join("");
+    const list = changes.length
+      ? `<div class="avail-list">${changes
+          .slice()
+          .reverse()
+          .map((c) => `<div><span>${escape(t("batChanged"))}</span><span class="d">${escape(this._fmtTime(c.at, true))} · ${c.from} % → ${c.to} %</span></div>`)
+          .join("")}</div>`
+      : "";
+    const srcKey = source === "statistics" ? "batSrcStats" : source === "history" ? (range === "30d" || range === "90d" ? "batSrcHistoryLong" : "batSrcHistory") : "batSrcNone";
+    return `<div class="avail bh"><div class="avail-top"><span class="avail-pct">${escape(String(Math.round(cur)))}<small>%</small></span><span class="avail-facts">${escape(facts.join(" · "))}</span></div>
+        <div class="bh-plot"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}${thr}
+          <path class="bh-area" d="${area}"/><path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/>${marks}</svg>${labels}</div>
+        <div class="avail-ticks bh-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>${list}</div>
+      <p class="dlg-note bh-src">${escape(t(srcKey))}</p>`;
   }
 
   _daysHtml(days) {

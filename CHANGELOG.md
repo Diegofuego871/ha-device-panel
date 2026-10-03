@@ -7,7 +7,28 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.22.0] - 2026-10-03
+
+Battery history in the device pop-up.
+
+### Added
+
+- Tapping the tile "Battery" in the device pop-up (devices with a battery
+  in percent) opens the window "Battery" with 24 h, 7 days, 30 days and
+  3 months: the level as a line with area like a share price, axis always
+  0–100 %, the warning threshold dashed, battery changes marked and listed
+  below (jump of at least 30 points upwards). Above: the current level,
+  the change since the last battery change and the use per day, otherwise
+  lowest and highest value.
+- Source is the recorder: 24 h and 7 days from the history, 30 days and
+  3 months from the long-term statistics (hourly values, kept beyond the
+  10 days of the recorder). Without statistics (sensor without
+  state_class) the history is used as far as the recorder has data; the
+  window says so.
+
 ## [0.21.0] - 2026-10-03
+
+Not released; included in 0.22.0.
 
 Weak signal warning per device and new devices marked.
 
@@ -31,7 +52,7 @@ Weak signal warning per device and new devices marked.
 
 ## [0.20.0] - 2026-10-03
 
-Not released; included in 0.21.0.
+Not released; included in 0.22.0.
 
 Outage notifications per integration, with delay, content, actions and a
 persistent notification.
@@ -79,7 +100,7 @@ persistent notification.
 
 ## [0.19.0] - 2026-10-02
 
-Not released; included in 0.21.0.
+Not released; included in 0.22.0.
 
 Columns, sorting and view per user, separately for desktop and phone.
 
@@ -584,7 +605,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[0.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.21.0
+[0.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.22.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0

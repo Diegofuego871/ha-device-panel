@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.21.0, Empfang-Warnung pro Gerät, neue Geräte)
+## Stand (0.22.0, Batterie-Verlauf)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -149,8 +149,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Protokolls aus dem Recorder. Mit `0.19.0` (Nutzer, 2026-10-02, Desktop
    nach Bild 6, Handy A in `docs/mockups/view-v1/`): Spalten, Sortierung,
    Gruppen oder Liste und Filter-Chips pro Benutzer, getrennt
-   Desktop/Handy (Fahrplan Schritt 2). `0.19.0` und `0.20.0` ohne
-   Release, in `0.21.0` enthalten. Mit `0.20.0` (Bild 5): Spalten "Push"
+   Desktop/Handy (Fahrplan Schritt 2). `0.19.0` bis `0.21.0` ohne
+   Release, in `0.22.0` enthalten. Mit `0.20.0` (Bild 5): Spalten "Push"
    und "Anhaltend" bei
    den Integrationen, "Erst melden nach", Inhalt der Meldung mit Vorschau,
    Aktionen "Öffnen" und "24 Std. stumm", anhaltende Benachrichtigung bei
@@ -177,8 +177,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
       `docs/mockups/signal-v1/`), gespeichert in
       `.storage/device_panel.devices` "signal", `list_devices` liefert
       `signal_setting`; Bewertung im Panel (`devSigLevel`).
-   g. Batterie-Verlauf im Popup: Variante A entschieden
-      (`docs/mockups/battery-history-v1/`; Achse 0–100 % empfohlen).
+   g. Erledigt mit `0.22.0`: Batterie-Verlauf im Popup (Variante A,
+      `docs/mockups/battery-history-v1/`, Achse 0–100 %), WebSocket
+      `device_panel/battery_history` in `battery_history.py`.
    h. Erledigt mit `0.21.0`: neue Geräte 3 Tage markiert, Chip "Neu"
       (`list_devices`: `created_at`, `new` nach Serverzeit, aus der
       Geräte-Registry).

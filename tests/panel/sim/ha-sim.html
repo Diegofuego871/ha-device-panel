@@ -188,6 +188,36 @@
   }
   // Wie das Backend: Zahlen über Lücken als ein Ausfall, der Streifen zeigt,
   // was HA beobachtet hat.
+  // Erfundener Batterie-Verlauf wie das Backend (battery_history.py):
+  // Fensterkontakt Küche (e) vor 74 Tagen von 12 % auf 100 % gewechselt,
+  // sonst langsam sinkend. 30 Tage und 3 Monate als Stundenmittel aus der
+  // Langzeitstatistik, sonst aus dem Verlauf.
+  window.__batSource = null;
+  function batteryHistory(d, range) {
+    const days = { "24h": 1, "7d": 7, "30d": 30, "90d": 90 }[range];
+    const end = Date.now() / 1000;
+    const start = end - days * D;
+    const level = d.battery.level;
+    const changeAt = d.id === "e" ? end - 74 * D : null;
+    const value = (t) => {
+      const wobble = Math.sin(t / 5400) * 0.6;
+      if (changeAt && t < changeAt) return Math.min(40, 12 + ((changeAt - t) / D) * 0.2) + wobble;
+      const from = changeAt || end - 400 * D;
+      const rate = (100 - level) / ((end - from) / D);
+      return Math.min(100, level + rate * (end - t) / D) + wobble;
+    };
+    const step = days >= 30 ? H : days === 7 ? 2 * H : H;
+    const points = [];
+    for (let t = start + (days >= 30 ? H / 2 : 0); t < end; t += step) points.push([Math.round(t), Math.round(value(t) * 10) / 10]);
+    points.push([Math.round(end), level]);
+    const changes = changeAt && changeAt >= start ? [{ at: Math.round(changeAt), from: 12, to: 100 }] : [];
+    const own = window.__devSettings.battery[d.id];
+    const dom = d.integration?.domain;
+    const integ = (window.__opts.battery_low_integrations || {})[dom];
+    const threshold = own === "off" || (own == null && integ === "off") ? null : Number.isInteger(own) ? own : integ ?? window.__opts.battery_low;
+    const source = window.__batSource || (days >= 30 ? "statistics" : "history");
+    return { entity_id: `sensor.${d.id}_batterie`, start, end, source, points, first: points[0][0], changes, threshold };
+  }
   function avail24(id) {
     const s = summarize(segments(bridged(events(id)), nowS - D, nowS));
     return s ? { ...s, strip: strip(segments(events(id), nowS - D, nowS), nowS - D, nowS) } : null;
@@ -576,6 +606,13 @@
         const data = detail(msg.device_id);
         if (!data) throw { code: "not_found", message: "Device not found" };
         return data;
+      }
+      if (msg.type === "device_panel/battery_history") {
+        const d = window.__devices.find((x) => x.id === msg.device_id);
+        if (!d) throw { code: "not_found", message: "device not found" };
+        if (d.battery?.level == null) throw { code: "not_found", message: "no battery level" };
+        if (!["24h", "7d", "30d", "90d"].includes(msg.range || "24h")) throw { code: "invalid_format", message: "range" };
+        return batteryHistory(d, msg.range || "24h");
       }
       if (msg.type === "device_panel/availability") return availHistory(msg.device_id, msg.range || "24h");
       if (msg.type === "matter/node_diagnostics") return { network_type: "thread", node_type: "end_device" };

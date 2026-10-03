@@ -92,6 +92,10 @@ details such as software version, manufacturer, model and area.
   Optionally a persistent notification in Home Assistant lists all offline
   devices as long as they are offline, with a link to each device. Off by
   default.
+- Battery history: the tile "Battery" in the device pop-up opens the level
+  over 24 h, 7 days, 30 days or 3 months as a line, with the warning
+  threshold and battery changes; from the recorder (long-term statistics
+  beyond its 10 days).
 - Weak signal warning per device, in its pop-up: global value (below
   -80 dBm or LQI 61), own threshold or off, for devices that always have a
   weak signal. Marking and the chip "Weak signal" follow.

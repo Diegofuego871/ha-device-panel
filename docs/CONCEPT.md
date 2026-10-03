@@ -493,6 +493,18 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   Ausfälle in `.storage/device_panel.notify`: kein erneuter Ausfall nach
   einem Neustart, die Rückkehr kommt trotzdem. Standard: alles aus ausser
   Sammelausfall.
+- Batterie-Verlauf (seit 0.22.0, Variante A in
+  `docs/mockups/battery-history-v1/`): `battery_history.py`, WebSocket
+  `device_panel/battery_history` (Gerät, Zeitraum 24h/7d/30d/90d). Quelle
+  der Recorder, kein eigenes Protokoll: bis 7 Tage der Verlauf
+  (`state_changes_during_period` mit Stand zu Beginn), ab 30 Tagen die
+  Langzeitstatistik (Stundenmittel, `statistics_during_period`); ohne
+  Statistik der Verlauf, so weit vorhanden (Hinweis im Fenster). Der
+  aktuelle Stand ist der letzte Punkt; über 1000 Punkte Mittel pro
+  Abschnitt. Batteriewechsel: +30 Punkte gegenüber dem vorigen Punkt oder
+  innert 3 Std. (verteilt über zwei Stundenmittel), einmal pro Fenster.
+  Panel: Achse immer 0–100 %, Schwelle (wirksame des Geräts) gestrichelt,
+  Kennzahlen seit dem letzten Wechsel bzw. tiefster/höchster Wert.
 - Empfang-Warnung pro Gerät (seit 0.21.0, Variante A in
   `docs/mockups/signal-v1/`): globaler Wert (Panel: schwach unter -80 dBm
   bzw. LQI 60 und darunter), eigene Schwelle "schwach unter" (dBm -110 bis

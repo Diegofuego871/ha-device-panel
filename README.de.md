@@ -98,6 +98,10 @@ Bereich.
   Gerät weiter. Auf Wunsch listet eine anhaltende Benachrichtigung in Home
   Assistant alle ausgefallenen Geräte, solange sie ausgefallen sind, mit
   Link zum Gerät. Standardmässig aus.
+- Batterie-Verlauf: Die Kachel "Batterie" im Geräte-Popup zeigt den Stand
+  über 24 Std., 7 Tage, 30 Tage oder 3 Monate als Linie, mit Warnschwelle
+  und Batteriewechseln; aus dem Recorder (Langzeitstatistik auch über
+  seine 10 Tage hinaus).
 - Empfang-Warnung pro Gerät im Popup: globaler Wert (unter -80 dBm bzw.
   LQI 61), eigene Schwelle oder aus, für Geräte, die immer schwachen
   Empfang haben. Markierung und Chip "Schwacher Empfang" folgen.

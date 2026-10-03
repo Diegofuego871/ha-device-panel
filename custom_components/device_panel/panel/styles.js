@@ -587,6 +587,24 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .avail-legend i.off { background: color-mix(in srgb, var(--dp-error) 45%, var(--dp-card)); box-shadow: inset 0 -2px 0 var(--dp-error); }
 .avail-bar .seg.none, .avail-legend i.none { background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--dp-text) 18%, var(--dp-card)) 0 4px, transparent 4px 8px); }
 .avail-bar .seg.hover { background: color-mix(in srgb, var(--dp-error) 70%, var(--dp-card)); }
+/* Batterie-Verlauf (seit 0.22.0): Fläche und Linie in Primärfarbe, Achse
+   0–100 %, Schwelle rot gestrichelt, Wechsel als senkrechte Linie. */
+.bh-plot { position: relative; height: 190px; margin: 6px 0 0 44px; }
+.bh-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.bh-grid { stroke: var(--dp-divider); stroke-width: 1; }
+.bh-thr { stroke: var(--dp-error); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.bh-chg { stroke: var(--dp-text3); stroke-width: 1; stroke-dasharray: 3 3; }
+.bh-area { fill: color-mix(in srgb, var(--dp-primary) 18%, transparent); }
+.bh-line { fill: none; stroke: var(--dp-primary); stroke-width: 2; stroke-linejoin: round; }
+.bh-y { position: absolute; left: -44px; width: 38px; transform: translateY(-50%); text-align: right; color: var(--dp-text3); font-size: 11px; }
+.bh-thr-l { position: absolute; left: 6px; margin-bottom: 2px; color: var(--dp-error); font-size: 11.5px; }
+.bh-chg-l { position: absolute; top: -2px; margin-left: 5px; color: var(--dp-text2); font-size: 11.5px; }
+.bh-dot { position: absolute; right: -5px; width: 10px; height: 10px; border-radius: 50%; transform: translateY(-50%); background: var(--dp-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--dp-primary) 25%, transparent); }
+.bh-ticks { margin-left: 44px; }
+.bh .avail-list { margin-top: 10px; }
+.bh .avail-list .d { color: var(--dp-text2); }
+.bh-src { margin: 10px 2px 0; }
 .avail-now { position: absolute; top: 0; right: 0; bottom: 0; width: 2px; background: var(--dp-text); }
 .avail-tip { position: absolute; bottom: calc(100% + 8px); z-index: 2; transform: translateX(-50%); padding: 7px 10px; border-radius: 8px;
   background: #323232; color: #fff; font-size: 12px; white-space: nowrap; box-shadow: 0 6px 18px rgba(0,0,0,0.35); pointer-events: none; }
