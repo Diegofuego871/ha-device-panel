@@ -7,7 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.25.0] - 2026-10-03
+
+"Alle" hebt alle Filter auf.
+
+### Geändert
+
+- Ein Tipp auf den Chip "Alle" hebt alle Filter auf einmal auf: Bereich,
+  Verbindungsart, "Nur Probleme" und die Hinweis-Chips (Batterie, Neu …).
+  Die Suche bleibt (sie hat ihr eigenes ×). "Alle" ist nur hervorgehoben,
+  wenn kein Filter aktiv ist, und die Zahl zeigt alle Geräte, so viele,
+  wie das Antippen zeigt.
+
 ## [0.24.0] - 2026-10-03
+
+Nicht veröffentlicht; enthalten in 0.25.0.
 
 Farbiges Batteriesymbol und Empfangsverlauf.
 
@@ -681,7 +695,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[0.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.24.0
+[0.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.25.0
 [0.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.23.0
 [0.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.22.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0

@@ -670,8 +670,15 @@ class DevicePanel extends HTMLElement {
       }
       const el = ev.target.closest("[data-conn],[data-problems],[data-hint]");
       if (!el || el.disabled) return;
-      // Aktiven Chip erneut antippen hebt den Filter auf.
-      if (el.dataset.conn) this._conn = this._conn === el.dataset.conn ? "all" : el.dataset.conn;
+      // "Alle" hebt alle Filter auf (seit 0.25.0, Wunsch des Nutzers): Bereich,
+      // Verbindungsart, "Nur Probleme", Hinweis. Die Suche bleibt (eigenes X).
+      // Aktiven Chip erneut antippen hebt nur seinen Filter auf.
+      if (el.dataset.conn === "all") {
+        this._conn = "all";
+        this._problems = false;
+        this._hint = null;
+        this._view.areas = [];
+      } else if (el.dataset.conn) this._conn = this._conn === el.dataset.conn ? "all" : el.dataset.conn;
       else if (el.dataset.problems !== undefined) this._problems = !this._problems;
       else if (el.dataset.hint) this._hint = this._hint === el.dataset.hint ? null : el.dataset.hint;
       this._saveView();
@@ -1671,12 +1678,15 @@ class DevicePanel extends HTMLElement {
     const base = all.filter((d) => this._areaPass(d) && this._problemPass(d) && this._hintPass(d, this._hint) && this._searchPass(d));
     const counts = new Map();
     for (const d of base) counts.set(this._connOf(d), (counts.get(this._connOf(d)) || 0) + 1);
-    const chip = (key, label, n, icon = "") =>
-      `<button type="button" class="chip ${this._conn === key ? "on" : ""} ${n ? "" : "zero"}" data-conn="${key}" aria-pressed="${this._conn === key}">${icon}<span>${escape(label)}</span> <span class="n">${n}</span></button>`;
+    const chip = (key, label, n, icon = "", on = this._conn === key) =>
+      `<button type="button" class="chip ${on ? "on" : ""} ${n ? "" : "zero"}" data-conn="${key}" aria-pressed="${on}">${icon}<span>${escape(label)}</span> <span class="n">${n}</span></button>`;
     // Bereich zuerst: erst den Bereich wählen, dann mit den Chips filtern.
     let html = this._areaChipHtml(all);
     if (html) html += `<span class="vsep"></span>`;
-    html += chip("all", this._t("all"), base.length);
+    // "Alle" ist nur ohne jeden Filter aktiv; die Zahl zeigt wie überall, was
+    // nach dem Antippen erscheint: alle Geräte (mit der Suche).
+    const none = this._conn === "all" && !this._problems && !this._hint && !this._areaSel();
+    html += chip("all", this._t("all"), all.filter((d) => this._searchPass(d)).length, "", none);
     for (const [key] of types) if (!this._hideConn.has(key)) html += chip(key, this._t(CONN[key].key), counts.get(key) || 0, CONN[key].icon(15));
     html += `<span class="vsep"></span><button type="button" class="chip ${this._problems ? "on" : ""}" data-problems aria-pressed="${this._problems}">${mdi("alert", 15)}<span>${escape(this._t("onlyProblems"))}</span></button>`;
     // Hinweise als Filter-Chips, nur wenn sie bei irgendeinem Gerät zutreffen

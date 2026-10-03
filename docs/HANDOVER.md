@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.24.0, Empfangsverlauf, Batteriefarben)
+## Stand (0.25.0, "Alle" hebt alle Filter auf)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -182,7 +182,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Batteriesymbol mit Füllung in vier Farben (Skala Claude überlassen:
    Stufen wie der Empfang, rot = schwach nach der Batterie-Warnung) und
    Empfangsverlauf per Tipp auf die Kachel "Empfang" (Rahmen wie
-   "Batterie", ohne eigenes Mockup).
+   "Batterie", ohne eigenes Mockup). `0.24.0` ohne Release, in `0.25.0`
+   enthalten. Mit `0.25.0` (Nutzer, 2026-10-03): Chip "Alle" hebt alle
+   Filter auf (Bereich, Verbindungsart, "Nur Probleme", Hinweise; Suche
+   bleibt). Offen beim Nutzer: Puls-Popup (A?), Spalten-Dialog "Anpassen"
+   (A?), Fenster "Empfang" so lassen?, Kopf beim Bereichsfilter (ganzes
+   Haus?); Rückmeldung zum Empfangsverlauf bei ZHA/Bluetooth.
    Als Nächstes, in dieser Reihenfolge (Nutzer, 2026-10-03):
    b. Puls-Kachel: Popup mit den Geräten, die in 24 Std. Unterbrüche
       hatten (Mockups `docs/mockups/pulse-v1/`, Empfehlung A, Entscheid

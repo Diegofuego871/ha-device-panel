@@ -7,7 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.25.0] - 2026-10-03
+
+"All" clears every filter.
+
+### Changed
+
+- Tapping the chip "All" clears all filters at once: area, connection
+  type, "Problems only" and the hint chips (battery, new …). The search
+  stays (it has its own ×). "All" is highlighted only when no filter is
+  active, and its number shows all devices, as many as tapping it shows.
+
 ## [0.24.0] - 2026-10-03
+
+Not released; included in 0.25.0.
 
 Coloured battery symbol and signal history.
 
@@ -651,7 +664,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[0.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.24.0
+[0.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.25.0
 [0.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.23.0
 [0.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.22.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0

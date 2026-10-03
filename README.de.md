@@ -37,7 +37,8 @@ Bereich.
   sortiert), niedriger Batterie, schwachem Empfang und verfügbaren Updates.
   Die Zahl auf einem Chip zählt mit der Suche und den übrigen Filtern: so
   viele Geräte, wie das Antippen zeigt. Ein aktiver Chip lässt sich mit
-  einem zweiten Tipp abwählen. In den Einstellungen ("Anzeige") lassen sich
+  einem zweiten Tipp abwählen; "Alle" hebt alle Filter auf einmal auf (die
+  Suche bleibt). In den Einstellungen ("Anzeige") lassen sich
   einzelne Chips der Verbindungsart ausblenden und alle in eine eigene
   Reihenfolge ziehen.
 - Filter nach Bereich: Der Chip "Bereich" am Anfang der Chip-Zeile wählt

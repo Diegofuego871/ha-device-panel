@@ -33,7 +33,8 @@ details such as software version, manufacturer, model and area.
   connection type, "problems only", battery (all battery devices, sorted by
   level), low battery, weak signal and available updates. The number on a
   chip counts with the search and the other filters: as many devices as
-  tapping it shows. Tapping an active chip again turns it off. In the
+  tapping it shows. Tapping an active chip again turns it off; "All"
+  clears every filter at once (the search stays). In the
   settings ("Display"), single connection type chips can be hidden and all
   of them dragged into your own order.
 - Filter by area: the chip "Area" at the start of the chip row selects one

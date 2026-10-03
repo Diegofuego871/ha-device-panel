@@ -74,14 +74,27 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] schliessen`, await closePick());
 
     // Mit den Chips kombinieren: Zahlen und Liste innerhalb des Bereichs
-    check(`[${tag}] "Alle" zählt im Bereich`, (await text('.chip[data-conn="all"] .n')) === "2" && (await text('.chip[data-conn="wifi"] .n')) === "1");
+    // "Alle" (seit 0.25.0) hebt alle Filter auf: Zahl = alle Geräte, aus, solange ein Filter gilt
+    check(`[${tag}] "Alle" zählt alle und ist aus, die übrigen zählen im Bereich`, (await text('.chip[data-conn="all"] .n')) === String(total.split(",").length) && !(await ev(`return r.querySelector('.chip[data-conn="all"]').classList.contains("on")`)) && (await text('.chip[data-conn="wifi"] .n')) === "1", await text('.chip[data-conn="all"]'));
     await tap('.chip[data-conn="wifi"]');
     check(`[${tag}] Bereich + WLAN`, await wait(`return [...r.querySelectorAll(".dev")].map(x=>x.dataset.open).join() === "k"`), await rows());
     check(`[${tag}] Chip "${T.chip}" zählt mit`, (await text(".chips .chip.area .n")) === "1");
     if (mobile) await ev(`r.querySelector(".content").scrollTop = r.querySelector(".chips").offsetTop - 80`);
     await p.screenshot({ path: `${outDir}/area-list-${tag.replace("/", "-")}.png` });
-    await tap('.chip[data-conn="wifi"]');
+    // "Alle" hebt alle Filter auf: Bereich, Verbindungsart, "Nur Probleme", Hinweis; die Suche bleibt
+    await tap(".chip[data-problems]");
+    await tap('.chip.hint[data-hint="batteries"]');
+    check(`[${tag}] vier Filter zugleich`, await wait(`return r.querySelectorAll(".dev").length === 0 && r.querySelector(".chip[data-problems]").classList.contains("on") && r.querySelector('.chip.hint[data-hint="batteries"]').classList.contains("on")`), await rows());
+    await tap('.chip[data-conn="all"]');
+    check(`[${tag}] "Alle" hebt alle auf`, await wait(`return [...r.querySelectorAll(".dev")].map(x=>x.dataset.open).sort().join() === ${JSON.stringify(total)}`) && (await ev(`return r.querySelector('.chip[data-conn="all"]').classList.contains("on") && !r.querySelector(".chips .chip.on:not([data-conn='all'])") && !r.querySelector(".chips [data-area-clear]")`)) && (await text(".chips .chip.area")) === T.chip, await rows());
+    await tap(".search");
+    await p.keyboard.type("Flur");
     await wait(`return r.querySelectorAll(".dev").length === 2`);
+    await tap('.chip[data-conn="wifi"]');
+    await tap('.chip[data-conn="all"]');
+    check(`[${tag}] "Alle" lässt die Suche stehen`, await wait(`return r.querySelectorAll(".dev").length === 2 && r.querySelector(".search").value === "Flur" && r.querySelector('.chip[data-conn="all"] .n').textContent === "2"`), await rows());
+    await tap(".search-clear");
+    await wait(`return r.querySelectorAll(".dev").length > 2`);
 
     // Etage wählt alle ihre Bereiche; Chip mit Name der Etage
     await tap(".chips [data-area-open]");

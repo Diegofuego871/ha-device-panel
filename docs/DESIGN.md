@@ -106,7 +106,9 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
 - Filter-Chips (seit 0.17.0): Zahl = Zeilen nach dem Antippen (mit Suche
   und übrigen Filtern), Chip mit 0 bleibt stehen und ist gedämpft
   (`.chip.zero`, Deckkraft 0.55), zweiter Tipp auf einen aktiven Chip wählt
-  ihn ab. Suchfeld mit eigenem X (`.search-clear`, nur mit Eingabe; das X
+  ihn ab. Seit 0.25.0 (Wunsch des Nutzers) hebt "Alle" alle Filter auf
+  (Bereich, Verbindungsart, "Nur Probleme", Hinweise; die Suche bleibt),
+  ist nur ohne Filter hervorgehoben und zählt alle Geräte. Suchfeld mit eigenem X (`.search-clear`, nur mit Eingabe; das X
   des Browsers ist ausgeblendet, iOS zeigt keines).
 - Ansicht (seit 0.19.0, `docs/mockups/view-v1/`): Desktop Knopf "Spalten"
   (Pille mit Symbol) öffnet ein Popover unter dem Knopf (340 px, Schalter,
