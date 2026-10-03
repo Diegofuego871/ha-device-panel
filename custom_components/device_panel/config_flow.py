@@ -23,9 +23,15 @@ from .const import (
     CONF_BATTERY_PUSH_DAILY,
     CONF_BATTERY_PUSH_MODE,
     CONF_BATTERY_PUSH_TIME,
+    CONF_NOTIFY_DELAY,
+    CONF_NOTIFY_EXCLUDE,
+    CONF_NOTIFY_FIELDS,
     CONF_NOTIFY_GROUP,
     CONF_NOTIFY_ONLINE,
     CONF_NOTIFY_OUTAGE,
+    CONF_OUTAGE_PERSISTENT,
+    CONF_PERSISTENT_EXCLUDE,
+    NOTIFY_FIELDS,
     DAILY_CONTENTS,
     PUSH_MODES,
     CONF_BATTERY_LOW,
@@ -51,11 +57,20 @@ from .const import (
     INT_RANGES,
     PANEL_TITLE,
 )
-from .options_api import INT_OPTIONS, battery_map, connection_map, connection_order, current_values, notify_targets, push_time
+from .options_api import (
+    INT_OPTIONS,
+    battery_map,
+    connection_map,
+    connection_order,
+    current_values,
+    notify_fields,
+    notify_targets,
+    push_time,
+)
 from .push import text
 
 # Einheit der Zahlenfelder im Optionsdialog.
-_UNITS = {CONF_OFFLINE_AFTER: "min", CONF_STARTUP_GRACE: "min", CONF_BATTERY_LOW: "%"}
+_UNITS = {CONF_OFFLINE_AFTER: "min", CONF_STARTUP_GRACE: "min", CONF_BATTERY_LOW: "%", CONF_NOTIFY_DELAY: "min"}
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -109,8 +124,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 # Bestehende Options erhalten, statt sie zu ersetzen. Leere
                 # Mehrfachauswahl muss die alte überschreiben.
                 data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own, CONF_CONNECTION_INTEGRATIONS: conns}
-                for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CONNECTIONS):
+                for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CONNECTIONS, CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE):
                     data[key] = sorted(set(user_input.get(key) or []))
+                # Inhalt der Meldung in fester Reihenfolge, wie im Panel.
+                data[CONF_NOTIFY_FIELDS] = notify_fields(list(user_input.get(CONF_NOTIFY_FIELDS) or []))
                 # Das Zahlenfeld liefert Kommazahlen (2.0); gespeichert wird wie
                 # aus dem Panel eine ganze Zahl.
                 for key, _default in INT_OPTIONS:
@@ -131,7 +148,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         integrations = [{"value": i["domain"], "label": f"{i['name']} ({i['devices']})"} for i in catalog["integrations"]]
         # Ausgeschlossene Integration ohne Geräte bleibt wählbar.
         known = {i["value"] for i in integrations}
-        integrations += [{"value": d, "label": d} for d in values[CONF_EXCLUDE_INTEGRATIONS] if d not in known]
+        for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE):
+            integrations += [{"value": d, "label": d} for d in values[key] if d not in known]
+            known.update(values[key])
         # Push-Ziele mit Beschriftung in der Sprache der Instanz.
         labels = {
             "none": lambda t: text(self.hass, "notify_none"),
@@ -166,6 +185,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Optional(CONF_EXCLUDE_INTEGRATIONS, default=values[CONF_EXCLUDE_INTEGRATIONS]): SelectSelector(
                         SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
                     ),
+                    # Spalten "Push" und "Anhaltend" bei den Integrationen (Panel).
+                    vol.Optional(CONF_NOTIFY_EXCLUDE, default=values[CONF_NOTIFY_EXCLUDE]): SelectSelector(
+                        SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
+                    ),
+                    vol.Optional(CONF_PERSISTENT_EXCLUDE, default=values[CONF_PERSISTENT_EXCLUDE]): SelectSelector(
+                        SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
+                    ),
                     vol.Optional(CONF_EXCLUDE_TYPES, default=values[CONF_EXCLUDE_TYPES]): SelectSelector(
                         SelectSelectorConfig(
                             options=list(DEVICE_TYPES), multiple=True, mode=SelectSelectorMode.DROPDOWN, translation_key="device_type"
@@ -180,6 +206,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Required(CONF_NOTIFY_OUTAGE, default=values[CONF_NOTIFY_OUTAGE]): bool,
                     vol.Required(CONF_NOTIFY_ONLINE, default=values[CONF_NOTIFY_ONLINE]): bool,
                     vol.Required(CONF_NOTIFY_GROUP, default=values[CONF_NOTIFY_GROUP]): bool,
+                    vol.Required(CONF_NOTIFY_DELAY, default=values[CONF_NOTIFY_DELAY]): _number(CONF_NOTIFY_DELAY),
+                    vol.Optional(CONF_NOTIFY_FIELDS, default=values[CONF_NOTIFY_FIELDS]): SelectSelector(
+                        SelectSelectorConfig(
+                            options=list(NOTIFY_FIELDS), multiple=True, mode=SelectSelectorMode.LIST, translation_key="notify_field"
+                        )
+                    ),
+                    vol.Required(CONF_OUTAGE_PERSISTENT, default=values[CONF_OUTAGE_PERSISTENT]): bool,
                     vol.Required(CONF_SHOW_SERVICE, default=values[CONF_SHOW_SERVICE]): bool,
                     vol.Required(CONF_SHOW_DISABLED, default=values[CONF_SHOW_DISABLED]): bool,
                     vol.Optional(CONF_HIDE_CONNECTIONS, default=values[CONF_HIDE_CONNECTIONS]): SelectSelector(

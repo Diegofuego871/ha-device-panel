@@ -120,6 +120,14 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Schalter, "Zurücksetzen" und "Fertig").
 - Kopf-Kacheln gleich hoch, auch auf dem Handy (Zeile mit `stretch`); der
   Ring bleibt fest und steht in seiner Kachel mittig.
+- Tabellen mit mehreren Schaltern pro Zeile (seit 0.20.0, Integrationen:
+  "Anzeigen", "Push", "Anhaltend"): Spalten fester Breite (`.ex-col`,
+  72 px, Handy 52 px), Kopf in Grossbuchstaben, darunter "Alle umschalten"
+  je Spalte; ausgeblendete Zeile sperrt die übrigen Schalter (gedämpft).
+- Vorschau einer Meldung (seit 0.20.0, "Inhalt der Meldung"): Karte wie
+  eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
+  Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des
+  Inhalts in zwei Spalten, auf dem Handy in einer.
 - Reihenfolge per Ziehen (seit 0.13.0, Chips der Verbindungsart): Griff
   (zwei Reihen Punkte) links in der Zeile, Zeile hebt sich beim Ziehen ab
   (`.lift`, Schatten); Pfeiltasten auf dem Griff verschieben um eine

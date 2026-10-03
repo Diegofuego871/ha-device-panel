@@ -101,6 +101,9 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
     # Batterie: Schwelle oder Meldungsart geändert, sofort neu prüfen.
     if (watch := hass.data.get(DATA_BATTERY)) is not None:
         await watch.async_options_changed()
+    # Ausfälle: Verzögerung, Integrationen, anhaltende Benachrichtigung.
+    if (notifier := hass.data.get(DATA_OUTAGE)) is not None:
+        await notifier.async_options_changed()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

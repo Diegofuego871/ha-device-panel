@@ -19,7 +19,7 @@ const TEXT = {
     opt: "Täglich nach Updates suchen", short: "Meldet eine neue Version unter Einstellungen → Reparaturen.", info: "Fragt einmal täglich",
     changed: "geändert", one: "1 Änderung", two: "2 Änderungen", save: "Speichern", cancel: "Abbrechen", savedShort: "Gespeichert", closeBtn: "Schliessen",
     pre: "Vorabversionen anzeigen", loadErr: "Einstellungen konnten nicht geladen werden:", saveErr: "Speichern fehlgeschlagen:", ver: "Device Panel 0.4.0",
-    secInt: "Integrationen", sumInt: "9 Integrationen · alle angezeigt", sumInt1: "9 Integrationen · 1 ausgeblendet", show: "Anzeigen", all: "Alle umschalten",
+    secInt: "Integrationen", sumInt: "9 Integrationen · alle angezeigt", sumInt1: "9 Integrationen · 1 ausgeblendet", show: "Anzeigen", all: "Alle umschalten", cols: "Anzeigen|Push|Anhaltend",
     zha: "Zigbee Home Automation", zhaSub: "5 Geräte", secTypes: "Gerätetypen", outlet: "Steckdose", sumTypes1: "11 Typen · 1 ausgeblendet", sumTypesNone: "11 Typen · alle angezeigt", sumTypesAll: "11 Typen · 11 ausgeblendet",
     secDet: "Ausfall-Erkennung", sumDet: (m, n) => `Ausgefallen nach ${m} Min. · instabil ab ${n} Unterbrüchen in 24 Std. · Anlaufphase 5 Min.`,
     offLabel: "Ausgefallen nach", offShort: "Minuten ohne Lebenszeichen. Kürzere Aussetzer zählen nicht.", unit: "Min.", range: "Erlaubt: 1 bis 60",
@@ -42,7 +42,7 @@ const TEXT = {
     opt: "Check for updates daily", short: "Reports a new version under Settings → Repairs.", info: "Queries the published releases",
     changed: "changed", one: "1 change", two: "2 changes", save: "Save", cancel: "Cancel", savedShort: "Saved", closeBtn: "Close",
     pre: "Show pre-releases", loadErr: "Could not load the settings:", saveErr: "Saving failed:", ver: "Device Panel 0.4.0",
-    secInt: "Integrations", sumInt: "9 integrations · all shown", sumInt1: "9 integrations · 1 hidden", show: "Show", all: "Toggle all",
+    secInt: "Integrations", sumInt: "9 integrations · all shown", sumInt1: "9 integrations · 1 hidden", show: "Show", all: "Toggle all", cols: "Show|Push|Persistent",
     zha: "Zigbee Home Automation", zhaSub: "5 devices", secTypes: "Device types", outlet: "Outlet", sumTypes1: "11 types · 1 hidden", sumTypesNone: "11 types · all shown", sumTypesAll: "11 types · 11 hidden",
     secDet: "Outage detection", sumDet: (m, n) => `Offline after ${m} min · unstable from ${n} outages in 24 h · grace period 5 min`,
     offLabel: "Offline after", offShort: "Minutes without a sign of life. Shorter dropouts are not counted.", unit: "min", range: "Allowed: 1 to 60",
@@ -172,7 +172,9 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="section"][data-id="integrations"]');
     const zhaRow = await ev(`const i=r.querySelector('input[data-list="exclude_integrations"][data-value="zha"]'); return i ? i.closest(".ex-row").textContent.replace(/\\s+/g," ").trim() : ""`);
     check(`[${tag}] Zeile mit Name und Zahl der Geräte`, zhaRow.includes(T.zha) && zhaRow.includes(T.zhaSub), zhaRow);
-    check(`[${tag}] Spalte "${T.show}" und "${T.all}"`, (await text(".ex-head")) === T.show && (await text(".ex-all .ex-name")) === T.all);
+    const heads = await ev(`return [...r.querySelectorAll(".ex-head.multi .ex-col")].map(e=>e.textContent).join("|")`);
+    check(`[${tag}] Spalten "${T.cols}" und "${T.all}"`, heads === T.cols && (await text(".ex-all .ex-name")) === T.all, heads);
+    check(`[${tag}] pro Spalte ein "Alle umschalten"`, (await ev(`return [...r.querySelectorAll(".ex-all input[data-list-all]")].map(i=>i.dataset.listAll).join()`)) === "exclude_integrations,notify_exclude_integrations,persistent_exclude_integrations");
     await tap('input[data-list="exclude_integrations"][data-value="zha"]');
     check(`[${tag}] Integration im Entwurf ausgeblendet`, (await text('[data-id="integrations"] .set-sec-sum')) === T.sumInt1 && (await text(".set-count")) === T.one && await ev(`return r.querySelector('input[data-value="zha"]').closest(".ex-row").classList.contains("off")`));
     await p.screenshot({ path: `${outDir}/settings-exclude-${lang}-${mobile ? "mobile" : "desktop"}.png` });
@@ -207,7 +209,7 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     const order = await ev(`return [...r.querySelectorAll(".set-sec-head")].map(h=>h.dataset.id).join(",")`);
-    check(`[${tag}] Abschnitte wie Bild 5`, order === "detection,battery,integrations,types,connections,push,display,updates", order);
+    check(`[${tag}] Abschnitte wie Bild 5`, order === "detection,battery,integrations,types,connections,push,persistent,display,updates", order);
     check(`[${tag}] Ausfall-Erkennung zusammengefasst`, (await text('[data-id="detection"] .set-sec-title')) === T.secDet && (await text('[data-id="detection"] .set-sec-sum')) === T.sumDet(2, 3), await text('[data-id="detection"] .set-sec-sum'));
     await tap('[data-set="section"][data-id="detection"]');
     check(`[${tag}] drei Zahlenfelder`, (await ev(`return r.querySelectorAll('.set-sec-body input[type="number"]').length`)) === 3);

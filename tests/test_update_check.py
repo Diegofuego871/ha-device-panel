@@ -123,11 +123,18 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "notify_outage": False,
         "notify_online": False,
         "notify_group": True,
+        "notify_delay": 0,
+        "notify_fields": ["area", "integration", "since"],
+        "notify_exclude_integrations": [],
+        "persistent_exclude_integrations": [],
+        "outage_persistent": False,
         "battery_push_mode": "instant",
         "battery_push_time": "08:00",
         "battery_push_daily": "new",
     }
-    assert result["limits"] == {"offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [5, 50]}
+    assert result["limits"] == {
+        "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [5, 50], "notify_delay": [0, 60],
+    }
     assert set(result["panel"]) == {"prerelease", "prerelease_hacs"}
 
     await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {CONF_UPDATE_CHECK: False}})
@@ -171,8 +178,9 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
     assert [str(k) for k in result["data_schema"].schema] == [
         "offline_after", "flaky_outages", "startup_grace", "battery_low", "battery_low_integrations", "battery_push",
         "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent",
-        "exclude_integrations", "exclude_types", "notify_service", "notify_click_target",
-        "notify_outage", "notify_online", "notify_group", "show_service_devices", "show_disabled_devices", "hide_connections",
+        "exclude_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "exclude_types",
+        "notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "notify_delay",
+        "notify_fields", "outage_persistent", "show_service_devices", "show_disabled_devices", "hide_connections",
         "connection_order", "connection_integrations", "update_check",
     ]
     result = await hass.config_entries.options.async_configure(
@@ -184,6 +192,15 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
     assert entry.options["offline_after"] == 10 and type(entry.options["offline_after"]) is int
     assert entry.options["flaky_outages"] == 3 and entry.options["startup_grace"] == 5
     assert entry.options["show_disabled_devices"] is True and entry.options["show_service_devices"] is False
+    # Ausfall-Meldungen (0.20.0): Standard, Inhalt in fester Reihenfolge.
+    assert entry.options["notify_delay"] == 0 and entry.options["notify_fields"] == ["area", "integration", "since"]
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"notify_delay": 5.0, "notify_fields": ["model", "area"], "outage_persistent": True}
+    )
+    assert entry.options["notify_delay"] == 5 and entry.options["notify_fields"] == ["area", "model"]
+    # Integrationen zur Wahl gibt es nur mit Geräten (siehe Ausschlüsse unten).
+    assert entry.options["notify_exclude_integrations"] == [] and entry.options["outage_persistent"] is True
 
     # Zu gross: der Selektor lehnt ab, gespeichert bleibt der alte Wert.
     result = await hass.config_entries.options.async_init(entry.entry_id)

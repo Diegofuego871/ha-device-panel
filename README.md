@@ -79,9 +79,19 @@ details such as software version, manufacturer, model and area.
 - Outage notifications: a push as soon as a device counts as offline and,
   if you like, an all clear when it is back online, with the duration of
   the outage (it replaces the outage notification on the phone). Several
-  devices at once give one notification with the probable cause. Per
-  device they can be switched off in its pop-up, e.g. for a charger that is
-  often offline on purpose; the device is still monitored. Off by default.
+  devices at once give one notification with the probable cause. "Report
+  only after" (0–60 min) waits before the push; short outages send nothing,
+  not even "back online", and a pending outage survives a restart. Choose
+  the content (area, integration, connection type, offline since, last
+  signal, battery, manufacturer / model) with a preview in the settings.
+  The push has the buttons "Open" and "Mute 24 h"; the pop-up shows the
+  mute until it ends and "Global setting" lifts it. Per integration the
+  columns "Push" and "Persistent" decide which integrations notify; per
+  device the notifications can be switched off in its pop-up, e.g. for a
+  charger that is often offline on purpose; the device is still monitored.
+  Optionally a persistent notification in Home Assistant lists all offline
+  devices as long as they are offline, with a link to each device. Off by
+  default.
 - Settings per device at a glance: a symbol next to the name (own battery
   threshold, battery warning off, notifications off, connection type set by
   hand), the chip "Own setting" shows only those devices, and the settings
@@ -94,9 +104,8 @@ details such as software version, manufacturer, model and area.
 
 ### Planned (see `docs/CONCEPT.md`)
 
-- Filter by area, outage notifications per integration with actions,
-  monitoring levels with rules, probable cause and radio path in the device
-  view.
+- Filter by area, monitoring levels with rules, probable cause and radio
+  path in the device view.
 
 ## Installation
 

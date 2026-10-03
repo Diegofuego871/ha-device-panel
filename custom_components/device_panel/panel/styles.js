@@ -440,6 +440,23 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .drag-reset { display: flex; justify-content: flex-end; padding: 8px 0 2px; }
 .ex-row.ex-all { padding: 6px 10px; margin: 0 -8px 2px; border: none; border-radius: 10px; background: var(--dp-subtle); color: var(--dp-text2); min-height: 40px; }
 .ex-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+/* Integrationen mit "Anzeigen", "Push", "Anhaltend" (Bild 5) */
+.ex-col { flex: none; display: flex; justify-content: center; width: 72px; }
+.ex-head.multi { justify-content: flex-start; }
+.ex-head.multi > span:first-child { flex: 1; }
+.ex-head.multi .ex-col { text-align: center; }
+.ex-row .switch input:disabled + span { opacity: .35; }
+/* Inhalt der Meldung und Vorschau */
+.nf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 24px; margin-top: 8px; }
+.nf-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; font-size: 14px; }
+.pv { margin-top: 12px; padding: 12px; border-radius: 14px; background: var(--dp-subtle); }
+.pv-k { margin-bottom: 8px; color: var(--dp-text2); font-size: 12px; }
+.pv-card { padding: 10px 12px 8px; border-radius: 12px; background: var(--dp-card); box-shadow: 0 1px 4px rgba(0,0,0,.12); font-size: 13px; }
+.pv-app { display: flex; align-items: center; gap: 6px; color: var(--dp-text2); font-size: 11.5px; }
+.pv-title { margin-top: 4px; font-weight: 600; }
+.pv-text { color: var(--dp-text); line-height: 1.35; }
+.pv-actions { display: flex; gap: 18px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--dp-divider); color: var(--dp-primary); font-weight: 500; }
+.pv .opt-short { margin-top: 8px; }
 .ex-name small { display: block; color: var(--dp-text2); font-size: 12px; }
 .ex-row.off .ex-name, .ex-row.off .ibadge { opacity: .55; }
 .ibadge { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: #fff; font-size: 11.5px; font-weight: 600;
@@ -600,6 +617,9 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .ex-row.bat-row { flex-wrap: wrap; }
   .bat-ctl { flex: 1 1 calc(100% - 42px); margin-left: 42px; }
   .bat-ctl .opt-select { flex: 1 1 auto; min-width: 0; }
+  .ex-col { width: 52px; }
+  .ex-head.multi { font-size: 10px; letter-spacing: .02em; }
+  .nf-grid { grid-template-columns: minmax(0, 1fr); }
   .toolbar { padding: 10px 12px 8px; gap: 8px; }
   .toolbar h1 { font-size: 18px; }
   .content { padding: 0 12px 12px; }

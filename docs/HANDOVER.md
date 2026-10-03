@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.18.0, Recorder-Nachfüllen)
+## Stand (0.20.0, Ausfall-Meldungen nach Bild 5)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -35,11 +35,19 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   sofort/täglich, `battery_push_time` "HH:MM", `battery_push_daily`
   neu/alle, `battery_persistent`; Überwachung in `battery.py`);
   "Integrationen" und "Gerätetypen" (Schalter "Anzeigen"; ausgeblendete
-  Geräte werden nicht überwacht); "Push-Benachrichtigung"
+  Geräte werden nicht überwacht; bei den Integrationen seit 0.20.0 dazu die
+  Spalten "Push" `notify_exclude_integrations` und "Anhaltend"
+  `persistent_exclude_integrations`); "Push-Benachrichtigung"
   (`notify_service`, `notify_click_target`, `notify_outage`,
-  `notify_online`, `notify_group`; Versand in `push.py`, Ausfall und
-  Rückkehr in `outage.py` über einen Listener am Protokoll, gemeldete
-  Ausfälle in `.storage/device_panel.notify`);
+  `notify_online`, `notify_group`, seit 0.20.0 `notify_delay` "Erst melden
+  nach" und `notify_fields` "Inhalt der Meldung" mit Vorschau; Versand in
+  `push.py`, Ausfall und Rückkehr in `outage.py` über einen Listener am
+  Protokoll, Termin per `async_call_later`, Stand `{"offline", "notified"}`
+  in `.storage/device_panel.notify`; Aktionen "Öffnen" und "24 Std. stumm"
+  über `mobile_app_notification_action`, stumm bis in
+  `.storage/device_panel.devices` "notify_mute"); "Anhaltende
+  Benachrichtigung" (`outage_persistent`, Benachrichtigung
+  `device_panel_outage`);
   "Anzeige" (`show_service_devices`, `show_disabled_devices`: deaktivierte
   Geräte in eigener Gruppe, nicht überwacht; `hide_connections`: Chips der
   Verbindungsart, die nicht erscheinen, gilt für alle, seit 0.11.0;
@@ -141,18 +149,35 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Protokolls aus dem Recorder. Mit `0.19.0` (Nutzer, 2026-10-02, Desktop
    nach Bild 6, Handy A in `docs/mockups/view-v1/`): Spalten, Sortierung,
    Gruppen oder Liste und Filter-Chips pro Benutzer, getrennt
-   Desktop/Handy (Fahrplan Schritt 2). Als Nächstes, vom Nutzer bestätigt:
-   Empfang pro Gerät akzeptieren bzw. eigene Schwelle ("Eigene Einstellung"
-   wie Batterie), Batterie-Verlauf im Popup (24 Std., 7, 30, 90 Tage,
-   Kurve); Mockups dazu in `docs/mockups/signal-v1/` und
-   `docs/mockups/battery-history-v1/` (Empfehlung jeweils A, Entscheid des
-   Nutzers offen); dann die Backlog-Punkte 3–7: Filter nach Bereich (Mockups
-   in `docs/mockups/area-v1/`, Empfehlung A, Entscheid offen), Rest von Schritt 7 (anhaltende
-   Benachrichtigung bei Ausfällen, Spalten Push/Anhaltend bei den
-   Integrationen nach Bild 5, Aktionen in Meldungen), Überwachungsebenen,
-   Geräteansicht (Ursache, Funkweg, Empfangsverlauf, Gesundheit), Empfangs-
-   und Batterieprotokoll;
-   `docs/CONCEPT.md`, "Pflicht"; Vorlagen in `docs/reference/`.
+   Desktop/Handy (Fahrplan Schritt 2). `0.19.0` ohne Release, in `0.20.0`
+   enthalten. Mit `0.20.0` (Bild 5): Spalten "Push" und "Anhaltend" bei
+   den Integrationen, "Erst melden nach", Inhalt der Meldung mit Vorschau,
+   Aktionen "Öffnen" und "24 Std. stumm", anhaltende Benachrichtigung bei
+   Ausfällen; behoben: eine Abfrage, die vor einer eigenen Änderung begann,
+   überschrieb sie (Fehlerbericht des Nutzers: Thread von Hand zeigte
+   wieder Matter; `_fetch(true)` verwirft den alten Stand).
+   Als Nächstes, in dieser Reihenfolge (Nutzer, 2026-10-03):
+   a. Unterbrüche über Neustarts zusammenfassen: aufeinanderfolgende
+      Ausfälle, zwischen denen das Gerät nie online war (nur Lücken), in
+      der Liste des Statistik-Fensters als ein Eintrag (Screenshot
+      Wasserlecksensor mit 8 Einträgen).
+   b. Puls-Kachel: Popup mit den Geräten, die in 24 Std. Unterbrüche
+      hatten.
+   c. Einzelne Geräte ausblenden; Liste der ausgeblendeten in den
+      Einstellungen zum Wiedereinblenden.
+   d. Spalten-Dialog wie HA "Anpassen" (Auge, Ziehgriff, "Standard
+      wiederherstellen", "Fertig").
+   e. Bereiche: Filter (Mockups `docs/mockups/area-v1/`, Empfehlung A),
+      Bereiche sortierbar, gewählte Bereiche separat einblenden.
+   f. Empfang pro Gerät akzeptieren: Variante A entschieden
+      (`docs/mockups/signal-v1/`).
+   g. Batterie-Verlauf im Popup: Variante A entschieden
+      (`docs/mockups/battery-history-v1/`; Achse 0–100 % empfohlen).
+   h. Neue Geräte die ersten 3 Tage markieren, Chip "Neu".
+   Danach die Backlog-Punkte 5–7: Überwachungsebenen, Geräteansicht
+   (Ursache, Funkweg, Empfangsverlauf, Gesundheit), Empfangs- und
+   Batterieprotokoll; `docs/CONCEPT.md`, "Pflicht"; Vorlagen in
+   `docs/reference/`.
 3. Umsetzung nach dem Fahrplan in `docs/CONCEPT.md` (Abschnitt "Fahrplan"),
    der Reihe nach: Geräteliste mit Statistik, Spalten pro Benutzer,
    Einstellungsmenü, Update-Bereich, Geräteansicht, Verfügbarkeitsprotokoll,

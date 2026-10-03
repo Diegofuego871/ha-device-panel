@@ -27,12 +27,17 @@
           "battery_push_daily": "Batterie: die Tagesmeldung enthält",
           "battery_persistent": "Batterie: anhaltende Benachrichtigung",
           "exclude_integrations": "Integrationen ausblenden",
+          "notify_exclude_integrations": "Push: Integrationen ohne Push",
+          "persistent_exclude_integrations": "Anhaltende Benachrichtigung: Integrationen nicht aufführen",
           "exclude_types": "Gerätetypen ausblenden",
           "notify_service": "Push-Ziel",
           "notify_click_target": "Tipp auf Meldung öffnet",
           "notify_outage": "Ausfall melden",
           "notify_online": "Wieder online melden",
           "notify_group": "Sammelausfall zusammenfassen",
+          "notify_delay": "Ausfälle erst melden nach",
+          "notify_fields": "Inhalt der Meldung",
+          "outage_persistent": "Anhaltende Benachrichtigung bei Ausfällen",
           "show_service_devices": "Dienst-Geräte anzeigen",
           "show_disabled_devices": "Deaktivierte Geräte anzeigen",
           "hide_connections": "Filter-Chips der Verbindungsart ausblenden",
@@ -52,12 +57,17 @@
           "battery_push_daily": "Nur Geräte, die seit der letzten Meldung schwach geworden sind, oder jeden Tag alle Geräte mit schwacher Batterie (Erinnerung).",
           "battery_persistent": "Eine Benachrichtigung in Home Assistant mit allen Geräten mit schwacher Batterie; sie verschwindet, wenn alle wieder über der Schwelle sind.",
           "exclude_integrations": "Geräte dieser Integrationen zeigt das Panel nicht, und sie werden nicht überwacht.",
+          "notify_exclude_integrations": "Kein Push bei Ausfall und Rückkehr für Geräte dieser Integrationen; überwacht werden sie weiter.",
+          "persistent_exclude_integrations": "Geräte dieser Integrationen erscheinen nicht in der anhaltenden Benachrichtigung bei Ausfällen.",
           "exclude_types": "Geräte dieser Typen zeigt das Panel nicht, und sie werden nicht überwacht. Den Typ eines einzelnen Geräts kann man in seinem Popup ändern.",
           "notify_service": "notify-Dienst oder notify-Entität, z. B. die Companion-App des Handys.",
           "notify_click_target": "Wohin ein Tipp auf eine Push-Meldung zu einem Gerät führt.",
           "notify_outage": "Sofort, sobald ein Gerät als ausgefallen gilt (siehe \"Ausgefallen nach\"), an das Push-Ziel oben.",
           "notify_online": "Entwarnung, sobald das Gerät zurück ist, mit der Dauer des Ausfalls.",
           "notify_group": "Ab 3 Geräten gleichzeitig eine Meldung mit vermuteter Ursache statt vieler.",
+          "notify_delay": "Minuten Ausfall, bevor der Push kommt (0 = sobald ein Gerät als ausgefallen gilt). Kürzere Ausfälle lösen weder Ausfall- noch Online-Meldung aus.",
+          "notify_fields": "Angaben unter dem Gerätenamen in der Ausfall-Meldung. Knöpfe: Öffnen, 24 Std. stumm (Companion-App).",
+          "outage_persistent": "Eine Meldung in Home Assistant mit allen gerade ausgefallenen Geräten; sie verschwindet, wenn alle wieder online sind.",
           "show_service_devices": "Dienste einer Integration statt echter Geräte, z. B. Sonne, Wettervorhersage oder Add-ons. Angezeigte Dienst-Geräte werden auch überwacht.",
           "show_disabled_devices": "In einer eigenen Gruppe am Ende der Liste. Sie werden nicht überwacht.",
           "hide_connections": "Nur die Chips über der Liste; die Geräte bleiben sichtbar. \"Alle\", \"Nur Probleme\" und die Hinweise bleiben immer. Gilt für alle Benutzer.",
@@ -135,6 +145,17 @@
         "network": "Netzwerk",
         "cloud": "Cloud",
         "unknown": "Unbekannt"
+      }
+    },
+    "notify_field": {
+      "options": {
+        "area": "Bereich",
+        "integration": "Integration",
+        "connection": "Verbindungsart",
+        "since": "Offline seit",
+        "signal": "Empfang zuletzt",
+        "battery": "Batterie",
+        "model": "Hersteller / Modell"
       }
     }
   }

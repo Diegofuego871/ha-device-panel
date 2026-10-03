@@ -84,10 +84,20 @@ Bereich.
 - Ausfall-Meldungen: ein Push, sobald ein Gerät als ausgefallen gilt, und
   auf Wunsch eine Entwarnung, wenn es wieder online ist, mit der Dauer des
   Ausfalls (sie ersetzt auf dem Handy die Ausfall-Meldung). Mehrere Geräte
-  gleichzeitig ergeben eine Meldung mit vermuteter Ursache. Pro Gerät
-  lassen sie sich im Popup ausschalten, z. B. für ein Ladegerät, das oft
-  absichtlich offline ist; überwacht wird das Gerät weiter. Standardmässig
-  aus.
+  gleichzeitig ergeben eine Meldung mit vermuteter Ursache. "Erst melden
+  nach" (0–60 Min.) wartet mit dem Push; kurze Aussetzer melden nichts,
+  auch kein "wieder online", und ein noch nicht gemeldeter Ausfall
+  übersteht einen Neustart. Den Inhalt wählen (Bereich, Integration,
+  Verbindungsart, offline seit, Empfang zuletzt, Batterie, Hersteller /
+  Modell), mit Vorschau in den Einstellungen. Der Push hat die Knöpfe
+  "Öffnen" und "24 Std. stumm"; das Popup zeigt das Stummschalten bis zu
+  seinem Ende, "Globale Einstellung" hebt es auf. Pro Integration
+  entscheiden die Spalten "Push" und "Anhaltend", welche Integrationen
+  melden; pro Gerät lassen sich die Meldungen im Popup ausschalten, z. B.
+  für ein Ladegerät, das oft absichtlich offline ist; überwacht wird das
+  Gerät weiter. Auf Wunsch listet eine anhaltende Benachrichtigung in Home
+  Assistant alle ausgefallenen Geräte, solange sie ausgefallen sind, mit
+  Link zum Gerät. Standardmässig aus.
 - Einstellungen pro Gerät auf einen Blick: ein Symbol beim Namen (eigene
   Batterie-Schwelle, Batterie-Warnung aus, Meldungen aus, Verbindungsart von
   Hand), der Chip "Eigene Einstellung" zeigt nur diese Geräte, und die
@@ -102,9 +112,8 @@ Bereich.
 
 ### Geplant (siehe `docs/CONCEPT.md`)
 
-- Filter nach Bereich, Ausfall-Meldungen pro Integration mit Aktionen,
-  Überwachungsebenen mit Regeln, vermutete Ursache und Funkweg in der
-  Geräteansicht.
+- Filter nach Bereich, Überwachungsebenen mit Regeln, vermutete Ursache
+  und Funkweg in der Geräteansicht.
 
 ## Installation
 

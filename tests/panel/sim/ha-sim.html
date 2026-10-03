@@ -221,7 +221,9 @@
   const candidates = () => window.__devices.filter((d) => d.entities > 0 && (!d.service || window.__opts.show_service_devices) && (!d.disabled || window.__opts.show_disabled_devices));
   const shown = () => candidates().filter((d) => !(d.integration && window.__opts.exclude_integrations.includes(d.integration.domain)) && !window.__opts.exclude_types.includes(d.type));
   // Bereiche der Zahlen wie options_api.limits().
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50], notify_delay: [0, 60] };
+  // Inhalt der Meldung wie options_api.NOTIFY_FIELDS (feste Reihenfolge).
+  const NOTIFY_FIELDS = ["area", "integration", "connection", "since", "signal", "battery", "model"];
   // Push-Ziele wie options_api.notify_targets (erfunden).
   const NOTIFY_TARGETS = [
     { value: "none", kind: "none" }, { value: "notify.mobile_app_testhandy", kind: "service" },
@@ -328,10 +330,12 @@
     exclude_integrations: [], exclude_types: [], notify_service: "none", notify_click_target: "panel",
     notify_outage: false, notify_online: false, notify_group: true, hide_connections: [], connection_order: [], connection_integrations: {},
     show_service_devices: false, show_disabled_devices: false, update_check: true,
+    notify_delay: 0, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
+    outage_persistent: false,
   };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
-  window.__devSettings = { battery: {}, notifyOff: new Set() };
+  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {} };
   window.__connOverrides = {};
   const pushHass = () => {
     const ha = document.querySelector("home-assistant").hass;
@@ -452,6 +456,16 @@
           const kinds = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud"];
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !kinds.includes(v))) throw { code: "invalid_format", message: "connection map" };
         }
+        if ("notify_fields" in msg.values) {
+          const v = msg.values.notify_fields;
+          if (!Array.isArray(v) || v.some((x) => !NOTIFY_FIELDS.includes(x))) throw { code: "invalid_format", message: "fields" };
+          msg.values.notify_fields = NOTIFY_FIELDS.filter((x) => v.includes(x));
+        }
+        for (const key of ["notify_exclude_integrations", "persistent_exclude_integrations"]) {
+          const v = msg.values[key];
+          if (key in msg.values && (!Array.isArray(v) || v.some((x) => !/^[a-z0-9_]+$/.test(x)))) throw { code: "invalid_format", message: key };
+          if (key in msg.values) msg.values[key] = [...new Set(v)].sort();
+        }
         if ("battery_low_integrations" in msg.values) {
           const m = msg.values.battery_low_integrations;
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || (v !== "off" && (!Number.isInteger(v) || v < 5 || v > 50)))) throw { code: "invalid_format", message: "battery map" };
@@ -472,6 +486,8 @@
           out.battery = v;
         }
         if ("notify" in msg) {
+          // Jede Wahl hebt "stumm bis" auf (wie das Backend).
+          delete window.__devSettings.mute[msg.device_id];
           if (msg.notify) window.__devSettings.notifyOff.delete(msg.device_id);
           else window.__devSettings.notifyOff.add(msg.device_id);
           out.notify = msg.notify;
@@ -504,7 +520,7 @@
           if (threshold === "off") return { ...b, low: false };
           return { ...b, low: b.level <= threshold };
         };
-        return {
+        const res = {
           devices: shown().map((d) => ({
             ...d,
             flaky: Boolean(d.online && d.avail24 && d.avail24.outages >= flakyN),
@@ -513,6 +529,7 @@
             battery_setting: window.__devSettings.battery[d.id] ?? null,
             battery_default: { pct: own[d.integration?.domain] ?? batLow, integration: own[d.integration?.domain] != null ? d.integration.domain : null },
             notify_off: window.__devSettings.notifyOff.has(d.id),
+            notify_mute_until: window.__devSettings.mute[d.id] || null,
             // Wie das Backend: von Hand vor der Erkennung.
             connection: window.__connOverrides[d.id] || (window.__opts.connection_integrations || {})[d.integration?.domain] || d.connection,
             connection_integration: (window.__opts.connection_integrations || {})[d.integration?.domain] || null,
@@ -522,6 +539,10 @@
           integrations, now: new Date().toISOString(), offline_after: window.__opts.offline_after * 60, battery_low: batLow,
           flaky_outages: flakyN, hide_connections: [...window.__opts.hide_connections], connection_order: [...window.__opts.connection_order], pulse: pulse(), incidents,
         };
+        // Langsame Antwort mit dem Stand vom Beginn der Abfrage (wie HA bei
+        // vielen Geräten): für den Wettlauf mit einer Änderung im Popup.
+        if (window.__listDelay) await new Promise((r) => setTimeout(r, window.__listDelay));
+        return res;
       }
       if (msg.type === "device_panel/device") {
         const data = detail(msg.device_id);

@@ -7,7 +7,50 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.20.0] - 2026-10-03
+
+Outage notifications per integration, with delay, content, actions and a
+persistent notification.
+
+### Added
+
+- Settings → "Integrations": besides "Show" two more columns, "Push" and
+  "Persistent", each with "Toggle all". They decide which integrations send
+  outage notifications and which appear in the persistent notification;
+  hidden integrations lock both. The summary shows "push for N" when push
+  notifications are on.
+- Settings → "Push notification": "Report only after" (0–60 min, default
+  0). Short outages send no notification, not even "back online". The
+  waiting time runs on without a state change and survives a restart of
+  Home Assistant.
+- "Content of the notification": area, integration, connection type,
+  offline since, last signal, battery, manufacturer / model as switches
+  (default: area, integration, offline since), always in this order, with
+  a preview of an outage notification using a device from the list.
+- Outage notifications have the buttons "Open" (the device in the panel)
+  and "Mute 24 h" (mutes the device for a day). The device pop-up shows
+  "Muted until …"; "Global setting" lifts it.
+- New section "Persistent notification" with "For outages": one
+  notification in Home Assistant lists all offline devices with a link to
+  each, as long as they are offline. Dismissed, it comes back only with a
+  new outage.
+
+### Changed
+
+- "Report outages" names the waiting time when "Report only after" is
+  longer than "Offline after".
+
+### Fixed
+
+- A connection type set by hand (e.g. Thread) could jump back to the
+  previous one (e.g. Matter) until the next refresh: a list request that
+  had started before the change overwrote it. Such a result is now
+  discarded and the list is requested again. The same applied to the type
+  set by hand, the settings per device and saved settings.
+
 ## [0.19.0] - 2026-10-02
+
+Not released; included in 0.20.0.
 
 Columns, sorting and view per user, separately for desktop and phone.
 
@@ -512,7 +555,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[0.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.19.0
+[0.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.20.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0

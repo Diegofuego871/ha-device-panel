@@ -7,7 +7,53 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.20.0] - 2026-10-03
+
+Ausfall-Meldungen pro Integration, mit Verzögerung, Inhalt, Aktionen und
+anhaltender Benachrichtigung.
+
+### Hinzugefügt
+
+- Einstellungen → "Integrationen": neben "Anzeigen" zwei weitere Spalten,
+  "Push" und "Anhaltend", je mit "Alle umschalten". Sie bestimmen, welche
+  Integrationen Ausfall-Meldungen senden und welche in der anhaltenden
+  Benachrichtigung stehen; ausgeblendete Integrationen sperren beide. Die
+  Zusammenfassung zeigt "Push für N", wenn Push-Meldungen eingeschaltet
+  sind.
+- Einstellungen → "Push-Benachrichtigung": "Erst melden nach" (0–60 Min.,
+  Standard 0). Kurze Aussetzer lösen keine Meldung aus, auch kein "wieder
+  online". Die Wartezeit läuft ohne Zustandswechsel weiter und übersteht
+  einen Neustart von Home Assistant.
+- "Inhalt der Meldung": Bereich, Integration, Verbindungsart, offline
+  seit, Empfang zuletzt, Batterie, Hersteller / Modell als Schalter
+  (Standard: Bereich, Integration, offline seit), immer in dieser
+  Reihenfolge, mit Vorschau einer Ausfall-Meldung mit einem Gerät aus der
+  Liste.
+- Ausfall-Meldungen haben die Knöpfe "Öffnen" (das Gerät im Panel) und
+  "24 Std. stumm" (schaltet das Gerät einen Tag stumm). Das Geräte-Popup
+  zeigt "Stumm bis …"; "Globale Einstellung" hebt es auf.
+- Neuer Abschnitt "Anhaltende Benachrichtigung" mit "Bei Ausfällen": eine
+  Benachrichtigung in Home Assistant listet alle ausgefallenen Geräte mit
+  Link zum Gerät, solange sie ausgefallen sind. Weggeklickt kommt sie erst
+  bei einem neuen Ausfall wieder.
+
+### Geändert
+
+- "Ausfall melden" nennt die Wartezeit, wenn "Erst melden nach" länger
+  ist als "Ausgefallen nach".
+
+### Behoben
+
+- Eine von Hand gesetzte Verbindungsart (z. B. Thread) konnte bis zur
+  nächsten Abfrage auf die vorige (z. B. Matter) zurückspringen: eine
+  Abfrage der Liste, die vor der Änderung begonnen hatte, überschrieb sie.
+  Ein solches Ergebnis wird jetzt verworfen und die Liste neu abgefragt.
+  Dasselbe galt für den Typ von Hand, die Einstellungen pro Gerät und
+  gespeicherte Einstellungen.
+
 ## [0.19.0] - 2026-10-02
+
+Nicht veröffentlicht; enthalten in 0.20.0.
 
 Spalten, Sortierung und Ansicht pro Benutzer, getrennt für Desktop und
 Handy.
@@ -539,7 +585,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[0.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.19.0
+[0.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.20.0
 [0.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.18.0
 [0.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.16.0
 [0.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.15.0

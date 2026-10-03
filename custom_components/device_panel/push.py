@@ -10,7 +10,7 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant
 
-from .const import CLICK_DEVICE, DATA_PUSH_IMAGE, NOTIFY_NONE, PANEL_URL_PATH
+from .const import CLICK_DEVICE, DATA_PUSH_IMAGE, MUTE_ACTION_PREFIX, NOTIFY_NONE, PANEL_URL_PATH
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,6 +39,24 @@ TEXTS: dict[str, dict[str, str]] = {
         "dur_hours": "{h} Std. {m} Min.",
         "dur_minutes": "{m} Min.",
         "dur_short": "< 1 Min.",
+        "action_open": "Öffnen",
+        "action_mute": "24 Std. stumm",
+        "field_battery": "Batterie {level}",
+        "field_signal": "Empfang zuletzt {value}",
+        "conn_zigbee": "Zigbee",
+        "conn_thread": "Thread",
+        "conn_zwave": "Z-Wave",
+        "conn_matter": "Matter",
+        "conn_ble": "Bluetooth",
+        "conn_wifi": "WLAN",
+        "conn_ethernet": "LAN",
+        "conn_network": "Netzwerk",
+        "conn_cloud": "Cloud",
+        "conn_unknown": "Unbekannt",
+        "outage_persistent_title": "Device Panel: Geräte ausgefallen",
+        "outage_persistent_intro": "Diese Geräte sind gerade ausgefallen:",
+        "outage_persistent_since": "seit {time}",
+        "outage_persistent_outro": "Die Meldung verschwindet von selbst, wenn alle wieder online sind. Einstellen im Device Panel unter Einstellungen → Anhaltende Benachrichtigung.",
     },
     "en": {
         "battery_title": "Low battery: {name}",
@@ -62,6 +80,24 @@ TEXTS: dict[str, dict[str, str]] = {
         "dur_hours": "{h} h {m} min",
         "dur_minutes": "{m} min",
         "dur_short": "< 1 min",
+        "action_open": "Open",
+        "action_mute": "Mute 24 h",
+        "field_battery": "battery {level}",
+        "field_signal": "last signal {value}",
+        "conn_zigbee": "Zigbee",
+        "conn_thread": "Thread",
+        "conn_zwave": "Z-Wave",
+        "conn_matter": "Matter",
+        "conn_ble": "Bluetooth",
+        "conn_wifi": "Wi-Fi",
+        "conn_ethernet": "LAN",
+        "conn_network": "Network",
+        "conn_cloud": "Cloud",
+        "conn_unknown": "Unknown",
+        "outage_persistent_title": "Device Panel: devices offline",
+        "outage_persistent_intro": "These devices are offline right now:",
+        "outage_persistent_since": "since {time}",
+        "outage_persistent_outro": "This notification disappears by itself once all of them are back online. Change it in Device Panel under Settings → Persistent notification.",
     },
 }
 
@@ -100,16 +136,27 @@ def device_url(click: str, device_id: str) -> str:
     return f"/config/devices/device/{device_id}" if click == CLICK_DEVICE else panel_url(device_id)
 
 
-def notification_data(hass: HomeAssistant, tag: str, url: str) -> dict[str, Any]:
+def notification_data(hass: HomeAssistant, tag: str, url: str, actions: list[dict[str, str]] | None = None) -> dict[str, Any]:
     """
     Zusatzdaten für die Companion-App. Das Klickziel steht doppelt drin: iOS
     liest "url", Android nur "clickAction". Der Tag ersetzt eine frühere
-    Meldung mit demselben Tag. Ohne Bild entfällt nur "icon_url".
+    Meldung mit demselben Tag. Ohne Bild entfällt nur "icon_url". Aktionen
+    erscheinen als Knöpfe unter der Meldung.
     """
     data: dict[str, Any] = {"tag": tag, "url": url, "clickAction": url}
     if image := hass.data.get(DATA_PUSH_IMAGE):
         data["icon_url"] = image
+    if actions:
+        data["actions"] = actions
     return data
+
+
+def device_actions(hass: HomeAssistant, url: str, device_id: str) -> list[dict[str, str]]:
+    """Knöpfe einer Ausfall-Meldung: öffnen und 24 Std. stumm (Bild 5)."""
+    return [
+        {"action": "URI", "title": text(hass, "action_open"), "uri": url},
+        {"action": f"{MUTE_ACTION_PREFIX}{device_id}", "title": text(hass, "action_mute")},
+    ]
 
 
 async def async_push(

@@ -27,12 +27,17 @@
           "battery_push_daily": "Battery: the daily notification lists",
           "battery_persistent": "Battery: persistent notification",
           "exclude_integrations": "Hide integrations",
+          "notify_exclude_integrations": "Push: integrations without push",
+          "persistent_exclude_integrations": "Persistent notification: integrations not listed",
           "exclude_types": "Hide device types",
           "notify_service": "Push target",
           "notify_click_target": "Tapping the notification opens",
           "notify_outage": "Report outages",
           "notify_online": "Report back online",
           "notify_group": "Combine group outages",
+          "notify_delay": "Report outages only after",
+          "notify_fields": "Content of the notification",
+          "outage_persistent": "Persistent notification for outages",
           "show_service_devices": "Show service devices",
           "show_disabled_devices": "Show disabled devices",
           "hide_connections": "Hide filter chips of the connection type",
@@ -52,12 +57,17 @@
           "battery_push_daily": "Only devices that became low since the last notification, or every day all devices with a low battery (reminder).",
           "battery_persistent": "One notification in Home Assistant listing all devices with a low battery; it disappears once all are above the threshold again.",
           "exclude_integrations": "Devices of these integrations are not shown in the panel and not monitored.",
+          "notify_exclude_integrations": "No outage and back online push for devices of these integrations; they are still monitored.",
+          "persistent_exclude_integrations": "Devices of these integrations do not appear in the persistent notification for outages.",
           "exclude_types": "Devices of these types are not shown in the panel and not monitored. The type of a single device can be changed in its pop-up.",
           "notify_service": "notify service or notify entity, e.g. the Companion app of your phone.",
           "notify_click_target": "Where tapping a push notification about a device leads.",
           "notify_outage": "Immediately as soon as a device counts as offline (see \"Offline after\"), to the push target above.",
           "notify_online": "All clear as soon as the device is back, with the duration of the outage.",
           "notify_group": "From 3 devices at once one notification with the probable cause instead of many.",
+          "notify_delay": "Minutes of outage before the push is sent (0 = as soon as a device counts as offline). Shorter outages send neither an outage nor a back online notification.",
+          "notify_fields": "Details below the device name in the outage notification. Buttons: open, mute 24 h (companion app).",
+          "outage_persistent": "One notification in Home Assistant listing all devices that are offline right now; it disappears once all are back.",
           "show_service_devices": "Services of an integration rather than real devices, e.g. sun, weather forecast or add-ons. Shown service devices are monitored too.",
           "show_disabled_devices": "In their own group at the end of the list. They are not monitored.",
           "hide_connections": "Only the chips above the list; the devices stay visible. \"All\", \"Problems only\" and the hints always stay. Applies to all users.",
@@ -135,6 +145,17 @@
         "network": "Network",
         "cloud": "Cloud",
         "unknown": "Unknown"
+      }
+    },
+    "notify_field": {
+      "options": {
+        "area": "Area",
+        "integration": "Integration",
+        "connection": "Connection type",
+        "since": "Offline since",
+        "signal": "Last signal",
+        "battery": "Battery",
+        "model": "Manufacturer / model"
       }
     }
   }

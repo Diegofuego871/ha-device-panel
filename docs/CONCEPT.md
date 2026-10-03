@@ -477,6 +477,38 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   Ausfälle in `.storage/device_panel.notify`: kein erneuter Ausfall nach
   einem Neustart, die Rückkehr kommt trotzdem. Standard: alles aus ausser
   Sammelausfall.
+- Ausfall-Meldungen nach Bild 5 (seit 0.20.0):
+  - "Erst melden nach" (`notify_delay`, 0–60 Min.): fällig, wenn
+    Beginn + Wartezeit erreicht ist; Beginn ist der Beginn des Ausfalls im
+    Protokoll, nicht die Erkennung. `async_call_later` auf den nächsten
+    Termin, damit die Meldung ohne Zustandswechsel kommt. Kurze Ausfälle:
+    weder Ausfall noch "wieder online" (Rückkehr nur, wenn der Ausfall
+    gemeldet war). Stand `{"offline": {Gerät: Beginn}, "notified": [...]}`
+    in `.storage/device_panel.notify`: ein noch nicht gemeldeter Ausfall
+    übersteht den Neustart und wird zum Termin gemeldet. Eine Datei aus
+    0.19.0 ohne "notified" gilt als ganz gemeldet (kein Nachmelden).
+  - Inhalt (`notify_fields`): Bereich, Integration, Verbindungsart, offline
+    seit, Empfang zuletzt, Batterie, Hersteller / Modell; immer in dieser
+    Reihenfolge (nicht in der Reihenfolge des Antippens), Werte aus
+    `devices.async_device_facts` (wirksame Verbindungsart wie in der
+    Liste: von Hand, Integration, Erkennung). Fehlt ein Wert, fällt er weg.
+    Die Vorschau im Panel nimmt ein ausgefallenes Gerät aus der Liste.
+  - Aktionen: "Öffnen" (`URI`, Gerät im Panel) und "24 Std. stumm"
+    (`DEVICE_PANEL_MUTE_<Gerät>`, Ereignis
+    `mobile_app_notification_action`): stumm bis jetzt + `MUTE_HOURS`,
+    gespeichert in `.storage/device_panel.devices` ("notify_mute",
+    abgelaufene fallen beim Schreiben weg). Das Popup zeigt "Stumm bis …"
+    als eigene Option; "Globale Einstellung" oder "Aus" hebt es auf.
+  - Pro Integration (Spalten in "Integrationen"): `notify_exclude_integrations`
+    (kein Push, Sammelmeldung zählt sie nicht), `persistent_exclude_integrations`
+    (nicht in der anhaltenden Benachrichtigung). Nach der primären
+    Integration wie Batterie und Verbindungsart.
+  - Anhaltende Benachrichtigung bei Ausfällen (`outage_persistent`, ID
+    `device_panel_outage`): alle ausgefallenen Geräte mit Link
+    `/device-panel?device=<id>`, ohne Geräte mit Meldungen aus und ohne
+    ausgeschlossene Integrationen, unabhängig von "Erst melden nach" und
+    stumm. Verschwindet, wenn keines mehr ausgefallen ist; weggeklickt erst
+    wieder bei einem neuen Ausfall (wie die Batterie).
 
 - Bild: `push/icon.png` (das gewählte Icon mit Rand, 512 × 512, Quelle
   `docs/brand/push.svg`) wird beim Setup als statischer Pfad ohne Anmeldung
@@ -496,15 +528,11 @@ Für den Versand zu übernehmen:
   Zusatzdaten ab (Telegram, E-Mail), einmal ohne `data` wiederholen.
   notify-Entitäten über `notify.send_message` (nur Titel und Text).
 - Texte in Deutsch und Englisch nach `hass.config.language`.
-- Für Ausfälle offen (Schritt 7): anhaltende Benachrichtigung bei
-  Ausfällen, Vorschau, Push und Anhaltend pro Integration (Bild 5),
-  Aktionen in der Meldung. Umgesetzt in 0.9.0: Ausfall sofort, "Wieder
-  online melden", Sammelausfall, aus pro Gerät.
+- Schritt 7 umgesetzt: 0.9.0 (Ausfall sofort, "Wieder online melden",
+  Sammelausfall, aus pro Gerät) und 0.20.0 (Bild 5, siehe oben).
 
 ## Mögliche Erweiterungen (später)
 
-- Aktionen in Push-Meldungen (z. B. Gerät stumm schalten), siehe
-  "Push-Meldungen".
 - Binary-Sensor "Geräte ausgefallen" und Sensor "Anzahl ausgefallen" für
   Automationen.
 - Hinweis auf verfügbare Firmware-Updates (update-Entitäten).

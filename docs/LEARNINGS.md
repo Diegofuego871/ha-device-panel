@@ -219,6 +219,15 @@ hat dort einen echten Fehler oder Umweg gekostet.
 - **Zusammenfassungen nicht wie Zustände formulieren:** "Batterie schwach"
   als Liste eingeschalteter Meldungen las sich wie eine Warnung; mit Verb
   ("meldet …").
+- **Alter Stand überdeckt eigene Änderung (0.20.0):** `_fetch` lief nie
+  doppelt; eine Abfrage, die vor einer Änderung im Popup begonnen hatte,
+  lieferte danach den alten Stand und überschrieb die sofort gezeigte Wahl,
+  das Neuladen nach der Änderung wurde übersprungen. Folge: Thread von Hand
+  sprang bis zur nächsten Abfrage (10 s) auf Matter zurück (Fehlerbericht
+  des Nutzers). Nach jeder eigenen Änderung `_fetch(true)`: ein Zähler
+  markiert laufende Abfragen als veraltet, ihr Ergebnis wird verworfen und
+  sofort neu abgefragt. Test: Nachbau mit `__listDelay` (Antwort mit dem
+  Stand vom Beginn, verzögert).
 
 ## Tests
 

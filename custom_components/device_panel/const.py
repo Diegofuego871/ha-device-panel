@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "22"
+PANEL_VERSION = "23"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -57,11 +57,16 @@ CONF_BATTERY_PERSISTENT = "battery_persistent"
 # "Schwach ab"; ohne Eintrag gilt der globale Wert. Massgebend ist
 # die primäre Integration des Geräts.
 CONF_BATTERY_LOW_INTEGRATIONS = "battery_low_integrations"
+# Push erst nach so vielen Minuten Ausfall (0 = sobald ausgefallen); kurze
+# Aussetzer lösen dann weder Ausfall- noch Online-Meldung aus.
+CONF_NOTIFY_DELAY = "notify_delay"
+DEFAULT_NOTIFY_DELAY = 0
 INT_RANGES = {
     CONF_OFFLINE_AFTER: (1, 60),
     CONF_FLAKY_OUTAGES: (2, 50),
     CONF_STARTUP_GRACE: (0, 30),
     CONF_BATTERY_LOW: (5, 50),
+    CONF_NOTIFY_DELAY: (0, 60),
 }
 # Erst wieder melden, wenn die Batterie zwischendurch so viele Prozentpunkte
 # über der Schwelle war (Batteriewechsel), sonst meldet ein Wert, der um die
@@ -87,6 +92,24 @@ CONF_NOTIFY_ONLINE = "notify_online"
 CONF_NOTIFY_GROUP = "notify_group"
 NOTIFY_GROUP_MIN = 3
 DATA_OUTAGE = f"{DOMAIN}_outage"
+# Ausfall-Meldungen nach Bild 5 (docs/mockups/panel-v1), seit 0.20.0;
+# "Erst melden nach" (CONF_NOTIFY_DELAY) steht bei den Bereichen oben.
+# Inhalt der Meldung (der Name steht im Titel), in dieser Reihenfolge (wie
+# die Vorschau in Bild 5).
+CONF_NOTIFY_FIELDS = "notify_fields"
+NOTIFY_FIELDS = ("area", "integration", "connection", "since", "signal", "battery", "model")
+DEFAULT_NOTIFY_FIELDS = ("area", "integration", "since")
+# Integrationen ohne Ausfall-/Online-Push bzw. ohne Eintrag in der
+# anhaltenden Benachrichtigung (Spalten "Push" und "Anhaltend").
+CONF_NOTIFY_EXCLUDE = "notify_exclude_integrations"
+CONF_PERSISTENT_EXCLUDE = "persistent_exclude_integrations"
+# Anhaltende Benachrichtigung in HA, solange Geräte ausgefallen sind.
+CONF_OUTAGE_PERSISTENT = "outage_persistent"
+PERSISTENT_OUTAGE_ID = f"{DOMAIN}_outage"
+# Aktion "24 Std. stumm" in der Push-Meldung (Companion-App): Ereignis
+# mobile_app_notification_action mit diesem Präfix und der Geräte-ID.
+MUTE_ACTION_PREFIX = "DEVICE_PANEL_MUTE_"
+MUTE_HOURS = 24
 # Batterie-Push: sofort oder einmal täglich um eine Uhrzeit (lokale Zeit),
 # täglich mit den neu betroffenen oder allen schwachen Geräten.
 CONF_BATTERY_PUSH_MODE = "battery_push_mode"

@@ -193,6 +193,10 @@ const MATTER_TYPES = { thread: "thread", wifi: "wifi", ethernet: "ethernet" };
 const CONN_MANUAL = Object.keys(CONN).filter((k) => k !== "unknown");
 
 const LOGO = `<svg width="30" height="30" viewBox="22 22 212 212" aria-hidden="true"><defs><linearGradient id="dpg" x1="28" y1="20" x2="228" y2="236" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7ADFFD"/><stop offset=".5" stop-color="#22A9F9"/><stop offset="1" stop-color="#1C7DF9"/></linearGradient></defs><path d="M60 44 H112 A84 84 0 0 1 112 212 H60 Z" fill="none" stroke="url(#dpg)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><path d="M86 128 H104 L118 94 L136 164 L150 128 H168" fill="none" stroke="url(#dpg)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+// Kleines Logo für die Vorschau einer Push-Meldung.
+const LOGO_SMALL = LOGO.replace('width="30" height="30"', 'width="14" height="14"').replaceAll("dpg", "dpgs");
+// Inhalt einer Ausfall-Meldung in fester Reihenfolge (wie const.NOTIFY_FIELDS).
+const NOTIFY_FIELDS = ["area", "integration", "connection", "since", "signal", "battery", "model"];
 
 // Empfang in vier Stufen (gut -> schlecht), Farben wie unifi_dynamic.
 function sigLevel(sig) {
@@ -637,7 +641,7 @@ class DevicePanel extends HTMLElement {
           this._devRangeError = null;
           this._setDeviceSettings(this._detailId, { battery: v });
         }
-      } else if (el.matches?.('select[data-dlg="dev-notify"]')) this._setDeviceSettings(this._detailId, { notify: el.value !== "off" });
+      } else if (el.matches?.('select[data-dlg="dev-notify"]') && el.value !== "mute") this._setDeviceSettings(this._detailId, { notify: el.value !== "off" });
     });
     dlg.addEventListener("close", () => {
       if (!dlg.open) this._resetDevice();
@@ -663,12 +667,21 @@ class DevicePanel extends HTMLElement {
     });
   }
 
-  // Nie zwei Abfragen gleichzeitig.
-  async _fetch() {
-    if (!this._hass || this._fetching) return;
+  // Nie zwei Abfragen gleichzeitig. changed: nach einer eigenen Änderung
+  // (Verbindungsart, Typ, Einstellungen). Eine Abfrage, die davor begonnen
+  // hat, bringt den alten Stand und würde die Änderung überdecken, bis zur
+  // nächsten Abfrage (Fehlerbericht: Thread von Hand zeigte wieder Matter).
+  // Ihr Ergebnis wird verworfen und sofort neu abgefragt.
+  async _fetch(changed = false) {
+    if (!this._hass) return;
+    if (changed) this._changes = (this._changes || 0) + 1;
+    if (this._fetching) return;
     this._fetching = true;
+    const seen = this._changes || 0;
+    const stale = () => (this._changes || 0) !== seen;
     try {
       const result = await this._hass.callWS({ type: "device_panel/list_devices" });
+      if (stale()) return;
       // Welche Geräte gezeigt werden (Dienst-Geräte, deaktivierte, Ausschlüsse),
       // entscheidet das Backend nach den Einstellungen.
       this._devices = result.devices || [];
@@ -689,20 +702,25 @@ class DevicePanel extends HTMLElement {
       this._error = null;
       this._deepPending = true;
     } catch (err) {
-      this._error = (err && err.message) || String(err);
+      if (!stale()) this._error = (err && err.message) || String(err);
     } finally {
       this._fetching = false;
-      this._loading = false;
-      this._render();
-      if (this._deepPending) {
-        this._deepPending = false;
-        this._deepLink();
-      }
-      this._refineMatter();
-      if (this._detailId) {
-        this._loadDetail();
-        if (this._statRange) this._loadHistory();
-      }
+      if (stale()) this._fetch();
+      else this._fetched();
+    }
+  }
+
+  _fetched() {
+    this._loading = false;
+    this._render();
+    if (this._deepPending) {
+      this._deepPending = false;
+      this._deepLink();
+    }
+    this._refineMatter();
+    if (this._detailId) {
+      this._loadDetail();
+      if (this._statRange) this._loadHistory();
     }
   }
 
@@ -1584,7 +1602,7 @@ class DevicePanel extends HTMLElement {
       this._typeError = (err && err.message) || String(err);
     }
     this._render();
-    this._fetch();
+    this._fetch(true);
   }
 
   // Verbindungsart von Hand: wie der Typ sofort zeigen, dann bestätigen lassen.
@@ -1601,7 +1619,7 @@ class DevicePanel extends HTMLElement {
       this._connError = (err && err.message) || String(err);
     }
     this._render();
-    this._fetch();
+    this._fetch(true);
   }
 
   // Einstellungen des Geräts: sofort speichern (wie der Typ), dann neu laden.
@@ -1618,7 +1636,7 @@ class DevicePanel extends HTMLElement {
       this._devSetError = (err && err.message) || String(err);
     }
     this._render();
-    this._fetch();
+    this._fetch(true);
   }
 
   _resetDevice() {
@@ -1767,10 +1785,14 @@ class DevicePanel extends HTMLElement {
           : ""
       }<div class="opt-short">${escape(t("devBatShort", def.pct, integ))}</div></div>`;
     }
-    html += `<div class="opt${d.notify_off ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devNotify"))}</span>${sel(
+    // Stumm (Knopf "24 Std. stumm" in der Meldung): eigene Option mit Ende;
+    // "Globale Einstellung" oder "Aus" hebt es auf.
+    const muted = d.notify_mute_until && Date.parse(d.notify_mute_until) > Date.now() ? Date.parse(d.notify_mute_until) / 1000 : null;
+    const notifyOpts = [["on", t("devNotifyOn")], ...(muted ? [["mute", t("devNotifyMuted", this._fmtTime(muted, true))]] : []), ["off", t("devNotifyOff")]];
+    html += `<div class="opt${d.notify_off || muted ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devNotify"))}</span>${sel(
       "dev-notify",
-      [["on", t("devNotifyOn")], ["off", t("devNotifyOff")]],
-      d.notify_off ? "off" : "on",
+      notifyOpts,
+      d.notify_off ? "off" : muted ? "mute" : "on",
       t("devNotify")
     )}</div><div class="opt-short">${escape(t("devNotifyShort"))}</div></div>`;
     if (this._devSetError) html += `<div class="opt-error">${escape(t("devSaveError"))} ${escape(this._devSetError)}</div>`;
@@ -2229,10 +2251,11 @@ class DevicePanel extends HTMLElement {
     return [
       ["detection", ["offline_after", "flaky_outages", "startup_grace"]],
       ["battery", ["battery_low", "battery_low_integrations", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "reset_battery"]],
-      ["integrations", ["exclude_integrations"]],
+      ["integrations", ["exclude_integrations", "notify_exclude_integrations", "persistent_exclude_integrations"]],
       ["types", ["exclude_types"]],
       ["connections", ["connection_integrations", "reset_connection"]],
-      ["push", ["notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "reset_notify"]],
+      ["push", ["notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "notify_delay", "notify_fields", "reset_notify"]],
+      ["persistent", ["outage_persistent"]],
       ["display", ["show_service_devices", "show_disabled_devices", "hide_connections", "connection_order"]],
       ["updates", ["update_check"]],
     ];
@@ -2322,7 +2345,16 @@ class DevicePanel extends HTMLElement {
     }
     if (id === "integrations") {
       const list = this._settings?.data?.catalog?.integrations || [];
-      return this._t("sumShown", this._t("sumIntegrations", list.length), d.exclude_integrations.length);
+      const shown = list.filter((i) => !d.exclude_integrations.includes(i.domain));
+      const push = shown.filter((i) => !(d.notify_exclude_integrations || []).includes(i.domain)).length;
+      const sum = this._t("sumShown", this._t("sumIntegrations", list.length), d.exclude_integrations.length);
+      // "Push für N" nur, wenn es Push-Meldungen gibt (Bild 5).
+      return d.notify_service && d.notify_service !== "none" && (d.notify_outage || d.notify_online) ? `${sum} · ${this._t("sumPushFor", push)}` : sum;
+    }
+    if (id === "persistent") {
+      const list = this._settings?.data?.catalog?.integrations || [];
+      const n = list.filter((i) => !d.exclude_integrations.includes(i.domain) && !(d.persistent_exclude_integrations || []).includes(i.domain)).length;
+      return d.outage_persistent ? this._t("sumPersistentOn", n) : this._t("sumPersistentOff");
     }
     if (id === "types") return this._t("sumShown", this._t("sumTypes", this._catalogTypes(d).length), d.exclude_types.length);
     if (id === "connections") {
@@ -2479,6 +2511,40 @@ class DevicePanel extends HTMLElement {
       <div class="opt-short">${escape(t(list.length ? `${pre}Short` : `${pre}Empty`))}</div>${rows ? `<div class="ovr-list">${rows}</div>` : ""}</div>`;
   }
 
+  // "Inhalt der Meldung" als Schalter in zwei Spalten, dazu die Vorschau
+  // einer Ausfall-Meldung (Bild 5) mit einem Gerät aus der Liste.
+  _notifyFieldsHtml(d, changes) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const on = new Set(d.notify_fields || []);
+    const labels = { area: "fieldArea", integration: "fieldIntegration", connection: "fieldConnection", since: "fieldSince", signal: "fieldSignal", battery: "fieldBattery", model: "fieldModel" };
+    const grid = NOTIFY_FIELDS.map(
+      (f) => `<label class="nf-item"><span>${escape(t(labels[f]))}</span><span class="switch"><input type="checkbox" data-nfield="${f}" ${on.has(f) ? "checked" : ""} aria-label="${escape(t(labels[f]))}"><span></span></span></label>`
+    ).join("");
+    // Beispiel: ein ausgefallenes Gerät, sonst irgendeines, sonst erfunden.
+    const dev = this._devices.find((x) => x.online === false) || this._devices[0] || { name: t("pvSample"), area: null };
+    const since = dev.offline_since ? Date.parse(dev.offline_since) / 1000 : Date.now() / 1000 - 300;
+    const parts = NOTIFY_FIELDS.filter((f) => on.has(f))
+      .map((f) => {
+        if (f === "area") return dev.area;
+        if (f === "integration") return dev.integration ? this._integName(dev) : null;
+        if (f === "connection") return dev.connection !== undefined ? t(CONN[this._connOf(dev)].key) : null;
+        if (f === "since") return t("pvSince", this._fmtTime(since));
+        if (f === "signal") return dev.signal?.value != null ? t("pvSignal", sigText(dev.signal)) : null;
+        if (f === "battery") return dev.battery?.level != null ? t("pvBattery", `${dev.battery.level} %`) : null;
+        if (f === "model") return [dev.manufacturer, dev.model].filter(Boolean).join(" ") || null;
+        return null;
+      })
+      .filter(Boolean);
+    const preview = d.notify_outage
+      ? `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
+          <div class="pv-title">${escape(t("pvTitle", dev.name))}</div><div class="pv-text">${escape(parts.join(" · "))}</div>
+          <div class="pv-actions"><span>${escape(t("pvOpen"))}</span><span>${escape(t("pvMute"))}</span></div></div>
+          <div class="opt-short">${escape(t("pvNote"))}</div></div>`
+      : "";
+    return `<div class="opt${changes.has("notify_fields") ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optFields"))}</span></div>
+      <div class="opt-short">${escape(t("optFieldsShort"))}</div><div class="nf-grid">${grid}</div>${preview}</div>`;
+  }
+
   _settingsBodyHtml() {
     const st = this._settings;
     const d = st.draft;
@@ -2513,22 +2579,32 @@ class DevicePanel extends HTMLElement {
       const [min, max] = st.data.limits?.[key] || [];
       return `<span class="opt-input"><input type="number" inputmode="numeric" step="1" ${min != null ? `min="${min}" max="${max}"` : ""} data-opt="${key}" value="${escape(d[key] ?? "")}" aria-label="${escape(label)}"><span class="unit">${escape(unit)}</span></span>`;
     };
-    // Ausschlüsse als Tabelle: Schalter "Anzeigen" pro Integration bzw. Typ.
+    // Ausschlüsse als Tabelle: Schalter "Anzeigen" pro Integration bzw. Typ,
+    // bei den Integrationen dazu "Push" und "Anhaltend" (Bild 5). Jede Spalte
+    // ist eine Liste der Ausgeschlossenen; ausgeblendete Zeilen sperren die
+    // übrigen Spalten (nicht überwacht, keine Meldungen).
     // drag: Zeilen mit Griff zum Verschieben (Reihenfolge der Chips).
-    const exTable = (key, items, intro, drag = false) => {
-      const hidden = new Set(d[key]);
-      const allShown = items.every((x) => !hidden.has(x.value));
+    const exTable = (key, items, intro, drag = false, cols = null) => {
+      const columns = cols || [[key, t("colShow")]];
+      const multi = columns.length > 1;
+      const sets = Object.fromEntries(columns.map(([k]) => [k, new Set(d[k] || [])]));
+      const hidden = sets[key];
       const handle = (x) =>
         drag
           ? `<button type="button" class="drag-h" data-set="drag" data-key="${escape(x.value)}" title="${escape(t("dragHint"))}" aria-label="${escape(t("dragMove", x.label))}">${mdi("drag", 18)}</button>`
           : "";
+      const cell = (html) => (multi ? `<span class="ex-col">${html}</span>` : html);
+      const toggle = (k, label, x, off) =>
+        cell(`<label class="switch"><input type="checkbox" data-list="${k}" data-value="${escape(x.value)}" ${sets[k].has(x.value) ? "" : "checked"} ${off ? "disabled" : ""} aria-label="${escape(`${label}: ${x.label}`)}"><span></span></label>`);
       const line = (x) => `<div class="ex-row${hidden.has(x.value) ? " off" : ""}">${handle(x)}${x.badge}<div class="ex-name">${escape(x.label)}<small>${escape(x.sub)}</small></div>
-          <label class="switch"><input type="checkbox" data-list="${key}" data-value="${escape(x.value)}" ${hidden.has(x.value) ? "" : "checked"} aria-label="${escape(`${t("colShow")}: ${x.label}`)}"><span></span></label></div>`;
+          ${columns.map(([k, label], i) => toggle(k, label, x, i > 0 && hidden.has(x.value))).join("")}</div>`;
       const rows = items.map(line).join("");
+      const allRow = columns
+        .map(([k, label]) => cell(`<label class="switch"><input type="checkbox" data-list-all="${k}" ${items.every((x) => !sets[k].has(x.value)) ? "checked" : ""} aria-label="${escape(`${t("toggleAll")}: ${label}`)}"><span></span></label>`))
+        .join("");
       return `<div class="opt-short ex-intro">${escape(intro)}</div>
-        <div class="ex-head"><span></span><span>${escape(t("colShow"))}</span></div>
-        <div class="ex-row ex-all"><div class="ex-name">${escape(t("toggleAll"))}</div>
-          <label class="switch"><input type="checkbox" data-list-all="${key}" ${allShown ? "checked" : ""} aria-label="${escape(t("toggleAll"))}"><span></span></label></div>
+        <div class="ex-head${multi ? " multi" : ""}"><span></span>${columns.map(([, label]) => (multi ? `<span class="ex-col">${escape(label)}</span>` : `<span>${escape(label)}</span>`)).join("")}</div>
+        <div class="ex-row ex-all"><div class="ex-name">${escape(t("toggleAll"))}</div>${allRow}</div>
         ${drag ? `<div class="drag-list">${rows}</div>` : rows}`;
     };
     const integrations = (st.data.catalog?.integrations || []).map((i) => ({
@@ -2579,16 +2655,23 @@ class DevicePanel extends HTMLElement {
         row("battery_persistent", t("optBatteryPersistent"), sw("battery_persistent", t("optBatteryPersistent")), t("optBatteryPersistentShort"), t("optBatteryPersistentInfo")) +
         this._batOwnHtml(d, errors) +
         this._overridesHtml("battery"),
-      integrations: exTable("exclude_integrations", integrations, t("hideIntro")),
+      integrations: exTable("exclude_integrations", integrations, t("integIntro"), false, [
+        ["exclude_integrations", t("colShow")],
+        ["notify_exclude_integrations", t("colPush")],
+        ["persistent_exclude_integrations", t("colPersistent")],
+      ]),
       types: exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`),
       connections: this._connIntegHtml(d) + this._overridesHtml("connection"),
       push:
         row("notify_service", t("optNotifyTarget"), select("notify_service", targets, t("optNotifyTarget")), t("optNotifyTargetShort"), t("optNotifyTargetInfo")) +
         row("notify_click_target", t("optClick"), select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null) +
-        row("notify_outage", t("optOutage"), sw("notify_outage", t("optOutage")), t("optOutageShort", st.data.values.offline_after ?? 2), null) +
+        row("notify_outage", t("optOutage"), sw("notify_outage", t("optOutage")), t("optOutageShort", st.data.values.offline_after ?? 2, errors.notify_delay ? st.data.values.notify_delay : d.notify_delay), null) +
         row("notify_online", t("optOnline"), sw("notify_online", t("optOnline")), t("optOnlineShort"), null) +
         row("notify_group", t("optGroup"), sw("notify_group", t("optGroup")), t("optGroupShort"), null) +
+        row("notify_delay", t("optDelay"), num("notify_delay", t("minuteUnit"), t("optDelay")), t("optDelayShort"), null) +
+        this._notifyFieldsHtml(d, changes) +
         this._overridesHtml("notify"),
+      persistent: row("outage_persistent", t("optOutagePersistent"), sw("outage_persistent", t("optOutagePersistent")), t("optOutagePersistentShort"), null),
       display:
         row("show_service_devices", t("optShowService"), sw("show_service_devices", t("optShowService")), t("optShowServiceShort"), t("optShowServiceInfo")) +
         row("show_disabled_devices", t("optShowDisabled"), sw("show_disabled_devices", t("optShowDisabled")), t("optShowDisabledShort"), null) +
@@ -2601,7 +2684,8 @@ class DevicePanel extends HTMLElement {
       updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
     const titles = {
-      detection: "secDetection", battery: "secBattery", integrations: "secIntegrations", types: "secTypes", connections: "secConnections", push: "secPush", display: "secDisplay", updates: "secUpdates",
+      detection: "secDetection", battery: "secBattery", integrations: "secIntegrations", types: "secTypes", connections: "secConnections", push: "secPush",
+      persistent: "secPersistent", display: "secDisplay", updates: "secUpdates",
     };
     return (
       `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
@@ -2769,7 +2853,13 @@ class DevicePanel extends HTMLElement {
         return;
       }
       if (!st?.draft || el.type !== "checkbox") return;
-      if (el.dataset.opt) st.draft[el.dataset.opt] = el.checked;
+      if (el.dataset.nfield) {
+        // Inhalt der Meldung: Liste in fester Reihenfolge.
+        const on = new Set(st.draft.notify_fields || []);
+        if (el.checked) on.add(el.dataset.nfield);
+        else on.delete(el.dataset.nfield);
+        st.draft.notify_fields = NOTIFY_FIELDS.filter((f) => on.has(f));
+      } else if (el.dataset.opt) st.draft[el.dataset.opt] = el.checked;
       else if (el.dataset.list) {
         // Angezeigt = nicht in der Liste der Ausschlüsse.
         const list = new Set(st.draft[el.dataset.list]);
@@ -2778,7 +2868,7 @@ class DevicePanel extends HTMLElement {
         st.draft[el.dataset.list] = [...list].sort();
       } else if (el.dataset.listAll) {
         const key = el.dataset.listAll;
-        const all = key === "exclude_integrations"
+        const all = key.endsWith("exclude_integrations")
           ? (st.data.catalog?.integrations || []).map((i) => i.domain)
           : key === "hide_connections"
             ? this._connCatalog(st.draft).map((x) => x.value)
@@ -2859,6 +2949,12 @@ class DevicePanel extends HTMLElement {
         line.textContent = errors[key] || line.dataset.short;
       }
     }
+    // "Ausfall melden" nennt die Wartezeit aus "Erst melden nach".
+    const outageLine = dialog.querySelector('input[data-opt="notify_outage"]')?.closest(".opt")?.querySelector(".opt-short");
+    if (outageLine) {
+      const delay = errors.notify_delay ? st.data.values.notify_delay : st.draft.notify_delay;
+      outageLine.textContent = this._t("optOutageShort", st.data.values.offline_after ?? 2, delay);
+    }
     for (const [id, keys] of this._settingsSections()) {
       const head = dialog.querySelector(`[data-set="section"][data-id="${id}"]`);
       if (!head) continue;
@@ -2902,7 +2998,7 @@ class DevicePanel extends HTMLElement {
       // Erkennung, Batterie-Schwelle, Ausschlüsse und Anzeige ändern die Liste sofort.
       const quiet = ["update_check", "battery_push", "battery_persistent", "notify_service", "notify_click_target"];
       // Zurückgesetzte Geräte: Symbole und Batterie-Markierung in der Liste.
-      if (anyReset || changes.some((k) => !quiet.includes(k))) this._fetch();
+      if (anyReset || changes.some((k) => !quiet.includes(k))) this._fetch(true);
       await this._reloadSettings(st);
     } catch (err) {
       if (this._settings !== st) return;

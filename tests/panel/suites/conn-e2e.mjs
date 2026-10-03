@@ -75,6 +75,24 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Speicherfehler angezeigt`, await wait(`return (r.querySelector('select[data-dlg="conn"]').closest(".tile").querySelector(".warn")?.textContent || "").startsWith(${JSON.stringify(T.err)})`));
     await p.evaluate(() => { window.__connFails = null; });
     await close();
+    // Wettlauf (Fehlerbericht): eine Abfrage, die vor der Wahl begonnen hat,
+    // bringt den alten Stand; er darf die Wahl nicht überdecken.
+    await open("e");
+    await p.evaluate(() => { window.__listDelay = 1200; });
+    await f.evaluate(() => { document.querySelector("device-panel")._fetch(); });
+    await p.waitForTimeout(100);
+    await (await handle('select[data-dlg="conn"]')).selectOption("thread");
+    await wait(`return r.querySelector('select[data-dlg="conn"]')?.value === "thread"`);
+    const seen = [];
+    for (let i = 0; i < 25; i += 1) {
+      seen.push(await ev(`return r.querySelector('select[data-dlg="conn"]')?.value + "/" + (r.querySelector('.chip[data-conn="thread"] .n')?.textContent || "0")`));
+      await p.waitForTimeout(100);
+    }
+    await p.evaluate(() => { window.__listDelay = 0; });
+    check(`[${tag}] alter Stand überdeckt die Wahl nicht`, seen.every((v) => v.startsWith("thread/")) && new Set(seen.map((v) => v.split("/")[1])).size === 1, seen.join(" "));
+    await (await handle('select[data-dlg="conn"]')).selectOption("");
+    await wait(`return r.querySelector('select[data-dlg="conn"]')?.value === ""`);
+    await close();
     // Matter: "Automatisch" zeigt die verfeinerte Erkennung
     await open("c");
     check(`[${tag}] Matter erkannt als Thread`, (await sel()) === `|${T.autoThread}`, await sel());

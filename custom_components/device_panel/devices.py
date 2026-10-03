@@ -10,6 +10,7 @@ Schnittstelle, bleibt das Feld leer, statt dass die Liste scheitert.
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Iterator
 from datetime import datetime, timedelta
 from typing import Any
@@ -524,6 +525,12 @@ async def async_load_type_overrides(hass: HomeAssistant) -> None:
                 if v == BATTERY_OFF or (isinstance(v, int) and not isinstance(v, bool) and low <= v <= high)
             },
             "notify_off": {str(d) for d in stored.get("notify_off") or [] if isinstance(d, str)},
+            # Push stumm bis (Unix-Zeit), aus der Aktion "24 Std. stumm".
+            "notify_mute": {
+                str(k): float(v)
+                for k, v in (stored.get("notify_mute") or {}).items()
+                if isinstance(v, (int, float)) and not isinstance(v, bool)
+            },
         }
         conns = stored.get("connections") if isinstance(stored.get("connections"), dict) else {}
         hass.data[DATA_CONNECTION_OVERRIDES] = {str(k): v for k, v in conns.items() if v in CONNECTION_MANUAL}
@@ -531,20 +538,39 @@ async def async_load_type_overrides(hass: HomeAssistant) -> None:
 
 async def _async_save_devices(hass: HomeAssistant) -> None:
     settings = device_settings(hass)
-    await _types_store(hass).async_save(
-        {
-            "types": dict(type_overrides(hass)),
-            "battery": dict(settings["battery"]),
-            "notify_off": sorted(settings["notify_off"]),
-            "connections": dict(connection_overrides(hass)),
-        }
-    )
+    data: dict[str, Any] = {
+        "types": dict(type_overrides(hass)),
+        "battery": dict(settings["battery"]),
+        "notify_off": sorted(settings["notify_off"]),
+        "connections": dict(connection_overrides(hass)),
+    }
+    # Abgelaufene fallen beim Schreiben weg; ohne Eintrag kein Schlüssel.
+    if mute := {d: t for d, t in settings.get("notify_mute", {}).items() if t > time.time()}:
+        data["notify_mute"] = mute
+    await _types_store(hass).async_save(data)
 
 
 @callback
 def device_settings(hass: HomeAssistant) -> dict[str, Any]:
-    """{"battery": {Gerät: Prozent | "off"}, "notify_off": {Gerät, …}}."""
-    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set()}
+    """{"battery": {Gerät: Prozent | "off"}, "notify_off": {Gerät, …}, "notify_mute": {Gerät: bis}}."""
+    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}}
+
+
+def _iso(ts: float | None) -> str | None:
+    return dt_util.utc_from_timestamp(ts).isoformat() if ts is not None else None
+
+
+def notify_muted_until(hass: HomeAssistant, device_id: str, now: float | None = None) -> float | None:
+    """Push für das Gerät stumm bis (Unix-Zeit), sonst None."""
+    until = device_settings(hass).get("notify_mute", {}).get(device_id)
+    return until if until is not None and until > (now if now is not None else time.time()) else None
+
+
+async def async_mute_device(hass: HomeAssistant, device_id: str, until: float) -> None:
+    """Ausfall- und Online-Push eines Geräts bis zu einem Zeitpunkt stumm."""
+    await async_load_type_overrides(hass)
+    hass.data[DATA_DEVICE_SETTINGS].setdefault("notify_mute", {})[device_id] = until
+    await _async_save_devices(hass)
 
 
 def device_battery_threshold(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry) -> int | None:
@@ -573,6 +599,8 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
         else:
             settings["battery"][device_id] = changes["battery"]
     if "notify" in changes:
+        # Jede Wahl im Popup hebt ein "stumm bis" auf.
+        settings.setdefault("notify_mute", {}).pop(device_id, None)
         if changes["notify"]:
             settings["notify_off"].discard(device_id)
         else:
@@ -822,6 +850,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 **_battery_fields(hass, opts, device, entries, primary.domain if primary else None),
                 # Ausfall- und Online-Meldungen für dieses Gerät aus.
                 "notify_off": device.id in device_settings(hass)["notify_off"],
+                "notify_mute_until": _iso(notify_muted_until(hass, device.id)),
                 "update": _update(hass, entries),
                 "avail24": avail,
                 # Instabil: online, aber oft unterbrochen.
@@ -858,6 +887,36 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
             for inc in log.incidents(now_ts, only=shown)
         ]
     return result
+
+
+async def async_device_facts(hass: HomeAssistant, device: dr.DeviceEntry, opts: dict[str, Any]) -> dict[str, Any]:
+    """
+    Angaben zu einem Gerät für Meldungen (Inhalt nach "Inhalt der Meldung"):
+    Bereich, Integration, Batterie, wirksame Verbindungsart, Empfang,
+    Hersteller und Modell. Werte, die gerade fehlen, sind None.
+    """
+    entries = er.async_entries_for_device(er.async_get(hass), device.id)
+    domains = sorted({e.domain for eid in device.config_entries if (e := hass.config_entries.async_get_entry(eid))})
+    info = await async_integration_info(hass, set(domains))
+    signal = _signal(hass, entries)
+    if "zha" in domains:
+        signal = _zha_signal(hass, device.id) or signal
+    ble = next((c[1] for c in device.connections if c[0] == dr.CONNECTION_BLUETOOTH), None)
+    if ble and not signal:
+        signal, _via = _ble_signal(hass, ble)
+    primary = _primary_entry(hass, device)
+    auto = _connection(device, domains, entries, signal, {d: i["iot_class"] for d, i in info.items()})
+    integ = opts[CONF_CONNECTION_INTEGRATIONS].get(primary.domain) if primary else None
+    area = ar.async_get(hass).async_get_area(device.area_id) if device.area_id else None
+    return {
+        "area": area.name if area else None,
+        "domain": primary.domain if primary else None,
+        "integration": info.get(primary.domain, {}).get("name", primary.domain) if primary else None,
+        "battery": battery(hass, entries),
+        "connection": connection_overrides(hass).get(device.id) or integ or auto,
+        "signal": signal,
+        "model": " ".join(x for x in (device.manufacturer, device.model) if x) or None,
+    }
 
 
 async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = None) -> dict[str, Any] | None:
