@@ -257,6 +257,31 @@ hat dort einen echten Fehler oder Umweg gekostet.
   aus dem Fenster, Zeilen darunter waren nicht erreichbar (Playwright:
   "element is outside of the viewport"). Höhe darum aus dem Platz bis zum
   unteren Rand (`_placeAreas`).
+- **Dialog statt Popover (0.26.0):** Das Spalten-Popover brauchte eigene
+  Handler für Klick ausserhalb, Escape und einen Klick-Fänger, damit der
+  Klick ausserhalb nicht zugleich die Liste traf. Als `<dialog>` mit
+  `showModal()` erledigt der Browser Escape und den Fokus; Klick auf den
+  Hintergrund ist ein Klick auf das Dialog-Element selbst
+  (`ev.target === dlg`), und das Ereignis `close` setzt den Zustand
+  zurück, egal wie geschlossen wurde.
+- **Kopf pro Bereich ohne neue Abfrage (0.26.0):** Der Puls lässt sich im
+  Panel aus den Streifen `avail24.strip` der Geräte im Bereich zählen
+  (Wert 1 = Unterbruch im Abschnitt), weil das Backend den Puls gleich
+  zählt; nur die Sammelausfälle brauchten die Geräte-IDs im Ergebnis.
+  `test_incident_and_pulse` prüft, dass die Streifen je Abschnitt
+  zusammengezählt den Puls des Backends ergeben.
+- **Puls zählte Abschnitte statt Geräte (bis 0.25.0):** `pulse` erhöhte
+  den Zähler pro Ausfall-Abschnitt; ein Gerät, das in einer halben Stunde
+  dreimal kurz weg war, ergab 3. Aufgefallen erst im echten HA beim
+  Vergleich mit dem Puls aus den Streifen (Kopf pro Bereich), die Tests
+  hatten je Gerät nur einen Ausfall. Jetzt pro Gerät eine Menge der
+  Abschnitte (`test_pulse_counts_devices_not_outages`).
+- **Raster-Spalte `1fr` wächst mit dem Inhalt (0.26.0):** `1fr` heisst
+  `minmax(auto, 1fr)`; eine Zeile mit `white-space: nowrap` macht die
+  Spalte so breit wie der Text, `text-overflow: ellipsis` greift nie, und
+  der Bereich hinter "Verfügbarkeit" lief bis in den Rand der Kachel.
+  `minmax(0, 1fr)` lässt die Spalte schrumpfen. Prüfung in `area-e2e`:
+  Abstand des Bereichs zum Rand jeder Kachel mindestens 12 px.
 - **Hinweis mit Aktion (0.23.0):** `.toast` steht mit `left: 50%` und
   `translateX(-50%)`; ohne `width: max-content` bricht der Text schon bei
   der halben Fensterbreite um.

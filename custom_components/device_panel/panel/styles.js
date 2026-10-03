@@ -76,7 +76,7 @@ button { font: inherit; color: inherit; }
 .hero { display: grid; grid-template-columns: minmax(260px, 300px) minmax(300px, 380px) minmax(280px, 1fr); gap: 12px; }
 .kt { background: var(--dp-card); border-radius: 20px; padding: 16px 18px; border: 1px solid var(--dp-divider); position: relative; overflow: hidden; min-width: 0; }
 .kt .k { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--dp-text2); font-weight: 500; display: flex; align-items: center; gap: 8px; }
-.kt.ring { display: grid; grid-template-columns: 108px 1fr; gap: 16px; align-items: center; }
+.kt.ring { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 16px; align-items: center; }
 .ringwrap { position: relative; width: 108px; height: 108px; }
 .ringwrap .c { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
 .ringwrap .c b { display: block; font-size: 24px; font-weight: 600; letter-spacing: -.02em; }
@@ -120,6 +120,34 @@ button { font: inherit; color: inherit; }
 .inc { margin-top: 8px; padding: 8px 10px; border-radius: 12px; background: var(--dp-error-soft); font-size: 12.5px; line-height: 1.35; }
 .inc b { display: block; color: var(--dp-error); font-weight: 600; margin-bottom: 1px; }
 .pnote { margin-top: 8px; font-size: 12.5px; color: var(--dp-text2); }
+/* Puls-Kachel öffnet das Fenster "Unterbrüche in 24 Std." (seit 0.26.0,
+   docs/mockups/pulse-v1, A): ganze Kachel, Zusammenfassung als Link. */
+.kt.pul.tap { cursor: pointer; }
+.kt.pul.tap:hover { border-color: color-mix(in srgb, var(--dp-primary) 45%, var(--dp-divider)); }
+.kt.pul.tap:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
+.kt .k .kchev { display: inline-flex; margin-left: auto; color: var(--dp-text3); }
+.pnote.plink { display: flex; align-items: center; gap: 2px; color: var(--dp-primary); font-weight: 500; }
+.pwin { padding: 12px 14px 8px; }
+.pwin .pchart { height: 130px; }
+.phit { fill: transparent; cursor: pointer; }
+.phit:hover, .phit.sel { fill: color-mix(in srgb, var(--dp-error) 16%, transparent); }
+.ppick { margin: 6px 0 2px; }
+.ppick .chip { max-width: 100%; }
+.plist { border-top: 1px solid var(--dp-divider); }
+.prow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 4px; border: 0; border-bottom: 1px solid var(--dp-divider);
+  background: none; color: var(--dp-text); font: inherit; text-align: left; cursor: pointer; }
+.prow:hover { background: var(--dp-hover); }
+.prow:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
+.pname { flex: 1; min-width: 0; }
+.pn { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font-size: 14px; }
+.pname small { display: block; overflow: hidden; color: var(--dp-text2); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.pval { display: flex; flex: none; flex-direction: column; align-items: flex-end; gap: 3px; color: var(--dp-text2); font-size: 12px; white-space: nowrap; }
+.pval b { color: var(--dp-error); font-weight: 600; }
+.pill.sm { height: 18px; padding: 0 6px; font-size: 11px; }
+/* Kopf mit Filter "Bereich" (seit 0.26.0): Auswahl hinter dem Titel. */
+.kt .k .scope { min-width: 0; overflow: hidden; color: var(--dp-primary); text-overflow: ellipsis; text-transform: none; letter-spacing: 0; white-space: nowrap; }
+/* Ring-Kachel: schmale Textspalte, der Bereich rutscht unter den Titel statt in den Rand. */
+.kt.ring .k { flex-wrap: wrap; row-gap: 2px; }
 .pnote.ok { color: var(--dp-success); }
 
 /* Chips */
@@ -184,17 +212,28 @@ dialog.area-sheet .arow.in { padding-left: 16px; }
   border: 1px solid var(--dp-divider); background: var(--dp-card); color: var(--dp-text2); font: inherit; font-size: 14px; cursor: pointer; }
 .view-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
 .view-btn.on { background: var(--dp-primary-soft); border-color: transparent; color: var(--dp-primary); }
-.cols-pop { position: fixed; z-index: 20; width: 340px; max-height: calc(100vh - 90px); overflow: auto; padding: 14px 8px 10px;
-  border: 1px solid var(--dp-divider); border-radius: 18px; background: var(--dp-card); color: var(--dp-text); box-shadow: 0 12px 34px rgba(0,0,0,.22); }
-.cols-pop[hidden] { display: none; }
-.cols-pop h4 { margin: 0 10px 2px; font-size: 15px; font-weight: 600; }
 .vsub { margin: 0 10px 8px; color: var(--dp-text2); font-size: 12px; line-height: 1.4; }
 .vrow { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 10px 0 4px; border-radius: 10px; background: var(--dp-card); font-size: 14px; }
 .vrow .vl { flex: 1; min-width: 0; }
 .vrow .vl small { margin-left: 6px; color: var(--dp-text3); font-size: 11px; }
-.vrow.off .vl { color: var(--dp-text2); }
-.vrow.fixed .drag-h { cursor: default; opacity: .35; }
-.vrow.fixed .switch { opacity: .45; }
+.vrow.off .vl { color: var(--dp-text3); }
+/* Dialog "Anpassen" wie HA (seit 0.26.0, docs/mockups/customize-v1, A):
+   Auge statt Schalter, ausgeblendete grau und ohne Griff. */
+.drag-h.ph { visibility: hidden; }
+.eye { flex: none; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none;
+  color: var(--dp-text2); cursor: pointer; }
+.eye:hover { background: var(--dp-hover); color: var(--dp-text); }
+.eye:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
+.vrow.off .eye { color: var(--dp-text3); }
+.eye.dis { opacity: .35; cursor: default; }
+.eye.dis:hover { background: none; color: var(--dp-text2); }
+dialog.cols-dlg .vrow { min-height: 44px; padding-left: 0; border-bottom: 1px solid var(--dp-divider); border-radius: 0; font-size: 14.5px; }
+dialog.cols-dlg .vlist .vrow:last-child { border-bottom: 0; }
+dialog.cols-dlg .vrow.lift { border-radius: 10px; }
+.dlg-actions.split { justify-content: space-between; }
+.dlg-actions.split .dlg-btn { flex: 0 0 auto; }
+.dlg-actions.split .dlg-btn.primary { min-width: 120px; }
+.dlg-btn.text { padding: 0 8px; border-color: transparent; color: var(--dp-primary); font-weight: 500; }
 .vrow.lift { position: relative; z-index: 2; box-shadow: 0 4px 16px rgba(0,0,0,.25); }
 .vfoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; padding: 8px 10px 0;
   border-top: 1px solid var(--dp-divider); color: var(--dp-text2); font-size: 12px; }
@@ -322,12 +361,12 @@ svg.strip .s2 { fill: var(--dp-bar-off); }
    Hintergrund, Esc und Fokusfalle liefert der Browser. Auf dem Handy als
    Blatt von unten. Der Dialog scrollt selbst, Kopf und Aktionsleiste
    bleiben per sticky sichtbar (wie unifi_dynamic). */
-dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
+dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.cols-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
   box-shadow: var(--dp-shadow); overflow: auto; overscroll-behavior: contain; max-height: calc(100% - 48px); }
 dialog.device, dialog.settings, dialog.view { width: min(640px, calc(100vw - 32px)); }
-dialog.area-sheet { width: min(420px, calc(100vw - 32px)); }
-dialog.stat-dlg { width: min(560px, calc(100vw - 32px)); }
-dialog.device::backdrop, dialog.settings::backdrop, dialog.view::backdrop, dialog.area-sheet::backdrop { background: rgba(0,0,0,0.5); }
+dialog.area-sheet, dialog.cols-dlg { width: min(420px, calc(100vw - 32px)); }
+dialog.stat-dlg, dialog.pulse-dlg { width: min(560px, calc(100vw - 32px)); }
+dialog.device::backdrop, dialog.settings::backdrop, dialog.view::backdrop, dialog.area-sheet::backdrop, dialog.pulse-dlg::backdrop, dialog.cols-dlg::backdrop { background: rgba(0,0,0,0.5); }
 /* Dialog dahinter stark gedimmt und unscharf, sein X ausgeblendet: so ist
    klar, welches Fenster gerade gilt. */
 dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
@@ -708,7 +747,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .hero .kt { min-width: 280px; scroll-snap-align: start; }
   .hero .kt.pul { min-width: 300px; }
   .pchart { height: 64px; }
-  .kt.ring { grid-template-columns: 84px 1fr; }
+  .kt.ring { grid-template-columns: 84px minmax(0, 1fr); }
   .ringwrap { width: 84px; height: 84px; }
   .ringwrap svg { width: 84px; height: 84px; }
   .ringwrap .c b { font-size: 19px; }
@@ -717,8 +756,9 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .chips { flex-wrap: nowrap; overflow-x: auto; margin: 12px -12px 4px; padding: 0 12px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .foot .tap { display: none; }
-  dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
-  dialog.view, dialog.area-sheet { max-height: 92%; }
+  dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
+  dialog.view, dialog.area-sheet, dialog.pulse-dlg { max-height: 92%; }
+  .pwin .pchart { height: 96px; }
   .view-btn { width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 50%; }
   .view-btn span { display: none; }
   .viewline { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }

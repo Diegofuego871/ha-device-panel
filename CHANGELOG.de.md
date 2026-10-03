@@ -7,6 +7,40 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.26.0] - 2026-10-03
+
+Fenster zum Ausfall-Puls, Kopf pro Bereich, Dialog "Anpassen".
+
+### Hinzugefügt
+
+- Ein Tipp auf die Kachel "Ausfall-Puls" öffnet das Fenster "Unterbrüche
+  in 24 Std.": der Puls gross, darunter alle Geräte mit Unterbrüchen in
+  den letzten 24 Stunden, meiste Unterbrüche zuerst, mit Anzahl, Dauer
+  zusammen und dem Streifen über 24 Stunden; gerade ausgefallene Geräte
+  sind markiert. Ein Tipp auf einen Zeitpunkt im Puls zeigt nur die
+  Geräte, die dann weg waren, ein Tipp auf ein Gerät öffnet sein Popup.
+
+### Geändert
+
+- Mit dem Filter "Bereich" folgt der Kopf den gewählten Bereichen: die
+  Kachel "Verfügbarkeit" mit dem Ring, "Gerade ausgefallen", der
+  Ausfall-Puls und die Sammelausfälle zählen nur deren Geräte, und die
+  Kacheln zeigen den Bereich hinter ihrem Titel. Ein Sammelausfall bleibt
+  nur, wenn im Bereich mindestens 3 Geräte betroffen waren.
+- Desktop: Die Spalten wählt man im Dialog "Anpassen" statt in einem
+  kleinen Aufklappfenster: ein Auge blendet eine Spalte ein oder aus, der
+  Griff zieht sie in eine andere Reihenfolge, "Gerät" ist immer sichtbar;
+  unten "Standard wiederherstellen" und "Fertig". Auf dem Handy hat das
+  Blatt "Ansicht" dieselben Augen und Knöpfe.
+
+### Behoben
+
+- Der Ausfall-Puls zählte ein Gerät in einem Abschnitt von 30 Min.
+  mehrfach, wenn es darin mehr als einmal ausfiel (oder ein Ausfall über
+  einen Neustart lief); die Kurve zeigte so 3 Geräte, wo nur eines
+  betroffen war. Er zählt jetzt Geräte, wie sein Tooltip sagt und wie der
+  Streifen in der Liste.
+
 ## [0.25.0] - 2026-10-03
 
 "Alle" hebt alle Filter auf.
@@ -695,6 +729,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.26.0
 [0.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.25.0
 [0.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.23.0
 [0.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.22.0

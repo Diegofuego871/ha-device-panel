@@ -7,6 +7,40 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.26.0] - 2026-10-03
+
+Outage pulse window, header per area, dialog "Customize".
+
+### Added
+
+- Tapping the tile "Outage pulse" opens the window "Outages in 24 h": the
+  pulse large, below it all devices with outages in the last 24 hours,
+  most outages first, with number, total time offline and the 24-hour
+  strip; devices that are offline right now are marked. Tapping a point
+  in the pulse shows only the devices that were offline then, tapping a
+  device opens its pop-up.
+
+### Changed
+
+- With the filter "Area", the header follows the selected areas: the tile
+  "Availability" with its ring, "Offline now", the outage pulse and the
+  group outages count only their devices, and the tiles show the area
+  after their title. A group outage remains only if at least 3 devices in
+  the area were affected.
+- Desktop: the columns are chosen in the dialog "Customize" instead of a
+  small pop-over: an eye shows or hides a column, the handle drags it into
+  a different order, "Device" is always visible; "Restore default" and
+  "Done" at the bottom. On the phone, the sheet "View" uses the same eyes
+  and buttons.
+
+### Fixed
+
+- The outage pulse counted a device several times in a 30-minute section
+  when it went offline more than once in it (or an outage ran across a
+  restart), so the curve could show 3 devices where only one was
+  affected. It now counts devices, as its tooltip says and like the strip
+  in the list.
+
 ## [0.25.0] - 2026-10-03
 
 "All" clears every filter.
@@ -664,6 +698,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.26.0
 [0.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.25.0
 [0.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.23.0
 [0.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.22.0

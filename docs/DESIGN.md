@@ -111,15 +111,18 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   ist nur ohne Filter hervorgehoben und zählt alle Geräte. Suchfeld mit eigenem X (`.search-clear`, nur mit Eingabe; das X
   des Browsers ist ausgeblendet, iOS zeigt keines).
 - Ansicht (seit 0.19.0, `docs/mockups/view-v1/`): Desktop Knopf "Spalten"
-  (Pille mit Symbol) öffnet ein Popover unter dem Knopf (340 px, Schalter,
-  Griff zum Ziehen, Fusszeile mit Hinweis und "Zurücksetzen"); Klick
-  ausserhalb oder Escape schliesst, ein Klick in die Liste schliesst nur
-  das Popover. Spaltenkopf als Knopf: Sortiersymbol erscheint beim
+  (Pille mit Symbol) öffnet seit 0.26.0 den Dialog "Anpassen" wie in HA
+  (`docs/mockups/customize-v1/`, A; vorher ein Popover): Kopf mit Symbol,
+  Titel und Kurzzeile, Hinweis zu Auge und Griff, Zeile "Gerät · immer
+  sichtbar" mit grauem Auge, darunter die Spalten mit Griff, Name und Auge
+  (ausgeblendet: Name grau, Auge durchgestrichen, ohne Griff), unten
+  "Standard wiederherstellen" als Textknopf links und "Fertig" rechts.
+  Klick auf den Hintergrund oder Escape schliesst. Spaltenkopf als Knopf: Sortiersymbol erscheint beim
   Darüberfahren, die sortierte Spalte in Primärfarbe mit Pfeil.
   "Gruppen | Liste" als Segment rechts in der Chip-Zeile. Handy: runder
   Knopf neben der Suche, Zeile "Sortiert nach" unter den Chips, Blatt
   "Ansicht" (Sortier-Pillen, Richtung, Darstellung, Angaben mit Griff und
-  Schalter, "Zurücksetzen" und "Fertig").
+  Auge, "Standard wiederherstellen" und "Fertig" wie im Dialog).
 - Kopf-Kacheln gleich hoch, auch auf dem Handy (Zeile mit `stretch`); der
   Ring bleibt fest und steht in seiner Kachel mittig.
 - Tabellen mit mehreren Schaltern pro Zeile (seit 0.20.0, Integrationen:
@@ -159,6 +162,19 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   hinterlegtem Feld. Aus der eigenen Aufzeichnung zusätzlich die Spanne als
   helle Fläche mit Legende und Lücken; aus dem Verlauf des Recorders eine
   Treppe (Zustände gelten bis zum nächsten Wechsel).
+- Puls-Fenster (seit 0.26.0, `docs/mockups/pulse-v1/`, A): Kachel
+  "Ausfall-Puls" mit Unterbrüchen antippbar (Pfeil rechts im Titel,
+  Zusammenfassung als Link). Fenster wie "Verfügbarkeit" (560 px, Handy
+  als Blatt): Titel "Unterbrüche in 24 Std.", Kurzzeile mit Anzahl,
+  Geräten und Dauer, Puls gross (130 px, Handy 96 px) mit Abschnitten zum
+  Antippen (gewählter Abschnitt hinterlegt, darüber eine Pille mit × zum
+  Aufheben), darunter die Geräte als Zeilen (Symbol, Name, "ausgefallen"
+  als kleine rote Pille, Bereich · Integration; rechts Anzahl fett, Dauer
+  und Streifen über 24 Std.).
+- Kopf mit Filter "Bereich" (seit 0.26.0): Name der Auswahl hinter dem
+  Titel jeder Kachel ("· Küche") in Primärfarbe, gekürzt mit "…". In der
+  Ring-Kachel (schmale Textspalte) rutscht er unter den Titel, wenn er
+  daneben keinen Platz hat.
 - Ausblenden (seit 0.23.0, `docs/mockups/hide-v1/`, A): im Geräte-Popup
   unten zwei gleich breite Knöpfe "Ausblenden" (Auge durchgestrichen) und
   "Schliessen". Danach Hinweis unten mit Text und Aktion "Rückgängig"

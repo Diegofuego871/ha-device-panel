@@ -15,10 +15,12 @@ const TEXT = {
   de: {
     btn: "Spalten", status: "Status", area: "Bereich", battery: "Batterie", avail: "Verfügbarkeit 24 Std.", list: "Liste",
     sortDefault: "Standard (Ausfälle zuerst)", sortBattery: "Batterie", title: "Ansicht",
+    customize: "Anpassen", restore: "Standard wiederherstellen", done: "Fertig", fixed: "Gerät immer sichtbar", hideArea: "Bereich einblenden",
   },
   en: {
     btn: "Columns", status: "Status", area: "Area", battery: "Battery", avail: "Availability 24 h", list: "List",
     sortDefault: "Default (offline first)", sortBattery: "Battery", title: "View",
+    customize: "Customize", restore: "Restore default", done: "Done", fixed: "Device always visible", hideArea: "Show Area",
   },
 };
 const DEFAULT_COLS = "status,connection,avail,type,integration,battery,model,software,area,outages,via";
@@ -45,6 +47,7 @@ for (const lang of ["de", "en"]) {
     await load();
     const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
     const handle = async (sel) => (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
+    const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
     const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
     // Was HA gespeichert hat (der Nachbau legt es in die Sitzung des Tabs),
@@ -81,38 +84,51 @@ for (const lang of ["de", "en"]) {
       const heads = () => ev(`return [...r.querySelectorAll("thead th")].map(t=>t.textContent.trim()).join("|")`);
       check(`[${tag}] Knopf "Spalten"`, (await ev(`return r.querySelector(".view-btn").textContent.trim()`)) === T.btn);
       await tap(".view-btn");
-      check(`[${tag}] Popover offen mit allen Spalten`, (await wait(`return !r.querySelector(".cols-pop").hidden`)) && (await ev(`return [...r.querySelectorAll('.cols-pop [data-vtoggle]')].map(i=>i.dataset.key).join()`)) === DEFAULT_COLS);
+      // Dialog "Anpassen" wie HA (0.26.0, docs/mockups/customize-v1, A)
+      const D = "dialog.cols-dlg";
+      const state = () => ev(`return [...r.querySelectorAll('${D} [data-vtoggle]')].map(i=>i.dataset.key+(i.getAttribute("aria-pressed")==="true"?"+":"-")).join()`);
+      check(`[${tag}] Dialog "Anpassen" mit allen Spalten`, (await wait(`return r.querySelector("${D}").open`)) && (await text(`${D} h2`)) === T.customize && (await ev(`return [...r.querySelectorAll('${D} [data-vtoggle]')].map(i=>i.dataset.key).join()`)) === DEFAULT_COLS);
       check(`[${tag}] aria-expanded`, (await ev(`return r.querySelector(".view-btn").getAttribute("aria-expanded")`)) === "true");
-      // Bereich ein, Status aus
-      await tap('.cols-pop [data-vtoggle="cols"][data-key="area"]');
-      await tap('.cols-pop [data-vtoggle="cols"][data-key="status"]');
+      check(`[${tag}] "Gerät" fest, Auge gesperrt`, (await ev(`const v=r.querySelector("${D} .vrow.fixed .vl"); return v.firstChild.textContent + " " + v.querySelector("small").textContent`)) === T.fixed && (await ev(`return !!r.querySelector("${D} .vrow.fixed .eye.dis") && !r.querySelector("${D} .vrow.fixed [data-vdrag]")`)));
+      check(`[${tag}] ausgeblendete grau, ohne Griff, Auge zu`, (await ev(`const row=r.querySelector('${D} .vrow[data-key="area"]'); return row.classList.contains("off") && !row.querySelector("[data-vdrag]") && row.querySelector(".eye").getAttribute("aria-label")`)) === T.hideArea);
+      check(`[${tag}] Knöpfe unten`, (await text(`${D} .dlg-actions [data-vreset]`)) === T.restore && (await text(`${D} .dlg-actions [data-vdone]`)) === T.done);
+      // Bereich ein, Status aus (Auge)
+      await tap(`${D} [data-vtoggle="cols"][data-key="area"]`);
+      await tap(`${D} [data-vtoggle="cols"][data-key="status"]`);
       const h1 = await heads();
       check(`[${tag}] Bereich ein, Status aus`, h1.endsWith(`|${T.area}`) && !h1.includes(`|${T.status}|`), h1);
       check(`[${tag}] Bereich nicht mehr unter dem Namen`, !(await ev(`return !!r.querySelector("tr.dev td:first-child .sub")`)));
-      check(`[${tag}] Popover bleibt offen`, await ev(`return !r.querySelector(".cols-pop").hidden`));
-      // Batterie nach oben ziehen (Maus)
-      await drag('.cols-pop .vrow[data-key="battery"] .drag-h', '.cols-pop .vrow[data-key="status"] .drag-h');
+      check(`[${tag}] Dialog bleibt offen`, await ev(`return r.querySelector("${D}").open`));
+      // Batterie nach oben ziehen (Maus), auf die Höhe von Status (ausgeblendet, ohne Griff)
+      await drag(`${D} .vrow[data-key="battery"] .drag-h`, `${D} .vrow[data-key="status"] .vl`);
       check(`[${tag}] Batterie nach oben gezogen`, (await heads()).split("|")[1] === T.battery, await heads());
       // Pfeiltaste: Batterie eins nach unten, Fokus bleibt am Griff
-      await (await handle('.cols-pop [data-vdrag][data-key="battery"]')).focus();
+      await (await handle(`${D} [data-vdrag][data-key="battery"]`)).focus();
       await p.keyboard.press("ArrowDown");
-      check(`[${tag}] Pfeiltaste verschiebt`, (await ev(`return [...r.querySelectorAll('.cols-pop [data-vtoggle]')].map(i=>i.dataset.key).slice(0,2).join()`)) === "status,battery" && (await ev(`return r.activeElement?.dataset.key === "battery"`)));
+      check(`[${tag}] Pfeiltaste verschiebt`, (await ev(`return [...r.querySelectorAll('${D} [data-vtoggle]')].map(i=>i.dataset.key).slice(0,2).join()`)) === "status,battery" && (await ev(`return r.activeElement?.dataset.key === "battery"`)));
       check(`[${tag}] gespeichert (Desktop)`, await savedSoon((v) => v.desktop.cols[1][0] === "battery" && v.desktop.cols.find(([k]) => k === "area")[1] === true && v.mobile.cols[0][0] === "status"));
+      await ev(`r.activeElement?.blur()`);
       await p.screenshot({ path: `${outDir}/view-cols-${tag.replace("/", "-")}.png` });
-      // Escape schliesst, auch direkt nach einem Schalter (Neuaufbau ersetzt
-      // das fokussierte Element; im echten HA blieb das Popover sonst offen).
-      await tap('.cols-pop [data-vtoggle="cols"][data-key="via"]');
-      await tap('.cols-pop [data-vtoggle="cols"][data-key="via"]');
-      check(`[${tag}] Fokus bleibt am Schalter`, await ev(`return r.activeElement?.dataset.vtoggle === "cols" && r.activeElement?.dataset.key === "via"`));
+      // Escape schliesst, auch direkt nach einem Auge (Neuaufbau ersetzt das
+      // fokussierte Element).
+      await tap(`${D} [data-vtoggle="cols"][data-key="via"]`);
+      await tap(`${D} [data-vtoggle="cols"][data-key="via"]`);
+      check(`[${tag}] Fokus bleibt am Auge`, await ev(`return r.activeElement?.dataset.vtoggle === "cols" && r.activeElement?.dataset.key === "via"`));
       await p.keyboard.press("Escape");
-      check(`[${tag}] Escape schliesst`, await wait(`return r.querySelector(".cols-pop").hidden`));
-      // Zurücksetzen
+      check(`[${tag}] Escape schliesst`, (await wait(`return !r.querySelector("${D}").open`)) && (await ev(`return r.querySelector(".view-btn").getAttribute("aria-expanded")`)) === "false");
+      // Standard wiederherstellen, Fertig
       await tap(".view-btn");
-      await tap('.cols-pop [data-vreset="cols"]');
-      check(`[${tag}] Zurücksetzen`, (await ev(`return [...r.querySelectorAll('.cols-pop [data-vtoggle]')].map(i=>i.dataset.key+(i.checked?"+":"-")).join()`)) === "status+,connection+,avail+,type+,integration+,battery+,model+,software+,area-,outages-,via-");
-      // Klick ausserhalb schliesst, ohne das Gerät zu öffnen
-      await tap('tr.dev td:nth-child(3)');
-      check(`[${tag}] Klick ausserhalb schliesst nur die Auswahl`, (await wait(`return r.querySelector(".cols-pop").hidden`)) && !(await ev(`return r.querySelector("dialog.device").open`)));
+      await wait(`return r.querySelector("${D}").open`);
+      await tap(`${D} [data-vreset="cols"]`);
+      check(`[${tag}] Standard wiederherstellen`, (await state()) === "status+,connection+,avail+,type+,integration+,battery+,model+,software+,area-,outages-,via-", await state());
+      await tap(`${D} .dlg-actions [data-vdone]`);
+      check(`[${tag}] Fertig schliesst`, await wait(`return !r.querySelector("${D}").open`));
+      // Klick auf den Hintergrund schliesst, ohne ein Gerät zu öffnen
+      await tap(".view-btn");
+      await wait(`return r.querySelector("${D}").open`);
+      const fr = await (await p.$("#panel-frame")).boundingBox();
+      await p.mouse.click(fr.x + 40, fr.y + 500);
+      check(`[${tag}] Hintergrund schliesst nur den Dialog`, (await wait(`return !r.querySelector("${D}").open`)) && !(await ev(`return r.querySelector("dialog.device").open`)));
 
       // Sortieren im Kopf: auf, ab, Standard
       const availInGroup = () => ev(`const out=[]; let g=-1; for (const tr of r.querySelectorAll("tbody tr")) { if (tr.classList.contains("grp")) { g++; out.push([]); continue; } const m=tr.children[3].textContent.replace(",",".").match(/\\d+(\\.\\d+)?/); out[g].push(m?Number(m[0]):null); } return out;`);

@@ -482,13 +482,18 @@ class AvailabilityLog:
         for dev, events in self._events.items():
             if only is not None and dev not in only:
                 continue
+            # Pro Gerät jeden Abschnitt nur einmal: mehrere kurze Ausfälle
+            # in derselben halben Stunde (oder einer über einen Neustart)
+            # sind ein Gerät, wie im Streifen der Liste.
+            hit: set[int] = set()
             for a, b, st in segments(events, start, now):
                 if st != OFFLINE:
                     continue
                 first = max(0, int((a - start) // size))
                 last = min(buckets - 1, int((b - start - 1e-6) // size))
-                for i in range(first, last + 1):
-                    counts[i] += 1
+                hit.update(range(first, last + 1))
+            for i in hit:
+                counts[i] += 1
         return counts
 
     def incidents(self, now: float | None = None, seconds: float = 86400, only: set[str] | None = None) -> list[dict[str, Any]]:

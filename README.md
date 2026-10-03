@@ -14,6 +14,9 @@ details such as software version, manufacturer, model and area.
   availability of the last 24 hours, which devices are offline right now and
   for how long, and an outage pulse over 24 hours that points out group
   outages (several devices at once, with the shared integration).
+  Tapping the pulse opens the devices with outages in 24 hours, most
+  first; a point in the pulse shows only the devices that were offline
+  then.
 - Device list grouped into offline (longest first, highlighted in red),
   unstable (3 or more outages in 24 hours), no data and online; cards on the
   phone. The device column stays in place when the table scrolls sideways.
@@ -23,9 +26,10 @@ details such as software version, manufacturer, model and area.
   config entry, battery, manufacturer and model, software with update hint;
   optionally area, outages in 24 hours and hub / bridge.
 - View per user, saved in Home Assistant and separate for desktop and
-  phone: choose and order the columns (desktop) or the details on the card
-  (phone), sort by any column (click on the header), groups or one list,
-  and the active filter chips.
+  phone: show or hide the columns (desktop, dialog "Customize") or the
+  details on the card (phone) with the eye and order them by the handle,
+  sort by any column (click on the header), groups or one list, and the
+  active filter chips.
 - Connection type per device: Zigbee, Z-Wave, Thread, Matter (Thread, Wi-Fi
   or LAN), Bluetooth, Wi-Fi, network, cloud; signal strength in dBm or LQI
   and the hub, bridge or Bluetooth proxy in between.
@@ -40,7 +44,8 @@ details such as software version, manufacturer, model and area.
 - Filter by area: the chip "Area" at the start of the chip row selects one
   or more areas or a whole floor (order as set in Home Assistant, "No area"
   for devices without one). The list shows only their devices, and the
-  other chips filter within them; the header keeps showing the whole home.
+  other chips filter within them. The header (availability, offline now,
+  outage pulse, group outages) then counts only these devices as well.
   Saved per user like the view.
 - Pop-up per device (like UniFi Dynamic Clients): availability 24 hours,
   outages in 7 days, signal and battery as tiles; connection, integration

@@ -402,7 +402,7 @@
     return counts;
   }
   // Sammelausfall: b, e, m (alle Zigbee) vor 11 Std.
-  const incidents = [{ at: nowS - 11 * H, count: 3, names: ["Bewegungsmelder Flur", "Fensterkontakt Küche", "Rauchmelder Flur"], integration: "zha" }];
+  const incidents = [{ at: nowS - 11 * H, count: 3, names: ["Bewegungsmelder Flur", "Fensterkontakt Küche", "Rauchmelder Flur"], integration: "zha", devices: ["b", "e", "m"] }];
 
   // Popup: Entitäten mit Lebenszeichen, Integrationseinträge, Kurzstatistik.
   function detail(id) {

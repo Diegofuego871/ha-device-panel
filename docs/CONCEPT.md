@@ -26,8 +26,9 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
 - Filter-Chips nach Verbindungsart und "Nur Probleme" (B), Ansicht
   gruppiert (Ausgefallen, Instabil, Online) oder als Liste.
 - Tabelle: ausgefallene Zeilen rot hinterlegt mit Balken links (A), Dauer
-  gross in der Statusspalte (B), alle Spalten über das Spalten-Popover
-  wählbar und verschiebbar (A), getrennt für Desktop und Handy.
+  gross in der Statusspalte (B), alle Spalten wählbar und verschiebbar
+  (A; seit 0.26.0 im Dialog "Anpassen" statt im Spalten-Popover),
+  getrennt für Desktop und Handy.
 - Geräteansicht mit Tabs (B), auf dem Desktop als Seitenleiste, auf dem
   Handy als Blatt: Übersicht (Kennzahlen, wahrscheinliche Ursache, Funkweg,
   Empfangsverlauf), Verlauf (Zeitstrahl und Unterbrüche aus A,
@@ -77,8 +78,14 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    Suche ab 9 Bereichen; Bereiche ohne gezeigte Geräte fehlen in der
    Auswahl. Pro Benutzer in der Ansicht (`areas`, Desktop/Handy getrennt);
    ein in HA gelöschter Bereich fällt still aus dem Filter. Die übrigen
-   Chips zählen und filtern innerhalb der gewählten Bereiche; der Kopf
-   zeigt das ganze Haus. Nicht weiter verfolgt: Gruppieren und Sortieren
+   Chips zählen und filtern innerhalb der gewählten Bereiche. Der Kopf
+   zeigte bis 0.25.0 das ganze Haus; seit 0.26.0 (Nutzer, 2026-10-03:
+   "Nur gewählte Bereiche") zählen Ring, "Gerade ausgefallen", Puls und
+   Sammelausfälle nur die Geräte der Auswahl, mit deren Name hinter dem
+   Titel der Kachel. Der Puls kommt dann aus den Streifen `avail24.strip`
+   der Geräte (gleiche Zählung wie `availability.pulse`), Sammelausfälle
+   aus `incidents[].devices` und bleiben nur mit mindestens 3 Geräten im
+   Bereich (wie `INCIDENT_MIN`). Nicht weiter verfolgt: Gruppieren und Sortieren
    nach Bereich (`docs/mockups/area-v2/`); der Nutzer will auswählen, nicht
    sortieren. Einzelne Geräte ausblenden (Nutzer, 2026-10-03: "komplett
    ausblenden, weil es Geräte sind, die mich nicht interessieren"),
@@ -87,8 +94,10 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    Integration und Typ (nicht überwacht, keine Meldungen, für alle
    Benutzer), Abschnitt "Ausgeblendete Geräte" zum Wiedereinblenden. Weitere
    Wünsche vom 2026-10-03 mit Mockups: Puls-Fenster mit den Geräten
-   (`docs/mockups/pulse-v1/`), Spalten wie HA "Anpassen"
-   (`docs/mockups/customize-v1/`); ohne Mockup: neue Geräte 3 Tage
+   (`docs/mockups/pulse-v1/`, A, umgesetzt in 0.26.0: Tipp auf die Kachel,
+   Puls gross mit antippbaren Abschnitten, Geräte nach Unterbrüchen,
+   Tipp auf ein Gerät öffnet sein Popup), Spalten wie HA "Anpassen"
+   (`docs/mockups/customize-v1/`, A, umgesetzt in 0.26.0); ohne Mockup: neue Geräte 3 Tage
    markiert, Chip "Neu" (umgesetzt in 0.21.0: `created_at` der
    Geräte-Registry, `NEW_DEVICE_DAYS`; Geräte von vor HA 2024.7 haben 1970
    und gelten nie als neu; ein gelöschtes und wieder hinzugefügtes Gerät
@@ -335,7 +344,8 @@ Umgesetzt in 0.3.0b1 (`availability.py`).
   Integration als Hinweis auf die Ursache. Ein Ausfall, der über einen
   Neustart läuft, beginnt beim Start nicht neu.
 - WebSocket: `device_panel/list_devices` liefert pro Gerät `avail24`
-  (Kurzfassung und 48 Abschnitte à 30 Min.), dazu `pulse` und `incidents`;
+  (Kurzfassung und 48 Abschnitte à 30 Min.), dazu `pulse` und `incidents`
+  (seit 0.26.0 mit den Geräte-IDs `devices` für den Kopf pro Bereich);
   `device_panel/device` die Entitäten und Kurzstatistik 24 Std./7 Tage;
   `device_panel/availability` den Verlauf für 24 Std., 7 oder 30 Tage.
 - Einmaliges Nachfüllen aus dem Recorder (seit 0.18.0, Nutzer, 2026-10-02:
@@ -434,8 +444,9 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
   Unbekannte oder ungültige Werte werden beim Laden bereinigt
   (`sanitizePrefs`).
 - Nicht gespeichert: Suchtext, Textfilter pro Spalte.
-- Spaltenwahl: Desktop als Popover, Handy als Blatt; Reihenfolge per Ziehen
-  oder Pfeiltasten; ausgeblendete Spalten behalten ihren Platz
+- Spaltenwahl: Desktop als Dialog "Anpassen" (seit 0.26.0, vorher
+  Popover), Handy als Blatt; Auge blendet ein und aus, Reihenfolge per
+  Ziehen oder Pfeiltasten; ausgeblendete Spalten behalten ihren Platz
   (`_mergeVisibleOrder`).
 - Panel: `DEFAULT_PREFS`, `loadPrefs`, `savePrefs`, `sanitizePrefs`,
   `_applyPrefs`, `_currentPrefs`, `_savePrefs`, `_saveUserPrefs`,

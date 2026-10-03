@@ -1025,6 +1025,9 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "at": inc["at"],
                 "count": len(inc["devices"]),
                 "names": [names[d] for d in inc["devices"] if d in names][:6],
+                # Für den Kopf mit Filter "Bereich" (seit 0.26.0): das Panel
+                # zählt nur die Geräte der gewählten Bereiche.
+                "devices": inc["devices"],
                 # Gemeinsame Integration als Hinweis auf die Ursache.
                 "integration": common if len({domain_of.get(d) for d in inc["devices"]}) == 1 and (common := domain_of.get(inc["devices"][0])) else None,
             }

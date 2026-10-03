@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.25.0, "Alle" hebt alle Filter auf)
+## Stand (0.26.0, Puls-Fenster, Kopf pro Bereich, Dialog "Anpassen")
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -11,7 +11,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   der Seitenleiste. WebSocket: `device_panel/list_devices` (Daten aus
   `devices.py`: Status nach dem Standard der Überwachung, Verbindungsart,
   Empfang, Hub, Batterie, Update, Typ, Integration mit Eintrag,
-  Verfügbarkeit 24 Std., Puls, Sammelausfälle), `device_panel/device`
+  Verfügbarkeit 24 Std., Puls, Sammelausfälle mit Geräte-IDs), `device_panel/device`
   (Popup), `device_panel/availability` (Statistik-Fenster),
   `device_panel/set_device_type` (Typ von Hand im Popup),
   `device_panel/set_device_connection` (Verbindungsart von Hand, seit
@@ -185,19 +185,26 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    "Batterie", ohne eigenes Mockup). `0.24.0` ohne Release, in `0.25.0`
    enthalten. Mit `0.25.0` (Nutzer, 2026-10-03): Chip "Alle" hebt alle
    Filter auf (Bereich, Verbindungsart, "Nur Probleme", Hinweise; Suche
-   bleibt). Offen beim Nutzer: Puls-Popup (A?), Spalten-Dialog "Anpassen"
-   (A?), Fenster "Empfang" so lassen?, Kopf beim Bereichsfilter (ganzes
-   Haus?); Rückmeldung zum Empfangsverlauf bei ZHA/Bluetooth.
+   bleibt). `v0.25.0` veröffentlicht. Entscheide des Nutzers
+   (2026-10-03, Fragen einzeln mit Bildern), umgesetzt mit `0.26.0`:
+   Puls-Fenster Variante A (`docs/mockups/pulse-v1/`), Spalten-Dialog
+   "Anpassen" Variante A (`docs/mockups/customize-v1/`; das Blatt
+   "Ansicht" auf dem Handy mit denselben Augen und Knöpfen), Fenster
+   "Empfang" bleibt so, Kopf (Verfügbarkeit, "Gerade ausgefallen", Puls,
+   Sammelausfälle) folgt dem Bereichsfilter (nicht mehr das ganze Haus;
+   `incidents[].devices` neu im Ergebnis). Offen: Rückmeldung des Nutzers
+   zum Empfangsverlauf bei ZHA/Bluetooth (nur mit Unit-Tests geprüft, das
+   Test-HA hat keine solchen Geräte).
    Als Nächstes, in dieser Reihenfolge (Nutzer, 2026-10-03):
-   b. Puls-Kachel: Popup mit den Geräten, die in 24 Std. Unterbrüche
-      hatten (Mockups `docs/mockups/pulse-v1/`, Empfehlung A, Entscheid
-      offen).
+   b. Erledigt mit `0.26.0`: Puls-Kachel öffnet das Fenster mit den
+      Geräten, die in 24 Std. Unterbrüche hatten (`docs/mockups/pulse-v1/`,
+      A).
    c. Erledigt mit `0.23.0`: einzelne Geräte ausblenden, Liste der
       ausgeblendeten in den Einstellungen zum Wiedereinblenden
       (`docs/mockups/hide-v1/`, A; nicht überwacht, keine Meldungen).
-   d. Spalten-Dialog wie HA "Anpassen" (Auge, Ziehgriff, "Standard
-      wiederherstellen", "Fertig"; `docs/mockups/customize-v1/`,
-      Empfehlung A).
+   d. Erledigt mit `0.26.0`: Spalten-Dialog wie HA "Anpassen" (Auge,
+      Ziehgriff, "Standard wiederherstellen", "Fertig";
+      `docs/mockups/customize-v1/`, A).
    e. Erledigt mit `0.23.0`: Filter "Bereich" (`docs/mockups/area-v1/`,
       A). Gruppieren und Sortieren nach Bereich (`docs/mockups/area-v2/`)
       nicht weiter verfolgt: Der Nutzer will Bereiche auswählen, nicht

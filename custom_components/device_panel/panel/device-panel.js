@@ -150,6 +150,7 @@ const MDI = {
   eyeOff:
     "M11.83,9L15,12.16C15,12.11 15,12.05 15,12A3,3 0 0,0 12,9C11.94,9 11.89,9 11.83,9M7.53,9.8L9.08,11.35C9.03,11.56 9,11.77 9,12A3,3 0 0,0 12,15C12.22,15 12.44,14.97 12.65,14.92L14.2,16.47C13.53,16.8 12.79,17 12,17A5,5 0 0,1 7,12C7,11.21 7.2,10.47 7.53,9.8M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.08L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7Z",
   home: "M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z",
+  eye: "M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z",
 };
 // Gerätetypen (devices.DEVICE_TYPES), gleiche Schlüssel wie im Backend.
 const TYPE_ICONS = {
@@ -607,10 +608,9 @@ class DevicePanel extends HTMLElement {
         <button type="button" class="view-btn" aria-expanded="false" title="${escape(this._t("viewBtn"))}" aria-label="${escape(this._t("viewBtn"))}">${mdi("cols", 20)}<span>${escape(this._t("viewBtn"))}</span></button>
         <button type="button" class="gear-btn" title="${escape(this._t("settingsBtn"))}" aria-label="${escape(this._t("settingsBtn"))}">${mdi("gear", 22)}</button>
       </div>
-      <div class="cols-pop" role="dialog" aria-label="${escape(this._t("viewBtn"))}" hidden></div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog>
+      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="cols-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
@@ -663,6 +663,10 @@ class DevicePanel extends HTMLElement {
         this._setAreas([]);
         return;
       }
+      if (ev.target.closest("[data-pulse-open]")) {
+        this._openPulse();
+        return;
+      }
       if (ev.target.closest("[data-area-open]")) {
         if (this._areaOpen) this._closeAreas();
         else this._openAreas();
@@ -688,14 +692,18 @@ class DevicePanel extends HTMLElement {
       if (this._narrowQuery.matches) this._openViewSheet();
       else this._toggleCols(!this._colsOpen);
     });
-    this._bindViewControls(root.querySelector(".cols-pop"), root.querySelector("dialog.view"));
+    this._bindViewControls(root.querySelector("dialog.cols-dlg"), root.querySelector("dialog.view"));
     this._bindAreas(root.querySelector(".area-pop"), root.querySelector("dialog.area-sheet"));
+    this._bindPulse(root.querySelector("dialog.pulse-dlg"));
     // Zeilen und Karten sind keine Buttons (Tabellensemantik); Tastatur
     // deshalb selbst behandeln.
     content.addEventListener("keydown", (ev) => {
       if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches?.("[data-open]:not(button)")) {
         ev.preventDefault();
         this._openDevice(ev.target.dataset.open);
+      } else if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches?.("[data-pulse-open]")) {
+        ev.preventDefault();
+        this._openPulse();
       }
     });
     const dlg = root.querySelector("dialog.device");
@@ -1112,47 +1120,60 @@ class DevicePanel extends HTMLElement {
     };
   }
 
+  // Dialog "Anpassen" wie in HA (seit 0.26.0, docs/mockups/customize-v1, A;
+  // vorher ein Popover unter dem Knopf).
   _toggleCols(open) {
-    const pop = this.shadowRoot.querySelector(".cols-pop");
+    const dlg = this.shadowRoot.querySelector("dialog.cols-dlg");
     const btn = this.shadowRoot.querySelector(".view-btn");
-    if (!pop || !btn) return;
+    if (!dlg || !btn) return;
     this._colsOpen = open;
     btn.classList.toggle("on", open);
     btn.setAttribute("aria-expanded", String(open));
-    pop.hidden = !open;
-    if (!open) return;
+    if (!open) {
+      if (dlg.open) dlg.close();
+      return;
+    }
     this._renderCols();
-    // Unter dem Knopf, rechtsbündig, nie über den Rand hinaus.
-    const b = btn.getBoundingClientRect();
-    pop.style.top = `${Math.round(b.bottom + 8)}px`;
-    pop.style.left = `${Math.max(8, Math.round(b.right - pop.offsetWidth))}px`;
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
   }
 
   // Liste zum Ein-/Ausblenden und Verschieben (Spalten bzw. Angaben).
+  // Wie HA "Anpassen": Griff links, Name, Auge rechts; ausgeblendete grau
+  // und ohne Griff (ihre Lage zählt erst, wenn sie wieder sichtbar sind).
   _orderRowsHtml(list, defs, kind) {
     const label = Object.fromEntries(defs.map(([k, l]) => [k, this._t(l)]));
     return list
-      .map(
-        ([key, on]) => `<div class="vrow${on ? "" : " off"}" data-key="${key}">
-          <button type="button" class="drag-h" data-vdrag="${kind}" data-key="${key}" title="${escape(this._t("colDragHint"))}" aria-label="${escape(this._t("colDragMove", label[key]))}">${mdi("drag", 18)}</button>
-          <span class="vl">${escape(label[key])}</span>
-          <label class="switch"><input type="checkbox" data-vtoggle="${kind}" data-key="${key}" ${on ? "checked" : ""} aria-label="${escape(label[key])}"><span></span></label></div>`
-      )
+      .map(([key, on]) => {
+        const handle = on
+          ? `<button type="button" class="drag-h" data-vdrag="${kind}" data-key="${key}" title="${escape(this._t("colDragHint"))}" aria-label="${escape(this._t("colDragMove", label[key]))}">${mdi("drag", 18)}</button>`
+          : `<span class="drag-h ph" aria-hidden="true"></span>`;
+        const eye = escape(this._t(on ? "colHide" : "colShowIt", label[key]));
+        return `<div class="vrow${on ? "" : " off"}" data-key="${key}">${handle}<span class="vl">${escape(label[key])}</span>
+          <button type="button" class="eye" data-vtoggle="${kind}" data-key="${key}" aria-pressed="${on}" title="${eye}" aria-label="${eye}">${mdi(on ? "eye" : "eyeOff", 20)}</button></div>`;
+      })
       .join("");
   }
 
   _renderCols() {
-    const pop = this.shadowRoot.querySelector(".cols-pop");
-    if (!pop) return;
+    const dlg = this.shadowRoot.querySelector("dialog.cols-dlg");
+    if (!dlg) return;
     const t = (k, ...a) => this._t(k, ...a);
-    setHtml(
-      pop,
-      `<h4>${escape(t("viewBtn"))}</h4><div class="vsub">${escape(t("viewSubDesktop"))}</div>
-      <div class="vrow fixed"><span class="drag-h" aria-hidden="true">${mdi("drag", 18)}</span><span class="vl">${escape(t("colName"))}<small>${escape(t("colFixed"))}</small></span>
-        <label class="switch"><input type="checkbox" checked disabled aria-label="${escape(t("colName"))}"><span></span></label></div>
-      <div class="vlist" data-vlist="cols">${this._orderRowsHtml(this._view.cols, COLUMNS, "cols")}</div>
-      <div class="vfoot"><span>${escape(t("colDragHint"))}</span><button type="button" class="vlink" data-vreset="cols">${escape(t("viewReset"))}</button></div>`
+    const scroll = dlg.scrollTop;
+    const changed = setHtml(
+      dlg,
+      `<div class="dlg-head"><span class="dlg-avatar">${mdi("cols", 28)}</span>
+        <div class="dlg-title"><h2>${escape(t("customizeTitle"))}</h2><div class="dlg-sub">${escape(t("customizeSub"))}</div></div>
+        <button type="button" class="dlg-close" data-vdone title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+      <div class="dlg-body"><p class="dlg-note small">${escape(t("customizeHint"))}</p>
+        <div class="vrow fixed"><span class="drag-h ph" aria-hidden="true"></span><span class="vl">${escape(t("colName"))}<small>${escape(t("colFixed"))}</small></span>
+          <span class="eye dis" aria-hidden="true">${mdi("eye", 20)}</span></div>
+        <div class="vlist" data-vlist="cols">${this._orderRowsHtml(this._view.cols, COLUMNS, "cols")}</div></div>
+      <div class="dlg-actions split"><button type="button" class="dlg-btn text" data-vreset="cols">${escape(t("restoreDefault"))}</button><button type="button" class="dlg-btn primary" data-vdone>${escape(t("viewDone"))}</button></div>`
     );
+    if (changed) dlg.scrollTop = scroll;
   }
 
   _openViewSheet() {
@@ -1197,7 +1218,7 @@ class DevicePanel extends HTMLElement {
         <div class="dlg-title"><h2>${escape(t("viewTitle"))}</h2><div class="dlg-sub">${escape(t("viewSubMobile"))}</div></div>
         <button type="button" class="dlg-close" data-vdone title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body">${body}</div>
-      <div class="dlg-actions"><button type="button" class="dlg-btn" data-vreset="sheet">${escape(t("viewReset"))}</button><button type="button" class="dlg-btn primary" data-vdone>${escape(t("viewDone"))}</button></div>`;
+      <div class="dlg-actions split"><button type="button" class="dlg-btn text" data-vreset="sheet">${escape(t("restoreDefault"))}</button><button type="button" class="dlg-btn primary" data-vdone>${escape(t("viewDone"))}</button></div>`;
     // Der Dialog scrollt selbst; Position beim Neuaufbau halten.
     const scroll = dlg.scrollTop;
     if (setHtml(dlg, html)) dlg.scrollTop = scroll;
@@ -1207,11 +1228,13 @@ class DevicePanel extends HTMLElement {
   // Griff (Maus und Finger, Pointer-Events), Pfeiltasten, Auswahl.
   _bindViewControls(pop, sheet) {
     const listOf = (kind) => (kind === "cols" ? "cols" : "fields");
+    // Auge: ein- oder ausblenden (seit 0.26.0 Knopf statt Schalter).
     const toggle = (ev) => {
       const el = ev.target.closest?.("[data-vtoggle]");
-      if (!el) return;
+      if (!el) return false;
       const key = listOf(el.dataset.vtoggle);
-      this._setView({ [key]: this._view[key].map(([k, on]) => [k, k === el.dataset.key ? el.checked : on]) });
+      this._setView({ [key]: this._view[key].map(([k, on]) => [k, k === el.dataset.key ? !on : on]) });
+      return true;
     };
     const reorder = (kind, keys) => {
       const key = listOf(kind);
@@ -1268,25 +1291,29 @@ class DevicePanel extends HTMLElement {
       win.addEventListener("pointercancel", up);
     };
 
-    pop.addEventListener("change", toggle);
     pop.addEventListener("keydown", keyMove);
-    pop.addEventListener("pointerdown", (ev) => drag(ev, null));
+    pop.addEventListener("pointerdown", (ev) => drag(ev, pop));
     pop.addEventListener("click", (ev) => {
+      // Klick auf den Hintergrund schliesst wie bei den übrigen Dialogen.
+      if (ev.target === pop) {
+        const r = pop.getBoundingClientRect();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._toggleCols(false);
+        return;
+      }
+      if (toggle(ev)) return;
       if (ev.target.closest("[data-vreset]")) this._setView({ cols: defaultView().cols });
+      else if (ev.target.closest("[data-vdone]")) this._toggleCols(false);
     });
-    // Klick ausserhalb oder Escape schliesst das Popover. Ein Klick in die
-    // Liste schliesst nur die Auswahl und öffnet kein Gerät (wie unifi_dynamic).
-    const content = this.shadowRoot.querySelector(".content");
-    this.shadowRoot.addEventListener(
-      "pointerdown",
-      (ev) => {
-        const path = ev.composedPath();
-        if (!this._colsOpen || path.some((el) => el === pop || el?.classList?.contains?.("view-btn"))) return;
-        this._toggleCols(false);
-        if (path.includes(content)) this._swallowUntil = Date.now() + 800;
-      },
-      true
-    );
+    // Escape schliesst den Dialog selbst: Knopf nachführen.
+    pop.addEventListener("close", () => {
+      if (!this._colsOpen) return;
+      this._colsOpen = false;
+      const btn = this.shadowRoot.querySelector(".view-btn");
+      btn?.classList.remove("on");
+      btn?.setAttribute("aria-expanded", "false");
+    });
+    // Ein Klick in die Liste, der ein Popover schliesst (Filter "Bereich"),
+    // öffnet kein Gerät (wie unifi_dynamic).
     this.shadowRoot.addEventListener(
       "click",
       (ev) => {
@@ -1300,20 +1327,12 @@ class DevicePanel extends HTMLElement {
       },
       true
     );
-    // Am Fenster: auch wenn der Fokus gerade nicht im Panel liegt.
-    (this.ownerDocument?.defaultView || window).addEventListener("keydown", (ev) => {
-      if (ev.key === "Escape" && this._colsOpen) {
-        this._toggleCols(false);
-        this.shadowRoot.querySelector(".view-btn")?.focus();
-      }
-    });
-
-    sheet.addEventListener("change", toggle);
     sheet.addEventListener("keydown", keyMove);
     sheet.addEventListener("pointerdown", (ev) => drag(ev, sheet));
     sheet.addEventListener("click", (ev) => {
       // Tipp auf den Hintergrund schliesst wie bei den übrigen Blättern.
       if (ev.target === sheet) return this._closeViewSheet();
+      if (toggle(ev)) return;
       const el = ev.target.closest("[data-vsort],[data-vdir],[data-vflat],[data-vreset],[data-vdone]");
       if (!el) return;
       if (el.dataset.vsort) this._setView({ sort: el.dataset.vsort, dir: el.dataset.vsort === this._view.sort ? this._view.dir : "asc" });
@@ -1564,9 +1583,12 @@ class DevicePanel extends HTMLElement {
     const root = this.shadowRoot;
     if (!root.querySelector(".content")) return;
     const all = this._devices;
-    const offline = all.filter((d) => d.online === false).sort((a, b) => Date.parse(a.offline_since) - Date.parse(b.offline_since));
+    // Kopf mit Filter "Bereich" nur für dessen Geräte (seit 0.26.0, Entscheid
+    // des Nutzers); die übrigen Chips wirken nur auf die Liste.
+    const scope = this._areaSel() ? all.filter((d) => this._areaPass(d)) : all;
+    const offline = scope.filter((d) => d.online === false).sort((a, b) => Date.parse(a.offline_since) - Date.parse(b.offline_since));
     // Kopf und Puls nur mit überwachten Geräten; deaktivierte zählen nicht.
-    const monitored = all.filter((d) => !d.disabled);
+    const monitored = scope.filter((d) => !d.disabled);
     setHtml(root.querySelector(".hero"), this._loading ? "" : this._heroHtml(monitored, offline));
     setHtml(root.querySelector(".chips"), this._loading ? "" : this._chipsHtml(all));
     setHtml(root.querySelector(".viewline"), this._loading || !this._narrowQuery.matches ? "" : this._viewLineHtml());
@@ -1576,6 +1598,7 @@ class DevicePanel extends HTMLElement {
       this._renderAreaList();
       this._placeAreas();
     }
+    this._renderPulse();
     const time = this._fetchedAt ? this._fetchedAt.toLocaleTimeString(this._locale(), { hour: "2-digit", minute: "2-digit" }) : "";
     setHtml(
       root.querySelector(".foot"),
@@ -1602,27 +1625,60 @@ class DevicePanel extends HTMLElement {
     }
     const line = (color, text) => `<div><i style="background:${color}"></i>${escape(text)}</div>`;
     const ring = `<div class="kt ring"><div class="ringwrap">${ringSvg(share, 108, 11)}<div class="c"><div><b>${online.length}</b><span>${escape(this._t("ofTotal", all.length))}</span></div></div></div>
-      <div><div class="k">${escape(this._t("availability"))}</div><div class="pct">${pctHtml}</div>
+      <div><div class="k">${escape(this._t("availability"))}${this._scopeHtml()}</div><div class="pct">${pctHtml}</div>
       <div class="lines">${line("var(--dp-success)", this._t("linesOnline", online.length - flaky))}
       ${flaky ? line("var(--dp-warning)", this._t("linesFlaky", flaky)) : ""}
       ${line("var(--dp-error)", this._t("linesOffline", offline.length))}
       ${noData ? line("var(--dp-text3)", this._t("linesNoData", noData)) : ""}</div></div></div>`;
     const off = offline.length
-      ? `<div class="kt err"><div class="k"><span class="pulse"></span>${escape(this._t("offlineNow"))}</div>
+      ? `<div class="kt err"><div class="k"><span class="pulse"></span>${escape(this._t("offlineNow"))}${this._scopeHtml()}</div>
         <div class="top"><span class="num">${offline.length}</span><span class="lbl">${escape(this._t("longest", `${offline[0].since_at_least ? "≥ " : ""}${this._duration(offline[0].offline_since)}`))}</span></div>
         <div class="olist">${offline.slice(0, 4).map((d) => `<button type="button" data-open="${escape(d.id)}"><span>${CONN[this._connOf(d)].icon(16)}</span><span class="name">${escape(d.name)}</span><b>${this._durationHtml(d, true)}</b></button>`).join("")}
         ${offline.length > 4 ? `<div class="more">${escape(this._t("more", offline.length - 4))}</div>` : ""}</div></div>`
-      : `<div class="kt"><div class="k">${escape(this._t("offlineNow"))}</div>
+      : `<div class="kt"><div class="k">${escape(this._t("offlineNow"))}${this._scopeHtml()}</div>
         <div class="top"><span class="num ok">0</span><span class="lbl">${escape(this._t("allOnline"))}</span></div>
         <div class="durs">${escape(this._t("allOnlineSub"))}</div></div>`;
     return ring + off + this._pulseHtml(all);
   }
 
-  // Ausfall-Puls: Zahl der Geräte mit Unterbruch je 30 Min. über 24 Std.,
-  // dazu der jüngste Sammelausfall (mehrere Geräte fast gleichzeitig).
-  _pulseHtml(all) {
-    const p = this._pulse;
-    if (!p || !p.length) return "";
+  // Mit Filter "Bereich": Name der Auswahl hinter dem Titel einer Kachel.
+  _scopeHtml() {
+    const sel = this._areaSel();
+    return sel ? `<span class="scope">· ${escape(this._areaLabel(sel, this._areaGroups()))}</span>` : "";
+  }
+
+  // Puls für den Kopf: ohne Bereichsfilter vom Backend, sonst aus den
+  // Streifen der Geräte im Bereich (gleiche Zählung: Geräte mit Unterbruch je
+  // 30 Min., availability.pulse und strip).
+  _headPulse(devs) {
+    if (!this._areaSel() || !this._pulse) return this._pulse;
+    const counts = new Array(this._pulse.length).fill(0);
+    for (const d of devs) {
+      (d.avail24?.strip || []).forEach((v, i) => {
+        if (v === 1 && i < counts.length) counts[i] += 1;
+      });
+    }
+    return counts;
+  }
+
+  // Sammelausfälle für den Kopf: mit Bereichsfilter nur deren Geräte, und nur
+  // solange es noch mindestens drei sind (wie availability.INCIDENT_MIN).
+  _headIncidents(devs) {
+    if (!this._areaSel()) return this._incidents;
+    const byId = new Map(devs.map((d) => [d.id, d]));
+    return this._incidents
+      .map((inc) => {
+        const mine = (inc.devices || []).filter((id) => byId.has(id));
+        if (mine.length < 3) return null;
+        const doms = new Set(mine.map((id) => byId.get(id).integration?.domain || null));
+        return { ...inc, devices: mine, count: mine.length, names: mine.map((id) => byId.get(id).name).slice(0, 6), integration: doms.size === 1 ? [...doms][0] : null };
+      })
+      .filter(Boolean);
+  }
+
+  // Puls als Kurve mit Ticks; in der Kachel mit Tooltips, im Fenster (tap)
+  // mit antippbaren Abschnitten (sel = gewählter Abschnitt).
+  _pulseChartHtml(p, incidents, tap = false, sel = null) {
     const n = p.length;
     const max = Math.max(...p);
     const W = 480;
@@ -1633,23 +1689,36 @@ class DevicePanel extends HTMLElement {
     const end = this._serverNow || Date.now() / 1000;
     const start = end - 86400;
     const size = 86400 / n;
+    const span = (i) => `${this._fmtTime(start + i * size)}–${this._fmtTime(start + (i + 1) * size)}`;
     const hits = p
-      .map((v, i) =>
-        v
-          ? `<rect x="${((i / n) * W).toFixed(1)}" y="0" width="${(W / n).toFixed(1)}" height="${H}" fill="transparent"><title>${escape(
-              this._t("pulseTip", `${this._fmtTime(start + i * size)}–${this._fmtTime(start + (i + 1) * size)}`, v)
-            )}</title></rect>`
-          : ""
-      )
+      .map((v, i) => {
+        if (!v) return "";
+        const rx = `x="${((i / n) * W).toFixed(1)}" y="0" width="${(W / n).toFixed(1)}" height="${H}"`;
+        const tip = `<title>${escape(this._t("pulseTip", span(i), v))}</title>`;
+        return tap ? `<rect class="phit${sel === i ? " sel" : ""}" ${rx} data-pulse-at="${i}">${tip}</rect>` : `<rect ${rx} fill="transparent">${tip}</rect>`;
+      })
       .join("");
-    const marks = this._incidents
+    const marks = incidents
       .filter((inc) => inc.at >= start)
       .map((inc) => `<span class="imark" style="left:${(((inc.at - start) / 86400) * 100).toFixed(2)}%" title="${escape(this._t("incidentTitle", this._fmtTime(inc.at)))}"></span>`)
       .join("");
     const ticks = this._ticks(start, end, "24h")
       .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
       .join("");
-    const inc = this._incidents[0];
+    return `<div class="pchart ${max ? "" : "quiet"}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="${tap ? "false" : "true"}">
+        <line class="base" x1="0" x2="${W}" y1="${H - 0.5}" y2="${H - 0.5}" vector-effect="non-scaling-stroke"/>
+        <path class="area" d="${line} L${x(n - 1)},${H} L${x(0)},${H} Z"/>
+        <path class="line" d="${line}" vector-effect="non-scaling-stroke"/>${hits}</svg>${marks}</div>
+      <div class="pticks">${ticks}<span class="now-label">${escape(this._t("now"))}</span></div>`;
+  }
+
+  // Ausfall-Puls: Zahl der Geräte mit Unterbruch je 30 Min. über 24 Std.,
+  // dazu der jüngste Sammelausfall (mehrere Geräte fast gleichzeitig).
+  _pulseHtml(all) {
+    const p = this._headPulse(all);
+    const incidents = this._headIncidents(all);
+    if (!p || !p.length) return "";
+    const inc = incidents[0];
     const outages = all.reduce((a, d) => a + (d.avail24?.outages || 0), 0);
     const affected = all.filter((d) => d.avail24?.outages).length;
     let note;
@@ -1657,16 +1726,121 @@ class DevicePanel extends HTMLElement {
       const integ = inc.integration ? this._integrations[inc.integration] || inc.integration : null;
       note = `<div class="inc" title="${escape((inc.names || []).join(", "))}"><b>${escape(this._t("incidentTitle", this._fmtTime(inc.at)))}</b>${escape(this._t("incidentText", inc.count, integ))}</div>`;
     } else if (outages) {
-      note = `<div class="pnote">${escape(this._t("pulseSummary", outages, affected))}</div>`;
+      note = `<div class="pnote plink">${escape(this._t("pulseSummary", outages, affected))}${mdi("chevron", 15)}</div>`;
     } else {
       note = `<div class="pnote ok">${escape(this._t("pulseNone"))}</div>`;
     }
-    return `<div class="kt pul"><div class="k">${mdi("pulse", 16)}${escape(this._t("pulseTitle"))}</div>
-      <div class="pchart ${max ? "" : "quiet"}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
-        <line class="base" x1="0" x2="${W}" y1="${H - 0.5}" y2="${H - 0.5}" vector-effect="non-scaling-stroke"/>
-        <path class="area" d="${line} L${x(n - 1)},${H} L${x(0)},${H} Z"/>
-        <path class="line" d="${line}" vector-effect="non-scaling-stroke"/>${hits}</svg>${marks}</div>
-      <div class="pticks">${ticks}<span class="now-label">${escape(this._t("now"))}</span></div>${note}</div>`;
+    // Mit Unterbrüchen öffnet die Kachel das Fenster mit den Geräten
+    // (seit 0.26.0, docs/mockups/pulse-v1, A).
+    const open = affected ? ` tap" data-pulse-open role="button" tabindex="0" aria-label="${escape(this._t("pulseOpen"))}` : "";
+    return `<div class="kt pul${open}"><div class="k">${mdi("pulse", 16)}${escape(this._t("pulseTitle"))}${this._scopeHtml()}${affected ? `<span class="kchev">${mdi("chevron", 16)}</span>` : ""}</div>
+      ${this._pulseChartHtml(p, incidents)}${note}</div>`;
+  }
+
+  // Geräte im Kopf: mit Filter "Bereich" nur dessen, überwacht (nicht deaktiviert).
+  _headDevices() {
+    return this._devices.filter((d) => !d.disabled && (!this._areaSel() || this._areaPass(d)));
+  }
+
+  // --- Fenster "Unterbrüche in 24 Std." (seit 0.26.0, docs/mockups/pulse-v1, A)
+
+  _openPulse() {
+    const dlg = this.shadowRoot.querySelector("dialog.pulse-dlg");
+    if (!dlg) return;
+    this._pulseAt = null;
+    this._renderPulse(true);
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+    dlg.scrollTop = 0;
+    if (window.matchMedia?.(TOUCH_QUERY).matches) this.shadowRoot.activeElement?.blur();
+  }
+
+  _closePulse() {
+    const dlg = this.shadowRoot.querySelector("dialog.pulse-dlg");
+    if (dlg?.open) {
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    }
+  }
+
+  // force: vor dem Öffnen (der Dialog ist noch zu).
+  _renderPulse(force = false) {
+    const dlg = this.shadowRoot.querySelector("dialog.pulse-dlg");
+    if (!dlg || (!dlg.open && !force)) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const head = this._headDevices();
+    const p = this._headPulse(head) || [];
+    const incidents = this._headIncidents(head);
+    const hit = head.filter((d) => d.avail24?.outages);
+    const outages = hit.reduce((a, d) => a + d.avail24.outages, 0);
+    const total = hit.reduce((a, d) => a + (d.avail24.offline || 0), 0);
+    if (this._pulseAt != null && !(p[this._pulseAt] > 0)) this._pulseAt = null;
+    const at = this._pulseAt;
+    const list = (at == null ? hit : head.filter((d) => d.avail24?.strip?.[at] === 1)).sort(
+      (a, b) => (b.avail24?.outages || 0) - (a.avail24?.outages || 0) || (b.avail24?.offline || 0) - (a.avail24?.offline || 0) || String(a.name).localeCompare(String(b.name))
+    );
+    const sub = hit.length ? t("pulseWinSub", outages, hit.length, this._fmtSeconds(total)) : t("pulseNone");
+    const scope = this._areaSel() ? ` · ${this._areaLabel(this._areaSel(), this._areaGroups())}` : "";
+    let pick = "";
+    if (at != null) {
+      const end = this._serverNow || Date.now() / 1000;
+      const size = 86400 / p.length;
+      const from = end - 86400 + at * size;
+      pick = `<div class="ppick"><button type="button" class="chip on" data-pulse-clear aria-label="${escape(t("pulseWinClear"))}">${mdi("pulse", 15)}<span>${escape(
+        t("pulseTip", `${this._fmtTime(from)}–${this._fmtTime(from + size)}`, list.length)
+      )}</span>${mdi("close", 14)}</button></div>`;
+    }
+    const rows = list
+      .map((d) => {
+        const a = d.avail24 || {};
+        const pill = d.online === false ? `<span class="pill off sm">${escape(t("statusOffline"))}</span>` : "";
+        const subline = [d.area, this._integName(d)].filter(Boolean).join(" · ");
+        return `<button type="button" class="prow" data-pulse-dev="${escape(d.id)}">${this._avatar(d, 16)}
+          <span class="pname"><span class="pn">${escape(d.name)}${pill}</span><small>${escape(subline)}</small></span>
+          <span class="pval"><span><b>${escape(String(a.outages || 0))}×</b> <small>${escape(t("statTotal", this._fmtSeconds(a.offline || 0)))}</small></span>${this._availHtml(d)}</span></button>`;
+      })
+      .join("");
+    const html = `<div class="dlg-head stat-head"><span class="dlg-avatar">${mdi("pulse", 24)}</span>
+        <div class="dlg-title"><h2>${escape(t("pulseWinTitle"))}</h2><div class="dlg-sub">${escape(sub + scope)}</div></div>
+        <button type="button" class="dlg-close" data-pulse-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+      <div class="dlg-body"><div class="avail pwin">${this._pulseChartHtml(p, incidents, true, at)}</div>
+        <p class="dlg-note small">${escape(t("pulseWinHint"))}</p>${pick}
+        <h3>${escape(t("pulseWinList"))}</h3>${rows ? `<div class="plist">${rows}</div>` : `<p class="dlg-note">${escape(t("pulseNone"))}</p>`}</div>
+      <div class="dlg-actions"><button type="button" class="dlg-btn" data-pulse-close>${escape(t("close"))}</button></div>`;
+    const scroll = dlg.scrollTop;
+    if (setHtml(dlg, html)) dlg.scrollTop = scroll;
+  }
+
+  _bindPulse(dlg) {
+    dlg.addEventListener("click", (ev) => {
+      if (ev.target === dlg) {
+        const r = dlg.getBoundingClientRect();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closePulse();
+        return;
+      }
+      const hit = ev.target.closest("[data-pulse-at]");
+      if (hit) {
+        const i = Number(hit.dataset.pulseAt);
+        this._pulseAt = this._pulseAt === i ? null : i;
+        this._renderPulse();
+        return;
+      }
+      if (ev.target.closest("[data-pulse-clear]")) {
+        this._pulseAt = null;
+        this._renderPulse();
+        return;
+      }
+      const dev = ev.target.closest("[data-pulse-dev]");
+      if (dev) {
+        // Gerät öffnen: das Fenster schliesst, das Popup übernimmt.
+        this._closePulse();
+        this._openDevice(dev.dataset.pulseDev);
+        return;
+      }
+      if (ev.target.closest("[data-pulse-close]")) this._closePulse();
+    });
   }
 
   _chipsHtml(all) {

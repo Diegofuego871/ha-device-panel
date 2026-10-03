@@ -33,6 +33,8 @@ for (const lang of ["de", "en"]) {
     const handle = async (sel) => (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
     const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
+    // Bereich hinter dem Titel bleibt im Innenabstand der Kachel (gekürzt oder umbrochen, nie im Rand)
+    const scopeInside = () => ev(`return [...r.querySelectorAll(".hero .kt .k .scope")].every(x=>{const t=x.closest(".kt").getBoundingClientRect(), b=x.getBoundingClientRect(); return b.width > 0 && b.right <= t.right - 12 && b.left >= t.left + 12;})`);
     const wait = (code, timeout = 5000) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout }).then(() => true, () => false);
     const rows = () => ev(`return [...r.querySelectorAll(".dev")].map(x=>x.dataset.open).sort().join()`);
     const PICK = mobile ? "dialog.area-sheet" : ".area-pop";
@@ -69,7 +71,13 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Haken und Etage halb`, (await checked(`${PICK} [data-area="kueche"]`)) === "true" && (await checked(`${PICK} [data-area-group="f:eg"]`)) === "mixed");
     check(`[${tag}] Chip zeigt Bereich und Zahl`, (await text(".chips .chip.area .al")) === "Küche" && (await text(".chips .chip.area .n")) === "2", await text(".chips .chip.area"));
     if (!mobile) check(`[${tag}] Fusszeile zählt`, (await text(".area-pop .afoot span")) === T.count, await text(".area-pop .afoot span"));
-    check(`[${tag}] Kopf zeigt weiter das ganze Haus`, (await text(".ringwrap .c b")) === ring);
+    // Kopf folgt dem Bereich (seit 0.26.0, Entscheid des Nutzers): Küche hat 2 Geräte, beide online
+    check(`[${tag}] Kopf nur für den Bereich`, (await text(".ringwrap .c b")) === "2" && ring !== "2" && (await ev(`return [...r.querySelectorAll(".hero .kt .k .scope")].map(x=>x.textContent).join("|")`)) === "· Küche|· Küche|· Küche", await ev(`return [...r.querySelectorAll(".hero .kt .k")].map(x=>x.textContent).join("|")`));
+    check(`[${tag}] Bereich im Kopf innerhalb der Kacheln`, await scopeInside(), await ev(`return [...r.querySelectorAll(".hero .kt .k .scope")].map(x=>Math.round(x.closest(".kt").getBoundingClientRect().right - x.getBoundingClientRect().right)).join()`));
+    check(`[${tag}] Sammelausfall mit nur einem Gerät aus Küche: weg`, !(await ev(`return !!r.querySelector(".hero .inc") || !!r.querySelector(".hero .imark")`)));
+    const pulseSum = await ev(`return r.host._headPulse(r.host._devices.filter(d=>r.host._areaPass(d))).reduce((a,b)=>a+b,0)`);
+    const expectPulse = await ev(`return r.host._devices.filter(d=>["e","k"].includes(d.id)).reduce((a,d)=>a+(d.avail24?.strip||[]).filter(v=>v===1).length,0)`);
+    check(`[${tag}] Puls aus den Streifen der Geräte im Bereich`, pulseSum === expectPulse && pulseSum > 0, `${pulseSum} / ${expectPulse}`);
     await p.screenshot({ path: `${outDir}/area-pick-${tag.replace("/", "-")}.png` });
     check(`[${tag}] schliessen`, await closePick());
 
@@ -101,6 +109,8 @@ for (const lang of ["de", "en"]) {
     await wait(mobile ? `return r.querySelector("dialog.area-sheet").open` : `return !r.querySelector(".area-pop").hidden`);
     await tap(`${PICK} [data-area-group="f:eg"]`);
     check(`[${tag}] Erdgeschoss: alle vier Bereiche`, await wait(`return [...r.querySelectorAll(".dev")].map(x=>x.dataset.open).sort().join() === "b,e,g,i,k,m,o"`), await rows());
+    check(`[${tag}] Erdgeschoss: Kopf 6 von 7 online, Sammelausfall (b, e, m) bleibt`, (await text(".ringwrap .c b")) === "6" && (await ev(`return !!r.querySelector(".hero .inc")`)), await text(".ringwrap .c"));
+    check(`[${tag}] Erdgeschoss im Kopf innerhalb der Kacheln`, await scopeInside());
     check(`[${tag}] Etage gewählt, Chip "Erdgeschoss"`, (await checked(`${PICK} [data-area-group="f:eg"]`)) === "true" && (await text(".chips .chip.area .al")) === "Erdgeschoss");
     await tap(`${PICK} [data-area="bad"]`);
     check(`[${tag}] mehr als zwei: Zahl der Bereiche`, await wait(`return r.querySelector(".chips .chip.area .al")?.textContent === ${JSON.stringify(T.many)}`), await text(".chips .chip.area .al"));

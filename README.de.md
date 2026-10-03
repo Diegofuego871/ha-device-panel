@@ -15,6 +15,9 @@ Bereich.
   der letzten 24 Stunden, welche Geräte gerade ausgefallen sind und seit
   wann, und ein Ausfall-Puls über 24 Stunden, der auf Sammelausfälle
   hinweist (mehrere Geräte gleichzeitig, mit gemeinsamer Integration).
+  Ein Tipp auf den Puls öffnet die Geräte mit Unterbrüchen in 24 Stunden,
+  meiste zuerst; ein Zeitpunkt im Puls zeigt nur die Geräte, die dann weg
+  waren.
 - Geräteliste in Gruppen: ausgefallen (längste zuerst, rot hervorgehoben),
   instabil (3 oder mehr Unterbrüche in 24 Stunden), keine Daten und online;
   auf dem Handy als Karten. Die Spalte mit dem Gerät bleibt stehen, wenn die
@@ -26,9 +29,10 @@ Bereich.
   Update-Hinweis; wahlweise Bereich, Unterbrüche in 24 Stunden und Hub /
   Bridge.
 - Ansicht pro Benutzer, gespeichert in Home Assistant und getrennt für
-  Desktop und Handy: Spalten (Desktop) bzw. Angaben auf der Karte (Handy)
-  wählen und ordnen, nach jeder Spalte sortieren (Klick auf den Kopf),
-  Gruppen oder eine Liste, dazu die aktiven Filter-Chips.
+  Desktop und Handy: Spalten (Desktop, Dialog "Anpassen") bzw. Angaben auf
+  der Karte (Handy) mit dem Auge ein- und ausblenden und am Griff ordnen,
+  nach jeder Spalte sortieren (Klick auf den Kopf), Gruppen oder eine
+  Liste, dazu die aktiven Filter-Chips.
 - Verbindungsart pro Gerät: Zigbee, Z-Wave, Thread, Matter (Thread, WLAN
   oder LAN), Bluetooth, WLAN, Netzwerk, Cloud; Empfang in dBm oder LQI und
   der Hub, die Bridge oder der Bluetooth-Proxy dazwischen.
@@ -44,8 +48,10 @@ Bereich.
 - Filter nach Bereich: Der Chip "Bereich" am Anfang der Chip-Zeile wählt
   einen oder mehrere Bereiche oder eine ganze Etage (Reihenfolge wie in
   Home Assistant, "Ohne Bereich" für Geräte ohne). Die Liste zeigt nur
-  deren Geräte, und die übrigen Chips filtern darin weiter; der Kopf zeigt
-  weiter das ganze Haus. Pro Benutzer gespeichert wie die Ansicht.
+  deren Geräte, und die übrigen Chips filtern darin weiter. Der Kopf
+  (Verfügbarkeit, gerade ausgefallen, Ausfall-Puls, Sammelausfälle) zählt
+  dann ebenfalls nur diese Geräte. Pro Benutzer gespeichert wie die
+  Ansicht.
 - Popup pro Gerät (wie bei UniFi Dynamic Clients): Verfügbarkeit 24 Stunden,
   Unterbrüche in 7 Tagen, Empfang und Batterie als Kacheln; Verbindung,
   Integration (warnt, wenn ihr Eintrag nicht geladen ist), Geräteangaben und

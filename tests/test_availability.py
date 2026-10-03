@@ -293,8 +293,10 @@ async def test_offline_after_restart_is_at_least(hass: HomeAssistant, hass_stora
 
 async def test_incident_and_pulse(hass: HomeAssistant, setup: AvailabilityLog, freezer) -> None:
     lights = []
+    ids = []
     for i in range(3):
         dev = _device(hass, f"Zigbee {i}", domain="zha")
+        ids.append(dev.id)
         lights.append(_entity(hass, dev, "light", "l", "on"))
     setup.evaluate()
     for light in lights:
@@ -304,7 +306,32 @@ async def test_incident_and_pulse(hass: HomeAssistant, setup: AvailabilityLog, f
     result = await async_list_devices(hass, setup)
     assert result["incidents"][0]["count"] == 3
     assert result["incidents"][0]["integration"] == "zha"
+    # Geräte-IDs für den Kopf mit Filter "Bereich" (seit 0.26.0)
+    assert result["incidents"][0]["devices"] == sorted(ids)
     assert max(result["pulse"]) == 3
+    # Das Panel zählt den Puls pro Bereich aus den Streifen: gleiche Zählung
+    strips = [d["avail24"]["strip"] for d in result["devices"] if not d["disabled"]]
+    assert result["pulse"] == [sum(1 for s in strips if s[i] == 1) for i in range(len(result["pulse"]))]
+
+
+async def test_pulse_counts_devices_not_outages(hass: HomeAssistant, setup: AvailabilityLog, freezer) -> None:
+    # Ein Gerät, dreimal kurz weg in derselben halben Stunde: im Puls 1 Gerät
+    # (Fehler bis 0.25.0: 3), wie im Streifen der Liste.
+    dev = _device(hass, "Wackel")
+    light = _entity(hass, dev, "light", "l", "on")
+    setup.evaluate()
+    for _ in range(3):
+        hass.states.async_set(light, "unavailable")
+        freezer.tick(timedelta(minutes=2))
+        setup.evaluate()
+        hass.states.async_set(light, "on")
+        freezer.tick(timedelta(minutes=1))
+        setup.evaluate()
+    result = await async_list_devices(hass, setup)
+    data = next(d for d in result["devices"] if d["id"] == dev.id)
+    assert data["avail24"]["outages"] == 3
+    assert max(result["pulse"]) == 1
+    assert result["pulse"] == [1 if v == 1 else 0 for v in data["avail24"]["strip"]]
 
 
 async def test_list_has_avail_flaky_type_integration(hass: HomeAssistant, setup: AvailabilityLog, freezer) -> None:
