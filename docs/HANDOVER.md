@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.0.0, Einstellungen in fünf Abschnitten)
+## Stand (1.1.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -283,7 +283,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `1.0.0` (Nutzer, 2026-10-04, `docs/mockups/content-v1/`, A): "Geräte im
    Panel" und "Darstellung" ersetzen "Integrationen", "Gerätetypen",
    "Verbindungsart", "Anzeige" und "Ausgeblendete Geräte" (verworfen: B
-   nur Ausnahmen mit Auswahl "Ausblenden …").
+   nur Ausnahmen mit Auswahl "Ausblenden …"). `1.1.0` (Wunsch des Nutzers):
+   Knopf "Alle zurücksetzen" im Reiter "Integrationen" (Aktion
+   `integ-reset-all`, setzt die fünf Optionen pro Integration im Entwurf
+   leer; Geräte mit eigener Einstellung bleiben). Die Liste der
+   Filter-Chips (`_connCatalog`) zeigt alle Arten aus `CONN`, auch ohne
+   Geräte (Wunsch des Nutzers).
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem

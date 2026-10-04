@@ -7,6 +7,27 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] - 2026-10-04
+
+"Reset all" for the integrations, all filter chips in the settings.
+
+### Changed
+
+- Settings, "Appearance" › "Filter chips": the list shows every
+  connection type that exists, also those without devices right now
+  (e.g. Matter, LAN), so a chip can be hidden or put in order in advance
+  (requested by the user). Before, only types with devices were listed.
+
+### Added
+
+- Settings, "Monitoring and notifications" › "Integrations": the button
+  "Reset all" next to the filter sets every integration back to the
+  defaults at once (offline after, push, persistent notification, low
+  battery threshold, push on low battery), like "Reset all" for the
+  devices. It applies with "Save"; greyed out when nothing differs.
+  Devices with their own setting stay as they are (reset in the tabs
+  "Outage" and "Battery").
+
 ## [1.0.0] - 2026-10-04
 
 Five sections in the settings instead of eight.
@@ -1002,6 +1023,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.1.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.1.0
 [1.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.0.0
 [0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0
 [0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1

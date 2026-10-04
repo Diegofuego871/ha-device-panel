@@ -651,7 +651,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .mon-grp { margin: 16px 0 2px; color: var(--dp-text2); font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 .mon-diff .opt-line { min-height: 28px; }
 .mon-intro { margin: 6px 0 8px; }
-.mon-flt { display: flex; gap: 6px; }
+.mon-flt { display: flex; flex-wrap: wrap; gap: 6px; }
 .mon-empty { margin: 12px 0; }
 .mon-hint { margin: -4px 0 8px; }
 .mon-dis { opacity: .5; }
@@ -680,6 +680,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .opt.bat-row .opt-input input { width: 40px; }
 .opt.changed > .opt-line .bat-ctl .opt-input:not(.bad), .opt.changed > .opt-line .bat-ctl .opt-select select { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 .integ-reset { margin: 14px 0 4px; }
+.mon-flt .integ-all { margin-left: auto; }
 .integ-goto { margin: 10px 0 2px; }
 .integ-goto .lnk { font-size: 12px; }
 /* Typ im Geräte-Popup wählbar */

@@ -48,7 +48,7 @@ const TEXT = {
     own: "Eigene",
     diffBat25: "Batterie 25 %",
     diffBatOff: "Batterie-Warnung aus",
-    filterOwn2: "Abweichend 2",
+    filterOwn2: "Abweichend 2", filterOwn0: "Abweichend 0",
   },
   en: {
     gear: "Settings", title: "Settings", sub: "Device Panel · applies to all users", sec: "Updates",
@@ -85,7 +85,7 @@ const TEXT = {
     own: "Own",
     diffBat25: "Battery 25 %",
     diffBatOff: "Battery warning off",
-    filterOwn2: "Differs 2",
+    filterOwn2: "Differs 2", filterOwn0: "Differs 0",
   },
 };
 
@@ -499,10 +499,11 @@ for (const lang of ["de", "en"]) {
     // Zurück auf den globalen Wert: "Alles auf Standard" und Auswahl
     await integ("matter");
     check(`[${tag}] Werte stehen`, (await ev(`return r.querySelector('select[data-bat-mode="matter"]').value + ":" + r.querySelector('input[data-bat="matter"]').value`)) === "own:25");
-    await tap('[data-set="integ-reset"][data-key="matter"]');
     await back();
-    await integ("bthome");
-    await mode("bthome", "default");
+    // "Alle zurücksetzen" (1.0.0): alle Abweichungen der Integrationen auf einmal
+    check(`[${tag}] Alle zurücksetzen aktiv`, await ev(`return !r.querySelector('[data-set="integ-reset-all"]').disabled`));
+    await tap('[data-set="integ-reset-all"]');
+    check(`[${tag}] Alle zurücksetzen: Entwurf leer, Knopf gesperrt, Filter "Abweichend 0"`, (await text('[data-set="ifilter"][data-key="own"]')) === T.filterOwn0 && await ev(`const d=r.host._settings.draft; return Object.keys(d.battery_low_integrations).length===0 && r.querySelector('[data-set="integ-reset-all"]').disabled`));
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] globaler Wert, gespeichert`, await savedThenClose() && JSON.stringify((await calls("device_panel/set_options")).at(-1).values) === JSON.stringify({ battery_low_integrations: {} }) && await wait(`return r.host._devices.filter((d) => d.battery?.low).map((d) => d.id).sort().join() === "a,b"`), await lowIds());
 

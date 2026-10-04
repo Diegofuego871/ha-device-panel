@@ -63,7 +63,7 @@ for (const lang of ["de", "en"]) {
     await openDisplay();
     check(`[${tag}] Reiter mit Titel`, (await ev(`return r.querySelector(".sub-tab.on").firstChild.textContent`)) === T.title);
     const rows = await ev(`return [...r.querySelectorAll('input[data-list="hide_connections"]')].map(i=>i.dataset.value + (i.checked ? "+" : "-")).join()`);
-    check(`[${tag}] alle Arten angezeigt`, rows === "zigbee+,wifi+,thread+,ble+,zwave+,network+,cloud+,unknown+", rows);
+    check(`[${tag}] alle Arten angezeigt, auch ohne Geräte (Matter, LAN)`, rows === "zigbee+,wifi+,thread+,ble+,zwave+,network+,cloud+,unknown+,matter+,ethernet+", rows);
     check(`[${tag}] Zeile mit Zahl`, (await ev(`const row=r.querySelector('input[data-list="hide_connections"][data-value="thread"]').closest(".ex-row"); return row.querySelector(".ex-name").firstChild.textContent + "|" + row.querySelector("small").textContent`)) === `${T.thread}|${T.threadSub}`);
     await tap('input[data-list="hide_connections"][data-value="thread"]');
     await tap('input[data-list="hide_connections"][data-value="ble"]');
@@ -125,24 +125,24 @@ for (const lang of ["de", "en"]) {
       await p.waitForTimeout(500);
     };
     await openDisplay();
-    check(`[${tag}] Griff in jeder Zeile`, (await rowOrder()) === "zigbee,wifi,thread,ble,zwave,network,cloud,unknown", await rowOrder());
+    check(`[${tag}] Griff in jeder Zeile`, (await rowOrder()) === "zigbee,wifi,thread,ble,zwave,network,cloud,unknown,matter,ethernet", await rowOrder());
     await drag('.drag-list [data-key="cloud"]', '.drag-list [data-key="zigbee"]');
-    check(`[${tag}] Cloud nach oben gezogen`, await wait(`return [...r.querySelectorAll('.drag-list [data-set="drag"]')].map(b=>b.dataset.key).join() === "cloud,zigbee,wifi,thread,ble,zwave,network,unknown"`), await rowOrder());
+    check(`[${tag}] Cloud nach oben gezogen`, await wait(`return [...r.querySelectorAll('.drag-list [data-set="drag"]')].map(b=>b.dataset.key).join() === "cloud,zigbee,wifi,thread,ble,zwave,network,unknown,matter,ethernet"`), await rowOrder());
     check(`[${tag}] Reihenfolge als Änderung`, (await text(".set-count")) === T.one && (await text('[data-id="look"] .set-sec-sum')).endsWith(T.order), `${await text(".set-count")} / ${await text('[data-id="look"] .set-sec-sum')}`);
     if (!mobile) {
       // Pfeiltasten am Griff: Zigbee eins nach unten, der Fokus bleibt am Griff
       await (await handle('.drag-list [data-key="zigbee"]')).focus();
       await p.keyboard.press("ArrowDown");
-      check(`[${tag}] Pfeiltaste verschiebt`, await wait(`return [...r.querySelectorAll('.drag-list [data-set="drag"]')].map(b=>b.dataset.key).join() === "cloud,wifi,zigbee,thread,ble,zwave,network,unknown"`) && await ev(`return r.activeElement?.dataset.key === "zigbee"`), await rowOrder());
+      check(`[${tag}] Pfeiltaste verschiebt`, await wait(`return [...r.querySelectorAll('.drag-list [data-set="drag"]')].map(b=>b.dataset.key).join() === "cloud,wifi,zigbee,thread,ble,zwave,network,unknown,matter,ethernet"`) && await ev(`return r.activeElement?.dataset.key === "zigbee"`), await rowOrder());
     }
     await p.screenshot({ path: `${outDir}/chips-order-${tag.replace("/", "-")}.png` });
-    const expected = mobile ? ["cloud", "zigbee", "wifi", "thread", "ble", "zwave", "network", "unknown"] : ["cloud", "wifi", "zigbee", "thread", "ble", "zwave", "network", "unknown"];
+    const expected = mobile ? ["cloud", "zigbee", "wifi", "thread", "ble", "zwave", "network", "unknown", "matter", "ethernet"] : ["cloud", "wifi", "zigbee", "thread", "ble", "zwave", "network", "unknown", "matter", "ethernet"];
     check(`[${tag}] Reihenfolge gespeichert`, (await save()) && JSON.stringify(await lastSet()) === JSON.stringify({ connection_order: expected }), JSON.stringify(await lastSet()));
-    check(`[${tag}] Chips in dieser Reihenfolge`, await wait(`return [...r.querySelectorAll(".chip[data-conn]")].map(c=>c.dataset.conn).join() === ${JSON.stringify(["all", ...expected].join())}`), await chips());
+    check(`[${tag}] Chips in dieser Reihenfolge`, await wait(`return [...r.querySelectorAll(".chip[data-conn]")].map(c=>c.dataset.conn).join() === ${JSON.stringify(["all", ...expected.filter((k) => k !== "matter" && k !== "ethernet")].join())}`), await chips());
     // Zurück nach Anzahl
     await openDisplay();
     await tap('[data-set="drag-reset"]');
-    check(`[${tag}] nach Anzahl`, (await rowOrder()) === "zigbee,wifi,thread,ble,zwave,network,cloud,unknown" && !(await ev(`return !!r.querySelector('[data-set="drag-reset"]')`)), await rowOrder());
+    check(`[${tag}] nach Anzahl`, (await rowOrder()) === "zigbee,wifi,thread,ble,zwave,network,cloud,unknown,matter,ethernet" && !(await ev(`return !!r.querySelector('[data-set="drag-reset"]')`)), await rowOrder());
     check(`[${tag}] zurück gespeichert`, (await save()) && JSON.stringify(await lastSet()) === JSON.stringify({ connection_order: [] }) && (await chips()) === before, await chips());
 
     // Ausgeblendete Art ohne Geräte bleibt in der Liste (zum Wieder-Einblenden)

@@ -164,7 +164,7 @@ Bereich.
   Schaltern als Chips; die Reiter "Ausfall" und "Batterie" enthalten alle
   ihre Einstellungen, der Reiter "Integrationen" führt jede Integration mit
   ihren Abweichungen auf und öffnet alle ihre Einstellungen mit eigenem
-  Zeitstrahl.
+  Zeitstrahl, mit "Alle zurücksetzen" auf den Standard.
 - Fünf Abschnitte in den Einstellungen: "Geräte im Panel" (Dienst-Geräte
   und deaktivierte Geräte; Reiter "Integrationen", "Typen" und "Geräte"
   zum Ausblenden aus Panel und Überwachung), "Überwachung und Meldungen",

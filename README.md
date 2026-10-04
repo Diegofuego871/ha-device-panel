@@ -152,7 +152,7 @@ details such as software version, manufacturer, model and area.
   device counts as offline and when the push arrives, with the switches as
   chips; the tabs "Outage" and "Battery" hold all their settings, the tab
   "Integrations" lists every integration with what differs and opens all
-  its settings with its own timeline.
+  its settings with its own timeline, with "Reset all" back to the defaults.
 - Five sections in the settings: "Devices in the panel" (service and
   disabled devices; tabs "Integrations", "Types" and "Devices" to hide them
   from the panel and from monitoring), "Monitoring and notifications",

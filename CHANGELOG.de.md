@@ -7,6 +7,28 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.1.0] - 2026-10-04
+
+"Alle zurücksetzen" bei den Integrationen, alle Filter-Chips in den Einstellungen.
+
+### Geändert
+
+- Einstellungen, "Darstellung" › "Filter-Chips": Die Liste zeigt jede
+  Verbindungsart, die es gibt, auch ohne Geräte (z. B. Matter, LAN), damit
+  sich ein Chip im Voraus ausblenden oder einordnen lässt (Wunsch des
+  Nutzers). Vorher standen nur Arten mit Geräten in der Liste.
+
+### Hinzugefügt
+
+- Einstellungen, "Überwachung und Meldungen" › "Integrationen": Der Knopf
+  "Alle zurücksetzen" neben dem Filter setzt alle Integrationen auf einmal
+  auf den Standard zurück (Ausgefallen nach, Push, anhaltende
+  Benachrichtigung, Schwelle schwache Batterie, Push bei schwacher
+  Batterie), wie "Alle zurücksetzen" bei den Geräten. Gilt mit
+  "Speichern"; grau, wenn nichts abweicht. Geräte mit eigener Einstellung
+  bleiben, wie sie sind (zurücksetzen in den Reitern "Ausfall" und
+  "Batterie").
+
 ## [1.0.0] - 2026-10-04
 
 Fünf Abschnitte in den Einstellungen statt acht.
@@ -1043,6 +1065,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.1.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.1.0
 [1.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.0.0
 [0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0
 [0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1

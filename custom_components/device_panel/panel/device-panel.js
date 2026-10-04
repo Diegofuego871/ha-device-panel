@@ -254,6 +254,11 @@ const MON_TAB_KEYS = {
 
 // Reiter der Abschnitte "Geräte im Panel" und "Darstellung" (seit 1.0.0,
 // docs/mockups/content-v1, A) mit den Optionen, die sie ändern.
+// Optionen mit Abweichungen pro Integration ("Alle zurücksetzen" in
+// "Überwachung und Meldungen" › "Integrationen", "Alles auf Standard" in der Integration).
+const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations"];
+const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations"];
+
 const SUB_TAB_KEYS = {
   integrations: ["exclude_integrations"],
   types: ["exclude_types"],
@@ -3413,9 +3418,13 @@ class DevicePanel extends HTMLElement {
   // Verbindungsarten für die Filter-Chips: alle mit Geräten (wie die Chips,
   // häufigste zuerst), dazu ausgeblendete ohne Geräte.
   _connCatalog(d) {
+    // Alle möglichen Arten, auch ohne Geräte (Wunsch des Nutzers, 1.2.0):
+    // so lassen sich Chips im Voraus ausblenden oder einordnen.
+    // Erst die Arten mit Geräten (gleiche Reihenfolge wie die Chips über der
+    // Liste), dann die übrigen.
     const counts = new Map();
     for (const dev of this._devices) counts.set(this._connOf(dev), (counts.get(this._connOf(dev)) || 0) + 1);
-    for (const key of d.hide_connections || []) if (!counts.has(key) && CONN[key]) counts.set(key, 0);
+    for (const key of Object.keys(CONN)) if (!counts.has(key)) counts.set(key, 0);
     return orderConns([...counts.entries()], d.connection_order).map(([key, n]) => ({ value: key, devices: n }));
   }
 
@@ -3938,8 +3947,12 @@ class DevicePanel extends HTMLElement {
           <span class="ilist-name">${escape(x.name)}<small>${escape(t("integDevs", x.devices, x.batDevices))}</small><small class="ilist-diff${x.unmon ? " unmon" : x.own ? " own" : ""}">${escape(x.own ? x.diff : t("integStandard"))}</small></span>${mdi("chevron", 18)}</button>`;
       })
       .join("");
+    // Alle Abweichungen der Integrationen auf einmal zurück auf den Standard
+    // (beim Speichern), wie "Alle zurücksetzen" bei den Geräten. Auch die
+    // von ausgeblendeten Integrationen, die die Liste nicht zeigt.
+    const anyOwn = INTEG_OWN_MAPS.some((k) => Object.keys(d[k] || {}).length) || INTEG_OWN_LISTS.some((k) => (d[k] || []).length);
     return `<div class="opt-short mon-intro">${escape(t("integListIntro"))}</div>
-      <div class="mon-flt">${chip("all", t("filterAll", items.length))}${chip("own", t("filterOwn", own.length))}</div>
+      <div class="mon-flt">${chip("all", t("filterAll", items.length))}${chip("own", t("filterOwn", own.length))}<button type="button" class="ovr-all integ-all" data-set="integ-reset-all" ${anyOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("ovrResetAll"))}</button></div>
       ${shown.length ? `<div class="ilist">${rows}</div>` : `<div class="opt-short mon-empty">${escape(t(items.length ? "integNoneOwn" : "integNone"))}</div>`}`;
   }
 
@@ -4252,6 +4265,11 @@ class DevicePanel extends HTMLElement {
       } else if (action === "chip") {
         if (!st.draft) return;
         st.draft[btn.dataset.key] = !st.draft[btn.dataset.key];
+        this._renderSettings();
+      } else if (action === "integ-reset-all") {
+        if (!st.draft) return;
+        for (const key of INTEG_OWN_MAPS) st.draft[key] = {};
+        for (const key of INTEG_OWN_LISTS) st.draft[key] = [];
         this._renderSettings();
       } else if (action === "integ-reset") {
         // Alles einer Integration auf den Standard (beim Speichern).
