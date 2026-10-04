@@ -137,3 +137,47 @@ async def test_preview_sends_nothing_and_checks_draft(hass: HomeAssistant, setup
     assert (await client.receive_json())["error"]["code"] == "not_found"
     await client.send_json({"id": 5, "type": f"{DOMAIN}/ai_prompt_preview", "device_id": lamp.id, "prompt": "x" * (AI_PROMPT_MAX + 1)})
     assert (await client.receive_json())["error"]["code"] == "invalid_format"
+
+
+async def test_facts_list_other_offline_devices_of_the_integration(hass: HomeAssistant, setup, freezer) -> None:
+    """1.3.0: Name, Bereich und Dauer der anderen ausgefallenen Geräte derselben Integration, längste zuerst, höchstens 10."""
+    from datetime import timedelta  # noqa: PLC0415
+
+    from custom_components.device_panel.ai_assessment import SAME_OFFLINE_MAX, build_facts  # noqa: PLC0415
+    from custom_components.device_panel.devices import async_list_devices  # noqa: PLC0415
+
+    log = hass.data[DATA_AVAILABILITY]
+    ereg = er.async_get(hass)
+    dreg = dr.async_get(hass)
+    source = MockConfigEntry(domain="zha", title="ZHA")
+    source.add_to_hass(hass)
+    entities: dict[str, str] = {}
+    for i in range(14):
+        dev = dreg.async_get_or_create(config_entry_id=source.entry_id, identifiers={("zha", f"d{i:02d}")}, name=f"Melder {i:02d}")
+        entities[dev.id] = ereg.async_get_or_create("binary_sensor", "zha", f"{dev.id}-m", device_id=dev.id).entity_id
+        hass.states.async_set(entities[dev.id], "on")
+    online = dreg.async_get_or_create(config_entry_id=source.entry_id, identifiers={("zha", "ok")}, name="Heiler Melder")
+    hass.states.async_set(ereg.async_get_or_create("binary_sensor", "zha", f"{online.id}-m", device_id=online.id).entity_id, "on")
+    log.evaluate()
+    ids = list(entities)
+    # Gerät 0 fehlt zuerst (am längsten), dann nacheinander die übrigen bis Nr. 12; Nr. 13 bleibt online
+    for n, dev_id in enumerate(ids[:13]):
+        hass.states.async_set(entities[dev_id], "unavailable")
+        log.evaluate()
+        freezer.tick(timedelta(minutes=2))
+    log.evaluate()
+    result = await async_list_devices(hass, log)
+    me = next(d for d in result["devices"] if d["name"] == "Melder 12")
+    facts = build_facts(me, result, time.time())
+    others = facts["same_integration_offline_devices"]
+    assert facts["same_integration_other_devices"]["offline_now"] == 12
+    # höchstens 10, die am längsten ausgefallenen zuerst, ohne das Gerät selbst
+    assert len(others) == SAME_OFFLINE_MAX == 10
+    assert others[0]["name"] == "Melder 00" and others[-1]["name"] == "Melder 09"
+    assert all("Melder 12" != o["name"] for o in others)
+    minutes = [o["offline_minutes"] for o in others]
+    assert minutes == sorted(minutes, reverse=True)
+    # Nur Name, Bereich (falls vorhanden) und Dauer: keine IDs oder Entitäten
+    assert all(set(o) <= {"name", "area", "offline_minutes"} for o in others)
+    text = json.dumps(facts)
+    assert "binary_sensor." not in text and me["id"] not in text

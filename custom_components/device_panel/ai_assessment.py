@@ -25,6 +25,9 @@ from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK
 from .devices import async_list_devices
 from .options_api import effective
 
+# Höchstens so viele andere ausgefallene Geräte der Integration in den Fakten.
+SAME_OFFLINE_MAX = 10
+
 LANGUAGES = {"de": "German (Swiss spelling: always 'ss', never the sharp s)", "en": "English"}
 
 
@@ -96,6 +99,23 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float) -> d
     if domain:
         same = [d for d in devices if (d.get("integration") or {}).get("domain") == domain and d["id"] != device["id"] and not d.get("unmonitored")]
         facts["same_integration_other_devices"] = {"total": len(same), "offline_now": sum(1 for d in same if d.get("online") is False)}
+        # Welche davon fehlen (seit 1.3.0, Wunsch des Nutzers): Name, Bereich, Dauer;
+        # die längsten zuerst, höchstens SAME_OFFLINE_MAX. Zeigt Muster (derselbe
+        # Bereich, derselbe Zeitpunkt), die Zahlen allein nicht zeigen.
+        gone = []
+        for d in same:
+            if d.get("online") is not False or not d.get("offline_since"):
+                continue
+            since = dt_util.parse_datetime(d["offline_since"])
+            if since is None:
+                continue
+            gone.append((since.timestamp(), d))
+        gone.sort(key=lambda x: x[0])
+        if gone:
+            facts["same_integration_offline_devices"] = [
+                {k: v for k, v in {"name": d["name"], "area": d.get("area"), "offline_minutes": max(0, _minutes(now - at) or 0)}.items() if v is not None}
+                for at, d in gone[:SAME_OFFLINE_MAX]
+            ]
     # Sammelausfälle der letzten 24 Std., an denen das Gerät beteiligt war.
     mine = [
         {

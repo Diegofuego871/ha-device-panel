@@ -7,7 +7,26 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-10-04
+
+More context for the AI assessment: the other offline devices of the integration.
+
+### Changed
+
+- AI assessment: besides the number of other devices of the same
+  integration that are offline (`same_integration_other_devices`), the
+  facts now list them: name, area and how long each has been offline
+  (`same_integration_offline_devices`, longest first, at most 10; requested
+  by the user). This shows patterns the numbers alone hide, e.g. all in the
+  same area or all gone at the same time. Note: up to 10 more device names
+  and areas go to the AI provider, besides the one device being assessed;
+  the notes in the settings and in the pop-up say so. Keys, credentials,
+  IDs and addresses are still never included. In expert mode the preview
+  shows exactly what is sent.
+
 ## [1.2.0] - 2026-10-04
+
+Not released; included in 1.3.0.
 
 Expert mode for the AI assessment: see, copy and adjust the prompt.
 
@@ -1046,7 +1065,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[1.2.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.2.0
+[1.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.3.0
 [1.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.0.0
 [0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0
 [0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1

@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.2.0, Einstellungen in fünf Abschnitten)
+## Stand (1.3.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -296,7 +296,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `device_panel/ai_prompt_preview` (nur Admin, schickt nichts an die KI),
    `get_options.ai_prompt_default`; Panel: Fenster `dialog.prompt-dlg`
    (`_openPrompt`, `_renderPrompt`, `_promptPreview`). Der Optionsdialog von
-   HA hat dafür kein Feld.
+   HA hat dafür kein Feld. `1.2.0` blieb ohne Release, in `1.3.0` enthalten.
+   `1.3.0` (Nutzer, 2026-10-04): die Fakten der KI listen die anderen
+   ausgefallenen Geräte der Integration (`same_integration_offline_devices`,
+   Name, Bereich, Minuten, längste zuerst, höchstens `SAME_OFFLINE_MAX` = 10);
+   die Hinweise `aiNote` und `optAiInfo` nennen es.
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem

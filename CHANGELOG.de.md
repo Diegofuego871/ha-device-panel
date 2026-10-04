@@ -7,7 +7,26 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.3.0] - 2026-10-04
+
+Mehr Zusammenhang für die KI-Einschätzung: die anderen ausgefallenen Geräte der Integration.
+
+### Geändert
+
+- KI-Einschätzung: Neben der Zahl der anderen ausgefallenen Geräte
+  derselben Integration (`same_integration_other_devices`) nennen die
+  Fakten sie jetzt: Name, Bereich und wie lange jedes ausgefallen ist
+  (`same_integration_offline_devices`, längste zuerst, höchstens 10;
+  Wunsch des Nutzers). So zeigen sich Muster, die Zahlen allein verbergen,
+  z. B. alle im selben Bereich oder alle zur selben Zeit weg. Achtung: Bis
+  zu 10 weitere Gerätenamen und Bereiche gehen an den KI-Anbieter, neben
+  dem eingeschätzten Gerät; die Hinweise in den Einstellungen und im Popup
+  sagen es. Schlüssel, Zugangsdaten, IDs und Adressen sind weiterhin nie
+  dabei. Im Profi-Modus zeigt die Vorschau genau, was gesendet wird.
+
 ## [1.2.0] - 2026-10-04
+
+Nicht veröffentlicht; enthalten in 1.3.0.
 
 Profi-Modus der KI-Einschätzung: den Prompt ansehen, kopieren und anpassen.
 
@@ -1089,7 +1108,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[1.2.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.2.0
+[1.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.3.0
 [1.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.0.0
 [0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0
 [0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1
