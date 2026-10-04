@@ -209,6 +209,10 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
   Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des
   Inhalts in zwei Spalten, auf dem Handy in einer.
+- Weitere Chips ausblenden (seit 1.11.0): im Reiter "Filter-Chips" eine Tabelle
+  "Weitere Chips" (Symbol, Name, Kurzzeile, Schalter, "Alle umschalten") über
+  der Tabelle der Verbindungsart, je mit Überschrift; ein Trenner steht vor
+  "Nur Probleme" und den Hinweisen nur, wenn mindestens einer erscheint.
 - Filter "Integration" (seit 1.9.0): Chip mit Puzzle-Symbol direkt hinter
   "Bereich", gleiche Gestalt und gleiches Popover (Handy: Blatt), eine flache
   Liste mit Kästchen, Name und Zahl, Suche ab neun Einträgen; aktiv mit ein

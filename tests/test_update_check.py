@@ -112,6 +112,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "startup_grace": 5,
         "show_service_devices": False,
         "show_disabled_devices": False,
+        "hide_chips": [],
         "hide_connections": [],
         "connection_order": [],
         "connection_integrations": {},
@@ -175,6 +176,19 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
     assert (await client.receive_json())["error"]["code"] == "invalid_format"
     await client.send_json({"id": 11, "type": f"{DOMAIN}/list_devices"})
     assert (await client.receive_json())["result"]["connection_order"] == ["wifi", "zigbee"]
+    # Übrige Filter-Chips (1.11.0): nur bekannte Schlüssel, in fester Reihenfolge, ohne Doppelte
+    await client.send_json({"id": 12, "type": f"{DOMAIN}/set_options", "values": {"hide_chips": ["new", "area", "problems", "area"]}})
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+    assert entry.options["hide_chips"] == ["area", "problems", "new"]
+    await client.send_json({"id": 13, "type": f"{DOMAIN}/set_options", "values": {"hide_chips": ["alle"]}})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"
+    await client.send_json({"id": 14, "type": f"{DOMAIN}/list_devices"})
+    assert (await client.receive_json())["result"]["hide_chips"] == ["area", "problems", "new"]
+    await client.send_json({"id": 15, "type": f"{DOMAIN}/set_options", "values": {"hide_chips": []}})
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+    assert entry.options["hide_chips"] == []
 
 
 async def test_options_flow(hass: HomeAssistant, entry) -> None:
@@ -189,7 +203,7 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
         "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields",
         "offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations",
         "battery_push_exclude_integrations", "exclude_integrations", "exclude_types", "exclude_devices",
-        "show_service_devices", "show_disabled_devices", "hide_connections",
+        "show_service_devices", "show_disabled_devices", "hide_chips", "hide_connections",
         "connection_order", "connection_integrations", "ai_assessment", "ai_task_entity", "update_check",
     ]
     # "Ausgefallen nach" über "Erst melden nach" (2): Fehler am Feld, nichts gespeichert.
@@ -399,3 +413,18 @@ async def test_old_notify_delay_counts_as_offline_after(hass: HomeAssistant, ent
     await hass.async_block_till_done()
     await client.send_json({"id": 4, "type": f"{DOMAIN}/get_options"})
     assert (await client.receive_json())["result"]["values"]["notify_delay"] == 7
+
+
+async def test_options_flow_hide_chips(hass: HomeAssistant, entry) -> None:
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"hide_chips": ["signal", "area", "signal"]})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options["hide_chips"] == ["area", "signal"]
+    # Leere Auswahl überschreibt die alte
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"hide_chips": []})
+    assert entry.options["hide_chips"] == []
+    # Unbekannter Chip: vom Selektor abgelehnt
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    with pytest.raises(InvalidData):
+        await hass.config_entries.options.async_configure(result["flow_id"], {"hide_chips": ["alle"]})

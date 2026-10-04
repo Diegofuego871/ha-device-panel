@@ -44,6 +44,7 @@
           "exclude_devices": "Ausgeblendete Geräte",
           "show_service_devices": "Dienst-Geräte anzeigen",
           "show_disabled_devices": "Deaktivierte Geräte anzeigen",
+          "hide_chips": "Filter-Chips ausblenden",
           "hide_connections": "Filter-Chips der Verbindungsart ausblenden",
           "connection_order": "Reihenfolge der Chips der Verbindungsart",
           "connection_integrations": "Verbindungsart pro Integration",
@@ -80,6 +81,7 @@
           "exclude_devices": "Geräte, die weder gezeigt noch überwacht werden und nichts melden. Im Panel: Knopf \"Ausblenden\" im Geräte-Popup.",
           "show_service_devices": "Dienste einer Integration statt echter Geräte, z. B. Sonne, Wettervorhersage oder Add-ons. Angezeigte Dienst-Geräte werden auch überwacht.",
           "show_disabled_devices": "In einer eigenen Gruppe am Ende der Liste. Sie werden nicht überwacht.",
+          "hide_chips": "Blendet einzelne Chips über der Liste aus: Bereich, Integration, \"Nur Probleme\", Batterie, Batterie niedrig, Schwacher Empfang, Update verfügbar, Eigene Einstellung, Neu. Die Geräte bleiben sichtbar; ein aktiver Filter eines ausgeblendeten Chips wird aufgehoben. \"Alle\" bleibt immer. Gilt für alle Benutzer.",
           "hide_connections": "Nur die Chips über der Liste; die Geräte bleiben sichtbar. \"Alle\", \"Nur Probleme\" und die Hinweise bleiben immer. Gilt für alle Benutzer.",
           "connection_order": "In der Reihenfolge der Auswahl; nicht gewählte folgen nach Anzahl der Geräte. Leer = nach Anzahl der Geräte. Im Panel per Griff ziehen.",
           "connection_integrations": "Integration → Verbindungsart, eine pro Zeile, z. B. \"hue: zigbee\". Gilt für alle Geräte der Integration statt der Erkennung; eine am Gerät von Hand gesetzte Verbindungsart geht vor. Arten: zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud.",
@@ -178,6 +180,19 @@
         "area": "Bereich",
         "integration": "Integration",
         "model": "Hersteller / Modell"
+      }
+    },
+    "chip": {
+      "options": {
+        "area": "Bereich",
+        "integration": "Integration",
+        "problems": "Nur Probleme",
+        "batteries": "Batterie",
+        "battery": "Batterie niedrig",
+        "signal": "Schwacher Empfang",
+        "update": "Update verfügbar",
+        "override": "Eigene Einstellung",
+        "new": "Neu"
       }
     }
   }

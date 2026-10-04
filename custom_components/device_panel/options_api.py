@@ -56,8 +56,10 @@ from .const import (
     CONF_EXCLUDE_TYPES,
     CONF_CONNECTION_INTEGRATIONS,
     CONF_CONNECTION_ORDER,
+    CONF_HIDE_CHIPS,
     CONF_HIDE_CONNECTIONS,
     CONNECTION_MANUAL,
+    CHIP_KEYS,
     CONNECTION_TYPES,
     CONF_FLAKY_OUTAGES,
     CONF_NOTIFY_CLICK,
@@ -101,7 +103,7 @@ INT_OPTIONS: tuple[tuple[str, int], ...] = (
     (CONF_BATTERY_LOW, DEFAULT_BATTERY_LOW),
     (CONF_NOTIFY_DELAY, DEFAULT_NOTIFY_DELAY),
 )
-LIST_OPTIONS = (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CONNECTIONS, CONF_CONNECTION_ORDER)
+LIST_OPTIONS = (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CHIPS, CONF_HIDE_CONNECTIONS, CONF_CONNECTION_ORDER)
 
 _DOMAIN_RE = re.compile(r"^[a-z0-9_]+$")
 # Geräte-IDs von HA: Hex (uuid4().hex); etwas weiter gefasst für Tests.
@@ -142,6 +144,13 @@ def _connections(value: Any) -> list[str]:
     if not isinstance(value, list) or not all(v in CONNECTION_TYPES for v in value):
         raise vol.Invalid("Liste von Verbindungsarten erwartet")
     return sorted(set(value))
+
+
+def _chips(value: Any) -> list[str]:
+    """Ausgeblendete Filter-Chips: bekannte Schlüssel in fester Reihenfolge, ohne Doppelte."""
+    if not isinstance(value, list) or not all(v in CHIP_KEYS for v in value):
+        raise vol.Invalid(f"Liste von Chips erwartet ({', '.join(CHIP_KEYS)})")
+    return [k for k in CHIP_KEYS if k in set(value)]
 
 
 def notify_fields(value: Any) -> list[str]:
@@ -281,6 +290,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_BATTERY_PUSH_EXCLUDE): _domains,
         vol.Optional(CONF_NOTIFY_FIELDS): notify_fields,
         vol.Optional(CONF_BATTERY_FIELDS): battery_fields,
+        vol.Optional(CONF_HIDE_CHIPS): _chips,
         vol.Optional(CONF_HIDE_CONNECTIONS): _connections,
         vol.Optional(CONF_CONNECTION_ORDER): connection_order,
         vol.Optional(CONF_CONNECTION_INTEGRATIONS): connection_map,
@@ -326,6 +336,7 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_BATTERY_FIELDS] = (
         [f for f in BATTERY_FIELDS if f in fields] if isinstance(fields, list) else list(DEFAULT_BATTERY_FIELDS)
     )
+    values[CONF_HIDE_CHIPS] = [k for k in CHIP_KEYS if k in set(options.get(CONF_HIDE_CHIPS) or [])]
     values[CONF_HIDE_CONNECTIONS] = sorted({c for c in options.get(CONF_HIDE_CONNECTIONS) or [] if c in CONNECTION_TYPES})
     # Reihenfolge bleibt, wie gespeichert (nicht sortieren); Unbekanntes fällt weg.
     values[CONF_CONNECTION_ORDER] = list(dict.fromkeys(c for c in options.get(CONF_CONNECTION_ORDER) or [] if c in CONNECTION_TYPES))

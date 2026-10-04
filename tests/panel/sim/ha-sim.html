@@ -515,7 +515,7 @@
     offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, offline_after_integrations: {}, battery_push: false, battery_persistent: false,
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
     exclude_integrations: [], exclude_types: [], exclude_devices: [], notify_service: "none", notify_click_target: "panel",
-    notify_outage: false, notify_online: false, notify_group: true, hide_connections: [], connection_order: [], connection_integrations: {},
+    notify_outage: false, notify_online: false, notify_group: true, hide_chips: [], hide_connections: [], connection_order: [], connection_integrations: {},
     show_service_devices: false, show_disabled_devices: false, update_check: true, ai_assessment: false, ai_task_entity: "", ai_prompt: "",
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
@@ -650,6 +650,13 @@
         if ("notify_click_target" in msg.values && !["panel", "device"].includes(msg.values.notify_click_target)) throw { code: "invalid_format", message: "click" };
         if ("battery_push_time" in msg.values && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(msg.values.battery_push_time))) throw { code: "invalid_format", message: "time" };
         if ("battery_push_mode" in msg.values && !["instant", "daily"].includes(msg.values.battery_push_mode)) throw { code: "invalid_format", message: "mode" };
+        if ("hide_chips" in msg.values) {
+          // Wie options_api._chips: bekannte Schlüssel in fester Reihenfolge.
+          const known = ["area", "integration", "problems", "batteries", "battery", "signal", "update", "override", "new"];
+          const v = msg.values.hide_chips;
+          if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "chips" };
+          msg.values.hide_chips = known.filter((k) => v.includes(k));
+        }
         if ("hide_connections" in msg.values) {
           const known = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown"];
           const v = msg.values.hide_connections;
@@ -854,7 +861,7 @@
           })),
           ai_assessment: Boolean(window.__opts.ai_assessment),
           integrations, now: new Date().toISOString(), offline_after: window.__opts.offline_after * 60, battery_low: batLow,
-          flaky_outages: flakyN, hide_connections: [...window.__opts.hide_connections], connection_order: [...window.__opts.connection_order], pulse: pulse(), incidents,
+          flaky_outages: flakyN, hide_chips: [...window.__opts.hide_chips], hide_connections: [...window.__opts.hide_connections], connection_order: [...window.__opts.connection_order], pulse: pulse(), incidents,
           areas: window.__areas.map((a) => ({ ...a })), floors: window.__floors.map((f) => ({ ...f })),
         };
         // Langsame Antwort mit dem Stand vom Beginn der Abfrage (wie HA bei

@@ -7,6 +7,26 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.11.0] - 2026-10-04
+
+Hide any filter chip.
+
+### Added
+
+- All filter chips can be hidden (requested by the user): Settings,
+  "Appearance", tab "Filter chips", new table "Other chips" above the
+  connection types: Area, Integration, Problems only, Battery, Low battery,
+  Weak signal, Update available, Own setting and New, each with a switch and
+  "Toggle all". "All" always stays.
+  - Applies to all users, like the hidden connection type chips; the
+    devices stay visible.
+  - A hidden chip clears its filter (requested by the user): "Problems only",
+    the hint, the area and the integration are reset, so no invisible filter
+    shortens the list. The header counts all devices again.
+  - The summary of the section counts the hidden chips of both tables.
+  - New option `hide_chips`, also in the options dialog of Home Assistant
+    ("Hide filter chips").
+
 ## [1.10.0] - 2026-10-04
 
 The AI assessment takes an uncertain battery forecast into account.
@@ -1255,6 +1275,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.11.0
 [1.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.10.0
 [1.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.8.0
 [1.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.7.0

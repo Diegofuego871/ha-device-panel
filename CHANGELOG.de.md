@@ -7,6 +7,29 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.11.0] - 2026-10-04
+
+Jeden Filter-Chip ausblenden.
+
+### Hinzugefügt
+
+- Alle Filter-Chips lassen sich ausblenden (Wunsch des Nutzers):
+  Einstellungen, "Darstellung", Reiter "Filter-Chips", neue Tabelle "Weitere
+  Chips" über den Verbindungsarten: Bereich, Integration, Nur Probleme,
+  Batterie, Batterie niedrig, Schwacher Empfang, Update verfügbar, Eigene
+  Einstellung und Neu, je mit Schalter und "Alle umschalten". "Alle" bleibt
+  immer.
+  - Gilt für alle Benutzer, wie die ausgeblendeten Chips der Verbindungsart;
+    die Geräte bleiben sichtbar.
+  - Ein ausgeblendeter Chip hebt seinen Filter auf (Wunsch des Nutzers): "Nur
+    Probleme", der Hinweis, Bereich und Integration werden zurückgesetzt,
+    damit kein unsichtbarer Filter die Liste kürzt. Der Kopf zählt wieder
+    alle Geräte.
+  - Die Zusammenfassung des Abschnitts zählt die ausgeblendeten Chips beider
+    Tabellen.
+  - Neue Option `hide_chips`, auch im Optionsdialog von Home Assistant
+    ("Filter-Chips ausblenden").
+
 ## [1.10.0] - 2026-10-04
 
 Die KI-Einschätzung beachtet eine unsichere Batterie-Prognose.
@@ -1301,6 +1324,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.11.0
 [1.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.10.0
 [1.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.8.0
 [1.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.7.0

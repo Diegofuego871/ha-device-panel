@@ -51,7 +51,9 @@ from .const import (
     CONF_FLAKY_OUTAGES,
     CONF_CONNECTION_INTEGRATIONS,
     CONF_CONNECTION_ORDER,
+    CONF_HIDE_CHIPS,
     CONF_HIDE_CONNECTIONS,
+    CHIP_KEYS,
     CONNECTION_TYPES,
     CONF_NOTIFY_CLICK,
     CONF_NOTIFY_SERVICE,
@@ -144,7 +146,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 # Mehrfachauswahl muss die alte überschreiben.
                 data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own, CONF_OFFLINE_INTEGRATIONS: offline, CONF_CONNECTION_INTEGRATIONS: conns}
                 for key in (
-                    CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_EXCLUDE_DEVICES, CONF_HIDE_CONNECTIONS,
+                    CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_EXCLUDE_DEVICES, CONF_HIDE_CHIPS, CONF_HIDE_CONNECTIONS,
                     CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE,
                 ):
                     data[key] = sorted(set(user_input.get(key) or []))
@@ -260,6 +262,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Optional(CONF_EXCLUDE_DEVICES, default=values[CONF_EXCLUDE_DEVICES]): DeviceSelector(DeviceSelectorConfig(multiple=True)),
                     vol.Required(CONF_SHOW_SERVICE, default=values[CONF_SHOW_SERVICE]): bool,
                     vol.Required(CONF_SHOW_DISABLED, default=values[CONF_SHOW_DISABLED]): bool,
+                    vol.Optional(CONF_HIDE_CHIPS, default=values[CONF_HIDE_CHIPS]): SelectSelector(
+                        SelectSelectorConfig(options=list(CHIP_KEYS), multiple=True, mode=SelectSelectorMode.DROPDOWN, translation_key="chip")
+                    ),
                     vol.Optional(CONF_HIDE_CONNECTIONS, default=values[CONF_HIDE_CONNECTIONS]): SelectSelector(
                         SelectSelectorConfig(
                             options=list(CONNECTION_TYPES), multiple=True, mode=SelectSelectorMode.DROPDOWN, translation_key="connection"

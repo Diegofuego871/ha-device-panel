@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "55"
+PANEL_VERSION = "56"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -212,6 +212,11 @@ CONF_EXCLUDE_DEVICES = "exclude_devices"
 CONF_HIDE_CONNECTIONS = "hide_connections"
 # Reihenfolge dieser Chips (gilt für alle); leer = nach Anzahl der Geräte.
 CONF_CONNECTION_ORDER = "connection_order"
+# Alle übrigen Filter-Chips ausblenden (seit 1.11.0, Wunsch des Nutzers; gilt
+# für alle Benutzer): Bereich, Integration, "Nur Probleme" und die Hinweise.
+# "Alle" bleibt immer. Ein ausgeblendeter Chip hebt seinen Filter auf.
+CONF_HIDE_CHIPS = "hide_chips"
+CHIP_KEYS = ("area", "integration", "problems", "batteries", "battery", "signal", "update", "override", "new")
 CONNECTION_TYPES = ("zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown")
 # Verbindungsart von Hand (Popup, wie der Typ): alle ausser "unbekannt", das
 # ist der Fall ohne Erkennung, kein Wert zum Wählen.

@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.10.0, Einstellungen in fünf Abschnitten)
+## Stand (1.11.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -350,6 +350,14 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `days_of_history`; Status "short" wird als Fakt gemeldet. Standard-Prompt
    (4282 Zeichen) verlangt grobe Spanne, nie ein festes Datum, und senkt die
    eigene Sicherheit der KI. Simulator-Kopie nachgeführt.
+   Weitere Chips ausblenden `1.11.0` (Nutzer, 2026-10-04, global): Option
+   `hide_chips` (`CHIP_KEYS`: area, integration, problems, batteries, battery,
+   signal, update, override, new; Validierung `options_api._chips`, feste
+   Reihenfolge; auch im HA-Optionsdialog); `list_devices` liefert
+   `hide_chips`. Panel: `_hideChips`, `_dropHiddenFilters()` hebt Filter
+   ausgeblendeter Chips auf (Probleme, Hinweis, Bereich, Integration),
+   Tabelle "Weitere Chips" in Darstellung › Filter-Chips (`CHIP_OTHER`,
+   `chipOther`), Trenner nur, wenn "Nur Probleme" oder ein Hinweis erscheint.
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem

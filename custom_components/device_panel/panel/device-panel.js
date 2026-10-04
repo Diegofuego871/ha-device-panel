@@ -258,6 +258,12 @@ const MON_TAB_KEYS = {
 // Prompt der KI-Einschätzung (Profi-Modus, seit 1.2.0): wie
 // ai_prompt.prompt_problem im Backend; das Backend prüft beim Speichern nochmals.
 const PROMPT_MAX = 6000;
+// Übrige Filter-Chips, die sich ausblenden lassen (seit 1.11.0, wie const.CHIP_KEYS):
+// Schlüssel, Symbol. Die Texte stehen in strings.js (chipOther).
+const CHIP_OTHER = [
+  ["area", "home"], ["integration", "puzzle"], ["problems", "alert"], ["batteries", "battery"], ["battery", "battery"],
+  ["signal", "signal"], ["update", "update"], ["override", "tune"], ["new", "sparkle"],
+];
 // Seit 1.7.0 zusätzlich die Gruppen der Fakten ({facts_area} usw., wie
 // ai_prompt.FACT_GROUPS): wer {facts} nicht nutzt, setzt nur Gruppen ein.
 const PROMPT_GROUPS = ["device", "history", "battery", "signal", "integration", "area", "hub", "model"];
@@ -280,7 +286,7 @@ const SUB_TAB_KEYS = {
   types: ["exclude_types"],
   devs: ["exclude_devices"],
   conn: ["connection_integrations", "reset_connection", "reset_signal"],
-  chips: ["hide_connections", "connection_order"],
+  chips: ["hide_chips", "hide_connections", "connection_order"],
 };
 
 // Empfang in vier Stufen (gut -> schlecht), Farben wie unifi_dynamic.
@@ -483,6 +489,8 @@ class DevicePanel extends HTMLElement {
     this._flakyOutages = 3;
     // Chips der Verbindungsart, die nicht erscheinen (Einstellung "Anzeige").
     this._hideConn = new Set();
+    // Weitere ausgeblendete Chips (seit 1.11.0): Schlüssel wie CHIP_KEYS.
+    this._hideChips = new Set();
     // Bereiche und Etagen aus HA in ihrer Reihenfolge (Filter "Bereich").
     this._areas = [];
     this._floors = [];
@@ -949,12 +957,14 @@ class DevicePanel extends HTMLElement {
       this._batteryLow = result.battery_low;
       this._aiOn = result.ai_assessment === true;
       this._hideConn = new Set(result.hide_connections || []);
+      this._hideChips = new Set(result.hide_chips || []);
       this._connOrder = result.connection_order || [];
       this._areas = Array.isArray(result.areas) ? result.areas : [];
       this._floors = Array.isArray(result.floors) ? result.floors : [];
       // Ausgeblendeter Chip mit aktivem Filter: zurück auf "Alle", sonst
       // bliebe ein Filter ohne sichtbaren Chip.
       if (this._hideConn.has(this._conn)) this._conn = "all";
+      this._dropHiddenFilters();
       this._pulse = Array.isArray(result.pulse) ? result.pulse : null;
       this._incidents = result.incidents || [];
       const serverNow = Date.parse(result.now);
@@ -1232,6 +1242,31 @@ class DevicePanel extends HTMLElement {
   _integTitle(d) {
     const title = d.integration?.title;
     return title && title !== this._integName(d) ? title : "";
+  }
+
+  // Ausgeblendete Chips (seit 1.11.0, Wunsch des Nutzers) heben ihren Filter
+  // auf: "Nur Probleme", der Hinweis, Bereich und Integration. Gespeichert
+  // wird nur, wenn sich etwas ändert.
+  _dropHiddenFilters() {
+    const hide = this._hideChips;
+    let changed = false;
+    if (hide.has("problems") && this._problems) {
+      this._problems = false;
+      changed = true;
+    }
+    if (this._hint && hide.has(this._hint)) {
+      this._hint = null;
+      changed = true;
+    }
+    if (hide.has("area") && (this._view.areas || []).length) {
+      this._view.areas = [];
+      changed = true;
+    }
+    if (hide.has("integration") && (this._view.integs || []).length) {
+      this._view.integs = [];
+      changed = true;
+    }
+    if (changed) this._saveView();
   }
 
   _matches(d) {
@@ -1717,6 +1752,7 @@ class DevicePanel extends HTMLElement {
 
   // Wie der Chip "Bereich"; erst ab zwei Integrationen sinnvoll (oder wenn aktiv).
   _integChipHtml(all) {
+    if (this._hideChips.has("integration")) return "";
     const sel = this._integSel();
     const open = this._areaOpen && this._pickKind === "integ";
     if (!sel) {
@@ -1729,6 +1765,7 @@ class DevicePanel extends HTMLElement {
   }
 
   _areaChipHtml(all) {
+    if (this._hideChips.has("area")) return "";
     const sel = this._areaSel();
     if (!sel && !this._areas.length) return "";
     const open = this._areaOpen && this._pickKind === "area";
@@ -2257,16 +2294,20 @@ class DevicePanel extends HTMLElement {
     const none = this._conn === "all" && !this._problems && !this._hint && !this._scoped();
     html += chip("all", this._t("all"), all.filter((d) => this._searchPass(d)).length, "", none);
     for (const [key] of types) if (!this._hideConn.has(key)) html += chip(key, this._t(CONN[key].key), counts.get(key) || 0, CONN[key].icon(15));
-    html += `<span class="vsep"></span><button type="button" class="chip ${this._problems ? "on" : ""}" data-problems aria-pressed="${this._problems}">${mdi("alert", 15)}<span>${escape(this._t("onlyProblems"))}</span></button>`;
+    // Trenner vor "Nur Probleme" und den Hinweisen, solange mindestens einer erscheint.
+    let tail = "";
+    if (!this._hideChips.has("problems")) tail += `<button type="button" class="chip ${this._problems ? "on" : ""}" data-problems aria-pressed="${this._problems}">${mdi("alert", 15)}<span>${escape(this._t("onlyProblems"))}</span></button>`;
     // Hinweise als Filter-Chips, nur wenn sie bei irgendeinem Gerät zutreffen
     // (oder aktiv sind).
     const rest = all.filter((d) => this._scopePass(d) && this._connPass(d) && this._problemPass(d) && this._searchPass(d));
     for (const { key, cls, icon, label, test } of HINTS) {
+      if (this._hideChips.has(key)) continue;
       const on = this._hint === key;
       if (!on && !all.some(test)) continue;
       const n = rest.filter(test).length;
-      html += `<button type="button" class="chip hint ${cls} ${on ? "on" : ""} ${n ? "" : "zero"}" data-hint="${key}" aria-pressed="${on}">${mdi(icon, 15)}<span>${escape(this._t(label))}</span> <span class="n">${n}</span></button>`;
+      tail += `<button type="button" class="chip hint ${cls} ${on ? "on" : ""} ${n ? "" : "zero"}" data-hint="${key}" aria-pressed="${on}">${mdi(icon, 15)}<span>${escape(this._t(label))}</span> <span class="n">${n}</span></button>`;
     }
+    if (tail) html += `<span class="vsep"></span>${tail}`;
     // Desktop: "Gruppen | Liste" am Ende der Chips; Handy: Zeile darunter.
     if (!this._narrowQuery.matches) html += this._flatSegHtml();
     return html;
@@ -3875,7 +3916,7 @@ class DevicePanel extends HTMLElement {
       return (hidden.some(Boolean) ? `${this._t("sumDevHidden", ...hidden)} · ` : "") + this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices));
     }
     if (id === "look") {
-      const chips = (d.hide_connections || []).length;
+      const chips = (d.hide_connections || []).length + (d.hide_chips || []).length;
       const n = Object.keys(d.connection_integrations || {}).length;
       return [
         n ? this._t("sumConnInteg", n) : this._t("sumConnAuto"),
@@ -4538,6 +4579,12 @@ class DevicePanel extends HTMLElement {
       sub: x.devices ? t("devicesCount", x.devices) : t("typesEmpty"),
       badge: `<span class="ibadge type">${CONN[x.value].icon(18)}</span>`,
     }));
+    const otherChips = CHIP_OTHER.map(([key, icon]) => ({
+      value: key,
+      label: t("chipOther")[key][0],
+      sub: t("chipOther")[key][1],
+      badge: `<span class="ibadge type">${mdi(icon, 18)}</span>`,
+    }));
     const types = this._catalogTypes(d).map((x) => ({
       value: x.type,
       label: t(typeKey(x.type)),
@@ -4586,7 +4633,11 @@ class DevicePanel extends HTMLElement {
       look:
         subTabs("look", [["conn", "subConn"], ["chips", "subChips"]]) +
         (lookTab === "chips"
-          ? // Filter-Chips der Verbindungsart (docs/mockups/view-v2, C): nur die Chips, gilt für alle.
+          ? // Weitere Chips (seit 1.11.0) und Filter-Chips der Verbindungsart
+            // (docs/mockups/view-v2, C): nur die Chips, gilt für alle.
+            `<h4 class="ex-title">${escape(t("chipsOtherTitle"))}</h4>` +
+            exTable("hide_chips", otherChips, t("chipsOtherIntro")) +
+            `<h4 class="ex-title">${escape(t("chipsConnTitle"))}</h4>` +
             exTable("hide_connections", chips, t("chipsIntro"), true) +
             ((d.connection_order || []).length
               ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset">${mdi("reset", 15)}${escape(t("chipsOrderReset"))}</button></div>`
@@ -4865,7 +4916,9 @@ class DevicePanel extends HTMLElement {
         }
         const all = key.endsWith("exclude_integrations")
           ? (st.data.catalog?.integrations || []).map((i) => i.domain)
-          : key === "hide_connections"
+          : key === "hide_chips"
+            ? CHIP_OTHER.map(([k]) => k)
+            : key === "hide_connections"
             ? this._connCatalog(st.draft).map((x) => x.value)
             : this._catalogTypes(st.draft).map((x) => x.type);
         st.draft[key] = el.checked ? [] : [...all].sort();

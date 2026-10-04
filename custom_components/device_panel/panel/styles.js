@@ -549,6 +549,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 
 /* Ausschlüsse: Integrationen und Gerätetypen mit Schalter "Anzeigen" */
 .ex-intro { margin: 8px 0 6px; }
+.ex-title { margin: 14px 2px 0; font-size: 14px; font-weight: 600; }
 .ex-head { display: flex; justify-content: space-between; padding: 6px 2px 4px; color: var(--dp-text2); font-size: 11px; font-weight: 500;
   letter-spacing: .04em; text-transform: uppercase; }
 .ex-row { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 6px 2px; border-bottom: 1px solid var(--dp-divider); }
