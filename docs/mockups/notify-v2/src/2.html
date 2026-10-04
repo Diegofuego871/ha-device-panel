@@ -1,0 +1,61 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<div class="row">
+<div class="col"><div class="cap">A1: Übersicht "Meldungen"<small>Je Meldung eine Karte: was, wann (ein Satz aus den Einstellungen) und wohin (Push, Anhaltend). Antippen klappt die Karte auf.</small></div>
+<div class="dlg m"><div class="hd"><div class="av">⚙</div><div><h2>Einstellungen</h2><div class="s">Device Panel · gilt für alle Benutzer</div></div><div class="x">✕</div></div>
+<div class="body"><div class="sec"><div class="sh"><b>Meldungen</b><div>notify.mobile_app_handy · Ausfall, wieder online, Batterie</div></div>
+<div class="sb">
+<div class="ln"><span>Ziel</span><span class="sel" style="width:205px">notify.mobile_app_handy</span></div>
+<div class="ln"><span>Tipp öffnet</span><span class="sel" style="width:205px">Gerät im Panel</span></div>
+<div class="h3">Wann kommt welche Meldung</div>
+<div class="mt"><div class="top"><div class="ic o">●</div><div><div class="t">Ausfall</div><div class="w">Push nach 10 Min. ohne Lebenszeichen (im Panel ab 5 Min.)</div></div><span class="chev">▾</span></div><div class="chips"><span class="chip on">Push</span><span class="chip on">Anhaltend</span></div></div>
+<div class="mt"><div class="top"><div class="ic g">●</div><div><div class="t">Wieder online</div><div class="w">sobald zurück, nur nach gemeldetem Ausfall</div></div><span class="chev">▾</span></div><div class="chips"><span class="chip on">Push</span></div></div>
+<div class="mt"><div class="top"><div class="ic s">●</div><div><div class="t">Sammelausfall</div><div class="w">ab 3 Geräten gleichzeitig: eine Meldung statt vieler</div></div><span class="chev">▾</span></div><div class="chips"><span class="chip on">Zusammenfassen</span></div></div>
+<div class="mt"><div class="top"><div class="ic b">▮</div><div><div class="t">Batterie schwach</div><div class="w">täglich um 20:00, alle unter 10 %</div></div><span class="chev">▾</span></div><div class="chips"><span class="chip on">Push</span><span class="chip">Anhaltend</span></div></div>
+<div class="h3">Pro Integration</div>
+<div class="note">Meldungen für Geräte der Integration; ausgeblendete Integrationen fehlen hier. <span style="color:var(--p)">23 Integrationen anzeigen ›</span></div>
+<div class="h3">Ausnahmen auf Geräten</div>
+<div class="note">2 Geräte mit Meldungen aus · 1 Gerät stumm bis 21:40</div>
+</div></div></div><div class="acts"><div class="btn">Schliessen</div><div class="btn pr">Speichern</div></div></div></div>
+
+<div class="col"><div class="cap">A2: Karte "Ausfall" aufgeklappt<small>Zeitstrahl macht sichtbar, dass beide Zeiten ab Beginn zählen und nicht addiert werden. "Erst melden nach" kürzer als "Ausgefallen nach" geht nicht (Fehler am Feld).</small></div>
+<div class="dlg m"><div class="body" style="padding-top:14px">
+<div class="mt open"><div class="top"><div class="ic o">●</div><div><div class="t">Ausfall</div><div class="w">Push nach 10 Min. ohne Lebenszeichen (im Panel ab 5 Min.)</div></div><span class="chev">▴</span></div><div class="chips"><span class="chip on">Push</span><span class="chip on">Anhaltend</span></div>
+<div class="in">
+<div class="tl"><div class="bar"></div>
+<div class="mk" style="left:8%"><i></i><b>0</b>Gerät weg</div>
+<div class="mk" style="left:45%"><i></i><b>5 Min.</b>im Panel ausgefallen</div>
+<div class="mk p" style="left:86%"><i></i><b>10 Min.</b>Push "Ausgefallen"</div></div>
+<div class="ln"><span>Ausgefallen nach<br><small style="color:var(--t2)">aus "Ausfall-Erkennung"</small></span><span class="num" style="background:#f3f4f6">5<small>Min.</small></span></div>
+<div class="ln"><span>Erst melden nach</span><span class="num">10<small>Min.</small></span></div>
+<div class="note">Ab Beginn des Ausfalls; mindestens so lang wie "Ausgefallen nach" (5 Min.). Kürzere Aussetzer lösen keine Meldung aus.</div>
+<div class="ln" style="padding-top:2px"><span style="color:var(--t2);font-size:13px">Beispiel bei 3 Min.:</span><span><span class="num bad">3<small>Min.</small></span></span></div>
+<div class="err" style="text-align:right">Mindestens 5 Min. (= "Ausgefallen nach")</div>
+<div class="hr"></div>
+<div class="lbl" style="margin:6px 0 4px">Inhalt der Meldung</div>
+<div class="fg"><div>Bereich<span class="sw"></span></div><div>Integration<span class="sw"></span></div><div>Offline seit<span class="sw"></span></div><div>Batterie zuletzt<span class="sw off"></span></div></div>
+<div class="pv"><div class="k">Vorschau</div><div class="c"><div class="a">Home Assistant · jetzt</div><div class="tt">Ausgefallen: Bewegungsmelder Flur</div><div>Flur · Zigbee · seit 14:32</div><div class="bt"><span>Öffnen</span><span>24 Std. stumm</span></div></div></div>
+</div></div>
+</div></div></div>
+
+<div class="col"><div class="cap">A3: "Batterie schwach" aufgeklappt und pro Integration<small>Batterie-Meldung mit Zeitpunkt, Inhalt und Vorschau wie beim Ausfall. Pro Integration eine Tabelle für alle Meldungen; die Spalten "Push" und "Anhaltend" in "Integrationen" entfallen.</small></div>
+<div class="dlg m"><div class="body" style="padding-top:14px">
+<div class="mt open"><div class="top"><div class="ic b">▮</div><div><div class="t">Batterie schwach</div><div class="w">täglich um 20:00, alle unter 10 %</div></div><span class="chev">▴</span></div><div class="chips"><span class="chip on">Push</span><span class="chip">Anhaltend</span></div>
+<div class="in">
+<div class="ln"><span>Schwach ab<br><small style="color:var(--t2)">aus "Batterie", pro Integration anders möglich</small></span><span class="num" style="background:#f3f4f6">10<small>%</small></span></div>
+<div class="ln"><span>Zeitpunkt</span><span style="display:flex;gap:6px"><span class="sel">Täglich um</span><span class="num" style="min-width:64px">20:00</span></span></div>
+<div class="ln"><span>Tagesmeldung enthält</span><span class="sel">Alle schwachen</span></div>
+<div class="lbl" style="margin:6px 0 4px">Inhalt der Meldung</div>
+<div class="fg"><div>Stand<span class="sw"></span></div><div>Bereich<span class="sw"></span></div><div>Integration<span class="sw off"></span></div><div>Hersteller / Modell<span class="sw off"></span></div></div>
+<div class="pv"><div class="k">Vorschau (Tagesmeldung)</div><div class="c"><div class="a">Home Assistant · 20:00</div><div class="tt">Batterie schwach: 2 Geräte</div><div>Rauchmelder Flur 8 % · Flur · Fensterkontakt Bad 6 % · Bad</div></div></div>
+</div></div>
+<div class="h3">Pro Integration</div>
+<div class="it"><div class="hd2 lbl"><span></span><span></span><span>Ausfall</span><span>Batterie</span><span>Anhalt.</span></div>
+<div class="tbl">
+<div class="tr"><div class="ib" style="background:#c62828">PH</div><div class="nm">Philips Hue<small>24 Geräte</small></div><div class="sw"></div><div class="sw"></div><div class="sw"></div></div>
+<div class="tr"><div class="ib" style="background:#ad1457">ZH</div><div class="nm">Zigbee<small>15 Geräte</small></div><div class="sw"></div><div class="sw"></div><div class="sw"></div></div>
+<div class="tr"><div class="ib" style="background:#2e7d32">MA</div><div class="nm">Matter<small>18 Geräte</small></div><div class="sw"></div><div class="sw"></div><div class="sw off"></div></div>
+<div class="tr"><div class="ib" style="background:#9e9d24">SH</div><div class="nm">Shelly<small>12 Geräte, ohne Batterie</small></div><div class="sw"></div><div class="sw dis off"></div><div class="sw"></div></div>
+<div class="tr"><div class="ib" style="background:#00897b">BT</div><div class="nm">BTHome<small>6 Geräte</small></div><div class="sw off"></div><div class="sw"></div><div class="sw off"></div></div>
+</div></div>
+</div></div></div>
+</div>
