@@ -9,7 +9,7 @@
 ## Das bekommst du
 
 - **Übersicht:** wie viele Geräte online sind, wer seit wann ausgefallen ist, ein Ausfall-Puls über 24 Stunden mit Sammelausfällen
-- **Geräteliste** nach ausgefallen, instabil und online gruppiert, mit Suche, Filter-Chips und eigenen Spalten
+- **Geräteliste** nach ausgefallen, instabil und online gruppiert, mit Suche, Filtern nach Bereich und Integration, Filter-Chips und eigenen Spalten
 - **Pro Gerät:** Verfügbarkeit, Unterbrüche, Empfang und Batterie im Popup, mit Verlauf und Statistik
 - **Batterie-Prognose:** wie lange die Batterie bis zur Warnschwelle hält, ohne KI
 - **Meldungen:** Push und anhaltende Benachrichtigung bei Ausfällen und schwacher Batterie, mit Zeitstrahl, wann was ankommt; Standard pro Integration, Ausnahmen pro Gerät

@@ -7,6 +7,30 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.9.0] - 2026-10-04
+
+Filter by integration, like the filter by area.
+
+### Added
+
+- Filter chip "Integration" next to "Area" (requested by the user): select
+  one or more integrations in a list with the number of devices each
+  (pop-over on the desktop, sheet on the phone, search from nine entries,
+  "No integration" for devices without one).
+  - The list shows only the devices of the selected integrations; the other
+    chips filter within them. Tapping "All" clears area and integration.
+  - Combines with the filter by area (both must match): the numbers in each
+    selection and on the chips count with the other filter.
+  - The header (availability, offline now, outage pulse, group outages) and
+    the pulse window count only these devices; the title names the
+    selection ("· Kitchen · Shelly").
+  - The active chip shows one or two names, otherwise the number, and a
+    cross that clears only this filter.
+  - Saved per user like the view, separate for desktop and phone. An
+    integration that no longer exists drops out silently.
+  - The filter uses the integration of the device as the column
+    "Integration" shows it.
+
 ## [1.8.0] - 2026-10-04
 
 The battery of the last 12 months in the AI assessment.
@@ -1206,6 +1230,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.9.0
 [1.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.8.0
 [1.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.7.0
 [1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0

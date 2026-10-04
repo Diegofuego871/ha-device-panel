@@ -7,6 +7,30 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.9.0] - 2026-10-04
+
+Filter nach Integration, wie der Filter nach Bereich.
+
+### Hinzugefügt
+
+- Filter-Chip "Integration" neben "Bereich" (Wunsch des Nutzers): eine oder
+  mehrere Integrationen in einer Liste mit der Zahl der Geräte wählen
+  (Popover auf dem Desktop, Blatt auf dem Handy, Suche ab neun Einträgen,
+  "Ohne Integration" für Geräte ohne eine).
+  - Die Liste zeigt nur die Geräte der gewählten Integrationen; die übrigen
+    Chips filtern darin weiter. "Alle" hebt Bereich und Integration auf.
+  - Kombinierbar mit dem Filter nach Bereich (beide müssen passen): die
+    Zahlen in jeder Auswahl und auf den Chips zählen mit dem anderen Filter.
+  - Der Kopf (Verfügbarkeit, gerade ausgefallen, Ausfall-Puls,
+    Sammelausfälle) und das Puls-Fenster zählen nur diese Geräte; der Titel
+    nennt die Auswahl ("· Küche · Shelly").
+  - Der aktive Chip zeigt einen oder zwei Namen, sonst die Zahl, und ein
+    Kreuz, das nur diesen Filter aufhebt.
+  - Pro Benutzer wie die Ansicht gespeichert, Desktop und Handy getrennt.
+    Eine Integration, die es nicht mehr gibt, fällt still weg.
+  - Der Filter nimmt die Integration des Geräts so, wie die Spalte
+    "Integration" sie zeigt.
+
 ## [1.8.0] - 2026-10-04
 
 Die Batterie der letzten 12 Monate in der KI-Einschätzung.
@@ -1251,6 +1275,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.9.0
 [1.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.8.0
 [1.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.7.0
 [1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0

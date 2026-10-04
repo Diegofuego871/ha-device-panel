@@ -209,6 +209,10 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
   Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des
   Inhalts in zwei Spalten, auf dem Handy in einer.
+- Filter "Integration" (seit 1.9.0): Chip mit Puzzle-Symbol direkt hinter
+  "Bereich", gleiche Gestalt und gleiches Popover (Handy: Blatt), eine flache
+  Liste mit Kästchen, Name und Zahl, Suche ab neun Einträgen; aktiv mit ein
+  oder zwei Namen, sonst "3 Integrationen". Erscheint ab zwei Integrationen.
 - Filter "Bereich" (seit 0.23.0, `docs/mockups/area-v1/`, A): Chip mit
   Haus-Symbol am Anfang der Chip-Zeile, danach ein Trennstrich. Ohne Wahl
   "Bereich" mit Pfeil nach unten; aktiv in Primärfarbe mit Name (Etage,

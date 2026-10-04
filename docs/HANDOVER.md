@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.8.0, Einstellungen in fünf Abschnitten)
+## Stand (1.9.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -337,6 +337,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `_extras` liefert `battery_year`; Gruppe `battery`); Standard-Prompt
    (3941 Zeichen) verlangt einen Satz dazu; `AI_PROMPT_MAX` 6000 (Panel
    `PROMPT_MAX`, Simulator nachgeführt).
+   Filter "Integration" `1.9.0` (Nutzer, 2026-10-04, "wie Bereich"): Chip
+   `chip area integ` (`_integChipHtml`, `data-integ-open`/`data-integ-clear`),
+   Ansicht-Feld `integs` (Domains, `AREA_NONE` = ohne Integration);
+   Popover und Blatt teilen sich mit dem Bereich (`_pickKind`, `_pickGroups`,
+   `_pickPicked`, `_setPick`, Textschlüssel `integ*`); `_scopePass` =
+   Bereich und Integration, `_scoped()`, `_scopeText()` für Kopf und Puls-Fenster;
+   Zahlen in beiden Auswahlen zählen den jeweils anderen Filter mit.
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem
