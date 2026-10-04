@@ -23,7 +23,10 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
+    BATTERY_FIELDS,
     CLICK_TARGETS,
+    CONF_BATTERY_FIELDS,
+    CONF_BATTERY_PUSH_EXCLUDE,
     CONF_BATTERY_PUSH_DAILY,
     CONF_BATTERY_PUSH_MODE,
     CONF_BATTERY_PUSH_TIME,
@@ -67,7 +70,9 @@ from .const import (
 )
 from .options_api import (
     INT_OPTIONS,
+    battery_fields,
     battery_map,
+    delay_too_short,
     offline_map,
     connection_map,
     connection_order,
@@ -138,10 +143,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 # Bestehende Options erhalten, statt sie zu ersetzen. Leere
                 # Mehrfachauswahl muss die alte überschreiben.
                 data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own, CONF_OFFLINE_INTEGRATIONS: offline, CONF_CONNECTION_INTEGRATIONS: conns}
-                for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_EXCLUDE_DEVICES, CONF_HIDE_CONNECTIONS, CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE):
+                for key in (
+                    CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_EXCLUDE_DEVICES, CONF_HIDE_CONNECTIONS,
+                    CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE,
+                ):
                     data[key] = sorted(set(user_input.get(key) or []))
-                # Inhalt der Meldung in fester Reihenfolge, wie im Panel.
+                # Inhalt der Meldungen in fester Reihenfolge, wie im Panel.
                 data[CONF_NOTIFY_FIELDS] = notify_fields(list(user_input.get(CONF_NOTIFY_FIELDS) or []))
+                data[CONF_BATTERY_FIELDS] = battery_fields(list(user_input.get(CONF_BATTERY_FIELDS) or []))
                 # Leere Auswahl der KI-Aufgabe überschreibt die alte (Standard von HA).
                 data[CONF_AI_TASK] = user_input.get(CONF_AI_TASK) or ""
                 # Das Zahlenfeld liefert Kommazahlen (2.0); gespeichert wird wie
@@ -154,7 +163,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 # Zeitfeld liefert "HH:MM:SS"; gespeichert wird "HH:MM" wie im Panel.
                 if CONF_BATTERY_PUSH_TIME in user_input:
                     data[CONF_BATTERY_PUSH_TIME] = push_time(user_input[CONF_BATTERY_PUSH_TIME])
-                return self.async_create_entry(title="", data=data)
+                # "Erst melden nach" nie kürzer als "Ausgefallen nach" (wie im Panel).
+                if delay_too_short(data):
+                    errors[CONF_NOTIFY_DELAY] = "notify_delay_short"
+                else:
+                    return self.async_create_entry(title="", data=data)
             # Fehler: die Eingaben bleiben stehen.
             values = {**values, **user_input}
         # Spät importiert: devices importiert options_api, das hier schon geladen ist.
@@ -164,7 +177,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         integrations = [{"value": i["domain"], "label": f"{i['name']} ({i['devices']})"} for i in catalog["integrations"]]
         # Ausgeschlossene Integration ohne Geräte bleibt wählbar.
         known = {i["value"] for i in integrations}
-        for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE):
+        for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE):
             integrations += [{"value": d, "label": d} for d in values[key] if d not in known]
             known.update(values[key])
         # Push-Ziele mit Beschriftung in der Sprache der Instanz.
@@ -183,14 +196,28 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             description_placeholders={"battery_domains": battery_domains},
             data_schema=vol.Schema(
                 {
+                    # Überwachung und Meldungen (Abschnitt im Panel, seit 0.34.0):
+                    # Ziel, Ausfall, Batterie, dann pro Integration.
+                    vol.Required(CONF_NOTIFY_SERVICE, default=values[CONF_NOTIFY_SERVICE]): SelectSelector(
+                        SelectSelectorConfig(options=targets, mode=SelectSelectorMode.DROPDOWN)
+                    ),
+                    vol.Required(CONF_NOTIFY_CLICK, default=values[CONF_NOTIFY_CLICK]): SelectSelector(
+                        SelectSelectorConfig(options=list(CLICK_TARGETS), mode=SelectSelectorMode.DROPDOWN, translation_key="click_target")
+                    ),
                     vol.Required(CONF_OFFLINE_AFTER, default=values[CONF_OFFLINE_AFTER]): _number(CONF_OFFLINE_AFTER),
-                    # Eigenes "Ausgefallen nach" pro Integration, z. B. "zha: 60" oder "hue: off".
-                    vol.Optional(CONF_OFFLINE_INTEGRATIONS, default=values[CONF_OFFLINE_INTEGRATIONS] or {}): ObjectSelector(),
+                    vol.Required(CONF_NOTIFY_DELAY, default=values[CONF_NOTIFY_DELAY]): _number(CONF_NOTIFY_DELAY),
                     vol.Required(CONF_FLAKY_OUTAGES, default=values[CONF_FLAKY_OUTAGES]): _number(CONF_FLAKY_OUTAGES),
                     vol.Required(CONF_STARTUP_GRACE, default=values[CONF_STARTUP_GRACE]): _number(CONF_STARTUP_GRACE),
+                    vol.Required(CONF_NOTIFY_OUTAGE, default=values[CONF_NOTIFY_OUTAGE]): bool,
+                    vol.Required(CONF_NOTIFY_ONLINE, default=values[CONF_NOTIFY_ONLINE]): bool,
+                    vol.Required(CONF_NOTIFY_GROUP, default=values[CONF_NOTIFY_GROUP]): bool,
+                    vol.Required(CONF_OUTAGE_PERSISTENT, default=values[CONF_OUTAGE_PERSISTENT]): bool,
+                    vol.Optional(CONF_NOTIFY_FIELDS, default=values[CONF_NOTIFY_FIELDS]): SelectSelector(
+                        SelectSelectorConfig(
+                            options=list(NOTIFY_FIELDS), multiple=True, mode=SelectSelectorMode.LIST, translation_key="notify_field"
+                        )
+                    ),
                     vol.Required(CONF_BATTERY_LOW, default=values[CONF_BATTERY_LOW]): _number(CONF_BATTERY_LOW),
-                    # Eigene Schwelle pro Integration als Zuordnung, z. B. "zha: 25".
-                    vol.Optional(CONF_BATTERY_LOW_INTEGRATIONS, default=values[CONF_BATTERY_LOW_INTEGRATIONS] or {}): ObjectSelector(),
                     vol.Required(CONF_BATTERY_PUSH, default=values[CONF_BATTERY_PUSH]): bool,
                     vol.Required(CONF_BATTERY_PUSH_MODE, default=values[CONF_BATTERY_PUSH_MODE]): SelectSelector(
                         SelectSelectorConfig(options=list(PUSH_MODES), mode=SelectSelectorMode.DROPDOWN, translation_key="battery_push_mode")
@@ -200,14 +227,28 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                         SelectSelectorConfig(options=list(DAILY_CONTENTS), mode=SelectSelectorMode.DROPDOWN, translation_key="battery_push_daily")
                     ),
                     vol.Required(CONF_BATTERY_PERSISTENT, default=values[CONF_BATTERY_PERSISTENT]): bool,
-                    vol.Optional(CONF_EXCLUDE_INTEGRATIONS, default=values[CONF_EXCLUDE_INTEGRATIONS]): SelectSelector(
-                        SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
+                    vol.Optional(CONF_BATTERY_FIELDS, default=values[CONF_BATTERY_FIELDS]): SelectSelector(
+                        SelectSelectorConfig(
+                            options=list(BATTERY_FIELDS), multiple=True, mode=SelectSelectorMode.LIST, translation_key="battery_field"
+                        )
                     ),
-                    # Spalten "Push" und "Anhaltend" bei den Integrationen (Panel).
+                    # Pro Integration (Reiter "Integrationen" im Panel). Eigenes
+                    # "Ausgefallen nach", z. B. "zha: 60" oder "hue: off".
+                    vol.Optional(CONF_OFFLINE_INTEGRATIONS, default=values[CONF_OFFLINE_INTEGRATIONS] or {}): ObjectSelector(),
                     vol.Optional(CONF_NOTIFY_EXCLUDE, default=values[CONF_NOTIFY_EXCLUDE]): SelectSelector(
                         SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
                     ),
                     vol.Optional(CONF_PERSISTENT_EXCLUDE, default=values[CONF_PERSISTENT_EXCLUDE]): SelectSelector(
+                        SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
+                    ),
+                    # Eigene Schwelle pro Integration als Zuordnung, z. B. "zha: 25".
+                    vol.Optional(CONF_BATTERY_LOW_INTEGRATIONS, default=values[CONF_BATTERY_LOW_INTEGRATIONS] or {}): ObjectSelector(),
+                    vol.Optional(CONF_BATTERY_PUSH_EXCLUDE, default=values[CONF_BATTERY_PUSH_EXCLUDE]): SelectSelector(
+                        SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
+                    ),
+                    # Abschnitt "Integrationen" (nur noch Anzeigen), Gerätetypen,
+                    # ausgeblendete Geräte.
+                    vol.Optional(CONF_EXCLUDE_INTEGRATIONS, default=values[CONF_EXCLUDE_INTEGRATIONS]): SelectSelector(
                         SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
                     ),
                     vol.Optional(CONF_EXCLUDE_TYPES, default=values[CONF_EXCLUDE_TYPES]): SelectSelector(
@@ -217,22 +258,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     ),
                     # Einzeln ausgeblendete Geräte (im Panel: Knopf im Geräte-Popup).
                     vol.Optional(CONF_EXCLUDE_DEVICES, default=values[CONF_EXCLUDE_DEVICES]): DeviceSelector(DeviceSelectorConfig(multiple=True)),
-                    vol.Required(CONF_NOTIFY_SERVICE, default=values[CONF_NOTIFY_SERVICE]): SelectSelector(
-                        SelectSelectorConfig(options=targets, mode=SelectSelectorMode.DROPDOWN)
-                    ),
-                    vol.Required(CONF_NOTIFY_CLICK, default=values[CONF_NOTIFY_CLICK]): SelectSelector(
-                        SelectSelectorConfig(options=list(CLICK_TARGETS), mode=SelectSelectorMode.DROPDOWN, translation_key="click_target")
-                    ),
-                    vol.Required(CONF_NOTIFY_OUTAGE, default=values[CONF_NOTIFY_OUTAGE]): bool,
-                    vol.Required(CONF_NOTIFY_ONLINE, default=values[CONF_NOTIFY_ONLINE]): bool,
-                    vol.Required(CONF_NOTIFY_GROUP, default=values[CONF_NOTIFY_GROUP]): bool,
-                    vol.Required(CONF_NOTIFY_DELAY, default=values[CONF_NOTIFY_DELAY]): _number(CONF_NOTIFY_DELAY),
-                    vol.Optional(CONF_NOTIFY_FIELDS, default=values[CONF_NOTIFY_FIELDS]): SelectSelector(
-                        SelectSelectorConfig(
-                            options=list(NOTIFY_FIELDS), multiple=True, mode=SelectSelectorMode.LIST, translation_key="notify_field"
-                        )
-                    ),
-                    vol.Required(CONF_OUTAGE_PERSISTENT, default=values[CONF_OUTAGE_PERSISTENT]): bool,
                     vol.Required(CONF_SHOW_SERVICE, default=values[CONF_SHOW_SERVICE]): bool,
                     vol.Required(CONF_SHOW_DISABLED, default=values[CONF_SHOW_DISABLED]): bool,
                     vol.Optional(CONF_HIDE_CONNECTIONS, default=values[CONF_HIDE_CONNECTIONS]): SelectSelector(

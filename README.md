@@ -14,6 +14,8 @@ details such as software version, manufacturer, model and area.
   availability of the last 24 hours, which devices are offline right now and
   for how long, and an outage pulse over 24 hours that points out group
   outages (several devices at once, with the shared integration).
+  The pulse is red while a device is offline and green again once all are
+  back; the bumps of past outages stay visible.
   Tapping the pulse opens the devices with outages in 24 hours, most
   first; a point in the pulse shows only the devices that were offline
   then.
@@ -61,10 +63,10 @@ details such as software version, manufacturer, model and area.
   with a timeline, every outage with time and duration, and outages per
   day.
 - A device counts as offline after 2 minutes without a sign of life
-  (adjustable under "Outage detection", like "unstable from" and the grace
-  period after a start). Integrations whose devices report rarely get their
-  own time in the settings (table "Integrations", column "Offline after");
-  "Don't monitor" keeps their devices visible, in a group "Not monitored",
+  (adjustable under "Monitoring and notifications", tab "Outage", like
+  "unstable from" and the grace period after a start). Integrations whose
+  devices report rarely get their own time (tab "Integrations"); with
+  "Monitor" off their devices stay visible, in a group "Not monitored",
   without outages, statistics and notifications. A connectivity sensor decides first; otherwise all
   regular entities must be unavailable. An outage only ends when Home
   Assistant sees the device online again: its duration runs on across
@@ -89,21 +91,23 @@ details such as software version, manufacturer, model and area.
   notification in Home Assistant listing all affected devices, both or
   neither. Tapping a push notification opens the device in the panel. The
   push comes immediately or once a day at a chosen time, with the newly
-  affected or all devices with a low battery. Per integration (only
-  integrations with battery devices are listed) choose the global value, an
-  own threshold or off; per device in its pop-up as well. The device comes
-  first, then the integration, then the global value.
+  affected or all devices with a low battery. Choose the content (level,
+  area, integration, manufacturer / model) with a preview. Per integration
+  choose the global value, an own threshold or off, and switch the push off;
+  per device in its pop-up as well. The device comes first, then the
+  integration, then the global value.
 - Outage notifications: a push as soon as a device counts as offline and,
   if you like, an all clear when it is back online, with the duration of
   the outage (it replaces the outage notification on the phone). Several
   devices at once give one notification with the probable cause. "Report
-  only after" (0–60 min) waits before the push; short outages send nothing,
+  only after" (at least "Offline after", up to 60 min) waits before the
+  push; short outages send nothing,
   not even "back online", and a pending outage survives a restart. Choose
   the content (area, integration, connection type, offline since, last
   signal, battery, manufacturer / model) with a preview in the settings.
   The push has the buttons "Open" and "Mute 24 h"; the pop-up shows the
-  mute until it ends and "Global setting" lifts it. Per integration the
-  columns "Push" and "Persistent" decide which integrations notify; per
+  mute until it ends and "Global setting" lifts it. Per integration push
+  and persistent notification can be switched off; per
   device the notifications can be switched off in its pop-up, e.g. for a
   charger that is often offline on purpose; the device is still monitored.
   Optionally a persistent notification in Home Assistant lists all offline
@@ -143,6 +147,13 @@ details such as software version, manufacturer, model and area.
   (Default, Integration, Device) and what the default would be. "Offline
   after" can be set per device too (same as the integration, own time or
   "Don't monitor"); the device comes first.
+- Monitoring and notifications in one place (first section of the
+  settings): the tab "Overview" shows one timeline per notification, when a
+  device counts as offline and when the push arrives, with the switches as
+  chips; the tabs "Outage" and "Battery" hold all their settings, the tab
+  "Integrations" lists every integration with what differs and opens all
+  its settings with its own timeline. The section "Integrations" only
+  shows or hides integrations.
 - Settings in the panel (gear icon) with updates: check for a new version,
   update via HACS with one click, restart afterwards, optionally offer
   pre-releases ("Enable in HACS" switches on the HACS pre-release option).

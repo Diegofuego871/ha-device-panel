@@ -15,6 +15,9 @@ Bereich.
   der letzten 24 Stunden, welche Geräte gerade ausgefallen sind und seit
   wann, und ein Ausfall-Puls über 24 Stunden, der auf Sammelausfälle
   hinweist (mehrere Geräte gleichzeitig, mit gemeinsamer Integration).
+  Der Puls ist rot, solange ein Gerät ausgefallen ist, und wieder grün,
+  sobald alle zurück sind; die Höcker vergangener Unterbrüche bleiben
+  sichtbar.
   Ein Tipp auf den Puls öffnet die Geräte mit Unterbrüchen in 24 Stunden,
   meiste zuerst; ein Zeitpunkt im Puls zeigt nur die Geräte, die dann weg
   waren.
@@ -68,11 +71,11 @@ Bereich.
   30 Tage mit Zeitstrahl, jeder Unterbruch mit Zeit und Dauer sowie
   Unterbrüche pro Tag.
 - Ein Gerät gilt als ausgefallen nach 2 Minuten ohne Lebenszeichen
-  (einstellbar unter "Ausfall-Erkennung", wie "instabil ab" und die
-  Anlaufphase nach einem Start). Integrationen, deren Geräte selten melden,
-  bekommen in den Einstellungen eine eigene Zeit (Tabelle "Integrationen",
-  Spalte "Ausgefallen nach"); "Nicht überwachen" zeigt ihre Geräte weiter,
-  in einer Gruppe "Nicht überwacht", ohne Ausfälle, Statistik und
+  (einstellbar unter "Überwachung und Meldungen", Reiter "Ausfall", wie
+  "instabil ab" und die Anlaufphase nach einem Start). Integrationen, deren
+  Geräte selten melden, bekommen eine eigene Zeit (Reiter
+  "Integrationen"); mit "Überwachen" aus bleiben ihre Geräte sichtbar, in
+  einer Gruppe "Nicht überwacht", ohne Ausfälle, Statistik und
   Meldungen. Ein Verbindungssensor entscheidet zuerst;
   sonst müssen alle normalen Entitäten nicht verfügbar sein. Ein Ausfall
   endet erst, wenn Home Assistant das Gerät wieder online sieht: Seine Dauer
@@ -99,22 +102,23 @@ Bereich.
   Geräten, beides oder keines. Ein Tipp auf die Push-Meldung öffnet das
   Gerät im Panel. Der Push kommt sofort oder einmal täglich zu einer
   gewählten Uhrzeit, mit den neu betroffenen oder allen schwachen Geräten.
-  Pro Integration (aufgeführt sind nur Integrationen mit Batteriegeräten)
-  gilt der globale Wert, eine eigene Schwelle oder aus; pro Gerät ebenso im
-  Popup. Das Gerät geht vor, dann die Integration, dann der globale Wert.
+  Den Inhalt wählen (Stand, Bereich, Integration, Hersteller / Modell), mit
+  Vorschau. Pro Integration gilt der globale Wert, eine eigene Schwelle oder
+  aus, und der Push lässt sich ausschalten; pro Gerät ebenso im Popup. Das
+  Gerät geht vor, dann die Integration, dann der globale Wert.
 - Ausfall-Meldungen: ein Push, sobald ein Gerät als ausgefallen gilt, und
   auf Wunsch eine Entwarnung, wenn es wieder online ist, mit der Dauer des
   Ausfalls (sie ersetzt auf dem Handy die Ausfall-Meldung). Mehrere Geräte
   gleichzeitig ergeben eine Meldung mit vermuteter Ursache. "Erst melden
-  nach" (0–60 Min.) wartet mit dem Push; kurze Aussetzer melden nichts,
+  nach" (mindestens "Ausgefallen nach", bis 60 Min.) wartet mit dem Push;
+  kurze Aussetzer melden nichts,
   auch kein "wieder online", und ein noch nicht gemeldeter Ausfall
   übersteht einen Neustart. Den Inhalt wählen (Bereich, Integration,
   Verbindungsart, offline seit, Empfang zuletzt, Batterie, Hersteller /
   Modell), mit Vorschau in den Einstellungen. Der Push hat die Knöpfe
   "Öffnen" und "24 Std. stumm"; das Popup zeigt das Stummschalten bis zu
-  seinem Ende, "Globale Einstellung" hebt es auf. Pro Integration
-  entscheiden die Spalten "Push" und "Anhaltend", welche Integrationen
-  melden; pro Gerät lassen sich die Meldungen im Popup ausschalten, z. B.
+  seinem Ende, "Globale Einstellung" hebt es auf. Pro Integration lassen
+  sich Push und anhaltende Benachrichtigung ausschalten; pro Gerät lassen sich die Meldungen im Popup ausschalten, z. B.
   für ein Ladegerät, das oft absichtlich offline ist; überwacht wird das
   Gerät weiter. Auf Wunsch listet eine anhaltende Benachrichtigung in Home
   Assistant alle ausgefallenen Geräte, solange sie ausgefallen sind, mit
@@ -155,6 +159,13 @@ Bereich.
   Etikett (Standard, Integration, Gerät) und was der Standard wäre.
   "Ausgefallen nach" lässt sich auch pro Gerät setzen (wie Integration,
   eigene Zeit oder "Nicht überwachen"); das Gerät geht vor.
+- Überwachung und Meldungen an einem Ort (erster Abschnitt der
+  Einstellungen): Der Reiter "Übersicht" zeigt je Meldung einen Zeitstrahl,
+  wann ein Gerät als ausgefallen gilt und wann der Push kommt, mit den
+  Schaltern als Chips; die Reiter "Ausfall" und "Batterie" enthalten alle
+  ihre Einstellungen, der Reiter "Integrationen" führt jede Integration mit
+  ihren Abweichungen auf und öffnet alle ihre Einstellungen mit eigenem
+  Zeitstrahl. Der Abschnitt "Integrationen" blendet nur noch ein und aus.
 - Einstellungen im Panel (Zahnrad) mit Updates: nach einer neuen Version
   suchen, mit einem Klick über HACS aktualisieren, danach neu starten,
   wahlweise Vorabversionen anbieten ("In HACS freischalten" schaltet die

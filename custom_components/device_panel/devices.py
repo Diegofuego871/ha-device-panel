@@ -28,6 +28,8 @@ from .const import (
     CONF_AI_ASSESSMENT,
     CONF_BATTERY_LOW,
     CONF_BATTERY_LOW_INTEGRATIONS,
+    CONF_BATTERY_PUSH,
+    CONF_BATTERY_PUSH_EXCLUDE,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_CONNECTION_ORDER,
@@ -360,12 +362,20 @@ def _battery_fields(
     threshold = device_battery_threshold(hass, opts, device)
     info = battery(hass, entries, threshold if threshold is not None else -1)
     own = opts[CONF_BATTERY_LOW_INTEGRATIONS].get(domain) if domain else None
+    # Push bei schwacher Batterie: global an und nicht für die Integration aus
+    # (seit 0.34.0); "push_integration" nennt sie, wenn sie ihn ausschaltet.
+    push_off = bool(domain) and domain in opts[CONF_BATTERY_PUSH_EXCLUDE]
     return {
         # Warnung aus: Stand ja, "schwach" nie.
         "battery": {**info, "low": False} if info and threshold is None else info,
         "has_battery": has_battery(hass, entries),
         "battery_setting": device_settings(hass)["battery"].get(device.id),
-        "battery_default": {"pct": own if own is not None else opts[CONF_BATTERY_LOW], "integration": domain if own is not None else None},
+        "battery_default": {
+            "pct": own if own is not None else opts[CONF_BATTERY_LOW],
+            "integration": domain if own is not None else None,
+            "push": bool(opts[CONF_BATTERY_PUSH]) and opts[CONF_NOTIFY_SERVICE] != NOTIFY_NONE and not push_off,
+            "push_integration": domain if push_off else None,
+        },
     }
 
 
@@ -818,7 +828,8 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
         }
     names = await async_integration_info(hass, {i["domain"] for i in items.values() if i["domain"]})
     for item in items.values():
-        domain = item.pop("domain")
+        # Domain bleibt: die Einstellungen einer Integration zeigen ihre Geräte.
+        domain = item["domain"]
         item["integration"] = names.get(domain, {}).get("name", domain) if domain else None
 
     def by_name(entry: dict[str, Any]) -> str:

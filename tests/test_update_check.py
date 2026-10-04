@@ -127,17 +127,19 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "notify_outage": False,
         "notify_online": False,
         "notify_group": True,
-        "notify_delay": 0,
+        "notify_delay": 2,
         "notify_fields": ["area", "integration", "since"],
         "notify_exclude_integrations": [],
         "persistent_exclude_integrations": [],
+        "battery_push_exclude_integrations": [],
+        "battery_fields": ["battery", "area"],
         "outage_persistent": False,
         "battery_push_mode": "instant",
         "battery_push_time": "08:00",
         "battery_push_daily": "new",
     }
     assert result["limits"] == {
-        "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [5, 50], "notify_delay": [0, 60],
+        "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [5, 50], "notify_delay": [1, 60],
     }
     assert set(result["panel"]) == {"prerelease", "prerelease_hacs"}
 
@@ -178,17 +180,25 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "init"
-    # Reihenfolge wie im Panel: Ausfall-Erkennung, Batterie, Ausschlüsse, Push, Anzeige, Updates.
+    # Reihenfolge wie im Panel (seit 0.34.0): Überwachung und Meldungen (Ziel,
+    # Ausfall, Batterie, pro Integration), Ausschlüsse, Anzeige, KI, Updates.
     assert [str(k) for k in result["data_schema"].schema] == [
-        "offline_after", "offline_after_integrations", "flaky_outages", "startup_grace", "battery_low", "battery_low_integrations", "battery_push",
-        "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent",
-        "exclude_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "exclude_types", "exclude_devices",
-        "notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "notify_delay",
-        "notify_fields", "outage_persistent", "show_service_devices", "show_disabled_devices", "hide_connections",
+        "notify_service", "notify_click_target", "offline_after", "notify_delay", "flaky_outages", "startup_grace",
+        "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields",
+        "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields",
+        "offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations",
+        "battery_push_exclude_integrations", "exclude_integrations", "exclude_types", "exclude_devices",
+        "show_service_devices", "show_disabled_devices", "hide_connections",
         "connection_order", "connection_integrations", "ai_assessment", "ai_task_entity", "update_check",
     ]
+    # "Ausgefallen nach" über "Erst melden nach" (2): Fehler am Feld, nichts gespeichert.
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {CONF_UPDATE_CHECK: False, "offline_after": 10.0, "show_disabled_devices": True}
+    )
+    assert result["type"] is FlowResultType.FORM and result["errors"] == {"notify_delay": "notify_delay_short"}
+    assert "offline_after" not in entry.options
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {CONF_UPDATE_CHECK: False, "offline_after": 10.0, "notify_delay": 10.0, "show_disabled_devices": True}
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options[CONF_UPDATE_CHECK] is False
@@ -196,13 +206,18 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
     assert entry.options["offline_after"] == 10 and type(entry.options["offline_after"]) is int
     assert entry.options["flaky_outages"] == 3 and entry.options["startup_grace"] == 5
     assert entry.options["show_disabled_devices"] is True and entry.options["show_service_devices"] is False
-    # Ausfall-Meldungen (0.20.0): Standard, Inhalt in fester Reihenfolge.
-    assert entry.options["notify_delay"] == 0 and entry.options["notify_fields"] == ["area", "integration", "since"]
+    # Ausfall-Meldungen (0.20.0): Inhalt in fester Reihenfolge.
+    assert entry.options["notify_delay"] == 10 and entry.options["notify_fields"] == ["area", "integration", "since"]
     result = await hass.config_entries.options.async_init(entry.entry_id)
     result = await hass.config_entries.options.async_configure(
-        result["flow_id"], {"notify_delay": 5.0, "notify_fields": ["model", "area"], "outage_persistent": True}
+        result["flow_id"], {"notify_delay": 15.0, "notify_fields": ["model", "area"], "outage_persistent": True}
     )
-    assert entry.options["notify_delay"] == 5 and entry.options["notify_fields"] == ["area", "model"]
+    assert entry.options["notify_delay"] == 15 and entry.options["notify_fields"] == ["area", "model"]
+    # Batterie (0.34.0): Inhalt in fester Reihenfolge, Push pro Integration.
+    assert entry.options["battery_fields"] == ["battery", "area"] and entry.options["battery_push_exclude_integrations"] == []
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"battery_fields": ["model", "battery"]})
+    assert entry.options["battery_fields"] == ["battery", "model"]
     # Integrationen zur Wahl gibt es nur mit Geräten (siehe Ausschlüsse unten).
     assert entry.options["notify_exclude_integrations"] == [] and entry.options["outage_persistent"] is True
 
@@ -345,3 +360,41 @@ async def test_options_flow_push_time(hass: HomeAssistant, entry) -> None:
     assert entry.options["battery_push_time"] == "07:30"
     assert entry.options["battery_push_mode"] == "daily" and entry.options["battery_push_daily"] == "all"
     assert entry.options["notify_outage"] is True and entry.options["notify_online"] is False
+
+
+async def test_notify_delay_not_shorter_than_offline_after(hass: HomeAssistant, entry, hass_ws_client) -> None:
+    """Seit 0.34.0 (Wunsch des Nutzers): "Erst melden nach" nie kürzer als "Ausgefallen nach"."""
+    client = await hass_ws_client(hass)
+    # Kürzer: abgelehnt, nichts gespeichert
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_options", "values": {"offline_after": 5, "notify_delay": 3}})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"
+    assert "offline_after" not in entry.options
+    # Gleich lang: erlaubt
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {"offline_after": 5, "notify_delay": 5}})
+    assert (await client.receive_json())["result"] == {"changed": True}
+    # "Ausgefallen nach" später über "Erst melden nach": abgelehnt, nicht still angepasst
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/set_options", "values": {"offline_after": 8}})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"
+    assert entry.options["offline_after"] == 5
+    # 0 ("sobald ausgefallen") gibt es nicht mehr
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/set_options", "values": {"notify_delay": 0}})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"
+
+
+async def test_old_notify_delay_counts_as_offline_after(hass: HomeAssistant, entry, hass_ws_client) -> None:
+    """Gespeichert vor 0.34.0 (0 = sobald ausgefallen, oder kürzer): gilt als "Ausgefallen nach", kein Fehler."""
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "offline_after": 5, "notify_delay": 0})
+    await hass.async_block_till_done()
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/get_options"})
+    assert (await client.receive_json())["result"]["values"]["notify_delay"] == 5
+    # Andere Einstellungen lassen sich weiter speichern, auch "Ausgefallen nach"
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {"offline_after": 7}})
+    assert (await client.receive_json())["result"] == {"changed": True}
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/get_options"})
+    assert (await client.receive_json())["result"]["values"]["notify_delay"] == 7
+    # Ein kürzerer Wert aus früheren Versionen gilt ebenso als "Ausgefallen nach"
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "notify_delay": 3})
+    await hass.async_block_till_done()
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/get_options"})
+    assert (await client.receive_json())["result"]["values"]["notify_delay"] == 7

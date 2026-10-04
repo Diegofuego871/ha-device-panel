@@ -343,7 +343,9 @@
   const candidates = () => window.__devices.filter((d) => d.entities > 0 && (!d.service || window.__opts.show_service_devices) && (!d.disabled || window.__opts.show_disabled_devices));
   const shown = () => candidates().filter((d) => !(d.integration && window.__opts.exclude_integrations.includes(d.integration.domain)) && !window.__opts.exclude_types.includes(d.type) && !window.__opts.exclude_devices.includes(d.id));
   // Bereiche der Zahlen wie options_api.limits().
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50], notify_delay: [0, 60] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50], notify_delay: [1, 60] };
+  // Inhalt der Batterie-Meldung wie options_api.BATTERY_FIELDS (seit 0.34.0).
+  const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
   // Inhalt der Meldung wie options_api.NOTIFY_FIELDS (feste Reihenfolge).
   const NOTIFY_FIELDS = ["area", "integration", "connection", "since", "signal", "battery", "model"];
   // Push-Ziele wie options_api.notify_targets (erfunden).
@@ -386,7 +388,7 @@
   // Wie das Backend (devices.async_device_overrides): auch ausgeblendete Geräte, nach Name.
   function overrides() {
     const visible = new Set(shown().map((d) => d.id));
-    const info = (d) => ({ id: d.id, name: d.name, area: d.area, integration: integrations[d.integration?.domain] || d.integration?.domain || null, hidden: !visible.has(d.id) });
+    const info = (d) => ({ id: d.id, name: d.name, area: d.area, domain: d.integration?.domain || null, integration: integrations[d.integration?.domain] || d.integration?.domain || null, hidden: !visible.has(d.id) });
     const byName = (a, b) => a.name.localeCompare(b.name);
     const s = window.__devSettings;
     return {
@@ -463,8 +465,8 @@
     exclude_integrations: [], exclude_types: [], exclude_devices: [], notify_service: "none", notify_click_target: "panel",
     notify_outage: false, notify_online: false, notify_group: true, hide_connections: [], connection_order: [], connection_integrations: {},
     show_service_devices: false, show_disabled_devices: false, update_check: true, ai_assessment: false, ai_task_entity: "",
-    notify_delay: 0, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
-    outage_persistent: false,
+    notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
+    outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
   };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
@@ -551,7 +553,10 @@
       if (msg.type === "device_panel/get_options") {
         if (window.__getOptsFails) throw new Error("boom");
         await new Promise((r) => setTimeout(r, 40));
-        return { values: JSON.parse(JSON.stringify(window.__opts)), panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS, notify_targets: NOTIFY_TARGETS, overrides: overrides() };
+        const values = JSON.parse(JSON.stringify(window.__opts));
+        // Wie options_api.values_from (seit 0.34.0): "Erst melden nach" nie kürzer als "Ausgefallen nach".
+        values.notify_delay = Math.max(Number.isInteger(values.notify_delay) && values.notify_delay >= 1 ? values.notify_delay : 2, values.offline_after);
+        return { values, panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS, notify_targets: NOTIFY_TARGETS, overrides: overrides() };
       }
       if (msg.type === "device_panel/set_device_connection") {
         if (window.__connFails) throw new Error(window.__connFails);
@@ -613,7 +618,18 @@
           if (!Array.isArray(v) || v.some((x) => typeof x !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(x))) throw { code: "invalid_format", message: "devices" };
           msg.values.exclude_devices = [...new Set(v)].sort();
         }
-        for (const key of ["notify_exclude_integrations", "persistent_exclude_integrations"]) {
+        if ("battery_fields" in msg.values) {
+          const v = msg.values.battery_fields;
+          if (!Array.isArray(v) || v.some((x) => !BATTERY_FIELDS.includes(x))) throw { code: "invalid_format", message: "battery fields" };
+          msg.values.battery_fields = BATTERY_FIELDS.filter((x) => v.includes(x));
+        }
+        // Wie options_api.apply_values: "Erst melden nach" nicht kürzer als "Ausgefallen nach".
+        if ("notify_delay" in msg.values || "offline_after" in msg.values) {
+          const oa = msg.values.offline_after ?? window.__opts.offline_after;
+          const nd = msg.values.notify_delay ?? window.__opts.notify_delay;
+          if (Number.isInteger(nd) && nd >= 1 && nd < oa) throw { code: "invalid_format", message: "notify_delay shorter than offline_after" };
+        }
+        for (const key of ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations"]) {
           const v = msg.values[key];
           if (key in msg.values && (!Array.isArray(v) || v.some((x) => !/^[a-z0-9_]+$/.test(x)))) throw { code: "invalid_format", message: key };
           if (key in msg.values) msg.values[key] = [...new Set(v)].sort();
@@ -747,7 +763,13 @@
             battery: bat(d),
             has_battery: Boolean(d.battery),
             battery_setting: window.__devSettings.battery[d.id] ?? null,
-            battery_default: { pct: own[d.integration?.domain] ?? batLow, integration: own[d.integration?.domain] != null ? d.integration.domain : null },
+            battery_default: {
+              pct: own[d.integration?.domain] ?? batLow,
+              integration: own[d.integration?.domain] != null ? d.integration.domain : null,
+              // Wie devices._battery_fields (seit 0.34.0): Push pro Integration aus.
+              push: Boolean(window.__opts.battery_push) && window.__opts.notify_service !== "none" && !(window.__opts.battery_push_exclude_integrations || []).includes(d.integration?.domain),
+              push_integration: (window.__opts.battery_push_exclude_integrations || []).includes(d.integration?.domain) ? d.integration.domain : null,
+            },
             notify_off: window.__devSettings.notifyOff.has(d.id),
             notify_mute_until: window.__devSettings.mute[d.id] || null,
             signal_setting: window.__devSettings.signal[d.id] ?? null,

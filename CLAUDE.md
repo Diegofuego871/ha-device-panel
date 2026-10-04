@@ -97,7 +97,8 @@ Bereich. Vorbild in Aufbau, Arbeitsweise und Design ist die Integration
 
 - Python: `python -m pyflakes custom_components/device_panel/*.py`
 - JSON gültig, `strings.json` identisch mit `translations/en.json`
-- `node --check` für alle Panel-Dateien
+- `node --input-type=module --check < Datei` für alle Panel-Dateien (`node --check`
+  allein findet in den Modulen keine Syntaxfehler, siehe LEARNINGS)
 - kein "ß" in Code, Texten, README, CHANGELOG
 - README und CHANGELOG DE/EN gleich aufgebaut (Test)
 - `python -m pytest` (Python 3.13, `pip install pytest-homeassistant-custom-component`)

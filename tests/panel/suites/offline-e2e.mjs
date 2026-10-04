@@ -1,8 +1,8 @@
-// "Ausgefallen nach" pro Integration (0.30.0, docs/mockups/backlog-v1, Punkt 5 B):
-// Spalte in der Tabelle "Integrationen" (Standard, feste Zeiten, "Nicht
-// überwachen"), Entwurf mit Markierung, Speichern, Gruppe "Nicht überwacht"
-// in der Liste ohne Status und ohne Zählung im Kopf. Deutsch und Englisch,
-// Desktop und Handy (Auswahl unter dem Namen).
+// "Ausgefallen nach" pro Integration (0.30.0, docs/mockups/backlog-v1, Punkt 5 B;
+// seit 0.34.0 in "Überwachung und Meldungen" › "Integrationen", je
+// Integration: Auswahl Standard/feste Zeiten, "Überwachen" als Schalter),
+// Entwurf mit Markierung, Speichern, Gruppe "Nicht überwacht" in der Liste
+// ohne Status und ohne Zählung im Kopf. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
 
@@ -12,8 +12,8 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 
 const TEXT = {
-  de: { head: "Ausgefallen nach", def: "Standard", none: "Nicht überwachen", min30: "30 Min.", hour1: "1 Std.", sum: "9 Integrationen · alle angezeigt · 2 mit eigener Zeit", group: "Nicht überwacht", pill: "Nicht überwacht" },
-  en: { head: "Offline after", def: "Default", none: "Don't monitor", min30: "30 min", hour1: "1 h", sum: "9 integrations · all shown · 2 with own time", group: "Not monitored", pill: "Not monitored" },
+  de: { def: "Standard (2 Min.)", last: "24 Std.", diff30: "Ausfall nach 30 Min.", unmon: "Nicht überwacht", own: "Eigene", would: "Standard wäre 2 Min.", group: "Nicht überwacht", pill: "Nicht überwacht" },
+  en: { def: "Default (2 min)", last: "24 h", diff30: "Offline after 30 min", unmon: "Not monitored", own: "Own", would: "Default would be 2 min", group: "Not monitored", pill: "Not monitored" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -46,34 +46,47 @@ for (const lang of ["de", "en"]) {
     };
     const modes = () => ev(`return [...r.querySelectorAll("select[data-off-mode]")].map(s=>s.dataset.offMode+":"+s.value).join()`);
 
+    const integ = async (dom) => { await tap(`[data-set="integ"][data-key="${dom}"]`); await wait(`return !!r.querySelector('[data-imon="${dom}"]')`); };
+    const back = async () => { await tap('[data-set="integ"][data-key=""]'); await wait(`return !!r.querySelector(".ilist")`); };
+    const diff = (dom) => text(`.ilist-row[data-key="${dom}"] .ilist-diff`);
+
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="integrations"]');
-    check(`[${tag}] Spalte "${T.head}"`, (await ev(`return [...r.querySelectorAll(".ex-head .ex-col")].pop().textContent`)) === T.head);
+    await tap('[data-set="section"][data-id="monitor"]');
+    await tap('[data-set="tab"][data-key="integ"]');
+    await wait(`return !!r.querySelector(".ilist")`);
+    await integ("zha");
     const sel = await ev(`const s=r.querySelector('select[data-off-mode="zha"]'); return [s.value, s.options[0].textContent, s.options[s.options.length-1].textContent, s.options.length]`);
-    check(`[${tag}] Auswahl: Standard zuerst, "${T.none}" zuletzt`, sel[0] === "default" && sel[1] === T.def && sel[2] === T.none && sel[3] === 13, JSON.stringify(sel));
-    // Handy: Auswahl unter dem Namen, nicht über den Rand; Desktop: in derselben Zeile
-    const geo = await ev(`const s=r.querySelector('select[data-off-mode="zha"]'); const row=s.closest(".ex-row"), name=row.querySelector(".ex-name"); const a=s.getBoundingClientRect(), n=name.getBoundingClientRect(), w=row.getBoundingClientRect(); return [a.top >= n.bottom - 1, a.right <= w.right + 1, a.left >= w.left - 1, r.querySelector("dialog.settings").scrollWidth <= r.querySelector("dialog.settings").clientWidth]`);
-    check(`[${tag}] Auswahl liegt in der Zeile${mobile ? " unter dem Namen" : ""}, kein seitlicher Überlauf`, (mobile ? geo[0] : true) && geo[1] && geo[2] && geo[3], JSON.stringify(geo));
-
+    check(`[${tag}] Auswahl: "${T.def}" zuerst, feste Zeiten bis "${T.last}"`, sel[0] === "default" && sel[1] === T.def && sel[2] === T.last && sel[3] === 12, JSON.stringify(sel));
+    const geo = await ev(`const d=r.querySelector("dialog.settings"); const s=r.querySelector('select[data-off-mode="zha"]').getBoundingClientRect(), o=r.querySelector('select[data-off-mode="zha"]').closest(".opt").getBoundingClientRect(); return [s.right <= o.right + 1, d.scrollWidth <= d.clientWidth]`);
+    check(`[${tag}] Auswahl in der Zeile, kein seitlicher Überlauf`, geo.every(Boolean), JSON.stringify(geo));
+    await back();
+    await integ("bthome");
     await pick("bthome", "30");
-    await pick("matter", "off");
-    check(`[${tag}] Entwurf: Zusammenfassung, Zähler, Markierung`, (await text('[data-id="integrations"] .set-sec-sum')) === T.sum && /^1 /.test(await text(".set-count")) && (await ev(`return r.querySelector('select[data-off-mode="bthome"]').closest(".opt-select").classList.contains("changed")`)), await text('[data-id="integrations"] .set-sec-sum'));
+    check(`[${tag}] eigene Zeit: Etikett und Standardwert, Markierung`, await wait(`return r.querySelector('select[data-off-mode="bthome"]')?.value === "30"`) && (await text('.opt:has(select[data-off-mode="bthome"]) .opt-origin')) === `${T.own}${T.would}` && await ev(`return r.querySelector('select[data-off-mode="bthome"]').closest(".opt").classList.contains("changed")`), await text('.opt:has(select[data-off-mode="bthome"]) .opt-origin'));
+    await back();
+    await integ("matter");
+    await tap('input[data-imon="matter"]');
+    check(`[${tag}] nicht überwachen: Auswahl gesperrt`, await wait(`return r.querySelector('select[data-off-mode="matter"]')?.disabled`));
+    await back();
+    check(`[${tag}] Entwurf: Liste, Zähler`, (await diff("bthome")) === T.diff30 && (await diff("matter")) === T.unmon && /^1 /.test(await text(".set-count")), `${await diff("bthome")} / ${await diff("matter")} / ${await text(".set-count")}`);
     check(`[${tag}] noch nichts gespeichert`, (await calls("device_panel/set_options")).length === 0);
-    await ev(`r.querySelector('select[data-off-mode="bthome"]').closest(".ex-row").scrollIntoView({ block: "center" })`);
-    await p.screenshot({ path: `${outDir}/offline-column-${tag.replace("/", "-")}.png` });
+    await p.screenshot({ path: `${outDir}/offline-integ-${tag.replace("/", "-")}.png` });
     await tap('dialog.settings [data-set="save"]');
     await wait(`return r.querySelector(".set-count")?.classList.contains("saved")`);
     const so = (await calls("device_panel/set_options")).at(-1);
     check(`[${tag}] gespeichert: Minuten und "off"`, JSON.stringify(so?.values) === JSON.stringify({ offline_after_integrations: { bthome: 30, matter: "off" } }), JSON.stringify(so?.values));
 
-    // "Anzeigen" aus: Auswahl gesperrt
+    // "Anzeigen" aus (Abschnitt "Integrationen"): fehlt in der Liste
+    await tap('[data-set="section"][data-id="integrations"]');
     await tap('input[data-list="exclude_integrations"][data-value="zha"]');
-    check(`[${tag}] Integration ausgeblendet: Auswahl gesperrt`, await ev(`return r.querySelector('select[data-off-mode="zha"]').disabled`));
+    await tap('[data-set="tab"][data-key="integ"]');
+    check(`[${tag}] ausgeblendete Integration fehlt in der Liste`, await wait(`return !!r.querySelector(".ilist") && !r.querySelector('.ilist-row[data-key="zha"]')`));
     await tap('input[data-list="exclude_integrations"][data-value="zha"]');
     // Zurück auf Standard
+    await integ("bthome");
     await pick("bthome", "default");
-    check(`[${tag}] Standard entfernt den Eintrag`, !(await modes()).includes("bthome:30") && (await ev(`return r.querySelector('select[data-off-mode="bthome"]').value`)) === "default");
+    check(`[${tag}] Standard entfernt den Eintrag`, await wait(`return r.querySelector('select[data-off-mode="bthome"]')?.value === "default"`) && (await ev(`return JSON.stringify(r.host._settings.draft.offline_after_integrations)`)) === JSON.stringify({ matter: "off" }));
     await pick("bthome", "30");
 
     // Liste: Matter-Geräte unter "Nicht überwacht"

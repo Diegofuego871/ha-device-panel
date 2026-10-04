@@ -536,6 +536,15 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   Ausfälle in `.storage/device_panel.notify`: kein erneuter Ausfall nach
   einem Neustart, die Rückkehr kommt trotzdem. Standard: alles aus ausser
   Sammelausfall.
+- Batterie pro Integration und Inhalt (seit 0.34.0, `docs/mockups/notify-v2/`
+  Bild 4 und `notify-v3/`): `battery_push_exclude_integrations` schaltet
+  nur den Push für die Geräte der Integration ab (Markierung und anhaltende
+  Benachrichtigung bleiben; `battery._pushable`, auch in der Tagesmeldung).
+  `battery_fields` (Stand, Bereich, Integration, Hersteller / Modell; feste
+  Reihenfolge, Standard Stand und Bereich wie vorher): Einzelmeldung "Stand
+  · Bereich · …", nichts gewählt = Stand; Sammel- und Tagesmeldung "Name
+  Stand (Bereich, …)". Integration und Modell holt `_async_parts` beim
+  Versand (`devices.async_device_facts`), nicht aus dem Merker.
 - Batterie-Verlauf (seit 0.22.0, Variante A in
   `docs/mockups/battery-history-v1/`): `battery_history.py`, WebSocket
   `device_panel/battery_history` (Gerät, Zeitraum 24h/7d/30d/90d). Quelle
@@ -559,7 +568,15 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   zurückzusetzen im Abschnitt "Verbindungsart". Push für schwachen Empfang
   gibt es nicht.
 - Ausfall-Meldungen nach Bild 5 (seit 0.20.0):
-  - "Erst melden nach" (`notify_delay`, 0–60 Min.): fällig, wenn
+  - "Erst melden nach" (`notify_delay`, seit 0.34.0 1–60 Min. und nie
+    kürzer als das globale "Ausgefallen nach"; Wunsch des Nutzers: vorher
+    gilt ein Gerät nicht als ausgefallen, ein kürzerer Wert wirkte nicht).
+    Gespeicherte kürzere Werte und 0 ("sobald ausgefallen") gelten als
+    "Ausgefallen nach" (`options_api.values_from`), Speichern eines
+    kürzeren Werts lehnen Panel, WebSocket und Optionsdialog ab, auch wenn
+    "Ausgefallen nach" darüber erhöht wird (`delay_too_short`). Eigenes
+    "Ausgefallen nach" einer Integration oder eines Geräts prüft das nicht:
+    dort gilt der grössere Wert. Fällig, wenn
     Beginn + Wartezeit erreicht ist; Beginn ist der Beginn des Ausfalls im
     Protokoll, nicht die Erkennung. `async_call_later` auf den nächsten
     Termin, damit die Meldung ohne Zustandswechsel kommt. Kurze Ausfälle:
@@ -580,7 +597,8 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
     gespeichert in `.storage/device_panel.devices` ("notify_mute",
     abgelaufene fallen beim Schreiben weg). Das Popup zeigt "Stumm bis …"
     als eigene Option; "Globale Einstellung" oder "Aus" hebt es auf.
-  - Pro Integration (Spalten in "Integrationen"): `notify_exclude_integrations`
+  - Pro Integration (bis 0.33.1 Spalten in "Integrationen", seit 0.34.0
+    Reiter "Integrationen" in "Überwachung und Meldungen"): `notify_exclude_integrations`
     (kein Push, Sammelmeldung zählt sie nicht), `persistent_exclude_integrations`
     (nicht in der anhaltenden Benachrichtigung). Nach der primären
     Integration wie Batterie und Verbindungsart.

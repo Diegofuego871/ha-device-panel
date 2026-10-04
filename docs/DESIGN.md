@@ -125,7 +125,7 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Auge, "Standard wiederherstellen" und "Fertig" wie im Dialog).
 - Kopf-Kacheln gleich hoch, auch auf dem Handy (Zeile mit `stretch`); der
   Ring bleibt fest und steht in seiner Kachel mittig.
-- Tabellen mit mehreren Schaltern pro Zeile (seit 0.20.0, Integrationen:
+- Tabellen mit mehreren Schaltern pro Zeile (seit 0.20.0 bis 0.33.1, Integrationen:
   "Anzeigen", "Push", "Anhaltend"): Spalten fester Breite (`.ex-col`,
   72 px, Handy 52 px), Kopf in Grossbuchstaben, darunter "Alle umschalten"
   je Spalte; ausgeblendete Zeile sperrt die übrigen Schalter (gedämpft).
@@ -140,6 +140,25 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Verlauf in Violett/Primärfarbe, Überschrift fett, Text, Fusszeile "Erstellt
   von … · Zeit · Neu erstellen"); Wartezustand mit pulsierendem Symbol,
   bei `prefers-reduced-motion` ohne Animation.
+- Überwachung und Meldungen (seit 0.34.0, `docs/mockups/notify-v3/`, C
+  mit eigenem Reiter "Integrationen"): erster Abschnitt der Einstellungen.
+  Reiter als Segment (`.mon-tabs`, grau hinterlegt, gewählter Reiter weiss
+  mit Schatten, Punkt oben rechts: blau = Änderung, rot = Fehler).
+  Übersicht: je Meldung eine Karte (`.lane`: Symbol in Rot bzw. Orange,
+  Titel, Link "Ändern ›"), darin ein Zeitstrahl (`.mtl`: Balken mit
+  Verlauf, Marken in festen Abständen, nicht massstäblich; Push-Marke in
+  Primärfarbe, gemeinsame Marke rot umrandet mit blauem Kern, kein Push
+  gestrichelt grau, verdeckte Zeit halb durchsichtig), darunter die
+  Schalter als Chips (`.mon-chip`, an = Primärfarbe mit Haken) und
+  "Abweichend: …" mit Links. In "Ausfall" und "Batterie" trägt der
+  Zeitstrahl die Zahlenfelder (kompakt, 30 px hoch), der Fehler steht
+  darunter; Gruppen "Erkennung", "Meldung", "Abweichungen" mit Überschrift
+  in Grossbuchstaben. Integrationen: Liste in einer Karte (Zeile mit
+  Badge, Name, Geräte, Abweichung in Primärfarbe bzw. "Nicht überwacht" in
+  Orange, Pfeil rechts; geänderte Zeile mit blauem Strich links), Filter
+  als Chips; Detail mit "‹ Alle Integrationen", Kopf mit grossem Badge,
+  eigenem Zeitstrahl und Zeilen mit Etikett "Standard"/"Eigene" wie im
+  Geräte-Popup; "Überwachen" aus dämpft den Rest.
 - Herkunft einer Einstellung im Geräte-Popup (seit 0.31.0,
   `docs/mockups/backlog-v1/`, A): unter der Auswahl eine Zeile `.opt-origin`
   mit Etikett (`.origin`: Standard grau, Integration violett, Gerät in
@@ -187,6 +206,11 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Aufheben), darunter die Geräte als Zeilen (Symbol, Name, "ausgefallen"
   als kleine rote Pille, Bereich · Integration; rechts Anzahl fett, Dauer
   und Streifen über 24 Std.).
+- Farbe des Pulses (seit 0.34.0, Wunsch des Nutzers): rot (`--dp-error`,
+  Fläche `--dp-error-soft`), solange im Kopf ein Gerät ausgefallen ist;
+  sonst grün (`.pchart.calm`: Linie `--dp-success`, Fläche
+  `--dp-success-soft`), Höcker bleiben. Ohne Unterbrüche flache grüne
+  Linie ohne Fläche (`.quiet`). Kachel und Fenster gleich.
 - Fixierter Kopf auf Handy und Desktop (seit 0.28.0, `docs/mockups/fixed-v1/`,
   C, Wunsch des Nutzers: nur die Liste scrollt, in beiden Ansichten): Sind
   die Kacheln unter der Zeile weggescrollt, steht oben eine Zeile (44 px,

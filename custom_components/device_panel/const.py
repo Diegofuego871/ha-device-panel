@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "42"
+PANEL_VERSION = "43"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -65,17 +65,30 @@ CONF_BATTERY_LOW_INTEGRATIONS = "battery_low_integrations"
 CONF_OFFLINE_INTEGRATIONS = "offline_after_integrations"
 OFFLINE_INTEGRATION_RANGE = (1, 1440)
 MONITOR_OFF = "off"
-# Push erst nach so vielen Minuten Ausfall (0 = sobald ausgefallen); kurze
-# Aussetzer lösen dann weder Ausfall- noch Online-Meldung aus.
+# Push erst nach so vielen Minuten Ausfall; kurze Aussetzer lösen dann weder
+# Ausfall- noch Online-Meldung aus. Seit 0.34.0 (Wunsch des Nutzers) nie
+# kürzer als das globale "Ausgefallen nach": vorher gilt ein Gerät nicht als
+# ausgefallen, ein kürzerer Wert wirkte nicht und führte in die Irre. Früher
+# gespeicherte kürzere Werte (auch 0 = "sobald ausgefallen") gelten als
+# "Ausgefallen nach" (options_api.values_from); neu Speichern lehnt sie ab.
 CONF_NOTIFY_DELAY = "notify_delay"
-DEFAULT_NOTIFY_DELAY = 0
+DEFAULT_NOTIFY_DELAY = DEFAULT_OFFLINE_AFTER
 INT_RANGES = {
     CONF_OFFLINE_AFTER: (1, 60),
     CONF_FLAKY_OUTAGES: (2, 50),
     CONF_STARTUP_GRACE: (0, 30),
     CONF_BATTERY_LOW: (5, 50),
-    CONF_NOTIFY_DELAY: (0, 60),
+    CONF_NOTIFY_DELAY: (1, 60),
 }
+# Integrationen ohne Push bei schwacher Batterie (seit 0.34.0, Reiter
+# "Integrationen" in "Überwachung und Meldungen"); Schwelle und anhaltende
+# Benachrichtigung bleiben.
+CONF_BATTERY_PUSH_EXCLUDE = "battery_push_exclude_integrations"
+# Inhalt der Batterie-Meldung (seit 0.34.0, vorher fest Stand und Bereich);
+# der Name steht im Titel.
+CONF_BATTERY_FIELDS = "battery_fields"
+BATTERY_FIELDS = ("battery", "area", "integration", "model")
+DEFAULT_BATTERY_FIELDS = ("battery", "area")
 # Erst wieder melden, wenn die Batterie zwischendurch so viele Prozentpunkte
 # über der Schwelle war (Batteriewechsel), sonst meldet ein Wert, der um die
 # Schwelle pendelt, immer wieder.

@@ -137,7 +137,10 @@ for (const lang of ["de", "en"]) {
     // Einstellungen: Liste "Eigenes Ausgefallen nach auf Geräten" mit Zurücksetzen
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="detection"]');
+    // Seit 0.34.0 im Reiter "Ausfall" von "Überwachung und Meldungen".
+    await tap('[data-set="section"][data-id="monitor"]');
+    await tap('[data-set="tab"][data-key="outage"]');
+    await wait(`return !!r.querySelector(".ovr-opt")`);
     check(`[${tag}] Liste "${T.resetTitle}" mit 2 Geräten`, (await text(".ovr-opt .opt-label")) === T.resetTitle && (await ev(`return r.querySelectorAll(".ovr-opt .ovr-row").length`)) === 2, await text(".ovr-opt"));
     await tap('.ovr-opt [data-set="ovr-all"]');
     check(`[${tag}] Entwurf: 2 Änderungen`, /^2 /.test(await text(".set-count")), await text(".set-count"));

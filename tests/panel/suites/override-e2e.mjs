@@ -70,25 +70,31 @@ for (const lang of ["de", "en"]) {
     await tap('.chip.hint[data-hint="override"]');
     check(`[${tag}] Filter aus`, await wait(`return r.querySelectorAll(".dev[data-open]").length === 16`));
 
+    // Seit 0.34.0: Reiter von "Überwachung und Meldungen" (Batterie, Ausfall).
+    const monTab = async (key) => {
+      if ((await ev(`return r.querySelector('[data-set="section"][data-id="monitor"]').getAttribute("aria-expanded")`)) !== "true") await tap('[data-set="section"][data-id="monitor"]');
+      await tap(`[data-set="tab"][data-key="${key}"]`);
+      await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "${key}"`);
+    };
     // Einstellungen: Liste, einzeln, rückgängig, alle
     await openSettings();
-    await tap('[data-set="section"][data-id="battery"]');
+    await monTab("battery");
     const batRows = await ev(`return [...r.querySelectorAll('[data-key^="battery:"]')].map(b=>{const row=b.closest(".ovr-row"); return row.querySelector(".ovr-name").firstChild.textContent + "=" + row.querySelector(".ovr-val").textContent;}).join(";")`);
     check(`[${tag}] Batterie-Liste nach Name`, batRows === `Fensterkontakt Küche=25 %;Temperatur Keller=${T.off};Thermostat Bad=30 %`, batRows);
     check(`[${tag}] Titel und Bereich · Integration`, (await ev(`return r.querySelector('[data-key="battery:e"]').closest(".ovr-opt").querySelector(".opt-label").textContent`)) === T.batTitle && (await ev(`return r.querySelector('[data-key="battery:e"]').closest(".ovr-row").querySelector("small").textContent`)) === T.eSub);
     await tap('[data-key="battery:c"]');
-    check(`[${tag}] einzeln markiert`, await ev(`const row=r.querySelector('[data-key="battery:c"]').closest(".ovr-row"); return row.classList.contains("reset") && row.querySelector("s").textContent === "30 %"`) && (await text(".set-count")) === T.one && (await text('[data-id="battery"] .set-badge')) === T.changed);
+    check(`[${tag}] einzeln markiert`, await ev(`const row=r.querySelector('[data-key="battery:c"]').closest(".ovr-row"); return row.classList.contains("reset") && row.querySelector("s").textContent === "30 %"`) && (await text(".set-count")) === T.one && (await text('[data-id="monitor"] .set-badge')) === T.changed);
     check(`[${tag}] Fokus bleibt auf dem Knopf`, await ev(`return r.activeElement === r.querySelector('[data-key="battery:c"]')`));
     await tap('[data-key="battery:c"]');
     check(`[${tag}] rückgängig`, (await text(".set-count")) === "" && !(await ev(`return !!r.querySelector(".ovr-row.reset")`)) && await ev(`return r.querySelector('[data-set="save"]').disabled`));
     await tap('[data-set="ovr-all"][data-key="battery"]');
     check(`[${tag}] alle markiert, Knopf gesperrt`, (await text(".set-count")) === T.three && await ev(`return r.querySelectorAll(".ovr-row.reset").length === 3 && r.querySelector('[data-set="ovr-all"][data-key="battery"]').disabled`));
-    await tap('[data-set="section"][data-id="push"]');
+    await monTab("outage");
     const pushRows = await ev(`return [...r.querySelectorAll('[data-key^="notify:"]')].map(b=>b.closest(".ovr-row").querySelector(".ovr-name").firstChild.textContent).join(";")`);
     check(`[${tag}] Meldungen-Liste mit ausgeblendetem Gerät`, pushRows === "Alte Lampe;Präsenzsensor Büro;Steckdose Terrasse" && (await ev(`return r.querySelector('[data-key="notify:s"]').closest(".ovr-row").querySelector("small").textContent`)) === T.hiddenSub, pushRows);
     check(`[${tag}] Titel Meldungen`, (await ev(`return r.querySelector('[data-key="notify:d"]').closest(".ovr-opt").querySelector(".opt-label").textContent`)) === T.notifyTitle);
     await tap('[data-key="notify:d"]');
-    check(`[${tag}] vier Änderungen`, (await text(".set-count")) === T.four && (await text('[data-id="push"] .set-badge')) === T.changed);
+    check(`[${tag}] vier Änderungen`, (await text(".set-count")) === T.four && (await text('[data-id="monitor"] .set-badge')) === T.changed);
     check(`[${tag}] noch nichts zurückgesetzt`, (await resets()).length === 0);
     await ev(`r.querySelector('[data-key="notify:d"]').closest(".ovr-opt").scrollIntoView({ block: "center" })`);
     await p.screenshot({ path: `${outDir}/override-settings-${tag.replace("/", "-")}.png` });
@@ -105,14 +111,14 @@ for (const lang of ["de", "en"]) {
 
     // Wieder öffnen: Batterie leer, Abbrechen verwirft
     await openSettings();
-    await tap('[data-set="section"][data-id="battery"]');
+    await monTab("battery");
     check(`[${tag}] Batterie: keine mehr`, !(await ev(`return !!r.querySelector('[data-set="ovr-all"][data-key="battery"]')`)) && (await ev(`return [...r.querySelectorAll(".ovr-opt .opt-short")].map(e=>e.textContent)`)).includes(T.batEmpty));
-    await tap('[data-set="section"][data-id="push"]');
+    await monTab("outage");
     await tap('[data-key="notify:f"]');
     await tap('dialog.settings .dlg-actions [data-set="close"]');
     const n = (await resets()).length;
     await openSettings();
-    await tap('[data-set="section"][data-id="push"]');
+    await monTab("outage");
     check(`[${tag}] Abbrechen verwirft`, (await resets()).length === n && !!(await handle('[data-key="notify:f"]')) && !(await ev(`return !!r.querySelector(".ovr-row.reset")`)));
     await tap('dialog.settings .dlg-actions [data-set="close"]');
 

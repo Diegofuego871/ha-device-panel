@@ -10,7 +10,10 @@ Datei, damit ein Neustart nicht erneut meldet. Erneut gemeldet wird erst,
 wenn die Batterie zwischendurch BATTERY_REARM Prozentpunkte über der
 Schwelle war. Die anhaltende Benachrichtigung listet alle betroffenen
 Geräte und verschwindet, sobald keines mehr betroffen ist. Pro Gerät lässt
-sich die Warnung ausschalten oder eine eigene Schwelle setzen.
+sich die Warnung ausschalten oder eine eigene Schwelle setzen. Seit 0.34.0
+lässt sich der Push pro Integration ausschalten (die Warnung im Panel und
+die anhaltende Benachrichtigung bleiben), und der Inhalt der Push-Meldung
+ist wählbar (Stand, Bereich, Integration, Hersteller und Modell).
 """
 
 from __future__ import annotations
@@ -22,7 +25,7 @@ from typing import Any
 from homeassistant.components import persistent_notification
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import Event, HomeAssistant, callback
-from homeassistant.helpers import area_registry as ar
+from homeassistant.helpers import area_registry as ar, device_registry as dr
 from homeassistant.helpers.event import async_track_time_change, async_track_time_interval
 from homeassistant.helpers.storage import Store
 
@@ -30,11 +33,13 @@ from . import push
 from .const import (
     BATTERY_PUSH_MAX,
     BATTERY_REARM,
+    CONF_BATTERY_FIELDS,
     CONF_BATTERY_LOW,
     CONF_BATTERY_LOW_INTEGRATIONS,
     CONF_BATTERY_PERSISTENT,
     CONF_BATTERY_PUSH,
     CONF_BATTERY_PUSH_DAILY,
+    CONF_BATTERY_PUSH_EXCLUDE,
     CONF_BATTERY_PUSH_MODE,
     CONF_BATTERY_PUSH_TIME,
     CONF_NOTIFY_CLICK,
@@ -46,7 +51,7 @@ from .const import (
     PUSH_DAILY,
     STORAGE_VERSION,
 )
-from .devices import battery, device_battery_threshold, device_settings, monitored_devices
+from .devices import async_device_facts, battery, device_battery_threshold, device_settings, monitored_devices, primary_domain
 from .options_api import effective
 
 _LOGGER = logging.getLogger(__name__)
@@ -233,20 +238,54 @@ class BatteryWatch:
     def _level_text(self, level: int | None) -> str:
         return f"{level} %" if level is not None else push.text(self.hass, "battery_low")
 
+    async def _async_parts(self, opts: dict[str, Any], dev: str, item: dict[str, Any]) -> tuple[str | None, list[str]]:
+        """Stand (falls gewählt) und übrige Angaben nach "Inhalt der Meldung", in fester Folge."""
+        fields = opts[CONF_BATTERY_FIELDS]
+        facts: dict[str, Any] = {}
+        if "integration" in fields or "model" in fields:
+            # Nur bei Bedarf: Integration und Modell stehen nicht im Merker.
+            device = dr.async_get(self.hass).async_get(dev)
+            facts = await async_device_facts(self.hass, device, opts) if device else {}
+        level = self._level_text(item["level"]) if "battery" in fields else None
+        extra = [
+            value
+            for field in fields
+            if field != "battery" and (value := item.get("area") if field == "area" else facts.get(field))
+        ]
+        return level, extra
+
+    def _pushable(self, opts: dict[str, Any], dev: str) -> bool:
+        """Push pro Integration aus (seit 0.34.0): Warnung bleibt, nur kein Push."""
+        excluded = opts[CONF_BATTERY_PUSH_EXCLUDE]
+        if not excluded:
+            return True
+        device = dr.async_get(self.hass).async_get(dev)
+        return device is None or primary_domain(self.hass, device) not in excluded
+
     async def _async_push(self, opts: dict[str, Any], low: dict[str, dict[str, Any]], new: list[str], summary: bool = False) -> None:
         hass = self.hass
         target = opts[CONF_NOTIFY_SERVICE]
-        ordered = self._order(low, new)
+        ordered = self._order(low, [d for d in new if self._pushable(opts, d)])
+        if not ordered:
+            return
         if len(ordered) > BATTERY_PUSH_MAX or (summary and len(ordered) > 1):
-            # Viele auf einmal oder Tagesmeldung: eine Sammelmeldung.
-            message = ", ".join(f"{low[d]['name']} {self._level_text(low[d]['level'])}" for d in ordered)
+            # Viele auf einmal oder Tagesmeldung: eine Sammelmeldung, je Gerät
+            # Name und Stand, die übrigen Angaben in Klammern.
+            items = []
+            for d in ordered:
+                level, extra = await self._async_parts(opts, d, low[d])
+                text = " ".join(x for x in (low[d]["name"], level) if x)
+                items.append(f"{text} ({', '.join(extra)})" if extra else text)
+            message = ", ".join(items)
             title = push.text(hass, "battery_title_many", count=len(ordered))
             url = push.panel_url()
             await push.async_push(hass, target, title, message, push.notification_data(hass, f"{DOMAIN}_battery", url))
             return
         for dev in ordered:
             item = low[dev]
-            message = " · ".join(x for x in (self._level_text(item["level"]), item["area"]) if x)
+            level, extra = await self._async_parts(opts, dev, item)
+            # Nichts gewählt: der Stand, damit die Meldung nicht leer ist.
+            message = " · ".join(x for x in (level, *extra) if x) or self._level_text(item["level"])
             url = push.device_url(opts[CONF_NOTIFY_CLICK], dev)
             data = push.notification_data(hass, f"{DOMAIN}_battery_{dev}", url)
             await push.async_push(hass, target, push.text(hass, "battery_title", name=item["name"]), message, data)

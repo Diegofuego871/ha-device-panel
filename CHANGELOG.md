@@ -7,6 +7,69 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.34.0] - 2026-10-04
+
+Monitoring and notifications in one place, with a timeline per notification.
+
+### Added
+
+- Settings: new section "Monitoring and notifications" at the top, with four
+  tabs (requested by the user: everything that monitors or notifies in one
+  place, so it is clear at a glance when which notification arrives):
+  - "Overview": one timeline per notification. Outage: device gone, offline
+    in the panel after "Offline after", push after "Report only after"
+    (one mark when both are equal). Low battery: threshold, then push right
+    away or daily at the chosen time. The switches as chips (push,
+    persistent, back online, group outage), how many integrations and
+    devices differ (with links), push target and what a tap opens.
+  - "Outage": the two times on an editable timeline, detection (unstable
+    from, grace period), notification (push, back online, group outage,
+    persistent notification, content with preview) and the exceptions
+    (integrations, devices to reset).
+  - "Battery": "Low from" on the timeline, push with time and daily
+    content, persistent notification, content with preview, exceptions.
+  - "Integrations": one row per integration with what differs from the
+    defaults in one sentence, filter "Differs". A tap opens all settings of
+    the integration with its own timeline (e.g. push only after 60 min when
+    its devices count as offline only then): monitor, offline after, push
+    on outage, persistent notification, low from, push on low battery, its
+    devices with their own setting, "All to default". Labels "Default" and
+    "Own" as in the device pop-up.
+- Push on low battery can be switched off per integration (option
+  `battery_push_exclude_integrations`); the red mark in the panel and the
+  persistent notification stay. The device pop-up says so next to the
+  battery warning.
+- The content of the low battery push is adjustable like the outage
+  notification: level, area, integration, manufacturer and model (option
+  `battery_fields`, default level and area as before), with a preview. The
+  daily or group notification lists the extra details in brackets after
+  each device.
+
+### Changed
+
+- "Report only after" can no longer be shorter than "Offline after"
+  (requested by the user): before that a device does not count as offline,
+  a shorter value had no effect and was misleading. The panel shows the
+  error under both fields and blocks saving, also when "Offline after" is
+  raised later; the options dialog of Home Assistant shows the same error.
+  The value 0 ("as soon as offline") no longer exists. A value saved
+  before (0 or shorter) counts as "Offline after", as it always did, and
+  stays until it is changed.
+- The section "Integrations" only has "Show"; push, persistent and offline
+  after per integration moved to "Monitoring and notifications" ›
+  "Integrations". The sections "Outage detection", "Battery", "Push
+  notification" and "Persistent notification" are merged into the new
+  section.
+- "Monitor" is a switch of its own per integration (before: "Don't
+  monitor" in the selection "Offline after"); off still means no outages,
+  battery warning, statistics or notifications.
+- Options dialog of Home Assistant: same order as the new section, with the
+  two new fields.
+- The pulse at the top turns green again as soon as no device is offline
+  (requested by the user: "green again, so you can see it"); the bumps of
+  past outages stay visible. Red only while a device is missing. Same in
+  the window "Outages in 24 h".
+
 ## [0.33.1] - 2026-10-04
 
 Clearer: "Content of the outage notification" is not the battery warning.
@@ -898,6 +961,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0
 [0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1
 [0.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.0
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0

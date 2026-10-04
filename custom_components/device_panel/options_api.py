@@ -18,7 +18,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import (
+    BATTERY_FIELDS,
     BATTERY_OFF,
+    CONF_BATTERY_FIELDS,
+    CONF_BATTERY_PUSH_EXCLUDE,
+    DEFAULT_BATTERY_FIELDS,
     MONITOR_OFF,
     OFFLINE_INTEGRATION_RANGE,
     CLICK_PANEL,
@@ -145,6 +149,13 @@ def notify_fields(value: Any) -> list[str]:
     return [f for f in NOTIFY_FIELDS if f in value]
 
 
+def battery_fields(value: Any) -> list[str]:
+    """Inhalt der Batterie-Meldung: bekannte Angaben in fester Reihenfolge."""
+    if not isinstance(value, list) or not all(v in BATTERY_FIELDS for v in value):
+        raise vol.Invalid(f"Liste aus {', '.join(BATTERY_FIELDS)} erwartet")
+    return [f for f in BATTERY_FIELDS if f in value]
+
+
 def connection_map(value: Any) -> dict[str, str]:
     """Verbindungsart pro Integration {Domain: Art}; "unbekannt" ist keine Wahl."""
     if value is None:
@@ -265,7 +276,9 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_EXCLUDE_DEVICES): device_ids,
         vol.Optional(CONF_NOTIFY_EXCLUDE): _domains,
         vol.Optional(CONF_PERSISTENT_EXCLUDE): _domains,
+        vol.Optional(CONF_BATTERY_PUSH_EXCLUDE): _domains,
         vol.Optional(CONF_NOTIFY_FIELDS): notify_fields,
+        vol.Optional(CONF_BATTERY_FIELDS): battery_fields,
         vol.Optional(CONF_HIDE_CONNECTIONS): _connections,
         vol.Optional(CONF_CONNECTION_ORDER): connection_order,
         vol.Optional(CONF_CONNECTION_INTEGRATIONS): connection_map,
@@ -289,6 +302,10 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
         number = _whole(options.get(key))
         low, high = INT_RANGES[key]
         values[key] = number if number is not None and low <= number <= high else default
+    # "Erst melden nach" nie kürzer als "Ausgefallen nach" (seit 0.34.0): ein
+    # früher gespeicherter kürzerer Wert wirkte schon immer wie "Ausgefallen
+    # nach" (der Push kommt frühestens, wenn das Gerät als ausgefallen gilt).
+    values[CONF_NOTIFY_DELAY] = max(values[CONF_NOTIFY_DELAY], values[CONF_OFFLINE_AFTER])
     values[CONF_EXCLUDE_INTEGRATIONS] = sorted(
         {d for d in options.get(CONF_EXCLUDE_INTEGRATIONS) or [] if isinstance(d, str)}
     )
@@ -296,11 +313,15 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_EXCLUDE_DEVICES] = sorted(
         {d for d in options.get(CONF_EXCLUDE_DEVICES) or [] if isinstance(d, str) and _DEVICE_RE.match(d)}
     )
-    for key in (CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE):
+    for key in (CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE):
         values[key] = sorted({d for d in options.get(key) or [] if isinstance(d, str) and _DOMAIN_RE.match(d)})
     fields = options.get(CONF_NOTIFY_FIELDS)
     values[CONF_NOTIFY_FIELDS] = (
         [f for f in NOTIFY_FIELDS if f in fields] if isinstance(fields, list) else list(DEFAULT_NOTIFY_FIELDS)
+    )
+    fields = options.get(CONF_BATTERY_FIELDS)
+    values[CONF_BATTERY_FIELDS] = (
+        [f for f in BATTERY_FIELDS if f in fields] if isinstance(fields, list) else list(DEFAULT_BATTERY_FIELDS)
     )
     values[CONF_HIDE_CONNECTIONS] = sorted({c for c in options.get(CONF_HIDE_CONNECTIONS) or [] if c in CONNECTION_TYPES})
     # Reihenfolge bleibt, wie gespeichert (nicht sortieren); Unbekanntes fällt weg.
@@ -394,10 +415,26 @@ def limits() -> dict[str, list[int]]:
     return {key: list(INT_RANGES[key]) for key, _default in INT_OPTIONS}
 
 
+def delay_too_short(options: Mapping[str, Any]) -> bool:
+    """
+    "Erst melden nach" kürzer als "Ausgefallen nach" (beide gespeichert, wie
+    sie gespeichert würden). Ein Wert aus früheren Versionen unter dem
+    Bereich (0 = sobald ausgefallen) zählt nicht: er gilt als "Ausgefallen
+    nach" (values_from).
+    """
+    delay = _whole(options.get(CONF_NOTIFY_DELAY))
+    low, _high = INT_RANGES[CONF_NOTIFY_DELAY]
+    if delay is None or delay < low:
+        return False
+    return delay < values_from(options)[CONF_OFFLINE_AFTER]
+
+
 def apply_values(hass: HomeAssistant, entry: ConfigEntry, values: dict[str, Any]) -> bool:
     """Prüft und speichert Werte aus dem Panel; True, wenn sich etwas änderte."""
     clean = PANEL_SCHEMA(values)
     options = {**entry.options, **clean}
+    if (CONF_NOTIFY_DELAY in clean or CONF_OFFLINE_AFTER in clean) and delay_too_short(options):
+        raise vol.Invalid("\"Erst melden nach\" darf nicht kürzer sein als \"Ausgefallen nach\"", path=[CONF_NOTIFY_DELAY])
     if options == dict(entry.options):
         return False
     hass.config_entries.async_update_entry(entry, options=options)

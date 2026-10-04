@@ -7,6 +7,71 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.34.0] - 2026-10-04
+
+Überwachung und Meldungen an einem Ort, mit Zeitstrahl je Meldung.
+
+### Hinzugefügt
+
+- Einstellungen: neuer Abschnitt "Überwachung und Meldungen" zuoberst, mit
+  vier Reitern (Wunsch des Nutzers: alles, was überwacht oder meldet, an
+  einem Ort, damit sofort klar ist, wann welche Meldung kommt):
+  - "Übersicht": je Meldung ein Zeitstrahl. Ausfall: Gerät weg, im Panel
+    ausgefallen nach "Ausgefallen nach", Push nach "Erst melden nach" (eine
+    Marke, wenn beide gleich sind). Batterie schwach: Schwelle, dann Push
+    sofort oder täglich zur gewählten Zeit. Die Schalter als Chips (Push,
+    Anhaltend, Wieder online, Sammelausfall), wie viele Integrationen und
+    Geräte abweichen (mit Verweis), Ziel und was ein Tipp öffnet.
+  - "Ausfall": die beiden Zeiten auf einem einstellbaren Zeitstrahl,
+    Erkennung (Instabil ab, Anlaufphase), Meldung (Push, Wieder online,
+    Sammelausfall, anhaltende Benachrichtigung, Inhalt mit Vorschau) und
+    die Abweichungen (Integrationen, Geräte zum Zurücksetzen).
+  - "Batterie": "Schwach ab" auf dem Zeitstrahl, Push mit Zeitpunkt und
+    Inhalt der Tagesmeldung, anhaltende Benachrichtigung, Inhalt mit
+    Vorschau, Abweichungen.
+  - "Integrationen": eine Zeile je Integration mit dem, was vom Standard
+    abweicht, in einem Satz, Filter "Abweichend". Ein Tipp öffnet alle
+    Einstellungen der Integration mit eigenem Zeitstrahl (z. B. Push erst
+    nach 60 Min., wenn ihre Geräte erst dann als ausgefallen gelten):
+    Überwachen, Ausgefallen nach, Push bei Ausfall, anhaltende
+    Benachrichtigung, Schwach ab, Push bei schwacher Batterie, ihre Geräte
+    mit eigener Einstellung, "Alles auf Standard". Etiketten "Standard" und
+    "Eigene" wie im Geräte-Popup.
+- Push bei schwacher Batterie lässt sich pro Integration ausschalten
+  (Option `battery_push_exclude_integrations`); die rote Markierung im
+  Panel und die anhaltende Benachrichtigung bleiben. Das Geräte-Popup sagt
+  es neben der Batterie-Warnung.
+- Der Inhalt des Push bei schwacher Batterie ist wählbar wie bei der
+  Ausfall-Meldung: Stand, Bereich, Integration, Hersteller und Modell
+  (Option `battery_fields`, Standard Stand und Bereich wie bisher), mit
+  Vorschau. Die Tages- oder Sammelmeldung nennt die weiteren Angaben in
+  Klammern nach jedem Gerät.
+
+### Geändert
+
+- "Erst melden nach" kann nicht mehr kürzer sein als "Ausgefallen nach"
+  (Wunsch des Nutzers): Vorher gilt ein Gerät nicht als ausgefallen, ein
+  kürzerer Wert wirkte nicht und führte in die Irre. Das Panel zeigt den
+  Fehler unter beiden Feldern und sperrt "Speichern", auch wenn
+  "Ausgefallen nach" später erhöht wird; der Optionsdialog von Home
+  Assistant zeigt denselben Fehler. Den Wert 0 ("sobald ausgefallen") gibt
+  es nicht mehr. Ein früher gespeicherter Wert (0 oder kürzer) gilt wie
+  schon immer als "Ausgefallen nach" und bleibt, bis er geändert wird.
+- Der Abschnitt "Integrationen" hat nur noch "Anzeigen"; Push, Anhaltend
+  und Ausgefallen nach pro Integration stehen jetzt in "Überwachung und
+  Meldungen" › "Integrationen". Die Abschnitte "Ausfall-Erkennung",
+  "Batterie", "Push-Benachrichtigung" und "Anhaltende Benachrichtigung"
+  gehen im neuen Abschnitt auf.
+- "Überwachen" ist pro Integration ein eigener Schalter (vorher: "Nicht
+  überwachen" in der Auswahl "Ausgefallen nach"); aus heisst weiterhin
+  keine Ausfälle, Batterie-Warnung, Statistik und Meldungen.
+- Optionsdialog von Home Assistant: gleiche Reihenfolge wie der neue
+  Abschnitt, mit den zwei neuen Feldern.
+- Der Puls oben wird wieder grün, sobald kein Gerät mehr ausgefallen ist
+  (Wunsch des Nutzers: "wieder grün, dass man das sieht"); die Höcker der
+  vergangenen Unterbrüche bleiben sichtbar. Rot nur, solange ein Gerät
+  fehlt. Ebenso im Fenster "Unterbrüche in 24 Std.".
+
 ## [0.33.1] - 2026-10-04
 
 Verständlicher: "Inhalt der Ausfall-Meldung" ist nicht die Batterie-Warnung.
@@ -935,6 +1000,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0
 [0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1
 [0.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.0
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0

@@ -101,6 +101,23 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Escape schliesst`, await wait(`return !r.querySelector("dialog.pulse-dlg").open`));
     }
 
+    // Farbe (0.34.0): rot, solange ein Gerät ausgefallen ist; sind alle wieder
+    // da, wird der Puls grün, die Höcker der Unterbrüche bleiben sichtbar.
+    const look = () => ev(`const c=r.querySelector(".hero .kt.pul .pchart"); return [c.classList.contains("calm"), getComputedStyle(c.querySelector(".line")).stroke, c.querySelector(".line").getAttribute("d").split("L").some((pt)=>Number(pt.split(",")[1])<70)]`);
+    const ok_ = await ev(`return getComputedStyle(r.host).getPropertyValue("--dp-success").trim()`);
+    const red = await look();
+    check(`[${tag}] Puls rot, solange Geräte ausgefallen sind`, red[0] === false && red[2] && await ev(`return r.host._devices.some(d=>!d.disabled && d.online===false)`), JSON.stringify(red));
+    await ev(`for (const d of r.host._devices) if (d.online === false) { d.online = true; d.offline_since = null; } r.host._render()`);
+    const green = await look();
+    const want = await ev(`const s=document.createElement("span"); s.style.color=${JSON.stringify(ok_)}; r.appendChild(s); const c=getComputedStyle(s).color; s.remove(); return c`);
+    check(`[${tag}] Puls grün, sobald alle wieder online sind, Höcker bleiben`, green[0] === true && green[1] === want && green[2], `${JSON.stringify(green)} / ${want}`);
+    if (mobile) await toPulseTile();
+    await tap(".hero .kt.pul");
+    check(`[${tag}] Puls im Fenster ebenfalls grün`, await wait(`return r.querySelector("dialog.pulse-dlg")?.open && r.querySelector("dialog.pulse-dlg .pchart").classList.contains("calm")`));
+    await ev(`r.activeElement?.blur()`);
+    await p.screenshot({ path: `${outDir}/pulse-calm-${tag.replace("/", "-")}.png` });
+    await tap('dialog.pulse-dlg .dlg-actions [data-pulse-close]');
+
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();
   }

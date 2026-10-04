@@ -376,6 +376,25 @@ hat dort einen echten Fehler oder Umweg gekostet.
   Fehler fand sich mit einem MutationObserver und einem Vorher/Nachher-Vergleich
   des HTML-Strings, nicht durch Wiederholen oder Warten.
 
+- **`node --check` prüft die Panel-Module nicht (0.34.0):** Node 22 meldete
+  für `device-panel.js` (mit `import`, ohne `"type": "module"`) Exit 0,
+  obwohl eine schliessende Klammer fehlte; erst das Laden im Browser
+  scheiterte ("Unexpected token 'else'"). Mit Modul-Syntax prüfen:
+  `node --input-type=module --check < datei.js` (findet den Fehler, auch
+  `.mjs` geht). `CLAUDE.md` nennt seither diesen Befehl.
+- **Klassen mit gängigen Namen kollidieren (0.34.0):** Die Zusatzklasse
+  `bat` am neuen Zeitstrahl erbte `.bat { display: inline-flex }` der
+  Batterie-Zelle in der Liste; alle Marken lagen übereinander. Zusatzklassen
+  neuer Bausteine mit eigenem Präfix (`mtl-b`, `mk-p`), und
+  `:first-of-type` zählt nach Elementtyp: Vor den Marken steht der Balken
+  (auch ein `div`), die Regel griff nie (`.mtl-bar + .mtl-mk`).
+- **Code zwischen zwei Kommentaren entfernen (0.34.0):** Beim Ausschneiden
+  der alten Tabellen-Funktionen "von Kommentar A bis Kommentar B" ging
+  `_connCatalog` mit, das dazwischen stand; die Einstellungen öffneten sich
+  nicht mehr. Danach die Liste der Methoden vor und nach dem Eingriff
+  vergleichen (`grep -oE "^  _[A-Za-z0-9]+\("` und `diff`).
+
+## Tests
 ## Tests
 
 - **Python mit echtem HA:** `pytest-homeassistant-custom-component` (Python

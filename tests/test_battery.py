@@ -267,7 +267,7 @@ async def test_warning_off_per_integration(hass: HomeAssistant, watch: BatteryWa
     devices = {d["name"]: d for d in (await async_list_devices(hass, log))["devices"]}
     # Warnung für die Integration aus: Stand sichtbar, nie "schwach", keine Meldung
     assert devices["Fenster"]["battery"] == {"level": 5, "low": False}
-    assert devices["Fenster"]["battery_default"] == {"pct": "off", "integration": "test"}
+    assert devices["Fenster"]["battery_default"] == {"pct": "off", "integration": "test", "push": True, "push_integration": None}
     assert calls == [] and _persistent(hass) is None
     # Eigene Schwelle des Geräts geht vor: Rauchmelder warnt ab 30 %
     await client.send_json({"id": 2, "type": f"{DOMAIN}/set_device_settings", "device_id": smoke.id, "battery": 30})
@@ -291,3 +291,86 @@ async def test_battery_map_is_checked(hass: HomeAssistant, watch: BatteryWatch, 
         assert (await client.receive_json())["error"]["code"] == "invalid_format", value
     await client.send_json({"id": 20, "type": f"{DOMAIN}/set_options", "values": {"battery_low_integrations": {}}})
     assert (await client.receive_json())["result"]["changed"] is True
+
+
+async def test_push_off_per_integration(hass: HomeAssistant, watch: BatteryWatch, hass_ws_client) -> None:
+    """Seit 0.34.0: Push pro Integration aus; schwach im Panel und anhaltende Benachrichtigung bleiben."""
+    calls = async_mock_service(hass, "notify", "handy")
+    window = _device(hass, "Fenster")  # Integration "test"
+    _battery(hass, window, "5")
+    log = hass.data[DATA_AVAILABILITY]
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_options", "values": {
+        "battery_push": True, "battery_persistent": True, "notify_service": "notify.handy",
+        "battery_push_exclude_integrations": ["test"],
+    }})
+    assert (await client.receive_json())["result"] == {"changed": True}
+    await hass.async_block_till_done()
+    await watch.async_check()
+    devices = {d["name"]: d for d in (await async_list_devices(hass, log))["devices"]}
+    assert devices["Fenster"]["battery"] == {"level": 5, "low": True}
+    assert devices["Fenster"]["battery_default"] == {"pct": 15, "integration": None, "push": False, "push_integration": "test"}
+    assert calls == [] and window.id in watch.low
+    assert "Fenster" in _persistent(hass)["message"]
+    # Tagesmeldung: ebenfalls ohne die Integration
+    await _options(hass, battery_push_mode="daily", battery_push_daily="all")
+    await watch._async_daily()
+    assert calls == []
+    # Wieder eingeschaltet: das schwache Gerät kommt mit der nächsten Meldung
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {"battery_push_exclude_integrations": []}})
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+    await watch._async_daily()
+    assert [c.data["title"] for c in calls] == ["Low battery: Fenster"]
+    # Keine Domain-Liste: abgelehnt
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/set_options", "values": {"battery_push_exclude_integrations": ["Böse Domain"]}})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"
+
+
+async def test_battery_fields(hass: HomeAssistant, watch: BatteryWatch, hass_ws_client) -> None:
+    """Seit 0.34.0: Inhalt der Batterie-Meldung wählbar, feste Reihenfolge; Sammelmeldung mit Klammern."""
+    from homeassistant.helpers import area_registry as ar  # noqa: PLC0415
+
+    calls = async_mock_service(hass, "notify", "handy")
+    area = ar.async_get(hass).async_create("Flur")
+    smoke = _device(hass, "Rauchmelder", manufacturer="Beispiel AG", model="Modell X")
+    dr.async_get(hass).async_update_device(smoke.id, area_id=area.id)
+    bat = _battery(hass, smoke, "50")
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/get_options"})
+    assert (await client.receive_json())["result"]["values"]["battery_fields"] == ["battery", "area"]
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {
+        "battery_push": True, "notify_service": "notify.handy", "battery_fields": ["model", "battery", "integration"],
+    }})
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+    hass.states.async_set(bat, "8")
+    await watch.async_check()
+    # Feste Reihenfolge (Stand, Integration, Modell), nicht die gewählte.
+    assert calls[-1].data["title"] == "Low battery: Rauchmelder"
+    assert calls[-1].data["message"] == "8 % · test · Beispiel AG Modell X"
+    # Standard (Stand, Bereich): wie vor 0.34.0
+    await _options(hass, battery_fields=["battery", "area"])
+    hass.states.async_set(bat, "100")
+    await watch.async_check()
+    hass.states.async_set(bat, "7")
+    await watch.async_check()
+    assert calls[-1].data["message"] == "7 % · Flur"
+    # Nichts gewählt: der Stand, damit die Meldung nicht leer ist
+    await _options(hass, battery_fields=[])
+    hass.states.async_set(bat, "100")
+    await watch.async_check()
+    hass.states.async_set(bat, "6")
+    await watch.async_check()
+    assert calls[-1].data["message"] == "6 %"
+    # Sammelmeldung: Name und Stand, die übrigen Angaben in Klammern
+    await _options(hass, battery_fields=["battery", "area"], battery_push_mode="daily", battery_push_daily="all")
+    other = _device(hass, "Fenster")
+    _battery(hass, other, "5")
+    await watch.async_check()
+    await watch._async_daily()
+    assert calls[-1].data["title"] == "Low battery: 2 devices"
+    assert calls[-1].data["message"] == "Fenster 5 %, Rauchmelder 6 % (Flur)"
+    # Unbekannte Angabe: abgelehnt
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/set_options", "values": {"battery_fields": ["since"]}})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"

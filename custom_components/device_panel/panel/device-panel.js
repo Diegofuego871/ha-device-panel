@@ -241,6 +241,16 @@ const LOGO_SMALL = LOGO.replace('width="30" height="30"', 'width="14" height="14
 // Zeiten der Auswahl "Ausgefallen nach" pro Integration (Minuten, 1 bis 1440).
 const OFFLINE_PRESETS = [1, 2, 5, 10, 15, 30, 60, 120, 360, 720, 1440];
 const NOTIFY_FIELDS = ["area", "integration", "connection", "since", "signal", "battery", "model"];
+// Inhalt der Batterie-Meldung (options_api.BATTERY_FIELDS, feste Reihenfolge).
+const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
+// Abschnitt "Überwachung und Meldungen" (seit 0.34.0): Optionen je Reiter,
+// für den Punkt am Reiter und das Etikett "geändert" des Abschnitts.
+const MON_TAB_KEYS = {
+  overview: ["notify_service", "notify_click_target"],
+  outage: ["offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "reset_offline", "reset_notify"],
+  battery: ["battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
+  integ: ["offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations"],
+};
 
 // Empfang in vier Stufen (gut -> schlecht), Farben wie unifi_dynamic.
 function sigLevel(sig) {
@@ -1841,7 +1851,10 @@ class DevicePanel extends HTMLElement {
 
   // Puls als Kurve mit Ticks; in der Kachel mit Tooltips, im Fenster (tap)
   // mit antippbaren Abschnitten (sel = gewählter Abschnitt).
-  _pulseChartHtml(p, incidents, tap = false, sel = null) {
+  // calm: gerade ist kein Gerät ausgefallen. Dann grün (seit 0.34.0, Wunsch
+  // des Nutzers: "wieder grün, dass man das sieht"); die Höcker der
+  // vergangenen Unterbrüche bleiben sichtbar. Rot nur, solange etwas fehlt.
+  _pulseChartHtml(p, incidents, tap = false, sel = null, calm = false) {
     const n = p.length;
     const max = Math.max(...p);
     const W = 480;
@@ -1871,7 +1884,7 @@ class DevicePanel extends HTMLElement {
     const ticks = this._ticks(start, end, "24h")
       .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
       .join("");
-    return `<div class="pchart ${max ? "" : "quiet"}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="${tap ? "false" : "true"}">
+    return `<div class="pchart${max ? (calm ? " calm" : "") : " quiet"}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="${tap ? "false" : "true"}">
         <line class="base" x1="0" x2="${W}" y1="${H - 0.5}" y2="${H - 0.5}" vector-effect="non-scaling-stroke"/>
         <path class="area" d="${line} L${x(n - 1)},${H} L${x(0)},${H} Z"/>
         <path class="line" d="${line}" vector-effect="non-scaling-stroke"/>${hits}</svg>${marks}</div>
@@ -1900,7 +1913,7 @@ class DevicePanel extends HTMLElement {
     // (seit 0.26.0, docs/mockups/pulse-v1, A).
     const open = affected ? ` tap" data-pulse-open role="button" tabindex="0" aria-label="${escape(this._t("pulseOpen"))}` : "";
     return `<div class="kt pul${open}"><div class="k">${mdi("pulse", 16)}${escape(this._t("pulseTitle"))}${this._scopeHtml()}${affected ? `<span class="kchev">${mdi("chevron", 16)}</span>` : ""}</div>
-      ${this._pulseChartHtml(p, incidents)}${note}</div>`;
+      ${this._pulseChartHtml(p, incidents, false, null, !all.some((d) => d.online === false))}${note}</div>`;
   }
 
   // Geräte im Kopf: mit Filter "Bereich" nur dessen, überwacht (nicht deaktiviert).
@@ -1971,7 +1984,7 @@ class DevicePanel extends HTMLElement {
     const html = `<div class="dlg-head stat-head"><span class="dlg-avatar">${mdi("pulse", 24)}</span>
         <div class="dlg-title"><h2>${escape(t("pulseWinTitle"))}</h2><div class="dlg-sub">${escape(sub + scope)}</div></div>
         <button type="button" class="dlg-close" data-pulse-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
-      <div class="dlg-body"><div class="avail pwin">${this._pulseChartHtml(p, incidents, true, at)}</div>
+      <div class="dlg-body"><div class="avail pwin">${this._pulseChartHtml(p, incidents, true, at, !head.some((d) => d.online === false))}</div>
         <p class="dlg-note small">${escape(t("pulseWinHint"))}</p>${pick}
         <h3>${escape(t("pulseWinList"))}</h3>${rows ? `<div class="plist">${rows}</div>` : `<p class="dlg-note">${escape(t("pulseNone"))}</p>`}</div>
       <div class="dlg-actions"><button type="button" class="dlg-btn" data-pulse-close>${escape(t("close"))}</button></div>`;
@@ -2555,7 +2568,15 @@ class DevicePanel extends HTMLElement {
               range ? `<div class="opt-error" data-dev-range>${escape(range.message)}</div>` : ""
             }`
           : ""
-      }${origin(mode !== "default", def.integration, mode !== "default" || def.integration ? t("originDefaultWould", this._batteryLow == null ? "15 %" : `${this._batteryLow} %`) : "", t("devBatShort", def.pct, integ))}</div>`;
+      }${origin(
+        mode !== "default",
+        def.integration || def.push_integration,
+        // Push pro Integration aus (seit 0.34.0): steht neben dem Standardwert.
+        [mode !== "default" || def.integration ? t("originDefaultWould", this._batteryLow == null ? "15 %" : `${this._batteryLow} %`) : "", def.push_integration ? t("originBatPushOff") : ""]
+          .filter(Boolean)
+          .join(" · "),
+        t("devBatShort", def.pct, integ)
+      )}</div>`;
     }
     // Empfang-Warnung (Variante A, docs/mockups/signal-v1): globaler Wert,
     // eigene Schwelle "schwach unter" oder aus; nur mit Empfangswert.
@@ -3234,6 +3255,8 @@ class DevicePanel extends HTMLElement {
     this._settings = {
       loading: true, error: null, saveError: null, saving: false, data: null, draft: null, open: new Set(), info: new Set(),
       resets: { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set() },
+      // Reiter von "Überwachung und Meldungen", gewählte Integration, Filter der Liste.
+      tab: "overview", integ: null, integFilter: "all",
     };
     this._renderSettings();
     if (!dialog.open) {
@@ -3309,17 +3332,15 @@ class DevicePanel extends HTMLElement {
     return [...this._settingsEntryChanges(), ...this._settingsExtraChanges(), ...this._settingsResetChanges()];
   }
 
-  // Abschnitte mit ihren Optionen in der Reihenfolge von Bild 5, dazu
-  // "Batterie" nach der Ausfall-Erkennung.
+  // Abschnitte mit ihren Optionen. Seit 0.34.0 (docs/mockups/notify-v3)
+  // zuerst "Überwachung und Meldungen" mit allem, was überwacht und meldet;
+  // "Integrationen" nur noch mit "Anzeigen".
   _settingsSections() {
     return [
-      ["detection", ["offline_after", "flaky_outages", "startup_grace", "reset_offline"]],
-      ["battery", ["battery_low", "battery_low_integrations", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "reset_battery"]],
-      ["integrations", ["exclude_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "offline_after_integrations"]],
+      ["monitor", Object.values(MON_TAB_KEYS).flat()],
+      ["integrations", ["exclude_integrations"]],
       ["types", ["exclude_types"]],
       ["connections", ["connection_integrations", "reset_connection", "reset_signal"]],
-      ["push", ["notify_service", "notify_click_target", "notify_outage", "notify_online", "notify_group", "notify_delay", "notify_fields", "reset_notify"]],
-      ["persistent", ["outage_persistent"]],
       ["display", ["show_service_devices", "show_disabled_devices", "hide_connections", "connection_order"]],
       ["hidden", ["exclude_devices"]],
       ["ai", ["ai_assessment", "ai_task_entity"]],
@@ -3342,6 +3363,10 @@ class DevicePanel extends HTMLElement {
       errors.battery_push_time = this._t("timeError");
     }
     if (this._batInvalid().length) errors.battery_low_integrations = this._t("settingsRange", ...(st.data.limits?.battery_low || [5, 50]));
+    // "Erst melden nach" nie kürzer als "Ausgefallen nach" (seit 0.34.0,
+    // Wunsch des Nutzers): vorher gilt ein Gerät nicht als ausgefallen.
+    const { offline_after: oa, notify_delay: nd } = st.draft;
+    if (!errors.offline_after && !errors.notify_delay && Number.isInteger(oa) && Number.isInteger(nd) && nd < oa) errors.notify_delay = this._t("delayShort", oa);
     return errors;
   }
 
@@ -3352,32 +3377,6 @@ class DevicePanel extends HTMLElement {
     return Object.entries(st?.draft?.battery_low_integrations || {})
       .filter(([, v]) => v !== "off" && (!Number.isInteger(v) || v < min || v > max))
       .map(([d]) => d);
-  }
-
-  // Auswahl "Ausgefallen nach" einer Integration (Spalte der Tabelle
-  // "Integrationen"): Standard, feste Zeiten, "Nicht überwachen". Ein
-  // gespeicherter Wert ausserhalb der Liste (YAML, Optionsdialog) bleibt wählbar.
-  _offlineSelectHtml(d, x, off) {
-    const saved = this._settings?.data?.values?.offline_after_integrations || {};
-    const own = d.offline_after_integrations || {};
-    const cur = own[x.value];
-    const mins = [...OFFLINE_PRESETS];
-    if (Number.isInteger(cur) && !mins.includes(cur)) mins.push(cur);
-    mins.sort((a, b) => a - b);
-    const pick = cur === undefined ? "default" : String(cur);
-    const opts = [["default", this._t("offlineDefault")], ...mins.map((m) => [String(m), this._t("offlineMin", m)]), ["off", this._t("offlineNone")]];
-    const html = opts.map(([v, l]) => `<option value="${v}" ${v === pick ? "selected" : ""}>${escape(l)}</option>`).join("");
-    const changed = cur !== saved[x.value];
-    return `<span class="ex-col sel"><span class="ex-lbl">${escape(this._t("colOffline"))}</span><span class="opt-select${changed ? " changed" : ""}"><select data-off-mode="${escape(x.value)}" ${off ? "disabled" : ""} aria-label="${escape(`${this._t("colOffline")}: ${x.label}`)}">${html}</select></span></span>`;
-  }
-
-  // Eigene Schwellen für die Zusammenfassung: "Name 25 %", nur gültige.
-  _batOwnSummary(d) {
-    const names = Object.fromEntries((this._settings?.data?.catalog?.battery || []).map((x) => [x.domain, x.name]));
-    const bad = new Set(this._batInvalid());
-    return Object.entries(d.battery_low_integrations || {})
-      .filter(([dom]) => !bad.has(dom))
-      .map(([dom, v]) => `${names[dom] || dom} ${v === "off" ? this._t("batOffSum") : `${v} %`}`);
   }
 
   // Verbindungsarten für die Filter-Chips: alle mit Geräten (wie die Chips,
@@ -3408,11 +3407,19 @@ class DevicePanel extends HTMLElement {
       const task = (this._settings?.data?.catalog?.ai_tasks || []).find((x) => x.value === d.ai_task_entity);
       return d.ai_assessment ? this._t("sumAiOn", task?.name || d.ai_task_entity || "") : this._t("sumAiOff");
     }
-    if (id === "detection") {
+    if (id === "monitor") {
       // Während der Eingabe ungültig: der gespeicherte Wert gilt weiter.
       const errors = this._settingsErrors();
       const num = (k) => (errors[k] ? this._settings?.data?.values?.[k] : d[k]);
-      return this._t("sumDetection", num("offline_after"), num("flaky_outages"), num("startup_grace"));
+      const target = Boolean(d.notify_service && d.notify_service !== "none");
+      return this._t("sumMonitor", {
+        offline: num("offline_after"),
+        push: target && d.notify_outage,
+        delay: num("notify_delay"),
+        battery: num("battery_low"),
+        batPush: target && d.battery_push,
+        daily: d.battery_push_mode === "daily" ? num("battery_push_time") : null,
+      });
     }
     if (id === "display") {
       const chips = (d.hide_connections || []).length;
@@ -3422,34 +3429,9 @@ class DevicePanel extends HTMLElement {
         ((d.connection_order || []).length ? ` · ${this._t("sumChipsOrder")}` : "")
       );
     }
-    if (id === "battery") {
-      const errors = this._settingsErrors();
-      const pct = errors.battery_low ? this._settings?.data?.values?.battery_low : d.battery_low;
-      const daily = d.battery_push_mode === "daily" ? (errors.battery_push_time ? this._settings?.data?.values?.battery_push_time : d.battery_push_time) : null;
-      return this._t("sumBattery", pct, Boolean(d.battery_push), Boolean(d.battery_persistent), this._batOwnSummary(d), daily);
-    }
-    if (id === "push") {
-      const target = d.notify_service && d.notify_service !== "none" ? d.notify_service : "";
-      const kinds = [
-        d.notify_outage && this._t("pushKindOutage"),
-        d.notify_online && this._t("pushKindOnline"),
-        d.battery_push && this._t("pushKindBattery"),
-      ].filter(Boolean);
-      return this._t("sumPush", target, kinds);
-    }
     if (id === "integrations") {
       const list = this._settings?.data?.catalog?.integrations || [];
-      const shown = list.filter((i) => !d.exclude_integrations.includes(i.domain));
-      const push = shown.filter((i) => !(d.notify_exclude_integrations || []).includes(i.domain)).length;
-      const own = Object.keys(d.offline_after_integrations || {}).length;
-      const sum = this._t("sumShown", this._t("sumIntegrations", list.length), d.exclude_integrations.length) + (own ? ` · ${this._t("sumOwnTime", own)}` : "");
-      // "Push für N" nur, wenn es Push-Meldungen gibt (Bild 5).
-      return d.notify_service && d.notify_service !== "none" && (d.notify_outage || d.notify_online) ? `${sum} · ${this._t("sumPushFor", push)}` : sum;
-    }
-    if (id === "persistent") {
-      const list = this._settings?.data?.catalog?.integrations || [];
-      const n = list.filter((i) => !d.exclude_integrations.includes(i.domain) && !(d.persistent_exclude_integrations || []).includes(i.domain)).length;
-      return d.outage_persistent ? this._t("sumPersistentOn", n) : this._t("sumPersistentOff");
+      return this._t("sumShown", this._t("sumIntegrations", list.length), d.exclude_integrations.length);
     }
     if (id === "types") return this._t("sumShown", this._t("sumTypes", this._catalogTypes(d).length), d.exclude_types.length);
     if (id === "hidden") {
@@ -3492,7 +3474,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -3501,42 +3483,6 @@ class DevicePanel extends HTMLElement {
     if (slot) lastHtml.set(slot, this._verSlotHtml);
     dialog.scrollTop = scroll;
     if (focusSel) refocus(dialog.querySelector(focusSel));
-  }
-
-  // Variante A (docs/mockups/battery-v1): eigene Schwelle nur für
-  // Integrationen mit Batteriegeräten, leer = globaler Wert.
-  _batOwnHtml(d, errors) {
-    const st = this._settings;
-    const t = (k, ...a) => this._t(k, ...a);
-    const list = st.data.catalog?.battery || [];
-    const std = errors.battery_low ? st.data.values.battery_low : d.battery_low;
-    const [min, max] = st.data.limits?.battery_low || [5, 50];
-    const own = d.battery_low_integrations || {};
-    const saved = st.data.values.battery_low_integrations || {};
-    const bad = new Set(this._batInvalid());
-    const head = `<div class="opt bat-own"><div class="opt-line"><span class="opt-label">${escape(t("batOwnTitle"))}</span></div>
-      <div class="opt-short" data-bat-short>${escape(t("batOwnShort", std))}</div></div>`;
-    if (!list.length) return head + `<div class="opt-short bat-empty">${escape(t("batOwnEmpty"))}</div>`;
-    // Variante B (docs/mockups/battery-v2): Auswahl wie im Geräte-Popup,
-    // das Feld nur bei eigener Schwelle.
-    const rows = list
-      .map((x) => {
-        const v = own[x.domain];
-        const mode = v === "off" ? "off" : v === undefined ? "default" : "own";
-        const cls = `${bad.has(x.domain) ? " invalid" : ""}${v !== saved[x.domain] ? " changed" : ""}${mode === "off" ? " off" : ""}`;
-        const opts = [["default", t("devBatDefault", std)], ["own", t("devBatOwn")], ["off", t("devBatOff")]]
-          .map(([val, text]) => `<option value="${val}"${val === mode ? " selected" : ""}>${escape(text)}</option>`)
-          .join("");
-        const input = mode === "own"
-          ? `<span class="opt-input"><input type="number" inputmode="numeric" step="1" min="${min}" max="${max}" data-bat="${escape(x.domain)}" value="${escape(v ?? "")}" placeholder="${escape(std)}" aria-label="${escape(`${x.name}: ${t("batOwnCol")}`)}"><span class="unit">%</span></span>`
-          : "";
-        return `<div class="ex-row bat-row${cls}"><span class="ibadge" style="--h:${hue(x.domain)}">${escape(initials(x.name))}</span>
-          <div class="ex-name">${escape(x.name)}<small>${escape(t("batDevices", x.devices, x.weakest))}</small></div>
-          <span class="bat-ctl"><span class="opt-select"><select data-bat-mode="${escape(x.domain)}" aria-label="${escape(`${x.name}: ${t("batOwnColMode")}`)}">${opts}</select>${mdi("chevronDown", 18)}</span>${input}</span></div>`;
-      })
-      .join("");
-    return head + `<div class="ex-head"><span>${escape(t("colIntegration"))}</span><span>${escape(t("batOwnColMode"))}</span></div>${rows}
-      <div class="opt-error" data-bat-error ${errors.battery_low_integrations ? "" : "hidden"}>${escape(errors.battery_low_integrations || "")}</div>`;
   }
 
   // Verbindungsart pro Integration (Variante B): gilt für alle Geräte der
@@ -3664,6 +3610,409 @@ class DevicePanel extends HTMLElement {
       <div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("optFieldsNote1"))}</p><p>${escape(t("optFieldsNote2"))}</p></div></div>${preview}</div>`;
   }
 
+  // --- Überwachung und Meldungen (seit 0.34.0, docs/mockups/notify-v3) -----
+  // Ein Abschnitt mit vier Reitern statt fünf Orten (Wunsch des Nutzers: auf
+  // einen Blick sehen, wann welche Meldung kommt): Übersicht mit einem
+  // Zeitstrahl je Meldung, Ausfall, Batterie, Integrationen (Liste, je
+  // Integration alle Einstellungen mit eigenem Zeitstrahl).
+  _monitorHtml(d, changes, errors, ui) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    const tab = MON_TAB_KEYS[st.tab] ? st.tab : "overview";
+    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["integ", "tabInteg"]]
+      .map(([id, key]) => {
+        const keys = MON_TAB_KEYS[id];
+        // Punkt am Reiter: dort gibt es eine Änderung (blau) oder einen Fehler (rot).
+        const mark = keys.some((k) => errors[k]) ? " err" : keys.some((k) => changes.has(k)) ? " chg" : "";
+        return `<button type="button" role="tab" class="mon-tab${id === tab ? " on" : ""}${mark}" data-set="tab" data-key="${id}" aria-selected="${id === tab}">${escape(t(key))}</button>`;
+      })
+      .join("");
+    const body =
+      tab === "outage"
+        ? this._monOutageHtml(d, changes, errors, ui)
+        : tab === "battery"
+          ? this._monBatteryHtml(d, changes, errors, ui)
+          : tab === "integ"
+            ? this._monIntegHtml(d, changes, errors)
+            : this._monOverviewHtml(d, errors, ui);
+    return `<div class="mon-tabs" role="tablist">${tabs}</div><div class="mon-body" role="tabpanel">${body}</div>`;
+  }
+
+  // Zeitstrahl: Balken mit Marken in festen Abständen (nicht massstäblich).
+  // Eine Marke hat Titel und Unterzeile oder ein Eingabefeld (html).
+  _tlHtml(marks, kind = "") {
+    return `<div class="mtl${kind ? ` ${kind}` : ""}"><div class="mtl-bar"></div>${marks
+      .map(
+        (m) =>
+          `<div class="mtl-mk${m.cls ? ` ${m.cls}` : ""}" style="left:${m.at}%"><i></i><b>${escape(m.title)}</b>${m.html || (m.sub ? `<span>${escape(m.sub)}</span>` : "")}</div>`
+      )
+      .join("")}</div>`;
+  }
+
+  // Marken einer Ausfall-Meldung: Gerät weg, im Panel ausgefallen, Push. Der
+  // Push kommt nie vor "Ausgefallen nach" (beide zählen ab Beginn des
+  // Ausfalls); gleich lang: eine gemeinsame Marke.
+  _outageMarks(offline, delay, push, reason) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const fmt = (m) => t("offlineMin", m);
+    const marks = [{ at: 8, title: "0", sub: t("tlGone") }];
+    if (push && delay > offline) marks.push({ at: 44, title: fmt(offline), sub: t("tlOffline") }, { at: 80, cls: "mk-p", title: fmt(delay), sub: t("tlPush") });
+    else if (push) marks.push({ at: 62, cls: "mk-p mk-both", title: fmt(offline), sub: t("tlBoth") });
+    else marks.push({ at: 44, title: fmt(offline), sub: t("tlOffline") }, { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: reason });
+    return marks;
+  }
+
+  // "Erst melden nach" kürzer als "Ausgefallen nach" (Fehler an beiden Feldern).
+  _delayShort(errors) {
+    const d = this._settings?.draft;
+    return Boolean(d) && !errors.offline_after && Number.isInteger(d.offline_after) && Number.isInteger(d.notify_delay) && d.notify_delay < d.offline_after;
+  }
+
+  // Integrationen für den Reiter "Integrationen": gezeigte aus dem Katalog,
+  // dazu solche mit eigener Einstellung ohne Geräte (zum Zurücksetzen). Je
+  // Integration, was vom Standard abweicht, als kurze Texte.
+  _integItems(d) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    const cat = st.data?.catalog || {};
+    const hidden = new Set(d.exclude_integrations || []);
+    const bat = new Map((cat.battery || []).map((b) => [b.domain, b.devices]));
+    const offMap = d.offline_after_integrations || {};
+    const batMap = d.battery_low_integrations || {};
+    const noPush = new Set(d.notify_exclude_integrations || []);
+    const noPers = new Set(d.persistent_exclude_integrations || []);
+    const noBatPush = new Set(d.battery_push_exclude_integrations || []);
+    const list = (cat.integrations || []).filter((i) => !hidden.has(i.domain)).map((i) => ({ domain: i.domain, name: i.name, devices: i.devices }));
+    const known = new Set(list.map((x) => x.domain));
+    for (const dom of [...Object.keys(offMap), ...Object.keys(batMap), ...noPush, ...noPers, ...noBatPush]) {
+      if (known.has(dom) || hidden.has(dom)) continue;
+      known.add(dom);
+      list.push({ domain: dom, name: this._integrations[dom] || dom, devices: 0 });
+    }
+    return list.map((x) => {
+      const off = offMap[x.domain];
+      const b = batMap[x.domain];
+      const unmon = off === "off";
+      const flags = [noPush.has(x.domain) && t("diffNoPush"), noPers.has(x.domain) && t("diffNoPers")].filter(Boolean);
+      const out = Number.isInteger(off) || flags.length ? t("diffOutage", Number.isInteger(off) ? t("offlineMin", off) : null, flags) : null;
+      const batText = b !== undefined || noBatPush.has(x.domain) ? t("diffBattery", Number.isInteger(b) ? b : null, b === "off", noBatPush.has(x.domain)) : null;
+      const diff = unmon ? t("integUnmon") : [out, batText].filter(Boolean).join(" · ");
+      return { ...x, batDevices: bat.get(x.domain) || 0, unmon, out, bat: batText, own: Boolean(unmon || out || batText), diff };
+    });
+  }
+
+  // Abweichungen für die Übersicht: Integrationen und Geräte je Meldung.
+  _monDiff(d) {
+    const ov = this._settings.data?.overrides || {};
+    const items = this._integItems(d);
+    return {
+      outI: items.filter((x) => x.unmon || x.out).length,
+      batI: items.filter((x) => x.bat).length,
+      outD: new Set([...(ov.offline || []), ...(ov.notify || [])].map((x) => x.id)).size,
+      batD: (ov.battery || []).length,
+    };
+  }
+
+  // Kasten "N Integrationen weichen ab" mit Sprung in den Reiter "Integrationen".
+  _integDiffBox(d, kind) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const items = this._integItems(d).filter((x) => (kind === "out" ? x.unmon || x.out : x.bat));
+    const text = items.map((x) => `${x.name}: ${kind === "out" ? (x.unmon ? t("integUnmon") : x.out) : x.bat}`).join(" · ");
+    return `<div class="opt mon-diff"><div class="opt-line"><span class="opt-label">${escape(t("diffIntegTitle", items.length))}</span><button type="button" class="lnk" data-set="goto" data-key="integ" data-filter="${items.length ? "own" : "all"}">${escape(t("diffIntegGo"))}</button></div>
+      <div class="opt-short">${escape(items.length ? text : t("diffIntegNone"))}</div></div>`;
+  }
+
+  _monOverviewHtml(d, errors, ui) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    // Während der Eingabe ungültig: der gespeicherte Wert gilt weiter.
+    const val = (k) => (errors[k] ? st.data.values[k] : d[k]);
+    const target = Boolean(d.notify_service && d.notify_service !== "none");
+    const reason = target ? t("tlSwitchedOff") : t("tlNoTarget");
+    const diff = this._monDiff(d);
+    const chip = (key, label) =>
+      `<button type="button" class="mon-chip${d[key] ? " on" : ""}" data-set="chip" data-key="${key}" aria-pressed="${Boolean(d[key])}">${d[key] ? mdi("check", 14) : ""}${escape(label)}</button>`;
+    const diffLine = (nI, nD, devTab) =>
+      `<div class="lane-diff">${
+        nI || nD
+          ? `${escape(t("diffLabel"))} ${[
+              nI ? `<button type="button" class="lnk" data-set="goto" data-key="integ" data-filter="own">${escape(t("diffInteg", nI))}</button>` : "",
+              nD ? `<button type="button" class="lnk" data-set="tab" data-key="${devTab}">${escape(t("diffDev", nD))}</button>` : "",
+            ]
+              .filter(Boolean)
+              .join(" · ")}`
+          : escape(t("diffNone"))
+      }</div>`;
+    const lane = (icon, cls, title, tab, tl, chips, diffHtml) =>
+      `<div class="lane" data-lane="${tab}"><div class="lane-head"><span class="lane-ic ${cls}">${mdi(icon, 16)}</span><span class="lane-t">${escape(title)}</span>
+        <button type="button" class="lnk" data-set="tab" data-key="${tab}">${escape(t("laneEdit"))}</button></div>${tl}<div class="lane-chips">${chips}</div>${diffHtml}</div>`;
+    const outTl = this._tlHtml(this._outageMarks(val("offline_after"), val("notify_delay"), target && d.notify_outage, reason));
+    const daily = d.battery_push_mode === "daily";
+    const batPush = target && d.battery_push;
+    const batTl = this._tlHtml(
+      [
+        { at: 14, title: t("tlLow", val("battery_low")), sub: t("tlRed") },
+        batPush
+          ? { at: 78, cls: "mk-p", title: daily ? t("tlDaily", val("battery_push_time")) : t("tlInstant"), sub: daily ? t(d.battery_push_daily === "all" ? "tlDailyAll" : "tlDailyNew") : t("tlInstantSub") }
+          : { at: 78, cls: "mk-off", title: t("tlNoPush"), sub: reason },
+      ],
+      "mtl-b"
+    );
+    const warn = !target && (d.notify_outage || d.notify_online || d.battery_push) ? t("noTargetWarn") : null;
+    return (
+      lane("pulse", "out", t("laneOutage"), "outage", outTl,
+        chip("notify_outage", t("chipPush")) + chip("outage_persistent", t("chipPersistent")) + chip("notify_online", t("chipOnline")) + chip("notify_group", t("chipGroup")),
+        diffLine(diff.outI, diff.outD, "outage")) +
+      lane("battery", "bat", t("laneBattery"), "battery", batTl, chip("battery_push", t("chipPush")) + chip("battery_persistent", t("chipPersistent")), diffLine(diff.batI, diff.batD, "battery")) +
+      ui.row("notify_service", t("optNotifyTarget"), ui.select("notify_service", ui.targets, t("optNotifyTarget")), t("optNotifyTargetShort"), t("optNotifyTargetInfo"), warn) +
+      ui.row("notify_click_target", t("optClick"), ui.select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null)
+    );
+  }
+
+  // Zahlenfeld im Zeitstrahl (beim Tippen nur _updateSettingsMeta, kein Neuaufbau).
+  _tlInput(d, key, unit, label, bad, changed) {
+    const [min, max] = this._settings.data.limits?.[key] || [];
+    return `<span class="opt-input mtl-in${bad ? " bad" : ""}${changed ? " chg" : ""}"><input type="number" inputmode="numeric" step="1" ${min != null ? `min="${min}" max="${max}"` : ""} data-opt="${key}" value="${escape(d[key] ?? "")}" aria-label="${escape(label)}"><span class="unit">${escape(unit)}</span></span>`;
+  }
+
+  _monOutageHtml(d, changes, errors, ui) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const short = this._delayShort(errors);
+    const target = Boolean(d.notify_service && d.notify_service !== "none");
+    const tl = this._tlHtml(
+      [
+        { at: 8, title: "0", sub: t("tlGone") },
+        { at: 44, title: t("optOfflineAfter"), html: this._tlInput(d, "offline_after", t("minuteUnit"), t("optOfflineAfter"), errors.offline_after || short, changes.has("offline_after")) },
+        { at: 80, cls: "mk-p", title: t("optDelay"), html: this._tlInput(d, "notify_delay", t("minuteUnit"), t("optDelay"), errors.notify_delay, changes.has("notify_delay")) },
+      ],
+      "mtl-e"
+    );
+    const err = errors.offline_after || errors.notify_delay;
+    return `${tl}<div class="opt-error mtl-err" data-tl-error="offline_after,notify_delay" ${err ? "" : "hidden"}>${escape(err || "")}</div>
+      <div class="opt-short mtl-note">${escape(t("tlNote"))}${ui.infoBtn("offline_after")}</div>
+      ${this._settings.info.has("offline_after") ? `<div class="opt-info">${escape(t("optOfflineAfterInfo"))}</div>` : ""}
+      <div class="mon-grp">${escape(t("grpDetect"))}</div>
+      ${ui.row("flaky_outages", t("optFlaky"), ui.num("flaky_outages", t("unitOutages"), t("optFlaky")), t("optFlakyShort"), t("optFlakyInfo"))}
+      ${ui.row("startup_grace", t("optGrace"), ui.num("startup_grace", t("minuteUnit"), t("optGrace")), t("optGraceShort"), t("optGraceInfo"))}
+      <div class="mon-grp">${escape(t("grpNotify"))}</div>
+      ${ui.row("notify_outage", t("optOutage"), ui.sw("notify_outage", t("optOutage")), target || !d.notify_outage ? t("optOutageShort") : null, null, target || !d.notify_outage ? null : t("noTargetWarn"))}
+      ${ui.row("notify_online", t("optOnline"), ui.sw("notify_online", t("optOnline")), t("optOnlineShort"), null)}
+      ${ui.row("notify_group", t("optGroup"), ui.sw("notify_group", t("optGroup")), t("optGroupShort"), null)}
+      ${ui.row("outage_persistent", t("optPersistent"), ui.sw("outage_persistent", t("optPersistent")), t("optOutagePersistentShort"), null)}
+      ${this._notifyFieldsHtml(d, changes)}
+      <div class="mon-grp">${escape(t("grpDiff"))}</div>
+      ${this._integDiffBox(d, "out")}${this._overridesHtml("offline")}${this._overridesHtml("notify")}`;
+  }
+
+  _monBatteryHtml(d, changes, errors, ui) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const target = Boolean(d.notify_service && d.notify_service !== "none");
+    const daily = d.battery_push_mode === "daily";
+    const time = errors.battery_push_time ? this._settings.data.values.battery_push_time : d.battery_push_time;
+    const push =
+      d.battery_push && target
+        ? { at: 76, cls: "mk-p", title: daily ? t("tlDaily", time) : t("tlInstant"), sub: daily ? t(d.battery_push_daily === "all" ? "tlDailyAll" : "tlDailyNew") : t("tlInstantSub") }
+        : { at: 76, cls: "mk-off", title: t("tlNoPush"), sub: target ? t("tlSwitchedOff") : t("tlNoTarget") };
+    const tl = this._tlHtml(
+      [{ at: 18, title: t("optBatteryLow"), html: this._tlInput(d, "battery_low", t("unitPercent"), t("optBatteryLow"), errors.battery_low, changes.has("battery_low")) }, push],
+      "mtl-b mtl-e"
+    );
+    const noTarget = d.battery_push && !target;
+    return `${tl}<div class="opt-error mtl-err" data-tl-error="battery_low" ${errors.battery_low ? "" : "hidden"}>${escape(errors.battery_low || "")}</div>
+      <div class="opt-short mtl-note">${escape(t("tlBatNote"))}</div>
+      <div class="mon-grp">${escape(t("grpNotify"))}</div>
+      ${ui.row("battery_push", t("optBatteryPush"), ui.sw("battery_push", t("optBatteryPush")), noTarget ? null : t("optBatteryPushShort"), t("optBatteryPushInfo"), noTarget ? t("noTargetWarn") : null)}
+      ${
+        d.battery_push
+          ? ui.row(
+              "battery_push_mode",
+              t("optPushMode"),
+              `<span class="opt-pair">${ui.select("battery_push_mode", [["instant", t("pushModeInstant")], ["daily", t("pushModeDaily")]], t("optPushMode"))}${
+                daily
+                  ? `<span class="opt-input${errors.battery_push_time ? " bad" : ""}"><input type="time" data-opt="battery_push_time" value="${escape(d.battery_push_time || "")}" aria-label="${escape(t("pushModeDaily"))}"></span>`
+                  : ""
+              }</span>`,
+              daily ? t("optPushModeShortDaily", d.battery_push_time || "–") : t("optPushModeShortInstant"),
+              null,
+              null,
+              ["battery_push_time"]
+            ) + (daily ? ui.row("battery_push_daily", t("optPushDaily"), ui.select("battery_push_daily", [["new", t("dailyNew")], ["all", t("dailyAll")]], t("optPushDaily")), t("optPushDailyShort"), null) : "")
+          : ""
+      }
+      ${ui.row("battery_persistent", t("optPersistent"), ui.sw("battery_persistent", t("optPersistent")), t("optBatteryPersistentShort"), t("optBatteryPersistentInfo"))}
+      ${this._batteryFieldsHtml(d, changes)}
+      <div class="mon-grp">${escape(t("grpDiff"))}</div>
+      ${this._integDiffBox(d, "bat")}${this._overridesHtml("battery")}`;
+  }
+
+  // Inhalt der Batterie-Meldung (seit 0.34.0, notify-v2 Bild 4: anpassbar wie
+  // die Ausfall-Meldung), mit Vorschau am schwächsten Gerät mit Batterie.
+  _batteryFieldsHtml(d, changes) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const on = new Set(d.battery_fields || []);
+    const labels = { battery: "bfBattery", area: "fieldArea", integration: "fieldIntegration", model: "fieldModel" };
+    const grid = BATTERY_FIELDS.map(
+      (f) => `<label class="nf-item"><span>${escape(t(labels[f]))}</span><span class="switch"><input type="checkbox" data-bfield="${f}" ${on.has(f) ? "checked" : ""} aria-label="${escape(t(labels[f]))}"><span></span></span></label>`
+    ).join("");
+    const withBat = this._devices.filter((x) => x.battery?.level != null);
+    // Schwach zuerst, dann mit den meisten Angaben, dann der tiefste Stand.
+    const score = (x) => (x.battery.low ? 4 : 0) + (x.area ? 1 : 0) + (x.manufacturer || x.model ? 1 : 0);
+    const dev = withBat.slice().sort((a, b) => score(b) - score(a) || a.battery.level - b.battery.level)[0] || null;
+    let invented = false;
+    const sample = (value, example) => {
+      if (value) return escape(value);
+      invented = true;
+      return `<i>${escape(example)}</i>`;
+    };
+    const level = () => sample(dev ? `${dev.battery.level} %` : "", t("pvSampleBattery"));
+    const parts = BATTERY_FIELDS.filter((f) => on.has(f)).map((f) =>
+      f === "battery"
+        ? level()
+        : f === "area"
+          ? sample(dev?.area || "", t("pvSampleArea"))
+          : f === "integration"
+            ? sample(dev?.integration ? this._integName(dev) : "", t("pvSampleInteg"))
+            : sample([dev?.manufacturer, dev?.model].filter(Boolean).join(" "), t("pvSampleModel"))
+    );
+    // Nichts gewählt: das Backend schickt den Stand.
+    const text = parts.length ? parts.join(" · ") : level();
+    const preview = d.battery_push
+      ? `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
+          <div class="pv-title">${escape(t("pvBatTitle", dev ? dev.name : t("pvSample")))}</div><div class="pv-text">${text}</div></div>
+          <div class="opt-short">${escape(t("pvBatNote"))}${invented ? ` ${escape(t("pvExample"))}` : ""}</div></div>`
+      : "";
+    return `<div class="opt${changes.has("battery_fields") ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optBatFields"))}</span></div>
+      <div class="opt-short">${escape(t("optBatFieldsShort"))}</div><div class="nf-grid">${grid}</div>${preview}</div>`;
+  }
+
+  _monIntegHtml(d, changes, errors) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    if (st.integ) return this._integDetailHtml(d, st.integ, errors);
+    const items = this._integItems(d);
+    const savedItems = new Map(this._integItems(st.data.values).map((x) => [x.domain, x.diff]));
+    const own = items.filter((x) => x.own);
+    const shown = st.integFilter === "own" ? own : items;
+    const chip = (key, label) =>
+      `<button type="button" class="mon-chip${st.integFilter === key || (key === "all" && st.integFilter !== "own") ? " on" : ""}" data-set="ifilter" data-key="${key}" aria-pressed="${st.integFilter === key || (key === "all" && st.integFilter !== "own")}">${escape(label)}</button>`;
+    const rows = shown
+      .map((x) => {
+        const changed = savedItems.get(x.domain) !== x.diff;
+        return `<button type="button" class="ilist-row${changed ? " changed" : ""}" data-set="integ" data-key="${escape(x.domain)}"><span class="ibadge" style="--h:${hue(x.domain)}">${escape(initials(x.name))}</span>
+          <span class="ilist-name">${escape(x.name)}<small>${escape(t("integDevs", x.devices, x.batDevices))}</small><small class="ilist-diff${x.unmon ? " unmon" : x.own ? " own" : ""}">${escape(x.own ? x.diff : t("integStandard"))}</small></span>${mdi("chevron", 18)}</button>`;
+      })
+      .join("");
+    return `<div class="opt-short mon-intro">${escape(t("integListIntro"))}</div>
+      <div class="mon-flt">${chip("all", t("filterAll", items.length))}${chip("own", t("filterOwn", own.length))}</div>
+      ${shown.length ? `<div class="ilist">${rows}</div>` : `<div class="opt-short mon-empty">${escape(t(items.length ? "integNoneOwn" : "integNone"))}</div>`}`;
+  }
+
+  // Alle Einstellungen einer Integration (notify-v3, Bild 3): Zeitstrahl mit
+  // den für sie wirksamen Zeiten, Ausfall, Batterie, ihre Geräte mit eigener
+  // Einstellung. Etikett "Standard" oder "Eigene" wie im Geräte-Popup.
+  _integDetailHtml(d, dom, errors) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    const item = this._integItems(d).find((x) => x.domain === dom) || { domain: dom, name: this._integrations[dom] || dom, devices: 0, batDevices: 0 };
+    const saved = st.data.values;
+    const offMap = d.offline_after_integrations || {};
+    const batMap = d.battery_low_integrations || {};
+    const off = offMap[dom];
+    const unmon = off === "off";
+    const val = (k) => (errors[k] ? saved[k] : d[k]);
+    const gOff = val("offline_after");
+    const gDelay = val("notify_delay");
+    const eff = Number.isInteger(off) ? off : gOff;
+    const target = Boolean(d.notify_service && d.notify_service !== "none");
+    const has = (key) => (d[key] || []).includes(dom);
+    const pushOn = target && d.notify_outage && !has("notify_exclude_integrations");
+    const fmt = (m) => t("offlineMin", m);
+    const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+    const origin = (own, would) =>
+      `<div class="opt-origin"><span class="origin ${own ? "own" : "std"}">${escape(t(own ? "originOwn" : "originStandard"))}</span>${own && would ? `<span>${escape(t("originDefaultWould", would))}</span>` : ""}</div>`;
+    const swi = (attrs, checked, label) =>
+      `<label class="switch"><input type="checkbox" ${attrs} ${checked ? "checked" : ""} ${unmon ? "disabled" : ""} aria-label="${escape(label)}"><span></span></label>`;
+    const opt = (changed, label, control, originHtml, extra = "", cls = "") =>
+      `<div class="opt${cls}${changed ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(label)}</span>${control}</div>${extra}${originHtml}</div>`;
+    const listSw = (key, label) =>
+      opt(has(key) !== (saved[key] || []).includes(dom), label, swi(`data-list="${key}" data-value="${escape(dom)}"`, !has(key), `${label}: ${item.name}`), origin(has(key)));
+    let tl;
+    if (unmon) tl = `<div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("integUnmonInfo"))}</p></div></div>`;
+    else {
+      const reason = target ? t("tlSwitchedOff") : t("tlNoTarget");
+      const later = pushOn && gDelay < eff;
+      const marks = later
+        ? [{ at: 8, title: "0", sub: t("tlGone") }, { at: 40, cls: "mk-ghost", title: fmt(gDelay), sub: t("optDelay") }, { at: 80, cls: "mk-p mk-both", title: fmt(eff), sub: t("tlBoth") }]
+        : this._outageMarks(eff, gDelay, pushOn, has("notify_exclude_integrations") && target && d.notify_outage ? t("tlIntegOff") : reason);
+      tl = this._tlHtml(marks) + (later ? `<div class="opt-short mtl-note">${escape(t("integPushLater", fmt(eff)))}</div>` : "");
+    }
+    // Ausgefallen nach: Standard oder feste Zeiten; "Nicht überwachen" ist der Schalter darüber.
+    const mins = [...OFFLINE_PRESETS];
+    if (Number.isInteger(off) && !mins.includes(off)) mins.push(off);
+    mins.sort((a, b) => a - b);
+    const offOpts = [["default", t("integOffDefault", fmt(gOff))], ...mins.map((m) => [String(m), fmt(m)])]
+      .map(([v, l]) => `<option value="${v}"${v === (Number.isInteger(off) ? String(off) : "default") ? " selected" : ""}>${escape(l)}</option>`)
+      .join("");
+    const offSel = `<span class="opt-select"><select data-off-mode="${escape(dom)}" ${unmon ? "disabled" : ""} aria-label="${escape(`${t("optOfflineAfter")}: ${item.name}`)}">${offOpts}</select>${mdi("chevronDown", 18)}</span>`;
+    let html =
+      `<button type="button" class="iback" data-set="integ" data-key="">${mdi("chevron", 18)}${escape(t("integBack"))}</button>
+      <div class="ihead"><span class="ibadge" style="--h:${hue(dom)}">${escape(initials(item.name))}</span><div><b>${escape(item.name)}</b><small>${escape(t("integDevs", item.devices, item.batDevices))}</small></div></div>
+      ${tl}<div class="mon-grp">${escape(t("grpOutage"))}</div>` +
+      opt(!same(unmon, (saved.offline_after_integrations || {})[dom] === "off"), t("optMonitor"),
+        `<label class="switch"><input type="checkbox" data-imon="${escape(dom)}" ${unmon ? "" : "checked"} aria-label="${escape(`${t("optMonitor")}: ${item.name}`)}"><span></span></label>`,
+        origin(unmon), unmon ? "" : `<div class="opt-short">${escape(t("optMonitorShort"))}</div>`) +
+      `<div class="${unmon ? "mon-dis" : ""}">` +
+      opt(!same(Number.isInteger(off) ? off : null, Number.isInteger((saved.offline_after_integrations || {})[dom]) ? saved.offline_after_integrations[dom] : null), t("optOfflineAfter"), offSel, origin(Number.isInteger(off), fmt(gOff))) +
+      listSw("notify_exclude_integrations", t("optPushOutage")) +
+      (target && d.notify_outage ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integPushGlobalOff" : "noTargetWarn"))}</div>`) +
+      listSw("persistent_exclude_integrations", t("optPersistent"));
+    // Batterie nur mit Batteriegeräten oder eigener Einstellung (zum Zurücksetzen).
+    if (item.batDevices || dom in batMap || has("battery_push_exclude_integrations")) {
+      const b = batMap[dom];
+      const mode = b === "off" ? "off" : b === undefined ? "default" : "own";
+      const std = val("battery_low");
+      const [min, max] = st.data.limits?.battery_low || [5, 50];
+      const bad = this._batInvalid().includes(dom);
+      const batSel = `<span class="bat-ctl"><span class="opt-select"><select data-bat-mode="${escape(dom)}" ${unmon ? "disabled" : ""} aria-label="${escape(`${t("optBatteryLow")}: ${item.name}`)}">${[
+        ["default", t("integBatDefault", std)],
+        ["own", t("originOwn")],
+        ["off", t("devBatOff")],
+      ]
+        .map(([v, l]) => `<option value="${v}"${v === mode ? " selected" : ""}>${escape(l)}</option>`)
+        .join("")}</select>${mdi("chevronDown", 18)}</span>${
+        mode === "own"
+          ? `<span class="opt-input${bad ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="${min}" max="${max}" data-bat="${escape(dom)}" value="${escape(b ?? "")}" placeholder="${escape(std)}" aria-label="${escape(`${item.name}: ${t("optBatteryLow")}`)}"><span class="unit">%</span></span>`
+          : ""
+      }</span>`;
+      html +=
+        `<div class="mon-grp">${escape(t("grpBattery"))}</div>` +
+        opt(!same(b, (saved.battery_low_integrations || {})[dom]), t("optBatteryLow"), batSel, origin(mode !== "default", `${std} %`),
+          `<div class="opt-error" data-bat-error ${errors.battery_low_integrations && bad ? "" : "hidden"}>${escape(bad ? errors.battery_low_integrations || "" : "")}</div>`, " bat-row") +
+        listSw("battery_push_exclude_integrations", t("optBatPush")) +
+        (target && d.battery_push ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integBatPushGlobalOff" : "noTargetWarn"))}</div>`);
+    }
+    html += "</div>";
+    // Geräte der Integration mit eigener Einstellung, zum Zurücksetzen wie im Reiter.
+    const ov = st.data.overrides || {};
+    const devs = ["offline", "notify", "battery"].flatMap((kind) => (ov[kind] || []).filter((x) => x.domain === dom).map((x) => ({ kind, x })));
+    if (devs.length) {
+      const rows = devs
+        .map(({ kind, x }) => {
+          const on = st.resets[kind].has(x.id);
+          const value = kind === "offline" ? (x.value === "off" ? t("ovrKindUnmon") : t("ovrKindOffline", fmt(x.value))) : kind === "notify" ? t("ovrKindNotify") : t("ovrKindBattery", x.value);
+          const label = t(on ? "ovrUndo" : "ovrReset", x.name);
+          return `<div class="ovr-row${on ? " reset" : ""}"><span class="ovr-name">${escape(x.name)}${x.area ? `<small>${escape(x.area)}</small>` : ""}</span>
+            <span class="ovr-val">${on ? `<s>${escape(value)}</s> ${escape(t("ovrToInteg"))}` : escape(value)}</span>
+            <button type="button" class="ovr-x" data-set="ovr-one" data-key="${kind}:${escape(x.id)}" title="${escape(label)}" aria-label="${escape(label)}">${mdi(on ? "reset" : "close", 16)}</button></div>`;
+        })
+        .join("");
+      html += `<div class="mon-grp">${escape(t("integDevTitle"))}</div><div class="ovr-list">${rows}</div>`;
+    }
+    const anyOwn = off !== undefined || dom in batMap || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations"].some(has);
+    html += `<div class="integ-reset"><button type="button" class="ovr-all" data-set="integ-reset" data-key="${escape(dom)}" ${anyOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("integReset"))}</button></div>`;
+    return html;
+  }
+
   _settingsBodyHtml() {
     const st = this._settings;
     const d = st.draft;
@@ -3693,7 +4042,6 @@ class DevicePanel extends HTMLElement {
       x.value,
       x.kind === "none" ? t("notifyNone") : x.kind === "entity" ? t("notifyEntity", x.value) : x.kind === "missing" ? t("notifyMissing", x.value) : x.value,
     ]);
-    const noTarget = !d.notify_service || d.notify_service === "none";
     const num = (key, unit, label) => {
       const [min, max] = st.data.limits?.[key] || [];
       return `<span class="opt-input"><input type="number" inputmode="numeric" step="1" ${min != null ? `min="${min}" max="${max}"` : ""} data-opt="${key}" value="${escape(d[key] ?? "")}" aria-label="${escape(label)}"><span class="unit">${escape(unit)}</span></span>`;
@@ -3755,54 +4103,16 @@ class DevicePanel extends HTMLElement {
       sub: [x.area, x.integration].filter(Boolean).join(" · "),
       badge: `<span class="ibadge type">${typeIcon(x.type, 18)}</span>`,
     }));
+    const ui = { row, sw, select, num, targets, infoBtn };
     const fields = {
-      detection:
-        row("offline_after", t("optOfflineAfter"), num("offline_after", t("minuteUnit"), t("optOfflineAfter")), t("optOfflineAfterShort"), t("optOfflineAfterInfo")) +
-        row("flaky_outages", t("optFlaky"), num("flaky_outages", t("unitOutages"), t("optFlaky")), t("optFlakyShort"), t("optFlakyInfo")) +
-        row("startup_grace", t("optGrace"), num("startup_grace", t("minuteUnit"), t("optGrace")), t("optGraceShort"), t("optGraceInfo")) +
-        this._overridesHtml("offline"),
-      battery:
-        row("battery_low", t("optBatteryLow"), num("battery_low", t("unitPercent"), t("optBatteryLow")), t("optBatteryLowShort"), null) +
-        row("battery_push", t("optBatteryPush"), sw("battery_push", t("optBatteryPush")), d.battery_push && noTarget ? null : t("optBatteryPushShort"), t("optBatteryPushInfo"),
-          d.battery_push && noTarget ? t("optBatteryPushNoTarget") : null) +
-        (d.battery_push
-          ? row(
-              "battery_push_mode",
-              t("optPushMode"),
-              `<span class="opt-pair">${select("battery_push_mode", [["instant", t("pushModeInstant")], ["daily", t("pushModeDaily")]], t("optPushMode"))}${
-                d.battery_push_mode === "daily"
-                  ? `<span class="opt-input${errors.battery_push_time ? " bad" : ""}"><input type="time" data-opt="battery_push_time" value="${escape(d.battery_push_time || "")}" aria-label="${escape(t("pushModeDaily"))}"></span>`
-                  : ""
-              }</span>`,
-              d.battery_push_mode === "daily" ? t("optPushModeShortDaily", d.battery_push_time || "–") : t("optPushModeShortInstant"),
-              null,
-              null,
-              ["battery_push_time"]
-            ) +
-            (d.battery_push_mode === "daily"
-              ? row("battery_push_daily", t("optPushDaily"), select("battery_push_daily", [["new", t("dailyNew")], ["all", t("dailyAll")]], t("optPushDaily")), t("optPushDailyShort"), null)
-              : "")
-          : "") +
-        row("battery_persistent", t("optBatteryPersistent"), sw("battery_persistent", t("optBatteryPersistent")), t("optBatteryPersistentShort"), t("optBatteryPersistentInfo")) +
-        this._batOwnHtml(d, errors) +
-        this._overridesHtml("battery"),
-      integrations: exTable("exclude_integrations", integrations, t("integIntro"), false, [
-        ["exclude_integrations", t("colShow")],
-        ["notify_exclude_integrations", t("colPush")],
-        ["persistent_exclude_integrations", t("colPersistent")],
-      ], null, { label: t("colOffline"), html: (x, off) => this._offlineSelectHtml(d, x, off) }),
+      monitor: this._monitorHtml(d, changes, errors, ui),
+      // Nur noch "Anzeigen" (seit 0.34.0); Überwachen und Melden pro
+      // Integration steht in "Überwachung und Meldungen" › "Integrationen".
+      integrations:
+        `<div class="nf-note integ-goto">${mdi("info", 16)}<div><p>${escape(t("integGoto"))} <button type="button" class="lnk" data-set="goto" data-key="integ">${escape(t("integGotoLink"))}</button></p></div></div>` +
+        exTable("exclude_integrations", integrations, t("integIntroShow")),
       types: exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`),
       connections: this._connIntegHtml(d) + this._overridesHtml("connection") + this._overridesHtml("signal"),
-      push:
-        row("notify_service", t("optNotifyTarget"), select("notify_service", targets, t("optNotifyTarget")), t("optNotifyTargetShort"), t("optNotifyTargetInfo")) +
-        row("notify_click_target", t("optClick"), select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null) +
-        row("notify_outage", t("optOutage"), sw("notify_outage", t("optOutage")), t("optOutageShort", st.data.values.offline_after ?? 2, errors.notify_delay ? st.data.values.notify_delay : d.notify_delay), null) +
-        row("notify_online", t("optOnline"), sw("notify_online", t("optOnline")), t("optOnlineShort"), null) +
-        row("notify_group", t("optGroup"), sw("notify_group", t("optGroup")), t("optGroupShort"), null) +
-        row("notify_delay", t("optDelay"), num("notify_delay", t("minuteUnit"), t("optDelay")), t("optDelayShort"), null) +
-        this._notifyFieldsHtml(d, changes) +
-        this._overridesHtml("notify"),
-      persistent: row("outage_persistent", t("optOutagePersistent"), sw("outage_persistent", t("optOutagePersistent")), t("optOutagePersistentShort"), null),
       display:
         row("show_service_devices", t("optShowService"), sw("show_service_devices", t("optShowService")), t("optShowServiceShort"), t("optShowServiceInfo")) +
         row("show_disabled_devices", t("optShowDisabled"), sw("show_disabled_devices", t("optShowDisabled")), t("optShowDisabledShort"), null) +
@@ -3830,8 +4140,8 @@ class DevicePanel extends HTMLElement {
       updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
     const titles = {
-      detection: "secDetection", battery: "secBattery", integrations: "secIntegrations", types: "secTypes", connections: "secConnections", push: "secPush",
-      persistent: "secPersistent", display: "secDisplay", hidden: "secHidden", ai: "secAiSettings", updates: "secUpdates",
+      monitor: "secMonitor", integrations: "secIntegrations", types: "secTypes", connections: "secConnections",
+      display: "secDisplay", hidden: "secHidden", ai: "secAiSettings", updates: "secUpdates",
     };
     return (
       `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
@@ -3868,7 +4178,37 @@ class DevicePanel extends HTMLElement {
       const action = btn.dataset.set;
       if (action === "close") this._closeSettings();
       else if (action === "save") this._saveSettings();
-      else if (action === "section" || action === "info") {
+      else if (action === "tab" || action === "goto" || action === "integ" || action === "ifilter") {
+        // Reiter, Sprung aus Übersicht oder Abschnitt "Integrationen", Liste
+        // und eine Integration (leer = zurück zur Liste).
+        if (action === "tab" || action === "goto") {
+          st.tab = btn.dataset.key;
+          st.integ = null;
+          if (btn.dataset.filter) st.integFilter = btn.dataset.filter;
+          if (action === "goto") st.open.add("monitor");
+        } else if (action === "integ") st.integ = btn.dataset.key || null;
+        else st.integFilter = btn.dataset.key;
+        this._renderSettings();
+        // Neuer Inhalt beginnt oben: die Reiter ins Bild, wenn sie darüber liegen.
+        if (action !== "ifilter") this.shadowRoot.querySelector("dialog.settings .mon-tabs")?.scrollIntoView({ block: action === "goto" ? "start" : "nearest" });
+      } else if (action === "chip") {
+        if (!st.draft) return;
+        st.draft[btn.dataset.key] = !st.draft[btn.dataset.key];
+        this._renderSettings();
+      } else if (action === "integ-reset") {
+        // Alles einer Integration auf den Standard (beim Speichern).
+        if (!st.draft) return;
+        const dom = btn.dataset.key;
+        for (const key of ["offline_after_integrations", "battery_low_integrations"]) {
+          const own = { ...(st.draft[key] || {}) };
+          delete own[dom];
+          st.draft[key] = own;
+        }
+        for (const key of ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations"]) {
+          st.draft[key] = (st.draft[key] || []).filter((x) => x !== dom);
+        }
+        this._renderSettings();
+      } else if (action === "section" || action === "info") {
         const set = action === "section" ? st.open : st.info;
         const key = action === "section" ? btn.dataset.id : btn.dataset.key;
         if (set.has(key)) set.delete(key);
@@ -4007,12 +4347,20 @@ class DevicePanel extends HTMLElement {
         return;
       }
       if (!st?.draft || el.type !== "checkbox") return;
-      if (el.dataset.nfield) {
+      if (el.dataset.nfield || el.dataset.bfield) {
         // Inhalt der Meldung: Liste in fester Reihenfolge.
-        const on = new Set(st.draft.notify_fields || []);
-        if (el.checked) on.add(el.dataset.nfield);
-        else on.delete(el.dataset.nfield);
-        st.draft.notify_fields = NOTIFY_FIELDS.filter((f) => on.has(f));
+        const [key, order, field] = el.dataset.nfield ? ["notify_fields", NOTIFY_FIELDS, el.dataset.nfield] : ["battery_fields", BATTERY_FIELDS, el.dataset.bfield];
+        const on = new Set(st.draft[key] || []);
+        if (el.checked) on.add(field);
+        else on.delete(field);
+        st.draft[key] = order.filter((f) => on.has(f));
+      } else if (el.dataset.imon) {
+        // "Überwachen" einer Integration = "Ausgefallen nach" nicht "off";
+        // wieder ein: Standard (eine eigene Zeit ist mit "off" ersetzt).
+        const own = { ...(st.draft.offline_after_integrations || {}) };
+        if (el.checked) delete own[el.dataset.imon];
+        else own[el.dataset.imon] = "off";
+        st.draft.offline_after_integrations = own;
       } else if (el.dataset.opt) st.draft[el.dataset.opt] = el.checked;
       else if (el.dataset.list) {
         // Angezeigt = nicht in der Liste der Ausschlüsse.
@@ -4069,11 +4417,11 @@ class DevicePanel extends HTMLElement {
     const std = errors.battery_low ? st.data.values.battery_low : st.draft.battery_low;
     for (const sel of dialog.querySelectorAll("select[data-bat-mode]")) {
       const dom = sel.dataset.batMode;
-      const row = sel.closest(".ex-row");
+      const row = sel.closest(".ex-row, .opt");
       row?.classList.toggle("invalid", bad.has(dom));
       row?.classList.toggle("changed", own[dom] !== saved[dom]);
       const def = sel.querySelector('option[value="default"]');
-      if (def) def.textContent = this._t("devBatDefault", std);
+      if (def) def.textContent = this._t("integBatDefault", std);
     }
     for (const input of dialog.querySelectorAll("input[data-bat]")) input.placeholder = String(std);
     const batErr = dialog.querySelector("[data-bat-error]");
@@ -4096,8 +4444,6 @@ class DevicePanel extends HTMLElement {
         line.textContent = errors[key] || this._t("optPushModeShortDaily", st.draft[key]);
       }
     }
-    const batShort = dialog.querySelector("[data-bat-short]");
-    if (batShort) batShort.textContent = this._t("batOwnShort", std);
     for (const input of dialog.querySelectorAll('input[type="number"][data-opt]')) {
       const key = input.dataset.opt;
       const opt = input.closest(".opt");
@@ -4110,11 +4456,25 @@ class DevicePanel extends HTMLElement {
         line.textContent = errors[key] || line.dataset.short;
       }
     }
-    // "Ausfall melden" nennt die Wartezeit aus "Erst melden nach".
-    const outageLine = dialog.querySelector('input[data-opt="notify_outage"]')?.closest(".opt")?.querySelector(".opt-short");
-    if (outageLine) {
-      const delay = errors.notify_delay ? st.data.values.notify_delay : st.draft.notify_delay;
-      outageLine.textContent = this._t("optOutageShort", st.data.values.offline_after ?? 2, delay);
+    // Zahlenfelder im Zeitstrahl (seit 0.34.0): Markierung, Fehler unter dem
+    // Zeitstrahl; "Erst melden nach" zu kurz markiert beide Felder.
+    const short = this._delayShort(errors);
+    for (const input of dialog.querySelectorAll(".mtl input[data-opt]")) {
+      const key = input.dataset.opt;
+      const box = input.closest(".opt-input");
+      box.classList.toggle("bad", Boolean(errors[key]) || (short && key === "offline_after"));
+      box.classList.toggle("chg", changes.includes(key));
+    }
+    for (const el of dialog.querySelectorAll("[data-tl-error]")) {
+      const msg = el.dataset.tlError.split(",").map((k) => errors[k]).find(Boolean);
+      el.hidden = !msg;
+      el.textContent = msg || "";
+    }
+    for (const tab of dialog.querySelectorAll(".mon-tab")) {
+      const keys = MON_TAB_KEYS[tab.dataset.key] || [];
+      const err = keys.some((k) => errors[k]);
+      tab.classList.toggle("err", err);
+      tab.classList.toggle("chg", !err && keys.some((k) => changes.includes(k)));
     }
     for (const [id, keys] of this._settingsSections()) {
       const head = dialog.querySelector(`[data-set="section"][data-id="${id}"]`);

@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.33.1, Texte: Ausfall-Meldung und Batterie-Warnung getrennt erklärt)
+## Stand (0.34.0, Überwachung und Meldungen an einem Ort)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -35,29 +35,35 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `devices.signal_source`).
 - Einstellungen im Panel (Zahnrad), Reihenfolge nach Bild 5:
   Versionskasten mit Update über HACS, Vorabversionen, "In HACS
-  freischalten"; "Ausfall-Erkennung" (Zahlenfelder `offline_after`,
-  `flaky_outages`, `startup_grace` mit Bereichen aus `const.INT_RANGES`,
-  Prüfung im Panel und im Backend); "Batterie" (`battery_low`,
-  `battery_low_integrations` {Domain: % oder "off"} nach Mockup A in
-  `docs/mockups/battery-v1/`, seit 0.14.0 Auswahl je Zeile nach Variante B
-  in `docs/mockups/battery-v2/`, `battery_push` mit `battery_push_mode`
-  sofort/täglich, `battery_push_time` "HH:MM", `battery_push_daily`
-  neu/alle, `battery_persistent`; Überwachung in `battery.py`);
-  "Integrationen" und "Gerätetypen" (Schalter "Anzeigen"; ausgeblendete
-  Geräte werden nicht überwacht; bei den Integrationen seit 0.20.0 dazu die
-  Spalten "Push" `notify_exclude_integrations`, "Anhaltend"
-  `persistent_exclude_integrations` und "Ausgefallen nach"
-  `offline_after_integrations`, seit 0.30.0); "Push-Benachrichtigung"
-  (`notify_service`, `notify_click_target`, `notify_outage`,
-  `notify_online`, `notify_group`, seit 0.20.0 `notify_delay` "Erst melden
-  nach" und `notify_fields` "Inhalt der Meldung" mit Vorschau; Versand in
-  `push.py`, Ausfall und Rückkehr in `outage.py` über einen Listener am
-  Protokoll, Termin per `async_call_later`, Stand `{"offline", "notified"}`
-  in `.storage/device_panel.notify`; Aktionen "Öffnen" und "24 Std. stumm"
-  über `mobile_app_notification_action`, stumm bis in
-  `.storage/device_panel.devices` "notify_mute"); "Anhaltende
-  Benachrichtigung" (`outage_persistent`, Benachrichtigung
-  `device_panel_outage`);
+  freischalten"; seit 0.34.0 zuerst "Überwachung und Meldungen"
+  (`docs/mockups/notify-v3/`, Entscheid des Nutzers: Variante C, eigener
+  Reiter "Integrationen", Batterie-Push pro Integration, Batterie-Inhalt
+  anpassbar) mit vier Reitern (`st.tab`, Optionen je Reiter in
+  `MON_TAB_KEYS`): "Übersicht" (Zeitstrahl je Meldung, Chips
+  `data-set="chip"`, Abweichungen, `notify_service`,
+  `notify_click_target`), "Ausfall" (Zeitstrahl mit `offline_after` und
+  `notify_delay`, dann `flaky_outages`, `startup_grace`, `notify_outage`,
+  `notify_online`, `notify_group`, `outage_persistent`, `notify_fields` mit
+  Vorschau, Geräte-Ausnahmen `offline` und `notify`), "Batterie"
+  (`battery_low` im Zeitstrahl, `battery_push`, `battery_push_mode`,
+  `battery_push_time`, `battery_push_daily`, `battery_persistent`,
+  `battery_fields` mit Vorschau, Ausnahmen `battery`), "Integrationen"
+  (Liste mit Abweichungen, Filter, Detail `st.integ` je Integration:
+  Überwachen = `offline_after_integrations` ≠ "off", Ausgefallen nach,
+  `notify_exclude_integrations`, `persistent_exclude_integrations`,
+  `battery_low_integrations`, `battery_push_exclude_integrations`, ihre
+  Geräte mit eigener Einstellung, "Alles auf Standard"). "Erst melden nach"
+  nie kürzer als "Ausgefallen nach" (`options_api.delay_too_short`, Fehler
+  `notify_delay_short` im Optionsdialog, Fehler an beiden Feldern im
+  Panel; gespeicherte kürzere Werte und 0 gelten als "Ausgefallen nach",
+  `values_from`). Batterie-Push in `battery.py` (`_pushable`,
+  `_async_parts`); `list_devices.battery_default` mit `push` und
+  `push_integration`; `get_options.overrides` je Gerät mit `domain`.
+  Bis 0.33.1 standen diese Optionen in "Ausfall-Erkennung", "Batterie",
+  "Integrationen" (Spalten), "Push-Benachrichtigung" und "Anhaltende
+  Benachrichtigung". "Integrationen" (seit 0.34.0 nur Schalter "Anzeigen",
+  `exclude_integrations`, mit Verweis `data-set="goto"`) und "Gerätetypen"
+  (Schalter "Anzeigen"; ausgeblendete Geräte werden nicht überwacht);
   "Anzeige" (`show_service_devices`, `show_disabled_devices`: deaktivierte
   Geräte in eigener Gruppe, nicht überwacht; `hide_connections`: Chips der
   Verbindungsart, die nicht erscheinen, gilt für alle, seit 0.11.0;
@@ -254,6 +260,26 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    KI-Anbieter geprüft: `tests/test_ai_assessment.py` ruft die echte
    `ai_task`-Komponente mit einer Ersatz-Entität auf (dafür zuerst
    `homeassistant` einrichten), im Test-HA nur der Fehlerpfad.
+   `0.33.1` (Rückfrage des Nutzers): Texte "Inhalt der Ausfall-Meldung"
+   und Batterie-Warnung getrennt erklärt; Puls-Kachel stabil.
+   Erledigt mit `0.34.0` (Nutzer, 2026-10-04, Mockups `notify-v2/` und
+   `notify-v3/`; Wunsch: Push, Ausfall und Batterie an einem Ort, damit
+   sofort klar ist, wann welche Meldung kommt): Abschnitt "Überwachung und
+   Meldungen" (Variante C ausgebaut, Integrationen als eigener Reiter mit
+   Detail), "Integrationen" nur noch "Anzeigen", Batterie-Push pro
+   Integration, Inhalt der Batterie-Meldung wählbar, "Erst melden nach"
+   nicht kürzer als "Ausgefallen nach" (0 entfällt, Speichern gesperrt,
+   alte Werte gelten als "Ausgefallen nach"). Puls grün, sobald kein Gerät
+   mehr ausgefallen ist (Rückfrage des Nutzers). Der Nutzer hat weitere
+   Punkte angekündigt.
+   Offen (Rückfrage des Nutzers, 2026-10-04): Kachel "Verfügbarkeit" zeigt
+   gross den Durchschnitt 24 Std. (z. B. 98,7 %), obwohl der Ring voll ist;
+   Varianten A heute, B jetzt gross und Ø 24 Std. darunter (Empfehlung),
+   C Ø 24 Std. mit dem Gerät, das ihn drückt. Entscheid des Nutzers abwarten.
+   Offene Backlog-Punkte: 1 Ursache, 2 Gesundheitswert, 3 Funkweg,
+   6 Regeln, 8 Entitäten, 9 CSV-Export, 10b KI-Zusammenfassung im
+   Puls-Fenster (optional); offen ist auch die Bestätigung des
+   Empfangsverlaufs für ZHA.
    Als Nächstes, in dieser Reihenfolge (Nutzer, 2026-10-03):
    b. Erledigt mit `0.26.0`: Puls-Kachel öffnet das Fenster mit den
       Geräten, die in 24 Std. Unterbrüche hatten (`docs/mockups/pulse-v1/`,

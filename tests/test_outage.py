@@ -236,7 +236,7 @@ async def test_battery_per_device(hass: HomeAssistant, setup, hass_ws_client) ->
     assert devices["Fenster"]["battery"] == {"level": 10, "low": False}  # Wert ja, Warnung nein
     assert devices["Fenster"]["battery_setting"] == "off" and devices["Rauchmelder"]["battery_setting"] == 30
     assert devices["Rauchmelder"]["battery"]["low"] is True
-    assert devices["Rauchmelder"]["battery_default"] == {"pct": 15, "integration": None}
+    assert devices["Rauchmelder"]["battery_default"] == {"pct": 15, "integration": None, "push": True, "push_integration": None}
     assert devices["Fenster"]["has_battery"] is True
     # Zurück auf den globalen Wert
     await client.send_json({"id": 3, "type": f"{DOMAIN}/set_device_settings", "device_id": a.id, "battery": None})
