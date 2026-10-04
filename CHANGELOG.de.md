@@ -32,6 +32,8 @@ Gruppen der Fakten als Variablen im Profi-Modus der KI-Einschätzung.
 
 ## [1.6.0] - 2026-10-04
 
+Nicht veröffentlicht; enthalten in 1.7.0.
+
 Mehr Zusammenhang für die KI-Einschätzung: Raum, Funkstandard, Hub und mehr.
 
 ### Hinzugefügt
@@ -1228,7 +1230,6 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [1.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.7.0
-[1.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.6.0
 [1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0
 [1.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.4.0
 [1.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.3.0

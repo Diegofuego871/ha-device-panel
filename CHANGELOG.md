@@ -32,6 +32,8 @@ Groups of facts as variables in the expert mode of the AI assessment.
 
 ## [1.6.0] - 2026-10-04
 
+Not released; included in 1.7.0.
+
 More context for the AI assessment: the room, the radio standard, the hub and more.
 
 ### Added
@@ -1183,7 +1185,6 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [1.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.7.0
-[1.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.6.0
 [1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0
 [1.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.4.0
 [1.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.3.0
