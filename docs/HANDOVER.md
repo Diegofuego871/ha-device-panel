@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.5.0, Einstellungen in fünf Abschnitten)
+## Stand (1.6.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -316,6 +316,15 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Zeitraum-Reiter; `async_battery_history` liefert das Feld `forecast`.
    Zustände `none`/`short`/`flat`/`reached`/`ok`; Panel `_batForecastHtml`,
    Strings `batFc*`, Simulator `__batForecast` und `batForecast()`.
+   KI-Fakten `1.6.0` (Nutzer, 2026-10-04; "Funkstandard" = Verbindungsart):
+   `same_area_devices` (ersetzt `same_area_offline_devices`; `_peer`,
+   `_peer_rank`, höchstens `SAME_AREA_MAX` = 15), `same_area_same_connection`,
+   `same_hub_other_devices`/`same_hub_offline_devices` (über `via`, nach
+   Name), `same_model_other_devices`, `went_offline_within_5_min_of_this_device`
+   (`SAME_TIME_SECONDS` = 300), `last_7d` und `battery_forecast` (beide aus
+   `_extras`, async: Protokoll 7 Tage und `async_battery_history` 365d).
+   `DEFAULT_PROMPT` 3638 von 4000 Zeichen (`AI_PROMPT_MAX`); die Kopie im
+   Simulator (`AI_PROMPT_DEFAULT`) muss nachgeführt werden.
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem

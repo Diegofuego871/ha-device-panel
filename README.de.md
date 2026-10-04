@@ -155,8 +155,12 @@ Bereich.
   Home Assistant und zeigt die Antwort. Die KI-Aufgabe ist in den
   Einstellungen wählbar. Im Profi-Modus lässt sich der Prompt ansehen,
   kopieren und anpassen (Variablen `{language}` und `{facts}`, mit Vorschau
-  des genauen Texts). Neben dem Gerät nennen die Fakten die anderen
-  ausgefallenen Geräte seiner Integration und seines Bereichs.
+  des genauen Texts). Neben dem Gerät geben die Fakten den
+  Zusammenhang: die anderen Geräte im selben Bereich mit
+  ihren Werten (auch gesunde, mit der Zahl derer mit demselben Funkstandard,
+  etwa Thread oder Bluetooth), die Geräte am selben Hub, Geräte desselben
+  Modells, die letzten 7 Tage, die Batterie-Prognose und welche Geräte zur
+  selben Zeit ausfielen.
 - Matter-Geräte: im Popup die Thread-Rolle (Router, Endgerät, schlafendes
   Endgerät) und der Netzname aus der Matter-Diagnose, neben der
   Verbindungsart, die weiter von Hand gesetzt werden kann.

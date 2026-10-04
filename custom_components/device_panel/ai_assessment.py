@@ -18,15 +18,22 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
 from .ai_prompt import DEFAULT_PROMPT, render_prompt
 from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK, SIGNAL_OFF, SIGNAL_WEAK_DBM, SIGNAL_WEAK_LQI
-from .devices import async_list_devices
+from .battery_history import async_battery_history, battery_entity
+from .devices import async_list_devices, device_battery_threshold
 from .options_api import effective
 
 # Höchstens so viele andere ausgefallene Geräte der Integration in den Fakten.
 SAME_OFFLINE_MAX = 10
+# Höchstens so viele Geräte des Bereichs mit ihren Werten (seit 1.6.0).
+SAME_AREA_MAX = 15
+# Ausfälle innerhalb dieser Zeit gelten als gleichzeitig mit dem Gerät.
+SAME_TIME_SECONDS = 300
 
 LANGUAGES = {"de": "German (Swiss spelling: always 'ss', never the sharp s)", "en": "English"}
 
@@ -56,36 +63,16 @@ def signal_weak(signal: dict[str, Any], setting: Any) -> bool:
     return value < SIGNAL_WEAK_DBM if signal.get("kind") == "dbm" else value <= SIGNAL_WEAK_LQI
 
 
-def _offline_list(devices: list[dict[str, Any]], now: float, extra: Any) -> list[dict[str, Any]]:
-    """
-    Ausgefallene Geräte mit Name, einer weiteren Angabe (extra(d) -> dict) und
-    Minuten seit dem Ausfall; die längsten zuerst, höchstens SAME_OFFLINE_MAX.
-    """
-    gone = []
-    for d in devices:
-        if d.get("online") is not False or not d.get("offline_since"):
-            continue
-        since = dt_util.parse_datetime(d["offline_since"])
-        if since is None:
-            continue
-        gone.append((since.timestamp(), d))
-    gone.sort(key=lambda x: x[0])
-    return [
-        {k: v for k, v in {"name": d["name"], **extra(d), "offline_minutes": max(0, _minutes(now - at) or 0)}.items() if v is not None}
-        for at, d in gone[:SAME_OFFLINE_MAX]
-    ]
+def _since(d: dict[str, Any]) -> float | None:
+    """Beginn des Ausfalls (Sekunden) oder None."""
+    if d.get("online") is not False or not d.get("offline_since"):
+        return None
+    since = dt_util.parse_datetime(d["offline_since"])
+    return since.timestamp() if since is not None else None
 
 
-def build_facts(device: dict[str, Any], result: dict[str, Any], now: float) -> dict[str, Any]:
-    """
-    Fakten zu einem Gerät aus der Geräteliste (async_list_devices), ohne IDs,
-    Adressen oder Entitätsnamen. Fehlende Angaben fehlen im Ergebnis.
-    """
-    devices = result["devices"]
-    integ = device.get("integration") or {}
-    domain = integ.get("domain")
-    names = result.get("integrations", {})
-    status = (
+def _status(device: dict[str, Any]) -> str:
+    return (
         "not monitored" if device.get("unmonitored")
         else "disabled" if device.get("disabled")
         else "no data" if device.get("online") is None
@@ -93,9 +80,76 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float) -> d
         else "unstable (online, but often interrupted)" if device.get("flaky")
         else "online"
     )
+
+
+def _offline_list(devices: list[dict[str, Any]], now: float, extra: Any, ref: float | None = None) -> list[dict[str, Any]]:
+    """
+    Ausgefallene Geräte mit Name, einer weiteren Angabe (extra(d) -> dict) und
+    Minuten seit dem Ausfall; die längsten zuerst, höchstens SAME_OFFLINE_MAX.
+    Mit ref (Beginn des Ausfalls des eingeschätzten Geräts, seit 1.6.0) steht
+    dabei, ob ein Gerät innerhalb von SAME_TIME_SECONDS davon ausfiel.
+    """
+    gone = [(at, d) for d in devices if (at := _since(d)) is not None]
+    gone.sort(key=lambda x: x[0])
+    out = []
+    for at, d in gone[:SAME_OFFLINE_MAX]:
+        item = {"name": d["name"], **extra(d), "offline_minutes": max(0, _minutes(now - at) or 0)}
+        if ref is not None:
+            item["went_offline_within_5_min_of_this_device"] = abs(at - ref) <= SAME_TIME_SECONDS
+        out.append({k: v for k, v in item.items() if v is not None})
+    return out
+
+
+def _peer(d: dict[str, Any], now: float, names: dict[str, str], ref: float | None) -> dict[str, Any]:
+    """Ein Gerät des Bereichs mit seinen Werten (seit 1.6.0), ohne IDs und Entitäten."""
+    dom = (d.get("integration") or {}).get("domain")
+    item: dict[str, Any] = {
+        "name": d["name"],
+        "type": d.get("type"),
+        "integration": names.get(dom, dom) if dom else None,
+        "connection_type": d.get("connection"),
+        "status": _status(d),
+    }
+    if (at := _since(d)) is not None:
+        item["offline_minutes"] = max(0, _minutes(now - at) or 0)
+        if ref is not None:
+            item["went_offline_within_5_min_of_this_device"] = abs(at - ref) <= SAME_TIME_SECONDS
+    if (signal := d.get("signal")) and signal.get("value") is not None:
+        item["signal_value"] = signal["value"]
+        item["signal_weak"] = signal_weak(signal, d.get("signal_setting"))
+    if (battery := d.get("battery")) and battery.get("level") is not None:
+        item["battery_percent"] = battery["level"]
+        item["battery_low"] = bool(battery.get("low"))
+    if (avail := d.get("avail24")) and avail.get("outages"):
+        item["interruptions_24h"] = avail["outages"]
+    return {k: v for k, v in item.items() if v is not None}
+
+
+def _peer_rank(d: dict[str, Any]) -> tuple[Any, ...]:
+    """Auffällige zuerst: ausgefallen (längste zuerst), instabil, schwacher Empfang oder Batterie, dann nach Name."""
+    at = _since(d)
+    sig = d.get("signal") or {}
+    weak = sig.get("value") is not None and signal_weak(sig, d.get("signal_setting"))
+    low = bool((d.get("battery") or {}).get("low"))
+    tier = 0 if at is not None else 1 if d.get("flaky") else 2 if weak or low else 3
+    return (tier, at if at is not None else 0, d["name"].lower())
+
+
+def build_facts(device: dict[str, Any], result: dict[str, Any], now: float, extra: dict[str, Any] | None = None) -> dict[str, Any]:
+    """
+    Fakten zu einem Gerät aus der Geräteliste (async_list_devices), ohne IDs,
+    Adressen oder Entitätsnamen. Fehlende Angaben fehlen im Ergebnis. extra
+    (seit 1.6.0, aus _extras): "week" (Verfügbarkeit 7 Tage) und "forecast"
+    (Batterie-Prognose), beides nicht in der Geräteliste.
+    """
+    extra = extra or {}
+    devices = result["devices"]
+    integ = device.get("integration") or {}
+    domain = integ.get("domain")
+    names = result.get("integrations", {})
     facts: dict[str, Any] = {
         "name": device["name"],
-        "status": status,
+        "status": _status(device),
         "type": device.get("type"),
         "area": device.get("area"),
         "integration": names.get(domain, integ.get("title") or domain) if domain else None,
@@ -106,11 +160,10 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float) -> d
         "connected_via": device.get("via"),
         "update_available": device.get("update"),
     }
-    if device.get("online") is False and device.get("offline_since"):
-        since = dt_util.parse_datetime(device["offline_since"])
-        if since is not None:
-            facts["offline_for_minutes"] = max(0, _minutes(now - since.timestamp()) or 0)
-            facts["offline_start_is_lower_bound"] = bool(device.get("since_at_least"))
+    ref = _since(device)
+    if ref is not None:
+        facts["offline_for_minutes"] = max(0, _minutes(now - ref) or 0)
+        facts["offline_start_is_lower_bound"] = bool(device.get("since_at_least"))
     avail = device.get("avail24")
     if avail:
         facts["last_24h"] = {
@@ -118,12 +171,27 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float) -> d
             "interruptions": avail.get("outages"),
             "longest_interruption_minutes": _minutes(avail.get("longest")),
         }
+    # Chronik über 7 Tage (seit 1.6.0): Dauerproblem oder Einzelfall?
+    if (week := extra.get("week")) and week.get("pct") is not None:
+        facts["last_7d"] = {
+            "availability_percent": week.get("pct"),
+            "interruptions": week.get("outages"),
+            "longest_interruption_minutes": _minutes(week.get("longest")),
+        }
     # Batterie- oder Netzgerät (seit 1.4.0): Schlafende Batteriegeräte melden
     # sich seltener; ein Netzgerät fällt eher mit dem Strom aus.
     facts["battery_powered"] = bool(device.get("has_battery"))
     if (battery := device.get("battery")) and battery.get("level") is not None:
         facts["battery_percent"] = battery["level"]
         facts["battery_low"] = bool(battery.get("low"))
+        if fc := extra.get("forecast"):
+            # Prognose aus dem Batterie-Verlauf (seit 1.6.0, wie im Panel).
+            if fc.get("status") == "ok":
+                facts["battery_forecast"] = {"days_left": round(fc["days"]), "until_percent": fc["target"], "confidence": fc["confidence"], "drop_is_accelerating": bool(fc.get("accelerating"))}
+            elif fc.get("status") == "reached":
+                facts["battery_forecast"] = {"status": "warning threshold reached"}
+            elif fc.get("status") == "flat":
+                facts["battery_forecast"] = {"status": "level barely drops"}
     if (signal := device.get("signal")) and signal.get("value") is not None:
         # "weak" wie im Panel, mit der Empfang-Warnung des Geräts (seit 1.4.0):
         # Die KI braucht keine Schwellen, und ein akzeptierter Empfang zählt.
@@ -136,6 +204,28 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float) -> d
         hub = next((d for d in devices if d["name"] == device["via"]), None)
         if hub is not None:
             facts["hub_online"] = hub.get("online")
+        # Andere Geräte am selben Hub (seit 1.6.0): wie viele, wie viele fehlen, wie viele im selben Raum.
+        at_hub = [d for d in devices if d.get("via") == device["via"] and d["id"] != device["id"] and not d.get("unmonitored") and not d.get("disabled")]
+        if at_hub:
+            facts["same_hub_other_devices"] = {
+                "total": len(at_hub),
+                "offline_now": sum(1 for d in at_hub if d.get("online") is False),
+                "in_same_area": sum(1 for d in at_hub if device.get("area_id") and d.get("area_id") == device["area_id"]),
+            }
+            if gone := _offline_list(at_hub, now, lambda d: {"area": d.get("area")}, ref):
+                facts["same_hub_offline_devices"] = gone
+    # Gleiches Modell (seit 1.6.0): Serienfehler oder fehlerhafte Firmware?
+    if device.get("manufacturer") and device.get("model"):
+        twins = [
+            d for d in devices
+            if d["id"] != device["id"] and d.get("manufacturer") == device["manufacturer"] and d.get("model") == device["model"]
+            and not d.get("unmonitored") and not d.get("disabled")
+        ]
+        if twins:
+            facts["same_model_other_devices"] = {"total": len(twins), "offline_now": sum(1 for d in twins if d.get("online") is False)}
+            if device.get("sw_version"):
+                same_sw = [d for d in twins if d.get("sw_version") == device["sw_version"]]
+                facts["same_model_other_devices"]["same_software_version"] = {"total": len(same_sw), "offline_now": sum(1 for d in same_sw if d.get("online") is False)}
     # Lage bei der Integration: sind andere Geräte derselben gerade auch weg?
     if domain:
         same = [d for d in devices if (d.get("integration") or {}).get("domain") == domain and d["id"] != device["id"] and not d.get("unmonitored")]
@@ -143,7 +233,7 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float) -> d
         # Welche davon fehlen (seit 1.3.0, Wunsch des Nutzers): Name, Bereich, Dauer;
         # die längsten zuerst, höchstens SAME_OFFLINE_MAX. Zeigt Muster (derselbe
         # Bereich, derselbe Zeitpunkt), die Zahlen allein nicht zeigen.
-        if gone := _offline_list(same, now, lambda d: {"area": d.get("area")}):
+        if gone := _offline_list(same, now, lambda d: {"area": d.get("area")}, ref):
             facts["same_integration_offline_devices"] = gone
     # Lage im Bereich, über alle Integrationen (seit 1.4.0): Fallen in einem
     # Raum Geräte verschiedener Funkarten zugleich aus, liegt es eher am Strom
@@ -154,13 +244,16 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float) -> d
             if d.get("area_id") == device["area_id"] and d["id"] != device["id"] and not d.get("unmonitored") and not d.get("disabled")
         ]
         facts["same_area_other_devices"] = {"total": len(here), "offline_now": sum(1 for d in here if d.get("online") is False)}
-
-        def integ_name(d: dict[str, Any]) -> dict[str, Any]:
-            dom = (d.get("integration") or {}).get("domain")
-            return {"integration": names.get(dom, dom) if dom else None}
-
-        if gone := _offline_list(here, now, integ_name):
-            facts["same_area_offline_devices"] = gone
+        # Dasselbe Funkprotokoll im Raum (seit 1.6.0): Fällt nur Thread oder nur
+        # Bluetooth aus, liegt es am Funk, nicht am Raum.
+        if conn := device.get("connection"):
+            same_conn = [d for d in here if d.get("connection") == conn]
+            if same_conn:
+                facts["same_area_same_connection"] = {"connection_type": conn, "total": len(same_conn), "offline_now": sum(1 for d in same_conn if d.get("online") is False)}
+        # Die Geräte des Bereichs mit ihren Werten (seit 1.6.0, Wunsch des Nutzers),
+        # auffällige zuerst, höchstens SAME_AREA_MAX; auch gesunde, als Gegenbeweis.
+        if here:
+            facts["same_area_devices"] = [_peer(d, now, names, ref) for d in sorted(here, key=_peer_rank)[:SAME_AREA_MAX]]
     # Sammelausfälle der letzten 24 Std., an denen das Gerät beteiligt war.
     mine = [
         {
@@ -229,6 +322,20 @@ def source_name(hass: HomeAssistant, entity_id: str | None) -> str | None:
     return state.name if state else entity_id
 
 
+async def _extras(hass: HomeAssistant, device: dict[str, Any], log: Any, now: float) -> dict[str, Any]:
+    """Fakten, die nicht in der Geräteliste stehen (seit 1.6.0): Verfügbarkeit 7 Tage, Batterie-Prognose."""
+    extra: dict[str, Any] = {}
+    if log is not None:
+        extra["week"] = log.device_summary(device["id"], 7 * 86400, now)
+    if device.get("has_battery") and (device.get("battery") or {}).get("level") is not None:
+        reg = dr.async_get(hass).async_get(device["id"])
+        entity_id = battery_entity(hass, er.async_entries_for_device(er.async_get(hass), device["id"])) if reg else None
+        if reg is not None and entity_id:
+            threshold = device_battery_threshold(hass, effective(hass), reg)
+            extra["forecast"] = (await async_battery_history(hass, entity_id, "365d", threshold, now))["forecast"]
+    return extra
+
+
 async def async_assess(hass: HomeAssistant, device_id: str, language: str, log: Any = None) -> dict[str, Any]:
     """Einschätzung eines Geräts: {"title", "text", "source", "at"}; wirft AiError."""
     opts = effective(hass)
@@ -239,7 +346,7 @@ async def async_assess(hass: HomeAssistant, device_id: str, language: str, log: 
     if device is None:
         raise AiError("not_found", "device not found")
     now = dt_util.utcnow()
-    facts = build_facts(device, result, now.timestamp())
+    facts = build_facts(device, result, now.timestamp(), await _extras(hass, device, log, now.timestamp()))
     entity_id = opts[CONF_AI_TASK] or None
     data = await _generate(hass, entity_id, build_instructions(facts, language, opts[CONF_AI_PROMPT]))
     text = data if isinstance(data, str) else json.dumps(data, ensure_ascii=False)
@@ -265,6 +372,7 @@ async def async_preview(
     device = next((d for d in result["devices"] if d["id"] == device_id), None)
     if device is None:
         raise AiError("not_found", "device not found")
-    facts = build_facts(device, result, dt_util.utcnow().timestamp())
+    now = dt_util.utcnow().timestamp()
+    facts = build_facts(device, result, now, await _extras(hass, device, log, now))
     chosen = template.strip() or effective(hass)[CONF_AI_PROMPT]
     return {"text": build_instructions(facts, language, chosen)}

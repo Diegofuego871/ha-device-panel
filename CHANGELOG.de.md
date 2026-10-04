@@ -7,6 +7,44 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.6.0] - 2026-10-04
+
+Mehr Zusammenhang für die KI-Einschätzung: Raum, Funkstandard, Hub und mehr.
+
+### Hinzugefügt
+
+- Fakten für die KI-Einschätzung (Wunsch des Nutzers):
+  - `same_area_devices`: die anderen Geräte im selben Bereich mit ihren
+    Werten (Typ, Integration, Verbindungsart, Status, Minuten offline,
+    Empfang mit `signal_weak`, Batterie, Unterbrüche in 24 Std.), auffällige
+    zuerst (ausgefallen, instabil, schwacher Empfang oder Batterie), auch
+    gesunde als Gegenbeweis; höchstens 15, ohne IDs oder Entitäten.
+  - `same_area_same_connection`: wie viele Geräte im Bereich denselben
+    Funkstandard nutzen (etwa Thread oder Bluetooth) und wie viele davon
+    ausgefallen sind.
+  - `same_hub_other_devices` und `same_hub_offline_devices`: andere Geräte
+    am selben Hub oder Router, wie viele fehlen und wie viele im selben
+    Bereich sind.
+  - `went_offline_within_5_min_of_this_device`: bei ausgefallenen Geräten
+    des Bereichs, des Hubs und der Integration, ob sie zusammen mit diesem
+    ausfielen.
+  - `same_model_other_devices`: gleicher Hersteller und gleiches Modell,
+    auch nach Softwarestand (Serien- oder Firmware-Fehler).
+  - `last_7d`: Verfügbarkeit, Unterbrüche und längster Unterbruch über
+    7 Tage (Dauerproblem oder Einzelfall).
+  - `battery_forecast`: Tage bis zur Warnschwelle, aus der Batterie-Prognose
+    von 1.5.0.
+- Der Standard-Prompt erklärt die neuen Fakten; gesunde Geräte im Bereich, am
+  Hub oder mit demselben Funkstandard gelten als Beleg gegen eine gemeinsame
+  Ursache.
+
+### Geändert
+
+- `same_area_offline_devices` entfällt zugunsten von `same_area_devices`, das
+  die ausgefallenen Geräte mit Minuten enthält. Ein gespeicherter eigener
+  Prompt behält seinen Text; "Standard" im Profi-Modus lädt den neuen.
+- Die Hinweise im Popup und in den Einstellungen nennen, was gesendet wird.
+
 ## [1.5.0] - 2026-10-04
 
 Batterie-Prognose im Verlaufsfenster der Batterie, ohne KI.
@@ -1166,6 +1204,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.6.0
 [1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0
 [1.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.4.0
 [1.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.3.0

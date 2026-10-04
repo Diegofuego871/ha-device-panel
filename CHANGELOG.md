@@ -7,6 +7,43 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] - 2026-10-04
+
+More context for the AI assessment: the room, the radio standard, the hub and more.
+
+### Added
+
+- Facts for the AI assessment (requested by the user):
+  - `same_area_devices`: the other devices in the same area with their
+    values (type, integration, connection type, status, minutes offline,
+    signal with `signal_weak`, battery, interruptions in 24 h), notable ones
+    first (offline, unstable, weak signal or low battery), healthy ones too
+    as counter-evidence; at most 15, no IDs or entities.
+  - `same_area_same_connection`: how many devices in the area use the same
+    radio standard (for example Thread or Bluetooth) and how many are
+    offline.
+  - `same_hub_other_devices` and `same_hub_offline_devices`: other devices
+    on the same hub or router, how many are offline and how many are in the
+    same area.
+  - `went_offline_within_5_min_of_this_device`: for offline devices of the
+    area, hub and integration, whether they failed together with this one.
+  - `same_model_other_devices`: same manufacturer and model, also by
+    software version (series or firmware fault).
+  - `last_7d`: availability, interruptions and longest interruption over
+    7 days (recurring problem or one-off).
+  - `battery_forecast`: days until the warning threshold, from the battery
+    forecast of 1.5.0.
+- The default prompt explains the new facts; healthy devices in the area, on
+  the hub or on the same radio standard count as evidence against a shared
+  cause.
+
+### Changed
+
+- `same_area_offline_devices` is replaced by `same_area_devices`, which
+  includes the offline devices with minutes. A saved own prompt keeps its
+  text; "Default" in expert mode loads the new one.
+- The notes in the pop-up and in the settings name what is sent.
+
 ## [1.5.0] - 2026-10-04
 
 Battery forecast in the battery history window, without AI.
@@ -1122,6 +1159,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.6.0
 [1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0
 [1.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.4.0
 [1.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.3.0

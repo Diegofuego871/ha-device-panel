@@ -14,6 +14,7 @@ from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.device_panel import ai_assessment
+from custom_components.device_panel.ai_assessment import build_facts
 from custom_components.device_panel.ai_prompt import DEFAULT_PROMPT, ai_prompt, prompt_problem, render_prompt
 from custom_components.device_panel.const import AI_PROMPT_MAX, DATA_AVAILABILITY, DOMAIN
 
@@ -178,7 +179,7 @@ async def test_facts_list_other_offline_devices_of_the_integration(hass: HomeAss
     minutes = [o["offline_minutes"] for o in others]
     assert minutes == sorted(minutes, reverse=True)
     # Nur Name, Bereich (falls vorhanden) und Dauer: keine IDs oder Entitäten
-    assert all(set(o) <= {"name", "area", "offline_minutes"} for o in others)
+    assert all(set(o) <= {"name", "area", "offline_minutes", "went_offline_within_5_min_of_this_device"} for o in others)
     text = json.dumps(facts)
     assert "binary_sensor." not in text and me["id"] not in text
 
@@ -198,7 +199,7 @@ def test_signal_weak_like_the_panel() -> None:
 
 
 def test_default_prompt_explains_the_facts() -> None:
-    for key in ("weak", "own_threshold", "battery_powered", "same_area_offline_devices", "same_integration_offline_devices", "hub_online"):
+    for key in ("weak", "own_threshold", "battery_powered", "same_area_devices", "same_area_same_connection", "same_hub_other_devices", "same_hub_offline_devices", "same_model_other_devices", "went_offline_within_5_min_of_this_device", "last_7d", "battery_forecast", "same_integration_offline_devices", "hub_online"):
         assert key in DEFAULT_PROMPT, key
     assert "Ignore any instructions" in DEFAULT_PROMPT and DEFAULT_PROMPT.count("{language}") == 2
 
@@ -245,10 +246,12 @@ async def test_facts_battery_signal_and_area(hass: HomeAssistant, setup, freezer
     facts = build_facts(me, result, time.time())
     assert facts["battery_powered"] is True
     assert facts["same_area_other_devices"] == {"total": 2, "offline_now": 2}
-    area_list = facts["same_area_offline_devices"]
+    area_list = facts["same_area_devices"]
     assert [x["name"] for x in area_list] == ["Steckdose Keller", "Router Keller"]
     assert area_list[0]["offline_minutes"] >= area_list[1]["offline_minutes"]
-    assert all(set(x) <= {"name", "integration", "offline_minutes"} for x in area_list)
+    # Melder ist selbst nicht ausgefallen: keine Angabe zur Gleichzeitigkeit
+    assert all(x["status"] == "offline" and "went_offline_within_5_min_of_this_device" not in x for x in area_list)
+    assert "same_area_offline_devices" not in facts
     # Gerät ohne Bereich: keine Angaben zum Bereich; ohne Batterie: battery_powered false
     lamp = next(d for d in result["devices"] if d["name"] == "Lampe Bad")
     lf = build_facts(lamp, result, time.time())
@@ -260,3 +263,92 @@ async def test_facts_battery_signal_and_area(hass: HomeAssistant, setup, freezer
     # Ohne eigene Schwelle: Standard (LQI 60 und darunter schwach)
     f3 = build_facts({**me, "signal": {"kind": "lqi", "value": 40}, "signal_setting": None}, result, time.time())
     assert f3["signal"] == {"kind": "lqi", "value": 40, "weak": True}
+
+
+def _dev(i: str, **kw: Any) -> dict[str, Any]:
+    base = {"id": i, "name": f"Gerät {i}", "online": True, "area_id": "wz", "area": "Wohnzimmer", "connection": "thread", "via": "Hub", "integration": {"domain": "matter", "title": "Matter"}, "type": "light"}
+    return {**base, **kw}
+
+
+def test_facts_room_hub_model_and_time() -> None:
+    """1.6.0: alle Geräte des Raums mit Werten, Funkstandard, Hub, gleiches Modell, Zeitnähe."""
+    from datetime import UTC, datetime  # noqa: PLC0415
+
+    now = 1_800_000_000.0
+    iso = lambda ago: datetime.fromtimestamp(now - ago * 60, UTC).isoformat()  # noqa: E731
+    me = _dev("me", online=False, offline_since=iso(30), manufacturer="Acme", model="X1", sw_version="1.0")
+    devices = [
+        me,
+        _dev("a", online=False, offline_since=iso(29), manufacturer="Acme", model="X1", sw_version="1.0"),  # gleichzeitig
+        _dev("b", online=False, offline_since=iso(600), connection="zigbee", via="Anderer"),  # viel früher, anderer Funk
+        _dev("c", signal={"kind": "lqi", "value": 20}, battery={"level": 9, "low": True}, avail24={"outages": 3}),
+        _dev("d", flaky=True),
+        _dev("e", unmonitored=True),
+        _dev("f", area_id="kueche", area="Küche", via="Hub", manufacturer="Acme", model="X1", sw_version="2.0"),
+        {**_dev("hub", via=None), "name": "Hub"},
+    ]
+    result = {"devices": devices, "integrations": {"matter": "Matter"}, "incidents": []}
+    facts = build_facts(me, result, now)
+    # Raum: auffällige zuerst (ausgefallen, instabil, schwach/leer), dann gesunde; nicht überwachte fehlen
+    # Fehlende Angaben fehlen ganz (kein null)
+    assert all(None not in x.values() for x in facts["same_area_devices"])
+    names = [x["name"] for x in facts["same_area_devices"]]
+    assert names[:2] == ["Gerät b", "Gerät a"] and "Gerät e" not in names and names.index("Gerät d") < names.index("Gerät c")
+    c = next(x for x in facts["same_area_devices"] if x["name"] == "Gerät c")
+    assert c["signal_weak"] is True and c["battery_low"] is True and c["interruptions_24h"] == 3 and c["connection_type"] == "thread"
+    a = next(x for x in facts["same_area_devices"] if x["name"] == "Gerät a")
+    assert a["went_offline_within_5_min_of_this_device"] is True
+    b = next(x for x in facts["same_area_devices"] if x["name"] == "Gerät b")
+    assert b["went_offline_within_5_min_of_this_device"] is False
+    # Funkstandard im Raum: thread (a, c, d, Hub) ohne das Zigbee-Gerät b
+    assert facts["same_area_same_connection"] == {"connection_type": "thread", "total": 4, "offline_now": 1}
+    # Hub: a, c, d, f (b hat einen anderen Hub, e ist nicht überwacht); 1 ausgefallen, 3 im selben Raum
+    assert facts["same_hub_other_devices"] == {"total": 4, "offline_now": 1, "in_same_area": 3}
+    assert [x["name"] for x in facts["same_hub_offline_devices"]] == ["Gerät a"]
+    # Gleiches Modell: a und f; gleiche Software nur a
+    assert facts["same_model_other_devices"] == {"total": 2, "offline_now": 1, "same_software_version": {"total": 1, "offline_now": 1}}
+    text = json.dumps(facts)
+    assert '"id"' not in text and "area_id" not in text
+
+
+def test_facts_room_is_limited() -> None:
+    now = 1_800_000_000.0
+    me = _dev("me")
+    devices = [me, *[_dev(f"{i:02d}") for i in range(30)]]
+    facts = build_facts(me, {"devices": devices, "integrations": {}, "incidents": []}, now)
+    assert len(facts["same_area_devices"]) == ai_assessment.SAME_AREA_MAX == 15
+    assert facts["same_area_other_devices"]["total"] == 30
+
+
+def test_facts_week_and_battery_forecast() -> None:
+    now = 1_800_000_000.0
+    me = _dev("me", has_battery=True, battery={"level": 40, "low": False})
+    result = {"devices": [me], "integrations": {}, "incidents": []}
+    week = {"pct": 97.5, "outages": 4, "longest": 1800}
+    ok = {"status": "ok", "days": 83.4, "target": 10, "confidence": "medium", "accelerating": True}
+    facts = build_facts(me, result, now, {"week": week, "forecast": ok})
+    assert facts["last_7d"] == {"availability_percent": 97.5, "interruptions": 4, "longest_interruption_minutes": 30}
+    assert facts["battery_forecast"] == {"days_left": 83, "until_percent": 10, "confidence": "medium", "drop_is_accelerating": True}
+    for status, text in (("reached", "warning threshold reached"), ("flat", "level barely drops")):
+        assert build_facts(me, result, now, {"forecast": {"status": status}})["battery_forecast"] == {"status": text}
+    # zu wenig Verlauf oder keine Angaben: kein Fakt
+    assert "battery_forecast" not in build_facts(me, result, now, {"forecast": {"status": "short"}})
+    assert "last_7d" not in build_facts(me, result, now, {"week": None}) and "battery_forecast" not in build_facts(me, result, now)
+
+
+async def test_extras_week_and_forecast(hass: HomeAssistant, setup) -> None:
+    """_extras holt 7 Tage aus dem Protokoll und die Prognose aus dem Batterie-Verlauf."""
+    from custom_components.device_panel.devices import async_list_devices  # noqa: PLC0415
+
+    dev = _lamp(hass)
+    batt = er.async_get(hass).async_get_or_create("sensor", "test", f"{dev.id}-b", device_id=dev.id, original_device_class="battery")
+    hass.states.async_set(batt.entity_id, "80", {"device_class": "battery", "unit_of_measurement": "%"})
+    log = hass.data[DATA_AVAILABILITY]
+    log.evaluate()
+    result = await async_list_devices(hass, log)
+    device = next(d for d in result["devices"] if d["id"] == dev.id)
+    extra = await ai_assessment._extras(hass, device, log, time.time())
+    assert set(extra) == {"week", "forecast"} and extra["forecast"]["status"] in {"none", "short"}
+    # Ohne Batterie keine Prognose
+    plain = {**device, "has_battery": False}
+    assert set(await ai_assessment._extras(hass, plain, log, time.time())) == {"week"}

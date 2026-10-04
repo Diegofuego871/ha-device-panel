@@ -145,7 +145,11 @@ details such as software version, manufacturer, model and area.
   the answer. The AI task can be chosen in the settings. In expert mode the
   prompt can be viewed, copied and adjusted (variables `{language}` and
   `{facts}`, with a preview of the exact text). Besides the device, the
-  facts name the other offline devices of its integration and its area.
+  facts also give the context: the other devices in the same area with their
+  values (also healthy ones, with how many share the same radio standard,
+  such as Thread or Bluetooth), the devices on the same hub, devices of the
+  same model, the last 7 days, the battery forecast and which devices went
+  offline at the same time.
 - Matter devices: in the pop-up the Thread role (router, end device, sleepy
   end device) and the network name from the Matter diagnostics, next to the
   connection type, which can still be set by hand.
