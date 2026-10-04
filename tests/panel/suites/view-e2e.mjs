@@ -146,11 +146,23 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] dritter Klick: Standard`, !(await ev(`return !!r.querySelector("th.sorted")`)) && (await ev(`return r.querySelector("tr.dev").textContent.includes("Temperatur Keller")`)));
 
       // Liste ohne Gruppen, nach Batterie
-      await tap('.chips [data-flat="1"]');
+      // Der Schalter "Gruppen | Liste" steht seit 1.12.0 im Dialog "Spalten", nicht mehr in der Chip-Zeile.
+      check(`[${tag}] kein Schalter in der Chip-Zeile`, !(await ev(`return !!r.querySelector(".chips [data-flat], .chips .vseg")`)));
+      await tap(".view-btn");
+      await wait(`return r.querySelector("dialog.cols-dlg").open`);
+      check(`[${tag}] Dialog "Spalten": Gruppen | Liste, Gruppen aktiv, Hinweis`, (await ev(`return [...r.querySelectorAll('dialog.cols-dlg [data-vflat]')].map(b=>b.dataset.vflat + (b.classList.contains("on") ? "+" : "-")).join()`)) === "0+,1-" && (await text("dialog.cols-dlg .vnote")).startsWith(lang === "de" ? "Gruppen:" : "Groups:"), await text("dialog.cols-dlg .vnote"));
+      await tap('dialog.cols-dlg [data-vflat="1"]');
+      check(`[${tag}] Liste gewählt, Dialog bleibt offen`, await wait(`return r.querySelector('dialog.cols-dlg [data-vflat="1"]').classList.contains("on") && r.querySelector("dialog.cols-dlg").open`));
+      await tap('dialog.cols-dlg [data-vreset]');
+      check(`[${tag}] "${T.restore}" stellt auch Gruppen wieder her`, await wait(`return r.host._view.flat === false && r.querySelector('dialog.cols-dlg [data-vflat="0"]').classList.contains("on")`));
+      await tap('dialog.cols-dlg [data-vflat="1"]');
+      await wait(`return r.host._view.flat === true`);
+      await tap('dialog.cols-dlg [data-vdone]');
+      await wait(`return !r.querySelector("dialog.cols-dlg").open`);
       await tap('th .th-sort[data-sort="battery"]');
       const bats = await ev(`return [...r.querySelectorAll("tr.dev")].map(tr=>{const m=tr.children[6].textContent.match(/(\\d+) %/); return m?Number(m[1]):null})`);
       const withVal = bats.filter((x) => x != null);
-      check(`[${tag}] Liste ohne Gruppen`, !(await ev(`return !!r.querySelector("tr.grp")`)) && (await ev(`return r.querySelector('.chips [data-flat="1"]').classList.contains("on")`)));
+      check(`[${tag}] Liste ohne Gruppen`, !(await ev(`return !!r.querySelector("tr.grp")`)) && (await ev(`return r.host._view.flat === true`)));
       check(`[${tag}] Batterie aufsteigend, ohne Wert am Ende`, withVal.every((v, i) => i === 0 || withVal[i - 1] <= v) && bats.indexOf(null) === withVal.length, JSON.stringify(bats));
       // Filter-Chip gehört zur Ansicht
       await tap('.chip[data-conn="wifi"]');

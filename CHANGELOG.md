@@ -7,6 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.12.0] - 2026-10-04
+
+"Groups | List" moves into the customize dialog.
+
+### Changed
+
+- The switch "Groups | List" no longer takes room in the chip row (requested
+  by the user: do we really need it?). It now sits at the top of the dialog
+  "Customize" ("Columns" on the desktop, "View" on the phone), with its note:
+  groups keep the offline devices on top and sort within each group, the list
+  sorts across all devices (for example by battery).
+  - The setting itself is unchanged and stays saved per user, separate for
+    desktop and phone.
+  - "Restore default" in the desktop dialog also restores the groups.
+  - The chip row and the line below it on the phone are shorter.
+
 ## [1.11.0] - 2026-10-04
 
 Hide any filter chip.
@@ -1275,6 +1291,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.0
 [1.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.11.0
 [1.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.10.0
 [1.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.8.0

@@ -119,7 +119,8 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   "Standard wiederherstellen" als Textknopf links und "Fertig" rechts.
   Klick auf den Hintergrund oder Escape schliesst. Spaltenkopf als Knopf: Sortiersymbol erscheint beim
   Darüberfahren, die sortierte Spalte in Primärfarbe mit Pfeil.
-  "Gruppen | Liste" als Segment rechts in der Chip-Zeile. Handy: runder
+  "Gruppen | Liste" als Segment zuoberst im Dialog (seit 1.12.0, vorher rechts
+  in der Chip-Zeile). Handy: runder
   Knopf neben der Suche, Zeile "Sortiert nach" unter den Chips, Blatt
   "Ansicht" (Sortier-Pillen, Richtung, Darstellung, Angaben mit Griff und
   Auge, "Standard wiederherstellen" und "Fertig" wie im Dialog).

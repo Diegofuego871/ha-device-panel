@@ -751,11 +751,6 @@ class DevicePanel extends HTMLElement {
         this._cycleSort(sortBtn.dataset.sort);
         return;
       }
-      const flat = ev.target.closest("[data-flat]");
-      if (flat) {
-        this._setView({ flat: flat.dataset.flat === "1" });
-        return;
-      }
       if (ev.target.closest("[data-view-open]")) {
         this._openViewSheet();
         return;
@@ -1476,7 +1471,9 @@ class DevicePanel extends HTMLElement {
       `<div class="dlg-head"><span class="dlg-avatar">${mdi("cols", 28)}</span>
         <div class="dlg-title"><h2>${escape(t("customizeTitle"))}</h2><div class="dlg-sub">${escape(t("customizeSub"))}</div></div>
         <button type="button" class="dlg-close" data-vdone title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
-      <div class="dlg-body"><p class="dlg-note small">${escape(t("customizeHint"))}</p>
+      <div class="dlg-body"><div class="vline first"><span>${escape(t("viewGroupsOrList"))}</span>${this._vseg("vflat", [["0", escape(t("viewGroups"))], ["1", escape(t("viewList"))]], this._view.flat ? "1" : "0")}</div>
+        <div class="vnote">${escape(t("viewGroupsNote"))}</div>
+        <h3>${escape(t("viewBtn"))}</h3><p class="dlg-note small">${escape(t("customizeHint"))}</p>
         <div class="vrow fixed"><span class="drag-h ph" aria-hidden="true"></span><span class="vl">${escape(t("colName"))}<small>${escape(t("colFixed"))}</small></span>
           <span class="eye dis" aria-hidden="true">${mdi("eye", 20)}</span></div>
         <div class="vlist" data-vlist="cols">${this._orderRowsHtml(this._view.cols, COLUMNS, "cols")}</div></div>
@@ -1503,15 +1500,19 @@ class DevicePanel extends HTMLElement {
     if (dlg?.open) dlg.close();
   }
 
+  // Umschalter (Segment) der Dialoge "Anpassen" und "Ansicht".
+  _vseg(attr, items, value) {
+    return `<span class="seg-sw" role="group">${items
+      .map(([val, label]) => `<button type="button" data-${attr}="${val}" class="${val === value ? "on" : ""}" aria-pressed="${val === value}">${label}</button>`)
+      .join("")}</span>`;
+  }
+
   _renderViewSheet() {
     const dlg = this.shadowRoot.querySelector("dialog.view");
     if (!dlg) return;
     const t = (k, ...a) => this._t(k, ...a);
     const v = this._view;
-    const seg = (attr, items, value) =>
-      `<span class="seg-sw" role="group">${items
-        .map(([val, label]) => `<button type="button" data-${attr}="${val}" class="${val === value ? "on" : ""}" aria-pressed="${val === value}">${label}</button>`)
-        .join("")}</span>`;
+    const seg = (attr, items, value) => this._vseg(attr, items, value);
     const pills = SORT_MOBILE.map((key) => {
       const on = v.sort === key;
       return `<button type="button" class="vpill${on ? " on" : ""}" data-vsort="${key}" aria-pressed="${on}">${on ? mdi("check", 15) : ""}${escape(this._sortLabel(key))}</button>`;
@@ -1610,7 +1611,9 @@ class DevicePanel extends HTMLElement {
         return;
       }
       if (toggle(ev)) return;
-      if (ev.target.closest("[data-vreset]")) this._setView({ cols: defaultView().cols });
+      const flat = ev.target.closest("[data-vflat]");
+      if (flat) this._setView({ flat: flat.dataset.vflat === "1" });
+      else if (ev.target.closest("[data-vreset]")) this._setView({ cols: defaultView().cols, flat: defaultView().flat });
       else if (ev.target.closest("[data-vdone]")) this._toggleCols(false);
     });
     // Escape schliesst den Dialog selbst: Knopf nachführen.
@@ -2308,19 +2311,7 @@ class DevicePanel extends HTMLElement {
       tail += `<button type="button" class="chip hint ${cls} ${on ? "on" : ""} ${n ? "" : "zero"}" data-hint="${key}" aria-pressed="${on}">${mdi(icon, 15)}<span>${escape(this._t(label))}</span> <span class="n">${n}</span></button>`;
     }
     if (tail) html += `<span class="vsep"></span>${tail}`;
-    // Desktop: "Gruppen | Liste" am Ende der Chips; Handy: Zeile darunter.
-    if (!this._narrowQuery.matches) html += this._flatSegHtml();
     return html;
-  }
-
-  _flatSegHtml() {
-    const flat = this._view.flat;
-    return `<span class="seg-sw vseg" role="group">${[["0", "viewGroups"], ["1", "viewList"]]
-      .map(([val, key]) => {
-        const on = (val === "1") === flat;
-        return `<button type="button" data-flat="${val}" class="${on ? "on" : ""}" aria-pressed="${on}">${escape(this._t(key))}</button>`;
-      })
-      .join("")}</span>`;
   }
 
   // Handy: "Sortiert nach" unter den Chips; öffnet das Blatt "Ansicht".
@@ -2328,7 +2319,7 @@ class DevicePanel extends HTMLElement {
     const v = this._view;
     const label = this._sortLabel(v.sort);
     const dir = v.sort === "default" ? "" : mdi(v.dir === "asc" ? "arrowUp" : "arrowDown", 14);
-    return `<button type="button" class="sort-btn" data-view-open aria-label="${escape(`${this._t("sortBy")}: ${label}`)}">${mdi("sort", 16)}<span>${escape(label)}</span>${dir}${mdi("chevronDown", 16)}</button>${this._flatSegHtml()}`;
+    return `<button type="button" class="sort-btn" data-view-open aria-label="${escape(`${this._t("sortBy")}: ${label}`)}">${mdi("sort", 16)}<span>${escape(label)}</span>${dir}${mdi("chevronDown", 16)}</button>`;
   }
 
   _avatar(d, size = 18) {

@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.11.0, Einstellungen in fünf Abschnitten)
+## Stand (1.12.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -358,6 +358,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    ausgeblendeter Chips auf (Probleme, Hinweis, Bereich, Integration),
    Tabelle "Weitere Chips" in Darstellung › Filter-Chips (`CHIP_OTHER`,
    `chipOther`), Trenner nur, wenn "Nur Probleme" oder ein Hinweis erscheint.
+   Gruppen/Liste `1.12.0` (Nutzer, 2026-10-04, Variante A): der Schalter
+   (`view.flat`) steht nicht mehr in der Chip-Zeile (`_flatSegHtml` entfernt),
+   sondern zuoberst im Dialog `cols-dlg` (Desktop) und weiter im Blatt "Ansicht"
+   (Handy); `_vseg()` teilen beide; "Standard wiederherstellen" setzt auch `flat`.
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem

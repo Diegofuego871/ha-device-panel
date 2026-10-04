@@ -249,7 +249,6 @@ th.sorted, th.sorted .th-sort { color: var(--dp-primary); }
 th.sorted .th-sort svg { opacity: 1; }
 .th-sort:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; border-radius: 4px; }
 .nbad { color: var(--dp-error); font-weight: 500; }
-.chips .vseg { margin-left: auto; }
 .viewline { display: none; }
 /* Kopf fixieren (seit 0.28.0, docs/mockups/fixed-v1, C; Desktop ebenfalls):
    Sind die Kacheln weggescrollt, steht oben eine Zeile (44 px), darunter die
@@ -953,7 +952,6 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .sort-btn span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .sort-btn svg { flex: none; color: var(--dp-primary); }
   .sort-btn svg:last-child { color: var(--dp-text2); }
-  .viewline .vseg { flex: none; margin-left: auto; }
   dialog.device { max-height: 92%; }
   /* Feste Höhe: sonst springt das Blatt bei jeder Änderung des Inhalts
      (Prüfung, Abschnitt auf/zu) und gibt kurz den Hintergrund frei. */

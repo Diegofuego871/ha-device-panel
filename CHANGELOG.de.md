@@ -7,6 +7,24 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.12.0] - 2026-10-04
+
+"Gruppen | Liste" wandert in den Dialog "Anpassen".
+
+### Geändert
+
+- Der Schalter "Gruppen | Liste" nimmt keinen Platz mehr in der Chip-Zeile ein
+  (Wunsch des Nutzers: Brauchen wir ihn wirklich?). Er steht jetzt ganz oben im
+  Dialog "Anpassen" ("Spalten" auf dem Desktop, "Ansicht" auf dem Handy), mit
+  seinem Hinweis: Gruppen halten die Ausgefallenen zuoberst und sortieren
+  innerhalb jeder Gruppe, die Liste sortiert über alle Geräte (etwa nach
+  Batterie).
+  - Die Einstellung selbst bleibt gleich und pro Benutzer gespeichert,
+    Desktop und Handy getrennt.
+  - "Standard wiederherstellen" im Desktop-Dialog stellt auch die Gruppen
+    wieder her.
+  - Die Chip-Zeile und die Zeile darunter auf dem Handy sind kürzer.
+
 ## [1.11.0] - 2026-10-04
 
 Jeden Filter-Chip ausblenden.
@@ -1324,6 +1342,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.0
 [1.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.11.0
 [1.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.10.0
 [1.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.8.0
