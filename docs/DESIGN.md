@@ -125,6 +125,12 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Auge, "Standard wiederherstellen" und "Fertig" wie im Dialog).
 - Kopf-Kacheln gleich hoch, auch auf dem Handy (Zeile mit `stretch`); der
   Ring bleibt fest und steht in seiner Kachel mittig.
+- Kachel "Verfügbarkeit" (seit 0.34.0, Variante B, Rückfrage des Nutzers):
+  gross der Anteil jetzt wie der Ring (`.pct`, 26 px, klein "jetzt"),
+  darunter `.pavg` (13 px, `--dp-text2`, Wert fett) "Ø 24 Std.: 98,7 %",
+  sobald das Protokoll Prozente hat. Vorher gross der Durchschnitt 24 Std.;
+  neben einem vollen Ring las er sich als Fehler. Nie 100 %, solange ein
+  Gerät fehlt (99,9 %).
 - Tabellen mit mehreren Schaltern pro Zeile (seit 0.20.0 bis 0.33.1, Integrationen:
   "Anzeigen", "Push", "Anhaltend"): Spalten fester Breite (`.ex-col`,
   72 px, Handy 52 px), Kopf in Grossbuchstaben, darunter "Alle umschalten"

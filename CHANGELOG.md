@@ -69,6 +69,11 @@ Monitoring and notifications in one place, with a timeline per notification.
   (requested by the user: "green again, so you can see it"); the bumps of
   past outages stay visible. Red only while a device is missing. Same in
   the window "Outages in 24 h".
+- Tile "Availability": the big number is the share online right now, like
+  the ring ("100 % now" when all are online); below it, smaller, the
+  average of the last 24 hours ("avg. 24 h: 98.7 %"). Before, the big
+  number was the 24-hour average and read like an error next to a full
+  ring (question from the user). Never 100 % while a device is missing.
 
 ## [0.33.1] - 2026-10-04
 

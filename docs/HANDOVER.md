@@ -272,10 +272,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    alte Werte gelten als "Ausgefallen nach"). Puls grün, sobald kein Gerät
    mehr ausgefallen ist (Rückfrage des Nutzers). Der Nutzer hat weitere
    Punkte angekündigt.
-   Offen (Rückfrage des Nutzers, 2026-10-04): Kachel "Verfügbarkeit" zeigt
-   gross den Durchschnitt 24 Std. (z. B. 98,7 %), obwohl der Ring voll ist;
-   Varianten A heute, B jetzt gross und Ø 24 Std. darunter (Empfehlung),
-   C Ø 24 Std. mit dem Gerät, das ihn drückt. Entscheid des Nutzers abwarten.
+   Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
+   vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
+   darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem
+   Gerät, das ihn drückt).
    Offene Backlog-Punkte: 1 Ursache, 2 Gesundheitswert, 3 Funkweg,
    6 Regeln, 8 Entitäten, 9 CSV-Export, 10b KI-Zusammenfassung im
    Puls-Fenster (optional); offen ist auch die Bestätigung des

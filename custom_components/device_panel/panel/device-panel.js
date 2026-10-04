@@ -1766,19 +1766,25 @@ class DevicePanel extends HTMLElement {
     const online = all.filter((d) => d.online === true);
     const flaky = online.filter((d) => d.flaky).length;
     const noData = all.filter((d) => d.online == null).length;
-    const share = all.length ? (online.length / all.length) * 100 : 100;
-    // Kennzahl: mittlere Verfügbarkeit der letzten 24 Std. (sobald das
-    // Protokoll genug Daten hat), sonst der Anteil, der gerade online ist.
+    let share = all.length ? (online.length / all.length) * 100 : 100;
+    // Nie 100 % zeigen, solange ein Gerät fehlt (Rundung bei vielen Geräten).
+    if (share > 99.9 && online.length < all.length) share = 99.9;
+    // Kennzahl gross: der Anteil, der gerade online ist, wie der Ring. Bis
+    // 0.33.1 stand hier gross der Durchschnitt der letzten 24 Std.; neben
+    // einem vollen Ring las sich das als Fehler (Rückfrage des Nutzers,
+    // 0.34.0, Variante B). Der Durchschnitt steht darunter, sobald das
+    // Protokoll genug Daten hat.
     const withAvail = all.filter((d) => d.avail24?.pct != null);
-    let pctHtml = `${escape(this._fmtPct(share))} %`;
+    const pctHtml = `${escape(this._fmtPct(share))} %<small>${escape(this._t("pctNow"))}</small>`;
+    let avgHtml = "";
     if (withAvail.length) {
       let avg = withAvail.reduce((a, d) => a + d.avail24.pct, 0) / withAvail.length;
       if (avg > 99.9 && withAvail.some((d) => d.avail24.outages)) avg = 99.9;
-      pctHtml = `${escape(this._fmtPct(avg))} %<small>${escape(this._t("avg24"))}</small>`;
+      avgHtml = `<div class="pavg">${escape(this._t("avg24"))}: <b>${escape(this._fmtPct(avg))} %</b></div>`;
     }
     const line = (color, text) => `<div><i style="background:${color}"></i>${escape(text)}</div>`;
     const ring = `<div class="kt ring"><div class="ringwrap">${ringSvg(share, 108, 11)}<div class="c"><div><b>${online.length}</b><span>${escape(this._t("ofTotal", all.length))}</span></div></div></div>
-      <div><div class="k">${escape(this._t("availability"))}${this._scopeHtml()}</div><div class="pct">${pctHtml}</div>
+      <div><div class="k">${escape(this._t("availability"))}${this._scopeHtml()}</div><div class="pct${avgHtml ? " with-avg" : ""}">${pctHtml}</div>${avgHtml}
       <div class="lines">${line("var(--dp-success)", this._t("linesOnline", online.length - flaky))}
       ${flaky ? line("var(--dp-warning)", this._t("linesFlaky", flaky)) : ""}
       ${line("var(--dp-error)", this._t("linesOffline", offline.length))}

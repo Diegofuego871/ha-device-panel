@@ -349,8 +349,9 @@ Umgesetzt in 0.3.0b1 (`availability.py`).
     `availability.PCT_MIN_COVERED`, im Panel gleich): Kurz nach dem ersten
     Start hiesse ein Unterbruch von einer Minute sonst "50 %". Darunter
     liefert `summarize` `pct: None`, das Panel zeigt "–" mit Hinweis;
-    Unterbrüche und Dauer erscheinen weiter. Der Durchschnitt oben nimmt
-    nur Geräte mit Prozent, ohne solche den Anteil gerade online.
+    Unterbrüche und Dauer erscheinen weiter. Der Durchschnitt oben
+    ("Ø 24 Std." unter dem Anteil jetzt, seit 0.34.0) nimmt nur Geräte mit
+    Prozent und fehlt ohne solche.
   - Unter "Ausgefallen nach" (alle Entitäten weg, aber noch keine Schwelle)
     ist ein Gerät weder ausgefallen noch online: Das Protokoll schreibt
     nichts. Nach einem Neustart sind das die Geräte, die schon vorher

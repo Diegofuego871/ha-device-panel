@@ -11,8 +11,9 @@ Bereich.
 
 ## Funktionen
 
-- Überblick oben: wie viele Geräte online sind, die mittlere Verfügbarkeit
-  der letzten 24 Stunden, welche Geräte gerade ausgefallen sind und seit
+- Überblick oben: wie viele Geräte online sind (Ring und Anteil jetzt),
+  darunter die mittlere Verfügbarkeit der letzten 24 Stunden, welche
+  Geräte gerade ausgefallen sind und seit
   wann, und ein Ausfall-Puls über 24 Stunden, der auf Sammelausfälle
   hinweist (mehrere Geräte gleichzeitig, mit gemeinsamer Integration).
   Der Puls ist rot, solange ein Gerät ausgefallen ist, und wieder grün,

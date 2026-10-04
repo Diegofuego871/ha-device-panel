@@ -83,6 +83,9 @@ button { font: inherit; color: inherit; }
 .ringwrap .c span { display: block; font-size: 11px; line-height: 1.2; color: var(--dp-text2); max-width: 76px; margin: 0 auto; }
 .kt .pct { font-size: 26px; font-weight: 600; margin: 6px 0 8px; letter-spacing: -.02em; white-space: nowrap; }
 .kt .pct small { font-size: 12px; font-weight: 400; color: var(--dp-text2); letter-spacing: 0; margin-left: 4px; }
+.kt .pct.with-avg { margin-bottom: 2px; }
+.kt .pavg { font-size: 13px; color: var(--dp-text2); margin-bottom: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.kt .pavg b { color: var(--dp-text); font-weight: 600; }
 .lines div { display: flex; align-items: center; gap: 8px; font-size: 13.5px; padding: 2px 0; }
 .lines i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
 .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--dp-error); flex: none;

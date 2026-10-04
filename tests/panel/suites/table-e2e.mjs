@@ -15,7 +15,7 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     title: "Geräte", search: "In allen Spalten suchen…", ofTotal: "von 16 online", offlineNow: "Gerade ausgefallen",
-    longest: "längster seit ≥ 3 T. 4 Std.", atLeast: "Mindestens seit ", since: "Ausgefallen seit ", lines: ["9 stabil", "2 instabil", "4 ausgefallen", "1 ohne Daten"], avg: "Ø 24 Std.",
+    longest: "längster seit ≥ 3 T. 4 Std.", atLeast: "Mindestens seit ", since: "Ausgefallen seit ", lines: ["9 stabil", "2 instabil", "4 ausgefallen", "1 ohne Daten"], avg: "Ø 24 Std.", now: "jetzt",
     pulse: "Ausfall-Puls · 24 Std.", incident: "Sammelausfall", incidentText: "3 Geräte gleichzeitig, alle über Zigbee Home Automation.",
     hints: ["Batterie 7", "Batterie niedrig 2", "Schwacher Empfang 3", "Update verfügbar 2", "Neu 2"],
     groups: ["Ausgefallen · 4", "Instabil · 2", "Keine Daten · 1", "Online · 9"], statusOffline: "ausgefallen", wifi: "WLAN", thread: "Thread",
@@ -25,7 +25,7 @@ const TEXT = {
   },
   en: {
     title: "Devices", search: "Search all columns…", ofTotal: "of 16 online", offlineNow: "Offline right now",
-    longest: "longest for ≥ 3 d 4 h", atLeast: "At least since ", since: "Offline since ", lines: ["9 stable", "2 unstable", "4 offline", "1 without data"], avg: "avg. 24 h",
+    longest: "longest for ≥ 3 d 4 h", atLeast: "At least since ", since: "Offline since ", lines: ["9 stable", "2 unstable", "4 offline", "1 without data"], avg: "avg. 24 h", now: "now",
     pulse: "Outage pulse · 24 h", incident: "Group outage", incidentText: "3 devices at once, all via Zigbee Home Automation.",
     hints: ["Battery 7", "Low battery 2", "Weak signal 3", "Update available 2", "New 2"],
     groups: ["Offline · 4", "Unstable · 2", "No data · 1", "Online · 9"], statusOffline: "offline", wifi: "Wi-Fi", thread: "Thread",
@@ -63,7 +63,10 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Ring 11 ${T.ofTotal}`, hero.includes("11") && hero.includes(T.ofTotal), hero.slice(0, 120));
     const lines = await ev(`return [...r.querySelectorAll(".lines div")].map(d=>d.textContent.trim())`);
     check(`[${tag}] Zeilen stabil/instabil/ausgefallen/ohne Daten`, JSON.stringify(lines) === JSON.stringify(T.lines), JSON.stringify(lines));
-    check(`[${tag}] Kennzahl Ø 24 Std.`, (await ev(`return r.querySelector(".kt .pct").textContent`)).includes(T.avg));
+    // Seit 0.34.0 (Variante B): gross der Anteil jetzt wie der Ring, darunter Ø 24 Std.
+    const kpi = await ev(`const c=r.querySelector(".ringwrap .c"); const on=Number(c.querySelector("b").textContent); const all=Number(c.querySelector("span").textContent.match(/\\d+/)[0]); return [r.querySelector(".kt .pct").textContent, r.host._fmtPct(on/all*100) + " %", r.querySelector(".kt .pavg")?.textContent || ""]`);
+    check(`[${tag}] Kennzahl jetzt wie der Ring`, kpi[0] === kpi[1] + T.now, JSON.stringify(kpi));
+    check(`[${tag}] darunter Ø 24 Std.`, new RegExp(`^${T.avg.replace(".", "\\.")}: \\d+[,.]\\d %$`).test(kpi[2]), JSON.stringify(kpi));
     check(`[${tag}] Ausfall-Tafel`, hero.includes(T.offlineNow) && hero.includes(T.longest), hero);
     check(`[${tag}] Ausfall vor Neustart als "mindestens"`, await ev(`return [...r.querySelectorAll(".olist b")][0].textContent.startsWith("≥")`));
     // Tooltip mit dem Beginn: "mindestens" mit Grund, sonst der Zeitpunkt

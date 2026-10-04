@@ -11,8 +11,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { title: "Unterbrüche in 24 Std.", sub: /^\d+ Unterbrüche bei \d+ Geräten · zusammen .+/, list: "Geräte · meiste Unterbrüche zuerst", offline: "ausgefallen", open: "Geräte mit Unterbrüchen zeigen", total: "zusammen ", kitchen: "· Küche" },
-  en: { title: "Outages in 24 h", sub: /^\d+ outages on \d+ devices · .+ in total/, list: "Devices · most outages first", offline: "offline", open: "Show devices with outages", total: " in total", kitchen: "· Küche" },
+  de: { title: "Unterbrüche in 24 Std.", sub: /^\d+ Unterbrüche bei \d+ Geräten · zusammen .+/, list: "Geräte · meiste Unterbrüche zuerst", offline: "ausgefallen", open: "Geräte mit Unterbrüchen zeigen", total: "zusammen ", kitchen: "· Küche", now: "jetzt", avg: "Ø 24 Std.", full: "100 %" },
+  en: { title: "Outages in 24 h", sub: /^\d+ outages on \d+ devices · .+ in total/, list: "Devices · most outages first", offline: "offline", open: "Show devices with outages", total: " in total", kitchen: "· Küche", now: "now", avg: "avg. 24 h", full: "100 %" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -117,6 +117,18 @@ for (const lang of ["de", "en"]) {
     await ev(`r.activeElement?.blur()`);
     await p.screenshot({ path: `${outDir}/pulse-calm-${tag.replace("/", "-")}.png` });
     await tap('dialog.pulse-dlg .dlg-actions [data-pulse-close]');
+
+    // Kachel "Verfügbarkeit" (0.34.0, Variante B): Sind alle online, steht
+    // gross 100 % wie der volle Ring; der Durchschnitt 24 Std. darunter
+    // bleibt unter 100 %, weil es Unterbrüche gab.
+    await ev(`for (const d of r.host._devices) if (d.online !== true) { d.online = true; d.offline_since = null; } r.host._render()`);
+    const kpi = await ev(`return [r.querySelector(".hero .kt .pct").textContent, r.querySelector(".hero .kt .pavg")?.textContent || "", r.querySelector(".ringwrap .c").textContent.replace(/\\s+/g," ").trim()]`);
+    check(`[${tag}] alle online: gross 100 % jetzt, darunter Ø 24 Std. unter 100 %`, kpi[0] === T.full + T.now && kpi[1].startsWith(T.avg + ": ") && !kpi[1].includes("100") && ((m) => m && m[1] === m[2])(kpi[2].match(/^(\d+)\D+(\d+)/)), JSON.stringify(kpi));
+    // Nie 100 % zeigen, solange ein Gerät fehlt (Rundung bei vielen Geräten)
+    const many = await ev(`const devs = Array.from({length: 2000}, (_, i) => ({ id: "x" + i, name: "x", online: i > 0 })); const html = r.host._heroHtml(devs, devs.filter(d => !d.online)); return html.match(/class="pct[^"]*">([^<]*)/)[1]`);
+    check(`[${tag}] 1999 von 2000: nicht 100 %`, many.startsWith("99") && many.includes("9 %"), many);
+    await ev(`r.querySelector(".hero").scrollLeft = 0`);
+    await p.screenshot({ path: `${outDir}/hero-kpi-${tag.replace("/", "-")}.png` });
 
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();

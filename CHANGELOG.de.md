@@ -71,6 +71,12 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
   (Wunsch des Nutzers: "wieder grün, dass man das sieht"); die Höcker der
   vergangenen Unterbrüche bleiben sichtbar. Rot nur, solange ein Gerät
   fehlt. Ebenso im Fenster "Unterbrüche in 24 Std.".
+- Kachel "Verfügbarkeit": Gross steht der Anteil, der gerade online ist,
+  wie der Ring ("100 % jetzt", wenn alle online sind); darunter kleiner
+  der Durchschnitt der letzten 24 Stunden ("Ø 24 Std.: 98,7 %"). Vorher
+  stand gross der Durchschnitt 24 Std. und las sich neben einem vollen Ring
+  wie ein Fehler (Rückfrage des Nutzers). Nie 100 %, solange ein Gerät
+  fehlt.
 
 ## [0.33.1] - 2026-10-04
 

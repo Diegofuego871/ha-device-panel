@@ -10,8 +10,9 @@ details such as software version, manufacturer, model and area.
 
 ## Features
 
-- Overview at the top: how many devices are online, the average
-  availability of the last 24 hours, which devices are offline right now and
+- Overview at the top: how many devices are online (ring and share right
+  now), below it the average availability of the last 24 hours, which
+  devices are offline right now and
   for how long, and an outage pulse over 24 hours that points out group
   outages (several devices at once, with the shared integration).
   The pulse is red while a device is offline and green again once all are
