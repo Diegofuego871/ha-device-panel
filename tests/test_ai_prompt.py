@@ -348,7 +348,7 @@ async def test_extras_week_and_forecast(hass: HomeAssistant, setup) -> None:
     result = await async_list_devices(hass, log)
     device = next(d for d in result["devices"] if d["id"] == dev.id)
     extra = await ai_assessment._extras(hass, device, log, time.time())
-    assert set(extra) == {"week", "forecast"} and extra["forecast"]["status"] in {"none", "short"}
+    assert set(extra) == {"week", "forecast", "battery_year"} and extra["forecast"]["status"] in {"none", "short"}
     # Ohne Batterie keine Prognose
     plain = {**device, "has_battery": False}
     assert set(await ai_assessment._extras(hass, plain, log, time.time())) == {"week"}
@@ -396,3 +396,47 @@ def test_every_fact_belongs_to_a_group_and_groups_render_alone() -> None:
     assert "Lampe {facts_area}" in full and '"same_area_devices"' not in full
     # Gruppe ohne Fakten: leeres Objekt
     assert ai_assessment.build_instructions({}, "en", "{facts_area}").strip() == "{}"
+
+
+def test_battery_year_summary() -> None:
+    """1.8.0: Batterie der letzten 12 Monate: Mittel und Tiefstand je Monat, Wechsel, ohne IDs."""
+    from datetime import UTC, datetime  # noqa: PLC0415
+
+    day = 86400
+    now = datetime(2026, 10, 15, 12, tzinfo=UTC).timestamp()
+    # Ein Jahr mit zwei Wechseln: Stand fällt von 100 auf 20, Wechsel, fällt wieder von 100 auf 60
+    points = [[now - (365 - i) * day, 100 - i * 0.4 if i < 200 else (100 - (i - 200) * 0.25 if i < 300 else 100 - (i - 300) * 0.6)] for i in range(366)]
+    changes = [{"at": now - 165 * day, "from": 20, "to": 100}, {"at": now - 65 * day, "from": 25, "to": 100}]
+    year = ai_assessment.battery_year({"points": points, "changes": changes}, now)
+    assert year["battery_changes"] == 2 and year["days_covered"] == 365
+    assert [c["days_ago"] for c in year["recent_changes"]] == [65, 165]  # neueste zuerst
+    assert year["recent_changes"][0] == {"days_ago": 65, "from_percent": 25, "to_percent": 100}
+    months = year["monthly_percent"]
+    assert len(months) <= ai_assessment.BATTERY_MONTHS_MAX and list(months) == sorted(months)
+    assert all(m["lowest"] <= m["average"] for m in months.values())
+    assert year["lowest_percent"] == min(round(p[1]) for p in points)
+    # ohne Wechsel: kein recent_changes; ohne Punkte: None
+    assert "recent_changes" not in ai_assessment.battery_year({"points": points, "changes": []}, now)
+    assert ai_assessment.battery_year({"points": [], "changes": []}, now) is None
+    # begrenzt auf die letzten Wechsel
+    many = [{"at": now - i * 10 * day, "from": 10, "to": 100} for i in range(1, 20)]
+    assert len(ai_assessment.battery_year({"points": points, "changes": many[::-1]}, now)["recent_changes"]) == ai_assessment.BATTERY_CHANGES_MAX
+    assert '"id"' not in json.dumps(year)
+
+
+def test_facts_include_the_battery_year_in_the_battery_group() -> None:
+    from custom_components.device_panel.ai_prompt import FACT_GROUPS  # noqa: PLC0415
+
+    now = 1_800_000_000.0
+    me = _dev("me", has_battery=True, battery={"level": 40, "low": False})
+    year = {"monthly_percent": {"2026-09": {"average": 50, "lowest": 40}}, "lowest_percent": 40, "days_covered": 300, "battery_changes": 0}
+    facts = build_facts(me, {"devices": [me], "integrations": {}, "incidents": []}, now, {"battery_year": year})
+    assert facts["battery_last_12_months"] == year and "battery_last_12_months" in FACT_GROUPS["battery"]
+    # Ohne Batterie oder ohne Angabe: kein Fakt
+    plain = _dev("p")
+    assert "battery_last_12_months" not in build_facts(plain, {"devices": [plain], "integrations": {}, "incidents": []}, now, {"battery_year": year})
+    assert "battery_last_12_months" not in build_facts(me, {"devices": [me], "integrations": {}, "incidents": []}, now)
+    # Die Gruppe {facts_battery} trägt ihn
+    text = ai_assessment.build_instructions(facts, "de", "{facts_battery}")
+    assert "battery_last_12_months" in text and '"name"' not in text
+    assert "battery_last_12_months" in DEFAULT_PROMPT and "12 months" in DEFAULT_PROMPT

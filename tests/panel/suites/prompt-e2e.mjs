@@ -15,12 +15,12 @@ const TEXT = {
   de: {
     expert: "Profi-Modus", def: "Standard", own: "Eigener", copied: "Kopiert", sub: "Standard", subOwn: "Eigener Prompt statt Standard", lang: "German",
     errFacts: "Der Prompt braucht {facts} oder mindestens eine Gruppe wie {facts_device}, sonst bekommt die KI keine Angaben zum Gerät.", errUnknown: "Unbekannter Platzhalter {name}. Erlaubt sind {language}, {facts} und die Gruppen {facts_device}, {facts_history}, {facts_battery}, {facts_signal}, {facts_integration}, {facts_area}, {facts_hub}, {facts_model}.", hint: "{facts} enthält alles. Statt {facts} lassen sich einzelne Gruppen einsetzen, um Umfang und Reihenfolge selbst zu bestimmen.", areaInfo: "Bereich: Geräte im selben Raum, gleicher Funkstandard",
-    sumOwn: "Aus · Eigener Prompt", tabs: "Bearbeiten|Vorschau", count: (n) => `${n} von 4000 Zeichen`, change: "1 Änderung",
+    sumOwn: "Aus · Eigener Prompt", tabs: "Bearbeiten|Vorschau", count: (n) => `${n} von 6000 Zeichen`, change: "1 Änderung",
   },
   en: {
     expert: "Expert mode", def: "Default", own: "Own", copied: "Copied", sub: "Default", subOwn: "Own prompt instead of the default", lang: "English",
     errFacts: "The prompt needs {facts} or at least one group such as {facts_device}, otherwise the AI gets no details about the device.", errUnknown: "Unknown placeholder {name}. Allowed are {language}, {facts} and the groups {facts_device}, {facts_history}, {facts_battery}, {facts_signal}, {facts_integration}, {facts_area}, {facts_hub}, {facts_model}.", hint: "{facts} contains everything. Instead of {facts} you can insert single groups to choose scope and order yourself.", areaInfo: "Area: devices in the same room, same radio standard",
-    sumOwn: "Off · Own prompt", tabs: "Edit|Preview", count: (n) => `${n} of 4000 characters`, change: "1 change",
+    sumOwn: "Off · Own prompt", tabs: "Edit|Preview", count: (n) => `${n} of 6000 characters`, change: "1 change",
   },
 };
 
@@ -78,7 +78,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] ohne {facts}: Fehler, Übernehmen gesperrt, Feld rot`, (await text("[data-prompt-error]")) === T.errFacts && (await ev(`return r.querySelector('[data-prompt="apply"]').disabled && r.querySelector(".pr-text").classList.contains("bad") && !r.querySelector("[data-prompt-error]").hidden`)), await text("[data-prompt-error]"));
     await setText("{name} {facts}");
     check(`[${tag}] unbekannter Platzhalter`, (await text("[data-prompt-error]")) === T.errUnknown.replace("{name}", "{name}") && (await ev(`return r.querySelector('[data-prompt="apply"]').disabled`)), await text("[data-prompt-error]"));
-    await setText("x".repeat(4001) + "{facts}");
+    await setText("x".repeat(6001) + "{facts}");
     check(`[${tag}] zu lang`, (await ev(`return r.querySelector('[data-prompt="apply"]').disabled && !r.querySelector("[data-prompt-error]").hidden`)));
     // Chip fügt an der Cursor-Stelle ein
     await setText("Vorher  nachher");

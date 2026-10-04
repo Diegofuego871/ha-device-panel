@@ -7,6 +7,28 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] - 2026-10-04
+
+The battery of the last 12 months in the AI assessment.
+
+### Added
+
+- New fact `battery_last_12_months` for the AI assessment (requested by the
+  user): average and lowest level per calendar month (at most 12), the
+  battery changes with days ago and the level before and after (the last 6),
+  the lowest level and the number of days covered. It comes from the
+  battery history (recorder) and is part of the group `{facts_battery}`.
+- The default prompt explains it, compares the time between battery changes
+  with the current drop and adds one sentence on the battery of the last
+  12 months to every assessment of a battery device (trend, changes,
+  forecast).
+
+### Changed
+
+- The prompt may now be up to 6000 characters (before 4000): the default
+  prompt needs almost 4000. Saved prompts stay valid.
+- The note in the settings names the 12 months of the battery.
+
 ## [1.7.0] - 2026-10-04
 
 Groups of facts as variables in the expert mode of the AI assessment.
@@ -1184,6 +1206,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.8.0
 [1.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.7.0
 [1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0
 [1.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.4.0

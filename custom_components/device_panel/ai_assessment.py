@@ -32,6 +32,9 @@ from .options_api import effective
 SAME_OFFLINE_MAX = 10
 # Höchstens so viele Geräte des Bereichs mit ihren Werten (seit 1.6.0).
 SAME_AREA_MAX = 15
+# Batterie der letzten 12 Monate: höchstens so viele Monate und Wechsel (seit 1.8.0).
+BATTERY_MONTHS_MAX = 12
+BATTERY_CHANGES_MAX = 6
 # Ausfälle innerhalb dieser Zeit gelten als gleichzeitig mit dem Gerät.
 SAME_TIME_SECONDS = 300
 
@@ -97,6 +100,34 @@ def _offline_list(devices: list[dict[str, Any]], now: float, extra: Any, ref: fl
         if ref is not None:
             item["went_offline_within_5_min_of_this_device"] = abs(at - ref) <= SAME_TIME_SECONDS
         out.append({k: v for k, v in item.items() if v is not None})
+    return out
+
+
+def battery_year(history: dict[str, Any], now: float) -> dict[str, Any] | None:
+    """
+    Batterie der letzten 12 Monate in Kürze (seit 1.8.0, Wunsch des Nutzers) aus
+    dem Batterie-Verlauf: Mittel und Tiefstand je Kalendermonat, die Wechsel mit
+    Alter und Stand davor und danach, Tiefstand insgesamt. Ohne Punkte None.
+    """
+    points = history.get("points") or []
+    if not points:
+        return None
+    months: dict[str, list[float]] = {}
+    for at, value in points:
+        months.setdefault(dt_util.as_local(dt_util.utc_from_timestamp(at)).strftime("%Y-%m"), []).append(value)
+    keys = sorted(months)[-BATTERY_MONTHS_MAX:]
+    out: dict[str, Any] = {
+        "monthly_percent": {k: {"average": round(sum(months[k]) / len(months[k])), "lowest": round(min(months[k]))} for k in keys},
+        "lowest_percent": round(min(v for _t, v in points)),
+        "days_covered": max(0, round((now - points[0][0]) / 86400)),
+    }
+    changes = history.get("changes") or []
+    out["battery_changes"] = len(changes)
+    if changes:
+        out["recent_changes"] = [
+            {"days_ago": max(0, round((now - c["at"]) / 86400)), "from_percent": c["from"], "to_percent": c["to"]}
+            for c in reversed(changes[-BATTERY_CHANGES_MAX:])
+        ]
     return out
 
 
@@ -184,6 +215,8 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float, extr
     if (battery := device.get("battery")) and battery.get("level") is not None:
         facts["battery_percent"] = battery["level"]
         facts["battery_low"] = bool(battery.get("low"))
+        if year := extra.get("battery_year"):
+            facts["battery_last_12_months"] = year
         if fc := extra.get("forecast"):
             # Prognose aus dem Batterie-Verlauf (seit 1.6.0, wie im Panel).
             if fc.get("status") == "ok":
@@ -329,7 +362,7 @@ def source_name(hass: HomeAssistant, entity_id: str | None) -> str | None:
 
 
 async def _extras(hass: HomeAssistant, device: dict[str, Any], log: Any, now: float) -> dict[str, Any]:
-    """Fakten, die nicht in der Geräteliste stehen (seit 1.6.0): Verfügbarkeit 7 Tage, Batterie-Prognose."""
+    """Fakten, die nicht in der Geräteliste stehen (seit 1.6.0): Verfügbarkeit 7 Tage, Batterie-Prognose, Batterie 12 Monate."""
     extra: dict[str, Any] = {}
     if log is not None:
         extra["week"] = log.device_summary(device["id"], 7 * 86400, now)
@@ -338,7 +371,9 @@ async def _extras(hass: HomeAssistant, device: dict[str, Any], log: Any, now: fl
         entity_id = battery_entity(hass, er.async_entries_for_device(er.async_get(hass), device["id"])) if reg else None
         if reg is not None and entity_id:
             threshold = device_battery_threshold(hass, effective(hass), reg)
-            extra["forecast"] = (await async_battery_history(hass, entity_id, "365d", threshold, now))["forecast"]
+            history = await async_battery_history(hass, entity_id, "365d", threshold, now)
+            extra["forecast"] = history["forecast"]
+            extra["battery_year"] = battery_year(history, now)
     return extra
 
 

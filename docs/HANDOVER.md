@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.7.0, Einstellungen in fünf Abschnitten)
+## Stand (1.8.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -323,7 +323,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Name), `same_model_other_devices`, `went_offline_within_5_min_of_this_device`
    (`SAME_TIME_SECONDS` = 300), `last_7d` und `battery_forecast` (beide aus
    `_extras`, async: Protokoll 7 Tage und `async_battery_history` 365d).
-   `DEFAULT_PROMPT` 3638 von 4000 Zeichen (`AI_PROMPT_MAX`); die Kopie im
+   `DEFAULT_PROMPT` (1.6.0: 3638 Zeichen; Grenze `AI_PROMPT_MAX`); die Kopie im
    Simulator (`AI_PROMPT_DEFAULT`) muss nachgeführt werden.
    Gruppen als Variablen `1.7.0` (Nutzer, 2026-10-04): `ai_prompt.FACT_GROUPS`
    (device, history, battery, signal, integration, area, hub, model; jeder Fakt
@@ -332,6 +332,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Gruppe); `render_prompt` ersetzt in einem Durchgang (Regex), Gruppe ohne
    Fakten = `{}`. Panel: `PROMPT_GROUPS`/`PROMPT_VARS`, `promptVarInfo`,
    `promptVarsHint`; Simulator `promptProblem` nachgeführt.
+   Batterie 12 Monate `1.8.0` (Nutzer, 2026-10-04): Fakt
+   `battery_last_12_months` (`battery_year()` aus dem Batterie-Verlauf 365d,
+   `_extras` liefert `battery_year`; Gruppe `battery`); Standard-Prompt
+   (3941 Zeichen) verlangt einen Satz dazu; `AI_PROMPT_MAX` 6000 (Panel
+   `PROMPT_MAX`, Simulator nachgeführt).
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem

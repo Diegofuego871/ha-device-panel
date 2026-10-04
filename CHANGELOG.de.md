@@ -7,6 +7,28 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.8.0] - 2026-10-04
+
+Die Batterie der letzten 12 Monate in der KI-Einschätzung.
+
+### Hinzugefügt
+
+- Neuer Fakt `battery_last_12_months` für die KI-Einschätzung (Wunsch des
+  Nutzers): Mittel und Tiefstand je Kalendermonat (höchstens 12), die
+  Batteriewechsel mit Alter in Tagen und Stand davor und danach (die letzten
+  6), der tiefste Stand und die abgedeckten Tage. Er stammt aus dem
+  Batterie-Verlauf (Recorder) und gehört zur Gruppe `{facts_battery}`.
+- Der Standard-Prompt erklärt ihn, vergleicht die Zeit zwischen den
+  Batteriewechseln mit dem aktuellen Rückgang und lässt bei jedem
+  Batteriegerät einen Satz zur Batterie der letzten 12 Monate in die
+  Einschätzung einfliessen (Trend, Wechsel, Prognose).
+
+### Geändert
+
+- Der Prompt darf nun bis zu 6000 Zeichen lang sein (vorher 4000): Der
+  Standard-Prompt braucht fast 4000. Gespeicherte Prompts bleiben gültig.
+- Der Hinweis in den Einstellungen nennt die 12 Monate der Batterie.
+
 ## [1.7.0] - 2026-10-04
 
 Gruppen der Fakten als Variablen im Profi-Modus der KI-Einschätzung.
@@ -1229,6 +1251,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.8.0
 [1.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.7.0
 [1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0
 [1.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.4.0

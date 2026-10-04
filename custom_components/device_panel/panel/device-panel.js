@@ -256,7 +256,7 @@ const MON_TAB_KEYS = {
 // docs/mockups/content-v1, A) mit den Optionen, die sie ändern.
 // Prompt der KI-Einschätzung (Profi-Modus, seit 1.2.0): wie
 // ai_prompt.prompt_problem im Backend; das Backend prüft beim Speichern nochmals.
-const PROMPT_MAX = 4000;
+const PROMPT_MAX = 6000;
 // Seit 1.7.0 zusätzlich die Gruppen der Fakten ({facts_area} usw., wie
 // ai_prompt.FACT_GROUPS): wer {facts} nicht nutzt, setzt nur Gruppen ein.
 const PROMPT_GROUPS = ["device", "history", "battery", "signal", "integration", "area", "hub", "model"];
