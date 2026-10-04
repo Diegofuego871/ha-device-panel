@@ -12,7 +12,7 @@
 - **Geräteliste** nach ausgefallen, instabil und online gruppiert, mit Suche, Filter-Chips und eigenen Spalten
 - **Pro Gerät:** Verfügbarkeit, Unterbrüche, Empfang und Batterie im Popup, mit Verlauf und Statistik
 - **Batterie-Prognose:** wie lange die Batterie bis zur Warnschwelle hält, ohne KI
-- **Meldungen:** Push und anhaltende Benachrichtigung bei Ausfällen und schwacher Batterie, mit Zeitstrahl, wann was ankommt
+- **Meldungen:** Push und anhaltende Benachrichtigung bei Ausfällen und schwacher Batterie, mit Zeitstrahl, wann was ankommt; Standard pro Integration, Ausnahmen pro Gerät
 - **Optionale KI-Einschätzung:** eine Vermutung zur Ursache auf Knopfdruck, der Prompt ist im Profi-Modus anpassbar
 - **Einstellungen im Panel,** auch Updates über HACS, auf Deutsch und Englisch
 - **Handy und Desktop,** die Ansicht wird pro Benutzer gespeichert
@@ -38,6 +38,12 @@ Verfügbarkeit, Unterbrüche, Empfang und Batterie als Kacheln, dazu Verbindung,
 | <img src="docs/screenshots/de/availability.png" alt="Verfügbarkeit über 7 Tage mit jedem Unterbruch"> | <img src="docs/screenshots/de/signal.png" alt="Empfangsverlauf mit Median, Spanne und Warnschwelle"> | <img src="docs/screenshots/de/battery.png" alt="Batterie-Verlauf mit Batteriewechsel, Schwelle und Prognose"> |
 
 Die Prognose rechnet ab dem letzten Batteriewechsel (höchstens ein Jahr) bis zur Warnschwelle des Geräts und sagt, wie sicher sie ist.
+
+### Einstellungen pro Gerät
+
+Jedes Gerät kann im Popup die Standardwerte übersteuern: eine eigene "Ausgefallen nach"-Zeit (oder keine Überwachung), eine eigene Batterie-Schwelle, eine eigene Empfang-Warnung sowie Ausfall- und Online-Meldungen aus oder für 24 Stunden stumm, etwa bei einem Ladegerät, das oft absichtlich offline ist. Jede Zeile zeigt, woher der Wert kommt und was der Standard wäre. Ein Symbol neben dem Namen in der Liste zeigt Geräte mit eigenen Einstellungen.
+
+<p align="center"><img src="docs/screenshots/de/device-settings.png" alt="Geräte-Popup: Einstellungen für dieses Gerät mit eigener Zeit, eigener Batterie-Schwelle und ausgeschalteten Meldungen" width="720"></p>
 
 ### Meldungen unter deiner Kontrolle
 

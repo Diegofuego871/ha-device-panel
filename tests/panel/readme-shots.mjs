@@ -1,7 +1,7 @@
 // Printscreens für die README (docs/screenshots/{de,en}/): aus dem HA-Nachbau
 // mit erfundenen Daten, Desktop hell, Handy dunkel. Aufruf: node readme-shots.mjs
 // Danach nur die in der README genutzten Dateien behalten (die übrigen Handy-Bilder
-// löschen: alle ausser overview-, popup- und battery-mobile). Port 8950 muss frei sein.
+// löschen: alle ausser overview-, popup- und battery-mobile; die Dateien neu erzeugen und nur die geänderten Bilder übernehmen, da Zeiten und Zufallswerte abweichen). Port 8950 muss frei sein.
 import { chromium } from "playwright-core";
 import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -66,6 +66,24 @@ for (const lang of ["de", "en"]) {
       }
       await closeDialogs();
     }
+
+    // Einstellungen für dieses Gerät: eigene Zeit, eigene Batterie-Schwelle, Meldungen aus
+    await open("e");
+    await (await handle('select[data-dlg="dev-off"]')).selectOption("own");
+    await wait(`return r.querySelector('input[data-dlg="dev-off-min"]')?.value === "2"`);
+    await (await handle('input[data-dlg="dev-off-min"]')).fill("90");
+    await p.keyboard.press("Tab");
+    await wait(`return r.host._devices.find((d) => d.id === "e").offline_after === 90`);
+    await (await handle('select[data-dlg="dev-bat"]')).selectOption("own");
+    await wait(`return r.querySelector('input[data-dlg="dev-bat-pct"]')?.value === "15"`);
+    await (await handle('input[data-dlg="dev-bat-pct"]')).fill("30");
+    await p.keyboard.press("Tab");
+    await wait(`return r.host._devices.find((d) => d.id === "e").battery_setting === 30`);
+    await (await handle('select[data-dlg="dev-notify"]')).selectOption("off");
+    await wait(`return r.querySelector('select[data-dlg="dev-notify"]')?.value === "off"`);
+    await ev(`r.querySelector(".dev-set").scrollIntoView({ block: "center" })`);
+    await shot("device-settings");
+    await closeDialogs();
 
     // Puls-Fenster
     await tap(".hero [data-pulse], .pulse-card, [data-pulse-open]").catch(() => {});

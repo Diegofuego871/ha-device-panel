@@ -12,7 +12,7 @@
 - **Device list** grouped into offline, unstable and online, with search, filter chips and your own columns
 - **Per device:** availability, outages, signal and battery in a pop-up, with history and statistics
 - **Battery forecast:** how long the battery lasts until its warning threshold, without AI
-- **Notifications:** push and persistent notification for outages and low batteries, with a timeline of when what arrives
+- **Notifications:** push and persistent notification for outages and low batteries, with a timeline of when what arrives; defaults per integration, overrides per device
 - **Optional AI assessment:** a guess at the cause on a button press, prompt adjustable in expert mode
 - **Settings in the panel,** including updates via HACS, in German and English
 - **Phone and desktop,** with the view saved per user
@@ -38,6 +38,12 @@ Availability, outages, signal and battery as tiles, plus connection, integration
 | <img src="docs/screenshots/en/availability.png" alt="Availability over 7 days with every outage"> | <img src="docs/screenshots/en/signal.png" alt="Signal history with median, range and warning threshold"> | <img src="docs/screenshots/en/battery.png" alt="Battery history with battery change, threshold and forecast"> |
 
 The forecast calculates from the last battery change (at most one year) up to the warning threshold of the device, and says how sure it is.
+
+### Settings per device
+
+Every device can override the defaults in its pop-up: its own "offline after" time (or no monitoring), its own battery threshold, its own signal warning, and outage and online notifications switched off or muted for 24 hours, for example for a charger that is often offline on purpose. Each row shows where the value comes from and what the default would be. A symbol next to the name in the list shows devices with their own settings.
+
+<p align="center"><img src="docs/screenshots/en/device-settings.png" alt="Device pop-up: settings for this device with own time, own battery threshold and notifications off" width="720"></p>
 
 ### Notifications you control
 
