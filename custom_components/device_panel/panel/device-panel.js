@@ -252,6 +252,16 @@ const MON_TAB_KEYS = {
   integ: ["offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations"],
 };
 
+// Reiter der Abschnitte "Geräte im Panel" und "Darstellung" (seit 1.0.0,
+// docs/mockups/content-v1, A) mit den Optionen, die sie ändern.
+const SUB_TAB_KEYS = {
+  integrations: ["exclude_integrations"],
+  types: ["exclude_types"],
+  devs: ["exclude_devices"],
+  conn: ["connection_integrations", "reset_connection", "reset_signal"],
+  chips: ["hide_connections", "connection_order"],
+};
+
 // Empfang in vier Stufen (gut -> schlecht), Farben wie unifi_dynamic.
 function sigLevel(sig) {
   if (!sig || sig.value == null) return null;
@@ -3279,6 +3289,8 @@ class DevicePanel extends HTMLElement {
       resets: { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set() },
       // Reiter von "Überwachung und Meldungen", gewählte Integration, Filter der Liste.
       tab: "overview", integ: null, integFilter: "all",
+      // Reiter von "Geräte im Panel" und "Darstellung".
+      sub: { devices: "integrations", look: "conn" },
     };
     this._renderSettings();
     if (!dialog.open) {
@@ -3359,12 +3371,9 @@ class DevicePanel extends HTMLElement {
   // "Integrationen" nur noch mit "Anzeigen".
   _settingsSections() {
     return [
+      ["devices", ["show_service_devices", "show_disabled_devices", ...SUB_TAB_KEYS.integrations, ...SUB_TAB_KEYS.types, ...SUB_TAB_KEYS.devs]],
       ["monitor", Object.values(MON_TAB_KEYS).flat()],
-      ["integrations", ["exclude_integrations"]],
-      ["types", ["exclude_types"]],
-      ["connections", ["connection_integrations", "reset_connection", "reset_signal"]],
-      ["display", ["show_service_devices", "show_disabled_devices", "hide_connections", "connection_order"]],
-      ["hidden", ["exclude_devices"]],
+      ["look", [...SUB_TAB_KEYS.conn, ...SUB_TAB_KEYS.chips]],
       ["ai", ["ai_assessment", "ai_task_entity"]],
       ["updates", ["update_check"]],
     ];
@@ -3423,6 +3432,17 @@ class DevicePanel extends HTMLElement {
     return types.filter((x) => x.devices > 0 || d.exclude_types.includes(x.type));
   }
 
+  // Zahl der ausgeblendeten Einträge eines Reiters (Zähler am Reiter und in der Zusammenfassung).
+  _subCount(id, d) {
+    if (id === "integrations") return (d.exclude_integrations || []).length;
+    if (id === "types") return (d.exclude_types || []).length;
+    if (id === "devs") {
+      const ex = new Set(d.exclude_devices || []);
+      return this._hiddenCatalog().filter((x) => ex.has(x.id)).length;
+    }
+    return 0;
+  }
+
   _settingsSummary(id, d) {
     if (id === "updates") return this._t(d.update_check ? "sumUpdatesOn" : "sumUpdatesOff");
     if (id === "ai") {
@@ -3443,26 +3463,20 @@ class DevicePanel extends HTMLElement {
         daily: d.battery_push_mode === "daily" ? num("battery_push_time") : null,
       });
     }
-    if (id === "display") {
+    if (id === "devices") {
+      const hidden = ["integrations", "types", "devs"].map((k) => this._subCount(k, d));
+      return (hidden.some(Boolean) ? `${this._t("sumDevHidden", ...hidden)} · ` : "") + this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices));
+    }
+    if (id === "look") {
       const chips = (d.hide_connections || []).length;
-      return (
-        this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices)) +
-        (chips ? ` · ${this._t("sumChipsHidden", chips)}` : "") +
-        ((d.connection_order || []).length ? ` · ${this._t("sumChipsOrder")}` : "")
-      );
-    }
-    if (id === "integrations") {
-      const list = this._settings?.data?.catalog?.integrations || [];
-      return this._t("sumShown", this._t("sumIntegrations", list.length), d.exclude_integrations.length);
-    }
-    if (id === "types") return this._t("sumShown", this._t("sumTypes", this._catalogTypes(d).length), d.exclude_types.length);
-    if (id === "hidden") {
-      const ex = new Set(d.exclude_devices || []);
-      return this._t("sumHidden", this._hiddenCatalog().filter((x) => ex.has(x.id)).length);
-    }
-    if (id === "connections") {
       const n = Object.keys(d.connection_integrations || {}).length;
-      return n ? this._t("sumConnInteg", n) : this._t("sumConnAuto");
+      return [
+        n ? this._t("sumConnInteg", n) : this._t("sumConnAuto"),
+        chips ? this._t("sumChipsHidden", chips) : "",
+        (d.connection_order || []).length ? this._t("sumChipsOrder") : "",
+      ]
+        .filter(Boolean)
+        .join(" · ");
     }
     return "";
   }
@@ -4126,27 +4140,47 @@ class DevicePanel extends HTMLElement {
       badge: `<span class="ibadge type">${typeIcon(x.type, 18)}</span>`,
     }));
     const ui = { row, sw, select, num, targets, infoBtn };
+    const devTab = ["integrations", "types", "devs"].includes(st.sub?.devices) ? st.sub.devices : "integrations";
+    const lookTab = st.sub?.look === "chips" ? "chips" : "conn";
+    // Reiter innerhalb eines Abschnitts; Zähler = ausgeblendete Einträge,
+    // Punkt = Änderung im Entwurf (wie bei den Reitern der Überwachung).
+    const subTabs = (group, items) =>
+      `<div class="sub-tabs" role="tablist">${items
+        .map(([id, key]) => {
+          const on = id === (group === "devices" ? devTab : lookTab);
+          const mark = SUB_TAB_KEYS[id].some((k) => changes.has(k)) ? " chg" : "";
+          const n = this._subCount(id, d);
+          return `<button type="button" role="tab" class="sub-tab${on ? " on" : ""}${mark}" data-set="subtab" data-group="${group}" data-key="${id}" aria-selected="${on}">${escape(t(key))}<span class="sub-n"${n ? "" : " hidden"}>${n}</span></button>`;
+        })
+        .join("")}</div>`;
     const fields = {
       monitor: this._monitorHtml(d, changes, errors, ui),
-      // Nur noch "Anzeigen" (seit 0.34.0); Überwachen und Melden pro
-      // Integration steht in "Überwachung und Meldungen" › "Integrationen".
-      integrations:
-        `<div class="nf-note integ-goto">${mdi("info", 16)}<div><p>${escape(t("integGoto"))} <button type="button" class="lnk" data-set="goto" data-key="integ">${escape(t("integGotoLink"))}</button></p></div></div>` +
-        exTable("exclude_integrations", integrations, t("integIntroShow")),
-      types: exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`),
-      connections: this._connIntegHtml(d) + this._overridesHtml("connection") + this._overridesHtml("signal"),
-      display:
+      // Seit 1.0.0 (docs/mockups/content-v1, A): was bestimmt, welche Geräte
+      // das Panel zeigt und überwacht, in einem Abschnitt. Die Integrationen
+      // haben nur "Anzeigen"; Überwachen und Melden pro Integration steht in
+      // "Überwachung und Meldungen" › "Integrationen".
+      devices:
         row("show_service_devices", t("optShowService"), sw("show_service_devices", t("optShowService")), t("optShowServiceShort"), t("optShowServiceInfo")) +
         row("show_disabled_devices", t("optShowDisabled"), sw("show_disabled_devices", t("optShowDisabled")), t("optShowDisabledShort"), null) +
-        // Filter-Chips der Verbindungsart (docs/mockups/view-v2, C): nur die Chips, gilt für alle.
-        `<div class="opt bat-own${changes.has("hide_connections") || changes.has("connection_order") ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optChips"))}</span></div></div>` +
-        exTable("hide_connections", chips, t("chipsIntro"), true) +
-        ((d.connection_order || []).length
-          ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset">${mdi("reset", 15)}${escape(t("chipsOrderReset"))}</button></div>`
-          : ""),
-      hidden: hiddenDevs.length
-        ? exTable("exclude_devices", hiddenDevs, t("hiddenIntro"), false, null, t("hiddenShowAll"))
-        : `<div class="opt-short ex-intro">${escape(t("hiddenIntro"))}</div><div class="opt-short hidden-empty">${escape(t("hiddenEmpty"))}</div>`,
+        subTabs("devices", [["integrations", "secIntegrations"], ["types", "subTypes"], ["devs", "subDevs"]]) +
+        (devTab === "types"
+          ? exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`)
+          : devTab === "devs"
+            ? hiddenDevs.length
+              ? exTable("exclude_devices", hiddenDevs, t("hiddenIntro"), false, null, t("hiddenShowAll"))
+              : `<div class="opt-short ex-intro">${escape(t("hiddenIntro"))}</div><div class="opt-short hidden-empty">${escape(t("hiddenEmpty"))}</div>`
+            : `<div class="nf-note integ-goto">${mdi("info", 16)}<div><p>${escape(t("integGoto"))} <button type="button" class="lnk" data-set="goto" data-key="integ">${escape(t("integGotoLink"))}</button></p></div></div>` +
+              exTable("exclude_integrations", integrations, t("integIntroShow"))),
+      // Wie Geräte erscheinen, nicht ob (seit 1.0.0).
+      look:
+        subTabs("look", [["conn", "subConn"], ["chips", "subChips"]]) +
+        (lookTab === "chips"
+          ? // Filter-Chips der Verbindungsart (docs/mockups/view-v2, C): nur die Chips, gilt für alle.
+            exTable("hide_connections", chips, t("chipsIntro"), true) +
+            ((d.connection_order || []).length
+              ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset">${mdi("reset", 15)}${escape(t("chipsOrderReset"))}</button></div>`
+              : "")
+          : this._connIntegHtml(d) + this._overridesHtml("connection") + this._overridesHtml("signal")),
       ai:
         row("ai_assessment", t("optAi"), sw("ai_assessment", t("optAi")), t("optAiShort"), t("optAiInfo")) +
         (d.ai_assessment
@@ -4162,8 +4196,7 @@ class DevicePanel extends HTMLElement {
       updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
     const titles = {
-      monitor: "secMonitor", integrations: "secIntegrations", types: "secTypes", connections: "secConnections",
-      display: "secDisplay", hidden: "secHidden", ai: "secAiSettings", updates: "secUpdates",
+      devices: "secDevices", monitor: "secMonitor", look: "secLook", ai: "secAiSettings", updates: "secUpdates",
     };
     return (
       `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
@@ -4213,6 +4246,9 @@ class DevicePanel extends HTMLElement {
         this._renderSettings();
         // Neuer Inhalt beginnt oben: die Reiter ins Bild, wenn sie darüber liegen.
         if (action !== "ifilter") this.shadowRoot.querySelector("dialog.settings .mon-tabs")?.scrollIntoView({ block: action === "goto" ? "start" : "nearest" });
+      } else if (action === "subtab") {
+        st.sub[btn.dataset.group] = btn.dataset.key;
+        this._renderSettings();
       } else if (action === "chip") {
         if (!st.draft) return;
         st.draft[btn.dataset.key] = !st.draft[btn.dataset.key];
@@ -4497,6 +4533,14 @@ class DevicePanel extends HTMLElement {
       const err = keys.some((k) => errors[k]);
       tab.classList.toggle("err", err);
       tab.classList.toggle("chg", !err && keys.some((k) => changes.includes(k)));
+    }
+    for (const tab of dialog.querySelectorAll(".sub-tab")) {
+      const keys = SUB_TAB_KEYS[tab.dataset.key] || [];
+      tab.classList.toggle("chg", keys.some((k) => changes.includes(k)));
+      const n = tab.querySelector(".sub-n");
+      const count = this._subCount(tab.dataset.key, st.draft);
+      n.textContent = count;
+      n.hidden = !count;
     }
     for (const [id, keys] of this._settingsSections()) {
       const head = dialog.querySelector(`[data-set="section"][data-id="${id}"]`);

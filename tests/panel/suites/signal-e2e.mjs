@@ -108,7 +108,7 @@ for (const lang of ["de", "en"]) {
     // Einstellungen: zurücksetzen (Abschnitt "Verbindungsart")
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="connections"]');
+    await tap('[data-set="section"][data-id="look"]');
     const rows = await ev(`const o=[...r.querySelectorAll(".ovr-opt")].find(x=>x.querySelector(".opt-label").textContent===${JSON.stringify(T.title)}); return o ? [...o.querySelectorAll(".ovr-row")].map(x=>x.querySelector(".ovr-name").childNodes[0].textContent.trim()+":"+x.querySelector(".ovr-val").textContent.trim()).join("|") : ""`);
     check(`[${tag}] Liste "Empfang-Warnung auf Geräten"`, rows === `Bewegungsmelder Flur:${T.vLqi}|Steckdose Terrasse:${T.vOff}`, rows);
     await tap('[data-set="ovr-all"][data-key="signal"]');

@@ -12,13 +12,13 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     hide: "Gerät ausblenden", toast: "Fensterkontakt Küche ausgeblendet", undo: "Rückgängig", shown: "Fensterkontakt Küche wieder eingeblendet",
-    sec: "Ausgeblendete Geräte", sumNone: "Keine ausgeblendet", sumOne: "1 Gerät ausgeblendet", sumTwo: "2 Geräte ausgeblendet",
+    sec: "Geräte im Panel", tab: "Geräte", base: "Dienst-Geräte und deaktivierte Geräte ausgeblendet", sumOne: "1 Gerät ausgeblendet", sumTwo: "2 Geräte ausgeblendet",
     all: "Alle einblenden", sub: "Küche · Zigbee Home Automation", empty: 'Kein Gerät ausgeblendet. Ein Gerät blendest du in seinem Popup mit "Gerät ausblenden" aus.',
     error: "Ausblenden fehlgeschlagen: Speicher voll",
   },
   en: {
     hide: "Hide device", toast: "Fensterkontakt Küche hidden", undo: "Undo", shown: "Fensterkontakt Küche shown again",
-    sec: "Hidden devices", sumNone: "None hidden", sumOne: "1 device hidden", sumTwo: "2 devices hidden",
+    sec: "Devices in the panel", tab: "Devices", base: "Service devices and disabled devices hidden", sumOne: "1 device hidden", sumTwo: "2 devices hidden",
     all: "Show all", sub: "Küche · Zigbee Home Automation", empty: 'No device is hidden. Hide a device in its pop-up with "Hide device".',
     error: "Could not hide the device: Speicher voll",
   },
@@ -83,9 +83,10 @@ for (const lang of ["de", "en"]) {
 
     // Einstellungen: zuerst leer
     await tap(".gear-btn");
-    await wait(`return !!r.querySelector('dialog.settings [data-id="hidden"]')`);
-    check(`[${tag}] Abschnitt "${T.sec}"`, (await text('[data-id="hidden"] .set-sec-title')) === T.sec && (await text('[data-id="hidden"] .set-sec-sum')) === T.sumNone, await text('[data-id="hidden"] .set-sec-sum'));
-    await tap('[data-set="section"][data-id="hidden"]');
+    await wait(`return !!r.querySelector('dialog.settings [data-id="devices"]')`);
+    check(`[${tag}] Abschnitt "${T.sec}"`, (await text('[data-id="devices"] .set-sec-title')) === T.sec && (await text('[data-id="devices"] .set-sec-sum')) === T.base, await text('[data-id="devices"] .set-sec-sum'));
+    await tap('[data-set="section"][data-id="devices"]');
+    await tap('[data-set="subtab"][data-key="devs"]');
     check(`[${tag}] ohne ausgeblendete: Hinweis`, (await text("dialog.settings .hidden-empty")) === T.empty, await text("dialog.settings .hidden-empty"));
     await tap('dialog.settings .dlg-actions [data-set="close"]');
     await wait(`return !r.querySelector("dialog.settings").open`);
@@ -98,19 +99,20 @@ for (const lang of ["de", "en"]) {
       await wait(`return !r.querySelector('.dev[data-open="${id}"]')`);
     }
     await tap(".gear-btn");
-    await wait(`return !!r.querySelector('dialog.settings [data-id="hidden"]')`);
-    check(`[${tag}] Zusammenfassung zählt`, (await text('[data-id="hidden"] .set-sec-sum')) === T.sumTwo, await text('[data-id="hidden"] .set-sec-sum'));
-    if (!(await ev(`return r.querySelector('[data-set="section"][data-id="hidden"]').getAttribute("aria-expanded") === "true"`))) await tap('[data-set="section"][data-id="hidden"]');
+    await wait(`return !!r.querySelector('dialog.settings [data-id="devices"]')`);
+    check(`[${tag}] Zusammenfassung zählt`, (await text('[data-id="devices"] .set-sec-sum')) === `${T.sumTwo} · ${T.base}`, await text('[data-id="devices"] .set-sec-sum'));
+    if (!(await ev(`return r.querySelector('[data-set="section"][data-id="devices"]').getAttribute("aria-expanded") === "true"`))) await tap('[data-set="section"][data-id="devices"]');
+    await tap('[data-set="subtab"][data-key="devs"]');
     const row = await ev(`const i=r.querySelector('input[data-list="exclude_devices"][data-value="e"]'); return i ? [i.checked, i.closest(".ex-row").querySelector(".ex-name").textContent.replace(/\\s+/g," ").trim(), !!i.closest(".ex-row").querySelector(".ibadge svg")] : null`);
     check(`[${tag}] Zeile mit Name, Bereich, Integration, Symbol; "Anzeigen" aus`, row && row[0] === false && row[1] === `Fensterkontakt Küche${T.sub}` && row[2], JSON.stringify(row));
-    check(`[${tag}] "${T.all}"`, (await text('dialog.settings [data-id="hidden"] ~ .set-sec-body .ex-all .ex-name, dialog.settings .set-sec.open .ex-all .ex-name')) === T.all, await text("dialog.settings .set-sec.open .ex-all .ex-name"));
+    check(`[${tag}] "${T.all}"`, (await text('dialog.settings [data-id="devices"] ~ .set-sec-body .ex-all .ex-name, dialog.settings .set-sec.open .ex-all .ex-name')) === T.all, await text("dialog.settings .set-sec.open .ex-all .ex-name"));
     if (mobile) await p.screenshot({ path: `${outDir}/hide-settings-${tag.replace("/", "-")}.png` });
     await tap('input[data-list="exclude_devices"][data-value="e"]');
-    check(`[${tag}] Entwurf: geändert, Zeile bleibt`, (await text('[data-id="hidden"] .set-sec-sum')) === T.sumOne && !!(await handle('input[data-list="exclude_devices"][data-value="e"]')) && (await text('[data-id="hidden"] .set-badge')) !== "");
+    check(`[${tag}] Entwurf: geändert, Zeile bleibt`, (await text('[data-id="devices"] .set-sec-sum')) === `${T.sumOne} · ${T.base}` && !!(await handle('input[data-list="exclude_devices"][data-value="e"]')) && (await text('[data-id="devices"] .set-badge')) !== "");
     if (!mobile) await p.screenshot({ path: `${outDir}/hide-settings-${tag.replace("/", "-")}.png` });
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] gespeichert: wieder in der Liste`, await wait(`return !!r.querySelector('.dev[data-open="e"]') && !r.querySelector('.dev[data-open="k"]')`));
-    check(`[${tag}] nach dem Speichern nur noch eines`, await wait(`return r.querySelectorAll('input[data-list="exclude_devices"]').length === 1`) && (await text('[data-id="hidden"] .set-sec-sum')) === T.sumOne, await text('[data-id="hidden"] .set-sec-sum'));
+    check(`[${tag}] nach dem Speichern nur noch eines`, await wait(`return r.querySelectorAll('input[data-list="exclude_devices"]').length === 1`) && (await text('[data-id="devices"] .set-sec-sum')) === `${T.sumOne} · ${T.base}`, await text('[data-id="devices"] .set-sec-sum'));
     // Alle einblenden
     await tap('input[data-list-all="exclude_devices"]');
     await tap('dialog.settings [data-set="save"]');

@@ -16,7 +16,7 @@ const TEXT = {
   de: {
     sum0: "Ausfall nach 2 Min., ohne Push · Batterie schwach ab 15 %, ohne Push",
     sumPush: "Ausfall nach 2 Min., Push nach 5 Min. · Batterie schwach ab 15 %, Push sofort",
-    int: "9 Integrationen · alle angezeigt", gotoLink: "Überwachung und Meldungen › Integrationen",
+    dev: "Dienst-Geräte und deaktivierte Geräte ausgeblendet", gotoLink: "Überwachung und Meldungen › Integrationen",
     tabs: "Übersicht|Ausfall|Batterie|Integrationen", filterAll: "Alle 9", filterOwn: (n) => `Abweichend ${n}`, std: "Standard", own: "Eigene",
     zhaSub: "5 Geräte · 3 mit Batterie", noPush: "Ausfall ohne Push", noPers: "Ausfall ohne Anhaltend · Batterie ohne Push", unmon: "Nicht überwacht",
     diffInteg: "2 Integrationen", noPushMark: "Kein Push", noTarget: "kein Ziel gewählt", pushMark: "ausgefallen und Push",
@@ -29,7 +29,7 @@ const TEXT = {
   en: {
     sum0: "Offline after 2 min, no push · Battery low from 15 %, no push",
     sumPush: "Offline after 2 min, push after 5 min · Battery low from 15 %, push right away",
-    int: "9 integrations · all shown", gotoLink: "Monitoring and notifications › Integrations",
+    dev: "Service devices and disabled devices hidden", gotoLink: "Monitoring and notifications › Integrations",
     tabs: "Overview|Outage|Battery|Integrations", filterAll: "All 9", filterOwn: (n) => `Differs ${n}`, std: "Default", own: "Own",
     zhaSub: "5 devices · 3 with battery", noPush: "Outage: no push", noPers: "Outage: no persistent · Battery: no push", unmon: "Not monitored",
     diffInteg: "2 integrations", noPushMark: "No push", noTarget: "no target chosen", pushMark: "offline and push",
@@ -72,12 +72,12 @@ for (const lang of ["de", "en"]) {
 
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    check(`[${tag}] Abschnitt "Überwachung und Meldungen" zuerst, Zusammenfassung`, (await ev(`return r.querySelector(".set-sec-head").dataset.id`)) === "monitor" && (await sum("monitor")) === T.sum0, await sum("monitor"));
-    check(`[${tag}] Integrationen: nur noch Anzeigen`, (await sum("integrations")) === T.int, await sum("integrations"));
+    check(`[${tag}] Abschnitt "Überwachung und Meldungen" zuerst, Zusammenfassung`, (await ev(`return [...r.querySelectorAll(".set-sec-head")].map(h=>h.dataset.id).join()`)) === "devices,monitor,look,ai,updates" && (await sum("monitor")) === T.sum0, await sum("monitor"));
+    check(`[${tag}] Geräte im Panel: Integrationen nur noch Anzeigen`, (await sum("devices")) === T.dev, await sum("devices"));
 
     // Abschnitt "Integrationen": Verweis springt in den Reiter "Integrationen"
-    await tap('[data-set="section"][data-id="integrations"]');
-    check(`[${tag}] Verweis im Abschnitt "Integrationen"`, (await text('.integ-goto [data-set="goto"]')) === T.gotoLink, await text(".integ-goto"));
+    await tap('[data-set="section"][data-id="devices"]');
+    check(`[${tag}] Verweis im Abschnitt "Geräte im Panel"`, (await text('.integ-goto [data-set="goto"]')) === T.gotoLink, await text(".integ-goto"));
     await tap('.integ-goto [data-set="goto"]');
     check(`[${tag}] Sprung: Abschnitt offen, Reiter "Integrationen", Liste`, await wait(`return r.querySelector('[data-set="section"][data-id="monitor"]').getAttribute("aria-expanded") === "true" && r.querySelector('.mon-tab.on')?.dataset.key === "integ" && !!r.querySelector(".ilist")`));
     check(`[${tag}] vier Reiter`, (await ev(`return [...r.querySelectorAll(".mon-tab")].map(t=>t.textContent).join("|")`)) === T.tabs);
@@ -128,7 +128,7 @@ for (const lang of ["de", "en"]) {
 
     // Ausfall: Inhalt, Vorschau, Erst melden nach
     await tab("outage");
-    const nfNote = await text(".nf-note");
+    const nfNote = await text(".mon-body .nf-note");
     check(`[${tag}] Name und Hinweis: nur Ausfall-Meldung`, (await text(".opt:has(.nf-grid) .opt-label")) === T.fieldsLabel && nfNote.includes(T.noteBattery), nfNote);
     check(`[${tag}] Inhalt: 7 Schalter in fester Reihenfolge`, (await ev(`return [...r.querySelectorAll(".nf-item > span:first-child")].map(s=>s.textContent).join("|")`)) === T.fields);
     check(`[${tag}] Standard: Bereich, Integration, Offline seit`, (await ev(`return [...r.querySelectorAll("input[data-nfield]:checked")].map(i=>i.dataset.nfield).join()`)) === "area,integration,since");

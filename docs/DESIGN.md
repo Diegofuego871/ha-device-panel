@@ -146,8 +146,19 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Verlauf in Violett/Primärfarbe, Überschrift fett, Text, Fusszeile "Erstellt
   von … · Zeit · Neu erstellen"); Wartezustand mit pulsierendem Symbol,
   bei `prefers-reduced-motion` ohne Animation.
+- Reihenfolge der Einstellungen (seit 1.0.0, `docs/mockups/content-v1/`, A,
+  Wunsch des Nutzers: weniger Punkte): "Geräte im Panel", "Überwachung und
+  Meldungen", "Darstellung", "KI-Einschätzung", "Updates". "Geräte im
+  Panel": oben die zwei Schalter (Dienst-Geräte, Deaktivierte Geräte),
+  darunter die Reiter Integrationen, Typen, Geräte (`.sub-tabs`/`.sub-tab`,
+  gleich gestaltet wie die Reiter der Überwachung; `.sub-n` = Zahl der
+  ausgeblendeten, grau, nur wenn grösser 0; Punkt = Änderung). Die
+  Zusammenfassung nennt zuerst, was ausgeblendet ist ("1 Integration, 1
+  Typ ausgeblendet · …"). "Darstellung": Reiter Verbindungsart und
+  Filter-Chips; die Zusammenfassung verbindet beides mit " · ".
 - Überwachung und Meldungen (seit 0.34.0, `docs/mockups/notify-v3/`, C
-  mit eigenem Reiter "Integrationen"): erster Abschnitt der Einstellungen.
+  mit eigenem Reiter "Integrationen"): bis 0.34.x erster, seit 1.0.0 zweiter
+  Abschnitt der Einstellungen.
   Reiter als Segment (`.mon-tabs`, grau hinterlegt, gewählter Reiter weiss
   mit Schatten, Punkt oben rechts: blau = Änderung, rot = Fehler).
   Übersicht: je Meldung eine Karte (`.lane`: Symbol in Rot bzw. Orange,

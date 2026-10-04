@@ -7,7 +7,31 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.0.0] - 2026-10-04
+
+Fünf Abschnitte in den Einstellungen statt acht.
+
+### Geändert
+
+- Einstellungen (Wunsch des Nutzers: weniger Punkte, was zusammengehört an
+  einem Ort): "Geräte im Panel" steht zuoberst und enthält alles, was
+  bestimmt, welche Geräte das Panel zeigt und überwacht: die Schalter
+  "Dienst-Geräte anzeigen" und "Deaktivierte Geräte anzeigen" und die
+  Reiter "Integrationen", "Typen" und "Geräte" (die einzeln
+  ausgeblendeten), je mit der Zahl der ausgeblendeten und einem Punkt bei
+  ungespeicherten Änderungen. "Überwachung und Meldungen" bleibt
+  unverändert. "Darstellung" enthält, was nur ändert, wie Geräte
+  erscheinen: die Reiter "Verbindungsart" (pro Integration, mit den
+  Ausnahmen auf Geräten) und "Filter-Chips" (welche Chips, in welcher
+  Reihenfolge). Die bisherigen Abschnitte "Integrationen", "Gerätetypen",
+  "Verbindungsart", "Anzeige" und "Ausgeblendete Geräte" gehen in diesen
+  beiden auf. Keine Option hat sich geändert; gespeicherte Einstellungen
+  bleiben. Die Zusammenfassung von "Geräte im Panel" nennt, was
+  ausgeblendet ist, z. B. "1 Integration, 1 Typ ausgeblendet".
+
 ## [0.34.1] - 2026-10-04
+
+Nicht veröffentlicht; enthalten in 1.0.0.
 
 Der Puls ist rot, wo er über null liegt, und grün nur, wo er auf null liegt.
 
@@ -1019,7 +1043,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[0.34.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.1
+[1.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.0.0
 [0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0
 [0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1
 [0.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.0

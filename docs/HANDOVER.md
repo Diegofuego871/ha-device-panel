@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.34.1, Überwachung und Meldungen an einem Ort)
+## Stand (1.0.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -61,19 +61,26 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `push_integration`; `get_options.overrides` je Gerät mit `domain`.
   Bis 0.33.1 standen diese Optionen in "Ausfall-Erkennung", "Batterie",
   "Integrationen" (Spalten), "Push-Benachrichtigung" und "Anhaltende
-  Benachrichtigung". "Integrationen" (seit 0.34.0 nur Schalter "Anzeigen",
-  `exclude_integrations`, mit Verweis `data-set="goto"`) und "Gerätetypen"
-  (Schalter "Anzeigen"; ausgeblendete Geräte werden nicht überwacht);
-  "Anzeige" (`show_service_devices`, `show_disabled_devices`: deaktivierte
-  Geräte in eigener Gruppe, nicht überwacht; `hide_connections`: Chips der
-  Verbindungsart, die nicht erscheinen, gilt für alle, seit 0.11.0;
-  `connection_order`: Reihenfolge dieser Chips, leer = nach Anzahl, nicht
-  genannte folgen nach Anzahl, seit 0.13.0); "Ausgeblendete Geräte"
-  (`exclude_devices`, seit 0.23.0: einzeln ausgeblendete Geräte, wie
+  Benachrichtigung". Seit 1.0.0 (Nutzer, 2026-10-04, Mockups
+  `docs/mockups/content-v1/`, A) fünf Abschnitte statt acht, in dieser
+  Reihenfolge: "Geräte im Panel" (`devices`; `show_service_devices`,
+  `show_disabled_devices`: deaktivierte Geräte in eigener Gruppe, nicht
+  überwacht; Reiter "Integrationen" mit `exclude_integrations` und
+  Verweis `data-set="goto"`, "Typen" mit `exclude_types`, "Geräte" mit
+  `exclude_devices`, seit 0.23.0: einzeln ausgeblendete Geräte, wie
   ausgeschlossene Integrationen nicht überwacht; `get_options` liefert sie
   im Katalog als `hidden_devices`, gelöschte fehlen, ihre ID bleibt
-  gespeichert); "Updates" (tägliche Prüfung
-  mit Meldung unter "Reparaturen"). Backend `update_check.py`,
+  gespeichert; Zähler am Reiter und Zusammenfassung zählen die
+  ausgeblendeten), "Überwachung und Meldungen" (`monitor`), "Darstellung"
+  (`look`; Reiter "Verbindungsart" mit `connection_integrations` und den
+  Ausnahmen, "Filter-Chips" mit `hide_connections`: Chips der
+  Verbindungsart, die nicht erscheinen, gilt für alle, seit 0.11.0, und
+  `connection_order`: Reihenfolge dieser Chips, leer = nach Anzahl, nicht
+  genannte folgen nach Anzahl, seit 0.13.0), "KI-Einschätzung", "Updates"
+  (tägliche Prüfung mit Meldung unter "Reparaturen"). Die Reiter dieser
+  zwei Abschnitte sind `SUB_TAB_KEYS` und `st.sub` im Panel (Klasse
+  `sub-tab`, Aktion `subtab`); die Reiter der Überwachung bleiben
+  `MON_TAB_KEYS`. Optionen und Optionsdialog haben sich nicht geändert. Backend `update_check.py`,
   `options_api.py` (`effective(hass)` liefert die wirksamen Werte),
   Optionsdialog in `config_flow.py` mit denselben Feldern in derselben
   Reihenfolge; WebSocket `device_panel/version`, `set_panel`, `get_options`
@@ -272,7 +279,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    alte Werte gelten als "Ausgefallen nach"). Der Nutzer hat weitere
    Punkte angekündigt. `0.34.1` (Wunsch des Nutzers): Puls abschnittweise
    gefärbt, rot über 0, grün nur auf 0 (0.34.0 färbte die ganze Kurve grün,
-   sobald gerade niemand fehlte).
+   sobald gerade niemand fehlte); ohne Release, in `1.0.0` enthalten.
+   `1.0.0` (Nutzer, 2026-10-04, `docs/mockups/content-v1/`, A): "Geräte im
+   Panel" und "Darstellung" ersetzen "Integrationen", "Gerätetypen",
+   "Verbindungsart", "Anzeige" und "Ausgeblendete Geräte" (verworfen: B
+   nur Ausnahmen mit Auswahl "Ausblenden …").
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem

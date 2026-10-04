@@ -600,13 +600,16 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ibadge.type { background: var(--dp-subtle); color: var(--dp-text2); }
 /* Überwachung und Meldungen (seit 0.34.0, docs/mockups/notify-v3): Reiter,
    Zeitstrahl je Meldung, Integrationen als Liste mit Detail. */
-.mon-tabs { display: flex; gap: 4px; margin: 10px 0 4px; padding: 4px; border-radius: 12px; background: var(--dp-subtle); }
-.mon-tab { position: relative; flex: 1 1 auto; min-width: 0; padding: 7px 6px; border: none; border-radius: 9px; background: none; color: var(--dp-text2);
+.mon-tabs, .sub-tabs { display: flex; gap: 4px; margin: 10px 0 4px; padding: 4px; border-radius: 12px; background: var(--dp-subtle); }
+.mon-tab, .sub-tab { position: relative; flex: 1 1 auto; min-width: 0; padding: 7px 6px; border: none; border-radius: 9px; background: none; color: var(--dp-text2);
   font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer; }
-.mon-tab:hover { color: var(--dp-text); }
-.mon-tab.on { background: var(--dp-card); color: var(--dp-text); font-weight: 600; box-shadow: var(--dp-shadow-s); }
-.mon-tab:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
-.mon-tab.chg::after, .mon-tab.err::after { content: ""; position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--dp-primary); }
+.mon-tab:hover, .sub-tab:hover { color: var(--dp-text); }
+.mon-tab.on, .sub-tab.on { background: var(--dp-card); color: var(--dp-text); font-weight: 600; box-shadow: var(--dp-shadow-s); }
+.mon-tab:focus-visible, .sub-tab:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
+.sub-tabs { margin: 12px 0 8px; }
+.sub-n { margin-left: 5px; font-size: 11.5px; font-weight: 500; color: var(--dp-text3); font-variant-numeric: tabular-nums; }
+.sub-n[hidden] { display: none; }
+.mon-tab.chg::after, .sub-tab.chg::after, .mon-tab.err::after { content: ""; position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--dp-primary); }
 .mon-tab.err::after { background: var(--dp-error); }
 .mon-body { padding-top: 4px; }
 .lnk { padding: 0; border: none; background: none; color: var(--dp-primary); font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; }
@@ -882,7 +885,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .ex-head .ex-col.sel, .ex-row.ex-all .ex-col.sel { display: none; }
   .ex-head.multi { font-size: 10px; letter-spacing: .02em; }
   .nf-grid { grid-template-columns: minmax(0, 1fr); }
-  .mon-tab { padding: 7px 3px; font-size: 12.5px; }
+  .mon-tab, .sub-tab { padding: 7px 3px; font-size: 12.5px; }
   .mtl { margin: 8px 6px 2px; }
   .mtl-mk { width: 100px; }
   .opt.bat-row .bat-ctl .opt-select { flex: 1 1 auto; }

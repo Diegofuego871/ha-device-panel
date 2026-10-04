@@ -108,7 +108,10 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    Dialog, Speichern/Abbrechen, `get_options`/`set_options`, Optionsdialog
    von HA). Abschnitte "Integrationen" und "Gerätetypen" (Anzeigen) in
    0.5.0, "Ausfall-Erkennung" und "Anzeige" in 0.6.0, "Batterie" und
-   "Push-Benachrichtigung" in 0.7.0 bis 0.9.0. Es fehlen "Anhaltende
+   "Push-Benachrichtigung" in 0.7.0 bis 0.9.0. Seit 0.34.0 steht Überwachen und
+   Melden in "Überwachung und Meldungen", seit 1.0.0 Integrationen, Typen,
+   einzelne Geräte, Dienst- und deaktivierte Geräte in "Geräte im Panel"
+   und Verbindungsart und Filter-Chips in "Darstellung". Es fehlen "Anhaltende
    Benachrichtigung" bei Ausfällen sowie die Spalten Push/Anhaltend bei den
    Integrationen (mit Schritt 7).
 4. **Update-Bereich wie unifi_dynamic:** Version, "Nach Updates suchen",

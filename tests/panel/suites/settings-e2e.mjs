@@ -19,11 +19,11 @@ const TEXT = {
     opt: "Täglich nach Updates suchen", short: "Meldet eine neue Version unter Einstellungen → Reparaturen.", info: "Fragt einmal täglich",
     changed: "geändert", one: "1 Änderung", two: "2 Änderungen", save: "Speichern", cancel: "Abbrechen", savedShort: "Gespeichert", closeBtn: "Schliessen",
     pre: "Vorabversionen anzeigen", loadErr: "Einstellungen konnten nicht geladen werden:", saveErr: "Speichern fehlgeschlagen:", ver: "Device Panel 0.4.0",
-    secInt: "Integrationen", sumInt: "9 Integrationen · alle angezeigt", sumInt1: "9 Integrationen · 1 ausgeblendet", show: "Anzeigen", all: "Alle umschalten",
-    zha: "Zigbee Home Automation", zhaSub: "5 Geräte", secTypes: "Gerätetypen", outlet: "Steckdose", sumTypes1: "11 Typen · 1 ausgeblendet", sumTypesNone: "11 Typen · alle angezeigt", sumTypesAll: "11 Typen · 11 ausgeblendet",
+    secInt: "Integrationen", secDev: "Geräte im Panel", tabTypes: "Typen", sumInt1: "1 Integration ausgeblendet", show: "Anzeigen", all: "Alle umschalten",
+    zha: "Zigbee Home Automation", zhaSub: "5 Geräte", outlet: "Steckdose", sumTypes1: "1 Integration, 1 Typ ausgeblendet", sumTypesAll: "1 Integration, 11 Typen ausgeblendet",
    
     offLabel: "Ausgefallen nach", unit: "Min.", range: "Erlaubt: 1 bis 60",
-    secDisp: "Anzeige", sumDisp: "Dienst-Geräte und deaktivierte Geräte ausgeblendet", sumDispDis: "Dienst-Geräte ausgeblendet · deaktivierte angezeigt",
+    sumDisp: "Dienst-Geräte und deaktivierte Geräte ausgeblendet", sumDispDis: "Dienst-Geräte ausgeblendet · deaktivierte angezeigt",
     sumDispBoth: "Dienst-Geräte und deaktivierte Geräte angezeigt", grpDis: "Deaktiviert", ofTotal: "von 17", four: "4 Änderungen", five: "5 Änderungen",
    
     noTarget: "Ohne Ziel kommt kein Push. Ziel wählen: Reiter \"Übersicht\".",
@@ -56,11 +56,11 @@ const TEXT = {
     opt: "Check for updates daily", short: "Reports a new version under Settings → Repairs.", info: "Queries the published releases",
     changed: "changed", one: "1 change", two: "2 changes", save: "Save", cancel: "Cancel", savedShort: "Saved", closeBtn: "Close",
     pre: "Show pre-releases", loadErr: "Could not load the settings:", saveErr: "Saving failed:", ver: "Device Panel 0.4.0",
-    secInt: "Integrations", sumInt: "9 integrations · all shown", sumInt1: "9 integrations · 1 hidden", show: "Show", all: "Toggle all",
-    zha: "Zigbee Home Automation", zhaSub: "5 devices", secTypes: "Device types", outlet: "Outlet", sumTypes1: "11 types · 1 hidden", sumTypesNone: "11 types · all shown", sumTypesAll: "11 types · 11 hidden",
+    secInt: "Integrations", secDev: "Devices in the panel", tabTypes: "Types", sumInt1: "1 integration hidden", show: "Show", all: "Toggle all",
+    zha: "Zigbee Home Automation", zhaSub: "5 devices", outlet: "Outlet", sumTypes1: "1 integration, 1 type hidden", sumTypesAll: "1 integration, 11 types hidden",
    
     offLabel: "Offline after", unit: "min", range: "Allowed: 1 to 60",
-    secDisp: "Display", sumDisp: "Service devices and disabled devices hidden", sumDispDis: "Service devices hidden · disabled shown",
+    sumDisp: "Service devices and disabled devices hidden", sumDispDis: "Service devices hidden · disabled shown",
     sumDispBoth: "Service devices and disabled devices shown", grpDis: "Disabled", ofTotal: "of 17", four: "4 changes", five: "5 changes",
    
     noTarget: "Without a target no push is sent. Choose a target: tab \"Overview\".",
@@ -197,13 +197,14 @@ for (const lang of ["de", "en"]) {
     // 0.34.0 nur noch "Anzeigen" (alles Weitere in "Überwachung und Meldungen").
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    check(`[${tag}] Abschnitt Integrationen`, (await text('[data-id="integrations"] .set-sec-title')) === T.secInt && (await text('[data-id="integrations"] .set-sec-sum')) === T.sumInt, await text('[data-id="integrations"] .set-sec-sum'));
-    await tap('[data-set="section"][data-id="integrations"]');
+    check(`[${tag}] Abschnitt Geräte im Panel`, (await text('[data-id="devices"] .set-sec-title')) === T.secDev && (await text('[data-id="devices"] .set-sec-sum')) === T.sumDisp, await text('[data-id="devices"] .set-sec-sum'));
+    await tap('[data-set="section"][data-id="devices"]');
+    check(`[${tag}] erster Reiter: Integrationen`, (await ev(`return r.querySelector(".sub-tab.on").firstChild.textContent`)) === T.secInt);
     const zhaRow = await ev(`const i=r.querySelector('input[data-list="exclude_integrations"][data-value="zha"]'); return i ? i.closest(".ex-row").textContent.replace(/\\s+/g," ").trim() : ""`);
     check(`[${tag}] Zeile mit Name und Zahl der Geräte`, zhaRow.includes(T.zha) && zhaRow.includes(T.zhaSub), zhaRow);
-    check(`[${tag}] nur Spalte "${T.show}" und "${T.all}"`, (await text('[data-id="integrations"] ~ .set-sec-body .ex-head span:last-child')) === T.show && (await text(".ex-all .ex-name")) === T.all && (await ev(`return [...r.querySelectorAll(".ex-all input[data-list-all]")].map(i=>i.dataset.listAll).join()`)) === "exclude_integrations" && !(await ev(`return !!r.querySelector('input[data-list="notify_exclude_integrations"], select[data-off-mode]')`)));
+    check(`[${tag}] nur Spalte "${T.show}" und "${T.all}"`, (await text('[data-id="devices"] ~ .set-sec-body .ex-head span:last-child')) === T.show && (await text(".ex-all .ex-name")) === T.all && (await ev(`return [...r.querySelectorAll(".ex-all input[data-list-all]")].map(i=>i.dataset.listAll).join()`)) === "exclude_integrations" && !(await ev(`return !!r.querySelector('input[data-list="notify_exclude_integrations"], select[data-off-mode]')`)));
     await tap('input[data-list="exclude_integrations"][data-value="zha"]');
-    check(`[${tag}] Integration im Entwurf ausgeblendet`, (await text('[data-id="integrations"] .set-sec-sum')) === T.sumInt1 && (await text(".set-count")) === T.one && await ev(`return r.querySelector('input[data-value="zha"]').closest(".ex-row").classList.contains("off")`));
+    check(`[${tag}] Integration im Entwurf ausgeblendet`, (await text('[data-id="devices"] .set-sec-sum')) === `${T.sumInt1} · ${T.sumDisp}` && (await text(".sub-tab.on .sub-n")) === "1" && (await text(".set-count")) === T.one && await ev(`return r.querySelector('input[data-value="zha"]').closest(".ex-row").classList.contains("off")`));
     await p.screenshot({ path: `${outDir}/settings-exclude-${lang}-${mobile ? "mobile" : "desktop"}.png` });
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] gespeichert`, await savedThenClose());
@@ -213,20 +214,22 @@ for (const lang of ["de", "en"]) {
     // Gerätetypen: einzeln und "Alle umschalten", dann Abbrechen
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="types"]');
-    check(`[${tag}] Abschnitt Gerätetypen`, (await text('[data-id="types"] .set-sec-title')) === T.secTypes);
+    await tap('[data-set="section"][data-id="devices"]');
+    await tap('[data-set="subtab"][data-key="types"]');
+    check(`[${tag}] Reiter Typen`, (await ev(`return r.querySelector(".sub-tab.on").firstChild.textContent`)) === T.tabTypes);
     await tap('input[data-list="exclude_types"][data-value="outlet"]');
-    check(`[${tag}] Typ ausgeblendet`, (await text('[data-id="types"] .set-sec-sum')) === T.sumTypes1, await text('[data-id="types"] .set-sec-sum'));
+    check(`[${tag}] Typ ausgeblendet`, (await text('[data-id="devices"] .set-sec-sum')) === `${T.sumTypes1} · ${T.sumDisp}`, await text('[data-id="devices"] .set-sec-sum'));
+    check(`[${tag}] Reiter Typen: Zähler 1 und Punkt für die Änderung`, (await text(".sub-tab.on .sub-n")) === "1" && await ev(`return r.querySelector(".sub-tab.on").classList.contains("chg") && !r.querySelector('.sub-tab[data-key="devs"]').classList.contains("chg")`));
     // Nicht alle an: "Alle umschalten" ist aus und zeigt beim Antippen alle.
     await tap('input[data-list-all="exclude_types"]');
-    check(`[${tag}] Alle umschalten zeigt alle`, (await text('[data-id="types"] .set-sec-sum')) === T.sumTypesNone && await ev(`return [...r.querySelectorAll('input[data-list="exclude_types"]')].every(i=>i.checked)`), await text('[data-id="types"] .set-sec-sum'));
+    check(`[${tag}] Alle umschalten zeigt alle`, (await text('[data-id="devices"] .set-sec-sum')) === `${T.sumInt1} · ${T.sumDisp}` && await ev(`return [...r.querySelectorAll('input[data-list="exclude_types"]')].every(i=>i.checked)`), await text('[data-id="devices"] .set-sec-sum'));
     await tap('input[data-list-all="exclude_types"]');
-    check(`[${tag}] nochmals: alle ausgeblendet`, (await text('[data-id="types"] .set-sec-sum')) === T.sumTypesAll && await ev(`return [...r.querySelectorAll('input[data-list="exclude_types"]')].every(i=>!i.checked)`), await text('[data-id="types"] .set-sec-sum'));
+    check(`[${tag}] nochmals: alle ausgeblendet`, (await text('[data-id="devices"] .set-sec-sum')) === `${T.sumTypesAll} · ${T.sumDisp}` && await ev(`return [...r.querySelectorAll('input[data-list="exclude_types"]')].every(i=>!i.checked)`), await text('[data-id="devices"] .set-sec-sum'));
     await tap('dialog.settings .dlg-actions [data-set="close"]');
     // Integration wieder einblenden
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="integrations"]');
+    await tap('[data-set="section"][data-id="devices"]');
     await tap('input[data-list="exclude_integrations"][data-value="zha"]');
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] gespeichert, Dialog offen, dann geschlossen`, await savedThenClose());
@@ -244,7 +247,7 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     const order = await ev(`return [...r.querySelectorAll(".set-sec-head")].map(h=>h.dataset.id).join(",")`);
-    check(`[${tag}] Abschnitte (notify-v3)`, order === "monitor,integrations,types,connections,display,hidden,ai,updates", order);
+    check(`[${tag}] Abschnitte (notify-v3)`, order === "devices,monitor,look,ai,updates", order);
     check(`[${tag}] Überwachung und Meldungen zusammengefasst`, (await text('[data-id="monitor"] .set-sec-title')) === T.secMon && (await text('[data-id="monitor"] .set-sec-sum')) === T.sumMon(2), await text('[data-id="monitor"] .set-sec-sum'));
     await tap('[data-set="section"][data-id="monitor"]');
     check(`[${tag}] Reiter "Übersicht" zuerst`, await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "overview" && r.querySelectorAll(".lane").length === 2`));
@@ -276,12 +279,12 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     check(`[${tag}] Erkennung nach Speichern`, (await text('[data-id="monitor"] .set-sec-sum')) === T.sumMon(10));
-    check(`[${tag}] Anzeige zusammengefasst`, (await text('[data-id="display"] .set-sec-title')) === T.secDisp && (await text('[data-id="display"] .set-sec-sum')) === T.sumDisp);
-    await tap('[data-set="section"][data-id="display"]');
+    check(`[${tag}] Anzeige zusammengefasst`, (await text('[data-id="devices"] .set-sec-title')) === T.secDev && (await text('[data-id="devices"] .set-sec-sum')) === T.sumDisp);
+    await tap('[data-set="section"][data-id="devices"]');
     await tap('.switch input[data-opt="show_disabled_devices"]');
-    check(`[${tag}] Anzeige live`, (await text('[data-id="display"] .set-sec-sum')) === T.sumDispDis);
+    check(`[${tag}] Anzeige live`, (await text('[data-id="devices"] .set-sec-sum')) === T.sumDispDis);
     await tap('.switch input[data-opt="show_service_devices"]');
-    check(`[${tag}] Anzeige live, beide`, (await text('[data-id="display"] .set-sec-sum')) === T.sumDispBoth);
+    check(`[${tag}] Anzeige live, beide`, (await text('[data-id="devices"] .set-sec-sum')) === T.sumDispBoth);
     await p.screenshot({ path: `${outDir}/settings-detection-${tag.replace("/", "-")}.png` });
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] gespeichert, Dialog offen, dann geschlossen`, await savedThenClose());
@@ -308,7 +311,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="section"][data-id="monitor"]');
     await tab("outage");
     for (const [key, val] of [["offline_after", "2"], ["notify_delay", "2"], ["flaky_outages", "3"]]) await typeIn(`input[data-opt="${key}"]`, val);
-    await tap('[data-set="section"][data-id="display"]');
+    await tap('[data-set="section"][data-id="devices"]');
     await tap('.switch input[data-opt="show_disabled_devices"]');
     await tap('.switch input[data-opt="show_service_devices"]');
     check(`[${tag}] fünf Änderungen`, (await text(".set-count")) === T.five, await text(".set-count"));

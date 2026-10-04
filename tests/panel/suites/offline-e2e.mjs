@@ -78,7 +78,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] gespeichert: Minuten und "off"`, JSON.stringify(so?.values) === JSON.stringify({ offline_after_integrations: { bthome: 30, matter: "off" } }), JSON.stringify(so?.values));
 
     // "Anzeigen" aus (Abschnitt "Integrationen"): fehlt in der Liste
-    await tap('[data-set="section"][data-id="integrations"]');
+    await tap('[data-set="section"][data-id="devices"]');
     await tap('input[data-list="exclude_integrations"][data-value="zha"]');
     await tap('[data-set="tab"][data-key="integ"]');
     check(`[${tag}] ausgeblendete Integration fehlt in der Liste`, await wait(`return !!r.querySelector(".ilist") && !r.querySelector('.ilist-row[data-key="zha"]')`));

@@ -164,7 +164,12 @@ Bereich.
   Schaltern als Chips; die Reiter "Ausfall" und "Batterie" enthalten alle
   ihre Einstellungen, der Reiter "Integrationen" führt jede Integration mit
   ihren Abweichungen auf und öffnet alle ihre Einstellungen mit eigenem
-  Zeitstrahl. Der Abschnitt "Integrationen" blendet nur noch ein und aus.
+  Zeitstrahl.
+- Fünf Abschnitte in den Einstellungen: "Geräte im Panel" (Dienst-Geräte
+  und deaktivierte Geräte; Reiter "Integrationen", "Typen" und "Geräte"
+  zum Ausblenden aus Panel und Überwachung), "Überwachung und Meldungen",
+  "Darstellung" (Reiter "Verbindungsart" und "Filter-Chips"),
+  "KI-Einschätzung" und "Updates".
 - Einstellungen im Panel (Zahnrad) mit Updates: nach einer neuen Version
   suchen, mit einem Klick über HACS aktualisieren, danach neu starten,
   wahlweise Vorabversionen anbieten ("In HACS freischalten" schaltet die

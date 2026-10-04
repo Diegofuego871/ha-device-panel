@@ -105,14 +105,14 @@ for (const lang of ["de", "en"]) {
     const wifiBefore = Number(await chip("wifi"));
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    check(`[${tag}] Abschnitt Verbindungsart`, (await text('[data-id="connections"] .set-sec-sum')) === T.sumAuto, await text('[data-id="connections"] .set-sec-sum'));
-    await tap('[data-set="section"][data-id="connections"]');
+    check(`[${tag}] Abschnitt Darstellung, Reiter Verbindungsart`, (await text('[data-id="look"] .set-sec-sum')) === T.sumAuto, await text('[data-id="look"] .set-sec-sum'));
+    await tap('[data-set="section"][data-id="look"]');
     const shellyRow = await ev(`const s=r.querySelector('select[data-conn-integ="shelly"]'); return s ? [s.closest(".ex-row").querySelector("small").textContent, s.value, s.options[0].textContent, s.options.length] : null`);
     check(`[${tag}] Zeile mit Erkennung und Auswahl`, (await text(".bat-own .opt-label")) === T.title && JSON.stringify(shellyRow) === JSON.stringify([T.shelly, "", T.autoOpt, 10]), JSON.stringify(shellyRow));
     const sh = await handle('select[data-conn-integ="shelly"]');
     await sh.scrollIntoViewIfNeeded();
     await sh.selectOption("ethernet");
-    check(`[${tag}] Entwurf`, await wait(`return r.querySelector('select[data-conn-integ="shelly"]')?.value === "ethernet"`) && (await text(".set-count")) === T.one && (await text('[data-id="connections"] .set-sec-sum')) === T.sumOne && await ev(`return r.querySelector('select[data-conn-integ="shelly"]').closest(".ex-row").classList.contains("changed")`));
+    check(`[${tag}] Entwurf`, await wait(`return r.querySelector('select[data-conn-integ="shelly"]')?.value === "ethernet"`) && (await text(".set-count")) === T.one && (await text('[data-id="look"] .set-sec-sum')) === T.sumOne && await ev(`return r.querySelector('select[data-conn-integ="shelly"]').closest(".ex-row").classList.contains("changed")`));
     if (mobile) {
       const over = await ev(`const d=r.querySelector("dialog.settings"); return d.scrollWidth - d.clientWidth`);
       check(`[${tag}] Handy ohne Überlauf`, over <= 1, String(over));
@@ -135,7 +135,7 @@ for (const lang of ["de", "en"]) {
     // Integration zurück auf Automatisch
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="connections"]');
+    await tap('[data-set="section"][data-id="look"]');
     const sh2 = await handle('select[data-conn-integ="shelly"]');
     await sh2.scrollIntoViewIfNeeded();
     await sh2.selectOption("");
@@ -151,7 +151,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Chip "Eigene Einstellung" zählt mit`, await wait(`return !!r.querySelector('.chip.hint[data-hint="override"]')`));
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="connections"]');
+    await tap('[data-set="section"][data-id="look"]');
     check(`[${tag}] Übersicht in "Verbindungsart"`, (await text('[data-key="connection:p"]') === "" || true) && (await ev(`return [...r.querySelectorAll(".ovr-opt .opt-label")].map(e=>e.textContent).includes(${JSON.stringify(T.ovrTitle)}) && !!r.querySelector('[data-key="connection:p"]')`)));
     await tap('[data-key="connection:p"]');
     check(`[${tag}] zum Zurücksetzen markiert`, (await ev(`return r.querySelector('[data-key="connection:p"]').closest(".ovr-row").querySelector(".ovr-val").textContent.replace(/\\s+/g," ").trim()`)) === T.ovrBack && (await text(".set-count")) === T.one);

@@ -7,7 +7,30 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.0] - 2026-10-04
+
+Five sections in the settings instead of eight.
+
+### Changed
+
+- Settings (requested by the user: fewer items, what belongs together in
+  one place): "Devices in the panel" comes first and holds everything that
+  decides which devices the panel shows and monitors: the switches "Show
+  service devices" and "Show disabled devices", and the tabs
+  "Integrations", "Types" and "Devices" (the devices hidden one by one),
+  each with the number hidden and a dot for unsaved changes. "Monitoring
+  and notifications" is unchanged. "Appearance" holds what only changes
+  how devices appear: the tabs "Connection type" (per integration, with
+  the exceptions on devices) and "Filter chips" (which chips, in which
+  order). The old sections "Integrations", "Device types", "Connection
+  type", "Display" and "Hidden devices" are merged into these two. No
+  option changed; saved settings stay as they are. The summary of
+  "Devices in the panel" says what is hidden, e.g. "1 integration, 1 type
+  hidden".
+
 ## [0.34.1] - 2026-10-04
+
+Not released; included in 1.0.0.
 
 The pulse is red where it is above zero and green only where it is zero.
 
@@ -979,7 +1002,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[0.34.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.1
+[1.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.0.0
 [0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0
 [0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1
 [0.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.0

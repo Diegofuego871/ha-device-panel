@@ -152,8 +152,12 @@ details such as software version, manufacturer, model and area.
   device counts as offline and when the push arrives, with the switches as
   chips; the tabs "Outage" and "Battery" hold all their settings, the tab
   "Integrations" lists every integration with what differs and opens all
-  its settings with its own timeline. The section "Integrations" only
-  shows or hides integrations.
+  its settings with its own timeline.
+- Five sections in the settings: "Devices in the panel" (service and
+  disabled devices; tabs "Integrations", "Types" and "Devices" to hide them
+  from the panel and from monitoring), "Monitoring and notifications",
+  "Appearance" (tabs "Connection type" and "Filter chips"), "AI assessment"
+  and "Updates".
 - Settings in the panel (gear icon) with updates: check for a new version,
   update via HACS with one click, restart afterwards, optionally offer
   pre-releases ("Enable in HACS" switches on the HACS pre-release option).
