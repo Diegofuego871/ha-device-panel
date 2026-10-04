@@ -13,12 +13,12 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     persOff: "Aus", persOn: (n) => `Bei Ausfällen · ${n} Integrationen`, int: "9 Integrationen · alle angezeigt", intPush: (n) => `9 Integrationen · alle angezeigt · Push für ${n}`,
-    fields: "Bereich|Integration|Verbindungsart|Offline seit|Empfang zuletzt|Batterie|Hersteller / Modell", title: "Ausgefallen: Temperatur Keller",
+    fields: "Bereich|Integration|Verbindungsart|Offline seit|Empfang zuletzt|Batterie zuletzt|Hersteller / Modell", title: "Ausgefallen: Temperatur Keller", fieldsLabel: "Inhalt der Ausfall-Meldung", noteBattery: "eigene Meldung mit festem Inhalt", batteryFixed: "Der Inhalt ist fest",
     since: /^seit \d\d:\d\d$/, battery: "Batterie 0 %", actions: "Öffnen|24 Std. stumm", invented: "-72 dBm|64 %", exampleNote: "Kursiv: Beispielwert", range: "Erlaubt: 0 bis 60", outage5: "Sobald ein Gerät 5 Min. ausgefallen ist (siehe \"Erst melden nach\").", muted: /^Stumm bis /, notifyOn: "Globale Einstellung",
   },
   en: {
     persOff: "Off", persOn: (n) => `For outages · ${n} integrations`, int: "9 integrations · all shown", intPush: (n) => `9 integrations · all shown · push for ${n}`,
-    fields: "Area|Integration|Connection type|Offline since|Last signal|Battery|Manufacturer / model", title: "Offline: Temperatur Keller",
+    fields: "Area|Integration|Connection type|Offline since|Last signal|Last battery level|Manufacturer / model", title: "Offline: Temperatur Keller", fieldsLabel: "Content of the outage notification", noteBattery: "separate notification with fixed content", batteryFixed: "The content is fixed",
     since: /^since \d\d:\d\d( [AP]M)?$/, battery: "battery 0 %", actions: "Open|Mute 24 h", invented: "-72 dBm|64 %", exampleNote: "Italic: example value", range: "Allowed: 0 to 60", outage5: "As soon as a device has been offline for 5 min (see \"Report only after\").", muted: /^Muted until /, notifyOn: "Global setting",
   },
 };
@@ -70,6 +70,11 @@ for (const lang of ["de", "en"]) {
 
     // Push: Ziel und Ausfall, dann "Push für 8"
     await tap('[data-set="section"][data-id="push"]');
+    // Hinweis unter den Schaltern (0.33.1): gilt nur für die Ausfall-Meldung, nicht für die Batterie-Warnung
+    const nfNote = await text(".nf-note");
+    check(`[${tag}] Name und Hinweis: nur Ausfall-Meldung, Batterie-Warnung ist eine eigene Meldung`, (await text(".opt:has(.nf-grid) .opt-label")) === T.fieldsLabel && nfNote.includes(T.noteBattery), nfNote);
+    await tap('[data-set="section"][data-id="battery"]');
+    check(`[${tag}] Batterie-Abschnitt: der Inhalt der Batterie-Meldung ist fest`, (await text('.opt:has(input[data-opt="battery_push"]) .opt-short')).includes(T.batteryFixed), await text('.opt:has(input[data-opt="battery_push"]) .opt-short'));
     check(`[${tag}] Inhalt: 7 Schalter in fester Reihenfolge`, (await ev(`return [...r.querySelectorAll(".nf-item > span:first-child")].map(s=>s.textContent).join("|")`)) === T.fields);
     check(`[${tag}] Standard: Bereich, Integration, Offline seit`, (await ev(`return [...r.querySelectorAll("input[data-nfield]:checked")].map(i=>i.dataset.nfield).join()`)) === "area,integration,since");
     check(`[${tag}] Vorschau erst mit "Bei Ausfall"`, !(await ev(`return !!r.querySelector(".pv")`)));

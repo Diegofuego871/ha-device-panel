@@ -1849,7 +1849,10 @@ class DevicePanel extends HTMLElement {
     const x = (i) => (((i + 0.5) / n) * W).toFixed(1);
     const y = (v) => (H - 3 - (max ? (v / max) * (H - 12) : 0)).toFixed(1);
     const line = `M${p.map((v, i) => `${x(i)},${y(v)}`).join(" L")}`;
-    const end = this._serverNow || Date.now() / 1000;
+    // Auf die Minute abgerundet: Mit der Sekunde der Abfrage änderte sich der
+    // Text der Achse alle 10 s, setHtml ersetzte die ganze Kachelreihe, und ein
+    // Tipp genau dabei ging verloren (Fenster öffnete sich nicht).
+    const end = Math.floor((this._serverNow || Date.now() / 1000) / 60) * 60;
     const start = end - 86400;
     const size = 86400 / n;
     const span = (i) => `${this._fmtTime(start + i * size)}–${this._fmtTime(start + (i + 1) * size)}`;
@@ -3657,7 +3660,8 @@ class DevicePanel extends HTMLElement {
           <div class="opt-short">${escape(t("pvNote"))}${invented ? ` ${escape(t("pvExample"))}` : ""}</div></div>`
       : "";
     return `<div class="opt${changes.has("notify_fields") ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optFields"))}</span></div>
-      <div class="opt-short">${escape(t("optFieldsShort"))}</div><div class="nf-grid">${grid}</div>${preview}</div>`;
+      <div class="opt-short">${escape(t("optFieldsShort"))}</div><div class="nf-grid">${grid}</div>
+      <div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("optFieldsNote1"))}</p><p>${escape(t("optFieldsNote2"))}</p></div></div>${preview}</div>`;
   }
 
   _settingsBodyHtml() {

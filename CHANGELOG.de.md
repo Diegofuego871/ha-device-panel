@@ -7,6 +7,29 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.33.1] - 2026-10-04
+
+Verständlicher: "Inhalt der Ausfall-Meldung" ist nicht die Batterie-Warnung.
+
+### Geändert
+
+- Einstellungen, Abschnitt "Push-Benachrichtigung": "Inhalt der Meldung"
+  heisst jetzt "Inhalt der Ausfall-Meldung", der Schalter "Batterie" jetzt
+  "Batterie zuletzt" (wie "Empfang zuletzt"). Ein Hinweiskasten unter den
+  Schaltern sagt, was die Einstellung umfasst: nur die Ausfall-Meldung
+  ("Ausgefallen: …"), nicht die Warnung bei schwacher Batterie, die eine
+  eigene Meldung mit festem Inhalt (Stand und Bereich) ist und im
+  Abschnitt "Batterie" eingestellt wird. Dieser Abschnitt sagt es
+  umgekehrt. Der Optionsdialog von Home Assistant hat dieselben Texte.
+
+### Behoben
+
+- Die Puls-Kachel im Kopf ersetzt nicht mehr alle 10 Sekunden die ganze
+  Kachelreihe: Ihre Zeitachse folgte der Sekunde der letzten Abfrage, die
+  Reihe wurde bei jeder Aktualisierung neu aufgebaut, und ein Tipp genau in
+  diesem Moment ging verloren (das Puls-Fenster öffnete sich nicht; von der
+  Testsuite entdeckt). Die Achse folgt jetzt der Minute.
+
 ## [0.33.0] - 2026-10-03
 
 Optionale KI-Einschätzung eines Geräts.
@@ -912,6 +935,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1
 [0.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.0
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0
 [0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0

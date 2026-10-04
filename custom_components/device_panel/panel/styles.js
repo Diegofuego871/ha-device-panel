@@ -576,6 +576,11 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ex-col.sel .opt-select.changed select { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 /* Inhalt der Meldung und Vorschau */
 .nf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 24px; margin-top: 8px; }
+/* Hinweis unter den Schaltern: gilt nur für die Ausfall-Meldung, nicht für die Batterie-Warnung */
+.nf-note { display: flex; gap: 8px; margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--dp-subtle); color: var(--dp-text2); font-size: 12px; line-height: 1.4; }
+.nf-note svg { flex: none; margin-top: 1px; color: var(--dp-primary); }
+.nf-note p { margin: 0; }
+.nf-note p + p { margin-top: 6px; color: var(--dp-text); }
 .nf-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; font-size: 14px; }
 .pv { margin-top: 12px; padding: 12px; border-radius: 14px; background: var(--dp-subtle); }
 .pv-k { margin-bottom: 8px; color: var(--dp-text2); font-size: 12px; }

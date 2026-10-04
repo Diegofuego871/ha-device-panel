@@ -7,6 +7,29 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.33.1] - 2026-10-04
+
+Clearer: "Content of the outage notification" is not the battery warning.
+
+### Changed
+
+- Settings, section "Push notification": "Content of the notification" is
+  now "Content of the outage notification", the switch "Battery" is now
+  "Last battery level" (like "Last signal"). A note box under the switches
+  says what the setting covers: only the outage notification ("Offline:
+  …"), not the low battery warning, which is a separate notification with
+  fixed content (level and area) and is set up in the section "Battery".
+  That section says the reverse. The options dialog of Home Assistant has
+  the same wording.
+
+### Fixed
+
+- The pulse tile in the header no longer swaps the whole row of tiles every
+  10 seconds: its time axis followed the second of the last query, so the
+  row was rebuilt with every refresh, and a tap at that very moment was lost
+  (the pulse window did not open, found by the test suite). The axis now
+  follows the minute.
+
 ## [0.33.0] - 2026-10-03
 
 Optional AI assessment of a device.
@@ -875,6 +898,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1
 [0.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.0
 [0.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.29.0
 [0.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.28.0

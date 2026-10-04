@@ -142,6 +142,12 @@ hat dort einen echten Fehler oder Umweg gekostet.
   python-matter-server nachlesen (`pip download python-matter-server
   --no-deps`), nicht raten: "router" gibt es dort nicht.
 
+- Einstellungen, die nur für eine von mehreren Meldungen gelten, sagen das
+  im Namen und in einem sichtbaren Hinweis, nicht nur in grauer Kleinschrift:
+  "Inhalt der Meldung" (nur Ausfall) wurde für die Batterie-Warnung gehalten
+  (Rückmeldung des Nutzers, 0.33.1). `notify_fields` wirkt nur in
+  `outage.message_parts`; die Batterie-Meldung (`battery.py`) hat festen Inhalt.
+
 ## Panel (Frontend)
 
 - **Vanilla Web Component**, kein Lit, kein Build, kein CDN. Logik, Texte
@@ -360,6 +366,15 @@ hat dort einen echten Fehler oder Umweg gekostet.
   markiert laufende Abfragen als veraltet, ihr Ergebnis wird verworfen und
   sofort neu abgefragt. Test: Nachbau mit `__listDelay` (Antwort mit dem
   Stand vom Beginn, verzögert).
+
+- `setHtml` ersetzt den ganzen Inhalt, sobald sich der String ändert. Alles,
+  was im String von der Uhrzeit abhängt (Achsen, Tooltips mit Zeiten),
+  ändert ihn bei jeder Abfrage und ersetzt Knoten unter dem Finger: Ein Tipp
+  zwischen "touchend" und "click" geht dann verloren (Puls-Kachel, 0.33.1,
+  nur gelegentlich in der Testsuite aufgefallen: "Fenster offen" scheiterte
+  etwa bei jedem 20. Lauf). Zeiten im String auf die Minute abrunden. Der
+  Fehler fand sich mit einem MutationObserver und einem Vorher/Nachher-Vergleich
+  des HTML-Strings, nicht durch Wiederholen oder Warten.
 
 ## Tests
 

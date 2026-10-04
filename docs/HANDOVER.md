@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.33.0, KI-Einschätzung im Popup)
+## Stand (0.33.1, Texte: Ausfall-Meldung und Batterie-Warnung getrennt erklärt)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").

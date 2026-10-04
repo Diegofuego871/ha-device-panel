@@ -33,14 +33,25 @@ for (const lang of ["de", "en"]) {
     const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
+    // Handy: Kachel in den Blick scrollen und warten, bis das Einrasten (scroll-snap) fertig ist;
+    // sonst wandert die Kachel unter dem Finger weg und der Tipp geht daneben (seltener Fehlschlag).
+    const toPulseTile = async () => {
+      await ev(`r.querySelector(".hero").scrollLeft = r.querySelector(".hero .kt.pul").offsetLeft - 12`);
+      await f.evaluate(new Function(`const r=${R}; const t=r.querySelector(".hero .kt.pul"); return new Promise((done) => { let last = null, same = 0; const tick = () => { const x = Math.round(t.getBoundingClientRect().left); same = x === last ? same + 1 : 0; last = x; if (same >= 6) done(); else requestAnimationFrame(tick); }; tick(); })`));
+    };
     const rows = () => ev(`return [...r.querySelectorAll("dialog.pulse-dlg [data-pulse-dev]")].map(x=>x.dataset.pulseDev).join()`);
     // Erwartung aus den Daten: Geräte mit Unterbrüchen, meiste zuerst
     const expected = await ev(`return r.host._devices.filter(d=>!d.disabled && d.avail24?.outages).sort((a,b)=>b.avail24.outages-a.avail24.outages || (b.avail24.offline||0)-(a.avail24.offline||0) || a.name.localeCompare(b.name)).map(d=>d.id).join()`);
 
+    // Regression (0.33.1): Die Achse hing an der Sekunde der Abfrage; alle 10 s änderte sich der Text,
+    // setHtml ersetzte die Kachelreihe, und ein Tipp genau dabei ging verloren.
+    const stable = await ev(`const h=r.host; const p=[0,1,2,3,0,1,0,2]; const base=Math.floor(Date.now()/1000/60)*60+5; const html=(t)=>{h._serverNow=t; return h._pulseChartHtml(p, [{at: base-3600}])}; const a=html(base), b=html(base+10), c=html(base+50), d=html(base+65); return [a===b, a===c, a!==d]`);
+    check(`[${tag}] Achse der Puls-Kachel bleibt innerhalb einer Minute gleich (Kachelreihe wird nicht ersetzt)`, JSON.stringify(stable) === "[true,true,true]", JSON.stringify(stable));
+
     // Kachel ist antippbar
     const tile = await ev(`const t=r.querySelector(".hero .kt.pul"); return t ? [t.classList.contains("tap"), t.getAttribute("role"), t.getAttribute("aria-label"), !!t.querySelector(".kchev")] : null`);
     check(`[${tag}] Puls-Kachel antippbar`, JSON.stringify(tile) === JSON.stringify([true, "button", T.open, true]), JSON.stringify(tile));
-    if (mobile) await ev(`r.querySelector(".hero").scrollLeft = r.querySelector(".hero .kt.pul").offsetLeft - 12`);
+    if (mobile) await toPulseTile();
     await tap(".hero .kt.pul");
     check(`[${tag}] Fenster offen`, await wait(`return r.querySelector("dialog.pulse-dlg")?.open && !!r.querySelector("dialog.pulse-dlg .plist")`));
     check(`[${tag}] Titel und Zusammenfassung`, (await text("dialog.pulse-dlg h2")) === T.title && T.sub.test(await text("dialog.pulse-dlg .dlg-sub")), await text("dialog.pulse-dlg .dlg-sub"));
@@ -75,7 +86,7 @@ for (const lang of ["de", "en"]) {
     // Mit Filter "Bereich" (Küche): nur deren Geräte
     await ev(`r.host._setAreas(["kueche"])`);
     const kitchen = await ev(`return r.host._devices.filter(d=>d.area_id==="kueche" && !d.disabled && d.avail24?.outages).map(d=>d.id).join()`);
-    if (mobile) await ev(`r.querySelector(".hero").scrollLeft = r.querySelector(".hero .kt.pul").offsetLeft - 12`);
+    if (mobile) await toPulseTile();
     await tap(".hero .kt.pul");
     check(`[${tag}] Bereich: nur dessen Geräte`, await wait(`return r.querySelector("dialog.pulse-dlg")?.open`) && (await rows()) === kitchen && (await text("dialog.pulse-dlg .dlg-sub")).endsWith(T.kitchen), `${await rows()} / ${kitchen} / ${await text("dialog.pulse-dlg .dlg-sub")}`);
     await tap('dialog.pulse-dlg .dlg-actions [data-pulse-close]');
