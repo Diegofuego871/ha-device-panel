@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<div class="row">
+<div class="col"><div class="cap">Heute<small>Abschnitt "KI-Einschätzung": Schalter und KI-Aufgabe. Der Prompt ist fest im Code.</small></div>
+<div class="dlg m"><div class="hd"><div class="av">⚙</div><div><h2>Einstellungen</h2><div class="s">Device Panel · gilt für alle Benutzer</div></div><div class="x">✕</div></div><div class="body">
+<div class="sec"><div class="sh"><b>KI-Einschätzung</b><div>Ein · Standard von Home Assistant</div></div><div class="sb">
+<div class="ln"><span>Knopf "Mit KI einschätzen" zeigen</span><div class="sw"></div></div>
+<div class="note">Aus, bis eingeschaltet. Nur auf Knopfdruck, nie von selbst.</div><div class="hr"></div>
+<div class="ln"><span>KI-Aufgabe</span><div class="sel" style="min-width:170px">Standard von HA</div></div>
+</div></div></div></div></div>
+
+<div class="col"><div class="cap">A · Profi-Modus im Abschnitt (Empfehlung)<small>Ein Schalter "Profi-Modus" im Abschnitt. Ein: Der Prompt steht als Text mit Variablen, zum Kopieren und Ändern; "Standard" setzt zurück. Ein Knopf öffnet das grosse Fenster (Bild 2) zum Bearbeiten mit Vorschau.</small></div>
+<div class="dlg m"><div class="hd"><div class="av">⚙</div><div><h2>Einstellungen</h2><div class="s">Device Panel · gilt für alle Benutzer</div></div><div class="x">✕</div></div><div class="body">
+<div class="sec"><div class="sh"><b>KI-Einschätzung</b><div>Ein · Eigener Prompt</div></div><div class="sb">
+<div class="ln"><span>Knopf "Mit KI einschätzen" zeigen</span><div class="sw"></div></div><div class="hr"></div>
+<div class="ln"><span>KI-Aufgabe</span><div class="sel" style="min-width:170px">Standard von HA</div></div><div class="hr"></div>
+<div class="ln"><span><b>Profi-Modus</b><div class="note" style="margin:0">Den Prompt ansehen und anpassen</div></span><div class="sw"></div></div>
+<div class="h3">Prompt · Eigener <span class="pill g">geändert</span></div>
+<div class="ta ro">You are a careful assistant for a Home Assistant installation. Below are facts about ONE smart home device as JSON. Assess why it is (or was) offline … Answer in <span class="v">{language}</span>. Format: …
+
+Facts:
+<span class="v">{facts}</span></div>
+<div class="btns"><div class="btn pr">Bearbeiten …</div><div class="btn">Kopieren</div><div class="btn">Standard</div></div>
+<div class="info">Der Prompt geht mit den Fakten des Geräts an den KI-Anbieter. Schlüssel, Zugangsdaten, IDs und Adressen sind nie dabei.</div>
+</div></div></div></div></div>
+</div>

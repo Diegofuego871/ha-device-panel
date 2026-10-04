@@ -1,0 +1,48 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<div class="row">
+<div class="col"><div class="cap">A · Fenster "Prompt bearbeiten", Reiter "Bearbeiten"<small>Textfeld mit dem Prompt. Die Variablen als Chips: Tippen fügt sie an der Cursor-Stelle ein. Pflicht ist {facts}; fehlt sie, zeigt das Fenster einen Fehler und "Übernehmen" ist gesperrt.</small></div>
+<div class="sheet2"><div class="hd"><div><h2 style="font-size:19px">Prompt bearbeiten</h2><div class="s">Eigener Prompt statt Standard</div></div><div class="x">✕</div></div><div class="body">
+<div class="tabs c"><span class="on">Bearbeiten</span><span>Vorschau</span></div>
+<div class="vars"><span class="chip">{language}</span><span class="chip">{facts}</span></div>
+<div class="ta" style="min-height:250px">You are a careful assistant for a Home Assistant installation. Below are facts about ONE smart home device as JSON. Assess why it is (or was) offline or unstable and what the owner could check, most likely cause first. Use only these facts; do not invent values. Say what is uncertain. Answer in <span class="v">{language}</span>. Format: the first line is a short headline (at most 6 words) naming the most likely cause; then an empty line; then 3 to 5 short sentences of plain text (no markdown, no lists).
+
+Facts:
+<span class="v">{facts}</span></div>
+<div class="cnt2">812 von 4000 Zeichen</div>
+<div class="warn">Die erste Zeile der Antwort zeigt das Panel als Überschrift. Verlangt der Prompt ein anderes Format, steht die ganze Antwort als Text.</div>
+<div class="btns"><div class="btn">Standard einfügen</div><div class="btn">Kopieren</div></div>
+</div><div class="acts"><div class="btn">Abbrechen</div><div class="btn pr">Übernehmen</div></div></div></div>
+
+<div class="col"><div class="cap">A · Reiter "Vorschau"<small>So geht der Prompt wirklich raus, mit den Fakten eines gewählten Geräts (erfundenes Beispiel). Zeigt vor dem Senden genau, was der Anbieter bekommt.</small></div>
+<div class="sheet2"><div class="hd"><div><h2 style="font-size:19px">Prompt bearbeiten</h2><div class="s">Eigener Prompt statt Standard</div></div><div class="x">✕</div></div><div class="body">
+<div class="tabs c"><span>Bearbeiten</span><span class="on">Vorschau</span></div>
+<div class="ln"><span class="sm">Gerät</span><div class="sel" style="min-width:200px">Fensterkontakt Küche</div></div>
+<div class="ta ro" style="font-size:11.5px">You are a careful assistant for a Home Assistant installation. … Answer in German (Swiss spelling: always 'ss', never the sharp s). Format: …
+
+Facts:
+{
+ "name": "Fensterkontakt Küche",
+ "status": "offline",
+ "type": "Door / window",
+ "area": "Küche",
+ "integration": "Zigbee Home Automation",
+ "offline_for_minutes": 47,
+ "last_24h": {
+  "availability_percent": 91.2,
+  "interruptions": 5
+ },
+ "battery_percent": 8,
+ "battery_low": true,
+ "hub_online": true
+}</div>
+<div class="note" style="margin-top:8px">Nur diese Angaben verlassen das Haus. Entitätsnamen, IDs, Adressen und Schlüssel sind nie dabei.</div>
+</div><div class="acts"><div class="btn">Abbrechen</div><div class="btn pr">Übernehmen</div></div></div></div>
+
+<div class="col"><div class="cap">Fehlerfall<small>{facts} fehlt oder ein Platzhalter ist unbekannt: Fehler unter dem Textfeld, "Übernehmen" gesperrt.</small></div>
+<div class="sheet2"><div class="hd"><div><h2 style="font-size:19px">Prompt bearbeiten</h2><div class="s">Eigener Prompt statt Standard</div></div><div class="x">✕</div></div><div class="body">
+<div class="tabs c"><span class="on">Bearbeiten</span><span>Vorschau</span></div>
+<div class="vars"><span class="chip">{language}</span><span class="chip">{facts}</span></div>
+<div class="ta" style="min-height:120px;border-color:var(--err)">Beurteile, warum das Gerät ausgefallen ist. Antworte auf <span class="v">{language}</span>. Kurz.</div>
+<div class="err">Der Prompt braucht <b>{facts}</b>, sonst bekommt die KI keine Angaben zum Gerät.</div>
+</div><div class="acts"><div class="btn">Abbrechen</div><div class="btn pr" style="opacity:.45">Übernehmen</div></div></div></div>
+</div>
