@@ -15,7 +15,7 @@ from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.components.recorder.common import async_wait_recording_done
 
-from custom_components.device_panel.battery_history import CHANGE_JUMP, changes, thin
+from custom_components.device_panel.battery_history import CHANGE_JUMP, changes, forecast, thin
 from custom_components.device_panel.const import DOMAIN
 
 
@@ -46,6 +46,76 @@ def test_thin_keeps_last_point() -> None:
     out = thin(pts, 0, 5000, limit=100)
     assert len(out) <= 101 and out[-1] == pts[-1]
     assert thin(pts[:50], 0, 50, limit=100) == pts[:50]
+
+
+# --- Prognose (seit 1.5.0) ----------------------------------------------------
+
+DAY = 86400.0
+NOW = 400 * DAY
+
+
+def _line(days: int, start: float, per_day: float, step: float = 0.25) -> list[tuple[float, float]]:
+    """Täglicher Wert, der mit per_day Punkten pro Tag fällt; endet bei NOW."""
+    return [(NOW - (days - i) * DAY, start - per_day * i) for i in range(days + 1)]
+
+
+def test_forecast_linear_until_the_warning_threshold() -> None:
+    # 100 % -> 60 % in 100 Tagen (0,4 pro Tag), Schwelle 10 %: noch 50 Punkte = 125 Tage
+    fc = forecast(_line(100, 100.0, 0.4), NOW, 10)
+    assert fc["status"] == "ok" and fc["target"] == 10 and fc["target_is_zero"] is False
+    assert fc["days"] == pytest.approx(125, abs=2) and fc["at"] == pytest.approx(NOW + 125 * DAY, abs=2 * DAY)
+    assert fc["confidence"] == "high" and fc["accelerating"] is False and fc["after_change"] is False
+    assert fc["per_month"] == pytest.approx(12.2, abs=0.2)
+    assert fc["days_low"] <= fc["days"] <= fc["days_high"]
+    # Ohne Warnung (None): bis 0 %
+    zero = forecast(_line(100, 100.0, 0.4), NOW, None)
+    assert zero["target"] == 0 and zero["target_is_zero"] is True and zero["days"] == pytest.approx(150, abs=2)
+    # Höhere eigene Schwelle des Geräts: früher
+    assert forecast(_line(100, 100.0, 0.4), NOW, 30)["days"] == pytest.approx(75, abs=2)
+
+
+def test_forecast_counts_only_since_the_last_battery_change() -> None:
+    old = _line(60, 40.0, 0.5)  # alte Batterie bis ~10 %
+    old = [(t - 80 * DAY, v) for t, v in old]
+    new = [(NOW - (50 - i) * DAY, 100.0 - 0.2 * i) for i in range(51)]  # neue Batterie, 0,2 pro Tag
+    fc = forecast(old + new, NOW, 10, 3 * 3600)
+    assert fc["status"] == "ok" and fc["after_change"] is True
+    assert fc["since"] == pytest.approx(NOW - 50 * DAY, abs=DAY)
+    # Noch 90 -> 10 Punkte... aktuell 90 %: (90 - 10) / 0,2 = 400 Tage
+    assert fc["days"] == pytest.approx(400, abs=10)
+
+
+def test_forecast_states() -> None:
+    # Zu wenig Tage seit dem Wechsel
+    short = forecast(_line(4, 90.0, 1.0), NOW, 10)
+    assert short["status"] == "short" and short["min_days"] == 7 and short["days_used"] == pytest.approx(4, abs=0.1)
+    # Gleichbleibend
+    flat = forecast([(NOW - (30 - i) * DAY, 80.0) for i in range(31)], NOW, 10)
+    assert flat["status"] == "flat"
+    # Steigend (Temperatur) zählt als gleichbleibend
+    assert forecast(_line(30, 50.0, -0.3), NOW, 10)["status"] == "flat"
+    # Schwelle schon erreicht
+    assert forecast(_line(30, 20.0, 0.5), NOW, 10)["status"] == "reached"
+    # Keine Daten
+    assert forecast([], NOW, 10)["status"] == "none"
+
+
+def test_forecast_warns_when_the_drop_gets_steeper() -> None:
+    # Knopfzelle: 40 Tage fast gleich, dann schneller Abfall
+    pts = [(NOW - (60 - i) * DAY, 98.0 - 0.02 * i) for i in range(40)]
+    pts += [(NOW - (60 - i) * DAY, 97.0 - 1.2 * (i - 40)) for i in range(40, 61)]
+    fc = forecast(pts, NOW, 5)
+    assert fc["status"] == "ok" and fc["accelerating"] is True
+    # Gleichmässiger Abfall: nicht steiler
+    assert forecast(_line(80, 100.0, 0.5), NOW, 5)["accelerating"] is False
+
+
+def test_forecast_confidence_is_lower_with_few_days_and_noise() -> None:
+    few = forecast(_line(10, 90.0, 0.5), NOW, 10)
+    assert few["status"] == "ok" and few["confidence"] == "low"
+    # Gröbe Stufen von 10 %: noch ein Ergebnis, aber nicht "hoch"
+    steps = [(NOW - (90 - i) * DAY, 100.0 - 10 * (i // 22)) for i in range(91)]
+    assert forecast(steps, NOW, 10)["confidence"] != "high"
 
 
 # --- mit Recorder ------------------------------------------------------------
@@ -147,3 +217,37 @@ async def test_without_recorder(hass: HomeAssistant, hass_ws_client) -> None:
     res = (await _ws(client, 1, type=f"{DOMAIN}/battery_history", device_id=dev.id, range="7d"))["result"]
     # Seit 0.26.0: der Wert gilt seit seiner letzten Änderung (zwei Punkte, unverändert seit)
     assert res["source"] == "none" and [v for _t, v in res["points"]] == [80, 80] and res["steady_since"] is not None
+
+
+async def test_history_carries_the_forecast_independent_of_the_range(recorder_mock, hass: HomeAssistant, hass_ws_client) -> None:
+    """Die Prognose steht in jedem Zeitraum und rechnet über das längste Fenster; Schwelle des Geräts."""
+    dev, bat = _battery_device(hass)
+    hass.states.async_set(bat, "70", {"device_class": "battery", "unit_of_measurement": "%", "state_class": "measurement"})
+    now = dt_util.utcnow()
+    top = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    # Tagesmittel über 100 Tage: 100 % -> 70 % (0,3 pro Tag), bis jetzt
+    rows = [{"start": top - timedelta(days=d), "mean": 70 + 0.3 * (d - 1), "min": 70, "max": 100} for d in range(100, 0, -1)]
+    async_import_statistics(
+        hass,
+        {"mean_type": StatisticMeanType.ARITHMETIC, "has_sum": False, "name": None, "source": "recorder", "statistic_id": bat, "unit_class": None, "unit_of_measurement": "%"},
+        rows,
+    )
+    await async_wait_recording_done(hass)
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    results = {}
+    for i, key in enumerate(("24h", "7d", "30d", "365d")):
+        results[key] = (await _ws(client, 1 + i, type=f"{DOMAIN}/battery_history", device_id=dev.id, range=key))["result"]
+    for key, result in results.items():
+        fc = result["forecast"]
+        assert fc["status"] == "ok", key
+        # Schwelle 15 % (Standard des Geräts): (70 - 15) / 0,3 = ~183 Tage, unabhängig vom Reiter
+        assert fc["target"] == 15 and fc["days"] == pytest.approx(183, abs=12), (key, fc["days"])
+    assert results["24h"]["forecast"]["days"] == pytest.approx(results["365d"]["forecast"]["days"], abs=1)
+    # Eigene Schwelle 5 %: später; Warnung aus: bis 0 %
+    await _ws(client, 9, type=f"{DOMAIN}/set_device_settings", device_id=dev.id, battery=5)
+    own = (await _ws(client, 10, type=f"{DOMAIN}/battery_history", device_id=dev.id, range="7d"))["result"]["forecast"]
+    assert own["target"] == 5 and own["days"] > results["7d"]["forecast"]["days"]
+    await _ws(client, 11, type=f"{DOMAIN}/set_device_settings", device_id=dev.id, battery="off")
+    off = (await _ws(client, 12, type=f"{DOMAIN}/battery_history", device_id=dev.id, range="7d"))["result"]["forecast"]
+    assert off["target"] == 0 and off["target_is_zero"] is True and off["days"] > own["days"]

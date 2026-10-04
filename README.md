@@ -116,7 +116,10 @@ details such as software version, manufacturer, model and area.
 - Battery history: the tile "Battery" in the device pop-up opens the level
   over 24 h, 7 days, 30 days, 3, 6 or 12 months as a line, with the warning
   threshold and battery changes; from the recorder (long-term statistics
-  beyond its 10 days).
+  beyond its 10 days). A forecast shows how long the battery probably lasts
+  until the warning threshold of the device (until empty if the warning is
+  off), calculated from the history since the last battery change, at most
+  one year, without AI.
 - Weak signal warning per device, in its pop-up: global value (below
   -80 dBm or LQI 61), own threshold or off, for devices that always have a
   weak signal. Marking and the chip "Weak signal" follow.

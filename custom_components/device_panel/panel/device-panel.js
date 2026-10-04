@@ -1112,6 +1112,53 @@ class DevicePanel extends HTMLElement {
     }
   }
 
+  _fmtDateY(sec) {
+    try {
+      return new Date(sec * 1000).toLocaleDateString(this._locale(), { day: "numeric", month: "short", year: "numeric" });
+    } catch (err) {
+      return new Date(sec * 1000).toISOString().slice(0, 10);
+    }
+  }
+
+  // Dauer in Tagen als Text: Tage bis 45, Monate bis 2 Jahre, danach Jahre.
+  _fmtSpan(days) {
+    const t = (k, ...a) => this._t(k, ...a);
+    if (days > 1825) return t("batFcOver5");
+    if (days < 45) return t("batFcDays", Math.max(1, Math.round(days)));
+    if (days < 730) return t("batFcMonths", Math.round(days / 30.4));
+    return t("batFcYears", this._fmtPct(Math.round((days / 365) * 10) / 10));
+  }
+
+  // Prognose-Block im Batterie-Verlauf (seit 1.5.0). Unabhängig vom
+  // gewählten Zeitraum: das Backend rechnet immer über höchstens 365 Tage.
+  _batForecastHtml(fc) {
+    if (!fc || !fc.status) return "";
+    const t = (k, ...a) => this._t(k, ...a);
+    const zero = !!fc.target_is_zero;
+    const note = `<p class="bh-fc-note">${escape(t("batFcNote"))}</p>`;
+    const wrap = (cls, inner) => `<div class="bh-fc ${cls}"><div class="bh-fc-h">${escape(t("batFcTitle"))}</div>${inner}${note}</div>`;
+    if (fc.status === "none") return "";
+    if (fc.status === "short") {
+      const msg = fc.after_change ? t("batFcShortChange", fc.days_used, fc.min_days) : t("batFcShortAll", fc.days_used, fc.min_days);
+      return wrap("muted", `<p class="bh-fc-sub">${escape(msg)}</p>`);
+    }
+    if (fc.status === "flat") return wrap("muted", `<p class="bh-fc-sub">${escape(t("batFcFlat"))}</p>`);
+    if (fc.status === "reached") return wrap("warn", `<p class="bh-fc-main">${escape(zero ? t("batFcReachedZero") : t("batFcReached", fc.target))}</p>`);
+    const sub = zero ? t("batFcTargetZero", this._fmtDateY(fc.at)) : t("batFcTarget", fc.target, this._fmtDateY(fc.at));
+    const lo = this._fmtSpan(fc.days_low);
+    const range = fc.days_high == null ? t("batFcRangeMin", lo) : t("batFcRange", lo, this._fmtSpan(fc.days_high));
+    const basis = fc.after_change ? t("batFcBasisChange", this._fmtDateY(fc.since), fc.days_used) : t("batFcBasisAll", fc.days_used);
+    const conf = ["high", "medium", "low"].includes(fc.confidence) ? fc.confidence : "low";
+    return wrap(
+      fc.accelerating ? "accel" : "",
+      `<div class="bh-fc-main">${escape(t("batFcLeft", this._fmtSpan(fc.days)))}</div>
+       <p class="bh-fc-sub">${escape(sub)}</p>
+       <div class="bh-fc-meta"><span>${escape(range)}</span><span class="bh-fc-conf ${conf}">${escape(t("batFcConf", conf))}</span><span>${escape(t("batFcRate", this._fmtPct(fc.per_month)))}</span></div>
+       <p class="bh-fc-basis">${escape(basis)}</p>
+       ${fc.accelerating ? `<p class="bh-fc-warn">${escape(t("batFcAccel"))}</p>` : ""}`
+    );
+  }
+
   // Beschriftete Marken auf ganzen Stunden bzw. Mitternacht (wie
   // unifi_dynamic). "minor" blendet das schmale Layout aus.
   _ticks(start, end, mode) {
@@ -3083,7 +3130,7 @@ class DevicePanel extends HTMLElement {
     const key = this._histKey(range);
     if (!h || h.key !== key || (!h.data && h.loading)) return `<div class="avail"><p class="dlg-note">${escape(t("loadingDetail"))}</p></div>`;
     if (!h.data) return `<div class="dlg-error">${escape(t("error"))} ${escape(h.error || "")}</div>`;
-    const { start, end, points = [], changes = [], threshold, source, steady_since: steady } = h.data;
+    const { start, end, points = [], changes = [], threshold, source, steady_since: steady, forecast } = h.data;
     if (!points.length) return `<div class="avail"><p class="dlg-note">${escape(t("batNoData"))}</p></div><p class="dlg-note bh-src">${escape(t("batSrcNone"))}</p>`;
     const span = end - start;
     const x = (at) => Math.max(0, Math.min(1000, ((at - start) / span) * 1000));
@@ -3127,6 +3174,7 @@ class DevicePanel extends HTMLElement {
       : "";
     const srcKey = source === "statistics" ? (h.data.period === "day" ? "batSrcStatsDay" : "batSrcStats") : source === "history" ? (["30d", "90d", "180d", "365d"].includes(range) ? "batSrcHistoryLong" : "batSrcHistory") : "batSrcNone";
     return `<div class="avail bh"><div class="avail-top"><span class="avail-pct">${escape(String(Math.round(cur)))}<small>%</small></span><span class="avail-facts">${escape(facts.join(" · "))}</span></div>
+        ${this._batForecastHtml(forecast)}
         <div class="bh-plot"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}${thr}
           <path class="bh-area" d="${area}"/><path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/>${marks}</svg>${labels}</div>
         <div class="avail-ticks bh-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>${list}</div>

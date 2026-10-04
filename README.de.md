@@ -125,7 +125,10 @@ Bereich.
 - Batterie-Verlauf: Die Kachel "Batterie" im Geräte-Popup zeigt den Stand
   über 24 Std., 7 Tage, 30 Tage, 3, 6 oder 12 Monate als Linie, mit Warnschwelle
   und Batteriewechseln; aus dem Recorder (Langzeitstatistik auch über
-  seine 10 Tage hinaus).
+  seine 10 Tage hinaus). Eine Prognose zeigt, wie lange die Batterie
+  voraussichtlich bis zur Warnschwelle des Geräts hält (ohne Warnung bis
+  leer), gerechnet aus dem Verlauf seit dem letzten Batteriewechsel, höchstens
+  ein Jahr, ohne KI.
 - Empfang-Warnung pro Gerät im Popup: globaler Wert (unter -80 dBm bzw.
   LQI 61), eigene Schwelle oder aus, für Geräte, die immer schwachen
   Empfang haben. Markierung und Chip "Schwacher Empfang" folgen.

@@ -196,6 +196,12 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   links, Wechsel grau gestrichelt mit Text oben, Punkt mit Hof am Ende
   ("jetzt"). Gleicher Rahmen wie "Verfügbarkeit" (Zeitraum oben, Kennzahl
   gross, Liste unten, Quelle als Kurzzeile).
+- Prognose (seit 1.5.0, im Fenster "Batterie" unter der Kennzahl): Block mit
+  Rand links (grün, orange bei Warnhinweis oder erreicht, grau bei zu
+  wenig Verlauf oder flach), Titel "Prognose", Restdauer gross, darunter
+  Ziel und Datum, Spanne, Pille für die Sicherheit (hoch grün, mittel orange,
+  gering rot) und Rückgang pro Monat, klein die Grundlage und der Hinweis
+  "ohne KI".
 - Markierung "Neu" (seit 0.21.0): kleines Etikett beim Namen in Grün
   (`--dp-success`, wie "online"), damit es sich von den blauen Symbolen der
   eigenen Einstellungen abhebt; Chip "Neu" mit Funkel-Symbol in Grün.

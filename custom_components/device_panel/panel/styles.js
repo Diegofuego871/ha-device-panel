@@ -860,6 +860,20 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .avail-legend i.sg-span { background: color-mix(in srgb, var(--dp-primary) 22%, transparent); }
 .bh .avail-list .d { color: var(--dp-text2); }
 .bh-src { margin: 10px 2px 0; }
+.bh-fc { margin: 12px 0 6px; padding: 12px 14px; border-radius: 12px; background: var(--dp-bg); border-left: 3px solid var(--dp-success); }
+.bh-fc.muted { border-left-color: var(--dp-subtle); }
+.bh-fc.warn, .bh-fc.accel { border-left-color: var(--dp-warning); }
+.bh-fc-h { font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--dp-text2); }
+.bh-fc-main { font-size: 20px; font-weight: 500; margin-top: 2px; }
+.bh-fc-sub { margin: 2px 0 0; color: var(--dp-text2); font-size: 13px; }
+.bh-fc-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 13px; color: var(--dp-text2); align-items: center; }
+.bh-fc-conf { padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; font-size: 12px; }
+.bh-fc-conf.high { color: var(--dp-success); }
+.bh-fc-conf.medium { color: var(--dp-warning); }
+.bh-fc-conf.low { color: var(--dp-error); }
+.bh-fc-basis { margin: 6px 0 0; font-size: 12px; color: var(--dp-text3); }
+.bh-fc-warn { margin: 6px 0 0; font-size: 13px; color: var(--dp-warning); }
+.bh-fc-note { margin: 6px 0 0; font-size: 11px; color: var(--dp-text3); }
 .avail-now { position: absolute; top: 0; right: 0; bottom: 0; width: 2px; background: var(--dp-text); }
 .avail-tip { position: absolute; bottom: calc(100% + 8px); z-index: 2; transform: translateX(-50%); padding: 7px 10px; border-radius: 8px;
   background: #323232; color: #fff; font-size: 12px; white-space: nowrap; box-shadow: 0 6px 18px rgba(0,0,0,0.35); pointer-events: none; }

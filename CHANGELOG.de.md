@@ -7,6 +7,33 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.5.0] - 2026-10-04
+
+Batterie-Prognose im Verlaufsfenster der Batterie, ohne KI.
+
+### Hinzugefügt
+
+- Batterie-Verlauf: Ein Block "Prognose" zeigt, wie lange die Batterie
+  voraussichtlich noch hält (Wunsch des Nutzers, ohne KI gerechnet):
+  - Grundlage: der Verlauf seit dem letzten Batteriewechsel oder der
+    längstmögliche Zeitraum, höchstens ein Jahr zurück. Die Prognose hängt
+    nicht vom gewählten Zeitraum-Reiter ab.
+  - Ziel: die beim Gerät geltende Warnschwelle (eigene, der Integration oder
+    globale). Bei 5 % also die Zeit bis 5 %. Ist die Warnung beim Gerät aus,
+    wird bis leer (0 %) gerechnet.
+  - Zeigt die Restdauer ("etwa 4 Monate"), das Datum, die Spanne, die
+    Sicherheit (hoch, mittel, gering) und den Rückgang pro Monat.
+  - Verfahren: eine Gerade durch die Tagesmittel (kleinste Quadrate); die
+    Spanne ergibt sich aus der Unsicherheit der Steigung. Die Sicherheit
+    sinkt bei wenig Verlauf, verrauschten Werten und groben Stufen (etwa
+    Sensoren, die nur in 10-%-Schritten melden).
+  - Ein Hinweis erscheint, wenn der Rückgang zuletzt steiler wird (typisch
+    für Lithium-Knopfzellen): die Prognose ist dann eher zu optimistisch.
+  - Keine Prognose bei weniger als 7 Tagen oder 5 Tageswerten seit dem
+    Wechsel, bei kaum sinkendem Stand oder wenn die Schwelle schon erreicht
+    ist; der Block sagt, warum.
+  - Neues Feld `forecast` in der Antwort von `device_panel/battery_history`.
+
 ## [1.4.0] - 2026-10-04
 
 Ein besserer Standard-Prompt für die KI-Einschätzung und mehr Fakten.
@@ -1139,6 +1166,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0
 [1.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.4.0
 [1.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.3.0
 [1.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.0.0

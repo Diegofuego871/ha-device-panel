@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.4.0, Einstellungen in fünf Abschnitten)
+## Stand (1.5.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -308,6 +308,14 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    mit `own_threshold`), `battery_powered`, `same_area_other_devices` und
    `same_area_offline_devices` (alle Integrationen, ohne deaktivierte und
    nicht überwachte).
+   Batterie-Prognose (`1.5.0`, Nutzer, 2026-10-04, ohne KI):
+   `battery_history.forecast()` rechnet immer aus höchstens 365 Tagen seit
+   dem letzten Wechsel (Tagesmittel, kleinste Quadrate, Spanne aus dem
+   Standardfehler der Steigung) bis zur Warnschwelle des Geräts
+   (`device_battery_threshold`; ohne Warnung bis 0 %), unabhängig vom
+   Zeitraum-Reiter; `async_battery_history` liefert das Feld `forecast`.
+   Zustände `none`/`short`/`flat`/`reached`/`ok`; Panel `_batForecastHtml`,
+   Strings `batFc*`, Simulator `__batForecast` und `batForecast()`.
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem

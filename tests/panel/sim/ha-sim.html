@@ -193,6 +193,48 @@
   // sonst langsam sinkend. 30 Tage und 3 Monate als Stundenmittel aus der
   // Langzeitstatistik, sonst aus dem Verlauf.
   window.__batSource = null;
+  // Prognose wie battery_history.forecast: Gerade durch die Tagesmittel seit dem
+  // letzten Wechsel (sonst ab 365 Tagen zurück), bis zur Warnschwelle (ohne: 0 %).
+  // __batForecast erzwingt eine Antwort (Objekt) für die Zustände des Panels.
+  window.__batForecast = null;
+  function batForecast(valueAt, end, changeAt, threshold) {
+    const target = threshold == null ? 0 : threshold;
+    const base = { target, target_is_zero: threshold == null, after_change: Boolean(changeAt) };
+    const from = changeAt ? changeAt + 3 * 3600 : end - 365 * D;
+    base.since = changeAt || from;
+    const xs = [];
+    const ys = [];
+    for (let t = from - (from % D) + D / 2; t < end; t += D) {
+      xs.push((t - end) / D);
+      ys.push(valueAt(t));
+    }
+    const span = xs.length ? xs[xs.length - 1] - xs[0] : 0;
+    base.days_used = Math.round(span * 10) / 10;
+    if (xs.length < 5 || span < 7) return { ...base, status: "short", min_days: 7 };
+    const n = xs.length;
+    const mx = xs.reduce((a, b) => a + b, 0) / n;
+    const my = ys.reduce((a, b) => a + b, 0) / n;
+    const sxx = xs.reduce((a, x) => a + (x - mx) ** 2, 0);
+    const b = xs.reduce((a, x, i) => a + (x - mx) * (ys[i] - my), 0) / sxx;
+    const a = my - b * mx;
+    const ssr = xs.reduce((s, x, i) => s + (ys[i] - (a + b * x)) ** 2, 0);
+    const sst = ys.reduce((s, y) => s + (y - my) ** 2, 0);
+    const r2 = sst > 0 ? 1 - ssr / sst : 0;
+    const se = Math.sqrt(ssr / (n - 2) / sxx);
+    const last = ys[n - 1];
+    base.current = Math.round(a * 10) / 10;
+    base.per_month = Math.round(-b * 30.44 * 100) / 100;
+    if (last <= target) return { ...base, status: "reached" };
+    if (b > -0.01 || -b * span < 2) return { ...base, status: "flat" };
+    const left = (a > target ? a : last) - target;
+    const eta = left / -b;
+    const low = b - se < 0 ? left / -(b - se) : null;
+    const high = b + se < 0 ? left / -(b + se) : null;
+    let confidence = span >= 60 && r2 >= 0.8 ? "high" : span >= 21 && r2 >= 0.5 ? "medium" : "low";
+    if (confidence === "high" && new Set(ys.map(Math.round)).size < 8) confidence = "medium";
+    return { ...base, status: "ok", days: Math.round(eta * 10) / 10, at: Math.round(end + eta * D), days_low: low == null ? null : Math.round(low * 10) / 10,
+      days_high: high == null ? null : Math.round(high * 10) / 10, confidence, r2: Math.round(r2 * 100) / 100, accelerating: false };
+  }
   function batteryHistory(d, range) {
     const days = { "24h": 1, "7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365 }[range];
     const end = Date.now() / 1000;
@@ -218,7 +260,8 @@
     const integ = (window.__opts.battery_low_integrations || {})[dom];
     const threshold = own === "off" || (own == null && integ === "off") ? null : Number.isInteger(own) ? own : integ ?? window.__opts.battery_low;
     const source = window.__batSource || (days >= 30 ? "statistics" : "history");
-    return { entity_id: `sensor.${d.id}_batterie`, start, end, source, points, first: points[0][0], changes, threshold, period: daily ? "day" : "hour" };
+    const forecast = window.__batForecast || batForecast(value, end, changeAt, threshold);
+    return { entity_id: `sensor.${d.id}_batterie`, start, end, source, points, first: points[0][0], changes, threshold, period: daily ? "day" : "hour", forecast };
   }
   // Empfangsverlauf wie signal_history.py (erfunden, gleichbleibend):
   // Zigbee (wie ZHA) und Bluetooth aus der eigenen Aufzeichnung (Blöcke mit

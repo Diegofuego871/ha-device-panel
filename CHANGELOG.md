@@ -7,6 +7,33 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-10-04
+
+Battery forecast in the battery history window, without AI.
+
+### Added
+
+- Battery history: a forecast block "Forecast" shows how long the battery
+  probably lasts (requested by the user, calculated without AI):
+  - Basis: the history since the last battery change, or the longest
+    available period, at most one year back. The forecast does not depend on
+    the selected range tab.
+  - Target: the warning threshold in use for this device (own, integration or
+    global). With 5 % that is the time until 5 %. If the warning is off for
+    the device, the forecast runs to empty (0 %).
+  - Shows the time left ("about 4 months"), the date, the range, the
+    confidence (high, medium, low) and the drop per month.
+  - Method: a straight line through the daily means (least squares); the
+    range comes from the uncertainty of the slope. The confidence falls with
+    little history, noisy data and coarse steps (for example sensors that
+    only report 10 % steps).
+  - A warning appears when the drop gets steeper lately (typical for
+    lithium coin cells): the forecast is then probably too optimistic.
+  - No forecast with less than 7 days or 5 daily values since the change, a
+    level that barely drops, or when the threshold is already reached; the
+    block says why.
+  - New field `forecast` in the answer of `device_panel/battery_history`.
+
 ## [1.4.0] - 2026-10-04
 
 A better default prompt for the AI assessment, and more facts.
@@ -1095,6 +1122,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0
 [1.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.4.0
 [1.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.3.0
 [1.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.0.0
