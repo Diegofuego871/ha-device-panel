@@ -1,0 +1,73 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<div class="row">
+<div class="col"><div class="cap">C1: Reiter "Übersicht"<small>Das Gesamtbild aus A: je Meldung ein Zeitstrahl, was wann kommt, mit den Schaltern Push und Anhaltend. Darunter Ziel und Tipp. "Ändern ›" springt in den Reiter.</small></div>
+<div class="dlg m"><div class="hd"><div class="av">⚙</div><div><h2>Einstellungen</h2><div class="s">Device Panel · gilt für alle Benutzer</div></div><div class="x">✕</div></div>
+<div class="body"><div class="sec"><div class="sh"><b>Meldungen</b><div>Ausfall nach 10 Min. · Batterie täglich 20:00</div></div>
+<div class="sb">
+<div class="tabs c"><span class="on">Übersicht</span><span>Ausfall</span><span>Batterie</span></div>
+<div class="lane"><div class="lt"><span class="ic" style="background:#fdecea;color:var(--err)">●</span>Ausfall<span class="go">Ändern ›</span></div>
+<div class="tl"><div class="bar"></div>
+<div class="mk" style="left:9%"><i></i><b>0</b>Gerät weg</div>
+<div class="mk" style="left:42%"><i></i><b>5 Min.</b>im Panel ausgefallen</div>
+<div class="mk p" style="left:78%"><i></i><b>10 Min.</b>Push "Ausgefallen"</div></div>
+<div class="chips"><span class="chip on">Push</span><span class="chip on">Anhaltend</span><span class="chip on">Wieder online</span><span class="chip on">Sammelausfall</span></div>
+<div class="note" style="margin:6px 0 0">Push für 18 von 23 Integrationen</div></div>
+<div class="lane"><div class="lt"><span class="ic" style="background:#fff4e0;color:#e08600">▮</span>Batterie schwach<span class="go">Ändern ›</span></div>
+<div class="tl b"><div class="bar"></div>
+<div class="mk" style="left:12%"><i></i><b>unter 10 %</b>im Panel rot</div>
+<div class="mk p" style="left:78%"><i></i><b>täglich 20:00</b>Push, alle schwachen</div></div>
+<div class="chips"><span class="chip on">Push</span><span class="chip">Anhaltend</span></div>
+<div class="note" style="margin:6px 0 0">Push für 15 von 17 Integrationen mit Batterie</div></div>
+<div class="hr"></div>
+<div class="ln"><span>Ziel</span><span class="sel" style="width:205px">notify.mobile_app_handy</span></div>
+<div class="ln"><span>Tipp öffnet</span><span class="sel" style="width:205px">Gerät im Panel</span></div>
+<div class="note">Ausnahmen auf Geräten: 2 mit Meldungen aus · 1 stumm bis 21:40</div>
+</div></div></div><div class="acts"><div class="btn">Schliessen</div><div class="btn pr">Speichern</div></div></div></div>
+
+<div class="col"><div class="cap">C2: Reiter "Ausfall"<small>Zeitstrahl mit beiden Zeiten zum Einstellen; "Erst melden nach" kürzer als "Ausgefallen nach" gibt einen Fehler. Unten, gestrichelt umrandet: die Integrationen, nur mit den Spalten für diese Meldung.</small></div>
+<div class="dlg m"><div class="body" style="padding-top:14px"><div class="sec"><div class="sh"><b>Meldungen</b><div>Ausfall nach 10 Min. · Batterie täglich 20:00</div></div>
+<div class="sb">
+<div class="tabs c"><span>Übersicht</span><span class="on">Ausfall</span><span>Batterie</span></div>
+<div class="tl ed"><div class="bar"></div>
+<div class="mk" style="left:9%"><i></i><b>0</b>Gerät weg</div>
+<div class="mk" style="left:42%"><i></i><b>Ausgefallen nach</b><span class="num">5<small>Min.</small></span></div>
+<div class="mk p" style="left:78%"><i></i><b>Erst melden nach</b><span class="num">10<small>Min.</small></span></div></div>
+<div class="note">Beide Zeiten zählen ab Beginn des Ausfalls, sie werden nicht addiert. "Ausgefallen nach" gilt auch für das Panel; pro Integration oder Gerät anders unter "Integrationen" bzw. im Geräte-Popup.</div>
+<div class="ln"><span>Push bei Ausfall</span><span class="sw"></span></div>
+<div class="ln"><span>Wieder online melden</span><span class="sw"></span></div>
+<div class="ln"><span>Sammelausfall zusammenfassen</span><span class="sw"></span></div>
+<div class="ln"><span>Anhaltende Benachrichtigung</span><span class="sw"></span></div>
+<div class="ln"><span>Inhalt der Meldung</span><span class="sel">Bereich, Integration, seit</span></div>
+<div class="pv" style="margin-top:4px"><div class="c"><div class="a">Home Assistant · jetzt</div><div class="tt">Ausgefallen: Bewegungsmelder Flur</div><div>Flur · Zigbee · seit 14:32</div></div></div>
+<div class="ibox"><div class="lbl"><span>Integrationen</span><span>nur Ausfall</span></div>
+<div class="it"><div class="hd2 lbl" style="grid-template-columns:30px 1fr 52px 52px"><span></span><span></span><span>Push</span><span>Anhalt.</span></div>
+<div class="tbl">
+<div class="tr" style="grid-template-columns:30px 1fr 52px 52px"><div class="ib" style="background:#c62828">PH</div><div class="nm">Philips Hue<small>24 Geräte</small></div><div class="sw"></div><div class="sw"></div></div>
+<div class="tr" style="grid-template-columns:30px 1fr 52px 52px"><div class="ib" style="background:#ad1457">ZH</div><div class="nm">Zigbee<small>15 Geräte</small></div><div class="sw"></div><div class="sw"></div></div>
+<div class="tr" style="grid-template-columns:30px 1fr 52px 52px"><div class="ib" style="background:#2e7d32">MA</div><div class="nm">Matter<small>18 Geräte</small></div><div class="sw"></div><div class="sw off"></div></div>
+<div class="tr" style="grid-template-columns:30px 1fr 52px 52px"><div class="ib" style="background:#00897b">BT</div><div class="nm">BTHome<small>6 Geräte</small></div><div class="sw off"></div><div class="sw off"></div></div>
+</div></div></div>
+</div></div></div></div></div>
+
+<div class="col"><div class="cap">C3: Reiter "Batterie"<small>Gleicher Aufbau: Zeitstrahl (Schwelle, dann Zeitpunkt), Schalter, Inhalt mit Vorschau. Unten die Integrationen mit Push und eigener Schwelle; der Abschnitt "Batterie" entfällt.</small></div>
+<div class="dlg m"><div class="body" style="padding-top:14px"><div class="sec"><div class="sh"><b>Meldungen</b><div>Ausfall nach 10 Min. · Batterie täglich 20:00</div></div>
+<div class="sb">
+<div class="tabs c"><span>Übersicht</span><span>Ausfall</span><span class="on">Batterie</span></div>
+<div class="tl b ed"><div class="bar"></div>
+<div class="mk" style="left:16%"><i></i><b>Schwach ab</b><span class="num">10<small>%</small></span></div>
+<div class="mk p" style="left:72%"><i></i><b>Push</b><span class="sel" style="display:inline-flex;padding:2px 6px;font-size:12px">täglich 20:00</span></div></div>
+<div class="note">Schwach ab gilt auch für die rote Markierung im Panel. Sofort: einmal pro Gerät, wenn es darunter fällt. Täglich: eine Sammelmeldung zur gewählten Zeit.</div>
+<div class="ln"><span>Push bei schwacher Batterie</span><span class="sw"></span></div>
+<div class="ln"><span>Tagesmeldung enthält</span><span class="sel">Alle schwachen</span></div>
+<div class="ln"><span>Anhaltende Benachrichtigung</span><span class="sw off"></span></div>
+<div class="ln"><span>Inhalt der Meldung</span><span class="sel">Stand, Bereich</span></div>
+<div class="pv" style="margin-top:4px"><div class="c"><div class="a">Home Assistant · 20:00</div><div class="tt">Batterie schwach: 2 Geräte</div><div>Rauchmelder Flur 8 % · Flur · Fensterkontakt Bad 6 % · Bad</div></div></div>
+<div class="ibox"><div class="lbl"><span>Integrationen</span><span>nur Batterie</span></div>
+<div class="it"><div class="hd2 lbl" style="grid-template-columns:30px 1fr 52px 92px"><span></span><span></span><span>Push</span><span>Schwach ab</span></div>
+<div class="tbl">
+<div class="tr" style="grid-template-columns:30px 1fr 52px 92px"><div class="ib" style="background:#c62828">PH</div><div class="nm">Philips Hue<small>8 mit Batterie</small></div><div class="sw"></div><span class="sel">Global</span></div>
+<div class="tr" style="grid-template-columns:30px 1fr 52px 92px"><div class="ib" style="background:#ad1457">ZH</div><div class="nm">Zigbee<small>11 mit Batterie</small></div><div class="sw"></div><span class="sel own">25 %</span></div>
+<div class="tr" style="grid-template-columns:30px 1fr 52px 92px"><div class="ib" style="background:#00897b">BT</div><div class="nm">BTHome<small>6 mit Batterie</small></div><div class="sw"></div><span class="sel own">Aus</span></div>
+</div></div></div>
+</div></div></div></div></div>
+</div>

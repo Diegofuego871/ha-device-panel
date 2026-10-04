@@ -10,9 +10,10 @@ Panels, Handy-Breite, erfundene Daten.
 
 | Bild | Inhalt |
 | --- | --- |
-| `1-struktur.png` | Heute (Meldungen an fünf Orten) und die Aufteilung nach A und B |
-| `2-variante-a.png` | **A (Empfehlung):** Abschnitt "Meldungen" mit Ziel, je Meldung einer Karte (was, wann in einem Satz, Push/Anhaltend), aufgeklappt mit Zeitstrahl, Zeit, Inhalt und Vorschau; darunter "Pro Integration" mit Ausfall, Batterie, Anhaltend. Schwellen bleiben in "Ausfall-Erkennung" und "Batterie" |
+| `1-struktur.png` | Heute (Meldungen an fünf Orten) und die Aufteilung nach A, B und C |
+| `2-variante-a.png` | A: Abschnitt "Meldungen" mit Ziel, je Meldung einer Karte (was, wann in einem Satz, Push/Anhaltend), aufgeklappt mit Zeitstrahl, Zeit, Inhalt und Vorschau; darunter "Pro Integration" mit Ausfall, Batterie, Anhaltend. Schwellen bleiben in "Ausfall-Erkennung" und "Batterie" |
 | `3-variante-b.png` | B: Abschnitt "Meldungen" mit Reitern Ausfall, Batterie, Ziel; jeder Reiter vollständig, Integrationen je Reiter |
+| `5-variante-c.png` | **C (Empfehlung):** Reiter wie B, dazu Reiter "Übersicht" mit dem Zeitstrahl aus A (je Meldung: was wann kommt, Push/Anhaltend, Ziel, Tipp öffnet). Reiter "Ausfall" und "Batterie" mit einstellbarem Zeitstrahl ("Ausgefallen nach" und "Erst melden nach" bzw. "Schwach ab" und Zeitpunkt), Schaltern, Inhalt, Vorschau; unten gestrichelt die Integrationen nur mit den Spalten dieser Meldung. Abschnitt "Batterie" entfällt, "Ausfall-Erkennung" behält Instabil ab und Anlaufphase |
 | `4-batterie-meldung.png` | Batterie-Meldung fest mit Vorschau oder anpassbar wie die Ausfall-Meldung (Empfehlung) |
 
 Darin auch Aufgabe "Erst melden nach nicht kürzer als Ausgefallen nach"

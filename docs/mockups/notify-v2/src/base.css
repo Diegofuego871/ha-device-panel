@@ -105,3 +105,20 @@ body { margin: 0; padding: 24px; background: #e8ebf0; font: 15px/1.4 Roboto, "Se
 .map .s em { font-style: normal; background: #fff4e0; color: #9a5b00; border-radius: 4px; padding: 0 3px; }
 .map .s.new { border-color: var(--p); background: #f4f9fe; }
 .map .s.gone { opacity: .45; text-decoration: line-through; }
+
+/* Variante C */
+.lane { border: 1px solid var(--div); border-radius: 14px; background: #fff; padding: 10px 12px 8px; margin: 8px 0; }
+.lane .lt { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14.5px; }
+.lane .lt .ic { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 13px; }
+.lane .lt .go { margin-left: auto; color: var(--p); font-weight: 500; font-size: 12.5px; }
+.lane .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.tl.b .bar { background: linear-gradient(90deg, #ffe2b3, #f59e0b); }
+.tl.b .mk i { border-color: #f59e0b; }
+.tl.g .mk.on i { border-color: var(--ok); background: var(--ok); }
+.tl .mk.p.off i { background: #fff; border-color: #c4c7cc; }
+.tl .mk .num { display: inline-block; min-width: 0; padding: 2px 6px; font-size: 12px; margin-top: 2px; }
+.tl.ed { height: 104px; }
+.tabs.c span { font-size: 13px; }
+.ibox { border: 1px dashed #b9c6d3; border-radius: 12px; padding: 8px 10px 4px; margin-top: 10px; background: #fbfcfe; }
+.ibox > .lbl { display: flex; justify-content: space-between; }
+.ibox > .lbl span:last-child { text-transform: none; letter-spacing: 0; color: var(--t3); font-weight: 400; }
