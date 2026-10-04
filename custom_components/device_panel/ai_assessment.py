@@ -21,7 +21,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
 
 from .ai_prompt import DEFAULT_PROMPT, render_prompt
-from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK
+from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK, SIGNAL_OFF, SIGNAL_WEAK_DBM, SIGNAL_WEAK_LQI
 from .devices import async_list_devices
 from .options_api import effective
 
@@ -41,6 +41,39 @@ class AiError(Exception):
 
 def _minutes(seconds: float | None) -> int | None:
     return None if seconds is None else int(round(seconds / 60))
+
+
+def signal_weak(signal: dict[str, Any], setting: Any) -> bool:
+    """
+    Schwacher Empfang wie im Panel (devSigLevel): Empfang-Warnung "off" ist nie
+    schwach, eine eigene Schwelle heisst "schwach unter X", sonst der Standard.
+    """
+    value = signal["value"]
+    if setting == SIGNAL_OFF:
+        return False
+    if isinstance(setting, int) and not isinstance(setting, bool):
+        return value < setting
+    return value < SIGNAL_WEAK_DBM if signal.get("kind") == "dbm" else value <= SIGNAL_WEAK_LQI
+
+
+def _offline_list(devices: list[dict[str, Any]], now: float, extra: Any) -> list[dict[str, Any]]:
+    """
+    Ausgefallene Geräte mit Name, einer weiteren Angabe (extra(d) -> dict) und
+    Minuten seit dem Ausfall; die längsten zuerst, höchstens SAME_OFFLINE_MAX.
+    """
+    gone = []
+    for d in devices:
+        if d.get("online") is not False or not d.get("offline_since"):
+            continue
+        since = dt_util.parse_datetime(d["offline_since"])
+        if since is None:
+            continue
+        gone.append((since.timestamp(), d))
+    gone.sort(key=lambda x: x[0])
+    return [
+        {k: v for k, v in {"name": d["name"], **extra(d), "offline_minutes": max(0, _minutes(now - at) or 0)}.items() if v is not None}
+        for at, d in gone[:SAME_OFFLINE_MAX]
+    ]
 
 
 def build_facts(device: dict[str, Any], result: dict[str, Any], now: float) -> dict[str, Any]:
@@ -85,11 +118,19 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float) -> d
             "interruptions": avail.get("outages"),
             "longest_interruption_minutes": _minutes(avail.get("longest")),
         }
+    # Batterie- oder Netzgerät (seit 1.4.0): Schlafende Batteriegeräte melden
+    # sich seltener; ein Netzgerät fällt eher mit dem Strom aus.
+    facts["battery_powered"] = bool(device.get("has_battery"))
     if (battery := device.get("battery")) and battery.get("level") is not None:
         facts["battery_percent"] = battery["level"]
         facts["battery_low"] = bool(battery.get("low"))
     if (signal := device.get("signal")) and signal.get("value") is not None:
-        facts["signal"] = {"kind": signal.get("kind"), "value": signal["value"]}
+        # "weak" wie im Panel, mit der Empfang-Warnung des Geräts (seit 1.4.0):
+        # Die KI braucht keine Schwellen, und ein akzeptierter Empfang zählt.
+        setting = device.get("signal_setting")
+        facts["signal"] = {"kind": signal.get("kind"), "value": signal["value"], "weak": signal_weak(signal, setting)}
+        if setting is not None:
+            facts["signal"]["own_threshold"] = setting
     # Hub (Verbindung über ...) im selben Bild: fällt er selbst aus?
     if device.get("via"):
         hub = next((d for d in devices if d["name"] == device["via"]), None)
@@ -102,20 +143,24 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float) -> d
         # Welche davon fehlen (seit 1.3.0, Wunsch des Nutzers): Name, Bereich, Dauer;
         # die längsten zuerst, höchstens SAME_OFFLINE_MAX. Zeigt Muster (derselbe
         # Bereich, derselbe Zeitpunkt), die Zahlen allein nicht zeigen.
-        gone = []
-        for d in same:
-            if d.get("online") is not False or not d.get("offline_since"):
-                continue
-            since = dt_util.parse_datetime(d["offline_since"])
-            if since is None:
-                continue
-            gone.append((since.timestamp(), d))
-        gone.sort(key=lambda x: x[0])
-        if gone:
-            facts["same_integration_offline_devices"] = [
-                {k: v for k, v in {"name": d["name"], "area": d.get("area"), "offline_minutes": max(0, _minutes(now - at) or 0)}.items() if v is not None}
-                for at, d in gone[:SAME_OFFLINE_MAX]
-            ]
+        if gone := _offline_list(same, now, lambda d: {"area": d.get("area")}):
+            facts["same_integration_offline_devices"] = gone
+    # Lage im Bereich, über alle Integrationen (seit 1.4.0): Fallen in einem
+    # Raum Geräte verschiedener Funkarten zugleich aus, liegt es eher am Strom
+    # oder am Netz dort als an einem Gerät.
+    if device.get("area_id"):
+        here = [
+            d for d in devices
+            if d.get("area_id") == device["area_id"] and d["id"] != device["id"] and not d.get("unmonitored") and not d.get("disabled")
+        ]
+        facts["same_area_other_devices"] = {"total": len(here), "offline_now": sum(1 for d in here if d.get("online") is False)}
+
+        def integ_name(d: dict[str, Any]) -> dict[str, Any]:
+            dom = (d.get("integration") or {}).get("domain")
+            return {"integration": names.get(dom, dom) if dom else None}
+
+        if gone := _offline_list(here, now, integ_name):
+            facts["same_area_offline_devices"] = gone
     # Sammelausfälle der letzten 24 Std., an denen das Gerät beteiligt war.
     mine = [
         {

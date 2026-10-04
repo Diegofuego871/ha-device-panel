@@ -152,7 +152,8 @@ Bereich.
   Home Assistant und zeigt die Antwort. Die KI-Aufgabe ist in den
   Einstellungen wählbar. Im Profi-Modus lässt sich der Prompt ansehen,
   kopieren und anpassen (Variablen `{language}` und `{facts}`, mit Vorschau
-  des genauen Texts).
+  des genauen Texts). Neben dem Gerät nennen die Fakten die anderen
+  ausgefallenen Geräte seiner Integration und seines Bereichs.
 - Matter-Geräte: im Popup die Thread-Rolle (Router, Endgerät, schlafendes
   Endgerät) und der Netzname aus der Matter-Diagnose, neben der
   Verbindungsart, die weiter von Hand gesetzt werden kann.

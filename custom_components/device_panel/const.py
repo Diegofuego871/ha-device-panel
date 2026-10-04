@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "49"
+PANEL_VERSION = "50"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -152,6 +152,10 @@ BATTERY_OFF = "off"
 # Eintrag gilt der Standard des Panels (unter -80 dBm bzw. LQI 60 und
 # darunter).
 SIGNAL_OFF = "off"
+# Standard-Schwellen für "schwach" (wie sigLevel im Panel): dBm darunter,
+# LQI gleich oder darunter. Die KI-Fakten (signal.weak) rechnen gleich.
+SIGNAL_WEAK_DBM = -80
+SIGNAL_WEAK_LQI = 60
 # Neue Geräte (seit 0.21.0): so lange nach dem Anlegen in HA markiert, mit
 # eigenem Filter-Chip.
 NEW_DEVICE_DAYS = 3

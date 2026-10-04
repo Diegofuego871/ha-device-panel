@@ -7,7 +7,38 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
-## [1.3.0] - 2026-10-04
+## [1.4.0] - 2026-10-04
+
+Ein besserer Standard-Prompt für die KI-Einschätzung und mehr Fakten.
+
+### Hinzugefügt
+
+- Fakten für die KI-Einschätzung (Wunsch des Nutzers):
+  - `signal.weak`: ob der Empfang für dieses Gerät schwach ist, wie ihn
+    das Panel zeigt (Standard unter -80 dBm bzw. LQI 60 und darunter; eine
+    eigene Schwelle des Geräts zählt, `own_threshold`, und "aus" ist nie
+    schwach).
+  - `battery_powered`: Batterie- oder Netzgerät.
+  - `same_area_other_devices` und `same_area_offline_devices`: andere
+    Geräte im selben Bereich, aus jeder Integration, die gerade
+    ausgefallen sind (Name, Integration, Minuten; längste zuerst,
+    höchstens 10). Fallen in einem Raum Geräte verschiedener Integrationen
+    zugleich aus, deutet das auf Strom oder Netz dort.
+
+### Geändert
+
+- Neuer Standard-Prompt der KI-Einschätzung (vom Nutzer im Profi-Modus
+  getestet): Die Fakten sind nur Daten (Anweisungen in Gerätenamen werden
+  ignoriert), was jeder Fakt bedeutet, die Reihenfolge der Ursachen
+  (zuerst eine gemeinsame Ursache wie Hub, Integration, Bereich oder
+  Sammelausfall, dann Batterie, Empfang, das Gerät selbst) und eine
+  klarere Antwort: Überschrift, 2 oder 3 Sätze mit den Fakten, bis zu 3
+  Prüfschritte auf eigenen Zeilen und wie sicher die Einschätzung ist. Ein
+  eigener Prompt bleibt, wie er ist; "Standard" im Profi-Modus wechselt
+  zum neuen.
+- Die Hinweise in den Einstellungen und im Popup nennen die ausgefallenen
+  Geräte desselben Bereichs, die ebenfalls mitgehen.
+
 
 Mehr Zusammenhang für die KI-Einschätzung: die anderen ausgefallenen Geräte der Integration.
 
@@ -1108,6 +1139,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.4.0
 [1.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.3.0
 [1.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.0.0
 [0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0

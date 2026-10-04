@@ -7,7 +7,37 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [1.3.0] - 2026-10-04
+## [1.4.0] - 2026-10-04
+
+A better default prompt for the AI assessment, and more facts.
+
+### Added
+
+- Facts for the AI assessment (requested by the user):
+  - `signal.weak`: whether the signal is weak for this device, like the
+    panel shows it (default below -80 dBm or LQI 60 and below; an own
+    threshold of the device counts, `own_threshold`, and "off" is never
+    weak).
+  - `battery_powered`: battery or mains powered.
+  - `same_area_other_devices` and `same_area_offline_devices`: other
+    devices in the same area, of any integration, that are offline now
+    (name, integration, minutes; longest first, at most 10). Several
+    devices of different integrations gone in one room point to power or
+    the network there.
+
+### Changed
+
+- New default prompt of the AI assessment (tested by the user in expert
+  mode): the facts are data only (instructions in device names are
+  ignored), what each fact means, the order of likely causes (shared cause
+  such as hub, integration, area or mass outage first, then battery,
+  signal, the device itself), and a clearer answer: headline, 2 or 3
+  sentences with the facts, up to 3 checks on their own lines and how
+  certain the assessment is. An own prompt stays as it is; "Default" in
+  expert mode switches to the new one.
+- The notes in the settings and in the pop-up name the other offline
+  devices of the same area that are sent as well.
+
 
 More context for the AI assessment: the other offline devices of the integration.
 
@@ -1065,6 +1095,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.4.0
 [1.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.3.0
 [1.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.0.0
 [0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0

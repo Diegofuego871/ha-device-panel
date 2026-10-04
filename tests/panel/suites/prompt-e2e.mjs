@@ -59,7 +59,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Profi-Modus aus, kein Prompt sichtbar`, !(await ev(`return r.querySelector('input[data-set="expert"]').checked`)) && !(await handle(".aip")), await text(".set-sec.open .opt:last-of-type"));
     check(`[${tag}] Beschriftung "${T.expert}"`, (await ev(`return [...r.querySelectorAll(".opt-label")].some(e=>e.textContent.trim()===${JSON.stringify(T.expert)})`)));
     await tap('input[data-set="expert"]');
-    check(`[${tag}] Schalter an: Prompt "${T.def}" mit zwei Platzhaltern`, (await text(".aip-h")).endsWith(T.def) && (await ev(`return r.querySelectorAll(".aip-box .pv").length`)) === 2 && (await text(".aip-box")).includes("careful assistant"), await text(".aip-h"));
+    check(`[${tag}] Schalter an: Prompt "${T.def}" mit allen Platzhaltern hervorgehoben`, (await text(".aip-h")).endsWith(T.def) && (await ev(`return r.querySelectorAll(".aip-box .pv").length === (r.host._settings.data.ai_prompt_default.match(/\\{(language|facts)\\}/g) || []).length && r.querySelectorAll(".aip-box .pv").length >= 2`)) && (await text(".aip-box")).includes("careful assistant"), await text(".aip-h"));
     check(`[${tag}] "Standard" gesperrt, nichts geändert`, (await ev(`return r.querySelector('[data-set="prompt-default"]').disabled`)) && (await text(".set-count")) === "");
 
     // Kopieren

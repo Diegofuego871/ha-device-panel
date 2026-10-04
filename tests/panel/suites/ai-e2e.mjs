@@ -15,14 +15,14 @@ const TEXT = {
   de: {
     sec: "KI-Einschätzung", sumOff: "Aus", sumOn: "Ein · OpenAI", sumDefault: "Ein · Standard von Home Assistant", opt: "Knopf \"Mit KI einschätzen\" zeigen", task: "KI-Aufgabe",
     taskDefault: "Standard von Home Assistant", button: "Mit KI einschätzen", head: "Einschätzung", title: "Wahrscheinlich Empfang", by: "Erstellt von \"OpenAI\"",
-    again: "Neu erstellen", note: "Gesendet werden Name, Bereich und Werte dieses Geräts und Name, Bereich und Dauer weiterer ausgefallener Geräte derselben Integration, keine Schlüssel oder Zugangsdaten.", retry: "Erneut versuchen",
+    again: "Neu erstellen", note: "Gesendet werden Name, Bereich und Werte dieses Geräts und Name und Dauer weiterer ausgefallener Geräte derselben Integration und desselben Bereichs, keine Schlüssel oder Zugangsdaten.", retry: "Erneut versuchen",
     errNo: "Keine KI-Aufgabe verfügbar", errTimeout: "nicht rechtzeitig", errFailed: "Fehler gemeldet", noTasks: "Keine KI-Aufgabe gefunden", working: "wertet",
     byLocal: "Erstellt von \"Lokales Modell\"",
   },
   en: {
     sec: "AI assessment", sumOff: "Off", sumOn: "On · OpenAI", sumDefault: "On · Home Assistant default", opt: "Show the button \"Assess with AI\"", task: "AI task",
     taskDefault: "Default of Home Assistant", button: "Assess with AI", head: "Assessment", title: "Probably reception", by: "Created by \"OpenAI\"",
-    again: "Create again", note: "Name, area and values of this device and name, area and duration of other offline devices of the same integration are sent, no keys or credentials.", retry: "Try again",
+    again: "Create again", note: "Name, area and values of this device and name and duration of other offline devices of the same integration and area are sent, no keys or credentials.", retry: "Try again",
     errNo: "No AI task available", errTimeout: "did not answer in time", errFailed: "reported an error", noTasks: "No AI task found", working: "analysing",
     byLocal: "Created by \"Lokales Modell\"",
   },

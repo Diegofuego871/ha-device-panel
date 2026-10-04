@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.3.0, Einstellungen in fünf Abschnitten)
+## Stand (1.4.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -300,7 +300,14 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `1.3.0` (Nutzer, 2026-10-04): die Fakten der KI listen die anderen
    ausgefallenen Geräte der Integration (`same_integration_offline_devices`,
    Name, Bereich, Minuten, längste zuerst, höchstens `SAME_OFFLINE_MAX` = 10);
-   die Hinweise `aiNote` und `optAiInfo` nennen es.
+   die Hinweise `aiNote` und `optAiInfo` nennen es. `1.4.0` (Nutzer,
+   2026-10-04): neuer `DEFAULT_PROMPT` (vom Nutzer im Profi-Modus getestet,
+   Regeln, Bedeutung der Fakten, Reihenfolge der Ursachen, Antwort mit
+   Prüfschritten und Sicherheit); Fakten `signal.weak` (`signal_weak`,
+   Schwellen `SIGNAL_WEAK_DBM`/`SIGNAL_WEAK_LQI` wie `sigLevel` im Panel,
+   mit `own_threshold`), `battery_powered`, `same_area_other_devices` und
+   `same_area_offline_devices` (alle Integrationen, ohne deaktivierte und
+   nicht überwachte).
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem
