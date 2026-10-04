@@ -1,0 +1,85 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="base.css">
+<div class="row">
+<div class="col"><div class="cap">1: Reiter "Übersicht"<small>Der Abschnitt steht zuoberst. Je Meldung ein Zeitstrahl: was wann kommt, dazu die Schalter als Chips und wie viele Integrationen und Geräte abweichen. Darunter Ziel und Tipp.</small></div>
+<div class="dlg m"><div class="hd"><div class="av">⚙</div><div><h2>Einstellungen</h2><div class="s">Device Panel · gilt für alle Benutzer</div></div><div class="x">✕</div></div>
+<div class="body"><div class="sec"><div class="sh"><b>Überwachung und Meldungen</b><div>Ausfall nach 5 Min., Push nach 10 Min. · Batterie unter 15 %, täglich 08:00</div></div>
+<div class="sb">
+<div class="tabs c4"><span class="on">Übersicht</span><span>Ausfall</span><span>Batterie</span><span>Integrationen</span></div>
+<div class="lane"><div class="lt"><span class="ic" style="background:#fdecea;color:var(--err)">●</span>Ausfall<span class="go">Ändern ›</span></div>
+<div class="tl"><div class="bar"></div>
+<div class="mk" style="left:9%"><i></i><b>0</b>Gerät weg</div>
+<div class="mk" style="left:42%"><i></i><b>5 Min.</b>im Panel ausgefallen</div>
+<div class="mk p" style="left:78%"><i></i><b>10 Min.</b>Push "Ausgefallen"</div></div>
+<div class="chips"><span class="chip on">Push</span><span class="chip on">Anhaltend</span><span class="chip on">Wieder online</span><span class="chip on">Sammelausfall</span></div>
+<div class="note" style="margin:6px 0 0">Abweichend: <span class="lnk">4 Integrationen</span> · <span class="lnk">2 Geräte</span></div></div>
+<div class="lane"><div class="lt"><span class="ic" style="background:#fff4e0;color:#e08600">▮</span>Batterie schwach<span class="go">Ändern ›</span></div>
+<div class="tl b"><div class="bar"></div>
+<div class="mk" style="left:12%"><i></i><b>unter 15 %</b>im Panel rot</div>
+<div class="mk p" style="left:78%"><i></i><b>täglich 08:00</b>Push, alle schwachen</div></div>
+<div class="chips"><span class="chip on">Push</span><span class="chip">Anhaltend</span></div>
+<div class="note" style="margin:6px 0 0">Abweichend: <span class="lnk">2 Integrationen</span> · <span class="lnk">1 Gerät</span></div></div>
+<div class="hr"></div>
+<div class="ln"><span>Ziel</span><span class="sel" style="width:205px">notify.mobile_app_handy</span></div>
+<div class="ln"><span>Tipp öffnet</span><span class="sel" style="width:205px">Gerät im Panel</span></div>
+</div></div></div><div class="acts"><div class="btn">Schliessen</div><div class="btn pr">Speichern</div></div></div></div>
+
+<div class="col"><div class="cap">2: Reiter "Ausfall"<small>Oben der Zeitstrahl mit beiden Zeiten. Darunter "Erkennung" (heute "Ausfall-Erkennung") und "Meldung" (heute "Push" und "Anhaltende"). Unten die Abweichungen: Integrationen als Verweis, Geräte zum Zurücksetzen.</small></div>
+<div class="dlg m"><div class="body" style="padding-top:14px"><div class="sec"><div class="sh"><b>Überwachung und Meldungen</b><div>Ausfall nach 5 Min., Push nach 10 Min. · Batterie unter 15 %, täglich 08:00</div></div>
+<div class="sb">
+<div class="tabs c4"><span>Übersicht</span><span class="on">Ausfall</span><span>Batterie</span><span>Integrationen</span></div>
+<div class="tl ed"><div class="bar"></div>
+<div class="mk" style="left:9%"><i></i><b>0</b>Gerät weg</div>
+<div class="mk" style="left:42%"><i></i><b>Ausgefallen nach</b><span class="num">5<small>Min.</small></span></div>
+<div class="mk p" style="left:78%"><i></i><b>Erst melden nach</b><span class="num">10<small>Min.</small></span></div></div>
+<div class="note">Beide Zeiten zählen ab Beginn des Ausfalls, sie werden nicht addiert. "Ausgefallen nach" gilt auch für das Panel; "Erst melden nach" kann nicht kürzer sein.</div>
+<div class="grp">Erkennung</div>
+<div class="ln"><span>Instabil ab<small>in 24 Std.</small></span><span class="num">3<small>Unterbrüche</small></span></div>
+<div class="ln"><span>Anlaufphase nach dem Start<small>Wer zurückkommt, hatte keinen Unterbruch</small></span><span class="num">5<small>Min.</small></span></div>
+<div class="grp">Meldung</div>
+<div class="ln"><span>Push bei Ausfall</span><span class="sw"></span></div>
+<div class="ln"><span>Wieder online melden</span><span class="sw"></span></div>
+<div class="ln"><span>Sammelausfall zusammenfassen</span><span class="sw"></span></div>
+<div class="ln"><span>Anhaltende Benachrichtigung</span><span class="sw"></span></div>
+<div class="ln"><span>Inhalt der Meldung</span><span class="sel">Bereich, Integration, seit</span></div>
+<div class="pv" style="margin-top:4px"><div class="c"><div class="a">Home Assistant · jetzt</div><div class="tt">Ausgefallen: Bewegungsmelder Flur</div><div>Flur · Zigbee · seit 14:32</div></div></div>
+<div class="grp">Abweichungen</div>
+<div class="box"><div class="ln"><span>4 Integrationen<small>BTHome 60 Min. · Matter ohne Anhaltend · Sonos ohne Push · Mobile App nicht überwacht</small></span><span class="lnk" style="white-space:nowrap">Integrationen ›</span></div></div>
+<div class="box">
+<div class="ovr"><span>Wetterstation<small>Garten · BTHome</small></span><span class="v">30 Min.</span><span class="xx">✕</span></div>
+<div class="ovr"><span>Ladegerät Garage<small>Garage · Shelly</small></span><span class="v">Meldungen aus</span><span class="xx">✕</span></div>
+</div>
+</div></div></div></div></div>
+
+<div class="col"><div class="cap">3: Reiter "Batterie"<small>Gleicher Aufbau: Zeitstrahl (Schwelle, dann Zeitpunkt), Meldung mit anpassbarem Inhalt und Vorschau, Abweichungen. Der Abschnitt "Batterie" entfällt.</small></div>
+<div class="dlg m"><div class="body" style="padding-top:14px"><div class="sec"><div class="sh"><b>Überwachung und Meldungen</b><div>Ausfall nach 5 Min., Push nach 10 Min. · Batterie unter 15 %, täglich 08:00</div></div>
+<div class="sb">
+<div class="tabs c4"><span>Übersicht</span><span>Ausfall</span><span class="on">Batterie</span><span>Integrationen</span></div>
+<div class="tl b ed"><div class="bar"></div>
+<div class="mk" style="left:16%"><i></i><b>Schwach ab</b><span class="num">15<small>%</small></span></div>
+<div class="mk p" style="left:72%"><i></i><b>Push</b><span class="sel" style="display:inline-flex;padding:2px 6px;font-size:12px">täglich 08:00</span></div></div>
+<div class="note">"Schwach ab" gilt auch für die rote Markierung im Panel. Sofort: einmal pro Gerät, wenn es darunter fällt. Täglich: eine Sammelmeldung zur gewählten Zeit.</div>
+<div class="grp">Meldung</div>
+<div class="ln"><span>Push bei schwacher Batterie</span><span class="sw"></span></div>
+<div class="ln"><span>Tagesmeldung enthält</span><span class="sel">Alle schwachen</span></div>
+<div class="ln"><span>Anhaltende Benachrichtigung</span><span class="sw off"></span></div>
+<div class="ln"><span>Inhalt der Meldung</span><span class="sel">Stand, Bereich</span></div>
+<div class="pv" style="margin-top:4px"><div class="c"><div class="a">Home Assistant · 08:00</div><div class="tt">Batterie schwach: 2 Geräte</div><div>Rauchmelder Flur 8 % · Flur · Fensterkontakt Bad 6 % · Bad</div></div></div>
+<div class="grp">Abweichungen</div>
+<div class="box"><div class="ln"><span>2 Integrationen<small>BTHome 25 % · Philips Hue ohne Push</small></span><span class="lnk" style="white-space:nowrap">Integrationen ›</span></div></div>
+<div class="box">
+<div class="ovr"><span>Rauchmelder Keller<small>Keller · Zigbee</small></span><span class="v">30 %</span><span class="xx">✕</span></div>
+</div>
+</div></div></div></div></div>
+
+<div class="col"><div class="cap">4: Fehler (Aufgabe "nicht kürzer")<small>"Erst melden nach" unter "Ausgefallen nach": Feld rot, Text darunter, "Speichern" gesperrt. Gleich, wenn später "Ausgefallen nach" über "Erst melden nach" erhöht wird.</small></div>
+<div class="dlg m"><div class="body" style="padding-top:14px"><div class="sec"><div class="sh"><b>Überwachung und Meldungen</b><div>Ausfall nach 5 Min., Push nach 10 Min. · Batterie unter 15 %, täglich 08:00</div></div>
+<div class="sb">
+<div class="tabs c4"><span>Übersicht</span><span class="on">Ausfall</span><span>Batterie</span><span>Integrationen</span></div>
+<div class="tl ed"><div class="bar"></div>
+<div class="mk" style="left:9%"><i></i><b>0</b>Gerät weg</div>
+<div class="mk" style="left:42%"><i></i><b>Ausgefallen nach</b><span class="num">5<small>Min.</small></span></div>
+<div class="mk p" style="left:78%"><i></i><b>Erst melden nach</b><span class="num bad">3<small>Min.</small></span></div></div>
+<div class="err">"Erst melden nach" muss mindestens 5 Min. sein ("Ausgefallen nach"). Vorher gilt ein Gerät nicht als ausgefallen.</div>
+<div class="fade">… Erkennung, Meldung, Abweichungen</div>
+</div></div></div><div class="acts"><div class="btn">Schliessen</div><div class="btn pr dis">Speichern</div></div></div></div>
+</div>
