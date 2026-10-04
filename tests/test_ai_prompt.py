@@ -325,15 +325,46 @@ def test_facts_week_and_battery_forecast() -> None:
     me = _dev("me", has_battery=True, battery={"level": 40, "low": False})
     result = {"devices": [me], "integrations": {}, "incidents": []}
     week = {"pct": 97.5, "outages": 4, "longest": 1800}
-    ok = {"status": "ok", "days": 83.4, "target": 10, "confidence": "medium", "accelerating": True}
+    ok = {"status": "ok", "days": 83.4, "target": 10, "confidence": "high", "accelerating": False, "days_low": 70.2, "days_high": 101.7, "days_used": 120.4}
     facts = build_facts(me, result, now, {"week": week, "forecast": ok})
     assert facts["last_7d"] == {"availability_percent": 97.5, "interruptions": 4, "longest_interruption_minutes": 30}
-    assert facts["battery_forecast"] == {"days_left": 83, "until_percent": 10, "confidence": "medium", "drop_is_accelerating": True}
+    # sichere Prognose: mit Spanne und Verlaufstagen, nicht unsicher
+    assert facts["battery_forecast"] == {
+        "days_left": 83, "days_range": {"min": 70, "max": 102}, "until_percent": 10, "confidence": "high",
+        "days_of_history": 120, "drop_is_accelerating": False, "uncertain": False,
+    }
     for status, text in (("reached", "warning threshold reached"), ("flat", "level barely drops")):
         assert build_facts(me, result, now, {"forecast": {"status": status}})["battery_forecast"] == {"status": text}
-    # zu wenig Verlauf oder keine Angaben: kein Fakt
-    assert "battery_forecast" not in build_facts(me, result, now, {"forecast": {"status": "short"}})
+    # zu wenig Verlauf: als unsicher gemeldet, mit den Tagen
+    short = build_facts(me, result, now, {"forecast": {"status": "short", "days_used": 3.2, "min_days": 7}})["battery_forecast"]
+    assert short == {"status": "too little history for a forecast", "days_of_history": 3, "uncertain": True}
+    # keine Angaben oder kein Verlauf: kein Fakt
+    assert "battery_forecast" not in build_facts(me, result, now, {"forecast": {"status": "none"}})
     assert "last_7d" not in build_facts(me, result, now, {"week": None}) and "battery_forecast" not in build_facts(me, result, now)
+
+
+def test_battery_forecast_is_flagged_uncertain() -> None:
+    """1.10.0: unsicher bei Sicherheit nicht "high", steilerem Rückgang oder unter 30 Tagen Verlauf; mit Gründen."""
+    base = {"status": "ok", "days": 90, "target": 15, "confidence": "high", "accelerating": False, "days_low": 80, "days_high": None, "days_used": 100}
+    sure = ai_assessment.battery_forecast_fact(base)
+    assert sure["uncertain"] is False and "uncertain_reasons" not in sure
+    # offene Obergrenze: "max" fehlt (mindestens so lange)
+    assert sure["days_range"] == {"min": 80}
+    low = ai_assessment.battery_forecast_fact({**base, "confidence": "low"})
+    assert low["uncertain"] is True and low["uncertain_reasons"] == ["confidence low"]
+    medium = ai_assessment.battery_forecast_fact({**base, "confidence": "medium"})
+    assert medium["uncertain"] is True and medium["uncertain_reasons"] == ["confidence medium"]
+    steep = ai_assessment.battery_forecast_fact({**base, "accelerating": True})
+    assert steep["uncertain"] is True and steep["drop_is_accelerating"] is True and "steeper" in steep["uncertain_reasons"][0]
+    thin = ai_assessment.battery_forecast_fact({**base, "days_used": 12.4})
+    assert thin["uncertain"] is True and thin["uncertain_reasons"] == ["only 12 days of history"] and thin["days_of_history"] == 12
+    # alles zusammen: drei Gründe in fester Reihenfolge
+    allr = ai_assessment.battery_forecast_fact({**base, "confidence": "low", "accelerating": True, "days_used": 10})
+    assert len(allr["uncertain_reasons"]) == 3 and allr["uncertain_reasons"][0] == "confidence low"
+    assert ai_assessment.battery_forecast_fact({"status": "none"}) is None
+    # Der Standard-Prompt erklärt es und senkt die eigene Sicherheit der KI
+    for word in ("uncertain", "uncertain_reasons", "days_range", "days_of_history", "never a firm date", "Lower it when a battery statement rests on an uncertain forecast"):
+        assert word in DEFAULT_PROMPT, word
 
 
 async def test_extras_week_and_forecast(hass: HomeAssistant, setup) -> None:

@@ -7,7 +7,33 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.10.0] - 2026-10-04
+
+Die KI-Einschätzung beachtet eine unsichere Batterie-Prognose.
+
+### Hinzugefügt
+
+- Der Fakt `battery_forecast` der KI-Einschätzung (Wunsch des Nutzers) sagt
+  jetzt, wenn die Berechnung unsicher ist: `uncertain` mit
+  `uncertain_reasons` (Sicherheit nicht "high", der Rückgang wird steiler und
+  die Prognose damit eher zu optimistisch, oder weniger als 30 Tage Verlauf),
+  dazu `days_range` (ohne `max`: mindestens so lange) und
+  `days_of_history`. Bei zu wenig Verlauf steht das im Fakt ("too little
+  history for a forecast"), statt dass er fehlt.
+- Der Standard-Prompt weist die KI an, eine unsichere Prognose auch so zu
+  behandeln: nur eine grobe Spanne, nie ein festes Datum, die Unsicherheit
+  nennen, die Ursache nicht darauf stützen und die eigene Sicherheit senken,
+  wenn eine Aussage zur Batterie darauf beruht.
+
+### Geändert
+
+- Der Standard-Prompt ist rund 340 Zeichen länger (4282 von 6000). Ein
+  gespeicherter eigener Prompt behält seinen Text; "Standard" im Profi-Modus
+  lädt den neuen.
+
 ## [1.9.0] - 2026-10-04
+
+Nicht veröffentlicht; enthalten in 1.10.0.
 
 Filter nach Integration, wie der Filter nach Bereich.
 
@@ -1275,7 +1301,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[1.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.9.0
+[1.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.10.0
 [1.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.8.0
 [1.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.7.0
 [1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0

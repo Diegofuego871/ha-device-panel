@@ -7,7 +7,32 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.10.0] - 2026-10-04
+
+The AI assessment takes an uncertain battery forecast into account.
+
+### Added
+
+- The fact `battery_forecast` of the AI assessment (requested by the user)
+  now says when the calculation is uncertain: `uncertain` with
+  `uncertain_reasons` (confidence not "high", the drop is getting steeper so
+  the forecast is probably too optimistic, or less than 30 days of
+  history), plus `days_range` (no `max`: at least that long) and
+  `days_of_history`. With too little history the fact says so
+  ("too little history for a forecast") instead of being left out.
+- The default prompt tells the AI to treat an uncertain forecast as such: only
+  a rough range, never a firm date, say that it is uncertain, do not base the
+  cause on it, and lower its own certainty when a battery statement rests on
+  it.
+
+### Changed
+
+- The default prompt is about 340 characters longer (4282 of 6000). A saved
+  own prompt keeps its text; "Default" in expert mode loads the new one.
+
 ## [1.9.0] - 2026-10-04
+
+Not released; included in 1.10.0.
 
 Filter by integration, like the filter by area.
 
@@ -1230,7 +1255,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[1.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.9.0
+[1.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.10.0
 [1.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.8.0
 [1.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.7.0
 [1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0

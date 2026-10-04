@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.9.0, Einstellungen in fünf Abschnitten)
+## Stand (1.10.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -344,6 +344,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `_pickPicked`, `_setPick`, Textschlüssel `integ*`); `_scopePass` =
    Bereich und Integration, `_scoped()`, `_scopeText()` für Kopf und Puls-Fenster;
    Zahlen in beiden Auswahlen zählen den jeweils anderen Filter mit.
+   Unsichere Prognose `1.10.0` (Nutzer, 2026-10-04): `battery_forecast_fact()`
+   liefert `uncertain` und `uncertain_reasons` (Sicherheit nicht "high",
+   `accelerating`, unter `FORECAST_DAYS_OK` = 30 Tage Verlauf), `days_range`,
+   `days_of_history`; Status "short" wird als Fakt gemeldet. Standard-Prompt
+   (4282 Zeichen) verlangt grobe Spanne, nie ein festes Datum, und senkt die
+   eigene Sicherheit der KI. Simulator-Kopie nachgeführt.
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem

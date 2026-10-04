@@ -131,6 +131,50 @@ def battery_year(history: dict[str, Any], now: float) -> dict[str, Any] | None:
     return out
 
 
+# Ab so vielen Tagen Verlauf gilt die Prognose nicht mehr als dünn belegt.
+FORECAST_DAYS_OK = 30
+
+
+def battery_forecast_fact(fc: dict[str, Any]) -> dict[str, Any] | None:
+    """
+    Prognose aus dem Batterie-Verlauf als Fakt (seit 1.6.0, wie im Panel). Seit
+    1.10.0 (Wunsch des Nutzers) mit Spanne, Verlaufstagen und dem Vermerk
+    "uncertain" samt Gründen: Sicherheit nicht "high", der Rückgang wird
+    steiler (Prognose eher zu optimistisch) oder weniger als FORECAST_DAYS_OK
+    Tage Verlauf. Die KI soll eine unsichere Prognose nicht als Tatsache nennen.
+    """
+    status = fc.get("status")
+    if status == "reached":
+        return {"status": "warning threshold reached"}
+    if status == "flat":
+        return {"status": "level barely drops"}
+    if status == "short":
+        return {"status": "too little history for a forecast", "days_of_history": round(fc.get("days_used") or 0), "uncertain": True}
+    if status != "ok":
+        return None
+    days = fc.get("days_used") or 0
+    reasons = []
+    if fc.get("confidence") != "high":
+        reasons.append(f"confidence {fc.get('confidence')}")
+    if fc.get("accelerating"):
+        reasons.append("the drop is getting steeper, so the forecast is probably too optimistic")
+    if days < FORECAST_DAYS_OK:
+        reasons.append(f"only {round(days)} days of history")
+    item: dict[str, Any] = {
+        "days_left": round(fc["days"]),
+        "days_range": {"min": round(fc["days_low"]) if fc.get("days_low") is not None else None, "max": round(fc["days_high"]) if fc.get("days_high") is not None else None},
+        "until_percent": fc["target"],
+        "confidence": fc["confidence"],
+        "days_of_history": round(days),
+        "drop_is_accelerating": bool(fc.get("accelerating")),
+        "uncertain": bool(reasons),
+    }
+    item["days_range"] = {k: v for k, v in item["days_range"].items() if v is not None}
+    if reasons:
+        item["uncertain_reasons"] = reasons
+    return item
+
+
 def _peer(d: dict[str, Any], now: float, names: dict[str, str], ref: float | None) -> dict[str, Any]:
     """Ein Gerät des Bereichs mit seinen Werten (seit 1.6.0), ohne IDs und Entitäten."""
     dom = (d.get("integration") or {}).get("domain")
@@ -218,13 +262,8 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float, extr
         if year := extra.get("battery_year"):
             facts["battery_last_12_months"] = year
         if fc := extra.get("forecast"):
-            # Prognose aus dem Batterie-Verlauf (seit 1.6.0, wie im Panel).
-            if fc.get("status") == "ok":
-                facts["battery_forecast"] = {"days_left": round(fc["days"]), "until_percent": fc["target"], "confidence": fc["confidence"], "drop_is_accelerating": bool(fc.get("accelerating"))}
-            elif fc.get("status") == "reached":
-                facts["battery_forecast"] = {"status": "warning threshold reached"}
-            elif fc.get("status") == "flat":
-                facts["battery_forecast"] = {"status": "level barely drops"}
+            if forecast_fact := battery_forecast_fact(fc):
+                facts["battery_forecast"] = forecast_fact
     if (signal := device.get("signal")) and signal.get("value") is not None:
         # "weak" wie im Panel, mit der Empfang-Warnung des Geräts (seit 1.4.0):
         # Die KI braucht keine Schwellen, und ein akzeptierter Empfang zählt.
