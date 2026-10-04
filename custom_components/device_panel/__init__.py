@@ -27,8 +27,10 @@ from .outage import OutageNotifier
 from .signal_history import RANGES as SIGNAL_RANGES
 from .signal_history import STORAGE_KEY as SIGNAL_STORE_KEY
 from .signal_history import SignalLog, async_signal_history
-from .ai_assessment import AiError, async_assess
+from .ai_assessment import AiError, async_assess, async_preview
+from .ai_prompt import DEFAULT_PROMPT
 from .const import (
+    AI_PROMPT_MAX,
     BATTERY_OFF,
     SIGNAL_DBM_RANGE,
     SIGNAL_LQI_RANGE,
@@ -410,6 +412,8 @@ async def _ws_get_options(
             "limits": options_api.limits(),
             "notify_targets": options_api.notify_targets(hass, options_api.current_values(entry)[CONF_NOTIFY_SERVICE]),
             "overrides": await async_device_overrides(hass),
+            # Standard-Prompt für den Profi-Modus (Anzeigen, Kopieren, Zurücksetzen).
+            "ai_prompt_default": DEFAULT_PROMPT,
         },
     )
 
@@ -548,6 +552,29 @@ async def _ws_ai_assess(
 
 @websocket_api.websocket_command(
     {
+        vol.Required("type"): f"{DOMAIN}/ai_prompt_preview",
+        vol.Required("device_id"): str,
+        vol.Optional("language", default="en"): vol.In(("de", "en")),
+        # Entwurf aus dem Fenster "Prompt bearbeiten"; leer = gespeicherter Prompt.
+        vol.Optional("prompt", default=""): vol.All(str, vol.Length(max=AI_PROMPT_MAX)),
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_ai_prompt_preview(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Vorschau des Prompts mit den Fakten eines Geräts (Profi-Modus); schickt nichts an die KI."""
+    try:
+        result = await async_preview(hass, msg["device_id"], msg["language"], msg["prompt"], hass.data.get(DATA_AVAILABILITY))
+    except AiError as err:
+        connection.send_error(msg["id"], err.code, str(err))
+        return
+    connection.send_result(msg["id"], result)
+
+
+@websocket_api.websocket_command(
+    {
         vol.Required("type"): f"{DOMAIN}/hide_device",
         vol.Required("device_id"): str,
         vol.Required("hidden"): bool,
@@ -604,6 +631,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     hass.data[DATA_WS_REGISTERED] = True
     websocket_api.async_register_command(hass, _ws_list_devices)
     websocket_api.async_register_command(hass, _ws_ai_assess)
+    websocket_api.async_register_command(hass, _ws_ai_prompt_preview)
     websocket_api.async_register_command(hass, _ws_device)
     websocket_api.async_register_command(hass, _ws_availability)
     websocket_api.async_register_command(hass, _ws_battery_history)

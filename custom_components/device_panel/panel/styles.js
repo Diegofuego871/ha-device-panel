@@ -378,12 +378,12 @@ svg.strip .s2 { fill: var(--dp-bar-off); }
    Hintergrund, Esc und Fokusfalle liefert der Browser. Auf dem Handy als
    Blatt von unten. Der Dialog scrollt selbst, Kopf und Aktionsleiste
    bleiben per sticky sichtbar (wie unifi_dynamic). */
-dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.cols-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
+dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.cols-dlg, dialog.prompt-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
   box-shadow: var(--dp-shadow); overflow: auto; overscroll-behavior: contain; max-height: calc(100% - 48px); }
 dialog.device, dialog.settings, dialog.view { width: min(640px, calc(100vw - 32px)); }
 dialog.area-sheet, dialog.cols-dlg { width: min(420px, calc(100vw - 32px)); }
-dialog.stat-dlg, dialog.pulse-dlg { width: min(560px, calc(100vw - 32px)); }
-dialog.device::backdrop, dialog.settings::backdrop, dialog.view::backdrop, dialog.area-sheet::backdrop, dialog.pulse-dlg::backdrop, dialog.cols-dlg::backdrop { background: rgba(0,0,0,0.5); }
+dialog.stat-dlg, dialog.pulse-dlg, dialog.prompt-dlg { width: min(560px, calc(100vw - 32px)); }
+dialog.device::backdrop, dialog.settings::backdrop, dialog.view::backdrop, dialog.area-sheet::backdrop, dialog.pulse-dlg::backdrop, dialog.cols-dlg::backdrop, dialog.prompt-dlg::backdrop { background: rgba(0,0,0,0.5); }
 /* Dialog dahinter stark gedimmt und unscharf, sein X ausgeblendet: so ist
    klar, welches Fenster gerade gilt. */
 dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
@@ -680,6 +680,24 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .opt.bat-row .opt-input input { width: 40px; }
 .opt.changed > .opt-line .bat-ctl .opt-input:not(.bad), .opt.changed > .opt-line .bat-ctl .opt-select select { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 .integ-reset { margin: 14px 0 4px; }
+/* Profi-Modus der KI-Einschätzung (seit 1.2.0, docs/mockups/ai-v1, A) */
+.aip { margin: 4px 0 8px; }
+.aip-h { font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--dp-text2); margin: 8px 0 6px; }
+.aip-h b { color: var(--dp-text); font-weight: 600; }
+.aip-box { font: 12.5px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace; background: var(--dp-subtle); border: 1px solid var(--dp-divider); border-radius: 10px;
+  padding: 10px 12px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 11.5em; overflow: auto; color: var(--dp-text); }
+.aip-box.ro { max-height: 22em; }
+.aip-box .pv, .pv { background: color-mix(in srgb, var(--dp-primary) 14%, transparent); color: var(--dp-primary); border-radius: 4px; padding: 0 3px; font-weight: 600; }
+.aip-btns { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.pr-vars { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+.pr-vars .chip { font-family: ui-monospace, "SF Mono", Menlo, monospace; color: var(--dp-primary); }
+.pr-text { width: 100%; box-sizing: border-box; min-height: 14em; resize: vertical; font: 12.5px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: var(--dp-text);
+  background: var(--dp-card); border: 1px solid var(--dp-divider); border-radius: 10px; padding: 10px 12px; }
+.pr-text:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
+.pr-text.bad { border-color: var(--dp-error); }
+.pr-count { text-align: right; font-size: 12px; color: var(--dp-text3); margin: 4px 0; }
+.prompt-dev { margin: 8px 0; }
+
 .mon-flt .integ-all { margin-left: auto; }
 .integ-goto { margin: 10px 0 2px; }
 .integ-goto .lnk { font-size: 12px; }
@@ -909,8 +927,8 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .chips { position: sticky; top: 44px; z-index: 5; box-sizing: border-box; height: 48px; flex-wrap: nowrap; overflow-x: auto; margin: 0 -12px; padding: 12px 12px 4px; background: var(--dp-bg); scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .foot .tap { display: none; }
-  dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
-  dialog.view, dialog.area-sheet, dialog.pulse-dlg { max-height: 92%; }
+  dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
+  dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg { max-height: 92%; }
   .pwin .pchart { height: 96px; }
   .view-btn { width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 50%; }
   .view-btn span { display: none; }

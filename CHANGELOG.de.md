@@ -7,7 +7,31 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.2.0] - 2026-10-04
+
+Profi-Modus der KI-Einschätzung: den Prompt ansehen, kopieren und anpassen.
+
+### Hinzugefügt
+
+- Einstellungen, "KI-Einschätzung": Der Schalter "Profi-Modus" zeigt den
+  Prompt, der an die KI-Aufgabe geht, mit seinen zwei Variablen
+  `{language}` (Sprache der Antwort) und `{facts}` (die Fakten eines Geräts
+  als JSON), dazu die Knöpfe "Bearbeiten …", "Kopieren" und "Standard"
+  (Wunsch des Nutzers). "Bearbeiten …" öffnet das Fenster "Prompt
+  bearbeiten": Textfeld mit Chips zum Einfügen der Variablen, Zähler
+  (höchstens 4000 Zeichen), Hinweis, dass die erste Zeile der Antwort zur
+  Überschrift wird, und ein Reiter "Vorschau" mit dem Text genau so, wie er
+  gesendet würde, mit den Fakten eines gewählten Geräts. Die Vorschau
+  schickt nichts an die KI. `{facts}` ist Pflicht; andere Platzhalter
+  werden abgelehnt. Gespeichert wird ein Prompt als Option `ai_prompt`
+  (leer = Standard); der Standard muss nicht gespeichert werden. Ein
+  eigener Prompt kann nicht mehr Daten anfordern: Es gehen weiter nur die
+  Fakten raus, nie Schlüssel, Zugangsdaten, IDs oder Adressen. Der
+  Optionsdialog von Home Assistant hat dafür kein Feld.
+
 ## [1.1.0] - 2026-10-04
+
+Nicht veröffentlicht; enthalten in 1.2.0.
 
 "Alle zurücksetzen" bei den Integrationen, alle Filter-Chips in den Einstellungen.
 
@@ -1065,7 +1089,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[1.1.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.1.0
+[1.2.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.2.0
 [1.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.0.0
 [0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0
 [0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1

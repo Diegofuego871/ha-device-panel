@@ -146,6 +146,16 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Verlauf in Violett/Primärfarbe, Überschrift fett, Text, Fusszeile "Erstellt
   von … · Zeit · Neu erstellen"); Wartezustand mit pulsierendem Symbol,
   bei `prefers-reduced-motion` ohne Animation.
+- Profi-Modus der KI-Einschätzung (seit 1.2.0, `docs/mockups/ai-v1/`, A):
+  im Abschnitt ein Schalter (Standard aus; an, wenn ein eigener Prompt
+  gilt), darunter Überschrift "Prompt · Standard|Eigener", der Text in einer
+  Box (`.aip-box`, Monospace, Platzhalter blau hinterlegt `.pv`, höchstens
+  11,5 Zeilen, scrollt) und die Knöpfe "Bearbeiten …" (primär), "Kopieren",
+  "Standard". Fenster `dialog.prompt-dlg` (560 px, Handy als Blatt):
+  Reiter Bearbeiten (Chips für die Variablen, Textfeld `.pr-text`, Zähler,
+  Fehler rot unter dem Feld, Hinweis zur Überschrift) und Vorschau
+  (Auswahl des Geräts, Text mit den Fakten, Hinweis, dass nichts gesendet
+  wird); Übernehmen ist bei ungültigem Prompt gesperrt.
 - Reihenfolge der Einstellungen (seit 1.0.0, `docs/mockups/content-v1/`, A,
   Wunsch des Nutzers: weniger Punkte): "Geräte im Panel", "Überwachung und
   Meldungen", "Darstellung", "KI-Einschätzung", "Updates". "Geräte im

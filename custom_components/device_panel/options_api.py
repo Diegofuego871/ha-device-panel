@@ -17,6 +17,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
+from .ai_prompt import ai_prompt
 from .const import (
     BATTERY_FIELDS,
     BATTERY_OFF,
@@ -67,6 +68,7 @@ from .const import (
     CONF_SHOW_SERVICE,
     CONF_STARTUP_GRACE,
     CONF_AI_ASSESSMENT,
+    CONF_AI_PROMPT,
     CONF_AI_TASK,
     CONF_UPDATE_CHECK,
     DEFAULT_BATTERY_LOW,
@@ -286,6 +288,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_OFFLINE_INTEGRATIONS): offline_map,
         vol.Optional(CONF_NOTIFY_SERVICE): _notify_target,
         vol.Optional(CONF_AI_TASK): _ai_task,
+        vol.Optional(CONF_AI_PROMPT): ai_prompt,
         vol.Optional(CONF_NOTIFY_CLICK): vol.In(CLICK_TARGETS),
         vol.Optional(CONF_BATTERY_PUSH_MODE): vol.In(PUSH_MODES),
         vol.Optional(CONF_BATTERY_PUSH_TIME): push_time,
@@ -344,6 +347,11 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_NOTIFY_SERVICE] = target if _NOTIFY_RE.match(target) else NOTIFY_NONE
     task = str(options.get(CONF_AI_TASK) or "").strip()
     values[CONF_AI_TASK] = task if _AI_TASK_RE.match(task) else ""
+    try:
+        values[CONF_AI_PROMPT] = ai_prompt(options.get(CONF_AI_PROMPT))
+    except vol.Invalid:
+        # Ungültig gespeichert: lieber der Standard als eine Fehlermeldung.
+        values[CONF_AI_PROMPT] = ""
     click = options.get(CONF_NOTIFY_CLICK)
     values[CONF_NOTIFY_CLICK] = click if click in CLICK_TARGETS else CLICK_PANEL
     mode = options.get(CONF_BATTERY_PUSH_MODE)

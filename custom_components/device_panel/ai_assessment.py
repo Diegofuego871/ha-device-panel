@@ -20,7 +20,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
 
-from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_TASK
+from .ai_prompt import DEFAULT_PROMPT, render_prompt
+from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK
 from .devices import async_list_devices
 from .options_api import effective
 
@@ -110,18 +111,13 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float) -> d
     return {k: v for k, v in facts.items() if v is not None}
 
 
-def build_instructions(facts: dict[str, Any], language: str) -> str:
-    """Anweisung an die KI: kurz, ohne Raten, in der Sprache des Panels."""
+def build_instructions(facts: dict[str, Any], language: str, template: str = "") -> str:
+    """
+    Anweisung an die KI: die Vorlage (eigener Prompt oder Standard) mit der
+    Sprache der Antwort und den Fakten als JSON.
+    """
     lang = LANGUAGES.get(language, LANGUAGES["en"])
-    return (
-        "You are a careful assistant for a Home Assistant installation. Below are facts about ONE smart home device "
-        "as JSON. Assess why it is (or was) offline or unstable and what the owner could check, most likely cause first. "
-        "Use only these facts; do not invent values. Say what is uncertain. "
-        f"Answer in {lang}. Format: the first line is a short headline (at most 6 words) naming the most likely cause; "
-        "then an empty line; then 3 to 5 short sentences of plain text (no markdown, no lists). "
-        "If nothing is wrong, say so briefly.\n\nFacts:\n"
-        + json.dumps(facts, ensure_ascii=False, indent=1)
-    )
+    return render_prompt(template or DEFAULT_PROMPT, json.dumps(facts, ensure_ascii=False, indent=1), lang)
 
 
 def split_answer(text: str) -> tuple[str, str]:
@@ -180,9 +176,30 @@ async def async_assess(hass: HomeAssistant, device_id: str, language: str, log: 
     now = dt_util.utcnow()
     facts = build_facts(device, result, now.timestamp())
     entity_id = opts[CONF_AI_TASK] or None
-    data = await _generate(hass, entity_id, build_instructions(facts, language))
+    data = await _generate(hass, entity_id, build_instructions(facts, language, opts[CONF_AI_PROMPT]))
     text = data if isinstance(data, str) else json.dumps(data, ensure_ascii=False)
     if not text.strip():
         raise AiError("failed", "empty answer")
     title, body = split_answer(text)
     return {"title": title, "text": body, "source": source_name(hass, entity_id), "at": now.isoformat()}
+
+
+async def async_preview(
+    hass: HomeAssistant, device_id: str, language: str, template: str = "", log: Any = None
+) -> dict[str, str]:
+    """
+    Der Text, der an die KI ginge, für ein Gerät (Vorschau im Profi-Modus):
+    {"text"}. Schickt nichts. template leer = gespeicherter Prompt, sonst der
+    Entwurf aus dem Fenster (geprüft). Wirft AiError("not_found"|"invalid_prompt").
+    """
+    from .ai_prompt import prompt_problem  # noqa: PLC0415
+
+    if template.strip() and (problem := prompt_problem(template.strip())):
+        raise AiError("invalid_prompt", problem)
+    result = await async_list_devices(hass, log)
+    device = next((d for d in result["devices"] if d["id"] == device_id), None)
+    if device is None:
+        raise AiError("not_found", "device not found")
+    facts = build_facts(device, result, dt_util.utcnow().timestamp())
+    chosen = template.strip() or effective(hass)[CONF_AI_PROMPT]
+    return {"text": build_instructions(facts, language, chosen)}

@@ -254,6 +254,18 @@ const MON_TAB_KEYS = {
 
 // Reiter der Abschnitte "Geräte im Panel" und "Darstellung" (seit 1.0.0,
 // docs/mockups/content-v1, A) mit den Optionen, die sie ändern.
+// Prompt der KI-Einschätzung (Profi-Modus, seit 1.2.0): wie
+// ai_prompt.prompt_problem im Backend; das Backend prüft beim Speichern nochmals.
+const PROMPT_MAX = 4000;
+const PROMPT_VARS = ["{language}", "{facts}"];
+function promptProblem(text) {
+  if (text.length > PROMPT_MAX) return ["promptErrLong", PROMPT_MAX];
+  if (!text.includes("{facts}")) return ["promptErrNoFacts"];
+  const unknown = (text.match(/\{[A-Za-z_][A-Za-z0-9_]*\}/g) || []).find((v) => !PROMPT_VARS.includes(v));
+  return unknown ? ["promptErrUnknown", unknown] : null;
+}
+const promptHtml = (text) => escape(text).replace(/\{(language|facts)\}/g, '<span class="pv">{$1}</span>');
+
 // Optionen mit Abweichungen pro Integration ("Alle zurücksetzen" in
 // "Überwachung und Meldungen" › "Integrationen", "Alles auf Standard" in der Integration).
 const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations"];
@@ -682,7 +694,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="cols-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
@@ -772,6 +784,7 @@ class DevicePanel extends HTMLElement {
     this._bindViewControls(root.querySelector("dialog.cols-dlg"), root.querySelector("dialog.view"));
     this._bindAreas(root.querySelector(".area-pop"), root.querySelector("dialog.area-sheet"));
     this._bindPulse(root.querySelector("dialog.pulse-dlg"));
+    this._bindPrompt(root.querySelector("dialog.prompt-dlg"));
     // Zeilen und Karten sind keine Buttons (Tabellensemantik); Tastatur
     // deshalb selbst behandeln.
     // Handy: Kacheln ganz weggescrollt (unter der Zeile oben) -> Zeile zeigen.
@@ -3324,10 +3337,226 @@ class DevicePanel extends HTMLElement {
   _closeSettings() {
     const dialog = this.shadowRoot.querySelector("dialog.settings");
     this._settings = null;
+    this._closePrompt();
     if (dialog?.open) {
       if (typeof dialog.close === "function") dialog.close();
       else dialog.removeAttribute("open");
     }
+  }
+
+  // --- Profi-Modus der KI-Einschätzung (seit 1.2.0, docs/mockups/ai-v1, A)
+
+  // Im Abschnitt: Schalter, bei "ein" der Prompt (nur zum Lesen) mit Knöpfen.
+  _aiPromptHtml(d, changed) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    const expert = st.expert ?? Boolean(d.ai_prompt);
+    const head = `<div class="opt${changed ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optAiExpert"))}</span>
+      <label class="switch"><input type="checkbox" data-set="expert" ${expert ? "checked" : ""} aria-label="${escape(t("optAiExpert"))}"><span></span></label></div>
+      <div class="opt-short">${escape(t("optAiExpertShort"))}</div></div>`;
+    if (!expert) return head;
+    const own = Boolean(d.ai_prompt);
+    return `${head}<div class="aip"><div class="aip-h">${escape(t("aiPromptTitle"))} · <b>${escape(t(own ? "aiPromptOwn" : "aiPromptDefault"))}</b></div>
+      <div class="aip-box" tabindex="0">${promptHtml(d.ai_prompt || st.data.ai_prompt_default || "")}</div>
+      <div class="aip-btns"><button type="button" class="dlg-btn primary" data-set="prompt-open">${escape(t("aiPromptEdit"))}</button>
+        <button type="button" class="dlg-btn" data-set="prompt-copy">${escape(t("aiPromptCopy"))}</button>
+        <button type="button" class="dlg-btn" data-set="prompt-default" ${own ? "" : "disabled"}>${escape(t("aiPromptReset"))}</button></div>
+      <div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("aiPromptPrivacy"))}</p></div></div></div>`;
+  }
+
+  // Text in die Zwischenablage; die Beschriftung des Knopfes sagt kurz "Kopiert".
+  async _copyText(text, btn) {
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      ok = true;
+    } catch {
+      // Ohne Berechtigung (iframe): über ein verstecktes Textfeld.
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;opacity:0";
+      this.shadowRoot.appendChild(ta);
+      ta.select();
+      try {
+        ok = document.execCommand("copy");
+      } catch {
+        ok = false;
+      }
+      ta.remove();
+    }
+    if (btn && ok) {
+      const label = btn.textContent;
+      btn.textContent = this._t("aiPromptCopied");
+      window.setTimeout(() => {
+        if (btn.isConnected) btn.textContent = label;
+      }, 1500);
+    }
+  }
+
+  _openPrompt() {
+    const st = this._settings;
+    const dlg = this.shadowRoot.querySelector("dialog.prompt-dlg");
+    if (!st?.draft || !dlg) return;
+    const devices = this._devices.filter((d) => !d.disabled);
+    const first = devices.find((d) => d.online === false) || devices[0];
+    this._prompt = { text: st.draft.ai_prompt || st.data.ai_prompt_default || "", tab: "edit", device: first ? first.id : null, preview: null, seq: 0 };
+    this._renderPrompt();
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+    dlg.scrollTop = 0;
+  }
+
+  _closePrompt() {
+    const dlg = this.shadowRoot.querySelector("dialog.prompt-dlg");
+    if (dlg?.open) {
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    }
+  }
+
+  _promptError(text) {
+    const p = promptProblem(text.replace(/\r\n/g, "\n").trim());
+    return p ? this._t(p[0], p[1]) : "";
+  }
+
+  _renderPrompt() {
+    const dlg = this.shadowRoot.querySelector("dialog.prompt-dlg");
+    const p = this._prompt;
+    const st = this._settings;
+    if (!dlg || !p || !st?.data) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const def = st.data.ai_prompt_default || "";
+    const own = p.text.trim() !== def.trim();
+    const tabs = [["edit", "promptTabEdit"], ["preview", "promptTabPreview"]]
+      .map(([id, key]) => `<button type="button" role="tab" class="sub-tab${p.tab === id ? " on" : ""}" data-prompt="tab" data-key="${id}" aria-selected="${p.tab === id}">${escape(t(key))}</button>`)
+      .join("");
+    let body;
+    if (p.tab === "preview") {
+      const devices = this._devices.filter((d) => !d.disabled).sort((a, b) => String(a.name).localeCompare(String(b.name)));
+      const pv = p.preview;
+      const text = !devices.length
+        ? `<div class="opt-short">${escape(t("promptNoDevice"))}</div>`
+        : !pv || pv.loading
+          ? `<div class="opt-short">${escape(t("promptPreviewLoading"))}</div>`
+          : pv.error
+            ? `<div class="opt-error">${escape(t("promptPreviewError"))} ${escape(pv.error)}</div>`
+            : `<div class="aip-box ro">${promptHtml(pv.text)}</div>`;
+      body = `<div class="opt-line prompt-dev"><span class="opt-label">${escape(t("promptDevice"))}</span><span class="opt-select"><select data-prompt-dev aria-label="${escape(t("promptDevice"))}">${devices
+        .map((d) => `<option value="${escape(d.id)}"${d.id === p.device ? " selected" : ""}>${escape(d.name)}</option>`)
+        .join("")}</select>${mdi("chevronDown", 18)}</span></div>${text}
+        <div class="opt-short">${escape(t("promptPreviewNote"))}</div>`;
+    } else {
+      body = `<div class="pr-vars">${PROMPT_VARS.map((v) => `<button type="button" class="chip" data-prompt="insert" data-key="${escape(v)}" aria-label="${escape(t("promptInsert", v))}">${escape(v)}</button>`).join("")}</div>
+        <textarea class="pr-text" data-prompt-text spellcheck="false" rows="12" aria-label="${escape(t("promptTitle"))}">${escape(p.text)}</textarea>
+        <div class="pr-count" data-prompt-count></div><div class="opt-error" data-prompt-error hidden></div>
+        <div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("promptHeadline"))}</p></div></div>
+        <div class="aip-btns"><button type="button" class="dlg-btn" data-prompt="default">${escape(t("promptInsertDefault"))}</button>
+          <button type="button" class="dlg-btn" data-prompt="copy">${escape(t("aiPromptCopy"))}</button></div>`;
+    }
+    const html = `<div class="dlg-head"><div class="dlg-title"><h2>${escape(t("promptTitle"))}</h2><div class="dlg-sub" data-prompt-sub>${escape(t(own ? "promptSubOwn" : "promptSubDefault"))}</div></div>
+        <button type="button" class="dlg-close" data-prompt="cancel" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+      <div class="dlg-body"><div class="sub-tabs" role="tablist">${tabs}</div>${body}</div>
+      <div class="dlg-actions"><button type="button" class="dlg-btn" data-prompt="cancel">${escape(t("promptCancel"))}</button>
+        <button type="button" class="dlg-btn primary" data-prompt="apply">${escape(t("promptApply"))}</button></div>`;
+    // Das Textfeld ändert sich beim Tippen ohne Neuaufbau; darum immer neu schreiben.
+    setHtml(dlg, "");
+    setHtml(dlg, html);
+    this._promptLive();
+  }
+
+  // Zähler, Fehler und "Übernehmen" nachführen, ohne das Textfeld neu zu bauen.
+  _promptLive() {
+    const dlg = this.shadowRoot.querySelector("dialog.prompt-dlg");
+    const p = this._prompt;
+    if (!dlg || !p) return;
+    const error = this._promptError(p.text);
+    const count = dlg.querySelector("[data-prompt-count]");
+    if (count) count.textContent = this._t("promptCount", p.text.length, PROMPT_MAX);
+    const err = dlg.querySelector("[data-prompt-error]");
+    if (err) {
+      err.hidden = !error;
+      err.textContent = error;
+    }
+    dlg.querySelector(".pr-text")?.classList.toggle("bad", Boolean(error));
+    const apply = dlg.querySelector('[data-prompt="apply"]');
+    if (apply) apply.disabled = Boolean(error);
+    const sub = dlg.querySelector("[data-prompt-sub]");
+    const def = this._settings?.data?.ai_prompt_default || "";
+    if (sub) sub.textContent = this._t(p.text.trim() !== def.trim() ? "promptSubOwn" : "promptSubDefault");
+  }
+
+  // Vorschau mit den Fakten des gewählten Geräts; veraltete Antworten verfallen (seq).
+  async _promptPreview() {
+    const p = this._prompt;
+    if (!p || !p.device) return;
+    const seq = ++p.seq;
+    p.preview = { loading: true };
+    this._renderPrompt();
+    let result;
+    try {
+      const text = p.text.replace(/\r\n/g, "\n").trim();
+      const problem = this._promptError(text);
+      if (problem) throw new Error(problem);
+      const r = await this._hass.callWS({ type: "device_panel/ai_prompt_preview", device_id: p.device, language: pickLang(this._hass), prompt: text });
+      result = { text: r.text };
+    } catch (err) {
+      result = { error: err && typeof err === "object" && err.message ? String(err.message) : String(err || "") };
+    }
+    if (this._prompt !== p || p.seq !== seq || p.tab !== "preview") return;
+    p.preview = result;
+    this._renderPrompt();
+  }
+
+  _bindPrompt(dlg) {
+    dlg.addEventListener("click", (ev) => {
+      if (ev.target === dlg) {
+        const r = dlg.getBoundingClientRect();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closePrompt();
+        return;
+      }
+      const btn = ev.target.closest("[data-prompt]");
+      const p = this._prompt;
+      if (!btn || btn.disabled || !p) return;
+      const action = btn.dataset.prompt;
+      const area = dlg.querySelector(".pr-text");
+      if (action === "cancel") this._closePrompt();
+      else if (action === "apply") {
+        const st = this._settings;
+        const text = p.text.replace(/\r\n/g, "\n").trim();
+        if (!st?.draft || this._promptError(text)) return;
+        st.draft.ai_prompt = text === (st.data.ai_prompt_default || "").trim() ? "" : text;
+        this._closePrompt();
+        this._renderSettings();
+      } else if (action === "tab") {
+        if (area) p.text = area.value;
+        p.tab = btn.dataset.key;
+        if (p.tab === "preview") this._promptPreview();
+        else this._renderPrompt();
+      } else if (action === "insert" && area) {
+        const at = area.selectionStart ?? area.value.length;
+        const end = area.selectionEnd ?? at;
+        area.value = area.value.slice(0, at) + btn.dataset.key + area.value.slice(end);
+        p.text = area.value;
+        area.focus();
+        area.setSelectionRange(at + btn.dataset.key.length, at + btn.dataset.key.length);
+        this._promptLive();
+      } else if (action === "default") {
+        p.text = this._settings?.data?.ai_prompt_default || "";
+        this._renderPrompt();
+      } else if (action === "copy") this._copyText(area ? area.value : p.text, btn);
+    });
+    dlg.addEventListener("input", (ev) => {
+      if (!ev.target.matches?.("[data-prompt-text]") || !this._prompt) return;
+      this._prompt.text = ev.target.value;
+      this._promptLive();
+    });
+    dlg.addEventListener("change", (ev) => {
+      if (!ev.target.matches?.("[data-prompt-dev]") || !this._prompt) return;
+      this._prompt.device = ev.target.value;
+      this._promptPreview();
+    });
   }
 
   _applyPanelSettings(panel) {
@@ -3379,7 +3608,7 @@ class DevicePanel extends HTMLElement {
       ["devices", ["show_service_devices", "show_disabled_devices", ...SUB_TAB_KEYS.integrations, ...SUB_TAB_KEYS.types, ...SUB_TAB_KEYS.devs]],
       ["monitor", Object.values(MON_TAB_KEYS).flat()],
       ["look", [...SUB_TAB_KEYS.conn, ...SUB_TAB_KEYS.chips]],
-      ["ai", ["ai_assessment", "ai_task_entity"]],
+      ["ai", ["ai_assessment", "ai_task_entity", "ai_prompt"]],
       ["updates", ["update_check"]],
     ];
   }
@@ -3456,7 +3685,8 @@ class DevicePanel extends HTMLElement {
     if (id === "updates") return this._t(d.update_check ? "sumUpdatesOn" : "sumUpdatesOff");
     if (id === "ai") {
       const task = (this._settings?.data?.catalog?.ai_tasks || []).find((x) => x.value === d.ai_task_entity);
-      return d.ai_assessment ? this._t("sumAiOn", task?.name || d.ai_task_entity || "") : this._t("sumAiOff");
+      const base = d.ai_assessment ? this._t("sumAiOn", task?.name || d.ai_task_entity || "") : this._t("sumAiOff");
+      return d.ai_prompt ? `${base} · ${this._t("sumAiPrompt")}` : base;
     }
     if (id === "monitor") {
       // Während der Eingabe ungültig: der gespeicherte Wert gilt weiter.
@@ -4205,7 +4435,8 @@ class DevicePanel extends HTMLElement {
               null,
               (st.data.catalog?.ai_tasks || []).length ? null : t("aiNoTasks")
             )
-          : ""),
+          : "") +
+        this._aiPromptHtml(d, changes.has("ai_prompt")),
       updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
     const titles = {
@@ -4261,6 +4492,17 @@ class DevicePanel extends HTMLElement {
         if (action !== "ifilter") this.shadowRoot.querySelector("dialog.settings .mon-tabs")?.scrollIntoView({ block: action === "goto" ? "start" : "nearest" });
       } else if (action === "subtab") {
         st.sub[btn.dataset.group] = btn.dataset.key;
+        this._renderSettings();
+      } else if (action === "expert") {
+        st.expert = btn.checked;
+        this._renderSettings();
+      } else if (action === "prompt-open") this._openPrompt();
+      else if (action === "prompt-copy") this._copyText(st.draft.ai_prompt || st.data.ai_prompt_default, btn);
+      else if (action === "prompt-default") {
+        if (!st.draft) return;
+        st.draft.ai_prompt = "";
+        // Der Prompt bleibt sichtbar, auch wenn der Schalter nur aus dem eigenen Prompt abgeleitet war.
+        st.expert = true;
         this._renderSettings();
       } else if (action === "chip") {
         if (!st.draft) return;

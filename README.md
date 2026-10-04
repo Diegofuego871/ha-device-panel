@@ -139,7 +139,9 @@ details such as software version, manufacturer, model and area.
 - Optional AI assessment (off by default): a button "Assess with AI" in the
   device pop-up sends the facts of that one device (no keys, no
   credentials) to an AI task of Home Assistant on a button press and shows
-  the answer. The AI task can be chosen in the settings.
+  the answer. The AI task can be chosen in the settings. In expert mode the
+  prompt can be viewed, copied and adjusted (variables `{language}` and
+  `{facts}`, with a preview of the exact text).
 - Matter devices: in the pop-up the Thread role (router, end device, sleepy
   end device) and the network name from the Matter diagnostics, next to the
   connection type, which can still be set by hand.

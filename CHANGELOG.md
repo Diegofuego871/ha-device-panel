@@ -7,7 +7,30 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.0] - 2026-10-04
+
+Expert mode for the AI assessment: see, copy and adjust the prompt.
+
+### Added
+
+- Settings, "AI assessment": the switch "Expert mode" shows the prompt that
+  is sent to the AI task, with its two variables `{language}` (language of
+  the answer) and `{facts}` (the facts of one device as JSON), and the
+  buttons "Edit …", "Copy" and "Default" (requested by the user). "Edit …"
+  opens the window "Edit prompt": a text field with chips to insert the
+  variables, a counter (at most 4000 characters), a note that the first
+  line of the answer becomes the headline, and a tab "Preview" with the
+  text exactly as it would be sent, with the facts of a chosen device. The
+  preview sends nothing to the AI. `{facts}` is required; other
+  placeholders are rejected. A prompt is stored as the option `ai_prompt`
+  (empty = default); the default needs no storing. A custom prompt cannot
+  request more data: still only the facts go out, never keys, credentials,
+  IDs or addresses. The options dialog of Home Assistant has no field for
+  it.
+
 ## [1.1.0] - 2026-10-04
+
+Not released; included in 1.2.0.
 
 "Reset all" for the integrations, all filter chips in the settings.
 
@@ -1023,7 +1046,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[1.1.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.1.0
+[1.2.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.2.0
 [1.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.0.0
 [0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0
 [0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1

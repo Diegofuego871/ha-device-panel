@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.1.0, Einstellungen in fünf Abschnitten)
+## Stand (1.2.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -288,7 +288,15 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `integ-reset-all`, setzt die fünf Optionen pro Integration im Entwurf
    leer; Geräte mit eigener Einstellung bleiben). Die Liste der
    Filter-Chips (`_connCatalog`) zeigt alle Arten aus `CONN`, auch ohne
-   Geräte (Wunsch des Nutzers).
+   Geräte (Wunsch des Nutzers). `1.1.0` blieb ohne Release, in `1.2.0`
+   enthalten. `1.2.0` (Nutzer, 2026-10-04, `docs/mockups/ai-v1/`, A):
+   Profi-Modus der KI-Einschätzung: Option `ai_prompt` (leer = Standard),
+   Vorlage mit `{language}` und `{facts}` in `ai_prompt.py`
+   (`DEFAULT_PROMPT`, `prompt_problem`, `render_prompt`), WebSocket
+   `device_panel/ai_prompt_preview` (nur Admin, schickt nichts an die KI),
+   `get_options.ai_prompt_default`; Panel: Fenster `dialog.prompt-dlg`
+   (`_openPrompt`, `_renderPrompt`, `_promptPreview`). Der Optionsdialog von
+   HA hat dafür kein Feld.
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem

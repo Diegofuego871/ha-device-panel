@@ -343,6 +343,13 @@
   const candidates = () => window.__devices.filter((d) => d.entities > 0 && (!d.service || window.__opts.show_service_devices) && (!d.disabled || window.__opts.show_disabled_devices));
   const shown = () => candidates().filter((d) => !(d.integration && window.__opts.exclude_integrations.includes(d.integration.domain)) && !window.__opts.exclude_types.includes(d.type) && !window.__opts.exclude_devices.includes(d.id));
   // Bereiche der Zahlen wie options_api.limits().
+  const AI_PROMPT_DEFAULT = "You are a careful assistant for a Home Assistant installation. Below are facts about ONE smart home device as JSON. Assess why it is (or was) offline or unstable and what the owner could check, most likely cause first. Use only these facts; do not invent values. Say what is uncertain. Answer in {language}. Format: the first line is a short headline (at most 6 words) naming the most likely cause; then an empty line; then 3 to 5 short sentences of plain text (no markdown, no lists). If nothing is wrong, say so briefly.\n\nFacts:\n{facts}";
+  const promptProblem = (text) => {
+    if (text.length > 4000) return "too_long";
+    if (!text.includes("{facts}")) return "no_facts";
+    for (const m of text.match(/\{[A-Za-z_][A-Za-z0-9_]*\}/g) || []) if (m !== "{facts}" && m !== "{language}") return "unknown:" + m;
+    return null;
+  };
   const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50], notify_delay: [1, 60] };
   // Inhalt der Batterie-Meldung wie options_api.BATTERY_FIELDS (seit 0.34.0).
   const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
@@ -464,7 +471,7 @@
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
     exclude_integrations: [], exclude_types: [], exclude_devices: [], notify_service: "none", notify_click_target: "panel",
     notify_outage: false, notify_online: false, notify_group: true, hide_connections: [], connection_order: [], connection_integrations: {},
-    show_service_devices: false, show_disabled_devices: false, update_check: true, ai_assessment: false, ai_task_entity: "",
+    show_service_devices: false, show_disabled_devices: false, update_check: true, ai_assessment: false, ai_task_entity: "", ai_prompt: "",
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
   };
@@ -556,7 +563,7 @@
         const values = JSON.parse(JSON.stringify(window.__opts));
         // Wie options_api.values_from (seit 0.34.0): "Erst melden nach" nie kürzer als "Ausgefallen nach".
         values.notify_delay = Math.max(Number.isInteger(values.notify_delay) && values.notify_delay >= 1 ? values.notify_delay : 2, values.offline_after);
-        return { values, panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS, notify_targets: NOTIFY_TARGETS, overrides: overrides() };
+        return { values, panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS, notify_targets: NOTIFY_TARGETS, overrides: overrides(), ai_prompt_default: AI_PROMPT_DEFAULT };
       }
       if (msg.type === "device_panel/set_device_connection") {
         if (window.__connFails) throw new Error(window.__connFails);
@@ -586,6 +593,13 @@
         for (const [k, [min, max]] of Object.entries(LIMITS)) {
           const v = msg.values[k];
           if (k in msg.values && (!Number.isInteger(v) || v < min || v > max)) throw { code: "invalid_format", message: `${k} out of range` };
+        }
+        if ("ai_prompt" in msg.values) {
+          // Wie ai_prompt.ai_prompt: leer oder Standard = Standard; sonst {facts} Pflicht, nur {language} und {facts}, höchstens 4000 Zeichen.
+          const text = typeof msg.values.ai_prompt === "string" ? msg.values.ai_prompt.replace(/\r\n/g, "\n").trim() : null;
+          if (text === null) throw { code: "invalid_format", message: "ai_prompt" };
+          if (promptProblem(text) && text !== "" && text !== AI_PROMPT_DEFAULT) throw { code: "invalid_format", message: "ai_prompt" };
+          msg.values.ai_prompt = text === AI_PROMPT_DEFAULT ? "" : text;
         }
         if ("notify_service" in msg.values && msg.values.notify_service !== "none" && !/^notify\.[a-z0-9_]+$/.test(msg.values.notify_service)) throw { code: "invalid_format", message: "notify" };
         if ("notify_click_target" in msg.values && !["panel", "device"].includes(msg.values.notify_click_target)) throw { code: "invalid_format", message: "click" };
@@ -698,6 +712,17 @@
           text: msg.language === "de" ? "Der Melder hatte heute kurze Unterbrüche und schwachen Empfang. Ein Router in der Nähe dürfte helfen." : "The sensor had short interruptions today and weak reception. A router nearby should help.",
           source, at: new Date().toISOString(),
         };
+      }
+      if (msg.type === "device_panel/ai_prompt_preview") {
+        // Wie ai_assessment.async_preview: schickt nichts, ersetzt {language} und {facts}.
+        const dev = window.__devices.find((x) => x.id === msg.device_id);
+        if (!dev) throw { code: "not_found", message: "device not found" };
+        const draft = (msg.prompt || "").trim();
+        if (draft && promptProblem(draft)) throw { code: "invalid_prompt", message: promptProblem(draft) };
+        if (window.__previewSlow) await new Promise((r) => setTimeout(r, 1200));
+        const facts = JSON.stringify({ name: dev.name, status: dev.online === false ? "offline" : "online", area: dev.area }, null, 1);
+        const lang = msg.language === "de" ? "German (Swiss spelling: always 'ss', never the sharp s)" : "English";
+        return { text: (draft || window.__opts.ai_prompt || AI_PROMPT_DEFAULT).replace("{language}", lang).replace("{facts}", facts) };
       }
       if (msg.type === "device_panel/hide_device") {
         // Wie das Backend: Option exclude_devices; Unbekanntes ausblenden geht nicht.
