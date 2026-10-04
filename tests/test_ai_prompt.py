@@ -352,3 +352,47 @@ async def test_extras_week_and_forecast(hass: HomeAssistant, setup) -> None:
     # Ohne Batterie keine Prognose
     plain = {**device, "has_battery": False}
     assert set(await ai_assessment._extras(hass, plain, log, time.time())) == {"week"}
+
+
+def test_group_placeholders_are_valid_and_alone_enough() -> None:
+    """1.7.0: Gruppen statt {facts}; mindestens eine von beiden, sonst no_facts."""
+    from custom_components.device_panel.ai_prompt import FACT_GROUPS  # noqa: PLC0415
+
+    assert set(FACT_GROUPS) == {"device", "history", "battery", "signal", "integration", "area", "hub", "model"}
+    assert prompt_problem("Antwort in {language}.\n{facts_device}\n{facts_area}") is None
+    assert prompt_problem("Nur {facts_hub}") is None
+    assert prompt_problem("Antwort in {language}, ohne Fakten") == "no_facts"
+    assert prompt_problem("{facts_foo}") == "unknown:{facts_foo}"
+    assert ai_prompt("Prompt {facts_signal}") == "Prompt {facts_signal}"
+    # Jeder Fakt gehört zu genau einer Gruppe
+    keys = [k for keys in FACT_GROUPS.values() for k in keys]
+    assert len(keys) == len(set(keys))
+
+
+def test_every_fact_belongs_to_a_group_and_groups_render_alone() -> None:
+    from datetime import UTC, datetime  # noqa: PLC0415
+
+    from custom_components.device_panel.ai_prompt import FACT_GROUPS  # noqa: PLC0415
+
+    now = 1_800_000_000.0
+    me = _dev(
+        "me", name="Lampe {facts_area}", online=False, offline_since=datetime.fromtimestamp(now - 1800, UTC).isoformat(), since_at_least=True,
+        manufacturer="Acme", model="X1", sw_version="1.0", update=True, has_battery=True, battery={"level": 50, "low": False},
+        signal={"kind": "lqi", "value": 80}, signal_setting=30, avail24={"pct": 90.0, "outages": 2, "longest": 600},
+    )
+    other = _dev("o", online=False, offline_since=datetime.fromtimestamp(now - 1700, UTC).isoformat(), manufacturer="Acme", model="X1", sw_version="1.0")
+    hub = {**_dev("hub", via=None), "name": "Hub"}
+    result = {"devices": [me, other, hub], "integrations": {"matter": "Matter"}, "incidents": [{"at": now - 900, "count": 2, "integration": "matter", "devices": ["me", "o"]}]}
+    facts = build_facts(me, result, now, {"week": {"pct": 99.0, "outages": 1, "longest": 60}, "forecast": {"status": "flat"}})
+    allowed = {k for keys in FACT_GROUPS.values() for k in keys}
+    assert set(facts) <= allowed, set(facts) - allowed
+    # Fast alles ist belegt: nur "same_hub_*" nicht, weil me am Hub "Hub" hängt (hub_online, same_hub_*) – hier geprüft
+    for key in ("hub_online", "same_hub_other_devices", "mass_outages_24h_involving_this_device", "battery_forecast", "last_7d", "same_model_other_devices", "same_area_devices"):
+        assert key in facts, key
+    # Nur die genannten Gruppen erscheinen; ein Platzhalter im Gerätenamen wird nicht nochmals ersetzt
+    text = ai_assessment.build_instructions(facts, "de", "Sprache {language}\nA: {facts_hub}\nB: {facts_signal}")
+    assert '"hub_online"' in text and '"signal"' in text and '"same_area_devices"' not in text and '"manufacturer"' not in text
+    full = ai_assessment.build_instructions(facts, "de", "{facts_device}")
+    assert "Lampe {facts_area}" in full and '"same_area_devices"' not in full
+    # Gruppe ohne Fakten: leeres Objekt
+    assert ai_assessment.build_instructions({}, "en", "{facts_area}").strip() == "{}"

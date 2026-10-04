@@ -257,14 +257,17 @@ const MON_TAB_KEYS = {
 // Prompt der KI-Einschätzung (Profi-Modus, seit 1.2.0): wie
 // ai_prompt.prompt_problem im Backend; das Backend prüft beim Speichern nochmals.
 const PROMPT_MAX = 4000;
-const PROMPT_VARS = ["{language}", "{facts}"];
+// Seit 1.7.0 zusätzlich die Gruppen der Fakten ({facts_area} usw., wie
+// ai_prompt.FACT_GROUPS): wer {facts} nicht nutzt, setzt nur Gruppen ein.
+const PROMPT_GROUPS = ["device", "history", "battery", "signal", "integration", "area", "hub", "model"];
+const PROMPT_VARS = ["{language}", "{facts}", ...PROMPT_GROUPS.map((g) => `{facts_${g}}`)];
 function promptProblem(text) {
   if (text.length > PROMPT_MAX) return ["promptErrLong", PROMPT_MAX];
-  if (!text.includes("{facts}")) return ["promptErrNoFacts"];
   const unknown = (text.match(/\{[A-Za-z_][A-Za-z0-9_]*\}/g) || []).find((v) => !PROMPT_VARS.includes(v));
-  return unknown ? ["promptErrUnknown", unknown] : null;
+  if (unknown) return ["promptErrUnknown", unknown];
+  return PROMPT_VARS.some((v) => v !== "{language}" && text.includes(v)) ? null : ["promptErrNoFacts"];
 }
-const promptHtml = (text) => escape(text).replace(/\{(language|facts)\}/g, '<span class="pv">{$1}</span>');
+const promptHtml = (text) => escape(text).replace(/\{(language|facts(?:_[a-z]+)?)\}/g, '<span class="pv">{$1}</span>');
 
 // Optionen mit Abweichungen pro Integration ("Alle zurücksetzen" in
 // "Überwachung und Meldungen" › "Integrationen", "Alles auf Standard" in der Integration).
@@ -3496,7 +3499,8 @@ class DevicePanel extends HTMLElement {
         .join("")}</select>${mdi("chevronDown", 18)}</span></div>${text}
         <div class="opt-short">${escape(t("promptPreviewNote"))}</div>`;
     } else {
-      body = `<div class="pr-vars">${PROMPT_VARS.map((v) => `<button type="button" class="chip" data-prompt="insert" data-key="${escape(v)}" aria-label="${escape(t("promptInsert", v))}">${escape(v)}</button>`).join("")}</div>
+      body = `<div class="pr-vars">${PROMPT_VARS.map((v) => `<button type="button" class="chip" data-prompt="insert" data-key="${escape(v)}" title="${escape(t("promptVarInfo", v))}" aria-label="${escape(t("promptInsert", v))}">${escape(v)}</button>`).join("")}</div>
+        <div class="opt-short">${escape(t("promptVarsHint"))}</div>
         <textarea class="pr-text" data-prompt-text spellcheck="false" rows="12" aria-label="${escape(t("promptTitle"))}">${escape(p.text)}</textarea>
         <div class="pr-count" data-prompt-count></div><div class="opt-error" data-prompt-error hidden></div>
         <div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("promptHeadline"))}</p></div></div>

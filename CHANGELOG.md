@@ -7,6 +7,29 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.7.0] - 2026-10-04
+
+Groups of facts as variables in the expert mode of the AI assessment.
+
+### Added
+
+- Expert mode: besides `{language}` and `{facts}` (everything, as before) the
+  prompt can use groups of the facts as variables (requested by the user):
+  `{facts_device}`, `{facts_history}`, `{facts_battery}`, `{facts_signal}`,
+  `{facts_integration}`, `{facts_area}`, `{facts_hub}` and `{facts_model}`.
+  Whoever does not use `{facts}` inserts only the wanted groups and so
+  controls scope, order and cost. The facts themselves are not split
+  further; every fact belongs to exactly one group.
+  - The window "Edit prompt" shows the new variables as chips with a short
+    explanation (tooltip) and a hint.
+  - A prompt needs `{facts}` or at least one group; an unknown variable is
+    reported first.
+  - A group without facts for the device is empty (`{}`). The preview shows
+    the exact text.
+  - The variables are replaced in one pass: a placeholder inside a device
+    name is not replaced again.
+- The default prompt is unchanged and still uses `{facts}`.
+
 ## [1.6.0] - 2026-10-04
 
 More context for the AI assessment: the room, the radio standard, the hub and more.
@@ -1159,6 +1182,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.7.0
 [1.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.6.0
 [1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0
 [1.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.4.0

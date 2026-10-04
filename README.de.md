@@ -154,8 +154,8 @@ Bereich.
   einen Geräts (keine Schlüssel, keine Zugangsdaten) an eine KI-Aufgabe von
   Home Assistant und zeigt die Antwort. Die KI-Aufgabe ist in den
   Einstellungen wählbar. Im Profi-Modus lässt sich der Prompt ansehen,
-  kopieren und anpassen (Variablen `{language}` und `{facts}`, mit Vorschau
-  des genauen Texts). Neben dem Gerät geben die Fakten den
+  kopieren und anpassen (Variablen `{language}`, `{facts}` und Gruppen
+  wie `{facts_area}` oder `{facts_hub}`, mit Vorschau des genauen Texts). Neben dem Gerät geben die Fakten den
   Zusammenhang: die anderen Geräte im selben Bereich mit
   ihren Werten (auch gesunde, mit der Zahl derer mit demselben Funkstandard,
   etwa Thread oder Bluetooth), die Geräte am selben Hub, Geräte desselben

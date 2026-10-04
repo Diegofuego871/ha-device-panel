@@ -7,6 +7,29 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.7.0] - 2026-10-04
+
+Gruppen der Fakten als Variablen im Profi-Modus der KI-Einschätzung.
+
+### Hinzugefügt
+
+- Profi-Modus: Neben `{language}` und `{facts}` (alles, wie bisher) kann der
+  Prompt Gruppen der Fakten als Variablen nutzen (Wunsch des Nutzers):
+  `{facts_device}`, `{facts_history}`, `{facts_battery}`, `{facts_signal}`,
+  `{facts_integration}`, `{facts_area}`, `{facts_hub}` und `{facts_model}`.
+  Wer `{facts}` nicht verwendet, setzt nur die gewünschten Gruppen ein und
+  bestimmt so Umfang, Reihenfolge und Kosten. Die Fakten selbst werden nicht
+  weiter aufgeteilt; jeder Fakt gehört zu genau einer Gruppe.
+  - Das Fenster "Prompt bearbeiten" zeigt die neuen Variablen als Chips mit
+    kurzer Erklärung (Tooltip) und einem Hinweis.
+  - Ein Prompt braucht `{facts}` oder mindestens eine Gruppe; eine unbekannte
+    Variable wird zuerst gemeldet.
+  - Eine Gruppe ohne Fakten für das Gerät ist leer (`{}`). Die Vorschau zeigt
+    den genauen Text.
+  - Die Variablen werden in einem Durchgang ersetzt: Ein Platzhalter im
+    Gerätenamen wird nicht nochmals ersetzt.
+- Der Standard-Prompt bleibt unverändert und nutzt weiter `{facts}`.
+
 ## [1.6.0] - 2026-10-04
 
 Mehr Zusammenhang für die KI-Einschätzung: Raum, Funkstandard, Hub und mehr.
@@ -1204,6 +1227,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.7.0
 [1.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.6.0
 [1.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.5.0
 [1.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.4.0

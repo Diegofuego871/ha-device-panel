@@ -22,7 +22,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
-from .ai_prompt import DEFAULT_PROMPT, render_prompt
+from .ai_prompt import DEFAULT_PROMPT, GROUP_PLACEHOLDERS, render_prompt
 from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK, SIGNAL_OFF, SIGNAL_WEAK_DBM, SIGNAL_WEAK_LQI
 from .battery_history import async_battery_history, battery_entity
 from .devices import async_list_devices, device_battery_threshold
@@ -272,10 +272,16 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float, extr
 def build_instructions(facts: dict[str, Any], language: str, template: str = "") -> str:
     """
     Anweisung an die KI: die Vorlage (eigener Prompt oder Standard) mit der
-    Sprache der Antwort und den Fakten als JSON.
+    Sprache der Antwort und den Fakten als JSON, alle in {facts} oder nur die
+    Gruppen, die die Vorlage nennt ({facts_area} usw., seit 1.7.0).
     """
     lang = LANGUAGES.get(language, LANGUAGES["en"])
-    return render_prompt(template or DEFAULT_PROMPT, json.dumps(facts, ensure_ascii=False, indent=1), lang)
+
+    def dump(data: dict[str, Any]) -> str:
+        return json.dumps(data, ensure_ascii=False, indent=1)
+
+    groups = {name: dump({k: facts[k] for k in keys if k in facts}) for name, keys in GROUP_PLACEHOLDERS.items()}
+    return render_prompt(template or DEFAULT_PROMPT, dump(facts), lang, groups)
 
 
 def split_answer(text: str) -> tuple[str, str]:

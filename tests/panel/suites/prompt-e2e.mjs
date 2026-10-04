@@ -14,12 +14,12 @@ const MINE = "Kurz auf {language}.\n{facts}";
 const TEXT = {
   de: {
     expert: "Profi-Modus", def: "Standard", own: "Eigener", copied: "Kopiert", sub: "Standard", subOwn: "Eigener Prompt statt Standard", lang: "German",
-    errFacts: "Der Prompt braucht {facts}, sonst bekommt die KI keine Angaben zum Gerät.", errUnknown: "Unbekannter Platzhalter {name}. Erlaubt sind {language} und {facts}.",
+    errFacts: "Der Prompt braucht {facts} oder mindestens eine Gruppe wie {facts_device}, sonst bekommt die KI keine Angaben zum Gerät.", errUnknown: "Unbekannter Platzhalter {name}. Erlaubt sind {language}, {facts} und die Gruppen {facts_device}, {facts_history}, {facts_battery}, {facts_signal}, {facts_integration}, {facts_area}, {facts_hub}, {facts_model}.", hint: "{facts} enthält alles. Statt {facts} lassen sich einzelne Gruppen einsetzen, um Umfang und Reihenfolge selbst zu bestimmen.", areaInfo: "Bereich: Geräte im selben Raum, gleicher Funkstandard",
     sumOwn: "Aus · Eigener Prompt", tabs: "Bearbeiten|Vorschau", count: (n) => `${n} von 4000 Zeichen`, change: "1 Änderung",
   },
   en: {
     expert: "Expert mode", def: "Default", own: "Own", copied: "Copied", sub: "Default", subOwn: "Own prompt instead of the default", lang: "English",
-    errFacts: "The prompt needs {facts}, otherwise the AI gets no details about the device.", errUnknown: "Unknown placeholder {name}. Allowed are {language} and {facts}.",
+    errFacts: "The prompt needs {facts} or at least one group such as {facts_device}, otherwise the AI gets no details about the device.", errUnknown: "Unknown placeholder {name}. Allowed are {language}, {facts} and the groups {facts_device}, {facts_history}, {facts_battery}, {facts_signal}, {facts_integration}, {facts_area}, {facts_hub}, {facts_model}.", hint: "{facts} contains everything. Instead of {facts} you can insert single groups to choose scope and order yourself.", areaInfo: "Area: devices in the same room, same radio standard",
     sumOwn: "Off · Own prompt", tabs: "Edit|Preview", count: (n) => `${n} of 4000 characters`, change: "1 change",
   },
 };
@@ -85,12 +85,23 @@ for (const lang of ["de", "en"]) {
     await ev(`const a=r.querySelector(".pr-text"); a.focus(); a.setSelectionRange(7, 7)`);
     await tap('[data-prompt="insert"][data-key="{facts}"]');
     check(`[${tag}] Chip {facts} an der Cursor-Stelle, Fehler weg`, (await ev(`return r.querySelector(".pr-text").value`)) === "Vorher {facts} nachher" && (await ev(`return r.querySelector("[data-prompt-error]").hidden && !r.querySelector('[data-prompt="apply"]').disabled`)));
+    // Gruppen der Fakten (1.7.0): zehn Chips mit Erklärung, Gruppe allein genügt
+    const chips = await ev(`return [...r.querySelectorAll('[data-prompt="insert"]')].map(c=>c.dataset.key)`);
+    check(`[${tag}] zehn Chips: {language}, {facts} und acht Gruppen`, JSON.stringify(chips) === JSON.stringify(["{language}", "{facts}", ...["device", "history", "battery", "signal", "integration", "area", "hub", "model"].map((g) => `{facts_${g}}`)]), JSON.stringify(chips));
+    check(`[${tag}] Chip mit Erklärung (Tooltip) und Hinweis`, (await ev(`return r.querySelector('[data-prompt="insert"][data-key="{facts_area}"]').title`)) === T.areaInfo && (await text("dialog.prompt-dlg .opt-short")) === T.hint, await text("dialog.prompt-dlg .opt-short"));
+    await setText("Auf {language}.\n{facts_device}\n{facts_area}");
+    check(`[${tag}] nur Gruppen: gültig`, await ev(`return r.querySelector("[data-prompt-error]").hidden && !r.querySelector('[data-prompt="apply"]').disabled`));
+    await setText("{facts_foo}");
+    check(`[${tag}] unbekannte Gruppe: Fehler`, (await text("[data-prompt-error]")) === T.errUnknown.replace("{name}", "{facts_foo}"), await text("[data-prompt-error]"));
+    await setText("Vorher {facts_hub} und {facts}");
+    check(`[${tag}] Gruppen und {facts} zusammen: gültig`, await ev(`return !r.querySelector('[data-prompt="apply"]').disabled`));
     await setText(MINE);
     check(`[${tag}] eigener Prompt: Unterzeile "${T.subOwn}"`, (await text("dialog.prompt-dlg [data-prompt-sub]")) === T.subOwn && (await text("[data-prompt-count]")) === T.count(MINE.length));
 
     // Vorschau mit den Fakten eines Geräts
     await tap('dialog.prompt-dlg [data-prompt="tab"][data-key="preview"]');
     check(`[${tag}] Vorschau: Text mit Sprache und Gerät, ohne Platzhalter`, await wait(`const t=r.querySelector("dialog.prompt-dlg .aip-box.ro")?.textContent||""; return t.startsWith("Kurz auf ${T.lang}") && t.includes('"name"') && !t.includes("{facts}") && !t.includes("{language}")`), await text("dialog.prompt-dlg .aip-box"));
+    check(`[${tag}] Vorschau ersetzt auch Gruppen (device mit Werten, übrige leer)`, await wait(`const t=r.querySelector("dialog.prompt-dlg .aip-box.ro")?.textContent||""; return !/\\{facts_[a-z]+\\}/.test(t)`));
     const dev1 = await ev(`return r.querySelector("[data-prompt-dev]").value`);
     const other = await ev(`return [...r.querySelectorAll("[data-prompt-dev] option")].map(o=>o.value).find(v=>v!==${JSON.stringify(dev1)})`);
     await ev(`const s=r.querySelector("[data-prompt-dev]"); s.value=${JSON.stringify(other)}; s.dispatchEvent(new Event("change", { bubbles: true }))`);

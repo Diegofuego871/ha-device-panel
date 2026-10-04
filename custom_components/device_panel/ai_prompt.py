@@ -3,10 +3,12 @@ Prompt der KI-Einschätzung (seit 1.2.0, docs/mockups/ai-v1, A).
 
 Der Standard steht hier; im Profi-Modus der Einstellungen kann der Nutzer ihn
 kopieren und ändern (Option ai_prompt, leer = Standard). Der Prompt ist eine
-Vorlage mit genau zwei Platzhaltern: {language} (Sprache der Antwort) und
-{facts} (die Fakten eines Geräts als JSON, siehe ai_assessment.build_facts).
-Ein eigener Prompt kann keine weiteren Daten anfordern; es gehen immer nur
-die Fakten raus. Ohne HA-Abhängigkeiten, damit options_api ihn prüfen kann.
+Vorlage mit den Platzhaltern {language} (Sprache der Antwort), {facts} (alle
+Fakten eines Geräts als JSON, siehe ai_assessment.build_facts) und seit 1.7.0
+den Gruppen {facts_device}, {facts_history}, {facts_battery}, {facts_signal},
+{facts_integration}, {facts_area}, {facts_hub} und {facts_model} (je ein Teil
+der Fakten). Ein eigener Prompt kann keine weiteren Daten anfordern; es gehen
+immer nur die Fakten raus. Ohne HA-Abhängigkeiten, damit options_api ihn prüfen kann.
 """
 
 from __future__ import annotations
@@ -20,7 +22,25 @@ from .const import AI_PROMPT_MAX
 
 PLACEHOLDER_LANGUAGE = "{language}"
 PLACEHOLDER_FACTS = "{facts}"
-PLACEHOLDERS = (PLACEHOLDER_LANGUAGE, PLACEHOLDER_FACTS)
+
+# Gruppen der Fakten (seit 1.7.0, Wunsch des Nutzers): Wer {facts} nicht
+# verwendet, setzt nur die gewünschten Gruppen ein. Jeder Fakt gehört zu genau
+# einer Gruppe (ein Test prüft, dass build_facts nichts ausserhalb erzeugt).
+FACT_GROUPS: dict[str, tuple[str, ...]] = {
+    "device": (
+        "name", "status", "type", "area", "integration", "manufacturer", "model", "software_version",
+        "connection_type", "connected_via", "update_available", "offline_for_minutes", "offline_start_is_lower_bound",
+    ),
+    "history": ("last_24h", "last_7d", "mass_outages_24h_involving_this_device"),
+    "battery": ("battery_powered", "battery_percent", "battery_low", "battery_forecast"),
+    "signal": ("signal",),
+    "integration": ("same_integration_other_devices", "same_integration_offline_devices"),
+    "area": ("same_area_other_devices", "same_area_same_connection", "same_area_devices"),
+    "hub": ("hub_online", "same_hub_other_devices", "same_hub_offline_devices"),
+    "model": ("same_model_other_devices",),
+}
+GROUP_PLACEHOLDERS = {f"{{facts_{name}}}": keys for name, keys in FACT_GROUPS.items()}
+PLACEHOLDERS = (PLACEHOLDER_LANGUAGE, PLACEHOLDER_FACTS, *GROUP_PLACEHOLDERS)
 
 # Seit 1.4.0 (vom Nutzer im Profi-Modus getestet): Regeln gegen Anweisungen
 # in den Daten, Bedeutung der Fakten, Reihenfolge der Ursachen und eine
@@ -90,11 +110,12 @@ def prompt_problem(text: str) -> str | None:
     """Warum ein Prompt nicht geht: "too_long", "no_facts" oder "unknown:{name}"; sonst None."""
     if len(text) > AI_PROMPT_MAX:
         return "too_long"
-    if PLACEHOLDER_FACTS not in text:
-        return "no_facts"
     for found in _PLACEHOLDER_RE.findall(text):
         if found not in PLACEHOLDERS:
             return f"unknown:{found}"
+    # Mindestens {facts} oder eine Gruppe, sonst bekommt die KI keine Angaben.
+    if not any(p in text for p in PLACEHOLDERS if p != PLACEHOLDER_LANGUAGE):
+        return "no_facts"
     return None
 
 
@@ -113,7 +134,11 @@ def ai_prompt(value: Any) -> str:
     return text
 
 
-def render_prompt(template: str, facts_json: str, language: str) -> str:
-    """Platzhalter einzeln ersetzen (nicht str.format): Klammern im Text bleiben unberührt."""
-    # {language} zuerst, damit Klammern in den Fakten nicht mehr ersetzt werden.
-    return (template or DEFAULT_PROMPT).replace(PLACEHOLDER_LANGUAGE, language).replace(PLACEHOLDER_FACTS, facts_json)
+def render_prompt(template: str, facts_json: str, language: str, groups: dict[str, str] | None = None) -> str:
+    """
+    Platzhalter in einem Durchgang ersetzen (nicht str.format): Klammern im Text
+    bleiben unberührt, und Platzhalter, die in den Fakten stehen (etwa im
+    Gerätenamen), werden nicht nochmals ersetzt. groups: {"{facts_area}": json, ...}.
+    """
+    values = {PLACEHOLDER_LANGUAGE: language, PLACEHOLDER_FACTS: facts_json, **(groups or {})}
+    return _PLACEHOLDER_RE.sub(lambda m: values.get(m.group(0), m.group(0)), template or DEFAULT_PROMPT)
