@@ -101,21 +101,32 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Escape schliesst`, await wait(`return !r.querySelector("dialog.pulse-dlg").open`));
     }
 
-    // Farbe (0.34.0): rot, solange ein Gerät ausgefallen ist; sind alle wieder
-    // da, wird der Puls grün, die Höcker der Unterbrüche bleiben sichtbar.
-    const look = () => ev(`const c=r.querySelector(".hero .kt.pul .pchart"); return [c.classList.contains("calm"), getComputedStyle(c.querySelector(".line")).stroke, c.querySelector(".line").getAttribute("d").split("L").some((pt)=>Number(pt.split(",")[1])<70)]`);
-    const ok_ = await ev(`return getComputedStyle(r.host).getPropertyValue("--dp-success").trim()`);
-    const red = await look();
-    check(`[${tag}] Puls rot, solange Geräte ausgefallen sind`, red[0] === false && red[2] && await ev(`return r.host._devices.some(d=>!d.disabled && d.online===false)`), JSON.stringify(red));
-    await ev(`for (const d of r.host._devices) if (d.online === false) { d.online = true; d.offline_since = null; } r.host._render()`);
-    const green = await look();
-    const want = await ev(`const s=document.createElement("span"); s.style.color=${JSON.stringify(ok_)}; r.appendChild(s); const c=getComputedStyle(s).color; s.remove(); return c`);
-    check(`[${tag}] Puls grün, sobald alle wieder online sind, Höcker bleiben`, green[0] === true && green[1] === want && green[2], `${JSON.stringify(green)} / ${want}`);
+    // Farbe (0.34.1, Wunsch des Nutzers): abschnittweise; rot, solange die
+    // Kurve über 0 liegt (auch An- und Abstieg), grün nur, wo sie auf 0 liegt.
+    const colorOf = (v) => `const s=document.createElement("span"); s.style.color="var(${v})"; r.appendChild(s); const c=getComputedStyle(s).color; s.remove(); return c`;
+    const RED = await ev(colorOf("--dp-error"));
+    const GREEN = await ev(colorOf("--dp-success"));
+    // Feste Werte: 2,2,1,1,0,0,0 ergibt einen roten Lauf (bis zum ersten
+    // Nullpunkt) und einen grünen; Fläche nur unter dem roten.
+    const fixed = await ev(`const d=document.createElement("div"); d.innerHTML=r.host._pulseChartHtml([2,2,1,1,0,0,0], []); r.appendChild(d); const ls=[...d.querySelectorAll("path.line")]; const out={runs: ls.map(l=>l.classList.contains("off")?"off":"ok"), pts: ls.map(l=>l.getAttribute("d").split("L").length), colors: ls.map(l=>getComputedStyle(l).stroke), areas: d.querySelectorAll("path.area").length}; d.remove(); return out`);
+    check(`[${tag}] Puls: rot über 0, grün auf 0`, JSON.stringify(fixed.runs) === '["off","ok"]' && JSON.stringify(fixed.pts) === "[5,3]" && JSON.stringify(fixed.colors) === JSON.stringify([RED, GREEN]) && fixed.areas === 1, JSON.stringify(fixed));
+    const flat = await ev(`const d=document.createElement("div"); d.innerHTML=r.host._pulseChartHtml([0,0,0,0], []); r.appendChild(d); const out=[[...d.querySelectorAll("path.line")].map(l=>l.classList.contains("ok")).join(), d.querySelectorAll("path.area").length, d.querySelector(".pchart").classList.contains("quiet")]; d.remove(); return out`);
+    check(`[${tag}] Puls ohne Unterbrüche: ganz grün, ohne Fläche`, JSON.stringify(flat) === '["true",0,true]', JSON.stringify(flat));
+    // Echte Kurve in Kachel und Fenster: grüne Läufe liegen ganz auf 0, rote
+    // haben einen Punkt darüber; gerade fehlen Geräte, also endet sie rot.
+    const shape = (sel) => ev(`const c=r.querySelector(${JSON.stringify(sel)}); const base=c.querySelector("line.base"); const zero=(84-3).toFixed(1); return [...c.querySelectorAll("path.line")].map(l=>{const ys=l.getAttribute("d").replace("M","").split(" L").map(q=>q.split(",")[1]); return [l.classList.contains("off")?"off":"ok", ys.every(v=>v===zero), getComputedStyle(l).stroke]})`);
+    // In der Simulation fehlt den ganzen Tag mindestens ein Gerät: die Kurve
+    // erreicht 0 nie, also ein roter Lauf (gemischt: Test mit festen Werten).
+    const okShape = (runs) => runs.length >= 1 && runs.every(([k, z, c]) => (k === "ok" ? z && c === GREEN : !z && c === RED)) && runs.at(-1)[0] === "off";
+    const tileRuns = await shape(".hero .kt.pul .pchart");
+    check(`[${tag}] Kachel: Farbe folgt der Kurve, endet rot (Geräte fehlen)`, okShape(tileRuns), JSON.stringify(tileRuns));
     if (mobile) await toPulseTile();
     await tap(".hero .kt.pul");
-    check(`[${tag}] Puls im Fenster ebenfalls grün`, await wait(`return r.querySelector("dialog.pulse-dlg")?.open && r.querySelector("dialog.pulse-dlg .pchart").classList.contains("calm")`));
+    await wait(`return r.querySelector("dialog.pulse-dlg")?.open`);
+    const winRuns = await shape("dialog.pulse-dlg .pchart");
+    check(`[${tag}] Fenster: gleiche Farben wie die Kachel`, okShape(winRuns) && JSON.stringify(winRuns.map((x) => x[0])) === JSON.stringify(tileRuns.map((x) => x[0])), JSON.stringify(winRuns));
     await ev(`r.activeElement?.blur()`);
-    await p.screenshot({ path: `${outDir}/pulse-calm-${tag.replace("/", "-")}.png` });
+    await p.screenshot({ path: `${outDir}/pulse-colors-${tag.replace("/", "-")}.png` });
     await tap('dialog.pulse-dlg .dlg-actions [data-pulse-close]');
 
     // Kachel "Verfügbarkeit" (0.34.0, Variante B): Sind alle online, steht

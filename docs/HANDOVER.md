@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (0.34.0, Überwachung und Meldungen an einem Ort)
+## Stand (0.34.1, Überwachung und Meldungen an einem Ort)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -269,9 +269,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Detail), "Integrationen" nur noch "Anzeigen", Batterie-Push pro
    Integration, Inhalt der Batterie-Meldung wählbar, "Erst melden nach"
    nicht kürzer als "Ausgefallen nach" (0 entfällt, Speichern gesperrt,
-   alte Werte gelten als "Ausgefallen nach"). Puls grün, sobald kein Gerät
-   mehr ausgefallen ist (Rückfrage des Nutzers). Der Nutzer hat weitere
-   Punkte angekündigt.
+   alte Werte gelten als "Ausgefallen nach"). Der Nutzer hat weitere
+   Punkte angekündigt. `0.34.1` (Wunsch des Nutzers): Puls abschnittweise
+   gefärbt, rot über 0, grün nur auf 0 (0.34.0 färbte die ganze Kurve grün,
+   sobald gerade niemand fehlte).
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem

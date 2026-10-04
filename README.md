@@ -15,8 +15,7 @@ details such as software version, manufacturer, model and area.
   devices are offline right now and
   for how long, and an outage pulse over 24 hours that points out group
   outages (several devices at once, with the shared integration).
-  The pulse is red while a device is offline and green again once all are
-  back; the bumps of past outages stay visible.
+  The pulse is red where devices were offline and green where none were.
   Tapping the pulse opens the devices with outages in 24 hours, most
   first; a point in the pulse shows only the devices that were offline
   then.

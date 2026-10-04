@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.34.1] - 2026-10-04
+
+The pulse is red where it is above zero and green only where it is zero.
+
+### Fixed
+
+- Pulse at the top and in the window "Outages in 24 h": the line is now
+  coloured section by section (requested by the user): red as long as the
+  curve is above zero, including the rise and the drop, green only where
+  it is zero; the red area only under the red sections. 0.34.0 turned the
+  whole curve green as soon as no device was offline right now, so the
+  bumps of past outages were green as well.
+
 ## [0.34.0] - 2026-10-04
 
 Monitoring and notifications in one place, with a timeline per notification.
@@ -966,6 +979,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[0.34.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.1
 [0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0
 [0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1
 [0.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.0

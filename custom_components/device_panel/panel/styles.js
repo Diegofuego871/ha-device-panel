@@ -112,9 +112,8 @@ button { font: inherit; color: inherit; }
 .pchart .base { stroke: var(--dp-divider); stroke-width: 1; }
 .pchart .area { fill: var(--dp-error-soft); }
 .pchart .line { fill: none; stroke: var(--dp-error); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-.pchart.quiet .line, .pchart.calm .line { stroke: var(--dp-success); }
-.pchart.calm .area { fill: var(--dp-success-soft); }
-.pchart.quiet .area { fill: none; }
+/* Grün nur, wo die Kurve auf 0 liegt (seit 0.34.1). */
+.pchart .line.ok { stroke: var(--dp-success); }
 .pchart .imark { position: absolute; top: -4px; bottom: 0; width: 0; border-left: 1.5px dashed var(--dp-error); }
 .pchart .imark::before { content: ""; position: absolute; top: -3px; left: -5px; width: 8px; height: 8px; border-radius: 50%;
   background: var(--dp-error); box-shadow: 0 0 0 3px var(--dp-error-soft); }
@@ -135,7 +134,6 @@ button { font: inherit; color: inherit; }
 .pwin .pchart { height: 130px; }
 .phit { fill: transparent; cursor: pointer; }
 .phit:hover, .phit.sel { fill: color-mix(in srgb, var(--dp-error) 16%, transparent); }
-.pchart.calm .phit:hover, .pchart.calm .phit.sel { fill: color-mix(in srgb, var(--dp-success) 18%, transparent); }
 .ppick { margin: 6px 0 2px; }
 .ppick .chip { max-width: 100%; }
 .plist { border-top: 1px solid var(--dp-divider); }

@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [0.34.1] - 2026-10-04
+
+Der Puls ist rot, wo er über null liegt, und grün nur, wo er auf null liegt.
+
+### Behoben
+
+- Puls oben und im Fenster "Unterbrüche in 24 Std.": Die Linie ist jetzt
+  abschnittweise gefärbt (Wunsch des Nutzers): rot, solange die Kurve über
+  null liegt, auch An- und Abstieg, grün nur, wo sie auf null liegt; die
+  rote Fläche nur unter den roten Abschnitten. 0.34.0 färbte die ganze
+  Kurve grün, sobald gerade kein Gerät ausgefallen war, also auch die
+  Höcker vergangener Unterbrüche.
+
 ## [0.34.0] - 2026-10-04
 
 Überwachung und Meldungen an einem Ort, mit Zeitstrahl je Meldung.
@@ -1006,6 +1019,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[0.34.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.1
 [0.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.34.0
 [0.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.1
 [0.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v0.33.0

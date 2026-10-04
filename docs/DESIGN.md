@@ -212,11 +212,14 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Aufheben), darunter die Geräte als Zeilen (Symbol, Name, "ausgefallen"
   als kleine rote Pille, Bereich · Integration; rechts Anzahl fett, Dauer
   und Streifen über 24 Std.).
-- Farbe des Pulses (seit 0.34.0, Wunsch des Nutzers): rot (`--dp-error`,
-  Fläche `--dp-error-soft`), solange im Kopf ein Gerät ausgefallen ist;
-  sonst grün (`.pchart.calm`: Linie `--dp-success`, Fläche
-  `--dp-success-soft`), Höcker bleiben. Ohne Unterbrüche flache grüne
-  Linie ohne Fläche (`.quiet`). Kachel und Fenster gleich.
+- Farbe des Pulses (seit 0.34.1, Wunsch des Nutzers): abschnittweise.
+  Rot (`path.line.off`, `--dp-error`, Fläche `--dp-error-soft` nur darunter),
+  wo die Kurve über 0 liegt, auch An- und Abstieg; grün (`path.line.ok`,
+  `--dp-success`, ohne Fläche) nur zwischen zwei Nullpunkten. Eigene Pfade
+  je Lauf statt `linearGradient` (`url(#id)` im Shadow DOM auf älteren
+  WebViews unzuverlässig). Ohne Unterbrüche flache grüne Linie (`.quiet`).
+  Kachel und Fenster gleich. 0.34.0 färbte die ganze Kurve grün, sobald
+  gerade niemand fehlte (verworfen: Höcker wurden grün).
 - Fixierter Kopf auf Handy und Desktop (seit 0.28.0, `docs/mockups/fixed-v1/`,
   C, Wunsch des Nutzers: nur die Liste scrollt, in beiden Ansichten): Sind
   die Kacheln unter der Zeile weggescrollt, steht oben eine Zeile (44 px,

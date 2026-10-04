@@ -1857,17 +1857,34 @@ class DevicePanel extends HTMLElement {
 
   // Puls als Kurve mit Ticks; in der Kachel mit Tooltips, im Fenster (tap)
   // mit antippbaren Abschnitten (sel = gewählter Abschnitt).
-  // calm: gerade ist kein Gerät ausgefallen. Dann grün (seit 0.34.0, Wunsch
-  // des Nutzers: "wieder grün, dass man das sieht"); die Höcker der
-  // vergangenen Unterbrüche bleiben sichtbar. Rot nur, solange etwas fehlt.
-  _pulseChartHtml(p, incidents, tap = false, sel = null, calm = false) {
+  // Farbe abschnittweise (seit 0.34.1, Wunsch des Nutzers): rot, solange die
+  // Kurve über 0 liegt (auch An- und Abstieg), grün nur, wo sie auf 0 liegt.
+  // 0.34.0 färbte die ganze Kurve grün, sobald gerade niemand fehlte; dann
+  // waren auch die Höcker grün. Eigene Pfade statt Verlauf (linearGradient):
+  // url(#id) im Shadow DOM ist auf älteren WebViews unzuverlässig.
+  _pulseChartHtml(p, incidents, tap = false, sel = null) {
     const n = p.length;
     const max = Math.max(...p);
     const W = 480;
     const H = 84;
     const x = (i) => (((i + 0.5) / n) * W).toFixed(1);
     const y = (v) => (H - 3 - (max ? (v / max) * (H - 12) : 0)).toFixed(1);
-    const line = `M${p.map((v, i) => `${x(i)},${y(v)}`).join(" L")}`;
+    const pt = (i) => `${x(i)},${y(p[i])}`;
+    // Läufe gleicher Farbe: Strecke i..i+1 ist rot, wenn ein Ende über 0 liegt.
+    const runs = [];
+    for (let i = 0; i < n - 1; i++) {
+      const off = p[i] > 0 || p[i + 1] > 0;
+      const last = runs[runs.length - 1];
+      if (last && last.off === off) last.to = i + 1;
+      else runs.push({ off, from: i, to: i + 1 });
+    }
+    if (n === 1) runs.push({ off: p[0] > 0, from: 0, to: 0 });
+    const path = (r) => `M${Array.from({ length: r.to - r.from + 1 }, (_, k) => pt(r.from + k)).join(" L")}`;
+    const areas = runs
+      .filter((r) => r.off)
+      .map((r) => `<path class="area" d="${path(r)} L${x(r.to)},${H} L${x(r.from)},${H} Z"/>`)
+      .join("");
+    const lines = runs.map((r) => `<path class="line ${r.off ? "off" : "ok"}" d="${path(r)}" vector-effect="non-scaling-stroke"/>`).join("");
     // Auf die Minute abgerundet: Mit der Sekunde der Abfrage änderte sich der
     // Text der Achse alle 10 s, setHtml ersetzte die ganze Kachelreihe, und ein
     // Tipp genau dabei ging verloren (Fenster öffnete sich nicht).
@@ -1890,10 +1907,9 @@ class DevicePanel extends HTMLElement {
     const ticks = this._ticks(start, end, "24h")
       .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
       .join("");
-    return `<div class="pchart${max ? (calm ? " calm" : "") : " quiet"}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="${tap ? "false" : "true"}">
+    return `<div class="pchart${max ? "" : " quiet"}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="${tap ? "false" : "true"}">
         <line class="base" x1="0" x2="${W}" y1="${H - 0.5}" y2="${H - 0.5}" vector-effect="non-scaling-stroke"/>
-        <path class="area" d="${line} L${x(n - 1)},${H} L${x(0)},${H} Z"/>
-        <path class="line" d="${line}" vector-effect="non-scaling-stroke"/>${hits}</svg>${marks}</div>
+        ${areas}${lines}${hits}</svg>${marks}</div>
       <div class="pticks">${ticks}<span class="now-label">${escape(this._t("now"))}</span></div>`;
   }
 
@@ -1919,7 +1935,7 @@ class DevicePanel extends HTMLElement {
     // (seit 0.26.0, docs/mockups/pulse-v1, A).
     const open = affected ? ` tap" data-pulse-open role="button" tabindex="0" aria-label="${escape(this._t("pulseOpen"))}` : "";
     return `<div class="kt pul${open}"><div class="k">${mdi("pulse", 16)}${escape(this._t("pulseTitle"))}${this._scopeHtml()}${affected ? `<span class="kchev">${mdi("chevron", 16)}</span>` : ""}</div>
-      ${this._pulseChartHtml(p, incidents, false, null, !all.some((d) => d.online === false))}${note}</div>`;
+      ${this._pulseChartHtml(p, incidents)}${note}</div>`;
   }
 
   // Geräte im Kopf: mit Filter "Bereich" nur dessen, überwacht (nicht deaktiviert).
@@ -1990,7 +2006,7 @@ class DevicePanel extends HTMLElement {
     const html = `<div class="dlg-head stat-head"><span class="dlg-avatar">${mdi("pulse", 24)}</span>
         <div class="dlg-title"><h2>${escape(t("pulseWinTitle"))}</h2><div class="dlg-sub">${escape(sub + scope)}</div></div>
         <button type="button" class="dlg-close" data-pulse-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
-      <div class="dlg-body"><div class="avail pwin">${this._pulseChartHtml(p, incidents, true, at, !head.some((d) => d.online === false))}</div>
+      <div class="dlg-body"><div class="avail pwin">${this._pulseChartHtml(p, incidents, true, at)}</div>
         <p class="dlg-note small">${escape(t("pulseWinHint"))}</p>${pick}
         <h3>${escape(t("pulseWinList"))}</h3>${rows ? `<div class="plist">${rows}</div>` : `<p class="dlg-note">${escape(t("pulseNone"))}</p>`}</div>
       <div class="dlg-actions"><button type="button" class="dlg-btn" data-pulse-close>${escape(t("close"))}</button></div>`;

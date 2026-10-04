@@ -16,9 +16,7 @@ Bereich.
   Geräte gerade ausgefallen sind und seit
   wann, und ein Ausfall-Puls über 24 Stunden, der auf Sammelausfälle
   hinweist (mehrere Geräte gleichzeitig, mit gemeinsamer Integration).
-  Der Puls ist rot, solange ein Gerät ausgefallen ist, und wieder grün,
-  sobald alle zurück sind; die Höcker vergangener Unterbrüche bleiben
-  sichtbar.
+  Der Puls ist rot, wo Geräte weg waren, und grün, wo keines fehlte.
   Ein Tipp auf den Puls öffnet die Geräte mit Unterbrüchen in 24 Stunden,
   meiste zuerst; ein Zeitpunkt im Puls zeigt nur die Geräte, die dann weg
   waren.
