@@ -157,6 +157,14 @@ hat dort einen echten Fehler oder Umweg gekostet.
   (`disabled` → `disabled=""`). Vergleich immer mit dem zuletzt gesetzten
   String (`setHtml`-Helfer mit WeakMap). Sonst wird bei jedem `hass`-Update
   neu aufgebaut, Klicks gehen verloren, Dropdowns schliessen.
+- **Zurück von einer HA-Seite:** Die Geräteseite von HA hat keinen festen
+  Rücksprung; ihr Pfeil ruft `goBack()` (`history.back()`, wenn mehr als ein
+  Eintrag da ist). Links ins Frontend von HA deshalb als `pushState` im
+  Elternfenster (`_navigate`) und mit `?historyBack=1`, HAs eigenem Merker
+  ("geh im Verlauf zurück statt zur festen Seite"); ältere Versionen
+  ignorieren ihn. In HA 2026.2.3 geht der Pfeil schon ohne ihn zurück ins
+  Panel; Meldung eines Nutzers der Companion-App (Pfeil führte in die
+  Geräteliste) ist ungeprüft. Im Test: `window.__nav` im Simulator.
 - **`hass`-Setter wird sehr oft aufgerufen** (jede Zustandsänderung in HA).
   Dort nur günstige, idempotente Arbeit.
 - **Abruf:** nie zwei gleichzeitig (ältere Antwort überschreibt neuere),

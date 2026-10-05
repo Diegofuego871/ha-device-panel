@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.12.0, Einstellungen in fünf Abschnitten)
+## Stand (1.12.1, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -362,6 +362,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    (`view.flat`) steht nicht mehr in der Chip-Zeile (`_flatSegHtml` entfernt),
    sondern zuoberst im Dialog `cols-dlg` (Desktop) und weiter im Blatt "Ansicht"
    (Handy); `_vseg()` teilen beide; "Standard wiederherstellen" setzt auch `flat`.
+   Zurück von der HA-Geräteseite `1.12.1` (Nutzer, 2026-10-05; Companion-App,
+   Pfeil oben links landete in der HA-Geräteliste): `_haDevicePath()` hängt
+   `?historyBack=1` an (HAs eigener Merker, wie bei den Listen im Frontend). Im
+   Test-HA 2026.2.3 ging der Pfeil auch ohne den Merker zurück ins Panel
+   (`goBack()` = `history.back()`), die Ursache beim Nutzer ist ungeprüft;
+   hilft der Merker nicht, nach der HA-Version fragen.
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem

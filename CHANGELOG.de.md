@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.12.1] - 2026-10-05
+
+Zurück von der Geräteseite von Home Assistant.
+
+### Behoben
+
+- "HA-Geräteseite öffnen" (Geräte-Popup und der Link zum HACS-Gerät in den
+  Einstellungen) öffnet die Seite jetzt mit dem eigenen Merker
+  `historyBack=1` von Home Assistant (Meldung des Nutzers: der Pfeil oben
+  links auf der Geräteseite führte in der Companion-App zur Geräteliste von
+  Home Assistant statt zurück ins Panel). Mit dem Merker geht Home Assistant
+  im Verlauf zurück, also ins Panel, statt zu einer festen Seite. Versionen
+  von Home Assistant, die den Merker nicht kennen, ignorieren ihn; dort geht
+  der Pfeil schon im Verlauf zurück.
+
 ## [1.12.0] - 2026-10-04
 
 "Gruppen | Liste" wandert in den Dialog "Anpassen".
@@ -1342,6 +1357,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.12.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.1
 [1.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.0
 [1.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.11.0
 [1.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.10.0

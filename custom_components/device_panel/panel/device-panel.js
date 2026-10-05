@@ -3006,7 +3006,7 @@ class DevicePanel extends HTMLElement {
     else if (action === "open-device") {
       const id = this._detailId;
       this._closeDevice();
-      this._navigate(`/config/devices/device/${id}`);
+      this._navigate(this._haDevicePath(id));
     } else if (action === "stat") this._openStat(btn.dataset.range, btn.dataset.kind);
     else if (action === "more-info") this._openMoreInfo(btn.dataset.entity);
     else if (action === "hide") this._hideDevice(this._detailId);
@@ -3085,6 +3085,14 @@ class DevicePanel extends HTMLElement {
       this._toast(`${this._t("unhideError")} ${errText(err)}`);
     }
     this._fetch(true);
+  }
+
+  // Geräteseite von HA. "historyBack=1" ist HAs eigener Merker (wie bei den
+  // Listen und beim Link der Geräteseite zu den Entitäten): "Du kommst von
+  // woanders, der Pfeil oben links geht im Verlauf zurück" statt zu einer
+  // festen Seite wie der Geräteliste. Ältere Versionen ignorieren ihn.
+  _haDevicePath(id) {
+    return `/config/devices/device/${id}?historyBack=1`;
   }
 
   // Navigation gehört ins Elternfenster (Home Assistant selbst): im iframe
@@ -5479,7 +5487,7 @@ class DevicePanel extends HTMLElement {
       const sw = this._hacsPreReleaseSwitch();
       if (sw && sw.deviceId) {
         this._closeSettings();
-        this._navigate(`/config/devices/device/${sw.deviceId}`);
+        this._navigate(this._haDevicePath(sw.deviceId));
       }
     } else if (action === "check") {
       await this._loadVersion(true);

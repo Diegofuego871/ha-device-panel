@@ -499,7 +499,7 @@
   window.__wsCalls = [];
   window.__nav = [];
   window.__moreInfo = [];
-  window.addEventListener("location-changed", () => window.__nav.push(location.pathname));
+  window.addEventListener("location-changed", () => window.__nav.push(location.pathname + location.search));
   document.querySelector("home-assistant").addEventListener("hass-more-info", (ev) => window.__moreInfo.push(ev.detail.entityId));
   // Sprache der HA-Oberfläche über ?lang=… (Standard Deutsch); HA setzt
   // sie an beiden Stellen, das Panel liest zuerst locale.language.

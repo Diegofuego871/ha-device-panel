@@ -7,6 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.12.1] - 2026-10-05
+
+Back from the Home Assistant device page.
+
+### Fixed
+
+- "Open HA device page" (device pop-up, and the link to the HACS device in
+  the settings) now opens the page with Home Assistant's own marker
+  `historyBack=1` (reported by the user: the arrow at the top left of the
+  device page led to the device list of Home Assistant instead of back to
+  the panel, in the companion app). With the marker Home Assistant goes back
+  in the history, to the panel, instead of to a fixed page. Versions of Home
+  Assistant that do not know the marker ignore it; there the arrow already
+  goes back in the history.
+
 ## [1.12.0] - 2026-10-04
 
 "Groups | List" moves into the customize dialog.
@@ -1291,6 +1306,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.12.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.1
 [1.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.0
 [1.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.11.0
 [1.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.10.0
