@@ -83,7 +83,7 @@
           "show_disabled_devices": "In their own group at the end of the list. They are not monitored.",
           "hide_chips": "Hides single chips above the list: area, integration, \"Problems only\", battery, low battery, weak signal, update available, own setting, new. The devices stay visible; an active filter of a hidden chip is cleared. \"All\" always stays. Applies to all users.",
           "hide_connections": "Only the chips above the list; the devices stay visible. \"All\", \"Problems only\" and the hints always stay. Applies to all users.",
-          "connection_order": "In the order of selection; types not chosen follow by number of devices. Empty = by number of devices. In the panel, drag by the handle.",
+          "connection_order": "Starting order of the connection type chips, in the order of selection; types not chosen follow by number of devices. Empty = by number of devices. Applies until chips are dragged in the panel (Settings › Display › Filter chips), which stores the order of all chips.",
           "connection_integrations": "Integration → connection type, one per line, e.g. \"hue: zigbee\". Applies to all devices of the integration instead of the detection; a connection type set by hand on the device comes first. Types: zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud.",
           "ai_assessment": "Without this switch the pop-up has no button. Only on a button press the panel sends name, area and values of that one device (no keys, no credentials) to the AI task; depending on the provider they leave your network.",
           "ai_task_entity": "Optional. Leave empty to use the default AI task of Home Assistant (Settings → System → General).",

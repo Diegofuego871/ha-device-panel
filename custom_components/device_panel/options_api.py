@@ -62,6 +62,7 @@ from .const import (
     CONNECTION_MANUAL,
     CHIP_KEYS,
     CHIP_ORDER_KEYS,
+    CHIP_ORDER_LEGACY_BLOCK,
     CONNECTION_TYPES,
     CONF_FLAKY_OUTAGES,
     CONF_NOTIFY_CLICK,
@@ -189,6 +190,21 @@ def connection_order(value: Any) -> list[str]:
     if not isinstance(value, list) or not all(v in CONNECTION_TYPES for v in value):
         raise vol.Invalid("Liste von Verbindungsarten erwartet")
     return list(dict.fromkeys(value))
+
+
+def _stored_chip_order(stored: Any, connection_order: list[str]) -> list[str]:
+    """
+    Gespeicherte Chip-Folge lesen. Der Block "connections" aus 1.13.0 wird zu
+    "all" und den Verbindungsarten in ihrer eigenen Folge (connection_order);
+    Verbindungsarten ohne Platz ordnet das Panel hinter der letzten ein.
+    """
+    out: list[str] = []
+    for key in stored if isinstance(stored, list) else []:
+        if key == CHIP_ORDER_LEGACY_BLOCK:
+            out.extend(["all", *connection_order])
+        elif key in CHIP_ORDER_KEYS:
+            out.append(key)
+    return list(dict.fromkeys(out))
 
 
 def chip_order(value: Any) -> list[str]:
@@ -350,7 +366,7 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_HIDE_CONNECTIONS] = sorted({c for c in options.get(CONF_HIDE_CONNECTIONS) or [] if c in CONNECTION_TYPES})
     # Reihenfolge bleibt, wie gespeichert (nicht sortieren); Unbekanntes fällt weg.
     values[CONF_CONNECTION_ORDER] = list(dict.fromkeys(c for c in options.get(CONF_CONNECTION_ORDER) or [] if c in CONNECTION_TYPES))
-    values[CONF_CHIP_ORDER] = list(dict.fromkeys(c for c in options.get(CONF_CHIP_ORDER) or [] if c in CHIP_ORDER_KEYS))
+    values[CONF_CHIP_ORDER] = _stored_chip_order(options.get(CONF_CHIP_ORDER), values[CONF_CONNECTION_ORDER])
     try:
         values[CONF_CONNECTION_INTEGRATIONS] = connection_map(options.get(CONF_CONNECTION_INTEGRATIONS))
     except vol.Invalid:

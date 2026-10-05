@@ -7,6 +7,42 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.14.0] - 2026-10-05
+
+Eine Liste für alle Filter-Chips.
+
+### Hinzugefügt
+
+- Einstellungen › Darstellung › Filter-Chips: Über der Liste zeigt eine
+  Vorschau "So sieht die Leiste aus" die Chips in der eingestellten Reihenfolge,
+  ausgeblendete und nicht zutreffende fehlen wie in der echten Leiste. Sie geht
+  bei jeder Änderung mit.
+- Feine Trenner in der Leiste zwischen zwei Chips verschiedener Art:
+  Auswahlfenster (Bereich, Integration), "Alle" mit den Verbindungsarten (genau
+  eine aktiv) und "Nur Probleme" mit den Hinweisen. In der Standardfolge stehen
+  sie dort, wo sie immer standen.
+
+### Geändert
+
+- Die Reihenfolge aller Chips ist eine Liste (Wunsch des Nutzers, Mockups
+  `docs/mockups/chip-order-v3/`, D2). "Alle" ist eine eigene Zeile mit Schloss
+  ("fest"): Sie lässt sich verschieben, aber nicht ausschalten. Jede
+  Verbindungsart ist eine eigene Zeile mit Schalter und Griff, Zigbee kann also
+  auch zwischen zwei Hinweisen stehen. Von oben nach unten ist von links nach
+  rechts. Vorher war "Verbindungsarten" ein Block, und die Verbindungsarten
+  hatten darunter eine zweite Liste.
+  - Die zweite Liste "Verbindungsart" und der Knopf "Nach Anzahl sortieren"
+    entfallen. "Standardreihenfolge" setzt alles zurück (Bereich, Integration,
+    Alle, Verbindungsarten nach Anzahl der Geräte, dann "Nur Probleme" und die
+    Hinweise).
+  - "Alle umschalten" schaltet alle Chips, auch die Verbindungsarten.
+  - Verbindungsarten mit gleich vielen Geräten stehen jetzt in fester Folge statt
+    in der Folge der Geräte.
+  - Bestehende Einstellungen bleiben erhalten: Der Block aus 1.13.0 und die
+    Reihenfolge der Verbindungsarten werden zu einer Folge. Im Optionsdialog von
+    Home Assistant ist "Reihenfolge der Chips der Verbindungsart" jetzt nur noch
+    die Ausgangsfolge, bis im Panel Chips gezogen werden.
+
 ## [1.13.1] - 2026-10-05
 
 Update-Kasten nach einem Neustart von Home Assistant.
@@ -1421,6 +1457,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.14.0
 [1.13.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.1
 [1.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.0
 [1.12.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.2

@@ -13,14 +13,14 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const KEYS = ["area", "integration", "problems", "batteries", "battery", "signal", "update", "override", "new"];
 const TEXT = {
   de: {
-    title: "Weitere Chips", conn: "Verbindungsart", area: "Bereich", integ: "Integration", problems: "Nur Probleme", signal: "Schwacher Empfang", neu: "Neu", overrideLabel: "Eigene Einstellung",
+    title: "Filter-Chips", conn: "Verbindungsart", area: "Bereich", integ: "Integration", problems: "Nur Probleme", signal: "Schwacher Empfang", neu: "Neu", overrideLabel: "Eigene Einstellung",
     labels: ["Bereich", "Integration", "Nur Probleme", "Batterie", "Batterie niedrig", "Schwacher Empfang", "Update verfügbar", "Eigene Einstellung", "Neu"],
-    sumTwo: "2 Filter-Chips ausgeblendet", sumAll: "9 Filter-Chips ausgeblendet", intro: /^Welche Chips über der Liste stehen und in welcher Reihenfolge \(am Griff ziehen\); "Alle" bleibt immer\./,
+    sumTwo: "2 Filter-Chips ausgeblendet", sumAll: "19 Filter-Chips ausgeblendet", intro: /^Alle Chips über der Liste, auch "Alle" und die Verbindungsarten\. Von oben nach unten ist von links nach rechts; am Griff ziehen\./,
   },
   en: {
-    title: "Other chips", conn: "Connection type", area: "Area", integ: "Integration", problems: "Problems only", signal: "Weak signal", neu: "New", overrideLabel: "Own setting",
+    title: "Filter chips", conn: "Connection type", area: "Area", integ: "Integration", problems: "Problems only", signal: "Weak signal", neu: "New", overrideLabel: "Own setting",
     labels: ["Area", "Integration", "Problems only", "Battery", "Low battery", "Weak signal", "Update available", "Own setting", "New"],
-    sumTwo: "2 filter chips hidden", sumAll: "9 filter chips hidden", intro: /^Which chips appear above the list and in which order \(drag by the handle\); "All" always stays\./,
+    sumTwo: "2 filter chips hidden", sumAll: "19 filter chips hidden", intro: /^All chips above the list, including "All" and the connection types\. Top to bottom is left to right; drag by the handle\./,
   },
 };
 
@@ -68,7 +68,7 @@ for (const lang of ["de", "en"]) {
     // Tabelle "Weitere Chips"
     check(`[${tag}] Reiter öffnet`, await openChips());
     const heads = await ev(`return [...r.querySelectorAll(".set-sec-body .ex-title")].map(x=>x.textContent)`);
-    check(`[${tag}] zwei Überschriften "${T.title}" und "${T.conn}"`, JSON.stringify(heads) === JSON.stringify([T.title, T.conn]), JSON.stringify(heads));
+    check(`[${tag}] eine Überschrift "${T.title}" (seit 1.14.0 eine Liste)`, JSON.stringify(heads) === JSON.stringify([T.title]), JSON.stringify(heads));
     const rows = await ev(`return [...r.querySelectorAll('input[data-list="hide_chips"]')].map(i=>i.dataset.value + (i.checked ? "+" : "-")).join()`);
     check(`[${tag}] neun Zeilen in fester Reihenfolge, alle an`, rows === KEYS.map((k) => `${k}+`).join(), rows);
     const labels = await ev(`return [...r.querySelectorAll('input[data-list="hide_chips"]')].map(i=>i.closest(".ex-row").querySelector(".ex-name").firstChild.textContent)`);
@@ -104,21 +104,23 @@ for (const lang of ["de", "en"]) {
 
     // "Alle umschalten": gemischt → alle an → alle aus; dann nur "Alle" und die Verbindungsart
     await openChips();
-    await tap('input[data-list-all="hide_chips"]');
+    await tap('input[data-list-all="chips"]');
     check(`[${tag}] gemischt: zuerst alle an`, await ev(`return [...r.querySelectorAll('input[data-list="hide_chips"]')].every(i=>i.checked)`));
-    await tap('input[data-list-all="hide_chips"]');
+    await tap('input[data-list-all="chips"]');
     check(`[${tag}] alle aus`, await ev(`return [...r.querySelectorAll('input[data-list="hide_chips"]')].every(i=>!i.checked)`));
     check(`[${tag}] Zusammenfassung "${T.sumAll}" (plus Verbindungsart)`, (await text('[data-id="look"] .set-sec-sum')).includes(T.sumAll), await text('[data-id="look"] .set-sec-sum'));
-    check(`[${tag}] alle neun gespeichert`, (await save()) && JSON.stringify(await lastSet()) === JSON.stringify({ hide_chips: KEYS }), JSON.stringify(await lastSet()));
+    const savedAll = (await save()) && (await lastSet());
+    check(`[${tag}] alle neun und alle zehn Verbindungsarten gespeichert`, savedAll && savedAll.hide_chips?.join() === KEYS.join() && savedAll.hide_connections?.length === 10, JSON.stringify(savedAll));
     const none = await wait(`const c=r.querySelector(".chips"); return !c.querySelector("[data-hint]") && !c.querySelector("[data-problems]")`) && await present();
-    check(`[${tag}] nur "Alle" und die Verbindungsart bleiben`, none && !none.area && !none.integration && !none.problems && none.hints === "", JSON.stringify(none));
-    check(`[${tag}] "Alle" und Verbindungs-Chips da, kein Trenner`, await ev(`const c=r.querySelector(".chips"); return !!c.querySelector('[data-conn="all"]') && !!c.querySelector('[data-conn="zigbee"]') && !c.querySelector(".vsep")`));
+    check(`[${tag}] nur "Alle" bleibt`, none && !none.area && !none.integration && !none.problems && none.hints === "", JSON.stringify(none));
+    check(`[${tag}] nur "Alle" da, kein Trenner`, await ev(`const c=r.querySelector(".chips"); return c.querySelectorAll(".chip").length === 1 && !!c.querySelector('[data-conn="all"]') && !c.querySelector(".vsep")`));
     check(`[${tag}] Geräte bleiben sichtbar`, (await ev(`return r.querySelectorAll(".dev").length`)) === total);
 
     // Wieder einblenden
     await openChips();
-    await tap('input[data-list-all="hide_chips"]');
-    check(`[${tag}] alle wieder an`, (await save()) && JSON.stringify(await lastSet()) === JSON.stringify({ hide_chips: [] }), JSON.stringify(await lastSet()));
+    await tap('input[data-list-all="chips"]');
+    const savedBack = (await save()) && (await lastSet());
+    check(`[${tag}] alle wieder an`, savedBack && savedBack.hide_chips?.length === 0 && savedBack.hide_connections?.length === 0, JSON.stringify(savedBack));
     const back = await wait(`return !!r.querySelector(".chips .chip.integ") && !!r.querySelector(".chips [data-problems]")`) && await present();
     check(`[${tag}] Chips zurück (ohne alten Filter)`, back && back.area && back.integration && back.problems && back.hints === "batteries,battery,signal,update,new" && (await ev(`return r.querySelectorAll(".dev").length`)) === total, JSON.stringify(back));
 

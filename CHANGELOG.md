@@ -7,6 +7,40 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.14.0] - 2026-10-05
+
+One list for all filter chips.
+
+### Added
+
+- Settings › Display › Filter chips: a preview "How the bar looks" above the
+  list shows the chips in the order you set, with the hidden and the
+  not-applicable ones left out like in the real bar. It updates with every
+  change.
+- Fine separators in the bar between two chips of a different kind: the
+  selection windows (Area, Integration), "All" with the connection types
+  (exactly one active), and "Problems only" with the hints. In the default
+  order they stand where they always did.
+
+### Changed
+
+- The order of all chips is one list (requested by the user, mockups
+  `docs/mockups/chip-order-v3/`, D2). "All" is a row of its own with a lock
+  ("fixed"): it can be moved but not switched off. Every connection type is a
+  row of its own with a switch and a handle, so Zigbee can also stand between
+  two hints. Top to bottom is left to right. Before, "Connection types" was
+  one block and the connection types had a second list below.
+  - The second list "Connection type" and the button "Sort by number" are
+    gone. "Default order" resets everything (Area, Integration, All, connection
+    types by number of devices, then "Problems only" and the hints).
+  - "Toggle all" switches all chips, including the connection types.
+  - Connection types with the same number of devices now stand in a fixed
+    order instead of the order of the devices.
+  - Existing settings are kept: the block from 1.13.0 and the order of the
+    connection types become one order. In the options dialog of Home
+    Assistant, "Order of the connection type chips" is now only the starting
+    order until you drag chips in the panel.
+
 ## [1.13.1] - 2026-10-05
 
 Update box after a restart of Home Assistant.
@@ -1368,6 +1402,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.14.0
 [1.13.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.1
 [1.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.0
 [1.12.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.2

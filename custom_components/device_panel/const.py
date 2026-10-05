@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "61"
+PANEL_VERSION = "62"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -217,12 +217,16 @@ CONF_CONNECTION_ORDER = "connection_order"
 # "Alle" bleibt immer. Ein ausgeblendeter Chip hebt seinen Filter auf.
 CONF_HIDE_CHIPS = "hide_chips"
 CHIP_KEYS = ("area", "integration", "problems", "batteries", "battery", "signal", "update", "override", "new")
-# Reihenfolge der Chips über der Liste (seit 1.13.0): wie CHIP_KEYS, dazu der
-# Block "connections" ("Alle" und die Verbindungsarten) an der bisherigen Stelle.
-# Leer = diese Standardfolge; nicht genannte Schlüssel folgen in dieser Folge.
-CONF_CHIP_ORDER = "chip_order"
-CHIP_ORDER_KEYS = (*CHIP_KEYS[:2], "connections", *CHIP_KEYS[2:])
 CONNECTION_TYPES = ("zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown")
+# Reihenfolge aller Chips über der Liste (seit 1.13.0, seit 1.14.0 eine Folge):
+# "all" und jede Verbindungsart sind Einträge wie die übrigen Chips. Leer =
+# Standardfolge (Bereich, Integration, "Alle", Verbindungsarten nach Anzahl der
+# Geräte, dann "Nur Probleme" und die Hinweise); nicht genannte Chips ordnet
+# das Panel in dieser Folge ein. "connections" (1.13.0: "Alle" mit allen
+# Verbindungsarten als Block) wird beim Lesen zu "all" und CONF_CONNECTION_ORDER.
+CONF_CHIP_ORDER = "chip_order"
+CHIP_ORDER_KEYS = (*CHIP_KEYS[:2], "all", *CONNECTION_TYPES, *CHIP_KEYS[2:])
+CHIP_ORDER_LEGACY_BLOCK = "connections"
 # Verbindungsart von Hand (Popup, wie der Typ): alle ausser "unbekannt", das
 # ist der Fall ohne Erkennung, kein Wert zum Wählen.
 CONNECTION_MANUAL = tuple(c for c in CONNECTION_TYPES if c != "unknown")

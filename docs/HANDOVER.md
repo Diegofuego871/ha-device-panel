@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.13.1, Einstellungen in fünf Abschnitten)
+## Stand (1.14.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,23 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Eine Liste für alle Chips `1.14.0` (Nutzer, 2026-10-05, Mockups
+   `docs/mockups/chip-order-v3/`, D2; ersetzt den Block "connections" aus
+   1.13.0): `chip_order` enthält `all`, jede Verbindungsart und die übrigen Chips
+   (`const.CHIP_ORDER_KEYS`); `options_api._stored_chip_order` macht aus dem
+   Block "connections" beim Lesen `all` plus `connection_order`;
+   `connection_order` bleibt als Ausgangsfolge (HA-Optionsdialog), das Panel
+   leert sie beim Ziehen. Panel: `chipOrder(order, connOrder, counts)` ergänzt
+   fehlende Verbindungsarten nach Anzahl hinter die letzte bzw. hinter `all`
+   (Gleichstand in der Reihenfolge von `CONN`), `chipKind()`/`joinChips()`
+   setzen die Trenner (Auswahlfenster | `all` und Verbindungsarten | Probleme und
+   Hinweise), `_chipsHtml` baut jeden Chip als Stück; Einstellungen: eine
+   `exTable` mit `x.list` je Zeile (`hide_connections` für Verbindungsarten),
+   `fixed` für `all` (Schloss `.fix-badge`), `allKey` "chips" für "Alle
+   umschalten", `_chipPreviewHtml` (Vorschau `.chip-prev`), `_setChipOrder`
+   (Standardfolge als `[]`). Tests: `chiporder-e2e.mjs` (Ziehen, Pfeiltasten,
+   Trenner, Vorschau, Ausblenden, Zurücksetzen), `test_update_check.py`
+   (Migration).
    Neustart im Update-Kasten `1.13.1` (Rückfrage des Nutzers, 2026-10-05, ob ein
    HACS-Update das eigene Update behindert): HACS selbst stört nicht
    (`restart` = HACS-`installed_version` > laufende Version aus

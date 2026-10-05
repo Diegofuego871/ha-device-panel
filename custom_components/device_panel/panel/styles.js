@@ -563,6 +563,13 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .drag-list .ex-row.lift { position: relative; z-index: 2; border-radius: 10px; background: var(--dp-card); box-shadow: 0 4px 16px rgba(0,0,0,.25); }
 .drag-list .ex-row:last-child { border-bottom: none; }
 .drag-reset { display: flex; justify-content: flex-end; padding: 8px 0 2px; }
+/* Vorschau der Chip-Leiste in den Einstellungen (seit 1.14.0) */
+.fix-badge { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--dp-divider);
+  background: var(--dp-card); color: var(--dp-text2); font-size: 12px; font-weight: 500; }
+.chip-prev { margin: 10px 0 4px; padding: 10px 12px 12px; border: 1px solid var(--dp-divider); border-radius: 14px; background: var(--dp-bg); }
+.chip-prev-t { margin: 0 0 8px; color: var(--dp-text2); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.chip-prev-pills { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.chip-prev-pills .chip { height: 28px; padding: 0 10px; font-size: 12.5px; pointer-events: none; }
 .ex-row.ex-all { padding: 6px 10px; margin: 0 -8px 2px; border: none; border-radius: 10px; background: var(--dp-subtle); color: var(--dp-text2); min-height: 40px; }
 .ex-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 /* Integrationen mit "Anzeigen", "Push", "Anhaltend" (Bild 5) */

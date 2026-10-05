@@ -210,10 +210,15 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
   Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des
   Inhalts in zwei Spalten, auf dem Handy in einer.
-- Weitere Chips ausblenden (seit 1.11.0): im Reiter "Filter-Chips" eine Tabelle
-  "Weitere Chips" (Symbol, Name, Kurzzeile, Schalter, "Alle umschalten") über
-  der Tabelle der Verbindungsart, je mit Überschrift; ein Trenner steht vor
-  "Nur Probleme" und den Hinweisen nur, wenn mindestens einer erscheint.
+- Filter-Chips in einer Liste (seit 1.14.0, `docs/mockups/chip-order-v3/`, D2;
+  vorher seit 1.11.0 "Weitere Chips" und eine zweite Liste der Verbindungsart):
+  im Reiter "Filter-Chips" eine Tabelle mit allen Chips (Griff, Symbol, Name,
+  Kurzzeile, Schalter, "Alle umschalten"): Reihenfolge von oben nach unten =
+  von links nach rechts. "Alle" ist fest (Schloss "fest" statt Schalter), jede
+  Verbindungsart eine eigene Zeile. Darüber eine Vorschau "So sieht die Leiste
+  aus" (die Chips als `.chip.chip-prev`, ohne Zustand). In der Leiste steht
+  zwischen zwei sichtbaren Chips verschiedener Art (Auswahlfenster | "Alle" und
+  Verbindungsarten | "Nur Probleme" und Hinweise) ein feiner Trenner.
 - Filter "Integration" (seit 1.9.0): Chip mit Puzzle-Symbol direkt hinter
   "Bereich", gleiche Gestalt und gleiches Popover (Handy: Blatt), eine flache
   Liste mit Kästchen, Name und Zahl, Suche ab neun Einträgen; aktiv mit ein

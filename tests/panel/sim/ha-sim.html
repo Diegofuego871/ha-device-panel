@@ -670,7 +670,7 @@
           msg.values.connection_order = [...new Set(v)];
         }
         if ("chip_order" in msg.values) {
-          const known = ["area", "integration", "connections", "problems", "batteries", "battery", "signal", "update", "override", "new"];
+          const known = ["area", "integration", "all", "zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown", "problems", "batteries", "battery", "signal", "update", "override", "new"];
           const v = msg.values.chip_order;
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "chip order" };
           msg.values.chip_order = [...new Set(v)];
