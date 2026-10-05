@@ -7,6 +7,30 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.12.2] - 2026-10-05
+
+Back from the Home Assistant device page, found and fixed.
+
+### Fixed
+
+- The arrow at the top left of the Home Assistant device page led to the
+  device list of Home Assistant instead of back to the panel (reported by
+  the user, also in the browser, so not a problem of the app). Cause: since
+  the frontend of Home Assistant 20260930 the device page has a fixed back
+  page (the device list) and goes back in the history only if the history
+  entry says where you came from (`history.state.from`). The panel's link
+  created the entry without it. It now creates the entry like Home
+  Assistant's own navigation. Checked in a Home Assistant with that frontend:
+  before the arrow went to `/config/devices/dashboard`, now to
+  `/device-panel`; also with the older frontend 20260128.6.
+  - Applies to "Open HA device page" in the device pop-up and to the link to
+    the HACS device in the settings.
+
+### Changed
+
+- The marker `historyBack=1` that 1.12.1 added to the link is removed again:
+  it had no effect on the device page.
+
 ## [1.12.1] - 2026-10-05
 
 Back from the Home Assistant device page.
@@ -1306,6 +1330,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.12.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.2
 [1.12.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.1
 [1.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.0
 [1.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.11.0

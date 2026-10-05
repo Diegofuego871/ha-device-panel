@@ -244,7 +244,9 @@ for (const lang of ["de", "en"]) {
     // HA-Geräteseite öffnen: Navigation im Elternfenster, Popup zu
     await tap(mobile ? '.mc[data-open="b"]' : 'tr[data-open="b"]');
     await tap('[data-dlg="open-device"]');
-    check(`[${tag}] HA-Geräteseite`, (await p.evaluate(() => window.__nav.at(-1))) === "/config/devices/device/b?historyBack=1" && !(await isOpen("device")));
+    check(`[${tag}] HA-Geräteseite`, (await p.evaluate(() => window.__nav.at(-1))) === "/config/devices/device/b" && !(await isOpen("device")));
+    // Seit dem HA-Frontend 20260930 geht der Pfeil oben links nur mit history.state.from im Verlauf zurück (ins Panel)
+    check(`[${tag}] Verlaufseintrag merkt, woher man kam (history.state.from)`, await p.evaluate(() => history.state?.from === "/ha-sim.html"), JSON.stringify(await p.evaluate(() => history.state)));
 
     check(`[${tag}] kein fehlender Text`, !(await ev(`return r.innerHTML.includes("undefined") || r.innerHTML.includes("NaN")`)));
     const over = await ev(`return document.documentElement.scrollWidth - innerWidth`);

@@ -3006,7 +3006,7 @@ class DevicePanel extends HTMLElement {
     else if (action === "open-device") {
       const id = this._detailId;
       this._closeDevice();
-      this._navigate(this._haDevicePath(id));
+      this._navigate(`/config/devices/device/${id}`);
     } else if (action === "stat") this._openStat(btn.dataset.range, btn.dataset.kind);
     else if (action === "more-info") this._openMoreInfo(btn.dataset.entity);
     else if (action === "hide") this._hideDevice(this._detailId);
@@ -3087,21 +3087,22 @@ class DevicePanel extends HTMLElement {
     this._fetch(true);
   }
 
-  // Geräteseite von HA. "historyBack=1" ist HAs eigener Merker (wie bei den
-  // Listen und beim Link der Geräteseite zu den Entitäten): "Du kommst von
-  // woanders, der Pfeil oben links geht im Verlauf zurück" statt zu einer
-  // festen Seite wie der Geräteliste. Ältere Versionen ignorieren ihn.
-  _haDevicePath(id) {
-    return `/config/devices/device/${id}?historyBack=1`;
-  }
-
   // Navigation gehört ins Elternfenster (Home Assistant selbst): im iframe
   // würde history.pushState nur das iframe umleiten. Gleiches Muster wie
   // HAs navigate(): pushState plus "location-changed" (siehe LEARNINGS).
+  // Seit dem Frontend 20260930 merkt sich HA im Verlaufseintrag, woher man
+  // kam (history.state.from): Der Pfeil oben links geht nur dann im Verlauf
+  // zurück (also ins Panel), wenn der Eintrag das trägt; sonst springt er zur
+  // festen Seite der Geräteseite, der Geräteliste von HA. Deshalb denselben
+  // Zustand mitgeben wie HAs navigate().
   _navigate(path, replace = false) {
     const target = window.parent || window;
-    if (replace) target.history.replaceState(target.history.state, "", path);
-    else target.history.pushState(null, "", path);
+    const state = target.history.state;
+    if (replace) {
+      // Wie HA: "root" und "from" des Eintrags bleiben.
+      const keep = state?.root ? { root: true } : null;
+      target.history.replaceState(state?.from === undefined ? keep : { ...keep, from: state.from }, "", path);
+    } else target.history.pushState({ from: target.location.pathname }, "", path);
     target.dispatchEvent(new target.CustomEvent("location-changed", { detail: { replace } }));
   }
 
@@ -5487,7 +5488,7 @@ class DevicePanel extends HTMLElement {
       const sw = this._hacsPreReleaseSwitch();
       if (sw && sw.deviceId) {
         this._closeSettings();
-        this._navigate(this._haDevicePath(sw.deviceId));
+        this._navigate(`/config/devices/device/${sw.deviceId}`);
       }
     } else if (action === "check") {
       await this._loadVersion(true);

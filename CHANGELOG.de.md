@@ -7,6 +7,30 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.12.2] - 2026-10-05
+
+Zurück von der Geräteseite von Home Assistant, Ursache gefunden und behoben.
+
+### Behoben
+
+- Der Pfeil oben links auf der Geräteseite von Home Assistant führte zur
+  Geräteliste von Home Assistant statt zurück ins Panel (Meldung des Nutzers,
+  auch im Browser, also kein Problem der App). Ursache: Seit dem Frontend 20260930
+  von Home Assistant hat die Geräteseite eine feste Rücksprungseite (die
+  Geräteliste) und geht nur dann im Verlauf zurück, wenn der Verlaufseintrag
+  sagt, woher man kam (`history.state.from`). Der Link des Panels legte den
+  Eintrag ohne das an. Er legt ihn jetzt an wie die eigene Navigation von Home
+  Assistant. In einem Home Assistant mit diesem Frontend geprüft: vorher ging
+  der Pfeil nach `/config/devices/dashboard`, jetzt nach `/device-panel`; auch
+  mit dem älteren Frontend 20260128.6.
+  - Gilt für "HA-Geräteseite öffnen" im Geräte-Popup und für den Link zum
+    HACS-Gerät in den Einstellungen.
+
+### Geändert
+
+- Der Merker `historyBack=1`, den 1.12.1 an den Link hängte, entfällt wieder:
+  Er wirkte bei der Geräteseite nicht.
+
 ## [1.12.1] - 2026-10-05
 
 Zurück von der Geräteseite von Home Assistant.
@@ -1357,6 +1381,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.12.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.2
 [1.12.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.1
 [1.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.0
 [1.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.11.0
