@@ -165,6 +165,7 @@ const MDI = {
   drag: "M9,3H11V5H9V3M13,3H15V5H13V3M9,7H11V9H9V7M13,7H15V9H13V7M9,11H11V13H9V11M13,11H15V13H13V11M9,15H11V17H9V15M13,15H15V17H13V15M9,19H11V21H9V19M13,19H15V21H13V19Z",
   tune: "M8 13C6.14 13 4.59 14.28 4.14 16H2V18H4.14C4.59 19.72 6.14 21 8 21S11.41 19.72 11.86 18H22V16H11.86C11.41 14.28 9.86 13 8 13M8 19C6.9 19 6 18.1 6 17C6 15.9 6.9 15 8 15S10 15.9 10 17C10 18.1 9.1 19 8 19M19.86 6C19.41 4.28 17.86 3 16 3S12.59 4.28 12.14 6H2V8H12.14C12.59 9.72 14.14 11 16 11S19.41 9.72 19.86 8H22V6H19.86M16 9C14.9 9 14 8.1 14 7C14 5.9 14.9 5 16 5S18 5.9 18 7C18 8.1 17.1 9 16 9Z",
   filter: "M6,13H18V11H6M3,6V8H21V6M10,18H14V16H10V18Z",
+  pin: "M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z",
   lock: "M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z",
   sparkle: "M12,1L9,9L1,12L9,15L12,23L15,15L23,12L15,9L12,1Z",
   signalOff: "M18,3V16.18L21,19.18V3H18M4.28,5L3,6.27L10.73,14H8V21H11V14.27L13,16.27V21H16V19.27L19.73,23L21,21.72L4.28,5M13,9V11.18L16,14.18V9H13M3,18V21H6V18H3Z",
@@ -283,9 +284,9 @@ const chipKind = (key) => (key === "area" || key === "integration" ? "scope" : k
 // übrige fehlende Chips folgen am Ende in der Standardfolge.
 function chipOrder(order, connOrder, counts) {
   const types = orderConns(Object.keys(CONN).map((k) => [k, (counts && counts.get(k)) || 0]), connOrder).map(([k]) => k);
-  const known = ["area", "integration", "all", ...Object.keys(CONN), ...CHIP_TAIL];
+  const known = ["pin", "area", "integration", "all", ...Object.keys(CONN), ...CHIP_TAIL];
   const out = (order || []).filter((k, i, a) => known.includes(k) && a.indexOf(k) === i);
-  if (!out.length) return ["area", "integration", "all", ...types, ...CHIP_TAIL];
+  if (!out.length) return ["pin", "area", "integration", "all", ...types, ...CHIP_TAIL];
   const missing = types.filter((k) => !out.includes(k));
   if (missing.length) {
     let at = out.reduce((n, k, i) => (k in CONN ? i : n), -1);
@@ -293,20 +294,40 @@ function chipOrder(order, connOrder, counts) {
     if (at < 0) out.push(...missing);
     else out.splice(at + 1, 0, ...missing);
   }
-  return [...out, ...["area", "integration", "all", ...CHIP_TAIL].filter((k) => !out.includes(k))];
+  const full = [...out, ...["area", "integration", "all", ...CHIP_TAIL].filter((k) => !out.includes(k))];
+  // Der Anheft-Marker fehlt in Folgen vor 1.15.0: ganz vorn, nichts angeheftet.
+  return full.includes("pin") ? full : ["pin", ...full];
 }
 // Chips (Schlüssel -> HTML, leer = erscheint nicht) in der Folge zusammensetzen,
 // mit einer feinen Linie zwischen zwei sichtbaren Chips verschiedener Art.
-function joinChips(order, parts) {
+// Angeheftet (seit 1.15.0) sind die sichtbaren Chips vor dem Marker "pin": Im
+// Modus "group" (Leiste) stehen sie in einem Block, der auf dem Handy beim
+// seitlichen Scrollen links klebt; an der Haftkante steht keine Linie. Im Modus
+// "mark" (Vorschau) bleibt alles in einer Reihe, nur ein Pin-Zeichen markiert
+// die Kante.
+function joinChips(order, parts, mode = "group", mark = "") {
+  const pinAt = order.indexOf("pin");
   let html = "";
   let prev = "";
-  for (const key of order) {
+  let open = false;
+  order.forEach((key, i) => {
     const part = parts.get(key);
-    if (!part) continue;
+    if (key === "pin" || !part) return;
+    const pinned = pinAt >= 0 && i < pinAt;
+    if (pinned && !open) {
+      if (mode === "group") html += `<span class="chip-pin">`;
+      open = true;
+    }
+    if (!pinned && open) {
+      html += mode === "group" ? `</span>` : mark;
+      open = false;
+      prev = "";
+    }
     if (prev && chipKind(prev) !== chipKind(key)) html += `<span class="vsep"></span>`;
     html += part;
     prev = key;
-  }
+  });
+  if (open) html += mode === "group" ? `</span>` : mark;
   return html;
 }
 // Seit 1.7.0 zusätzlich die Gruppen der Fakten ({facts_area} usw., wie
@@ -866,6 +887,8 @@ class DevicePanel extends HTMLElement {
     }
     // Kopfzeile der Tabelle klebt unter Zeile, Chips (und Sortierung): deren
     // Höhe wechselt (Chips brechen um), darum messen statt festlegen.
+    const chipBar = content.querySelector(".chips");
+    chipBar.addEventListener("scroll", () => chipBar.classList.toggle("scrolled", chipBar.scrollLeft > 2), { passive: true });
     if (typeof ResizeObserver === "function") {
       this._stickyObserver = new ResizeObserver(() => this._syncSticky());
       this._stickyObserver.observe(content.querySelector(".chips"));
@@ -2018,6 +2041,7 @@ class DevicePanel extends HTMLElement {
     setHtml(root.querySelector(".hero"), this._loading ? "" : this._heroHtml(monitored, offline));
     setHtml(root.querySelector(".hstrip"), this._loading ? "" : this._stripHtml(monitored, offline));
     setHtml(root.querySelector(".chips"), this._loading ? "" : this._chipsHtml(all));
+    this._guardPin();
     setHtml(root.querySelector(".viewline"), this._loading || !this._narrowQuery.matches ? "" : this._viewLineHtml());
     this._syncSticky();
     const rows = all.filter((d) => this._matches(d));
@@ -2372,6 +2396,15 @@ class DevicePanel extends HTMLElement {
       parts.set(key, `<button type="button" class="chip hint ${cls} ${on ? "on" : ""} ${n ? "" : "zero"}" data-hint="${key}" aria-pressed="${on}">${mdi(icon, 15)}<span>${escape(this._t(label))}</span> <span class="n">${n}</span></button>`);
     }
     return joinChips(chipOrder(this._chipOrder, this._connOrder, present), parts);
+  }
+
+  // Angeheftete Chips (seit 1.15.0) kleben auf dem Handy links. Nehmen sie mehr
+  // als 60 % der Leiste ein, bliebe zu wenig Platz zum Scrollen: dann scrollen
+  // sie wie die übrigen mit. Auf dem Desktop (Leiste bricht um) ohne Wirkung.
+  _guardPin() {
+    const bar = this.shadowRoot.querySelector(".chips");
+    const pin = bar?.querySelector(".chip-pin");
+    if (pin) pin.classList.toggle("too-wide", pin.offsetWidth > bar.clientWidth * 0.6);
   }
 
   // Handy: "Sortiert nach" unter den Chips; öffnet das Blatt "Ansicht".
@@ -3960,7 +3993,12 @@ class DevicePanel extends HTMLElement {
       const n = devs.filter(test).length;
       parts.set(key, hideChips.has(key) || !n ? "" : pill(`${mdi(icon, 15)}<span>${escape(t(label))}</span> <span class="n">${n}</span>`, `hint ${cls}`));
     }
-    return joinChips(this._dragOrder(d), parts);
+    const order = this._dragOrder(d);
+    const wrap = joinChips(order, parts, "mark", `<span class="chip-prev-pin" title="${escape(t("chipPinTip"))}">${mdi("pin", 13)}</span>`);
+    // Etwas angeheftet: dazu die Leiste des Handys (eine Zeile, seitlich
+    // gescrollt, zum Ausprobieren mit dem Finger oder der Maus).
+    const strip = joinChips(order, parts, "group");
+    return { wrap, strip: strip.includes("chip-pin") ? strip : "" };
   }
 
   // Ausgeblendete Geräte, wie beim Öffnen gespeichert: Wer eines wieder
@@ -4063,6 +4101,13 @@ class DevicePanel extends HTMLElement {
     const slot = dialog.querySelector(".ver-slot");
     if (slot) lastHtml.set(slot, this._verSlotHtml);
     dialog.scrollTop = scroll;
+    // Vorschau der Handy-Leiste einmal seitlich scrollen, damit die Haftkante
+    // zu sehen ist; danach bleibt, was der Nutzer eingestellt hat.
+    const strip = dialog.querySelector(".chip-prev-strip");
+    if (strip && !strip.dataset.placed) {
+      strip.dataset.placed = "1";
+      strip.scrollLeft = Math.min(120, strip.scrollWidth - strip.clientWidth);
+    }
     if (focusSel) refocus(dialog.querySelector(focusSel));
   }
 
@@ -4658,7 +4703,10 @@ class DevicePanel extends HTMLElement {
         x.fixed
           ? cell(`<span class="fix-badge" title="${escape(t("chipFixedTip"))}">${mdi("lock", 13)}${escape(t("chipFixed"))}</span>`)
           : cell(`<label class="switch"><input type="checkbox" data-list="${x.list || k}" data-value="${escape(x.value)}" ${setOf(x.list || k).has(x.value) ? "" : "checked"} ${off ? "disabled" : ""} aria-label="${escape(`${label}: ${x.label}`)}"><span></span></label>`);
-      const line = (x) => `<div class="ex-row${isOff(x) ? " off" : ""}">${handle(x)}${x.badge}<div class="ex-name">${escape(x.label)}<small>${escape(x.sub)}</small></div>
+      // Anheft-Marker (seit 1.15.0, docs/mockups/chip-pin-v1, B): schlanke Linie
+      // mit Etikett und Griff statt einer Zeile mit Schalter.
+      const pinLine = (x) => `<div class="ex-row pin-line"><span class="pin-tab" title="${escape(t("chipPinTip"))}">${handle(x)}${mdi("pin", 14)}<span>${escape(t("chipPinLabel"))}</span></span></div>`;
+      const line = (x) => x.pin ? pinLine(x) : `<div class="ex-row${isOff(x) ? " off" : ""}">${handle(x)}${x.badge}<div class="ex-name">${escape(x.label)}<small>${escape(x.sub)}</small></div>
           ${columns.map(([k, label], i) => toggle(k, label, x, x.fixed || (i > 0 && isOff(x)))).join("")}${extra ? extra.html(x, isOff(x)) : ""}</div>`;
       const rows = items.map(line).join("");
       const allRow = columns
@@ -4686,6 +4734,7 @@ class DevicePanel extends HTMLElement {
     const chipIcons = Object.fromEntries(CHIP_OTHER);
     const connCounts = this._connCounts();
     const chipItems = this._dragOrder(d).map((key) => {
+      if (key === "pin") return { value: key, pin: true, label: t("chipPinLabel") };
       if (key === "all") {
         return { value: key, label: t("chipOther").all[0], sub: t("chipOther").all[1], badge: `<span class="ibadge type">${mdi("filter", 18)}</span>`, fixed: true };
       }
@@ -4748,7 +4797,12 @@ class DevicePanel extends HTMLElement {
             `<h4 class="ex-title">${escape(t("chipsOtherTitle"))}</h4>` +
             exTable(
               "hide_chips", chipItems, t("chipsOtherIntro"), "chip_order", null, null, null, "chips",
-              `<div class="chip-prev"><div class="chip-prev-t">${escape(t("chipsPreview"))}</div><div class="chip-prev-pills">${this._chipPreviewHtml(d)}</div></div>`
+              (() => {
+                const prev = this._chipPreviewHtml(d);
+                return `<div class="chip-prev"><div class="chip-prev-t">${escape(t("chipsPreview"))}</div><div class="chip-prev-pills">${prev.wrap}</div>` +
+                  (prev.strip ? `<div class="chip-prev-t phone">${escape(t("chipsPreviewPhone"))}</div><div class="chip-prev-strip">${prev.strip}</div>` : "") +
+                  `</div>`;
+              })()
             ) +
             ((d.chip_order || []).length || (d.connection_order || []).length
               ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset">${mdi("reset", 15)}${escape(t("chipsOrderResetAll"))}</button></div>`

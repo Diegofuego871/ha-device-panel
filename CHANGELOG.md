@@ -7,6 +7,25 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.15.0] - 2026-10-05
+
+Pin filter chips.
+
+### Added
+
+- Settings › Display › Filter chips: a line "pinned up to here" in the chip
+  list (requested by the user, mockups `docs/mockups/chip-pin-v1/`, B). It
+  has a handle and moves like a chip. The visible chips above it stay on the
+  left when the chip bar scrolls sideways on the phone, with a shadow at the
+  edge once you scroll. At the very top (default) nothing is pinned.
+  - The bar scrolls sideways only on narrow screens (up to 600 px); on the
+    desktop it wraps as before and pinning has no effect.
+  - Pinned chips that would take more than 60 % of the bar scroll along
+    instead, so the rest stays reachable.
+  - The preview above the list marks the edge with a pin and, once something
+    is pinned, adds the phone bar scrolled sideways (you can scroll it to try).
+  - Applies to all users, stored with the order in `chip_order`.
+
 ## [1.14.0] - 2026-10-05
 
 One list for all filter chips.
@@ -1404,6 +1423,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.15.0
 [1.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.14.0
 [1.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.0
 [1.12.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.2

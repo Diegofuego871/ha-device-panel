@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "62"
+PANEL_VERSION = "63"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -225,7 +225,10 @@ CONNECTION_TYPES = ("zigbee", "thread", "zwave", "matter", "ble", "wifi", "ether
 # das Panel in dieser Folge ein. "connections" (1.13.0: "Alle" mit allen
 # Verbindungsarten als Block) wird beim Lesen zu "all" und CONF_CONNECTION_ORDER.
 CONF_CHIP_ORDER = "chip_order"
-CHIP_ORDER_KEYS = (*CHIP_KEYS[:2], "all", *CONNECTION_TYPES, *CHIP_KEYS[2:])
+# "pin" (seit 1.15.0) ist kein Chip, sondern der Anheft-Marker: Die sichtbaren
+# Chips davor bleiben auf dem Handy beim seitlichen Scrollen der Leiste links
+# stehen. Ganz vorn (Standard) = nichts angeheftet.
+CHIP_ORDER_KEYS = (*CHIP_KEYS[:2], "all", *CONNECTION_TYPES, *CHIP_KEYS[2:], "pin")
 CHIP_ORDER_LEGACY_BLOCK = "connections"
 # Verbindungsart von Hand (Popup, wie der Typ): alle ausser "unbekannt", das
 # ist der Fall ohne Erkennung, kein Wert zum Wählen.

@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.14.0, Einstellungen in fünf Abschnitten)
+## Stand (1.15.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,18 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Chips anheften `1.15.0` (Nutzer, 2026-10-05, Mockups
+   `docs/mockups/chip-pin-v1/`, B): `"pin"` ist ein Schlüssel in `chip_order`
+   (`const.CHIP_ORDER_KEYS`), kein Chip; ganz vorn (Standard, fehlt er in älteren
+   Folgen, setzt `chipOrder()` ihn nach vorn) = nichts angeheftet. `joinChips(order,
+   parts, mode, mark)` setzt die sichtbaren Chips vor `pin` in `<span
+   class="chip-pin">` (Modus "group"; Vorschau: Modus "mark" mit Pin-Zeichen);
+   CSS: ab 600 px sticky links mit Schatten (`.chips.scrolled`), auf dem Desktop
+   `display: contents`; `_guardPin()` löst die Gruppe ab 60 % der Leistenbreite
+   (`.too-wide`). Einstellungen: `pinLine` in `exTable` (Linie mit Etikett und
+   Griff), Vorschau zusätzlich als Handy-Leiste (`.chip-prev-strip`,
+   `_renderSettings` scrollt sie einmal an). Tests: `chiporder-e2e.mjs`
+   (Linie, Pfeiltasten, Haftgruppe, Grenze, Scrollen).
    Eine Liste für alle Chips `1.14.0` (Nutzer, 2026-10-05, Mockups
    `docs/mockups/chip-order-v3/`, D2; ersetzt den Block "connections" aus
    1.13.0): `chip_order` enthält `all`, jede Verbindungsart und die übrigen Chips

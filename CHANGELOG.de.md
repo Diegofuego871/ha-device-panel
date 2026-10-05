@@ -7,6 +7,28 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.15.0] - 2026-10-05
+
+Chips anheften.
+
+### Hinzugefügt
+
+- Einstellungen › Darstellung › Filter-Chips: Eine Linie "angeheftet bis hier"
+  in der Chip-Liste (Wunsch des Nutzers, Mockups `docs/mockups/chip-pin-v1/`, B).
+  Sie hat einen Griff und lässt sich wie ein Chip verschieben. Die sichtbaren
+  Chips darüber bleiben auf dem Handy beim seitlichen Scrollen der Leiste
+  links stehen, mit einem Schatten an der Kante, sobald man scrollt. Ganz oben
+  (Standard) ist nichts angeheftet.
+  - Die Leiste scrollt nur auf schmalen Bildschirmen (bis 600 px) seitlich;
+    auf dem Desktop bricht sie wie bisher um, dort hat das Anheften keine
+    Wirkung.
+  - Angeheftete Chips, die mehr als 60 % der Leiste einnähmen, scrollen
+    stattdessen mit, damit der Rest erreichbar bleibt.
+  - Die Vorschau über der Liste markiert die Kante mit einem Pin und zeigt,
+    sobald etwas angeheftet ist, zusätzlich die Handy-Leiste seitlich gescrollt
+    (zum Ausprobieren scrollbar).
+  - Gilt für alle Benutzer, gespeichert mit der Reihenfolge in `chip_order`.
+
 ## [1.14.0] - 2026-10-05
 
 Eine Liste für alle Filter-Chips.
@@ -1459,6 +1481,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.15.0
 [1.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.14.0
 [1.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.0
 [1.12.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.2

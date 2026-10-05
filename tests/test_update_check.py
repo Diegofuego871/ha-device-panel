@@ -192,17 +192,17 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
     assert entry.options["hide_chips"] == []
     # Reihenfolge aller Chips (1.13.0, seit 1.14.0 mit "all" und den Verbindungsarten):
     # wie gegeben, ohne Doppelte; der Block "connections" aus 1.13.0 ist kein Schlüssel mehr
-    order = ["battery", "area", "all", "wifi", "battery", "zigbee", "new"]
+    order = ["battery", "area", "all", "wifi", "battery", "zigbee", "pin", "new"]
     await client.send_json({"id": 16, "type": f"{DOMAIN}/set_options", "values": {"chip_order": order}})
     assert (await client.receive_json())["success"]
     await hass.async_block_till_done()
-    assert entry.options["chip_order"] == ["battery", "area", "all", "wifi", "zigbee", "new"]
+    assert entry.options["chip_order"] == ["battery", "area", "all", "wifi", "zigbee", "pin", "new"]
     await client.send_json({"id": 17, "type": f"{DOMAIN}/set_options", "values": {"chip_order": ["alle"]}})
     assert (await client.receive_json())["error"]["code"] == "invalid_format"
     await client.send_json({"id": 18, "type": f"{DOMAIN}/set_options", "values": {"chip_order": ["connections"]}})
     assert (await client.receive_json())["error"]["code"] == "invalid_format"
     await client.send_json({"id": 19, "type": f"{DOMAIN}/list_devices"})
-    assert (await client.receive_json())["result"]["chip_order"] == ["battery", "area", "all", "wifi", "zigbee", "new"]
+    assert (await client.receive_json())["result"]["chip_order"] == ["battery", "area", "all", "wifi", "zigbee", "pin", "new"]
     await client.send_json({"id": 20, "type": f"{DOMAIN}/set_options", "values": {"chip_order": []}})
     assert (await client.receive_json())["success"]
     await hass.async_block_till_done()
@@ -362,9 +362,9 @@ def test_chip_order_from_1_13_0() -> None:
     # Ohne Ausgangsfolge der Verbindungsarten bleibt nur "all"; die Arten ordnet das Panel nach Anzahl ein
     _Entry.options = {"chip_order": ["connections", "problems"]}
     assert current_values(_Entry())["chip_order"] == ["all", "problems"]
-    # Neues Format unverändert, Unbekanntes fällt weg
-    _Entry.options = {"chip_order": ["zigbee", "all", "funk", "problems"]}
-    assert current_values(_Entry())["chip_order"] == ["zigbee", "all", "problems"]
+    # Neues Format unverändert, Unbekanntes fällt weg; der Anheft-Marker "pin" (1.15.0) bleibt
+    _Entry.options = {"chip_order": ["all", "pin", "zigbee", "funk", "problems"]}
+    assert current_values(_Entry())["chip_order"] == ["all", "pin", "zigbee", "problems"]
 
 
 async def test_options_flow_connection_per_integration(hass: HomeAssistant, entry) -> None:

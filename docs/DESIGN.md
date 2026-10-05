@@ -210,6 +210,12 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
   Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des
   Inhalts in zwei Spalten, auf dem Handy in einer.
+- Chips anheften (seit 1.15.0, `docs/mockups/chip-pin-v1/`, B): in der Chip-Liste
+  eine schlanke gestrichelte Linie in Primärfarbe mit Etikett "angeheftet bis hier"
+  (Pin, Griff) statt einer Zeile; die sichtbaren Chips davor stehen in der Leiste
+  des Handys in einer Gruppe, die beim seitlichen Scrollen links klebt (Schatten
+  an der Kante ab Scrollen, Hintergrund wie die Leiste). Ab 60 % der Leistenbreite
+  scrollt sie mit. Vorschau: Pin-Zeichen an der Kante, dazu die Handy-Leiste.
 - Filter-Chips in einer Liste (seit 1.14.0, `docs/mockups/chip-order-v3/`, D2;
   vorher seit 1.11.0 "Weitere Chips" und eine zweite Liste der Verbindungsart):
   im Reiter "Filter-Chips" eine Tabelle mit allen Chips (Griff, Symbol, Name,

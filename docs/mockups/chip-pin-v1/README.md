@@ -22,6 +22,11 @@ ein verschiebbarer Eintrag der Folge, ganz oben bedeutet "nichts angeheftet".
 - Wenige Chips anheften (eins bis zwei): Sonst bleibt auf dem Handy wenig Platz
   zum Scrollen.
 
+## Entscheid des Nutzers: B (2026-10-05)
+
+Umgesetzt in 1.15.0; die Vorschau zeigt dort zusätzlich zur Reihe mit Pin-Zeichen die
+Handy-Leiste, sobald etwas angeheftet ist. Die Grenze von 60 % der Breite ist eingebaut.
+
 ## Empfehlung: A
 
 Die getönten Zeilen zeigen auf einen Blick, was angeheftet ist, und die Zeile ist

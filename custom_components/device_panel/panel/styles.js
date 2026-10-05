@@ -172,6 +172,7 @@ button { font: inherit; color: inherit; }
 .chip.on { background: var(--dp-primary-soft); border-color: transparent; color: var(--dp-primary); }
 .chip.on svg, .chip.on .n { color: var(--dp-primary); }
 .vsep { width: 1px; height: 22px; background: var(--dp-divider); margin: 0 2px; }
+.chips .chip-pin { display: contents; }
 
 /* Filter "Bereich" (seit 0.23.0, docs/mockups/area-v1, A): Chip am Anfang
    der Zeile, Auswahl als Popover (Desktop) bzw. Blatt (Handy). */
@@ -570,6 +571,19 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .chip-prev-t { margin: 0 0 8px; color: var(--dp-text2); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
 .chip-prev-pills { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .chip-prev-pills .chip { height: 28px; padding: 0 10px; font-size: 12.5px; pointer-events: none; }
+.chip-prev-t.phone { margin-top: 12px; }
+.chip-prev-pin { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: var(--dp-primary); color: #fff; }
+.chip-prev-strip { display: flex; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -12px; padding: 4px 12px 6px; }
+.chip-prev-strip::-webkit-scrollbar { display: none; }
+.chip-prev-strip .chip { flex: none; height: 28px; padding: 0 10px; font-size: 12.5px; pointer-events: none; }
+.chip-prev-strip .chip-pin { position: sticky; left: -12px; z-index: 2; flex: none; display: flex; align-items: center; gap: 8px; margin-left: -12px; padding: 4px 12px; background: var(--dp-bg); }
+.chip-prev-strip .chip-pin::after { content: ""; position: absolute; right: -14px; top: 0; bottom: 0; width: 14px; background: linear-gradient(90deg, rgba(0,0,0,.28), transparent); pointer-events: none; }
+.ex-row.pin-line { display: block; position: relative; min-height: 0; height: 34px; padding: 0; margin: 2px 0; border: none; }
+.pin-line::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px dashed var(--dp-primary); }
+.pin-tab { position: absolute; left: 0; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px 0 4px;
+  border-radius: 999px; background: var(--dp-primary); color: #fff; font-size: 12.5px; font-weight: 600; }
+.pin-tab .drag-h { width: 24px; height: 28px; margin: 0; background: none; color: rgba(255,255,255,.85); }
+.pin-tab .drag-h svg { color: inherit; }
 .ex-row.ex-all { padding: 6px 10px; margin: 0 -8px 2px; border: none; border-radius: 10px; background: var(--dp-subtle); color: var(--dp-text2); min-height: 40px; }
 .ex-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
 /* Integrationen mit "Anzeigen", "Push", "Anhaltend" (Bild 5) */
@@ -947,6 +961,11 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .hs-in { padding: 0 14px; }
   .chips { position: sticky; top: 44px; z-index: 5; box-sizing: border-box; height: 48px; flex-wrap: nowrap; overflow-x: auto; margin: 0 -12px; padding: 12px 12px 4px; background: var(--dp-bg); scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
+  /* Angeheftete Chips (seit 1.15.0): kleben links, mit Schatten an der Haftkante, sobald gescrollt wird */
+  .chips .chip-pin { position: sticky; left: -12px; z-index: 2; flex: none; display: flex; align-items: center; gap: 8px; margin-left: -12px; padding: 0 12px; background: var(--dp-bg); }
+  .chips .chip-pin::after { content: ""; position: absolute; right: -14px; top: 0; bottom: 0; width: 14px; background: linear-gradient(90deg, rgba(0,0,0,.28), transparent); opacity: 0; transition: opacity .15s; pointer-events: none; }
+  .chips.scrolled .chip-pin::after { opacity: 1; }
+  .chips .chip-pin.too-wide { position: static; }
   .foot .tap { display: none; }
   dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
   dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg { max-height: 92%; }
