@@ -45,6 +45,8 @@ Eine Liste für alle Filter-Chips.
 
 ## [1.13.1] - 2026-10-05
 
+Nicht veröffentlicht; enthalten in 1.14.0.
+
 Update-Kasten nach einem Neustart von Home Assistant.
 
 ### Behoben
@@ -1458,7 +1460,6 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [1.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.14.0
-[1.13.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.1
 [1.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.0
 [1.12.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.2
 [1.12.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.1
