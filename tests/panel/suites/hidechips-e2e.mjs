@@ -15,12 +15,12 @@ const TEXT = {
   de: {
     title: "Weitere Chips", conn: "Verbindungsart", area: "Bereich", integ: "Integration", problems: "Nur Probleme", signal: "Schwacher Empfang", neu: "Neu", overrideLabel: "Eigene Einstellung",
     labels: ["Bereich", "Integration", "Nur Probleme", "Batterie", "Batterie niedrig", "Schwacher Empfang", "Update verfügbar", "Eigene Einstellung", "Neu"],
-    sumTwo: "2 Filter-Chips ausgeblendet", sumAll: "9 Filter-Chips ausgeblendet", intro: /^Welche übrigen Chips über der Liste stehen; "Alle" bleibt immer\./,
+    sumTwo: "2 Filter-Chips ausgeblendet", sumAll: "9 Filter-Chips ausgeblendet", intro: /^Welche Chips über der Liste stehen und in welcher Reihenfolge \(am Griff ziehen\); "Alle" bleibt immer\./,
   },
   en: {
     title: "Other chips", conn: "Connection type", area: "Area", integ: "Integration", problems: "Problems only", signal: "Weak signal", neu: "New", overrideLabel: "Own setting",
     labels: ["Area", "Integration", "Problems only", "Battery", "Low battery", "Weak signal", "Update available", "Own setting", "New"],
-    sumTwo: "2 filter chips hidden", sumAll: "9 filter chips hidden", intro: /^Which other chips appear above the list; "All" always stays\./,
+    sumTwo: "2 filter chips hidden", sumAll: "9 filter chips hidden", intro: /^Which chips appear above the list and in which order \(drag by the handle\); "All" always stays\./,
   },
 };
 

@@ -164,6 +164,7 @@ const MDI = {
   check: "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z",
   drag: "M9,3H11V5H9V3M13,3H15V5H13V3M9,7H11V9H9V7M13,7H15V9H13V7M9,11H11V13H9V11M13,11H15V13H13V11M9,15H11V17H9V15M13,15H15V17H13V15M9,19H11V21H9V19M13,19H15V21H13V19Z",
   tune: "M8 13C6.14 13 4.59 14.28 4.14 16H2V18H4.14C4.59 19.72 6.14 21 8 21S11.41 19.72 11.86 18H22V16H11.86C11.41 14.28 9.86 13 8 13M8 19C6.9 19 6 18.1 6 17C6 15.9 6.9 15 8 15S10 15.9 10 17C10 18.1 9.1 19 8 19M19.86 6C19.41 4.28 17.86 3 16 3S12.59 4.28 12.14 6H2V8H12.14C12.59 9.72 14.14 11 16 11S19.41 9.72 19.86 8H22V6H19.86M16 9C14.9 9 14 8.1 14 7C14 5.9 14.9 5 16 5S18 5.9 18 7C18 8.1 17.1 9 16 9Z",
+  filter: "M6,13H18V11H6M3,6V8H21V6M10,18H14V16H10V18Z",
   sparkle: "M12,1L9,9L1,12L9,15L12,23L15,15L23,12L15,9L12,1Z",
   signalOff: "M18,3V16.18L21,19.18V3H18M4.28,5L3,6.27L10.73,14H8V21H11V14.27L13,16.27V21H16V19.27L19.73,23L21,21.72L4.28,5M13,9V11.18L16,14.18V9H13M3,18V21H6V18H3Z",
   timer: "M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M19.03,7.39L20.45,5.97C20,5.46 19.55,5 19.04,4.56L17.62,6C16.07,4.74 14.12,4 12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22C17,22 21,17.97 21,13C21,10.88 20.26,8.93 19.03,7.39M11,14H13V8H11M15,1H9V3H15V1Z",
@@ -264,6 +265,15 @@ const CHIP_OTHER = [
   ["area", "home"], ["integration", "puzzle"], ["problems", "alert"], ["batteries", "battery"], ["battery", "battery"],
   ["signal", "signal"], ["update", "update"], ["override", "tune"], ["new", "sparkle"],
 ];
+// Reihenfolge der Chips über der Liste (seit 1.13.0, wie const.CHIP_ORDER_KEYS):
+// "connections" ist der Block aus "Alle" und den Verbindungsarten.
+const CHIP_ORDER_DEFAULT = ["area", "integration", "connections", "problems", "batteries", "battery", "signal", "update", "override", "new"];
+// Gespeicherte Folge (leer = Standard) vervollständigen: Unbekanntes fällt weg,
+// nicht genannte Schlüssel folgen in der Standardfolge.
+function chipOrder(order) {
+  const known = (order || []).filter((k, i, a) => CHIP_ORDER_DEFAULT.includes(k) && a.indexOf(k) === i);
+  return [...known, ...CHIP_ORDER_DEFAULT.filter((k) => !known.includes(k))];
+}
 // Seit 1.7.0 zusätzlich die Gruppen der Fakten ({facts_area} usw., wie
 // ai_prompt.FACT_GROUPS): wer {facts} nicht nutzt, setzt nur Gruppen ein.
 const PROMPT_GROUPS = ["device", "history", "battery", "signal", "integration", "area", "hub", "model"];
@@ -286,7 +296,7 @@ const SUB_TAB_KEYS = {
   types: ["exclude_types"],
   devs: ["exclude_devices"],
   conn: ["connection_integrations", "reset_connection", "reset_signal"],
-  chips: ["hide_chips", "hide_connections", "connection_order"],
+  chips: ["hide_chips", "hide_connections", "connection_order", "chip_order"],
 };
 
 // Empfang in vier Stufen (gut -> schlecht), Farben wie unifi_dynamic.
@@ -491,6 +501,8 @@ class DevicePanel extends HTMLElement {
     this._hideConn = new Set();
     // Weitere ausgeblendete Chips (seit 1.11.0): Schlüssel wie CHIP_KEYS.
     this._hideChips = new Set();
+    // Reihenfolge der Chips über der Liste (seit 1.13.0), leer = Standard.
+    this._chipOrder = [];
     // Bereiche und Etagen aus HA in ihrer Reihenfolge (Filter "Bereich").
     this._areas = [];
     this._floors = [];
@@ -954,6 +966,7 @@ class DevicePanel extends HTMLElement {
       this._hideConn = new Set(result.hide_connections || []);
       this._hideChips = new Set(result.hide_chips || []);
       this._connOrder = result.connection_order || [];
+      this._chipOrder = result.chip_order || [];
       this._areas = Array.isArray(result.areas) ? result.areas : [];
       this._floors = Array.isArray(result.floors) ? result.floors : [];
       // Ausgeblendeter Chip mit aktivem Filter: zurück auf "Alle", sonst
@@ -2289,28 +2302,48 @@ class DevicePanel extends HTMLElement {
     for (const d of base) counts.set(this._connOf(d), (counts.get(this._connOf(d)) || 0) + 1);
     const chip = (key, label, n, icon = "", on = this._conn === key) =>
       `<button type="button" class="chip ${on ? "on" : ""} ${n ? "" : "zero"}" data-conn="${key}" aria-pressed="${on}">${icon}<span>${escape(label)}</span> <span class="n">${n}</span></button>`;
-    // Bereich zuerst: erst den Bereich wählen, dann mit den Chips filtern.
-    let html = this._areaChipHtml(all) + this._integChipHtml(all);
-    if (html) html += `<span class="vsep"></span>`;
+    // Jeder Chip als eigenes Stück; die Reihenfolge bestimmt die Einstellung
+    // "Reihenfolge der Chips" (seit 1.13.0). Standard: Bereich zuerst (erst den
+    // Bereich wählen, dann mit den Chips filtern), dann der Block der
+    // Verbindungsarten, dann "Nur Probleme" und die Hinweise.
+    const parts = new Map();
+    parts.set("area", this._areaChipHtml(all));
+    parts.set("integration", this._integChipHtml(all));
     // "Alle" ist nur ohne jeden Filter aktiv; die Zahl zeigt wie überall, was
     // nach dem Antippen erscheint: alle Geräte (mit der Suche).
     const none = this._conn === "all" && !this._problems && !this._hint && !this._scoped();
-    html += chip("all", this._t("all"), all.filter((d) => this._searchPass(d)).length, "", none);
-    for (const [key] of types) if (!this._hideConn.has(key)) html += chip(key, this._t(CONN[key].key), counts.get(key) || 0, CONN[key].icon(15));
-    // Trenner vor "Nur Probleme" und den Hinweisen, solange mindestens einer erscheint.
-    let tail = "";
-    if (!this._hideChips.has("problems")) tail += `<button type="button" class="chip ${this._problems ? "on" : ""}" data-problems aria-pressed="${this._problems}">${mdi("alert", 15)}<span>${escape(this._t("onlyProblems"))}</span></button>`;
+    let block = chip("all", this._t("all"), all.filter((d) => this._searchPass(d)).length, "", none);
+    for (const [key] of types) if (!this._hideConn.has(key)) block += chip(key, this._t(CONN[key].key), counts.get(key) || 0, CONN[key].icon(15));
+    parts.set("connections", block);
+    parts.set(
+      "problems",
+      this._hideChips.has("problems")
+        ? ""
+        : `<button type="button" class="chip ${this._problems ? "on" : ""}" data-problems aria-pressed="${this._problems}">${mdi("alert", 15)}<span>${escape(this._t("onlyProblems"))}</span></button>`
+    );
     // Hinweise als Filter-Chips, nur wenn sie bei irgendeinem Gerät zutreffen
     // (oder aktiv sind).
     const rest = all.filter((d) => this._scopePass(d) && this._connPass(d) && this._problemPass(d) && this._searchPass(d));
     for (const { key, cls, icon, label, test } of HINTS) {
-      if (this._hideChips.has(key)) continue;
       const on = this._hint === key;
-      if (!on && !all.some(test)) continue;
+      if (this._hideChips.has(key) || (!on && !all.some(test))) {
+        parts.set(key, "");
+        continue;
+      }
       const n = rest.filter(test).length;
-      tail += `<button type="button" class="chip hint ${cls} ${on ? "on" : ""} ${n ? "" : "zero"}" data-hint="${key}" aria-pressed="${on}">${mdi(icon, 15)}<span>${escape(this._t(label))}</span> <span class="n">${n}</span></button>`;
+      parts.set(key, `<button type="button" class="chip hint ${cls} ${on ? "on" : ""} ${n ? "" : "zero"}" data-hint="${key}" aria-pressed="${on}">${mdi(icon, 15)}<span>${escape(this._t(label))}</span> <span class="n">${n}</span></button>`);
     }
-    if (tail) html += `<span class="vsep"></span>${tail}`;
+    // Trenner nur um den Block der Verbindungsarten, und nur neben einem
+    // sichtbaren Nachbarn.
+    let html = "";
+    let prev = "";
+    for (const key of chipOrder(this._chipOrder)) {
+      const part = parts.get(key);
+      if (!part) continue;
+      if (prev && (key === "connections" || prev === "connections")) html += `<span class="vsep"></span>`;
+      html += part;
+      prev = key;
+    }
     return html;
   }
 
@@ -3781,7 +3814,7 @@ class DevicePanel extends HTMLElement {
     // Inhalt vergleichen, nicht nach Referenz oder Reihenfolge.
     // Ausnahme: die Reihenfolge der Chips, bei ihr zählt genau die Folge.
     const norm = (v) => (Array.isArray(v) ? [...v].sort() : v && typeof v === "object" ? Object.entries(v).sort() : v);
-    const same = (k, a, b) => (k === "connection_order" ? JSON.stringify(a || []) === JSON.stringify(b || []) : JSON.stringify(norm(a)) === JSON.stringify(norm(b)));
+    const same = (k, a, b) => (k === "connection_order" || k === "chip_order" ? JSON.stringify(a || []) === JSON.stringify(b || []) : JSON.stringify(norm(a)) === JSON.stringify(norm(b)));
     return Object.keys(st.draft).filter((k) => !same(k, st.draft[k], st.data.values[k]));
   }
 
@@ -3866,6 +3899,11 @@ class DevicePanel extends HTMLElement {
     return orderConns([...counts.entries()], d.connection_order).map(([key, n]) => ({ value: key, devices: n }));
   }
 
+  // Angezeigte Folge einer ziehbaren Liste: Verbindungsarten oder alle Chips.
+  _dragOrder(opt, d) {
+    return opt === "chip_order" ? chipOrder(d.chip_order) : this._connCatalog(d).map((x) => x.value);
+  }
+
   // Ausgeblendete Geräte, wie beim Öffnen gespeichert: Wer eines wieder
   // einschaltet, behält die Zeile bis zum Speichern (sonst verschwände sie
   // unter dem Finger). Gelöschte Geräte fehlen (Backend).
@@ -3921,7 +3959,7 @@ class DevicePanel extends HTMLElement {
       return [
         n ? this._t("sumConnInteg", n) : this._t("sumConnAuto"),
         chips ? this._t("sumChipsHidden", chips) : "",
-        (d.connection_order || []).length ? this._t("sumChipsOrder") : "",
+        (d.connection_order || []).length || (d.chip_order || []).length ? this._t("sumChipsOrder") : "",
       ]
         .filter(Boolean)
         .join(" · ");
@@ -4546,15 +4584,19 @@ class DevicePanel extends HTMLElement {
       const multi = columns.length > 1;
       const sets = Object.fromEntries(columns.map(([k]) => [k, new Set(d[k] || [])]));
       const hidden = sets[key];
+      const dragOpt = drag === true ? "connection_order" : drag;
       const handle = (x) =>
         drag
-          ? `<button type="button" class="drag-h" data-set="drag" data-key="${escape(x.value)}" title="${escape(t("dragHint"))}" aria-label="${escape(t("dragMove", x.label))}">${mdi("drag", 18)}</button>`
+          ? `<button type="button" class="drag-h" data-set="drag" data-drag="${dragOpt}" data-key="${escape(x.value)}" title="${escape(t("dragHint"))}" aria-label="${escape(t("dragMove", x.label))}">${mdi("drag", 18)}</button>`
           : "";
       const cell = (html) => (multi ? `<span class="ex-col">${html}</span>` : html);
+      // Feste Zeile (Block der Verbindungsarten): immer an, nicht umschaltbar.
       const toggle = (k, label, x, off) =>
-        cell(`<label class="switch"><input type="checkbox" data-list="${k}" data-value="${escape(x.value)}" ${sets[k].has(x.value) ? "" : "checked"} ${off ? "disabled" : ""} aria-label="${escape(`${label}: ${x.label}`)}"><span></span></label>`);
+        x.fixed
+          ? cell(`<label class="switch"><input type="checkbox" checked disabled aria-label="${escape(`${label}: ${x.label}`)}"><span></span></label>`)
+          : cell(`<label class="switch"><input type="checkbox" data-list="${k}" data-value="${escape(x.value)}" ${sets[k].has(x.value) ? "" : "checked"} ${off ? "disabled" : ""} aria-label="${escape(`${label}: ${x.label}`)}"><span></span></label>`);
       const line = (x) => `<div class="ex-row${hidden.has(x.value) ? " off" : ""}">${handle(x)}${x.badge}<div class="ex-name">${escape(x.label)}<small>${escape(x.sub)}</small></div>
-          ${columns.map(([k, label], i) => toggle(k, label, x, i > 0 && hidden.has(x.value))).join("")}${extra ? extra.html(x, hidden.has(x.value)) : ""}</div>`;
+          ${columns.map(([k, label], i) => toggle(k, label, x, x.fixed || (i > 0 && hidden.has(x.value)))).join("")}${extra ? extra.html(x, hidden.has(x.value)) : ""}</div>`;
       const rows = items.map(line).join("");
       const allRow = columns
         .map(([k, label]) => cell(`<label class="switch"><input type="checkbox" data-list-all="${k}" ${items.every((x) => !sets[k].has(x.value)) ? "checked" : ""} aria-label="${escape(`${allLabel || t("toggleAll")}: ${label}`)}"><span></span></label>`))
@@ -4562,7 +4604,7 @@ class DevicePanel extends HTMLElement {
       return `<div class="opt-short ex-intro">${escape(intro)}</div>
         <div class="ex-head${multi ? " multi" : ""}"><span></span>${columns.map(([, label]) => (multi ? `<span class="ex-col">${escape(label)}</span>` : `<span>${escape(label)}</span>`)).join("")}${extra ? `<span class="ex-col sel">${escape(extra.label)}</span>` : ""}</div>
         <div class="ex-row ex-all"><div class="ex-name">${escape(allLabel || t("toggleAll"))}</div>${allRow}${extra ? `<span class="ex-col sel"></span>` : ""}</div>
-        ${drag ? `<div class="drag-list">${rows}</div>` : rows}`;
+        ${drag ? `<div class="drag-list" data-drag-list="${dragOpt}">${rows}</div>` : rows}`;
     };
     // KI-Aufgaben von HA; eine früher gewählte, die es nicht mehr gibt, bleibt sichtbar.
     const aiTasks = [...(st.data.catalog?.ai_tasks || [])];
@@ -4579,11 +4621,15 @@ class DevicePanel extends HTMLElement {
       sub: x.devices ? t("devicesCount", x.devices) : t("typesEmpty"),
       badge: `<span class="ibadge type">${CONN[x.value].icon(18)}</span>`,
     }));
-    const otherChips = CHIP_OTHER.map(([key, icon]) => ({
+    // Seit 1.13.0 in der eingestellten Reihenfolge; "connections" ist der Block
+    // aus "Alle" und den Verbindungsarten, er bleibt immer sichtbar (fixed).
+    const chipIcons = Object.fromEntries([...CHIP_OTHER, ["connections", "filter"]]);
+    const otherChips = chipOrder(d.chip_order).map((key) => ({
       value: key,
       label: t("chipOther")[key][0],
       sub: t("chipOther")[key][1],
-      badge: `<span class="ibadge type">${mdi(icon, 18)}</span>`,
+      badge: `<span class="ibadge type">${mdi(chipIcons[key], 18)}</span>`,
+      fixed: key === "connections",
     }));
     const types = this._catalogTypes(d).map((x) => ({
       value: x.type,
@@ -4636,11 +4682,14 @@ class DevicePanel extends HTMLElement {
           ? // Weitere Chips (seit 1.11.0) und Filter-Chips der Verbindungsart
             // (docs/mockups/view-v2, C): nur die Chips, gilt für alle.
             `<h4 class="ex-title">${escape(t("chipsOtherTitle"))}</h4>` +
-            exTable("hide_chips", otherChips, t("chipsOtherIntro")) +
+            exTable("hide_chips", otherChips, t("chipsOtherIntro"), "chip_order") +
+            ((d.chip_order || []).length
+              ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset" data-key="chip_order">${mdi("reset", 15)}${escape(t("chipsOrderResetAll"))}</button></div>`
+              : "") +
             `<h4 class="ex-title">${escape(t("chipsConnTitle"))}</h4>` +
             exTable("hide_connections", chips, t("chipsIntro"), true) +
             ((d.connection_order || []).length
-              ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset">${mdi("reset", 15)}${escape(t("chipsOrderReset"))}</button></div>`
+              ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset" data-key="connection_order">${mdi("reset", 15)}${escape(t("chipsOrderReset"))}</button></div>`
               : "")
           : this._connIntegHtml(d) + this._overridesHtml("connection") + this._overridesHtml("signal")),
       ai:
@@ -4753,7 +4802,7 @@ class DevicePanel extends HTMLElement {
         this._renderSettings();
       } else if (action === "drag-reset") {
         if (!st.draft) return;
-        st.draft.connection_order = [];
+        st.draft[btn.dataset.key === "chip_order" ? "chip_order" : "connection_order"] = [];
         this._renderSettings();
       } else if (action === "ovr-all" || action === "ovr-one") {
         if (!st.data) return;
@@ -4779,6 +4828,7 @@ class DevicePanel extends HTMLElement {
       const row = h.closest(".ex-row");
       const box = row?.parentElement;
       if (!box) return;
+      const opt = h.dataset.drag || "connection_order";
       // Bewegungen am Fenster abhören, nicht am Griff: Das Umhängen der Zeile
       // im DOM hebt die Zeiger-Bindung an den Griff auf.
       const win = this.ownerDocument?.defaultView || window;
@@ -4806,8 +4856,10 @@ class DevicePanel extends HTMLElement {
         const st = this._settings;
         if (!st?.draft) return;
         const order = [...box.querySelectorAll('[data-set="drag"]')].map((b) => b.dataset.key);
-        if (JSON.stringify(order) !== JSON.stringify(this._connCatalog(st.draft).map((x) => x.value))) {
-          st.draft.connection_order = order;
+        // Nur speichern, wenn die Folge von der angezeigten abweicht; bei den
+        // Chips zählt die Standardfolge als "leer".
+        if (JSON.stringify(order) !== JSON.stringify(this._dragOrder(opt, st.draft))) {
+          st.draft[opt] = opt === "chip_order" && JSON.stringify(order) === JSON.stringify(CHIP_ORDER_DEFAULT) ? [] : order;
         }
         this._renderSettings();
       };
@@ -4820,12 +4872,13 @@ class DevicePanel extends HTMLElement {
       const st = this._settings;
       if (!h || !st?.draft || (ev.key !== "ArrowUp" && ev.key !== "ArrowDown")) return;
       ev.preventDefault();
-      const order = this._connCatalog(st.draft).map((x) => x.value);
+      const opt = h.dataset.drag || "connection_order";
+      const order = this._dragOrder(opt, st.draft);
       const i = order.indexOf(h.dataset.key);
       const j = ev.key === "ArrowUp" ? i - 1 : i + 1;
       if (i < 0 || j < 0 || j >= order.length) return;
       [order[i], order[j]] = [order[j], order[i]];
-      st.draft.connection_order = order;
+      st.draft[opt] = opt === "chip_order" && JSON.stringify(order) === JSON.stringify(CHIP_ORDER_DEFAULT) ? [] : order;
       this._renderSettings();
     });
     dialog.addEventListener("input", (ev) => {

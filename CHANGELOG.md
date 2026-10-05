@@ -7,6 +7,26 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.13.0] - 2026-10-05
+
+Order of all filter chips.
+
+### Added
+
+- The order of all chips above the list can be set (requested by the user,
+  for example to put "Battery" first). Settings › Display › Filter chips: the
+  list "Other chips" has a handle on every row (drag with mouse or finger, or
+  move with the arrow keys), like the connection type chips. The new row
+  "Connection types" stands for "All" and the connection type chips as one
+  block; it is always on and can be moved like the others. The order inside
+  the block stays adjustable below.
+  - Chips that apply to no device still do not appear, wherever they stand.
+  - Separators only stand around the connection type block, and only next to
+    a visible chip. "Default order" resets it; the default order is stored as
+    empty. Applies to all users.
+  - New option `chip_order` (set in the panel, kept by the options dialog of
+    Home Assistant, which cannot drag).
+
 ## [1.12.2] - 2026-10-05
 
 Back from the Home Assistant device page, found and fixed.
@@ -1330,6 +1350,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.0
 [1.12.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.2
 [1.12.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.1
 [1.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.0

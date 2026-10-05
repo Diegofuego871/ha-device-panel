@@ -70,7 +70,7 @@ Only on a button press, with an AI task of Home Assistant. No keys, credentials 
 - A device counts as offline after 2 minutes without a sign of life (adjustable, per integration and per device).
 - An outage lasts until Home Assistant sees the device online again, also across restarts. "At least" (≥) means the start is not known.
 - The availability log covers 31 days in its own file, not the recorder. Time while Home Assistant was not running counts as "no data".
-- Hidden devices, integrations and device types are neither shown nor monitored. Every filter chip can be hidden in the settings.
+- Hidden devices, integrations and device types are neither shown nor monitored. Every filter chip can be hidden and reordered in the settings.
 - Battery warning from 5 to 50 % (default 15 %), per integration and per device.
 - Signal history comes from the recorder or, for ZHA, Bluetooth and unrecorded sensors, from the panel itself.
 - Every setting shows where it comes from: default, integration or device.

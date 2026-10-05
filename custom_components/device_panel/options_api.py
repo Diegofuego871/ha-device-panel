@@ -55,11 +55,13 @@ from .const import (
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_CONNECTION_INTEGRATIONS,
+    CONF_CHIP_ORDER,
     CONF_CONNECTION_ORDER,
     CONF_HIDE_CHIPS,
     CONF_HIDE_CONNECTIONS,
     CONNECTION_MANUAL,
     CHIP_KEYS,
+    CHIP_ORDER_KEYS,
     CONNECTION_TYPES,
     CONF_FLAKY_OUTAGES,
     CONF_NOTIFY_CLICK,
@@ -103,7 +105,7 @@ INT_OPTIONS: tuple[tuple[str, int], ...] = (
     (CONF_BATTERY_LOW, DEFAULT_BATTERY_LOW),
     (CONF_NOTIFY_DELAY, DEFAULT_NOTIFY_DELAY),
 )
-LIST_OPTIONS = (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CHIPS, CONF_HIDE_CONNECTIONS, CONF_CONNECTION_ORDER)
+LIST_OPTIONS = (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CHIPS, CONF_HIDE_CONNECTIONS, CONF_CONNECTION_ORDER, CONF_CHIP_ORDER)
 
 _DOMAIN_RE = re.compile(r"^[a-z0-9_]+$")
 # Geräte-IDs von HA: Hex (uuid4().hex); etwas weiter gefasst für Tests.
@@ -186,6 +188,13 @@ def connection_order(value: Any) -> list[str]:
     """Reihenfolge der Chips: bekannte Arten in der gegebenen Folge, ohne Doppelte."""
     if not isinstance(value, list) or not all(v in CONNECTION_TYPES for v in value):
         raise vol.Invalid("Liste von Verbindungsarten erwartet")
+    return list(dict.fromkeys(value))
+
+
+def chip_order(value: Any) -> list[str]:
+    """Reihenfolge der Chips über der Liste: bekannte Schlüssel in der gegebenen Folge, ohne Doppelte."""
+    if not isinstance(value, list) or not all(v in CHIP_ORDER_KEYS for v in value):
+        raise vol.Invalid(f"Liste von Chips erwartet ({', '.join(CHIP_ORDER_KEYS)})")
     return list(dict.fromkeys(value))
 
 
@@ -293,6 +302,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_HIDE_CHIPS): _chips,
         vol.Optional(CONF_HIDE_CONNECTIONS): _connections,
         vol.Optional(CONF_CONNECTION_ORDER): connection_order,
+        vol.Optional(CONF_CHIP_ORDER): chip_order,
         vol.Optional(CONF_CONNECTION_INTEGRATIONS): connection_map,
         vol.Optional(CONF_BATTERY_LOW_INTEGRATIONS): battery_map,
         vol.Optional(CONF_OFFLINE_INTEGRATIONS): offline_map,
@@ -340,6 +350,7 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_HIDE_CONNECTIONS] = sorted({c for c in options.get(CONF_HIDE_CONNECTIONS) or [] if c in CONNECTION_TYPES})
     # Reihenfolge bleibt, wie gespeichert (nicht sortieren); Unbekanntes fällt weg.
     values[CONF_CONNECTION_ORDER] = list(dict.fromkeys(c for c in options.get(CONF_CONNECTION_ORDER) or [] if c in CONNECTION_TYPES))
+    values[CONF_CHIP_ORDER] = list(dict.fromkeys(c for c in options.get(CONF_CHIP_ORDER) or [] if c in CHIP_ORDER_KEYS))
     try:
         values[CONF_CONNECTION_INTEGRATIONS] = connection_map(options.get(CONF_CONNECTION_INTEGRATIONS))
     except vol.Invalid:

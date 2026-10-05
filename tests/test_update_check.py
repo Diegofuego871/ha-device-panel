@@ -115,6 +115,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "hide_chips": [],
         "hide_connections": [],
         "connection_order": [],
+        "chip_order": [],
         "connection_integrations": {},
         "battery_low": 15,
         "battery_low_integrations": {},
@@ -189,6 +190,20 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
     assert (await client.receive_json())["success"]
     await hass.async_block_till_done()
     assert entry.options["hide_chips"] == []
+    # Reihenfolge aller Chips (1.13.0): wie gegeben, ohne Doppelte, "connections" ist der Block
+    order = ["battery", "area", "connections", "battery", "new"]
+    await client.send_json({"id": 16, "type": f"{DOMAIN}/set_options", "values": {"chip_order": order}})
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+    assert entry.options["chip_order"] == ["battery", "area", "connections", "new"]
+    await client.send_json({"id": 17, "type": f"{DOMAIN}/set_options", "values": {"chip_order": ["alle"]}})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"
+    await client.send_json({"id": 18, "type": f"{DOMAIN}/list_devices"})
+    assert (await client.receive_json())["result"]["chip_order"] == ["battery", "area", "connections", "new"]
+    await client.send_json({"id": 19, "type": f"{DOMAIN}/set_options", "values": {"chip_order": []}})
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+    assert entry.options["chip_order"] == []
 
 
 async def test_options_flow(hass: HomeAssistant, entry) -> None:
@@ -318,6 +333,15 @@ async def test_options_flow_hide_connections(hass: HomeAssistant, entry) -> None
     result = await hass.config_entries.options.async_init(entry.entry_id)
     with pytest.raises(InvalidData):
         await hass.config_entries.options.async_configure(result["flow_id"], {"hide_connections": ["funk"]})
+
+
+async def test_options_flow_keeps_chip_order(hass: HomeAssistant, entry) -> None:
+    """Die Reihenfolge der Chips (nur im Panel gesetzt) überlebt den Optionsdialog."""
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "chip_order": ["battery", "area"]})
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(result["flow_id"], {"hide_connections": ["ble"]})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options["chip_order"] == ["battery", "area"]
 
 
 async def test_options_flow_connection_per_integration(hass: HomeAssistant, entry) -> None:

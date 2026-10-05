@@ -32,6 +32,7 @@ from .const import (
     CONF_BATTERY_PUSH_EXCLUDE,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
+    CONF_CHIP_ORDER,
     CONF_CONNECTION_ORDER,
     CONF_CONNECTION_INTEGRATIONS,
     CONF_HIDE_CHIPS,
@@ -1121,6 +1122,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         "hide_chips": opts[CONF_HIDE_CHIPS],
         "hide_connections": opts[CONF_HIDE_CONNECTIONS],
         "connection_order": opts[CONF_CONNECTION_ORDER],
+        # Reihenfolge aller Chips über der Liste (seit 1.13.0), leer = Standard.
+        "chip_order": opts[CONF_CHIP_ORDER],
         "pulse": None,
         "incidents": [],
         # Filter "Bereich": Bereiche und Etagen in der Reihenfolge, die man in

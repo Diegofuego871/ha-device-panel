@@ -7,6 +7,28 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.13.0] - 2026-10-05
+
+Reihenfolge aller Filter-Chips.
+
+### Hinzugefügt
+
+- Die Reihenfolge aller Chips über der Liste lässt sich einstellen (Wunsch des
+  Nutzers, zum Beispiel "Batterie" ganz nach vorn). Einstellungen › Darstellung
+  › Filter-Chips: Die Liste "Weitere Chips" hat in jeder Zeile einen Griff (mit
+  Maus oder Finger ziehen oder mit den Pfeiltasten verschieben), wie die Chips
+  der Verbindungsart. Die neue Zeile "Verbindungsarten" steht für "Alle" und
+  die Chips der Verbindungsart als ein Block; sie ist immer an und lässt sich
+  wie die anderen verschieben. Die Reihenfolge innerhalb des Blocks bleibt
+  darunter einstellbar.
+  - Chips, die auf kein Gerät zutreffen, erscheinen weiterhin nicht, egal wo
+    sie stehen.
+  - Trenner stehen nur um den Block der Verbindungsarten und nur neben einem
+    sichtbaren Chip. "Standardreihenfolge" setzt zurück; die Standardfolge
+    wird als leer gespeichert. Gilt für alle Benutzer.
+  - Neue Option `chip_order` (im Panel gesetzt, vom Optionsdialog von Home
+    Assistant erhalten, der nicht ziehen kann).
+
 ## [1.12.2] - 2026-10-05
 
 Zurück von der Geräteseite von Home Assistant, Ursache gefunden und behoben.
@@ -1381,6 +1403,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.0
 [1.12.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.2
 [1.12.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.1
 [1.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.0

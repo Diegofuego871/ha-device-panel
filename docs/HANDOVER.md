@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.12.2, Einstellungen in fünf Abschnitten)
+## Stand (1.13.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -372,6 +372,17 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `pip download --python-version 3.14` holen, nach `hass_frontend`
    entpacken, HA mit `--skip-pip`). `historyBack=1` aus 1.12.1 wirkte nicht und
    ist wieder entfernt.
+   Reihenfolge aller Chips `1.13.0` (Nutzer, 2026-10-05, "Batterie ganz oben";
+   Entscheid: alles frei, Verbindungsarten als ein Block): Option `chip_order`
+   (`const.CHIP_ORDER_KEYS` = `CHIP_KEYS` mit `connections` an Stelle 3;
+   `options_api.chip_order`, Reihenfolge bleibt, Doppelte fallen weg; leer =
+   Standard, nicht genannte folgen in der Standardfolge; nicht im
+   HA-Optionsdialog, bleibt dort erhalten). Panel: `chipOrder()` ergänzt die
+   Folge, `_chipsHtml` baut jeden Chip als Stück und setzt Trenner nur um
+   `connections` neben sichtbaren Nachbarn; Einstellungen: `exTable(..., drag)`
+   nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
+   `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
+   als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem
