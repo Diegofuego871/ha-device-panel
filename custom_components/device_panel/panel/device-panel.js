@@ -259,6 +259,9 @@ const MON_TAB_KEYS = {
 // Prompt der KI-Einschätzung (Profi-Modus, seit 1.2.0): wie
 // ai_prompt.prompt_problem im Backend; das Backend prüft beim Speichern nochmals.
 const PROMPT_MAX = 6000;
+// So lange gilt "Home Assistant startet neu…", wenn die laufende Version gleich
+// bleibt (Neustart abgebrochen oder nie gekommen); danach erscheint der Knopf wieder.
+const RESTART_WAIT_MS = 5 * 60 * 1000;
 // Übrige Filter-Chips, die sich ausblenden lassen (seit 1.11.0, wie const.CHIP_KEYS):
 // Schlüssel, Symbol. Die Texte stehen in strings.js (chipOther).
 const CHIP_OTHER = [
@@ -983,6 +986,8 @@ class DevicePanel extends HTMLElement {
       this._offline = false;
       this._retries = 0;
       this._deepPending = true;
+      // HA ist nach dem Neustart wieder da: laufende Version neu lesen.
+      if (this._version?.restarting) this._loadVersion(false);
     } catch (err) {
       if (!stale()) {
         if (isConnectionError(err)) {
@@ -5323,6 +5328,7 @@ class DevicePanel extends HTMLElement {
     }
     v.error = null;
     this._renderSettingsVersion();
+    let fresh = false;
     const jobs = [
       // Vorabversion immer mitabfragen: auch bei ausgeschaltetem Schalter
       // muss das Panel wissen, welche Version GitHub als Pre-Release führt,
@@ -5331,6 +5337,7 @@ class DevicePanel extends HTMLElement {
       this._hass.callWS({ type: "device_panel/version", force, prerelease: true }).then(
         (r) => {
           v.data = r;
+          fresh = true;
           if (!this._settings || !this._settings.extra) this._applyPanelSettings(r && r.panel);
         },
         (err) => (v.error = errText(err))
@@ -5361,6 +5368,13 @@ class DevicePanel extends HTMLElement {
       v.hacsSyncing = false;
     }
     v.checking = false;
+    // Nach einem Neustart bleibt die Seite offen (HA lädt sie nicht neu): Läuft
+    // jetzt eine andere Version, oder kam in 5 Minuten kein Neustart, gilt
+    // "startet neu" nicht mehr. Ohne Antwort von HA bleibt es stehen.
+    if (v.restarting && fresh && (v.data.installed !== v.restartFrom || Date.now() - v.restartAt > RESTART_WAIT_MS)) {
+      v.restarting = false;
+      v.restartFrom = null;
+    }
     if (v.data && v.data.error && !v.data.latest && !v.data.prerelease) v.error = v.data.error;
     if (this._versionState().betaBlocked) await this._loadHacsSwitch();
     this._renderSettingsVersion();
@@ -5467,7 +5481,7 @@ class DevicePanel extends HTMLElement {
     const notes = url ? `<a class="ver-link" href="${escape(url)}" target="_blank" rel="noopener">${escape(t("verReleaseNotes"))}${mdi("open", 15)}</a>` : "";
     if (v.restarting) return row("rst", "reset", t("verRestarting"), t("verRestartSub"), "");
     if (restart) {
-      return row("rst", "reset", t("verRestartNeeded", a.installed_version), t("verRestartSub"),
+      return row("rst", "reset", t("verRestartNeeded", a.installed_version), v.restartError ? `${t("verRestartError")} ${v.restartError}` : t("verRestartSub"),
         `<button type="button" class="ver-btn warn" data-ver="restart">${mdi("reset", 16)}${escape(t("verRestart"))}</button>`);
     }
     if (inProgress || v.installing) {
@@ -5562,11 +5576,21 @@ class DevicePanel extends HTMLElement {
     } else if (action === "restart") {
       if (!window.confirm(this._t("verRestartConfirm"))) return;
       v.restarting = true;
+      v.restartError = null;
+      v.restartFrom = this._versionState().installed;
+      v.restartAt = Date.now();
       this._renderSettingsVersion();
       try {
         await this._callService("homeassistant", "restart", {});
       } catch (err) {
-        // Die Verbindung bricht beim Neustart ab; ein Fehler hier ist normal.
+        // Die Verbindung bricht beim Neustart ab; ein Verbindungsfehler ist normal.
+        // Lehnt HA den Neustart ab (z. B. ungültige Konfiguration), steht der
+        // Fehler in der Zeile und der Knopf bleibt.
+        if (!isConnectionError(err)) {
+          v.restarting = false;
+          v.restartError = errText(err);
+          this._renderSettingsVersion();
+        }
       }
     }
   }

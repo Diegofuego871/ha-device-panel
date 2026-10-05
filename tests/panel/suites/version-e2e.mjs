@@ -94,6 +94,48 @@ for (const mobile of [false, true]) {
   check(`[${tag}] Neustart mit Rückfrage ausgelöst`, svc.length === 1 && svc[0].domain === "homeassistant" && svc[0].service === "restart", JSON.stringify(svc));
   check(`[${tag}] Anzeige "startet neu"`, (await verText()).includes("Home Assistant startet neu"));
 
+  // 3b. Home Assistant ist wieder da, die Seite blieb offen (kein Neuladen):
+  // die neue Version läuft, "startet neu" darf nicht stehen bleiben.
+  await p.evaluate(() => { window.__version = { installed: "0.5.0", latest: "0.5.0" }; });
+  await open();
+  await p.waitForTimeout(400);
+  t = await verText();
+  check(`[${tag}] nach dem Neustart: neue Version läuft, kein "startet neu"`, t.includes("Device Panel 0.5.0") && !t.includes("startet neu") && !(await has('[data-ver="restart"]')), t);
+  // Auch bei geöffnetem Fenster: Verbindung kommt zurück, ohne erneutes Öffnen.
+  await ev(`${panel}._version = null`);
+  await p.evaluate(() => { window.__version = { installed: "0.4.0", latest: "0.5.0" }; });
+  await setHacs({ installed_version: "0.5.0", latest_version: "0.5.0" });
+  await open();
+  await p.waitForTimeout(400);
+  await p.evaluate(() => { window.__services = []; });
+  await tap('[data-ver="restart"]');
+  await p.waitForTimeout(100);
+  check(`[${tag}] erneut: Anzeige "startet neu"`, (await verText()).includes("Home Assistant startet neu"));
+  await p.evaluate(() => { window.__version = { installed: "0.5.0", latest: "0.5.0" }; });
+  await ev(`${panel}._fetch()`);
+  check(`[${tag}] Verbindung zurück, Fenster offen: neue Version läuft`, await f.waitForFunction(new Function(`const x=${R}.querySelector("dialog.settings .ver-slot"); return !!x && x.innerText.includes("Device Panel 0.5.0") && !x.innerText.includes("startet neu")`), null, { timeout: 5000 }).then(() => true, () => false), await verText());
+
+  // 3c. Neustart abgelehnt (z. B. ungültige Konfiguration): Fehler in der Zeile, Knopf bleibt
+  await ev(`${panel}._version = null`);
+  await p.evaluate(() => { window.__version = { installed: "0.4.0", latest: "0.5.0" }; window.__serviceFails = "Die Konfiguration ist ungültig"; });
+  await open();
+  await p.waitForTimeout(400);
+  await tap('[data-ver="restart"]');
+  await p.waitForTimeout(200);
+  t = await verText();
+  check(`[${tag}] Neustart abgelehnt: Fehler in der Zeile, Knopf bleibt`, t.includes("Neustart fehlgeschlagen") && t.includes("Die Konfiguration ist ungültig") && !t.includes("startet neu") && await has('[data-ver="restart"]'), t);
+  await p.evaluate(() => { window.__serviceFails = null; });
+
+  // 3d. Neustart ohne Fehler, aber nichts passiert (nach 5 Minuten): Knopf wieder da
+  await tap('[data-ver="restart"]');
+  await p.waitForTimeout(100);
+  check(`[${tag}] erneut ausgelöst: "startet neu"`, (await verText()).includes("Home Assistant startet neu"));
+  await ev(`${panel}._version.restartAt = Date.now() - 6 * 60 * 1000`);
+  await open();
+  await p.waitForTimeout(400);
+  t = await verText();
+  check(`[${tag}] nach 5 Minuten ohne Neustart: Knopf wieder da`, !t.includes("startet neu") && await has('[data-ver="restart"]'), t);
+
   // 4. HACS kennt die neue Version noch nicht: automatisch nachladen, Hinweis
   await ev(`${panel}._version = null`);
   await setHacs({ installed_version: "0.4.0", latest_version: "0.4.0" });

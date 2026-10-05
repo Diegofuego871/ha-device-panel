@@ -7,6 +7,24 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.13.1] - 2026-10-05
+
+Update box after a restart of Home Assistant.
+
+### Fixed
+
+- After "Restart now" in the update box, "Home Assistant is restarting…"
+  stayed for good as long as the page was not reloaded: Home Assistant does
+  not reload the panel after a restart, and the panel never cleared that
+  state. The box now reads the running version again as soon as Home
+  Assistant answers; if a different version is running, the message goes
+  away. If no restart happened within 5 minutes, the "Restart now" button
+  comes back.
+- If Home Assistant refuses the restart (for example because the
+  configuration is invalid), the error now appears in the box ("Restart
+  failed: …") and the button stays. Before, the panel claimed it was
+  restarting.
+
 ## [1.13.0] - 2026-10-05
 
 Order of all filter chips.
@@ -1350,6 +1368,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.13.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.1
 [1.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.0
 [1.12.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.2
 [1.12.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.1

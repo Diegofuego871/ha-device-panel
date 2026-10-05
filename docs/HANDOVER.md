@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.13.0, Einstellungen in fünf Abschnitten)
+## Stand (1.13.1, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,16 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Neustart im Update-Kasten `1.13.1` (Rückfrage des Nutzers, 2026-10-05, ob ein
+   HACS-Update das eigene Update behindert): HACS selbst stört nicht
+   (`restart` = HACS-`installed_version` > laufende Version aus
+   `device_panel/version`, `in_progress` je Entität). Fehler im Panel:
+   `v.restarting` wurde nie zurückgesetzt, HA lädt die Seite nach dem
+   Neustart nicht neu, "startet neu…" blieb stehen (`version-e2e` umging das
+   mit `_version = null`). Jetzt `restartFrom`/`restartAt`: `_loadVersion`
+   beendet den Zustand bei anderer laufender Version oder nach
+   `RESTART_WAIT_MS` (5 Min.), `_fetch` lädt nach der Rückkehr der Verbindung
+   neu; lehnt HA ab (kein Verbindungsfehler), steht `restartError` in der Zeile.
    Kachel "Verfügbarkeit" (Rückfrage des Nutzers, 2026-10-04: 98,7 % trotz
    vollem Ring): Variante B gewählt, gross der Anteil jetzt wie der Ring,
    darunter "Ø 24 Std." (verworfen: A wie bisher, C Durchschnitt mit dem

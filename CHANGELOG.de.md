@@ -7,6 +7,24 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.13.1] - 2026-10-05
+
+Update-Kasten nach einem Neustart von Home Assistant.
+
+### Behoben
+
+- Nach "Jetzt neu starten" im Update-Kasten blieb "Home Assistant startet
+  neu…" dauerhaft stehen, solange die Seite nicht neu geladen wurde: Home
+  Assistant lädt das Panel nach einem Neustart nicht neu, und das Panel hat
+  diesen Zustand nie zurückgesetzt. Der Kasten liest jetzt die laufende
+  Version neu, sobald Home Assistant antwortet; läuft eine andere Version,
+  verschwindet die Meldung. Kam innerhalb von 5 Minuten kein Neustart, ist
+  der Knopf "Jetzt neu starten" wieder da.
+- Lehnt Home Assistant den Neustart ab (zum Beispiel wegen ungültiger
+  Konfiguration), erscheint der Fehler jetzt im Kasten ("Neustart
+  fehlgeschlagen: …") und der Knopf bleibt. Vorher behauptete das Panel, es
+  starte neu.
+
 ## [1.13.0] - 2026-10-05
 
 Reihenfolge aller Filter-Chips.
@@ -1403,6 +1421,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.13.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.1
 [1.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.0
 [1.12.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.2
 [1.12.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.12.1
