@@ -27,7 +27,7 @@ Ausgefallene Geräte mit der Zeit, seit der sie fehlen, instabile Geräte und de
 
 ### Alles zu einem Gerät
 
-Verfügbarkeit, Unterbrüche, Empfang und Batterie als Kacheln, dazu Verbindung, Integration, Hersteller, Modell, Software und alle Entitäten. Typ und Verbindungsart lassen sich hier korrigieren.
+Verfügbarkeit, Unterbrüche, Empfang und Batterie als Kacheln, dazu Verbindung, Integration, Hersteller, Modell, Software und alle Entitäten. Typ und Verbindungsart lassen sich hier korrigieren, und das Gerät lässt sich umbenennen (in Home Assistant, Entitäts-IDs bleiben).
 
 <p align="center"><img src="docs/screenshots/de/popup.png" alt="Geräte-Popup mit Statistik, Verbindung und Gerätedaten" width="720"></p>
 

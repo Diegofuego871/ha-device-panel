@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.21.0] - 2026-10-06
+
+Geräte umbenennen.
+
+### Hinzugefügt
+
+- Geräte-Popup: Ein Stift neben dem Namen benennt das Gerät in Home Assistant um
+  (Wunsch des Nutzers). Es setzt den Gerätenamen im Geräte-Register, wie die
+  Geräteseite von Home Assistant, der neue Name gilt also überall. Enter oder der
+  Haken speichert, Escape oder das Kreuz bricht ab. Der Name der Integration
+  bleibt erhalten und steht als "Originalname" mit "Zurücksetzen"; ein leerer
+  Name stellt ihn wieder her. Es wird nur das Gerät umbenannt, Entitäts-IDs
+  bleiben, wie sie sind. Umbenennen dürfen nur Administratoren (neuer Befehl
+  `device_panel/rename_device`).
+
 ## [1.20.0] - 2026-10-06
 
 Paralleler Zeitstrahl beim Ausfall.
@@ -1599,6 +1614,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.21.0
 [1.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.20.0
 [1.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.19.0
 [1.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.18.0

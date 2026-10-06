@@ -598,6 +598,37 @@ async def _ws_hide_device(
 
 @websocket_api.websocket_command(
     {
+        vol.Required("type"): f"{DOMAIN}/rename_device",
+        vol.Required("device_id"): str,
+        # Leer = zurück auf den Namen der Integration.
+        vol.Required("name"): vol.All(str, vol.Length(max=255)),
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_rename_device(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """
+    Gerät in Home Assistant umbenennen (Popup, nur auf Knopfdruck): setzt
+    name_by_user im Geräte-Register, also wie die Geräteseite von HA. Der Name der
+    Integration bleibt erhalten, ein leerer Name stellt ihn wieder her. Entitäts-IDs
+    ändern sich nicht.
+    """
+    registry = dr.async_get(hass)
+    if registry.async_get(msg["device_id"]) is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
+        return
+    name = msg["name"].strip() or None
+    device = registry.async_update_device(msg["device_id"], name_by_user=name)
+    connection.send_result(
+        msg["id"],
+        {"name": (device.name_by_user or device.name) if device else name, "name_custom": device.name_by_user if device else name},
+    )
+
+
+@websocket_api.websocket_command(
+    {
         vol.Required("type"): f"{DOMAIN}/reset_device_settings",
         # Geräte, deren Batterie-Warnung bzw. Meldungen auf den globalen Wert
         # zurückgehen (Einstellungen, beim Speichern).
@@ -644,4 +675,5 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_set_device_settings)
     websocket_api.async_register_command(hass, _ws_reset_device_settings)
     websocket_api.async_register_command(hass, _ws_hide_device)
+    websocket_api.async_register_command(hass, _ws_rename_device)
     websocket_api.async_register_command(hass, _ws_signal_history)

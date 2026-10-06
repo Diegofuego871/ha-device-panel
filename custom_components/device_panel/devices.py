@@ -1059,6 +1059,9 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "area": area.name if area else None,
                 # Für den Filter "Bereich" (seit 0.23.0).
                 "area_id": area.id if area else None,
+                # Name der Integration und eigener Name (Umbenennen im Popup, seit 1.21.0)
+                "name_original": device.name,
+                "name_custom": device.name_by_user,
                 "manufacturer": device.manufacturer,
                 "model": device.model,
                 "sw_version": device.sw_version,

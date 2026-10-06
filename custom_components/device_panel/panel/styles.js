@@ -409,6 +409,15 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .dlg-avatar.warn { background: var(--dp-warning-soft); color: var(--dp-warning); }
 .dlg-avatar.none { background: var(--dp-subtle); color: var(--dp-text2); }
 .dlg-title { flex: 1 1 auto; min-width: 0; }
+.dlg-title h2 .dn-edit { display: inline-grid; place-items: center; width: 28px; height: 28px; margin-left: 6px; vertical-align: middle; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--dp-text2); cursor: pointer; }
+.dlg-title h2 .dn-edit:hover { background: var(--dp-hover); color: var(--dp-text); }
+.dlg-title h2 .dn-edit:focus-visible { outline: 2px solid var(--dp-primary); }
+.dn-form { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; }
+.dn-input { flex: 1 1 auto; min-width: 0; height: 38px; padding: 0 12px; border: 1px solid var(--dp-primary); border-radius: 10px; background: var(--dp-bg); color: var(--dp-text); font: inherit; font-size: 16px; }
+.dn-btn { flex: none; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid var(--dp-divider); border-radius: 50%; background: transparent; color: var(--dp-text2); cursor: pointer; }
+.dn-btn.ok { border-color: var(--dp-primary); background: var(--dp-primary); color: #fff; }
+.dn-btn:disabled, .dn-input:disabled { opacity: .55; cursor: default; }
+.dn-orig { margin: 0 0 6px; color: var(--dp-text2); font-size: 12.5px; }
 .dlg-title h2 { margin: 2px 0 6px; font-size: 21px; font-weight: 500; overflow-wrap: anywhere; }
 .dlg-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; color: var(--dp-text2); font-size: 13px; }
 .dlg-close { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border: none; border-radius: 50%;

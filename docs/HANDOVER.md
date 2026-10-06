@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.20.0, Einstellungen in fünf Abschnitten)
+## Stand (1.21.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Gerät umbenennen `1.21.0` (Nutzer, 2026-10-06, ohne Mockup): WebSocket
+   `device_panel/rename_device` (Admin) setzt `name_by_user` im Geräte-Register, leer =
+   zurück; `list_devices` liefert `name_original` und `name_custom`. Popup: Stift im
+   Kopf (`_nameHtml`, `_renameStart/_renameSave/_renameCancel`, Zustand `this._rename`,
+   Enter/Escape im Feld). Nur das Gerät, keine Entitäts-IDs. Tests: `test_rename.py`,
+   `rename-e2e.mjs`.
    Paralleler Ausfall-Zeitstrahl `1.20.0` (Nutzer, 2026-10-06): `_ptlHtml(rows)` und
    `_outageRows()` ersetzen `_outageMarks()` (Übersicht, Reiter "Ausfall", Integration);
    `_ptlWidth()` rechnet die Länge, `_updateSettingsMeta` passt `--w` beim Tippen an.

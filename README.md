@@ -27,7 +27,7 @@ Offline devices with the time they have been gone, unstable devices and the outa
 
 ### Everything about one device
 
-Availability, outages, signal and battery as tiles, plus connection, integration, manufacturer, model, software and all entities. Type and connection type can be corrected here.
+Availability, outages, signal and battery as tiles, plus connection, integration, manufacturer, model, software and all entities. Type and connection type can be corrected here, and the device can be renamed (in Home Assistant, entity IDs stay).
 
 <p align="center"><img src="docs/screenshots/en/popup.png" alt="Device pop-up with statistics, connection and device details" width="720"></p>
 

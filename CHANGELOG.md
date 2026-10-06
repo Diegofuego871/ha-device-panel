@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.21.0] - 2026-10-06
+
+Rename devices.
+
+### Added
+
+- Device pop-up: a pencil next to the name renames the device in Home Assistant
+  (requested by the user). It sets the device name in the device registry, the
+  same as the device page of Home Assistant, so the new name applies everywhere.
+  Enter or the check mark saves, Escape or the cross cancels. The name of the
+  integration is kept and shown as "Original name" with "Reset"; an empty name
+  restores it. Only the device is renamed, entity IDs stay as they are. Only
+  administrators can rename (new command `device_panel/rename_device`).
+
 ## [1.20.0] - 2026-10-06
 
 Parallel outage timeline.
@@ -1539,6 +1553,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.21.0
 [1.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.20.0
 [1.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.19.0
 [1.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.18.0

@@ -525,6 +525,7 @@
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
   window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {} };
   window.__connOverrides = {};
+  window.__names = {};
   const pushHass = () => {
     const ha = document.querySelector("home-assistant").hass;
     document.querySelector("#panel-frame").contentDocument.querySelector("device-panel").hass = { ...ha };
@@ -610,6 +611,16 @@
         // Wie options_api.values_from (seit 0.34.0): "Erst melden nach" nie kürzer als "Ausgefallen nach".
         values.notify_delay = Math.max(Number.isInteger(values.notify_delay) && values.notify_delay >= 1 ? values.notify_delay : 2, values.offline_after);
         return { values, panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS, notify_targets: NOTIFY_TARGETS, overrides: overrides(), ai_prompt_default: AI_PROMPT_DEFAULT };
+      }
+      if (msg.type === "device_panel/rename_device") {
+        if (window.__renameFails) throw new Error(window.__renameFails);
+        if (!window.__devices.find((x) => x.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
+        if (typeof msg.name !== "string" || msg.name.length > 255) throw { code: "invalid_format", message: "name" };
+        const name = msg.name.trim() || null;
+        if (name) window.__names[msg.device_id] = name;
+        else delete window.__names[msg.device_id];
+        const orig = window.__devices.find((x) => x.id === msg.device_id).name;
+        return { name: name || orig, name_custom: name };
       }
       if (msg.type === "device_panel/set_device_connection") {
         if (window.__connFails) throw new Error(window.__connFails);
@@ -856,6 +867,9 @@
         const res = {
           devices: shown().map((d) => ({
             ...d,
+            name: window.__names[d.id] || d.name,
+            name_original: d.name,
+            name_custom: window.__names[d.id] || null,
             ...(unmon(d) ? { online: null, offline_since: null, since_at_least: false } : {}),
             unmonitored: unmon(d),
             offline_after: unmon(d) ? null : offEff(d),
