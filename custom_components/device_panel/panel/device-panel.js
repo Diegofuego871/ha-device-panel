@@ -148,6 +148,7 @@ const MDI = {
   signal: "M3,21H6V18H3M8,21H11V14H8M13,21H16V9H13M18,21H21V3H18V21Z",
   update: "M21,10.12H14.22L16.96,7.3C14.23,4.6 9.81,4.5 7.08,7.2C4.35,9.91 4.35,14.28 7.08,17C9.81,19.7 14.23,19.7 16.96,17C18.32,15.65 19,14.08 19,12.1H21C21,14.08 20.12,16.65 18.36,18.39C14.85,21.87 9.15,21.87 5.64,18.39C2.14,14.92 2.11,9.28 5.62,5.81C9.13,2.34 14.76,2.34 18.27,5.81L21,3V10.12M12.5,8V12.25L16,14.33L15.28,15.54L11,13V8H12.5Z",
   alert: "M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z",
+  copy: "M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z",
   close: "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",
   gear: "M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z",
   verOk: "M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z",
@@ -3100,7 +3101,8 @@ class DevicePanel extends HTMLElement {
         return `<li class="entity" role="button" tabindex="0" data-dlg="more-info" data-entity="${escape(e.entity_id)}">
           <span class="ent-name">${escape(e.name)}<small>${escape(e.entity_id)}</small></span>
           ${e.liveness ? `<span class="pill live">${escape(this._t("liveness"))}</span>` : ""}
-          <span class="ent-state ${bad ? "bad" : ""}">${escape(text)}</span></li>`;
+          <span class="ent-state ${bad ? "bad" : ""}">${escape(text)}</span>
+          <button type="button" class="ent-copy" data-dlg="copy-id" data-entity="${escape(e.entity_id)}" title="${escape(this._t("entCopy"))}" aria-label="${escape(`${this._t("entCopy")}: ${e.entity_id}`)}">${mdi("copy", 16)}</button></li>`;
       })
       .join("");
     const hint = list.some((e) => e.liveness) ? `<p class="dlg-note small">${escape(this._t("livenessHint"))}</p>` : "";
@@ -3187,6 +3189,7 @@ class DevicePanel extends HTMLElement {
       this._navigate(`/config/devices/device/${id}`);
     } else if (action === "stat") this._openStat(btn.dataset.range, btn.dataset.kind);
     else if (action === "more-info") this._openMoreInfo(btn.dataset.entity);
+    else if (action === "copy-id") this._copyId(btn);
     else if (action === "hide") this._hideDevice(this._detailId);
     else if (action === "ai") this._aiAssess(this._detailId);
   }
@@ -3777,6 +3780,19 @@ class DevicePanel extends HTMLElement {
         if (btn.isConnected) btn.textContent = label;
       }, 1500);
     }
+    return ok;
+  }
+
+  // Entitäts-ID in die Zwischenablage; das Symbol zeigt kurz einen Haken.
+  async _copyId(btn) {
+    if (!(await this._copyText(btn.dataset.entity, null))) return;
+    btn.classList.add("done");
+    btn.innerHTML = mdi("check", 16);
+    window.setTimeout(() => {
+      if (!btn.isConnected) return;
+      btn.classList.remove("done");
+      btn.innerHTML = mdi("copy", 16);
+    }, 1500);
   }
 
   _openPrompt() {

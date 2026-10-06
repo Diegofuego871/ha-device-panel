@@ -96,6 +96,11 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] drei Entitäten`, ents.length === 3, JSON.stringify(ents));
     check(`[${tag}] Lebenszeichen markiert`, ents[0].includes(T.live) && !ents[1].includes(T.live), JSON.stringify(ents));
     check(`[${tag}] nicht verfügbar rot`, (await texts("dialog.device .ent-state.bad")).every((s) => s === T.unavailable) && (await texts("dialog.device .ent-state.bad")).length === 2);
+    // Kopieren der Entitäts-ID: ein Knopf je Entität, öffnet das Detailfenster nicht
+    check(`[${tag}] Kopierknopf je Entität`, (await ev(`return r.querySelectorAll("dialog.device .ent-copy").length`)) === 3);
+    await ev(`window.__moreInfo = 0; r.host.addEventListener("hass-more-info", () => window.__moreInfo++, true); r.host.getRootNode().host; return 1`).catch(() => {});
+    await tap("dialog.device .ent-copy");
+    check(`[${tag}] Kopieren: Haken, kein Detailfenster`, await wait(`return r.querySelector("dialog.device .ent-copy").classList.contains("done")`) && (await f.evaluate(() => window.__moreInfo || 0)) === 0);
     check(`[${tag}] Hinweis Lebenszeichen`, (await text("dialog.device .dlg-note.small")) === T.liveHint);
     check(`[${tag}] Aktion Schliessen`, (await text('.dlg-actions [data-dlg="close"]')) === T.close);
     if (mobile) {

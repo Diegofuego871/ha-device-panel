@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.19.0] - 2026-10-06
+
+Copy the entity ID.
+
+### Added
+
+- Device pop-up: every entity in the list has a copy button that puts its
+  entity ID on the clipboard (requested by the user). A check mark confirms it;
+  the button does not open the entity details.
+
 ## [1.18.0] - 2026-10-06
 
 Start values for new installations.
@@ -1514,6 +1524,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.19.0
 [1.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.18.0
 [1.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.17.0
 [1.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.16.0

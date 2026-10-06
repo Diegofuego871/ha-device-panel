@@ -847,6 +847,10 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ent-name small.cat { display: inline; margin-left: 6px; }
 .pill.live { height: 19px; font-size: 11px; color: var(--dp-primary); background: var(--dp-primary-soft); }
 .ent-state { flex: none; max-width: 45%; text-align: right; overflow-wrap: anywhere; }
+.ent-copy { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin: -4px -6px -4px 0; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--dp-text2); cursor: pointer; }
+.ent-copy:hover { background: var(--dp-hover); color: var(--dp-text); }
+.ent-copy:focus-visible { outline: 2px solid var(--dp-primary); }
+.ent-copy.done { color: var(--dp-success); }
 .ent-state.bad { color: var(--dp-error); }
 
 /* Statistik-Fenster */

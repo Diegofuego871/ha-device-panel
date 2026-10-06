@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.19.0] - 2026-10-06
+
+Entitäts-ID kopieren.
+
+### Hinzugefügt
+
+- Geräte-Popup: Jede Entität in der Liste hat einen Kopierknopf, der ihre
+  Entitäts-ID in die Zwischenablage legt (Wunsch des Nutzers). Ein Haken
+  bestätigt es; der Knopf öffnet die Details der Entität nicht.
+
 ## [1.18.0] - 2026-10-06
 
 Startwerte für neue Installationen.
@@ -1574,6 +1584,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.19.0
 [1.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.18.0
 [1.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.17.0
 [1.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.16.0
