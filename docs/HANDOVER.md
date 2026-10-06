@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.24.0, Einstellungen in fünf Abschnitten)
+## Stand (1.25.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,17 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Gerätetyp pro Integration `1.25.0` (Nutzer, 2026-10-06, ohne Mockup, nach dem Muster der Verbindungsart
+   pro Integration): Option `type_integrations` {Domain: Typ} (`options_api.type_map`, auch im
+   Optionsdialog); Vorrang in `devices.effective_type`: von Hand am Gerät, dann
+   `devices.integration_type` (primäre Integration), dann Erkennung. `list_devices` liefert `type`
+   (wirksam), `type_auto`, `type_manual` und neu `type_integration`; Ausschlüsse nach Typ und der
+   Katalog der Typen rechnen mit dem wirksamen Typ. Der Typ gilt nur im Panel (nicht im HA-Register).
+   Panel: `_typeIntegHtml` im Reiter "Typen" über der Liste "Typen anzeigen" (`SUB_TAB_KEYS.types`
+   enthält `type_integrations`), Popup "Wie Integration: X" (`typeAutoInteg`, `typeByInteg`),
+   Zusammenfassung `sumTypeInteg`; Zeilen mit Klasse `type-row` (Typnamen sind lang, der Name
+   bricht um statt die Auswahl zu verdrängen). Simulator: `applyTypes()`. Tests:
+   `test_type_integration.py`, `typeinteg-e2e.mjs`.
    Push bei neuen Geräten `1.24.0` (Nutzer, 2026-10-06, ohne Mockup, nach dem Muster von Ausfall und
    Batterie; Entscheide: nur Geräte ab dem Einschalten, Sammelfenster einstellbar, Override pro
    Integration): `newdevice.NewDeviceNotifier` lauscht auf `EVENT_DEVICE_REGISTRY_UPDATED` (action

@@ -210,6 +210,11 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
   Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des
   Inhalts in zwei Spalten, auf dem Handy in einer.
+- Gerätetyp pro Integration (seit 1.25.0, nach dem Muster der Verbindungsart, ohne Mockup): Liste
+  im Reiter "Typen" über "Typen anzeigen", je Zeile Logo, Name, Zahl der Geräte mit der Erkennung
+  ("erkannt: 2 Steckdose") und eine Auswahl "Automatisch" plus alle Typen; geänderte Zeile mit
+  Primärrahmen. Der Name bricht um (`.type-row .ex-name { flex: 1 1 0 }`), die Auswahl bleibt voll
+  sichtbar. Im Popup "Wie Integration: Typ" mit Hinweis.
 - Reiter "Neu" (seit 1.24.0, nach dem Muster von Batterie und Ausfall, ohne Mockup): ein
   Balken im parallelen Zeitstrahl ("0 Gerät gefunden", Feld "Sammeln während"), Schalter
   "Neue Geräte melden" und "Anhaltend", Inhalt der Meldung mit Vorschau, "Abweichungen"

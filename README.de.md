@@ -28,7 +28,7 @@ Ausgefallene Geräte mit der Zeit, seit der sie fehlen, instabile Geräte und de
 
 ### Alles zu einem Gerät
 
-Verfügbarkeit, Unterbrüche, Empfang und Batterie als Kacheln, dazu Verbindung, Integration, Hersteller, Modell, Software und alle Entitäten. Typ und Verbindungsart lassen sich hier korrigieren, und das Gerät lässt sich umbenennen (in Home Assistant, Entitäts-IDs bleiben).
+Verfügbarkeit, Unterbrüche, Empfang und Batterie als Kacheln, dazu Verbindung, Integration, Hersteller, Modell, Software und alle Entitäten. Typ und Verbindungsart lassen sich hier korrigieren (oder einmal pro Integration in den Einstellungen festlegen), und das Gerät lässt sich umbenennen (in Home Assistant, Entitäts-IDs bleiben).
 
 <p align="center"><img src="docs/screenshots/de/popup.png" alt="Geräte-Popup mit Statistik, Verbindung und Gerätedaten" width="720"></p>
 
@@ -74,6 +74,7 @@ Nur auf Knopfdruck, mit einer KI-Aufgabe von Home Assistant. Es gehen keine Schl
 - Das Verfügbarkeitsprotokoll umfasst 31 Tage in einer eigenen Datei, nicht im Recorder. Zeit, in der Home Assistant nicht lief, zählt als "keine Daten".
 - Ausgeblendete Geräte, Integrationen und Gerätetypen werden weder angezeigt noch überwacht. Jeder Filter-Chip lässt sich in den Einstellungen ausblenden und umordnen.
 - Batterie-Warnung von 5 bis 50 % (Standard 15 %), pro Integration und pro Gerät.
+- Gerätetyp und Verbindungsart werden automatisch erkannt. Beide lassen sich pro Integration festlegen; ein am Gerät von Hand gesetzter Wert geht vor. Der Typ gilt nur im Panel, nicht in Home Assistant.
 - Der Empfangsverlauf kommt aus dem Recorder oder, bei ZHA, Bluetooth und nicht aufgezeichneten Sensoren, vom Panel selbst.
 - Jede Einstellung zeigt, woher sie kommt: Standard, Integration oder Gerät.
 - Sicherheitsrelevantes (Tokens, Schlüssel) zeigt das Panel nie an.

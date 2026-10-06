@@ -7,7 +7,31 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.25.0] - 2026-10-06
+
+Gerätetyp pro Integration.
+
+### Hinzugefügt
+
+- Gerätetyp pro Integration (Wunsch des Nutzers): unter Einstellungen › Geräte im
+  Panel › Typen eine Liste aller Integrationen mit dem erkannten Typ und einer
+  Auswahl "Automatisch" plus alle Gerätetypen. Ein hier gesetzter Typ gilt für
+  alle Geräte der Integration statt der Erkennung; "Automatisch" (Standard)
+  belässt die Erkennung wie bisher. Ein am einzelnen Gerät von Hand gesetzter Typ
+  geht weiterhin vor (Gerät, dann Integration, dann Erkennung).
+  - Im Popup steht die Auswahl dann als "Wie Integration: Schalter" mit dem
+    Hinweis "für die ganze Integration festgelegt", solange das Gerät keinen
+    eigenen Typ hat.
+  - Der Typ zählt überall, wo der Typ zählt: Liste, Filter, Ausschlüsse nach Typ
+    (samt Zahlen unter "Typen") und KI-Einschätzung. Er gilt nur im Panel und
+    wird nicht in Home Assistant geschrieben.
+  - Die Zusammenfassung des Abschnitts zeigt "Typ für N Integrationen festgelegt".
+  - Neue Option `type_integrations` ({Domain: Typ}), auch im Optionsdialog;
+    `list_devices` liefert zusätzlich `type_integration`.
+
 ## [1.24.0] - 2026-10-06
+
+Nicht veröffentlicht; enthalten in 1.25.0.
 
 Push-Meldung bei neuen Geräten.
 
@@ -1669,7 +1693,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[1.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.24.0
+[1.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.25.0
 [1.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.23.0
 [1.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.22.0
 [1.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.21.0

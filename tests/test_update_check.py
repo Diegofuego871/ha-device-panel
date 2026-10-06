@@ -119,6 +119,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "signal_low": {},
         "signal_low_integrations": {},
         "connection_integrations": {},
+        "type_integrations": {},
         "battery_low": 15,
         "battery_low_integrations": {},
         "offline_after_integrations": {},
@@ -253,7 +254,7 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
         "offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations",
         "battery_push_exclude_integrations", "new_exclude_integrations", "exclude_integrations", "exclude_types", "exclude_devices",
         "show_service_devices", "show_disabled_devices", "hide_chips", "hide_connections",
-        "connection_order", "connection_integrations", "signal_low", "signal_low_integrations", "ai_assessment", "ai_task_entity", "update_check",
+        "connection_order", "connection_integrations", "type_integrations", "signal_low", "signal_low_integrations", "ai_assessment", "ai_task_entity", "update_check",
     ]
     # "Ausgefallen nach" über "Erst melden nach" (2): Fehler am Feld, nichts gespeichert.
     result = await hass.config_entries.options.async_configure(

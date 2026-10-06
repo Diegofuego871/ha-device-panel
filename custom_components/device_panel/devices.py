@@ -68,6 +68,7 @@ from .const import (
     SIGNAL_OFF,
     NEW_DEVICE_DAYS,
     CONF_EXCLUDE_DEVICES,
+    CONF_TYPE_INTEGRATIONS,
 )
 from .options_api import battery_threshold, effective, offline_after_for, signal_default
 
@@ -494,7 +495,7 @@ def _shown(
             continue
         if not unmonitored and device_offline_after(hass, opts, device) is None:
             continue
-        if ex_types and effective_type(hass, device, entries, hubs)[0] in ex_types:
+        if ex_types and effective_type(hass, device, entries, hubs, opts[CONF_TYPE_INTEGRATIONS])[0] in ex_types:
             continue
         yield device, entries
 
@@ -599,13 +600,32 @@ def device_type(hass: HomeAssistant, device: dr.DeviceEntry, entries: list[er.Re
     return "other"
 
 
+def integration_type(hass: HomeAssistant, device: dr.DeviceEntry, integ: dict[str, str] | None = None) -> str | None:
+    """Typ, den die Integration des Geräts festlegt (seit 1.25.0), sonst None."""
+    own = integ if integ is not None else effective(hass)[CONF_TYPE_INTEGRATIONS]
+    if not own or not (primary := _primary_entry(hass, device)):
+        return None
+    kind = own.get(primary.domain)
+    return kind if kind in DEVICE_TYPES else None
+
+
 def effective_type(
-    hass: HomeAssistant, device: dr.DeviceEntry, entries: list[er.RegistryEntry], hubs: set[str]
+    hass: HomeAssistant,
+    device: dr.DeviceEntry,
+    entries: list[er.RegistryEntry],
+    hubs: set[str],
+    integ: dict[str, str] | None = None,
 ) -> tuple[str, str]:
-    """(gültiger Typ, erkannter Typ): ein von Hand gesetzter Typ hat Vorrang."""
+    """
+    (gültiger Typ, erkannter Typ): ein von Hand am Gerät gesetzter Typ hat
+    Vorrang, dann der Typ der Integration (integ: {Domain: Typ}, ohne Angabe aus
+    den Optionen), sonst die Erkennung.
+    """
     auto = device_type(hass, device, entries, hubs)
     manual = type_overrides(hass).get(device.id)
-    return (manual if manual in DEVICE_TYPES else auto), auto
+    if manual in DEVICE_TYPES:
+        return manual, auto
+    return (integration_type(hass, device, integ) or auto), auto
 
 
 # -- Typ von Hand (eigene Datei, eine Instanz pro HA) ---------------------------
@@ -904,7 +924,7 @@ async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
         primary = _primary_entry(hass, device)
         if primary:
             by_domain[primary.domain] = by_domain.get(primary.domain, 0) + 1
-        kind = effective_type(hass, device, entries, hubs)[0]
+        kind = effective_type(hass, device, entries, hubs, opts[CONF_TYPE_INTEGRATIONS])[0]
         by_type[kind] = by_type.get(kind, 0) + 1
     # Eigene Batterie-Schwelle: Integrationen mit Batteriegeräten unter den
     # überwachten Geräten (Ausblendungen gelten), dazu solche mit eigener
@@ -968,7 +988,7 @@ async def async_hidden_devices(hass: HomeAssistant, opts: dict[str, Any] | None 
         items.append({
             "id": dev,
             "name": device.name_by_user or device.name or dev,
-            "type": effective_type(hass, device, entries, hubs)[0],
+            "type": effective_type(hass, device, entries, hubs, opts[CONF_TYPE_INTEGRATIONS])[0],
             "area": area.name if area else None,
             "domain": primary_domain(hass, device),
         })
@@ -1075,8 +1095,10 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "hw_version": device.hw_version,
                 "integrations": domains,
                 "integration": {"domain": primary.domain, "title": primary.title} if primary else None,
-                **dict(zip(("type", "type_auto"), effective_type(hass, device, entries, hubs))),
+                **dict(zip(("type", "type_auto"), effective_type(hass, device, entries, hubs, opts[CONF_TYPE_INTEGRATIONS]))),
                 "type_manual": device.id in type_overrides(hass),
+                # Typ der Integration (seit 1.25.0), wenn dort einer festgelegt ist.
+                "type_integration": integration_type(hass, device, opts[CONF_TYPE_INTEGRATIONS]),
                 "entities": len(entries),
                 "online": online,
                 "disabled": disabled,

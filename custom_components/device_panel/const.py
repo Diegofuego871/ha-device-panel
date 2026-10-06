@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "72"
+PANEL_VERSION = "73"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -277,5 +277,8 @@ DATA_CONNECTION_OVERRIDES = f"{DOMAIN}_connection_overrides"
 # Verbindungsart pro Integration {Domain: Art} (gilt für alle Benutzer): für
 # alle Geräte der Integration statt der Erkennung; von Hand am Gerät geht vor.
 CONF_CONNECTION_INTEGRATIONS = "connection_integrations"
+# Gerätetyp pro Integration (seit 1.25.0): {Domain: Typ}, gilt für alle Geräte der
+# Integration statt der Erkennung; ein Typ von Hand am Gerät geht vor.
+CONF_TYPE_INTEGRATIONS = "type_integrations"
 # Von Hand gesetzte Gerätetypen (eigene Datei, eine Instanz pro HA).
 DATA_TYPE_OVERRIDES = f"{DOMAIN}_type_overrides"

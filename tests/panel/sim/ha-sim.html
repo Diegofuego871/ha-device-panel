@@ -380,6 +380,8 @@
     d.flaky = Boolean(d.online && d.avail24 && d.avail24.outages >= 3);
     d.type_auto = d.type;
     d.type_manual = false;
+    d.type_man = null;
+    d.type_integration = null;
   }
   // Wie das Backend: Kandidaten nach "Anzeige" (Dienst-Geräte, deaktivierte,
   // mit Entitäten), dann die Ausschlüsse.
@@ -408,6 +410,17 @@
     { value: "notify.familie", kind: "service" }, { value: "notify.fernseher", kind: "entity" },
   ];
   const TYPE_ORDER = ["hub", "phone", "network", "climate", "lock", "cover", "valve", "vacuum", "camera", "alarm", "media", "fan", "light", "outlet", "switch", "motion", "contact", "safety", "energy", "sensor", "button", "other"];
+  // Wie devices.effective_type (seit 1.25.0): von Hand am Gerät, dann Typ der
+  // Integration, dann Erkennung. Der Typ gilt nur im Panel.
+  function applyTypes() {
+    const own = window.__opts.type_integrations || {};
+    for (const d of window.__devices) {
+      const v = own[d.integration?.domain];
+      d.type_integration = TYPE_ORDER.includes(v) ? v : null;
+      d.type = d.type_man || d.type_integration || d.type_auto;
+      d.type_manual = Boolean(d.type_man);
+    }
+  }
   function catalog() {
     const byDomain = {};
     const byType = {};
@@ -517,7 +530,7 @@
     offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, offline_after_integrations: {}, battery_push: false, battery_persistent: false,
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
     exclude_integrations: [], exclude_types: [], exclude_devices: [], notify_service: "none", notify_click_target: "panel",
-    notify_outage: false, notify_online: false, notify_group: true, hide_chips: [], hide_connections: [], connection_order: [], chip_order: [], connection_integrations: {},
+    notify_outage: false, notify_online: false, notify_group: true, hide_chips: [], hide_connections: [], connection_order: [], chip_order: [], connection_integrations: {}, type_integrations: {},
     show_service_devices: false, show_disabled_devices: false, update_check: true, ai_assessment: false, ai_task_entity: "", ai_prompt: "",
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
@@ -700,6 +713,10 @@
           const kinds = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud"];
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !kinds.includes(v))) throw { code: "invalid_format", message: "connection map" };
         }
+        if ("type_integrations" in msg.values) {
+          const m = msg.values.type_integrations;
+          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !TYPE_ORDER.includes(v))) throw { code: "invalid_format", message: "type map" };
+        }
         if ("notify_fields" in msg.values) {
           const v = msg.values.notify_fields;
           if (!Array.isArray(v) || v.some((x) => !NOTIFY_FIELDS.includes(x))) throw { code: "invalid_format", message: "fields" };
@@ -758,6 +775,7 @@
         }
         const changed = Object.keys(msg.values).some((k) => JSON.stringify(window.__opts[k]) !== JSON.stringify(msg.values[k]));
         Object.assign(window.__opts, msg.values);
+        applyTypes();
         return { changed };
       }
       if (msg.type === "device_panel/set_device_settings") {
@@ -841,8 +859,8 @@
         if (window.__typeFails) throw new Error(window.__typeFails);
         const d = window.__devices.find((x) => x.id === msg.device_id);
         if (!d) throw { code: "not_found", message: "device not found" };
-        d.type = msg.device_type || d.type_auto;
-        d.type_manual = Boolean(msg.device_type);
+        d.type_man = msg.device_type || null;
+        applyTypes();
         return { device_type: msg.device_type };
       }
       if (msg.type === "device_panel/list_devices") {

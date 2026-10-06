@@ -63,6 +63,7 @@ from .const import (
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_CONNECTION_INTEGRATIONS,
+    CONF_TYPE_INTEGRATIONS,
     CONF_CHIP_ORDER,
     CONF_CONNECTION_ORDER,
     CONF_HIDE_CHIPS,
@@ -204,6 +205,21 @@ def connection_map(value: Any) -> dict[str, str]:
         kind = kind.strip().lower() if isinstance(kind, str) else kind
         if not isinstance(domain, str) or not _DOMAIN_RE.match(domain) or kind not in CONNECTION_MANUAL:
             raise vol.Invalid("Integration → Verbindungsart erwartet (zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud)")
+        out[domain] = kind
+    return dict(sorted(out.items()))
+
+
+def type_map(value: Any) -> dict[str, str]:
+    """Gerätetyp pro Integration {Domain: Typ} (seit 1.25.0)."""
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise vol.Invalid("Zuordnung Integration → Gerätetyp erwartet")
+    out: dict[str, str] = {}
+    for domain, kind in value.items():
+        kind = kind.strip().lower() if isinstance(kind, str) else kind
+        if not isinstance(domain, str) or not _DOMAIN_RE.match(domain) or kind not in DEVICE_TYPES:
+            raise vol.Invalid(f"Integration → Gerätetyp erwartet ({', '.join(DEVICE_TYPES)})")
         out[domain] = kind
     return dict(sorted(out.items()))
 
@@ -393,6 +409,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_CONNECTION_ORDER): connection_order,
         vol.Optional(CONF_CHIP_ORDER): chip_order,
         vol.Optional(CONF_CONNECTION_INTEGRATIONS): connection_map,
+        vol.Optional(CONF_TYPE_INTEGRATIONS): type_map,
         vol.Optional(CONF_BATTERY_LOW_INTEGRATIONS): battery_map,
         vol.Optional(CONF_SIGNAL_LOW): signal_map,
         vol.Optional(CONF_SIGNAL_LOW_INTEGRATIONS): signal_integrations_map,
@@ -448,6 +465,11 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
         values[CONF_CONNECTION_INTEGRATIONS] = connection_map(options.get(CONF_CONNECTION_INTEGRATIONS))
     except vol.Invalid:
         values[CONF_CONNECTION_INTEGRATIONS] = {}
+    try:
+        values[CONF_TYPE_INTEGRATIONS] = type_map(options.get(CONF_TYPE_INTEGRATIONS))
+    except vol.Invalid:
+        # Ungültig gespeichert: lieber keine eigenen Typen als ein Fehler.
+        values[CONF_TYPE_INTEGRATIONS] = {}
     try:
         values[CONF_BATTERY_LOW_INTEGRATIONS] = battery_map(options.get(CONF_BATTERY_LOW_INTEGRATIONS))
     except vol.Invalid:

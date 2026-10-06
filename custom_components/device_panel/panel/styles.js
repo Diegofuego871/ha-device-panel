@@ -544,6 +544,8 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ex-row.bat-row .opt-input input { width: 40px; }
 .ex-row.bat-row.changed .opt-input, .ex-row.bat-row.changed .opt-select select { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 .ex-row.bat-row.invalid .opt-input { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
+/* Typ pro Integration (seit 1.25.0): lange Typnamen in der Erkennung brechen um, statt die Auswahl zu verdrängen */
+.ex-row.type-row .ex-name { flex: 1 1 0; }
 .bat-empty { padding: 4px 0 8px; }
 /* Auswahl (Push-Ziel, Klickziel) wie unifi_dynamic. */
 .opt-select { position: relative; flex: 0 1 260px; min-width: 0; }

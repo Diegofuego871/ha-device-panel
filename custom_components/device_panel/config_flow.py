@@ -57,6 +57,7 @@ from .const import (
     CONF_EXCLUDE_TYPES,
     CONF_FLAKY_OUTAGES,
     CONF_CONNECTION_INTEGRATIONS,
+    CONF_TYPE_INTEGRATIONS,
     CONF_SIGNAL_LOW,
     CONF_SIGNAL_LOW_INTEGRATIONS,
     CONF_CONNECTION_ORDER,
@@ -88,6 +89,7 @@ from .options_api import (
     delay_too_short,
     offline_map,
     connection_map,
+    type_map,
     signal_integrations_map,
     signal_map,
     connection_order,
@@ -155,6 +157,11 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 conns = None
                 errors[CONF_CONNECTION_INTEGRATIONS] = "connection_map"
             try:
+                types_by_integration = type_map(user_input.get(CONF_TYPE_INTEGRATIONS))
+            except vol.Invalid:
+                types_by_integration = None
+                errors[CONF_TYPE_INTEGRATIONS] = "type_map"
+            try:
                 signal_low = signal_map(user_input.get(CONF_SIGNAL_LOW))
             except vol.Invalid:
                 signal_low = None
@@ -167,7 +174,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if not errors:
                 # Bestehende Options erhalten, statt sie zu ersetzen. Leere
                 # Mehrfachauswahl muss die alte überschreiben.
-                data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own, CONF_OFFLINE_INTEGRATIONS: offline, CONF_CONNECTION_INTEGRATIONS: conns, CONF_SIGNAL_LOW: signal_low, CONF_SIGNAL_LOW_INTEGRATIONS: signal_integ}
+                data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own, CONF_OFFLINE_INTEGRATIONS: offline, CONF_CONNECTION_INTEGRATIONS: conns, CONF_TYPE_INTEGRATIONS: types_by_integration, CONF_SIGNAL_LOW: signal_low, CONF_SIGNAL_LOW_INTEGRATIONS: signal_integ}
                 for key in (
                     CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_EXCLUDE_DEVICES, CONF_HIDE_CHIPS, CONF_HIDE_CONNECTIONS,
                     CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE, CONF_NEW_EXCLUDE,
@@ -315,6 +322,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     ),
                     # Verbindungsart pro Integration als Zuordnung, z. B. "hue: zigbee".
                     vol.Optional(CONF_CONNECTION_INTEGRATIONS, default=values[CONF_CONNECTION_INTEGRATIONS] or {}): ObjectSelector(),
+                    # Gerätetyp pro Integration als Zuordnung, z. B. "hue: light" (seit 1.25.0).
+                    vol.Optional(CONF_TYPE_INTEGRATIONS, default=values[CONF_TYPE_INTEGRATIONS] or {}): ObjectSelector(),
                     # Warnschwelle des Empfangs pro Funkart, global und pro Integration (seit 1.17.0).
                     vol.Optional(CONF_SIGNAL_LOW, default=values[CONF_SIGNAL_LOW] or {}): ObjectSelector(),
                     vol.Optional(CONF_SIGNAL_LOW_INTEGRATIONS, default=values[CONF_SIGNAL_LOW_INTEGRATIONS] or {}): ObjectSelector(),

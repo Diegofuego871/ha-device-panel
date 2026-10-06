@@ -370,7 +370,7 @@ const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_inte
 
 const SUB_TAB_KEYS = {
   integrations: ["exclude_integrations"],
-  types: ["exclude_types"],
+  types: ["exclude_types", "type_integrations"],
   devs: ["exclude_devices"],
   conn: ["connection_integrations", "signal_low", "reset_connection", "reset_signal"],
   chips: ["hide_chips", "hide_connections", "connection_order", "chip_order"],
@@ -2863,7 +2863,7 @@ class DevicePanel extends HTMLElement {
     try {
       await this._hass.callWS({ type: "device_panel/set_device_type", device_id: id, device_type: kind });
       if (d) {
-        d.type = kind || d.type_auto || d.type;
+        d.type = kind || d.type_integration || d.type_auto || d.type;
         d.type_manual = Boolean(kind);
       }
     } catch (err) {
@@ -3161,11 +3161,14 @@ class DevicePanel extends HTMLElement {
     const sw = `${text(d.sw_version)}${d.update ? `<small class="upd">${escape(this._t("updateTo", d.update))}</small>` : ""}`;
     // Typ wählbar: automatisch erkannt oder von Hand (für Ausschlüsse, wenn
     // die Erkennung danebenliegt). Gilt sofort, ohne "Speichern".
-    const opts = [`<option value="" ${d.type_manual ? "" : "selected"}>${escape(this._t("typeAuto", this._t(typeKey(d.type_auto || d.type))))}</option>`]
+    // Ohne Wahl am Gerät gilt die Integration, wenn dort ein Typ festgelegt ist.
+    const integ = !d.type_manual && d.type_integration && TYPE_ICONS[d.type_integration] ? d.type_integration : null;
+    const autoText = integ ? this._t("typeAutoInteg", this._t(typeKey(integ))) : this._t("typeAuto", this._t(typeKey(d.type_auto || d.type)));
+    const opts = [`<option value="" ${d.type_manual ? "" : "selected"}>${escape(autoText)}</option>`]
       .concat(TYPE_ORDER.map((k) => `<option value="${k}" ${d.type_manual && d.type === k ? "selected" : ""}>${escape(this._t(typeKey(k)))}</option>`))
       .join("");
     const typeSel = `<label class="typ-sel">${typeIcon(d.type, 16)}<select data-dlg="type" aria-label="${escape(this._t("typeLabel"))}">${opts}</select>${mdi("chevronDown", 18)}</label>${
-      d.type_manual ? `<small>${escape(this._t("typeManual"))}</small>` : ""
+      d.type_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t("typeByInteg"))}</small>` : ""
     }${this._typeError ? `<small class="warn">${escape(this._t("typeSaveError"))} ${escape(this._typeError)}</small>` : ""}`;
     const tiles = [
       this._tile(this._t("typeLabel"), typeSel),
@@ -4454,7 +4457,8 @@ class DevicePanel extends HTMLElement {
     }
     if (id === "devices") {
       const hidden = ["integrations", "types", "devs"].map((k) => this._subCount(k, d));
-      return (hidden.some(Boolean) ? `${this._t("sumDevHidden", ...hidden)} · ` : "") + this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices));
+      const typed = Object.keys(d.type_integrations || {}).length;
+      return (hidden.some(Boolean) ? `${this._t("sumDevHidden", ...hidden)} · ` : "") + (typed ? `${this._t("sumTypeInteg", typed)} · ` : "") + this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices));
     }
     if (id === "look") {
       const chips = (d.hide_connections || []).length + (d.hide_chips || []).length;
@@ -4500,7 +4504,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -4558,6 +4562,47 @@ class DevicePanel extends HTMLElement {
       })
       .join("");
     return head + `<div class="ex-head"><span>${escape(t("colIntegration"))}</span><span>${escape(t("connType"))}</span></div>${rows}`;
+  }
+
+  // Gerätetyp pro Integration (seit 1.25.0): gilt für alle Geräte der
+  // Integration statt der Erkennung, von Hand am Gerät geht vor. Gleiche
+  // Darstellung wie die Verbindungsart pro Integration; je Zeile die Erkennung.
+  _typeIntegHtml(d) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    const own = d.type_integrations || {};
+    const saved = st.data.values.type_integrations || {};
+    const groups = new Map();
+    for (const dev of this._devices) {
+      const dom = dev.integration?.domain;
+      if (!dom || dev.disabled) continue;
+      const g = groups.get(dom) || { devices: 0, kinds: new Map() };
+      const kind = dev.type_auto || dev.type;
+      g.devices += 1;
+      g.kinds.set(kind, (g.kinds.get(kind) || 0) + 1);
+      groups.set(dom, g);
+    }
+    // Festgelegt, aber gerade ohne Geräte (z. B. ausgeblendet): bleibt zum Zurücksetzen.
+    for (const dom of Object.keys({ ...own, ...saved })) if (!groups.has(dom)) groups.set(dom, { devices: 0, kinds: new Map() });
+    const names = Object.fromEntries((st.data.catalog?.integrations || []).map((x) => [x.domain, x.name]));
+    const name = (dom) => this._integrations[dom] || names[dom] || dom;
+    const list = [...groups.entries()].sort((a, b) => b[1].devices - a[1].devices || name(a[0]).localeCompare(name(b[0])));
+    const head = `<div class="opt bat-own"><div class="opt-line"><span class="opt-label">${escape(t("typeIntegTitle"))}</span></div>
+      <div class="opt-short">${escape(t("typeIntegShort"))}</div></div>`;
+    if (!list.length) return head;
+    const rows = list
+      .map(([dom, g]) => {
+        const v = own[dom] || "";
+        const detected = [...g.kinds.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${n} ${t(typeKey(k))}`).join(", ");
+        const opts = [["", t("connIntegAuto")], ...TYPE_ORDER.map((k) => [k, t(typeKey(k))])]
+          .map(([val, text]) => `<option value="${val}"${val === v ? " selected" : ""}>${escape(text)}</option>`)
+          .join("");
+        return `<div class="ex-row bat-row type-row${(own[dom] || null) !== (saved[dom] || null) ? " changed" : ""}">${this._ibadge(dom, name(dom))}
+          <div class="ex-name">${escape(name(dom))}<small>${escape(t("typeIntegDevices", g.devices, detected))}</small></div>
+          <span class="bat-ctl"><span class="opt-select"><select data-type-integ="${escape(dom)}" aria-label="${escape(`${name(dom)}: ${t("typeLabel")}`)}">${opts}</select>${mdi("chevronDown", 18)}</span></span></div>`;
+      })
+      .join("");
+    return head + `<div class="ex-head"><span>${escape(t("colIntegration"))}</span><span>${escape(t("typeLabel"))}</span></div>${rows}`;
   }
 
   // Geräte mit eigener Einstellung (Batterie oder Meldungen), einzeln oder
@@ -5297,7 +5342,7 @@ class DevicePanel extends HTMLElement {
         row("show_disabled_devices", t("optShowDisabled"), sw("show_disabled_devices", t("optShowDisabled")), t("optShowDisabledShort"), null) +
         subTabs("devices", [["integrations", "secIntegrations"], ["types", "subTypes"], ["devs", "subDevs"]]) +
         (devTab === "types"
-          ? exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`)
+          ? this._typeIntegHtml(d) + `<h4 class="ex-title">${escape(t("typesShowTitle"))}</h4>` + exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`)
           : devTab === "devs"
             ? hiddenDevs.length
               ? exTable("exclude_devices", hiddenDevs, t("hiddenIntro"), false, null, t("hiddenShowAll"))
@@ -5546,6 +5591,14 @@ class DevicePanel extends HTMLElement {
         if (el.value) own[el.dataset.connInteg] = el.value;
         else delete own[el.dataset.connInteg];
         st.draft.connection_integrations = own;
+        this._renderSettings();
+        return;
+      }
+      if (st?.draft && el.tagName === "SELECT" && el.dataset.typeInteg) {
+        const own = { ...(st.draft.type_integrations || {}) };
+        if (el.value) own[el.dataset.typeInteg] = el.value;
+        else delete own[el.dataset.typeInteg];
+        st.draft.type_integrations = own;
         this._renderSettings();
         return;
       }

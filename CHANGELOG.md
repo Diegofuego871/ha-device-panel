@@ -7,7 +7,30 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.25.0] - 2026-10-06
+
+Device type per integration.
+
+### Added
+
+- Device type per integration (requested by the user): in Settings › Devices in
+  the panel › Types, a list of all integrations with the type detected for them
+  and a selection "Automatic" plus all device types. A type set here applies to
+  all devices of the integration instead of the detection; "Automatic" (the
+  default) keeps the detection as before. A type set by hand on a single device
+  still comes first (device, then integration, then detection).
+  - In the pop-up the selection reads "Same as integration: Switch" with the note
+    "set for the whole integration" as long as the device has no type of its own.
+  - The type counts everywhere the type counts: list, filter, exclusions by type
+    (including the counts in "Types") and the AI assessment. It only applies in
+    the panel; it is not written to Home Assistant.
+  - The section summary shows "type set for N integrations".
+  - New option `type_integrations` ({domain: type}), also in the options
+    dialog; `list_devices` additionally returns `type_integration`.
+
 ## [1.24.0] - 2026-10-06
+
+Not released; included in 1.25.0.
 
 Push notification for new devices.
 
@@ -1607,7 +1630,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[1.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.24.0
+[1.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.25.0
 [1.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.23.0
 [1.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.22.0
 [1.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.21.0

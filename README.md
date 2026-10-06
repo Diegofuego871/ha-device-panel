@@ -28,7 +28,7 @@ Offline devices with the time they have been gone, unstable devices and the outa
 
 ### Everything about one device
 
-Availability, outages, signal and battery as tiles, plus connection, integration, manufacturer, model, software and all entities. Type and connection type can be corrected here, and the device can be renamed (in Home Assistant, entity IDs stay).
+Availability, outages, signal and battery as tiles, plus connection, integration, manufacturer, model, software and all entities. Type and connection type can be corrected here (or set once per integration in the settings), and the device can be renamed (in Home Assistant, entity IDs stay).
 
 <p align="center"><img src="docs/screenshots/en/popup.png" alt="Device pop-up with statistics, connection and device details" width="720"></p>
 
@@ -74,6 +74,7 @@ Only on a button press, with an AI task of Home Assistant. No keys, credentials 
 - The availability log covers 31 days in its own file, not the recorder. Time while Home Assistant was not running counts as "no data".
 - Hidden devices, integrations and device types are neither shown nor monitored. Every filter chip can be hidden and reordered in the settings.
 - Battery warning from 5 to 50 % (default 15 %), per integration and per device.
+- Device type and connection type are detected automatically. You can fix either per integration; a value set by hand on the device comes first. The type only applies in the panel, not in Home Assistant.
 - Signal history comes from the recorder or, for ZHA, Bluetooth and unrecorded sensors, from the panel itself.
 - Every setting shows where it comes from: default, integration or device.
 - Nothing security-relevant (tokens, keys) is ever shown in the panel.
