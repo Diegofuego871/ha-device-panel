@@ -14,7 +14,7 @@ Start values for new installations.
 ### Changed
 
 - New installations start with the values the author uses (requested by the
-  user, from his settings screenshots):
+  user, based on screenshots of the settings):
   - Order of the filter chips: "All" (pinned) first, then Integration, New,
     Offline, Warnings, Low battery, Battery, Area, the connection types (Thread,
     Wi-Fi, Bluetooth, Zigbee, LAN, Cloud, Matter, Network, Unknown, Z-Wave) and

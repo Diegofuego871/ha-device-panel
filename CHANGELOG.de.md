@@ -14,7 +14,7 @@ Startwerte für neue Installationen.
 ### Geändert
 
 - Neue Installationen starten mit den Werten, die der Autor nutzt (Wunsch des
-  Nutzers, nach seinen Bildschirmfotos der Einstellungen):
+  Nutzers, nach Bildschirmfotos der Einstellungen):
   - Reihenfolge der Filter-Chips: zuerst "Alle" (angeheftet), dann Integration,
     Neu, Ausgefallen, Warnungen, Batterie niedrig, Batterie, Bereich, die
     Verbindungsarten (Thread, WLAN, Bluetooth, Zigbee, LAN, Cloud, Matter,

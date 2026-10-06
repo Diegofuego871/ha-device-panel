@@ -383,7 +383,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
-   Startwerte für neue Installationen `1.18.0` (Nutzer, 2026-10-06, nach seinen
+   Startwerte für neue Installationen `1.18.0` (Nutzer, 2026-10-06, nach
    Bildschirmfotos der Einstellungen): Die Standardfolge der Chips ist fest
    (`CHIP_DEFAULT` im Panel; "Alle", Anheft-Marker, Integration, Neu, Ausgefallen,
    Warnungen, Batterie niedrig, Batterie, Bereich, Thread, WLAN, Bluetooth,
