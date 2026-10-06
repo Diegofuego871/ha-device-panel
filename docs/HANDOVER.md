@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.22.0, Einstellungen in fünf Abschnitten)
+## Stand (1.23.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Logos auch in den Einstellungen `1.23.0`: `_ibadge(domain, name)` ersetzt die Buchstaben-Kennzeichen
+   (`.ibadge`, Listen der Integrationen); die Logos der Katalog-Integrationen werden beim Laden der
+   Optionen vorab geladen (`_brandPreloadDomains`), spät eintreffende Ergebnisse zeichnen auch den
+   offenen Einstellungsdialog neu. Test: `brand-e2e.mjs`.
    Logos der Integrationen `1.22.0` (Nutzer, 2026-10-06; Entscheid: Avatar ersetzen, lokal
    von HA): `_avatar` zeigt `/api/brands/integration/<Domain>/icon.png?token=` (HA >= 2026.3,
    Token per WebSocket `brands/access_token`, alle 10 Min. neu; im dunklen Design zuerst

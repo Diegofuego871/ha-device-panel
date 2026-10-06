@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.23.0] - 2026-10-06
+
+Integration logos in the settings.
+
+### Changed
+
+- The integration lists in the settings show the logo of the integration too
+  (display, monitoring and notifications, connection type per integration, hidden
+  integrations), instead of the coloured initials. Same source and fallback as in
+  the device list: without a logo or on an older Home Assistant the initials stay.
+
 ## [1.22.0] - 2026-10-06
 
 Integration logos in the list.
@@ -1569,6 +1580,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.23.0
 [1.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.22.0
 [1.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.21.0
 [1.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.20.0

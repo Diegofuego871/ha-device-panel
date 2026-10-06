@@ -468,7 +468,9 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .set-sec.open .set-sec-head:hover { background: color-mix(in srgb, var(--dp-text) 12.5%, var(--dp-card)); }
 .set-sec.open .set-sec-title { font-weight: 600; }
 .set-sec.open .set-sec-body { border-top-color: color-mix(in srgb, var(--dp-text) 16%, transparent); }
-.set-sec.open .opt-info, .set-sec.open .ex-row.ex-all, .set-sec.open .ibadge.type { background: var(--dp-sec-head); }
+.set-sec.open .opt-info, .set-sec.open .ex-row.ex-all, .set-sec.open .ibadge.has-img { background: var(--dp-subtle); }
+.ibadge img { display: block; object-fit: contain; border-radius: 4px; }
+.ibadge.type { background: var(--dp-sec-head); }
 .opt { padding: 10px 0; border-bottom: 1px solid var(--dp-divider); }
 .opt:last-child { border-bottom: none; }
 .opt-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }

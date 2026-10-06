@@ -2518,6 +2518,15 @@ class DevicePanel extends HTMLElement {
     return `<div class="av ${cls}${src ? " has-brand" : ""}">${icon}<span class="dot"></span></div>`;
   }
 
+  // Kennzeichen einer Integration in den Einstellungen (seit 1.23.0): ihr Logo, sonst
+  // die Anfangsbuchstaben auf farbigem Grund.
+  _ibadge(domain, name) {
+    const src = this._brandSrc(domain);
+    return src
+      ? `<span class="ibadge has-img"><img src="${escape(src)}" alt="" width="22" height="22" draggable="false"></span>`
+      : `<span class="ibadge" style="--h:${hue(domain)}">${escape(initials(name))}</span>`;
+  }
+
   // Logos der Integrationen (seit 1.22.0): vom Brand-Dienst der eigenen HA-Instanz
   // (ab 2026.3, /api/brands/integration/<Domain>/icon.png), geschützt durch ein Token
   // (WebSocket brands/access_token, läuft ab: alle 10 Min. neu holen). Nichts geht ins
@@ -2538,17 +2547,24 @@ class DevicePanel extends HTMLElement {
 
   _brandRenderSoon() {
     window.clearTimeout(this._brandRender);
-    this._brandRender = window.setTimeout(() => this._render(), 60);
+    this._brandRender = window.setTimeout(() => {
+      this._render();
+      if (this._settings?.data && this.shadowRoot.querySelector("dialog.settings")?.open) this._renderSettings();
+    }, 60);
   }
 
   // Die Logos aller gezeigten Integrationen einmal laden (höchstens 2 s warten), bevor
   // die Liste zum ersten Mal erscheint; so baut sich die Liste nicht nachträglich um.
   async _brandPreload(devices) {
+    await this._brandPreloadDomains(devices.map((d) => d.integration?.domain));
+  }
+
+  async _brandPreloadDomains(domains) {
     const wait = (ms) => new Promise((ok) => window.setTimeout(ok, ms));
     await Promise.race([this._brandReady, wait(1500)]);
     if (!this._brandToken) return;
     this._brandState ||= new Map();
-    const todo = [...new Set(devices.map((d) => d.integration?.domain).filter((x) => x && !this._brandState.has(x)))];
+    const todo = [...new Set(domains.filter((x) => x && !this._brandState.has(x)))];
     if (todo.length) await Promise.race([Promise.all(todo.map((x) => this._brandProbe(x))), wait(2000)]);
   }
 
@@ -3802,6 +3818,9 @@ class DevicePanel extends HTMLElement {
     try {
       const data = await this._hass.callWS({ type: "device_panel/get_options" });
       if (this._settings !== st) return;
+      // Logos der Integrationen vorab laden, damit die Liste gleich vollständig erscheint.
+      await this._brandPreloadDomains((data.catalog?.integrations || []).map((i) => i.domain));
+      if (this._settings !== st) return;
       st.data = data;
       st.draft = { ...data.values };
       this._applyPanelSettings(data.panel);
@@ -4530,7 +4549,7 @@ class DevicePanel extends HTMLElement {
         const opts = [["", t("connIntegAuto")], ...CONN_MANUAL.map((k) => [k, t(CONN[k].key)])]
           .map(([val, text]) => `<option value="${val}"${val === v ? " selected" : ""}>${escape(text)}</option>`)
           .join("");
-        return `<div class="ex-row bat-row conn-row${(own[dom] || null) !== (saved[dom] || null) ? " changed" : ""}"><span class="ibadge" style="--h:${hue(dom)}">${escape(initials(name(dom)))}</span>
+        return `<div class="ex-row bat-row conn-row${(own[dom] || null) !== (saved[dom] || null) ? " changed" : ""}">${this._ibadge(dom, name(dom))}
           <div class="ex-name">${escape(name(dom))}<small>${escape(t("connIntegDevices", g.devices, detected))}</small></div>
           <span class="bat-ctl"><span class="opt-select"><select data-conn-integ="${escape(dom)}" aria-label="${escape(`${name(dom)}: ${t("connType")}`)}">${opts}</select>${mdi("chevronDown", 18)}</span></span></div>`;
       })
@@ -4936,7 +4955,7 @@ class DevicePanel extends HTMLElement {
     const rows = shown
       .map((x) => {
         const changed = savedItems.get(x.domain) !== x.diff;
-        return `<button type="button" class="ilist-row${changed ? " changed" : ""}" data-set="integ" data-key="${escape(x.domain)}"><span class="ibadge" style="--h:${hue(x.domain)}">${escape(initials(x.name))}</span>
+        return `<button type="button" class="ilist-row${changed ? " changed" : ""}" data-set="integ" data-key="${escape(x.domain)}">${this._ibadge(x.domain, x.name)}
           <span class="ilist-name">${escape(x.name)}<small>${escape(t("integDevs", x.devices, x.batDevices))}</small><small class="ilist-diff${x.unmon ? " unmon" : x.own ? " own" : ""}">${escape(x.own ? x.diff : t("integStandard"))}</small></span>${mdi("chevron", 18)}</button>`;
       })
       .join("");
@@ -4996,7 +5015,7 @@ class DevicePanel extends HTMLElement {
     const offSel = `<span class="opt-select"><select data-off-mode="${escape(dom)}" ${unmon ? "disabled" : ""} aria-label="${escape(`${t("optOfflineAfter")}: ${item.name}`)}">${offOpts}</select>${mdi("chevronDown", 18)}</span>`;
     let html =
       `<button type="button" class="iback" data-set="integ" data-key="">${mdi("chevron", 18)}${escape(t("integBack"))}</button>
-      <div class="ihead"><span class="ibadge" style="--h:${hue(dom)}">${escape(initials(item.name))}</span><div><b>${escape(item.name)}</b><small>${escape(t("integDevs", item.devices, item.batDevices))}</small></div></div>
+      <div class="ihead">${this._ibadge(dom, item.name)}<div><b>${escape(item.name)}</b><small>${escape(t("integDevs", item.devices, item.batDevices))}</small></div></div>
       ${tl}<div class="mon-grp">${escape(t("grpOutage"))}</div>` +
       opt(!same(unmon, (saved.offline_after_integrations || {})[dom] === "off"), t("optMonitor"),
         `<label class="switch"><input type="checkbox" data-imon="${escape(dom)}" ${unmon ? "" : "checked"} aria-label="${escape(`${t("optMonitor")}: ${item.name}`)}"><span></span></label>`,
@@ -5138,7 +5157,7 @@ class DevicePanel extends HTMLElement {
       value: i.domain,
       label: i.name,
       sub: t("devicesCount", i.devices),
-      badge: `<span class="ibadge" style="--h:${hue(i.domain)}">${escape(initials(i.name))}</span>`,
+      badge: this._ibadge(i.domain, i.name),
     }));
     // Eine Liste für alle Chips (seit 1.14.0, docs/mockups/chip-order-v3, D2):
     // "Alle" (fest, nur verschiebbar), jede Verbindungsart (auch ohne Geräte,

@@ -46,6 +46,26 @@ for (const mobile of [false, true]) {
       check(`[${tag}] Bilder laden wirklich`, await ev(`return [...r.querySelectorAll(".dev .av img.brand")].every((i) => i.complete && i.naturalWidth > 0)`));
       await p.screenshot({ path: `${outDir}/brand-${tag.replace("/", "-")}.png` });
     }
+    // Einstellungen: Logos auch bei den Integrationen (Anzeige und Überwachung), sonst Anfangsbuchstaben
+    await ev(`r.querySelector(".gear-btn").click()`);
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    await ev(`r.querySelector('[data-set="section"][data-id="devices"]').click()`);
+    await wait(`return !!r.querySelector('input[data-list="exclude_integrations"]')`);
+    const badge = (dom) => ev(`const i=r.querySelector('input[data-list="exclude_integrations"][data-value="${dom}"]'); const b=i?.closest(".ex-row")?.querySelector(".ibadge"); return b ? { img: b.querySelector("img")?.getAttribute("src") || null, text: b.textContent.trim() } : null`);
+    if (mode === "nobrands") {
+      const sb = await badge("shelly");
+      check(`[${tag}] Einstellungen ohne Dienst: Anfangsbuchstaben`, sb && !sb.img && sb.text === "SH", JSON.stringify(sb));
+    } else {
+      const sb = await badge("shelly");
+      const mb = await badge("matter");
+      check(`[${tag}] Einstellungen: Shelly mit Logo, Matter (404) mit Buchstaben`, sb && sb.img === "/api/brands/integration/shelly/icon.png?token=sim-token" && mb && !mb.img && mb.text === "MA", JSON.stringify([sb, mb]));
+      check(`[${tag}] Logos in den Einstellungen laden`, await ev(`return [...r.querySelectorAll("dialog.settings .ibadge img")].every((i) => i.complete && i.naturalWidth > 0)`));
+      await ev(`r.querySelector('[data-set="section"][data-id="monitor"]').click()`);
+      await ev(`r.querySelector('[data-set="tab"][data-key="integ"]').click()`);
+      await wait(`return !!r.querySelector(".ilist")`);
+      check(`[${tag}] Liste der Integrationen (Überwachung) mit Logo`, await ev(`return !!r.querySelector('.ilist-row[data-key="shelly"] .ibadge img')`));
+      await p.screenshot({ path: `${outDir}/brand-settings-${tag.replace("/", "-")}.png` });
+    }
     check(`[${tag}] keine JS-Fehler`, errors.length === 0, errors.join("; "));
     await ctx.close();
   }
