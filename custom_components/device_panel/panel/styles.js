@@ -403,7 +403,7 @@ dialog.device::backdrop, dialog.settings::backdrop, dialog.view::backdrop, dialo
    klar, welches Fenster gerade gilt. */
 dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
 :host([stat-open]) dialog.device .dlg-head .dlg-close { visibility: hidden; }
-.dlg-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: flex-start; gap: 14px; padding: 20px 16px 14px 22px; background: var(--dp-card); }
+.dlg-head { position: sticky; top: 0; z-index: 4; display: flex; align-items: flex-start; gap: 14px; padding: 20px 16px 14px 22px; background: var(--dp-card); }
 .dlg-avatar { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 15px; background: var(--dp-primary-soft); color: var(--dp-primary); }
 .dlg-avatar.off { background: var(--dp-error-soft); color: var(--dp-error); }
 .dlg-avatar.warn { background: var(--dp-warning-soft); color: var(--dp-warning); }
@@ -426,7 +426,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .dlg-note { margin: 8px 0; color: var(--dp-text2); font-size: 14px; }
 .dlg-note.small { font-size: 12px; color: var(--dp-text3); }
 .dlg-error { margin: 8px 0; padding: 10px 12px; border-radius: 10px; background: var(--dp-error-soft); color: var(--dp-error); font-size: 14px; }
-.dlg-actions { position: sticky; bottom: 0; z-index: 2; display: flex; gap: 8px; padding: 14px 22px calc(16px + env(safe-area-inset-bottom, 0px));
+.dlg-actions { position: sticky; bottom: 0; z-index: 4; display: flex; gap: 8px; padding: 14px 22px calc(16px + env(safe-area-inset-bottom, 0px));
   background: var(--dp-card); border-top: 1px solid var(--dp-divider); }
 .dlg-btn { flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 18px;
   border-radius: 12px; border: 1px solid var(--dp-divider); background: none; font-size: 14px; cursor: pointer; }
@@ -588,7 +588,8 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .chip-prev-pills .chip { height: 28px; padding: 0 10px; font-size: 12.5px; pointer-events: none; }
 .chip-prev-t.phone { margin-top: 12px; }
 .chip-prev-pin { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: var(--dp-primary); color: #fff; }
-.chip-prev-strip { display: flex; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -12px; padding: 4px 12px 6px; }
+/* isolation: Die Haftgruppe (sticky, z-index 2) bleibt in der Vorschau und deckt beim Scrollen den Dialog-Kopf nicht ab. */
+.chip-prev-strip { isolation: isolate; display: flex; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -12px; padding: 4px 12px 6px; }
 .chip-prev-strip::-webkit-scrollbar { display: none; }
 .chip-prev-strip .chip { flex: none; height: 28px; padding: 0 10px; font-size: 12.5px; pointer-events: none; }
 .chip-prev-strip .chip-pin { position: sticky; left: -12px; z-index: 2; flex: none; display: flex; align-items: center; gap: 8px; margin-left: -12px; padding: 4px 12px; background: var(--dp-bg); }

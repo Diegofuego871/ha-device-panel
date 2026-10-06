@@ -10,7 +10,8 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed
 
-from custom_components.device_panel.const import DATA_AVAILABILITY, DOMAIN
+from custom_components.device_panel.const import DATA_AVAILABILITY, DOMAIN, NEW_INSTALL_OPTIONS
+from custom_components.device_panel.options_api import values_from
 
 
 async def _setup(hass: HomeAssistant) -> MockConfigEntry:
@@ -57,6 +58,33 @@ async def test_single_instance(hass: HomeAssistant) -> None:
     result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
     assert result["type"] == "abort"
     assert result["reason"] == "single_instance_allowed"
+
+
+async def test_new_install_starts_with_start_values(hass: HomeAssistant, hass_ws_client) -> None:
+    """Eine neue Installation bekommt die Startwerte (1.18.0); sie gelten nur dort, nicht für bestehende."""
+    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
+    assert result["type"] == "form"
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    assert result["type"] == "create_entry"
+    entry = result["result"]
+    await hass.async_block_till_done()
+    assert entry.options == NEW_INSTALL_OPTIONS
+    # Das Panel bekommt sie wie jede andere Option
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/get_options"})
+    values = (await client.receive_json())["result"]["values"]
+    assert values["notify_fields"] == ["area", "integration", "connection", "since", "battery"]
+    assert values["battery_fields"] == ["battery", "area", "integration"]
+    assert values["hide_chips"] == ["override"]
+    assert values["hide_connections"] == []
+    # Die Vorlage bleibt unverändert, auch wenn die Optionen geändert werden
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "hide_chips": []})
+    assert NEW_INSTALL_OPTIONS["hide_chips"] == ["override"]
+    # Eine bestehende Installation ohne gespeicherte Werte behält den bisherigen Standard
+    other = MockConfigEntry(domain=DOMAIN, title="Device Panel 2")
+    assert other.options == {}
+    assert values_from(other.options)["notify_fields"] == ["area", "integration", "since"]
+    assert values_from(other.options)["hide_chips"] == []
 
 
 async def test_remove_deletes_own_files(hass: HomeAssistant, hass_ws_client, hass_storage, freezer) -> None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Any
 
 import voluptuous as vol
@@ -55,6 +56,7 @@ from .const import (
     CONF_CONNECTION_ORDER,
     CONF_HIDE_CHIPS,
     CONF_HIDE_CONNECTIONS,
+    NEW_INSTALL_OPTIONS,
     CHIP_KEYS,
     CONNECTION_TYPES,
     CONF_NOTIFY_CLICK,
@@ -100,7 +102,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
         if user_input is not None:
-            return self.async_create_entry(title=PANEL_TITLE, data={})
+            return self.async_create_entry(title=PANEL_TITLE, data={}, options=deepcopy(NEW_INSTALL_OPTIONS))
         return self.async_show_form(step_id="user")
 
     @staticmethod

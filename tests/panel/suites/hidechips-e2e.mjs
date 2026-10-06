@@ -10,16 +10,19 @@ const b = await chromium.launch(launchOptions);
 let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
-const KEYS = ["area", "integration", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new"];
+// Das Backend speichert hide_chips in der Reihenfolge von const.CHIP_KEYS.
+const SAVED_KEYS = ["area", "integration", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new"];
+// Reihenfolge der Standardfolge seit 1.18.0 (ohne "Alle" und Verbindungsarten)
+const KEYS = ["integration", "new", "offline", "problems", "battery", "batteries", "area", "signal", "update", "override"];
 const TEXT = {
   de: {
     title: "Filter-Chips", conn: "Verbindungsart", area: "Bereich", integ: "Integration", problems: "Warnungen", signal: "Schwacher Empfang", neu: "Neu", overrideLabel: "Eigene Einstellung",
-    labels: ["Bereich", "Integration", "Ausgefallen", "Warnungen", "Batterie", "Batterie niedrig", "Schwacher Empfang", "Update verfügbar", "Eigene Einstellung", "Neu"],
+    labels: ["Integration", "Neu", "Ausgefallen", "Warnungen", "Batterie niedrig", "Batterie", "Bereich", "Schwacher Empfang", "Update verfügbar", "Eigene Einstellung"],
     sumTwo: "2 Filter-Chips ausgeblendet", sumAll: "20 Filter-Chips ausgeblendet", intro: /^Alle Chips über der Liste, auch "Alle" und die Verbindungsarten\. Von oben nach unten ist von links nach rechts; am Griff ziehen\./,
   },
   en: {
     title: "Filter chips", conn: "Connection type", area: "Area", integ: "Integration", problems: "Warnings", signal: "Weak signal", neu: "New", overrideLabel: "Own setting",
-    labels: ["Area", "Integration", "Offline", "Warnings", "Battery", "Low battery", "Weak signal", "Update available", "Own setting", "New"],
+    labels: ["Integration", "New", "Offline", "Warnings", "Low battery", "Battery", "Area", "Weak signal", "Update available", "Own setting"],
     sumTwo: "2 filter chips hidden", sumAll: "20 filter chips hidden", intro: /^All chips above the list, including "All" and the connection types\. Top to bottom is left to right; drag by the handle\./,
   },
 };
@@ -63,7 +66,7 @@ for (const lang of ["de", "en"]) {
 
     // Ausgangslage: alle Chips da
     const start = await present();
-    check(`[${tag}] Ausgangslage: Bereich, Integration, Warnungen und Hinweise da`, start.area && start.integration && start.problems && start.hints === "batteries,battery,signal,update,new", JSON.stringify(start));
+    check(`[${tag}] Ausgangslage: Bereich, Integration, Warnungen und Hinweise da`, start.area && start.integration && start.problems && start.hints === "new,battery,batteries,signal,update", JSON.stringify(start));
 
     // Tabelle "Weitere Chips"
     check(`[${tag}] Reiter öffnet`, await openChips());
@@ -89,7 +92,7 @@ for (const lang of ["de", "en"]) {
     await p.screenshot({ path: `${outDir}/hidechips-settings-${tag.replace("/", "-")}.png` });
     check(`[${tag}] gespeichert (feste Reihenfolge)`, (await save()) && JSON.stringify(await lastSet()) === JSON.stringify({ hide_chips: ["area", "integration", "problems", "signal"] }), JSON.stringify(await lastSet()));
     const after = await wait(`const c=r.querySelector(".chips"); return !c.querySelector(".chip.area") && !c.querySelector("[data-problems]") && ![...c.querySelectorAll("[data-hint]")].some(x=>x.dataset.hint==="signal")`) && await present();
-    check(`[${tag}] Chips weg: Bereich, Integration, Warnungen, Schwacher Empfang`, after && !after.area && !after.integration && !after.problems && after.hints === "batteries,battery,update,new", JSON.stringify(after));
+    check(`[${tag}] Chips weg: Bereich, Integration, Warnungen, Schwacher Empfang`, after && !after.area && !after.integration && !after.problems && after.hints === "new,battery,batteries,update", JSON.stringify(after));
     check(`[${tag}] Filter aufgehoben: alle Geräte, "Alle" aktiv`, await wait(`return r.querySelectorAll(".dev").length === ${total} && r.querySelector('.chip[data-conn="all"]').classList.contains("on")`), String(await ev(`return r.querySelectorAll(".dev").length`)));
     check(`[${tag}] Zustand zurückgesetzt (Probleme, Hinweis, Bereich, Integration)`, await ev(`const h=r.host; return h._problems === false && h._hint === null && !(h._view.areas||[]).length && !(h._view.integs||[]).length`));
     check(`[${tag}] Kopf wieder für alle Geräte`, !(await ev(`return !!r.querySelector(".hero .kt .k .scope")`)));
@@ -110,7 +113,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] alle aus`, await ev(`return [...r.querySelectorAll('input[data-list="hide_chips"]')].every(i=>!i.checked)`));
     check(`[${tag}] Zusammenfassung "${T.sumAll}" (plus Verbindungsart)`, (await text('[data-id="look"] .set-sec-sum')).includes(T.sumAll), await text('[data-id="look"] .set-sec-sum'));
     const savedAll = (await save()) && (await lastSet());
-    check(`[${tag}] alle zehn Chips und alle zehn Verbindungsarten gespeichert`, savedAll && savedAll.hide_chips?.join() === KEYS.join() && savedAll.hide_connections?.length === 10, JSON.stringify(savedAll));
+    check(`[${tag}] alle zehn Chips und alle zehn Verbindungsarten gespeichert`, savedAll && savedAll.hide_chips?.join() === SAVED_KEYS.join() && savedAll.hide_connections?.length === 10, JSON.stringify(savedAll));
     const none = await wait(`const c=r.querySelector(".chips"); return !c.querySelector("[data-hint]") && !c.querySelector("[data-problems]")`) && await present();
     check(`[${tag}] nur "Alle" bleibt`, none && !none.area && !none.integration && !none.problems && none.hints === "", JSON.stringify(none));
     check(`[${tag}] nur "Alle" da, kein Trenner`, await ev(`const c=r.querySelector(".chips"); return c.querySelectorAll(".chip").length === 1 && !!c.querySelector('[data-conn="all"]') && !c.querySelector(".vsep")`));
@@ -122,7 +125,7 @@ for (const lang of ["de", "en"]) {
     const savedBack = (await save()) && (await lastSet());
     check(`[${tag}] alle wieder an`, savedBack && savedBack.hide_chips?.length === 0 && savedBack.hide_connections?.length === 0, JSON.stringify(savedBack));
     const back = await wait(`return !!r.querySelector(".chips .chip.integ") && !!r.querySelector(".chips [data-problems]")`) && await present();
-    check(`[${tag}] Chips zurück (ohne alten Filter)`, back && back.area && back.integration && back.problems && back.hints === "batteries,battery,signal,update,new" && (await ev(`return r.querySelectorAll(".dev").length`)) === total, JSON.stringify(back));
+    check(`[${tag}] Chips zurück (ohne alten Filter)`, back && back.area && back.integration && back.problems && back.hints === "new,battery,batteries,signal,update" && (await ev(`return r.querySelectorAll(".dev").length`)) === total, JSON.stringify(back));
 
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();

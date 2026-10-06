@@ -407,6 +407,14 @@ hat dort einen echten Fehler oder Umweg gekostet.
   nicht mehr. Danach die Liste der Methoden vor und nach dem Eingriff
   vergleichen (`grep -oE "^  _[A-Za-z0-9]+\("` und `diff`).
 
+- **Sticky im scrollenden Dialog überdeckt den sticky Kopf:** Ein Element mit
+  `position: sticky` und `z-index` (die Haftgruppe der Chip-Vorschau, z-index 2)
+  steht im selben Stapel wie der sticky Kopf des Dialogs (ebenfalls 2); bei
+  gleichem z-index gewinnt, was später im DOM steht, und die Gruppe deckt beim
+  Scrollen den Kopf ab. Abhilfe: Streifen mit `isolation: isolate`, Kopf und
+  Aktionsleiste höher (4). Test: das Element unter den Kopf scrollen und mit
+  `elementFromPoint` prüfen, was dort oben liegt.
+
 ## Tests
 ## Tests
 

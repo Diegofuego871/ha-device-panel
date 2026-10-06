@@ -7,6 +7,37 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.18.0] - 2026-10-06
+
+Start values for new installations.
+
+### Changed
+
+- New installations start with the values the author uses (requested by the
+  user, from his settings screenshots):
+  - Order of the filter chips: "All" (pinned) first, then Integration, New,
+    Offline, Warnings, Low battery, Battery, Area, the connection types (Thread,
+    Wi-Fi, Bluetooth, Zigbee, LAN, Cloud, Matter, Network, Unknown, Z-Wave) and
+    last Weak signal, Update available and Own setting. Without a stored order
+    this is also what "Default order" restores.
+  - Content of the outage notification: area, integration, connection type,
+    offline since and last battery level (before: area, integration, offline
+    since).
+  - Content of the battery notification: level, area and integration (before:
+    level and area).
+  - The chip "Own setting" is hidden (it can be switched on in Settings ›
+    Display › Filter chips).
+- The content of the notifications and the hidden chip apply only to new
+  installations, existing ones keep what they have. The new default order also
+  applies to installations that never changed the order of the chips (earlier
+  default: Area, Integration, "All" and the connection types by number of
+  devices); a stored order stays as it is.
+
+### Fixed
+
+- In Settings › Display › Filter chips, the preview of the phone bar with the
+  pinned chips no longer covers the header of the dialog when you scroll.
+
 ## [1.17.0] - 2026-10-06
 
 Signal warning threshold per connection type.
@@ -1483,6 +1514,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.18.0
 [1.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.17.0
 [1.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.16.0
 [1.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.15.0

@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.17.0, Einstellungen in fünf Abschnitten)
+## Stand (1.18.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,24 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Startwerte für neue Installationen `1.18.0` (Nutzer, 2026-10-06, nach seinen
+   Bildschirmfotos der Einstellungen): Die Standardfolge der Chips ist fest
+   (`CHIP_DEFAULT` im Panel; "Alle", Anheft-Marker, Integration, Neu, Ausgefallen,
+   Warnungen, Batterie niedrig, Batterie, Bereich, Thread, WLAN, Bluetooth,
+   Zigbee, LAN, Cloud, Matter, Netzwerk, Unbekannt, Z-Wave, Schwacher Empfang,
+   Update verfügbar, Eigene Einstellung) und gilt, wo `chip_order` leer ist, auch
+   für bestehende Installationen; nur eine eigene `connection_order` aus 1.12.0
+   ohne `chip_order` behält die alte Anordnung. Inhalt der Meldungen und der
+   ausgeblendete Chip "Eigene Einstellung" stehen als `const.NEW_INSTALL_OPTIONS`
+   in den Optionen einer neu eingerichteten Instanz (`config_flow`, `options=`);
+   bestehende Installationen behalten ihre Werte und den alten Standard
+   (`DEFAULT_NOTIFY_FIELDS`, `DEFAULT_BATTERY_FIELDS`). Bereich und Z-Wave bleiben
+   sichtbar (Entscheid des Nutzers). Dazu der Fehler, dass die Haftgruppe der
+   Chip-Vorschau (sticky, z-index 2) beim Scrollen den Dialog-Kopf überdeckte:
+   `isolation: isolate` am Streifen und z-index 4 für Kopf und Aktionsleiste.
+   Tests: `chiporder-e2e.mjs` (Schritt 1b prüft die Überdeckung mit
+   `elementFromPoint`), `test_init.py`; Standardfolge in `area-`, `chips-`,
+   `hidechips-`, `integ-` und `table-e2e` nachgezogen.
    Empfang-Warnschwelle pro Funkart `1.17.0` (Nutzer, 2026-10-06: "Wi-Fi,
    Bluetooth und Zigbee separat", Sollwert und "Aus" dazu; ohne Mockup, auf
    Empfehlung): Optionen `signal_low` {Verbindungsart: Zahl oder "off"} und

@@ -210,6 +210,11 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
   Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des
   Inhalts in zwei Spalten, auf dem Handy in einer.
+- Standardfolge der Filter-Chips (seit 1.18.0, nach dem Bildschirmfoto des Nutzers):
+  "Alle" ist angeheftet (klebt auf dem Handy links), dann Integration, die Hinweise
+  (Neu, Ausgefallen, Warnungen, Batterie niedrig, Batterie), Bereich, die
+  Verbindungsarten (Thread, WLAN, Bluetooth, Zigbee, LAN, Cloud, Matter, Netzwerk,
+  Unbekannt, Z-Wave) und zuletzt Schwacher Empfang, Update und Eigene Einstellung.
 - Empfang-Warnschwelle pro Funkart (seit 1.17.0): Zeilen im Stil der Batterie pro
   Integration (`.opt.bat-row.sig-row`): Funkart links, Auswahl "Standard / Eigene /
   Aus" und bei "Eigene" ein Zahlenfeld mit Einheit (dBm oder LQI); darunter die Zahl

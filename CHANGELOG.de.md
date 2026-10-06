@@ -7,6 +7,38 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.18.0] - 2026-10-06
+
+Startwerte für neue Installationen.
+
+### Geändert
+
+- Neue Installationen starten mit den Werten, die der Autor nutzt (Wunsch des
+  Nutzers, nach seinen Bildschirmfotos der Einstellungen):
+  - Reihenfolge der Filter-Chips: zuerst "Alle" (angeheftet), dann Integration,
+    Neu, Ausgefallen, Warnungen, Batterie niedrig, Batterie, Bereich, die
+    Verbindungsarten (Thread, WLAN, Bluetooth, Zigbee, LAN, Cloud, Matter,
+    Netzwerk, Unbekannt, Z-Wave) und zuletzt Schwacher Empfang, Update
+    verfügbar und Eigene Einstellung. Ohne gespeicherte Folge ist das auch, was
+    "Standardreihenfolge" wiederherstellt.
+  - Inhalt der Ausfall-Meldung: Bereich, Integration, Verbindungsart, Offline
+    seit und Batterie zuletzt (vorher: Bereich, Integration, Offline seit).
+  - Inhalt der Batterie-Meldung: Stand, Bereich und Integration (vorher: Stand
+    und Bereich).
+  - Der Chip "Eigene Einstellung" ist ausgeblendet (einschalten unter
+    Einstellungen › Darstellung › Filter-Chips).
+- Der Inhalt der Meldungen und der ausgeblendete Chip gelten nur für neue
+  Installationen, bestehende behalten, was sie haben. Die neue Standardfolge
+  gilt auch für Installationen, die die Reihenfolge der Chips nie geändert haben
+  (bisher: Bereich, Integration, "Alle" und die Verbindungsarten nach Zahl der
+  Geräte); eine gespeicherte Folge bleibt, wie sie ist.
+
+### Behoben
+
+- Unter Einstellungen › Darstellung › Filter-Chips deckt die Vorschau der
+  Handy-Leiste mit den angehefteten Chips beim Scrollen den Kopf des Dialogs
+  nicht mehr ab.
+
 ## [1.17.0] - 2026-10-06
 
 Warnschwelle für den Empfang pro Funkart.
@@ -1542,6 +1574,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.18.0
 [1.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.17.0
 [1.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.16.0
 [1.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.15.0

@@ -279,6 +279,14 @@ const CHIP_TAIL = CHIP_OTHER.map(([k]) => k).filter((k) => k !== "area" && k !==
 // trennt eine feine Linie. Auswahlfenster (Bereich, Integration), "Alle" mit den
 // Verbindungsarten (genau eine aktiv) und "Nur Probleme" mit den Hinweisen.
 const chipKind = (key) => (key === "area" || key === "integration" ? "scope" : key === "all" || key in CONN ? "conn" : "tail");
+// Standardfolge ohne gespeicherte Folge (seit 1.18.0, nach dem Bildschirmfoto des
+// Nutzers): "Alle" ist angeheftet, dann die Hinweise, dann die Verbindungsarten,
+// hinten die seltenen Chips.
+const CHIP_DEFAULT = [
+  "all", "pin", "integration", "new", "offline", "problems", "battery", "batteries", "area",
+  "thread", "wifi", "ble", "zigbee", "ethernet", "cloud", "matter", "network", "unknown", "zwave",
+  "signal", "update", "override",
+];
 // Vollständige Folge aus der gespeicherten (leer = Standard): Unbekanntes und
 // Doppelte fallen weg. Verbindungsarten ohne Platz (neue Art, ältere Folge)
 // kommen nach Anzahl der Geräte (counts: Art -> Zahl; connOrder: Ausgangsfolge
@@ -288,7 +296,11 @@ function chipOrder(order, connOrder, counts) {
   const types = orderConns(Object.keys(CONN).map((k) => [k, (counts && counts.get(k)) || 0]), connOrder).map(([k]) => k);
   const known = ["pin", "area", "integration", "all", ...Object.keys(CONN), ...CHIP_TAIL];
   const out = (order || []).filter((k, i, a) => known.includes(k) && a.indexOf(k) === i);
-  if (!out.length) return ["pin", "area", "integration", "all", ...types, ...CHIP_TAIL];
+  if (!out.length) {
+    // Nur eine eigene Folge der Verbindungsarten aus 1.12.0 (ohne chip_order) behält ihre Anordnung.
+    if ((connOrder || []).length) return ["pin", "area", "integration", "all", ...types, ...CHIP_TAIL];
+    return [...CHIP_DEFAULT];
+  }
   const missing = types.filter((k) => !out.includes(k));
   if (missing.length) {
     let at = out.reduce((n, k, i) => (k in CONN ? i : n), -1);
@@ -1953,7 +1965,7 @@ class DevicePanel extends HTMLElement {
   // hinaus (der Chip steht nach dem Kopf oft weit unten); die Liste scrollt.
   _placeAreas() {
     const pop = this.shadowRoot.querySelector(".area-pop");
-    const chip = this.shadowRoot.querySelector(this._pickKind === "integ" ? ".chips .chip.integ" : ".chips .chip.area");
+    const chip = this.shadowRoot.querySelector(this._pickKind === "integ" ? ".chips .chip.integ" : ".chips .chip.area:not(.integ)");
     if (!pop || pop.hidden || !chip) return;
     const b = chip.getBoundingClientRect();
     const width = pop.offsetWidth;

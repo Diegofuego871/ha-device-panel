@@ -51,7 +51,8 @@ for (const lang of ["de", "en"]) {
     const ring = await text(".ringwrap .c b");
 
     // Chip am Anfang der Zeile
-    check(`[${tag}] Chip "${T.chip}" zuerst`, (await ev(`return r.querySelector(".chips").firstElementChild?.matches(".chip.area")`)) && (await text(".chips .chip.area")) === T.chip);
+    // Standardfolge seit 1.18.0: nach den Hinweisen "Batterie", vor den Verbindungsarten
+    check(`[${tag}] Chip "${T.chip}" nach den Hinweisen, vor den Verbindungsarten`, (await ev(`const c=[...r.querySelectorAll(".chips .chip")]; const at=(sel)=>c.indexOf(r.querySelector(sel)); return at('.chip.hint[data-hint="batteries"]') < at(".chips .chip.area:not(.integ)") && at(".chips .chip.area:not(.integ)") < at('.chip[data-conn="thread"]')`)) && (await text(".chips .chip.area:not(.integ)")) === T.chip);
     await tap(".chips [data-area-open]");
     check(`[${tag}] Auswahl offen`, await wait(mobile ? `return r.querySelector("dialog.area-sheet").open` : `return !r.querySelector(".area-pop").hidden`));
     check(`[${tag}] Titel`, (await text(mobile ? "dialog.area-sheet h2" : ".area-pop h4")) === T.title);
@@ -61,7 +62,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Etagen und Bereiche in HA-Reihenfolge mit Zahl`, (await pickRows()) === expected, await pickRows());
     check(`[${tag}] Suche ab 9 Bereichen`, !!(await handle(`${PICK} [data-area-search]`)) && (await ev(`return r.querySelector("${PICK} [data-area-search]").placeholder`)) === T.search);
     if (!mobile) {
-      const pos = await ev(`const c=r.querySelector(".chips .chip.area").getBoundingClientRect(), q=r.querySelector(".area-pop").getBoundingClientRect(); return [Math.round(q.left-c.left), Math.round(q.top-c.bottom)]`);
+      const pos = await ev(`const c=r.querySelector(".chips .chip.area:not(.integ)").getBoundingClientRect(), q=r.querySelector(".area-pop").getBoundingClientRect(); return [Math.round(q.left-c.left), Math.round(q.top-c.bottom)]`);
       check(`[${tag}] Popover unter dem Chip`, pos[0] === 0 && pos[1] === 8, JSON.stringify(pos));
     }
 
@@ -69,7 +70,7 @@ for (const lang of ["de", "en"]) {
     await tap(`${PICK} [data-area="kueche"]`);
     check(`[${tag}] Küche: nur ihre Geräte`, await wait(`return [...r.querySelectorAll(".dev")].map(x=>x.dataset.open).sort().join() === "e,k"`), await rows());
     check(`[${tag}] Haken und Etage halb`, (await checked(`${PICK} [data-area="kueche"]`)) === "true" && (await checked(`${PICK} [data-area-group="f:eg"]`)) === "mixed");
-    check(`[${tag}] Chip zeigt Bereich und Zahl`, (await text(".chips .chip.area .al")) === "Küche" && (await text(".chips .chip.area .n")) === "2", await text(".chips .chip.area"));
+    check(`[${tag}] Chip zeigt Bereich und Zahl`, (await text(".chips .chip.area:not(.integ) .al")) === "Küche" && (await text(".chips .chip.area:not(.integ) .n")) === "2", await text(".chips .chip.area:not(.integ)"));
     if (!mobile) check(`[${tag}] Fusszeile zählt`, (await text(".area-pop .afoot span")) === T.count, await text(".area-pop .afoot span"));
     // Kopf folgt dem Bereich (seit 0.26.0, Entscheid des Nutzers): Küche hat 2 Geräte, beide online
     check(`[${tag}] Kopf nur für den Bereich`, (await text(".ringwrap .c b")) === "2" && ring !== "2" && (await ev(`return [...r.querySelectorAll(".hero .kt .k .scope")].map(x=>x.textContent).join("|")`)) === "· Küche|· Küche|· Küche", await ev(`return [...r.querySelectorAll(".hero .kt .k")].map(x=>x.textContent).join("|")`));
@@ -86,7 +87,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] "Alle" zählt alle und ist aus, die übrigen zählen im Bereich`, (await text('.chip[data-conn="all"] .n')) === String(total.split(",").length) && !(await ev(`return r.querySelector('.chip[data-conn="all"]').classList.contains("on")`)) && (await text('.chip[data-conn="wifi"] .n')) === "1", await text('.chip[data-conn="all"]'));
     await tap('.chip[data-conn="wifi"]');
     check(`[${tag}] Bereich + WLAN`, await wait(`return [...r.querySelectorAll(".dev")].map(x=>x.dataset.open).join() === "k"`), await rows());
-    check(`[${tag}] Chip "${T.chip}" zählt mit`, (await text(".chips .chip.area .n")) === "1");
+    check(`[${tag}] Chip "${T.chip}" zählt mit`, (await text(".chips .chip.area:not(.integ) .n")) === "1");
     if (mobile) await ev(`r.querySelector(".content").scrollTop = r.querySelector(".chips").offsetTop - 80`);
     await p.screenshot({ path: `${outDir}/area-list-${tag.replace("/", "-")}.png` });
     // "Alle" hebt alle Filter auf: Bereich, Verbindungsart, "Nur Probleme", Hinweis; die Suche bleibt
@@ -94,7 +95,7 @@ for (const lang of ["de", "en"]) {
     await tap('.chip.hint[data-hint="batteries"]');
     check(`[${tag}] vier Filter zugleich`, await wait(`return r.querySelectorAll(".dev").length === 0 && r.querySelector(".chip[data-problems]").classList.contains("on") && r.querySelector('.chip.hint[data-hint="batteries"]').classList.contains("on")`), await rows());
     await tap('.chip[data-conn="all"]');
-    check(`[${tag}] "Alle" hebt alle auf`, await wait(`return [...r.querySelectorAll(".dev")].map(x=>x.dataset.open).sort().join() === ${JSON.stringify(total)}`) && (await ev(`return r.querySelector('.chip[data-conn="all"]').classList.contains("on") && !r.querySelector(".chips .chip.on:not([data-conn='all'])") && !r.querySelector(".chips [data-area-clear]")`)) && (await text(".chips .chip.area")) === T.chip, await rows());
+    check(`[${tag}] "Alle" hebt alle auf`, await wait(`return [...r.querySelectorAll(".dev")].map(x=>x.dataset.open).sort().join() === ${JSON.stringify(total)}`) && (await ev(`return r.querySelector('.chip[data-conn="all"]').classList.contains("on") && !r.querySelector(".chips .chip.on:not([data-conn='all'])") && !r.querySelector(".chips [data-area-clear]")`)) && (await text(".chips .chip.area:not(.integ)")) === T.chip, await rows());
     await tap(".search");
     await p.keyboard.type("Flur");
     await wait(`return r.querySelectorAll(".dev").length === 2`);
@@ -111,12 +112,12 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Erdgeschoss: alle vier Bereiche`, await wait(`return [...r.querySelectorAll(".dev")].map(x=>x.dataset.open).sort().join() === "b,e,g,i,k,m,o"`), await rows());
     check(`[${tag}] Erdgeschoss: Kopf 6 von 7 online, Sammelausfall (b, e, m) bleibt`, (await text(".ringwrap .c b")) === "6" && (await ev(`return !!r.querySelector(".hero .inc")`)), await text(".ringwrap .c"));
     check(`[${tag}] Erdgeschoss im Kopf innerhalb der Kacheln`, await scopeInside());
-    check(`[${tag}] Etage gewählt, Chip "Erdgeschoss"`, (await checked(`${PICK} [data-area-group="f:eg"]`)) === "true" && (await text(".chips .chip.area .al")) === "Erdgeschoss");
+    check(`[${tag}] Etage gewählt, Chip "Erdgeschoss"`, (await checked(`${PICK} [data-area-group="f:eg"]`)) === "true" && (await text(".chips .chip.area:not(.integ) .al")) === "Erdgeschoss");
     await tap(`${PICK} [data-area="bad"]`);
-    check(`[${tag}] mehr als zwei: Zahl der Bereiche`, await wait(`return r.querySelector(".chips .chip.area .al")?.textContent === ${JSON.stringify(T.many)}`), await text(".chips .chip.area .al"));
+    check(`[${tag}] mehr als zwei: Zahl der Bereiche`, await wait(`return r.querySelector(".chips .chip.area:not(.integ) .al")?.textContent === ${JSON.stringify(T.many)}`), await text(".chips .chip.area:not(.integ) .al"));
     await tap(`${PICK} [data-area-group="f:eg"]`);
     check(`[${tag}] Etage nochmals: abgewählt`, await wait(`return [...r.querySelectorAll(".dev")].map(x=>x.dataset.open).join() === "c"`), await rows());
-    check(`[${tag}] ein Bereich: Name`, (await text(".chips .chip.area .al")) === "Bad");
+    check(`[${tag}] ein Bereich: Name`, (await text(".chips .chip.area:not(.integ) .al")) === "Bad");
 
     // Suche: Bereich oder Etage
     await tap(`${PICK} [data-area-search]`);
@@ -135,7 +136,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] "${T.none}"`, await wait(`return [...r.querySelectorAll(".dev")].map(x=>x.dataset.open).join() === "p"`), await rows());
     // Alle zeigen
     await tap(mobile ? 'dialog.area-sheet .dlg-actions [data-area-clear]' : ".area-pop .afoot [data-area-clear]");
-    check(`[${tag}] "${T.all}" hebt auf`, await wait(`return [...r.querySelectorAll(".dev")].map(x=>x.dataset.open).sort().join() === ${JSON.stringify(total)}`) && (await text(".chips .chip.area")) === T.chip);
+    check(`[${tag}] "${T.all}" hebt auf`, await wait(`return [...r.querySelectorAll(".dev")].map(x=>x.dataset.open).sort().join() === ${JSON.stringify(total)}`) && (await text(".chips .chip.area:not(.integ)")) === T.chip);
     if (!mobile) {
       // Klick ausserhalb schliesst und öffnet kein Gerät
       await tap('.dev[data-open="g"]');
@@ -165,7 +166,7 @@ for (const lang of ["de", "en"]) {
     // Bereich in HA gelöscht: Filter fällt weg statt leerer Liste
     await p.evaluate(() => (window.__areas = window.__areas.filter((a) => a.id !== "keller")));
     await ev(`r.host._fetch()`);
-    check(`[${tag}] gelöschter Bereich: alle Geräte`, await wait(`return r.querySelectorAll(".dev").length > 3`) && (await text(".chips .chip.area")) === T.chip, await rows());
+    check(`[${tag}] gelöschter Bereich: alle Geräte`, await wait(`return r.querySelectorAll(".dev").length > 3`) && (await text(".chips .chip.area:not(.integ)")) === T.chip, await rows());
     await tap(".chips [data-area-clear], .chips [data-area-open]");
 
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
