@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.15.0, Einstellungen in fünf Abschnitten)
+## Stand (1.16.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,20 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Warnung statt Problem `1.16.0` (Nutzer, 2026-10-06, Mockups
+   `docs/mockups/chip-warn-v1/`, V1; Entscheid A): Zwei Stufen. `devOffline(d)` =
+   offline, `devWarn(d)` = instabil, Batterie niedrig, schwacher Empfang oder keine
+   Daten (ohne Ausfälle; deaktivierte und nicht überwachte zählen nicht). Chips
+   `offline` (neu, `const.CHIP_KEYS`, Ansicht `view.offline`, `_offlineOnly`) und
+   `problems` (Schlüssel blieb, Anzeige "Warnungen"); beide mit Zahl, nur
+   sichtbar, wenn sie zutreffen oder aktiv sind (`_chipsHtml`/`level()`);
+   `_problemPass`: ist einer aktiv, zählt Ausfall bzw. Warnung, beide aktiv =
+   beides (oder). Zeile `.kwarn` unten in der Kachel (`_heroHtml`, Klasse
+   `.kt.offl` als Spalte, `data-warn-open` setzt "Alle" zurück und dann
+   "Warnungen"). `chipOrder` ordnet `offline` in älteren Folgen vor `problems`
+   ein. "Warnschwelle" in Texten (Panel, HA, README); Optionsnamen unverändert.
+   Tests: neue Suite `warn-e2e.mjs`, angepasst `table-`, `hidechips-`,
+   `chiporder-`, `signal-`, `override-`, `devset-`, `settings-e2e`.
    Chips anheften `1.15.0` (Nutzer, 2026-10-05, Mockups
    `docs/mockups/chip-pin-v1/`, B): `"pin"` ist ein Schlüssel in `chip_order`
    (`const.CHIP_ORDER_KEYS`), kein Chip; ganz vorn (Standard, fehlt er in älteren

@@ -35,15 +35,15 @@ Availability, outages, signal and battery as tiles, plus connection, integration
 
 | Availability | Signal | Battery with forecast |
 |---|---|---|
-| <img src="docs/screenshots/en/availability.png" alt="Availability over 7 days with every outage"> | <img src="docs/screenshots/en/signal.png" alt="Signal history with median, range and warning threshold"> | <img src="docs/screenshots/en/battery.png" alt="Battery history with battery change, threshold and forecast"> |
+| <img src="docs/screenshots/en/availability.png" alt="Availability over 7 days with every outage"> | <img src="docs/screenshots/en/signal.png" alt="Signal history with median, range and warning threshold"> | <img src="docs/screenshots/en/battery.png" alt="Battery history with battery change, warning threshold and forecast"> |
 
 The forecast calculates from the last battery change (at most one year) up to the warning threshold of the device, and says how sure it is.
 
 ### Settings per device
 
-Every device can override the defaults in its pop-up: its own "offline after" time (or no monitoring), its own battery threshold, its own signal warning, and outage and online notifications switched off or muted for 24 hours, for example for a charger that is often offline on purpose. Each row shows where the value comes from and what the default would be. A symbol next to the name in the list shows devices with their own settings.
+Every device can override the defaults in its pop-up: its own "offline after" time (or no monitoring), its own battery warning threshold, its own signal warning, and outage and online notifications switched off or muted for 24 hours, for example for a charger that is often offline on purpose. Each row shows where the value comes from and what the default would be. A symbol next to the name in the list shows devices with their own settings.
 
-<p align="center"><img src="docs/screenshots/en/device-settings.png" alt="Device pop-up: settings for this device with own time, own battery threshold and notifications off" width="720"></p>
+<p align="center"><img src="docs/screenshots/en/device-settings.png" alt="Device pop-up: settings for this device with own time, own battery warning threshold and notifications off" width="720"></p>
 
 ### Notifications you control
 

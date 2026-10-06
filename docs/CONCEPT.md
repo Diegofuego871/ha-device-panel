@@ -23,7 +23,7 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
 
 - Kopf aus B: Ring "online von gesamt", Tafel "Gerade ausgefallen" mit
   Dauer, Ausfall-Puls über 24 Std. mit Hinweis auf Sammelausfälle.
-- Filter-Chips nach Verbindungsart und "Nur Probleme" (B), Ansicht
+- Filter-Chips nach Verbindungsart und "Warnungen" (B), Ansicht
   gruppiert (Ausgefallen, Instabil, Online) oder als Liste.
 - Tabelle: ausgefallene Zeilen rot hinterlegt mit Balken links (A), Dauer
   gross in der Statusspalte (B), alle Spalten wählbar und verschiebbar
@@ -60,7 +60,7 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    ohne Wert am Ende. Mit Batterie-Chip und Standard-Sortierung nach Stand.
    Dazu (Nutzer, 2026-10-02): Filter-Chips der Verbindungsart einzeln
    ausblendbar, standardmässig alle sichtbar; "Alle" und die hinteren Chips
-   ("Nur Probleme", Hinweise, "Eigene Einstellung") bleiben immer.
+   ("Warnungen", Hinweise, "Eigene Einstellung") bleiben immer.
    Umgesetzt in 0.11.0 als globale Einstellung (Variante C in
    `docs/mockups/view-v2/`, Abschnitt "Anzeige", auch im Optionsdialog).
    Dazu (Nutzer, 2026-10-02) die Reihenfolge der Chips per Ziehen, ebenfalls
@@ -305,7 +305,7 @@ Meldungen und eigene Aufzeichnung des Empfangs.
   Geräte lassen sich zeigen und werden dann wie alle überwacht;
   deaktivierte Geräte lassen sich zeigen (mit ihren deaktivierten
   Entitäten), in eigener Gruppe am Ende, nie überwacht und nicht in Kopf,
-  Puls oder "Nur Probleme".
+  Puls oder "Warnungen".
 
 ## Verfügbarkeitsprotokoll
 
@@ -568,7 +568,7 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   oder "off". Gespeichert in `.storage/device_panel.devices` ("signal",
   nur mit Einträgen). Bewertet wird im Panel (`devSigLevel`): "off" nie
   schwach, sonst Stufe 1 nur unter der Schwelle; Balken, Chip "Schwacher
-  Empfang" und "Nur Probleme" folgen. Zählt als "Eigene Einstellung",
+  Empfang" und "Warnungen" folgen. Zählt als "Eigene Einstellung",
   zurückzusetzen im Abschnitt "Verbindungsart". Push für schwachen Empfang
   gibt es nicht.
 - Ausfall-Meldungen nach Bild 5 (seit 0.20.0):

@@ -35,15 +35,15 @@ Verfügbarkeit, Unterbrüche, Empfang und Batterie als Kacheln, dazu Verbindung,
 
 | Verfügbarkeit | Empfang | Batterie mit Prognose |
 |---|---|---|
-| <img src="docs/screenshots/de/availability.png" alt="Verfügbarkeit über 7 Tage mit jedem Unterbruch"> | <img src="docs/screenshots/de/signal.png" alt="Empfangsverlauf mit Median, Spanne und Warnschwelle"> | <img src="docs/screenshots/de/battery.png" alt="Batterie-Verlauf mit Batteriewechsel, Schwelle und Prognose"> |
+| <img src="docs/screenshots/de/availability.png" alt="Verfügbarkeit über 7 Tage mit jedem Unterbruch"> | <img src="docs/screenshots/de/signal.png" alt="Empfangsverlauf mit Median, Spanne und Warnschwelle"> | <img src="docs/screenshots/de/battery.png" alt="Batterie-Verlauf mit Batteriewechsel, Warnschwelle und Prognose"> |
 
 Die Prognose rechnet ab dem letzten Batteriewechsel (höchstens ein Jahr) bis zur Warnschwelle des Geräts und sagt, wie sicher sie ist.
 
 ### Einstellungen pro Gerät
 
-Jedes Gerät kann im Popup die Standardwerte übersteuern: eine eigene "Ausgefallen nach"-Zeit (oder keine Überwachung), eine eigene Batterie-Schwelle, eine eigene Empfang-Warnung sowie Ausfall- und Online-Meldungen aus oder für 24 Stunden stumm, etwa bei einem Ladegerät, das oft absichtlich offline ist. Jede Zeile zeigt, woher der Wert kommt und was der Standard wäre. Ein Symbol neben dem Namen in der Liste zeigt Geräte mit eigenen Einstellungen.
+Jedes Gerät kann im Popup die Standardwerte übersteuern: eine eigene "Ausgefallen nach"-Zeit (oder keine Überwachung), eine eigene Batterie-Warnschwelle, eine eigene Empfang-Warnung sowie Ausfall- und Online-Meldungen aus oder für 24 Stunden stumm, etwa bei einem Ladegerät, das oft absichtlich offline ist. Jede Zeile zeigt, woher der Wert kommt und was der Standard wäre. Ein Symbol neben dem Namen in der Liste zeigt Geräte mit eigenen Einstellungen.
 
-<p align="center"><img src="docs/screenshots/de/device-settings.png" alt="Geräte-Popup: Einstellungen für dieses Gerät mit eigener Zeit, eigener Batterie-Schwelle und ausgeschalteten Meldungen" width="720"></p>
+<p align="center"><img src="docs/screenshots/de/device-settings.png" alt="Geräte-Popup: Einstellungen für dieses Gerät mit eigener Zeit, eigener Batterie-Warnschwelle und ausgeschalteten Meldungen" width="720"></p>
 
 ### Meldungen unter deiner Kontrolle
 

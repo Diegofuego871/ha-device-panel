@@ -31,7 +31,7 @@ const TEXT = {
     rangeBat: "Erlaubt: 5 bis 50",
    
     batDef: (p) => `Standard (${p} %)`, batModes: "Standard (15 %)|Eigene|Aus", popDefOff: "Wie Integration (aus)",
-    shortInstant: "Sobald ein Gerät unter die Schwelle fällt.", shortDaily: (t) => `Eine Sammelmeldung um ${t}; Ausfall-Meldungen betrifft das nicht.`, timeErr: "Uhrzeit HH:MM",
+    shortInstant: "Sobald ein Gerät unter die Warnschwelle fällt.", shortDaily: (t) => `Eine Sammelmeldung um ${t}; Ausfall-Meldungen betrifft das nicht.`, timeErr: "Uhrzeit HH:MM",
     dailyAll: "Alle schwachen Geräte",
    
     outageShort: "Sobald \"Erst melden nach\" um ist, an das Ziel im Reiter \"Übersicht\".", eight: "8 Änderungen",
@@ -68,7 +68,7 @@ const TEXT = {
     rangeBat: "Allowed: 5 to 50",
    
     batDef: (p) => `Default (${p} %)`, batModes: "Default (15 %)|Own|Off", popDefOff: "Same as integration (off)",
-    shortInstant: "As soon as a device drops below the threshold.", shortDaily: (t) => `One summary at ${t}; outage notifications are not affected.`, timeErr: "Time HH:MM",
+    shortInstant: "As soon as a device drops below the warning threshold.", shortDaily: (t) => `One summary at ${t}; outage notifications are not affected.`, timeErr: "Time HH:MM",
     dailyAll: "All devices with a low battery",
    
     outageShort: "Once \"Report only after\" has passed, to the target in the tab \"Overview\".", eight: "8 changes",
@@ -300,7 +300,7 @@ for (const lang of ["de", "en"]) {
     // 16 + Dienst-Gerät; das deaktivierte zählt im Kopf nicht.
     check(`[${tag}] Kopf zählt Deaktivierte nicht`, (await text(".ring .c span")).includes(T.ofTotal), await text(".ring .c span"));
     await tap("[data-problems]");
-    check(`[${tag}] Nur Probleme ohne Deaktivierte`, !(await ev(`return [...r.querySelectorAll(".dev")].some(e=>e.textContent.includes("Alte Lampe"))`)));
+    check(`[${tag}] Warnungen ohne Deaktivierte`, !(await ev(`return [...r.querySelectorAll(".dev")].some(e=>e.textContent.includes("Alte Lampe"))`)));
     await tap("[data-problems]");
     await ev(`[...r.querySelectorAll(".dev")].find(e=>e.textContent.includes("Alte Lampe")).scrollIntoView({ block: "center" })`);
     await p.screenshot({ path: `${outDir}/list-disabled-${tag.replace("/", "-")}.png` });

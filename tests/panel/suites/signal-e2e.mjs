@@ -13,13 +13,13 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
-    label: "Empfang-Warnung", def: "Globaler Wert (unter -80 dBm)", defLqi: "Globaler Wert (unter LQI 61)", modes: "Globaler Wert (unter -80 dBm)|Eigene Schwelle|Aus",
-    short: "Heute -84 dBm.", low: "Schwach unter", range: "Erlaubt: -110 bis -40", tipOwn: "Eigene Empfang-Schwelle: schwach unter -89 dBm",
+    label: "Empfang-Warnung", def: "Globaler Wert (unter -80 dBm)", defLqi: "Globaler Wert (unter LQI 61)", modes: "Globaler Wert (unter -80 dBm)|Eigene Warnschwelle|Aus",
+    short: "Heute -84 dBm.", low: "Schwach unter", range: "Erlaubt: -110 bis -40", tipOwn: "Eigene Empfang-Warnschwelle: schwach unter -89 dBm",
     tipOff: "Empfang-Warnung aus (nur dieses Gerät)", title: "Empfang-Warnung auf Geräten", vOff: "Aus", vLqi: "unter LQI 28", sec: "Einstellungen für dieses Gerät",
   },
   en: {
-    label: "Weak signal warning", def: "Global value (below -80 dBm)", defLqi: "Global value (below LQI 61)", modes: "Global value (below -80 dBm)|Own threshold|Off",
-    short: "Now -84 dBm.", low: "Weak below", range: "Allowed: -110 to -40", tipOwn: "Own signal threshold: weak below -89 dBm",
+    label: "Weak signal warning", def: "Global value (below -80 dBm)", defLqi: "Global value (below LQI 61)", modes: "Global value (below -80 dBm)|Own warning threshold|Off",
+    short: "Now -84 dBm.", low: "Weak below", range: "Allowed: -110 to -40", tipOwn: "Own signal warning threshold: weak below -89 dBm",
     tipOff: "Weak signal warning off (this device only)", title: "Signal warning on devices", vOff: "Off", vLqi: "below LQI 28", sec: "Settings for this device",
   },
 };

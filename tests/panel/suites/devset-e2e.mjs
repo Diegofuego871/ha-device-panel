@@ -11,11 +11,11 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
-    sec: "Einstellungen für dieses Gerät", def: "Globaler Wert (15 %)", own: "Eigene Schwelle", short: "Globaler Wert: 15 %.", notifyOn: "Globale Einstellung",
+    sec: "Einstellungen für dieses Gerät", def: "Globaler Wert (15 %)", own: "Eigene Warnschwelle", short: "Globaler Wert: 15 %.", notifyOn: "Globale Einstellung",
     range: "Erlaubt: 5 bis 50", notifyOff: "Aus für dieses Gerät", saveErr: "Konnte nicht gespeichert werden:",
   },
   en: {
-    sec: "Settings for this device", def: "Global value (15 %)", own: "Own threshold", short: "Global value: 15 %.", notifyOn: "Global setting",
+    sec: "Settings for this device", def: "Global value (15 %)", own: "Own warning threshold", short: "Global value: 15 %.", notifyOn: "Global setting",
     range: "Allowed: 5 to 50", notifyOff: "Off for this device", saveErr: "Could not be saved:",
   },
 };

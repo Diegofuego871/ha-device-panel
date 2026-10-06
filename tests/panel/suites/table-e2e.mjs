@@ -20,7 +20,7 @@ const TEXT = {
     hints: ["Batterie 7", "Batterie niedrig 2", "Schwacher Empfang 3", "Update verfügbar 2", "Neu 2"],
     groups: ["Ausgefallen · 4", "Instabil · 2", "Keine Daten · 1", "Online · 9"], statusOffline: "ausgefallen", wifi: "WLAN", thread: "Thread",
     head: ["Gerät", "Status", "Verbindung", "Verfügbarkeit 24 Std.", "Typ", "Integration", "Batterie", "Hersteller / Modell", "Software"],
-    problems: "Nur Probleme", footer: "16 von 16 Geräten", tap: "Antippen für Details", via: "über Steckdose Flur",
+    problems: "Warnungen", footer: "16 von 16 Geräten", tap: "Antippen für Details", via: "über Steckdose Flur",
     type: "Bewegung / Präsenz", flaky: "Instabil", flakyCount: "5× in 24 Std.", climate: "klima",
   },
   en: {
@@ -30,7 +30,7 @@ const TEXT = {
     hints: ["Battery 7", "Low battery 2", "Weak signal 3", "Update available 2", "New 2"],
     groups: ["Offline · 4", "Unstable · 2", "No data · 1", "Online · 9"], statusOffline: "offline", wifi: "Wi-Fi", thread: "Thread",
     head: ["Device", "Status", "Connection", "Availability 24 h", "Type", "Integration", "Battery", "Manufacturer / model", "Software"],
-    problems: "Problems only", footer: "16 of 16 devices", tap: "Tap for details", via: "via Steckdose Flur",
+    problems: "Warnings", footer: "16 of 16 devices", tap: "Tap for details", via: "via Steckdose Flur",
     type: "Motion / presence", flaky: "Unstable", flakyCount: "5× in 24 h", climate: "climate",
   },
 };
@@ -121,9 +121,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Hinweis Batterie filtert`, (await count()) === 2 && (await ev(`return r.querySelector('[data-hint="battery"]').classList.contains("on")`)));
     await tap('[data-hint="battery"]');
     check(`[${tag}] Hinweis wieder aus`, (await count()) === 16);
+    // Seit 1.16.0: "Warnungen" (instabil, Batterie niedrig, Empfang, keine Daten) ohne Ausfälle,
+    // dazu "Ausgefallen"; beide zusammen zeigen, was vorher "Nur Probleme" zeigte.
     await tap("[data-problems]");
-    check(`[${tag}] ${T.problems} (inkl. instabil)`, (await count()) === 7, String(await count()));
+    check(`[${tag}] ${T.problems} (inkl. instabil, ohne Ausfälle)`, (await count()) === 3, String(await count()));
+    await tap("[data-offline]");
+    check(`[${tag}] "Ausgefallen" dazu: beides (wie früher "Nur Probleme")`, (await count()) === 7, String(await count()));
     await tap("[data-problems]");
+    check(`[${tag}] nur "Ausgefallen"`, (await count()) === 4, String(await count()));
+    await tap("[data-offline]");
     await search("küche");
     check(`[${tag}] Suche nach Bereich`, (await count()) === 2, String(await count()));
     await search("funkstick");

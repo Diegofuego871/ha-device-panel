@@ -7,6 +7,36 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.16.0] - 2026-10-06
+
+Warning instead of problem.
+
+### Added
+
+- New filter chip "Offline" (German "Ausgefallen") with the number of devices
+  that are offline right now. Like the hint chips it appears only when it
+  applies, and it can be ordered, hidden and pinned like the others.
+- A line at the bottom of the tile "Currently offline": "3 devices with a
+  warning" (requested by the user, mockups `docs/mockups/chip-warn-v1/`, V1). A
+  tap shows only those devices. Without warnings the line says "No warnings".
+
+### Changed
+
+- Two levels instead of "problem": **Outage** (device offline) and **warning**
+  (unstable, low battery, weak signal, or no data). The chip "Problems only" is
+  now "Warnings" and shows only warnings, without outages; it shows its number
+  and appears only when it applies. With "Offline" switched on as well, you get
+  what "Problems only" showed before.
+- "Threshold" is now "warning threshold" for battery and signal ("Own warning
+  threshold", "Own battery warning threshold", in the panel, the options dialog
+  and the README). Stored settings stay valid, no keys changed.
+
+### Fixed
+
+- The description of the chip said "Only offline and unstable devices" although
+  it also showed low battery, weak signal and devices without data. It now says
+  what the chip does.
+
 ## [1.15.0] - 2026-10-05
 
 Pin filter chips.
@@ -1423,6 +1453,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.16.0
 [1.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.15.0
 [1.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.14.0
 [1.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.13.0

@@ -107,7 +107,7 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   und übrigen Filtern), Chip mit 0 bleibt stehen und ist gedämpft
   (`.chip.zero`, Deckkraft 0.55), zweiter Tipp auf einen aktiven Chip wählt
   ihn ab. Seit 0.25.0 (Wunsch des Nutzers) hebt "Alle" alle Filter auf
-  (Bereich, Verbindungsart, "Nur Probleme", Hinweise; die Suche bleibt),
+  (Bereich, Verbindungsart, "Warnungen", Hinweise; die Suche bleibt),
   ist nur ohne Filter hervorgehoben und zählt alle Geräte. Suchfeld mit eigenem X (`.search-clear`, nur mit Eingabe; das X
   des Browsers ist ausgeblendet, iOS zeigt keines).
 - Ansicht (seit 0.19.0, `docs/mockups/view-v1/`): Desktop Knopf "Spalten"
@@ -210,6 +210,11 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
   Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des
   Inhalts in zwei Spalten, auf dem Handy in einer.
+- Warnung statt Problem (seit 1.16.0, `docs/mockups/chip-warn-v1/`, V1): Unten in
+  der Kachel "Gerade ausgefallen" eine schlanke Zeile mit Trennlinie ("3 Geräte
+  mit Warnung", Warnsymbol in Orange, Pfeil; Knopf, hebt Hover und Fokus hervor;
+  ohne Warnungen "Keine Warnungen" mit Haken, kein Knopf). Chips "Ausgefallen"
+  (rotes Symbol) und "Warnungen" (orange) mit Zahl vor den Hinweisen.
 - Chips anheften (seit 1.15.0, `docs/mockups/chip-pin-v1/`, B): in der Chip-Liste
   eine schlanke gestrichelte Linie in Primärfarbe mit Etikett "angeheftet bis hier"
   (Pin, Griff) statt einer Zeile; die sichtbaren Chips davor stehen in der Leiste
@@ -224,7 +229,7 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Verbindungsart eine eigene Zeile. Darüber eine Vorschau "So sieht die Leiste
   aus" (die Chips als `.chip.chip-prev`, ohne Zustand). In der Leiste steht
   zwischen zwei sichtbaren Chips verschiedener Art (Auswahlfenster | "Alle" und
-  Verbindungsarten | "Nur Probleme" und Hinweise) ein feiner Trenner.
+  Verbindungsarten | "Warnungen" und Hinweise) ein feiner Trenner.
 - Filter "Integration" (seit 1.9.0): Chip mit Puzzle-Symbol direkt hinter
   "Bereich", gleiche Gestalt und gleiches Popover (Handy: Blatt), eine flache
   Liste mit Kästchen, Name und Zahl, Suche ab neun Einträgen; aktiv mit ein

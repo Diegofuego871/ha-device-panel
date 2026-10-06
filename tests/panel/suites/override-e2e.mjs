@@ -12,14 +12,14 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
-    chip: "Eigene Einstellung", batOff: "Batterie-Warnung aus (nur dieses Gerät)", batOwn: "Eigene Batterie-Schwelle: 30 % (global 15 %)",
+    chip: "Eigene Einstellung", batOff: "Batterie-Warnung aus (nur dieses Gerät)", batOwn: "Eigene Batterie-Warnschwelle: 30 % (global 15 %)",
     mute: "Ausfall- und Online-Meldungen aus (nur dieses Gerät)", batTitle: "Eigene Werte auf Geräten", notifyTitle: "Meldungen auf Geräten ausgeschaltet",
     off: "Aus", resetAll: "Alle zurücksetzen", one: "1 Änderung", three: "3 Änderungen", four: "4 Änderungen", changed: "geändert",
     batEmpty: "Keine. Eigene Werte setzt man im Geräte-Popup.", hiddenSub: "Estrich · Philips Hue · ausgeblendet", eSub: "Küche · Zigbee Home Automation",
     saveErr: "Speichern fehlgeschlagen:",
   },
   en: {
-    chip: "Own setting", batOff: "Battery warning off (this device only)", batOwn: "Own battery threshold: 30 % (global 15 %)",
+    chip: "Own setting", batOff: "Battery warning off (this device only)", batOwn: "Own battery warning threshold: 30 % (global 15 %)",
     mute: "Outage and online notifications off (this device only)", batTitle: "Own values on devices", notifyTitle: "Notifications switched off on devices",
     off: "Off", resetAll: "Reset all", one: "1 change", three: "3 changes", four: "4 changes", changed: "changed",
     batEmpty: "None. Own values are set in the device pop-up.", hiddenSub: "Estrich · Philips Hue · hidden", eSub: "Küche · Zigbee Home Automation",

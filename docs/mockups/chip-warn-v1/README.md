@@ -26,6 +26,11 @@ Erstellt im echten Panel (Nachbau aus `tests/panel`, erfundene Daten).
   Warnungen steht dort "Keine Warnungen" (V1).
 - Intern bleiben die Schlüssel (`problems` für die Warnungen); neu kommt `offline`.
 
+## Entscheid des Nutzers: V1 (2026-10-06)
+
+Umgesetzt in 1.16.0; die Chips heissen "Ausgefallen" und "Warnungen" (ohne "Nur", wie die
+übrigen Chips).
+
 ## Empfehlung: V1
 
 Die Aufschlüsselung wiederholt, was die Chips darunter (Batterie niedrig,

@@ -178,14 +178,14 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
     await client.send_json({"id": 11, "type": f"{DOMAIN}/list_devices"})
     assert (await client.receive_json())["result"]["connection_order"] == ["wifi", "zigbee"]
     # Übrige Filter-Chips (1.11.0): nur bekannte Schlüssel, in fester Reihenfolge, ohne Doppelte
-    await client.send_json({"id": 12, "type": f"{DOMAIN}/set_options", "values": {"hide_chips": ["new", "area", "problems", "area"]}})
+    await client.send_json({"id": 12, "type": f"{DOMAIN}/set_options", "values": {"hide_chips": ["new", "area", "problems", "offline", "area"]}})
     assert (await client.receive_json())["success"]
     await hass.async_block_till_done()
-    assert entry.options["hide_chips"] == ["area", "problems", "new"]
+    assert entry.options["hide_chips"] == ["area", "offline", "problems", "new"]
     await client.send_json({"id": 13, "type": f"{DOMAIN}/set_options", "values": {"hide_chips": ["alle"]}})
     assert (await client.receive_json())["error"]["code"] == "invalid_format"
     await client.send_json({"id": 14, "type": f"{DOMAIN}/list_devices"})
-    assert (await client.receive_json())["result"]["hide_chips"] == ["area", "problems", "new"]
+    assert (await client.receive_json())["result"]["hide_chips"] == ["area", "offline", "problems", "new"]
     await client.send_json({"id": 15, "type": f"{DOMAIN}/set_options", "values": {"hide_chips": []}})
     assert (await client.receive_json())["success"]
     await hass.async_block_till_done()

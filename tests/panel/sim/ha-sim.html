@@ -652,7 +652,7 @@
         if ("battery_push_mode" in msg.values && !["instant", "daily"].includes(msg.values.battery_push_mode)) throw { code: "invalid_format", message: "mode" };
         if ("hide_chips" in msg.values) {
           // Wie options_api._chips: bekannte Schlüssel in fester Reihenfolge.
-          const known = ["area", "integration", "problems", "batteries", "battery", "signal", "update", "override", "new"];
+          const known = ["area", "integration", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new"];
           const v = msg.values.hide_chips;
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "chips" };
           msg.values.hide_chips = known.filter((k) => v.includes(k));
@@ -670,7 +670,7 @@
           msg.values.connection_order = [...new Set(v)];
         }
         if ("chip_order" in msg.values) {
-          const known = ["area", "integration", "all", "zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown", "problems", "batteries", "battery", "signal", "update", "override", "new", "pin"];
+          const known = ["area", "integration", "all", "zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "pin"];
           const v = msg.values.chip_order;
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "chip order" };
           msg.values.chip_order = [...new Set(v)];

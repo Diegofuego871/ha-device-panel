@@ -166,6 +166,8 @@ const MDI = {
   tune: "M8 13C6.14 13 4.59 14.28 4.14 16H2V18H4.14C4.59 19.72 6.14 21 8 21S11.41 19.72 11.86 18H22V16H11.86C11.41 14.28 9.86 13 8 13M8 19C6.9 19 6 18.1 6 17C6 15.9 6.9 15 8 15S10 15.9 10 17C10 18.1 9.1 19 8 19M19.86 6C19.41 4.28 17.86 3 16 3S12.59 4.28 12.14 6H2V8H12.14C12.59 9.72 14.14 11 16 11S19.41 9.72 19.86 8H22V6H19.86M16 9C14.9 9 14 8.1 14 7C14 5.9 14.9 5 16 5S18 5.9 18 7C18 8.1 17.1 9 16 9Z",
   filter: "M6,13H18V11H6M3,6V8H21V6M10,18H14V16H10V18Z",
   pin: "M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z",
+  chevronRight: "M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z",
+  closeCircle: "M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z",
   lock: "M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z",
   sparkle: "M12,1L9,9L1,12L9,15L12,23L15,15L23,12L15,9L12,1Z",
   signalOff: "M18,3V16.18L21,19.18V3H18M4.28,5L3,6.27L10.73,14H8V21H11V14.27L13,16.27V21H16V19.27L19.73,23L21,21.72L4.28,5M13,9V11.18L16,14.18V9H13M3,18V21H6V18H3Z",
@@ -267,7 +269,7 @@ const RESTART_WAIT_MS = 5 * 60 * 1000;
 // Übrige Filter-Chips, die sich ausblenden lassen (seit 1.11.0, wie const.CHIP_KEYS):
 // Schlüssel, Symbol. Die Texte stehen in strings.js (chipOther).
 const CHIP_OTHER = [
-  ["area", "home"], ["integration", "puzzle"], ["problems", "alert"], ["batteries", "battery"], ["battery", "battery"],
+  ["area", "home"], ["integration", "puzzle"], ["offline", "closeCircle"], ["problems", "alert"], ["batteries", "battery"], ["battery", "battery"],
   ["signal", "signal"], ["update", "update"], ["override", "tune"], ["new", "sparkle"],
 ];
 // Reihenfolge aller Chips über der Liste (seit 1.13.0, seit 1.14.0 eine Folge,
@@ -294,6 +296,8 @@ function chipOrder(order, connOrder, counts) {
     if (at < 0) out.push(...missing);
     else out.splice(at + 1, 0, ...missing);
   }
+  // Der Chip "Ausgefallen" (seit 1.16.0) fehlt in älteren Folgen: vor "Warnungen".
+  if (!out.includes("offline") && out.includes("problems")) out.splice(out.indexOf("problems"), 0, "offline");
   const full = [...out, ...["area", "integration", "all", ...CHIP_TAIL].filter((k) => !out.includes(k))];
   // Der Anheft-Marker fehlt in Folgen vor 1.15.0: ganz vorn, nichts angeheftet.
   return full.includes("pin") ? full : ["pin", ...full];
@@ -388,6 +392,11 @@ function devSigLevel(d) {
   return d.signal.value < own ? 1 : Math.max(level, 2);
 }
 const devWeak = (d) => devSigLevel(d) === 1;
+// Zwei Stufen (seit 1.16.0): Ausfall = Gerät offline; Warnung = instabil, Batterie
+// niedrig, schwacher Empfang oder keine Daten, ohne Ausfälle. Deaktivierte und
+// nicht überwachte Geräte zählen nicht (bewusst abgeschaltet).
+const devOffline = (d) => !d.disabled && !d.unmonitored && d.online === false;
+const devWarn = (d) => !d.disabled && !d.unmonitored && d.online !== false && (d.online !== true || Boolean(d.flaky) || Boolean(d.battery?.low) || devWeak(d));
 // Vorschlag für die eigene Schwelle: 5 dBm bzw. 10 LQI unter dem heutigen
 // Wert, im erlaubten Bereich; ohne Wert der Standard.
 function sigSuggest(sig) {
@@ -474,6 +483,8 @@ const defaultView = () => ({
   fields: CARD_FIELDS.map(([k, , on]) => [k, on]),
   conn: "all",
   problems: false,
+  // Filter "Ausgefallen" (seit 1.16.0); mit "Warnungen" zusammen zählt beides (oder).
+  offline: false,
   hint: null,
   // Filter "Bereich" (seit 0.23.0): IDs der Bereiche, AREA_NONE = ohne Bereich.
   areas: [],
@@ -507,6 +518,7 @@ function sanitizeView(raw) {
     fields: order(raw.fields, CARD_FIELDS),
     conn: raw.conn === "all" || (typeof raw.conn === "string" && CONN[raw.conn]) ? raw.conn : "all",
     problems: Boolean(raw.problems),
+    offline: Boolean(raw.offline),
     hint: HINTS.some((h) => h.key === raw.hint) ? raw.hint : null,
     areas: Array.isArray(raw.areas) ? [...new Set(raw.areas.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 64))].sort().slice(0, 500) : [],
     integs: Array.isArray(raw.integs) ? [...new Set(raw.integs.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 64))].sort().slice(0, 500) : [],
@@ -602,6 +614,14 @@ class DevicePanel extends HTMLElement {
 
   set _problems(value) {
     this._view.problems = value;
+  }
+
+  get _offlineOnly() {
+    return this._view.offline;
+  }
+
+  set _offlineOnly(value) {
+    this._view.offline = value;
   }
 
   get _hint() {
@@ -849,19 +869,31 @@ class DevicePanel extends HTMLElement {
         if (!same) this._openAreas(kind);
         return;
       }
-      const el = ev.target.closest("[data-conn],[data-problems],[data-hint]");
+      // Zeile unten in der Kachel (seit 1.16.0): nur die Warnungen anzeigen.
+      if (ev.target.closest("[data-warn-open]")) {
+        this._conn = "all";
+        this._hint = null;
+        this._offlineOnly = false;
+        this._problems = true;
+        this._saveView();
+        this._render();
+        return;
+      }
+      const el = ev.target.closest("[data-conn],[data-problems],[data-offline],[data-hint]");
       if (!el || el.disabled) return;
       // "Alle" hebt alle Filter auf (seit 0.25.0, Wunsch des Nutzers): Bereich,
-      // Verbindungsart, "Nur Probleme", Hinweis. Die Suche bleibt (eigenes X).
+      // Verbindungsart, "Ausgefallen", "Warnungen", Hinweis. Die Suche bleibt (eigenes X).
       // Aktiven Chip erneut antippen hebt nur seinen Filter auf.
       if (el.dataset.conn === "all") {
         this._conn = "all";
         this._problems = false;
+        this._offlineOnly = false;
         this._hint = null;
         this._view.areas = [];
         this._view.integs = [];
       } else if (el.dataset.conn) this._conn = this._conn === el.dataset.conn ? "all" : el.dataset.conn;
       else if (el.dataset.problems !== undefined) this._problems = !this._problems;
+      else if (el.dataset.offline !== undefined) this._offlineOnly = !this._offlineOnly;
       else if (el.dataset.hint) this._hint = this._hint === el.dataset.hint ? null : el.dataset.hint;
       this._saveView();
       this._render();
@@ -1313,13 +1345,17 @@ class DevicePanel extends HTMLElement {
   }
 
   // Ausgeblendete Chips (seit 1.11.0, Wunsch des Nutzers) heben ihren Filter
-  // auf: "Nur Probleme", der Hinweis, Bereich und Integration. Gespeichert
+  // auf: "Ausgefallen", "Warnungen", der Hinweis, Bereich und Integration. Gespeichert
   // wird nur, wenn sich etwas ändert.
   _dropHiddenFilters() {
     const hide = this._hideChips;
     let changed = false;
     if (hide.has("problems") && this._problems) {
       this._problems = false;
+      changed = true;
+    }
+    if (hide.has("offline") && this._offlineOnly) {
+      this._offlineOnly = false;
       changed = true;
     }
     if (this._hint && hide.has(this._hint)) {
@@ -1399,9 +1435,11 @@ class DevicePanel extends HTMLElement {
     return this._conn === "all" || this._connOf(d) === this._conn;
   }
 
+  // "Ausgefallen" und "Warnungen" (seit 1.16.0, vorher "Nur Probleme"): Ist einer
+  // aktiv, zählen Geräte mit Ausfall bzw. Warnung; sind beide aktiv, beides.
   _problemPass(d) {
-    // Deaktiviert ist kein Problem: nicht überwacht, bewusst abgeschaltet.
-    return !this._problems || (!d.disabled && !d.unmonitored && (d.online !== true || d.flaky || d.battery?.low || devWeak(d)));
+    if (!this._problems && !this._offlineOnly) return true;
+    return (this._offlineOnly && devOffline(d)) || (this._problems && devWarn(d));
   }
 
   _hintPass(d, hint) {
@@ -2090,14 +2128,20 @@ class DevicePanel extends HTMLElement {
       ${flaky ? line("var(--dp-warning)", this._t("linesFlaky", flaky)) : ""}
       ${line("var(--dp-error)", this._t("linesOffline", offline.length))}
       ${noData ? line("var(--dp-text3)", this._t("linesNoData", noData)) : ""}</div></div></div>`;
+    // Zeile unten in der Kachel (seit 1.16.0, docs/mockups/chip-warn-v1, V1): wie
+    // viele Geräte eine Warnung haben; antippbar, setzt den Filter "Warnungen".
+    const warn = all.filter(devWarn).length;
+    const warnLine = warn
+      ? `<button type="button" class="kwarn" data-warn-open aria-label="${escape(this._t("warnOpen"))}"><span class="w-ic">${mdi("alert", 16)}</span><span><b>${warn}</b> ${escape(this._t("warnDevices", warn))}</span><span class="w-go">${mdi("chevronRight", 18)}</span></button>`
+      : `<div class="kwarn none"><span class="w-ic">${mdi("check", 16)}</span><span>${escape(this._t("warnNone"))}</span></div>`;
     const off = offline.length
-      ? `<div class="kt err"><div class="k"><span class="pulse"></span>${escape(this._t("offlineNow"))}${this._scopeHtml()}</div>
+      ? `<div class="kt err offl"><div class="k"><span class="pulse"></span>${escape(this._t("offlineNow"))}${this._scopeHtml()}</div>
         <div class="top"><span class="num">${offline.length}</span><span class="lbl">${escape(this._t("longest", `${offline[0].since_at_least ? "≥ " : ""}${this._duration(offline[0].offline_since)}`))}</span></div>
         <div class="olist">${offline.slice(0, 4).map((d) => `<button type="button" data-open="${escape(d.id)}"><span>${CONN[this._connOf(d)].icon(16)}</span><span class="name">${escape(d.name)}</span><b>${this._durationHtml(d, true)}</b></button>`).join("")}
-        ${offline.length > 4 ? `<div class="more">${escape(this._t("more", offline.length - 4))}</div>` : ""}</div></div>`
-      : `<div class="kt"><div class="k">${escape(this._t("offlineNow"))}${this._scopeHtml()}</div>
+        ${offline.length > 4 ? `<div class="more">${escape(this._t("more", offline.length - 4))}</div>` : ""}</div>${warnLine}</div>`
+      : `<div class="kt offl"><div class="k">${escape(this._t("offlineNow"))}${this._scopeHtml()}</div>
         <div class="top"><span class="num ok">0</span><span class="lbl">${escape(this._t("allOnline"))}</span></div>
-        <div class="durs">${escape(this._t("allOnlineSub"))}</div></div>`;
+        <div class="durs">${escape(this._t("allOnlineSub"))}</div>${warnLine}</div>`;
     return ring + off + this._pulseHtml(all);
   }
 
@@ -2366,23 +2410,28 @@ class DevicePanel extends HTMLElement {
     // Reihenfolge bestimmt die Einstellung "Reihenfolge der Chips" (seit 1.13.0,
     // seit 1.14.0 eine Folge). Standard: Bereich zuerst (erst den Bereich
     // wählen, dann mit den Chips filtern), dann "Alle" mit den Verbindungsarten,
-    // dann "Nur Probleme" und die Hinweise.
+    // dann "Ausgefallen", "Warnungen" und die Hinweise.
     const parts = new Map();
     parts.set("area", this._areaChipHtml(all));
     parts.set("integration", this._integChipHtml(all));
     // "Alle" ist nur ohne jeden Filter aktiv; die Zahl zeigt wie überall, was
     // nach dem Antippen erscheint: alle Geräte (mit der Suche).
-    const none = this._conn === "all" && !this._problems && !this._hint && !this._scoped();
+    const none = this._conn === "all" && !this._problems && !this._offlineOnly && !this._hint && !this._scoped();
     parts.set("all", chip("all", this._t("all"), all.filter((d) => this._searchPass(d)).length, "", none));
     for (const key of Object.keys(CONN)) {
       parts.set(key, present.has(key) && !this._hideConn.has(key) ? chip(key, this._t(CONN[key].key), counts.get(key) || 0, CONN[key].icon(15)) : "");
     }
-    parts.set(
-      "problems",
-      this._hideChips.has("problems")
-        ? ""
-        : `<button type="button" class="chip ${this._problems ? "on" : ""}" data-problems aria-pressed="${this._problems}">${mdi("alert", 15)}<span>${escape(this._t("onlyProblems"))}</span></button>`
-    );
+    // "Ausgefallen" und "Warnungen" (seit 1.16.0): wie die Hinweise nur, wenn sie
+    // bei irgendeinem Gerät zutreffen (oder aktiv sind); die Zahl zählt mit allen
+    // übrigen Filtern ausser diesen beiden.
+    const others = all.filter((d) => this._scopePass(d) && this._connPass(d) && this._hintPass(d, this._hint) && this._searchPass(d));
+    const level = (key, test, on, attr, icon, label, cls) => {
+      if (this._hideChips.has(key) || (!on && !all.some(test))) return "";
+      const n = others.filter(test).length;
+      return `<button type="button" class="chip ${cls} ${on ? "on" : ""} ${n ? "" : "zero"}" ${attr} aria-pressed="${on}">${mdi(icon, 15)}<span>${escape(this._t(label))}</span> <span class="n">${n}</span></button>`;
+    };
+    parts.set("offline", level("offline", devOffline, this._offlineOnly, "data-offline", "closeCircle", "chipOffline", "off"));
+    parts.set("problems", level("problems", devWarn, this._problems, "data-problems", "alert", "chipWarnings", "warn"));
     // Hinweise als Filter-Chips, nur wenn sie bei irgendeinem Gerät zutreffen
     // (oder aktiv sind).
     const rest = all.filter((d) => this._scopePass(d) && this._connPass(d) && this._problemPass(d) && this._searchPass(d));
@@ -3988,7 +4037,10 @@ class DevicePanel extends HTMLElement {
     for (const key of Object.keys(CONN)) {
       parts.set(key, counts.get(key) && !hideConn.has(key) ? pill(`${CONN[key].icon(15)}<span>${escape(t(CONN[key].key))}</span> <span class="n">${counts.get(key)}</span>`) : "");
     }
-    parts.set("problems", hideChips.has("problems") ? "" : pill(`${mdi("alert", 15)}<span>${escape(t("onlyProblems"))}</span>`));
+    for (const [key, test, icon, label, cls] of [["offline", devOffline, "closeCircle", "chipOffline", "off"], ["problems", devWarn, "alert", "chipWarnings", "warn"]]) {
+      const n = devs.filter(test).length;
+      parts.set(key, hideChips.has(key) || !n ? "" : pill(`${mdi(icon, 15)}<span>${escape(t(label))}</span> <span class="n">${n}</span>`, cls));
+    }
     for (const { key, cls, icon, label, test } of HINTS) {
       const n = devs.filter(test).length;
       parts.set(key, hideChips.has(key) || !n ? "" : pill(`${mdi(icon, 15)}<span>${escape(t(label))}</span> <span class="n">${n}</span>`, `hint ${cls}`));

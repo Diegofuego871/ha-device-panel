@@ -93,6 +93,19 @@ button { font: inherit; color: inherit; }
 .kt.err { border-color: var(--dp-error-line);
   background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--dp-error) 16%, transparent), transparent 60%), var(--dp-card);
   box-shadow: 0 0 0 1px var(--dp-error-line), 0 8px 30px -12px color-mix(in srgb, var(--dp-error) 55%, transparent); }
+/* Zeile "Geräte mit Warnung" unten in der Kachel "Gerade ausgefallen" (seit 1.16.0) */
+.kt.offl { display: flex; flex-direction: column; }
+.kt.offl .durs, .kt.offl .olist { margin-bottom: 14px; }
+.kwarn { display: flex; align-items: center; gap: 8px; width: auto; margin: auto -18px -16px; padding: 11px 18px; border: none; border-top: 1px solid var(--dp-divider); background: none;
+  color: var(--dp-text); font: inherit; font-size: 13.5px; text-align: left; }
+button.kwarn { cursor: pointer; }
+button.kwarn:hover { background: var(--dp-subtle); }
+button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
+.kwarn .w-ic { display: inline-flex; color: var(--dp-warning); }
+.kwarn b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.kwarn .w-go { margin-left: auto; display: inline-flex; color: var(--dp-text3); }
+.kwarn.none { color: var(--dp-text2); }
+.kwarn.none .w-ic { color: var(--dp-success); }
 .kt .top { display: flex; align-items: flex-end; gap: 12px; margin: 6px 0 8px; }
 .kt .top .num { font-size: 44px; font-weight: 600; line-height: 1; letter-spacing: -.03em; color: var(--dp-error); }
 .kt .top .num.ok { color: var(--dp-success); }
@@ -160,6 +173,8 @@ button { font: inherit; color: inherit; }
 .chip .n { color: var(--dp-text2); }
 .chip svg { color: var(--dp-text2); }
 .chip.hint.b svg { color: var(--dp-error); }
+.chip.off svg { color: var(--dp-error); }
+.chip.warn svg { color: var(--dp-warning); }
 .chip.hint.s svg { color: var(--dp-warning); }
 .chip.hint.u svg { color: var(--dp-primary); }
 .chip.hint.o svg { color: var(--dp-primary); }
