@@ -714,6 +714,11 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .opt.bat-row .bat-ctl { display: flex; flex: 0 1 auto; align-items: center; gap: 8px; min-width: 0; }
 .opt.bat-row .bat-ctl .opt-select { flex: 0 1 180px; }
 .opt.bat-row .opt-input input { width: 40px; }
+/* Empfang-Schwelle pro Funkart (seit 1.17.0): Platz für "-110" */
+.opt.bat-row.sig-row .opt-input input { width: 54px; }
+.opt.bat-row.sig-row .bat-ctl .opt-select { flex: 0 1 250px; }
+.opt.sig-row .opt-label { white-space: nowrap; }
+.sig-intro { margin-bottom: 4px; }
 .opt.changed > .opt-line .bat-ctl .opt-input:not(.bad), .opt.changed > .opt-line .bat-ctl .opt-select select { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 .integ-reset { margin: 14px 0 4px; }
 /* Profi-Modus der KI-Einschätzung (seit 1.2.0, docs/mockups/ai-v1, A) */
@@ -958,6 +963,10 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .mtl { margin: 8px 6px 2px; }
   .mtl-mk { width: 100px; }
   .opt.bat-row .bat-ctl .opt-select { flex: 1 1 auto; }
+  /* Empfang pro Funkart: Name oben, Auswahl und Feld darunter über die ganze Breite. */
+  .opt.sig-row > .opt-line { flex-wrap: wrap; row-gap: 8px; }
+  .opt.sig-row .bat-ctl { flex: 1 1 100%; margin-left: 0; }
+  .opt.bat-row.sig-row .bat-ctl .opt-select { flex: 1 1 auto; }
   .toolbar { padding: 10px 12px 8px; gap: 8px; }
   .toolbar h1 { font-size: 18px; }
   .content { padding: 0 12px 12px; }

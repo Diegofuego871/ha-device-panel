@@ -7,6 +7,36 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.17.0] - 2026-10-06
+
+Warnschwelle für den Empfang pro Funkart.
+
+### Hinzugefügt
+
+- Warnschwelle für den Empfang pro Funkart (Wunsch des Nutzers): WLAN,
+  Bluetooth, Zigbee, Z-Wave usw. bekommen je einen eigenen Wert, weil sie in
+  verschiedenen Einheiten melden (WLAN und Bluetooth in dBm, Zigbee meist in LQI) und
+  verschiedene Bereiche haben. Jede Funkart steht auf "Standard", "Eigene" oder
+  "Aus" ("Aus" markiert sie nie als schwach).
+  - Global: Einstellungen › Darstellung › Verbindungsart, Block "Empfang:
+    Warnschwelle pro Funkart". Es erscheinen nur Funkarten mit Geräten, die
+    einen Empfangswert melden.
+  - Pro Integration: Einstellungen › Überwachung und Meldungen › Integrationen,
+    Abschnitt "Empfang" der Integration. Der Wert der Integration geht dem
+    globalen Wert vor; "Alles auf Standard" und "Alle zurücksetzen" schliessen
+    ihn ein, die Integrationsliste zeigt "Empfang (n Funkarten)".
+  - Reihenfolge der Geltung: eigener Wert am Gerät, dann Integration, dann
+    globaler Wert, dann der feste Standard (unter -80 dBm bzw. LQI 61).
+  - Eine Zahl gilt nur für Geräte, die in derselben Einheit melden (negativ =
+    dBm, positiv = LQI); sonst gilt die nächste Stufe.
+  - Im Geräte-Popup nennt die erste Auswahl, woher der Wert kommt ("Globaler
+    Wert (unter -85 dBm)", "Wie Integration (unter -90 dBm)", "... (aus)"), mit
+    der Herkunft "Integration Shelly" und was der Standard wäre.
+  - Die KI-Einschätzung nutzt den Wert, der für das Gerät gilt (`signal.weak`
+    und `own_threshold`).
+  - Neue Optionen `signal_low` und `signal_low_integrations` (auch im
+    Optionsdialog als YAML, etwa `{"wifi": -85, "zigbee": 40, "ble": "off"}`).
+
 ## [1.16.0] - 2026-10-06
 
 Warnung statt Problem.
@@ -1512,6 +1542,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.17.0
 [1.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.16.0
 [1.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.15.0
 [1.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.14.0

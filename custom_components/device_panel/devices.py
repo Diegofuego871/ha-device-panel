@@ -69,7 +69,7 @@ from .const import (
     NEW_DEVICE_DAYS,
     CONF_EXCLUDE_DEVICES,
 )
-from .options_api import battery_threshold, effective, offline_after_for
+from .options_api import battery_threshold, effective, offline_after_for, signal_default
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -1098,6 +1098,9 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "signal": signal,
                 # Empfang-Warnung des Geräts: None (Standard), "off" oder Schwelle.
                 "signal_setting": device_settings(hass).get("signal", {}).get(device.id),
+                # Was ohne Einstellung des Geräts gilt (seit 1.17.0): Wert und
+                # Herkunft ("integration", "global" oder None = fester Standard).
+                "signal_default": signal_default(opts, primary.domain if primary else None, manual_conn or integ_conn or auto_conn or "unknown", signal),
                 "via": via,
                 **_battery_fields(hass, opts, device, entries, primary.domain if primary else None),
                 # Ausfall- und Online-Meldungen für dieses Gerät aus.

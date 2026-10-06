@@ -255,7 +255,7 @@ const MON_TAB_KEYS = {
   overview: ["notify_service", "notify_click_target"],
   outage: ["offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "reset_offline", "reset_notify"],
   battery: ["battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
-  integ: ["offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations"],
+  integ: ["offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "signal_low_integrations"],
 };
 
 // Reiter der Abschnitte "Geräte im Panel" und "Darstellung" (seit 1.0.0,
@@ -348,14 +348,14 @@ const promptHtml = (text) => escape(text).replace(/\{(language|facts(?:_[a-z]+)?
 
 // Optionen mit Abweichungen pro Integration ("Alle zurücksetzen" in
 // "Überwachung und Meldungen" › "Integrationen", "Alles auf Standard" in der Integration).
-const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations"];
+const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations", "signal_low_integrations"];
 const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations"];
 
 const SUB_TAB_KEYS = {
   integrations: ["exclude_integrations"],
   types: ["exclude_types"],
   devs: ["exclude_devices"],
-  conn: ["connection_integrations", "reset_connection", "reset_signal"],
+  conn: ["connection_integrations", "signal_low", "reset_connection", "reset_signal"],
   chips: ["hide_chips", "hide_connections", "connection_order", "chip_order"],
 };
 
@@ -381,12 +381,29 @@ const sigRank = (sig) => {
   const level = sigLevel(sig);
   return level ? level * 1000 + (sig.kind === "dbm" ? sig.value + 200 : sig.value) : null;
 };
+// Schwelle, die für das Gerät gilt (seit 1.17.0): die eigene am Gerät, sonst die
+// der Integration oder der Funkart (vom Backend als signal_default), sonst
+// null = fester Standard. "off" heisst: nie schwach.
+const sigOwn = (d) => d.signal_setting ?? d.signal_default?.value ?? null;
+// Fester Standard der Warnschwelle je Einheit ("schwach unter").
+const sigStd = (kind) => (kind === "lqi" ? WEAK_LQI + 1 : WEAK_DBM);
+// Schwelle einer Funkart ohne eigene Einstellung (wie options_api.signal_default):
+// erst die Integration, dann der globale Wert; eine Zahl gilt nur für die
+// passende Einheit (dBm negativ, LQI positiv), "off" für jede.
+function sigDefaultOf(global, integ, conn, kind) {
+  for (const [source, table] of [["integration", integ], ["global", global]]) {
+    const v = table?.[conn];
+    if (v == null) continue;
+    if (v === "off" || !kind || v < 0 === (kind === "dbm")) return { value: v, source };
+  }
+  return { value: null, source: null };
+}
 // Stufe mit der Empfang-Warnung des Geräts (seit 0.21.0, docs/mockups/signal-v1,
 // A): "aus" ist nie schwach, eine eigene Schwelle heisst "schwach unter X";
 // ohne Einstellung der Standard. Schwach bleibt Stufe 1, sonst mindestens 2.
 function devSigLevel(d) {
   const level = sigLevel(d.signal);
-  const own = d.signal_setting;
+  const own = sigOwn(d);
   if (!level || own == null) return level;
   if (own === "off") return Math.max(level, 2);
   return d.signal.value < own ? 1 : Math.max(level, 2);
@@ -2974,14 +2991,21 @@ class DevicePanel extends HTMLElement {
     if (d.signal?.value != null || own != null) {
       const sigMode = own === "off" ? "off" : Number.isInteger(own) ? "own" : "default";
       const lqi = d.signal ? d.signal.kind === "lqi" : Number.isInteger(own) && own > 0;
-      const std = lqi ? `LQI ${WEAK_LQI + 1}` : `${WEAK_DBM} dBm`;
+      // Was ohne eigene Einstellung gilt (seit 1.17.0): Wert der Integration oder
+      // der Funkart, sonst der feste Standard.
+      const sdef = d.signal_default || { value: null, source: null };
+      const std = sdef.value === "off" ? t("sigOffWord") : sigText({ kind: lqi ? "lqi" : "dbm", value: Number.isInteger(sdef.value) ? sdef.value : sigStd(lqi ? "lqi" : "dbm") });
+      const defLabel =
+        sdef.source === "integration"
+          ? sdef.value === "off" ? t("devSigIntegOff") : t("devSigInteg", std)
+          : sdef.value === "off" ? t("devSigDefaultOff") : t("devSigDefault", std);
       const [min, max] = lqi ? SIG_LQI_RANGE : SIG_DBM_RANGE;
       const range = sigMode === "own" ? this._sigRangeError : null;
       // Ohne inputmode: iOS zeigt bei type=number dann die Tastatur mit Minus.
       const mode = lqi ? ' inputmode="numeric"' : "";
       html += `<div class="opt${sigMode !== "default" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devSignal"))}</span>${sel(
         "dev-sig",
-        [["default", t("devSigDefault", std)], ["own", t("devSigOwn")], ["off", t("devSigOff")]],
+        [["default", defLabel], ["own", t("devSigOwn")], ["off", t("devSigOff")]],
         sigMode,
         t("devSignal")
       )}</div>${
@@ -2990,7 +3014,7 @@ class DevicePanel extends HTMLElement {
               range ? `<div class="opt-error" data-dev-range>${escape(range.message)}</div>` : ""
             }`
           : ""
-      }${origin(sigMode !== "default", null, sigMode !== "default" ? t("originDefaultWould", lqi ? `LQI ${WEAK_LQI + 1}` : `${WEAK_DBM} dBm`) : "", t("devSigShort", d.signal?.value != null ? sigText(d.signal) : null))}</div>`;
+      }${origin(sigMode !== "default", sdef.source === "integration" ? d.integration?.domain : null, sigMode !== "default" ? t("originDefaultWould", std) : "", t("devSigShort", d.signal?.value != null ? sigText(d.signal) : null))}</div>`;
     }
     // Stumm (Knopf "24 Std. stumm" in der Meldung): eigene Option mit Ende;
     // "Globale Einstellung" oder "Aus" hebt es auf.
@@ -3544,7 +3568,7 @@ class DevicePanel extends HTMLElement {
       }
     }
     // Schwelle: eigene des Geräts (passende Art), sonst der Standard; "aus" ohne Linie.
-    const own = d.signal_setting;
+    const own = sigOwn(d);
     const limit = own === "off" ? null : Number.isInteger(own) && own < 0 === dbm ? own : dbm ? WEAK_DBM : WEAK_LQI;
     const showLimit = limit != null && limit < top && limit > bottom;
     const mid = Math.round((top + bottom) / 2);
@@ -3979,6 +4003,12 @@ class DevicePanel extends HTMLElement {
       errors.battery_push_time = this._t("timeError");
     }
     if (this._batInvalid().length) errors.battery_low_integrations = this._t("settingsRange", ...(st.data.limits?.battery_low || [5, 50]));
+    // Warnschwelle des Empfangs pro Funkart ausserhalb des Bereichs der Einheit.
+    const sigBad = this._sigInvalid();
+    const sigGlobal = sigBad.find((x) => !x.dom);
+    const sigInteg = sigBad.find((x) => x.dom);
+    if (sigGlobal) errors.signal_low = this._t("settingsRange", ...sigGlobal.range);
+    if (sigInteg) errors.signal_low_integrations = this._t("settingsRange", ...sigInteg.range);
     // "Erst melden nach" nie kürzer als "Ausgefallen nach" (seit 0.34.0,
     // Wunsch des Nutzers): vorher gilt ein Gerät nicht als ausgefallen.
     const { offline_after: oa, notify_delay: nd } = st.draft;
@@ -3993,6 +4023,129 @@ class DevicePanel extends HTMLElement {
     return Object.entries(st?.draft?.battery_low_integrations || {})
       .filter(([, v]) => v !== "off" && (!Number.isInteger(v) || v < min || v > max))
       .map(([d]) => d);
+  }
+
+  // Geräte mit Empfangswert je Verbindungsart ("wifi") und je Integration und
+  // Verbindungsart ("shelly|wifi") für die Warnschwellen pro Funkart (seit
+  // 1.17.0). Die Einheit einer Gruppe ist die häufigste ihrer Geräte.
+  _sigGroups() {
+    const out = new Map();
+    for (const dev of this._devices) {
+      const kind = dev.signal?.value != null ? dev.signal.kind : null;
+      if (!kind || dev.disabled) continue;
+      // Die Verbindungsart des Backends (Hand vor Integration vor Erkennung), nicht
+      // die verfeinerte des Panels: nach ihr rechnet das Backend die Schwelle ("matter"
+      // bleibt "matter", auch wenn der Chip "Thread" zeigt).
+      const conn = CONN[dev.connection] ? dev.connection : "unknown";
+      const dom = dev.integration?.domain;
+      for (const key of dom ? [conn, `${dom}|${conn}`] : [conn]) {
+        const g = out.get(key) || { devices: 0, kinds: new Map() };
+        g.devices += 1;
+        g.kinds.set(kind, (g.kinds.get(kind) || 0) + 1);
+        out.set(key, g);
+      }
+    }
+    return out;
+  }
+
+  // Einheit einer Funkart: die häufigste der Geräte, sonst die der eigenen Zahl.
+  _sigKind(group, value) {
+    if (group) return [...group.kinds.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    return Number.isInteger(value) && value > 0 ? "lqi" : "dbm";
+  }
+
+  // Eigene Schwellen pro Funkart (global und je Integration), deren Zahl
+  // ausserhalb des Bereichs ihrer Einheit liegt: {dom, conn, range}.
+  _sigInvalid() {
+    const st = this._settings;
+    if (!st?.draft) return [];
+    const groups = this._sigGroups();
+    const rows = [
+      ...Object.entries(st.draft.signal_low || {}).map(([conn, v]) => ({ dom: "", conn, v })),
+      ...Object.entries(st.draft.signal_low_integrations || {}).flatMap(([dom, m]) => Object.entries(m || {}).map(([conn, v]) => ({ dom, conn, v }))),
+    ];
+    return rows
+      .filter(({ v }) => v !== "off")
+      .map((x) => ({ ...x, range: this._sigKind(groups.get(x.dom ? `${x.dom}|${x.conn}` : x.conn), x.v) === "lqi" ? SIG_LQI_RANGE : SIG_DBM_RANGE }))
+      .filter(({ v, range }) => !Number.isInteger(v) || v < range[0] || v > range[1]);
+  }
+
+  // Schwelle einer Funkart im Entwurf setzen; undefined = Standard (Eintrag
+  // weg, bei einer Integration auch deren leere Zuordnung). id: "<Domain>|<Art>",
+  // ohne Domain die globale Schwelle.
+  _setSig(id, value) {
+    const st = this._settings;
+    const [dom, conn] = id.split("|");
+    const put = (map) => {
+      const out = { ...(map || {}) };
+      if (value === undefined) delete out[conn];
+      else out[conn] = value;
+      return out;
+    };
+    if (!dom) st.draft.signal_low = put(st.draft.signal_low);
+    else {
+      const all = { ...(st.draft.signal_low_integrations || {}) };
+      const own = put(all[dom]);
+      if (Object.keys(own).length) all[dom] = own;
+      else delete all[dom];
+      st.draft.signal_low_integrations = all;
+    }
+  }
+
+  // Zeilen "Funkart: Standard / Eigene / Aus" der Empfang-Warnschwelle (seit
+  // 1.17.0): dom leer = global (Reiter Verbindungsart), sonst eine Integration.
+  // Es erscheinen die Funkarten mit Geräten, die einen Empfangswert melden, dazu
+  // solche mit eigener Einstellung ohne Geräte (zum Zurücksetzen).
+  _sigRowsHtml(d, dom) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    const groups = this._sigGroups();
+    const prefix = dom ? `${dom}|` : "";
+    const pick = (src) => (dom ? (src.signal_low_integrations || {})[dom] : src.signal_low) || {};
+    const table = pick(d);
+    const saved = pick(st.data.values);
+    const conns = new Set([...Object.keys(table), ...Object.keys(saved)]);
+    for (const key of groups.keys()) if (dom ? key.startsWith(prefix) : !key.includes("|")) conns.add(key.slice(prefix.length));
+    const bad = new Set(this._sigInvalid().filter((x) => x.dom === (dom || "")).map((x) => x.conn));
+    const name = dom ? this._integrations[dom] || dom : "";
+    const list = [...conns].sort((a, b) => (groups.get(prefix + b)?.devices || 0) - (groups.get(prefix + a)?.devices || 0) || a.localeCompare(b));
+    return list
+      .map((conn) => {
+        const g = groups.get(prefix + conn);
+        const own = table[conn];
+        const mode = own === "off" ? "off" : own === undefined ? "default" : "own";
+        const kind = this._sigKind(g, own);
+        const [min, max] = kind === "lqi" ? SIG_LQI_RANGE : SIG_DBM_RANGE;
+        // Was ohne eigene Einstellung gilt: in der Integration der globale Wert, sonst der feste Standard.
+        const def = dom ? sigDefaultOf(d.signal_low, null, conn, kind) : { value: null, source: null };
+        const stdText = def.value === "off" ? t("sigOffWord") : sigText({ kind, value: Number.isInteger(def.value) ? def.value : sigStd(kind) });
+        const defLabel = def.source === "global" ? (def.value === "off" ? t("sigRowGlobalOff") : t("sigRowGlobal", stdText)) : t("sigRowDefault", stdText);
+        const id = `${dom || ""}|${conn}`;
+        const label = CONN[conn] ? t(CONN[conn].key) : conn;
+        const aria = `${name ? `${name}: ` : ""}${label}: ${t("devSignal")}`;
+        const changed = JSON.stringify(own ?? null) !== JSON.stringify(saved[conn] ?? null);
+        const select = `<span class="opt-select"><select data-sig-mode="${escape(id)}" aria-label="${escape(aria)}">${[["default", defLabel], ["own", t("originOwn")], ["off", t("devSigOff")]]
+          .map(([v, l]) => `<option value="${v}"${v === mode ? " selected" : ""}>${escape(l)}</option>`)
+          .join("")}</select>${mdi("chevronDown", 18)}</span>`;
+        const input =
+          mode === "own"
+            ? `<span class="opt-input${bad.has(conn) ? " bad" : ""}"><input type="number"${kind === "lqi" ? ' inputmode="numeric"' : ""} step="1" min="${min}" max="${max}" data-sig="${escape(id)}" value="${escape(own ?? "")}" placeholder="${escape(stdText)}" aria-label="${escape(`${aria} (${t("devSigLow")})`)}"><span class="unit">${kind === "lqi" ? "LQI" : "dBm"}</span></span>`
+            : "";
+        const origin = `<div class="opt-origin"><span class="origin ${mode !== "default" ? "own" : "std"}">${escape(t(mode !== "default" ? "originOwn" : "originStandard"))}</span>${mode !== "default" ? `<span>${escape(t("originDefaultWould", stdText))}</span>` : ""}</div>`;
+        const info = g ? t("sigRowInfo", g.devices, kind === "lqi") : t("sigRowNone");
+        return `<div class="opt bat-row sig-row${changed ? " changed" : ""}${bad.has(conn) ? " invalid" : ""}"><div class="opt-line"><span class="opt-label">${escape(label)}</span><span class="bat-ctl">${select}${input}</span></div>
+          <div class="opt-short">${escape(info)}</div>
+          <div class="opt-error" data-sig-error="${escape(id)}" ${bad.has(conn) ? "" : "hidden"}>${bad.has(conn) ? escape(t("settingsRange", min, max)) : ""}</div>${origin}</div>`;
+      })
+      .join("");
+  }
+
+  // Globale Warnschwellen des Empfangs pro Funkart im Reiter Verbindungsart.
+  _sigGlobalHtml(d) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const rows = this._sigRowsHtml(d, "");
+    return `<div class="opt bat-own"><div class="opt-line"><span class="opt-label">${escape(t("sigTitle"))}</span></div>
+      <div class="opt-short">${escape(t("sigShort"))}</div></div>${rows || `<div class="opt-short mon-empty">${escape(t("sigNone"))}</div>`}`;
   }
 
   // Verbindungsarten für die Filter-Chips: alle mit Geräten (wie die Chips,
@@ -4107,6 +4260,7 @@ class DevicePanel extends HTMLElement {
       const n = Object.keys(d.connection_integrations || {}).length;
       return [
         n ? this._t("sumConnInteg", n) : this._t("sumConnAuto"),
+        Object.keys(d.signal_low || {}).length ? this._t("sumSignal", Object.keys(d.signal_low).length) : "",
         chips ? this._t("sumChipsHidden", chips) : "",
         (d.connection_order || []).length || (d.chip_order || []).length ? this._t("sumChipsOrder") : "",
       ]
@@ -4145,7 +4299,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -4360,9 +4514,10 @@ class DevicePanel extends HTMLElement {
     const noPush = new Set(d.notify_exclude_integrations || []);
     const noPers = new Set(d.persistent_exclude_integrations || []);
     const noBatPush = new Set(d.battery_push_exclude_integrations || []);
+    const sigMap = d.signal_low_integrations || {};
     const list = (cat.integrations || []).filter((i) => !hidden.has(i.domain)).map((i) => ({ domain: i.domain, name: i.name, devices: i.devices }));
     const known = new Set(list.map((x) => x.domain));
-    for (const dom of [...Object.keys(offMap), ...Object.keys(batMap), ...noPush, ...noPers, ...noBatPush]) {
+    for (const dom of [...Object.keys(offMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush]) {
       if (known.has(dom) || hidden.has(dom)) continue;
       known.add(dom);
       list.push({ domain: dom, name: this._integrations[dom] || dom, devices: 0 });
@@ -4374,8 +4529,10 @@ class DevicePanel extends HTMLElement {
       const flags = [noPush.has(x.domain) && t("diffNoPush"), noPers.has(x.domain) && t("diffNoPers")].filter(Boolean);
       const out = Number.isInteger(off) || flags.length ? t("diffOutage", Number.isInteger(off) ? t("offlineMin", off) : null, flags) : null;
       const batText = b !== undefined || noBatPush.has(x.domain) ? t("diffBattery", Number.isInteger(b) ? b : null, b === "off", noBatPush.has(x.domain)) : null;
-      const diff = unmon ? t("integUnmon") : [out, batText].filter(Boolean).join(" · ");
-      return { ...x, batDevices: bat.get(x.domain) || 0, unmon, out, bat: batText, own: Boolean(unmon || out || batText), diff };
+      const sigCount = Object.keys(sigMap[x.domain] || {}).length;
+      const sigDiff = sigCount ? t("diffSignal", sigCount) : null;
+      const diff = unmon ? t("integUnmon") : [out, batText, sigDiff].filter(Boolean).join(" · ");
+      return { ...x, batDevices: bat.get(x.domain) || 0, unmon, out, bat: batText, sig: sigDiff, own: Boolean(unmon || out || batText || sigDiff), diff };
     });
   }
 
@@ -4674,6 +4831,10 @@ class DevicePanel extends HTMLElement {
         (target && d.battery_push ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integBatPushGlobalOff" : "noTargetWarn"))}</div>`);
     }
     html += "</div>";
+    // Empfang (seit 1.17.0): Warnschwelle je Funkart der Integration; gilt auch bei
+    // "Nicht überwachen", weil sie nur die Markierung betrifft.
+    const sigRows = this._sigRowsHtml(d, dom);
+    if (sigRows) html += `<div class="mon-grp">${escape(t("grpSignal"))}</div><div class="opt-short sig-intro">${escape(t("sigIntegShort"))}</div>${sigRows}`;
     // Geräte der Integration mit eigener Einstellung, zum Zurücksetzen wie im Reiter.
     const ov = st.data.overrides || {};
     const devs = ["offline", "notify", "battery"].flatMap((kind) => (ov[kind] || []).filter((x) => x.domain === dom).map((x) => ({ kind, x })));
@@ -4690,7 +4851,7 @@ class DevicePanel extends HTMLElement {
         .join("");
       html += `<div class="mon-grp">${escape(t("integDevTitle"))}</div><div class="ovr-list">${rows}</div>`;
     }
-    const anyOwn = off !== undefined || dom in batMap || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations"].some(has);
+    const anyOwn = off !== undefined || dom in batMap || dom in (d.signal_low_integrations || {}) || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations"].some(has);
     html += `<div class="integ-reset"><button type="button" class="ovr-all" data-set="integ-reset" data-key="${escape(dom)}" ${anyOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("integReset"))}</button></div>`;
     return html;
   }
@@ -4859,7 +5020,7 @@ class DevicePanel extends HTMLElement {
             ((d.chip_order || []).length || (d.connection_order || []).length
               ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset">${mdi("reset", 15)}${escape(t("chipsOrderResetAll"))}</button></div>`
               : "")
-          : this._connIntegHtml(d) + this._overridesHtml("connection") + this._overridesHtml("signal")),
+          : this._connIntegHtml(d) + this._overridesHtml("connection") + this._sigGlobalHtml(d) + this._overridesHtml("signal")),
       ai:
         row("ai_assessment", t("optAi"), sw("ai_assessment", t("optAi")), t("optAiShort"), t("optAiInfo")) +
         (d.ai_assessment
@@ -4953,7 +5114,7 @@ class DevicePanel extends HTMLElement {
         // Alles einer Integration auf den Standard (beim Speichern).
         if (!st.draft) return;
         const dom = btn.dataset.key;
-        for (const key of ["offline_after_integrations", "battery_low_integrations"]) {
+        for (const key of ["offline_after_integrations", "battery_low_integrations", "signal_low_integrations"]) {
           const own = { ...(st.draft[key] || {}) };
           delete own[dom];
           st.draft[key] = own;
@@ -5061,6 +5222,9 @@ class DevicePanel extends HTMLElement {
         const own = { ...(st.draft.battery_low_integrations || {}) };
         own[el.dataset.bat] = el.value === "" ? null : Number(el.value);
         st.draft.battery_low_integrations = own;
+      } else if (el.dataset.sig) {
+        // Eigene Schwelle einer Funkart (global oder je Integration); leer ist ungültig.
+        this._setSig(el.dataset.sig, el.value === "" ? null : Number(el.value));
       } else if (el.dataset.opt) {
         st.draft[el.dataset.opt] = el.value === "" ? null : Number(el.value);
       } else return;
@@ -5087,6 +5251,19 @@ class DevicePanel extends HTMLElement {
         if (el.value === "default") delete own[el.dataset.offMode];
         else own[el.dataset.offMode] = el.value === "off" ? "off" : Number(el.value);
         st.draft.offline_after_integrations = own;
+        this._renderSettings();
+        return;
+      }
+      if (st?.draft && el.tagName === "SELECT" && el.dataset.sigMode) {
+        const [dom, conn] = el.dataset.sigMode.split("|");
+        if (el.value === "default") this._setSig(el.dataset.sigMode, undefined);
+        else if (el.value === "off") this._setSig(el.dataset.sigMode, "off");
+        else {
+          // Start mit dem heute geltenden Wert (gleiche Einheit), sonst dem festen Standard.
+          const kind = this._sigKind(this._sigGroups().get(dom ? `${dom}|${conn}` : conn));
+          const def = sigDefaultOf(st.draft.signal_low, null, conn, kind);
+          this._setSig(el.dataset.sigMode, Number.isInteger(def.value) && dom ? def.value : sigStd(kind));
+        }
         this._renderSettings();
         return;
       }
@@ -5184,6 +5361,23 @@ class DevicePanel extends HTMLElement {
       if (def) def.textContent = this._t("integBatDefault", std);
     }
     for (const input of dialog.querySelectorAll("input[data-bat]")) input.placeholder = String(std);
+    // Empfang-Schwellen pro Funkart: Zeile markieren, Fehlerzeile je Zeile.
+    const sigBad = new Set(this._sigInvalid().map((x) => `${x.dom}|${x.conn}`));
+    for (const input of dialog.querySelectorAll("input[data-sig]")) {
+      const row = input.closest(".opt");
+      row?.classList.toggle("invalid", sigBad.has(input.dataset.sig));
+      input.closest(".opt-input")?.classList.toggle("bad", sigBad.has(input.dataset.sig));
+      const err = row?.querySelector("[data-sig-error]");
+      if (err) {
+        const [min, max] = input.min !== "" ? [input.min, input.max] : [0, 0];
+        err.hidden = !sigBad.has(input.dataset.sig);
+        err.textContent = err.hidden ? "" : this._t("settingsRange", min, max);
+      }
+      const [dom, conn] = input.dataset.sig.split("|");
+      const now = dom ? ((st.draft.signal_low_integrations || {})[dom] || {})[conn] : (st.draft.signal_low || {})[conn];
+      const was = dom ? ((st.data.values.signal_low_integrations || {})[dom] || {})[conn] : (st.data.values.signal_low || {})[conn];
+      row?.classList.toggle("changed", JSON.stringify(now ?? null) !== JSON.stringify(was ?? null));
+    }
     const batErr = dialog.querySelector("[data-bat-error]");
     if (batErr) {
       batErr.hidden = !errors.battery_low_integrations;

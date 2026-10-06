@@ -519,6 +519,7 @@
     show_service_devices: false, show_disabled_devices: false, update_check: true, ai_assessment: false, ai_task_entity: "", ai_prompt: "",
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
+    signal_low: {}, signal_low_integrations: {},
   };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
@@ -710,6 +711,22 @@
           const m = msg.values.battery_low_integrations;
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || (v !== "off" && (!Number.isInteger(v) || v < 5 || v > 50)))) throw { code: "invalid_format", message: "battery map" };
         }
+        // Wie options_api.signal_map / signal_integrations_map (seit 1.17.0): Verbindungsart ->
+        // "off" oder Zahl (dBm -110..-40, LQI 1..200); je Integration verschachtelt, leere fallen weg.
+        {
+          const kinds = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown"];
+          const sigValue = (v) => v === "off" || (Number.isInteger(v) && ((v >= -110 && v <= -40) || (v >= 1 && v <= 200)));
+          const sigMap = (m) => {
+            if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !kinds.includes(k) || !sigValue(v))) throw { code: "invalid_format", message: "signal map" };
+            return Object.fromEntries(Object.entries(m).sort());
+          };
+          if ("signal_low" in msg.values) msg.values.signal_low = sigMap(msg.values.signal_low);
+          if ("signal_low_integrations" in msg.values) {
+            const m = msg.values.signal_low_integrations;
+            if (!m || typeof m !== "object" || Array.isArray(m) || Object.keys(m).some((k) => !/^[a-z0-9_]+$/.test(k))) throw { code: "invalid_format", message: "signal integrations" };
+            msg.values.signal_low_integrations = Object.fromEntries(Object.entries(m).map(([k, v]) => [k, sigMap(v)]).filter(([, v]) => Object.keys(v).length).sort());
+          }
+        }
         if ("offline_after_integrations" in msg.values) {
           // Wie options_api.offline_map: Minuten 1 bis 1440 oder "off".
           const m = msg.values.offline_after_integrations;
@@ -859,6 +876,18 @@
             notify_off: window.__devSettings.notifyOff.has(d.id),
             notify_mute_until: window.__devSettings.mute[d.id] || null,
             signal_setting: window.__devSettings.signal[d.id] ?? null,
+            // Wie options_api.signal_default (seit 1.17.0): Integration vor global, Einheit muss passen.
+            signal_default: (() => {
+              const conn = window.__connOverrides[d.id] || (window.__opts.connection_integrations || {})[d.integration?.domain] || d.connection;
+              const kind = d.signal?.kind ?? null;
+              const tables = [["integration", (window.__opts.signal_low_integrations || {})[d.integration?.domain] || {}], ["global", window.__opts.signal_low || {}]];
+              for (const [source, table] of tables) {
+                const v = table[conn];
+                if (v == null) continue;
+                if (v === "off" || kind === null || (v < 0) === (kind === "dbm")) return { value: v, source };
+              }
+              return { value: null, source: null };
+            })(),
             // Wie das Backend: von Hand vor der Erkennung.
             connection: window.__connOverrides[d.id] || (window.__opts.connection_integrations || {})[d.integration?.domain] || d.connection,
             connection_integration: (window.__opts.connection_integrations || {})[d.integration?.domain] || null,

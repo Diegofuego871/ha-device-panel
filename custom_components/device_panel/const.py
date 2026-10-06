@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "64"
+PANEL_VERSION = "65"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -161,6 +161,13 @@ SIGNAL_WEAK_LQI = 60
 NEW_DEVICE_DAYS = 3
 SIGNAL_DBM_RANGE = (-110, -40)
 SIGNAL_LQI_RANGE = (1, 200)
+# Warnschwelle für den Empfang pro Funkart (seit 1.17.0): {Verbindungsart: Zahl
+# oder "off"}, Zahl wie beim Gerät (dBm negativ, LQI positiv). Gilt für Geräte
+# mit dieser Verbindungsart ohne eigene Einstellung; ohne Eintrag der feste
+# Standard (SIGNAL_WEAK_*). Pro Integration {Domain: {Verbindungsart: Zahl oder
+# "off"}} geht sie vor dem globalen Wert; das Gerät geht vor beiden.
+CONF_SIGNAL_LOW = "signal_low"
+CONF_SIGNAL_LOW_INTEGRATIONS = "signal_low_integrations"
 CLICK_PANEL = "panel"
 CLICK_DEVICE = "device"
 CLICK_TARGETS = (CLICK_PANEL, CLICK_DEVICE)

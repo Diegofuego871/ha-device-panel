@@ -210,6 +210,12 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
   Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des
   Inhalts in zwei Spalten, auf dem Handy in einer.
+- Empfang-Warnschwelle pro Funkart (seit 1.17.0): Zeilen im Stil der Batterie pro
+  Integration (`.opt.bat-row.sig-row`): Funkart links, Auswahl "Standard / Eigene /
+  Aus" und bei "Eigene" ein Zahlenfeld mit Einheit (dBm oder LQI); darunter die Zahl
+  der Geräte mit Empfangswert, dann Herkunft ("Standard" oder "Eigene", "Standard
+  wäre -80 dBm"). Auf dem Handy steht der Name oben, Auswahl und Feld darunter über
+  die ganze Breite. Fehler (Bereich nach Einheit) rot am Feld und in der Zeile.
 - Warnung statt Problem (seit 1.16.0, `docs/mockups/chip-warn-v1/`, V1): Unten in
   der Kachel "Gerade ausgefallen" eine schlanke Zeile mit Trennlinie ("3 Geräte
   mit Warnung", Warnsymbol in Orange, Pfeil; Knopf, hebt Hover und Fokus hervor;

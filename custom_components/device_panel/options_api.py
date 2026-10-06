@@ -62,6 +62,9 @@ from .const import (
     CONNECTION_MANUAL,
     CHIP_KEYS,
     CHIP_ORDER_KEYS,
+    SIGNAL_DBM_RANGE,
+    SIGNAL_LQI_RANGE,
+    SIGNAL_OFF,
     CHIP_ORDER_LEGACY_BLOCK,
     CONNECTION_TYPES,
     CONF_FLAKY_OUTAGES,
@@ -71,6 +74,8 @@ from .const import (
     CONF_OFFLINE_INTEGRATIONS,
     CONF_SHOW_DISABLED,
     CONF_SHOW_SERVICE,
+    CONF_SIGNAL_LOW,
+    CONF_SIGNAL_LOW_INTEGRATIONS,
     CONF_STARTUP_GRACE,
     CONF_AI_ASSESSMENT,
     CONF_AI_PROMPT,
@@ -258,6 +263,54 @@ def battery_map(value: Any) -> dict[str, int | str]:
     return dict(sorted(out.items()))
 
 
+def _signal_value(value: Any) -> int | str:
+    """Warnschwelle für den Empfang: "off" oder Zahl (dBm negativ, LQI positiv)."""
+    # YAML 1.1 (Optionsdialog) liest "off" als False.
+    if value is False or (isinstance(value, str) and value.strip().lower() == SIGNAL_OFF):
+        return SIGNAL_OFF
+    number = _whole(value)
+    ok = number is not None and (
+        SIGNAL_DBM_RANGE[0] <= number <= SIGNAL_DBM_RANGE[1] or SIGNAL_LQI_RANGE[0] <= number <= SIGNAL_LQI_RANGE[1]
+    )
+    if not ok:
+        raise vol.Invalid(
+            f"off oder {SIGNAL_DBM_RANGE[0]}..{SIGNAL_DBM_RANGE[1]} dBm bzw. {SIGNAL_LQI_RANGE[0]}..{SIGNAL_LQI_RANGE[1]} LQI erwartet"
+        )
+    return number  # type: ignore[return-value]
+
+
+def signal_map(value: Any) -> dict[str, int | str]:
+    """
+    Warnschwellen für den Empfang pro Funkart {Verbindungsart: Zahl oder "off"}
+    (seit 1.17.0), z. B. {"wifi": -85, "zigbee": 40, "ble": "off"}.
+    """
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise vol.Invalid("Zuordnung Verbindungsart → Schwelle erwartet")
+    out: dict[str, int | str] = {}
+    for kind, setting in value.items():
+        if kind not in CONNECTION_TYPES:
+            raise vol.Invalid(f"Verbindungsart aus {', '.join(CONNECTION_TYPES)} erwartet")
+        out[kind] = _signal_value(setting)
+    return dict(sorted(out.items()))
+
+
+def signal_integrations_map(value: Any) -> dict[str, dict[str, int | str]]:
+    """Wie signal_map, je Integration {Domain: {Verbindungsart: Zahl oder "off"}}; leere Einträge fallen weg."""
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise vol.Invalid("Zuordnung Integration → Verbindungsart → Schwelle erwartet")
+    out: dict[str, dict[str, int | str]] = {}
+    for domain, inner in value.items():
+        if not isinstance(domain, str) or not _DOMAIN_RE.match(domain):
+            raise vol.Invalid("Integration → Verbindungsart → Schwelle erwartet")
+        if rules := signal_map(inner):
+            out[domain] = rules
+    return dict(sorted(out.items()))
+
+
 def offline_map(value: Any) -> dict[str, int | str]:
     """
     Eigenes "Ausgefallen nach" {Domain: Minuten oder "off"}; "off" schaltet die
@@ -321,6 +374,8 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_CHIP_ORDER): chip_order,
         vol.Optional(CONF_CONNECTION_INTEGRATIONS): connection_map,
         vol.Optional(CONF_BATTERY_LOW_INTEGRATIONS): battery_map,
+        vol.Optional(CONF_SIGNAL_LOW): signal_map,
+        vol.Optional(CONF_SIGNAL_LOW_INTEGRATIONS): signal_integrations_map,
         vol.Optional(CONF_OFFLINE_INTEGRATIONS): offline_map,
         vol.Optional(CONF_NOTIFY_SERVICE): _notify_target,
         vol.Optional(CONF_AI_TASK): _ai_task,
@@ -376,6 +431,14 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     except vol.Invalid:
         # Ungültig gespeichert: lieber keine eigenen Schwellen als ein Fehler.
         values[CONF_BATTERY_LOW_INTEGRATIONS] = {}
+    try:
+        values[CONF_SIGNAL_LOW] = signal_map(options.get(CONF_SIGNAL_LOW))
+    except vol.Invalid:
+        values[CONF_SIGNAL_LOW] = {}
+    try:
+        values[CONF_SIGNAL_LOW_INTEGRATIONS] = signal_integrations_map(options.get(CONF_SIGNAL_LOW_INTEGRATIONS))
+    except vol.Invalid:
+        values[CONF_SIGNAL_LOW_INTEGRATIONS] = {}
     try:
         values[CONF_OFFLINE_INTEGRATIONS] = offline_map(options.get(CONF_OFFLINE_INTEGRATIONS))
     except vol.Invalid:
@@ -440,6 +503,30 @@ def notify_targets(hass: HomeAssistant, current: str) -> list[dict[str, Any]]:
     if current not in {t["value"] for t in targets}:
         targets.append({"value": current, "kind": "missing"})
     return targets
+
+
+def signal_default(
+    opts: Mapping[str, Any], domain: str | None, connection: str | None, signal: Mapping[str, Any] | None
+) -> dict[str, Any]:
+    """
+    Warnschwelle des Empfangs ohne Einstellung des Geräts (seit 1.17.0):
+    erst die Integration, dann der globale Wert, je für die Verbindungsart des
+    Geräts. value ist "off", eine Zahl oder None (fester Standard); source
+    nennt, woher sie kommt. Eine Zahl gilt nur für die passende Einheit (dBm
+    negativ, LQI positiv); sonst zählt die nächste Stufe.
+    """
+    kind = (signal or {}).get("kind")
+    tables = (
+        ("integration", (opts.get(CONF_SIGNAL_LOW_INTEGRATIONS) or {}).get(domain) or {} if domain else {}),
+        ("global", opts.get(CONF_SIGNAL_LOW) or {}),
+    )
+    for source, table in tables:
+        value = table.get(connection) if connection else None
+        if value is None:
+            continue
+        if value == SIGNAL_OFF or kind is None or (value < 0) == (kind == "dbm"):
+            return {"value": value, "source": source}
+    return {"value": None, "source": None}
 
 
 def battery_threshold(opts: Mapping[str, Any], domain: str | None) -> int | None:

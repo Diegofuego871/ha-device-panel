@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.16.0, Einstellungen in fünf Abschnitten)
+## Stand (1.17.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,24 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Empfang-Warnschwelle pro Funkart `1.17.0` (Nutzer, 2026-10-06: "Wi-Fi,
+   Bluetooth und Zigbee separat", Sollwert und "Aus" dazu; ohne Mockup, auf
+   Empfehlung): Optionen `signal_low` {Verbindungsart: Zahl oder "off"} und
+   `signal_low_integrations` {Domain: {Verbindungsart: ...}} (`options_api.signal_map`,
+   `signal_integrations_map`, `signal_default`; Zahl negativ = dBm, positiv = LQI).
+   Geltung: Gerät (`signal_setting`) vor Integration vor global vor festem Standard
+   (`SIGNAL_WEAK_*`); eine Zahl gilt nur, wenn ihr Vorzeichen zur Einheit des
+   Geräts passt, "off" immer. `list_devices.signal_default` {value, source} je
+   Gerät (wie `battery_default`); Panel: `sigOwn(d)` für `devSigLevel` und die
+   Verlaufslinie, `sigDefaultOf()` für die Zeilen. Einstellungen: Darstellung ›
+   Verbindungsart, Block `_sigGlobalHtml`; Integrations-Detail, Abschnitt
+   "Empfang" (`_sigRowsHtml(d, dom)`, `data-sig-mode`/`data-sig` = "Domain|Art",
+   Domain leer = global); Entwurf über `_setSig`, Prüfung `_sigInvalid()` (Bereich
+   nach Einheit der Gruppe, `_sigGroups()` zählt Geräte mit Empfangswert je Art und
+   Integration; die Art ist die des Backends (`connection`), nicht die verfeinerte des
+   Panels: ein Matter-Gerät bleibt "matter"). Eine Änderung zählt pro Option, nicht pro Funkart. KI:
+   `ai_assessment._signal_limit`. Tests: `test_signal_default.py`,
+   `sigtype-e2e.mjs`, Simulator `signal_default`.
    Warnung statt Problem `1.16.0` (Nutzer, 2026-10-06, Mockups
    `docs/mockups/chip-warn-v1/`, V1; Entscheid A): Zwei Stufen. `devOffline(d)` =
    offline, `devWarn(d)` = instabil, Batterie niedrig, schwacher Empfang oder keine

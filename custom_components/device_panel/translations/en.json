@@ -50,7 +50,9 @@
           "connection_integrations": "Connection type per integration",
           "ai_assessment": "AI assessment: show the button in the device pop-up",
           "ai_task_entity": "AI task for the assessment (empty = default of Home Assistant)",
-          "update_check": "Check for updates daily"
+          "update_check": "Check for updates daily",
+          "signal_low": "Signal: warning threshold per connection type",
+          "signal_low_integrations": "Signal: warning threshold per connection type and integration"
         },
         "data_description": {
           "notify_service": "notify service or notify entity, e.g. the Companion app of your phone.",
@@ -87,7 +89,9 @@
           "connection_integrations": "Integration → connection type, one per line, e.g. \"hue: zigbee\". Applies to all devices of the integration instead of the detection; a connection type set by hand on the device comes first. Types: zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud.",
           "ai_assessment": "Without this switch the pop-up has no button. Only on a button press the panel sends name, area and values of that one device (no keys, no credentials) to the AI task; depending on the provider they leave your network.",
           "ai_task_entity": "Optional. Leave empty to use the default AI task of Home Assistant (Settings → System → General).",
-          "update_check": "Reports a new version under Settings → Repairs. Pre-releases are never reported here."
+          "update_check": "Reports a new version under Settings → Repairs. Pre-releases are never reported here.",
+          "signal_low": "Connection type → threshold, one per line, e.g. \"wifi: -85\", \"zigbee: 40\" or \"ble: off\" (dBm negative, LQI positive). Applies to devices without an own setting; unset = standard (-80 dBm, LQI 60).",
+          "signal_low_integrations": "Integration → connection type → threshold, e.g. \"shelly:\" with \"wifi: -88\" and \"ble: off\" below it. Goes before the global value; a device setting goes before both."
         }
       }
     },
@@ -95,7 +99,9 @@
       "offline_map": "Each line must be integration: whole number from 1 to 1440 or off (e.g. \"zha: 60\", \"hue: off\").",
       "battery_map": "Each line must be integration: whole number from 5 to 50 or off (e.g. \"zha: 25\", \"bthome: off\").",
       "connection_map": "Each line must be integration: connection type (zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud).",
-      "notify_delay_short": "\"Report outages only after\" must not be shorter than \"Offline after\": before that a device does not count as offline."
+      "notify_delay_short": "\"Report outages only after\" must not be shorter than \"Offline after\": before that a device does not count as offline.",
+      "signal_map": "Each line must be a connection type (e.g. wifi, ble, zigbee) and off or a number: dBm from -110 to -40, LQI from 1 to 200.",
+      "signal_integrations_map": "Each integration must contain connection types with off or a number: dBm from -110 to -40, LQI from 1 to 200."
     }
   },
   "issues": {

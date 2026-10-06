@@ -263,6 +263,13 @@ async def test_facts_battery_signal_and_area(hass: HomeAssistant, setup, freezer
     # Ohne eigene Schwelle: Standard (LQI 60 und darunter schwach)
     f3 = build_facts({**me, "signal": {"kind": "lqi", "value": 40}, "signal_setting": None}, result, time.time())
     assert f3["signal"] == {"kind": "lqi", "value": 40, "weak": True}
+    # Warnschwelle der Integration oder global (signal_default, seit 1.17.0) zählt wie die des Geräts; das Gerät geht vor
+    f4 = build_facts({**me, "signal": {"kind": "lqi", "value": 40}, "signal_setting": None, "signal_default": {"value": 30, "source": "integration"}}, result, time.time())
+    assert f4["signal"] == {"kind": "lqi", "value": 40, "weak": False, "own_threshold": 30}
+    f5 = build_facts({**me, "signal": {"kind": "lqi", "value": 40}, "signal_setting": 50, "signal_default": {"value": 30, "source": "global"}}, result, time.time())
+    assert f5["signal"] == {"kind": "lqi", "value": 40, "weak": True, "own_threshold": 50}
+    f6 = build_facts({**me, "signal": {"kind": "lqi", "value": 10}, "signal_setting": None, "signal_default": {"value": "off", "source": "global"}}, result, time.time())
+    assert f6["signal"] == {"kind": "lqi", "value": 10, "weak": False, "own_threshold": "off"}
 
 
 def _dev(i: str, **kw: Any) -> dict[str, Any]:

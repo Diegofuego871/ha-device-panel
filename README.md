@@ -68,6 +68,7 @@ Only on a button press, with an AI task of Home Assistant. No keys, credentials 
 ## Good to know
 
 - A device counts as offline after 2 minutes without a sign of life (adjustable, per integration and per device).
+- A signal counts as weak below -80 dBm or LQI 61. The warning threshold can be set per connection type, globally, per integration and per device, or switched off.
 - An outage lasts until Home Assistant sees the device online again, also across restarts. "At least" (≥) means the start is not known.
 - The availability log covers 31 days in its own file, not the recorder. Time while Home Assistant was not running counts as "no data".
 - Hidden devices, integrations and device types are neither shown nor monitored. Every filter chip can be hidden and reordered in the settings.

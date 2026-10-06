@@ -50,6 +50,8 @@ from .const import (
     CONF_EXCLUDE_TYPES,
     CONF_FLAKY_OUTAGES,
     CONF_CONNECTION_INTEGRATIONS,
+    CONF_SIGNAL_LOW,
+    CONF_SIGNAL_LOW_INTEGRATIONS,
     CONF_CONNECTION_ORDER,
     CONF_HIDE_CHIPS,
     CONF_HIDE_CONNECTIONS,
@@ -77,6 +79,8 @@ from .options_api import (
     delay_too_short,
     offline_map,
     connection_map,
+    signal_integrations_map,
+    signal_map,
     connection_order,
     current_values,
     notify_fields,
@@ -141,10 +145,20 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             except vol.Invalid:
                 conns = None
                 errors[CONF_CONNECTION_INTEGRATIONS] = "connection_map"
+            try:
+                signal_low = signal_map(user_input.get(CONF_SIGNAL_LOW))
+            except vol.Invalid:
+                signal_low = None
+                errors[CONF_SIGNAL_LOW] = "signal_map"
+            try:
+                signal_integ = signal_integrations_map(user_input.get(CONF_SIGNAL_LOW_INTEGRATIONS))
+            except vol.Invalid:
+                signal_integ = None
+                errors[CONF_SIGNAL_LOW_INTEGRATIONS] = "signal_integrations_map"
             if not errors:
                 # Bestehende Options erhalten, statt sie zu ersetzen. Leere
                 # Mehrfachauswahl muss die alte überschreiben.
-                data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own, CONF_OFFLINE_INTEGRATIONS: offline, CONF_CONNECTION_INTEGRATIONS: conns}
+                data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own, CONF_OFFLINE_INTEGRATIONS: offline, CONF_CONNECTION_INTEGRATIONS: conns, CONF_SIGNAL_LOW: signal_low, CONF_SIGNAL_LOW_INTEGRATIONS: signal_integ}
                 for key in (
                     CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_EXCLUDE_DEVICES, CONF_HIDE_CHIPS, CONF_HIDE_CONNECTIONS,
                     CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE,
@@ -279,6 +293,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     ),
                     # Verbindungsart pro Integration als Zuordnung, z. B. "hue: zigbee".
                     vol.Optional(CONF_CONNECTION_INTEGRATIONS, default=values[CONF_CONNECTION_INTEGRATIONS] or {}): ObjectSelector(),
+                    # Warnschwelle des Empfangs pro Funkart, global und pro Integration (seit 1.17.0).
+                    vol.Optional(CONF_SIGNAL_LOW, default=values[CONF_SIGNAL_LOW] or {}): ObjectSelector(),
+                    vol.Optional(CONF_SIGNAL_LOW_INTEGRATIONS, default=values[CONF_SIGNAL_LOW_INTEGRATIONS] or {}): ObjectSelector(),
                     # KI-Einschätzung im Geräte-Popup: aus, bis eingeschaltet; die
                     # KI-Aufgabe ist wählbar, leer = Standard von Home Assistant.
                     vol.Required(CONF_AI_ASSESSMENT, default=values[CONF_AI_ASSESSMENT]): bool,

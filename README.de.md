@@ -68,6 +68,7 @@ Nur auf Knopfdruck, mit einer KI-Aufgabe von Home Assistant. Es gehen keine Schl
 ## Gut zu wissen
 
 - Ein Gerät gilt nach 2 Minuten ohne Lebenszeichen als ausgefallen (einstellbar, pro Integration und pro Gerät).
+- Ein Empfang gilt als schwach unter -80 dBm bzw. LQI 61. Die Warnschwelle lässt sich pro Funkart einstellen, global, pro Integration und pro Gerät, oder ausschalten.
 - Ein Ausfall dauert, bis Home Assistant das Gerät wieder online sieht, auch über Neustarts. "Mindestens" (≥) heisst: Der Beginn ist nicht bekannt.
 - Das Verfügbarkeitsprotokoll umfasst 31 Tage in einer eigenen Datei, nicht im Recorder. Zeit, in der Home Assistant nicht lief, zählt als "keine Daten".
 - Ausgeblendete Geräte, Integrationen und Gerätetypen werden weder angezeigt noch überwacht. Jeder Filter-Chip lässt sich in den Einstellungen ausblenden und umordnen.

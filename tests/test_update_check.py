@@ -116,6 +116,8 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "hide_connections": [],
         "connection_order": [],
         "chip_order": [],
+        "signal_low": {},
+        "signal_low_integrations": {},
         "connection_integrations": {},
         "battery_low": 15,
         "battery_low_integrations": {},
@@ -209,6 +211,29 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
     assert entry.options["chip_order"] == []
 
 
+async def test_signal_thresholds_from_panel(hass: HomeAssistant, entry, hass_ws_client, github_offline) -> None:
+    """Warnschwelle des Empfangs pro Funkart, global und pro Integration, gültig geprüft und gespeichert."""
+    client = await hass_ws_client(hass)
+    values = {"signal_low": {"zigbee": 40, "wifi": -85, "ble": "off"}, "signal_low_integrations": {"shelly": {"wifi": -90}, "zha": {}}}
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_options", "values": values})
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+    assert entry.options["signal_low"] == {"ble": "off", "wifi": -85, "zigbee": 40}
+    assert entry.options["signal_low_integrations"] == {"shelly": {"wifi": -90}}
+    for i, bad in enumerate(({"signal_low": {"funk": -85}}, {"signal_low": {"wifi": -20}}, {"signal_low_integrations": {"shelly": {"wifi": 0}}}), start=2):
+        await client.send_json({"id": i, "type": f"{DOMAIN}/set_options", "values": bad})
+        assert (await client.receive_json())["error"]["code"] == "invalid_format"
+    await client.send_json({"id": 5, "type": f"{DOMAIN}/get_options"})
+    got = (await client.receive_json())["result"]["values"]
+    assert got["signal_low"] == {"ble": "off", "wifi": -85, "zigbee": 40}
+    assert got["signal_low_integrations"] == {"shelly": {"wifi": -90}}
+    # Zurücksetzen
+    await client.send_json({"id": 6, "type": f"{DOMAIN}/set_options", "values": {"signal_low": {}, "signal_low_integrations": {}}})
+    assert (await client.receive_json())["success"]
+    await hass.async_block_till_done()
+    assert entry.options["signal_low"] == {} and entry.options["signal_low_integrations"] == {}
+
+
 async def test_options_flow(hass: HomeAssistant, entry) -> None:
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.FORM
@@ -222,7 +247,7 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
         "offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations",
         "battery_push_exclude_integrations", "exclude_integrations", "exclude_types", "exclude_devices",
         "show_service_devices", "show_disabled_devices", "hide_chips", "hide_connections",
-        "connection_order", "connection_integrations", "ai_assessment", "ai_task_entity", "update_check",
+        "connection_order", "connection_integrations", "signal_low", "signal_low_integrations", "ai_assessment", "ai_task_entity", "update_check",
     ]
     # "Ausgefallen nach" über "Erst melden nach" (2): Fehler am Feld, nichts gespeichert.
     result = await hass.config_entries.options.async_configure(

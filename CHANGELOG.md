@@ -7,6 +7,36 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.17.0] - 2026-10-06
+
+Signal warning threshold per connection type.
+
+### Added
+
+- Warning threshold for the signal per connection type (requested by the user):
+  Wi-Fi, Bluetooth, Zigbee, Z-Wave and so on each get their own value, because
+  they report in different units (Wi-Fi and Bluetooth in dBm, Zigbee usually in LQI) and
+  have different ranges. Each connection type is set to "Default", "Own" or
+  "Off" ("Off" never marks it as weak).
+  - Global: Settings › Display › Connection type, block "Signal: warning
+    threshold per connection type". Only connection types with devices that
+    report a signal value are listed.
+  - Per integration: Settings › Monitoring and notifications › Integrations,
+    section "Signal" of the integration. The value of the integration goes
+    before the global value; "All to default" and "Reset all" include it, the
+    integration list shows "Signal (n connection types)".
+  - Order of precedence: own value on the device, then integration, then global
+    value, then the fixed default (below -80 dBm or LQI 61).
+  - A number only applies to devices that report in the same unit (negative =
+    dBm, positive = LQI); otherwise the next level applies.
+  - In the device pop-up the first option names where the value comes from
+    ("Global value (below -85 dBm)", "Like integration (below -90 dBm)", "... (off)"),
+    with the origin "Integration Shelly" and what the default would be.
+  - The AI assessment uses the value that applies to the device (`signal.weak`
+    and `own_threshold`).
+  - New options `signal_low` and `signal_low_integrations` (also in the options
+    dialog as YAML, for example `{"wifi": -85, "zigbee": 40, "ble": "off"}`).
+
 ## [1.16.0] - 2026-10-06
 
 Warning instead of problem.
@@ -1453,6 +1483,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.17.0
 [1.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.16.0
 [1.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.15.0
 [1.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.14.0
