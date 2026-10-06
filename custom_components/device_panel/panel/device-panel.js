@@ -4509,17 +4509,39 @@ class DevicePanel extends HTMLElement {
       .join("")}</div>`;
   }
 
-  // Marken einer Ausfall-Meldung: Gerät weg, im Panel ausgefallen, Push. Der
-  // Push kommt nie vor "Ausgefallen nach" (beide zählen ab Beginn des
-  // Ausfalls); gleich lang: eine gemeinsame Marke.
-  _outageMarks(offline, delay, push, reason) {
+  // Zeitstrahl der Ausfall-Meldung als zwei parallele Balken ab demselben Nullpunkt
+  // (seit 1.20.0, Wunsch des Nutzers): "Ausgefallen nach" und Push zählen beide ab
+  // Beginn des Ausfalls und werden nicht addiert. Die Länge folgt dem Wert (mindestens
+  // ein Fünftel, damit Beschriftung und Ende sichtbar bleiben). Zeile: title, sub oder
+  // html (Eingabefeld), w (Länge in %), cls, ghost (gestrichelte Marke, Länge in %).
+  _ptlHtml(rows, edit = false) {
+    const t = (k, ...a) => this._t(k, ...a);
+    return `<div class="mtl ptl${edit ? " ptl-e" : ""}"><div class="ptl-zero"><b>0</b><span>${escape(t("tlGone"))}</span></div>${rows
+      .map(
+        (r) =>
+          `<div class="ptl-row${r.cls ? ` ${r.cls}` : ""}" style="--w:${r.w}%"${r.key ? ` data-ptl="${r.key}"` : ""}><div class="ptl-head"><b>${escape(r.title)}</b>${r.html || (r.sub ? `<span>${escape(r.sub)}</span>` : "")}</div><div class="ptl-track"><i></i>${
+            r.ghost != null ? `<em style="left:calc(${r.ghost}% - 6px)"></em>` : ""
+          }</div></div>`
+      )
+      .join("")}</div>`;
+  }
+
+  // Länge eines Balkens in Prozent im Verhältnis zum längsten (mindestens 22).
+  _ptlWidth(value, max) {
+    return Number.isInteger(value) && max > 0 ? Math.max(22, Math.min(100, Math.round((value / max) * 100))) : 60;
+  }
+
+  // Balken einer Ausfall-Meldung: im Panel ausgefallen und Push. Der Push kommt nie
+  // vor "Ausgefallen nach"; ohne Push steht statt des Balkens der Grund.
+  _outageRows(offline, delay, push, reason, ghost = null) {
     const t = (k, ...a) => this._t(k, ...a);
     const fmt = (m) => t("offlineMin", m);
-    const marks = [{ at: 8, title: "0", sub: t("tlGone") }];
-    if (push && delay > offline) marks.push({ at: 44, title: fmt(offline), sub: t("tlOffline") }, { at: 80, cls: "mk-p", title: fmt(delay), sub: t("tlPush") });
-    else if (push) marks.push({ at: 62, cls: "mk-p mk-both", title: fmt(offline), sub: t("tlBoth") });
-    else marks.push({ at: 44, title: fmt(offline), sub: t("tlOffline") }, { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: reason });
-    return marks;
+    const at = Math.max(delay, offline);
+    const max = Math.max(offline, push ? at : 0, ghost || 0);
+    const rows = [{ title: fmt(offline), sub: t("tlOffline"), w: this._ptlWidth(offline, max) }];
+    if (push) rows.push({ cls: "mk-p", title: fmt(at), sub: t("tlPush"), w: this._ptlWidth(at, max), ghost: ghost != null ? this._ptlWidth(ghost, max) : null });
+    else rows.push({ cls: "mk-off", title: t("tlNoPush"), sub: reason, w: 100 });
+    return rows;
   }
 
   // "Erst melden nach" kürzer als "Ausgefallen nach" (Fehler an beiden Feldern).
@@ -4609,7 +4631,7 @@ class DevicePanel extends HTMLElement {
     const lane = (icon, cls, title, tab, tl, chips, diffHtml) =>
       `<div class="lane" data-lane="${tab}"><div class="lane-head"><span class="lane-ic ${cls}">${mdi(icon, 16)}</span><span class="lane-t">${escape(title)}</span>
         <button type="button" class="lnk" data-set="tab" data-key="${tab}">${escape(t("laneEdit"))}</button></div>${tl}<div class="lane-chips">${chips}</div>${diffHtml}</div>`;
-    const outTl = this._tlHtml(this._outageMarks(val("offline_after"), val("notify_delay"), target && d.notify_outage, reason));
+    const outTl = this._ptlHtml(this._outageRows(val("offline_after"), val("notify_delay"), target && d.notify_outage, reason));
     const daily = d.battery_push_mode === "daily";
     const batPush = target && d.battery_push;
     const batTl = this._tlHtml(
@@ -4642,13 +4664,15 @@ class DevicePanel extends HTMLElement {
     const t = (k, ...a) => this._t(k, ...a);
     const short = this._delayShort(errors);
     const target = Boolean(d.notify_service && d.notify_service !== "none");
-    const tl = this._tlHtml(
+    const oa = d.offline_after;
+    const nd = d.notify_delay;
+    const max = Math.max(Number.isInteger(oa) ? oa : 0, Number.isInteger(nd) ? nd : 0);
+    const tl = this._ptlHtml(
       [
-        { at: 8, title: "0", sub: t("tlGone") },
-        { at: 44, title: t("optOfflineAfter"), html: this._tlInput(d, "offline_after", t("minuteUnit"), t("optOfflineAfter"), errors.offline_after || short, changes.has("offline_after")) },
-        { at: 80, cls: "mk-p", title: t("optDelay"), html: this._tlInput(d, "notify_delay", t("minuteUnit"), t("optDelay"), errors.notify_delay, changes.has("notify_delay")) },
+        { key: "offline_after", title: t("optOfflineAfter"), html: this._tlInput(d, "offline_after", t("minuteUnit"), t("optOfflineAfter"), errors.offline_after || short, changes.has("offline_after")), w: this._ptlWidth(oa, max) },
+        { key: "notify_delay", cls: "mk-p", title: t("optDelay"), html: this._tlInput(d, "notify_delay", t("minuteUnit"), t("optDelay"), errors.notify_delay, changes.has("notify_delay")), w: this._ptlWidth(nd, max) },
       ],
-      "mtl-e"
+      true
     );
     const err = errors.offline_after || errors.notify_delay;
     return `${tl}<div class="opt-error mtl-err" data-tl-error="offline_after,notify_delay" ${err ? "" : "hidden"}>${escape(err || "")}</div>
@@ -4808,10 +4832,8 @@ class DevicePanel extends HTMLElement {
     else {
       const reason = target ? t("tlSwitchedOff") : t("tlNoTarget");
       const later = pushOn && gDelay < eff;
-      const marks = later
-        ? [{ at: 8, title: "0", sub: t("tlGone") }, { at: 40, cls: "mk-ghost", title: fmt(gDelay), sub: t("optDelay") }, { at: 80, cls: "mk-p mk-both", title: fmt(eff), sub: t("tlBoth") }]
-        : this._outageMarks(eff, gDelay, pushOn, has("notify_exclude_integrations") && target && d.notify_outage ? t("tlIntegOff") : reason);
-      tl = this._tlHtml(marks) + (later ? `<div class="opt-short mtl-note">${escape(t("integPushLater", fmt(eff)))}</div>` : "");
+      const rows = this._outageRows(eff, gDelay, pushOn, has("notify_exclude_integrations") && target && d.notify_outage ? t("tlIntegOff") : reason, later ? gDelay : null);
+      tl = this._ptlHtml(rows) + (later ? `<div class="opt-short mtl-note">${escape(t("integPushLater", fmt(eff)))}</div>` : "");
     }
     // Ausgefallen nach: Standard oder feste Zeiten; "Nicht überwachen" ist der Schalter darüber.
     const mins = [...OFFLINE_PRESETS];
@@ -5447,6 +5469,11 @@ class DevicePanel extends HTMLElement {
       box.classList.toggle("bad", Boolean(errors[key]) || (short && key === "offline_after"));
       box.classList.toggle("chg", changes.includes(key));
     }
+    // Länge der Balken folgt den getippten Werten.
+    const oa = st.draft.offline_after;
+    const nd = st.draft.notify_delay;
+    const top = Math.max(Number.isInteger(oa) ? oa : 0, Number.isInteger(nd) ? nd : 0);
+    for (const row of dialog.querySelectorAll(".ptl-row[data-ptl]")) row.style.setProperty("--w", `${this._ptlWidth(st.draft[row.dataset.ptl], top)}%`);
     for (const el of dialog.querySelectorAll("[data-tl-error]")) {
       const msg = el.dataset.tlError.split(",").map((k) => errors[k]).find(Boolean);
       el.hidden = !msg;

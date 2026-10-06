@@ -124,7 +124,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Chip "Push" an`, await wait(`return r.querySelector('[data-set="chip"][data-key="notify_outage"]').getAttribute("aria-pressed") === "true"`));
     await pick('select[data-opt="notify_service"]', "notify.mobile_app_testhandy");
     // Gleich lang (2 Min.): eine gemeinsame Marke "ausgefallen und Push".
-    check(`[${tag}] mit Ziel: gemeinsame Marke im Zeitstrahl`, await wait(`return r.querySelector('[data-lane="outage"] .mk-both span')?.textContent === ${JSON.stringify(T.pushMark)}`), await text('[data-lane="outage"] .mtl'));
+    check(`[${tag}] mit Ziel: zwei parallele Balken ab 0, beide 5 Min.`, await wait(`const rows=[...r.querySelectorAll('[data-lane="outage"] .ptl-row')]; return rows.length === 2 && rows[1].classList.contains("mk-p") && rows[0].querySelector("b").textContent === rows[1].querySelector("b").textContent && rows[0].style.getPropertyValue("--w") === rows[1].style.getPropertyValue("--w")`), await text('[data-lane="outage"] .mtl'));
 
     // Ausfall: Inhalt, Vorschau, Erst melden nach
     await tab("outage");
@@ -156,6 +156,13 @@ for (const lang of ["de", "en"]) {
     await delay.fill("");
     await delay.type("5");
     check(`[${tag}] 5 Min. gültig`, await wait(`return !r.querySelector('[data-set="save"]').disabled && r.querySelector("[data-tl-error]").hidden`));
+    // Die Balken sind parallel und folgen den Werten beim Tippen: der längere füllt die Breite, der kürzere verhält sich dazu
+    const widths = () => ev(`return [...r.querySelectorAll(".ptl-row[data-ptl]")].map((x) => parseInt(x.style.getPropertyValue("--w"))).join()`);
+    const same = await widths();
+    await ev(`const i=r.querySelector('.ptl input[data-opt="notify_delay"]'); i.value="20"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
+    const [wa, wd] = (await widths()).split(",").map(Number);
+    check(`[${tag}] Zeitstrahl: zwei Balken ab 0, Länge folgt dem Wert (${same} → ${wa},${wd})`, wd === 100 && wa < wd && wa !== Number(same.split(",")[0]));
+    await ev(`const i=r.querySelector('.ptl input[data-opt="notify_delay"]'); i.value="5"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
     await tap('.switch input[data-opt="outage_persistent"]');
     await ev(`r.querySelector(".nf-grid").scrollIntoView({ block: "start" })`);
     await p.screenshot({ path: `${outDir}/notify-preview-${tag.replace("/", "-")}.png` });

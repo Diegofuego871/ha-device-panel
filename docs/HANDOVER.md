@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.19.0, Einstellungen in fünf Abschnitten)
+## Stand (1.20.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Paralleler Ausfall-Zeitstrahl `1.20.0` (Nutzer, 2026-10-06): `_ptlHtml(rows)` und
+   `_outageRows()` ersetzen `_outageMarks()` (Übersicht, Reiter "Ausfall", Integration);
+   `_ptlWidth()` rechnet die Länge, `_updateSettingsMeta` passt `--w` beim Tippen an.
+   Der Batterie-Zeitstrahl nutzt weiter `_tlHtml`. Tests: `notify-`, `settings-e2e`.
    Startwerte für neue Installationen `1.18.0` (Nutzer, 2026-10-06, nach
    Bildschirmfotos der Einstellungen): Die Standardfolge der Chips ist fest
    (`CHIP_DEFAULT` im Panel; "Alle", Anheft-Marker, Integration, Neu, Ausgefallen,

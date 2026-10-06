@@ -7,6 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.20.0] - 2026-10-06
+
+Parallel outage timeline.
+
+### Changed
+
+- Settings › Monitoring and notifications: the timeline of "Offline after" and
+  "Notify after" now shows two parallel bars that start at the same zero point
+  ("device gone"), because both times count from the start of the outage
+  (requested by the user). The bar length follows the value (the longer one fills
+  the width, the other is shown in proportion, at least a fifth) and changes while
+  you type. Same in the overview and in the integration details; a missing push
+  shows a dashed line with the reason, and an integration that delays the push
+  shows the global value as a dashed mark.
+
 ## [1.19.0] - 2026-10-06
 
 Copy the entity ID.
@@ -1524,6 +1539,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.20.0
 [1.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.19.0
 [1.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.18.0
 [1.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.17.0

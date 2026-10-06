@@ -684,6 +684,26 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .mtl .opt-input.mtl-in.chg { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 .mtl .opt-input.mtl-in.bad { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
 .mtl-err { margin: 2px 0 4px; }
+/* Ausfall-Zeitstrahl: zwei parallele Balken ab demselben Nullpunkt (seit 1.20.0) */
+.mtl.ptl { height: auto; margin: 10px 12px 6px; padding-left: 20px; }
+.ptl::before { content: ""; position: absolute; left: 4px; top: 8px; bottom: 12px; border-left: 2px dashed var(--dp-text3); opacity: .6; }
+.ptl-zero { position: relative; display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.ptl-zero::before { content: ""; position: absolute; left: -20px; top: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-text3); }
+.ptl-zero b { color: var(--dp-text); font-size: 12px; font-weight: 600; }
+.ptl-zero span { color: var(--dp-text2); font-size: 11.5px; }
+.ptl-row { margin-bottom: 10px; }
+.ptl-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 22px; }
+.ptl-head b { color: var(--dp-text); font-size: 12.5px; font-weight: 600; }
+.ptl-head > span:not(.opt-input) { color: var(--dp-text2); font-size: 11.5px; text-align: right; }
+.ptl-e .ptl-head { min-height: 36px; }
+.ptl-track { position: relative; height: 14px; margin: 3px 0 0 -15px; }
+.ptl-track::before { content: ""; position: absolute; left: 0; top: 5px; height: 4px; width: var(--w); border-radius: 2px; background: linear-gradient(90deg, var(--dp-error-line), var(--dp-error)); transition: width .15s; }
+.ptl-track i { position: absolute; top: 0; left: calc(var(--w) - 14px); width: 14px; height: 14px; box-sizing: border-box; border: 2px solid var(--dp-error); border-radius: 50%; background: var(--dp-card); transition: left .15s; }
+.ptl-track em { position: absolute; top: 2px; width: 10px; height: 10px; box-sizing: border-box; border: 2px dashed var(--dp-text3); border-radius: 50%; background: var(--dp-card); }
+.ptl-row.mk-p .ptl-track::before { background: linear-gradient(90deg, color-mix(in srgb, var(--dp-primary) 35%, transparent), var(--dp-primary)); }
+.ptl-row.mk-p .ptl-track i { border-color: var(--dp-primary); background: var(--dp-primary); box-shadow: inset 0 0 0 2px var(--dp-card); }
+.ptl-row.mk-off .ptl-track::before { height: 0; border-top: 2px dashed var(--dp-text3); background: none; top: 6px; }
+.ptl-row.mk-off .ptl-track i { display: none; }
 .mtl-note { display: flex; align-items: flex-start; gap: 4px; margin: 4px 0 2px; }
 .mon-grp { margin: 16px 0 2px; color: var(--dp-text2); font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
 .mon-diff .opt-line { min-height: 28px; }

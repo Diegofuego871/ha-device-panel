@@ -210,6 +210,10 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
   Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des
   Inhalts in zwei Spalten, auf dem Handy in einer.
+- Ausfall-Zeitstrahl (seit 1.20.0, Wunsch des Nutzers): zwei parallele Balken ab einem
+  gemeinsamen Nullpunkt (gestrichelte Linie links, "0 Gerät weg"), rot "Ausgefallen
+  nach", Primärfarbe Push; Länge nach Wert (längster 100 %, mindestens 22 %), Eingabefelder
+  über dem jeweiligen Balken. Der Batterie-Zeitstrahl bleibt eine Linie mit Marken.
 - Standardfolge der Filter-Chips (seit 1.18.0, nach dem Bildschirmfoto des Nutzers):
   "Alle" ist angeheftet (klebt auf dem Handy links), dann Integration, die Hinweise
   (Neu, Ausgefallen, Warnungen, Batterie niedrig, Batterie), Bereich, die

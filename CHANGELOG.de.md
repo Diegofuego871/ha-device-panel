@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.20.0] - 2026-10-06
+
+Paralleler Zeitstrahl beim Ausfall.
+
+### Geändert
+
+- Einstellungen › Überwachung und Meldungen: Der Zeitstrahl von "Ausgefallen
+  nach" und "Erst melden nach" zeigt jetzt zwei parallele Balken ab demselben
+  Nullpunkt ("Gerät weg"), weil beide Zeiten ab Beginn des Ausfalls zählen
+  (Wunsch des Nutzers). Die Länge folgt dem Wert (der längere füllt die Breite,
+  der andere steht im Verhältnis dazu, mindestens ein Fünftel) und ändert sich
+  beim Tippen. Ebenso in der Übersicht und im Detail der Integration; fehlt der
+  Push, steht eine gestrichelte Linie mit dem Grund, verzögert eine Integration
+  den Push, zeigt eine gestrichelte Marke den globalen Wert.
+
 ## [1.19.0] - 2026-10-06
 
 Entitäts-ID kopieren.
@@ -1584,6 +1599,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.20.0
 [1.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.19.0
 [1.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.18.0
 [1.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.17.0
