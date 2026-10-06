@@ -250,7 +250,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Abschnitte (notify-v3)`, order === "devices,monitor,look,ai,updates", order);
     check(`[${tag}] Überwachung und Meldungen zusammengefasst`, (await text('[data-id="monitor"] .set-sec-title')) === T.secMon && (await text('[data-id="monitor"] .set-sec-sum')) === T.sumMon(2), await text('[data-id="monitor"] .set-sec-sum'));
     await tap('[data-set="section"][data-id="monitor"]');
-    check(`[${tag}] Reiter "Übersicht" zuerst`, await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "overview" && r.querySelectorAll(".lane").length === 2`));
+    check(`[${tag}] Reiter "Übersicht" zuerst`, await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "overview" && r.querySelectorAll(".lane").length === 3`));
     await tab("outage");
     check(`[${tag}] vier Zahlenfelder, zwei im Zeitstrahl`, (await ev(`return r.querySelectorAll('.set-sec-body input[type="number"]').length`)) === 4 && (await ev(`return [...r.querySelectorAll('.mtl input[type="number"]')].map(i=>i.dataset.opt).join()`)) === "offline_after,notify_delay");
     check(`[${tag}] Feld im Zeitstrahl mit Titel und Einheit`, (await text('.ptl-row:has(input[data-opt="offline_after"]) .ptl-head > b')) === T.offLabel && (await text('.ptl-row:has(input[data-opt="offline_after"]) .unit')) === T.unit);

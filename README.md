@@ -11,6 +11,7 @@
 - **Overview:** devices online, who is offline and since when, an outage pulse over 24 hours with group outages
 - **Device list** grouped into offline, unstable and online, with search, filters by area and integration, filter chips and your own columns
 - **Per device:** availability, outages, signal and battery in a pop-up, with history and statistics
+- **Notifications you control:** outage, back online, low battery and new devices as push or persistent notification, per integration
 - **Battery forecast:** how long the battery lasts until its warning threshold, without AI
 - **Notifications:** push and persistent notification for outages and low batteries, with a timeline of when what arrives; defaults per integration, overrides per device
 - **Optional AI assessment:** a guess at the cause on a button press, prompt adjustable in expert mode

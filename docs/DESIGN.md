@@ -210,6 +210,10 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
   Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des
   Inhalts in zwei Spalten, auf dem Handy in einer.
+- Reiter "Neu" (seit 1.24.0, nach dem Muster von Batterie und Ausfall, ohne Mockup): ein
+  Balken im parallelen Zeitstrahl ("0 Gerät gefunden", Feld "Sammeln während"), Schalter
+  "Neue Geräte melden" und "Anhaltend", Inhalt der Meldung mit Vorschau, "Abweichungen"
+  mit Integrationen; in der Übersicht eine dritte Zeile mit grünem Symbol.
 - Ausfall-Zeitstrahl (seit 1.20.0, Wunsch des Nutzers): zwei parallele Balken ab einem
   gemeinsamen Nullpunkt (gestrichelte Linie links, "0 Gerät weg"), rot "Ausgefallen
   nach", Primärfarbe Push; Länge nach Wert (längster 100 %, mindestens 22 %), Eingabefelder

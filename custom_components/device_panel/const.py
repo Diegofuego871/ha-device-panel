@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "71"
+PANEL_VERSION = "72"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -73,7 +73,25 @@ MONITOR_OFF = "off"
 # "Ausgefallen nach" (options_api.values_from); neu Speichern lehnt sie ab.
 CONF_NOTIFY_DELAY = "notify_delay"
 DEFAULT_NOTIFY_DELAY = DEFAULT_OFFLINE_AFTER
+# Push bei neuen Geräten (seit 1.24.0): ein neues Gerät im Geräte-Register meldet
+# das Panel nach dem Sammelfenster (Minuten, CONF_NEW_WINDOW) in einer Meldung mit
+# allen, die inzwischen dazukamen; erst Geräte, die nach dem Einschalten entstehen.
+CONF_NOTIFY_NEW = "notify_new"
+CONF_NEW_WINDOW = "new_window"
+DEFAULT_NEW_WINDOW = 5
+# Inhalt der Meldung (der Name steht im Titel), in dieser Reihenfolge.
+CONF_NEW_FIELDS = "new_fields"
+NEW_FIELDS = ("area", "integration", "connection", "model")
+DEFAULT_NEW_FIELDS = ("area", "integration")
+# Integrationen, deren neue Geräte nicht gemeldet werden (Override pro Integration).
+CONF_NEW_EXCLUDE = "new_exclude_integrations"
+# Anhaltende Benachrichtigung in HA mit den zuletzt gefundenen Geräten.
+CONF_NEW_PERSISTENT = "new_persistent"
+NEW_RECENT_MAX = 10
+DATA_NEW = f"{DOMAIN}_new"
+PERSISTENT_NEW_ID = f"{DOMAIN}_new"
 INT_RANGES = {
+    CONF_NEW_WINDOW: (1, 60),
     CONF_OFFLINE_AFTER: (1, 60),
     CONF_FLAKY_OUTAGES: (2, 50),
     CONF_STARTUP_GRACE: (0, 30),
@@ -249,6 +267,8 @@ NEW_INSTALL_OPTIONS = {
     CONF_NOTIFY_FIELDS: ["area", "integration", "connection", "since", "battery"],
     CONF_BATTERY_FIELDS: ["battery", "area", "integration"],
     CONF_HIDE_CHIPS: ["override"],
+    # Bluetooth-Tracker legen laufend Geräte an (Handys in der Nähe): kein Push bei neuen Geräten.
+    CONF_NEW_EXCLUDE: ["ibeacon"],
 }
 # Verbindungsart von Hand (Popup, wie der Typ): alle ausser "unbekannt", das
 # ist der Fall ohne Erkennung, kein Wert zum Wählen.

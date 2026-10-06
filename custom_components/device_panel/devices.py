@@ -506,6 +506,13 @@ def monitored_devices(
     yield from _shown(hass, opts or effective(hass), disabled=False, unmonitored=False)
 
 
+def shown_devices(
+    hass: HomeAssistant, opts: dict[str, Any] | None = None
+) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:
+    """Gezeigte, nicht deaktivierte Geräte, auch die auf "Nicht überwachen" (neue Geräte, seit 1.24.0)."""
+    yield from _shown(hass, opts or effective(hass), disabled=False)
+
+
 def listed_devices(
     hass: HomeAssistant, opts: dict[str, Any] | None = None
 ) -> Iterator[tuple[dr.DeviceEntry, list[er.RegistryEntry]]]:

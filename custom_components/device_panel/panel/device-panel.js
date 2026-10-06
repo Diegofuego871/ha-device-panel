@@ -251,13 +251,16 @@ const OFFLINE_PRESETS = [1, 2, 5, 10, 15, 30, 60, 120, 360, 720, 1440];
 const NOTIFY_FIELDS = ["area", "integration", "connection", "since", "signal", "battery", "model"];
 // Inhalt der Batterie-Meldung (options_api.BATTERY_FIELDS, feste Reihenfolge).
 const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
+// Inhalt der Meldung bei neuen Geräten (seit 1.24.0, const.NEW_FIELDS).
+const NEW_FIELDS = ["area", "integration", "connection", "model"];
 // Abschnitt "Überwachung und Meldungen" (seit 0.34.0): Optionen je Reiter,
 // für den Punkt am Reiter und das Etikett "geändert" des Abschnitts.
 const MON_TAB_KEYS = {
   overview: ["notify_service", "notify_click_target"],
   outage: ["offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "reset_offline", "reset_notify"],
   battery: ["battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
-  integ: ["offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "signal_low_integrations"],
+  new: ["notify_new", "new_window", "new_persistent", "new_fields"],
+  integ: ["offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
 
 // Reiter der Abschnitte "Geräte im Panel" und "Darstellung" (seit 1.0.0,
@@ -363,7 +366,7 @@ const promptHtml = (text) => escape(text).replace(/\{(language|facts(?:_[a-z]+)?
 // Optionen mit Abweichungen pro Integration ("Alle zurücksetzen" in
 // "Überwachung und Meldungen" › "Integrationen", "Alles auf Standard" in der Integration).
 const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations", "signal_low_integrations"];
-const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations"];
+const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations"];
 
 const SUB_TAB_KEYS = {
   integrations: ["exclude_integrations"],
@@ -4497,7 +4500,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -4649,7 +4652,7 @@ class DevicePanel extends HTMLElement {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
     const tab = MON_TAB_KEYS[st.tab] ? st.tab : "overview";
-    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["integ", "tabInteg"]]
+    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["new", "tabNew"], ["integ", "tabInteg"]]
       .map(([id, key]) => {
         const keys = MON_TAB_KEYS[id];
         // Punkt am Reiter: dort gibt es eine Änderung (blau) oder einen Fehler (rot).
@@ -4662,6 +4665,8 @@ class DevicePanel extends HTMLElement {
         ? this._monOutageHtml(d, changes, errors, ui)
         : tab === "battery"
           ? this._monBatteryHtml(d, changes, errors, ui)
+          : tab === "new"
+            ? this._monNewHtml(d, changes, errors, ui)
           : tab === "integ"
             ? this._monIntegHtml(d, changes, errors)
             : this._monOverviewHtml(d, errors, ui);
@@ -4684,9 +4689,9 @@ class DevicePanel extends HTMLElement {
   // Beginn des Ausfalls und werden nicht addiert. Die Länge folgt dem Wert (mindestens
   // ein Fünftel, damit Beschriftung und Ende sichtbar bleiben). Zeile: title, sub oder
   // html (Eingabefeld), w (Länge in %), cls, ghost (gestrichelte Marke, Länge in %).
-  _ptlHtml(rows, edit = false) {
+  _ptlHtml(rows, edit = false, zero = "tlGone") {
     const t = (k, ...a) => this._t(k, ...a);
-    return `<div class="mtl ptl${edit ? " ptl-e" : ""}"><div class="ptl-zero"><b>0</b><span>${escape(t("tlGone"))}</span></div>${rows
+    return `<div class="mtl ptl${edit ? " ptl-e" : ""}"><div class="ptl-zero"><b>0</b><span>${escape(t(zero))}</span></div>${rows
       .map(
         (r) =>
           `<div class="ptl-row${r.cls ? ` ${r.cls}` : ""}" style="--w:${r.w}%"${r.key ? ` data-ptl="${r.key}"` : ""}><div class="ptl-head"><b>${escape(r.title)}</b>${r.html || (r.sub ? `<span>${escape(r.sub)}</span>` : "")}</div><div class="ptl-track"><i></i>${
@@ -4735,9 +4740,10 @@ class DevicePanel extends HTMLElement {
     const noPers = new Set(d.persistent_exclude_integrations || []);
     const noBatPush = new Set(d.battery_push_exclude_integrations || []);
     const sigMap = d.signal_low_integrations || {};
+    const noNew = new Set(d.new_exclude_integrations || []);
     const list = (cat.integrations || []).filter((i) => !hidden.has(i.domain)).map((i) => ({ domain: i.domain, name: i.name, devices: i.devices }));
     const known = new Set(list.map((x) => x.domain));
-    for (const dom of [...Object.keys(offMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush]) {
+    for (const dom of [...Object.keys(offMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush, ...noNew]) {
       if (known.has(dom) || hidden.has(dom)) continue;
       known.add(dom);
       list.push({ domain: dom, name: this._integrations[dom] || dom, devices: 0 });
@@ -4751,8 +4757,9 @@ class DevicePanel extends HTMLElement {
       const batText = b !== undefined || noBatPush.has(x.domain) ? t("diffBattery", Number.isInteger(b) ? b : null, b === "off", noBatPush.has(x.domain)) : null;
       const sigCount = Object.keys(sigMap[x.domain] || {}).length;
       const sigDiff = sigCount ? t("diffSignal", sigCount) : null;
-      const diff = unmon ? t("integUnmon") : [out, batText, sigDiff].filter(Boolean).join(" · ");
-      return { ...x, batDevices: bat.get(x.domain) || 0, unmon, out, bat: batText, sig: sigDiff, own: Boolean(unmon || out || batText || sigDiff), diff };
+      const newDiff = noNew.has(x.domain) ? t("diffNoNew") : null;
+      const diff = unmon ? t("integUnmon") : [out, batText, newDiff, sigDiff].filter(Boolean).join(" · ");
+      return { ...x, batDevices: bat.get(x.domain) || 0, unmon, out, bat: batText, noNew: noNew.has(x.domain), sig: sigDiff, own: Boolean(unmon || out || batText || newDiff || sigDiff), diff };
     });
   }
 
@@ -4763,6 +4770,7 @@ class DevicePanel extends HTMLElement {
     return {
       outI: items.filter((x) => x.unmon || x.out).length,
       batI: items.filter((x) => x.bat).length,
+      newI: items.filter((x) => x.noNew).length,
       outD: new Set([...(ov.offline || []), ...(ov.notify || [])].map((x) => x.id)).size,
       batD: (ov.battery || []).length,
     };
@@ -4771,8 +4779,8 @@ class DevicePanel extends HTMLElement {
   // Kasten "N Integrationen weichen ab" mit Sprung in den Reiter "Integrationen".
   _integDiffBox(d, kind) {
     const t = (k, ...a) => this._t(k, ...a);
-    const items = this._integItems(d).filter((x) => (kind === "out" ? x.unmon || x.out : x.bat));
-    const text = items.map((x) => `${x.name}: ${kind === "out" ? (x.unmon ? t("integUnmon") : x.out) : x.bat}`).join(" · ");
+    const items = this._integItems(d).filter((x) => (kind === "out" ? x.unmon || x.out : kind === "new" ? x.noNew : x.bat));
+    const text = items.map((x) => `${x.name}: ${kind === "out" ? (x.unmon ? t("integUnmon") : x.out) : kind === "new" ? t("diffNoNew") : x.bat}`).join(" · ");
     return `<div class="opt mon-diff"><div class="opt-line"><span class="opt-label">${escape(t("diffIntegTitle", items.length))}</span><button type="button" class="lnk" data-set="goto" data-key="integ" data-filter="${items.length ? "own" : "all"}">${escape(t("diffIntegGo"))}</button></div>
       <div class="opt-short">${escape(items.length ? text : t("diffIntegNone"))}</div></div>`;
   }
@@ -4813,12 +4821,14 @@ class DevicePanel extends HTMLElement {
       ],
       "mtl-b"
     );
-    const warn = !target && (d.notify_outage || d.notify_online || d.battery_push) ? t("noTargetWarn") : null;
+    const warn = !target && (d.notify_outage || d.notify_online || d.battery_push || d.notify_new) ? t("noTargetWarn") : null;
+    const newTl = this._ptlHtml(this._newRows(val("new_window"), target && d.notify_new, reason), false, "tlFound");
     return (
       lane("pulse", "out", t("laneOutage"), "outage", outTl,
         chip("notify_outage", t("chipPush")) + chip("outage_persistent", t("chipPersistent")) + chip("notify_online", t("chipOnline")) + chip("notify_group", t("chipGroup")),
         diffLine(diff.outI, diff.outD, "outage")) +
       lane("battery", "bat", t("laneBattery"), "battery", batTl, chip("battery_push", t("chipPush")) + chip("battery_persistent", t("chipPersistent")), diffLine(diff.batI, diff.batD, "battery")) +
+      lane("sparkle", "new", t("laneNew"), "new", newTl, chip("notify_new", t("chipPush")) + chip("new_persistent", t("chipPersistent")), diffLine(diff.newI, 0, "new")) +
       ui.row("notify_service", t("optNotifyTarget"), ui.select("notify_service", ui.targets, t("optNotifyTarget")), t("optNotifyTargetShort"), t("optNotifyTargetInfo"), warn) +
       ui.row("notify_click_target", t("optClick"), ui.select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null)
     );
@@ -4942,6 +4952,72 @@ class DevicePanel extends HTMLElement {
       <div class="opt-short">${escape(t("optBatFieldsShort"))}</div><div class="nf-grid">${grid}</div>${preview}</div>`;
   }
 
+  // Balken der Meldung bei neuen Geräten (seit 1.24.0): vom Fund bis zur Meldung nach dem
+  // Sammelfenster; ohne Push steht der Grund.
+  _newRows(window, push, reason) {
+    const t = (k, ...a) => this._t(k, ...a);
+    return push ? [{ cls: "mk-p", title: t("offlineMin", window), sub: t("tlNewPush"), w: 100 }] : [{ cls: "mk-off", title: t("tlNoPush"), sub: reason, w: 100 }];
+  }
+
+  // Reiter "Neu" (seit 1.24.0): Push bei neuen Geräten nach dem Muster von Ausfall und
+  // Batterie: Zeitstrahl mit Sammelfenster, Meldung, Inhalt mit Vorschau, Abweichungen.
+  _monNewHtml(d, changes, errors, ui) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const target = Boolean(d.notify_service && d.notify_service !== "none");
+    const noTarget = d.notify_new && !target;
+    const tl = this._ptlHtml(
+      [{ cls: "mk-p", title: t("optNewWindow"), html: this._tlInput(d, "new_window", t("minuteUnit"), t("optNewWindow"), errors.new_window, changes.has("new_window")), w: 100 }],
+      true,
+      "tlFound"
+    );
+    return `${tl}<div class="opt-error mtl-err" data-tl-error="new_window" ${errors.new_window ? "" : "hidden"}>${escape(errors.new_window || "")}</div>
+      <div class="opt-short mtl-note">${escape(t("tlNewNote"))}</div>
+      <div class="mon-grp">${escape(t("grpNotify"))}</div>
+      ${ui.row("notify_new", t("optNewNotify"), ui.sw("notify_new", t("optNewNotify")), noTarget ? null : t("optNewNotifyShort"), null, noTarget ? t("noTargetWarn") : null)}
+      ${ui.row("new_persistent", t("optPersistent"), ui.sw("new_persistent", t("optPersistent")), t("optNewPersistentShort"), null)}
+      ${this._newFieldsHtml(d, changes)}
+      <div class="mon-grp">${escape(t("grpDiff"))}</div>
+      ${this._integDiffBox(d, "new")}`;
+  }
+
+  // Inhalt der Meldung bei neuen Geräten mit Vorschau an einem Gerät aus der Liste
+  // (das zuletzt hinzugekommene, sonst das mit den meisten Angaben).
+  _newFieldsHtml(d, changes) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const on = new Set(d.new_fields || []);
+    const labels = { area: "fieldArea", integration: "fieldIntegration", connection: "fieldConnection", model: "fieldModel" };
+    const grid = NEW_FIELDS.map(
+      (f) => `<label class="nf-item"><span>${escape(t(labels[f]))}</span><span class="switch"><input type="checkbox" data-newfield="${f}" ${on.has(f) ? "checked" : ""} aria-label="${escape(t(labels[f]))}"><span></span></span></label>`
+    ).join("");
+    const score = (x) => (x.new ? 10 : 0) + (x.area ? 1 : 0) + (x.integration ? 1 : 0) + (x.manufacturer || x.model ? 1 : 0);
+    const newest = (x) => (x.created_at ? Date.parse(x.created_at) || 0 : 0);
+    const dev = this._devices.slice().sort((a, b) => score(b) - score(a) || newest(b) - newest(a))[0] || null;
+    let invented = false;
+    const sample = (value, example) => {
+      if (value) return escape(value);
+      invented = true;
+      return `<i>${escape(example)}</i>`;
+    };
+    const parts = NEW_FIELDS.filter((f) => on.has(f)).map((f) =>
+      f === "area"
+        ? sample(dev?.area || "", t("pvSampleArea"))
+        : f === "integration"
+          ? sample(dev?.integration ? this._integName(dev) : "", t("pvSampleInteg"))
+          : f === "connection"
+            ? sample(dev ? t(CONN[this._connOf(dev)].key) : "", t("pvSampleConn"))
+            : sample([dev?.manufacturer, dev?.model].filter(Boolean).join(" "), t("pvSampleModel"))
+    );
+    // Nichts gewählt: das Backend schreibt "neu gefunden".
+    const text = parts.length ? parts.join(" · ") : escape(t("pvNewFound"));
+    const preview = d.notify_new
+      ? `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
+          <div class="pv-title">${escape(t("pvNewTitle", dev ? dev.name : t("pvSample")))}</div><div class="pv-text">${text}</div></div>
+          <div class="opt-short">${escape(t("pvNewNote"))}${invented ? ` ${escape(t("pvExample"))}` : ""}</div></div>`
+      : "";
+    return `<div class="opt${changes.has("new_fields") ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optNewFields"))}</span></div>
+      <div class="opt-short">${escape(t("optNewFieldsShort"))}</div><div class="nf-grid">${grid}</div>${preview}</div>`;
+  }
+
   _monIntegHtml(d, changes, errors) {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
@@ -5051,6 +5127,13 @@ class DevicePanel extends HTMLElement {
         (target && d.battery_push ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integBatPushGlobalOff" : "noTargetWarn"))}</div>`);
     }
     html += "</div>";
+    // Neue Geräte (seit 1.24.0): Override pro Integration; gilt auch bei "Nicht überwachen".
+    html +=
+      `<div class="mon-grp">${escape(t("grpNew"))}</div>` +
+      opt(has("new_exclude_integrations") !== (saved.new_exclude_integrations || []).includes(dom), t("optNewNotify"),
+        `<label class="switch"><input type="checkbox" data-list="new_exclude_integrations" data-value="${escape(dom)}" ${has("new_exclude_integrations") ? "" : "checked"} aria-label="${escape(`${t("optNewNotify")}: ${item.name}`)}"><span></span></label>`,
+        origin(has("new_exclude_integrations"))) +
+      (target && d.notify_new ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integNewGlobalOff" : "noTargetWarn"))}</div>`);
     // Empfang (seit 1.17.0): Warnschwelle je Funkart der Integration; gilt auch bei
     // "Nicht überwachen", weil sie nur die Markierung betrifft.
     const sigRows = this._sigRowsHtml(d, dom);
@@ -5071,7 +5154,7 @@ class DevicePanel extends HTMLElement {
         .join("");
       html += `<div class="mon-grp">${escape(t("integDevTitle"))}</div><div class="ovr-list">${rows}</div>`;
     }
-    const anyOwn = off !== undefined || dom in batMap || dom in (d.signal_low_integrations || {}) || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations"].some(has);
+    const anyOwn = off !== undefined || dom in batMap || dom in (d.signal_low_integrations || {}) || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations"].some(has);
     html += `<div class="integ-reset"><button type="button" class="ovr-all" data-set="integ-reset" data-key="${escape(dom)}" ${anyOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("integReset"))}</button></div>`;
     return html;
   }
@@ -5339,7 +5422,7 @@ class DevicePanel extends HTMLElement {
           delete own[dom];
           st.draft[key] = own;
         }
-        for (const key of ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations"]) {
+        for (const key of INTEG_OWN_LISTS) {
           st.draft[key] = (st.draft[key] || []).filter((x) => x !== dom);
         }
         this._renderSettings();
@@ -5499,9 +5582,13 @@ class DevicePanel extends HTMLElement {
         return;
       }
       if (!st?.draft || el.type !== "checkbox") return;
-      if (el.dataset.nfield || el.dataset.bfield) {
+      if (el.dataset.nfield || el.dataset.bfield || el.dataset.newfield) {
         // Inhalt der Meldung: Liste in fester Reihenfolge.
-        const [key, order, field] = el.dataset.nfield ? ["notify_fields", NOTIFY_FIELDS, el.dataset.nfield] : ["battery_fields", BATTERY_FIELDS, el.dataset.bfield];
+        const [key, order, field] = el.dataset.nfield
+          ? ["notify_fields", NOTIFY_FIELDS, el.dataset.nfield]
+          : el.dataset.bfield
+            ? ["battery_fields", BATTERY_FIELDS, el.dataset.bfield]
+            : ["new_fields", NEW_FIELDS, el.dataset.newfield];
         const on = new Set(st.draft[key] || []);
         if (el.checked) on.add(field);
         else on.delete(field);

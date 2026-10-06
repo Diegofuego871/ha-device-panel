@@ -20,6 +20,8 @@ from .availability import RANGES, AvailabilityLog
 from .availability import STORAGE_KEY as AVAILABILITY_STORE_KEY
 from .battery import STORE_KEY as BATTERY_STORE_KEY
 from .battery import BatteryWatch
+from .newdevice import STORE_KEY as NEW_STORE_KEY
+from .newdevice import NewDeviceNotifier
 from .battery_history import RANGES as BATTERY_RANGES
 from .battery_history import async_battery_history, battery_entity
 from .outage import STORE_KEY as NOTIFY_STORE_KEY
@@ -41,6 +43,7 @@ from .const import (
     INT_RANGES,
     DATA_AVAILABILITY,
     DATA_BATTERY,
+    DATA_NEW,
     DATA_CONNECTION_OVERRIDES,
     DATA_DEVICE_SETTINGS,
     DATA_OUTAGE,
@@ -105,6 +108,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         watch = BatteryWatch(hass)
         await watch.async_start()
         hass.data[DATA_BATTERY] = watch
+    if DATA_NEW not in hass.data:
+        new_devices = NewDeviceNotifier(hass)
+        await new_devices.async_start()
+        hass.data[DATA_NEW] = new_devices
     if DATA_SIGNAL not in hass.data:
         signal_log = SignalLog(hass)
         await signal_log.async_start()
@@ -122,6 +129,9 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
     # Batterie: Schwelle oder Meldungsart geändert, sofort neu prüfen.
     if (watch := hass.data.get(DATA_BATTERY)) is not None:
         await watch.async_options_changed()
+    # Neue Geräte: ausgeschaltet verwirft Offenes.
+    if (new_devices := hass.data.get(DATA_NEW)) is not None:
+        await new_devices.async_options_changed()
     # Ausfälle: Verzögerung, Integrationen, anhaltende Benachrichtigung.
     if (notifier := hass.data.get(DATA_OUTAGE)) is not None:
         await notifier.async_options_changed()
@@ -134,6 +144,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await notifier.async_stop()
     if (log := hass.data.pop(DATA_AVAILABILITY, None)) is not None:
         await log.async_stop()
+    if (new_devices := hass.data.pop(DATA_NEW, None)) is not None:
+        await new_devices.async_stop()
     if (watch := hass.data.pop(DATA_BATTERY, None)) is not None:
         await watch.async_stop()
     if (signal_log := hass.data.pop(DATA_SIGNAL, None)) is not None:
@@ -151,7 +163,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     Panel-Einstellungen. HA ruft
     das erst nach dem Entladen auf; dort wurde alles Ausstehende geschrieben.
     """
-    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, SIGNAL_STORE_KEY, update_check.PANEL_STORE_KEY):
+    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, SIGNAL_STORE_KEY, update_check.PANEL_STORE_KEY):
         await Store(hass, STORAGE_VERSION, key).async_remove()
     # Geladene Stände vergessen: ein neues Einrichten ohne Neustart beginnt leer.
     for key in (DATA_TYPE_OVERRIDES, DATA_DEVICE_SETTINGS, DATA_CONNECTION_OVERRIDES, update_check.PANEL_DATA_KEY):

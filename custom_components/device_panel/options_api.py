@@ -22,6 +22,14 @@ from .const import (
     BATTERY_FIELDS,
     BATTERY_OFF,
     CONF_BATTERY_FIELDS,
+    CONF_NEW_EXCLUDE,
+    CONF_NEW_FIELDS,
+    CONF_NEW_PERSISTENT,
+    CONF_NEW_WINDOW,
+    CONF_NOTIFY_NEW,
+    DEFAULT_NEW_FIELDS,
+    DEFAULT_NEW_WINDOW,
+    NEW_FIELDS,
     CONF_BATTERY_PUSH_EXCLUDE,
     DEFAULT_BATTERY_FIELDS,
     MONITOR_OFF,
@@ -99,6 +107,8 @@ BOOL_OPTIONS: tuple[tuple[str, bool], ...] = (
     (CONF_OUTAGE_PERSISTENT, False),
     (CONF_BATTERY_PUSH, False),
     (CONF_BATTERY_PERSISTENT, False),
+    (CONF_NOTIFY_NEW, False),
+    (CONF_NEW_PERSISTENT, False),
     (CONF_SHOW_SERVICE, False),
     (CONF_SHOW_DISABLED, False),
     (CONF_UPDATE_CHECK, DEFAULT_UPDATE_CHECK),
@@ -110,6 +120,7 @@ INT_OPTIONS: tuple[tuple[str, int], ...] = (
     (CONF_STARTUP_GRACE, DEFAULT_STARTUP_GRACE),
     (CONF_BATTERY_LOW, DEFAULT_BATTERY_LOW),
     (CONF_NOTIFY_DELAY, DEFAULT_NOTIFY_DELAY),
+    (CONF_NEW_WINDOW, DEFAULT_NEW_WINDOW),
 )
 LIST_OPTIONS = (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CHIPS, CONF_HIDE_CONNECTIONS, CONF_CONNECTION_ORDER, CONF_CHIP_ORDER)
 
@@ -173,6 +184,13 @@ def battery_fields(value: Any) -> list[str]:
     if not isinstance(value, list) or not all(v in BATTERY_FIELDS for v in value):
         raise vol.Invalid(f"Liste aus {', '.join(BATTERY_FIELDS)} erwartet")
     return [f for f in BATTERY_FIELDS if f in value]
+
+
+def new_fields(value: Any) -> list[str]:
+    """Inhalt der Meldung bei neuen Geräten: bekannte Angaben in fester Reihenfolge."""
+    if not isinstance(value, list) or not all(v in NEW_FIELDS for v in value):
+        raise vol.Invalid(f"Liste aus {', '.join(NEW_FIELDS)} erwartet")
+    return [f for f in NEW_FIELDS if f in value]
 
 
 def connection_map(value: Any) -> dict[str, str]:
@@ -368,6 +386,8 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_BATTERY_PUSH_EXCLUDE): _domains,
         vol.Optional(CONF_NOTIFY_FIELDS): notify_fields,
         vol.Optional(CONF_BATTERY_FIELDS): battery_fields,
+        vol.Optional(CONF_NEW_FIELDS): new_fields,
+        vol.Optional(CONF_NEW_EXCLUDE): _domains,
         vol.Optional(CONF_HIDE_CHIPS): _chips,
         vol.Optional(CONF_HIDE_CONNECTIONS): _connections,
         vol.Optional(CONF_CONNECTION_ORDER): connection_order,
@@ -407,7 +427,7 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_EXCLUDE_DEVICES] = sorted(
         {d for d in options.get(CONF_EXCLUDE_DEVICES) or [] if isinstance(d, str) and _DEVICE_RE.match(d)}
     )
-    for key in (CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE):
+    for key in (CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE, CONF_NEW_EXCLUDE):
         values[key] = sorted({d for d in options.get(key) or [] if isinstance(d, str) and _DOMAIN_RE.match(d)})
     fields = options.get(CONF_NOTIFY_FIELDS)
     values[CONF_NOTIFY_FIELDS] = (
@@ -417,6 +437,8 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_BATTERY_FIELDS] = (
         [f for f in BATTERY_FIELDS if f in fields] if isinstance(fields, list) else list(DEFAULT_BATTERY_FIELDS)
     )
+    fields = options.get(CONF_NEW_FIELDS)
+    values[CONF_NEW_FIELDS] = [f for f in NEW_FIELDS if f in fields] if isinstance(fields, list) else list(DEFAULT_NEW_FIELDS)
     values[CONF_HIDE_CHIPS] = [k for k in CHIP_KEYS if k in set(options.get(CONF_HIDE_CHIPS) or [])]
     values[CONF_HIDE_CONNECTIONS] = sorted({c for c in options.get(CONF_HIDE_CONNECTIONS) or [] if c in CONNECTION_TYPES})
     # Reihenfolge bleibt, wie gespeichert (nicht sortieren); Unbekanntes fällt weg.

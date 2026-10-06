@@ -7,6 +7,33 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.24.0] - 2026-10-06
+
+Push notification for new devices.
+
+### Added
+
+- Push notification when a new device appears in Home Assistant (requested by
+  the user), with its own tab "New" in Settings › Monitoring and notifications,
+  built like "Outage" and "Battery":
+  - Off by default. Only devices that appear after you switch it on are
+    reported; hidden, disabled and excluded devices are not.
+  - Collect window (default 5 minutes, 1 to 60): the first new device starts it,
+    then one notification arrives with everything that came in meanwhile. One
+    device gives "New device: Name", several give "3 new devices" with the
+    details in brackets. The window also gives area, manufacturer and model time
+    to fill in.
+  - Content of the notification (area, integration, connection type,
+    manufacturer / model) with a preview, optional persistent notification in
+    Home Assistant with the devices found last (until you dismiss it). Tapping
+    the notification opens the device, as set under "Opens".
+  - Timeline with the window in the tab and a third row in the overview.
+  - Per integration: switch "Report new devices" in the integration details;
+    the list and "All to default" include it. New installations start with
+    "ibeacon" excluded (Bluetooth trackers create devices all the time).
+  - New options `notify_new`, `new_window`, `new_persistent`, `new_fields` and
+    `new_exclude_integrations`, also in the options dialog.
+
 ## [1.23.0] - 2026-10-06
 
 Integration logos in the settings.
@@ -1580,6 +1607,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.24.0
 [1.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.23.0
 [1.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.22.0
 [1.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.21.0

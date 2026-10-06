@@ -395,9 +395,11 @@
     if (!["{facts}", ...PROMPT_GROUPS].some((v) => text.includes(v))) return "no_facts";
     return null;
   };
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50], notify_delay: [1, 60] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50], notify_delay: [1, 60], new_window: [1, 60] };
   // Inhalt der Batterie-Meldung wie options_api.BATTERY_FIELDS (seit 0.34.0).
   const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
+  // Inhalt der Meldung bei neuen Geräten wie const.NEW_FIELDS (seit 1.24.0).
+  const NEW_FIELDS = ["area", "integration", "connection", "model"];
   // Inhalt der Meldung wie options_api.NOTIFY_FIELDS (feste Reihenfolge).
   const NOTIFY_FIELDS = ["area", "integration", "connection", "since", "signal", "battery", "model"];
   // Push-Ziele wie options_api.notify_targets (erfunden).
@@ -520,6 +522,7 @@
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
+    notify_new: false, new_window: 5, new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
   };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
@@ -707,6 +710,11 @@
           if (!Array.isArray(v) || v.some((x) => typeof x !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(x))) throw { code: "invalid_format", message: "devices" };
           msg.values.exclude_devices = [...new Set(v)].sort();
         }
+        if ("new_fields" in msg.values) {
+          const v = msg.values.new_fields;
+          if (!Array.isArray(v) || v.some((x) => !NEW_FIELDS.includes(x))) throw { code: "invalid_format", message: "new fields" };
+          msg.values.new_fields = NEW_FIELDS.filter((x) => v.includes(x));
+        }
         if ("battery_fields" in msg.values) {
           const v = msg.values.battery_fields;
           if (!Array.isArray(v) || v.some((x) => !BATTERY_FIELDS.includes(x))) throw { code: "invalid_format", message: "battery fields" };
@@ -718,7 +726,7 @@
           const nd = msg.values.notify_delay ?? window.__opts.notify_delay;
           if (Number.isInteger(nd) && nd >= 1 && nd < oa) throw { code: "invalid_format", message: "notify_delay shorter than offline_after" };
         }
-        for (const key of ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations"]) {
+        for (const key of ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations"]) {
           const v = msg.values[key];
           if (key in msg.values && (!Array.isArray(v) || v.some((x) => !/^[a-z0-9_]+$/.test(x)))) throw { code: "invalid_format", message: key };
           if (key in msg.values) msg.values[key] = [...new Set(v)].sort();

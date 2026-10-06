@@ -34,11 +34,16 @@
           "battery_push_daily": "Batterie: die Tagesmeldung enthält",
           "battery_persistent": "Batterie: anhaltende Benachrichtigung",
           "battery_fields": "Batterie: Inhalt der Push-Meldung",
+          "notify_new": "Neue Geräte: Push-Meldung",
+          "new_window": "Neue Geräte: Sammeln während",
+          "new_persistent": "Neue Geräte: Anhaltende Benachrichtigung",
+          "new_fields": "Neue Geräte: Inhalt der Push-Meldung",
           "offline_after_integrations": "Ausfall: eigenes \"Ausgefallen nach\" pro Integration",
           "notify_exclude_integrations": "Push: Integrationen ohne Push",
           "persistent_exclude_integrations": "Anhaltende Benachrichtigung: Integrationen nicht aufführen",
           "battery_low_integrations": "Batterie: eigene Warnschwelle pro Integration",
           "battery_push_exclude_integrations": "Batterie: Integrationen ohne Push",
+          "new_exclude_integrations": "Neue Geräte: Integrationen ohne Push",
           "exclude_integrations": "Integrationen ausblenden",
           "exclude_types": "Gerätetypen ausblenden",
           "exclude_devices": "Ausgeblendete Geräte",
@@ -73,11 +78,16 @@
           "battery_push_daily": "Nur Geräte, die seit der letzten Meldung schwach geworden sind, oder jeden Tag alle Geräte mit schwacher Batterie (Erinnerung).",
           "battery_persistent": "Eine Benachrichtigung in Home Assistant mit allen Geräten mit schwacher Batterie; sie verschwindet, wenn alle wieder über der Warnschwelle sind.",
           "battery_fields": "Angaben unter dem Gerätenamen im Push bei schwacher Batterie (\"Batterie schwach: …\"); die Tages- oder Sammelmeldung nennt sie in Klammern nach jedem Gerät. Nichts gewählt: der Stand.",
+          "notify_new": "Eine Push-Meldung, wenn in Home Assistant ein neues Gerät erscheint (nur Geräte, die nach dem Einschalten entstehen), an das Push-Ziel oben.",
+          "new_window": "Minuten, die nach dem ersten neuen Gerät gewartet wird, damit weitere Geräte (etwa einer neuen Integration) in einer Meldung ankommen und Bereich und Modell bekannt sind.",
+          "new_persistent": "Eine Benachrichtigung in Home Assistant mit den zuletzt gefundenen Geräten; sie bleibt, bis du sie wegklickst.",
+          "new_fields": "Angaben unter dem Gerätenamen im Push (\"Neues Gerät: …\"); die Sammelmeldung nennt sie in Klammern nach jedem Gerät. Nichts gewählt: die Integration.",
           "offline_after_integrations": "Integration → Minuten oder off, eine pro Zeile, z. B. \"zha: 60\" oder \"hue: off\" (off: Geräte bleiben sichtbar, werden aber nicht überwacht: keine Ausfälle, Statistik oder Meldungen). Ohne Eintrag gilt der globale Wert; massgebend ist die primäre Integration des Geräts.",
           "notify_exclude_integrations": "Kein Push bei Ausfall und Rückkehr für Geräte dieser Integrationen; überwacht werden sie weiter.",
           "persistent_exclude_integrations": "Geräte dieser Integrationen erscheinen nicht in der anhaltenden Benachrichtigung bei Ausfällen.",
           "battery_low_integrations": "Integration → Prozent oder off, eine pro Zeile, z. B. \"zha: 25\" oder \"bthome: off\" (Warnung für diese Integration aus). Ohne Eintrag gilt der globale Wert (Feld oben); massgebend ist die primäre Integration des Geräts.",
           "battery_push_exclude_integrations": "Kein Push bei schwacher Batterie für Geräte dieser Integrationen; die rote Markierung im Panel und die anhaltende Benachrichtigung bleiben.",
+          "new_exclude_integrations": "Kein Push bei neuen Geräten dieser Integrationen (etwa Bluetooth-Tracker, die laufend Geräte anlegen).",
           "exclude_integrations": "Geräte dieser Integrationen zeigt das Panel nicht, und sie werden nicht überwacht.",
           "exclude_types": "Geräte dieser Typen zeigt das Panel nicht, und sie werden nicht überwacht. Den Typ eines einzelnen Geräts kann man in seinem Popup ändern.",
           "exclude_devices": "Geräte, die weder gezeigt noch überwacht werden und nichts melden. Im Panel: Knopf \"Ausblenden\" im Geräte-Popup.",
@@ -185,6 +195,14 @@
         "battery": "Stand",
         "area": "Bereich",
         "integration": "Integration",
+        "model": "Hersteller / Modell"
+      }
+    },
+    "new_field": {
+      "options": {
+        "area": "Bereich",
+        "integration": "Integration",
+        "connection": "Verbindungsart",
         "model": "Hersteller / Modell"
       }
     },

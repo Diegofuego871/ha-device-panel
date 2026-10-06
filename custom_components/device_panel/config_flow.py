@@ -28,6 +28,12 @@ from .const import (
     CLICK_TARGETS,
     CONF_BATTERY_FIELDS,
     CONF_BATTERY_PUSH_EXCLUDE,
+    CONF_NEW_EXCLUDE,
+    CONF_NEW_FIELDS,
+    CONF_NEW_PERSISTENT,
+    CONF_NEW_WINDOW,
+    CONF_NOTIFY_NEW,
+    NEW_FIELDS,
     CONF_BATTERY_PUSH_DAILY,
     CONF_BATTERY_PUSH_MODE,
     CONF_BATTERY_PUSH_TIME,
@@ -77,6 +83,7 @@ from .const import (
 from .options_api import (
     INT_OPTIONS,
     battery_fields,
+    new_fields,
     battery_map,
     delay_too_short,
     offline_map,
@@ -92,7 +99,7 @@ from .options_api import (
 from .push import text
 
 # Einheit der Zahlenfelder im Optionsdialog.
-_UNITS = {CONF_OFFLINE_AFTER: "min", CONF_STARTUP_GRACE: "min", CONF_BATTERY_LOW: "%", CONF_NOTIFY_DELAY: "min"}
+_UNITS = {CONF_OFFLINE_AFTER: "min", CONF_STARTUP_GRACE: "min", CONF_BATTERY_LOW: "%", CONF_NOTIFY_DELAY: "min", CONF_NEW_WINDOW: "min"}
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -163,12 +170,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own, CONF_OFFLINE_INTEGRATIONS: offline, CONF_CONNECTION_INTEGRATIONS: conns, CONF_SIGNAL_LOW: signal_low, CONF_SIGNAL_LOW_INTEGRATIONS: signal_integ}
                 for key in (
                     CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_EXCLUDE_DEVICES, CONF_HIDE_CHIPS, CONF_HIDE_CONNECTIONS,
-                    CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE,
+                    CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE, CONF_NEW_EXCLUDE,
                 ):
                     data[key] = sorted(set(user_input.get(key) or []))
                 # Inhalt der Meldungen in fester Reihenfolge, wie im Panel.
                 data[CONF_NOTIFY_FIELDS] = notify_fields(list(user_input.get(CONF_NOTIFY_FIELDS) or []))
                 data[CONF_BATTERY_FIELDS] = battery_fields(list(user_input.get(CONF_BATTERY_FIELDS) or []))
+                data[CONF_NEW_FIELDS] = new_fields(list(user_input.get(CONF_NEW_FIELDS) or []))
                 # Leere Auswahl der KI-Aufgabe überschreibt die alte (Standard von HA).
                 data[CONF_AI_TASK] = user_input.get(CONF_AI_TASK) or ""
                 # Das Zahlenfeld liefert Kommazahlen (2.0); gespeichert wird wie
@@ -195,7 +203,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         integrations = [{"value": i["domain"], "label": f"{i['name']} ({i['devices']})"} for i in catalog["integrations"]]
         # Ausgeschlossene Integration ohne Geräte bleibt wählbar.
         known = {i["value"] for i in integrations}
-        for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE):
+        for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE, CONF_NEW_EXCLUDE):
             integrations += [{"value": d, "label": d} for d in values[key] if d not in known]
             known.update(values[key])
         # Push-Ziele mit Beschriftung in der Sprache der Instanz.
@@ -250,6 +258,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                             options=list(BATTERY_FIELDS), multiple=True, mode=SelectSelectorMode.LIST, translation_key="battery_field"
                         )
                     ),
+                    # Neue Geräte (Reiter "Neu" im Panel, seit 1.24.0).
+                    vol.Required(CONF_NOTIFY_NEW, default=values[CONF_NOTIFY_NEW]): bool,
+                    vol.Required(CONF_NEW_WINDOW, default=values[CONF_NEW_WINDOW]): _number(CONF_NEW_WINDOW),
+                    vol.Required(CONF_NEW_PERSISTENT, default=values[CONF_NEW_PERSISTENT]): bool,
+                    vol.Optional(CONF_NEW_FIELDS, default=values[CONF_NEW_FIELDS]): SelectSelector(
+                        SelectSelectorConfig(
+                            options=list(NEW_FIELDS), multiple=True, mode=SelectSelectorMode.LIST, translation_key="new_field"
+                        )
+                    ),
                     # Pro Integration (Reiter "Integrationen" im Panel). Eigenes
                     # "Ausgefallen nach", z. B. "zha: 60" oder "hue: off".
                     vol.Optional(CONF_OFFLINE_INTEGRATIONS, default=values[CONF_OFFLINE_INTEGRATIONS] or {}): ObjectSelector(),
@@ -262,6 +279,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     # Eigene Schwelle pro Integration als Zuordnung, z. B. "zha: 25".
                     vol.Optional(CONF_BATTERY_LOW_INTEGRATIONS, default=values[CONF_BATTERY_LOW_INTEGRATIONS] or {}): ObjectSelector(),
                     vol.Optional(CONF_BATTERY_PUSH_EXCLUDE, default=values[CONF_BATTERY_PUSH_EXCLUDE]): SelectSelector(
+                        SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
+                    ),
+                    vol.Optional(CONF_NEW_EXCLUDE, default=values[CONF_NEW_EXCLUDE]): SelectSelector(
                         SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
                     ),
                     # Abschnitt "Integrationen" (nur noch Anzeigen), Gerätetypen,

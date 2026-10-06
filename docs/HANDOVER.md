@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.23.0, Einstellungen in fünf Abschnitten)
+## Stand (1.24.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,19 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Push bei neuen Geräten `1.24.0` (Nutzer, 2026-10-06, ohne Mockup, nach dem Muster von Ausfall und
+   Batterie; Entscheide: nur Geräte ab dem Einschalten, Sammelfenster einstellbar, Override pro
+   Integration): `newdevice.NewDeviceNotifier` lauscht auf `EVENT_DEVICE_REGISTRY_UPDATED` (action
+   "create"), sammelt `new_window` Minuten ab dem ersten Gerät und meldet dann (`async_flush`: nur
+   `devices.shown_devices`, nicht `new_exclude_integrations`; ein Gerät einzeln mit Tag
+   `device_panel_new_<id>`, mehrere als Sammelmeldung `device_panel_new`); `new_persistent` legt
+   eine Meldung `device_panel_new` mit den letzten 10 Geräten an (Wegklicken leert die Liste,
+   `.storage/device_panel.new`, beim Entfernen der Integration gelöscht). Optionen `notify_new`,
+   `new_window` (1..60), `new_persistent`, `new_fields` (`NEW_FIELDS`), `new_exclude_integrations`;
+   `NEW_INSTALL_OPTIONS` schliesst "ibeacon" aus. Panel: Reiter "Neu" (`_monNewHtml`,
+   `_newFieldsHtml`, `_newRows`, `MON_TAB_KEYS.new`), dritte Übersicht-Zeile, Schalter im
+   Integrations-Detail, `_ptlHtml(rows, edit, zero)` mit Null "Gerät gefunden". Tests:
+   `test_new_devices.py`, `newdevices-e2e.mjs`.
    Logos auch in den Einstellungen `1.23.0`: `_ibadge(domain, name)` ersetzt die Buchstaben-Kennzeichen
    (`.ibadge`, Listen der Integrationen); die Logos der Katalog-Integrationen werden beim Laden der
    Optionen vorab geladen (`_brandPreloadDomains`), spät eintreffende Ergebnisse zeichnen auch den
