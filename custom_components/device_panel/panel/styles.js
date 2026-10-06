@@ -329,6 +329,7 @@ tr.dev.flaky td:first-child { box-shadow: inset 4px 0 0 var(--dp-warning); }
 .av { position: relative; width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: var(--dp-subtle); color: var(--dp-text2); flex: none; }
 .av.off { background: var(--dp-error-soft); color: var(--dp-error); }
 .av.warn { background: var(--dp-warning-soft); color: var(--dp-warning); }
+.av img.brand { display: block; object-fit: contain; border-radius: 4px; }
 .av .dot { position: absolute; right: -3px; bottom: -3px; width: 12px; height: 12px; border-radius: 50%; border: 2.5px solid var(--dp-card); background: var(--dp-success); }
 .av.off .dot { background: var(--dp-error); box-shadow: 0 0 8px var(--dp-error); }
 .av.warn .dot { background: var(--dp-warning); }

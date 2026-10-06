@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.21.0, Einstellungen in fünf Abschnitten)
+## Stand (1.22.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Logos der Integrationen `1.22.0` (Nutzer, 2026-10-06; Entscheid: Avatar ersetzen, lokal
+   von HA): `_avatar` zeigt `/api/brands/integration/<Domain>/icon.png?token=` (HA >= 2026.3,
+   Token per WebSocket `brands/access_token`, alle 10 Min. neu; im dunklen Design zuerst
+   `dark_icon.png`); `_brandSrc/_brandProbe` laden jedes Logo einmal vor und merken ok/fail,
+   ohne Dienst oder Logo bleibt das Verbindungs-Icon. Das Popup nutzt weiter das Typ-Icon.
+   Simulator: `brands/access_token`, Route in `server.mjs` ("matter" ohne Logo, `?nobrands=1`
+   wie eine ältere HA); die README-Bilder entstehen mit `nobrands`. Test: `brand-e2e.mjs`.
    Gerät umbenennen `1.21.0` (Nutzer, 2026-10-06, ohne Mockup): WebSocket
    `device_panel/rename_device` (Admin) setzt `name_by_user` im Geräte-Register, leer =
    zurück; `list_devices` liefert `name_original` und `name_custom`. Popup: Stift im

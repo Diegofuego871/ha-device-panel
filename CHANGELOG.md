@@ -7,6 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.22.0] - 2026-10-06
+
+Integration logos in the list.
+
+### Changed
+
+- In the device list, the round avatar shows the logo of the integration instead
+  of the icon of the connection type (requested by the user); the status dot
+  stays. The logos come from the brand service of your own Home Assistant
+  (`/api/brands/integration/<domain>/icon.png`, since Home Assistant 2026.3, with
+  the access token from `brands/access_token`), so nothing is loaded from the
+  internet and it works offline. In the dark theme `dark_icon.png` is used if there
+  is one. Without a logo (for example some custom integrations) or on an older Home
+  Assistant, the icon of the connection type stays. The connection type remains in
+  its column, in the pop-up and in the filter chips.
+
 ## [1.21.0] - 2026-10-06
 
 Rename devices.
@@ -1553,6 +1569,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.22.0
 [1.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.21.0
 [1.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.20.0
 [1.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.19.0

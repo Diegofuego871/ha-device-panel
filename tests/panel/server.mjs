@@ -16,8 +16,29 @@ function resolve(url) {
   return join(here, "sim", normalize(path === "/" ? "/ha-sim.html" : path));
 }
 
+// Brand-Dienst von HA (ab 2026.3) nachgebaut: /api/brands/integration/<Domain>/<Bild>?token=...
+// Mit Token, sonst 401. "matter" hat kein Logo (404), dark_icon.png gibt es nur für "zha".
+// Als Bild eine Raute in der Farbe der Domain (SVG), damit Tests und Printscreens etwas sehen.
+export const BRAND_TOKEN = "sim-token";
+export const brandRequests = [];
+function brand(url, res) {
+  const u = new URL(url, "http://x");
+  const m = u.pathname.match(/^\/api\/brands\/integration\/([a-z0-9_]+)\/([a-z_@0-9]+\.png)$/);
+  if (!m) return false;
+  brandRequests.push(`${m[1]}/${m[2]}`);
+  if (u.searchParams.get("token") !== BRAND_TOKEN) res.writeHead(401).end("unauthorized");
+  else if (m[1] === "matter" || (m[2] === "dark_icon.png" && m[1] !== "zha")) res.writeHead(404).end("not found");
+  else {
+    const hue = [...m[1]].reduce((n, c) => n + c.charCodeAt(0), 0) % 360;
+    res.writeHead(200, { "content-type": "image/svg+xml", "cache-control": "no-store" });
+    res.end(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 1 23 12 12 23 1 12Z" fill="hsl(${hue} 65% 50%)"/><text x="12" y="16" font-size="11" text-anchor="middle" fill="#fff" font-family="sans-serif">${m[1][0].toUpperCase()}</text></svg>`);
+  }
+  return true;
+}
+
 export function startServer(port = 8950) {
   const server = createServer(async (req, res) => {
+    if (brand(req.url, res)) return;
     const file = resolve(req.url);
     try {
       if (!file) throw new Error("ungültiger Pfad");

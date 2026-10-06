@@ -20,7 +20,7 @@ for (const lang of ["de", "en"]) {
       ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }
       : { viewport: { width: 1280, height: 860 }, deviceScaleFactor: 1.5 });
     const p = await ctx.newPage();
-    await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}`);
+    await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}&nobrands=1`);
     const frameEl = await p.waitForSelector("#panel-frame");
     const f = await frameEl.contentFrame();
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });

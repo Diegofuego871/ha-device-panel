@@ -7,6 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.22.0] - 2026-10-06
+
+Logos der Integrationen in der Liste.
+
+### Geändert
+
+- In der Geräteliste zeigt der runde Avatar das Logo der Integration statt des
+  Icons der Verbindungsart (Wunsch des Nutzers); der Statuspunkt bleibt. Die Logos
+  kommen vom Brand-Dienst der eigenen Home-Assistant-Instanz
+  (`/api/brands/integration/<Domain>/icon.png`, seit Home Assistant 2026.3, mit
+  dem Zugriffstoken aus `brands/access_token`), es wird also nichts aus dem
+  Internet geladen, und es geht offline. Im dunklen Design gilt `dark_icon.png`,
+  wenn es eines gibt. Ohne Logo (etwa bei manchen eigenen Integrationen) oder bei
+  einem älteren Home Assistant bleibt das Icon der Verbindungsart. Die
+  Verbindungsart steht weiter in ihrer Spalte, im Popup und in den Filter-Chips.
+
 ## [1.21.0] - 2026-10-06
 
 Geräte umbenennen.
@@ -1614,6 +1630,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.22.0
 [1.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.21.0
 [1.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.20.0
 [1.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.19.0

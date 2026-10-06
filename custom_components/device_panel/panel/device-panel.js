@@ -738,6 +738,7 @@ class DevicePanel extends HTMLElement {
       this._build();
       this._loadUserView();
       this._fetch();
+      this._brandReady = this._brandStart();
     } else if (this._settings) {
       // HACS meldet Fortschritt und neue Versionen über seine Update-Entität.
       this._renderSettingsVersion();
@@ -775,6 +776,8 @@ class DevicePanel extends HTMLElement {
     this._stickyObserver?.disconnect();
     window.clearInterval(this._timer);
     window.clearInterval(this._tick);
+    window.clearInterval(this._brandTimer);
+    window.clearTimeout(this._brandRender);
     window.clearTimeout(this._retryTimer);
     document.removeEventListener("visibilitychange", this._onVisible);
     window.removeEventListener("online", this._onWake);
@@ -1085,6 +1088,9 @@ class DevicePanel extends HTMLElement {
     const stale = () => (this._changes || 0) !== seen;
     try {
       const result = await this._callWithTimeout({ type: "device_panel/list_devices" });
+      if (stale()) return;
+      // Logos vorab laden, damit die erste Darstellung schon vollständig ist.
+      await this._brandPreload(result.devices || []);
       if (stale()) return;
       // Welche Geräte gezeigt werden (Dienst-Geräte, deaktivierte, Ausschlüsse),
       // entscheidet das Backend nach den Einstellungen.
@@ -2506,7 +2512,78 @@ class DevicePanel extends HTMLElement {
 
   _avatar(d, size = 18) {
     const cls = d.online === false ? "off" : d.online == null ? "none" : d.flaky ? "warn" : "";
-    return `<div class="av ${cls}">${CONN[this._connOf(d)].icon(size)}<span class="dot"></span></div>`;
+    // Logo der Integration, wenn der Brand-Dienst von HA eines liefert; sonst das Icon der Verbindungsart.
+    const src = this._brandSrc(d.integration?.domain);
+    const icon = src ? `<img class="brand" src="${escape(src)}" alt="" width="${size + 6}" height="${size + 6}" draggable="false">` : CONN[this._connOf(d)].icon(size);
+    return `<div class="av ${cls}${src ? " has-brand" : ""}">${icon}<span class="dot"></span></div>`;
+  }
+
+  // Logos der Integrationen (seit 1.22.0): vom Brand-Dienst der eigenen HA-Instanz
+  // (ab 2026.3, /api/brands/integration/<Domain>/icon.png), geschützt durch ein Token
+  // (WebSocket brands/access_token, läuft ab: alle 10 Min. neu holen). Nichts geht ins
+  // Internet. Ohne Dienst (ältere HA) oder ohne Logo bleibt das Verbindungs-Icon.
+  async _brandStart() {
+    const load = async () => {
+      try {
+        const res = await this._hass.callWS({ type: "brands/access_token" });
+        this._brandToken = res?.token || null;
+      } catch {
+        this._brandToken = null;
+      }
+    };
+    await load();
+    // Nur, wenn der Dienst antwortet (ältere HA kennen ihn nicht).
+    if (this._brandToken) this._brandTimer = window.setInterval(load, 10 * 60 * 1000);
+  }
+
+  _brandRenderSoon() {
+    window.clearTimeout(this._brandRender);
+    this._brandRender = window.setTimeout(() => this._render(), 60);
+  }
+
+  // Die Logos aller gezeigten Integrationen einmal laden (höchstens 2 s warten), bevor
+  // die Liste zum ersten Mal erscheint; so baut sich die Liste nicht nachträglich um.
+  async _brandPreload(devices) {
+    const wait = (ms) => new Promise((ok) => window.setTimeout(ok, ms));
+    await Promise.race([this._brandReady, wait(1500)]);
+    if (!this._brandToken) return;
+    this._brandState ||= new Map();
+    const todo = [...new Set(devices.map((d) => d.integration?.domain).filter((x) => x && !this._brandState.has(x)))];
+    if (todo.length) await Promise.race([Promise.all(todo.map((x) => this._brandProbe(x))), wait(2000)]);
+  }
+
+  // Adresse des Logos oder null (noch unbekannt, nicht vorhanden, kein Token).
+  _brandSrc(domain) {
+    if (!domain || !this._brandToken) return null;
+    this._brandState ||= new Map();
+    if (!this._brandState.has(domain)) this._brandProbe(domain).then(() => this._brandRenderSoon());
+    const known = this._brandState.get(domain);
+    return known && known !== "fail" && known !== "pending" ? `/api/brands/integration/${encodeURIComponent(domain)}/${known}?token=${encodeURIComponent(this._brandToken)}` : null;
+  }
+
+  // Lädt das Bild einmal und merkt das Ergebnis; im dunklen Design zuerst dark_icon.png,
+  // sonst oder ersatzweise icon.png. Die Zusage endet, wenn das Ergebnis feststeht.
+  _brandProbe(domain) {
+    this._brandState.set(domain, "pending");
+    const dark = this._hass?.themes?.darkMode ?? window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+    const files = dark ? ["dark_icon.png", "icon.png"] : ["icon.png"];
+    return new Promise((done) => {
+      const next = (i) => {
+        if (i >= files.length) {
+          this._brandState.set(domain, "fail");
+          done();
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          this._brandState.set(domain, files[i]);
+          done();
+        };
+        img.onerror = () => next(i + 1);
+        img.src = `/api/brands/integration/${encodeURIComponent(domain)}/${files[i]}?token=${encodeURIComponent(this._brandToken)}`;
+      };
+      next(0);
+    });
   }
 
   // Einstellungen pro Gerät beim Namen (Variante A, docs/mockups/override-v1):

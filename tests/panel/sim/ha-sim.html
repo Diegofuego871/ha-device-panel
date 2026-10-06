@@ -612,6 +612,11 @@
         values.notify_delay = Math.max(Number.isInteger(values.notify_delay) && values.notify_delay >= 1 ? values.notify_delay : 2, values.offline_after);
         return { values, panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS, notify_targets: NOTIFY_TARGETS, overrides: overrides(), ai_prompt_default: AI_PROMPT_DEFAULT };
       }
+      if (msg.type === "brands/access_token") {
+        // Wie HA ab 2026.3; ältere HA kennen den Befehl nicht (?nobrands=1).
+        if (params.get("nobrands")) throw { code: "unknown_command", message: "Unknown command." };
+        return { token: "sim-token" };
+      }
       if (msg.type === "device_panel/rename_device") {
         if (window.__renameFails) throw new Error(window.__renameFails);
         if (!window.__devices.find((x) => x.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
