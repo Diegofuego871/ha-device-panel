@@ -369,8 +369,8 @@ const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations"
 const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations"];
 
 const SUB_TAB_KEYS = {
-  integrations: ["exclude_integrations"],
-  types: ["exclude_types", "type_integrations"],
+  integrations: ["exclude_integrations", "type_integrations"],
+  types: ["exclude_types"],
   devs: ["exclude_devices"],
   conn: ["connection_integrations", "signal_low", "reset_connection", "reset_signal"],
   chips: ["hide_chips", "hide_connections", "connection_order", "chip_order"],
@@ -4564,45 +4564,20 @@ class DevicePanel extends HTMLElement {
     return head + `<div class="ex-head"><span>${escape(t("colIntegration"))}</span><span>${escape(t("connType"))}</span></div>${rows}`;
   }
 
-  // Gerätetyp pro Integration (seit 1.25.0): gilt für alle Geräte der
-  // Integration statt der Erkennung, von Hand am Gerät geht vor. Gleiche
-  // Darstellung wie die Verbindungsart pro Integration; je Zeile die Erkennung.
-  _typeIntegHtml(d) {
-    const st = this._settings;
-    const t = (k, ...a) => this._t(k, ...a);
-    const own = d.type_integrations || {};
-    const saved = st.data.values.type_integrations || {};
-    const groups = new Map();
+  // Erkannter Typ der gezeigten Geräte je Integration {Domain: Map(Typ -> Zahl)}
+  // für die Spalte "Typ" der Integrationen (seit 1.25.0), damit man sieht, was
+  // sich ändert, wenn man einen Typ festlegt.
+  _typeIntegInfo() {
+    const out = new Map();
     for (const dev of this._devices) {
       const dom = dev.integration?.domain;
       if (!dom || dev.disabled) continue;
-      const g = groups.get(dom) || { devices: 0, kinds: new Map() };
+      const kinds = out.get(dom) || new Map();
       const kind = dev.type_auto || dev.type;
-      g.devices += 1;
-      g.kinds.set(kind, (g.kinds.get(kind) || 0) + 1);
-      groups.set(dom, g);
+      kinds.set(kind, (kinds.get(kind) || 0) + 1);
+      out.set(dom, kinds);
     }
-    // Festgelegt, aber gerade ohne Geräte (z. B. ausgeblendet): bleibt zum Zurücksetzen.
-    for (const dom of Object.keys({ ...own, ...saved })) if (!groups.has(dom)) groups.set(dom, { devices: 0, kinds: new Map() });
-    const names = Object.fromEntries((st.data.catalog?.integrations || []).map((x) => [x.domain, x.name]));
-    const name = (dom) => this._integrations[dom] || names[dom] || dom;
-    const list = [...groups.entries()].sort((a, b) => b[1].devices - a[1].devices || name(a[0]).localeCompare(name(b[0])));
-    const head = `<div class="opt bat-own"><div class="opt-line"><span class="opt-label">${escape(t("typeIntegTitle"))}</span></div>
-      <div class="opt-short">${escape(t("typeIntegShort"))}</div></div>`;
-    if (!list.length) return head;
-    const rows = list
-      .map(([dom, g]) => {
-        const v = own[dom] || "";
-        const detected = [...g.kinds.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${n} ${t(typeKey(k))}`).join(", ");
-        const opts = [["", t("connIntegAuto")], ...TYPE_ORDER.map((k) => [k, t(typeKey(k))])]
-          .map(([val, text]) => `<option value="${val}"${val === v ? " selected" : ""}>${escape(text)}</option>`)
-          .join("");
-        return `<div class="ex-row bat-row type-row${(own[dom] || null) !== (saved[dom] || null) ? " changed" : ""}">${this._ibadge(dom, name(dom))}
-          <div class="ex-name">${escape(name(dom))}<small>${escape(t("typeIntegDevices", g.devices, detected))}</small></div>
-          <span class="bat-ctl"><span class="opt-select"><select data-type-integ="${escape(dom)}" aria-label="${escape(`${name(dom)}: ${t("typeLabel")}`)}">${opts}</select>${mdi("chevronDown", 18)}</span></span></div>`;
-      })
-      .join("");
-    return head + `<div class="ex-head"><span>${escape(t("colIntegration"))}</span><span>${escape(t("typeLabel"))}</span></div>${rows}`;
+    return out;
   }
 
   // Geräte mit eigener Einstellung (Batterie oder Meldungen), einzeln oder
@@ -5287,6 +5262,31 @@ class DevicePanel extends HTMLElement {
       sub: t("devicesCount", i.devices),
       badge: this._ibadge(i.domain, i.name),
     }));
+    // Typ pro Integration (seit 1.25.0): Spalte neben "Anzeigen", gilt für alle
+    // Geräte der Integration statt der Erkennung, von Hand am Gerät geht vor.
+    // Je Zeile die Erkennung, "Automatisch" ist der Standard. Festgelegt, aber
+    // gerade ohne Geräte: bleibt zum Zurücksetzen in der Liste.
+    const typeInfo = this._typeIntegInfo();
+    const typeOwn = d.type_integrations || {};
+    const typeSaved = st.data.values.type_integrations || {};
+    const detected = (dom) =>
+      [...(typeInfo.get(dom) || [])].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${n} ${t(typeKey(k))}`).join(", ");
+    for (const i of integrations) if (detected(i.value)) i.sub = `${i.sub} · ${t("typeIntegDetected", detected(i.value))}`;
+    for (const dom of Object.keys({ ...typeOwn, ...typeSaved })) {
+      if (integrations.some((x) => x.value === dom)) continue;
+      const label = this._integrations[dom] || dom;
+      integrations.push({ value: dom, label, sub: t("typesEmpty"), badge: this._ibadge(dom, label) });
+    }
+    const typeOpts = [["", t("connIntegAuto")], ...TYPE_ORDER.map((k) => [k, t(typeKey(k))])];
+    const typeExtra = {
+      label: t("typeLabel"),
+      html: (x) => {
+        const v = typeOwn[x.value] || "";
+        const changed = (typeOwn[x.value] || null) !== (typeSaved[x.value] || null);
+        const opts = typeOpts.map(([val, text]) => `<option value="${val}"${val === v ? " selected" : ""}>${escape(text)}</option>`).join("");
+        return `<span class="ex-col sel"><span class="ex-lbl">${escape(t("typeLabel"))}</span><span class="opt-select${changed ? " changed" : ""}"><select data-type-integ="${escape(x.value)}" aria-label="${escape(`${t("typeLabel")}: ${x.label}`)}">${opts}</select>${mdi("chevronDown", 18)}</span></span>`;
+      },
+    };
     // Eine Liste für alle Chips (seit 1.14.0, docs/mockups/chip-order-v3, D2):
     // "Alle" (fest, nur verschiebbar), jede Verbindungsart (auch ohne Geräte,
     // zum Ausblenden und Einordnen im Voraus) und die übrigen Chips, in der
@@ -5342,13 +5342,13 @@ class DevicePanel extends HTMLElement {
         row("show_disabled_devices", t("optShowDisabled"), sw("show_disabled_devices", t("optShowDisabled")), t("optShowDisabledShort"), null) +
         subTabs("devices", [["integrations", "secIntegrations"], ["types", "subTypes"], ["devs", "subDevs"]]) +
         (devTab === "types"
-          ? this._typeIntegHtml(d) + `<h4 class="ex-title">${escape(t("typesShowTitle"))}</h4>` + exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`)
+          ? exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`)
           : devTab === "devs"
             ? hiddenDevs.length
               ? exTable("exclude_devices", hiddenDevs, t("hiddenIntro"), false, null, t("hiddenShowAll"))
               : `<div class="opt-short ex-intro">${escape(t("hiddenIntro"))}</div><div class="opt-short hidden-empty">${escape(t("hiddenEmpty"))}</div>`
             : `<div class="nf-note integ-goto">${mdi("info", 16)}<div><p>${escape(t("integGoto"))} <button type="button" class="lnk" data-set="goto" data-key="integ">${escape(t("integGotoLink"))}</button></p></div></div>` +
-              exTable("exclude_integrations", integrations, t("integIntroShow"))),
+              exTable("exclude_integrations", integrations, `${t("integIntroShow")} ${t("typeIntegIntro")}`, false, null, null, typeExtra)),
       // Wie Geräte erscheinen, nicht ob (seit 1.0.0).
       look:
         subTabs("look", [["conn", "subConn"], ["chips", "subChips"]]) +

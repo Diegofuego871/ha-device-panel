@@ -544,8 +544,6 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ex-row.bat-row .opt-input input { width: 40px; }
 .ex-row.bat-row.changed .opt-input, .ex-row.bat-row.changed .opt-select select { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 .ex-row.bat-row.invalid .opt-input { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
-/* Typ pro Integration (seit 1.25.0): lange Typnamen in der Erkennung brechen um, statt die Auswahl zu verdrängen */
-.ex-row.type-row .ex-name { flex: 1 1 0; }
 .bat-empty { padding: 4px 0 8px; }
 /* Auswahl (Push-Ziel, Klickziel) wie unifi_dynamic. */
 .opt-select { position: relative; flex: 0 1 260px; min-width: 0; }
@@ -622,8 +620,10 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ex-head.multi > span:first-child { flex: 1; }
 .ex-head.multi .ex-col { text-align: center; }
 .ex-row .switch input:disabled + span { opacity: .35; }
-/* Spalte "Ausgefallen nach" der Integrationen: breiter als die Schalter. */
-.ex-col.sel { width: 156px; }
+/* Auswahlspalte der Integrationen ("Typ", früher "Ausgefallen nach"): breiter als die Schalter. */
+.ex-col.sel { width: 176px; }
+/* Lange Erkennungstexte brechen um, statt den Schalter in eine eigene Zeile zu drängen */
+.ex-row:has(.ex-col.sel) .ex-name { flex: 1 1 0; }
 .ex-col.sel .opt-select { flex: 1 1 auto; }
 .ex-col.sel .opt-select select { height: 34px; padding-left: 8px; font-size: 13px; }
 .ex-col.sel .ex-lbl { display: none; }

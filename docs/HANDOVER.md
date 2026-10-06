@@ -389,10 +389,14 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `devices.integration_type` (primäre Integration), dann Erkennung. `list_devices` liefert `type`
    (wirksam), `type_auto`, `type_manual` und neu `type_integration`; Ausschlüsse nach Typ und der
    Katalog der Typen rechnen mit dem wirksamen Typ. Der Typ gilt nur im Panel (nicht im HA-Register).
-   Panel: `_typeIntegHtml` im Reiter "Typen" über der Liste "Typen anzeigen" (`SUB_TAB_KEYS.types`
-   enthält `type_integrations`), Popup "Wie Integration: X" (`typeAutoInteg`, `typeByInteg`),
-   Zusammenfassung `sumTypeInteg`; Zeilen mit Klasse `type-row` (Typnamen sind lang, der Name
-   bricht um statt die Auswahl zu verdrängen). Simulator: `applyTypes()`. Tests:
+   Platzierung nach Bildschirmfoto des Nutzers: Spalte "Typ" in der Liste der Integrationen
+   (Reiter "Integrationen" von "Geräte im Panel", `SUB_TAB_KEYS.integrations` enthält
+   `type_integrations`), nicht im Reiter "Typen". Panel: `exTable(..., extra)` (die
+   Auswahlspalte `.ex-col.sel` aus 0.30.0, Handy: Auswahl mit Beschriftung unter dem Namen)
+   mit `typeExtra`, Erkennung je Zeile aus `_typeIntegInfo()`, festgelegte Integrationen ohne
+   Geräte bleiben zum Zurücksetzen in der Liste; Popup "Wie Integration: X" (`typeAutoInteg`,
+   `typeByInteg`), Zusammenfassung `sumTypeInteg`. `.ex-row:has(.ex-col.sel) .ex-name` bricht
+   lange Erkennungstexte um, statt Schalter oder Auswahl zu verdrängen. Simulator: `applyTypes()`. Tests:
    `test_type_integration.py`, `typeinteg-e2e.mjs`.
    Push bei neuen Geräten `1.24.0` (Nutzer, 2026-10-06, ohne Mockup, nach dem Muster von Ausfall und
    Batterie; Entscheide: nur Geräte ab dem Einschalten, Sammelfenster einstellbar, Override pro

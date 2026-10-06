@@ -14,11 +14,12 @@ Gerätetyp pro Integration.
 ### Hinzugefügt
 
 - Gerätetyp pro Integration (Wunsch des Nutzers): unter Einstellungen › Geräte im
-  Panel › Typen eine Liste aller Integrationen mit dem erkannten Typ und einer
-  Auswahl "Automatisch" plus alle Gerätetypen. Ein hier gesetzter Typ gilt für
-  alle Geräte der Integration statt der Erkennung; "Automatisch" (Standard)
-  belässt die Erkennung wie bisher. Ein am einzelnen Gerät von Hand gesetzter Typ
-  geht weiterhin vor (Gerät, dann Integration, dann Erkennung).
+  Panel › Integrationen eine Spalte "Typ" neben "Anzeigen" mit einer Auswahl
+  "Automatisch" plus alle Gerätetypen; jede Zeile zeigt die erkannten Typen der
+  Integration. Ein hier gesetzter Typ gilt für alle Geräte der Integration statt
+  der Erkennung; "Automatisch" (Standard) belässt die Erkennung wie bisher. Ein
+  am einzelnen Gerät von Hand gesetzter Typ geht weiterhin vor (Gerät, dann
+  Integration, dann Erkennung).
   - Im Popup steht die Auswahl dann als "Wie Integration: Schalter" mit dem
     Hinweis "für die ganze Integration festgelegt", solange das Gerät keinen
     eigenen Typ hat.

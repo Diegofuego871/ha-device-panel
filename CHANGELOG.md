@@ -14,11 +14,12 @@ Device type per integration.
 ### Added
 
 - Device type per integration (requested by the user): in Settings › Devices in
-  the panel › Types, a list of all integrations with the type detected for them
-  and a selection "Automatic" plus all device types. A type set here applies to
-  all devices of the integration instead of the detection; "Automatic" (the
-  default) keeps the detection as before. A type set by hand on a single device
-  still comes first (device, then integration, then detection).
+  the panel › Integrations, a column "Type" next to "Show" with a selection
+  "Automatic" plus all device types; each row shows the types detected for the
+  integration. A type set here applies to all devices of the integration instead
+  of the detection; "Automatic" (the default) keeps the detection as before. A
+  type set by hand on a single device still comes first (device, then
+  integration, then detection).
   - In the pop-up the selection reads "Same as integration: Switch" with the note
     "set for the whole integration" as long as the device has no type of its own.
   - The type counts everywhere the type counts: list, filter, exclusions by type

@@ -1,5 +1,5 @@
-// Gerätetyp pro Integration (1.25.0): Liste im Reiter "Typen" von "Geräte im
-// Panel" mit Erkennung je Zeile, Entwurf und Speichern, Wirkung auf Liste,
+// Gerätetyp pro Integration (1.25.0): Spalte "Typ" in der Liste der Integrationen
+// unter "Geräte im Panel" mit Erkennung je Zeile, Entwurf und Speichern, Wirkung auf Liste,
 // Typen-Zähler und Popup ("Wie Integration: …"); von Hand am Gerät geht vor,
 // zurück auf Automatisch. Deutsch und Englisch, Desktop und Handy, echte
 // Klicks/Taps.
@@ -12,16 +12,16 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
-    title: "Gerätetyp pro Integration", shelly: "2 Geräte · erkannt: 2 Steckdose", autoOpt: "Automatisch", one: "1 Änderung",
+    col: "Typ", intro: 'Die Spalte "Typ" gilt für alle Geräte der Integration', shelly: "2 Geräte · erkannt: 2 Steckdose", autoOpt: "Automatisch", one: "1 Änderung",
     sumNone: "Dienst-Geräte und deaktivierte Geräte ausgeblendet", sumOne: "Typ für 1 Integration festgelegt · Dienst-Geräte und deaktivierte Geräte ausgeblendet",
     popAuto: "Automatisch: Steckdose", popInteg: "Wie Integration: Schalter", byInteg: "für die ganze Integration festgelegt", manual: "von Hand gesetzt",
-    switch: "Schalter", outlet: "Steckdose", two: "2 Geräte", showTitle: "Typen anzeigen",
+    switch: "Schalter", outlet: "Steckdose", two: "2 Geräte",
   },
   en: {
-    title: "Device type per integration", shelly: "2 devices · detected: 2 Outlet", autoOpt: "Automatic", one: "1 change",
+    col: "Type", intro: 'The "Type" column applies to all devices of the integration', shelly: "2 devices · detected: 2 Outlet", autoOpt: "Automatic", one: "1 change",
     sumNone: "Service devices and disabled devices hidden", sumOne: "type set for 1 integration · Service devices and disabled devices hidden",
     popAuto: "Automatic: Outlet", popInteg: "Same as integration: Switch", byInteg: "set for the whole integration", manual: "set by hand",
-    switch: "Switch", outlet: "Outlet", two: "2 devices", showTitle: "Show types",
+    switch: "Switch", outlet: "Outlet", two: "2 devices",
   },
 };
 const TYPES = ",hub,phone,network,climate,lock,cover,valve,vacuum,camera,alarm,media,fan,light,outlet,switch,motion,contact,safety,energy,sensor,button,other";
@@ -49,11 +49,11 @@ for (const lang of ["de", "en"]) {
     const open = async (id) => { await tap(`.dev[data-open="${id}"]`); await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('select[data-dlg="type"]')`); };
     const close = async () => { await tap('dialog.device [data-dlg="close"]'); await wait(`return !r.querySelector("dialog.device").open`); };
     const sel = () => ev(`const s=r.querySelector('select[data-dlg="type"]'); return s.value + "|" + s.options[s.selectedIndex].textContent`);
-    const openTypes = async () => {
+    // Der Reiter "Integrationen" ist beim Öffnen von "Geräte im Panel" der erste
+    const openInteg = async () => {
       await tap(".gear-btn");
       await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
       await tap('[data-set="section"][data-id="devices"]');
-      await tap('[data-set="subtab"][data-key="types"]');
       await wait(`return !!r.querySelector('select[data-type-integ="shelly"]')`);
     };
     const closeSettings = async () => { await tap('dialog.settings .dlg-actions [data-set="close"]'); await wait(`return !r.querySelector("dialog.settings")?.open`); };
@@ -65,11 +65,20 @@ for (const lang of ["de", "en"]) {
     await close();
 
     // Einstellungen: Liste im Reiter "Typen"
-    await openTypes();
+    await openInteg();
     check(`[${tag}] Abschnitt ohne festen Typ`, (await text('[data-id="devices"] .set-sec-sum')) === T.sumNone, await text('[data-id="devices"] .set-sec-sum'));
     const row = await ev(`const s=r.querySelector('select[data-type-integ="shelly"]'); return s ? [s.closest(".ex-row").querySelector("small").textContent, s.value, s.options[0].textContent, [...s.options].map(o=>o.value).join()] : null`);
-    check(`[${tag}] Zeile mit Erkennung und Auswahl`, (await text(".bat-own .opt-label")) === T.title && JSON.stringify(row) === JSON.stringify([T.shelly, "", T.autoOpt, TYPES]), JSON.stringify(row));
-    check(`[${tag}] Liste der Typen bleibt darunter`, (await text(".ex-title")) === T.showTitle && await ev(`return !!r.querySelector('input[data-list="exclude_types"][data-value="outlet"]')`));
+    check(`[${tag}] Zeile mit Erkennung und Auswahl`, JSON.stringify(row) === JSON.stringify([T.shelly, "", T.autoOpt, TYPES]), JSON.stringify(row));
+    // Spalte neben "Anzeigen": Kopf (Desktop) bzw. Beschriftung in der Zeile (Handy)
+    check(`[${tag}] Spalte "Typ" mit Erklärung`,
+      (await text(".ex-intro")).includes(T.intro) &&
+      (await ev(`return r.querySelector('select[data-type-integ="shelly"]').closest(".ex-col").querySelector(".ex-lbl").textContent`)) === T.col &&
+      (mobile || (await text(".ex-head .ex-col.sel")) === T.col),
+      await text(".ex-head"));
+    // Schalter "Anzeigen" steht in jeder Zeile rechts neben dem Namen (Handy: lange Erkennungstexte
+    // drängen ihn nicht in eine eigene Zeile)
+    const misplaced = await ev(`return [...r.querySelectorAll('select[data-type-integ]')].map((s) => s.closest(".ex-row")).filter((row) => { const n=row.querySelector(".ex-name").getBoundingClientRect(); const w=row.querySelector(".switch").getBoundingClientRect(); return Math.abs((w.top + w.height/2) - (n.top + n.height/2)) > n.height/2 + 4 || w.left < n.left; }).length`);
+    check(`[${tag}] Schalter "Anzeigen" in jeder Zeile neben dem Namen`, misplaced === 0, String(misplaced));
     const sh = await handle('select[data-type-integ="shelly"]');
     await sh.scrollIntoViewIfNeeded();
     await sh.selectOption("switch");
@@ -77,7 +86,7 @@ for (const lang of ["de", "en"]) {
       await wait(`return r.querySelector('select[data-type-integ="shelly"]')?.value === "switch"`) &&
       (await text(".set-count")) === T.one &&
       (await text('[data-id="devices"] .set-sec-sum')) === T.sumOne &&
-      (await ev(`return r.querySelector('select[data-type-integ="shelly"]').closest(".ex-row").classList.contains("changed")`)) &&
+      (await ev(`return r.querySelector('select[data-type-integ="shelly"]').closest(".opt-select").classList.contains("changed")`)) &&
       (await ev(`return r.querySelector(".sub-tab.on").classList.contains("chg")`)),
       `${await text(".set-count")} | ${await text('[data-id="devices"] .set-sec-sum')}`);
     // Lange Typnamen in der Erkennung (Zigbee) verdrängen die Auswahl nicht aus dem Fenster
@@ -92,6 +101,8 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] gespeichert`, await wait(`return r.querySelector(".set-count")?.classList.contains("saved")`) && JSON.stringify((await setCalls()).at(-1)) === JSON.stringify({ type_integrations: { shelly: "switch" } }), JSON.stringify((await setCalls()).at(-1)));
     // Der Katalog folgt dem wirksamen Typ: "Schalter" mit 2 Geräten, "Steckdose" ohne Geräte nicht mehr in der Liste
+    await tap('[data-set="subtab"][data-key="types"]');
+    check(`[${tag}] Reiter "Typen" ohne Typ-Auswahl`, await ev(`return !r.querySelector('select[data-type-integ]')`));
     check(`[${tag}] Typen-Liste folgt dem Typ`, await wait(`const s=r.querySelector('input[data-list="exclude_types"][data-value="switch"]'); return s && s.closest(".ex-row").querySelector("small").textContent === ${JSON.stringify(T.two)} && !r.querySelector('input[data-list="exclude_types"][data-value="outlet"]')`),
       await ev(`return r.querySelector('input[data-list="exclude_types"][data-value="switch"]')?.closest(".ex-row").querySelector("small").textContent || "fehlt"`));
     await closeSettings();
@@ -111,7 +122,7 @@ for (const lang of ["de", "en"]) {
     await close();
 
     // Integration zurück auf Automatisch
-    await openTypes();
+    await openInteg();
     check(`[${tag}] gespeicherter Wert in der Auswahl`, (await ev(`return r.querySelector('select[data-type-integ="shelly"]').value`)) === "switch" && (await text('[data-id="devices"] .set-sec-sum')) === T.sumOne);
     const sh2 = await handle('select[data-type-integ="shelly"]');
     await sh2.scrollIntoViewIfNeeded();
