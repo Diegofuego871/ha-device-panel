@@ -34,9 +34,10 @@ export async function setup(port, outUrl) {
 
   // Seite im Nachbau; css wird in den Shadow-Root gehängt. freeze: keine
   // Abfragen und kein Neuaufbau mehr (das Mockup bleibt stehen).
-  async function page(mobile, { css = "", freeze = true, lang = "de" } = {}) {
+  // width/height: Handy-Fenster (Standard 390 x 844; iPhone 17: 402 x 874).
+  async function page(mobile, { css = "", freeze = true, lang = "de", width = 390, height = 844 } = {}) {
     const ctx = await b.newContext(mobile
-      ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }
+      ? { viewport: { width, height }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }
       : { viewport: { width: 1400, height: 1000 }, deviceScaleFactor: 1.5 });
     const p = await ctx.newPage();
     await p.goto(`http://127.0.0.1:${port}/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}`);
