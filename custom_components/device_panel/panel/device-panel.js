@@ -2172,7 +2172,7 @@ class DevicePanel extends HTMLElement {
     }
     const line = (color, text) => `<div><i style="background:${color}"></i>${escape(text)}</div>`;
     const ring = `<div class="kt ring"><div class="ringwrap">${ringSvg(share, 108, 11)}<div class="c"><div><b>${online.length}</b><span>${escape(this._t("ofTotal", all.length))}</span></div></div></div>
-      <div><div class="k">${escape(this._t("availability"))}${this._scopeHtml()}</div><div class="pct${avgHtml ? " with-avg" : ""}">${pctHtml}</div>${avgHtml}
+      <div class="rtxt"><div class="k">${escape(this._t("availability"))}${this._scopeHtml()}</div><div class="pct${avgHtml ? " with-avg" : ""}">${pctHtml}</div>${avgHtml}
       <div class="lines">${line("var(--dp-success)", this._t("linesOnline", online.length - flaky))}
       ${flaky ? line("var(--dp-warning)", this._t("linesFlaky", flaky)) : ""}
       ${line("var(--dp-error)", this._t("linesOffline", offline.length))}
@@ -2181,13 +2181,14 @@ class DevicePanel extends HTMLElement {
     // viele Geräte eine Warnung haben; antippbar, setzt den Filter "Warnungen".
     const warn = all.filter(devWarn).length;
     const warnLine = warn
-      ? `<button type="button" class="kwarn" data-warn-open aria-label="${escape(this._t("warnOpen"))}"><span class="w-ic">${mdi("alert", 16)}</span><span><b>${warn}</b> ${escape(this._t("warnDevices", warn))}</span><span class="w-go">${mdi("chevronRight", 18)}</span></button>`
+      ? `<button type="button" class="kwarn" data-warn-open aria-label="${escape(this._t("warnOpen"))}"><span class="w-ic">${mdi("alert", 16)}</span><span><b>${warn}</b><span class="w-long"> ${escape(this._t("warnDevices", warn))}</span><span class="w-short"> ${escape(this._t("warnShort", warn))}</span></span><span class="w-go">${mdi("chevronRight", 18)}</span></button>`
       : `<div class="kwarn none"><span class="w-ic">${mdi("check", 16)}</span><span>${escape(this._t("warnNone"))}</span></div>`;
     const off = offline.length
       ? `<div class="kt err offl"><div class="k"><span class="pulse"></span>${escape(this._t("offlineNow"))}${this._scopeHtml()}</div>
         <div class="top"><span class="num">${offline.length}</span><span class="lbl">${escape(this._t("longest", `${offline[0].since_at_least ? "≥ " : ""}${this._duration(offline[0].offline_since)}`))}</span></div>
         <div class="olist">${offline.slice(0, 4).map((d) => `<button type="button" data-open="${escape(d.id)}"><span>${CONN[this._connOf(d)].icon(16)}</span><span class="name">${escape(d.name)}</span><b>${this._durationHtml(d, true)}</b></button>`).join("")}
-        ${offline.length > 4 ? `<div class="more">${escape(this._t("more", offline.length - 4))}</div>` : ""}</div>${warnLine}</div>`
+        ${offline.length > 4 ? `<div class="more more-long">${escape(this._t("more", offline.length - 4))}</div>` : ""}
+        ${offline.length > 2 ? `<div class="more more-short">${escape(this._t("more", offline.length - 2))}</div>` : ""}</div>${warnLine}</div>`
       : `<div class="kt offl"><div class="k">${escape(this._t("offlineNow"))}${this._scopeHtml()}</div>
         <div class="top"><span class="num ok">0</span><span class="lbl">${escape(this._t("allOnline"))}</span></div>
         <div class="durs">${escape(this._t("allOnlineSub"))}</div>${warnLine}</div>`;
@@ -2314,6 +2315,14 @@ class DevicePanel extends HTMLElement {
       <div class="pticks">${ticks}<span class="now-label">${escape(this._t("now"))}</span></div>`;
   }
 
+  // Hinweis auf einen Sammelausfall (mehrere Geräte fast gleichzeitig): in der Kachel
+  // und, seit 1.26.0, im Fenster "Unterbrüche in 24 Std." (auf dem Handy zeigt die
+  // schlanke Kachel nur die Titelzeile).
+  _incidentHtml(inc) {
+    const integ = inc.integration ? this._integrations[inc.integration] || inc.integration : null;
+    return `<div class="inc" title="${escape((inc.names || []).join(", "))}"><b>${escape(this._t("incidentTitle", this._fmtTime(inc.at)))}</b><span class="inc-text">${escape(this._t("incidentText", inc.count, integ))}</span></div>`;
+  }
+
   // Ausfall-Puls: Zahl der Geräte mit Unterbruch je 30 Min. über 24 Std.,
   // dazu der jüngste Sammelausfall (mehrere Geräte fast gleichzeitig).
   _pulseHtml(all) {
@@ -2325,8 +2334,7 @@ class DevicePanel extends HTMLElement {
     const affected = all.filter((d) => d.avail24?.outages).length;
     let note;
     if (inc) {
-      const integ = inc.integration ? this._integrations[inc.integration] || inc.integration : null;
-      note = `<div class="inc" title="${escape((inc.names || []).join(", "))}"><b>${escape(this._t("incidentTitle", this._fmtTime(inc.at)))}</b>${escape(this._t("incidentText", inc.count, integ))}</div>`;
+      note = this._incidentHtml(inc);
     } else if (outages) {
       note = `<div class="pnote plink">${escape(this._t("pulseSummary", outages, affected))}${mdi("chevron", 15)}</div>`;
     } else {
@@ -2407,7 +2415,7 @@ class DevicePanel extends HTMLElement {
     const html = `<div class="dlg-head stat-head"><span class="dlg-avatar">${mdi("pulse", 24)}</span>
         <div class="dlg-title"><h2>${escape(t("pulseWinTitle"))}</h2><div class="dlg-sub">${escape(sub + scope)}</div></div>
         <button type="button" class="dlg-close" data-pulse-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
-      <div class="dlg-body"><div class="avail pwin">${this._pulseChartHtml(p, incidents, true, at)}</div>
+      <div class="dlg-body"><div class="avail pwin">${this._pulseChartHtml(p, incidents, true, at)}${incidents.slice(0, 3).map((inc) => this._incidentHtml(inc)).join("")}</div>
         <p class="dlg-note small">${escape(t("pulseWinHint"))}</p>${pick}
         <h3>${escape(t("pulseWinList"))}</h3>${rows ? `<div class="plist">${rows}</div>` : `<p class="dlg-note">${escape(t("pulseNone"))}</p>`}</div>
       <div class="dlg-actions"><button type="button" class="dlg-btn" data-pulse-close>${escape(t("close"))}</button></div>`;

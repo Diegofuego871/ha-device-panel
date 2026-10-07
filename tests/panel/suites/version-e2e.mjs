@@ -22,10 +22,20 @@ for (const mobile of [false, true]) {
   await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`));
   const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
   const panel = `document.querySelector("device-panel")`;
+  // Die Update-Zeile wird bei Änderungen an HACS und beim Prüfen neu gezeichnet: wurde das Element
+  // zwischen Suchen und Tippen ersetzt, das Element neu suchen (selten, unter Last).
   const tap = async (sel) => {
-    const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
-    if (!h) throw new Error("fehlt: " + sel);
-    if (mobile) await h.tap(); else await h.click();
+    for (let versuch = 1; ; versuch++) {
+      const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
+      if (!h) throw new Error("fehlt: " + sel);
+      try {
+        if (mobile) await h.tap(); else await h.click();
+        return;
+      } catch (err) {
+        if (versuch >= 3 || !/not attached|not stable/.test(String(err))) throw err;
+        await p.waitForTimeout(200);
+      }
+    }
   };
   const verText = () => ev(`return r.querySelector("dialog.settings .ver-slot")?.innerText.replace(/\\s+/g," ") || ""`);
   const open = async () => {

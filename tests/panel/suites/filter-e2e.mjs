@@ -40,7 +40,9 @@ for (const lang of ["de", "en"]) {
 
     // Kopf-Kacheln gleich hoch
     const heights = await ev(`return [...r.querySelectorAll(".hero .kt")].map(k=>Math.round(k.getBoundingClientRect().height))`);
-    check(`[${tag}] Kopf-Kacheln gleich hoch`, heights.length === 3 && Math.max(...heights) - Math.min(...heights) <= 1, JSON.stringify(heights));
+    // Handy (seit 1.26.0): "Verfügbarkeit" und "Gerade ausgefallen" gleich hoch, der Puls ist eine schlanke Zeile
+    const same = mobile ? heights.slice(0, 2) : heights;
+    check(`[${tag}] Kopf-Kacheln gleich hoch`, heights.length === 3 && Math.max(...same) - Math.min(...same) <= 1 && (!mobile || heights[2] <= 80), JSON.stringify(heights));
     await p.screenshot({ path: `${outDir}/filter-hero-${tag.replace("/", "-")}.png` });
 
     // X im Suchfeld: erst mit Eingabe sichtbar

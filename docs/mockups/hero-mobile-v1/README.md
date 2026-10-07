@@ -40,6 +40,10 @@ Beginn der Geräteliste, gemessen vom oberen Fensterrand im 874 px hohen Fenster
 | **V2** | 540 px (+25 bis 35 px) | ja, als Zeile mit Kurve und Titel des Sammelausfalls | nein |
 | V3 | 494 px (−10 bis −25 px) | erst nach dem Wischen | ja, für den Puls |
 
+## Entscheid des Nutzers: V2 (2026-10-07)
+
+Umgesetzt in 1.26.0, mit dem vollen Text des Sammelausfalls im Puls-Fenster.
+
 ## Empfehlung: V2
 
 Alle drei Angaben bleiben ohne Wischen sichtbar, und die Liste beginnt kaum tiefer als heute

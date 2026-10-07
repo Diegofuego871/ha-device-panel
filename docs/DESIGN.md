@@ -210,6 +210,10 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   eine Benachrichtigung auf dem Handy (App-Zeile mit Logo, Titel fett,
   Text, Knöpfe in Primärfarbe), darunter eine Kurzzeile. Schalter des
   Inhalts in zwei Spalten, auf dem Handy in einer.
+- Kopf auf dem Handy (seit 1.26.0, `docs/mockups/hero-mobile-v1`, V2): zwei kompakte Kacheln
+  nebeneinander (je 185 px bei 402 pt; Ring 62 px mit Prozentwert daneben, Zahl 38 px, zwei
+  Geräte, kurze Warnzeile "3 Warnungen"), darunter der Puls als schlanke Zeile (Titel,
+  Titelzeile des Sammelausfalls, Kurve 112 x 38 px). Kein Wischen mehr; ab 601 px unverändert.
 - Gerätetyp pro Integration (seit 1.25.0, Platzierung nach Bildschirmfoto des Nutzers, ohne
   Mockup): Spalte "Typ" neben "Anzeigen" in der Liste der Integrationen, je Zeile Logo, Name,
   Zahl der Geräte mit der Erkennung ("erkannt: 2 Steckdose") und eine Auswahl "Automatisch" plus

@@ -7,6 +7,30 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.26.0] - 2026-10-07
+
+Kopf-Kacheln nebeneinander auf dem Handy.
+
+### Hinzugefügt
+
+- Das Fenster "Unterbrüche in 24 Std." zeigt jetzt die Sammelausfälle (bis zu 3) mit
+  vollem Text über der Geräteliste; bisher standen sie nur in der Kachel.
+
+### Geändert
+
+- Kopf auf dem Handy (bis 600 px Breite; Wunsch des Nutzers, Mockup `hero-mobile-v1`,
+  V2): "Verfügbarkeit" und "Gerade ausgefallen" stehen jetzt nebeneinander, je die halbe
+  Breite (185 px auf einem iPhone 17), statt drei Kacheln zum Wischen. Tablet und Desktop
+  bleiben wie sie waren.
+  - Verfügbarkeit: kleinerer Ring (nur die Zahl) mit dem Prozentwert daneben,
+    darunter der Durchschnitt über 24 Std. und die Zeilen.
+  - Gerade ausgefallen: kleinere Zahl, die zwei längsten Geräte und "+ 2 weitere",
+    eine kurze Warnzeile ("3 Warnungen"); der Satz "Kein Gerät ist gerade
+    ausgefallen." entfällt (die 0 und "Alles online" sagen dasselbe).
+  - Ausfall-Puls: eine schlanke Zeile unter den zwei Kacheln mit Titel, der Titelzeile
+    des Sammelausfalls (oder der Zusammenfassung) und einer kleinen Kurve; Antippen
+    öffnet das Fenster wie bisher.
+
 ## [1.25.0] - 2026-10-06
 
 Gerätetyp pro Integration.
@@ -1694,6 +1718,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0
 [1.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.25.0
 [1.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.23.0
 [1.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.22.0

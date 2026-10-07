@@ -7,6 +7,29 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.26.0] - 2026-10-07
+
+Header tiles side by side on the phone.
+
+### Added
+
+- The window "Outages in 24 h" now shows the group outage notes (up to 3) with their
+  full text, above the device list; so far they were only on the tile.
+
+### Changed
+
+- Header on the phone (up to 600 px wide; requested by the user, mockup
+  `hero-mobile-v1`, V2): "Availability" and "Offline right now" now sit side by
+  side, each half the width (185 px on an iPhone 17), instead of three tiles to swipe
+  through. Tablet and desktop stay as they were.
+  - Availability: smaller ring (the number only) with the percentage beside it,
+    the 24 h average and the lines below.
+  - Offline right now: smaller number, the two longest devices and "+ 2 more", a short
+    warning line ("3 warnings"); the sentence "No device is offline right now." is
+    left out (the 0 and "All online" say the same).
+  - Outage pulse: a slim row under the two tiles with the title, the headline of the
+    group outage (or the summary) and a small curve; a tap opens the window as before.
+
 ## [1.25.0] - 2026-10-06
 
 Device type per integration.
@@ -1631,6 +1654,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0
 [1.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.25.0
 [1.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.23.0
 [1.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.22.0

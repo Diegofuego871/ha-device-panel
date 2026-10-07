@@ -117,6 +117,8 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 .olist b { color: var(--dp-error); font-weight: 600; font-variant-numeric: tabular-nums; }
 .olist .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .olist .more { color: var(--dp-text2); font-size: 12.5px; padding-top: 6px; border-top: 1px solid var(--dp-divider); }
+/* Kurzfassungen für das Handy (seit 1.26.0): nur dort sichtbar, siehe @media (max-width: 600px) */
+.olist .more-short, .kwarn .w-short { display: none; }
 
 /* Ausfall-Puls: Zahl der Geräte mit Unterbruch über 24 Std. */
 .kt.pul .k svg { color: var(--dp-text2); }
@@ -1010,16 +1012,48 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .toolbar { padding: 10px 12px 8px; gap: 8px; }
   .toolbar h1 { font-size: 18px; }
   .content { padding: 0 12px 12px; }
-  .hero { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; margin: 0 -12px; padding: 0 12px; scrollbar-width: none; }
-  .hero::-webkit-scrollbar { display: none; }
-  .hero .kt { min-width: 280px; scroll-snap-align: start; }
-  .hero .kt.pul { min-width: 300px; }
+  /* Kopf auf dem Handy (seit 1.26.0, docs/mockups/hero-mobile-v1, V2): "Verfügbarkeit" und
+     "Gerade ausgefallen" kompakt nebeneinander (je die halbe Breite, auf dem iPhone 17 185 px),
+     der Ausfall-Puls als schlanke Zeile darunter. */
+  .hero { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .hero .kt { padding: 12px; border-radius: 16px; }
+  .hero .kt .k { font-size: 11px; letter-spacing: .03em; gap: 6px; }
   .pchart { height: 64px; }
-  .kt.ring { grid-template-columns: 84px minmax(0, 1fr); }
-  .ringwrap { width: 84px; height: 84px; }
-  .ringwrap svg { width: 84px; height: 84px; }
-  .ringwrap .c b { font-size: 19px; }
-  .ringwrap .c span { font-size: 10px; max-width: 60px; }
+  /* Verfügbarkeit: Ring und Prozentwert nebeneinander, darunter Durchschnitt und Zeilen */
+  .kt.ring { grid-template-columns: 62px minmax(0, 1fr); gap: 0 10px; align-content: start; }
+  .kt.ring .rtxt { display: contents; }
+  .kt.ring .k { grid-column: 1 / -1; margin-bottom: 8px; }
+  .ringwrap { grid-column: 1; grid-row: 2; width: 62px; height: 62px; }
+  .ringwrap svg { width: 62px; height: 62px; }
+  .ringwrap .c b { font-size: 17px; }
+  .ringwrap .c span { display: none; }
+  .kt.ring .pct { grid-column: 2; grid-row: 2; margin: 0; font-size: 23px; line-height: 1.1; }
+  .kt.ring .pct small { display: block; margin: 2px 0 0; }
+  .kt.ring .pavg { grid-column: 1 / -1; margin: 10px 0 2px; font-size: 12.5px; }
+  .kt.ring .lines { grid-column: 1 / -1; margin-top: 2px; }
+  .kt.ring .lines div { font-size: 12.5px; }
+  /* Gerade ausgefallen: kleinere Zahl, die zwei längsten Geräte, kurze Warnzeile */
+  .kt.offl .top { margin: 2px 0 8px; gap: 8px; }
+  .kt.offl .top .num { font-size: 38px; }
+  .kt.offl .top .lbl { font-size: 12px; padding-bottom: 3px; line-height: 1.25; }
+  .kt.offl .durs { display: none; }
+  .kt.offl .olist { margin-bottom: 12px; }
+  .olist button { grid-template-columns: 16px minmax(0, 1fr) auto; gap: 6px; padding: 5px 0; font-size: 12.5px; }
+  .olist button:nth-child(n+3) { display: none; }
+  .olist .more-long { display: none; }
+  .olist .more-short { display: block; font-size: 12px; }
+  .kwarn { margin: auto -12px -12px; padding: 9px 12px; font-size: 12.5px; }
+  .kwarn .w-long { display: none; }
+  .kwarn .w-short { display: inline; }
+  /* Ausfall-Puls: schlanke Zeile mit Titel, Zusammenfassung (oder Titel des Sammelausfalls) und Kurve */
+  .hero .kt.pul { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) 112px; column-gap: 12px; align-items: center; padding: 10px 12px; }
+  .hero .kt.pul .k { grid-column: 1; grid-row: 1; }
+  .hero .kt.pul .pnote, .hero .kt.pul .inc { grid-column: 1; grid-row: 2; margin: 4px 0 0; }
+  .hero .kt.pul .inc { padding: 0; background: none; }
+  .hero .kt.pul .inc b { display: inline; margin: 0; }
+  .hero .kt.pul .inc .inc-text { display: none; }
+  .hero .kt.pul .pchart { grid-column: 2; grid-row: 1 / span 2; height: 38px; margin: 0; }
+  .hero .kt.pul .pticks { display: none; }
   .pticks .minor, .avail-ticks .minor { display: none; }
   .hstrip { margin: 0 -12px; }
   .hs-in { padding: 0 14px; }

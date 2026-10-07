@@ -37,7 +37,7 @@ for (const lang of ["de", "en"]) {
     const total = await rows();
 
     // 1. Zeile unten in der Kachel
-    const line = await ev(`const k=r.querySelector(".hero .kt.offl .kwarn"); if (!k) return null; const t=k.closest(".kt").getBoundingClientRect(), a=k.getBoundingClientRect(); return { text: k.textContent.replace(/\\s+/g," ").trim(), tag: k.tagName, gap: Math.round(t.bottom - a.bottom) }`);
+    const line = await ev(`const k=r.querySelector(".hero .kt.offl .kwarn"); if (!k) return null; const t=k.closest(".kt").getBoundingClientRect(), a=k.getBoundingClientRect(); return { text: (k.querySelector("b").textContent + k.querySelector(".w-long").textContent).replace(/\\s+/g," ").trim(), tag: k.tagName, gap: Math.round(t.bottom - a.bottom) }`);
     check(`[${tag}] Kachel: Zeile "3 ... mit Warnung" als Knopf`, line && line.tag === "BUTTON" && T.line.test(line.text), JSON.stringify(line));
     check(`[${tag}] Zeile sitzt unten in der Kachel`, line && Math.abs(line.gap) <= 17, JSON.stringify(line));
     // 2. Chips mit Zahl

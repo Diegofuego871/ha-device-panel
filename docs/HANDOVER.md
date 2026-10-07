@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.25.0, Einstellungen in fünf Abschnitten)
+## Stand (1.26.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,15 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Kopf auf dem Handy `1.26.0` (Nutzer, 2026-10-07, Mockup `docs/mockups/hero-mobile-v1`, V2): bis 600 px
+   stehen "Verfügbarkeit" (`.kt.ring`, Ring 62 px, Text über `.rtxt` mit `display: contents` ins Raster) und
+   "Gerade ausgefallen" (`.kt.offl`) je halbe Breite nebeneinander, der Puls (`.kt.pul`) ist eine schlanke
+   Zeile (Raster: Titel und Hinweis links, Kurve rechts, `.pticks` aus, `.inc-text` aus). Kurzfassungen
+   stehen doppelt im Markup und werden per CSS umgeschaltet (`.kwarn .w-long/.w-short`, `.olist .more-long/
+   .more-short`, Text `warnShort`); Liste auf dem Handy nur die zwei längsten Geräte. Der Text des
+   Sammelausfalls (`_incidentHtml`) steht zusätzlich im Puls-Fenster (bis 3). Tablet und Desktop unverändert.
+   Test: `hero-mobile-e2e.mjs` (iPhone 17, 375 pt, Grenze 600/601 px); `filter-e2e.mjs` und `warn-e2e.mjs`
+   angepasst. `docs/screenshots/*/overview-mobile.png` neu.
    Gerätetyp pro Integration `1.25.0` (Nutzer, 2026-10-06, ohne Mockup, nach dem Muster der Verbindungsart
    pro Integration): Option `type_integrations` {Domain: Typ} (`options_api.type_map`, auch im
    Optionsdialog); Vorrang in `devices.effective_type`: von Hand am Gerät, dann
