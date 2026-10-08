@@ -7,6 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.27.0] - 2026-10-08
+
+Grund der Warnung oben im Geräte-Popup.
+
+### Hinzugefügt
+
+- Geräte-Popup (Wunsch des Nutzers, Mockup `warn-reason-v1`, K2): Die Gründe einer Warnung
+  stehen jetzt oben als Marken unter dem Namen: "Instabil · 5× in 24 Std.",
+  "Empfang schwach · LQI 61", "Batterie niedrig · 9 %". Die passenden Kacheln der Statistik
+  tragen einen gelben Rahmen und einen Punkt, damit Marke und Kachel sichtbar zusammengehören.
+  Geräte ohne Warnung zeigen beides nicht.
+
+### Geändert
+
+- Die Marke ersetzt die Pille "Instabil" unter dem Namen.
+
 ## [1.26.0] - 2026-10-07
 
 Kopf-Kacheln nebeneinander auf dem Handy.
@@ -1718,6 +1734,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0
 [1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0
 [1.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.25.0
 [1.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.23.0

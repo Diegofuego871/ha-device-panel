@@ -7,6 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.27.0] - 2026-10-08
+
+Reason for the warning at the top of the device pop-up.
+
+### Added
+
+- Device pop-up (requested by the user, mockup `warn-reason-v1`, K2): the reasons for a
+  warning now stand at the top as tags under the name: "Unstable · 5× in 24 h",
+  "Weak signal · LQI 61", "Battery low · 9 %". The matching tiles in the statistics get a
+  yellow frame and a dot, so tag and tile belong together visibly. Devices without a
+  warning show neither.
+
+### Changed
+
+- The pill "Unstable" under the name is replaced by the tag.
+
 ## [1.26.0] - 2026-10-07
 
 Header tiles side by side on the phone.
@@ -1654,6 +1670,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0
 [1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0
 [1.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.25.0
 [1.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.23.0

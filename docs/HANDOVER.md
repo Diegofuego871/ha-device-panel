@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.26.0, Einstellungen in fünf Abschnitten)
+## Stand (1.27.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Grund der Warnung im Popup `1.27.0` (Nutzer, 2026-10-08, Mockup `warn-reason-v1`, K2): `why`-Marken
+   (`.why-tags`) unter dem Namen für instabil, schwachen Empfang, Batterie niedrig (ersetzen die Pille
+   "Instabil"); `_statTile/_staticTile(..., warn)` setzen `.st-tile.warned` (gelber Rahmen, Punkt per `::after`).
+   Strings `warnWeakSignal`, `warnBatteryLow`. Test `warnwhy-e2e.mjs`.
    Kopf auf dem Handy `1.26.0` (Nutzer, 2026-10-07, Mockup `docs/mockups/hero-mobile-v1`, V2): bis 600 px
    stehen "Verfügbarkeit" (`.kt.ring`, Ring 62 px, Text über `.rtxt` mit `display: contents` ins Raster) und
    "Gerade ausgefallen" (`.kt.offl`) je halbe Breite nebeneinander, der Puls (`.kt.pul`) ist eine schlanke

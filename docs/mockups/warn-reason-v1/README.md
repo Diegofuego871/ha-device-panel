@@ -15,6 +15,8 @@ langen Gründen unruhig; C ist ein Zusatz zu A.
 
 Neu rendern: `CHROMIUM_PATH=... node docs/mockups/warn-reason-v1/src/render.mjs`
 
+## Entscheid des Nutzers: K2 (2026-10-08), umgesetzt in 1.27.0
+
 ## Runde 2: Kombination aus B und C (Wunsch des Nutzers)
 
 `2-Kombination.png`: **K1** Marken im Kopf (B, die Pille "Instabil" entfällt, die Marke ersetzt sie)

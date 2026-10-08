@@ -855,6 +855,14 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   border: 1px solid var(--dp-divider); border-radius: 14px; background: var(--dp-subtle); text-align: left; cursor: pointer; }
 .st-tile:hover { border-color: color-mix(in srgb, var(--dp-primary) 50%, transparent); }
 .st-tile.static { cursor: default; }
+/* Grund der Warnung (seit 1.27.0): Marken im Kopf, gelber Rahmen und Punkt an der Kachel */
+.why-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.why { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 11px; border-radius: 999px; font-size: 13px;
+  border: 1px solid color-mix(in srgb, var(--dp-warning) 45%, transparent); background: var(--dp-warning-soft); }
+.why svg { color: var(--dp-warning); flex: none; }
+.why b { font-weight: 600; }
+.st-tile.warned { border-color: var(--dp-warning); box-shadow: 0 0 0 1px var(--dp-warning) inset; background: color-mix(in srgb, var(--dp-warning) 10%, var(--dp-card)); }
+.st-tile.warned::after { content: ""; position: absolute; top: 8px; right: 10px; width: 9px; height: 9px; border-radius: 50%; background: var(--dp-warning); }
 .st-tile.static:hover { border-color: var(--dp-divider); }
 .st-tile > .chev { position: absolute; right: 6px; bottom: 7px; color: var(--dp-text3); }
 .st-k { max-width: 100%; overflow: hidden; color: var(--dp-text2); font-size: 12px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }

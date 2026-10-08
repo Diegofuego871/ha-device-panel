@@ -2950,13 +2950,13 @@ class DevicePanel extends HTMLElement {
     this._renderDevice();
   }
 
-  _statTile(range, label, valueHtml, sub, kind = "avail", bad = false) {
-    return `<button type="button" class="st-tile" data-dlg="stat" data-range="${range}" data-kind="${kind}">
+  _statTile(range, label, valueHtml, sub, kind = "avail", bad = false, warn = false) {
+    return `<button type="button" class="st-tile${warn ? " warned" : ""}" data-dlg="stat" data-range="${range}" data-kind="${kind}">
       <span class="st-k">${escape(label)}</span><span class="st-v${bad ? " bad" : ""}">${valueHtml}</span><span class="st-sub">${escape(sub)}</span>${mdi("chevron", 16).replace('class="ic"', 'class="ic chev"')}</button>`;
   }
 
-  _staticTile(label, valueHtml, sub, bad = false) {
-    return `<div class="st-tile static"><span class="st-k">${escape(label)}</span><span class="st-v${bad ? " bad" : ""}">${valueHtml}</span><span class="st-sub">${escape(sub || "")}</span></div>`;
+  _staticTile(label, valueHtml, sub, bad = false, warn = false) {
+    return `<div class="st-tile static${warn ? " warned" : ""}"><span class="st-k">${escape(label)}</span><span class="st-v${bad ? " bad" : ""}">${valueHtml}</span><span class="st-sub">${escape(sub || "")}</span></div>`;
   }
 
   _tile(label, valueHtml) {
@@ -2980,7 +2980,10 @@ class DevicePanel extends HTMLElement {
             ? this._t("statOutages", s24.outages, this._fmtSeconds(s24.longest))
             : s24.pct == null
               ? this._t("pctWait")
-              : this._t("statNoOutages")
+              : this._t("statNoOutages"),
+        "avail",
+        false,
+        Boolean(d.flaky)
       )
     );
     let v7 = `<span class="t3">…</span>`;
@@ -2995,13 +2998,13 @@ class DevicePanel extends HTMLElement {
     tiles.push(this._statTile("7d", this._t("tileOutages7"), v7, sub7));
     const level = devSigLevel(d);
     // Tipp öffnet den Verlauf (seit 0.24.0, Wunsch des Nutzers).
-    if (level) tiles.push(this._statTile("24h", this._t("tileSignal"), `${bars(level, d.online === false)}${escape(sigText(d.signal))}`, this._t("tierNames")[level], "signal"));
+    if (level) tiles.push(this._statTile("24h", this._t("tileSignal"), `${bars(level, d.online === false)}${escape(sigText(d.signal))}`, this._t("tierNames")[level], "signal", false, level === 1));
     if (d.battery) {
       const b = d.battery;
       const value = `${batIcon(b, 18)}${b.level != null ? `${escape(String(b.level))}<small>%</small>` : escape(b.low ? this._t("batteryLow") : "OK")}`;
       // Mit Prozent: Tipp öffnet den Verlauf; "schwach ja/nein" nur als Kachel.
-      if (b.level != null) tiles.push(this._statTile("30d", this._t("tileBattery"), value, b.low ? this._t("batteryLow") : this._t("batHistoryHint"), "battery", b.low));
-      else tiles.push(this._staticTile(this._t("tileBattery"), value, "", b.low));
+      if (b.level != null) tiles.push(this._statTile("30d", this._t("tileBattery"), value, b.low ? this._t("batteryLow") : this._t("batHistoryHint"), "battery", b.low, b.low));
+      else tiles.push(this._staticTile(this._t("tileBattery"), value, "", b.low, b.low));
     }
     return `<div class="st-tiles" style="--n:${tiles.length}">${tiles.join("")}</div>`;
   }
@@ -3254,14 +3257,24 @@ class DevicePanel extends HTMLElement {
       } else if (d.disabled || d.unmonitored || d.online == null) {
         status = `<span class="pill none">${escape(this._t(d.disabled ? "statusDisabled" : d.unmonitored ? "statusUnmonitored" : "statusNoData"))}</span>`;
         avatar = "none";
-      } else if (d.flaky) {
-        status = `<span class="pill warn">${escape(this._t("statusFlaky"))}</span><span>${escape(this._t("flakyOutages", d.avail24.outages))}</span>`;
+      } else if (d.flaky || devWeak(d) || d.battery?.low) {
         avatar = "warn";
       }
+      // Grund der Warnung oben (seit 1.27.0, docs/mockups/warn-reason-v1, K2): Marken im Kopf,
+      // die zugehörigen Kacheln der Statistik tragen einen gelben Punkt.
+      const why = [];
+      if (d.online !== false && !d.disabled && !d.unmonitored) {
+        if (d.flaky) why.push([this._t("statusFlaky"), this._t("flakyOutages", d.avail24?.outages ?? 0)]);
+        if (devWeak(d)) why.push([this._t("warnWeakSignal"), sigText(d.signal)]);
+        if (d.battery?.low) why.push([this._t("warnBatteryLow"), d.battery.level != null ? `${d.battery.level} %` : ""]);
+      }
+      const whyHtml = why.length
+        ? `<div class="why-tags">${why.map(([k, v]) => `<span class="why">${mdi("alert", 15)}<b>${escape(k)}</b>${v ? ` · ${escape(v)}` : ""}</span>`).join("")}</div>`
+        : "";
       const ents = this._entitiesHtml(d);
       html = `<div class="dlg-head"><span class="dlg-avatar ${avatar}">${typeIcon(d.type, 28)}</span>
           <div class="dlg-title">${this._nameHtml(d)}
-            <div class="dlg-sub">${status}<span>${[this._t(typeKey(d.type)), d.area].filter(Boolean).map(escape).join(" · ")}</span></div></div>
+            <div class="dlg-sub">${status}<span>${[this._t(typeKey(d.type)), d.area].filter(Boolean).map(escape).join(" · ")}</span></div>${whyHtml}</div>
           ${close}</div>
         <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device">${mdi("open", 17)}${escape(this._t("openDevicePage"))}</button></div>
         <div class="dlg-body">
