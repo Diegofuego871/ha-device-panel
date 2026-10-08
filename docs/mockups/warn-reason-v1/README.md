@@ -14,3 +14,9 @@ Empfehlung A: klar lesbar auch bei mehreren Gründen, nennt Wert und Schwelle; B
 langen Gründen unruhig; C ist ein Zusatz zu A.
 
 Neu rendern: `CHROMIUM_PATH=... node docs/mockups/warn-reason-v1/src/render.mjs`
+
+## Runde 2: Kombination aus B und C (Wunsch des Nutzers)
+
+`2-Kombination.png`: **K1** Marken im Kopf (B, die Pille "Instabil" entfällt, die Marke ersetzt sie)
+und betroffene Statistik-Kacheln gelb umrandet (C). **K2** wie K1, dazu ein gelber Punkt in der
+Kachel, der zur Marke gehört. Empfehlung: K1; K2 nur, wenn die Zuordnung Marke/Kachel unklar wirkt.

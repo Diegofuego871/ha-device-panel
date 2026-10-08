@@ -40,9 +40,13 @@ async function shotVariant(name, fn) {
   await ctx.close();
   return f;
 }
-const a = await shotVariant("A", (A) => `d.querySelector(".dlg-quick").insertAdjacentHTML("beforebegin", ${JSON.stringify(A)}); d.querySelector(".dlg-quick").style.marginTop="10px"`);
-const b = await shotVariant("B", (A, B) => `d.querySelector(".dlg-sub").insertAdjacentHTML("afterend", ${JSON.stringify(B)}); d.querySelector(".dlg-sub span:not(.pill)").remove()`);
-const c = await shotVariant("C", (A) => `d.querySelector(".dlg-quick").insertAdjacentHTML("beforebegin", ${JSON.stringify(A)}); d.querySelector(".dlg-quick").style.marginTop="10px"; const t=[...d.querySelectorAll(".st-tile")]; for (const x of t) if (/Verfügbarkeit|Empfang/.test(x.textContent)) x.classList.add("mk-hl")`);
-await compose("1-Varianten.png", [[a, "A (Empfehlung): Hinweisfeld unter dem Kopf, eine Zeile je Grund mit Wert und Schwelle", 380], [b, "B: Marken im Kopf, ersetzen die Zeile unter dem Namen", 380], [c, "C: wie A, dazu die betroffenen Kacheln gelb markiert", 380]]);
+const SHORT = [["Instabil", "5× in 24 Std."], ["Empfang schwach", "LQI 61"]];
+const chips = SHORT.map(([t, v]) => `<button><svg width="15" height="15" viewBox="0 0 24 24"><path fill="currentColor" d="${ALERT}"/></svg><b>${t}</b> · ${v}</button>`).join("");
+const HL = `for (const x of [...d.querySelectorAll(".st-tile")]) if (/Verfügbarkeit|Empfang/.test(x.textContent)) x.classList.add("mk-hl")`;
+// K1: Marken im Kopf (B), betroffene Kacheln markiert (C); die Pille "Instabil" entfällt, da die Marke sie ersetzt
+const k1 = await shotVariant("K1", () => `d.querySelector(".dlg-sub .pill.warn").remove(); d.querySelector(".dlg-sub span").remove(); d.querySelector(".dlg-sub").insertAdjacentHTML("afterend", '<div class="mk-tags">' + ${JSON.stringify(chips)} + '</div>'); ${HL}`);
+// K2: wie K1, Marken zusätzlich mit Tipp-Hinweis und gelbem Punkt an der Kachel (Marke und Kachel gehören sichtbar zusammen)
+const k2 = await shotVariant("K2", () => `d.querySelector(".dlg-sub .pill.warn").remove(); d.querySelector(".dlg-sub span").remove(); d.querySelector(".dlg-sub").insertAdjacentHTML("afterend", '<div class="mk-tags">' + ${JSON.stringify(chips)} + '</div>'); ${HL}; for (const x of d.querySelectorAll(".mk-hl")) x.insertAdjacentHTML("afterbegin", '<span style="position:absolute;top:8px;right:10px;width:9px;height:9px;border-radius:50%;background:var(--dp-warning)"></span>'); for (const x of d.querySelectorAll(".st-tile")) x.style.position="relative"`);
+await compose("2-Kombination.png", [[k1, "K1: Marken im Kopf (B) und betroffene Kacheln gelb umrandet (C)", 380], [k2, "K2: wie K1, dazu gelber Punkt in der Kachel, der zur Marke gehört", 380]]);
 await close();
 console.log("fertig");
