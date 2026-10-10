@@ -37,6 +37,8 @@ Geräte, die gerade laden.
 - Einstellungen › Batterie › "Laden": Der Zeitstrahl der Übersicht steht auch dort, wie bei der
   Warnung. Anstieg (Feld) und "Voll ab" (Auswahl) stellt man im Zeitstrahl ein, die Hinweise
   stehen darunter.
+- Die Suchfelder der Listen in den Einstellungen und der Auswahlfenster (Bereich, Integration)
+  haben ein eigenes X zum Leeren, sobald etwas eingegeben ist; iOS zeigt das des Browsers nicht.
 
 ## [1.34.0] - 2026-10-10
 

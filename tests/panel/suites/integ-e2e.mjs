@@ -89,6 +89,11 @@ for (const lang of ["de", "en"]) {
     await openInteg();
     await ev(`const i=r.querySelector("${PICK} [data-area-search]"); i.value="zig"; i.dispatchEvent(new Event("input", {bubbles:true}))`);
     check(`[${tag}] Suche "zig": nur Zigbee`, await wait(`return [...r.querySelectorAll("${PICK} .arow .al")].map(x=>x.textContent).join() === ${JSON.stringify(T.zigbee)}`), (await pickRows()).join());
+    // X im Suchfeld (1.35.0): sichtbar mit Eingabe, leert, blendet sich aus
+    check(`[${tag}] Suchfeld: X sichtbar`, await ev(`const x=r.querySelector("${PICK} [data-area-search-clear]"); return !!x && !x.hidden`));
+    await tap(`${PICK} [data-area-search-clear]`);
+    check(`[${tag}] X leert die Suche, alle Einträge, X weg`, await wait(`const i=r.querySelector("${PICK} [data-area-search]"); const x=r.querySelector("${PICK} [data-area-search-clear]"); return i.value === "" && x.hidden && r.querySelectorAll("${PICK} .arow").length > 3`));
+    await ev(`const i=r.querySelector("${PICK} [data-area-search]"); i.value="zig"; i.dispatchEvent(new Event("input", {bubbles:true}))`);
     await ev(`const i=r.querySelector("${PICK} [data-area-search]"); i.value="xyz"; i.dispatchEvent(new Event("input", {bubbles:true}))`);
     check(`[${tag}] Suche ohne Treffer: Hinweis`, await wait(`return !!r.querySelector("${PICK} .anote")`));
     await closePick();

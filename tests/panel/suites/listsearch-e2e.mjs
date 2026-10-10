@@ -41,6 +41,13 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await type("exclude_integrations", "gibtesnicht");
   check(`[${tag}] keine Treffer`, (await visible("exclude_integrations")) === 0 && (await ev(`return r.querySelector('.srch-rows[data-srch="exclude_integrations"] .srch-none').hidden`)) === false && (await ev(`return r.querySelector('.srch-rows[data-srch="exclude_integrations"] .srch-none').textContent`)) === T[lang].none);
   await p.screenshot({ path: `${outDir}/listsearch-${tag.replace("/", "-")}.png` });
+  // X im Suchfeld (1.35.0): sichtbar mit Eingabe, leert und blendet sich aus
+  check(`[${tag}] Suchfeld mit Eingabe: X sichtbar`, await ev(`const x=r.querySelector('[data-lclear="exclude_integrations"]'); return !!x && !x.hidden`));
+  await tap('[data-lclear="exclude_integrations"]');
+  check(`[${tag}] X leert: alles sichtbar, Zähler weg, X weg`, (await visible("exclude_integrations")) === 9 && (await count("exclude_integrations")) === "" && (await ev(`return r.querySelector('input[data-lsearch="exclude_integrations"]').value === "" && r.querySelector('[data-lclear="exclude_integrations"]').hidden`)));
+  await type("exclude_integrations", "zig");
+  await type("exclude_integrations", "");
+  check(`[${tag}] von Hand geleert: X weg`, await ev(`return r.querySelector('[data-lclear="exclude_integrations"]').hidden`));
   await type("exclude_integrations", "");
   check(`[${tag}] leeren zeigt alles, Zähler weg`, (await visible("exclude_integrations")) === 9 && (await count("exclude_integrations")) === "");
 

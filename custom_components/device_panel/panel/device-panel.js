@@ -1960,7 +1960,7 @@ class DevicePanel extends HTMLElement {
     const icon = kind === "integ" ? "puzzle" : "home";
     const many = this._pickGroups().reduce((a, g) => a + g.items.length, 0) > 8;
     const search = many
-      ? `<label class="area-search">${mdi("search", 16)}<input type="search" data-area-search placeholder="${escape(this._pk("Search"))}" aria-label="${escape(this._pk("Search"))}"></label>`
+      ? `<label class="area-search">${mdi("search", 16)}<input type="search" data-area-search placeholder="${escape(this._pk("Search"))}" aria-label="${escape(this._pk("Search"))}">${this._fieldClearHtml("data-area-search-clear", "", "")}</label>`
       : "";
     if (mobile) {
       const dlg = this.shadowRoot.querySelector("dialog.area-sheet");
@@ -2079,12 +2079,23 @@ class DevicePanel extends HTMLElement {
           else picked.add(id);
         }
         this._setPick([...picked]);
+      } else if (ev.target.closest("[data-area-search-clear]")) {
+        ev.preventDefault();
+        const box = ev.target.closest("dialog, .area-pop");
+        const input = box?.querySelector("[data-area-search]");
+        if (input) input.value = "";
+        this._areaQuery = "";
+        ev.target.closest("[data-area-search-clear]").hidden = true;
+        this._renderAreaList();
+        if (input && !window.matchMedia?.(TOUCH_QUERY).matches) input.focus();
       } else if (ev.target.closest("[data-area-clear]")) this._setPick([]);
       else if (ev.target.closest("[data-area-done]")) this._closeAreas();
     };
     const onInput = (ev) => {
       if (!ev.target.matches?.("[data-area-search]")) return;
       this._areaQuery = ev.target.value;
+      const x = ev.target.closest("dialog, .area-pop")?.querySelector("[data-area-search-clear]");
+      if (x) x.hidden = !ev.target.value;
       this._renderAreaList();
     };
     pop.addEventListener("click", onClick);
@@ -4604,7 +4615,13 @@ class DevicePanel extends HTMLElement {
     if (n < 8) return "";
     const q = this._settings?.search?.[key] || "";
     const ph = this._t("listSearch");
-    return `<label class="list-search" data-for="${key}">${mdi("search", 18)}<input type="search" data-lsearch="${key}" value="${escape(q)}" placeholder="${escape(ph)}" aria-label="${escape(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n"></span></label>`;
+    return `<label class="list-search" data-for="${key}">${mdi("search", 18)}<input type="search" data-lsearch="${key}" value="${escape(q)}" placeholder="${escape(ph)}" aria-label="${escape(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n"></span>${this._fieldClearHtml("data-lclear", key, q)}</label>`;
+  }
+
+  // Eigenes X in Suchfeldern (seit 1.35.0): iOS zeigt das des Browsers nicht. Sichtbar nur mit Eingabe.
+  _fieldClearHtml(attr, value, text) {
+    const label = this._t("searchClear");
+    return `<button type="button" class="field-clear" ${attr}="${escape(value)}" title="${escape(label)}" aria-label="${escape(label)}"${text ? "" : " hidden"}>${mdi("close", 16)}</button>`;
   }
 
   _applyListSearch(root) {
@@ -4623,6 +4640,8 @@ class DevicePanel extends HTMLElement {
       if (none) none.hidden = !q || n > 0;
       const cnt = root.querySelector(`.list-search[data-for="${key}"] .n`);
       if (cnt) cnt.textContent = q ? this._t("listSearchOf", n, rows.length) : "";
+      const x = root.querySelector(`[data-lclear="${key}"]`);
+      if (x) x.hidden = !st?.search?.[key];
     }
   }
 
@@ -5681,6 +5700,18 @@ class DevicePanel extends HTMLElement {
 
   _bindSettings(dialog) {
     dialog.addEventListener("click", (ev) => {
+      const lclear = ev.target.closest("[data-lclear]");
+      if (lclear) {
+        // Klick im Label fokussiert sonst das Feld und öffnet auf dem Handy die Tastatur.
+        ev.preventDefault();
+        const key = lclear.dataset.lclear;
+        (this._settings.search ||= {})[key] = "";
+        const input = dialog.querySelector(`input[data-lsearch="${key}"]`);
+        if (input) input.value = "";
+        this._applyListSearch(dialog);
+        if (input && !window.matchMedia?.(TOUCH_QUERY).matches) input.focus();
+        return;
+      }
       const verBtn = ev.target.closest("[data-ver]");
       if (verBtn) {
         if (!verBtn.disabled) this._versionAction(verBtn.dataset.ver);

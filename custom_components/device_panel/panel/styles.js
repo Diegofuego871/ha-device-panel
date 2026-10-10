@@ -631,6 +631,12 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .list-search input { flex: 1; min-width: 0; border: 0; background: none; color: var(--dp-text); font: inherit; font-size: 15px; outline: none; }
 .list-search .n { font-size: 12.5px; white-space: nowrap; }
 .list-search .n:empty { display: none; }
+/* Eigenes X in den Suchfeldern der Listen und der Auswahl (seit 1.35.0); das des Browsers zeigt iOS nicht. */
+.list-search input::-webkit-search-cancel-button, .area-search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
+.field-clear { flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin-right: -6px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--dp-text2); cursor: pointer; }
+.field-clear:hover { background: var(--dp-hover); color: var(--dp-text); }
+.field-clear:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
+.field-clear[hidden] { display: none; }
 .srch-rows [hidden] { display: none !important; }
 /* Integrationen mit "Anzeigen", "Push", "Anhaltend" (Bild 5) */
 .ex-col { flex: none; display: flex; justify-content: center; width: 72px; }

@@ -36,6 +36,9 @@ Devices that are charging right now.
 - Settings › Battery › "Charging": the timeline of the overview is also there, like for the
   warning. The rise (field) and "Full from" (selection) are set in the timeline, with the
   hints below it.
+- The search fields of the lists in the settings and of the pickers (area, integration) have
+  an own clear button (X) now, as soon as something is typed; iOS does not show the one of the
+  browser.
 
 ## [1.34.0] - 2026-10-10
 
