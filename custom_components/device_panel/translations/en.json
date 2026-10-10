@@ -67,7 +67,7 @@
           "updates_kinds": "Updates: which kinds",
           "notify_charge": "Charging: push notification",
           "charge_full": "Charging: full from (%)",
-          "charge_rise": "Charging: detected at a rise of (points)",
+          "charge_rise": "Charging: detected at a rise of (%)",
           "charge_integrations": "Charging: integrations with a notification"
         },
         "data_description": {
@@ -122,7 +122,7 @@
           "updates_kinds": "Home Assistant (core, OS, supervisor), add-ons, HACS, device firmware. Skipped versions are never reported.",
           "notify_charge": "A push notification as soon as a device is fully charged. Off by default; switch it on per integration (below) or per device (device pop-up). Only for rechargeable devices: a new battery looks like charging.",
           "charge_full": "Level that counts as full (90 to 100). Some devices never report 100 %.",
-          "charge_rise": "Charging is detected when the level rises this many points above the lowest level since the last discharge (5 to 80).",
+          "charge_rise": "Charging is detected when the level rises this many percent above the lowest level since the last discharge (5 to 80).",
           "charge_integrations": "Integrations whose devices report when charged (a device can differ in its pop-up)."
         }
       }

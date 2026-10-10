@@ -5014,7 +5014,7 @@ class DevicePanel extends HTMLElement {
     const fulls = [...new Set([90, 95, 98, 100, d.charge_full].filter((v) => Number.isInteger(v)))].sort((a, b) => a - b);
     const fullSel = `<span class="opt-select"><select data-cfull aria-label="${escape(t("optChargeFull"))}">${fulls.map((v) => `<option value="${v}"${v === d.charge_full ? " selected" : ""}>${v} %</option>`).join("")}</select>${mdi("chevronDown", 18)}</span>`;
     html += ui.row("charge_full", t("optChargeFull"), fullSel, t("optChargeFullShort"), null);
-    html += ui.row("charge_rise", t("optChargeRise"), ui.num("charge_rise", t("unitPoints"), t("optChargeRise")), t("optChargeRiseShort"), null);
+    html += ui.row("charge_rise", t("optChargeRise"), ui.num("charge_rise", t("unitPercent"), t("optChargeRise")), t("optChargeRiseShort"), null);
     // Integrationen mit Batteriegeräten (Katalog), dazu bereits eingeschaltete ohne Geräte.
     const on = new Set(d.charge_integrations || []);
     const saved = new Set(st.data.values.charge_integrations || []);

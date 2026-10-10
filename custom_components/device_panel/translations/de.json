@@ -67,7 +67,7 @@
           "updates_kinds": "Updates: welche Arten",
           "notify_charge": "Laden: Push-Meldung",
           "charge_full": "Laden: voll ab (%)",
-          "charge_rise": "Laden: erkannt bei Anstieg um (Punkte)",
+          "charge_rise": "Laden: erkannt bei Anstieg um (%)",
           "charge_integrations": "Laden: Integrationen mit Meldung"
         },
         "data_description": {
@@ -122,7 +122,7 @@
           "updates_kinds": "Home Assistant (Core, OS, Supervisor), Add-ons, HACS, Geräte-Firmware. Übersprungene Versionen werden nie gemeldet.",
           "notify_charge": "Eine Push-Meldung, sobald ein Gerät voll geladen ist. Standardmässig aus; einschalten pro Integration (unten) oder pro Gerät (Geräte-Popup). Nur für wiederaufladbare Geräte: eine neue Batterie sieht wie Laden aus.",
           "charge_full": "Stand, der als voll gilt (90 bis 100). Manche Geräte melden nie 100 %.",
-          "charge_rise": "Laden gilt als erkannt, wenn der Stand so viele Punkte über den tiefsten Stand seit dem letzten Entladen steigt (5 bis 80).",
+          "charge_rise": "Laden gilt als erkannt, wenn der Stand so viele Prozent über den tiefsten Stand seit dem letzten Entladen steigt (5 bis 80).",
           "charge_integrations": "Integrationen, deren Geräte das Laden melden (ein Gerät kann im Popup abweichen)."
         }
       }

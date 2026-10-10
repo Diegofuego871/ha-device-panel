@@ -42,9 +42,9 @@ Charging notification.
   "Charging"), per integration, or per device in the device pop-up ("Report charging": same
   as integration, on, off; the device wins).
   - Detection without a charging entity: the panel remembers the lowest level since the
-    last discharge. A rise of 20 points or more from there counts as charging; at "full"
+    last discharge. A rise of 20 % or more from there (22 % to 42 %, for example) counts as charging; at "full"
     (default 100 %) it sends one push. Both values are configurable ("Full from" 90, 95, 98
-    or 100 %; rise 5 to 80 points), because some devices never report 100 %.
+    or 100 %; rise 5 to 80 %), because some devices never report 100 %.
   - Fallback for devices that report rarely: a jump from below 90 % straight to "full"
     is reported as well, without a duration ("from 38 %"). The notification re-arms once the
     level has dropped 10 points below "full".

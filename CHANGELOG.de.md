@@ -42,9 +42,9 @@ Lademeldung.
   (Abschnitt "Laden"), pro Integration oder pro Gerät im Geräte-Popup ("Laden melden":
   Wie Integration, Ein, Aus; das Gerät geht vor).
   - Erkennung ohne Ladeanzeige-Entität: Das Panel merkt sich den tiefsten Stand seit dem
-    letzten Entladen. Ein Anstieg um 20 Punkte oder mehr gilt als Laden; bei "voll"
+    letzten Entladen. Ein Anstieg um 20 % oder mehr (von 22 % auf 42 %, zum Beispiel) gilt als Laden; bei "voll"
     (Standard 100 %) kommt ein Push. Beide Werte sind einstellbar ("Voll ab" 90, 95, 98 oder
-    100 %; Anstieg 5 bis 80 Punkte), weil manche Geräte nie 100 % melden.
+    100 %; Anstieg 5 bis 80 %), weil manche Geräte nie 100 % melden.
   - Ersatzregel für Geräte, die selten melden: Ein Sprung von unter 90 % direkt auf "voll"
     wird ebenfalls gemeldet, ohne Dauer ("von 38 %"). Die Meldung ist wieder scharf, sobald
     der Stand 10 Punkte unter "voll" gefallen ist.
