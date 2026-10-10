@@ -7,6 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.0.0] - 2026-10-10
+
+Material look, step 1 (pre-release).
+
+### Changed
+
+- New look for the device pop-up, the settings and the log window (requested by the user, mockups
+  `apple-design-v1`, variant B, step 1 of 2): translucent sheets with blur and a light top edge, a dimmed and
+  slightly blurred background, head and buttons fade out softly instead of ending in a hard line, glass-like tiles,
+  buttons and tabs, tighter spacing of large titles and slightly wider spacing of small labels, and an instant
+  press feedback (3 % smaller). Only styles change: no fields, values, tags or functions. Without support for
+  `backdrop-filter` or with "reduce transparency" the sheets stay opaque as before; with "reduce motion" the press
+  feedback is off. Step 2 (sheet that can be dragged, springs) follows separately. Can be reverted by going back
+  to 1.44.0.
+
 ## [1.44.0] - 2026-10-10
 
 Tabs wrap onto a second row.
@@ -2061,6 +2076,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[2.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.0
 [1.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.44.0
 [1.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.43.0
 [1.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.39.0

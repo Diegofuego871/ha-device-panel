@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.0] - 2026-10-10
+
+Material-Look, Schritt 1 (Vorabversion).
+
+### Geändert
+
+- Neues Aussehen für das Geräte-Popup, die Einstellungen und das Protokoll-Fenster (Wunsch des Nutzers, Mockups
+  `apple-design-v1`, Variante B, Schritt 1 von 2): durchscheinende Blätter mit Unschärfe und heller Oberkante,
+  abgedunkelter und leicht unscharfer Hintergrund, Kopf und Knöpfe laufen weich aus statt mit harter Linie,
+  gläserne Kacheln, Tasten und Reiter, enger gesetzte grosse Titel und etwas weiter gesetzte kleine Beschriftung
+  sowie eine sofortige Druck-Rückmeldung (3 % kleiner). Es ändern sich nur Stile: keine Felder, Werte, Tags oder
+  Funktionen. Ohne Unterstützung für `backdrop-filter` oder bei "Transparenz reduzieren" bleiben die Blätter
+  deckend wie bisher; bei "Bewegung reduzieren" entfällt die Druck-Rückmeldung. Schritt 2 (ziehbares Blatt, Federn)
+  folgt gesondert. Zurück auf 1.44.0 geht jederzeit.
+
 ## [1.44.0] - 2026-10-10
 
 Reiter brechen auf eine zweite Zeile um.
@@ -2128,6 +2143,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.0
 [1.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.44.0
 [1.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.43.0
 [1.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.39.0

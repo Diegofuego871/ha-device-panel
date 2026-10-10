@@ -1216,4 +1216,37 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
   dialog.device, dialog.settings, dialog.pulse-dlg, dialog.area-sheet, dialog.prompt-dlg { height: 92%; max-height: 92%; }
   dialog.stat-dlg { height: 86%; max-height: 86%; }
 }
+
+/* Material (seit 2.0.0b1, Wunsch des Nutzers, Variante B aus docs/mockups/apple-design-v1): Geräte-Popup, Einstellungen und Protokoll sind
+   durchscheinende Blätter mit Unschärfe und heller Oberkante; Kopf und Knöpfe laufen weich aus statt mit harter Linie. Nur Stile: keine Inhalte,
+   Felder oder Werte ändern sich. Farben aus den Theme-Variablen (hell und dunkel). Ohne Unterstützung für backdrop-filter oder bei
+   "Transparenz reduzieren" bleiben die Blätter deckend wie bisher. */
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  @media not (prefers-reduced-transparency: reduce) {
+    dialog.device, dialog.settings, dialog.log-dlg { background: color-mix(in srgb, var(--dp-card) 80%, transparent);
+      -webkit-backdrop-filter: blur(28px) saturate(170%); backdrop-filter: blur(28px) saturate(170%);
+      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dp-text) 14%, transparent), 0 24px 70px rgba(0,0,0,0.5); }
+    dialog.device::backdrop, dialog.settings::backdrop, dialog.log-dlg::backdrop { background: rgba(0,0,0,0.42); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+    dialog.device .dlg-head, dialog.settings .dlg-head, dialog.log-dlg .dlg-head { background: color-mix(in srgb, var(--dp-card) 60%, transparent);
+      -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+    dialog.device .dev-tabs { background: color-mix(in srgb, var(--dp-card) 60%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+    dialog.device .dev-tabs::after { display: none; }
+    dialog.device .dlg-actions, dialog.settings .dlg-actions, dialog.log-dlg .dlg-actions { border-top: none; padding-top: 24px;
+      background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--dp-card) 85%, transparent) 42%);
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+    dialog.device .dlg-btn, dialog.settings .dlg-btn { background: color-mix(in srgb, var(--dp-text) 8%, transparent); border-color: color-mix(in srgb, var(--dp-text) 12%, transparent); }
+    dialog.device .dlg-btn.primary, dialog.settings .dlg-btn.primary { background: var(--dp-primary); border-color: transparent; }
+    dialog.device .tile, dialog.device .st-tile { background: color-mix(in srgb, var(--dp-text) 6%, transparent); border-color: color-mix(in srgb, var(--dp-text) 8%, transparent); }
+    dialog.device .mon-tabs, dialog.device .sub-tabs, dialog.settings .mon-tabs, dialog.settings .sub-tabs { background: color-mix(in srgb, var(--dp-text) 8%, transparent); }
+  }
+}
+/* Typografie: grosse Titel enger, kleine Beschriftung etwas weiter (Spationierung nach Grösse) */
+.dlg-title { letter-spacing: -0.022em; line-height: 1.12; }
+.dlg-title h2 { font-size: 24px; font-weight: 700; }
+.opt-short, .opt-origin, .sub, .st-sub { letter-spacing: 0.01em; }
+.st-k { letter-spacing: 0.02em; }
+/* Rückmeldung beim Drücken: sofort, 3 % kleiner; mit reduzierter Bewegung entfällt es */
+@media not (prefers-reduced-motion: reduce) {
+  button:active, .dev:active, .mrow:active, .chip:active, .tile:active, .st-tile:active, .sub-tab:active, .mon-tab:active { transform: scale(0.97); transition: transform 100ms ease-out; }
+}
 `;

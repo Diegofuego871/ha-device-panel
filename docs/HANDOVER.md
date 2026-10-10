@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.44.0, Einstellungen in fünf Abschnitten)
+## Stand (2.0.0 Vorabversion, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -431,6 +431,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Wischen im Popup `1.41.0` (Nutzer, Video nicht angekommen, Ursache nur vermutet): `_renderDevice(soft)` und `_renderLogBody(soft)` bauen beim
    Abfragen nicht neu auf, solange `_dlgBusy()` gilt (Berührung aktiv oder weniger als 0,8 s her, Scroll/Wheel im Fenster);
    `_trackBusy(dlg)` setzt die Merker. Nur der Abfragepfad ist weich, eigene Aktionen bauen sofort neu auf. Test `busy-e2e.mjs`.
+   Material-Look `2.0.0` (Nutzer, Schritt 1 von 2, Mockups `docs/mockups/apple-design-v1`, Variante B; Skill `.claude/skills/apple-design`): Block am Ende von `styles.js`
+   (durchscheinende Blätter mit `backdrop-filter`, nur unter `@supports` und `not (prefers-reduced-transparency)`, Druck-Rückmeldung unter `not (prefers-reduced-motion)`).
+   Nur Stile. Schritt 2 offen: ziehbares Blatt mit Federn (Prototyp `prototype.html`), mit Schalter zum Abschalten und Touch-Test (iPhone-Scrollproblem!).
+   Zurück: v1.44.0. Als Vorabversion veröffentlichen (Nutzer legt den Tag an).
    Reiter umbrechen `1.44.0` (Nutzer, Mockups `docs/mockups/tabs-style-v1`; der Nutzer wählte das bisherige Segment-Aussehen): `.mon-tabs, .sub-tabs { flex-wrap: wrap }`,
    `.mon-tab, .sub-tab { flex: 1 0 auto; white-space: nowrap }`; das seitliche Scrollen der Reiterzeile (1.42.0) entfällt. Test `levels-e2e.mjs`.
    Abschnittstitel `1.43.0` (Nutzer): ein Stil `.set-title` (= `.mon-grp`, `.ex-title`; 18 px fett mit Akzentbalken), Helfer `ttl(key)` in `_settingsBodyHtml`; neue Titel
