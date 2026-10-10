@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "92"
+PANEL_VERSION = "93"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -143,7 +143,7 @@ DATA_CHARGE = f"{DOMAIN}_charge"
 INT_RANGES = {
     CONF_NEW_WINDOW: (1, 60),
     CONF_UPDATES_WINDOW: (1, 60),
-    CONF_CHARGE_FULL: (90, 100),
+    CONF_CHARGE_FULL: (50, 100),
     CONF_CHARGE_RISE: (5, 80),
     CONF_OFFLINE_AFTER: (1, 60),
     CONF_FLAKY_OUTAGES: (2, 50),

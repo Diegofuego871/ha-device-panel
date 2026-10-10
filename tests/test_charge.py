@@ -264,7 +264,37 @@ async def test_integration_own_full_and_rise(hass: HomeAssistant) -> None:
     import voluptuous as vol  # noqa: PLC0415
 
     assert charge_map("charge_full")({"zha": 95}) == {"zha": 95} and charge_map("charge_full")(None) == {}
-    for bad in ({"zha": 50}, {"zha": "x"}, {"ZHA!": 95}, [1]):
+    for bad in ({"zha": 49}, {"zha": 101}, {"zha": "x"}, {"ZHA!": 95}, [1]):
         with pytest.raises(vol.Invalid):
             charge_map("charge_full")(bad)
-    assert values_from({"charge_full_integrations": {"zha": 50}})["charge_full_integrations"] == {}
+    assert values_from({"charge_full_integrations": {"zha": 49}})["charge_full_integrations"] == {}
+    assert values_from({"charge_full_integrations": {"zha": 80}})["charge_full_integrations"] == {"zha": 80}
+
+
+def test_full_80_needs_a_real_rise_or_jump() -> None:
+    """"Voll ab" 80 (1.38.0): ein Schritt 79 → 80 ist kein Laden; ein Anstieg oder Sprung von mehr als 10 Punkten schon."""
+    opts = {**OPTS, "charge_full": 80}
+    n = _notifier()
+    assert n.step("d", 70, 0, opts) is None
+    assert n.step("d", 79, 60, opts) is None  # Anstieg 9 < 20
+    assert n.step("d", 80, 120, opts) is None  # kein Sprung (vorher 79), kein Anstieg von 20 über den Tiefpunkt
+    n2 = _notifier()
+    n2.step("e", 40, 0, opts)
+    assert n2.step("e", 60, 100, opts) is None
+    done = n2.step("e", 80, 200, opts)
+    assert done == {"level": 80, "start": 40, "seconds": 200}
+    n3 = _notifier()
+    n3.step("f", 60, 0, opts)
+    assert n3.step("f", 80, 50, opts) is not None  # Anstieg 20 erreicht
+
+
+async def test_device_full_range_50_to_100(hass: HomeAssistant, hass_ws_client) -> None:
+    from custom_components.device_panel.devices import device_settings  # noqa: PLC0415
+
+    await _setup(hass)
+    device, _entity = _device(hass, "Handy", level=30)
+    client = await hass_ws_client(hass)
+    for i, (value, accepted) in enumerate(((80, True), (50, True), (49, False), (101, False)), start=1):
+        await client.send_json({"id": i, "type": f"{DOMAIN}/set_device_settings", "device_id": device.id, "charge_full": value})
+        assert (await client.receive_json())["success"] is accepted, value
+    assert device_settings(hass)["charge_full"] == {device.id: 50}

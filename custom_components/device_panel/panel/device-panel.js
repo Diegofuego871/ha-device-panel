@@ -369,6 +369,10 @@ const promptHtml = (text) => escape(text).replace(/\{(language|facts(?:_[a-z]+)?
 
 // Optionen mit Abweichungen pro Integration ("Alle zurücksetzen" in
 // "Überwachung und Meldungen" › "Integrationen", "Alles auf Standard" in der Integration).
+// "Voll ab" (seit 1.38.0): feste Stufen und "Eigener Wert"; ein Wert ausserhalb der Stufen gilt als eigener.
+const CHARGE_FULL_PRESETS = [100, 95, 90, 80];
+const CHARGE_FULL_OWN_START = 85;
+const CHARGE_FULL_RANGE = [50, 100];
 const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations", "signal_low_integrations", "charge_full_integrations", "charge_rise_integrations"];
 // Liste der Integrationen mit Lademeldung (seit 1.32.0 auch hier einstellbar): zurücksetzen = aus, der Standard.
 const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"];
@@ -1030,8 +1034,22 @@ class DevicePanel extends HTMLElement {
       } else if (el.matches?.('select[data-dlg="dev-charge"]')) {
         this._setDeviceSettings(this._detailId, { charge: el.value === "on" ? true : el.value === "off" ? false : null });
       } else if (el.matches?.('select[data-dlg="dev-charge-full"]')) {
-        // Eigenes "Voll ab" des Geräts (seit 1.35.0): "default" = globaler Wert.
-        this._setDeviceSettings(this._detailId, { charge_full: el.value === "default" ? null : Number(el.value) });
+        // Eigenes "Voll ab" des Geräts (seit 1.35.0): "default" = globaler Wert, "own" = Zahl (Start 85, sonst der bisherige Wert).
+        const d = this._devices.find((x) => x.id === this._detailId);
+        this._chargeFullRangeError = null;
+        const own = Number.isInteger(d?.charge_full_setting) && !CHARGE_FULL_PRESETS.includes(d.charge_full_setting) ? d.charge_full_setting : CHARGE_FULL_OWN_START;
+        this._setDeviceSettings(this._detailId, { charge_full: el.value === "default" ? null : el.value === "own" ? own : Number(el.value) });
+      } else if (el.matches?.('input[data-dlg="dev-charge-full-val"]')) {
+        const v = Number(el.value);
+        const [min, max] = CHARGE_FULL_RANGE;
+        if (el.value === "" || !Number.isInteger(v) || v < min || v > max) {
+          this._chargeFullRangeError = { value: el.value, message: this._t("settingsRange", min, max) };
+          this._devForce = true;
+          this._renderDevice();
+        } else {
+          this._chargeFullRangeError = null;
+          this._setDeviceSettings(this._detailId, { charge_full: v });
+        }
       } else if (el.matches?.('select[data-dlg="dev-charge-rise"]')) {
         // Eigener Anstieg: mit dem globalen Wert beginnen, dann anpassen.
         const d = this._devices.find((x) => x.id === this._detailId);
@@ -3251,6 +3269,7 @@ class DevicePanel extends HTMLElement {
     this._sigRangeError = null;
     this._offRangeError = null;
     this._chargeRangeError = null;
+    this._chargeFullRangeError = null;
     this._typeError = null;
     this._detailId = null;
     this._detail = null;
@@ -3500,13 +3519,21 @@ class DevicePanel extends HTMLElement {
         const gRise = cd.rise ?? 20;
         const fullSet = d.charge_full_setting;
         const riseSet = d.charge_rise_setting;
-        const fulls = [...new Set([90, 95, 98, 100, fullSet].filter((v) => Number.isInteger(v)))].sort((a, b) => a - b);
+        // Stufen 100, 95, 90, 80 oder "Eigener Wert" (Zahl); ein Wert ausserhalb der Stufen zeigt "Eigener Wert".
+        const fullMode = fullSet == null ? "default" : CHARGE_FULL_PRESETS.includes(fullSet) ? String(fullSet) : "own";
+        const fullErr = fullMode === "own" ? this._chargeFullRangeError : null;
         html += `<div class="opt${fullSet != null ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeFull"))}</span>${sel(
           "dev-charge-full",
-          [["default", cd.full_integration ? t("devChargeFullInteg", gFull) : t("devChargeFullGlobal", gFull)], ...fulls.map((v) => [String(v), `${v} %`])],
-          fullSet == null ? "default" : String(fullSet),
+          [["default", cd.full_integration ? t("devChargeFullInteg", gFull) : t("devChargeFullGlobal", gFull)], ...CHARGE_FULL_PRESETS.map((v) => [String(v), `${v} %`]), ["own", t("chargeFullOwn")]],
+          fullMode,
           t("devChargeFull")
-        )}</div>${origin(fullSet != null, cd.full_integration, fullSet != null || cd.full_integration ? t("originDefaultWould", `${gFull} %`) : "", t("devChargeFullShort"))}</div>`;
+        )}</div>${
+          fullMode === "own"
+            ? `<div class="opt-line opt-sub"><span class="opt-label">${escape(t("devChargeFull"))}</span><span class="opt-input${fullErr ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="${CHARGE_FULL_RANGE[0]}" max="${CHARGE_FULL_RANGE[1]}" data-dlg="dev-charge-full-val" value="${escape(fullErr ? fullErr.value : fullSet)}" aria-label="${escape(t("devChargeFull"))}"><span class="unit">${escape(t("unitPercent"))}</span></span></div>${
+                fullErr ? `<div class="opt-error" data-dev-range>${escape(fullErr.message)}</div>` : ""
+              }`
+            : ""
+        }${origin(fullSet != null, cd.full_integration, fullSet != null || cd.full_integration ? t("originDefaultWould", `${gFull} %`) : "", t("devChargeFullShort"))}</div>`;
         const riseMode = riseSet != null ? "own" : "default";
         const riseErr = riseMode === "own" ? this._chargeRangeError : null;
         html += `<div class="opt${riseMode === "own" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeRise"))}</span>${sel(
@@ -3628,6 +3655,7 @@ class DevicePanel extends HTMLElement {
     if (!this._devForce && this._rename && typing?.dataset?.dlg === "rename-input") return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-bat-pct" && typing.value !== String(d.battery_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-sig-val" && typing.value !== String(d.signal_setting)) return;
+    if (!this._devForce && d && typing?.dataset?.dlg === "dev-charge-full-val" && typing.value !== String(d.charge_full_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-off-min" && typing.value !== String(d.offline_setting)) return;
     this._devForce = false;
     let html;
@@ -5464,8 +5492,11 @@ class DevicePanel extends HTMLElement {
     const target = Boolean(d.notify_service && d.notify_service !== "none");
     const noTarget = d.notify_charge && !target;
     const push = target && d.notify_charge;
-    const fulls = [...new Set([90, 95, 98, 100, d.charge_full].filter((v) => Number.isInteger(v)))].sort((a, b) => a - b);
-    const fullSel = `<span class="opt-select${changes.has("charge_full") ? " chg" : ""}"><select data-cfull aria-label="${escape(t("optChargeFull"))}">${fulls.map((v) => `<option value="${v}"${v === d.charge_full ? " selected" : ""}>${v} %</option>`).join("")}</select>${mdi("chevronDown", 18)}</span>`;
+    // Stufen 100, 95, 90, 80 oder "Eigener Wert" mit Zahlenfeld (seit 1.38.0).
+    const fullMode = CHARGE_FULL_PRESETS.includes(d.charge_full) ? String(d.charge_full) : "own";
+    const fullSel = `<span class="opt-select${changes.has("charge_full") ? " chg" : ""}"><select data-cfull aria-label="${escape(t("optChargeFull"))}">${[...CHARGE_FULL_PRESETS.map((v) => [String(v), `${v} %`]), ["own", t("chargeFullOwn")]].map(([v, label]) => `<option value="${v}"${v === fullMode ? " selected" : ""}>${escape(label)}</option>`).join("")}</select>${mdi("chevronDown", 18)}</span>${
+      fullMode === "own" ? this._tlInput(d, "charge_full", t("unitPercent"), t("optChargeFull"), errors.charge_full, changes.has("charge_full")) : ""
+    }`;
     // Zeitstrahl wie bei der Warnung (seit 1.35.0): Anstieg erkennt das Laden, "Voll ab" löst den Push aus;
     // beide Werte stehen im Zeitstrahl.
     const tl = this._tlHtml(
@@ -5475,7 +5506,7 @@ class DevicePanel extends HTMLElement {
       ],
       "mtl-b mtl-e"
     );
-    let html = `${tl}<div class="opt-error mtl-err" data-tl-error="charge_rise" ${errors.charge_rise ? "" : "hidden"}>${escape(errors.charge_rise || "")}</div>
+    let html = `${tl}<div class="opt-error mtl-err" data-tl-error="charge_rise,charge_full" ${errors.charge_rise || errors.charge_full ? "" : "hidden"}>${escape(errors.charge_rise || errors.charge_full || "")}</div>
       <div class="opt-short mtl-note">${escape(t("optChargeRiseShort"))} ${escape(t("optChargeFullShort"))}</div>
       ${ui.row("notify_charge", t("optCharge"), ui.sw("notify_charge", t("optCharge")), noTarget ? null : t("optChargeShort"), null, noTarget ? t("noTargetWarn") : null)}`;
     if (!d.notify_charge) return html;
@@ -5795,12 +5826,20 @@ class DevicePanel extends HTMLElement {
         const savedFull = saved.charge_full_integrations || {};
         const savedRise = saved.charge_rise_integrations || {};
         const choices = (presets, own) => [...new Set([...presets, own].filter((v) => Number.isInteger(v)))].sort((a, b) => a - b);
-        const chargeSel = (attr, own, g, values, label) =>
-          `<span class="opt-select"><select ${attr}="${escape(dom)}" ${unmon ? "disabled" : ""} aria-label="${escape(`${label}: ${item.name}`)}"><option value="default"${own == null ? " selected" : ""}>${escape(t("integChargeDefault", g))}</option>${values
+        const chargeSel = (attr, own, g, values, label, ownOption = false) => {
+          const custom = ownOption && own != null && !values.includes(own);
+          return `<span class="opt-select"><select ${attr}="${escape(dom)}" ${unmon ? "disabled" : ""} aria-label="${escape(`${label}: ${item.name}`)}"><option value="default"${own == null ? " selected" : ""}>${escape(t("integChargeDefault", g))}</option>${values
             .map((v) => `<option value="${v}"${v === own ? " selected" : ""}>${v} %</option>`)
-            .join("")}</select>${mdi("chevronDown", 18)}</span>`;
+            .join("")}${ownOption ? `<option value="own"${custom ? " selected" : ""}>${escape(t("chargeFullOwn"))}</option>` : ""}</select>${mdi("chevronDown", 18)}</span>`;
+        };
+        // Eigener Wert von "Voll ab" (seit 1.38.0): Zahlenfeld unter der Auswahl.
+        const fullOwn = (own) => {
+          if (own == null || CHARGE_FULL_PRESETS.includes(own)) return "";
+          const bad = this._integFullErr?.dom === dom ? this._integFullErr : null;
+          return `<div class="opt-line opt-sub"><span class="opt-label">${escape(t("optChargeFull"))}</span><span class="opt-input${bad ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="${CHARGE_FULL_RANGE[0]}" max="${CHARGE_FULL_RANGE[1]}" data-cfull-integ-val="${escape(dom)}" ${unmon ? "disabled" : ""} value="${escape(bad ? bad.value : own)}" aria-label="${escape(`${t("optChargeFull")}: ${item.name}`)}"><span class="unit">${escape(t("unitPercent"))}</span></span></div>${bad ? `<div class="opt-error">${escape(bad.message)}</div>` : ""}`;
+        };
         html +=
-          opt((fullMap[dom] ?? null) !== (savedFull[dom] ?? null), t("optChargeFull"), chargeSel("data-cfull-integ", fullMap[dom], gFull, choices([90, 95, 98, 100], fullMap[dom]), t("optChargeFull")), origin(fullMap[dom] != null, fullMap[dom] != null ? `${gFull} %` : "")) +
+          opt((fullMap[dom] ?? null) !== (savedFull[dom] ?? null), t("optChargeFull"), chargeSel("data-cfull-integ", fullMap[dom], gFull, CHARGE_FULL_PRESETS, t("optChargeFull"), true), origin(fullMap[dom] != null, fullMap[dom] != null ? `${gFull} %` : ""), fullOwn(fullMap[dom])) +
           opt((riseMap[dom] ?? null) !== (savedRise[dom] ?? null), t("optChargeRise"), chargeSel("data-crise-integ", riseMap[dom], gRise, choices([5, 10, 15, 20, 25, 30, 40, 50, 60, 80], riseMap[dom]), t("optChargeRise")), origin(riseMap[dom] != null, riseMap[dom] != null ? `${gRise} %` : ""));
       }
     }
@@ -6259,7 +6298,8 @@ class DevicePanel extends HTMLElement {
       const st = this._settings;
       const el = ev.target;
       if (st?.draft && el.tagName === "SELECT" && el.dataset.cfull !== undefined) {
-        st.draft.charge_full = Number(el.value);
+        // "own": mit einem Wert ausserhalb der Stufen beginnen (der bisherige eigene Wert, sonst 85).
+        st.draft.charge_full = el.value === "own" ? (Number.isInteger(st.draft.charge_full) && !CHARGE_FULL_PRESETS.includes(st.draft.charge_full) ? st.draft.charge_full : CHARGE_FULL_OWN_START) : Number(el.value);
         this._renderSettings();
         return;
       }
@@ -6305,12 +6345,28 @@ class DevicePanel extends HTMLElement {
         this._renderSettings();
         return;
       }
+      if (st?.draft && el.tagName === "INPUT" && el.dataset.cfullIntegVal) {
+        // Eigener Wert von "Voll ab" einer Integration (Zahlenfeld, seit 1.38.0).
+        const dom = el.dataset.cfullIntegVal;
+        const v = Number(el.value);
+        const [min, max] = CHARGE_FULL_RANGE;
+        if (el.value === "" || !Number.isInteger(v) || v < min || v > max) {
+          this._integFullErr = { dom, value: el.value, message: this._t("settingsRange", min, max) };
+        } else {
+          this._integFullErr = null;
+          st.draft.charge_full_integrations = { ...(st.draft.charge_full_integrations || {}), [dom]: v };
+        }
+        this._renderSettings();
+        return;
+      }
       if (st?.draft && el.tagName === "SELECT" && (el.dataset.cfullInteg || el.dataset.criseInteg)) {
         // Eigenes "Voll ab" bzw. eigener Anstieg einer Integration: "default" = global.
         const key = el.dataset.cfullInteg ? "charge_full_integrations" : "charge_rise_integrations";
         const dom = el.dataset.cfullInteg || el.dataset.criseInteg;
         const map = { ...(st.draft[key] || {}) };
+        this._integFullErr = null;
         if (el.value === "default") delete map[dom];
+        else if (el.value === "own") map[dom] = Number.isInteger(map[dom]) && !CHARGE_FULL_PRESETS.includes(map[dom]) ? map[dom] : CHARGE_FULL_OWN_START;
         else map[dom] = Number(el.value);
         st.draft[key] = map;
         this._renderSettings();

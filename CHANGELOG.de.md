@@ -7,7 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.39.0] - 2026-10-10
+
+"Voll ab" mit Stufen und eigenem Wert.
+
+### Geändert
+
+- "Voll ab" der Lademeldung (Wunsch des Nutzers): die Stufen sind jetzt 100, 95, 90 und 80 % (98 % entfällt)
+  oder "Eigener Wert" mit einem Zahlenfeld von 50 bis 100 %. Das gilt im Geräte-Popup, global (Einstellungen ›
+  Batterie › Laden) und pro Integration; ein Wert ausserhalb der Stufen zeigt "Eigener Wert". Der Bereich ist
+  jetzt 50 bis 100 % (vorher 90 bis 100 %); die Home-Assistant-Option `charge_full` nimmt denselben Bereich.
+  Die Ersatzregel für selten meldende Geräte (Sprung auf voll) verlangt jetzt einen Sprung von mehr als 10
+  Punkten unter "Voll ab", damit ein Schritt von 79 auf 80 % bei "Voll ab" 80 % nicht als Laden gilt.
+
 ## [1.38.0] - 2026-10-10
+
+Nicht veröffentlicht; enthalten in 1.39.0.
 
 Protokoll: warum eine Meldung kam oder nicht.
 
@@ -27,6 +42,8 @@ Protokoll: warum eine Meldung kam oder nicht.
   und `clear_log` (nur Administratoren).
 
 ## [1.37.0] - 2026-10-10
+
+Nicht veröffentlicht; enthalten in 1.39.0.
 
 Reiter im Geräte-Popup.
 
@@ -1992,8 +2009,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[1.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.38.0
-[1.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.37.0
+[1.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.39.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0
 [1.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.34.0

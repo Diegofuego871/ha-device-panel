@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { grp: "Laden", subWarn: "Warnung", diff: "Abweichungen von \"Schwach ab\"", title: "Geladen: ", from: "in 1 Std. 40 Min. von 22 %", row: "Laden melden", def: "Wie Integration: aus", on: "Ein", off: "Aus", none: "Ohne Ziel kommt kein Push", one: "1 Änderung", diffOn: "Laden an", diffVals: "voll ab 98 %, Anstieg 15 %", row2: "Lademeldung" },
-  en: { grp: "Charging", subWarn: "Warning", diff: "Exceptions to \"Low from\"", title: "Charged: ", from: "in 1 h 40 min from 22 %", row: "Report charging", def: "Same as integration: off", on: "On", off: "Off", none: "Without a target no push", one: "1 change", diffOn: "Charging on", diffVals: "full from 98 %, rise 15 %", row2: "Charging notification" },
+  de: { grp: "Laden", subWarn: "Warnung", diff: "Abweichungen von \"Schwach ab\"", title: "Geladen: ", from: "in 1 Std. 40 Min. von 22 %", row: "Laden melden", def: "Wie Integration: aus", on: "Ein", off: "Aus", none: "Ohne Ziel kommt kein Push", one: "1 Änderung", diffOn: "Laden an", diffVals: "voll ab 90 %, Anstieg 15 %", row2: "Lademeldung" },
+  en: { grp: "Charging", subWarn: "Warning", diff: "Exceptions to \"Low from\"", title: "Charged: ", from: "in 1 h 40 min from 22 %", row: "Report charging", def: "Same as integration: off", on: "On", off: "Off", none: "Without a target no push", one: "1 change", diffOn: "Charging on", diffVals: "full from 90 %, rise 15 %", row2: "Charging notification" },
 };
 for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const T_ = T[lang];
@@ -79,11 +79,22 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await wait(`return r.querySelector('input[data-cinteg="matter"]').checked`);
   // Eigenes "Voll ab" und eigener Anstieg der Integration (1.35.0): erscheinen, sobald die Lademeldung für sie an ist
   check(`[${tag}] Detail Matter: "Voll ab" und Anstieg der Integration, global (95 %, 30 %)`, await wait(`const f=r.querySelector('select[data-cfull-integ="matter"]'), q=r.querySelector('select[data-crise-integ="matter"]'); return !!f && !!q && f.value === "default" && q.value === "default" && f.options[0].textContent.includes("95 %") && q.options[0].textContent.includes("30 %")`));
-  await (await handle('select[data-cfull-integ="matter"]')).selectOption("98");
-  await wait(`return r.querySelector('select[data-cfull-integ="matter"]')?.value === "98"`);
+  await (await handle('select[data-cfull-integ="matter"]')).selectOption("90");
+  await wait(`return r.querySelector('select[data-cfull-integ="matter"]')?.value === "90"`);
   await (await handle('select[data-crise-integ="matter"]')).selectOption("15");
   await wait(`return r.querySelector('select[data-crise-integ="matter"]')?.value === "15"`);
-  check(`[${tag}] Entwurf: Voll ab 98 und Anstieg 15 für Matter`, await ev(`const d=r.host._settings.draft; return JSON.stringify(d.charge_full_integrations) === '{"matter":98}' && JSON.stringify(d.charge_rise_integrations) === '{"matter":15}'`));
+  check(`[${tag}] Entwurf: Voll ab 90 und Anstieg 15 für Matter`, await ev(`const d=r.host._settings.draft; return JSON.stringify(d.charge_full_integrations) === '{"matter":90}' && JSON.stringify(d.charge_rise_integrations) === '{"matter":15}'`));
+  // "Eigener Wert" von "Voll ab" der Integration (1.38.0): Zahlenfeld, 50 bis 100
+  await (await handle('select[data-cfull-integ="matter"]')).selectOption("own");
+  check(`[${tag}] Detail Matter: "Eigener Wert" zeigt das Zahlenfeld mit 85`, await wait(`return r.querySelector('input[data-cfull-integ-val="matter"]')?.value === "85" && r.host._settings.draft.charge_full_integrations.matter === 85`));
+  await (await handle('input[data-cfull-integ-val="matter"]')).fill("70");
+  await ev(`r.querySelector('input[data-cfull-integ-val="matter"]').dispatchEvent(new Event("change", { bubbles: true }))`);
+  check(`[${tag}] Detail Matter: eigener Wert 70 im Entwurf`, await wait(`return r.host._settings.draft.charge_full_integrations.matter === 70 && r.querySelector('select[data-cfull-integ="matter"]').value === "own"`));
+  await (await handle('input[data-cfull-integ-val="matter"]')).fill("30");
+  await ev(`r.querySelector('input[data-cfull-integ-val="matter"]').dispatchEvent(new Event("change", { bubbles: true }))`);
+  check(`[${tag}] Detail Matter: 30 abgelehnt, Entwurf bleibt 70`, await wait(`return !!r.querySelector('.opt-error') && /50/.test(r.querySelector('input[data-cfull-integ-val="matter"]').closest(".opt").textContent) && r.host._settings.draft.charge_full_integrations.matter === 70`));
+  await (await handle('select[data-cfull-integ="matter"]')).selectOption("90");
+  await wait(`return r.host._settings.draft.charge_full_integrations.matter === 90 && !r.querySelector('input[data-cfull-integ-val="matter"]')`);
   await tap('.iback');
   await wait(`return !!r.querySelector('.ilist-row[data-key="matter"]')`);
   check(`[${tag}] Matter jetzt mit "${T_.diffOn}" samt Werten und ungespeichert`, (await text('.ilist-row[data-key="matter"] .ilist-diff')).includes(`${T_.diffOn} (${T_.diffVals})`) && await ev(`return r.querySelector('.ilist-row[data-key="matter"]').classList.contains("changed")`), await text('.ilist-row[data-key="matter"] .ilist-diff'));

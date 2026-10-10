@@ -7,7 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.39.0] - 2026-10-10
+
+"Full from" with steps and an own value.
+
+### Changed
+
+- "Full from" of the charging notification (requested by the user): the steps are now 100, 95, 90 and
+  80 % (98 % is gone) or "Own value" with a number field from 50 to 100 %. This holds in the device
+  pop-up, globally (Settings › Battery › Charging) and per integration; a value outside the steps
+  shows "Own value". The range is now 50 to 100 % (before 90 to 100 %); the Home Assistant option
+  `charge_full` takes the same range. The fallback rule for devices that report rarely (a jump to full)
+  now needs a jump of more than 10 points below "Full from", so a step from 79 to 80 % does not count as
+  charging at "Full from" 80 %.
+
 ## [1.38.0] - 2026-10-10
+
+Not released; included in 1.39.0.
 
 Log: why a notification came or did not.
 
@@ -26,6 +42,8 @@ Log: why a notification came or did not.
   commands `get_log`, `set_log` and `clear_log` (administrators only).
 
 ## [1.37.0] - 2026-10-10
+
+Not released; included in 1.39.0.
 
 Tabs in the device pop-up.
 
@@ -1926,8 +1944,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[1.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.38.0
-[1.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.37.0
+[1.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.39.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0
 [1.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.34.0

@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.38.0, Einstellungen in fünf Abschnitten)
+## Stand (1.39.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -415,6 +415,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    (eigene Klasse, damit `.gear-btn` in den Tests das Zahnrad bleibt), `dialog.log-dlg` mit `_openLog`/`_renderLogFrame`/
    `_renderLogBody` (Kopf und Suche nur beim Öffnen, damit die Eingabe das Nachfragen alle 4 s übersteht), Zeile mit Gerät
    öffnet `_openDevice` über dem Protokoll. Tests `test_activity.py`, `log-e2e.mjs`; Simulator `window.__log`.
+   "Voll ab" mit Stufen und eigenem Wert `1.39.0` (Nutzer): Stufen 100, 95, 90, 80 (`CHARGE_FULL_PRESETS`) oder "Eigener Wert" (Zahlenfeld,
+   50 bis 100, `INT_RANGES[CONF_CHARGE_FULL]`), im Popup (`dev-charge-full`, `dev-charge-full-val`), global (`data-cfull`, `_tlInput(d, "charge_full")`)
+   und pro Integration (`data-cfull-integ`, `data-cfull-integ-val`); ein Wert ausserhalb der Stufen gilt als eigener. `charge.step()`: Ersatzregel
+   nur bei Sprung über `min(CHARGE_JUMP_FROM, full - 10)`. Tests `chargefull-e2e.mjs`, `test_charge.py`.
    Übersicht mit allen Meldungen `1.34.0` (Nutzer, 2026-10-10): `_monOverviewHtml` hat fünf Zeilen (`lane(...)`: Ausfall,
    Batterie, Laden `data-lane="charge"`, Neue Geräte, Updates); `lane()` nimmt `sub` (Unterreiter, `data-sub` am
    "Ändern"-Knopf, der Handler setzt `st.sub.battery`) und `id`. Strings `laneCharge`, `tlCharge*`, `tlUpd*`, `laneUpd*`.

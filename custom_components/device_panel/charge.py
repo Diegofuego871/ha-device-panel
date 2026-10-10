@@ -203,7 +203,8 @@ class ChargeNotifier:
                 # Entladen: der Tiefpunkt beginnt neu (sonst bliebe "lädt" nach einem Rückgang stehen).
                 st.update(min=level, min_at=now, peak=level)
             charging = level - st["min"] >= rise
-            if level >= full and (charging or (prev < CHARGE_JUMP_FROM)):
+            # Ersatzregel nur bei einem Sprung von mehr als 10 Punkten (sonst zählte bei "Voll ab" 80 jeder Schritt 79 → 80).
+            if level >= full and (charging or (prev < min(CHARGE_JUMP_FROM, full - 10))):
                 st["done"] = True
                 if charging:
                     result = {"level": level, "start": st["min"], "seconds": max(0.0, now - st["min_at"])}
