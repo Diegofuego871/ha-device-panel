@@ -5117,10 +5117,6 @@ class DevicePanel extends HTMLElement {
     if (slot) lastHtml.set(slot, this._verSlotHtml);
     dialog.scrollTop = scroll;
     this._applyListSearch(dialog);
-    // Sieben Reiter passen auf dem Handy nicht nebeneinander: die Zeile scrollt seitlich, der gewählte Reiter bleibt in der Mitte.
-    const monBar = dialog.querySelector(".mon-tabs");
-    const monOn = monBar?.querySelector(".mon-tab.on");
-    if (monBar && monOn) monBar.scrollLeft = Math.max(0, monOn.offsetLeft - (monBar.clientWidth - monOn.offsetWidth) / 2);
     // Vorschau der Handy-Leiste einmal seitlich scrollen, damit die Haftkante
     // zu sehen ist; danach bleibt, was der Nutzer eingestellt hat.
     const strip = dialog.querySelector(".chip-prev-strip");

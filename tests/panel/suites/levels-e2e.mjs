@@ -40,7 +40,8 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] Einstellungen: Reiter ${T_.glob}`, (await tabsOf("dialog.settings .mon-tab")) === T_.glob, await tabsOf("dialog.settings .mon-tab"));
   await tap('.mon-tab[data-key="charge"]');
   check(`[${tag}] Einstellungen: Reiter "Laden" zeigt die Lademeldung ohne Unterreiter`, await wait(`return !!r.querySelector('input[data-opt="notify_charge"]') && !r.querySelector('.sub-tab[data-group="battery"]')`));
-  if (mobile) check(`[${tag}] Handy: Reiterzeile scrollt seitlich, gewählter Reiter sichtbar`, await ev(`const bar=r.querySelector(".mon-tabs"), on=bar.querySelector(".mon-tab.on"); const a=on.getBoundingClientRect(), c=bar.getBoundingClientRect(); return bar.scrollWidth >= bar.clientWidth && a.left >= c.left - 1 && a.right <= c.right + 1`));
+  // Bei Platzmangel (Handy) brechen die Reiter auf eine zweite Zeile um, nichts scrollt oder wird abgeschnitten
+  if (mobile) check(`[${tag}] Handy: Reiter in zwei Zeilen, keine seitliche Verschiebung`, await ev(`const bar=r.querySelector(".mon-tabs"); const tops = new Set([...bar.children].map(x => Math.round(x.getBoundingClientRect().top))); const inside = [...bar.children].every(x => x.getBoundingClientRect().right <= bar.getBoundingClientRect().right + 1); return bar.scrollWidth <= bar.clientWidth + 1 && tops.size >= 2 && inside`));
 
   // --- Integration (Matter: hat Batteriegeräte)
   await tap('.mon-tab[data-key="integ"]');

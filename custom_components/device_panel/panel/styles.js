@@ -683,14 +683,11 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ibadge.type { background: var(--dp-subtle); color: var(--dp-text2); }
 /* Überwachung und Meldungen (seit 0.34.0, docs/mockups/notify-v3): Reiter,
    Zeitstrahl je Meldung, Integrationen als Liste mit Detail. */
-.mon-tabs, .sub-tabs { display: flex; gap: 4px; margin: 10px 0 4px; padding: 4px; border-radius: 12px; background: var(--dp-subtle); }
-.mon-tab, .sub-tab { position: relative; flex: 1 1 auto; min-width: 0; padding: 7px 6px; border: none; border-radius: 9px; background: none; color: var(--dp-text2);
+.mon-tabs, .sub-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0 4px; padding: 4px; border-radius: 12px; background: var(--dp-subtle); }
+.mon-tab, .sub-tab { position: relative; flex: 1 0 auto; min-width: 0; padding: 8px 12px; white-space: nowrap; border: none; border-radius: 9px; background: none; color: var(--dp-text2);
   font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer; }
 .mon-tab:hover, .sub-tab:hover { color: var(--dp-text); }
-/* Sieben Reiter (seit 1.42.0, "Laden" ist ein eigener Reiter): auf schmalen Bildschirmen seitlich scrollen statt abschneiden */
-.mon-tabs { position: relative; overflow-x: auto; scrollbar-width: none; }
-.mon-tabs::-webkit-scrollbar { display: none; }
-.mon-tabs .mon-tab { flex: 1 0 auto; padding-left: 9px; padding-right: 9px; white-space: nowrap; }
+/* Reiter brechen bei Platzmangel auf eine zweite Zeile um (seit 1.44.0), die Zeilen füllen die Breite */
 .mon-tab.on, .sub-tab.on { background: var(--dp-card); color: var(--dp-text); font-weight: 600; box-shadow: var(--dp-shadow-s); }
 .mon-tab:focus-visible, .sub-tab:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
 .sub-tabs { margin: 12px 0 8px; }
@@ -1063,7 +1060,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .ex-head .ex-col.sel, .ex-row.ex-all .ex-col.sel { display: none; }
   .ex-head.multi { font-size: 10px; letter-spacing: .02em; }
   .nf-grid { grid-template-columns: minmax(0, 1fr); }
-  .mon-tab, .sub-tab { padding: 7px 3px; font-size: 12.5px; }
+  .mon-tab, .sub-tab { padding: 8px 10px; font-size: 13px; }
   .mtl { margin: 8px 6px 2px; }
   .mtl-mk { width: 100px; }
   .opt.bat-row .bat-ctl .opt-select { flex: 1 1 auto; }

@@ -7,6 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.44.0] - 2026-10-10
+
+Reiter brechen auf eine zweite Zeile um.
+
+### Geändert
+
+- Alle Reiter (Einstellungen, Detail einer Integration, Geräte-Popup, Unterreiter der Abschnitte und das
+  Prompt-Fenster) behalten das klare Segment-Aussehen und brechen bei Platzmangel auf eine zweite Zeile um, statt
+  seitlich zu scrollen oder gequetscht zu werden (Wunsch des Nutzers; der Stil wurde aus den Mockups
+  `tabs-style-v1` gewählt: das bisherige Aussehen bleibt). Die Reiter einer Zeile füllen deren Breite.
+
 ## [1.43.0] - 2026-10-10
 
 Klare Abschnittstitel in den Einstellungen.
@@ -2117,6 +2128,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.44.0
 [1.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.43.0
 [1.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.39.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0

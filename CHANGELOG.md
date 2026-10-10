@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.44.0] - 2026-10-10
+
+Tabs wrap onto a second row.
+
+### Changed
+
+- All tabs (settings, detail of an integration, device pop-up, sub-tabs of the sections and the prompt window)
+  keep the clear segmented look and now wrap onto a second row when there is no more room, instead of scrolling
+  sideways or being squeezed (requested by the user; the style was chosen from the mockups `tabs-style-v1`: the
+  existing look stays). The tabs of a row fill its width.
+
 ## [1.43.0] - 2026-10-10
 
 Clear section titles in the settings.
@@ -2050,6 +2061,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.44.0
 [1.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.43.0
 [1.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.39.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
