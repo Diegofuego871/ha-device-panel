@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { grp: "Laden", subWarn: "Warnung", diff: "Abweichungen von \"Schwach ab\"", title: "Geladen: ", from: "in 1 Std. 40 Min. von 22 %", row: "Laden melden", def: "Wie Integration: aus", on: "Ein", off: "Aus", none: "Ohne Ziel kommt kein Push", one: "1 Änderung" },
-  en: { grp: "Charging", subWarn: "Warning", diff: "Exceptions to \"Low from\"", title: "Charged: ", from: "in 1 h 40 min from 22 %", row: "Report charging", def: "Same as integration: off", on: "On", off: "Off", none: "Without a target no push", one: "1 change" },
+  de: { grp: "Laden", subWarn: "Warnung", diff: "Abweichungen von \"Schwach ab\"", title: "Geladen: ", from: "in 1 Std. 40 Min. von 22 %", row: "Laden melden", def: "Wie Integration: aus", on: "Ein", off: "Aus", none: "Ohne Ziel kommt kein Push", one: "1 Änderung", diffOn: "Laden an", row2: "Lademeldung" },
+  en: { grp: "Charging", subWarn: "Warning", diff: "Exceptions to \"Low from\"", title: "Charged: ", from: "in 1 h 40 min from 22 %", row: "Report charging", def: "Same as integration: off", on: "On", off: "Off", none: "Without a target no push", one: "1 change", diffOn: "Charging on", row2: "Charging notification" },
 };
 for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const T_ = T[lang];
@@ -65,6 +65,28 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await wait(`return r.querySelector(".set-count")?.classList.contains("saved")`);
   const last = (await optCalls()).at(-1) || {};
   check(`[${tag}] gespeichert`, last.notify_charge === true && last.charge_full === 95 && last.charge_rise === 30 && JSON.stringify(last.charge_integrations) === JSON.stringify(["zha"]), JSON.stringify(last));
+  // Reiter "Integrationen" (1.32.0): derselbe Wert wie die Liste im Unterreiter "Laden"
+  await tap('.mon-tab[data-key="integ"]');
+  await wait(`return !!r.querySelector('.ilist-row[data-key="zha"]')`);
+  check(`[${tag}] Liste der Integrationen: ZHA mit "${T_.diffOn}"`, (await text('.ilist-row[data-key="zha"] .ilist-diff')).includes(T_.diffOn) && !(await text('.ilist-row[data-key="matter"] .ilist-diff')).includes(T_.diffOn), await text('.ilist-row[data-key="zha"] .ilist-diff'));
+  await tap('.ilist-row[data-key="matter"]');
+  await wait(`return !!r.querySelector('input[data-cinteg="matter"]')`);
+  check(`[${tag}] Detail Matter: Schalter "${T_.row2}" aus, Hinweis "Standard wäre aus"`, !(await ev(`return r.querySelector('input[data-cinteg="matter"]').checked`)));
+  await tap('input[data-cinteg="matter"]');
+  await wait(`return r.querySelector('input[data-cinteg="matter"]').checked`);
+  await tap('.iback');
+  await wait(`return !!r.querySelector('.ilist-row[data-key="matter"]')`);
+  check(`[${tag}] Matter jetzt mit "${T_.diffOn}" und ungespeichert`, (await text('.ilist-row[data-key="matter"] .ilist-diff')).includes(T_.diffOn) && await ev(`return r.querySelector('.ilist-row[data-key="matter"]').classList.contains("changed")`));
+  await tap('.mon-tab[data-key="battery"]');
+  await wait(`return !!r.querySelector('.sub-tab[data-key="bat_charge"]')`);
+  await tap('.sub-tab[data-key="bat_charge"]');
+  await wait(`return !!r.querySelector('input[data-cinteg="matter"]')`);
+  check(`[${tag}] Unterreiter "Laden": Matter ebenfalls an (gleicher Wert)`, await ev(`return r.querySelector('input[data-cinteg="matter"]').checked && r.querySelector('input[data-cinteg="zha"]').checked`));
+  await tap('input[data-cinteg="matter"]');
+  await wait(`return !r.querySelector('input[data-cinteg="matter"]').checked`);
+  await tap('.mon-tab[data-key="integ"]');
+  await wait(`return !!r.querySelector('.ilist-row[data-key="matter"]')`);
+  check(`[${tag}] Zurück im Unterreiter: Matter wieder ohne "${T_.diffOn}"`, !(await text('.ilist-row[data-key="matter"] .ilist-diff')).includes(T_.diffOn));
   await tap('dialog.settings [data-set="close"]').catch(() => {});
   await ev(`const d=r.querySelector("dialog.settings"); if (d?.open) d.close(); return 1`);
 

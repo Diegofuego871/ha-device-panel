@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.33.0] - 2026-10-10
+
+Lademeldung auch pro Integration im Reiter "Integrationen".
+
+### Hinzugefügt
+
+- Einstellungen › Überwachung und Meldungen › Integrationen (Wunsch des Nutzers): im Detail
+  einer Integration mit Batteriegeräten, Gruppe "Batterie", der Schalter "Lademeldung"
+  (Standard aus; es ist derselbe Wert wie die Liste unter "Batterie" › "Laden"). Die Liste der
+  Integrationen zeigt "Laden an", der Filter "Abweichend" findet sie; "Alle zurücksetzen" und
+  "Alles auf Standard" schalten sie wieder aus. Ein Hinweis nennt, wenn die Lademeldung global
+  ausgeschaltet ist oder kein Ziel hat.
+
 ## [1.32.0] - 2026-10-10
 
 Reiter Batterie: Unterreiter "Warnung" und "Laden".
@@ -1866,6 +1879,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.33.0
 [1.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.32.0
 [1.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0

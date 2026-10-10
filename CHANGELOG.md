@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.33.0] - 2026-10-10
+
+Charging notification also per integration in the tab "Integrations".
+
+### Added
+
+- Settings › Monitoring and notifications › Integrations (requested by the user): in the
+  detail of an integration with battery devices, group "Battery", the switch "Charging
+  notification" (default off, like the list in "Battery" › "Charging", it is the same
+  value). The list of integrations shows "Charging on" and the filter "Deviating" finds
+  them; "Reset all" and "Everything to default" switch it off again. A hint says when the
+  charging notification is switched off globally or has no target.
+
 ## [1.32.0] - 2026-10-10
 
 Battery tab: sub-tabs "Warning" and "Charging".
@@ -1802,6 +1815,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.33.0
 [1.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.32.0
 [1.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0

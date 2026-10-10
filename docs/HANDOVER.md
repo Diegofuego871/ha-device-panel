@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.32.0, Einstellungen in fünf Abschnitten)
+## Stand (1.33.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Lademeldung pro Integration auch im Reiter Integrationen `1.33.0` (Nutzer, 2026-10-10): Schalter `data-cinteg` in
+   `_integDetailHtml` (Gruppe Batterie), gleicher Wert wie die Liste im Unterreiter Laden (`charge_integrations`);
+   `INTEG_OWN_LISTS` enthält `charge_integrations` (Zurücksetzen = aus), `_integItems` zeigt "Laden an" (`diffCharge`).
+   Test `charge-e2e.mjs`.
    Reiter Batterie `1.32.0` (Nutzer, 2026-10-10, Mockup `battery-layout-v1`, C): Unterreiter "Warnung | Laden"
    (`st.sub.battery` = `bat_warn`/`bat_charge`, `SUB_TAB_KEYS`, Handler `data-set="subtab" data-group="battery"`);
    "Abweichungen" heissen `grpDiffBat` ("Abweichungen von Schwach ab") und stehen bei der Warnung; `_chargeHtml`

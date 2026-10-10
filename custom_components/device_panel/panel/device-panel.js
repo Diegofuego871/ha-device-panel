@@ -368,7 +368,8 @@ const promptHtml = (text) => escape(text).replace(/\{(language|facts(?:_[a-z]+)?
 // Optionen mit Abweichungen pro Integration ("Alle zurücksetzen" in
 // "Überwachung und Meldungen" › "Integrationen", "Alles auf Standard" in der Integration).
 const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations", "signal_low_integrations"];
-const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations"];
+// Liste der Integrationen mit Lademeldung (seit 1.32.0 auch hier einstellbar): zurücksetzen = aus, der Standard.
+const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"];
 
 const SUB_TAB_KEYS = {
   integrations: ["exclude_integrations", "type_integrations"],
@@ -4833,9 +4834,10 @@ class DevicePanel extends HTMLElement {
     const noBatPush = new Set(d.battery_push_exclude_integrations || []);
     const sigMap = d.signal_low_integrations || {};
     const noNew = new Set(d.new_exclude_integrations || []);
+    const chargeOn = new Set(d.charge_integrations || []);
     const list = (cat.integrations || []).filter((i) => !hidden.has(i.domain)).map((i) => ({ domain: i.domain, name: i.name, devices: i.devices }));
     const known = new Set(list.map((x) => x.domain));
-    for (const dom of [...Object.keys(offMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush, ...noNew]) {
+    for (const dom of [...Object.keys(offMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush, ...noNew, ...chargeOn]) {
       if (known.has(dom) || hidden.has(dom)) continue;
       known.add(dom);
       list.push({ domain: dom, name: this._integrations[dom] || dom, devices: 0 });
@@ -4850,8 +4852,9 @@ class DevicePanel extends HTMLElement {
       const sigCount = Object.keys(sigMap[x.domain] || {}).length;
       const sigDiff = sigCount ? t("diffSignal", sigCount) : null;
       const newDiff = noNew.has(x.domain) ? t("diffNoNew") : null;
-      const diff = unmon ? t("integUnmon") : [out, batText, newDiff, sigDiff].filter(Boolean).join(" · ");
-      return { ...x, batDevices: bat.get(x.domain) || 0, unmon, out, bat: batText, noNew: noNew.has(x.domain), sig: sigDiff, own: Boolean(unmon || out || batText || newDiff || sigDiff), diff };
+      const chargeDiff = chargeOn.has(x.domain) ? t("diffCharge") : null;
+      const diff = unmon ? t("integUnmon") : [out, batText, chargeDiff, newDiff, sigDiff].filter(Boolean).join(" · ");
+      return { ...x, batDevices: bat.get(x.domain) || 0, unmon, out, bat: batText, noNew: noNew.has(x.domain), sig: sigDiff, own: Boolean(unmon || out || batText || chargeDiff || newDiff || sigDiff), diff };
     });
   }
 
@@ -5306,7 +5309,7 @@ class DevicePanel extends HTMLElement {
       (target && d.notify_outage ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integPushGlobalOff" : "noTargetWarn"))}</div>`) +
       listSw("persistent_exclude_integrations", t("optPersistent"));
     // Batterie nur mit Batteriegeräten oder eigener Einstellung (zum Zurücksetzen).
-    if (item.batDevices || dom in batMap || has("battery_push_exclude_integrations")) {
+    if (item.batDevices || dom in batMap || has("battery_push_exclude_integrations") || has("charge_integrations")) {
       const b = batMap[dom];
       const mode = b === "off" ? "off" : b === undefined ? "default" : "own";
       const std = val("battery_low");
@@ -5328,7 +5331,12 @@ class DevicePanel extends HTMLElement {
         opt(!same(b, (saved.battery_low_integrations || {})[dom]), t("optBatteryLow"), batSel, origin(mode !== "default", `${std} %`),
           `<div class="opt-error" data-bat-error ${errors.battery_low_integrations && bad ? "" : "hidden"}>${escape(bad ? errors.battery_low_integrations || "" : "")}</div>`, " bat-row") +
         listSw("battery_push_exclude_integrations", t("optBatPush")) +
-        (target && d.battery_push ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integBatPushGlobalOff" : "noTargetWarn"))}</div>`);
+        (target && d.battery_push ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integBatPushGlobalOff" : "noTargetWarn"))}</div>`) +
+        // Lademeldung (seit 1.32.0): derselbe Wert wie die Liste im Unterreiter "Laden"; Standard ist aus.
+        opt(has("charge_integrations") !== (saved.charge_integrations || []).includes(dom), t("optCharge"),
+          swi(`data-cinteg="${escape(dom)}"`, has("charge_integrations"), `${t("optCharge")}: ${item.name}`),
+          origin(has("charge_integrations"), t("devChargeOff").toLowerCase())) +
+        (target && d.notify_charge ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integChargeGlobalOff" : "noTargetWarn"))}</div>`);
     }
     html += "</div>";
     // Neue Geräte (seit 1.24.0): Override pro Integration; gilt auch bei "Nicht überwachen".
@@ -5358,7 +5366,7 @@ class DevicePanel extends HTMLElement {
         .join("");
       html += `<div class="mon-grp">${escape(t("integDevTitle"))}</div><div class="ovr-list">${rows}</div>`;
     }
-    const anyOwn = off !== undefined || dom in batMap || dom in (d.signal_low_integrations || {}) || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations"].some(has);
+    const anyOwn = off !== undefined || dom in batMap || dom in (d.signal_low_integrations || {}) || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"].some(has);
     html += `<div class="integ-reset"><button type="button" class="ovr-all" data-set="integ-reset" data-key="${escape(dom)}" ${anyOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("integReset"))}</button></div>`;
     return html;
   }
