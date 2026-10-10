@@ -14,8 +14,9 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.storage import Store
+from homeassistant.loader import async_get_integration
 
-from . import options_api, update_check, updates
+from . import activity, options_api, update_check, updates
 from .availability import RANGES, AvailabilityLog
 from .availability import STORAGE_KEY as AVAILABILITY_STORE_KEY
 from .battery import STORE_KEY as BATTERY_STORE_KEY
@@ -48,6 +49,7 @@ from .const import (
     DATA_AVAILABILITY,
     DATA_BATTERY,
     DATA_NEW,
+    DATA_ACTIVITY,
     DATA_CHARGE,
     DATA_UPDATES,
     DATA_CONNECTION_OVERRIDES,
@@ -96,6 +98,9 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async_mark_start(hass)
+    # Protokoll (seit 1.38.0): der Eintrag "gestartet" nennt die Version, die gerade läuft.
+    integration = await async_get_integration(hass, DOMAIN)
+    activity.record(hass, "info", "system", "sys_start", "Device Panel", version=str(integration.version))
     await _async_register_push_path(hass)
     await _async_register_panel(hass)
     _async_register_websocket_commands(hass)
@@ -175,6 +180,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if (signal_log := hass.data.pop(DATA_SIGNAL, None)) is not None:
         await signal_log.async_stop()
     update_check.async_stop_daily(hass)
+    hass.data.pop(DATA_ACTIVITY, None)
     return True
 
 
@@ -698,6 +704,31 @@ async def _ws_reset_device_settings(
     connection.send_result(msg["id"], done)
 
 
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/get_log"})
+@websocket_api.require_admin
+@callback
+def _ws_get_log(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Protokoll für das Fenster "Protokoll": Einträge, Debug-Schalter, Beginn (nur im Arbeitsspeicher)."""
+    connection.send_result(msg["id"], activity.snapshot(hass))
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/set_log", vol.Required("debug"): bool})
+@websocket_api.require_admin
+@callback
+def _ws_set_log(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Debug-Einträge aufzeichnen oder nicht (nur bis zum nächsten Neustart)."""
+    activity.set_debug(hass, msg["debug"])
+    connection.send_result(msg["id"], activity.snapshot(hass))
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/clear_log"})
+@websocket_api.require_admin
+@callback
+def _ws_clear_log(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    activity.clear(hass)
+    connection.send_result(msg["id"], activity.snapshot(hass))
+
+
 @callback
 def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     if hass.data.get(DATA_WS_REGISTERED):
@@ -720,3 +751,6 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_hide_device)
     websocket_api.async_register_command(hass, _ws_rename_device)
     websocket_api.async_register_command(hass, _ws_signal_history)
+    websocket_api.async_register_command(hass, _ws_get_log)
+    websocket_api.async_register_command(hass, _ws_set_log)
+    websocket_api.async_register_command(hass, _ws_clear_log)

@@ -21,7 +21,7 @@ from homeassistant.helpers.event import async_call_later, async_track_time_chang
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from . import push
+from . import activity, push
 from .const import (
     CONF_NOTIFY_SERVICE,
     CONF_NOTIFY_UPDATES,
@@ -227,6 +227,8 @@ class UpdateNotifier:
         # Nicht mehr offene Updates vergessen, damit ein späteres neues wieder gemeldet wird.
         open_ids = {s.entity_id for s in hass.states.async_all("update") if s.state == "on"}
         self._known = {k: v for k, v in self._known.items() if k in open_ids}
+        if items:
+            activity.record(hass, "info", "updates", "updates_no_target" if opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE else "updates_sent", "Home Assistant", count=len(items))
         if items and opts[CONF_NOTIFY_SERVICE] != NOTIFY_NONE:
             await push.async_push(
                 hass, opts[CONF_NOTIFY_SERVICE], push.text(hass, "update_title"), self.message(items),

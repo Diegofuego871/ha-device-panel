@@ -35,7 +35,7 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from . import push
+from . import activity, push
 from .availability import OFFLINE, ONLINE, AvailabilityLog
 from .const import (
     CONF_NOTIFY_CLICK,
@@ -198,6 +198,8 @@ class OutageNotifier:
             # (aus, stumm, Integration ohne Push): sonst käme er später.
             self._notified.update(dev for dev, _start in due)
             self._store.async_delay_save(self._data, 1)
+        self._log_flush(opts, due, False, now)
+        self._log_flush(opts, came_back or [], True, now)
         if opts[CONF_NOTIFY_SERVICE] != NOTIFY_NONE:
             if due and opts[CONF_NOTIFY_OUTAGE]:
                 await self._async_push(opts, [x for x in due if self._pushable(opts, x[0], now)], online=False)
@@ -205,6 +207,25 @@ class OutageNotifier:
                 await self._async_push(opts, [x for x in came_back if self._pushable(opts, x[0], now)], online=True)
         self._update_persistent(opts, new_outage)
         self._schedule(delay, now)
+
+    def _log_flush(self, opts: dict[str, Any], items: list[tuple[str, float]], online: bool, now: float) -> None:
+        """Ins Protokoll: was mit einem fälligen Ausfall oder einer Rückkehr geschieht und warum (Meldung oder keine)."""
+        hass = self.hass
+        registry = dr.async_get(hass)
+        kind = "online" if online else "outage"
+        for dev, value in items:
+            device = registry.async_get(dev)
+            name = (device.name_by_user or device.name or dev) if device is not None else dev
+            if opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE:
+                code = "no_target"
+            elif not (opts[CONF_NOTIFY_ONLINE] if online else opts[CONF_NOTIFY_OUTAGE]):
+                code = "off"
+            elif not self._pushable(opts, dev, now):
+                code = "device_off"
+            else:
+                code = "sent"
+            args = {"duration": push.duration(hass, value)} if online else {"time": _local_time(value)}
+            activity.record(hass, "info", "outage", f"{kind}_{code}", name, dev, **args)
 
     @callback
     def _schedule(self, delay: float, now: float) -> None:

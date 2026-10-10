@@ -167,3 +167,14 @@ def test_push_texts_complete() -> None:
     placeholders = lambda s: set(re.findall(r"\{(\w+)\}", s))  # noqa: E731
     for key in TEXTS["de"]:
         assert placeholders(TEXTS["de"][key]) == placeholders(TEXTS["en"][key]), key
+
+
+def test_activity_texts_complete() -> None:
+    """Texte des Protokolls (1.38.0): DE und EN gleich, jeder Text kommt in beiden mit denselben Platzhaltern."""
+    from custom_components.device_panel.activity import TEXTS
+
+    assert set(TEXTS) == {"de", "en"}
+    assert set(TEXTS["de"]) == set(TEXTS["en"])
+    placeholders = lambda s: set(re.findall(r"\{(\w+)\}", s))  # noqa: E731
+    for key in TEXTS["de"]:
+        assert placeholders(TEXTS["de"][key]) == placeholders(TEXTS["en"][key]), key

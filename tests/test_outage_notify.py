@@ -204,3 +204,21 @@ async def test_persistent_outage_notification(hass: HomeAssistant, setup, freeze
     hass.states.async_set(light, "on")
     await _tick(hass, setup, freezer, 1)
     assert _persistent(hass) is None
+
+
+async def test_outage_decisions_are_logged(hass: HomeAssistant, setup, freezer) -> None:
+    """Protokoll (1.38.0): Ausfall mit Meldung, Rückkehr ohne (Online-Meldungen aus), jeweils mit Grund."""
+    from custom_components.device_panel import activity  # noqa: PLC0415
+
+    async_mock_service(hass, "notify", "handy")
+    lamp = _device(hass, "Lampe")
+    light = _entity(hass, lamp, "light", "l", "on")
+    await _options(hass, notify_service="notify.handy", notify_outage=True, notify_online=False, notify_delay=2)
+    setup.evaluate()
+    hass.states.async_set(light, "unavailable")
+    await _tick(hass, setup, freezer, 3)
+    hass.states.async_set(light, "on")
+    await _tick(hass, setup, freezer, 1)
+    texts = [(e["cat"], e["title"], e["text"]) for e in activity.snapshot(hass)["entries"] if e["cat"] == "outage"]
+    assert any(t[1] == "Lampe" and t[2].endswith(": sending the notification") and t[2].startswith("offline since") for t in texts), texts
+    assert any(t[1] == "Lampe" and t[2].startswith("back online after") and t[2].endswith("online notifications are off") for t in texts), texts

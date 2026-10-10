@@ -7,6 +7,25 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.38.0] - 2026-10-10
+
+Protokoll: warum eine Meldung kam oder nicht.
+
+### Hinzugefügt
+
+- Protokoll (Wunsch des Nutzers, Mockups `popup-tabs-log-v1`, P1): ein neuer Knopf "Protokoll" in der Kopfzeile,
+  links vom Zahnrad. Das Fenster ist auf dem Desktop gross und füllt auf dem Handy den Bildschirm. Es zeigt,
+  was die Meldungen entscheiden und warum etwas nicht kam ("Lademeldung für dieses Gerät aus", "kein Push-Ziel
+  gewählt", "Push-Ziel existiert nicht", stumm, aus …): Laden (erkannt, voll geladen, Meldung gesendet oder
+  nicht), Ausfall und wieder online, Batterie (neu schwach, und warum kein Push), neue Geräte,
+  Update-Erinnerungen, jeder Push (gesendet oder fehlgeschlagen) und der Start. Filter nach Stufe (Info,
+  Warnung, Fehler) und Bereich, Suche mit X zum Leeren, "Kopieren" der gezeigten Einträge und "Leeren". Eine
+  Zeile mit Gerät öffnet dessen Popup. Der Schalter "Debug-Einträge aufzeichnen" im Fenster zeichnet auch
+  Zwischenschritte auf (jeden neuen Batteriestand mit Tiefpunkt und Schwellen), bis zum nächsten Neustart. Die
+  Einträge liegen nur im Arbeitsspeicher (die letzten 500) und gehen zusätzlich ins Protokoll von Home
+  Assistant (Warnungen und Fehler sind dort ohnehin sichtbar). Neue WebSocket-Befehle `get_log`, `set_log`
+  und `clear_log` (nur Administratoren).
+
 ## [1.37.0] - 2026-10-10
 
 Reiter im Geräte-Popup.
@@ -1973,6 +1992,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.38.0
 [1.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.37.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0

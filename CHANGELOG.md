@@ -7,6 +7,24 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.38.0] - 2026-10-10
+
+Log: why a notification came or did not.
+
+### Added
+
+- Log (requested by the user, mockups `popup-tabs-log-v1`, P1): a new button "Log" in the header, left of the
+  gear. The window is large on the desktop and fills the screen on the phone. It lists what the
+  notifications decide and why something did not come ("charging notification off for this device", "no push
+  target chosen", "push target does not exist", muted, off …): charging (detected, fully charged, notification
+  sent or not), outage and back online, battery (newly low, and why no push), new devices, update
+  reminders, every push (sent or failed) and the start. Filter by level (Info, Warning, Error) and area, search
+  with an X to clear, "Copy" for the shown entries and "Clear". A row with a device opens its pop-up. The
+  checkbox "Record debug entries" in the window also records intermediate steps (every new battery level
+  with low point and thresholds), until the next restart. The entries are only in memory (the last 500) and
+  go to the Home Assistant log as well (warnings and errors are visible there anyway). New WebSocket
+  commands `get_log`, `set_log` and `clear_log` (administrators only).
+
 ## [1.37.0] - 2026-10-10
 
 Tabs in the device pop-up.
@@ -1908,6 +1926,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.38.0
 [1.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.37.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0

@@ -10,6 +10,7 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant
 
+from . import activity
 from .const import CLICK_DEVICE, DATA_PUSH_IMAGE, MUTE_ACTION_PREFIX, NOTIFY_NONE, PANEL_URL_PATH
 
 _LOGGER = logging.getLogger(__name__)
@@ -196,29 +197,35 @@ async def async_push(
         return False
     domain, _, object_id = target.partition(".")
     if domain != "notify" or not object_id:
-        _LOGGER.warning("Ungültiges Push-Ziel '%s', erwartet wird notify.<name>", target)
+        activity.record(hass, "error", "push", "push_invalid", target)
         return False
     plain: dict[str, Any] = {"title": title, "message": message}
     if hass.services.has_service("notify", object_id):
         if data:
             try:
                 await hass.services.async_call("notify", object_id, {**plain, "data": data}, blocking=True)
+                activity.record(hass, "info", "push", "push_sent", target, title=title)
                 return True
             except Exception as err:  # noqa: BLE001
-                _LOGGER.debug("Ziel '%s' lehnt die Zusatzdaten ab (%s), Versuch ohne", target, err)
+                _LOGGER.debug("Zusatzdaten abgelehnt (%s)", err)
+                activity.record(hass, "debug", "push", "push_extra", target)
         try:
             await hass.services.async_call("notify", object_id, plain, blocking=True)
+            activity.record(hass, "info", "push", "push_sent", target, title=title)
             return True
         except Exception:  # noqa: BLE001
             _LOGGER.exception("Push an '%s' fehlgeschlagen", target)
+            activity.record(hass, "error", "push", "push_failed", target, title=title)
             return False
     if hass.states.get(target) is not None and hass.services.has_service("notify", "send_message"):
         # notify-Entität: send_message kennt nur Titel und Text.
         try:
             await hass.services.async_call("notify", "send_message", {**plain, "entity_id": target}, blocking=True)
+            activity.record(hass, "info", "push", "push_sent", target, title=title)
             return True
         except Exception:  # noqa: BLE001
             _LOGGER.exception("Push an '%s' fehlgeschlagen", target)
+            activity.record(hass, "error", "push", "push_failed", target, title=title)
             return False
-    _LOGGER.warning("Push-Ziel '%s' existiert nicht, Meldung verworfen", target)
+    activity.record(hass, "error", "push", "push_missing", target, title=title)
     return False

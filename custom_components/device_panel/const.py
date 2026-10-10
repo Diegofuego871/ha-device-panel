@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "91"
+PANEL_VERSION = "92"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -34,6 +34,8 @@ DATA_PUSH_IMAGE = f"{DOMAIN}_push_image"
 DATA_WS_REGISTERED = f"{DOMAIN}_ws_registered"
 # Zeitpunkt, an dem die Integration beim Start von HA geladen wurde.
 DATA_STARTED_AT = f"{DOMAIN}_started_at"
+# Protokoll der Integration im Arbeitsspeicher (activity.py, seit 1.38.0).
+DATA_ACTIVITY = f"{DOMAIN}_activity"
 
 # Ausfall-Erkennung (Optionen, docs/CONCEPT.md, "Überwachung einstellen"):
 # ausgefallen erst nach 2 Min. ohne Lebenszeichen; instabil ab 3 Unterbrüchen

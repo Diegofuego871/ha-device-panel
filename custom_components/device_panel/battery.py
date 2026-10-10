@@ -29,7 +29,7 @@ from homeassistant.helpers import area_registry as ar, device_registry as dr
 from homeassistant.helpers.event import async_track_time_change, async_track_time_interval
 from homeassistant.helpers.storage import Store
 
-from . import push
+from . import activity, push
 from .const import (
     BATTERY_PUSH_MAX,
     BATTERY_REARM,
@@ -207,6 +207,8 @@ class BatteryWatch:
                     "area": area.name if area else None,
                 }
         new = [dev for dev in low if dev not in self._low]
+        for dev in new:
+            self._log_new(opts, dev, low[dev])
         push_key = (opts[CONF_BATTERY_PUSH], opts[CONF_NOTIFY_SERVICE])
         switched = self._push_key is not None and push_key != self._push_key
         self._push_key = push_key
@@ -229,6 +231,22 @@ class BatteryWatch:
             self._low = low
             self._pending = pending
             self._save()
+
+    def _log_new(self, opts: dict[str, Any], dev: str, item: dict[str, Any]) -> None:
+        """Ins Protokoll: ein Gerät ist neu schwach, und ob (wann) eine Meldung folgt."""
+        hass = self.hass
+        activity.record(hass, "info", "battery", "battery_new", item["name"], dev, level=self._level_text(item["level"]))
+        if not opts[CONF_BATTERY_PUSH]:
+            code = "battery_push_off"
+        elif opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE:
+            code = "battery_no_target"
+        elif opts[CONF_BATTERY_PUSH_MODE] == PUSH_DAILY:
+            code = "battery_daily"
+        elif not self._pushable(opts, dev):
+            code = "battery_integ_off"
+        else:
+            return  # die Meldung selbst steht als "gesendet" unter Push
+        activity.record(hass, "info", "battery", code, item["name"], dev)
 
     @staticmethod
     def _order(low: dict[str, dict[str, Any]], ids: list[str]) -> list[str]:

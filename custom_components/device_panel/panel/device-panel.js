@@ -161,6 +161,7 @@ const MDI = {
   reset: "M12,4C14.1,4 16.1,4.8 17.6,6.3C20.7,9.4 20.7,14.5 17.6,17.6C15.8,19.5 13.3,20.2 10.9,19.9L11.4,17.9C13.1,18.1 14.9,17.5 16.2,16.2C18.5,13.9 18.5,10.1 16.2,7.7C15.1,6.6 13.5,6 12,6V10.6L7,5.6L12,0.6V4M6.3,17.6C3.7,15 3.3,11 5.1,7.9L6.6,9.4C5.5,11.6 5.9,14.4 7.8,16.2C8.3,16.7 8.9,17.1 9.6,17.4L9,19.4C8,19 7.1,18.4 6.3,17.6Z",
   info: "M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
   cols: "M16,5V18H21V5M4,18H9V5H4M10,18H15V5H10V18Z",
+  log: "M4,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M4,6V18H20V6H4M6,8H18V10H6V8M6,11H18V13H6V11M6,14H14V16H6V14Z",
   sort: "M9,3L5,7H8V14H10V7H13M16,17V10H14V17H11L15,21L19,17H16Z",
   arrowUp: "M13,20H11V8L5.5,13.5L4.08,12.08L12,4.16L19.92,12.08L18.5,13.5L13,8V20Z",
   arrowDown: "M11,4H13V16L18.5,10.5L19.92,11.92L12,19.84L4.08,11.92L5.5,10.5L11,16V4Z",
@@ -800,6 +801,7 @@ class DevicePanel extends HTMLElement {
     this._stickyObserver?.disconnect();
     window.clearInterval(this._timer);
     window.clearInterval(this._tick);
+    window.clearInterval(this._logTimer);
     window.clearInterval(this._brandTimer);
     window.clearTimeout(this._brandRender);
     window.clearTimeout(this._retryTimer);
@@ -853,14 +855,16 @@ class DevicePanel extends HTMLElement {
         <label class="searchbox">${mdi("search", 20)}<input class="search" type="search" placeholder="${escape(this._t("search"))}" aria-label="${escape(this._t("search"))}">
           <button type="button" class="search-clear" title="${escape(this._t("searchClear"))}" aria-label="${escape(this._t("searchClear"))}" hidden>${mdi("close", 18)}</button></label>
         <button type="button" class="view-btn" aria-expanded="false" title="${escape(this._t("viewBtn"))}" aria-label="${escape(this._t("viewBtn"))}">${mdi("cols", 20)}<span>${escape(this._t("viewBtn"))}</span></button>
+        <button type="button" class="log-btn" title="${escape(this._t("logBtn"))}" aria-label="${escape(this._t("logBtn"))}">${mdi("log", 22)}</button>
         <button type="button" class="gear-btn" title="${escape(this._t("settingsBtn"))}" aria-label="${escape(this._t("settingsBtn"))}">${mdi("gear", 22)}</button>
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
+    root.querySelector(".log-btn").addEventListener("click", () => this._openLog());
     root.querySelector(".toast").addEventListener("click", (ev) => {
       if (!ev.target.closest("[data-toast-action]") || !this._toastAction) return;
       const { run } = this._toastAction;
@@ -963,6 +967,7 @@ class DevicePanel extends HTMLElement {
     this._bindViewControls(root.querySelector("dialog.cols-dlg"), root.querySelector("dialog.view"));
     this._bindAreas(root.querySelector(".area-pop"), root.querySelector("dialog.area-sheet"));
     this._bindPulse(root.querySelector("dialog.pulse-dlg"));
+    this._bindLog(root.querySelector("dialog.log-dlg"));
     this._bindPrompt(root.querySelector("dialog.prompt-dlg"));
     // Zeilen und Karten sind keine Buttons (Tabellensemantik); Tastatur
     // deshalb selbst behandeln.
@@ -2504,6 +2509,231 @@ class DevicePanel extends HTMLElement {
       }
       if (ev.target.closest("[data-pulse-close]")) this._closePulse();
     });
+  }
+
+  // --- Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1) ----------------
+  // Eigener Knopf in der Kopfzeile, Fenster gross auf dem Desktop, auf dem Handy vollflächig. Die Einträge
+  // liegen im Arbeitsspeicher der Integration (nur Administratoren); das Fenster fragt alle 4 Sekunden nach.
+
+  _logState() {
+    if (!this._log) {
+      this._log = { entries: [], debug: false, since: null, max: 500, loaded: false, error: null };
+      this._logUi = { q: "", level: "all", cat: "all" };
+    }
+    return this._log;
+  }
+
+  _openLog() {
+    const dlg = this.shadowRoot.querySelector("dialog.log-dlg");
+    if (!dlg) return;
+    this._logState();
+    this._renderLogFrame();
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+    if (window.matchMedia?.(TOUCH_QUERY).matches) this.shadowRoot.activeElement?.blur();
+    this._fetchLog();
+    window.clearInterval(this._logTimer);
+    this._logTimer = window.setInterval(() => this._fetchLog(), 4000);
+  }
+
+  _closeLog() {
+    window.clearInterval(this._logTimer);
+    const dlg = this.shadowRoot.querySelector("dialog.log-dlg");
+    if (dlg?.open) {
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    }
+  }
+
+  async _logCall(msg) {
+    const log = this._logState();
+    try {
+      const res = await this._callWithTimeout(msg, 10000);
+      Object.assign(log, { entries: res.entries || [], debug: Boolean(res.debug), since: res.since ?? null, max: res.max || 500, loaded: true, error: null });
+    } catch (err) {
+      log.error = errText(err);
+      log.loaded = true;
+    }
+    this._renderLogBody();
+  }
+
+  _fetchLog() {
+    return this._logCall({ type: "device_panel/get_log" });
+  }
+
+  // Fester Teil (Kopf, Suche, Chips, Fuss): wird nur beim Öffnen gebaut, damit die Eingabe beim Nachfragen bleibt.
+  _renderLogFrame() {
+    const dlg = this.shadowRoot.querySelector("dialog.log-dlg");
+    const t = (k, ...a) => this._t(k, ...a);
+    dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("log", 28)}</span>
+        <div class="dlg-title"><h2>${escape(t("logTitle"))}</h2><div class="dlg-sub" data-lg="sub"></div></div>
+        <button type="button" class="dlg-close" data-lg-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+      <div class="lg-bar">
+        <label class="list-search lg-search">${mdi("search", 18)}<input type="search" data-lg-search value="${escape(this._logUi.q)}" placeholder="${escape(t("logSearch"))}" aria-label="${escape(t("logSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this._fieldClearHtml("data-lg-clear", "", this._logUi.q)}</label>
+        <div class="lg-chips" data-lg="levels"></div>
+        <div class="lg-chips" data-lg="cats"></div>
+        <label class="lg-check" title="${escape(t("logDebugHint"))}"><input type="checkbox" data-lg-debug><span>${escape(t("logDebug"))}</span></label>
+      </div>
+      <div class="lg-list" data-lg="list" role="list"></div>
+      <div class="lg-foot"><span data-lg="count"></span><span class="sp"></span>
+        <button type="button" class="lg-btn" data-lg-copy>${mdi("copy", 16)}<span>${escape(t("logCopy"))}</span></button>
+        <button type="button" class="lg-btn" data-lg-reset>${escape(t("logClear"))}</button></div>`;
+    this._renderLogBody();
+  }
+
+  _logFiltered() {
+    const log = this._logState();
+    const { q, level, cat } = this._logUi;
+    const needle = q.trim().toLocaleLowerCase();
+    return [...log.entries]
+      .filter((e) => (level === "all" || e.level === level) && (cat === "all" || e.cat === cat))
+      .filter((e) => !needle || `${e.title} ${e.text} ${e.detail} ${this._t(`logCat_${e.cat}`)}`.toLocaleLowerCase().includes(needle))
+      .sort((a, b) => b.at - a.at);
+  }
+
+  _logTime(e) {
+    const d = new Date(e.at * 1000);
+    let time;
+    try {
+      time = d.toLocaleTimeString(this._locale(), { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    } catch {
+      time = d.toISOString().slice(11, 19);
+    }
+    return time;
+  }
+
+  _logDay(e) {
+    const d = new Date(e.at * 1000);
+    const today = new Date();
+    const key = (x) => `${x.getFullYear()}-${x.getMonth()}-${x.getDate()}`;
+    if (key(d) === key(today)) return this._t("logToday");
+    today.setDate(today.getDate() - 1);
+    if (key(d) === key(today)) return this._t("logYesterday");
+    try {
+      return d.toLocaleDateString(this._locale(), { weekday: "short", day: "numeric", month: "numeric", year: "numeric" });
+    } catch {
+      return d.toISOString().slice(0, 10);
+    }
+  }
+
+  // Wechselnder Teil: Chips mit Zahlen, Liste, Fuss. Schreibt nur, was sich geändert hat (setHtml).
+  _renderLogBody() {
+    const dlg = this.shadowRoot.querySelector("dialog.log-dlg");
+    if (!dlg || !dlg.querySelector('[data-lg="list"]')) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const log = this._logState();
+    const ui = this._logUi;
+    const inCat = (e) => ui.cat === "all" || e.cat === ui.cat;
+    const inLevel = (e) => ui.level === "all" || e.level === ui.level;
+    const needle = ui.q.trim().toLocaleLowerCase();
+    const inText = (e) => !needle || `${e.title} ${e.text} ${e.detail} ${t(`logCat_${e.cat}`)}`.toLocaleLowerCase().includes(needle);
+    // Zahlen der Chips: je Gruppe nach den übrigen Filtern
+    const count = (fn) => log.entries.filter(fn).length;
+    const levels = [["all", t("logAll"), count((e) => inCat(e) && inText(e))]];
+    if (log.debug || log.entries.some((e) => e.level === "debug")) levels.push(["debug", t("logLevel_debug"), count((e) => e.level === "debug" && inCat(e) && inText(e))]);
+    for (const l of ["info", "warning", "error"]) levels.push([l, t(`logLevel_${l}`), count((e) => e.level === l && inCat(e) && inText(e))]);
+    const cats = [["all", t("logAll"), count((e) => inLevel(e) && inText(e))]];
+    for (const c of ["charge", "outage", "battery", "push", "updates", "new", "system"]) cats.push([c, t(`logCat_${c}`), count((e) => e.cat === c && inLevel(e) && inText(e))]);
+    const dot = (l) => (l === "all" ? "" : `<span class="lg-dot ${l}"></span>`);
+    const chip = (attr, [id, label, n], on) =>
+      `<button type="button" class="chip${on === id ? " on" : ""}" ${attr}="${id}" aria-pressed="${on === id}">${dot(id)}<span>${escape(label)}</span><span class="n">${n}</span></button>`;
+    const lv = dlg.querySelector('[data-lg="levels"]');
+    const ct = dlg.querySelector('[data-lg="cats"]');
+    setHtml(lv, levels.map((x) => chip("data-lg-level", x, ui.level)).join(""));
+    setHtml(ct, cats.map((x) => chip("data-lg-cat", x, ui.cat)).join(""));
+    const check = dlg.querySelector("[data-lg-debug]");
+    if (check.checked !== log.debug) check.checked = log.debug;
+    const shown = this._logFiltered();
+    let body = "";
+    if (log.error) body += `<div class="dlg-error">${escape(t("logError"))} ${escape(log.error)}</div>`;
+    let day = "";
+    for (const e of shown) {
+      const d = this._logDay(e);
+      if (d !== day) {
+        day = d;
+        body += `<div class="lg-day" role="presentation">${escape(d)}</div>`;
+      }
+      const open = e.device_id && this._devices.some((x) => x.id === e.device_id);
+      const tag = open ? "button" : "div";
+      body += `<${tag}${open ? ` type="button" data-lg-open="${escape(e.device_id)}"` : ""} class="lg-row ${e.level}" role="listitem">
+        <span class="lg-tm">${escape(this._logTime(e))}</span><span class="lg-lv"><span class="lg-dot ${e.level}" title="${escape(t(`logLevel_${e.level}`))}"></span></span>
+        <span class="lg-cat"><span class="lg-pill ${e.cat}">${escape(t(`logCat_${e.cat}`))}</span></span>
+        <span class="lg-msg">${e.title ? `<b>${escape(e.title)}</b> · ` : ""}${escape(e.text)}${e.detail ? `<small>${escape(e.detail)}</small>` : ""}</span></${tag}>`;
+    }
+    if (!shown.length && log.loaded && !log.error) body += `<p class="dlg-note lg-none">${escape(t(log.entries.length ? "logNoneFilter" : "logNone"))}</p>`;
+    const list = dlg.querySelector('[data-lg="list"]');
+    const keep = list.scrollTop;
+    if (setHtml(list, body)) list.scrollTop = keep;
+    const since = log.since ? this._fmtTime(log.since, false) : "";
+    setHtml(dlg.querySelector('[data-lg="sub"]'), escape(t("logSub", log.max, since)));
+    setHtml(dlg.querySelector('[data-lg="count"]'), escape(t("logCount", log.entries.length, shown.length)));
+  }
+
+  _logText() {
+    const rows = this._logFiltered().reverse();
+    return rows
+      .map((e) => {
+        const d = new Date(e.at * 1000);
+        const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${d.toTimeString().slice(0, 8)}`;
+        return `${stamp} [${e.level.toUpperCase()}] [${this._t(`logCat_${e.cat}`)}] ${e.title ? `${e.title}: ` : ""}${e.text}${e.detail ? ` (${e.detail})` : ""}`;
+      })
+      .join("\n");
+  }
+
+  _bindLog(dlg) {
+    const rerender = () => this._renderLogBody();
+    dlg.addEventListener("click", async (ev) => {
+      if (ev.target === dlg) {
+        const r = dlg.getBoundingClientRect();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closeLog();
+        return;
+      }
+      const el = ev.target.closest("[data-lg-close],[data-lg-level],[data-lg-cat],[data-lg-clear],[data-lg-copy],[data-lg-reset],[data-lg-open]");
+      if (!el) return;
+      if (el.matches("[data-lg-close]")) this._closeLog();
+      else if (el.matches("[data-lg-level]")) {
+        this._logUi.level = el.dataset.lgLevel;
+        rerender();
+      } else if (el.matches("[data-lg-cat]")) {
+        this._logUi.cat = el.dataset.lgCat;
+        rerender();
+      } else if (el.matches("[data-lg-clear]")) {
+        this._logUi.q = "";
+        const input = dlg.querySelector("[data-lg-search]");
+        input.value = "";
+        el.hidden = true;
+        input.focus();
+        rerender();
+      } else if (el.matches("[data-lg-copy]")) {
+        const label = el.querySelector("span");
+        if (await this._copyText(this._logText(), null) && label) {
+          const old = label.textContent;
+          label.textContent = this._t("logCopied");
+          window.setTimeout(() => {
+            if (label.isConnected) label.textContent = old;
+          }, 1500);
+        }
+      } else if (el.matches("[data-lg-reset]")) {
+        await this._logCall({ type: "device_panel/clear_log" });
+      } else if (el.matches("[data-lg-open]")) {
+        // Das Geräte-Popup öffnet über dem Protokoll; schliesst es, ist man wieder im Protokoll.
+        this._openDevice(el.dataset.lgOpen);
+      }
+    });
+    dlg.addEventListener("input", (ev) => {
+      if (ev.target.matches("[data-lg-search]")) {
+        this._logUi.q = ev.target.value;
+        const clear = dlg.querySelector("[data-lg-clear]");
+        if (clear) clear.hidden = !ev.target.value;
+        rerender();
+      }
+    });
+    dlg.addEventListener("change", (ev) => {
+      if (ev.target.matches("[data-lg-debug]")) this._logCall({ type: "device_panel/set_log", debug: ev.target.checked });
+    });
+    dlg.addEventListener("close", () => window.clearInterval(this._logTimer));
   }
 
   _chipsHtml(all) {

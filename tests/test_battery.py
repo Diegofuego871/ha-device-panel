@@ -374,3 +374,17 @@ async def test_battery_fields(hass: HomeAssistant, watch: BatteryWatch, hass_ws_
     # Unbekannte Angabe: abgelehnt
     await client.send_json({"id": 3, "type": f"{DOMAIN}/set_options", "values": {"battery_fields": ["since"]}})
     assert (await client.receive_json())["error"]["code"] == "invalid_format"
+
+
+async def test_new_low_is_logged_with_reason(hass: HomeAssistant, watch: BatteryWatch) -> None:
+    """Protokoll (1.38.0): neu schwach, und warum keine Meldung kam (Batterie-Push aus)."""
+    from custom_components.device_panel import activity  # noqa: PLC0415
+
+    dev = _device(hass, "Sensor Keller")
+    bat = _battery(hass, dev, "50")
+    await _options(hass, battery_push=False, notify_service="notify.handy")
+    await watch.async_check()
+    hass.states.async_set(bat, "10")
+    await watch.async_check()
+    texts = [e["text"] for e in activity.snapshot(hass)["entries"] if e["cat"] == "battery" and e["title"] == "Sensor Keller"]
+    assert texts == ["battery 10 % below the threshold: newly low", "battery push is off: no notification"]

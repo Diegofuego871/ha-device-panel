@@ -24,7 +24,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.storage import Store
 
-from . import push
+from . import activity, push
 from .const import (
     CONF_NEW_EXCLUDE,
     CONF_NEW_FIELDS,
@@ -143,6 +143,8 @@ class NewDeviceNotifier:
             items.append({"id": dev, "name": device.name_by_user or device.name or dev, **await async_device_facts(hass, device, opts)})
         if not items:
             return
+        for i in items:
+            activity.record(hass, "info", "new", "new_no_target" if opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE else "new_found", i["name"], i["id"])
         if opts[CONF_NOTIFY_SERVICE] != NOTIFY_NONE:
             await self._async_push(opts, items)
         if opts[CONF_NEW_PERSISTENT]:

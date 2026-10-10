@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.37.0, Einstellungen in fünf Abschnitten)
+## Stand (1.38.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -407,6 +407,14 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    (Entitäten); Zustand `_devTab` (öffnet immer auf "ov", Knopf `data-dlg="tab"` mit `data-tab`), Zähler `devOwnCount(d)` am Reiter
    (Punkt über `.sub-tab.chg`). Tests tippen zuerst `dialog.device [data-tab="set"]`. Hinweis: das geschlossene Popup behält sein
    HTML, `.sub-tab` darum in Tests immer mit `dialog.settings` einschränken.
+   Protokoll `1.38.0` (Nutzer, Mockups `popup-tabs-log-v1`, P1): Backend `activity.py` (Ringspeicher der letzten 500 Einträge im
+   Arbeitsspeicher, `record(hass, severity, cat, code, name, device_id, **args)`, Texte DE/EN in `TEXTS`, Debug-Einträge nur bei
+   eingeschaltetem Schalter, Eintrag geht zusätzlich ans Python-Protokoll); Einträge in `push.py` (jeder Versand), `charge.py`
+   (beobachtet, lädt, voll, aus/kein Ziel, Debug je Stand), `outage.py` (`_log_flush`), `battery.py` (`_log_new`), `newdevice.py`,
+   `updates.py`, Start in `__init__.py`; WS `get_log`/`set_log`/`clear_log` (Admin). Panel: Knopf `.log-btn` links vom Zahnrad
+   (eigene Klasse, damit `.gear-btn` in den Tests das Zahnrad bleibt), `dialog.log-dlg` mit `_openLog`/`_renderLogFrame`/
+   `_renderLogBody` (Kopf und Suche nur beim Öffnen, damit die Eingabe das Nachfragen alle 4 s übersteht), Zeile mit Gerät
+   öffnet `_openDevice` über dem Protokoll. Tests `test_activity.py`, `log-e2e.mjs`; Simulator `window.__log`.
    Übersicht mit allen Meldungen `1.34.0` (Nutzer, 2026-10-10): `_monOverviewHtml` hat fünf Zeilen (`lane(...)`: Ausfall,
    Batterie, Laden `data-lane="charge"`, Neue Geräte, Updates); `lane()` nimmt `sub` (Unterreiter, `data-sub` am
    "Ändern"-Knopf, der Handler setzt `st.sub.battery`) und `id`. Strings `laneCharge`, `tlCharge*`, `tlUpd*`, `laneUpd*`.

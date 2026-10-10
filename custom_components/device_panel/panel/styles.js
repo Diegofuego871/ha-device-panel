@@ -65,9 +65,9 @@ button { font: inherit; color: inherit; }
   background: none; color: var(--dp-text2); cursor: pointer; }
 .search-clear:hover { background: var(--dp-hover); color: var(--dp-text); }
 .search-clear[hidden] { display: none; }
-.gear-btn { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--dp-divider);
+.gear-btn, .log-btn { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--dp-divider);
   background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
-.gear-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
+.gear-btn:hover, .log-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
 .content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 20px 16px; }
 /* Kopf, Chips und Fusszeile bleiben beim seitlichen Scrollen der Tabelle stehen. */
 .hero, .chips, .foot { position: sticky; left: 0; }
@@ -1126,7 +1126,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   dialog.settings[open] { display: flex; flex-direction: column; }
   dialog.settings[open] > * { flex-shrink: 0; }
   dialog.settings[open] > .dlg-body { flex-grow: 1; }
-  .toolbar .gear-btn { width: 38px; height: 38px; }
+  .toolbar .gear-btn, .toolbar .log-btn { width: 38px; height: 38px; }
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   .dlg-head { padding: 18px 12px 12px 16px; }
   .dlg-quick { padding: 0 16px 6px; }
@@ -1134,5 +1134,56 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .dlg-actions { padding-left: 16px; padding-right: 16px; }
   .st-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1): Fenster gross auf dem Desktop, auf dem Handy vollflächig */
+dialog.log-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
+  width: min(1040px, calc(100vw - 48px)); height: min(780px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
+dialog.log-dlg[open] { display: flex; flex-direction: column; }
+dialog.log-dlg::backdrop { background: rgba(0,0,0,0.5); }
+.log-dlg .dlg-head { flex: none; position: static; }
+.lg-bar { flex: none; display: flex; flex-direction: column; gap: 10px; padding: 4px 22px 10px; }
+.lg-search { max-width: none; width: 100%; box-sizing: border-box; }
+.lg-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.lg-chips::-webkit-scrollbar { display: none; }
+.lg-chips .chip { height: 30px; font-size: 12.5px; flex: none; }
+.lg-chips .chip.on { background: var(--dp-primary-soft); border-color: var(--dp-primary); color: var(--dp-primary); }
+.lg-check { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; font-size: 13px; color: var(--dp-text2); cursor: pointer; }
+.lg-check input { width: 18px; height: 18px; accent-color: var(--dp-primary); margin: 0; }
+.lg-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--dp-text3); }
+.lg-dot.warning { background: var(--dp-warning); }
+.lg-dot.error { background: var(--dp-error); }
+.lg-dot.debug { background: transparent; box-shadow: inset 0 0 0 1.5px var(--dp-text3); }
+.lg-list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 22px 8px; }
+.lg-day { position: sticky; top: 0; z-index: 1; padding: 12px 4px 6px; background: var(--dp-card); font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--dp-text2); }
+.lg-row { display: grid; grid-template-columns: 70px 14px 92px 1fr; gap: 10px; align-items: start; width: 100%; box-sizing: border-box; padding: 8px 4px; margin: 0; border: 0; border-bottom: 1px solid var(--dp-divider);
+  background: none; color: var(--dp-text); font: inherit; font-size: 13.5px; line-height: 1.35; text-align: left; }
+button.lg-row { cursor: pointer; }
+button.lg-row:hover { background: var(--dp-hover); }
+.lg-row.warning { background: linear-gradient(90deg, var(--dp-warning-soft), transparent 40%); }
+.lg-row.error { background: linear-gradient(90deg, var(--dp-error-soft), transparent 40%); }
+.lg-row.debug { color: var(--dp-text2); }
+.lg-tm { color: var(--dp-text2); font-variant-numeric: tabular-nums; font-size: 12.5px; padding-top: 1px; }
+.lg-lv { padding-top: 5px; }
+.lg-msg { min-width: 0; overflow-wrap: anywhere; }
+.lg-msg b { font-weight: 600; }
+.lg-msg small { display: block; margin-top: 2px; color: var(--dp-text3); font-size: 12px; }
+.lg-pill { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 11px; font-size: 11.5px; font-weight: 600; background: var(--dp-subtle); color: var(--dp-text2); white-space: nowrap; }
+.lg-pill.charge { background: var(--dp-success-soft); color: var(--dp-success); }
+.lg-pill.battery { background: var(--dp-warning-soft); color: var(--dp-warning); }
+.lg-pill.outage { background: var(--dp-error-soft); color: var(--dp-error); }
+.lg-pill.push { background: var(--dp-primary-soft); color: var(--dp-primary); }
+.lg-none { padding: 24px 4px; }
+.lg-foot { flex: none; display: flex; align-items: center; gap: 10px; padding: 10px 22px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--dp-divider); color: var(--dp-text2); font-size: 12.5px; }
+.lg-foot .sp { margin-left: auto; }
+.lg-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--dp-divider); background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 13.5px; cursor: pointer; }
+.lg-btn:hover { background: var(--dp-hover); }
+@media (max-width: 700px) {
+  dialog.log-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
+  .lg-bar { padding: 4px 16px 10px; }
+  .lg-list { padding: 0 16px 8px; }
+  .lg-foot { padding-left: 16px; padding-right: 16px; }
+  .lg-row { grid-template-columns: 14px auto 1fr; grid-template-areas: "lv tm cat" ". msg msg"; gap: 4px 10px; padding: 10px 2px; }
+  .lg-lv { grid-area: lv; } .lg-tm { grid-area: tm; font-weight: 600; color: var(--dp-text); padding-top: 0; align-self: center; } .lg-cat { grid-area: cat; } .lg-msg { grid-area: msg; font-size: 14px; }
 }
 `;

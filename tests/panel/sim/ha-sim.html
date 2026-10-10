@@ -548,6 +548,26 @@
   window.__version = { installed: "0.4.0", latest: "0.4.0" };
   window.__pre = null;
   window.__panelSettings = { prerelease: false, prerelease_hacs: null };
+  // Protokoll (seit 1.38.0), erfundene Einträge: at = Sekunden vor jetzt
+  {
+    const now = Date.now() / 1000;
+    const e = (ago, level, cat, title, text, detail, device_id) => ({ at: now - ago, level, cat, title, text, detail: detail || "", device_id: device_id || null });
+    window.__log = {
+      debug: false, since: now - 6 * 3600,
+      entries: [
+        e(3, "info", "charge", "Aqua10 Roller", "charging: level 23 % from 11 % (rise of 20 points reached)", "", "e"),
+        e(60, "info", "push", "notify.handy", "sent: Charged: Handy Lea"),
+        e(61, "info", "charge", "Handy Lea", "fully charged at 100 % (full from 100 %), sending the notification", "charging observed: from 22 % in 1 h 40 min", "c"),
+        e(900, "warning", "battery", "Türsensor Keller", "battery 9 % below the threshold: newly low", "", "b"),
+        e(1500, "info", "outage", "Zigbee-Lampe Flur", "back online after 6 min: sending the notification", "", "d"),
+        e(1900, "info", "outage", "Zigbee-Lampe Flur", "offline since 12:41: sending the notification", "", "d"),
+        e(4000, "error", "push", "notify.altes_handy", "push target does not exist, notification dropped: Low battery: Rauchmelder Estrich"),
+        e(5000, "info", "new", "Bewegungsmelder Garage", "new device found", "", "a"),
+        e(9000, "info", "updates", "Home Assistant", "2 updates available, sending the reminder"),
+        e(26 * 3600, "info", "system", "Device Panel", "started (version 1.38.0)"),
+      ],
+    };
+  }
   window.__opts = {
     offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, offline_after_integrations: {}, battery_push: false, battery_persistent: false,
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
@@ -636,6 +656,17 @@
           checked_at: Date.now() / 1000 - (msg.force ? 0 : 3 * 3600), error: window.__versionError || null,
           prerelease: pre, prerelease_url: pre ? `https://github.com/Diegofuego871/ha-device-panel/releases/tag/v${pre}` : null, panel: { ...window.__panelSettings },
         };
+      }
+      // Protokoll (seit 1.38.0): window.__log = { entries, debug, since }; Debug-Einträge entstehen erst nach dem Einschalten.
+      if (msg.type === "device_panel/get_log" || msg.type === "device_panel/set_log" || msg.type === "device_panel/clear_log") {
+        if (window.__logFails) throw new Error(window.__logFails);
+        const log = window.__log;
+        if (msg.type === "device_panel/set_log") {
+          log.debug = Boolean(msg.debug);
+          if (log.debug) log.entries.push({ at: Date.now() / 1000 - 2, level: "debug", cat: "charge", title: "Aqua10 Roller", text: "level 23 %, low point 11 %, full from 100 %, rise 20 points", detail: "", device_id: "e" });
+        }
+        if (msg.type === "device_panel/clear_log") log.entries = [];
+        return { entries: log.entries.map((e) => ({ ...e })), debug: log.debug, since: log.since, max: 500 };
       }
       if (msg.type === "device_panel/set_panel") {
         if ("prerelease" in msg) window.__panelSettings.prerelease = msg.prerelease;

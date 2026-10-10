@@ -24,7 +24,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.storage import Store
 
-from . import push
+from . import activity, push
 from .battery_history import battery_entity
 from .const import (
     CHARGE_DROP,
@@ -122,6 +122,8 @@ class ChargeNotifier:
                 wanted[entity_id] = device.id
         if wanted == self._entities and self._unsub_track is not None:
             return
+        if wanted != self._entities:
+            activity.record(hass, "info", "charge", "charge_watch", count=len(wanted))
         if self._unsub_track is not None:
             self._unsub_track()
             self._unsub_track = None
@@ -145,12 +147,32 @@ class ChargeNotifier:
             return
         opts = effective(self.hass)
         # Eigenes "Voll ab" und eigener Anstieg des Geräts (seit 1.35.0) gelten für die Erkennung wie für den Push.
-        done = self.step(dev, level, time.time(), device_charge_opts(self.hass, opts, dev))
+        copts = device_charge_opts(self.hass, opts, dev)
+        now = time.time()
+        was = self.charging(dev, now, copts) is not None
+        done = self.step(dev, level, now, copts)
+        device = dr.async_get(self.hass).async_get(dev)
+        name = (device.name_by_user or device.name or dev) if device is not None else dev
+        st = self._state.get(dev) or {}
+        low = round(st.get("min", level))
+        hass = self.hass
+        activity.record(hass, "debug", "charge", "charge_level", name, dev, level=round(level), low=low, full=copts[CONF_CHARGE_FULL], rise=copts[CONF_CHARGE_RISE])
+        if not was and done is None and self.charging(dev, now, copts) is not None:
+            activity.record(hass, "info", "charge", "charge_started", name, dev, level=round(level), low=low, rise=copts[CONF_CHARGE_RISE])
         if done is None:
             return
-        device = dr.async_get(self.hass).async_get(dev)
-        if device is not None and self.enabled(opts, self.hass, device):
-            self.hass.async_create_task(self._async_push(dev, done))
+        if device is None or not self.enabled(opts, hass, device):
+            activity.record(hass, "info", "charge", "charge_full_off", name, dev, level=round(done["level"]), full=copts[CONF_CHARGE_FULL])
+            return
+        if opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE:
+            activity.record(hass, "warning", "charge", "charge_no_target", name, dev, level=round(done["level"]))
+            return
+        if done["seconds"] is not None:
+            how = activity.text(hass, "charge_how_rise", start=round(done["start"]), duration=push.duration(hass, done["seconds"]))
+        else:
+            how = activity.text(hass, "charge_how_jump", start=round(done["start"]))
+        activity.record(hass, "info", "charge", "charge_full_sent", name, dev, level=round(done["level"]), full=copts[CONF_CHARGE_FULL], how=how)
+        hass.async_create_task(self._async_push(dev, done))
 
     def step(self, dev: str, level: float, now: float, opts: dict[str, Any]) -> dict[str, Any] | None:
         """
