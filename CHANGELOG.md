@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.0.1] - 2026-10-10
+
+Material look sharpened and applied to the list (pre-release).
+
+### Changed
+
+- The sheets (device pop-up, settings, log) are more translucent (64 % instead of 80 %) with a stronger light top
+  edge, a darker and more blurred background and clearly visible glass on tiles, tabs and cards, so the material
+  can be seen on a phone as well (requested by the user, after testing 2.0.0).
+- The list gets the same look: larger tighter title "Devices", cards with larger radius and soft depth, the chip
+  bar as translucent material over the list, group titles ("Offline", "Online") in the stronger title style.
+  Only styles change.
+
 ## [2.0.0] - 2026-10-10
 
 Material look, step 1 (pre-release).
@@ -2076,6 +2089,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[2.0.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.1
 [2.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.0
 [1.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.44.0
 [1.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.43.0

@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.0.0 Vorabversion, Einstellungen in fünf Abschnitten)
+## Stand (2.0.1 Vorabversion, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -431,6 +431,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Wischen im Popup `1.41.0` (Nutzer, Video nicht angekommen, Ursache nur vermutet): `_renderDevice(soft)` und `_renderLogBody(soft)` bauen beim
    Abfragen nicht neu auf, solange `_dlgBusy()` gilt (Berührung aktiv oder weniger als 0,8 s her, Scroll/Wheel im Fenster);
    `_trackBusy(dlg)` setzt die Merker. Nur der Abfragepfad ist weich, eigene Aktionen bauen sofort neu auf. Test `busy-e2e.mjs`.
+   Material nachgeschärft und Liste angepasst `2.0.1` (Nutzer nach Test): Blatt 64 %, kräftigere Oberkante, Liste (`.toolbar h1`, `.hero > *`, `.chips`, `.cards .gh`) im selben Block von `styles.js`.
    Material-Look `2.0.0` (Nutzer, Schritt 1 von 2, Mockups `docs/mockups/apple-design-v1`, Variante B; Skill `.claude/skills/apple-design`): Block am Ende von `styles.js`
    (durchscheinende Blätter mit `backdrop-filter`, nur unter `@supports` und `not (prefers-reduced-transparency)`, Druck-Rückmeldung unter `not (prefers-reduced-motion)`).
    Nur Stile. Schritt 2 offen: ziehbares Blatt mit Federn (Prototyp `prototype.html`), mit Schalter zum Abschalten und Touch-Test (iPhone-Scrollproblem!).

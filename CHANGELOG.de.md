@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.1] - 2026-10-10
+
+Material-Look nachgeschärft und auf die Liste angewendet (Vorabversion).
+
+### Geändert
+
+- Die Blätter (Geräte-Popup, Einstellungen, Protokoll) sind durchscheinender (64 % statt 80 %), mit kräftigerer
+  heller Oberkante, dunklerem und unschärferem Hintergrund und klar sichtbarem Glas bei Kacheln, Reitern und
+  Karten, damit man das Material auch auf dem Handy sieht (Wunsch des Nutzers, nach dem Test von 2.0.0).
+- Die Liste bekommt denselben Look: grösserer, enger gesetzter Titel "Geräte", Karten mit grösserem Radius und
+  weicher Tiefe, die Chip-Leiste als durchscheinendes Material über der Liste, Gruppentitel ("Ausgefallen",
+  "Online") im kräftigeren Titelstil. Es ändern sich nur Stile.
+
 ## [2.0.0] - 2026-10-10
 
 Material-Look, Schritt 1 (Vorabversion).
@@ -2143,6 +2156,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.0.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.1
 [2.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.0
 [1.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.44.0
 [1.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.43.0

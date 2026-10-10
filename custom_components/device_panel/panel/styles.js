@@ -1223,10 +1223,10 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
    "Transparenz reduzieren" bleiben die Blätter deckend wie bisher. */
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   @media not (prefers-reduced-transparency: reduce) {
-    dialog.device, dialog.settings, dialog.log-dlg { background: color-mix(in srgb, var(--dp-card) 80%, transparent);
-      -webkit-backdrop-filter: blur(28px) saturate(170%); backdrop-filter: blur(28px) saturate(170%);
-      box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dp-text) 14%, transparent), 0 24px 70px rgba(0,0,0,0.5); }
-    dialog.device::backdrop, dialog.settings::backdrop, dialog.log-dlg::backdrop { background: rgba(0,0,0,0.42); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+    dialog.device, dialog.settings, dialog.log-dlg { background: color-mix(in srgb, var(--dp-card) 64%, transparent);
+      -webkit-backdrop-filter: blur(30px) saturate(190%); backdrop-filter: blur(30px) saturate(190%);
+      box-shadow: inset 0 1.5px 0 color-mix(in srgb, var(--dp-text) 30%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--dp-text) 8%, transparent), 0 24px 70px rgba(0,0,0,0.55); }
+    dialog.device::backdrop, dialog.settings::backdrop, dialog.log-dlg::backdrop { background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
     dialog.device .dlg-head, dialog.settings .dlg-head, dialog.log-dlg .dlg-head { background: color-mix(in srgb, var(--dp-card) 60%, transparent);
       -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
     dialog.device .dev-tabs { background: color-mix(in srgb, var(--dp-card) 60%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
@@ -1236,8 +1236,19 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
       -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
     dialog.device .dlg-btn, dialog.settings .dlg-btn { background: color-mix(in srgb, var(--dp-text) 8%, transparent); border-color: color-mix(in srgb, var(--dp-text) 12%, transparent); }
     dialog.device .dlg-btn.primary, dialog.settings .dlg-btn.primary { background: var(--dp-primary); border-color: transparent; }
-    dialog.device .tile, dialog.device .st-tile { background: color-mix(in srgb, var(--dp-text) 6%, transparent); border-color: color-mix(in srgb, var(--dp-text) 8%, transparent); }
-    dialog.device .mon-tabs, dialog.device .sub-tabs, dialog.settings .mon-tabs, dialog.settings .sub-tabs { background: color-mix(in srgb, var(--dp-text) 8%, transparent); }
+    dialog.device .tile, dialog.device .st-tile, dialog.settings .nf-note, dialog.settings .pv { background: color-mix(in srgb, var(--dp-text) 9%, transparent); border-color: color-mix(in srgb, var(--dp-text) 14%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dp-text) 12%, transparent); }
+    dialog.device .mon-tabs, dialog.device .sub-tabs, dialog.settings .mon-tabs, dialog.settings .sub-tabs { background: color-mix(in srgb, var(--dp-text) 11%, transparent); }
+    dialog.device .dev-set { background: color-mix(in srgb, var(--dp-text) 5%, transparent); }
+    dialog.device .mon-tab.on, dialog.device .sub-tab.on, dialog.settings .mon-tab.on, dialog.settings .sub-tab.on { background: color-mix(in srgb, var(--dp-text) 20%, transparent); box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
+  }
+}
+/* Liste (seit 2.0.1): grosser Titel, weiche Tiefe der Kacheln, Chip-Leiste als Material, Gruppentitel im neuen Titelstil */
+.toolbar h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; }
+.hero > *, .mlist { border-radius: 22px; box-shadow: 0 8px 26px -10px rgba(0,0,0,0.45); }
+.cards .gh { margin: 22px 6px 8px; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; }
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  @media not (prefers-reduced-transparency: reduce) {
+    .chips { background: color-mix(in srgb, var(--dp-bg) 66%, transparent); -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%); }
   }
 }
 /* Typografie: grosse Titel enger, kleine Beschriftung etwas weiter (Spationierung nach Grösse) */
