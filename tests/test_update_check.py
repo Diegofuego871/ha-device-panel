@@ -147,6 +147,8 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "notify_charge": False,
         "charge_full": 100,
         "charge_rise": 20,
+        "notify_charge_stop": False,
+        "charge_stall": 15,
         "charge_integrations": [],
         "notify_updates": False,
         "updates_window": 5,
@@ -164,7 +166,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "battery_push_daily": "new",
     }
     assert result["limits"] == {
-        "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [5, 50], "notify_delay": [1, 60], "new_window": [1, 60], "updates_window": [1, 60], "charge_full": [50, 100], "charge_rise": [5, 80],
+        "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [5, 50], "notify_delay": [1, 60], "new_window": [1, 60], "updates_window": [1, 60], "charge_full": [50, 100], "charge_rise": [5, 80], "charge_stall": [5, 120],
     }
     assert set(result["panel"]) == {"prerelease", "prerelease_hacs"}
 
@@ -264,7 +266,7 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
         "notify_service", "notify_click_target", "offline_after", "notify_delay", "flaky_outages", "startup_grace",
         "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields",
         "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields",
-        "notify_charge", "charge_full", "charge_rise", "charge_integrations",
+        "notify_charge", "charge_full", "charge_rise", "notify_charge_stop", "charge_stall", "charge_integrations",
         "notify_new", "new_window", "new_persistent", "new_fields",
         "notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds",
         "offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations",

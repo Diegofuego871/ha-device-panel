@@ -15,13 +15,14 @@ from __future__ import annotations
 
 import logging
 import time
+from datetime import timedelta
 from typing import Any
 
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.helpers.storage import Store
 
 from . import activity, push
@@ -34,7 +35,9 @@ from .const import (
     CONF_CHARGE_FULL,
     CONF_CHARGE_INTEGRATIONS,
     CONF_CHARGE_RISE,
+    CONF_CHARGE_STALL,
     CONF_NOTIFY_CHARGE,
+    CONF_NOTIFY_CHARGE_STOP,
     CONF_NOTIFY_CLICK,
     CONF_NOTIFY_SERVICE,
     DOMAIN,
@@ -95,6 +98,8 @@ class ChargeNotifier:
         # Alle überwachten Geräte mit Batterie werden beobachtet (für "lädt gerade" im Panel);
         # die Meldung bei "voll" geht nur an die eingeschalteten.
         self._unsubs.append(self.hass.bus.async_listen(er.EVENT_ENTITY_REGISTRY_UPDATED, self._on_registry))
+        # Ladung beendet (seit 1.40.0): ein gleichbleibender Stand löst kein Ereignis aus, darum ein Termin jede Minute.
+        self._unsubs.append(async_track_time_interval(self.hass, self._on_tick, timedelta(minutes=1)))
         await self.async_rebuild()
 
     @callback
@@ -189,7 +194,9 @@ class ChargeNotifier:
         prev = st["last"]
         st["last"] = level
         if level > prev:
+            # Steigt der Stand wieder, gilt die Ladung als fortgesetzt ("beendet" fällt weg).
             st["up_at"] = now
+            st.pop("stopped", None)
         result: dict[str, Any] | None = None
         if st.get("done"):
             # Wieder scharf, wenn der Stand deutlich unter "voll" fällt (Entladen oder Batteriewechsel).
@@ -213,13 +220,53 @@ class ChargeNotifier:
         self._save()
         return result
 
+    @callback
+    def _on_tick(self, _now: Any) -> None:
+        self.check_stalls(time.time())
+
+    def check_stalls(self, now: float) -> list[str]:
+        """
+        Ladung beendet (seit 1.40.0): Geräte, die nach dem Stand laden, deren Stand aber seit "beendet nach"
+        Minuten unverändert ist (Ladelimit, Ladegerät abgezogen, Gerät voll unter "Voll ab"). Nur Geräte mit
+        eingeschalteter Lademeldung, nur ohne eigene Ladeanzeige (die sagt es selbst). Gibt die Geräte-IDs zurück.
+        """
+        hass = self.hass
+        opts = effective(hass)
+        registry = dr.async_get(hass)
+        ereg = er.async_get(hass)
+        stopped: list[str] = []
+        for dev, st in self._state.items():
+            if st.get("done") or st.get("stopped") or now - st.get("up_at", now) < opts[CONF_CHARGE_STALL] * 60:
+                continue
+            device = registry.async_get(dev)
+            if device is None or not self.enabled(opts, hass, device) or charging_entity(hass, er.async_entries_for_device(ereg, dev)):
+                continue
+            copts = device_charge_opts(hass, opts, dev)
+            # Nur wer jetzt nach dem Stand lädt (vor dem Merker "beendet"), sonst gäbe es nichts zu beenden.
+            if self.charging(dev, now, copts) is None:
+                continue
+            st["stopped"] = True
+            stopped.append(dev)
+            name = device.name_by_user or device.name or dev
+            args = {"level": round(st["last"]), "minutes": opts[CONF_CHARGE_STALL], "full": copts[CONF_CHARGE_FULL]}
+            if opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE:
+                activity.record(hass, "info", "charge", "charge_stopped_no_target", name, dev, **args)
+            elif not opts[CONF_NOTIFY_CHARGE_STOP]:
+                activity.record(hass, "info", "charge", "charge_stopped_push_off", name, dev, **args)
+            else:
+                activity.record(hass, "info", "charge", "charge_stopped_sent", name, dev, **args)
+                hass.async_create_task(self._async_push_stop(dev, dict(st)))
+        if stopped:
+            self._save()
+        return stopped
+
     def charging(self, dev: str, now: float, opts: dict[str, Any]) -> dict[str, Any] | None:
         """
         Lädt das Gerät jetzt, nach dem Stand: Anstieg erkannt, noch nicht voll, zuletzt gestiegen.
         Gibt Stand, Start und Zeitpunkt des Tiefpunkts zurück, sonst None.
         """
         st = self._state.get(dev)
-        if not st or st.get("done"):
+        if not st or st.get("done") or st.get("stopped"):
             return None
         if st["last"] - st["min"] < opts[CONF_CHARGE_RISE] or st["last"] >= opts[CONF_CHARGE_FULL]:
             return None
@@ -272,6 +319,24 @@ class ChargeNotifier:
         if area:
             parts.append(area)
         return " · ".join(parts)
+
+    async def _async_push_stop(self, dev: str, st: dict[str, Any]) -> None:
+        """Push "Ladung beendet": Stand, bisherige Ladung und wie lange er schon unverändert ist."""
+        hass = self.hass
+        opts = effective(hass)
+        device = dr.async_get(hass).async_get(dev)
+        if device is None or opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE:
+            return
+        area = ar.async_get(hass).async_get_area(device.area_id) if device.area_id else None
+        name = device.name_by_user or device.name or dev
+        parts = [f"{round(st['last'])} %", push.text(hass, "charge_from", duration=push.duration(hass, max(0.0, st.get("up_at", st["min_at"]) - st["min_at"])), start=round(st["min"]))]
+        parts.append(push.text(hass, "charge_stalled", duration=push.duration(hass, opts[CONF_CHARGE_STALL] * 60)))
+        if area:
+            parts.append(area.name)
+        await push.async_push(
+            hass, opts[CONF_NOTIFY_SERVICE], push.text(hass, "charge_stop_title", name=name), " · ".join(parts),
+            push.notification_data(hass, f"{DOMAIN}_charge_{dev}", push.device_url(opts[CONF_NOTIFY_CLICK], dev)),
+        )
 
     async def _async_push(self, dev: str, done: dict[str, Any]) -> None:
         hass = self.hass

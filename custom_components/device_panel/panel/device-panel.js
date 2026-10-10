@@ -261,7 +261,7 @@ const UPDATE_KINDS = ["core", "addons", "hacs", "devices"];
 const MON_TAB_KEYS = {
   overview: ["notify_service", "notify_click_target"],
   outage: ["offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "reset_offline", "reset_notify"],
-  battery: ["notify_charge", "charge_full", "charge_rise", "charge_integrations", "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
+  battery: ["notify_charge", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations", "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
   new: ["notify_new", "new_window", "new_persistent", "new_fields"],
   updates: ["notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include"],
   integ: ["offline_after_integrations", "charge_full_integrations", "charge_rise_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
@@ -385,7 +385,7 @@ const SUB_TAB_KEYS = {
   chips: ["hide_chips", "hide_connections", "connection_order", "chip_order"],
   // Reiter "Batterie" (seit 1.31.1, docs/mockups/battery-layout-v1, C): Warnung | Laden.
   bat_warn: ["battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
-  bat_charge: ["notify_charge", "charge_full", "charge_rise", "charge_integrations"],
+  bat_charge: ["notify_charge", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations"],
 };
 
 // Empfang in vier Stufen (gut -> schlecht), Farben wie unifi_dynamic.
@@ -5510,6 +5510,10 @@ class DevicePanel extends HTMLElement {
       <div class="opt-short mtl-note">${escape(t("optChargeRiseShort"))} ${escape(t("optChargeFullShort"))}</div>
       ${ui.row("notify_charge", t("optCharge"), ui.sw("notify_charge", t("optCharge")), noTarget ? null : t("optChargeShort"), null, noTarget ? t("noTargetWarn") : null)}`;
     if (!d.notify_charge) return html;
+    // Ladung beendet (seit 1.40.0): bleibt der Stand ohne Ladeanzeige am Gerät so lange unverändert, endet "lädt";
+    // der Push dazu hat einen eigenen Schalter (standardmässig aus).
+    html += ui.row("charge_stall", t("optChargeStall"), ui.num("charge_stall", t("minuteUnit"), t("optChargeStall")), t("optChargeStallShort"), null) +
+      ui.row("notify_charge_stop", t("optChargeStop"), ui.sw("notify_charge_stop", t("optChargeStop")), noTarget ? null : t("optChargeStopShort"), null);
     // Integrationen mit Batteriegeräten (Katalog), dazu bereits eingeschaltete ohne Geräte.
     const on = new Set(d.charge_integrations || []);
     const saved = new Set(st.data.values.charge_integrations || []);

@@ -7,6 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.40.0] - 2026-10-10
+
+Ladung beendet.
+
+### Hinzugefügt
+
+- Ladung beendet (Wunsch des Nutzers): ein Gerät ohne eigene Ladeanzeige, das nach dem Stand lud, gilt nicht
+  mehr als ladend, sobald der Stand eine eingestellte Zeit unverändert bleibt (Standard 15 Minuten, 5 bis
+  120), zum Beispiel bei einem Ladelimit oder abgezogenem Ladegerät. Markierung, Chip "Lädt" und Balken
+  verschwinden, und das Protokoll sagt "Ladung beendet bei 80 %". Steigt der Stand wieder, geht die Ladung
+  weiter. Neu: ein Push "Ladung beendet" mit Stand, bisheriger Ladung und der Dauer, seit der der Stand
+  unverändert ist, mit eigenem Schalter (standardmässig aus; nur für Geräte, bei denen die Lademeldung an
+  ist). Beides in Einstellungen › Batterie › Laden (Optionen `charge_stall` und `notify_charge_stop`, auch
+  in den Home-Assistant-Optionen). Geräte mit eigener Ladeanzeige melden das Ende selbst und sind nicht
+  betroffen.
+
 ## [1.39.0] - 2026-10-10
 
 "Voll ab" mit Stufen und eigenem Wert.
@@ -2009,6 +2025,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.40.0
 [1.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.39.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0

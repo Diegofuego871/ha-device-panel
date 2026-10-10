@@ -7,6 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.40.0] - 2026-10-10
+
+Charging stopped.
+
+### Added
+
+- Charging stopped (requested by the user): a device without a charging indicator of its own that was
+  charging by its level no longer counts as charging once the level stays unchanged for a set time
+  (default 15 minutes, 5 to 120), for example with a charge limit or when the charger is unplugged. The mark,
+  the chip "Charging" and the bar disappear, and the log says "charging stopped at 80 %". If the level rises
+  again, the charge continues. New: a push "Charging stopped" with the level, the charge so far and how long
+  the level has been unchanged, with its own switch (off by default; only for devices whose charging
+  notification is on). Both in Settings › Battery › Charging (options `charge_stall` and
+  `notify_charge_stop`, also in the Home Assistant options). Devices with a charging indicator of their own
+  report the end themselves and are not affected.
+
 ## [1.39.0] - 2026-10-10
 
 "Full from" with steps and an own value.
@@ -1944,6 +1960,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.40.0
 [1.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.39.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0

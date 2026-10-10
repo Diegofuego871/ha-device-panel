@@ -58,6 +58,13 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   // Voll ab 95, Anstieg 30, zha einschalten
   await (await handle("select[data-cfull]")).selectOption("95");
   await (await handle('input[data-opt="charge_rise"]')).fill("30");
+  // Ladung beendet (1.40.0): "beendet nach" (Standard 15 Min.) und der Push dazu (Standard aus)
+  check(`[${tag}] Ladung beendet: 15 Min., Push aus`, await ev(`return r.querySelector('input[data-opt="charge_stall"]')?.value === "15" && r.querySelector('input[data-opt="notify_charge_stop"]')?.checked === false`));
+  await (await handle('input[data-opt="charge_stall"]')).fill("3");
+  check(`[${tag}] beendet nach 3: Fehler, Speichern gesperrt`, await wait(`return r.querySelector('[data-set="save"]').disabled`));
+  await (await handle('input[data-opt="charge_stall"]')).fill("20");
+  await tap('input[data-opt="notify_charge_stop"]');
+  await wait(`return r.querySelector('input[data-opt="notify_charge_stop"]').checked`);
   await tap('input[data-cinteg="zha"]');
   check(`[${tag}] Vorschau folgt "Voll ab"`, await ev(`return [...r.querySelectorAll(".pv-text")].some(e=>e.innerText.startsWith("95 %"))`));
   await (await handle('input[data-opt="charge_rise"]')).fill("2");
@@ -67,7 +74,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await tap('dialog.settings [data-set="save"]');
   await wait(`return r.querySelector(".set-count")?.classList.contains("saved")`);
   const last = (await optCalls()).at(-1) || {};
-  check(`[${tag}] gespeichert`, last.notify_charge === true && last.charge_full === 95 && last.charge_rise === 30 && JSON.stringify(last.charge_integrations) === JSON.stringify(["zha"]), JSON.stringify(last));
+  check(`[${tag}] gespeichert`, last.notify_charge === true && last.charge_full === 95 && last.charge_rise === 30 && last.charge_stall === 20 && last.notify_charge_stop === true && JSON.stringify(last.charge_integrations) === JSON.stringify(["zha"]), JSON.stringify(last));
   // Reiter "Integrationen" (1.32.0): derselbe Wert wie die Liste im Unterreiter "Laden"
   await tap('.mon-tab[data-key="integ"]');
   await wait(`return !!r.querySelector('.ilist-row[data-key="zha"]')`);

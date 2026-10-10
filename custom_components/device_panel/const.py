@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "93"
+PANEL_VERSION = "94"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -126,6 +126,11 @@ CONF_NOTIFY_CHARGE = "notify_charge"
 CONF_CHARGE_FULL = "charge_full"
 DEFAULT_CHARGE_FULL = 100
 CONF_CHARGE_RISE = "charge_rise"
+# Ladung beendet (seit 1.40.0): ohne Ladeanzeige am Gerät gilt die Ladung als beendet, wenn der Stand
+# CONF_CHARGE_STALL Minuten unverändert bleibt; Push dazu nur mit CONF_NOTIFY_CHARGE_STOP (standardmässig aus).
+CONF_CHARGE_STALL = "charge_stall"
+DEFAULT_CHARGE_STALL = 15
+CONF_NOTIFY_CHARGE_STOP = "notify_charge_stop"
 # Eigenes "Voll ab" und eigener Anstieg pro Integration (seit 1.35.0): {Domain: Wert}; das Gerät geht vor.
 CONF_CHARGE_FULL_INTEGRATIONS = "charge_full_integrations"
 CONF_CHARGE_RISE_INTEGRATIONS = "charge_rise_integrations"
@@ -145,6 +150,7 @@ INT_RANGES = {
     CONF_UPDATES_WINDOW: (1, 60),
     CONF_CHARGE_FULL: (50, 100),
     CONF_CHARGE_RISE: (5, 80),
+    CONF_CHARGE_STALL: (5, 120),
     CONF_OFFLINE_AFTER: (1, 60),
     CONF_FLAKY_OUTAGES: (2, 50),
     CONF_STARTUP_GRACE: (0, 30),

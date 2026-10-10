@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from datetime import timedelta
 from typing import Any
 
@@ -39,6 +40,10 @@ def _device(hass: HomeAssistant, name: str, level: int = 50, domain: str = "test
     entity = er.async_get(hass).async_get_or_create("sensor", domain, f"{name}-bat", device_id=device.id, original_device_class="battery")
     hass.states.async_set(entity.entity_id, str(level), {"device_class": "battery", "unit_of_measurement": "%"})
     return device, entity.entity_id
+
+
+def _bat(hass: HomeAssistant, entity: str, level: int) -> None:
+    hass.states.async_set(entity, str(level), {"device_class": "battery", "unit_of_measurement": "%"})
 
 
 def test_step_rise_then_full() -> None:
@@ -298,3 +303,64 @@ async def test_device_full_range_50_to_100(hass: HomeAssistant, hass_ws_client) 
         await client.send_json({"id": i, "type": f"{DOMAIN}/set_device_settings", "device_id": device.id, "charge_full": value})
         assert (await client.receive_json())["success"] is accepted, value
     assert device_settings(hass)["charge_full"] == {device.id: 50}
+
+
+async def test_charge_stopped_when_level_stalls(hass: HomeAssistant, freezer) -> None:
+    """Ladung beendet (1.40.0): Stand N Minuten unverändert → "lädt" endet, Protokoll, Push nur mit Schalter."""
+    from custom_components.device_panel import activity  # noqa: PLC0415
+
+    calls = async_mock_service(hass, "notify", "handy")
+    on, on_entity = _device(hass, "Zahnbürste", 30)
+    off, off_entity = _device(hass, "Wegwerf", 30, domain="andere")  # Integration ohne Lademeldung
+    await _setup(hass, notify_charge_stop=True)
+    notifier = hass.data[DATA_CHARGE]
+    opts = values_from({"notify_charge": True})
+    for ent in (on_entity, off_entity):
+        _bat(hass, ent, 55)
+    await hass.async_block_till_done()
+    now = time.time()
+    assert notifier.charging(on.id, now, opts) is not None and notifier.check_stalls(now + 10 * 60) == []  # erst 10 von 15 Min.
+    freezer.tick(timedelta(minutes=16))
+    assert notifier.check_stalls(time.time()) == [on.id]  # "Wegwerf" hat keine Lademeldung: nie beendet
+    await hass.async_block_till_done()
+    assert notifier.charging(on.id, time.time(), opts) is None
+    assert len(calls) == 1 and calls[0].data["title"] == "Charging stopped: Zahnbürste"
+    assert calls[0].data["message"].startswith("55 % · ") and calls[0].data["message"].endswith("level unchanged for 15 min")
+    texts = [e["text"] for e in activity.snapshot(hass)["entries"] if e["title"] == "Zahnbürste"]
+    assert any(t.startswith("charging stopped at 55 % (full from 100 %): level unchanged for 15 min, sending") for t in texts)
+    assert notifier.check_stalls(time.time()) == []  # nur einmal
+    # Der Stand steigt wieder: die Ladung geht weiter
+    _bat(hass, on_entity, 60)
+    await hass.async_block_till_done()
+    assert notifier.charging(on.id, time.time(), opts) is not None and "stopped" not in notifier._state[on.id]
+
+
+async def test_charge_stopped_without_push_switch_or_target(hass: HomeAssistant, freezer) -> None:
+    from custom_components.device_panel import activity  # noqa: PLC0415
+
+    calls = async_mock_service(hass, "notify", "handy")
+    device, entity = _device(hass, "Zahnbürste", 30)
+    await _setup(hass)  # notify_charge_stop ist standardmässig aus
+    notifier = hass.data[DATA_CHARGE]
+    _bat(hass, entity, 55)
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(minutes=16))
+    assert notifier.check_stalls(time.time()) == [device.id]
+    await hass.async_block_till_done()
+    assert calls == []
+    texts = [e["text"] for e in activity.snapshot(hass)["entries"] if e["title"] == "Zahnbürste"]
+    assert any("the push for a stopped charge is off: no notification" in t for t in texts)
+
+
+async def test_charge_stall_skips_device_with_indicator(hass: HomeAssistant, freezer) -> None:
+    calls = async_mock_service(hass, "notify", "handy")
+    device, entity = _device(hass, "Handy", 30)
+    ereg = er.async_get(hass)
+    flag = ereg.async_get_or_create("binary_sensor", "test", "Handy-chg", device_id=device.id, original_device_class="battery_charging")
+    hass.states.async_set(flag.entity_id, "on")
+    await _setup(hass, notify_charge_stop=True)
+    notifier = hass.data[DATA_CHARGE]
+    _bat(hass, entity, 55)
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(minutes=30))
+    assert notifier.check_stalls(time.time()) == [] and calls == []  # die Ladeanzeige des Geräts meldet es selbst

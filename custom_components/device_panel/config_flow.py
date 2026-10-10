@@ -35,7 +35,9 @@ from .const import (
     CONF_CHARGE_FULL,
     CONF_CHARGE_INTEGRATIONS,
     CONF_CHARGE_RISE,
+    CONF_CHARGE_STALL,
     CONF_NOTIFY_CHARGE,
+    CONF_NOTIFY_CHARGE_STOP,
     CONF_NOTIFY_UPDATES,
     CONF_UPDATES_KINDS,
     CONF_UPDATES_MODE,
@@ -115,7 +117,7 @@ from .options_api import (
 from .push import text
 
 # Einheit der Zahlenfelder im Optionsdialog.
-_UNITS = {CONF_OFFLINE_AFTER: "min", CONF_STARTUP_GRACE: "min", CONF_BATTERY_LOW: "%", CONF_NOTIFY_DELAY: "min", CONF_NEW_WINDOW: "min", CONF_UPDATES_WINDOW: "min", CONF_CHARGE_FULL: "%", CONF_CHARGE_RISE: "%"}
+_UNITS = {CONF_OFFLINE_AFTER: "min", CONF_STARTUP_GRACE: "min", CONF_BATTERY_LOW: "%", CONF_NOTIFY_DELAY: "min", CONF_NEW_WINDOW: "min", CONF_UPDATES_WINDOW: "min", CONF_CHARGE_FULL: "%", CONF_CHARGE_RISE: "%", CONF_CHARGE_STALL: "min"}
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -286,6 +288,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Required(CONF_NOTIFY_CHARGE, default=values[CONF_NOTIFY_CHARGE]): bool,
                     vol.Required(CONF_CHARGE_FULL, default=values[CONF_CHARGE_FULL]): _number(CONF_CHARGE_FULL),
                     vol.Required(CONF_CHARGE_RISE, default=values[CONF_CHARGE_RISE]): _number(CONF_CHARGE_RISE),
+                    vol.Required(CONF_NOTIFY_CHARGE_STOP, default=values[CONF_NOTIFY_CHARGE_STOP]): bool,
+                    vol.Required(CONF_CHARGE_STALL, default=values[CONF_CHARGE_STALL]): _number(CONF_CHARGE_STALL),
                     vol.Optional(CONF_CHARGE_INTEGRATIONS, default=values[CONF_CHARGE_INTEGRATIONS]): SelectSelector(
                         SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
                     ),

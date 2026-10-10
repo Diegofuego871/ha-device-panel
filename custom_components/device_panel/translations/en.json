@@ -68,6 +68,8 @@
           "notify_charge": "Charging: push notification",
           "charge_full": "Charging: full from (%)",
           "charge_rise": "Charging: detected at a rise of (%)",
+          "notify_charge_stop": "Charging: push when charging stops",
+          "charge_stall": "Charging: stopped after (min)",
           "charge_integrations": "Charging: integrations with a notification"
         },
         "data_description": {
@@ -123,6 +125,8 @@
           "notify_charge": "A push notification as soon as a device is fully charged. Off by default; switch it on per integration (below) or per device (device pop-up). Only for rechargeable devices: a new battery looks like charging.",
           "charge_full": "Level that counts as full (50 to 100). Some devices never report 100 %.",
           "charge_rise": "Charging is detected when the level rises this many percent above the lowest level since the last discharge (5 to 80).",
+          "notify_charge_stop": "A push notification when a charge ends before the device is full (the level stays unchanged for the time below), for example with a charge limit. Off by default; only for devices whose charging notification is on. Not for devices with a charging indicator of their own.",
+          "charge_stall": "The charge counts as stopped when the level stays unchanged this many minutes (5 to 120). Some devices report only every few minutes near the end of a charge, so leave room.",
           "charge_integrations": "Integrations whose devices report when charged (a device can differ in its pop-up)."
         }
       }
