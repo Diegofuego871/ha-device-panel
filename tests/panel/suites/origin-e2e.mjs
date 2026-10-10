@@ -88,6 +88,8 @@ for (const lang of ["de", "en"]) {
     // Nicht überwachen
     await (await handle('select[data-dlg="dev-off"]')).selectOption("off");
     check(`[${tag}] "${T.none}" gesendet, Gerät ohne Status`, await wait(`const d=r.host._devices.find((x) => x.id === "e"); return d.unmonitored === true && d.online == null`) && (await calls()).at(-1).offline === "off");
+    // Der Status kommt mit der nächsten Abfrage; nach einer Berührung wartet das Popup kurz (siehe _dlgBusy).
+    await wait(`return (r.querySelector("dialog.device .dlg-title .pill, dialog.device .dlg-head .pill")?.textContent || "").includes(${JSON.stringify(T.pill)})`);
     check(`[${tag}] Popup: Status "${T.pill}"`, (await text("dialog.device .dlg-title .pill, dialog.device .dlg-head .pill")).includes(T.pill), await text("dialog.device .dlg-head"));
     await p.screenshot({ path: `${outDir}/origin-own-${tag.replace("/", "-")}.png` });
     // Zurück: Standard

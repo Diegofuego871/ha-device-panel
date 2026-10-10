@@ -428,6 +428,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    in `.storage/device_panel.devices`; `devices.charge_stop_values()` und `device_charge_opts()` (Gerät > Integration > global) liefern `charge_stall` und
    `notify_charge_stop`, `check_stalls` nutzt sie je Gerät; `charge_default` hat `stall`, `stop`, `stall_integration`, `stop_integration`. Panel: Popup
    `dev-charge-stall`, `dev-charge-stall-val`, `dev-charge-stop`; Integrations-Detail `data-cstall-integ`, `data-cstop-integ`. Tests `chargestop-e2e.mjs`, `test_charge.py`.
+   Wischen im Popup `1.41.0` (Nutzer, Video nicht angekommen, Ursache nur vermutet): `_renderDevice(soft)` und `_renderLogBody(soft)` bauen beim
+   Abfragen nicht neu auf, solange `_dlgBusy()` gilt (Berührung aktiv oder weniger als 0,8 s her, Scroll/Wheel im Fenster);
+   `_trackBusy(dlg)` setzt die Merker. Nur der Abfragepfad ist weich, eigene Aktionen bauen sofort neu auf. Test `busy-e2e.mjs`.
    Übersicht mit allen Meldungen `1.34.0` (Nutzer, 2026-10-10): `_monOverviewHtml` hat fünf Zeilen (`lane(...)`: Ausfall,
    Batterie, Laden `data-lane="charge"`, Neue Geräte, Updates); `lane()` nimmt `sub` (Unterreiter, `data-sub` am
    "Ändern"-Knopf, der Handler setzt `st.sub.battery`) und `id`. Strings `laneCharge`, `tlCharge*`, `tlUpd*`, `laneUpd*`.

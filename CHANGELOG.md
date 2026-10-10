@@ -23,6 +23,16 @@ Charging stopped per integration and per device.
   `charge_stop` in `set_device_settings`; `list_devices` has `charge_stall_setting`, `charge_stop_setting` and
   the values in `charge_default`.
 
+### Fixed
+
+- The device pop-up (and the log window) is no longer rebuilt by the periodic refresh (every 10 seconds)
+  while you touch it, swipe in it or have a selection open. On the iPhone a replaced content cancels the
+  swipe, the page behind scrolls along and can trigger the reload of the app ("the device view is no longer
+  scrollable, everything scrolls together"); an open selection would also close. The refresh waits until
+  the touch has ended (about a second) and then updates; your own actions still update at once. The cause
+  is not confirmed on a real device (no reproduction possible); if it still happens, please report the
+  exact steps.
+
 ## [1.40.0] - 2026-10-10
 
 Not released; included in 1.41.0.

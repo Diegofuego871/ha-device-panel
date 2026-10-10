@@ -23,6 +23,16 @@ Ladung beendet pro Integration und pro Gerät.
   Panel); neue Einstellungen `charge_stall` und `charge_stop` in `set_device_settings`; `list_devices` hat
   `charge_stall_setting`, `charge_stop_setting` und die Werte in `charge_default`.
 
+### Behoben
+
+- Das Geräte-Popup (und das Protokoll-Fenster) wird vom regelmässigen Abfragen (alle 10 Sekunden) nicht mehr
+  neu aufgebaut, solange du es berührst, darin wischst oder eine Auswahl offen hast. Auf dem iPhone bricht ein
+  ersetzter Inhalt die Wischbewegung ab, die Seite dahinter scrollt mit und kann das Neuladen der App auslösen
+  ("die Geräteansicht ist nicht mehr scrollbar, alles scrollt zusammen"); eine offene Auswahl würde sich
+  ausserdem schliessen. Das Abfragen wartet, bis die Berührung vorbei ist (etwa eine Sekunde), und
+  aktualisiert dann; eigene Aktionen aktualisieren weiterhin sofort. Die Ursache ist auf einem echten Gerät
+  nicht bestätigt (keine Reproduktion möglich); falls es weiter vorkommt, bitte die genauen Schritte melden.
+
 ## [1.40.0] - 2026-10-10
 
 Nicht veröffentlicht; enthalten in 1.41.0.

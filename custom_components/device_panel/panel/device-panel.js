@@ -780,7 +780,7 @@ class DevicePanel extends HTMLElement {
     this._timer = window.setInterval(() => {
       if (document.visibilityState !== "hidden") this._fetch();
     }, POLL_INTERVAL_MS);
-    this._tick = window.setInterval(() => this._hass && this._render(), TICK_MS);
+    this._tick = window.setInterval(() => this._hass && this._render(true), TICK_MS);
     this._onVisible = () => document.visibilityState === "visible" && this._wake();
     document.addEventListener("visibilitychange", this._onVisible);
     // Handy wacht auf oder bekommt wieder Netz: sofort neu abfragen.
@@ -808,6 +808,8 @@ class DevicePanel extends HTMLElement {
     window.clearInterval(this._timer);
     window.clearInterval(this._tick);
     window.clearInterval(this._logTimer);
+    window.clearTimeout(this._logRetry);
+    window.clearTimeout(this._devRetry);
     window.clearInterval(this._brandTimer);
     window.clearTimeout(this._brandRender);
     window.clearTimeout(this._retryTimer);
@@ -1005,6 +1007,7 @@ class DevicePanel extends HTMLElement {
       }
     });
     const dlg = root.querySelector("dialog.device");
+    this._trackBusy(dlg);
     dlg.addEventListener("click", (ev) => this._onDeviceClick(ev));
     dlg.addEventListener("input", (ev) => {
       if (this._rename && ev.target.matches?.('input[data-dlg="rename-input"]')) this._rename.value = ev.target.value;
@@ -1256,7 +1259,7 @@ class DevicePanel extends HTMLElement {
   _fetched() {
     // Offline und noch nie Daten gehabt: weiter "wird geladen" (mit Hinweis), kein Fehlerbild.
     this._loading = !!this._offline && !this._fetchedAt;
-    this._render();
+    this._render(true);
     if (this._deepPending) {
       this._deepPending = false;
       this._deepLink();
@@ -1304,7 +1307,7 @@ class DevicePanel extends HTMLElement {
     } finally {
       this._refining = false;
     }
-    if (changed) this._render();
+    if (changed) this._render(true);
   }
 
   // Von Hand gesetzt: genau diese; sonst die der Integration (gilt für alle
@@ -2211,7 +2214,8 @@ class DevicePanel extends HTMLElement {
 
   // --- Liste ----------------------------------------------------------------
 
-  _render() {
+  // soft: Aufruf aus dem Abfragen (nicht aus einer Aktion des Benutzers); das Popup wartet dann auf das Ende einer Berührung.
+  _render(soft = false) {
     const root = this.shadowRoot;
     if (!root.querySelector(".content")) return;
     const all = this._devices;
@@ -2243,7 +2247,8 @@ class DevicePanel extends HTMLElement {
           ? `<span class="offline-note">${escape(this._t("reconnecting"))}</span>`
           : `<span>${escape(this._t("footer", rows.length, all.length))}${time ? ` · ${escape(this._t("updatedAt", time))}` : ""}</span>${rows.length ? `<span class="tap">${escape(this._t("openDetails"))}</span>` : ""}`
     );
-    this._renderDevice();
+    // Das Popup nicht mitten in einer Berührung oder Wischbewegung neu aufbauen (siehe _dlgBusy).
+    this._renderDevice(soft);
   }
 
   _heroHtml(all, offline) {
@@ -2585,7 +2590,7 @@ class DevicePanel extends HTMLElement {
     }
   }
 
-  async _logCall(msg) {
+  async _logCall(msg, soft = false) {
     const log = this._logState();
     try {
       const res = await this._callWithTimeout(msg, 10000);
@@ -2594,11 +2599,11 @@ class DevicePanel extends HTMLElement {
       log.error = errText(err);
       log.loaded = true;
     }
-    this._renderLogBody();
+    this._renderLogBody(soft);
   }
 
   _fetchLog() {
-    return this._logCall({ type: "device_panel/get_log" });
+    return this._logCall({ type: "device_panel/get_log" }, true);
   }
 
   // Fester Teil (Kopf, Suche, Chips, Fuss): wird nur beim Öffnen gebaut, damit die Eingabe beim Nachfragen bleibt.
@@ -2657,9 +2662,15 @@ class DevicePanel extends HTMLElement {
   }
 
   // Wechselnder Teil: Chips mit Zahlen, Liste, Fuss. Schreibt nur, was sich geändert hat (setHtml).
-  _renderLogBody() {
+  _renderLogBody(soft = false) {
     const dlg = this.shadowRoot.querySelector("dialog.log-dlg");
     if (!dlg || !dlg.querySelector('[data-lg="list"]')) return;
+    // Beim Nachfragen nicht mitten in einer Wischbewegung neu aufbauen (siehe _dlgBusy).
+    if (soft && dlg.open && this._dlgBusy(dlg)) {
+      window.clearTimeout(this._logRetry);
+      this._logRetry = window.setTimeout(() => this._renderLogBody(true), 500);
+      return;
+    }
     const t = (k, ...a) => this._t(k, ...a);
     const log = this._logState();
     const ui = this._logUi;
@@ -2721,6 +2732,7 @@ class DevicePanel extends HTMLElement {
   }
 
   _bindLog(dlg) {
+    this._trackBusy(dlg);
     const rerender = () => this._renderLogBody();
     dlg.addEventListener("click", async (ev) => {
       if (ev.target === dlg) {
@@ -3691,10 +3703,37 @@ class DevicePanel extends HTMLElement {
     return { count: list.length, html: list.length ? `<ul class="entities">${items}</ul>${hint}` : "" };
   }
 
-  _renderDevice() {
+  // Berührt der Benutzer das Fenster gerade oder wischt er darin? Dann baut das Abfragen (alle 10 s) den Inhalt nicht
+  // neu auf: Auf dem iPhone bricht ein ersetzter Inhalt die Wischbewegung ab, die Seite dahinter scrollt mit und löst
+  // das Neuladen der App aus (Rückmeldung des Nutzers).
+  _trackBusy(dlg) {
+    const busy = { touch: false, at: 0 };
+    dlg.__busy = busy;
+    const stamp = () => {
+      busy.at = Date.now();
+    };
+    dlg.addEventListener("touchstart", () => { busy.touch = true; stamp(); }, { passive: true, capture: true });
+    for (const type of ["touchend", "touchcancel"]) dlg.addEventListener(type, () => { busy.touch = false; stamp(); }, { passive: true, capture: true });
+    dlg.addEventListener("scroll", stamp, { passive: true, capture: true });
+    dlg.addEventListener("wheel", stamp, { passive: true, capture: true });
+  }
+
+  _dlgBusy(dlg) {
+    const busy = dlg?.__busy;
+    if (!busy) return false;
+    // Beim Wischen mit Schwung feuert "scroll" weiter, die Frist läuft also ab dem letzten Ereignis.
+    return busy.touch || Date.now() - busy.at < 800;
+  }
+
+  _renderDevice(soft = false) {
     this._renderStat();
     const dlg = this.shadowRoot.querySelector("dialog.device");
     if (!dlg || !this._detailId) return;
+    if (soft && !this._devForce && dlg.open && this._dlgBusy(dlg)) {
+      window.clearTimeout(this._devRetry);
+      this._devRetry = window.setTimeout(() => this._renderDevice(true), 500);
+      return;
+    }
     const close = `<button type="button" class="dlg-close" data-dlg="close" title="${escape(this._t("close"))}" aria-label="${escape(this._t("close"))}">${mdi("close", 18)}</button>`;
     const d = this._devices.find((x) => x.id === this._detailId);
     // Eigene Schwelle wird gerade getippt: nicht neu aufbauen, sonst ginge die
