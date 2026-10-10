@@ -3,7 +3,7 @@
 // Online-Meldungen aus, sofort gespeichert; Eingabe übersteht das Abfragen.
 // Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
-import { launchOptions, outDir } from "../lib.mjs";
+import { launchOptions, outDir, ensureDevTab } from "../lib.mjs";
 
 const b = await chromium.launch(launchOptions);
 let ok = true;
@@ -33,11 +33,11 @@ for (const lang of ["de", "en"]) {
     await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}`);
     const f = await (await p.waitForSelector("#panel-frame")).contentFrame();
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
-    const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
-    const handle = async (sel) => (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
+    const ev = async (c) => { await ensureDevTab(f, R, c); return f.evaluate(new Function(`const r=${R};` + c)); };
+    const handle = async (sel) => { await ensureDevTab(f, R, sel); return (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement(); };
     const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
-    const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
+    const wait = async (code) => { await ensureDevTab(f, R, code); return f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false); };
     const calls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").map(({ type, id, ...rest }) => rest));
     const lowChip = () => ev(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent || "0"`);
     const open = async (id) => {
@@ -126,7 +126,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] als geändert markiert`, await ev(`return r.querySelector('select[data-dlg="dev-notify"]').closest(".opt").classList.contains("changed")`));
     await close();
     await open("a");
-    check(`[${tag}] nach erneutem Öffnen`, (await ev(`return r.querySelector('select[data-dlg="dev-bat"]').value + "|" + r.querySelector('select[data-dlg="dev-notify"]').value`)) === "off|off");
+    check(`[${tag}] nach erneutem Öffnen`, (await ev(`return r.querySelector('select[data-dlg="dev-bat"]').value`)) + "|" + (await ev(`return r.querySelector('select[data-dlg="dev-notify"]').value`)) === "off|off");
     // Zurück
     await (await handle('select[data-dlg="dev-bat"]')).selectOption("default");
     await wait(`return r.querySelector('select[data-dlg="dev-bat"]')?.value === "default"`);

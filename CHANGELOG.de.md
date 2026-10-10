@@ -7,7 +7,33 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.42.0] - 2026-10-10
+
+Auf jeder Ebene dieselben Reiter.
+
+### Geändert
+
+- Dieselben Reiter in den Einstellungen, im Detail einer Integration und im Geräte-Popup (Wunsch des Nutzers,
+  "überall genau gleich aufgebaut"):
+  - Einstellungen › Überwachung und Meldungen: "Laden" ist ein eigener Reiter (vorher ein Unterreiter von
+    "Batterie"): Übersicht, Ausfall, Batterie, Laden, Neu, Updates, Integrationen. Auf dem Handy scrollt die
+    Reiterzeile seitlich und hält den gewählten Reiter in der Mitte.
+  - Detail einer Integration: Reiter Ausfall, Batterie, Laden, Neu, Empfang und Geräte statt einer langen Seite.
+    Jeder Reiter zeigt die Grafik des passenden Reiters der Einstellungen (mit den Werten, die für die
+    Integration gelten), ein Punkt markiert einen Reiter mit eigener Einstellung der Integration, "Alles auf
+    Standard" bleibt darunter.
+  - Geräte-Popup, Reiter Einstellungen: Unterreiter Ausfall, Batterie, Laden und Empfang mit Grafik und den
+    Einstellungen des Geräts (Herkunft wie bisher). Die Reiter gibt es immer; was ein Gerät nicht kann (keine
+    Batterie, kein Empfang), sagt ein kurzer Hinweis. Ein Punkt markiert einen Reiter mit eigener Einstellung
+    des Geräts.
+- "Ladung erkannt bei Anstieg" lässt sich ab 2 % einstellen (Wunsch des Nutzers; vorher 5 bis 80 %), in der
+  globalen Einstellung, pro Integration (die Liste bietet jetzt 2 % und 3 %) und pro Gerät.
+- Inhalt, der unter der Reiterzeile des Geräte-Popups durchläuft, blendet weich aus statt hart abgeschnitten zu
+  werden (die Kacheln "Typ" und "Verbindungsart" schienen an den Reitern zu kleben).
+
 ## [1.41.0] - 2026-10-10
+
+Nicht veröffentlicht; enthalten in 1.42.0.
 
 Ladung beendet pro Integration und pro Gerät.
 
@@ -26,7 +52,7 @@ Ladung beendet pro Integration und pro Gerät.
 - Push-Titel beginnen mit einem Emoji (Wunsch des Nutzers), damit das Thema auf den ersten Blick klar ist:
   🪫 schwache Batterie, 🔴 ausgefallen, 🚨 Sammelausfall, 🟢 wieder online, ✨ neues Gerät, 🔋 geladen,
   🔌 Ladung beendet, ⬆️ Update-Erinnerung. Die Vorschauen in den Einstellungen zeigen dieselben Titel. Die
-  anhaltenden Benachrichtigungen in Home Assistant behalten ihre Titel.
+  anhaltenden Benachrichtigungen in Home Assistant beginnen ebenfalls mit dem Emoji ihres Themas (🪫, 🔴, ✨).
 - Ladebalken mit Ziel (Wunsch des Nutzers, Mockup `charge-target-v1`, Variante C): liegt "Voll ab" unter 100 %
   (zum Beispiel 80 %), ist der Rest hinter dem Ziel schraffiert, mit Strich und kleiner Zahl am Ziel. Gezeigt in
   der Liste beim Chip "Lädt" und in der Batterie-Kachel des Geräte-Popups. Bei 100 % bleibt der Balken wie bisher.
@@ -57,7 +83,7 @@ Ladung beendet pro Integration und pro Gerät.
 
 ## [1.40.0] - 2026-10-10
 
-Nicht veröffentlicht; enthalten in 1.41.0.
+Nicht veröffentlicht; enthalten in 1.42.0.
 
 Ladung beendet.
 
@@ -2075,7 +2101,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[1.41.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.41.0
+[1.42.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.42.0
 [1.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.39.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0

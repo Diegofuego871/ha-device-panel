@@ -52,13 +52,13 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] Chip "Push" der Zeile Laden schaltet die Lademeldung ein`, await ev(`return r.querySelector('[data-lane="charge"] .mon-chip').getAttribute("aria-pressed") === "true" && r.querySelector(".mon-tab.on, .mon-tab.chg") !== null`));
   // "Ändern": richtiger Unterreiter
   await tap('[data-lane="charge"] [data-set="tab"]');
-  await wait(`return !!r.querySelector('.sub-tab[data-key="bat_charge"].on')`);
-  check(`[${tag}] "Ändern" bei Laden öffnet Batterie › ${T_.sub}`, await ev(`return !!r.querySelector('.sub-tab[data-key="bat_charge"].on')`));
+  await wait(`return !!r.querySelector('.mon-tab[data-key="charge"].on')`);
+  check(`[${tag}] "Ändern" bei Laden öffnet den Reiter ${T_.sub}`, await ev(`return !!r.querySelector('.mon-tab[data-key="charge"].on')`));
   await tap('.mon-tab[data-key="overview"]');
   await wait(`return !!r.querySelector('[data-lane="battery"]')`);
   await tap('[data-lane="battery"] [data-set="tab"]');
-  await wait(`return !!r.querySelector('.sub-tab[data-key="bat_warn"].on')`);
-  check(`[${tag}] "Ändern" bei Batterie öffnet Batterie › ${T_.subWarn}`, await ev(`return !!r.querySelector('.sub-tab[data-key="bat_warn"].on')`));
+  await wait(`return !!r.querySelector('.mon-tab[data-key="battery"].on')`);
+  check(`[${tag}] "Ändern" bei Batterie öffnet den Reiter Batterie`, await ev(`return !!r.querySelector('.mon-tab[data-key="battery"].on')`));
   await tap('.mon-tab[data-key="overview"]');
   await wait(`return !!r.querySelector('[data-lane="updates"]')`);
   await tap('[data-lane="updates"] [data-set="tab"]');

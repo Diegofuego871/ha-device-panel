@@ -32,6 +32,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await tap('.dev[data-open="b"]');
   await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab="set"]')`);
   await tap('dialog.device [data-tab="set"]');
+  await tap('dialog.device [data-stab="chg"]');
   await wait(`return !!r.querySelector('select[data-dlg="dev-charge"]')`);
   await (await handle('select[data-dlg="dev-charge"]')).selectOption("on");
   await wait(`return !!r.querySelector('select[data-dlg="dev-charge-stall"]')`);
@@ -61,13 +62,13 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await tap(".gear-btn");
   await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
   await tap('[data-set="section"][data-id="monitor"]');
-  await tap('.mon-tab[data-key="battery"]');
-  await tap('.sub-tab[data-key="bat_charge"]');
+  await tap('.mon-tab[data-key="charge"]');
   await wait(`return !!r.querySelector('input[data-opt="notify_charge"]')`);
   await tap('input[data-opt="notify_charge"]');
   await tap('.mon-tab[data-key="integ"]');
   await wait(`return !!r.querySelector('.ilist-row[data-key="matter"]')`);
   await tap('.ilist-row[data-key="matter"]');
+  await tap('[data-set="isub"][data-key="chg"]');
   await wait(`return !!r.querySelector('input[data-cinteg="matter"]')`);
   await tap('input[data-cinteg="matter"]');
   await wait(`return !!r.querySelector('select[data-cstall-integ="matter"]')`);
@@ -80,6 +81,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const diff = await text('.ilist-row[data-key="matter"] .ilist-diff');
   check(`[${tag}] Liste der Integrationen nennt beide Werte`, diff.includes(T_.diff) && diff.includes(T_.diffStop), diff);
   await tap('.ilist-row[data-key="matter"]');
+  await tap('[data-set="isub"][data-key="chg"]');
   await wait(`return !!r.querySelector('select[data-cstall-integ="matter"]')`);
   await tap('[data-set="integ-reset"]');
   check(`[${tag}] Zurücksetzen: beide Werte weg`, await wait(`const d=r.host._settings.draft; return JSON.stringify(d.charge_stall_integrations) === "{}" && JSON.stringify(d.charge_stop_integrations) === "{}"`));

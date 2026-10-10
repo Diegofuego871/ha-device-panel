@@ -7,7 +7,31 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.42.0] - 2026-10-10
+
+The same tabs on every level.
+
+### Changed
+
+- The same tabs in the settings, in the detail of an integration and in the device pop-up (requested by the
+  user, "so it is built exactly the same everywhere"):
+  - Settings › Monitoring and notifications: "Charging" is a tab of its own (before: a sub-tab of "Battery"):
+    Overview, Outage, Battery, Charging, New, Updates, Integrations. On a phone the row of tabs scrolls
+    sideways and keeps the chosen tab in the middle.
+  - Detail of an integration: tabs Outage, Battery, Charging, New, Signal and Devices instead of one long
+    page. Each tab shows the graph of the matching tab in the settings (with the values that apply to the
+    integration), a dot marks a tab with an own setting of the integration, "Reset all to default" stays below.
+  - Device pop-up, tab Settings: sub-tabs Outage, Battery, Charging and Signal with the graph and the settings
+    of the device (origin as before). The tabs are always there; what a device cannot do (no battery, no
+    signal) says a short hint. A dot marks a tab with an own setting of the device.
+- "Charging detected at a rise of" can be set from 2 % (requested by the user; before: 5 to 80 %), in the global
+  setting, per integration (the list now offers 2 % and 3 %) and per device.
+- Content that scrolls under the tab row of the device pop-up fades out instead of being cut off hard (the tiles
+  "Type" and "Connection type" seemed to stick to the tabs).
+
 ## [1.41.0] - 2026-10-10
+
+Not released; included in 1.42.0.
 
 Charging stopped per integration and per device.
 
@@ -26,7 +50,7 @@ Charging stopped per integration and per device.
 - Push titles start with an emoji (requested by the user) so the topic is clear at first glance: 🪫 low
   battery, 🔴 offline, 🚨 group outage, 🟢 back online, ✨ new device, 🔋 charged, 🔌 charging stopped,
   ⬆️ update reminder. The previews in the settings show the same titles. The persistent notifications in
-  Home Assistant keep their titles.
+  Home Assistant start with the emoji of their topic as well (🪫, 🔴, ✨).
 - Charge bar with target (requested by the user, mockup `charge-target-v1`, variant C): when "Full from" is below
   100 % (for example 80 %), the rest behind the target is hatched, with a line and a small number at the
   target. Shown in the list with the chip "Charging" and in the battery tile of the device pop-up. At 100 % the
@@ -57,7 +81,7 @@ Charging stopped per integration and per device.
 
 ## [1.40.0] - 2026-10-10
 
-Not released; included in 1.41.0.
+Not released; included in 1.42.0.
 
 Charging stopped.
 
@@ -2010,7 +2034,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[1.41.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.41.0
+[1.42.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.42.0
 [1.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.39.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0

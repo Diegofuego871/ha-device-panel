@@ -5,7 +5,7 @@
 // und Push (Ziel, Ausfall, wieder online, Sammelausfall); aufgeklappter
 // Abschnitt abgesetzt. Deutsch und Englisch, Desktop und Handy (Blatt).
 import { chromium } from "playwright-core";
-import { launchOptions, outDir } from "../lib.mjs";
+import { launchOptions, outDir, ensureIntegTab, ensureDevTab } from "../lib.mjs";
 
 const b = await chromium.launch(launchOptions);
 let ok = true;
@@ -102,15 +102,15 @@ for (const lang of ["de", "en"]) {
     await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}`);
     const f = await (await p.waitForSelector("#panel-frame")).contentFrame();
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`));
-    const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
+    const ev = async (c) => { await ensureIntegTab(f, R, c); await ensureDevTab(f, R, c); return f.evaluate(new Function(`const r=${R};` + c)); };
     const tap = async (sel) => {
-      const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
+      await ensureIntegTab(f, R, sel); await ensureDevTab(f, R, sel); const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
       if (!h) throw new Error("fehlt: " + sel);
       if (mobile) await h.tap(); else await h.click();
     };
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
     const isOpen = () => ev(`return r.querySelector("dialog.settings").open`);
-    const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
+    const wait = async (code) => { await ensureIntegTab(f, R, code); await ensureDevTab(f, R, code); return f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false); };
     const calls = (type) => p.evaluate((t) => window.__wsCalls.filter((m) => m.type === t), type);
     // Nach dem Speichern bleibt der Dialog offen und zeigt "Gespeichert".
     const savedOpen = () => wait(`return r.querySelector("dialog.settings").open && r.querySelector(".set-count")?.classList.contains("saved")`);
@@ -238,7 +238,7 @@ for (const lang of ["de", "en"]) {
     // Überwachung und Meldungen (seit 0.34.0): Reiter "Ausfall" mit Zeitstrahl
     const tab = async (key) => { await tap(`[data-set="tab"][data-key="${key}"]`); await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "${key}"`); };
     const typeIn = async (sel, val) => {
-      const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
+      await ensureIntegTab(f, R, sel); await ensureDevTab(f, R, sel); const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
       if (mobile) await h.tap(); else await h.click();
       await h.fill("");
       if (val !== "") await h.type(val);
@@ -435,7 +435,7 @@ for (const lang of ["de", "en"]) {
     // Batterie pro Integration: im Reiter "Integrationen", je Integration
     // (seit 0.34.0; Auswahl wie im Geräte-Popup, Variante B aus battery-v2)
     const mode = async (dom, value) => {
-      const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-bat-mode="${dom}"]')`))).asElement();
+      await ensureIntegTab(f, R, 'data-bat-mode'); const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-bat-mode="${dom}"]')`))).asElement();
       await h.scrollIntoViewIfNeeded();
       if (mobile) await h.tap(); else await h.click();
       await h.selectOption(value);

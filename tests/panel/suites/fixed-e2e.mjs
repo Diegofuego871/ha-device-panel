@@ -4,7 +4,7 @@
 // Zeile scrollt zurück. Auch auf dem Desktop (Kopfzeile der
 // Tabelle klebt unter den Chips), in beiden Darstellungen (Gruppen, Liste).
 import { chromium } from "playwright-core";
-import { launchOptions, outDir } from "../lib.mjs";
+import { launchOptions, outDir, ensureIntegTab } from "../lib.mjs";
 
 const b = await chromium.launch(launchOptions);
 let ok = true;
@@ -23,8 +23,8 @@ for (const lang of ["de", "en"]) {
     await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}`);
     const f = await (await p.waitForSelector("#panel-frame")).contentFrame();
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
-    const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
-    const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
+    const ev = async (c) => { await ensureIntegTab(f, R, c); return f.evaluate(new Function(`const r=${R};` + c)); };
+    const wait = async (code) => { await ensureIntegTab(f, R, code); return f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false); };
     const rect = (sel) => ev(`const e=r.querySelector(${JSON.stringify(sel)}); if(!e) return null; const b=e.getBoundingClientRect(); return {top: Math.round(b.top), bottom: Math.round(b.bottom), height: Math.round(b.height), visible: getComputedStyle(e).display !== "none" && b.height > 0}`);
     const top = () => ev(`return Math.round(r.querySelector(".content").getBoundingClientRect().top)`);
     const scrollTo = (y) => ev(`r.querySelector(".content").scrollTop = ${y}`);

@@ -34,12 +34,12 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
   await tap('[data-set="section"][data-id="monitor"]');
   await tap('.mon-tab[data-key="battery"]');
-  // Unterreiter "Warnung | Laden" (1.31.1, docs/mockups/battery-layout-v1, C): zuerst die Warnung mit ihren Abweichungen
-  await wait(`return !!r.querySelector('.sub-tab[data-key="bat_warn"]')`);
-  const subs = await ev(`return [...r.querySelectorAll('.sub-tab[data-group="battery"]')].map(b => b.textContent.trim() + (b.classList.contains("on") ? "*" : ""))`);
-  check(`[${tag}] Unterreiter "${T_.subWarn}*" und "${T_.grp}"`, JSON.stringify(subs) === JSON.stringify([T_.subWarn + "*", T_.grp]), JSON.stringify(subs));
+  // "Laden" ist seit 1.42.0 ein eigener Reiter direkt nach "Batterie" (vorher Unterreiter), die Batterie zeigt zuerst die Warnung
+  await wait(`return !!r.querySelector('.mon-tab[data-key="charge"]')`);
+  const tabs = await ev(`return [...r.querySelectorAll('.mon-tab')].map(b => b.dataset.key + (b.classList.contains("on") ? "*" : ""))`);
+  check(`[${tag}] Reiter: "Batterie*" gefolgt von "${T_.grp}", keine Unterreiter`, tabs.join().includes("battery*,charge") && (await ev(`return !r.querySelector('.sub-tab[data-group="battery"]')`)) && (await text('.mon-tab[data-key="charge"]')) === T_.grp, tabs.join());
   check(`[${tag}] Warnung: Abweichungen mit Bezug "${T_.diff}", ohne Laden`, await ev(`return [...r.querySelectorAll(".mon-grp")].some(g => g.textContent.trim() === ${JSON.stringify(T_.diff)}) && !r.querySelector('input[data-opt="notify_charge"]')`));
-  await tap('.sub-tab[data-key="bat_charge"]');
+  await tap('.mon-tab[data-key="charge"]');
   await wait(`return !!r.querySelector('input[data-opt="notify_charge"]')`);
   check(`[${tag}] Laden: ohne Abweichungen und Warnschwelle`, await ev(`return ![...r.querySelectorAll(".mon-grp")].some(g => g.textContent.trim() === ${JSON.stringify(T_.diff)}) && !r.querySelector('input[data-opt="battery_low"]')`));
   check(`[${tag}] Lademeldung: Schalter aus, keine Liste der Integrationen`, !(await ev(`return r.querySelector('input[data-opt="notify_charge"]').checked`)) && !(await ev(`return !!r.querySelector("input[data-cinteg]")`)));
@@ -67,8 +67,8 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await wait(`return r.querySelector('input[data-opt="notify_charge_stop"]').checked`);
   await tap('input[data-cinteg="zha"]');
   check(`[${tag}] Vorschau folgt "Voll ab"`, await ev(`return [...r.querySelectorAll(".pv-text")].some(e=>e.innerText.startsWith("95 %"))`));
-  await (await handle('input[data-opt="charge_rise"]')).fill("2");
-  check(`[${tag}] Anstieg 2: Fehler, Speichern gesperrt`, await wait(`return r.querySelector('[data-set="save"]').disabled`));
+  await (await handle('input[data-opt="charge_rise"]')).fill("1");
+  check(`[${tag}] Anstieg 1: Fehler, Speichern gesperrt`, await wait(`return r.querySelector('[data-set="save"]').disabled`));
   await (await handle('input[data-opt="charge_rise"]')).fill("30");
   await p.screenshot({ path: `${outDir}/charge-${tag.replace("/", "-")}.png` });
   await tap('dialog.settings [data-set="save"]');
@@ -80,6 +80,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await wait(`return !!r.querySelector('.ilist-row[data-key="zha"]')`);
   check(`[${tag}] Liste der Integrationen: ZHA mit "${T_.diffOn}"`, (await text('.ilist-row[data-key="zha"] .ilist-diff')).includes(T_.diffOn) && !(await text('.ilist-row[data-key="matter"] .ilist-diff')).includes(T_.diffOn), await text('.ilist-row[data-key="zha"] .ilist-diff'));
   await tap('.ilist-row[data-key="matter"]');
+  await tap('[data-set="isub"][data-key="chg"]');
   await wait(`return !!r.querySelector('input[data-cinteg="matter"]')`);
   check(`[${tag}] Detail Matter: Schalter "${T_.row2}" aus, Hinweis "Standard wäre aus"`, !(await ev(`return r.querySelector('input[data-cinteg="matter"]').checked`)));
   await tap('input[data-cinteg="matter"]');
@@ -88,6 +89,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] Detail Matter: "Voll ab" und Anstieg der Integration, global (95 %, 30 %)`, await wait(`const f=r.querySelector('select[data-cfull-integ="matter"]'), q=r.querySelector('select[data-crise-integ="matter"]'); return !!f && !!q && f.value === "default" && q.value === "default" && f.options[0].textContent.includes("95 %") && q.options[0].textContent.includes("30 %")`));
   await (await handle('select[data-cfull-integ="matter"]')).selectOption("90");
   await wait(`return r.querySelector('select[data-cfull-integ="matter"]')?.value === "90"`);
+  check(`[${tag}] Detail Matter: Anstieg ab 2 % wählbar`, (await ev(`return [...r.querySelector('select[data-crise-integ="matter"]').options].map(o=>o.value).slice(1, 3).join()`)) === "2,3");
   await (await handle('select[data-crise-integ="matter"]')).selectOption("15");
   await wait(`return r.querySelector('select[data-crise-integ="matter"]')?.value === "15"`);
   check(`[${tag}] Entwurf: Voll ab 90 und Anstieg 15 für Matter`, await ev(`const d=r.host._settings.draft; return JSON.stringify(d.charge_full_integrations) === '{"matter":90}' && JSON.stringify(d.charge_rise_integrations) === '{"matter":15}'`));
@@ -105,9 +107,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await tap('.iback');
   await wait(`return !!r.querySelector('.ilist-row[data-key="matter"]')`);
   check(`[${tag}] Matter jetzt mit "${T_.diffOn}" samt Werten und ungespeichert`, (await text('.ilist-row[data-key="matter"] .ilist-diff')).includes(`${T_.diffOn} (${T_.diffVals})`) && await ev(`return r.querySelector('.ilist-row[data-key="matter"]').classList.contains("changed")`), await text('.ilist-row[data-key="matter"] .ilist-diff'));
-  await tap('.mon-tab[data-key="battery"]');
-  await wait(`return !!r.querySelector('.sub-tab[data-key="bat_charge"]')`);
-  await tap('.sub-tab[data-key="bat_charge"]');
+  await tap('.mon-tab[data-key="charge"]');
   await wait(`return !!r.querySelector('input[data-cinteg="matter"]')`);
   check(`[${tag}] Unterreiter "Laden": Matter ebenfalls an (gleicher Wert)`, await ev(`return r.querySelector('input[data-cinteg="matter"]').checked && r.querySelector('input[data-cinteg="zha"]').checked`));
   await tap('input[data-cinteg="matter"]');
@@ -120,7 +120,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
 
   // Popup: Thermostat Bad (Matter, 22 %), ZHA-Gerät Bewegungsmelder (Integration ein)
   await tap('.dev[data-open="c"]');
-  await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector('select[data-dlg="dev-charge"]')`);
+  await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await tap('dialog.device [data-stab="chg"]'); await wait(`return r.querySelector('select[data-dlg="dev-charge"]')`);
   check(`[${tag}] Popup "${T_.row}": Standard "${T_.def}"`, (await ev(`const s=r.querySelector('select[data-dlg="dev-charge"]'); return s.value + "|" + s.options[s.selectedIndex].textContent`)) === `default|${T_.def}`);
   await (await handle('select[data-dlg="dev-charge"]')).selectOption("on");
   await wait(`return r.querySelector('select[data-dlg="dev-charge"]')?.value === "on"`);
@@ -139,9 +139,14 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] Anstieg 12 gesendet`, (await wait(`return true`)) && JSON.stringify((await devCalls()).at(-1)) === JSON.stringify({ device_id: "c", charge_rise: 12 }), JSON.stringify((await devCalls()).at(-1)));
   const nCalls = (await devCalls()).length;
   const rise2 = await handle('input[data-dlg="dev-charge-rise-val"]');
-  await rise2.fill("2");
+  await rise2.fill("1");
   await rise2.press("Tab");
-  check(`[${tag}] Anstieg 2: Bereich genannt, nichts gesendet`, (await wait(`return !!r.querySelector("[data-dev-range]")`)) && (await devCalls()).length === nCalls, String((await devCalls()).length));
+  check(`[${tag}] Anstieg 1: Bereich genannt, nichts gesendet`, (await wait(`return !!r.querySelector("[data-dev-range]")`)) && (await devCalls()).length === nCalls, String((await devCalls()).length));
+  // Ab 2 Prozent erlaubt (1.42.0)
+  const rise3 = await handle('input[data-dlg="dev-charge-rise-val"]');
+  await rise3.fill("2");
+  await rise3.press("Tab");
+  check(`[${tag}] Anstieg 2 gesendet`, (await wait(`return !r.querySelector("[data-dev-range]")`)) && JSON.stringify((await devCalls()).at(-1)) === JSON.stringify({ device_id: "c", charge_rise: 2 }), JSON.stringify((await devCalls()).at(-1)));
   await (await handle('select[data-dlg="dev-charge-rise"]')).selectOption("default");
   await (await handle('select[data-dlg="dev-charge-full"]')).selectOption("default");
   await wait(`return r.querySelector('select[data-dlg="dev-charge-full"]')?.value === "default" && !r.querySelector('input[data-dlg="dev-charge-rise-val"]')`);
@@ -161,6 +166,8 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
     if (hasLevel === false) {
       await tap(`.dev[data-open="${noBat}"]`);
       await wait(`return r.querySelector("dialog.device")?.open`);
+      await tap('dialog.device [data-tab="set"]');
+      await tap('dialog.device [data-stab="chg"]');
       check(`[${tag}] Gerät ohne Batterie: keine Zeile "${T_.row}"`, await ev(`return !r.querySelector('select[data-dlg="dev-charge"]')`));
       await tap('dialog.device [data-dlg="close"]');
     }

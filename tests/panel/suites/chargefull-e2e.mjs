@@ -28,8 +28,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await tap(".gear-btn");
   await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
   await tap('[data-set="section"][data-id="monitor"]');
-  await tap('.mon-tab[data-key="battery"]');
-  await tap('.sub-tab[data-key="bat_charge"]');
+  await tap('.mon-tab[data-key="charge"]');
   await wait(`return !!r.querySelector('select[data-cfull]')`);
   check(`[${tag}] global: Stufen 100, 95, 90, 80 und "${T_.own}"`, JSON.stringify(await opts("select[data-cfull]")) === JSON.stringify(["100|100 %", "95|95 %", "90|90 %", "80|80 %", `own|${T_.own}`]), JSON.stringify(await opts("select[data-cfull]")));
   check(`[${tag}] global: ohne eigenen Wert kein Zahlenfeld`, !(await ev(`return !!r.querySelector('input[data-opt="charge_full"]')`)));
@@ -49,6 +48,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await tap('.dev[data-open="b"]');
   await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab="set"]')`);
   await tap('dialog.device [data-tab="set"]');
+  await tap('dialog.device [data-stab="chg"]');
   await wait(`return !!r.querySelector('select[data-dlg="dev-charge"]')`);
   await (await handle('select[data-dlg="dev-charge"]')).selectOption("on");
   await wait(`return !!r.querySelector('select[data-dlg="dev-charge-full"]')`);

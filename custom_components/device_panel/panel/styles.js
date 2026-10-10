@@ -688,6 +688,10 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .mon-tab, .sub-tab { position: relative; flex: 1 1 auto; min-width: 0; padding: 7px 6px; border: none; border-radius: 9px; background: none; color: var(--dp-text2);
   font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer; }
 .mon-tab:hover, .sub-tab:hover { color: var(--dp-text); }
+/* Sieben Reiter (seit 1.42.0, "Laden" ist ein eigener Reiter): auf schmalen Bildschirmen seitlich scrollen statt abschneiden */
+.mon-tabs { position: relative; overflow-x: auto; scrollbar-width: none; }
+.mon-tabs::-webkit-scrollbar { display: none; }
+.mon-tabs .mon-tab { flex: 1 0 auto; padding-left: 9px; padding-right: 9px; white-space: nowrap; }
 .mon-tab.on, .sub-tab.on { background: var(--dp-card); color: var(--dp-text); font-weight: 600; box-shadow: var(--dp-shadow-s); }
 .mon-tab:focus-visible, .sub-tab:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
 .sub-tabs { margin: 12px 0 8px; }
@@ -822,6 +826,11 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .typ-ro { display: inline-flex; align-items: center; gap: 8px; color: var(--dp-text); }
 .typ-ro > svg { color: var(--dp-text2); }
 .dev-tabs { position: sticky; top: var(--dev-head-h, 0px); z-index: 3; padding: 4px 22px 8px; background: var(--dp-card); }
+/* Inhalt, der unter der Reiterzeile durchläuft, wird weich ausgeblendet statt hart abgeschnitten (kein "Kleben" der Kacheln) */
+.dev-tabs::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 12px; background: linear-gradient(var(--dp-card), transparent); pointer-events: none; }
+/* Gleiche Reiter auf allen Ebenen (seit 1.42.0): Einstellungen, Integration, Gerät */
+.lvl-tabs { margin: 6px 0 10px; }
+.lvl-body > .mtl, .lvl-body > .ptl { margin-top: 4px; }
 .dev-tabs .sub-tabs { margin: 0; }
 @media (max-width: 700px) { .dev-tabs { padding: 0 16px; } }
 .typ-sel { position: relative; display: inline-flex; align-items: center; gap: 6px; max-width: 100%; color: var(--dp-text); }

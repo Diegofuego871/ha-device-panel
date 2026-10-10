@@ -17,7 +17,7 @@
 - **Batterie-Prognose:** wie lange die Batterie bis zur Warnschwelle hält, ohne KI
 - **Meldungen:** Push und anhaltende Benachrichtigung bei Ausfällen und schwacher Batterie, mit Zeitstrahl, wann was ankommt; Standard pro Integration, Ausnahmen pro Gerät
 - **Optionale KI-Einschätzung:** eine Vermutung zur Ursache auf Knopfdruck, der Prompt ist im Profi-Modus anpassbar
-- **Einstellungen im Panel,** auch Updates über HACS, auf Deutsch und Englisch
+- **Einstellungen im Panel,** auch Updates über HACS, auf Deutsch und Englisch; dieselben Reiter (Ausfall, Batterie, Laden, Neu, Empfang) in den globalen Einstellungen, in jeder Integration und an jedem Gerät
 - **Handy und Desktop,** die Ansicht wird pro Benutzer gespeichert
 
 ## Bilder

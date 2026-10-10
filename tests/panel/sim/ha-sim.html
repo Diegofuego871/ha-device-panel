@@ -397,7 +397,7 @@
     if (!["{facts}", ...PROMPT_GROUPS].some((v) => text.includes(v))) return "no_facts";
     return null;
   };
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [5, 80], charge_stall: [5, 120] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [2, 80], charge_stall: [5, 120] };
   // Inhalt der Batterie-Meldung wie options_api.BATTERY_FIELDS (seit 0.34.0).
   const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
   // Inhalt der Meldung bei neuen Geräten wie const.NEW_FIELDS (seit 1.24.0).
@@ -770,7 +770,7 @@
           const m = msg.values.type_integrations;
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !TYPE_ORDER.includes(v))) throw { code: "invalid_format", message: "type map" };
         }
-        for (const [key, lo, hi] of [["charge_full_integrations", 50, 100], ["charge_rise_integrations", 5, 80], ["charge_stall_integrations", 5, 120]]) {
+        for (const [key, lo, hi] of [["charge_full_integrations", 50, 100], ["charge_rise_integrations", 2, 80], ["charge_stall_integrations", 5, 120]]) {
           if (key in msg.values) {
             const v = msg.values[key];
             if (!v || typeof v !== "object" || Array.isArray(v) || Object.entries(v).some(([k, n]) => !/^[a-z0-9_]+$/.test(k) || !Number.isInteger(n) || n < lo || n > hi)) throw { code: "invalid_format", message: key };
@@ -884,7 +884,7 @@
           else window.__devSettings.signal[msg.device_id] = v;
           out.signal = v;
         }
-        for (const [key, store, lo, hi] of [["charge_full", "chargeFull", 50, 100], ["charge_rise", "chargeRise", 5, 80], ["charge_stall", "chargeStall", 5, 120]]) {
+        for (const [key, store, lo, hi] of [["charge_full", "chargeFull", 50, 100], ["charge_rise", "chargeRise", 2, 80], ["charge_stall", "chargeStall", 5, 120]]) {
           if (key in msg) {
             if (!(msg[key] === null || (Number.isInteger(msg[key]) && msg[key] >= lo && msg[key] <= hi))) throw { code: "invalid_format", message: key };
             if (msg[key] === null) delete window.__devSettings[store][msg.device_id];

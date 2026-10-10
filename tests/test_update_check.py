@@ -168,7 +168,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "battery_push_daily": "new",
     }
     assert result["limits"] == {
-        "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [1, 50], "notify_delay": [1, 60], "new_window": [1, 60], "updates_window": [1, 60], "charge_full": [50, 100], "charge_rise": [5, 80], "charge_stall": [5, 120],
+        "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [1, 50], "notify_delay": [1, 60], "new_window": [1, 60], "updates_window": [1, 60], "charge_full": [50, 100], "charge_rise": [2, 80], "charge_stall": [5, 120],
     }
     assert set(result["panel"]) == {"prerelease", "prerelease_hacs"}
 

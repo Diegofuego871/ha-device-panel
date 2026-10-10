@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.41.0, Einstellungen in fünf Abschnitten)
+## Stand (1.42.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -431,8 +431,15 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Wischen im Popup `1.41.0` (Nutzer, Video nicht angekommen, Ursache nur vermutet): `_renderDevice(soft)` und `_renderLogBody(soft)` bauen beim
    Abfragen nicht neu auf, solange `_dlgBusy()` gilt (Berührung aktiv oder weniger als 0,8 s her, Scroll/Wheel im Fenster);
    `_trackBusy(dlg)` setzt die Merker. Nur der Abfragepfad ist weich, eigene Aktionen bauen sofort neu auf. Test `busy-e2e.mjs`.
+   Gleiche Reiter auf allen Ebenen `1.42.0` (Nutzer, "überall genau gleich aufgebaut"): Ausfall | Batterie | Laden | Neu | Empfang | Geräte.
+   Global: "Laden" ist ein eigener `mon-tab` (`MON_TAB_KEYS.charge`, vorher Unterreiter `bat_charge`; die Tab-Zeile scrollt seitlich, `.mon-tabs`,
+   der gewählte Reiter wird in `_renderSettings` zentriert). Integration: `_integDetailHtml` baut je Reiter `outHtml/batHtml/chgHtml/newHtml/sigHtml/devsHtml`
+   mit der Grafik des globalen Reiters (wirksame Werte), `st.sub.integ` (`data-set="isub"`), Punkt `.chg` = eigene Einstellung der Integration.
+   Gerät: `_deviceNotifyHtml` sammelt die Zeilen in `parts.out/bat/chg/sig`, Unterreiter `data-dlg="stab"` (`this._devSub`, beim Öffnen "out"), Grafik aus den
+   wirksamen Werten des Geräts (`offline_default`, `battery_default`, `charge_default`), Hinweis `devNoBattery`/`devNoSignal`, wenn das Gerät es nicht kann.
+   `.dev-tabs::after` blendet durchlaufenden Inhalt weich aus. Tests `devset-e2e`, `charge-e2e`, `integ-e2e`, `overview-e2e` u. a. angepasst.
    Emoji in Push-Titeln `1.41.0` (Nutzer): erstes Zeichen jedes Titels in `push.py` `TEXTS` (`*_title`, `*_title_many`, `update_title`), dieselben Emoji in den
-   Panel-Vorschauen (`pv*Title` in `strings.js`); anhaltende Benachrichtigungen unverändert. Tests passen die erwarteten Titel an.
+   Panel-Vorschauen (`pv*Title` in `strings.js`); dieselben Emoji vorne an den Titeln der anhaltenden Benachrichtigungen (`*_persistent_title`). Tests passen die erwarteten Titel an.
    Ladebalken mit Ziel `1.41.0` (Nutzer, Mockup `charge-target-v1`, C): `charging()` liefert `full` (Voll ab des Geräts), `_chargeBarHtml(c)` zeichnet Rest/Strich/Zahl
    (`.chg-rest`, `.chg-tick`, `.chg-goal`, `.has-goal`), in der Liste (Chip "Lädt") und als `extra` der Batterie-Kachel im Popup. Test `chargechip-e2e.mjs`.
    Log-Chips `1.41.0` (Nutzer): `.lg-chips .chip:first-child` ist sticky (deckender Hintergrund). Test `log-e2e.mjs`.
@@ -467,7 +474,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Vorschau mit den echten offenen Updates. Art "Add-ons" heisst "Apps (Add-ons)". Tests `test_updates.py`, `updates-e2e.mjs`.
    Lademeldung `1.30.0` (Nutzer, 2026-10-10, Mockup `charging-v1`, Konzept `docs/CONCEPT-laden-updates.md`):
    `charge.ChargeNotifier` beobachtet die Batterie-Sensoren (`battery_entity`), `step()` merkt den tiefsten Stand
-   seit dem Entladen; Anstieg >= `charge_rise` (5..80, Standard 20) = lädt, Push bei Stand >= `charge_full`
+   seit dem Entladen; Anstieg >= `charge_rise` (2..80 seit 1.42.0, Standard 20) = lädt, Push bei Stand >= `charge_full`
    (90..100, Standard 100); Ersatzregel: Sprung von < 90 auf >= voll (`CHARGE_JUMP_FROM`), wieder scharf bei
    Stand < voll - `CHARGE_REARM`. Schalter `notify_charge` (aus), Integrationen `charge_integrations`, pro Gerät
    `charge` (true/false/None) in `.storage/device_panel.devices` (Gerät geht vor); Merker in

@@ -4,7 +4,7 @@
 // pro Integration (Schalter im Detail, Liste, "Alles auf Standard"). Deutsch und Englisch,
 // Desktop und Handy.
 import { chromium } from "playwright-core";
-import { launchOptions, outDir } from "../lib.mjs";
+import { launchOptions, outDir, ensureIntegTab } from "../lib.mjs";
 
 const b = await chromium.launch(launchOptions);
 let ok = true;
@@ -36,11 +36,11 @@ for (const lang of ["de", "en"]) {
     await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}`);
     const f = await (await p.waitForSelector("#panel-frame")).contentFrame();
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
-    const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
-    const handle = async (sel) => (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
+    const ev = async (c) => { await ensureIntegTab(f, R, c); return f.evaluate(new Function(`const r=${R};` + c)); };
+    const handle = async (sel) => { await ensureIntegTab(f, R, sel); return (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement(); };
     const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
-    const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
+    const wait = async (code) => { await ensureIntegTab(f, R, code); return f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false); };
     const setCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_options").map((m) => m.values));
     const tab = async (key) => { await tap(`[data-set="tab"][data-key="${key}"]`); await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "${key}"`); };
     const save = async () => { await tap('dialog.settings [data-set="save"]'); return wait(`return r.querySelector(".set-count")?.classList.contains("saved")`); };
@@ -53,7 +53,7 @@ for (const lang of ["de", "en"]) {
     // Übersicht: dritte Zeile "Neue Geräte" mit einem Balken, ohne Ziel "Kein Push"
     check(`[${tag}] Übersicht: fünf Zeilen, "${T.lane}" mit Null "${T.zero}" und "${T.noPush}"`, (await ev(`return r.querySelectorAll(".lane").length`)) === 5 && (await text('[data-lane="new"] .lane-t')) === T.lane && (await text('[data-lane="new"] .ptl-zero span')) === T.zero && (await text('[data-lane="new"] .mk-off b')) === T.noPush && (await text('[data-lane="new"] .mk-off span')) === T.noTarget, await text('[data-lane="new"]'));
     check(`[${tag}] Chips Push und Anhaltend aus`, (await ev(`return [...r.querySelectorAll('[data-lane="new"] .mon-chip')].map(c=>c.textContent.trim()+":"+c.getAttribute("aria-pressed")).join()`)) === `${T.push}:false,${T.pers}:false`);
-    check(`[${tag}] Reiter mit "${T.tab}" vor "Integrationen"`, (await ev(`return [...r.querySelectorAll(".mon-tab")].map(t=>t.dataset.key).join()`)) === "overview,outage,battery,new,updates,integ");
+    check(`[${tag}] Reiter mit "${T.tab}" vor "Integrationen"`, (await ev(`return [...r.querySelectorAll(".mon-tab")].map(t=>t.dataset.key).join()`)) === "overview,outage,battery,charge,new,updates,integ");
 
     // Reiter "Neu"
     await tap('[data-lane="new"] [data-set="tab"][data-key="new"]');
@@ -93,7 +93,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return !!r.querySelector(".ilist")`);
     await tap('[data-set="integ"][data-key="shelly"]');
     await wait(`return !!r.querySelector('[data-imon="shelly"]')`);
-    check(`[${tag}] Detail: Abschnitt "${T.grp}" mit Schalter "${T.optNotify}", an`, (await ev(`return [...r.querySelectorAll(".mon-grp")].some(x=>x.textContent.trim()===${JSON.stringify(T.grp)})`)) && (await ev(`return r.querySelector('input[data-list="new_exclude_integrations"][data-value="shelly"]').checked`)));
+    check(`[${tag}] Detail: Abschnitt "${T.grp}" mit Schalter "${T.optNotify}", an`, (await ev(`return !!r.querySelector('input[data-list="new_exclude_integrations"]')`)) && (await ev(`return [...r.querySelectorAll(".lvl-tabs .sub-tab.on")].map(x=>x.dataset.key).join() === "new"`)) && (await ev(`return r.querySelector('input[data-list="new_exclude_integrations"][data-value="shelly"]').checked`)));
     check(`[${tag}] Ziel und Schalter an: kein Hinweis`, !(await ev(`return [...r.querySelectorAll(".mon-hint")].some(x=>x.textContent.trim()===${JSON.stringify(T.gOff)})`)));
     await tap('input[data-list="new_exclude_integrations"][data-value="shelly"]');
     check(`[${tag}] ausgeschaltet: Zeile geändert, "Eigene"`, await wait(`const i=r.querySelector('input[data-list="new_exclude_integrations"][data-value="shelly"]'); return !i.checked && i.closest(".opt").classList.contains("changed")`) && (await ev(`return r.querySelector('input[data-list="new_exclude_integrations"][data-value="shelly"]').closest(".opt").querySelector(".origin").textContent`)) === (lang === "de" ? "Eigene" : "Own"));

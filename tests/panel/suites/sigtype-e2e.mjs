@@ -5,7 +5,7 @@
 // "Schwacher Empfang" und Popup, Prüfung des Bereichs, Zurücksetzen.
 // Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
-import { launchOptions, outDir } from "../lib.mjs";
+import { launchOptions, outDir, ensureDevTab } from "../lib.mjs";
 
 const b = await chromium.launch(launchOptions);
 let ok = true;
@@ -47,11 +47,11 @@ for (const lang of ["de", "en"]) {
     await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}`);
     const f = await (await p.waitForSelector("#panel-frame")).contentFrame();
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
-    const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
-    const handle = async (sel) => (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
+    const ev = async (c) => { await ensureDevTab(f, R, c); return f.evaluate(new Function(`const r=${R};` + c)); };
+    const handle = async (sel) => { await ensureDevTab(f, R, sel); return (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement(); };
     const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
-    const wait = (code, timeout = 5000) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout }).then(() => true, () => false);
+    const wait = async (code, timeout = 5000) => { await ensureDevTab(f, R, code); return f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout }).then(() => true, () => false); };
     const setCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_options").map((m) => m.values));
     const weak = () => ev(`return r.querySelector('.chip.hint[data-hint="signal"] .n')?.textContent || "0"`);
     const weakIs = (n) => wait(`return (r.querySelector('.chip.hint[data-hint="signal"] .n')?.textContent || "0") === "${n}"`);
@@ -140,8 +140,9 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="tab"][data-key="integ"]');
     await wait(`return !!r.querySelector(".ilist")`);
     await tap('[data-set="integ"][data-key="shelly"]');
-    await wait(`return !!r.querySelector('[data-imon="shelly"]')`);
-    check(`[${tag}] Abschnitt "${T.grp}" mit WLAN (2 Geräte)`, (await ev(`return [...r.querySelectorAll(".mon-grp")].map(x=>x.textContent.trim()).includes(${JSON.stringify(T.grp)})`)) && (await ev(`return [...r.querySelectorAll("select[data-sig-mode]")].map(s=>s.dataset.sigMode).join()`)) === "shelly|wifi", await ev(`return [...r.querySelectorAll("select[data-sig-mode]")].map(s=>s.dataset.sigMode).join()`));
+    await tap('[data-set="isub"][data-key="sig"]');
+    await wait(`return !!r.querySelector('select[data-sig-mode="shelly|wifi"]')`);
+    check(`[${tag}] Reiter "${T.grp}" mit WLAN (2 Geräte)`, (await ev(`return [...r.querySelectorAll(".lvl-tabs .sub-tab.on")].map(x=>x.textContent.trim()).includes(${JSON.stringify(T.grp)})`)) && (await ev(`return [...r.querySelectorAll("select[data-sig-mode]")].map(s=>s.dataset.sigMode).join()`)) === "shelly|wifi", await ev(`return [...r.querySelectorAll("select[data-sig-mode]")].map(s=>s.dataset.sigMode).join()`));
     const s0 = await row("shelly|wifi");
     check(`[${tag}] Zeile: "${T.integGlobal}", Standard, 2 Geräte`, (await sel("shelly|wifi")) === `default|${T.integGlobal}` && s0.info === (lang === "de" ? "2 Geräte mit Empfangswert in dBm" : "2 devices with a signal value in dBm") && s0.label === T.wifi, JSON.stringify(s0));
     // Strenger als global: -80 macht die Steckdose (-84) wieder schwach
@@ -178,7 +179,8 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="section"][data-id="monitor"]');
     await tap('[data-set="tab"][data-key="integ"]');
     await tap('[data-set="integ"][data-key="shelly"]');
-    await wait(`return !!r.querySelector('[data-imon="shelly"]')`);
+    await tap('[data-set="isub"][data-key="sig"]');
+    await wait(`return !!r.querySelector('select[data-sig-mode="shelly|wifi"]')`);
     check(`[${tag}] Zeile zeigt die gespeicherte Eigene (-80)`, (await sel("shelly|wifi")).startsWith("own|") && (await row("shelly|wifi")).val === "-80", JSON.stringify(await row("shelly|wifi")));
     check(`[${tag}] "Alles auf Standard" freigegeben`, !(await ev(`return r.querySelector('[data-set="integ-reset"]').disabled`)));
     await tap('[data-set="integ-reset"][data-key="shelly"]');

@@ -5,7 +5,7 @@
 // "Erst melden nach" im Zeitstrahl, Herkunft im Geräte-Popup, Stumm im Popup.
 // Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
-import { launchOptions, outDir } from "../lib.mjs";
+import { launchOptions, outDir, ensureIntegTab, ensureDevTab } from "../lib.mjs";
 
 const b = await chromium.launch(launchOptions);
 let ok = true;
@@ -17,7 +17,7 @@ const TEXT = {
     sum0: "Ausfall nach 2 Min., ohne Push · Batterie schwach ab 15 %, ohne Push",
     sumPush: "Ausfall nach 2 Min., Push nach 5 Min. · Batterie schwach ab 15 %, Push sofort",
     dev: "Dienst-Geräte und deaktivierte Geräte ausgeblendet", gotoLink: "Überwachung und Meldungen › Integrationen",
-    tabs: "Übersicht|Ausfall|Batterie|Neu|Updates|Integrationen", filterAll: "Alle 9", filterOwn: (n) => `Abweichend ${n}`, std: "Standard", own: "Eigene",
+    tabs: "Übersicht|Ausfall|Batterie|Laden|Neu|Updates|Integrationen", filterAll: "Alle 9", filterOwn: (n) => `Abweichend ${n}`, std: "Standard", own: "Eigene",
     zhaSub: "5 Geräte · 3 mit Batterie", noPush: "Ausfall ohne Push", noPers: "Ausfall ohne Anhaltend · Batterie ohne Push", unmon: "Nicht überwacht",
     diffInteg: "2 Integrationen", noPushMark: "Kein Push", noTarget: "kein Ziel gewählt", pushMark: "ausgefallen und Push",
     fields: "Bereich|Integration|Verbindungsart|Offline seit|Empfang zuletzt|Batterie zuletzt|Hersteller / Modell", title: "🔴 Ausgefallen: Temperatur Keller", fieldsLabel: "Inhalt der Ausfall-Meldung", noteBattery: "eigenen Inhalt im Reiter \"Batterie\"",
@@ -30,7 +30,7 @@ const TEXT = {
     sum0: "Offline after 2 min, no push · Battery low from 15 %, no push",
     sumPush: "Offline after 2 min, push after 5 min · Battery low from 15 %, push right away",
     dev: "Service devices and disabled devices hidden", gotoLink: "Monitoring and notifications › Integrations",
-    tabs: "Overview|Outage|Battery|New|Updates|Integrations", filterAll: "All 9", filterOwn: (n) => `Differs ${n}`, std: "Default", own: "Own",
+    tabs: "Overview|Outage|Battery|Charging|New|Updates|Integrations", filterAll: "All 9", filterOwn: (n) => `Differs ${n}`, std: "Default", own: "Own",
     zhaSub: "5 devices · 3 with battery", noPush: "Outage: no push", noPers: "Outage: no persistent · Battery: no push", unmon: "Not monitored",
     diffInteg: "2 integrations", noPushMark: "No push", noTarget: "no target chosen", pushMark: "offline and push",
     fields: "Area|Integration|Connection type|Offline since|Last signal|Last battery level|Manufacturer / model", title: "🔴 Offline: Temperatur Keller", fieldsLabel: "Content of the outage notification", noteBattery: "own content in the tab \"Battery\"",
@@ -54,11 +54,11 @@ for (const lang of ["de", "en"]) {
     await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}`);
     const f = await (await p.waitForSelector("#panel-frame")).contentFrame();
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
-    const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
-    const handle = async (sel) => (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
+    const ev = async (c) => { await ensureIntegTab(f, R, c); await ensureDevTab(f, R, c); return f.evaluate(new Function(`const r=${R};` + c)); };
+    const handle = async (sel) => { await ensureIntegTab(f, R, sel); await ensureDevTab(f, R, sel); return (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement(); };
     const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
-    const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
+    const wait = async (code) => { await ensureIntegTab(f, R, code); await ensureDevTab(f, R, code); return f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false); };
     const calls = (type) => p.evaluate((t) => window.__wsCalls.filter((m) => m.type === t), type);
     const pick = async (sel, value) => { const h = await handle(sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); await h.selectOption(value); };
     const sum = (id) => text(`[data-id="${id}"] .set-sec-sum`);

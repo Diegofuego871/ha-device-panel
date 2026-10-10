@@ -184,7 +184,7 @@ async def test_persistent_outage_notification(hass: HomeAssistant, setup, freeze
     hass.states.async_set(socket, "unavailable")
     await _tick(hass, setup, freezer, 3)
     note = _persistent(hass)
-    assert note["title"] == "Device Panel: devices offline"
+    assert note["title"] == "🔴 Device Panel: devices offline"
     assert f"[Lampe](/device-panel?device={lamp.id})" in note["message"] and "Steckdose" in note["message"]
     # Integration ohne "Anhaltend": fällt weg
     await _options(hass, persistent_exclude_integrations=["other"])

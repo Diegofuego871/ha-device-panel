@@ -17,7 +17,7 @@
 - **Battery forecast:** how long the battery lasts until its warning threshold, without AI
 - **Notifications:** push and persistent notification for outages and low batteries, with a timeline of when what arrives; defaults per integration, overrides per device
 - **Optional AI assessment:** a guess at the cause on a button press, prompt adjustable in expert mode
-- **Settings in the panel,** including updates via HACS, in German and English
+- **Settings in the panel,** including updates via HACS, in German and English; the same tabs (Outage, Battery, Charging, New, Signal) in the global settings, in each integration and on each device
 - **Phone and desktop,** with the view saved per user
 
 ## Screenshots
