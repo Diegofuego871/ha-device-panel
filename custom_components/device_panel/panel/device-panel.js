@@ -145,6 +145,7 @@ const MDI = {
   cloud: "M6.5,20Q4.22,20 2.61,18.43 1,16.85 1,14.58 1,12.63 2.17,11.1 3.35,9.57 5.25,9.15 5.88,6.85 7.75,5.43 9.63,4 12,4 14.93,4 16.96,6.04 19,8.07 19,11 20.73,11.2 21.86,12.5 23,13.78 23,15.5 23,17.38 21.69,18.69 20.38,20 18.5,20Z",
   lan: "M7,15H9V18H11V15H13V18H15V15H17V18H18V9H15V6H9V9H6V18H7V15M4.38,3H19.63C20.94,3 22,4.06 22,5.38V19.63A2.37,2.37 0 0,1 19.63,22H4.38C3.06,22 2,20.94 2,19.63V5.38C2,4.06 3.06,3 4.38,3Z",
   battery: "M16,20H8V6H16M16.67,4H15V2H9V4H7.33A1.33,1.33 0 0,0 6,5.33V20.67C6,21.4 6.6,22 7.33,22H16.67A1.33,1.33 0 0,0 18,20.67V5.33C18,4.6 17.4,4 16.67,4Z",
+  batteryCharging: "M11,20V14.5H9L13,7V12.5H15M16.67,4H15V2H9V4H7.33A1.33,1.33 0 0,0 6,5.33V20.67C6,21.4 6.6,22 7.33,22H16.67A1.33,1.33 0 0,0 18,20.67V5.33C18,4.6 17.4,4 16.67,4Z",
   signal: "M3,21H6V18H3M8,21H11V14H8M13,21H16V9H13M18,21H21V3H18V21Z",
   update: "M21,10.12H14.22L16.96,7.3C14.23,4.6 9.81,4.5 7.08,7.2C4.35,9.91 4.35,14.28 7.08,17C9.81,19.7 14.23,19.7 16.96,17C18.32,15.65 19,14.08 19,12.1H21C21,14.08 20.12,16.65 18.36,18.39C14.85,21.87 9.15,21.87 5.64,18.39C2.14,14.92 2.11,9.28 5.62,5.81C9.13,2.34 14.76,2.34 18.27,5.81L21,3V10.12M12.5,8V12.25L16,14.33L15.28,15.54L11,13V8H12.5Z",
   alert: "M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z",
@@ -4895,15 +4896,16 @@ class DevicePanel extends HTMLElement {
         nI || nD
           ? `${escape(t("diffLabel"))} ${[
               nI ? `<button type="button" class="lnk" data-set="goto" data-key="integ" data-filter="own">${escape(t("diffInteg", nI))}</button>` : "",
-              nD ? `<button type="button" class="lnk" data-set="tab" data-key="${devTab}">${escape(t("diffDev", nD))}</button>` : "",
+              nD ? `<button type="button" class="lnk" data-set="tab" data-key="${devTab}"${devTab === "battery" ? ' data-sub="bat_warn"' : ""}>${escape(t("diffDev", nD))}</button>` : "",
             ]
               .filter(Boolean)
               .join(" · ")}`
           : escape(t("diffNone"))
       }</div>`;
-    const lane = (icon, cls, title, tab, tl, chips, diffHtml) =>
-      `<div class="lane" data-lane="${tab}"><div class="lane-head"><span class="lane-ic ${cls}">${mdi(icon, 16)}</span><span class="lane-t">${escape(title)}</span>
-        <button type="button" class="lnk" data-set="tab" data-key="${tab}">${escape(t("laneEdit"))}</button></div>${tl}<div class="lane-chips">${chips}</div>${diffHtml}</div>`;
+    // sub: Unterreiter des Reiters, den "Ändern" öffnet (Batterie: Warnung oder Laden).
+    const lane = (icon, cls, title, tab, tl, chips, diffHtml, sub = "", id = tab) =>
+      `<div class="lane" data-lane="${id}"><div class="lane-head"><span class="lane-ic ${cls}">${mdi(icon, 16)}</span><span class="lane-t">${escape(title)}</span>
+        <button type="button" class="lnk" data-set="tab" data-key="${tab}"${sub ? ` data-sub="${sub}"` : ""}>${escape(t("laneEdit"))}</button></div>${tl}<div class="lane-chips">${chips}</div>${diffHtml}</div>`;
     const outTl = this._ptlHtml(this._outageRows(val("offline_after"), val("notify_delay"), target && d.notify_outage, reason));
     const daily = d.battery_push_mode === "daily";
     const batPush = target && d.battery_push;
@@ -4916,14 +4918,53 @@ class DevicePanel extends HTMLElement {
       ],
       "mtl-b"
     );
-    const warn = !target && (d.notify_outage || d.notify_online || d.battery_push || d.notify_new) ? t("noTargetWarn") : null;
+    const warn = !target && (d.notify_outage || d.notify_online || d.battery_push || d.notify_new || d.notify_charge || d.notify_updates) ? t("noTargetWarn") : null;
     const newTl = this._ptlHtml(this._newRows(val("new_window"), target && d.notify_new, reason), false, "tlFound");
+    // Laden (seit 1.34.0): Anstieg erkennt das Laden, "Voll ab" löst den Push aus. Standard aus.
+    const chargeTl = this._tlHtml(
+      [
+        { at: 14, title: t("tlChargeRise", val("charge_rise")), sub: t("tlChargeRiseSub") },
+        target && d.notify_charge
+          ? { at: 78, cls: "mk-p", title: t("tlChargeFull", val("charge_full")), sub: t("tlChargeFullSub") }
+          : { at: 78, cls: "mk-off", title: t("tlNoPush"), sub: target ? t("tlSwitchedOff") : t("tlNoTarget") },
+      ],
+      "mtl-b"
+    );
+    const chargeInteg = (d.charge_integrations || []).length;
+    const chargeDev = this._devices.filter((x) => x.charge_setting != null).length;
+    const chargeDiff = `<div class="lane-diff">${
+      chargeInteg || chargeDev
+        ? `${escape(t("laneChargeOn"))} ${[
+            chargeInteg ? `<button type="button" class="lnk" data-set="goto" data-key="integ" data-filter="own">${escape(t("diffInteg", chargeInteg))}</button>` : "",
+            chargeDev ? escape(t("diffDev", chargeDev)) : "",
+          ]
+            .filter(Boolean)
+            .join(" · ")}`
+        : escape(t("laneChargeNone"))
+    }</div>`;
+    // Updates (seit 1.34.0): wann eine Update-Meldung kommt und für welche Arten.
+    const updMode = d.updates_mode || "daily";
+    const updTime = val("updates_time") || "";
+    const updPush =
+      target && d.notify_updates
+        ? updMode === "instant"
+          ? { at: 78, cls: "mk-p", title: t("tlUpdWindow", val("updates_window")), sub: t("tlUpdWindowSub") }
+          : { at: 78, cls: "mk-p", title: updMode === "weekly" ? t("tlWeekly", updTime) : t("tlDaily", updTime), sub: t("tlUpdAllSub") }
+        : { at: 78, cls: "mk-off", title: t("tlNoPush"), sub: reason };
+    const updTl = this._tlHtml([{ at: 14, title: t("tlUpdOpen"), sub: t("tlUpdOpenSub") }, updPush], "mtl-b");
+    const updKinds = UPDATE_KINDS.filter((k) => (d.updates_kinds || []).includes(k)).map((k) => t(`updKind_${k}`));
+    const updOwn = (d.updates_exclude || []).length + (d.updates_include || []).length;
+    const updDiff = `<div class="lane-diff">${escape(t("laneUpdKinds"))} ${escape(updKinds.length ? updKinds.join(", ") : t("laneUpdNoKind"))}${
+      updOwn ? ` · <button type="button" class="lnk" data-set="tab" data-key="updates">${escape(t("laneUpdOwn", updOwn))}</button>` : ""
+    }</div>`;
     return (
       lane("pulse", "out", t("laneOutage"), "outage", outTl,
         chip("notify_outage", t("chipPush")) + chip("outage_persistent", t("chipPersistent")) + chip("notify_online", t("chipOnline")) + chip("notify_group", t("chipGroup")),
         diffLine(diff.outI, diff.outD, "outage")) +
-      lane("battery", "bat", t("laneBattery"), "battery", batTl, chip("battery_push", t("chipPush")) + chip("battery_persistent", t("chipPersistent")), diffLine(diff.batI, diff.batD, "battery")) +
+      lane("battery", "bat", t("laneBattery"), "battery", batTl, chip("battery_push", t("chipPush")) + chip("battery_persistent", t("chipPersistent")), diffLine(diff.batI, diff.batD, "battery"), "bat_warn") +
+      lane("batteryCharging", "chg", t("laneCharge"), "battery", chargeTl, chip("notify_charge", t("chipPush")), chargeDiff, "bat_charge", "charge") +
       lane("sparkle", "new", t("laneNew"), "new", newTl, chip("notify_new", t("chipPush")) + chip("new_persistent", t("chipPersistent")), diffLine(diff.newI, 0, "new")) +
+      lane("update", "upd", t("laneUpdates"), "updates", updTl, chip("notify_updates", t("chipPush")), updDiff) +
       ui.row("notify_service", t("optNotifyTarget"), ui.select("notify_service", ui.targets, t("optNotifyTarget")), t("optNotifyTargetShort"), t("optNotifyTargetInfo"), warn) +
       ui.row("notify_click_target", t("optClick"), ui.select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null)
     );
@@ -5619,6 +5660,7 @@ class DevicePanel extends HTMLElement {
         // und eine Integration (leer = zurück zur Liste).
         if (action === "tab" || action === "goto") {
           st.tab = btn.dataset.key;
+          if (btn.dataset.sub) st.sub.battery = btn.dataset.sub;
           st.integ = null;
           if (btn.dataset.filter) st.integFilter = btn.dataset.filter;
           if (action === "goto") st.open.add("monitor");

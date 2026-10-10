@@ -7,7 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.34.0] - 2026-10-10
+
+Übersicht mit allen Meldungen.
+
+### Hinzugefügt
+
+- Einstellungen › Überwachung und Meldungen › Übersicht (Wunsch des Nutzers): zwei neue
+  Zeilen, damit die Übersicht jede Meldung zeigt. "Laden" zeigt den Anstieg, der das Laden
+  erkennt, und "Voll ab" mit dem Push, den Chip "Push" (schaltet die Lademeldung) und für
+  welche Integrationen und Geräte sie eingeschaltet ist. "Updates" zeigt, wann der Push kommt
+  (sofort nach dem Sammelfenster, täglich oder montags zur eingestellten Zeit), den Chip
+  "Push", die Arten und die Zahl der Ausnahmen. "Ändern" öffnet den passenden Reiter, bei
+  "Laden" den Unterreiter "Laden", bei "Batterie schwach" den Unterreiter "Warnung".
+
 ## [1.33.0] - 2026-10-10
+
+Nicht veröffentlicht; enthalten in 1.34.0.
 
 Lademeldung auch pro Integration im Reiter "Integrationen".
 
@@ -1879,7 +1895,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[1.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.33.0
+[1.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.34.0
 [1.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.32.0
 [1.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0

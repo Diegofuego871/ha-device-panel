@@ -7,7 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.34.0] - 2026-10-10
+
+Overview with all notifications.
+
+### Added
+
+- Settings › Monitoring and notifications › Overview (requested by the user): two new rows,
+  so the overview covers every notification. "Charging" shows the rise that detects charging
+  and "Full from" with the push, the chip "Push" (switches the charging notification), and
+  for which integrations and devices it is switched on. "Updates" shows when the push comes
+  (immediately after the collect window, daily or Mondays at the set time), the chip "Push",
+  the kinds and the number of exceptions. "Change" opens the matching tab, for "Charging" the
+  sub-tab "Charging", for "Low battery" the sub-tab "Warning".
+
 ## [1.33.0] - 2026-10-10
+
+Not released; included in 1.34.0.
 
 Charging notification also per integration in the tab "Integrations".
 
@@ -1815,7 +1831,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[1.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.33.0
+[1.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.34.0
 [1.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.32.0
 [1.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0

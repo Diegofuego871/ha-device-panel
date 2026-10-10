@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.33.0, Einstellungen in fünf Abschnitten)
+## Stand (1.34.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Übersicht mit allen Meldungen `1.34.0` (Nutzer, 2026-10-10): `_monOverviewHtml` hat fünf Zeilen (`lane(...)`: Ausfall,
+   Batterie, Laden `data-lane="charge"`, Neue Geräte, Updates); `lane()` nimmt `sub` (Unterreiter, `data-sub` am
+   "Ändern"-Knopf, der Handler setzt `st.sub.battery`) und `id`. Strings `laneCharge`, `tlCharge*`, `tlUpd*`, `laneUpd*`.
+   Test `overview-e2e.mjs`, `newdevices-e2e.mjs` (fünf Zeilen).
    Lademeldung pro Integration auch im Reiter Integrationen `1.33.0` (Nutzer, 2026-10-10): Schalter `data-cinteg` in
    `_integDetailHtml` (Gruppe Batterie), gleicher Wert wie die Liste im Unterreiter Laden (`charge_integrations`);
    `INTEG_OWN_LISTS` enthält `charge_integrations` (Zurücksetzen = aus), `_integItems` zeigt "Laden an" (`diffCharge`).

@@ -682,6 +682,8 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .lane-ic.out { background: var(--dp-error-soft); color: var(--dp-error); }
 .lane-ic.bat { background: var(--dp-warning-soft); color: var(--dp-warning); }
 .lane-ic.new { background: var(--dp-success-soft); color: var(--dp-success); }
+.lane-ic.chg { background: color-mix(in srgb, var(--dp-tier3) 18%, transparent); color: var(--dp-tier3); }
+.lane-ic.upd { background: var(--dp-primary-soft); color: var(--dp-primary); }
 .lane-t { flex: 1; font-weight: 600; }
 .lane-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
 .lane-diff { margin-top: 8px; color: var(--dp-text2); font-size: 12.5px; }

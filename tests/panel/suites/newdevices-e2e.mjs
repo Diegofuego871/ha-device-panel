@@ -51,7 +51,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return !!r.querySelector(".lane")`);
 
     // Übersicht: dritte Zeile "Neue Geräte" mit einem Balken, ohne Ziel "Kein Push"
-    check(`[${tag}] Übersicht: drei Zeilen, "${T.lane}" mit Null "${T.zero}" und "${T.noPush}"`, (await ev(`return r.querySelectorAll(".lane").length`)) === 3 && (await text('[data-lane="new"] .lane-t')) === T.lane && (await text('[data-lane="new"] .ptl-zero span')) === T.zero && (await text('[data-lane="new"] .mk-off b')) === T.noPush && (await text('[data-lane="new"] .mk-off span')) === T.noTarget, await text('[data-lane="new"]'));
+    check(`[${tag}] Übersicht: fünf Zeilen, "${T.lane}" mit Null "${T.zero}" und "${T.noPush}"`, (await ev(`return r.querySelectorAll(".lane").length`)) === 5 && (await text('[data-lane="new"] .lane-t')) === T.lane && (await text('[data-lane="new"] .ptl-zero span')) === T.zero && (await text('[data-lane="new"] .mk-off b')) === T.noPush && (await text('[data-lane="new"] .mk-off span')) === T.noTarget, await text('[data-lane="new"]'));
     check(`[${tag}] Chips Push und Anhaltend aus`, (await ev(`return [...r.querySelectorAll('[data-lane="new"] .mon-chip')].map(c=>c.textContent.trim()+":"+c.getAttribute("aria-pressed")).join()`)) === `${T.push}:false,${T.pers}:false`);
     check(`[${tag}] Reiter mit "${T.tab}" vor "Integrationen"`, (await ev(`return [...r.querySelectorAll(".mon-tab")].map(t=>t.dataset.key).join()`)) === "overview,outage,battery,new,updates,integ");
 
