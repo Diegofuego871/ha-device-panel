@@ -1,6 +1,6 @@
 # Konzept: Lademeldung und Update-Erinnerung (Entwurf, 2026-10-10)
 
-Update-Erinnerung umgesetzt in 1.29.0 (Entscheide: Reiter "Updates", Standard täglich 09:00 konfigurierbar, Bild wie die übrigen Meldungen); Lademeldung folgt in 1.30.0. Mockups: `docs/mockups/charging-v1/`. Offene Entscheide stehen am Ende.
+Update-Erinnerung umgesetzt in 1.29.0 (Entscheide: Reiter "Updates", Standard täglich 09:00 konfigurierbar, Bild wie die übrigen Meldungen); Lademeldung umgesetzt in 1.30.0 (ohne Ladeanzeige-Entität; Anstieg und "Voll ab" konfigurierbar). Mockups: `docs/mockups/charging-v1/`. Offene Entscheide stehen am Ende.
 
 ## 1. Lademeldung ("Gerät ist geladen")
 

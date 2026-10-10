@@ -7,7 +7,36 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.30.0] - 2026-10-10
+
+Charging notification.
+
+### Added
+
+- Charging notification (requested by the user, mockups and concept `charging-v1`,
+  `docs/CONCEPT-laden-updates.md`): a push as soon as a device is fully charged. Off by
+  default; switch it on in the tab "Battery" under Monitoring and notifications (section
+  "Charging"), per integration, or per device in the device pop-up ("Report charging": same
+  as integration, on, off; the device wins).
+  - Detection without a charging entity: the panel remembers the lowest level since the
+    last discharge. A rise of 20 points or more from there counts as charging; at "full"
+    (default 100 %) it sends one push. Both values are configurable ("Full from" 90, 95, 98
+    or 100 %; rise 5 to 80 points), because some devices never report 100 %.
+  - Fallback for devices that report rarely: a jump from below 90 % straight to "full"
+    is reported as well, without a duration ("from 38 %"). The notification re-arms once the
+    level has dropped 10 points below "full".
+  - Notification: "Charged: name", text "100 % · in 1 h 40 min from 22 % · area"; same push
+    target and image as the other notifications; tap opens the device in the panel.
+  - Preview in the settings, like the battery notification; the list of integrations has a
+    search field from 8 entries.
+  - Caution: a new battery looks like charging, so keep it off for devices with
+    non-rechargeable batteries.
+  - New options `notify_charge`, `charge_full`, `charge_rise` and `charge_integrations`,
+    also in the options dialog; per-device setting in `.storage/device_panel.devices`.
+
 ## [1.29.0] - 2026-10-10
+
+Not released; included in 1.30.0.
 
 Update reminder.
 
@@ -35,6 +64,8 @@ Update reminder.
   settings.
 
 ## [1.28.0] - 2026-10-10
+
+Not released; included in 1.30.0.
 
 Search field in long lists of the settings.
 
@@ -1710,8 +1741,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[1.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.29.0
-[1.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.28.0
+[1.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.30.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0
 [1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0
 [1.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.25.0

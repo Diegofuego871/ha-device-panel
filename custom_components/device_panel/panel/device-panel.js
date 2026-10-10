@@ -259,7 +259,7 @@ const UPDATE_KINDS = ["core", "addons", "hacs", "devices"];
 const MON_TAB_KEYS = {
   overview: ["notify_service", "notify_click_target"],
   outage: ["offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "reset_offline", "reset_notify"],
-  battery: ["battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
+  battery: ["notify_charge", "charge_full", "charge_rise", "charge_integrations", "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
   new: ["notify_new", "new_window", "new_persistent", "new_fields"],
   updates: ["notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds"],
   integ: ["offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
@@ -1003,6 +1003,8 @@ class DevicePanel extends HTMLElement {
         const value = el.value === "own" ? (Number.isInteger(pct) ? pct : this._batteryLow ?? 15) : el.value === "off" ? "off" : null;
         this._devRangeError = null;
         this._setDeviceSettings(this._detailId, { battery: value });
+      } else if (el.matches?.('select[data-dlg="dev-charge"]')) {
+        this._setDeviceSettings(this._detailId, { charge: el.value === "on" ? true : el.value === "off" ? false : null });
       } else if (el.matches?.('input[data-dlg="dev-bat-pct"]')) {
         const v = Number(el.value);
         const [min, max] = [5, 50];
@@ -2911,6 +2913,7 @@ class DevicePanel extends HTMLElement {
         if ("notify" in changes) d.notify_off = !changes.notify;
         if ("signal" in changes) d.signal_setting = changes.signal;
         if ("offline" in changes) d.offline_setting = changes.offline;
+        if ("charge" in changes) d.charge_setting = changes.charge;
       }
     } catch (err) {
       this._devSetError = errText(err);
@@ -3148,6 +3151,17 @@ class DevicePanel extends HTMLElement {
             }`
           : ""
       }${origin(sigMode !== "default", sdef.source === "integration" ? d.integration?.domain : null, sigMode !== "default" ? t("originDefaultWould", std) : "", t("devSigShort", d.signal?.value != null ? sigText(d.signal) : null))}</div>`;
+    }
+    // Lademeldung (seit 1.30.0): Push, sobald das Gerät voll geladen ist; ohne Wahl gilt die Integration.
+    if (d.battery?.level != null) {
+      const cd = d.charge_default || { on: false, integration: null };
+      const cs = d.charge_setting === true ? "on" : d.charge_setting === false ? "off" : "default";
+      html += `<div class="opt${cs !== "default" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devCharge"))}</span>${sel(
+        "dev-charge",
+        [["default", t("devChargeDefault", cd.on)], ["on", t("devChargeOn")], ["off", t("devChargeOff")]],
+        cs,
+        t("devCharge")
+      )}</div>${origin(cs !== "default", cd.integration, "", t("devChargeShort"))}</div>`;
     }
     // Stumm (Knopf "24 Std. stumm" in der Meldung): eigene Option mit Ende;
     // "Globale Einstellung" oder "Aus" hebt es auf.
@@ -4528,7 +4542,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -4983,8 +4997,43 @@ class DevicePanel extends HTMLElement {
       }
       ${ui.row("battery_persistent", t("optPersistent"), ui.sw("battery_persistent", t("optPersistent")), t("optBatteryPersistentShort"), t("optBatteryPersistentInfo"))}
       ${this._batteryFieldsHtml(d, changes)}
+      ${this._chargeHtml(d, changes, errors, ui)}
       <div class="mon-grp">${escape(t("grpDiff"))}</div>
       ${this._integDiffBox(d, "bat")}${this._overridesHtml("battery")}`;
+  }
+
+  // Abschnitt "Laden" im Reiter "Batterie" (seit 1.30.0, docs/mockups/charging-v1): Push, sobald ein
+  // Gerät voll geladen ist. Aus; einschalten pro Integration (hier) oder pro Gerät (Popup).
+  _chargeHtml(d, changes, errors, ui) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    const target = Boolean(d.notify_service && d.notify_service !== "none");
+    const noTarget = d.notify_charge && !target;
+    let html = `<div class="mon-grp">${escape(t("grpCharge"))}</div>${ui.row("notify_charge", t("optCharge"), ui.sw("notify_charge", t("optCharge")), noTarget ? null : t("optChargeShort"), null, noTarget ? t("noTargetWarn") : null)}`;
+    if (!d.notify_charge) return html;
+    const fulls = [...new Set([90, 95, 98, 100, d.charge_full].filter((v) => Number.isInteger(v)))].sort((a, b) => a - b);
+    const fullSel = `<span class="opt-select"><select data-cfull aria-label="${escape(t("optChargeFull"))}">${fulls.map((v) => `<option value="${v}"${v === d.charge_full ? " selected" : ""}>${v} %</option>`).join("")}</select>${mdi("chevronDown", 18)}</span>`;
+    html += ui.row("charge_full", t("optChargeFull"), fullSel, t("optChargeFullShort"), null);
+    html += ui.row("charge_rise", t("optChargeRise"), ui.num("charge_rise", t("unitPoints"), t("optChargeRise")), t("optChargeRiseShort"), null);
+    // Integrationen mit Batteriegeräten (Katalog), dazu bereits eingeschaltete ohne Geräte.
+    const on = new Set(d.charge_integrations || []);
+    const saved = new Set(st.data.values.charge_integrations || []);
+    const items = (st.data.catalog?.battery || []).map((x) => ({ domain: x.domain, name: x.name, devices: x.devices }));
+    for (const dom of [...on, ...saved]) if (!items.some((x) => x.domain === dom)) items.push({ domain: dom, name: this._integrations[dom] || dom, devices: 0 });
+    const rows = items
+      .map((x) => `<div class="ex-row${on.has(x.domain) !== saved.has(x.domain) ? " changed" : ""}">${this._ibadge(x.domain, x.name)}<div class="ex-name">${escape(x.name)}<small>${escape(t("chargeIntegSub", x.devices))}</small></div>
+        <label class="switch"><input type="checkbox" data-cinteg="${escape(x.domain)}" ${on.has(x.domain) ? "checked" : ""} aria-label="${escape(`${t("optCharge")}: ${x.name}`)}"><span></span></label></div>`)
+      .join("");
+    html += `<div class="opt-short" style="margin-top:6px"><b>${escape(t("chargeIntegTitle"))}</b> ${escape(t("chargeIntegHint"))}</div>${this._searchHtml("charge", items.length)}
+      <div class="srch-rows" data-srch="charge">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>`;
+    // Vorschau an einem Gerät mit Batterie (Beispielwerte kursiv, wie bei den anderen Meldungen)
+    const dev = this._devices.find((x) => x.battery?.level != null) || null;
+    const name = dev ? dev.name : t("pvSample");
+    const area = dev?.area ? escape(dev.area) : `<i>${escape(t("pvSampleArea"))}</i>`;
+    html += `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
+      <div class="pv-title">${escape(t("pvChargeTitle", name))}</div><div class="pv-text">${escape(`${d.charge_full ?? 100} %`)} · ${escape(t("pvChargeFrom", this._fmtSeconds(6000), 22))} · ${area}</div></div>
+      <div class="opt-short">${escape(t("pvChargeNote"))}</div></div>`;
+    return html;
   }
 
   // Inhalt der Batterie-Meldung (seit 0.34.0, notify-v2 Bild 4: anpassbar wie
@@ -5680,6 +5729,11 @@ class DevicePanel extends HTMLElement {
     dialog.addEventListener("change", (ev) => {
       const st = this._settings;
       const el = ev.target;
+      if (st?.draft && el.tagName === "SELECT" && el.dataset.cfull !== undefined) {
+        st.draft.charge_full = Number(el.value);
+        this._renderSettings();
+        return;
+      }
       if (st?.draft && el.tagName === "SELECT" && el.dataset.opt) {
         st.draft[el.dataset.opt] = el.value;
         this._renderSettings();
@@ -5734,7 +5788,12 @@ class DevicePanel extends HTMLElement {
         return;
       }
       if (!st?.draft || el.type !== "checkbox") return;
-      if (el.dataset.ukind) {
+      if (el.dataset.cinteg) {
+        const on = new Set(st.draft.charge_integrations || []);
+        if (el.checked) on.add(el.dataset.cinteg);
+        else on.delete(el.dataset.cinteg);
+        st.draft.charge_integrations = [...on].sort();
+      } else if (el.dataset.ukind) {
         const on = new Set(st.draft.updates_kinds || []);
         if (el.checked) on.add(el.dataset.ukind);
         else on.delete(el.dataset.ukind);

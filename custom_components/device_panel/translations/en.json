@@ -64,7 +64,11 @@
           "updates_time": "Updates: daily/weekly at",
           "updates_window": "Updates: collect for",
           "updates_repeat": "Updates: remind about open updates",
-          "updates_kinds": "Updates: which kinds"
+          "updates_kinds": "Updates: which kinds",
+          "notify_charge": "Charging: push notification",
+          "charge_full": "Charging: full from (%)",
+          "charge_rise": "Charging: detected at a rise of (points)",
+          "charge_integrations": "Charging: integrations with a notification"
         },
         "data_description": {
           "notify_service": "notify service or notify entity, e.g. the Companion app of your phone.",
@@ -115,7 +119,11 @@
           "updates_time": "Time for the daily or weekly notification.",
           "updates_window": "Minutes to wait after the first new update (mode immediately), so that several updates arrive in one notification.",
           "updates_repeat": "Report an update that stays open again after 3 or 7 days.",
-          "updates_kinds": "Home Assistant (core, OS, supervisor), add-ons, HACS, device firmware. Skipped versions are never reported."
+          "updates_kinds": "Home Assistant (core, OS, supervisor), add-ons, HACS, device firmware. Skipped versions are never reported.",
+          "notify_charge": "A push notification as soon as a device is fully charged. Off by default; switch it on per integration (below) or per device (device pop-up). Only for rechargeable devices: a new battery looks like charging.",
+          "charge_full": "Level that counts as full (90 to 100). Some devices never report 100 %.",
+          "charge_rise": "Charging is detected when the level rises this many points above the lowest level since the last discharge (5 to 80).",
+          "charge_integrations": "Integrations whose devices report when charged (a device can differ in its pop-up)."
         }
       }
     },

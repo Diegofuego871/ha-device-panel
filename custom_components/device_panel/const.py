@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "78"
+PANEL_VERSION = "79"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -111,9 +111,26 @@ DEFAULT_UPDATES_KINDS = ("core", "addons", "hacs")
 CONF_UPDATES_REPEAT = "updates_repeat"
 UPDATES_REPEATS = {"never": 0, "3d": 3 * 86400, "7d": 7 * 86400}
 DATA_UPDATES = f"{DOMAIN}_updates"
+# Lademeldung (seit 1.30.0, Abschnitt "Laden" im Reiter "Batterie"): Push, sobald ein Gerät
+# voll geladen ist. Aus; einschalten pro Integration (CONF_CHARGE_INTEGRATIONS) oder pro Gerät
+# (Popup, Gerät geht vor). Erkannt am Anstieg des Batteriestands um CONF_CHARGE_RISE Punkte über
+# den tiefsten Stand; "voll" ab CONF_CHARGE_FULL Prozent. Ersatzregel für Geräte, die selten
+# melden: Wechsel von unter CHARGE_JUMP_FROM Prozent auf "voll".
+CONF_NOTIFY_CHARGE = "notify_charge"
+CONF_CHARGE_FULL = "charge_full"
+DEFAULT_CHARGE_FULL = 100
+CONF_CHARGE_RISE = "charge_rise"
+DEFAULT_CHARGE_RISE = 20
+CONF_CHARGE_INTEGRATIONS = "charge_integrations"
+CHARGE_JUMP_FROM = 90
+# Wieder scharf, wenn der Stand so viele Punkte unter "voll" fällt.
+CHARGE_REARM = 10
+DATA_CHARGE = f"{DOMAIN}_charge"
 INT_RANGES = {
     CONF_NEW_WINDOW: (1, 60),
     CONF_UPDATES_WINDOW: (1, 60),
+    CONF_CHARGE_FULL: (90, 100),
+    CONF_CHARGE_RISE: (5, 80),
     CONF_OFFLINE_AFTER: (1, 60),
     CONF_FLAKY_OUTAGES: (2, 50),
     CONF_STARTUP_GRACE: (0, 30),

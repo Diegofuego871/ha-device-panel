@@ -32,6 +32,10 @@ from .const import (
     CONF_NEW_FIELDS,
     CONF_NEW_PERSISTENT,
     CONF_NEW_WINDOW,
+    CONF_CHARGE_FULL,
+    CONF_CHARGE_INTEGRATIONS,
+    CONF_CHARGE_RISE,
+    CONF_NOTIFY_CHARGE,
     CONF_NOTIFY_UPDATES,
     CONF_UPDATES_KINDS,
     CONF_UPDATES_MODE,
@@ -111,7 +115,7 @@ from .options_api import (
 from .push import text
 
 # Einheit der Zahlenfelder im Optionsdialog.
-_UNITS = {CONF_OFFLINE_AFTER: "min", CONF_STARTUP_GRACE: "min", CONF_BATTERY_LOW: "%", CONF_NOTIFY_DELAY: "min", CONF_NEW_WINDOW: "min", CONF_UPDATES_WINDOW: "min"}
+_UNITS = {CONF_OFFLINE_AFTER: "min", CONF_STARTUP_GRACE: "min", CONF_BATTERY_LOW: "%", CONF_NOTIFY_DELAY: "min", CONF_NEW_WINDOW: "min", CONF_UPDATES_WINDOW: "min", CONF_CHARGE_FULL: "%", CONF_CHARGE_RISE: "%"}
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -187,7 +191,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 data = {**self.config_entry.options, **user_input, CONF_BATTERY_LOW_INTEGRATIONS: own, CONF_OFFLINE_INTEGRATIONS: offline, CONF_CONNECTION_INTEGRATIONS: conns, CONF_TYPE_INTEGRATIONS: types_by_integration, CONF_SIGNAL_LOW: signal_low, CONF_SIGNAL_LOW_INTEGRATIONS: signal_integ}
                 for key in (
                     CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_EXCLUDE_DEVICES, CONF_HIDE_CHIPS, CONF_HIDE_CONNECTIONS,
-                    CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE, CONF_NEW_EXCLUDE,
+                    CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE, CONF_NEW_EXCLUDE, CONF_CHARGE_INTEGRATIONS,
                 ):
                     data[key] = sorted(set(user_input.get(key) or []))
                 # Inhalt der Meldungen in fester Reihenfolge, wie im Panel.
@@ -223,7 +227,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         integrations = [{"value": i["domain"], "label": f"{i['name']} ({i['devices']})"} for i in catalog["integrations"]]
         # Ausgeschlossene Integration ohne Geräte bleibt wählbar.
         known = {i["value"] for i in integrations}
-        for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE, CONF_NEW_EXCLUDE):
+        for key in (CONF_EXCLUDE_INTEGRATIONS, CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE, CONF_NEW_EXCLUDE, CONF_CHARGE_INTEGRATIONS):
             integrations += [{"value": d, "label": d} for d in values[key] if d not in known]
             known.update(values[key])
         # Push-Ziele mit Beschriftung in der Sprache der Instanz.
@@ -277,6 +281,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                         SelectSelectorConfig(
                             options=list(BATTERY_FIELDS), multiple=True, mode=SelectSelectorMode.LIST, translation_key="battery_field"
                         )
+                    ),
+                    # Lademeldung (Abschnitt "Laden" im Reiter "Batterie", seit 1.30.0).
+                    vol.Required(CONF_NOTIFY_CHARGE, default=values[CONF_NOTIFY_CHARGE]): bool,
+                    vol.Required(CONF_CHARGE_FULL, default=values[CONF_CHARGE_FULL]): _number(CONF_CHARGE_FULL),
+                    vol.Required(CONF_CHARGE_RISE, default=values[CONF_CHARGE_RISE]): _number(CONF_CHARGE_RISE),
+                    vol.Optional(CONF_CHARGE_INTEGRATIONS, default=values[CONF_CHARGE_INTEGRATIONS]): SelectSelector(
+                        SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
                     ),
                     # Neue Geräte (Reiter "Neu" im Panel, seit 1.24.0).
                     vol.Required(CONF_NOTIFY_NEW, default=values[CONF_NOTIFY_NEW]): bool,

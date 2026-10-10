@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.29.0, Einstellungen in fünf Abschnitten)
+## Stand (1.30.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,15 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Lademeldung `1.30.0` (Nutzer, 2026-10-10, Mockup `charging-v1`, Konzept `docs/CONCEPT-laden-updates.md`):
+   `charge.ChargeNotifier` beobachtet die Batterie-Sensoren (`battery_entity`), `step()` merkt den tiefsten Stand
+   seit dem Entladen; Anstieg >= `charge_rise` (5..80, Standard 20) = lädt, Push bei Stand >= `charge_full`
+   (90..100, Standard 100); Ersatzregel: Sprung von < 90 auf >= voll (`CHARGE_JUMP_FROM`), wieder scharf bei
+   Stand < voll - `CHARGE_REARM`. Schalter `notify_charge` (aus), Integrationen `charge_integrations`, pro Gerät
+   `charge` (true/false/None) in `.storage/device_panel.devices` (Gerät geht vor); Merker in
+   `.storage/device_panel.charge`. Ladeanzeige-Entität (Konzept Regel 1) bewusst nicht umgesetzt. Panel:
+   `_chargeHtml` im Reiter "Batterie" (Voll ab `data-cfull`, Anstieg, Integrationen `data-cinteg` mit Suche
+   `charge`, Vorschau), Popup-Zeile `dev-charge` (nur mit Batteriestand). Tests `test_charge.py`, `charge-e2e.mjs`.
    Update-Erinnerung `1.29.0` (Nutzer, 2026-10-10, Mockup `charging-v1`, Konzept `docs/CONCEPT-laden-updates.md`):
    `updates.UpdateNotifier` hört auf `update.*` (EVENT_STATE_CHANGED), Modi `instant` (Sammelfenster
    `updates_window`), `daily`/`weekly` (`updates_time`, Montag), Arten `updates_kinds` (core/addons über

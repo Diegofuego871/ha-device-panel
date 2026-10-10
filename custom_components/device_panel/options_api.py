@@ -26,7 +26,13 @@ from .const import (
     CONF_NEW_FIELDS,
     CONF_NEW_PERSISTENT,
     CONF_NEW_WINDOW,
+    CONF_CHARGE_FULL,
+    CONF_CHARGE_INTEGRATIONS,
+    CONF_CHARGE_RISE,
+    CONF_NOTIFY_CHARGE,
     CONF_NOTIFY_UPDATES,
+    DEFAULT_CHARGE_FULL,
+    DEFAULT_CHARGE_RISE,
     CONF_UPDATES_KINDS,
     CONF_UPDATES_MODE,
     CONF_UPDATES_REPEAT,
@@ -124,6 +130,7 @@ BOOL_OPTIONS: tuple[tuple[str, bool], ...] = (
     (CONF_NOTIFY_NEW, False),
     (CONF_NEW_PERSISTENT, False),
     (CONF_NOTIFY_UPDATES, False),
+    (CONF_NOTIFY_CHARGE, False),
     (CONF_SHOW_SERVICE, False),
     (CONF_SHOW_DISABLED, False),
     (CONF_UPDATE_CHECK, DEFAULT_UPDATE_CHECK),
@@ -137,6 +144,8 @@ INT_OPTIONS: tuple[tuple[str, int], ...] = (
     (CONF_NOTIFY_DELAY, DEFAULT_NOTIFY_DELAY),
     (CONF_NEW_WINDOW, DEFAULT_NEW_WINDOW),
     (CONF_UPDATES_WINDOW, DEFAULT_UPDATES_WINDOW),
+    (CONF_CHARGE_FULL, DEFAULT_CHARGE_FULL),
+    (CONF_CHARGE_RISE, DEFAULT_CHARGE_RISE),
 )
 LIST_OPTIONS = (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CHIPS, CONF_HIDE_CONNECTIONS, CONF_CONNECTION_ORDER, CONF_CHIP_ORDER)
 
@@ -426,6 +435,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_BATTERY_FIELDS): battery_fields,
         vol.Optional(CONF_NEW_FIELDS): new_fields,
         vol.Optional(CONF_NEW_EXCLUDE): _domains,
+        vol.Optional(CONF_CHARGE_INTEGRATIONS): _domains,
         vol.Optional(CONF_UPDATES_KINDS): update_kinds,
         vol.Optional(CONF_UPDATES_MODE): vol.In(UPDATES_MODES),
         vol.Optional(CONF_UPDATES_TIME): push_time,
@@ -470,7 +480,7 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_EXCLUDE_DEVICES] = sorted(
         {d for d in options.get(CONF_EXCLUDE_DEVICES) or [] if isinstance(d, str) and _DEVICE_RE.match(d)}
     )
-    for key in (CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE, CONF_NEW_EXCLUDE):
+    for key in (CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE, CONF_NEW_EXCLUDE, CONF_CHARGE_INTEGRATIONS):
         values[key] = sorted({d for d in options.get(key) or [] if isinstance(d, str) and _DOMAIN_RE.match(d)})
     fields = options.get(CONF_NOTIFY_FIELDS)
     values[CONF_NOTIFY_FIELDS] = (

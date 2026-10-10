@@ -30,6 +30,8 @@ from .const import (
     CONF_BATTERY_LOW_INTEGRATIONS,
     CONF_BATTERY_PUSH,
     CONF_BATTERY_PUSH_EXCLUDE,
+    CONF_CHARGE_INTEGRATIONS,
+    CONF_NOTIFY_CHARGE,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_CHIP_ORDER,
@@ -666,6 +668,8 @@ async def async_load_type_overrides(hass: HomeAssistant) -> None:
             "signal": {str(k): v for k, v in (stored.get("signal") or {}).items() if valid_signal_setting(v)},
             # "Ausgefallen nach" des Geräts: Minuten oder "off" (seit 0.31.0).
             "offline": {str(k): v for k, v in (stored.get("offline") or {}).items() if valid_offline_setting(v)},
+            # Lademeldung des Geräts: True/False, ohne Eintrag gilt die Integration (seit 1.30.0).
+            "charge": {str(k): v for k, v in (stored.get("charge") or {}).items() if isinstance(v, bool)},
         }
         conns = stored.get("connections") if isinstance(stored.get("connections"), dict) else {}
         hass.data[DATA_CONNECTION_OVERRIDES] = {str(k): v for k, v in conns.items() if v in CONNECTION_MANUAL}
@@ -686,6 +690,8 @@ async def _async_save_devices(hass: HomeAssistant) -> None:
         data["signal"] = dict(settings["signal"])
     if settings.get("offline"):
         data["offline"] = dict(settings["offline"])
+    if settings.get("charge"):
+        data["charge"] = dict(settings["charge"])
     await _types_store(hass).async_save(data)
 
 
@@ -694,9 +700,9 @@ def device_settings(hass: HomeAssistant) -> dict[str, Any]:
     """
     {"battery": {Gerät: Prozent | "off"}, "notify_off": {Gerät, …},
     "notify_mute": {Gerät: bis}, "signal": {Gerät: Schwelle | "off"},
-    "offline": {Gerät: Minuten | "off"}}.
+    "offline": {Gerät: Minuten | "off"}, "charge": {Gerät: bool}}.
     """
-    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}}
+    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "charge": {}}
 
 
 def valid_signal_setting(value: Any) -> bool:
@@ -765,7 +771,8 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
     Einstellungen eines Geräts: battery=None (globaler Wert), "off" oder
     Prozent; notify=True/False (Ausfall- und Online-Meldungen);
     signal=None (Standard), "off" oder Schwelle "schwach unter";
-    offline=None (Integration bzw. global), "off" oder Minuten.
+    offline=None (Integration bzw. global), "off" oder Minuten;
+    charge=None (Integration), True/False (Lademeldung, seit 1.30.0).
     """
     await async_load_type_overrides(hass)
     settings = hass.data[DATA_DEVICE_SETTINGS]
@@ -774,6 +781,11 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
             settings.setdefault("offline", {}).pop(device_id, None)
         else:
             settings.setdefault("offline", {})[device_id] = changes["offline"]
+    if "charge" in changes:
+        if changes["charge"] is None:
+            settings.setdefault("charge", {}).pop(device_id, None)
+        else:
+            settings.setdefault("charge", {})[device_id] = bool(changes["charge"])
     if "signal" in changes:
         if changes["signal"] is None:
             settings.setdefault("signal", {}).pop(device_id, None)
@@ -1137,6 +1149,12 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 **_battery_fields(hass, opts, device, entries, primary.domain if primary else None),
                 # Ausfall- und Online-Meldungen für dieses Gerät aus.
                 "notify_off": device.id in device_settings(hass)["notify_off"],
+                # Lademeldung (seit 1.30.0): am Gerät (None = Integration) und was ohne Wahl gilt.
+                "charge_setting": device_settings(hass).get("charge", {}).get(device.id),
+                "charge_default": {
+                    "on": bool(opts[CONF_NOTIFY_CHARGE]) and bool(primary) and primary.domain in opts[CONF_CHARGE_INTEGRATIONS],
+                    "integration": primary.domain if primary and primary.domain in opts[CONF_CHARGE_INTEGRATIONS] else None,
+                },
                 "notify_mute_until": _iso(notify_muted_until(hass, device.id)),
                 "update": _update(hass, entries),
                 "avail24": avail,

@@ -397,7 +397,7 @@
     if (!["{facts}", ...PROMPT_GROUPS].some((v) => text.includes(v))) return "no_facts";
     return null;
   };
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60], charge_full: [90, 100], charge_rise: [5, 80] };
   // Inhalt der Batterie-Meldung wie options_api.BATTERY_FIELDS (seit 0.34.0).
   const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
   // Inhalt der Meldung bei neuen Geräten wie const.NEW_FIELDS (seit 1.24.0).
@@ -535,11 +535,11 @@
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
-    notify_new: false, new_window: 5, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
+    notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, charge_integrations: [], notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
   };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
-  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {} };
+  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, charge: {} };
   window.__connOverrides = {};
   window.__names = {};
   const pushHass = () => {
@@ -752,7 +752,7 @@
           const nd = msg.values.notify_delay ?? window.__opts.notify_delay;
           if (Number.isInteger(nd) && nd >= 1 && nd < oa) throw { code: "invalid_format", message: "notify_delay shorter than offline_after" };
         }
-        for (const key of ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations"]) {
+        for (const key of ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"]) {
           const v = msg.values[key];
           if (key in msg.values && (!Array.isArray(v) || v.some((x) => !/^[a-z0-9_]+$/.test(x)))) throw { code: "invalid_format", message: key };
           if (key in msg.values) msg.values[key] = [...new Set(v)].sort();
@@ -813,6 +813,12 @@
           if (v === null) delete window.__devSettings.signal[msg.device_id];
           else window.__devSettings.signal[msg.device_id] = v;
           out.signal = v;
+        }
+        if ("charge" in msg) {
+          if (!(msg.charge === null || typeof msg.charge === "boolean")) throw { code: "invalid_format", message: "charge" };
+          if (msg.charge === null) delete window.__devSettings.charge[msg.device_id];
+          else window.__devSettings.charge[msg.device_id] = msg.charge;
+          out.charge = msg.charge;
         }
         if ("notify" in msg) {
           // Jede Wahl hebt "stumm bis" auf (wie das Backend).
@@ -928,6 +934,8 @@
               push_integration: (window.__opts.battery_push_exclude_integrations || []).includes(d.integration?.domain) ? d.integration.domain : null,
             },
             notify_off: window.__devSettings.notifyOff.has(d.id),
+            charge_setting: window.__devSettings.charge[d.id] ?? null,
+            charge_default: { on: Boolean(window.__opts.notify_charge) && (window.__opts.charge_integrations || []).includes(d.integration?.domain), integration: (window.__opts.charge_integrations || []).includes(d.integration?.domain) ? d.integration.domain : null },
             notify_mute_until: window.__devSettings.mute[d.id] || null,
             signal_setting: window.__devSettings.signal[d.id] ?? null,
             // Wie options_api.signal_default (seit 1.17.0): Integration vor global, Einheit muss passen.

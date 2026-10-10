@@ -7,7 +7,36 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.30.0] - 2026-10-10
+
+Lademeldung.
+
+### Hinzugefügt
+
+- Lademeldung (Wunsch des Nutzers, Mockups und Konzept `charging-v1`,
+  `docs/CONCEPT-laden-updates.md`): ein Push, sobald ein Gerät voll geladen ist.
+  Standardmässig aus; einschalten im Reiter "Batterie" unter Überwachung und Meldungen
+  (Abschnitt "Laden"), pro Integration oder pro Gerät im Geräte-Popup ("Laden melden":
+  Wie Integration, Ein, Aus; das Gerät geht vor).
+  - Erkennung ohne Ladeanzeige-Entität: Das Panel merkt sich den tiefsten Stand seit dem
+    letzten Entladen. Ein Anstieg um 20 Punkte oder mehr gilt als Laden; bei "voll"
+    (Standard 100 %) kommt ein Push. Beide Werte sind einstellbar ("Voll ab" 90, 95, 98 oder
+    100 %; Anstieg 5 bis 80 Punkte), weil manche Geräte nie 100 % melden.
+  - Ersatzregel für Geräte, die selten melden: Ein Sprung von unter 90 % direkt auf "voll"
+    wird ebenfalls gemeldet, ohne Dauer ("von 38 %"). Die Meldung ist wieder scharf, sobald
+    der Stand 10 Punkte unter "voll" gefallen ist.
+  - Meldung: "Geladen: Name", Text "100 % · in 1 Std. 40 Min. von 22 % · Bereich"; gleiches
+    Push-Ziel und Bild wie die anderen Meldungen; Tippen öffnet das Gerät im Panel.
+  - Vorschau in den Einstellungen, analog zur Batterie-Meldung; die Liste der Integrationen
+    hat ab 8 Einträgen ein Suchfeld.
+  - Achtung: Eine neue Batterie sieht wie Laden aus; für Geräte mit nicht wiederaufladbaren
+    Batterien aus lassen.
+  - Neue Optionen `notify_charge`, `charge_full`, `charge_rise` und `charge_integrations`,
+    auch im Optionsdialog; Einstellung pro Gerät in `.storage/device_panel.devices`.
+
 ## [1.29.0] - 2026-10-10
+
+Nicht veröffentlicht; enthalten in 1.30.0.
 
 Update-Erinnerung.
 
@@ -35,6 +64,8 @@ Update-Erinnerung.
   bleibt ganz oben in den Einstellungen.
 
 ## [1.28.0] - 2026-10-10
+
+Nicht veröffentlicht; enthalten in 1.30.0.
 
 Suchfeld in langen Listen der Einstellungen.
 
@@ -1774,8 +1805,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[1.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.29.0
-[1.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.28.0
+[1.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.30.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0
 [1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0
 [1.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.25.0
