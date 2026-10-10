@@ -276,7 +276,7 @@ class ChargeNotifier:
         up = st.get("up_at")
         if up is None or now - up > CHARGE_STALE:
             return None
-        return {"level": st["last"], "from": st["min"], "since": st["min_at"], "source": "level"}
+        return {"level": st["last"], "from": st["min"], "since": st["min_at"], "full": opts[CONF_CHARGE_FULL], "source": "level"}
 
     def charging_of(self, device: dr.DeviceEntry, entries: list[er.RegistryEntry], now: float, opts: dict[str, Any]) -> dict[str, Any] | None:
         """
@@ -292,7 +292,8 @@ class ChargeNotifier:
             if state.state not in ("on", "charging"):
                 return None
             st = self._state.get(device.id)
-            return {"level": st["last"] if st else None, "from": None, "since": state.last_changed.timestamp(), "source": "entity"}
+            full = device_charge_opts(self.hass, opts, device.id)[CONF_CHARGE_FULL]
+            return {"level": st["last"] if st else None, "from": None, "since": state.last_changed.timestamp(), "full": full, "source": "entity"}
         if not self.enabled(opts, self.hass, device):
             return None
         return self.charging(device.id, now, device_charge_opts(self.hass, opts, device.id))

@@ -80,7 +80,7 @@ async def test_charge_decisions_are_logged(hass: HomeAssistant) -> None:
     assert any(t.startswith("fully charged at 100 % (full from 100 %), sending") for t in texts["Zahnbürste"])
     assert any("charging notification is off for this device" in t for t in texts["Wegwerf"])
     assert any(e["level"] == "debug" and e["title"] == "Zahnbürste" for e in entries)
-    assert any(e["cat"] == "push" and e["title"] == "notify.handy" and e["text"] == "sent: Charged: Zahnbürste" for e in entries)
+    assert any(e["cat"] == "push" and e["title"] == "notify.handy" and e["text"] == "sent: 🔋 Charged: Zahnbürste" for e in entries)
     assert len(calls) == 1
 
 

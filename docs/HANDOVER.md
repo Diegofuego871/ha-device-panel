@@ -431,6 +431,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Wischen im Popup `1.41.0` (Nutzer, Video nicht angekommen, Ursache nur vermutet): `_renderDevice(soft)` und `_renderLogBody(soft)` bauen beim
    Abfragen nicht neu auf, solange `_dlgBusy()` gilt (Berührung aktiv oder weniger als 0,8 s her, Scroll/Wheel im Fenster);
    `_trackBusy(dlg)` setzt die Merker. Nur der Abfragepfad ist weich, eigene Aktionen bauen sofort neu auf. Test `busy-e2e.mjs`.
+   Emoji in Push-Titeln `1.41.0` (Nutzer): erstes Zeichen jedes Titels in `push.py` `TEXTS` (`*_title`, `*_title_many`, `update_title`), dieselben Emoji in den
+   Panel-Vorschauen (`pv*Title` in `strings.js`); anhaltende Benachrichtigungen unverändert. Tests passen die erwarteten Titel an.
+   Ladebalken mit Ziel `1.41.0` (Nutzer, Mockup `charge-target-v1`, C): `charging()` liefert `full` (Voll ab des Geräts), `_chargeBarHtml(c)` zeichnet Rest/Strich/Zahl
+   (`.chg-rest`, `.chg-tick`, `.chg-goal`, `.has-goal`), in der Liste (Chip "Lädt") und als `extra` der Batterie-Kachel im Popup. Test `chargechip-e2e.mjs`.
+   Log-Chips `1.41.0` (Nutzer): `.lg-chips .chip:first-child` ist sticky (deckender Hintergrund). Test `log-e2e.mjs`.
    Batterie-Schwelle ab 1 % `1.41.0` (Nutzer): `INT_RANGES[CONF_BATTERY_LOW] = (1, 50)` (vorher 5), Panel `[1, 50]` (Popup, global, pro Integration), Simulator
    und Texte (`battery_map` "1 bis 50"); Tests `test_battery.py`, `devset-e2e.mjs`, `settings-e2e.mjs`.
    Feste Höhe der Fenster `1.41.0` (Nutzer): `dialog.device`, `.settings`, `.stat-dlg`, `.pulse-dlg`, `.area-sheet`, `.prompt-dlg` haben eine feste Höhe

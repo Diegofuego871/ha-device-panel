@@ -356,6 +356,14 @@ tr.dev.flaky td:first-child { box-shadow: inset 4px 0 0 var(--dp-warning); }
 .chg-bar { display: block; position: relative; height: 6px; margin-top: 6px; border-radius: 3px; background: var(--dp-bar-off); overflow: hidden; }
 .chg-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--dp-success); }
 .chg-sub { display: block; margin-top: 2px; }
+/* Ziel unter 100 %: Rest schraffiert, Strich und Zahl am Ziel (die Zahl steht über dem Balken, daher Platz oben) */
+.chg-bar.has-goal { overflow: visible; margin-top: 15px; }
+.chg-bar i { z-index: 1; }
+.chg-rest { position: absolute; top: 0; bottom: 0; right: 0; border-radius: 0 3px 3px 0; background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--dp-text) 22%, transparent) 0 3px, transparent 3px 6px); }
+.chg-tick { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--dp-text); z-index: 2; }
+.chg-goal { position: absolute; top: -14px; transform: translateX(-50%); font-size: 10.5px; line-height: 1; color: var(--dp-text2); white-space: nowrap; }
+.st-tile .chg-bar { align-self: stretch; margin-top: 4px; }
+.st-tile .chg-bar.has-goal { margin-top: 15px; }
 .chip.hint.ch .ic { color: var(--dp-success); }
 .chip.hint.ch.on { background: var(--dp-success-soft); border-color: var(--dp-success); color: var(--dp-success); }
 /* Batterie farbig nach Stand (seit 0.24.0): Stufen wie der Empfang, rot wie
@@ -1148,6 +1156,9 @@ dialog.log-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .lg-chips::-webkit-scrollbar { display: none; }
 .lg-chips .chip { height: 30px; font-size: 12.5px; flex: none; }
 .lg-chips .chip.on { background: var(--dp-primary-soft); border-color: var(--dp-primary); color: var(--dp-primary); }
+/* "Alle" bleibt beim seitlichen Scrollen stehen; deckend, damit die vorbeiziehenden Chips nicht durchscheinen (der Schatten füllt die Lücke) */
+.lg-chips .chip:first-child { position: sticky; left: 0; z-index: 1; background-color: var(--dp-card); box-shadow: 6px 0 0 var(--dp-card); }
+.lg-chips .chip.on:first-child { background: linear-gradient(var(--dp-primary-soft), var(--dp-primary-soft)) var(--dp-card); }
 .lg-check { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; font-size: 13px; color: var(--dp-text2); cursor: pointer; }
 .lg-check input { width: 18px; height: 18px; accent-color: var(--dp-primary); margin: 0; }
 .lg-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--dp-text3); }

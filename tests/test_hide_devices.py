@@ -69,7 +69,7 @@ async def test_hide_and_show_device(hass: HomeAssistant, setup, hass_ws_client, 
     setup.evaluate()
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
-    assert [c.data["title"] for c in calls] == ["Offline: Lampe"]
+    assert [c.data["title"] for c in calls] == ["🔴 Offline: Lampe"]
     # … dann ausgeblendet: nicht mehr in der Liste, nicht überwacht, vergessen
     res = await _ws(client, next(ids), type=f"{DOMAIN}/hide_device", device_id=lamp.id, hidden=True)
     assert res["result"] == {"hidden": True, "changed": True}

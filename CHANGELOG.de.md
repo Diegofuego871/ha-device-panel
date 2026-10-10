@@ -23,6 +23,15 @@ Ladung beendet pro Integration und pro Gerät.
   Panel); neue Einstellungen `charge_stall` und `charge_stop` in `set_device_settings`; `list_devices` hat
   `charge_stall_setting`, `charge_stop_setting` und die Werte in `charge_default`.
 
+- Push-Titel beginnen mit einem Emoji (Wunsch des Nutzers), damit das Thema auf den ersten Blick klar ist:
+  🪫 schwache Batterie, 🔴 ausgefallen, 🚨 Sammelausfall, 🟢 wieder online, ✨ neues Gerät, 🔋 geladen,
+  🔌 Ladung beendet, ⬆️ Update-Erinnerung. Die Vorschauen in den Einstellungen zeigen dieselben Titel. Die
+  anhaltenden Benachrichtigungen in Home Assistant behalten ihre Titel.
+- Ladebalken mit Ziel (Wunsch des Nutzers, Mockup `charge-target-v1`, Variante C): liegt "Voll ab" unter 100 %
+  (zum Beispiel 80 %), ist der Rest hinter dem Ziel schraffiert, mit Strich und kleiner Zahl am Ziel. Gezeigt in
+  der Liste beim Chip "Lädt" und in der Batterie-Kachel des Geräte-Popups. Bei 100 % bleibt der Balken wie bisher.
+  `list_devices` hat `full` in `charging`.
+
 ### Geändert
 
 - Feste Höhe der Fenster (Wunsch des Nutzers): das Geräte-Popup, die Einstellungen, das Statistik-Fenster, das
@@ -36,6 +45,8 @@ Ladung beendet pro Integration und pro Gerät.
 
 ### Behoben
 
+- Protokoll-Fenster: "Alle" bleibt in beiden Chip-Zeilen stehen, wenn seitlich gescrollt wird (vorher scrollte
+  auf dem Handy der erste Chip der zweiten Zeile aus dem Bild).
 - Das Geräte-Popup (und das Protokoll-Fenster) wird vom regelmässigen Abfragen (alle 10 Sekunden) nicht mehr
   neu aufgebaut, solange du es berührst, darin wischst oder eine Auswahl offen hast. Auf dem iPhone bricht ein
   ersetzter Inhalt die Wischbewegung ab, die Seite dahinter scrollt mit und kann das Neuladen der App auslösen

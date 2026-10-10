@@ -3030,8 +3030,16 @@ class DevicePanel extends HTMLElement {
     if (!c) return "";
     const dur = this._duration(c.since);
     const text = c.level != null && c.from != null ? this._t("chargingInfo", c.level, c.from, dur) : c.level != null ? this._t("chargingInfoNoStart", c.level, dur) : this._t("chargingSince", dur);
-    const bar = c.level != null ? `<span class="chg-bar" aria-hidden="true"><i style="width:${Math.max(0, Math.min(100, c.level))}%"></i></span>` : "";
-    return `${bar}<span class="sub chg-sub">${escape(text)}</span>`;
+    return `${this._chargeBarHtml(c)}<span class="sub chg-sub">${escape(text)}</span>`;
+  }
+
+  // Ladebalken mit Ziel (seit 1.41.0, docs/mockups/charge-target-v1, Variante C): liegt "Voll ab" unter 100 %,
+  // ist der Rest hinter dem Ziel schraffiert, mit Strich und kleiner Zahl am Ziel. Bei 100 % bleibt der Balken wie er war.
+  _chargeBarHtml(c) {
+    if (c.level == null) return "";
+    const goal = Number.isFinite(c.full) && c.full > 0 && c.full < 100 ? Math.round(c.full) : null;
+    const mark = goal == null ? "" : `<b class="chg-rest" style="left:${goal}%"></b><b class="chg-tick" style="left:${goal}%"></b><span class="chg-goal" style="left:${goal}%">${goal}</span>`;
+    return `<span class="chg-bar${goal == null ? "" : " has-goal"}" aria-hidden="true"${goal == null ? "" : ` title="${escape(this._t("chargeGoal", goal))}"`}><i style="width:${Math.max(0, Math.min(100, c.level))}%"></i>${mark}</span>`;
   }
 
   _softwareHtml(d) {
@@ -3330,9 +3338,9 @@ class DevicePanel extends HTMLElement {
     this._renderDevice();
   }
 
-  _statTile(range, label, valueHtml, sub, kind = "avail", bad = false, warn = false) {
+  _statTile(range, label, valueHtml, sub, kind = "avail", bad = false, warn = false, extra = "") {
     return `<button type="button" class="st-tile${warn ? " warned" : ""}" data-dlg="stat" data-range="${range}" data-kind="${kind}">
-      <span class="st-k">${escape(label)}</span><span class="st-v${bad ? " bad" : ""}">${valueHtml}</span><span class="st-sub">${escape(sub)}</span>${mdi("chevron", 16).replace('class="ic"', 'class="ic chev"')}</button>`;
+      <span class="st-k">${escape(label)}</span><span class="st-v${bad ? " bad" : ""}">${valueHtml}</span>${extra}<span class="st-sub">${escape(sub)}</span>${mdi("chevron", 16).replace('class="ic"', 'class="ic chev"')}</button>`;
   }
 
   _staticTile(label, valueHtml, sub, bad = false, warn = false) {
@@ -3384,7 +3392,7 @@ class DevicePanel extends HTMLElement {
       const value = `${batIcon(b, 18)}${b.level != null ? `${escape(String(b.level))}<small>%</small>` : escape(b.low ? this._t("batteryLow") : "OK")}`;
       // Mit Prozent: Tipp öffnet den Verlauf; "schwach ja/nein" nur als Kachel.
       const chg = d.charging ? this._t("chargingSince", this._duration(d.charging.since)) : null;
-      if (b.level != null) tiles.push(this._statTile("30d", this._t("tileBattery"), d.charging ? `${mdi("batteryCharging", 18)}${escape(String(b.level))}<small>%</small>` : value, chg || (b.low ? this._t("batteryLow") : this._t("batHistoryHint")), "battery", b.low, b.low));
+      if (b.level != null) tiles.push(this._statTile("30d", this._t("tileBattery"), d.charging ? `${mdi("batteryCharging", 18)}${escape(String(b.level))}<small>%</small>` : value, chg || (b.low ? this._t("batteryLow") : this._t("batHistoryHint")), "battery", b.low, b.low, d.charging ? this._chargeBarHtml({ ...d.charging, level: b.level }) : ""));
       else tiles.push(this._staticTile(this._t("tileBattery"), value, "", b.low, b.low));
     }
     return `<div class="st-tiles" style="--n:${tiles.length}">${tiles.join("")}</div>`;

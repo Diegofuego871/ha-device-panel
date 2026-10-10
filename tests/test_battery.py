@@ -59,7 +59,7 @@ async def test_push_once_rearm_and_persistent(hass: HomeAssistant, watch: Batter
     hass.states.async_set(bat, "10")
     await watch.async_check()
     assert len(calls) == 1
-    assert calls[0].data["title"] == "Low battery: Sensor Keller"
+    assert calls[0].data["title"] == "🪫 Low battery: Sensor Keller"
     assert calls[0].data["message"] == "10 %"
     assert calls[0].data["data"]["url"] == f"/device-panel?device={dev.id}"
     assert calls[0].data["data"]["clickAction"] == f"/device-panel?device={dev.id}"
@@ -106,7 +106,7 @@ async def test_many_at_once_one_push(hass: HomeAssistant, watch: BatteryWatch) -
         _battery(hass, _device(hass, f"Gerät {i}"), str(5 + i))
     await watch.async_check()
     assert len(calls) == 1
-    assert calls[0].data["title"] == "Low battery: 5 devices"
+    assert calls[0].data["title"] == "🪫 Low battery: 5 devices"
     assert calls[0].data["message"].startswith("Gerät 0 5 %, Gerät 1 6 %")
     assert calls[0].data["data"]["url"] == "/device-panel"
 
@@ -189,7 +189,7 @@ async def test_notify_targets_and_entity_push(hass: HomeAssistant, watch: Batter
     _battery(hass, _device(hass, "A"), "3")
     await watch.async_check()
     # Entität: nur Titel und Text über send_message
-    assert len(sent) == 1 and sent[0].data == {"title": "Low battery: A", "message": "3 %", "entity_id": "notify.fernseher"}
+    assert len(sent) == 1 and sent[0].data == {"title": "🪫 Low battery: A", "message": "3 %", "entity_id": "notify.fernseher"}
 
 
 async def test_target_rejecting_data_gets_plain_message(hass: HomeAssistant, watch: BatteryWatch) -> None:
@@ -204,7 +204,7 @@ async def test_target_rejecting_data_gets_plain_message(hass: HomeAssistant, wat
     await _options(hass, battery_push=True, notify_service="notify.mail")
     _battery(hass, _device(hass, "A"), "3")
     await watch.async_check()
-    assert received == [{"title": "Low battery: A", "message": "3 %"}]
+    assert received == [{"title": "🪫 Low battery: A", "message": "3 %"}]
 
 
 async def test_push_options_are_checked(hass: HomeAssistant, watch: BatteryWatch, hass_ws_client) -> None:
@@ -238,7 +238,7 @@ async def test_threshold_per_integration(hass: HomeAssistant, watch: BatteryWatc
     await hass.async_block_till_done()
     # 25 % liegt unter der eigenen Schwelle 30 %, nicht unter der allgemeinen 15 %
     assert (await async_list_devices(hass, log))["devices"][0]["battery"]["low"] is True
-    assert len(calls) == 1 and calls[0].data["title"] == "Low battery: Fenster"
+    assert len(calls) == 1 and calls[0].data["title"] == "🪫 Low battery: Fenster"
     assert "(threshold per integration or device)" in _persistent(hass)["message"]
     # Eigene Schwelle ohne Geräte bleibt in der Liste (zum Zurücksetzen)
     await client.send_json({"id": 3, "type": f"{DOMAIN}/get_options"})
@@ -274,7 +274,7 @@ async def test_warning_off_per_integration(hass: HomeAssistant, watch: BatteryWa
     assert (await client.receive_json())["success"]
     await hass.async_block_till_done()
     await watch.async_check()
-    assert [c.data["title"] for c in calls] == ["Low battery: Rauchmelder"]
+    assert [c.data["title"] for c in calls] == ["🪫 Low battery: Rauchmelder"]
     assert set(watch.low) == {smoke.id}
     # Gespeichert wie im Panel, auch "OFF" und False (YAML 1.1) als off
     await client.send_json({"id": 3, "type": f"{DOMAIN}/set_options", "values": {"battery_low_integrations": {"test": "OFF", "zha": False, "hue": 20}}})
@@ -324,7 +324,7 @@ async def test_push_off_per_integration(hass: HomeAssistant, watch: BatteryWatch
     assert (await client.receive_json())["success"]
     await hass.async_block_till_done()
     await watch._async_daily()
-    assert [c.data["title"] for c in calls] == ["Low battery: Fenster"]
+    assert [c.data["title"] for c in calls] == ["🪫 Low battery: Fenster"]
     # Keine Domain-Liste: abgelehnt
     await client.send_json({"id": 3, "type": f"{DOMAIN}/set_options", "values": {"battery_push_exclude_integrations": ["Böse Domain"]}})
     assert (await client.receive_json())["error"]["code"] == "invalid_format"
@@ -350,7 +350,7 @@ async def test_battery_fields(hass: HomeAssistant, watch: BatteryWatch, hass_ws_
     hass.states.async_set(bat, "8")
     await watch.async_check()
     # Feste Reihenfolge (Stand, Integration, Modell), nicht die gewählte.
-    assert calls[-1].data["title"] == "Low battery: Rauchmelder"
+    assert calls[-1].data["title"] == "🪫 Low battery: Rauchmelder"
     assert calls[-1].data["message"] == "8 % · test · Beispiel AG Modell X"
     # Standard (Stand, Bereich): wie vor 0.34.0
     await _options(hass, battery_fields=["battery", "area"])
@@ -372,7 +372,7 @@ async def test_battery_fields(hass: HomeAssistant, watch: BatteryWatch, hass_ws_
     _battery(hass, other, "5")
     await watch.async_check()
     await watch._async_daily()
-    assert calls[-1].data["title"] == "Low battery: 2 devices"
+    assert calls[-1].data["title"] == "🪫 Low battery: 2 devices"
     assert calls[-1].data["message"] == "Fenster 5 %, Rauchmelder 6 % (Flur)"
     # Unbekannte Angabe: abgelehnt
     await client.send_json({"id": 3, "type": f"{DOMAIN}/set_options", "values": {"battery_fields": ["since"]}})

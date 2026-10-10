@@ -55,7 +55,7 @@ async def test_single_device_after_window(hass: HomeAssistant, freezer) -> None:
     await _wait(hass, freezer, 1)
     assert len(calls) == 1
     data = calls[0].data
-    assert data["title"] == "New device: Stehlampe"
+    assert data["title"] == "✨ New device: Stehlampe"
     # Standardinhalt: Bereich und Integration; Tippen öffnet das Gerät im Panel
     assert data["message"] == "Wohnzimmer · test"
     assert data["data"]["url"] == f"/device-panel?device={lamp.id}"
@@ -77,7 +77,7 @@ async def test_group_and_fields(hass: HomeAssistant, freezer) -> None:
     await _wait(hass, freezer, 1)
     # Das Fenster beginnt beim ersten Gerät: alle drei in einer Meldung
     assert len(calls) == 1
-    assert calls[0].data["title"] == "3 new devices"
+    assert calls[0].data["title"] == "✨ 3 new devices"
     assert calls[0].data["message"] == "Lampe A (L1), Lampe B (L2), Lampe C"
     assert calls[0].data["data"]["tag"] == f"{DOMAIN}_new"
 

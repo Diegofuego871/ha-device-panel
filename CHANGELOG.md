@@ -23,6 +23,15 @@ Charging stopped per integration and per device.
   `charge_stop` in `set_device_settings`; `list_devices` has `charge_stall_setting`, `charge_stop_setting` and
   the values in `charge_default`.
 
+- Push titles start with an emoji (requested by the user) so the topic is clear at first glance: 🪫 low
+  battery, 🔴 offline, 🚨 group outage, 🟢 back online, ✨ new device, 🔋 charged, 🔌 charging stopped,
+  ⬆️ update reminder. The previews in the settings show the same titles. The persistent notifications in
+  Home Assistant keep their titles.
+- Charge bar with target (requested by the user, mockup `charge-target-v1`, variant C): when "Full from" is below
+  100 % (for example 80 %), the rest behind the target is hatched, with a line and a small number at the
+  target. Shown in the list with the chip "Charging" and in the battery tile of the device pop-up. At 100 % the
+  bar stays as before. `list_devices` has `full` in `charging`.
+
 ### Changed
 
 - Fixed height of the windows (requested by the user): the device pop-up, the settings, the statistics
@@ -36,6 +45,8 @@ Charging stopped per integration and per device.
 
 ### Fixed
 
+- Log window: "All" stays in place in both chip rows when you scroll sideways (before, the first chip of the
+  second row scrolled out of view on the phone).
 - The device pop-up (and the log window) is no longer rebuilt by the periodic refresh (every 10 seconds)
   while you touch it, swipe in it or have a selection open. On the iPhone a replaced content cancels the
   swipe, the page behind scrolls along and can trigger the reload of the app ("the device view is no longer

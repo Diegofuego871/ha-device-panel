@@ -11,8 +11,8 @@
 - **Overview:** devices online, who is offline and since when, an outage pulse over 24 hours with group outages
 - **Device list** grouped into offline, unstable and online, with search, filters by area and integration, filter chips and your own columns
 - **Per device:** availability, outages, signal and battery in a pop-up, with history and statistics
-- **Notifications you control:** outage, back online, low battery and new devices as push or persistent notification, per integration
-- **Charging and updates:** filter chip "Charging" with a green mark for devices that charge right now (without a charging indicator of its own, a device counts only with the charging notification switched on), optional push when a device is fully charged or the charge stops early, and an update reminder (daily, weekly or immediately) that replaces your own automations; both off by default; the update reminder can be set per app, per integration and per firmware
+- **Notifications you control:** outage, back online, low battery and new devices as push (each title starts with a fitting emoji) or persistent notification, per integration
+- **Charging and updates:** filter chip "Charging" with a green mark and a charge bar (showing the target when "Full from" is below 100 %) for devices that charge right now (without a charging indicator of its own, a device counts only with the charging notification switched on), optional push when a device is fully charged or the charge stops early, and an update reminder (daily, weekly or immediately) that replaces your own automations; both off by default; the update reminder can be set per app, per integration and per firmware
 - **Log:** a button in the header opens a log (large on the desktop, full screen on the phone) that shows what the notifications decide and why one did not come, with filter, search and an optional debug mode
 - **Battery forecast:** how long the battery lasts until its warning threshold, without AI
 - **Notifications:** push and persistent notification for outages and low batteries, with a timeline of when what arrives; defaults per integration, overrides per device

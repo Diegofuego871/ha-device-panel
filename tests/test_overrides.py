@@ -110,7 +110,7 @@ async def test_reset_battery_runs_warning(hass: HomeAssistant, setup, hass_ws_cl
     assert res["result"]["battery"] == 1
     await hass.async_block_till_done()
     # Zurück auf den globalen Wert: die Warnung kommt sofort
-    assert [c.data["title"] for c in calls] == ["Low battery: Fenster"]
+    assert [c.data["title"] for c in calls] == ["🪫 Low battery: Fenster"]
     # Keine Liste: abgelehnt
     assert (await _ws(client, 3, type=f"{DOMAIN}/reset_device_settings", battery=["x"], notify="kein"))["error"]["code"] == "invalid_format"
 

@@ -52,6 +52,11 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] Chips Bereich`, JSON.stringify(await texts('dialog.log-dlg [data-lg="cats"] .chip > span:not(.n):not(.lg-dot)')) === JSON.stringify(T_.cats));
   check(`[${tag}] Zahlen: Warnung 1, Fehler 1, Push 2`, (await chipN("data-lg-level", "warning")) === "1" && (await chipN("data-lg-level", "error")) === "1" && (await chipN("data-lg-cat", "push")) === "2");
   check(`[${tag}] Debug-Schalter im Fenster, aus`, (await text("dialog.log-dlg .lg-check")) === T_.debug && !(await ev(`return r.querySelector("dialog.log-dlg [data-lg-debug]").checked`)));
+  // "Alle" bleibt in beiden Chip-Zeilen stehen, wenn seitlich gescrollt wird (nur dort ist die Zeile breiter als das Fenster)
+  if (mobile) {
+    const pin = await ev(`const out = []; for (const k of ["levels", "cats"]) { const row = r.querySelector('dialog.log-dlg [data-lg="' + k + '"]'); row.scrollLeft = row.scrollWidth; const a = row.querySelector(".chip").getBoundingClientRect(), b = row.getBoundingClientRect(); out.push([row.scrollWidth > row.clientWidth, Math.abs(a.left - b.left) <= 1, getComputedStyle(row.querySelector(".chip")).position]); row.scrollLeft = 0; } return out`);
+    check(`[${tag}] Chips: "Alle" bleibt beim Scrollen stehen`, pin[1][0] && pin.every((x) => x[1] && x[2] === "sticky"), JSON.stringify(pin));
+  }
   await p.screenshot({ path: `${outDir}/log-${lang}-${mobile ? "mobile" : "desktop"}.png` });
 
   // Filter Stufe, dann Bereich, kombiniert

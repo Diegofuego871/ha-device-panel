@@ -80,10 +80,10 @@ async def test_delay_skips_short_outage(hass: HomeAssistant, setup, freezer) -> 
     freezer.tick(timedelta(minutes=2.5))
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
-    assert [c.data["title"] for c in calls] == ["Offline: Lampe"]
+    assert [c.data["title"] for c in calls] == ["🔴 Offline: Lampe"]
     hass.states.async_set(light, "on")
     await _tick(hass, setup, freezer, 0.5)
-    assert [c.data["title"] for c in calls] == ["Offline: Lampe", "Back online: Lampe"]
+    assert [c.data["title"] for c in calls] == ["🔴 Offline: Lampe", "🟢 Back online: Lampe"]
 
 
 async def test_pending_outage_survives_restart(hass: HomeAssistant, hass_storage: dict[str, Any], freezer) -> None:
@@ -102,7 +102,7 @@ async def test_pending_outage_survives_restart(hass: HomeAssistant, hass_storage
     freezer.tick(timedelta(minutes=4))
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
-    assert [c.data["title"] for c in calls] == ["Offline: Lampe"] and lamp.id in notifier.notified
+    assert [c.data["title"] for c in calls] == ["🔴 Offline: Lampe"] and lamp.id in notifier.notified
 
 
 async def test_old_store_counts_as_notified(hass: HomeAssistant, hass_storage: dict[str, Any]) -> None:
@@ -156,7 +156,7 @@ async def test_mute_action_and_integration_without_push(hass: HomeAssistant, set
     freezer.tick(timedelta(hours=24))
     hass.states.async_set(light, "unavailable")
     await _tick(hass, setup, freezer, 3)
-    assert [c.data["title"] for c in calls] == ["Offline: Lampe"]
+    assert [c.data["title"] for c in calls] == ["🔴 Offline: Lampe"]
     hass.states.async_set(light, "on")
     await _tick(hass, setup, freezer, 1)
     # Stumm per Aktion, "Globale Einstellung" im Popup hebt es auf.

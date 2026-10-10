@@ -67,7 +67,7 @@ async def test_outage_and_back_online(hass: HomeAssistant, setup, freezer) -> No
     await _tick(hass, setup, freezer, 2)
     # Sofort bei Erkennung
     assert len(calls) == 1
-    assert calls[0].data["title"] == "Offline: Lampe"
+    assert calls[0].data["title"] == "🔴 Offline: Lampe"
     assert calls[0].data["message"].startswith("Küche · test · since ")
     assert calls[0].data["data"]["tag"] == f"{DOMAIN}_device_{lamp.id}"
     assert calls[0].data["data"]["url"] == f"/device-panel?device={lamp.id}"
@@ -76,7 +76,7 @@ async def test_outage_and_back_online(hass: HomeAssistant, setup, freezer) -> No
     hass.states.async_set(light, "on")
     await _tick(hass, setup, freezer, 0.5)
     assert len(calls) == 2
-    assert calls[1].data["title"] == "Back online: Lampe"
+    assert calls[1].data["title"] == "🟢 Back online: Lampe"
     assert calls[1].data["message"] == "after 8 min · Küche"
     # Gleicher Tag: die Rückkehr ersetzt die Ausfall-Meldung
     assert calls[1].data["data"]["tag"] == calls[0].data["data"]["tag"]
@@ -107,7 +107,7 @@ async def test_switches_target_and_mute(hass: HomeAssistant, setup, freezer, has
     hass.states.async_set(light, "on")
     hass.states.async_set(switch, "on")
     await _tick(hass, setup, freezer, 1)
-    assert [c.data["title"] for c in calls] == ["Back online: Lampe"]  # Steckdose stumm
+    assert [c.data["title"] for c in calls] == ["🟢 Back online: Lampe"]  # Steckdose stumm
     devices = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}
     assert devices["Steckdose"]["notify_off"] is True and devices["Lampe"]["notify_off"] is False
 
@@ -121,19 +121,19 @@ async def test_group_outage(hass: HomeAssistant, setup, freezer) -> None:
         hass.states.async_set(light, "unavailable")
     await _tick(hass, setup, freezer, 3)
     assert len(calls) == 1
-    assert calls[0].data["title"] == "Group outage: 3 devices"
+    assert calls[0].data["title"] == "🚨 Group outage: 3 devices"
     assert calls[0].data["message"].startswith("Zigbee 0, Zigbee 1, Zigbee 2 · probably ")
     assert calls[0].data["data"]["url"] == "/device-panel"
     for light in lights:
         hass.states.async_set(light, "on")
     await _tick(hass, setup, freezer, 1)
-    assert calls[1].data["title"] == "Back online: 3 devices"
+    assert calls[1].data["title"] == "🟢 Back online: 3 devices"
     # Zusammenfassen aus: einzeln
     await _options(hass, notify_group=False)
     for light in lights:
         hass.states.async_set(light, "unavailable")
     await _tick(hass, setup, freezer, 3)
-    assert [c.data["title"] for c in calls[2:]] == ["Offline: Zigbee 0", "Offline: Zigbee 1", "Offline: Zigbee 2"]
+    assert [c.data["title"] for c in calls[2:]] == ["🔴 Offline: Zigbee 0", "🔴 Offline: Zigbee 1", "🔴 Offline: Zigbee 2"]
 
 
 async def test_restart_does_not_repeat_outage(hass: HomeAssistant, hass_storage: dict[str, Any], freezer) -> None:
@@ -151,7 +151,7 @@ async def test_restart_does_not_repeat_outage(hass: HomeAssistant, hass_storage:
     assert calls == []  # vor dem Neustart schon gemeldet
     hass.states.async_set(light, "on")
     await _tick(hass, log, freezer, 1)
-    assert [c.data["title"] for c in calls] == ["Back online: Lampe"]
+    assert [c.data["title"] for c in calls] == ["🟢 Back online: Lampe"]
     assert hass.data[DATA_OUTAGE].offline == {}
 
 
@@ -185,7 +185,7 @@ async def test_restart_keeps_outage_and_duration(hass: HomeAssistant, hass_stora
     assert calls == []  # derselbe Ausfall, nicht nochmals melden
     hass.states.async_set(light, "on")
     await _tick(hass, log, freezer, 0.5)
-    assert [c.data["title"] for c in calls] == ["Back online: Lampe"]
+    assert [c.data["title"] for c in calls] == ["🟢 Back online: Lampe"]
     assert calls[0].data["message"].startswith("after 2 d")
 
 
@@ -199,16 +199,16 @@ async def test_outage_known_from_log_is_not_repeated(hass: HomeAssistant, setup,
     setup.evaluate()
     hass.states.async_set(light, "unavailable")
     await _tick(hass, setup, freezer, 3)
-    assert [c.data["title"] for c in calls] == ["Offline: Lampe"]
+    assert [c.data["title"] for c in calls] == ["🔴 Offline: Lampe"]
     await _options(hass, exclude_integrations=["hue"])
     await _tick(hass, setup, freezer, 60)
     assert lamp.id not in hass.data[DATA_OUTAGE].offline
     await _options(hass, exclude_integrations=[])
     await _tick(hass, setup, freezer, 1)
-    assert [c.data["title"] for c in calls] == ["Offline: Lampe"]
+    assert [c.data["title"] for c in calls] == ["🔴 Offline: Lampe"]
     hass.states.async_set(light, "on")
     await _tick(hass, setup, freezer, 0.5)
-    assert [c.data["title"] for c in calls] == ["Offline: Lampe", "Back online: Lampe"]
+    assert [c.data["title"] for c in calls] == ["🔴 Offline: Lampe", "🟢 Back online: Lampe"]
     assert calls[1].data["message"].startswith("after 1 h")
 
 
@@ -231,7 +231,7 @@ async def test_battery_per_device(hass: HomeAssistant, setup, hass_ws_client) ->
     assert (await client.receive_json())["success"]
     await _options(hass, battery_push=True, notify_service="notify.handy")
     await watch.async_check()
-    assert [c.data["title"] for c in calls] == ["Low battery: Rauchmelder"]
+    assert [c.data["title"] for c in calls] == ["🪫 Low battery: Rauchmelder"]
     devices = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}
     assert devices["Fenster"]["battery"] == {"level": 10, "low": False}  # Wert ja, Warnung nein
     assert devices["Fenster"]["battery_setting"] == "off" and devices["Rauchmelder"]["battery_setting"] == 30
@@ -242,7 +242,7 @@ async def test_battery_per_device(hass: HomeAssistant, setup, hass_ws_client) ->
     await client.send_json({"id": 3, "type": f"{DOMAIN}/set_device_settings", "device_id": a.id, "battery": None})
     await client.receive_json()
     await watch.async_check()
-    assert [c.data["title"] for c in calls][-1] == "Low battery: Fenster"
+    assert [c.data["title"] for c in calls][-1] == "🪫 Low battery: Fenster"
     # Ungültig
     for i, payload in enumerate(({"battery": 60}, {"battery": "aus"}, {"notify": "nein"}), 10):
         await client.send_json({"id": i, "type": f"{DOMAIN}/set_device_settings", "device_id": a.id, **payload})
@@ -265,7 +265,7 @@ async def test_battery_daily(hass: HomeAssistant, setup, content: str) -> None:
     # Eingeschaltet: die gerade betroffenen kommen mit der ersten Tagesmeldung
     assert names(watch.pending) == ["A", "B"]
     await watch._async_daily()
-    assert [c.data["title"] for c in calls] == ["Low battery: 2 devices"]
+    assert [c.data["title"] for c in calls] == ["🪫 Low battery: 2 devices"]
     assert watch.pending == set()
     # Ohne neue Geräte: "neu" bleibt still, "alle" erinnert erneut
     await watch._async_daily()
@@ -273,7 +273,7 @@ async def test_battery_daily(hass: HomeAssistant, setup, content: str) -> None:
     _battery(hass, _device(hass, "C"), "5")
     await watch.async_check()
     await watch._async_daily()
-    assert calls[-1].data["title"] == ("Low battery: C" if content == "new" else "Low battery: 3 devices")
+    assert calls[-1].data["title"] == ("🪫 Low battery: C" if content == "new" else "🪫 Low battery: 3 devices")
 
 
 async def test_battery_daily_to_instant_keeps_pending(hass: HomeAssistant, setup) -> None:
@@ -285,7 +285,7 @@ async def test_battery_daily_to_instant_keeps_pending(hass: HomeAssistant, setup
     assert calls == [] and len(watch.pending) == 1
     # Vor der Tagesmeldung auf "sofort" umgestellt: A kommt jetzt
     await _options(hass, battery_push_mode="instant")
-    assert [c.data["title"] for c in calls] == ["Low battery: A"]
+    assert [c.data["title"] for c in calls] == ["🪫 Low battery: A"]
     assert watch.pending == set()
     await watch.async_check()
     assert len(calls) == 1

@@ -8,8 +8,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { chip: "Lädt", pill: "lädt", info1: "81 % · von 38 % · seit 1 Std. 20 Min.", tile: "lädt seit 1 Std. 20 Min." },
-  en: { chip: "Charging", pill: "charging", info1: "81 % · from 38 % · for 1 h 20 min", tile: "charging for 1 h 20 min" },
+  de: { chip: "Lädt", pill: "lädt", info1: "81 % · von 38 % · seit 1 Std. 20 Min.", tile: "lädt seit 1 Std. 20 Min.", goal: "Ziel 80 %" },
+  en: { chip: "Charging", pill: "charging", info1: "81 % · from 38 % · for 1 h 20 min", tile: "charging for 1 h 20 min", goal: "Target 80 %" },
 };
 for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const T_ = T[lang];
@@ -35,7 +35,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
 
   check(`[${tag}] ohne ladende Geräte kein Chip und keine Pille`, await ev(`return !r.querySelector('.chip[data-hint="charging"]') && !r.querySelector(".pill.chg")`));
   // Backend meldet drei ladende Geräte: Türschloss (81 %), Heizkörper (67 %), Fensterkontakt (64 %)
-  await p.evaluate(() => { window.__charging = { i: { level: 81, from: 38, ago: 4800 }, j: { level: 67, from: 22, ago: 7500 }, e: { level: 64, from: 15, ago: 2400 } }; });
+  await p.evaluate(() => { window.__charging = { i: { level: 81, from: 38, ago: 4800 }, j: { level: 67, from: 22, ago: 7500 }, e: { level: 64, from: 15, ago: 2400 } }; window.__devSettings.chargeFull = { i: 80 }; });
   await ev(`r.host._fetch(true)`);
   check(`[${tag}] Chip "${T_.chip} 3" erscheint nach "Batterie"`, await wait(`const c=[...r.querySelectorAll(".chips .chip")]; const ch=r.querySelector('.chip[data-hint="charging"]'); return !!ch && ch.textContent.replace(/\\s+/g," ").trim() === ${JSON.stringify(T_.chip + " 3")} && c.indexOf(ch) === c.indexOf(r.querySelector('.chip[data-hint="batteries"]')) + 1`));
   check(`[${tag}] grüne Pille "${T_.pill}" bei genau drei Geräten`, await wait(`return [...r.querySelectorAll('.dev')].filter(d=>d.querySelector(".pill.chg")).map(d=>d.dataset.open).sort().join() === "e,i,j"`) && (await text('.dev[data-open="i"] .pill.chg')) === T_.pill, await ev(`return [...r.querySelectorAll('.pill.chg')].length`));
@@ -48,6 +48,10 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] Chip gewählt: nur die drei Geräte, nach Stand (81, 67, 64)`, await wait(`return [...r.querySelectorAll(".dev")].map(d=>d.dataset.open).join() === "i,j,e"`), await ev(`return [...r.querySelectorAll(".dev")].map(d=>d.dataset.open).join()`));
   check(`[${tag}] Stand, Start und Dauer: "${T_.info1}"`, (await text('.dev[data-open="i"] .chg-sub')) === T_.info1, await text('.dev[data-open="i"] .chg-sub'));
   check(`[${tag}] Füllstandsbalken 81 %`, (await ev(`return r.querySelector('.dev[data-open="i"] .chg-bar i').style.width`)) === "81%");
+  // Ziel unter 100 % (1.41.0, docs/mockups/charge-target-v1, C): Strich, Zahl und schraffierter Rest nur beim Türschloss ("Voll ab" 80 %)
+  const goal = await ev(`const b = r.querySelector('.dev[data-open="i"] .chg-bar'); return [b.classList.contains("has-goal"), b.querySelector(".chg-tick")?.style.left, b.querySelector(".chg-goal")?.textContent, b.querySelector(".chg-rest")?.style.left, b.title]`);
+  check(`[${tag}] Ziel 80 % im Balken (Strich, Zahl, Rest, Tipp)`, JSON.stringify(goal) === JSON.stringify([true, "80%", "80", "80%", T_.goal]), JSON.stringify(goal));
+  check(`[${tag}] ohne eigenes Ziel (100 %) bleibt der Balken wie er war`, await ev(`const b = r.querySelector('.dev[data-open="j"] .chg-bar'); return !b.classList.contains("has-goal") && !b.querySelector(".chg-tick") && b.querySelector("i").style.width === "67%"`));
   if (mobile) check(`[${tag}] Handy: Zeile mit grünem Streifen`, await ev(`return r.querySelector('.mrow.dev[data-open="i"]').classList.contains("chg")`));
   await p.screenshot({ path: `${outDir}/chargechip-chip-${tag.replace("/", "-")}.png` });
   // Chip wieder ab
@@ -57,6 +61,8 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await tap('.dev[data-open="i"]');
   await wait(`return r.querySelector("dialog.device")?.open`);
   check(`[${tag}] Popup: Kachel Batterie "${T_.tile}"`, await wait(`return [...r.querySelectorAll("dialog.device .st-tile")].some(t=>t.innerText.replace(/\\s+/g," ").includes(${JSON.stringify(T_.tile)}))`));
+  check(`[${tag}] Popup: Balken mit Ziel in der Kachel`, await wait(`const b = r.querySelector("dialog.device .st-tile .chg-bar.has-goal"); return !!b && b.querySelector(".chg-goal")?.textContent === "80" && b.querySelector("i").style.width !== ""`));
+  await p.screenshot({ path: `${outDir}/chargechip-popup-${tag.replace("/", "-")}.png` });
   await ctx.close();
   check(`[${tag}] keine JS-Fehler`, errors.length === 0, errors.join("; "));
 }

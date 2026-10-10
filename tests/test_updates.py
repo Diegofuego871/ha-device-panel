@@ -49,7 +49,7 @@ async def test_instant_collects_in_one_message(hass: HomeAssistant, freezer) -> 
     await _wait(hass, freezer, 4)
     assert len(calls) == 1
     data = calls[0].data
-    assert data["title"] == "Home Assistant update"
+    assert data["title"] == "⬆️ Home Assistant update"
     assert data["message"] == "2 available:\n• Home Assistant Core 2026.10.2 → 2026.10.3\n• Mosquitto broker 6.5.0 → 6.5.1"
     assert data["data"]["url"] == "/config/updates"
     # Dasselbe Update nicht noch einmal

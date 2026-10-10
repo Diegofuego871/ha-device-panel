@@ -105,7 +105,7 @@ async def test_push_for_integration_and_device(hass: HomeAssistant) -> None:
     # Nur die Integration "test" ist eingeschaltet
     assert len(calls) == 1
     data = calls[0].data
-    assert data["title"] == "Charged: Zahnbürste"
+    assert data["title"] == "🔋 Charged: Zahnbürste"
     assert data["message"] == "100 % · in < 1 min from 30 % · Büro"
     # Gerät schaltet ein: die andere Integration meldet jetzt auch
     await async_set_device_settings(hass, other.id, charge=True)
@@ -114,7 +114,7 @@ async def test_push_for_integration_and_device(hass: HomeAssistant) -> None:
     await hass.async_block_till_done()
     hass.states.async_set(other_eid, "100", {"device_class": "battery", "unit_of_measurement": "%"})
     await hass.async_block_till_done()
-    assert [c.data["title"] for c in calls] == ["Charged: Zahnbürste", "Charged: Wegwerf"]
+    assert [c.data["title"] for c in calls] == ["🔋 Charged: Zahnbürste", "🔋 Charged: Wegwerf"]
     # Gerät schaltet aus, obwohl die Integration an ist
     await async_set_device_settings(hass, device.id, charge=False)
     await hass.data[DATA_CHARGE].async_rebuild()
@@ -158,7 +158,7 @@ def test_charging_by_level_rise_then_full_or_drop() -> None:
     assert n.charging("d", 300, OPTS) is None  # Anstieg 8 < 20
     n.step("d", 50, 400, OPTS)
     info = n.charging("d", 400, OPTS)
-    assert info == {"level": 50, "from": 22, "since": 200, "source": "level"}
+    assert info == {"level": 50, "from": 22, "since": 200, "full": 100, "source": "level"}
     # Lange ohne Anstieg: unbekannt, nicht mehr "lädt"
     assert n.charging("d", 400 + 3 * 3600, OPTS) is None
     # Entladen (fünf Punkte unter dem Höchststand): der Tiefpunkt beginnt neu
@@ -196,7 +196,7 @@ async def test_charging_flag_in_list_and_entity_wins(hass: HomeAssistant) -> Non
         hass.states.async_set(ent, "55", {"device_class": "battery", "unit_of_measurement": "%"})
     await hass.async_block_till_done()
     by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
-    assert by_name["Handy"]["charging"] == {"level": 55, "from": 20, "since": by_name["Handy"]["charging"]["since"], "source": "level"}
+    assert by_name["Handy"]["charging"] == {"level": 55, "from": 20, "since": by_name["Handy"]["charging"]["since"], "full": 100, "source": "level"}
     # Gleicher Anstieg, aber Lademeldung aus: nie "lädt" (Schwanken eines Sensors ist kein Laden)
     assert by_name["Roboter"]["charging"] is None
     # Lademeldung am Roboter eingeschaltet: derselbe Anstieg zählt jetzt
@@ -240,7 +240,7 @@ async def test_device_own_full_and_rise(hass: HomeAssistant) -> None:
     for ent in (entity, other_entity):
         hass.states.async_set(ent, "96", {"device_class": "battery", "unit_of_measurement": "%"})
     await hass.async_block_till_done()
-    assert len(calls) == 1 and calls[0].data["title"] == "Charged: Handy"
+    assert len(calls) == 1 and calls[0].data["title"] == "🔋 Charged: Handy"
     # Zurück auf global
     await async_set_device_settings(hass, device.id, charge_full=None, charge_rise=None)
     assert device_settings(hass)["charge_full"] == {} and device_settings(hass)["charge_rise"] == {}
@@ -325,7 +325,7 @@ async def test_charge_stopped_when_level_stalls(hass: HomeAssistant, freezer) ->
     assert notifier.check_stalls(time.time()) == [on.id]  # "Wegwerf" hat keine Lademeldung: nie beendet
     await hass.async_block_till_done()
     assert notifier.charging(on.id, time.time(), opts) is None
-    assert len(calls) == 1 and calls[0].data["title"] == "Charging stopped: Zahnbürste"
+    assert len(calls) == 1 and calls[0].data["title"] == "🔌 Charging stopped: Zahnbürste"
     assert calls[0].data["message"].startswith("55 % · ") and calls[0].data["message"].endswith("level unchanged for 15 min")
     texts = [e["text"] for e in activity.snapshot(hass)["entries"] if e["title"] == "Zahnbürste"]
     assert any(t.startswith("charging stopped at 55 % (full from 100 %): level unchanged for 15 min, sending") for t in texts)
@@ -401,7 +401,7 @@ async def test_stall_and_stop_per_integration_and_device(hass: HomeAssistant, fr
     freezer.tick(timedelta(minutes=25))
     assert notifier.check_stalls(time.time()) == [a.id]  # Zahnbürste: 30 Min. der Integration; Push an
     await hass.async_block_till_done()
-    assert [c.data["title"] for c in calls] == ["Charging stopped: Zahnbürste"] and calls[0].data["message"].endswith("level unchanged for 30 min")
+    assert [c.data["title"] for c in calls] == ["🔌 Charging stopped: Zahnbürste"] and calls[0].data["message"].endswith("level unchanged for 30 min")
     # Zurück auf Integration bzw. global
     await async_set_device_settings(hass, b.id, charge_stall=None, charge_stop=None)
     assert device_settings(hass)["charge_stall"] == {} and device_settings(hass)["charge_stop"] == {}
