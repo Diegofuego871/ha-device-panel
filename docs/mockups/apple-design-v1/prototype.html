@@ -1,0 +1,507 @@
+<title>Device Panel Prototyp</title>
+<style>
+/* Layout: ein Handy-Rahmen in der Seitenmitte, darin die Geräteliste; das Popup ist ein Blatt, das sich ziehen lässt. */
+:root {
+  /* dunkel zuerst, wie das Panel in Home Assistant */
+  --bg: #0b0d11;
+  --app: #12151a;
+  --card: #1a1e25;
+  --sheet: #1b1f27;
+  --text: #eef1f6;
+  --text2: #9ba3b1;
+  --text3: #6c7584;
+  --line: rgba(255,255,255,.09);
+  --glass: rgba(255,255,255,.07);
+  --glass-on: rgba(255,255,255,.17);
+  --edge: rgba(255,255,255,.17);
+  --primary: #1fa8f2;
+  --ok: #43b05c;
+  --warn: #f5a524;
+  --bad: #f0605d;
+  --shadow: rgba(0,0,0,.55);
+  --font: ui-sans-serif, system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #e6e9ef; --app: #f4f6fa; --card: #ffffff; --sheet: #ffffff; --text: #12161c; --text2: #5a6372; --text3: #8a93a1;
+  --line: rgba(10,20,40,.10); --glass: rgba(10,20,40,.06); --glass-on: rgba(255,255,255,.95); --edge: rgba(255,255,255,.9);
+  --primary: #0a84d6; --ok: #2f9a49; --warn: #d98a06; --bad: #d64541; --shadow: rgba(20,30,50,.28); color-scheme: light; } }
+:root[data-theme="light"] {
+  --bg: #e6e9ef; --app: #f4f6fa; --card: #ffffff; --sheet: #ffffff; --text: #12161c; --text2: #5a6372; --text3: #8a93a1;
+  --line: rgba(10,20,40,.10); --glass: rgba(10,20,40,.06); --glass-on: rgba(255,255,255,.95); --edge: rgba(255,255,255,.9);
+  --primary: #0a84d6; --ok: #2f9a49; --warn: #d98a06; --bad: #d64541; --shadow: rgba(20,30,50,.28); color-scheme: light; }
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body { margin: 0; padding-inline: 16px; padding-block: 12px; background: var(--bg); color: var(--text); font: 15px/1.4 var(--font); -webkit-font-smoothing: antialiased; display: flex; justify-content: center; }
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
+h1, h2, h3, p { margin: 0; }
+
+.frame { position: relative; width: 100%; max-width: 420px; height: 100%; max-height: 860px; border-radius: 30px; overflow: hidden; background: #000; box-shadow: 0 18px 60px var(--shadow); isolation: isolate; }
+.app { position: absolute; inset: 0; background: var(--app); transform-origin: 50% 0; will-change: transform; overflow: hidden; display: flex; flex-direction: column; }
+.top { flex: none; display: flex; align-items: center; gap: 10px; padding: 18px 18px 8px; }
+.logo { width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, var(--primary), #5b7cfa); display: grid; place-items: center; }
+.logo svg { width: 18px; height: 18px; }
+.top h1 { font-size: 28px; line-height: 1.1; font-weight: 800; letter-spacing: -.03em; }
+.top .sp { flex: 1; }
+.pill-btn { height: 34px; padding: 0 12px; border-radius: 17px; background: var(--glass); color: var(--text2); font-size: 13px; letter-spacing: .01em; }
+.scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 24px; display: flex; flex-direction: column; gap: 14px; }
+.scroll > * { flex: none; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tile { background: var(--card); border-radius: 22px; padding: 14px 14px 13px; box-shadow: 0 8px 26px -10px var(--shadow); }
+.tile .k { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text3); font-weight: 600; }
+.tile .v { margin-top: 6px; font-size: 30px; line-height: 1.05; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.tile .s { margin-top: 4px; font-size: 12.5px; color: var(--text2); letter-spacing: .01em; }
+.tile.bad { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bad) 55%, transparent), 0 8px 26px -10px var(--shadow); }
+.tile.bad .v { color: var(--bad); }
+.hint { font-size: 13px; color: var(--text2); letter-spacing: .01em; padding: 0 4px; }
+.group { background: var(--card); border-radius: 22px; overflow: hidden; box-shadow: 0 8px 26px -10px var(--shadow); }
+.group-t { padding: 14px 16px 6px; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text3); }
+.group-t.bad { color: var(--bad); }
+.row { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 16px; text-align: left; }
+.row + .row::before { content: ""; position: absolute; left: 62px; right: 0; top: 0; height: 1px; background: var(--line); }
+.av { flex: none; width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; font-weight: 700; font-size: 13px; color: #fff; }
+.av.bad { background: color-mix(in srgb, var(--bad) 80%, #000); } .av.ok { background: color-mix(in srgb, var(--primary) 70%, #000); }
+.row .m { flex: 1; min-width: 0; }
+.row .n { font-size: 16px; font-weight: 600; letter-spacing: -.012em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .d { font-size: 12.5px; color: var(--text2); letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .r { text-align: right; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.row .r small { display: block; font-size: 11.5px; font-weight: 500; color: var(--text2); }
+.row .r.bad { color: var(--bad); }
+.chg-pill { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 8px; font-size: 11px; font-weight: 600; color: var(--ok); background: color-mix(in srgb, var(--ok) 16%, transparent); }
+
+/* Druck-Rückmeldung: sofort beim Aufsetzen, 3 % kleiner, federt zurück */
+[data-press] { transition: transform .32s cubic-bezier(.2,.9,.25,1.25), background-color .2s; will-change: transform; }
+[data-press].pressed { transform: scale(.97); transition: transform .1s ease-out, background-color .1s; }
+.row[data-press].pressed { background: var(--glass); transform: none; }
+
+/* Blatt: Material B (durchscheinend, Unschärfe, helle Oberkante), Hintergrund wird abgedunkelt und zurückgeschoben */
+.scrim { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 5; -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); }
+.scrim.on { pointer-events: auto; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; display: flex; flex-direction: column; border-radius: 28px 28px 0 0; overflow: hidden; visibility: hidden; transform: translate3d(0, 110%, 0); will-change: transform;
+  background: color-mix(in srgb, var(--sheet) 74%, transparent); -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%);
+  box-shadow: 0 -14px 50px var(--shadow), inset 0 1px 0 var(--edge); }
+.solid .sheet { background: var(--sheet); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.grab { flex: none; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.grab:active { cursor: grabbing; }
+.handle { width: 38px; height: 5px; border-radius: 3px; background: var(--text3); opacity: .6; margin: 8px auto 4px; }
+.sh-head { display: flex; align-items: center; gap: 12px; padding: 8px 14px 10px 18px; }
+.sh-head .av { width: 46px; height: 46px; border-radius: 14px; font-size: 16px; }
+.sh-head .t { flex: 1; min-width: 0; }
+.sh-head h2 { font-size: 24px; line-height: 1.12; font-weight: 800; letter-spacing: -.025em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sh-head .st { margin-top: 2px; font-size: 13px; color: var(--text2); letter-spacing: .01em; }
+.sh-head .st b { font-weight: 600; }
+.x { flex: none; width: 34px; height: 34px; border-radius: 17px; background: var(--glass); display: grid; place-items: center; }
+.x svg { width: 16px; height: 16px; }
+.sh-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 30px; -webkit-overflow-scrolling: touch; }
+.sheet.partial .sh-body { overflow: hidden; }
+
+/* Segmente: der Zeiger wandert mit einer Feder */
+.seg { position: relative; display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 14px; background: var(--glass); margin: 8px 0 14px; }
+.seg button { position: relative; z-index: 1; flex: 1 0 auto; padding: 8px 9px; border-radius: 10px; font-size: 13px; font-weight: 500; color: var(--text2); letter-spacing: .005em; white-space: nowrap; transition: color .2s; }
+.seg button.on { color: var(--text); font-weight: 650; }
+.seg .ind { position: absolute; left: 0; top: 0; z-index: 0; border-radius: 10px; background: var(--glass-on); box-shadow: 0 1px 6px rgba(0,0,0,.28); will-change: transform; }
+.seg button .dot { position: absolute; top: 5px; right: 6px; width: 6px; height: 6px; border-radius: 3px; background: var(--primary); }
+.pane { animation: paneIn .24s ease-out both; }
+@keyframes paneIn { from { opacity: 0; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: none; } }
+.rm .pane { animation: fadeIn .18s linear both; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+h3 { margin: 18px 4px 8px; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text3); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stile { background: var(--glass); border-radius: 18px; padding: 12px 13px; min-width: 0; }
+.stile .k { font-size: 12px; color: var(--text2); letter-spacing: .01em; }
+.stile .v { margin-top: 4px; font-size: 22px; font-weight: 750; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+.stile .v small { font-size: 13px; font-weight: 500; color: var(--text2); letter-spacing: 0; }
+.stile .s { margin-top: 3px; font-size: 12px; color: var(--text2); letter-spacing: .01em; }
+.stile.wide { grid-column: 1 / -1; }
+.stile .v.txt { font-size: 16px; line-height: 1.25; letter-spacing: -.015em; font-weight: 700; }
+.bar { position: relative; height: 7px; border-radius: 4px; background: var(--glass); margin: 12px 0 10px; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--ok); z-index: 1; will-change: width; }
+.bar .rest { position: absolute; top: 0; bottom: 0; right: 0; border-radius: 0 4px 4px 0; background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--text) 24%, transparent) 0 3px, transparent 3px 6px); }
+.bar .tick { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--text); z-index: 2; }
+.bar .num { position: absolute; top: -20px; transform: translateX(-50%); font-size: 10.5px; line-height: 1; color: var(--text2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bar-wrap { padding-top: 12px; }
+.set { background: var(--glass); border-radius: 18px; padding: 2px 14px; }
+.srow { position: relative; display: flex; align-items: center; gap: 12px; padding: 13px 0; min-height: 52px; }
+.srow + .srow::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--line); }
+.srow .l { flex: 1; min-width: 0; font-size: 15.5px; letter-spacing: -.01em; }
+.srow .l small { display: block; margin-top: 2px; font-size: 12px; color: var(--text2); letter-spacing: .01em; }
+.srow.col { flex-direction: column; align-items: stretch; gap: 0; }
+.srow.col .seg { margin: 8px 0 4px; }
+.sw { flex: none; position: relative; width: 52px; height: 32px; border-radius: 16px; background: var(--glass-on); }
+.sw .kn { position: absolute; left: 2px; top: 2px; width: 28px; height: 28px; border-radius: 14px; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.35); will-change: transform; }
+.sw .tr { position: absolute; inset: 0; border-radius: 16px; background: var(--ok); opacity: 0; }
+.step { flex: none; display: flex; align-items: center; gap: 2px; background: var(--glass-on); border-radius: 12px; }
+.step button { width: 36px; height: 34px; font-size: 19px; line-height: 1; color: var(--primary); }
+.step output { min-width: 66px; text-align: center; font-size: 14.5px; font-variant-numeric: tabular-nums; font-weight: 600; }
+.ent { display: flex; flex-direction: column; background: var(--glass); border-radius: 18px; overflow: hidden; }
+.ent .row { padding: 11px 14px; }
+.ent .row + .row::before { left: 14px; }
+.ent .row .d { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11.5px; }
+.ent .val { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 14px; }
+.note { margin-top: 10px; padding: 0 4px; font-size: 12.5px; color: var(--text2); letter-spacing: .01em; }
+
+.hud { position: absolute; z-index: 20; left: 12px; right: 12px; top: 12px; padding: 9px 12px; border-radius: 14px; background: rgba(0,0,0,.66); color: #fff; font: 12px/1.35 ui-monospace, "SF Mono", Menlo, monospace; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); pointer-events: none; opacity: 0; transition: opacity .15s; }
+.hud.on { opacity: 1; }
+
+.motion { background: var(--card); border-radius: 22px; padding: 6px 16px 14px; box-shadow: 0 8px 26px -10px var(--shadow); }
+.motion h3 { margin-left: 0; }
+.ctl { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 10px 0; }
+.ctl + .ctl { border-top: 1px solid var(--line); }
+.ctl label { font-size: 14.5px; letter-spacing: -.005em; }
+.ctl output { font-size: 13px; color: var(--text2); font-variant-numeric: tabular-nums; }
+.ctl input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--primary); }
+.ctl .sw { grid-row: 1; grid-column: 2; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.rm .scrim, .rm .app { transition: opacity .18s linear; }
+</style>
+
+<div class="frame" id="frame">
+  <div class="app" id="app">
+    <div class="top">
+      <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="#fff" d="M3 13h3l3-8 4 14 3-8h5v2h-3.6l-2.6 6.7L9.8 9.9 8 15H3z"/></svg></div>
+      <h1>Geräte</h1>
+      <span class="sp"></span>
+      <button class="pill-btn" data-press id="toMotion" type="button">Bewegung</button>
+    </div>
+    <div class="scroll" id="list">
+      <div class="tiles">
+        <div class="tile"><div class="k">Verfügbarkeit</div><div class="v">68,8 %</div><div class="s">11 online · Ø 24 Std. 91,6 %</div></div>
+        <div class="tile bad"><div class="k">Gerade ausgefallen</div><div class="v">4</div><div class="s">längster seit 3 T. 4 Std.</div></div>
+      </div>
+      <p class="hint">Tippe ein Gerät. Greife das Blatt am Griff oder an der Kopfzeile, ziehe es mit Schwung nach unten oder auf halbe Höhe, und greife es mitten in der Bewegung wieder. Beispieldaten.</p>
+      <div class="group" id="g-bad"><div class="group-t bad">Ausgefallen · 4</div></div>
+      <div class="group" id="g-ok"><div class="group-t">Online · 5</div></div>
+      <div class="motion" id="motion">
+        <h3>Bewegung</h3>
+        <div class="ctl"><label for="c-resp">Antwort beim Öffnen</label><output id="o-resp"></output><input id="c-resp" type="range" min="0.2" max="0.8" step="0.02" value="0.42"></div>
+        <div class="ctl"><label for="c-damp">Dämpfung beim Öffnen</label><output id="o-damp"></output><input id="c-damp" type="range" min="0.5" max="1" step="0.05" value="1"></div>
+        <div class="ctl"><label for="c-slow">Zeitlupe</label><output id="o-slow"></output><input id="c-slow" type="range" min="0.1" max="1" step="0.05" value="1"></div>
+        <div class="ctl"><label id="l-rm">Reduzierte Bewegung</label><button class="sw" id="t-rm" role="switch" aria-labelledby="l-rm" aria-checked="false" type="button"><span class="tr"></span><span class="kn"></span></button></div>
+        <div class="ctl"><label id="l-tr">Transparenz reduzieren</label><button class="sw" id="t-tr" role="switch" aria-labelledby="l-tr" aria-checked="false" type="button"><span class="tr"></span><span class="kn"></span></button></div>
+        <div class="ctl"><label id="l-dbg">Messwerte beim Ziehen</label><button class="sw" id="t-dbg" role="switch" aria-labelledby="l-dbg" aria-checked="false" type="button"><span class="tr"></span><span class="kn"></span></button></div>
+        <p class="note">Nach dem Loslassen läuft das Blatt mit der Geschwindigkeit deines Fingers weiter und landet beim Ziel, auf das die Bewegung zeigt (Antwort 0,32 s, Dämpfung 0,8). Ein Tipp öffnet es mit den Reglern oben.</p>
+      </div>
+    </div>
+  </div>
+  <div class="scrim" id="scrim"></div>
+  <div class="hud" id="hud" aria-hidden="true"></div>
+  <section class="sheet" id="sheet" aria-label="Gerät" aria-modal="true" role="dialog">
+    <div class="grab" id="grab">
+      <div class="handle"></div>
+      <div class="sh-head">
+        <div class="av ok" id="s-av">TB</div>
+        <div class="t"><h2 id="s-name">Thermostat Bad</h2><div class="st" id="s-st"></div></div>
+        <button class="x" id="s-x" type="button" aria-label="Schliessen"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg></button>
+      </div>
+    </div>
+    <div class="sh-body" id="s-body"><div class="seg" id="tabs" role="tablist"></div><div id="pane"></div></div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s, el) { return (el || document).querySelector(s); };
+  var clamp = function (v, a, b) { return Math.min(b, Math.max(a, v)); };
+  var frame = $("#frame"), app = $("#app"), scrim = $("#scrim"), sheet = $("#sheet"), body = $("#s-body"), hud = $("#hud");
+
+  /* ---------- Einstellungen der Bewegung ---------- */
+  var S = { resp: 0.42, damp: 1, slow: 1, rm: false, debug: false, full: 100 };
+  var mq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  if (mq && mq.matches) S.rm = true;
+
+  /* ---------- Feder: Antwort (Sekunden) und Dämpfungsverhältnis wie bei Apple ---------- */
+  var springs = new Set(), last = 0, running = false;
+  function Spring(x) { this.x = x; this.v = 0; this.t = x; this.k = 0; this.c = 0; this.on = false; this.update = null; this.rest = null; }
+  Spring.prototype.to = function (target, o) {
+    o = o || {};
+    this.t = target;
+    if (S.rm && !o.always) { this.x = target; this.v = 0; this.on = false; springs.delete(this); if (this.update) this.update(this.x); if (this.rest) this.rest(); return this; }
+    if (o.v !== undefined) this.v = o.v;
+    var w = 2 * Math.PI / (o.resp || 0.3);
+    this.k = w * w; this.c = 2 * (o.damp === undefined ? 1 : o.damp) * w;
+    this.on = true; springs.add(this); kick();
+    return this;
+  };
+  Spring.prototype.stop = function () { this.on = false; this.v = 0; springs.delete(this); };
+  Spring.prototype.step = function (dt) {
+    var n = Math.max(1, Math.ceil(dt / 0.004)), h = dt / n, i;
+    for (i = 0; i < n; i++) { var a = -this.k * (this.x - this.t) - this.c * this.v; this.v += a * h; this.x += this.v * h; }
+    if (Math.abs(this.x - this.t) < 0.25 && Math.abs(this.v) < 6) { this.x = this.t; this.v = 0; this.on = false; springs.delete(this); if (this.update) this.update(this.x); if (this.rest) this.rest(); }
+    else if (this.update) this.update(this.x);
+  };
+  function kick() { if (!running) { running = true; last = performance.now(); requestAnimationFrame(frameLoop); } }
+  function frameLoop(now) {
+    var dt = Math.min((now - last) / 1000, 1 / 30) * S.slow; last = now;
+    springs.forEach(function (s) { s.step(dt); });
+    if (springs.size) requestAnimationFrame(frameLoop); else running = false;
+  }
+
+  /* ---------- Beispieldaten (erfunden) ---------- */
+  var DEVICES = [
+    { id: "tb", n: "Thermostat Bad", a: "Klima / Heizung · Matter · Bad", st: "bad", r: "47 Min.", ini: "TB", av: "99,2 %", out: 3, bat: 22, chg: true, stTxt: "Ausgefallen seit 47 Min.", net: "Zuhause-Thread", role: "Endgerät" },
+    { id: "bf", n: "Bewegungsmelder Flur", a: "Bewegung · Zigbee · Flur", st: "bad", r: "2 Std.", ini: "BF", av: "88,4 %", out: 6, bat: 64, chg: false, stTxt: "Ausgefallen seit 2 Std. 5 Min.", net: "Zigbee-Netz 1", role: "Endgerät" },
+    { id: "st", n: "Steckdose Terrasse", a: "Steckdose · WLAN · Terrasse", st: "bad", r: "6 Min.", ini: "ST", av: "95,0 %", out: 2, bat: null, chg: false, stTxt: "Ausgefallen seit 6 Min.", net: "WLAN Haus", role: "Gerät" },
+    { id: "tk", n: "Temperatur Keller", a: "Sensor · BTHome · Keller", st: "bad", r: "≥ 3 T.", ini: "TK", av: "12,0 %", out: 1, bat: 9, chg: false, stTxt: "Ausgefallen seit 3 T. 4 Std.", net: "Bluetooth", role: "Sensor" },
+    { id: "tl", n: "Türschloss Haustür", a: "Schloss · Matter · Eingang", st: "ok", r: "Online", ini: "TH", av: "100 %", out: 0, bat: 81, chg: true, stTxt: "Online", net: "Zuhause-Thread", role: "Schlafendes Endgerät" },
+    { id: "hk", n: "Heizkörper Kinderzimmer", a: "Klima · Z-Wave · Kinderzimmer", st: "ok", r: "Online", ini: "HK", av: "99,8 %", out: 0, bat: 67, chg: true, stTxt: "Online", net: "Z-Wave", role: "Gerät" },
+    { id: "fk", n: "Fensterkontakt Küche", a: "Tür / Fenster · Zigbee · Küche", st: "ok", r: "Online", ini: "FK", av: "97,1 %", out: 2, bat: 64, chg: true, stTxt: "Online · instabil", net: "Zigbee-Netz 1", role: "Endgerät" },
+    { id: "rm", n: "Rauchmelder Flur", a: "Rauchmelder · Zigbee · Flur", st: "ok", r: "Online", ini: "RF", av: "100 %", out: 0, bat: 88, chg: false, stTxt: "Online", net: "Zigbee-Netz 1", role: "Endgerät" },
+    { id: "lw", n: "Lampe Wohnzimmer", a: "Licht · WLAN · Wohnzimmer", st: "ok", r: "Online", ini: "LW", av: "99,9 %", out: 0, bat: null, chg: false, stTxt: "Online", net: "WLAN Haus", role: "Gerät" }
+  ];
+  var cur = DEVICES[0];
+
+  /* ---------- Druck-Rückmeldung ---------- */
+  function press(el) {
+    el.setAttribute("data-press", "");
+    var on = function () { el.classList.add("pressed"); }, off = function () { el.classList.remove("pressed"); };
+    el.addEventListener("pointerdown", on); el.addEventListener("pointerup", off); el.addEventListener("pointercancel", off); el.addEventListener("pointerleave", off);
+  }
+  document.querySelectorAll("[data-press]").forEach(press);
+
+  /* ---------- Liste ---------- */
+  DEVICES.forEach(function (d) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "row"; b.dataset.id = d.id;
+    b.innerHTML = '<span class="av ' + d.st + '">' + d.ini + '</span><span class="m"><span class="n"></span><span class="d"></span></span><span class="r ' + (d.st === "bad" ? "bad" : "") + '"></span>';
+    b.querySelector(".n").textContent = d.n;
+    b.querySelector(".d").textContent = d.a;
+    b.querySelector(".r").innerHTML = d.st === "bad" ? d.r + "<small>ausgefallen</small>" : (d.chg ? '<span class="chg-pill">lädt</span>' : "Online");
+    press(b);
+    b.addEventListener("click", function () { openSheet(d, b); });
+    $(d.st === "bad" ? "#g-bad" : "#g-ok").appendChild(b);
+  });
+  $("#toMotion").addEventListener("click", function () { $("#motion").scrollIntoView({ behavior: S.rm ? "auto" : "smooth", block: "center" }); });
+
+  /* ---------- Blatt: Lage, Rubber-Band, Raster ---------- */
+  var H = 600, DET = [0, 0, 600];
+  function measure() { H = Math.round(frame.clientHeight * 0.9); sheet.style.height = H + "px"; DET = [0, Math.round(H * 0.46), H]; }
+  measure(); window.addEventListener("resize", function () { measure(); if (!drag) { if (isOpen) { ySpring.x = nearestDet(ySpring.x); render(ySpring.x); } else render(H); } });
+  var isOpen = false, drag = null, ySpring = new Spring(H);
+  function rubber(over, dim, c) { c = c || 0.55; return (over * dim * c) / (dim + c * Math.abs(over)); }
+  function nearestDet(v) { return DET.reduce(function (b, d) { return Math.abs(d - v) < Math.abs(b - v) ? d : b; }, DET[0]); }
+  function project(v, d) { d = d || 0.998; return (v / 1000) * d / (1 - d); }
+  function render(y) {
+    var yy = y < 0 ? -rubber(-y, H) : y;
+    sheet.style.transform = "translate3d(0," + yy.toFixed(2) + "px,0)";
+    var p = clamp(1 - Math.max(yy, 0) / H, 0, 1);
+    if (S.rm) { sheet.style.opacity = isOpen ? 1 : 0; scrim.style.opacity = isOpen ? 0.5 : 0; app.style.transform = "none"; app.style.borderRadius = "0"; }
+    else {
+      sheet.style.opacity = 1;
+      scrim.style.opacity = (p * 0.55).toFixed(3);
+      scrim.style.webkitBackdropFilter = scrim.style.backdropFilter = "blur(" + (p * 5).toFixed(1) + "px)";
+      app.style.transform = "scale(" + (1 - 0.05 * p).toFixed(4) + ") translate3d(0," + (p * 4).toFixed(2) + "px,0)";
+      app.style.borderRadius = (p * 26).toFixed(1) + "px";
+    }
+    sheet.classList.toggle("partial", yy > 6);
+    if (p <= 0.001 && !isOpen) sheet.style.visibility = "hidden"; else sheet.style.visibility = "visible";
+  }
+  ySpring.update = function (x) { render(x); };
+  ySpring.rest = function () { if (!isOpen) { sheet.style.visibility = "hidden"; scrim.classList.remove("on"); } };
+
+  function openSheet(d, trigger) {
+    cur = d; fill(d); isOpen = true; scrim.classList.add("on");
+    sheet.style.visibility = "visible";
+    if (!drag) { ySpring.stop(); if (ySpring.x < H * 0.98 && !S.rm) { /* greift mitten in der Bewegung: von hier weiter */ } else ySpring.x = H; }
+    ySpring.to(0, { resp: S.resp, damp: S.damp });
+    if (S.rm) { sheet.style.opacity = 0; requestAnimationFrame(function () { sheet.style.transition = "opacity .18s linear"; sheet.style.opacity = 1; setTimeout(function () { sheet.style.transition = ""; }, 220); }); }
+    sheet.dataset.from = trigger ? trigger.dataset.id : "";
+  }
+  function closeSheet(v) {
+    isOpen = false;
+    ySpring.to(H, { resp: S.resp, damp: 1, v: v || 0 });
+    if (S.rm) { sheet.style.transition = "opacity .18s linear"; sheet.style.opacity = 0; scrim.style.opacity = 0; setTimeout(function () { sheet.style.transition = ""; sheet.style.visibility = "hidden"; scrim.classList.remove("on"); }, 200); }
+  }
+  scrim.addEventListener("click", function () { closeSheet(0); });
+  $("#s-x").addEventListener("click", function () { closeSheet(0); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && isOpen) closeSheet(0); });
+
+  /* ---------- Ziehen: 1:1 mit dem Finger, Geschwindigkeit, Schwung, Landeziel ---------- */
+  function beginDrag(py) {
+    ySpring.stop();                                   // greift die Bewegung mitten im Flug: weiter von der sichtbaren Lage
+    drag = { y0: ySpring.x, p0: py, samples: [{ t: performance.now(), y: ySpring.x }], moved: false };
+  }
+  function moveDrag(py) {
+    var y = drag.y0 + (py - drag.p0);
+    if (Math.abs(py - drag.p0) > 2) drag.moved = true;
+    ySpring.x = y; drag.samples.push({ t: performance.now(), y: y });
+    if (drag.samples.length > 12) drag.samples.shift();
+    render(y);
+    if (S.debug) showHud(y, velocity());
+  }
+  function velocity() {
+    var s = drag.samples, now = performance.now(), i = s.length - 1, j = i;
+    while (j > 0 && now - s[j - 1].t < 110) j--;
+    if (j === i) return 0;
+    var dt = (s[i].t - s[j].t) / 1000;
+    return dt > 0 ? (s[i].y - s[j].y) / dt : 0;
+  }
+  function endDrag() {
+    var y = ySpring.x, v = velocity(), proj = y + project(v), target = nearestDet(proj), momentum = Math.abs(v) > 350;
+    drag = null;
+    if (S.debug) showHud(y, v, proj, target, true);
+    isOpen = target < H;
+    ySpring.to(target, { resp: momentum ? 0.32 : S.resp, damp: momentum ? 0.8 : 1, v: v });
+    if (S.rm && !isOpen) { sheet.style.opacity = 0; scrim.style.opacity = 0; scrim.classList.remove("on"); }
+  }
+  function showHud(y, v, proj, target, done) {
+    hud.classList.add("on");
+    var name = { 0: "ganz offen", 2: "geschlossen" };
+    var t = target === undefined ? "" : "\nZiel " + (target === DET[0] ? "ganz offen" : target === DET[1] ? "halbe Höhe" : "geschlossen");
+    hud.textContent = "Lage " + Math.round(y) + " px · v " + Math.round(v) + " px/s" + (proj !== undefined ? "\nprojiziert auf " + Math.round(proj) + " px" : "") + t;
+    clearTimeout(showHud.t); if (done) showHud.t = setTimeout(function () { hud.classList.remove("on"); }, 1600);
+  }
+  var grab = $("#grab");
+  grab.addEventListener("pointerdown", function (e) {
+    if (e.target.closest("button")) return;
+    grab.setPointerCapture(e.pointerId); beginDrag(e.clientY);
+  });
+  grab.addEventListener("pointermove", function (e) { if (drag && grab.hasPointerCapture(e.pointerId)) moveDrag(e.clientY); });
+  grab.addEventListener("pointerup", function (e) { if (drag) { var moved = drag.moved; if (!moved) { drag = null; ySpring.to(nearestDet(ySpring.x), { resp: S.resp, damp: 1 }); } else endDrag(); } });
+  grab.addEventListener("pointercancel", function () { if (drag) endDrag(); });
+
+  /* Inhalt: nach unten ziehen übernimmt das Blatt, sobald der Inhalt oben steht oder das Blatt nicht ganz offen ist */
+  var tStart = null;
+  body.addEventListener("touchstart", function (e) { tStart = { y: e.touches[0].clientY, engaged: false, atTop: body.scrollTop <= 0 }; }, { passive: true });
+  body.addEventListener("touchmove", function (e) {
+    if (!tStart) return;
+    var py = e.touches[0].clientY, dy = py - tStart.y;
+    if (!tStart.engaged) {
+      var notFull = ySpring.x > 4;
+      if ((notFull && Math.abs(dy) > 6) || (tStart.atTop && body.scrollTop <= 0 && dy > 6)) { tStart.engaged = true; beginDrag(py); drag.p0 = py; }
+    }
+    if (tStart.engaged && drag) { e.preventDefault(); moveDrag(py); }
+  }, { passive: false });
+  function touchEnd() { if (tStart && tStart.engaged && drag) endDrag(); tStart = null; }
+  body.addEventListener("touchend", touchEnd); body.addEventListener("touchcancel", touchEnd);
+
+  /* ---------- Segmente mit Feder-Zeiger ---------- */
+  function segment(host, labels, start, onChange, opts) {
+    opts = opts || {};
+    host.innerHTML = ""; host.classList.add("seg");
+    var ind = document.createElement("div"); ind.className = "ind"; host.appendChild(ind);
+    var btns = labels.map(function (l, i) {
+      var b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "tab"); b.textContent = l;
+      if (opts.dots && opts.dots[i]) { var dot = document.createElement("span"); dot.className = "dot"; b.appendChild(dot); }
+      b.addEventListener("click", function () { select(i, true); }); press(b); host.appendChild(b); return b;
+    });
+    var sx = new Spring(0), sy = new Spring(0), sw = new Spring(0), sh = new Spring(0), first = true, idx = start;
+    function paint() { ind.style.width = sw.x + "px"; ind.style.height = sh.x + "px"; ind.style.transform = "translate3d(" + sx.x + "px," + sy.x + "px,0)"; }
+    [sx, sy, sw, sh].forEach(function (s) { s.update = paint; });
+    function place(animate) {
+      var b = btns[idx], o = { resp: 0.3, damp: 1 };
+      btns.forEach(function (x, i) { x.classList.toggle("on", i === idx); x.setAttribute("aria-selected", i === idx); });
+      if (!animate || first) { sx.x = sx.t = b.offsetLeft; sy.x = sy.t = b.offsetTop; sw.x = sw.t = b.offsetWidth; sh.x = sh.t = b.offsetHeight; paint(); first = false; return; }
+      sx.to(b.offsetLeft, o); sy.to(b.offsetTop, o); sw.to(b.offsetWidth, o); sh.to(b.offsetHeight, o);
+    }
+    function select(i, user) { idx = i; place(true); onChange(i, user); }
+    place(false);
+    var ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(function () { if (host.isConnected) place(false); }) : null; if (ro) ro.observe(host);
+    return { select: function (i) { idx = i; place(true); }, relayout: function () { place(false); } };
+  }
+
+  /* ---------- Schalter und Stepper ---------- */
+  function toggle(btn, on, cb) {
+    var s = new Spring(on ? 1 : 0), kn = $(".kn", btn), tr = $(".tr", btn);
+    function paint(x) { kn.style.transform = "translate3d(" + (x * 20) + "px,0,0)"; tr.style.opacity = clamp(x, 0, 1); }
+    s.update = paint; paint(s.x); btn.setAttribute("aria-checked", on);
+    btn.addEventListener("click", function () { on = !on; btn.setAttribute("aria-checked", on); s.to(on ? 1 : 0, { resp: 0.28, damp: 0.78 }); if (cb) cb(on); });
+    press(btn);
+    return { set: function (v) { on = v; btn.setAttribute("aria-checked", on); s.to(on ? 1 : 0, { resp: 0.28, damp: 0.78 }); } };
+  }
+  function stepper(host, value, min, max, step, fmt, cb) {
+    host.className = "step";
+    host.innerHTML = '<button type="button" aria-label="weniger">−</button><output></output><button type="button" aria-label="mehr">+</button>';
+    var o = $("output", host), bs = host.querySelectorAll("button");
+    function paint() { o.textContent = fmt(value); }
+    bs[0].addEventListener("click", function () { value = clamp(value - step, min, max); paint(); cb(value); });
+    bs[1].addEventListener("click", function () { value = clamp(value + step, min, max); paint(); cb(value); });
+    bs.forEach(press); paint();
+  }
+
+  /* ---------- Ladebalken mit Ziel (Variante C aus dem Panel) ---------- */
+  var bars = [];
+  function chargeBar(level) {
+    var w = document.createElement("div"); w.className = "bar-wrap";
+    w.innerHTML = '<div class="bar"><i></i><b class="rest"></b><b class="tick"></b><span class="num"></span></div>';
+    var bar = $(".bar", w), fill = $("i", w), rest = $(".rest", w), tick = $(".tick", w), num = $(".num", w);
+    fill.style.width = level + "%";
+    var g = new Spring(S.full);
+    g.update = function (x) { rest.style.left = x + "%"; tick.style.left = x + "%"; num.style.left = x + "%"; num.textContent = Math.round(x); var show = x < 99.5; rest.style.display = tick.style.display = num.style.display = show ? "" : "none"; };
+    g.update(g.x);
+    var obj = { el: w, set: function (v) { g.to(v, { resp: 0.36, damp: 0.78 }); } };
+    bars.push(obj); return obj;
+  }
+
+  /* ---------- Blatt füllen ---------- */
+  var tabsApi = null, subApi = null, tab = 0, sub = 0;
+  function fill(d) {
+    $("#s-name").textContent = d.n;
+    var av = $("#s-av"); av.textContent = d.ini; av.className = "av " + d.st;
+    $("#s-st").innerHTML = (d.st === "bad" ? '<b style="color:var(--bad)">' : '<b style="color:var(--ok)">') + d.stTxt + "</b> · " + d.a.split(" · ").slice(-1)[0];
+    body.scrollTop = 0; tab = 0; sub = 0;
+    tabsApi = segment($("#tabs"), ["Übersicht", "Einstellungen", "Entitäten"], 0, function (i) { tab = i; renderPane(); }, { dots: [false, true, false] });
+    renderPane();
+  }
+  function tile(k, v, s, cls) { return '<div class="stile"><div class="k">' + k + '</div><div class="v ' + (cls || "") + '">' + v + '</div>' + (s ? '<div class="s">' + s + "</div>" : "") + "</div>"; }
+  function renderPane() {
+    var pane = $("#pane"); pane.innerHTML = ""; bars = [];
+    var wrap = document.createElement("div"); wrap.className = "pane"; pane.appendChild(wrap); var d = cur;
+    if (tab === 0) {
+      wrap.innerHTML = "<h3>Statistik</h3>" + '<div class="grid2">' + tile("Verfügbarkeit 24 Std.", d.av.replace(" %", "") + " <small>%</small>", d.out ? d.out + " Unterbrüche · längster 17 Min." : "keine Unterbrüche") + tile("Unterbrüche 7 Tage", String(d.out + 1), d.out ? "zusammen 57 Min." : "keine Unterbrüche") + (d.bat != null ? '<div class="stile wide"><div class="k">Batterie</div><div class="v">' + d.bat + ' <small>%</small></div><div id="bar-slot"></div><div class="s">' + (d.chg ? "lädt seit 33 Min. · Ziel " + S.full + " %" : "lädt nicht") + "</div></div>" : "") + "</div>" +
+        "<h3>Verbindung</h3>" + '<div class="grid2">' + tile("Verbindungsart", d.a.split(" · ")[1], "", "txt") + tile("Rolle", d.role, "meldet sich nur zeitweise", "txt") + tile("Netz", d.net, "aus der Diagnose", "txt") + tile("Integration", d.a.split(" · ")[1] === "WLAN" ? "Shelly" : "Matter", "", "txt") + "</div>";
+      if (d.bat != null) { var cb = chargeBar(d.bat); $("#bar-slot", wrap).appendChild(cb.el); cb.set(S.full); if (!d.chg) cb.el.querySelector(".bar").style.opacity = ".6"; }
+    } else if (tab === 1) {
+      wrap.innerHTML = "<h3>Typ und Verbindung</h3>" + '<div class="grid2">' + tile("Typ", "Automatisch", "", "txt") + tile("Verbindungsart", "Automatisch", "", "txt") + "</div><h3>Einstellungen für dieses Gerät</h3><div id=\"sub-host\"></div><div id=\"sub-pane\"></div>";
+      subApi = segment($("#sub-host", wrap), ["Ausfall", "Batterie", "Laden", "Empfang"], sub, function (i) { sub = i; renderSub(); }, { dots: [false, false, true, false] });
+      renderSub();
+    } else {
+      var rows = [["Verfügbarkeit", "binary_sensor.bad_thermostat_online", "an"], ["Batteriestand", "sensor.bad_thermostat_batterie", d.bat != null ? d.bat + " %" : "–"], ["Temperatur", "sensor.bad_thermostat_temperatur", "21,5 °C"], ["Soll-Temperatur", "number.bad_thermostat_soll", "22,0 °C"], ["Fenster offen", "binary_sensor.bad_fenster", "aus"], ["Signalstärke", "sensor.bad_thermostat_lqi", "61 LQI"], ["Firmware", "update.bad_thermostat_firmware", "aktuell"], ["Neustart", "button.bad_thermostat_neustart", "–"], ["Kindersicherung", "switch.bad_thermostat_sperre", "aus"]];
+      wrap.innerHTML = '<h3>Entitäten · 9</h3><div class="ent"></div><p class="note">Beispieldaten, nur zum Antippen.</p>';
+      var host = $(".ent", wrap);
+      rows.forEach(function (r) { var b = document.createElement("button"); b.type = "button"; b.className = "row"; b.innerHTML = '<span class="m"><span class="n"></span><span class="d"></span></span><span class="r val"></span>'; $(".n", b).textContent = r[0]; $(".d", b).textContent = r[1]; $(".val", b).textContent = r[2]; press(b); host.appendChild(b); });
+    }
+  }
+  function renderSub() {
+    var host = $("#sub-pane"); host.innerHTML = ""; bars = [];
+    var w = document.createElement("div"); w.className = "pane"; host.appendChild(w); var d = cur;
+    function srow(label, small) { var r = document.createElement("div"); r.className = "srow"; r.innerHTML = '<div class="l">' + label + (small ? "<small>" + small + "</small>" : "") + '</div>'; return r; }
+    var set = document.createElement("div"); set.className = "set"; w.appendChild(set);
+    if (sub === 0) {
+      var r1 = srow("Ausgefallen nach", "Globaler Wert 5 Min."); var s1 = document.createElement("div"); r1.appendChild(s1); set.appendChild(r1); stepper(s1, 5, 1, 60, 1, function (v) { return v + " Min."; }, function () {});
+      var r2 = srow("Ausfall melden", "Push an · Anhaltend aus"); var b2 = document.createElement("button"); b2.className = "sw"; b2.setAttribute("role", "switch"); b2.innerHTML = '<span class="tr"></span><span class="kn"></span>'; b2.setAttribute("aria-label", "Ausfall melden"); r2.appendChild(b2); set.appendChild(r2); toggle(b2, true);
+    } else if (sub === 1) {
+      if (d.bat == null) { w.innerHTML = '<p class="note">Dieses Gerät meldet keinen Batteriestand.</p>'; return; }
+      var r3 = srow("Schwach ab", "Globaler Wert 10 %"); var s3 = document.createElement("div"); r3.appendChild(s3); set.appendChild(r3); stepper(s3, 10, 1, 50, 1, function (v) { return v + " %"; }, function () {});
+      var r4 = srow("Push bei schwacher Batterie"); var b4 = document.createElement("button"); b4.className = "sw"; b4.setAttribute("role", "switch"); b4.setAttribute("aria-label", "Push bei schwacher Batterie"); b4.innerHTML = '<span class="tr"></span><span class="kn"></span>'; r4.appendChild(b4); set.appendChild(r4); toggle(b4, true);
+    } else if (sub === 2) {
+      if (d.bat == null) { w.innerHTML = '<p class="note">Dieses Gerät meldet keinen Batteriestand.</p>'; return; }
+      var cbar = chargeBar(d.bat); cbar.set(S.full); w.insertBefore(cbar.el, set);
+      var r5 = srow("Laden melden", "Push, sobald das Ziel erreicht ist"); var b5 = document.createElement("button"); b5.className = "sw"; b5.setAttribute("role", "switch"); b5.setAttribute("aria-label", "Laden melden"); b5.innerHTML = '<span class="tr"></span><span class="kn"></span>'; r5.appendChild(b5); set.appendChild(r5); toggle(b5, true);
+      var r6 = srow("Voll ab", "Ziel des Ladebalkens"); r6.classList.add("col"); var h6 = document.createElement("div"); r6.appendChild(h6); set.appendChild(r6);
+      var vals = [100, 95, 90, 80];
+      segment(h6, vals.map(function (v) { return v + " %"; }), vals.indexOf(S.full), function (i) { S.full = vals[i]; bars.forEach(function (b) { b.set(S.full); }); }, {});
+      var r7 = srow("Ladung beendet nach", "Standard 15 Min."); var s7 = document.createElement("div"); r7.appendChild(s7); set.appendChild(r7); stepper(s7, 15, 5, 120, 5, function (v) { return v + " Min."; }, function () {});
+    } else {
+      var r8 = srow("Empfang-Warnung"); r8.classList.add("col"); var h8 = document.createElement("div"); r8.appendChild(h8); set.appendChild(r8); segment(h8, ["Standard", "Eigene", "Aus"], 0, function () {}, {});
+      w.insertAdjacentHTML("beforeend", '<p class="note">Schwach unter LQI 30 gilt der Empfang als schlecht.</p>');
+    }
+  }
+
+  /* ---------- Regler der Bewegung ---------- */
+  function ctl(id, key, out, fmt) { var el = $(id), o = $(out); function p() { o.textContent = fmt(S[key]); } el.addEventListener("input", function () { S[key] = parseFloat(el.value); p(); }); p(); }
+  ctl("#c-resp", "resp", "#o-resp", function (v) { return v.toFixed(2).replace(".", ",") + " s"; });
+  ctl("#c-damp", "damp", "#o-damp", function (v) { return v.toFixed(2).replace(".", ","); });
+  ctl("#c-slow", "slow", "#o-slow", function (v) { return Math.round(v * 100) + " %"; });
+  var tRm = toggle($("#t-rm"), S.rm, function (on) { S.rm = on; document.body.classList.toggle("rm", on); if (!isOpen) render(H); else render(ySpring.x); });
+  document.body.classList.toggle("rm", S.rm);
+  toggle($("#t-tr"), false, function (on) { frame.classList.toggle("solid", on); });
+  toggle($("#t-dbg"), false, function (on) { S.debug = on; if (!on) hud.classList.remove("on"); });
+  if (mq && mq.addEventListener) mq.addEventListener("change", function (e) { S.rm = e.matches; tRm.set(S.rm); document.body.classList.toggle("rm", S.rm); });
+
+  render(H);
+  fill(cur);
+  window.__proto = { open: function (i) { openSheet(DEVICES[i || 0], null); }, y: function () { return ySpring.x; }, isOpen: function () { return isOpen; }, H: function () { return H; }, det: function () { return DET.slice(); }, S: S };
+})();
+</script>
