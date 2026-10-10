@@ -376,6 +376,9 @@ const SUB_TAB_KEYS = {
   devs: ["exclude_devices"],
   conn: ["connection_integrations", "signal_low", "reset_connection", "reset_signal"],
   chips: ["hide_chips", "hide_connections", "connection_order", "chip_order"],
+  // Reiter "Batterie" (seit 1.31.1, docs/mockups/battery-layout-v1, C): Warnung | Laden.
+  bat_warn: ["battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
+  bat_charge: ["notify_charge", "charge_full", "charge_rise", "charge_integrations"],
 };
 
 // Empfang in vier Stufen (gut -> schlecht), Farben wie unifi_dynamic.
@@ -3849,7 +3852,7 @@ class DevicePanel extends HTMLElement {
       // Reiter von "Überwachung und Meldungen", gewählte Integration, Filter der Liste.
       tab: "overview", integ: null, integFilter: "all",
       // Reiter von "Geräte im Panel" und "Darstellung".
-      sub: { devices: "integrations", look: "conn" },
+      sub: { devices: "integrations", look: "conn", battery: "bat_warn" },
     };
     this._renderSettings();
     if (!dialog.open) {
@@ -4974,7 +4977,17 @@ class DevicePanel extends HTMLElement {
       "mtl-b mtl-e"
     );
     const noTarget = d.battery_push && !target;
-    return `${tl}<div class="opt-error mtl-err" data-tl-error="battery_low" ${errors.battery_low ? "" : "hidden"}>${escape(errors.battery_low || "")}</div>
+    // Unterreiter "Warnung | Laden": die Lademeldung hat ihre eigene Ansicht, die
+    // Abweichungen stehen bei der Warnung, zu der sie gehören.
+    const sub = this._settings.sub?.battery === "bat_charge" ? "bat_charge" : "bat_warn";
+    const subTabs = `<div class="sub-tabs" role="tablist">${[["bat_warn", "subBatWarn"], ["bat_charge", "subBatCharge"]]
+      .map(([id, key]) => {
+        const mark = SUB_TAB_KEYS[id].some((k) => changes.has(k)) ? " chg" : "";
+        return `<button type="button" role="tab" class="sub-tab${id === sub ? " on" : ""}${mark}" data-set="subtab" data-group="battery" data-key="${id}" aria-selected="${id === sub}">${escape(t(key))}<span class="sub-n" hidden></span></button>`;
+      })
+      .join("")}</div>`;
+    if (sub === "bat_charge") return `${subTabs}${this._chargeHtml(d, changes, errors, ui)}`;
+    return `${subTabs}${tl}<div class="opt-error mtl-err" data-tl-error="battery_low" ${errors.battery_low ? "" : "hidden"}>${escape(errors.battery_low || "")}</div>
       <div class="opt-short mtl-note">${escape(t("tlBatNote"))}</div>
       <div class="mon-grp">${escape(t("grpNotify"))}</div>
       ${ui.row("battery_push", t("optBatteryPush"), ui.sw("battery_push", t("optBatteryPush")), noTarget ? null : t("optBatteryPushShort"), t("optBatteryPushInfo"), noTarget ? t("noTargetWarn") : null)}
@@ -4997,19 +5010,18 @@ class DevicePanel extends HTMLElement {
       }
       ${ui.row("battery_persistent", t("optPersistent"), ui.sw("battery_persistent", t("optPersistent")), t("optBatteryPersistentShort"), t("optBatteryPersistentInfo"))}
       ${this._batteryFieldsHtml(d, changes)}
-      ${this._chargeHtml(d, changes, errors, ui)}
-      <div class="mon-grp">${escape(t("grpDiff"))}</div>
+      <div class="mon-grp">${escape(t("grpDiffBat", t("optBatteryLow")))}</div>
       ${this._integDiffBox(d, "bat")}${this._overridesHtml("battery")}`;
   }
 
-  // Abschnitt "Laden" im Reiter "Batterie" (seit 1.30.0, docs/mockups/charging-v1): Push, sobald ein
-  // Gerät voll geladen ist. Aus; einschalten pro Integration (hier) oder pro Gerät (Popup).
+  // Unterreiter "Laden" im Reiter "Batterie" (seit 1.30.0, docs/mockups/charging-v1; eigene Ansicht seit
+  // 1.31.1): Push, sobald ein Gerät voll geladen ist. Aus; einschalten pro Integration (hier) oder pro Gerät (Popup).
   _chargeHtml(d, changes, errors, ui) {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
     const target = Boolean(d.notify_service && d.notify_service !== "none");
     const noTarget = d.notify_charge && !target;
-    let html = `<div class="mon-grp">${escape(t("grpCharge"))}</div>${ui.row("notify_charge", t("optCharge"), ui.sw("notify_charge", t("optCharge")), noTarget ? null : t("optChargeShort"), null, noTarget ? t("noTargetWarn") : null)}`;
+    let html = `${ui.row("notify_charge", t("optCharge"), ui.sw("notify_charge", t("optCharge")), noTarget ? null : t("optChargeShort"), null, noTarget ? t("noTargetWarn") : null)}`;
     if (!d.notify_charge) return html;
     const fulls = [...new Set([90, 95, 98, 100, d.charge_full].filter((v) => Number.isInteger(v)))].sort((a, b) => a - b);
     const fullSel = `<span class="opt-select"><select data-cfull aria-label="${escape(t("optChargeFull"))}">${fulls.map((v) => `<option value="${v}"${v === d.charge_full ? " selected" : ""}>${v} %</option>`).join("")}</select>${mdi("chevronDown", 18)}</span>`;

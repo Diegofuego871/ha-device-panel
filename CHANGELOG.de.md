@@ -7,7 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.32.0] - 2026-10-10
+
+Reiter Batterie: Unterreiter "Warnung" und "Laden".
+
+### Geändert
+
+- Einstellungen › Überwachung und Meldungen › Batterie (Wunsch des Nutzers, Mockups
+  `battery-layout-v1`, C): zwei Unterreiter. "Warnung" enthält den Zeitstrahl der Schwelle, die
+  Meldung, ihren Inhalt und die Abweichungen, jetzt mit dem Titel "Abweichungen von "Schwach
+  ab"", damit klar ist, worauf sie sich beziehen. "Laden" enthält die Lademeldung in einer
+  eigenen Ansicht (Schalter, "Voll ab", Anstieg, Integrationen mit Suche, Vorschau). Der Punkt
+  an einem Unterreiter zeigt eine Änderung.
+
 ## [1.31.1] - 2026-10-10
+
+Nicht veröffentlicht; enthalten in 1.32.0.
 
 Behoben: Panel lädt seit Home Assistant 2026.10 langsam oder gar nicht.
 
@@ -1848,7 +1863,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[1.31.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.1
+[1.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.32.0
 [1.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0
 [1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0

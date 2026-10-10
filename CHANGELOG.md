@@ -7,7 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.32.0] - 2026-10-10
+
+Battery tab: sub-tabs "Warning" and "Charging".
+
+### Changed
+
+- Settings › Monitoring and notifications › Battery (requested by the user, mockups
+  `battery-layout-v1`, C): two sub-tabs. "Warning" holds the threshold timeline, the
+  notification, its content and the exceptions, now titled "Exceptions to "Low from"" so it is
+  clear what they refer to. "Charging" holds the charging notification with its own view
+  (switch, "Full from", rise, integrations with search, preview). The dot on a sub-tab shows
+  a change.
+
 ## [1.31.1] - 2026-10-10
+
+Not released; included in 1.32.0.
 
 Fix: panel loads slowly or not at all since Home Assistant 2026.10.
 
@@ -1784,7 +1799,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[1.31.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.1
+[1.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.32.0
 [1.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0
 [1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0

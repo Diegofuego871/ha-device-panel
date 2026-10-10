@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.31.1, Einstellungen in fünf Abschnitten)
+## Stand (1.32.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Reiter Batterie `1.32.0` (Nutzer, 2026-10-10, Mockup `battery-layout-v1`, C): Unterreiter "Warnung | Laden"
+   (`st.sub.battery` = `bat_warn`/`bat_charge`, `SUB_TAB_KEYS`, Handler `data-set="subtab" data-group="battery"`);
+   "Abweichungen" heissen `grpDiffBat` ("Abweichungen von Schwach ab") und stehen bei der Warnung; `_chargeHtml`
+   ohne Überschrift. Test `charge-e2e.mjs`.
    Fehler `1.31.1` (Nutzer, 2026-10-10, hohe Priorität): Panel lud seit HA 2026.10 langsam/gar nicht. Ursache:
    `DeviceEntry.config_entries`/`primary_config_entry` melden ab 2026.10 zur Laufzeit (`report_usage`); das
    Panel las sie hundertfach je Abfrage. Neu `compat.device_entry_ids()` / `device_primary_entry_id()`

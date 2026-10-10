@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { grp: "Laden", title: "Geladen: ", from: "in 1 Std. 40 Min. von 22 %", row: "Laden melden", def: "Wie Integration: aus", on: "Ein", off: "Aus", none: "Ohne Ziel kommt kein Push", one: "1 Änderung" },
-  en: { grp: "Charging", title: "Charged: ", from: "in 1 h 40 min from 22 %", row: "Report charging", def: "Same as integration: off", on: "On", off: "Off", none: "Without a target no push", one: "1 change" },
+  de: { grp: "Laden", subWarn: "Warnung", diff: "Abweichungen von \"Schwach ab\"", title: "Geladen: ", from: "in 1 Std. 40 Min. von 22 %", row: "Laden melden", def: "Wie Integration: aus", on: "Ein", off: "Aus", none: "Ohne Ziel kommt kein Push", one: "1 Änderung" },
+  en: { grp: "Charging", subWarn: "Warning", diff: "Exceptions to \"Low from\"", title: "Charged: ", from: "in 1 h 40 min from 22 %", row: "Report charging", def: "Same as integration: off", on: "On", off: "Off", none: "Without a target no push", one: "1 change" },
 };
 for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const T_ = T[lang];
@@ -34,8 +34,15 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
   await tap('[data-set="section"][data-id="monitor"]');
   await tap('.mon-tab[data-key="battery"]');
+  // Unterreiter "Warnung | Laden" (1.31.1, docs/mockups/battery-layout-v1, C): zuerst die Warnung mit ihren Abweichungen
+  await wait(`return !!r.querySelector('.sub-tab[data-key="bat_warn"]')`);
+  const subs = await ev(`return [...r.querySelectorAll('.sub-tab[data-group="battery"]')].map(b => b.textContent.trim() + (b.classList.contains("on") ? "*" : ""))`);
+  check(`[${tag}] Unterreiter "${T_.subWarn}*" und "${T_.grp}"`, JSON.stringify(subs) === JSON.stringify([T_.subWarn + "*", T_.grp]), JSON.stringify(subs));
+  check(`[${tag}] Warnung: Abweichungen mit Bezug "${T_.diff}", ohne Laden`, await ev(`return [...r.querySelectorAll(".mon-grp")].some(g => g.textContent.trim() === ${JSON.stringify(T_.diff)}) && !r.querySelector('input[data-opt="notify_charge"]')`));
+  await tap('.sub-tab[data-key="bat_charge"]');
   await wait(`return !!r.querySelector('input[data-opt="notify_charge"]')`);
-  check(`[${tag}] Abschnitt "${T_.grp}", Schalter aus, sonst nichts`, (await ev(`return [...r.querySelectorAll(".mon-grp")].map(g=>g.textContent.trim())`)).includes(T_.grp) && !(await ev(`return r.querySelector('input[data-opt="notify_charge"]').checked`)) && !(await ev(`return !!r.querySelector("select[data-cfull], input[data-opt='charge_rise'], input[data-cinteg]")`)));
+  check(`[${tag}] Laden: ohne Abweichungen und Warnschwelle`, await ev(`return ![...r.querySelectorAll(".mon-grp")].some(g => g.textContent.trim() === ${JSON.stringify(T_.diff)}) && !r.querySelector('.mtl')`));
+  check(`[${tag}] Lademeldung: Schalter aus, sonst nichts`, !(await ev(`return r.querySelector('input[data-opt="notify_charge"]').checked`)) && !(await ev(`return !!r.querySelector("select[data-cfull], input[data-opt='charge_rise'], input[data-cinteg]")`)));
   await tap('input[data-opt="notify_charge"]');
   await wait(`return !!r.querySelector('select[data-cfull]')`);
   const base = await ev(`return [r.querySelector("select[data-cfull]").value, r.querySelector('input[data-opt="charge_rise"]').value, r.querySelectorAll("input[data-cinteg]").length, [...r.querySelectorAll("input[data-cinteg]")].some(i=>i.checked)]`);

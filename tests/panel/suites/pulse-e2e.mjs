@@ -51,9 +51,14 @@ for (const lang of ["de", "en"]) {
     // Kachel ist antippbar
     const tile = await ev(`const t=r.querySelector(".hero .kt.pul"); return t ? [t.classList.contains("tap"), t.getAttribute("role"), t.getAttribute("aria-label"), !!t.querySelector(".kchev")] : null`);
     check(`[${tag}] Puls-Kachel antippbar`, JSON.stringify(tile) === JSON.stringify([true, "button", T.open, true]), JSON.stringify(tile));
-    if (mobile) await toPulseTile();
-    await tap(".hero .kt.pul");
-    check(`[${tag}] Fenster offen`, await wait(`return r.querySelector("dialog.pulse-dlg")?.open && !!r.querySelector("dialog.pulse-dlg .plist")`));
+    // Der Neuaufbau der Kachelreihe (Abfrage alle 10 s) kann einen Tipp verschlucken: bis zu drei Versuche.
+    let opened = false;
+    for (let versuch = 1; versuch <= 3 && !opened; versuch++) {
+      if (mobile) await toPulseTile();
+      try { await tap(".hero .kt.pul"); } catch (err) { if (!/not attached|not stable/.test(String(err))) throw err; }
+      opened = await wait(`return r.querySelector("dialog.pulse-dlg")?.open && !!r.querySelector("dialog.pulse-dlg .plist")`);
+    }
+    check(`[${tag}] Fenster offen`, opened);
     check(`[${tag}] Titel und Zusammenfassung`, (await text("dialog.pulse-dlg h2")) === T.title && T.sub.test(await text("dialog.pulse-dlg .dlg-sub")), await text("dialog.pulse-dlg .dlg-sub"));
     check(`[${tag}] Liste: meiste Unterbrüche zuerst`, (await rows()) === expected && expected.length > 0, `${await rows()} / ${expected}`);
     check(`[${tag}] Überschrift der Liste`, (await text("dialog.pulse-dlg h3")) === T.list);
