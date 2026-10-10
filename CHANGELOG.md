@@ -23,6 +23,14 @@ Charging stopped per integration and per device.
   `charge_stop` in `set_device_settings`; `list_devices` has `charge_stall_setting`, `charge_stop_setting` and
   the values in `charge_default`.
 
+### Changed
+
+- Fixed height of the windows (requested by the user): the device pop-up, the settings, the statistics
+  window, the outage window ("pulse"), the area selection and the prompt window keep the same height whatever
+  tab or range is chosen (before, the pop-up got shorter on a tab with less content). Head, tabs and buttons
+  stay in place, the content fills the rest and scrolls when it is longer. Smaller windows with constant
+  content (columns, view) are unchanged.
+
 ### Fixed
 
 - The device pop-up (and the log window) is no longer rebuilt by the periodic refresh (every 10 seconds)

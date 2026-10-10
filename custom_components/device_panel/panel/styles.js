@@ -1186,4 +1186,15 @@ button.lg-row:hover { background: var(--dp-hover); }
   .lg-row { grid-template-columns: 14px auto 1fr; grid-template-areas: "lv tm cat" ". msg msg"; gap: 4px 10px; padding: 10px 2px; }
   .lg-lv { grid-area: lv; } .lg-tm { grid-area: tm; font-weight: 600; color: var(--dp-text); padding-top: 0; align-self: center; } .lg-cat { grid-area: cat; } .lg-msg { grid-area: msg; font-size: 14px; }
 }
+
+/* Feste Höhe (seit 1.41.0, Wunsch des Nutzers): Fenster mit Reitern oder wechselndem Inhalt bleiben gleich hoch, egal welcher Reiter
+   gewählt ist. Kopf, Reiter und Knöpfe bleiben stehen, der Inhalt füllt den Rest und scrollt, wenn er länger ist. */
+dialog.device, dialog.settings, dialog.stat-dlg, dialog.pulse-dlg, dialog.area-sheet, dialog.prompt-dlg { height: min(780px, calc(100% - 48px)); }
+dialog.device[open], dialog.settings[open], dialog.stat-dlg[open], dialog.pulse-dlg[open], dialog.area-sheet[open], dialog.prompt-dlg[open] { display: flex; flex-direction: column; }
+dialog.device[open] > *, dialog.settings[open] > *, dialog.stat-dlg[open] > *, dialog.pulse-dlg[open] > *, dialog.area-sheet[open] > *, dialog.prompt-dlg[open] > * { flex-shrink: 0; }
+dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-dlg[open] > .dlg-body, dialog.pulse-dlg[open] > .dlg-body, dialog.area-sheet[open] > .dlg-body, dialog.prompt-dlg[open] > .dlg-body { flex-grow: 1; }
+@media (max-width: 600px) {
+  dialog.device, dialog.settings, dialog.pulse-dlg, dialog.area-sheet, dialog.prompt-dlg { height: 92%; max-height: 92%; }
+  dialog.stat-dlg { height: 86%; max-height: 86%; }
+}
 `;

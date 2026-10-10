@@ -23,6 +23,14 @@ Ladung beendet pro Integration und pro Gerät.
   Panel); neue Einstellungen `charge_stall` und `charge_stop` in `set_device_settings`; `list_devices` hat
   `charge_stall_setting`, `charge_stop_setting` und die Werte in `charge_default`.
 
+### Geändert
+
+- Feste Höhe der Fenster (Wunsch des Nutzers): das Geräte-Popup, die Einstellungen, das Statistik-Fenster, das
+  Fenster der Unterbrüche ("Puls"), die Bereichsauswahl und das Prompt-Fenster bleiben gleich hoch, egal
+  welcher Reiter oder Zeitraum gewählt ist (vorher wurde das Popup auf einem Reiter mit weniger Inhalt
+  niedriger). Kopf, Reiter und Knöpfe bleiben stehen, der Inhalt füllt den Rest und scrollt, wenn er länger
+  ist. Kleinere Fenster mit gleichbleibendem Inhalt (Spalten, Ansicht) bleiben unverändert.
+
 ### Behoben
 
 - Das Geräte-Popup (und das Protokoll-Fenster) wird vom regelmässigen Abfragen (alle 10 Sekunden) nicht mehr
