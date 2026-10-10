@@ -7,7 +7,25 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.41.0] - 2026-10-10
+
+Ladung beendet pro Integration und pro Gerät.
+
+### Hinzugefügt
+
+- "Ladung beendet nach" und der Push bei beendeter Ladung lassen sich pro Integration und pro Gerät
+  übersteuern (Wunsch des Nutzers), wie "Voll ab" und der Anstieg. Im Geräte-Popup (Reiter Einstellungen)
+  zwei weitere Zeilen: "Ladung beendet nach" (globaler oder Wert der Integration, oder "Eigene Zeit" von 5 bis
+  120 Minuten) und "Push bei beendeter Ladung" (Standard, Ein, Aus), je mit Herkunft. Im Detail einer
+  Integration (Reiter Integrationen, Gruppe "Batterie"): eine Zeit (5 bis 120 Minuten) und Ein/Aus, mit dem
+  Standard (globaler Wert). Die Liste zeigt "Laden an (beendet nach 30 Min., Push bei Ende ein)". Reihenfolge:
+  Gerät, Integration, global. Neue Optionen `charge_stall_integrations` und `charge_stop_integrations` (nur im
+  Panel); neue Einstellungen `charge_stall` und `charge_stop` in `set_device_settings`; `list_devices` hat
+  `charge_stall_setting`, `charge_stop_setting` und die Werte in `charge_default`.
+
 ## [1.40.0] - 2026-10-10
+
+Nicht veröffentlicht; enthalten in 1.41.0.
 
 Ladung beendet.
 
@@ -2025,7 +2043,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[1.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.40.0
+[1.41.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.41.0
 [1.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.39.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0

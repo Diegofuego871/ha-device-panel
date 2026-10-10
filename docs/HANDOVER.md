@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.40.0, Einstellungen in fünf Abschnitten)
+## Stand (1.41.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -423,6 +423,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    eingeschalteter Lademeldung, ohne eigene Ladeanzeige und seit `charge_stall` Minuten (Standard 15, 5..120) ohne Anstieg (`up_at`), bekommt den
    Merker `stopped` (`charging()` gibt dann None; ein Anstieg löscht ihn in `step()`); Protokoll `charge_stopped_*`, Push `_async_push_stop` nur mit
    `notify_charge_stop` (Standard aus). Panel: Zeilen in Batterie › Laden. Tests `test_charge.py`, `charge-e2e.mjs`.
+   Ladung beendet pro Integration und Gerät `1.41.0` (Nutzer): Optionen `charge_stall_integrations` ({Domain: Minuten}, `charge_map`) und
+   `charge_stop_integrations` ({Domain: bool}, `options_api.bool_map`); Geräte-Einstellungen `charge_stall` ({Gerät: 5..120}) und `charge_stop` ({Gerät: bool})
+   in `.storage/device_panel.devices`; `devices.charge_stop_values()` und `device_charge_opts()` (Gerät > Integration > global) liefern `charge_stall` und
+   `notify_charge_stop`, `check_stalls` nutzt sie je Gerät; `charge_default` hat `stall`, `stop`, `stall_integration`, `stop_integration`. Panel: Popup
+   `dev-charge-stall`, `dev-charge-stall-val`, `dev-charge-stop`; Integrations-Detail `data-cstall-integ`, `data-cstop-integ`. Tests `chargestop-e2e.mjs`, `test_charge.py`.
    Übersicht mit allen Meldungen `1.34.0` (Nutzer, 2026-10-10): `_monOverviewHtml` hat fünf Zeilen (`lane(...)`: Ausfall,
    Batterie, Laden `data-lane="charge"`, Neue Geräte, Updates); `lane()` nimmt `sub` (Unterreiter, `data-sub` am
    "Ändern"-Knopf, der Handler setzt `st.sub.battery`) und `id`. Strings `laneCharge`, `tlCharge*`, `tlUpd*`, `laneUpd*`.

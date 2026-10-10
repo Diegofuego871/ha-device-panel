@@ -44,6 +44,7 @@ from .const import (
     CONF_BATTERY_LOW,
     CONF_CHARGE_FULL,
     CONF_CHARGE_RISE,
+    CONF_CHARGE_STALL,
     CONF_NOTIFY_SERVICE,
     INT_RANGES,
     DATA_AVAILABILITY,
@@ -556,6 +557,9 @@ def _signal_setting(value: Any) -> Any:
         # Eigenes "Voll ab" und eigener Anstieg der Lademeldung (seit 1.35.0): None = global.
         vol.Optional("charge_full"): vol.Any(None, vol.All(int, vol.Range(*INT_RANGES[CONF_CHARGE_FULL]))),
         vol.Optional("charge_rise"): vol.Any(None, vol.All(int, vol.Range(*INT_RANGES[CONF_CHARGE_RISE]))),
+        # "Ladung beendet nach" und Push bei beendeter Ladung (seit 1.41.0): None = Integration bzw. global.
+        vol.Optional("charge_stall"): vol.Any(None, vol.All(int, vol.Range(*INT_RANGES[CONF_CHARGE_STALL]))),
+        vol.Optional("charge_stop"): vol.Any(None, bool),
     }
 )
 @websocket_api.require_admin
@@ -567,7 +571,7 @@ async def _ws_set_device_settings(
     if dr.async_get(hass).async_get(msg["device_id"]) is None:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
         return
-    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "charge", "charge_full", "charge_rise") if k in msg}
+    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop") if k in msg}
     await async_set_device_settings(hass, msg["device_id"], **changes)
     # Batterie-Warnung sofort nachführen (Push, anhaltende Benachrichtigung).
     if "battery" in changes and (watch := hass.data.get(DATA_BATTERY)) is not None:

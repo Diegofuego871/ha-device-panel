@@ -7,7 +7,25 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.41.0] - 2026-10-10
+
+Charging stopped per integration and per device.
+
+### Added
+
+- "Charging stopped after" and the push when charging stops can be overridden per integration and per
+  device (requested by the user), like "Full from" and the rise. In the device pop-up (tab Settings) two
+  more rows: "Charging stopped after" (global or integration value, or "Own time" from 5 to 120 minutes) and
+  "Push when charging stops" (default, on, off), each with its origin. In the detail of an integration (tab
+  Integrations, group "Battery"): a time (5 to 120 minutes) and on/off, with the default (global value). The list
+  shows "Charging on (stopped after 30 min, push at end on)". Order: device, integration, global. New options
+  `charge_stall_integrations` and `charge_stop_integrations` (panel only); new settings `charge_stall` and
+  `charge_stop` in `set_device_settings`; `list_devices` has `charge_stall_setting`, `charge_stop_setting` and
+  the values in `charge_default`.
+
 ## [1.40.0] - 2026-10-10
+
+Not released; included in 1.41.0.
 
 Charging stopped.
 
@@ -1960,7 +1978,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[1.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.40.0
+[1.41.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.41.0
 [1.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.39.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0

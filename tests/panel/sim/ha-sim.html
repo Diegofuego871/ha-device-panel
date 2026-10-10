@@ -577,11 +577,11 @@
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
-    notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, notify_charge_stop: false, charge_stall: 15, charge_integrations: [], charge_full_integrations: {}, charge_rise_integrations: {}, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
+    notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, notify_charge_stop: false, charge_stall: 15, charge_integrations: [], charge_full_integrations: {}, charge_rise_integrations: {}, charge_stall_integrations: {}, charge_stop_integrations: {}, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
   };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
-  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, charge: {}, chargeFull: {}, chargeRise: {} };
+  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, charge: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {} };
   window.__connOverrides = {};
   window.__names = {};
   const pushHass = () => {
@@ -770,11 +770,15 @@
           const m = msg.values.type_integrations;
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !TYPE_ORDER.includes(v))) throw { code: "invalid_format", message: "type map" };
         }
-        for (const [key, lo, hi] of [["charge_full_integrations", 50, 100], ["charge_rise_integrations", 5, 80]]) {
+        for (const [key, lo, hi] of [["charge_full_integrations", 50, 100], ["charge_rise_integrations", 5, 80], ["charge_stall_integrations", 5, 120]]) {
           if (key in msg.values) {
             const v = msg.values[key];
             if (!v || typeof v !== "object" || Array.isArray(v) || Object.entries(v).some(([k, n]) => !/^[a-z0-9_]+$/.test(k) || !Number.isInteger(n) || n < lo || n > hi)) throw { code: "invalid_format", message: key };
           }
+        }
+        if ("charge_stop_integrations" in msg.values) {
+          const v = msg.values.charge_stop_integrations;
+          if (!v || typeof v !== "object" || Array.isArray(v) || Object.entries(v).some(([k, b]) => !/^[a-z0-9_]+$/.test(k) || typeof b !== "boolean")) throw { code: "invalid_format", message: "charge_stop_integrations" };
         }
         if ("updates_kinds" in msg.values) {
           const v = msg.values.updates_kinds;
@@ -880,13 +884,19 @@
           else window.__devSettings.signal[msg.device_id] = v;
           out.signal = v;
         }
-        for (const [key, store, lo, hi] of [["charge_full", "chargeFull", 50, 100], ["charge_rise", "chargeRise", 5, 80]]) {
+        for (const [key, store, lo, hi] of [["charge_full", "chargeFull", 50, 100], ["charge_rise", "chargeRise", 5, 80], ["charge_stall", "chargeStall", 5, 120]]) {
           if (key in msg) {
             if (!(msg[key] === null || (Number.isInteger(msg[key]) && msg[key] >= lo && msg[key] <= hi))) throw { code: "invalid_format", message: key };
             if (msg[key] === null) delete window.__devSettings[store][msg.device_id];
             else window.__devSettings[store][msg.device_id] = msg[key];
             out[key] = msg[key];
           }
+        }
+        if ("charge_stop" in msg) {
+          if (!(msg.charge_stop === null || typeof msg.charge_stop === "boolean")) throw { code: "invalid_format", message: "charge_stop" };
+          if (msg.charge_stop === null) delete window.__devSettings.chargeStop[msg.device_id];
+          else window.__devSettings.chargeStop[msg.device_id] = msg.charge_stop;
+          out.charge_stop = msg.charge_stop;
         }
         if ("charge" in msg) {
           if (!(msg.charge === null || typeof msg.charge === "boolean")) throw { code: "invalid_format", message: "charge" };
@@ -1011,9 +1021,11 @@
             charge_setting: window.__devSettings.charge[d.id] ?? null,
             charge_full_setting: window.__devSettings.chargeFull[d.id] ?? null,
             charge_rise_setting: window.__devSettings.chargeRise[d.id] ?? null,
+            charge_stall_setting: window.__devSettings.chargeStall[d.id] ?? null,
+            charge_stop_setting: window.__devSettings.chargeStop[d.id] ?? null,
             // Lädt gerade (seit 1.35.0): window.__charging = { Geräte-ID: { level, from, ago (Sekunden) } }
             charging: window.__charging?.[d.id] ? { level: window.__charging[d.id].level, from: window.__charging[d.id].from ?? null, since: new Date(Date.now() - (window.__charging[d.id].ago ?? 3600) * 1000).toISOString(), source: "level" } : null,
-            charge_default: { full: (window.__opts.charge_full_integrations || {})[d.integration?.domain] ?? window.__opts.charge_full, rise: (window.__opts.charge_rise_integrations || {})[d.integration?.domain] ?? window.__opts.charge_rise, full_integration: (window.__opts.charge_full_integrations || {})[d.integration?.domain] != null ? d.integration.domain : null, rise_integration: (window.__opts.charge_rise_integrations || {})[d.integration?.domain] != null ? d.integration.domain : null, on: Boolean(window.__opts.notify_charge) && (window.__opts.charge_integrations || []).includes(d.integration?.domain), integration: (window.__opts.charge_integrations || []).includes(d.integration?.domain) ? d.integration.domain : null },
+            charge_default: { stall: (window.__opts.charge_stall_integrations || {})[d.integration?.domain] ?? window.__opts.charge_stall, stall_integration: (window.__opts.charge_stall_integrations || {})[d.integration?.domain] != null ? d.integration.domain : null, stop: (window.__opts.charge_stop_integrations || {})[d.integration?.domain] ?? Boolean(window.__opts.notify_charge_stop), stop_integration: (window.__opts.charge_stop_integrations || {})[d.integration?.domain] != null ? d.integration.domain : null, full: (window.__opts.charge_full_integrations || {})[d.integration?.domain] ?? window.__opts.charge_full, rise: (window.__opts.charge_rise_integrations || {})[d.integration?.domain] ?? window.__opts.charge_rise, full_integration: (window.__opts.charge_full_integrations || {})[d.integration?.domain] != null ? d.integration.domain : null, rise_integration: (window.__opts.charge_rise_integrations || {})[d.integration?.domain] != null ? d.integration.domain : null, on: Boolean(window.__opts.notify_charge) && (window.__opts.charge_integrations || []).includes(d.integration?.domain), integration: (window.__opts.charge_integrations || []).includes(d.integration?.domain) ? d.integration.domain : null },
             notify_mute_until: window.__devSettings.mute[d.id] || null,
             signal_setting: window.__devSettings.signal[d.id] ?? null,
             // Wie options_api.signal_default (seit 1.17.0): Integration vor global, Einheit muss passen.

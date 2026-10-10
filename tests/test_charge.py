@@ -266,6 +266,7 @@ async def test_integration_own_full_and_rise(hass: HomeAssistant) -> None:
     assert by_name["Hue-Lampe"]["charge_default"]["full"] == 100 and by_name["Hue-Lampe"]["charge_default"]["full_integration"] is None
     # Prüfung der Zuordnung
     import pytest  # noqa: PLC0415
+    import pytest  # noqa: PLC0415
     import voluptuous as vol  # noqa: PLC0415
 
     assert charge_map("charge_full")({"zha": 95}) == {"zha": 95} and charge_map("charge_full")(None) == {}
@@ -364,3 +365,61 @@ async def test_charge_stall_skips_device_with_indicator(hass: HomeAssistant, fre
     await hass.async_block_till_done()
     freezer.tick(timedelta(minutes=30))
     assert notifier.check_stalls(time.time()) == [] and calls == []  # die Ladeanzeige des Geräts meldet es selbst
+
+
+async def test_stall_and_stop_per_integration_and_device(hass: HomeAssistant, freezer, hass_ws_client) -> None:
+    """"Ladung beendet nach" und Push dazu (1.41.0): Gerät vor Integration vor global."""
+    from custom_components.device_panel.devices import async_list_devices, charge_stop_values, device_charge_opts, device_settings  # noqa: PLC0415
+
+    calls = async_mock_service(hass, "notify", "handy")
+    a, a_entity = _device(hass, "Zahnbürste", 30)  # Integration "test": eigene 30 Min., Push an
+    b, b_entity = _device(hass, "Rasierer", 30)  # wie Integration, aber am Gerät 5 Min. und Push aus
+    await _setup(hass, charge_stall_integrations={"test": 30}, charge_stop_integrations={"test": True})
+    notifier = hass.data[DATA_CHARGE]
+    opts = values_from({"charge_stall_integrations": {"test": 30}, "charge_stop_integrations": {"test": True}})
+    assert charge_stop_values(opts, "test") == (30, True, "test", "test") and charge_stop_values(opts, "andere") == (15, False, None, None)
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_device_settings", "device_id": b.id, "charge_stall": 5, "charge_stop": False})
+    assert (await client.receive_json())["success"]
+    for i, bad in enumerate(({"charge_stall": 4}, {"charge_stall": 121}, {"charge_stop": "ja"}), start=2):
+        await client.send_json({"id": i, "type": f"{DOMAIN}/set_device_settings", "device_id": b.id, **bad})
+        assert (await client.receive_json())["success"] is False
+    assert device_settings(hass)["charge_stall"] == {b.id: 5} and device_settings(hass)["charge_stop"] == {b.id: False}
+    copts_b = device_charge_opts(hass, opts, b.id)
+    copts_a = device_charge_opts(hass, opts, a.id)
+    assert (copts_b["charge_stall"], copts_b["notify_charge_stop"], copts_a["charge_stall"], copts_a["notify_charge_stop"]) == (5, False, 30, True)
+    by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
+    assert by_name["Rasierer"]["charge_stall_setting"] == 5 and by_name["Rasierer"]["charge_stop_setting"] is False
+    assert by_name["Zahnbürste"]["charge_stall_setting"] is None and by_name["Zahnbürste"]["charge_default"]["stall"] == 30 and by_name["Zahnbürste"]["charge_default"]["stall_integration"] == "test" and by_name["Zahnbürste"]["charge_default"]["stop"] is True
+    for ent in (a_entity, b_entity):
+        _bat(hass, ent, 55)
+    await hass.async_block_till_done()
+    freezer.tick(timedelta(minutes=6))
+    assert notifier.check_stalls(time.time()) == [b.id]  # Rasierer: 5 Min. am Gerät; Push aus
+    await hass.async_block_till_done()
+    assert calls == []
+    freezer.tick(timedelta(minutes=25))
+    assert notifier.check_stalls(time.time()) == [a.id]  # Zahnbürste: 30 Min. der Integration; Push an
+    await hass.async_block_till_done()
+    assert [c.data["title"] for c in calls] == ["Charging stopped: Zahnbürste"] and calls[0].data["message"].endswith("level unchanged for 30 min")
+    # Zurück auf Integration bzw. global
+    await async_set_device_settings(hass, b.id, charge_stall=None, charge_stop=None)
+    assert device_settings(hass)["charge_stall"] == {} and device_settings(hass)["charge_stop"] == {}
+
+
+def test_bool_and_stall_maps_validate() -> None:
+    import pytest  # noqa: PLC0415
+    import voluptuous as vol  # noqa: PLC0415
+
+    from custom_components.device_panel.options_api import bool_map, charge_map  # noqa: PLC0415
+
+    assert bool_map({"zha": True, "hue": False}) == {"hue": False, "zha": True} and bool_map(None) == {}
+    for bad in ({"zha": 1}, {"ZHA!": True}, [1]):
+        with pytest.raises(vol.Invalid):
+            bool_map(bad)
+    assert charge_map("charge_stall")({"zha": 10}) == {"zha": 10}
+    for bad in ({"zha": 4}, {"zha": 121}):
+        with pytest.raises(vol.Invalid):
+            charge_map("charge_stall")(bad)
+    assert values_from({"charge_stall_integrations": {"zha": 4}, "charge_stop_integrations": {"zha": "x"}})["charge_stall_integrations"] == {}
+    assert values_from({"charge_stop_integrations": {"zha": "x"}})["charge_stop_integrations"] == {}

@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "94"
+PANEL_VERSION = "95"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -134,6 +134,9 @@ CONF_NOTIFY_CHARGE_STOP = "notify_charge_stop"
 # Eigenes "Voll ab" und eigener Anstieg pro Integration (seit 1.35.0): {Domain: Wert}; das Gerät geht vor.
 CONF_CHARGE_FULL_INTEGRATIONS = "charge_full_integrations"
 CONF_CHARGE_RISE_INTEGRATIONS = "charge_rise_integrations"
+# "Ladung beendet nach" und der Push dazu pro Integration (seit 1.41.0): {Domain: Minuten} bzw. {Domain: bool}; das Gerät geht vor.
+CONF_CHARGE_STALL_INTEGRATIONS = "charge_stall_integrations"
+CONF_CHARGE_STOP_INTEGRATIONS = "charge_stop_integrations"
 DEFAULT_CHARGE_RISE = 20
 CONF_CHARGE_INTEGRATIONS = "charge_integrations"
 CHARGE_JUMP_FROM = 90

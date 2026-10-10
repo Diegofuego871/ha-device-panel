@@ -36,6 +36,10 @@ from .const import (
     CONF_CHARGE_INTEGRATIONS,
     CONF_CHARGE_RISE,
     CONF_CHARGE_RISE_INTEGRATIONS,
+    CONF_CHARGE_STALL,
+    CONF_CHARGE_STALL_INTEGRATIONS,
+    CONF_CHARGE_STOP_INTEGRATIONS,
+    CONF_NOTIFY_CHARGE_STOP,
     CONF_NOTIFY_CHARGE,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
@@ -411,15 +415,37 @@ def charge_values(opts: dict[str, Any], domain: str | None) -> tuple[int, int, s
     )
 
 
+def charge_stop_values(opts: dict[str, Any], domain: str | None) -> tuple[int, bool, str | None, str | None]:
+    """
+    "Ladung beendet nach" (Minuten) und Push bei beendeter Ladung ohne Wahl am Gerät: die der Integration, sonst die
+    globalen (seit 1.41.0). Dazu je die Integration, wenn der Wert von ihr kommt (für die Herkunft im Popup).
+    """
+    stall = (opts.get(CONF_CHARGE_STALL_INTEGRATIONS) or {}).get(domain) if domain else None
+    stop = (opts.get(CONF_CHARGE_STOP_INTEGRATIONS) or {}).get(domain) if domain else None
+    return (
+        opts[CONF_CHARGE_STALL] if stall is None else stall,
+        bool(opts[CONF_NOTIFY_CHARGE_STOP]) if stop is None else stop,
+        domain if stall is not None else None,
+        domain if stop is not None else None,
+    )
+
+
 def device_charge_opts(hass: HomeAssistant, opts: dict[str, Any], device_id: str) -> dict[str, Any]:
-    """Optionen mit dem "Voll ab" und Anstieg des Geräts: Gerät, sonst Integration, sonst global (Lademeldung und "lädt gerade")."""
+    """
+    Optionen mit "Voll ab", Anstieg, "Ladung beendet nach" und Push bei beendeter Ladung des Geräts: Gerät, sonst
+    Integration, sonst global (Lademeldung und "lädt gerade").
+    """
     settings = device_settings(hass)
     device = dr.async_get(hass).async_get(device_id)
-    full, rise, _fi, _ri = charge_values(opts, primary_domain(hass, device) if device else None)
+    domain = primary_domain(hass, device) if device else None
+    full, rise, _fi, _ri = charge_values(opts, domain)
+    stall, stop, _si, _pi = charge_stop_values(opts, domain)
     return {
         **opts,
         CONF_CHARGE_FULL: settings.get("charge_full", {}).get(device_id, full),
         CONF_CHARGE_RISE: settings.get("charge_rise", {}).get(device_id, rise),
+        CONF_CHARGE_STALL: settings.get("charge_stall", {}).get(device_id, stall),
+        CONF_NOTIFY_CHARGE_STOP: settings.get("charge_stop", {}).get(device_id, stop),
     }
 
 
@@ -723,6 +749,9 @@ async def async_load_type_overrides(hass: HomeAssistant) -> None:
             # Eigenes "Voll ab" und eigener Anstieg des Geräts für die Lademeldung (seit 1.35.0).
             "charge_full": {str(k): v for k, v in (stored.get("charge_full") or {}).items() if _in_range(v, CONF_CHARGE_FULL)},
             "charge_rise": {str(k): v for k, v in (stored.get("charge_rise") or {}).items() if _in_range(v, CONF_CHARGE_RISE)},
+            # Eigenes "Ladung beendet nach" und eigener Push bei beendeter Ladung des Geräts (seit 1.41.0).
+            "charge_stall": {str(k): v for k, v in (stored.get("charge_stall") or {}).items() if _in_range(v, CONF_CHARGE_STALL)},
+            "charge_stop": {str(k): v for k, v in (stored.get("charge_stop") or {}).items() if isinstance(v, bool)},
         }
         conns = stored.get("connections") if isinstance(stored.get("connections"), dict) else {}
         hass.data[DATA_CONNECTION_OVERRIDES] = {str(k): v for k, v in conns.items() if v in CONNECTION_MANUAL}
@@ -745,7 +774,7 @@ async def _async_save_devices(hass: HomeAssistant) -> None:
         data["offline"] = dict(settings["offline"])
     if settings.get("charge"):
         data["charge"] = dict(settings["charge"])
-    for key in ("charge_full", "charge_rise"):
+    for key in ("charge_full", "charge_rise", "charge_stall", "charge_stop"):
         if settings.get(key):
             data[key] = dict(settings[key])
     await _types_store(hass).async_save(data)
@@ -758,7 +787,7 @@ def device_settings(hass: HomeAssistant) -> dict[str, Any]:
     "notify_mute": {Gerät: bis}, "signal": {Gerät: Schwelle | "off"},
     "offline": {Gerät: Minuten | "off"}, "charge": {Gerät: bool}}.
     """
-    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "charge": {}, "charge_full": {}, "charge_rise": {}}
+    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}}
 
 
 def valid_signal_setting(value: Any) -> bool:
@@ -829,7 +858,8 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
     signal=None (Standard), "off" oder Schwelle "schwach unter";
     offline=None (Integration bzw. global), "off" oder Minuten;
     charge=None (Integration), True/False (Lademeldung, seit 1.30.0);
-    charge_full / charge_rise=None (global) oder eigener Wert (seit 1.35.0).
+    charge_full / charge_rise / charge_stall=None (Integration bzw. global) oder eigener Wert (seit 1.35.0, charge_stall seit 1.41.0);
+    charge_stop=None (Integration bzw. global), True/False (Push bei beendeter Ladung, seit 1.41.0).
     """
     await async_load_type_overrides(hass)
     settings = hass.data[DATA_DEVICE_SETTINGS]
@@ -843,12 +873,17 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
             settings.setdefault("charge", {}).pop(device_id, None)
         else:
             settings.setdefault("charge", {})[device_id] = bool(changes["charge"])
-    for key in ("charge_full", "charge_rise"):
+    for key in ("charge_full", "charge_rise", "charge_stall"):
         if key in changes:
             if changes[key] is None:
                 settings.setdefault(key, {}).pop(device_id, None)
             else:
                 settings.setdefault(key, {})[device_id] = int(changes[key])
+    if "charge_stop" in changes:
+        if changes["charge_stop"] is None:
+            settings.setdefault("charge_stop", {}).pop(device_id, None)
+        else:
+            settings.setdefault("charge_stop", {})[device_id] = bool(changes["charge_stop"])
     if "signal" in changes:
         if changes["signal"] is None:
             settings.setdefault("signal", {}).pop(device_id, None)
@@ -1217,9 +1252,12 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 # Eigenes "Voll ab" und eigener Anstieg (None = global, seit 1.35.0).
                 "charge_full_setting": device_settings(hass).get("charge_full", {}).get(device.id),
                 "charge_rise_setting": device_settings(hass).get("charge_rise", {}).get(device.id),
+                "charge_stall_setting": device_settings(hass).get("charge_stall", {}).get(device.id),
+                "charge_stop_setting": device_settings(hass).get("charge_stop", {}).get(device.id),
                 "charge_default": {
                     # Ohne Wahl am Gerät: Wert der Integration, sonst global (full_integration/rise_integration nennen sie).
                     **dict(zip(("full", "rise", "full_integration", "rise_integration"), charge_values(opts, primary.domain if primary else None))),
+                    **dict(zip(("stall", "stop", "stall_integration", "stop_integration"), charge_stop_values(opts, primary.domain if primary else None))),
                     "on": bool(opts[CONF_NOTIFY_CHARGE]) and bool(primary) and primary.domain in opts[CONF_CHARGE_INTEGRATIONS],
                     "integration": primary.domain if primary and primary.domain in opts[CONF_CHARGE_INTEGRATIONS] else None,
                 },

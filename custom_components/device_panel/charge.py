@@ -236,26 +236,29 @@ class ChargeNotifier:
         ereg = er.async_get(hass)
         stopped: list[str] = []
         for dev, st in self._state.items():
-            if st.get("done") or st.get("stopped") or now - st.get("up_at", now) < opts[CONF_CHARGE_STALL] * 60:
+            if st.get("done") or st.get("stopped"):
                 continue
             device = registry.async_get(dev)
             if device is None or not self.enabled(opts, hass, device) or charging_entity(hass, er.async_entries_for_device(ereg, dev)):
                 continue
+            # "Ladung beendet nach" und der Push dazu: Gerät, sonst Integration, sonst global (seit 1.41.0).
             copts = device_charge_opts(hass, opts, dev)
+            if now - st.get("up_at", now) < copts[CONF_CHARGE_STALL] * 60:
+                continue
             # Nur wer jetzt nach dem Stand lädt (vor dem Merker "beendet"), sonst gäbe es nichts zu beenden.
             if self.charging(dev, now, copts) is None:
                 continue
             st["stopped"] = True
             stopped.append(dev)
             name = device.name_by_user or device.name or dev
-            args = {"level": round(st["last"]), "minutes": opts[CONF_CHARGE_STALL], "full": copts[CONF_CHARGE_FULL]}
+            args = {"level": round(st["last"]), "minutes": copts[CONF_CHARGE_STALL], "full": copts[CONF_CHARGE_FULL]}
             if opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE:
                 activity.record(hass, "info", "charge", "charge_stopped_no_target", name, dev, **args)
-            elif not opts[CONF_NOTIFY_CHARGE_STOP]:
+            elif not copts[CONF_NOTIFY_CHARGE_STOP]:
                 activity.record(hass, "info", "charge", "charge_stopped_push_off", name, dev, **args)
             else:
                 activity.record(hass, "info", "charge", "charge_stopped_sent", name, dev, **args)
-                hass.async_create_task(self._async_push_stop(dev, dict(st)))
+                hass.async_create_task(self._async_push_stop(dev, dict(st), copts[CONF_CHARGE_STALL]))
         if stopped:
             self._save()
         return stopped
@@ -320,7 +323,7 @@ class ChargeNotifier:
             parts.append(area)
         return " · ".join(parts)
 
-    async def _async_push_stop(self, dev: str, st: dict[str, Any]) -> None:
+    async def _async_push_stop(self, dev: str, st: dict[str, Any], minutes: int) -> None:
         """Push "Ladung beendet": Stand, bisherige Ladung und wie lange er schon unverändert ist."""
         hass = self.hass
         opts = effective(hass)
@@ -330,7 +333,7 @@ class ChargeNotifier:
         area = ar.async_get(hass).async_get_area(device.area_id) if device.area_id else None
         name = device.name_by_user or device.name or dev
         parts = [f"{round(st['last'])} %", push.text(hass, "charge_from", duration=push.duration(hass, max(0.0, st.get("up_at", st["min_at"]) - st["min_at"])), start=round(st["min"]))]
-        parts.append(push.text(hass, "charge_stalled", duration=push.duration(hass, opts[CONF_CHARGE_STALL] * 60)))
+        parts.append(push.text(hass, "charge_stalled", duration=push.duration(hass, minutes * 60)))
         if area:
             parts.append(area.name)
         await push.async_push(
