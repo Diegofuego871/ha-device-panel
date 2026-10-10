@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.30.0, Einstellungen in fünf Abschnitten)
+## Stand (1.31.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Update-Erinnerung pro Eintrag `1.31.0` (Nutzer, 2026-10-10): `updates.catalog(hass)` liefert alle `update.*`-Entitäten
+   (`id, name, kind, platform, installed, latest, available`, nach Art und Name) als `catalog.updates` in `get_options`;
+   Optionen `updates_exclude`/`updates_include` (Entitäts-IDs, `options_api.update_ids`); `updates.is_wanted()`: Ausnahme
+   vor Art. Panel: Liste im Reiter "Updates" (`data-uitem`, Suche `updates`, Normalisierung `_normalizeUpdateItems`),
+   Vorschau mit den echten offenen Updates. Art "Add-ons" heisst "Apps (Add-ons)". Tests `test_updates.py`, `updates-e2e.mjs`.
    Lademeldung `1.30.0` (Nutzer, 2026-10-10, Mockup `charging-v1`, Konzept `docs/CONCEPT-laden-updates.md`):
    `charge.ChargeNotifier` beobachtet die Batterie-Sensoren (`battery_entity`), `step()` merkt den tiefsten Stand
    seit dem Entladen; Anstieg >= `charge_rise` (5..80, Standard 20) = lädt, Push bei Stand >= `charge_full`

@@ -261,7 +261,7 @@ const MON_TAB_KEYS = {
   outage: ["offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "reset_offline", "reset_notify"],
   battery: ["notify_charge", "charge_full", "charge_rise", "charge_integrations", "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
   new: ["notify_new", "new_window", "new_persistent", "new_fields"],
-  updates: ["notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds"],
+  updates: ["notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include"],
   integ: ["offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
 
@@ -4542,7 +4542,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -5106,6 +5106,13 @@ class DevicePanel extends HTMLElement {
 
   // Reiter "Updates" (seit 1.29.0, docs/mockups/charging-v1): Update-Erinnerung per Push, ersetzt
   // Automationen mit Zähler und Hilfsentität. Das Panel hört auf die update-Entitäten von HA.
+  _normalizeUpdateItems(draft) {
+    const kind = new Map((this._settings.data?.catalog?.updates || []).map((u) => [u.id, u.kind]));
+    const kinds = new Set(draft.updates_kinds || []);
+    draft.updates_exclude = (draft.updates_exclude || []).filter((id) => !kind.has(id) || kinds.has(kind.get(id)));
+    draft.updates_include = (draft.updates_include || []).filter((id) => !kind.has(id) || !kinds.has(kind.get(id)));
+  }
+
   _monUpdatesHtml(d, changes, errors, ui) {
     const t = (k, ...a) => this._t(k, ...a);
     const target = Boolean(d.notify_service && d.notify_service !== "none");
@@ -5118,14 +5125,36 @@ class DevicePanel extends HTMLElement {
     const kindRows = UPDATE_KINDS.map((k) =>
       ui.row("updates_kinds", t(`updKind_${k}`), `<label class="switch"><input type="checkbox" data-ukind="${k}" ${kinds.has(k) ? "checked" : ""} aria-label="${escape(t(`updKind_${k}`))}"><span></span></label>`, t(`updKindShort_${k}`), null)
     ).join("");
-    // Vorschau mit Beispielen (das Panel kennt die Update-Entitäten nicht; Entwurf und Wirkung
-    // sind im Backend, tests/test_updates.py): eine Zeile je gewählter Art.
+    // Liste aller update-Entitäten (seit 1.31.0): jeder Eintrag folgt seiner Art, bis er hier
+    // umgeschaltet wird (Ausnahme pro Eintrag, `updates_exclude` / `updates_include`).
+    const st = this._settings;
+    const items = st.data?.catalog?.updates || [];
+    const wanted = (v, x) => (v.updates_exclude || []).includes(x.id) ? false : (v.updates_include || []).includes(x.id) ? true : (v.updates_kinds || []).includes(x.kind);
+    const saved = st.data.values;
+    const rows = items
+      .map((x) => {
+        const on = wanted(d, x);
+        const ver = x.available && x.installed && x.latest ? t("updItemOpen", x.installed, x.latest) : x.installed ? t("updItemVersion", x.installed) : "";
+        const own = (d.updates_exclude || []).includes(x.id) || (d.updates_include || []).includes(x.id);
+        return `<div class="ex-row${on !== wanted(saved, x) ? " changed" : ""}">${this._ibadge(x.platform || x.kind, x.name)}<div class="ex-name">${escape(x.name)}${x.available ? `<span class="upd-dot" title="${escape(t("updItemOpenTip"))}"></span>` : ""}<small>${escape([t(`updKind_${x.kind}`), ver].filter(Boolean).join(" · "))}${own ? ` · ${escape(t("updItemOwn"))}` : ""}</small></div>
+          <label class="switch"><input type="checkbox" data-uitem="${escape(x.id)}" ${on ? "checked" : ""} aria-label="${escape(`${t("optUpdNotify")}: ${x.name}`)}"><span></span></label></div>`;
+      })
+      .join("");
+    const list = items.length
+      ? `<div class="mon-grp">${escape(t("grpUpdItems"))}</div><div class="opt-short">${escape(t("updItemsHint"))}</div>${this._searchHtml("updates", items.length)}
+        <div class="srch-rows" data-srch="updates">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>`
+      : `<div class="mon-grp">${escape(t("grpUpdItems"))}</div><div class="opt-short">${escape(t("updItemsNone"))}</div>`;
+    // Vorschau: die jetzt offenen Updates, die gemeldet würden; ohne offene Beispiele.
+    const open = items.filter((x) => x.available && wanted(d, x));
     const sample = { core: "Home Assistant Core 2026.10.2 → 2026.10.3", addons: "Mosquitto broker 6.5.0 → 6.5.1", hacs: "Device Panel 1.27.0 → 1.28.0", devices: "Shelly Plug 1.0.0 → 1.1.0" };
-    const lines = UPDATE_KINDS.filter((k) => kinds.has(k)).map((k) => `• ${escape(sample[k])}`);
+    const real = items.some((x) => x.available);
+    const lines = real
+      ? open.map((x) => `• ${escape(x.installed && x.latest ? `${x.name} ${x.installed} → ${x.latest}` : x.name)}`)
+      : UPDATE_KINDS.filter((k) => kinds.has(k)).map((k) => `• ${escape(sample[k])}`);
     const preview = d.notify_updates
       ? `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
-          <div class="pv-title">${escape(t("pvUpdTitle"))}</div><div class="pv-text">${lines.length ? `${escape(t("pvUpdCount", lines.length))}<br>${lines.join("<br>")}` : "–"}</div></div>
-          <div class="opt-short">${escape(t("pvUpdNote"))} ${escape(t("pvExample2"))}</div></div>`
+          <div class="pv-title">${escape(t("pvUpdTitle"))}</div><div class="pv-text">${lines.length ? `${escape(t("pvUpdCount", lines.length))}<br>${lines.join("<br>")}` : escape(t("pvUpdNone"))}</div></div>
+          <div class="opt-short">${escape(t("pvUpdNote"))} ${escape(real ? t("pvUpdReal") : t("pvExample2"))}</div></div>`
       : "";
     return `<div class="opt-short mtl-note">${escape(t("updNote"))}</div>
       <div class="mon-grp">${escape(t("grpNotify"))}</div>
@@ -5139,6 +5168,7 @@ class DevicePanel extends HTMLElement {
       }
       <div class="mon-grp">${escape(t("grpUpdKinds"))}</div>
       ${kindRows}
+      ${list}
       ${preview}`;
   }
 
@@ -5798,6 +5828,19 @@ class DevicePanel extends HTMLElement {
         if (el.checked) on.add(el.dataset.ukind);
         else on.delete(el.dataset.ukind);
         st.draft.updates_kinds = UPDATE_KINDS.filter((k) => on.has(k));
+        // Ausnahmen, die jetzt der Art entsprechen, sind überflüssig.
+        this._normalizeUpdateItems(st.draft);
+      } else if (el.dataset.uitem) {
+        // Eintrag umschalten: gleich wie die Art = keine Ausnahme, sonst Ausnahme (Aus oder An).
+        const x = (st.data.catalog?.updates || []).find((u) => u.id === el.dataset.uitem);
+        const ex = new Set(st.draft.updates_exclude || []);
+        const inc = new Set(st.draft.updates_include || []);
+        ex.delete(el.dataset.uitem);
+        inc.delete(el.dataset.uitem);
+        const kindOn = (st.draft.updates_kinds || []).includes(x?.kind);
+        if (el.checked !== kindOn) (el.checked ? inc : ex).add(el.dataset.uitem);
+        st.draft.updates_exclude = [...ex].sort();
+        st.draft.updates_include = [...inc].sort();
       } else if (el.dataset.nfield || el.dataset.bfield || el.dataset.newfield) {
         // Inhalt der Meldung: Liste in fester Reihenfolge.
         const [key, order, field] = el.dataset.nfield

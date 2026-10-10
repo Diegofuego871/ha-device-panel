@@ -654,6 +654,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .pv-actions { display: flex; gap: 18px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--dp-divider); color: var(--dp-primary); font-weight: 500; }
 .pv .opt-short { margin-top: 8px; }
 .ex-name small { display: block; color: var(--dp-text2); font-size: 12px; }
+.upd-dot { display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; background: var(--dp-warning); vertical-align: middle; }
 .ex-row.off .ex-name, .ex-row.off .ibadge { opacity: .55; }
 .ibadge { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: #fff; font-size: 11.5px; font-weight: 600;
   background: hsl(var(--h, 200) 55% 45%); }

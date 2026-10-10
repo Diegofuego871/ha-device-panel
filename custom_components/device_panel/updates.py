@@ -25,7 +25,10 @@ from . import push
 from .const import (
     CONF_NOTIFY_SERVICE,
     CONF_NOTIFY_UPDATES,
+    CONF_UPDATES_EXCLUDE,
+    CONF_UPDATES_INCLUDE,
     CONF_UPDATES_KINDS,
+    UPDATE_KINDS,
     CONF_UPDATES_MODE,
     CONF_UPDATES_REPEAT,
     CONF_UPDATES_TIME,
@@ -61,6 +64,32 @@ def update_kind(hass: HomeAssistant, entity_id: str) -> str:
     if platform == "hacs":
         return "hacs"
     return "devices"
+
+
+def is_wanted(opts: dict[str, Any], entity_id: str, kind: str) -> bool:
+    """Ob ein Update gemeldet wird: Ausnahme pro Eintrag vor der Art."""
+    if entity_id in opts[CONF_UPDATES_EXCLUDE]:
+        return False
+    if entity_id in opts[CONF_UPDATES_INCLUDE]:
+        return True
+    return kind in opts[CONF_UPDATES_KINDS]
+
+
+def catalog(hass: HomeAssistant) -> list[dict[str, Any]]:
+    """
+    Alle update-Entitäten für die Liste in den Einstellungen (Apps, Core/OS/Supervisor,
+    HACS, Geräte-Firmware), nach Art und Name; "available" = jetzt ein Update offen.
+    """
+    registry = er.async_get(hass)
+    out = []
+    for state in hass.states.async_all("update"):
+        item = _item(hass, state)
+        entry = registry.async_get(state.entity_id)
+        item["platform"] = entry.platform if entry else None
+        item["available"] = state.state == "on"
+        out.append(item)
+    order = {k: i for i, k in enumerate(UPDATE_KINDS)}
+    return sorted(out, key=lambda i: (order[i["kind"]], i["name"].lower()))
 
 
 def _item(hass: HomeAssistant, state: Any) -> dict[str, Any]:
@@ -174,14 +203,13 @@ class UpdateNotifier:
     def due(self, opts: dict[str, Any], only: set[str] | None = None, now: float | None = None) -> list[dict[str, Any]]:
         """Updates, die jetzt zu melden sind: neu oder (mit Erinnerung) lange offen."""
         now = time.time() if now is None else now
-        kinds = set(opts[CONF_UPDATES_KINDS])
         repeat = UPDATES_REPEATS[opts[CONF_UPDATES_REPEAT]]
         out: list[dict[str, Any]] = []
         for state in self.hass.states.async_all("update"):
             if state.state != "on" or (only is not None and state.entity_id not in only):
                 continue
             item = _item(self.hass, state)
-            if item["kind"] not in kinds:
+            if not is_wanted(opts, item["id"], item["kind"]):
                 continue
             known = self._known.get(item["id"])
             if known is None or known["v"] != item["latest"] or (repeat and now - known["at"] >= repeat):

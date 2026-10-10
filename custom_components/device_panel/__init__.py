@@ -15,7 +15,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.storage import Store
 
-from . import options_api, update_check
+from . import options_api, update_check, updates
 from .availability import RANGES, AvailabilityLog
 from .availability import STORAGE_KEY as AVAILABILITY_STORE_KEY
 from .battery import STORE_KEY as BATTERY_STORE_KEY
@@ -442,7 +442,7 @@ async def _ws_get_options(
         {
             "values": options_api.current_values(entry),
             "panel": update_check.panel_settings(hass),
-            "catalog": await async_catalog(hass),
+            "catalog": {**await async_catalog(hass), "updates": updates.catalog(hass)},
             "limits": options_api.limits(),
             "notify_targets": options_api.notify_targets(hass, options_api.current_values(entry)[CONF_NOTIFY_SERVICE]),
             "overrides": await async_device_overrides(hass),

@@ -260,7 +260,7 @@
     "update_kind": {
       "options": {
         "core": "Home Assistant (Core, OS, Supervisor)",
-        "addons": "Add-ons",
+        "addons": "Apps (Add-ons)",
         "hacs": "HACS",
         "devices": "Geräte-Firmware"
       }

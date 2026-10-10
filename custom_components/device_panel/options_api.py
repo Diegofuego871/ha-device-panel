@@ -33,6 +33,8 @@ from .const import (
     CONF_NOTIFY_UPDATES,
     DEFAULT_CHARGE_FULL,
     DEFAULT_CHARGE_RISE,
+    CONF_UPDATES_EXCLUDE,
+    CONF_UPDATES_INCLUDE,
     CONF_UPDATES_KINDS,
     CONF_UPDATES_MODE,
     CONF_UPDATES_REPEAT,
@@ -152,6 +154,7 @@ LIST_OPTIONS = (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CHIPS, 
 _DOMAIN_RE = re.compile(r"^[a-z0-9_]+$")
 # Geräte-IDs von HA: Hex (uuid4().hex); etwas weiter gefasst für Tests.
 _DEVICE_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+_UPDATE_ID_RE = re.compile(r"^update\.[a-z0-9_]+$")
 _NOTIFY_RE = re.compile(r"^notify\.[a-z0-9_]+$")
 _AI_TASK_RE = re.compile(r"^ai_task\.[a-z0-9_]+$")
 _TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
@@ -209,6 +212,13 @@ def battery_fields(value: Any) -> list[str]:
     if not isinstance(value, list) or not all(v in BATTERY_FIELDS for v in value):
         raise vol.Invalid(f"Liste aus {', '.join(BATTERY_FIELDS)} erwartet")
     return [f for f in BATTERY_FIELDS if f in value]
+
+
+def update_ids(value: Any) -> list[str]:
+    """Entitäts-IDs von Updates (Ausnahmen pro Eintrag), sortiert, ohne Doppelte."""
+    if not isinstance(value, list) or not all(isinstance(v, str) and _UPDATE_ID_RE.match(v) for v in value):
+        raise vol.Invalid("Liste von update-Entitäten erwartet")
+    return sorted(set(value))
 
 
 def update_kinds(value: Any) -> list[str]:
@@ -437,6 +447,8 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_NEW_EXCLUDE): _domains,
         vol.Optional(CONF_CHARGE_INTEGRATIONS): _domains,
         vol.Optional(CONF_UPDATES_KINDS): update_kinds,
+        vol.Optional(CONF_UPDATES_EXCLUDE): update_ids,
+        vol.Optional(CONF_UPDATES_INCLUDE): update_ids,
         vol.Optional(CONF_UPDATES_MODE): vol.In(UPDATES_MODES),
         vol.Optional(CONF_UPDATES_TIME): push_time,
         vol.Optional(CONF_UPDATES_REPEAT): vol.In(tuple(UPDATES_REPEATS)),
@@ -546,6 +558,8 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     # Update-Erinnerung (seit 1.29.0)
     kinds = options.get(CONF_UPDATES_KINDS)
     values[CONF_UPDATES_KINDS] = [k for k in UPDATE_KINDS if k in kinds] if isinstance(kinds, list) else list(DEFAULT_UPDATES_KINDS)
+    for key in (CONF_UPDATES_EXCLUDE, CONF_UPDATES_INCLUDE):
+        values[key] = sorted({u for u in options.get(key) or [] if isinstance(u, str) and _UPDATE_ID_RE.match(u)})
     mode = options.get(CONF_UPDATES_MODE)
     values[CONF_UPDATES_MODE] = mode if mode in UPDATES_MODES else UPDATES_DAILY
     try:

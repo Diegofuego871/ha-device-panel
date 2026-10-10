@@ -7,7 +7,30 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.31.0] - 2026-10-10
+
+Update-Erinnerung pro App und Integration.
+
+### Hinzugefügt
+
+- Update-Erinnerung: Liste aller Update-Entitäten von Home Assistant im Reiter "Updates"
+  (Wunsch des Nutzers): Home Assistant Core, Betriebssystem und Supervisor, jede installierte
+  App (Add-on), HACS-Einträge und Geräte-Firmware, mit Name, installierter Version und einem
+  Punkt "Update verfügbar". Jeder Eintrag folgt seiner Art (die vier Schalter über der Liste),
+  bis du ihn einzeln umschaltest: aus für eine App einer eingeschalteten Art oder an für eine
+  Firmware einer ausgeschalteten Art. Ein Eintrag mit eigener Wahl ist mit "eigene Wahl"
+  markiert und geht der Art vor. Die Liste hat ab 8 Einträgen ein Suchfeld.
+- Die Vorschau im Reiter "Updates" zeigt jetzt die Updates, die jetzt offen sind und gemeldet
+  würden (Beispiele nur, wenn nichts offen ist).
+- Neue Optionen `updates_exclude` und `updates_include` (Entitäts-IDs, im Panel gesetzt).
+
+### Geändert
+
+- Die Art "Add-ons" heisst jetzt "Apps (Add-ons)", wie in Home Assistant.
+
 ## [1.30.0] - 2026-10-10
+
+Nicht veröffentlicht; enthalten in 1.31.0.
 
 Lademeldung.
 
@@ -1805,7 +1828,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[1.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.30.0
+[1.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0
 [1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0
 [1.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.25.0

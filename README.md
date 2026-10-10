@@ -12,7 +12,7 @@
 - **Device list** grouped into offline, unstable and online, with search, filters by area and integration, filter chips and your own columns
 - **Per device:** availability, outages, signal and battery in a pop-up, with history and statistics
 - **Notifications you control:** outage, back online, low battery and new devices as push or persistent notification, per integration
-- **Charging and updates:** optional push when a device is fully charged, and an update reminder (daily, weekly or immediately) that replaces your own automations; both off by default
+- **Charging and updates:** optional push when a device is fully charged, and an update reminder (daily, weekly or immediately) that replaces your own automations; both off by default; the update reminder can be set per app, per integration and per firmware
 - **Battery forecast:** how long the battery lasts until its warning threshold, without AI
 - **Notifications:** push and persistent notification for outages and low batteries, with a timeline of when what arrives; defaults per integration, overrides per device
 - **Optional AI assessment:** a guess at the cause on a button press, prompt adjustable in expert mode

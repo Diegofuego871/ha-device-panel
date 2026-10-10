@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "79"
+PANEL_VERSION = "80"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -107,6 +107,10 @@ DEFAULT_UPDATES_WINDOW = 5
 CONF_UPDATES_KINDS = "updates_kinds"
 UPDATE_KINDS = ("core", "addons", "hacs", "devices")
 DEFAULT_UPDATES_KINDS = ("core", "addons", "hacs")
+# Ausnahmen pro Eintrag (seit 1.31.0): ein Eintrag folgt seiner Art, bis er hier steht.
+# Aus: Entität gemeldet wird nie; An: wird gemeldet, auch wenn die Art aus ist.
+CONF_UPDATES_EXCLUDE = "updates_exclude"
+CONF_UPDATES_INCLUDE = "updates_include"
 # Offen gebliebenes Update erneut melden: nie, nach 3 oder nach 7 Tagen.
 CONF_UPDATES_REPEAT = "updates_repeat"
 UPDATES_REPEATS = {"never": 0, "3d": 3 * 86400, "7d": 7 * 86400}

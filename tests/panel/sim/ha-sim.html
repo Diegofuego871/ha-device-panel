@@ -450,9 +450,31 @@
       // KI-Aufgaben von HA (erfunden); __aiTasks = [] für "keine".
       ai_tasks: window.__aiTasks || [{ value: "ai_task.openai", name: "OpenAI" }, { value: "ai_task.lokal", name: "Lokales Modell" }],
       battery: Object.entries(bat).map(([domain, v]) => ({ domain, name: integrations[domain] || domain, ...v })).sort((a, b) => b.devices - a.devices || a.name.localeCompare(b.name)),
+      // Wie updates.catalog: alle update-Entitäten nach Art und Name (erfunden); __updates = [] für "keine".
+      updates: window.__updates || UPDATE_ITEMS,
     };
   }
   // Wie das Backend (devices.async_device_overrides): auch ausgeblendete Geräte, nach Name.
+  const upd = (id, name, kind, platform, installed, latest) => ({ id: `update.${id}`, name, kind, platform, installed, latest: latest || installed, available: Boolean(latest) });
+  const UPDATE_ITEMS = [
+    upd("home_assistant_core_update", "Home Assistant Core", "core", "hassio", "2026.10.2", "2026.10.3"),
+    upd("home_assistant_operating_system_update", "Home Assistant Operating System", "core", "hassio", "16.2"),
+    upd("home_assistant_supervisor_update", "Home Assistant Supervisor", "core", "hassio", "2026.10.0"),
+    upd("advanced_ssh_update", "Advanced SSH & Web Terminal", "addons", "hassio", "19.0.0"),
+    upd("duckdns_update", "Duck DNS", "addons", "hassio", "1.19.0"),
+    upd("esphome_update", "ESPHome Device Builder", "addons", "hassio", "2026.9.1", "2026.10.0"),
+    upd("file_editor_update", "File editor", "addons", "hassio", "5.8.0"),
+    upd("matter_hub_update", "Home-Assistant-Matter-Hub", "addons", "hassio", "3.0.1"),
+    upd("mariadb_update", "MariaDB", "addons", "hassio", "2.7.1", "2.7.2"),
+    upd("matter_server_update", "Matter Server", "addons", "hassio", "8.1.0"),
+    upd("mosquitto_update", "Mosquitto broker", "addons", "hassio", "6.5.0", "6.5.1"),
+    upd("samba_update", "Samba share", "addons", "hassio", "12.4.0"),
+    upd("studio_code_update", "Studio Code Server", "addons", "hassio", "5.18.0"),
+    upd("device_panel_update", "Device Panel", "hacs", "hacs", "1.30.0"),
+    upd("mushroom_update", "Mushroom", "hacs", "hacs", "4.0.0", "4.1.0"),
+    upd("shelly_plug_fw", "Shelly Plug", "devices", "shelly", "1.0.0", "1.1.0"),
+    upd("hue_bridge_fw", "Hue Bridge", "devices", "hue", "1.60.0"),
+  ];
   function overrides() {
     const visible = new Set(shown().map((d) => d.id));
     const info = (d) => ({ id: d.id, name: d.name, area: d.area, domain: d.integration?.domain || null, integration: integrations[d.integration?.domain] || d.integration?.domain || null, hidden: !visible.has(d.id) });
@@ -535,7 +557,7 @@
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
-    notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, charge_integrations: [], notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
+    notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, charge_integrations: [], notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
   };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
@@ -722,6 +744,13 @@
           const kinds = ["core", "addons", "hacs", "devices"];
           if (!Array.isArray(v) || v.some((x) => !kinds.includes(x))) throw { code: "invalid_format", message: "update kinds" };
           msg.values.updates_kinds = kinds.filter((x) => v.includes(x));
+        }
+        for (const key of ["updates_exclude", "updates_include"]) {
+          if (key in msg.values) {
+            const v = msg.values[key];
+            if (!Array.isArray(v) || v.some((x) => !/^update\.[a-z0-9_]+$/.test(x))) throw { code: "invalid_format", message: key };
+            msg.values[key] = [...new Set(v)].sort();
+          }
         }
         if ("updates_mode" in msg.values && !["instant", "daily", "weekly"].includes(msg.values.updates_mode)) throw { code: "invalid_format", message: "updates mode" };
         if ("updates_repeat" in msg.values && !["never", "3d", "7d"].includes(msg.values.updates_repeat)) throw { code: "invalid_format", message: "updates repeat" };
