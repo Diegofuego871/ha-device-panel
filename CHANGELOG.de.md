@@ -36,6 +36,9 @@ Behoben: Panel lädt seit Home Assistant 2026.10 langsam oder gar nicht.
   Meldungen, die Home Assistant blockierten. Das Panel liest jetzt `config_entry_id` (ältere
   Home-Assistant-Versionen funktionieren weiter mit `config_entries`). Ein Test prüft, dass
   kein Modul die veralteten Eigenschaften mehr liest.
+- Dieselbe Ursache an einer zweiten Stelle (Log von Home Assistant): `device_registry.devices`
+  wurde als Abbildung benutzt (`.values()`), was seit 2026.10 ebenfalls meldet. Das Panel
+  iteriert jetzt das Register.
 
 ### Geändert
 

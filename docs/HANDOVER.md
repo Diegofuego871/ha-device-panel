@@ -391,9 +391,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    `DeviceEntry.config_entries`/`primary_config_entry` melden ab 2026.10 zur Laufzeit (`report_usage`); das
    Panel las sie hundertfach je Abfrage. Neu `compat.device_entry_ids()` / `device_primary_entry_id()`
    (`config_entry_id`, Rückfall `config_entries`); `tests/test_compat.py` verbietet direkte Lesezugriffe.
-   Nicht gegen HA 2026.10 selbst getestet (nur 2026.2.3 verfügbar): Ursache aus den Entwickler-Blogs
-   und Messung der Kosten hergeleitet; Bestätigung über das Log des Nutzers (Warnung "device_panel ...
-   config_entries") offen.
+   Ursache durch das Log des Nutzers bestätigt (Logger homeassistant.helpers.frame: Warnungen zu
+   `config_entries`, `primary_config_entry` und `device_registry.devices.values()`); zweite Stelle: neu
+   `compat.registry_devices()`. Nicht gegen HA 2026.10 selbst getestet (nur 2026.2.3 verfügbar).
    Update-Erinnerung pro Eintrag `1.31.0` (Nutzer, 2026-10-10): `updates.catalog(hass)` liefert alle `update.*`-Entitäten
    (`id, name, kind, platform, installed, latest, available`, nach Art und Name) als `catalog.updates` in `get_options`;
    Optionen `updates_exclude`/`updates_include` (Entitäts-IDs, `options_api.update_ids`); `updates.is_wanted()`: Ausnahme

@@ -12,6 +12,9 @@ hat dort einen echten Fehler oder Umweg gekostet.
   rund 750 Lesezugriffe pro `list_devices`), alles im Event-Loop: Panel lud nicht, ganz HA
   träge. Regel: Geräte-Einträge nur über `compat.device_entry_ids()` lesen
   (`config_entry_id`, Rückfall für ältere HA); `tests/test_compat.py` prüft den Quelltext.
+  Gleiches gilt für `device_registry.devices` als Abbildung (`.values()`, `.get()`): iterieren,
+  Rückfall für ältere HA in `compat.registry_devices()`. Das Log von HA (Logger
+  `homeassistant.helpers.frame`) nennt Datei und Zeile jeder Fundstelle.
   Vor jedem HA-Release die Entwickler-Blogs ("developers.home-assistant.io/blog") auf
   Veraltungen lesen, die Laufzeit-Meldungen auslösen.
 - **Panel als eingebautes iframe-Panel** registrieren

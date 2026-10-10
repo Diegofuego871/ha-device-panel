@@ -36,6 +36,9 @@ Fix: panel loads slowly or not at all since Home Assistant 2026.10.
   thousands of reports that blocked Home Assistant. The panel now reads `config_entry_id`
   (older Home Assistant versions keep working with `config_entries`). A test checks that no
   module reads the deprecated properties any more.
+- The same cause, second place (Home Assistant log): `device_registry.devices` was used as a
+  mapping (`.values()`), which is also reported since 2026.10. The panel now iterates the
+  registry.
 
 ### Changed
 

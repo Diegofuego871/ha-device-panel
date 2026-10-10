@@ -24,7 +24,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
-from .compat import device_entry_ids, device_primary_entry_id
+from .compat import device_entry_ids, device_primary_entry_id, registry_devices
 from .const import (
     CONF_AI_ASSESSMENT,
     CONF_BATTERY_LOW,
@@ -463,7 +463,7 @@ def candidate_devices(
     deaktivierten Entitäten). Ausschlüsse noch nicht abgezogen.
     """
     ent_reg = er.async_get(hass)
-    for device in dr.async_get(hass).devices.values():
+    for device in registry_devices(dr.async_get(hass)):
         if device.entry_type == dr.DeviceEntryType.SERVICE and not service:
             continue
         if device.disabled_by and not disabled:
@@ -475,7 +475,7 @@ def candidate_devices(
 
 def hub_ids(hass: HomeAssistant) -> set[str]:
     """Geräte, über die andere Geräte verbunden sind (Hub, Bridge, Koordinator)."""
-    return {d.via_device_id for d in dr.async_get(hass).devices.values() if d.via_device_id}
+    return {d.via_device_id for d in registry_devices(dr.async_get(hass)) if d.via_device_id}
 
 
 def _shown(
