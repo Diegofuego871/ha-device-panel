@@ -100,6 +100,27 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await (await handle('select[data-dlg="dev-charge"]')).selectOption("on");
   await wait(`return r.querySelector('select[data-dlg="dev-charge"]')?.value === "on"`);
   check(`[${tag}] Ein gesendet`, JSON.stringify((await devCalls()).at(-1)) === JSON.stringify({ device_id: "c", charge: true }), JSON.stringify((await devCalls()).at(-1)));
+  // Eigene Werte am Gerät (1.35.0): "Voll ab" und Anstieg erscheinen, sobald die Lademeldung für das Gerät gilt
+  check(`[${tag}] Gerät mit Lademeldung "Ein": Felder "Voll ab" und Anstieg da, global (95 %, 30 %, vorher gespeichert)`, await wait(`const f=r.querySelector('select[data-dlg="dev-charge-full"]'), q=r.querySelector('select[data-dlg="dev-charge-rise"]'); return !!f && !!q && f.value === "default" && q.value === "default" && f.options[0].textContent.includes("95 %") && q.options[0].textContent.includes("30 %")`));
+  await (await handle('select[data-dlg="dev-charge-full"]')).selectOption("95");
+  await wait(`return r.querySelector('select[data-dlg="dev-charge-full"]')?.value === "95"`);
+  check(`[${tag}] Voll ab 95 gesendet`, JSON.stringify((await devCalls()).at(-1)) === JSON.stringify({ device_id: "c", charge_full: 95 }), JSON.stringify((await devCalls()).at(-1)));
+  await (await handle('select[data-dlg="dev-charge-rise"]')).selectOption("own");
+  check(`[${tag}] Eigener Anstieg beginnt beim globalen Wert (30)`, (await wait(`return r.querySelector('input[data-dlg="dev-charge-rise-val"]')?.value === "30"`)) && JSON.stringify((await devCalls()).at(-1)) === JSON.stringify({ device_id: "c", charge_rise: 30 }), JSON.stringify((await devCalls()).at(-1)));
+  const rise = await handle('input[data-dlg="dev-charge-rise-val"]');
+  if (mobile) await rise.tap(); else await rise.click();
+  await rise.fill("12");
+  await rise.press("Tab");
+  check(`[${tag}] Anstieg 12 gesendet`, (await wait(`return true`)) && JSON.stringify((await devCalls()).at(-1)) === JSON.stringify({ device_id: "c", charge_rise: 12 }), JSON.stringify((await devCalls()).at(-1)));
+  const nCalls = (await devCalls()).length;
+  const rise2 = await handle('input[data-dlg="dev-charge-rise-val"]');
+  await rise2.fill("2");
+  await rise2.press("Tab");
+  check(`[${tag}] Anstieg 2: Bereich genannt, nichts gesendet`, (await wait(`return !!r.querySelector("[data-dev-range]")`)) && (await devCalls()).length === nCalls, String((await devCalls()).length));
+  await (await handle('select[data-dlg="dev-charge-rise"]')).selectOption("default");
+  await (await handle('select[data-dlg="dev-charge-full"]')).selectOption("default");
+  await wait(`return r.querySelector('select[data-dlg="dev-charge-full"]')?.value === "default" && !r.querySelector('input[data-dlg="dev-charge-rise-val"]')`);
+  check(`[${tag}] zurück auf global (null)`, JSON.stringify((await devCalls()).slice(-2)) === JSON.stringify([{ device_id: "c", charge_rise: null }, { device_id: "c", charge_full: null }]), JSON.stringify((await devCalls()).slice(-2)));
   await (await handle('select[data-dlg="dev-charge"]')).selectOption("off");
   await wait(`return r.querySelector('select[data-dlg="dev-charge"]')?.value === "off"`);
   check(`[${tag}] Aus gesendet`, JSON.stringify((await devCalls()).at(-1)) === JSON.stringify({ device_id: "c", charge: false }));

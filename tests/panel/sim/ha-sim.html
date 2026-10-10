@@ -561,7 +561,7 @@
   };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
-  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, charge: {} };
+  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, charge: {}, chargeFull: {}, chargeRise: {} };
   window.__connOverrides = {};
   window.__names = {};
   const pushHass = () => {
@@ -843,6 +843,14 @@
           else window.__devSettings.signal[msg.device_id] = v;
           out.signal = v;
         }
+        for (const [key, store, lo, hi] of [["charge_full", "chargeFull", 90, 100], ["charge_rise", "chargeRise", 5, 80]]) {
+          if (key in msg) {
+            if (!(msg[key] === null || (Number.isInteger(msg[key]) && msg[key] >= lo && msg[key] <= hi))) throw { code: "invalid_format", message: key };
+            if (msg[key] === null) delete window.__devSettings[store][msg.device_id];
+            else window.__devSettings[store][msg.device_id] = msg[key];
+            out[key] = msg[key];
+          }
+        }
         if ("charge" in msg) {
           if (!(msg.charge === null || typeof msg.charge === "boolean")) throw { code: "invalid_format", message: "charge" };
           if (msg.charge === null) delete window.__devSettings.charge[msg.device_id];
@@ -964,9 +972,11 @@
             },
             notify_off: window.__devSettings.notifyOff.has(d.id),
             charge_setting: window.__devSettings.charge[d.id] ?? null,
+            charge_full_setting: window.__devSettings.chargeFull[d.id] ?? null,
+            charge_rise_setting: window.__devSettings.chargeRise[d.id] ?? null,
             // Lädt gerade (seit 1.35.0): window.__charging = { Geräte-ID: { level, from, ago (Sekunden) } }
             charging: window.__charging?.[d.id] ? { level: window.__charging[d.id].level, from: window.__charging[d.id].from ?? null, since: new Date(Date.now() - (window.__charging[d.id].ago ?? 3600) * 1000).toISOString(), source: "level" } : null,
-            charge_default: { on: Boolean(window.__opts.notify_charge) && (window.__opts.charge_integrations || []).includes(d.integration?.domain), integration: (window.__opts.charge_integrations || []).includes(d.integration?.domain) ? d.integration.domain : null },
+            charge_default: { full: window.__opts.charge_full, rise: window.__opts.charge_rise, on: Boolean(window.__opts.notify_charge) && (window.__opts.charge_integrations || []).includes(d.integration?.domain), integration: (window.__opts.charge_integrations || []).includes(d.integration?.domain) ? d.integration.domain : null },
             notify_mute_until: window.__devSettings.mute[d.id] || null,
             signal_setting: window.__devSettings.signal[d.id] ?? null,
             // Wie options_api.signal_default (seit 1.17.0): Integration vor global, Einheit muss passen.

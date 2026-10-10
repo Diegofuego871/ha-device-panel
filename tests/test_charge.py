@@ -200,3 +200,35 @@ async def test_charging_flag_in_list_and_entity_wins(hass: HomeAssistant) -> Non
     hass.states.async_set(flag.entity_id, "on")
     by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
     assert by_name["Handy"]["charging"]["source"] == "entity" and by_name["Handy"]["charging"]["level"] == 45
+
+
+async def test_device_own_full_and_rise(hass: HomeAssistant) -> None:
+    """Eigenes "Voll ab" und eigener Anstieg am Gerät (1.35.0) gelten für "lädt" und für den Push."""
+    from custom_components.device_panel.devices import async_list_devices, device_charge_opts, device_settings  # noqa: PLC0415
+
+    calls = async_mock_service(hass, "notify", "handy")
+    await _setup(hass)
+    device, entity = _device(hass, "Handy", level=30)
+    other, other_entity = _device(hass, "Tablet", level=30)
+    await hass.data[DATA_CHARGE].async_rebuild()
+    await async_set_device_settings(hass, device.id, charge_full=95, charge_rise=10)
+    assert device_settings(hass)["charge_full"] == {device.id: 95} and device_settings(hass)["charge_rise"] == {device.id: 10}
+    opts = values_from({"notify_charge": True})
+    assert device_charge_opts(hass, opts, device.id)["charge_full"] == 95 and device_charge_opts(hass, opts, other.id)["charge_full"] == 100
+    for level in ("45", "46"):
+        hass.states.async_set(entity, level, {"device_class": "battery", "unit_of_measurement": "%"})
+        hass.states.async_set(other_entity, level, {"device_class": "battery", "unit_of_measurement": "%"})
+        await hass.async_block_till_done()
+    by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
+    # Mit Anstieg 10 lädt das Handy, das Tablet (global 20) noch nicht
+    assert by_name["Handy"]["charging"] is not None and by_name["Tablet"]["charging"] is None
+    assert by_name["Handy"]["charge_full_setting"] == 95 and by_name["Handy"]["charge_rise_setting"] == 10
+    assert by_name["Tablet"]["charge_full_setting"] is None and by_name["Handy"]["charge_default"]["full"] == 100 and by_name["Handy"]["charge_default"]["rise"] == 20
+    # 96 % ist für das Handy voll (95), für das Tablet nicht (100)
+    for ent in (entity, other_entity):
+        hass.states.async_set(ent, "96", {"device_class": "battery", "unit_of_measurement": "%"})
+    await hass.async_block_till_done()
+    assert len(calls) == 1 and calls[0].data["title"] == "Charged: Handy"
+    # Zurück auf global
+    await async_set_device_settings(hass, device.id, charge_full=None, charge_rise=None)
+    assert device_settings(hass)["charge_full"] == {} and device_settings(hass)["charge_rise"] == {}

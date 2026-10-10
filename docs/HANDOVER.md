@@ -393,6 +393,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Tests `test_charge.py`, `chargechip-e2e.mjs`. Unterreiter Laden: Zeitstrahl mit `charge_rise` (Feld) und
    `charge_full` (Auswahl `data-cfull`) im Zeitstrahl wie bei der Warnung (`_chargeHtml`, `.mtl-mk .opt-select`). X in den Suchfeldern der Listen und Auswahlfenster: `_fieldClearHtml`,
    `data-lclear` / `data-area-search-clear`, `.field-clear`.
+   Lademeldung pro Gerät (eigene Werte, 1.35.0): `device_settings` `charge_full` {Gerät: 90..100} und `charge_rise`
+   {Gerät: 5..80} (`.storage/device_panel.devices`), `devices.device_charge_opts()` mischt sie in die Optionen für
+   `ChargeNotifier` (Push und "lädt"); WS `set_device_settings`; Popup `dev-charge-full`, `dev-charge-rise`,
+   `dev-charge-rise-val`. Tests `test_charge.py`, `charge-e2e.mjs`.
    Übersicht mit allen Meldungen `1.34.0` (Nutzer, 2026-10-10): `_monOverviewHtml` hat fünf Zeilen (`lane(...)`: Ausfall,
    Batterie, Laden `data-lane="charge"`, Neue Geräte, Updates); `lane()` nimmt `sub` (Unterreiter, `data-sub` am
    "Ändern"-Knopf, der Handler setzt `st.sub.battery`) und `id`. Strings `laneCharge`, `tlCharge*`, `tlUpd*`, `laneUpd*`.

@@ -40,7 +40,7 @@ from .const import (
     NOTIFY_NONE,
     STORAGE_VERSION,
 )
-from .devices import device_settings, monitored_devices, primary_domain
+from .devices import device_charge_opts, device_settings, monitored_devices, primary_domain
 from .options_api import effective
 
 _LOGGER = logging.getLogger(__name__)
@@ -131,7 +131,7 @@ class ChargeNotifier:
         now = time.time()
         for entity_id, dev in wanted.items():
             if dev not in self._state and (level := level_of(hass.states.get(entity_id))) is not None:
-                self._state[dev] = {"min": level, "min_at": now, "last": level, "done": level >= opts[CONF_CHARGE_FULL]}
+                self._state[dev] = {"min": level, "min_at": now, "last": level, "done": level >= device_charge_opts(hass, opts, dev)[CONF_CHARGE_FULL]}
         if wanted:
             self._unsub_track = async_track_state_change_event(hass, list(wanted), self._on_state)
         self._save()
@@ -143,7 +143,8 @@ class ChargeNotifier:
         if dev is None or level is None:
             return
         opts = effective(self.hass)
-        done = self.step(dev, level, time.time(), opts)
+        # Eigenes "Voll ab" und eigener Anstieg des Geräts (seit 1.35.0) gelten für die Erkennung wie für den Push.
+        done = self.step(dev, level, time.time(), device_charge_opts(self.hass, opts, dev))
         if done is None:
             return
         device = dr.async_get(self.hass).async_get(dev)
@@ -215,7 +216,7 @@ class ChargeNotifier:
                 return None
             st = self._state.get(device.id)
             return {"level": st["last"] if st else None, "from": None, "since": state.last_changed.timestamp(), "source": "entity"}
-        return self.charging(device.id, now, opts)
+        return self.charging(device.id, now, device_charge_opts(self.hass, opts, device.id))
 
     def _save(self) -> None:
         self._store.async_delay_save(lambda: {"state": self._state}, 1)

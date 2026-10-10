@@ -29,6 +29,13 @@ Geräte, die gerade laden.
   gestiegen ist. Ein Rückgang um 5 Punkte beendet es. Geräte, die selten melden (viele
   Bluetooth- und Zigbee-Sensoren), zeigen "lädt" spät oder nie. `list_devices` hat das neue Feld
   `charging` (Stand, Startstand, seit, Quelle).
+- Lademeldung pro Gerät (Wunsch des Nutzers): im Geräte-Popup, sobald die Lademeldung für das
+  Gerät gilt (eigenes "Ein" oder von der Integration), zwei weitere Zeilen: "Voll ab" (globaler
+  Wert oder 90, 95, 98, 100 %) und "Ladung erkannt bei Anstieg" (globaler Wert oder eigener
+  Wert von 5 bis 80 %), je mit Herkunft ("Gerät", "Standard wäre …"). Die eigenen Werte gelten
+  für den Push und für die Markierung "lädt". Neue Einstellungen `charge_full` und
+  `charge_rise` in `set_device_settings`; `list_devices` hat `charge_full_setting`,
+  `charge_rise_setting` und die globalen Werte in `charge_default`.
 
 ### Geändert
 

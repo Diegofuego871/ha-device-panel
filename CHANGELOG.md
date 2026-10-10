@@ -28,6 +28,13 @@ Devices that are charging right now.
   risen in the last 2 hours. A fall of 5 points ends it. Devices that report rarely (many
   Bluetooth and Zigbee sensors) show "charging" late or never. `list_devices` has the new field
   `charging` (level, start level, since, source).
+- Charging notification per device (requested by the user): in the device pop-up, as soon as
+  the charging notification applies to the device (own "On" or from the integration), two more
+  rows: "Full from" (global value or 90, 95, 98, 100 %) and "Charging detected at a rise"
+  (global value or own value from 5 to 80 %), each with the origin ("Device", "Default would be
+  ..."). The own values count for the push and for the mark "charging". New settings
+  `charge_full` and `charge_rise` in `set_device_settings`; `list_devices` has
+  `charge_full_setting`, `charge_rise_setting` and the global values in `charge_default`.
 
 ### Changed
 

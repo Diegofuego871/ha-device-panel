@@ -1011,6 +1011,25 @@ class DevicePanel extends HTMLElement {
         this._setDeviceSettings(this._detailId, { battery: value });
       } else if (el.matches?.('select[data-dlg="dev-charge"]')) {
         this._setDeviceSettings(this._detailId, { charge: el.value === "on" ? true : el.value === "off" ? false : null });
+      } else if (el.matches?.('select[data-dlg="dev-charge-full"]')) {
+        // Eigenes "Voll ab" des Geräts (seit 1.35.0): "default" = globaler Wert.
+        this._setDeviceSettings(this._detailId, { charge_full: el.value === "default" ? null : Number(el.value) });
+      } else if (el.matches?.('select[data-dlg="dev-charge-rise"]')) {
+        // Eigener Anstieg: mit dem globalen Wert beginnen, dann anpassen.
+        const d = this._devices.find((x) => x.id === this._detailId);
+        this._chargeRangeError = null;
+        this._setDeviceSettings(this._detailId, { charge_rise: el.value === "own" ? d?.charge_default?.rise ?? 20 : null });
+      } else if (el.matches?.('input[data-dlg="dev-charge-rise-val"]')) {
+        const v = Number(el.value);
+        const [min, max] = [Number(el.min), Number(el.max)];
+        if (el.value === "" || !Number.isInteger(v) || v < min || v > max) {
+          this._chargeRangeError = { value: el.value, message: this._t("settingsRange", min, max) };
+          this._devForce = true;
+          this._renderDevice();
+        } else {
+          this._chargeRangeError = null;
+          this._setDeviceSettings(this._detailId, { charge_rise: v });
+        }
       } else if (el.matches?.('input[data-dlg="dev-bat-pct"]')) {
         const v = Number(el.value);
         const [min, max] = [5, 50];
@@ -2961,6 +2980,8 @@ class DevicePanel extends HTMLElement {
         if ("signal" in changes) d.signal_setting = changes.signal;
         if ("offline" in changes) d.offline_setting = changes.offline;
         if ("charge" in changes) d.charge_setting = changes.charge;
+        if ("charge_full" in changes) d.charge_full_setting = changes.charge_full;
+        if ("charge_rise" in changes) d.charge_rise_setting = changes.charge_rise;
       }
     } catch (err) {
       this._devSetError = errText(err);
@@ -2977,6 +2998,7 @@ class DevicePanel extends HTMLElement {
     this._devRangeError = null;
     this._sigRangeError = null;
     this._offRangeError = null;
+    this._chargeRangeError = null;
     this._typeError = null;
     this._detailId = null;
     this._detail = null;
@@ -3210,6 +3232,34 @@ class DevicePanel extends HTMLElement {
         cs,
         t("devCharge")
       )}</div>${origin(cs !== "default", cd.integration, "", t("devChargeShort"))}</div>`;
+      // Eigene Werte der Lademeldung (seit 1.35.0): "Voll ab" und Anstieg, wie global; nur wenn sie für das Gerät gilt.
+      if (cs === "on" || (cs === "default" && cd.on)) {
+        const gFull = cd.full ?? 100;
+        const gRise = cd.rise ?? 20;
+        const fullSet = d.charge_full_setting;
+        const riseSet = d.charge_rise_setting;
+        const fulls = [...new Set([90, 95, 98, 100, fullSet].filter((v) => Number.isInteger(v)))].sort((a, b) => a - b);
+        html += `<div class="opt${fullSet != null ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeFull"))}</span>${sel(
+          "dev-charge-full",
+          [["default", t("devChargeFullGlobal", gFull)], ...fulls.map((v) => [String(v), `${v} %`])],
+          fullSet == null ? "default" : String(fullSet),
+          t("devChargeFull")
+        )}</div>${origin(fullSet != null, null, fullSet != null ? t("originDefaultWould", `${gFull} %`) : "", t("devChargeFullShort"))}</div>`;
+        const riseMode = riseSet != null ? "own" : "default";
+        const riseErr = riseMode === "own" ? this._chargeRangeError : null;
+        html += `<div class="opt${riseMode === "own" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeRise"))}</span>${sel(
+          "dev-charge-rise",
+          [["default", t("devChargeRiseGlobal", gRise)], ["own", t("devChargeRiseOwn")]],
+          riseMode,
+          t("devChargeRise")
+        )}</div>${
+          riseMode === "own"
+            ? `<div class="opt-line opt-sub"><span class="opt-label">${escape(t("devChargeRiseBy"))}</span><span class="opt-input${riseErr ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="5" max="80" data-dlg="dev-charge-rise-val" value="${escape(riseErr ? riseErr.value : riseSet)}" aria-label="${escape(t("devChargeRise"))}"><span class="unit">${escape(t("unitPercent"))}</span></span></div>${
+                riseErr ? `<div class="opt-error" data-dev-range>${escape(riseErr.message)}</div>` : ""
+              }`
+            : ""
+        }${origin(riseMode === "own", null, riseMode === "own" ? t("originDefaultWould", `${gRise} %`) : "", t("devChargeRiseShort"))}</div>`;
+      }
     }
     // Stumm (Knopf "24 Std. stumm" in der Meldung): eigene Option mit Ende;
     // "Globale Einstellung" oder "Aus" hebt es auf.
