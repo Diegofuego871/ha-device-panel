@@ -27,9 +27,9 @@ const note = (t) => `<div class="opt-short mon-hint">${t}</div>`;
 
 const PANES = {
   outage: () => `__TL__${row("Überwachen", sw(), "")}${row("Ausgefallen nach", sel("Standard (5 Min.)"), "")}${row("Push bei Ausfall", sw(), "")}`,
-  battery: () => `${row("Schwach ab", sel("Eigene Schwelle: 15 %"), "Standard wäre 10 %", true)}${row("Push bei schwacher Batterie", sw(), "")}`,
-  charge: () => `${row("Laden melden", sw(), "")}${row("Voll ab", sel("80 %"), "Standard wäre 100 %", true)}${row("Ladung erkannt bei Anstieg", sel("Standard (20 %)"), "")}${row("Ladung beendet nach", sel("Standard (15 Min.)"), "")}${row("Push bei beendeter Ladung", sel("Standard (aus)"), "")}`,
-  newdev: () => `${row("Neue Geräte melden", sw(), "")}${note("Meldet neue Geräte dieser Integration, sobald sie in Home Assistant erscheinen.")}`,
+  battery: () => `__TL_BAT__${row("Schwach ab", sel("Eigene Schwelle: 15 %"), "Standard wäre 10 %", true)}${row("Push bei schwacher Batterie", sw(), "")}`,
+  charge: () => `__TL_CHG__${row("Laden melden", sw(), "")}${row("Voll ab", sel("80 %"), "Standard wäre 100 %", true)}${row("Ladung erkannt bei Anstieg", sel("Standard (20 %)"), "")}${row("Ladung beendet nach", sel("Standard (15 Min.)"), "")}${row("Push bei beendeter Ladung", sel("Standard (aus)"), "")}`,
+  newdev: () => `__TL_NEW__${row("Neue Geräte melden", sw(), "")}${note("Meldet neue Geräte dieser Integration, sobald sie in Home Assistant erscheinen.")}`,
   signal: () => `<div class="opt-short sig-intro">Schwach unter diesem Wert gilt der Empfang als schlecht.</div>${row("Thread", sel("Standard (LQI 61)"), "")}${row("Zigbee", sel("Standard (LQI 61)"), "")}`,
   devices: () => `<div class="opt-short">Geräte dieser Integration mit eigenen Einstellungen:</div><div class="ovr-list"><div class="opt-short" style="padding:10px 0">Thermostat Bad · eigene Schwelle 15 %</div><div class="opt-short" style="padding:10px 0">Türsensor Keller · Lademeldung aus</div></div>`,
 };
@@ -57,7 +57,17 @@ async function shotOf(name, build) {
     // alles nach dem Kopf entfernen
     const head = root.querySelector(".ihead");
     while (head.nextSibling) head.nextSibling.remove();
-    head.insertAdjacentHTML("afterend", ${JSON.stringify(build())}.replace("__TL__", tl));
+    // Die Grafik je Reiter wie im globalen Reiter (echte Funktionen des Panels, Werte dieser Integration)
+    const T = (k, ...a) => r.host._t(k, ...a);
+    const TLS = {
+      __TL__: tl,
+      __TL_BAT__: r.host._tlHtml([{ at: 18, title: T("optBatteryLow"), sub: "15 % (Standard 10 %)" }, { at: 76, cls: "mk-p", title: T("tlInstant"), sub: T("tlInstantSub") }], "mtl-b"),
+      __TL_CHG__: r.host._tlHtml([{ at: 18, title: T("tlChargeRise", 20), sub: T("tlChargeRiseSub") }, { at: 76, cls: "mk-p", title: T("tlChargeFull", 80), sub: T("tlChargeFullSub") }], "mtl-b"),
+      __TL_NEW__: r.host._ptlHtml([{ cls: "mk-p", title: T("offlineMin", 5), sub: T("tlNewPush"), w: 100 }], false, "tlFound"),
+    };
+    let html = ${JSON.stringify(build())};
+    for (const [k, v] of Object.entries(TLS)) html = html.split(k).join(v);
+    head.insertAdjacentHTML("afterend", html);
     back.scrollIntoView({ block: "start" });
   `
   );
@@ -81,10 +91,15 @@ const files = [
   await shotOf("B1", B("battery", "charge")), await shotOf("C1", C),
 ];
 await compose("1-Reiter-Integration.png", [
-  [files[0], "A: Reiter Ausfall | Batterie | Laden | Neu | Empfang | Geräte; Punkt = eigene Einstellung (Ausfall gewählt, mit Zeitleiste)", 300],
-  [files[1], "A: Reiter \"Laden\" gewählt: alle Lade-Zeilen auf einer kurzen Seite (Empfehlung)", 300],
-  [files[2], "B: wie global: Batterie mit Unterreitern \"Warnung | Laden\"", 300],
-  [files[3], "C: aufklappbare Abschnitte mit Zusammenfassung statt Reiter", 300],
+  [files[0], "A: Reiter Ausfall | Batterie | Laden | Neu | Empfang | Geräte; Punkt = eigene Einstellung; jeder Reiter mit seiner Grafik (Ausfall gewählt)", 300],
+  [files[1], "A: Reiter \"Laden\" gewählt, mit der Lade-Grafik (Anstieg, Voll ab) wie global (Empfehlung)", 300],
+  [files[2], "B: wie global: Batterie mit Unterreitern \"Warnung | Laden\", Grafik je Unterreiter", 300],
+  [files[3], "C: aufklappbare Abschnitte mit Zusammenfassung, Grafik im geöffneten Abschnitt", 300],
+]);
+const more = [await shotOf("A3", A("battery")), await shotOf("A4", A("newdev"))];
+await compose("2-Grafik-je-Reiter.png", [
+  [more[0], "A: Reiter \"Batterie\": Grafik mit Schwach ab (15 %) und Push, wie im globalen Reiter", 300],
+  [more[1], "A: Reiter \"Neu\": Grafik mit Sammelfenster und Push \"Neues Gerät\"", 300],
 ]);
 await close();
 console.log("fertig");
