@@ -595,7 +595,6 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 
 /* Ausschlüsse: Integrationen und Gerätetypen mit Schalter "Anzeigen" */
 .ex-intro { margin: 8px 0 6px; }
-.ex-title { margin: 14px 2px 0; font-size: 14px; font-weight: 600; }
 .ex-head { display: flex; justify-content: space-between; padding: 6px 2px 4px; color: var(--dp-text2); font-size: 11px; font-weight: 500;
   letter-spacing: .04em; text-transform: uppercase; }
 .ex-row { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 6px 2px; border-bottom: 1px solid var(--dp-divider); }
@@ -764,7 +763,10 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ptl-row.mk-off .ptl-track::before { height: 0; border-top: 2px dashed var(--dp-text3); background: none; top: 6px; }
 .ptl-row.mk-off .ptl-track i { display: none; }
 .mtl-note { display: flex; align-items: flex-start; gap: 4px; margin: 4px 0 2px; }
-.mon-grp { margin: 16px 0 2px; color: var(--dp-text2); font-size: 11.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+/* Ein Titelstil für jedes neue Thema in den Einstellungen (seit 1.43.0): gross, mit Akzentbalken */
+.mon-grp, .set-title, .ex-title { display: flex; align-items: center; gap: 10px; margin: 28px 0 8px; color: var(--dp-text); font-size: 18px; font-weight: 700; line-height: 1.25; letter-spacing: 0; text-transform: none; }
+.mon-grp::before, .set-title::before, .ex-title::before { content: ""; flex: none; width: 4px; height: 1.15em; border-radius: 2px; background: var(--dp-primary); }
+.dlg-body > .set-title:first-child, .mon-body > .mon-grp:first-child, .lvl-body > .set-title:first-child { margin-top: 6px; }
 .mon-diff .opt-line { min-height: 28px; }
 .mon-intro { margin: 6px 0 8px; }
 .mon-flt { display: flex; flex-wrap: wrap; gap: 6px; }

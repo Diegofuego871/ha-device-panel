@@ -86,7 +86,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     await tap('[data-set="section"][data-id="look"]');
     await wait(`return !!r.querySelector('select[data-sig-mode="|wifi"]')`);
-    check(`[${tag}] Block "${T.title}" im Reiter Verbindungsart`, (await ev(`return [...r.querySelectorAll(".opt-label")].some(x=>x.textContent.trim()===${JSON.stringify(T.title)})`)));
+    check(`[${tag}] Block "${T.title}" im Reiter Verbindungsart`, (await ev(`return [...r.querySelectorAll(".set-title")].some(x=>x.textContent.trim()===${JSON.stringify(T.title)})`)));
     check(`[${tag}] Zeilen: WLAN, Zigbee, Bluetooth, Z-Wave (nur mit Empfangswert)`, (await ev(`return [...r.querySelectorAll("select[data-sig-mode]")].map(s=>s.dataset.sigMode).join()`)) === "|wifi,|zigbee,|ble,|zwave");
     const w0 = await row("|wifi");
     check(`[${tag}] WLAN: Standard in dBm mit Zahl der Geräte`, w0 && w0.label === T.wifi && (await sel("|wifi")) === `default|${T.defWifi}` && w0.info === T.infoWifi && w0.origin === (lang === "de" ? "Standard" : "Default") && !w0.changed, JSON.stringify(w0));

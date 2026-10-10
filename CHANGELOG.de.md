@@ -7,7 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.43.0] - 2026-10-10
+
+Klare Abschnittstitel in den Einstellungen.
+
+### Geändert
+
+- Ein Titelstil für jedes neue Thema in den Einstellungen (Wunsch des Nutzers): grösser (18 px, fett), in der
+  Textfarbe mit einem Akzentbalken davor, damit auf den ersten Blick klar ist, dass ein neuer Abschnitt
+  beginnt. Die kleinen grauen Grossbuchstaben-Titel ("Erkennung", "Meldung" …) sehen jetzt gleich aus. Neue
+  Titel dort, wo ein Thema ohne Titel begann: "Was das Panel zeigt", "Integrationen im Panel", "Gerätetypen im
+  Panel" und "Ausgeblendete Geräte" (Geräte im Panel); "Ziel der Meldungen" (Übersicht); "Meldung" und
+  "Integrationen" (Laden); "Anzeige", "Anbieter" und "Prompt" (KI-Einschätzung). "Verbindungsart pro
+  Integration", "Empfang: Warnschwelle pro Funkart" und "Filter-Chips" sind ebenfalls Titel.
+
 ## [1.42.0] - 2026-10-10
+
+Nicht veröffentlicht; enthalten in 1.43.0.
 
 Auf jeder Ebene dieselben Reiter.
 
@@ -33,7 +49,7 @@ Auf jeder Ebene dieselben Reiter.
 
 ## [1.41.0] - 2026-10-10
 
-Nicht veröffentlicht; enthalten in 1.42.0.
+Nicht veröffentlicht; enthalten in 1.43.0.
 
 Ladung beendet pro Integration und pro Gerät.
 
@@ -83,7 +99,7 @@ Ladung beendet pro Integration und pro Gerät.
 
 ## [1.40.0] - 2026-10-10
 
-Nicht veröffentlicht; enthalten in 1.42.0.
+Nicht veröffentlicht; enthalten in 1.43.0.
 
 Ladung beendet.
 
@@ -2101,7 +2117,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[1.42.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.42.0
+[1.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.43.0
 [1.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.39.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0

@@ -108,7 +108,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Abschnitt Darstellung, Reiter Verbindungsart`, (await text('[data-id="look"] .set-sec-sum')) === T.sumAuto, await text('[data-id="look"] .set-sec-sum'));
     await tap('[data-set="section"][data-id="look"]');
     const shellyRow = await ev(`const s=r.querySelector('select[data-conn-integ="shelly"]'); return s ? [s.closest(".ex-row").querySelector("small").textContent, s.value, s.options[0].textContent, s.options.length] : null`);
-    check(`[${tag}] Zeile mit Erkennung und Auswahl`, (await text(".bat-own .opt-label")) === T.title && JSON.stringify(shellyRow) === JSON.stringify([T.shelly, "", T.autoOpt, 10]), JSON.stringify(shellyRow));
+    check(`[${tag}] Zeile mit Erkennung und Auswahl`, (await text(".set-title")) === T.title && JSON.stringify(shellyRow) === JSON.stringify([T.shelly, "", T.autoOpt, 10]), JSON.stringify(shellyRow));
     const sh = await handle('select[data-conn-integ="shelly"]');
     await sh.scrollIntoViewIfNeeded();
     await sh.selectOption("ethernet");

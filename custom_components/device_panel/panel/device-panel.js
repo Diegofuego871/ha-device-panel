@@ -4952,8 +4952,8 @@ class DevicePanel extends HTMLElement {
   _sigGlobalHtml(d) {
     const t = (k, ...a) => this._t(k, ...a);
     const rows = this._sigRowsHtml(d, "");
-    return `<div class="opt bat-own"><div class="opt-line"><span class="opt-label">${escape(t("sigTitle"))}</span></div>
-      <div class="opt-short">${escape(t("sigShort"))}</div></div>${rows || `<div class="opt-short mon-empty">${escape(t("sigNone"))}</div>`}`;
+    return `<div class="set-title">${escape(t("sigTitle"))}</div>
+      <div class="opt-short">${escape(t("sigShort"))}</div>${rows || `<div class="opt-short mon-empty">${escape(t("sigNone"))}</div>`}`;
   }
 
   // Verbindungsarten für die Filter-Chips: alle mit Geräten (wie die Chips,
@@ -5191,8 +5191,8 @@ class DevicePanel extends HTMLElement {
     const names = Object.fromEntries((st.data.catalog?.integrations || []).map((x) => [x.domain, x.name]));
     const name = (dom) => this._integrations[dom] || names[dom] || dom;
     const list = [...groups.entries()].sort((a, b) => b[1].devices - a[1].devices || name(a[0]).localeCompare(name(b[0])));
-    const head = `<div class="opt bat-own"><div class="opt-line"><span class="opt-label">${escape(t("connIntegTitle"))}</span></div>
-      <div class="opt-short">${escape(t("connIntegShort"))}</div></div>`;
+    const head = `<div class="set-title">${escape(t("connIntegTitle"))}</div>
+      <div class="opt-short">${escape(t("connIntegShort"))}</div>`;
     if (!list.length) return head;
     const rows = list
       .map(([dom, g]) => {
@@ -5544,6 +5544,7 @@ class DevicePanel extends HTMLElement {
       lane("batteryCharging", "chg", t("laneCharge"), "charge", chargeTl, chip("notify_charge", t("chipPush")), chargeDiff) +
       lane("sparkle", "new", t("laneNew"), "new", newTl, chip("notify_new", t("chipPush")) + chip("new_persistent", t("chipPersistent")), diffLine(diff.newI, 0, "new")) +
       lane("update", "upd", t("laneUpdates"), "updates", updTl, chip("notify_updates", t("chipPush")), updDiff) +
+      `<div class="mon-grp">${escape(t("grpTarget"))}</div>` +
       ui.row("notify_service", t("optNotifyTarget"), ui.select("notify_service", ui.targets, t("optNotifyTarget")), t("optNotifyTargetShort"), t("optNotifyTargetInfo"), warn) +
       ui.row("notify_click_target", t("optClick"), ui.select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null)
     );
@@ -5651,6 +5652,7 @@ class DevicePanel extends HTMLElement {
     );
     let html = `${tl}<div class="opt-error mtl-err" data-tl-error="charge_rise,charge_full" ${errors.charge_rise || errors.charge_full ? "" : "hidden"}>${escape(errors.charge_rise || errors.charge_full || "")}</div>
       <div class="opt-short mtl-note">${escape(t("optChargeRiseShort"))} ${escape(t("optChargeFullShort"))}</div>
+      <div class="mon-grp">${escape(t("grpNotify"))}</div>
       ${ui.row("notify_charge", t("optCharge"), ui.sw("notify_charge", t("optCharge")), noTarget ? null : t("optChargeShort"), null, noTarget ? t("noTargetWarn") : null)}`;
     if (!d.notify_charge) return html;
     // Ladung beendet (seit 1.40.0): bleibt der Stand ohne Ladeanzeige am Gerät so lange unverändert, endet "lädt";
@@ -5666,7 +5668,7 @@ class DevicePanel extends HTMLElement {
       .map((x) => `<div class="ex-row${on.has(x.domain) !== saved.has(x.domain) ? " changed" : ""}">${this._ibadge(x.domain, x.name)}<div class="ex-name">${escape(x.name)}<small>${escape(t("chargeIntegSub", x.devices))}</small></div>
         <label class="switch"><input type="checkbox" data-cinteg="${escape(x.domain)}" ${on.has(x.domain) ? "checked" : ""} aria-label="${escape(`${t("optCharge")}: ${x.name}`)}"><span></span></label></div>`)
       .join("");
-    html += `<div class="opt-short" style="margin-top:6px"><b>${escape(t("chargeIntegTitle"))}</b> ${escape(t("chargeIntegHint"))}</div>${this._searchHtml("charge", items.length)}
+    html += `<div class="mon-grp">${escape(t("chargeIntegTitle"))}</div><div class="opt-short">${escape(t("chargeIntegHint"))}</div>${this._searchHtml("charge", items.length)}
       <div class="srch-rows" data-srch="charge">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>`;
     // Vorschau an einem Gerät mit Batterie (Beispielwerte kursiv, wie bei den anderen Meldungen)
     const dev = this._devices.find((x) => x.battery?.level != null) || null;
@@ -6229,6 +6231,8 @@ class DevicePanel extends HTMLElement {
       badge: `<span class="ibadge type">${typeIcon(x.type, 18)}</span>`,
     }));
     const ui = { row, sw, select, num, targets, infoBtn };
+    // Titel eines neuen Themas (seit 1.43.0): überall derselbe grosse Stil (.set-title, wie .mon-grp)
+    const ttl = (key) => `<div class="set-title">${escape(t(key))}</div>`;
     const devTab = ["integrations", "types", "devs"].includes(st.sub?.devices) ? st.sub.devices : "integrations";
     const lookTab = st.sub?.look === "chips" ? "chips" : "conn";
     // Reiter innerhalb eines Abschnitts; Zähler = ausgeblendete Einträge,
@@ -6249,9 +6253,11 @@ class DevicePanel extends HTMLElement {
       // haben nur "Anzeigen"; Überwachen und Melden pro Integration steht in
       // "Überwachung und Meldungen" › "Integrationen".
       devices:
+        ttl("ttlShow") +
         row("show_service_devices", t("optShowService"), sw("show_service_devices", t("optShowService")), t("optShowServiceShort"), t("optShowServiceInfo")) +
         row("show_disabled_devices", t("optShowDisabled"), sw("show_disabled_devices", t("optShowDisabled")), t("optShowDisabledShort"), null) +
         subTabs("devices", [["integrations", "secIntegrations"], ["types", "subTypes"], ["devs", "subDevs"]]) +
+        ttl(devTab === "types" ? "ttlTypes" : devTab === "devs" ? "ttlHiddenDevs" : "ttlIntegShow") +
         (devTab === "types"
           ? exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`)
           : devTab === "devs"
@@ -6281,9 +6287,10 @@ class DevicePanel extends HTMLElement {
               : "")
           : this._connIntegHtml(d) + this._overridesHtml("connection") + this._sigGlobalHtml(d) + this._overridesHtml("signal")),
       ai:
+        ttl("ttlAiShow") +
         row("ai_assessment", t("optAi"), sw("ai_assessment", t("optAi")), t("optAiShort"), t("optAiInfo")) +
         (d.ai_assessment
-          ? row(
+          ? ttl("ttlAiTask") + row(
               "ai_task_entity",
               t("optAiTask"),
               select("ai_task_entity", [["", t("aiTaskDefault")], ...aiTasks.map((x) => [x.value, x.name])], t("optAiTask")),
@@ -6292,6 +6299,7 @@ class DevicePanel extends HTMLElement {
               (st.data.catalog?.ai_tasks || []).length ? null : t("aiNoTasks")
             )
           : "") +
+        ttl("ttlAiPrompt") +
         this._aiPromptHtml(d, changes.has("ai_prompt")),
       updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
