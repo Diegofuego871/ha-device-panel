@@ -133,7 +133,7 @@
     },
     "error": {
       "offline_map": "Each line must be integration: whole number from 1 to 1440 or off (e.g. \"zha: 60\", \"hue: off\").",
-      "battery_map": "Each line must be integration: whole number from 5 to 50 or off (e.g. \"zha: 25\", \"bthome: off\").",
+      "battery_map": "Each line must be integration: whole number from 1 to 50 or off (e.g. \"zha: 25\", \"bthome: off\").",
       "connection_map": "Each line must be integration: connection type (zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud).",
       "type_map": "Each line must be integration: device type (hub, phone, network, climate, lock, cover, valve, vacuum, camera, alarm, media, fan, light, outlet, switch, motion, contact, safety, energy, sensor, button, other).",
       "notify_delay_short": "\"Report outages only after\" must not be shorter than \"Offline after\": before that a device does not count as offline.",

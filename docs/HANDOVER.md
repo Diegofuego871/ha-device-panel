@@ -431,6 +431,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Wischen im Popup `1.41.0` (Nutzer, Video nicht angekommen, Ursache nur vermutet): `_renderDevice(soft)` und `_renderLogBody(soft)` bauen beim
    Abfragen nicht neu auf, solange `_dlgBusy()` gilt (Berührung aktiv oder weniger als 0,8 s her, Scroll/Wheel im Fenster);
    `_trackBusy(dlg)` setzt die Merker. Nur der Abfragepfad ist weich, eigene Aktionen bauen sofort neu auf. Test `busy-e2e.mjs`.
+   Batterie-Schwelle ab 1 % `1.41.0` (Nutzer): `INT_RANGES[CONF_BATTERY_LOW] = (1, 50)` (vorher 5), Panel `[1, 50]` (Popup, global, pro Integration), Simulator
+   und Texte (`battery_map` "1 bis 50"); Tests `test_battery.py`, `devset-e2e.mjs`, `settings-e2e.mjs`.
    Feste Höhe der Fenster `1.41.0` (Nutzer): `dialog.device`, `.settings`, `.stat-dlg`, `.pulse-dlg`, `.area-sheet`, `.prompt-dlg` haben eine feste Höhe
    (Desktop `min(780px, 100% - 48px)`, Handy 92 %, Statistik 86 %), Flex-Spalte mit `.dlg-body { flex-grow: 1 }`, damit die Knöpfe unten bleiben und der
    Inhalt den Rest füllt. Fenster mit gleichbleibendem Inhalt (`view`, `cols-dlg`) bleiben wie sie sind. Test `dlgheight-e2e.mjs`.

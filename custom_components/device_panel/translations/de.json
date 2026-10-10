@@ -133,7 +133,7 @@
     },
     "error": {
       "offline_map": "Jede Zeile muss Integration: ganze Zahl von 1 bis 1440 oder off sein (z. B. \"zha: 60\", \"hue: off\").",
-      "battery_map": "Jede Zeile muss Integration: ganze Zahl von 5 bis 50 oder off sein (z. B. \"zha: 25\", \"bthome: off\").",
+      "battery_map": "Jede Zeile muss Integration: ganze Zahl von 1 bis 50 oder off sein (z. B. \"zha: 25\", \"bthome: off\").",
       "connection_map": "Jede Zeile muss Integration: Verbindungsart sein (zigbee, thread, zwave, matter, ble, wifi, ethernet, network, cloud).",
       "type_map": "Jede Zeile muss Integration: Gerätetyp sein (hub, phone, network, climate, lock, cover, valve, vacuum, camera, alarm, media, fan, light, outlet, switch, motion, contact, safety, energy, sensor, button, other).",
       "notify_delay_short": "\"Ausfälle erst melden nach\" darf nicht kürzer sein als \"Ausgefallen nach\": vorher gilt ein Gerät nicht als ausgefallen.",

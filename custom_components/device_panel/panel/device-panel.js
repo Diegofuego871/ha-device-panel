@@ -1091,7 +1091,7 @@ class DevicePanel extends HTMLElement {
         }
       } else if (el.matches?.('input[data-dlg="dev-bat-pct"]')) {
         const v = Number(el.value);
-        const [min, max] = [5, 50];
+        const [min, max] = [1, 50];
         // Ausserhalb des Bereichs: nichts senden, Eingabe stehen lassen und
         // den Bereich direkt unter dem Feld nennen.
         if (el.value === "" || !Number.isInteger(v) || v < min || v > max) {
@@ -3493,7 +3493,7 @@ class DevicePanel extends HTMLElement {
         t("devBattery")
       )}</div>${
         mode === "own"
-          ? `<div class="opt-line opt-sub"><span class="opt-label">${escape(t("devBatLow"))}</span><span class="opt-input${range ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="5" max="50" data-dlg="dev-bat-pct" value="${escape(range ? range.value : setting)}" aria-label="${escape(t("devBatLow"))}"><span class="unit">%</span></span></div>${
+          ? `<div class="opt-line opt-sub"><span class="opt-label">${escape(t("devBatLow"))}</span><span class="opt-input${range ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="1" max="50" data-dlg="dev-bat-pct" value="${escape(range ? range.value : setting)}" aria-label="${escape(t("devBatLow"))}"><span class="unit">%</span></span></div>${
               range ? `<div class="opt-error" data-dev-range>${escape(range.message)}</div>` : ""
             }`
           : ""
@@ -4753,7 +4753,7 @@ class DevicePanel extends HTMLElement {
     if ("battery_push_time" in st.draft && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(st.draft.battery_push_time || ""))) {
       errors.battery_push_time = this._t("timeError");
     }
-    if (this._batInvalid().length) errors.battery_low_integrations = this._t("settingsRange", ...(st.data.limits?.battery_low || [5, 50]));
+    if (this._batInvalid().length) errors.battery_low_integrations = this._t("settingsRange", ...(st.data.limits?.battery_low || [1, 50]));
     // Warnschwelle des Empfangs pro Funkart ausserhalb des Bereichs der Einheit.
     const sigBad = this._sigInvalid();
     const sigGlobal = sigBad.find((x) => !x.dom);
@@ -4770,7 +4770,7 @@ class DevicePanel extends HTMLElement {
   // Integrationen, deren eigene Batterie-Schwelle ausserhalb des Bereichs liegt.
   _batInvalid() {
     const st = this._settings;
-    const [min, max] = st?.data?.limits?.battery_low || [5, 50];
+    const [min, max] = st?.data?.limits?.battery_low || [1, 50];
     return Object.entries(st?.draft?.battery_low_integrations || {})
       .filter(([, v]) => v !== "off" && (!Number.isInteger(v) || v < min || v > max))
       .map(([d]) => d);
@@ -5888,7 +5888,7 @@ class DevicePanel extends HTMLElement {
       const b = batMap[dom];
       const mode = b === "off" ? "off" : b === undefined ? "default" : "own";
       const std = val("battery_low");
-      const [min, max] = st.data.limits?.battery_low || [5, 50];
+      const [min, max] = st.data.limits?.battery_low || [1, 50];
       const bad = this._batInvalid().includes(dom);
       const batSel = `<span class="bat-ctl"><span class="opt-select"><select data-bat-mode="${escape(dom)}" ${unmon ? "disabled" : ""} aria-label="${escape(`${t("optBatteryLow")}: ${item.name}`)}">${[
         ["default", t("integBatDefault", std)],

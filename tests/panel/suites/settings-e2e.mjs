@@ -28,7 +28,7 @@ const TEXT = {
    
     noTarget: "Ohne Ziel kommt kein Push. Ziel wählen: Reiter \"Übersicht\".",
     notifyNone: "Kein Ziel (keine Push-Meldungen)", entity: "notify.fernseher (Entität)",
-    rangeBat: "Erlaubt: 5 bis 50",
+    rangeBat: "Erlaubt: 1 bis 50",
    
     batDef: (p) => `Standard (${p} %)`, batModes: "Standard (15 %)|Eigene|Aus", popDefOff: "Wie Integration (aus)",
     shortInstant: "Sobald ein Gerät unter die Warnschwelle fällt.", shortDaily: (t) => `Eine Sammelmeldung um ${t}; Ausfall-Meldungen betrifft das nicht.`, timeErr: "Uhrzeit HH:MM",
@@ -65,7 +65,7 @@ const TEXT = {
    
     noTarget: "Without a target no push is sent. Choose a target: tab \"Overview\".",
     notifyNone: "No target (no push notifications)", entity: "notify.fernseher (entity)",
-    rangeBat: "Allowed: 5 to 50",
+    rangeBat: "Allowed: 1 to 50",
    
     batDef: (p) => `Default (${p} %)`, batModes: "Default (15 %)|Own|Off", popDefOff: "Same as integration (off)",
     shortInstant: "As soon as a device drops below the warning threshold.", shortDaily: (t) => `One summary at ${t}; outage notifications are not affected.`, timeErr: "Time HH:MM",

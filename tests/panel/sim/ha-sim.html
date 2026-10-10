@@ -397,7 +397,7 @@
     if (!["{facts}", ...PROMPT_GROUPS].some((v) => text.includes(v))) return "no_facts";
     return null;
   };
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [5, 80], charge_stall: [5, 120] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [5, 80], charge_stall: [5, 120] };
   // Inhalt der Batterie-Meldung wie options_api.BATTERY_FIELDS (seit 0.34.0).
   const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
   // Inhalt der Meldung bei neuen Geräten wie const.NEW_FIELDS (seit 1.24.0).
@@ -829,7 +829,7 @@
         }
         if ("battery_low_integrations" in msg.values) {
           const m = msg.values.battery_low_integrations;
-          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || (v !== "off" && (!Number.isInteger(v) || v < 5 || v > 50)))) throw { code: "invalid_format", message: "battery map" };
+          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || (v !== "off" && (!Number.isInteger(v) || v < 1 || v > 50)))) throw { code: "invalid_format", message: "battery map" };
         }
         // Wie options_api.signal_map / signal_integrations_map (seit 1.17.0): Verbindungsart ->
         // "off" oder Zahl (dBm -110..-40, LQI 1..200); je Integration verschachtelt, leere fallen weg.
@@ -863,7 +863,7 @@
         const out = {};
         if ("battery" in msg) {
           const v = msg.battery;
-          if (!(v === null || v === "off" || (Number.isInteger(v) && v >= 5 && v <= 50))) throw { code: "invalid_format", message: "battery" };
+          if (!(v === null || v === "off" || (Number.isInteger(v) && v >= 1 && v <= 50))) throw { code: "invalid_format", message: "battery" };
           if (v === null) delete window.__devSettings.battery[msg.device_id];
           else window.__devSettings.battery[msg.device_id] = v;
           out.battery = v;

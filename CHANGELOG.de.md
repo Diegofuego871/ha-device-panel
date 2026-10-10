@@ -30,6 +30,9 @@ Ladung beendet pro Integration und pro Gerät.
   welcher Reiter oder Zeitraum gewählt ist (vorher wurde das Popup auf einem Reiter mit weniger Inhalt
   niedriger). Kopf, Reiter und Knöpfe bleiben stehen, der Inhalt füllt den Rest und scrollt, wenn er länger
   ist. Kleinere Fenster mit gleichbleibendem Inhalt (Spalten, Ansicht) bleiben unverändert.
+- Die Batterie-Warnung ("Schwach ab") lässt sich bis auf 1 % senken (Wunsch des Nutzers: "Ich möchte hier
+  niemand bevormunden"; vorher 5 bis 50 %). Gilt im Geräte-Popup, in der globalen Einstellung, pro Integration
+  und in den Home-Assistant-Optionen; 0 und Werte über 50 werden weiterhin abgelehnt.
 
 ### Behoben
 

@@ -216,7 +216,7 @@ async def test_push_options_are_checked(hass: HomeAssistant, watch: BatteryWatch
     result = (await client.receive_json())["result"]
     assert result["values"]["notify_service"] == "none" and result["values"]["notify_click_target"] == "panel"
     assert result["notify_targets"][0] == {"value": "none", "kind": "none"}
-    assert result["limits"]["battery_low"] == [5, 50]
+    assert result["limits"]["battery_low"] == [1, 50]
 
 
 async def test_threshold_per_integration(hass: HomeAssistant, watch: BatteryWatch, hass_ws_client) -> None:
@@ -285,10 +285,13 @@ async def test_warning_off_per_integration(hass: HomeAssistant, watch: BatteryWa
 
 async def test_battery_map_is_checked(hass: HomeAssistant, watch: BatteryWatch, hass_ws_client) -> None:
     client = await hass_ws_client(hass)
-    bad = ({"zha": 60}, {"zha": 4}, {"zha": True}, {"Böse Domain": 20}, {"zha": "20"}, {"zha": "aus"}, {"Böse Domain": "off"}, ["zha"])
+    bad = ({"zha": 60}, {"zha": 0}, {"zha": True}, {"Böse Domain": 20}, {"zha": "20"}, {"zha": "aus"}, {"Böse Domain": "off"}, ["zha"])
     for i, value in enumerate(bad, 1):
         await client.send_json({"id": i, "type": f"{DOMAIN}/set_options", "values": {"battery_low_integrations": value}})
         assert (await client.receive_json())["error"]["code"] == "invalid_format", value
+    # Ab 1 Prozent erlaubt (seit 1.41.0): niemand wird bevormundet
+    await client.send_json({"id": 19, "type": f"{DOMAIN}/set_options", "values": {"battery_low_integrations": {"zha": 1}}})
+    assert (await client.receive_json())["success"] is True
     await client.send_json({"id": 20, "type": f"{DOMAIN}/set_options", "values": {"battery_low_integrations": {}}})
     assert (await client.receive_json())["result"]["changed"] is True
 

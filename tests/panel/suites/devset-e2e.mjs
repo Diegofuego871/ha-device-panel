@@ -12,11 +12,11 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     sec: "Einstellungen für dieses Gerät", def: "Globaler Wert (15 %)", own: "Eigene Warnschwelle", short: "Globaler Wert: 15 %.", notifyOn: "Globale Einstellung",
-    range: "Erlaubt: 5 bis 50", notifyOff: "Aus für dieses Gerät", saveErr: "Konnte nicht gespeichert werden:",
+    range: "Erlaubt: 1 bis 50", notifyOff: "Aus für dieses Gerät", saveErr: "Konnte nicht gespeichert werden:",
   },
   en: {
     sec: "Settings for this device", def: "Global value (15 %)", own: "Own warning threshold", short: "Global value: 15 %.", notifyOn: "Global setting",
-    range: "Allowed: 5 to 50", notifyOff: "Off for this device", saveErr: "Could not be saved:",
+    range: "Allowed: 1 to 50", notifyOff: "Off for this device", saveErr: "Could not be saved:",
   },
 };
 
@@ -87,6 +87,23 @@ for (const lang of ["de", "en"]) {
     await inp3.fill("30");
     await inp3.press("Tab");
     check(`[${tag}] gültiger Wert: Hinweis weg, gespeichert`, await wait(`return !r.querySelector("[data-dev-range]") && !r.querySelector('input[data-dlg="dev-bat-pct"]').closest(".opt-input").classList.contains("bad")`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "c", battery: 30 }) && (await calls()).length === n + 1, JSON.stringify((await calls()).at(-1)));
+    // Ab 1 Prozent erlaubt (1.41.0), 0 nicht
+    const inp4 = await handle('input[data-dlg="dev-bat-pct"]');
+    if (mobile) await inp4.tap(); else await inp4.click();
+    await inp4.fill("1");
+    await inp4.press("Tab");
+    check(`[${tag}] 1 % erlaubt und gespeichert`, await wait(`return !r.querySelector("[data-dev-range]")`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "c", battery: 1 }), JSON.stringify((await calls()).at(-1)));
+    const inp5 = await handle('input[data-dlg="dev-bat-pct"]');
+    if (mobile) await inp5.tap(); else await inp5.click();
+    await inp5.fill("0");
+    await inp5.press("Tab");
+    check(`[${tag}] 0 % abgelehnt (${T.range})`, await wait(`return r.querySelector("[data-dev-range]")?.textContent === ${JSON.stringify(T.range)}`));
+    // Zurück auf 30, damit die folgenden Prüfungen den alten Stand sehen
+    const inp6 = await handle('input[data-dlg="dev-bat-pct"]');
+    if (mobile) await inp6.tap(); else await inp6.click();
+    await inp6.fill("30");
+    await inp6.press("Tab");
+    await wait(`return !r.querySelector("[data-dev-range]")`);
     await close();
 
     // Temperatur Keller (BTHome, 0 %): Warnung aus

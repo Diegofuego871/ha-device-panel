@@ -30,6 +30,9 @@ Charging stopped per integration and per device.
   tab or range is chosen (before, the pop-up got shorter on a tab with less content). Head, tabs and buttons
   stay in place, the content fills the rest and scrolls when it is longer. Smaller windows with constant
   content (columns, view) are unchanged.
+- The battery warning ("Low from") can be set down to 1 % (requested by the user: "I do not want to patronise
+  anyone"; before: 5 to 50 %). Applies to the device pop-up, the global setting, the setting per integration and
+  the Home Assistant options; 0 and values above 50 are still rejected.
 
 ### Fixed
 
