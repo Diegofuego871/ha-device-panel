@@ -687,6 +687,8 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .mon-tab, .sub-tab { position: relative; flex: 1 0 auto; min-width: 0; padding: 8px 12px; white-space: nowrap; border: none; border-radius: 9px; background: none; color: var(--dp-text2);
   font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer; }
 .mon-tab:hover, .sub-tab:hover { color: var(--dp-text); }
+/* Nicht gewählte Reiter leicht umrahmt (seit 2.0.2), damit man sie als Reiter erkennt; innen als Schatten, damit nichts springt */
+.mon-tab:not(.on), .sub-tab:not(.on) { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dp-text) 16%, transparent); }
 /* Reiter brechen bei Platzmangel auf eine zweite Zeile um (seit 1.44.0), die Zeilen füllen die Breite */
 .mon-tab.on, .sub-tab.on { background: var(--dp-card); color: var(--dp-text); font-weight: 600; box-shadow: var(--dp-shadow-s); }
 .mon-tab:focus-visible, .sub-tab:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
@@ -716,7 +718,8 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .mon-chip:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
 .mtl { position: relative; height: 84px; margin: 8px 12px 2px; }
 .mtl.mtl-e { height: 102px; }
-.mtl-bar { position: absolute; top: 20px; left: 0; right: 0; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--dp-error-line), var(--dp-error)); }
+/* Linie und Balken enden bei 80 % der Breite (seit 2.0.2): der Wert steht am Endpunkt, die letzten 20 % bleiben frei */
+.mtl-bar { position: absolute; top: 20px; left: 0; right: 20%; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--dp-error-line), var(--dp-error)); }
 .mtl.mtl-b .mtl-bar { background: linear-gradient(90deg, var(--dp-warning-soft), var(--dp-warning)); }
 .mtl-mk { position: absolute; top: 13px; width: 112px; transform: translateX(-50%); color: var(--dp-text2); font-size: 11px; line-height: 1.3; text-align: center; }
 .mtl-mk .opt-select { display: inline-block; flex: none; width: 92px; margin-bottom: 3px; }
@@ -746,15 +749,15 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ptl-zero::before { content: ""; position: absolute; left: -20px; top: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-text3); }
 .ptl-zero b { color: var(--dp-text); font-size: 12px; font-weight: 600; }
 .ptl-zero span { color: var(--dp-text2); font-size: 11.5px; }
-.ptl-row { margin-bottom: 10px; }
-.ptl-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 22px; }
-.ptl-head b { color: var(--dp-text); font-size: 12.5px; font-weight: 600; }
-.ptl-head > span:not(.opt-input) { color: var(--dp-text2); font-size: 11.5px; text-align: right; }
-.ptl-e .ptl-head { min-height: 36px; }
+.ptl-row { margin-bottom: 2px; padding-bottom: 38px; }
+.ptl-e .ptl-row { padding-bottom: 68px; }
 .ptl-track { position: relative; height: 14px; margin: 3px 0 0 -15px; }
-.ptl-track::before { content: ""; position: absolute; left: 0; top: 5px; height: 4px; width: var(--w); border-radius: 2px; background: linear-gradient(90deg, var(--dp-error-line), var(--dp-error)); transition: width .15s; }
-.ptl-track i { position: absolute; top: 0; left: calc(var(--w) - 14px); width: 14px; height: 14px; box-sizing: border-box; border: 2px solid var(--dp-error); border-radius: 50%; background: var(--dp-card); transition: left .15s; }
+.ptl-track::before { content: ""; position: absolute; left: 0; top: 5px; height: 4px; width: calc(var(--w) * .8); border-radius: 2px; background: linear-gradient(90deg, var(--dp-error-line), var(--dp-error)); transition: width .15s; }
+.ptl-track i { position: absolute; top: 0; left: calc(var(--w) * .8 - 14px); width: 14px; height: 14px; box-sizing: border-box; border: 2px solid var(--dp-error); border-radius: 50%; background: var(--dp-card); transition: left .15s; }
 .ptl-track em { position: absolute; top: 2px; width: 10px; height: 10px; box-sizing: border-box; border: 2px dashed var(--dp-text3); border-radius: 50%; background: var(--dp-card); }
+/* Wert und Beschreibung unter dem Ring, mittig am Endpunkt; bei kurzen Balken nicht über den linken Rand hinaus */
+.mtl-mk.ptl-txt { top: 19px; width: 150px; left: max(calc(var(--w) * .8 - 7px), 75px); }
+.ptl-txt i { display: none; }
 .ptl-row.mk-p .ptl-track::before { background: linear-gradient(90deg, color-mix(in srgb, var(--dp-primary) 35%, transparent), var(--dp-primary)); }
 .ptl-row.mk-p .ptl-track i { border-color: var(--dp-primary); background: var(--dp-primary); box-shadow: inset 0 0 0 2px var(--dp-card); }
 .ptl-row.mk-off .ptl-track::before { height: 0; border-top: 2px dashed var(--dp-text3); background: none; top: 6px; }
@@ -1258,6 +1261,10 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
 .st-k { letter-spacing: 0.02em; }
 /* Rückmeldung beim Drücken: sofort, 3 % kleiner; mit reduzierter Bewegung entfällt es */
 @media not (prefers-reduced-motion: reduce) {
-  button:active, .dev:active, .mrow:active, .chip:active, .tile:active, .st-tile:active, .sub-tab:active, .mon-tab:active { transform: scale(0.97); transition: transform 100ms ease-out; }
+  button:active, .dev:active, .chip:active, .tile:active, .st-tile:active, .sub-tab:active, .mon-tab:active { transform: scale(0.97); transition: transform 100ms ease-out; }
+  /* Zeilen, die ihren Behälter ausfüllen, werden nicht kleiner: sonst blitzt am Rand der Grund des Behälters auf (dunkle Fläche links,
+     Fehler in 2.0.1). Sie zeigen stattdessen die Hover-Farbe. */
+  .mrow:active, .set-sec-head:active, .ilist-row:active, button.lg-row:active, .afloor:active, .arow:active, .prow:active, .olist button:active, button.kwarn:active { transform: none; }
+  .mrow:active, .set-sec-head:active, .ilist-row:active, button.lg-row:active, .afloor:active, .arow:active, .prow:active { background: var(--dp-hover); }
 }
 `;

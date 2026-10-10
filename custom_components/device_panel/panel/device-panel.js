@@ -3655,8 +3655,8 @@ class DevicePanel extends HTMLElement {
       [
         { at: 14, title: t("tlChargeRise", d.charge_rise_setting ?? cdv.rise ?? 20), sub: t("tlChargeRiseSub") },
         chargeOn
-          ? { at: 78, cls: "mk-p", title: t("tlChargeFull", d.charge_full_setting ?? cdv.full ?? 100), sub: t("tlChargeFullSub") }
-          : { at: 78, cls: "mk-off", title: t("tlNoPush"), sub: t("tlSwitchedOff") },
+          ? { at: 80, cls: "mk-p", title: t("tlChargeFull", d.charge_full_setting ?? cdv.full ?? 100), sub: t("tlChargeFullSub") }
+          : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: t("tlSwitchedOff") },
       ],
       "mtl-b"
     );
@@ -5338,8 +5338,11 @@ class DevicePanel extends HTMLElement {
     return `<div class="mon-tabs" role="tablist">${tabs}</div><div class="mon-body" role="tabpanel">${body}</div>`;
   }
 
-  // Zeitstrahl: Balken mit Marken in festen Abständen (nicht massstäblich).
-  // Eine Marke hat Titel und Unterzeile oder ein Eingabefeld (html).
+  // Zeitstrahl: Linie mit Marken in festen Abständen (nicht massstäblich). Eine Marke hat
+  // Titel und Unterzeile oder ein Eingabefeld (html). Seit 2.0.2 endet die Linie bei 80 %
+  // der Breite, genau an der letzten Marke (at: 80); darunter steht der Wert mittig am
+  // Endpunkt. Die letzten 20 % bleiben frei, damit Felder und Texte nicht am Rand kleben
+  // (docs/mockups/graphics-v1, Variante A).
   _tlHtml(marks, kind = "") {
     return `<div class="mtl${kind ? ` ${kind}` : ""}"><div class="mtl-bar"></div>${marks
       .map(
@@ -5352,16 +5355,18 @@ class DevicePanel extends HTMLElement {
   // Zeitstrahl der Ausfall-Meldung als zwei parallele Balken ab demselben Nullpunkt
   // (seit 1.20.0, Wunsch des Nutzers): "Ausgefallen nach" und Push zählen beide ab
   // Beginn des Ausfalls und werden nicht addiert. Die Länge folgt dem Wert (mindestens
-  // ein Fünftel, damit Beschriftung und Ende sichtbar bleiben). Zeile: title, sub oder
-  // html (Eingabefeld), w (Länge in %), cls, ghost (gestrichelte Marke, Länge in %).
+  // ein Fünftel, damit Beschriftung und Ende sichtbar bleiben). Seit 2.0.2 endet der
+  // längste Balken wie die Linien bei 80 % der Breite (Stil in styles.js), Wert und
+  // Beschreibung stehen unter dem Ring am Endpunkt. Zeile: title, sub oder html
+  // (Eingabefeld), w (Länge in %), cls, ghost (gestrichelte Marke, Länge in %).
   _ptlHtml(rows, edit = false, zero = "tlGone") {
     const t = (k, ...a) => this._t(k, ...a);
     return `<div class="mtl ptl${edit ? " ptl-e" : ""}"><div class="ptl-zero"><b>0</b><span>${escape(t(zero))}</span></div>${rows
       .map(
         (r) =>
-          `<div class="ptl-row${r.cls ? ` ${r.cls}` : ""}" style="--w:${r.w}%"${r.key ? ` data-ptl="${r.key}"` : ""}><div class="ptl-head"><b>${escape(r.title)}</b>${r.html || (r.sub ? `<span>${escape(r.sub)}</span>` : "")}</div><div class="ptl-track"><i></i>${
-            r.ghost != null ? `<em style="left:calc(${r.ghost}% - 6px)"></em>` : ""
-          }</div></div>`
+          `<div class="ptl-row${r.cls ? ` ${r.cls}` : ""}" style="--w:${r.w}%"${r.key ? ` data-ptl="${r.key}"` : ""}><div class="ptl-track"><i></i>${
+            r.ghost != null ? `<em style="left:calc(${r.ghost}% * .8 - 6px)"></em>` : ""
+          }<div class="mtl-mk ptl-txt"><b>${escape(r.title)}</b>${r.html || (r.sub ? `<span>${escape(r.sub)}</span>` : "")}</div></div></div>`
       )
       .join("")}</div>`;
   }
@@ -5488,8 +5493,8 @@ class DevicePanel extends HTMLElement {
       [
         { at: 14, title: t("tlLow", val("battery_low")), sub: t("tlRed") },
         batPush
-          ? { at: 78, cls: "mk-p", title: daily ? t("tlDaily", val("battery_push_time")) : t("tlInstant"), sub: daily ? t(d.battery_push_daily === "all" ? "tlDailyAll" : "tlDailyNew") : t("tlInstantSub") }
-          : { at: 78, cls: "mk-off", title: t("tlNoPush"), sub: reason },
+          ? { at: 80, cls: "mk-p", title: daily ? t("tlDaily", val("battery_push_time")) : t("tlInstant"), sub: daily ? t(d.battery_push_daily === "all" ? "tlDailyAll" : "tlDailyNew") : t("tlInstantSub") }
+          : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: reason },
       ],
       "mtl-b"
     );
@@ -5500,8 +5505,8 @@ class DevicePanel extends HTMLElement {
       [
         { at: 14, title: t("tlChargeRise", val("charge_rise")), sub: t("tlChargeRiseSub") },
         target && d.notify_charge
-          ? { at: 78, cls: "mk-p", title: t("tlChargeFull", val("charge_full")), sub: t("tlChargeFullSub") }
-          : { at: 78, cls: "mk-off", title: t("tlNoPush"), sub: target ? t("tlSwitchedOff") : t("tlNoTarget") },
+          ? { at: 80, cls: "mk-p", title: t("tlChargeFull", val("charge_full")), sub: t("tlChargeFullSub") }
+          : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: target ? t("tlSwitchedOff") : t("tlNoTarget") },
       ],
       "mtl-b"
     );
@@ -5523,9 +5528,9 @@ class DevicePanel extends HTMLElement {
     const updPush =
       target && d.notify_updates
         ? updMode === "instant"
-          ? { at: 78, cls: "mk-p", title: t("tlUpdWindow", val("updates_window")), sub: t("tlUpdWindowSub") }
-          : { at: 78, cls: "mk-p", title: updMode === "weekly" ? t("tlWeekly", updTime) : t("tlDaily", updTime), sub: t("tlUpdAllSub") }
-        : { at: 78, cls: "mk-off", title: t("tlNoPush"), sub: reason };
+          ? { at: 80, cls: "mk-p", title: t("tlUpdWindow", val("updates_window")), sub: t("tlUpdWindowSub") }
+          : { at: 80, cls: "mk-p", title: updMode === "weekly" ? t("tlWeekly", updTime) : t("tlDaily", updTime), sub: t("tlUpdAllSub") }
+        : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: reason };
     const updTl = this._tlHtml([{ at: 14, title: t("tlUpdOpen"), sub: t("tlUpdOpenSub") }, updPush], "mtl-b");
     const updKinds = UPDATE_KINDS.filter((k) => (d.updates_kinds || []).includes(k)).map((k) => t(`updKind_${k}`));
     const updOwn = (d.updates_exclude || []).length + (d.updates_include || []).length;
@@ -5590,8 +5595,8 @@ class DevicePanel extends HTMLElement {
     const time = errors.battery_push_time ? this._settings.data.values.battery_push_time : d.battery_push_time;
     const push =
       d.battery_push && target
-        ? { at: 76, cls: "mk-p", title: daily ? t("tlDaily", time) : t("tlInstant"), sub: daily ? t(d.battery_push_daily === "all" ? "tlDailyAll" : "tlDailyNew") : t("tlInstantSub") }
-        : { at: 76, cls: "mk-off", title: t("tlNoPush"), sub: target ? t("tlSwitchedOff") : t("tlNoTarget") };
+        ? { at: 80, cls: "mk-p", title: daily ? t("tlDaily", time) : t("tlInstant"), sub: daily ? t(d.battery_push_daily === "all" ? "tlDailyAll" : "tlDailyNew") : t("tlInstantSub") }
+        : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: target ? t("tlSwitchedOff") : t("tlNoTarget") };
     const tl = this._tlHtml(
       [{ at: 18, title: t("optBatteryLow"), html: this._tlInput(d, "battery_low", t("unitPercent"), t("optBatteryLow"), errors.battery_low, changes.has("battery_low")) }, push],
       "mtl-b mtl-e"
@@ -5642,7 +5647,7 @@ class DevicePanel extends HTMLElement {
     const tl = this._tlHtml(
       [
         { at: 18, title: t("tlChargeRiseEdit"), html: this._tlInput(d, "charge_rise", t("unitPercent"), t("optChargeRise"), errors.charge_rise, changes.has("charge_rise")) },
-        { at: 76, cls: push ? "mk-p" : "mk-off", title: t("optChargeFull"), html: `${fullSel}<span>${escape(push ? t("tlChargeFullSub") : t(target ? "tlSwitchedOff" : "tlNoTarget"))}</span>` },
+        { at: 80, cls: push ? "mk-p" : "mk-off", title: t("optChargeFull"), html: `${fullSel}<span>${escape(push ? t("tlChargeFullSub") : t(target ? "tlSwitchedOff" : "tlNoTarget"))}</span>` },
       ],
       "mtl-b mtl-e"
     );
@@ -5968,8 +5973,8 @@ class DevicePanel extends HTMLElement {
         [
           lowMark,
           batPushOn && mode !== "off"
-            ? { at: 78, cls: "mk-p", title: daily ? t("tlDaily", val("battery_push_time")) : t("tlInstant"), sub: daily ? t(d.battery_push_daily === "all" ? "tlDailyAll" : "tlDailyNew") : t("tlInstantSub") }
-            : { at: 78, cls: "mk-off", title: t("tlNoPush"), sub: mode === "off" ? t("devBatOff") : reasonOf(has("battery_push_exclude_integrations") && target && d.battery_push) },
+            ? { at: 80, cls: "mk-p", title: daily ? t("tlDaily", val("battery_push_time")) : t("tlInstant"), sub: daily ? t(d.battery_push_daily === "all" ? "tlDailyAll" : "tlDailyNew") : t("tlInstantSub") }
+            : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: mode === "off" ? t("devBatOff") : reasonOf(has("battery_push_exclude_integrations") && target && d.battery_push) },
         ],
         "mtl-b"
       );
@@ -5993,8 +5998,8 @@ class DevicePanel extends HTMLElement {
         [
           { at: 14, title: t("tlChargeRise", riseMap[dom] ?? gRise), sub: t("tlChargeRiseSub") },
           target && d.notify_charge && chargeOn
-            ? { at: 78, cls: "mk-p", title: t("tlChargeFull", fullMap[dom] ?? gFull), sub: t("tlChargeFullSub") }
-            : { at: 78, cls: "mk-off", title: t("tlNoPush"), sub: !chargeOn ? t("tlSwitchedOff") : target ? t("tlSwitchedOff") : t("tlNoTarget") },
+            ? { at: 80, cls: "mk-p", title: t("tlChargeFull", fullMap[dom] ?? gFull), sub: t("tlChargeFullSub") }
+            : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: !chargeOn ? t("tlSwitchedOff") : target ? t("tlSwitchedOff") : t("tlNoTarget") },
         ],
         "mtl-b"
       );

@@ -3,7 +3,14 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.0.1 Vorabversion, Einstellungen in fünf Abschnitten)
+## Stand (2.0.2, Einstellungen in fünf Abschnitten)
+
+- 2.0.2 (regulär, keine Vorabversion): einheitliche Grafiken (`.mtl`/`.ptl`: Linie und Balken enden bei 80 %, Wert
+  unter dem Ring am Endpunkt, Mockups `docs/mockups/graphics-v1`, Variante A; `_tlHtml` mit `at: 80`, `_ptlHtml` mit
+  `.ptl-txt` statt `.ptl-head`), nicht gewählte Reiter mit leichtem Rahmen (`.mon-tab:not(.on), .sub-tab:not(.on)`,
+  Schatten innen), Zeilen in Behältern (`.mrow`, `.set-sec-head`, `.ilist-row`, `button.lg-row`, …) werden beim
+  Drücken nicht mehr kleiner (zeigte den Grund des Behälters als dunkle Fläche). Neue Suite `graphics-e2e`.
+  Schritt 2 des Material-Looks (ziehbares Blatt) steht weiter aus, erst nach Rückmeldung des Nutzers.
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").

@@ -7,6 +7,29 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.2] - 2026-10-10
+
+Einheitliche Grafiken, umrahmte Reiter und Korrektur beim Drücken. Diese Version ist ein reguläres Release (keine
+Vorabversion); sie enthält den Material-Look aus 2.0.0 und 2.0.1.
+
+### Geändert
+
+- Alle Zeitstrahl-Grafiken sind einheitlich (Wunsch des Nutzers, Mockups `graphics-v1`, Variante A): Linien und
+  Balken reichen nicht mehr bis zum rechten Rand, sondern enden bei 80 % der Breite, und der Wert samt
+  Beschreibung steht unter dem Endpunkt (Ring). Das gilt für die Balken bei "Ausfall" und "Neu" (der längste Balken
+  endet bei 80 %, der Wert wanderte vom rechten Rand zum Ende) und für die Linien bei "Batterie", "Laden" und
+  "Updates" (die Linie endet an der letzten Marke). Überall, wo sie vorkommen: Übersicht, die Reiter der
+  Einstellungen, Detail einer Integration und Geräte-Popup. Es ändert sich nur das Aussehen: keine Werte, Felder
+  oder Funktionen.
+- Nicht gewählte Reiter sind leicht umrahmt, damit man sie besser als Reiter erkennt. Das gilt für alle Reiter:
+  Einstellungen, Detail einer Integration und Geräte-Popup.
+
+### Behoben
+
+- Wer eine Zeile drückt und hält (zum Beispiel einen Abschnitt in den Einstellungen, eine Integration, eine
+  Listenzeile oder eine Protokollzeile), sah am Rand eine dunklere Fläche: Solche Zeilen werden beim Drücken nicht
+  mehr kleiner, sondern zeigen stattdessen die Hover-Farbe (seit 2.0.0).
+
 ## [2.0.1] - 2026-10-10
 
 Material-Look nachgeschärft und auf die Liste angewendet (Vorabversion).
@@ -2156,6 +2179,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.0.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.2
 [2.0.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.1
 [2.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.0
 [1.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.44.0

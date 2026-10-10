@@ -7,6 +7,28 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.0.2] - 2026-10-10
+
+Unified graphics, framed tabs and a press fix. This version is a regular release (not a pre-release); it includes the
+material look from 2.0.0 and 2.0.1.
+
+### Changed
+
+- All timeline graphics are unified (requested by the user, mockups `graphics-v1`, variant A): lines and bars no
+  longer reach the right edge but end at 80 % of the width, and the value and its description sit below the end
+  point (ring). This applies to the bars of "Outage" and "New" (the longest bar ends at 80 %, the value moved from
+  the right edge to the end) and to the lines of "Battery", "Charging" and "Updates" (the line ends at the last
+  mark). Everywhere they appear: overview, the settings tabs, the integration detail and the device pop-up. Only
+  the look changes: no values, fields or functions.
+- Tabs that are not selected get a light frame so they are easier to recognise as tabs. This applies to all tabs:
+  settings, integration detail and device pop-up.
+
+### Fixed
+
+- Pressing and holding a row (for example a section in the settings, an integration, a list row or a log row) no
+  longer shows a darker area at the edge: such rows no longer shrink while pressed but show the hover colour
+  instead (introduced in 2.0.0).
+
 ## [2.0.1] - 2026-10-10
 
 Material look sharpened and applied to the list (pre-release).
@@ -2089,6 +2111,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[2.0.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.2
 [2.0.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.1
 [2.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.0
 [1.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.44.0
