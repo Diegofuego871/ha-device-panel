@@ -179,18 +179,25 @@ def test_charging_ignores_jump_to_full_and_unknown_devices() -> None:
 async def test_charging_flag_in_list_and_entity_wins(hass: HomeAssistant) -> None:
     from custom_components.device_panel.devices import async_list_devices  # noqa: PLC0415
 
-    await _setup(hass, notify_charge=False, charge_integrations=[])
+    await _setup(hass, charge_integrations=[])
     watcher = hass.data[DATA_CHARGE]
     device, entity = _device(hass, "Handy", level=20)
     other, other_entity = _device(hass, "Roboter", level=30)
     await watcher.async_rebuild()
-    # Ohne eingeschaltete Lademeldung beobachtet das Panel trotzdem alle Batteriegeräte
+    await async_set_device_settings(hass, device.id, charge=True)
+    # Das Panel beobachtet alle Batteriegeräte, auch die ohne eingeschaltete Lademeldung
     assert set(watcher._entities) >= {entity, other_entity}
-    hass.states.async_set(entity, "45", {"device_class": "battery", "unit_of_measurement": "%"})
+    for ent in (entity, other_entity):
+        hass.states.async_set(ent, "55", {"device_class": "battery", "unit_of_measurement": "%"})
     await hass.async_block_till_done()
     by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
-    assert by_name["Handy"]["charging"] == {"level": 45, "from": 20, "since": by_name["Handy"]["charging"]["since"], "source": "level"}
+    assert by_name["Handy"]["charging"] == {"level": 55, "from": 20, "since": by_name["Handy"]["charging"]["since"], "source": "level"}
+    # Gleicher Anstieg, aber Lademeldung aus: nie "lädt" (Schwanken eines Sensors ist kein Laden)
     assert by_name["Roboter"]["charging"] is None
+    # Lademeldung am Roboter eingeschaltet: derselbe Anstieg zählt jetzt
+    await async_set_device_settings(hass, other.id, charge=True)
+    by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
+    assert by_name["Roboter"]["charging"] is not None
     # Ladeanzeige des Geräts (Binärsensor battery_charging) geht vor: aus = nicht laden, auch bei steigendem Stand
     ereg = er.async_get(hass)
     flag = ereg.async_get_or_create("binary_sensor", "test", "Handy-chg", device_id=device.id, original_device_class="battery_charging")
@@ -199,7 +206,7 @@ async def test_charging_flag_in_list_and_entity_wins(hass: HomeAssistant) -> Non
     assert by_name["Handy"]["charging"] is None
     hass.states.async_set(flag.entity_id, "on")
     by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
-    assert by_name["Handy"]["charging"]["source"] == "entity" and by_name["Handy"]["charging"]["level"] == 45
+    assert by_name["Handy"]["charging"]["source"] == "entity" and by_name["Handy"]["charging"]["level"] == 55
 
 
 async def test_device_own_full_and_rise(hass: HomeAssistant) -> None:

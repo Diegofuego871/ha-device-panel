@@ -400,6 +400,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Pro Integration (1.36.0): Optionen `charge_full_integrations`/`charge_rise_integrations` ({Domain: Wert}, `options_api.charge_map`),
    `devices.charge_values()` (Gerät > Integration > global), `charge_default` mit `full_integration`/`rise_integration`;
    Panel `data-cfull-integ`/`data-crise-integ` im Integrations-Detail (Auswahl mit Stufen), `INTEG_OWN_MAPS`.
+   Fehler 1.36.0 (Nutzer, Kühlschrank-Sensor mit Knopfzelle als "lädt" markiert): `ChargeNotifier.charging_of()` nimmt den Stand nur noch,
+   wenn `enabled()` (Lademeldung für das Gerät) gilt; die Ladeanzeige des Geräts gilt weiter immer. Test `test_charging_flag_in_list_and_entity_wins`.
    Übersicht mit allen Meldungen `1.34.0` (Nutzer, 2026-10-10): `_monOverviewHtml` hat fünf Zeilen (`lane(...)`: Ausfall,
    Batterie, Laden `data-lane="charge"`, Neue Geräte, Updates); `lane()` nimmt `sub` (Unterreiter, `data-sub` am
    "Ändern"-Knopf, der Handler setzt `st.sub.battery`) und `id`. Strings `laneCharge`, `tlCharge*`, `tlUpd*`, `laneUpd*`.

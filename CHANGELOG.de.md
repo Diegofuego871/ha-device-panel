@@ -21,6 +21,16 @@ Lademeldung pro Integration mit eigenen Werten.
   `charge_full_integrations` und `charge_rise_integrations` (nur im Panel); im Geräte-Popup
   heisst der Standard dann "Wie Integration (95 %)".
 
+### Behoben
+
+- Ein Gerät ohne eigene Ladeanzeige wurde schon bei einem blossen Anstieg des Stands als "lädt"
+  markiert, auch wenn es gar nicht lädt: ein Knopfzellen-Sensor im Kühlschrank (BTHome)
+  schwankte von 53 auf 61 % und erschien im Chip "Lädt". Der Stand allein zählt jetzt nur noch,
+  wenn die Lademeldung für das Gerät eingeschaltet ist (eigenes "Ein" oder von der
+  Integration); damit gilt es als wiederaufladbar. Sonst wird es nie markiert. Geräte mit
+  Ladeanzeige (Binärsensor battery_charging, Companion-App "Batteriestatus") bleiben
+  unverändert.
+
 ## [1.35.0] - 2026-10-10
 
 Geräte, die gerade laden.

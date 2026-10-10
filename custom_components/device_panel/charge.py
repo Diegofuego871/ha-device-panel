@@ -1,7 +1,8 @@
 """
 Lademeldung (seit 1.30.0, Abschnitt "Laden" im Reiter "Batterie"): Push, sobald ein Gerät
 voll geladen ist. Standardmässig aus; eingeschaltet pro Integration oder pro Gerät (Popup,
-das Gerät geht vor). Das Laden wird am Batteriestand erkannt, nicht abgefragt: Das Panel hört
+das Gerät geht vor). Das Laden wird am Batteriestand erkannt (für "lädt" im Panel nur bei eingeschalteter
+Lademeldung, ausser das Gerät hat eine Ladeanzeige), nicht abgefragt: Das Panel hört
 auf den Prozent-Sensor und merkt sich den tiefsten Stand seit dem letzten Entladen. Steigt
 der Stand um "Anstieg" Punkte darüber, gilt das Gerät als "lädt"; erreicht es "Voll ab", geht
 die Meldung raus. Geräte, die selten melden (Bluetooth, Zigbee), zeigen oft nur einen Sprung:
@@ -207,7 +208,10 @@ class ChargeNotifier:
     def charging_of(self, device: dr.DeviceEntry, entries: list[er.RegistryEntry], now: float, opts: dict[str, Any]) -> dict[str, Any] | None:
         """
         "Lädt gerade" für Liste und Popup: die Ladeanzeige des Geräts, wenn es eine hat und sie
-        etwas meldet (sie gilt dann allein), sonst die Erkennung am Stand.
+        etwas meldet (sie gilt dann allein), sonst die Erkennung am Stand, und die nur, wenn die
+        Lademeldung für das Gerät eingeschaltet ist: Das ist die Erklärung "wiederaufladbar".
+        Ohne sie liesse sich ein Schwanken des Stands (Knopfzelle im Kühlschrank, Batteriewechsel)
+        nicht von Laden unterscheiden.
         """
         entity_id = charging_entity(self.hass, entries)
         state = self.hass.states.get(entity_id) if entity_id else None
@@ -216,6 +220,8 @@ class ChargeNotifier:
                 return None
             st = self._state.get(device.id)
             return {"level": st["last"] if st else None, "from": None, "since": state.last_changed.timestamp(), "source": "entity"}
+        if not self.enabled(opts, self.hass, device):
+            return None
         return self.charging(device.id, now, device_charge_opts(self.hass, opts, device.id))
 
     def _save(self) -> None:

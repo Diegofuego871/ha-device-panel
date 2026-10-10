@@ -21,6 +21,15 @@ Charging notification per integration with its own values.
   `charge_full_integrations` and `charge_rise_integrations` (panel only); in the device pop-up
   the default reads "Same as integration (95 %)".
 
+### Fixed
+
+- A device without a charging indicator of its own was marked "charging" from a mere rise of
+  its level, also when it does not charge: a button-cell sensor in a fridge (BTHome) swung
+  from 53 to 61 % and showed up in the chip "Charging". The level alone now counts only when
+  the charging notification is switched on for the device (own "On" or from the integration),
+  which declares it rechargeable; otherwise it is never marked. Devices with a charging
+  indicator (binary sensor battery_charging, companion app "Battery state") are unchanged.
+
 ## [1.35.0] - 2026-10-10
 
 Devices that are charging right now.
