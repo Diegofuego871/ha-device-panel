@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.28.0] - 2026-10-10
+
+Suchfeld in langen Listen der Einstellungen.
+
+### Hinzugefügt
+
+- Suchfeld über langen Listen in den Einstellungen (Wunsch des Nutzers, Mockup
+  `settings-search-v1`, A): ab 8 Einträgen, bei den Integrationen, Typen und ausgeblendeten
+  Geräten (Geräte im Panel), Überwachung und Meldungen › Integrationen, der Verbindungsart pro
+  Integration und den Listen der Geräte mit eigener Einstellung. Die Liste filtert beim
+  Tippen, zeigt "1 von 9" und "Keine Treffer."; die Suche bleibt, wenn sich der Dialog neu
+  aufbaut. "Alle umschalten" schaltet weiter die ganze Liste.
+
 ## [1.27.0] - 2026-10-08
 
 Grund der Warnung oben im Geräte-Popup.
@@ -1734,6 +1747,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.28.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0
 [1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0
 [1.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.25.0

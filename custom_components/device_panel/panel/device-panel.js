@@ -4533,6 +4533,7 @@ class DevicePanel extends HTMLElement {
     const slot = dialog.querySelector(".ver-slot");
     if (slot) lastHtml.set(slot, this._verSlotHtml);
     dialog.scrollTop = scroll;
+    this._applyListSearch(dialog);
     // Vorschau der Handy-Leiste einmal seitlich scrollen, damit die Haftkante
     // zu sehen ist; danach bleibt, was der Nutzer eingestellt hat.
     const strip = dialog.querySelector(".chip-prev-strip");
@@ -4541,6 +4542,34 @@ class DevicePanel extends HTMLElement {
       strip.scrollLeft = Math.min(120, strip.scrollWidth - strip.clientWidth);
     }
     if (focusSel) refocus(dialog.querySelector(focusSel));
+  }
+
+  // Suchfeld in langen Listen der Einstellungen (seit 1.28.0, docs/mockups/settings-search-v1, A):
+  // ab 8 Einträgen über der Liste; filtert die Zeilen des Behälters mit data-srch ohne Neuaufbau.
+  _searchHtml(key, n) {
+    if (n < 8) return "";
+    const q = this._settings?.search?.[key] || "";
+    const ph = this._t("listSearch");
+    return `<label class="list-search" data-for="${key}">${mdi("search", 18)}<input type="search" data-lsearch="${key}" value="${escape(q)}" placeholder="${escape(ph)}" aria-label="${escape(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n"></span></label>`;
+  }
+
+  _applyListSearch(root) {
+    const st = this._settings;
+    for (const wrap of root.querySelectorAll(".srch-rows[data-srch]")) {
+      const key = wrap.dataset.srch;
+      const q = String(st?.search?.[key] || "").trim().toLowerCase();
+      const rows = [...wrap.children].filter((e) => e.matches(".ex-row, .ilist-row, .ovr-row"));
+      let n = 0;
+      for (const row of rows) {
+        const hit = !q || row.textContent.toLowerCase().includes(q);
+        row.hidden = !hit;
+        if (hit) n += 1;
+      }
+      const none = wrap.querySelector(".srch-none");
+      if (none) none.hidden = !q || n > 0;
+      const cnt = root.querySelector(`.list-search[data-for="${key}"] .n`);
+      if (cnt) cnt.textContent = q ? this._t("listSearchOf", n, rows.length) : "";
+    }
   }
 
   // Verbindungsart pro Integration (Variante B): gilt für alle Geräte der
@@ -4582,7 +4611,7 @@ class DevicePanel extends HTMLElement {
           <span class="bat-ctl"><span class="opt-select"><select data-conn-integ="${escape(dom)}" aria-label="${escape(`${name(dom)}: ${t("connType")}`)}">${opts}</select>${mdi("chevronDown", 18)}</span></span></div>`;
       })
       .join("");
-    return head + `<div class="ex-head"><span>${escape(t("colIntegration"))}</span><span>${escape(t("connType"))}</span></div>${rows}`;
+    return head + this._searchHtml("conn", list.length) + `<div class="ex-head"><span>${escape(t("colIntegration"))}</span><span>${escape(t("connType"))}</span></div><div class="srch-rows" data-srch="conn">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>`;
   }
 
   // Erkannter Typ der gezeigten Geräte je Integration {Domain: Map(Typ -> Zahl)}
@@ -4635,7 +4664,7 @@ class DevicePanel extends HTMLElement {
       })
       .join("");
     return `<div class="opt ovr-opt${marked.size ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t(`${pre}Title`))}</span>${btn}</div>
-      <div class="opt-short">${escape(t(list.length ? `${pre}Short` : `${pre}Empty`))}</div>${rows ? `<div class="ovr-list">${rows}</div>` : ""}</div>`;
+      <div class="opt-short">${escape(t(list.length ? `${pre}Short` : `${pre}Empty`))}</div>${rows ? this._searchHtml(`ovr-${kind}`, list.length) + `<div class="ovr-list srch-rows" data-srch="ovr-${kind}">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>` : ""}</div>`;
   }
 
   // "Inhalt der Meldung" als Schalter in zwei Spalten, dazu die Vorschau
@@ -5082,7 +5111,7 @@ class DevicePanel extends HTMLElement {
     const anyOwn = INTEG_OWN_MAPS.some((k) => Object.keys(d[k] || {}).length) || INTEG_OWN_LISTS.some((k) => (d[k] || []).length);
     return `<div class="opt-short mon-intro">${escape(t("integListIntro"))}</div>
       <div class="mon-flt">${chip("all", t("filterAll", items.length))}${chip("own", t("filterOwn", own.length))}<button type="button" class="ovr-all integ-all" data-set="integ-reset-all" ${anyOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("ovrResetAll"))}</button></div>
-      ${shown.length ? `<div class="ilist">${rows}</div>` : `<div class="opt-short mon-empty">${escape(t(items.length ? "integNoneOwn" : "integNone"))}</div>`}`;
+      ${shown.length ? this._searchHtml("integ", shown.length) + `<div class="ilist srch-rows" data-srch="integ">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>` : `<div class="opt-short mon-empty">${escape(t(items.length ? "integNoneOwn" : "integNone"))}</div>`}`;
   }
 
   // Alle Einstellungen einer Integration (notify-v3, Bild 3): Zeitstrahl mit
@@ -5269,10 +5298,10 @@ class DevicePanel extends HTMLElement {
       const allRow = columns
         .map(([k, label]) => cell(`<label class="switch"><input type="checkbox" data-list-all="${allKey || k}" ${items.every((x) => x.fixed || !setOf(x.list || k).has(x.value)) ? "checked" : ""} aria-label="${escape(`${allLabel || t("toggleAll")}: ${label}`)}"><span></span></label>`))
         .join("");
-      return `<div class="opt-short ex-intro">${escape(intro)}</div>${preview}
+      return `<div class="opt-short ex-intro">${escape(intro)}</div>${preview}${drag ? "" : this._searchHtml(key, items.length)}
         <div class="ex-head${multi ? " multi" : ""}"><span></span>${columns.map(([, label]) => (multi ? `<span class="ex-col">${escape(label)}</span>` : `<span>${escape(label)}</span>`)).join("")}${extra ? `<span class="ex-col sel">${escape(extra.label)}</span>` : ""}</div>
         <div class="ex-row ex-all"><div class="ex-name">${escape(allLabel || t("toggleAll"))}</div>${allRow}${extra ? `<span class="ex-col sel"></span>` : ""}</div>
-        ${drag ? `<div class="drag-list" data-drag-list="${dragOpt}">${rows}</div>` : rows}`;
+        ${drag ? `<div class="drag-list" data-drag-list="${dragOpt}">${rows}</div>` : `<div class="srch-rows" data-srch="${key}">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>`}`;
     };
     // KI-Aufgaben von HA; eine früher gewählte, die es nicht mehr gibt, bleibt sichtbar.
     const aiTasks = [...(st.data.catalog?.ai_tasks || [])];
@@ -5579,6 +5608,12 @@ class DevicePanel extends HTMLElement {
     dialog.addEventListener("input", (ev) => {
       const st = this._settings;
       const el = ev.target;
+      if (el.dataset?.lsearch && st) {
+        // Suchfeld einer Liste (seit 1.28.0): nur filtern, kein Neuaufbau (sonst ginge der Fokus verloren)
+        (st.search ||= {})[el.dataset.lsearch] = el.value;
+        this._applyListSearch(dialog);
+        return;
+      }
       if (st?.draft && el.type === "time" && el.dataset.opt) {
         st.draft[el.dataset.opt] = el.value;
         this._updateSettingsMeta();

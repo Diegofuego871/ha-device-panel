@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.28.0] - 2026-10-10
+
+Search field in long lists of the settings.
+
+### Added
+
+- Search field above long lists in the settings (requested by the user, mockup
+  `settings-search-v1`, A): from 8 entries on, for the integrations, types and hidden
+  devices (Devices in the panel), Monitoring and notifications › Integrations, the
+  connection type per integration and the lists of devices with their own setting. The
+  list filters as you type, shows "1 of 9" and "No matches."; the search stays when the
+  dialog redraws. "Toggle all" still switches the whole list.
+
 ## [1.27.0] - 2026-10-08
 
 Reason for the warning at the top of the device pop-up.
@@ -1670,6 +1683,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.28.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0
 [1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0
 [1.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.25.0

@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.27.0, Einstellungen in fünf Abschnitten)
+## Stand (1.28.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Suchfeld in langen Listen `1.28.0` (Nutzer, 2026-10-10, Mockup `settings-search-v1`, A): `_searchHtml(key, n)`
+   (ab 8 Einträgen) und `_applyListSearch(root)`; Zeilen in Behältern `.srch-rows[data-srch]` (exTable ohne
+   Ziehen, `conn`, `integ`, `ovr-*`), `hidden` per Eingabe ohne Neuaufbau, Suchtext in `st.search`. Test `listsearch-e2e.mjs`.
    Grund der Warnung im Popup `1.27.0` (Nutzer, 2026-10-08, Mockup `warn-reason-v1`, K2): `why`-Marken
    (`.why-tags`) unter dem Namen für instabil, schwachen Empfang, Batterie niedrig (ersetzen die Pille
    "Instabil"); `_statTile/_staticTile(..., warn)` setzen `.st-tile.warned` (gelber Rahmen, Punkt per `::after`).

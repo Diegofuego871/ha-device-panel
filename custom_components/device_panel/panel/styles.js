@@ -616,6 +616,13 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .pin-tab .drag-h svg { color: inherit; }
 .ex-row.ex-all { padding: 6px 10px; margin: 0 -8px 2px; border: none; border-radius: 10px; background: var(--dp-subtle); color: var(--dp-text2); min-height: 40px; }
 .ex-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+/* Suchfeld in langen Listen (seit 1.28.0) */
+.list-search { display: flex; align-items: center; gap: 8px; height: 42px; margin: 8px 0 6px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--dp-divider); background: var(--dp-card); color: var(--dp-text2); }
+.list-search:focus-within { border-color: var(--dp-primary); }
+.list-search input { flex: 1; min-width: 0; border: 0; background: none; color: var(--dp-text); font: inherit; font-size: 15px; outline: none; }
+.list-search .n { font-size: 12.5px; white-space: nowrap; }
+.list-search .n:empty { display: none; }
+.srch-rows [hidden] { display: none !important; }
 /* Integrationen mit "Anzeigen", "Push", "Anhaltend" (Bild 5) */
 .ex-col { flex: none; display: flex; justify-content: center; width: 72px; }
 .ex-head.multi { justify-content: flex-start; }
