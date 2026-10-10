@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.28.0, Einstellungen in fünf Abschnitten)
+## Stand (1.29.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Update-Erinnerung `1.29.0` (Nutzer, 2026-10-10, Mockup `charging-v1`, Konzept `docs/CONCEPT-laden-updates.md`):
+   `updates.UpdateNotifier` hört auf `update.*` (EVENT_STATE_CHANGED), Modi `instant` (Sammelfenster
+   `updates_window`), `daily`/`weekly` (`updates_time`, Montag), Arten `updates_kinds` (core/addons über
+   Plattform `hassio`, `hacs`, `devices`), Merker `{Entität: {v, at}}` in `.storage/device_panel.updates`,
+   `updates_repeat` (nie/3d/7d). Standard täglich 09:00, aus. Panel: Reiter "Updates" (`_monUpdatesHtml`,
+   `MON_TAB_KEYS.updates`, Vorschau mit Beispielen); Abschnitt "Updates" heisst "Panel-Version". Tests
+   `test_updates.py`, `updates-e2e.mjs`.
    Suchfeld in langen Listen `1.28.0` (Nutzer, 2026-10-10, Mockup `settings-search-v1`, A): `_searchHtml(key, n)`
    (ab 8 Einträgen) und `_applyListSearch(root)`; Zeilen in Behältern `.srch-rows[data-srch]` (exTable ohne
    Ziehen, `conn`, `integ`, `ovr-*`), `hidden` per Eingabe ohne Neuaufbau, Suchtext in `st.search`. Test `listsearch-e2e.mjs`.

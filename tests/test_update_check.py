@@ -144,13 +144,19 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "new_persistent": False,
         "new_fields": ["area", "integration"],
         "new_exclude_integrations": [],
+        "notify_updates": False,
+        "updates_window": 5,
+        "updates_mode": "daily",
+        "updates_time": "09:00",
+        "updates_repeat": "never",
+        "updates_kinds": ["core", "addons", "hacs"],
         "outage_persistent": False,
         "battery_push_mode": "instant",
         "battery_push_time": "08:00",
         "battery_push_daily": "new",
     }
     assert result["limits"] == {
-        "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [5, 50], "notify_delay": [1, 60], "new_window": [1, 60],
+        "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [5, 50], "notify_delay": [1, 60], "new_window": [1, 60], "updates_window": [1, 60],
     }
     assert set(result["panel"]) == {"prerelease", "prerelease_hacs"}
 
@@ -251,6 +257,7 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
         "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields",
         "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields",
         "notify_new", "new_window", "new_persistent", "new_fields",
+        "notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds",
         "offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations",
         "battery_push_exclude_integrations", "new_exclude_integrations", "exclude_integrations", "exclude_types", "exclude_devices",
         "show_service_devices", "show_disabled_devices", "hide_chips", "hide_connections",

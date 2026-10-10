@@ -253,6 +253,7 @@ const NOTIFY_FIELDS = ["area", "integration", "connection", "since", "signal", "
 const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
 // Inhalt der Meldung bei neuen Geräten (seit 1.24.0, const.NEW_FIELDS).
 const NEW_FIELDS = ["area", "integration", "connection", "model"];
+const UPDATE_KINDS = ["core", "addons", "hacs", "devices"];
 // Abschnitt "Überwachung und Meldungen" (seit 0.34.0): Optionen je Reiter,
 // für den Punkt am Reiter und das Etikett "geändert" des Abschnitts.
 const MON_TAB_KEYS = {
@@ -260,6 +261,7 @@ const MON_TAB_KEYS = {
   outage: ["offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "reset_offline", "reset_notify"],
   battery: ["battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
   new: ["notify_new", "new_window", "new_persistent", "new_fields"],
+  updates: ["notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds"],
   integ: ["offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
 
@@ -4224,6 +4226,7 @@ class DevicePanel extends HTMLElement {
       const v = st.draft[key];
       if (!Number.isInteger(v) || v < min || v > max) errors[key] = this._t("settingsRange", min, max);
     }
+    if ("updates_time" in st.draft && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(st.draft.updates_time || ""))) errors.updates_time = this._t("timeError");
     if ("battery_push_time" in st.draft && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(st.draft.battery_push_time || ""))) {
       errors.battery_push_time = this._t("timeError");
     }
@@ -4525,7 +4528,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -4722,7 +4725,7 @@ class DevicePanel extends HTMLElement {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
     const tab = MON_TAB_KEYS[st.tab] ? st.tab : "overview";
-    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["new", "tabNew"], ["integ", "tabInteg"]]
+    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["new", "tabNew"], ["updates", "tabUpdates"], ["integ", "tabInteg"]]
       .map(([id, key]) => {
         const keys = MON_TAB_KEYS[id];
         // Punkt am Reiter: dort gibt es eine Änderung (blau) oder einen Fehler (rot).
@@ -4737,6 +4740,8 @@ class DevicePanel extends HTMLElement {
           ? this._monBatteryHtml(d, changes, errors, ui)
           : tab === "new"
             ? this._monNewHtml(d, changes, errors, ui)
+          : tab === "updates"
+            ? this._monUpdatesHtml(d, changes, errors, ui)
           : tab === "integ"
             ? this._monIntegHtml(d, changes, errors)
             : this._monOverviewHtml(d, errors, ui);
@@ -5048,6 +5053,44 @@ class DevicePanel extends HTMLElement {
       ${this._newFieldsHtml(d, changes)}
       <div class="mon-grp">${escape(t("grpDiff"))}</div>
       ${this._integDiffBox(d, "new")}`;
+  }
+
+  // Reiter "Updates" (seit 1.29.0, docs/mockups/charging-v1): Update-Erinnerung per Push, ersetzt
+  // Automationen mit Zähler und Hilfsentität. Das Panel hört auf die update-Entitäten von HA.
+  _monUpdatesHtml(d, changes, errors, ui) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const target = Boolean(d.notify_service && d.notify_service !== "none");
+    const noTarget = d.notify_updates && !target;
+    const mode = d.updates_mode || "daily";
+    const time = d.updates_time || "";
+    const modeSel = ui.select("updates_mode", [["instant", t("updModeInstant")], ["daily", t("updModeDaily")], ["weekly", t("updModeWeekly")]], t("optUpdMode"));
+    const timeIn = `<span class="opt-input${errors.updates_time ? " bad" : ""}"><input type="time" data-opt="updates_time" value="${escape(time)}" aria-label="${escape(t("optUpdMode"))}"></span>`;
+    const kinds = new Set(d.updates_kinds || []);
+    const kindRows = UPDATE_KINDS.map((k) =>
+      ui.row("updates_kinds", t(`updKind_${k}`), `<label class="switch"><input type="checkbox" data-ukind="${k}" ${kinds.has(k) ? "checked" : ""} aria-label="${escape(t(`updKind_${k}`))}"><span></span></label>`, t(`updKindShort_${k}`), null)
+    ).join("");
+    // Vorschau mit Beispielen (das Panel kennt die Update-Entitäten nicht; Entwurf und Wirkung
+    // sind im Backend, tests/test_updates.py): eine Zeile je gewählter Art.
+    const sample = { core: "Home Assistant Core 2026.10.2 → 2026.10.3", addons: "Mosquitto broker 6.5.0 → 6.5.1", hacs: "Device Panel 1.27.0 → 1.28.0", devices: "Shelly Plug 1.0.0 → 1.1.0" };
+    const lines = UPDATE_KINDS.filter((k) => kinds.has(k)).map((k) => `• ${escape(sample[k])}`);
+    const preview = d.notify_updates
+      ? `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
+          <div class="pv-title">${escape(t("pvUpdTitle"))}</div><div class="pv-text">${lines.length ? `${escape(t("pvUpdCount", lines.length))}<br>${lines.join("<br>")}` : "–"}</div></div>
+          <div class="opt-short">${escape(t("pvUpdNote"))} ${escape(t("pvExample2"))}</div></div>`
+      : "";
+    return `<div class="opt-short mtl-note">${escape(t("updNote"))}</div>
+      <div class="mon-grp">${escape(t("grpNotify"))}</div>
+      ${ui.row("notify_updates", t("optUpdNotify"), ui.sw("notify_updates", t("optUpdNotify")), noTarget ? null : t("optUpdNotifyShort"), null, noTarget ? t("noTargetWarn") : null)}
+      ${
+        d.notify_updates
+          ? ui.row("updates_mode", t("optUpdMode"), `<span class="opt-pair">${modeSel}${mode === "instant" ? "" : timeIn}</span>`, t(mode === "instant" ? "optUpdModeShortInstant" : mode === "daily" ? "optUpdModeShortDaily" : "optUpdModeShortWeekly", time || "–"), null, null, ["updates_time"]) +
+            (mode === "instant" ? ui.row("updates_window", t("optUpdWindow"), ui.num("updates_window", t("minuteUnit"), t("optUpdWindow")), t("optUpdWindowShort"), null) : "") +
+            ui.row("updates_repeat", t("optUpdRepeat"), ui.select("updates_repeat", [["never", t("updRepeatNever")], ["3d", t("updRepeat3d")], ["7d", t("updRepeat7d")]], t("optUpdRepeat")), t("optUpdRepeatShort"), null)
+          : ""
+      }
+      <div class="mon-grp">${escape(t("grpUpdKinds"))}</div>
+      ${kindRows}
+      ${preview}`;
   }
 
   // Inhalt der Meldung bei neuen Geräten mit Vorschau an einem Gerät aus der Liste
@@ -5691,7 +5734,12 @@ class DevicePanel extends HTMLElement {
         return;
       }
       if (!st?.draft || el.type !== "checkbox") return;
-      if (el.dataset.nfield || el.dataset.bfield || el.dataset.newfield) {
+      if (el.dataset.ukind) {
+        const on = new Set(st.draft.updates_kinds || []);
+        if (el.checked) on.add(el.dataset.ukind);
+        else on.delete(el.dataset.ukind);
+        st.draft.updates_kinds = UPDATE_KINDS.filter((k) => on.has(k));
+      } else if (el.dataset.nfield || el.dataset.bfield || el.dataset.newfield) {
         // Inhalt der Meldung: Liste in fester Reihenfolge.
         const [key, order, field] = el.dataset.nfield
           ? ["notify_fields", NOTIFY_FIELDS, el.dataset.nfield]

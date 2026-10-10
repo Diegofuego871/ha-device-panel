@@ -397,7 +397,7 @@
     if (!["{facts}", ...PROMPT_GROUPS].some((v) => text.includes(v))) return "no_facts";
     return null;
   };
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50], notify_delay: [1, 60], new_window: [1, 60] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [5, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60] };
   // Inhalt der Batterie-Meldung wie options_api.BATTERY_FIELDS (seit 0.34.0).
   const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
   // Inhalt der Meldung bei neuen Geräten wie const.NEW_FIELDS (seit 1.24.0).
@@ -535,7 +535,7 @@
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
-    notify_new: false, new_window: 5, new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
+    notify_new: false, new_window: 5, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
   };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
@@ -717,6 +717,15 @@
           const m = msg.values.type_integrations;
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !TYPE_ORDER.includes(v))) throw { code: "invalid_format", message: "type map" };
         }
+        if ("updates_kinds" in msg.values) {
+          const v = msg.values.updates_kinds;
+          const kinds = ["core", "addons", "hacs", "devices"];
+          if (!Array.isArray(v) || v.some((x) => !kinds.includes(x))) throw { code: "invalid_format", message: "update kinds" };
+          msg.values.updates_kinds = kinds.filter((x) => v.includes(x));
+        }
+        if ("updates_mode" in msg.values && !["instant", "daily", "weekly"].includes(msg.values.updates_mode)) throw { code: "invalid_format", message: "updates mode" };
+        if ("updates_repeat" in msg.values && !["never", "3d", "7d"].includes(msg.values.updates_repeat)) throw { code: "invalid_format", message: "updates repeat" };
+        if ("updates_time" in msg.values && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(msg.values.updates_time))) throw { code: "invalid_format", message: "updates time" };
         if ("notify_fields" in msg.values) {
           const v = msg.values.notify_fields;
           if (!Array.isArray(v) || v.some((x) => !NOTIFY_FIELDS.includes(x))) throw { code: "invalid_format", message: "fields" };

@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "77"
+PANEL_VERSION = "78"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -90,8 +90,30 @@ CONF_NEW_PERSISTENT = "new_persistent"
 NEW_RECENT_MAX = 10
 DATA_NEW = f"{DOMAIN}_new"
 PERSISTENT_NEW_ID = f"{DOMAIN}_new"
+# Update-Erinnerung (seit 1.29.0, Reiter "Updates" in "Überwachung und Meldungen"): ersetzt
+# die Automationen mit Zähler und Hilfsentität. Hört auf die update-Entitäten von HA und
+# meldet neue Updates sofort (nach dem Sammelfenster), täglich oder wöchentlich (Montag).
+CONF_NOTIFY_UPDATES = "notify_updates"
+CONF_UPDATES_MODE = "updates_mode"
+UPDATES_INSTANT = "instant"
+UPDATES_DAILY = "daily"
+UPDATES_WEEKLY = "weekly"
+UPDATES_MODES = (UPDATES_INSTANT, UPDATES_DAILY, UPDATES_WEEKLY)
+CONF_UPDATES_TIME = "updates_time"
+DEFAULT_UPDATES_TIME = "09:00"
+CONF_UPDATES_WINDOW = "updates_window"
+DEFAULT_UPDATES_WINDOW = 5
+# Welche Arten gemeldet werden: Home Assistant (Core, OS, Supervisor), Add-ons, HACS, Geräte-Firmware.
+CONF_UPDATES_KINDS = "updates_kinds"
+UPDATE_KINDS = ("core", "addons", "hacs", "devices")
+DEFAULT_UPDATES_KINDS = ("core", "addons", "hacs")
+# Offen gebliebenes Update erneut melden: nie, nach 3 oder nach 7 Tagen.
+CONF_UPDATES_REPEAT = "updates_repeat"
+UPDATES_REPEATS = {"never": 0, "3d": 3 * 86400, "7d": 7 * 86400}
+DATA_UPDATES = f"{DOMAIN}_updates"
 INT_RANGES = {
     CONF_NEW_WINDOW: (1, 60),
+    CONF_UPDATES_WINDOW: (1, 60),
     CONF_OFFLINE_AFTER: (1, 60),
     CONF_FLAKY_OUTAGES: (2, 50),
     CONF_STARTUP_GRACE: (0, 30),

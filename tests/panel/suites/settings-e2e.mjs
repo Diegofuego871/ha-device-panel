@@ -14,7 +14,7 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 
 const TEXT = {
   de: {
-    gear: "Einstellungen", title: "Einstellungen", sub: "Device Panel · gilt für alle Benutzer", sec: "Updates",
+    gear: "Einstellungen", title: "Einstellungen", sub: "Device Panel · gilt für alle Benutzer", sec: "Panel-Version",
     sumOn: "Tägliche Prüfung · neue Version unter \"Reparaturen\"", sumOff: "Keine automatische Prüfung",
     opt: "Täglich nach Updates suchen", short: "Meldet eine neue Version unter Einstellungen → Reparaturen.", info: "Fragt einmal täglich",
     changed: "geändert", one: "1 Änderung", two: "2 Änderungen", save: "Speichern", cancel: "Abbrechen", savedShort: "Gespeichert", closeBtn: "Schliessen",
@@ -51,7 +51,7 @@ const TEXT = {
     filterOwn2: "Abweichend 2", filterOwn0: "Abweichend 0",
   },
   en: {
-    gear: "Settings", title: "Settings", sub: "Device Panel · applies to all users", sec: "Updates",
+    gear: "Settings", title: "Settings", sub: "Device Panel · applies to all users", sec: "Panel version",
     sumOn: "Daily check · new version under \"Repairs\"", sumOff: "No automatic check",
     opt: "Check for updates daily", short: "Reports a new version under Settings → Repairs.", info: "Queries the published releases",
     changed: "changed", one: "1 change", two: "2 changes", save: "Save", cancel: "Cancel", savedShort: "Saved", closeBtn: "Close",

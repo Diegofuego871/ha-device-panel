@@ -7,6 +7,33 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.29.0] - 2026-10-10
+
+Update-Erinnerung.
+
+### Hinzugefügt
+
+- Update-Erinnerung (Wunsch des Nutzers, Mockup `charging-v1`): Push-Meldung, wenn in Home
+  Assistant ein neues Update verfügbar ist, im neuen Reiter "Updates" unter Überwachung und
+  Meldungen. Sie ersetzt Automationen mit Zähler und Hilfsentität: Das Panel schaut selbst
+  auf die Update-Entitäten von Home Assistant. Standardmässig aus; gleiches Push-Ziel wie die
+  übrigen Meldungen, mit deren Bild und "Antippen öffnet die Update-Seite".
+  - Zeitpunkt: täglich zur eingestellten Uhrzeit (Standard 09:00), wöchentlich (montags) oder
+    sofort nach einem Sammelfenster (Standard 5 Minuten).
+  - Arten: Home Assistant (Core, OS, Supervisor), Add-ons, HACS (auch dieses Panel),
+    Geräte-Firmware (standardmässig aus). Übersprungene Versionen werden nie gemeldet.
+  - Eine Meldung nennt alle offenen Updates mit "Name alt → neu". Ein Update wird je Version
+    einmal gemeldet; auf Wunsch nach 3 oder 7 Tagen noch einmal, wenn es offen bleibt.
+  - Vorschau in den Einstellungen, wie bei der Batterie-Meldung.
+  - Neue Optionen `notify_updates`, `updates_mode`, `updates_time`, `updates_window`,
+    `updates_repeat` und `updates_kinds`, auch im Optionsdialog.
+
+### Geändert
+
+- Der Abschnitt "Updates" (Version dieses Panels) in den Einstellungen heisst jetzt
+  "Panel-Version", damit er vom neuen Reiter zu unterscheiden ist. Die Update-Zeile des Panels
+  bleibt ganz oben in den Einstellungen.
+
 ## [1.28.0] - 2026-10-10
 
 Suchfeld in langen Listen der Einstellungen.
@@ -1747,6 +1774,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.29.0
 [1.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.28.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0
 [1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0

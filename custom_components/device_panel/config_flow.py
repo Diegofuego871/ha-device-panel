@@ -32,6 +32,15 @@ from .const import (
     CONF_NEW_FIELDS,
     CONF_NEW_PERSISTENT,
     CONF_NEW_WINDOW,
+    CONF_NOTIFY_UPDATES,
+    CONF_UPDATES_KINDS,
+    CONF_UPDATES_MODE,
+    CONF_UPDATES_REPEAT,
+    CONF_UPDATES_TIME,
+    CONF_UPDATES_WINDOW,
+    UPDATE_KINDS,
+    UPDATES_MODES,
+    UPDATES_REPEATS,
     CONF_NOTIFY_NEW,
     NEW_FIELDS,
     CONF_BATTERY_PUSH_DAILY,
@@ -85,6 +94,7 @@ from .options_api import (
     INT_OPTIONS,
     battery_fields,
     new_fields,
+    update_kinds,
     battery_map,
     delay_too_short,
     offline_map,
@@ -101,7 +111,7 @@ from .options_api import (
 from .push import text
 
 # Einheit der Zahlenfelder im Optionsdialog.
-_UNITS = {CONF_OFFLINE_AFTER: "min", CONF_STARTUP_GRACE: "min", CONF_BATTERY_LOW: "%", CONF_NOTIFY_DELAY: "min", CONF_NEW_WINDOW: "min"}
+_UNITS = {CONF_OFFLINE_AFTER: "min", CONF_STARTUP_GRACE: "min", CONF_BATTERY_LOW: "%", CONF_NOTIFY_DELAY: "min", CONF_NEW_WINDOW: "min", CONF_UPDATES_WINDOW: "min"}
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -184,6 +194,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 data[CONF_NOTIFY_FIELDS] = notify_fields(list(user_input.get(CONF_NOTIFY_FIELDS) or []))
                 data[CONF_BATTERY_FIELDS] = battery_fields(list(user_input.get(CONF_BATTERY_FIELDS) or []))
                 data[CONF_NEW_FIELDS] = new_fields(list(user_input.get(CONF_NEW_FIELDS) or []))
+                data[CONF_UPDATES_KINDS] = update_kinds(list(user_input.get(CONF_UPDATES_KINDS) or []))
+                if CONF_UPDATES_TIME in user_input:
+                    data[CONF_UPDATES_TIME] = push_time(user_input[CONF_UPDATES_TIME])
                 # Leere Auswahl der KI-Aufgabe überschreibt die alte (Standard von HA).
                 data[CONF_AI_TASK] = user_input.get(CONF_AI_TASK) or ""
                 # Das Zahlenfeld liefert Kommazahlen (2.0); gespeichert wird wie
@@ -272,6 +285,21 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Optional(CONF_NEW_FIELDS, default=values[CONF_NEW_FIELDS]): SelectSelector(
                         SelectSelectorConfig(
                             options=list(NEW_FIELDS), multiple=True, mode=SelectSelectorMode.LIST, translation_key="new_field"
+                        )
+                    ),
+                    # Update-Erinnerung (Reiter "Updates" im Panel, seit 1.29.0).
+                    vol.Required(CONF_NOTIFY_UPDATES, default=values[CONF_NOTIFY_UPDATES]): bool,
+                    vol.Required(CONF_UPDATES_MODE, default=values[CONF_UPDATES_MODE]): SelectSelector(
+                        SelectSelectorConfig(options=list(UPDATES_MODES), mode=SelectSelectorMode.DROPDOWN, translation_key="updates_mode")
+                    ),
+                    vol.Required(CONF_UPDATES_TIME, default=values[CONF_UPDATES_TIME]): TimeSelector(),
+                    vol.Required(CONF_UPDATES_WINDOW, default=values[CONF_UPDATES_WINDOW]): _number(CONF_UPDATES_WINDOW),
+                    vol.Required(CONF_UPDATES_REPEAT, default=values[CONF_UPDATES_REPEAT]): SelectSelector(
+                        SelectSelectorConfig(options=list(UPDATES_REPEATS), mode=SelectSelectorMode.DROPDOWN, translation_key="updates_repeat")
+                    ),
+                    vol.Optional(CONF_UPDATES_KINDS, default=values[CONF_UPDATES_KINDS]): SelectSelector(
+                        SelectSelectorConfig(
+                            options=list(UPDATE_KINDS), multiple=True, mode=SelectSelectorMode.LIST, translation_key="update_kind"
                         )
                     ),
                     # Pro Integration (Reiter "Integrationen" im Panel). Eigenes

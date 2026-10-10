@@ -26,6 +26,19 @@ from .const import (
     CONF_NEW_FIELDS,
     CONF_NEW_PERSISTENT,
     CONF_NEW_WINDOW,
+    CONF_NOTIFY_UPDATES,
+    CONF_UPDATES_KINDS,
+    CONF_UPDATES_MODE,
+    CONF_UPDATES_REPEAT,
+    CONF_UPDATES_TIME,
+    CONF_UPDATES_WINDOW,
+    DEFAULT_UPDATES_KINDS,
+    DEFAULT_UPDATES_TIME,
+    DEFAULT_UPDATES_WINDOW,
+    UPDATE_KINDS,
+    UPDATES_DAILY,
+    UPDATES_MODES,
+    UPDATES_REPEATS,
     CONF_NOTIFY_NEW,
     DEFAULT_NEW_FIELDS,
     DEFAULT_NEW_WINDOW,
@@ -110,6 +123,7 @@ BOOL_OPTIONS: tuple[tuple[str, bool], ...] = (
     (CONF_BATTERY_PERSISTENT, False),
     (CONF_NOTIFY_NEW, False),
     (CONF_NEW_PERSISTENT, False),
+    (CONF_NOTIFY_UPDATES, False),
     (CONF_SHOW_SERVICE, False),
     (CONF_SHOW_DISABLED, False),
     (CONF_UPDATE_CHECK, DEFAULT_UPDATE_CHECK),
@@ -122,6 +136,7 @@ INT_OPTIONS: tuple[tuple[str, int], ...] = (
     (CONF_BATTERY_LOW, DEFAULT_BATTERY_LOW),
     (CONF_NOTIFY_DELAY, DEFAULT_NOTIFY_DELAY),
     (CONF_NEW_WINDOW, DEFAULT_NEW_WINDOW),
+    (CONF_UPDATES_WINDOW, DEFAULT_UPDATES_WINDOW),
 )
 LIST_OPTIONS = (CONF_EXCLUDE_INTEGRATIONS, CONF_EXCLUDE_TYPES, CONF_HIDE_CHIPS, CONF_HIDE_CONNECTIONS, CONF_CONNECTION_ORDER, CONF_CHIP_ORDER)
 
@@ -185,6 +200,13 @@ def battery_fields(value: Any) -> list[str]:
     if not isinstance(value, list) or not all(v in BATTERY_FIELDS for v in value):
         raise vol.Invalid(f"Liste aus {', '.join(BATTERY_FIELDS)} erwartet")
     return [f for f in BATTERY_FIELDS if f in value]
+
+
+def update_kinds(value: Any) -> list[str]:
+    """Arten der Update-Erinnerung: bekannte Werte in fester Reihenfolge."""
+    if not isinstance(value, list) or not all(v in UPDATE_KINDS for v in value):
+        raise vol.Invalid(f"Liste aus {', '.join(UPDATE_KINDS)} erwartet")
+    return [k for k in UPDATE_KINDS if k in value]
 
 
 def new_fields(value: Any) -> list[str]:
@@ -404,6 +426,10 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_BATTERY_FIELDS): battery_fields,
         vol.Optional(CONF_NEW_FIELDS): new_fields,
         vol.Optional(CONF_NEW_EXCLUDE): _domains,
+        vol.Optional(CONF_UPDATES_KINDS): update_kinds,
+        vol.Optional(CONF_UPDATES_MODE): vol.In(UPDATES_MODES),
+        vol.Optional(CONF_UPDATES_TIME): push_time,
+        vol.Optional(CONF_UPDATES_REPEAT): vol.In(tuple(UPDATES_REPEATS)),
         vol.Optional(CONF_HIDE_CHIPS): _chips,
         vol.Optional(CONF_HIDE_CONNECTIONS): _connections,
         vol.Optional(CONF_CONNECTION_ORDER): connection_order,
@@ -507,6 +533,17 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
         values[CONF_BATTERY_PUSH_TIME] = DEFAULT_BATTERY_PUSH_TIME
     daily = options.get(CONF_BATTERY_PUSH_DAILY)
     values[CONF_BATTERY_PUSH_DAILY] = daily if daily in DAILY_CONTENTS else DAILY_NEW
+    # Update-Erinnerung (seit 1.29.0)
+    kinds = options.get(CONF_UPDATES_KINDS)
+    values[CONF_UPDATES_KINDS] = [k for k in UPDATE_KINDS if k in kinds] if isinstance(kinds, list) else list(DEFAULT_UPDATES_KINDS)
+    mode = options.get(CONF_UPDATES_MODE)
+    values[CONF_UPDATES_MODE] = mode if mode in UPDATES_MODES else UPDATES_DAILY
+    try:
+        values[CONF_UPDATES_TIME] = push_time(options.get(CONF_UPDATES_TIME))
+    except vol.Invalid:
+        values[CONF_UPDATES_TIME] = DEFAULT_UPDATES_TIME
+    repeat = options.get(CONF_UPDATES_REPEAT)
+    values[CONF_UPDATES_REPEAT] = repeat if repeat in UPDATES_REPEATS else "never"
     return values
 
 

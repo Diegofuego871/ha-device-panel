@@ -58,7 +58,13 @@
           "ai_task_entity": "AI task for the assessment (empty = default of Home Assistant)",
           "update_check": "Check for updates daily",
           "signal_low": "Signal: warning threshold per connection type",
-          "signal_low_integrations": "Signal: warning threshold per connection type and integration"
+          "signal_low_integrations": "Signal: warning threshold per connection type and integration",
+          "notify_updates": "Updates: push notification",
+          "updates_mode": "Updates: time of the notification",
+          "updates_time": "Updates: daily/weekly at",
+          "updates_window": "Updates: collect for",
+          "updates_repeat": "Updates: remind about open updates",
+          "updates_kinds": "Updates: which kinds"
         },
         "data_description": {
           "notify_service": "notify service or notify entity, e.g. the Companion app of your phone.",
@@ -103,7 +109,13 @@
           "ai_task_entity": "Optional. Leave empty to use the default AI task of Home Assistant (Settings → System → General).",
           "update_check": "Reports a new version under Settings → Repairs. Pre-releases are never reported here.",
           "signal_low": "Connection type → threshold, one per line, e.g. \"wifi: -85\", \"zigbee: 40\" or \"ble: off\" (dBm negative, LQI positive). Applies to devices without an own setting; unset = standard (-80 dBm, LQI 60).",
-          "signal_low_integrations": "Integration → connection type → threshold, e.g. \"shelly:\" with \"wifi: -88\" and \"ble: off\" below it. Goes before the global value; a device setting goes before both."
+          "signal_low_integrations": "Integration → connection type → threshold, e.g. \"shelly:\" with \"wifi: -88\" and \"ble: off\" below it. Goes before the global value; a device setting goes before both.",
+          "notify_updates": "A push notification when a new update is available in Home Assistant (core, add-ons, HACS, device firmware), to the push target above. Replaces automations with a counter helper.",
+          "updates_mode": "Immediately (after the collect time), once a day or once a week (Monday).",
+          "updates_time": "Time for the daily or weekly notification.",
+          "updates_window": "Minutes to wait after the first new update (mode immediately), so that several updates arrive in one notification.",
+          "updates_repeat": "Report an update that stays open again after 3 or 7 days.",
+          "updates_kinds": "Home Assistant (core, OS, supervisor), add-ons, HACS, device firmware. Skipped versions are never reported."
         }
       }
     },
@@ -221,6 +233,28 @@
         "update": "Update available",
         "override": "Own setting",
         "new": "New"
+      }
+    },
+    "updates_mode": {
+      "options": {
+        "instant": "Immediately",
+        "daily": "Once a day",
+        "weekly": "Once a week (Monday)"
+      }
+    },
+    "updates_repeat": {
+      "options": {
+        "never": "Never",
+        "3d": "After 3 days",
+        "7d": "After 7 days"
+      }
+    },
+    "update_kind": {
+      "options": {
+        "core": "Home Assistant (core, OS, supervisor)",
+        "addons": "Add-ons",
+        "hacs": "HACS",
+        "devices": "Device firmware"
       }
     }
   }
