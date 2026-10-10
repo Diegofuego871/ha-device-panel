@@ -7,6 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.36.0] - 2026-10-10
+
+Lademeldung pro Integration mit eigenen Werten.
+
+### Hinzugefügt
+
+- Lademeldung pro Integration (Wunsch des Nutzers): im Detail einer Integration (Reiter
+  Integrationen, Gruppe "Batterie"), sobald die Lademeldung für sie an ist, "Voll ab" und
+  "Ladung erkannt bei Anstieg" mit dem Standard (globaler Wert) oder einem eigenen Wert (Anstieg
+  5 bis 80 % in Stufen, Voll ab 90, 95, 98, 100 %). Die Liste zeigt "Laden an (voll ab 98 %,
+  Anstieg 15 %)". Reihenfolge: Gerät, Integration, global. Neue Optionen
+  `charge_full_integrations` und `charge_rise_integrations` (nur im Panel); im Geräte-Popup
+  heisst der Standard dann "Wie Integration (95 %)".
+
 ## [1.35.0] - 2026-10-10
 
 Geräte, die gerade laden.
@@ -36,13 +50,6 @@ Geräte, die gerade laden.
   für den Push und für die Markierung "lädt". Neue Einstellungen `charge_full` und
   `charge_rise` in `set_device_settings`; `list_devices` hat `charge_full_setting`,
   `charge_rise_setting` und die globalen Werte in `charge_default`.
-- Lademeldung pro Integration (Wunsch des Nutzers): im Detail einer Integration (Reiter
-  Integrationen, Gruppe "Batterie"), sobald die Lademeldung für sie an ist, "Voll ab" und
-  "Ladung erkannt bei Anstieg" mit dem Standard (globaler Wert) oder einem eigenen Wert (Anstieg
-  5 bis 80 % in Stufen, Voll ab 90, 95, 98, 100 %). Die Liste zeigt "Laden an (voll ab 98 %,
-  Anstieg 15 %)". Reihenfolge: Gerät, Integration, global. Neue Optionen
-  `charge_full_integrations` und `charge_rise_integrations` (nur im Panel); im Geräte-Popup
-  heisst der Standard dann "Wie Integration (95 %)".
 
 ### Geändert
 
@@ -1942,6 +1949,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0
 [1.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.34.0
 [1.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.32.0
