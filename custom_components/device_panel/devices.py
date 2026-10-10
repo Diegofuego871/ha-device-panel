@@ -32,8 +32,10 @@ from .const import (
     CONF_BATTERY_PUSH,
     CONF_BATTERY_PUSH_EXCLUDE,
     CONF_CHARGE_FULL,
+    CONF_CHARGE_FULL_INTEGRATIONS,
     CONF_CHARGE_INTEGRATIONS,
     CONF_CHARGE_RISE,
+    CONF_CHARGE_RISE_INTEGRATIONS,
     CONF_NOTIFY_CHARGE,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
@@ -394,13 +396,30 @@ def _in_range(value: Any, key: str) -> bool:
     return isinstance(value, int) and not isinstance(value, bool) and low <= value <= high
 
 
+def charge_values(opts: dict[str, Any], domain: str | None) -> tuple[int, int, str | None, str | None]:
+    """
+    "Voll ab" und Anstieg ohne Wahl am Gerät: die der Integration, sonst die globalen. Dazu je die
+    Integration, wenn der Wert von ihr kommt (für die Herkunft im Popup).
+    """
+    full = (opts.get(CONF_CHARGE_FULL_INTEGRATIONS) or {}).get(domain) if domain else None
+    rise = (opts.get(CONF_CHARGE_RISE_INTEGRATIONS) or {}).get(domain) if domain else None
+    return (
+        opts[CONF_CHARGE_FULL] if full is None else full,
+        opts[CONF_CHARGE_RISE] if rise is None else rise,
+        domain if full is not None else None,
+        domain if rise is not None else None,
+    )
+
+
 def device_charge_opts(hass: HomeAssistant, opts: dict[str, Any], device_id: str) -> dict[str, Any]:
-    """Optionen mit dem eigenen "Voll ab" und Anstieg des Geräts (Lademeldung und "lädt gerade")."""
+    """Optionen mit dem "Voll ab" und Anstieg des Geräts: Gerät, sonst Integration, sonst global (Lademeldung und "lädt gerade")."""
     settings = device_settings(hass)
+    device = dr.async_get(hass).async_get(device_id)
+    full, rise, _fi, _ri = charge_values(opts, primary_domain(hass, device) if device else None)
     return {
         **opts,
-        CONF_CHARGE_FULL: settings.get("charge_full", {}).get(device_id, opts[CONF_CHARGE_FULL]),
-        CONF_CHARGE_RISE: settings.get("charge_rise", {}).get(device_id, opts[CONF_CHARGE_RISE]),
+        CONF_CHARGE_FULL: settings.get("charge_full", {}).get(device_id, full),
+        CONF_CHARGE_RISE: settings.get("charge_rise", {}).get(device_id, rise),
     }
 
 
@@ -1199,8 +1218,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "charge_full_setting": device_settings(hass).get("charge_full", {}).get(device.id),
                 "charge_rise_setting": device_settings(hass).get("charge_rise", {}).get(device.id),
                 "charge_default": {
-                    "full": opts[CONF_CHARGE_FULL],
-                    "rise": opts[CONF_CHARGE_RISE],
+                    # Ohne Wahl am Gerät: Wert der Integration, sonst global (full_integration/rise_integration nennen sie).
+                    **dict(zip(("full", "rise", "full_integration", "rise_integration"), charge_values(opts, primary.domain if primary else None))),
                     "on": bool(opts[CONF_NOTIFY_CHARGE]) and bool(primary) and primary.domain in opts[CONF_CHARGE_INTEGRATIONS],
                     "integration": primary.domain if primary and primary.domain in opts[CONF_CHARGE_INTEGRATIONS] else None,
                 },

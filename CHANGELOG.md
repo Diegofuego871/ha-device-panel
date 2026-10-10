@@ -35,6 +35,13 @@ Devices that are charging right now.
   ..."). The own values count for the push and for the mark "charging". New settings
   `charge_full` and `charge_rise` in `set_device_settings`; `list_devices` has
   `charge_full_setting`, `charge_rise_setting` and the global values in `charge_default`.
+- Charging notification per integration (requested by the user): in the detail of an
+  integration (tab Integrations, group "Battery"), as soon as the charging notification is on
+  for it, "Full from" and "Charging detected at a rise" with the default (global value) or an own
+  value (rise 5 to 80 % in steps, full 90, 95, 98, 100 %). The list shows "Charging on (full
+  from 98 %, rise 15 %)". Order: device, integration, global. New options
+  `charge_full_integrations` and `charge_rise_integrations` (panel only); in the device pop-up
+  the default reads "Same as integration (95 %)".
 
 ### Changed
 

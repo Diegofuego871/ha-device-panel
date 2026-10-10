@@ -78,6 +78,8 @@ from .const import (
     PUSH_MODES,
     CONF_BATTERY_LOW,
     CONF_BATTERY_LOW_INTEGRATIONS,
+    CONF_CHARGE_FULL_INTEGRATIONS,
+    CONF_CHARGE_RISE_INTEGRATIONS,
     CONF_BATTERY_PERSISTENT,
     CONF_BATTERY_PUSH,
     CONF_EXCLUDE_DEVICES,
@@ -313,6 +315,26 @@ def _notify_target(value: Any) -> str:
     return text
 
 
+def charge_map(key: str):
+    """Prüfung einer Zuordnung {Domain: ganze Zahl im Bereich der Option key} (eigene Lade-Werte pro Integration)."""
+
+    def check(value: Any) -> dict[str, int]:
+        low, high = INT_RANGES[key]
+        if value is None:
+            return {}
+        if not isinstance(value, dict):
+            raise vol.Invalid("Zuordnung Integration → Zahl erwartet")
+        out: dict[str, int] = {}
+        for domain, number in value.items():
+            n = _whole(number)
+            if not isinstance(domain, str) or not _DOMAIN_RE.match(domain) or n is None or not low <= n <= high:
+                raise vol.Invalid(f"Integration → ganze Zahl von {low} bis {high} erwartet")
+            out[domain] = n
+        return dict(sorted(out.items()))
+
+    return check
+
+
 def battery_map(value: Any) -> dict[str, int | str]:
     """
     Eigene Batterie-Schwellen {Domain: Prozent oder "off"}; Bereich wie
@@ -459,6 +481,8 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_CONNECTION_INTEGRATIONS): connection_map,
         vol.Optional(CONF_TYPE_INTEGRATIONS): type_map,
         vol.Optional(CONF_BATTERY_LOW_INTEGRATIONS): battery_map,
+        vol.Optional(CONF_CHARGE_FULL_INTEGRATIONS): charge_map(CONF_CHARGE_FULL),
+        vol.Optional(CONF_CHARGE_RISE_INTEGRATIONS): charge_map(CONF_CHARGE_RISE),
         vol.Optional(CONF_SIGNAL_LOW): signal_map,
         vol.Optional(CONF_SIGNAL_LOW_INTEGRATIONS): signal_integrations_map,
         vol.Optional(CONF_OFFLINE_INTEGRATIONS): offline_map,
@@ -523,6 +547,11 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     except vol.Invalid:
         # Ungültig gespeichert: lieber keine eigenen Schwellen als ein Fehler.
         values[CONF_BATTERY_LOW_INTEGRATIONS] = {}
+    for key, source in ((CONF_CHARGE_FULL_INTEGRATIONS, CONF_CHARGE_FULL), (CONF_CHARGE_RISE_INTEGRATIONS, CONF_CHARGE_RISE)):
+        try:
+            values[key] = charge_map(source)(options.get(key))
+        except vol.Invalid:
+            values[key] = {}
     try:
         values[CONF_SIGNAL_LOW] = signal_map(options.get(CONF_SIGNAL_LOW))
     except vol.Invalid:

@@ -232,3 +232,32 @@ async def test_device_own_full_and_rise(hass: HomeAssistant) -> None:
     # Zurück auf global
     await async_set_device_settings(hass, device.id, charge_full=None, charge_rise=None)
     assert device_settings(hass)["charge_full"] == {} and device_settings(hass)["charge_rise"] == {}
+
+
+async def test_integration_own_full_and_rise(hass: HomeAssistant) -> None:
+    """Eigenes "Voll ab" und Anstieg pro Integration (1.35.0): Gerät vor Integration vor global."""
+    from custom_components.device_panel.devices import async_list_devices, charge_values, device_charge_opts  # noqa: PLC0415
+    from custom_components.device_panel.options_api import charge_map  # noqa: PLC0415
+
+    await _setup(hass, charge_full_integrations={"test": 95}, charge_rise_integrations={"test": 10})
+    device, _entity = _device(hass, "Handy", level=30)
+    other, _other = _device(hass, "Hue-Lampe", level=30, domain="hue")
+    opts = values_from({"charge_full_integrations": {"test": 95}, "charge_rise_integrations": {"test": 10}})
+    assert charge_values(opts, "test") == (95, 10, "test", "test")
+    assert charge_values(opts, "hue") == (100, 20, None, None)
+    assert device_charge_opts(hass, opts, device.id)["charge_full"] == 95 and device_charge_opts(hass, opts, other.id)["charge_full"] == 100
+    # Das Gerät geht vor
+    await async_set_device_settings(hass, device.id, charge_full=98)
+    assert device_charge_opts(hass, opts, device.id)["charge_full"] == 98 and device_charge_opts(hass, opts, device.id)["charge_rise"] == 10
+    by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
+    assert by_name["Handy"]["charge_default"]["full"] == 95 and by_name["Handy"]["charge_default"]["full_integration"] == "test"
+    assert by_name["Hue-Lampe"]["charge_default"]["full"] == 100 and by_name["Hue-Lampe"]["charge_default"]["full_integration"] is None
+    # Prüfung der Zuordnung
+    import pytest  # noqa: PLC0415
+    import voluptuous as vol  # noqa: PLC0415
+
+    assert charge_map("charge_full")({"zha": 95}) == {"zha": 95} and charge_map("charge_full")(None) == {}
+    for bad in ({"zha": 50}, {"zha": "x"}, {"ZHA!": 95}, [1]):
+        with pytest.raises(vol.Invalid):
+            charge_map("charge_full")(bad)
+    assert values_from({"charge_full_integrations": {"zha": 50}})["charge_full_integrations"] == {}

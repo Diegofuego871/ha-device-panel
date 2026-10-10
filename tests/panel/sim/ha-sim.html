@@ -557,7 +557,7 @@
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
-    notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, charge_integrations: [], notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
+    notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, charge_integrations: [], charge_full_integrations: {}, charge_rise_integrations: {}, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
   };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
@@ -738,6 +738,12 @@
         if ("type_integrations" in msg.values) {
           const m = msg.values.type_integrations;
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !TYPE_ORDER.includes(v))) throw { code: "invalid_format", message: "type map" };
+        }
+        for (const [key, lo, hi] of [["charge_full_integrations", 90, 100], ["charge_rise_integrations", 5, 80]]) {
+          if (key in msg.values) {
+            const v = msg.values[key];
+            if (!v || typeof v !== "object" || Array.isArray(v) || Object.entries(v).some(([k, n]) => !/^[a-z0-9_]+$/.test(k) || !Number.isInteger(n) || n < lo || n > hi)) throw { code: "invalid_format", message: key };
+          }
         }
         if ("updates_kinds" in msg.values) {
           const v = msg.values.updates_kinds;
@@ -976,7 +982,7 @@
             charge_rise_setting: window.__devSettings.chargeRise[d.id] ?? null,
             // Lädt gerade (seit 1.35.0): window.__charging = { Geräte-ID: { level, from, ago (Sekunden) } }
             charging: window.__charging?.[d.id] ? { level: window.__charging[d.id].level, from: window.__charging[d.id].from ?? null, since: new Date(Date.now() - (window.__charging[d.id].ago ?? 3600) * 1000).toISOString(), source: "level" } : null,
-            charge_default: { full: window.__opts.charge_full, rise: window.__opts.charge_rise, on: Boolean(window.__opts.notify_charge) && (window.__opts.charge_integrations || []).includes(d.integration?.domain), integration: (window.__opts.charge_integrations || []).includes(d.integration?.domain) ? d.integration.domain : null },
+            charge_default: { full: (window.__opts.charge_full_integrations || {})[d.integration?.domain] ?? window.__opts.charge_full, rise: (window.__opts.charge_rise_integrations || {})[d.integration?.domain] ?? window.__opts.charge_rise, full_integration: (window.__opts.charge_full_integrations || {})[d.integration?.domain] != null ? d.integration.domain : null, rise_integration: (window.__opts.charge_rise_integrations || {})[d.integration?.domain] != null ? d.integration.domain : null, on: Boolean(window.__opts.notify_charge) && (window.__opts.charge_integrations || []).includes(d.integration?.domain), integration: (window.__opts.charge_integrations || []).includes(d.integration?.domain) ? d.integration.domain : null },
             notify_mute_until: window.__devSettings.mute[d.id] || null,
             signal_setting: window.__devSettings.signal[d.id] ?? null,
             // Wie options_api.signal_default (seit 1.17.0): Integration vor global, Einheit muss passen.

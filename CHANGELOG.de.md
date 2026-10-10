@@ -36,6 +36,13 @@ Geräte, die gerade laden.
   für den Push und für die Markierung "lädt". Neue Einstellungen `charge_full` und
   `charge_rise` in `set_device_settings`; `list_devices` hat `charge_full_setting`,
   `charge_rise_setting` und die globalen Werte in `charge_default`.
+- Lademeldung pro Integration (Wunsch des Nutzers): im Detail einer Integration (Reiter
+  Integrationen, Gruppe "Batterie"), sobald die Lademeldung für sie an ist, "Voll ab" und
+  "Ladung erkannt bei Anstieg" mit dem Standard (globaler Wert) oder einem eigenen Wert (Anstieg
+  5 bis 80 % in Stufen, Voll ab 90, 95, 98, 100 %). Die Liste zeigt "Laden an (voll ab 98 %,
+  Anstieg 15 %)". Reihenfolge: Gerät, Integration, global. Neue Optionen
+  `charge_full_integrations` und `charge_rise_integrations` (nur im Panel); im Geräte-Popup
+  heisst der Standard dann "Wie Integration (95 %)".
 
 ### Geändert
 

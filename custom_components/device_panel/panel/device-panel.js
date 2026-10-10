@@ -263,7 +263,7 @@ const MON_TAB_KEYS = {
   battery: ["notify_charge", "charge_full", "charge_rise", "charge_integrations", "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
   new: ["notify_new", "new_window", "new_persistent", "new_fields"],
   updates: ["notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include"],
-  integ: ["offline_after_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
+  integ: ["offline_after_integrations", "charge_full_integrations", "charge_rise_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
 
 // Reiter der Abschnitte "Geräte im Panel" und "Darstellung" (seit 1.0.0,
@@ -368,7 +368,7 @@ const promptHtml = (text) => escape(text).replace(/\{(language|facts(?:_[a-z]+)?
 
 // Optionen mit Abweichungen pro Integration ("Alle zurücksetzen" in
 // "Überwachung und Meldungen" › "Integrationen", "Alles auf Standard" in der Integration).
-const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations", "signal_low_integrations"];
+const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations", "signal_low_integrations", "charge_full_integrations", "charge_rise_integrations"];
 // Liste der Integrationen mit Lademeldung (seit 1.32.0 auch hier einstellbar): zurücksetzen = aus, der Standard.
 const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"];
 
@@ -3241,15 +3241,15 @@ class DevicePanel extends HTMLElement {
         const fulls = [...new Set([90, 95, 98, 100, fullSet].filter((v) => Number.isInteger(v)))].sort((a, b) => a - b);
         html += `<div class="opt${fullSet != null ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeFull"))}</span>${sel(
           "dev-charge-full",
-          [["default", t("devChargeFullGlobal", gFull)], ...fulls.map((v) => [String(v), `${v} %`])],
+          [["default", cd.full_integration ? t("devChargeFullInteg", gFull) : t("devChargeFullGlobal", gFull)], ...fulls.map((v) => [String(v), `${v} %`])],
           fullSet == null ? "default" : String(fullSet),
           t("devChargeFull")
-        )}</div>${origin(fullSet != null, null, fullSet != null ? t("originDefaultWould", `${gFull} %`) : "", t("devChargeFullShort"))}</div>`;
+        )}</div>${origin(fullSet != null, cd.full_integration, fullSet != null || cd.full_integration ? t("originDefaultWould", `${gFull} %`) : "", t("devChargeFullShort"))}</div>`;
         const riseMode = riseSet != null ? "own" : "default";
         const riseErr = riseMode === "own" ? this._chargeRangeError : null;
         html += `<div class="opt${riseMode === "own" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeRise"))}</span>${sel(
           "dev-charge-rise",
-          [["default", t("devChargeRiseGlobal", gRise)], ["own", t("devChargeRiseOwn")]],
+          [["default", cd.rise_integration ? t("devChargeRiseInteg", gRise) : t("devChargeRiseGlobal", gRise)], ["own", t("devChargeRiseOwn")]],
           riseMode,
           t("devChargeRise")
         )}</div>${
@@ -3258,7 +3258,7 @@ class DevicePanel extends HTMLElement {
                 riseErr ? `<div class="opt-error" data-dev-range>${escape(riseErr.message)}</div>` : ""
               }`
             : ""
-        }${origin(riseMode === "own", null, riseMode === "own" ? t("originDefaultWould", `${gRise} %`) : "", t("devChargeRiseShort"))}</div>`;
+        }${origin(riseMode === "own", cd.rise_integration, riseMode === "own" || cd.rise_integration ? t("originDefaultWould", `${gRise} %`) : "", t("devChargeRiseShort"))}</div>`;
       }
     }
     // Stumm (Knopf "24 Std. stumm" in der Meldung): eigene Option mit Ende;
@@ -4640,7 +4640,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfullInteg ? `[data-cfull-integ="${active.dataset.cfullInteg}"]` : active.dataset.criseInteg ? `[data-crise-integ="${active.dataset.criseInteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -4939,7 +4939,7 @@ class DevicePanel extends HTMLElement {
     const chargeOn = new Set(d.charge_integrations || []);
     const list = (cat.integrations || []).filter((i) => !hidden.has(i.domain)).map((i) => ({ domain: i.domain, name: i.name, devices: i.devices }));
     const known = new Set(list.map((x) => x.domain));
-    for (const dom of [...Object.keys(offMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush, ...noNew, ...chargeOn]) {
+    for (const dom of [...Object.keys(offMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush, ...noNew, ...chargeOn, ...Object.keys(d.charge_full_integrations || {}), ...Object.keys(d.charge_rise_integrations || {})]) {
       if (known.has(dom) || hidden.has(dom)) continue;
       known.add(dom);
       list.push({ domain: dom, name: this._integrations[dom] || dom, devices: 0 });
@@ -4954,7 +4954,9 @@ class DevicePanel extends HTMLElement {
       const sigCount = Object.keys(sigMap[x.domain] || {}).length;
       const sigDiff = sigCount ? t("diffSignal", sigCount) : null;
       const newDiff = noNew.has(x.domain) ? t("diffNoNew") : null;
-      const chargeDiff = chargeOn.has(x.domain) ? t("diffCharge") : null;
+      const cf = (d.charge_full_integrations || {})[x.domain];
+      const cr = (d.charge_rise_integrations || {})[x.domain];
+      const chargeDiff = chargeOn.has(x.domain) ? t("diffCharge") + (cf != null || cr != null ? ` (${[cf != null ? t("diffChargeFull", cf) : "", cr != null ? t("diffChargeRise", cr) : ""].filter(Boolean).join(", ")})` : "") : null;
       const diff = unmon ? t("integUnmon") : [out, batText, chargeDiff, newDiff, sigDiff].filter(Boolean).join(" · ");
       return { ...x, batDevices: bat.get(x.domain) || 0, unmon, out, bat: batText, noNew: noNew.has(x.domain), sig: sigDiff, own: Boolean(unmon || out || batText || chargeDiff || newDiff || sigDiff), diff };
     });
@@ -5489,6 +5491,23 @@ class DevicePanel extends HTMLElement {
           swi(`data-cinteg="${escape(dom)}"`, has("charge_integrations"), `${t("optCharge")}: ${item.name}`),
           origin(has("charge_integrations"), t("devChargeOff").toLowerCase())) +
         (target && d.notify_charge ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integChargeGlobalOff" : "noTargetWarn"))}</div>`);
+      // Eigenes "Voll ab" und eigener Anstieg der Integration (seit 1.35.0): ohne Wahl gilt der globale Wert, das Gerät geht vor.
+      if (has("charge_integrations")) {
+        const gFull = val("charge_full");
+        const gRise = val("charge_rise");
+        const fullMap = d.charge_full_integrations || {};
+        const riseMap = d.charge_rise_integrations || {};
+        const savedFull = saved.charge_full_integrations || {};
+        const savedRise = saved.charge_rise_integrations || {};
+        const choices = (presets, own) => [...new Set([...presets, own].filter((v) => Number.isInteger(v)))].sort((a, b) => a - b);
+        const chargeSel = (attr, own, g, values, label) =>
+          `<span class="opt-select"><select ${attr}="${escape(dom)}" ${unmon ? "disabled" : ""} aria-label="${escape(`${label}: ${item.name}`)}"><option value="default"${own == null ? " selected" : ""}>${escape(t("integChargeDefault", g))}</option>${values
+            .map((v) => `<option value="${v}"${v === own ? " selected" : ""}>${v} %</option>`)
+            .join("")}</select>${mdi("chevronDown", 18)}</span>`;
+        html +=
+          opt((fullMap[dom] ?? null) !== (savedFull[dom] ?? null), t("optChargeFull"), chargeSel("data-cfull-integ", fullMap[dom], gFull, choices([90, 95, 98, 100], fullMap[dom]), t("optChargeFull")), origin(fullMap[dom] != null, fullMap[dom] != null ? `${gFull} %` : "")) +
+          opt((riseMap[dom] ?? null) !== (savedRise[dom] ?? null), t("optChargeRise"), chargeSel("data-crise-integ", riseMap[dom], gRise, choices([5, 10, 15, 20, 25, 30, 40, 50, 60, 80], riseMap[dom]), t("optChargeRise")), origin(riseMap[dom] != null, riseMap[dom] != null ? `${gRise} %` : ""));
+      }
     }
     html += "</div>";
     // Neue Geräte (seit 1.24.0): Override pro Integration; gilt auch bei "Nicht überwachen".
@@ -5518,7 +5537,7 @@ class DevicePanel extends HTMLElement {
         .join("");
       html += `<div class="mon-grp">${escape(t("integDevTitle"))}</div><div class="ovr-list">${rows}</div>`;
     }
-    const anyOwn = off !== undefined || dom in batMap || dom in (d.signal_low_integrations || {}) || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"].some(has);
+    const anyOwn = off !== undefined || dom in batMap || dom in (d.charge_full_integrations || {}) || dom in (d.charge_rise_integrations || {}) || dom in (d.signal_low_integrations || {}) || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"].some(has);
     html += `<div class="integ-reset"><button type="button" class="ovr-all" data-set="integ-reset" data-key="${escape(dom)}" ${anyOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("integReset"))}</button></div>`;
     return html;
   }
@@ -5819,7 +5838,7 @@ class DevicePanel extends HTMLElement {
         // Alles einer Integration auf den Standard (beim Speichern).
         if (!st.draft) return;
         const dom = btn.dataset.key;
-        for (const key of ["offline_after_integrations", "battery_low_integrations", "signal_low_integrations"]) {
+        for (const key of INTEG_OWN_MAPS) {
           const own = { ...(st.draft[key] || {}) };
           delete own[dom];
           st.draft[key] = own;
@@ -5988,6 +6007,17 @@ class DevicePanel extends HTMLElement {
           const def = sigDefaultOf(st.draft.signal_low, null, conn, kind);
           this._setSig(el.dataset.sigMode, Number.isInteger(def.value) && dom ? def.value : sigStd(kind));
         }
+        this._renderSettings();
+        return;
+      }
+      if (st?.draft && el.tagName === "SELECT" && (el.dataset.cfullInteg || el.dataset.criseInteg)) {
+        // Eigenes "Voll ab" bzw. eigener Anstieg einer Integration: "default" = global.
+        const key = el.dataset.cfullInteg ? "charge_full_integrations" : "charge_rise_integrations";
+        const dom = el.dataset.cfullInteg || el.dataset.criseInteg;
+        const map = { ...(st.draft[key] || {}) };
+        if (el.value === "default") delete map[dom];
+        else map[dom] = Number(el.value);
+        st.draft[key] = map;
         this._renderSettings();
         return;
       }

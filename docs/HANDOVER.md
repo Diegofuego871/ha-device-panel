@@ -397,6 +397,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    {Gerät: 5..80} (`.storage/device_panel.devices`), `devices.device_charge_opts()` mischt sie in die Optionen für
    `ChargeNotifier` (Push und "lädt"); WS `set_device_settings`; Popup `dev-charge-full`, `dev-charge-rise`,
    `dev-charge-rise-val`. Tests `test_charge.py`, `charge-e2e.mjs`.
+   Pro Integration: Optionen `charge_full_integrations`/`charge_rise_integrations` ({Domain: Wert}, `options_api.charge_map`),
+   `devices.charge_values()` (Gerät > Integration > global), `charge_default` mit `full_integration`/`rise_integration`;
+   Panel `data-cfull-integ`/`data-crise-integ` im Integrations-Detail (Auswahl mit Stufen), `INTEG_OWN_MAPS`.
    Übersicht mit allen Meldungen `1.34.0` (Nutzer, 2026-10-10): `_monOverviewHtml` hat fünf Zeilen (`lane(...)`: Ausfall,
    Batterie, Laden `data-lane="charge"`, Neue Geräte, Updates); `lane()` nimmt `sub` (Unterreiter, `data-sub` am
    "Ändern"-Knopf, der Handler setzt `st.sub.battery`) und `id`. Strings `laneCharge`, `tlCharge*`, `tlUpd*`, `laneUpd*`.
