@@ -390,7 +390,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    vor: `charging_entity()`, Binärsensor battery_charging oder Companion `_battery_state`). `devices._charging()` liefert
    `charging` {level, from, since, source} in `list_devices`. Chip `charging` (`CHIP_KEYS`, `HINTS`, `CHIP_OTHER`,
    `CHIP_DEFAULT`), `_chargingPillHtml`, `_chargingInfoHtml`, Chip-Ansicht flach nach Stand. Simulator `window.__charging`.
-   Tests `test_charge.py`, `chargechip-e2e.mjs`.
+   Tests `test_charge.py`, `chargechip-e2e.mjs`. Unterreiter Laden: Zeitstrahl mit `charge_rise` (Feld) und
+   `charge_full` (Auswahl `data-cfull`) im Zeitstrahl wie bei der Warnung (`_chargeHtml`, `.mtl-mk .opt-select`).
    Übersicht mit allen Meldungen `1.34.0` (Nutzer, 2026-10-10): `_monOverviewHtml` hat fünf Zeilen (`lane(...)`: Ausfall,
    Batterie, Laden `data-lane="charge"`, Neue Geräte, Updates); `lane()` nimmt `sub` (Unterreiter, `data-sub` am
    "Ändern"-Knopf, der Handler setzt `st.sub.battery`) und `id`. Strings `laneCharge`, `tlCharge*`, `tlUpd*`, `laneUpd*`.

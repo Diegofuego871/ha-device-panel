@@ -705,6 +705,11 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .mtl-bar { position: absolute; top: 20px; left: 0; right: 0; height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--dp-error-line), var(--dp-error)); }
 .mtl.mtl-b .mtl-bar { background: linear-gradient(90deg, var(--dp-warning-soft), var(--dp-warning)); }
 .mtl-mk { position: absolute; top: 13px; width: 112px; transform: translateX(-50%); color: var(--dp-text2); font-size: 11px; line-height: 1.3; text-align: center; }
+.mtl-mk .opt-select { display: inline-block; flex: none; width: 92px; margin-bottom: 3px; }
+.mtl-mk .opt-select select { height: 30px; padding: 0 22px 0 8px; font-size: 13px; }
+.mtl-mk .opt-select svg { top: 6px; right: 5px; }
+.mtl-mk .opt-select.chg select { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
+.mtl-mk.mk-off .opt-select { display: inline-block; }
 .mtl-mk i { display: block; width: 14px; height: 14px; margin: 0 auto 5px; border: 2px solid var(--dp-error); border-radius: 50%; background: var(--dp-card); box-sizing: border-box; }
 .mtl.mtl-b .mtl-mk i { border-color: var(--dp-warning); }
 .mtl-mk.mk-p i, .mtl.mtl-b .mtl-mk.mk-p i { border-color: var(--dp-primary); background: var(--dp-primary); }

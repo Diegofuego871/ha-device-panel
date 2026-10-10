@@ -33,6 +33,9 @@ Devices that are charging right now.
 
 - The charging notification now observes all monitored devices with a battery (before: only the
   switched-on ones); it still sends the push only for those.
+- Settings › Battery › "Charging": the timeline of the overview is also there, like for the
+  warning. The rise (field) and "Full from" (selection) are set in the timeline, with the
+  hints below it.
 
 ## [1.34.0] - 2026-10-10
 

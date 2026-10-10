@@ -41,8 +41,11 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] Warnung: Abweichungen mit Bezug "${T_.diff}", ohne Laden`, await ev(`return [...r.querySelectorAll(".mon-grp")].some(g => g.textContent.trim() === ${JSON.stringify(T_.diff)}) && !r.querySelector('input[data-opt="notify_charge"]')`));
   await tap('.sub-tab[data-key="bat_charge"]');
   await wait(`return !!r.querySelector('input[data-opt="notify_charge"]')`);
-  check(`[${tag}] Laden: ohne Abweichungen und Warnschwelle`, await ev(`return ![...r.querySelectorAll(".mon-grp")].some(g => g.textContent.trim() === ${JSON.stringify(T_.diff)}) && !r.querySelector('.mtl')`));
-  check(`[${tag}] Lademeldung: Schalter aus, sonst nichts`, !(await ev(`return r.querySelector('input[data-opt="notify_charge"]').checked`)) && !(await ev(`return !!r.querySelector("select[data-cfull], input[data-opt='charge_rise'], input[data-cinteg]")`)));
+  check(`[${tag}] Laden: ohne Abweichungen und Warnschwelle`, await ev(`return ![...r.querySelectorAll(".mon-grp")].some(g => g.textContent.trim() === ${JSON.stringify(T_.diff)}) && !r.querySelector('input[data-opt="battery_low"]')`));
+  check(`[${tag}] Lademeldung: Schalter aus, keine Liste der Integrationen`, !(await ev(`return r.querySelector('input[data-opt="notify_charge"]').checked`)) && !(await ev(`return !!r.querySelector("input[data-cinteg]")`)));
+  // Zeitstrahl wie bei der Warnung (1.35.0): Anstieg und "Voll ab" im Zeitstrahl, auch bei ausgeschalteter Meldung
+  const tlInfo = await ev(`const m=[...r.querySelectorAll(".mtl .mtl-mk")]; return [m.length, !!m[0]?.querySelector('input[data-opt="charge_rise"]'), !!m[1]?.querySelector("select[data-cfull]"), m[1]?.classList.contains("mk-off"), r.querySelector('input[data-opt="charge_rise"]')?.value, r.querySelector("select[data-cfull]")?.value]`);
+  check(`[${tag}] Zeitstrahl: Anstieg (Feld) und Voll ab (Auswahl) darin, Push aus`, JSON.stringify(tlInfo) === JSON.stringify([2, true, true, true, "20", "100"]), JSON.stringify(tlInfo));
   await tap('input[data-opt="notify_charge"]');
   await wait(`return !!r.querySelector('select[data-cfull]')`);
   const base = await ev(`return [r.querySelector("select[data-cfull]").value, r.querySelector('input[data-opt="charge_rise"]').value, r.querySelectorAll("input[data-cinteg]").length, [...r.querySelectorAll("input[data-cinteg]")].some(i=>i.checked)]`);

@@ -34,6 +34,9 @@ Geräte, die gerade laden.
 
 - Die Lademeldung beobachtet jetzt alle überwachten Geräte mit Batterie (vorher nur die
   eingeschalteten); den Push sendet sie weiter nur für diese.
+- Einstellungen › Batterie › "Laden": Der Zeitstrahl der Übersicht steht auch dort, wie bei der
+  Warnung. Anstieg (Feld) und "Voll ab" (Auswahl) stellt man im Zeitstrahl ein, die Hinweise
+  stehen darunter.
 
 ## [1.34.0] - 2026-10-10
 

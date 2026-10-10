@@ -5097,12 +5097,22 @@ class DevicePanel extends HTMLElement {
     const t = (k, ...a) => this._t(k, ...a);
     const target = Boolean(d.notify_service && d.notify_service !== "none");
     const noTarget = d.notify_charge && !target;
-    let html = `${ui.row("notify_charge", t("optCharge"), ui.sw("notify_charge", t("optCharge")), noTarget ? null : t("optChargeShort"), null, noTarget ? t("noTargetWarn") : null)}`;
-    if (!d.notify_charge) return html;
+    const push = target && d.notify_charge;
     const fulls = [...new Set([90, 95, 98, 100, d.charge_full].filter((v) => Number.isInteger(v)))].sort((a, b) => a - b);
-    const fullSel = `<span class="opt-select"><select data-cfull aria-label="${escape(t("optChargeFull"))}">${fulls.map((v) => `<option value="${v}"${v === d.charge_full ? " selected" : ""}>${v} %</option>`).join("")}</select>${mdi("chevronDown", 18)}</span>`;
-    html += ui.row("charge_full", t("optChargeFull"), fullSel, t("optChargeFullShort"), null);
-    html += ui.row("charge_rise", t("optChargeRise"), ui.num("charge_rise", t("unitPercent"), t("optChargeRise")), t("optChargeRiseShort"), null);
+    const fullSel = `<span class="opt-select${changes.has("charge_full") ? " chg" : ""}"><select data-cfull aria-label="${escape(t("optChargeFull"))}">${fulls.map((v) => `<option value="${v}"${v === d.charge_full ? " selected" : ""}>${v} %</option>`).join("")}</select>${mdi("chevronDown", 18)}</span>`;
+    // Zeitstrahl wie bei der Warnung (seit 1.35.0): Anstieg erkennt das Laden, "Voll ab" löst den Push aus;
+    // beide Werte stehen im Zeitstrahl.
+    const tl = this._tlHtml(
+      [
+        { at: 18, title: t("tlChargeRiseEdit"), html: this._tlInput(d, "charge_rise", t("unitPercent"), t("optChargeRise"), errors.charge_rise, changes.has("charge_rise")) },
+        { at: 76, cls: push ? "mk-p" : "mk-off", title: t("optChargeFull"), html: `${fullSel}<span>${escape(push ? t("tlChargeFullSub") : t(target ? "tlSwitchedOff" : "tlNoTarget"))}</span>` },
+      ],
+      "mtl-b mtl-e"
+    );
+    let html = `${tl}<div class="opt-error mtl-err" data-tl-error="charge_rise" ${errors.charge_rise ? "" : "hidden"}>${escape(errors.charge_rise || "")}</div>
+      <div class="opt-short mtl-note">${escape(t("optChargeRiseShort"))} ${escape(t("optChargeFullShort"))}</div>
+      ${ui.row("notify_charge", t("optCharge"), ui.sw("notify_charge", t("optCharge")), noTarget ? null : t("optChargeShort"), null, noTarget ? t("noTargetWarn") : null)}`;
+    if (!d.notify_charge) return html;
     // Integrationen mit Batteriegeräten (Katalog), dazu bereits eingeschaltete ohne Geräte.
     const on = new Set(d.charge_integrations || []);
     const saved = new Set(st.data.values.charge_integrations || []);
