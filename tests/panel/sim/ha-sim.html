@@ -707,7 +707,7 @@
         if ("battery_push_mode" in msg.values && !["instant", "daily"].includes(msg.values.battery_push_mode)) throw { code: "invalid_format", message: "mode" };
         if ("hide_chips" in msg.values) {
           // Wie options_api._chips: bekannte Schlüssel in fester Reihenfolge.
-          const known = ["area", "integration", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new"];
+          const known = ["area", "integration", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging"];
           const v = msg.values.hide_chips;
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "chips" };
           msg.values.hide_chips = known.filter((k) => v.includes(k));
@@ -725,7 +725,7 @@
           msg.values.connection_order = [...new Set(v)];
         }
         if ("chip_order" in msg.values) {
-          const known = ["area", "integration", "all", "zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "pin"];
+          const known = ["area", "integration", "all", "zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "pin"];
           const v = msg.values.chip_order;
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "chip order" };
           msg.values.chip_order = [...new Set(v)];
@@ -964,6 +964,8 @@
             },
             notify_off: window.__devSettings.notifyOff.has(d.id),
             charge_setting: window.__devSettings.charge[d.id] ?? null,
+            // Lädt gerade (seit 1.35.0): window.__charging = { Geräte-ID: { level, from, ago (Sekunden) } }
+            charging: window.__charging?.[d.id] ? { level: window.__charging[d.id].level, from: window.__charging[d.id].from ?? null, since: new Date(Date.now() - (window.__charging[d.id].ago ?? 3600) * 1000).toISOString(), source: "level" } : null,
             charge_default: { on: Boolean(window.__opts.notify_charge) && (window.__opts.charge_integrations || []).includes(d.integration?.domain), integration: (window.__opts.charge_integrations || []).includes(d.integration?.domain) ? d.integration.domain : null },
             notify_mute_until: window.__devSettings.mute[d.id] || null,
             signal_setting: window.__devSettings.signal[d.id] ?? null,

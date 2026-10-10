@@ -134,3 +134,69 @@ async def test_message_texts(hass: HomeAssistant) -> None:
     n = hass.data[DATA_CHARGE]
     assert n.message({"level": 100, "start": 22, "seconds": 6000}, "Büro") == "100 % · in 1 h 40 min from 22 % · Büro"
     assert n.message({"level": 100, "start": 38, "seconds": None}, None) == "100 % · from 38 %"
+
+
+# --- "Lädt gerade" (1.35.0): Chip und Markierung im Panel -------------------------------------------
+
+
+def _notifier() -> ChargeNotifier:
+    n = ChargeNotifier.__new__(ChargeNotifier)
+    n._state = {}
+    n._save = lambda: None  # type: ignore[method-assign]
+    return n
+
+
+def test_charging_by_level_rise_then_full_or_drop() -> None:
+    n = _notifier()
+    for level, at in ((40, 0), (30, 100), (22, 200), (30, 300)):
+        n.step("d", level, at, OPTS)
+    assert n.charging("d", 300, OPTS) is None  # Anstieg 8 < 20
+    n.step("d", 50, 400, OPTS)
+    info = n.charging("d", 400, OPTS)
+    assert info == {"level": 50, "from": 22, "since": 200, "source": "level"}
+    # Lange ohne Anstieg: unbekannt, nicht mehr "lädt"
+    assert n.charging("d", 400 + 3 * 3600, OPTS) is None
+    # Entladen (fünf Punkte unter dem Höchststand): der Tiefpunkt beginnt neu
+    n.step("d", 60, 500, OPTS)
+    n.step("d", 54, 600, OPTS)
+    assert n.charging("d", 600, OPTS) is None
+    assert n._state["d"]["min"] == 54
+    # Voll: nicht mehr "lädt"
+    n.step("d", 90, 700, OPTS)
+    assert n.charging("d", 700, OPTS) is not None
+    assert n.step("d", 100, 800, OPTS) is not None
+    assert n.charging("d", 800, OPTS) is None
+
+
+def test_charging_ignores_jump_to_full_and_unknown_devices() -> None:
+    n = _notifier()
+    n.step("d", 38, 0, OPTS)
+    n.step("d", 100, 50, OPTS)  # Ersatzregel: Meldung, aber "geladen", nicht "lädt"
+    assert n.charging("d", 50, OPTS) is None
+    assert n.charging("fehlt", 50, OPTS) is None
+
+
+async def test_charging_flag_in_list_and_entity_wins(hass: HomeAssistant) -> None:
+    from custom_components.device_panel.devices import async_list_devices  # noqa: PLC0415
+
+    await _setup(hass, notify_charge=False, charge_integrations=[])
+    watcher = hass.data[DATA_CHARGE]
+    device, entity = _device(hass, "Handy", level=20)
+    other, other_entity = _device(hass, "Roboter", level=30)
+    await watcher.async_rebuild()
+    # Ohne eingeschaltete Lademeldung beobachtet das Panel trotzdem alle Batteriegeräte
+    assert set(watcher._entities) >= {entity, other_entity}
+    hass.states.async_set(entity, "45", {"device_class": "battery", "unit_of_measurement": "%"})
+    await hass.async_block_till_done()
+    by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
+    assert by_name["Handy"]["charging"] == {"level": 45, "from": 20, "since": by_name["Handy"]["charging"]["since"], "source": "level"}
+    assert by_name["Roboter"]["charging"] is None
+    # Ladeanzeige des Geräts (Binärsensor battery_charging) geht vor: aus = nicht laden, auch bei steigendem Stand
+    ereg = er.async_get(hass)
+    flag = ereg.async_get_or_create("binary_sensor", "test", "Handy-chg", device_id=device.id, original_device_class="battery_charging")
+    hass.states.async_set(flag.entity_id, "off")
+    by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
+    assert by_name["Handy"]["charging"] is None
+    hass.states.async_set(flag.entity_id, "on")
+    by_name = {d["name"]: d for d in (await async_list_devices(hass))["devices"]}
+    assert by_name["Handy"]["charging"]["source"] == "entity" and by_name["Handy"]["charging"]["level"] == 45

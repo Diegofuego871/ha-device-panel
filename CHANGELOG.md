@@ -7,6 +7,33 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.35.0] - 2026-10-10
+
+Devices that are charging right now.
+
+### Added
+
+- Filter chip "Charging" (requested by the user, mockups `charging-state-v1`, B and C): shows
+  the devices that are charging right now, after "Battery"; it only appears when a device
+  charges, and like the other chips it can be hidden, pinned and moved in the settings
+  (Display). With the chip on, the list is one list sorted by level (fullest first), each
+  device with a green bar, "81 % · from 38 % · for 1 h 20 min" and a green stripe on the phone.
+- Marking in the list: a green pill "charging" next to the device (phone: right in the row,
+  desktop: behind the name, in the battery column with a lightning symbol); in the device
+  pop-up the battery tile says "charging for 1 h 20 min".
+- Detection for all devices with a battery, independent of the charging notification: the
+  charging indicator of the device where it has one (binary sensor with device class
+  battery_charging, or the companion app "Battery state"), otherwise the rise of the level from
+  its lowest value by the set rise (default 20 %), as long as the level is not full and has
+  risen in the last 2 hours. A fall of 5 points ends it. Devices that report rarely (many
+  Bluetooth and Zigbee sensors) show "charging" late or never. `list_devices` has the new field
+  `charging` (level, start level, since, source).
+
+### Changed
+
+- The charging notification now observes all monitored devices with a battery (before: only the
+  switched-on ones); it still sends the push only for those.
+
 ## [1.34.0] - 2026-10-10
 
 Overview with all notifications.
@@ -1831,6 +1858,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0
 [1.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.34.0
 [1.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.32.0
 [1.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.0

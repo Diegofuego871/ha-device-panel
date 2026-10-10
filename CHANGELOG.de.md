@@ -7,6 +7,34 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.35.0] - 2026-10-10
+
+Geräte, die gerade laden.
+
+### Hinzugefügt
+
+- Filter-Chip "Lädt" (Wunsch des Nutzers, Mockups `charging-state-v1`, B und C): zeigt die
+  Geräte, die gerade laden, nach "Batterie"; er erscheint nur, wenn ein Gerät lädt, und lässt
+  sich wie die anderen Chips in den Einstellungen (Darstellung) ausblenden, anheften und
+  verschieben. Bei gewähltem Chip ist die Liste eine Liste nach Stand (das vollste zuerst), je
+  Gerät mit grünem Balken, "81 % · von 38 % · seit 1 Std. 20 Min." und auf dem Handy mit grünem
+  Streifen.
+- Markierung in der Liste: eine grüne Pille "lädt" beim Gerät (Handy: rechts in der Zeile,
+  Desktop: hinter dem Namen, in der Spalte Batterie mit Blitz); im Geräte-Popup nennt die
+  Kachel Batterie "lädt seit 1 Std. 20 Min.".
+- Erkennung für alle Geräte mit Batterie, unabhängig von der Lademeldung: die Ladeanzeige des
+  Geräts, wo es eine hat (Binärsensor mit Geräteklasse battery_charging oder der "Batteriestatus"
+  der Companion-App), sonst der Anstieg des Stands vom tiefsten Wert um den eingestellten
+  Anstieg (Standard 20 %), solange der Stand nicht voll ist und in den letzten 2 Stunden
+  gestiegen ist. Ein Rückgang um 5 Punkte beendet es. Geräte, die selten melden (viele
+  Bluetooth- und Zigbee-Sensoren), zeigen "lädt" spät oder nie. `list_devices` hat das neue Feld
+  `charging` (Stand, Startstand, seit, Quelle).
+
+### Geändert
+
+- Die Lademeldung beobachtet jetzt alle überwachten Geräte mit Batterie (vorher nur die
+  eingeschalteten); den Push sendet sie weiter nur für diese.
+
 ## [1.34.0] - 2026-10-10
 
 Übersicht mit allen Meldungen.
@@ -1895,6 +1923,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0
 [1.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.34.0
 [1.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.32.0
 [1.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.0

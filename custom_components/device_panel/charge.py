@@ -26,8 +26,10 @@ from homeassistant.helpers.storage import Store
 from . import push
 from .battery_history import battery_entity
 from .const import (
+    CHARGE_DROP,
     CHARGE_JUMP_FROM,
     CHARGE_REARM,
+    CHARGE_STALE,
     CONF_CHARGE_FULL,
     CONF_CHARGE_INTEGRATIONS,
     CONF_CHARGE_RISE,
@@ -55,6 +57,21 @@ def level_of(state: Any) -> float | None:
     return value if 0 <= value <= 100 else None
 
 
+def charging_entity(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> str | None:
+    """
+    Ladeanzeige des Geräts, wenn es eine hat: Binärsensor mit Geräteklasse battery_charging
+    (an = lädt) oder der Sensor "Batteriestatus" der Companion-App (charging/full/…).
+    """
+    for entry in entries:
+        if entry.disabled_by:
+            continue
+        if entry.domain == "binary_sensor" and (entry.device_class or entry.original_device_class) == "battery_charging":
+            return entry.entity_id
+        if entry.domain == "sensor" and entry.platform == "mobile_app" and entry.entity_id.endswith("_battery_state"):
+            return entry.entity_id
+    return None
+
+
 class ChargeNotifier:
     def __init__(self, hass: HomeAssistant) -> None:
         self.hass = hass
@@ -74,6 +91,8 @@ class ChargeNotifier:
                 if isinstance(k, str) and isinstance(v, dict) and all(isinstance(v.get(f), (int, float)) for f in ("min", "min_at", "last"))
             }
         # Neue Entitäten und Geräte (Register) ändern, welche Sensoren zu beobachten sind.
+        # Alle überwachten Geräte mit Batterie werden beobachtet (für "lädt gerade" im Panel);
+        # die Meldung bei "voll" geht nur an die eingeschalteten.
         self._unsubs.append(self.hass.bus.async_listen(er.EVENT_ENTITY_REGISTRY_UPDATED, self._on_registry))
         await self.async_rebuild()
 
@@ -97,12 +116,9 @@ class ChargeNotifier:
         hass = self.hass
         opts = effective(hass)
         wanted: dict[str, str] = {}
-        if opts[CONF_NOTIFY_CHARGE]:
-            for device, entries in monitored_devices(hass, opts):
-                if not self.enabled(opts, hass, device):
-                    continue
-                if (entity_id := battery_entity(hass, entries)) is not None:
-                    wanted[entity_id] = device.id
+        for device, entries in monitored_devices(hass, opts):
+            if (entity_id := battery_entity(hass, entries)) is not None:
+                wanted[entity_id] = device.id
         if wanted == self._entities and self._unsub_track is not None:
             return
         if self._unsub_track is not None:
@@ -126,8 +142,12 @@ class ChargeNotifier:
         level = level_of(event.data.get("new_state"))
         if dev is None or level is None:
             return
-        done = self.step(dev, level, time.time(), effective(self.hass))
-        if done is not None:
+        opts = effective(self.hass)
+        done = self.step(dev, level, time.time(), opts)
+        if done is None:
+            return
+        device = dr.async_get(self.hass).async_get(dev)
+        if device is not None and self.enabled(opts, self.hass, device):
             self.hass.async_create_task(self._async_push(dev, done))
 
     def step(self, dev: str, level: float, now: float, opts: dict[str, Any]) -> dict[str, Any] | None:
@@ -139,11 +159,13 @@ class ChargeNotifier:
         rise = opts[CONF_CHARGE_RISE]
         st = self._state.get(dev)
         if st is None:
-            self._state[dev] = {"min": level, "min_at": now, "last": level, "done": level >= full}
+            self._state[dev] = {"min": level, "min_at": now, "last": level, "peak": level, "done": level >= full}
             self._save()
             return None
         prev = st["last"]
         st["last"] = level
+        if level > prev:
+            st["up_at"] = now
         result: dict[str, Any] | None = None
         if st.get("done"):
             # Wieder scharf, wenn der Stand deutlich unter "voll" fällt (Entladen oder Batteriewechsel).
@@ -151,7 +173,11 @@ class ChargeNotifier:
                 st.update(done=False, min=level, min_at=now)
         else:
             if level < st["min"]:
-                st["min"], st["min_at"] = level, now
+                st["min"], st["min_at"], st["peak"] = level, now, level
+            st["peak"] = max(st.get("peak", st["min"]), level)
+            if level <= st["peak"] - CHARGE_DROP:
+                # Entladen: der Tiefpunkt beginnt neu (sonst bliebe "lädt" nach einem Rückgang stehen).
+                st.update(min=level, min_at=now, peak=level)
             charging = level - st["min"] >= rise
             if level >= full and (charging or (prev < CHARGE_JUMP_FROM)):
                 st["done"] = True
@@ -161,6 +187,35 @@ class ChargeNotifier:
                     result = {"level": level, "start": prev, "seconds": None}
         self._save()
         return result
+
+    def charging(self, dev: str, now: float, opts: dict[str, Any]) -> dict[str, Any] | None:
+        """
+        Lädt das Gerät jetzt, nach dem Stand: Anstieg erkannt, noch nicht voll, zuletzt gestiegen.
+        Gibt Stand, Start und Zeitpunkt des Tiefpunkts zurück, sonst None.
+        """
+        st = self._state.get(dev)
+        if not st or st.get("done"):
+            return None
+        if st["last"] - st["min"] < opts[CONF_CHARGE_RISE] or st["last"] >= opts[CONF_CHARGE_FULL]:
+            return None
+        up = st.get("up_at")
+        if up is None or now - up > CHARGE_STALE:
+            return None
+        return {"level": st["last"], "from": st["min"], "since": st["min_at"], "source": "level"}
+
+    def charging_of(self, device: dr.DeviceEntry, entries: list[er.RegistryEntry], now: float, opts: dict[str, Any]) -> dict[str, Any] | None:
+        """
+        "Lädt gerade" für Liste und Popup: die Ladeanzeige des Geräts, wenn es eine hat und sie
+        etwas meldet (sie gilt dann allein), sonst die Erkennung am Stand.
+        """
+        entity_id = charging_entity(self.hass, entries)
+        state = self.hass.states.get(entity_id) if entity_id else None
+        if state is not None and state.state not in ("unknown", "unavailable"):
+            if state.state not in ("on", "charging"):
+                return None
+            st = self._state.get(device.id)
+            return {"level": st["last"] if st else None, "from": None, "since": state.last_changed.timestamp(), "source": "entity"}
+        return self.charging(device.id, now, opts)
 
     def _save(self) -> None:
         self._store.async_delay_save(lambda: {"state": self._state}, 1)

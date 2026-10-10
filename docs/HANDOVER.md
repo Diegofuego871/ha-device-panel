@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.34.0, Einstellungen in fünf Abschnitten)
+## Stand (1.35.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,14 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Geräte, die gerade laden `1.35.0` (Nutzer, 2026-10-10, Mockup `charging-state-v1`, B in der Liste, C bei gewähltem Chip):
+   `ChargeNotifier` beobachtet jetzt alle überwachten Geräte mit Batterie (Push nur für die eingeschalteten, `_on_state`);
+   `step()` führt zusätzlich `peak` und `up_at`; `charging()` (Anstieg >= `charge_rise`, nicht voll, Anstieg in den letzten
+   `CHARGE_STALE` = 2 Std., Rückgang um `CHARGE_DROP` = 5 Punkte beginnt neu) und `charging_of()` (Ladeanzeige-Entität geht
+   vor: `charging_entity()`, Binärsensor battery_charging oder Companion `_battery_state`). `devices._charging()` liefert
+   `charging` {level, from, since, source} in `list_devices`. Chip `charging` (`CHIP_KEYS`, `HINTS`, `CHIP_OTHER`,
+   `CHIP_DEFAULT`), `_chargingPillHtml`, `_chargingInfoHtml`, Chip-Ansicht flach nach Stand. Simulator `window.__charging`.
+   Tests `test_charge.py`, `chargechip-e2e.mjs`.
    Übersicht mit allen Meldungen `1.34.0` (Nutzer, 2026-10-10): `_monOverviewHtml` hat fünf Zeilen (`lane(...)`: Ausfall,
    Batterie, Laden `data-lane="charge"`, Neue Geräte, Updates); `lane()` nimmt `sub` (Unterreiter, `data-sub` am
    "Ändern"-Knopf, der Handler setzt `st.sub.battery`) und `id`. Strings `laneCharge`, `tlCharge*`, `tlUpd*`, `laneUpd*`.

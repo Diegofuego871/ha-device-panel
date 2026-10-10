@@ -11,19 +11,19 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 // Das Backend speichert hide_chips in der Reihenfolge von const.CHIP_KEYS.
-const SAVED_KEYS = ["area", "integration", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new"];
+const SAVED_KEYS = ["area", "integration", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging"];
 // Reihenfolge der Standardfolge seit 1.18.0 (ohne "Alle" und Verbindungsarten)
-const KEYS = ["integration", "new", "offline", "problems", "battery", "batteries", "area", "signal", "update", "override"];
+const KEYS = ["integration", "new", "offline", "problems", "battery", "batteries", "charging", "area", "signal", "update", "override"];
 const TEXT = {
   de: {
     title: "Filter-Chips", conn: "Verbindungsart", area: "Bereich", integ: "Integration", problems: "Warnungen", signal: "Schwacher Empfang", neu: "Neu", overrideLabel: "Eigene Einstellung",
-    labels: ["Integration", "Neu", "Ausgefallen", "Warnungen", "Batterie niedrig", "Batterie", "Bereich", "Schwacher Empfang", "Update verfügbar", "Eigene Einstellung"],
-    sumTwo: "2 Filter-Chips ausgeblendet", sumAll: "20 Filter-Chips ausgeblendet", intro: /^Alle Chips über der Liste, auch "Alle" und die Verbindungsarten\. Von oben nach unten ist von links nach rechts; am Griff ziehen\./,
+    labels: ["Integration", "Neu", "Ausgefallen", "Warnungen", "Batterie niedrig", "Batterie", "Lädt", "Bereich", "Schwacher Empfang", "Update verfügbar", "Eigene Einstellung"],
+    sumTwo: "2 Filter-Chips ausgeblendet", sumAll: "21 Filter-Chips ausgeblendet", intro: /^Alle Chips über der Liste, auch "Alle" und die Verbindungsarten\. Von oben nach unten ist von links nach rechts; am Griff ziehen\./,
   },
   en: {
     title: "Filter chips", conn: "Connection type", area: "Area", integ: "Integration", problems: "Warnings", signal: "Weak signal", neu: "New", overrideLabel: "Own setting",
-    labels: ["Integration", "New", "Offline", "Warnings", "Low battery", "Battery", "Area", "Weak signal", "Update available", "Own setting"],
-    sumTwo: "2 filter chips hidden", sumAll: "20 filter chips hidden", intro: /^All chips above the list, including "All" and the connection types\. Top to bottom is left to right; drag by the handle\./,
+    labels: ["Integration", "New", "Offline", "Warnings", "Low battery", "Battery", "Charging", "Area", "Weak signal", "Update available", "Own setting"],
+    sumTwo: "2 filter chips hidden", sumAll: "21 filter chips hidden", intro: /^All chips above the list, including "All" and the connection types\. Top to bottom is left to right; drag by the handle\./,
   },
 };
 

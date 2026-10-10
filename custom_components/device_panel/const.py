@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "84"
+PANEL_VERSION = "85"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -129,6 +129,11 @@ CONF_CHARGE_INTEGRATIONS = "charge_integrations"
 CHARGE_JUMP_FROM = 90
 # Wieder scharf, wenn der Stand so viele Punkte unter "voll" fällt.
 CHARGE_REARM = 10
+# "Lädt gerade" (seit 1.35.0, Filter-Chip und Markierung): Fällt der Stand um so viele Punkte unter
+# den höchsten seit dem Tiefpunkt, wird entladen; ohne Anstieg so lange (Sekunden) gilt das Laden
+# als unbekannt (Geräte, die selten melden, zeigen "lädt" dann nicht mehr).
+CHARGE_DROP = 5
+CHARGE_STALE = 2 * 3600
 DATA_CHARGE = f"{DOMAIN}_charge"
 INT_RANGES = {
     CONF_NEW_WINDOW: (1, 60),
@@ -287,7 +292,7 @@ CONF_HIDE_CHIPS = "hide_chips"
 # Seit 1.16.0: "offline" ("Ausgefallen", nur ausgefallene Geräte) und "problems"
 # ("Warnungen": instabil, Batterie niedrig, schwacher Empfang, keine Daten, ohne
 # Ausfälle; der Schlüssel blieb, damit gespeicherte Einstellungen gültig bleiben).
-CHIP_KEYS = ("area", "integration", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new")
+CHIP_KEYS = ("area", "integration", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging")
 CONNECTION_TYPES = ("zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown")
 # Reihenfolge aller Chips über der Liste (seit 1.13.0, seit 1.14.0 eine Folge):
 # "all" und jede Verbindungsart sind Einträge wie die übrigen Chips. Leer =

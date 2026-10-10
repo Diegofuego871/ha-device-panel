@@ -58,6 +58,7 @@ from .const import (
     CONF_SHOW_SERVICE,
     BATTERY_OFF,
     DATA_DEVICE_SETTINGS,
+    DATA_CHARGE,
     DATA_STARTED_AT,
     DATA_TYPE_OVERRIDES,
     DEFAULT_BATTERY_LOW,
@@ -383,6 +384,17 @@ def _battery_fields(
             "push_integration": domain if push_off else None,
         },
     }
+
+
+def _charging(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry, entries: list[er.RegistryEntry], now: float) -> dict[str, Any] | None:
+    """Lädt das Gerät gerade? {level, from, since (ISO), source} oder None (Beobachter: charge.ChargeNotifier)."""
+    watcher = hass.data.get(DATA_CHARGE)
+    if watcher is None:
+        return None
+    info = watcher.charging_of(device, entries, now, opts)
+    if info is None:
+        return None
+    return {**info, "level": None if info["level"] is None else round(info["level"]), "from": None if info["from"] is None else round(info["from"]), "since": _iso(info["since"])}
 
 
 def has_battery(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> bool:
@@ -1157,6 +1169,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                     "integration": primary.domain if primary and primary.domain in opts[CONF_CHARGE_INTEGRATIONS] else None,
                 },
                 "notify_mute_until": _iso(notify_muted_until(hass, device.id)),
+                # Lädt gerade (seit 1.35.0): Ladeanzeige des Geräts oder Anstieg des Stands.
+                "charging": _charging(hass, opts, device, entries, now_ts),
                 "update": _update(hass, entries),
                 "avail24": avail,
                 # Instabil: online, aber oft unterbrochen.

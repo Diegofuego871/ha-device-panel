@@ -12,7 +12,7 @@
 - **Geräteliste** nach ausgefallen, instabil und online gruppiert, mit Suche, Filtern nach Bereich und Integration, Filter-Chips und eigenen Spalten
 - **Pro Gerät:** Verfügbarkeit, Unterbrüche, Empfang und Batterie im Popup, mit Verlauf und Statistik
 - **Meldungen unter deiner Kontrolle:** Ausfall, wieder online, schwache Batterie und neue Geräte als Push oder anhaltende Benachrichtigung, pro Integration
-- **Laden und Updates:** optional ein Push, wenn ein Gerät voll geladen ist, und eine Update-Erinnerung (täglich, wöchentlich oder sofort), die eigene Automationen ersetzt; beides standardmässig aus; die Update-Erinnerung lässt sich pro App, pro Integration und pro Firmware einstellen
+- **Laden und Updates:** Filter-Chip "Lädt" mit grüner Markierung für Geräte, die gerade laden, optional ein Push, wenn ein Gerät voll geladen ist, und eine Update-Erinnerung (täglich, wöchentlich oder sofort), die eigene Automationen ersetzt; beides standardmässig aus; die Update-Erinnerung lässt sich pro App, pro Integration und pro Firmware einstellen
 - **Batterie-Prognose:** wie lange die Batterie bis zur Warnschwelle hält, ohne KI
 - **Meldungen:** Push und anhaltende Benachrichtigung bei Ausfällen und schwacher Batterie, mit Zeitstrahl, wann was ankommt; Standard pro Integration, Ausnahmen pro Gerät
 - **Optionale KI-Einschätzung:** eine Vermutung zur Ursache auf Knopfdruck, der Prompt ist im Profi-Modus anpassbar

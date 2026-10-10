@@ -349,6 +349,15 @@ tr.dev.flaky td:first-child { box-shadow: inset 4px 0 0 var(--dp-warning); }
 .sig .val { font-size: 12px; color: var(--dp-text2); }
 .bat { display: inline-flex; align-items: center; gap: 3px; }
 .bat.low { color: var(--dp-error); font-weight: 500; }
+.bat.chg { color: var(--dp-success); font-weight: 600; }
+/* Ladende Geräte (seit 1.35.0, docs/mockups/charging-state-v1): grüne Pille, bei gewähltem Chip Streifen und Balken. */
+.pill.chg { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; background: var(--dp-success-soft); color: var(--dp-success); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.mrow.chg { box-shadow: inset 3px 0 0 var(--dp-success); }
+.chg-bar { display: block; position: relative; height: 6px; margin-top: 6px; border-radius: 3px; background: var(--dp-bar-off); overflow: hidden; }
+.chg-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--dp-success); }
+.chg-sub { display: block; margin-top: 2px; }
+.chip.hint.ch .ic { color: var(--dp-success); }
+.chip.hint.ch.on { background: var(--dp-success-soft); border-color: var(--dp-success); color: var(--dp-success); }
 /* Batterie farbig nach Stand (seit 0.24.0): Stufen wie der Empfang, rot wie
    der Text bei "schwach". */
 .bat-ic.t4 { color: var(--dp-tier4); }

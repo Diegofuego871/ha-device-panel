@@ -278,7 +278,7 @@ const RESTART_WAIT_MS = 5 * 60 * 1000;
 // Schlüssel, Symbol. Die Texte stehen in strings.js (chipOther).
 const CHIP_OTHER = [
   ["area", "home"], ["integration", "puzzle"], ["offline", "closeCircle"], ["problems", "alert"], ["batteries", "battery"], ["battery", "battery"],
-  ["signal", "signal"], ["update", "update"], ["override", "tune"], ["new", "sparkle"],
+  ["signal", "signal"], ["update", "update"], ["override", "tune"], ["new", "sparkle"], ["charging", "batteryCharging"],
 ];
 // Reihenfolge aller Chips über der Liste (seit 1.13.0, seit 1.14.0 eine Folge,
 // wie const.CHIP_ORDER_KEYS): "all", jede Verbindungsart und die übrigen Chips.
@@ -291,7 +291,7 @@ const chipKind = (key) => (key === "area" || key === "integration" ? "scope" : k
 // Nutzers): "Alle" ist angeheftet, dann die Hinweise, dann die Verbindungsarten,
 // hinten die seltenen Chips.
 const CHIP_DEFAULT = [
-  "all", "pin", "integration", "new", "offline", "problems", "battery", "batteries", "area",
+  "all", "pin", "integration", "new", "offline", "problems", "battery", "batteries", "charging", "area",
   "thread", "wifi", "ble", "zigbee", "ethernet", "cloud", "matter", "network", "unknown", "zwave",
   "signal", "update", "override",
 ];
@@ -575,6 +575,7 @@ function sanitizeViews(raw) {
 // "Batterie" zeigt alle Geräte mit Batterie (Überblick über den Stand).
 const HINTS = [
   { key: "batteries", cls: "ba", icon: "battery", label: "hintBatteries", test: (d) => Boolean(d.battery || d.has_battery) },
+  { key: "charging", cls: "ch", icon: "batteryCharging", label: "hintCharging", test: (d) => Boolean(d.charging) },
   { key: "battery", cls: "b", icon: "battery", label: "hintBattery", test: (d) => Boolean(d.battery?.low) },
   { key: "signal", cls: "s", icon: "signal", label: "hintSignal", test: (d) => devWeak(d) },
   { key: "update", cls: "u", icon: "update", label: "hintUpdate", test: (d) => Boolean(d.update) },
@@ -2684,7 +2685,30 @@ class DevicePanel extends HTMLElement {
     const b = d.battery;
     if (!b) return `<span class="t3">–</span>`;
     const text = b.level != null ? `${b.level} %` : b.low ? this._t("batteryLow") : "OK";
+    // Lädt gerade (seit 1.35.0): Blitz im Symbol, grün.
+    if (d.charging) return `<span class="bat chg" title="${escape(this._t("chargingSince", this._duration(d.charging.since)))}">${mdi("batteryCharging", 14)} ${escape(text)}</span>`;
     return `<span class="bat ${b.low ? "low" : ""}">${batIcon(b, 14)} ${escape(text)}</span>`;
+  }
+
+  // Ladende Geräte (seit 1.35.0, docs/mockups/charging-state-v1, B und C): grüne Pille "lädt" in der Liste;
+  // bei gewähltem Chip "Lädt" dazu Stand, Start und Dauer sowie ein Füllstandsbalken.
+  _chargingView() {
+    return this._hint === "charging";
+  }
+
+  _chargingPillHtml(d, title = true) {
+    if (!d.charging) return "";
+    const tip = title ? ` title="${escape(this._t("chargingSince", this._duration(d.charging.since)))}"` : "";
+    return `<span class="pill chg"${tip}>${mdi("batteryCharging", 13)}${escape(this._t("chargingPill"))}</span>`;
+  }
+
+  _chargingInfoHtml(d) {
+    const c = d.charging;
+    if (!c) return "";
+    const dur = this._duration(c.since);
+    const text = c.level != null && c.from != null ? this._t("chargingInfo", c.level, c.from, dur) : c.level != null ? this._t("chargingInfoNoStart", c.level, dur) : this._t("chargingSince", dur);
+    const bar = c.level != null ? `<span class="chg-bar" aria-hidden="true"><i style="width:${Math.max(0, Math.min(100, c.level))}%"></i></span>` : "";
+    return `${bar}<span class="sub chg-sub">${escape(text)}</span>`;
   }
 
   _softwareHtml(d) {
@@ -2699,7 +2723,8 @@ class DevicePanel extends HTMLElement {
     const byName = (a, b) => String(a.name).localeCompare(String(b.name));
     const outages = (d) => d.avail24?.outages || 0;
     const active = rows.filter((d) => !d.disabled && !d.unmonitored);
-    const chosen = this._sortCmp() || (this._batterySort() ? (a, b) => batteryRank(a) - batteryRank(b) || byName(a, b) : null);
+    // Chip "Lädt": der volleste zuerst (fast fertig); Batterie-Chips: der leerste zuerst.
+    const chosen = this._sortCmp() || (this._batterySort() ? (a, b) => batteryRank(a) - batteryRank(b) || byName(a, b) : this._chargingView() ? (a, b) => (b.charging?.level ?? -1) - (a.charging?.level ?? -1) || byName(a, b) : null);
     const groups = [
       ["e", this._t("groupOffline"), this._t("groupOfflineHint"), active.filter((d) => d.online === false).sort((a, b) => Date.parse(a.offline_since) - Date.parse(b.offline_since))],
       ["w", this._t("groupFlaky"), this._t("groupFlakyHint", this._flakyOutages), active.filter((d) => d.online === true && d.flaky).sort((a, b) => outages(b) - outages(a) || byName(a, b))],
@@ -2710,7 +2735,8 @@ class DevicePanel extends HTMLElement {
       // Integration auf "Nicht überwachen": sichtbar, ohne Status und Meldungen.
       ["d", this._t("groupUnmonitored"), this._t("groupUnmonitoredHint"), rows.filter((d) => d.unmonitored).sort(byName)],
     ].filter((g) => g[3].length);
-    if (this._view.flat) {
+    // Chip "Lädt": eine Liste nach Stand (der volleste zuerst), ohne Gruppen, wie im Mockup charging-state-v1.
+    if (this._view.flat || (this._chargingView() && !this._sortCmp())) {
       // Ohne gewählte Sortierung in der Folge der Gruppen, nur ohne Köpfe.
       const list = chosen ? [...rows].sort(chosen) : groups.flatMap((g) => g[3]);
       return list.length ? [["flat", null, null, list]] : [];
@@ -2760,6 +2786,7 @@ class DevicePanel extends HTMLElement {
     const head = `<thead><tr>${["name", ...keys].map(th).join("")}</tr></thead>`;
     // Bereich unter dem Namen nur, solange er keine eigene Spalte hat.
     const areaSub = !keys.includes("area");
+    const chargingView = this._chargingView();
     const span = keys.length + 1;
     const body = this._groups(rows)
       .map(([cls, title, hint, list]) =>
@@ -2767,7 +2794,7 @@ class DevicePanel extends HTMLElement {
         list
           .map(
             (d) => `<tr class="dev ${d.online === false ? "off" : d.online && d.flaky ? "flaky" : ""}" data-open="${escape(d.id)}" tabindex="0">
-            <td><div class="nc">${this._avatar(d)}<div>${escape(d.name)}${this._newTagHtml(d)}${this._overrideHtml(d)}${areaSub && d.area ? `<span class="sub">${escape(d.area)}</span>` : ""}</div></div></td>
+            <td><div class="nc">${this._avatar(d)}<div>${escape(d.name)}${this._newTagHtml(d)}${this._overrideHtml(d)}${this._chargingPillHtml(d)}${chargingView ? this._chargingInfoHtml(d) : areaSub && d.area ? `<span class="sub">${escape(d.area)}</span>` : ""}</div></div></td>
             ${keys.map((k) => `<td>${cell[k](d)}</td>`).join("")}</tr>`
           )
           .join("")
@@ -2806,17 +2833,21 @@ class DevicePanel extends HTMLElement {
     const metaKeys = fields.filter((k) => k !== "connection");
     const meta = (d) => metaKeys.map((k) => this._fieldHtml(d, k)).filter(Boolean).join(" · ");
     const batExtra = batSort && !metaKeys.includes("battery");
+    const chargingView = this._chargingView();
     // Online ohne Auffälligkeit: kompakte Zeile; sonst eine Karte mit Dauer.
     const compact = (d) => d.online === true && !d.flaky && !d.disabled;
-    const row = (d) => `<div class="mrow dev" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d, 16)}<div>${escape(d.name)}${this._newTagHtml(d)}${this._overrideHtml(d)}<span class="sub">${meta(d)}</span></div>
-              <div>${d.battery?.low || batSort ? this._batteryHtml(d) : bars(devSigLevel(d), false)}</div></div>`;
+    // Rechts: ladend die grüne Pille (bei gewähltem Chip nur das Symbol, der Stand steht im Balken), sonst schwache
+    // Batterie oder Empfang.
+    const rowRight = (d) => (d.charging ? (chargingView ? `<span class="bat chg">${mdi("batteryCharging", 16)}</span>` : this._chargingPillHtml(d)) : d.battery?.low || batSort ? this._batteryHtml(d) : bars(devSigLevel(d), false));
+    const row = (d) => `<div class="mrow dev${d.charging && chargingView ? " chg" : ""}" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d, 16)}<div>${escape(d.name)}${this._newTagHtml(d)}${this._overrideHtml(d)}<span class="sub">${meta(d)}</span>${chargingView ? this._chargingInfoHtml(d) : ""}</div>
+              <div>${rowRight(d)}</div></div>`;
     const card = (d) => {
       let right = this._statusHtml(d);
       if (d.online === false) right = `<div class="dur">${this._durationHtml(d, true)}</div><div class="durs">${escape(this._t("statusOffline"))}</div>`;
-      const sb = `${showConn ? this._connHtml(d, false) : ""}${batExtra ? ` ${this._batteryHtml(d)}` : ""}`;
+      const sb = `${showConn ? this._connHtml(d, false) : ""}${batExtra ? ` ${this._batteryHtml(d)}` : ""}${d.charging && !batExtra ? ` ${this._chargingPillHtml(d)}` : ""}`;
       const m = meta(d);
       return `<div class="mc dev ${d.online === false ? "off" : d.flaky ? "flaky" : ""}" data-open="${escape(d.id)}" tabindex="0" role="button">${this._avatar(d)}
-            <div><div class="nm">${escape(d.name)}${this._newTagHtml(d)}${this._overrideHtml(d)}</div>${sb.trim() ? `<div class="sb">${sb}</div>` : ""}${m ? `<div class="sb2">${m}</div>` : ""}</div>
+            <div><div class="nm">${escape(d.name)}${this._newTagHtml(d)}${this._overrideHtml(d)}</div>${sb.trim() ? `<div class="sb">${sb}</div>` : ""}${m ? `<div class="sb2">${m}</div>` : ""}${chargingView ? this._chargingInfoHtml(d) : ""}</div>
             <div class="rt">${right}</div></div>`;
     };
     return `<div class="cards">${this._groups(rows)
@@ -3013,7 +3044,8 @@ class DevicePanel extends HTMLElement {
       const b = d.battery;
       const value = `${batIcon(b, 18)}${b.level != null ? `${escape(String(b.level))}<small>%</small>` : escape(b.low ? this._t("batteryLow") : "OK")}`;
       // Mit Prozent: Tipp öffnet den Verlauf; "schwach ja/nein" nur als Kachel.
-      if (b.level != null) tiles.push(this._statTile("30d", this._t("tileBattery"), value, b.low ? this._t("batteryLow") : this._t("batHistoryHint"), "battery", b.low, b.low));
+      const chg = d.charging ? this._t("chargingSince", this._duration(d.charging.since)) : null;
+      if (b.level != null) tiles.push(this._statTile("30d", this._t("tileBattery"), d.charging ? `${mdi("batteryCharging", 18)}${escape(String(b.level))}<small>%</small>` : value, chg || (b.low ? this._t("batteryLow") : this._t("batHistoryHint")), "battery", b.low, b.low));
       else tiles.push(this._staticTile(this._t("tileBattery"), value, "", b.low, b.low));
     }
     return `<div class="st-tiles" style="--n:${tiles.length}">${tiles.join("")}</div>`;
