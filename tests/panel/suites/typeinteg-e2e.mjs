@@ -46,7 +46,7 @@ for (const lang of ["de", "en"]) {
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
     const setCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_options").map((m) => m.values));
     const typeCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_type").map(({ device_id, device_type }) => ({ device_id, device_type })));
-    const open = async (id) => { await tap(`.dev[data-open="${id}"]`); await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('select[data-dlg="type"]')`); };
+    const open = async (id) => { await tap(`.dev[data-open="${id}"]`); await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector('select[data-dlg="type"]')`); };
     const close = async () => { await tap('dialog.device [data-dlg="close"]'); await wait(`return !r.querySelector("dialog.device").open`); };
     const sel = () => ev(`const s=r.querySelector('select[data-dlg="type"]'); return s.value + "|" + s.options[s.selectedIndex].textContent`);
     // Der Reiter "Integrationen" ist beim Öffnen von "Geräte im Panel" der erste
@@ -87,7 +87,7 @@ for (const lang of ["de", "en"]) {
       (await text(".set-count")) === T.one &&
       (await text('[data-id="devices"] .set-sec-sum')) === T.sumOne &&
       (await ev(`return r.querySelector('select[data-type-integ="shelly"]').closest(".opt-select").classList.contains("changed")`)) &&
-      (await ev(`return r.querySelector(".sub-tab.on").classList.contains("chg")`)),
+      (await ev(`return r.querySelector("dialog.settings .sub-tab.on").classList.contains("chg")`)),
       `${await text(".set-count")} | ${await text('[data-id="devices"] .set-sec-sum')}`);
     // Lange Typnamen in der Erkennung (Zigbee) verdrängen die Auswahl nicht aus dem Fenster
     const clipped = await ev(`const box=r.querySelector("dialog.settings").getBoundingClientRect(); return [...r.querySelectorAll("select[data-type-integ]")].filter((s)=>{const q=s.getBoundingClientRect(); return q.right > box.right - 8 || q.left < box.left || q.width < 120}).length`);

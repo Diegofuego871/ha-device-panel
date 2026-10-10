@@ -69,6 +69,7 @@ for (const lang of ["de", "en"]) {
 
     // Einstellungen für dieses Gerät: eigene Zeit, eigene Batterie-Schwelle, Meldungen aus
     await open("e");
+    await tap('dialog.device [data-tab="set"]');
     await (await handle('select[data-dlg="dev-off"]')).selectOption("own");
     await wait(`return r.querySelector('input[data-dlg="dev-off-min"]')?.value === "2"`);
     await (await handle('input[data-dlg="dev-off-min"]')).fill("90");

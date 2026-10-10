@@ -7,6 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.37.0] - 2026-10-10
+
+Reiter im Geräte-Popup.
+
+### Geändert
+
+- Geräte-Popup mit drei Reitern (Wunsch des Nutzers, Mockups `popup-tabs-log-v1`, R3):
+  "Übersicht", "Einstellungen" und "Entitäten". Die "Übersicht" hat Statistik, Einschätzung,
+  Verbindung und Geräteangaben zum Lesen; Typ und Verbindungsart stehen dort als Text. Alle
+  Einstellungen des Geräts sind im Reiter "Einstellungen": Typ, Verbindungsart und alles unter
+  "Einstellungen für dieses Gerät" (Ausfall, Batterie, Empfang, Laden, Meldungen). Der Reiter
+  zeigt die Zahl der eigenen Einstellungen ("Einstellungen · 2 eigene") mit einem Punkt; die
+  "Entitäten" haben die Liste der Entitäten. Das Popup öffnet immer auf der "Übersicht".
+
 ## [1.36.0] - 2026-10-10
 
 Lademeldung pro Integration mit eigenen Werten.
@@ -1959,6 +1973,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.37.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0
 [1.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.34.0

@@ -102,7 +102,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
 
   // Popup: Thermostat Bad (Matter, 22 %), ZHA-Gerät Bewegungsmelder (Integration ein)
   await tap('.dev[data-open="c"]');
-  await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('select[data-dlg="dev-charge"]')`);
+  await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector('select[data-dlg="dev-charge"]')`);
   check(`[${tag}] Popup "${T_.row}": Standard "${T_.def}"`, (await ev(`const s=r.querySelector('select[data-dlg="dev-charge"]'); return s.value + "|" + s.options[s.selectedIndex].textContent`)) === `default|${T_.def}`);
   await (await handle('select[data-dlg="dev-charge"]')).selectOption("on");
   await wait(`return r.querySelector('select[data-dlg="dev-charge"]')?.value === "on"`);

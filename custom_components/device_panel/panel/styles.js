@@ -811,6 +811,11 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .integ-goto { margin: 10px 0 2px; }
 .integ-goto .lnk { font-size: 12px; }
 /* Typ im Geräte-Popup wählbar */
+.typ-ro { display: inline-flex; align-items: center; gap: 8px; color: var(--dp-text); }
+.typ-ro > svg { color: var(--dp-text2); }
+.dev-tabs { position: sticky; top: var(--dev-head-h, 0px); z-index: 3; padding: 4px 22px 8px; background: var(--dp-card); }
+.dev-tabs .sub-tabs { margin: 0; }
+@media (max-width: 700px) { .dev-tabs { padding: 0 16px; } }
 .typ-sel { position: relative; display: inline-flex; align-items: center; gap: 6px; max-width: 100%; color: var(--dp-text); }
 .typ-sel > svg:first-child { color: var(--dp-text2); }
 .typ-sel select { min-width: 0; max-width: 100%; height: 30px; padding: 0 26px 0 8px; border: 1px solid var(--dp-divider); border-radius: 8px;

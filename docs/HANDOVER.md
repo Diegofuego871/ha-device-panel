@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.36.0, Einstellungen in fünf Abschnitten)
+## Stand (1.37.0, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -402,6 +402,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    Panel `data-cfull-integ`/`data-crise-integ` im Integrations-Detail (Auswahl mit Stufen), `INTEG_OWN_MAPS`.
    Fehler 1.36.0 (Nutzer, Kühlschrank-Sensor mit Knopfzelle als "lädt" markiert): `ChargeNotifier.charging_of()` nimmt den Stand nur noch,
    wenn `enabled()` (Lademeldung für das Gerät) gilt; die Ladeanzeige des Geräts gilt weiter immer. Test `test_charging_flag_in_list_and_entity_wins`.
+   Reiter im Geräte-Popup `1.37.0` (Nutzer, Mockups `popup-tabs-log-v1`, R3): `_renderDevice()` baut `ov` (Statistik, KI, Verbindung,
+   Gerät; Typ und Verbindungsart nur als Text), `set` (`_typeSelHtml(d, true)`/`_connSelHtml(d, true)` + `_deviceNotifyHtml`) und `ent`
+   (Entitäten); Zustand `_devTab` (öffnet immer auf "ov", Knopf `data-dlg="tab"` mit `data-tab`), Zähler `devOwnCount(d)` am Reiter
+   (Punkt über `.sub-tab.chg`). Tests tippen zuerst `dialog.device [data-tab="set"]`. Hinweis: das geschlossene Popup behält sein
+   HTML, `.sub-tab` darum in Tests immer mit `dialog.settings` einschränken.
    Übersicht mit allen Meldungen `1.34.0` (Nutzer, 2026-10-10): `_monOverviewHtml` hat fünf Zeilen (`lane(...)`: Ausfall,
    Batterie, Laden `data-lane="charge"`, Neue Geräte, Updates); `lane()` nimmt `sub` (Unterreiter, `data-sub` am
    "Ändern"-Knopf, der Handler setzt `st.sub.battery`) und `id`. Strings `laneCharge`, `tlCharge*`, `tlUpd*`, `laneUpd*`.

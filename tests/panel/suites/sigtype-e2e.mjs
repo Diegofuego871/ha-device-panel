@@ -72,7 +72,7 @@ for (const lang of ["de", "en"]) {
     const sec = (id) => text(`[data-id="${id}"] .set-sec-sum`);
     const open = async (id) => {
       await tap(`.dev[data-open="${id}"]`);
-      await wait(`return r.querySelector("dialog.device")?.open && r.querySelector(".dev-set")`);
+      await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector(".dev-set")`);
     };
     const close = async () => { await tap('dialog.device [data-dlg="close"]'); await wait(`return !r.querySelector("dialog.device").open`); };
     const popSel = () => ev(`const s=r.querySelector('select[data-dlg="dev-sig"]'); return s ? s.value + "|" + s.options[s.selectedIndex].textContent : ""`);

@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.37.0] - 2026-10-10
+
+Tabs in the device pop-up.
+
+### Changed
+
+- Device pop-up with three tabs (requested by the user, mockups `popup-tabs-log-v1`, R3):
+  "Overview", "Settings" and "Entities". "Overview" holds the statistics, assessment,
+  connection and device details for reading; type and connection type show as text there. All
+  settings of the device are in "Settings": type, connection type and everything under
+  "Settings for this device" (outage, battery, signal, charging, notifications). The tab shows
+  the number of own settings ("Settings · 2 custom") with a dot; "Entities" has the list of
+  entities. The pop-up always opens on "Overview".
+
 ## [1.36.0] - 2026-10-10
 
 Charging notification per integration with its own values.
@@ -1894,6 +1908,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.37.0
 [1.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.36.0
 [1.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.35.0
 [1.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.34.0

@@ -40,7 +40,7 @@ for (const lang of ["de", "en"]) {
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
     const calls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_connection").map(({ device_id, connection }) => ({ device_id, connection })));
     const chip = (k) => ev(`return r.querySelector('.chip[data-conn="${k}"] .n')?.textContent || ""`);
-    const open = async (id) => { await tap(`.dev[data-open="${id}"]`); await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('select[data-dlg="conn"]')`); };
+    const open = async (id) => { await tap(`.dev[data-open="${id}"]`); await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector('select[data-dlg="conn"]')`); };
     const close = async () => { await tap('dialog.device [data-dlg="close"]'); await wait(`return !r.querySelector("dialog.device").open`); };
     const sel = () => ev(`const s=r.querySelector('select[data-dlg="conn"]'); return s.value + "|" + s.options[s.selectedIndex].textContent`);
 

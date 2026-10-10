@@ -199,7 +199,7 @@ for (const lang of ["de", "en"]) {
 
     // Popup eines ZHA-Geräts: Batterie-Push für die Integration aus
     await tap('.dev[data-open="b"]');
-    await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('select[data-dlg="dev-bat"]')`);
+    await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector('select[data-dlg="dev-bat"]')`);
     const batOrigin = await ev(`return r.querySelector('select[data-dlg="dev-bat"]').closest(".opt").querySelector(".opt-origin").textContent`);
     check(`[${tag}] Popup: "${T.popBatPushOff}"`, batOrigin.includes(T.popBatPushOff), batOrigin);
     await tap('dialog.device [data-dlg="close"]');
@@ -209,7 +209,7 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { window.__devSettings.mute.d = new Date(Date.now() + 20 * 3600000).toISOString(); });
     await f.evaluate(() => document.querySelector("device-panel")._fetch());
     await tap('.dev[data-open="d"]');
-    await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('select[data-dlg="dev-notify"]')`);
+    await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector('select[data-dlg="dev-notify"]')`);
     const sel = await ev(`const s=r.querySelector('select[data-dlg="dev-notify"]'); return [s.value, s.options[s.selectedIndex].textContent, s.options.length, s.closest(".opt").classList.contains("changed")]`);
     check(`[${tag}] Popup: stumm bis …, markiert`, sel[0] === "mute" && T.muted.test(sel[1]) && sel[2] === 3 && sel[3] === true, JSON.stringify(sel));
     await ev(`r.querySelector('select[data-dlg="dev-notify"]').scrollIntoView({ block: "center" })`);

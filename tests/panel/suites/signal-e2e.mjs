@@ -46,7 +46,7 @@ for (const lang of ["de", "en"]) {
     const weak = () => ev(`return r.querySelector('.chip.hint[data-hint="signal"] .n')?.textContent || "0"`);
     const open = async (id) => {
       await tap(`.dev[data-open="${id}"]`);
-      await wait(`return r.querySelector("dialog.device")?.open && r.querySelector(".dev-set")`);
+      await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector(".dev-set")`);
     };
     const close = async () => { await tap('dialog.device [data-dlg="close"]'); await wait(`return !r.querySelector("dialog.device").open`); };
     const sel = () => ev(`const s=r.querySelector('select[data-dlg="dev-sig"]'); return s ? s.value + "|" + s.options[s.selectedIndex].textContent : ""`);
@@ -72,7 +72,9 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Vorschlag 5 dBm unter heute`, await wait(`return r.querySelector('input[data-dlg="dev-sig-val"]')?.value === "-89"`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "d", signal: -89 }), JSON.stringify((await calls()).at(-1)));
     check(`[${tag}] Feld mit Einheit und Beschriftung`, (await text('.opt-sub:has(input[data-dlg="dev-sig-val"]) .unit')) === "dBm" && (await text('.opt-sub:has(input[data-dlg="dev-sig-val"]) .opt-label')) === T.low);
     check(`[${tag}] nicht mehr schwach: Chip 2`, await wait(`return r.querySelector('.chip.hint[data-hint="signal"] .n')?.textContent === "2"`), await weak());
+    await tap('dialog.device [data-tab="ov"]');
     check(`[${tag}] Kachel "Empfang" nicht mehr rot`, await ev(`const t=[...r.querySelectorAll("dialog.device .st-tile, dialog.device .tile")].find(x=>/dBm/.test(x.textContent)); return !!t && !t.querySelector('rect[fill="var(--dp-tier1)"]')`));
+    await tap('dialog.device [data-tab="set"]');
     await ev(`r.querySelector(".dev-set").scrollIntoView({ block: "center" })`);
     await p.screenshot({ path: `${outDir}/signal-${tag.replace("/", "-")}.png` });
     // Ausserhalb des Bereichs: nichts gesendet

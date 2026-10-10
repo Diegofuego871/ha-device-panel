@@ -487,7 +487,9 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Liste: schwach sind jetzt Matter (22 %) und Zigbee (8 %), nicht BTHome (0 %)`, await wait(`return r.host._devices.filter((d) => d.battery?.low).map((d) => d.id).sort().join() === "b,c"`), await lowIds());
     // Geräte-Popup des BTHome-Geräts: globaler Wert ist "aus"
     await tap('.dev[data-open="a"]');
-    await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('select[data-dlg="dev-bat"]')`);
+    await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab="set"]')`);
+    await tap('dialog.device [data-tab="set"]');
+    await wait(`return r.querySelector('select[data-dlg="dev-bat"]')`);
     check(`[${tag}] Popup: globaler Wert aus`, (await ev(`return r.querySelector('select[data-dlg="dev-bat"] option[value="default"]').textContent`)) === T.popDefOff);
     await tap('dialog.device [data-dlg="close"]');
     await wait(`return !r.querySelector("dialog.device").open`);

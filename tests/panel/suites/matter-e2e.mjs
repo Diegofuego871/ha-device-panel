@@ -35,8 +35,11 @@ for (const lang of ["de", "en"]) {
     const find = async (label) => (await tiles()).find(([k]) => k === label);
     const open = async (id) => {
       await ev(`r.host._openDevice(${JSON.stringify(id)})`);
-      await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('select[data-dlg="conn"]')`);
+      await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`);
     };
+    // Seit 1.37.0: Rolle und Netz stehen in der Übersicht, die Wahl der Verbindungsart im Reiter "Einstellungen".
+    const toSettings = async () => { await (await handle('dialog.device [data-tab="set"]')).click(); await wait(`return r.querySelector('select[data-dlg="conn"]')`); };
+    const toOverview = async () => { await (await handle('dialog.device [data-tab="ov"]')).click(); await wait(`return !r.querySelector('select[data-dlg="conn"]')`); };
     const close = async () => {
       await ev(`r.querySelector("dialog.device").close()`);
       await wait(`return !r.querySelector("dialog.device").open`);
@@ -65,12 +68,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] schlafendes Endgerät`, sleepy && sleepy[1] === `${T.sleepy}${T.sleepyHint}`, JSON.stringify(sleepy));
 
     // Verbindungsart von Hand bleibt möglich und hat Vorrang; Kacheln bleiben
+    await toSettings();
     await (await handle('select[data-dlg="conn"]')).selectOption("wifi");
     check(`[${tag}] von Hand "${T.wifi}" gesetzt`, await wait(`const d=r.host._devices.find((x)=>x.id==="i"); return d.connection === "wifi" && d.connection_manual === true`));
     await wait(`return !!r.querySelector('select[data-dlg="conn"]')`);
     check(`[${tag}] Verbindungsart von Hand hat Vorrang (${T.wifi})`, (await ev(`return r.host._connOf(r.host._devices.find((x)=>x.id==="i"))`)) === "wifi" && (await ev(`const s=r.querySelector('select[data-dlg="conn"]'); return s.value`)) === "wifi");
+    await toOverview();
     const still = await find(T.role);
     check(`[${tag}] Rolle bleibt als Zusatzangabe`, still && still[1].startsWith(T.sleepy), JSON.stringify(still));
+    await toSettings();
     await (await handle('select[data-dlg="conn"]')).selectOption("");
     await wait(`return r.host._devices.find((x)=>x.id==="i").connection_manual === false`);
     await close();
@@ -99,7 +105,7 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { window.__matterDiag = null; });
     await refresh();
     await open("c");
-    check(`[${tag}] Diagnose-Fehler: keine Kacheln, Popup funktioniert`, !(await find(T.role)) && !(await find(T.net)) && (await ev(`return !!r.querySelector('select[data-dlg="conn"]')`)));
+    check(`[${tag}] Diagnose-Fehler: keine Kacheln, Popup funktioniert`, !(await find(T.role)) && !(await find(T.net)) && (await ev(`return !!r.querySelector('dialog.device [data-tab="set"]')`)));
     // Kein Passwort, kein Schlüssel im Popup
     check(`[${tag}] nichts Sicherheitsrelevantes im Popup`, !(await ev(`return /password|passwort|credential|secret/i.test(r.querySelector("dialog.device").textContent)`)));
     await close();

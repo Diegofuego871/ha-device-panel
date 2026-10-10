@@ -43,7 +43,7 @@ The forecast calculates from the last battery change (at most one year) up to th
 
 ### Settings per device
 
-Every device can override the defaults in its pop-up: its own "offline after" time (or no monitoring), its own battery warning threshold, its own signal warning, and outage and online notifications switched off or muted for 24 hours, for example for a charger that is often offline on purpose. Each row shows where the value comes from and what the default would be. A symbol next to the name in the list shows devices with their own settings.
+Every device can override the defaults in the "Settings" tab of its pop-up: its own "offline after" time (or no monitoring), its own battery warning threshold, its own signal warning, and outage and online notifications switched off or muted for 24 hours, for example for a charger that is often offline on purpose. Each row shows where the value comes from and what the default would be. A symbol next to the name in the list shows devices with their own settings.
 
 <p align="center"><img src="docs/screenshots/en/device-settings.png" alt="Device pop-up: settings for this device with own time, own battery warning threshold and notifications off" width="720"></p>
 

@@ -514,6 +514,19 @@ function orderConns(entries, order) {
 // von Hand zählt nicht dazu (Entscheid des Nutzers).
 // Seit 0.17.0 zählt auch die Verbindungsart von Hand (Wunsch des Nutzers:
 // so lässt sie sich gesammelt bereinigen).
+// Anzahl eigener Einstellungen des Geräts (Zähler am Reiter "Einstellungen"): jede Wahl, die vom Standard abweicht.
+const devOwnCount = (d) =>
+  [
+    d.type_manual,
+    d.connection_manual,
+    d.offline_setting != null,
+    d.battery_setting != null,
+    d.signal_setting != null,
+    d.charge_setting != null,
+    d.charge_full_setting != null,
+    d.charge_rise_setting != null,
+    d.notify_off || (d.notify_mute_until && Date.parse(d.notify_mute_until) > Date.now()),
+  ].filter(Boolean).length;
 const hasOverride = (d) => d.offline_setting != null || d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual) || d.signal_setting != null;
 
 const defaultView = () => ({
@@ -2914,6 +2927,7 @@ class DevicePanel extends HTMLElement {
     if (!dlg || !id) return;
     this._closeStat();
     this._detailId = id;
+    this._devTab = "ov";
     this._detail = null;
     this._renderDevice();
     if (!dlg.open) {
@@ -2921,7 +2935,15 @@ class DevicePanel extends HTMLElement {
       else dlg.setAttribute("open", "");
     }
     dlg.scrollTop = 0;
+    this._stickDevTabs(dlg);
     this._loadDetail(true);
+  }
+
+  // Die Reiter bleiben unter dem Kopf haften: Höhe des Kopfes als Abstand (je nach Warnungen und Namen verschieden;
+  // bei geschlossenem Dialog ist sie 0, darum auch nach dem Öffnen messen).
+  _stickDevTabs(dlg) {
+    const h = dlg.querySelector(".dlg-head")?.offsetHeight;
+    if (h) dlg.style.setProperty("--dev-head-h", `${h}px`);
   }
 
   _closeDevice() {
@@ -3084,8 +3106,8 @@ class DevicePanel extends HTMLElement {
     return `<div class="st-tiles" style="--n:${tiles.length}">${tiles.join("")}</div>`;
   }
 
-  _connSectionHtml(d) {
-    const detail = this._detail?.id === d.id ? this._detail.data : null;
+  // Verbindungsart: im Reiter "Einstellungen" wählbar, in der Übersicht nur Text (seit 1.37.0).
+  _connSelHtml(d, edit) {
     const type = this._connOf(d);
     // Verbindungsart wählbar wie der Typ: erkannt oder von Hand, gilt sofort.
     const auto = this._connAuto(d);
@@ -3095,9 +3117,19 @@ class DevicePanel extends HTMLElement {
     const opts = [`<option value="" ${d.connection_manual ? "" : "selected"}>${escape(autoText)}</option>`]
       .concat(CONN_MANUAL.map((k) => `<option value="${k}" ${d.connection_manual && d.connection === k ? "selected" : ""}>${escape(this._t(CONN[k].key))}</option>`))
       .join("");
-    const connSel = `<label class="typ-sel">${CONN[type].icon(16)}<select data-dlg="conn" aria-label="${escape(this._t("connType"))}">${opts}</select>${mdi("chevronDown", 18)}</label>${
+    if (!edit) {
+      return `<span class="typ-ro">${CONN[type].icon(16)}<span>${escape(this._t(CONN[type].key))}</span></span>${
+        d.connection_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t("connByInteg"))}</small>` : ""
+      }`;
+    }
+    return `<label class="typ-sel">${CONN[type].icon(16)}<select data-dlg="conn" aria-label="${escape(this._t("connType"))}">${opts}</select>${mdi("chevronDown", 18)}</label>${
       d.connection_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t("connByInteg"))}</small>` : ""
     }${this._connError ? `<small class="warn">${escape(this._t("connSaveError"))} ${escape(this._connError)}</small>` : ""}`;
+  }
+
+  _connSectionHtml(d) {
+    const detail = this._detail?.id === d.id ? this._detail.data : null;
+    const connSel = this._connSelHtml(d, false);
     const tiles = [this._tile(this._t("connType"), connSel)];
     if (d.via) tiles.push(this._tile(this._t("viaLabel"), escape(d.via)));
     // Thread-Rolle und Netz aus der Matter-Diagnose (Zusatzangaben, ohne
@@ -3281,9 +3313,8 @@ class DevicePanel extends HTMLElement {
     return `<div class="dev-set">${html}</div>`;
   }
 
-  _deviceSectionHtml(d) {
-    const text = (v) => (v ? escape(v) : `<span class="t3">–</span>`);
-    const sw = `${text(d.sw_version)}${d.update ? `<small class="upd">${escape(this._t("updateTo", d.update))}</small>` : ""}`;
+  // Typ: im Reiter "Einstellungen" wählbar, in der Übersicht nur Text (seit 1.37.0).
+  _typeSelHtml(d, edit) {
     // Typ wählbar: automatisch erkannt oder von Hand (für Ausschlüsse, wenn
     // die Erkennung danebenliegt). Gilt sofort, ohne "Speichern".
     // Ohne Wahl am Gerät gilt die Integration, wenn dort ein Typ festgelegt ist.
@@ -3292,9 +3323,20 @@ class DevicePanel extends HTMLElement {
     const opts = [`<option value="" ${d.type_manual ? "" : "selected"}>${escape(autoText)}</option>`]
       .concat(TYPE_ORDER.map((k) => `<option value="${k}" ${d.type_manual && d.type === k ? "selected" : ""}>${escape(this._t(typeKey(k)))}</option>`))
       .join("");
-    const typeSel = `<label class="typ-sel">${typeIcon(d.type, 16)}<select data-dlg="type" aria-label="${escape(this._t("typeLabel"))}">${opts}</select>${mdi("chevronDown", 18)}</label>${
+    if (!edit) {
+      return `<span class="typ-ro">${typeIcon(d.type, 16)}<span>${escape(this._t(typeKey(d.type)))}</span></span>${
+        d.type_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t("typeByInteg"))}</small>` : ""
+      }`;
+    }
+    return `<label class="typ-sel">${typeIcon(d.type, 16)}<select data-dlg="type" aria-label="${escape(this._t("typeLabel"))}">${opts}</select>${mdi("chevronDown", 18)}</label>${
       d.type_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t("typeByInteg"))}</small>` : ""
     }${this._typeError ? `<small class="warn">${escape(this._t("typeSaveError"))} ${escape(this._typeError)}</small>` : ""}`;
+  }
+
+  _deviceSectionHtml(d) {
+    const text = (v) => (v ? escape(v) : `<span class="t3">–</span>`);
+    const sw = `${text(d.sw_version)}${d.update ? `<small class="upd">${escape(this._t("updateTo", d.update))}</small>` : ""}`;
+    const typeSel = this._typeSelHtml(d, false);
     const tiles = [
       this._tile(this._t("typeLabel"), typeSel),
       this._tile(this._t("manufacturer"), text(d.manufacturer)),
@@ -3386,18 +3428,35 @@ class DevicePanel extends HTMLElement {
         ? `<div class="why-tags">${why.map(([k, v]) => `<span class="why">${mdi("alert", 15)}<b>${escape(k)}</b>${v ? ` · ${escape(v)}` : ""}</span>`).join("")}</div>`
         : "";
       const ents = this._entitiesHtml(d);
+      // Reiter (seit 1.37.0, docs/mockups/popup-tabs-log-v1, R3): Übersicht zum Lesen, alle Einstellungen des Geräts
+      // in "Einstellungen" (der Zähler nennt die eigenen), Entitäten für sich.
+      const own = devOwnCount(d);
+      const tab = ["ov", "set", "ent"].includes(this._devTab) ? this._devTab : "ov";
+      const tabs = `<div class="sub-tabs" role="tablist">${[
+        ["ov", this._t("devTabOverview"), false],
+        ["set", own ? this._t("devTabSettingsOwn", own) : this._t("devTabSettings"), own > 0],
+        ["ent", this._t("devTabEntities", ents.count), false],
+      ]
+        .map(([id, label, chg]) => `<button type="button" role="tab" class="sub-tab${id === tab ? " on" : ""}${chg ? " chg" : ""}" data-dlg="tab" data-tab="${id}" aria-selected="${id === tab}">${escape(label)}</button>`)
+        .join("")}</div>`;
+      const body =
+        tab === "set"
+          ? `<h3>${escape(this._t("secTypeConn"))}</h3><div class="tiles">${this._tile(this._t("typeLabel"), this._typeSelHtml(d, true))}${this._tile(this._t("connType"), this._connSelHtml(d, true))}</div>
+          <h3>${escape(this._t("secNotifyDevice"))}</h3>${this._deviceNotifyHtml(d)}
+          <p class="dlg-note small">${escape(this._t("devSettingsNote"))}</p>`
+          : tab === "ent"
+            ? `<h3>${escape(this._t("secEntities", ents.count))}</h3>${ents.html}`
+            : `<h3>${escape(this._t("secStats"))}</h3>${this._statTilesHtml(d)}
+          ${this._aiHtml(d)}
+          <h3>${escape(this._t("secConnection"))}</h3>${this._connSectionHtml(d)}
+          <h3>${escape(this._t("secDevice"))}</h3>${this._deviceSectionHtml(d)}`;
       html = `<div class="dlg-head"><span class="dlg-avatar ${avatar}">${typeIcon(d.type, 28)}</span>
           <div class="dlg-title">${this._nameHtml(d)}
             <div class="dlg-sub">${status}<span>${[this._t(typeKey(d.type)), d.area].filter(Boolean).map(escape).join(" · ")}</span></div>${whyHtml}</div>
           ${close}</div>
         <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device">${mdi("open", 17)}${escape(this._t("openDevicePage"))}</button></div>
-        <div class="dlg-body">
-          <h3>${escape(this._t("secStats"))}</h3>${this._statTilesHtml(d)}
-          ${this._aiHtml(d)}
-          <h3>${escape(this._t("secConnection"))}</h3>${this._connSectionHtml(d)}
-          <h3>${escape(this._t("secDevice"))}</h3>${this._deviceSectionHtml(d)}
-          <h3>${escape(this._t("secNotifyDevice"))}</h3>${this._deviceNotifyHtml(d)}
-          <h3>${escape(this._t("secEntities", ents.count))}</h3>${ents.html}
+        <div class="dev-tabs">${tabs}</div>
+        <div class="dlg-body" role="tabpanel">${body}
           ${this._hideError ? `<div class="dlg-error">${escape(this._t("hideError"))} ${escape(this._hideError)}</div>` : ""}
         </div>
         <div class="dlg-actions two"><button type="button" class="dlg-btn hide-btn" data-dlg="hide">${mdi("eyeOff", 18)}${escape(this._t("hideDevice"))}</button>
@@ -3407,12 +3466,13 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const sel =
       active && dlg.contains(active) && active.dataset?.dlg
-        ? `[data-dlg="${active.dataset.dlg}"]${active.dataset.range ? `[data-range="${active.dataset.range}"]` : ""}${
+        ? `[data-dlg="${active.dataset.dlg}"]${active.dataset.range ? `[data-range="${active.dataset.range}"]` : ""}${active.dataset.tab ? `[data-tab="${active.dataset.tab}"]` : ""}${
             active.dataset.entity ? `[data-entity="${CSS.escape(active.dataset.entity)}"]` : ""
           }`
         : null;
     const scroll = dlg.scrollTop;
     if (!setHtml(dlg, html)) return;
+    this._stickDevTabs(dlg);
     dlg.scrollTop = scroll;
     if (sel) refocus(dlg.querySelector(sel));
   }
@@ -3440,7 +3500,12 @@ class DevicePanel extends HTMLElement {
     else if (action === "rename-cancel") this._renameCancel();
     else if (action === "rename-save") this._renameSave(this.shadowRoot.querySelector('input[data-dlg="rename-input"]')?.value ?? "");
     else if (action === "rename-reset") this._renameSave("");
-    else if (action === "hide") this._hideDevice(this._detailId);
+    else if (action === "tab") {
+      this._devTab = btn.dataset.tab;
+      this._devForce = true;
+      this._renderDevice();
+      this.shadowRoot.querySelector("dialog.device").scrollTop = 0;
+    } else if (action === "hide") this._hideDevice(this._detailId);
     else if (action === "ai") this._aiAssess(this._detailId);
   }
 

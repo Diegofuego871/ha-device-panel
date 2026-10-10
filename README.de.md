@@ -43,7 +43,7 @@ Die Prognose rechnet ab dem letzten Batteriewechsel (höchstens ein Jahr) bis zu
 
 ### Einstellungen pro Gerät
 
-Jedes Gerät kann im Popup die Standardwerte übersteuern: eine eigene "Ausgefallen nach"-Zeit (oder keine Überwachung), eine eigene Batterie-Warnschwelle, eine eigene Empfang-Warnung sowie Ausfall- und Online-Meldungen aus oder für 24 Stunden stumm, etwa bei einem Ladegerät, das oft absichtlich offline ist. Jede Zeile zeigt, woher der Wert kommt und was der Standard wäre. Ein Symbol neben dem Namen in der Liste zeigt Geräte mit eigenen Einstellungen.
+Jedes Gerät kann im Reiter "Einstellungen" seines Popups die Standardwerte übersteuern: eine eigene "Ausgefallen nach"-Zeit (oder keine Überwachung), eine eigene Batterie-Warnschwelle, eine eigene Empfang-Warnung sowie Ausfall- und Online-Meldungen aus oder für 24 Stunden stumm, etwa bei einem Ladegerät, das oft absichtlich offline ist. Jede Zeile zeigt, woher der Wert kommt und was der Standard wäre. Ein Symbol neben dem Namen in der Liste zeigt Geräte mit eigenen Einstellungen.
 
 <p align="center"><img src="docs/screenshots/de/device-settings.png" alt="Geräte-Popup: Einstellungen für dieses Gerät mit eigener Zeit, eigener Batterie-Warnschwelle und ausgeschalteten Meldungen" width="720"></p>
 

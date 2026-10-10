@@ -15,7 +15,7 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     pill: "Ausgefallen seit 2 Std. 14 Min.", sub: "Bewegung / Präsenz · Flur", open: "HA-Geräteseite öffnen",
-    secs: ["Statistik", "Verbindung", "Gerät", "Einstellungen für dieses Gerät", "Entitäten · 3"],
+    secs: ["Statistik", "Verbindung", "Gerät"], tabs: ["Übersicht", "Einstellungen", "Entitäten · 3"], tabOwn: "Einstellungen · 1 eigene", setSecs: ["Typ und Verbindung", "Einstellungen für dieses Gerät"], entSecs: ["Entitäten · 3"],
     tile24: ["Verfügbarkeit 24 Std.", "90,2%", "2 Unterbrüche · längster 2 Std. 14 Min."],
     tile7: ["Unterbrüche 7 Tage", "3", "zusammen 2 Std. 41 Min."], signal: ["Empfang", "LQI 38", "schwach"], battery: ["Batterie", "8%", "niedrig"],
     update: "Update auf 2.2.0 verfügbar", live: "Lebenszeichen", unavailable: "nicht verfügbar", liveHint: "Markierte Entitäten zeigen, ob das Gerät lebt.",
@@ -28,7 +28,7 @@ const TEXT = {
   },
   en: {
     pill: "Offline for 2 h 14 min", sub: "Motion / presence · Flur", open: "Open device page",
-    secs: ["Statistics", "Connection", "Device", "Settings for this device", "Entities · 3"],
+    secs: ["Statistics", "Connection", "Device"], tabs: ["Overview", "Settings", "Entities · 3"], tabOwn: "Settings · 1 custom", setSecs: ["Type and connection", "Settings for this device"], entSecs: ["Entities · 3"],
     tile24: ["Availability 24 h", "90.2%", "2 outages · longest 2 h 14 min"],
     tile7: ["Outages 7 days", "3", "2 h 41 min in total"], signal: ["Signal", "LQI 38", "weak"], battery: ["Battery", "8%", "low"],
     update: "Update to 2.2.0 available", live: "Sign of life", unavailable: "unavailable", liveHint: "Marked entities show whether the device is alive.",
@@ -92,6 +92,14 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Verbindung`, ["Zigbee", "Steckdose Flur", "Zigbee Home Automation", "Funkstick Erdgeschoss"].every((s) => conn.includes(s)), conn);
     const device = (await texts("dialog.device .tiles"))[1];
     check(`[${tag}] Gerät`, ["Beispiel AG", "Modell B", "1.0.1", T.update, "Flur"].every((s) => device.includes(s)), device);
+    // Reiter (seit 1.37.0): Übersicht, Einstellungen (Zähler eigener Einstellungen), Entitäten
+    check(`[${tag}] Reiter`, JSON.stringify(await texts('dialog.device [role="tab"]')) === JSON.stringify(T.tabs), JSON.stringify(await texts('dialog.device [role="tab"]')));
+    check(`[${tag}] Übersicht ist gewählt`, (await text('dialog.device [role="tab"][aria-selected="true"]')) === T.tabs[0]);
+    await tap('dialog.device [data-tab="set"]');
+    check(`[${tag}] Reiter Einstellungen: Abschnitte`, await wait(`return [...r.querySelectorAll("dialog.device h3")].map(h=>h.textContent.trim()).join("|") === ${JSON.stringify(T.setSecs.join("|"))}`), JSON.stringify(await texts("dialog.device h3")));
+    check(`[${tag}] Reiter Einstellungen: Typ und Verbindungsart wählbar`, (await ev(`return !!r.querySelector('dialog.device select[data-dlg="type"]') && !!r.querySelector('dialog.device select[data-dlg="conn"]')`)));
+    await tap('dialog.device [data-tab="ent"]');
+    check(`[${tag}] Reiter Entitäten: Abschnitt`, await wait(`return [...r.querySelectorAll("dialog.device h3")].map(h=>h.textContent.trim()).join("|") === ${JSON.stringify(T.entSecs.join("|"))}`), JSON.stringify(await texts("dialog.device h3")));
     const ents = await texts("dialog.device li.entity");
     check(`[${tag}] drei Entitäten`, ents.length === 3, JSON.stringify(ents));
     check(`[${tag}] Lebenszeichen markiert`, ents[0].includes(T.live) && !ents[1].includes(T.live), JSON.stringify(ents));
@@ -114,6 +122,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Entitäts-Dialog von HA`, (await p.evaluate(() => window.__moreInfo)).includes("binary_sensor.bewegungsmelder_flur"));
 
     // --- Statistik-Fenster 24 Std. ---
+    await tap('dialog.device [data-tab="ov"]');
     await tap('dialog.device [data-dlg="stat"][data-range="24h"]');
     check(`[${tag}] Statistik-Fenster offen, Popup bleibt`, (await isOpen("stat-dlg")) && (await isOpen("device")));
     check(`[${tag}] X des Popups ausgeblendet`, (await ev(`return getComputedStyle(r.querySelector('dialog.device .dlg-close')).visibility`)) === "hidden");
@@ -226,6 +235,7 @@ for (const lang of ["de", "en"]) {
 
     // Typ von Hand: wählen, sofort in Popup und Liste, zurück auf automatisch
     await tap(mobile ? '.mrow[data-open="k"]' : 'tr[data-open="k"]');
+    await tap('dialog.device [data-tab="set"]');
     const sel = async (value) => {
       const h = (await f.evaluateHandle(new Function(`return ${R}.querySelector('dialog.device select[data-dlg="type"]')`))).asElement();
       await h.selectOption(value);
@@ -234,6 +244,7 @@ for (const lang of ["de", "en"]) {
     await sel("switch");
     const st = await calls("device_panel/set_device_type");
     check(`[${tag}] set_device_type`, st.at(-1)?.device_id === "k" && st.at(-1)?.device_type === "switch", JSON.stringify(st));
+    check(`[${tag}] Reiter zählt die eigene Einstellung`, (await text('dialog.device [data-tab="set"]')) === T.tabOwn && (await ev(`return r.querySelector('dialog.device [data-tab="set"]').classList.contains("chg")`)), await text('dialog.device [data-tab="set"]'));
     check(`[${tag}] von Hand im Popup`, await wait(`return r.querySelector('dialog.device select[data-dlg="type"]').value === "switch" && r.querySelector("dialog.device").textContent.includes(${JSON.stringify(T.manual)})`));
     const rowType = await ev(`const e=r.querySelector('[data-open="k"]'); return e.textContent`);
     check(`[${tag}] Liste zeigt neuen Typ`, rowType.includes(T.sw), rowType);

@@ -61,7 +61,7 @@ for (const lang of ["de", "en"]) {
     await tap('.chip[data-conn="thread"]');
     check(`[${tag}] Thread-Filter aktiv`, await wait(`return r.querySelectorAll(".dev[data-open]").length === 2`));
     await openDisplay();
-    check(`[${tag}] Reiter mit Titel`, (await ev(`return r.querySelector(".sub-tab.on").firstChild.textContent`)) === T.title);
+    check(`[${tag}] Reiter mit Titel`, (await ev(`return r.querySelector("dialog.settings .sub-tab.on").firstChild.textContent`)) === T.title);
     const rows = await ev(`return [...r.querySelectorAll('input[data-list="hide_connections"]')].map(i=>i.dataset.value + (i.checked ? "+" : "-")).join()`);
     check(`[${tag}] alle Arten angezeigt, auch ohne Geräte (Matter, LAN)`, rows === "thread+,wifi+,ble+,zigbee+,ethernet+,cloud+,matter+,network+,unknown+,zwave+", rows);
     check(`[${tag}] Zeile mit Zahl`, (await ev(`const row=r.querySelector('input[data-list="hide_connections"][data-value="thread"]').closest(".ex-row"); return row.querySelector(".ex-name").firstChild.textContent + "|" + row.querySelector("small").textContent`)) === `${T.thread}|${T.threadSub}`);

@@ -42,7 +42,7 @@ for (const lang of ["de", "en"]) {
     const lowChip = () => ev(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent || "0"`);
     const open = async (id) => {
       await tap(`.dev[data-open="${id}"]`);
-      await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('select[data-dlg="dev-notify"]')`);
+      await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector('select[data-dlg="dev-notify"]')`);
     };
     const close = async () => { await tap('dialog.device [data-dlg="close"]'); await wait(`return !r.querySelector("dialog.device").open`); };
 

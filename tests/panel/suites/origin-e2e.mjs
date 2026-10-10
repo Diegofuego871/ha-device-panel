@@ -53,7 +53,7 @@ for (const lang of ["de", "en"]) {
     const origin = (name) => ev(`const o=${row(name)}.querySelector(".opt-origin"); return [o.querySelector(".origin").textContent.trim(), o.querySelector(".origin").className.replace("origin ",""), o.textContent.replace(o.querySelector(".origin").textContent,"").trim()]`);
     const openDev = async (id) => {
       await ev(`r.host._openDevice(${JSON.stringify(id)})`);
-      await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('select[data-dlg="dev-off"]')`);
+      await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector('select[data-dlg="dev-off"]')`);
     };
 
     // Zigbee-Gerät "e" (Fensterkontakt Küche): Standard
