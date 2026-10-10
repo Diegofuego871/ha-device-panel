@@ -7,6 +7,26 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.31.1] - 2026-10-10
+
+Fix: panel loads slowly or not at all since Home Assistant 2026.10.
+
+### Fixed
+
+- Panel and settings loaded very slowly or not at all, saving took long, and the whole of
+  Home Assistant could feel sluggish since Home Assistant 2026.10. Cause: since 2026.10 every
+  read of `DeviceEntry.config_entries` and `primary_config_entry` (deprecated since 2026.8,
+  replaced by `config_entry_id`) is reported at runtime, which inspects the call stack. The
+  panel read them several times per device and request, so some hundreds of devices meant
+  thousands of reports that blocked Home Assistant. The panel now reads `config_entry_id`
+  (older Home Assistant versions keep working with `config_entries`). A test checks that no
+  module reads the deprecated properties any more.
+
+### Changed
+
+- Charging notification: the rise is given in "%" instead of "points" (panel and options
+  dialog); the description gives an example.
+
 ## [1.31.0] - 2026-10-10
 
 Update reminder per app and integration.
@@ -1764,6 +1784,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[1.31.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.1
 [1.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0
 [1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0

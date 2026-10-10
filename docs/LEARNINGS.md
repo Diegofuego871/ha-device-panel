@@ -5,6 +5,15 @@ hat dort einen echten Fehler oder Umweg gekostet.
 
 ## Home Assistant (Backend)
 
+- **Veraltete Eigenschaften nie in Schleifen lesen (1.31.1):** Seit HA 2026.10 meldet jedes
+  Lesen von `DeviceEntry.config_entries` / `primary_config_entry` zur Laufzeit
+  (`report_usage` untersucht den Aufrufstapel, rund 1 ms je Aufruf auf einem PC, auf einem
+  Raspberry Pi ein Vielfaches). Das Panel las sie pro Gerät mehrfach je Abfrage (150 Geräte:
+  rund 750 Lesezugriffe pro `list_devices`), alles im Event-Loop: Panel lud nicht, ganz HA
+  träge. Regel: Geräte-Einträge nur über `compat.device_entry_ids()` lesen
+  (`config_entry_id`, Rückfall für ältere HA); `tests/test_compat.py` prüft den Quelltext.
+  Vor jedem HA-Release die Entwickler-Blogs ("developers.home-assistant.io/blog") auf
+  Veraltungen lesen, die Laufzeit-Meldungen auslösen.
 - **Panel als eingebautes iframe-Panel** registrieren
   (`frontend.async_register_built_in_panel(component_name="iframe", …,
   require_admin=True)`), nicht als Custom Panel. HA rendert dann Kopfzeile,

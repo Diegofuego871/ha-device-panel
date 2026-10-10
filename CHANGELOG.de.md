@@ -7,6 +7,26 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.31.1] - 2026-10-10
+
+Behoben: Panel lädt seit Home Assistant 2026.10 langsam oder gar nicht.
+
+### Behoben
+
+- Panel und Einstellungen luden seit Home Assistant 2026.10 sehr langsam oder gar nicht,
+  Speichern dauerte lange, und ganz Home Assistant konnte träge wirken. Ursache: Seit 2026.10
+  meldet jedes Lesen von `DeviceEntry.config_entries` und `primary_config_entry` (seit 2026.8
+  veraltet, ersetzt durch `config_entry_id`) zur Laufzeit und untersucht dazu den Aufrufstapel.
+  Das Panel las sie pro Gerät und Abfrage mehrfach: bei einigen hundert Geräten Tausende
+  Meldungen, die Home Assistant blockierten. Das Panel liest jetzt `config_entry_id` (ältere
+  Home-Assistant-Versionen funktionieren weiter mit `config_entries`). Ein Test prüft, dass
+  kein Modul die veralteten Eigenschaften mehr liest.
+
+### Geändert
+
+- Lademeldung: Der Anstieg steht in "%" statt in "Punkten" (Panel und Optionsdialog); die
+  Beschreibung nennt ein Beispiel.
+
 ## [1.31.0] - 2026-10-10
 
 Update-Erinnerung pro App und Integration.
@@ -1828,6 +1848,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[1.31.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.1
 [1.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.31.0
 [1.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.27.0
 [1.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v1.26.0

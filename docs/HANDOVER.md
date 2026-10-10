@@ -3,7 +3,7 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (1.31.0, Einstellungen in fünf Abschnitten)
+## Stand (1.31.1, Einstellungen in fünf Abschnitten)
 
 - Repository `Diegofuego871/ha-device-panel`, nur Branch `main` (siehe
   `CLAUDE.md`, "Git und Releases").
@@ -383,6 +383,13 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
    nimmt jetzt den Optionsnamen (`data-drag`, `data-drag-list`), feste Zeile
    `fixed` (Schalter an, ohne `data-list`), `_dragOrder()`; Standardfolge wird
    als `[]` gespeichert. Tests: `chiporder-e2e.mjs`, `test_update_check.py`.
+   Fehler `1.31.1` (Nutzer, 2026-10-10, hohe Priorität): Panel lud seit HA 2026.10 langsam/gar nicht. Ursache:
+   `DeviceEntry.config_entries`/`primary_config_entry` melden ab 2026.10 zur Laufzeit (`report_usage`); das
+   Panel las sie hundertfach je Abfrage. Neu `compat.device_entry_ids()` / `device_primary_entry_id()`
+   (`config_entry_id`, Rückfall `config_entries`); `tests/test_compat.py` verbietet direkte Lesezugriffe.
+   Nicht gegen HA 2026.10 selbst getestet (nur 2026.2.3 verfügbar): Ursache aus den Entwickler-Blogs
+   und Messung der Kosten hergeleitet; Bestätigung über das Log des Nutzers (Warnung "device_panel ...
+   config_entries") offen.
    Update-Erinnerung pro Eintrag `1.31.0` (Nutzer, 2026-10-10): `updates.catalog(hass)` liefert alle `update.*`-Entitäten
    (`id, name, kind, platform, installed, latest, available`, nach Art und Name) als `catalog.updates` in `get_options`;
    Optionen `updates_exclude`/`updates_include` (Entitäts-IDs, `options_api.update_ids`); `updates.is_wanted()`: Ausnahme

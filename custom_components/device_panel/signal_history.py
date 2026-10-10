@@ -37,6 +37,7 @@ from homeassistant.util import dt as dt_util
 from .availability import ONLINE
 from .battery_history import STATS_FROM_DAYS, _history, _statistics, held, thin
 from .const import DATA_AVAILABILITY, DOMAIN, STORAGE_VERSION
+from .compat import device_entry_ids
 from .devices import monitored_devices, signal_sensor, signal_source
 from .options_api import effective
 from .storage_util import PeriodicSaver
@@ -195,7 +196,7 @@ class SignalLog:
             events = log.events(device.id) if log is not None else []
             if not events or events[-1][1] != ONLINE:
                 continue
-            domains = {e.domain for eid in device.config_entries if (e := self.hass.config_entries.async_get_entry(eid))}
+            domains = {e.domain for eid in device_entry_ids(device) if (e := self.hass.config_entries.async_get_entry(eid))}
             signal, _via, source = signal_source(self.hass, device, entries, domains)
             if not signal or signal.get("value") is None:
                 continue
@@ -319,7 +320,7 @@ async def async_signal_history(
     span = RANGES.get(range_key, RANGES["24h"])
     start = now - span
     entries = er.async_entries_for_device(er.async_get(hass), device.id)
-    domains = {e.domain for eid in device.config_entries if (e := hass.config_entries.async_get_entry(eid))}
+    domains = {e.domain for eid in device_entry_ids(device) if (e := hass.config_entries.async_get_entry(eid))}
     signal, _via, source = signal_source(hass, device, entries, domains)
     result: dict[str, Any] = {
         "kind": signal["kind"] if signal else None,

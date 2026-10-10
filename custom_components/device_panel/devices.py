@@ -24,6 +24,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
+from .compat import device_entry_ids, device_primary_entry_id
 from .const import (
     CONF_AI_ASSESSMENT,
     CONF_BATTERY_LOW,
@@ -1026,7 +1027,7 @@ async def async_set_device_hidden(hass: HomeAssistant, device_id: str, hidden: b
 
 
 def _primary_entry(hass: HomeAssistant, device: dr.DeviceEntry):
-    entry_id = getattr(device, "primary_config_entry", None) or next(iter(device.config_entries), None)
+    entry_id = device_primary_entry_id(device)
     return hass.config_entries.async_get_entry(entry_id) if entry_id else None
 
 
@@ -1052,7 +1053,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
     hubs = hub_ids(hass)
     for device, entries in listed_devices(hass, opts):
         domains = sorted(
-            {e.domain for eid in device.config_entries if (e := hass.config_entries.async_get_entry(eid))}
+            {e.domain for eid in device_entry_ids(device) if (e := hass.config_entries.async_get_entry(eid))}
         )
         all_domains.update(domains)
         raw.append((device, entries, domains))
@@ -1212,7 +1213,7 @@ async def async_device_facts(hass: HomeAssistant, device: dr.DeviceEntry, opts: 
     Hersteller und Modell. Werte, die gerade fehlen, sind None.
     """
     entries = er.async_entries_for_device(er.async_get(hass), device.id)
-    domains = sorted({e.domain for eid in device.config_entries if (e := hass.config_entries.async_get_entry(eid))})
+    domains = sorted({e.domain for eid in device_entry_ids(device) if (e := hass.config_entries.async_get_entry(eid))})
     info = await async_integration_info(hass, set(domains))
     signal, _via, _source = signal_source(hass, device, entries, domains)
     primary = _primary_entry(hass, device)
@@ -1256,7 +1257,7 @@ async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = No
                 "liveness": e.entity_id in relevant_ids,
             }
         )
-    entry_ids = list(device.config_entries)
+    entry_ids = device_entry_ids(device)
     domains = {e.domain for eid in entry_ids if (e := hass.config_entries.async_get_entry(eid))}
     info = await async_integration_info(hass, domains)
     configs = []
