@@ -13,12 +13,12 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     tab: "Neu", lane: "Neue Geräte", zero: "Gerät gefunden", push: "Push", pers: "Anhaltend", noTarget: "kein Ziel gewählt", noPush: "Kein Push", newPush: "Push \"Neues Gerät\"",
-    window: "Sammeln während", optNotify: "Neue Geräte melden", fields: "Inhalt der Meldung", pvTitle: (n) => `Neues Gerät: ${n}`, noNew: "Neue Geräte ohne Push", range: "Erlaubt: 1 bis 60",
+    window: "Sammeln während", optNotify: "Neue Geräte melden", fields: "Inhalt der Meldung", pvTitle: (n) => `✨ Neues Gerät: ${n}`, noNew: "Neue Geräte ohne Push", range: "Erlaubt: 1 bis 60",
     grp: "Neue Geräte", diffTitle: "1 Integration weicht ab", gOff: "Die Meldung bei neuen Geräten ist global ausgeschaltet oder ohne Ziel (Reiter \"Neu\"); diese Einstellung gilt, sobald sie eingeschaltet ist.",
   },
   en: {
     tab: "New", lane: "New devices", zero: "device found", push: "Push", pers: "Persistent", noTarget: "no target chosen", noPush: "No push", newPush: "push \"New device\"",
-    window: "Collect for", optNotify: "Report new devices", fields: "Content of the notification", pvTitle: (n) => `New device: ${n}`, noNew: "New devices without push", range: "Allowed: 1 to 60",
+    window: "Collect for", optNotify: "Report new devices", fields: "Content of the notification", pvTitle: (n) => `✨ New device: ${n}`, noNew: "New devices without push", range: "Allowed: 1 to 60",
     grp: "New devices", diffTitle: "1 integration differs", gOff: "The notification for new devices is switched off globally or has no target (tab \"New\"); this setting applies as soon as it is on.",
   },
 };

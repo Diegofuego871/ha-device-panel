@@ -10,8 +10,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { tab: "Updates", sec: "Panel-Version", title: "Home Assistant Update", count: "5 verfügbar:", c4: "4 verfügbar:", own: "eigene Wahl", grp: "Einzelne Apps und Integrationen", none: "Ohne Ziel kommt kein Push", daily: "Täglich um", weekly: "Montags um", instant: "Sofort", one: "1 Änderung" },
-  en: { tab: "Updates", sec: "Panel version", title: "Home Assistant update", count: "5 available:", c4: "4 available:", own: "own choice", grp: "Single apps and integrations", none: "Without a target no push", daily: "Daily at", weekly: "Mondays at", instant: "Immediately", one: "1 change" },
+  de: { tab: "Updates", sec: "Panel-Version", title: "⬆️ Home Assistant Update", count: "5 verfügbar:", c4: "4 verfügbar:", own: "eigene Wahl", grp: "Einzelne Apps und Integrationen", none: "Ohne Ziel kommt kein Push", daily: "Täglich um", weekly: "Montags um", instant: "Sofort", one: "1 Änderung" },
+  en: { tab: "Updates", sec: "Panel version", title: "⬆️ Home Assistant update", count: "5 available:", c4: "4 available:", own: "own choice", grp: "Single apps and integrations", none: "Without a target no push", daily: "Daily at", weekly: "Mondays at", instant: "Immediately", one: "1 change" },
 };
 for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const T_ = T[lang];
