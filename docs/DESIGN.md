@@ -378,3 +378,11 @@ HA-Nachbau prüfen.
 - Wert · Wann · Versand · Text · Name. Zuerst wohin (Empfänger, kritisch, Wiederholen), dann was: Titel und Inhalt der
   Meldung und "wieder normal" mit eigenem Titel und Inhalt stehen im selben Schritt, darunter Vorschau und "Test senden"
   (der Test kennt so Empfänger, Lautstärke und Wiederholung).
+
+## Magic Push: Übersicht in den Einstellungen (seit 2.13.0, docs/mockups/magic-overview-v1, Variante B)
+
+- Oben Hinweis, dann Suchfeld (wie `list-search`, "n von m", X), Filter "Alle / An / Aus / Ausgelöst" als zweizeilige
+  Reiterleiste mit Zahlen, dann "n Meldungen auf m Geräten" mit "Alle einklappen".
+- Pro Gerät eine Karte (`.mg-dcard`): abgesetzter Kopf (Symbol, Name, Bereich · Integration, Zahl, Pfeil, rote Marke bei
+  Ausfall), darunter die Meldungen als Zeilen durch Linien getrennt, am Ende "Gerät öffnen ›". Zu: Kurzfassung statt
+  Bereich · Integration. Suche und Filter klappen Treffer auf.

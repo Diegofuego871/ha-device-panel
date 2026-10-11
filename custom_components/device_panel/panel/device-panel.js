@@ -104,6 +104,14 @@ function refocus(el) {
   const picker = el.tagName === "SELECT" || (el.tagName === "INPUT" && (el.type === "time" || el.type === "date"));
   if (picker && window.matchMedia?.(TOUCH_QUERY).matches) return;
   el.focus({ preventScroll: true });
+  // Suchfeld einer Liste: der Cursor bleibt am Ende des Getippten
+  if (el.dataset?.lsearch) {
+    try {
+      el.setSelectionRange(el.value.length, el.value.length);
+    } catch (err) {
+      // Feldart ohne Auswahl: nichts zu tun
+    }
+  }
 }
 
 // Für Text und Attribute: auch Anführungszeichen, sonst bricht ein Wert mit
@@ -5437,7 +5445,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.emoji ? `[data-emoji="${active.dataset.emoji}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfullInteg ? `[data-cfull-integ="${active.dataset.cfullInteg}"]` : active.dataset.criseInteg ? `[data-crise-integ="${active.dataset.criseInteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.lsearch ? `[data-lsearch="${active.dataset.lsearch}"]` : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.emoji ? `[data-emoji="${active.dataset.emoji}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfullInteg ? `[data-cfull-integ="${active.dataset.cfullInteg}"]` : active.dataset.criseInteg ? `[data-crise-integ="${active.dataset.criseInteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -5473,6 +5481,21 @@ class DevicePanel extends HTMLElement {
 
   _applyListSearch(root) {
     const st = this._settings;
+    // Übersicht Magic Push (seit 2.13.0): Karten statt Zeilen, darum eigener Neuaufbau des Listenteils bei geänderter Suche
+    const zone = root.querySelector("[data-mg-all-zone]");
+    if (zone && st?.magicAll?.rules) {
+      const q = String(st.search?.magic || "");
+      if (zone.dataset.q !== q) {
+        zone.dataset.q = q;
+        st.magicAll.sopen = {};
+        zone.innerHTML = this._magic.overviewListHtml(st.magicAll, this._devices);
+      }
+      const sh = st.magicAll.shown;
+      const cnt = root.querySelector('.list-search[data-for="magic"] .n');
+      if (cnt && sh) cnt.textContent = sh.filtering ? this._t("listSearchOf", sh.n, sh.total) : "";
+      const x = root.querySelector('[data-lclear="magic"]');
+      if (x) x.hidden = !q;
+    }
     for (const wrap of root.querySelectorAll(".srch-rows[data-srch]")) {
       const key = wrap.dataset.srch;
       const q = String(st?.search?.[key] || "").trim().toLowerCase();
@@ -5710,7 +5733,7 @@ class DevicePanel extends HTMLElement {
   _monMagicHtml() {
     const st = this._settings;
     if (!st.magicAll) {
-      st.magicAll = { rules: null, error: null, confirmId: null, flash: "", err: "" };
+      st.magicAll = { rules: null, error: null, confirmId: null, flash: "", err: "", filter: "all", open: {}, sopen: {} };
       this._loadMagicAll();
     }
     return this._magic.overviewHtml(st.magicAll, this._devices);
@@ -5745,6 +5768,20 @@ class DevicePanel extends HTMLElement {
     }
     if (action === "magic-device") {
       this._openDevice(btn.dataset.device, "magic");
+      return;
+    }
+    // Filter, Karte ein- oder ausklappen (seit 2.13.0): nur Anzeige, kein Server
+    if (action === "magic-filter") {
+      all.filter = btn.dataset.v;
+      all.sopen = {};
+      if (this._settings === st) this._renderSettings();
+      return;
+    }
+    if (action === "magic-fold-dev" || action === "magic-fold-all") {
+      if (action === "magic-fold-dev") this._magic.toggleFold(all, this._devices, btn.dataset.device);
+      else this._magic.foldAll(all, this._devices);
+      const zone = this.shadowRoot.querySelector("dialog.settings [data-mg-all-zone]");
+      if (zone) zone.innerHTML = this._magic.overviewListHtml(all, this._devices);
       return;
     }
     if (action === "magic-edit") {

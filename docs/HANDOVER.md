@@ -3,7 +3,18 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.12.0, Magic Push: Schrittfolge Versand vor Text)
+## Stand (2.13.0, Magic Push: Übersicht mit Gerätekarten, Suche, Filter)
+
+- 2.13.0 (Entscheid des Nutzers: Variante B, keine wählbare Gruppierung; Mockups `docs/mockups/magic-overview-v1`):
+  `MagicPush.overviewHtml` zeichnet Suchfeld (`data-lsearch="magic"`, Text in `_settings.search.magic`), Filter
+  (`.mg-filter`, Aktionen `data-set="magic-filter"`) und die Zone `[data-mg-all-zone]` (`overviewListHtml`: Zahl, "Alle
+  einklappen", Karten `.mg-dcard` mit Kopf `.mg-dhead`, Zeilen `.mg-card`, Fuss "Gerät öffnen"). Zustand in
+  `_settings.magicAll`: `filter`, `open` (zu/offen ohne Filter; Standard: offen bis 3 Geräte), `sopen` (mit Filter,
+  Standard offen, beginnt bei neuer Suche/neuem Filter neu). Suche: `_applyListSearch` zeichnet nur die Zone neu, wenn
+  sich der Suchtext (`data-q`) ändert; Fokus und Cursor überstehen einen Neuaufbau (`refocus`, `lsearch`). Filter
+  "Ausgelöst" = eingeschaltet und `active`. Tests: `magicall-e2e` (Suche, Filter, Falten, viele Geräte).
+
+## Stand davor (2.12.0, Magic Push: Schrittfolge Versand vor Text)
 
 - 2.12.0 (Wunsch des Nutzers): Schritte des Assistenten: 1 Wert, 2 Wann, 3 Versand (`step3Html`: Empfänger, kritisch +
   Lautstärke, Wiederholen; bei "ändert sich" nur Empfänger/kritisch und Hinweis), 4 Text (`step4Html`: Titel, Inhalt,

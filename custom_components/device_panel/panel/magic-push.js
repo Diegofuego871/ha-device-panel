@@ -538,8 +538,88 @@ export class MagicPush {
 
   // --- Übersicht aller Meldungen (Reiter "Magic Push" in den Einstellungen, seit 2.10.0) --------------------------
 
-  // Nach Gerät gruppiert: Kopf mit Gerät (Symbol, Name, Bereich und Integration), darunter seine Meldungen mit Schalter,
-  // Bearbeiten und Löschen. Neue Meldungen gibt es hier nicht, sie entstehen im Popup des Geräts.
+  // Seit 2.13.0 (docs/mockups/magic-overview-v1, Variante B): pro Gerät eine einklappbare Karte (Kopf mit Symbol, Name,
+  // Bereich und Integration, Zahl; zu: Kurzfassung), darin die Meldungen mit Schalter, Bearbeiten und Löschen; darüber
+  // Suchfeld und Filter (Alle, An, Aus, Ausgelöst). Neue Meldungen gibt es hier nicht, sie entstehen im Popup des Geräts.
+  // Suche und Filter klappen die Treffer auf; der Zustand "zu/offen" gilt, solange die Einstellungen offen sind.
+  allQuery() {
+    return String(this.host._settings?.search?.magic || "").trim();
+  }
+
+  collate() {
+    return [this.host._locale() || undefined, { sensitivity: "base" }];
+  }
+
+  // Alle Meldungen nach Gerät: Name, Untertitel (Bereich · Integration), Ausfall; sortiert nach Gerätename
+  allGroups(all, devices) {
+    const byDevice = new Map();
+    for (const r of all.rules) {
+      if (!byDevice.has(r.device_id)) byDevice.set(r.device_id, []);
+      byDevice.get(r.device_id).push(r);
+    }
+    const [loc, opt] = this.collate();
+    return [...byDevice.entries()]
+      .map(([id, rules]) => {
+        const dev = devices.find((d) => d.id === id);
+        return {
+          id,
+          dev,
+          name: dev?.name || rules[0].device_name || id,
+          sub: dev ? [dev.area, this.host._integName(dev)].filter(Boolean).join(" · ") : "",
+          off: dev?.online === false,
+          rules: rules.sort((a, b) => a.name.localeCompare(b.name, loc, opt)),
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, loc, opt));
+  }
+
+  // Suchtext einer Meldung: Name, Satz, Gerät, Bereich, Integration, Empfänger, Entität
+  haystack(r, g) {
+    const e = this.entityOf(r);
+    return [r.name, this.sentence(r), g.name, g.sub, r.target, r.entity_id, e?.name].filter(Boolean).join(" ").toLowerCase();
+  }
+
+  passes(r, g, q, filter) {
+    if (filter === "on" && !r.enabled) return false;
+    if (filter === "off" && r.enabled) return false;
+    if (filter === "fired" && !(r.enabled && r.active)) return false;
+    return !q || q.toLowerCase().split(/\s+/).every((w) => this.haystack(r, g).includes(w));
+  }
+
+  allCounts(rules) {
+    return { all: rules.length, on: rules.filter((r) => r.enabled).length, off: rules.filter((r) => !r.enabled).length, fired: rules.filter((r) => r.enabled && r.active).length };
+  }
+
+  // Filter aktiv? Dann sind die Treffer aufgeklappt (eigener Zustand, der beim Ändern von Suche und Filter neu beginnt)
+  isFiltering(all) {
+    return Boolean(this.allQuery()) || (all.filter || "all") !== "all";
+  }
+
+  isOpen(all, id, nGroups) {
+    if (this.isFiltering(all)) return all.sopen?.[id] ?? true;
+    return all.open?.[id] ?? nGroups <= 3;
+  }
+
+  toggleFold(all, devices, id) {
+    const map = this.isFiltering(all) ? (all.sopen ||= {}) : (all.open ||= {});
+    map[id] = !this.isOpen(all, id, this.allGroups(all, devices).length);
+  }
+
+  foldAll(all, devices) {
+    const groups = this.visibleGroups(all, devices);
+    const anyOpen = groups.some((g) => this.isOpen(all, g.id, this.allGroups(all, devices).length));
+    const map = this.isFiltering(all) ? (all.sopen ||= {}) : (all.open ||= {});
+    for (const g of groups) map[g.id] = !anyOpen;
+  }
+
+  visibleGroups(all, devices) {
+    const q = this.allQuery();
+    const filter = all.filter || "all";
+    return this.allGroups(all, devices)
+      .map((g) => ({ ...g, shown: g.rules.filter((r) => this.passes(r, g, q, filter)) }))
+      .filter((g) => g.shown.length);
+  }
+
   overviewHtml(all, devices) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
@@ -551,22 +631,45 @@ export class MagicPush {
     if (all.err) html += `<div class="dlg-error">${esc(all.err)}</div>`;
     if (!all.rules) return `${html}<p class="mg-note">${esc(t("mgLoading"))}</p>`;
     if (!all.rules.length) return `${html}<p class="mg-empty">${esc(t("mgAllEmpty"))}</p>`;
-    const byDevice = new Map();
-    for (const r of all.rules) {
-      if (!byDevice.has(r.device_id)) byDevice.set(r.device_id, []);
-      byDevice.get(r.device_id).push(r);
-    }
-    const nameOf = (id, rules) => devices.find((d) => d.id === id)?.name || rules[0].device_name || id;
-    const groups = [...byDevice.entries()].sort((a, b) => nameOf(a[0], a[1]).localeCompare(nameOf(b[0], b[1]), this.host._locale() || undefined, { sensitivity: "base" }));
-    html += `<p class="mg-count">${esc(t("mgAllCount", all.rules.length, groups.length))}</p>`;
-    for (const [id, rules] of groups) {
-      const dev = devices.find((d) => d.id === id);
-      const sub = dev ? [dev.area, this.host._integName(dev)].filter(Boolean).join(" · ") : "";
-      const off = dev?.online === false;
-      html += `<div class="mg-dev"><button type="button" class="mg-devbtn" data-set="magic-device" data-device="${esc(id)}" title="${esc(t("mgAllOpenDevice"))}">
-        <span class="mg-devic${off ? " off" : ""}" aria-hidden="true">${this.h.typeIcon(dev?.type || "other", 18)}</span>
-        <span class="mg-t"><b>${esc(nameOf(id, rules))}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>${off ? `<span class="mg-devoff">${esc(t("statusOffline"))}</span>` : ""}</button></div>`;
-      html += rules.sort((a, b) => a.name.localeCompare(b.name, this.host._locale() || undefined, { sensitivity: "base" })).map((r) => this.overviewCardHtml(r, all)).join("");
+    const q = String(this.host._settings?.search?.magic || "");
+    const ph = t("listSearch");
+    html += `<label class="list-search" data-for="magic">${this.h.mdi("search", 18)}<input type="search" data-lsearch="magic" value="${esc(q)}" placeholder="${esc(ph)}" aria-label="${esc(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n"></span>${this.host._fieldClearHtml("data-lclear", "magic", q)}</label>`;
+    const c = this.allCounts(all.rules);
+    const filter = all.filter || "all";
+    html += `<div class="sub-tabs mg-tabs mg-filter" role="tablist">${[["all", "mgFilterAll"], ["on", "mgFilterOn"], ["off", "mgFilterOff"], ["fired", "mgFilterFired"]]
+      .map(([k, label]) => `<button type="button" role="tab" class="sub-tab two${k === filter ? " on" : ""}" data-set="magic-filter" data-v="${k}" aria-selected="${k === filter}"><span class="tab-l">${esc(t(label))}</span> <span class="tab-s">${c[k]}</span></button>`)
+      .join("")}</div>`;
+    return `${html}<div data-mg-all-zone data-q="${esc(q)}">${this.overviewListHtml(all, devices)}</div>`;
+  }
+
+  // Zahl der Treffer, Alle einklappen und die Gerätekarten (der Teil, der bei der Suche neu gezeichnet wird)
+  overviewListHtml(all, devices) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const groups = this.visibleGroups(all, devices);
+    const nGroups = this.allGroups(all, devices).length;
+    const shown = groups.reduce((n, g) => n + g.shown.length, 0);
+    all.shown = { n: shown, total: all.rules.length, filtering: this.isFiltering(all) };
+    if (!groups.length) return `<p class="mg-note mg-none">${esc(t("listSearchNone"))}</p>`;
+    const anyOpen = groups.some((g) => this.isOpen(all, g.id, nGroups));
+    let html = `<div class="mg-allcount"><span class="mg-count">${esc(t("mgAllCount", shown, groups.length))}</span><button type="button" class="linkbtn" data-set="magic-fold-all">${esc(t(anyOpen ? "mgFoldAll" : "mgUnfoldAll"))}</button></div>`;
+    for (const g of groups) {
+      const open = this.isOpen(all, g.id, nGroups);
+      const firing = g.shown.filter((r) => r.enabled && r.active).length;
+      const offN = g.shown.filter((r) => !r.enabled).length;
+      const sum = open
+        ? g.sub
+          ? `<small>${esc(g.sub)}</small>`
+          : ""
+        : `<small class="mg-dsum">${esc(t("mgSumMsgs", g.shown.length))}${offN ? ` · ${esc(t("mgSumOff", offN))}` : ""}${firing ? ` · <span class="mg-on">${esc(t("mgSumFired", firing))}</span>` : ""}${g.off ? ` · <span class="mg-warn">${esc(t("mgUnreachable"))}</span>` : ""}</small>`;
+      html += `<div class="mg-dcard${open ? "" : " closed"}"><button type="button" class="mg-dhead" data-set="magic-fold-dev" data-device="${esc(g.id)}" aria-expanded="${open}">
+        <span class="mg-devic${g.off ? " off" : ""}" aria-hidden="true">${this.h.typeIcon(g.dev?.type || "other", 18)}</span>
+        <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span>${g.off && open ? `<span class="mg-devoff">${esc(t("statusOffline"))}</span>` : ""}<span class="mg-badge">${g.shown.length}</span><span class="mg-chev" aria-hidden="true">${open ? "▾" : "▸"}</span></button>`;
+      if (open) {
+        html += g.shown.map((r) => this.overviewCardHtml(r, all)).join("");
+        html += `<div class="mg-dfoot"><button type="button" class="linkbtn" data-set="magic-device" data-device="${esc(g.id)}">${esc(t("mgAllOpenDevice"))} ›</button></div>`;
+      }
+      html += `</div>`;
     }
     return html;
   }

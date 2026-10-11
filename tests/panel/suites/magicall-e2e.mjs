@@ -75,9 +75,9 @@ for (const lang of ["de", "en"]) {
 
     await tap('dialog.settings [data-set="tab"][data-key="magic"]');
     check(`[${tag}] Reiter zeigt Hinweis und Zahl`, await wait(`const t=r.querySelector('${body}')?.textContent || ""; return t.includes(${JSON.stringify(T.intro)}) && t.includes(${JSON.stringify(T.count)})`), await text(body));
-    const heads = await ev(`return [...r.querySelectorAll('${body} .mg-devbtn b')].map(x => x.textContent.trim()).join("|")`);
+    const heads = await ev(`return [...r.querySelectorAll('${body} .mg-dhead .mg-t b')].map(x => x.textContent.trim()).join("|")`);
     check(`[${tag}] nach Gerät gruppiert: Steckdose Terrasse, Stromzähler`, heads === "Steckdose Terrasse|Stromzähler", heads);
-    check(`[${tag}] Gerätekopf nennt Bereich und Integration`, (await text(`${body} .mg-devbtn small`)).includes("Terrasse"));
+    check(`[${tag}] Gerätekopf nennt Bereich und Integration`, (await text(`${body} .mg-dhead small`)).includes("Terrasse"));
     check(`[${tag}] drei Karten, die ausgeschaltete ist abgesetzt`, (await cards()) === 3 && (await ev(`return r.querySelectorAll('${body} .mg-card.off').length`)) === 1);
     check(`[${tag}] Satz: Entität, Bedingung, Dauer`, (await ev(`return [...r.querySelectorAll('${body} .mg-card .mg-t small:first-of-type')].map(x => x.textContent).join(" | ")`)).includes("12") && (await ev(`return [...r.querySelectorAll('${body} .mg-card .mg-t small:first-of-type')].some(x => x.textContent.includes("Absolute Feuchte berechnet"))`)));
     check(`[${tag}] freie Entität ist gekennzeichnet`, (await ev(`return [...r.querySelectorAll('${body} .mg-card')].filter(c => c.querySelector(".mg-freetag")).map(c => c.querySelector("b").textContent).join()`)) === "Feuchte hoch");
@@ -127,9 +127,90 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { window.__magicLoadFails = null; });
 
     // Gerätekopf: Popup mit der Liste des Geräts
-    await tap(`${body} .mg-devbtn[data-device="h"]`);
+    await tap(`${body} [data-set="magic-device"][data-device="h"]`);
     check(`[${tag}] Gerätekopf öffnet das Popup im Reiter Magic Push (Liste, kein Assistent)`, await wait(`const d=r.querySelector("dialog.device"); return d?.open && !!r.querySelector('.mg-root .mg-card') && !r.querySelector('.mg-root .mg-stephead')`));
     await ev(`r.host._closeDevice()`);
+
+    // Struktur, Suche und Filter (2.13.0, docs/mockups/magic-overview-v1, Variante B)
+    // Das "close" des eben geschlossenen Popups nimmt auf dem Handy den Fokus (_blurOnTouch): erst abwarten, dann tippen
+    await p.waitForTimeout(500);
+    const reload = async (rules) => {
+      await p.evaluate((r) => { window.__magic.rules = r; }, rules);
+      await ev(`r.host._settings.magicAll = null; r.host._settings.search = {}; r.host._renderSettings()`);
+      await wait(`return r.querySelectorAll('${body} .mg-dhead').length > 0`);
+    };
+    const nOf = (n, total) => (lang === "de" ? `${n} von ${total}` : `${n} of ${total}`);
+    const base = [
+      RULE("r00000000001", "d", "Keller kalt", "sensor.temp", { __active: true }),
+      RULE("r00000000002", "d", "Feuchte hoch", "sensor.abs_humidity", { kind: "above", value: 10, critical: true, critical_volume: 7 }),
+      RULE("r00000000003", "h", "Fenster offen", "binary_sensor.window", { kind: "is", value: "on", for_s: 2700, reset_value: "off", enabled: false }),
+    ];
+    await reload(base);
+    const input = `${body} input[data-lsearch="magic"]`;
+    // Tippen mit Wiederholung: der Neuaufbau der Einstellungen kann das Feld zwischen Greifen und Tippen ersetzen
+    const type = async (sel, value) => {
+      for (let i = 0; ; i++) {
+        try { const h = await handle(sel); await h.fill(value); return; }
+        catch (err) { if (i >= 3 || !/not attached|detached/.test(String(err))) throw err; await new Promise((r) => setTimeout(r, 150)); }
+      }
+    };
+    const waitNames = (names) => wait(`return [...r.querySelectorAll('${body} .mg-card .mg-t b')].map(b => b.textContent.trim()).sort().join("|") === ${JSON.stringify(names)}`);
+    const cardNames = () => ev(`return [...r.querySelectorAll('${body} .mg-card .mg-t b')].map(b => b.textContent.trim()).sort().join("|")`);
+    check(`[${tag}] Suchfeld und vier Filter mit Zahlen (Alle 3, An 2, Aus 1, Ausgelöst 1)`, !!(await handle(input)) && (await ev(`return [...r.querySelectorAll('${body} .mg-filter .sub-tab .tab-s')].map(x => x.textContent.trim()).join()`)) === "3,2,1,1" && (await ev(`return r.querySelectorAll('${body} .mg-filter .sub-tab').length`)) === 4);
+    check(`[${tag}] Filter ist eine Reiterleiste mit Kapsel, "Alle" gewählt`, await wait(`return !!r.querySelector('${body} .mg-filter > .seg-pill') && r.querySelector('${body} .mg-filter .sub-tab.on')?.dataset.v === "all"`));
+    check(`[${tag}] Gerätekarten: pro Gerät ein Kopf mit Zahl der Meldungen`, (await ev(`return [...r.querySelectorAll('${body} .mg-dhead')].map(h => h.dataset.device + ":" + h.querySelector(".mg-badge").textContent).join()`)) === "d:2,h:1");
+    // Suche: Name, Gerät, Satz; mehrere Wörter; Fokus bleibt, Zahl "n von m", X
+    await type(input, "feuchte");
+    check(`[${tag}] Suche "feuchte": eine Meldung, "${nOf(1, 3)}", Fokus bleibt im Feld`, await wait(`return r.querySelectorAll('${body} .mg-card').length === 1 && r.querySelector('${body} .list-search .n').textContent.trim() === ${JSON.stringify(nOf(1, 3))} && r.activeElement === r.querySelector('${input}')`), await ev(`return [r.querySelectorAll('${body} .mg-card').length, r.querySelector('${body} .list-search .n').textContent, String(r.activeElement?.tagName), [...r.querySelectorAll("dialog[open]")].map(d => d.className).join("+"), String(document.activeElement?.tagName)].join(" / ")`));
+    await type(input, "stromzähler");
+    check(`[${tag}] Suche nach dem Gerät findet dessen Meldung`, await waitNames("Fenster offen"), await cardNames());
+    await type(input, lang === "de" ? "kritisch" : "critical");
+    check(`[${tag}] Suche im Satz ("kritisch")`, await waitNames("Feuchte hoch"), await cardNames());
+    await type(input, "temperatur 12");
+    check(`[${tag}] mehrere Wörter müssen alle vorkommen`, await waitNames("Keller kalt"), await cardNames());
+    await type(input, "xyzxyz");
+    check(`[${tag}] ohne Treffer: Hinweis, keine Karte, "${nOf(0, 3)}"`, await wait(`return r.querySelectorAll('${body} .mg-dcard').length === 0 && !!r.querySelector('${body} .mg-none') && r.querySelector('${body} .list-search .n').textContent.trim() === ${JSON.stringify(nOf(0, 3))}`));
+    await tap(`${body} [data-lclear="magic"]`);
+    check(`[${tag}] X leert die Suche: alle drei wieder da`, await wait(`return r.querySelectorAll('${body} .mg-card').length === 3 && r.querySelector('${input}').value === ""`));
+    // Filter
+    await tap(`${body} .mg-filter [data-v="off"]`);
+    check(`[${tag}] Filter "Aus": nur die ausgeschaltete`, await waitNames("Fenster offen"), await cardNames());
+    await tap(`${body} .mg-filter [data-v="fired"]`);
+    check(`[${tag}] Filter "Ausgelöst": nur die, deren Bedingung gerade gilt`, await waitNames("Keller kalt"), await cardNames());
+    await tap(`${body} .mg-filter [data-v="on"]`);
+    check(`[${tag}] Filter "An": zwei`, await wait(`return r.querySelectorAll('${body} .mg-card').length === 2`));
+    check(`[${tag}] Zahlen im Filter bleiben, auch wenn gefiltert wird`, (await ev(`return [...r.querySelectorAll('${body} .mg-filter .sub-tab .tab-s')].map(x => x.textContent.trim()).join()`)) === "3,2,1,1");
+    await tap(`${body} .mg-filter [data-v="all"]`);
+    await wait(`return r.querySelectorAll('${body} .mg-card').length === 3`);
+    // Karten ein- und ausklappen
+    await tap(`${body} .mg-dhead[data-device="d"]`);
+    check(`[${tag}] Kopf antippen klappt die Karte zu: Kurzfassung statt Meldungen`, await wait(`const h=r.querySelector('${body} .mg-dhead[data-device="d"]'); return h.getAttribute("aria-expanded") === "false" && r.querySelectorAll('${body} .mg-card').length === 1 && /(2 Meldungen|2 messages)/.test(h.textContent) && /(ausgelöst|triggered)/.test(h.textContent)`));
+    await tap(`${body} .mg-dhead[data-device="d"]`);
+    check(`[${tag}] nochmals antippen klappt auf`, await wait(`return r.querySelector('${body} .mg-dhead[data-device="d"]').getAttribute("aria-expanded") === "true" && r.querySelectorAll('${body} .mg-card').length === 3`));
+    await tap(`${body} [data-set="magic-fold-all"]`);
+    check(`[${tag}] "Alle einklappen": alle zu, Knopf heisst nun "Alle ausklappen"`, await wait(`return [...r.querySelectorAll('${body} .mg-dhead')].every(h => h.getAttribute("aria-expanded") === "false") && /(Alle ausklappen|Expand all)/.test(r.querySelector('${body} [data-set="magic-fold-all"]').textContent)`));
+    // Suche klappt Treffer auf, auch wenn die Karte zu war; ohne Suche ist sie wieder zu
+    await type(input, "feuchte");
+    check(`[${tag}] Suche klappt die Treffer auf`, await wait(`return r.querySelector('${body} .mg-dhead[data-device="d"]').getAttribute("aria-expanded") === "true" && r.querySelectorAll('${body} .mg-card').length === 1`));
+    await tap(`${body} [data-lclear="magic"]`);
+    check(`[${tag}] ohne Suche ist die Karte wieder zu (Zustand gemerkt)`, await wait(`return [...r.querySelectorAll('${body} .mg-dhead')].every(h => h.getAttribute("aria-expanded") === "false")`));
+    await tap(`${body} [data-set="magic-fold-all"]`);
+    await wait(`return r.querySelectorAll('${body} .mg-card').length === 3`);
+    // Mehr als drei Geräte: zu Beginn alle zu (Überblick), Kurzfassung zeigt "aus" und "ausgelöst"
+    const others = await ev(`return r.host._devices.map(d => d.id).filter(id => id !== "d" && id !== "h").slice(0, 4)`);
+    await reload([...base, ...others.map((id, i) => RULE(`r0000000001${i}`, id, ["Alpha", "Beta", "Gamma", "Delta"][i], "sensor.temp"))]);
+    check(`[${tag}] mehr als drei Geräte: alle Karten zu, Karten gezählt`, (await ev(`return [...r.querySelectorAll('${body} .mg-dhead')].every(h => h.getAttribute("aria-expanded") === "false") && r.querySelectorAll('${body} .mg-card').length === 0`)) && (await ev(`return r.querySelectorAll('${body} .mg-dhead').length`)) === 2 + others.length);
+    check(`[${tag}] zu: Kurzfassung mit "aus" und "ausgelöst"`, await ev(`const h=r.querySelector('${body} .mg-dhead[data-device="h"]'); const d=r.querySelector('${body} .mg-dhead[data-device="d"]'); return /(1 aus|1 off)/.test(h.textContent) && /(1 ausgelöst|1 triggered)/.test(d.textContent)`));
+    await type(input, "gamma");
+    check(`[${tag}] Suche in zugeklappten Karten: Treffer aufgeklappt`, (await waitNames("Gamma")) && (await ev(`return r.querySelectorAll('${body} .mg-dhead').length`)) === 1, await cardNames());
+    await tap(`${body} [data-lclear="magic"]`);
+    // "Gerät öffnen" in der aufgeklappten Karte
+    await tap(`${body} .mg-dhead[data-device="h"]`);
+    await tap(`${body} [data-set="magic-device"][data-device="h"]`);
+    check(`[${tag}] "Gerät öffnen" zeigt das Popup im Reiter Magic Push`, await wait(`return r.querySelector("dialog.device")?.open && !!r.querySelector('.sub-tab[data-tab="magic"].on')`));
+    await ev(`r.host._closeDevice()`);
+    check(`[${tag}] Übersicht ohne Querscrollen (viele Karten)`, (await ev(`const d=r.querySelector("dialog.settings"); return d.scrollWidth - d.clientWidth`)) <= 0);
+    await p.screenshot({ path: `${outDir}/magicall-${tag.replace("/", "-")}-many.png` });
 
     // Leer, Fehler
     await p.evaluate(() => { window.__magic.rules = []; });

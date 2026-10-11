@@ -1406,12 +1406,24 @@ input.mg-pill { cursor: text; }
 .mg-stepper .sub-tab { font-size: 18px; }
 .mg-valin { min-width: 0; width: 100%; box-sizing: border-box; padding: 0 6px; border: none; border-radius: 11px; background: none; color: var(--dp-text); font: inherit; font-size: 15px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
 .mg-valin:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
-/* Reiter "Magic Push" in den Einstellungen (seit 2.10.0): Gerät als Kopf, darunter seine Meldungen */
+/* Reiter "Magic Push" in den Einstellungen (seit 2.10.0; seit 2.13.0 Gerätekarten, docs/mockups/magic-overview-v1, Variante B):
+   pro Gerät eine einklappbare Karte, darin die Meldungen; darüber Suchfeld und Filter */
 .mg-count { margin: 4px 0 0; color: var(--dp-text2); font-size: 12.5px; }
-.mg-dev { margin-top: 14px; }
-.mg-devbtn { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; padding: 4px 2px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.mg-devbtn:hover b { color: var(--dp-primary); }
-.mg-devbtn:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; border-radius: 8px; }
+.mg-filter { margin: 2px 0 8px; }
+.mg-allcount { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 2px 2px; }
+.mg-allcount .mg-count { margin: 0; }
+.mg-none { margin-top: 14px; }
+.mg-dcard { margin-top: 10px; border-radius: 16px; background: var(--dp-subtle); overflow: hidden; }
+.mg-dhead { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; padding: 11px 12px; border: 0; background: color-mix(in srgb, var(--dp-text) 5%, var(--dp-subtle)); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.mg-dhead:hover b { color: var(--dp-primary); }
+.mg-dhead:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
+.mg-dhead .mg-t b { font-size: 15px; }
+.mg-dsum { color: var(--dp-text2); }
+.mg-dsum .mg-on { color: var(--dp-primary); font-weight: 500; }
+.mg-dsum .mg-warn { color: var(--dp-warning); font-weight: 500; }
+.mg-badge { flex: none; min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; display: grid; place-items: center; border-radius: 99px; background: var(--dp-primary-soft); color: var(--dp-primary); font-size: 12px; font-weight: 600; }
+.mg-dcard .mg-card { margin: 0; padding: 12px 14px 12px 12px; border-radius: 0; background: none; border-top: 1px solid var(--dp-divider); }
+.mg-dfoot { padding: 8px 14px 10px 56px; border-top: 1px solid var(--dp-divider); font-size: 13px; }
 .mg-devic { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--dp-subtle); color: var(--dp-text2); }
 .mg-devic.off { background: var(--dp-error-soft); color: var(--dp-error); }
 .mg-devoff { flex: none; padding: 1px 8px; border-radius: 99px; background: var(--dp-error-soft); color: var(--dp-error); font-size: 11.5px; font-weight: 500; }

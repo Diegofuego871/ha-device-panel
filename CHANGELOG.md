@@ -7,6 +7,26 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.13.0] - 2026-10-11
+
+Magic Push: overview in the settings with structure, search and filter.
+
+### Changed
+
+- The overview "Magic Push" in the settings (Monitoring and notifications) now groups the messages in one card per device
+  (requested by the user, mockups `docs/mockups/magic-overview-v1`, variant B). The card head shows the device (icon, name,
+  area and integration, a red "offline" mark) and the number of its messages; the messages sit inside the card, each with
+  switch, "Edit" and "Delete", and "Open device" at the end. A tap on the head collapses the card; collapsed, it shows a
+  short summary ("2 messages · 1 off · 1 triggered", "currently unreachable"). "Collapse all" / "Expand all" sits above
+  the list. With more than three devices all cards start collapsed. The state is kept while the settings are open.
+
+### Added
+
+- Search field above the overview, like in the other long lists of the settings: it looks through name, sentence, device,
+  area, integration, recipient and entity ID (several words must all appear), shows "n of m" and has a cross.
+- Filter "All / On / Off / Triggered" with the numbers (Triggered: the condition holds right now). Search and filter
+  expand the matching cards; without them the cards are as before.
+
 ## [2.12.0] - 2026-10-11
 
 Magic Push: new order of the steps.
@@ -2472,6 +2492,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0
 [2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0
 [2.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.11.0
 [2.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.10.0

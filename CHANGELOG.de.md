@@ -7,6 +7,27 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.13.0] - 2026-10-11
+
+Magic Push: Übersicht in den Einstellungen mit Struktur, Suche und Filter.
+
+### Geändert
+
+- Die Übersicht "Magic Push" in den Einstellungen (Überwachung und Meldungen) gruppiert die Meldungen jetzt in einer Karte
+  pro Gerät (Wunsch des Nutzers, Mockups `docs/mockups/magic-overview-v1`, Variante B). Der Kopf der Karte zeigt das Gerät
+  (Symbol, Name, Bereich und Integration, rote Marke "ausgefallen") und die Zahl seiner Meldungen; die Meldungen stehen in
+  der Karte, je mit Schalter, "Bearbeiten" und "Löschen", am Ende "Gerät öffnen". Ein Tipp auf den Kopf klappt die Karte
+  zu; zu zeigt sie eine Kurzfassung ("2 Meldungen · 1 aus · 1 ausgelöst", "gerade nicht erreichbar"). Über der Liste
+  steht "Alle einklappen" / "Alle ausklappen". Bei mehr als drei Geräten beginnen alle Karten zu. Der Zustand bleibt
+  erhalten, solange die Einstellungen offen sind.
+
+### Hinzugefügt
+
+- Suchfeld über der Übersicht, wie in den anderen langen Listen der Einstellungen: Es durchsucht Name, Satz, Gerät, Bereich,
+  Integration, Empfänger und Entitäts-ID (mehrere Wörter müssen alle vorkommen), zeigt "n von m" und hat ein Kreuz.
+- Filter "Alle / An / Aus / Ausgelöst" mit den Zahlen (Ausgelöst: die Bedingung gilt gerade). Suche und Filter klappen die
+  Treffer auf; ohne sie sind die Karten wie vorher.
+
 ## [2.12.0] - 2026-10-11
 
 Magic Push: neue Reihenfolge der Schritte.
@@ -2554,6 +2575,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0
 [2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0
 [2.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.11.0
 [2.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.10.0
