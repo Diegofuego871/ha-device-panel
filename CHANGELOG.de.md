@@ -7,7 +7,28 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.1.0] - 2026-10-11
+
+Das Icon der Integration in Push-Meldungen.
+
+### Hinzugefügt
+
+- Eine Push-Meldung, die eindeutig zu einer Integration gehört, zeigt nun deren Icon statt des Device-Panel-Icons:
+  "Wieder online: Aqara FP400" zeigt das Icon der Integration, mit der das Gerät eingerichtet ist (zum Beispiel
+  Matter). Das gilt für Ausfall und Wieder online, schwache Batterie, Ladung und neue Geräte. Eine Meldung zu
+  mehreren Geräten zeigt das Icon nur, wenn alle zur selben Integration gehören; sonst, und bei der
+  Update-Erinnerung, bleibt das Device-Panel-Icon. Nichts einzurichten.
+- Woher das Icon kommt: zuerst `brand/icon.png` der Integration selbst, sonst der Icon-Dienst von Home Assistant
+  (`brands.home-assistant.io`), dieselbe Quelle, die Home Assistant für die eigenen Integrations-Seiten nutzt. Jedes
+  Icon wird nur einmal geholt, mit Rand auf eine quadratische Fläche gesetzt (iOS schneidet die Ecken des Bilds ab)
+  und in `.storage/device_panel_icons` abgelegt; die Companion-App lädt es ohne Anmeldung, wie das Device-Panel-Icon.
+  Ein Icon, das sich nicht finden lässt, wird nach sechs Stunden neu versucht; bis dahin, und wenn Home Assistant
+  keinen Netzzugriff hat, gilt das Device-Panel-Icon. Eine Meldung wartet wegen eines Icons nie länger als vier
+  Sekunden. Der Ordner wird beim Entfernen der Integration gelöscht.
+
 ## [2.0.10] - 2026-10-11
+
+Nicht veröffentlicht; enthalten in 2.1.0.
 
 Geräte-Popup: der Reiter "Einstellungen" auf zwei Zeilen.
 
@@ -19,6 +40,8 @@ Geräte-Popup: der Reiter "Einstellungen" auf zwei Zeilen.
   die übrigen Reiter bleiben wie bisher.
 
 ## [2.0.9] - 2026-10-11
+
+Nicht veröffentlicht; enthalten in 2.1.0.
 
 Blauer Ring nach dem Schliessen eines Fensters auf dem Handy.
 
@@ -32,6 +55,8 @@ Blauer Ring nach dem Schliessen eines Fensters auf dem Handy.
 
 ## [2.0.8] - 2026-10-11
 
+Nicht veröffentlicht; enthalten in 2.1.0.
+
 Klares Zeichen für eine ausgeschaltete Meldung in den Grafiken.
 
 ### Geändert
@@ -43,6 +68,8 @@ Klares Zeichen für eine ausgeschaltete Meldung in den Grafiken.
   der gestrichelten Linie.
 
 ## [2.0.7] - 2026-10-11
+
+Nicht veröffentlicht; enthalten in 2.1.0.
 
 Einstellungen pro Gerät an einem Ort; "Darstellung" hat nur noch die Filter-Chips.
 
@@ -2295,10 +2322,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[2.0.10]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.10
-[2.0.9]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.9
-[2.0.8]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.8
-[2.0.7]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.7
+[2.1.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.1.0
 [2.0.6]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.6
 [2.0.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.5
 [2.0.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.4

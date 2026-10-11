@@ -7,7 +7,28 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.1.0] - 2026-10-11
+
+The icon of the integration in push notifications.
+
+### Added
+
+- A push notification that clearly belongs to one integration now shows that integration's icon instead of the Device
+  Panel icon: "Back online: Aqara FP400" shows the icon of the integration the device is set up with (for example
+  Matter). This applies to outage and back-online, low battery, charging, and new device notifications. A
+  notification about several devices shows the icon only when all of them belong to the same integration; otherwise,
+  and for update reminders, the Device Panel icon stays. Nothing to set up.
+- Where the icon comes from: first `brand/icon.png` of the integration itself, otherwise the icon service of Home
+  Assistant (`brands.home-assistant.io`), the same source Home Assistant uses for its own integration pages. Each icon
+  is fetched only once, put on a square area with a margin (iOS cuts the corners of the image) and stored in
+  `.storage/device_panel_icons`; the companion app loads it without login, like the Device Panel icon. An icon that
+  cannot be found is retried after six hours; until then, and when Home Assistant has no network access, the Device
+  Panel icon is used. A notification is never held back for longer than four seconds because of an icon. The folder
+  is deleted when the integration is removed.
+
 ## [2.0.10] - 2026-10-11
+
+Not released; included in 2.1.0.
 
 Device pop-up: the tab "Settings" on two lines.
 
@@ -18,6 +39,8 @@ Device pop-up: the tab "Settings" on two lines.
   squeezed into one line (requested by the user). The tab without own settings and the other tabs stay as they were.
 
 ## [2.0.9] - 2026-10-11
+
+Not released; included in 2.1.0.
 
 Blue ring left over after closing a window on the phone.
 
@@ -30,6 +53,8 @@ Blue ring left over after closing a window on the phone.
 
 ## [2.0.8] - 2026-10-11
 
+Not released; included in 2.1.0.
+
 A clear sign for a switched-off notification in the graphics.
 
 ### Changed
@@ -40,6 +65,8 @@ A clear sign for a switched-off notification in the graphics.
   showed no sign at all when switched off, now show the same ring at the end of the dashed line.
 
 ## [2.0.7] - 2026-10-11
+
+Not released; included in 2.1.0.
 
 Settings per device in one place; "Display" only has the filter chips.
 
@@ -2221,10 +2248,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[2.0.10]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.10
-[2.0.9]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.9
-[2.0.8]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.8
-[2.0.7]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.7
+[2.1.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.1.0
 [2.0.6]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.6
 [2.0.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.5
 [2.0.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.4

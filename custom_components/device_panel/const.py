@@ -27,10 +27,20 @@ PUSH_DIR = "push"
 PUSH_IMAGE_FILE = "icon.png"
 PUSH_STATIC_URL_PATH = f"{STATIC_URL_PATH}/{PUSH_DIR}"
 PUSH_IMAGE_URL = f"{PUSH_STATIC_URL_PATH}/{PUSH_IMAGE_FILE}"
+# Icons der Integrationen als Bild der Meldung (push_icon.py). Der Ordner
+# liegt unter .storage, weil er zur Laufzeit beschrieben wird; er wird
+# ohne Zwischenspeicher-Kopfzeilen ausgeliefert, damit ein ausgetauschtes Icon
+# ankommt.
+PUSH_ICON_DIR = "device_panel_icons"
+PUSH_ICON_URL_PATH = f"{STATIC_URL_PATH}/icons"
+BRANDS_CDN_URL = "https://brands.home-assistant.io"
 
 DATA_PANEL_REGISTERED = f"{DOMAIN}_panel_registered"
 # URL des Push-Bilds oder None, wenn es nicht bereitgestellt werden konnte.
 DATA_PUSH_IMAGE = f"{DOMAIN}_push_image"
+# Ordner, Sperre und Merkliste der Integrations-Icons oder None, wenn der
+# statische Pfad nicht bereitgestellt werden konnte (push_icon.py).
+DATA_PUSH_ICONS = f"{DOMAIN}_push_icons"
 DATA_WS_REGISTERED = f"{DOMAIN}_ws_registered"
 # Zeitpunkt, an dem die Integration beim Start von HA geladen wurde.
 DATA_STARTED_AT = f"{DOMAIN}_started_at"

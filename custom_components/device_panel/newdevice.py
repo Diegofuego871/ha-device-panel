@@ -24,7 +24,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.storage import Store
 
-from . import activity, push
+from . import activity, push, push_icon
 from .const import (
     CONF_NEW_EXCLUDE,
     CONF_NEW_FIELDS,
@@ -171,7 +171,9 @@ class NewDeviceNotifier:
                 lines.append(f"{i['name']} ({', '.join(extra)})" if extra else i["name"])
             await push.async_push(
                 hass, target, push.text(hass, "new_title_many", count=len(items)), ", ".join(lines),
-                push.notification_data(hass, f"{DOMAIN}_new", push.panel_url()),
+                push.notification_data(
+                    hass, f"{DOMAIN}_new", push.panel_url(), icon=await push_icon.async_common_icon(hass, [i["domain"] for i in items])
+                ),
             )
             return
         item = items[0]
@@ -179,7 +181,7 @@ class NewDeviceNotifier:
         url = push.device_url(opts[CONF_NOTIFY_CLICK], item["id"])
         await push.async_push(
             hass, target, push.text(hass, "new_title", name=item["name"]), message,
-            push.notification_data(hass, f"{DOMAIN}_new_{item['id']}", url),
+            push.notification_data(hass, f"{DOMAIN}_new_{item['id']}", url, icon=await push_icon.async_integration_icon(hass, item["domain"])),
         )
 
     def _update_persistent(self, items: list[dict[str, Any]]) -> None:

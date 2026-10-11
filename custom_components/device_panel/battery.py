@@ -29,7 +29,7 @@ from homeassistant.helpers import area_registry as ar, device_registry as dr
 from homeassistant.helpers.event import async_track_time_change, async_track_time_interval
 from homeassistant.helpers.storage import Store
 
-from . import activity, push
+from . import activity, push, push_icon
 from .const import (
     BATTERY_PUSH_MAX,
     BATTERY_REARM,
@@ -280,6 +280,11 @@ class BatteryWatch:
         device = dr.async_get(self.hass).async_get(dev)
         return device is None or primary_domain(self.hass, device) not in excluded
 
+    def _domain(self, dev: str) -> str | None:
+        """Integration des Geräts, für das Icon der Meldung."""
+        device = dr.async_get(self.hass).async_get(dev)
+        return primary_domain(self.hass, device) if device else None
+
     async def _async_push(self, opts: dict[str, Any], low: dict[str, dict[str, Any]], new: list[str], summary: bool = False) -> None:
         hass = self.hass
         target = opts[CONF_NOTIFY_SERVICE]
@@ -297,7 +302,8 @@ class BatteryWatch:
             message = ", ".join(items)
             title = push.text(hass, "battery_title_many", count=len(ordered))
             url = push.panel_url()
-            await push.async_push(hass, target, title, message, push.notification_data(hass, f"{DOMAIN}_battery", url))
+            icon = await push_icon.async_common_icon(hass, [self._domain(d) for d in ordered])
+            await push.async_push(hass, target, title, message, push.notification_data(hass, f"{DOMAIN}_battery", url, icon=icon))
             return
         for dev in ordered:
             item = low[dev]
@@ -305,7 +311,8 @@ class BatteryWatch:
             # Nichts gewählt: der Stand, damit die Meldung nicht leer ist.
             message = " · ".join(x for x in (level, *extra) if x) or self._level_text(item["level"])
             url = push.device_url(opts[CONF_NOTIFY_CLICK], dev)
-            data = push.notification_data(hass, f"{DOMAIN}_battery_{dev}", url)
+            icon = await push_icon.async_integration_icon(hass, self._domain(dev))
+            data = push.notification_data(hass, f"{DOMAIN}_battery_{dev}", url, icon=icon)
             await push.async_push(hass, target, push.text(hass, "battery_title", name=item["name"]), message, data)
 
     def _update_persistent(self, opts: dict[str, Any], low: dict[str, dict[str, Any]], has_new: bool) -> None:

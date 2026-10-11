@@ -3,7 +3,16 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.0.10, Einstellungen in fünf Abschnitten)
+## Stand (2.1.0, Integrations-Icon in Push-Meldungen)
+
+- 2.1.0: Push-Meldungen zeigen das Icon der Integration (`push_icon.py`): `async_integration_icon(hass, domain)` →
+  URL unter `/device_panel/icons/<domain>.png` oder None; Quelle erst `brand/icon.png` der Integration
+  (`integration.file_path`), dann CDN `brands.home-assistant.io/_/<domain>/icon.png` (4 s Timeout), mit Rand 512 × 512
+  (Pillow, Anteil 62 %), Ordner `.storage/device_panel_icons` (statischer Pfad ohne Zwischenspeicher, in
+  `async_remove_entry` gelöscht), Fehlschlag 6 Std. gemerkt, Auffrischen nach 30 Tagen. Sammelmeldungen nur bei
+  gemeinsamer Integration (`async_common_icon`), Update-Erinnerung unverändert. Fallback: `push/icon.png`. Tests:
+  `tests/test_push_icon.py`. **Nicht geprüft:** Anzeige auf einem echten iPhone; ob HA 2026.10 Core-Icons lokal
+  liefert (der Code nutzt das CDN direkt, wie HA selbst).
 
 - 2.0.10: Geräte-Popup, Reiter "Einstellungen" mit eigenen Einstellungen auf zwei Zeilen (`.sub-tab.two`, `.tab-l` 13 px,
   `.tab-s` 11.5 px; Text `devTabOwnCount`, `aria-label` bleibt "Einstellungen · n eigene"). Test in `popup-e2e`.

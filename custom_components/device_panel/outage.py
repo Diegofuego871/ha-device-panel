@@ -35,7 +35,7 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from . import activity, push
+from . import activity, push, push_icon
 from .availability import OFFLINE, ONLINE, AvailabilityLog
 from .const import (
     CONF_NOTIFY_CLICK,
@@ -273,7 +273,9 @@ class OutageNotifier:
                 target,
                 push.text(hass, f"{kind}_title_many", count=len(info)),
                 " · ".join(parts),
-                push.notification_data(hass, f"{DOMAIN}_incident", push.panel_url()),
+                push.notification_data(
+                    hass, f"{DOMAIN}_incident", push.panel_url(), icon=await push_icon.async_common_icon(hass, list(domains))
+                ),
             )
             return
         for i in info:
@@ -286,7 +288,8 @@ class OutageNotifier:
                 actions = push.device_actions(hass, url, i["id"])
             # Gleicher Tag für Ausfall und Rückkehr: die Rückkehr ersetzt die
             # Ausfall-Meldung auf dem Handy.
-            data = push.notification_data(hass, f"{DOMAIN}_device_{i['id']}", url, actions)
+            icon = await push_icon.async_integration_icon(hass, i["domain"])
+            data = push.notification_data(hass, f"{DOMAIN}_device_{i['id']}", url, actions, icon)
             await push.async_push(
                 hass, target, push.text(hass, f"{kind}_title", name=i["name"]), " · ".join(x for x in parts if x), data
             )

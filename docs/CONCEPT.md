@@ -622,6 +622,13 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   Brand-Icon verlor die Ecken (Nutzer, 2026-10-02). `hass.data[DATA_PUSH_IMAGE]` hält
   die URL, oder None, wenn das Bereitstellen scheiterte (dann ohne Bild).
 
+- Icon der Integration (seit 2.1.0, `push_icon.py`): Gehört eine Meldung
+  eindeutig zu einer Integration (Einzelmeldung, oder Sammelmeldung mit nur
+  einer Integration), ist `icon_url` deren Icon unter
+  `/device_panel/icons/<domain>.png`, sonst das Bild oben. Quellen:
+  `brand/icon.png` der Integration, dann `brands.home-assistant.io`; mit Rand
+  auf 512 × 512 gesetzt und in `.storage/device_panel_icons` abgelegt.
+
 Für den Versand zu übernehmen:
 
 - Zusatzdaten (`notification_data`): `icon_url` = Bild (Android; iOS zeigt es

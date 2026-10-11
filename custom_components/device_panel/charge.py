@@ -25,7 +25,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.helpers.storage import Store
 
-from . import activity, push
+from . import activity, push, push_icon
 from .battery_history import battery_entity
 from .const import (
     CHARGE_DROP,
@@ -339,7 +339,10 @@ class ChargeNotifier:
             parts.append(area.name)
         await push.async_push(
             hass, opts[CONF_NOTIFY_SERVICE], push.text(hass, "charge_stop_title", name=name), " · ".join(parts),
-            push.notification_data(hass, f"{DOMAIN}_charge_{dev}", push.device_url(opts[CONF_NOTIFY_CLICK], dev)),
+            push.notification_data(
+                hass, f"{DOMAIN}_charge_{dev}", push.device_url(opts[CONF_NOTIFY_CLICK], dev),
+                icon=await push_icon.async_integration_icon(hass, primary_domain(hass, device)),
+            ),
         )
 
     async def _async_push(self, dev: str, done: dict[str, Any]) -> None:
@@ -352,5 +355,8 @@ class ChargeNotifier:
         name = device.name_by_user or device.name or dev
         await push.async_push(
             hass, opts[CONF_NOTIFY_SERVICE], push.text(hass, "charge_title", name=name), self.message(done, area.name if area else None),
-            push.notification_data(hass, f"{DOMAIN}_charge_{dev}", push.device_url(opts[CONF_NOTIFY_CLICK], dev)),
+            push.notification_data(
+                hass, f"{DOMAIN}_charge_{dev}", push.device_url(opts[CONF_NOTIFY_CLICK], dev),
+                icon=await push_icon.async_integration_icon(hass, primary_domain(hass, device)),
+            ),
         )

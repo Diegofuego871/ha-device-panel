@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -57,6 +59,7 @@ from .const import (
     DATA_DEVICE_SETTINGS,
     DATA_OUTAGE,
     DATA_PANEL_REGISTERED,
+    DATA_PUSH_ICONS,
     DATA_PUSH_IMAGE,
     DATA_SIGNAL,
     DATA_TYPE_OVERRIDES,
@@ -71,6 +74,8 @@ from .const import (
     PANEL_TITLE,
     PANEL_URL_PATH,
     PUSH_DIR,
+    PUSH_ICON_DIR,
+    PUSH_ICON_URL_PATH,
     PUSH_IMAGE_FILE,
     PUSH_IMAGE_URL,
     PUSH_STATIC_URL_PATH,
@@ -103,6 +108,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     integration = await async_get_integration(hass, DOMAIN)
     activity.record(hass, "info", "system", "sys_start", "Device Panel", version=str(integration.version))
     await _async_register_push_path(hass)
+    await _async_register_push_icons(hass)
     await _async_register_panel(hass)
     _async_register_websocket_commands(hass)
     # Typ von Hand und Einstellungen pro Gerät vor dem Protokoll: beide
@@ -196,6 +202,11 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """
     for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, update_check.PANEL_STORE_KEY):
         await Store(hass, STORAGE_VERSION, key).async_remove()
+    # Heruntergeladene Icons der Meldungen; der statische Pfad bleibt bis zum
+    # Neustart angemeldet, der Ordner wird bei Bedarf neu angelegt.
+    await hass.async_add_executor_job(lambda: shutil.rmtree(_icon_dir(hass), ignore_errors=True))
+    if isinstance(state := hass.data.get(DATA_PUSH_ICONS), dict):
+        state["missing"].clear()
     # Geladene Stände vergessen: ein neues Einrichten ohne Neustart beginnt leer.
     for key in (DATA_TYPE_OVERRIDES, DATA_DEVICE_SETTINGS, DATA_CONNECTION_OVERRIDES, update_check.PANEL_DATA_KEY):
         hass.data.pop(key, None)
@@ -239,6 +250,35 @@ async def _async_register_push_path(hass: HomeAssistant) -> None:
         return
 
     hass.data[DATA_PUSH_IMAGE] = PUSH_IMAGE_URL
+
+
+def _icon_dir(hass: HomeAssistant) -> Path:
+    return Path(hass.config.path(".storage", PUSH_ICON_DIR))
+
+
+async def _async_register_push_icons(hass: HomeAssistant) -> None:
+    """
+    Macht den Ordner mit den Integrations-Icons der Meldungen abrufbar (wie
+    push/, aber beschreibbar und ohne Zwischenspeicher-Kopfzeilen). Läuft
+    einmal pro Home-Assistant-Instanz; schlägt es fehl, bleibt es beim
+    Device-Panel-Icon.
+    """
+    if DATA_PUSH_ICONS in hass.data:
+        return
+    folder = _icon_dir(hass)
+    try:
+        await hass.async_add_executor_job(lambda: folder.mkdir(parents=True, exist_ok=True))
+        await hass.http.async_register_static_paths([StaticPathConfig(PUSH_ICON_URL_PATH, str(folder), False)])
+    except Exception as err:  # noqa: BLE001 - die Icons sind nur Kosmetik
+        hass.data[DATA_PUSH_ICONS] = None
+        _LOGGER.warning(
+            "Statischer Pfad %s konnte nicht registriert werden (%s), "
+            "Push-Meldungen zeigen das Device-Panel-Icon",
+            PUSH_ICON_URL_PATH,
+            err,
+        )
+        return
+    hass.data[DATA_PUSH_ICONS] = {"dir": folder, "lock": asyncio.Lock(), "missing": {}}
 
 
 async def _async_register_panel(hass: HomeAssistant) -> None:

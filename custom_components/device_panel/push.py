@@ -165,15 +165,18 @@ def device_url(click: str, device_id: str) -> str:
     return f"/config/devices/device/{device_id}" if click == CLICK_DEVICE else panel_url(device_id)
 
 
-def notification_data(hass: HomeAssistant, tag: str, url: str, actions: list[dict[str, str]] | None = None) -> dict[str, Any]:
+def notification_data(
+    hass: HomeAssistant, tag: str, url: str, actions: list[dict[str, str]] | None = None, icon: str | None = None
+) -> dict[str, Any]:
     """
     Zusatzdaten für die Companion-App. Das Klickziel steht doppelt drin: iOS
     liest "url", Android nur "clickAction". Der Tag ersetzt eine frühere
-    Meldung mit demselben Tag. Ohne Bild entfällt nur "icon_url". Aktionen
-    erscheinen als Knöpfe unter der Meldung.
+    Meldung mit demselben Tag. Als Bild dient das Icon der Integration
+    (push_icon.py), sonst das Device-Panel-Icon; ohne beide entfällt nur
+    "icon_url". Aktionen erscheinen als Knöpfe unter der Meldung.
     """
     data: dict[str, Any] = {"tag": tag, "url": url, "clickAction": url}
-    if image := hass.data.get(DATA_PUSH_IMAGE):
+    if image := icon or hass.data.get(DATA_PUSH_IMAGE):
         data["icon_url"] = image
     if actions:
         data["actions"] = actions
