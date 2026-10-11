@@ -94,7 +94,6 @@ async def test_validation(hass: HomeAssistant, setup) -> None:  # noqa: F811
         {**_rule(device, temp), "kind": "gleich"},
         {**_rule(device, temp), "recover": True},  # ohne Text
         {**_rule(device, temp), "target": "light.kueche"},
-        {**_rule(device, foreign)},  # Entität eines anderen Geräts
         {**_rule(device, "sensor.gibt_es_nicht")},
         {**_rule(device, temp), "device_id": "nichtda"},
         {**_rule(device, temp, kind="is"), "value": None},
@@ -679,3 +678,96 @@ def test_history_with_reset_value() -> None:
     _i, _f, count = magic_history.evaluate([(0.0, "14"), (1000.0, "11"), (1100.0, "13"), (1500.0, "11"), (4000.0, "14.5")], "below", 12, 300, now, 14)
     assert count == 1  # der zweite Abschnitt (2500 s) zählt, der erste (100 s) nicht
 
+
+async def test_websocket_list_all_devices(hass: HomeAssistant, setup, hass_ws_client) -> None:  # noqa: F811
+    """magic_list (2.10.0): alle Meldungen aller Geräte, mit Gerätename und Angaben zur Entität."""
+    await _options(hass, notify_service="notify.handy")
+    keller = _device(hass, "Klimasensor Keller")
+    fenster = _device(hass, "Fenster Bad")
+    temp = _sensor(hass, keller, "temp", "14.2", "temperature", "°C")
+    window = _sensor(hass, fenster, "window", "off", "window", domain="binary_sensor")
+    magic_push = hass.data[DATA_MAGIC]
+    await magic_push.async_save_rule(_rule(keller, temp, name="Keller kalt"))
+    await magic_push.async_save_rule(_rule(fenster, window, kind="is", value="on", name="Bad offen", reset_value="off"))
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/magic_list"})
+    reply = await client.receive_json()
+    assert reply["success"]
+    rules = {r["name"]: r for r in reply["result"]["rules"]}
+    assert set(rules) == {"Keller kalt", "Bad offen"}
+    assert rules["Keller kalt"]["device_id"] == keller.id and rules["Keller kalt"]["device_name"] == "Klimasensor Keller"
+    assert rules["Keller kalt"]["entity"]["kind"] == "number" and rules["Keller kalt"]["entity"]["unit"] == "°C"
+    assert rules["Bad offen"]["entity"]["kind"] == "state" and [o["value"] for o in rules["Bad offen"]["entity"]["options"]] == ["on", "off"]
+    assert rules["Bad offen"]["device_name"] == "Fenster Bad"
+    # Gerät entfernt: die Meldung ist weg und taucht nicht mehr auf
+    dr.async_get(hass).async_remove_device(fenster.id)
+    await hass.async_block_till_done()
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/magic_list"})
+    assert [r["name"] for r in (await client.receive_json())["result"]["rules"]] == ["Keller kalt"]
+
+
+async def test_free_entity(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Freie Entität (2.10.0): jede Entität, auch von einem anderen Gerät oder ohne Gerät; die Meldung bleibt am Gerät."""
+    hass.config.language = "de"
+    calls = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    keller = _device(hass, "Klimasensor Keller")
+    other = _device(hass, "Wetterstation")
+    foreign = _sensor(hass, other, "abs", "9", "humidity", "g/m³")  # Entität eines anderen Geräts
+    magic_push = hass.data[DATA_MAGIC]
+    with pytest.raises(vol.Invalid):
+        await magic_push.async_save_rule(_rule(keller, "sensor.gibt_es_nicht"))
+    rule = await magic_push.async_save_rule(
+        _rule(keller, foreign, for_s=0, name="Absolute Feuchte", message="{device}: {entity} {value} {unit}", kind="above", value=10)
+    )
+    assert rule["entity_id"] == foreign and rule["device_id"] == keller.id
+    payload = magic.rule_payload(hass, magic_push, rule)
+    assert payload["entity_free"] is True and payload["entity_missing"] is False
+    hass.states.async_set(foreign, "12,5".replace(",", "."), {"device_class": "humidity", "unit_of_measurement": "g/m³"})
+    await hass.async_block_till_done()
+    # {device} ist das Gerät der Meldung, {entity}, Wert und Einheit kommen von der freien Entität
+    assert len(calls) == 1
+    assert calls[0].data["title"].startswith("Klimasensor Keller: ") and calls[0].data["title"].endswith("12,5 g/m³")
+    # Entität ohne Registereintrag (zum Beispiel aus YAML): nur ein Zustand
+    hass.states.async_set("sensor.absolut_berechnet", "7.5", {"unit_of_measurement": "g/m³", "friendly_name": "Absolute Feuchte berechnet"})
+    own = await magic_push.async_save_rule(_rule(keller, "sensor.absolut_berechnet", kind="above", value=10, for_s=0, name="Berechnet", message="{entity}: {value} {unit}"))
+    assert magic.rule_payload(hass, magic_push, own)["entity_free"] is True
+    hass.states.async_set("sensor.absolut_berechnet", "11", {"unit_of_measurement": "g/m³", "friendly_name": "Absolute Feuchte berechnet"})
+    await hass.async_block_till_done()
+    assert calls[-1].data["title"] == "Absolute Feuchte berechnet: 11 g/m³"
+    # eigene Entität des Geräts ist nicht frei
+    temp = _sensor(hass, keller, "temp", "14", "temperature", "°C")
+    mine = await magic_push.async_save_rule(_rule(keller, temp, name="Eigene"))
+    assert magic.rule_payload(hass, magic_push, mine)["entity_free"] is False
+
+
+async def test_free_entity_search_and_panel_data(hass: HomeAssistant, setup, hass_ws_client) -> None:  # noqa: F811
+    await _options(hass, notify_service="notify.handy")
+    keller = _device(hass, "Klimasensor Keller")
+    other = _device(hass, "Wetterstation Garten")
+    _sensor(hass, keller, "temp", "14.2", "temperature", "°C")
+    foreign = _sensor(hass, other, "abs", "9", "humidity", "g/m³")
+    hass.states.async_set("sensor.absolut_berechnet", "7.5", {"unit_of_measurement": "g/m³", "friendly_name": "Absolute Feuchte berechnet"})
+    client = await hass_ws_client(hass)
+
+    async def call(command: str, **payload: Any) -> dict[str, Any]:
+        call.n += 1
+        await client.send_json({"id": call.n, "type": f"{DOMAIN}/{command}", **payload})
+        return await client.receive_json()
+
+    call.n = 0
+    found = (await call("magic_entity_search", query="absolut"))["result"]["entities"]
+    assert [e["entity_id"] for e in found] == ["sensor.absolut_berechnet"]
+    assert found[0]["kind"] == "number" and found[0]["unit"] == "g/m³" and found[0]["name"] == "Absolute Feuchte berechnet"
+    # nach Gerät suchen und mehrere Wörter
+    by_device = (await call("magic_entity_search", query="garten abs"))["result"]["entities"]
+    assert [e["entity_id"] for e in by_device] == [foreign] and by_device[0]["device_name"] == "Wetterstation Garten"
+    everything = (await call("magic_entity_search"))["result"]["entities"]
+    assert len(everything) >= 2
+    assert not (await call("magic_entity_search", query="x" * 81))["success"]
+    # magic_get nennt die freien Entitäten der Meldungen mit ihren Angaben
+    saved = await call("magic_save", rule=_rule(keller, foreign, name="Fremd", kind="above", value=10))
+    assert saved["success"] and saved["result"]["rule"]["entity_free"] is True
+    got = (await call("magic_get", device_id=keller.id))["result"]
+    assert [e["entity_id"] for e in got["extra_entities"]] == [foreign] and got["extra_entities"][0]["unit"] == "g/m³"
+    assert all(e["entity_id"] != foreign for e in got["entities"])

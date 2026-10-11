@@ -421,13 +421,59 @@ def _ws_magic_get(hass: HomeAssistant, connection: websocket_api.ActiveConnectio
         msg["id"],
         {
             "rules": [magic.rule_payload(hass, push_rules, r) for r in rules],
-            "entities": magic.entities_payload(hass, msg["device_id"]),
+            "entities": (own := magic.entities_payload(hass, msg["device_id"])),
+            # Freie Entitäten der Meldungen (nicht von diesem Gerät): ihre Angaben für Sätze und Texte
+            "extra_entities": [
+                magic.entity_descriptor(hass, eid)
+                for eid in sorted({r["entity_id"] for r in rules} - {e["entity_id"] for e in own})
+                if hass.states.get(eid) is not None or er.async_get(hass).async_get(eid) is not None
+            ],
             "targets": magic.targets_payload(hass, [r["target"] for r in rules if r.get("target")]),
             "default_target": default,
             "limits": {"per_device": magic.MAX_PER_DEVICE, "name": magic.NAME_MAX, "text": magic.TEXT_MAX, "for": magic.FOR_MAX, "repeat": magic.REPEAT_MAX},
             "variables": {"common": magic.VARIABLES_COMMON, **magic.VARIABLES},
         },
     )
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/magic_list"})
+@websocket_api.require_admin
+@callback
+def _ws_magic_list(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Alle Meldungen aller Geräte (seit 2.10.0, Reiter "Magic Push" in den Einstellungen), mit Gerät und Entität."""
+    push_rules = _magic(hass)
+    if push_rules is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "integration not set up")
+        return
+    devices = dr.async_get(hass)
+    entities: dict[str, dict[str, Any] | None] = {}
+    out: list[dict[str, Any]] = []
+    for rule in push_rules.rules():
+        device = devices.async_get(rule["device_id"])
+        if device is None:
+            continue
+        if rule["entity_id"] not in entities:
+            entities[rule["entity_id"]] = (
+                magic.entity_descriptor(hass, rule["entity_id"])
+                if hass.states.get(rule["entity_id"]) is not None or er.async_get(hass).async_get(rule["entity_id"]) is not None
+                else None
+            )
+        found = entities[rule["entity_id"]]
+        payload = magic.rule_payload(hass, push_rules, rule)
+        payload["device_name"] = device.name_by_user or device.name or ""
+        payload["entity"] = {k: found[k] for k in ("name", "domain", "device_class", "kind", "unit", "options")} if found else None
+        out.append(payload)
+    connection.send_result(msg["id"], {"rules": out})
+
+
+@websocket_api.websocket_command(
+    {vol.Required("type"): f"{DOMAIN}/magic_entity_search", vol.Optional("query", default=""): vol.All(str, vol.Length(max=80))}
+)
+@websocket_api.require_admin
+@callback
+def _ws_magic_entity_search(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Freie Entität (seit 2.10.0): Suche in allen Entitäten von Home Assistant."""
+    connection.send_result(msg["id"], {"entities": magic.search_entities(hass, msg["query"])})
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/magic_save", vol.Required("rule"): dict})
@@ -956,7 +1002,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_version)
     websocket_api.async_register_command(hass, _ws_release_notes)
     websocket_api.async_register_command(hass, _ws_set_panel)
-    for command in (_ws_magic_get, _ws_magic_save, _ws_magic_delete, _ws_magic_enable, _ws_magic_preview, _ws_magic_test, _ws_magic_history):
+    for command in (_ws_magic_get, _ws_magic_list, _ws_magic_entity_search, _ws_magic_save, _ws_magic_delete, _ws_magic_enable, _ws_magic_preview, _ws_magic_test, _ws_magic_history):
         websocket_api.async_register_command(hass, command)
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_set_options)

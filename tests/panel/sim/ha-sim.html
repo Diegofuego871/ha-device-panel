@@ -989,15 +989,24 @@
           { entity_id: "sensor.battery", name: "Batterie", domain: "sensor", device_class: "battery", kind: "number", state: "86", available: true, value: "86", number: 86, unit: "%", category: "diagnostic", options: [] },
           { entity_id: "sensor.rssi", name: "Signal", domain: "sensor", device_class: "signal_strength", kind: "number", state: "unavailable", available: false, value: null, number: null, unit: "dBm", category: "diagnostic", options: [] },
         ];
-        const payload = (r) => ({ ...r, active: Boolean(r.__active), since: null, fired: false, last_fired: r.__last || null, entity_missing: !ents.some((e) => e.entity_id === r.entity_id), available: true });
+        // Freie Entitäten (2.10.0): anderes Gerät oder ohne Gerät
+        const FREE = [
+          { entity_id: "sensor.abs_humidity", name: "Absolute Feuchte berechnet", domain: "sensor", device_class: null, kind: "number", state: "9.2", available: true, value: language === "de" ? "9,2" : "9.2", number: 9.2, unit: "g/m³", category: null, options: [], device_name: "" },
+          { entity_id: "sensor.garten_temp", name: "Temperatur Garten", domain: "sensor", device_class: "temperature", kind: "number", state: "6.5", available: true, value: language === "de" ? "6,5" : "6.5", number: 6.5, unit: "°C", category: null, options: [], device_name: "Wetterstation Garten" },
+          { entity_id: "binary_sensor.garten_regen", name: "Regen Garten", domain: "binary_sensor", device_class: "moisture", kind: "state", state: "off", available: true, value: language === "de" ? "trocken" : "dry", number: null, unit: "", category: null, options: [{ value: "on", label: language === "de" ? "nass" : "wet" }, { value: "off", label: language === "de" ? "trocken" : "dry" }], device_name: "Wetterstation Garten" },
+        ];
+        const known = (id) => ents.find((e) => e.entity_id === id) || FREE.find((e) => e.entity_id === id) || null;
+        const payload = (r) => ({ ...r, active: Boolean(r.__active), since: null, fired: false, last_fired: r.__last || null, entity_missing: !known(r.entity_id), entity_free: !ents.some((e) => e.entity_id === r.entity_id), available: true });
         const strip = (r) => Object.fromEntries(Object.entries(r).filter(([k]) => !k.startsWith("__")));
         if (msg.type.endsWith("magic_get")) {
           const dev = window.__devices.find((d) => d.id === msg.device_id);
           if (!dev) throw { code: "not_found", message: "device not found" };
           if (window.__magicLoadFails) throw new Error(window.__magicLoadFails);
+          const mine = M.rules.filter((r) => r.device_id === msg.device_id);
           return {
-            rules: M.rules.filter((r) => r.device_id === msg.device_id).sort((a, b) => a.name.localeCompare(b.name)).map(payload),
+            rules: mine.sort((a, b) => a.name.localeCompare(b.name)).map(payload),
             entities: ents,
+            extra_entities: [...new Set(mine.map((r) => r.entity_id))].map((id) => FREE.find((e) => e.entity_id === id)).filter(Boolean),
             targets: [
               { value: "notify.familie", kind: "group" },
               { value: "notify.mobile_app_dani_iphone", kind: "service" },
@@ -1016,15 +1025,29 @@
           if (!["above", "below", "is", "change"].includes(r.kind)) fail("Art ungültig");
           if ((r.kind === "above" || r.kind === "below") && !Number.isFinite(Number(r.value))) fail("Für über und unter wird eine Zahl gebraucht");
           if (r.kind === "is" && (r.value == null || r.value === "")) fail("Für ist wird ein Zustand gebraucht");
-          if (!ents.some((e) => e.entity_id === r.entity_id)) fail("Die Entität gehört nicht zu diesem Gerät");
+          if (!known(r.entity_id)) fail("Die Entität gibt es nicht");
           if (r.recover && r.kind !== "change" && !String(r.recover_message || "").trim()) fail("Für die Meldung bei wieder normal fehlt der Text");
           if (r.for_s < 0 || r.for_s > 7 * 86400) fail("Dauer ungültig");
         };
         const fill = (text, r) => {
-          const e = ents.find((x) => x.entity_id === r.entity_id) || {};
+          const e = known(r.entity_id) || {};
           const vars = { value: e.value ?? "", unit: e.unit ?? "", threshold: r.value ?? "", device: "Klimasensor Keller", area: "Keller", entity: e.name ?? "", integration: "Zigbee", rule: r.name ?? "", duration: "10 Min.", since: "10:00", time: "10:10", old: "geschlossen", new: "offen" };
           return String(text || "").replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]).trim() : m)).replace(/\s+/g, " ").trim();
         };
+        if (msg.type.endsWith("magic_list")) {
+          if (window.__magicListFails) throw new Error(window.__magicListFails);
+          return {
+            rules: M.rules
+              .map((r) => ({ ...payload(r), device_name: (window.__devices.find((d) => d.id === r.device_id) || {}).name || "", entity: (({ name, domain, device_class, kind, unit, options }) => ({ name, domain, device_class, kind, unit, options }))(known(r.entity_id) || {}) }))
+              .filter((r) => window.__devices.some((d) => d.id === r.device_id)),
+          };
+        }
+        if (msg.type.endsWith("magic_entity_search")) {
+          if (window.__magicSearchFails) throw new Error(window.__magicSearchFails);
+          const words = String(msg.query || "").toLowerCase().split(/\s+/).filter(Boolean);
+          const all = [...ents, ...FREE];
+          return { entities: all.filter((e) => words.every((w) => `${e.name} ${e.entity_id} ${e.device_name || ""}`.toLowerCase().includes(w))) };
+        }
         if (msg.type.endsWith("magic_save")) {
           if (window.__magicSaveFails) throw new Error(window.__magicSaveFails);
           const r = { ...msg.rule };
@@ -1059,7 +1082,7 @@
         }
         if (msg.type.endsWith("magic_preview")) {
           const r = msg.rule;
-          if (!ents.some((e) => e.entity_id === r.entity_id)) fail("Die Entität gehört nicht zu diesem Gerät");
+          if (!known(r.entity_id)) fail("Die Entität gibt es nicht");
           if ((r.kind === "above" || r.kind === "below") && !Number.isFinite(Number(r.value))) fail("Für über und unter wird eine Zahl gebraucht");
           const text = msg.which === "recover" ? r.recover_message : r.message;
           const title = fill(text, r);
@@ -1081,7 +1104,7 @@
           const base = { start: now - 86400, end: now, kind: "number", points: [], intervals: [], fires: [], count: 0 };
           if (mode === "norecorder") return { ...base, available: false, empty: true };
           if (mode === "empty") return { ...base, available: true, empty: true };
-          const e = ents.find((x) => x.entity_id === msg.entity_id);
+          const e = known(msg.entity_id);
           if (e?.kind === "state") {
             return { ...base, kind: "state", available: true, empty: false, intervals: [[now - 70000, now - 69000, false], [now - 20000, now - 8000, true]], fires: [{ at: now - 19400, start: now - 20000, end: now - 8000, duration: 12000, extreme: null }], count: 1 };
           }

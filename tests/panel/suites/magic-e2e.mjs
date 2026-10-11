@@ -68,7 +68,7 @@ for (const lang of ["de", "en"]) {
     // --- Assistent, Zahl ---
     await tap('[data-mg="add"]');
     await headingOk(T.q1);
-    check(`[${tag}] Schritt 1: fünf Entitäten, "Weiter" gesperrt`, (await ev(`return r.querySelectorAll('${root} .mg-pick').length`)) === 5 && (await ev(`return r.querySelector('${root} [data-mg="next"]').disabled`)) === true);
+    check(`[${tag}] Schritt 1: fünf Entitäten, "Weiter" gesperrt`, (await ev(`return r.querySelectorAll('${root} .mg-pick[data-id]').length`)) === 5 && (await ev(`return r.querySelector('${root} [data-mg="next"]').disabled`)) === true);
     check(`[${tag}] nicht erreichbare Entität benannt`, (await text(`${root} .mg-pick[data-id="sensor.rssi"]`)).includes(T.unreachable));
     check(`[${tag}] Schrittleiste: nur der erste Balken an`, (await ev(`return r.querySelectorAll('${root} .mg-stp.on').length`)) === 1 && (await ev(`return r.querySelectorAll('${root} button.mg-stp').length`)) === 0);
     await tap('.mg-pick[data-id="sensor.temp"]');
@@ -312,6 +312,55 @@ for (const lang of ["de", "en"]) {
     await tap('[data-mg="delete"]');
     await tap('[data-mg="delete-yes"]');
     check(`[${tag}] Löschen: Karte weg, Server weiss es`, await wait(`return r.querySelectorAll('${root} .mg-card').length === 1`) && (await calls("magic_delete")).length === 1);
+
+    // --- Freie Entität (2.10.0): ganz unten in Schritt 1, jede Entität, die Meldung bleibt am Gerät ---
+    await tap('[data-mg="add"]');
+    check(`[${tag}] Schritt 1: "Freie Entität" ganz unten, zu`, (await ev(`const k=[...r.querySelectorAll('${root} .mg-pick')]; return k.at(-1)?.dataset.mg === "free-open" && !r.querySelector('${root} .mg-free')`)));
+    await tap('[data-mg="free-open"]');
+    check(`[${tag}] Suche öffnet mit Treffern aller Entitäten (auch fremder Geräte)`, await wait(`return r.querySelectorAll('${root} [data-mg="free-pick"]').length >= 6`));
+    await fill('input[data-mg="free-query"]', "garten regen");
+    check(`[${tag}] Suche nach mehreren Wörtern (Gerät und Name)`, await wait(`const l=[...r.querySelectorAll('${root} [data-mg="free-pick"]')].map(b=>b.dataset.id); return l.length === 1 && l[0] === "binary_sensor.garten_regen"`));
+    check(`[${tag}] Treffer nennt Entitäts-ID und Gerät`, (await text(`${root} [data-mg="free-pick"]`)).includes("binary_sensor.garten_regen") && (await text(`${root} [data-mg="free-pick"]`)).includes("Wetterstation Garten"));
+    await fill('input[data-mg="free-query"]', "ohne treffer xyz");
+    check(`[${tag}] ohne Treffer: Hinweis`, await wait(`return !!r.querySelector('${root} [data-mg-zone="freelist"] .mg-hint')`));
+    await fill('input[data-mg="free-query"]', "absolut");
+    await wait(`return r.querySelectorAll('${root} [data-mg="free-pick"]').length === 1`);
+    await tap('[data-mg="free-pick"][data-id="sensor.abs_humidity"]');
+    check(`[${tag}] gewählt: Karte "frei gewählt" ist markiert, Suche zu, "Weiter" frei`, await wait(`const c=r.querySelector('${root} .mg-pick.sel'); return c?.dataset.id === "sensor.abs_humidity" && c.textContent.includes(${JSON.stringify(lang === "de" ? "frei gewählt" : "freely chosen")}) && !r.querySelector('${root} .mg-free') && r.querySelector('${root} [data-mg="next"]').disabled === false`));
+    await next();
+    await step(2);
+    check(`[${tag}] Schritt 2 nimmt Art, Einheit und Wert der freien Entität`, (await text(`${root} .mg-unit`)).includes("g/m³") && (await ev(`return r.querySelector('${root} input[data-mg="value"]').value`)) === "9.2" && (await text(`${root} .mg-stephead`)).includes("Absolute Feuchte berechnet"));
+    await tap('[data-mg="kind"][data-kind="above"]');
+    await fill('input[data-mg="value"]', "10");
+    await next();
+    check(`[${tag}] Titel-Vorgabe nutzt den Namen der freien Entität`, await wait(`return r.querySelector('${root} [data-mg-text="message"]').value.includes("{entity}")`));
+    await fill('[data-mg-text="message"]', "{device}: {entity} {value} {unit}");
+    check(`[${tag}] Vorschau: {device} bleibt das Gerät, {entity} und Wert kommen von der freien Entität`, await wait(`const t=r.querySelector('${root} .mg-pv .pv-title')?.textContent; return t?.startsWith("Klimasensor Keller: Absolute Feuchte berechnet") && t.endsWith("g/m³")`), await text(`${root} .mg-pv .pv-title`));
+    await next();
+    await next();
+    await fill('input[data-mg="name"]', "Feuchte hoch");
+    await tap('[data-mg="save"]');
+    await wait(`return r.querySelectorAll('${root} .mg-card').length === 2`);
+    const freeSaved = (await calls("magic_save")).at(-1)?.rule;
+    check(`[${tag}] gespeichert: Entität der freien Wahl, Gerät bleibt dasselbe`, freeSaved.entity_id === "sensor.abs_humidity" && freeSaved.device_id === "d" && freeSaved.kind === "above", JSON.stringify(freeSaved));
+    check(`[${tag}] Karte nennt die Entität (frei)`, await wait(`return [...r.querySelectorAll('${root} .mg-card')].some(c => c.textContent.includes("Feuchte hoch") && c.querySelector(".mg-freetag")?.textContent.includes("sensor.abs_humidity"))`));
+    await tap('.mg-card:has(.mg-freetag) [data-mg="edit"]');
+    check(`[${tag}] Bearbeiten: freie Entität ist gewählt und nennt sich`, await wait(`const c=r.querySelector('${root} .mg-pick.sel'); return c?.dataset.id === "sensor.abs_humidity" && c.textContent.includes(${JSON.stringify(lang === "de" ? "frei gewählt" : "freely chosen")})`));
+    // Zustand als freie Entität (Regen): Wörter der Entität, "ist"
+    await tap('[data-mg="free-open"]');
+    await fill('input[data-mg="free-query"]', "regen");
+    await wait(`return r.querySelectorAll('${root} [data-mg="free-pick"]').length === 1`);
+    await tap('[data-mg="free-pick"][data-id="binary_sensor.garten_regen"]');
+    await next();
+    await step(2);
+    check(`[${tag}] freier Zustand: "ist" und "ändert sich", Wörter der Entität`, (await ev(`return [...r.querySelectorAll('${root} .sub-tabs [data-mg="kind"]')].map(b => b.dataset.kind).join()`)) === "is,change" && (await ev(`return [...r.querySelectorAll('${root} [data-mg="state"]')].map(b => b.textContent.trim()).join()`)) === (lang === "de" ? "nass,trocken" : "wet,dry"));
+    check(`[${tag}] Schritt 1 mit Suche ohne Querscrollen`, (await overflow()) <= 0);
+    await tap('[data-mg="back"]');
+    await tap('[data-mg="cancel"]');
+    await wait(`return !!r.querySelector('${root} [data-mg="add"]')`);
+    await tap('.mg-card:has(.mg-freetag) [data-mg="delete"]');
+    await tap('[data-mg="delete-yes"]');
+    await wait(`return r.querySelectorAll('${root} .mg-card').length === 1`);
 
     // --- Laden schlägt fehl: Wiederholen ---
     await ev(`r.host._closeDevice()`);

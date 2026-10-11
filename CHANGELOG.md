@@ -7,7 +7,37 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.10.0] - 2026-10-11
+
+Magic Push: overview in the settings and free entities.
+
+### Added
+
+- New tab "Magic Push" under "Monitoring and notifications" in the settings (requested by the user). It shows all
+  Magic Push messages of all devices, grouped by device: the device (icon, name, area and integration, a mark if it is
+  offline) as a heading, below it its messages with name, sentence ("Temperature below 12 °C · for 10 min. · back from
+  14 °C"), state and when it last fired. Messages can be turned on and off, edited and deleted (with a confirmation)
+  right there; "Edit" opens the pop-up of the device with the assistant on that message, and a tap on the device opens
+  its pop-up in the tab Magic Push. New messages are not created here, only in the pop-up of a device. The changes
+  apply at once, not with "Save"; the overview reloads when a device pop-up is closed.
+- Free entity (requested by the user): at the very bottom of step 1 of the assistant, "Choose a free entity" opens a
+  search over all entities of Home Assistant (by name, entity ID and device; several words work). The message stays
+  tied to this device, but the entity can come from another device or from none: value, unit and states come from the
+  chosen entity, `{entity}` is its name and `{device}` stays the device of the message. This allows, for example, a
+  calculated absolute humidity on a sensor that cannot measure it. The list and the overview mark such messages with the
+  entity ID.
+
+### Changed
+
+- The settings on the phone show only the titles of the sections; the small preview line below each title is gone
+  there (requested by the user). On the desktop it stays.
+- The tab bar of "Monitoring and notifications" now has nine tabs: five and four on the desktop, three rows of three on
+  the phone.
+- Magic Push no longer insists that an entity belongs to the device (see "Free entity"); an entity must exist.
+
 ## [2.9.0] - 2026-10-11
+
+Not released; included in 2.10.0.
 
 Magic Push: your own reset condition.
 
@@ -2405,7 +2435,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.9.0
+[2.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.10.0
 [2.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.8.0
 [2.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.5.0
 [2.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.3.0

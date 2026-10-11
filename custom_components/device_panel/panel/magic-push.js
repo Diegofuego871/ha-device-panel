@@ -89,7 +89,11 @@ export class MagicPush {
     this.view = "list";
     this.wiz = null;
     this.ui = { renameId: null, renameValue: "", confirmId: null, flash: "", error: "" };
+    // Freie Entitäten, die im Assistenten gewählt wurden (Angaben vom Server), und die Suche danach
+    this.extra = {};
+    this._pendingEdit = null;
     this._seq = 0;
+    window.clearTimeout(this._freeTimer);
   }
 
   t(key, ...args) {
@@ -116,6 +120,19 @@ export class MagicPush {
     return this.data.rules.filter((r) => r.enabled).length;
   }
 
+  // Aus der Übersicht in den Einstellungen: den Assistenten mit dieser Meldung öffnen, sobald die Liste da ist
+  editWhenLoaded(ruleId) {
+    this._pendingEdit = ruleId;
+    this.applyPending();
+  }
+
+  applyPending() {
+    if (!this._pendingEdit || !this.data) return;
+    const rule = this.data.rules.find((r) => r.id === this._pendingEdit);
+    this._pendingEdit = null;
+    if (rule) this.startWizard(rule);
+  }
+
   // Popup geöffnet: bei einem anderen Gerät von vorn beginnen und im Hintergrund laden.
   open(deviceId) {
     if (this.deviceId !== deviceId) {
@@ -133,6 +150,7 @@ export class MagicPush {
       const result = await this.host._hass.callWS({ type: "device_panel/magic_get", device_id: deviceId });
       if (this.deviceId !== deviceId) return;
       this.data = result;
+      this.applyPending();
     } catch (err) {
       if (this.deviceId !== deviceId) return;
       this.error = this.h.errText(err);
@@ -156,7 +174,17 @@ export class MagicPush {
   }
 
   entity(id) {
-    return this.data?.entities.find((e) => e.entity_id === id) || null;
+    return this.data?.entities.find((e) => e.entity_id === id) || this.data?.extra_entities?.find((e) => e.entity_id === id) || this.extra[id] || null;
+  }
+
+  // Angaben zur Entität einer Meldung: aus der Liste aller Geräte (rule.entity) oder aus dem Popup des Geräts
+  entityOf(rule) {
+    return rule.entity || this.entity(rule.entity_id);
+  }
+
+  // Frei = nicht von diesem Gerät (seit 2.10.0)
+  isFree(entityId) {
+    return Boolean(entityId) && !this.data?.entities.some((e) => e.entity_id === entityId);
   }
 
   // --- Anzeige-Hilfen ---------------------------------------------------------
@@ -208,7 +236,7 @@ export class MagicPush {
 
   // Bedingung als Satzteil ("unter 12 °C", "ist offen", "ändert sich").
   condText(rule) {
-    const e = this.entity(rule.entity_id);
+    const e = this.entityOf(rule);
     const unit = e?.kind === "number" && e.unit ? ` ${e.unit}` : "";
     if (rule.kind === "change") return this.t("mgSentenceChange");
     if (rule.kind === "is" && e?.kind === "state") {
@@ -223,7 +251,7 @@ export class MagicPush {
 
   // "zurück ab 14 °C" (unter), "zurück bis 70 %" (über), "zurück bei geschlossen" (ist)
   resetSentence(rule) {
-    const e = this.entity(rule.entity_id);
+    const e = this.entityOf(rule);
     const unit = e?.kind === "number" && e.unit ? ` ${e.unit}` : "";
     if (rule.kind === "is") {
       const word = e?.options?.find((o) => o.value === String(rule.reset_value))?.label ?? String(rule.reset_value);
@@ -233,7 +261,7 @@ export class MagicPush {
   }
 
   entityName(rule) {
-    return this.entity(rule.entity_id)?.name || rule.entity_id;
+    return this.entityOf(rule)?.name || rule.entity_id;
   }
 
   repeatText(seconds) {
@@ -370,12 +398,10 @@ export class MagicPush {
     return html;
   }
 
-  cardHtml(r) {
+  // Zeile unter dem Satz: Zustand der Entität, ob sie gilt, wann zuletzt, und woher eine freie Entität kommt
+  statusParts(r) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
-    const e = this.entity(r.entity_id);
-    const renaming = this.ui.renameId === r.id;
-    const confirming = this.ui.confirmId === r.id;
     const status = [];
     if (r.entity_missing) status.push(`<span class="mg-warn">${esc(t("mgEntityMissing"))}</span>`);
     else if (!r.available && r.enabled) status.push(`<span class="mg-warn">${esc(t("mgUnreachable"))}</span>`);
@@ -385,6 +411,17 @@ export class MagicPush {
       const ago = (Date.now() + this.host._offset) / 1000 - r.last_fired;
       status.push(esc(ago < 60 ? t("mgJustNow") : t("mgLast", this.host._fmtSeconds(ago, true))));
     } else status.push(esc(t("mgNever")));
+    if (r.entity_free) status.push(`<span class="mg-freetag">${esc(t("mgFreeTag", r.entity_id))}</span>`);
+    return status;
+  }
+
+  cardHtml(r) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const e = this.entity(r.entity_id);
+    const renaming = this.ui.renameId === r.id;
+    const confirming = this.ui.confirmId === r.id;
+    const status = this.statusParts(r);
     const title = renaming
       ? `<div class="mg-t"><input class="mg-input" type="text" data-mg="rename-input" maxlength="${this.limit("name", 60)}" value="${esc(this.ui.renameValue)}" aria-label="${esc(t("mgRenameLabel"))}">
           <div class="mg-btns small"><button type="button" class="dlg-btn" data-mg="rename-cancel">${esc(t("mgCancel"))}</button><button type="button" class="dlg-btn primary" data-mg="rename-save">${esc(t("mgSave"))}</button></div></div>`
@@ -401,6 +438,58 @@ export class MagicPush {
           <div class="mg-btns small"><button type="button" class="dlg-btn" data-mg="delete-no">${esc(t("mgCancel"))}</button><button type="button" class="dlg-btn danger" data-mg="delete-yes" data-id="${esc(r.id)}">${esc(t("mgDeleteYes"))}</button></div></div>`
       : "";
     return `<div class="mg-card${r.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${emojiFor(e)}</span>${title}${renaming ? "" : sw}</div>${acts}${confirm}</div>`;
+  }
+
+  // --- Übersicht aller Meldungen (Reiter "Magic Push" in den Einstellungen, seit 2.10.0) --------------------------
+
+  // Nach Gerät gruppiert: Kopf mit Gerät (Symbol, Name, Bereich und Integration), darunter seine Meldungen mit Schalter,
+  // Bearbeiten und Löschen. Neue Meldungen gibt es hier nicht, sie entstehen im Popup des Geräts.
+  overviewHtml(all, devices) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    let html = `<p class="mg-note">${esc(t("mgAllIntro"))}</p>`;
+    if (all.flash) html += `<div class="mg-flash" role="status">${esc(all.flash)}</div>`;
+    if (all.error && !all.rules) {
+      return `${html}<div class="dlg-error">${esc(t("mgLoadError", all.error))}</div><button type="button" class="qbtn" data-set="magic-reload">${esc(t("mgRetry"))}</button>`;
+    }
+    if (all.err) html += `<div class="dlg-error">${esc(all.err)}</div>`;
+    if (!all.rules) return `${html}<p class="mg-note">${esc(t("mgLoading"))}</p>`;
+    if (!all.rules.length) return `${html}<p class="mg-empty">${esc(t("mgAllEmpty"))}</p>`;
+    const byDevice = new Map();
+    for (const r of all.rules) {
+      if (!byDevice.has(r.device_id)) byDevice.set(r.device_id, []);
+      byDevice.get(r.device_id).push(r);
+    }
+    const nameOf = (id, rules) => devices.find((d) => d.id === id)?.name || rules[0].device_name || id;
+    const groups = [...byDevice.entries()].sort((a, b) => nameOf(a[0], a[1]).localeCompare(nameOf(b[0], b[1]), this.host._locale() || undefined, { sensitivity: "base" }));
+    html += `<p class="mg-count">${esc(t("mgAllCount", all.rules.length, groups.length))}</p>`;
+    for (const [id, rules] of groups) {
+      const dev = devices.find((d) => d.id === id);
+      const sub = dev ? [dev.area, this.host._integName(dev)].filter(Boolean).join(" · ") : "";
+      const off = dev?.online === false;
+      html += `<div class="mg-dev"><button type="button" class="mg-devbtn" data-set="magic-device" data-device="${esc(id)}" title="${esc(t("mgAllOpenDevice"))}">
+        <span class="mg-devic${off ? " off" : ""}" aria-hidden="true">${this.h.typeIcon(dev?.type || "other", 18)}</span>
+        <span class="mg-t"><b>${esc(nameOf(id, rules))}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>${off ? `<span class="mg-devoff">${esc(t("statusOffline"))}</span>` : ""}</button></div>`;
+      html += rules.sort((a, b) => a.name.localeCompare(b.name, this.host._locale() || undefined, { sensitivity: "base" })).map((r) => this.overviewCardHtml(r, all)).join("");
+    }
+    return html;
+  }
+
+  overviewCardHtml(r, all) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const confirming = all.confirmId === r.id;
+    const sw = `<label class="switch"><input type="checkbox" data-set="magic-toggle" data-id="${esc(r.id)}"${r.enabled ? " checked" : ""} aria-label="${esc(r.name)}"><span></span></label>`;
+    const acts = confirming
+      ? ""
+      : `<div class="mg-acts"><button type="button" class="linkbtn" data-set="magic-edit" data-device="${esc(r.device_id)}" data-id="${esc(r.id)}">${esc(t("mgActEdit"))}</button>
+        <button type="button" class="linkbtn danger" data-set="magic-delete" data-id="${esc(r.id)}">${esc(t("mgActDelete"))}</button></div>`;
+    const confirm = confirming
+      ? `<div class="mg-confirm"><b>${esc(t("mgDeleteAsk", r.name))}</b><small>${esc(t("mgDeleteNote"))}</small>
+          <div class="mg-btns small"><button type="button" class="dlg-btn" data-set="magic-delete-no">${esc(t("mgCancel"))}</button><button type="button" class="dlg-btn danger" data-set="magic-delete-yes" data-id="${esc(r.id)}">${esc(t("mgDeleteYes"))}</button></div></div>`
+      : "";
+    return `<div class="mg-card${r.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${emojiFor(this.entityOf(r))}</span>
+      <div class="mg-t"><b>${esc(r.name)}</b><small>${esc(this.sentence(r))}</small><small class="mg-status">${this.statusParts(r).join(" · ")}</small></div>${sw}</div>${acts}${confirm}</div>`;
   }
 
   // --- Assistent: Stand -------------------------------------------------------
@@ -475,6 +564,7 @@ export class MagicPush {
       pv: { main: null, recover: null },
       test: null,
       targetOpen: false,
+      free: { open: false, query: "", results: null, loading: false, error: "" },
       error: "",
       saving: false,
     };
@@ -918,17 +1008,65 @@ export class MagicPush {
   step1Html() {
     const esc = (v) => this.esc(v);
     const entities = this.data?.entities || [];
-    if (!entities.length) return `<p class="mg-note">${esc(this.t("mgNoEntities"))}</p>`;
     const picked = this.wiz.draft.entity_id;
-    return entities
-      .map((e) => {
-        const cat = e.category ? this.tt(`mgCat_${e.category}`) : "";
-        const sel = e.entity_id === picked;
-        return `<button type="button" class="mg-card mg-pick${sel ? " sel" : ""}" data-mg="pick" data-id="${esc(e.entity_id)}" role="radio" aria-checked="${sel}">
-          <span class="mg-row"><span class="mg-ic" aria-hidden="true">${emojiFor(e)}</span><span class="mg-t"><b>${esc(e.name)}</b>${cat ? `<small>${esc(cat)}</small>` : ""}</span>
-          <span class="mg-val${e.available ? "" : " off"}">${esc(this.entityValue(e))}</span><span class="mg-radio${sel ? " on" : ""}"></span></span></button>`;
-      })
-      .join("");
+    let html = entities.length
+      ? entities.map((e) => this.pickCardHtml(e, e.entity_id === picked, this.tt(`mgCat_${e.category}`))).join("")
+      : `<p class="mg-note">${esc(this.t("mgNoEntities"))}</p>`;
+    // Ganz unten: freie Entität (seit 2.10.0), jede Entität von Home Assistant; die Meldung bleibt an dieses Gerät gebunden
+    const free = this.isFree(picked) ? this.entity(picked) : null;
+    html += `<div class="mg-k mg-freehead">${esc(this.t("mgFreeLabel"))}</div>`;
+    if (free) html += this.pickCardHtml(free, true, this.t("mgFreeBadge"), free.entity_id);
+    const open = this.wiz.free.open;
+    html += `<button type="button" class="mg-card mg-pick mg-freebtn" data-mg="free-open" aria-expanded="${open}"><span class="mg-row"><span class="mg-ic" aria-hidden="true">🔎</span>
+      <span class="mg-t"><b>${esc(free ? this.t("mgFreeChange") : this.t("mgFreeOpen"))}</b><small>${esc(this.t("mgFreeSub"))}</small></span><span class="mg-chev" aria-hidden="true">${open ? "▴" : "▾"}</span></span></button>`;
+    if (open) {
+      html += `<div class="mg-free"><input class="mg-input" type="search" data-mg="free-query" value="${esc(this.wiz.free.query)}" placeholder="${esc(this.t("mgFreeSearch"))}" aria-label="${esc(this.t("mgFreeSearch"))}" autocomplete="off">
+        <div data-mg-zone="freelist">${this.freeListHtml()}</div></div>`;
+    }
+    return html;
+  }
+
+  pickCardHtml(e, sel, note, sub = "") {
+    const esc = (v) => this.esc(v);
+    return `<button type="button" class="mg-card mg-pick${sel ? " sel" : ""}" data-mg="pick" data-id="${esc(e.entity_id)}" role="radio" aria-checked="${sel}">
+      <span class="mg-row"><span class="mg-ic" aria-hidden="true">${emojiFor(e)}</span><span class="mg-t"><b>${esc(e.name)}</b>${note || sub ? `<small>${esc([note, sub].filter(Boolean).join(" · "))}</small>` : ""}</span>
+      <span class="mg-val${e.available ? "" : " off"}">${esc(this.entityValue(e))}</span><span class="mg-radio${sel ? " on" : ""}"></span></span></button>`;
+  }
+
+  // Treffer der Suche: Name, darunter Entitäts-ID und Gerät, rechts der Wert
+  freeListHtml() {
+    const esc = (v) => this.esc(v);
+    const f = this.wiz.free;
+    if (f.error) return `<div class="opt-error">${esc(this.t("mgFreeError", f.error))}</div>`;
+    if (f.loading && !f.results) return `<p class="mg-hint">${esc(this.t("mgFreeLoading"))}</p>`;
+    if (!f.results?.length) return `<p class="mg-hint">${esc(this.t("mgFreeNone"))}</p>`;
+    return `<div class="mg-list" role="listbox">${f.results
+      .map(
+        (e) => `<button type="button" class="mg-opt-row" role="option" data-mg="free-pick" data-id="${esc(e.entity_id)}"><span><b>${emojiFor(e)} ${esc(e.name)}</b><br><small>${esc([e.entity_id, e.device_name].filter(Boolean).join(" · "))}</small></span><span class="mg-freeval">${esc(this.entityValue(e))}</span></button>`
+      )
+      .join("")}</div>`;
+  }
+
+  searchFree(query) {
+    const w = this.wiz;
+    if (!w) return;
+    window.clearTimeout(this._freeTimer);
+    w.free.loading = true;
+    this._freeTimer = window.setTimeout(async () => {
+      const seq = (this._freeSeq = (this._freeSeq || 0) + 1);
+      try {
+        const r = await this.call({ type: "device_panel/magic_entity_search", query });
+        if (seq !== this._freeSeq || this.wiz !== w) return;
+        w.free.results = r.entities;
+        w.free.error = "";
+      } catch (err) {
+        if (seq !== this._freeSeq || this.wiz !== w) return;
+        w.free.error = this.h.errText(err);
+      }
+      w.free.loading = false;
+      const zone = this.root?.querySelector('[data-mg-zone="freelist"]');
+      if (zone) zone.innerHTML = this.freeListHtml();
+    }, query ? 250 : 0);
   }
 
   // Bedingung (Zahl: über, unter, ist gleich, ändert sich; Zustand: ist, ändert sich), Wert, Dauer.
@@ -1311,6 +1449,22 @@ export class MagicPush {
       case "pick":
         this.pickEntity(id);
         break;
+      case "free-open":
+        this.wiz.free.open = !this.wiz.free.open;
+        this.paint();
+        if (this.wiz.free.open) {
+          if (!this.wiz.free.results) this.searchFree(this.wiz.free.query);
+          this.root.querySelector('[data-mg="free-query"]')?.focus({ preventScroll: true });
+        }
+        break;
+      case "free-pick": {
+        const found = this.wiz.free.results?.find((x) => x.entity_id === id);
+        if (!found) break;
+        this.extra[id] = found;
+        this.wiz.free.open = false;
+        this.pickEntity(id);
+        break;
+      }
       case "kind":
         this.setKind(el.dataset.kind);
         break;
@@ -1402,6 +1556,10 @@ export class MagicPush {
     if (el.dataset.mgText) this.onText(el);
     else if (action === "value") this.setValue(el.value, true);
     else if (action === "reset-value") this.setReset(el.value, true);
+    else if (action === "free-query") {
+      this.wiz.free.query = el.value;
+      this.searchFree(el.value);
+    }
     else if (action === "for-own") {
       this.wiz.draft.forOwn.text = el.value;
       this.applyOwnFor();

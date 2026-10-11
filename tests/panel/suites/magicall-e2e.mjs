@@ -1,0 +1,144 @@
+// Magic Push in den Einstellungen (2.10.0): Reiter "Magic Push" unter Überwachung und Meldungen zeigt alle Meldungen aller
+// Geräte, nach Gerät gruppiert; ein- und ausschalten, bearbeiten (öffnet das Geräte-Popup mit dem Assistenten) und löschen
+// mit Rückfrage, aber keine neue anlegen. Dazu die Reiterleiste mit neun Reitern und die Einstellungen auf dem Handy
+// ohne Vorschauzeile. Deutsch und Englisch, Desktop und Handy, echte Klicks und Taps.
+import { chromium } from "playwright-core";
+import { launchOptions, outDir } from "../lib.mjs";
+
+const b = await chromium.launch(launchOptions);
+let ok = true;
+const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
+const R = `document.querySelector("device-panel").shadowRoot`;
+const TEXT = {
+  de: { tab: "Magic Push", intro: "Alle Meldungen von Magic Push", count: "3 Meldungen auf 2 Geräten", count2: "2 Meldungen auf 2 Geräten", count1: "1 Meldung auf 1 Gerät", empty: "Noch keine Meldungen", deleteAsk: "löschen?", deleted: "Gelöscht.", q1: "Was soll überwacht werden?", err: "konnten nicht geladen werden", off: "ausgeschaltet", mon: "Überwachung und Meldungen" },
+  en: { tab: "Magic Push", intro: "All Magic Push messages", count: "3 messages on 2 devices", count2: "2 messages on 2 devices", count1: "1 message on 1 device", empty: "No messages yet", deleteAsk: "Delete", deleted: "Deleted.", q1: "What should be watched?", err: "could not be loaded", off: "turned off", mon: "Monitoring and notifications" },
+};
+const RULE = (id, device, name, entity, extra = {}) => ({ id, device_id: device, entity_id: entity, name, kind: "below", value: 12, for_s: 600, message: "Meldung {value}", body: "", recover: false, recover_message: "", recover_body: "", repeat_s: 0, target: null, enabled: true, critical: false, critical_volume: 10, reset_value: null, ...extra });
+
+for (const lang of ["de", "en"]) {
+  const T = TEXT[lang];
+  for (const mobile of [false, true]) {
+    const tag = `${lang}/${mobile ? "mobile" : "desktop"}`;
+    const ctx = await b.newContext(mobile
+      ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }
+      : { viewport: { width: 1400, height: 900 } });
+    const p = await ctx.newPage();
+    const errors = [];
+    p.on("pageerror", (e) => errors.push(e.message));
+    await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}`);
+    const f = await (await p.waitForSelector("#panel-frame")).contentFrame();
+    await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
+    const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
+    const handle = async (sel) => (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
+    const tap = async (sel) => {
+      for (let i = 0; ; i++) {
+        try {
+          const h = await handle(sel);
+          if (!h) throw new Error("fehlt: " + sel);
+          await h.scrollIntoViewIfNeeded();
+          if (mobile) await h.tap(); else await h.click();
+          return;
+        } catch (err) {
+          if (i >= 3 || !/not attached|detached/.test(String(err))) throw err;
+          await new Promise((r) => setTimeout(r, 150));
+        }
+      }
+    };
+    const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
+    const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
+    const calls = (type) => p.evaluate((t) => window.__wsCalls.filter((m) => m.type === `device_panel/${t}`), type);
+    const body = "dialog.settings .mon-body";
+    const cards = () => ev(`return r.querySelectorAll('${body} .mg-card').length`);
+
+    await p.evaluate((rules) => {
+      window.__opts.notify_service = "notify.mobile_app_dani_iphone";
+      window.__magic = { rules, tests: [], seq: 10 };
+    }, [
+      RULE("r00000000001", "d", "Keller kalt", "sensor.temp"),
+      RULE("r00000000002", "d", "Feuchte hoch", "sensor.abs_humidity", { kind: "above", value: 10 }),
+      RULE("r00000000003", "h", "Fenster offen", "binary_sensor.window", { kind: "is", value: "on", for_s: 2700, reset_value: "off", enabled: false }),
+    ]);
+
+    // Einstellungen auf dem Handy: nur Titel, keine Vorschauzeile (Wunsch des Nutzers); Desktop behält sie
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    const summaryShown = await ev(`const s=r.querySelector("dialog.settings .set-sec-sum"); return !!s && getComputedStyle(s).display !== "none"`);
+    check(`[${tag}] Einstellungen: Vorschauzeile ${mobile ? "auf dem Handy weg" : "auf dem Desktop da"}`, summaryShown === !mobile);
+    check(`[${tag}] Einstellungen: Abschnitte lassen sich weiter aufklappen`, (await ev(`return r.querySelectorAll("dialog.settings .set-sec-head").length`)) >= 4);
+    await tap('[data-set="section"][data-id="monitor"]');
+    await wait(`return !!r.querySelector("dialog.settings .mon-tabs")`);
+    const tabs = await ev(`return [...r.querySelectorAll("dialog.settings .mon-tabs .mon-tab")].map(b => b.dataset.key).join()`);
+    check(`[${tag}] neun Reiter, "Magic Push" vor "Integrationen"`, tabs === "overview,outage,battery,charge,new,updates,sig,magic,integ", tabs);
+    const cols = await ev(`return getComputedStyle(r.querySelector("dialog.settings .mon-tabs")).gridTemplateColumns.split(" ").length`);
+    check(`[${tag}] Reiterleiste: ${mobile ? "drei" : "fünf"} Spalten`, cols === (mobile ? 3 : 5), String(cols));
+    check(`[${tag}] kein Reiter abgeschnitten`, await ev(`return [...r.querySelectorAll("dialog.settings .mon-tab")].every(b => b.scrollWidth <= b.clientWidth + 1)`));
+
+    await tap('dialog.settings [data-set="tab"][data-key="magic"]');
+    check(`[${tag}] Reiter zeigt Hinweis und Zahl`, await wait(`const t=r.querySelector('${body}')?.textContent || ""; return t.includes(${JSON.stringify(T.intro)}) && t.includes(${JSON.stringify(T.count)})`), await text(body));
+    const heads = await ev(`return [...r.querySelectorAll('${body} .mg-devbtn b')].map(x => x.textContent.trim()).join("|")`);
+    check(`[${tag}] nach Gerät gruppiert: Steckdose Terrasse, Stromzähler`, heads === "Steckdose Terrasse|Stromzähler", heads);
+    check(`[${tag}] Gerätekopf nennt Bereich und Integration`, (await text(`${body} .mg-devbtn small`)).includes("Terrasse"));
+    check(`[${tag}] drei Karten, die ausgeschaltete ist abgesetzt`, (await cards()) === 3 && (await ev(`return r.querySelectorAll('${body} .mg-card.off').length`)) === 1);
+    check(`[${tag}] Satz: Entität, Bedingung, Dauer`, (await ev(`return [...r.querySelectorAll('${body} .mg-card .mg-t small:first-of-type')].map(x => x.textContent).join(" | ")`)).includes("12") && (await ev(`return [...r.querySelectorAll('${body} .mg-card .mg-t small:first-of-type')].some(x => x.textContent.includes("Absolute Feuchte berechnet"))`)));
+    check(`[${tag}] freie Entität ist gekennzeichnet`, (await ev(`return [...r.querySelectorAll('${body} .mg-card')].filter(c => c.querySelector(".mg-freetag")).map(c => c.querySelector("b").textContent).join()`)) === "Feuchte hoch");
+    check(`[${tag}] Rücksetzwert im Satz`, (await ev(`return [...r.querySelectorAll('${body} .mg-card')].some(c => c.textContent.includes("Fenster offen") && /(zurück bei|back at)/.test(c.textContent))`)));
+    check(`[${tag}] keine Möglichkeit, hier eine neue Meldung anzulegen`, !(await ev(`return !!r.querySelector('${body} [data-mg="add"]') || !![...r.querySelectorAll('${body} button')].some(b => /Neue Meldung|New message/.test(b.textContent))`)));
+    check(`[${tag}] ohne Querscrollen`, (await ev(`const d=r.querySelector("dialog.settings"); return d.scrollWidth - d.clientWidth`)) <= 0);
+    await p.screenshot({ path: `${outDir}/magicall-${tag.replace("/", "-")}.png` });
+
+    // Ein- und Ausschalten
+    await tap(`${body} input[data-set="magic-toggle"][data-id="r00000000001"]`);
+    check(`[${tag}] Ausschalten: Server und Karte`, await wait(`return r.querySelectorAll('${body} .mg-card.off').length === 2`) && (await calls("magic_enable")).at(-1)?.enabled === false);
+    await tap(`${body} input[data-set="magic-toggle"][data-id="r00000000003"]`);
+    check(`[${tag}] Einschalten`, await wait(`return r.querySelectorAll('${body} .mg-card.off').length === 1`) && (await calls("magic_enable")).at(-1)?.enabled === true);
+
+    // Löschen mit Rückfrage
+    await tap(`${body} [data-set="magic-delete"][data-id="r00000000001"]`);
+    check(`[${tag}] Löschen fragt nach`, await wait(`return r.querySelector('${body} .mg-confirm b')?.textContent.includes(${JSON.stringify(T.deleteAsk)})`));
+    await tap(`${body} [data-set="magic-delete-no"]`);
+    check(`[${tag}] Abbrechen löscht nichts`, (await cards()) === 3 && (await calls("magic_delete")).length === 0);
+    await tap(`${body} [data-set="magic-delete"][data-id="r00000000001"]`);
+    await tap(`${body} [data-set="magic-delete-yes"]`);
+    check(`[${tag}] gelöscht: Karte weg, Zahl nachgeführt, Hinweis`, await wait(`const t=r.querySelector('${body}').textContent; return r.querySelectorAll('${body} .mg-card').length === 2 && t.includes(${JSON.stringify(T.count2)}) && t.includes(${JSON.stringify(T.deleted)})`) && (await calls("magic_delete")).length === 1);
+
+    // Bearbeiten: Popup des Geräts mit dem Assistenten (Schritt 1, Entität gewählt)
+    await tap(`${body} [data-set="magic-edit"][data-id="r00000000002"]`);
+    check(`[${tag}] Bearbeiten öffnet das Popup des Geräts im Reiter Magic Push`, await wait(`const d=r.querySelector("dialog.device"); return d?.open && r.querySelector('.sub-tab[data-tab="magic"].on') && d.querySelector(".dlg-title h2")?.textContent.includes("Steckdose Terrasse")`));
+    check(`[${tag}] Assistent mit dieser Meldung (freie Entität gewählt)`, await wait(`return r.querySelector('.mg-root .mg-big')?.textContent.trim() === ${JSON.stringify(T.q1)} && r.querySelector('.mg-root .mg-pick.sel')?.dataset.id === "sensor.abs_humidity"`));
+    await tap('.mg-root button.mg-stp[data-step="5"]');
+    await wait(`return !!r.querySelector('.mg-root input[data-mg="name"]')`);
+    const fill = async (sel, value) => { const h = await handle(sel); await h.fill(value); };
+    await fill('.mg-root input[data-mg="name"]', "Feuchte zu hoch");
+    await tap('.mg-root [data-mg="save"]');
+    await wait(`return !!r.querySelector('.mg-root .mg-flash')`);
+    const saved = (await calls("magic_save")).at(-1)?.rule;
+    check(`[${tag}] Änderung gespeichert (dieselbe Meldung)`, saved?.id === "r00000000002" && saved.name === "Feuchte zu hoch", JSON.stringify(saved));
+    await p.evaluate(() => { window.__wsCalls = []; });
+    await ev(`r.host._closeDevice()`);
+    check(`[${tag}] Popup zu: Übersicht lädt neu und zeigt den neuen Namen`, await wait(`return r.querySelector('${body}')?.textContent.includes("Feuchte zu hoch")`) && (await calls("magic_list")).length >= 1);
+    check(`[${tag}] Einstellungen sind noch offen`, await ev(`return r.querySelector("dialog.settings").open`));
+
+    // Gerätekopf: Popup mit der Liste des Geräts
+    await tap(`${body} .mg-devbtn[data-device="h"]`);
+    check(`[${tag}] Gerätekopf öffnet das Popup im Reiter Magic Push (Liste, kein Assistent)`, await wait(`const d=r.querySelector("dialog.device"); return d?.open && !!r.querySelector('.mg-root .mg-card') && !r.querySelector('.mg-root .mg-stephead')`));
+    await ev(`r.host._closeDevice()`);
+
+    // Leer, Fehler
+    await p.evaluate(() => { window.__magic.rules = []; });
+    await tap('dialog.settings [data-set="tab"][data-key="outage"]');
+    await tap('dialog.settings [data-set="tab"][data-key="magic"]');
+    await ev(`r.host._settings.magicAll = null; r.host._renderSettings()`);
+    check(`[${tag}] ohne Meldungen: Hinweis, wo man sie anlegt`, await wait(`return r.querySelector('${body}')?.textContent.includes(${JSON.stringify(T.empty)})`));
+    await p.evaluate(() => { window.__magicListFails = "Verbindung weg"; });
+    await ev(`r.host._settings.magicAll = null; r.host._renderSettings()`);
+    check(`[${tag}] Laden schlägt fehl: Fehler und Wiederholen`, await wait(`return r.querySelector('${body} .dlg-error')?.textContent.includes(${JSON.stringify(T.err)}) && !!r.querySelector('${body} [data-set="magic-reload"]')`));
+    await p.evaluate(() => { window.__magicListFails = null; });
+    await tap(`${body} [data-set="magic-reload"]`);
+    check(`[${tag}] Wiederholen klappt`, await wait(`return r.querySelector('${body}')?.textContent.includes(${JSON.stringify(T.empty)}) && !r.querySelector('${body} .dlg-error')`));
+    check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
+    await ctx.close();
+  }
+}
+await b.close();
+console.log(ok ? "ALL PASSED" : "SOME FAILED");
+process.exit(ok ? 0 : 1);

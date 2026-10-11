@@ -334,9 +334,10 @@ def clean_rule(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
     device = dr.async_get(hass).async_get(rule["device_id"])
     if device is None:
         raise vol.Invalid("Gerät nicht gefunden")
-    entry = er.async_get(hass).async_get(rule["entity_id"])
-    if entry is None or entry.device_id != device.id:
-        raise vol.Invalid("Die Entität gehört nicht zu diesem Gerät")
+    # Freie Entität (seit 2.10.0): jede Entität von Home Assistant ist erlaubt, auch von einem anderen Gerät oder ohne
+    # Gerät; die Meldung bleibt an dieses Gerät gebunden.
+    if er.async_get(hass).async_get(rule["entity_id"]) is None and hass.states.get(rule["entity_id"]) is None:
+        raise vol.Invalid("Die Entität gibt es nicht")
     kind = rule["kind"]
     if kind in NUMERIC_KINDS:
         if _float(rule.get("value")) is None:
@@ -416,7 +417,8 @@ def context(
     ctx = {
         "device": (device.name_by_user or device.name or "") if device is not None else "",
         "area": area.name if area else "",
-        "entity": entity_label(rule["entity_id"], entry, device, state),
+        # Bei einer freien Entität (anderes Gerät) heisst sie nach ihrem eigenen Gerät, "device" bleibt das der Meldung
+        "entity": entity_label(rule["entity_id"], entry, dev_reg.async_get(entry.device_id) if entry is not None and entry.device_id else device, state),
         "integration": rule.get("_integration", ""),
         "rule": rule.get("name", ""),
         "value": show(raw),
@@ -844,42 +846,63 @@ def targets_payload(hass: HomeAssistant, current: list[str]) -> list[dict[str, A
     return out
 
 
+def entity_descriptor(hass: HomeAssistant, entity_id: str) -> dict[str, Any]:
+    """Angaben zu einer Entität für die Wahl und die Texte: Art (Zahl oder Zustand), Wert, Einheit, wählbare Zustände."""
+    entry = er.async_get(hass).async_get(entity_id)
+    state = hass.states.get(entity_id)
+    own = dr.async_get(hass).async_get(entry.device_id) if entry is not None and entry.device_id else None
+    kind = entity_kind(state, entry)
+    cls = device_class(state, entry)
+    raw = state.state if state is not None else None
+    available = raw not in IGNORED
+    domain = entity_id.split(".", 1)[0]
+    number = _float(raw) if kind == "number" else None
+    return {
+        "entity_id": entity_id,
+        "name": entity_label(entity_id, entry, own, state),
+        "domain": domain,
+        "device_class": cls,
+        "kind": kind,
+        "state": raw,
+        "available": available,
+        "value": number_text(hass, number) if number is not None else (state_word(hass, domain, cls, str(raw)) if available else None),
+        "number": number,
+        "unit": str(state.attributes.get("unit_of_measurement") or "") if state is not None and kind == "number" else "",
+        "category": entry.entity_category.value if entry is not None and entry.entity_category else None,
+        "options": state_options(hass, entity_id) if kind == "state" else [],
+        "device_name": (own.name_by_user or own.name or "") if own is not None else "",
+    }
+
+
 def entities_payload(hass: HomeAssistant, device_id: str) -> list[dict[str, Any]]:
-    """Alle Entitäten eines Geräts zur Wahl: Art (Zahl oder Zustand), jetziger Wert, wählbare Zustände."""
-    device = dr.async_get(hass).async_get(device_id)
-    out: list[dict[str, Any]] = []
+    """Alle Entitäten eines Geräts zur Wahl (erst die ohne Kategorie, dann Diagnose und Konfiguration)."""
     entries = er.async_entries_for_device(er.async_get(hass), device_id)
-    for entry in sorted(entries, key=lambda e: (e.entity_category is not None, e.entity_id)):
-        state = hass.states.get(entry.entity_id)
-        kind = entity_kind(state, entry)
-        cls = device_class(state, entry)
-        raw = state.state if state is not None else None
-        available = raw not in IGNORED
-        number = _float(raw) if kind == "number" else None
-        out.append(
-            {
-                "entity_id": entry.entity_id,
-                "name": entity_label(entry.entity_id, entry, device, state),
-                "domain": entry.domain,
-                "device_class": cls,
-                "kind": kind,
-                "state": raw,
-                "available": available,
-                "value": number_text(hass, number) if number is not None else (state_word(hass, entry.domain, cls, str(raw)) if available else None),
-                "number": number,
-                "unit": str(state.attributes.get("unit_of_measurement") or "") if state is not None and kind == "number" else "",
-                "category": entry.entity_category.value if entry.entity_category else None,
-                "options": state_options(hass, entry.entity_id) if kind == "state" else [],
-            }
-        )
-    return out
+    return [entity_descriptor(hass, entry.entity_id) for entry in sorted(entries, key=lambda e: (e.entity_category is not None, e.entity_id))]
+
+
+def search_entities(hass: HomeAssistant, query: str, limit: int = 40) -> list[dict[str, Any]]:
+    """Suche in allen Entitäten (freie Entität, seit 2.10.0): nach Name, Entitäts-ID und Gerät, ohne Suchtext die ersten nach Name."""
+    needle = " ".join(query.casefold().split())
+    registry = er.async_get(hass)
+    devices = dr.async_get(hass)
+    found: list[tuple[str, str]] = []
+    for state in hass.states.async_all():
+        entry = registry.async_get(state.entity_id)
+        own = devices.async_get(entry.device_id) if entry is not None and entry.device_id else None
+        name = entity_label(state.entity_id, entry, own, state)
+        haystack = f"{name} {state.entity_id} {(own.name_by_user or own.name or '') if own is not None else ''}".casefold()
+        if all(part in haystack for part in needle.split()):
+            found.append((name.casefold(), state.entity_id))
+    found.sort()
+    return [entity_descriptor(hass, entity_id) for _name, entity_id in found[:limit]]
 
 
 def rule_payload(hass: HomeAssistant, magic: MagicPush, rule: dict[str, Any]) -> dict[str, Any]:
     """Regel mit Stand für das Panel: aktiv (Bedingung gilt gerade), zuletzt gemeldet, Entität fehlt."""
     rt = magic.runtime(rule["id"])
     state = hass.states.get(rule["entity_id"])
-    exists = er.async_get(hass).async_get(rule["entity_id"]) is not None
+    entry = er.async_get(hass).async_get(rule["entity_id"])
+    exists = entry is not None or state is not None
     return {
         **{k: v for k, v in rule.items() if not k.startswith("_")},
         "active": rt["since"] is not None,
@@ -887,5 +910,7 @@ def rule_payload(hass: HomeAssistant, magic: MagicPush, rule: dict[str, Any]) ->
         "fired": bool(rt["fired"]),
         "last_fired": rt["last_fired"],
         "entity_missing": not exists,
+        # Entität eines anderen Geräts oder ohne Gerät (freie Entität, seit 2.10.0)
+        "entity_free": entry is None or entry.device_id != rule["device_id"],
         "available": state is not None and state.state not in IGNORED,
     }

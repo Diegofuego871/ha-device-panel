@@ -3,7 +3,19 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.9.0, Magic Push: eigener Rücksetzwert)
+## Stand (2.10.0, Magic Push: Übersicht in den Einstellungen, freie Entität)
+
+- 2.10.0: (1) WS `magic_list` (alle Meldungen aller Geräte mit `device_name` und `entity`-Angaben) und Reiter "magic" in
+  `_monitorHtml` (`_monMagicHtml`, `_loadMagicAll`, `_magicAllAction`; Aktionen `data-set="magic-*"`; Schalter per
+  `change`; `MagicPush.overviewHtml`). Bearbeiten: `_openDevice(id, "magic", ruleId)` → `editWhenLoaded`. Nach dem
+  Schliessen des Geräte-Popups lädt die Übersicht neu (`_resetDevice`). (2) Freie Entität: `clean_rule` verlangt nur noch,
+  dass die Entität existiert (Register oder Zustand); `entity_descriptor`, `search_entities`, WS `magic_entity_search`,
+  `extra_entities` in `magic_get`, `entity_free` in `rule_payload`; `{entity}` heisst nach dem eigenen Gerät der Entität,
+  `{device}` bleibt das der Meldung. Panel: unterster Block in Schritt 1 (`wiz.free`, `searchFree`, `extra`). (3) Handy:
+  `.set-sec-sum` unter 600 px ausgeblendet; neun Reiter: 5 Spalten Desktop, 3 Handy. Tests: `magicall-e2e`, `magic-e2e`,
+  `test_magic` (Suche, freie Entität).
+
+## Stand davor (2.9.0, Magic Push: eigener Rücksetzwert)
 
 - 2.9.0: Regelfeld `reset_value` (leer = automatisch wie bisher; Zahl bei über/unter, Zustand bei "ist"; bei "ändert sich"
   immer leer). `magic.reset_met` und `_clean_reset` (unter: Rücksetzwert ≥ Schwelle, über: ≤). Auslösen in `_evaluate`:

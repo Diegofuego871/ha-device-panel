@@ -1406,4 +1406,28 @@ input.mg-pill { cursor: text; }
 .mg-stepper .sub-tab { font-size: 18px; }
 .mg-valin { min-width: 0; width: 100%; box-sizing: border-box; padding: 0 6px; border: none; border-radius: 11px; background: none; color: var(--dp-text); font: inherit; font-size: 15px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
 .mg-valin:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
+/* Reiter "Magic Push" in den Einstellungen (seit 2.10.0): Gerät als Kopf, darunter seine Meldungen */
+.mg-count { margin: 4px 0 0; color: var(--dp-text2); font-size: 12.5px; }
+.mg-dev { margin-top: 14px; }
+.mg-devbtn { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; padding: 4px 2px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.mg-devbtn:hover b { color: var(--dp-primary); }
+.mg-devbtn:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; border-radius: 8px; }
+.mg-devic { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--dp-subtle); color: var(--dp-text2); }
+.mg-devic.off { background: var(--dp-error-soft); color: var(--dp-error); }
+.mg-devoff { flex: none; padding: 1px 8px; border-radius: 99px; background: var(--dp-error-soft); color: var(--dp-error); font-size: 11.5px; font-weight: 500; }
+.mg-freetag { color: var(--dp-text3); overflow-wrap: anywhere; }
+/* Freie Entität im Assistenten (Schritt 1, ganz unten) */
+.mg-freehead { margin-top: 18px; }
+.mg-freebtn { border: 1.5px dashed color-mix(in srgb, var(--dp-primary) 45%, transparent); background: none; }
+.mg-chev { flex: none; color: var(--dp-text2); }
+.mg-free { margin-top: 8px; }
+.mg-freeval { flex: none; max-width: 40%; text-align: right; font-weight: 600; overflow-wrap: anywhere; }
+.mg-opt-row b { font-weight: 500; }
+/* Reiterleiste mit neun Reitern (Überwachung und Meldungen mit "Magic Push"): Desktop 5 + 4, Handy 3 × 3 */
+.mon-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(9)), .sub-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(9)) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 600px) {
+  .mon-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(9)), .sub-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(9)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* Einstellungen auf dem Handy: nur die Titel der Abschnitte, die Vorschauzeile hat kaum Platz (Wunsch des Nutzers) */
+  .set-sec-sum { display: none; }
+}
 `;

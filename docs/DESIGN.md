@@ -351,3 +351,14 @@ HA-Nachbau prüfen.
   "− Zahl +" hat dieselbe Fläche, aber keine Kapsel (keine Auswahl); die Felder für eigene Zeit tragen dieselbe Fläche.
   Hat eine Leiste keinen gewählten Knopf, entfernt `_initSeg` die Kapsel.
 
+
+
+## Magic Push in den Einstellungen und freie Entität (seit 2.10.0)
+
+- Reiter "Magic Push" in "Überwachung und Meldungen": nach Gerät gruppiert (Kopf mit Symbol, Name, Bereich · Integration,
+  rote Marke bei Ausfall), darunter Karten wie im Popup (Schalter, Bearbeiten, Löschen mit Rückfrage), kein "Neu".
+  Neun Reiter: Desktop 5 + 4, Handy 3 × 3.
+- Einstellungen auf dem Handy: nur Titel der Abschnitte, keine Vorschauzeile (`.set-sec-sum` unter 600 px aus).
+- Schritt 1: unter den Entitäten des Geräts die gestrichelte Karte "Freie Entität wählen" mit Suchfeld und Trefferliste
+  (Name, ID · Gerät, Wert); die gewählte steht als markierte Karte mit "frei gewählt" darüber.
+

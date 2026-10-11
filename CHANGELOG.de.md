@@ -7,7 +7,38 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.10.0] - 2026-10-11
+
+Magic Push: Übersicht in den Einstellungen und freie Entitäten.
+
+### Hinzugefügt
+
+- Neuer Reiter "Magic Push" unter "Überwachung und Meldungen" in den Einstellungen (Wunsch des Nutzers). Er zeigt alle
+  Meldungen von Magic Push aller Geräte, nach Gerät gruppiert: das Gerät (Symbol, Name, Bereich und Integration, eine
+  Marke bei Ausfall) als Überschrift, darunter seine Meldungen mit Name, Satz ("Temperatur unter 12 °C · für 10 Min. ·
+  zurück ab 14 °C"), Zustand und wann sie zuletzt kam. Meldungen lassen sich dort ein- und ausschalten, bearbeiten und
+  löschen (mit Rückfrage); "Bearbeiten" öffnet das Popup des Geräts mit dem Assistenten auf dieser Meldung, ein Tipp auf
+  das Gerät öffnet sein Popup im Reiter Magic Push. Neue Meldungen entstehen nicht hier, sondern nur im Popup eines
+  Geräts. Die Änderungen gelten sofort, nicht erst mit "Speichern"; die Übersicht lädt neu, wenn ein Geräte-Popup
+  schliesst.
+- Freie Entität (Wunsch des Nutzers): ganz unten in Schritt 1 des Assistenten öffnet "Freie Entität wählen" eine Suche
+  über alle Entitäten von Home Assistant (nach Name, Entitäts-ID und Gerät, mehrere Wörter möglich). Die Meldung bleibt an
+  dieses Gerät gebunden, die Entität darf aber von einem anderen Gerät oder von keinem stammen: Wert, Einheit und
+  Zustände kommen von der gewählten Entität, `{entity}` ist ihr Name und `{device}` bleibt das Gerät der Meldung. So
+  lässt sich zum Beispiel eine berechnete absolute Luftfeuchtigkeit an einem Sensor verwenden, der sie nicht messen
+  kann. Liste und Übersicht kennzeichnen solche Meldungen mit der Entitäts-ID.
+
+### Geändert
+
+- Die Einstellungen zeigen auf dem Handy nur noch die Titel der Abschnitte; die kleine Vorschauzeile unter dem Titel
+  entfällt dort (Wunsch des Nutzers). Auf dem Desktop bleibt sie.
+- Die Reiterleiste von "Überwachung und Meldungen" hat jetzt neun Reiter: auf dem Desktop fünf und vier, auf dem Handy
+  drei Zeilen zu drei.
+- Magic Push verlangt nicht mehr, dass die Entität zum Gerät gehört (siehe "Freie Entität"); die Entität muss es geben.
+
 ## [2.9.0] - 2026-10-11
+
+Nicht veröffentlicht; enthalten in 2.10.0.
 
 Magic Push: eigene Rücksetzbedingung.
 
@@ -2483,7 +2514,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.9.0
+[2.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.10.0
 [2.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.8.0
 [2.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.5.0
 [2.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.3.0

@@ -338,6 +338,8 @@ const MON_TAB_KEYS = {
   new: ["notify_new", "new_window", "new_persistent", "new_fields", "emoji_new"],
   updates: ["notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include", "emoji_updates"],
   sig: ["signal_low", "reset_signal"],
+  // Magic Push (seit 2.10.0): die Meldungen gehören den Geräten und werden sofort gespeichert, nicht mit "Speichern"
+  magic: [],
   integ: ["offline_after_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
 
@@ -697,7 +699,7 @@ class DevicePanel extends HTMLElement {
     // KI-Einschätzungen je Gerät (nur im Speicher), Option aus der Geräteliste.
     this._ai = new Map();
     // Magic Push (seit 2.6.0): eigener Reiter im Geräte-Popup, verwaltet seinen Stand selbst (magic-push.js)
-    this._magic = new MagicPush(this, { escape, mdi, errText, logo: LOGO_SMALL });
+    this._magic = new MagicPush(this, { escape, mdi, errText, logo: LOGO_SMALL, typeIcon });
     this._aiOn = false;
     this._flakyOutages = 3;
     // Chips der Verbindungsart, die nicht erscheinen (Einstellung "Anzeige").
@@ -3386,15 +3388,17 @@ class DevicePanel extends HTMLElement {
 
   // --- Geräte-Popup ---------------------------------------------------------
 
-  _openDevice(id) {
+  // tab: Reiter, mit dem das Popup beginnt; editRule: Meldung, die der Assistent von Magic Push gleich öffnet
+  _openDevice(id, tab = "ov", editRule = null) {
     const dlg = this.shadowRoot.querySelector("dialog.device");
     if (!dlg || !id) return;
     this._closeStat();
     this._detailId = id;
-    this._devTab = "ov";
+    this._devTab = tab;
     this._devSub = "out";
     this._detail = null;
     this._magic.open(id);
+    if (editRule) this._magic.editWhenLoaded(editRule);
     this._renderDevice();
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
@@ -3497,6 +3501,10 @@ class DevicePanel extends HTMLElement {
     this._detail = null;
     this._hist = null;
     this._magic.reset();
+    // Im Popup können Meldungen geändert worden sein: die Übersicht in den Einstellungen neu laden
+    if (this._settings?.magicAll) {
+      this._loadMagicAll();
+    }
   }
 
   // Entitäten und Kurzstatistik (7 Tage) holt erst das Popup.
@@ -5667,7 +5675,7 @@ class DevicePanel extends HTMLElement {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
     const tab = MON_TAB_KEYS[st.tab] ? st.tab : "overview";
-    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["charge", "tabCharge"], ["new", "tabNew"], ["updates", "tabUpdates"], ["sig", "tabSignal"], ["integ", "tabInteg"]]
+    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["charge", "tabCharge"], ["new", "tabNew"], ["updates", "tabUpdates"], ["sig", "tabSignal"], ["magic", "tabMagic"], ["integ", "tabInteg"]]
       .map(([id, key]) => {
         const keys = MON_TAB_KEYS[id];
         // Punkt am Reiter: dort gibt es eine Änderung (blau) oder einen Fehler (rot).
@@ -5688,10 +5696,81 @@ class DevicePanel extends HTMLElement {
             ? this._monUpdatesHtml(d, changes, errors, ui)
           : tab === "sig"
             ? this._monSigHtml(d)
+          : tab === "magic"
+            ? this._monMagicHtml()
           : tab === "integ"
             ? this._monIntegHtml(d, changes, errors)
             : this._monOverviewHtml(d, errors, ui);
     return `<div class="mon-tabs" role="tablist">${tabs}</div><div class="mon-body" role="tabpanel">${body}</div>`;
+  }
+
+  // Magic Push (seit 2.10.0): alle Meldungen aller Geräte, nach Gerät. Die Liste wird beim ersten Zeigen geladen und nach dem
+  // Schliessen eines Geräte-Popups neu (dort kann man sie ändern).
+  _monMagicHtml() {
+    const st = this._settings;
+    if (!st.magicAll) {
+      st.magicAll = { rules: null, error: null, confirmId: null, flash: "", err: "" };
+      this._loadMagicAll();
+    }
+    return this._magic.overviewHtml(st.magicAll, this._devices);
+  }
+
+  async _loadMagicAll() {
+    const st = this._settings;
+    if (!st?.magicAll) return;
+    const all = st.magicAll;
+    try {
+      const r = await this._hass.callWS({ type: "device_panel/magic_list" });
+      all.rules = r.rules;
+      all.error = null;
+    } catch (err) {
+      all.error = errText(err);
+    }
+    if (this._settings === st) this._renderSettings();
+  }
+
+  async _magicAllAction(action, btn) {
+    const st = this._settings;
+    const all = st?.magicAll;
+    if (!all) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const id = btn.dataset.id;
+    all.flash = "";
+    all.err = "";
+    if (action === "magic-reload") {
+      all.error = null;
+      this._loadMagicAll();
+      return;
+    }
+    if (action === "magic-device") {
+      this._openDevice(btn.dataset.device, "magic");
+      return;
+    }
+    if (action === "magic-edit") {
+      this._openDevice(btn.dataset.device, "magic", id);
+      return;
+    }
+    if (action === "magic-delete") all.confirmId = id;
+    else if (action === "magic-delete-no") all.confirmId = null;
+    else if (action === "magic-delete-yes") {
+      try {
+        await this._hass.callWS({ type: "device_panel/magic_delete", rule_id: id });
+        all.rules = all.rules.filter((r) => r.id !== id);
+        all.flash = t("mgDeleted");
+      } catch (err) {
+        all.err = t("mgListError", errText(err));
+      }
+      all.confirmId = null;
+    } else if (action === "magic-toggle") {
+      try {
+        const r = await this._hass.callWS({ type: "device_panel/magic_enable", rule_id: id, enabled: btn.checked });
+        const i = all.rules.findIndex((x) => x.id === id);
+        if (i >= 0) all.rules[i] = { ...all.rules[i], ...r.rule };
+      } catch (err) {
+        all.err = t("mgListError", errText(err));
+      }
+    }
+    if (this._settings === st) this._renderSettings();
   }
 
   // Zeitstrahl: Linie mit Marken in festen Abständen (nicht massstäblich). Eine Marke hat
@@ -6740,6 +6819,7 @@ class DevicePanel extends HTMLElement {
       const st = this._settings;
       const action = btn.dataset.set;
       if (action === "close") this._closeSettings();
+      else if (action.startsWith("magic-") && action !== "magic-toggle") this._magicAllAction(action, btn);
       else if (action === "save") this._saveSettings();
       else if (action === "tab" || action === "goto" || action === "integ" || action === "ifilter") {
         // Reiter, Sprung aus Übersicht oder Abschnitt "Integrationen", Liste
@@ -6939,6 +7019,10 @@ class DevicePanel extends HTMLElement {
     dialog.addEventListener("change", (ev) => {
       const st = this._settings;
       const el = ev.target;
+      if (el.matches?.('input[data-set="magic-toggle"]')) {
+        this._magicAllAction("magic-toggle", el);
+        return;
+      }
       if (st?.draft && el.tagName === "SELECT" && el.dataset.cfull !== undefined) {
         // "own": mit einem Wert ausserhalb der Stufen beginnen (der bisherige eigene Wert, sonst 85).
         st.draft.charge_full = el.value === "own" ? (Number.isInteger(st.draft.charge_full) && !CHARGE_FULL_PRESETS.includes(st.draft.charge_full) ? st.draft.charge_full : CHARGE_FULL_OWN_START) : Number(el.value);

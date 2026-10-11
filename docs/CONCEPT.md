@@ -488,7 +488,8 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
 
 Eigene Meldungen pro Gerät ohne Automation, im vierten Reiter des Geräte-Popups.
 
-- **Regel:** Entität des Geräts, Art (`above`, `below`, `is`, `change`), Wert, Dauer `for_s` (0 bis 7 Tage), Text mit
+- **Regel:** Entität (seit 2.10.0 jede Entität von Home Assistant; "frei" heisst: nicht von diesem Gerät, die Meldung bleibt
+  dem Gerät zugeordnet, Wert und Einheit kommen von der Entität), Art (`above`, `below`, `is`, `change`), Wert, Dauer `for_s` (0 bis 7 Tage), Text mit
   Variablen, optional "wieder normal" mit eigenem freiem Text, Wiederholung `repeat_s` (0 = einmal je Episode, bis
   30 Tage), Empfänger (`notify.*` oder leer = Standard-Push-Ziel der Einstellungen), Name (≤ 60), Schalter.
   Höchstens 20 je Gerät, 200 gesamt. Gespeichert in `.storage` (`device_panel.magic`), mit Laufzeitstand (seit wann,
