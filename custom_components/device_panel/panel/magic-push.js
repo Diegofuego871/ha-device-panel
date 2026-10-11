@@ -7,7 +7,9 @@
  * baut das Popup gar nicht neu (wizardOpen()). So geht beim Tippen nichts verloren.
  *
  * Aufbau: Liste der Meldungen (Name, Satz, Schalter, Bearbeiten/Umbenennen/Löschen) und ein Assistent in fünf
- * Schritten (Wert · Wann · Text · Versand · Name). Rückblick und Vorschau kommen vom Server (magic_history,
+ * Schritten (Wert · Wann · Text · Versand · Name). Der Assistent hat seit 2.11.0 ein eigenes Fenster (dialog.magic-dlg,
+ * docs/mockups/magic-push-dialog-v1, Variante A): Vollbild auf dem Handy, breites Fenster mit Seitenspalte auf dem Desktop.
+ * Der Reiter im Popup zeigt nur noch die Liste. Rückblick und Vorschau kommen vom Server (magic_history,
  * magic_preview), damit Panel und Meldung dieselbe Rechnung benutzen.
  */
 
@@ -88,6 +90,8 @@ export class MagicPush {
     this.error = null;
     this.view = "list";
     this.wiz = null;
+    this.standalone = false;
+    this.closeWin();
     this.ui = { renameId: null, renameValue: "", confirmId: null, flash: "", error: "" };
     // Freie Entitäten, die im Assistenten gewählt wurden (Angaben vom Server), und die Suche danach
     this.extra = {};
@@ -112,6 +116,31 @@ export class MagicPush {
 
   wizardOpen() {
     return this.view === "wizard" && Boolean(this.wiz);
+  }
+
+  // Fenster des Assistenten (steht fest im Panel, siehe device-panel.js) und Suche darin
+  win() {
+    return this.host.shadowRoot?.querySelector("dialog.magic-dlg") || null;
+  }
+
+  q(selector) {
+    return this.win()?.querySelector(selector) || null;
+  }
+
+  qa(selector) {
+    return this.win()?.querySelectorAll(selector) || [];
+  }
+
+  // Gehört das Element zur Liste im Popup oder zum Fenster des Assistenten?
+  inScope(el) {
+    return Boolean(this.root?.contains(el) || this.win()?.contains(el));
+  }
+
+  closeWin() {
+    const win = this.win();
+    if (!win) return;
+    if (win.open) win.close();
+    win.innerHTML = "";
   }
 
   // Zahl der eingeschalteten Meldungen für die Beschriftung des Reiters (null: noch nicht geladen).
@@ -152,11 +181,12 @@ export class MagicPush {
   }
 
   // Popup geöffnet: bei einem anderen Gerät von vorn beginnen und im Hintergrund laden.
-  open(deviceId) {
+  open(deviceId, standalone = false) {
     if (this.deviceId !== deviceId) {
       this.reset();
       this.deviceId = deviceId;
     }
+    this.standalone = standalone;
     this.load(deviceId);
   }
 
@@ -172,6 +202,13 @@ export class MagicPush {
     } catch (err) {
       if (this.deviceId !== deviceId) return;
       this.error = this.h.errText(err);
+      // Aus der Übersicht geöffnet: der Fehler gehört dorthin (es gibt kein Popup, das ihn zeigt)
+      const all = this.standalone ? this.host._settings?.magicAll : null;
+      if (all) {
+        all.err = this.t("mgLoadError", this.error);
+        this._pendingEdit = null;
+        this.host._renderSettings?.();
+      }
     }
     this.loading = false;
     this.refresh();
@@ -188,7 +225,8 @@ export class MagicPush {
   attach(root) {
     this.root = root;
     if (!this.data && !this.loading && !this.error && this.deviceId) this.load(this.deviceId);
-    this.paint();
+    // Der Assistent lebt in seinem eigenen Fenster und bleibt vom Neuaufbau des Popups unberührt
+    if (!this.wizardOpen()) this.paint();
   }
 
   entity(id) {
@@ -383,9 +421,13 @@ export class MagicPush {
   // --- Liste ------------------------------------------------------------------
 
   paint() {
+    if (this.view === "wizard" && this.wiz) {
+      this.paintWindow();
+      return;
+    }
     if (!this.root?.isConnected) return;
-    this.root.innerHTML = this.view === "wizard" && this.wiz ? this.wizardHtml() : this.listHtml();
-    if (this.view === "list" && this.ui.renameId) {
+    this.root.innerHTML = this.listHtml();
+    if (this.ui.renameId) {
       const input = this.root.querySelector('input[data-mg="rename-input"]');
       if (input) {
         input.focus({ preventScroll: true });
@@ -393,7 +435,42 @@ export class MagicPush {
         this.revealField(input);
       }
     }
-    if (this.view === "wizard") this.paintZones();
+  }
+
+  // Assistent im eigenen Fenster: Kopf, Fortschritt, Inhalt (scrollt) und Knöpfe (fest). Beim Neuzeichnen bleibt die Scrollposition.
+  paintWindow() {
+    const win = this.win();
+    if (!win) return;
+    const scrolls = [".mgw-body", ".mgw-main", ".mgw-side"].map((sel) => [sel, win.querySelector(sel)?.scrollTop || 0]);
+    win.innerHTML = this.wizardHtml();
+    if (!win.open) {
+      if (typeof win.showModal === "function") win.showModal();
+      else win.setAttribute("open", "");
+      this.host._blurOnTouch?.();
+    }
+    this.placeSide(win);
+    this.paintZones();
+    for (const [sel, top] of scrolls) {
+      const el = win.querySelector(sel);
+      if (el) el.scrollTop = top;
+    }
+  }
+
+  // Desktop: Diagramm, Rückblick und Vorschau rechts neben dem Formular (seit 2.11.0); schmal bleiben sie im Fluss des Formulars
+  wide() {
+    return Boolean(window.matchMedia?.("(min-width: 900px)").matches);
+  }
+
+  placeSide(win) {
+    if (!this.wide()) return;
+    const body = win.querySelector(".mgw-body");
+    const zones = ["chart", "hist", "pv"].map((n) => body?.querySelector(`[data-mg-zone="${n}"]`)).filter(Boolean);
+    if (!zones.length) return;
+    const side = document.createElement("aside");
+    side.className = "mgw-side";
+    side.append(...zones);
+    body.classList.add("two");
+    body.append(side);
   }
 
   listHtml() {
@@ -586,7 +663,10 @@ export class MagicPush {
       free: { open: false, query: "", results: null, loading: false, error: "" },
       error: "",
       saving: false,
+      confirmClose: false,
     };
+    // Stand beim Öffnen: ohne Änderung schliesst das Fenster ohne Rückfrage
+    this.wiz.snap = JSON.stringify(this.wiz.draft);
     this.paint();
     this.scrollTop();
   }
@@ -597,14 +677,30 @@ export class MagicPush {
     this._seq += 1;
     this.view = "list";
     this.wiz = null;
+    this.closeWin();
     this.paint();
-    this.scrollTop();
+    if (this.standalone) {
+      // Aus der Übersicht in den Einstellungen geöffnet: kein Popup dahinter, die Übersicht neu laden
+      this.reset();
+      this.host._loadMagicAll?.();
+      return;
+    }
     this.host._renderDevice(true);
   }
 
+  // Schliessen mit Rückfrage, wenn etwas geändert wurde
+  requestClose() {
+    const w = this.wiz;
+    if (!w) return;
+    if (w.saving) return;
+    if (JSON.stringify(w.draft) !== w.snap) {
+      w.confirmClose = true;
+      this.paint();
+    } else this.closeWizard();
+  }
+
   scrollTop() {
-    const dlg = this.host.shadowRoot.querySelector("dialog.device");
-    if (dlg) dlg.scrollTop = 0;
+    for (const el of this.qa(".mgw-body, .mgw-main, .mgw-side")) el.scrollTop = 0;
   }
 
   // Wert, Bedingung oder Entität haben sich geändert: Standardtexte nachführen, solange nichts von Hand geschrieben wurde.
@@ -672,7 +768,7 @@ export class MagicPush {
     d.value = text;
     if (!d.nameTouched) d.name = this.suggestName(d);
     if (!fromInput) {
-      const input = this.root.querySelector('input[data-mg="value"]');
+      const input = this.q('input[data-mg="value"]');
       if (input) input.value = text;
     }
     this.paintZones(["chart", "resethint"]);
@@ -695,7 +791,7 @@ export class MagicPush {
   setReset(text, fromInput = false) {
     this.wiz.draft.reset_value = text;
     if (!fromInput) {
-      const input = this.root.querySelector('input[data-mg="reset-value"]');
+      const input = this.q('input[data-mg="reset-value"]');
       if (input) input.value = text;
     }
     this.paintZones(["chart", "resethint"]);
@@ -743,10 +839,10 @@ export class MagicPush {
   // Die Voreinstellungen leuchten nur, wenn sie gelten und keine eigene Zeit getippt ist.
   markPresets() {
     const d = this.wiz.draft;
-    for (const btn of this.root.querySelectorAll('[data-mg="for"]')) {
+    for (const btn of this.qa('[data-mg="for"]')) {
       this.setOn(btn, !d.forOwn.text && Number(btn.dataset.s) === d.for_s);
     }
-    for (const btn of this.root.querySelectorAll('[data-mg="repeat"]')) {
+    for (const btn of this.qa('[data-mg="repeat"]')) {
       this.setOn(btn, !d.repeatOwn.text && Number(btn.dataset.s) === d.repeat_s);
     }
   }
@@ -803,9 +899,9 @@ export class MagicPush {
   }
 
   syncNav() {
-    if (!this.root || !this.wiz) return;
+    if (!this.win() || !this.wiz) return;
     const ok = this.canNext();
-    for (const btn of this.root.querySelectorAll('[data-mg="next"], [data-mg="save"]')) btn.disabled = !ok || this.wiz.saving;
+    for (const btn of this.qa('[data-mg="next"], [data-mg="save"]')) btn.disabled = !ok || this.wiz.saving;
   }
 
   goto(step) {
@@ -1015,13 +1111,17 @@ export class MagicPush {
     const last = step === STEPS;
     const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-mg="${step === 1 ? "cancel" : "back"}">${esc(step === 1 ? t("mgCancel") : t("mgBack"))}</button>
       ${last ? `<button type="button" class="dlg-btn primary" data-mg="save"${this.canNext() && !w.saving ? "" : " disabled"}>${esc(t("mgSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-mg="next"${this.canNext() ? "" : " disabled"}>${esc(t("mgNext"))}</button>`}</div>`;
-    return `<h3>${esc(w.editing ? t("mgEditing") : t("mgNew"))}</h3>
-      <div class="mg-stephead"><span>${esc(t("mgStepOf", step, STEPS))}</span><span>${esc(where)}</span></div>
-      <div class="mg-steps">${bars}</div>
-      <div class="mg-big">${esc(t(`mgQ_${step}`))}</div>
-      ${body}
-      ${w.error ? `<div class="dlg-error" role="alert">${esc(w.error)}</div>` : ""}
-      ${nav}`;
+    const discard = `<div class="mgw-discard" role="alertdialog" aria-label="${esc(t("mgDiscardTitle"))}"><b>${esc(t("mgDiscardTitle"))}</b><small>${esc(t("mgDiscardNote"))}</small>
+      <div class="mg-btns small"><button type="button" class="dlg-btn" data-mg="discard-no">${esc(t("mgDiscardNo"))}</button><button type="button" class="dlg-btn danger" data-mg="discard-yes">${esc(t("mgDiscardYes"))}</button></div></div>`;
+    const device = this.host._devices?.find((d) => d.id === this.deviceId)?.name || "";
+    return `<div class="mgw-head"><div class="mgw-t"><b>${esc(w.editing ? t("mgEditing") : t("mgNew"))}</b>${device ? `<small>${esc(device)}</small>` : ""}</div>
+        <button type="button" class="dlg-close" data-mg="close" title="${esc(t("close"))}" aria-label="${esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>
+      <div class="mgw-prog"><div class="mg-stephead"><span>${esc(t("mgStepOf", step, STEPS))}</span><span>${esc(where)}</span></div>
+        <div class="mg-steps">${bars}</div></div>
+      <div class="mgw-body"><div class="mgw-main"><div class="mg-big">${esc(t(`mgQ_${step}`))}</div>
+        ${body}
+        ${w.error ? `<div class="dlg-error" role="alert">${esc(w.error)}</div>` : ""}</div></div>
+      <div class="mgw-foot">${w.confirmClose ? discard : nav}</div>`;
   }
 
   step1Html() {
@@ -1083,7 +1183,7 @@ export class MagicPush {
         w.free.error = this.h.errText(err);
       }
       w.free.loading = false;
-      const zone = this.root?.querySelector('[data-mg-zone="freelist"]');
+      const zone = this.q('[data-mg-zone="freelist"]');
       if (zone) zone.innerHTML = this.freeListHtml();
     }, query ? 250 : 0);
   }
@@ -1283,9 +1383,9 @@ export class MagicPush {
   // --- Assistent: Zonen (ohne den Schritt neu zu zeichnen, sonst ginge beim Tippen der Fokus verloren) -------
 
   paintZones(only) {
-    if (!this.root || !this.wiz) return;
+    if (!this.win() || !this.wiz) return;
     for (const name of only || ["chart", "hist", "pv", "forhint", "resethint"]) {
-      const el = this.root.querySelector(`[data-mg-zone="${name}"]`);
+      const el = this.q(`[data-mg-zone="${name}"]`);
       if (!el) continue;
       if (name === "chart") el.innerHTML = this.chartHtml();
       else if (name === "hist") el.innerHTML = this.histHtml();
@@ -1389,6 +1489,21 @@ export class MagicPush {
 
   // --- Ereignisse -------------------------------------------------------------
 
+  // Das Fenster des Assistenten: dieselben Ereignisse wie im Popup; Escape fragt bei Änderungen nach, ein Klick daneben nicht
+  bindWindow(win) {
+    this.bind(win);
+    win.addEventListener("cancel", (ev) => {
+      ev.preventDefault();
+      if (this.wiz?.confirmClose) {
+        this.wiz.confirmClose = false;
+        this.paint();
+      } else this.requestClose();
+    });
+    window.matchMedia?.("(min-width: 900px)").addEventListener?.("change", () => {
+      if (this.wizardOpen()) this.paint();
+    });
+  }
+
   bind(dlg) {
     dlg.addEventListener("click", (ev) => this.onClick(ev));
     dlg.addEventListener("input", (ev) => this.onInput(ev));
@@ -1407,7 +1522,7 @@ export class MagicPush {
 
   onClick(ev) {
     const el = ev.target.closest?.("[data-mg]");
-    if (!el || !this.root?.contains(el) || el.disabled) return;
+    if (!el || !this.inScope(el) || el.disabled) return;
     const action = el.dataset.mg;
     const id = el.dataset.id;
     switch (action) {
@@ -1452,6 +1567,14 @@ export class MagicPush {
         this.remove(id);
         break;
       case "cancel":
+      case "close":
+        this.requestClose();
+        break;
+      case "discard-no":
+        this.wiz.confirmClose = false;
+        this.paint();
+        break;
+      case "discard-yes":
         this.closeWizard();
         break;
       case "back":
@@ -1474,7 +1597,7 @@ export class MagicPush {
         this.paint();
         if (this.wiz.free.open) {
           if (!this.wiz.free.results) this.searchFree(this.wiz.free.query);
-          const field = this.root.querySelector('[data-mg="free-query"]');
+          const field = this.q('[data-mg="free-query"]');
           field?.focus({ preventScroll: true });
           this.revealField(field);
         }
@@ -1544,7 +1667,7 @@ export class MagicPush {
   // Die Variable kommt in das zuletzt gewählte Feld der Gruppe (Titel oder Inhalt); ohne Wahl in den Titel.
   insertVariable(group, name) {
     const field = this.wiz.focus?.[group] || (group === "recover" ? "recover_message" : "message");
-    const ta = this.root.querySelector(`[data-mg-text="${field}"]`);
+    const ta = this.q(`[data-mg-text="${field}"]`);
     if (!ta) return;
     const token = `{${name}}`;
     const start = ta.selectionStart ?? ta.value.length;
@@ -1574,7 +1697,7 @@ export class MagicPush {
       this.ui.renameValue = el.value;
       return;
     }
-    if (!this.wiz || !this.root?.contains(el)) return;
+    if (!this.wiz || !this.inScope(el)) return;
     if (el.dataset.mgText) this.onText(el);
     else if (action === "value") this.setValue(el.value, true);
     else if (action === "reset-value") this.setReset(el.value, true);
@@ -1591,14 +1714,14 @@ export class MagicPush {
     } else if (action === "volume") {
       const level = Math.min(Math.max(Number(el.value) || 1, 1), VOLUME_MAX);
       this.wiz.draft.critical_volume = level;
-      const out = this.root.querySelector(".mg-volval");
+      const out = this.q(".mg-volval");
       if (out) out.textContent = this.t("mgVolumeOf", level);
       el.setAttribute("aria-valuetext", this.t("mgVolumeOf", level));
     } else if (action === "name") {
       this.wiz.draft.name = el.value;
       this.wiz.draft.nameTouched = true;
       this.syncNav();
-      const title = this.root.querySelector(".mg-card .mg-t b");
+      const title = this.q(".mg-card .mg-t b");
       if (title) title.textContent = el.value || "–";
     }
   }

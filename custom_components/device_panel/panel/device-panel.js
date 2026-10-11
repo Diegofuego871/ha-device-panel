@@ -1035,7 +1035,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
@@ -1182,6 +1182,7 @@ class DevicePanel extends HTMLElement {
     this._trackBusy(dlg);
     dlg.addEventListener("click", (ev) => this._onDeviceClick(ev));
     this._magic.bind(dlg);
+    this._magic.bindWindow(root.querySelector("dialog.magic-dlg"));
     dlg.addEventListener("input", (ev) => {
       if (this._rename && ev.target.matches?.('input[data-dlg="rename-input"]')) this._rename.value = ev.target.value;
     });
@@ -3982,7 +3983,7 @@ class DevicePanel extends HTMLElement {
     // Eingabe beim nächsten Abfragen (alle 10 s) verloren.
     const typing = this.shadowRoot.activeElement;
     // Der Assistent von Magic Push ist offen: nicht neu aufbauen, sonst ginge Getipptes verloren (Stand liegt im Modul).
-    if (!this._devForce && this._devTab === "magic" && this._magic.wizardOpen()) return;
+    if (!this._devForce && this._magic.wizardOpen()) return;
     if (!this._devForce && this._rename && typing?.dataset?.dlg === "rename-input") return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-bat-pct" && typing.value !== String(d.battery_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-sig-val" && typing.value !== String(d.signal_setting)) return;
@@ -5747,7 +5748,9 @@ class DevicePanel extends HTMLElement {
       return;
     }
     if (action === "magic-edit") {
-      this._openDevice(btn.dataset.device, "magic", id);
+      // Seit 2.11.0 direkt das Fenster des Assistenten, ohne das Popup des Geräts dahinter
+      this._magic.open(btn.dataset.device, true);
+      this._magic.editWhenLoaded(id);
       return;
     }
     if (action === "magic-delete") all.confirmId = id;

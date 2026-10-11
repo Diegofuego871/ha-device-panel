@@ -1422,7 +1422,39 @@ input.mg-pill { cursor: text; }
 .mg-chev { flex: none; color: var(--dp-text2); }
 .mg-free { margin-top: 8px; }
 /* Beim Hochscrollen unter dem Kopf und den Reitern des Popups anhalten (Kopf und Reiter bleiben stehen) */
-.mg-free .mg-input, .mg-card .mg-input { scroll-margin-top: calc(var(--dev-head-h, 100px) + 70px); }
+.mg-card .mg-input { scroll-margin-top: calc(var(--dev-head-h, 100px) + 70px); }
+.mgw-body .mg-input { scroll-margin-top: 8px; }
+
+/* Fenster des Assistenten (seit 2.11.0, docs/mockups/magic-push-dialog-v1, Variante A): Vollbild auf dem Handy, auf dem Desktop
+   ein breites Fenster; Diagramm, Rückblick und Vorschau stehen dort rechts. Kopf, Fortschritt und Knöpfe bleiben stehen. */
+dialog.magic-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden; overscroll-behavior: contain;
+  width: min(920px, calc(100vw - 32px)); max-width: none; height: min(700px, calc(100% - 48px)); max-height: none; }
+dialog.magic-dlg::backdrop { background: rgba(0,0,0,0.5); }
+dialog.magic-dlg[open] { display: flex; flex-direction: column; }
+dialog.magic-dlg[open] > * { flex-shrink: 0; }
+.mgw-head { display: flex; align-items: center; gap: 10px; padding: 16px 14px 8px 22px; }
+.mgw-t { flex: 1 1 auto; min-width: 0; }
+.mgw-t b { display: block; font-size: 18px; font-weight: 500; }
+.mgw-t small { display: block; margin-top: 1px; color: var(--dp-text2); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mgw-prog { padding: 0 22px 6px; }
+.mgw-prog .mg-steps { margin: 4px 0; }
+dialog.magic-dlg[open] > .mgw-body { flex: 1 1 auto; flex-shrink: 1; min-height: 0; overflow: auto; padding: 2px 22px 14px; overscroll-behavior: contain; }
+dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hidden; padding: 2px 0 0 22px; }
+.mgw-body.two > .mgw-main, .mgw-body.two > .mgw-side { min-height: 0; overflow: auto; overscroll-behavior: contain; padding-bottom: 14px; }
+.mgw-body.two > .mgw-main { flex: 1 1 auto; min-width: 0; }
+.mgw-body.two > .mgw-side { flex: 0 0 310px; box-sizing: border-box; padding: 4px 22px 14px 18px; border-left: 1px solid var(--dp-divider); background: color-mix(in srgb, var(--dp-text) 3%, var(--dp-card)); }
+.mgw-side > :first-child { margin-top: 0; }
+.mgw-foot { padding: 10px 22px calc(14px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--dp-divider); background: var(--dp-card); }
+.mgw-foot .mg-btns { margin-top: 0; }
+.mgw-discard b { display: block; font-size: 14px; font-weight: 600; }
+.mgw-discard small { display: block; margin-top: 2px; color: var(--dp-text2); font-size: 12.5px; line-height: 1.4; }
+@media (max-width: 700px) {
+  dialog.magic-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
+  .mgw-head { padding: 14px 12px 6px 16px; }
+  .mgw-prog { padding: 0 16px 4px; }
+  dialog.magic-dlg[open] > .mgw-body { padding: 2px 16px 12px; }
+  .mgw-foot { padding: 10px 16px calc(14px + env(safe-area-inset-bottom, 0px)); }
+}
 .mg-freeval { flex: none; max-width: 40%; text-align: right; font-weight: 600; overflow-wrap: anywhere; }
 .mg-opt-row b { font-weight: 500; }
 /* Reiterleiste mit neun Reitern (Überwachung und Meldungen mit "Magic Push"): Desktop 5 + 4, Handy 3 × 3 */

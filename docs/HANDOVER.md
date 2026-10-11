@@ -3,7 +3,21 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.10.0, Magic Push: Übersicht in den Einstellungen, freie Entität)
+## Stand (2.11.0, Magic Push: Assistent im eigenen Fenster)
+
+- 2.11.0 (Entscheid des Nutzers: Variante A, Vollbild auf dem Handy; Rest nach Empfehlung, Mockups
+  `docs/mockups/magic-push-dialog-v1`): Der Assistent lebt in `dialog.magic-dlg` (steht fest im Panel-Template, ein
+  Fenster, `MagicPush.bindWindow`). `MagicPush.win()/q()/qa()/inScope()` ersetzen `this.root` im Assistenten; `this.root`
+  bleibt nur die Liste im Reiter. `paint()` zeichnet bei `view === "wizard"` über `paintWindow()` (Kopf, Fortschritt,
+  `.mgw-body` scrollt, `.mgw-foot` fest; Scrollpositionen bleiben), Desktop (≥ 900 px, `placeSide`): Zonen `chart`, `hist`,
+  `pv` wandern in `.mgw-side`. Schliessen: `requestClose()` fragt bei Änderungen (`wiz.snap` gegen Entwurf) "Änderungen
+  verwerfen?" (`wiz.confirmClose`); Escape (`cancel`) ebenso, Klick daneben tut nichts. `attach()` zeichnet den Assistenten
+  nicht neu; `_renderDevice` baut bei offenem Assistenten nicht neu auf. "Bearbeiten" in den Einstellungen:
+  `MagicPush.open(deviceId, true)` (standalone) + `editWhenLoaded`, ohne Popup; nach Schliessen `reset()` und
+  `_loadMagicAll()`; Ladefehler erscheint in der Übersicht. Tests: `magic-e2e` (484), `magicall-e2e` (120). Offen: iOS-Tastatur
+  im iframe nicht auf echtem iPhone geprüft.
+
+## Stand davor (2.10.0, Magic Push: Übersicht in den Einstellungen, freie Entität)
 
 - 2.10.0: (1) WS `magic_list` (alle Meldungen aller Geräte mit `device_name` und `entity`-Angaben) und Reiter "magic" in
   `_monitorHtml` (`_monMagicHtml`, `_loadMagicAll`, `_magicAllAction`; Aktionen `data-set="magic-*"`; Schalter per

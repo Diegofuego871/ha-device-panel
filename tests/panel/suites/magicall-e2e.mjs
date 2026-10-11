@@ -101,22 +101,30 @@ for (const lang of ["de", "en"]) {
     await tap(`${body} [data-set="magic-delete-yes"]`);
     check(`[${tag}] gelöscht: Karte weg, Zahl nachgeführt, Hinweis`, await wait(`const t=r.querySelector('${body}').textContent; return r.querySelectorAll('${body} .mg-card').length === 2 && t.includes(${JSON.stringify(T.count2)}) && t.includes(${JSON.stringify(T.deleted)})`) && (await calls("magic_delete")).length === 1);
 
-    // Bearbeiten: Popup des Geräts mit dem Assistenten (Schritt 1, Entität gewählt)
+    // Bearbeiten (seit 2.11.0): direkt das Fenster des Assistenten, ohne das Popup des Geräts dahinter
+    const W = "dialog.magic-dlg";
     await tap(`${body} [data-set="magic-edit"][data-id="r00000000002"]`);
-    check(`[${tag}] Bearbeiten öffnet das Popup des Geräts im Reiter Magic Push`, await wait(`const d=r.querySelector("dialog.device"); return d?.open && r.querySelector('.sub-tab[data-tab="magic"].on') && d.querySelector(".dlg-title h2")?.textContent.includes("Steckdose Terrasse")`));
-    check(`[${tag}] Assistent mit dieser Meldung (freie Entität gewählt)`, await wait(`return r.querySelector('.mg-root .mg-big')?.textContent.trim() === ${JSON.stringify(T.q1)} && r.querySelector('.mg-root .mg-pick.sel')?.dataset.id === "sensor.abs_humidity"`));
-    await tap('.mg-root button.mg-stp[data-step="5"]');
-    await wait(`return !!r.querySelector('.mg-root input[data-mg="name"]')`);
+    check(`[${tag}] Bearbeiten öffnet das Fenster des Assistenten, kein Geräte-Popup, Einstellungen dahinter offen`, await wait(`return r.querySelector("${W}")?.open && !r.querySelector("dialog.device").open && r.querySelector("dialog.settings").open && r.querySelector('${W} .mgw-t')?.textContent.includes("Steckdose Terrasse")`));
+    check(`[${tag}] Assistent mit dieser Meldung (freie Entität gewählt)`, await wait(`return r.querySelector('${W} .mg-big')?.textContent.trim() === ${JSON.stringify(T.q1)} && r.querySelector('${W} .mg-pick.sel')?.dataset.id === "sensor.abs_humidity"`));
+    // Schliessen ohne Änderung: sofort zu, Einstellungen bleiben
+    await tap(`${W} [data-mg="close"]`);
+    check(`[${tag}] Schliessen ohne Änderung: Fenster zu, Einstellungen offen, Zustand zurückgesetzt`, await wait(`return !r.querySelector("${W}").open && r.querySelector("dialog.settings").open && r.host._magic.deviceId === null`));
+    await tap(`${body} [data-set="magic-edit"][data-id="r00000000002"]`);
+    await wait(`return r.querySelector("${W}")?.open && !!r.querySelector('${W} .mg-pick.sel')`);
+    await tap(`${W} button.mg-stp[data-step="5"]`);
+    await wait(`return !!r.querySelector('${W} input[data-mg="name"]')`);
     const fill = async (sel, value) => { const h = await handle(sel); await h.fill(value); };
-    await fill('.mg-root input[data-mg="name"]', "Feuchte zu hoch");
-    await tap('.mg-root [data-mg="save"]');
-    await wait(`return !!r.querySelector('.mg-root .mg-flash')`);
+    await p.evaluate(() => { window.__wsCalls = []; });
+    await fill(`${W} input[data-mg="name"]`, "Feuchte zu hoch");
+    await tap(`${W} [data-mg="save"]`);
     const saved = (await calls("magic_save")).at(-1)?.rule;
     check(`[${tag}] Änderung gespeichert (dieselbe Meldung)`, saved?.id === "r00000000002" && saved.name === "Feuchte zu hoch", JSON.stringify(saved));
-    await p.evaluate(() => { window.__wsCalls = []; });
-    await ev(`r.host._closeDevice()`);
-    check(`[${tag}] Popup zu: Übersicht lädt neu und zeigt den neuen Namen`, await wait(`return r.querySelector('${body}')?.textContent.includes("Feuchte zu hoch")`) && (await calls("magic_list")).length >= 1);
-    check(`[${tag}] Einstellungen sind noch offen`, await ev(`return r.querySelector("dialog.settings").open`));
+    check(`[${tag}] Gespeichert: Fenster zu, Übersicht lädt neu und zeigt den neuen Namen, Einstellungen offen`, await wait(`return !r.querySelector("${W}").open && r.querySelector('${body}')?.textContent.includes("Feuchte zu hoch") && r.querySelector("dialog.settings").open`) && (await calls("magic_list")).length >= 1);
+    // Laden der Meldungen des Geräts schlägt fehl: Fehler in der Übersicht, kein leeres Fenster
+    await p.evaluate(() => { window.__magicLoadFails = "Verbindung weg"; });
+    await tap(`${body} [data-set="magic-edit"][data-id="r00000000002"]`);
+    check(`[${tag}] Laden fehlgeschlagen: Fehler in der Übersicht, kein Fenster`, await wait(`return !r.querySelector("${W}").open && r.querySelector('${body} .dlg-error')?.textContent.includes("Verbindung weg")`));
+    await p.evaluate(() => { window.__magicLoadFails = null; });
 
     // Gerätekopf: Popup mit der Liste des Geräts
     await tap(`${body} .mg-devbtn[data-device="h"]`);

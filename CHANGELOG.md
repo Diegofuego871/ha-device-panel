@@ -7,6 +7,24 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.11.0] - 2026-10-11
+
+Magic Push: the assistant gets its own window.
+
+### Changed
+
+- The assistant of Magic Push (new message and edit) now opens in its own window on top of the device pop-up instead of
+  inside the tab (requested by the user, mockups `docs/mockups/magic-push-dialog-v1`, variant A). On the phone the window
+  fills the whole screen: a slim top bar with the title, the device and "Close", the step bar below it, the content in
+  between and "Back"/"Next" fixed at the bottom, so they are always within reach. This gives the steps about a third
+  more room, and the keyboard no longer pushes the content under a tall pop-up header. On the desktop the window is wide
+  (920 px) and shows the chart, the look back and the preview in a column on the right next to the form. The tab
+  "Magic Push" in the pop-up now shows only the list of messages with "New message" and "Edit".
+- "Edit" in the overview in the settings opens the assistant window directly, without the device pop-up behind it; after
+  saving or closing, the settings are there again and the overview is reloaded.
+- Closing the window (cross, Escape, "Cancel" in step 1) with unsaved changes asks "Discard changes?"; without changes it
+  closes at once. A tap next to the window does not close it.
+
 ## [2.10.0] - 2026-10-11
 
 Magic Push: overview in the settings and free entities.
@@ -2442,6 +2460,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.11.0
 [2.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.10.0
 [2.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.8.0
 [2.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.5.0

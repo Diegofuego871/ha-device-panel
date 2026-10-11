@@ -362,3 +362,13 @@ HA-Nachbau prüfen.
 - Schritt 1: unter den Entitäten des Geräts die gestrichelte Karte "Freie Entität wählen" mit Suchfeld und Trefferliste
   (Name, ID · Gerät, Wert); die gewählte steht als markierte Karte mit "frei gewählt" darüber.
 
+## Magic Push: Assistent im eigenen Fenster (seit 2.11.0, docs/mockups/magic-push-dialog-v1, Variante A)
+
+- Der Assistent ist ein eigenes Fenster (`dialog.magic-dlg`) über dem Geräte-Popup, nicht mehr Teil des Reiters. Handy:
+  Vollbild ohne Rundung; Desktop: 920 px breit, Höhe wie die anderen Fenster. Aufbau von oben nach unten: Kopf (Titel
+  "Neue Meldung"/"Meldung bearbeiten", Gerätename klein, Kreuz `.dlg-close`), Fortschritt (`.mg-stephead`, `.mg-steps`),
+  Inhalt `.mgw-body` (scrollt), Fusszeile `.mgw-foot` (Zurück/Weiter bzw. Rückfrage "Änderungen verwerfen?") fest.
+- Desktop (≥ 900 px): Diagramm, Rückblick und Vorschau stehen in `.mgw-side` rechts (310 px, leicht abgesetzt), das
+  Formular links; beide Spalten scrollen für sich. Schmal bleibt alles in einer Spalte in der Reihenfolge des Formulars.
+- Neue Fenster dieser Art: Kopf schmal, Knöpfe fest unten, Inhalt scrollt; Rückfrage inline in der Fusszeile statt eines
+  weiteren Fensters.
