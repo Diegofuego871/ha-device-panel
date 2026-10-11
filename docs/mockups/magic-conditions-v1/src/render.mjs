@@ -4,6 +4,7 @@
 //   A: Bedingungskarten; "Bedingung hinzufügen" öffnet die Auswahl wie Schritt 1, danach die Bedingung (Reiterleiste, Wert)  <- Empfehlung
 //   B: Karten mit eingebautem Editor; die Entität wählt man in der Karte aus einer Liste
 //   C: Satz-Baukasten: die Meldung als Satz mit Bausteinen
+//   M1-M3: Vorschlag des Nutzers (2026-10-11): alle Bedingungen auf der ersten Seite (Wert + Wann + Bedingungen in einem), danach "Wie lange?" mit Rückblick; 5 Schritte
 //   AG / CG: gemischtes Und/Oder mit einer Ebene Gruppen (Klammern): A mit Gruppen-Kasten, C mit Klammern im Satz
 // Aufruf: CHROMIUM_PATH=... node docs/mockups/magic-conditions-v1/src/render.mjs
 import { setup } from "../../_lib/mock.mjs";
@@ -63,13 +64,18 @@ const CSS = `
 .mc-addin { margin-top: 8px; text-align: center; color: var(--dp-primary); font-size: 13px; font-weight: 500; }
 .mc-adds { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
 .mc-chip.par { background: none; font-size: 22px; padding: 0 2px; color: var(--dp-text2); min-height: 40px; }
+.mc-tlr { display: grid; grid-template-columns: 104px 1fr; align-items: center; gap: 8px; margin: 6px 0; font-size: 12px; color: var(--dp-text2); }
+.mc-tlr.tot { padding-top: 6px; border-top: 1px solid var(--dp-divider); color: var(--dp-text); }
+.mc-tl { position: relative; height: 14px; border-radius: 5px; background: color-mix(in srgb, var(--dp-text) 10%, transparent); overflow: hidden; }
+.mc-tl i { position: absolute; top: 0; bottom: 0; background: var(--dp-error); opacity: .75; }
+.mc-scale { display: flex; justify-content: space-between; margin: 2px 0 0 112px; font-size: 11px; color: var(--dp-text2); }
 .mc-big { margin: 4px 0 8px; font-size: 20px; font-weight: 600; line-height: 1.25; }
 `;
 
 const bars = (n, of = 6) => `<div class="mg-steps">${Array.from({ length: of }, (_, i) => `<span class="mg-stp${i < n ? " on" : ""}"></span>`).join("")}</div>`;
-const head = (n, where) => `<div class="mgd-head"><div class="t"><b>Neue Meldung</b><small>Klimasensor Keller</small></div><span class="mgd-x">×</span></div>
-  <div class="mgd-prog"><div class="mg-stephead"><span>Schritt ${n} von 6</span><span>${where}</span></div>${bars(n)}</div>`;
-const win = (n, where, body, foot) => `<dialog class="mgd"><div class="mgd-win">${head(n, where)}<div class="mgd-body">${body}</div><div class="mgd-foot">${foot}</div></div></dialog>`;
+const head = (n, where, of = 6) => `<div class="mgd-head"><div class="t"><b>Neue Meldung</b><small>Klimasensor Keller</small></div><span class="mgd-x">×</span></div>
+  <div class="mgd-prog"><div class="mg-stephead"><span>Schritt ${n} von ${of}</span><span>${where}</span></div>${bars(n, of)}</div>`;
+const win = (n, where, body, foot, of = 6) => `<dialog class="mgd"><div class="mgd-win">${head(n, where, of)}<div class="mgd-body">${body}</div><div class="mgd-foot">${foot}</div></div></dialog>`;
 const nav = (next, skip = false) => `<div class="mg-btns"><span class="dlg-btn">Zurück</span>${skip ? '<span class="dlg-btn skip">Überspringen</span>' : ""}<span class="dlg-btn primary">${next}</span></div>`;
 const seg = (items, on) => `<div class="mc-seg">${items.map((l, i) => `<span class="${i === on ? "on" : ""}">${l}</span>`).join("")}</div>`;
 const logic = (on = 0) => seg(["Alle müssen zutreffen (und)", "Eine genügt (oder)"], on);
@@ -124,6 +130,32 @@ const SCREENS = {
     <div class="mc-chips"><span class="mc-chip">🌡️ Temperatur unter 12 °C</span><span class="mc-chip op">und ▾</span><span class="mc-chip par">(</span><span class="mc-chip sel">🪟 Fenster ist offen ✕</span><span class="mc-chip op">oder ▾</span><span class="mc-chip">💧 Luftfeuchtigkeit über 60 % ✕</span><span class="mc-chip par">)</span><span class="mc-chip add">+ Bedingung</span><span class="mc-chip add">+ ( )</span></div>
     <div class="mc-card"><div class="mc-row" style="padding-bottom:4px"><span class="mc-ic">🪟</span><div class="mc-t"><b>Fenster bearbeiten</b><small>Entität wählen · Bedingung</small></div></div><div class="mc-edit" style="border-top:0">${stateEdit}</div></div>
     <p class="mc-note">"und" und "oder" sind je Verbindung wählbar; ohne Klammer gilt "und" vor "oder".</p>`, nav("Weiter")),
+  // M: alle Bedingungen auf der ersten Seite, 5 Schritte (Bedingungen · Wie lange · Versand · Text · Name)
+  "M0": win(1, "Bedingungen", `<div class="mc-big">Was soll überwacht werden?</div>
+    <p class="mc-intro">Wähle den ersten Wert. Weitere Bedingungen (und/oder) kannst du danach hinzufügen.</p>${pick(0)}`, `<div class="mg-btns"><span class="dlg-btn">Abbrechen</span><span class="dlg-btn primary">Weiter</span></div>`, 5),
+  "M1": win(1, "Bedingungen", `<div class="mc-big">Welche Bedingungen?</div>
+    ${seg(["Alle Teile müssen zutreffen (und)", "Ein Teil genügt (oder)"], 0)}
+    <div class="mc-sum"><b>Melden, wenn</b> 🌡️ Temperatur unter 12 °C <span class="op">und</span> ( 🪟 Fenster ist offen <span class="op">oder</span> 💧 Luftfeuchtigkeit über 60 % )</div>
+    <div class="mc-card"><div class="mc-row"><span class="mc-ic">🌡️</span><div class="mc-t"><b>Temperatur</b><small>unter 12 °C · jetzt: 14,2 °C</small></div><span class="mc-act">▴</span></div>
+      <div class="mc-edit">${seg(["über", "unter", "ist gleich", "ändert sich"], 1)}
+      <svg viewBox="0 0 320 60" style="width:100%;height:60px;margin-top:6px" preserveAspectRatio="none"><path d="M0,18 C40,8 80,10 120,26 S180,50 210,46 S280,14 320,12" fill="none" stroke="var(--dp-primary)" stroke-width="2"/><line x1="0" x2="320" y1="40" y2="40" stroke="var(--dp-error)" stroke-width="1.5" stroke-dasharray="5 4"/></svg>
+      <div class="mc-k">Schwelle · Einheit: °C</div><div class="mc-step"><span>−</span><span>12</span><span>+</span></div>
+      <div class="mc-k">Zurücksetzen</div>${seg(["Automatisch", "Eigener Wert"], 0)}</div></div>
+    ${join("und")}
+    <div class="mc-group"><div class="mc-ghead"><span>Gruppe</span><div class="mc-mini"><span>alle</span><span class="on">eine genügt</span></div><span class="mc-act del">✕</span></div>
+      ${cond("🪟", "Fenster", "ist offen")}${join("oder")}${cond("💧", "Luftfeuchtigkeit", "über 60 %")}
+      <div class="mc-addin">+ Bedingung in der Gruppe</div></div>
+    <div class="mc-adds"><div class="mc-add" style="margin:0">+ Bedingung</div><div class="mc-add" style="margin:0">+ Gruppe</div></div>`, nav("Weiter"), 5),
+  "M2": win(2, "Wie lange", `<div class="mc-big">Wie lange muss das zutreffen?</div>
+    ${seg(["Sofort", "1 Min.", "5 Min.", "10 Min.", "30 Min."], 3)}
+    <div class="mc-k">Rückblick 24 Std.</div>
+    <div class="mc-card" style="padding:10px 12px">
+      <div class="mc-tlr"><span>🌡️ unter 12 °C</span><div class="mc-tl"><i style="left:30%;width:12%"></i><i style="left:62%;width:6%"></i></div></div>
+      <div class="mc-tlr"><span>🪟 Fenster offen</span><div class="mc-tl"><i style="left:28%;width:16%"></i><i style="left:80%;width:10%"></i></div></div>
+      <div class="mc-tlr"><span>💧 über 60 %</span><div class="mc-tl"><i style="left:5%;width:40%"></i><i style="left:55%;width:30%"></i></div></div>
+      <div class="mc-tlr tot"><span><b>Zusammen</b></span><div class="mc-tl"><i style="left:30%;width:12%;background:var(--dp-primary)"></i><i style="left:62%;width:6%;background:var(--dp-primary);opacity:.4"></i></div></div>
+      <div class="mc-scale"><span>vor 24 Std.</span><span>jetzt</span></div></div>
+    <div class="mc-sum"><b>Rückblick</b> · wäre <b>1-mal</b> gekommen<br><span style="opacity:.8">gestern 04:12 · 38 Min. · Temperatur und Fenster zugleich</span></div>`, nav("Weiter"), 5),
 };
 
 const out = [];
@@ -139,5 +171,6 @@ for (const [k, html] of Object.entries(SCREENS)) f[k] = await one(k, html);
 await compose("1-Varianten.png", [[f.A1, "A: Karten, Hinzufügen wie Schritt 1 (Empfehlung)", 300], [f.B1, "B: Karten mit eingebautem Editor", 300], [f.C1, "C: Satz-Baukasten", 300]]);
 await compose("2-A-Ablauf.png", [[f.A0, "A: leere Seite, \"Überspringen\"", 300], [f.A2, "A: Hinzufügen, Entität wählen", 300], [f.A3, "A: Bedingung festlegen", 300]]);
 await compose("3-Kombinieren.png", [[f.AG, "A mit Gruppen: Temperatur UND (Fenster ODER Feuchte)", 330], [f.CG, "C mit Klammern im Satz", 330]]);
+await compose("4-Eine-Seite.png", [[f.M0, "1 · ohne Bedingung: Auswahl wie bisher", 300], [f.M1, "1 · Bedingungen: alles auf einer Seite", 300], [f.M2, "2 · Wie lange, Rückblick je Bedingung und zusammen", 300]]);
 await close();
 console.log("fertig");

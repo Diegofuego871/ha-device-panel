@@ -7,6 +7,7 @@ Wert · Wann · Bedingungen · Versand · Text · Name.
 
 - `1-Varianten.png`: A, B, C
 - `2-A-Ablauf.png`: Variante A: leere Seite ("Überspringen"), Entität wählen, Bedingung festlegen
+- `4-Eine-Seite.png`: Vorschlag des Nutzers: alle Bedingungen auf der ersten Seite, danach "Wie lange" mit Rückblick (5 Schritte)
 - `3-Kombinieren.png`: gemischtes Und/Oder mit einer Ebene Gruppen: A mit Gruppen-Kasten, C mit Klammern im Satz
 
 Varianten:
@@ -37,3 +38,18 @@ Vorschlag zur Wirkung (Entscheide stehen aus):
    `{conditions}` als Satz der Gesamtbedingung.
 
 Neu erzeugen: `CHROMIUM_PATH=... node docs/mockups/magic-conditions-v1/src/render.mjs`
+
+## Alle Bedingungen auf einer Seite (Vorschlag des Nutzers, 2026-10-11)
+
+Statt "Wert", "Wann" und "Bedingungen" eine Seite "Bedingungen"; danach "Wie lange" mit Rückblick. Schritte:
+Bedingungen · Wie lange · Versand · Text · Name (5, wie heute).
+
+Einwände und Folgen:
+
+1. Dauer ("für mindestens") und Rückblick brauchen einen eigenen Platz: neuer Schritt 2 "Wie lange". Der Rückblick zeigt je
+   Bedingung eine Zeile und "Zusammen".
+2. Der Rücksetzwert gilt je Bedingung (nicht mehr nur für die erste); "Automatisch" ist die Vorgabe.
+3. "ändert sich" ist ein Ereignis, kein Zustand: nur als einzige Bedingung (dann keine Gruppen, kein Und/Oder).
+4. Der einfachste Fall (eine Bedingung) bleibt wie heute: erst Auswahl, dann Bedingung festlegen; die Karte klappt auf.
+5. Variablen, Namensvorschlag und Diagramm beziehen sich auf die erste Bedingung der Liste.
+6. Bestehende Meldungen bleiben gültig (eine Bedingung).
