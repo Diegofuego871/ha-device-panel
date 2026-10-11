@@ -1,7 +1,7 @@
 // Magic Push (2.6.0): vierter Reiter im Geräte-Popup. Liste (Zähler im Reiter), Assistent in fünf Schritten
 // (Wert · Wann · Text · Versand · Name) für Zahl und Zustand, freie Zeit, Rückblick (auch leer und ohne
 // Recorder), Variablen einfügen, Vorschau, Empfänger-Auswahl, Wiederholung, eigener Text für "wieder normal",
-// Test senden, Speichern, Umbenennen, Ein-/Ausschalten, Löschen mit Bestätigung, Bearbeiten, Fehler beim
+// Kritische Mitteilung mit Lautstärke, Test senden, Speichern, Umbenennen, Ein-/Ausschalten, Löschen mit Bestätigung, Bearbeiten, Fehler beim
 // Speichern, Assistent übersteht den Neuaufbau des Popups. Deutsch und Englisch, Desktop und Handy,
 // echte Eingaben und Taps.
 import { chromium } from "playwright-core";
@@ -127,6 +127,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Empfänger-Liste: Gruppen, Dienste, Entitäten`, groups.split(",").length === 3, groups);
     await tap('.mg-opt-row[data-v="notify.familie"]');
     check(`[${tag}] Gruppe gewählt, Liste zu`, (await text(`${root} .mg-sel`)).includes("notify.familie") && !(await ev(`return !!r.querySelector('${root} .mg-list')`)));
+    // Kritische Mitteilung: Schalter, dann Lautstärke 1 bis 10
+    check(`[${tag}] kritisch zuerst aus, kein Regler`, (await ev(`return !r.querySelector('${root} input[data-mg="critical"]').checked && !r.querySelector('${root} input[data-mg="volume"]')`)));
+    await tap('input[data-mg="critical"]');
+    check(`[${tag}] kritisch an: Regler 1 bis 10, Vorgabe 10`, await wait(`const v=r.querySelector('${root} input[data-mg="volume"]'); return !!v && v.min === "1" && v.max === "10" && v.step === "1" && v.value === "10" && r.querySelector('${root} .mg-volval').textContent.trim() === ${JSON.stringify(lang === "de" ? "10 von 10" : "10 of 10")}`));
+    check(`[${tag}] kritisch: Vorschau trägt den Vermerk`, await wait(`return r.querySelector('${root} .mg-pv .pv-app')?.textContent.includes(${JSON.stringify(lang === "de" ? "kritisch" : "critical")})`));
+    await ev(`const v=r.querySelector('${root} input[data-mg="volume"]'); v.value="7"; v.dispatchEvent(new Event("input",{bubbles:true}))`);
+    check(`[${tag}] Lautstärke 7: Anzeige folgt`, (await text(`${root} .mg-volval`)) === (lang === "de" ? "7 von 10" : "7 of 10"));
+    check(`[${tag}] Schritt 4 mit Regler ohne Querscrollen`, (await overflow()) <= 0);
+    await p.screenshot({ path: `${outDir}/magic-${tag.replace("/", "-")}-4.png` });
     // Wiederholung: eigene Zeit 3 Std.
     await fill('input[data-mg="repeat-own"]', "3");
     await ev(`const s=r.querySelector('${root} select[data-mg="repeat-unit"]'); s.value="3600"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
@@ -145,7 +154,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-mg="test"][data-which="recover"]');
     check(`[${tag}] Test senden: Rückmeldung`, await wait(`return r.querySelector('${root} .mg-testres')?.textContent.includes(${JSON.stringify(T.testSent)})`));
     const test = (await calls("magic_test")).at(-1);
-    check(`[${tag}] Test geht mit "wieder normal" und dem Entwurf an den Server`, test?.which === "recover" && test.rule.recover_message === "Keller wieder warm: {value} {unit}" && test.rule.target === "notify.familie", JSON.stringify(test));
+    check(`[${tag}] Test geht mit "wieder normal" und dem Entwurf an den Server`, test?.which === "recover" && test.rule.critical === true && test.rule.critical_volume === 7 && test.rule.recover_message === "Keller wieder warm: {value} {unit}" && test.rule.target === "notify.familie", JSON.stringify(test));
     await next();
 
     // --- Schritt 5: Name ---
@@ -160,9 +169,10 @@ for (const lang of ["de", "en"]) {
     await tap('[data-mg="save"]');
     check(`[${tag}] gespeichert: Liste mit Hinweis`, await wait(`return r.querySelector('${root} .mg-flash')?.textContent.trim() === ${JSON.stringify(T.saved)} && r.querySelectorAll('${root} .mg-card').length === 1`));
     const saved = (await calls("magic_save")).at(-1)?.rule;
-    check(`[${tag}] Server bekommt alle Felder`, saved && saved.entity_id === "sensor.temp" && saved.kind === "below" && saved.value === 12 && saved.for_s === 2700 && saved.repeat_s === 10800 && saved.recover === true && saved.recover_message === "Keller wieder warm: {value} {unit}" && saved.message === "Keller kalt: {value} {unit} (unter {threshold}) ✔" && saved.target === "notify.familie" && saved.name === "Keller kalt" && saved.device_id === "d", JSON.stringify(saved));
+    check(`[${tag}] Server bekommt alle Felder`, saved && saved.entity_id === "sensor.temp" && saved.kind === "below" && saved.value === 12 && saved.for_s === 2700 && saved.repeat_s === 10800 && saved.recover === true && saved.recover_message === "Keller wieder warm: {value} {unit}" && saved.message === "Keller kalt: {value} {unit} (unter {threshold}) ✔" && saved.target === "notify.familie" && saved.critical === true && saved.critical_volume === 7 && saved.name === "Keller kalt" && saved.device_id === "d", JSON.stringify(saved));
     check(`[${tag}] Reiter zeigt "${T.active1}"`, await wait(`return r.querySelector('.sub-tab[data-tab="magic"] .tab-s')?.textContent.trim() === ${JSON.stringify(T.active1)}`));
     check(`[${tag}] Karte: Name, Satz, noch nie ausgelöst`, (await text(`${root} .mg-card .mg-t b`)) === "Keller kalt" && (await text(`${root} .mg-card .mg-t small`)).includes("12") && (await text(`${root} .mg-status`)).includes(T.never));
+    check(`[${tag}] Karte nennt "kritisch" und die Lautstärke`, (await text(`${root} .mg-card .mg-t small`)).includes(lang === "de" ? "kritisch (Lautstärke 7)" : "critical (volume 7)"), await text(`${root} .mg-card .mg-t small`));
     check(`[${tag}] Liste ohne Querscrollen`, (await overflow()) <= 0);
     await p.screenshot({ path: `${outDir}/magic-${tag.replace("/", "-")}-list.png` });
 
@@ -194,7 +204,7 @@ for (const lang of ["de", "en"]) {
     await headingOk(T.q5);
     check(`[${tag}] Sprung zu Schritt 5: Name, Text und Empfänger übernommen`, (await ev(`return r.querySelector('${root} input[data-mg="name"]').value`)) === "Kellertemperatur");
     await tap('button.mg-stp[data-step="4"]');
-    check(`[${tag}] Schritt 4 übernimmt Gruppe, Wiederholung und "wieder normal"-Text`, (await text(`${root} .mg-sel`)).includes("notify.familie") && (await ev(`return r.querySelector('${root} input[data-mg="repeat-own"]').value`)) === "3" && (await ev(`return r.querySelector('${root} textarea[data-mg-text="recover_message"]').value`)) === "Keller wieder warm: {value} {unit}");
+    check(`[${tag}] Schritt 4 übernimmt Gruppe, Wiederholung und "wieder normal"-Text`, (await text(`${root} .mg-sel`)).includes("notify.familie") && (await ev(`return r.querySelector('${root} input[data-mg="repeat-own"]').value`)) === "3" && (await ev(`return r.querySelector('${root} textarea[data-mg-text="recover_message"]').value`)) === "Keller wieder warm: {value} {unit}" && (await ev(`return r.querySelector('${root} input[data-mg="critical"]').checked && r.querySelector('${root} input[data-mg="volume"]').value === "7"`)));
     await tap('button.mg-stp[data-step="5"]');
     await fill('input[data-mg="name"]', "Keller zu kalt");
     await tap('[data-mg="save"]');

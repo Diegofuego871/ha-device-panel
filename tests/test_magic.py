@@ -466,3 +466,49 @@ def test_state_words() -> None:
     assert magic.state_word(_Hass(), "binary_sensor", None, "on") == "ein"  # type: ignore[arg-type]
     assert magic.state_word(_Hass(), "lock", None, "unlocked") == "entriegelt"  # type: ignore[arg-type]
     assert magic.state_word(_Hass(), "sensor", None, "irgendwas") == "irgendwas"  # type: ignore[arg-type]
+
+
+async def test_critical_notification(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Kritische Mitteilung (2.7.0): iOS-Lautstärke 0.1 bis 1.0 aus 1 bis 10, Android-Kanal; "wieder normal" bleibt gewöhnlich."""
+    calls = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    device = _device(hass, "Klimasensor Keller")
+    temp = _sensor(hass, device, "temp", "14.2", "temperature", "°C")
+    magic_push = hass.data[DATA_MAGIC]
+    # Vorgabe: gewöhnlich, Lautstärke 10
+    plain = await magic_push.async_save_rule({**_rule(device, temp), "name": "Gewöhnlich"})
+    assert plain["critical"] is False and plain["critical_volume"] == 10
+    for bad in (0, 11, 2.5, "7"):
+        with pytest.raises(vol.Invalid):
+            await magic_push.async_save_rule({**_rule(device, temp), "critical": True, "critical_volume": bad})
+    await magic_push.async_delete_rule(plain["id"])
+    rule = await magic_push.async_save_rule(
+        _rule(device, temp, for_s=0, critical=True, critical_volume=7, recover=True, recover_message="Wieder warm: {value}")
+    )
+    assert rule["critical"] is True and rule["critical_volume"] == 7
+    hass.states.async_set(temp, "11", {"device_class": "temperature", "unit_of_measurement": "°C"})
+    await hass.async_block_till_done()
+    assert len(calls) == 1
+    data = calls[0].data["data"]
+    assert data["push"] == {"sound": {"name": "default", "critical": 1, "volume": 0.7}}
+    assert data["ttl"] == 0 and data["priority"] == "high" and data["channel"] == "alarm_stream"
+    assert data["tag"] == f"{DOMAIN}_magic_{rule['id']}"  # die übrigen Zusatzdaten bleiben
+    # wieder normal: gewöhnliche Meldung
+    hass.states.async_set(temp, "13", {"device_class": "temperature", "unit_of_measurement": "°C"})
+    await hass.async_block_till_done()
+    assert len(calls) == 2 and "push" not in calls[1].data["data"] and "channel" not in calls[1].data["data"]
+    # Test: klingt wie die echte Meldung (main), "wieder normal" nicht
+    sendable = {k: v for k, v in magic_push.get(rule["id"]).items() if k != "created"}  # wie das Panel: nur Felder des Schemas
+    assert await magic_push.async_test(sendable, "main")
+    assert calls[2].data["data"]["push"]["sound"]["volume"] == 0.7
+    assert await magic_push.async_test(sendable, "recover")
+    assert "push" not in calls[3].data["data"]
+    # Lautstärke 1 = 0.1, 10 = 1.0
+    from custom_components.device_panel import push as push_module
+
+    assert push_module.critical_data(1)["push"]["sound"]["volume"] == 0.1
+    assert push_module.critical_data(10)["push"]["sound"]["volume"] == 1.0
+    # Eine gespeicherte Meldung aus 2.6 ohne die Felder lädt mit den Vorgaben
+    legacy = {k: v for k, v in magic_push.get(rule["id"]).items() if k not in ("critical", "critical_volume")}
+    cleaned = magic.clean_stored(legacy)
+    assert cleaned["critical"] is False and cleaned["critical_volume"] == 10

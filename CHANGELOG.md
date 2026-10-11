@@ -7,6 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.7.0] - 2026-10-11
+
+Magic Push: critical notification with a volume.
+
+### Added
+
+- In step 4 ("Delivery") of the Magic Push assistant, the new switch "Critical notification" (requested by the user).
+  With it on, a slider sets the volume from 1 to 10. A critical message also arrives when the device is muted or on
+  "Do not disturb". For iOS the volume is sent as 0.1 to 1.0 (`push.sound` with `critical: 1`; 0 would be silent, so
+  the scale starts at 1). For Android, which has no volume per message, the message is sent with `ttl: 0`,
+  `priority: high` and the channel `alarm_stream`, so it sounds through the alarm sound at the volume set on the
+  device. Only the message itself is critical; "back to normal" arrives as an ordinary message. "Send test" sounds
+  like the real message, so you can hear the volume. The preview is marked "critical", and the list shows "critical
+  (volume 7)". iOS needs critical alerts allowed for the Companion app in its settings.
+
 ## [2.6.1] - 2026-10-11
 
 Release notes open again with a new version from HACS.
@@ -2348,6 +2363,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[2.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.7.0
 [2.6.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.1
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.5.0

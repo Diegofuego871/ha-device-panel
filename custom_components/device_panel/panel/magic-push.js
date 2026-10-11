@@ -14,12 +14,14 @@
 const STEPS = 5;
 const PRESET_FOR = [0, 60, 300, 600, 1800, 3600];
 const PRESET_REPEAT = [0, 1800, 3600, 86400];
+// Kritische Mitteilung: Lautstärke 1 bis 10 (iOS: 0.1 bis 1.0, der Server rechnet um)
+const VOLUME_MAX = 10;
 const FOR_UNITS = [1, 60, 3600, 86400];
 const REPEAT_UNITS = [60, 3600, 86400];
 const HIST_DELAY_MS = 450;
 const PREVIEW_DELAY_MS = 300;
 // Felder, die der Server in einer Meldung annimmt (alles andere, etwa "active", würde er ablehnen).
-const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "message", "recover", "recover_message", "repeat_s", "target", "enabled"];
+const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "message", "recover", "recover_message", "repeat_s", "target", "enabled", "critical", "critical_volume"];
 
 // Zeichen vor dem Eintrag: nach Geräteklasse, sonst nach Art der Entität.
 const EMOJI_CLASS = {
@@ -236,6 +238,7 @@ export class MagicPush {
       parts.push(this.repeatText(rule.repeat_s));
       if (rule.recover) parts.push(this.t("mgSentenceRecover"));
     }
+    if (rule.critical) parts.push(this.t("mgSentenceCritical", rule.critical_volume ?? VOLUME_MAX));
     if (rule.target) parts.push(this.t("mgSentenceTo", this.niceTarget(rule.target)));
     return parts.join(" · ");
   }
@@ -293,6 +296,8 @@ export class MagicPush {
       repeat_s: d.kind === "change" ? 0 : d.repeat_s,
       target: d.target || null,
       enabled: d.enabled,
+      critical: d.critical,
+      critical_volume: d.critical_volume,
     };
     if (d.id) out.id = d.id;
     return out;
@@ -385,6 +390,8 @@ export class MagicPush {
       repeat_s: 0,
       repeatOwn: { text: "", unit: 3600 },
       target: "",
+      critical: false,
+      critical_volume: VOLUME_MAX,
       name: "",
       nameTouched: false,
       enabled: true,
@@ -406,6 +413,8 @@ export class MagicPush {
       recoverTouched: true,
       repeat_s: rule.repeat_s || 0,
       target: rule.target || "",
+      critical: Boolean(rule.critical),
+      critical_volume: rule.critical_volume ?? VOLUME_MAX,
       name: rule.name,
       nameTouched: true,
       enabled: rule.enabled,
@@ -924,7 +933,13 @@ export class MagicPush {
     let html = `<div class="mg-k">${esc(t("mgTarget"))}</div>
       <button type="button" class="mg-sel" data-mg="target-toggle" aria-expanded="${this.wiz.targetOpen}"><span>${esc(d.target ? this.niceTarget(d.target) : t("mgTargetDefault"))}<small>${esc(targetSub)}</small></span><span aria-hidden="true">${this.wiz.targetOpen ? "▴" : "▾"}</span></button>`;
     if (this.wiz.targetOpen) html += `<div class="mg-list" role="listbox">${this.targetListHtml()}</div>`;
-    html += `<p class="mg-hint">${esc(t("mgTargetHint"))}</p>`;
+    html += `<p class="mg-hint">${esc(t("mgTargetHint"))}</p>
+      <div class="mg-optrow"><div>${esc(t("mgCritical"))}<small>${esc(t("mgCriticalHint"))}</small></div><label class="switch"><input type="checkbox" data-mg="critical"${d.critical ? " checked" : ""} aria-label="${esc(t("mgCritical"))}"><span></span></label></div>`;
+    if (d.critical) {
+      html += `<div class="mg-vol"><label class="mg-k" for="mg-volume">${esc(t("mgVolume"))}</label>
+        <div class="mg-volrow"><input id="mg-volume" type="range" min="1" max="${VOLUME_MAX}" step="1" value="${d.critical_volume}" data-mg="volume" aria-valuetext="${esc(t("mgVolumeOf", d.critical_volume))}"><output class="mg-volval" for="mg-volume">${esc(t("mgVolumeOf", d.critical_volume))}</output></div>
+        <p class="mg-hint">${esc(t("mgVolumeHint"))}</p></div>`;
+    }
     if (change) {
       html += `<p class="mg-hint">${esc(t("mgChangeNote"))}</p>`;
     } else {
@@ -1044,7 +1059,7 @@ export class MagicPush {
       else if (!p.title) inner = `<div class="pv-text">${esc(t("mgPvEmpty"))}</div>`;
       else inner = `<div class="pv-title">${esc(p.title)}</div><div class="pv-text">${esc(p.message)}</div>`;
       const test = w.step === 4 ? this.testHtml(which) : "";
-      return `<div class="mg-pv"><div class="pv-k">${esc(t("mgPvLabel"))}</div><div class="pv-card"><div class="pv-app">${this.h.logo}${esc(t("mgPvApp"))}</div>${inner}</div><div class="opt-short">${esc(note)}</div>${test}</div>`;
+      return `<div class="mg-pv"><div class="pv-k">${esc(t("mgPvLabel"))}</div><div class="pv-card"><div class="pv-app">${this.h.logo}${esc(t("mgPvApp"))}${which === "main" && w.draft.critical ? ` · ${esc(t("mgPvCritical"))}` : ""}</div>${inner}</div><div class="opt-short">${esc(note)}</div>${test}</div>`;
     };
     let html = card(w.pv.main, t("mgPvNote"), "main");
     if (w.step >= 4 && w.draft.recover && w.draft.kind !== "change") html += card(w.pv.recover, t("mgPvNoteRecover"), "recover");
@@ -1217,6 +1232,12 @@ export class MagicPush {
     } else if (action === "repeat-own") {
       this.wiz.draft.repeatOwn.text = el.value;
       this.applyOwnRepeat();
+    } else if (action === "volume") {
+      const level = Math.min(Math.max(Number(el.value) || 1, 1), VOLUME_MAX);
+      this.wiz.draft.critical_volume = level;
+      const out = this.root.querySelector(".mg-volval");
+      if (out) out.textContent = this.t("mgVolumeOf", level);
+      el.setAttribute("aria-valuetext", this.t("mgVolumeOf", level));
     } else if (action === "name") {
       this.wiz.draft.name = el.value;
       this.wiz.draft.nameTouched = true;
@@ -1242,6 +1263,10 @@ export class MagicPush {
     } else if (action === "repeat-unit") {
       d.repeatOwn.unit = Number(el.value);
       this.applyOwnRepeat();
+    } else if (action === "critical") {
+      d.critical = el.checked;
+      this.paint();
+      this.paintZones(["pv"]);
     } else if (action === "recover") {
       d.recover = el.checked;
       if (d.recover && !d.recover_message) d.recover_message = this.defaultRecover(d);

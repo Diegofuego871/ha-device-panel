@@ -7,6 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.7.0] - 2026-10-11
+
+Magic Push: kritische Mitteilung mit Lautstärke.
+
+### Hinzugefügt
+
+- In Schritt 4 ("Versand") des Magic-Push-Assistenten steht der neue Schalter "Kritische Mitteilung" (Wunsch des
+  Nutzers). Ist er an, stellt ein Regler die Lautstärke von 1 bis 10 ein. Eine kritische Meldung kommt auch bei stummem
+  Gerät oder "Nicht stören" an. Für iOS wird die Lautstärke als 0,1 bis 1,0 geschickt (`push.sound` mit `critical: 1`;
+  0 wäre stumm, darum beginnt die Skala bei 1). Für Android, das keine Lautstärke pro Meldung kennt, geht die Meldung
+  mit `ttl: 0`, `priority: high` und dem Kanal `alarm_stream` hinaus und klingt so über den Alarm-Ton in der am Gerät
+  eingestellten Lautstärke. Nur die Meldung selbst ist kritisch; "wieder normal" kommt als gewöhnliche Meldung. "Test
+  senden" klingt wie die echte Meldung, so lässt sich die Lautstärke anhören. Die Vorschau trägt den Vermerk
+  "kritisch", die Liste zeigt "kritisch (Lautstärke 7)". Auf iOS müssen kritische Hinweise für die Companion-App in
+  deren Einstellungen erlaubt sein.
+
 ## [2.6.1] - 2026-10-11
 
 Release Notes öffnen wieder bei einer neuen Version von HACS.
@@ -2424,6 +2440,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.7.0
 [2.6.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.1
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.5.0

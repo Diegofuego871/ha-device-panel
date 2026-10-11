@@ -259,6 +259,9 @@ RULE_SCHEMA = vol.Schema(
         vol.Optional("repeat_s", default=0): _seconds(REPEAT_MAX),
         vol.Optional("target"): vol.Any(None, "", vol.All(str, vol.Match(_NOTIFY_RE))),
         vol.Optional("enabled", default=True): bool,
+        # Kritische Mitteilung (seit 2.7.0): durchbricht stumm und "Nicht stören"; Lautstärke 1 bis 10 (iOS: 0.1 bis 1.0)
+        vol.Optional("critical", default=False): bool,
+        vol.Optional("critical_volume", default=push.CRITICAL_VOLUME_MAX): vol.All(int, vol.Range(min=1, max=push.CRITICAL_VOLUME_MAX)),
     }
 )
 
@@ -626,7 +629,7 @@ class MagicPush:
         title = render(rule["message"], ctx)
         message = info_line(self.hass, rule, ctx)
         code = "magic_repeat" if repeat else "magic_fired"
-        self.hass.async_create_task(self._async_send(rule, title, message, code, ctx))
+        self.hass.async_create_task(self._async_send(rule, title, message, code, ctx, critical=rule["critical"]))
         if rule["repeat_s"] > 0 and rule["kind"] != "change":
             self._timers[rule_id] = async_call_later(self.hass, rule["repeat_s"], partial(self._on_timer, rule_id))
 
@@ -662,7 +665,7 @@ class MagicPush:
     def target(self, rule: dict[str, Any]) -> str:
         return rule.get("target") or effective(self.hass)["notify_service"]
 
-    async def _async_send(self, rule: dict[str, Any], title: str, message: str, code: str, ctx: dict[str, str]) -> bool:
+    async def _async_send(self, rule: dict[str, Any], title: str, message: str, code: str, ctx: dict[str, str], *, critical: bool = False) -> bool:
         hass = self.hass
         opts = effective(hass)
         target = self.target(rule)
@@ -672,6 +675,9 @@ class MagicPush:
             return False
         icon = await push_icon.async_integration_icon(hass, primary_domain(hass, device))
         data = push.notification_data(hass, f"{DOMAIN}_magic_{rule['id']}", push.device_url(opts["notify_click_target"], device.id), icon=icon)
+        # Nur die Meldung selbst ist kritisch; "wieder normal" kommt als gewöhnliche Meldung
+        if critical:
+            data.update(push.critical_data(rule["critical_volume"]))
         activity.record(hass, "info", "magic", code, rule["name"], rule["device_id"], title=title)
         return await push.async_push(hass, target, title, message, data)
 
@@ -680,7 +686,8 @@ class MagicPush:
         rule = clean_rule(self.hass, raw)
         title, message, ctx = self.preview(rule, which)
         activity.record(self.hass, "info", "magic", "magic_test", rule["name"], rule["device_id"])
-        return await self._async_send({**rule, "id": rule.get("id", "test")}, f"{title}", message, "magic_test", ctx)
+        # Der Test klingt wie die echte Meldung, damit man die Lautstärke hören kann
+        return await self._async_send({**rule, "id": rule.get("id", "test")}, f"{title}", message, "magic_test", ctx, critical=rule["critical"] and which == "main")
 
     def preview_raw(self, raw: dict[str, Any], which: str = "main") -> tuple[str, str]:
         """Vorschau für einen Entwurf: fehlende Texte und Namen sind erlaubt (dann ist der Text leer)."""

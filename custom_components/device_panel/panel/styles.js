@@ -1402,4 +1402,8 @@ input.mg-pill { cursor: text; }
 .mg-testrow { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 13px; font-weight: 500; }
 .mg-testres { color: var(--dp-success); font-weight: 400; }
 .mg-testres.bad { color: var(--dp-error); }
+.mg-optrow small { display: block; margin-top: 2px; color: var(--dp-text2); font-size: 12px; line-height: 1.35; }
+.mg-volrow { display: flex; align-items: center; gap: 14px; }
+.mg-volrow input[type=range] { flex: 1; min-width: 0; height: 32px; accent-color: var(--dp-primary); }
+.mg-volval { flex: none; min-width: 64px; text-align: right; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
 `;

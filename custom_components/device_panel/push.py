@@ -197,6 +197,24 @@ def notification_data(
     return data
 
 
+# Kritische Mitteilung (seit 2.7.0). Die Companion-App für iOS erwartet in "push.sound" critical = 1 und volume als
+# Kommazahl von 0.0 bis 1.0 (0.0 wäre stumm); im Panel gilt 1 bis 10, also 0.1 bis 1.0. Auf Android gibt es keine
+# Lautstärke pro Meldung: ttl 0, priority high und der Kanal "alarm_stream" spielen sie über den Alarm-Ton, auch bei
+# stummem Telefon (companion.home-assistant.io, "Critical notifications").
+CRITICAL_VOLUME_MAX = 10
+
+
+def critical_data(volume: int) -> dict[str, Any]:
+    """Zusatzdaten einer kritischen Mitteilung; volume 1 bis 10."""
+    level = min(max(int(volume), 1), CRITICAL_VOLUME_MAX)
+    return {
+        "push": {"sound": {"name": "default", "critical": 1, "volume": round(level / CRITICAL_VOLUME_MAX, 1)}},
+        "ttl": 0,
+        "priority": "high",
+        "channel": "alarm_stream",
+    }
+
+
 def device_actions(hass: HomeAssistant, url: str, device_id: str) -> list[dict[str, str]]:
     """Knöpfe einer Ausfall-Meldung: öffnen und 24 Std. stumm (Bild 5)."""
     return [

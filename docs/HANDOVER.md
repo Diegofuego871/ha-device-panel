@@ -3,7 +3,16 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.6.1, Magic Push, Fehlerkorrektur Release Notes)
+## Stand (2.7.0, Magic Push: kritische Mitteilung)
+
+- 2.7.0: Regelfelder `critical` (bool) und `critical_volume` (1 bis 10, Vorgabe 10) in `magic.py` (`RULE_SCHEMA`; ältere
+  Regeln laden mit den Vorgaben). `push.critical_data(volume)`: iOS `push.sound {name, critical: 1, volume: n/10}`,
+  Android `ttl 0`, `priority high`, `channel alarm_stream`. Nur die Hauptmeldung ist kritisch (auch beim Wiederholen und
+  im Test "main"), "wieder normal" nicht. Panel: Schalter und Regler in Schritt 4 (`data-mg="critical"`, `"volume"`).
+  Quelle: companion.home-assistant.io "Critical notifications" (iOS-Volume dort nur als `1.0` gezeigt; 0.0 bis 1.0 nach
+  Apples Doku, aus dem Gedächtnis bestätigt, nicht gegen die Apple-Seite selbst). Nicht auf einem Gerät gehört.
+
+## Stand davor (2.6.1, Fehlerkorrektur Release Notes)
 
 - 2.6.1: HACS liefert `latest_version` mit Tag ("v2.6.0"); `_versionState` übernimmt das, und `release_notes` lehnte
   es ab (Schema `VERSION_ARG`). Korrigiert an beiden Enden: `_openNotes` entfernt das "v", `VERSION_ARG` und
