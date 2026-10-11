@@ -660,7 +660,7 @@
         const v = window.__version;
         const pre = msg.prerelease && window.__pre ? window.__pre : null;
         return {
-          installed: v.installed, latest: v.latest, release_url: v.latest ? `https://github.com/Diegofuego871/ha-device-panel/releases/tag/v${v.latest}` : null,
+          installed: v.installed, latest: v.latest, release_url: v.latest ? `https://github.com/Diegofuego871/ha-device-panel/releases/tag/v${String(v.latest).replace(/^v/, "")}` : null,
           checked_at: Date.now() / 1000 - (msg.force ? 0 : 3 * 3600), error: window.__versionError || null,
           prerelease: pre, prerelease_url: pre ? `https://github.com/Diegofuego871/ha-device-panel/releases/tag/v${pre}` : null, panel: { ...window.__panelSettings },
         };

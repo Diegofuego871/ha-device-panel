@@ -4775,10 +4775,12 @@ class DevicePanel extends HTMLElement {
     // Mit neuer Version: alle Versionen dazwischen. Ohne: die Notes der installierten Version
     // (kein Update da, aber nachlesen, was die aktuelle Version bringt).
     const newer = Boolean(state.latest && state.installed && this._cmpVersion(state.latest, state.installed) > 0);
-    const latest = newer ? state.latest : state.installed;
+    // HACS meldet die Version mit dem Tag ("v2.6.0"); der Server erwartet die Nummer ohne "v".
+    const bare = (v) => (v == null ? v : String(v).replace(/^v/i, ""));
+    const latest = bare(newer ? state.latest : state.installed);
     if (!latest) return;
     const n = (this._notes = {
-      installed: newer ? state.installed : null,
+      installed: newer ? bare(state.installed) : null,
       latest,
       current: !newer,
       url: newer ? state.url || null : `https://github.com/${REPO}/releases/tag/v${latest}`,

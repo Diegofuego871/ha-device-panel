@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.6.1] - 2026-10-11
+
+Release Notes öffnen wieder bei einer neuen Version von HACS.
+
+### Behoben
+
+- "Release Notes" bei einem verfügbaren Update zeigten den Fehler "does not match the expected pattern at 'latest'. Got
+  'v2.6.0'" (Meldung des Nutzers). HACS nennt die neue Version mit ihrem Tag ("v2.6.0"), der Server nahm aber nur die
+  reine Nummer an. Das Panel schickt jetzt die Nummer ohne "v", und der Server akzeptiert auch ein führendes "v".
+
 ## [2.6.0] - 2026-10-11
 
 Magic Push: eigene Meldungen pro Gerät, ohne Automation.
@@ -2414,6 +2424,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.6.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.1
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.5.0
 [2.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.3.0

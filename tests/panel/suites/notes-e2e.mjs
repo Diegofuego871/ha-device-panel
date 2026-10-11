@@ -51,7 +51,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Kopf "${lang === "de" ? "Installierte Version 0.4.0" : "Installed version 0.4.0"}", Link auf diese Version`, cur.sub === (lang === "de" ? "Installierte Version 0.4.0" : "Installed version 0.4.0") && cur.github.endsWith("/releases/tag/v0.4.0"), JSON.stringify(cur));
     await tap('dialog.notes-dlg [data-notes="close"].primary');
     await wait(`return !r.querySelector("dialog.notes-dlg").open`);
-    await p.evaluate(() => { window.__version = { installed: "0.4.0", latest: "0.5.0" }; });
+    // HACS meldet die neue Version mit Tag ("v0.5.0"): das Panel schickt die Nummer ohne "v" (Fehler in 2.6.0)
+    await p.evaluate(() => { window.__version = { installed: "0.4.0", latest: "v0.5.0" }; });
     await tap('[data-ver="check"]');
     check(`[${tag}] Update gefunden: Knopf "Release Notes"`, await wait(`return !!r.querySelector('[data-ver="notes"]')`));
   await p.evaluate(() => { window.__notesDelay = 300; window.__wsCalls = []; });

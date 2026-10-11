@@ -81,7 +81,7 @@ NOTES_MAX = 15
 NOTES_MAX_BYTES = 1_000_000
 _NOTES_KEY = f"{DOMAIN}_release_notes"
 # Versionsnummer, wie sie im URL-Pfad stehen darf (kommt vom Panel): Ziffern, Punkte, Vorabstufe.
-VERSION_ARG = re.compile(r"^\d{1,3}(\.\d{1,3}){0,2}([-.]?(a|b|rc|alpha|beta|pre)\.?\d{0,3})?\Z", re.IGNORECASE)
+VERSION_ARG = re.compile(r"^v?\d{1,3}(\.\d{1,3}){0,2}([-.]?(a|b|rc|alpha|beta|pre)\.?\d{0,3})?\Z", re.IGNORECASE)
 _SECTION_RE = re.compile(r"^## \[([^\]]+)\](?: - (\S+))?\s*$")
 _FOOTNOTE_RE = re.compile(r"^\[[^\]]+\]: \S+")
 _NOT_RELEASED_RE = re.compile(r"^(Not released|Nicht veröffentlicht)\b", re.IGNORECASE)
@@ -370,6 +370,9 @@ async def async_release_notes(
     language ("de"/"en", die tatsächlich gelieferte), error (Text oder None).
     """
     wanted = "de" if language == "de" else "en"
+    # HACS nennt die Version mit dem Tag ("v2.6.0"); intern gilt die Nummer ohne "v".
+    latest = latest.lstrip("vV")
+    installed = installed.lstrip("vV") if installed else installed
     key = (installed or "", latest, wanted)
     cache: dict[Any, dict[str, Any]] = hass.data.setdefault(_NOTES_KEY, {})
     if (hit := cache.get(key)) is not None:

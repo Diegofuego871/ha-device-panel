@@ -3,7 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.6.0, Magic Push)
+## Stand (2.6.1, Magic Push, Fehlerkorrektur Release Notes)
+
+- 2.6.1: HACS liefert `latest_version` mit Tag ("v2.6.0"); `_versionState` übernimmt das, und `release_notes` lehnte
+  es ab (Schema `VERSION_ARG`). Korrigiert an beiden Enden: `_openNotes` entfernt das "v", `VERSION_ARG` und
+  `async_release_notes` akzeptieren es. Tests: `test_release_notes.py` (WS mit "v"), `notes-e2e` (neue Version "v0.5.0").
+
+### Magic Push (2.6.0)
 
 - 2.6.0: Magic Push, vierter Reiter im Geräte-Popup (Entscheide des Nutzers: Variante C = Assistent, Wiederholung und
   "wieder normal" konfigurierbar, Text für "wieder normal" frei wie der erste, Empfänger wählbar mit Standard =

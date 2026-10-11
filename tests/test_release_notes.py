@@ -152,3 +152,6 @@ async def test_command(hass: HomeAssistant, hass_ws_client, texts) -> None:
     assert not (await call(installed="x/y", latest="2.2.0"))["success"]
     assert not (await call(latest="2.2.0", language="fr"))["success"]
     assert (await call(latest="2.2.0"))["success"]
+    # HACS nennt die Version mit Tag ("v2.2.0"): gleiche Antwort wie ohne "v" (Fehler im Panel, 2.6.0)
+    tagged = await call(installed="v2.0.6", latest="v2.2.0", language="de")
+    assert tagged["success"] and [e["version"] for e in tagged["result"]["entries"]] == ["2.2.0", "2.1.0", "2.0.10"]
