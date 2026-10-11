@@ -6001,7 +6001,9 @@ class DevicePanel extends HTMLElement {
       .map((x) => `<div class="ex-row${on.has(x.domain) !== saved.has(x.domain) ? " changed" : ""}">${this._ibadge(x.domain, x.name)}<div class="ex-name">${escape(x.name)}<small>${escape(t("chargeIntegSub", x.devices))}</small></div>
         <label class="switch"><input type="checkbox" data-cinteg="${escape(x.domain)}" ${on.has(x.domain) ? "checked" : ""} aria-label="${escape(`${t("optCharge")}: ${x.name}`)}"><span></span></label></div>`)
       .join("");
-    html += `<div class="mon-grp">${escape(t("chargeIntegTitle"))}</div><div class="opt-short">${escape(t("chargeIntegHint"))}</div>${this._searchHtml("charge", items.length)}
+    // Die lange Liste steht ganz unten (Wunsch des Nutzers, seit 2.5.0): Emoji und Vorschau davor,
+    // damit man nicht an der Liste vorbeiscrollen muss.
+    const integList = `<div class="mon-grp">${escape(t("chargeIntegTitle"))}</div><div class="opt-short">${escape(t("chargeIntegHint"))}</div>${this._searchHtml("charge", items.length)}
       <div class="srch-rows" data-srch="charge">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>`;
     // Vorschau an einem Gerät mit Batterie (Beispielwerte kursiv, wie bei den anderen Meldungen)
     const dev = this._devices.find((x) => x.battery?.level != null) || null;
@@ -6011,7 +6013,7 @@ class DevicePanel extends HTMLElement {
     html += `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
       <div class="pv-title">${this._pveHtml(d, "charge")}${escape(t("pvChargeTitle", name))}</div><div class="pv-text">${escape(`${d.charge_full ?? 100} %`)} · ${escape(t("pvChargeFrom", this._fmtSeconds(6000), 22))} · ${area}</div></div>
       <div class="opt-short">${escape(t("pvChargeNote"))}</div></div>`;
-    return html;
+    return html + integList;
   }
 
   // Inhalt der Batterie-Meldung (seit 0.34.0, notify-v2 Bild 4: anpassbar wie
@@ -6146,9 +6148,9 @@ class DevicePanel extends HTMLElement {
       }
       <div class="mon-grp">${escape(t("grpUpdKinds"))}</div>
       ${kindRows}
-      ${list}
       ${this._emojiHtml(d, ["updates"], changes)}
-      ${preview}`;
+      ${preview}
+      ${list}`;
   }
 
   // Inhalt der Meldung bei neuen Geräten mit Vorschau an einem Gerät aus der Liste
@@ -6635,6 +6637,10 @@ class DevicePanel extends HTMLElement {
         // Reihenfolge, Ausblenden und Vorschau der Leiste, gilt für alle. Seit 2.0.7 ohne Unterreiter
         // (Verbindungsart und Empfang sind nach "Geräte im Panel" und "Überwachung und Meldungen" gezogen).
             `<h4 class="ex-title">${escape(t("chipsOtherTitle"))}</h4>` +
+            // Zurücksetzen vor der Liste, nicht dahinter (seit 2.5.0): die Liste steht ganz unten.
+            ((d.chip_order || []).length || (d.connection_order || []).length
+              ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset">${mdi("reset", 15)}${escape(t("chipsOrderResetAll"))}</button></div>`
+              : "") +
             exTable(
               "hide_chips", chipItems, t("chipsOtherIntro"), "chip_order", null, null, null, "chips",
               (() => {
@@ -6643,10 +6649,7 @@ class DevicePanel extends HTMLElement {
                   (prev.strip ? `<div class="chip-prev-t phone">${escape(t("chipsPreviewPhone"))}</div><div class="chip-prev-strip">${prev.strip}</div>` : "") +
                   `</div>`;
               })()
-            ) +
-            ((d.chip_order || []).length || (d.connection_order || []).length
-              ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset">${mdi("reset", 15)}${escape(t("chipsOrderResetAll"))}</button></div>`
-              : ""),
+            ),
       ai:
         ttl("ttlAiShow") +
         row("ai_assessment", t("optAi"), sw("ai_assessment", t("optAi")), t("optAiShort"), t("optAiInfo")) +

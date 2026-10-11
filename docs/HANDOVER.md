@@ -3,9 +3,14 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.4.0, Release Notes auch der installierten Version)
+## Stand (2.5.0, lange Listen zuunterst)
 
-- 2.4.0: Auch ohne Update hat die Zeile "Aktuell" den Knopf "Release Notes" (`data-ver="notes"`). `_openNotes`
+- 2.5.0: Regel für die Einstellungen: Eine lange Liste (Pro Integration, alle Apps, Chips, Abweichungen) steht
+  immer als letzter Block ihres Reiters; Konfiguration, Emoji und Vorschau davor. Geändert: Reiter "Laden"
+  (`integList` nach der Vorschau), "Updates" (`list` nach der Vorschau), "Darstellung" (Knopf "Reihenfolge
+  zurücksetzen" über der Liste). Neue Listen halten sich daran. Test: `listlast-e2e`.
+
+- 2.4.0 (nicht veröffentlicht, in 2.5.0 enthalten): Auch ohne Update hat die Zeile "Aktuell" den Knopf "Release Notes" (`data-ver="notes"`). `_openNotes`
   fragt dann ohne `installed` nach `latest = installierte Version` (Backend: nur diese Version, Tag `v<installiert>`);
   Kopf "Installierte Version x.y.z" (`notesInstalled`), Link auf deren Release. Eine Version ohne Tag (Entwicklung)
   ergibt "HTTP 404" mit Link/Erneut versuchen.

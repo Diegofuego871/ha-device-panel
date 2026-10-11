@@ -157,6 +157,8 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
   Fehler rot unter dem Feld, Hinweis zur Überschrift) und Vorschau
   (Auswahl des Geräts, Text mit den Fakten, Hinweis, dass nichts gesendet
   wird); Übernehmen ist bei ungültigem Prompt gesperrt.
+- Lange Listen in den Einstellungen (Pro Integration, alle Apps, Chips) stehen immer zuunterst in ihrem Reiter, davor
+  Konfiguration, Emoji und Vorschau (seit 2.5.0, Wunsch des Nutzers): so scrollt man nicht an ihnen vorbei.
 - Reihenfolge der Einstellungen (seit 1.0.0, `docs/mockups/content-v1/`, A,
   Wunsch des Nutzers: weniger Punkte): "Geräte im Panel", "Überwachung und
   Meldungen", "Darstellung", "KI-Einschätzung", "Updates". "Geräte im

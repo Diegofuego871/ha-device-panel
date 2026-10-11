@@ -7,7 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.5.0] - 2026-10-11
+
+Lange Listen in den Einstellungen ganz unten.
+
+### Geändert
+
+- In den Einstellungen steht eine lange Liste jetzt immer zuunterst in ihrem Reiter, damit man nicht an ihr vorbeiscrollen
+  muss (Wunsch des Nutzers). Unter "Laden" stehen das Emoji-Feld und die Vorschau nun über der Liste "Pro Integration", unter
+  "Updates" über der Liste "Einzelne Apps und Integrationen". Unter "Darstellung" ist "Reihenfolge zurücksetzen" über die
+  Chip-Liste gewandert. Die Reiter "Ausfall", "Batterie", "Neu" und "Empfang" endeten schon mit ihren Listen der Ausnahmen.
+
 ## [2.4.0] - 2026-10-11
+
+Nicht veröffentlicht; enthalten in 2.5.0.
 
 Release Notes auch der installierten Version lesen.
 
@@ -2369,7 +2382,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[2.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.4.0
+[2.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.5.0
 [2.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.3.0
 [2.2.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.2.0
 [2.1.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.1.0
