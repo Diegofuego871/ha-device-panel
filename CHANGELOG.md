@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.0.4] - 2026-10-11
+
+Connection type per integration next to the type.
+
+### Changed
+
+- The connection type per integration (Zigbee, Thread, Wi-Fi, ...) is now set in the same list as the type:
+  Settings › "Devices in the panel" › "Integrations" has a second selection "Connection type" next to "Type"
+  (requested by the user). It is the same setting as before, so values already set stay. On the phone, "Type" and
+  "Connection type" stand below the name; the detected connection types are shown as a tooltip of the selection.
+- "Display" › "Connection type" no longer has its own list of integrations; a note with a link leads to the new
+  place. The per-device exceptions and the reception thresholds stay there.
+- The summary of "Devices in the panel" shows how many integrations have a connection type set.
+
 ## [2.0.3] - 2026-10-11
 
 Tabs without a background area, larger on the phone.
@@ -2125,6 +2139,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[2.0.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.4
 [2.0.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.3
 [2.0.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.2
 [2.0.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.1

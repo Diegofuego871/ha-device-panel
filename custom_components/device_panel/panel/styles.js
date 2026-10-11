@@ -653,6 +653,8 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ex-row .switch input:disabled + span { opacity: .35; }
 /* Auswahlspalte der Integrationen ("Typ", früher "Ausgefallen nach"): breiter als die Schalter. */
 .ex-col.sel { width: 176px; }
+/* Zwei Auswahl-Spalten (Typ und Verbindungsart der Integrationen, seit 2.0.4): etwas schmaler */
+@media (min-width: 601px) { .ex-row:has(.ex-col.sel ~ .ex-col.sel) .ex-col.sel, .ex-head:has(.ex-col.sel ~ .ex-col.sel) .ex-col.sel { width: 150px; } }
 /* Lange Erkennungstexte brechen um, statt den Schalter in eine eigene Zeile zu drängen */
 .ex-row:has(.ex-col.sel) .ex-name { flex: 1 1 0; }
 .ex-col.sel .opt-select { flex: 1 1 auto; }

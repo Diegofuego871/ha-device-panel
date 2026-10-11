@@ -379,10 +379,10 @@ const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations"
 const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"];
 
 const SUB_TAB_KEYS = {
-  integrations: ["exclude_integrations", "type_integrations"],
+  integrations: ["exclude_integrations", "type_integrations", "connection_integrations"],
   types: ["exclude_types"],
   devs: ["exclude_devices"],
-  conn: ["connection_integrations", "signal_low", "reset_connection", "reset_signal"],
+  conn: ["signal_low", "reset_connection", "reset_signal"],
   chips: ["hide_chips", "hide_connections", "connection_order", "chip_order"],
 };
 
@@ -5062,19 +5062,18 @@ class DevicePanel extends HTMLElement {
     if (id === "devices") {
       const hidden = ["integrations", "types", "devs"].map((k) => this._subCount(k, d));
       const typed = Object.keys(d.type_integrations || {}).length;
-      return (hidden.some(Boolean) ? `${this._t("sumDevHidden", ...hidden)} · ` : "") + (typed ? `${this._t("sumTypeInteg", typed)} · ` : "") + this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices));
+      const conn = Object.keys(d.connection_integrations || {}).length;
+      return (hidden.some(Boolean) ? `${this._t("sumDevHidden", ...hidden)} · ` : "") + (typed ? `${this._t("sumTypeInteg", typed)} · ` : "") + (conn ? `${this._t("sumConnInteg", conn)} · ` : "") + this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices));
     }
     if (id === "look") {
       const chips = (d.hide_connections || []).length + (d.hide_chips || []).length;
-      const n = Object.keys(d.connection_integrations || {}).length;
       return [
-        n ? this._t("sumConnInteg", n) : this._t("sumConnAuto"),
         Object.keys(d.signal_low || {}).length ? this._t("sumSignal", Object.keys(d.signal_low).length) : "",
         chips ? this._t("sumChipsHidden", chips) : "",
         (d.connection_order || []).length || (d.chip_order || []).length ? this._t("sumChipsOrder") : "",
       ]
         .filter(Boolean)
-        .join(" · ");
+        .join(" · ") || this._t("sumConnAuto");
     }
     return "";
   }
@@ -5163,46 +5162,19 @@ class DevicePanel extends HTMLElement {
     }
   }
 
-  // Verbindungsart pro Integration (Variante B): gilt für alle Geräte der
-  // Integration statt der Erkennung, von Hand am Gerät geht vor. Je Zeile die
-  // Erkennung als Übersicht, damit man sieht, was sich ändert. Darstellung wie
-  // die Batterie pro Integration (docs/mockups/battery-v2, B).
-  _connIntegHtml(d) {
-    const st = this._settings;
-    const t = (k, ...a) => this._t(k, ...a);
-    const own = d.connection_integrations || {};
-    const saved = st.data.values.connection_integrations || {};
-    const groups = new Map();
+  // Erkannte Verbindungsart der gezeigten Geräte je Integration {Domain: Map(Art -> Zahl)} für die
+  // Spalte "Verbindungsart" der Integrationen (seit 2.0.4, vorher eigene Liste in "Darstellung").
+  _connIntegInfo() {
+    const out = new Map();
     for (const dev of this._devices) {
       const dom = dev.integration?.domain;
       if (!dom || dev.disabled) continue;
-      const g = groups.get(dom) || { devices: 0, kinds: new Map() };
+      const kinds = out.get(dom) || new Map();
       const kind = this._connAuto(dev);
-      g.devices += 1;
-      g.kinds.set(kind, (g.kinds.get(kind) || 0) + 1);
-      groups.set(dom, g);
+      kinds.set(kind, (kinds.get(kind) || 0) + 1);
+      out.set(dom, kinds);
     }
-    // Festgelegt, aber gerade ohne Geräte (z. B. ausgeblendet): bleibt zum Zurücksetzen.
-    for (const dom of Object.keys({ ...own, ...saved })) if (!groups.has(dom)) groups.set(dom, { devices: 0, kinds: new Map() });
-    const names = Object.fromEntries((st.data.catalog?.integrations || []).map((x) => [x.domain, x.name]));
-    const name = (dom) => this._integrations[dom] || names[dom] || dom;
-    const list = [...groups.entries()].sort((a, b) => b[1].devices - a[1].devices || name(a[0]).localeCompare(name(b[0])));
-    const head = `<div class="set-title">${escape(t("connIntegTitle"))}</div>
-      <div class="opt-short">${escape(t("connIntegShort"))}</div>`;
-    if (!list.length) return head;
-    const rows = list
-      .map(([dom, g]) => {
-        const v = own[dom] || "";
-        const detected = [...g.kinds.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${n} ${t(CONN[k].key)}`).join(", ");
-        const opts = [["", t("connIntegAuto")], ...CONN_MANUAL.map((k) => [k, t(CONN[k].key)])]
-          .map(([val, text]) => `<option value="${val}"${val === v ? " selected" : ""}>${escape(text)}</option>`)
-          .join("");
-        return `<div class="ex-row bat-row conn-row${(own[dom] || null) !== (saved[dom] || null) ? " changed" : ""}">${this._ibadge(dom, name(dom))}
-          <div class="ex-name">${escape(name(dom))}<small>${escape(t("connIntegDevices", g.devices, detected))}</small></div>
-          <span class="bat-ctl"><span class="opt-select"><select data-conn-integ="${escape(dom)}" aria-label="${escape(`${name(dom)}: ${t("connType")}`)}">${opts}</select>${mdi("chevronDown", 18)}</span></span></div>`;
-      })
-      .join("");
-    return head + this._searchHtml("conn", list.length) + `<div class="ex-head"><span>${escape(t("colIntegration"))}</span><span>${escape(t("connType"))}</span></div><div class="srch-rows" data-srch="conn">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>`;
+    return out;
   }
 
   // Erkannter Typ der gezeigten Geräte je Integration {Domain: Map(Typ -> Zahl)}
@@ -6131,13 +6103,14 @@ class DevicePanel extends HTMLElement {
     // ist eine Liste der Ausgeschlossenen; ausgeblendete Zeilen sperren die
     // übrigen Spalten (nicht überwacht, keine Meldungen).
     // drag: Zeilen mit Griff zum Verschieben (Reihenfolge der Chips).
-    // extra: zusätzliche Spalte mit Auswahl {label, html(x, off)} am Ende
-    // ("Ausgefallen nach" der Integrationen).
+    // extra: zusätzliche Spalte (oder Liste von Spalten) mit Auswahl {label, html(x, off)} am Ende
+    // ("Typ" und "Verbindungsart" der Integrationen).
     // Zeilen mit eigener Liste (x.list) schalten diese statt der Liste der Tabelle
     // (die Chips-Liste mischt hide_chips und hide_connections); allKey benennt
     // den Schalter "Alle umschalten", preview steht unter dem Hinweis.
     const exTable = (key, items, intro, drag = false, cols = null, allLabel = null, extra = null, allKey = null, preview = "") => {
       const columns = cols || [[key, t("colShow")]];
+      const extras = extra ? [].concat(extra) : [];
       const multi = columns.length > 1;
       const sets = {};
       const setOf = (k) => (sets[k] ||= new Set(d[k] || []));
@@ -6157,14 +6130,14 @@ class DevicePanel extends HTMLElement {
       // mit Etikett und Griff statt einer Zeile mit Schalter.
       const pinLine = (x) => `<div class="ex-row pin-line"><span class="pin-tab" title="${escape(t("chipPinTip"))}">${handle(x)}${mdi("pin", 14)}<span>${escape(t("chipPinLabel"))}</span></span></div>`;
       const line = (x) => x.pin ? pinLine(x) : `<div class="ex-row${isOff(x) ? " off" : ""}">${handle(x)}${x.badge}<div class="ex-name">${escape(x.label)}<small>${escape(x.sub)}</small></div>
-          ${columns.map(([k, label], i) => toggle(k, label, x, x.fixed || (i > 0 && isOff(x)))).join("")}${extra ? extra.html(x, isOff(x)) : ""}</div>`;
+          ${columns.map(([k, label], i) => toggle(k, label, x, x.fixed || (i > 0 && isOff(x)))).join("")}${extras.map((e) => e.html(x, isOff(x))).join("")}</div>`;
       const rows = items.map(line).join("");
       const allRow = columns
         .map(([k, label]) => cell(`<label class="switch"><input type="checkbox" data-list-all="${allKey || k}" ${items.every((x) => x.fixed || !setOf(x.list || k).has(x.value)) ? "checked" : ""} aria-label="${escape(`${allLabel || t("toggleAll")}: ${label}`)}"><span></span></label>`))
         .join("");
       return `<div class="opt-short ex-intro">${escape(intro)}</div>${preview}${drag ? "" : this._searchHtml(key, items.length)}
-        <div class="ex-head${multi ? " multi" : ""}"><span></span>${columns.map(([, label]) => (multi ? `<span class="ex-col">${escape(label)}</span>` : `<span>${escape(label)}</span>`)).join("")}${extra ? `<span class="ex-col sel">${escape(extra.label)}</span>` : ""}</div>
-        <div class="ex-row ex-all"><div class="ex-name">${escape(allLabel || t("toggleAll"))}</div>${allRow}${extra ? `<span class="ex-col sel"></span>` : ""}</div>
+        <div class="ex-head${multi ? " multi" : ""}"><span></span>${columns.map(([, label]) => (multi ? `<span class="ex-col">${escape(label)}</span>` : `<span>${escape(label)}</span>`)).join("")}${extras.map((e) => `<span class="ex-col sel">${escape(e.label)}</span>`).join("")}</div>
+        <div class="ex-row ex-all"><div class="ex-name">${escape(allLabel || t("toggleAll"))}</div>${allRow}${extras.map(() => `<span class="ex-col sel"></span>`).join("")}</div>
         ${drag ? `<div class="drag-list" data-drag-list="${dragOpt}">${rows}</div>` : `<div class="srch-rows" data-srch="${key}">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>`}`;
     };
     // KI-Aufgaben von HA; eine früher gewählte, die es nicht mehr gibt, bleibt sichtbar.
@@ -6199,6 +6172,30 @@ class DevicePanel extends HTMLElement {
         const changed = (typeOwn[x.value] || null) !== (typeSaved[x.value] || null);
         const opts = typeOpts.map(([val, text]) => `<option value="${val}"${val === v ? " selected" : ""}>${escape(text)}</option>`).join("");
         return `<span class="ex-col sel"><span class="ex-lbl">${escape(t("typeLabel"))}</span><span class="opt-select${changed ? " changed" : ""}"><select data-type-integ="${escape(x.value)}" aria-label="${escape(`${t("typeLabel")}: ${x.label}`)}">${opts}</select>${mdi("chevronDown", 18)}</span></span>`;
+      },
+    };
+    // Verbindungsart pro Integration (seit 2.0.4 neben dem Typ, vorher eigene Liste in "Darstellung"): gilt für alle
+    // Geräte der Integration statt der Erkennung, von Hand am Gerät geht vor. Festgelegt, aber gerade ohne Geräte:
+    // bleibt zum Zurücksetzen in der Liste.
+    const connInfo = this._connIntegInfo();
+    const connOwn = d.connection_integrations || {};
+    const connSaved = st.data.values.connection_integrations || {};
+    const connDetected = (dom) =>
+      [...(connInfo.get(dom) || [])].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${n} ${t(CONN[k].key)}`).join(", ");
+    for (const dom of Object.keys({ ...connOwn, ...connSaved })) {
+      if (integrations.some((x) => x.value === dom)) continue;
+      const label = this._integrations[dom] || dom;
+      integrations.push({ value: dom, label, sub: t("typesEmpty"), badge: this._ibadge(dom, label) });
+    }
+    const connOpts = [["", t("connIntegAuto")], ...CONN_MANUAL.map((k) => [k, t(CONN[k].key)])];
+    const connExtra = {
+      label: t("connType"),
+      html: (x) => {
+        const v = connOwn[x.value] || "";
+        const changed = (connOwn[x.value] || null) !== (connSaved[x.value] || null);
+        const opts = connOpts.map(([val, text]) => `<option value="${val}"${val === v ? " selected" : ""}>${escape(text)}</option>`).join("");
+        const hint = connDetected(x.value) ? t("typeIntegDetected", connDetected(x.value)) : "";
+        return `<span class="ex-col sel"><span class="ex-lbl">${escape(t("connType"))}</span><span class="opt-select${changed ? " changed" : ""}"><select data-conn-integ="${escape(x.value)}" title="${escape(hint)}" aria-label="${escape(`${t("connType")}: ${x.label}`)}">${opts}</select>${mdi("chevronDown", 18)}</span></span>`;
       },
     };
     // Eine Liste für alle Chips (seit 1.14.0, docs/mockups/chip-order-v3, D2):
@@ -6266,7 +6263,7 @@ class DevicePanel extends HTMLElement {
               ? exTable("exclude_devices", hiddenDevs, t("hiddenIntro"), false, null, t("hiddenShowAll"))
               : `<div class="opt-short ex-intro">${escape(t("hiddenIntro"))}</div><div class="opt-short hidden-empty">${escape(t("hiddenEmpty"))}</div>`
             : `<div class="nf-note integ-goto">${mdi("info", 16)}<div><p>${escape(t("integGoto"))} <button type="button" class="lnk" data-set="goto" data-key="integ">${escape(t("integGotoLink"))}</button></p></div></div>` +
-              exTable("exclude_integrations", integrations, `${t("integIntroShow")} ${t("typeIntegIntro")}`, false, null, null, typeExtra)),
+              exTable("exclude_integrations", integrations, `${t("integIntroShow")} ${t("typeIntegIntro")}`, false, null, null, [typeExtra, connExtra])),
       // Wie Geräte erscheinen, nicht ob (seit 1.0.0).
       look:
         subTabs("look", [["conn", "subConn"], ["chips", "subChips"]]) +
@@ -6286,7 +6283,8 @@ class DevicePanel extends HTMLElement {
             ((d.chip_order || []).length || (d.connection_order || []).length
               ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset">${mdi("reset", 15)}${escape(t("chipsOrderResetAll"))}</button></div>`
               : "")
-          : this._connIntegHtml(d) + this._overridesHtml("connection") + this._sigGlobalHtml(d) + this._overridesHtml("signal")),
+          : `<div class="nf-note integ-goto">${mdi("info", 16)}<div><p>${escape(t("connMoved"))} <button type="button" class="lnk" data-set="gosub" data-section="devices" data-group="devices" data-key="integrations">${escape(t("connMovedLink"))}</button></p></div></div>` +
+            this._overridesHtml("connection") + this._sigGlobalHtml(d) + this._overridesHtml("signal")),
       ai:
         ttl("ttlAiShow") +
         row("ai_assessment", t("optAi"), sw("ai_assessment", t("optAi")), t("optAiShort"), t("optAiInfo")) +
@@ -6371,6 +6369,12 @@ class DevicePanel extends HTMLElement {
         this._renderSettings();
         // Neuer Inhalt beginnt oben: die Reiter ins Bild, wenn sie darüber liegen.
         if (action !== "ifilter") this.shadowRoot.querySelector("dialog.settings .mon-tabs")?.scrollIntoView({ block: action === "goto" ? "start" : "nearest" });
+      } else if (action === "gosub") {
+        // Sprung in den Unterreiter eines Abschnitts (seit 2.0.4: Verbindungsart pro Integration)
+        st.open.add(btn.dataset.section);
+        st.sub[btn.dataset.group] = btn.dataset.key;
+        this._renderSettings();
+        this.shadowRoot.querySelector(`dialog.settings [data-set="section"][data-id="${btn.dataset.section}"]`)?.scrollIntoView({ block: "start" });
       } else if (action === "subtab") {
         st.sub[btn.dataset.group] = btn.dataset.key;
         this._renderSettings();

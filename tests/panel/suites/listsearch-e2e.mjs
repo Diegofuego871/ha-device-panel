@@ -67,11 +67,9 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await type("integ", "hue");
   check(`[${tag}] Überwachung › Integrationen filtert`, (await visible("integ")) === 1, String(await visible("integ")));
 
-  // Darstellung › Verbindungsart
+  // Darstellung › Verbindungsart: seit 2.0.4 ohne eigene Liste (die Verbindungsart pro Integration steht in "Geräte im Panel")
   await tap('[data-set="section"][data-id="look"]');
-  await wait(`return !!r.querySelector('input[data-lsearch="conn"]')`);
-  await type("conn", "esphome");
-  check(`[${tag}] Verbindungsart pro Integration filtert`, (await visible("conn")) === 1, String(await visible("conn")));
+  check(`[${tag}] Darstellung › Verbindungsart: keine Liste der Integrationen mehr`, await ev(`return !r.querySelector('input[data-lsearch="conn"]')`));
   check(`[${tag}] kein fehlender Text`, !(await ev(`return r.innerHTML.includes("undefined") || r.innerHTML.includes("NaN")`)));
   check(`[${tag}] keine JS-Fehler`, errors.length === 0, errors.join("; "));
   await ctx.close();

@@ -3,7 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.0.3, Einstellungen in fünf Abschnitten)
+## Stand (2.0.4, Einstellungen in fünf Abschnitten)
+
+- 2.0.4: "Verbindungsart pro Integration" (`connection_integrations`) steht neben dem Typ in "Geräte im Panel" ›
+  "Integrationen" (`exTable` mit Liste von Zusatzspalten, `connExtra`); die eigene Liste in "Darstellung" ›
+  "Verbindungsart" entfiel (Hinweis mit Sprung `data-set="gosub"`). `SUB_TAB_KEYS`, Zusammenfassungen und `conn-e2e`
+  angepasst. Gleiche Einstellung, keine Datenänderung.
 
 - 2.0.3: Reiter (`.mon-tabs`, `.sub-tabs`) ohne Fläche dahinter, jeder Reiter mit eigenem Rahmen, natürliche Breite
   linksbündig (`flex: 0 0 auto`), auf dem Handy (max. 600 px) mindestens 44 px hoch, Schrift 14 px. Mockups

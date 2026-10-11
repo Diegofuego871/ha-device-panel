@@ -7,6 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.4] - 2026-10-11
+
+Verbindungsart pro Integration neben dem Typ.
+
+### Geändert
+
+- Die Verbindungsart pro Integration (Zigbee, Thread, WLAN, ...) stellt man jetzt in derselben Liste ein wie den
+  Typ: Einstellungen › "Geräte im Panel" › "Integrationen" hat neben "Typ" eine zweite Auswahl "Verbindungsart"
+  (Wunsch des Nutzers). Es ist dieselbe Einstellung wie bisher, bereits gesetzte Werte bleiben also. Auf dem Handy
+  stehen "Typ" und "Verbindungsart" unter dem Namen; die erkannten Verbindungsarten zeigt der Tooltip der Auswahl.
+- "Darstellung" › "Verbindungsart" hat keine eigene Liste der Integrationen mehr; ein Hinweis mit Link führt zur
+  neuen Stelle. Die Ausnahmen pro Gerät und die Empfangs-Schwellen bleiben dort.
+- Die Zusammenfassung von "Geräte im Panel" zeigt, für wie viele Integrationen eine Verbindungsart festgelegt ist.
+
 ## [2.0.3] - 2026-10-11
 
 Reiter ohne Fläche dahinter, auf dem Handy grösser.
@@ -2194,6 +2208,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.0.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.4
 [2.0.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.3
 [2.0.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.2
 [2.0.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.1

@@ -67,7 +67,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Zeile mit Zahl`, (await ev(`const row=r.querySelector('input[data-list="hide_connections"][data-value="thread"]').closest(".ex-row"); return row.querySelector(".ex-name").firstChild.textContent + "|" + row.querySelector("small").textContent`)) === `${T.thread}|${T.threadSub}`);
     await tap('input[data-list="hide_connections"][data-value="thread"]');
     await tap('input[data-list="hide_connections"][data-value="ble"]');
-    check(`[${tag}] Zusammenfassung und Zähler`, (await text('[data-id="look"] .set-sec-sum')) === `${T.sumBase} · ${T.two}` && (await text(".set-count")) === T.one, `${await text('[data-id="look"] .set-sec-sum')} / ${await text(".set-count")}`);
+    check(`[${tag}] Zusammenfassung und Zähler`, (await text('[data-id="look"] .set-sec-sum')) === T.two && (await text(".set-count")) === T.one, `${await text('[data-id="look"] .set-sec-sum')} / ${await text(".set-count")}`);
     await ev(`r.querySelector('input[data-list="hide_connections"]').closest(".set-sec-body").scrollIntoView({ block: "end" })`);
     await p.screenshot({ path: `${outDir}/chips-settings-${tag.replace("/", "-")}.png` });
     check(`[${tag}] gespeichert`, (await save()) && JSON.stringify(await lastSet()) === JSON.stringify({ hide_connections: ["ble", "thread"] }), JSON.stringify(await lastSet()));

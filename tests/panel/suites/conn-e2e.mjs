@@ -12,11 +12,11 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: { auto: "Automatisch: Unbekannt", autoThread: "Automatisch: Thread", manual: "von Hand gesetzt", zigbee: "Zigbee", err: "Verbindungsart konnte nicht gespeichert werden:",
-    sumAuto: "Automatisch erkannt", sumOne: "1 Integration festgelegt", title: "Verbindungsart pro Integration", shelly: "2 Geräte · erkannt: 2 WLAN", autoOpt: "Automatisch",
+    sumAuto: "Automatisch erkannt", sumOne: "Verbindungsart für 1 Integration festgelegt", title: "Verbindungsart", shelly: "erkannt: 2 WLAN", moved: "Verbindungsart pro Integration:", autoOpt: "Automatisch",
     one: "1 Änderung", integ: "Wie Integration: LAN", byInteg: "für die ganze Integration festgelegt", lan: "LAN",
     ovrTip: "Verbindungsart von Hand: Zigbee (sonst Unbekannt)", ovrTitle: "Verbindungsart von Hand auf Geräten", ovrBack: "Zigbee → automatisch" },
   en: { auto: "Automatic: Unknown", autoThread: "Automatic: Thread", manual: "set by hand", zigbee: "Zigbee", err: "Could not save the connection type:",
-    sumAuto: "Detected automatically", sumOne: "1 integration set", title: "Connection type per integration", shelly: "2 devices · detected: 2 Wi-Fi", autoOpt: "Automatic",
+    sumAuto: "Detected automatically", sumOne: "connection type set for 1 integration", title: "Connection type", shelly: "detected: 2 Wi-Fi", moved: "Connection type per integration:", autoOpt: "Automatic",
     one: "1 change", integ: "Same as integration: LAN", byInteg: "set for the whole integration", lan: "LAN",
     ovrTip: "Connection type set by hand: Zigbee (otherwise Unknown)", ovrTitle: "Connection type set by hand on devices", ovrBack: "Zigbee → automatic" },
 };
@@ -106,13 +106,17 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     check(`[${tag}] Abschnitt Darstellung, Reiter Verbindungsart`, (await text('[data-id="look"] .set-sec-sum')) === T.sumAuto, await text('[data-id="look"] .set-sec-sum'));
+    // Seit 2.0.4: keine eigene Liste mehr in "Darstellung", nur ein Hinweis mit Sprung nach "Geräte im Panel" › Integrationen
     await tap('[data-set="section"][data-id="look"]');
-    const shellyRow = await ev(`const s=r.querySelector('select[data-conn-integ="shelly"]'); return s ? [s.closest(".ex-row").querySelector("small").textContent, s.value, s.options[0].textContent, s.options.length] : null`);
-    check(`[${tag}] Zeile mit Erkennung und Auswahl`, (await text(".set-title")) === T.title && JSON.stringify(shellyRow) === JSON.stringify([T.shelly, "", T.autoOpt, 10]), JSON.stringify(shellyRow));
+    check(`[${tag}] Darstellung: Hinweis statt Liste`, (await text(".integ-goto p")).startsWith(T.moved) && await ev(`return !r.querySelector('select[data-conn-integ]')`), await text(".integ-goto p"));
+    await tap('.integ-goto [data-set="gosub"]');
+    await wait(`return !!r.querySelector('select[data-conn-integ="shelly"]')`);
+    const shellyRow = await ev(`const s=r.querySelector('select[data-conn-integ="shelly"]'); return s ? [s.title, s.value, s.options[0].textContent, s.options.length] : null`);
+    check(`[${tag}] Sprung: Zeile in "Geräte im Panel" mit Erkennung und Auswahl neben dem Typ`, JSON.stringify(shellyRow) === JSON.stringify([T.shelly, "", T.autoOpt, 10]) && await ev(`const row = r.querySelector('select[data-conn-integ="shelly"]').closest(".ex-row"); return !!row.querySelector("select[data-type-integ]") && row.querySelectorAll(".ex-col.sel").length === 2`) && (await text(".ex-head")).includes(T.title), JSON.stringify(shellyRow));
     const sh = await handle('select[data-conn-integ="shelly"]');
     await sh.scrollIntoViewIfNeeded();
     await sh.selectOption("ethernet");
-    check(`[${tag}] Entwurf`, await wait(`return r.querySelector('select[data-conn-integ="shelly"]')?.value === "ethernet"`) && (await text(".set-count")) === T.one && (await text('[data-id="look"] .set-sec-sum')) === T.sumOne && await ev(`return r.querySelector('select[data-conn-integ="shelly"]').closest(".ex-row").classList.contains("changed")`));
+    check(`[${tag}] Entwurf`, await wait(`return r.querySelector('select[data-conn-integ="shelly"]')?.value === "ethernet"`) && (await text(".set-count")) === T.one && (await text('[data-id="devices"] .set-sec-sum')).includes(T.sumOne) && await ev(`return r.querySelector('select[data-conn-integ="shelly"]').closest(".opt-select").classList.contains("changed")`));
     if (mobile) {
       const over = await ev(`const d=r.querySelector("dialog.settings"); return d.scrollWidth - d.clientWidth`);
       check(`[${tag}] Handy ohne Überlauf`, over <= 1, String(over));
@@ -135,7 +139,7 @@ for (const lang of ["de", "en"]) {
     // Integration zurück auf Automatisch
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="look"]');
+    await tap('[data-set="section"][data-id="devices"]');
     const sh2 = await handle('select[data-conn-integ="shelly"]');
     await sh2.scrollIntoViewIfNeeded();
     await sh2.selectOption("");

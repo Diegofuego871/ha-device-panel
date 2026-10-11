@@ -12,13 +12,13 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
-    col: "Typ", intro: 'Die Spalte "Typ" gilt für alle Geräte der Integration', shelly: "2 Geräte · erkannt: 2 Steckdose", autoOpt: "Automatisch", one: "1 Änderung",
+    col: "Typ", intro: 'Die Spalten "Typ" und "Verbindungsart" gelten für alle Geräte der Integration', shelly: "2 Geräte · erkannt: 2 Steckdose", autoOpt: "Automatisch", one: "1 Änderung",
     sumNone: "Dienst-Geräte und deaktivierte Geräte ausgeblendet", sumOne: "Typ für 1 Integration festgelegt · Dienst-Geräte und deaktivierte Geräte ausgeblendet",
     popAuto: "Automatisch: Steckdose", popInteg: "Wie Integration: Schalter", byInteg: "für die ganze Integration festgelegt", manual: "von Hand gesetzt",
     switch: "Schalter", outlet: "Steckdose", two: "2 Geräte",
   },
   en: {
-    col: "Type", intro: 'The "Type" column applies to all devices of the integration', shelly: "2 devices · detected: 2 Outlet", autoOpt: "Automatic", one: "1 change",
+    col: "Type", intro: 'The "Type" and "Connection type" columns apply to all devices of the integration', shelly: "2 devices · detected: 2 Outlet", autoOpt: "Automatic", one: "1 change",
     sumNone: "Service devices and disabled devices hidden", sumOne: "type set for 1 integration · Service devices and disabled devices hidden",
     popAuto: "Automatic: Outlet", popInteg: "Same as integration: Switch", byInteg: "set for the whole integration", manual: "set by hand",
     switch: "Switch", outlet: "Outlet", two: "2 devices",
