@@ -137,6 +137,76 @@ function escape(value) {
   return (value == null ? "" : String(value)).replace(/[&<>"']/g, (c) => ESCAPES[c]);
 }
 
+// Kleiner Markdown-Umsetzer für die Release Notes (CHANGELOG im Stil Keep a Changelog): Überschriften,
+// Listen mit Fortsetzungszeilen, Absätze, Codeblöcke, `Code`, **fett** und https-Links. HTML aus der Quelle
+// wird nie übernommen: erst escapen, dann nur die bekannten Auszeichnungen ersetzen.
+function inlineMd(text) {
+  return String(text)
+    .split(/(`[^`]+`)/)
+    .map((part) =>
+      part.length > 2 && part.startsWith("`") && part.endsWith("`")
+        ? `<code>${escape(part.slice(1, -1))}</code>`
+        : escape(part)
+            .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+            .replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    )
+    .join("");
+}
+
+function releaseMarkdownHtml(markdown) {
+  let html = "";
+  let list = null;
+  let para = [];
+  let code = null;
+  const flushPara = () => {
+    if (para.length) html += `<p>${inlineMd(para.join(" "))}</p>`;
+    para = [];
+  };
+  const flushList = () => {
+    if (list) html += `<ul>${list.map((x) => `<li>${inlineMd(x)}</li>`).join("")}</ul>`;
+    list = null;
+  };
+  for (const raw of String(markdown || "").replace(/\r\n/g, "\n").split("\n")) {
+    const line = raw.replace(/\s+$/, "");
+    if (/^\s*```/.test(line)) {
+      if (code) {
+        html += `<pre>${escape(code.join("\n"))}</pre>`;
+        code = null;
+      } else {
+        flushPara();
+        flushList();
+        code = [];
+      }
+      continue;
+    }
+    if (code) {
+      code.push(line);
+      continue;
+    }
+    let m;
+    if (!line.trim()) {
+      flushPara();
+      flushList();
+    } else if ((m = line.match(/^#{1,6}\s+(.*)$/))) {
+      flushPara();
+      flushList();
+      html += `<h4>${inlineMd(m[1])}</h4>`;
+    } else if ((m = line.match(/^\s*[-*]\s+(.*)$/))) {
+      flushPara();
+      (list ||= []).push(m[1]);
+    } else if (list && /^\s+\S/.test(line)) {
+      list[list.length - 1] += ` ${line.trim()}`;
+    } else {
+      flushList();
+      para.push(line.trim());
+    }
+  }
+  if (code) html += `<pre>${escape(code.join("\n"))}</pre>`;
+  flushPara();
+  flushList();
+  return html;
+}
+
 // --- Symbole (Material Design Icons als Pfad, Funkarten als Strichzeichnung)
 const MDI = {
   search: "M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z",
@@ -954,7 +1024,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
@@ -1063,6 +1133,7 @@ class DevicePanel extends HTMLElement {
     this._bindPulse(root.querySelector("dialog.pulse-dlg"));
     this._bindLog(root.querySelector("dialog.log-dlg"));
     this._bindPrompt(root.querySelector("dialog.prompt-dlg"));
+    this._bindNotes(root.querySelector("dialog.notes-dlg"));
     // Auf dem Handy gibt der Browser beim Schliessen eines Fensters den Fokus an die antippte Kachel zurück und zeigt dort einen
     // blauen Ring (zum Beispiel an der Kachel "Ausfall-Puls"). "close" steigt nicht auf, darum in der Einfangphase.
     root.addEventListener("close", () => this._blurOnTouch(), true);
@@ -4551,6 +4622,7 @@ class DevicePanel extends HTMLElement {
     const dialog = this.shadowRoot.querySelector("dialog.settings");
     this._settings = null;
     this._closePrompt();
+    this._closeNotes();
     if (dialog?.open) {
       if (typeof dialog.close === "function") dialog.close();
       else dialog.removeAttribute("open");
@@ -4675,6 +4747,106 @@ class DevicePanel extends HTMLElement {
       btn.classList.remove("done");
       btn.innerHTML = mdi("copy", 16);
     }, 1500);
+  }
+
+  // --- Fenster "Release Notes" (seit 2.3.0): die Versionen nach der installierten bis zur neuesten,
+  // aus dem CHANGELOG des Repositories (Sprache des Panels, sonst Englisch), statt eines Links auf GitHub.
+  _openNotes() {
+    const dlg = this.shadowRoot.querySelector("dialog.notes-dlg");
+    if (!dlg) return;
+    const { installed, latest, url } = this._versionState();
+    if (!latest) return;
+    const n = (this._notes = { installed, latest, url: url || null, loading: true, error: null, data: null, seq: (this._notes?.seq || 0) + 1 });
+    this._renderNotes();
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+    this._blurOnTouch();
+    dlg.scrollTop = 0;
+    this._loadNotes(n);
+  }
+
+  async _loadNotes(n, force = false) {
+    const lang = pickLang(this._hass);
+    try {
+      const data = await this._hass.callWS({ type: "device_panel/release_notes", installed: n.installed || undefined, latest: n.latest, language: lang, force });
+      if (this._notes !== n) return;
+      n.data = data;
+      n.error = data.error && !(data.entries || []).length ? data.error : null;
+    } catch (err) {
+      if (this._notes !== n) return;
+      n.error = errText(err);
+    }
+    n.loading = false;
+    this._renderNotes();
+  }
+
+  _closeNotes() {
+    const dlg = this.shadowRoot.querySelector("dialog.notes-dlg");
+    this._notes = null;
+    if (dlg?.open) {
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    }
+  }
+
+  _renderNotes() {
+    const dlg = this.shadowRoot.querySelector("dialog.notes-dlg");
+    const n = this._notes;
+    if (!dlg || !n) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const link = n.url ? `<a class="dlg-btn rn-gh" href="${escape(n.url)}" target="_blank" rel="noopener">${escape(t("notesGithub"))}${mdi("open", 15)}</a>` : "";
+    let body;
+    if (n.loading) {
+      body = `<p class="dlg-note">${escape(t("notesLoading"))}</p>`;
+    } else if (n.error) {
+      const msg = n.error === "rate_limit" ? t("verRateLimit") : n.error;
+      body = `<div class="dlg-error">${escape(t("notesError"))} ${escape(msg)}</div><div class="aip-btns"><button type="button" class="dlg-btn" data-notes="retry">${escape(t("notesRetry"))}</button></div>`;
+    } else {
+      const entries = n.data?.entries || [];
+      const lang = pickLang(this._hass);
+      const note = n.data?.language && n.data.language !== lang ? `<div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("notesEnglishOnly"))}</p></div></div>` : "";
+      body =
+        note +
+        entries
+          .map((e) => {
+            const date = e.date && !Number.isNaN(Date.parse(e.date)) ? this._fmtDateY(Date.parse(e.date) / 1000) : "";
+            return `<section class="rn-entry"><h3 class="rn-ver"><span>${escape(e.version)}</span>${date ? `<small>${escape(date)}</small>` : ""}</h3><div class="rn">${releaseMarkdownHtml(e.notes)}</div></section>`;
+          })
+          .join("");
+    }
+    const sub = n.installed ? `${n.installed} → ${n.latest}` : n.latest;
+    const html = `<div class="dlg-head"><span class="dlg-avatar">${mdi("verUp", 24)}</span><div class="dlg-title"><h2>${escape(t("notesTitle"))}</h2><div class="dlg-sub">${escape(sub)}</div></div>
+        <button type="button" class="dlg-close" data-notes="close" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+      <div class="dlg-body">${body}</div>
+      <div class="dlg-actions">${link}<button type="button" class="dlg-btn primary" data-notes="close">${escape(t("close"))}</button></div>`;
+    setHtml(dlg, html);
+  }
+
+  _bindNotes(dlg) {
+    if (!dlg) return;
+    dlg.addEventListener("click", (ev) => {
+      if (ev.target === dlg) {
+        const r = dlg.getBoundingClientRect();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closeNotes();
+        return;
+      }
+      const btn = ev.target.closest("[data-notes]");
+      if (!btn) return;
+      if (btn.dataset.notes === "close") this._closeNotes();
+      else if (btn.dataset.notes === "retry" && this._notes) {
+        const n = this._notes;
+        n.loading = true;
+        n.error = null;
+        this._renderNotes();
+        this._loadNotes(n, true);
+      }
+    });
+    // Escape schliesst nur dieses Fenster, nicht die Einstellungen dahinter.
+    dlg.addEventListener("close", () => {
+      this._notes = null;
+    });
   }
 
   _openPrompt() {
@@ -7417,7 +7589,8 @@ class DevicePanel extends HTMLElement {
         <span class="ver-ic">${mdi(iconName, 20)}</span>
         <div class="ver-t"><b>${escape(title)}</b><small>${escape(sub)}</small></div>
         ${right ? `<div class="ver-btns">${right}</div>` : ""}</div>`;
-    const notes = url ? `<a class="ver-link" href="${escape(url)}" target="_blank" rel="noopener">${escape(t("verReleaseNotes"))}${mdi("open", 15)}</a>` : "";
+    // Release Notes im Fenster (seit 2.3.0); ohne die neueste Version nichts zu zeigen.
+    const notes = latest && installed && this._cmpVersion(latest, installed) > 0 ? `<button type="button" class="ver-link" data-ver="notes">${escape(t("verReleaseNotes"))}${mdi("info", 15)}</button>` : "";
     if (v.restarting) return row("rst", "reset", t("verRestarting"), t("verRestartSub"), "");
     if (restart) {
       return row("rst", "reset", t("verRestartNeeded", a.installed_version), v.restartError ? `${t("verRestartError")} ${v.restartError}` : t("verRestartSub"),
@@ -7488,6 +7661,8 @@ class DevicePanel extends HTMLElement {
       if (!st || !st.extra) return;
       st.extra.prerelease = !st.extra.prerelease;
       this._renderSettings();
+    } else if (action === "notes") {
+      this._openNotes();
     } else if (action === "hacs-enable") {
       await this._enableHacsPrerelease();
     } else if (action === "hacs-device") {

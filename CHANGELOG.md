@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.3.0] - 2026-10-11
+
+Release notes in a window instead of a link.
+
+### Changed
+
+- In the settings, "Release notes" at an available update no longer opens GitHub but a window in the panel (requested
+  by the user). It shows the notes of all versions after the installed one up to the new one, newest first, so skipped
+  versions are included. In a German panel they come in German (from `CHANGELOG.de.md` of the new version on GitHub),
+  otherwise in English; if a language is missing, the window says so and shows English. A button "On GitHub" in the
+  window still opens the release page. Without a network connection or at GitHub's rate limit the window shows the
+  error with "Try again". The texts are cached for six hours.
+
 ## [2.2.0] - 2026-10-11
 
 An emoji per push notification, set in the panel.
@@ -2271,6 +2284,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[2.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.3.0
 [2.2.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.2.0
 [2.1.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.1.0
 [2.0.6]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.6

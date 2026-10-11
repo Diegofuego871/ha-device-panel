@@ -433,7 +433,9 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
 - Versionszeile oben in den Einstellungen: installierte Version, neue
   Version (GitHub), "Nach Updates suchen", "Aktualisieren" über die
   HACS-Update-Entität (`update.install`), Neustart-Hinweis nach der
-  Installation, Release Notes.
+  Installation, Release Notes (seit 2.3.0 in einem Fenster: die Abschnitte
+  aller Versionen nach der installierten aus dem CHANGELOG am Tag der neuen
+  Version, in der Sprache des Panels, sonst Englisch).
 - Abgleich mit HACS: Kennt HACS die Version noch nicht, lädt das Panel HACS
   automatisch nach ("Wird mit HACS abgeglichen …"), sonst Hinweis.
 - Schalter "Vorabversionen anzeigen", gilt für die ganze Instanz (Backend-

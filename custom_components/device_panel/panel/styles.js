@@ -413,12 +413,12 @@ svg.strip .s2 { fill: var(--dp-bar-off); }
    Hintergrund, Esc und Fokusfalle liefert der Browser. Auf dem Handy als
    Blatt von unten. Der Dialog scrollt selbst, Kopf und Aktionsleiste
    bleiben per sticky sichtbar (wie unifi_dynamic). */
-dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.cols-dlg, dialog.prompt-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
+dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.cols-dlg, dialog.prompt-dlg, dialog.notes-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
   box-shadow: var(--dp-shadow); overflow: auto; overscroll-behavior: contain; max-height: calc(100% - 48px); }
 dialog.device, dialog.settings, dialog.view { width: min(640px, calc(100vw - 32px)); }
 dialog.area-sheet, dialog.cols-dlg { width: min(420px, calc(100vw - 32px)); }
-dialog.stat-dlg, dialog.pulse-dlg, dialog.prompt-dlg { width: min(560px, calc(100vw - 32px)); }
-dialog.device::backdrop, dialog.settings::backdrop, dialog.view::backdrop, dialog.area-sheet::backdrop, dialog.pulse-dlg::backdrop, dialog.cols-dlg::backdrop, dialog.prompt-dlg::backdrop { background: rgba(0,0,0,0.5); }
+dialog.stat-dlg, dialog.pulse-dlg, dialog.prompt-dlg, dialog.notes-dlg { width: min(560px, calc(100vw - 32px)); }
+dialog.device::backdrop, dialog.settings::backdrop, dialog.view::backdrop, dialog.area-sheet::backdrop, dialog.pulse-dlg::backdrop, dialog.cols-dlg::backdrop, dialog.prompt-dlg::backdrop, dialog.notes-dlg::backdrop { background: rgba(0,0,0,0.5); }
 /* Dialog dahinter stark gedimmt und unscharf, sein X ausgeblendet: so ist
    klar, welches Fenster gerade gilt. */
 dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
@@ -884,6 +884,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 /* Hover darf die Farbe der Hauptknöpfe nicht durch Grau ersetzen. */
 .ver-btn.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--dp-primary) 88%, #000); }
 .ver-btn.warn:hover:not(:disabled) { background: color-mix(in srgb, var(--dp-warning) 88%, #000); }
+button.ver-link { border: none; background: none; font: inherit; font-size: 13px; cursor: pointer; }
 .ver-link { display: inline-flex; align-items: center; gap: 5px; padding: 0 6px; color: var(--dp-primary); font-size: 13px; text-decoration: none; white-space: nowrap; }
 .ver.upd { background: color-mix(in srgb, var(--dp-primary) 10%, var(--dp-subtle)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dp-primary) 35%, transparent); }
 .ver.upd .ver-ic { background: var(--dp-primary-soft); color: var(--dp-primary); }
@@ -1155,8 +1156,8 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .chips.scrolled .chip-pin::after { opacity: 1; }
   .chips .chip-pin.too-wide { position: static; }
   .foot .tap { display: none; }
-  dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
-  dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg { max-height: 92%; }
+  dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg, dialog.notes-dlg { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
+  dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg, dialog.notes-dlg { max-height: 92%; }
   .pwin .pchart { height: 96px; }
   /* Handy: der Knopf oben entfällt (seit 2.0.5); die Zeile "Sortierung & Ansicht" unter den Chips öffnet dasselbe Blatt */
   .view-btn { display: none; }
@@ -1240,12 +1241,12 @@ button.lg-row:hover { background: var(--dp-hover); }
 
 /* Feste Höhe (seit 1.41.0, Wunsch des Nutzers): Fenster mit Reitern oder wechselndem Inhalt bleiben gleich hoch, egal welcher Reiter
    gewählt ist. Kopf, Reiter und Knöpfe bleiben stehen, der Inhalt füllt den Rest und scrollt, wenn er länger ist. */
-dialog.device, dialog.settings, dialog.stat-dlg, dialog.pulse-dlg, dialog.area-sheet, dialog.prompt-dlg { height: min(780px, calc(100% - 48px)); }
-dialog.device[open], dialog.settings[open], dialog.stat-dlg[open], dialog.pulse-dlg[open], dialog.area-sheet[open], dialog.prompt-dlg[open] { display: flex; flex-direction: column; }
-dialog.device[open] > *, dialog.settings[open] > *, dialog.stat-dlg[open] > *, dialog.pulse-dlg[open] > *, dialog.area-sheet[open] > *, dialog.prompt-dlg[open] > * { flex-shrink: 0; }
-dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-dlg[open] > .dlg-body, dialog.pulse-dlg[open] > .dlg-body, dialog.area-sheet[open] > .dlg-body, dialog.prompt-dlg[open] > .dlg-body { flex-grow: 1; }
+dialog.device, dialog.settings, dialog.stat-dlg, dialog.pulse-dlg, dialog.area-sheet, dialog.prompt-dlg, dialog.notes-dlg { height: min(780px, calc(100% - 48px)); }
+dialog.device[open], dialog.settings[open], dialog.stat-dlg[open], dialog.pulse-dlg[open], dialog.area-sheet[open], dialog.prompt-dlg[open], dialog.notes-dlg[open] { display: flex; flex-direction: column; }
+dialog.device[open] > *, dialog.settings[open] > *, dialog.stat-dlg[open] > *, dialog.pulse-dlg[open] > *, dialog.area-sheet[open] > *, dialog.prompt-dlg[open] > *, dialog.notes-dlg[open] > * { flex-shrink: 0; }
+dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-dlg[open] > .dlg-body, dialog.pulse-dlg[open] > .dlg-body, dialog.area-sheet[open] > .dlg-body, dialog.prompt-dlg[open] > .dlg-body, dialog.notes-dlg[open] > .dlg-body { flex-grow: 1; }
 @media (max-width: 600px) {
-  dialog.device, dialog.settings, dialog.pulse-dlg, dialog.area-sheet, dialog.prompt-dlg { height: 92%; max-height: 92%; }
+  dialog.device, dialog.settings, dialog.pulse-dlg, dialog.area-sheet, dialog.prompt-dlg, dialog.notes-dlg { height: 92%; max-height: 92%; }
   dialog.stat-dlg { height: 86%; max-height: 86%; }
 }
 
@@ -1300,4 +1301,18 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
 @media (max-width: 389px) {
   .mon-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(5)), .sub-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(5)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+/* Fenster "Release Notes" (seit 2.3.0): Abschnitt je Version, Markdown als Überschriften, Listen, Code */
+.rn-entry + .rn-entry { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--dp-divider); }
+/* .dlg-body h3 ist sonst klein und grau (Zwischentitel): die Versionsnummer ist der Titel des Abschnitts */
+.dlg-body .rn-entry .rn-ver { display: flex; align-items: baseline; gap: 10px; margin: 0 0 6px; color: var(--dp-text); font-size: 18px; font-weight: 600; text-transform: none; letter-spacing: 0; }
+.dlg-body .rn-entry .rn-ver small { color: var(--dp-text2); font-size: 12.5px; font-weight: 400; }
+.rn { font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.rn h4 { margin: 12px 0 4px; font-size: 13px; font-weight: 600; letter-spacing: .02em; color: var(--dp-text2); }
+.rn p { margin: 6px 0; }
+.rn ul { margin: 4px 0 8px; padding-left: 20px; }
+.rn li { margin: 4px 0; }
+.rn code { padding: 1px 5px; border-radius: 5px; background: var(--dp-subtle); font-size: 12.5px; }
+.rn pre { margin: 8px 0; padding: 10px 12px; border-radius: 10px; background: var(--dp-subtle); overflow-x: auto; font-size: 12.5px; }
+.rn a { color: var(--dp-primary); }
+a.dlg-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--dp-text); text-decoration: none; }
 `;

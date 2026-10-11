@@ -74,7 +74,8 @@ for (const mobile of [false, true]) {
   await p.waitForTimeout(500);
   t = await verText();
   check(`[${tag}] ohne HACS Update gefunden: Hinweis, Release Notes, kein Knopf`, t.includes("Version 0.5.0 verfügbar") && t.includes("Installation über HACS oder manuell") && t.includes("Release Notes") && !(await has('[data-ver="install"]')), t);
-  check(`[${tag}] Release-Link zeigt auf GitHub`, (await ev(`return r.querySelector(".ver-link").href`)).endsWith("/releases/tag/v0.5.0"));
+  // Release Notes im Fenster statt Link (seit 2.3.0, Einzelheiten in notes-e2e)
+  check(`[${tag}] "Release Notes" ist ein Knopf (kein Link nach aussen)`, await ev(`const b=r.querySelector(".ver-link"); return b.tagName==="BUTTON" && b.dataset.ver==="notes" && !b.getAttribute("href")`));
   await p.evaluate(() => { window.__versionDelay = 20; });
 
   // 3. Mit HACS: Aktualisieren, Fortschritt, Neustart

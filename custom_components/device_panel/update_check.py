@@ -72,6 +72,21 @@ def _cached(hass: HomeAssistant, key: str, force: bool) -> dict[str, Any] | None
     return cached if age < limit else None
 
 
+# Release Notes im Panel (seit 2.3.0): die Abschnitte der Versionen aus CHANGELOG(.de).md am Tag
+# der neuesten Version, damit auch übersprungene Versionen dabei sind. Fehlt die Datei (oder die
+# Sprache), gilt der Text des GitHub-Releases (Englisch).
+RAW_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}"
+TAG_RELEASE_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/tags"
+NOTES_MAX = 15
+NOTES_MAX_BYTES = 1_000_000
+_NOTES_KEY = f"{DOMAIN}_release_notes"
+# Versionsnummer, wie sie im URL-Pfad stehen darf (kommt vom Panel): Ziffern, Punkte, Vorabstufe.
+VERSION_ARG = re.compile(r"^\d{1,3}(\.\d{1,3}){0,2}([-.]?(a|b|rc|alpha|beta|pre)\.?\d{0,3})?\Z", re.IGNORECASE)
+_SECTION_RE = re.compile(r"^## \[([^\]]+)\](?: - (\S+))?\s*$")
+_FOOTNOTE_RE = re.compile(r"^\[[^\]]+\]: \S+")
+_NOT_RELEASED_RE = re.compile(r"^(Not released|Nicht veröffentlicht)\b", re.IGNORECASE)
+
+
 def _strip_v(tag: Any) -> str:
     text = str(tag or "").strip()
     return text[1:] if text[:1] in ("v", "V") else text
@@ -282,3 +297,108 @@ async def async_set_panel_settings(hass: HomeAssistant, values: dict[str, Any]) 
         current["prerelease_hacs"] = str(values["prerelease_hacs"]) if values["prerelease_hacs"] else None
     await _panel_store(hass).async_save(dict(current))
     return dict(current)
+
+
+# -- Release Notes im Panel ------------------------------------------------------
+
+
+def changelog_sections(text: str) -> list[dict[str, Any]]:
+    """
+    Abschnitte einer CHANGELOG-Datei (Keep a Changelog): Version, Datum und
+    Markdown-Text, in der Reihenfolge der Datei (neueste zuerst). Der Vermerk
+    "Nicht veröffentlicht; enthalten in …" fällt weg, die Link-Fussnoten am
+    Ende gehören zu keinem Abschnitt.
+    """
+    out: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    for line in text.splitlines():
+        match = _SECTION_RE.match(line)
+        if match:
+            current = {"version": _strip_v(match.group(1)), "date": match.group(2), "lines": []}
+            out.append(current)
+        elif current is not None:
+            if _FOOTNOTE_RE.match(line):
+                current = None
+            else:
+                current["lines"].append(line)
+    sections = []
+    for section in out:
+        lines = [x for x in section.pop("lines") if not _NOT_RELEASED_RE.match(x.strip())]
+        body = "\n".join(lines).strip()
+        if body and section["version"][:1].isdigit():
+            sections.append({**section, "notes": re.sub(r"\n{3,}", "\n\n", body)})
+    return sections
+
+
+def select_sections(sections: list[dict[str, Any]], installed: str | None, latest: str) -> list[dict[str, Any]]:
+    """Versionen nach der installierten bis zur neuesten, neueste zuerst; ohne installierte nur die neueste."""
+    if not installed:
+        picked = [x for x in sections if compare_versions(x["version"], latest) == 0]
+    else:
+        picked = [
+            x
+            for x in sections
+            if compare_versions(x["version"], installed) > 0 and compare_versions(x["version"], latest) <= 0
+        ]
+    picked.sort(key=lambda x: _version_key(x["version"]), reverse=True)
+    return picked[:NOTES_MAX]
+
+
+async def _async_get_text(hass: HomeAssistant, url: str) -> tuple[str | None, str | None]:
+    """Textdatei holen; (Text, Fehler). 404 ist kein Fehler im engeren Sinn (Text None, Fehler "HTTP 404")."""
+    try:
+        session = async_get_clientsession(hass)
+        async with session.get(url, timeout=TIMEOUT) as resp:
+            if resp.status >= 400:
+                return None, f"HTTP {resp.status}"
+            raw = await resp.content.read(NOTES_MAX_BYTES + 1)
+            if len(raw) > NOTES_MAX_BYTES:
+                return None, "too large"
+            return raw.decode("utf-8", errors="replace"), None
+    except (asyncio.TimeoutError, ClientError, ValueError) as err:
+        return None, str(err) or type(err).__name__
+
+
+async def async_release_notes(
+    hass: HomeAssistant, installed: str | None, latest: str, language: str, force: bool = False
+) -> dict[str, Any]:
+    """
+    Release Notes der Versionen nach der installierten bis zur neuesten.
+    Deutsch aus CHANGELOG.de.md, sonst (und als Rückfall) Englisch aus
+    CHANGELOG.md, zuletzt der Text des GitHub-Releases. Zwischengespeichert
+    wie die Versionsprüfung. Ergebnis: entries [{version, date, notes}],
+    language ("de"/"en", die tatsächlich gelieferte), error (Text oder None).
+    """
+    wanted = "de" if language == "de" else "en"
+    key = (installed or "", latest, wanted)
+    cache: dict[Any, dict[str, Any]] = hass.data.setdefault(_NOTES_KEY, {})
+    if (hit := cache.get(key)) is not None:
+        age = time.time() - hit["checked_at"]
+        if age < (ERROR_RETRY_SECONDS if hit["error"] else CACHE_SECONDS) and not (force and age >= FORCE_MIN_SECONDS):
+            return hit
+    result: dict[str, Any] = {"checked_at": time.time(), "entries": [], "language": wanted, "error": None}
+    tag = f"v{latest}"
+    names = ["CHANGELOG.de.md", "CHANGELOG.md"] if wanted == "de" else ["CHANGELOG.md"]
+    error: str | None = None
+    for name in names:
+        text, error = await _async_get_text(hass, f"{RAW_URL}/{tag}/{name}")
+        if text is None:
+            continue
+        entries = select_sections(changelog_sections(text), installed, latest)
+        if entries:
+            result["entries"] = [{k: x[k] for k in ("version", "date", "notes")} for x in entries]
+            result["language"] = "de" if name.endswith(".de.md") else "en"
+            break
+    if not result["entries"]:
+        # Rückfall: der Text des GitHub-Releases (Englisch), nur für die neueste Version.
+        data, error = await _async_get_json(hass, f"{TAG_RELEASE_URL}/{tag}")
+        if isinstance(data, dict) and isinstance(data.get("body"), str) and data["body"].strip():
+            published = str(data.get("published_at") or "")[:10] or None
+            result["entries"] = [{"version": latest, "date": published, "notes": data["body"].strip()[:NOTES_MAX_BYTES]}]
+            result["language"] = "en"
+            error = None
+    result["error"] = None if result["entries"] else (error or "HTTP 404")
+    if len(cache) > 20:
+        cache.clear()
+    cache[key] = result
+    return result

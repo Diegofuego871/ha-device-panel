@@ -665,6 +665,23 @@
           prerelease: pre, prerelease_url: pre ? `https://github.com/Diegofuego871/ha-device-panel/releases/tag/v${pre}` : null, panel: { ...window.__panelSettings },
         };
       }
+      // Release Notes im Fenster (seit 2.3.0, erfundene Texte): window.__notesFail = Fehlertext (Antwort mit error),
+      // __notesThrows = Verbindungsfehler, __notesEnglish = nur Englisch, __notesDelay = Wartezeit in ms.
+      if (msg.type === "device_panel/release_notes") {
+        await new Promise((r) => setTimeout(r, window.__notesDelay || 20));
+        if (window.__notesThrows) throw new Error(window.__notesThrows);
+        if (window.__notesFail) return { entries: [], language: msg.language, error: window.__notesFail };
+        const de = msg.language === "de" && !window.__notesEnglish;
+        const md = (title) => `${title}\n\n### ${de ? "Hinzugefügt" : "Added"}\n\n- ${de ? "Eine **fette** Zeile mit" : "A **bold** line with"} \`code\` ${de ? "und einem Link" : "and a link"} [GitHub](https://github.com/Diegofuego871/ha-device-panel),\n  ${de ? "die auf der nächsten Zeile weitergeht." : "which continues on the next line."}\n- <script>window.__xss = 1<\/script> <b>nicht fett</b>\n\n### ${de ? "Behoben" : "Fixed"}\n\n- ${de ? "Ein Fehler." : "A bug."}\n\n\`\`\`\nrelease = 1\n\`\`\``;
+        return {
+          entries: [
+            { version: msg.latest, date: "2026-10-11", notes: md(de ? "Neueste Version." : "Latest version.") },
+            { version: "0.4.5", date: "2026-10-09", notes: md(de ? "Eine Zwischenversion." : "An intermediate version.") },
+          ],
+          language: de ? "de" : "en",
+          error: null,
+        };
+      }
       // Protokoll (seit 1.38.0): window.__log = { entries, debug, since }; Debug-Einträge entstehen erst nach dem Einschalten.
       if (msg.type === "device_panel/get_log" || msg.type === "device_panel/set_log" || msg.type === "device_panel/clear_log") {
         if (window.__logFails) throw new Error(window.__logFails);

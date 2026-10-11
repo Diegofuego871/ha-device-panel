@@ -452,6 +452,28 @@ async def _ws_version(
 
 @websocket_api.websocket_command(
     {
+        vol.Required("type"): f"{DOMAIN}/release_notes",
+        # Kommt in den Pfad der Abfrage: nur Versionsnummern, keine freien Texte.
+        vol.Optional("installed"): vol.Any(None, vol.All(str, vol.Match(update_check.VERSION_ARG))),
+        vol.Required("latest"): vol.All(str, vol.Match(update_check.VERSION_ARG)),
+        vol.Optional("language", default="en"): vol.In(("de", "en")),
+        vol.Optional("force", default=False): bool,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_release_notes(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Release Notes der Versionen nach der installierten bis zur neuesten (Fenster im Panel, seit 2.3.0)."""
+    result = await update_check.async_release_notes(
+        hass, msg.get("installed"), msg["latest"], msg["language"], force=msg["force"]
+    )
+    connection.send_result(msg["id"], {k: v for k, v in result.items() if k != "checked_at"})
+
+
+@websocket_api.websocket_command(
+    {
         vol.Required("type"): f"{DOMAIN}/set_panel",
         vol.Optional("prerelease"): bool,
         vol.Optional("prerelease_hacs"): vol.Any(None, str),
@@ -790,6 +812,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_availability)
     websocket_api.async_register_command(hass, _ws_battery_history)
     websocket_api.async_register_command(hass, _ws_version)
+    websocket_api.async_register_command(hass, _ws_release_notes)
     websocket_api.async_register_command(hass, _ws_set_panel)
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_set_options)

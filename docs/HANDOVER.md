@@ -3,7 +3,16 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.2.0, Emoji pro Push-Meldung)
+## Stand (2.3.0, Release Notes im Fenster)
+
+- 2.3.0: "Release Notes" in der Versionszeile der Einstellungen ist ein Knopf (`data-ver="notes"`) und öffnet
+  `dialog.notes-dlg` (`_openNotes`/`_renderNotes`/`_bindNotes`) statt GitHub. WS `device_panel/release_notes`
+  {installed, latest, language, force} → `update_check.async_release_notes`: Abschnitte aller Versionen nach der
+  installierten bis zur neuesten aus `CHANGELOG.de.md` bzw. `CHANGELOG.md` am Tag `v<latest>`
+  (`raw.githubusercontent.com`), Rückfall Englisch, zuletzt der Text des GitHub-Releases; Zwischenspeicher 6 Std.
+  (Fehler 5 Min.). Die Versionsnummern gehen in den URL-Pfad: Prüfung mit `VERSION_ARG` (nur Nummern). Markdown
+  setzt das Panel selbst um (`releaseMarkdownHtml`: Überschriften, Listen, fett, Code, https-Links; HTML wird
+  escaped). Tests: `tests/test_release_notes.py`, `notes-e2e`. Nicht geprüft: Anzeige auf dem iPhone.
 
 - 2.2.0: Emoji im Push-Titel pro Meldung einstellbar: Optionen `emoji_outage|group|online|battery|charge|charge_stop|new|updates`
   (`const.EMOJI_DEFAULTS`/`EMOJI_KEYS`; None = Standard, "" = ohne Emoji, höchstens 3 sichtbare Zeichen, Prüfung
