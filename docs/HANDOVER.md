@@ -3,7 +3,17 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.13.0, Magic Push: Übersicht mit Gerätekarten, Suche, Filter)
+## Stand (2.13.1, Magic Push: Tastatur im Assistenten-Fenster)
+
+- 2.13.1 (gemeldet: "Freie Entität wählen" scrollt zu weit): `scrollIntoView` im Fenster schob das Suchfeld über den
+  oberen Rand der sichtbaren Fläche, weil das Handy die Seite (visualViewport) schon hochgeschoben hatte. Jetzt:
+  `MagicPush.visibleArea()` (visualViewport des obersten Fensters minus Abstand des iframes), `fitWindow()` (Fenster nur so
+  hoch wie die sichtbare Fläche, CSS `--mgw-top`/`--mgw-h`, ≤ 700 px), `watchViewport()` (resize/scroll), `revealField`
+  scrollt nur den Inhalt (`scrollParent`) und stellt das Feld oben in die sichtbare Fläche. Test: `magic-e2e` simuliert
+  die Tastatur mit einem Ersatz für `_topWindow().visualViewport` (unten und hochgeschoben). Offen: auf echtem iPhone
+  prüfen; verhält sich die Companion-App anders (kein visualViewport-Ereignis), hilft nur die Lage des Feldes.
+
+## Stand davor (2.13.0, Magic Push: Übersicht mit Gerätekarten, Suche, Filter)
 
 - 2.13.0 (Entscheid des Nutzers: Variante B, keine wählbare Gruppierung; Mockups `docs/mockups/magic-overview-v1`):
   `MagicPush.overviewHtml` zeichnet Suchfeld (`data-lsearch="magic"`, Text in `_settings.search.magic`), Filter

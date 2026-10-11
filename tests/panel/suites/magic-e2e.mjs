@@ -343,6 +343,18 @@ for (const lang of ["de", "en"]) {
     await p.waitForTimeout(900);
     const pos = await ev(`const i=r.querySelector('${W} input[data-mg="free-query"]').getBoundingClientRect(); const t=r.querySelector('${W} .mgw-body').getBoundingClientRect(); return [Math.round(i.top - t.top), r.activeElement === r.querySelector('${W} input[data-mg="free-query"]'), Math.round(t.height)]`);
     check(`[${tag}] Suchfeld: hat den Fokus und liegt in der oberen Hälfte des Inhalts`, pos[1] === true && pos[0] >= -2 && pos[0] <= pos[2] * 0.5, JSON.stringify(pos));
+    // Handy mit Tastatur (simuliert über das visualViewport des obersten Fensters): das Fenster folgt der sichtbaren Fläche
+    // und das Suchfeld liegt darin, auch wenn das Handy die Seite hochgeschoben hat (gemeldet 2026-10-11: zu weit gescrollt)
+    if (mobile) {
+      for (const [label, offset] of [["Tastatur unten", 0], ["Seite hochgeschoben", 260]]) {
+        await ev(`const fake = { offsetTop: ${offset}, height: 480, addEventListener() {}, removeEventListener() {} }; r.host._topWindow = () => ({ visualViewport: fake, addEventListener() {}, removeEventListener() {} }); r.host._magic.fitWindow(); r.host._magic.revealField(r.querySelector('${W} input[data-mg="free-query"]'));`);
+        await p.waitForTimeout(500);
+        const kb = await ev(`const a=r.host._magic.visibleArea(); const d=r.querySelector("${W}").getBoundingClientRect(); const i=r.querySelector('${W} input[data-mg="free-query"]').getBoundingClientRect(); const n=r.querySelector('${W} .mgw-foot').getBoundingClientRect(); return { fit: Math.abs(d.top - a.top) <= 1 && Math.abs(d.bottom - a.bottom) <= 1, foot: n.bottom <= a.bottom + 1, input: i.top >= a.top && i.bottom <= a.bottom, small: a.bottom - a.top < innerHeight - 60, a, d: [d.top, d.bottom], i: [i.top, i.bottom] }`);
+        check(`[${tag}] ${label}: Fenster passt in die sichtbare Fläche, Fusszeile und Suchfeld darin`, kb.fit && kb.foot && kb.input && kb.small, JSON.stringify(kb));
+      }
+      await ev(`delete r.host._topWindow; r.host._magic.fitWindow();`);
+      check(`[${tag}] ohne Tastatur wieder volle Höhe`, (await ev(`return r.querySelector("${W}").style.getPropertyValue("--mgw-h") === "" && Math.round(r.querySelector("${W}").getBoundingClientRect().height) === innerHeight`)) === true);
+    }
     await fill('input[data-mg="free-query"]', "garten regen");
     check(`[${tag}] Suche nach mehreren Wörtern (Gerät und Name)`, await wait(`const l=[...r.querySelectorAll('${W} [data-mg="free-pick"]')].map(b=>b.dataset.id); return l.length === 1 && l[0] === "binary_sensor.garten_regen"`));
     check(`[${tag}] Treffer nennt Entitäts-ID und Gerät`, (await text(`${W} [data-mg="free-pick"]`)).includes("binary_sensor.garten_regen") && (await text(`${W} [data-mg="free-pick"]`)).includes("Wetterstation Garten"));

@@ -141,6 +141,9 @@ export class MagicPush {
     if (!win) return;
     if (win.open) win.close();
     win.innerHTML = "";
+    this._unwatch?.();
+    win.style.removeProperty("--mgw-top");
+    win.style.removeProperty("--mgw-h");
   }
 
   // Zahl der eingeschalteten Meldungen für die Beschriftung des Reiters (null: noch nicht geladen).
@@ -149,16 +152,93 @@ export class MagicPush {
     return this.data.rules.filter((r) => r.enabled).length;
   }
 
-  // Ein Feld, das gleich getippt wird, an den oberen Rand holen: die Tastatur des Handys deckt sonst das Feld zu, wenn es weiter
-  // unten steht. Die sichtbare Fläche ändert sich erst während die Tastatur einfährt, darum noch einmal danach (visualViewport).
+  // Sichtbare Fläche (ohne Tastatur) in Koordinaten dieses Fensters. Auf dem Handy schrumpft das visualViewport des
+  // obersten Fensters, wenn die Tastatur kommt, oder es verschiebt sich, weil das Handy die Seite hochschiebt; das Panel
+  // liegt in einem iframe, darum zählt dessen Abstand zum oberen Rand mit.
+  visibleArea() {
+    const full = { top: 0, bottom: window.innerHeight };
+    try {
+      const top = this.host._topWindow?.() || window;
+      const vv = top.visualViewport || window.visualViewport;
+      if (!vv) return full;
+      const frameTop = top === window ? 0 : window.frameElement?.getBoundingClientRect().top || 0;
+      return { top: Math.max(0, vv.offsetTop - frameTop), bottom: Math.min(window.innerHeight, vv.offsetTop + vv.height - frameTop) };
+    } catch (err) {
+      return full;
+    }
+  }
+
+  viewport() {
+    try {
+      return (this.host._topWindow?.() || window).visualViewport || window.visualViewport || null;
+    } catch (err) {
+      return window.visualViewport || null;
+    }
+  }
+
+  // Handy: das Fenster nur so hoch wie die sichtbare Fläche, sonst deckt die Tastatur Felder und Knöpfe zu
+  fitWindow() {
+    const win = this.win();
+    if (!win) return;
+    const narrow = Boolean(window.matchMedia?.("(max-width: 700px)").matches);
+    const area = this.visibleArea();
+    const h = area.bottom - area.top;
+    if (narrow && h > 0 && h < window.innerHeight - 60) {
+      win.style.setProperty("--mgw-top", `${Math.round(area.top)}px`);
+      win.style.setProperty("--mgw-h", `${Math.round(h)}px`);
+    } else {
+      win.style.removeProperty("--mgw-top");
+      win.style.removeProperty("--mgw-h");
+    }
+  }
+
+  // Solange das Fenster offen ist, folgt es der sichtbaren Fläche
+  watchViewport() {
+    if (this._unwatch) return;
+    const vv = this.viewport();
+    if (!vv?.addEventListener) return;
+    const fit = () => this.fitWindow();
+    vv.addEventListener("resize", fit);
+    vv.addEventListener("scroll", fit);
+    this._unwatch = () => {
+      vv.removeEventListener("resize", fit);
+      vv.removeEventListener("scroll", fit);
+      this._unwatch = null;
+    };
+  }
+
+  // Nächster Vorfahre, der wirklich scrollt (im Fenster des Assistenten der Inhalt, nicht das Fenster)
+  scrollParent(el) {
+    const win = this.win();
+    for (let node = el.parentElement; node && node !== win; node = node.parentElement) {
+      const overflow = getComputedStyle(node).overflowY;
+      if ((overflow === "auto" || overflow === "scroll") && node.scrollHeight > node.clientHeight + 1) return node;
+    }
+    return null;
+  }
+
+  // Ein Feld, das gleich getippt wird, an den oberen Rand der sichtbaren Fläche holen: die Tastatur des Handys deckt das Feld
+  // sonst zu, wenn es weiter unten steht. Die sichtbare Fläche ändert sich erst, während die Tastatur einfährt (und das Handy
+  // schiebt die Seite von sich aus), darum noch einmal danach (visualViewport). Im Fenster des Assistenten wird nur der
+  // Inhalt gescrollt und die Lage der sichtbaren Fläche eingerechnet; ein Scrollen des Fensters selbst würde das Feld
+  // zu weit nach oben aus dem Bild schieben (gemeldet 2026-10-11).
   revealField(el) {
     if (!el) return;
     const go = () => {
-      if (el.isConnected) el.scrollIntoView({ block: "start", behavior: "smooth" });
+      if (!el.isConnected) return;
+      if (!this.win()?.contains(el)) {
+        el.scrollIntoView({ block: "start", behavior: "smooth" });
+        return;
+      }
+      this.fitWindow();
+      const sc = this.scrollParent(el);
+      if (!sc) return;
+      const want = Math.max(sc.getBoundingClientRect().top, this.visibleArea().top) + 8;
+      sc.scrollTop += el.getBoundingClientRect().top - want;
     };
     window.setTimeout(go, 60);
-    const vv = this.host._topWindow?.()?.visualViewport || window.visualViewport;
-    if (!vv) return;
+    const vv = this.viewport();
+    if (!vv?.addEventListener) return;
     const again = () => {
       vv.removeEventListener("resize", again);
       window.setTimeout(go, 60);
@@ -448,6 +528,8 @@ export class MagicPush {
       else win.setAttribute("open", "");
       this.host._blurOnTouch?.();
     }
+    this.watchViewport();
+    this.fitWindow();
     this.placeSide(win);
     this.paintZones();
     for (const [sel, top] of scrolls) {

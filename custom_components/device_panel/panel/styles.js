@@ -1461,7 +1461,8 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .mgw-discard b { display: block; font-size: 14px; font-weight: 600; }
 .mgw-discard small { display: block; margin-top: 2px; color: var(--dp-text2); font-size: 12.5px; line-height: 1.4; }
 @media (max-width: 700px) {
-  dialog.magic-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
+  /* --mgw-top/--mgw-h: sichtbare Fläche ohne Tastatur (magic-push.js, fitWindow) */
+  dialog.magic-dlg { width: 100%; max-width: 100%; height: var(--mgw-h, 100%); max-height: 100%; margin: 0; border-radius: 0; inset-block-start: var(--mgw-top, 0px); inset-block-end: auto; }
   .mgw-head { padding: 14px 12px 6px 16px; }
   .mgw-prog { padding: 0 16px 4px; }
   dialog.magic-dlg[open] > .mgw-body { padding: 2px 16px 12px; }

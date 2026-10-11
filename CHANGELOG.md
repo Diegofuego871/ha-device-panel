@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.13.1] - 2026-10-11
+
+### Fixed
+
+- Magic Push on the phone: choosing "Choose a free entity" scrolled the list too far, so the search field was no longer
+  visible. The assistant window now follows the visible area above the keyboard (also when the phone pushes the page up)
+  and scrolls only its own content, so that the search field sits at the top of what is visible. "Back"/"Next" stay above
+  the keyboard as well.
+
 ## [2.13.0] - 2026-10-11
 
 Magic Push: overview in the settings with structure, search and filter.
@@ -2492,6 +2501,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.13.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.1
 [2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0
 [2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0
 [2.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.11.0

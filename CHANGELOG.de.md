@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.13.1] - 2026-10-11
+
+### Behoben
+
+- Magic Push auf dem Handy: "Freie Entität wählen" scrollte die Liste zu weit, das Suchfeld war nicht mehr zu sehen. Das
+  Assistenten-Fenster folgt jetzt der sichtbaren Fläche über der Tastatur (auch wenn das Handy die Seite hochschiebt) und
+  scrollt nur seinen eigenen Inhalt, sodass das Suchfeld oben in dem steht, was sichtbar ist. "Zurück"/"Weiter" bleiben
+  ebenfalls über der Tastatur.
+
 ## [2.13.0] - 2026-10-11
 
 Magic Push: Übersicht in den Einstellungen mit Struktur, Suche und Filter.
@@ -2575,6 +2584,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.13.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.1
 [2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0
 [2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0
 [2.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.11.0
