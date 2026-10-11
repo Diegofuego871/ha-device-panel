@@ -56,21 +56,38 @@ for (const mobile of [false, true]) {
     check(`[${tag}] ${tab}: Eingabefeld liegt in der Grafik, nicht über dem rechten Rand`, await ev(`const g = r.querySelector(${JSON.stringify(sel)}); const gb = g.getBoundingClientRect(); return [...g.querySelectorAll("input[data-opt]")].every(i => { const x = i.getBoundingClientRect(); return x.left >= gb.left - 4 && x.right <= gb.right + 4 })`));
   }
 
-  // Reiter: nicht gewählte umrahmt, gewählter nicht
-  check(`[${tag}] Reiter: nicht gewählte mit Rahmen, gewählter ohne`, await ev(`const off = r.querySelector(".mon-tab:not(.on)"); const on = r.querySelector(".mon-tab.on"); return getComputedStyle(off).boxShadow.includes("inset") && !getComputedStyle(on).boxShadow.includes("inset")`));
-  check(`[${tag}] Reiter: Breite unverändert (Rahmen innen)`, await ev(`const off = r.querySelector(".mon-tab:not(.on)"); return getComputedStyle(off).borderTopWidth === "0px"`));
+  // Reiter als Segmentschalter (2.0.5): Fläche hinter der Reihe, gleich breite Felder, Kapsel hinter dem gewählten Reiter
+  const bar = "dialog.settings .mon-tabs";
+  check(`[${tag}] Reiter: Fläche hinter der Reihe, abgerundet`, await ev(`const c = getComputedStyle(r.querySelector(${JSON.stringify(bar)})); return c.backgroundColor !== "rgba(0, 0, 0, 0)" && parseInt(c.borderRadius) >= 12 && c.display === "grid"`));
+  check(`[${tag}] Reiter: nicht gewählte ohne Rahmen, gewählter in Akzentfarbe`, await ev(`const off = r.querySelector(${JSON.stringify(bar + " .mon-tab:not(.on)")}); const on = r.querySelector(${JSON.stringify(bar + " .mon-tab.on")}); return getComputedStyle(off).boxShadow === "none" && getComputedStyle(on).color !== getComputedStyle(off).color`));
+  await p.waitForTimeout(700); // die Kapsel gleitet noch vom letzten Wechsel
+  check(`[${tag}] Reiter: Kapsel genau hinter dem gewählten Reiter`, await ev(`const b = r.querySelector(${JSON.stringify(bar)}); const pills = b.querySelectorAll(":scope > .seg-pill"); const p = pills[0].getBoundingClientRect(); const o = b.querySelector(".mon-tab.on").getBoundingClientRect(); return pills.length === 1 && Math.abs(p.left - o.left) < 1.5 && Math.abs(p.top - o.top) < 1.5 && Math.abs(p.width - o.width) < 1.5 && Math.abs(p.height - o.height) < 1.5`));
+  check(`[${tag}] Reiter: alle gleich breit, auch "Integrationen" (der letzte links, nicht gezogen)`, await ev(`const tabs = [...r.querySelectorAll(${JSON.stringify(bar + " .mon-tab")})]; const w = tabs.map(t => Math.round(t.getBoundingClientRect().width)); const bb = r.querySelector(${JSON.stringify(bar)}).getBoundingClientRect(); return Math.max(...w) - Math.min(...w) <= 1 && Math.max(...w) < bb.width * 0.4`));
+  if (mobile) {
+    check(`[${tag}] Handy: Reiter mindestens 44 px hoch, 7 Reiter in vier Spalten (4 + 3)`, await ev(`const tabs = [...r.querySelectorAll(${JSON.stringify(bar + " .mon-tab")})]; const tops = new Set(tabs.map(t => Math.round(t.getBoundingClientRect().top))); const firstRow = tabs.filter(t => Math.round(t.getBoundingClientRect().top) === [...tops][0]).length; return tabs.every(t => t.getBoundingClientRect().height >= 43.5) && tops.size === 2 && firstRow === 4`));
+    check(`[${tag}] Handy: kein Text abgeschnitten`, await ev(`return [...r.querySelectorAll(${JSON.stringify(bar + " .mon-tab")})].every(t => t.scrollWidth <= t.clientWidth)`));
+  } else {
+    check(`[${tag}] Desktop: sieben Reiter in einer Zeile`, await ev(`const tabs = [...r.querySelectorAll(${JSON.stringify(bar + " .mon-tab")})]; return new Set(tabs.map(t => Math.round(t.getBoundingClientRect().top))).size === 1 && tabs.length === 7`));
+  }
+  // Wechsel: die Kapsel gleitet (unterwegs zwischen alter und neuer Lage), landet am neuen Reiter
+  const pillPos = () => ev(`const b = r.querySelector(${JSON.stringify(bar)}); const p = b.querySelector(":scope > .seg-pill").getBoundingClientRect(); return [p.left, p.top]`);
+  await tap(`.mon-tab[data-key="battery"]`);
+  await wait(`return r.querySelector('.mon-tab[data-key="battery"]').classList.contains("on")`);
+  await p.waitForTimeout(700);
+  const g0 = await pillPos();
+  // Lage der Kapsel in jedem Bild (requestAnimationFrame) während 700 ms nach dem Wechsel
+  const seen = await ev(`return new Promise((res) => { const b = r.querySelector(${JSON.stringify(bar)}); const out = []; const t0 = performance.now(); r.querySelector('.mon-tab[data-key="charge"]').click(); const tick = () => { const q = b.querySelector(":scope > .seg-pill")?.getBoundingClientRect(); if (q) out.push([q.left, q.top]); if (performance.now() - t0 < 700) requestAnimationFrame(tick); else res(out); }; tick(); })`);
+  const g1 = await pillPos();
+  const target = await ev(`const o = r.querySelector('.mon-tab[data-key="charge"]').getBoundingClientRect(); return [o.left, o.top]`);
+  const between = seen.some(([x, y]) => (Math.abs(x - g0[0]) > 4 || Math.abs(y - g0[1]) > 4) && (Math.abs(x - g1[0]) > 4 || Math.abs(y - g1[1]) > 4));
+  check(`[${tag}] Reiter: Kapsel gleitet und landet am gewählten Reiter`, between && Math.abs(g1[0] - target[0]) < 1.5 && Math.abs(g1[1] - target[1]) < 1.5, JSON.stringify({ g0, g1, target, seen: seen.map((x) => x.map(Math.round).join(":")).join(" ") }));
 
-  // Reiter ohne Fläche dahinter (2.0.3), natürliche Breite links, auf dem Handy mindestens 44 px hoch
-  check(`[${tag}] Reiter: keine Fläche hinter der Reihe`, await ev(`const bar = r.querySelector("dialog.settings .mon-tabs"); const c = getComputedStyle(bar); return (c.backgroundColor === "rgba(0, 0, 0, 0)" || c.backgroundColor === "transparent") && c.paddingTop === "0px"`));
-  check(`[${tag}] Reiter: natürliche Breite, keiner füllt die Zeile (auch "Integrationen" nicht)`, await ev(`const bar = r.querySelector("dialog.settings .mon-tabs"); const bb = bar.getBoundingClientRect(); const tabs = [...bar.children]; return tabs.every(t => getComputedStyle(t).flexGrow === "0" && t.getBoundingClientRect().width < bb.width * 0.45) && getComputedStyle(bar).justifyContent !== "center"`));
-  if (mobile) check(`[${tag}] Handy: Reiter mindestens 44 px hoch`, await ev(`return [...r.querySelectorAll("dialog.settings .mon-tab")].every(t => t.getBoundingClientRect().height >= 43.5)`));
-
-  // Gerät: Reiter im Popup umrahmt
+  // Gerät: Reiter im Popup mit Kapsel
   await tap(".dlg-close");
   await ev(`r.querySelector("dialog.settings")?.close?.()`);
   await tap('.dev[data-open="c"], .mrow[data-open="c"]');
   await wait(`return !!r.querySelector("dialog.device .sub-tab")`);
-  check(`[${tag}] Gerät: Reiter umrahmt`, await ev(`const t = [...r.querySelectorAll("dialog.device .sub-tab:not(.on)")]; return t.length > 0 && t.every(x => getComputedStyle(x).boxShadow.includes("inset"))`));
+  check(`[${tag}] Gerät: Reiter als Segmentschalter mit Kapsel`, await ev(`const bars = [...r.querySelectorAll("dialog.device .sub-tabs")]; return bars.length > 0 && bars.every(b => b.querySelectorAll(":scope > .seg-pill").length === 1 && getComputedStyle(b).backgroundColor !== "rgba(0, 0, 0, 0)")`));
 
   check(`[${tag}] keine JS-Fehler`, errors.length === 0, errors.join("; "));
   await ctx.close();

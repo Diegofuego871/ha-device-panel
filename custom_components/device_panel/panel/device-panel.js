@@ -794,6 +794,11 @@ class DevicePanel extends HTMLElement {
       this._render();
     };
     this._narrowQuery.addEventListener("change", this._onNarrow);
+    // Kapsel der Reiter nach erneutem Einhängen wieder beobachten
+    if (this._segMO) {
+      this._segMO.observe(this.shadowRoot, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+      this.shadowRoot.querySelectorAll(".mon-tabs, .sub-tabs").forEach((bar) => delete bar._segSeen);
+    }
     // Tipp auf eine Meldung, während das Panel schon offen ist: HA ändert
     // nur die Adresse, das iframe bleibt.
     this._onLocation = () => this._deepLink();
@@ -801,6 +806,8 @@ class DevicePanel extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this._segMO?.disconnect();
+    this._segRO?.disconnect();
     this._heroObserver?.disconnect();
     this._stickyObserver?.disconnect();
     window.clearInterval(this._timer);
@@ -829,6 +836,80 @@ class DevicePanel extends HTMLElement {
 
   // Deep-Link aus einer Meldung: /device-panel?device=<id> öffnet das Popup.
   // Der Parameter wird danach entfernt, damit Neuladen es nicht erneut öffnet.
+  // Reiter als Segmentschalter (seit 2.0.5, docs/mockups/segmented-v1): Die gewählte "Kapsel" ist ein eigenes Element
+  // (.seg-pill), das beim Wechsel zum neuen Reiter gleitet. Die Reiterleisten werden bei jedem Aufbau neu gezeichnet;
+  // darum merkt sich das Panel je Leiste die letzte Lage der Kapsel und fährt von dort los (FLIP). Ohne Bewegung
+  // (Beim ersten Zeichnen, nach Grössenänderung, bei "Bewegung reduzieren") steht die Kapsel sofort am Ziel.
+  _initSeg(root) {
+    this._segLast = new Map();
+    const reduced = () => Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+    const keyOf = (bar) => {
+      const b = bar.querySelector("button");
+      return `${bar.closest("dialog")?.className || "page"}|${b ? b.dataset.set || b.dataset.dlg || b.dataset.prompt || "" : ""}|${b?.dataset.group || ""}`;
+    };
+    const apply = (pill, r) => {
+      pill.style.width = `${r.w}px`;
+      pill.style.height = `${r.h}px`;
+      pill.style.transform = `translate(${r.x}px, ${r.y}px)`;
+    };
+    const instant = (pill, r) => {
+      pill.style.transition = "none";
+      apply(pill, r);
+      void pill.offsetWidth;
+      pill.style.transition = "";
+    };
+    const sync = (still = false) => {
+      for (const bar of root.querySelectorAll(".mon-tabs, .sub-tabs")) {
+        const on = bar.querySelector(".mon-tab.on, .sub-tab.on");
+        if (!on || !bar.offsetWidth) continue; // unsichtbar (Fenster zu): Lage wird beim Öffnen gesetzt
+        if (!bar._segSeen) {
+          bar._segSeen = true;
+          this._segRO.observe(bar);
+        }
+        bar._segW = bar.offsetWidth;
+        const rect = { x: on.offsetLeft, y: on.offsetTop, w: on.offsetWidth, h: on.offsetHeight };
+        const key = keyOf(bar);
+        const prev = this._segLast.get(key);
+        let pill = bar.querySelector(":scope > .seg-pill");
+        const fresh = !pill;
+        if (fresh) {
+          pill = document.createElement("i");
+          pill.className = "seg-pill";
+          pill.setAttribute("aria-hidden", "true");
+          bar.appendChild(pill);
+        }
+        const same = (a, b) => a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
+        const moved = Boolean(prev) && !same(prev, rect);
+        // Wird die Leiste mitten in der Fahrt noch einmal neu gezeichnet, startet die Kapsel wieder am ursprünglichen Ausgang.
+        const now = Date.now();
+        const from = moved ? prev : prev?.from && now - prev.t < 500 ? prev.from : null;
+        const animate = Boolean(from) && !still && !reduced();
+        if (!animate) instant(pill, rect);
+        else if (fresh) {
+          instant(pill, from);
+          apply(pill, rect);
+        } else apply(pill, rect);
+        if (animate) {
+          pill.classList.add("go");
+          window.clearTimeout(pill._goT);
+          pill._goT = window.setTimeout(() => pill.classList.remove("go"), 320);
+        }
+        this._segLast.set(key, { ...rect, from: animate ? from : null, t: moved ? now : prev?.t || 0 });
+      }
+    };
+    // Nur bei echter Breitenänderung (Fenster öffnet, Drehen); die erste Meldung beim Beobachten ist keine.
+    this._segRO = new ResizeObserver((entries) => {
+      // Entfernte (ersetzte) Leisten melden Breite 0: aus der Beobachtung nehmen und nicht beachten.
+      for (const e of entries) if (!e.target.isConnected) this._segRO.unobserve(e.target);
+      if (entries.some((e) => e.target.isConnected && e.target.offsetWidth > 0 && e.target.offsetWidth !== e.target._segW)) sync(true);
+    });
+    this._segMO = new MutationObserver((muts) => {
+      if (muts.every((m) => m.target.classList?.contains("seg-pill") || [...m.addedNodes, ...m.removedNodes].every((n) => n.classList?.contains("seg-pill")))) return;
+      sync();
+    });
+    this._segMO.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+  }
+
   _deepLink() {
     const top = this._topWindow();
     if (!top || this._loading || this._error) return;
@@ -975,6 +1056,7 @@ class DevicePanel extends HTMLElement {
     this._bindPulse(root.querySelector("dialog.pulse-dlg"));
     this._bindLog(root.querySelector("dialog.log-dlg"));
     this._bindPrompt(root.querySelector("dialog.prompt-dlg"));
+    this._initSeg(root);
     // Zeilen und Karten sind keine Buttons (Tabellensemantik); Tastatur
     // deshalb selbst behandeln.
     // Handy: Kacheln ganz weggescrollt (unter der Zeile oben) -> Zeile zeigen.
@@ -2844,12 +2926,14 @@ class DevicePanel extends HTMLElement {
     if (pin) pin.classList.toggle("too-wide", pin.offsetWidth > bar.clientWidth * 0.6);
   }
 
-  // Handy: "Sortiert nach" unter den Chips; öffnet das Blatt "Ansicht".
+  // Handy: eine Zeile "Sortierung & Ansicht" unter den Chips mit der gewählten Sortierung rechts; öffnet das Blatt
+  // "Ansicht" (seit 2.0.5, docs/mockups/sort-line-v1, C; ersetzt die Pille und den Knopf oben, die dasselbe öffneten).
   _viewLineHtml() {
     const v = this._view;
     const label = this._sortLabel(v.sort);
     const dir = v.sort === "default" ? "" : mdi(v.dir === "asc" ? "arrowUp" : "arrowDown", 14);
-    return `<button type="button" class="sort-btn" data-view-open aria-label="${escape(`${this._t("sortBy")}: ${label}`)}">${mdi("sort", 16)}<span>${escape(label)}</span>${dir}${mdi("chevronDown", 16)}</button>`;
+    const title = this._t("viewLineTitle");
+    return `<button type="button" class="sort-btn" data-view-open aria-label="${escape(`${title}: ${label}`)}">${mdi("sort", 16)}<span class="lbl">${escape(title)}</span><span class="val">${escape(label)}</span>${dir}${mdi("chevronDown", 16)}</button>`;
   }
 
   _avatar(d, size = 18) {

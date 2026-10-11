@@ -15,12 +15,12 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     btn: "Spalten", status: "Status", area: "Bereich", battery: "Batterie", avail: "Verfügbarkeit 24 Std.", list: "Liste",
-    sortDefault: "Standard (Ausfälle zuerst)", sortBattery: "Batterie", title: "Ansicht",
+    sortDefault: "Standard (Ausfälle zuerst)", sortBattery: "Batterie", title: "Ansicht", viewLine: "Sortierung & Ansicht",
     customize: "Anpassen", restore: "Standard wiederherstellen", done: "Fertig", fixed: "Gerät immer sichtbar", hideArea: "Bereich einblenden",
   },
   en: {
     btn: "Columns", status: "Status", area: "Area", battery: "Battery", avail: "Availability 24 h", list: "List",
-    sortDefault: "Default (offline first)", sortBattery: "Battery", title: "View",
+    sortDefault: "Default (offline first)", sortBattery: "Battery", title: "View", viewLine: "Sorting & view",
     customize: "Customize", restore: "Restore default", done: "Done", fixed: "Device always visible", hideArea: "Show Area",
   },
 };
@@ -188,9 +188,10 @@ for (const lang of ["de", "en"]) {
       await p.setViewportSize({ width: 1400, height: 1000 });
       check(`[${tag}] breit: wieder Desktop`, await wait(`return !r.querySelector("tr.grp") && r.querySelector('.chip[data-conn="wifi"]').classList.contains("on")`));
     } else {
-      const sortText = () => ev(`return r.querySelector(".sort-btn").textContent.trim()`);
+      const sortText = () => ev(`return r.querySelector(".sort-btn .val").textContent.trim()`);
       check(`[${tag}] Zeile "Sortiert nach"`, (await sortText()) === T.sortDefault, await sortText());
-      await tap(".view-btn");
+      check(`[${tag}] Handy: Knopf oben entfällt, Zeile "Sortierung & Ansicht" statt Pille`, (await ev(`return getComputedStyle(r.querySelector(".view-btn")).display === "none"`)) && (await ev(`return r.querySelector(".sort-btn .lbl").textContent`)) === T.viewLine);
+      await tap(".sort-btn");
       check(`[${tag}] Blatt "Ansicht"`, (await wait(`return r.querySelector("dialog.view").open`)) && (await ev(`return r.querySelector("dialog.view h2").textContent`)) === T.title);
       await tap('dialog.view [data-vsort="battery"]');
       check(`[${tag}] Batterie gewählt`, (await sortText()).startsWith(T.sortBattery) && (await ev(`return r.querySelector('dialog.view [data-vsort="battery"]').classList.contains("on")`)));
@@ -222,7 +223,7 @@ for (const lang of ["de", "en"]) {
       await ev(`r.querySelector(".content").scrollTop = r.querySelector(".chips").offsetTop - 80`);
       await p.screenshot({ path: `${outDir}/view-list-${tag.replace("/", "-")}.png` });
       // Zurücksetzen im Blatt
-      await tap(".view-btn");
+      await tap(".sort-btn");
       await wait(`return r.querySelector("dialog.view").open`);
       await tap('dialog.view [data-vreset]');
       check(`[${tag}] Zurücksetzen im Blatt`, (await sortText()) === T.sortDefault && (await ev(`return !!r.querySelector(".gh") && r.querySelector('dialog.view .vlist .vrow').dataset.key === "connection"`)));

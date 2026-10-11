@@ -7,6 +7,26 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.5] - 2026-10-11
+
+Reiter als Segmentschalter und auf dem Handy eine Zeile für Sortierung und Ansicht.
+
+### Geändert
+
+- Die Reiter sehen aus und verhalten sich wie der Segmentschalter der UniFi-App (Wunsch des Nutzers, Mockups
+  `segmented-v1`): eine abgerundete Fläche mit gleich breiten Feldern; das gewählte Feld ist eine dunklere Kapsel mit
+  Schrift in der Akzentfarbe, die anderen haben keinen Rahmen. Beim Wechsel gleitet die Kapsel mit leichtem
+  Nachschwingen zum neuen Reiter und die Schrift wechselt weich zur Akzentfarbe; mit "Bewegung reduzieren" springt
+  die Kapsel stattdessen. Das gilt für alle Reiter: Einstellungen, Detail einer Integration und Geräte-Popup. Das
+  ersetzt die umrahmten Reiter aus 2.0.2 und 2.0.3.
+- Ab fünf Reitern zeigt das Handy vier Spalten (sieben Reiter: 4 + 3, der letzte links und gleich gross wie die
+  anderen), auf schmalen Handys (unter 390 px) drei Spalten; auf dem Desktop eine Zeile. Auf dem Handy sind die
+  Reiter mindestens 44 px hoch.
+- Handy: Der Knopf "Spalten" oben und die Pille "Sortiert nach" unter den Chips (beide öffneten dasselbe Blatt
+  "Ansicht") sind durch eine Zeile "Sortierung & Ansicht" unter den Chips ersetzt; rechts steht die gewählte
+  Sortierung in der Akzentfarbe, mit Richtungspfeil (Wunsch des Nutzers, Mockups `sort-line-v1`, Variante C). Das
+  Suchfeld ist breiter. Der Desktop bleibt unverändert.
+
 ## [2.0.4] - 2026-10-11
 
 Verbindungsart pro Integration neben dem Typ.
@@ -2208,6 +2228,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.0.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.5
 [2.0.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.4
 [2.0.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.3
 [2.0.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.2

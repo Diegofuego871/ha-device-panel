@@ -685,16 +685,22 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ibadge.type { background: var(--dp-subtle); color: var(--dp-text2); }
 /* Überwachung und Meldungen (seit 0.34.0, docs/mockups/notify-v3): Reiter,
    Zeitstrahl je Meldung, Integrationen als Liste mit Detail. */
-/* Reiter ohne Fläche dahinter (seit 2.0.3, Wunsch des Nutzers, docs/mockups/tabs-frame-v1 A und tabs-touch-v1 V2): jeder Reiter hat seinen Rahmen, die Reihe hat keinen eigenen Grund; natürliche Breite, linksbündig, bei Platzmangel nächste Zeile */
-.mon-tabs, .sub-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; padding: 0; }
-.mon-tab, .sub-tab { position: relative; flex: 0 0 auto; min-width: 0; padding: 8px 14px; white-space: nowrap; border: none; border-radius: 9px; background: none; color: var(--dp-text2);
-  font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer; }
+/* Reiter als Segmentschalter (seit 2.0.5, Wunsch des Nutzers nach der Aufnahme der UniFi-App, docs/mockups/segmented-v1): eine abgerundete
+   Fläche mit gleich breiten Feldern; das gewählte Feld ist die dunklere Kapsel (.seg-pill, vom Panel gesetzt, gleitet beim Wechsel) mit Akzentschrift.
+   Ab fünf Reitern auf dem Handy vier Spalten (bei schmalen Handys drei), auf dem Desktop eine Zeile. */
+.mon-tabs, .sub-tabs { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px; margin: 10px 0 4px; padding: 3px; border-radius: 14px;
+  background: color-mix(in srgb, var(--dp-text) 7%, var(--dp-card)); }
+.mon-tab, .sub-tab { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 36px; padding: 0 4px; white-space: nowrap; border: none; border-radius: 11px;
+  background: none; color: color-mix(in srgb, var(--dp-text) 72%, transparent); font: inherit; font-size: 13.5px; text-align: center; cursor: pointer; transition: color .22s ease; }
 .mon-tab:hover, .sub-tab:hover { color: var(--dp-text); }
-/* Nicht gewählte Reiter leicht umrahmt (seit 2.0.2), damit man sie als Reiter erkennt; innen als Schatten, damit nichts springt */
-.mon-tab:not(.on), .sub-tab:not(.on) { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dp-text) 16%, transparent); }
-/* Reiter brechen bei Platzmangel auf eine zweite Zeile um (seit 1.44.0) */
-.mon-tab.on, .sub-tab.on { background: var(--dp-card); color: var(--dp-text); font-weight: 600; box-shadow: var(--dp-shadow-s); }
-.mon-tab:focus-visible, .sub-tab:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
+.mon-tab.on, .sub-tab.on { color: var(--dp-primary); font-weight: 500; }
+.mon-tab:focus-visible, .sub-tab:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
+/* Kapsel: gleitet mit leichtem Nachschwingen, während der Fahrt etwas durchscheinend (wie in der Aufnahme); Farbe wie der Grund der Seite (dunkler als die Fläche, im hellen Theme etwas grauer) */
+.seg-pill { position: absolute; z-index: 0; left: 0; top: 0; border-radius: 11px; background: var(--dp-bg); pointer-events: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dp-text) 7%, transparent);
+  transition: transform .46s cubic-bezier(.3, 1.35, .5, 1), width .46s cubic-bezier(.3, 1.35, .5, 1), height .46s cubic-bezier(.3, 1.35, .5, 1), opacity .46s ease; }
+.seg-pill.go { opacity: .8; }
+@media (prefers-reduced-motion: reduce) { .seg-pill, .mon-tab, .sub-tab { transition: none; } }
 .sub-tabs { margin: 12px 0 8px; }
 .sub-n { margin-left: 5px; font-size: 11.5px; font-weight: 500; color: var(--dp-text3); font-variant-numeric: tabular-nums; }
 .sub-n[hidden] { display: none; }
@@ -1066,8 +1072,9 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .ex-head .ex-col.sel, .ex-row.ex-all .ex-col.sel { display: none; }
   .ex-head.multi { font-size: 10px; letter-spacing: .02em; }
   .nf-grid { grid-template-columns: minmax(0, 1fr); }
-  /* Handy: Tippfläche mindestens 44 px hoch (seit 2.0.3) */
-  .mon-tab, .sub-tab { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 14px; font-size: 14px; border-radius: 11px; }
+  /* Handy: Tippfläche mindestens 44 px hoch; ab fünf Reitern vier Spalten (7 Reiter: 4 + 3, der letzte links und gleich gross) */
+  .mon-tab, .sub-tab { min-height: 44px; }
+  .mon-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(5)), .sub-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(5)) { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .mtl { margin: 8px 6px 2px; }
   .mtl-mk { width: 100px; }
   .opt.bat-row .bat-ctl .opt-select { flex: 1 1 auto; }
@@ -1134,12 +1141,13 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
   dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg { max-height: 92%; }
   .pwin .pchart { height: 96px; }
-  .view-btn { width: 38px; height: 38px; padding: 0; justify-content: center; border-radius: 50%; }
-  .view-btn span { display: none; }
-  .viewline { display: flex; align-items: center; gap: 8px; position: sticky; top: 92px; z-index: 5; margin: 0 -12px 4px; padding: 0 12px 6px; background: var(--dp-bg); }
-  .sort-btn { display: inline-flex; align-items: center; gap: 6px; min-width: 0; height: 32px; padding: 0 10px 0 8px; border: 1px solid var(--dp-divider);
-    border-radius: 999px; background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 13px; cursor: pointer; }
-  .sort-btn span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  /* Handy: der Knopf oben entfällt (seit 2.0.5); die Zeile "Sortierung & Ansicht" unter den Chips öffnet dasselbe Blatt */
+  .view-btn { display: none; }
+  .viewline { display: flex; align-items: center; gap: 8px; position: sticky; top: 92px; z-index: 5; margin: 0 -12px 6px; padding: 0 12px; background: var(--dp-bg); }
+  .sort-btn { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; height: 44px; padding: 0 4px; border: 0; border-top: 1px solid var(--dp-divider); border-bottom: 1px solid var(--dp-divider);
+    border-radius: 0; background: none; color: var(--dp-text); font: inherit; font-size: 14px; cursor: pointer; }
+  .sort-btn .lbl { flex: none; color: var(--dp-text2); }
+  .sort-btn .val { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: right; color: var(--dp-primary); font-weight: 600; }
   .sort-btn svg { flex: none; color: var(--dp-primary); }
   .sort-btn svg:last-child { color: var(--dp-text2); }
   dialog.device { max-height: 92%; }
@@ -1245,7 +1253,6 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
     dialog.device .dlg-btn.primary, dialog.settings .dlg-btn.primary { background: var(--dp-primary); border-color: transparent; }
     dialog.device .tile, dialog.device .st-tile, dialog.settings .nf-note, dialog.settings .pv { background: color-mix(in srgb, var(--dp-text) 9%, transparent); border-color: color-mix(in srgb, var(--dp-text) 14%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dp-text) 12%, transparent); }
     dialog.device .dev-set { background: color-mix(in srgb, var(--dp-text) 5%, transparent); }
-    dialog.device .mon-tab.on, dialog.device .sub-tab.on, dialog.settings .mon-tab.on, dialog.settings .sub-tab.on { background: color-mix(in srgb, var(--dp-text) 20%, transparent); box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
   }
 }
 /* Liste (seit 2.0.1): grosser Titel, weiche Tiefe der Kacheln, Chip-Leiste als Material, Gruppentitel im neuen Titelstil */
@@ -1269,5 +1276,9 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
      Fehler in 2.0.1). Sie zeigen stattdessen die Hover-Farbe. */
   .mrow:active, .set-sec-head:active, .ilist-row:active, button.lg-row:active, .afloor:active, .arow:active, .prow:active, .olist button:active, button.kwarn:active { transform: none; }
   .mrow:active, .set-sec-head:active, .ilist-row:active, button.lg-row:active, .afloor:active, .arow:active, .prow:active { background: var(--dp-hover); }
+}
+/* Schmale Handys (unter 390 px): ab fünf Reitern drei Spalten, damit "Integrationen" nicht abgeschnitten wird */
+@media (max-width: 389px) {
+  .mon-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(5)), .sub-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(5)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 `;

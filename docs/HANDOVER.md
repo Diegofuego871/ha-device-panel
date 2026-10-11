@@ -3,7 +3,16 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.0.4, Einstellungen in fünf Abschnitten)
+## Stand (2.0.5, Einstellungen in fünf Abschnitten)
+
+- 2.0.5: Reiter (`.mon-tabs`, `.sub-tabs`) als Segmentschalter nach der UniFi-Aufnahme (Mockups `docs/mockups/segmented-v1`,
+  mit `prototype.html`): Fläche, gleich breite Felder (Grid), Kapsel `.seg-pill` als eigenes Element, das `_initSeg()`
+  per MutationObserver setzt und beim Wechsel gleiten lässt (FLIP über `_segLast`, weil die Leisten bei jedem Aufbau
+  neu gezeichnet werden; ResizeObserver nur bei echter Breitenänderung, ersetzte Leisten werden ausgenommen). Ab fünf
+  Reitern auf dem Handy vier Spalten (unter 390 px drei), "Bewegung reduzieren" ohne Gleiten. Handy: Zeile
+  "Sortierung & Ansicht" (`.sort-btn` mit `.lbl`/`.val`) ersetzt Pille und Knopf oben (`.view-btn` auf dem Handy
+  ausgeblendet; Mockups `sort-line-v1`, C). Tests: `graphics-e2e`, `view-e2e`.
+  Ungeprüft auf einem echten iPhone: Gefühl des Gleitens, Verhalten bei sehr schmalen Fenstern.
 
 - 2.0.4: "Verbindungsart pro Integration" (`connection_integrations`) steht neben dem Typ in "Geräte im Panel" ›
   "Integrationen" (`exTable` mit Liste von Zusatzspalten, `connExtra`); die eigene Liste in "Darstellung" ›
