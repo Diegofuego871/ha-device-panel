@@ -3,9 +3,18 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.1.0, Integrations-Icon in Push-Meldungen)
+## Stand (2.2.0, Emoji pro Push-Meldung)
 
-- 2.1.0 (auch): Puls zeigt am rechten Rand den Stand jetzt: `availability.pulse` zählt im letzten Abschnitt nur noch
+- 2.2.0: Emoji im Push-Titel pro Meldung einstellbar: Optionen `emoji_outage|group|online|battery|charge|charge_stop|new|updates`
+  (`const.EMOJI_DEFAULTS`/`EMOJI_KEYS`; None = Standard, "" = ohne Emoji, höchstens 3 sichtbare Zeichen, Prüfung
+  `options_api.emoji`/`grapheme_count`, Panel `_graphemes` mit Intl.Segmenter). `push.title(hass, opts, kind, key, **kw)`
+  setzt das Emoji vor den Text (die Titel in `push.TEXTS` haben kein Emoji mehr; die anhaltenden Benachrichtigungen
+  behalten es). Panel: `_emojiHtml` über der Vorschau (Ausfall: 3 Felder, Batterie, Laden nur bei eingeschalteter
+  Meldung: 2, Neu, Updates), `_syncEmoji` führt Feld, Standard-Knopf und Vorschau-Spanne (`data-pve`) nach, ohne neu
+  aufzubauen (setHtml überspringt gleiches HTML, darum auch beim Zurücksetzen von Hand). Nur im Panel, nicht im
+  Optionsdialog von HA. Tests: `tests/test_push_emoji.py`, `emoji-e2e`.
+
+- 2.1.0: Puls zeigt am rechten Rand den Stand jetzt: `availability.pulse` zählt im letzten Abschnitt nur noch
   laufende Ausfälle (`down_now`, `avail24.down` im Gerät); Panel `_inPulse`/`_headPulse` (Bereichsfilter, Fenster-Liste)
   ebenso; Streifen pro Gerät unverändert. Simulator (`ha-sim.html`) bildet das nach.
 - 2.1.0: Push-Meldungen zeigen das Icon der Integration (`push_icon.py`): `async_integration_icon(hass, domain)` →

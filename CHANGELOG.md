@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.2.0] - 2026-10-11
+
+An emoji per push notification, set in the panel.
+
+### Added
+
+- The emoji at the start of a push title can be changed per notification (requested by the user), in the tab of the
+  notification in "Monitoring and notifications": "Outage" (offline, group outage, back online), "Battery" (low
+  battery), "Charging" (charged, charging stopped), "New" and "Updates". The field sits above the preview, which follows
+  while you type. The default is today's emoji (🔴 🚨 🟢 🪫 🔋 🔌 ✨ ⬆️). The field takes up to 3 characters (a
+  flag or an emoji with a skin tone counts as one) and can be saved empty for a title without emoji. "Default" sets the
+  emoji back. The persistent notifications in Home Assistant keep their emoji; the setting is in the panel only, not in
+  the options dialog of Home Assistant.
+
 ## [2.1.0] - 2026-10-11
 
 The icon of the integration in push notifications.
@@ -2257,6 +2271,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[2.2.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.2.0
 [2.1.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.1.0
 [2.0.6]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.6
 [2.0.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.5

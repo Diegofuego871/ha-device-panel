@@ -12,6 +12,7 @@ from collections.abc import Mapping
 from typing import Any
 
 import re
+import unicodedata
 
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
@@ -125,6 +126,9 @@ from .const import (
     DEFAULT_UPDATE_CHECK,
     DEVICE_TYPES,
     DOMAIN,
+    EMOJI_DEFAULTS,
+    EMOJI_KEYS,
+    EMOJI_MAX,
     INT_RANGES,
     NOTIFY_NONE,
 )
@@ -167,6 +171,54 @@ _UPDATE_ID_RE = re.compile(r"^update\.[a-z0-9_]+$")
 _NOTIFY_RE = re.compile(r"^notify\.[a-z0-9_]+$")
 _AI_TASK_RE = re.compile(r"^ai_task\.[a-z0-9_]+$")
 _TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+
+
+def grapheme_count(text: str) -> int:
+    """
+    Zahl der sichtbaren Zeichen (Graphem-Cluster, vereinfacht): Zeichen mit
+    Variantenwahl (⬆️), Hautton, Zero-Width-Joiner-Folgen (👨‍👩‍👧) und
+    Flaggen zählen als eins, wie das Panel sie mit Intl.Segmenter zählt.
+    """
+    count = 0
+    joined = False
+    flag_open = False
+    for ch in text:
+        code = ord(ch)
+        extend = (
+            ch == "\u200d"
+            or 0xFE00 <= code <= 0xFE0F
+            or 0x1F3FB <= code <= 0x1F3FF
+            or 0xE0020 <= code <= 0xE007F
+            or unicodedata.category(ch) in ("Mn", "Me", "Mc")
+        )
+        is_flag = 0x1F1E6 <= code <= 0x1F1FF
+        if count and (extend or joined):
+            joined = ch == "\u200d"
+            continue
+        if is_flag and flag_open:
+            flag_open = False
+            continue
+        flag_open = is_flag
+        joined = False
+        count += 1
+    return count
+
+
+def emoji(value: Any) -> str | None:
+    """
+    Emoji einer Push-Meldung: None = Standard, "" = ohne Emoji, sonst höchstens
+    EMOJI_MAX sichtbare Zeichen (beliebiger Text, keine Steuerzeichen).
+    """
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise vol.Invalid("Text mit höchstens %d Zeichen erwartet" % EMOJI_MAX)
+    text = value.strip()
+    if len(text) > 32 or any(unicodedata.category(c).startswith("C") and c != "\u200d" for c in text):
+        raise vol.Invalid("Text mit höchstens %d Zeichen erwartet" % EMOJI_MAX)
+    if grapheme_count(text) > EMOJI_MAX:
+        raise vol.Invalid("Höchstens %d Zeichen erlaubt" % EMOJI_MAX)
+    return text
 
 
 def push_time(value: Any) -> str:
@@ -516,6 +568,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_BATTERY_PUSH_MODE): vol.In(PUSH_MODES),
         vol.Optional(CONF_BATTERY_PUSH_TIME): push_time,
         vol.Optional(CONF_BATTERY_PUSH_DAILY): vol.In(DAILY_CONTENTS),
+        **{vol.Optional(key): emoji for key in EMOJI_KEYS.values()},
     }
 )
 
@@ -611,6 +664,12 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
         values[CONF_BATTERY_PUSH_TIME] = DEFAULT_BATTERY_PUSH_TIME
     daily = options.get(CONF_BATTERY_PUSH_DAILY)
     values[CONF_BATTERY_PUSH_DAILY] = daily if daily in DAILY_CONTENTS else DAILY_NEW
+    # Emoji der Push-Meldungen: None = Standard (ungültig gespeichert gilt der Standard).
+    for key in EMOJI_KEYS.values():
+        try:
+            values[key] = emoji(options.get(key))
+        except vol.Invalid:
+            values[key] = None
     # Update-Erinnerung (seit 1.29.0)
     kinds = options.get(CONF_UPDATES_KINDS)
     values[CONF_UPDATES_KINDS] = [k for k in UPDATE_KINDS if k in kinds] if isinstance(kinds, list) else list(DEFAULT_UPDATES_KINDS)
@@ -702,6 +761,12 @@ def offline_after_for(opts: Mapping[str, Any], domain: str | None) -> float | No
     own = opts.get(CONF_OFFLINE_INTEGRATIONS) or {}
     value = own.get(domain, opts[CONF_OFFLINE_AFTER]) if domain else opts[CONF_OFFLINE_AFTER]
     return None if value == MONITOR_OFF else value * 60
+
+
+def emoji_for(values: Mapping[str, Any], kind: str) -> str:
+    """Wirksames Emoji einer Meldung (Standard, wenn nichts eingestellt ist); "" = keines."""
+    own = values.get(EMOJI_KEYS[kind])
+    return EMOJI_DEFAULTS[kind] if own is None else own
 
 
 def limits() -> dict[str, list[int]]:

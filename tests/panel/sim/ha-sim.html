@@ -583,7 +583,10 @@
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
     notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, notify_charge_stop: false, charge_stall: 15, charge_integrations: [], charge_full_integrations: {}, charge_rise_integrations: {}, charge_stall_integrations: {}, charge_stop_integrations: {}, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
+    // Emoji der Push-Meldungen: null = Standard (seit 2.2.0)
+    emoji_outage: null, emoji_group: null, emoji_online: null, emoji_battery: null, emoji_charge: null, emoji_charge_stop: null, emoji_new: null, emoji_updates: null,
   };
+  const EMOJI_DEFAULTS = { outage: "🔴", group: "🚨", online: "🟢", battery: "🪫", charge: "🔋", charge_stop: "🔌", new: "✨", updates: "⬆️" };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
   window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, charge: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {} };
@@ -684,7 +687,7 @@
         const values = JSON.parse(JSON.stringify(window.__opts));
         // Wie options_api.values_from (seit 0.34.0): "Erst melden nach" nie kürzer als "Ausgefallen nach".
         values.notify_delay = Math.max(Number.isInteger(values.notify_delay) && values.notify_delay >= 1 ? values.notify_delay : 2, values.offline_after);
-        return { values, panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS, notify_targets: NOTIFY_TARGETS, overrides: overrides(), ai_prompt_default: AI_PROMPT_DEFAULT };
+        return { values, panel: { ...window.__panelSettings }, catalog: catalog(), limits: LIMITS, notify_targets: NOTIFY_TARGETS, overrides: overrides(), ai_prompt_default: AI_PROMPT_DEFAULT, emoji_defaults: EMOJI_DEFAULTS, emoji_max: 3 };
       }
       if (msg.type === "brands/access_token") {
         // Wie HA ab 2026.3; ältere HA kennen den Befehl nicht (?nobrands=1).
@@ -801,6 +804,16 @@
         if ("updates_mode" in msg.values && !["instant", "daily", "weekly"].includes(msg.values.updates_mode)) throw { code: "invalid_format", message: "updates mode" };
         if ("updates_repeat" in msg.values && !["never", "3d", "7d"].includes(msg.values.updates_repeat)) throw { code: "invalid_format", message: "updates repeat" };
         if ("updates_time" in msg.values && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(msg.values.updates_time))) throw { code: "invalid_format", message: "updates time" };
+        for (const kind of Object.keys(EMOJI_DEFAULTS)) {
+          // Wie options_api.emoji: null = Standard, "" = ohne Emoji, sonst höchstens 3 sichtbare Zeichen.
+          const key = `emoji_${kind}`;
+          if (!(key in msg.values)) continue;
+          const v = msg.values[key];
+          if (v === null) continue;
+          const marks = typeof v === "string" ? [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(v.trim())] : null;
+          if (!marks || marks.length > 3) throw { code: "invalid_format", message: key };
+          msg.values[key] = v.trim();
+        }
         if ("notify_fields" in msg.values) {
           const v = msg.values.notify_fields;
           if (!Array.isArray(v) || v.some((x) => !NOTIFY_FIELDS.includes(x))) throw { code: "invalid_format", message: "fields" };

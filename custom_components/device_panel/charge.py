@@ -338,7 +338,7 @@ class ChargeNotifier:
         if area:
             parts.append(area.name)
         await push.async_push(
-            hass, opts[CONF_NOTIFY_SERVICE], push.text(hass, "charge_stop_title", name=name), " · ".join(parts),
+            hass, opts[CONF_NOTIFY_SERVICE], push.title(hass, opts, "charge_stop", "charge_stop_title", name=name), " · ".join(parts),
             push.notification_data(
                 hass, f"{DOMAIN}_charge_{dev}", push.device_url(opts[CONF_NOTIFY_CLICK], dev),
                 icon=await push_icon.async_integration_icon(hass, primary_domain(hass, device)),
@@ -354,7 +354,7 @@ class ChargeNotifier:
         area = ar.async_get(hass).async_get_area(device.area_id) if device.area_id else None
         name = device.name_by_user or device.name or dev
         await push.async_push(
-            hass, opts[CONF_NOTIFY_SERVICE], push.text(hass, "charge_title", name=name), self.message(done, area.name if area else None),
+            hass, opts[CONF_NOTIFY_SERVICE], push.title(hass, opts, "charge", "charge_title", name=name), self.message(done, area.name if area else None),
             push.notification_data(
                 hass, f"{DOMAIN}_charge_{dev}", push.device_url(opts[CONF_NOTIFY_CLICK], dev),
                 icon=await push_icon.async_integration_icon(hass, primary_domain(hass, device)),

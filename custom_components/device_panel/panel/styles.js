@@ -678,6 +678,15 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .pv-text { color: var(--dp-text); line-height: 1.35; }
 .pv-actions { display: flex; gap: 18px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--dp-divider); color: var(--dp-primary); font-weight: 500; }
 .pv .opt-short { margin-top: 8px; }
+/* Emoji im Titel der Push-Meldung (seit 2.2.0): ein Feld je Meldung über der Vorschau */
+.emo-box { margin-top: 12px; }
+.emo-row { display: flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 2px; }
+.emo-l { flex: 1 1 auto; min-width: 0; font-size: 14px; }
+.emo-in input { width: 72px; text-align: center; font-size: 18px; }
+.emo-in input::placeholder { color: var(--dp-text3); font-size: 11px; }
+.emo-row.changed .emo-in { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
+.emo-reset { min-width: 56px; text-align: right; }
+.emo-reset[disabled] { opacity: .4; cursor: default; text-decoration: none; }
 .ex-name small { display: block; color: var(--dp-text2); font-size: 12px; }
 .upd-dot { display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; background: var(--dp-warning); vertical-align: middle; }
 .ex-row.off .ex-name, .ex-row.off .ibadge { opacity: .55; }

@@ -231,7 +231,7 @@ class UpdateNotifier:
             activity.record(hass, "info", "updates", "updates_no_target" if opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE else "updates_sent", "Home Assistant", count=len(items))
         if items and opts[CONF_NOTIFY_SERVICE] != NOTIFY_NONE:
             await push.async_push(
-                hass, opts[CONF_NOTIFY_SERVICE], push.text(hass, "update_title"), self.message(items),
+                hass, opts[CONF_NOTIFY_SERVICE], push.title(hass, opts, "updates", "update_title"), self.message(items),
                 push.notification_data(hass, f"{DOMAIN}_updates", UPDATES_URL),
             )
         for item in items:

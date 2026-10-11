@@ -260,11 +260,11 @@ const UPDATE_KINDS = ["core", "addons", "hacs", "devices"];
 // für den Punkt am Reiter und das Etikett "geändert" des Abschnitts.
 const MON_TAB_KEYS = {
   overview: ["notify_service", "notify_click_target"],
-  outage: ["offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "reset_offline", "reset_notify"],
-  charge: ["notify_charge", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations"],
-  battery: ["battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
-  new: ["notify_new", "new_window", "new_persistent", "new_fields"],
-  updates: ["notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include"],
+  outage: ["offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "emoji_outage", "emoji_group", "emoji_online", "reset_offline", "reset_notify"],
+  charge: ["notify_charge", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations", "emoji_charge", "emoji_charge_stop"],
+  battery: ["battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "emoji_battery", "reset_battery"],
+  new: ["notify_new", "new_window", "new_persistent", "new_fields", "emoji_new"],
+  updates: ["notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include", "emoji_updates"],
   sig: ["signal_low", "reset_signal"],
   integ: ["offline_after_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
@@ -5222,7 +5222,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfullInteg ? `[data-cfull-integ="${active.dataset.cfullInteg}"]` : active.dataset.criseInteg ? `[data-crise-integ="${active.dataset.criseInteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.emoji ? `[data-emoji="${active.dataset.emoji}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfullInteg ? `[data-cfull-integ="${active.dataset.cfullInteg}"]` : active.dataset.criseInteg ? `[data-crise-integ="${active.dataset.criseInteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -5345,6 +5345,67 @@ class DevicePanel extends HTMLElement {
       <div class="opt-short">${escape(t(list.length ? `${pre}Short` : `${pre}Empty`))}</div>${rows ? this._searchHtml(`ovr-${kind}`, list.length) + `<div class="ovr-list srch-rows" data-srch="ovr-${kind}">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>` : ""}</div>`;
   }
 
+  // Sichtbare Zeichen eines Texts (Emoji mit Variantenwahl, Hautton oder Joiner zählen als eins);
+  // wie options_api.grapheme_count im Backend. Ohne Intl.Segmenter zählen Codepunkte.
+  _graphemes(text) {
+    try {
+      return [...new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text)].map((x) => x.segment);
+    } catch (err) {
+      return [...text];
+    }
+  }
+
+  // Wirksames Emoji einer Meldung im Entwurf: eigenes (auch leer), sonst der Standard.
+  _emojiOf(d, kind) {
+    const own = d[`emoji_${kind}`];
+    return own == null ? this._settings?.data?.emoji_defaults?.[kind] || "" : own;
+  }
+
+  // Feld, Standard-Knopf, Markierung und Vorschau einer Meldung nach dem Entwurf nachführen,
+  // ohne neu aufzubauen (der Cursor soll beim Tippen bleiben). Mit setValue auch den Text.
+  _syncEmoji(kind, setValue = false) {
+    const dialog = this.shadowRoot.querySelector("dialog.settings");
+    const st = this._settings;
+    if (!dialog || !st?.draft) return;
+    const key = `emoji_${kind}`;
+    for (const span of dialog.querySelectorAll(`[data-pve="${kind}"]`)) span.textContent = this._pveText(st.draft, kind);
+    const input = dialog.querySelector(`[data-emoji="${kind}"]`);
+    if (input && setValue) input.value = this._emojiOf(st.draft, kind);
+    const row = input?.closest(".emo-row");
+    row?.querySelector(".emo-reset")?.toggleAttribute("disabled", st.draft[key] == null);
+    row?.classList.toggle("changed", st.draft[key] !== (st.data?.values?.[key] ?? null));
+  }
+
+  // Anfang des Titels in der Vorschau: Emoji und Leerzeichen, leer ohne Emoji. Die Spanne wird
+  // beim Tippen im Feld nachgeführt (data-pve), ohne die Vorschau neu zu bauen.
+  _pveText(d, kind) {
+    const mark = this._emojiOf(d, kind);
+    return mark ? `${mark} ` : "";
+  }
+
+  _pveHtml(d, kind) {
+    return `<span data-pve="${kind}">${escape(this._pveText(d, kind))}</span>`;
+  }
+
+  // Emoji im Titel der Push-Meldung (seit 2.2.0, Wunsch des Nutzers): je Meldung ein Feld mit
+  // bis zu drei Zeichen; leer = ohne Emoji, "Standard" setzt zurück (null im Entwurf).
+  _emojiHtml(d, kinds, changes) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const defs = this._settings?.data?.emoji_defaults || {};
+    const max = this._settings?.data?.emoji_max || 3;
+    const rows = kinds
+      .map((kind) => {
+        const key = `emoji_${kind}`;
+        const own = d[key] != null;
+        const label = t(key);
+        return `<div class="emo-row${changes.has(key) ? " changed" : ""}"><span class="emo-l">${escape(label)}</span>
+          <span class="opt-input emo-in"><input type="text" data-emoji="${kind}" value="${escape(own ? d[key] : defs[kind] || "")}" placeholder="${escape(t("emojiNone"))}" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="${escape(t("emojiLabel", label))}"></span>
+          <button type="button" class="lnk emo-reset" data-set="emoji-reset" data-key="${kind}" ${own ? "" : "disabled"}>${escape(t("emojiReset"))}</button></div>`;
+      })
+      .join("");
+    return `<div class="emo-box"><div class="opt-line"><span class="opt-label">${escape(t("emojiTitle"))}</span></div><div class="opt-short">${escape(t("emojiShort", max))}</div>${rows}</div>`;
+  }
+
   // "Inhalt der Meldung" als Schalter in zwei Spalten, dazu die Vorschau
   // einer Ausfall-Meldung (Bild 5) mit einem Gerät aus der Liste.
   _notifyFieldsHtml(d, changes) {
@@ -5382,13 +5443,13 @@ class DevicePanel extends HTMLElement {
       .filter(Boolean);
     const preview = d.notify_outage
       ? `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
-          <div class="pv-title">${escape(t("pvTitle", dev.name))}</div><div class="pv-text">${parts.join(" · ")}</div>
+          <div class="pv-title">${this._pveHtml(d, "outage")}${escape(t("pvTitle", dev.name))}</div><div class="pv-text">${parts.join(" · ")}</div>
           <div class="pv-actions"><span>${escape(t("pvOpen"))}</span><span>${escape(t("pvMute"))}</span></div></div>
           <div class="opt-short">${escape(t("pvNote"))}${invented ? ` ${escape(t("pvExample"))}` : ""}</div></div>`
       : "";
     return `<div class="opt${changes.has("notify_fields") ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optFields"))}</span></div>
       <div class="opt-short">${escape(t("optFieldsShort"))}</div><div class="nf-grid">${grid}</div>
-      <div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("optFieldsNote1"))}</p><p>${escape(t("optFieldsNote2"))}</p></div></div>${preview}</div>`;
+      <div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("optFieldsNote1"))}</p><p>${escape(t("optFieldsNote2"))}</p></div></div>${this._emojiHtml(d, ["outage", "group", "online"], changes)}${preview}</div>`;
   }
 
   // --- Überwachung und Meldungen (seit 0.34.0, docs/mockups/notify-v3) -----
@@ -5764,8 +5825,9 @@ class DevicePanel extends HTMLElement {
     const dev = this._devices.find((x) => x.battery?.level != null) || null;
     const name = dev ? dev.name : t("pvSample");
     const area = dev?.area ? escape(dev.area) : `<i>${escape(t("pvSampleArea"))}</i>`;
+    html += this._emojiHtml(d, ["charge", "charge_stop"], changes);
     html += `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
-      <div class="pv-title">${escape(t("pvChargeTitle", name))}</div><div class="pv-text">${escape(`${d.charge_full ?? 100} %`)} · ${escape(t("pvChargeFrom", this._fmtSeconds(6000), 22))} · ${area}</div></div>
+      <div class="pv-title">${this._pveHtml(d, "charge")}${escape(t("pvChargeTitle", name))}</div><div class="pv-text">${escape(`${d.charge_full ?? 100} %`)} · ${escape(t("pvChargeFrom", this._fmtSeconds(6000), 22))} · ${area}</div></div>
       <div class="opt-short">${escape(t("pvChargeNote"))}</div></div>`;
     return html;
   }
@@ -5803,11 +5865,11 @@ class DevicePanel extends HTMLElement {
     const text = parts.length ? parts.join(" · ") : level();
     const preview = d.battery_push
       ? `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
-          <div class="pv-title">${escape(t("pvBatTitle", dev ? dev.name : t("pvSample")))}</div><div class="pv-text">${text}</div></div>
+          <div class="pv-title">${this._pveHtml(d, "battery")}${escape(t("pvBatTitle", dev ? dev.name : t("pvSample")))}</div><div class="pv-text">${text}</div></div>
           <div class="opt-short">${escape(t("pvBatNote"))}${invented ? ` ${escape(t("pvExample"))}` : ""}</div></div>`
       : "";
     return `<div class="opt${changes.has("battery_fields") ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optBatFields"))}</span></div>
-      <div class="opt-short">${escape(t("optBatFieldsShort"))}</div><div class="nf-grid">${grid}</div>${preview}</div>`;
+      <div class="opt-short">${escape(t("optBatFieldsShort"))}</div><div class="nf-grid">${grid}</div>${this._emojiHtml(d, ["battery"], changes)}${preview}</div>`;
   }
 
   // Balken der Meldung bei neuen Geräten (seit 1.24.0): vom Fund bis zur Meldung nach dem
@@ -5887,7 +5949,7 @@ class DevicePanel extends HTMLElement {
       : UPDATE_KINDS.filter((k) => kinds.has(k)).map((k) => `• ${escape(sample[k])}`);
     const preview = d.notify_updates
       ? `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
-          <div class="pv-title">${escape(t("pvUpdTitle"))}</div><div class="pv-text">${lines.length ? `${escape(t("pvUpdCount", lines.length))}<br>${lines.join("<br>")}` : escape(t("pvUpdNone"))}</div></div>
+          <div class="pv-title">${this._pveHtml(d, "updates")}${escape(t("pvUpdTitle"))}</div><div class="pv-text">${lines.length ? `${escape(t("pvUpdCount", lines.length))}<br>${lines.join("<br>")}` : escape(t("pvUpdNone"))}</div></div>
           <div class="opt-short">${escape(t("pvUpdNote"))} ${escape(real ? t("pvUpdReal") : t("pvExample2"))}</div></div>`
       : "";
     return `<div class="opt-short mtl-note">${escape(t("updNote"))}</div>
@@ -5903,6 +5965,7 @@ class DevicePanel extends HTMLElement {
       <div class="mon-grp">${escape(t("grpUpdKinds"))}</div>
       ${kindRows}
       ${list}
+      ${this._emojiHtml(d, ["updates"], changes)}
       ${preview}`;
   }
 
@@ -5937,11 +6000,11 @@ class DevicePanel extends HTMLElement {
     const text = parts.length ? parts.join(" · ") : escape(t("pvNewFound"));
     const preview = d.notify_new
       ? `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
-          <div class="pv-title">${escape(t("pvNewTitle", dev ? dev.name : t("pvSample")))}</div><div class="pv-text">${text}</div></div>
+          <div class="pv-title">${this._pveHtml(d, "new")}${escape(t("pvNewTitle", dev ? dev.name : t("pvSample")))}</div><div class="pv-text">${text}</div></div>
           <div class="opt-short">${escape(t("pvNewNote"))}${invented ? ` ${escape(t("pvExample"))}` : ""}</div></div>`
       : "";
     return `<div class="opt${changes.has("new_fields") ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optNewFields"))}</span></div>
-      <div class="opt-short">${escape(t("optNewFieldsShort"))}</div><div class="nf-grid">${grid}</div>${preview}</div>`;
+      <div class="opt-short">${escape(t("optNewFieldsShort"))}</div><div class="nf-grid">${grid}</div>${this._emojiHtml(d, ["new"], changes)}${preview}</div>`;
   }
 
   _monIntegHtml(d, changes, errors) {
@@ -6538,6 +6601,14 @@ class DevicePanel extends HTMLElement {
         st.draft.chip_order = [];
         st.draft.connection_order = [];
         this._renderSettings();
+      } else if (action === "emoji-reset") {
+        // Standard-Emoji einer Meldung (seit 2.2.0): null im Entwurf.
+        if (!st.draft) return;
+        st.draft[`emoji_${btn.dataset.key}`] = null;
+        this._renderSettings();
+        // Die Eingabe hat der Nutzer von Hand verändert: gleicht sich der Neuaufbau nicht an
+        // (setHtml überspringt gleiches HTML), also das Feld selbst nachführen.
+        this._syncEmoji(btn.dataset.key, true);
       } else if (action === "ovr-all" || action === "ovr-one") {
         if (!st.data) return;
         const [kind, id] = btn.dataset.key.split(/:(.*)/s);
@@ -6617,6 +6688,23 @@ class DevicePanel extends HTMLElement {
         // Suchfeld einer Liste (seit 1.28.0): nur filtern, kein Neuaufbau (sonst ginge der Fokus verloren)
         (st.search ||= {})[el.dataset.lsearch] = el.value;
         this._applyListSearch(dialog);
+        return;
+      }
+      if (st?.draft && el.dataset?.emoji) {
+        // Emoji im Titel (seit 2.2.0): höchstens so viele sichtbare Zeichen wie erlaubt (nicht
+        // mitten in einer Eingabe-Komposition kürzen), leer = ohne Emoji, wie der Standard = Standard.
+        if (ev.isComposing) return;
+        const kind = el.dataset.emoji;
+        const max = st.data?.emoji_max || 3;
+        let marks = this._graphemes(el.value);
+        if (marks.length > max) {
+          marks = marks.slice(0, max);
+          el.value = marks.join("");
+        }
+        const value = marks.join("").trim();
+        st.draft[`emoji_${kind}`] = value === (st.data?.emoji_defaults?.[kind] || "") && value !== "" ? null : value;
+        this._syncEmoji(kind);
+        this._updateSettingsMeta();
         return;
       }
       if (st?.draft && el.type === "time" && el.dataset.opt) {

@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "114"
+PANEL_VERSION = "115"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -34,6 +34,23 @@ PUSH_IMAGE_URL = f"{PUSH_STATIC_URL_PATH}/{PUSH_IMAGE_FILE}"
 PUSH_ICON_DIR = "device_panel_icons"
 PUSH_ICON_URL_PATH = f"{STATIC_URL_PATH}/icons"
 BRANDS_CDN_URL = "https://brands.home-assistant.io"
+
+# Emoji vor dem Titel einer Push-Meldung (seit 2.2.0), je Meldung einstellbar.
+# Gespeichert wird nur, was vom Standard abweicht: None (Standard), "" (ohne
+# Emoji) oder höchstens EMOJI_MAX Zeichen. Die anhaltenden Benachrichtigungen
+# in Home Assistant behalten ihr Emoji.
+EMOJI_MAX = 3
+EMOJI_DEFAULTS: dict[str, str] = {
+    "outage": "🔴",
+    "group": "🚨",
+    "online": "🟢",
+    "battery": "🪫",
+    "charge": "🔋",
+    "charge_stop": "🔌",
+    "new": "✨",
+    "updates": "⬆️",
+}
+EMOJI_KEYS: dict[str, str] = {kind: f"emoji_{kind}" for kind in EMOJI_DEFAULTS}
 
 DATA_PANEL_REGISTERED = f"{DOMAIN}_panel_registered"
 # URL des Push-Bilds oder None, wenn es nicht bereitgestellt werden konnte.

@@ -629,6 +629,11 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   `brand/icon.png` der Integration, dann `brands.home-assistant.io`; mit Rand
   auf 512 × 512 gesetzt und in `.storage/device_panel_icons` abgelegt.
 
+- Emoji im Titel (seit 2.2.0): je Meldung einstellbar (Optionen `emoji_<art>`),
+  Standard sind die bisherigen (🔴 🚨 🟢 🪫 🔋 🔌 ✨ ⬆️), höchstens 3 sichtbare
+  Zeichen, leer erlaubt (ohne Emoji), `null` = Standard. Betrifft nur die
+  Push-Titel, nicht die anhaltenden Benachrichtigungen.
+
 Für den Versand zu übernehmen:
 
 - Zusatzdaten (`notification_data`): `icon_url` = Bild (Android; iOS zeigt es

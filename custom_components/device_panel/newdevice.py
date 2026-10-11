@@ -170,7 +170,7 @@ class NewDeviceNotifier:
                 extra = self.parts(opts, i)
                 lines.append(f"{i['name']} ({', '.join(extra)})" if extra else i["name"])
             await push.async_push(
-                hass, target, push.text(hass, "new_title_many", count=len(items)), ", ".join(lines),
+                hass, target, push.title(hass, opts, "new", "new_title_many", count=len(items)), ", ".join(lines),
                 push.notification_data(
                     hass, f"{DOMAIN}_new", push.panel_url(), icon=await push_icon.async_common_icon(hass, [i["domain"] for i in items])
                 ),
@@ -180,7 +180,7 @@ class NewDeviceNotifier:
         message = " · ".join(self.parts(opts, item)) or push.text(hass, "new_found")
         url = push.device_url(opts[CONF_NOTIFY_CLICK], item["id"])
         await push.async_push(
-            hass, target, push.text(hass, "new_title", name=item["name"]), message,
+            hass, target, push.title(hass, opts, "new", "new_title", name=item["name"]), message,
             push.notification_data(hass, f"{DOMAIN}_new_{item['id']}", url, icon=await push_icon.async_integration_icon(hass, item["domain"])),
         )
 

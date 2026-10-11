@@ -271,7 +271,7 @@ class OutageNotifier:
             await push.async_push(
                 hass,
                 target,
-                push.text(hass, f"{kind}_title_many", count=len(info)),
+                push.title(hass, opts, "online" if online else "group", f"{kind}_title_many", count=len(info)),
                 " · ".join(parts),
                 push.notification_data(
                     hass, f"{DOMAIN}_incident", push.panel_url(), icon=await push_icon.async_common_icon(hass, list(domains))
@@ -291,7 +291,7 @@ class OutageNotifier:
             icon = await push_icon.async_integration_icon(hass, i["domain"])
             data = push.notification_data(hass, f"{DOMAIN}_device_{i['id']}", url, actions, icon)
             await push.async_push(
-                hass, target, push.text(hass, f"{kind}_title", name=i["name"]), " · ".join(x for x in parts if x), data
+                hass, target, push.title(hass, opts, kind, f"{kind}_title", name=i["name"]), " · ".join(x for x in parts if x), data
             )
 
     def message_parts(self, opts: dict[str, Any], i: dict[str, Any]) -> list[str]:

@@ -11,6 +11,7 @@ from typing import Any
 from homeassistant.core import HomeAssistant
 
 from . import activity
+from .options_api import emoji_for
 from .const import CLICK_DEVICE, DATA_PUSH_IMAGE, MUTE_ACTION_PREFIX, NOTIFY_NONE, PANEL_URL_PATH
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,8 +20,8 @@ _LOGGER = logging.getLogger(__name__)
 # Schlüsseln (tests/test_translations.py prüft das).
 TEXTS: dict[str, dict[str, str]] = {
     "de": {
-        "battery_title": "🪫 Batterie schwach: {name}",
-        "battery_title_many": "🪫 Batterie schwach: {count} Geräte",
+        "battery_title": "Batterie schwach: {name}",
+        "battery_title_many": "Batterie schwach: {count} Geräte",
         "battery_low": "schwach",
         "persistent_title": "🪫 Device Panel: Batterie schwach",
         "persistent_intro": "Diese Geräte haben eine schwache Batterie (bis {threshold} %):",
@@ -29,12 +30,12 @@ TEXTS: dict[str, dict[str, str]] = {
         "notify_none": "Keine Push-Meldungen",
         "notify_entity": "{entity_id} (Entität)",
         "notify_missing": "{value} (nicht gefunden)",
-        "outage_title": "🔴 Ausgefallen: {name}",
-        "outage_title_many": "🚨 Sammelausfall: {count} Geräte",
+        "outage_title": "Ausgefallen: {name}",
+        "outage_title_many": "Sammelausfall: {count} Geräte",
         "outage_since": "seit {time}",
         "outage_cause": "vermutlich {integration}",
-        "online_title": "🟢 Wieder online: {name}",
-        "online_title_many": "🟢 Wieder online: {count} Geräte",
+        "online_title": "Wieder online: {name}",
+        "online_title_many": "Wieder online: {count} Geräte",
         "online_after": "nach {duration}",
         "dur_days": "{d} T. {h} Std.",
         "dur_hours": "{h} Std. {m} Min.",
@@ -54,15 +55,15 @@ TEXTS: dict[str, dict[str, str]] = {
         "conn_network": "Netzwerk",
         "conn_cloud": "Cloud",
         "conn_unknown": "Unbekannt",
-        "new_title": "✨ Neues Gerät: {name}",
-        "new_title_many": "✨ {count} neue Geräte",
+        "new_title": "Neues Gerät: {name}",
+        "new_title_many": "{count} neue Geräte",
         "new_found": "neu gefunden",
-        "charge_title": "🔋 Geladen: {name}",
+        "charge_title": "Geladen: {name}",
         "charge_from": "in {duration} von {start} %",
         "charge_jump": "von {start} %",
-        "charge_stop_title": "🔌 Ladung beendet: {name}",
+        "charge_stop_title": "Ladung beendet: {name}",
         "charge_stalled": "Stand seit {duration} unverändert",
-        "update_title": "⬆️ Home Assistant Update",
+        "update_title": "Home Assistant Update",
         "update_message": "{count} verfügbar:",
         "update_line": "{name} {installed} → {latest}",
         "new_persistent_title": "✨ Device Panel: Neue Geräte",
@@ -74,8 +75,8 @@ TEXTS: dict[str, dict[str, str]] = {
         "outage_persistent_outro": "Die Meldung verschwindet von selbst, wenn alle wieder online sind. Einstellen im Device Panel unter Einstellungen → Anhaltende Benachrichtigung.",
     },
     "en": {
-        "battery_title": "🪫 Low battery: {name}",
-        "battery_title_many": "🪫 Low battery: {count} devices",
+        "battery_title": "Low battery: {name}",
+        "battery_title_many": "Low battery: {count} devices",
         "battery_low": "low",
         "persistent_title": "🪫 Device Panel: low battery",
         "persistent_intro": "These devices have a low battery (up to {threshold} %):",
@@ -84,12 +85,12 @@ TEXTS: dict[str, dict[str, str]] = {
         "notify_none": "No push notifications",
         "notify_entity": "{entity_id} (entity)",
         "notify_missing": "{value} (not found)",
-        "outage_title": "🔴 Offline: {name}",
-        "outage_title_many": "🚨 Group outage: {count} devices",
+        "outage_title": "Offline: {name}",
+        "outage_title_many": "Group outage: {count} devices",
         "outage_since": "since {time}",
         "outage_cause": "probably {integration}",
-        "online_title": "🟢 Back online: {name}",
-        "online_title_many": "🟢 Back online: {count} devices",
+        "online_title": "Back online: {name}",
+        "online_title_many": "Back online: {count} devices",
         "online_after": "after {duration}",
         "dur_days": "{d} d {h} h",
         "dur_hours": "{h} h {m} min",
@@ -109,15 +110,15 @@ TEXTS: dict[str, dict[str, str]] = {
         "conn_network": "Network",
         "conn_cloud": "Cloud",
         "conn_unknown": "Unknown",
-        "new_title": "✨ New device: {name}",
-        "new_title_many": "✨ {count} new devices",
+        "new_title": "New device: {name}",
+        "new_title_many": "{count} new devices",
         "new_found": "newly found",
-        "charge_title": "🔋 Charged: {name}",
+        "charge_title": "Charged: {name}",
         "charge_from": "in {duration} from {start} %",
         "charge_jump": "from {start} %",
-        "charge_stop_title": "🔌 Charging stopped: {name}",
+        "charge_stop_title": "Charging stopped: {name}",
         "charge_stalled": "level unchanged for {duration}",
-        "update_title": "⬆️ Home Assistant update",
+        "update_title": "Home Assistant update",
         "update_message": "{count} available:",
         "update_line": "{name} {installed} → {latest}",
         "new_persistent_title": "✨ Device Panel: new devices",
@@ -129,6 +130,15 @@ TEXTS: dict[str, dict[str, str]] = {
         "outage_persistent_outro": "This notification disappears by itself once all of them are back online. Change it in Device Panel under Settings → Persistent notification.",
     },
 }
+
+
+def title(hass: HomeAssistant, opts: dict[str, Any], kind: str, key: str, **kwargs: Any) -> str:
+    """
+    Titel einer Push-Meldung: das eingestellte Emoji der Meldung (kind, siehe
+    const.EMOJI_DEFAULTS), ein Leerzeichen und der Text. Ohne Emoji nur der Text.
+    """
+    mark = emoji_for(opts, kind)
+    return f"{mark} {text(hass, key, **kwargs)}" if mark else text(hass, key, **kwargs)
 
 
 def language(hass: HomeAssistant) -> str:

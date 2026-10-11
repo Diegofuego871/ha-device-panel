@@ -7,6 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.2.0] - 2026-10-11
+
+Ein Emoji pro Push-Meldung, im Panel einstellbar.
+
+### Hinzugefügt
+
+- Das Emoji am Anfang des Push-Titels lässt sich pro Meldung ändern (Wunsch des Nutzers), im Reiter der Meldung unter
+  "Überwachung und Meldungen": "Ausfall" (ausgefallen, Sammelausfall, wieder online), "Batterie" (schwache Batterie),
+  "Laden" (geladen, Ladung beendet), "Neu" und "Updates". Das Feld steht über der Vorschau, die beim Tippen mitgeht.
+  Standard ist das bisherige Emoji (🔴 🚨 🟢 🪫 🔋 🔌 ✨ ⬆️). Das Feld nimmt bis zu 3 Zeichen (eine Flagge oder ein Emoji
+  mit Hautton zählt als eins) und lässt sich leer speichern, dann hat der Titel kein Emoji. "Standard" setzt das Emoji
+  zurück. Die anhaltenden Benachrichtigungen in Home Assistant behalten ihr Emoji; die Einstellung gibt es nur im
+  Panel, nicht im Optionsdialog von Home Assistant.
+
 ## [2.1.0] - 2026-10-11
 
 Das Icon der Integration in Push-Meldungen.
@@ -2331,6 +2345,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.2.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.2.0
 [2.1.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.1.0
 [2.0.6]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.6
 [2.0.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.5

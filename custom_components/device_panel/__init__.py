@@ -66,6 +66,8 @@ from .const import (
     DATA_WS_REGISTERED,
     DEVICE_TYPES,
     DOMAIN,
+    EMOJI_DEFAULTS,
+    EMOJI_MAX,
     PANEL_DIR,
     PANEL_HTML_FILE,
     PANEL_ICON,
@@ -497,6 +499,9 @@ async def _ws_get_options(
             "overrides": await async_device_overrides(hass),
             # Standard-Prompt für den Profi-Modus (Anzeigen, Kopieren, Zurücksetzen).
             "ai_prompt_default": DEFAULT_PROMPT,
+            # Emoji der Push-Meldungen: Standard und Höchstzahl der Zeichen (seit 2.2.0).
+            "emoji_defaults": EMOJI_DEFAULTS,
+            "emoji_max": EMOJI_MAX,
         },
     )
 
