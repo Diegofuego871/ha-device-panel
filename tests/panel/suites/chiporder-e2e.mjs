@@ -55,7 +55,6 @@ for (const lang of ["de", "en"]) {
       await tap(".gear-btn");
       await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
       await tap('[data-set="section"][data-id="look"]');
-      await tap('[data-set="subtab"][data-key="chips"]');
       await wait(`return !!r.querySelector('.drag-list[data-drag-list="chip_order"]')`);
     };
     const save = async () => {

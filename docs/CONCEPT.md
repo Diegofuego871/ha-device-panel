@@ -528,7 +528,7 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   eine Liste der Geräte mit eigenem Wert, einzeln oder alle zurücksetzen
   (mit "Speichern"). Der Typ von Hand zählt nicht dazu; die Verbindungsart
   von Hand seit 0.17.0 schon (Nutzer, 2026-10-02: "dann könnte man auch
-  einfach bereinigen"), zurückzusetzen im Abschnitt "Verbindungsart", danach
+  einfach bereinigen"), zurückzusetzen in "Geräte im Panel" › "Pro Gerät" (bis 2.0.6 im Abschnitt "Verbindungsart"), danach
   gilt wieder Integration bzw. Erkennung. Gelöschte Geräte
   behalten ihren Eintrag (HA stellt ein wieder hinzugefügtes Gerät mit
   derselben ID her).
@@ -570,7 +570,7 @@ Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:
   nur mit Einträgen). Bewertet wird im Panel (`devSigLevel`): "off" nie
   schwach, sonst Stufe 1 nur unter der Schwelle; Balken, Chip "Schwacher
   Empfang" und "Warnungen" folgen. Zählt als "Eigene Einstellung",
-  zurückzusetzen im Abschnitt "Verbindungsart". Push für schwachen Empfang
+  zurückzusetzen in "Geräte im Panel" › "Pro Gerät" (bis 2.0.6 im Abschnitt "Verbindungsart"). Push für schwachen Empfang
   gibt es nicht.
 - Ausfall-Meldungen nach Bild 5 (seit 0.20.0):
   - "Erst melden nach" (`notify_delay`, seit 0.34.0 1–60 Min. und nie

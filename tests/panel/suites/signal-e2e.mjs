@@ -107,10 +107,11 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Chip "Eigene Einstellung" zeigt sie`, ids === "b,d", ids);
     await tap('.chip.hint[data-hint="override"]');
 
-    // Einstellungen: zurücksetzen (Abschnitt "Verbindungsart")
+    // Einstellungen: zurücksetzen (Geräte im Panel › Pro Gerät)
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="look"]');
+    await tap('[data-set="section"][data-id="devices"]');
+    await tap('[data-set="subtab"][data-key="devset"]');
     const rows = await ev(`const o=[...r.querySelectorAll(".ovr-opt")].find(x=>x.querySelector(".opt-label").textContent===${JSON.stringify(T.title)}); return o ? [...o.querySelectorAll(".ovr-row")].map(x=>x.querySelector(".ovr-name").childNodes[0].textContent.trim()+":"+x.querySelector(".ovr-val").textContent.trim()).join("|") : ""`);
     check(`[${tag}] Liste "Empfang-Warnung auf Geräten"`, rows === `Bewegungsmelder Flur:${T.vLqi}|Steckdose Terrasse:${T.vOff}`, rows);
     await tap('[data-set="ovr-all"][data-key="signal"]');

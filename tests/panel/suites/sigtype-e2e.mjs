@@ -84,9 +84,10 @@ for (const lang of ["de", "en"]) {
     // --- Global: Reiter Verbindungsart --------------------------------------
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="look"]');
+    await tap('[data-set="section"][data-id="monitor"]');
+    await tap('.mon-tab[data-key="sig"]');
     await wait(`return !!r.querySelector('select[data-sig-mode="|wifi"]')`);
-    check(`[${tag}] Block "${T.title}" im Reiter Verbindungsart`, (await ev(`return [...r.querySelectorAll(".set-title")].some(x=>x.textContent.trim()===${JSON.stringify(T.title)})`)));
+    check(`[${tag}] Block "${T.title}" im Reiter Empfang (Überwachung und Meldungen)`, (await ev(`return [...r.querySelectorAll(".set-title")].some(x=>x.textContent.trim()===${JSON.stringify(T.title)})`)));
     check(`[${tag}] Zeilen: WLAN, Zigbee, Bluetooth, Z-Wave (nur mit Empfangswert)`, (await ev(`return [...r.querySelectorAll("select[data-sig-mode]")].map(s=>s.dataset.sigMode).join()`)) === "|wifi,|zigbee,|ble,|zwave");
     const w0 = await row("|wifi");
     check(`[${tag}] WLAN: Standard in dBm mit Zahl der Geräte`, w0 && w0.label === T.wifi && (await sel("|wifi")) === `default|${T.defWifi}` && w0.info === T.infoWifi && w0.origin === (lang === "de" ? "Standard" : "Default") && !w0.changed, JSON.stringify(w0));
@@ -94,13 +95,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Zigbee: Standard in LQI`, z0 && z0.label === T.zigbee && (await sel("|zigbee")) === `default|${T.defZigbee}` && z0.info === T.infoZigbee, JSON.stringify(z0));
     check(`[${tag}] Bluetooth: ein Gerät`, (await row("|ble")).info === T.infoBle);
     check(`[${tag}] Optionen Standard|Eigene|Aus`, (await ev(`return [...r.querySelector('select[data-sig-mode="|wifi"]').options].map(o=>o.textContent).join("|")`)) === `${T.defWifi}|${T.own}|${T.off}`);
-    check(`[${tag}] Abschnitt: noch nichts angepasst`, !(await sec("look")).includes(lang === "de" ? "Empfang" : "Signal"), await sec("look"));
+    const sigMark = () => ev(`return r.querySelector('.mon-tab[data-key="sig"]').classList.contains("chg")`);
+    check(`[${tag}] Reiter Empfang: noch nichts angepasst (kein Punkt)`, !(await sigMark()));
+    check(`[${tag}] Darstellung: keine Empfang-Zusammenfassung mehr`, !(await sec("look")).includes(lang === "de" ? "Empfang" : "Signal"), await sec("look"));
 
     // WLAN: Eigene, Start mit dem Standard; -120 ungültig; -85 gültig
     await pick("|wifi", "own");
     const w1 = await row("|wifi");
     check(`[${tag}] WLAN Eigene: Feld mit -80 dBm, Zeile geändert, "${T.would}"`, await wait(`return r.querySelector('input[data-sig="|wifi"]')?.value === "-80"`) && w1.unit === "dBm" && (await row("|wifi")).changed && (await row("|wifi")).origin === T.own && (await row("|wifi")).would === T.would, JSON.stringify(await row("|wifi")));
-    check(`[${tag}] Zähler und Zusammenfassung`, (await text(".set-count")) === T.one && (await sec("look")).includes(T.sum), `${await text(".set-count")} / ${await sec("look")}`);
+    check(`[${tag}] Zähler und Zusammenfassung`, (await text(".set-count")) === T.one && (await sigMark()), `${await text(".set-count")} / ${await sigMark()}`);
     await typeVal("|wifi", "-120");
     const bad = await row("|wifi");
     check(`[${tag}] -120: Fehler "${T.range}", Speichern gesperrt`, bad.invalid && bad.err === T.range && (await ev(`return r.querySelector('[data-set="save"]').disabled`)), JSON.stringify(bad));
@@ -118,7 +121,7 @@ for (const lang of ["de", "en"]) {
     await ev(`r.querySelector('select[data-sig-mode="|wifi"]').closest(".opt").scrollIntoView({ block: "center" })`);
     await p.screenshot({ path: `${outDir}/sigtype-global-${tag.replace("/", "-")}.png` });
     check(`[${tag}] gespeichert (sortierte Zuordnung)`, await save() && JSON.stringify((await setCalls()).at(-1)) === JSON.stringify({ signal_low: { ble: "off", wifi: -85, zigbee: 30 } }), JSON.stringify((await setCalls()).at(-1)));
-    check(`[${tag}] Zusammenfassung "${T.sum3}"`, (await sec("look")).includes(T.sum3), await sec("look"));
+    check(`[${tag}] gespeichert: Reiter Empfang ohne Änderungspunkt`, !(await sigMark()), await text(".set-count"));
     check(`[${tag}] Wirkung: nichts mehr schwach (WLAN -85, Zigbee 30, Bluetooth aus)`, await weakIs(0), await weak());
     await tap('dialog.settings .dlg-actions [data-set="close"]');
 
@@ -199,7 +202,8 @@ for (const lang of ["de", "en"]) {
     // Globale Werte zurücksetzen: Auswahl "Standard" nimmt den Eintrag weg
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="look"]');
+    await tap('[data-set="section"][data-id="monitor"]');
+    await tap('.mon-tab[data-key="sig"]');
     await wait(`return !!r.querySelector('select[data-sig-mode="|wifi"]')`);
     check(`[${tag}] gespeicherte Werte wieder da`, (await sel("|wifi")).startsWith("own|") && (await row("|wifi")).val === "-85" && (await row("|zigbee")).val === "30" && (await sel("|ble")).startsWith("off|"));
     await pick("|wifi", "default");

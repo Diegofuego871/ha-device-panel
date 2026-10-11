@@ -7,6 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.0.7] - 2026-10-11
+
+Settings per device in one place; "Display" only has the filter chips.
+
+### Changed
+
+- "Devices in the panel" has a new tab "Per device" (requested by the user): all devices with a setting of their own
+  are listed there, each kind in its own list with reset buttons (outage time, notifications switched off, battery,
+  connection type set by hand, signal warning). Single entries or all of them can be reset; it applies with "Save".
+  The lists stay at their own topic as well (for example the battery ones under "Battery"). The tab shows how many
+  devices have a setting of their own.
+- The signal warning thresholds per connection type, which were part of "Display" › "Connection type", are now a
+  tab "Signal" in "Monitoring and notifications" (the same place where integrations and devices have their "Signal"
+  tab), with the devices that have their own threshold below "Exceptions". The settings themselves do not change.
+- "Display" no longer has the tab "Connection type": only the filter chips remain, without sub-tabs.
+- "Monitoring and notifications" has eight tabs (new: "Signal"), always in two rows of four, also on the desktop.
+
 ## [2.0.6] - 2026-10-11
 
 Pencil at the device name without the blue ring.
@@ -2172,6 +2189,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[2.0.7]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.7
 [2.0.6]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.6
 [2.0.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.5
 [2.0.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.4

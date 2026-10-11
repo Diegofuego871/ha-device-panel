@@ -53,7 +53,6 @@ for (const lang of ["de", "en"]) {
         await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
       }
       if ((await ev(`return r.querySelector('[data-set="section"][data-id="look"]').getAttribute("aria-expanded")`)) !== "true") await tap('[data-set="section"][data-id="look"]');
-      await tap('[data-set="subtab"][data-key="chips"]');
       return wait(`return !!r.querySelector('input[data-list="hide_chips"]')`);
     };
     const save = async () => {

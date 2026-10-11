@@ -1278,6 +1278,8 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
   .mrow:active, .set-sec-head:active, .ilist-row:active, button.lg-row:active, .afloor:active, .arow:active, .prow:active, .olist button:active, button.kwarn:active { transform: none; }
   .mrow:active, .set-sec-head:active, .ilist-row:active, button.lg-row:active, .afloor:active, .arow:active, .prow:active { background: var(--dp-hover); }
 }
+/* Acht Reiter (Überwachung und Meldungen, seit 2.0.7): überall zwei Zeilen zu vier, auch auf dem Desktop (sonst wird "Integrationen" abgeschnitten) */
+.mon-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(8)), .sub-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(8)) { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 /* Schmale Handys (unter 390 px): ab fünf Reitern drei Spalten, damit "Integrationen" nicht abgeschnitten wird */
 @media (max-width: 389px) {
   .mon-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(5)), .sub-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(5)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }

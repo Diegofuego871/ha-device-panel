@@ -12,11 +12,11 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: { auto: "Automatisch: Unbekannt", autoThread: "Automatisch: Thread", manual: "von Hand gesetzt", zigbee: "Zigbee", err: "Verbindungsart konnte nicht gespeichert werden:",
-    sumAuto: "Automatisch erkannt", sumOne: "Verbindungsart für 1 Integration festgelegt", title: "Verbindungsart", shelly: "erkannt: 2 WLAN", moved: "Verbindungsart pro Integration:", autoOpt: "Automatisch",
+    sumLook: "Standardansicht", sumOne: "Verbindungsart für 1 Integration festgelegt", title: "Verbindungsart", shelly: "erkannt: 2 WLAN", moved: "Verbindungsart pro Integration:", autoOpt: "Automatisch",
     one: "1 Änderung", integ: "Wie Integration: LAN", byInteg: "für die ganze Integration festgelegt", lan: "LAN",
     ovrTip: "Verbindungsart von Hand: Zigbee (sonst Unbekannt)", ovrTitle: "Verbindungsart von Hand auf Geräten", ovrBack: "Zigbee → automatisch" },
   en: { auto: "Automatic: Unknown", autoThread: "Automatic: Thread", manual: "set by hand", zigbee: "Zigbee", err: "Could not save the connection type:",
-    sumAuto: "Detected automatically", sumOne: "connection type set for 1 integration", title: "Connection type", shelly: "detected: 2 Wi-Fi", moved: "Connection type per integration:", autoOpt: "Automatic",
+    sumLook: "Default view", sumOne: "connection type set for 1 integration", title: "Connection type", shelly: "detected: 2 Wi-Fi", moved: "Connection type per integration:", autoOpt: "Automatic",
     one: "1 change", integ: "Same as integration: LAN", byInteg: "set for the whole integration", lan: "LAN",
     ovrTip: "Connection type set by hand: Zigbee (otherwise Unknown)", ovrTitle: "Connection type set by hand on devices", ovrBack: "Zigbee → automatic" },
 };
@@ -105,11 +105,12 @@ for (const lang of ["de", "en"]) {
     const wifiBefore = Number(await chip("wifi"));
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    check(`[${tag}] Abschnitt Darstellung, Reiter Verbindungsart`, (await text('[data-id="look"] .set-sec-sum')) === T.sumAuto, await text('[data-id="look"] .set-sec-sum'));
-    // Seit 2.0.4: keine eigene Liste mehr in "Darstellung", nur ein Hinweis mit Sprung nach "Geräte im Panel" › Integrationen
+    check(`[${tag}] Abschnitt Darstellung: Standardansicht (ohne Verbindungsart)`, (await text('[data-id="look"] .set-sec-sum')) === T.sumLook, await text('[data-id="look"] .set-sec-sum'));
+    // Seit 2.0.7: "Darstellung" hat nur noch die Filter-Chips (kein Reiter Verbindungsart mehr)
     await tap('[data-set="section"][data-id="look"]');
-    check(`[${tag}] Darstellung: Hinweis statt Liste`, (await text(".integ-goto p")).startsWith(T.moved) && await ev(`return !r.querySelector('select[data-conn-integ]')`), await text(".integ-goto p"));
-    await tap('.integ-goto [data-set="gosub"]');
+    check(`[${tag}] Darstellung ohne Unterreiter und ohne Liste der Integrationen`, await ev(`return !r.querySelector('[data-id="look"] ~ .set-sec-body .sub-tabs') && !r.querySelector('select[data-conn-integ]') && !r.querySelector('.ovr-opt')`));
+    await tap('[data-set="section"][data-id="look"]');
+    await tap('[data-set="section"][data-id="devices"]');
     await wait(`return !!r.querySelector('select[data-conn-integ="shelly"]')`);
     const shellyRow = await ev(`const s=r.querySelector('select[data-conn-integ="shelly"]'); return s ? [s.title, s.value, s.options[0].textContent, s.options.length] : null`);
     check(`[${tag}] Sprung: Zeile in "Geräte im Panel" mit Erkennung und Auswahl neben dem Typ`, JSON.stringify(shellyRow) === JSON.stringify([T.shelly, "", T.autoOpt, 10]) && await ev(`const row = r.querySelector('select[data-conn-integ="shelly"]').closest(".ex-row"); return !!row.querySelector("select[data-type-integ]") && row.querySelectorAll(".ex-col.sel").length === 2`) && (await text(".ex-head")).includes(T.title), JSON.stringify(shellyRow));
@@ -155,8 +156,9 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Chip "Eigene Einstellung" zählt mit`, await wait(`return !!r.querySelector('.chip.hint[data-hint="override"]')`));
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    await tap('[data-set="section"][data-id="look"]');
-    check(`[${tag}] Übersicht in "Verbindungsart"`, (await text('[data-key="connection:p"]') === "" || true) && (await ev(`return [...r.querySelectorAll(".ovr-opt .opt-label")].map(e=>e.textContent).includes(${JSON.stringify(T.ovrTitle)}) && !!r.querySelector('[data-key="connection:p"]')`)));
+    await tap('[data-set="section"][data-id="devices"]');
+    await tap('[data-set="subtab"][data-key="devset"]');
+    check(`[${tag}] Übersicht in "Pro Gerät"`, (await text('[data-key="connection:p"]') === "" || true) && (await ev(`return [...r.querySelectorAll(".ovr-opt .opt-label")].map(e=>e.textContent).includes(${JSON.stringify(T.ovrTitle)}) && !!r.querySelector('[data-key="connection:p"]')`)));
     await tap('[data-key="connection:p"]');
     check(`[${tag}] zum Zurücksetzen markiert`, (await ev(`return r.querySelector('[data-key="connection:p"]').closest(".ovr-row").querySelector(".ovr-val").textContent.replace(/\\s+/g," ").trim()`)) === T.ovrBack && (await text(".set-count")) === T.one);
     await tap('dialog.settings [data-set="save"]');

@@ -7,6 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.7] - 2026-10-11
+
+Einstellungen pro Gerät an einem Ort; "Darstellung" hat nur noch die Filter-Chips.
+
+### Geändert
+
+- "Geräte im Panel" hat einen neuen Reiter "Pro Gerät" (Wunsch des Nutzers): Dort stehen alle Geräte mit einer
+  eigenen Einstellung, jede Art in einer eigenen Liste mit Zurücksetzen (Ausfall-Zeit, ausgeschaltete Meldungen,
+  Batterie, Verbindungsart von Hand, Empfang-Warnung). Einzelne Einträge oder alle lassen sich zurücksetzen; es
+  gilt mit "Speichern". Die Listen stehen weiterhin auch beim jeweiligen Thema (zum Beispiel die der Batterie unter
+  "Batterie"). Der Reiter zeigt, wie viele Geräte eine eigene Einstellung haben.
+- Die Warnschwellen des Empfangs pro Funkart, bisher Teil von "Darstellung" › "Verbindungsart", sind jetzt ein Reiter
+  "Empfang" in "Überwachung und Meldungen" (dort, wo auch Integrationen und Geräte ihren Reiter "Empfang" haben),
+  mit den Geräten mit eigener Schwelle unter "Abweichungen". Die Einstellungen selbst ändern sich nicht.
+- "Darstellung" hat den Reiter "Verbindungsart" nicht mehr: Es bleiben nur die Filter-Chips, ohne Unterreiter.
+- "Überwachung und Meldungen" hat acht Reiter (neu: "Empfang"), immer in zwei Zeilen zu vier, auch auf dem Desktop.
+
 ## [2.0.6] - 2026-10-11
 
 Stift am Gerätenamen ohne blauen Ring.
@@ -2243,6 +2260,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.0.7]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.7
 [2.0.6]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.6
 [2.0.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.5
 [2.0.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.4

@@ -3,7 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.0.6, Einstellungen in fünf Abschnitten)
+## Stand (2.0.7, Einstellungen in fünf Abschnitten)
+
+- 2.0.7: Einstellungen pro Gerät an einem Ort: "Geräte im Panel" › Reiter "Pro Gerät" (`devset`, alle fünf Override-Listen
+  `_overridesHtml`: offline, notify, battery, connection, signal; Zähler über `_subCount("devset")`). Die globalen
+  Empfang-Warnschwellen (`_sigGlobalHtml`) und die Empfang-Overrides stehen im neuen Reiter "Empfang" (`sig`,
+  `_monSigHtml`) der Überwachung (jetzt acht Reiter, immer 4 + 4). "Darstellung" hat keine Unterreiter mehr, nur noch
+  die Filter-Chips (`SUB_TAB_KEYS.conn` entfiel, `gosub` und `connMoved` aus 2.0.4 ebenfalls). Neue Suite `prodevice-e2e`.
 
 - 2.0.6: Stift am Gerätenamen (`.dn-edit`) als getönter Kreis statt blauem Ring, Tastatur-Fokus neutral; `_blurOnTouch()`
   nimmt nach `showModal` auf dem Handy den Fokus vom ersten Knopf (Popup, Einstellungen, Statistik, Prompt).
@@ -100,7 +106,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   im Katalog als `hidden_devices`, gelöschte fehlen, ihre ID bleibt
   gespeichert; Zähler am Reiter und Zusammenfassung zählen die
   ausgeblendeten), "Überwachung und Meldungen" (`monitor`), "Darstellung"
-  (`look`; Reiter "Verbindungsart" mit `connection_integrations` und den
+  (`look`; bis 2.0.6 Reiter "Verbindungsart" mit `connection_integrations` und den
   Ausnahmen, "Filter-Chips" mit `hide_connections`: Chips der
   Verbindungsart, die nicht erscheinen, gilt für alle, seit 0.11.0, und
   `connection_order`: Reihenfolge dieser Chips, leer = nach Anzahl, nicht

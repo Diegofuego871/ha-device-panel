@@ -265,6 +265,7 @@ const MON_TAB_KEYS = {
   battery: ["battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "reset_battery"],
   new: ["notify_new", "new_window", "new_persistent", "new_fields"],
   updates: ["notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include"],
+  sig: ["signal_low", "reset_signal"],
   integ: ["offline_after_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
 
@@ -382,7 +383,7 @@ const SUB_TAB_KEYS = {
   integrations: ["exclude_integrations", "type_integrations", "connection_integrations"],
   types: ["exclude_types"],
   devs: ["exclude_devices"],
-  conn: ["signal_low", "reset_connection", "reset_signal"],
+  devset: ["reset_connection", "reset_signal", "reset_offline", "reset_notify", "reset_battery"],
   chips: ["hide_chips", "hide_connections", "connection_order", "chip_order"],
 };
 
@@ -4507,7 +4508,7 @@ class DevicePanel extends HTMLElement {
       // Reiter von "Überwachung und Meldungen", gewählte Integration, Filter der Liste.
       tab: "overview", integ: null, integFilter: "all",
       // Reiter von "Geräte im Panel" und "Darstellung".
-      sub: { devices: "integrations", look: "conn", integ: "out" },
+      sub: { devices: "integrations", integ: "out" },
     };
     this._renderSettings();
     if (!dialog.open) {
@@ -4881,9 +4882,9 @@ class DevicePanel extends HTMLElement {
   // "Integrationen" nur noch mit "Anzeigen".
   _settingsSections() {
     return [
-      ["devices", ["show_service_devices", "show_disabled_devices", ...SUB_TAB_KEYS.integrations, ...SUB_TAB_KEYS.types, ...SUB_TAB_KEYS.devs]],
+      ["devices", ["show_service_devices", "show_disabled_devices", ...SUB_TAB_KEYS.integrations, ...SUB_TAB_KEYS.types, ...SUB_TAB_KEYS.devs, ...SUB_TAB_KEYS.devset]],
       ["monitor", Object.values(MON_TAB_KEYS).flat()],
-      ["look", [...SUB_TAB_KEYS.conn, ...SUB_TAB_KEYS.chips]],
+      ["look", [...SUB_TAB_KEYS.chips]],
       ["ai", ["ai_assessment", "ai_task_entity", "ai_prompt"]],
       ["updates", ["update_check"]],
     ];
@@ -5042,7 +5043,14 @@ class DevicePanel extends HTMLElement {
       .join("");
   }
 
-  // Globale Warnschwellen des Empfangs pro Funkart im Reiter Verbindungsart.
+  // Reiter "Empfang" der Überwachung (seit 2.0.7, vorher in "Darstellung" › "Verbindungsart"): die Warnschwellen pro Funkart
+  // und, wie bei den anderen Reitern, die Geräte mit eigener Schwelle unter "Abweichungen".
+  _monSigHtml(d) {
+    const t = (k, ...a) => this._t(k, ...a);
+    return `${this._sigGlobalHtml(d)}<div class="mon-grp">${escape(t("grpDiff"))}</div>${this._overridesHtml("signal")}`;
+  }
+
+  // Globale Warnschwellen des Empfangs pro Funkart (Reiter "Empfang").
   _sigGlobalHtml(d) {
     const t = (k, ...a) => this._t(k, ...a);
     const rows = this._sigRowsHtml(d, "");
@@ -5123,6 +5131,11 @@ class DevicePanel extends HTMLElement {
 
   // Zahl der ausgeblendeten Einträge eines Reiters (Zähler am Reiter und in der Zusammenfassung).
   _subCount(id, d) {
+    if (id === "devset") {
+      // Geräte mit eigener Einstellung, die nicht zum Zurücksetzen markiert sind
+      const st = this._settings;
+      return ["offline", "notify", "battery", "connection", "signal"].reduce((n, k) => n + (st?.data?.overrides?.[k] || []).filter((x) => !st.resets[k].has(x.id)).length, 0);
+    }
     if (id === "integrations") return (d.exclude_integrations || []).length;
     if (id === "types") return (d.exclude_types || []).length;
     if (id === "devs") {
@@ -5162,12 +5175,11 @@ class DevicePanel extends HTMLElement {
     if (id === "look") {
       const chips = (d.hide_connections || []).length + (d.hide_chips || []).length;
       return [
-        Object.keys(d.signal_low || {}).length ? this._t("sumSignal", Object.keys(d.signal_low).length) : "",
         chips ? this._t("sumChipsHidden", chips) : "",
         (d.connection_order || []).length || (d.chip_order || []).length ? this._t("sumChipsOrder") : "",
       ]
         .filter(Boolean)
-        .join(" · ") || this._t("sumConnAuto");
+        .join(" · ") || this._t("sumLookStd");
     }
     return "";
   }
@@ -5379,7 +5391,7 @@ class DevicePanel extends HTMLElement {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
     const tab = MON_TAB_KEYS[st.tab] ? st.tab : "overview";
-    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["charge", "tabCharge"], ["new", "tabNew"], ["updates", "tabUpdates"], ["integ", "tabInteg"]]
+    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["charge", "tabCharge"], ["new", "tabNew"], ["updates", "tabUpdates"], ["sig", "tabSignal"], ["integ", "tabInteg"]]
       .map(([id, key]) => {
         const keys = MON_TAB_KEYS[id];
         // Punkt am Reiter: dort gibt es eine Änderung (blau) oder einen Fehler (rot).
@@ -5398,6 +5410,8 @@ class DevicePanel extends HTMLElement {
             ? this._monNewHtml(d, changes, errors, ui)
           : tab === "updates"
             ? this._monUpdatesHtml(d, changes, errors, ui)
+          : tab === "sig"
+            ? this._monSigHtml(d)
           : tab === "integ"
             ? this._monIntegHtml(d, changes, errors)
             : this._monOverviewHtml(d, errors, ui);
@@ -6325,14 +6339,13 @@ class DevicePanel extends HTMLElement {
     const ui = { row, sw, select, num, targets, infoBtn };
     // Titel eines neuen Themas (seit 1.43.0): überall derselbe grosse Stil (.set-title, wie .mon-grp)
     const ttl = (key) => `<div class="set-title">${escape(t(key))}</div>`;
-    const devTab = ["integrations", "types", "devs"].includes(st.sub?.devices) ? st.sub.devices : "integrations";
-    const lookTab = st.sub?.look === "chips" ? "chips" : "conn";
+    const devTab = ["integrations", "types", "devs", "devset"].includes(st.sub?.devices) ? st.sub.devices : "integrations";
     // Reiter innerhalb eines Abschnitts; Zähler = ausgeblendete Einträge,
     // Punkt = Änderung im Entwurf (wie bei den Reitern der Überwachung).
     const subTabs = (group, items) =>
       `<div class="sub-tabs" role="tablist">${items
         .map(([id, key]) => {
-          const on = id === (group === "devices" ? devTab : lookTab);
+          const on = id === devTab;
           const mark = SUB_TAB_KEYS[id].some((k) => changes.has(k)) ? " chg" : "";
           const n = this._subCount(id, d);
           return `<button type="button" role="tab" class="sub-tab${on ? " on" : ""}${mark}" data-set="subtab" data-group="${group}" data-key="${id}" aria-selected="${on}">${escape(t(key))}<span class="sub-n"${n ? "" : " hidden"}>${n}</span></button>`;
@@ -6348,10 +6361,14 @@ class DevicePanel extends HTMLElement {
         ttl("ttlShow") +
         row("show_service_devices", t("optShowService"), sw("show_service_devices", t("optShowService")), t("optShowServiceShort"), t("optShowServiceInfo")) +
         row("show_disabled_devices", t("optShowDisabled"), sw("show_disabled_devices", t("optShowDisabled")), t("optShowDisabledShort"), null) +
-        subTabs("devices", [["integrations", "secIntegrations"], ["types", "subTypes"], ["devs", "subDevs"]]) +
-        ttl(devTab === "types" ? "ttlTypes" : devTab === "devs" ? "ttlHiddenDevs" : "ttlIntegShow") +
+        subTabs("devices", [["integrations", "secIntegrations"], ["types", "subTypes"], ["devs", "subDevs"], ["devset", "subDevSet"]]) +
+        ttl(devTab === "types" ? "ttlTypes" : devTab === "devs" ? "ttlHiddenDevs" : devTab === "devset" ? "ttlDevSet" : "ttlIntegShow") +
         (devTab === "types"
           ? exTable("exclude_types", types, `${t("hideIntro")} ${t("typesIntro")}`)
+          : devTab === "devset"
+            ? // Alle Geräte mit eigener Einstellung an einem Ort (seit 2.0.7); jede Liste steht auch beim jeweiligen Thema.
+              `<div class="opt-short ex-intro">${escape(t("devSetIntro"))}</div>` +
+              ["offline", "notify", "battery", "connection", "signal"].map((k) => this._overridesHtml(k)).join("")
           : devTab === "devs"
             ? hiddenDevs.length
               ? exTable("exclude_devices", hiddenDevs, t("hiddenIntro"), false, null, t("hiddenShowAll"))
@@ -6360,10 +6377,9 @@ class DevicePanel extends HTMLElement {
               exTable("exclude_integrations", integrations, `${t("integIntroShow")} ${t("typeIntegIntro")}`, false, null, null, [typeExtra, connExtra])),
       // Wie Geräte erscheinen, nicht ob (seit 1.0.0).
       look:
-        subTabs("look", [["conn", "subConn"], ["chips", "subChips"]]) +
-        (lookTab === "chips"
-          ? // Alle Chips in einer Liste (seit 1.14.0, docs/mockups/chip-order-v3, D2):
-            // Reihenfolge, Ausblenden und Vorschau der Leiste, gilt für alle.
+        // Alle Chips in einer Liste (seit 1.14.0, docs/mockups/chip-order-v3, D2):
+        // Reihenfolge, Ausblenden und Vorschau der Leiste, gilt für alle. Seit 2.0.7 ohne Unterreiter
+        // (Verbindungsart und Empfang sind nach "Geräte im Panel" und "Überwachung und Meldungen" gezogen).
             `<h4 class="ex-title">${escape(t("chipsOtherTitle"))}</h4>` +
             exTable(
               "hide_chips", chipItems, t("chipsOtherIntro"), "chip_order", null, null, null, "chips",
@@ -6376,9 +6392,7 @@ class DevicePanel extends HTMLElement {
             ) +
             ((d.chip_order || []).length || (d.connection_order || []).length
               ? `<div class="drag-reset"><button type="button" class="ovr-all" data-set="drag-reset">${mdi("reset", 15)}${escape(t("chipsOrderResetAll"))}</button></div>`
-              : "")
-          : `<div class="nf-note integ-goto">${mdi("info", 16)}<div><p>${escape(t("connMoved"))} <button type="button" class="lnk" data-set="gosub" data-section="devices" data-group="devices" data-key="integrations">${escape(t("connMovedLink"))}</button></p></div></div>` +
-            this._overridesHtml("connection") + this._sigGlobalHtml(d) + this._overridesHtml("signal")),
+              : ""),
       ai:
         ttl("ttlAiShow") +
         row("ai_assessment", t("optAi"), sw("ai_assessment", t("optAi")), t("optAiShort"), t("optAiInfo")) +
@@ -6463,12 +6477,6 @@ class DevicePanel extends HTMLElement {
         this._renderSettings();
         // Neuer Inhalt beginnt oben: die Reiter ins Bild, wenn sie darüber liegen.
         if (action !== "ifilter") this.shadowRoot.querySelector("dialog.settings .mon-tabs")?.scrollIntoView({ block: action === "goto" ? "start" : "nearest" });
-      } else if (action === "gosub") {
-        // Sprung in den Unterreiter eines Abschnitts (seit 2.0.4: Verbindungsart pro Integration)
-        st.open.add(btn.dataset.section);
-        st.sub[btn.dataset.group] = btn.dataset.key;
-        this._renderSettings();
-        this.shadowRoot.querySelector(`dialog.settings [data-set="section"][data-id="${btn.dataset.section}"]`)?.scrollIntoView({ block: "start" });
       } else if (action === "subtab") {
         st.sub[btn.dataset.group] = btn.dataset.key;
         this._renderSettings();

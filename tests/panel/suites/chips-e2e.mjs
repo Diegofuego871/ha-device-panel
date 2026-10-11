@@ -45,7 +45,6 @@ for (const lang of ["de", "en"]) {
       await tap(".gear-btn");
       await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
       await tap('[data-set="section"][data-id="look"]');
-      await tap('[data-set="subtab"][data-key="chips"]');
     };
     // Speichern: Dialog bleibt offen ("Gespeichert"), danach schliessen.
     const save = async () => {
@@ -61,7 +60,7 @@ for (const lang of ["de", "en"]) {
     await tap('.chip[data-conn="thread"]');
     check(`[${tag}] Thread-Filter aktiv`, await wait(`return r.querySelectorAll(".dev[data-open]").length === 2`));
     await openDisplay();
-    check(`[${tag}] Reiter mit Titel`, (await ev(`return r.querySelector("dialog.settings .sub-tab.on").firstChild.textContent`)) === T.title);
+    check(`[${tag}] Darstellung: nur die Filter-Chips, ohne Unterreiter`, await ev(`return !r.querySelector("dialog.settings .sub-tab") && !!r.querySelector("dialog.settings .ex-title")`));
     const rows = await ev(`return [...r.querySelectorAll('input[data-list="hide_connections"]')].map(i=>i.dataset.value + (i.checked ? "+" : "-")).join()`);
     check(`[${tag}] alle Arten angezeigt, auch ohne Geräte (Matter, LAN)`, rows === "thread+,wifi+,ble+,zigbee+,ethernet+,cloud+,matter+,network+,unknown+,zwave+", rows);
     check(`[${tag}] Zeile mit Zahl`, (await ev(`const row=r.querySelector('input[data-list="hide_connections"][data-value="thread"]').closest(".ex-row"); return row.querySelector(".ex-name").firstChild.textContent + "|" + row.querySelector("small").textContent`)) === `${T.thread}|${T.threadSub}`);
