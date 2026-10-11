@@ -7,6 +7,38 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.6.0] - 2026-10-11
+
+Magic Push: eigene Meldungen pro Gerät, ohne Automation.
+
+### Hinzugefügt
+
+- Neuer vierter Reiter "Magic Push" im Geräte-Popup (Wunsch des Nutzers). Er listet die Meldungen des Geräts (Name, ein
+  Satz wie "Temperatur unter 12 °C · für 10 Min. · einmal", wann sie zuletzt kam, ein Schalter) mit "Bearbeiten",
+  "Umbenennen" und "Löschen" (mit Rückfrage). Der Reiter zeigt die Zahl der aktiven Meldungen.
+- "Neue Meldung" öffnet einen Assistenten in fünf Schritten: Wert, Wann, Text, Versand, Name. 1) Eine beliebige Entität
+  des Geräts wählen, mit ihrem jetzigen Wert. 2) Die Bedingung: über, unter, ist gleich oder ändert sich bei einer Zahl;
+  ist oder ändert sich bei einem Zustand (mit den Wörtern der Entität, etwa offen oder geschlossen). Die Dauer ("für
+  mindestens") hat Vorschläge und immer auch eine freie Zeit (Zahl und Einheit, bis 7 Tage). Ein Diagramm oder eine
+  Zeitleiste der letzten 24 Stunden und ein Rückblick ("wäre 1-mal gekommen, gestern 04:12, tiefster Wert 11,6 °C") zeigen,
+  was die Einstellung getan hätte; der Rückblick darf leer sein und braucht den Recorder. 3) Der Text ist frei; die
+  Variablen passen zur Entität ({value}, {unit}, {threshold} bei einer Zahl, {value} als Wort der Entität bei einem
+  Zustand, {old} und {new} bei einer Änderung, dazu immer {device}, {area}, {entity}, {integration}, {rule}, {duration},
+  {since}, {time}) und werden an den Cursor eingefügt. Eine Vorschau mit dem jetzigen Wert steht immer da. 4) Der
+  Empfänger: der Standard aus den Einstellungen oder ein Notify-Dienst, eine Gruppe oder eine Entität; Wiederholung (nur
+  einmal, 30 Min., 1 Std., täglich oder eine freie Zeit); "Auch melden, wenn wieder normal" mit einem Text, der genauso
+  frei ist wie der erste, mit eigener Vorschau; "Test senden". 5) Der Name, mit Vorschlag, und eine Zusammenfassung.
+- Eine Meldung kommt, wenn die Bedingung die angegebene Zeit gegolten hat, einmal je Episode (erneut erst, wenn der Wert
+  zwischendurch wieder normal war) oder wiederholt. "Ändert sich" kommt je Änderung, sobald der neue Wert die Zeit
+  geblieben ist. Nicht erreichbare Entitäten (unavailable, unknown) melden nichts und setzen die Zeit nicht zurück. Der
+  Stand überlebt Neustarts; Meldungen eines entfernten Geräts werden mit entfernt. Bis 20 Meldungen pro Gerät und 200
+  insgesamt.
+- Ein Push von Magic Push zeigt das Icon der Integration und öffnet das Gerät im Panel, wie die anderen Meldungen. Das
+  Protokoll hat eine neue Kategorie "Magic Push".
+- Befehle `device_panel/magic_get`, `magic_save`, `magic_delete`, `magic_enable`, `magic_preview`, `magic_test` und
+  `magic_history` (nur Administratoren). Die Meldungen liegen in `.storage` und werden beim Entfernen der Integration
+  gelöscht.
+
 ## [2.5.0] - 2026-10-11
 
 Lange Listen in den Einstellungen ganz unten.
@@ -2382,6 +2414,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.5.0
 [2.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.3.0
 [2.2.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.2.0

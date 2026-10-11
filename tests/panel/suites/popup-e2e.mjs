@@ -15,7 +15,7 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     pill: "Ausgefallen seit 2 Std. 14 Min.", sub: "Bewegung / Präsenz · Flur", open: "HA-Geräteseite öffnen",
-    secs: ["Statistik", "Verbindung", "Gerät"], tabs: ["Übersicht", "Einstellungen", "Entitäten · 3"], tabOwn: "Einstellungen 1 eigene", setSecs: ["Typ und Verbindung", "Einstellungen für dieses Gerät"], entSecs: ["Entitäten · 3"],
+    secs: ["Statistik", "Verbindung", "Gerät"], tabs: ["Übersicht", "Einstellungen", "Entitäten · 3", "Magic Push"], tabOwn: "Einstellungen 1 eigene", setSecs: ["Typ und Verbindung", "Einstellungen für dieses Gerät"], entSecs: ["Entitäten · 3"],
     tile24: ["Verfügbarkeit 24 Std.", "90,2%", "2 Unterbrüche · längster 2 Std. 14 Min."],
     tile7: ["Unterbrüche 7 Tage", "3", "zusammen 2 Std. 41 Min."], signal: ["Empfang", "LQI 38", "schwach"], battery: ["Batterie", "8%", "niedrig"],
     update: "Update auf 2.2.0 verfügbar", live: "Lebenszeichen", unavailable: "nicht verfügbar", liveHint: "Markierte Entitäten zeigen, ob das Gerät lebt.",
@@ -28,7 +28,7 @@ const TEXT = {
   },
   en: {
     pill: "Offline for 2 h 14 min", sub: "Motion / presence · Flur", open: "Open device page",
-    secs: ["Statistics", "Connection", "Device"], tabs: ["Overview", "Settings", "Entities · 3"], tabOwn: "Settings 1 custom", setSecs: ["Type and connection", "Settings for this device"], entSecs: ["Entities · 3"],
+    secs: ["Statistics", "Connection", "Device"], tabs: ["Overview", "Settings", "Entities · 3", "Magic Push"], tabOwn: "Settings 1 custom", setSecs: ["Type and connection", "Settings for this device"], entSecs: ["Entities · 3"],
     tile24: ["Availability 24 h", "90.2%", "2 outages · longest 2 h 14 min"],
     tile7: ["Outages 7 days", "3", "2 h 41 min in total"], signal: ["Signal", "LQI 38", "weak"], battery: ["Battery", "8%", "low"],
     update: "Update to 2.2.0 available", live: "Sign of life", unavailable: "unavailable", liveHint: "Marked entities show whether the device is alive.",
@@ -92,7 +92,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Verbindung`, ["Zigbee", "Steckdose Flur", "Zigbee Home Automation", "Funkstick Erdgeschoss"].every((s) => conn.includes(s)), conn);
     const device = (await texts("dialog.device .tiles"))[1];
     check(`[${tag}] Gerät`, ["Beispiel AG", "Modell B", "1.0.1", T.update, "Flur"].every((s) => device.includes(s)), device);
-    // Reiter (seit 1.37.0): Übersicht, Einstellungen (Zähler eigener Einstellungen), Entitäten
+    // Reiter (seit 1.37.0): Übersicht, Einstellungen (Zähler eigener Einstellungen), Entitäten, Magic Push (seit 2.6.0)
     check(`[${tag}] Reiter`, JSON.stringify(await texts('dialog.device [role="tab"]')) === JSON.stringify(T.tabs), JSON.stringify(await texts('dialog.device [role="tab"]')));
     check(`[${tag}] Übersicht ist gewählt`, (await text('dialog.device [role="tab"][aria-selected="true"]')) === T.tabs[0]);
     await tap('dialog.device [data-tab="set"]');

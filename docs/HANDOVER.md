@@ -3,7 +3,21 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.5.0, lange Listen zuunterst)
+## Stand (2.6.0, Magic Push)
+
+- 2.6.0: Magic Push, vierter Reiter im Geräte-Popup (Entscheide des Nutzers: Variante C = Assistent, Wiederholung und
+  "wieder normal" konfigurierbar, Text für "wieder normal" frei wie der erste, Empfänger wählbar mit Standard =
+  Push-Ziel der Einstellungen, Rückblick 24 Std. (darf leer sein), unavailable/unknown melden nichts, Meldungen
+  benennen/umbenennen/löschen, Name als fünfter Schritt). Backend: `magic.py` (Regeln, Prüfung `clean_rule`,
+  `cond_met`, Variablen `render`, Klasse `MagicPush` mit Zustandsverfolgung, Timern für Dauer und Wiederholung,
+  Store `device_panel.magic`), `magic_history.py` (Rückblick über den Recorder, gleiche `cond_met`), WS `magic_get/
+  save/delete/enable/preview/test/history`. Panel: `panel/magic-push.js` (Klasse `MagicPush`, verwaltet Liste und
+  Assistent selbst in `.mg-root`; `attach()` nach jedem Neuaufbau des Popups; solange der Assistent offen ist, baut
+  `_renderDevice` nicht neu auf), Strings `mg*`, CSS `.mg-*`. Timer-Callbacks müssen `@callback` sein, sonst laufen sie
+  im Executor (so gefunden). Tests: `tests/test_magic.py`, `suites/magic-e2e.mjs`; Mockups `docs/mockups/magic-push-v2`.
+  Offen/Unsicher: nicht in echtem HA mit echtem Recorder und iPhone geprüft; Notify-Gruppen werden best effort erkannt.
+
+## Stand davor (2.5.0, lange Listen zuunterst)
 
 - 2.5.0: Regel für die Einstellungen: Eine lange Liste (Pro Integration, alle Apps, Chips, Abweichungen) steht
   immer als letzter Block ihres Reiters; Konfiguration, Emoji und Vorschau davor. Geändert: Reiter "Laden"

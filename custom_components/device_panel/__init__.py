@@ -34,6 +34,10 @@ from .outage import OutageNotifier
 from .signal_history import RANGES as SIGNAL_RANGES
 from .signal_history import STORAGE_KEY as SIGNAL_STORE_KEY
 from .signal_history import SignalLog, async_signal_history
+from . import magic
+from .magic import STORE_KEY as MAGIC_STORE_KEY
+from .magic import MagicPush
+from .magic_history import async_history as async_magic_history
 from .ai_assessment import AiError, async_assess, async_preview
 from .ai_prompt import DEFAULT_PROMPT
 from .const import (
@@ -61,6 +65,7 @@ from .const import (
     DATA_PANEL_REGISTERED,
     DATA_PUSH_ICONS,
     DATA_PUSH_IMAGE,
+    DATA_MAGIC,
     DATA_SIGNAL,
     DATA_TYPE_OVERRIDES,
     DATA_WS_REGISTERED,
@@ -144,6 +149,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         signal_log = SignalLog(hass)
         await signal_log.async_start()
         hass.data[DATA_SIGNAL] = signal_log
+    if DATA_MAGIC not in hass.data:
+        magic_push = MagicPush(hass)
+        await magic_push.async_start()
+        hass.data[DATA_MAGIC] = magic_push
     await update_check.async_load_panel_settings(hass)
     update_check.async_start_daily(hass)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
@@ -188,6 +197,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await watch.async_stop()
     if (signal_log := hass.data.pop(DATA_SIGNAL, None)) is not None:
         await signal_log.async_stop()
+    if (magic_push := hass.data.pop(DATA_MAGIC, None)) is not None:
+        await magic_push.async_stop()
     update_check.async_stop_daily(hass)
     hass.data.pop(DATA_ACTIVITY, None)
     return True
@@ -202,7 +213,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     Panel-Einstellungen. HA ruft
     das erst nach dem Entladen auf; dort wurde alles Ausstehende geschrieben.
     """
-    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, update_check.PANEL_STORE_KEY):
+    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, MAGIC_STORE_KEY, update_check.PANEL_STORE_KEY):
         await Store(hass, STORAGE_VERSION, key).async_remove()
     # Heruntergeladene Icons der Meldungen; der statische Pfad bleibt bis zum
     # Neustart angemeldet, der Ordner wird bei Bedarf neu angelegt.
@@ -385,6 +396,136 @@ async def _ws_battery_history(
         return
     threshold = device_battery_threshold(hass, options_api.effective(hass), device)
     connection.send_result(msg["id"], await async_battery_history(hass, entity_id, msg["range"], threshold))
+
+
+def _magic(hass: HomeAssistant) -> MagicPush | None:
+    return hass.data.get(DATA_MAGIC)
+
+
+def _magic_error(connection: websocket_api.ActiveConnection, msg: dict[str, Any], err: vol.Invalid) -> None:
+    connection.send_error(msg["id"], websocket_api.ERR_INVALID_FORMAT, str(err.msg if hasattr(err, "msg") else err))
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/magic_get", vol.Required("device_id"): str})
+@websocket_api.require_admin
+@callback
+def _ws_magic_get(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Magic Push eines Geräts: Meldungen, wählbare Entitäten, Empfänger (seit 2.6.0)."""
+    push_rules = _magic(hass)
+    if push_rules is None or dr.async_get(hass).async_get(msg["device_id"]) is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
+        return
+    rules = push_rules.rules(msg["device_id"])
+    default = options_api.effective(hass)[CONF_NOTIFY_SERVICE]
+    connection.send_result(
+        msg["id"],
+        {
+            "rules": [magic.rule_payload(hass, push_rules, r) for r in rules],
+            "entities": magic.entities_payload(hass, msg["device_id"]),
+            "targets": magic.targets_payload(hass, [r["target"] for r in rules if r.get("target")]),
+            "default_target": default,
+            "limits": {"per_device": magic.MAX_PER_DEVICE, "name": magic.NAME_MAX, "text": magic.TEXT_MAX, "for": magic.FOR_MAX, "repeat": magic.REPEAT_MAX},
+            "variables": {"common": magic.VARIABLES_COMMON, **magic.VARIABLES},
+        },
+    )
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/magic_save", vol.Required("rule"): dict})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_magic_save(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Meldung anlegen oder ändern (mit id)."""
+    push_rules = _magic(hass)
+    if push_rules is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "integration not set up")
+        return
+    try:
+        rule = await push_rules.async_save_rule(msg["rule"])
+    except vol.Invalid as err:
+        _magic_error(connection, msg, err)
+        return
+    connection.send_result(msg["id"], {"rule": magic.rule_payload(hass, push_rules, rule)})
+
+
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/magic_delete", vol.Required("rule_id"): str})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_magic_delete(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    push_rules = _magic(hass)
+    if push_rules is None or not await push_rules.async_delete_rule(msg["rule_id"]):
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "rule not found")
+        return
+    connection.send_result(msg["id"], {"deleted": msg["rule_id"]})
+
+
+@websocket_api.websocket_command(
+    {vol.Required("type"): f"{DOMAIN}/magic_enable", vol.Required("rule_id"): str, vol.Required("enabled"): bool}
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_magic_enable(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    push_rules = _magic(hass)
+    rule = await push_rules.async_set_enabled(msg["rule_id"], msg["enabled"]) if push_rules is not None else None
+    if rule is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "rule not found")
+        return
+    connection.send_result(msg["id"], {"rule": magic.rule_payload(hass, push_rules, rule)})  # type: ignore[arg-type]
+
+
+@websocket_api.websocket_command(
+    {vol.Required("type"): f"{DOMAIN}/magic_preview", vol.Required("rule"): dict, vol.Optional("which", default="main"): vol.In(("main", "recover"))}
+)
+@websocket_api.require_admin
+@callback
+def _ws_magic_preview(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Vorschau der Meldung mit dem jetzigen Wert (auch für einen noch unvollständigen Entwurf)."""
+    push_rules = _magic(hass)
+    if push_rules is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "integration not set up")
+        return
+    try:
+        title, message = push_rules.preview_raw(msg["rule"], msg["which"])
+    except vol.Invalid as err:
+        _magic_error(connection, msg, err)
+        return
+    connection.send_result(msg["id"], {"title": title, "message": message})
+
+
+@websocket_api.websocket_command(
+    {vol.Required("type"): f"{DOMAIN}/magic_test", vol.Required("rule"): dict, vol.Optional("which", default="main"): vol.In(("main", "recover"))}
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_magic_test(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Test: eine echte Meldung mit dem jetzigen Wert an den gewählten Empfänger."""
+    push_rules = _magic(hass)
+    if push_rules is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "integration not set up")
+        return
+    try:
+        sent = await push_rules.async_test(msg["rule"], msg["which"])
+    except vol.Invalid as err:
+        _magic_error(connection, msg, err)
+        return
+    connection.send_result(msg["id"], {"sent": sent})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/magic_history",
+        vol.Required("entity_id"): vol.All(str, vol.Match(magic._ENTITY_RE)),
+        vol.Required("kind"): vol.In(magic.KINDS),
+        vol.Optional("value"): vol.Any(None, str, int, float),
+        vol.Optional("for_s", default=0): vol.All(int, vol.Range(min=0, max=magic.FOR_MAX)),
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_magic_history(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Rückblick: wie oft wäre die Meldung in den letzten 24 Stunden gekommen?"""
+    connection.send_result(
+        msg["id"], await async_magic_history(hass, msg["entity_id"], msg["kind"], msg.get("value"), msg["for_s"])
+    )
 
 
 @websocket_api.websocket_command(
@@ -814,6 +955,8 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_version)
     websocket_api.async_register_command(hass, _ws_release_notes)
     websocket_api.async_register_command(hass, _ws_set_panel)
+    for command in (_ws_magic_get, _ws_magic_save, _ws_magic_delete, _ws_magic_enable, _ws_magic_preview, _ws_magic_test, _ws_magic_history):
+        websocket_api.async_register_command(hass, command)
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_set_options)
     websocket_api.async_register_command(hass, _ws_set_device_type)

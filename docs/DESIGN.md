@@ -333,3 +333,12 @@ Status: online = `--dp-success` (Punkt + Pill "Verbunden"), ausgefallen =
 Erst Mockup (HTML, erfundene Daten, Desktop und Handy, 2–4 Varianten mit
 Empfehlung), Nutzer wählt, dann umsetzen und mit Screenshots aus dem
 HA-Nachbau prüfen.
+
+## Magic Push (seit 2.6.0, docs/mockups/magic-push-v2, Variante C)
+
+- Vierter Reiter "Magic Push" im Geräte-Popup, zweizeilig mit "n aktiv" wie "Einstellungen". Liste: Karten
+  (Zeichen nach Geräteklasse, Name, Satz, Status, Schalter) mit Textknöpfen Bearbeiten/Umbenennen/Löschen; Löschen
+  fragt in der Karte nach.
+- Assistent in fünf Schritten mit Balken (im Bearbeiten-Modus antippbar), je Schritt eine grosse Frage. Zahl: Diagramm
+  mit gestrichelter Schwelle und roten Zonen, Zustand: Balken. Dauer als Segmente plus freie Zeit. Variablen als Chips
+  (passende hervorgehoben). Vorschau als Meldungs-Karte (`.mg-pv`, nicht `.pv`: diese Klasse nutzt der KI-Prompt).

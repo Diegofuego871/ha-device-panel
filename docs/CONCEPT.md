@@ -484,6 +484,25 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
 - Verbindungsabbrüche still überbrücken, Polling im Hintergrund pausieren.
 - Statistik-Fenster mit Tabs, Zeitraum 24 Std./7/30 Tage, Loader.
 
+## Magic Push (seit 2.6.0, Wunsch des Nutzers)
+
+Eigene Meldungen pro Gerät ohne Automation, im vierten Reiter des Geräte-Popups.
+
+- **Regel:** Entität des Geräts, Art (`above`, `below`, `is`, `change`), Wert, Dauer `for_s` (0 bis 7 Tage), Text mit
+  Variablen, optional "wieder normal" mit eigenem freiem Text, Wiederholung `repeat_s` (0 = einmal je Episode, bis
+  30 Tage), Empfänger (`notify.*` oder leer = Standard-Push-Ziel der Einstellungen), Name (≤ 60), Schalter.
+  Höchstens 20 je Gerät, 200 gesamt. Gespeichert in `.storage` (`device_panel.magic`), mit Laufzeitstand (seit wann,
+  gemeldet, zuletzt).
+- **Auslösen:** gilt die Bedingung durchgehend `for_s` Sekunden, kommt eine Meldung; `unavailable`/`unknown` melden
+  nichts und setzen nichts zurück. "Ändert sich": je Änderung, mit Dauer muss der neue Wert stabil bleiben; ohne
+  Wiederholung und ohne "wieder normal". Der Stand überlebt Neustarts.
+- **Text:** nur `{name}`-Ersetzung per Regex, keine Vorlagensprache. Variablen je Art der Entität: Zahl `value unit
+  threshold`, Zustand `value` (Wort der Entität, nicht on/off), Änderung `value unit old new`; immer `device area
+  entity integration rule duration since time`. Titel = freier Text, zweite Zeile automatisch.
+- **Vorschau und Rückblick** rechnet der Server (`magic_preview`, `magic_history`), damit Panel und Meldung dieselbe
+  Rechnung nutzen. Der Rückblick braucht den Recorder und darf leer sein.
+- **Push:** Tag `device_panel_magic_<id>`, Klick öffnet das Gerät, Icon der Integration, Protokoll-Kategorie `magic`.
+
 ## Push-Meldungen (Grundlage seit 0.7.0)
 
 Wie in unifi_dynamic (`docs/reference/notification.py`). Bereits umgesetzt:

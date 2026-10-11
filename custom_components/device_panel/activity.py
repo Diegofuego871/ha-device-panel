@@ -27,7 +27,7 @@ _LOGGER = logging.getLogger(__name__)
 
 MAX_ENTRIES = 500
 LEVELS = ("debug", "info", "warning", "error")
-CATEGORIES = ("charge", "outage", "battery", "new", "updates", "push", "system")
+CATEGORIES = ("charge", "outage", "battery", "new", "updates", "magic", "push", "system")
 
 _PY_LEVEL = {"debug": logging.DEBUG, "info": logging.INFO, "warning": logging.WARNING, "error": logging.ERROR}
 
@@ -35,6 +35,12 @@ _PY_LEVEL = {"debug": logging.DEBUG, "info": logging.INFO, "warning": logging.WA
 TEXTS: dict[str, dict[str, str]] = {
     "de": {
         "sys_start": "gestartet (Version {version})",
+        "magic_fired": "ausgelöst, Meldung wird gesendet: {title}",
+        "magic_repeat": "Wert bleibt so, Meldung wird wiederholt: {title}",
+        "magic_recovered": "wieder normal, Meldung wird gesendet: {title}",
+        "magic_test": "Test: Meldung wird gesendet",
+        "magic_no_target": "ausgelöst, aber kein Push-Ziel gewählt: keine Meldung",
+        "magic_no_target_d": "Einstellungen › Überwachung und Meldungen › Übersicht, oder bei der Meldung ein Ziel wählen",
         "charge_watch": "{count} Geräte mit Batterie werden beobachtet",
         "charge_level": "Stand {level} %, Tiefpunkt {low} %, Voll ab {full} %, Anstieg {rise} Punkte",
         "charge_started": "lädt: Stand {level} % von {low} % (Anstieg {rise} Punkte erreicht)",
@@ -74,6 +80,12 @@ TEXTS: dict[str, dict[str, str]] = {
     },
     "en": {
         "sys_start": "started (version {version})",
+        "magic_fired": "triggered, sending the notification: {title}",
+        "magic_repeat": "value stays the same, repeating the notification: {title}",
+        "magic_recovered": "back to normal, sending the notification: {title}",
+        "magic_test": "test: sending the notification",
+        "magic_no_target": "triggered, but no push target chosen: no notification",
+        "magic_no_target_d": "Settings › Monitoring and notifications › Overview, or choose a target in the notification",
         "charge_watch": "watching {count} devices with a battery",
         "charge_level": "level {level} %, low point {low} %, full from {full} %, rise {rise} points",
         "charge_started": "charging: level {level} % from {low} % (rise of {rise} points reached)",

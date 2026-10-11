@@ -7,6 +7,36 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.6.0] - 2026-10-11
+
+Magic Push: your own messages per device, without an automation.
+
+### Added
+
+- New fourth tab "Magic Push" in the device pop-up (requested by the user). It lists the messages of the device (name,
+  a sentence such as "Temperature below 12 °C · for 10 min. · once", when it last fired, a switch) with "Edit",
+  "Rename" and "Delete" (with a confirmation). The tab shows the number of active messages.
+- "New message" opens an assistant in five steps: value, when, text, delivery, name. 1) Pick any entity of the device,
+  with its current value. 2) The condition: above, below, equals or changes for a number; is or changes for a state
+  (with the words of the entity, such as open or closed). The duration ("for at least") comes with suggestions and
+  always a free time (number and unit, up to 7 days). A chart or timeline of the last 24 hours and a look back
+  ("would have fired once, yesterday 04:12, lowest value 11.6 °C") show what the setting would have done; the look back
+  may be empty and needs the recorder. 3) The text is free; variables fit the entity ({value}, {unit}, {threshold} for
+  a number, {value} as the entity's word for a state, {old} and {new} for a change, and always {device}, {area},
+  {entity}, {integration}, {rule}, {duration}, {since}, {time}) and are inserted at the cursor. A preview with the
+  current value is always shown. 4) The recipient: the default from the settings or a notify service, group or entity;
+  repeat (only once, 30 min., 1 h, daily or a free time); "Also notify when back to normal" with a text that is just as
+  free as the first one, with its own preview; "Send test". 5) The name, with a suggestion, and a summary.
+- A message fires when the condition has held for the given time, once per episode (again only after the value was back
+  to normal), or repeated. "Changes" fires per change, once the new value has stayed for the time. Entities that are
+  unavailable or unknown report nothing and do not reset the time. The state survives restarts; messages of a removed
+  device are removed too. Up to 20 messages per device and 200 in total.
+- A push of Magic Push shows the icon of the integration and opens the device in the panel, like the other
+  notifications. The log has a new category "Magic Push".
+- Commands `device_panel/magic_get`, `magic_save`, `magic_delete`, `magic_enable`, `magic_preview`, `magic_test` and
+  `magic_history` (administrators only). The messages are stored in `.storage` and are deleted when the integration is
+  removed.
+
 ## [2.5.0] - 2026-10-11
 
 Long lists at the end in the settings.
@@ -2308,6 +2338,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.5.0
 [2.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.3.0
 [2.2.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.2.0

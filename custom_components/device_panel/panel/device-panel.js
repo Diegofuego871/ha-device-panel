@@ -12,9 +12,10 @@
  */
 
 const MODULE_VERSION = new URL(import.meta.url).search;
-const [{ STRINGS, pickLang }, { PANEL_CSS }] = await Promise.all([
+const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }] = await Promise.all([
   import(`./strings.js${MODULE_VERSION}`),
   import(`./styles.js${MODULE_VERSION}`),
+  import(`./magic-push.js${MODULE_VERSION}`),
 ]);
 
 const POLL_INTERVAL_MS = 10000;
@@ -209,6 +210,7 @@ function releaseMarkdownHtml(markdown) {
 
 // --- Symbole (Material Design Icons als Pfad, Funkarten als Strichzeichnung)
 const MDI = {
+  plus: "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z",
   search: "M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z",
   wifi: "M12,21L15.6,16.2C14.6,15.45 13.35,15 12,15C10.65,15 9.4,15.45 8.4,16.2L12,21M12,3C7.95,3 4.21,4.34 1.2,6.6L3,9C5.5,7.12 8.62,6 12,6C15.38,6 18.5,7.12 21,9L22.8,6.6C19.79,4.34 16.05,3 12,3M12,9C9.3,9 6.81,9.89 4.8,11.4L6.6,13.8C8.1,12.67 9.97,12 12,12C14.03,12 15.9,12.67 17.4,13.8L19.2,11.4C17.19,9.89 14.7,9 12,9Z",
   ble: "M14.88,16.29L13,18.17V14.41M13,5.83L14.88,7.71L13,9.58M17.71,7.71L12,2H11V9.58L6.41,5L5,6.41L10.59,12L5,17.58L6.41,19L11,14.41V22H12L17.71,16.29L13.41,12L17.71,7.71Z",
@@ -694,6 +696,8 @@ class DevicePanel extends HTMLElement {
     this._matter = new Map();
     // KI-Einschätzungen je Gerät (nur im Speicher), Option aus der Geräteliste.
     this._ai = new Map();
+    // Magic Push (seit 2.6.0): eigener Reiter im Geräte-Popup, verwaltet seinen Stand selbst (magic-push.js)
+    this._magic = new MagicPush(this, { escape, mdi, errText, logo: LOGO_SMALL });
     this._aiOn = false;
     this._flakyOutages = 3;
     // Chips der Verbindungsart, die nicht erscheinen (Einstellung "Anzeige").
@@ -1170,6 +1174,7 @@ class DevicePanel extends HTMLElement {
     const dlg = root.querySelector("dialog.device");
     this._trackBusy(dlg);
     dlg.addEventListener("click", (ev) => this._onDeviceClick(ev));
+    this._magic.bind(dlg);
     dlg.addEventListener("input", (ev) => {
       if (this._rename && ev.target.matches?.('input[data-dlg="rename-input"]')) this._rename.value = ev.target.value;
     });
@@ -2848,7 +2853,7 @@ class DevicePanel extends HTMLElement {
     if (log.debug || log.entries.some((e) => e.level === "debug")) levels.push(["debug", t("logLevel_debug"), count((e) => e.level === "debug" && inCat(e) && inText(e))]);
     for (const l of ["info", "warning", "error"]) levels.push([l, t(`logLevel_${l}`), count((e) => e.level === l && inCat(e) && inText(e))]);
     const cats = [["all", t("logAll"), count((e) => inLevel(e) && inText(e))]];
-    for (const c of ["charge", "outage", "battery", "push", "updates", "new", "system"]) cats.push([c, t(`logCat_${c}`), count((e) => e.cat === c && inLevel(e) && inText(e))]);
+    for (const c of ["charge", "outage", "battery", "push", "magic", "updates", "new", "system"]) cats.push([c, t(`logCat_${c}`), count((e) => e.cat === c && inLevel(e) && inText(e))]);
     const dot = (l) => (l === "all" ? "" : `<span class="lg-dot ${l}"></span>`);
     const chip = (attr, [id, label, n], on) =>
       `<button type="button" class="chip${on === id ? " on" : ""}" ${attr}="${id}" aria-pressed="${on === id}">${dot(id)}<span>${escape(label)}</span><span class="n">${n}</span></button>`;
@@ -3384,6 +3389,7 @@ class DevicePanel extends HTMLElement {
     this._devTab = "ov";
     this._devSub = "out";
     this._detail = null;
+    this._magic.open(id);
     this._renderDevice();
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
@@ -3485,6 +3491,7 @@ class DevicePanel extends HTMLElement {
     this._detailId = null;
     this._detail = null;
     this._hist = null;
+    this._magic.reset();
   }
 
   // Entitäten und Kurzstatistik (7 Tage) holt erst das Popup.
@@ -3961,6 +3968,8 @@ class DevicePanel extends HTMLElement {
     // Eigene Schwelle wird gerade getippt: nicht neu aufbauen, sonst ginge die
     // Eingabe beim nächsten Abfragen (alle 10 s) verloren.
     const typing = this.shadowRoot.activeElement;
+    // Der Assistent von Magic Push ist offen: nicht neu aufbauen, sonst ginge Getipptes verloren (Stand liegt im Modul).
+    if (!this._devForce && this._devTab === "magic" && this._magic.wizardOpen()) return;
     if (!this._devForce && this._rename && typing?.dataset?.dlg === "rename-input") return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-bat-pct" && typing.value !== String(d.battery_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-sig-val" && typing.value !== String(d.signal_setting)) return;
@@ -3999,14 +4008,17 @@ class DevicePanel extends HTMLElement {
       // Reiter (seit 1.37.0, docs/mockups/popup-tabs-log-v1, R3): Übersicht zum Lesen, alle Einstellungen des Geräts
       // in "Einstellungen" (der Zähler nennt die eigenen), Entitäten für sich.
       const own = devOwnCount(d);
-      const tab = ["ov", "set", "ent"].includes(this._devTab) ? this._devTab : "ov";
+      const tab = ["ov", "set", "ent", "magic"].includes(this._devTab) ? this._devTab : "ov";
+      const magicCount = this._magic.count(d.id);
       const tabs = `<div class="sub-tabs" role="tablist">${[
         ["ov", this._t("devTabOverview"), false],
         // Mit eigenen Einstellungen auf zwei Zeilen (seit 2.0.10): Name, darunter klein die Zahl
         ["set", this._t("devTabSettings"), own > 0, own ? this._t("devTabOwnCount", own) : ""],
         ["ent", this._t("devTabEntities", ents.count), false],
+        // Magic Push: mit eingeschalteten Meldungen ebenfalls zweizeilig (Name, darunter klein die Zahl)
+        ["magic", this._t("mgTab"), false, magicCount ? this._t("mgTabActive", magicCount) : ""],
       ]
-        .map(([id, label, chg, sub]) => `<button type="button" role="tab" class="sub-tab${sub ? " two" : ""}${id === tab ? " on" : ""}${chg ? " chg" : ""}" data-dlg="tab" data-tab="${id}" aria-selected="${id === tab}"${sub ? ` aria-label="${escape(this._t("devTabSettingsOwn", own))}"` : ""}>${
+        .map(([id, label, chg, sub]) => `<button type="button" role="tab" class="sub-tab${sub ? " two" : ""}${id === tab ? " on" : ""}${chg ? " chg" : ""}" data-dlg="tab" data-tab="${id}" aria-selected="${id === tab}"${sub ? ` aria-label="${escape(id === "magic" ? this._t("mgTabAria", magicCount) : this._t("devTabSettingsOwn", own))}"` : ""}>${
           sub ? `<span class="tab-l">${escape(label)}</span> <span class="tab-s">${escape(sub)}</span>` : escape(label)
         }</button>`)
         .join("")}</div>`;
@@ -4015,9 +4027,11 @@ class DevicePanel extends HTMLElement {
           ? `<h3>${escape(this._t("secTypeConn"))}</h3><div class="tiles">${this._tile(this._t("typeLabel"), this._typeSelHtml(d, true))}${this._tile(this._t("connType"), this._connSelHtml(d, true))}</div>
           <h3>${escape(this._t("secNotifyDevice"))}</h3>${this._deviceNotifyHtml(d)}
           <p class="dlg-note small">${escape(this._t("devSettingsNote"))}</p>`
-          : tab === "ent"
-            ? `<h3>${escape(this._t("secEntities", ents.count))}</h3>${ents.html}`
-            : `<h3>${escape(this._t("secStats"))}</h3>${this._statTilesHtml(d)}
+          : tab === "magic"
+            ? `<div class="mg-root"></div>`
+            : tab === "ent"
+              ? `<h3>${escape(this._t("secEntities", ents.count))}</h3>${ents.html}`
+              : `<h3>${escape(this._t("secStats"))}</h3>${this._statTilesHtml(d)}
           ${this._aiHtml(d)}
           <h3>${escape(this._t("secConnection"))}</h3>${this._connSectionHtml(d)}
           <h3>${escape(this._t("secDevice"))}</h3>${this._deviceSectionHtml(d)}`;
@@ -4044,6 +4058,9 @@ class DevicePanel extends HTMLElement {
     const scroll = dlg.scrollTop;
     if (!setHtml(dlg, html)) return;
     this._stickDevTabs(dlg);
+    // Magic Push füllt seinen Behälter nach jedem Neuaufbau aus dem eigenen Stand.
+    const mgRoot = d && this._devTab === "magic" ? dlg.querySelector(".mg-root") : null;
+    if (mgRoot) this._magic.attach(mgRoot);
     dlg.scrollTop = scroll;
     if (sel) refocus(dlg.querySelector(sel));
   }
