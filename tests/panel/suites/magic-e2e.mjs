@@ -113,6 +113,22 @@ for (const lang of ["de", "en"]) {
     await fill('input[data-mg="for-own"]', "45");
     await ev(`const s=r.querySelector('${root} select[data-mg="for-unit"]'); s.value="60"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
     check(`[${tag}] wieder gültig: "Weiter" frei`, await wait(`return r.querySelector('${root} [data-mg="next"]').disabled === false`));
+    // Rücksetzwert (2.8.0): automatisch oder eigener Wert, mit Hinweis, Prüfung, Linie im Diagramm
+    check(`[${tag}] Zurücksetzen: Reiterleiste "Automatisch / Eigener Wert", zuerst automatisch`, (await ev(`return [...r.querySelectorAll('${root} [data-mg="reset-mode"]')].map(b => b.classList.contains("on")).join()`)) === "true,false" && !(await ev(`return !!r.querySelector('${root} input[data-mg="reset-value"]')`)));
+    await tap('[data-mg="reset-mode"][data-own="1"]');
+    check(`[${tag}] eigener Wert: Zahlenwähler mit Vorschlag über der Schwelle, Hinweis nennt beide Werte`, await wait(`const v=r.querySelector('${root} input[data-mg="reset-value"]'); return !!v && Number(v.value) > 12 && r.querySelector('${root} [data-mg-zone="resethint"]').textContent.includes("12") && r.querySelector('${root} [data-mg-zone="resethint"]').textContent.includes(v.value.replace(".", ${JSON.stringify(lang === "de" ? "," : ".")}))`), await text(`${root} [data-mg-zone="resethint"]`));
+    await fill('input[data-mg="reset-value"]', "10");
+    check(`[${tag}] Rücksetzwert unter der Schwelle: Fehler, "Weiter" gesperrt`, await wait(`return !!r.querySelector('${root} [data-mg-zone="resethint"] .opt-error') && r.querySelector('${root} [data-mg="next"]').disabled === true`));
+    await fill('input[data-mg="reset-value"]', "14");
+    check(`[${tag}] Rücksetzwert 14: Hinweis, "Weiter" frei`, await wait(`return !r.querySelector('${root} [data-mg-zone="resethint"] .opt-error') && r.querySelector('${root} [data-mg-zone="resethint"]').textContent.includes("14") && r.querySelector('${root} [data-mg="next"]').disabled === false`));
+    await tap('[data-mg="reset-step"][data-dir="1"]');
+    check(`[${tag}] Plus am Rücksetzwert`, (await ev(`return r.querySelector('${root} input[data-mg="reset-value"]').value`)) === "15");
+    await tap('[data-mg="reset-step"][data-dir="-1"]');
+    check(`[${tag}] Diagramm: zweite Linie für den Rücksetzwert`, await wait(`return r.querySelectorAll('${root} svg.mg-spark line').length === 2`));
+    await p.waitForTimeout(700);
+    const histCall = (await calls("magic_history")).at(-1);
+    check(`[${tag}] Rückblick bekommt den Rücksetzwert`, histCall?.reset_value === 14, JSON.stringify(histCall));
+    check(`[${tag}] Kapsel der Rücksetz-Leiste liegt unter "Eigener Wert"`, JSON.stringify(await pillAt(`${root} .sub-tabs:has([data-mg="reset-mode"])`)) === "[0,0,0]");
     check(`[${tag}] Schritt 2 ohne Querscrollen`, (await overflow()) <= 0, String(await overflow()));
     await p.screenshot({ path: `${outDir}/magic-${tag.replace("/", "-")}-2.png` });
     await next();
@@ -203,9 +219,10 @@ for (const lang of ["de", "en"]) {
     await tap('[data-mg="save"]');
     check(`[${tag}] gespeichert: Liste mit Hinweis`, await wait(`return r.querySelector('${root} .mg-flash')?.textContent.trim() === ${JSON.stringify(T.saved)} && r.querySelectorAll('${root} .mg-card').length === 1`));
     const saved = (await calls("magic_save")).at(-1)?.rule;
-    check(`[${tag}] Server bekommt alle Felder`, saved && saved.entity_id === "sensor.temp" && saved.kind === "below" && saved.value === 12 && saved.for_s === 2700 && saved.repeat_s === 10800 && saved.recover === true && saved.recover_message === "Keller wieder warm: {value} {unit}" && saved.message === "Keller kalt: {value} {unit} (unter {threshold}) ✔" && saved.target === "notify.familie" && saved.critical === true && saved.critical_volume === 7 && saved.body === "Aktuell {value} {unit}\nSchwelle {threshold} {unit}" && saved.recover_body === "Wieder {value} {unit} nach {duration}" && saved.name === "Keller kalt" && saved.device_id === "d", JSON.stringify(saved));
+    check(`[${tag}] Server bekommt alle Felder`, saved && saved.entity_id === "sensor.temp" && saved.kind === "below" && saved.value === 12 && saved.for_s === 2700 && saved.repeat_s === 10800 && saved.recover === true && saved.recover_message === "Keller wieder warm: {value} {unit}" && saved.message === "Keller kalt: {value} {unit} (unter {threshold}) ✔" && saved.target === "notify.familie" && saved.reset_value === 14 && saved.critical === true && saved.critical_volume === 7 && saved.body === "Aktuell {value} {unit}\nSchwelle {threshold} {unit}" && saved.recover_body === "Wieder {value} {unit} nach {duration}" && saved.name === "Keller kalt" && saved.device_id === "d", JSON.stringify(saved));
     check(`[${tag}] Reiter zeigt "${T.active1}"`, await wait(`return r.querySelector('.sub-tab[data-tab="magic"] .tab-s')?.textContent.trim() === ${JSON.stringify(T.active1)}`));
     check(`[${tag}] Karte: Name, Satz, noch nie ausgelöst`, (await text(`${root} .mg-card .mg-t b`)) === "Keller kalt" && (await text(`${root} .mg-card .mg-t small`)).includes("12") && (await text(`${root} .mg-status`)).includes(T.never));
+    check(`[${tag}] Karte nennt den Rücksetzwert`, (await text(`${root} .mg-card .mg-t small`)).includes(lang === "de" ? "zurück ab 14 °C" : "back from 14 °C"), await text(`${root} .mg-card .mg-t small`));
     check(`[${tag}] Karte nennt "kritisch" und die Lautstärke`, (await text(`${root} .mg-card .mg-t small`)).includes(lang === "de" ? "kritisch (Lautstärke 7)" : "critical (volume 7)"), await text(`${root} .mg-card .mg-t small`));
     check(`[${tag}] Liste ohne Querscrollen`, (await overflow()) <= 0);
     await p.screenshot({ path: `${outDir}/magic-${tag.replace("/", "-")}-list.png` });
@@ -234,6 +251,8 @@ for (const lang of ["de", "en"]) {
     await tap('[data-mg="edit"]');
     await headingOk(T.q1);
     check(`[${tag}] Bearbeiten: Schrittleiste antippbar, Entität gewählt`, (await ev(`return r.querySelectorAll('${root} button.mg-stp').length`)) === 5 && (await ev(`return r.querySelector('${root} .mg-pick.sel')?.dataset.id`)) === "sensor.temp");
+    await tap('button.mg-stp[data-step="2"]');
+    check(`[${tag}] Bearbeiten: eigener Rücksetzwert 14 ist da`, await wait(`return r.querySelector('${root} [data-mg="reset-mode"][data-own="1"]')?.classList.contains("on") && r.querySelector('${root} input[data-mg="reset-value"]').value === "14"`));
     await tap('button.mg-stp[data-step="5"]');
     await headingOk(T.q5);
     check(`[${tag}] Sprung zu Schritt 5: Name, Text und Empfänger übernommen`, (await ev(`return r.querySelector('${root} input[data-mg="name"]').value`)) === "Kellertemperatur");
@@ -254,6 +273,9 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Zustand: nur "ist" und "ändert sich", Wörter der Entität`, kinds === "is,change" && (await ev(`return [...r.querySelectorAll('${root} [data-mg="state"]')].map(b => b.textContent.trim()).join()`)) === (lang === "de" ? "offen,geschlossen" : "open,closed"));
     check(`[${tag}] Zustand: Balken statt Linie`, await wait(`return !!r.querySelector('${root} .mg-bar span') && !r.querySelector('${root} svg.mg-spark')`));
     await tap('[data-mg="state"][data-v="on"]');
+    await tap('[data-mg="reset-mode"][data-own="1"]');
+    check(`[${tag}] Zustand: Rücksetzzustand zur Wahl, Vorschlag ist der andere Zustand`, await wait(`return [...r.querySelectorAll('${root} [data-mg="reset-state"]')].length === 2 && r.querySelector('${root} [data-mg="reset-state"].on')?.dataset.v === "off"`));
+    check(`[${tag}] Zustand: Hinweis nennt das Wort`, (await text(`${root} [data-mg-zone="resethint"]`)).includes(lang === "de" ? "geschlossen" : "closed"), await text(`${root} [data-mg-zone="resethint"]`));
     await fill('input[data-mg="for-own"]', "45");
     await next();
     check(`[${tag}] Zustand: Variablen nur {value}`, await wait(`return [...r.querySelectorAll('${root} .mg-chips button.sug')].map(b => b.dataset.var).join() === "value"`));
@@ -266,8 +288,9 @@ for (const lang of ["de", "en"]) {
     await tap('[data-mg="kind"][data-kind="is"]');
     check(`[${tag}] ohne Recorder: Hinweis, kein Fehler`, await wait(`return r.querySelector('${root} .mg-hist')?.textContent.includes(${JSON.stringify(T.norec)})`));
     await p.evaluate(() => { window.__magicHist = null; });
-    // "ändert sich": keine Wiederholung, kein "wieder normal"
+    // "ändert sich": keine Wiederholung, kein "wieder normal", kein Rücksetzwert
     await tap('[data-mg="kind"][data-kind="change"]');
+    check(`[${tag}] ändert sich: kein Abschnitt "Zurücksetzen"`, !(await ev(`return !!r.querySelector('${root} [data-mg="reset-mode"]')`)));
     await next();
     check(`[${tag}] ändert sich: Variablen old/new`, await wait(`return [...r.querySelectorAll('${root} .mg-chips button.sug')].map(b => b.dataset.var).join() === "value,unit,old,new"`));
     await next();

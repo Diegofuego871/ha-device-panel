@@ -7,6 +7,24 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.9.0] - 2026-10-11
+
+Magic Push: eigene Rücksetzbedingung.
+
+### Hinzugefügt
+
+- In Schritt 2 des Magic-Push-Assistenten steht der neue Abschnitt "Zurücksetzen" (Wunsch des Nutzers). "Automatisch"
+  behält das bisherige Verhalten: Die Meldung ist zurückgesetzt, sobald die Bedingung nicht mehr gilt. Mit "Eigener Wert"
+  bestimmst du, wo sie zurückgesetzt wird: bei einer Zahl ein Rücksetzwert (zum Beispiel melden unter 12 °C, erst ab
+  14 °C zurücksetzen; der Assistent schlägt einen Wert vor und prüft, dass er auf der Seite des Normalen liegt), bei einem
+  Zustand der Zustand, bei dem zurückgesetzt wird (zum Beispiel erst bei "geschlossen"). Dazwischen bleibt alles still:
+  keine zweite Meldung und kein "wieder normal". "Wieder normal" und das erneute Scharfwerden (wichtig bei "nur einmal"
+  und bei der Wiederholung) folgen dem Rücksetzwert. Vor der Meldung ändert sich nichts: Die Bedingung muss ohne
+  Unterbruch gelten, sonst beginnt die Zeit von vorn. Eine Wiederholung, die im Zwischenbereich wartete, läuft im alten
+  Takt weiter. Das Diagramm zeigt eine zweite, grüne Linie für den Rücksetzwert, der Rückblick rechnet damit, und die
+  Liste zeigt "zurück ab 14 °C". "Ändert sich" hat keinen Rücksetzwert. Meldungen aus früheren Versionen bleiben
+  automatisch.
+
 ## [2.8.0] - 2026-10-11
 
 Magic Push: Titel und Inhalt getrennt schreiben.
@@ -2465,6 +2483,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.9.0
 [2.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.8.0
 [2.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.5.0
 [2.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.3.0

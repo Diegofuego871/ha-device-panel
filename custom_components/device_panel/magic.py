@@ -212,6 +212,27 @@ def cond_met(kind: str, value: Any, state: str | None) -> bool | None:
     return None
 
 
+def reset_met(kind: str, value: Any, reset_value: Any, state: str | None) -> bool | None:
+    """
+    Gilt der eigene Rücksetzwert? (seit 2.8.0). "unter": zurückgesetzt ab dem Rücksetzwert (grösser oder gleich),
+    "über": bis zum Rücksetzwert (kleiner oder gleich), "ist": beim gewählten Zustand. Ohne Rücksetzwert gilt das
+    Gegenteil der Bedingung (wie bisher). None: nicht beurteilbar.
+    """
+    if state in IGNORED:
+        return None
+    if reset_value in (None, ""):
+        met = cond_met(kind, value, state)
+        return None if met is None else not met
+    if kind in NUMERIC_KINDS:
+        x, limit = _float(state), _float(reset_value)
+        if x is None or limit is None:
+            return None
+        return x <= limit if kind == "above" else x >= limit
+    if kind == "is":
+        return cond_met("is", reset_value, state)
+    return None
+
+
 def _text(max_len: int, minimum: int = 0):
     def check(value: Any) -> str:
         if not isinstance(value, str):
@@ -282,10 +303,29 @@ RULE_SCHEMA = vol.Schema(
         vol.Optional("target"): vol.Any(None, "", vol.All(str, vol.Match(_NOTIFY_RE))),
         vol.Optional("enabled", default=True): bool,
         # Kritische Mitteilung (seit 2.7.0): durchbricht stumm und "Nicht stören"; Lautstärke 1 bis 10 (iOS: 0.1 bis 1.0)
+        # Eigener Rücksetzwert (seit 2.8.0): leer = zurückgesetzt, sobald die Bedingung nicht mehr gilt (wie bisher)
+        vol.Optional("reset_value", default=None): vol.Any(None, "", _threshold),
         vol.Optional("critical", default=False): bool,
         vol.Optional("critical_volume", default=push.CRITICAL_VOLUME_MAX): vol.All(int, vol.Range(min=1, max=push.CRITICAL_VOLUME_MAX)),
     }
 )
+
+
+def _clean_reset(rule: dict[str, Any], kind: str) -> float | str | None:
+    """Rücksetzwert prüfen: leer = automatisch; bei über/unter muss er auf der Seite des Normalen liegen."""
+    reset = rule.get("reset_value")
+    if reset in (None, ""):
+        return None
+    if kind in NUMERIC_KINDS:
+        number = _float(reset)
+        if number is None:
+            raise vol.Invalid("Für den Rücksetzwert wird eine Zahl gebraucht")
+        if kind == "below" and number < rule["value"]:
+            raise vol.Invalid("Der Rücksetzwert muss bei unter mindestens so gross wie die Schwelle sein")
+        if kind == "above" and number > rule["value"]:
+            raise vol.Invalid("Der Rücksetzwert muss bei über höchstens so gross wie die Schwelle sein")
+        return number
+    return reset
 
 
 def clean_rule(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
@@ -302,12 +342,15 @@ def clean_rule(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
         if _float(rule.get("value")) is None:
             raise vol.Invalid("Für über und unter wird eine Zahl gebraucht")
         rule["value"] = _float(rule["value"])
+        rule["reset_value"] = _clean_reset(rule, kind)
     elif kind == "is":
         if rule.get("value") in (None, ""):
             raise vol.Invalid("Für ist wird ein Zustand gebraucht")
+        rule["reset_value"] = _clean_reset(rule, kind)
     else:
         # "ändert sich": kein Wert, kein Normalzustand, keine Wiederholung
         rule["value"] = None
+        rule["reset_value"] = None
         rule["recover"] = False
         rule["repeat_s"] = 0
     rule["recover_message"] = rule.get("recover_message") or ""
@@ -512,7 +555,7 @@ class MagicPush:
                 raise vol.Invalid(f"Höchstens {MAX_PER_DEVICE} Meldungen pro Gerät")
             rule["id"] = uuid.uuid4().hex[:12]
         rule["created"] = existing["created"] if existing and "created" in existing else time.time()
-        changed = existing is None or any(existing.get(k) != rule.get(k) for k in ("entity_id", "kind", "value", "for_s", "repeat_s", "recover"))
+        changed = existing is None or any(existing.get(k) != rule.get(k) for k in ("entity_id", "kind", "value", "reset_value", "for_s", "repeat_s", "recover"))
         self._rules[rule["id"]] = rule
         if changed:
             self._reset(rule["id"])
@@ -615,7 +658,15 @@ class MagicPush:
                 self._save()
             if not rt["fired"] and rule_id not in self._timers:
                 self._arm(rule, state, now)
+            elif rt["fired"] and rule["repeat_s"] > 0 and rule_id not in self._timers:
+                # Wiederholung ruhte im Zwischenbereich des Rücksetzwerts: ab jetzt weiter, im alten Takt
+                delay = max(0.0, (rt["last_sent"] or now) + rule["repeat_s"] - now)
+                self._timers[rule_id] = async_call_later(self.hass, delay, partial(self._on_timer, rule_id))
         elif rt["since"] is not None:
+            # Schon gemeldet und ein eigener Rücksetzwert gesetzt: im Zwischenbereich bleibt alles still und gemeldet,
+            # zurückgesetzt wird erst am Rücksetzwert. Vor der Meldung gilt die Bedingung durchgehend, sonst von vorn.
+            if rt["fired"] and rule.get("reset_value") not in (None, "") and not reset_met(rule["kind"], rule["value"], rule["reset_value"], state.state):
+                return
             self._resolve(rule, state, now)
 
     def _arm(self, rule: dict[str, Any], state: State, now: float) -> None:

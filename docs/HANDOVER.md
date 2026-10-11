@@ -3,7 +3,17 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.8.0, Magic Push: Titel und Inhalt getrennt)
+## Stand (2.9.0, Magic Push: eigener Rücksetzwert)
+
+- 2.9.0: Regelfeld `reset_value` (leer = automatisch wie bisher; Zahl bei über/unter, Zustand bei "ist"; bei "ändert sich"
+  immer leer). `magic.reset_met` und `_clean_reset` (unter: Rücksetzwert ≥ Schwelle, über: ≤). Auslösen in `_evaluate`:
+  nach der Meldung bleibt die Episode im Zwischenbereich bestehen (still, kein "wieder normal"), vor der Meldung gilt
+  die Bedingung durchgehend; eine ruhende Wiederholung wird beim Wiedereintritt im alten Takt neu gesetzt. Rückblick:
+  `magic_history.evaluate(..., reset_value)`, WS `magic_history` nimmt `reset_value`. Panel Schritt 2 "Zurücksetzen"
+  (Reiterleiste, Zahlenwähler `reset-value`, Zustände `reset-state`), grüne Linie im Diagramm, Satz "zurück ab …".
+  Offen: Rücksetzdauer ("erst nach n Min.") wurde bewusst nicht gebaut (Entscheid des Nutzers: nur der Wert).
+
+## Stand davor (2.8.0, Magic Push: Titel und Inhalt getrennt)
 
 - 2.8.0: Regelfelder `body` und `recover_body` (mehrzeilig, ≤ 300, leer = automatische Zeile wie bisher, `_body` in
   `magic.py`; ältere Regeln laden leer). `content()` ersetzt `info_line` beim Senden und in der Vorschau (`preview`).

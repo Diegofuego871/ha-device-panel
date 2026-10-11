@@ -21,7 +21,7 @@ const REPEAT_UNITS = [60, 3600, 86400];
 const HIST_DELAY_MS = 450;
 const PREVIEW_DELAY_MS = 300;
 // Felder, die der Server in einer Meldung annimmt (alles andere, etwa "active", würde er ablehnen).
-const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "message", "body", "recover", "recover_message", "recover_body", "repeat_s", "target", "enabled", "critical", "critical_volume"];
+const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "reset_value", "message", "body", "recover", "recover_message", "recover_body", "repeat_s", "target", "enabled", "critical", "critical_volume"];
 
 // Zeichen vor dem Eintrag: nach Geräteklasse, sonst nach Art der Entität.
 const EMOJI_CLASS = {
@@ -221,6 +221,17 @@ export class MagicPush {
     return this.t("mgSentenceIs", num);
   }
 
+  // "zurück ab 14 °C" (unter), "zurück bis 70 %" (über), "zurück bei geschlossen" (ist)
+  resetSentence(rule) {
+    const e = this.entity(rule.entity_id);
+    const unit = e?.kind === "number" && e.unit ? ` ${e.unit}` : "";
+    if (rule.kind === "is") {
+      const word = e?.options?.find((o) => o.value === String(rule.reset_value))?.label ?? String(rule.reset_value);
+      return this.t("mgSentenceResetAt", word);
+    }
+    return this.t(rule.kind === "above" ? "mgSentenceResetTo" : "mgSentenceResetFrom", this.fmtNum(rule.reset_value) + unit);
+  }
+
   entityName(rule) {
     return this.entity(rule.entity_id)?.name || rule.entity_id;
   }
@@ -238,6 +249,7 @@ export class MagicPush {
       parts.push(this.repeatText(rule.repeat_s));
       if (rule.recover) parts.push(this.t("mgSentenceRecover"));
     }
+    if (rule.kind !== "change" && rule.reset_value != null && rule.reset_value !== "") parts.push(this.resetSentence(rule));
     if (rule.critical) parts.push(this.t("mgSentenceCritical", rule.critical_volume ?? VOLUME_MAX));
     if (rule.target) parts.push(this.t("mgSentenceTo", this.niceTarget(rule.target)));
     return parts.join(" · ");
@@ -287,6 +299,12 @@ export class MagicPush {
     return out;
   }
 
+  // Eigener Rücksetzwert für den Server: Zahl bei Zahlen, Zustand bei Zuständen; sonst leer (automatisch)
+  resetPayload(d, e) {
+    if (!d.resetOwn || d.kind === "change" || String(d.reset_value).trim() === "") return null;
+    return e?.kind === "number" ? parseNumber(d.reset_value) : d.reset_value;
+  }
+
   draftPayload() {
     const d = this.wiz.draft;
     const e = this.entity(d.entity_id);
@@ -300,6 +318,7 @@ export class MagicPush {
       kind: d.kind,
       value,
       for_s: d.for_s,
+      reset_value: this.resetPayload(d, e),
       message: d.message,
       body: d.body,
       recover: d.kind === "change" ? false : d.recover,
@@ -394,6 +413,9 @@ export class MagicPush {
       value: "",
       for_s: 600,
       forOwn: { text: "", unit: 60 },
+      // Eigener Rücksetzwert (seit 2.8.0); ohne: zurückgesetzt, sobald die Bedingung nicht mehr gilt
+      resetOwn: false,
+      reset_value: "",
       message: "",
       body: "",
       recover: false,
@@ -420,6 +442,8 @@ export class MagicPush {
       kind: rule.kind,
       value: rule.value == null ? "" : String(rule.value),
       for_s: rule.for_s,
+      resetOwn: rule.reset_value != null && rule.reset_value !== "",
+      reset_value: rule.reset_value == null ? "" : String(rule.reset_value),
       message: rule.message,
       body: rule.body || "",
       recover: Boolean(rule.recover),
@@ -499,6 +523,8 @@ export class MagicPush {
         d.value = other ? other.value : "";
       }
       d.entity_id = id;
+      d.resetOwn = false;
+      d.reset_value = "";
     }
     this.syncDefaults();
     this.paint();
@@ -513,10 +539,23 @@ export class MagicPush {
     if ((kind === "above" || kind === "below" || (kind === "is" && e?.kind === "number")) && parseNumber(d.value) == null && e?.number != null) {
       d.value = String(Math.round(e.number * 10) / 10);
     }
+    if (d.resetOwn) d.reset_value = this.defaultReset(d);
     this.syncDefaults();
     this.paint();
     this.requestHistory();
     this.requestPreview();
+  }
+
+  // Vorschlag für den Rücksetzwert: ein Stück auf der Seite des Normalen, bei Zuständen der andere Zustand
+  defaultReset(d) {
+    const e = this.entity(d.entity_id);
+    if (d.kind === "is" && e?.kind === "state") {
+      return (e.options?.find((o) => o.value !== String(d.value)) || e.options?.[0])?.value ?? "";
+    }
+    const v = parseNumber(d.value);
+    if (v == null) return "";
+    const gap = Math.max(1, Math.abs(v) * 0.1);
+    return String(Math.round((d.kind === "above" ? v - gap : v + gap) * 10) / 10);
   }
 
   setValue(text, fromInput = false) {
@@ -527,19 +566,48 @@ export class MagicPush {
       const input = this.root.querySelector('input[data-mg="value"]');
       if (input) input.value = text;
     }
-    this.paintZones(["chart"]);
+    this.paintZones(["chart", "resethint"]);
     this.syncNav();
     this.requestHistory();
     this.requestPreview();
   }
 
-  stepValue(direction) {
+  stepValue(direction, field = "value") {
     const d = this.wiz.draft;
     const e = this.entity(d.entity_id);
-    const current = parseNumber(d.value) ?? e?.number ?? 0;
+    const current = parseNumber(d[field]) ?? e?.number ?? 0;
     // Ganze Schwelle in ganzen Schritten, mit Nachkommastellen in Zehnteln (ab 100 wieder ganz, sonst zu mühsam).
     const step = Number.isInteger(current) || Math.abs(current) >= 100 ? 1 : 0.1;
-    this.setValue(String(Math.round((current + direction * step) * 1000) / 1000));
+    const next = String(Math.round((current + direction * step) * 1000) / 1000);
+    if (field === "reset_value") this.setReset(next);
+    else this.setValue(next);
+  }
+
+  setReset(text, fromInput = false) {
+    this.wiz.draft.reset_value = text;
+    if (!fromInput) {
+      const input = this.root.querySelector('input[data-mg="reset-value"]');
+      if (input) input.value = text;
+    }
+    this.paintZones(["chart", "resethint"]);
+    this.syncNav();
+    this.requestHistory();
+  }
+
+  // Fehler des eigenen Rücksetzwerts als Textschlüssel ("" = in Ordnung)
+  resetError() {
+    const d = this.wiz.draft;
+    const e = this.entity(d.entity_id);
+    if (!d.resetOwn || d.kind === "change") return "";
+    if (e?.kind === "state" || (d.kind === "is" && e?.kind !== "number")) return String(d.reset_value).trim() === "" ? "mgResetBadState" : "";
+    const rv = parseNumber(d.reset_value);
+    if (rv == null) return "mgResetBadNumber";
+    if (d.kind === "is") return "";
+    const v = parseNumber(d.value);
+    if (v == null) return "";
+    if (d.kind === "below" && rv < v) return "mgResetBad_below";
+    if (d.kind === "above" && rv > v) return "mgResetBad_above";
+    return "";
   }
 
   setForSeconds(seconds) {
@@ -616,8 +684,8 @@ export class MagicPush {
     if (step === 1) return Boolean(e);
     if (step === 2) {
       if (!e) return false;
-      if (d.kind === "above" || d.kind === "below") return parseNumber(d.value) != null && !this.forError();
-      if (d.kind === "is") return String(d.value).trim() !== "" && (e.kind !== "number" || parseNumber(d.value) != null) && !this.forError();
+      if (d.kind === "above" || d.kind === "below") return parseNumber(d.value) != null && !this.forError() && !this.resetError();
+      if (d.kind === "is") return String(d.value).trim() !== "" && (e.kind !== "number" || parseNumber(d.value) != null) && !this.forError() && !this.resetError();
       return !this.forError();
     }
     if (step === 3) return d.message.trim() !== "";
@@ -672,6 +740,8 @@ export class MagicPush {
     const seq = (this._seq += 1);
     const msg = { type: "device_panel/magic_history", entity_id: d.entity_id, kind: d.kind, for_s: d.for_s };
     if (value != null) msg.value = value;
+    const reset = this.resetPayload(d, this.entity(d.entity_id));
+    if (reset != null && !this.resetError()) msg.reset_value = reset;
     try {
       const result = await this.call(msg);
       if (seq !== this._seq || this.wiz !== w) return;
@@ -889,8 +959,54 @@ export class MagicPush {
         <input class="mg-pill num mg-ownin" type="text" inputmode="decimal" data-mg="for-own" value="${esc(d.forOwn.text)}" placeholder="${esc(t("mgOwnPh"))}" aria-label="${esc(t("mgOwnTime"))}" autocomplete="off">
         <select class="mg-pill" data-mg="for-unit" aria-label="${esc(t("mgOwnTime"))}">${FOR_UNITS.map((u) => `<option value="${u}"${u === d.forOwn.unit ? " selected" : ""}>${esc(t(`mgUnit_${u}`))}</option>`).join("")}</select></div>
       <div data-mg-zone="forhint">${this.forHintHtml()}</div>
+      ${this.resetHtml()}
       <div data-mg-zone="hist">${this.histHtml()}</div>`;
     return html;
+  }
+
+  // Zurücksetzen (seit 2.8.0): automatisch, sobald die Bedingung nicht mehr gilt, oder erst am eigenen Wert
+  resetHtml() {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const d = this.wiz.draft;
+    const e = this.entity(d.entity_id);
+    if (!e || d.kind === "change") return "";
+    let html = `<div class="mg-k">${esc(t("mgResetLabel"))}</div>${this.tabsHtml([
+      { on: !d.resetOwn, attrs: 'data-mg="reset-mode" data-own="0"', label: t("mgResetAuto") },
+      { on: d.resetOwn, attrs: 'data-mg="reset-mode" data-own="1"', label: t("mgResetOwn") },
+    ])}`;
+    if (d.resetOwn) {
+      if (d.kind === "is" && e.kind === "state") {
+        html += e.options?.length
+          ? this.tabsHtml(e.options.map((o) => ({ on: String(d.reset_value) === o.value, attrs: `data-mg="reset-state" data-v="${esc(o.value)}"`, label: o.label })))
+          : `<input class="mg-input" type="text" data-mg="reset-value" value="${esc(d.reset_value)}" aria-label="${esc(t("mgResetValue"))}" autocomplete="off">`;
+      } else {
+        html += `<div class="mg-k">${esc(t("mgResetValue"))}${e.unit ? ` <span class="mg-unit">· ${esc(t("mgThresholdUnit", e.unit))}</span>` : ""}</div>
+          <div class="sub-tabs mg-tabs mg-stepper"><button type="button" class="sub-tab" data-mg="reset-step" data-dir="-1" aria-label="${esc(t("mgMinus"))}">−</button>
+          <input class="mg-valin" type="text" inputmode="decimal" data-mg="reset-value" value="${esc(d.reset_value)}" aria-label="${esc(t("mgResetValue"))}" autocomplete="off">
+          <button type="button" class="sub-tab" data-mg="reset-step" data-dir="1" aria-label="${esc(t("mgPlus"))}">+</button></div>`;
+      }
+    }
+    return `${html}<div data-mg-zone="resethint">${this.resetHintHtml()}</div>`;
+  }
+
+  resetHintHtml() {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const d = this.wiz.draft;
+    const e = this.entity(d.entity_id);
+    if (!e || d.kind === "change") return "";
+    if (!d.resetOwn) return `<p class="mg-hint">${esc(t("mgResetHintAuto"))}</p>`;
+    const bad = this.resetError();
+    if (bad) return `<div class="opt-error">${esc(t(bad))}</div>`;
+    const unit = e.kind === "number" && e.unit ? ` ${e.unit}` : "";
+    if (d.kind === "is") {
+      const word = e.options?.find((o) => o.value === String(d.reset_value))?.label ?? String(d.reset_value);
+      return `<p class="mg-hint">${esc(t("mgResetHint_is", word))}</p>`;
+    }
+    const thr = this.fmtNum(parseNumber(d.value) ?? 0) + unit;
+    const rv = this.fmtNum(parseNumber(d.reset_value) ?? 0) + unit;
+    return `<p class="mg-hint">${esc(t(d.kind === "above" ? "mgResetHint_above" : "mgResetHint_below", thr, rv))}</p>`;
   }
 
   // Auswahlgruppe als Reiterleiste: dieselben Klassen wie die Reiter oben (.sub-tabs/.sub-tab), damit die Kapsel (.seg-pill)
@@ -1010,12 +1126,13 @@ export class MagicPush {
 
   paintZones(only) {
     if (!this.root || !this.wiz) return;
-    for (const name of only || ["chart", "hist", "pv", "forhint"]) {
+    for (const name of only || ["chart", "hist", "pv", "forhint", "resethint"]) {
       const el = this.root.querySelector(`[data-mg-zone="${name}"]`);
       if (!el) continue;
       if (name === "chart") el.innerHTML = this.chartHtml();
       else if (name === "hist") el.innerHTML = this.histHtml();
       else if (name === "forhint") el.innerHTML = this.forHintHtml();
+      else if (name === "resethint") el.innerHTML = this.resetHintHtml();
       else el.innerHTML = this.pvHtml();
     }
   }
@@ -1036,9 +1153,10 @@ export class MagicPush {
     const bands = (hist.intervals || []).filter(() => d.kind !== "change");
     if (e.kind === "number" && hist.points?.length > 1) {
       const limit = d.kind === "change" ? null : parseNumber(d.value);
+      const back = d.resetOwn && d.kind !== "change" && !this.resetError() ? parseNumber(d.reset_value) : null;
       const ys = hist.points.map((p) => p[1]);
-      const hi = Math.max(...ys, limit ?? -Infinity);
-      const lo = Math.min(...ys, limit ?? Infinity);
+      const hi = Math.max(...ys, limit ?? -Infinity, back ?? -Infinity);
+      const lo = Math.min(...ys, limit ?? Infinity, back ?? Infinity);
       const W = 320;
       const H = 70;
       const y = (n) => H - 8 - ((n - lo) / (hi - lo || 1)) * (H - 16);
@@ -1047,8 +1165,9 @@ export class MagicPush {
         .map(([a, b, counts]) => `<rect x="${((x(a) / 100) * W).toFixed(1)}" y="0" width="${Math.max(1, ((x(b ?? to) - x(a)) / 100) * W).toFixed(1)}" height="${H}" fill="var(--dp-error)" opacity="${counts ? 0.2 : 0.08}"/>`)
         .join("");
       const lim = limit != null && Number.isFinite(limit) ? `<line x1="0" x2="${W}" y1="${y(limit).toFixed(1)}" y2="${y(limit).toFixed(1)}" stroke="var(--dp-error)" stroke-width="1.5" stroke-dasharray="5 4"/>` : "";
+      const reset = back != null ? `<line x1="0" x2="${W}" y1="${y(back).toFixed(1)}" y2="${y(back).toFixed(1)}" stroke="var(--dp-success)" stroke-width="1.5" stroke-dasharray="5 4"/>` : "";
       const mid = limit != null ? t("mgChartThreshold", `${this.fmtNum(limit)}${e.unit ? ` ${e.unit}` : ""}`) : t("mgChartRange", this.fmtNum(lo), this.fmtNum(hi));
-      return `<div class="mg-card"><svg class="mg-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(t("mgHistTitle"))}">${zones}<path d="${line}" fill="none" stroke="var(--dp-primary)" stroke-width="2" vector-effect="non-scaling-stroke"/>${lim}</svg>
+      return `<div class="mg-card"><svg class="mg-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(t("mgHistTitle"))}">${zones}<path d="${line}" fill="none" stroke="var(--dp-primary)" stroke-width="2" vector-effect="non-scaling-stroke"/>${lim}${reset}</svg>
         <div class="mg-scale"><span>${esc(t("mgChart24"))}</span><span>${esc(mid)}</span><span>${esc(t("mgChartNow"))}</span></div></div>`;
     }
     const what = d.kind === "change" ? t("mgChartChanges") : t("mgChartStateLine", this.condText({ entity_id: d.entity_id, kind: d.kind, value: d.value }));
@@ -1205,6 +1324,22 @@ export class MagicPush {
       case "step":
         this.stepValue(Number(el.dataset.dir));
         break;
+      case "reset-step":
+        this.stepValue(Number(el.dataset.dir), "reset_value");
+        break;
+      case "reset-mode": {
+        const d = this.wiz.draft;
+        d.resetOwn = el.dataset.own === "1";
+        if (d.resetOwn && String(d.reset_value).trim() === "") d.reset_value = this.defaultReset(d);
+        this.paint();
+        this.requestHistory();
+        break;
+      }
+      case "reset-state":
+        this.wiz.draft.reset_value = el.dataset.v;
+        this.paint();
+        this.requestHistory();
+        break;
       case "for":
         this.setForSeconds(Number(el.dataset.s));
         break;
@@ -1266,6 +1401,7 @@ export class MagicPush {
     if (!this.wiz || !this.root?.contains(el)) return;
     if (el.dataset.mgText) this.onText(el);
     else if (action === "value") this.setValue(el.value, true);
+    else if (action === "reset-value") this.setReset(el.value, true);
     else if (action === "for-own") {
       this.wiz.draft.forOwn.text = el.value;
       this.applyOwnFor();

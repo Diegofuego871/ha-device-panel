@@ -18,7 +18,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
-from .magic import IGNORED, NUMERIC_KINDS, _float, cond_met, entity_kind
+from .magic import IGNORED, NUMERIC_KINDS, _float, cond_met, entity_kind, reset_met
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def _states(hass: HomeAssistant, entity_id: str, start: datetime, end: datetime)
 
 
 def evaluate(
-    rows: list[tuple[float, str]], kind: str, value: Any, for_s: int, now: float
+    rows: list[tuple[float, str]], kind: str, value: Any, for_s: int, now: float, reset_value: Any = None
 ) -> tuple[list[list[Any]], list[dict[str, Any]], int]:
     """
     Abschnitte, in denen die Bedingung galt, und die Auslösungen daraus.
@@ -80,6 +80,11 @@ def evaluate(
                 if number is not None:
                     values.append(number)
             elif current is not None:
+                # Eigener Rücksetzwert: nach der Meldung bleibt die Episode im Zwischenbereich bestehen
+                held = ts - current[0]
+                if reset_value not in (None, "") and held >= for_s and reset_met(kind, value, reset_value, state) is False:
+                    current[1] = end
+                    continue
                 _close(current, values, kind, for_s, now, intervals, fires)
                 current = None
         if current is not None:
@@ -118,7 +123,7 @@ def points(rows: list[tuple[float, str]], start: float, now: float) -> list[list
 
 
 async def async_history(
-    hass: HomeAssistant, entity_id: str, kind: str, value: Any, for_s: int, now: float | None = None
+    hass: HomeAssistant, entity_id: str, kind: str, value: Any, for_s: int, now: float | None = None, reset_value: Any = None
 ) -> dict[str, Any]:
     """Rückblick der letzten 24 Stunden für eine Regel (noch nicht gespeichert)."""
     now = now if now is not None else time.time()
@@ -153,5 +158,5 @@ async def async_history(
         return result
     result["empty"] = False
     result["points"] = points(rows, start, now)
-    result["intervals"], result["fires"], result["count"] = evaluate(rows, kind, value, for_s, now)
+    result["intervals"], result["fires"], result["count"] = evaluate(rows, kind, value, for_s, now, reset_value)
     return result

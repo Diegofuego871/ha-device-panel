@@ -7,6 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.9.0] - 2026-10-11
+
+Magic Push: your own reset condition.
+
+### Added
+
+- In step 2 of the Magic Push assistant, the new section "Reset" (requested by the user). "Automatic" keeps the old
+  behaviour: the message is reset as soon as the condition no longer holds. With "Own value" you choose where it is
+  reset: for a number a reset value (for example fire below 12 °C, reset only from 14 °C; the assistant suggests a value
+  and checks that it lies on the normal side of the limit), for a state the state at which it is reset (for example
+  only at "closed"). Between the two values everything stays quiet: no second message and no "back to normal".
+  "Back to normal" and the new arming (important with "only once" and repeating) follow the reset value. Before the
+  message has fired nothing changes: the condition must hold without a break, otherwise the time starts again. A
+  repeat that waited in between continues in its old rhythm. The chart shows a second, green line for the reset value,
+  the look back counts with it, and the list shows "back from 14 °C". "Changes" has no reset. Messages from earlier
+  versions stay automatic.
+
 ## [2.8.0] - 2026-10-11
 
 Magic Push: title and content written separately.
@@ -2388,6 +2405,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.9.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.9.0
 [2.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.8.0
 [2.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.5.0
 [2.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.3.0

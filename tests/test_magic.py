@@ -559,3 +559,123 @@ async def test_body_text(hass: HomeAssistant, setup, freezer) -> None:  # noqa: 
     legacy = {k: v for k, v in magic_push.get(rule["id"]).items() if k not in ("body", "recover_body")}
     cleaned = magic.clean_stored(legacy)
     assert cleaned["body"] == "" and cleaned["recover_body"] == ""
+
+
+@pytest.mark.parametrize(
+    ("kind", "value", "reset", "state", "expected"),
+    [
+        ("below", 12, 14, "13", False),  # Zwischenbereich: noch nicht zurückgesetzt
+        ("below", 12, 14, "14", True),
+        ("below", 12, None, "12", True),  # ohne Rücksetzwert: Gegenteil der Bedingung
+        ("below", 12, "", "11", False),
+        ("above", 75, 70, "72", False),
+        ("above", 75, 70, "70", True),
+        ("is", "on", "off", "on", False),
+        ("is", "on", "off", "off", True),
+        ("below", 12, 14, "unavailable", None),
+        ("change", None, None, "1", None),
+    ],
+)
+def test_reset_met(kind: str, value: Any, reset: Any, state: str, expected: bool | None) -> None:
+    assert magic.reset_met(kind, value, reset, state) is expected
+
+
+async def test_reset_value_validation(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    device = _device(hass, "Klima")
+    temp = _sensor(hass, device, "temp", "14", "temperature", "°C")
+    window = _sensor(hass, device, "window", "off", "window", domain="binary_sensor")
+    magic_push = hass.data[DATA_MAGIC]
+    for bad in (
+        _rule(device, temp, kind="below", value=12, reset_value=11),  # liegt auf der falschen Seite
+        _rule(device, temp, kind="above", value=75, reset_value=80),
+        _rule(device, temp, kind="below", value=12, reset_value="warm"),
+    ):
+        with pytest.raises(vol.Invalid):
+            await magic_push.async_save_rule(bad)
+    ok = await magic_push.async_save_rule(_rule(device, temp, kind="below", value=12, reset_value="14,5".replace(",", ".")))
+    assert ok["reset_value"] == 14.5
+    same = await magic_push.async_save_rule(_rule(device, temp, kind="below", value=12, reset_value=12, name="gleich"))
+    assert same["reset_value"] == 12
+    assert (await magic_push.async_save_rule(_rule(device, temp, kind="below", value=12, reset_value="", name="leer")))["reset_value"] is None
+    state = await magic_push.async_save_rule(_rule(device, window, kind="is", value="on", reset_value="off", name="Fenster"))
+    assert state["reset_value"] == "off"
+    # "ändert sich" kennt keinen Rücksetzwert
+    change = await magic_push.async_save_rule(_rule(device, temp, kind="change", value=None, reset_value=5, name="Änderung"))
+    assert change["reset_value"] is None
+    # Meldungen aus früheren Versionen laden ohne das Feld
+    legacy = {k: v for k, v in ok.items() if k != "reset_value"}
+    assert magic.clean_stored(legacy)["reset_value"] is None
+
+
+async def test_reset_value_hysteresis(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Unter 12 melden, erst ab 14 zurücksetzen: dazwischen still, keine zweite Meldung, kein "wieder normal"."""
+    calls = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    device = _device(hass, "Klimasensor Keller")
+    temp = _sensor(hass, device, "temp", "14.2", "temperature", "°C")
+    magic_push = hass.data[DATA_MAGIC]
+    attrs = {"device_class": "temperature", "unit_of_measurement": "°C"}
+    await magic_push.async_save_rule(_rule(device, temp, for_s=0, reset_value=14, recover=True, recover_message="Wieder warm: {value}"))
+
+    async def set_temp(value: str) -> None:
+        hass.states.async_set(temp, value, attrs)
+        await hass.async_block_till_done()
+
+    await set_temp("11")
+    assert len(calls) == 1
+    await set_temp("13")  # Zwischenbereich: nichts
+    await set_temp("11")  # wieder darunter: keine zweite Meldung, die Episode läuft noch
+    assert len(calls) == 1
+    await set_temp("13.9")
+    assert len(calls) == 1
+    await set_temp("14")  # Rücksetzwert erreicht
+    assert len(calls) == 2 and calls[1].data["title"] == "Wieder warm: 14"
+    await set_temp("11")  # wieder scharf
+    assert len(calls) == 3
+
+
+async def test_reset_value_before_firing_and_repeat(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    calls = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    device = _device(hass, "Klimasensor Keller")
+    temp = _sensor(hass, device, "temp", "14.2", "temperature", "°C")
+    magic_push = hass.data[DATA_MAGIC]
+    attrs = {"device_class": "temperature", "unit_of_measurement": "°C"}
+    await magic_push.async_save_rule(_rule(device, temp, for_s=600, reset_value=14, repeat_s=600))
+
+    async def set_temp(value: str) -> None:
+        hass.states.async_set(temp, value, attrs)
+        await _tick(hass, freezer, 0)
+
+    # Vor der Meldung gilt die Bedingung durchgehend: ein Ausflug in den Zwischenbereich beginnt die Dauer von vorn
+    await set_temp("11")
+    await _tick(hass, freezer, 400)
+    await set_temp("13")
+    await _tick(hass, freezer, 100)
+    await set_temp("11")
+    await _tick(hass, freezer, 400)
+    assert calls == []
+    await _tick(hass, freezer, 201)
+    assert len(calls) == 1
+    # Nach der Meldung: im Zwischenbereich ruht die Wiederholung, danach geht sie im alten Takt weiter
+    await _tick(hass, freezer, 100)
+    await set_temp("13")
+    await _tick(hass, freezer, 700)  # Wiederholzeit läuft ab, aber nicht unter der Schwelle
+    assert len(calls) == 1
+    await set_temp("11")
+    assert len(calls) == 2  # sofort fällig, weil die Zeit der Wiederholung schon um ist
+
+
+def test_history_with_reset_value() -> None:
+    now = 10000.0
+    rows = [(0.0, "14"), (1000.0, "11"), (2000.0, "13"), (3000.0, "11"), (4000.0, "14.5")]
+    # ohne eigenen Rücksetzwert: zwei Abschnitte unter 12
+    _intervals, _fires, count = magic_history.evaluate(rows, "below", 12, 300, now)
+    assert count == 2
+    # mit Rücksetzwert 14: ein zusammenhängender Abschnitt von 1000 bis 4000, eine Auslösung
+    intervals, fires, count = magic_history.evaluate(rows, "below", 12, 300, now, 14)
+    assert count == 1 and fires[0]["start"] == 1000.0 and fires[0]["end"] == 4000.0 and len(intervals) == 1
+    # zu kurz vor dem Zwischenbereich: kein Zusammenhalt, die Dauer reichte nicht
+    _i, _f, count = magic_history.evaluate([(0.0, "14"), (1000.0, "11"), (1100.0, "13"), (1500.0, "11"), (4000.0, "14.5")], "below", 12, 300, now, 14)
+    assert count == 1  # der zweite Abschnitt (2500 s) zählt, der erste (100 s) nicht
+
