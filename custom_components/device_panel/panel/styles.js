@@ -683,13 +683,14 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ibadge.type { background: var(--dp-subtle); color: var(--dp-text2); }
 /* Überwachung und Meldungen (seit 0.34.0, docs/mockups/notify-v3): Reiter,
    Zeitstrahl je Meldung, Integrationen als Liste mit Detail. */
-.mon-tabs, .sub-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0 4px; padding: 4px; border-radius: 12px; background: var(--dp-subtle); }
-.mon-tab, .sub-tab { position: relative; flex: 1 0 auto; min-width: 0; padding: 8px 12px; white-space: nowrap; border: none; border-radius: 9px; background: none; color: var(--dp-text2);
+/* Reiter ohne Fläche dahinter (seit 2.0.3, Wunsch des Nutzers, docs/mockups/tabs-frame-v1 A und tabs-touch-v1 V2): jeder Reiter hat seinen Rahmen, die Reihe hat keinen eigenen Grund; natürliche Breite, linksbündig, bei Platzmangel nächste Zeile */
+.mon-tabs, .sub-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; padding: 0; }
+.mon-tab, .sub-tab { position: relative; flex: 0 0 auto; min-width: 0; padding: 8px 14px; white-space: nowrap; border: none; border-radius: 9px; background: none; color: var(--dp-text2);
   font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer; }
 .mon-tab:hover, .sub-tab:hover { color: var(--dp-text); }
 /* Nicht gewählte Reiter leicht umrahmt (seit 2.0.2), damit man sie als Reiter erkennt; innen als Schatten, damit nichts springt */
 .mon-tab:not(.on), .sub-tab:not(.on) { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dp-text) 16%, transparent); }
-/* Reiter brechen bei Platzmangel auf eine zweite Zeile um (seit 1.44.0), die Zeilen füllen die Breite */
+/* Reiter brechen bei Platzmangel auf eine zweite Zeile um (seit 1.44.0) */
 .mon-tab.on, .sub-tab.on { background: var(--dp-card); color: var(--dp-text); font-weight: 600; box-shadow: var(--dp-shadow-s); }
 .mon-tab:focus-visible, .sub-tab:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
 .sub-tabs { margin: 12px 0 8px; }
@@ -1063,7 +1064,8 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   .ex-head .ex-col.sel, .ex-row.ex-all .ex-col.sel { display: none; }
   .ex-head.multi { font-size: 10px; letter-spacing: .02em; }
   .nf-grid { grid-template-columns: minmax(0, 1fr); }
-  .mon-tab, .sub-tab { padding: 8px 10px; font-size: 13px; }
+  /* Handy: Tippfläche mindestens 44 px hoch (seit 2.0.3) */
+  .mon-tab, .sub-tab { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 14px; font-size: 14px; border-radius: 11px; }
   .mtl { margin: 8px 6px 2px; }
   .mtl-mk { width: 100px; }
   .opt.bat-row .bat-ctl .opt-select { flex: 1 1 auto; }
@@ -1240,7 +1242,6 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
     dialog.device .dlg-btn, dialog.settings .dlg-btn { background: color-mix(in srgb, var(--dp-text) 8%, transparent); border-color: color-mix(in srgb, var(--dp-text) 12%, transparent); }
     dialog.device .dlg-btn.primary, dialog.settings .dlg-btn.primary { background: var(--dp-primary); border-color: transparent; }
     dialog.device .tile, dialog.device .st-tile, dialog.settings .nf-note, dialog.settings .pv { background: color-mix(in srgb, var(--dp-text) 9%, transparent); border-color: color-mix(in srgb, var(--dp-text) 14%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dp-text) 12%, transparent); }
-    dialog.device .mon-tabs, dialog.device .sub-tabs, dialog.settings .mon-tabs, dialog.settings .sub-tabs { background: color-mix(in srgb, var(--dp-text) 11%, transparent); }
     dialog.device .dev-set { background: color-mix(in srgb, var(--dp-text) 5%, transparent); }
     dialog.device .mon-tab.on, dialog.device .sub-tab.on, dialog.settings .mon-tab.on, dialog.settings .sub-tab.on { background: color-mix(in srgb, var(--dp-text) 20%, transparent); box-shadow: 0 1px 6px rgba(0,0,0,0.3); }
   }

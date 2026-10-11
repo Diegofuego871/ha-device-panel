@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.3] - 2026-10-11
+
+Reiter ohne Fläche dahinter, auf dem Handy grösser.
+
+### Geändert
+
+- Die Reiter behalten ihren Rahmen, aber die Fläche hinter der ganzen Reihe entfällt: Die Reihe hat denselben
+  Grund wie das übrige Popup beziehungsweise die Einstellungen (Wunsch des Nutzers, Mockups `tabs-frame-v1`,
+  Variante A). Das gilt für alle Reiter: Einstellungen, Detail einer Integration und Geräte-Popup.
+- Die Reiter haben ihre natürliche Breite und stehen linksbündig (Mockups `tabs-touch-v1`, Variante 2): Sie füllen
+  die Zeile nicht mehr, der letzte Reiter ("Integrationen") ist deshalb nicht mehr über die ganze Breite gezogen,
+  sondern gleich gross wie die anderen und links. Bei Platzmangel kommen die nächsten Reiter in eine zweite Zeile.
+- Auf dem Handy sind die Reiter grösser, damit man sie besser mit dem Finger trifft: mindestens 44 px hoch, Schrift
+  14 px.
+
 ## [2.0.2] - 2026-10-10
 
 Einheitliche Grafiken, umrahmte Reiter und Korrektur beim Drücken. Diese Version ist ein reguläres Release (keine
@@ -2179,6 +2194,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.0.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.3
 [2.0.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.2
 [2.0.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.1
 [2.0.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.0

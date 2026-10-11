@@ -60,6 +60,11 @@ for (const mobile of [false, true]) {
   check(`[${tag}] Reiter: nicht gewählte mit Rahmen, gewählter ohne`, await ev(`const off = r.querySelector(".mon-tab:not(.on)"); const on = r.querySelector(".mon-tab.on"); return getComputedStyle(off).boxShadow.includes("inset") && !getComputedStyle(on).boxShadow.includes("inset")`));
   check(`[${tag}] Reiter: Breite unverändert (Rahmen innen)`, await ev(`const off = r.querySelector(".mon-tab:not(.on)"); return getComputedStyle(off).borderTopWidth === "0px"`));
 
+  // Reiter ohne Fläche dahinter (2.0.3), natürliche Breite links, auf dem Handy mindestens 44 px hoch
+  check(`[${tag}] Reiter: keine Fläche hinter der Reihe`, await ev(`const bar = r.querySelector("dialog.settings .mon-tabs"); const c = getComputedStyle(bar); return (c.backgroundColor === "rgba(0, 0, 0, 0)" || c.backgroundColor === "transparent") && c.paddingTop === "0px"`));
+  check(`[${tag}] Reiter: natürliche Breite, keiner füllt die Zeile (auch "Integrationen" nicht)`, await ev(`const bar = r.querySelector("dialog.settings .mon-tabs"); const bb = bar.getBoundingClientRect(); const tabs = [...bar.children]; return tabs.every(t => getComputedStyle(t).flexGrow === "0" && t.getBoundingClientRect().width < bb.width * 0.45) && getComputedStyle(bar).justifyContent !== "center"`));
+  if (mobile) check(`[${tag}] Handy: Reiter mindestens 44 px hoch`, await ev(`return [...r.querySelectorAll("dialog.settings .mon-tab")].every(t => t.getBoundingClientRect().height >= 43.5)`));
+
   // Gerät: Reiter im Popup umrahmt
   await tap(".dlg-close");
   await ev(`r.querySelector("dialog.settings")?.close?.()`);

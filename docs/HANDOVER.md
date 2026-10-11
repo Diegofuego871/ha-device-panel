@@ -3,7 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.0.2, Einstellungen in fünf Abschnitten)
+## Stand (2.0.3, Einstellungen in fünf Abschnitten)
+
+- 2.0.3: Reiter (`.mon-tabs`, `.sub-tabs`) ohne Fläche dahinter, jeder Reiter mit eigenem Rahmen, natürliche Breite
+  linksbündig (`flex: 0 0 auto`), auf dem Handy (max. 600 px) mindestens 44 px hoch, Schrift 14 px. Mockups
+  `docs/mockups/tabs-frame-v1` (A) und `tabs-touch-v1` (Variante 2). Test in `graphics-e2e`.
 
 - 2.0.2 (regulär, keine Vorabversion): einheitliche Grafiken (`.mtl`/`.ptl`: Linie und Balken enden bei 80 %, Wert
   unter dem Ring am Endpunkt, Mockups `docs/mockups/graphics-v1`, Variante A; `_tlHtml` mit `at: 80`, `_ptlHtml` mit
