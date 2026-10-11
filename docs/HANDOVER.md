@@ -3,7 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.3.0, Release Notes im Fenster)
+## Stand (2.4.0, Release Notes auch der installierten Version)
+
+- 2.4.0: Auch ohne Update hat die Zeile "Aktuell" den Knopf "Release Notes" (`data-ver="notes"`). `_openNotes`
+  fragt dann ohne `installed` nach `latest = installierte Version` (Backend: nur diese Version, Tag `v<installiert>`);
+  Kopf "Installierte Version x.y.z" (`notesInstalled`), Link auf deren Release. Eine Version ohne Tag (Entwicklung)
+  ergibt "HTTP 404" mit Link/Erneut versuchen.
 
 - 2.3.0: "Release Notes" in der Versionszeile der Einstellungen ist ein Knopf (`data-ver="notes"`) und öffnet
   `dialog.notes-dlg` (`_openNotes`/`_renderNotes`/`_bindNotes`) statt GitHub. WS `device_panel/release_notes`

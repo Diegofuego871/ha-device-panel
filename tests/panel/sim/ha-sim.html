@@ -676,7 +676,7 @@
         return {
           entries: [
             { version: msg.latest, date: "2026-10-11", notes: md(de ? "Neueste Version." : "Latest version.") },
-            { version: "0.4.5", date: "2026-10-09", notes: md(de ? "Eine Zwischenversion." : "An intermediate version.") },
+            ...(msg.installed ? [{ version: "0.4.5", date: "2026-10-09", notes: md(de ? "Eine Zwischenversion." : "An intermediate version.") }] : []),
           ],
           language: de ? "de" : "en",
           error: null,

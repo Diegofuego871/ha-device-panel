@@ -435,7 +435,8 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
   HACS-Update-Entität (`update.install`), Neustart-Hinweis nach der
   Installation, Release Notes (seit 2.3.0 in einem Fenster: die Abschnitte
   aller Versionen nach der installierten aus dem CHANGELOG am Tag der neuen
-  Version, in der Sprache des Panels, sonst Englisch).
+  Version, in der Sprache des Panels, sonst Englisch; seit 2.4.0 auch ohne
+  Update, dann die der installierten Version).
 - Abgleich mit HACS: Kennt HACS die Version noch nicht, lädt das Panel HACS
   automatisch nach ("Wird mit HACS abgeglichen …"), sonst Hinweis.
 - Schalter "Vorabversionen anzeigen", gilt für die ganze Instanz (Backend-

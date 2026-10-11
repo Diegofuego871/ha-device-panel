@@ -4754,9 +4754,19 @@ class DevicePanel extends HTMLElement {
   _openNotes() {
     const dlg = this.shadowRoot.querySelector("dialog.notes-dlg");
     if (!dlg) return;
-    const { installed, latest, url } = this._versionState();
+    const state = this._versionState();
+    // Mit neuer Version: alle Versionen dazwischen. Ohne: die Notes der installierten Version
+    // (kein Update da, aber nachlesen, was die aktuelle Version bringt).
+    const newer = Boolean(state.latest && state.installed && this._cmpVersion(state.latest, state.installed) > 0);
+    const latest = newer ? state.latest : state.installed;
     if (!latest) return;
-    const n = (this._notes = { installed, latest, url: url || null, loading: true, error: null, data: null, seq: (this._notes?.seq || 0) + 1 });
+    const n = (this._notes = {
+      installed: newer ? state.installed : null,
+      latest,
+      current: !newer,
+      url: newer ? state.url || null : `https://github.com/${REPO}/releases/tag/v${latest}`,
+      loading: true, error: null, data: null, seq: (this._notes?.seq || 0) + 1,
+    });
     this._renderNotes();
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
@@ -4816,7 +4826,7 @@ class DevicePanel extends HTMLElement {
           })
           .join("");
     }
-    const sub = n.installed ? `${n.installed} → ${n.latest}` : n.latest;
+    const sub = n.current ? t("notesInstalled", n.latest) : n.installed ? `${n.installed} → ${n.latest}` : n.latest;
     const html = `<div class="dlg-head"><span class="dlg-avatar">${mdi("verUp", 24)}</span><div class="dlg-title"><h2>${escape(t("notesTitle"))}</h2><div class="dlg-sub">${escape(sub)}</div></div>
         <button type="button" class="dlg-close" data-notes="close" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body">${body}</div>
@@ -7637,6 +7647,8 @@ class DevicePanel extends HTMLElement {
       // Etikett "Beta" in den Titel, Hinweis in den Kasten.
       return beta ? html.replace("</b>", ` <span class="ver-tag">${escape(t("verBeta"))}</span></b>`).replace(/<\/div>\s*$/, `${hint}</div>`) : html;
     }
+    // Auch ohne Update: die Release Notes der installierten Version (seit 2.4.0).
+    const currentNotes = installed ? `<button type="button" class="ver-link" data-ver="notes">${escape(t("verReleaseNotes"))}${mdi("info", 15)}</button>` : "";
     const checked = d.checked_at ? t("verChecked", this._formatRelative(d.checked_at)) : "";
     const err = v.error === "rate_limit" ? t("verRateLimit") : v.error;
     const sub = v.checking ? t("verCheckingSub") : v.error ? `${t("verCheckError")} ${err}` : [t("verCurrent"), checked].filter(Boolean).join(" · ");
@@ -7645,7 +7657,7 @@ class DevicePanel extends HTMLElement {
     // Fehlgeschlagene Prüfung nicht mit Häkchen ("aktuell") darstellen.
     const failed = Boolean(v.error && !v.checking);
     return row(failed ? "err" : "ok", failed ? "alert" : "verOk", t("verName", installed || "?"), sub,
-      `<button type="button" class="ver-btn" data-ver="check" ${v.checking ? `disabled aria-busy="true" title="${escape(t("verChecking"))}"` : ""}>${v.checking ? `<span class="ver-spin"></span>` : mdi("verCheck", 16)}${escape(t("verCheck"))}</button>`);
+      `${currentNotes}<button type="button" class="ver-btn" data-ver="check" ${v.checking ? `disabled aria-busy="true" title="${escape(t("verChecking"))}"` : ""}>${v.checking ? `<span class="ver-spin"></span>` : mdi("verCheck", 16)}${escape(t("verCheck"))}</button>`);
   }
 
   _renderSettingsVersion() {

@@ -38,10 +38,20 @@ for (const lang of ["de", "en"]) {
       }
     };
 
-    // Neue Version auf GitHub (ohne HACS): die Zeile zeigt "Release Notes"
-    await p.evaluate(() => { window.__version = { installed: "0.4.0", latest: "0.5.0" }; });
+    // Kein Update da: "Release Notes" gibt es trotzdem, für die installierte Version (2.4.0)
+    await p.evaluate(() => { window.__version = { installed: "0.4.0", latest: "0.4.0" }; window.__wsCalls = []; });
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .ver-slot")`);
+    check(`[${tag}] aktuell: Knopf "Release Notes" neben "${lang === "de" ? "Nach Updates suchen" : "Check for updates"}"`, await wait(`return !!r.querySelector('.ver.ok [data-ver="notes"]') && !!r.querySelector('.ver.ok [data-ver="check"]')`));
+    await tap('.ver.ok [data-ver="notes"]');
+    await wait(`return !!r.querySelector("dialog.notes-dlg .rn")`);
+    const cur = await ev(`const d=r.querySelector("dialog.notes-dlg"); return { sub: d.querySelector(".dlg-sub").textContent, vers: [...d.querySelectorAll(".rn-ver span")].map(x=>x.textContent).join(), github: d.querySelector(".rn-gh")?.href }`);
+    const curCall = await p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/release_notes"));
+    check(`[${tag}] installierte Version: Abfrage ohne "installed", nur diese Version`, curCall.length === 1 && curCall[0].installed == null && curCall[0].latest === "0.4.0" && cur.vers === "0.4.0", JSON.stringify([curCall, cur]));
+    check(`[${tag}] Kopf "${lang === "de" ? "Installierte Version 0.4.0" : "Installed version 0.4.0"}", Link auf diese Version`, cur.sub === (lang === "de" ? "Installierte Version 0.4.0" : "Installed version 0.4.0") && cur.github.endsWith("/releases/tag/v0.4.0"), JSON.stringify(cur));
+    await tap('dialog.notes-dlg [data-notes="close"].primary');
+    await wait(`return !r.querySelector("dialog.notes-dlg").open`);
+    await p.evaluate(() => { window.__version = { installed: "0.4.0", latest: "0.5.0" }; });
     await tap('[data-ver="check"]');
     check(`[${tag}] Update gefunden: Knopf "Release Notes"`, await wait(`return !!r.querySelector('[data-ver="notes"]')`));
   await p.evaluate(() => { window.__notesDelay = 300; window.__wsCalls = []; });

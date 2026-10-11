@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.4.0] - 2026-10-11
+
+Read the release notes of the installed version too.
+
+### Added
+
+- In the settings, the row of the installed version ("Up to date") now also has the button "Release notes" (requested by
+  the user). Without an update it opens the same window with the notes of the installed version, headed "Installed
+  version x.y.z", so you can read what the current version brought. The window works as before: the language of the
+  panel, a hint if only English exists, the button "On GitHub" and "Try again" on errors.
+
 ## [2.3.0] - 2026-10-11
 
 Release notes in a window instead of a link.
@@ -2284,6 +2295,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[2.4.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.4.0
 [2.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.3.0
 [2.2.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.2.0
 [2.1.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.1.0
