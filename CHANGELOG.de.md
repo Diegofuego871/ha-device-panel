@@ -36,6 +36,15 @@ Magic Push: Übersicht in den Einstellungen und freie Entitäten.
   drei Zeilen zu drei.
 - Magic Push verlangt nicht mehr, dass die Entität zum Gerät gehört (siehe "Freie Entität"); die Entität muss es geben.
 
+### Behoben
+
+- Auf dem Handy deckte die Tastatur das Suchfeld zu, wenn die Suche nach einer freien Entität aufging. Das Feld scrollt
+  jetzt beim Öffnen direkt unter die Reiter und noch einmal, sobald die Tastatur da ist (auch beim Umbenennen einer
+  Meldung in der Liste).
+- Die Fehlermeldung bei einem ungültigen Rücksetzwert nennt jetzt die Bedingung und die Schwelle ("Bei "unter 14 g/m³"
+  muss der Rücksetzwert mindestens 14 g/m³ sein ...") und weist auf die andere Richtung hin, wenn ein tieferer oder
+  höherer Wert gemeint ist.
+
 ## [2.9.0] - 2026-10-11
 
 Nicht veröffentlicht; enthalten in 2.10.0.

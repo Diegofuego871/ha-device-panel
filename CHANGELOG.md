@@ -35,6 +35,13 @@ Magic Push: overview in the settings and free entities.
   the phone.
 - Magic Push no longer insists that an entity belongs to the device (see "Free entity"); an entity must exist.
 
+### Fixed
+
+- On the phone, opening the search for a free entity let the keyboard cover the search field. The field now scrolls up
+  right under the tabs when it opens, and again once the keyboard is out (also for renaming a message in the list).
+- The error for an invalid reset value now names the condition and the limit ("With "below 14 g/m³" the reset value must
+  be at least 14 g/m³ ...") and points to the other direction when a lower or higher value is meant.
+
 ## [2.9.0] - 2026-10-11
 
 Not released; included in 2.10.0.

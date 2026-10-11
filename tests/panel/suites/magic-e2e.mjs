@@ -318,6 +318,10 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Schritt 1: "Freie Entität" ganz unten, zu`, (await ev(`const k=[...r.querySelectorAll('${root} .mg-pick')]; return k.at(-1)?.dataset.mg === "free-open" && !r.querySelector('${root} .mg-free')`)));
     await tap('[data-mg="free-open"]');
     check(`[${tag}] Suche öffnet mit Treffern aller Entitäten (auch fremder Geräte)`, await wait(`return r.querySelectorAll('${root} [data-mg="free-pick"]').length >= 6`));
+    // Das Suchfeld scrollt nach oben, damit die Tastatur es nicht zudeckt (direkt unter Kopf und Reiter)
+    await p.waitForTimeout(900);
+    const pos = await ev(`const i=r.querySelector('${root} input[data-mg="free-query"]').getBoundingClientRect(); const t=r.querySelector("dialog.device .dev-tabs").getBoundingClientRect(); return [Math.round(i.top - t.bottom), r.activeElement === r.querySelector('${root} input[data-mg="free-query"]')]`);
+    check(`[${tag}] Suchfeld: hat den Fokus und liegt oben, direkt unter den Reitern`, pos[1] === true && pos[0] >= -2 && pos[0] <= 140, JSON.stringify(pos));
     await fill('input[data-mg="free-query"]', "garten regen");
     check(`[${tag}] Suche nach mehreren Wörtern (Gerät und Name)`, await wait(`const l=[...r.querySelectorAll('${root} [data-mg="free-pick"]')].map(b=>b.dataset.id); return l.length === 1 && l[0] === "binary_sensor.garten_regen"`));
     check(`[${tag}] Treffer nennt Entitäts-ID und Gerät`, (await text(`${root} [data-mg="free-pick"]`)).includes("binary_sensor.garten_regen") && (await text(`${root} [data-mg="free-pick"]`)).includes("Wetterstation Garten"));

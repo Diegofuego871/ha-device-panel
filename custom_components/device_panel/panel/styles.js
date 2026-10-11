@@ -1421,6 +1421,8 @@ input.mg-pill { cursor: text; }
 .mg-freebtn { border: 1.5px dashed color-mix(in srgb, var(--dp-primary) 45%, transparent); background: none; }
 .mg-chev { flex: none; color: var(--dp-text2); }
 .mg-free { margin-top: 8px; }
+/* Beim Hochscrollen unter dem Kopf und den Reitern des Popups anhalten (Kopf und Reiter bleiben stehen) */
+.mg-free .mg-input, .mg-card .mg-input { scroll-margin-top: calc(var(--dev-head-h, 100px) + 70px); }
 .mg-freeval { flex: none; max-width: 40%; text-align: right; font-weight: 600; overflow-wrap: anywhere; }
 .mg-opt-row b { font-weight: 500; }
 /* Reiterleiste mit neun Reitern (Überwachung und Meldungen mit "Magic Push"): Desktop 5 + 4, Handy 3 × 3 */

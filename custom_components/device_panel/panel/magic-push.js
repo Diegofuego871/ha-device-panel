@@ -120,6 +120,24 @@ export class MagicPush {
     return this.data.rules.filter((r) => r.enabled).length;
   }
 
+  // Ein Feld, das gleich getippt wird, an den oberen Rand holen: die Tastatur des Handys deckt sonst das Feld zu, wenn es weiter
+  // unten steht. Die sichtbare Fläche ändert sich erst während die Tastatur einfährt, darum noch einmal danach (visualViewport).
+  revealField(el) {
+    if (!el) return;
+    const go = () => {
+      if (el.isConnected) el.scrollIntoView({ block: "start", behavior: "smooth" });
+    };
+    window.setTimeout(go, 60);
+    const vv = this.host._topWindow?.()?.visualViewport || window.visualViewport;
+    if (!vv) return;
+    const again = () => {
+      vv.removeEventListener("resize", again);
+      window.setTimeout(go, 60);
+    };
+    vv.addEventListener("resize", again);
+    window.setTimeout(() => vv.removeEventListener("resize", again), 1500);
+  }
+
   // Aus der Übersicht in den Einstellungen: den Assistenten mit dieser Meldung öffnen, sobald die Liste da ist
   editWhenLoaded(ruleId) {
     this._pendingEdit = ruleId;
@@ -372,6 +390,7 @@ export class MagicPush {
       if (input) {
         input.focus({ preventScroll: true });
         input.select();
+        this.revealField(input);
       }
     }
     if (this.view === "wizard") this.paintZones();
@@ -1135,9 +1154,10 @@ export class MagicPush {
     const e = this.entity(d.entity_id);
     if (!e || d.kind === "change") return "";
     if (!d.resetOwn) return `<p class="mg-hint">${esc(t("mgResetHintAuto"))}</p>`;
-    const bad = this.resetError();
-    if (bad) return `<div class="opt-error">${esc(t(bad))}</div>`;
     const unit = e.kind === "number" && e.unit ? ` ${e.unit}` : "";
+    // Die Fehlermeldung nennt die Bedingung mit der Schwelle, damit klar ist, warum der Wert nicht passt
+    const bad = this.resetError();
+    if (bad) return `<div class="opt-error">${esc(t(bad, this.fmtNum(parseNumber(d.value) ?? 0) + unit))}</div>`;
     if (d.kind === "is") {
       const word = e.options?.find((o) => o.value === String(d.reset_value))?.label ?? String(d.reset_value);
       return `<p class="mg-hint">${esc(t("mgResetHint_is", word))}</p>`;
@@ -1454,7 +1474,9 @@ export class MagicPush {
         this.paint();
         if (this.wiz.free.open) {
           if (!this.wiz.free.results) this.searchFree(this.wiz.free.query);
-          this.root.querySelector('[data-mg="free-query"]')?.focus({ preventScroll: true });
+          const field = this.root.querySelector('[data-mg="free-query"]');
+          field?.focus({ preventScroll: true });
+          this.revealField(field);
         }
         break;
       case "free-pick": {
