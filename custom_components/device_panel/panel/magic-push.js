@@ -7,7 +7,7 @@
  * baut das Popup gar nicht neu (wizardOpen()). So geht beim Tippen nichts verloren.
  *
  * Aufbau: Liste der Meldungen (Name, Satz, Schalter, Bearbeiten/Umbenennen/Löschen) und ein Assistent in fünf
- * Schritten (Wert · Wann · Text · Versand · Name). Der Assistent hat seit 2.11.0 ein eigenes Fenster (dialog.magic-dlg,
+ * Schritten (Wert · Wann · Versand · Text · Name). Der Assistent hat seit 2.11.0 ein eigenes Fenster (dialog.magic-dlg,
  * docs/mockups/magic-push-dialog-v1, Variante A): Vollbild auf dem Handy, breites Fenster mit Seitenspalte auf dem Desktop.
  * Der Reiter im Popup zeigt nur noch die Liste. Rückblick und Vorschau kommen vom Server (magic_history,
  * magic_preview), damit Panel und Meldung dieselbe Rechnung benutzen.
@@ -893,8 +893,8 @@ export class MagicPush {
       if (d.kind === "is") return String(d.value).trim() !== "" && (e.kind !== "number" || parseNumber(d.value) != null) && !this.forError() && !this.resetError();
       return !this.forError();
     }
-    if (step === 3) return d.message.trim() !== "";
-    if (step === 4) return (!d.recover || d.kind === "change" || d.recover_message.trim() !== "") && !this.repeatError();
+    if (step === 3) return !this.repeatError();
+    if (step === 4) return d.message.trim() !== "" && (!d.recover || d.kind === "change" || d.recover_message.trim() !== "");
     return d.name.trim() !== "";
   }
 
@@ -912,11 +912,11 @@ export class MagicPush {
     w.step = step;
     w.error = "";
     if (step === 5 && !w.draft.nameTouched) w.draft.name = this.suggestName(w.draft);
-    if (step === 3) this.syncDefaults();
+    if (step >= 3) this.syncDefaults();
     this.paint();
     this.scrollTop();
     if (step === 2) this.requestHistory();
-    if (step >= 3) this.requestPreview();
+    if (step >= 4) this.requestPreview();
   }
 
   // --- Assistent: Rückblick und Vorschau ----------------------------------------
@@ -960,7 +960,7 @@ export class MagicPush {
 
   requestPreview() {
     const w = this.wiz;
-    if (!w || w.step < 3) return;
+    if (!w || w.step < 4) return;
     window.clearTimeout(this._pvTimer);
     this._pvTimer = window.setTimeout(() => this.fetchPreview(), PREVIEW_DELAY_MS);
   }
@@ -1297,20 +1297,30 @@ export class MagicPush {
       .join("")}</div>`;
   }
 
+  // Schritt 3: wohin (Empfänger), kritische Mitteilung, Wiederholung
   step3Html() {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const d = this.wiz.draft;
-    const e = this.entity(d.entity_id);
-    const group = this.varGroup();
-    return `<label class="mg-k" for="mg-message">${esc(t("mgMsgLabel"))}</label>
-      <input id="mg-message" class="mg-input" type="text" maxlength="${this.limit("text", 300)}" data-mg-text="message" data-mg-group="main" value="${esc(d.message)}" placeholder="${esc(t("mgMsgPh"))}" autocomplete="off">
-      <label class="mg-k" for="mg-body">${esc(t("mgBodyLabel"))}</label>
-      <textarea id="mg-body" class="mg-text" rows="3" maxlength="${this.limit("text", 300)}" data-mg-text="body" data-mg-group="main" placeholder="${esc(t("mgBodyPh"))}">${esc(d.body)}</textarea>
-      <p class="mg-hint">${esc(t("mgBodyHint"))}</p>
-      <div class="mg-k">${esc(t("mgVarsFor", e?.name || "", t(`mgVarKind_${group}`)))}</div>${this.chipsHtml("main")}
-      <p class="mg-hint">${esc(t("mgVarsWhere"))} ${esc(t(`mgVarHelp_${group}`))}</p>
-      <div data-mg-zone="pv">${this.pvHtml()}</div>`;
+    const change = d.kind === "change";
+    const targetSub = d.target || (String(this.data.default_target || "").startsWith("notify.") ? this.data.default_target : t("mgTargetNone"));
+    let html = `<div class="mg-k">${esc(t("mgTarget"))}</div>
+      <button type="button" class="mg-sel" data-mg="target-toggle" aria-expanded="${this.wiz.targetOpen}"><span>${esc(d.target ? this.niceTarget(d.target) : t("mgTargetDefault"))}<small>${esc(targetSub)}</small></span><span aria-hidden="true">${this.wiz.targetOpen ? "▴" : "▾"}</span></button>`;
+    if (this.wiz.targetOpen) html += `<div class="mg-list" role="listbox">${this.targetListHtml()}</div>`;
+    html += `<p class="mg-hint">${esc(t("mgTargetHint"))}</p>
+      <div class="mg-optrow"><div>${esc(t("mgCritical"))}<small>${esc(t("mgCriticalHint"))}</small></div><label class="switch"><input type="checkbox" data-mg="critical"${d.critical ? " checked" : ""} aria-label="${esc(t("mgCritical"))}"><span></span></label></div>`;
+    if (d.critical) {
+      html += `<div class="mg-vol"><label class="mg-k" for="mg-volume">${esc(t("mgVolume"))}</label>
+        <div class="mg-volrow"><input id="mg-volume" type="range" min="1" max="${VOLUME_MAX}" step="1" value="${d.critical_volume}" data-mg="volume" aria-valuetext="${esc(t("mgVolumeOf", d.critical_volume))}"><output class="mg-volval" for="mg-volume">${esc(t("mgVolumeOf", d.critical_volume))}</output></div>
+        <p class="mg-hint">${esc(t("mgVolumeHint"))}</p></div>`;
+    }
+    if (change) return `${html}<p class="mg-hint">${esc(t("mgChangeNote"))}</p>`;
+    return `${html}<div class="mg-k">${esc(t("mgRepeat"))}</div>
+      ${this.tabsHtml(PRESET_REPEAT.map((s) => ({ on: !d.repeatOwn.text && d.repeat_s === s, attrs: `data-mg="repeat" data-s="${s}"`, label: s ? t(`mgRepeat_${s}`) : t("mgRepeatOnce") })))}
+      <div class="mg-own"><span>${esc(t("mgRepeatOwn"))}</span>
+        <input class="mg-pill num mg-ownin" type="text" inputmode="decimal" data-mg="repeat-own" value="${esc(d.repeatOwn.text)}" placeholder="${esc(t("mgOwnPh"))}" aria-label="${esc(t("mgRepeatOwn"))}" autocomplete="off">
+        <select class="mg-pill" data-mg="repeat-unit" aria-label="${esc(t("mgRepeatOwn"))}">${REPEAT_UNITS.map((u) => `<option value="${u}"${u === d.repeatOwn.unit ? " selected" : ""}>${esc(t(`mgUnit_${u}`))}</option>`).join("")}</select></div>
+      <p class="mg-hint">${esc(t("mgRepeatOnceHint"))}</p>`;
   }
 
   targetListHtml() {
@@ -1329,43 +1339,42 @@ export class MagicPush {
     return html;
   }
 
+  // Schritt 4: Titel und Inhalt der Meldung, auf Wunsch "wieder normal" mit eigenem Titel und Inhalt, Vorschau und Test
   step4Html() {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const d = this.wiz.draft;
+    const e = this.entity(d.entity_id);
+    const group = this.varGroup();
     const change = d.kind === "change";
-    const targetSub = d.target || (String(this.data.default_target || "").startsWith("notify.") ? this.data.default_target : t("mgTargetNone"));
-    let html = `<div class="mg-k">${esc(t("mgTarget"))}</div>
-      <button type="button" class="mg-sel" data-mg="target-toggle" aria-expanded="${this.wiz.targetOpen}"><span>${esc(d.target ? this.niceTarget(d.target) : t("mgTargetDefault"))}<small>${esc(targetSub)}</small></span><span aria-hidden="true">${this.wiz.targetOpen ? "▴" : "▾"}</span></button>`;
-    if (this.wiz.targetOpen) html += `<div class="mg-list" role="listbox">${this.targetListHtml()}</div>`;
-    html += `<p class="mg-hint">${esc(t("mgTargetHint"))}</p>
-      <div class="mg-optrow"><div>${esc(t("mgCritical"))}<small>${esc(t("mgCriticalHint"))}</small></div><label class="switch"><input type="checkbox" data-mg="critical"${d.critical ? " checked" : ""} aria-label="${esc(t("mgCritical"))}"><span></span></label></div>`;
-    if (d.critical) {
-      html += `<div class="mg-vol"><label class="mg-k" for="mg-volume">${esc(t("mgVolume"))}</label>
-        <div class="mg-volrow"><input id="mg-volume" type="range" min="1" max="${VOLUME_MAX}" step="1" value="${d.critical_volume}" data-mg="volume" aria-valuetext="${esc(t("mgVolumeOf", d.critical_volume))}"><output class="mg-volval" for="mg-volume">${esc(t("mgVolumeOf", d.critical_volume))}</output></div>
-        <p class="mg-hint">${esc(t("mgVolumeHint"))}</p></div>`;
-    }
-    if (change) {
-      html += `<p class="mg-hint">${esc(t("mgChangeNote"))}</p>`;
-    } else {
-      html += `<div class="mg-k">${esc(t("mgRepeat"))}</div>
-        ${this.tabsHtml(PRESET_REPEAT.map((s) => ({ on: !d.repeatOwn.text && d.repeat_s === s, attrs: `data-mg="repeat" data-s="${s}"`, label: s ? t(`mgRepeat_${s}`) : t("mgRepeatOnce") })))}
-        <div class="mg-own"><span>${esc(t("mgRepeatOwn"))}</span>
-          <input class="mg-pill num mg-ownin" type="text" inputmode="decimal" data-mg="repeat-own" value="${esc(d.repeatOwn.text)}" placeholder="${esc(t("mgOwnPh"))}" aria-label="${esc(t("mgRepeatOwn"))}" autocomplete="off">
-          <select class="mg-pill" data-mg="repeat-unit" aria-label="${esc(t("mgRepeatOwn"))}">${REPEAT_UNITS.map((u) => `<option value="${u}"${u === d.repeatOwn.unit ? " selected" : ""}>${esc(t(`mgUnit_${u}`))}</option>`).join("")}</select></div>
-        <p class="mg-hint">${esc(t("mgRepeatOnceHint"))}</p>
-        <div class="mg-optrow"><div>${esc(t("mgRecover"))}</div><label class="switch"><input type="checkbox" data-mg="recover"${d.recover ? " checked" : ""} aria-label="${esc(t("mgRecover"))}"><span></span></label></div>`;
-      if (d.recover) {
-        html += `<label class="mg-k" for="mg-recover">${esc(t("mgRecoverText"))}</label>
-          <input id="mg-recover" class="mg-input" type="text" maxlength="${this.limit("text", 300)}" data-mg-text="recover_message" data-mg-group="recover" value="${esc(d.recover_message)}" placeholder="${esc(t("mgMsgPh"))}" autocomplete="off">
-          <label class="mg-k" for="mg-recover-body">${esc(t("mgRecoverBody"))}</label>
-          <textarea id="mg-recover-body" class="mg-text" rows="2" maxlength="${this.limit("text", 300)}" data-mg-text="recover_body" data-mg-group="recover" placeholder="${esc(t("mgBodyPh"))}">${esc(d.recover_body)}</textarea>
-          <p class="mg-hint">${esc(t("mgBodyHint"))}</p>
-          ${this.chipsHtml("recover")}`;
-      }
-    }
-    return `${html}<div data-mg-zone="pv">${this.pvHtml()}</div>`;
+    return `<label class="mg-k" for="mg-message">${esc(t("mgMsgLabel"))}</label>
+      <input id="mg-message" class="mg-input" type="text" maxlength="${this.limit("text", 300)}" data-mg-text="message" data-mg-group="main" value="${esc(d.message)}" placeholder="${esc(t("mgMsgPh"))}" autocomplete="off">
+      <label class="mg-k" for="mg-body">${esc(t("mgBodyLabel"))}</label>
+      <textarea id="mg-body" class="mg-text" rows="3" maxlength="${this.limit("text", 300)}" data-mg-text="body" data-mg-group="main" placeholder="${esc(t("mgBodyPh"))}">${esc(d.body)}</textarea>
+      <p class="mg-hint">${esc(t("mgBodyHint"))}</p>
+      <div class="mg-k">${esc(t("mgVarsFor", e?.name || "", t(`mgVarKind_${group}`)))}</div>${this.chipsHtml("main")}
+      <p class="mg-hint">${esc(t("mgVarsWhere"))} ${esc(t(`mgVarHelp_${group}`))}</p>
+      ${change ? "" : this.recoverHtml()}
+      <div data-mg-zone="pv">${this.pvHtml()}</div>`;
   }
+
+  // "Auch melden, wenn wieder normal" mit eigenem Titel und Inhalt (gehört zum Text der Meldung)
+  recoverHtml() {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const d = this.wiz.draft;
+    let html = `<div class="mg-optrow"><div>${esc(t("mgRecover"))}</div><label class="switch"><input type="checkbox" data-mg="recover"${d.recover ? " checked" : ""} aria-label="${esc(t("mgRecover"))}"><span></span></label></div>`;
+    if (d.recover) {
+      html += `<label class="mg-k" for="mg-recover">${esc(t("mgRecoverText"))}</label>
+        <input id="mg-recover" class="mg-input" type="text" maxlength="${this.limit("text", 300)}" data-mg-text="recover_message" data-mg-group="recover" value="${esc(d.recover_message)}" placeholder="${esc(t("mgMsgPh"))}" autocomplete="off">
+        <label class="mg-k" for="mg-recover-body">${esc(t("mgRecoverBody"))}</label>
+        <textarea id="mg-recover-body" class="mg-text" rows="2" maxlength="${this.limit("text", 300)}" data-mg-text="recover_body" data-mg-group="recover" placeholder="${esc(t("mgBodyPh"))}">${esc(d.recover_body)}</textarea>
+        <p class="mg-hint">${esc(t("mgBodyHint"))}</p>
+        ${this.chipsHtml("recover")}`;
+    }
+    return html;
+  }
+
 
   step5Html() {
     const esc = (v) => this.esc(v);

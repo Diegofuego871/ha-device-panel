@@ -1,5 +1,5 @@
 // Magic Push (2.6.0): vierter Reiter im Geräte-Popup. Liste (Zähler im Reiter), Assistent in fünf Schritten
-// (Wert · Wann · Text · Versand · Name) für Zahl und Zustand, freie Zeit, Rückblick (auch leer und ohne
+// (Wert · Wann · Versand · Text · Name) für Zahl und Zustand, freie Zeit, Rückblick (auch leer und ohne
 // Recorder), Variablen einfügen, Vorschau, Empfänger-Auswahl, Wiederholung, eigener Text für "wieder normal",
 // Kritische Mitteilung mit Lautstärke, Test senden, Speichern, Umbenennen, Ein-/Ausschalten, Löschen mit Bestätigung, Bearbeiten, Fehler beim
 // Speichern, Assistent übersteht den Neuaufbau des Popups. Deutsch und Englisch, Desktop und Handy,
@@ -150,9 +150,35 @@ for (const lang of ["de", "en"]) {
     await p.screenshot({ path: `${outDir}/magic-${tag.replace("/", "-")}-2.png` });
     await next();
 
-    // --- Schritt 3: Text ---
+    // --- Schritt 3: Versand (Empfänger, kritisch, Wiederholung) ---
     await step(3);
-    check(`[${tag}] Schritt 3: Standardtext zur Art, Variablen der Zahl`, (await ev(`return r.querySelector('${W} [data-mg-text="message"]').value`)).includes("{entity}") && (await ev(`return [...r.querySelectorAll('${W} .mg-chips button.sug')].map(b => b.dataset.var).join()`)) === "value,unit,threshold");
+    check(`[${tag}] Schritt 3: Empfänger = Standard`, (await text(`${W} .mg-sel`)).includes("notify.mobile_app_dani_iphone"));
+    await tap('[data-mg="target-toggle"]');
+    const groups = await ev(`return [...r.querySelectorAll('${W} .mg-opt-head')].map(h => h.textContent.trim().toLowerCase()).join()`);
+    check(`[${tag}] Empfänger-Liste: Gruppen, Dienste, Entitäten`, groups.split(",").length === 3, groups);
+    await tap('.mg-opt-row[data-v="notify.familie"]');
+    check(`[${tag}] Gruppe gewählt, Liste zu`, (await text(`${W} .mg-sel`)).includes("notify.familie") && !(await ev(`return !!r.querySelector('${W} .mg-list')`)));
+    // Kritische Mitteilung: Schalter, dann Lautstärke 1 bis 10
+    check(`[${tag}] kritisch zuerst aus, kein Regler`, (await ev(`return !r.querySelector('${W} input[data-mg="critical"]').checked && !r.querySelector('${W} input[data-mg="volume"]')`)));
+    await tap('input[data-mg="critical"]');
+    check(`[${tag}] kritisch an: Regler 1 bis 10, Vorgabe 10`, await wait(`const v=r.querySelector('${W} input[data-mg="volume"]'); return !!v && v.min === "1" && v.max === "10" && v.step === "1" && v.value === "10" && r.querySelector('${W} .mg-volval').textContent.trim() === ${JSON.stringify(lang === "de" ? "10 von 10" : "10 of 10")}`));
+    await ev(`const v=r.querySelector('${W} input[data-mg="volume"]'); v.value="7"; v.dispatchEvent(new Event("input",{bubbles:true}))`);
+    check(`[${tag}] Lautstärke 7: Anzeige folgt`, (await text(`${W} .mg-volval`)) === (lang === "de" ? "7 von 10" : "7 of 10"));
+    check(`[${tag}] Schritt 3 mit Regler ohne Querscrollen`, (await overflow()) <= 0);
+    await p.screenshot({ path: `${outDir}/magic-${tag.replace("/", "-")}-3.png` });
+    // Wiederholung: eigene Zeit 3 Std.
+    await fill('input[data-mg="repeat-own"]', "3");
+    await ev(`const s=r.querySelector('${W} select[data-mg="repeat-unit"]'); s.value="3600"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
+    check(`[${tag}] Wiederholung frei: keine Voreinstellung leuchtet`, await wait(`return !r.querySelector('${W} [data-mg="repeat"].on')`));
+    await tap('[data-mg="repeat"][data-s="1800"]');
+    check(`[${tag}] Voreinstellung 30 Min. ersetzt die freie Zeit`, await wait(`return r.querySelector('${W} [data-mg="repeat"].on')?.dataset.s === "1800" && r.querySelector('${W} input[data-mg="repeat-own"]').value === ""`));
+    await fill('input[data-mg="repeat-own"]', "3");
+    await ev(`const s=r.querySelector('${W} select[data-mg="repeat-unit"]'); s.value="3600"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
+    await next();
+
+    // --- Schritt 4: Text und "wieder normal" ---
+    await step(4);
+    check(`[${tag}] Schritt 4: Standardtext zur Art, Variablen der Zahl`, (await ev(`return r.querySelector('${W} [data-mg-text="message"]').value`)).includes("{entity}") && (await ev(`return [...r.querySelectorAll('${W} .mg-chips button.sug')].map(b => b.dataset.var).join()`)) === "value,unit,threshold");
     await fill('[data-mg-text="message"]', "Keller kalt: ");
     await tap('[data-mg="var"][data-var="value"]');
     await tap('[data-mg="var"][data-var="unit"]');
@@ -176,38 +202,12 @@ for (const lang of ["de", "en"]) {
     await fill('[data-mg-text="body"]', "Aktuell {value} {unit}\nSchwelle {threshold} {unit}");
     check(`[${tag}] Vorschau mit eingesetzten Werten`, await wait(`return r.querySelector('${W} .mg-pv .pv-title')?.textContent.startsWith("Keller kalt: ") && !r.querySelector('${W} .mg-pv .pv-title').textContent.includes("{")`), await text(`${W} .mg-pv .pv-title`));
     check(`[${tag}] Vorschau-Hinweis`, (await text(`${W} .mg-pv .opt-short`)).includes(T.pvNote));
+    check(`[${tag}] kritisch (aus Schritt 3): Vorschau trägt den Vermerk`, await wait(`return r.querySelector('${W} .mg-pv .pv-app')?.textContent.includes(${JSON.stringify(lang === "de" ? "kritisch" : "critical")})`));
     // Der Neuaufbau des Popups (Abfrage alle 10 s) lässt den Assistenten in Ruhe
     await fill('[data-mg-text="message"]', "Keller kalt: {value} {unit} (unter {threshold}) ✔");
     await ev(`r.host._renderDevice(true)`);
     await ev(`r.host._devForce = true; r.host._renderDevice()`);
     check(`[${tag}] Text übersteht den Neuaufbau des Popups`, (await ev(`return r.querySelector('${W} [data-mg-text="message"]')?.value`)) === "Keller kalt: {value} {unit} (unter {threshold}) ✔");
-    await next();
-
-    // --- Schritt 4: Versand ---
-    await step(4);
-    check(`[${tag}] Schritt 4: Empfänger = Standard`, (await text(`${W} .mg-sel`)).includes("notify.mobile_app_dani_iphone"));
-    await tap('[data-mg="target-toggle"]');
-    const groups = await ev(`return [...r.querySelectorAll('${W} .mg-opt-head')].map(h => h.textContent.trim().toLowerCase()).join()`);
-    check(`[${tag}] Empfänger-Liste: Gruppen, Dienste, Entitäten`, groups.split(",").length === 3, groups);
-    await tap('.mg-opt-row[data-v="notify.familie"]');
-    check(`[${tag}] Gruppe gewählt, Liste zu`, (await text(`${W} .mg-sel`)).includes("notify.familie") && !(await ev(`return !!r.querySelector('${W} .mg-list')`)));
-    // Kritische Mitteilung: Schalter, dann Lautstärke 1 bis 10
-    check(`[${tag}] kritisch zuerst aus, kein Regler`, (await ev(`return !r.querySelector('${W} input[data-mg="critical"]').checked && !r.querySelector('${W} input[data-mg="volume"]')`)));
-    await tap('input[data-mg="critical"]');
-    check(`[${tag}] kritisch an: Regler 1 bis 10, Vorgabe 10`, await wait(`const v=r.querySelector('${W} input[data-mg="volume"]'); return !!v && v.min === "1" && v.max === "10" && v.step === "1" && v.value === "10" && r.querySelector('${W} .mg-volval').textContent.trim() === ${JSON.stringify(lang === "de" ? "10 von 10" : "10 of 10")}`));
-    check(`[${tag}] kritisch: Vorschau trägt den Vermerk`, await wait(`return r.querySelector('${W} .mg-pv .pv-app')?.textContent.includes(${JSON.stringify(lang === "de" ? "kritisch" : "critical")})`));
-    await ev(`const v=r.querySelector('${W} input[data-mg="volume"]'); v.value="7"; v.dispatchEvent(new Event("input",{bubbles:true}))`);
-    check(`[${tag}] Lautstärke 7: Anzeige folgt`, (await text(`${W} .mg-volval`)) === (lang === "de" ? "7 von 10" : "7 of 10"));
-    check(`[${tag}] Schritt 4 mit Regler ohne Querscrollen`, (await overflow()) <= 0);
-    await p.screenshot({ path: `${outDir}/magic-${tag.replace("/", "-")}-4.png` });
-    // Wiederholung: eigene Zeit 3 Std.
-    await fill('input[data-mg="repeat-own"]', "3");
-    await ev(`const s=r.querySelector('${W} select[data-mg="repeat-unit"]'); s.value="3600"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
-    check(`[${tag}] Wiederholung frei: keine Voreinstellung leuchtet`, await wait(`return !r.querySelector('${W} [data-mg="repeat"].on')`));
-    await tap('[data-mg="repeat"][data-s="1800"]');
-    check(`[${tag}] Voreinstellung 30 Min. ersetzt die freie Zeit`, await wait(`return r.querySelector('${W} [data-mg="repeat"].on')?.dataset.s === "1800" && r.querySelector('${W} input[data-mg="repeat-own"]').value === ""`));
-    await fill('input[data-mg="repeat-own"]', "3");
-    await ev(`const s=r.querySelector('${W} select[data-mg="repeat-unit"]'); s.value="3600"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
     // "wieder normal" mit eigenem Text
     check(`[${tag}] "wieder normal" zuerst aus`, (await ev(`return r.querySelector('${W} [data-mg-text="recover_message"]')`)) === null);
     await tap('input[data-mg="recover"]');
@@ -273,8 +273,10 @@ for (const lang of ["de", "en"]) {
     await tap('button.mg-stp[data-step="5"]');
     await headingOk(T.q5);
     check(`[${tag}] Sprung zu Schritt 5: Name, Text und Empfänger übernommen`, (await ev(`return r.querySelector('${W} input[data-mg="name"]').value`)) === "Kellertemperatur");
+    await tap('button.mg-stp[data-step="3"]');
+    check(`[${tag}] Schritt 3 übernimmt Gruppe, Wiederholung und kritische Mitteilung`, (await text(`${W} .mg-sel`)).includes("notify.familie") && (await ev(`return r.querySelector('${W} input[data-mg="repeat-own"]').value`)) === "3" && (await ev(`return r.querySelector('${W} input[data-mg="critical"]').checked && r.querySelector('${W} input[data-mg="volume"]').value === "7"`)));
     await tap('button.mg-stp[data-step="4"]');
-    check(`[${tag}] Schritt 4 übernimmt Gruppe, Wiederholung und "wieder normal"-Text`, (await text(`${W} .mg-sel`)).includes("notify.familie") && (await ev(`return r.querySelector('${W} input[data-mg="repeat-own"]').value`)) === "3" && (await ev(`return r.querySelector('${W} [data-mg-text="recover_message"]').value`)) === "Keller wieder warm: {value} {unit}" && (await ev(`return r.querySelector('${W} input[data-mg="critical"]').checked && r.querySelector('${W} input[data-mg="volume"]').value === "7"`)));
+    check(`[${tag}] Schritt 4 übernimmt Titel, Inhalt und den "wieder normal"-Text`, (await ev(`return r.querySelector('${W} [data-mg-text="recover_message"]').value`)) === "Keller wieder warm: {value} {unit}" && (await ev(`return r.querySelector('${W} [data-mg-text="message"]').value.length > 0`)));
     await tap('button.mg-stp[data-step="5"]');
     await fill('input[data-mg="name"]', "Keller zu kalt");
     await tap('[data-mg="save"]');
@@ -295,8 +297,10 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Zustand: Hinweis nennt das Wort`, (await text(`${W} [data-mg-zone="resethint"]`)).includes(lang === "de" ? "geschlossen" : "closed"), await text(`${W} [data-mg-zone="resethint"]`));
     await fill('input[data-mg="for-own"]', "45");
     await next();
+    await next();
     check(`[${tag}] Zustand: Variablen nur {value}`, await wait(`return [...r.querySelectorAll('${W} .mg-chips button.sug')].map(b => b.dataset.var).join() === "value"`));
     // Kein Verlauf: leer und ohne Recorder
+    await tap('[data-mg="back"]');
     await tap('[data-mg="back"]');
     await p.evaluate(() => { window.__magicHist = "empty"; });
     await tap('[data-mg="kind"][data-kind="change"]');
@@ -309,9 +313,9 @@ for (const lang of ["de", "en"]) {
     await tap('[data-mg="kind"][data-kind="change"]');
     check(`[${tag}] ändert sich: kein Abschnitt "Zurücksetzen"`, !(await ev(`return !!r.querySelector('${W} [data-mg="reset-mode"]')`)));
     await next();
-    check(`[${tag}] ändert sich: Variablen old/new`, await wait(`return [...r.querySelectorAll('${W} .mg-chips button.sug')].map(b => b.dataset.var).join() === "value,unit,old,new"`));
+    check(`[${tag}] ändert sich: keine Wiederholung (Schritt 3)`, (await ev(`return !r.querySelector('${W} [data-mg="repeat"]')`)));
     await next();
-    check(`[${tag}] ändert sich: keine Wiederholung, kein "wieder normal"`, (await ev(`return !r.querySelector('${W} [data-mg="repeat"]') && !r.querySelector('${W} input[data-mg="recover"]')`)));
+    check(`[${tag}] ändert sich: Variablen old/new, kein "wieder normal" (Schritt 4)`, await wait(`return [...r.querySelectorAll('${W} .mg-chips button.sug')].map(b => b.dataset.var).join() === "value,unit,old,new" && !r.querySelector('${W} input[data-mg="recover"]')`));
     await next();
     // Speichern schlägt fehl: Fehler im Assistenten, nichts geht verloren
     await p.evaluate(() => { window.__magicSaveFails = "Dienst nicht erreichbar"; });
@@ -354,10 +358,10 @@ for (const lang of ["de", "en"]) {
     await tap('[data-mg="kind"][data-kind="above"]');
     await fill('input[data-mg="value"]', "10");
     await next();
+    await next();
     check(`[${tag}] Titel-Vorgabe nutzt den Namen der freien Entität`, await wait(`return r.querySelector('${W} [data-mg-text="message"]').value.includes("{entity}")`));
     await fill('[data-mg-text="message"]', "{device}: {entity} {value} {unit}");
     check(`[${tag}] Vorschau: {device} bleibt das Gerät, {entity} und Wert kommen von der freien Entität`, await wait(`const t=r.querySelector('${W} .mg-pv .pv-title')?.textContent; return t?.startsWith("Klimasensor Keller: Absolute Feuchte berechnet") && t.endsWith("g/m³")`), await text(`${W} .mg-pv .pv-title`));
-    await next();
     await next();
     await fill('input[data-mg="name"]', "Feuchte hoch");
     await tap('[data-mg="save"]');

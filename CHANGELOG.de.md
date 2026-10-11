@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.12.0] - 2026-10-11
+
+Magic Push: neue Reihenfolge der Schritte.
+
+### Geändert
+
+- Der Assistent von Magic Push fragt jetzt zuerst, wohin die Meldung geht, und dann, was darin steht (Wunsch des Nutzers).
+  Schritt 3 ist "Versand": Empfänger, kritische Mitteilung mit Lautstärke und Wiederholen. Schritt 4 ist "Text": Titel und
+  Inhalt der Meldung und, wenn gewünscht, "Auch melden, wenn wieder normal" mit eigenem Titel und Inhalt, alles in einem
+  Fenster, danach die Vorschau und "Test senden". Der Test nutzt so schon den gewählten Empfänger, die Lautstärke und die
+  Wiederholung. Schritt 5 bleibt "Name". Bestehende Meldungen bleiben unverändert; beim Bearbeiten stehen die Schritte in
+  der Leiste in der neuen Reihenfolge.
+
 ## [2.11.0] - 2026-10-11
 
 Magic Push: der Assistent bekommt ein eigenes Fenster.
@@ -2541,6 +2554,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0
 [2.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.11.0
 [2.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.10.0
 [2.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.8.0

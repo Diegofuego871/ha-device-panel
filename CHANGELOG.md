@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.12.0] - 2026-10-11
+
+Magic Push: new order of the steps.
+
+### Changed
+
+- The assistant of Magic Push now asks where the message goes before what it says (requested by the user). Step 3 is
+  "Delivery": recipient, critical notification with volume, and repeating. Step 4 is "Text": title and content of the
+  message and, if wanted, "Also notify when back to normal" with its own title and content, all in one window, followed by
+  the preview and "Send test". The test therefore already uses the chosen recipient, volume and repetition. Step 5 stays
+  "Name". Existing messages are unchanged; when editing, the steps in the bar are in the new order.
+
 ## [2.11.0] - 2026-10-11
 
 Magic Push: the assistant gets its own window.
@@ -2460,6 +2472,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0
 [2.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.11.0
 [2.10.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.10.0
 [2.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.8.0

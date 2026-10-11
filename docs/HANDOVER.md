@@ -3,7 +3,16 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.11.0, Magic Push: Assistent im eigenen Fenster)
+## Stand (2.12.0, Magic Push: Schrittfolge Versand vor Text)
+
+- 2.12.0 (Wunsch des Nutzers): Schritte des Assistenten: 1 Wert, 2 Wann, 3 Versand (`step3Html`: Empfänger, kritisch +
+  Lautstärke, Wiederholen; bei "ändert sich" nur Empfänger/kritisch und Hinweis), 4 Text (`step4Html`: Titel, Inhalt,
+  Variablen, "wieder normal" mit eigenem Titel/Inhalt in `recoverHtml()`, Vorschau-Zone, Test), 5 Name. `canNext`: Schritt 3
+  `!repeatError()`, Schritt 4 Titel gefüllt und (bei "wieder normal") dessen Titel gefüllt. Vorschau wird erst ab Schritt 4
+  geholt (`requestPreview`, `goto`); `syncDefaults` ab Schritt 3. `pvHtml`: Test nur in Schritt 4 (`w.step === 4`). Strings
+  `mgStepName_3/4`, `mgQ_3/4` getauscht. Tests: `magic-e2e` (488), `magicall-e2e` (120).
+
+## Stand davor (2.11.0, Magic Push: Assistent im eigenen Fenster)
 
 - 2.11.0 (Entscheid des Nutzers: Variante A, Vollbild auf dem Handy; Rest nach Empfehlung, Mockups
   `docs/mockups/magic-push-dialog-v1`): Der Assistent lebt in `dialog.magic-dlg` (steht fest im Panel-Template, ein

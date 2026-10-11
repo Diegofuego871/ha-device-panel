@@ -372,3 +372,9 @@ HA-Nachbau prüfen.
   Formular links; beide Spalten scrollen für sich. Schmal bleibt alles in einer Spalte in der Reihenfolge des Formulars.
 - Neue Fenster dieser Art: Kopf schmal, Knöpfe fest unten, Inhalt scrollt; Rückfrage inline in der Fusszeile statt eines
   weiteren Fensters.
+
+## Magic Push: Schrittfolge (seit 2.12.0, Wunsch des Nutzers)
+
+- Wert · Wann · Versand · Text · Name. Zuerst wohin (Empfänger, kritisch, Wiederholen), dann was: Titel und Inhalt der
+  Meldung und "wieder normal" mit eigenem Titel und Inhalt stehen im selben Schritt, darunter Vorschau und "Test senden"
+  (der Test kennt so Empfänger, Lautstärke und Wiederholung).
