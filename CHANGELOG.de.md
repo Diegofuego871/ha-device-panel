@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.6] - 2026-10-11
+
+Stift am Gerätenamen ohne blauen Ring.
+
+### Geändert
+
+- Der Stift neben dem Gerätenamen (Umbenennen) ist ein kleiner Kreis auf der leicht getönten Fläche, wie die Fläche
+  der neuen Reiter, statt eines blauen Rings (Wunsch des Nutzers). Der Tastatur-Fokus wird in einer neutralen Farbe
+  gezeigt.
+
+### Behoben
+
+- Auf dem Handy zeigt das Öffnen des Geräte-Popups, der Einstellungen, des Statistik-Fensters oder des Prompt-Editors
+  keinen Fokusrahmen mehr am ersten Knopf (der Stift erschien mit blauem Ring).
+
 ## [2.0.5] - 2026-10-11
 
 Reiter als Segmentschalter und auf dem Handy eine Zeile für Sortierung und Ansicht.
@@ -2228,6 +2243,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.0.6]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.6
 [2.0.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.5
 [2.0.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.4
 [2.0.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.3

@@ -3,7 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.0.5, Einstellungen in fünf Abschnitten)
+## Stand (2.0.6, Einstellungen in fünf Abschnitten)
+
+- 2.0.6: Stift am Gerätenamen (`.dn-edit`) als getönter Kreis statt blauem Ring, Tastatur-Fokus neutral; `_blurOnTouch()`
+  nimmt nach `showModal` auf dem Handy den Fokus vom ersten Knopf (Popup, Einstellungen, Statistik, Prompt).
 
 - 2.0.5: Reiter (`.mon-tabs`, `.sub-tabs`) als Segmentschalter nach der UniFi-Aufnahme (Mockups `docs/mockups/segmented-v1`,
   mit `prototype.html`): Fläche, gleich breite Felder (Grid), Kapsel `.seg-pill` als eigenes Element, das `_initSeg()`

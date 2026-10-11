@@ -429,9 +429,10 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .dlg-avatar.warn { background: var(--dp-warning-soft); color: var(--dp-warning); }
 .dlg-avatar.none { background: var(--dp-subtle); color: var(--dp-text2); }
 .dlg-title { flex: 1 1 auto; min-width: 0; }
-.dlg-title h2 .dn-edit { display: inline-grid; place-items: center; width: 28px; height: 28px; margin-left: 6px; vertical-align: middle; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--dp-text2); cursor: pointer; }
-.dlg-title h2 .dn-edit:hover { background: var(--dp-hover); color: var(--dp-text); }
-.dlg-title h2 .dn-edit:focus-visible { outline: 2px solid var(--dp-primary); }
+/* Stift am Gerätenamen im Stil der Reiter (seit 2.0.6): kleiner Kreis auf der leicht getönten Fläche statt blauem Ring; auch der Tastatur-Fokus neutral */
+.dlg-title h2 .dn-edit { display: inline-grid; place-items: center; width: 28px; height: 28px; margin-left: 6px; vertical-align: middle; padding: 0; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--dp-text) 7%, var(--dp-card)); color: color-mix(in srgb, var(--dp-text) 72%, transparent); cursor: pointer; transition: background .2s ease, color .2s ease; }
+.dlg-title h2 .dn-edit:hover { background: color-mix(in srgb, var(--dp-text) 13%, var(--dp-card)); color: var(--dp-text); }
+.dlg-title h2 .dn-edit:focus-visible { outline: 2px solid color-mix(in srgb, var(--dp-text) 45%, transparent); outline-offset: 1px; }
 .dn-form { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; }
 .dn-input { flex: 1 1 auto; min-width: 0; height: 38px; padding: 0 12px; border: 1px solid var(--dp-primary); border-radius: 10px; background: var(--dp-bg); color: var(--dp-text); font: inherit; font-size: 16px; }
 .dn-btn { flex: none; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid var(--dp-divider); border-radius: 50%; background: transparent; color: var(--dp-text2); cursor: pointer; }

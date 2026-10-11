@@ -910,6 +910,12 @@ class DevicePanel extends HTMLElement {
     this._segMO.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
   }
 
+  // Kein Fokusrahmen beim Öffnen eines Fensters per Tipp (showModal fokussiert den ersten Knopf, auf dem Handy wäre das
+  // zum Beispiel der Stift am Gerätenamen blau umrandet).
+  _blurOnTouch() {
+    if (window.matchMedia?.(TOUCH_QUERY).matches) this.shadowRoot.activeElement?.blur();
+  }
+
   _deepLink() {
     const top = this._topWindow();
     if (!top || this._loading || this._error) return;
@@ -3305,6 +3311,7 @@ class DevicePanel extends HTMLElement {
       if (typeof dlg.showModal === "function") dlg.showModal();
       else dlg.setAttribute("open", "");
     }
+    this._blurOnTouch();
     dlg.scrollTop = 0;
     this._stickDevTabs(dlg);
     this._loadDetail(true);
@@ -4115,6 +4122,7 @@ class DevicePanel extends HTMLElement {
       if (typeof dlg.showModal === "function") dlg.showModal();
       else dlg.setAttribute("open", "");
     }
+    this._blurOnTouch();
     dlg.scrollTop = 0;
     this._loadHistory(true);
   }
@@ -4506,6 +4514,7 @@ class DevicePanel extends HTMLElement {
       if (typeof dialog.showModal === "function") dialog.showModal();
       else dialog.setAttribute("open", "");
     }
+    this._blurOnTouch();
     this._loadVersion(false);
     const st = this._settings;
     try {
@@ -4670,6 +4679,7 @@ class DevicePanel extends HTMLElement {
       if (typeof dlg.showModal === "function") dlg.showModal();
       else dlg.setAttribute("open", "");
     }
+    this._blurOnTouch();
     dlg.scrollTop = 0;
   }
 

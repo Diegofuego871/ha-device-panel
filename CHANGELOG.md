@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.0.6] - 2026-10-11
+
+Pencil at the device name without the blue ring.
+
+### Changed
+
+- The pencil next to the device name (rename) is a small circle on the lightly tinted surface, like the area of the
+  new tabs, instead of a blue ring (requested by the user). The keyboard focus is shown in a neutral colour.
+
+### Fixed
+
+- On the phone, opening the device pop-up, the settings, the statistics window or the prompt editor no longer shows
+  a focus ring on the first button (the pencil appeared with a blue ring).
+
 ## [2.0.5] - 2026-10-11
 
 Tabs as a segmented control, and one line for sorting and view on the phone.
@@ -2158,6 +2172,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[2.0.6]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.6
 [2.0.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.5
 [2.0.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.4
 [2.0.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.3
