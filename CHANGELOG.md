@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.0.8] - 2026-10-11
+
+A clear sign for a switched-off notification in the graphics.
+
+### Changed
+
+- The end point of a switched-off notification ("No push") is a grey ring with a diagonal stroke instead of a dashed
+  ring that looked like a pixel error (requested by the user, mockups `off-marker-v1`, variant B). This applies to all
+  graphics: overview, the settings tabs, integration detail and device pop-up. The bars of "Outage" and "New", which
+  showed no sign at all when switched off, now show the same ring at the end of the dashed line.
+
 ## [2.0.7] - 2026-10-11
 
 Settings per device in one place; "Display" only has the filter chips.
@@ -2189,6 +2200,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[2.0.8]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.8
 [2.0.7]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.7
 [2.0.6]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.6
 [2.0.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.5

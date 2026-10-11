@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.8] - 2026-10-11
+
+Klares Zeichen für eine ausgeschaltete Meldung in den Grafiken.
+
+### Geändert
+
+- Der Endpunkt einer ausgeschalteten Meldung ("Kein Push") ist ein grauer Ring mit Schrägstrich statt eines
+  gestrichelten Rings, der wie ein Pixelfehler aussah (Wunsch des Nutzers, Mockups `off-marker-v1`, Variante B). Das
+  gilt für alle Grafiken: Übersicht, die Reiter der Einstellungen, Detail einer Integration und Geräte-Popup. Die
+  Balken bei "Ausfall" und "Neu", die ausgeschaltet gar kein Zeichen zeigten, zeigen jetzt denselben Ring am Ende
+  der gestrichelten Linie.
+
 ## [2.0.7] - 2026-10-11
 
 Einstellungen pro Gerät an einem Ort; "Darstellung" hat nur noch die Filter-Chips.
@@ -2260,6 +2272,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.0.8]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.8
 [2.0.7]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.7
 [2.0.6]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.6
 [2.0.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.5

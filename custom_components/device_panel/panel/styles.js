@@ -741,7 +741,10 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .mtl.mtl-b .mtl-mk i { border-color: var(--dp-warning); }
 .mtl-mk.mk-p i, .mtl.mtl-b .mtl-mk.mk-p i { border-color: var(--dp-primary); background: var(--dp-primary); }
 .mtl-mk.mk-both i { border-color: var(--dp-error); background: var(--dp-primary); box-shadow: inset 0 0 0 2px var(--dp-card); }
-.mtl-mk.mk-off i, .mtl.mtl-b .mtl-mk.mk-off i { border-color: var(--dp-text3); border-style: dashed; }
+/* Meldung aus (seit 2.0.8, Wunsch des Nutzers, docs/mockups/off-marker-v1, B): grauer Ring mit Schrägstrich statt gestricheltem Ring, der wie ein Pixelfehler aussah;
+   bei den Balken (Ausfall, Neu) steht er am Ende der gestrichelten Linie */
+.mtl-mk.mk-off i, .mtl.mtl-b .mtl-mk.mk-off i { position: relative; border-color: var(--dp-text3); border-style: solid; }
+.mtl-mk.mk-off i::before, .ptl-row.mk-off .ptl-track i::before { content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 2px; border-radius: 1px; background: var(--dp-text3); transform: translate(-50%, -50%) rotate(-45deg); }
 .mtl-mk.mk-ghost { opacity: .55; }
 .mtl-mk.mk-ghost i { border-style: dashed; }
 .mtl-mk b { display: block; color: var(--dp-text); font-size: 11.5px; font-weight: 600; }
@@ -771,7 +774,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .ptl-row.mk-p .ptl-track::before { background: linear-gradient(90deg, color-mix(in srgb, var(--dp-primary) 35%, transparent), var(--dp-primary)); }
 .ptl-row.mk-p .ptl-track i { border-color: var(--dp-primary); background: var(--dp-primary); box-shadow: inset 0 0 0 2px var(--dp-card); }
 .ptl-row.mk-off .ptl-track::before { height: 0; border-top: 2px dashed var(--dp-text3); background: none; top: 6px; }
-.ptl-row.mk-off .ptl-track i { display: none; }
+.ptl-row.mk-off .ptl-track i { border-color: var(--dp-text3); }
 .mtl-note { display: flex; align-items: flex-start; gap: 4px; margin: 4px 0 2px; }
 /* Ein Titelstil für jedes neue Thema in den Einstellungen (seit 1.43.0): gross, mit Akzentbalken */
 .mon-grp, .set-title, .ex-title { display: flex; align-items: center; gap: 10px; margin: 28px 0 8px; color: var(--dp-text); font-size: 18px; font-weight: 700; line-height: 1.25; letter-spacing: 0; text-transform: none; }

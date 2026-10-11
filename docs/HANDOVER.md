@@ -3,7 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.0.7, Einstellungen in fünf Abschnitten)
+## Stand (2.0.8, Einstellungen in fünf Abschnitten)
+
+- 2.0.8: Zeichen für "Meldung aus" (`.mk-off`) in allen Grafiken: grauer Ring mit Schrägstrich (Mockups
+  `docs/mockups/off-marker-v1`, B); bei den Balken steht der Ring am Ende der gestrichelten Linie. Nur Stile.
 
 - 2.0.7: Einstellungen pro Gerät an einem Ort: "Geräte im Panel" › Reiter "Pro Gerät" (`devset`, alle fünf Override-Listen
   `_overridesHtml`: offline, notify, battery, connection, signal; Zähler über `_subCount("devset")`). Die globalen
