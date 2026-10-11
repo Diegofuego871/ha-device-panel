@@ -1063,6 +1063,9 @@ class DevicePanel extends HTMLElement {
     this._bindPulse(root.querySelector("dialog.pulse-dlg"));
     this._bindLog(root.querySelector("dialog.log-dlg"));
     this._bindPrompt(root.querySelector("dialog.prompt-dlg"));
+    // Auf dem Handy gibt der Browser beim Schliessen eines Fensters den Fokus an die antippte Kachel zurück und zeigt dort einen
+    // blauen Ring (zum Beispiel an der Kachel "Ausfall-Puls"). "close" steigt nicht auf, darum in der Einfangphase.
+    root.addEventListener("close", () => this._blurOnTouch(), true);
     this._initSeg(root);
     // Zeilen und Karten sind keine Buttons (Tabellensemantik); Tastatur
     // deshalb selbst behandeln.

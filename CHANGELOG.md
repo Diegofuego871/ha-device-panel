@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.0.9] - 2026-10-11
+
+Blue ring left over after closing a window on the phone.
+
+### Fixed
+
+- On the phone, a blue ring stayed around the tile "Outage pulse" (and could stay around other tapped elements) after
+  opening and closing its window: the browser gives the focus back to the tapped element when a window closes and
+  shows a focus ring there. On touch devices the focus is now released when a window closes (pulse, device
+  pop-up, settings, view, statistics, areas, log, prompt editor). The keyboard focus on the desktop is not affected.
+
 ## [2.0.8] - 2026-10-11
 
 A clear sign for a switched-off notification in the graphics.
@@ -2200,6 +2211,7 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
+[2.0.9]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.9
 [2.0.8]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.8
 [2.0.7]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.7
 [2.0.6]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.6

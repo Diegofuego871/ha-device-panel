@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.9] - 2026-10-11
+
+Blauer Ring nach dem Schliessen eines Fensters auf dem Handy.
+
+### Behoben
+
+- Auf dem Handy blieb nach dem Öffnen und Schliessen des Fensters ein blauer Ring um die Kachel "Ausfall-Puls" stehen
+  (und konnte bei anderen angetippten Elementen stehen bleiben): Der Browser gibt beim Schliessen eines Fensters den
+  Fokus an das angetippte Element zurück und zeigt dort einen Fokusring. Auf Touch-Geräten wird der Fokus beim
+  Schliessen jetzt losgelassen (Puls, Geräte-Popup, Einstellungen, Ansicht, Statistik, Bereiche, Protokoll,
+  Prompt-Editor). Der Tastatur-Fokus auf dem Desktop bleibt unberührt.
+
 ## [2.0.8] - 2026-10-11
 
 Klares Zeichen für eine ausgeschaltete Meldung in den Grafiken.
@@ -2272,6 +2284,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.0.9]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.9
 [2.0.8]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.8
 [2.0.7]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.7
 [2.0.6]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.6
