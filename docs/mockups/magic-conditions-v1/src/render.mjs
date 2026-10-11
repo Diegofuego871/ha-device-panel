@@ -4,6 +4,7 @@
 //   A: Bedingungskarten; "Bedingung hinzufügen" öffnet die Auswahl wie Schritt 1, danach die Bedingung (Reiterleiste, Wert)  <- Empfehlung
 //   B: Karten mit eingebautem Editor; die Entität wählt man in der Karte aus einer Liste
 //   C: Satz-Baukasten: die Meldung als Satz mit Bausteinen
+//   AG / CG: gemischtes Und/Oder mit einer Ebene Gruppen (Klammern): A mit Gruppen-Kasten, C mit Klammern im Satz
 // Aufruf: CHROMIUM_PATH=... node docs/mockups/magic-conditions-v1/src/render.mjs
 import { setup } from "../../_lib/mock.mjs";
 const { page, shot, compose, close } = await setup(8992, import.meta.url);
@@ -54,6 +55,14 @@ const CSS = `
 .mc-chip.op { background: var(--dp-primary-soft); color: var(--dp-primary); font-weight: 700; text-transform: uppercase; font-size: 12px; }
 .mc-chip.add { background: none; border: 1.5px dashed color-mix(in srgb, var(--dp-primary) 55%, transparent); color: var(--dp-primary); }
 .mc-note { margin: 8px 2px 0; color: var(--dp-text2); font-size: 12.5px; line-height: 1.4; }
+.mc-group { margin-top: 8px; padding: 8px 8px 10px; border: 1.5px dashed color-mix(in srgb, var(--dp-primary) 50%, transparent); border-radius: 16px; }
+.mc-ghead { display: flex; align-items: center; gap: 8px; padding: 0 4px 2px; color: var(--dp-text2); font-size: 12px; }
+.mc-ghead > span:first-child { flex: 1; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+.mc-mini { display: grid; grid-auto-flow: column; gap: 2px; padding: 2px; border-radius: 9px; background: color-mix(in srgb, var(--dp-text) 7%, var(--dp-card)); }
+.mc-mini span { padding: 4px 10px; border-radius: 7px; font-size: 12px; } .mc-mini span.on { background: var(--dp-bg); color: var(--dp-primary); font-weight: 500; }
+.mc-addin { margin-top: 8px; text-align: center; color: var(--dp-primary); font-size: 13px; font-weight: 500; }
+.mc-adds { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.mc-chip.par { background: none; font-size: 22px; padding: 0 2px; color: var(--dp-text2); min-height: 40px; }
 .mc-big { margin: 4px 0 8px; font-size: 20px; font-weight: 600; line-height: 1.25; }
 `;
 
@@ -100,6 +109,21 @@ const SCREENS = {
     <div class="mc-chips"><span class="mc-chip">🌡️ Temperatur unter 12 °C</span><span class="mc-chip op">und ▾</span><span class="mc-chip sel">🪟 Fenster ist offen ✕</span><span class="mc-chip op">und ▾</span><span class="mc-chip">💧 Luftfeuchtigkeit über 60 % ✕</span><span class="mc-chip add">+ Bedingung</span></div>
     <div class="mc-card"><div class="mc-row" style="padding-bottom:4px"><span class="mc-ic">🪟</span><div class="mc-t"><b>Fenster bearbeiten</b><small>Entität wählen · Bedingung</small></div></div><div class="mc-edit" style="border-top:0">${stateEdit}</div></div>
     <p class="mc-note">"und/oder" gilt für alle Bausteine; ein Tipp wechselt.</p>`, nav("Weiter")),
+  // Gemischtes Und/Oder: oben Und, darin eine Gruppe mit Oder (Temperatur UND (Fenster ODER Feuchte))
+  "AG": win(3, "🌡️ Temperatur · Bedingungen", `<div class="mc-big">Soll noch etwas dazukommen?</div>
+    ${seg(["Alle Teile müssen zutreffen (und)", "Ein Teil genügt (oder)"], 0)}
+    <div class="mc-sum"><b>Melden, wenn</b> 🌡️ Temperatur unter 12 °C <span class="op">und</span> ( 🪟 Fenster ist offen <span class="op">oder</span> 💧 Luftfeuchtigkeit über 60 % ) <span style="opacity:.75">· für mindestens 10 Min.</span></div>
+    ${first}${join("und")}
+    <div class="mc-group"><div class="mc-ghead"><span>Gruppe</span><div class="mc-mini"><span>alle</span><span class="on">eine genügt</span></div><span class="mc-act del">✕</span></div>
+      ${cond("🪟", "Fenster", "ist offen")}${join("oder")}${cond("💧", "Luftfeuchtigkeit", "über 60 %")}
+      <div class="mc-addin">+ Bedingung in der Gruppe</div></div>
+    <div class="mc-adds"><div class="mc-add" style="margin:0">+ Bedingung</div><div class="mc-add" style="margin:0">+ Gruppe</div></div>`, nav("Weiter")),
+  "CG": win(3, "🌡️ Temperatur · Bedingungen", `<div class="mc-big">Soll noch etwas dazukommen?</div>
+    <p class="mc-intro">Tippe auf einen Baustein, um ihn zu ändern. Klammern bilden Gruppen.</p>
+    <div class="mc-note" style="margin:0 0 4px">Melden, wenn</div>
+    <div class="mc-chips"><span class="mc-chip">🌡️ Temperatur unter 12 °C</span><span class="mc-chip op">und ▾</span><span class="mc-chip par">(</span><span class="mc-chip sel">🪟 Fenster ist offen ✕</span><span class="mc-chip op">oder ▾</span><span class="mc-chip">💧 Luftfeuchtigkeit über 60 % ✕</span><span class="mc-chip par">)</span><span class="mc-chip add">+ Bedingung</span><span class="mc-chip add">+ ( )</span></div>
+    <div class="mc-card"><div class="mc-row" style="padding-bottom:4px"><span class="mc-ic">🪟</span><div class="mc-t"><b>Fenster bearbeiten</b><small>Entität wählen · Bedingung</small></div></div><div class="mc-edit" style="border-top:0">${stateEdit}</div></div>
+    <p class="mc-note">"und" und "oder" sind je Verbindung wählbar; ohne Klammer gilt "und" vor "oder".</p>`, nav("Weiter")),
 };
 
 const out = [];
@@ -114,5 +138,6 @@ const f = {};
 for (const [k, html] of Object.entries(SCREENS)) f[k] = await one(k, html);
 await compose("1-Varianten.png", [[f.A1, "A: Karten, Hinzufügen wie Schritt 1 (Empfehlung)", 300], [f.B1, "B: Karten mit eingebautem Editor", 300], [f.C1, "C: Satz-Baukasten", 300]]);
 await compose("2-A-Ablauf.png", [[f.A0, "A: leere Seite, \"Überspringen\"", 300], [f.A2, "A: Hinzufügen, Entität wählen", 300], [f.A3, "A: Bedingung festlegen", 300]]);
+await compose("3-Kombinieren.png", [[f.AG, "A mit Gruppen: Temperatur UND (Fenster ODER Feuchte)", 330], [f.CG, "C mit Klammern im Satz", 330]]);
 await close();
 console.log("fertig");

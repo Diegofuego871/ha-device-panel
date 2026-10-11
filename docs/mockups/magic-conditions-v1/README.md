@@ -7,6 +7,7 @@ Wert · Wann · Bedingungen · Versand · Text · Name.
 
 - `1-Varianten.png`: A, B, C
 - `2-A-Ablauf.png`: Variante A: leere Seite ("Überspringen"), Entität wählen, Bedingung festlegen
+- `3-Kombinieren.png`: gemischtes Und/Oder mit einer Ebene Gruppen: A mit Gruppen-Kasten, C mit Klammern im Satz
 
 Varianten:
 
@@ -18,6 +19,11 @@ Varianten:
 - **B, Karten mit eingebautem Editor:** Die Karte klappt auf und enthält Entität (Liste) und Bedingung. Weniger Schritte,
   aber auf dem Handy länger und schwerer zu überblicken.
 - **C, Satz-Baukasten:** Die Meldung als Satz aus Bausteinen. Kompakt, aber weniger geführt und mit mehr Antippen.
+
+Gemischtes Und/Oder (Wunsch des Nutzers): Nicht an C gebunden. Es braucht ein Modell mit einer Ebene Gruppen: oben ein
+Operator (und/oder), darin einzelne Bedingungen und Gruppen, jede Gruppe mit eigenem Operator. Das deckt "A und (B oder C)"
+und "(A und B) oder C" ab. In A ist die Gruppe ein Kasten mit eigenem Schalter (alle / eine genügt), in C eine Klammer im
+Satz. Ohne Gruppen wäre ein gemischter Satz "A und B oder C" mehrdeutig.
 
 Vorschlag zur Wirkung (Entscheide stehen aus):
 
