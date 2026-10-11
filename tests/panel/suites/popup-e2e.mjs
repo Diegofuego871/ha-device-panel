@@ -15,7 +15,7 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     pill: "Ausgefallen seit 2 Std. 14 Min.", sub: "Bewegung / Präsenz · Flur", open: "HA-Geräteseite öffnen",
-    secs: ["Statistik", "Verbindung", "Gerät"], tabs: ["Übersicht", "Einstellungen", "Entitäten · 3"], tabOwn: "Einstellungen · 1 eigene", setSecs: ["Typ und Verbindung", "Einstellungen für dieses Gerät"], entSecs: ["Entitäten · 3"],
+    secs: ["Statistik", "Verbindung", "Gerät"], tabs: ["Übersicht", "Einstellungen", "Entitäten · 3"], tabOwn: "Einstellungen 1 eigene", setSecs: ["Typ und Verbindung", "Einstellungen für dieses Gerät"], entSecs: ["Entitäten · 3"],
     tile24: ["Verfügbarkeit 24 Std.", "90,2%", "2 Unterbrüche · längster 2 Std. 14 Min."],
     tile7: ["Unterbrüche 7 Tage", "3", "zusammen 2 Std. 41 Min."], signal: ["Empfang", "LQI 38", "schwach"], battery: ["Batterie", "8%", "niedrig"],
     update: "Update auf 2.2.0 verfügbar", live: "Lebenszeichen", unavailable: "nicht verfügbar", liveHint: "Markierte Entitäten zeigen, ob das Gerät lebt.",
@@ -28,7 +28,7 @@ const TEXT = {
   },
   en: {
     pill: "Offline for 2 h 14 min", sub: "Motion / presence · Flur", open: "Open device page",
-    secs: ["Statistics", "Connection", "Device"], tabs: ["Overview", "Settings", "Entities · 3"], tabOwn: "Settings · 1 custom", setSecs: ["Type and connection", "Settings for this device"], entSecs: ["Entities · 3"],
+    secs: ["Statistics", "Connection", "Device"], tabs: ["Overview", "Settings", "Entities · 3"], tabOwn: "Settings 1 custom", setSecs: ["Type and connection", "Settings for this device"], entSecs: ["Entities · 3"],
     tile24: ["Availability 24 h", "90.2%", "2 outages · longest 2 h 14 min"],
     tile7: ["Outages 7 days", "3", "2 h 41 min in total"], signal: ["Signal", "LQI 38", "weak"], battery: ["Battery", "8%", "low"],
     update: "Update to 2.2.0 available", live: "Sign of life", unavailable: "unavailable", liveHint: "Marked entities show whether the device is alive.",
@@ -244,6 +244,7 @@ for (const lang of ["de", "en"]) {
     await sel("switch");
     const st = await calls("device_panel/set_device_type");
     check(`[${tag}] set_device_type`, st.at(-1)?.device_id === "k" && st.at(-1)?.device_type === "switch", JSON.stringify(st));
+    check(`[${tag}] Reiter mit eigener Einstellung: Name und Zahl auf zwei Zeilen, Zahl kleiner`, await ev(`const t = r.querySelector('dialog.device [data-tab="set"]'); const l = t.querySelector(".tab-l"), n = t.querySelector(".tab-s"); if (!l || !n) return false; const a = l.getBoundingClientRect(), b = n.getBoundingClientRect(); return b.top >= a.bottom - 1 && parseFloat(getComputedStyle(n).fontSize) < parseFloat(getComputedStyle(l).fontSize) && t.scrollWidth <= t.clientWidth && !!t.getAttribute("aria-label")`));
     check(`[${tag}] Reiter zählt die eigene Einstellung`, (await text('dialog.device [data-tab="set"]')) === T.tabOwn && (await ev(`return r.querySelector('dialog.device [data-tab="set"]').classList.contains("chg")`)), await text('dialog.device [data-tab="set"]'));
     check(`[${tag}] von Hand im Popup`, await wait(`return r.querySelector('dialog.device select[data-dlg="type"]').value === "switch" && r.querySelector("dialog.device").textContent.includes(${JSON.stringify(T.manual)})`));
     const rowType = await ev(`const e=r.querySelector('[data-open="k"]'); return e.textContent`);

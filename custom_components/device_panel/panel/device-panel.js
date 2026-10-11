@@ -3928,10 +3928,13 @@ class DevicePanel extends HTMLElement {
       const tab = ["ov", "set", "ent"].includes(this._devTab) ? this._devTab : "ov";
       const tabs = `<div class="sub-tabs" role="tablist">${[
         ["ov", this._t("devTabOverview"), false],
-        ["set", own ? this._t("devTabSettingsOwn", own) : this._t("devTabSettings"), own > 0],
+        // Mit eigenen Einstellungen auf zwei Zeilen (seit 2.0.10): Name, darunter klein die Zahl
+        ["set", this._t("devTabSettings"), own > 0, own ? this._t("devTabOwnCount", own) : ""],
         ["ent", this._t("devTabEntities", ents.count), false],
       ]
-        .map(([id, label, chg]) => `<button type="button" role="tab" class="sub-tab${id === tab ? " on" : ""}${chg ? " chg" : ""}" data-dlg="tab" data-tab="${id}" aria-selected="${id === tab}">${escape(label)}</button>`)
+        .map(([id, label, chg, sub]) => `<button type="button" role="tab" class="sub-tab${sub ? " two" : ""}${id === tab ? " on" : ""}${chg ? " chg" : ""}" data-dlg="tab" data-tab="${id}" aria-selected="${id === tab}"${sub ? ` aria-label="${escape(this._t("devTabSettingsOwn", own))}"` : ""}>${
+          sub ? `<span class="tab-l">${escape(label)}</span> <span class="tab-s">${escape(sub)}</span>` : escape(label)
+        }</button>`)
         .join("")}</div>`;
       const body =
         tab === "set"

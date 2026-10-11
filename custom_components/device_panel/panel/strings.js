@@ -507,6 +507,7 @@ export const STRINGS = {
     devTabOverview: "Übersicht",
     devTabSettings: "Einstellungen",
     devTabSettingsOwn: (n) => `Einstellungen · ${n} eigene`,
+    devTabOwnCount: (n) => `${n} eigene`,
     devTabEntities: (n) => `Entitäten · ${n}`,
     secTypeConn: "Typ und Verbindung",
     // Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1)
@@ -1453,6 +1454,7 @@ export const STRINGS = {
     devTabOverview: "Overview",
     devTabSettings: "Settings",
     devTabSettingsOwn: (n) => `Settings · ${n} custom`,
+    devTabOwnCount: (n) => `${n} custom`,
     devTabEntities: (n) => `Entities · ${n}`,
     secTypeConn: "Type and connection",
     // Log (since 1.38.0, docs/mockups/popup-tabs-log-v1, P1)

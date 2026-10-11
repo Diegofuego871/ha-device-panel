@@ -3,7 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.0.9, Einstellungen in fünf Abschnitten)
+## Stand (2.0.10, Einstellungen in fünf Abschnitten)
+
+- 2.0.10: Geräte-Popup, Reiter "Einstellungen" mit eigenen Einstellungen auf zwei Zeilen (`.sub-tab.two`, `.tab-l` 13 px,
+  `.tab-s` 11.5 px; Text `devTabOwnCount`, `aria-label` bleibt "Einstellungen · n eigene"). Test in `popup-e2e`.
 
 - 2.0.9: Fehler behoben: Nach dem Schliessen eines Fensters gibt der Browser den Fokus an die antippte Kachel zurück und
   zeigt dort `:focus-visible` (blauer Ring an "Ausfall-Puls"). `close`-Listener in der Einfangphase auf dem Shadow-Root

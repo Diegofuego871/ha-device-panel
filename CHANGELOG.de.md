@@ -7,6 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.0.10] - 2026-10-11
+
+Geräte-Popup: der Reiter "Einstellungen" auf zwei Zeilen.
+
+### Geändert
+
+- Im Geräte-Popup zeigt der Reiter "Einstellungen" die Zahl auf einer zweiten Zeile, wenn das Gerät eigene
+  Einstellungen hat: "Einstellungen" in etwas kleinerer Schrift, darunter klein "1 eigene". Vorher war
+  "Einstellungen · 1 eigene" in eine Zeile gepresst (Wunsch des Nutzers). Der Reiter ohne eigene Einstellungen und
+  die übrigen Reiter bleiben wie bisher.
+
 ## [2.0.9] - 2026-10-11
 
 Blauer Ring nach dem Schliessen eines Fensters auf dem Handy.
@@ -2284,6 +2295,7 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
+[2.0.10]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.10
 [2.0.9]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.9
 [2.0.8]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.8
 [2.0.7]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.0.7

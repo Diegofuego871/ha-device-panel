@@ -695,6 +695,10 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   background: none; color: color-mix(in srgb, var(--dp-text) 72%, transparent); font: inherit; font-size: 13.5px; text-align: center; cursor: pointer; transition: color .22s ease; }
 .mon-tab:hover, .sub-tab:hover { color: var(--dp-text); }
 .mon-tab.on, .sub-tab.on { color: var(--dp-primary); font-weight: 500; }
+/* Reiter mit zweiter Zeile (Geräte-Popup: "Einstellungen" mit "1 eigene", seit 2.0.10): Name etwas kleiner, darunter die Zahl klein */
+.sub-tab.two { flex-direction: column; gap: 1px; line-height: 1.15; }
+.sub-tab.two .tab-l { font-size: 13px; }
+.sub-tab.two .tab-s { font-size: 11.5px; font-weight: 400; opacity: .8; }
 .mon-tab:focus-visible, .sub-tab:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
 /* Kapsel: gleitet mit leichtem Nachschwingen, während der Fahrt etwas durchscheinend (wie in der Aufnahme); Farbe wie der Grund der Seite (dunkler als die Fläche, im hellen Theme etwas grauer) */
 .seg-pill { position: absolute; z-index: 0; left: 0; top: 0; border-radius: 11px; background: var(--dp-bg); pointer-events: none;
