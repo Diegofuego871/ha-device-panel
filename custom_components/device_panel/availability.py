@@ -476,11 +476,24 @@ class AvailabilityLog:
             "days": days,
         }
 
+    @staticmethod
+    def _open(end: float, now: float) -> bool:
+        """Läuft der Abschnitt noch (endet er jetzt)?"""
+        return end >= now - 1e-6
+
+    def down_now(self, device_id: str, now: float | None = None) -> bool:
+        """Ist das Gerät laut Protokoll gerade ausgefallen (dieselbe Regel wie der letzte Abschnitt von pulse)?"""
+        now = now if now is not None else time.time()
+        segs = segments(self.events(device_id), now - 86400, now)
+        return bool(segs) and segs[-1][2] == OFFLINE and self._open(segs[-1][1], now)
+
     def pulse(self, now: float | None = None, buckets: int = 48, only: set[str] | None = None) -> list[int]:
         """
         Zahl der Geräte mit Unterbruch je Abschnitt der letzten 24 Std. Ein
         Bild wie die Balken: was HA beobachtet hat, Lücken ohne Daten zählen
-        nicht.
+        nicht. Der letzte Abschnitt (rechter Rand) zeigt den Stand jetzt: nur
+        Geräte, die gerade ausgefallen sind. Sonst bliebe die Kurve bis zu
+        30 Min. nach der Rückkehr eines Geräts oben (2.1.0).
         """
         now = now if now is not None else time.time()
         start = now - 86400
@@ -498,6 +511,8 @@ class AvailabilityLog:
                     continue
                 first = max(0, int((a - start) // size))
                 last = min(buckets - 1, int((b - start - 1e-6) // size))
+                if not self._open(b, now):
+                    last = min(last, buckets - 2)
                 hit.update(range(first, last + 1))
             for i in hit:
                 counts[i] += 1

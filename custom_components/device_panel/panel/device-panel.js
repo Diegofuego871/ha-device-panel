@@ -2419,17 +2419,20 @@ class DevicePanel extends HTMLElement {
     return [area && this._areaLabel(area, this._areaGroups()), integ && this._integLabel(integ, this._integGroups())].filter(Boolean).join(" · ");
   }
 
+  // Gehört das Gerät zum Abschnitt i des Pulses? Der letzte Abschnitt ist der
+  // Stand jetzt: nur Geräte, die gerade ausgefallen sind (availability.pulse).
+  _inPulse(d, i, n) {
+    return d.avail24?.strip?.[i] === 1 && (i < n - 1 || d.avail24.down === true);
+  }
+
   // Puls für den Kopf: ohne Bereichsfilter vom Backend, sonst aus den
   // Streifen der Geräte im Bereich (gleiche Zählung: Geräte mit Unterbruch je
   // 30 Min., availability.pulse und strip).
   _headPulse(devs) {
     if (!this._scoped() || !this._pulse) return this._pulse;
-    const counts = new Array(this._pulse.length).fill(0);
-    for (const d of devs) {
-      (d.avail24?.strip || []).forEach((v, i) => {
-        if (v === 1 && i < counts.length) counts[i] += 1;
-      });
-    }
+    const n = this._pulse.length;
+    const counts = new Array(n).fill(0);
+    for (const d of devs) for (let i = 0; i < n; i++) if (this._inPulse(d, i, n)) counts[i] += 1;
     return counts;
   }
 
@@ -2579,7 +2582,7 @@ class DevicePanel extends HTMLElement {
     const total = hit.reduce((a, d) => a + (d.avail24.offline || 0), 0);
     if (this._pulseAt != null && !(p[this._pulseAt] > 0)) this._pulseAt = null;
     const at = this._pulseAt;
-    const list = (at == null ? hit : head.filter((d) => d.avail24?.strip?.[at] === 1)).sort(
+    const list = (at == null ? hit : head.filter((d) => this._inPulse(d, at, p.length))).sort(
       (a, b) => (b.avail24?.outages || 0) - (a.avail24?.outages || 0) || (b.avail24?.offline || 0) - (a.avail24?.offline || 0) || String(a.name).localeCompare(String(b.name))
     );
     const sub = hit.length ? t("pulseWinSub", outages, hit.length, this._fmtSeconds(total)) : t("pulseNone");

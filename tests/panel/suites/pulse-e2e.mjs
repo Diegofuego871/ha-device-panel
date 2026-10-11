@@ -134,6 +134,11 @@ for (const lang of ["de", "en"]) {
     await p.screenshot({ path: `${outDir}/pulse-colors-${tag.replace("/", "-")}.png` });
     await tap('dialog.pulse-dlg .dlg-actions [data-pulse-close]');
 
+    // Rechter Rand = Stand jetzt (2.1.0): Backend- und Bereichs-Zählung nehmen im letzten Abschnitt
+    // nur Geräte, die gerade ausgefallen sind (avail24.down), nicht die kürzlich zurückgekehrten.
+    const edge = await ev(`const h=r.host, n=h._pulse.length, devs=h._devices.filter(d=>!d.disabled); const down=devs.filter(d=>d.avail24?.down).length; const back=devs.filter(d=>d.avail24?.strip?.[n-1]===1 && !d.avail24.down).length; const scoped=devs.map((d,i)=>h._inPulse(d,n-1,n)).filter(Boolean).length; return {last:h._pulse[n-1], down, back, scoped}`);
+    check(`[${tag}] Puls: rechter Rand zählt nur ausgefallene Geräte, nicht zurückgekehrte`, edge.last === edge.down && edge.scoped === edge.down, JSON.stringify(edge));
+
     // Kachel "Verfügbarkeit" (0.34.0, Variante B): Sind alle online, steht
     // gross 100 % wie der volle Ring; der Durchschnitt 24 Std. darunter
     // bleibt unter 100 %, weil es Unterbrüche gab.

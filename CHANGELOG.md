@@ -26,6 +26,15 @@ The icon of the integration in push notifications.
   Panel icon is used. A notification is never held back for longer than four seconds because of an icon. The folder
   is deleted when the integration is removed.
 
+### Changed
+
+- The right edge of the outage pulse now shows the state right now (requested by the user): the last section counts
+  only devices that are offline at this moment. Before, a device that had been gone for a short time kept the curve at
+  the right edge up and red for up to 30 minutes after it came back, although "Offline now" already said 0. The
+  outages stay visible in the sections before, in the bar of each device and in the list of the pulse window. A short
+  outage that lies entirely within the current half hour no longer shows in the curve once the device is back. The
+  window lists the same devices when you tap the last section.
+
 ## [2.0.10] - 2026-10-11
 
 Not released; included in 2.1.0.

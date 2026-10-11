@@ -327,11 +327,38 @@ async def test_pulse_counts_devices_not_outages(hass: HomeAssistant, setup: Avai
         hass.states.async_set(light, "on")
         freezer.tick(timedelta(minutes=1))
         setup.evaluate()
+    # Eine halbe Stunde später: die Unterbrüche liegen nicht mehr im letzten Abschnitt.
+    freezer.tick(timedelta(minutes=31))
+    setup.evaluate()
     result = await async_list_devices(hass, setup)
     data = next(d for d in result["devices"] if d["id"] == dev.id)
     assert data["avail24"]["outages"] == 3
     assert max(result["pulse"]) == 1
     assert result["pulse"] == [1 if v == 1 else 0 for v in data["avail24"]["strip"]]
+
+
+async def test_pulse_end_shows_state_now(hass: HomeAssistant, setup: AvailabilityLog, freezer) -> None:
+    """Kehrt ein Gerät zurück, fällt die Kurve am rechten Rand sofort ab (2.1.0)."""
+    dev = _device(hass, "Bewegungsmelder")
+    light = _entity(hass, dev, "light", "l", "on")
+    setup.evaluate()
+    hass.states.async_set(light, "unavailable")
+    freezer.tick(timedelta(minutes=40))
+    setup.evaluate()
+    result = await async_list_devices(hass, setup)
+    data = next(d for d in result["devices"] if d["id"] == dev.id)
+    assert data["avail24"]["down"] is True
+    assert result["pulse"][-2:] == [1, 1]
+    # Zurück: der Unterbruch bleibt im vorletzten Abschnitt und im Streifen sichtbar, der rechte Rand ist 0.
+    hass.states.async_set(light, "on")
+    freezer.tick(timedelta(minutes=1))
+    setup.evaluate()
+    result = await async_list_devices(hass, setup)
+    data = next(d for d in result["devices"] if d["id"] == dev.id)
+    assert data["avail24"]["down"] is False
+    assert data["avail24"]["strip"][-1] == 1
+    assert result["pulse"][-1] == 0
+    assert result["pulse"][-2] == 1
 
 
 async def test_list_has_avail_flaky_type_integration(hass: HomeAssistant, setup: AvailabilityLog, freezer) -> None:

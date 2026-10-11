@@ -325,7 +325,10 @@
   }
   function avail24(id) {
     const s = summarize(segments(bridged(events(id)), nowS - D, nowS));
-    return s ? { ...s, strip: strip(segments(events(id), nowS - D, nowS), nowS - D, nowS) } : null;
+    const segs = segments(events(id), nowS - D, nowS);
+    // "down": gerade ausgefallen laut Protokoll (wie availability.down_now).
+    const last = segs[segs.length - 1];
+    return s ? { ...s, strip: strip(segs, nowS - D, nowS), down: !!last && last[2] === OFFLINE && last[1] >= nowS - 1e-6 } : null;
   }
 
   // Etagen und Bereiche (erfunden) in der Reihenfolge, die man in HA
@@ -492,7 +495,8 @@
     bthome: "BTHome", zha: "Zigbee Home Automation", matter: "Matter", shelly: "Shelly", esphome: "ESPHome",
     hue: "Philips Hue", zwave_js: "Z-Wave", synology_dsm: "Synology DSM", roborock: "Roborock", met: "Meteorologisk institutt (Met.no)",
   };
-  // Ausfall-Puls wie im Backend: Geräte mit Unterbruch je 30 Min.
+  // Ausfall-Puls wie im Backend: Geräte mit Unterbruch je 30 Min.; der letzte
+  // Abschnitt zeigt den Stand jetzt (nur Geräte, die gerade ausgefallen sind).
   function pulse() {
     const counts = new Array(48).fill(0);
     const start = nowS - D;
@@ -500,7 +504,8 @@
       for (const [a, b, st] of segments(events(d.id), start, nowS)) {
         if (st !== OFFLINE) continue;
         const first = Math.max(0, Math.floor((a - start) / 1800));
-        const last = Math.min(47, Math.floor((b - start - 1e-6) / 1800));
+        let last = Math.min(47, Math.floor((b - start - 1e-6) / 1800));
+        if (b < nowS - 1e-6) last = Math.min(last, 46);
         for (let i = first; i <= last; i++) counts[i] += 1;
       }
     }

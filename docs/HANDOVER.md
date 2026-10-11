@@ -5,6 +5,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 ## Stand (2.1.0, Integrations-Icon in Push-Meldungen)
 
+- 2.1.0 (auch): Puls zeigt am rechten Rand den Stand jetzt: `availability.pulse` zählt im letzten Abschnitt nur noch
+  laufende Ausfälle (`down_now`, `avail24.down` im Gerät); Panel `_inPulse`/`_headPulse` (Bereichsfilter, Fenster-Liste)
+  ebenso; Streifen pro Gerät unverändert. Simulator (`ha-sim.html`) bildet das nach.
 - 2.1.0: Push-Meldungen zeigen das Icon der Integration (`push_icon.py`): `async_integration_icon(hass, domain)` →
   URL unter `/device_panel/icons/<domain>.png` oder None; Quelle erst `brand/icon.png` der Integration
   (`integration.file_path`), dann CDN `brands.home-assistant.io/_/<domain>/icon.png` (4 s Timeout), mit Rand 512 × 512

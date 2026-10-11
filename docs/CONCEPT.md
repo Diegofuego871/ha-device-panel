@@ -83,7 +83,7 @@ und B, und alle Ideen aus den Mockups werden verfolgt:
    "Nur gewählte Bereiche") zählen Ring, "Gerade ausgefallen", Puls und
    Sammelausfälle nur die Geräte der Auswahl, mit deren Name hinter dem
    Titel der Kachel. Der Puls kommt dann aus den Streifen `avail24.strip`
-   der Geräte (gleiche Zählung wie `availability.pulse`), Sammelausfälle
+   der Geräte (gleiche Zählung wie `availability.pulse`; der letzte Abschnitt zeigt den Stand jetzt und zählt nur laufende Ausfälle, `avail24.down`), Sammelausfälle
    aus `incidents[].devices` und bleiben nur mit mindestens 3 Geräten im
    Bereich (wie `INCIDENT_MIN`). Nicht weiter verfolgt: Gruppieren und Sortieren
    nach Bereich (`docs/mockups/area-v2/`); der Nutzer will auswählen, nicht

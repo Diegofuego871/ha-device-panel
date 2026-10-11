@@ -26,6 +26,15 @@ Das Icon der Integration in Push-Meldungen.
   keinen Netzzugriff hat, gilt das Device-Panel-Icon. Eine Meldung wartet wegen eines Icons nie länger als vier
   Sekunden. Der Ordner wird beim Entfernen der Integration gelöscht.
 
+### Geändert
+
+- Der rechte Rand des Ausfall-Pulses zeigt jetzt den Stand jetzt (Wunsch des Nutzers): Der letzte Abschnitt zählt nur
+  Geräte, die in diesem Moment ausgefallen sind. Bisher blieb die Kurve am rechten Rand bis zu 30 Minuten nach der
+  Rückkehr eines kurz ausgefallenen Geräts oben und rot, obwohl "Gerade ausgefallen" schon 0 zeigte. Die Ausfälle
+  bleiben in den Abschnitten davor, im Balken jedes Geräts und in der Liste des Puls-Fensters sichtbar. Ein kurzer
+  Ausfall, der ganz in der laufenden halben Stunde liegt, erscheint in der Kurve nicht mehr, sobald das Gerät wieder
+  da ist. Das Fenster listet beim Tipp auf den letzten Abschnitt dieselben Geräte.
+
 ## [2.0.10] - 2026-10-11
 
 Nicht veröffentlicht; enthalten in 2.1.0.

@@ -1184,7 +1184,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         avail = None
         if log is not None:
             summary = log.device_summary(device.id, 86400, now_ts)
-            avail = {**(summary or {}), "strip": log.device_strip(device.id, now_ts)} if summary else None
+            avail = {**(summary or {}), "strip": log.device_strip(device.id, now_ts), "down": log.down_now(device.id, now_ts)} if summary else None
         auto_conn = _connection(device, domains, entries, signal, iot_classes)
         manual_conn = connection_overrides(hass).get(device.id)
         # Pro Integration festgelegt (nach der primären Integration, wie die Batterie).
