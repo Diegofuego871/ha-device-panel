@@ -1326,7 +1326,7 @@ a.dlg-btn { display: inline-flex; align-items: center; justify-content: center; 
 .mg-card.sel { box-shadow: inset 0 0 0 1.5px var(--dp-primary); }
 .mg-pick { display: block; width: 100%; box-sizing: border-box; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .mg-pick:hover { background: var(--dp-hover); }
-.mg-pick:focus-visible, .mg-stp:focus-visible, .mg-seg button:focus-visible, .mg-pill:focus-visible, .mg-chips button:focus-visible, .mg-sel:focus-visible, .mg-opt-row:focus-visible, .mg-add:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
+.mg-pick:focus-visible, .mg-stp:focus-visible, .mg-pill:focus-visible, .mg-chips button:focus-visible, .mg-sel:focus-visible, .mg-opt-row:focus-visible, .mg-add:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
 .mg-row { display: flex; align-items: center; gap: 12px; }
 .mg-ic { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--dp-primary-soft); font-size: 19px; }
 .mg-t { flex: 1; min-width: 0; }
@@ -1360,18 +1360,12 @@ a.dlg-btn { display: inline-flex; align-items: center; justify-content: center; 
 button.mg-stp { cursor: pointer; }
 button.mg-stp::after { content: ""; position: absolute; inset: -10px 0; }
 .mg-big { margin: 4px 0 8px; font-size: 20px; font-weight: 600; line-height: 1.25; }
-.mg-seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px; margin: 6px 0; padding: 3px; border-radius: 12px; background: color-mix(in srgb, var(--dp-text) 7%, var(--dp-card)); }
-.mg-seg.wrap { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); }
-.mg-seg button { min-height: 36px; padding: 0 6px; border: 0; border-radius: 9px; background: none; color: color-mix(in srgb, var(--dp-text) 72%, transparent); font: inherit; font-size: 13px; text-align: center; cursor: pointer; }
-.mg-seg button.on { background: var(--dp-bg); color: var(--dp-primary); font-weight: 500; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dp-text) 7%, transparent); }
 .mg-k { margin: 12px 0 4px; color: var(--dp-text2); font-size: 12px; }
 .mg-k.first { margin-top: 0; }
 .mg-unit { opacity: .85; }
-.mg-pills { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0; }
-.mg-pill { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; height: 38px; padding: 0 13px; border: 1px solid var(--dp-divider); border-radius: 99px; background: var(--dp-input); color: var(--dp-text); font: inherit; font-size: 14px; cursor: pointer; }
+.mg-pill { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; height: 38px; padding: 0 13px; border: none; border-radius: 11px; background: color-mix(in srgb, var(--dp-text) 7%, var(--dp-card)); color: var(--dp-text); font: inherit; font-size: 14px; cursor: pointer; }
 .mg-pill.num { min-width: 56px; font-variant-numeric: tabular-nums; font-weight: 600; text-align: center; }
 input.mg-pill { cursor: text; }
-.mg-valin { width: 110px; }
 .mg-own { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; color: var(--dp-text2); font-size: 13px; }
 .mg-own .mg-pill { height: 34px; }
 .mg-ownin { width: 70px; min-width: 0; }
@@ -1398,7 +1392,7 @@ input.mg-pill { cursor: text; }
 .mg-pv { margin-top: 12px; padding: 12px; border-radius: 14px; background: var(--dp-subtle); }
 .mg-pv .pv-card { padding: 10px 12px 8px; border-radius: 12px; background: var(--dp-card); box-shadow: 0 1px 4px rgba(0,0,0,.12); font-size: 13px; }
 .mg-pv .opt-short { margin-top: 8px; }
-.mg-pv .pv-text { overflow-wrap: anywhere; }
+.mg-pv .pv-text { overflow-wrap: anywhere; white-space: pre-line; }
 .mg-testrow { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 13px; font-weight: 500; }
 .mg-testres { color: var(--dp-success); font-weight: 400; }
 .mg-testres.bad { color: var(--dp-error); }
@@ -1406,4 +1400,10 @@ input.mg-pill { cursor: text; }
 .mg-volrow { display: flex; align-items: center; gap: 14px; }
 .mg-volrow input[type=range] { flex: 1; min-width: 0; height: 32px; accent-color: var(--dp-primary); }
 .mg-volval { flex: none; min-width: 64px; text-align: right; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Auswahlgruppen im Assistenten sind Reiterleisten wie überall (.sub-tabs); der Wertwähler "− Zahl +" hat dieselbe Fläche, aber keine Kapsel */
+.mg-tabs { margin: 6px 0; }
+.mg-stepper { grid-template-columns: 56px minmax(0, 1fr) 56px; grid-auto-flow: column; max-width: 300px; }
+.mg-stepper .sub-tab { font-size: 18px; }
+.mg-valin { min-width: 0; width: 100%; box-sizing: border-box; padding: 0 6px; border: none; border-radius: 11px; background: none; color: var(--dp-text); font: inherit; font-size: 15px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
+.mg-valin:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
 `;

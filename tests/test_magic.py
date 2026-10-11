@@ -512,3 +512,50 @@ async def test_critical_notification(hass: HomeAssistant, setup, freezer) -> Non
     legacy = {k: v for k, v in magic_push.get(rule["id"]).items() if k not in ("critical", "critical_volume")}
     cleaned = magic.clean_stored(legacy)
     assert cleaned["critical"] is False and cleaned["critical_volume"] == 10
+
+
+async def test_body_text(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Titel und Inhalt getrennt (2.7.0): beide frei mit Variablen; ohne eigenen Inhalt die automatische Zeile."""
+    hass.config.language = "de"
+    calls = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    device = _device(hass, "Klimasensor Keller")
+    temp = _sensor(hass, device, "temp", "14.2", "temperature", "°C")
+    magic_push = hass.data[DATA_MAGIC]
+    # Vorgabe: kein eigener Inhalt, die Zeile bleibt automatisch (wie in 2.6)
+    plain = await magic_push.async_save_rule({**_rule(device, temp), "name": "Ohne"})
+    assert plain["body"] == "" and plain["recover_body"] == ""
+    await magic_push.async_delete_rule(plain["id"])
+    rule = await magic_push.async_save_rule(
+        _rule(
+            device,
+            temp,
+            for_s=0,
+            body="  Aktuell {value} {unit}\r\n\r\n\r\n\r\nSchwelle   {threshold} {unit}  ",
+            recover=True,
+            recover_message="Wieder warm",
+            recover_body="Jetzt {value} {unit} nach {duration}",
+        )
+    )
+    assert rule["body"] == "Aktuell {value} {unit}\n\nSchwelle {threshold} {unit}"  # Zeilen aufgeräumt, Leerzeilen zusammengefasst
+    hass.states.async_set(temp, "11", {"device_class": "temperature", "unit_of_measurement": "°C"})
+    await hass.async_block_till_done()
+    assert calls[0].data["title"] == "Keller ist kalt: 11 °C"
+    assert calls[0].data["message"] == "Aktuell 11 °C\n\nSchwelle 12 °C"
+    hass.states.async_set(temp, "13", {"device_class": "temperature", "unit_of_measurement": "°C"})
+    await hass.async_block_till_done()
+    assert calls[1].data["title"] == "Wieder warm" and calls[1].data["message"].startswith("Jetzt 13 °C nach ")
+    # Vorschau (Entwurf) mit eigenem Inhalt, auch mit leerem Titel: nichts
+    title, message = magic_push.preview_raw({**_rule(device, temp), "body": "{device}: {value}"}, "main")
+    assert title == "Keller ist kalt: 13 °C" and message == "Klimasensor Keller: 13"
+    assert magic_push.preview_raw({**_rule(device, temp), "message": "", "body": "x"}, "main") == ("", "")
+    # Leerer Inhalt: automatische Zeile; zu langer oder falscher Inhalt wird abgelehnt
+    title, message = magic_push.preview_raw({**_rule(device, temp), "body": "  "}, "main")
+    assert message.startswith("Klimasensor Keller")
+    for bad in ("x" * (magic.TEXT_MAX + 1), 5):
+        with pytest.raises(vol.Invalid):
+            await magic_push.async_save_rule({**_rule(device, temp), "body": bad})
+    # Eine gespeicherte Meldung aus 2.6 ohne die Felder lädt mit leerem Inhalt
+    legacy = {k: v for k, v in magic_push.get(rule["id"]).items() if k not in ("body", "recover_body")}
+    cleaned = magic.clean_stored(legacy)
+    assert cleaned["body"] == "" and cleaned["recover_body"] == ""

@@ -342,3 +342,12 @@ HA-Nachbau prüfen.
 - Assistent in fünf Schritten mit Balken (im Bearbeiten-Modus antippbar), je Schritt eine grosse Frage. Zahl: Diagramm
   mit gestrichelter Schwelle und roten Zonen, Zustand: Balken. Dauer als Segmente plus freie Zeit. Variablen als Chips
   (passende hervorgehoben). Vorschau als Meldungs-Karte (`.mg-pv`, nicht `.pv`: diese Klasse nutzt der KI-Prompt).
+
+## Auswahlknöpfe (Regel seit 2.7.0, Wunsch des Nutzers)
+
+- Alle Auswahlen in Reiter- oder Segmentform sind Reiterleisten (`.sub-tabs`/`.sub-tab`, `.mon-tabs`/`.mon-tab`) mit der
+  gleitenden Kapsel (`.seg-pill`, `_initSeg`), im ganzen Panel gleich gestaltet; nur die Grösse darf abweichen. In
+  Magic Push gilt das für Bedingung, Zustand, Dauer und Wiederholung (`tabsHtml` in `magic-push.js`). Der Wertwähler
+  "− Zahl +" hat dieselbe Fläche, aber keine Kapsel (keine Auswahl); die Felder für eigene Zeit tragen dieselbe Fläche.
+  Hat eine Leiste keinen gewählten Knopf, entfernt `_initSeg` die Kapsel.
+

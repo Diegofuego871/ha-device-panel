@@ -1064,7 +1064,10 @@
           const text = msg.which === "recover" ? r.recover_message : r.message;
           const title = fill(text, r);
           const line = msg.which === "recover" ? "Klimasensor Keller · nach 10 Min." : "Klimasensor Keller · seit 10 Min.";
-          return { title, message: title ? line : "" };
+          // Eigener Inhalt (2.7.0), mehrzeilig; leer = automatische Zeile
+          const own = (msg.which === "recover" ? r.recover_body : r.body) || "";
+          const body = String(own).split("\n").map((l) => fill(l, r)).join("\n").trim();
+          return { title, message: title ? body || line : "" };
         }
         if (msg.type.endsWith("magic_test")) {
           check(msg.rule);

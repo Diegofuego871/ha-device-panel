@@ -43,6 +43,15 @@ Bereich. Vorbild in Aufbau, Arbeitsweise und Design ist die Integration
 - Sicherheitsrelevantes (Tokens, Keys) nie im Panel anzeigen.
 - Andere Integrationen nie ohne ausdrücklichen Knopfdruck des Nutzers ändern.
 
+## Design-Regel: Auswahlknöpfe
+
+- Jede Auswahl in Reiter- oder Segmentform (Reiter, Bedingung, Dauer, Wiederholung, Zustand, Verbindungsart …) ist eine
+  Reiterleiste: Klassen `.sub-tabs`/`.sub-tab` (oder `.mon-tabs`/`.mon-tab`) mit `.on` am gewählten Knopf. Die gleitende
+  Kapsel (`.seg-pill`) setzt `_initSeg` in `device-panel.js` von selbst; nie eine eigene Segmentleiste ohne Kapsel
+  bauen. Die Grösse darf abweichen, der Stil (Fläche, Rundung, Schrift, Farbe, Gleiten) nie. Neue Gruppen bekommen
+  ihren Schlüssel über `data-set`, `data-dlg`, `data-prompt` oder `data-mg` (sonst teilen sich Leisten die Lage).
+  Eine Leiste ohne gewählten Knopf (zum Beispiel eigene Zeit getippt) zeigt keine Kapsel.
+
 ## Git und Releases
 
 - Nur auf `main` pushen, keine weiteren Branches. Gilt auch, wenn die

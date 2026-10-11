@@ -920,7 +920,7 @@ class DevicePanel extends HTMLElement {
     const reduced = () => Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
     const keyOf = (bar) => {
       const b = bar.querySelector("button");
-      return `${bar.closest("dialog")?.className || "page"}|${b ? b.dataset.set || b.dataset.dlg || b.dataset.prompt || "" : ""}|${b?.dataset.group || ""}`;
+      return `${bar.closest("dialog")?.className || "page"}|${b ? b.dataset.set || b.dataset.dlg || b.dataset.prompt || b.dataset.mg || "" : ""}|${b?.dataset.group || ""}`;
     };
     const apply = (pill, r) => {
       pill.style.width = `${r.w}px`;
@@ -936,6 +936,11 @@ class DevicePanel extends HTMLElement {
     const sync = (still = false) => {
       for (const bar of root.querySelectorAll(".mon-tabs, .sub-tabs")) {
         const on = bar.querySelector(".mon-tab.on, .sub-tab.on");
+        // Leiste ohne Wahl (Magic Push: eigene Zeit getippt, keine Voreinstellung gilt): keine Kapsel stehen lassen
+        if (!on && bar.offsetWidth) {
+          bar.querySelector(":scope > .seg-pill")?.remove();
+          this._segLast.delete(keyOf(bar));
+        }
         if (!on || !bar.offsetWidth) continue; // unsichtbar (Fenster zu): Lage wird beim Öffnen gesetzt
         if (!bar._segSeen) {
           bar._segSeen = true;

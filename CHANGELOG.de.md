@@ -7,7 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.8.0] - 2026-10-11
+
+Magic Push: Titel und Inhalt getrennt schreiben.
+
+### Hinzugefügt
+
+- Im Magic-Push-Assistenten sind Titel und Inhalt einer Meldung jetzt zwei getrennte, freie Felder, beide mit
+  Variablen (Wunsch des Nutzers). Bisher liess sich nur der Titel schreiben; die Zeile darunter entstand automatisch.
+  Schritt 3 hat den Titel (eine Zeile) und den Inhalt (mehrere Zeilen erlaubt, bis 300 Zeichen); ein Tipp auf eine
+  Variable fügt sie im zuletzt gewählten Feld ein. Bleibt der Inhalt leer, entsteht die Zeile wie bisher automatisch
+  (Gerät und wie lange, bei einer Änderung alter und neuer Wert). Neue Meldungen beginnen mit einem Standardinhalt
+  ("{device} · seit {duration}"). "Wieder normal" hat in Schritt 4 einen eigenen Titel und einen eigenen Inhalt. Die
+  Vorschau zeigt beide, "Test senden" schickt beide. Meldungen aus früheren Versionen behalten ihre automatische Zeile.
+
 ## [2.7.0] - 2026-10-11
+
+Nicht veröffentlicht; enthalten in 2.8.0.
 
 Magic Push: kritische Mitteilung mit Lautstärke.
 
@@ -23,7 +39,15 @@ Magic Push: kritische Mitteilung mit Lautstärke.
   "kritisch", die Liste zeigt "kritisch (Lautstärke 7)". Auf iOS müssen kritische Hinweise für die Companion-App in
   deren Einstellungen erlaubt sein.
 
+### Geändert
+
+- Im Magic-Push-Assistenten sind alle Auswahlen (Bedingung, Zustand, Dauer, Wiederholung) jetzt Reiterleisten wie die
+  Reiter darüber, mit der gleitenden Kapsel und demselben Aussehen (Wunsch des Nutzers). Der Wertwähler "− Zahl +" hat
+  dieselbe Fläche. Eine Leiste ohne gewählten Knopf (eigene Zeit getippt) zeigt keine Kapsel.
+
 ## [2.6.1] - 2026-10-11
+
+Nicht veröffentlicht; enthalten in 2.8.0.
 
 Release Notes öffnen wieder bei einer neuen Version von HACS.
 
@@ -2440,9 +2464,8 @@ Erste Vorabversion.
 - Tests gegen ein echtes Home Assistant und Playwright-Suiten für das Panel,
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
-[2.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.7.0
-[2.6.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.1
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.8.0
 [2.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.5.0
 [2.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.3.0
 [2.2.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.2.0

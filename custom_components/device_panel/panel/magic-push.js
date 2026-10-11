@@ -21,7 +21,7 @@ const REPEAT_UNITS = [60, 3600, 86400];
 const HIST_DELAY_MS = 450;
 const PREVIEW_DELAY_MS = 300;
 // Felder, die der Server in einer Meldung annimmt (alles andere, etwa "active", würde er ablehnen).
-const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "message", "recover", "recover_message", "repeat_s", "target", "enabled", "critical", "critical_volume"];
+const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "message", "body", "recover", "recover_message", "recover_body", "repeat_s", "target", "enabled", "critical", "critical_volume"];
 
 // Zeichen vor dem Eintrag: nach Geräteklasse, sonst nach Art der Entität.
 const EMOJI_CLASS = {
@@ -264,6 +264,16 @@ export class MagicPush {
     return this.t(e?.kind === "number" ? "mgDefaultRecover_number" : "mgDefaultRecover_state").trim();
   }
 
+  // Inhalt unter dem Titel (seit 2.7.0): Vorgabe wie die frühere automatische Zeile
+  defaultBody(draft) {
+    if (draft.kind === "change") return this.t("mgDefaultBody_change");
+    return draft.for_s > 0 ? this.t("mgDefaultBody_since") : this.t("mgDefaultBody_plain");
+  }
+
+  defaultRecoverBody() {
+    return this.t("mgDefaultRecoverBody");
+  }
+
   // --- Server -----------------------------------------------------------------
 
   call(msg) {
@@ -291,8 +301,10 @@ export class MagicPush {
       value,
       for_s: d.for_s,
       message: d.message,
+      body: d.body,
       recover: d.kind === "change" ? false : d.recover,
       recover_message: d.recover_message,
+      recover_body: d.recover_body,
       repeat_s: d.kind === "change" ? 0 : d.repeat_s,
       target: d.target || null,
       enabled: d.enabled,
@@ -383,10 +395,12 @@ export class MagicPush {
       for_s: 600,
       forOwn: { text: "", unit: 60 },
       message: "",
-      messageTouched: false,
+      body: "",
       recover: false,
       recover_message: "",
-      recoverTouched: false,
+      recover_body: "",
+      // Von Hand geschriebene Texte werden nicht mehr durch Standardtexte ersetzt
+      touched: { message: false, body: false, recover_message: false, recover_body: false },
       repeat_s: 0,
       repeatOwn: { text: "", unit: 3600 },
       target: "",
@@ -407,10 +421,11 @@ export class MagicPush {
       value: rule.value == null ? "" : String(rule.value),
       for_s: rule.for_s,
       message: rule.message,
-      messageTouched: true,
+      body: rule.body || "",
       recover: Boolean(rule.recover),
       recover_message: rule.recover_message || "",
-      recoverTouched: true,
+      recover_body: rule.recover_body || "",
+      touched: { message: true, body: true, recover_message: true, recover_body: true },
       repeat_s: rule.repeat_s || 0,
       target: rule.target || "",
       critical: Boolean(rule.critical),
@@ -462,8 +477,10 @@ export class MagicPush {
   // Wert, Bedingung oder Entität haben sich geändert: Standardtexte nachführen, solange nichts von Hand geschrieben wurde.
   syncDefaults() {
     const d = this.wiz.draft;
-    if (!d.messageTouched) d.message = this.defaultMessage(d);
-    if (!d.recoverTouched) d.recover_message = this.defaultRecover(d);
+    if (!d.touched.message) d.message = this.defaultMessage(d);
+    if (!d.touched.body) d.body = this.defaultBody(d);
+    if (!d.touched.recover_message) d.recover_message = this.defaultRecover(d);
+    if (!d.touched.recover_body) d.recover_body = this.defaultRecoverBody();
     if (!d.nameTouched) d.name = this.suggestName(d);
   }
 
@@ -550,11 +567,17 @@ export class MagicPush {
   markPresets() {
     const d = this.wiz.draft;
     for (const btn of this.root.querySelectorAll('[data-mg="for"]')) {
-      btn.classList.toggle("on", !d.forOwn.text && Number(btn.dataset.s) === d.for_s);
+      this.setOn(btn, !d.forOwn.text && Number(btn.dataset.s) === d.for_s);
     }
     for (const btn of this.root.querySelectorAll('[data-mg="repeat"]')) {
-      btn.classList.toggle("on", !d.repeatOwn.text && Number(btn.dataset.s) === d.repeat_s);
+      this.setOn(btn, !d.repeatOwn.text && Number(btn.dataset.s) === d.repeat_s);
     }
+  }
+
+  // Wahl in einer Reiterleiste ändern; die Kapsel folgt der Klasse "on" (Beobachter im Panel).
+  setOn(btn, on) {
+    btn.classList.toggle("on", on);
+    btn.setAttribute("aria-checked", String(on));
   }
 
   setRepeatSeconds(seconds) {
@@ -846,32 +869,37 @@ export class MagicPush {
     const e = this.entity(d.entity_id);
     if (!e) return "";
     const kinds = e.kind === "number" ? [["above", "mgKindAbove"], ["below", "mgKindBelow"], ["is", "mgKindIs"], ["change", "mgKindChange"]] : [["is", "mgKindIsState"], ["change", "mgKindChange"]];
-    let html = `<div class="mg-seg" role="tablist">${kinds
-      .map(([k, label]) => `<button type="button" role="tab" class="${d.kind === k ? "on" : ""}" aria-selected="${d.kind === k}" data-mg="kind" data-kind="${k}">${esc(t(label))}</button>`)
-      .join("")}</div>`;
+    let html = this.tabsHtml(kinds.map(([k, label]) => ({ on: d.kind === k, attrs: `data-mg="kind" data-kind="${k}"`, label: t(label) })));
     html += `<div data-mg-zone="chart">${this.chartHtml()}</div>`;
     if (d.kind === "above" || d.kind === "below" || (d.kind === "is" && e.kind === "number")) {
       html += `<div class="mg-k">${esc(t("mgThreshold"))}${e.unit ? ` <span class="mg-unit">· ${esc(t("mgThresholdUnit", e.unit))}</span>` : ""}</div>
-        <div class="mg-pills"><button type="button" class="mg-pill num" data-mg="step" data-dir="-1" aria-label="${esc(t("mgMinus"))}">−</button>
-        <input class="mg-pill num mg-valin" type="text" inputmode="decimal" data-mg="value" value="${esc(d.value)}" aria-label="${esc(t("mgThreshold"))}" autocomplete="off">
-        <button type="button" class="mg-pill num" data-mg="step" data-dir="1" aria-label="${esc(t("mgPlus"))}">+</button></div>`;
+        <div class="sub-tabs mg-tabs mg-stepper"><button type="button" class="sub-tab" data-mg="step" data-dir="-1" aria-label="${esc(t("mgMinus"))}">−</button>
+        <input class="mg-valin" type="text" inputmode="decimal" data-mg="value" value="${esc(d.value)}" aria-label="${esc(t("mgThreshold"))}" autocomplete="off">
+        <button type="button" class="sub-tab" data-mg="step" data-dir="1" aria-label="${esc(t("mgPlus"))}">+</button></div>`;
     } else if (d.kind === "is") {
       if (e.options?.length) {
-        html += `<div class="mg-k">${esc(t("mgPickState"))}</div><div class="mg-seg wrap">${e.options
-          .map((o) => `<button type="button" class="${String(d.value) === o.value ? "on" : ""}" data-mg="state" data-v="${esc(o.value)}">${esc(o.label)}</button>`)
-          .join("")}</div>`;
+        html += `<div class="mg-k">${esc(t("mgPickState"))}</div>${this.tabsHtml(e.options.map((o) => ({ on: String(d.value) === o.value, attrs: `data-mg="state" data-v="${esc(o.value)}"`, label: o.label })))}`;
       } else {
         html += `<div class="mg-k">${esc(t("mgStateFree"))}</div><input class="mg-input" type="text" data-mg="value" value="${esc(d.value)}" autocomplete="off">`;
       }
     }
     html += `<div class="mg-k">${esc(d.kind === "change" ? t("mgForChange") : t("mgFor"))}</div>
-      <div class="mg-seg wrap">${PRESET_FOR.map((s) => `<button type="button" class="${!d.forOwn.text && d.for_s === s ? "on" : ""}" data-mg="for" data-s="${s}">${esc(this.fmtDur(s))}</button>`).join("")}</div>
+      ${this.tabsHtml(PRESET_FOR.map((s) => ({ on: !d.forOwn.text && d.for_s === s, attrs: `data-mg="for" data-s="${s}"`, label: this.fmtDur(s) })))}
       <div class="mg-own"><span>${esc(t("mgOwnTime"))}</span>
         <input class="mg-pill num mg-ownin" type="text" inputmode="decimal" data-mg="for-own" value="${esc(d.forOwn.text)}" placeholder="${esc(t("mgOwnPh"))}" aria-label="${esc(t("mgOwnTime"))}" autocomplete="off">
         <select class="mg-pill" data-mg="for-unit" aria-label="${esc(t("mgOwnTime"))}">${FOR_UNITS.map((u) => `<option value="${u}"${u === d.forOwn.unit ? " selected" : ""}>${esc(t(`mgUnit_${u}`))}</option>`).join("")}</select></div>
       <div data-mg-zone="forhint">${this.forHintHtml()}</div>
       <div data-mg-zone="hist">${this.histHtml()}</div>`;
     return html;
+  }
+
+  // Auswahlgruppe als Reiterleiste: dieselben Klassen wie die Reiter oben (.sub-tabs/.sub-tab), damit die Kapsel (.seg-pill)
+  // gleitet und alles gleich aussieht (Wunsch des Nutzers, docs/DESIGN.md "Auswahlknöpfe").
+  tabsHtml(items) {
+    const esc = (v) => this.esc(v);
+    return `<div class="sub-tabs mg-tabs" role="radiogroup">${items
+      .map((i) => `<button type="button" role="radio" class="sub-tab${i.on ? " on" : ""}" aria-checked="${Boolean(i.on)}" ${i.attrs}>${esc(i.label)}</button>`)
+      .join("")}</div>`;
   }
 
   forHintHtml() {
@@ -886,12 +914,12 @@ export class MagicPush {
     return e?.kind === "number" ? "number" : "state";
   }
 
-  chipsHtml(field) {
+  chipsHtml(group) {
     const esc = (v) => this.esc(v);
     const vars = this.data.variables;
     const names = [...(vars[this.varGroup()] || []), ...vars.common];
     return `<div class="mg-chips">${names
-      .map((n) => `<button type="button" class="${(vars[this.varGroup()] || []).includes(n) ? "sug" : ""}" data-mg="var" data-field="${field}" data-var="${esc(n)}" title="${esc(this.tt(`mgVar_${n}`))}">{${esc(n)}}</button>`)
+      .map((n) => `<button type="button" class="${(vars[this.varGroup()] || []).includes(n) ? "sug" : ""}" data-mg="var" data-group="${group}" data-var="${esc(n)}" title="${esc(this.tt(`mgVar_${n}`))}">{${esc(n)}}</button>`)
       .join("")}</div>`;
   }
 
@@ -902,9 +930,12 @@ export class MagicPush {
     const e = this.entity(d.entity_id);
     const group = this.varGroup();
     return `<label class="mg-k" for="mg-message">${esc(t("mgMsgLabel"))}</label>
-      <textarea id="mg-message" class="mg-text" rows="3" maxlength="${this.limit("text", 300)}" data-mg-text="message" placeholder="${esc(t("mgMsgPh"))}">${esc(d.message)}</textarea>
-      <div class="mg-k">${esc(t("mgVarsFor", e?.name || "", t(`mgVarKind_${group}`)))}</div>${this.chipsHtml("message")}
-      <p class="mg-hint">${esc(t(`mgVarHelp_${group}`))}</p>
+      <input id="mg-message" class="mg-input" type="text" maxlength="${this.limit("text", 300)}" data-mg-text="message" data-mg-group="main" value="${esc(d.message)}" placeholder="${esc(t("mgMsgPh"))}" autocomplete="off">
+      <label class="mg-k" for="mg-body">${esc(t("mgBodyLabel"))}</label>
+      <textarea id="mg-body" class="mg-text" rows="3" maxlength="${this.limit("text", 300)}" data-mg-text="body" data-mg-group="main" placeholder="${esc(t("mgBodyPh"))}">${esc(d.body)}</textarea>
+      <p class="mg-hint">${esc(t("mgBodyHint"))}</p>
+      <div class="mg-k">${esc(t("mgVarsFor", e?.name || "", t(`mgVarKind_${group}`)))}</div>${this.chipsHtml("main")}
+      <p class="mg-hint">${esc(t("mgVarsWhere"))} ${esc(t(`mgVarHelp_${group}`))}</p>
       <div data-mg-zone="pv">${this.pvHtml()}</div>`;
   }
 
@@ -944,7 +975,7 @@ export class MagicPush {
       html += `<p class="mg-hint">${esc(t("mgChangeNote"))}</p>`;
     } else {
       html += `<div class="mg-k">${esc(t("mgRepeat"))}</div>
-        <div class="mg-seg wrap">${PRESET_REPEAT.map((s) => `<button type="button" class="${!d.repeatOwn.text && d.repeat_s === s ? "on" : ""}" data-mg="repeat" data-s="${s}">${esc(s ? t(`mgRepeat_${s}`) : t("mgRepeatOnce"))}</button>`).join("")}</div>
+        ${this.tabsHtml(PRESET_REPEAT.map((s) => ({ on: !d.repeatOwn.text && d.repeat_s === s, attrs: `data-mg="repeat" data-s="${s}"`, label: s ? t(`mgRepeat_${s}`) : t("mgRepeatOnce") })))}
         <div class="mg-own"><span>${esc(t("mgRepeatOwn"))}</span>
           <input class="mg-pill num mg-ownin" type="text" inputmode="decimal" data-mg="repeat-own" value="${esc(d.repeatOwn.text)}" placeholder="${esc(t("mgOwnPh"))}" aria-label="${esc(t("mgRepeatOwn"))}" autocomplete="off">
           <select class="mg-pill" data-mg="repeat-unit" aria-label="${esc(t("mgRepeatOwn"))}">${REPEAT_UNITS.map((u) => `<option value="${u}"${u === d.repeatOwn.unit ? " selected" : ""}>${esc(t(`mgUnit_${u}`))}</option>`).join("")}</select></div>
@@ -952,8 +983,11 @@ export class MagicPush {
         <div class="mg-optrow"><div>${esc(t("mgRecover"))}</div><label class="switch"><input type="checkbox" data-mg="recover"${d.recover ? " checked" : ""} aria-label="${esc(t("mgRecover"))}"><span></span></label></div>`;
       if (d.recover) {
         html += `<label class="mg-k" for="mg-recover">${esc(t("mgRecoverText"))}</label>
-          <textarea id="mg-recover" class="mg-text" rows="2" maxlength="${this.limit("text", 300)}" data-mg-text="recover_message" placeholder="${esc(t("mgMsgPh"))}">${esc(d.recover_message)}</textarea>
-          ${this.chipsHtml("recover_message")}`;
+          <input id="mg-recover" class="mg-input" type="text" maxlength="${this.limit("text", 300)}" data-mg-text="recover_message" data-mg-group="recover" value="${esc(d.recover_message)}" placeholder="${esc(t("mgMsgPh"))}" autocomplete="off">
+          <label class="mg-k" for="mg-recover-body">${esc(t("mgRecoverBody"))}</label>
+          <textarea id="mg-recover-body" class="mg-text" rows="2" maxlength="${this.limit("text", 300)}" data-mg-text="recover_body" data-mg-group="recover" placeholder="${esc(t("mgBodyPh"))}">${esc(d.recover_body)}</textarea>
+          <p class="mg-hint">${esc(t("mgBodyHint"))}</p>
+          ${this.chipsHtml("recover")}`;
       }
     }
     return `${html}<div data-mg-zone="pv">${this.pvHtml()}</div>`;
@@ -1083,6 +1117,11 @@ export class MagicPush {
     dlg.addEventListener("input", (ev) => this.onInput(ev));
     dlg.addEventListener("change", (ev) => this.onChange(ev));
     dlg.addEventListener("keydown", (ev) => this.onKey(ev));
+    // Welches Feld einer Gruppe zuletzt gewählt wurde, bekommt die Variable (auch wenn ein Tipp auf den Chip den Fokus nimmt)
+    dlg.addEventListener("focusin", (ev) => {
+      const el = ev.target;
+      if (this.wiz && el.dataset?.mgText) (this.wiz.focus ||= {})[el.dataset.mgGroup] = el.dataset.mgText;
+    });
     // Variablen einfügen, ohne dass das Textfeld den Fokus (und die Tastatur) verliert.
     dlg.addEventListener("mousedown", (ev) => {
       if (ev.target.closest?.('[data-mg="var"]')) ev.preventDefault();
@@ -1182,7 +1221,7 @@ export class MagicPush {
         this.paint();
         break;
       case "var":
-        this.insertVariable(el.dataset.field, el.dataset.var);
+        this.insertVariable(el.dataset.group, el.dataset.var);
         break;
       case "test":
         this.sendTest(el.dataset.which);
@@ -1191,8 +1230,10 @@ export class MagicPush {
     }
   }
 
-  insertVariable(field, name) {
-    const ta = this.root.querySelector(`textarea[data-mg-text="${field}"]`);
+  // Die Variable kommt in das zuletzt gewählte Feld der Gruppe (Titel oder Inhalt); ohne Wahl in den Titel.
+  insertVariable(group, name) {
+    const field = this.wiz.focus?.[group] || (group === "recover" ? "recover_message" : "message");
+    const ta = this.root.querySelector(`[data-mg-text="${field}"]`);
     if (!ta) return;
     const token = `{${name}}`;
     const start = ta.selectionStart ?? ta.value.length;
@@ -1210,8 +1251,7 @@ export class MagicPush {
     const d = this.wiz.draft;
     const field = ta.dataset.mgText;
     d[field] = ta.value;
-    if (field === "message") d.messageTouched = true;
-    else d.recoverTouched = true;
+    d.touched[field] = true;
     this.syncNav();
     this.requestPreview();
   }
@@ -1270,6 +1310,7 @@ export class MagicPush {
     } else if (action === "recover") {
       d.recover = el.checked;
       if (d.recover && !d.recover_message) d.recover_message = this.defaultRecover(d);
+      if (d.recover && !d.touched.recover_body && !d.recover_body) d.recover_body = this.defaultRecoverBody();
       this.paint();
       this.requestPreview();
     }

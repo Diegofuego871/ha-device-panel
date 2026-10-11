@@ -225,6 +225,25 @@ def _text(max_len: int, minimum: int = 0):
     return check
 
 
+def _body(max_len: int):
+    """Inhalt der Meldung (seit 2.7.0): mehrzeilig erlaubt, leer erlaubt (dann entsteht die Zeile automatisch)."""
+
+    def check(value: Any) -> str:
+        if value is None:
+            return ""
+        if not isinstance(value, str):
+            raise vol.Invalid("Text erwartet")
+        lines = [" ".join(line.split()) for line in value.replace("\r\n", "\n").replace("\r", "\n").split("\n")]
+        text = "\n".join(lines).strip()
+        while "\n\n\n" in text:
+            text = text.replace("\n\n\n", "\n\n")
+        if len(text) > max_len or any(ord(c) < 32 and c != "\n" for c in text):
+            raise vol.Invalid(f"Text mit höchstens {max_len} Zeichen erwartet")
+        return text
+
+    return check
+
+
 def _seconds(maximum: int):
     def check(value: Any) -> int:
         number = _float(value)
@@ -256,6 +275,9 @@ RULE_SCHEMA = vol.Schema(
         vol.Required("message"): _text(TEXT_MAX, 1),
         vol.Optional("recover", default=False): bool,
         vol.Optional("recover_message", default=""): vol.Any(None, "", _text(TEXT_MAX)),
+        # Inhalt unter dem Titel (seit 2.7.0), frei mit Variablen; leer = automatische Zeile wie bisher
+        vol.Optional("body", default=""): _body(TEXT_MAX),
+        vol.Optional("recover_body", default=""): _body(TEXT_MAX),
         vol.Optional("repeat_s", default=0): _seconds(REPEAT_MAX),
         vol.Optional("target"): vol.Any(None, "", vol.All(str, vol.Match(_NOTIFY_RE))),
         vol.Optional("enabled", default=True): bool,
@@ -364,6 +386,13 @@ def context(
         "new": show(new if new is not None else raw),
     }
     return ctx
+
+
+def content(hass: HomeAssistant, rule: dict[str, Any], ctx: dict[str, str], *, recovered: bool = False) -> str:
+    """Inhalt der Meldung: der eigene Text mit eingesetzten Variablen, ohne eigenen die automatische Zeile."""
+    own = rule.get("recover_body" if recovered else "body") or ""
+    text = "\n".join(" ".join(line.split()) for line in render(own, ctx).split("\n")).strip()
+    return text or info_line(hass, rule, ctx, recovered=recovered)
 
 
 def info_line(hass: HomeAssistant, rule: dict[str, Any], ctx: dict[str, str], *, recovered: bool = False) -> str:
@@ -627,7 +656,7 @@ class MagicPush:
         self._save()
         ctx = self._context(rule, state, since=rt["since"] or now, now=now, old=old)
         title = render(rule["message"], ctx)
-        message = info_line(self.hass, rule, ctx)
+        message = content(self.hass, rule, ctx)
         code = "magic_repeat" if repeat else "magic_fired"
         self.hass.async_create_task(self._async_send(rule, title, message, code, ctx, critical=rule["critical"]))
         if rule["repeat_s"] > 0 and rule["kind"] != "change":
@@ -642,7 +671,7 @@ class MagicPush:
         if fired and rule["recover"]:
             ctx = self._context(rule, state, since=since, now=now)
             title = render(rule["recover_message"], ctx)
-            self.hass.async_create_task(self._async_send(rule, title, info_line(self.hass, rule, ctx, recovered=True), "magic_recovered", ctx))
+            self.hass.async_create_task(self._async_send(rule, title, content(self.hass, rule, ctx, recovered=True), "magic_recovered", ctx))
 
     def _context(self, rule: dict[str, Any], state: State | None, *, since: float, now: float, old: str | None = None) -> dict[str, str]:
         ctx = context(self.hass, {**rule, "_integration": self._integration(rule)}, state, since=since, now=now, old=old)
@@ -711,8 +740,8 @@ class MagicPush:
             old = other[0] if other else state.state
         ctx = self._context(rule, state, since=now - example, now=now, old=old)
         if which == "recover":
-            return render(rule["recover_message"], ctx), info_line(self.hass, rule, ctx, recovered=True), ctx
-        return render(rule["message"], ctx), info_line(self.hass, rule, ctx), ctx
+            return render(rule["recover_message"], ctx), content(self.hass, rule, ctx, recovered=True), ctx
+        return render(rule["message"], ctx), content(self.hass, rule, ctx), ctx
 
 
 def clean_stored(raw: Any) -> dict[str, Any]:

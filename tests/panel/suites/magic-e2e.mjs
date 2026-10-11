@@ -76,7 +76,21 @@ for (const lang of ["de", "en"]) {
     await next();
     await headingOk(T.q2);
     await step(2);
-    check(`[${tag}] Schritt 2: vier Bedingungen, "unter" gewählt, Wert aus der Entität`, (await ev(`return r.querySelectorAll('${root} .mg-seg[role=tablist] button').length`)) === 4 && (await ev(`return r.querySelector('${root} .mg-seg button.on').dataset.kind`)) === "below" && (await ev(`return r.querySelector('${root} input[data-mg="value"]').value`)) === "14.2");
+    check(`[${tag}] Schritt 2: vier Bedingungen, "unter" gewählt, Wert aus der Entität`, (await ev(`return r.querySelectorAll('${root} .sub-tabs [data-mg="kind"]').length`)) === 4 && (await ev(`return r.querySelector('${root} .sub-tabs [data-mg="kind"].on').dataset.kind`)) === "below" && (await ev(`return r.querySelector('${root} input[data-mg="value"]').value`)) === "14.2");
+    // Auswahlknöpfe sind Reiterleisten wie die Reiter oben: .sub-tabs mit gleitender Kapsel, gleiche Schrift und Fläche
+    const pillAt = (bar) => ev(`const b=r.querySelector(${JSON.stringify(bar)}); const p=b?.querySelector(":scope > .seg-pill"); const on=b?.querySelector(".sub-tab.on"); if(!p||!on) return null; const m=new DOMMatrix(getComputedStyle(p).transform); return [Math.round(m.m41-on.offsetLeft), Math.round(m.m42-on.offsetTop), Math.round(p.offsetWidth-on.offsetWidth)]`);
+    const same = (await ev(`const a=getComputedStyle(r.querySelector('dialog.device .dev-tabs .sub-tab')), b=getComputedStyle(r.querySelector('${root} [data-mg="kind"]')), bar=getComputedStyle(r.querySelector('dialog.device .dev-tabs .sub-tabs')), bar2=getComputedStyle(r.querySelector('${root} .sub-tabs.mg-tabs')); return [a.borderRadius===b.borderRadius, a.fontFamily===b.fontFamily, bar.backgroundColor===bar2.backgroundColor, bar.borderRadius===bar2.borderRadius]`));
+    check(`[${tag}] Auswahlknöpfe wie die Reiter: gleiche Form, Schrift und Fläche`, same.every(Boolean), JSON.stringify(same));
+    await p.waitForTimeout(700);
+    check(`[${tag}] Bedingung: Kapsel liegt unter dem gewählten Knopf`, JSON.stringify(await pillAt(`${root} .sub-tabs:has([data-mg="kind"])`)) === "[0,0,0]", JSON.stringify(await pillAt(`${root} .sub-tabs:has([data-mg="kind"])`)));
+    await tap('[data-mg="kind"][data-kind="above"]');
+    await p.waitForTimeout(80);
+    const moving = await pillAt(`${root} .sub-tabs:has([data-mg="kind"])`);
+    check(`[${tag}] Kapsel gleitet (noch unterwegs kurz nach dem Wechsel)`, moving && (moving[0] !== 0 || moving[2] !== 0 || (await ev(`return r.querySelector('${root} .sub-tabs:has([data-mg="kind"]) .seg-pill').classList.contains("go")`))), JSON.stringify(moving));
+    await p.waitForTimeout(700);
+    check(`[${tag}] Kapsel kommt am neuen Knopf an`, JSON.stringify(await pillAt(`${root} .sub-tabs:has([data-mg="kind"])`)) === "[0,0,0]");
+    await tap('[data-mg="kind"][data-kind="below"]');
+    await p.waitForTimeout(700);
     // Wert tippen, Rückblick und Diagramm erscheinen
     await fill('input[data-mg="value"]', "12");
     check(`[${tag}] Rückblick: "${T.once}"`, await wait(`return r.querySelector('${root} .mg-hist')?.textContent.includes(${JSON.stringify(T.once)})`), await text(`${root} .mg-hist`));
@@ -90,6 +104,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Dauer 10 Min. gewählt`, await wait(`return r.querySelector('${root} [data-mg="for"].on')?.dataset.s === "600"`));
     await fill('input[data-mg="for-own"]', "45");
     await ev(`const s=r.querySelector('${root} select[data-mg="for-unit"]'); s.value="60"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
+    check(`[${tag}] freie Zeit: keine Kapsel bleibt auf einem Vorschlag stehen`, await wait(`return !r.querySelector('${root} .sub-tabs:has([data-mg="for"]) .seg-pill')`));
     check(`[${tag}] freie Zeit 45 Min. ersetzt den Vorschlag`, await wait(`return !r.querySelector('${root} [data-mg="for"].on') && r.querySelector('${root} input[data-mg="for-own"]').value === "45"`));
     // zu lang: 8 Tage
     await ev(`const s=r.querySelector('${root} select[data-mg="for-unit"]'); s.value="86400"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
@@ -104,19 +119,35 @@ for (const lang of ["de", "en"]) {
 
     // --- Schritt 3: Text ---
     await step(3);
-    check(`[${tag}] Schritt 3: Standardtext zur Art, Variablen der Zahl`, (await ev(`return r.querySelector('${root} textarea[data-mg-text="message"]').value`)).includes("{entity}") && (await ev(`return [...r.querySelectorAll('${root} .mg-chips button.sug')].map(b => b.dataset.var).join()`)) === "value,unit,threshold");
-    await fill('textarea[data-mg-text="message"]', "Keller kalt: ");
+    check(`[${tag}] Schritt 3: Standardtext zur Art, Variablen der Zahl`, (await ev(`return r.querySelector('${root} [data-mg-text="message"]').value`)).includes("{entity}") && (await ev(`return [...r.querySelectorAll('${root} .mg-chips button.sug')].map(b => b.dataset.var).join()`)) === "value,unit,threshold");
+    await fill('[data-mg-text="message"]', "Keller kalt: ");
     await tap('[data-mg="var"][data-var="value"]');
     await tap('[data-mg="var"][data-var="unit"]');
-    check(`[${tag}] Variablen werden an den Cursor eingefügt`, (await ev(`return r.querySelector('${root} textarea[data-mg-text="message"]').value`)) === "Keller kalt: {value}{unit}");
-    await fill('textarea[data-mg-text="message"]', "Keller kalt: {value} {unit} (unter {threshold})");
+    check(`[${tag}] Variablen werden an den Cursor eingefügt`, (await ev(`return r.querySelector('${root} [data-mg-text="message"]').value`)) === "Keller kalt: {value}{unit}");
+    await fill('[data-mg-text="message"]', "Keller kalt: {value} {unit} (unter {threshold})");
+    // Inhalt getrennt vom Titel (2.7.0)
+    check(`[${tag}] Titel ist ein Einzeilenfeld, Inhalt ein Textfeld mit Vorgabe`, (await ev(`return r.querySelector('${root} [data-mg-text="message"]').tagName === "INPUT" && r.querySelector('${root} [data-mg-text="body"]').tagName === "TEXTAREA"`)) && (await ev(`return r.querySelector('${root} [data-mg-text="body"]').value`)).includes("{device}"));
+    await fill('[data-mg-text="body"]', "Aktuell {value} {unit}\nSchwelle {threshold} {unit}");
+    const wantBody = `Aktuell ${lang === "de" ? "14,2" : "14.2"} °C\nSchwelle 12 °C`;
+    check(`[${tag}] Vorschau: Titel und Inhalt getrennt, Inhalt mit eingesetzten Werten und Zeilenumbruch`, await wait(`const t=r.querySelector('${root} .mg-pv .pv-title')?.textContent, b=r.querySelector('${root} .mg-pv .pv-text')?.textContent; return !!t && t.startsWith("Keller kalt: ") && b === ${JSON.stringify(wantBody)}`), await text(`${root} .mg-pv .pv-text`));
+    // Variable geht in das zuletzt gewählte Feld
+    await ev(`r.querySelector('${root} [data-mg-text="body"]').focus()`);
+    await tap('[data-mg="var"][data-group="main"][data-var="since"]');
+    check(`[${tag}] Variable landet im Inhalt, wenn dieser zuletzt gewählt war`, (await ev(`return r.querySelector('${root} [data-mg-text="body"]').value`)).endsWith("{since}") && !(await ev(`return r.querySelector('${root} [data-mg-text="message"]').value`)).includes("{since}"));
+    await ev(`r.querySelector('${root} [data-mg-text="message"]').focus()`);
+    await tap('[data-mg="var"][data-group="main"][data-var="area"]');
+    check(`[${tag}] danach im Titel, wenn dieser zuletzt gewählt war`, (await ev(`return r.querySelector('${root} [data-mg-text="message"]').value`)).endsWith("{area}") && !(await ev(`return r.querySelector('${root} [data-mg-text="body"]').value`)).includes("{area}"));
+    await fill('[data-mg-text="message"]', "Keller kalt: {value} {unit} (unter {threshold})");
+    await fill('[data-mg-text="body"]', "");
+    check(`[${tag}] leerer Inhalt: automatische Zeile in der Vorschau`, await wait(`return r.querySelector('${root} .mg-pv .pv-text')?.textContent === "Klimasensor Keller · seit 10 Min."`), await text(`${root} .mg-pv .pv-text`));
+    await fill('[data-mg-text="body"]', "Aktuell {value} {unit}\nSchwelle {threshold} {unit}");
     check(`[${tag}] Vorschau mit eingesetzten Werten`, await wait(`return r.querySelector('${root} .mg-pv .pv-title')?.textContent.startsWith("Keller kalt: ") && !r.querySelector('${root} .mg-pv .pv-title').textContent.includes("{")`), await text(`${root} .mg-pv .pv-title`));
     check(`[${tag}] Vorschau-Hinweis`, (await text(`${root} .mg-pv .opt-short`)).includes(T.pvNote));
     // Der Neuaufbau des Popups (Abfrage alle 10 s) lässt den Assistenten in Ruhe
-    await fill('textarea[data-mg-text="message"]', "Keller kalt: {value} {unit} (unter {threshold}) ✔");
+    await fill('[data-mg-text="message"]', "Keller kalt: {value} {unit} (unter {threshold}) ✔");
     await ev(`r.host._renderDevice(true)`);
     await ev(`r.host._devForce = true; r.host._renderDevice()`);
-    check(`[${tag}] Text übersteht den Neuaufbau des Popups`, (await ev(`return r.querySelector('${root} textarea[data-mg-text="message"]')?.value`)) === "Keller kalt: {value} {unit} (unter {threshold}) ✔");
+    check(`[${tag}] Text übersteht den Neuaufbau des Popups`, (await ev(`return r.querySelector('${root} [data-mg-text="message"]')?.value`)) === "Keller kalt: {value} {unit} (unter {threshold}) ✔");
     await next();
 
     // --- Schritt 4: Versand ---
@@ -145,10 +176,13 @@ for (const lang of ["de", "en"]) {
     await fill('input[data-mg="repeat-own"]', "3");
     await ev(`const s=r.querySelector('${root} select[data-mg="repeat-unit"]'); s.value="3600"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
     // "wieder normal" mit eigenem Text
-    check(`[${tag}] "wieder normal" zuerst aus`, (await ev(`return r.querySelector('${root} textarea[data-mg-text="recover_message"]')`)) === null);
+    check(`[${tag}] "wieder normal" zuerst aus`, (await ev(`return r.querySelector('${root} [data-mg-text="recover_message"]')`)) === null);
     await tap('input[data-mg="recover"]');
-    check(`[${tag}] "wieder normal": eigenes Textfeld mit Standardtext`, await wait(`return (r.querySelector('${root} textarea[data-mg-text="recover_message"]')?.value || "").includes("{entity}")`));
-    await fill('textarea[data-mg-text="recover_message"]', "Keller wieder warm: {value} {unit}");
+    check(`[${tag}] "wieder normal": eigenes Textfeld mit Standardtext`, await wait(`return (r.querySelector('${root} [data-mg-text="recover_message"]')?.value || "").includes("{entity}")`));
+    await fill('[data-mg-text="recover_message"]', "Keller wieder warm: {value} {unit}");
+    check(`[${tag}] "wieder normal": eigener Inhalt mit Vorgabe`, (await ev(`return r.querySelector('${root} [data-mg-text="recover_body"]').value`)).includes("{duration}"));
+    await fill('[data-mg-text="recover_body"]', "Wieder {value} {unit} nach {duration}");
+    check(`[${tag}] zweite Vorschau: Inhalt aus dem eigenen Text`, await wait(`const b=[...r.querySelectorAll('${root} .mg-pv .pv-text')].map(x=>x.textContent); return b.length === 2 && b[1].startsWith("Wieder ") && b[1].includes("nach 10 Min.")`), await ev(`return [...r.querySelectorAll('${root} .mg-pv .pv-text')].map(x=>x.textContent).join(" | ")`));
     check(`[${tag}] zweite Vorschau mit dem freien Text`, await wait(`const t=[...r.querySelectorAll('${root} .mg-pv .pv-title')].map(x=>x.textContent); return t.length === 2 && t[1].startsWith("Keller wieder warm: ")`), await ev(`return [...r.querySelectorAll('${root} .mg-pv .pv-title')].map(x=>x.textContent).join(" | ")`));
     // Test senden
     await tap('[data-mg="test"][data-which="recover"]');
@@ -169,7 +203,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-mg="save"]');
     check(`[${tag}] gespeichert: Liste mit Hinweis`, await wait(`return r.querySelector('${root} .mg-flash')?.textContent.trim() === ${JSON.stringify(T.saved)} && r.querySelectorAll('${root} .mg-card').length === 1`));
     const saved = (await calls("magic_save")).at(-1)?.rule;
-    check(`[${tag}] Server bekommt alle Felder`, saved && saved.entity_id === "sensor.temp" && saved.kind === "below" && saved.value === 12 && saved.for_s === 2700 && saved.repeat_s === 10800 && saved.recover === true && saved.recover_message === "Keller wieder warm: {value} {unit}" && saved.message === "Keller kalt: {value} {unit} (unter {threshold}) ✔" && saved.target === "notify.familie" && saved.critical === true && saved.critical_volume === 7 && saved.name === "Keller kalt" && saved.device_id === "d", JSON.stringify(saved));
+    check(`[${tag}] Server bekommt alle Felder`, saved && saved.entity_id === "sensor.temp" && saved.kind === "below" && saved.value === 12 && saved.for_s === 2700 && saved.repeat_s === 10800 && saved.recover === true && saved.recover_message === "Keller wieder warm: {value} {unit}" && saved.message === "Keller kalt: {value} {unit} (unter {threshold}) ✔" && saved.target === "notify.familie" && saved.critical === true && saved.critical_volume === 7 && saved.body === "Aktuell {value} {unit}\nSchwelle {threshold} {unit}" && saved.recover_body === "Wieder {value} {unit} nach {duration}" && saved.name === "Keller kalt" && saved.device_id === "d", JSON.stringify(saved));
     check(`[${tag}] Reiter zeigt "${T.active1}"`, await wait(`return r.querySelector('.sub-tab[data-tab="magic"] .tab-s')?.textContent.trim() === ${JSON.stringify(T.active1)}`));
     check(`[${tag}] Karte: Name, Satz, noch nie ausgelöst`, (await text(`${root} .mg-card .mg-t b`)) === "Keller kalt" && (await text(`${root} .mg-card .mg-t small`)).includes("12") && (await text(`${root} .mg-status`)).includes(T.never));
     check(`[${tag}] Karte nennt "kritisch" und die Lautstärke`, (await text(`${root} .mg-card .mg-t small`)).includes(lang === "de" ? "kritisch (Lautstärke 7)" : "critical (volume 7)"), await text(`${root} .mg-card .mg-t small`));
@@ -204,7 +238,7 @@ for (const lang of ["de", "en"]) {
     await headingOk(T.q5);
     check(`[${tag}] Sprung zu Schritt 5: Name, Text und Empfänger übernommen`, (await ev(`return r.querySelector('${root} input[data-mg="name"]').value`)) === "Kellertemperatur");
     await tap('button.mg-stp[data-step="4"]');
-    check(`[${tag}] Schritt 4 übernimmt Gruppe, Wiederholung und "wieder normal"-Text`, (await text(`${root} .mg-sel`)).includes("notify.familie") && (await ev(`return r.querySelector('${root} input[data-mg="repeat-own"]').value`)) === "3" && (await ev(`return r.querySelector('${root} textarea[data-mg-text="recover_message"]').value`)) === "Keller wieder warm: {value} {unit}" && (await ev(`return r.querySelector('${root} input[data-mg="critical"]').checked && r.querySelector('${root} input[data-mg="volume"]').value === "7"`)));
+    check(`[${tag}] Schritt 4 übernimmt Gruppe, Wiederholung und "wieder normal"-Text`, (await text(`${root} .mg-sel`)).includes("notify.familie") && (await ev(`return r.querySelector('${root} input[data-mg="repeat-own"]').value`)) === "3" && (await ev(`return r.querySelector('${root} [data-mg-text="recover_message"]').value`)) === "Keller wieder warm: {value} {unit}" && (await ev(`return r.querySelector('${root} input[data-mg="critical"]').checked && r.querySelector('${root} input[data-mg="volume"]').value === "7"`)));
     await tap('button.mg-stp[data-step="5"]');
     await fill('input[data-mg="name"]', "Keller zu kalt");
     await tap('[data-mg="save"]');
@@ -216,7 +250,7 @@ for (const lang of ["de", "en"]) {
     await tap('.mg-pick[data-id="binary_sensor.window"]');
     await next();
     await step(2);
-    const kinds = await ev(`return [...r.querySelectorAll('${root} .mg-seg[role=tablist] button')].map(b => b.dataset.kind).join()`);
+    const kinds = await ev(`return [...r.querySelectorAll('${root} .sub-tabs [data-mg="kind"]')].map(b => b.dataset.kind).join()`);
     check(`[${tag}] Zustand: nur "ist" und "ändert sich", Wörter der Entität`, kinds === "is,change" && (await ev(`return [...r.querySelectorAll('${root} [data-mg="state"]')].map(b => b.textContent.trim()).join()`)) === (lang === "de" ? "offen,geschlossen" : "open,closed"));
     check(`[${tag}] Zustand: Balken statt Linie`, await wait(`return !!r.querySelector('${root} .mg-bar span') && !r.querySelector('${root} svg.mg-spark')`));
     await tap('[data-mg="state"][data-v="on"]');

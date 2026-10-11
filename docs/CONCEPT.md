@@ -498,7 +498,7 @@ Eigene Meldungen pro Gerät ohne Automation, im vierten Reiter des Geräte-Popup
   Wiederholung und ohne "wieder normal". Der Stand überlebt Neustarts.
 - **Text:** nur `{name}`-Ersetzung per Regex, keine Vorlagensprache. Variablen je Art der Entität: Zahl `value unit
   threshold`, Zustand `value` (Wort der Entität, nicht on/off), Änderung `value unit old new`; immer `device area
-  entity integration rule duration since time`. Titel = freier Text, zweite Zeile automatisch.
+  entity integration rule duration since time`. Titel und Inhalt sind getrennte freie Texte mit denselben Variablen (seit 2.8.0); ein leerer Inhalt ergibt die automatische Zeile (Gerät und Dauer, bei Änderung alt → neu).
 - **Vorschau und Rückblick** rechnet der Server (`magic_preview`, `magic_history`), damit Panel und Meldung dieselbe
   Rechnung nutzen. Der Rückblick braucht den Recorder und darf leer sein.
 - **Push:** Tag `device_panel_magic_<id>`, Klick öffnet das Gerät, Icon der Integration, Protokoll-Kategorie `magic`.

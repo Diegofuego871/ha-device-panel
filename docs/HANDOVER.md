@@ -3,7 +3,16 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.7.0, Magic Push: kritische Mitteilung)
+## Stand (2.8.0, Magic Push: Titel und Inhalt getrennt)
+
+- 2.8.0: Regelfelder `body` und `recover_body` (mehrzeilig, ≤ 300, leer = automatische Zeile wie bisher, `_body` in
+  `magic.py`; ältere Regeln laden leer). `content()` ersetzt `info_line` beim Senden und in der Vorschau (`preview`).
+  Panel Schritt 3: Titel `<input>`, Inhalt `<textarea>`, ein Chip-Satz je Gruppe (`data-group` main/recover) fügt in das
+  zuletzt gewählte Feld ein (`wiz.focus`, per `focusin`); Schritt 4: eigener Titel und Inhalt für "wieder normal".
+  Entwurf: `draft.touched` je Feld (Standardtexte folgen Art, Dauer und Entität, bis von Hand geschrieben wird).
+  2.6.1 und 2.7.0 sind nicht getaggt (Nicht veröffentlicht); die Notes für 2.8.0 fassen alles seit 2.6.0 zusammen.
+
+## Stand davor (2.7.0, Magic Push: kritische Mitteilung)
 
 - 2.7.0: Regelfelder `critical` (bool) und `critical_volume` (1 bis 10, Vorgabe 10) in `magic.py` (`RULE_SCHEMA`; ältere
   Regeln laden mit den Vorgaben). `push.critical_data(volume)`: iOS `push.sound {name, critical: 1, volume: n/10}`,
@@ -11,6 +20,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   im Test "main"), "wieder normal" nicht. Panel: Schalter und Regler in Schritt 4 (`data-mg="critical"`, `"volume"`).
   Quelle: companion.home-assistant.io "Critical notifications" (iOS-Volume dort nur als `1.0` gezeigt; 0.0 bis 1.0 nach
   Apples Doku, aus dem Gedächtnis bestätigt, nicht gegen die Apple-Seite selbst). Nicht auf einem Gerät gehört.
+- 2.7.0 (ergänzt): Design-Regel "Auswahlknöpfe" (CLAUDE.md, DESIGN.md): alle Segmentauswahlen sind `.sub-tabs` mit `.seg-pill`.
+  `_initSeg` kennt jetzt `data-mg` als Schlüssel und entfernt die Kapsel einer Leiste ohne `.on`.
 
 ## Stand davor (2.6.1, Fehlerkorrektur Release Notes)
 

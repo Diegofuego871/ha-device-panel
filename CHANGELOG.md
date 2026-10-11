@@ -7,7 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.8.0] - 2026-10-11
+
+Magic Push: title and content written separately.
+
+### Added
+
+- In the Magic Push assistant, the title and the content of a message are now two separate, free fields, both with
+  variables (requested by the user). Until now only the title could be written; the line below it was made
+  automatically. Step 3 has the title (one line) and the content (several lines allowed, up to 300 characters); a tap on
+  a variable inserts it into the field you chose last. Leave the content empty and the line is made automatically as
+  before (device and how long, or old and new value for a change). New messages start with a default content
+  ("{device} · for {duration}"). "Back to normal" has its own title and its own content in step 4. The preview shows
+  both, and "Send test" sends both. Messages from earlier versions keep their automatic line.
+
 ## [2.7.0] - 2026-10-11
+
+Not released; included in 2.8.0.
 
 Magic Push: critical notification with a volume.
 
@@ -22,7 +38,15 @@ Magic Push: critical notification with a volume.
   like the real message, so you can hear the volume. The preview is marked "critical", and the list shows "critical
   (volume 7)". iOS needs critical alerts allowed for the Companion app in its settings.
 
+### Changed
+
+- In the Magic Push assistant, all choices (condition, state, duration, repeat) are now tab bars like the tabs above,
+  with the sliding capsule and the same look (requested by the user). The value selector "− number +" has the same
+  surface. A bar without a selected button (a free time was typed) shows no capsule.
+
 ## [2.6.1] - 2026-10-11
+
+Not released; included in 2.8.0.
 
 Release notes open again with a new version from HACS.
 
@@ -2363,9 +2387,8 @@ First pre-release.
 - Tests against a real Home Assistant and Playwright suites for the panel,
   GitHub Actions for HACS/hassfest validation and tests.
 
-[2.7.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.7.0
-[2.6.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.1
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.8.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.8.0
 [2.5.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.5.0
 [2.3.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.3.0
 [2.2.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.2.0
