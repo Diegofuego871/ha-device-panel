@@ -7,7 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.14.0] - 2026-10-11
+
+Magic Push: a preview under each message.
+
+### Changed
+
+- Step 4 of the assistant ("Text") now shows each preview right below its own fields (requested by the user): title and
+  content of the message, their variables, then the preview with "Send test"; below that "Also notify when back to
+  normal" with its own title, content and variables, and again its own preview with its own "Send test". Before, both
+  previews stood together at the bottom. Step 5 (summary) still shows both previews together.
+
 ## [2.13.1] - 2026-10-11
+
+Not released; included in 2.14.0.
 
 ### Fixed
 
@@ -2501,7 +2514,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.13.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.1
+[2.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.14.0
 [2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0
 [2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0
 [2.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.11.0

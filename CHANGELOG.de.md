@@ -7,7 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.14.0] - 2026-10-11
+
+Magic Push: eine Vorschau unter jeder Nachricht.
+
+### Geändert
+
+- Schritt 4 des Assistenten ("Text") zeigt jede Vorschau jetzt direkt unter ihren eigenen Feldern (Wunsch des Nutzers):
+  Titel und Inhalt der Meldung, ihre Variablen, dann die Vorschau mit "Test senden"; darunter "Auch melden, wenn wieder
+  normal" mit eigenem Titel, Inhalt und eigenen Variablen und wieder einer eigenen Vorschau mit eigenem "Test senden".
+  Vorher standen beide Vorschauen zusammen unten. Schritt 5 (Zusammenfassung) zeigt beide Vorschauen weiterhin zusammen.
+
 ## [2.13.1] - 2026-10-11
+
+Nicht veröffentlicht; enthalten in 2.14.0.
 
 ### Behoben
 
@@ -2584,7 +2597,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.13.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.1
+[2.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.14.0
 [2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0
 [2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0
 [2.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.11.0

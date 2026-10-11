@@ -3,7 +3,15 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.13.1, Magic Push: Tastatur im Assistenten-Fenster)
+## Stand (2.14.0, Magic Push: Vorschau unter jeder Nachricht)
+
+- 2.14.0 (Wunsch des Nutzers): Schritt 4 hat zwei Vorschau-Zonen: `[data-mg-zone="pv"]` (`pvHtml("main")`) direkt unter
+  Titel/Inhalt/Variablen und `[data-mg-zone="pvr"]` (`pvHtml("recover")`) am Ende von `recoverHtml()`, jede mit eigenem
+  "Test senden". Schritt 5 zeigt beide zusammen (`pvHtml()` ohne Argument). `paintZones` kennt `pvr`; auf dem Desktop
+  bleiben die Vorschauen in Schritt 4 im Fluss (nicht in `.mgw-side`), in Schritt 5 stehen sie rechts. 2.13.1 (Tastatur)
+  ist nicht veröffentlicht und in 2.14.0 enthalten.
+
+## Stand davor (2.13.1, Magic Push: Tastatur im Assistenten-Fenster)
 
 - 2.13.1 (gemeldet: "Freie Entität wählen" scrollt zu weit): `scrollIntoView` im Fenster schob das Suchfeld über den
   oberen Rand der sichtbaren Fläche, weil das Handy die Seite (visualViewport) schon hochgeschoben hatte. Jetzt:

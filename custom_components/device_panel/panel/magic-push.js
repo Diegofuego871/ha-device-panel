@@ -546,7 +546,9 @@ export class MagicPush {
   placeSide(win) {
     if (!this.wide()) return;
     const body = win.querySelector(".mgw-body");
-    const zones = ["chart", "hist", "pv"].map((n) => body?.querySelector(`[data-mg-zone="${n}"]`)).filter(Boolean);
+    // Schritt 4: die Vorschauen bleiben unter ihren Feldern; nur im Schritt 5 (Zusammenfassung) stehen sie rechts
+    const names = this.wiz?.step === 4 ? ["chart", "hist"] : ["chart", "hist", "pv"];
+    const zones = names.map((n) => body?.querySelector(`[data-mg-zone="${n}"]`)).filter(Boolean);
     if (!zones.length) return;
     const side = document.createElement("aside");
     side.className = "mgw-side";
@@ -1166,14 +1168,14 @@ export class MagicPush {
     const [main, recover] = await Promise.all([one("main"), w.draft.recover && w.draft.kind !== "change" ? one("recover") : Promise.resolve(null)]);
     if (seq !== this._pvSeq || this.wiz !== w) return;
     w.pv = { main, recover };
-    this.paintZones(["pv"]);
+    this.paintZones(["pv", "pvr"]);
   }
 
   async sendTest(which) {
     const w = this.wiz;
     if (!w || w.test?.busy) return;
     w.test = { which, busy: true };
-    this.paintZones(["pv"]);
+    this.paintZones(["pv", "pvr"]);
     try {
       const r = await this.call({ type: "device_panel/magic_test", rule: this.draftPayload(), which });
       const to = w.draft.target || this.data.default_target;
@@ -1181,7 +1183,7 @@ export class MagicPush {
     } catch (err) {
       w.test = { which, text: this.t("mgTestError", this.h.errText(err)), failed: true };
     }
-    if (this.wiz === w) this.paintZones(["pv"]);
+    if (this.wiz === w) this.paintZones(["pv", "pvr"]);
   }
 
   // --- Assistent: Aktionen ----------------------------------------------------
@@ -1539,8 +1541,8 @@ export class MagicPush {
       <p class="mg-hint">${esc(t("mgBodyHint"))}</p>
       <div class="mg-k">${esc(t("mgVarsFor", e?.name || "", t(`mgVarKind_${group}`)))}</div>${this.chipsHtml("main")}
       <p class="mg-hint">${esc(t("mgVarsWhere"))} ${esc(t(`mgVarHelp_${group}`))}</p>
-      ${change ? "" : this.recoverHtml()}
-      <div data-mg-zone="pv">${this.pvHtml()}</div>`;
+      <div data-mg-zone="pv">${this.pvHtml("main")}</div>
+      ${change ? "" : this.recoverHtml()}`;
   }
 
   // "Auch melden, wenn wieder normal" mit eigenem Titel und Inhalt (gehört zum Text der Meldung)
@@ -1555,7 +1557,8 @@ export class MagicPush {
         <label class="mg-k" for="mg-recover-body">${esc(t("mgRecoverBody"))}</label>
         <textarea id="mg-recover-body" class="mg-text" rows="2" maxlength="${this.limit("text", 300)}" data-mg-text="recover_body" data-mg-group="recover" placeholder="${esc(t("mgBodyPh"))}">${esc(d.recover_body)}</textarea>
         <p class="mg-hint">${esc(t("mgBodyHint"))}</p>
-        ${this.chipsHtml("recover")}`;
+        ${this.chipsHtml("recover")}
+        <div data-mg-zone="pvr">${this.pvHtml("recover")}</div>`;
     }
     return html;
   }
@@ -1578,14 +1581,15 @@ export class MagicPush {
 
   paintZones(only) {
     if (!this.win() || !this.wiz) return;
-    for (const name of only || ["chart", "hist", "pv", "forhint", "resethint"]) {
+    for (const name of only || ["chart", "hist", "pv", "pvr", "forhint", "resethint"]) {
       const el = this.q(`[data-mg-zone="${name}"]`);
       if (!el) continue;
       if (name === "chart") el.innerHTML = this.chartHtml();
       else if (name === "hist") el.innerHTML = this.histHtml();
       else if (name === "forhint") el.innerHTML = this.forHintHtml();
       else if (name === "resethint") el.innerHTML = this.resetHintHtml();
-      else el.innerHTML = this.pvHtml();
+      else if (name === "pvr") el.innerHTML = this.pvHtml("recover");
+      else el.innerHTML = this.pvHtml(this.wiz.step === 4 ? "main" : undefined);
     }
   }
 
@@ -1653,7 +1657,8 @@ export class MagicPush {
   }
 
   // Vorschau: Meldung der Seite, mit eingesetzten Werten (vom Server).
-  pvHtml() {
+  // only: "main" oder "recover" (Schritt 4: jede Vorschau steht unter ihren Feldern); ohne: beide (Schritt 5)
+  pvHtml(only) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const w = this.wiz;
@@ -1666,8 +1671,11 @@ export class MagicPush {
       const test = w.step === 4 ? this.testHtml(which) : "";
       return `<div class="mg-pv"><div class="pv-k">${esc(t("mgPvLabel"))}</div><div class="pv-card"><div class="pv-app">${this.h.logo}${esc(t("mgPvApp"))}${which === "main" && w.draft.critical ? ` · ${esc(t("mgPvCritical"))}` : ""}</div>${inner}</div><div class="opt-short">${esc(note)}</div>${test}</div>`;
     };
+    const recoverOn = w.draft.recover && w.draft.kind !== "change";
+    if (only === "main") return card(w.pv.main, t("mgPvNote"), "main");
+    if (only === "recover") return recoverOn ? card(w.pv.recover, t("mgPvNoteRecover"), "recover") : "";
     let html = card(w.pv.main, t("mgPvNote"), "main");
-    if (w.step >= 4 && w.draft.recover && w.draft.kind !== "change") html += card(w.pv.recover, t("mgPvNoteRecover"), "recover");
+    if (w.step >= 4 && recoverOn) html += card(w.pv.recover, t("mgPvNoteRecover"), "recover");
     return html;
   }
 
@@ -1939,7 +1947,7 @@ export class MagicPush {
     } else if (action === "critical") {
       d.critical = el.checked;
       this.paint();
-      this.paintZones(["pv"]);
+      this.paintZones(["pv", "pvr"]);
     } else if (action === "recover") {
       d.recover = el.checked;
       if (d.recover && !d.recover_message) d.recover_message = this.defaultRecover(d);

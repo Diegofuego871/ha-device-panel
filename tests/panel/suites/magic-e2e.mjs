@@ -202,6 +202,7 @@ for (const lang of ["de", "en"]) {
     await fill('[data-mg-text="body"]', "Aktuell {value} {unit}\nSchwelle {threshold} {unit}");
     check(`[${tag}] Vorschau mit eingesetzten Werten`, await wait(`return r.querySelector('${W} .mg-pv .pv-title')?.textContent.startsWith("Keller kalt: ") && !r.querySelector('${W} .mg-pv .pv-title').textContent.includes("{")`), await text(`${W} .mg-pv .pv-title`));
     check(`[${tag}] Vorschau-Hinweis`, (await text(`${W} .mg-pv .opt-short`)).includes(T.pvNote));
+    check(`[${tag}] Schritt 4: Vorschau mit "Test senden" steht direkt unter Titel und Inhalt, vor "wieder normal"`, await ev(`const q=(x)=>r.querySelector('${W} '+x); const pv=q('[data-mg-zone="pv"]'), body=q('[data-mg-text="body"]'), rec=q('input[data-mg="recover"]'); const F=Node.DOCUMENT_POSITION_FOLLOWING; return !!pv && !!(body.compareDocumentPosition(pv) & F) && !!(pv.compareDocumentPosition(rec) & F) && pv.querySelectorAll('.mg-pv').length === 1 && !!pv.querySelector('[data-mg="test"][data-which="main"]') && !q('[data-mg-zone="pvr"]')`));
     check(`[${tag}] kritisch (aus Schritt 3): Vorschau trägt den Vermerk`, await wait(`return r.querySelector('${W} .mg-pv .pv-app')?.textContent.includes(${JSON.stringify(lang === "de" ? "kritisch" : "critical")})`));
     // Der Neuaufbau des Popups (Abfrage alle 10 s) lässt den Assistenten in Ruhe
     await fill('[data-mg-text="message"]', "Keller kalt: {value} {unit} (unter {threshold}) ✔");
@@ -217,6 +218,7 @@ for (const lang of ["de", "en"]) {
     await fill('[data-mg-text="recover_body"]', "Wieder {value} {unit} nach {duration}");
     check(`[${tag}] zweite Vorschau: Inhalt aus dem eigenen Text`, await wait(`const b=[...r.querySelectorAll('${W} .mg-pv .pv-text')].map(x=>x.textContent); return b.length === 2 && b[1].startsWith("Wieder ") && b[1].includes("nach 10 Min.")`), await ev(`return [...r.querySelectorAll('${W} .mg-pv .pv-text')].map(x=>x.textContent).join(" | ")`));
     check(`[${tag}] zweite Vorschau mit dem freien Text`, await wait(`const t=[...r.querySelectorAll('${W} .mg-pv .pv-title')].map(x=>x.textContent); return t.length === 2 && t[1].startsWith("Keller wieder warm: ")`), await ev(`return [...r.querySelectorAll('${W} .mg-pv .pv-title')].map(x=>x.textContent).join(" | ")`));
+    check(`[${tag}] zweite Vorschau steht unter Titel und Inhalt von "wieder normal", mit eigenem Test`, await ev(`const q=(x)=>r.querySelector('${W} '+x); const pvr=q('[data-mg-zone="pvr"]'), rb=q('[data-mg-text="recover_body"]'), pv=q('[data-mg-zone="pv"]'); const F=Node.DOCUMENT_POSITION_FOLLOWING; return !!pvr && !!(rb.compareDocumentPosition(pvr) & F) && pv.querySelectorAll('.mg-pv').length === 1 && pvr.querySelectorAll('.mg-pv').length === 1 && !!pvr.querySelector('[data-mg="test"][data-which="recover"]') && !pv.querySelector('[data-which="recover"]')`));
     // Test senden
     await tap('[data-mg="test"][data-which="recover"]');
     check(`[${tag}] Test senden: Rückmeldung`, await wait(`return r.querySelector('${W} .mg-testres')?.textContent.includes(${JSON.stringify(T.testSent)})`));
