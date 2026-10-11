@@ -486,7 +486,7 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
 
 ## Magic Push (seit 2.6.0, Wunsch des Nutzers)
 
-Eigene Meldungen pro Gerät ohne Automation, im vierten Reiter des Geräte-Popups. Der Assistent zum Anlegen und Bearbeiten öffnet seit 2.11.0 in einem eigenen Fenster (Vollbild auf dem Handy); der Reiter zeigt die Liste. Schritte: Wert · Wann · Versand · Text · Name (seit 2.12.0 Versand vor Text).
+Eigene Meldungen pro Gerät ohne Automation, im vierten Reiter des Geräte-Popups. Der Assistent zum Anlegen und Bearbeiten öffnet seit 2.11.0 in einem eigenen Fenster (Vollbild auf dem Handy); der Reiter zeigt die Liste. Schritte seit 2.15.0: Bedingungen · Wie lange · Versand · Text · Name. Die Bedingung ist seit 2.15.0 ein Baum aus Und/Oder (eine Ebene Gruppen, höchstens 10 Bedingungen, 4 Gruppen), jede Bedingung mit eigener Entität, Art, Wert und eigenem Rücksetzwert; Dauer, Wiederholung und "wieder normal" gelten für das Ganze, Variable `{conditions}`. Bei "Und" verhindert `unavailable` die Meldung, bei "Oder" wird es übergangen.
 
 - **Regel:** Entität (seit 2.10.0 jede Entität von Home Assistant; "frei" heisst: nicht von diesem Gerät, die Meldung bleibt
   dem Gerät zugeordnet, Wert und Einheit kommen von der Entität), Art (`above`, `below`, `is`, `change`), Wert, Dauer `for_s` (0 bis 7 Tage), Text mit

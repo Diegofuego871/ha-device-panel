@@ -425,12 +425,12 @@ def _ws_magic_get(hass: HomeAssistant, connection: websocket_api.ActiveConnectio
             # Freie Entitäten der Meldungen (nicht von diesem Gerät): ihre Angaben für Sätze und Texte
             "extra_entities": [
                 magic.entity_descriptor(hass, eid)
-                for eid in sorted({r["entity_id"] for r in rules} - {e["entity_id"] for e in own})
+                for eid in sorted({e for r in rules for e in magic.rule_entities(r)} - {e["entity_id"] for e in own})
                 if hass.states.get(eid) is not None or er.async_get(hass).async_get(eid) is not None
             ],
             "targets": magic.targets_payload(hass, [r["target"] for r in rules if r.get("target")]),
             "default_target": default,
-            "limits": {"per_device": magic.MAX_PER_DEVICE, "name": magic.NAME_MAX, "text": magic.TEXT_MAX, "for": magic.FOR_MAX, "repeat": magic.REPEAT_MAX},
+            "limits": {"per_device": magic.MAX_PER_DEVICE, "name": magic.NAME_MAX, "text": magic.TEXT_MAX, "for": magic.FOR_MAX, "repeat": magic.REPEAT_MAX, "leaves": magic.MAX_LEAVES, "groups": magic.MAX_GROUPS},
             "variables": {"common": magic.VARIABLES_COMMON, **magic.VARIABLES},
         },
     )
@@ -452,16 +452,20 @@ def _ws_magic_list(hass: HomeAssistant, connection: websocket_api.ActiveConnecti
         device = devices.async_get(rule["device_id"])
         if device is None:
             continue
-        if rule["entity_id"] not in entities:
-            entities[rule["entity_id"]] = (
-                magic.entity_descriptor(hass, rule["entity_id"])
-                if hass.states.get(rule["entity_id"]) is not None or er.async_get(hass).async_get(rule["entity_id"]) is not None
-                else None
-            )
+        for entity_id in magic.rule_entities(rule):
+            if entity_id not in entities:
+                entities[entity_id] = (
+                    magic.entity_descriptor(hass, entity_id)
+                    if hass.states.get(entity_id) is not None or er.async_get(hass).async_get(entity_id) is not None
+                    else None
+                )
         found = entities[rule["entity_id"]]
         payload = magic.rule_payload(hass, push_rules, rule)
         payload["device_name"] = device.name_by_user or device.name or ""
-        payload["entity"] = {k: found[k] for k in ("name", "domain", "device_class", "kind", "unit", "options")} if found else None
+        brief = ("name", "domain", "device_class", "kind", "unit", "options")
+        payload["entity"] = {k: found[k] for k in brief} if found else None
+        # Alle Entitäten der Bedingungen (seit 2.15.0), damit die Übersicht den ganzen Satz bilden kann
+        payload["leaf_entities"] = {eid: {k: d[k] for k in brief} for eid in magic.rule_entities(rule) if (d := entities.get(eid))}
         out.append(payload)
     connection.send_result(msg["id"], {"rules": out})
 
@@ -564,15 +568,22 @@ async def _ws_magic_test(hass: HomeAssistant, connection: websocket_api.ActiveCo
         vol.Optional("value"): vol.Any(None, str, int, float),
         vol.Optional("for_s", default=0): vol.All(int, vol.Range(min=0, max=magic.FOR_MAX)),
         vol.Optional("reset_value"): vol.Any(None, str, int, float),
+        # Mehrere verknüpfte Bedingungen (seit 2.15.0): Baum statt der einen Bedingung
+        vol.Optional("conditions"): vol.Any(None, dict),
     }
 )
 @websocket_api.require_admin
 @websocket_api.async_response
 async def _ws_magic_history(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
     """Rückblick: wie oft wäre die Meldung in den letzten 24 Stunden gekommen?"""
-    connection.send_result(
-        msg["id"], await async_magic_history(hass, msg["entity_id"], msg["kind"], msg.get("value"), msg["for_s"], reset_value=msg.get("reset_value"))
-    )
+    try:
+        result = await async_magic_history(
+            hass, msg["entity_id"], msg["kind"], msg.get("value"), msg["for_s"], reset_value=msg.get("reset_value"), conditions=msg.get("conditions")
+        )
+    except vol.Invalid as err:
+        _magic_error(connection, msg, err)
+        return
+    connection.send_result(msg["id"], result)
 
 
 @websocket_api.websocket_command(

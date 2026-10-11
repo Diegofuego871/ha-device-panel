@@ -7,6 +7,12 @@ kommt eine Push-Meldung mit frei geschriebenem Text. Optional folgt eine Meldung
 wieder normal ist (ebenfalls frei geschrieben), und die Meldung kann in Abständen wiederholt
 werden, solange der Wert so bleibt.
 
+Seit 2.15.0 kann eine Meldung mehrere Bedingungen verknüpfen (Und/Oder, mit einer Ebene Gruppen): "conditions" ist
+ein Baum {"op": "and"|"or", "items": [Bedingung | Gruppe]}, eine Gruppe {"op", "items": [Bedingung]}, eine Bedingung
+{"entity_id", "kind" (über, unter, ist), "value", "reset_value"}. Die erste Bedingung (der Reihe nach) steht zusätzlich in den
+alten Feldern entity_id, kind, value, reset_value; ohne Baum gibt es genau diese eine Bedingung. Dauer und
+Wiederholung gelten für das Ganze, der Rücksetzwert je Bedingung. "ändert sich" gibt es nur als einzige Bedingung.
+
 Der Text kennt Variablen in geschweiften Klammern, die zur Entität passen: bei einer Zahl
 {value} {unit} {threshold}, bei einem Zustand {value} als Wort der Entität ("offen" statt "on"),
 bei "ändert sich" zusätzlich {old} und {new}. Es wird nur ersetzt, nie ausgewertet: keine
@@ -54,6 +60,11 @@ TEXT_MAX = 300
 VALUE_MAX = 64
 FOR_MAX = 7 * 86400
 REPEAT_MAX = 30 * 86400
+# Verknüpfte Bedingungen (seit 2.15.0)
+OPS = ("and", "or")
+LEAF_KINDS = ("above", "below", "is")
+MAX_LEAVES = 10
+MAX_GROUPS = 4
 IGNORED = ("unavailable", "unknown", "", None)
 
 _ID_RE = re.compile(r"^[0-9a-f]{12}$")
@@ -63,7 +74,7 @@ _DEVICE_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 _VAR_RE = re.compile(r"\{(\w+)\}")
 
 # Variablen je Art der Entität (das Panel zeigt dieselben als Auswahl).
-VARIABLES_COMMON = ("device", "area", "entity", "integration", "rule", "duration", "since", "time")
+VARIABLES_COMMON = ("device", "area", "entity", "integration", "rule", "duration", "since", "time", "conditions")
 VARIABLES = {
     "number": ("value", "unit", "threshold"),
     "state": ("value",),
@@ -233,6 +244,175 @@ def reset_met(kind: str, value: Any, reset_value: Any, state: str | None) -> boo
     return None
 
 
+# -- Verknüpfte Bedingungen (seit 2.15.0) ---------------------------------------------
+
+
+def primary_leaf(rule: dict[str, Any]) -> dict[str, Any]:
+    """Die erste Bedingung einer Regel aus den alten Feldern."""
+    return {"entity_id": rule["entity_id"], "kind": rule["kind"], "value": rule.get("value"), "reset_value": rule.get("reset_value")}
+
+
+def rule_tree(rule: dict[str, Any]) -> dict[str, Any]:
+    """Der Bedingungsbaum einer Regel; ohne gespeicherten Baum die eine Bedingung der alten Felder."""
+    return rule.get("conditions") or {"op": "and", "items": [primary_leaf(rule)]}
+
+
+def tree_leaves(node: dict[str, Any]) -> list[dict[str, Any]]:
+    """Alle Bedingungen eines Baums der Reihe nach (die erste ist die der alten Felder)."""
+    out: list[dict[str, Any]] = []
+    for item in node["items"]:
+        out.extend(tree_leaves(item) if "items" in item else [item])
+    return out
+
+
+def rule_entities(rule: dict[str, Any]) -> list[str]:
+    """Entitäten aller Bedingungen, ohne Wiederholung, die erste zuerst."""
+    seen: dict[str, None] = {}
+    for leaf in tree_leaves(rule_tree(rule)):
+        seen.setdefault(leaf["entity_id"], None)
+    return list(seen)
+
+
+def combine(op: str, values: list[bool | None]) -> bool | None:
+    """
+    Werte verknüpfen. Und: eine falsche Bedingung macht alles falsch; ist eine nicht beurteilbar (nicht erreichbar) und
+    keine falsch, ist das Ganze nicht beurteilbar (keine Meldung, nichts beendet). Oder: nicht beurteilbare zählen nicht,
+    es gelten die anderen.
+    """
+    if op == "or":
+        known = [v for v in values if v is not None]
+        return any(known) if known else None
+    if any(v is False for v in values):
+        return False
+    return None if any(v is None for v in values) else True
+
+
+def eval_tree(node: dict[str, Any], leaf_value: Any) -> bool | None:
+    """Baum auswerten; leaf_value(Bedingung) liefert True, False oder None."""
+    values = [eval_tree(item, leaf_value) if "items" in item else leaf_value(item) for item in node["items"]]
+    return combine(node.get("op", "and"), values)
+
+
+def leaf_met(leaf: dict[str, Any], state: str | None) -> bool | None:
+    """Gilt die Bedingung für den Zustand?"""
+    return cond_met(leaf["kind"], leaf.get("value"), state)
+
+
+def leaf_hold(leaf: dict[str, Any], state: str | None) -> bool | None:
+    """Nach der Meldung: gilt die Bedingung noch, auch im Zwischenbereich des eigenen Rücksetzwerts?"""
+    met = leaf_met(leaf, state)
+    if met is False and leaf.get("reset_value") not in (None, "") and reset_met(leaf["kind"], leaf.get("value"), leaf["reset_value"], state) is False:
+        return True
+    return met
+
+
+def has_reset(rule: dict[str, Any]) -> bool:
+    return any(leaf.get("reset_value") not in (None, "") for leaf in tree_leaves(rule_tree(rule)))
+
+
+def _leaf_text(hass: HomeAssistant, leaf: dict[str, Any]) -> str:
+    """Eine Bedingung als Satzteil: "Temperatur unter 12 °C", "Fenster ist offen"."""
+    registry = er.async_get(hass)
+    entry = registry.async_get(leaf["entity_id"])
+    state = hass.states.get(leaf["entity_id"])
+    own = dr.async_get(hass).async_get(entry.device_id) if entry is not None and entry.device_id else None
+    label = entity_label(leaf["entity_id"], entry, own, state)
+    if leaf["kind"] in NUMERIC_KINDS:
+        unit = str(state.attributes.get("unit_of_measurement") or "") if state is not None else ""
+        value = number_text(hass, _float(leaf.get("value")) or 0.0) + (f" {unit}" if unit else "")
+        key = "magic_above" if leaf["kind"] == "above" else "magic_below"
+        return f"{label} {push.text(hass, key, value=value)}"
+    domain = leaf["entity_id"].split(".", 1)[0]
+    word = state_word(hass, domain, device_class(state, entry), str(leaf.get("value")))
+    return f"{label} {push.text(hass, 'magic_is', value=word)}"
+
+
+def condition_text(hass: HomeAssistant, rule: dict[str, Any]) -> str:
+    """Die ganze Bedingung als Satz: "Temperatur unter 12 °C und (Fenster ist offen oder Feuchte über 60 %)"."""
+
+    def node_text(node: dict[str, Any], nested: bool) -> str:
+        word = f" {push.text(hass, 'magic_or' if node.get('op') == 'or' else 'magic_and')} "
+        parts = [node_text(item, True) if "items" in item else _leaf_text(hass, item) for item in node["items"]]
+        text = word.join(parts)
+        return f"({text})" if nested and len(parts) > 1 else text
+
+    return node_text(rule_tree(rule), False)
+
+
+def _clean_leaf(hass: HomeAssistant, raw: Any, *, alone: bool) -> dict[str, Any]:
+    """Eine Bedingung prüfen: Entität gibt es, über/unter mit Zahl, ist mit Zustand, Rücksetzwert auf der Seite des Normalen."""
+    if not isinstance(raw, dict):
+        raise vol.Invalid("Bedingung erwartet")
+    entity_id = raw.get("entity_id")
+    if not isinstance(entity_id, str) or not _ENTITY_RE.match(entity_id):
+        raise vol.Invalid("Entität erwartet")
+    if er.async_get(hass).async_get(entity_id) is None and hass.states.get(entity_id) is None:
+        raise vol.Invalid("Die Entität gibt es nicht")
+    kind = raw.get("kind")
+    if kind not in (KINDS if alone else LEAF_KINDS):
+        raise vol.Invalid('"ändert sich" gibt es nur als einzige Bedingung' if kind == "change" else "Art der Bedingung unbekannt")
+    leaf: dict[str, Any] = {"entity_id": entity_id, "kind": kind, "value": None, "reset_value": None}
+    if kind in NUMERIC_KINDS:
+        number = _float(raw.get("value"))
+        if number is None:
+            raise vol.Invalid("Für über und unter wird eine Zahl gebraucht")
+        leaf["value"] = number
+    elif kind == "is":
+        value = _threshold(raw.get("value")) if raw.get("value") not in (None, "") else None
+        if value is None:
+            raise vol.Invalid("Für ist wird ein Zustand gebraucht")
+        leaf["value"] = value
+    if kind != "change":
+        leaf["reset_value"] = _clean_reset(raw.get("reset_value"), kind, leaf["value"])
+    return leaf
+
+
+def _raw_leaves(raw: Any) -> list[Any]:
+    """Alle Bedingungen eines ungeprüften Baums der Reihe nach (Form wird geprüft)."""
+    if not isinstance(raw, dict) or not isinstance(raw.get("items"), list) or not raw["items"]:
+        raise vol.Invalid("Bedingungen erwartet")
+    out: list[Any] = []
+    for item in raw["items"]:
+        if isinstance(item, dict) and "items" in item:
+            if not isinstance(item["items"], list) or not item["items"]:
+                raise vol.Invalid("Eine Gruppe braucht Bedingungen")
+            out.extend(item["items"])
+        else:
+            out.append(item)
+    return out
+
+
+def clean_conditions(hass: HomeAssistant, raw: Any) -> dict[str, Any]:
+    """
+    Bedingungsbaum mit mehreren Bedingungen prüfen (seit 2.15.0) und bereinigen. Höchstens MAX_LEAVES Bedingungen und
+    MAX_GROUPS Gruppen, Gruppen nicht verschachtelt, "ändert sich" nicht erlaubt.
+    """
+    _raw_leaves(raw)
+    op = raw.get("op", "and")
+    if op not in OPS:
+        raise vol.Invalid("Und oder Oder erwartet")
+    groups = 0
+    items: list[dict[str, Any]] = []
+    for item in raw["items"]:
+        if isinstance(item, dict) and "items" in item:
+            groups += 1
+            if groups > MAX_GROUPS:
+                raise vol.Invalid(f"Höchstens {MAX_GROUPS} Gruppen")
+            if item.get("op", "and") not in OPS:
+                raise vol.Invalid("Und oder Oder erwartet")
+            inner = item["items"]
+            if not isinstance(inner, list) or not inner or any(isinstance(x, dict) and "items" in x for x in inner):
+                raise vol.Invalid("Eine Gruppe enthält Bedingungen, keine weitere Gruppe")
+            items.append({"op": item.get("op", "and"), "items": [_clean_leaf(hass, x, alone=False) for x in inner]})
+        else:
+            items.append(_clean_leaf(hass, item, alone=False))
+    tree = {"op": op, "items": items}
+    count = len(tree_leaves(tree))
+    if count > MAX_LEAVES:
+        raise vol.Invalid(f"Höchstens {MAX_LEAVES} Bedingungen")
+    return tree
+
+
 def _text(max_len: int, minimum: int = 0):
     def check(value: Any) -> str:
         if not isinstance(value, str):
@@ -305,24 +485,25 @@ RULE_SCHEMA = vol.Schema(
         # Kritische Mitteilung (seit 2.7.0): durchbricht stumm und "Nicht stören"; Lautstärke 1 bis 10 (iOS: 0.1 bis 1.0)
         # Eigener Rücksetzwert (seit 2.8.0): leer = zurückgesetzt, sobald die Bedingung nicht mehr gilt (wie bisher)
         vol.Optional("reset_value", default=None): vol.Any(None, "", _threshold),
+        # Verknüpfte Bedingungen (seit 2.15.0), geprüft in clean_rule
+        vol.Optional("conditions", default=None): vol.Any(None, dict),
         vol.Optional("critical", default=False): bool,
         vol.Optional("critical_volume", default=push.CRITICAL_VOLUME_MAX): vol.All(int, vol.Range(min=1, max=push.CRITICAL_VOLUME_MAX)),
     }
 )
 
 
-def _clean_reset(rule: dict[str, Any], kind: str) -> float | str | None:
+def _clean_reset(reset: Any, kind: str, value: Any) -> float | str | None:
     """Rücksetzwert prüfen: leer = automatisch; bei über/unter muss er auf der Seite des Normalen liegen."""
-    reset = rule.get("reset_value")
     if reset in (None, ""):
         return None
     if kind in NUMERIC_KINDS:
         number = _float(reset)
         if number is None:
             raise vol.Invalid("Für den Rücksetzwert wird eine Zahl gebraucht")
-        if kind == "below" and number < rule["value"]:
+        if kind == "below" and number < value:
             raise vol.Invalid("Der Rücksetzwert muss bei unter mindestens so gross wie die Schwelle sein")
-        if kind == "above" and number > rule["value"]:
+        if kind == "above" and number > value:
             raise vol.Invalid("Der Rücksetzwert muss bei über höchstens so gross wie die Schwelle sein")
         return number
     return reset
@@ -331,6 +512,17 @@ def _clean_reset(rule: dict[str, Any], kind: str) -> float | str | None:
 def clean_rule(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
     """Regel prüfen und bereinigen (Fehler als vol.Invalid mit Text für das Panel)."""
     rule = RULE_SCHEMA(raw)
+    # Bedingungen (seit 2.15.0): die erste steht in den alten Feldern und wird wie bisher geprüft
+    raw_tree = rule.get("conditions")
+    raw_leaves = _raw_leaves(raw_tree) if raw_tree else []
+    if raw_leaves:
+        first = raw_leaves[0]
+        if not isinstance(first, dict):
+            raise vol.Invalid("Bedingung erwartet")
+        for key in ("entity_id", "kind", "value", "reset_value"):
+            rule[key] = first.get(key)
+        if not isinstance(rule["entity_id"], str) or not _ENTITY_RE.match(rule["entity_id"]) or rule["kind"] not in KINDS:
+            raise vol.Invalid("Bedingung unvollständig")
     device = dr.async_get(hass).async_get(rule["device_id"])
     if device is None:
         raise vol.Invalid("Gerät nicht gefunden")
@@ -343,11 +535,11 @@ def clean_rule(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
         if _float(rule.get("value")) is None:
             raise vol.Invalid("Für über und unter wird eine Zahl gebraucht")
         rule["value"] = _float(rule["value"])
-        rule["reset_value"] = _clean_reset(rule, kind)
+        rule["reset_value"] = _clean_reset(rule.get("reset_value"), kind, rule["value"])
     elif kind == "is":
         if rule.get("value") in (None, ""):
             raise vol.Invalid("Für ist wird ein Zustand gebraucht")
-        rule["reset_value"] = _clean_reset(rule, kind)
+        rule["reset_value"] = _clean_reset(rule.get("reset_value"), kind, rule.get("value"))
     else:
         # "ändert sich": kein Wert, kein Normalzustand, keine Wiederholung
         rule["value"] = None
@@ -358,6 +550,13 @@ def clean_rule(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
     if rule["recover"] and not rule["recover_message"]:
         raise vol.Invalid("Für die Meldung bei wieder normal fehlt der Text")
     rule["target"] = rule.get("target") or None
+    if len(raw_leaves) > 1:
+        tree = clean_conditions(hass, raw_tree)
+        first = tree_leaves(tree)[0]
+        rule.update(entity_id=first["entity_id"], kind=first["kind"], value=first["value"], reset_value=first["reset_value"])
+        rule["conditions"] = tree
+    else:
+        rule["conditions"] = None
     return rule
 
 
@@ -429,6 +628,7 @@ def context(
         "time": _clock(hass, now),
         "old": show(old),
         "new": show(new if new is not None else raw),
+        "conditions": condition_text(hass, rule),
     }
     return ctx
 
@@ -557,7 +757,7 @@ class MagicPush:
                 raise vol.Invalid(f"Höchstens {MAX_PER_DEVICE} Meldungen pro Gerät")
             rule["id"] = uuid.uuid4().hex[:12]
         rule["created"] = existing["created"] if existing and "created" in existing else time.time()
-        changed = existing is None or any(existing.get(k) != rule.get(k) for k in ("entity_id", "kind", "value", "reset_value", "for_s", "repeat_s", "recover"))
+        changed = existing is None or any(existing.get(k) != rule.get(k) for k in ("entity_id", "kind", "value", "reset_value", "conditions", "for_s", "repeat_s", "recover"))
         self._rules[rule["id"]] = rule
         if changed:
             self._reset(rule["id"])
@@ -609,7 +809,8 @@ class MagicPush:
         self._by_entity = {}
         for rule in self._rules.values():
             if rule["enabled"]:
-                self._by_entity.setdefault(rule["entity_id"], []).append(rule)
+                for entity_id in rule_entities(rule):
+                    self._by_entity.setdefault(entity_id, []).append(rule)
         if self._by_entity:
             self._unsub_track = async_track_state_change_event(self.hass, list(self._by_entity), self._on_state)
 
@@ -634,13 +835,34 @@ class MagicPush:
         if (cancel := self._timers.pop(rule_id, None)) is not None:
             cancel()
 
+    def _met(self, rule: dict[str, Any]) -> bool | None:
+        """Gilt die ganze Bedingung jetzt? None: nicht beurteilbar (Entität nicht erreichbar)."""
+
+        def leaf(item: dict[str, Any]) -> bool | None:
+            state = self.hass.states.get(item["entity_id"])
+            return leaf_met(item, state.state if state is not None else None)
+
+        return eval_tree(rule_tree(rule), leaf)
+
+    def _held(self, rule: dict[str, Any]) -> bool | None:
+        """Wie _met, aber im Zwischenbereich eines eigenen Rücksetzwerts gilt die Bedingung noch (nach der Meldung)."""
+
+        def leaf(item: dict[str, Any]) -> bool | None:
+            state = self.hass.states.get(item["entity_id"])
+            return leaf_hold(item, state.state if state is not None else None)
+
+        return eval_tree(rule_tree(rule), leaf)
+
     def _evaluate(self, rule: dict[str, Any], state: State | None, old: State | None) -> None:
-        if not rule["enabled"] or state is None or state.state in IGNORED:
+        """Eine Regel prüfen. state und old gehören zur Entität, die sich geändert hat (bei "ändert sich" die der Regel)."""
+        if not rule["enabled"]:
             return
         now = time.time()
         rule_id = rule["id"]
         rt = self.runtime(rule_id)
         if rule["kind"] == "change":
+            if state is None or state.state in IGNORED:
+                return
             if old is None or old.state in IGNORED or old.state == state.state:
                 return
             self._cancel(rule_id)
@@ -650,8 +872,10 @@ class MagicPush:
                 self._pending[rule_id] = {"old": old.state, "new": state.state}
                 self._timers[rule_id] = async_call_later(self.hass, rule["for_s"], partial(self._on_timer, rule_id))
             return
-        met = cond_met(rule["kind"], rule["value"], state.state)
-        if met is None:
+        # Mit mehreren Bedingungen kann sich eine andere Entität geändert haben: Stand der ersten für Variablen und Meldung
+        state = self.hass.states.get(rule["entity_id"])
+        met = self._met(rule)
+        if state is None or met is None:
             return
         if met:
             if rt["since"] is None:
@@ -667,7 +891,7 @@ class MagicPush:
         elif rt["since"] is not None:
             # Schon gemeldet und ein eigener Rücksetzwert gesetzt: im Zwischenbereich bleibt alles still und gemeldet,
             # zurückgesetzt wird erst am Rücksetzwert. Vor der Meldung gilt die Bedingung durchgehend, sonst von vorn.
-            if rt["fired"] and rule.get("reset_value") not in (None, "") and not reset_met(rule["kind"], rule["value"], rule["reset_value"], state.state):
+            if rt["fired"] and has_reset(rule) and self._held(rule) is True:
                 return
             self._resolve(rule, state, now)
 
@@ -687,7 +911,7 @@ class MagicPush:
         if rule is None or not rule["enabled"]:
             return
         state = self.hass.states.get(rule["entity_id"])
-        if state is None or state.state in IGNORED:
+        if state is None or (rule["kind"] == "change" and state.state in IGNORED):
             return
         now = time.time()
         if rule["kind"] == "change":
@@ -696,7 +920,7 @@ class MagicPush:
                 self._fire(rule, state, now, old=pending["old"])
             return
         rt = self.runtime(rule_id)
-        if rt["since"] is None or not cond_met(rule["kind"], rule["value"], state.state):
+        if rt["since"] is None or self._met(rule) is not True:
             return
         self._fire(rule, state, now, repeat=rt["fired"])
 
@@ -805,8 +1029,16 @@ def clean_stored(raw: Any) -> dict[str, Any]:
         raise vol.Invalid("Zahl fehlt")
     rule["target"] = rule.get("target") or None
     rule["recover_message"] = rule.get("recover_message") or ""
+    if rule.get("conditions"):
+        # Form prüfen (die Register-Prüfung läuft nur beim Anlegen); Fehler = Regel wird ignoriert
+        leaves = _raw_leaves(rule["conditions"])
+        if len(leaves) < 2 or any(not isinstance(x, dict) or x.get("kind") not in LEAF_KINDS or not isinstance(x.get("entity_id"), str) for x in leaves):
+            raise vol.Invalid("Bedingungen ungültig")
+        if rule["conditions"].get("op", "and") not in OPS:
+            raise vol.Invalid("Bedingungen ungültig")
+    else:
+        rule["conditions"] = None
     return rule
-
 
 
 # -- Angaben für das Panel ---------------------------------------------------------
@@ -902,9 +1134,13 @@ def rule_payload(hass: HomeAssistant, magic: MagicPush, rule: dict[str, Any]) ->
     rt = magic.runtime(rule["id"])
     state = hass.states.get(rule["entity_id"])
     entry = er.async_get(hass).async_get(rule["entity_id"])
-    exists = entry is not None or state is not None
+    registry = er.async_get(hass)
+    exists = all(registry.async_get(eid) is not None or hass.states.get(eid) is not None for eid in rule_entities(rule))
     return {
         **{k: v for k, v in rule.items() if not k.startswith("_")},
+        # Immer der Baum (bei einer Bedingung mit genau einer), für das Panel; dazu die ganze Bedingung als Satz
+        "conditions": rule_tree(rule),
+        "condition_text": condition_text(hass, rule),
         "active": rt["since"] is not None,
         "since": rt["since"],
         "fired": bool(rt["fired"]),
@@ -912,5 +1148,5 @@ def rule_payload(hass: HomeAssistant, magic: MagicPush, rule: dict[str, Any]) ->
         "entity_missing": not exists,
         # Entität eines anderen Geräts oder ohne Gerät (freie Entität, seit 2.10.0)
         "entity_free": entry is None or entry.device_id != rule["device_id"],
-        "available": state is not None and state.state not in IGNORED,
+        "available": magic._met(rule) is not None if rule["kind"] != "change" else state is not None and state.state not in IGNORED,
     }

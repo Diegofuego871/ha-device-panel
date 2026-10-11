@@ -7,7 +7,37 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.15.0] - 2026-10-11
+
+Magic Push: mehrere verknüpfte Bedingungen (Und/Oder, mit Gruppen), alle auf der ersten Seite des Assistenten.
+
+### Hinzugefügt
+
+- Magic Push kann mehrere Bedingungen verknüpfen (Wunsch des Nutzers, Mockups `docs/mockups/magic-conditions-v1`). Auf der
+  ersten Seite des Assistenten kommen Bedingungen mit "+ Bedingung" dazu: jede mit eigener Entität (auch von anderen
+  Geräten), Art (über, unter, ist) und Wert, mit Diagramm der letzten 24 Stunden. Zwei oder mehr Bedingungen verbindet
+  "Und" oder "Oder"; ein Satz "Melden, wenn ..." zeigt, was die Meldung tut. "+ Gruppe" setzt einen Kasten, in dem die
+  Bedingungen andersherum verknüpft sind ("alle" oder "eine genügt"), zum Beispiel "A und (B oder C)". Eine Ebene
+  Gruppen, höchstens 10 Bedingungen und 4 Gruppen.
+- Jede Bedingung hat ihren eigenen Rücksetzwert ("Zurücksetzen"), so behält jede ihre eigene Zone gegen Flattern.
+  "Ändert sich" kann nur die einzige Bedingung einer Meldung sein.
+- Neue Textvariable `{conditions}`: die Bedingungen als Satz, zum Beispiel "Temperatur über 25 °C und Fenster ist offen".
+- Der Rückblick (Seite 2) zeigt eine Zeitleiste je Bedingung und eine Zeile "Zusammen" mit den Zeitpunkten, zu denen die
+  Meldung gekommen wäre.
+- Übersicht und Meldungsliste zeigen die ganze Bedingung als Satz.
+
+### Geändert
+
+- Der Assistent hat wieder fünf Schritte, aber in neuer Reihenfolge: 1 Bedingungen (Entität und Bedingung, eine oder
+  mehrere) · 2 Wie lange (Dauer und Rückblick) · 3 Versand · 4 Text · 5 Name. "Wie lange", "Wiederholen" und "Auch melden,
+  wenn wieder normal" gelten für die ganze Bedingung.
+- Bei "Und" bedeutet eine Bedingung `unavailable` oder `unknown`, dass nichts passiert; bei "Oder" wird sie übergangen,
+  solange eine andere entscheidet. Die erste Bedingung steht weiterhin in den alten Feldern, bestehende Meldungen laufen
+  unverändert weiter.
+
 ## [2.14.0] - 2026-10-11
+
+Nicht veröffentlicht; enthalten in 2.15.0.
 
 Magic Push: eine Vorschau unter jeder Nachricht.
 
@@ -2597,7 +2627,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.14.0
+[2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0
 [2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0
 [2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0
 [2.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.11.0

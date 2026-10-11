@@ -3,7 +3,31 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.14.0, Magic Push: Vorschau unter jeder Nachricht)
+## Stand (2.15.0, Magic Push: mehrere verknüpfte Bedingungen)
+
+- 2.15.0 (Wunsch des Nutzers, Mockups `docs/mockups/magic-conditions-v1`, Variante "Eine Seite"): Schritte 1 Bedingungen ·
+  2 Wie lange · 3 Versand · 4 Text · 5 Name. Regel hat `conditions` = `{"op": "and"|"or", "items": [Blatt | Gruppe]}`,
+  Gruppe = `{"op", "items": [Blatt]}` (eine Ebene), Blatt = `{entity_id, kind (above|below|is), value, reset_value}`.
+  Gespeichert nur bei mehr als einem Blatt (sonst `None`); das erste Blatt (Tiefensuche) steht zusätzlich in den alten
+  Feldern `entity_id/kind/value/reset_value`, damit Altdaten und Einzelregeln unverändert laufen. Grenzen `MAX_LEAVES`
+  10, `MAX_GROUPS` 4; "ändert sich" nur als einzige Bedingung.
+- Auswertung (`magic.py`): `combine(op, werte)` dreiwertig (AND nach Kleene, OR übergeht `None`), `eval_tree`,
+  `leaf_met`, `leaf_hold` (Zone je Blatt über `reset_value`), `has_reset`. Engine: `_retrack` hört auf alle Blatt-
+  Entitäten, `_met`/`_held`, Dauer/Wiederholung/"wieder normal" gelten für das Ganze. AND mit `unavailable` → nichts
+  passiert. Neue Variable `{conditions}` (`condition_text`, Texte `push.text` `magic_and/or/above/below/is`).
+- Rückblick: `magic_history.evaluate_tree` rechnet in Zeitscheiben über alle Entitäten (Spannen je Blatt plus kombinierte
+  Intervalle und Auslösungen); WS `magic_history` nimmt optional `conditions`, Antwort enthält `leaves`.
+  `rule_payload` liefert immer einen Baum (`rule_tree`) und `condition_text`; `magic_list` hat `leaf_entities`.
+- Panel (`magic-push.js`): Entwurf `draft.conds` (Baum mit nur im Panel gültigen `uid`), `syncPrimary()` spiegelt das erste
+  Blatt in `d.entity_id/kind/…`; `w.cur` offenes Blatt (nur eines gleichzeitig), `w.adding` Hinzufügen. Seite 1:
+  `pickerHtml` (leer) / `condListHtml` mit `leafHtml`, `groupHtml`, `leafEditorHtml`; Seite 2: `step2Html` mit
+  `reviewChartHtml`/`timelinesHtml`. Rückblick Seite 1 je Blatt (`requestLeafHistory`, for_s 0), Seite 2 kombiniert
+  (`requestHistory`). Seg-Kapseln der Gruppen brauchen `data-mg` plus `data-group=uid`.
+- Tests: `tests/test_magic_conditions.py` (pytest), `magic-cond-e2e.mjs`, angepasst `magic-e2e.mjs`, `magicall-e2e.mjs`;
+  Simulator versteht `conditions`. Offen: auf echtem iPhone prüfen. 2.14.0 und 2.13.1 sind nicht veröffentlicht und in
+  2.15.0 enthalten.
+
+## Stand davor (2.14.0, Magic Push: Vorschau unter jeder Nachricht)
 
 - 2.14.0 (Wunsch des Nutzers): Schritt 4 hat zwei Vorschau-Zonen: `[data-mg-zone="pv"]` (`pvHtml("main")`) direkt unter
   Titel/Inhalt/Variablen und `[data-mg-zone="pvr"]` (`pvHtml("recover")`) am Ende von `recoverHtml()`, jede mit eigenem

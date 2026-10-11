@@ -1437,6 +1437,36 @@ input.mg-pill { cursor: text; }
 .mg-card .mg-input { scroll-margin-top: calc(var(--dev-head-h, 100px) + 70px); }
 .mgw-body .mg-input { scroll-margin-top: 8px; }
 
+/* Bedingungen im Assistenten (seit 2.15.0, docs/mockups/magic-conditions-v1): Karten, Gruppen, Und/Oder, Rückblick je Bedingung */
+.mg-sumline { margin: 8px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--dp-primary-soft); font-size: 13.5px; line-height: 1.45; overflow-wrap: anywhere; }
+.mg-lcard { margin-top: 8px; border-radius: 14px; background: var(--dp-subtle); overflow: hidden; }
+.mg-lcard.open { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--dp-primary) 55%, transparent); }
+.mg-lhead { display: flex; align-items: center; gap: 4px; padding-right: 6px; }
+.mg-lmain { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; padding: 12px 8px 12px 14px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.mg-lmain:hover { background: var(--dp-hover); }
+.mg-lmain:focus-visible, .mg-xbtn:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
+.mg-xbtn { flex: none; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--dp-text2); cursor: pointer; }
+.mg-xbtn:hover { background: var(--dp-hover); color: var(--dp-error); }
+.mg-ledit { padding: 0 14px 12px; border-top: 1px solid var(--dp-divider); }
+.mg-chgent { display: block; margin: 12px 0 0; font-size: 13px; }
+.mg-join { display: flex; align-items: center; gap: 8px; margin: 6px 0 -2px 18px; color: var(--dp-primary); font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.mg-join::before { content: ""; width: 2px; height: 14px; margin-right: 6px; border-radius: 1px; background: color-mix(in srgb, var(--dp-primary) 55%, transparent); }
+.mg-group { margin-top: 8px; padding: 8px 8px 10px; border: 1.5px dashed color-mix(in srgb, var(--dp-primary) 50%, transparent); border-radius: 16px; }
+.mg-ghead { display: flex; align-items: center; gap: 8px; padding: 0 2px 2px 6px; color: var(--dp-text2); font-size: 12px; }
+.mg-ghead b { flex: 1; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+.mg-ghead .mg-tabs { margin: 0; }
+.mg-mini .sub-tab { min-height: 30px; padding: 0 10px; font-size: 12px; }
+.mg-addin { display: block; width: 100%; margin: 8px 0 0; text-align: center; font-size: 13px; }
+.mg-adds { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.mg-adds .mg-add { margin-top: 0; }
+.mg-tlr { display: grid; grid-template-columns: minmax(96px, 36%) 1fr; align-items: center; gap: 8px; margin: 6px 0; color: var(--dp-text2); font-size: 12px; }
+.mg-tlr > span { overflow-wrap: anywhere; line-height: 1.25; }
+.mg-tlr.tot { padding-top: 6px; border-top: 1px solid var(--dp-divider); color: var(--dp-text); }
+.mg-tl { position: relative; height: 14px; border-radius: 5px; background: color-mix(in srgb, var(--dp-text) 10%, transparent); overflow: hidden; }
+.mg-tl i { position: absolute; top: 0; bottom: 0; background: var(--dp-error); opacity: .75; }
+.mg-tl i.all { background: var(--dp-primary); opacity: 1; }
+.mg-tl i.dim { opacity: .35; }
+
 /* Fenster des Assistenten (seit 2.11.0, docs/mockups/magic-push-dialog-v1, Variante A): Vollbild auf dem Handy, auf dem Desktop
    ein breites Fenster; Diagramm, Rückblick und Vorschau stehen dort rechts. Kopf, Fortschritt und Knöpfe bleiben stehen. */
 dialog.magic-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden; overscroll-behavior: contain;

@@ -379,6 +379,16 @@ HA-Nachbau prüfen.
   Meldung und "wieder normal" mit eigenem Titel und Inhalt stehen im selben Schritt, darunter Vorschau und "Test senden"
   (der Test kennt so Empfänger, Lautstärke und Wiederholung).
 
+## Magic Push: Bedingungen auf Seite 1 (seit 2.15.0, docs/mockups/magic-conditions-v1, "Eine Seite")
+
+- Schritte: Bedingungen · Wie lange · Versand · Text · Name. Seite 1 ist leer ein Entitätswähler, danach eine Liste von
+  Karten (`.mg-lcard`, immer nur eine offen: Art-Reiter, Diagramm, Wert, "Zurücksetzen"). Oben Und/Oder-Reiterleiste (erst
+  ab zwei Bedingungen) und der Satz "Melden, wenn ...". Gruppen sind gestrichelte Kästen (`.mg-group`) mit eigener
+  "alle"/"eine genügt"-Leiste und "+ Bedingung in der Gruppe". Alle Auswahlen sind `tabsHtml` mit Kapsel (Regel
+  "Auswahlknöpfe"); Gruppenleisten tragen `data-group`, damit sich die Lage nicht teilt.
+- Seite 2: Dauer-Reiter, eigene Zeit, darunter bei einer Bedingung das Diagramm mit Schwelle, bei mehreren eine
+  Zeitleiste je Bedingung (`.mg-tl`) und die Zeile "Zusammen".
+
 ## Magic Push: Übersicht in den Einstellungen (seit 2.13.0, docs/mockups/magic-overview-v1, Variante B)
 
 - Oben Hinweis, dann Suchfeld (wie `list-search`, "n von m", X), Filter "Alle / An / Aus / Ausgelöst" als zweizeilige

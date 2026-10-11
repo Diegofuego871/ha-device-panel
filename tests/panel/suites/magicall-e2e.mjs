@@ -10,8 +10,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { tab: "Magic Push", intro: "Alle Meldungen von Magic Push", count: "3 Meldungen auf 2 Geräten", count2: "2 Meldungen auf 2 Geräten", count1: "1 Meldung auf 1 Gerät", empty: "Noch keine Meldungen", deleteAsk: "löschen?", deleted: "Gelöscht.", q1: "Was soll überwacht werden?", err: "konnten nicht geladen werden", off: "ausgeschaltet", mon: "Überwachung und Meldungen" },
-  en: { tab: "Magic Push", intro: "All Magic Push messages", count: "3 messages on 2 devices", count2: "2 messages on 2 devices", count1: "1 message on 1 device", empty: "No messages yet", deleteAsk: "Delete", deleted: "Deleted.", q1: "What should be watched?", err: "could not be loaded", off: "turned off", mon: "Monitoring and notifications" },
+  de: { tab: "Magic Push", intro: "Alle Meldungen von Magic Push", count: "3 Meldungen auf 2 Geräten", count2: "2 Meldungen auf 2 Geräten", count1: "1 Meldung auf 1 Gerät", empty: "Noch keine Meldungen", deleteAsk: "löschen?", deleted: "Gelöscht.", q1: "Was soll überwacht werden?", q1b: "Welche Bedingungen?", err: "konnten nicht geladen werden", off: "ausgeschaltet", mon: "Überwachung und Meldungen" },
+  en: { tab: "Magic Push", intro: "All Magic Push messages", count: "3 messages on 2 devices", count2: "2 messages on 2 devices", count1: "1 message on 1 device", empty: "No messages yet", deleteAsk: "Delete", deleted: "Deleted.", q1: "What should be watched?", q1b: "Which conditions?", err: "could not be loaded", off: "turned off", mon: "Monitoring and notifications" },
 };
 const RULE = (id, device, name, entity, extra = {}) => ({ id, device_id: device, entity_id: entity, name, kind: "below", value: 12, for_s: 600, message: "Meldung {value}", body: "", recover: false, recover_message: "", recover_body: "", repeat_s: 0, target: null, enabled: true, critical: false, critical_volume: 10, reset_value: null, ...extra });
 
@@ -105,12 +105,12 @@ for (const lang of ["de", "en"]) {
     const W = "dialog.magic-dlg";
     await tap(`${body} [data-set="magic-edit"][data-id="r00000000002"]`);
     check(`[${tag}] Bearbeiten öffnet das Fenster des Assistenten, kein Geräte-Popup, Einstellungen dahinter offen`, await wait(`return r.querySelector("${W}")?.open && !r.querySelector("dialog.device").open && r.querySelector("dialog.settings").open && r.querySelector('${W} .mgw-t')?.textContent.includes("Steckdose Terrasse")`));
-    check(`[${tag}] Assistent mit dieser Meldung (freie Entität gewählt)`, await wait(`return r.querySelector('${W} .mg-big')?.textContent.trim() === ${JSON.stringify(T.q1)} && r.querySelector('${W} .mg-pick.sel')?.dataset.id === "sensor.abs_humidity"`));
+    check(`[${tag}] Assistent mit dieser Meldung (freie Entität gewählt)`, await wait(`return r.querySelector('${W} .mg-big')?.textContent.trim() === ${JSON.stringify(T.q1b)} && (r.querySelector('${W} .mg-lcard.open')?.textContent || "").includes("Absolute Feuchte berechnet")`));
     // Schliessen ohne Änderung: sofort zu, Einstellungen bleiben
     await tap(`${W} [data-mg="close"]`);
     check(`[${tag}] Schliessen ohne Änderung: Fenster zu, Einstellungen offen, Zustand zurückgesetzt`, await wait(`return !r.querySelector("${W}").open && r.querySelector("dialog.settings").open && r.host._magic.deviceId === null`));
     await tap(`${body} [data-set="magic-edit"][data-id="r00000000002"]`);
-    await wait(`return r.querySelector("${W}")?.open && !!r.querySelector('${W} .mg-pick.sel')`);
+    await wait(`return r.querySelector("${W}")?.open && !!r.querySelector('${W} .mg-lcard.open')`);
     await tap(`${W} button.mg-stp[data-step="5"]`);
     await wait(`return !!r.querySelector('${W} input[data-mg="name"]')`);
     const fill = async (sel, value) => { const h = await handle(sel); await h.fill(value); };
@@ -211,6 +211,15 @@ for (const lang of ["de", "en"]) {
     await ev(`r.host._closeDevice()`);
     check(`[${tag}] Übersicht ohne Querscrollen (viele Karten)`, (await ev(`const d=r.querySelector("dialog.settings"); return d.scrollWidth - d.clientWidth`)) <= 0);
     await p.screenshot({ path: `${outDir}/magicall-${tag.replace("/", "-")}-many.png` });
+
+    // Mehrere Bedingungen (2.15.0): die Übersicht nennt den ganzen Satz mit Gruppe in Klammern
+    const multi = RULE("r00000000099", "d", "Zwei Bedingungen", "sensor.temp", { conditions: { op: "and", items: [
+      { entity_id: "sensor.temp", kind: "below", value: 12, reset_value: null },
+      { op: "or", items: [{ entity_id: "binary_sensor.window", kind: "is", value: "on", reset_value: null }, { entity_id: "sensor.humidity", kind: "above", value: 60, reset_value: null }] },
+    ] } });
+    await reload([multi]);
+    const sentence = await text(`${body} .mg-card .mg-t small`);
+    check(`[${tag}] Übersicht: Satz mit allen Bedingungen und Klammer um die Gruppe`, /Temperatur .*12.* (und|and) \(.*Fenster.* (oder|or) Luftfeuchtigkeit.*60.*\)/.test(sentence), sentence);
 
     // Leer, Fehler
     await p.evaluate(() => { window.__magic.rules = []; });

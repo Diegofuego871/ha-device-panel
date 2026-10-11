@@ -7,7 +7,8 @@
  * baut das Popup gar nicht neu (wizardOpen()). So geht beim Tippen nichts verloren.
  *
  * Aufbau: Liste der Meldungen (Name, Satz, Schalter, Bearbeiten/Umbenennen/Löschen) und ein Assistent in fünf
- * Schritten (Wert · Wann · Versand · Text · Name). Der Assistent hat seit 2.11.0 ein eigenes Fenster (dialog.magic-dlg,
+ * Schritten (Bedingungen · Wie lange · Versand · Text · Name; Bedingungen seit 2.15.0 als Baum aus Und/Oder mit einer
+ * Ebene Gruppen, alle auf Seite 1). Der Assistent hat seit 2.11.0 ein eigenes Fenster (dialog.magic-dlg,
  * docs/mockups/magic-push-dialog-v1, Variante A): Vollbild auf dem Handy, breites Fenster mit Seitenspalte auf dem Desktop.
  * Der Reiter im Popup zeigt nur noch die Liste. Rückblick und Vorschau kommen vom Server (magic_history,
  * magic_preview), damit Panel und Meldung dieselbe Rechnung benutzen.
@@ -21,9 +22,12 @@ const VOLUME_MAX = 10;
 const FOR_UNITS = [1, 60, 3600, 86400];
 const REPEAT_UNITS = [60, 3600, 86400];
 const HIST_DELAY_MS = 450;
+// Kennung einer Bedingung oder Gruppe im Entwurf (nur im Panel, geht nicht an den Server)
+let LEAF_SEQ = 0;
+const leafId = () => `c${(LEAF_SEQ += 1)}`;
 const PREVIEW_DELAY_MS = 300;
 // Felder, die der Server in einer Meldung annimmt (alles andere, etwa "active", würde er ablehnen).
-const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "reset_value", "message", "body", "recover", "recover_message", "recover_body", "repeat_s", "target", "enabled", "critical", "critical_volume"];
+const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "reset_value", "message", "body", "recover", "recover_message", "recover_body", "repeat_s", "target", "enabled", "critical", "critical_volume", "conditions"];
 
 // Zeichen vor dem Eintrag: nach Geräteklasse, sonst nach Art der Entität.
 const EMOJI_CLASS = {
@@ -371,8 +375,7 @@ export class MagicPush {
   }
 
   // Bedingung als Satzteil ("unter 12 °C", "ist offen", "ändert sich").
-  condText(rule) {
-    const e = this.entityOf(rule);
+  condText(rule, e = this.entityOf(rule)) {
     const unit = e?.kind === "number" && e.unit ? ` ${e.unit}` : "";
     if (rule.kind === "change") return this.t("mgSentenceChange");
     if (rule.kind === "is" && e?.kind === "state") {
@@ -407,19 +410,190 @@ export class MagicPush {
 
   // "Temperatur unter 12 °C · für 10 Min. · einmal · mit "wieder normal""
   sentence(rule) {
-    const parts = [`${this.entityName(rule)} ${this.condText(rule)}`];
+    const many = rule.conditions?.items && this.leavesOf({ conds: rule.conditions }).length > 1;
+    const parts = [many ? this.treeText(rule.conditions, (id) => this.entityByIdOf(rule, id)) : `${this.entityName(rule)} ${this.condText(rule)}`];
     parts.push(rule.for_s ? this.t("mgSentenceFor", this.fmtDur(rule.for_s)) : this.t("mgSentenceNow"));
     if (rule.kind !== "change") {
       parts.push(this.repeatText(rule.repeat_s));
       if (rule.recover) parts.push(this.t("mgSentenceRecover"));
     }
-    if (rule.kind !== "change" && rule.reset_value != null && rule.reset_value !== "") parts.push(this.resetSentence(rule));
+    if (!many && rule.kind !== "change" && rule.reset_value != null && rule.reset_value !== "") parts.push(this.resetSentence(rule));
     if (rule.critical) parts.push(this.t("mgSentenceCritical", rule.critical_volume ?? VOLUME_MAX));
     if (rule.target) parts.push(this.t("mgSentenceTo", this.niceTarget(rule.target)));
     return parts.join(" · ");
   }
 
   // Vorschlag für den Namen aus Entität und Bedingung.
+  // Entität einer Bedingung: aus der Regel (Übersicht), sonst aus dem Popup des Geräts
+  entityByIdOf(rule, id) {
+    return rule?.leaf_entities?.[id] || (id === rule?.entity_id ? rule.entity : null) || this.entity(id);
+  }
+
+  // Ganze Bedingung als Satz: "Temperatur unter 12 °C und (Fenster ist offen oder Feuchte über 60 %)"
+  treeText(tree, resolve) {
+    const part = (item, nested) => {
+      if (item.items) {
+        const text = item.items.map((x) => part(x, true)).join(` ${this.t(item.op === "or" ? "mgOrWord" : "mgAndWord")} `);
+        return nested && item.items.length > 1 ? `(${text})` : text;
+      }
+      const e = resolve(item.entity_id);
+      return `${e?.name || item.entity_id} ${this.condText(item, e)}`;
+    };
+    return part(tree, false);
+  }
+
+  // --- Bedingungen im Entwurf (seit 2.15.0) ---------------------------------------
+
+  newLeaf(entityId = "") {
+    return { uid: leafId(), entity_id: entityId, kind: "below", value: "", reset_value: "", resetOwn: false };
+  }
+
+  // Alle Bedingungen der Reihe nach (Gruppen aufgelöst). Die erste gilt für Name, Variablen und Standardtexte.
+  leavesOf(d = this.wiz?.draft) {
+    const out = [];
+    for (const item of d?.conds?.items || []) {
+      if (item.items) out.push(...item.items);
+      else out.push(item);
+    }
+    return out;
+  }
+
+  findLeaf(uid) {
+    return this.leavesOf().find((l) => l.uid === uid) || null;
+  }
+
+  curLeaf() {
+    return this.findLeaf(this.wiz?.cur);
+  }
+
+  // Die erste Bedingung steht zusätzlich in den alten Feldern des Entwurfs (Namen, Texte und Variablen bauen darauf)
+  syncPrimary(d = this.wiz.draft) {
+    const first = this.leavesOf(d)[0];
+    d.entity_id = first?.entity_id || "";
+    d.kind = first?.kind || "below";
+    d.value = first?.value ?? "";
+    d.resetOwn = Boolean(first?.resetOwn);
+    d.reset_value = first?.reset_value ?? "";
+  }
+
+  // Leere Gruppen fallen weg; genau eine Bedingung steht ohne Gruppe
+  tidyTree(d = this.wiz.draft) {
+    d.conds.items = d.conds.items.filter((i) => !i.items || i.items.length);
+    const leaves = this.leavesOf(d);
+    if (leaves.length === 1) d.conds.items = [leaves[0]];
+  }
+
+  // Vorgabe für eine neu gewählte Entität: Zahl "unter" dem jetzigen Wert, Zustand der andere
+  leafDefaults(lf, e) {
+    if (e.kind === "number") {
+      lf.kind = "below";
+      lf.value = e.number != null ? String(Math.round(e.number * 10) / 10) : "";
+    } else {
+      lf.kind = "is";
+      const other = e.options?.find((o) => o.value !== String(e.state)) || e.options?.[0];
+      lf.value = other ? other.value : "";
+    }
+    lf.resetOwn = false;
+    lf.reset_value = "";
+  }
+
+  leafValid(lf) {
+    const e = this.entity(lf.entity_id);
+    if (!e) return false;
+    if (lf.kind === "above" || lf.kind === "below") return parseNumber(lf.value) != null && !this.resetError(lf);
+    if (lf.kind === "is") return String(lf.value).trim() !== "" && (e.kind !== "number" || parseNumber(lf.value) != null) && !this.resetError(lf);
+    return true;
+  }
+
+  // Bedingung für den Server: Zahl bei Zahlen, Zustand bei Zuständen
+  leafPayload(lf) {
+    const e = this.entity(lf.entity_id);
+    let value = null;
+    if (lf.kind === "above" || lf.kind === "below") value = parseNumber(lf.value);
+    else if (lf.kind === "is") value = e?.kind === "number" ? (parseNumber(lf.value) ?? lf.value) : lf.value;
+    return { entity_id: lf.entity_id, kind: lf.kind, value, reset_value: this.resetPayload(lf, e) };
+  }
+
+  treePayload(d = this.wiz.draft) {
+    return {
+      op: d.conds.op,
+      items: d.conds.items.map((it) => (it.items ? { op: it.op, items: it.items.map((l) => this.leafPayload(l)) } : this.leafPayload(it))),
+    };
+  }
+
+  onPick(id) {
+    const e = this.entity(id);
+    const w = this.wiz;
+    if (!e || !w) return;
+    const d = w.draft;
+    const add = w.adding;
+    if (add?.replace) {
+      const lf = this.findLeaf(add.replace);
+      if (lf && lf.entity_id !== id) {
+        lf.entity_id = id;
+        this.leafDefaults(lf, e);
+      }
+      w.cur = add.replace;
+    } else {
+      const lf = this.newLeaf(id);
+      this.leafDefaults(lf, e);
+      if (add?.group === "new") d.conds.items.push({ uid: leafId(), op: "or", items: [lf] });
+      else if (add?.group) d.conds.items.find((g) => g.uid === add.group)?.items.push(lf);
+      else d.conds.items.push(lf);
+      w.cur = lf.uid;
+    }
+    w.adding = null;
+    w.free.open = false;
+    this.syncPrimary();
+    this.syncDefaults();
+    this.paint();
+    this.syncNav();
+    this.requestLeafHistory();
+  }
+
+  startAdd(adding) {
+    this.wiz.adding = adding;
+    this.wiz.free.open = false;
+    this.paint();
+    this.scrollTop();
+  }
+
+  removeLeaf(uid) {
+    const w = this.wiz;
+    const d = w.draft;
+    d.conds.items = d.conds.items
+      .map((it) => (it.items ? { ...it, items: it.items.filter((l) => l.uid !== uid) } : it))
+      .filter((it) => (it.items ? it.items.length : it.uid !== uid));
+    this.afterTreeChange(uid);
+  }
+
+  removeGroup(uid) {
+    const d = this.wiz.draft;
+    const gone = d.conds.items.find((it) => it.uid === uid)?.items.map((l) => l.uid) || [];
+    d.conds.items = d.conds.items.filter((it) => it.uid !== uid);
+    this.afterTreeChange(gone.includes(this.wiz.cur) ? this.wiz.cur : null);
+  }
+
+  afterTreeChange(removedUid) {
+    const w = this.wiz;
+    this.tidyTree();
+    const leaves = this.leavesOf();
+    if (w.cur === removedUid || !this.findLeaf(w.cur)) w.cur = leaves.length === 1 ? leaves[0].uid : null;
+    this.syncPrimary();
+    this.syncDefaults();
+    this.paint();
+    this.syncNav();
+    this.requestLeafHistory();
+  }
+
+  // Eine Bedingung auf- oder zuklappen (immer höchstens eine ist offen)
+  openLeaf(uid) {
+    const w = this.wiz;
+    w.cur = w.cur === uid ? null : uid;
+    this.paint();
+    this.requestLeafHistory();
+  }
+
   suggestName(draft) {
     const e = this.entity(draft.entity_id);
     if (!e) return "";
@@ -464,25 +638,23 @@ export class MagicPush {
   }
 
   // Eigener Rücksetzwert für den Server: Zahl bei Zahlen, Zustand bei Zuständen; sonst leer (automatisch)
-  resetPayload(d, e) {
-    if (!d.resetOwn || d.kind === "change" || String(d.reset_value).trim() === "") return null;
-    return e?.kind === "number" ? parseNumber(d.reset_value) : d.reset_value;
+  resetPayload(lf, e = this.entity(lf.entity_id)) {
+    if (!lf.resetOwn || lf.kind === "change" || String(lf.reset_value).trim() === "") return null;
+    return e?.kind === "number" ? parseNumber(lf.reset_value) : lf.reset_value;
   }
 
   draftPayload() {
     const d = this.wiz.draft;
-    const e = this.entity(d.entity_id);
-    let value = null;
-    if (d.kind === "above" || d.kind === "below") value = parseNumber(d.value);
-    else if (d.kind === "is") value = e?.kind === "number" ? (parseNumber(d.value) ?? d.value) : d.value;
+    const leaves = this.leavesOf();
+    const first = leaves.length ? this.leafPayload(leaves[0]) : { entity_id: d.entity_id, kind: d.kind, value: null, reset_value: null };
     const out = {
       device_id: this.deviceId,
-      entity_id: d.entity_id,
+      entity_id: first.entity_id,
       name: (d.name || "").trim() || this.suggestName(d) || "Magic Push",
-      kind: d.kind,
-      value,
+      kind: first.kind,
+      value: first.value,
       for_s: d.for_s,
-      reset_value: this.resetPayload(d, e),
+      reset_value: first.reset_value,
       message: d.message,
       body: d.body,
       recover: d.kind === "change" ? false : d.recover,
@@ -494,6 +666,8 @@ export class MagicPush {
       critical: d.critical,
       critical_volume: d.critical_volume,
     };
+    // Mehrere Bedingungen (seit 2.15.0): der Baum; die erste steht zusätzlich in den alten Feldern
+    if (leaves.length > 1) out.conditions = this.treePayload(d);
     if (d.id) out.id = d.id;
     return out;
   }
@@ -546,8 +720,9 @@ export class MagicPush {
   placeSide(win) {
     if (!this.wide()) return;
     const body = win.querySelector(".mgw-body");
-    // Schritt 4: die Vorschauen bleiben unter ihren Feldern; nur im Schritt 5 (Zusammenfassung) stehen sie rechts
-    const names = this.wiz?.step === 4 ? ["chart", "hist"] : ["chart", "hist", "pv"];
+    // Rechts stehen nur Rückblick (Schritt 2) und die Zusammenfassung (Schritt 5); sonst bleibt alles unter seinen Feldern
+    const step = this.wiz?.step;
+    const names = step === 2 ? ["chart", "hist"] : step === 5 ? ["pv"] : [];
     const zones = names.map((n) => body?.querySelector(`[data-mg-zone="${n}"]`)).filter(Boolean);
     if (!zones.length) return;
     const side = document.createElement("aside");
@@ -780,6 +955,8 @@ export class MagicPush {
   newDraft() {
     return {
       id: null,
+      // Bedingungen (seit 2.15.0): Baum aus Bedingungen und Gruppen; die erste steht zusätzlich in entity_id, kind, value, ...
+      conds: { op: "and", items: [] },
       entity_id: "",
       kind: "below",
       value: "",
@@ -808,14 +985,21 @@ export class MagicPush {
 
   draftFrom(rule) {
     const d = this.newDraft();
+    const tree = rule.conditions?.items?.length
+      ? rule.conditions
+      : { op: "and", items: [{ entity_id: rule.entity_id, kind: rule.kind, value: rule.value, reset_value: rule.reset_value }] };
+    const leaf = (x) => ({
+      uid: leafId(),
+      entity_id: x.entity_id,
+      kind: x.kind,
+      value: x.value == null ? "" : String(x.value),
+      reset_value: x.reset_value == null ? "" : String(x.reset_value),
+      resetOwn: x.reset_value != null && x.reset_value !== "",
+    });
+    d.conds = { op: tree.op || "and", items: tree.items.map((it) => (it.items ? { uid: leafId(), op: it.op || "and", items: it.items.map(leaf) } : leaf(it))) };
     Object.assign(d, {
       id: rule.id,
-      entity_id: rule.entity_id,
-      kind: rule.kind,
-      value: rule.value == null ? "" : String(rule.value),
       for_s: rule.for_s,
-      resetOwn: rule.reset_value != null && rule.reset_value !== "",
-      reset_value: rule.reset_value == null ? "" : String(rule.reset_value),
       message: rule.message,
       body: rule.body || "",
       recover: Boolean(rule.recover),
@@ -830,6 +1014,7 @@ export class MagicPush {
       nameTouched: true,
       enabled: rule.enabled,
     });
+    this.syncPrimary(d);
     if (!PRESET_FOR.includes(d.for_s)) d.forOwn = splitSeconds(d.for_s, FOR_UNITS);
     if (d.repeat_s && !PRESET_REPEAT.includes(d.repeat_s)) d.repeatOwn = splitSeconds(d.repeat_s, REPEAT_UNITS);
     return d;
@@ -851,17 +1036,26 @@ export class MagicPush {
       error: "",
       saving: false,
       confirmClose: false,
+      // Schritt 1: gerade geöffnete Bedingung (uid), Auswahl einer Entität ({group, replace}) und Verlauf der offenen Bedingung
+      cur: null,
+      adding: null,
+      leafHist: null,
     };
+    const leaves = this.leavesOf(this.wiz.draft);
+    if (leaves.length === 1) this.wiz.cur = leaves[0].uid;
     // Stand beim Öffnen: ohne Änderung schliesst das Fenster ohne Rückfrage
     this.wiz.snap = JSON.stringify(this.wiz.draft);
     this.paint();
     this.scrollTop();
+    this.requestLeafHistory();
   }
 
   closeWizard() {
     window.clearTimeout(this._histTimer);
+    window.clearTimeout(this._leafTimer);
     window.clearTimeout(this._pvTimer);
     this._seq += 1;
+    this._lseq = (this._lseq || 0) + 1;
     this.view = "list";
     this.wiz = null;
     this.closeWin();
@@ -900,59 +1094,42 @@ export class MagicPush {
     if (!d.nameTouched) d.name = this.suggestName(d);
   }
 
-  pickEntity(id) {
-    const d = this.wiz.draft;
-    const e = this.entity(id);
-    if (!e) return;
-    // Beim Wechsel auf eine andere Entität passt der alte Wert nicht mehr (Schwelle der Temperatur gilt nicht für die Feuchte).
-    if (d.entity_id !== id) {
-      if (e.kind === "number") {
-        if (!["above", "below", "is", "change"].includes(d.kind)) d.kind = "below";
-        d.value = e.number != null ? String(Math.round(e.number * 10) / 10) : "";
-      } else {
-        if (d.kind !== "change") d.kind = "is";
-        const other = e.options?.find((o) => o.value !== String(e.state)) || e.options?.[0];
-        d.value = other ? other.value : "";
-      }
-      d.entity_id = id;
-      d.resetOwn = false;
-      d.reset_value = "";
-    }
-    this.syncDefaults();
-    this.paint();
-    this.syncNav();
-  }
-
   setKind(kind) {
-    const d = this.wiz.draft;
-    const e = this.entity(d.entity_id);
-    d.kind = kind;
-    if (kind === "is" && e?.kind === "state" && !d.value) d.value = e.options?.[0]?.value ?? "";
-    if ((kind === "above" || kind === "below" || (kind === "is" && e?.kind === "number")) && parseNumber(d.value) == null && e?.number != null) {
-      d.value = String(Math.round(e.number * 10) / 10);
+    const lf = this.curLeaf();
+    if (!lf) return;
+    const e = this.entity(lf.entity_id);
+    // "ändert sich" ist ein Ereignis und gibt es nur als einzige Bedingung
+    if (kind === "change" && this.leavesOf().length > 1) return;
+    lf.kind = kind;
+    if (kind === "is" && e?.kind === "state" && !lf.value) lf.value = e.options?.[0]?.value ?? "";
+    if ((kind === "above" || kind === "below" || (kind === "is" && e?.kind === "number")) && parseNumber(lf.value) == null && e?.number != null) {
+      lf.value = String(Math.round(e.number * 10) / 10);
     }
-    if (d.resetOwn) d.reset_value = this.defaultReset(d);
+    if (lf.resetOwn) lf.reset_value = this.defaultReset(lf);
+    this.syncPrimary();
     this.syncDefaults();
     this.paint();
-    this.requestHistory();
-    this.requestPreview();
+    this.requestLeafHistory();
   }
 
   // Vorschlag für den Rücksetzwert: ein Stück auf der Seite des Normalen, bei Zuständen der andere Zustand
-  defaultReset(d) {
-    const e = this.entity(d.entity_id);
-    if (d.kind === "is" && e?.kind === "state") {
-      return (e.options?.find((o) => o.value !== String(d.value)) || e.options?.[0])?.value ?? "";
+  defaultReset(lf) {
+    const e = this.entity(lf.entity_id);
+    if (lf.kind === "is" && e?.kind === "state") {
+      return (e.options?.find((o) => o.value !== String(lf.value)) || e.options?.[0])?.value ?? "";
     }
-    const v = parseNumber(d.value);
+    const v = parseNumber(lf.value);
     if (v == null) return "";
     const gap = Math.max(1, Math.abs(v) * 0.1);
-    return String(Math.round((d.kind === "above" ? v - gap : v + gap) * 10) / 10);
+    return String(Math.round((lf.kind === "above" ? v - gap : v + gap) * 10) / 10);
   }
 
   setValue(text, fromInput = false) {
+    const lf = this.curLeaf();
+    if (!lf) return;
+    lf.value = text;
+    this.syncPrimary();
     const d = this.wiz.draft;
-    d.value = text;
     if (!d.nameTouched) d.name = this.suggestName(d);
     if (!fromInput) {
       const input = this.q('input[data-mg="value"]');
@@ -960,14 +1137,14 @@ export class MagicPush {
     }
     this.paintZones(["chart", "resethint"]);
     this.syncNav();
-    this.requestHistory();
-    this.requestPreview();
+    this.requestLeafHistory();
   }
 
   stepValue(direction, field = "value") {
-    const d = this.wiz.draft;
-    const e = this.entity(d.entity_id);
-    const current = parseNumber(d[field]) ?? e?.number ?? 0;
+    const lf = this.curLeaf();
+    if (!lf) return;
+    const e = this.entity(lf.entity_id);
+    const current = parseNumber(lf[field]) ?? e?.number ?? 0;
     // Ganze Schwelle in ganzen Schritten, mit Nachkommastellen in Zehnteln (ab 100 wieder ganz, sonst zu mühsam).
     const step = Number.isInteger(current) || Math.abs(current) >= 100 ? 1 : 0.1;
     const next = String(Math.round((current + direction * step) * 1000) / 1000);
@@ -976,29 +1153,31 @@ export class MagicPush {
   }
 
   setReset(text, fromInput = false) {
-    this.wiz.draft.reset_value = text;
+    const lf = this.curLeaf();
+    if (!lf) return;
+    lf.reset_value = text;
+    this.syncPrimary();
     if (!fromInput) {
       const input = this.q('input[data-mg="reset-value"]');
       if (input) input.value = text;
     }
     this.paintZones(["chart", "resethint"]);
     this.syncNav();
-    this.requestHistory();
+    this.requestLeafHistory();
   }
 
   // Fehler des eigenen Rücksetzwerts als Textschlüssel ("" = in Ordnung)
-  resetError() {
-    const d = this.wiz.draft;
-    const e = this.entity(d.entity_id);
-    if (!d.resetOwn || d.kind === "change") return "";
-    if (e?.kind === "state" || (d.kind === "is" && e?.kind !== "number")) return String(d.reset_value).trim() === "" ? "mgResetBadState" : "";
-    const rv = parseNumber(d.reset_value);
+  resetError(lf = this.curLeaf()) {
+    if (!lf || !lf.resetOwn || lf.kind === "change") return "";
+    const e = this.entity(lf.entity_id);
+    if (e?.kind === "state" || (lf.kind === "is" && e?.kind !== "number")) return String(lf.reset_value).trim() === "" ? "mgResetBadState" : "";
+    const rv = parseNumber(lf.reset_value);
     if (rv == null) return "mgResetBadNumber";
-    if (d.kind === "is") return "";
-    const v = parseNumber(d.value);
+    if (lf.kind === "is") return "";
+    const v = parseNumber(lf.value);
     if (v == null) return "";
-    if (d.kind === "below" && rv < v) return "mgResetBad_below";
-    if (d.kind === "above" && rv > v) return "mgResetBad_above";
+    if (lf.kind === "below" && rv < v) return "mgResetBad_below";
+    if (lf.kind === "above" && rv > v) return "mgResetBad_above";
     return "";
   }
 
@@ -1072,14 +1251,11 @@ export class MagicPush {
 
   canNext(step = this.wiz.step) {
     const d = this.wiz.draft;
-    const e = this.entity(d.entity_id);
-    if (step === 1) return Boolean(e);
-    if (step === 2) {
-      if (!e) return false;
-      if (d.kind === "above" || d.kind === "below") return parseNumber(d.value) != null && !this.forError() && !this.resetError();
-      if (d.kind === "is") return String(d.value).trim() !== "" && (e.kind !== "number" || parseNumber(d.value) != null) && !this.forError() && !this.resetError();
-      return !this.forError();
+    if (step === 1) {
+      const leaves = this.leavesOf();
+      return leaves.length > 0 && !this.wiz.adding && leaves.every((l) => this.leafValid(l));
     }
+    if (step === 2) return !this.forError();
     if (step === 3) return !this.repeatError();
     if (step === 4) return d.message.trim() !== "" && (!d.recover || d.kind === "change" || d.recover_message.trim() !== "");
     return d.name.trim() !== "";
@@ -1102,6 +1278,7 @@ export class MagicPush {
     if (step >= 3) this.syncDefaults();
     this.paint();
     this.scrollTop();
+    if (step === 1) this.requestLeafHistory();
     if (step === 2) this.requestHistory();
     if (step >= 4) this.requestPreview();
   }
@@ -1112,28 +1289,63 @@ export class MagicPush {
     const w = this.wiz;
     if (!w || w.step !== 2) return;
     window.clearTimeout(this._histTimer);
-    const d = w.draft;
-    const numeric = d.kind === "above" || d.kind === "below";
-    const value = numeric ? parseNumber(d.value) : d.kind === "is" ? d.value : null;
-    if ((numeric && value == null) || (d.kind === "is" && String(d.value).trim() === "") || this.forError()) {
+    const leaves = this.leavesOf();
+    if (!leaves.length || !leaves.every((l) => this.leafValid(l)) || this.forError()) {
       w.hist = null;
       this.paintZones(["chart", "hist"]);
       return;
     }
     w.hist = { loading: true, prev: w.hist && !w.hist.loading ? w.hist : w.hist?.prev || null };
     this.paintZones(["hist"]);
-    this._histTimer = window.setTimeout(() => this.fetchHistory(value), HIST_DELAY_MS);
+    this._histTimer = window.setTimeout(() => this.fetchHistory(), HIST_DELAY_MS);
   }
 
-  async fetchHistory(value) {
+  // Verlauf der offenen Bedingung für das Diagramm in Schritt 1 (ohne Dauer: jeder Abschnitt zählt)
+  requestLeafHistory() {
+    const w = this.wiz;
+    if (!w || w.step !== 1) return;
+    window.clearTimeout(this._leafTimer);
+    const lf = this.curLeaf();
+    if (!lf || !this.leafValid(lf)) {
+      w.leafHist = null;
+      this.paintZones(["chart"]);
+      return;
+    }
+    w.leafHist = { loading: true, prev: w.leafHist && !w.leafHist.loading ? w.leafHist : w.leafHist?.prev || null };
+    this._leafTimer = window.setTimeout(() => this.fetchLeafHistory(lf.uid), HIST_DELAY_MS);
+  }
+
+  async fetchLeafHistory(uid) {
+    const w = this.wiz;
+    const lf = this.findLeaf(uid);
+    if (!w || !lf) return;
+    const seq = (this._lseq = (this._lseq || 0) + 1);
+    const one = this.leafPayload(lf);
+    const msg = { type: "device_panel/magic_history", entity_id: one.entity_id, kind: one.kind, for_s: 0 };
+    if (one.value != null) msg.value = one.value;
+    if (one.reset_value != null) msg.reset_value = one.reset_value;
+    try {
+      const result = await this.call(msg);
+      if (seq !== this._lseq || this.wiz !== w) return;
+      w.leafHist = result;
+    } catch (err) {
+      if (seq !== this._lseq || this.wiz !== w) return;
+      w.leafHist = { failed: true };
+    }
+    this.paintZones(["chart"]);
+  }
+
+  async fetchHistory() {
     const w = this.wiz;
     if (!w) return;
     const d = w.draft;
     const seq = (this._seq += 1);
-    const msg = { type: "device_panel/magic_history", entity_id: d.entity_id, kind: d.kind, for_s: d.for_s };
-    if (value != null) msg.value = value;
-    const reset = this.resetPayload(d, this.entity(d.entity_id));
-    if (reset != null && !this.resetError()) msg.reset_value = reset;
+    const first = this.leafPayload(this.leavesOf()[0]);
+    const msg = { type: "device_panel/magic_history", entity_id: first.entity_id, kind: first.kind, for_s: d.for_s };
+    if (first.value != null) msg.value = first.value;
+    if (first.reset_value != null) msg.reset_value = first.reset_value;
+    // Mehrere Bedingungen: der Rückblick rechnet über alle (seit 2.15.0)
+    if (this.leavesOf().length > 1) msg.conditions = this.treePayload();
     try {
       const result = await this.call(msg);
       if (seq !== this._seq || this.wiz !== w) return;
@@ -1288,7 +1500,7 @@ export class MagicPush {
         ? `<button type="button" class="mg-stp${on}" data-mg="goto" data-step="${n}" aria-label="${esc(`${t("mgStepOf", n, STEPS)}: ${t(`mgStepName_${n}`)}`)}"></button>`
         : `<span class="mg-stp${on}"></span>`;
     }).join("");
-    const where = step === 1 ? t(`mgStepName_${step}`) : `${e ? `${emojiFor(e)} ${e.name} · ` : ""}${t(`mgStepName_${step}`)}`;
+    const where = step === 1 || !this.leavesOf().length ? t(`mgStepName_${step}`) : `${e ? `${emojiFor(e)} ${e.name}${this.leavesOf().length > 1 ? " +" : ""} · ` : ""}${t(`mgStepName_${step}`)}`;
     let body = "";
     if (step === 1) body = this.step1Html();
     else if (step === 2) body = this.step2Html();
@@ -1305,30 +1517,124 @@ export class MagicPush {
         <button type="button" class="dlg-close" data-mg="close" title="${esc(t("close"))}" aria-label="${esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>
       <div class="mgw-prog"><div class="mg-stephead"><span>${esc(t("mgStepOf", step, STEPS))}</span><span>${esc(where)}</span></div>
         <div class="mg-steps">${bars}</div></div>
-      <div class="mgw-body"><div class="mgw-main"><div class="mg-big">${esc(t(`mgQ_${step}`))}</div>
+      <div class="mgw-body"><div class="mgw-main"><div class="mg-big">${esc(t(step === 1 && !w.adding && this.leavesOf().length ? "mgQ_1b" : `mgQ_${step}`))}</div>
         ${body}
         ${w.error ? `<div class="dlg-error" role="alert">${esc(w.error)}</div>` : ""}</div></div>
       <div class="mgw-foot">${w.confirmClose ? discard : nav}</div>`;
   }
 
+  // Schritt 1 (seit 2.15.0): alle Bedingungen an einem Ort. Ohne Bedingung (und beim Hinzufügen) die Auswahl der Entität
+  // wie bisher, sonst die Liste mit Und/Oder, Gruppen und der geöffneten Bedingung.
   step1Html() {
+    return this.wiz.adding || !this.leavesOf().length ? this.pickerHtml() : this.condListHtml();
+  }
+
+  pickerHtml() {
     const esc = (v) => this.esc(v);
+    const w = this.wiz;
     const entities = this.data?.entities || [];
-    const picked = this.wiz.draft.entity_id;
-    let html = entities.length
+    const picked = w.adding?.replace ? this.findLeaf(w.adding.replace)?.entity_id || "" : "";
+    let html = `<p class="mg-note">${esc(this.t(this.leavesOf().length ? "mgAddIntro" : "mgFirstIntro"))}</p>`;
+    html += entities.length
       ? entities.map((e) => this.pickCardHtml(e, e.entity_id === picked, this.tt(`mgCat_${e.category}`))).join("")
       : `<p class="mg-note">${esc(this.t("mgNoEntities"))}</p>`;
     // Ganz unten: freie Entität (seit 2.10.0), jede Entität von Home Assistant; die Meldung bleibt an dieses Gerät gebunden
-    const free = this.isFree(picked) ? this.entity(picked) : null;
+    const free = picked && this.isFree(picked) ? this.entity(picked) : null;
     html += `<div class="mg-k mg-freehead">${esc(this.t("mgFreeLabel"))}</div>`;
     if (free) html += this.pickCardHtml(free, true, this.t("mgFreeBadge"), free.entity_id);
-    const open = this.wiz.free.open;
+    const open = w.free.open;
     html += `<button type="button" class="mg-card mg-pick mg-freebtn" data-mg="free-open" aria-expanded="${open}"><span class="mg-row"><span class="mg-ic" aria-hidden="true">🔎</span>
       <span class="mg-t"><b>${esc(free ? this.t("mgFreeChange") : this.t("mgFreeOpen"))}</b><small>${esc(this.t("mgFreeSub"))}</small></span><span class="mg-chev" aria-hidden="true">${open ? "▴" : "▾"}</span></span></button>`;
     if (open) {
-      html += `<div class="mg-free"><input class="mg-input" type="search" data-mg="free-query" value="${esc(this.wiz.free.query)}" placeholder="${esc(this.t("mgFreeSearch"))}" aria-label="${esc(this.t("mgFreeSearch"))}" autocomplete="off">
+      html += `<div class="mg-free"><input class="mg-input" type="search" data-mg="free-query" value="${esc(w.free.query)}" placeholder="${esc(this.t("mgFreeSearch"))}" aria-label="${esc(this.t("mgFreeSearch"))}" autocomplete="off">
         <div data-mg-zone="freelist">${this.freeListHtml()}</div></div>`;
     }
+    return html;
+  }
+
+  // Liste der Bedingungen: Und/Oder und Satz (ab zwei Bedingungen), Karten und Gruppen, Knöpfe zum Hinzufügen
+  condListHtml() {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const d = this.wiz.draft;
+    const leaves = this.leavesOf();
+    const sole = leaves.length === 1;
+    let html = "";
+    if (!sole) {
+      html += this.tabsHtml([
+        { on: d.conds.op === "and", attrs: 'data-mg="op" data-v="and"', label: t("mgOpAnd") },
+        { on: d.conds.op === "or", attrs: 'data-mg="op" data-v="or"', label: t("mgOpOr") },
+      ]);
+      html += `<div class="mg-sumline"><b>${esc(t("mgWhenPrefix"))}</b> ${esc(this.treeText(d.conds, (id) => this.entity(id)))}</div>`;
+    }
+    d.conds.items.forEach((item, i) => {
+      if (i > 0) html += `<div class="mg-join">${esc(t(d.conds.op === "or" ? "mgOrWord" : "mgAndWord"))}</div>`;
+      html += item.items ? this.groupHtml(item) : this.leafHtml(item);
+    });
+    const groups = d.conds.items.filter((i) => i.items).length;
+    if (sole && leaves[0].kind === "change") return html;
+    if (leaves.length >= this.limit("leaves", 10)) return `${html}<p class="mg-hint mg-limit">${esc(t("mgLimitConds", this.limit("leaves", 10)))}</p>`;
+    html += `<div class="mg-adds"><button type="button" class="mg-add" data-mg="add-cond">${this.h.mdi("plus", 18)}${esc(t("mgAddCond"))}</button>`;
+    if (groups < this.limit("groups", 4)) html += `<button type="button" class="mg-add" data-mg="add-group">${this.h.mdi("plus", 18)}${esc(t("mgAddGroup"))}</button>`;
+    return `${html}</div>`;
+  }
+
+  groupHtml(g) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const tabs = this.tabsHtml(
+      [
+        { on: g.op === "and", attrs: `data-mg="gop" data-group="${esc(g.uid)}" data-v="and"`, label: t("mgGroupAll") },
+        { on: g.op === "or", attrs: `data-mg="gop" data-group="${esc(g.uid)}" data-v="or"`, label: t("mgGroupAny") },
+      ],
+      "mg-mini"
+    );
+    const inner = g.items.map((lf, i) => `${i ? `<div class="mg-join">${esc(t(g.op === "or" ? "mgOrWord" : "mgAndWord"))}</div>` : ""}${this.leafHtml(lf)}`).join("");
+    const full = this.leavesOf().length >= this.limit("leaves", 10);
+    return `<div class="mg-group"><div class="mg-ghead"><b>${esc(t("mgGroup"))}</b>${tabs}
+      <button type="button" class="mg-xbtn" data-mg="group-del" data-uid="${esc(g.uid)}" title="${esc(t("mgRemoveGroup"))}" aria-label="${esc(t("mgRemoveGroup"))}">${this.h.mdi("close", 16)}</button></div>
+      ${inner}${full ? "" : `<button type="button" class="linkbtn mg-addin" data-mg="add-in" data-uid="${esc(g.uid)}">${esc(t("mgAddInGroup"))}</button>`}</div>`;
+  }
+
+  // Eine Bedingung: Kopf (Name, Satz, jetziger Wert) und, wenn offen, der Editor
+  leafHtml(lf) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const e = this.entity(lf.entity_id);
+    const open = this.wiz.cur === lf.uid;
+    const now = e ? this.entityValue(e) : "";
+    const sub = [this.leafValid(lf) || lf.kind === "change" ? this.condText(lf, e) : t("mgCondIncomplete"), now ? t("mgNowValue", now) : ""].filter(Boolean).join(" · ");
+    return `<div class="mg-lcard${open ? " open" : ""}"><div class="mg-lhead">
+      <button type="button" class="mg-lmain" data-mg="leaf-open" data-uid="${esc(lf.uid)}" aria-expanded="${open}"><span class="mg-ic" aria-hidden="true">${emojiFor(e)}</span>
+        <span class="mg-t"><b>${esc(e?.name || lf.entity_id)}</b><small>${esc(sub)}</small></span><span class="mg-chev" aria-hidden="true">${open ? "▴" : "▾"}</span></button>
+      <button type="button" class="mg-xbtn" data-mg="leaf-del" data-uid="${esc(lf.uid)}" title="${esc(t("mgRemoveCond"))}" aria-label="${esc(t("mgRemoveCond"))}">${this.h.mdi("close", 16)}</button></div>
+      ${open ? this.leafEditorHtml(lf, e) : ""}</div>`;
+  }
+
+  // Editor der offenen Bedingung: Art, Diagramm, Wert, Zurücksetzen (bisher "Wann")
+  leafEditorHtml(lf, e) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    if (!e) return "";
+    const sole = this.leavesOf().length === 1;
+    let kinds = e.kind === "number" ? [["above", "mgKindAbove"], ["below", "mgKindBelow"], ["is", "mgKindIs"]] : [["is", "mgKindIsState"]];
+    if (sole) kinds = [...kinds, ["change", "mgKindChange"]];
+    let html = `<div class="mg-ledit">${this.tabsHtml(kinds.map(([k, label]) => ({ on: lf.kind === k, attrs: `data-mg="kind" data-kind="${k}"`, label: t(label) })))}`;
+    html += `<div data-mg-zone="chart">${this.chartHtml(this.wiz.leafHist, lf)}</div>`;
+    if (lf.kind === "above" || lf.kind === "below" || (lf.kind === "is" && e.kind === "number")) {
+      html += `<div class="mg-k">${esc(t("mgThreshold"))}${e.unit ? ` <span class="mg-unit">· ${esc(t("mgThresholdUnit", e.unit))}</span>` : ""}</div>
+        <div class="sub-tabs mg-tabs mg-stepper"><button type="button" class="sub-tab" data-mg="step" data-dir="-1" aria-label="${esc(t("mgMinus"))}">−</button>
+        <input class="mg-valin" type="text" inputmode="decimal" data-mg="value" value="${esc(lf.value)}" aria-label="${esc(t("mgThreshold"))}" autocomplete="off">
+        <button type="button" class="sub-tab" data-mg="step" data-dir="1" aria-label="${esc(t("mgPlus"))}">+</button></div>`;
+    } else if (lf.kind === "is") {
+      if (e.options?.length) {
+        html += `<div class="mg-k">${esc(t("mgPickState"))}</div>${this.tabsHtml(e.options.map((o) => ({ on: String(lf.value) === o.value, attrs: `data-mg="state" data-v="${esc(o.value)}"`, label: o.label })))}`;
+      } else {
+        html += `<div class="mg-k">${esc(t("mgStateFree"))}</div><input class="mg-input" type="text" data-mg="value" value="${esc(lf.value)}" autocomplete="off">`;
+      }
+    }
+    html += this.resetHtml(lf);
+    html += `<button type="button" class="linkbtn mg-chgent" data-mg="leaf-entity" data-uid="${esc(lf.uid)}">${esc(t("mgChangeEntity"))}</button></div>`;
     return html;
   }
 
@@ -1376,89 +1682,102 @@ export class MagicPush {
   }
 
   // Bedingung (Zahl: über, unter, ist gleich, ändert sich; Zustand: ist, ändert sich), Wert, Dauer.
+  // Schritt 2 (seit 2.15.0): wie lange die Bedingung gelten muss, und der Rückblick (je Bedingung und zusammen)
   step2Html() {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const d = this.wiz.draft;
-    const e = this.entity(d.entity_id);
-    if (!e) return "";
-    const kinds = e.kind === "number" ? [["above", "mgKindAbove"], ["below", "mgKindBelow"], ["is", "mgKindIs"], ["change", "mgKindChange"]] : [["is", "mgKindIsState"], ["change", "mgKindChange"]];
-    let html = this.tabsHtml(kinds.map(([k, label]) => ({ on: d.kind === k, attrs: `data-mg="kind" data-kind="${k}"`, label: t(label) })));
-    html += `<div data-mg-zone="chart">${this.chartHtml()}</div>`;
-    if (d.kind === "above" || d.kind === "below" || (d.kind === "is" && e.kind === "number")) {
-      html += `<div class="mg-k">${esc(t("mgThreshold"))}${e.unit ? ` <span class="mg-unit">· ${esc(t("mgThresholdUnit", e.unit))}</span>` : ""}</div>
-        <div class="sub-tabs mg-tabs mg-stepper"><button type="button" class="sub-tab" data-mg="step" data-dir="-1" aria-label="${esc(t("mgMinus"))}">−</button>
-        <input class="mg-valin" type="text" inputmode="decimal" data-mg="value" value="${esc(d.value)}" aria-label="${esc(t("mgThreshold"))}" autocomplete="off">
-        <button type="button" class="sub-tab" data-mg="step" data-dir="1" aria-label="${esc(t("mgPlus"))}">+</button></div>`;
-    } else if (d.kind === "is") {
-      if (e.options?.length) {
-        html += `<div class="mg-k">${esc(t("mgPickState"))}</div>${this.tabsHtml(e.options.map((o) => ({ on: String(d.value) === o.value, attrs: `data-mg="state" data-v="${esc(o.value)}"`, label: o.label })))}`;
-      } else {
-        html += `<div class="mg-k">${esc(t("mgStateFree"))}</div><input class="mg-input" type="text" data-mg="value" value="${esc(d.value)}" autocomplete="off">`;
-      }
-    }
-    html += `<div class="mg-k">${esc(d.kind === "change" ? t("mgForChange") : t("mgFor"))}</div>
+    if (!this.leavesOf().length) return "";
+    return `<div class="mg-k">${esc(d.kind === "change" ? t("mgForChange") : t("mgFor"))}</div>
       ${this.tabsHtml(PRESET_FOR.map((s) => ({ on: !d.forOwn.text && d.for_s === s, attrs: `data-mg="for" data-s="${s}"`, label: this.fmtDur(s) })))}
       <div class="mg-own"><span>${esc(t("mgOwnTime"))}</span>
         <input class="mg-pill num mg-ownin" type="text" inputmode="decimal" data-mg="for-own" value="${esc(d.forOwn.text)}" placeholder="${esc(t("mgOwnPh"))}" aria-label="${esc(t("mgOwnTime"))}" autocomplete="off">
         <select class="mg-pill" data-mg="for-unit" aria-label="${esc(t("mgOwnTime"))}">${FOR_UNITS.map((u) => `<option value="${u}"${u === d.forOwn.unit ? " selected" : ""}>${esc(t(`mgUnit_${u}`))}</option>`).join("")}</select></div>
       <div data-mg-zone="forhint">${this.forHintHtml()}</div>
-      ${this.resetHtml()}
+      <div data-mg-zone="chart">${this.reviewChartHtml()}</div>
       <div data-mg-zone="hist">${this.histHtml()}</div>`;
-    return html;
+  }
+
+  // Rückblick-Grafik: bei einer Bedingung das Diagramm mit Schwelle, bei mehreren eine Zeile je Bedingung und "Zusammen"
+  reviewChartHtml() {
+    const leaves = this.leavesOf();
+    return leaves.length > 1 ? this.timelinesHtml() : this.chartHtml(this.wiz.hist, leaves[0]);
+  }
+
+  timelinesHtml() {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const w = this.wiz;
+    const hist = w.hist && !w.hist.loading ? w.hist : w.hist?.prev || null;
+    if (!hist || hist.failed || !hist.available || hist.empty || !hist.leaves) return "";
+    const from = hist.start;
+    const span = hist.end - from || 1;
+    const pct = (ts) => Math.max(0, Math.min(100, ((ts - from) / span) * 100));
+    const bars = (list, cls = "") =>
+      list.map(([a, b, counts]) => `<i class="${cls}${counts === false ? " dim" : ""}" style="left:${pct(a).toFixed(2)}%;width:${Math.max(0.8, pct(b ?? hist.end) - pct(a)).toFixed(2)}%"></i>`).join("");
+    const leaves = this.leavesOf();
+    const rows = hist.leaves
+      .map((row, i) => {
+        const lf = leaves[i];
+        const e = lf ? this.entity(lf.entity_id) : null;
+        const label = lf ? `${emojiFor(e)} ${e?.name || lf.entity_id} ${this.condText(lf, e)}` : row.entity_id;
+        return `<div class="mg-tlr"><span>${esc(label)}</span><div class="mg-tl">${bars(row.intervals)}</div></div>`;
+      })
+      .join("");
+    const together = `<div class="mg-tlr tot"><span><b>${esc(t("mgTogether"))}</b></span><div class="mg-tl">${bars(hist.intervals || [], "all")}</div></div>`;
+    return `<div class="mg-card mg-tls">${rows}${together}<div class="mg-scale"><span>${esc(t("mgChart24"))}</span><span>${esc(t("mgChartNow"))}</span></div></div>`;
   }
 
   // Zurücksetzen (seit 2.8.0): automatisch, sobald die Bedingung nicht mehr gilt, oder erst am eigenen Wert
-  resetHtml() {
+  // Zurücksetzen (seit 2.8.0, seit 2.15.0 je Bedingung): automatisch, sobald die Bedingung nicht mehr gilt, oder erst am eigenen Wert
+  resetHtml(lf) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
-    const d = this.wiz.draft;
-    const e = this.entity(d.entity_id);
-    if (!e || d.kind === "change") return "";
+    const e = this.entity(lf.entity_id);
+    if (!e || lf.kind === "change") return "";
     let html = `<div class="mg-k">${esc(t("mgResetLabel"))}</div>${this.tabsHtml([
-      { on: !d.resetOwn, attrs: 'data-mg="reset-mode" data-own="0"', label: t("mgResetAuto") },
-      { on: d.resetOwn, attrs: 'data-mg="reset-mode" data-own="1"', label: t("mgResetOwn") },
+      { on: !lf.resetOwn, attrs: 'data-mg="reset-mode" data-own="0"', label: t("mgResetAuto") },
+      { on: lf.resetOwn, attrs: 'data-mg="reset-mode" data-own="1"', label: t("mgResetOwn") },
     ])}`;
-    if (d.resetOwn) {
-      if (d.kind === "is" && e.kind === "state") {
+    if (lf.resetOwn) {
+      if (lf.kind === "is" && e.kind === "state") {
         html += e.options?.length
-          ? this.tabsHtml(e.options.map((o) => ({ on: String(d.reset_value) === o.value, attrs: `data-mg="reset-state" data-v="${esc(o.value)}"`, label: o.label })))
-          : `<input class="mg-input" type="text" data-mg="reset-value" value="${esc(d.reset_value)}" aria-label="${esc(t("mgResetValue"))}" autocomplete="off">`;
+          ? this.tabsHtml(e.options.map((o) => ({ on: String(lf.reset_value) === o.value, attrs: `data-mg="reset-state" data-v="${esc(o.value)}"`, label: o.label })))
+          : `<input class="mg-input" type="text" data-mg="reset-value" value="${esc(lf.reset_value)}" aria-label="${esc(t("mgResetValue"))}" autocomplete="off">`;
       } else {
         html += `<div class="mg-k">${esc(t("mgResetValue"))}${e.unit ? ` <span class="mg-unit">· ${esc(t("mgThresholdUnit", e.unit))}</span>` : ""}</div>
           <div class="sub-tabs mg-tabs mg-stepper"><button type="button" class="sub-tab" data-mg="reset-step" data-dir="-1" aria-label="${esc(t("mgMinus"))}">−</button>
-          <input class="mg-valin" type="text" inputmode="decimal" data-mg="reset-value" value="${esc(d.reset_value)}" aria-label="${esc(t("mgResetValue"))}" autocomplete="off">
+          <input class="mg-valin" type="text" inputmode="decimal" data-mg="reset-value" value="${esc(lf.reset_value)}" aria-label="${esc(t("mgResetValue"))}" autocomplete="off">
           <button type="button" class="sub-tab" data-mg="reset-step" data-dir="1" aria-label="${esc(t("mgPlus"))}">+</button></div>`;
       }
     }
-    return `${html}<div data-mg-zone="resethint">${this.resetHintHtml()}</div>`;
+    return `${html}<div data-mg-zone="resethint">${this.resetHintHtml(lf)}</div>`;
   }
 
-  resetHintHtml() {
+  resetHintHtml(lf = this.curLeaf()) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
-    const d = this.wiz.draft;
-    const e = this.entity(d.entity_id);
-    if (!e || d.kind === "change") return "";
-    if (!d.resetOwn) return `<p class="mg-hint">${esc(t("mgResetHintAuto"))}</p>`;
+    const e = lf ? this.entity(lf.entity_id) : null;
+    if (!e || lf.kind === "change") return "";
+    if (!lf.resetOwn) return `<p class="mg-hint">${esc(t("mgResetHintAuto"))}</p>`;
     const unit = e.kind === "number" && e.unit ? ` ${e.unit}` : "";
     // Die Fehlermeldung nennt die Bedingung mit der Schwelle, damit klar ist, warum der Wert nicht passt
-    const bad = this.resetError();
-    if (bad) return `<div class="opt-error">${esc(t(bad, this.fmtNum(parseNumber(d.value) ?? 0) + unit))}</div>`;
-    if (d.kind === "is") {
-      const word = e.options?.find((o) => o.value === String(d.reset_value))?.label ?? String(d.reset_value);
+    const bad = this.resetError(lf);
+    if (bad) return `<div class="opt-error">${esc(t(bad, this.fmtNum(parseNumber(lf.value) ?? 0) + unit))}</div>`;
+    if (lf.kind === "is") {
+      const word = e.options?.find((o) => o.value === String(lf.reset_value))?.label ?? String(lf.reset_value);
       return `<p class="mg-hint">${esc(t("mgResetHint_is", word))}</p>`;
     }
-    const thr = this.fmtNum(parseNumber(d.value) ?? 0) + unit;
-    const rv = this.fmtNum(parseNumber(d.reset_value) ?? 0) + unit;
-    return `<p class="mg-hint">${esc(t(d.kind === "above" ? "mgResetHint_above" : "mgResetHint_below", thr, rv))}</p>`;
+    const thr = this.fmtNum(parseNumber(lf.value) ?? 0) + unit;
+    const rv = this.fmtNum(parseNumber(lf.reset_value) ?? 0) + unit;
+    return `<p class="mg-hint">${esc(t(lf.kind === "above" ? "mgResetHint_above" : "mgResetHint_below", thr, rv))}</p>`;
   }
 
   // Auswahlgruppe als Reiterleiste: dieselben Klassen wie die Reiter oben (.sub-tabs/.sub-tab), damit die Kapsel (.seg-pill)
   // gleitet und alles gleich aussieht (Wunsch des Nutzers, docs/DESIGN.md "Auswahlknöpfe").
-  tabsHtml(items) {
+  tabsHtml(items, cls = "") {
     const esc = (v) => this.esc(v);
-    return `<div class="sub-tabs mg-tabs" role="radiogroup">${items
+    return `<div class="sub-tabs mg-tabs${cls ? ` ${cls}` : ""}" role="radiogroup">${items
       .map((i) => `<button type="button" role="radio" class="sub-tab${i.on ? " on" : ""}" aria-checked="${Boolean(i.on)}" ${i.attrs}>${esc(i.label)}</button>`)
       .join("")}</div>`;
   }
@@ -1584,7 +1903,7 @@ export class MagicPush {
     for (const name of only || ["chart", "hist", "pv", "pvr", "forhint", "resethint"]) {
       const el = this.q(`[data-mg-zone="${name}"]`);
       if (!el) continue;
-      if (name === "chart") el.innerHTML = this.chartHtml();
+      if (name === "chart") el.innerHTML = this.wiz.step === 2 ? this.reviewChartHtml() : this.chartHtml(this.wiz.leafHist, this.curLeaf());
       else if (name === "hist") el.innerHTML = this.histHtml();
       else if (name === "forhint") el.innerHTML = this.forHintHtml();
       else if (name === "resethint") el.innerHTML = this.resetHintHtml();
@@ -1593,14 +1912,13 @@ export class MagicPush {
     }
   }
 
-  // Diagramm der letzten 24 Stunden: Zahl als Linie mit Schwelle, Zustand als Balken.
-  chartHtml() {
+  // Diagramm der letzten 24 Stunden für eine Bedingung (seit 2.15.0 mit dem Verlauf als Parameter): Zahl als Linie mit Schwelle, Zustand als Balken.
+  chartHtml(histData, lf) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
-    const w = this.wiz;
-    const d = w.draft;
-    const e = this.entity(d.entity_id);
-    const hist = w.hist && !w.hist.loading ? w.hist : w.hist?.prev || null;
+    const d = lf;
+    const e = lf ? this.entity(lf.entity_id) : null;
+    const hist = histData && !histData.loading ? histData : histData?.prev || null;
     if (!e || !hist || hist.failed || !hist.available || hist.empty) return "";
     const from = hist.start;
     const to = hist.end;
@@ -1609,7 +1927,7 @@ export class MagicPush {
     const bands = (hist.intervals || []).filter(() => d.kind !== "change");
     if (e.kind === "number" && hist.points?.length > 1) {
       const limit = d.kind === "change" ? null : parseNumber(d.value);
-      const back = d.resetOwn && d.kind !== "change" && !this.resetError() ? parseNumber(d.reset_value) : null;
+      const back = d.resetOwn && d.kind !== "change" && !this.resetError(lf) ? parseNumber(d.reset_value) : null;
       const ys = hist.points.map((p) => p[1]);
       const hi = Math.max(...ys, limit ?? -Infinity, back ?? -Infinity);
       const lo = Math.min(...ys, limit ?? Infinity, back ?? Infinity);
@@ -1769,6 +2087,11 @@ export class MagicPush {
         this.remove(id);
         break;
       case "cancel":
+        if (this.wiz.step === 1 && this.wiz.adding && this.leavesOf().length) {
+          this.wiz.adding = null;
+          this.paint();
+        } else this.requestClose();
+        break;
       case "close":
         this.requestClose();
         break;
@@ -1792,8 +2115,39 @@ export class MagicPush {
         this.save();
         break;
       case "pick":
-        this.pickEntity(id);
+        this.onPick(id);
         break;
+      case "add-cond":
+        this.startAdd({ group: null });
+        break;
+      case "add-group":
+        this.startAdd({ group: "new" });
+        break;
+      case "add-in":
+        this.startAdd({ group: el.dataset.uid });
+        break;
+      case "leaf-open":
+        this.openLeaf(el.dataset.uid);
+        break;
+      case "leaf-del":
+        this.removeLeaf(el.dataset.uid);
+        break;
+      case "leaf-entity":
+        this.startAdd({ replace: el.dataset.uid });
+        break;
+      case "group-del":
+        this.removeGroup(el.dataset.uid);
+        break;
+      case "op":
+        this.wiz.draft.conds.op = el.dataset.v;
+        this.paint();
+        break;
+      case "gop": {
+        const g = this.wiz.draft.conds.items.find((it) => it.uid === el.dataset.group);
+        if (g) g.op = el.dataset.v;
+        this.paint();
+        break;
+      }
       case "free-open":
         this.wiz.free.open = !this.wiz.free.open;
         this.paint();
@@ -1809,19 +2163,22 @@ export class MagicPush {
         if (!found) break;
         this.extra[id] = found;
         this.wiz.free.open = false;
-        this.pickEntity(id);
+        this.onPick(id);
         break;
       }
       case "kind":
         this.setKind(el.dataset.kind);
         break;
-      case "state":
-        this.wiz.draft.value = el.dataset.v;
+      case "state": {
+        const lf = this.curLeaf();
+        if (!lf) break;
+        lf.value = el.dataset.v;
+        this.syncPrimary();
         this.syncDefaults();
         this.paint();
-        this.requestHistory();
-        this.requestPreview();
+        this.requestLeafHistory();
         break;
+      }
       case "step":
         this.stepValue(Number(el.dataset.dir));
         break;
@@ -1829,18 +2186,24 @@ export class MagicPush {
         this.stepValue(Number(el.dataset.dir), "reset_value");
         break;
       case "reset-mode": {
-        const d = this.wiz.draft;
-        d.resetOwn = el.dataset.own === "1";
-        if (d.resetOwn && String(d.reset_value).trim() === "") d.reset_value = this.defaultReset(d);
+        const lf = this.curLeaf();
+        if (!lf) break;
+        lf.resetOwn = el.dataset.own === "1";
+        if (lf.resetOwn && String(lf.reset_value).trim() === "") lf.reset_value = this.defaultReset(lf);
+        this.syncPrimary();
         this.paint();
-        this.requestHistory();
+        this.requestLeafHistory();
         break;
       }
-      case "reset-state":
-        this.wiz.draft.reset_value = el.dataset.v;
+      case "reset-state": {
+        const lf = this.curLeaf();
+        if (!lf) break;
+        lf.reset_value = el.dataset.v;
+        this.syncPrimary();
         this.paint();
-        this.requestHistory();
+        this.requestLeafHistory();
         break;
+      }
       case "for":
         this.setForSeconds(Number(el.dataset.s));
         break;

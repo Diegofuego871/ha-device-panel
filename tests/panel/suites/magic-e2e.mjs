@@ -12,8 +12,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { tab: "Magic Push", add: "Neue Meldung", q1: "Was soll überwacht werden?", q2: "Wann soll gemeldet werden?", q5: "Wie soll die Meldung heissen?", once: "wäre 1-mal gekommen", none: "Kein Verlauf vorhanden", norec: "der Recorder ist nicht aktiv", saved: "Gespeichert.", testSent: "Test gesendet an", unreachable: "nicht erreichbar", delAsk: 'löschen?', rename: "Umbenennen", del: "Löschen", active1: "1 aktiv", pvNote: "Vorschau mit dem aktuellen Wert", saveErr: "Speichern nicht möglich:", hint: "Höchstens", never: "noch nie ausgelöst", discard: "Änderungen verwerfen?", dismissed: "Verwerfen" },
-  en: { tab: "Magic Push", add: "New message", q1: "What should be watched?", q2: "When should it notify?", q5: "What should the message be called?", once: "would have fired once", none: "No history available", norec: "the recorder is not active", saved: "Saved.", testSent: "Test sent to", unreachable: "unreachable", delAsk: "Delete", rename: "Rename", del: "Delete", active1: "1 active", pvNote: "Preview with the current value", saveErr: "Could not save:", hint: "At most", never: "never triggered", discard: "Discard changes?", dismissed: "Discard" },
+  de: { tab: "Magic Push", add: "Neue Meldung", q1: "Was soll überwacht werden?", q2: "Wie lange muss das zutreffen?", q1b: "Welche Bedingungen?", step1: "Bedingungen", step2: "Wie lange", q5: "Wie soll die Meldung heissen?", once: "wäre 1-mal gekommen", none: "Kein Verlauf vorhanden", norec: "der Recorder ist nicht aktiv", saved: "Gespeichert.", testSent: "Test gesendet an", unreachable: "nicht erreichbar", delAsk: 'löschen?', rename: "Umbenennen", del: "Löschen", active1: "1 aktiv", pvNote: "Vorschau mit dem aktuellen Wert", saveErr: "Speichern nicht möglich:", hint: "Höchstens", never: "noch nie ausgelöst", discard: "Änderungen verwerfen?", dismissed: "Verwerfen" },
+  en: { tab: "Magic Push", add: "New message", q1: "What should be watched?", q2: "How long must this hold?", q1b: "Which conditions?", step1: "Conditions", step2: "How long", q5: "What should the message be called?", once: "would have fired once", none: "No history available", norec: "the recorder is not active", saved: "Saved.", testSent: "Test sent to", unreachable: "unreachable", delAsk: "Delete", rename: "Rename", del: "Delete", active1: "1 active", pvNote: "Preview with the current value", saveErr: "Could not save:", hint: "At most", never: "never triggered", discard: "Discard changes?", dismissed: "Discard" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -83,17 +83,12 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Schritt 1: fünf Entitäten, "Weiter" gesperrt`, (await ev(`return r.querySelectorAll('${W} .mg-pick[data-id]').length`)) === 5 && (await ev(`return r.querySelector('${W} [data-mg="next"]').disabled`)) === true);
     check(`[${tag}] nicht erreichbare Entität benannt`, (await text(`${W} .mg-pick[data-id="sensor.rssi"]`)).includes(T.unreachable));
     check(`[${tag}] Schrittleiste: nur der erste Balken an`, (await ev(`return r.querySelectorAll('${W} .mg-stp.on').length`)) === 1 && (await ev(`return r.querySelectorAll('${W} button.mg-stp').length`)) === 0);
+    check(`[${tag}] Schritt 1 heisst "${T.step1}", Schritt 2 "${T.step2}"`, (await text(`${W} .mg-stephead`)).includes(T.step1));
+    // Alle Bedingungen auf der ersten Seite (2.15.0): Wahl der Entität, dann ihre Bedingung
     await tap('.mg-pick[data-id="sensor.temp"]');
-    check(`[${tag}] Temperatur gewählt, "Weiter" frei`, await wait(`return r.querySelector('${W} .mg-pick.sel')?.dataset.id === "sensor.temp" && r.querySelector('${W} [data-mg="next"]').disabled === false`));
-    await next();
-    await headingOk(T.q2);
-    await step(2);
-    check(`[${tag}] Schritt 2: Diagramm ${mobile ? "im Fluss des Formulars" : "in der Seitenspalte rechts"}`, (await ev(`return !!r.querySelector('${W} .mgw-side [data-mg-zone="chart"]')`)) === !mobile);
-    // Die Knöpfe bleiben stehen, auch wenn der Inhalt ganz nach unten gescrollt ist
-    await ev(`const sc = r.querySelector('${W} .mgw-body.two > .mgw-main') || r.querySelector('${W} .mgw-body'); sc.scrollTop = 99999;`);
-    check(`[${tag}] Knöpfe unten bleiben sichtbar (fest)`, (await ev(`const n=r.querySelector('${W} [data-mg="next"]').getBoundingClientRect(); const w=r.querySelector("${W}").getBoundingClientRect(); return n.top >= w.top && n.bottom <= w.bottom + 1`)) === true);
-    await ev(`const sc = r.querySelector('${W} .mgw-body.two > .mgw-main') || r.querySelector('${W} .mgw-body'); sc.scrollTop = 0;`);
-    check(`[${tag}] Schritt 2: vier Bedingungen, "unter" gewählt, Wert aus der Entität`, (await ev(`return r.querySelectorAll('${W} .sub-tabs [data-mg="kind"]').length`)) === 4 && (await ev(`return r.querySelector('${W} .sub-tabs [data-mg="kind"].on').dataset.kind`)) === "below" && (await ev(`return r.querySelector('${W} input[data-mg="value"]').value`)) === "14.2");
+    await headingOk(T.q1b);
+    check(`[${tag}] Temperatur gewählt: Karte offen mit drei Bedingungen, "unter" und dem Wert der Entität, "Weiter" frei`, await wait(`return r.querySelectorAll('${W} .mg-lcard').length === 1 && r.querySelector('${W} .mg-lcard.open') && r.querySelectorAll('${W} .sub-tabs [data-mg="kind"]').length === 4 && r.querySelector('${W} [data-mg="next"]').disabled === false`) && (await ev(`return r.querySelector('${W} .sub-tabs [data-mg="kind"].on').dataset.kind`)) === "below" && (await ev(`return r.querySelector('${W} input[data-mg="value"]').value`)) === "14.2");
+    check(`[${tag}] eine Bedingung: kein Und/Oder, aber "Bedingung" und "Gruppe" zum Hinzufügen`, !(await ev(`return !!r.querySelector('${W} [data-mg="op"]')`)) && !!(await handle(`${W} [data-mg="add-cond"]`)) && !!(await handle(`${W} [data-mg="add-group"]`)));
     // Auswahlknöpfe sind Reiterleisten wie die Reiter oben: .sub-tabs mit gleitender Kapsel, gleiche Schrift und Fläche
     const pillAt = (bar) => ev(`const b=r.querySelector(${JSON.stringify(bar)}); const p=b?.querySelector(":scope > .seg-pill"); const on=b?.querySelector(".sub-tab.on"); if(!p||!on) return null; const m=new DOMMatrix(getComputedStyle(p).transform); return [Math.round(m.m41-on.offsetLeft), Math.round(m.m42-on.offsetTop), Math.round(p.offsetWidth-on.offsetWidth)]`);
     const same = (await ev(`const a=getComputedStyle(r.querySelector('dialog.device .dev-tabs .sub-tab')), b=getComputedStyle(r.querySelector('${W} [data-mg="kind"]')), bar=getComputedStyle(r.querySelector('dialog.device .dev-tabs .sub-tabs')), bar2=getComputedStyle(r.querySelector('${W} .sub-tabs.mg-tabs')); return [a.borderRadius===b.borderRadius, a.fontFamily===b.fontFamily, bar.backgroundColor===bar2.backgroundColor, bar.borderRadius===bar2.borderRadius]`));
@@ -108,15 +103,40 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Kapsel kommt am neuen Knopf an`, JSON.stringify(await pillAt(`${W} .sub-tabs:has([data-mg="kind"])`)) === "[0,0,0]");
     await tap('[data-mg="kind"][data-kind="below"]');
     await p.waitForTimeout(700);
-    // Wert tippen, Rückblick und Diagramm erscheinen
+    // Wert tippen: das Diagramm der Bedingung erscheint
     await fill('input[data-mg="value"]', "12");
-    check(`[${tag}] Rückblick: "${T.once}"`, await wait(`return r.querySelector('${W} .mg-hist')?.textContent.includes(${JSON.stringify(T.once)})`), await text(`${W} .mg-hist`));
-    check(`[${tag}] Diagramm mit Schwelle`, await wait(`return !!r.querySelector('${W} svg.mg-spark line')`));
+    check(`[${tag}] Diagramm mit Schwelle in der Karte`, await wait(`return !!r.querySelector('${W} .mg-lcard svg.mg-spark line')`));
     // Minus/Plus
     await tap('[data-mg="step"][data-dir="1"]');
     check(`[${tag}] Plus erhöht um 1`, (await ev(`return r.querySelector('${W} input[data-mg="value"]').value`)) === "13");
     await tap('[data-mg="step"][data-dir="-1"]');
-    // Dauer: Vorschlag, dann freie Zeit
+    // Rücksetzwert (2.8.0, seit 2.15.0 je Bedingung): automatisch oder eigener Wert, mit Hinweis, Prüfung, Linie im Diagramm
+    check(`[${tag}] Zurücksetzen: Reiterleiste "Automatisch / Eigener Wert", zuerst automatisch`, (await ev(`return [...r.querySelectorAll('${W} [data-mg="reset-mode"]')].map(b => b.classList.contains("on")).join()`)) === "true,false" && !(await ev(`return !!r.querySelector('${W} input[data-mg="reset-value"]')`)));
+    await tap('[data-mg="reset-mode"][data-own="1"]');
+    check(`[${tag}] eigener Wert: Zahlenwähler mit Vorschlag über der Schwelle, Hinweis nennt beide Werte`, await wait(`const v=r.querySelector('${W} input[data-mg="reset-value"]'); return !!v && Number(v.value) > 12 && r.querySelector('${W} [data-mg-zone="resethint"]').textContent.includes("12") && r.querySelector('${W} [data-mg-zone="resethint"]').textContent.includes(v.value.replace(".", ${JSON.stringify(lang === "de" ? "," : ".")}))`), await text(`${W} [data-mg-zone="resethint"]`));
+    await fill('input[data-mg="reset-value"]', "10");
+    check(`[${tag}] Rücksetzwert unter der Schwelle: Fehler, "Weiter" gesperrt`, await wait(`return !!r.querySelector('${W} [data-mg-zone="resethint"] .opt-error') && r.querySelector('${W} [data-mg="next"]').disabled === true`));
+    await fill('input[data-mg="reset-value"]', "14");
+    check(`[${tag}] Rücksetzwert 14: Hinweis, "Weiter" frei`, await wait(`return !r.querySelector('${W} [data-mg-zone="resethint"] .opt-error') && r.querySelector('${W} [data-mg-zone="resethint"]').textContent.includes("14") && r.querySelector('${W} [data-mg="next"]').disabled === false`));
+    await tap('[data-mg="reset-step"][data-dir="1"]');
+    check(`[${tag}] Plus am Rücksetzwert`, (await ev(`return r.querySelector('${W} input[data-mg="reset-value"]').value`)) === "15");
+    await tap('[data-mg="reset-step"][data-dir="-1"]');
+    check(`[${tag}] Diagramm: zweite Linie für den Rücksetzwert`, await wait(`return r.querySelectorAll('${W} svg.mg-spark line').length === 2`));
+    await p.waitForTimeout(700);
+    const leafCall = (await calls("magic_history")).at(-1);
+    check(`[${tag}] Verlauf der Bedingung bekommt den Rücksetzwert, ohne Dauer`, leafCall?.reset_value === 14 && leafCall.for_s === 0 && !("conditions" in leafCall), JSON.stringify(leafCall));
+    check(`[${tag}] Kapsel der Rücksetz-Leiste liegt unter "Eigener Wert"`, JSON.stringify(await pillAt(`${W} .sub-tabs:has([data-mg="reset-mode"])`)) === "[0,0,0]");
+    check(`[${tag}] Schritt 1 ohne Querscrollen`, (await overflow()) <= 0, String(await overflow()));
+    await p.screenshot({ path: `${outDir}/magic-${tag.replace("/", "-")}-1.png` });
+    await next();
+    await headingOk(T.q2);
+    await step(2);
+    check(`[${tag}] Schritt 2: Rückblick ${mobile ? "im Fluss des Formulars" : "in der Seitenspalte rechts"}`, (await ev(`return !!r.querySelector('${W} .mgw-side [data-mg-zone="hist"]')`)) === !mobile);
+    // Die Knöpfe bleiben stehen, auch wenn der Inhalt ganz nach unten gescrollt ist
+    await ev(`const sc = r.querySelector('${W} .mgw-body.two > .mgw-main') || r.querySelector('${W} .mgw-body'); sc.scrollTop = 99999;`);
+    check(`[${tag}] Knöpfe unten bleiben sichtbar (fest)`, (await ev(`const n=r.querySelector('${W} [data-mg="next"]').getBoundingClientRect(); const w=r.querySelector("${W}").getBoundingClientRect(); return n.top >= w.top && n.bottom <= w.bottom + 1`)) === true);
+    await ev(`const sc = r.querySelector('${W} .mgw-body.two > .mgw-main') || r.querySelector('${W} .mgw-body'); sc.scrollTop = 0;`);
+    // Dauer: Vorschlag, dann freie Zeit (Schritt 2)
     await tap('[data-mg="for"][data-s="600"]');
     check(`[${tag}] Dauer 10 Min. gewählt`, await wait(`return r.querySelector('${W} [data-mg="for"].on')?.dataset.s === "600"`));
     await fill('input[data-mg="for-own"]', "45");
@@ -130,22 +150,11 @@ for (const lang of ["de", "en"]) {
     await fill('input[data-mg="for-own"]', "45");
     await ev(`const s=r.querySelector('${W} select[data-mg="for-unit"]'); s.value="60"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
     check(`[${tag}] wieder gültig: "Weiter" frei`, await wait(`return r.querySelector('${W} [data-mg="next"]').disabled === false`));
-    // Rücksetzwert (2.8.0): automatisch oder eigener Wert, mit Hinweis, Prüfung, Linie im Diagramm
-    check(`[${tag}] Zurücksetzen: Reiterleiste "Automatisch / Eigener Wert", zuerst automatisch`, (await ev(`return [...r.querySelectorAll('${W} [data-mg="reset-mode"]')].map(b => b.classList.contains("on")).join()`)) === "true,false" && !(await ev(`return !!r.querySelector('${W} input[data-mg="reset-value"]')`)));
-    await tap('[data-mg="reset-mode"][data-own="1"]');
-    check(`[${tag}] eigener Wert: Zahlenwähler mit Vorschlag über der Schwelle, Hinweis nennt beide Werte`, await wait(`const v=r.querySelector('${W} input[data-mg="reset-value"]'); return !!v && Number(v.value) > 12 && r.querySelector('${W} [data-mg-zone="resethint"]').textContent.includes("12") && r.querySelector('${W} [data-mg-zone="resethint"]').textContent.includes(v.value.replace(".", ${JSON.stringify(lang === "de" ? "," : ".")}))`), await text(`${W} [data-mg-zone="resethint"]`));
-    await fill('input[data-mg="reset-value"]', "10");
-    check(`[${tag}] Rücksetzwert unter der Schwelle: Fehler, "Weiter" gesperrt`, await wait(`return !!r.querySelector('${W} [data-mg-zone="resethint"] .opt-error') && r.querySelector('${W} [data-mg="next"]').disabled === true`));
-    await fill('input[data-mg="reset-value"]', "14");
-    check(`[${tag}] Rücksetzwert 14: Hinweis, "Weiter" frei`, await wait(`return !r.querySelector('${W} [data-mg-zone="resethint"] .opt-error') && r.querySelector('${W} [data-mg-zone="resethint"]').textContent.includes("14") && r.querySelector('${W} [data-mg="next"]').disabled === false`));
-    await tap('[data-mg="reset-step"][data-dir="1"]');
-    check(`[${tag}] Plus am Rücksetzwert`, (await ev(`return r.querySelector('${W} input[data-mg="reset-value"]').value`)) === "15");
-    await tap('[data-mg="reset-step"][data-dir="-1"]');
-    check(`[${tag}] Diagramm: zweite Linie für den Rücksetzwert`, await wait(`return r.querySelectorAll('${W} svg.mg-spark line').length === 2`));
+    check(`[${tag}] Rückblick: "${T.once}"`, await wait(`return r.querySelector('${W} .mg-hist')?.textContent.includes(${JSON.stringify(T.once)})`), await text(`${W} .mg-hist`));
+    check(`[${tag}] Rückblick-Diagramm mit Schwelle (eine Bedingung)`, await wait(`return !!r.querySelector('${W} svg.mg-spark line')`));
     await p.waitForTimeout(700);
     const histCall = (await calls("magic_history")).at(-1);
-    check(`[${tag}] Rückblick bekommt den Rücksetzwert`, histCall?.reset_value === 14, JSON.stringify(histCall));
-    check(`[${tag}] Kapsel der Rücksetz-Leiste liegt unter "Eigener Wert"`, JSON.stringify(await pillAt(`${W} .sub-tabs:has([data-mg="reset-mode"])`)) === "[0,0,0]");
+    check(`[${tag}] Rückblick bekommt Dauer, Schwelle und Rücksetzwert, ohne Bedingungsbaum`, histCall?.for_s === 2700 && histCall.value === 12 && histCall.reset_value === 14 && !("conditions" in histCall), JSON.stringify(histCall));
     check(`[${tag}] Schritt 2 ohne Querscrollen`, (await overflow()) <= 0, String(await overflow()));
     await p.screenshot({ path: `${outDir}/magic-${tag.replace("/", "-")}-2.png` });
     await next();
@@ -268,10 +277,11 @@ for (const lang of ["de", "en"]) {
 
     // --- Bearbeiten ---
     await tap('[data-mg="edit"]');
-    await headingOk(T.q1);
-    check(`[${tag}] Bearbeiten: Schrittleiste antippbar, Entität gewählt`, (await ev(`return r.querySelectorAll('${W} button.mg-stp').length`)) === 5 && (await ev(`return r.querySelector('${W} .mg-pick.sel')?.dataset.id`)) === "sensor.temp");
-    await tap('button.mg-stp[data-step="2"]');
+    await headingOk(T.q1b);
+    check(`[${tag}] Bearbeiten: Schrittleiste antippbar, Bedingung "Temperatur" offen`, (await ev(`return r.querySelectorAll('${W} button.mg-stp').length`)) === 5 && (await text(`${W} .mg-lcard.open .mg-t b`)) === "Temperatur");
     check(`[${tag}] Bearbeiten: eigener Rücksetzwert 14 ist da`, await wait(`return r.querySelector('${W} [data-mg="reset-mode"][data-own="1"]')?.classList.contains("on") && r.querySelector('${W} input[data-mg="reset-value"]').value === "14"`));
+    await tap('button.mg-stp[data-step="2"]');
+    check(`[${tag}] Bearbeiten: Schritt 2 hat die Dauer 45 Min.`, await wait(`return r.querySelector('${W} input[data-mg="for-own"]').value === "45"`));
     await tap('button.mg-stp[data-step="5"]');
     await headingOk(T.q5);
     check(`[${tag}] Sprung zu Schritt 5: Name, Text und Empfänger übernommen`, (await ev(`return r.querySelector('${W} input[data-mg="name"]').value`)) === "Kellertemperatur");
@@ -288,32 +298,34 @@ for (const lang of ["de", "en"]) {
     // --- Assistent, Zustand (Fenster) ---
     await tap('[data-mg="add"]');
     await tap('.mg-pick[data-id="binary_sensor.window"]');
-    await next();
-    await step(2);
+    await headingOk(T.q1b);
     const kinds = await ev(`return [...r.querySelectorAll('${W} .sub-tabs [data-mg="kind"]')].map(b => b.dataset.kind).join()`);
-    check(`[${tag}] Zustand: nur "ist" und "ändert sich", Wörter der Entität`, kinds === "is,change" && (await ev(`return [...r.querySelectorAll('${W} [data-mg="state"]')].map(b => b.textContent.trim()).join()`)) === (lang === "de" ? "offen,geschlossen" : "open,closed"));
-    check(`[${tag}] Zustand: Balken statt Linie`, await wait(`return !!r.querySelector('${W} .mg-bar span') && !r.querySelector('${W} svg.mg-spark')`));
+    check(`[${tag}] Zustand: nur "ist" und "ändert sich" (allein), Wörter der Entität`, kinds === "is,change" && (await ev(`return [...r.querySelectorAll('${W} [data-mg="state"]')].map(b => b.textContent.trim()).join()`)) === (lang === "de" ? "offen,geschlossen" : "open,closed"));
+    check(`[${tag}] Zustand: Balken statt Linie`, await wait(`return !!r.querySelector('${W} .mg-lcard .mg-bar span') && !r.querySelector('${W} svg.mg-spark')`));
     await tap('[data-mg="state"][data-v="on"]');
     await tap('[data-mg="reset-mode"][data-own="1"]');
     check(`[${tag}] Zustand: Rücksetzzustand zur Wahl, Vorschlag ist der andere Zustand`, await wait(`return [...r.querySelectorAll('${W} [data-mg="reset-state"]')].length === 2 && r.querySelector('${W} [data-mg="reset-state"].on')?.dataset.v === "off"`));
     check(`[${tag}] Zustand: Hinweis nennt das Wort`, (await text(`${W} [data-mg-zone="resethint"]`)).includes(lang === "de" ? "geschlossen" : "closed"), await text(`${W} [data-mg-zone="resethint"]`));
+    await next();
     await fill('input[data-mg="for-own"]', "45");
     await next();
     await next();
     check(`[${tag}] Zustand: Variablen nur {value}`, await wait(`return [...r.querySelectorAll('${W} .mg-chips button.sug')].map(b => b.dataset.var).join() === "value"`));
-    // Kein Verlauf: leer und ohne Recorder
+    // Kein Verlauf: leer und ohne Recorder (der Rückblick steht in Schritt 2)
     await tap('[data-mg="back"]');
     await tap('[data-mg="back"]');
     await p.evaluate(() => { window.__magicHist = "empty"; });
-    await tap('[data-mg="kind"][data-kind="change"]');
+    await tap('[data-mg="for"][data-s="300"]');
     check(`[${tag}] Rückblick darf leer sein: "${T.none}"`, await wait(`return r.querySelector('${W} .mg-hist')?.textContent.includes(${JSON.stringify(T.none)})`));
     await p.evaluate(() => { window.__magicHist = "norecorder"; });
-    await tap('[data-mg="kind"][data-kind="is"]');
+    await tap('[data-mg="for"][data-s="600"]');
     check(`[${tag}] ohne Recorder: Hinweis, kein Fehler`, await wait(`return r.querySelector('${W} .mg-hist')?.textContent.includes(${JSON.stringify(T.norec)})`));
     await p.evaluate(() => { window.__magicHist = null; });
-    // "ändert sich": keine Wiederholung, kein "wieder normal", kein Rücksetzwert
+    // "ändert sich": keine Wiederholung, kein "wieder normal", kein Rücksetzwert (nur als einzige Bedingung)
+    await tap('[data-mg="back"]');
     await tap('[data-mg="kind"][data-kind="change"]');
-    check(`[${tag}] ändert sich: kein Abschnitt "Zurücksetzen"`, !(await ev(`return !!r.querySelector('${W} [data-mg="reset-mode"]')`)));
+    check(`[${tag}] ändert sich: kein Abschnitt "Zurücksetzen", keine Knöpfe zum Hinzufügen`, !(await ev(`return !!r.querySelector('${W} [data-mg="reset-mode"]') || !!r.querySelector('${W} [data-mg="add-cond"]')`)));
+    await next();
     await next();
     check(`[${tag}] ändert sich: keine Wiederholung (Schritt 3)`, (await ev(`return !r.querySelector('${W} [data-mg="repeat"]')`)));
     await next();
@@ -365,12 +377,11 @@ for (const lang of ["de", "en"]) {
     await fill('input[data-mg="free-query"]', "absolut");
     await wait(`return r.querySelectorAll('${W} [data-mg="free-pick"]').length === 1`);
     await tap('[data-mg="free-pick"][data-id="sensor.abs_humidity"]');
-    check(`[${tag}] gewählt: Karte "frei gewählt" ist markiert, Suche zu, "Weiter" frei`, await wait(`const c=r.querySelector('${W} .mg-pick.sel'); return c?.dataset.id === "sensor.abs_humidity" && c.textContent.includes(${JSON.stringify(lang === "de" ? "frei gewählt" : "freely chosen")}) && !r.querySelector('${W} .mg-free') && r.querySelector('${W} [data-mg="next"]').disabled === false`));
-    await next();
-    await step(2);
-    check(`[${tag}] Schritt 2 nimmt Art, Einheit und Wert der freien Entität`, (await text(`${W} .mg-unit`)).includes("g/m³") && (await ev(`return r.querySelector('${W} input[data-mg="value"]').value`)) === "9.2" && (await text(`${W} .mg-stephead`)).includes("Absolute Feuchte berechnet"));
+    check(`[${tag}] gewählt: Bedingung der freien Entität offen, Suche zu, "Weiter" frei`, await wait(`const c=r.querySelector('${W} .mg-lcard.open'); return c?.textContent.includes("Absolute Feuchte berechnet") && !r.querySelector('${W} .mg-free') && r.querySelector('${W} [data-mg="next"]').disabled === false`));
+    check(`[${tag}] Bedingung nimmt Art, Einheit und Wert der freien Entität`, (await text(`${W} .mg-unit`)).includes("g/m³") && (await ev(`return r.querySelector('${W} input[data-mg="value"]').value`)) === "9.2");
     await tap('[data-mg="kind"][data-kind="above"]');
     await fill('input[data-mg="value"]', "10");
+    await next();
     await next();
     await next();
     check(`[${tag}] Titel-Vorgabe nutzt den Namen der freien Entität`, await wait(`return r.querySelector('${W} [data-mg-text="message"]').value.includes("{entity}")`));
@@ -384,21 +395,19 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] gespeichert: Entität der freien Wahl, Gerät bleibt dasselbe`, freeSaved.entity_id === "sensor.abs_humidity" && freeSaved.device_id === "d" && freeSaved.kind === "above", JSON.stringify(freeSaved));
     check(`[${tag}] Karte nennt die Entität (frei)`, await wait(`return [...r.querySelectorAll('${root} .mg-card')].some(c => c.textContent.includes("Feuchte hoch") && c.querySelector(".mg-freetag")?.textContent.includes("sensor.abs_humidity"))`));
     await tap('.mg-card:has(.mg-freetag) [data-mg="edit"]');
-    check(`[${tag}] Bearbeiten: freie Entität ist gewählt und nennt sich`, await wait(`const c=r.querySelector('${W} .mg-pick.sel'); return c?.dataset.id === "sensor.abs_humidity" && c.textContent.includes(${JSON.stringify(lang === "de" ? "frei gewählt" : "freely chosen")})`));
-    // Zustand als freie Entität (Regen): Wörter der Entität, "ist"
+    check(`[${tag}] Bearbeiten: Bedingung der freien Entität ist offen`, await wait(`return (r.querySelector('${W} .mg-lcard.open .mg-t b')?.textContent || "") === "Absolute Feuchte berechnet"`));
+    // Zustand als freie Entität (Regen): Entität der Bedingung ändern, Wörter der Entität, "ist"
+    await tap('[data-mg="leaf-entity"]');
     await tap('[data-mg="free-open"]');
     await fill('input[data-mg="free-query"]', "regen");
     await wait(`return r.querySelectorAll('${W} [data-mg="free-pick"]').length === 1`);
     await tap('[data-mg="free-pick"][data-id="binary_sensor.garten_regen"]');
-    await next();
-    await step(2);
     check(`[${tag}] freier Zustand: "ist" und "ändert sich", Wörter der Entität`, (await ev(`return [...r.querySelectorAll('${W} .sub-tabs [data-mg="kind"]')].map(b => b.dataset.kind).join()`)) === "is,change" && (await ev(`return [...r.querySelectorAll('${W} [data-mg="state"]')].map(b => b.textContent.trim()).join()`)) === (lang === "de" ? "nass,trocken" : "wet,dry"));
-    check(`[${tag}] Schritt 1 mit Suche ohne Querscrollen`, (await overflow()) <= 0);
-    await tap('[data-mg="back"]');
+    check(`[${tag}] Schritt 1 mit Bedingung ohne Querscrollen`, (await overflow()) <= 0);
     await tap('[data-mg="cancel"]');
     check(`[${tag}] Abbrechen mit Änderungen fragt nach "${T.discard}"`, await wait(`return r.querySelector('${W} .mgw-discard b')?.textContent.trim() === ${JSON.stringify(T.discard)} && !r.querySelector('${W} [data-mg="next"]')`));
     await tap('[data-mg="discard-no"]');
-    check(`[${tag}] "Weiter bearbeiten": Fenster und Stand bleiben`, await wait(`return !r.querySelector('${W} .mgw-discard') && r.querySelector("${W}").open && !!r.querySelector('${W} .mg-pick.sel')`));
+    check(`[${tag}] "Weiter bearbeiten": Fenster und Stand bleiben`, await wait(`return !r.querySelector('${W} .mgw-discard') && r.querySelector("${W}").open && !!r.querySelector('${W} .mg-lcard.open')`));
     await p.keyboard.press("Escape");
     check(`[${tag}] Escape fragt ebenfalls nach, schliesst das Fenster nicht`, await wait(`return !!r.querySelector('${W} .mgw-discard') && r.querySelector("${W}").open`));
     await p.keyboard.press("Escape");

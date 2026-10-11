@@ -7,7 +7,37 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.15.0] - 2026-10-11
+
+Magic Push: several linked conditions (And/Or, with groups), all on the first page of the assistant.
+
+### Added
+
+- Magic Push can combine several conditions (requested by the user, mockups `docs/mockups/magic-conditions-v1`). On the
+  first page of the assistant you add conditions with "+ Condition": each has its own entity (also from other devices),
+  kind (above, below, is) and value, with a chart of the last 24 hours. Two or more conditions are linked with "And" or
+  "Or"; a sentence "Notify when ..." shows what the message does. "+ Group" adds a box inside which the conditions are
+  linked the other way ("all" or "one is enough"), for example "A and (B or C)". One level of groups, at most 10
+  conditions and 4 groups.
+- Every condition has its own reset value ("Reset"), so each one keeps its own zone against flapping. "Changes" can only
+  be the single condition of a message.
+- New text variable `{conditions}`: the conditions as a sentence, for example "Temperature above 25 °C and Window is
+  open".
+- The look back (page 2) shows one timeline per condition plus a "Together" row with the moments the message would have
+  fired.
+- The overview and the message list show the whole condition as a sentence.
+
+### Changed
+
+- The assistant has five steps again, but in a new order: 1 Conditions (entity and condition, one or more) · 2 How long
+  (duration and look back) · 3 Delivery · 4 Text · 5 Name. "How long", "Repeat" and "Also notify when back to normal"
+  apply to the whole condition.
+- With "And", a condition that is `unavailable` or `unknown` means nothing happens; with "Or" it is ignored while another
+  condition decides. The first condition is still stored in the old fields, so existing messages keep working unchanged.
+
 ## [2.14.0] - 2026-10-11
+
+Not released; included in 2.15.0.
 
 Magic Push: a preview under each message.
 
@@ -2514,7 +2544,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.14.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.14.0
+[2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0
 [2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0
 [2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0
 [2.11.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.11.0
