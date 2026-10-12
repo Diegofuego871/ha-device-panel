@@ -38,6 +38,9 @@ from . import magic
 from .magic import STORE_KEY as MAGIC_STORE_KEY
 from .magic import MagicPush
 from .magic_history import async_history as async_magic_history
+from .timers import STORE_KEY as TIMERS_STORE_KEY
+from .timers import TimerManager
+from .timers_ws import COMMANDS as TIMER_COMMANDS
 from .ai_assessment import AiError, async_assess, async_preview
 from .ai_prompt import DEFAULT_PROMPT
 from .const import (
@@ -67,6 +70,7 @@ from .const import (
     DATA_PUSH_ICONS,
     DATA_PUSH_IMAGE,
     DATA_MAGIC,
+    DATA_TIMERS,
     DATA_SIGNAL,
     DATA_TYPE_OVERRIDES,
     DATA_WS_REGISTERED,
@@ -154,6 +158,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         magic_push = MagicPush(hass)
         await magic_push.async_start()
         hass.data[DATA_MAGIC] = magic_push
+    if DATA_TIMERS not in hass.data:
+        timer_manager = TimerManager(hass)
+        await timer_manager.async_start()
+        hass.data[DATA_TIMERS] = timer_manager
     await update_check.async_load_panel_settings(hass)
     update_check.async_start_daily(hass)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
@@ -202,6 +210,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await signal_log.async_stop()
     if (magic_push := hass.data.pop(DATA_MAGIC, None)) is not None:
         await magic_push.async_stop()
+    if (timer_manager := hass.data.pop(DATA_TIMERS, None)) is not None:
+        await timer_manager.async_stop()
     update_check.async_stop_daily(hass)
     hass.data.pop(DATA_ACTIVITY, None)
     return True
@@ -216,7 +226,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     Panel-Einstellungen. HA ruft
     das erst nach dem Entladen auf; dort wurde alles Ausstehende geschrieben.
     """
-    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, MAGIC_STORE_KEY, update_check.PANEL_STORE_KEY):
+    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, MAGIC_STORE_KEY, TIMERS_STORE_KEY, update_check.PANEL_STORE_KEY):
         await Store(hass, STORAGE_VERSION, key).async_remove()
     # Heruntergeladene Icons der Meldungen; der statische Pfad bleibt bis zum
     # Neustart angemeldet, der Ordner wird bei Bedarf neu angelegt.
@@ -1026,6 +1036,8 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_release_notes)
     websocket_api.async_register_command(hass, _ws_set_panel)
     for command in (_ws_magic_get, _ws_magic_list, _ws_magic_entity_search, _ws_magic_save, _ws_magic_delete, _ws_magic_enable, _ws_magic_preview, _ws_magic_test, _ws_magic_history):
+        websocket_api.async_register_command(hass, command)
+    for command in TIMER_COMMANDS:
         websocket_api.async_register_command(hass, command)
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_set_options)

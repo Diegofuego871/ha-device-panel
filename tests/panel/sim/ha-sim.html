@@ -400,7 +400,7 @@
     if (!["{facts}", ...PROMPT_GROUPS].some((v) => text.includes(v))) return "no_facts";
     return null;
   };
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [2, 80], charge_stall: [5, 120] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [2, 80], charge_stall: [5, 120], timers_catch_up: [0, 60] };
   // Inhalt der Batterie-Meldung wie options_api.BATTERY_FIELDS (seit 0.34.0).
   const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
   // Inhalt der Meldung bei neuen Geräten wie const.NEW_FIELDS (seit 1.24.0).
@@ -582,6 +582,7 @@
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
+    timers_pause: false, timers_catch_up: 10, timers_notify_error: true,
     notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, notify_charge_stop: false, charge_stall: 15, charge_integrations: [], charge_full_integrations: {}, charge_rise_integrations: {}, charge_stall_integrations: {}, charge_stop_integrations: {}, charge_live: false, charge_live_integrations: {}, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
     // Emoji der Push-Meldungen: null = Standard (seit 2.2.0)
     emoji_outage: null, emoji_group: null, emoji_online: null, emoji_battery: null, emoji_charge: null, emoji_charge_stop: null, emoji_new: null, emoji_updates: null,
@@ -994,6 +995,151 @@
         const device = JSON.stringify({ name: dev.name, status: dev.online === false ? "offline" : "online", area: dev.area }, null, 1);
         const values = { "{language}": lang, "{facts}": facts, ...Object.fromEntries(PROMPT_GROUPS.map((g) => [g, g === "{facts_device}" ? device : "{}"])) };
         return { text: (draft || window.__opts.ai_prompt || AI_PROMPT_DEFAULT).replace(/\{[A-Za-z_][A-Za-z0-9_]*\}/g, (m) => values[m] ?? m) };
+      }
+      // Timer (2.21.0): Timer pro Gerät im Speicher der Seite, Prüfung und Zeitberechnung ungefähr wie im Backend
+      if (typeof msg.type === "string" && msg.type.startsWith("device_panel/timer_")) {
+        const T = (window.__timers ||= { list: [], seq: 1, runs: [], tests: [] });
+        const fail = (message) => { throw { code: "invalid_format", message }; };
+        const pad = (n) => String(n).padStart(2, "0");
+        const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const local = (ts) => { const d = new Date(ts * 1000); return { ts, date: ymd(d), time: `${pad(d.getHours())}:${pad(d.getMinutes())}`, weekday: (d.getDay() + 6) % 7 }; };
+        const de = language === "de";
+        const DEFAULT_ENTS = [
+          { entity_id: "switch.plug", name: de ? "Steckdose" : "Plug", domain: "switch", state: "on", available: true, actions: ["on", "off", "toggle"] },
+          { entity_id: "light.led", name: "LED-Ring", domain: "light", state: "off", available: true, actions: ["on", "off", "toggle"] },
+        ];
+        const entsOf = (id) => (window.__timerEntities && id in window.__timerEntities ? window.__timerEntities[id] : DEFAULT_ENTS);
+        const entOf = (r) => entsOf(r.device_id).find((e) => e.entity_id === r.entity_id);
+        const lastDay = (y, m) => new Date(y, m + 1, 0).getDate();
+        const at = (y, m, d, hh, mm) => new Date(y, m, d, hh, mm, 0, 0).getTime() / 1000;
+        const nextAfter = (r, afterTs) => {
+          const [hh, mm] = String(r.time).split(":").map(Number);
+          const base = new Date(afterTs * 1000);
+          if (r.repeat === "monthly") {
+            for (let i = 0; i < 26; i++) {
+              const y = base.getFullYear() + Math.floor((base.getMonth() + i) / 12), m = (base.getMonth() + i) % 12;
+              const d = r.mday === -1 ? lastDay(y, m) : Math.min(r.mday, lastDay(y, m));
+              const ts = at(y, m, d, hh, mm);
+              if (ts > afterTs) return ts;
+            }
+            return null;
+          }
+          for (let i = 0; i < 9; i++) {
+            const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
+            const wd = (d.getDay() + 6) % 7;
+            if (r.repeat === "weekly" && !(r.weekdays || []).includes(wd)) continue;
+            const ts = at(d.getFullYear(), d.getMonth(), d.getDate(), hh, mm);
+            if (ts > afterTs) return ts;
+          }
+          return null;
+        };
+        const firstDue = (r, now) => {
+          if (r.kind === "countdown") return now + r.delay_s;
+          if (r.kind === "once") { const [y, m, d] = r.date.split("-").map(Number); const [hh, mm] = r.time.split(":").map(Number); const ts = at(y, m - 1, d, hh, mm); return ts > now ? ts : null; }
+          return nextAfter(r, now);
+        };
+        const runsOf = (r, now) => {
+          if (r.kind === "countdown") return [local(now + r.delay_s)];
+          if (r.kind === "once") { const ts = firstDue(r, now); return ts ? [local(ts)] : []; }
+          const out = []; let cur = now;
+          while (out.length < 3) { const n = nextAfter(r, cur); if (!n) break; out.push(local(n)); cur = n; }
+          return out;
+        };
+        const check = (r, draft = false) => {
+          if (!entsOf(r.device_id)) fail("Gerät nicht gefunden");
+          const e = entOf(r);
+          if (!e) fail("Die Entität gehört nicht zu diesem Gerät");
+          if (!e.actions.includes(r.action)) fail("Diese Aktion gibt es für diese Entität nicht");
+          if (String(r.name || "").length > 60) fail("Name: höchstens 60 Zeichen");
+          if (r.back_s && r.action === "toggle") fail("Umschalten lässt sich nicht zurückschalten");
+          if (r.back_s != null && r.back_s !== 0 && (r.back_s < 10 || r.back_s > 604800)) fail("Zurückschalten: ganze Zahl von 10 bis 604800 erwartet");
+          if (r.kind === "countdown") { if (!r.delay_s) fail("Dauer fehlt"); if (r.delay_s < 10 || r.delay_s > 604800) fail("Dauer: ganze Zahl von 10 bis 604800 erwartet"); }
+          else if (r.kind === "once") { if (!r.date || !r.time) fail("Datum und Uhrzeit fehlen"); if (r.enabled !== false && !firstDue(r, Date.now() / 1000)) fail("Der Zeitpunkt liegt in der Vergangenheit"); }
+          else if (r.kind === "repeat") {
+            if (!r.time || !r.repeat) fail("Uhrzeit und Wiederholung fehlen");
+            if (r.repeat === "weekly" && !(r.weekdays || []).length) fail("Mindestens ein Wochentag");
+            if (r.repeat === "monthly" && !r.mday) fail("Tag des Monats fehlt");
+          } else fail("Art ungültig");
+        };
+        const payload = (r) => {
+          const e = entOf(r);
+          const now = Date.now() / 1000;
+          return { ...r, due: r.enabled ? r.__due : null, due_local: r.enabled && r.__due ? local(r.__due) : null, revert_due: null, revert_local: null, last: r.__last || null, done: r.__done || null,
+            running: r.kind === "countdown" && r.enabled && Boolean(r.__due), entity_name: e ? e.name : r.entity_id, entity_state: e ? e.state : null, entity_missing: !e, domain: String(r.entity_id).split(".")[0], actions: e ? e.actions : [],
+            next_runs: r.enabled && r.kind !== "countdown" ? runsOf(r, now) : [], device_name: (window.__devices.find((d) => d.id === r.device_id) || {}).name || "" };
+        };
+        const strip = (r) => Object.fromEntries(Object.entries(r).filter(([k]) => !k.startsWith("__")));
+        const today = () => ymd(new Date());
+        if (msg.type.endsWith("timer_get")) {
+          if (!window.__devices.find((d) => d.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
+          if (window.__timerLoadFails) throw new Error(window.__timerLoadFails);
+          const mine = T.list.filter((r) => r.device_id === msg.device_id).sort((a, b) => a.name.localeCompare(b.name));
+          return {
+            timers: mine.map((r) => payload(strip(r) && r)).map((p) => strip(p)),
+            entities: entsOf(msg.device_id),
+            targets: [{ value: "notify.familie", kind: "group" }, { value: "notify.mobile_app_dani_iphone", kind: "service" }, { value: "notify.mobile_app_partner_iphone", kind: "service" }, { value: "notify.kuechen_display", kind: "entity" }],
+            default_target: window.__opts.notify_service && window.__opts.notify_service !== "none" ? window.__opts.notify_service : "notify.mobile_app_dani_iphone",
+            limits: { per_device: 20, name: 60, back_min: 10, back_max: 604800, delay_min: 10, delay_max: 604800 },
+            now: Date.now() / 1000, today: today(),
+          };
+        }
+        if (msg.type.endsWith("timer_list")) {
+          if (window.__timerListFails) throw new Error(window.__timerListFails);
+          return { timers: T.list.map((r) => strip(payload(r))), now: Date.now() / 1000, today: today() };
+        }
+        if (msg.type.endsWith("timer_save")) {
+          const raw = msg.timer;
+          check(raw);
+          const old = raw.id ? T.list.find((x) => x.id === raw.id) : null;
+          if (raw.id && !old) fail("Timer nicht gefunden");
+          const e = entOf(raw);
+          const r = { id: old ? old.id : `t${T.seq++}`.padEnd(12, "0"), device_id: raw.device_id, entity_id: raw.entity_id, name: String(raw.name || "").trim() || e.name, action: raw.action, back_s: raw.back_s || null, kind: raw.kind,
+            delay_s: raw.kind === "countdown" ? raw.delay_s : null, date: raw.kind === "once" ? raw.date : null, time: raw.kind === "countdown" ? null : raw.time, repeat: raw.kind === "repeat" ? raw.repeat : null,
+            weekdays: raw.kind === "repeat" && raw.repeat === "weekly" ? [...raw.weekdays].sort() : null, mday: raw.kind === "repeat" && raw.repeat === "monthly" ? raw.mday : null,
+            enabled: raw.enabled !== false, push: Boolean(raw.push), target: raw.target || null, created: old ? old.created : Date.now() / 1000 };
+          r.__due = r.enabled ? firstDue(r, Date.now() / 1000) : null;
+          if (old) T.list.splice(T.list.indexOf(old), 1);
+          T.list.push(r);
+          T.saved = (T.saved || 0) + 1;
+          return { timer: strip(payload(r)) };
+        }
+        if (msg.type.endsWith("timer_delete")) {
+          const i = T.list.findIndex((x) => x.id === msg.timer_id);
+          if (i < 0) throw { code: "not_found", message: "timer not found" };
+          T.list.splice(i, 1);
+          return { deleted: msg.timer_id };
+        }
+        if (msg.type.endsWith("timer_enable")) {
+          const r = T.list.find((x) => x.id === msg.timer_id);
+          if (!r) throw { code: "not_found", message: "timer not found" };
+          if (msg.enabled) { r.__due = firstDue(r, Date.now() / 1000); if (!r.__due) fail("Der Zeitpunkt liegt in der Vergangenheit"); r.__done = null; }
+          else r.__due = null;
+          r.enabled = msg.enabled;
+          return { timer: strip(payload(r)) };
+        }
+        if (msg.type.endsWith("timer_run")) {
+          const r = T.list.find((x) => x.id === msg.timer_id);
+          if (!r) throw { code: "not_found", message: "timer not found" };
+          T.runs.push(r.id);
+          const ok = !window.__timerRunFails;
+          r.__last = { at: Date.now() / 1000, ok, what: ok ? "run" : "failed", reason: ok ? null : "unavailable" };
+          return { ok, reason: ok ? null : "unavailable", timer: strip(payload(r)) };
+        }
+        if (msg.type.endsWith("timer_preview")) {
+          const r = { ...msg.timer, enabled: true };
+          check(r);
+          const e = entOf(r);
+          const word = r.action === "toggle" ? (de ? "umgeschaltet" : "toggled") : r.action === "on" ? (de ? "ein" : "on") : (de ? "aus" : "off");
+          const clock = local(Date.now() / 1000).time;
+          const name = String(r.name || "").trim() || e.name;
+          return { title: `⏱️ Timer: ${name}`, message: r.action === "toggle" ? (de ? `${e.name} wurde umgeschaltet · ${clock}` : `${e.name} was toggled · ${clock}`) : (de ? `${e.name} ist jetzt ${word} · ${clock}` : `${e.name} is now ${word} · ${clock}`), name,
+            target: r.target || window.__opts.notify_service, next_runs: runsOf(r, Date.now() / 1000) };
+        }
+        if (msg.type.endsWith("timer_test")) {
+          check({ ...msg.timer, enabled: true });
+          T.tests.push(msg.timer);
+          return { sent: window.__timerTestFail ? false : true };
+        }
       }
       // Magic Push (2.6.0): Meldungen pro Gerät im Speicher der Seite, Prüfung ungefähr wie im Backend
       if (typeof msg.type === "string" && msg.type.startsWith("device_panel/magic_")) {

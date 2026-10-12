@@ -4,7 +4,7 @@ Wunsch des Nutzers (2026-10-12): Timer. Im Geräte-Popup ein zusätzlicher Reite
 Einstellungen ein neuer aufklappbarer Abschnitt, der alle Timer sammelt (gleicher Ansatz wie Magic Push, aber nicht unter
 "Meldungen", sondern als eigener Abschnitt), mit Suche und Ein-/Ausschalten. Man wählt die Entität, die man schalten will;
 es werden nur schaltbare Entitäten dieses Geräts angeboten. Einmalig (danach automatisch aus) oder geplant (auf Wunsch
-täglich, wöchentlich, monatlich wiederholt). Alles im echten Panel (Nachbau, erfundene Daten). Noch nichts umgesetzt.
+täglich, wöchentlich, monatlich wiederholt). Alles im echten Panel (Nachbau, erfundene Daten). Umgesetzt in 2.21.0.
 
 - `1-Reiter-Timer.png`: Reiter "Timer" im Geräte-Popup, Handy: A Karten wie Magic Push, B Wecker-Stil (Empfehlung)
 - `1b-Reiter-Desktop.png`: B auf dem Desktop
@@ -88,7 +88,7 @@ benachrichtigen".
 - **Neustart:** was passiert, wenn Home Assistant zur Zeit des Timers nicht lief (siehe Frage 4).
 - **Geräteliste:** kleine Marke "⏱ 4" beim Gerätenamen und optional ein Chip "Mit Timer".
 
-## Technisches Vorgehen (Vorschlag, nichts gebaut)
+## Technisches Vorgehen (Vorschlag, umgesetzt in 2.21.0)
 
 - Neues Modul `timers.py` mit eigenem Speicher (`device_panel.timers`). Pro Timer wird der **nächste Zeitpunkt** berechnet und
   genau dafür ein Aufruf geplant (`async_track_point_in_time`), kein Abfragen im Minutentakt. Countdowns speichern den
@@ -126,5 +126,16 @@ benachrichtigen".
 
 Entschieden (2026-10-12): Erinnerung nur bei Ausführung; Schalter statt Checkbox; Push pro Timer mit Empfänger, Standard ist das
 Push-Ziel aus den Einstellungen.
+
+Umgesetzt in 2.21.0, die Fragen 1 bis 5 und 7 vom Nutzer nicht beantwortet, darum nach Empfehlung (vom Nutzer zu bestätigen):
+1. Entitäten wie empfohlen (`switch`, `light`, `fan`, `input_boolean`, `siren`, `humidifier`, `cover`, `valve`, `lock`).
+2. Eine Entität pro Timer.
+3. "Danach zurückschalten" dabei (10 Min., 30 Min., 1 Std. oder eigene Zeit); das Zurückschalten kommt auch nach einem
+   Schalten von Hand.
+4. Nachholen als Zahl in Minuten (0 bis 60, Standard 10, 0 = nie) statt Aus/10 Min./1 Std.; mindestens 90 s Toleranz.
+5. Einmalige Timer bleiben als "erledigt" (Knopf "Erneut starten"), Countdowns räumen sich nach 24 Std. selbst auf; den Knopf
+   "Aufräumen" gibt es nicht.
+7. Symbole über dem Text auf dem Handy (nur CSS, der Text der Reiter bleibt unverändert).
+8. Gebaut: "Alle Timer pausieren", "Ausführen", Protokoll. Nicht gebaut: Marke "⏱ n" in der Geräteliste, Chip "Mit Timer".
 
 Neu erzeugen: `CHROMIUM_PATH=... node docs/mockups/timer-v1/src/render.mjs`

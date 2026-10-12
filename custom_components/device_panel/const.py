@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "140"
+PANEL_VERSION = "141"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -185,6 +185,14 @@ CHARGE_REARM = 10
 CHARGE_DROP = 5
 CHARGE_STALE = 2 * 3600
 DATA_CHARGE = f"{DOMAIN}_charge"
+# Timer (seit 2.21.0): alle pausieren (Ferien), verpasste Timer nach einem Neustart nachholen (Minuten; 0 = nie), bei einem
+# Fehler benachrichtigen (an das Standard-Ziel, wenn der Timer keine eigene Meldung hat).
+CONF_TIMERS_PAUSE = "timers_pause"
+CONF_TIMERS_CATCH_UP = "timers_catch_up"
+CONF_TIMERS_NOTIFY_ERROR = "timers_notify_error"
+DEFAULT_TIMERS_CATCH_UP = 10
+TIMERS_CATCH_UP_CHOICES = (0, 10, 60)
+
 INT_RANGES = {
     CONF_NEW_WINDOW: (1, 60),
     CONF_UPDATES_WINDOW: (1, 60),
@@ -196,6 +204,7 @@ INT_RANGES = {
     CONF_STARTUP_GRACE: (0, 30),
     CONF_BATTERY_LOW: (1, 50),
     CONF_NOTIFY_DELAY: (1, 60),
+    CONF_TIMERS_CATCH_UP: (0, 60),
 }
 # Integrationen ohne Push bei schwacher Batterie (seit 0.34.0, Reiter
 # "Integrationen" in "Überwachung und Meldungen"); Schwelle und anhaltende
@@ -312,6 +321,7 @@ DATA_AVAILABILITY = f"{DOMAIN}_availability"
 DATA_SIGNAL = f"{DOMAIN}_signal"
 # Magic Push (seit 2.6.0): Regeln pro Gerät, magic.py
 DATA_MAGIC = f"{DOMAIN}_magic"
+DATA_TIMERS = f"{DOMAIN}_timers"
 
 WS_TYPE_LIST_DEVICES = f"{DOMAIN}/list_devices"
 

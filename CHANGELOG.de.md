@@ -7,6 +7,51 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.21.0] - 2026-10-12
+
+Timer: eine Entität eines Geräts einmalig oder nach Plan schalten (Wunsch des Nutzers).
+
+### Hinzugefügt
+
+- Neuer Reiter "Timer" im Geräte-Popup (jetzt der fünfte Reiter, nach "Magic Push"). Ein Timer schaltet eine schaltbare
+  Entität des Geräts (Schalter, Licht, Ventilator, Luftbefeuchter, Sirene, input_boolean, Rollladen, Ventil, Schloss).
+  Angeboten werden nur Entitäten, die zum Gerät gehören. Aktionen: Einschalten, Ausschalten, Umschalten (bei Rollläden
+  und Ventilen Öffnen und Schliessen, bei Schlössern Verriegeln und Entriegeln; Schlösser haben kein Umschalten). Der Reiter listet die Timer des Geräts als Uhr-Karten mit der nächsten
+  Ausführung, einem Schalter zum Ein- und Ausschalten und den Aktionen "Bearbeiten", "Ausführen" und "Löschen"
+  (mit Rückfrage). Ein Timer mit Countdown zeigt einen Ring mit der Restzeit.
+- Der Assistent für einen neuen Timer öffnet in einem eigenen Fenster (auf dem Handy als Vollbild), vier Schritte:
+  1. was schalten (Entität, Aktion, auf Wunsch "Danach wieder zurückschalten" nach 10 Min., 30 Min., 1 Std. oder eigener
+  Zeit), 2. wann ("In ..." als Countdown, "Einmal" an einem Datum zu einer Uhrzeit, "Wiederholt" täglich, wöchentlich
+  mit Wochentagen oder monatlich an einem Tag des Monats, auch "letzter Tag"), 3. ob per Push gemeldet wird, 4. Name
+  (leer = Name der Entität) und Prüfung mit den nächsten Ausführungen. Falsche Eingaben erscheinen beim Feld und sperren
+  "Weiter". Schliessen mit Änderungen fragt "Änderungen verwerfen?".
+- Per Push melden (Schalter, pro Timer, standardmässig aus): eine Erinnerung aufs Handy in dem Moment, in dem der Timer
+  schaltet, damit man eine Kontrolle hat. Der Inhalt ist fest und bei jedem Timer gleich ("Timer: <Name>", "<Entität> ist
+  jetzt ein · 11:15"), der Assistent zeigt eine Vorschau und "Test senden". Der Empfänger ist wählbar (Dienste, Gruppen,
+  Entitäten wie in "Überwachung und Meldungen"); Standard ist das Push-Ziel aus dem ersten Menü der Einstellungen, und
+  ein Timer ohne eigene Wahl folgt einer späteren Änderung davon. Ein Push kommt nur, wenn der Timer wirklich schaltet,
+  nicht beim Bearbeiten. Auch Fehler werden gemeldet (abschaltbar).
+- Neuer Abschnitt "Timer" in den Einstellungen (aufklappbar, gleicher Ansatz wie Magic Push): eine Karte pro Gerät mit
+  allen Timern, Suche, Filter (Alle, Aktiv, Aus, Läuft), "Alle einklappen", ein- und ausschalten, bearbeiten (öffnet
+  das Popup des Geräts im Assistenten), ausführen, löschen. Darunter die allgemeinen Optionen: "Alle Timer
+  pausieren", "Verpasste Timer nachholen" (Minuten, 0 bis 60, Standard 10) und "Bei Fehler benachrichtigen".
+- Die Steuerung läuft in Home Assistant, nicht im Browser: Ein Timer schaltet auch bei geschlossenem Panel. Sie nutzt die
+  Zeitzone von Home Assistant (Sommerzeit wird beachtet; ein monatlicher Timer am 31. läuft in kürzeren Monaten am
+  letzten Tag). Ein einmaliger oder Countdown-Timer schaltet sich danach selbst aus und bleibt als "Erledigt" in der
+  Liste (ein Countdown-Timer verschwindet nach einem Tag); "Erneut starten" setzt eine neue Zeit. Die nächste
+  Ausführung übersteht einen Neustart. Ausführungen, die weiter zurückliegen als das Nachhol-Fenster (Pause,
+  Neustart), werden übersprungen und protokolliert (ein wiederholter Timer rückt auf die nächste Ausführung). Ein
+  fehlgeschlagenes Schalten wird zweimal nach 5 Minuten wiederholt.
+- Protokoll: Timer-Läufe, manuelle Läufe, Zurückschalten, Wiederholungen, Fehler, übersprungene Läufe, pausierte
+  Timer und fehlende Ziele erscheinen im Protokoll unter der Kategorie "Timer".
+
+### Geändert
+
+- Die Reiterleiste des Geräte-Popups hat fünf Reiter. Auf dem Handy (Breite bis 600 px) zeigen die Reiter ein kleines
+  Symbol über dem Text, damit alle fünf in einer Zeile Platz haben.
+- Handy: Die Kurve in der Zeile "Ausfall-Puls" reicht jetzt von der Mitte der Kachel bis zum rechten Rand (vorher auf
+  112 px zusammengepresst). Der Titel der Zeile kann auf schmalen Handys auf zwei Zeilen umbrechen.
+
 ## [2.20.0] - 2026-10-12
 
 Speichern funktioniert überall gleich, und das helle Design wirkt nicht mehr ausgegraut (beides Wunsch des Nutzers).
@@ -2771,6 +2816,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.21.0
 [2.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.20.0
 [2.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.19.0
 [2.17.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.1

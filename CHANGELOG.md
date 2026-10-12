@@ -7,6 +7,49 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.21.0] - 2026-10-12
+
+Timer: switch an entity of a device once or on a schedule (requested by the user).
+
+### Added
+
+- New tab "Timer" in the device pop-up (now the fifth tab, after "Magic Push"). A timer switches one switchable entity
+  of the device (switch, light, fan, humidifier, siren, input_boolean, cover, valve, lock). Only entities that belong
+  to the device are offered. Actions: turn on, turn off, toggle (for covers and valves open and close, for locks lock
+  and unlock; locks have no toggle). The tab lists the timers of the device
+  as clock cards with the next run, a switch to enable or disable, and the actions "Edit", "Run" and "Delete" (with
+  confirmation). A countdown timer shows a ring with the remaining time.
+- The assistant for a new timer opens in its own window (full screen on the phone), four steps: 1. what to switch (entity,
+  action, optional "Switch back afterwards" after 10 min, 30 min, 1 h or your own time), 2. when ("In ..." as countdown,
+  "Once" at a date and time, "Repeat" daily, weekly with weekdays or monthly on a day of the month, including "last
+  day"), 3. whether to report by push, 4. name (empty = name of the entity) and check with the next runs. Wrong input is
+  shown at the field and blocks "Next". Closing with changes asks "Discard changes?".
+- Report by push (switch, per timer, off by default): a reminder on your phone at the moment the timer switches, so
+  you have a control. The content is fixed and the same for every timer ("Timer: <name>", "<entity> is now on · 11:15"),
+  the assistant shows a preview and "Send test". The recipient can be chosen (services, groups, entities as in
+  "Monitoring and notifications"); the default is the push target from the first menu of the settings, and a timer
+  without own choice follows a later change of it. A push is sent only when the timer really switches, not when you
+  edit it. Failures are reported as well (can be turned off).
+- New section "Timer" in the settings (collapsible, same approach as Magic Push): one card per device with all its
+  timers, search, filter (All, On, Off, Running), "Collapse all", enable or disable, edit (opens the pop-up of the
+  device in the assistant), run, delete. Under it the general options: "Pause all timers", "Make up missed timers"
+  (minutes, 0 to 60, default 10) and "Notify on failure".
+- The engine runs in Home Assistant, not in the browser: a timer fires with the panel closed. It uses the time zone of
+  Home Assistant (daylight saving time is respected; a monthly timer on the 31st runs on the last day of shorter
+  months). A single or countdown timer disables itself afterwards and stays in the list as "Done" (a countdown timer
+  disappears after a day); "Start again" sets a new time. The next run survives a restart. Runs that fell into a pause or
+  a restart longer ago than the catch-up window are skipped and logged (a repeating timer moves to its next run). A
+  failed switch is retried twice after 5 minutes.
+- Log: timer runs, manual runs, switching back, retries, failures, skipped runs, paused timers and missing targets
+  appear in the log under the category "Timer".
+
+### Changed
+
+- The tab bar of the device pop-up has five tabs. On the phone (width up to 600 px) the tabs show a small symbol
+  above the text so that all five fit in one row.
+- Phone: the curve of the "Outage pulse" row now spans from the middle of the tile to the right edge (before, it was
+  squeezed into 112 px). The title of the row may wrap to two lines on narrow phones.
+
 ## [2.20.0] - 2026-10-12
 
 Saving works the same everywhere, and the light theme no longer looks greyed out (both requested by the user).
@@ -2680,6 +2723,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.21.0
 [2.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.20.0
 [2.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.19.0
 [2.17.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.1

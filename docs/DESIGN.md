@@ -423,6 +423,17 @@ HA-Nachbau prüfen.
   (Abbrechen, Kreuz, Hintergrund, Escape, Geräteseite) zeigt dasselbe mittige Pop-up wie Magic Push (`dialog.discard-dlg`,
   `.dd-card`, `.dd-btns`), Fokus auf "Weiter bearbeiten". Einzelaktionen (umbenennen, ausblenden, Listenaktionen) bleiben sofort.
 
+## Timer (seit 2.21.0, docs/mockups/timer-v1)
+
+- Reiter "Timer" im Popup: Uhr-Karten (`.tm-clock`, grosse Uhrzeit, Name, Ergebnis, Wochentage `.tm-days`, Zeile "nächster Lauf"
+  mit Bearbeiten/Ausführen/Löschen); Countdown mit Ring. Neuer Timer: gestrichelte Fläche "Neuer Timer".
+- Assistent im eigenen Fenster wie Magic Push (`dialog.magic-dlg.timer-dlg`, vier Schritte); Wahl in Reiterform nur über
+  `.sub-tabs`/`.mon-tabs` mit Kapsel (Regel Auswahlknöpfe), Wochentage als runde Knöpfe `.tm-wd`, Uhrzeit und Datum als
+  `.tm-timein`/`.tm-datein`. Push als Schalter mit Vorschau der Mitteilung.
+- Einstellungen: Abschnitt "Timer" gleich aufgebaut wie die Magic-Push-Übersicht (`mg-dcard` je Gerät, Suche, Filter
+  Alle/Aktiv/Aus/Läuft, "Alle einklappen"), darunter "Allgemein" mit den drei Optionen.
+- Reiterleiste: fünf Reiter; Handy (bis 600 px) mit Symbol über dem Text (`::before`, Emoji), Text unverändert.
+
 ## Magic Push: Rückfrage beim Schliessen (seit 2.16.0)
 
 - "Änderungen verwerfen?" ist ein Pop-up in der Mitte des Assistenten-Fensters über abgedunkeltem Hintergrund

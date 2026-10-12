@@ -27,7 +27,7 @@ _LOGGER = logging.getLogger(__name__)
 
 MAX_ENTRIES = 500
 LEVELS = ("debug", "info", "warning", "error")
-CATEGORIES = ("charge", "outage", "battery", "new", "updates", "magic", "push", "system")
+CATEGORIES = ("charge", "outage", "battery", "new", "updates", "magic", "timer", "push", "system")
 
 _PY_LEVEL = {"debug": logging.DEBUG, "info": logging.INFO, "warning": logging.WARNING, "error": logging.ERROR}
 
@@ -39,6 +39,17 @@ TEXTS: dict[str, dict[str, str]] = {
         "magic_repeat": "Wert bleibt so, Meldung wird wiederholt: {title}",
         "magic_recovered": "wieder normal, Meldung wird gesendet: {title}",
         "magic_test": "Test: Meldung wird gesendet",
+        "timer_run": "geschaltet: {entity} ({action})",
+        "timer_run_manual": "von Hand ausgeführt: {entity} ({action})",
+        "timer_revert": "zurückgeschaltet: {entity} ({action})",
+        "timer_retry": "{entity} nicht erreichbar, neuer Versuch in {minutes} Min. ({count} von {max})",
+        "timer_failed": "{entity} konnte nicht geschaltet werden",
+        "timer_failed_d": "Einzelheiten im Home-Assistant-Protokoll",
+        "timer_missed": "verpasst (Home Assistant lief nicht, {minutes} Min. zu spät): übersprungen",
+        "timer_paused": "übersprungen: alle Timer sind pausiert",
+        "timer_no_target": "Meldung gewünscht, aber kein Push-Ziel gewählt: keine Meldung",
+        "timer_no_target_d": "Einstellungen › Überwachung und Meldungen › Übersicht, oder beim Timer einen Empfänger wählen",
+        "timer_test": "Test: Meldung wird gesendet",
         "magic_no_target": "ausgelöst, aber kein Push-Ziel gewählt: keine Meldung",
         "magic_no_target_d": "Einstellungen › Überwachung und Meldungen › Übersicht, oder bei der Meldung ein Ziel wählen",
         "charge_watch": "{count} Geräte mit Batterie werden beobachtet",
@@ -94,6 +105,17 @@ TEXTS: dict[str, dict[str, str]] = {
         "magic_repeat": "value stays the same, repeating the notification: {title}",
         "magic_recovered": "back to normal, sending the notification: {title}",
         "magic_test": "test: sending the notification",
+        "timer_run": "switched: {entity} ({action})",
+        "timer_run_manual": "run by hand: {entity} ({action})",
+        "timer_revert": "switched back: {entity} ({action})",
+        "timer_retry": "{entity} not reachable, trying again in {minutes} min ({count} of {max})",
+        "timer_failed": "{entity} could not be switched",
+        "timer_failed_d": "details in the Home Assistant log",
+        "timer_missed": "missed (Home Assistant was not running, {minutes} min late): skipped",
+        "timer_paused": "skipped: all timers are paused",
+        "timer_no_target": "notification wanted, but no push target chosen: no notification",
+        "timer_no_target_d": "Settings › Monitoring and notifications › Overview, or choose a recipient in the timer",
+        "timer_test": "test: sending the notification",
         "magic_no_target": "triggered, but no push target chosen: no notification",
         "magic_no_target_d": "Settings › Monitoring and notifications › Overview, or choose a target in the notification",
         "charge_watch": "watching {count} devices with a battery",

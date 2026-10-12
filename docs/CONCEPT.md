@@ -484,6 +484,15 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
 - Verbindungsabbrüche still überbrücken, Polling im Hintergrund pausieren.
 - Statistik-Fenster mit Tabs, Zeitraum 24 Std./7/30 Tage, Loader.
 
+## Timer (seit 2.21.0, Wunsch des Nutzers)
+
+Schaltet eine schaltbare Entität eines Geräts ohne Automation: einmalig (in X Minuten oder an einem Datum) oder wiederholt
+(täglich, wöchentlich, monatlich), auf Wunsch mit "danach zurückschalten" und mit Push-Erinnerung in dem Moment, in dem
+geschaltet wird (fester Inhalt, Vorschau, Empfänger wählbar, Standard das Push-Ziel der Einstellungen). Läuft in Home
+Assistant (nicht im Browser), mit der Zeitzone von HA, überlebt Neustarts (nachholen innerhalb von `timers_catch_up`, sonst
+überspringen und im Protokoll vermerken). Reiter "Timer" im Popup, Übersicht und Optionen im Abschnitt "Timer" der
+Einstellungen. Einzelheiten: `docs/mockups/timer-v1/README.md`, `timers.py`.
+
 ## Live-Aktivität beim Laden (seit 2.19.0, Wunsch des Nutzers)
 
 Optional (aus), global, pro Integration und pro Gerät, unabhängig von der Lademeldung. Zeigt auf iPhone (Live-Aktivität, iOS

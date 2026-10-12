@@ -12,10 +12,11 @@
  */
 
 const MODULE_VERSION = new URL(import.meta.url).search;
-const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }] = await Promise.all([
+const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { TimerUi }] = await Promise.all([
   import(`./strings.js${MODULE_VERSION}`),
   import(`./styles.js${MODULE_VERSION}`),
   import(`./magic-push.js${MODULE_VERSION}`),
+  import(`./timers.js${MODULE_VERSION}`),
 ]);
 
 const POLL_INTERVAL_MS = 10000;
@@ -709,6 +710,8 @@ class DevicePanel extends HTMLElement {
     this._ai = new Map();
     // Magic Push (seit 2.6.0): eigener Reiter im Geräte-Popup, verwaltet seinen Stand selbst (magic-push.js)
     this._magic = new MagicPush(this, { escape, mdi, errText, logo: LOGO_SMALL, typeIcon });
+    // Timer (seit 2.21.0): eigener Reiter im Geräte-Popup und Abschnitt "Timer" in den Einstellungen (timers.js)
+    this._timers = new TimerUi(this, { escape, mdi, errText, logo: LOGO_SMALL, typeIcon });
     this._aiOn = false;
     this._flakyOutages = 3;
     // Chips der Verbindungsart, die nicht erscheinen (Einstellung "Anzeige").
@@ -934,7 +937,7 @@ class DevicePanel extends HTMLElement {
     const reduced = () => Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
     const keyOf = (bar) => {
       const b = bar.querySelector("button");
-      return `${bar.closest("dialog")?.className || "page"}|${b ? b.dataset.set || b.dataset.dlg || b.dataset.prompt || b.dataset.mg || "" : ""}|${b?.dataset.group || ""}`;
+      return `${bar.closest("dialog")?.className || "page"}|${b ? b.dataset.set || b.dataset.dlg || b.dataset.prompt || b.dataset.mg || b.dataset.tm || "" : ""}|${b?.dataset.group || ""}`;
     };
     const apply = (pill, r) => {
       pill.style.width = `${r.w}px`;
@@ -1047,7 +1050,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg timer-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
@@ -1196,6 +1199,8 @@ class DevicePanel extends HTMLElement {
     dlg.addEventListener("click", (ev) => this._onDeviceClick(ev));
     this._magic.bind(dlg);
     this._magic.bindWindow(root.querySelector("dialog.magic-dlg"));
+    this._timers.bind(dlg);
+    this._timers.bindWindow(root.querySelector("dialog.timer-dlg"));
     dlg.addEventListener("input", (ev) => {
       if (this._rename && ev.target.matches?.('input[data-dlg="rename-input"]')) this._rename.value = ev.target.value;
     });
@@ -2882,7 +2887,7 @@ class DevicePanel extends HTMLElement {
     if (log.debug || log.entries.some((e) => e.level === "debug")) levels.push(["debug", t("logLevel_debug"), count((e) => e.level === "debug" && inCat(e) && inText(e))]);
     for (const l of ["info", "warning", "error"]) levels.push([l, t(`logLevel_${l}`), count((e) => e.level === l && inCat(e) && inText(e))]);
     const cats = [["all", t("logAll"), count((e) => inLevel(e) && inText(e))]];
-    for (const c of ["charge", "outage", "battery", "push", "magic", "updates", "new", "system"]) cats.push([c, t(`logCat_${c}`), count((e) => e.cat === c && inLevel(e) && inText(e))]);
+    for (const c of ["charge", "outage", "battery", "push", "magic", "timer", "updates", "new", "system"]) cats.push([c, t(`logCat_${c}`), count((e) => e.cat === c && inLevel(e) && inText(e))]);
     const dot = (l) => (l === "all" ? "" : `<span class="lg-dot ${l}"></span>`);
     const chip = (attr, [id, label, n], on) =>
       `<button type="button" class="chip${on === id ? " on" : ""}" ${attr}="${id}" aria-pressed="${on === id}">${dot(id)}<span>${escape(label)}</span><span class="n">${n}</span></button>`;
@@ -3411,7 +3416,7 @@ class DevicePanel extends HTMLElement {
   // --- Geräte-Popup ---------------------------------------------------------
 
   // tab: Reiter, mit dem das Popup beginnt; editRule: Meldung, die der Assistent von Magic Push gleich öffnet
-  _openDevice(id, tab = "ov", editRule = null) {
+  _openDevice(id, tab = "ov", editRule = null, editTimer = null) {
     const dlg = this.shadowRoot.querySelector("dialog.device");
     if (!dlg || !id) return;
     this._closeStat();
@@ -3421,6 +3426,8 @@ class DevicePanel extends HTMLElement {
     this._detail = null;
     this._magic.open(id);
     if (editRule) this._magic.editWhenLoaded(editRule);
+    this._timers.open(id);
+    if (editTimer) this._timers.editWhenLoaded(editTimer);
     this._renderDevice();
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
@@ -3637,9 +3644,13 @@ class DevicePanel extends HTMLElement {
     this._detail = null;
     this._hist = null;
     this._magic.reset();
+    this._timers.reset();
     // Im Popup können Meldungen geändert worden sein: die Übersicht in den Einstellungen neu laden
     if (this._settings?.magicAll) {
       this._loadMagicAll();
+    }
+    if (this._settings?.timersAll) {
+      this._loadTimersAll();
     }
   }
 
@@ -4132,7 +4143,7 @@ class DevicePanel extends HTMLElement {
     // Eingabe beim nächsten Abfragen (alle 10 s) verloren.
     const typing = this.shadowRoot.activeElement;
     // Der Assistent von Magic Push ist offen: nicht neu aufbauen, sonst ginge Getipptes verloren (Stand liegt im Modul).
-    if (!this._devForce && this._magic.wizardOpen()) return;
+    if (!this._devForce && (this._magic.wizardOpen() || this._timers.wizardOpen())) return;
     if (!this._devForce && this._rename && typing?.dataset?.dlg === "rename-input") return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-bat-pct" && typing.value !== String(d.battery_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-sig-val" && typing.value !== String(d.signal_setting)) return;
@@ -4171,8 +4182,9 @@ class DevicePanel extends HTMLElement {
       // Reiter (seit 1.37.0, docs/mockups/popup-tabs-log-v1, R3): Übersicht zum Lesen, alle Einstellungen des Geräts
       // in "Einstellungen" (der Zähler nennt die eigenen), Entitäten für sich.
       const own = devOwnCount(d);
-      const tab = ["ov", "set", "ent", "magic"].includes(this._devTab) ? this._devTab : "ov";
+      const tab = ["ov", "set", "ent", "magic", "timer"].includes(this._devTab) ? this._devTab : "ov";
       const magicCount = this._magic.count(d.id);
+      const timerCount = this._timers.count(d.id);
       const tabs = `<div class="sub-tabs" role="tablist">${[
         ["ov", this._t("devTabOverview"), false],
         // Mit eigenen Einstellungen auf zwei Zeilen (seit 2.0.10): Name, darunter klein die Zahl
@@ -4180,8 +4192,10 @@ class DevicePanel extends HTMLElement {
         ["ent", this._t("devTabEntities", ents.count), false],
         // Magic Push: mit eingeschalteten Meldungen ebenfalls zweizeilig (Name, darunter klein die Zahl)
         ["magic", this._t("mgTab"), false, magicCount ? this._t("mgTabActive", magicCount) : ""],
+        // Timer (seit 2.21.0): ebenfalls zweizeilig mit der Zahl der eingeschalteten
+        ["timer", this._t("tmTab"), false, timerCount ? this._t("tmTabActive", timerCount) : ""],
       ]
-        .map(([id, label, chg, sub]) => `<button type="button" role="tab" class="sub-tab${sub ? " two" : ""}${id === tab ? " on" : ""}${chg ? " chg" : ""}" data-dlg="tab" data-tab="${id}" aria-selected="${id === tab}"${sub ? ` aria-label="${escape(id === "magic" ? this._t("mgTabAria", magicCount) : this._t("devTabSettingsOwn", own))}"` : ""}>${
+        .map(([id, label, chg, sub]) => `<button type="button" role="tab" class="sub-tab${sub ? " two" : ""}${id === tab ? " on" : ""}${chg ? " chg" : ""}" data-dlg="tab" data-tab="${id}" aria-selected="${id === tab}"${sub ? ` aria-label="${escape(id === "magic" ? this._t("mgTabAria", magicCount) : id === "timer" ? this._t("tmTabAria", timerCount) : this._t("devTabSettingsOwn", own))}"` : ""}>${
           sub ? `<span class="tab-l">${escape(label)}</span> <span class="tab-s">${escape(sub)}</span>` : escape(label)
         }</button>`)
         .join("")}</div>`;
@@ -4192,6 +4206,8 @@ class DevicePanel extends HTMLElement {
           <p class="dlg-note small">${escape(this._t("devSettingsNote"))}</p>`
           : tab === "magic"
             ? `<div class="mg-root"></div>`
+            : tab === "timer"
+              ? `<div class="tm-root"></div>`
             : tab === "ent"
               ? `<h3>${escape(this._t("secEntities", ents.count))}</h3>${ents.html}`
               : `<h3>${escape(this._t("secStats"))}</h3>${this._statTilesHtml(d)}
@@ -4223,6 +4239,8 @@ class DevicePanel extends HTMLElement {
     // Magic Push füllt seinen Behälter nach jedem Neuaufbau aus dem eigenen Stand.
     const mgRoot = d && this._devTab === "magic" ? dlg.querySelector(".mg-root") : null;
     if (mgRoot) this._magic.attach(mgRoot);
+    const tmRoot = d && this._devTab === "timer" ? dlg.querySelector(".tm-root") : null;
+    if (tmRoot) this._timers.attach(tmRoot);
     dlg.scrollTop = scroll;
     if (sel) refocus(dlg.querySelector(sel));
   }
@@ -5282,6 +5300,7 @@ class DevicePanel extends HTMLElement {
     return [
       ["devices", ["show_service_devices", "show_disabled_devices", ...SUB_TAB_KEYS.integrations, ...SUB_TAB_KEYS.types, ...SUB_TAB_KEYS.devs, ...SUB_TAB_KEYS.devset]],
       ["monitor", Object.values(MON_TAB_KEYS).flat()],
+      ["timers", ["timers_pause", "timers_catch_up", "timers_notify_error"]],
       ["look", [...SUB_TAB_KEYS.chips]],
       ["ai", ["ai_assessment", "ai_task_entity", "ai_prompt"]],
       ["updates", ["update_check"]],
@@ -5550,6 +5569,12 @@ class DevicePanel extends HTMLElement {
       const base = d.ai_assessment ? this._t("sumAiOn", task?.name || d.ai_task_entity || "") : this._t("sumAiOff");
       return d.ai_prompt ? `${base} · ${this._t("sumAiPrompt")}` : base;
     }
+    if (id === "timers") {
+      const all = this._settings?.timersAll?.timers;
+      if (!all) return this._t(d.timers_pause ? "sumTimersPaused" : "sumTimersIdle");
+      const n = all.length;
+      return n ? this._t("sumTimers", n, all.filter((x) => x.enabled).length, Boolean(d.timers_pause)) : this._t(d.timers_pause ? "sumTimersPaused" : "sumTimersNone");
+    }
     if (id === "monitor") {
       // Während der Eingabe ungültig: der gespeicherte Wert gilt weiter.
       const errors = this._settingsErrors();
@@ -5661,6 +5686,21 @@ class DevicePanel extends HTMLElement {
       const cnt = root.querySelector('.list-search[data-for="magic"] .n');
       if (cnt && sh) cnt.textContent = sh.filtering ? this._t("listSearchOf", sh.n, sh.total) : "";
       const x = root.querySelector('[data-lclear="magic"]');
+      if (x) x.hidden = !q;
+    }
+    // Übersicht Timer (seit 2.21.0): wie Magic Push
+    const tzone = root.querySelector("[data-tm-all-zone]");
+    if (tzone && st?.timersAll?.timers) {
+      const q = String(st.search?.timers || "");
+      if (tzone.dataset.q !== q) {
+        tzone.dataset.q = q;
+        st.timersAll.sopen = {};
+        tzone.innerHTML = this._timers.overviewListHtml(st.timersAll, this._devices);
+      }
+      const sh = st.timersAll.shown;
+      const cnt = root.querySelector('.list-search[data-for="timers"] .n');
+      if (cnt && sh) cnt.textContent = sh.filtering ? this._t("listSearchOf", sh.n, sh.total) : "";
+      const x = root.querySelector('[data-lclear="timers"]');
       if (x) x.hidden = !q;
     }
     for (const wrap of root.querySelectorAll(".srch-rows[data-srch]")) {
@@ -5916,6 +5956,102 @@ class DevicePanel extends HTMLElement {
       all.error = null;
     } catch (err) {
       all.error = errText(err);
+    }
+    if (this._settings === st) this._renderSettings();
+  }
+
+  // Timer (seit 2.21.0): alle Timer aller Geräte, nach Gerät. Laden wie bei Magic Push; nach dem Schliessen eines Popups neu.
+  _monTimersHtml() {
+    const st = this._settings;
+    if (!st.timersAll) {
+      st.timersAll = { timers: null, error: null, confirmId: null, flash: "", err: "", filter: "all", open: {}, sopen: {} };
+      this._loadTimersAll();
+    }
+    return this._timers.overviewHtml(st.timersAll, this._devices);
+  }
+
+  async _loadTimersAll() {
+    const st = this._settings;
+    if (!st?.timersAll) return;
+    const all = st.timersAll;
+    try {
+      const r = await this._hass.callWS({ type: "device_panel/timer_list" });
+      all.timers = r.timers;
+      all.error = null;
+      this._timers._today = r.today;
+      this._timers._offset = Number.isFinite(r.now) ? r.now * 1000 - Date.now() : 0;
+    } catch (err) {
+      all.error = errText(err);
+    }
+    if (this._settings === st) this._renderSettings();
+  }
+
+  async _timersAllAction(action, btn) {
+    const st = this._settings;
+    const all = st?.timersAll;
+    if (!all) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const id = btn.dataset.id;
+    const ui = this._timers;
+    all.flash = "";
+    all.err = "";
+    if (action === "timer-reload") {
+      all.error = null;
+      this._loadTimersAll();
+      return;
+    }
+    if (action === "timer-device") {
+      this._openDevice(btn.dataset.device, "timer");
+      return;
+    }
+    if (action === "timer-filter") {
+      all.filter = btn.dataset.v;
+      all.sopen = {};
+      if (this._settings === st) this._renderSettings();
+      return;
+    }
+    if (action === "timer-fold-dev" || action === "timer-fold-all") {
+      if (action === "timer-fold-dev") ui.toggleFold(all, this._devices, btn.dataset.device);
+      else ui.foldAll(all, this._devices);
+      const zone = this.shadowRoot.querySelector("dialog.settings [data-tm-all-zone]");
+      if (zone) zone.innerHTML = ui.overviewListHtml(all, this._devices);
+      return;
+    }
+    if (action === "timer-edit") {
+      // Direkt das Fenster des Assistenten, ohne das Popup des Geräts dahinter
+      ui.open(btn.dataset.device, true);
+      ui.editWhenLoaded(id);
+      return;
+    }
+    if (action === "timer-delete") all.confirmId = id;
+    else if (action === "timer-delete-no") all.confirmId = null;
+    else if (action === "timer-delete-yes") {
+      try {
+        await this._hass.callWS({ type: "device_panel/timer_delete", timer_id: id });
+        all.timers = all.timers.filter((x) => x.id !== id);
+        all.flash = t("tmDeleted");
+      } catch (err) {
+        all.err = t("tmDeleteError", errText(err));
+      }
+      all.confirmId = null;
+    } else if (action === "timer-toggle" || action === "timer-restart") {
+      try {
+        const r = await this._hass.callWS({ type: "device_panel/timer_enable", timer_id: id, enabled: action === "timer-restart" ? true : btn.checked });
+        const i = all.timers.findIndex((x) => x.id === id);
+        if (i >= 0) all.timers[i] = { ...all.timers[i], ...r.timer };
+      } catch (err) {
+        all.err = t("tmToggleError", errText(err));
+      }
+    } else if (action === "timer-run") {
+      try {
+        const r = await this._hass.callWS({ type: "device_panel/timer_run", timer_id: id });
+        const i = all.timers.findIndex((x) => x.id === id);
+        if (i >= 0) all.timers[i] = { ...all.timers[i], ...r.timer };
+        if (r.ok) all.flash = t("tmRunDone");
+        else all.err = t("tmRunFailed", t(`tmReason_${r.reason || "error"}`));
+      } catch (err) {
+        all.err = t("tmRunFailed", errText(err));
+      }
     }
     if (this._settings === st) this._renderSettings();
   }
@@ -7008,10 +7144,16 @@ class DevicePanel extends HTMLElement {
           : "") +
         ttl("ttlAiPrompt") +
         this._aiPromptHtml(d, changes.has("ai_prompt")),
+      timers:
+        this._monTimersHtml() +
+        ttl("ttlTimersGeneral") +
+        row("timers_pause", t("optTimersPause"), sw("timers_pause", t("optTimersPause")), t("optTimersPauseShort"), null) +
+        row("timers_catch_up", t("optTimersCatchUp"), num("timers_catch_up", t("minuteUnit"), t("optTimersCatchUp")), t("optTimersCatchUpShort"), null) +
+        row("timers_notify_error", t("optTimersNotifyError"), sw("timers_notify_error", t("optTimersNotifyError")), t("optTimersNotifyErrorShort"), null),
       updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
     };
     const titles = {
-      devices: "secDevices", monitor: "secMonitor", look: "secLook", ai: "secAiSettings", updates: "secUpdates",
+      devices: "secDevices", monitor: "secMonitor", timers: "secTimers", look: "secLook", ai: "secAiSettings", updates: "secUpdates",
     };
     return (
       `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
@@ -7065,6 +7207,7 @@ class DevicePanel extends HTMLElement {
       const action = btn.dataset.set;
       if (action === "close") this._requestCloseSettings();
       else if (action.startsWith("magic-") && action !== "magic-toggle") this._magicAllAction(action, btn);
+      else if (action.startsWith("timer-") && action !== "timer-toggle") this._timersAllAction(action, btn);
       else if (action === "save") this._saveSettings();
       else if (action === "tab" || action === "goto" || action === "integ" || action === "ifilter") {
         // Reiter, Sprung aus Übersicht oder Abschnitt "Integrationen", Liste
@@ -7266,6 +7409,10 @@ class DevicePanel extends HTMLElement {
       const el = ev.target;
       if (el.matches?.('input[data-set="magic-toggle"]')) {
         this._magicAllAction("magic-toggle", el);
+        return;
+      }
+      if (el.matches?.('input[data-set="timer-toggle"]')) {
+        this._timersAllAction("timer-toggle", el);
         return;
       }
       if (st?.draft && el.tagName === "SELECT" && el.dataset.cfull !== undefined) {

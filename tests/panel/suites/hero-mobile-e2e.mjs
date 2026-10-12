@@ -123,6 +123,8 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Ticks der Zeitachse im Puls weg`, !(await s.shown(".kt.pul .pticks")));
       const chart = await s.rect(".kt.pul .pchart");
       check(`[${tag}] Kurve rechts in der Zeile`, chart.h >= 30 && chart.h <= 44 && chart.w >= 100 && chart.r <= pul.r - 8, JSON.stringify(chart));
+      // Seit 2.21.0 (Wunsch des Nutzers): die Kurve reicht von der Mitte der Kachel bis zum Rand, nicht in 112 px gepresst
+      check(`[${tag}] Kurve beginnt in der Mitte der Kachel`, Math.abs(chart.x - (pul.x + pul.w / 2)) <= 12 && chart.w >= (pul.w - 24) / 2 - 14, JSON.stringify({ chart, pul }));
 
       if (ph.width === 402) await s.p.screenshot({ path: `${outDir}/hero-mobile-${lang}-${state}.png` });
 

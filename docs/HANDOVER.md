@@ -3,7 +3,30 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.20.0, einheitlich speichern)
+## Stand (2.21.0, Timer)
+
+- 2.21.0 (Wunsch des Nutzers, Mockups `docs/mockups/timer-v1`): Timer, die eine schaltbare Entität eines Geräts einmalig
+  (Countdown "In X Min." oder Datum mit Uhrzeit) oder wiederholt (täglich, wöchentlich mit Wochentagen, monatlich) schalten,
+  optional mit "danach zurückschalten" und mit Push pro Timer (Schalter, fester Inhalt, Vorschau, Empfänger wählbar,
+  Standard = `effective(hass)["notify_service"]`; Push nur, wenn der Timer schaltet).
+  **Backend** `timers.py`: Klasse `TimerManager` (Speicher `.storage/device_panel.timers` mit `timers` und `runtime`; je Timer
+  ein `async_track_point_in_utc_time` für min(fällig, Zurückschalten); `asyncio.Lock`; Toleranz = max(`timers_catch_up` * 60,
+  90 s), Verpasstes wird übersprungen (wiederholt: nächster Termin, einmalig: erledigt); zwei Wiederholungen nach 300 s;
+  Countdown räumt sich nach 86400 s auf; Zeitzone von HA, Sommerzeit über UTC-Rundweg, monatlich fällt auf den letzten
+  Tag, `mday = -1` = letzter Tag), `occurrence_after/first_due/next_runs`, `TIMER_SCHEMA`, `switchable_entities`,
+  `timer_payload`. Befehle in `timers_ws.py` (`device_panel/timer_get|list|save|delete|enable|run|preview|test`).
+  Push-Texte in `push.py` (`timer_*`), Protokoll-Kategorie "timer" in `activity.py`. Optionen `timers_pause`,
+  `timers_catch_up` (Minuten, 0 bis 60, Standard 10), `timers_notify_error` (Standard an).
+  **Panel** `panel/timers.js` (`TimerUi`, wie `magic-push.js`): Reiter "Timer" im Popup (Behälter `.tm-root`, `attach(root)`
+  nach jedem Neuzeichnen), Assistent in eigenem Fenster `dialog.magic-dlg.timer-dlg` (Magic-Push-CSS `mgw-*`, `mg-*`;
+  Schlüssel `data-tm`, in `_initSeg` über `dataset.tm`), Übersicht in den Einstellungen (Abschnitt "timers", `data-set="timer-*"`,
+  Suchschlüssel `timers`). Reiterleiste: fünf Reiter, auf dem Handy (bis 600 px) Symbole per `::before`. Simulator
+  `tests/panel/sim/ha-sim.html` kennt die Timer-Befehle; Suite `timer-e2e` (258 Prüfungen), Python `tests/test_timers.py`.
+  Offen: Entscheide 1 bis 5 und 7 der Mockup-Fragen sind nach Empfehlung gefallen (siehe `docs/mockups/timer-v1/README.md`),
+  Marke "⏱ n" und Chip "Mit Timer" in der Geräteliste fehlen; nichts auf einem echten Gerät und Handy geprüft (vor allem
+  das Schalten über einen Neustart, Sommerzeit und die Push-Zustellung).
+
+## Davor (2.20.0, einheitlich speichern)
 
 - 2.20.0 (Wunsch des Nutzers): Geräte-Popup und Zahnrad speichern nur noch mit "Speichern"; Schliessen mit Änderungen
   fragt "Änderungen verwerfen?" (`dialog.discard-dlg`, eigenes modales Fenster, `_askDiscard(onYes)`). Geräte-Entwurf
@@ -14,14 +37,6 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   (`_typeError`, `_connError`, `_devSetError`) und der Entwurf bleibt. Bewusst sofort geblieben: Umbenennen, Gerät
   ausblenden, Listenaktionen von Magic Push, "Anpassen", Filter. Neue Suite `savecheck-e2e`; Suiten, die im Popup etwas
   wählen, klicken danach `[data-dlg="save"]`. Auf einem echten Gerät noch nicht geprüft.
-
-## Nächste Funktion: Timer (Mockups fertig, Entscheid offen)
-
-- Wunsch des Nutzers (2026-10-12): Timer, die eine schaltbare Entität eines Geräts einmalig (in X Min. oder an einem Datum)
-  oder geplant (täglich, wöchentlich, monatlich) schalten. Reiter "Timer" im Geräte-Popup, eigener aufklappbarer Abschnitt
-  "Timer" in den Einstellungen (Suche, aktivieren/deaktivieren). Mockups, Konzept, technisches Vorgehen und acht offene
-  Fragen mit Empfehlung: `docs/mockups/timer-v1/README.md`. Es ist noch nichts gebaut; zuerst die Fragen mit dem Nutzer
-  klären (vor allem Reiterleiste auf dem Handy mit fünf Reitern, Fehlerfall, Neustart).
 
 ## Davor (2.19.0, Live-Aktivität beim Laden)
 

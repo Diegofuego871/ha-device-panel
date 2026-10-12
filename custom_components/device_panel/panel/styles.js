@@ -1145,7 +1145,7 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   .kwarn .w-long { display: none; }
   .kwarn .w-short { display: inline; }
   /* Ausfall-Puls: schlanke Zeile mit Titel, Zusammenfassung (oder Titel des Sammelausfalls) und Kurve */
-  .hero .kt.pul { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) 112px; column-gap: 12px; align-items: center; padding: 10px 12px; }
+  .hero .kt.pul { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(112px, 1fr); column-gap: 12px; align-items: center; padding: 10px 12px; }
   .hero .kt.pul .k { grid-column: 1; grid-row: 1; }
   .hero .kt.pul .pnote, .hero .kt.pul .inc { grid-column: 1; grid-row: 2; margin: 4px 0 0; }
   .hero .kt.pul .inc { padding: 0; background: none; }
@@ -1537,5 +1537,60 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
   .mon-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(9)), .sub-tabs:has(> :is(.mon-tab, .sub-tab):nth-child(9)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   /* Einstellungen auf dem Handy: nur die Titel der Abschnitte, die Vorschauzeile hat kaum Platz (Wunsch des Nutzers) */
   .set-sec-sum { display: none; }
+}
+
+/* Timer (seit 2.21.0, docs/mockups/timer-v1): Wecker-Stil im Popup, Assistent mit den Stilen von Magic Push (dialog.magic-dlg) */
+.tm-clock { margin-top: 8px; padding: 12px 14px; border-radius: 16px; background: var(--dp-subtle); }
+.tm-clock.off { opacity: .7; }
+.tm-clock .top { display: flex; align-items: center; gap: 10px; }
+.tm-clock .time { font-size: 34px; font-weight: 300; letter-spacing: -.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+.tm-clock .time small { font-size: 14px; font-weight: 400; margin-left: 6px; color: var(--dp-text2); letter-spacing: 0; }
+.tm-clock .grow { flex: 1; min-width: 0; }
+.tm-clock .name { margin-top: 6px; font-size: 14px; font-weight: 600; }
+.tm-clock .what { margin-top: 2px; color: var(--dp-text2); font-size: 12.5px; line-height: 1.35; }
+.tm-days { display: flex; gap: 5px; margin-top: 9px; }
+.tm-days i { flex: 1; max-width: 34px; height: 26px; display: grid; place-items: center; border-radius: 8px; font-style: normal; font-size: 11.5px; color: var(--dp-text2); background: color-mix(in srgb, var(--dp-text) 6%, transparent); }
+.tm-days i.on { background: var(--dp-primary-soft); color: var(--dp-primary); font-weight: 600; }
+.tm-clock .next { margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--dp-divider); display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; color: var(--dp-text2); font-size: 12.5px; }
+.tm-clock .next b { color: var(--dp-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.tm-clock .next .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.tm-ring { flex: none; position: relative; width: 62px; height: 62px; }
+.tm-ring svg { width: 62px; height: 62px; transform: rotate(-90deg); }
+.tm-ring circle { fill: none; stroke-width: 6; }
+.tm-ring .bg { stroke: color-mix(in srgb, var(--dp-text) 12%, transparent); }
+.tm-ring .fg { stroke: var(--dp-primary); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+.tm-ring span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.tm-tag { display: inline-block; padding: 1px 8px; border-radius: 99px; background: var(--dp-primary-soft); color: var(--dp-primary); font-size: 11.5px; font-weight: 500; }
+.tm-tag.grey { background: var(--dp-subtle); color: var(--dp-text2); }
+/* Assistent */
+.tm-wd { display: flex; gap: 6px; margin-top: 6px; }
+.tm-wd button { flex: 1; max-width: 44px; height: 44px; border: none; border-radius: 50%; font: inherit; font-size: 13.5px; color: var(--dp-text); cursor: pointer;
+  background: color-mix(in srgb, var(--dp-text) 7%, var(--dp-card)); }
+.tm-wd button.on { background: var(--dp-primary); color: #fff; font-weight: 600; }
+.tm-wd button:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
+.tm-timein, .tm-datein { box-sizing: border-box; height: 46px; font-size: 20px; font-variant-numeric: tabular-nums; }
+.tm-timein { width: 160px; }
+.tm-datein { width: 220px; max-width: 100%; }
+.tm-next { margin-top: 8px; border-radius: 14px; background: var(--dp-subtle); padding: 4px 14px; }
+.tm-next div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; font-size: 13.5px; border-top: 1px solid var(--dp-divider); }
+.tm-next div:first-child { border-top: 0; }
+.tm-next div span:last-child { color: var(--dp-text2); }
+.tm-sum { margin-top: 8px; padding: 12px 14px; border-radius: 14px; background: var(--dp-primary-soft); font-size: 14.5px; line-height: 1.45; }
+.tm-sum b { font-weight: 600; }
+.tm-result { margin-top: 10px; }
+/* Reiterleiste im Geräte-Popup mit fünf Reitern: auf dem Handy Symbole, die Beschriftung nur am gewählten Reiter (Entscheid zu Frage 7 in docs/mockups/timer-v1) */
+@media (max-width: 600px) {
+  .dev-tabs .sub-tabs { display: flex; gap: 2px; }
+  .dev-tabs .sub-tab { flex: 1 1 0; min-width: 0; padding: 0 4px; font-size: 0; }
+  .dev-tabs .sub-tab::before { font-size: 18px; line-height: 1; }
+  .dev-tabs .sub-tab[data-tab="ov"]::before { content: "📊"; }
+  .dev-tabs .sub-tab[data-tab="set"]::before { content: "⚙️"; }
+  .dev-tabs .sub-tab[data-tab="ent"]::before { content: "🧩"; }
+  .dev-tabs .sub-tab[data-tab="magic"]::before { content: "✨"; }
+  .dev-tabs .sub-tab[data-tab="timer"]::before { content: "⏱️"; }
+  .dev-tabs .sub-tab.two:not(.on) > * { display: none; }
+  .dev-tabs .sub-tab.on { flex: 2.8 1 0; gap: 6px; font-size: 13.5px; }
+  .dev-tabs .sub-tab.on.two::before { display: none; }
+  .dev-tabs .sub-tab.on.two .tab-l { font-size: 13px; }
 }
 `;
