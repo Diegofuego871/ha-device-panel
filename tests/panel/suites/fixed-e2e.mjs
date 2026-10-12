@@ -37,6 +37,15 @@ for (const lang of ["de", "en"]) {
         await scrollTo(40);
         await wait(`return r.querySelectorAll(".dev").length > 1`);
         await scrollTo(0);
+        // Der IntersectionObserver meldet unter Last verzögert: bleibt die Zeile stehen, einmal weit weg und zurück scrollen
+        for (let versuch = 0; versuch < 3; versuch++) {
+          if (await ev(`return getComputedStyle(r.querySelector(".hs-in")).display === "none"`)) break;
+          await p.waitForTimeout(800);
+          if (await ev(`return getComputedStyle(r.querySelector(".hs-in")).display === "none"`)) break;
+          await scrollTo(600);
+          await p.waitForTimeout(400);
+          await scrollTo(0);
+        }
         const name = flat ? "Liste" : "Gruppen";
         check(`[${tag}] ${name}: oben Kacheln, keine Zeile`, (await rect(".hero")).visible && (await wait(`return getComputedStyle(r.querySelector(".hs-in")).display === "none"`)), JSON.stringify([await rect(".hero"), await rect(".hs-in")]));
         await scrollTo(1000);
