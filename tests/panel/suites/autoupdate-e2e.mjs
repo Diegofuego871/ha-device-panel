@@ -51,7 +51,7 @@ for (const lang of ["de", "en"]) {
     };
 
     await openUpdates();
-    check(`[${tag}] Zeile "${T.label}" unter der täglichen Prüfung, aus`, await ev(`const i = r.querySelector('input[data-auto-update]'); return !i.checked && !i.disabled && i.getAttribute("aria-label") === ${JSON.stringify(T.label)} && i.closest(".opt").previousElementSibling?.querySelector('input[data-opt="update_check"]')`));
+    check(`[${tag}] Zeile "${T.label}" unter Prüfung und Uhrzeit, aus`, await ev(`const i = r.querySelector('input[data-auto-update]'); return !i.checked && !i.disabled && i.getAttribute("aria-label") === ${JSON.stringify(T.label)} && i.closest(".opt").previousElementSibling?.querySelector('input[data-opt="update_check_time"]') && i.closest(".opt").previousElementSibling.previousElementSibling?.querySelector('input[data-opt="update_check"]')`));
     check(`[${tag}] Zusammenfassung ohne automatisch`, (await ev(`return r.querySelector('[data-id="updates"] .set-sec-sum').textContent.trim()`)) === T.sumOn);
 
     // Ohne tägliche Prüfung gesperrt und aus
