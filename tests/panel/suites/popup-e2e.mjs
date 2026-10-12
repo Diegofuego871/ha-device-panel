@@ -191,8 +191,10 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Schliessen`, !(await isOpen("device")));
       await tap('.mrow[data-open="g"]');
       check(`[${tag}] Zeile im Online-Block öffnet`, (await isOpen("device")) && (await text("dialog.device h2")) === "Deckenlicht Wohnzimmer");
-      await p.touchscreen.tap(195, 125);
-      check(`[${tag}] Tipp auf den Hintergrund schliesst`, !(await isOpen("device")));
+      // Vollbild (2.24.1): kein Hintergrund mehr, Kreuz schliesst
+      check(`[${tag}] Vollbild`, await ev(`const q = r.querySelector("dialog.device").getBoundingClientRect(); return Math.round(q.width) === innerWidth && Math.round(q.height) === innerHeight && q.top === 0`));
+      await tap('dialog.device [data-dlg="close"]');
+      check(`[${tag}] Kreuz schliesst`, !(await isOpen("device")));
     }
 
     // Ausfall vor dem Neustart und Integrationseintrag mit Problem

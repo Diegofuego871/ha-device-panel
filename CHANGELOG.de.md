@@ -7,6 +7,12 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.24.1] - 2026-10-12
+
+### Geändert
+
+- Auf dem Handy öffnet jetzt auch das Geräte-Popup als Vollbild, wie die Einstellungen und das Blatt "Ansicht". Der Hintergrund zum Antippen entfällt, das Kreuz und "Schliessen" schliessen es.
+
 ## [2.24.0] - 2026-10-12
 
 Einstellungen und Blatt "Ansicht" öffnen auf dem Handy als Vollbild, die Aktionen der Karten sind besser zu treffen, und der Timer-Assistent speichert auf jeder Seite.
@@ -2928,6 +2934,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.24.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.1
 [2.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.0
 [2.23.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.1
 [2.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.0

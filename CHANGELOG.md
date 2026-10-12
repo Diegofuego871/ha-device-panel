@@ -7,6 +7,12 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.24.1] - 2026-10-12
+
+### Changed
+
+- On the phone the device pop-up now also opens full screen, like the settings and the view sheet. There is no background left to tap, the cross and "Close" close it.
+
 ## [2.24.0] - 2026-10-12
 
 Settings and the view sheet open full screen on the phone, the cards' actions are easier to hit, and the timer assistant can save on every page.
@@ -2827,6 +2833,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.24.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.1
 [2.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.0
 [2.23.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.1
 [2.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.0
