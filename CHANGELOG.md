@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- The stopwatch button in the header sits exactly in the middle between its left neighbour (search field, on wide screens the "View" button) and the gear: 22 px on both sides, on every screen width.
+- The stopwatch button in the header sits exactly in the middle between its left neighbour (search field, on wide screens the "View" button) and the gear: the same distance on both sides (15 px on the phone, where the search field stays as wide as before; 22 px on wide screens).
 - On the phone the device pop-up now also opens full screen, like the settings and the view sheet. There is no background left to tap, the cross and "Close" close it.
 
 ## [2.24.0] - 2026-10-12

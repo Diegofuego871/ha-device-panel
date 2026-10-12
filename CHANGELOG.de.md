@@ -15,7 +15,7 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Geändert
 
-- Der Stoppuhr-Knopf in der Kopfzeile sitzt genau in der Mitte zwischen seinem linken Nachbarn (Suchfeld, auf breiten Bildschirmen der Knopf "Ansicht") und dem Zahnrad: auf beiden Seiten 22 px, bei jeder Bildschirmbreite.
+- Der Stoppuhr-Knopf in der Kopfzeile sitzt genau in der Mitte zwischen seinem linken Nachbarn (Suchfeld, auf breiten Bildschirmen der Knopf "Ansicht") und dem Zahnrad: auf beiden Seiten derselbe Abstand (15 px auf dem Handy, wo das Suchfeld so breit bleibt wie vorher; 22 px auf breiten Bildschirmen).
 - Auf dem Handy öffnet jetzt auch das Geräte-Popup als Vollbild, wie die Einstellungen und das Blatt "Ansicht". Der Hintergrund zum Antippen entfällt, das Kreuz und "Schliessen" schliessen es.
 
 ## [2.24.0] - 2026-10-12
