@@ -1326,6 +1326,8 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
 }
 /* Liste (seit 2.0.1): grosser Titel, weiche Tiefe der Kacheln, Chip-Leiste als Material, Gruppentitel im neuen Titelstil */
 .toolbar h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; }
+/* Kein sichtbarer Titel mehr (seit 2.25.0): die Anwendung heisst schon "Device Panel", das Suchfeld gewinnt den Platz. Der Titel bleibt für Screenreader. */
+.toolbar h1 { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
 .hero > *, .mlist { border-radius: 22px; box-shadow: 0 8px 26px -10px rgba(0,0,0,0.45); }
 .cards .gh { margin: 22px 6px 8px; font-size: 13px; font-weight: 700; letter-spacing: 0.05em; }
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {

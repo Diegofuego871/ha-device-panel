@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.25.0] - 2026-10-12
 
-Panel updates: time of the daily check, push notification, and a red dot while a restart is pending.
+Panel updates (time of the daily check, push notification, red dot while a restart is pending) and a leaner header without the title.
+
+### Changed
+
+- The visible title "Devices" above the list is gone (the application is already called "Device Panel"); the logo stays and the search field takes over the space. The title remains for screen readers.
 
 ### Added
 

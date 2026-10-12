@@ -9,7 +9,11 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.25.0] - 2026-10-12
 
-Panel-Updates: Uhrzeit der täglichen Prüfung, Push-Meldung und ein roter Punkt, solange ein Neustart aussteht.
+Panel-Updates (Uhrzeit der täglichen Prüfung, Push-Meldung, roter Punkt bei ausstehendem Neustart) und eine schlankere Kopfzeile ohne Titel.
+
+### Geändert
+
+- Der sichtbare Titel "Geräte" über der Liste entfällt (die Anwendung heisst schon "Device Panel"); das Logo bleibt, das Suchfeld übernimmt den Platz. Für Screenreader bleibt der Titel erhalten.
 
 ### Hinzugefügt
 
