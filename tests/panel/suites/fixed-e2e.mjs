@@ -33,8 +33,10 @@ for (const lang of ["de", "en"]) {
       const content0 = await top();
       for (const flat of [false, true]) {
         await ev(`r.host._setFlat ? r.host._setFlat(${flat}) : r.host._setView({ flat: ${flat} })`);
-        await scrollTo(0);
+        // Erst weg, dann zurück: ein Scroll-Ereignis ist sicher, auch wenn die Lage schon 0 war (sonst Wettlauf unter Last)
+        await scrollTo(40);
         await wait(`return r.querySelectorAll(".dev").length > 1`);
+        await scrollTo(0);
         const name = flat ? "Liste" : "Gruppen";
         check(`[${tag}] ${name}: oben Kacheln, keine Zeile`, (await rect(".hero")).visible && (await wait(`return getComputedStyle(r.querySelector(".hs-in")).display === "none"`)), JSON.stringify([await rect(".hero"), await rect(".hs-in")]));
         await scrollTo(1000);

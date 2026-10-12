@@ -195,8 +195,9 @@ for (const lang of ["de", "en"]) {
       await p.mouse.click(20, 500);
       check(`[${tag}] Hintergrund schliesst`, await wait(`return !r.querySelector("dialog.settings").open`));
     } else {
-      await p.touchscreen.tap(195, 130);
-      check(`[${tag}] Tipp über dem Blatt schliesst`, await wait(`return !r.querySelector("dialog.settings").open`));
+      // Vollbild (2.24.0): kein Hintergrund mehr, "Schliessen" schliesst
+      await tap('dialog.settings .dlg-actions [data-set="close"]');
+      check(`[${tag}] Schliessen schliesst (Vollbild, kein Hintergrund)`, await wait(`return !r.querySelector("dialog.settings").open`));
     }
 
     // Ausschlüsse: Integration ausblenden, Liste ohne ihre Geräte. Seit
