@@ -68,6 +68,9 @@ button { font: inherit; color: inherit; }
 .gear-btn, .tmall-btn { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--dp-divider);
   background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
 .tmall-btn { margin: 0 10px; } /* gleicher Abstand links (Suchfeld) und rechts (Zahnrad): genau mittig, skaliert mit der Breite */
+.gear-btn { position: relative; }
+/* Roter Punkt: Update installiert, Neustart steht aus (seit 2.25.0) */
+.gear-btn.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-bg); }
 .gear-btn:hover, .tmall-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
 .content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 20px 16px; }
 /* Kopf, Chips und Fusszeile bleiben beim seitlichen Scrollen der Tabelle stehen. */

@@ -26,11 +26,21 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.event import async_call_later, async_track_time_interval
+from homeassistant.helpers.event import async_call_later, async_track_time_change, async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.loader import async_get_integration
 
-from .const import CONF_UPDATE_CHECK, DEFAULT_UPDATE_CHECK, DOMAIN, GITHUB_REPO, STORAGE_VERSION
+from .const import (
+    CONF_UPDATE_CHECK,
+    CONF_UPDATE_CHECK_TIME,
+    CONF_UPDATE_NOTIFY,
+    DEFAULT_UPDATE_CHECK,
+    DOMAIN,
+    GITHUB_REPO,
+    NOTIFY_NONE,
+    PANEL_URL_PATH,
+    STORAGE_VERSION,
+)
 
 LATEST_RELEASE_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 # Für Vorabversionen: die letzten Releases inkl. Pre-Releases.
@@ -49,12 +59,13 @@ _LOGGER = logging.getLogger(__name__)
 _CACHE_KEY = f"{DOMAIN}_latest_release"
 _PRE_CACHE_KEY = f"{DOMAIN}_latest_prerelease"
 _TIMER_KEY = f"{DOMAIN}_update_timer"
+_TIME_KEY = f"{DOMAIN}_update_check_time"
 # Gemeinsame Panel-Einstellungen der Instanz (nicht pro Benutzer):
 # Vorabversionen anbieten, und welchen HACS-Schalter "Pre-release" das Panel
 # selbst eingeschaltet hat (nur den schaltet es wieder aus).
 PANEL_DATA_KEY = f"{DOMAIN}_panel_settings"
 PANEL_STORE_KEY = f"{DOMAIN}.panel"
-PANEL_DEFAULTS: dict[str, Any] = {"prerelease": False, "prerelease_hacs": None, "auto_update": False}
+PANEL_DEFAULTS: dict[str, Any] = {"prerelease": False, "prerelease_hacs": None, "auto_update": False, "notified": {}}
 RESTART_ISSUE_ID = "restart_required"
 # HACS braucht für Download und Entpacken etwas; danach gilt der Versuch als gescheitert.
 INSTALL_TIMEOUT = 300
@@ -230,6 +241,9 @@ async def async_refresh_issue(hass: HomeAssistant, release: dict[str, Any] | Non
         # Öffnen der Einstellungen), nicht erst nach einem eigenen Lauf. Läuft im Hintergrund, die Prüfung wartet nicht darauf.
         if auto_update_active(hass):
             hass.async_create_task(async_auto_install(hass), f"{DOMAIN}_auto_install")
+        else:
+            # Ohne automatische Installation: Push "Version verfügbar" (einmal pro Version, seit 2.25.0)
+            await async_notify(hass, "found", latest, installed)
         ir.async_create_issue(
             hass,
             DOMAIN,
@@ -282,6 +296,34 @@ async def _async_hacs_refresh(hass: HomeAssistant) -> None:
         _LOGGER.debug("HACS-Repository konnte nicht aktualisiert werden", exc_info=True)
 
 
+async def async_notify(hass: HomeAssistant, kind: str, latest: str, installed: str | None) -> bool:
+    """
+    Push zum Panel-Update (seit 2.25.0), einmal pro Version und Art: "found" = neue Version gefunden, "done" = automatisch
+    installiert (Neustart steht aus). Nur mit eingeschaltetem "update_notify"; Ziel: eigener Empfänger, sonst das globale Ziel.
+    Gemerkt wird erst nach dem Versand, damit ein fehlgeschlagener Push beim nächsten Durchgang wieder versucht wird.
+    """
+    from . import options_api, push  # noqa: PLC0415 (push und options_api importieren dieses Modul)
+
+    opts = options_api.effective(hass)
+    if not opts[CONF_UPDATE_NOTIFY]:
+        return False
+    settings = await async_load_panel_settings(hass)
+    notified = settings.setdefault("notified", {})
+    if notified.get(kind) == latest:
+        return False
+    target = options_api.notify_target(opts, "panelupdate")
+    if not target or target == NOTIFY_NONE:
+        return False
+    title = push.text(hass, f"panelupdate_{kind}_title", latest=latest, installed=installed or "?")
+    message = push.text(hass, f"panelupdate_{kind}_text", latest=latest, installed=installed or "?")
+    data = push.notification_data(hass, f"{DOMAIN}_panelupdate", f"/{PANEL_URL_PATH}")
+    if not await push.async_push(hass, target, title, message, data):
+        return False
+    notified[kind] = latest
+    await _panel_store(hass).async_save(dict(settings))
+    return True
+
+
 async def async_auto_install(hass: HomeAssistant) -> bool:
     """
     Sobald eine Prüfung eine neuere Version findet (Start, tägliche Prüfung, Öffnen der Einstellungen): ist sie da, über HACS installieren (update.install). Nur mit
@@ -328,6 +370,8 @@ async def async_auto_install(hass: HomeAssistant) -> bool:
                 await hass.services.async_call("update", "install", {"entity_id": entity_id}, blocking=True)
         except Exception as err:  # noqa: BLE001 (jede Ursache gehört ins Protokoll; am nächsten Tag neuer Versuch)
             activity.record(hass, "warning", "updates", "auto_update_failed", "Device Panel", None, version=latest, error=str(err) or type(err).__name__)
+            # Installation gescheitert: wenigstens melden, dass es eine neue Version gibt
+            await async_notify(hass, "found", latest, running)
             return False
         activity.record(hass, "info", "updates", "auto_update_done", "Device Panel", None, version=latest)
         ir.async_create_issue(
@@ -340,7 +384,39 @@ async def async_auto_install(hass: HomeAssistant) -> bool:
             translation_key=RESTART_ISSUE_ID,
             translation_placeholders={"latest": latest, "installed": running},
         )
+        await async_notify(hass, "done", latest, running)
         return True
+
+
+def _check_time(hass: HomeAssistant) -> str:
+    """Eingestellte Uhrzeit der täglichen Prüfung ("" = automatisch)."""
+    from .options_api import effective  # noqa: PLC0415 (options_api importiert dieses Modul)
+
+    return str(effective(hass)[CONF_UPDATE_CHECK_TIME] or "")
+
+
+def _schedule(hass: HomeAssistant) -> None:
+    """Zeitgeber der täglichen Prüfung setzen: feste Uhrzeit (seit 2.25.0) oder automatisch (zufällig nach dem Start, dann alle 24 Std.)."""
+    unsubs: list[Any] = hass.data[_TIMER_KEY]
+    for unsub in unsubs:
+        unsub()
+    unsubs.clear()
+    when = _check_time(hass)
+    hass.data[_TIME_KEY] = when
+
+    async def _run(_now: Any = None) -> None:
+        await async_refresh_issue(hass)
+
+    if when:
+        hour, minute = (int(part) for part in when.split(":"))
+        unsubs.append(async_track_time_change(hass, _run, hour=hour, minute=minute, second=0))
+        return
+
+    async def _first(_now: Any) -> None:
+        await _run()
+        unsubs.append(async_track_time_interval(hass, _run, DAILY))
+
+    unsubs.append(async_call_later(hass, random.randint(*FIRST_CHECK_DELAY), _first))
 
 
 @callback
@@ -348,17 +424,15 @@ def async_start_daily(hass: HomeAssistant) -> None:
     """Tägliche Prüfung starten (einmal pro Instanz)."""
     if _TIMER_KEY in hass.data:
         return
-    unsubs: list[Any] = []
+    hass.data[_TIMER_KEY] = []
+    _schedule(hass)
 
-    async def _run(_now: Any = None) -> None:
-        await async_refresh_issue(hass)
 
-    async def _first(_now: Any) -> None:
-        await _run()
-        unsubs.append(async_track_time_interval(hass, _run, DAILY))
-
-    unsubs.append(async_call_later(hass, random.randint(*FIRST_CHECK_DELAY), _first))
-    hass.data[_TIMER_KEY] = unsubs
+@callback
+def async_reschedule_daily(hass: HomeAssistant) -> None:
+    """Uhrzeit der Prüfung geändert: Zeitgeber neu setzen (sonst bleibt der Lauf unberührt)."""
+    if _TIMER_KEY in hass.data and hass.data.get(_TIME_KEY) != _check_time(hass):
+        _schedule(hass)
 
 
 @callback
@@ -366,6 +440,7 @@ def async_stop_daily(hass: HomeAssistant) -> None:
     """Beim Entladen: Zeitgeber und Meldung entfernen."""
     for unsub in hass.data.pop(_TIMER_KEY, []):
         unsub()
+    hass.data.pop(_TIME_KEY, None)
     ir.async_delete_issue(hass, DOMAIN, ISSUE_ID)
 
 
@@ -391,13 +466,15 @@ async def async_load_panel_settings(hass: HomeAssistant) -> dict[str, Any]:
             "prerelease": prerelease,
             "prerelease_hacs": str(stored["prerelease_hacs"]) if stored.get("prerelease_hacs") else None,
             "auto_update": bool(stored.get("auto_update")),
+            "notified": {k: str(v) for k, v in (stored.get("notified") or {}).items() if k in ("found", "done") and v},
         }
     return hass.data[PANEL_DATA_KEY]
 
 
 @callback
 def panel_settings(hass: HomeAssistant) -> dict[str, Any]:
-    return dict(hass.data.get(PANEL_DATA_KEY) or PANEL_DEFAULTS)
+    # "notified" (gemerkte Versionen der Push-Meldungen) ist intern und gehört nicht ins Panel
+    return {k: v for k, v in dict(hass.data.get(PANEL_DATA_KEY) or PANEL_DEFAULTS).items() if k != "notified"}
 
 
 async def async_set_panel_settings(hass: HomeAssistant, values: dict[str, Any]) -> dict[str, Any]:
@@ -409,7 +486,7 @@ async def async_set_panel_settings(hass: HomeAssistant, values: dict[str, Any]) 
     if "prerelease_hacs" in values:
         current["prerelease_hacs"] = str(values["prerelease_hacs"]) if values["prerelease_hacs"] else None
     await _panel_store(hass).async_save(dict(current))
-    return dict(current)
+    return panel_settings(hass)
 
 
 # -- Release Notes im Panel ------------------------------------------------------

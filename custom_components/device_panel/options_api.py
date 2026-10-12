@@ -125,6 +125,8 @@ from .const import (
     CONF_AI_PROMPT,
     CONF_AI_TASK,
     CONF_UPDATE_CHECK,
+    CONF_UPDATE_CHECK_TIME,
+    CONF_UPDATE_NOTIFY,
     DEFAULT_BATTERY_LOW,
     DEFAULT_FLAKY_OUTAGES,
     DEFAULT_OFFLINE_AFTER,
@@ -158,6 +160,7 @@ BOOL_OPTIONS: tuple[tuple[str, bool], ...] = (
     (CONF_SHOW_SERVICE, False),
     (CONF_SHOW_DISABLED, False),
     (CONF_UPDATE_CHECK, DEFAULT_UPDATE_CHECK),
+    (CONF_UPDATE_NOTIFY, False),
     (CONF_AI_ASSESSMENT, False),
 )
 INT_OPTIONS: tuple[tuple[str, int], ...] = (
@@ -567,6 +570,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_UPDATES_INCLUDE): update_ids,
         vol.Optional(CONF_UPDATES_MODE): vol.In(UPDATES_MODES),
         vol.Optional(CONF_UPDATES_TIME): push_time,
+        vol.Optional(CONF_UPDATE_CHECK_TIME): vol.Any("", None, push_time),
         vol.Optional(CONF_UPDATES_REPEAT): vol.In(tuple(UPDATES_REPEATS)),
         vol.Optional(CONF_HIDE_CHIPS): _chips,
         vol.Optional(CONF_HIDE_CONNECTIONS): _connections,
@@ -712,6 +716,10 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
         values[CONF_UPDATES_TIME] = push_time(options.get(CONF_UPDATES_TIME))
     except vol.Invalid:
         values[CONF_UPDATES_TIME] = DEFAULT_UPDATES_TIME
+    try:
+        values[CONF_UPDATE_CHECK_TIME] = push_time(options.get(CONF_UPDATE_CHECK_TIME)) if options.get(CONF_UPDATE_CHECK_TIME) else ""
+    except vol.Invalid:
+        values[CONF_UPDATE_CHECK_TIME] = ""
     repeat = options.get(CONF_UPDATES_REPEAT)
     values[CONF_UPDATES_REPEAT] = repeat if repeat in UPDATES_REPEATS else "never"
     return values

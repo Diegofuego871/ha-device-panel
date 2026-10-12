@@ -10,6 +10,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `hass.data["hacs"].repositories.get_by_full_name(...).update_repository(force=True)`, bestmöglich). Panel: `_loadVersion` installiert bei
   jeder Erkennung, pro Version und Sitzung einmal (`v.autoTried`), mit "Nach Updates suchen" erneut. Nicht geprüft: echtes HACS.
 
+- 2.25.0: Panel-Updates. Optionen `update_check_time` (leer = automatisch, sonst `async_track_time_change`; `async_reschedule_daily` bei Änderung),
+  `update_notify` und Reiter-Ziel `panelupdate` (`notify_service_panelupdate`); `update_check.async_notify` (einmal pro Version und Art `found`/`done`,
+  gemerkt in `device_panel.panel` unter `notified`, erst nach erfolgreichem Versand). Ohne Auto-Update: Push "verfügbar" bei der Erkennung;
+  mit Auto-Update: "installiert" nach `update.install` (bei Fehlschlag "verfügbar"). Roter Punkt am Zahnrad (`.has-dot`, `_gearDot`,
+  `_versionDotInit`): `_versionState().restart` (HACS `installed_version` > laufende Version), alle 5 s höchstens neu berechnet.
 - 2.23.1 auch: Protokoll-Knopf (`data-set="log"`, Klasse `dlg-close dlg-log`) im Kopf der Einstellungen statt `.log-btn` in der Kopfzeile;
   öffnet `dialog.log-dlg` über den Einstellungen. Suiten `log`, `busy` angepasst.
 

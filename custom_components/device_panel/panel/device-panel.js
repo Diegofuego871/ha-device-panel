@@ -960,10 +960,41 @@ class DevicePanel extends HTMLElement {
       this._loadUserFavs();
       this._fetch();
       this._brandReady = this._brandStart();
-    } else if (this._settings) {
+      this._versionDotInit();
+    } else {
       // HACS meldet Fortschritt und neue Versionen über seine Update-Entität.
-      this._renderSettingsVersion();
+      if (this._settings) this._renderSettingsVersion();
+      this._gearDot();
     }
+  }
+
+  // Roter Punkt am Zahnrad, solange ein Update installiert ist und der Neustart noch aussteht (seit 2.25.0). Nötig ist die laufende
+  // Version vom Server, darum beim Start einmal abfragen (aus dem Zwischenspeicher, kein Aufruf bei GitHub, wenn frisch).
+  async _versionDotInit() {
+    try {
+      const r = await this._hass.callWS({ type: "device_panel/version", force: false, prerelease: true });
+      const v = (this._version = this._version || {});
+      if (!v.data) v.data = r;
+    } catch (_err) {
+      /* ohne Antwort kein Punkt */
+    }
+    this._gearDot(true);
+  }
+
+  _gearDot(now = false) {
+    // set hass kommt bei jeder Zustandsänderung: höchstens alle 5 Sekunden rechnen
+    const t = Date.now();
+    if (!now && this._dotAt && t - this._dotAt < 5000) return;
+    this._dotAt = t;
+    const btn = this.shadowRoot?.querySelector(".gear-btn");
+    if (!btn || !this._version?.data) return;
+    const s = this._versionState();
+    const on = Boolean(s.restart && !this._version.restarting);
+    if (btn.classList.contains("has-dot") === on) return;
+    btn.classList.toggle("has-dot", on);
+    const label = on ? `${this._t("settingsBtn")} · ${this._t("settingsBtnRestart")}` : this._t("settingsBtn");
+    btn.setAttribute("title", label);
+    btn.setAttribute("aria-label", label);
   }
 
   connectedCallback() {
@@ -5414,7 +5445,7 @@ class DevicePanel extends HTMLElement {
       ["timers", ["timers_pause", "timers_catch_up", "notify_service_timers", "timers_notify_error"]],
       ["look", [...SUB_TAB_KEYS.chips]],
       ["ai", ["ai_assessment", "ai_task_entity", "ai_prompt"]],
-      ["updates", ["update_check"]],
+      ["updates", ["update_check", "update_check_time", "update_notify", "notify_service_panelupdate"]],
     ];
   }
 
@@ -5429,6 +5460,7 @@ class DevicePanel extends HTMLElement {
       const v = st.draft[key];
       if (!Number.isInteger(v) || v < min || v > max) errors[key] = this._t("settingsRange", min, max);
     }
+    if (st.draft.update_check_time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(st.draft.update_check_time))) errors.update_check_time = this._t("timeError");
     if ("updates_time" in st.draft && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(st.draft.updates_time || ""))) errors.updates_time = this._t("timeError");
     if ("battery_push_time" in st.draft && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(st.draft.battery_push_time || ""))) {
       errors.battery_push_time = this._t("timeError");
@@ -7099,6 +7131,23 @@ class DevicePanel extends HTMLElement {
       const control = `<label class="switch"><input type="checkbox" data-auto-update ${on ? "checked" : ""} ${daily && st.extra ? "" : "disabled"} aria-label="${escape(t("optAutoUpdate"))}"><span></span></label>`;
       return row("auto_update", t("optAutoUpdate"), control, daily ? t("optAutoUpdateShort") : t("optAutoUpdateNeedsCheck"), t("optAutoUpdateInfo")).replace('class="opt', changed ? 'class="opt changed' : 'class="opt');
     };
+    // Uhrzeit der täglichen Prüfung (seit 2.25.0): leer = automatisch (zufällig nach dem Start, danach alle 24 Stunden)
+    const checkTimeRow = () => {
+      const daily = Boolean(d.update_check);
+      const time = d.update_check_time || "";
+      const control = `<span class="opt-input${errors.update_check_time ? " bad" : ""}"><input type="time" data-opt="update_check_time" value="${escape(time)}"${daily ? "" : " disabled"} aria-label="${escape(t("optUpdateCheckTime"))}"></span>
+        <button type="button" class="lnk" data-set="check-time-auto"${daily && time ? "" : " disabled"}>${escape(t("optUpdateCheckTimeAuto"))}</button>`;
+      return row("update_check_time", t("optUpdateCheckTime"), control, daily ? t("optUpdateCheckTimeShort") : t("optAutoUpdateNeedsCheck"), null);
+    };
+    // Push zum Panel-Update (seit 2.25.0): Schalter, darunter der Empfänger (nur wenn an)
+    const updateNotifyRows = () => {
+      const daily = Boolean(d.update_check);
+      const control = `<label class="switch"><input type="checkbox" data-opt="update_notify" ${d.update_notify && daily ? "checked" : ""}${daily ? "" : " disabled"} aria-label="${escape(t("optUpdateNotify"))}"><span></span></label>`;
+      const auto = Boolean(st.extra ? st.extra.auto_update : this._autoUpdate);
+      let html = row("update_notify", t("optUpdateNotify"), control, daily ? t(auto ? "optUpdateNotifyShortAuto" : "optUpdateNotifyShort") : t("optAutoUpdateNeedsCheck"), t("optUpdateNotifyInfo"));
+      if (daily && d.update_notify) html += targetRow("panelupdate", "optUpdateTargetShort");
+      return html;
+    };
     const select = (key, options, label) => `<span class="opt-select"><select data-opt="${key}" aria-label="${escape(label)}">${options
         .map(([v, text]) => `<option value="${escape(v)}"${v === d[key] ? " selected" : ""}>${escape(text)}</option>`)
         .join("")}</select>${mdi("chevronDown", 18)}</span>`;
@@ -7330,7 +7379,9 @@ class DevicePanel extends HTMLElement {
         row("timers_notify_error", t("optTimersNotifyError"), sw("timers_notify_error", t("optTimersNotifyError")), t("optTimersNotifyErrorShort"), t("optTimersNotifyErrorInfo")),
       updates:
         row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
-        autoUpdateRow(),
+        checkTimeRow() +
+        autoUpdateRow() +
+        updateNotifyRows(),
     };
     const titles = {
       devices: "secDevices", monitor: "secMonitor", timers: "secTimers", look: "secLook", ai: "secAiSettings", updates: "secUpdates",
@@ -7446,6 +7497,11 @@ class DevicePanel extends HTMLElement {
         for (const key of INTEG_OWN_LISTS) {
           st.draft[key] = (st.draft[key] || []).filter((x) => x !== dom);
         }
+        this._renderSettings();
+      } else if (action === "check-time-auto") {
+        // Uhrzeit der Prüfung zurück auf "automatisch"
+        if (!st.draft) return;
+        st.draft.update_check_time = "";
         this._renderSettings();
       } else if (action === "section" || action === "info") {
         const set = action === "section" ? st.open : st.info;
@@ -7825,7 +7881,7 @@ class DevicePanel extends HTMLElement {
     }
     // Uhrzeit der Tagesmeldung: Markierung, Fehler und Kurzzeile mit der
     // neuen Zeit, ohne Neuaufbau (Fokus im Zeitfeld bleibt).
-    const timeInput = dialog.querySelector('input[type="time"][data-opt]');
+    const timeInput = dialog.querySelector('input[type="time"][data-opt]:not([data-opt="update_check_time"])');
     const timeRow = timeInput?.closest(".opt");
     if (timeRow) {
       const key = timeInput.dataset.opt;
@@ -7837,6 +7893,16 @@ class DevicePanel extends HTMLElement {
         line.className = errors[key] ? "opt-error" : "opt-short";
         line.textContent = errors[key] || this._t("optPushModeShortDaily", st.draft[key]);
       }
+    }
+    // Uhrzeit der täglichen Prüfung (seit 2.25.0): Markierung, Fehler und "Automatisch"-Knopf nachführen, ohne Neuaufbau
+    const checkInput = dialog.querySelector('input[type="time"][data-opt="update_check_time"]');
+    if (checkInput) {
+      const row = checkInput.closest(".opt");
+      checkInput.closest(".opt-input").classList.toggle("bad", Boolean(errors.update_check_time));
+      row.classList.toggle("invalid", Boolean(errors.update_check_time));
+      row.classList.toggle("changed", changes.includes("update_check_time"));
+      const auto = row.querySelector('[data-set="check-time-auto"]');
+      if (auto) auto.disabled = checkInput.disabled || !checkInput.value;
     }
     for (const input of dialog.querySelectorAll('input[type="number"][data-opt]')) {
       const key = input.dataset.opt;
@@ -8185,6 +8251,7 @@ class DevicePanel extends HTMLElement {
     if (v.data && v.data.error && !v.data.latest && !v.data.prerelease) v.error = v.data.error;
     if (this._versionState().betaBlocked) await this._loadHacsSwitch();
     this._renderSettingsVersion();
+    this._gearDot(true);
     // Automatisch installieren (seit 2.22.0, ab 2.23.0 bei jeder Erkennung): sobald eine neuere Version gefunden wird (Öffnen der
     // Einstellungen oder "Nach Updates suchen"), wird sie installiert, ohne "Aktualisieren". Nur mit der täglichen Prüfung; der
     // Neustart bleibt Sache des Benutzers. Ohne Knopfdruck pro Version nur ein Versuch je Sitzung (kein Dauerlauf bei Fehlern).

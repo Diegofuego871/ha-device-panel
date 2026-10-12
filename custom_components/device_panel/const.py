@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "163"
+PANEL_VERSION = "164"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -236,6 +236,7 @@ CONF_NOTIFY_SERVICE_BATTERY = "notify_service_battery"
 CONF_NOTIFY_SERVICE_CHARGE = "notify_service_charge"
 CONF_NOTIFY_SERVICE_NEW = "notify_service_new"
 CONF_NOTIFY_SERVICE_UPDATES = "notify_service_updates"
+CONF_NOTIFY_SERVICE_PANELUPDATE = "notify_service_panelupdate"
 CONF_NOTIFY_SERVICE_TIMERS = "notify_service_timers"
 NOTIFY_TOPICS = {
     "outage": CONF_NOTIFY_SERVICE_OUTAGE,
@@ -244,6 +245,7 @@ NOTIFY_TOPICS = {
     "new": CONF_NOTIFY_SERVICE_NEW,
     "updates": CONF_NOTIFY_SERVICE_UPDATES,
     "timers": CONF_NOTIFY_SERVICE_TIMERS,
+    "panelupdate": CONF_NOTIFY_SERVICE_PANELUPDATE,
 }
 CONF_NOTIFY_CLICK = "notify_click_target"
 # Push bei Ausfall (sofort, sobald ein Gerät als ausgefallen gilt) und bei
@@ -344,6 +346,10 @@ AI_PROMPT_MAX = 6000
 AI_TIMEOUT = 90
 CONF_UPDATE_CHECK = "update_check"
 DEFAULT_UPDATE_CHECK = True
+# Uhrzeit der täglichen Prüfung (seit 2.25.0): leer = automatisch (zufällig nach dem Start, danach alle 24 Stunden), sonst "HH:MM"
+# in der Zeit von Home Assistant. Push bei gefundenem Update und nach der automatischen Installation (Ziel: Reiter "panelupdate").
+CONF_UPDATE_CHECK_TIME = "update_check_time"
+CONF_UPDATE_NOTIFY = "update_notify"
 
 # Gerätetypen für Liste, Popup und Ausschlüsse (devices.device_type). Die
 # Reihenfolge ist die Anzeigereihenfolge in den Einstellungen.

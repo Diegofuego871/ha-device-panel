@@ -171,6 +171,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Optionen geändert (Panel oder Optionsdialog): kein Reload nötig."""
     # Tägliche Prüfung ein-/ausgeschaltet: Meldung sofort nachführen.
+    update_check.async_reschedule_daily(hass)
     await update_check.async_refresh_issue(hass)
     # Batterie: Schwelle oder Meldungsart geändert, sofort neu prüfen.
     if (watch := hass.data.get(DATA_BATTERY)) is not None:

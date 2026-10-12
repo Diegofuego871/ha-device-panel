@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.25.0] - 2026-10-12
+
+Panel-Updates: Uhrzeit der täglichen Prüfung, Push-Meldung und ein roter Punkt, solange ein Neustart aussteht.
+
+### Hinzugefügt
+
+- Ein kleiner roter Punkt am Zahnrad-Knopf, solange ein Panel-Update installiert ist und der Neustart noch aussteht (HACS hat die neue Version auf der Platte, während die alte läuft). Er verschwindet nach dem Neustart; die Beschriftung lautet "Neustart steht aus".
+- Einstellungen › Panel-Updates › "Uhrzeit der Prüfung": Die tägliche Prüfung läuft zu einer gewählten Uhrzeit (Zeit von Home Assistant). Leer, der Standard, bleibt wie bisher: zufällig nach dem Start von Home Assistant, danach alle 24 Stunden. "Automatisch" setzt zurück.
+- Einstellungen › Panel-Updates › "Per Push melden": eine Push-Meldung, einmal pro Version. Ohne automatische Installation meldet sie, dass eine neue Version verfügbar ist; mit automatischer Installation meldet sie nach dem Installieren, dass die Version installiert ist und der Neustart aussteht (scheitert die Installation, kommt stattdessen die Meldung "verfügbar"). Der Empfänger (Gruppe, Dienst oder Entität) ist in einer Zeile darunter wählbar; Standard ist das Push-Ziel der Übersicht. Ein Tipp auf die Meldung öffnet das Panel. Nur mit eingeschalteter täglicher Prüfung.
+
 ## [2.24.1] - 2026-10-12
 
 ### Hinzugefügt
@@ -2939,6 +2949,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.25.0
 [2.24.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.1
 [2.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.0
 [2.23.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.1

@@ -109,6 +109,9 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         # Eigenes Ziel je Reiter: leer = das globale (seit 2.18.0)
         **{key: "" for key in NOTIFY_TOPICS.values()},
         CONF_UPDATE_CHECK: True,
+        # Uhrzeit der Prüfung (leer = automatisch) und Push zum Panel-Update (seit 2.25.0)
+        "update_check_time": "",
+        "update_notify": False,
         "exclude_integrations": [],
         "exclude_types": [],
         "exclude_devices": [],
@@ -329,7 +332,7 @@ async def test_panel_settings_persist(hass: HomeAssistant, entry, hass_ws_client
     await client.send_json({"id": 1, "type": f"{DOMAIN}/set_panel", "prerelease": True, "prerelease_hacs": "switch.device_panel_pre_release"})
     assert (await client.receive_json())["result"] == {"prerelease": True, "prerelease_hacs": "switch.device_panel_pre_release", "auto_update": False}
     stored = hass_storage[f"{DOMAIN}.panel"]["data"]
-    assert stored == {"prerelease": True, "prerelease_hacs": "switch.device_panel_pre_release", "auto_update": False}
+    assert stored == {"prerelease": True, "prerelease_hacs": "switch.device_panel_pre_release", "auto_update": False, "notified": {}}
     await client.send_json({"id": 2, "type": f"{DOMAIN}/set_panel", "prerelease_hacs": None})
     assert (await client.receive_json())["result"]["prerelease_hacs"] is None
 
@@ -660,3 +663,110 @@ async def test_no_install_trigger_when_auto_update_is_off(hass: HomeAssistant, e
     await update_check.async_refresh_issue(hass)
     await hass.async_block_till_done()
     assert calls == []
+
+
+# -- Push zum Panel-Update und Uhrzeit der Prüfung (seit 2.25.0) ---------------------------------------------------------
+
+
+def _notify_options(hass: HomeAssistant, entry, **extra: Any) -> None:
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "update_notify": True, "notify_service": "notify.handy", **extra})
+
+
+async def test_push_when_update_found_once_per_version(hass: HomeAssistant, entry, github_offline) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    github_offline[LATEST] = (_release("v99.0.0"), None)
+    _notify_options(hass, entry)
+    await hass.async_block_till_done()
+    await update_check.async_refresh_issue(hass)
+    assert len(handy) == 1
+    assert "99.0.0" in handy[0].data["title"] and handy[0].data["data"]["url"] == "/device-panel"
+    # Neue Version: wieder eine Meldung
+    await update_check.async_refresh_issue(hass, {"latest": "99.1.0"})
+    assert len(handy) == 2 and "99.1.0" in handy[1].data["title"]
+
+
+async def test_no_push_when_switch_is_off_or_no_target(hass: HomeAssistant, entry, github_offline) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    github_offline[LATEST] = (_release("v99.0.0"), None)
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "notify_service": "notify.handy"})
+    await update_check.async_refresh_issue(hass)
+    assert handy == []
+    _notify_options(hass, entry, notify_service="none")
+    await update_check.async_refresh_issue(hass)
+    assert handy == []
+
+
+async def test_push_goes_to_own_recipient(hass: HomeAssistant, entry, github_offline) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    familie = async_mock_service(hass, "notify", "familie")
+    github_offline[LATEST] = (_release("v99.0.0"), None)
+    _notify_options(hass, entry, notify_service_panelupdate="notify.familie")
+    await hass.async_block_till_done()
+    await update_check.async_refresh_issue(hass)
+    assert handy == [] and len(familie) == 1
+
+
+async def test_push_after_automatic_installation_instead_of_found(hass: HomeAssistant, entry, github_offline) -> None:
+    handy = async_mock_service(hass, "notify", "handy")
+    installed = await update_check.async_installed_version(hass)
+    await _auto_setup(hass, entry, github_offline)
+    github_offline[LATEST] = (_release("v99.0.0"), None)
+    await _hacs_entity(hass, installed, "99.0.0")
+    _notify_options(hass, entry)
+    await hass.async_block_till_done()
+    await update_check.async_refresh_issue(hass)
+    await hass.async_block_till_done()
+    assert len(handy) == 1
+    assert "installiert" in handy[0].data["title"] or "installed" in handy[0].data["title"]
+    # Merkt sich: nicht noch einmal
+    await update_check.async_notify(hass, "done", "99.0.0", installed)
+    assert len(handy) == 1
+
+
+async def test_failed_push_is_tried_again(hass: HomeAssistant, entry, github_offline) -> None:
+    github_offline[LATEST] = (_release("v99.0.0"), None)
+    _notify_options(hass, entry)
+    await hass.async_block_till_done()  # notify.handy gibt es (noch) nicht: nichts gemerkt
+    assert update_check.panel_settings(hass).get("notified") is None
+    handy = async_mock_service(hass, "notify", "handy")
+    await update_check.async_refresh_issue(hass)
+    assert len(handy) == 1
+
+
+def test_check_time_option_is_validated() -> None:
+    from custom_components.device_panel import options_api
+
+    assert options_api.values_from({"update_check_time": "04:30"})["update_check_time"] == "04:30"
+    assert options_api.values_from({"update_check_time": "25:99"})["update_check_time"] == ""
+    assert options_api.values_from({})["update_check_time"] == ""
+    assert options_api.values_from({"update_check_time": "09:05:00"})["update_check_time"] == "09:05"
+
+
+async def test_daily_check_runs_at_the_set_time(hass: HomeAssistant, entry, github_offline, freezer) -> None:
+    from datetime import timedelta
+
+    from homeassistant.util import dt as dt_util
+    from pytest_homeassistant_custom_component.common import async_fire_time_changed
+
+    freezer.move_to("2026-10-12 03:00:00+00:00")
+    update_check.async_stop_daily(hass)
+    github_offline[LATEST] = (_release("v99.0.0"), None)
+    local = dt_util.now()
+    at = (local + timedelta(minutes=30)).strftime("%H:%M")
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "update_check_time": at})
+    await hass.async_block_till_done()
+    # Die Änderung der Optionen löst selbst eine Prüfung aus: Meldung entfernen, dann muss erst die Uhrzeit sie wieder anlegen
+    ir.async_delete_issue(hass, DOMAIN, update_check.ISSUE_ID)
+    update_check.async_start_daily(hass)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, update_check.ISSUE_ID) is None
+    freezer.tick(timedelta(minutes=31))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert ir.async_get(hass).async_get_issue(DOMAIN, update_check.ISSUE_ID) is not None
+    # Zeit geändert: neu gesetzt; gleiche Zeit: bleibt
+    first = list(hass.data[update_check._TIMER_KEY])
+    update_check.async_reschedule_daily(hass)
+    assert hass.data[update_check._TIMER_KEY] == first
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "update_check_time": ""})
+    update_check.async_reschedule_daily(hass)
+    assert hass.data[update_check._TIME_KEY] == ""

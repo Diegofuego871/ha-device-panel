@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.25.0] - 2026-10-12
+
+Panel updates: time of the daily check, push notification, and a red dot while a restart is pending.
+
+### Added
+
+- A small red dot on the gear button as long as a panel update is installed and the restart is still pending (HACS has the new version on disk while the old one runs). It disappears after the restart; its label says "restart pending".
+- Settings › Panel updates › "Time of the check": the daily check runs at a time you choose (Home Assistant's time). Empty, the default, stays as before: at a random time after Home Assistant starts, then every 24 hours. "Automatic" resets it.
+- Settings › Panel updates › "Notify by push": a push notification once per version. Without automatic installation it says that a new version is available; with automatic installation it says, after installing, that the version is installed and the restart is pending (if the installation fails, the "available" notification is sent instead). The recipient (group, service or entity) can be chosen in a row below; default is the push target of the Overview. Tapping the notification opens the panel. Only with the daily check turned on.
+
 ## [2.24.1] - 2026-10-12
 
 ### Added
@@ -2838,6 +2848,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.25.0
 [2.24.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.1
 [2.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.0
 [2.23.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.1
