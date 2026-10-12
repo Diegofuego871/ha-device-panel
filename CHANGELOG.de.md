@@ -33,6 +33,11 @@ Favoriten und automatische Updates (beides Wunsch des Nutzers): ein Herz auf der
   drücken. Eine fehlgeschlagene Installation steht im Protokoll und wird bei der nächsten täglichen Prüfung wiederholt.
   Ohne HACS geschieht nichts. Der Schalter ist eine Panel-Einstellung für die ganze Instanz und gilt mit "Speichern".
 
+### Geändert
+
+- Geräte-Popup auf dem Handy: Die kleinen Symbole bleiben. Das Symbol des Reiters "Magic Push" ist jetzt eine Glocke (🔔)
+  statt der Funken, die zu wenig nach Benachrichtigung aussahen.
+
 ## [2.21.0] - 2026-10-12
 
 Timer: eine Entität eines Geräts einmalig oder nach Plan schalten (Wunsch des Nutzers).

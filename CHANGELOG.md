@@ -30,6 +30,11 @@ Favorites and automatic updates (both requested by the user): a heart on the dev
   without pressing "Update" a second time. A failed installation is logged and tried again at the next daily check.
   Nothing happens without HACS. The switch is a panel setting for the whole instance and applies with "Save".
 
+### Changed
+
+- Device pop-up on the phone: the small symbols stay. The symbol of the "Magic Push" tab is now a bell (🔔) instead of
+  the sparkle, which looked too little like a notification.
+
 ## [2.21.0] - 2026-10-12
 
 Timer: switch an entity of a device once or on a schedule (requested by the user).

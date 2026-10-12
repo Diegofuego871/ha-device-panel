@@ -1596,7 +1596,7 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
   .dev-tabs .sub-tab[data-tab="ov"]::before { content: "📊"; }
   .dev-tabs .sub-tab[data-tab="set"]::before { content: "⚙️"; }
   .dev-tabs .sub-tab[data-tab="ent"]::before { content: "🧩"; }
-  .dev-tabs .sub-tab[data-tab="magic"]::before { content: "✨"; }
+  .dev-tabs .sub-tab[data-tab="magic"]::before { content: "🔔"; }
   .dev-tabs .sub-tab[data-tab="timer"]::before { content: "⏱️"; }
   .dev-tabs .sub-tab.two:not(.on) > * { display: none; }
   .dev-tabs .sub-tab.on { flex: 2.8 1 0; gap: 6px; font-size: 13.5px; }
