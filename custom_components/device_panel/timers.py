@@ -6,7 +6,8 @@ und Ventilen Öffnen und Schliessen, bei Schlössern Ab- und Aufschliessen). Opt
 zurück ("20:00 ein, nach 3 Std. 30 Min. wieder aus"). Der Zeitpunkt hat drei Arten:
 
 * countdown: einmal, in X Minuten ab jetzt ("delay_s")
-* once: einmal, an einem Datum zu einer Uhrzeit ("date", "time")
+* once: einmal, an einem Datum zu einer Uhrzeit ("date", "time"); ohne Datum beim nächsten Eintreffen der Uhrzeit (heute
+  oder morgen)
 * repeat: wiederholt zu einer Uhrzeit: täglich, wöchentlich (Wochentage) oder monatlich (Tag des Monats, -1 = letzter)
 
 Einmalige Timer sind nach der Ausführung automatisch aus (bleiben aber in der Liste, "erledigt"); wiederholte laufen weiter.
@@ -162,9 +163,17 @@ def occurrence_after(timer: dict[str, Any], after: datetime, tz: Any) -> datetim
     return None
 
 
-def once_at(timer: dict[str, Any], tz: Any) -> datetime:
-    year, month, day = (int(p) for p in timer["date"].split("-"))
+def once_at(timer: dict[str, Any], tz: Any, after: datetime | None = None) -> datetime | None:
+    """
+    Zeitpunkt eines einmaligen Timers. Ohne Datum (seit 2.22.0) gilt das nächste Eintreffen der Uhrzeit nach "after"
+    (heute, sonst morgen); das gilt nur für die Planung, danach schaltet sich der Timer aus. Ohne "after" und ohne Datum: None.
+    """
     hour, minute = _hm(timer["time"])
+    if not timer.get("date"):
+        if after is None:
+            return None
+        return occurrence_after({"kind": "repeat", "repeat": "daily", "time": timer["time"]}, after, tz)
+    year, month, day = (int(p) for p in timer["date"].split("-"))
     return _local(tz, year, month, day, hour, minute)
 
 
@@ -174,8 +183,8 @@ def first_due(timer: dict[str, Any], now: float, tz: Any) -> float | None:
         return now + float(timer["delay_s"])
     after = dt_util.utc_from_timestamp(now).astimezone(tz)
     if timer["kind"] == "once":
-        at = once_at(timer, tz)
-        return at.timestamp() if at > after else None
+        at = once_at(timer, tz, after)
+        return at.timestamp() if at is not None and at > after else None
     nxt = occurrence_after(timer, after, tz)
     return nxt.timestamp() if nxt else None
 
@@ -193,7 +202,9 @@ def next_runs(timer: dict[str, Any], now: float, tz: Any, count: int = 3) -> lis
     if timer["kind"] == "countdown":
         out.append(after + timedelta(seconds=float(timer["delay_s"])))
     elif timer["kind"] == "once":
-        out.append(once_at(timer, tz))
+        at = once_at(timer, tz, after)
+        if at is not None:
+            out.append(at)
     else:
         cursor = after
         while len(out) < count:
@@ -234,7 +245,7 @@ TIMER_SCHEMA = vol.Schema(
         vol.Optional("back_s", default=None): vol.Any(None, _int_in(BACK_MIN, BACK_MAX, "Zurückschalten"), msg=f"Zurückschalten: ganze Zahl von {BACK_MIN} bis {BACK_MAX} erwartet"),
         vol.Required("kind"): vol.In(KINDS),
         vol.Optional("delay_s", default=None): vol.Any(None, _int_in(DELAY_MIN, DELAY_MAX, "Dauer"), msg=f"Dauer: ganze Zahl von {DELAY_MIN} bis {DELAY_MAX} erwartet"),
-        vol.Optional("date", default=None): vol.Any(None, vol.All(str, vol.Match(_DATE_RE)), msg="Datum ungültig"),
+        vol.Optional("date", default=None): vol.Any(None, "", vol.All(str, vol.Match(_DATE_RE)), msg="Datum ungültig"),
         vol.Optional("time", default=None): vol.Any(None, vol.All(str, vol.Match(_TIME_RE)), msg="Uhrzeit ungültig"),
         vol.Optional("repeat", default=None): vol.Any(None, vol.In(REPEATS)),
         vol.Optional("weekdays", default=None): vol.Any(None, [vol.All(int, vol.Range(min=0, max=6))], msg="Wochentage ungültig"),
@@ -256,14 +267,18 @@ def clean_when(timer: dict[str, Any], tz: Any, *, check_future: bool = True) -> 
             raise vol.Invalid("Dauer fehlt")
         timer.update(date=None, time=None, repeat=None, weekdays=None, mday=None)
     elif kind == "once":
-        if not timer["date"] or not timer["time"]:
-            raise vol.Invalid("Datum und Uhrzeit fehlen")
-        try:
-            at = once_at(timer, tz)
-        except ValueError as err:
-            raise vol.Invalid("Datum ungültig") from err
-        if check_future and timer["enabled"] and at <= dt_util.now(tz):
-            raise vol.Invalid("Der Zeitpunkt liegt in der Vergangenheit")
+        if not timer["time"]:
+            raise vol.Invalid("Uhrzeit fehlt")
+        # Ohne Datum: nächstes Eintreffen der Uhrzeit, kann nie in der Vergangenheit liegen
+        if timer["date"]:
+            try:
+                at = once_at(timer, tz)
+            except ValueError as err:
+                raise vol.Invalid("Datum ungültig") from err
+            if check_future and timer["enabled"] and at <= dt_util.now(tz):
+                raise vol.Invalid("Der Zeitpunkt liegt in der Vergangenheit")
+        else:
+            timer["date"] = None
         timer.update(delay_s=None, repeat=None, weekdays=None, mday=None)
     else:
         if not timer["time"] or timer["repeat"] is None:
@@ -474,7 +489,7 @@ class TimerManager:
             return None
         rt = self.runtime(timer_id)
         if enabled:
-            if timer["kind"] == "once" and once_at(timer, self.tz) <= dt_util.now(self.tz):
+            if timer["kind"] == "once" and timer.get("date") and once_at(timer, self.tz) <= dt_util.now(self.tz):
                 raise vol.Invalid("Der Zeitpunkt liegt in der Vergangenheit")
             timer["enabled"] = True
             self._rearm_runtime(timer, rt)

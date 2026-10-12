@@ -260,7 +260,7 @@ export class TimerUi {
   // Wann: "Täglich um 20:00", "Mo, Mi, Fr um 06:30", "Monatlich am 1. um 09:00", "Einmalig, 24.12. um 17:00", "Einmalig, in 30 Min."
   whenText(tm) {
     if (tm.kind === "countdown") return this.t("tmWhenCountdown", this.fmtDur(tm.delay_s));
-    if (tm.kind === "once") return this.t("tmWhenOnce", this.dateText({ date: tm.date }), tm.time);
+    if (tm.kind === "once") return tm.date ? this.t("tmWhenOnce", this.dateText({ date: tm.date }), tm.time) : this.t("tmWhenOnceNext", tm.time);
     if (tm.repeat === "daily") return this.t("tmWhenDaily", tm.time);
     if (tm.repeat === "weekly") return this.t("tmWhenWeekly", (tm.weekdays || []).map((i) => this.wd(i)).join(", "), tm.time);
     return this.t("tmWhenMonthly", tm.mday === -1 ? this.t("tmLastDayShort") : `${tm.mday}.`, tm.time);
@@ -337,7 +337,7 @@ export class TimerUi {
       const circ = 2 * Math.PI * 26;
       left = `<div class="tm-ring" data-tm-due="${tm.due}" data-total="${total}"><svg viewBox="0 0 62 62" aria-hidden="true"><circle class="bg" cx="31" cy="31" r="26"/><circle class="fg" cx="31" cy="31" r="26" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${(circ * (1 - rem / total)).toFixed(1)}"/></svg><span data-tm-left>${esc(this.fmtClock(rem))}</span></div>`;
     } else {
-      const sub = tm.kind === "once" ? this.dateText({ date: tm.date }) : tm.repeat === "monthly" ? t("tmMonthlyOn", tm.mday === -1 ? t("tmLastDayShort") : `${tm.mday}.`) : "";
+      const sub = tm.kind === "once" ? (tm.date ? this.dateText({ date: tm.date }) : t("tmOnceShort")) : tm.repeat === "monthly" ? t("tmMonthlyOn", tm.mday === -1 ? t("tmLastDayShort") : `${tm.mday}.`) : "";
       left = `<div class="time">${esc(tm.time || this.localTimeOf(tm))}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`;
     }
     const sw = `<label class="switch"><input type="checkbox" data-tm="toggle" data-id="${esc(tm.id)}"${tm.enabled ? " checked" : ""} aria-label="${esc(tm.name)}"><span></span></label>`;
@@ -637,7 +637,7 @@ export class TimerUi {
       kind: "repeat",
       delay_s: 1800,
       delayOwn: { text: "", unit: 60 },
-      date: this.tomorrow(),
+      date: "",
       time: "06:30",
       repeat: "daily",
       weekdays: [0, 1, 2, 3, 4],
@@ -666,7 +666,7 @@ export class TimerUi {
       kind: tm.kind,
       delay_s: tm.delay_s || 1800,
       delayOwn: delayPreset || !tm.delay_s ? { text: "", unit: 60 } : delay,
-      date: tm.date || this.tomorrow(),
+      date: tm.date || "",
       time: tm.time || "06:30",
       repeat: tm.repeat || "daily",
       weekdays: tm.weekdays?.length ? [...tm.weekdays] : [0, 1, 2, 3, 4],
@@ -691,7 +691,7 @@ export class TimerUi {
       back_s: d.back_s || null,
       kind: d.kind,
       delay_s: d.kind === "countdown" ? d.delay_s : null,
-      date: d.kind === "once" ? d.date : null,
+      date: d.kind === "once" && d.date ? d.date : null,
       time: d.kind === "countdown" ? null : d.time,
       repeat: d.kind === "repeat" ? d.repeat : null,
       weekdays: d.kind === "repeat" && d.repeat === "weekly" ? d.weekdays : null,
@@ -778,7 +778,8 @@ export class TimerUi {
     if (step === 2) {
       if (!/^\d{2}:\d{2}$/.test(d.time || "") && d.kind !== "countdown") return false;
       if (d.kind === "countdown") return !this.delayError();
-      if (d.kind === "once") return Boolean(d.date) && !this.wiz.pvError;
+      // Datum darf fehlen: dann gilt das nächste Eintreffen der Uhrzeit (seit 2.22.0)
+      if (d.kind === "once") return !this.wiz.pvError;
       if (d.repeat === "weekly") return d.weekdays.length > 0;
       if (d.repeat === "monthly") return Number.isInteger(d.mday) && d.mday >= -1 && d.mday !== 0 && d.mday <= 31;
       return true;
@@ -884,6 +885,18 @@ export class TimerUi {
     }
   }
 
+  // Datum gesetzt oder geleert: "Datum leeren" und den Hinweis nachführen, ohne das Feld neu zu zeichnen (ein offener Datumswähler bliebe sonst nicht offen)
+  syncDate() {
+    const row = this.q(".tm-daterow");
+    const d = this.wiz?.draft;
+    if (!row || !d) return;
+    const btn = row.querySelector('[data-tm="date-clear"]');
+    if (d.date && !btn) row.insertAdjacentHTML("beforeend", `<button type="button" class="linkbtn" data-tm="date-clear">${this.esc(this.t("tmDateClear"))}</button>`);
+    else if (!d.date && btn) btn.remove();
+    const hint = row.parentElement.querySelector(".mg-hint");
+    if (hint) hint.textContent = this.t(d.date ? "tmOnceNote" : "tmOnceNoteNoDate");
+  }
+
   syncNav() {
     const next = this.q('[data-tm="nav-next"], [data-tm="nav-save"]');
     if (next) next.disabled = !this.canNext() || Boolean(this.wiz?.saving);
@@ -975,11 +988,11 @@ export class TimerUi {
         ${this.delayError() ? `<div class="opt-error" data-tm-err="delay">${esc(this.delayError())}</div>` : ""}
         <p class="mg-hint">${esc(t("tmCountdownNote"))}</p>`;
     } else if (d.kind === "once") {
-      html += `<div class="mg-k">${esc(t("tmDate"))}</div>
-        <input class="mg-input tm-datein" type="date" data-tm="date" value="${esc(d.date)}" min="${esc(this.data.today || "")}" aria-label="${esc(t("tmDate"))}">
+      html += `<div class="mg-k">${esc(t("tmDate"))} <span class="tm-opt">${esc(t("tmDateOptional"))}</span></div>
+        <div class="tm-daterow"><input class="mg-input tm-datein" type="date" data-tm="date" value="${esc(d.date)}" min="${esc(this.data.today || "")}" aria-label="${esc(t("tmDate"))}">${d.date ? `<button type="button" class="linkbtn" data-tm="date-clear">${esc(t("tmDateClear"))}</button>` : ""}</div>
         <div class="mg-k">${esc(t("tmTime"))}</div>
         <input class="mg-input tm-timein" type="time" data-tm="time" value="${esc(d.time)}" aria-label="${esc(t("tmTime"))}">
-        <p class="mg-hint">${esc(t("tmOnceNote"))}</p>`;
+        <p class="mg-hint">${esc(t(d.date ? "tmOnceNote" : "tmOnceNoteNoDate"))}</p>`;
     } else {
       html += `<div class="mg-k">${esc(t("tmTime"))}</div>
         <input class="mg-input tm-timein" type="time" data-tm="time" value="${esc(d.time)}" aria-label="${esc(t("tmTime"))}">
@@ -1201,6 +1214,11 @@ export class TimerUi {
         this.paint();
         this.requestPreview();
         break;
+      case "date-clear":
+        w.draft.date = "";
+        this.paint();
+        this.requestPreview();
+        break;
       case "wd": {
         const day = Number(el.dataset.d);
         const set = new Set(w.draft.weekdays);
@@ -1276,6 +1294,7 @@ export class TimerUi {
         break;
       case "date":
         d.date = el.value;
+        this.syncDate();
         this.syncNav();
         this.requestPreview();
         break;
@@ -1367,6 +1386,7 @@ export class TimerUi {
         break;
       case "date":
         d.date = el.value;
+        this.syncDate();
         this.syncNav();
         this.requestPreview();
         break;

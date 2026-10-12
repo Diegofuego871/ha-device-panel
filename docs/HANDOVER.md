@@ -29,6 +29,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   (sechs neue), Suite `autoupdate-e2e`. Nicht geprüft: echtes HACS (Entität, `update.install`-Dauer, Verhalten bei
   Vorabversionen) und der Ablauf über Nacht.
 
+- Timer "Einmal" ohne Datum (2.22.0, Wunsch des Nutzers): `date` darf `None` sein (Standard im Assistenten); `timers.once_at(timer,
+  tz, after)` liefert dann das nächste Eintreffen der Uhrzeit (wie täglich), `first_due`/`next_runs` übergeben "jetzt"; Prüfung
+  "Vergangenheit" nur mit Datum; Einschalten plant neu. Panel: Feld leer, `data-tm="date-clear"`, `syncDate()` (ohne Neuzeichnen
+  des Datumsfelds), `whenText` "Einmalig, nächstes Mal um …". Der Schalter geht danach immer aus (wie bei jedem einmaligen Timer).
+
 ## Davor (2.21.0, Timer)
 
 - 2.21.0 (Wunsch des Nutzers, Mockups `docs/mockups/timer-v1`): Timer, die eine schaltbare Entität eines Geräts einmalig

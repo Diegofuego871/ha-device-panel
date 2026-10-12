@@ -1581,6 +1581,8 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .tm-timein, .tm-datein { box-sizing: border-box; height: 46px; font-size: 20px; font-variant-numeric: tabular-nums; }
 .tm-timein { width: 160px; }
 .tm-datein { width: 220px; max-width: 100%; }
+.tm-daterow { display: flex; align-items: center; gap: 14px; }
+.tm-opt { color: var(--dp-text3); font-size: .9em; font-weight: 400; }
 .tm-next { margin-top: 8px; border-radius: 14px; background: var(--dp-subtle); padding: 4px 14px; }
 .tm-next div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; font-size: 13.5px; border-top: 1px solid var(--dp-divider); }
 .tm-next div:first-child { border-top: 0; }

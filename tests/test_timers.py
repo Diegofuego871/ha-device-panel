@@ -509,3 +509,52 @@ async def test_non_admin_is_refused(hass: HomeAssistant, setup, hass_ws_client, 
     client = await hass_ws_client(hass)
     await client.send_json({"id": 1, "type": f"{DOMAIN}/timer_list"})
     assert (await client.receive_json())["success"] is False
+
+
+# -- Einmalig ohne Datum (seit 2.22.0) ------------------------------------------------------------
+
+
+def test_once_without_date_is_next_time_of_day() -> None:
+    timer = {"kind": "once", "date": None, "time": "06:30", "delay_s": None}
+    morning = _at(2026, 10, 12, 6, 0)
+    now = morning.timestamp()
+    # Uhrzeit liegt noch vor uns: heute
+    assert timers.first_due(timer, now, ZURICH) == _at(2026, 10, 12, 6, 30).timestamp()
+    # schon vorbei: morgen
+    late = _at(2026, 10, 12, 7, 0).timestamp()
+    assert timers.first_due(timer, late, ZURICH) == _at(2026, 10, 13, 6, 30).timestamp()
+    # genau zur Zeit: erst morgen
+    assert timers.first_due(timer, _at(2026, 10, 12, 6, 30).timestamp(), ZURICH) == _at(2026, 10, 13, 6, 30).timestamp()
+    # Vorschau: genau ein Eintrag (nicht wiederholt)
+    runs = timers.next_runs(timer, late, ZURICH)
+    assert [(r["date"], r["time"]) for r in runs] == [("2026-10-13", "06:30")]
+
+
+async def test_once_without_date_runs_once_then_is_disabled(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    calls = async_mock_service(hass, "switch", "turn_on")
+    manager = hass.data[DATA_TIMERS]
+    device = _device(hass, "Steckdose")
+    plug = _switch(hass, device)
+    now = datetime.now(ZURICH)
+    # Eine Minute später als jetzt (Uhrzeit ohne Datum)
+    target = (now + timedelta(minutes=1)).strftime("%H:%M")
+    saved = await manager.async_save_timer(_raw(device, plug, kind="once", date="", time=target, delay_s=None))
+    assert saved["date"] is None and saved["enabled"] is True
+    due = manager.runtime(saved["id"])["due"]
+    assert due is not None and 0 < due - time.time() <= 3600 * 24
+    freezer.move_to(datetime.fromtimestamp(due + 5, ZURICH))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert len(calls) == 1
+    # danach aus; Einschalten plant das nächste Eintreffen der Uhrzeit (kein Fehler "Vergangenheit")
+    assert manager.get(saved["id"])["enabled"] is False and manager.runtime(saved["id"])["due"] is None
+    again = await manager.async_set_enabled(saved["id"], True)
+    assert again["enabled"] is True and manager.runtime(saved["id"])["due"] > time.time()
+
+
+async def test_once_requires_time_but_not_date(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    manager = hass.data[DATA_TIMERS]
+    device = _device(hass, "Steckdose")
+    plug = _switch(hass, device)
+    with pytest.raises(vol.Invalid, match="Uhrzeit"):
+        await manager.async_save_timer(_raw(device, plug, kind="once", date=None, time=None, delay_s=None))

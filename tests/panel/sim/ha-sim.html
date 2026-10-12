@@ -1036,6 +1036,7 @@
         };
         const firstDue = (r, now) => {
           if (r.kind === "countdown") return now + r.delay_s;
+          if (r.kind === "once" && !r.date) return nextAfter({ ...r, kind: "repeat", repeat: "daily" }, now);
           if (r.kind === "once") { const [y, m, d] = r.date.split("-").map(Number); const [hh, mm] = r.time.split(":").map(Number); const ts = at(y, m - 1, d, hh, mm); return ts > now ? ts : null; }
           return nextAfter(r, now);
         };
@@ -1055,7 +1056,7 @@
           if (r.back_s && r.action === "toggle") fail("Umschalten lässt sich nicht zurückschalten");
           if (r.back_s != null && r.back_s !== 0 && (r.back_s < 10 || r.back_s > 604800)) fail("Zurückschalten: ganze Zahl von 10 bis 604800 erwartet");
           if (r.kind === "countdown") { if (!r.delay_s) fail("Dauer fehlt"); if (r.delay_s < 10 || r.delay_s > 604800) fail("Dauer: ganze Zahl von 10 bis 604800 erwartet"); }
-          else if (r.kind === "once") { if (!r.date || !r.time) fail("Datum und Uhrzeit fehlen"); if (r.enabled !== false && !firstDue(r, Date.now() / 1000)) fail("Der Zeitpunkt liegt in der Vergangenheit"); }
+          else if (r.kind === "once") { if (!r.time) fail("Uhrzeit fehlt"); if (r.date && r.enabled !== false && !firstDue(r, Date.now() / 1000)) fail("Der Zeitpunkt liegt in der Vergangenheit"); }
           else if (r.kind === "repeat") {
             if (!r.time || !r.repeat) fail("Uhrzeit und Wiederholung fehlen");
             if (r.repeat === "weekly" && !(r.weekdays || []).length) fail("Mindestens ein Wochentag");
@@ -1095,7 +1096,7 @@
           if (raw.id && !old) fail("Timer nicht gefunden");
           const e = entOf(raw);
           const r = { id: old ? old.id : `t${T.seq++}`.padEnd(12, "0"), device_id: raw.device_id, entity_id: raw.entity_id, name: String(raw.name || "").trim() || e.name, action: raw.action, back_s: raw.back_s || null, kind: raw.kind,
-            delay_s: raw.kind === "countdown" ? raw.delay_s : null, date: raw.kind === "once" ? raw.date : null, time: raw.kind === "countdown" ? null : raw.time, repeat: raw.kind === "repeat" ? raw.repeat : null,
+            delay_s: raw.kind === "countdown" ? raw.delay_s : null, date: raw.kind === "once" && raw.date ? raw.date : null, time: raw.kind === "countdown" ? null : raw.time, repeat: raw.kind === "repeat" ? raw.repeat : null,
             weekdays: raw.kind === "repeat" && raw.repeat === "weekly" ? [...raw.weekdays].sort() : null, mday: raw.kind === "repeat" && raw.repeat === "monthly" ? raw.mday : null,
             enabled: raw.enabled !== false, push: Boolean(raw.push), target: raw.target || null, created: old ? old.created : Date.now() / 1000 };
           r.__due = r.enabled ? firstDue(r, Date.now() / 1000) : null;

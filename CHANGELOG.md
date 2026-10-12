@@ -32,6 +32,10 @@ Favorites and automatic updates (both requested by the user): a heart on the dev
 
 ### Changed
 
+- Timer "Once": the date may stay empty, and it is empty by default. Without a date the timer switches the next time
+  the clock reaches the chosen time, today or tomorrow. After that it is always switched off and has to be enabled
+  again (that is the difference to "Daily"); enabling it again waits for the next time. With a date it works as before.
+  "Clear date" next to the field empties it again. In the list such a timer shows "once" and "Once, next time at 06:30".
 - Device pop-up on the phone: the small symbols stay. The symbol of the "Magic Push" tab is now a bell (🔔) instead of
   the sparkle, which looked too little like a notification.
 

@@ -12,10 +12,10 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { plug: "Steckdose", look: "Darstellung", tab: "Timer", add: "Neuer Timer", q1: "Was soll geschaltet werden?", q2: "Wann soll geschaltet werden?", q3: "Soll eine Push-Meldung kommen?", q4: "Name und Prüfung", step1: "Schritt 1 von 4", step4: "Schritt 4 von 4",
+  de: { onceNoDate: "Ohne Datum schaltet der Timer beim nächsten Eintreffen der Uhrzeit", dateClear: "Datum leeren", plug: "Steckdose", look: "Darstellung", tab: "Timer", add: "Neuer Timer", q1: "Was soll geschaltet werden?", q2: "Wann soll geschaltet werden?", q3: "Soll eine Push-Meldung kommen?", q4: "Name und Prüfung", step1: "Schritt 1 von 4", step4: "Schritt 4 von 4",
     empty: "Noch keine Timer", noEnt: "keine Entität, die ein Timer schalten kann", daily: "Täglich", weekly: "Wöchentlich", monthly: "Monatlich", def: "Standard aus den Einstellungen", pushTitle: "⏱️ Timer: Bewässerung",
     one: "1 aktiv", delAsk: "Timer \"Bewässerung\" löschen?", discard: "Änderungen verwerfen?", sec: "Timer", pauseLabel: "Alle Timer pausieren", saved: "Timer gespeichert.", running: "läuft", hit: "1 von 2" },
-  en: { plug: "Plug", look: "Appearance", tab: "Timer", add: "New timer", q1: "What should be switched?", q2: "When should it switch?", q3: "Should a push notification come?", q4: "Name and check", step1: "Step 1 of 4", step4: "Step 4 of 4",
+  en: { onceNoDate: "Without a date the timer switches the next time the clock reaches this time", dateClear: "Clear date", plug: "Plug", look: "Appearance", tab: "Timer", add: "New timer", q1: "What should be switched?", q2: "When should it switch?", q3: "Should a push notification come?", q4: "Name and check", step1: "Step 1 of 4", step4: "Step 4 of 4",
     empty: "No timers yet", noEnt: "no entity a timer can switch", daily: "Daily", weekly: "Weekly", monthly: "Monthly", def: "Default from the settings", pushTitle: "⏱️ Timer: Bewässerung",
     one: "1 on", delAsk: "Delete timer \"Bewässerung\"?", discard: "Discard changes?", sec: "Timers", pauseLabel: "Pause all timers", saved: "Timer saved.", running: "running", hit: "1 of 2" },
 };
@@ -117,9 +117,13 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] zu kurze Dauer: Fehler, Weiter gesperrt`, await wait(`return !!r.querySelector('dialog.timer-dlg [data-tm-err="delay"]:not([hidden])') && r.querySelector('dialog.timer-dlg [data-tm="nav-next"]').disabled`));
     await tap(`${win} [data-tm="delay"][data-s="1800"]`);
     await tap(`${win} [data-tm="kind"][data-v="once"]`);
-    check(`[${tag}] Einmal: Datum morgen, eine Vorschau`, await wait(`return !!r.querySelector('dialog.timer-dlg [data-tm="date"]').value && r.querySelectorAll("dialog.timer-dlg .tm-next div").length === 1`));
+    // Seit 2.22.0 darf das Datum leer bleiben (Standard): der Timer schaltet beim nächsten Eintreffen der Uhrzeit, danach ist er aus
+    check(`[${tag}] Einmal: Datum leer (Standard), Hinweis ohne Datum, eine Vorschau, Weiter frei`, await wait(`const d = r.querySelector('dialog.timer-dlg [data-tm="date"]'); return d.value === "" && r.querySelectorAll("dialog.timer-dlg .tm-next div").length === 1 && !r.querySelector('dialog.timer-dlg [data-tm="nav-next"]').disabled && !r.querySelector('dialog.timer-dlg [data-tm="date-clear"]') && r.querySelector("dialog.timer-dlg .mg-hint").textContent.includes(${JSON.stringify(T.onceNoDate)})`), await text(`${win} .mg-hint`));
+    check(`[${tag}] Vorschau: nächstes Mal um 06:30`, await wait(`return (r.querySelector("dialog.timer-dlg .tm-next")?.textContent || "").trim().endsWith("06:30")`), await text(`${win} .tm-next`));
     await ev(`const i = r.querySelector('dialog.timer-dlg [data-tm="date"]'); i.value = "2020-01-01"; i.dispatchEvent(new Event("input", { bubbles: true })); i.dispatchEvent(new Event("change", { bubbles: true }));`);
     check(`[${tag}] Datum in der Vergangenheit: Fehler vom Server, Weiter gesperrt`, await wait(`return !!r.querySelector("dialog.timer-dlg .opt-error") && r.querySelector('dialog.timer-dlg [data-tm="nav-next"]').disabled`));
+    await tap(`${win} [data-tm="date-clear"]`);
+    check(`[${tag}] "${T.dateClear}": Datum leer, Fehler weg, Weiter frei`, await wait(`return r.querySelector('dialog.timer-dlg [data-tm="date"]').value === "" && !r.querySelector("dialog.timer-dlg .opt-error") && !r.querySelector('dialog.timer-dlg [data-tm="nav-next"]').disabled`));
     await tap(`${win} [data-tm="kind"][data-v="repeat"]`);
     await tap(`${win} [data-tm="repeat"][data-v="weekly"]`);
     await p.screenshot({ path: `${outDir}/timer-w2-${tag.replace("/", "-")}.png` });
