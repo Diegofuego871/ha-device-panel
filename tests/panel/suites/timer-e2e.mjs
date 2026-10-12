@@ -181,6 +181,18 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("dialog.timer-dlg").open`);
     await tap(`${win} [data-tm="close"]`);
     check(`[${tag}] ohne Änderung ohne Rückfrage`, await wait(`return !r.querySelector("dialog.timer-dlg").open && !r.querySelector("dialog.discard-dlg").open`));
+    // Speichern auf jeder Seite (2.24.0): ohne Durchklicken speichern und schliessen
+    const nSave = (await calls("device_panel/timer_save")).length;
+    await tap('.tm-root [data-tm="edit"]');
+    await wait(`return r.querySelector("dialog.timer-dlg").open`);
+    check(`[${tag}] Schritt 2: Knopf "Speichern" neben "Weiter", freigegeben`, await ev(`const q = r.querySelector('dialog.timer-dlg [data-tm="nav-quick"]'); return !!q && !q.disabled && !!r.querySelector('dialog.timer-dlg [data-tm="nav-next"]') && q.textContent.trim().length > 0`));
+    await tap(`${win} [data-tm="wd"][data-d="4"]`);
+    await tap(`${win} [data-tm="wd"][data-d="2"]`);
+    await tap(`${win} [data-tm="wd"][data-d="0"]`);
+    check(`[${tag}] ungültig (kein Wochentag): "Speichern" gesperrt`, await wait(`return r.querySelector('dialog.timer-dlg [data-tm="nav-quick"]').disabled`));
+    await tap(`${win} [data-tm="wd"][data-d="1"]`);
+    await tap(`${win} [data-tm="nav-quick"]`);
+    check(`[${tag}] Speichern ohne Durchklicken: timer_save gesendet, Fenster zu`, await wait(`return !r.querySelector("dialog.timer-dlg").open`) && (await calls("device_panel/timer_save")).length === nSave + 1);
 
     // Zweiter Timer: Countdown läuft
     await tap('.tm-root [data-tm="add"]');

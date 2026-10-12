@@ -9,7 +9,11 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.24.0] - 2026-10-12
 
-Einstellungen und Blatt "Ansicht" öffnen auf dem Handy als Vollbild.
+Einstellungen und Blatt "Ansicht" öffnen auf dem Handy als Vollbild, die Aktionen der Karten sind besser zu treffen, und der Timer-Assistent speichert auf jeder Seite.
+
+### Hinzugefügt
+
+- Timer-Assistent: ein Knopf "Speichern" auf jeder Seite (zwischen "Zurück" und "Weiter"), freigegeben, sobald alle Schritte gültig sind. Wer nur die Zeit eines bestehenden Timers ändert, muss nicht mehr durch alle vier Schritte klicken: ändern, speichern, das Fenster schliesst. Auf der letzten Seite bleibt das gewohnte "Speichern".
 
 ### Geändert
 

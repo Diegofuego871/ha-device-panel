@@ -893,9 +893,16 @@ export class TimerUi {
     }
   }
 
+  // Alle Schritte gültig: dann darf auf jeder Seite gespeichert werden (seit 2.24.0)
+  canSaveAll() {
+    return Array.from({ length: STEPS }, (_, i) => i + 1).every((n) => this.canNext(n));
+  }
+
   syncNav() {
     const next = this.q('[data-tm="nav-next"], [data-tm="nav-save"]');
     if (next) next.disabled = !this.canNext() || Boolean(this.wiz?.saving);
+    const quick = this.q('[data-tm="nav-quick"]');
+    if (quick) quick.disabled = !this.canSaveAll() || Boolean(this.wiz?.saving);
   }
 
   tabsHtml(items, cls = "") {
@@ -928,7 +935,9 @@ export class TimerUi {
     }).join("");
     const body = [this.step1Html, this.step2Html, this.step3Html, this.step4Html][step - 1].call(this);
     const last = step === STEPS;
+    const quick = last ? "" : `<button type="button" class="dlg-btn quick" data-tm="nav-quick"${this.canSaveAll() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("tmSaving") : t("tmSave"))}</button>`;
     const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-tm="${step === 1 ? "nav-cancel" : "nav-back"}">${esc(step === 1 ? t("tmCancel") : t("tmBack"))}</button>
+      ${quick}
       ${last ? `<button type="button" class="dlg-btn primary" data-tm="nav-save"${this.canNext() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("tmSaving") : t("tmSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-tm="nav-next"${this.canNext() ? "" : " disabled"}>${esc(t("tmNext"))}</button>`}</div>`;
     const device = this.host._devices?.find((x) => x.id === this.deviceId)?.name || "";
     return `<div class="mgw-head"><div class="mgw-t"><b>${esc(w.editing ? t("tmEditing") : t("tmNew"))}</b>${device ? `<small>${esc(device)}</small>` : ""}</div>
@@ -1167,6 +1176,9 @@ export class TimerUi {
         break;
       case "nav-next":
         if (this.canNext()) this.setStep(w.step + 1);
+        break;
+      case "nav-quick":
+        if (this.canSaveAll()) this.save();
         break;
       case "nav-save":
         if (this.canNext()) this.save();

@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.24.0] - 2026-10-12
 
-Settings and the view sheet open full screen on the phone.
+Settings and the view sheet open full screen on the phone, the cards' actions are easier to hit, and the timer assistant can save on every page.
+
+### Added
+
+- Timer assistant: a "Save" button on every page (between "Back" and "Next"), enabled as soon as all steps are valid. Changing only the time of an existing timer no longer needs a click through all four steps: change, save, the window closes. On the last page the usual "Save" stays.
 
 ### Changed
 

@@ -1406,6 +1406,7 @@ a.dlg-btn { display: inline-flex; align-items: center; justify-content: center; 
 .mg-text { display: block; resize: vertical; min-height: 64px; }
 .mg-btns { display: flex; gap: 8px; margin-top: 14px; }
 .mg-btns.small { margin-top: 8px; }
+.mg-btns .dlg-btn.quick { border-color: var(--dp-primary); color: var(--dp-primary); }
 .mg-btns.small .dlg-btn { height: 36px; }
 /* Feste Höhe: ein Emoji in der Angabe rechts macht die Zeile sonst höher, und die Balken darunter rutschen von Schritt zu Schritt */
 .mg-stephead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; height: 18px; line-height: 18px; overflow: hidden; color: var(--dp-text2); font-size: 12px; }
