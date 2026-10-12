@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.17.1] - 2026-10-12
+
+Magic Push: robuster bei Absturz und Neustart von Home Assistant.
+
+### Behoben
+
+- Nach einer Meldung ("ausgelöst" oder "wieder normal") wird der Stand jetzt sofort gespeichert statt erst nach bis zu
+  5 Sekunden. Stürzte Home Assistant direkt nach dem Senden ab oder fiel der Strom aus (kein sauberes Herunterfahren),
+  wusste es nach dem Start nicht, dass die Meldung schon raus war, und sendete dieselbe noch einmal. Ein sauberes
+  Herunterfahren war nicht betroffen.
+- "Ändert sich" mit Dauer ("der neue Wert muss bleiben für mindestens ...") überlebt jetzt einen Neustart: die laufende
+  Wartezeit wird mitgespeichert und läuft nach dem Start weiter. War die Zeit während des Ausfalls abgelaufen und der Wert
+  noch derselbe, kommt die Meldung gleich beim Start; hat sich der Wert inzwischen zurückgeändert, wird nichts gesendet.
+  Vorher ging so eine Änderung verloren.
+
 ## [2.17.0] - 2026-10-12
 
 Magic Push: "Zurücksetzen erst nach" einer Dauer, gegen Flattern um die Schwelle.
@@ -2663,6 +2678,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.17.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.1
 [2.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.0
 [2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0
 [2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0

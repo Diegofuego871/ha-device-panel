@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.17.1] - 2026-10-12
+
+Magic Push: more robust across crashes and restarts of Home Assistant.
+
+### Fixed
+
+- After a message ("triggered" or "back to normal") the state is now written to disk immediately instead of after up to
+  5 seconds. If Home Assistant crashed or lost power right after sending (no clean shutdown), it did not know that the
+  message had gone out and sent the same one again after the start. A clean shutdown was not affected.
+- "Changes" with a duration ("the new value must stay for at least ...") now survives a restart: the running wait is
+  stored and continues after the start. If the time ran out while Home Assistant was off and the value is still the
+  same, the message comes right at the start; if the value changed back in the meantime, nothing is sent. Before, such
+  a change was lost.
+
 ## [2.17.0] - 2026-10-12
 
 Magic Push: "Reset only after" a duration, against flapping around the threshold.
@@ -2577,6 +2591,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.17.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.1
 [2.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.0
 [2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0
 [2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0

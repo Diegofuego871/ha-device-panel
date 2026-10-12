@@ -670,7 +670,8 @@ class MagicPush:
         self._timers: dict[str, CALLBACK_TYPE] = {}
         # Wartezeit bis zum Zurücksetzen (reset_for_s), getrennt von Dauer/Wiederholung
         self._rtimers: dict[str, CALLBACK_TYPE] = {}
-        self._pending: dict[str, dict[str, str]] = {}
+        # "Ändert sich" mit Dauer: der neue Wert muss bis "due" bleiben; wird mitgespeichert (seit 2.17.1)
+        self._pending: dict[str, dict[str, Any]] = {}
         self._unsub_track: CALLBACK_TYPE | None = None
         self._unsubs: list[CALLBACK_TYPE] = []
         self._integration_names: dict[str, str] = {}
@@ -697,6 +698,13 @@ class MagicPush:
                         "last_sent": _float(rt.get("last_sent")),
                         "last_fired": _float(rt.get("last_fired")),
                     }
+        pending = stored.get("pending") if isinstance(stored, dict) else None
+        if isinstance(pending, dict):
+            for rule_id, item in pending.items():
+                rule = self._rules.get(rule_id)
+                due = _float(item.get("due")) if isinstance(item, dict) else None
+                if rule is not None and rule["kind"] == "change" and due is not None and isinstance(item.get("old"), str) and isinstance(item.get("new"), str):
+                    self._pending[rule_id] = {"old": item["old"], "new": item["new"], "due": due}
         # Gelöschte Geräte nehmen ihre Regeln mit.
         self._unsubs.append(self.hass.bus.async_listen(dr.EVENT_DEVICE_REGISTRY_UPDATED, self._on_device_registry))
         self._retrack()
@@ -718,10 +726,14 @@ class MagicPush:
         await self._store.async_save(self._data())
 
     def _data(self) -> dict[str, Any]:
-        return {"rules": self._rules, "runtime": self._runtime}
+        return {"rules": self._rules, "runtime": self._runtime, "pending": self._pending}
 
     def _save(self) -> None:
         self._store.async_delay_save(self._data, 5)
+
+    def _save_now(self) -> None:
+        """Sofort schreiben: nach einer Meldung darf ein Absturz nicht vergessen lassen, dass sie schon raus ist (seit 2.17.1)."""
+        self.hass.async_create_task(self._store.async_save(self._data()))
 
     @callback
     def _on_started(self, _hass: HomeAssistant) -> None:
@@ -825,10 +837,29 @@ class MagicPush:
 
     @callback
     def _resync(self) -> None:
+        self._restore_pending()
         for rule in list(self._rules.values()):
             state = self.hass.states.get(rule["entity_id"])
             if state is not None:
                 self._evaluate(rule, state, None)
+
+    def _restore_pending(self) -> None:
+        """Nach dem Start: "ändert sich" mit Dauer weiterlaufen lassen, sofern der neue Wert noch gilt (seit 2.17.1)."""
+        now = time.time()
+        for rule_id, pending in list(self._pending.items()):
+            rule = self._rules.get(rule_id)
+            state = self.hass.states.get(rule["entity_id"]) if rule is not None else None
+            if rule is None or not rule["enabled"] or state is None or (state.state != pending["new"] and state.state not in IGNORED):
+                # Regel weg oder der Wert hat sich inzwischen wieder geändert: nichts zu melden
+                self._pending.pop(rule_id, None)
+                continue
+            if rule_id in self._timers:
+                continue
+            if pending["due"] <= now:
+                # Die Dauer ist während des Ausfalls abgelaufen: sofort entscheiden, ohne Timer
+                self._on_timer(rule_id, None)
+            else:
+                self._timers[rule_id] = async_call_later(self.hass, pending["due"] - now, partial(self._on_timer, rule_id))
 
     @callback
     def _on_state(self, event: Event) -> None:
@@ -881,7 +912,8 @@ class MagicPush:
             if rule["for_s"] <= 0:
                 self._fire(rule, state, now, old=old.state)
             else:
-                self._pending[rule_id] = {"old": old.state, "new": state.state}
+                self._pending[rule_id] = {"old": old.state, "new": state.state, "due": now + rule["for_s"]}
+                self._save()
                 self._timers[rule_id] = async_call_later(self.hass, rule["for_s"], partial(self._on_timer, rule_id))
             return
         # Mit mehreren Bedingungen kann sich eine andere Entität geändert haben: Stand der ersten für Variablen und Meldung
@@ -948,10 +980,13 @@ class MagicPush:
             return
         state = self.hass.states.get(rule["entity_id"])
         if state is None or (rule["kind"] == "change" and state.state in IGNORED):
+            if rule["kind"] == "change" and self._pending.pop(rule_id, None) is not None:
+                self._save()
             return
         now = time.time()
         if rule["kind"] == "change":
             pending = self._pending.pop(rule_id, None)
+            self._save()
             if pending and state.state == pending["new"]:
                 self._fire(rule, state, now, old=pending["old"])
             return
@@ -966,7 +1001,7 @@ class MagicPush:
         if rule["kind"] != "change":
             rt["fired"] = True
         rt["last_sent"] = rt["last_fired"] = now
-        self._save()
+        self._save_now()
         ctx = self._context(rule, state, since=rt["since"] or now, now=now, old=old)
         title = render(rule["message"], ctx)
         message = content(self.hass, rule, ctx)
@@ -980,7 +1015,7 @@ class MagicPush:
         rt = self.runtime(rule_id)
         since, fired = rt["since"] or now, rt["fired"]
         self._reset(rule_id)
-        self._save()
+        self._save_now()
         if fired and rule["recover"]:
             ctx = self._context(rule, state, since=since, now=now)
             title = render(rule["recover_message"], ctx)

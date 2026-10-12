@@ -496,7 +496,7 @@ Eigene Meldungen pro Gerät ohne Automation, im vierten Reiter des Geräte-Popup
   gemeldet, zuletzt).
 - **Auslösen:** gilt die Bedingung durchgehend `for_s` Sekunden, kommt eine Meldung; `unavailable`/`unknown` melden
   nichts und setzen nichts zurück. "Ändert sich": je Änderung, mit Dauer muss der neue Wert stabil bleiben; ohne
-  Wiederholung und ohne "wieder normal". Der Stand überlebt Neustarts.
+  Wiederholung und ohne "wieder normal". Der Stand überlebt Neustarts (seit 2.17.1 wird er nach jeder Meldung sofort geschrieben, und die laufende Dauer von "ändert sich" bleibt erhalten; die Wartezeit "Zurücksetzen erst nach" beginnt nach dem Start von vorn).
 - **Text:** nur `{name}`-Ersetzung per Regex, keine Vorlagensprache. Variablen je Art der Entität: Zahl `value unit
   threshold`, Zustand `value` (Wort der Entität, nicht on/off), Änderung `value unit old new`; immer `device area
   entity integration rule duration since time`. Titel und Inhalt sind getrennte freie Texte mit denselben Variablen (seit 2.8.0); ein leerer Inhalt ergibt die automatische Zeile (Gerät und Dauer, bei Änderung alt → neu).

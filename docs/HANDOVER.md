@@ -3,7 +3,17 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.17.0, Magic Push: Zurücksetzen erst nach Dauer)
+## Stand (2.17.1, Magic Push: robuster bei Absturz und Neustart)
+
+- 2.17.1 (Frage des Nutzers zur Neustart-Festigkeit): `_fire` und `_resolve` schreiben mit `_save_now()` sofort
+  (`async_save`, nicht mehr nur `async_delay_save(…, 5)`), damit ein Absturz nach dem Senden keine Doppelmeldung auslöst.
+  "Ändert sich" mit Dauer: `_pending` enthält jetzt `due` (Zeitpunkt) und liegt im Speicher (Schlüssel `pending`);
+  `_restore_pending()` (aus `_resync`, nach dem Start) setzt den Timer neu, meldet sofort bei abgelaufener Dauer und
+  verwirft, wenn sich der Wert zurückgeändert hat. Bekannt und bewusst: nach dem Start gilt die Bedingung als
+  durchgehend erfüllt, was dazwischen war, weiss HA nicht; die Wartezeit "Zurücksetzen erst nach" liegt nur im Speicher
+  und beginnt nach dem Start von vorn. Tests: `tests/test_magic_restart.py`.
+
+## Stand davor (2.17.0, Magic Push: Zurücksetzen erst nach Dauer)
 
 - 2.17.0 (Wunsch des Nutzers, gegen Flattern bei "Automatisch"): Regelfeld `reset_for_s` (0 bis 7 Tage, Vorgabe 0, bei
   "ändert sich" immer 0). Engine (`magic.py`): in `_evaluate` startet bei nicht mehr geltender Bedingung (und nach der
