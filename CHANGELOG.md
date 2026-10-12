@@ -17,6 +17,7 @@ Favorite timers, and the title in the header only disappears on the phone.
 
 ### Changed
 
+- Timer assistant: with "switch back afterwards" the preview now shows exactly when it switches back, to the minute: under each next run ("back off: tomorrow 06:50") and in the last step under "Next run". Calculated by Home Assistant with its time zone.
 - The title "Devices" in the header is visible again on wide screens (from 700 px); on the phone it stays gone, as in 2.25.0. The timer button stays centred on both.
 - Timer durations are shown exactly, down to the second, instead of being rounded: 690 minutes now read "11 h 30 min" (before "11 h"), 90 seconds "1 min 30 s". This applies to the result line of the assistant, the sentence of a timer, and the range messages.
 

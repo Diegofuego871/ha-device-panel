@@ -124,7 +124,7 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-tm="kind"][data-v="once"]`);
     // Seit 2.22.0 gilt ohne Datum das nächste Eintreffen der Uhrzeit (Standard); der Schalter "Bestimmtes Datum" setzt zuerst morgen ein
     check(`[${tag}] Einmal: Schalter "${T.dateSwitch}" aus, kein Datumsfeld, Hinweis ohne Datum, eine Vorschau, Weiter frei`, await wait(`const s = r.querySelector('dialog.timer-dlg [data-tm="date-on"]'); return !!s && !s.checked && !r.querySelector('dialog.timer-dlg [data-tm="date"]') && r.querySelectorAll("dialog.timer-dlg .tm-next div").length === 1 && !r.querySelector('dialog.timer-dlg [data-tm="nav-next"]').disabled && r.querySelector("dialog.timer-dlg .mg-hint").textContent.includes(${JSON.stringify(T.onceNoDate)})`), await text(`${win} .mg-hint`));
-    check(`[${tag}] Vorschau: nächstes Mal um 06:30`, await wait(`return (r.querySelector("dialog.timer-dlg .tm-next")?.textContent || "").trim().endsWith("06:30")`), await text(`${win} .tm-next`));
+    check(`[${tag}] Vorschau: nächstes Mal um 06:30`, await wait(`return (r.querySelector("dialog.timer-dlg .tm-next")?.textContent || "").includes("06:30")`), await text(`${win} .tm-next`));
     await tap(`${win} [data-tm="date-on"]`);
     check(`[${tag}] Schalter an: Datumsfeld mit dem morgigen Datum, Vorschau morgen`, await wait(`const d = r.querySelector('dialog.timer-dlg [data-tm="date"]'); const tm = new Date(Date.parse(${JSON.stringify("")} || (r.host._timers.data?.today || "") + "T00:00:00Z") + 86400000).toISOString().slice(0, 10); return !!d && d.value === tm && r.querySelector('dialog.timer-dlg [data-tm="date-on"]').checked && !r.querySelector('dialog.timer-dlg [data-tm="nav-next"]').disabled`));
     await ev(`const i = r.querySelector('dialog.timer-dlg [data-tm="date"]'); i.value = "2020-01-01"; i.dispatchEvent(new Event("input", { bubbles: true })); i.dispatchEvent(new Event("change", { bubbles: true }));`);
@@ -151,6 +151,7 @@ for (const lang of ["de", "en"]) {
 
     // --- Schritt 4: Name und Prüfung -----------------------------------------------------------------------------
     check(`[${tag}] Schritt 4: Satz mit Wochentagen, Push-Zeile, nächste Ausführung`, await wait(`return r.querySelector("dialog.timer-dlg .mg-big")?.textContent === ${JSON.stringify(T.q4)} && !!r.querySelector("dialog.timer-dlg .tm-sum") && /Familie/.test(r.querySelector("dialog.timer-dlg .tm-sum").textContent) && !!r.querySelector("dialog.timer-dlg .tm-next div")`), await text(`${win} .tm-sum`));
+    check(`[${tag}] Schritt 4: zu jeder Ausführung steht, wann es wieder ${lang === "de" ? "aus" : "off"} geht (06:30 + 20 Min. = 06:50)`, await wait(`const s = [...r.querySelectorAll("dialog.timer-dlg .tm-next small")]; return s.length === 1 && s[0].textContent.includes("06:50") && s[0].textContent.startsWith(${JSON.stringify(lang === "de" ? "wieder aus" : "back off")})`), await text(`${win} .tm-next`));
     await fill(`${win} [data-tm="name"]`, "Bewässerung");
     await p.screenshot({ path: `${outDir}/timer-w4-${tag.replace("/", "-")}.png` });
     await tap(`${win} [data-tm="nav-save"]`);

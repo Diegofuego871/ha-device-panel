@@ -1621,8 +1621,9 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .tm-timein { width: 160px; }
 .tm-datein { width: 220px; max-width: 100%; }
 .tm-next { margin-top: 8px; border-radius: 14px; background: var(--dp-subtle); padding: 4px 14px; }
-.tm-next div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; font-size: 13.5px; border-top: 1px solid var(--dp-divider); }
+.tm-next div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; padding: 8px 0; font-size: 13.5px; border-top: 1px solid var(--dp-divider); }
 .tm-next div:first-child { border-top: 0; }
+.tm-next small { flex: 0 0 100%; margin-top: -4px; color: var(--dp-text2); font-size: 12.5px; }
 .tm-next div span:last-child { color: var(--dp-text2); }
 .tm-sum { margin-top: 8px; padding: 12px 14px; border-radius: 14px; background: var(--dp-primary-soft); font-size: 14.5px; line-height: 1.45; }
 .tm-sum b { font-weight: 600; }

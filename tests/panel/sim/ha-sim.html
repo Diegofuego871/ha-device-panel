@@ -1040,13 +1040,15 @@
           if (r.kind === "once") { const [y, m, d] = r.date.split("-").map(Number); const [hh, mm] = r.time.split(":").map(Number); const ts = at(y, m - 1, d, hh, mm); return ts > now ? ts : null; }
           return nextAfter(r, now);
         };
-        const runsOf = (r, now) => {
+        const runsOf0 = (r, now) => {
           if (r.kind === "countdown") return [local(now + r.delay_s)];
           if (r.kind === "once") { const ts = firstDue(r, now); return ts ? [local(ts)] : []; }
           const out = []; let cur = now;
           while (out.length < 3) { const n = nextAfter(r, cur); if (!n) break; out.push(local(n)); cur = n; }
           return out;
         };
+        // Mit "wieder zurückschalten" auch der Zeitpunkt des Zurückschaltens (wie der Server, seit 2.26.0)
+        const runsOf = (r, now) => runsOf0(r, now).map((x) => (r.back_s ? { ...x, back: local(x.ts + r.back_s) } : x));
         const check = (r, draft = false) => {
           if (!entsOf(r.device_id)) fail("Gerät nicht gefunden");
           const e = entOf(r);

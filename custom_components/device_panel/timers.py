@@ -212,7 +212,12 @@ def next_runs(timer: dict[str, Any], now: float, tz: Any, count: int = 3) -> lis
                 break
             out.append(nxt)
             cursor = nxt
-    return [local_parts(d.timestamp(), tz) for d in out]
+    # Mit "danach wieder zurückschalten" (seit 2.26.0) steht zu jeder Ausführung auch der Zeitpunkt des Zurückschaltens
+    back = timer.get("back_s")
+    return [
+        {**local_parts(d.timestamp(), tz), **({"back": local_parts(d.timestamp() + float(back), tz)} if back else {})}
+        for d in out
+    ]
 
 
 # -- Prüfen --------------------------------------------------------------------------------------

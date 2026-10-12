@@ -1050,8 +1050,17 @@ export class TimerUi {
     const runs = w.pv?.next_runs;
     if (!runs?.length) return "";
     const label = w.draft.kind === "countdown" ? t("tmRunsAt") : t("tmNextRuns");
-    const rows = runs.map((r) => `<div><span>${esc(this.dateText(r))}</span><span>${esc(r.time)}</span></div>`).join("");
+    // Mit "danach wieder zurückschalten": darunter, wann es wieder ein-/ausgeschaltet wird (vom Server auf die Minute genau gerechnet)
+    const rows = runs.map((r) => `<div><span>${esc(this.dateText(r))}</span><span>${esc(r.time)}</span>${this.backLine(r)}</div>`).join("");
     return `<div class="mg-k">${esc(label)}</div><div class="tm-next">${rows}</div>`;
+  }
+
+  // Zeile "wieder aus: morgen 06:50" unter einer Ausführung, wenn zurückgeschaltet wird (seit 2.26.0)
+  backLine(run) {
+    const d = this.wiz.draft;
+    if (!run?.back || !d.back_s || !opposite(d.action)) return "";
+    const word = this.t(`tmRes_${resKey(this.domainOf(d.entity_id), opposite(d.action))}`);
+    return `<small>${this.esc(this.t("tmBackAtRow", word, this.localText(run.back)))}</small>`;
   }
 
   // Schritt 3: Meldung
@@ -1125,7 +1134,7 @@ export class TimerUi {
     if (d.push) html += `<br>🔔 ${esc(t("tmSumPush", d.target ? this.niceTarget(d.target) : t("tmTargetDefaultShort")))}`;
     html += `</div>`;
     const first = w.pv?.next_runs?.[0];
-    if (first) html += `<div class="mg-k">${esc(t("tmNextRun2"))}</div><div class="tm-next"><div><span>${esc(this.localText(first))}</span></div></div>`;
+    if (first) html += `<div class="mg-k">${esc(t("tmNextRun2"))}</div><div class="tm-next"><div><span>${esc(this.localText(first))}</span>${this.backLine(first)}</div></div>`;
     else if (w.pvError) html += `<div class="opt-error" role="alert">${esc(w.pvError)}</div>`;
     return html;
   }

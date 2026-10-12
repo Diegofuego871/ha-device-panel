@@ -70,6 +70,17 @@ def test_next_runs_preview_lists_three() -> None:
     assert [(r["date"], r["time"], r["weekday"]) for r in rows] == [("2026-10-14", "06:30", 2), ("2026-10-16", "06:30", 4), ("2026-10-19", "06:30", 0)]
 
 
+def test_next_runs_carry_the_switch_back_time_to_the_minute() -> None:
+    now = _at(2026, 10, 12, 8, 0).timestamp()
+    # 06:30 + 11 Std. 30 Min. = 18:00, am selben Tag; über Mitternacht in den nächsten Tag
+    rows = timers.next_runs(_timer(repeat="weekly", weekdays=[0, 2, 4], back_s=11 * 3600 + 30 * 60), now, ZURICH)
+    assert (rows[0]["date"], rows[0]["time"]) == ("2026-10-14", "06:30") and (rows[0]["back"]["date"], rows[0]["back"]["time"]) == ("2026-10-14", "18:00")
+    rows = timers.next_runs(_timer(repeat="weekly", weekdays=[0, 2, 4], back_s=20 * 3600 + 45 * 60), now, ZURICH)
+    assert (rows[0]["back"]["date"], rows[0]["back"]["time"]) == ("2026-10-15", "03:15")
+    # ohne Zurückschalten kein "back"
+    assert "back" not in timers.next_runs(_timer(repeat="weekly", weekdays=[0, 2, 4]), now, ZURICH)[0]
+
+
 # -- Prüfen ---------------------------------------------------------------------------------------
 
 

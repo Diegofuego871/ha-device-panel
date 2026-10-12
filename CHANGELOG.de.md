@@ -17,6 +17,7 @@ Lieblings-Timer, und der Titel in der Kopfzeile entfällt nur noch auf dem Handy
 
 ### Geändert
 
+- Timer-Assistent: Mit "Danach wieder zurückschalten" zeigt die Vorschau jetzt genau, wann zurückgeschaltet wird, auf die Minute: unter jeder nächsten Ausführung ("wieder aus: morgen 06:50") und im letzten Schritt unter "Nächste Ausführung". Gerechnet von Home Assistant mit dessen Zeitzone.
 - Der Titel "Geräte" in der Kopfzeile ist auf breiten Bildschirmen (ab 700 px) wieder sichtbar; auf dem Handy bleibt er weg, wie in 2.25.0. Der Timer-Knopf bleibt auf beiden mittig.
 - Dauern bei Timern werden genau angezeigt, bis auf die Sekunde, statt gerundet: 690 Minuten lauten jetzt "11 Std. 30 Min." (vorher "11 Std."), 90 Sekunden "1 Min. 30 Sek.". Das gilt für die Ergebniszeile im Assistenten, den Satz eines Timers und die Bereichsmeldungen.
 
