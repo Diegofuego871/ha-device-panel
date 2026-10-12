@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.24.0] - 2026-10-12
+
+Settings open full screen on the phone.
+
+### Changed
+
+- On the phone the settings now fill the whole screen (like the window of all timers) instead of a sheet that leaves a strip of the list visible at the top. On wide screens nothing changes.
+
 ## [2.23.1] - 2026-10-12
 
 Automatic updates install as soon as a version is found.
@@ -2814,6 +2822,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.0
 [2.23.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.1
 [2.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.0
 [2.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.22.0

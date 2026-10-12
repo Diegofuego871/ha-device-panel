@@ -63,6 +63,9 @@ for (const mobile of [false, true]) {
     set.push(await h("settings"));
   }
   same("Einstellungen", set);
+  // Handy: Einstellungen als Vollbild (2.24.0), Desktop: Blatt mit Rand
+  const box = await ev(`const q = r.querySelector("dialog.settings").getBoundingClientRect(); return [Math.round(q.width), Math.round(q.height), Math.round(q.left), Math.round(q.top), innerWidth, innerHeight]`);
+  check(`[${tag}] Einstellungen: ${mobile ? "Vollbild" : "nicht Vollbild"}`, mobile ? box[0] === box[4] && box[1] === box[5] && box[2] === 0 && box[3] === 0 : box[0] < box[4] && box[1] < box[5], JSON.stringify(box));
   await ev(`const d=r.querySelector("dialog.settings"); if (d.open) d.close();`);
 
   // Puls-Fenster ohne und mit gewähltem Unterbruch
