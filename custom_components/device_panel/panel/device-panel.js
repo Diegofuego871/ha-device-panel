@@ -6184,6 +6184,13 @@ class DevicePanel extends HTMLElement {
     this._loadTmAll();
   }
 
+  // Die Liste wurde ohne den Zwischenspeicher von setHtml verändert (Suche tippen, Ausklappen): beim nächsten vollen Neuzeichnen darf
+  // dieser nicht "unverändert" melden, sonst bliebe die alte Liste stehen (Suche leeren zeigte nach dem Tippen die Trefferliste weiter)
+  _tmAllStale(dlg) {
+    const body = dlg.querySelector("[data-tma-body]");
+    if (body) lastHtml.delete(body);
+  }
+
   _closeTmAll() {
     const dlg = this.shadowRoot.querySelector("dialog.tmall-dlg");
     this._tmAll = null;
@@ -6258,6 +6265,9 @@ class DevicePanel extends HTMLElement {
         all.query = "";
         all.sopen = {};
         this._renderTmAll();
+        // Hat das Feld den Fokus, behält das Neuzeichnen seinen Text: ausdrücklich leeren
+        const field = dlg.querySelector("input[data-lsearch]");
+        if (field) field.value = "";
         return;
       }
       const btn = ev.target.closest("button[data-tma]");
@@ -6280,6 +6290,7 @@ class DevicePanel extends HTMLElement {
         else ui.foldAll(all, this._devices);
         const zone = dlg.querySelector("[data-tm-all-zone]");
         if (zone) zone.innerHTML = ui.overviewListHtml(all, this._devices);
+        this._tmAllStale(dlg);
       } else if (action === "timer-edit") {
         ui.open(btn.dataset.device, true);
         ui.editWhenLoaded(btn.dataset.id);
@@ -6314,6 +6325,7 @@ class DevicePanel extends HTMLElement {
       // Nur die Liste neu zeichnen, das Suchfeld behält Fokus und Cursor
       const zone = dlg.querySelector("[data-tm-all-zone]");
       if (zone) zone.innerHTML = this._timers.overviewListHtml(all, this._devices);
+      this._tmAllStale(dlg);
       const cnt = dlg.querySelector(".list-search .n");
       if (cnt && all.shown) cnt.textContent = all.shown.filtering ? this._t("listSearchOf", all.shown.n, all.shown.total) : "";
       const x = dlg.querySelector("[data-tma-clear]");

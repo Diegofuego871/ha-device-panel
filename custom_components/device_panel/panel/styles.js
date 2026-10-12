@@ -5,6 +5,9 @@
  */
 export const PANEL_CSS = `
 :host {
+  /* iOS vergrössert sonst die Schrift einzelner Textblöcke je nach Inhalt (Timer-Fenster: Einleitung grösser, wenn die Liste leer ist) */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   --dp-bg: var(--primary-background-color, #f4f6f9);
   --dp-card: var(--card-background-color, #fff);
   --dp-text: var(--primary-text-color, #212121);

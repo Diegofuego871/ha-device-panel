@@ -21,6 +21,11 @@ Lieblings-Timer (Herz), und der Titel in der Kopfzeile entfällt nur noch auf de
 - Der Titel "Geräte" in der Kopfzeile ist auf breiten Bildschirmen (ab 700 px) wieder sichtbar; auf dem Handy bleibt er weg, wie in 2.25.0. Der Timer-Knopf bleibt auf beiden mittig.
 - Dauern bei Timern werden genau angezeigt, bis auf die Sekunde, statt gerundet: 690 Minuten lauten jetzt "11 Std. 30 Min." (vorher "11 Std."), 90 Sekunden "1 Min. 30 Sek.". Das gilt für die Ergebniszeile im Assistenten, den Satz eines Timers und die Bereichsmeldungen.
 
+### Behoben
+
+- Fenster mit allen Timern auf dem iPhone: Der Einleitungstext über dem Suchfeld änderte seine Grösse je nach Liste (grösser und dreizeilig bei leerer Liste), und Suchfeld und Reiterleiste verschoben sich. Das Panel schaltet jetzt die automatische Textvergrösserung von iOS ab, damit bleiben Text und Reiterleiste auf jedem Reiter gleich gross und gleich hoch.
+- Fenster mit allen Timern: Nach dem Tippen einer Suche konnte das Kreuz im Suchfeld die alten Treffer stehen lassen (die Liste wurde nicht neu gezeichnet, weil sie unverändert aussah). Behoben; das gilt auch nach dem Auf- und Zuklappen von Geräten.
+
 ## [2.25.0] - 2026-10-12
 
 Panel-Updates (Uhrzeit der täglichen Prüfung, Push-Meldung, roter Punkt bei ausstehendem Neustart) und eine schlankere Kopfzeile ohne Titel.

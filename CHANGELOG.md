@@ -21,6 +21,11 @@ Favorite timers (heart), and the title in the header only disappears on the phon
 - The title "Devices" in the header is visible again on wide screens (from 700 px); on the phone it stays gone, as in 2.25.0. The timer button stays centred on both.
 - Timer durations are shown exactly, down to the second, instead of being rounded: 690 minutes now read "11 h 30 min" (before "11 h"), 90 seconds "1 min 30 s". This applies to the result line of the assistant, the sentence of a timer, and the range messages.
 
+### Fixed
+
+- Window with all timers on iPhone: the intro text above the search field changed its size depending on the list (larger and three lines with an empty list), which moved the search field and the tab bar. The panel now turns off the automatic text enlargement of iOS, so the text and the tab bar keep the same size and height on every tab.
+- Window with all timers: after typing a search, the cross in the search field could leave the old hits on screen (the list was not redrawn when it looked unchanged). Fixed; it also applies after expanding or collapsing devices.
+
 ## [2.25.0] - 2026-10-12
 
 Panel updates (time of the daily check, push notification, red dot while a restart is pending) and a leaner header without the title.

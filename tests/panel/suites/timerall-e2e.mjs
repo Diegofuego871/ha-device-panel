@@ -48,6 +48,17 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Aktionen ${mobile ? "mit 44 px Trefferhöhe" : "unverändert"}`, await ev(`const hs = [...r.querySelectorAll("dialog.tmall-dlg .mg-acts .linkbtn, dialog.tmall-dlg .mg-dfoot .linkbtn")].map((e) => e.getBoundingClientRect().height); return hs.length > 0 && hs.every((h) => ${mobile ? "h >= 43.5" : "h < 40"})`));
     await p.screenshot({ path: `${outDir}/timerall-${tag.replace("/", "-")}.png` });
 
+    // Die Reiterleiste bleibt auf derselben Höhe, die Schrift der Einleitung gleich gross, egal was die Liste zeigt (2.26.0)
+    const geo = () => ev(`const d = r.querySelector("dialog.tmall-dlg"); return JSON.stringify([Math.round(d.querySelector(".mg-filter").getBoundingClientRect().top), getComputedStyle(d.querySelector(".mg-note")).fontSize, Math.round(d.querySelector(".mg-note").getBoundingClientRect().height)])`);
+    const geoAll = await geo();
+    await tap('dialog.tmall-dlg [data-tma="timer-filter"][data-v="running"]');
+    await wait(`return r.querySelector("dialog.tmall-dlg .mg-none")`);
+    const geoNone = await geo();
+    check(`[${tag}] Reiterleiste gleich hoch und Einleitung gleich gross, auch bei leerer Liste`, geoAll === geoNone, `${geoAll} / ${geoNone}`);
+    check(`[${tag}] text-size-adjust 100 %`, await ev(`const c = getComputedStyle(r.host); return (c.webkitTextSizeAdjust || c.textSizeAdjust) === "100%"`));
+    await tap('dialog.tmall-dlg [data-tma="timer-filter"][data-v="all"]');
+    await wait(`return r.querySelectorAll("dialog.tmall-dlg .mg-dcard").length > 0`);
+
     // Suche und Filter
     await ev(`r.querySelector('dialog.tmall-dlg input[data-lsearch="timers"]').focus()`);
     await p.keyboard.type("nacht");
