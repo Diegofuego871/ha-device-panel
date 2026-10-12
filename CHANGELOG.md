@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.25.0] - 2026-10-12
 
-Panel updates (time of the daily check, push notification, red dot while a restart is pending) and a leaner header without the title.
+Panel updates (time of the daily check, push notification, red dot while a restart is pending) and a leaner header on the phone.
 
 ### Changed
 
-- The visible title "Devices" above the list is gone (the application is already called "Device Panel"); the logo stays and the search field takes over the space. The title remains for screen readers.
+- On the phone the visible title "Devices" above the list is gone (the application is already called "Device Panel" right above it); the logo stays and the search field takes over the space, the timer button stays centred. The title remains for screen readers; on wide screens it stays visible.
 
 ### Added
 

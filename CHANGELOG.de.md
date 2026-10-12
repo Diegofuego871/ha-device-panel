@@ -9,11 +9,11 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.25.0] - 2026-10-12
 
-Panel-Updates (Uhrzeit der täglichen Prüfung, Push-Meldung, roter Punkt bei ausstehendem Neustart) und eine schlankere Kopfzeile ohne Titel.
+Panel-Updates (Uhrzeit der täglichen Prüfung, Push-Meldung, roter Punkt bei ausstehendem Neustart) und eine schlankere Kopfzeile auf dem Handy.
 
 ### Geändert
 
-- Der sichtbare Titel "Geräte" über der Liste entfällt (die Anwendung heisst schon "Device Panel"); das Logo bleibt, das Suchfeld übernimmt den Platz. Für Screenreader bleibt der Titel erhalten.
+- Auf dem Handy entfällt der sichtbare Titel "Geräte" über der Liste (die Anwendung heisst direkt darüber schon "Device Panel"); das Logo bleibt, das Suchfeld übernimmt den Platz, der Timer-Knopf bleibt mittig. Für Screenreader bleibt der Titel erhalten; auf breiten Bildschirmen bleibt er sichtbar.
 
 ### Hinzugefügt
 
