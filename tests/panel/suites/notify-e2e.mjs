@@ -25,6 +25,7 @@ const TEXT = {
     outageShort: "Sobald \"Erst melden nach\" um ist, an das Ziel im Reiter \"Übersicht\".",
     bFields: "Stand|Bereich|Integration|Hersteller / Modell", bTitle: "🪫 Batterie schwach: Temperatur Keller", bText: "0 % · Keller", bTextInteg: "0 % · Keller · BTHome",
     popBatPushOff: "Push für die Integration aus", muted: /^Stumm bis /, notifyOn: "Globale Einstellung",
+    stdTarget: "Standard (notify.mobile_app_testhandy)", stdTargetNone: "Standard (kein Ziel)", recipient: "Empfänger",
   },
   en: {
     sum0: "Offline after 2 min, no push · Battery low from 15 %, no push",
@@ -38,6 +39,7 @@ const TEXT = {
     outageShort: "Once \"Report only after\" has passed, to the target in the tab \"Overview\".",
     bFields: "Level|Area|Integration|Manufacturer / model", bTitle: "🪫 Low battery: Temperatur Keller", bText: "0 % · Keller", bTextInteg: "0 % · Keller · BTHome",
     popBatPushOff: "Push off for the integration", muted: /^Muted until /, notifyOn: "Global setting",
+    stdTarget: "Default (notify.mobile_app_testhandy)", stdTargetNone: "Default (no target)", recipient: "Recipient",
   },
 };
 
@@ -185,12 +187,28 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Zusammenfassung mit Push`, (await sum("monitor")) === T.sumPush, await sum("monitor"));
     await p.screenshot({ path: `${outDir}/notify-battery-${tag.replace("/", "-")}.png` });
 
+    // Eigenes Ziel je Reiter (2.18.0): Zeile "Empfänger" in Ausfall, Batterie, Laden, Neu, Updates; Standard folgt dem Ziel der Übersicht
+    // Der Reiterwechsel kann mit einem Neuaufbau zusammenfallen ("nicht mehr im DOM"): dann nochmals
+    const tabAgain = async (key) => { for (let i = 0; ; i++) { try { return await tab(key); } catch (err) { if (i >= 4) throw err; await p.waitForTimeout(400); } } };
+    await p.waitForTimeout(500);
+    for (const topic of ["outage", "charge", "new", "updates", "battery"]) {
+      await tabAgain(topic);
+      check(`[${tag}] ${topic}: Zeile "${T.recipient}", Standard = "${T.stdTarget}", kein "Kein Ziel" in der Liste`, await wait(`const s=r.querySelector('select[data-opt="notify_service_${topic}"]'); return !!s && s.value === "" && s.options[0].textContent === ${JSON.stringify(T.stdTarget)} && ![...s.options].some((o) => o.value === "none") && s.closest(".opt").querySelector(".opt-label").textContent.trim() === ${JSON.stringify(T.recipient)}`));
+    }
+    await tabAgain("charge");
+    check(`[${tag}] Empfänger liegt direkt unter der Überschrift der Meldungen`, await ev(`const o=r.querySelector('select[data-opt="notify_service_charge"]').closest(".opt"); return o.previousElementSibling?.classList.contains("mon-grp")`));
+    await pick('select[data-opt="notify_service_charge"]', "notify.familie");
+    check(`[${tag}] Laden: eigenes Ziel gewählt, Zeile als geändert markiert, Standard bleibt wählbar`, await wait(`const s=r.querySelector('select[data-opt="notify_service_charge"]'); return s.value === "notify.familie" && s.closest(".opt").classList.contains("changed") && [...s.options].some((o) => o.value === "")`));
+    await ev(`r.querySelector('select[data-opt="notify_service_charge"]').closest(".opt").scrollIntoView({ block: "center" })`);
+    await p.screenshot({ path: `${outDir}/notify-target-${tag.replace("/", "-")}.png` });
+    check(`[${tag}] Reiter "Laden" hat den Punkt für geändert`, await wait(`return r.querySelector('.mon-tab[data-key="charge"]').classList.contains("chg")`));
+
     await tap('dialog.settings [data-set="save"]');
     const sorted = (o) => JSON.stringify(Object.fromEntries(Object.entries(o || {}).sort()));
     const expect = {
       battery_fields: ["battery", "model"], battery_push: true, battery_push_exclude_integrations: ["zha"],
       notify_delay: 5, notify_exclude_integrations: ["bthome"], notify_fields: ["integration", "since", "battery"], notify_outage: true,
-      notify_service: "notify.mobile_app_testhandy", outage_persistent: true, persistent_exclude_integrations: ["zha"],
+      notify_service: "notify.mobile_app_testhandy", notify_service_charge: "notify.familie", outage_persistent: true, persistent_exclude_integrations: ["zha"],
     };
     const saved = await wait(`return r.querySelector(".set-count")?.classList.contains("saved")`);
     check(`[${tag}] gespeichert`, saved && sorted((await calls("device_panel/set_options")).at(-1)?.values) === sorted(expect), JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values));

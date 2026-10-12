@@ -340,11 +340,11 @@ const UPDATE_KINDS = ["core", "addons", "hacs", "devices"];
 // für den Punkt am Reiter und das Etikett "geändert" des Abschnitts.
 const MON_TAB_KEYS = {
   overview: ["notify_service", "notify_click_target"],
-  outage: ["offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "emoji_outage", "emoji_group", "emoji_online", "reset_offline", "reset_notify"],
-  charge: ["notify_charge", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations", "emoji_charge", "emoji_charge_stop"],
-  battery: ["battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "emoji_battery", "reset_battery"],
-  new: ["notify_new", "new_window", "new_persistent", "new_fields", "emoji_new"],
-  updates: ["notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include", "emoji_updates"],
+  outage: ["notify_service_outage", "offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "emoji_outage", "emoji_group", "emoji_online", "reset_offline", "reset_notify"],
+  charge: ["notify_service_charge", "notify_charge", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations", "emoji_charge", "emoji_charge_stop"],
+  battery: ["notify_service_battery", "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "emoji_battery", "reset_battery"],
+  new: ["notify_service_new", "notify_new", "new_window", "new_persistent", "new_fields", "emoji_new"],
+  updates: ["notify_service_updates", "notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include", "emoji_updates"],
   sig: ["signal_low", "reset_signal"],
   // Magic Push (seit 2.10.0): die Meldungen gehören den Geräten und werden sofort gespeichert, nicht mit "Speichern"
   magic: [],
@@ -5388,13 +5388,14 @@ class DevicePanel extends HTMLElement {
       // Während der Eingabe ungültig: der gespeicherte Wert gilt weiter.
       const errors = this._settingsErrors();
       const num = (k) => (errors[k] ? this._settings?.data?.values?.[k] : d[k]);
-      const target = Boolean(d.notify_service && d.notify_service !== "none");
+      const tOut = this._hasTarget(d, "outage");
+      const tBat = this._hasTarget(d, "battery");
       return this._t("sumMonitor", {
         offline: num("offline_after"),
-        push: target && d.notify_outage,
+        push: tOut && d.notify_outage,
         delay: num("notify_delay"),
         battery: num("battery_low"),
-        batPush: target && d.battery_push,
+        batPush: tBat && d.battery_push,
         daily: d.battery_push_mode === "daily" ? num("battery_push_time") : null,
       });
     }
@@ -5937,13 +5938,19 @@ class DevicePanel extends HTMLElement {
       <div class="opt-short">${escape(items.length ? text : t("diffIntegNone"))}</div></div>`;
   }
 
+  // Gibt es für die Meldungen dieses Reiters (outage, battery, charge, new, updates) ein Ziel: das eigene, sonst das globale (seit 2.18.0)
+  _hasTarget(d, topic) {
+    const target = d[`notify_service_${topic}`] || d.notify_service;
+    return Boolean(target && target !== "none");
+  }
+
   _monOverviewHtml(d, errors, ui) {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
     // Während der Eingabe ungültig: der gespeicherte Wert gilt weiter.
     const val = (k) => (errors[k] ? st.data.values[k] : d[k]);
-    const target = Boolean(d.notify_service && d.notify_service !== "none");
-    const reason = target ? t("tlSwitchedOff") : t("tlNoTarget");
+    const tg = (topic) => this._hasTarget(d, topic);
+    const reasonFor = (topic) => (tg(topic) ? t("tlSwitchedOff") : t("tlNoTarget"));
     const diff = this._monDiff(d);
     const chip = (key, label) =>
       `<button type="button" class="mon-chip${d[key] ? " on" : ""}" data-set="chip" data-key="${key}" aria-pressed="${Boolean(d[key])}">${d[key] ? mdi("check", 14) : ""}${escape(label)}</button>`;
@@ -5961,27 +5968,28 @@ class DevicePanel extends HTMLElement {
     const lane = (icon, cls, title, tab, tl, chips, diffHtml) =>
       `<div class="lane" data-lane="${tab}"><div class="lane-head"><span class="lane-ic ${cls}">${mdi(icon, 16)}</span><span class="lane-t">${escape(title)}</span>
         <button type="button" class="lnk" data-set="tab" data-key="${tab}">${escape(t("laneEdit"))}</button></div>${tl}<div class="lane-chips">${chips}</div>${diffHtml}</div>`;
-    const outTl = this._ptlHtml(this._outageRows(val("offline_after"), val("notify_delay"), target && d.notify_outage, reason));
+    const outTl = this._ptlHtml(this._outageRows(val("offline_after"), val("notify_delay"), tg("outage") && d.notify_outage, reasonFor("outage")));
     const daily = d.battery_push_mode === "daily";
-    const batPush = target && d.battery_push;
+    const batPush = tg("battery") && d.battery_push;
     const batTl = this._tlHtml(
       [
         { at: 14, title: t("tlLow", val("battery_low")), sub: t("tlRed") },
         batPush
           ? { at: 80, cls: "mk-p", title: daily ? t("tlDaily", val("battery_push_time")) : t("tlInstant"), sub: daily ? t(d.battery_push_daily === "all" ? "tlDailyAll" : "tlDailyNew") : t("tlInstantSub") }
-          : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: reason },
+          : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: reasonFor("battery") },
       ],
       "mtl-b"
     );
-    const warn = !target && (d.notify_outage || d.notify_online || d.battery_push || d.notify_new || d.notify_charge || d.notify_updates) ? t("noTargetWarn") : null;
-    const newTl = this._ptlHtml(this._newRows(val("new_window"), target && d.notify_new, reason), false, "tlFound");
+    // Ohne Ziel kommt kein Push: Warnung, sobald ein Reiter mit eingeschaltetem Push weder ein eigenes noch das globale Ziel hat
+    const warn = [["outage", d.notify_outage || d.notify_online], ["battery", d.battery_push], ["new", d.notify_new], ["charge", d.notify_charge], ["updates", d.notify_updates]].some(([topic, on]) => on && !tg(topic)) ? t("noTargetWarn") : null;
+    const newTl = this._ptlHtml(this._newRows(val("new_window"), tg("new") && d.notify_new, reasonFor("new")), false, "tlFound");
     // Laden (seit 1.34.0): Anstieg erkennt das Laden, "Voll ab" löst den Push aus. Standard aus.
     const chargeTl = this._tlHtml(
       [
         { at: 14, title: t("tlChargeRise", val("charge_rise")), sub: t("tlChargeRiseSub") },
-        target && d.notify_charge
+        tg("charge") && d.notify_charge
           ? { at: 80, cls: "mk-p", title: t("tlChargeFull", val("charge_full")), sub: t("tlChargeFullSub") }
-          : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: target ? t("tlSwitchedOff") : t("tlNoTarget") },
+          : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: reasonFor("charge") },
       ],
       "mtl-b"
     );
@@ -6001,11 +6009,11 @@ class DevicePanel extends HTMLElement {
     const updMode = d.updates_mode || "daily";
     const updTime = val("updates_time") || "";
     const updPush =
-      target && d.notify_updates
+      tg("updates") && d.notify_updates
         ? updMode === "instant"
           ? { at: 80, cls: "mk-p", title: t("tlUpdWindow", val("updates_window")), sub: t("tlUpdWindowSub") }
           : { at: 80, cls: "mk-p", title: updMode === "weekly" ? t("tlWeekly", updTime) : t("tlDaily", updTime), sub: t("tlUpdAllSub") }
-        : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: reason };
+        : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: reasonFor("updates") };
     const updTl = this._tlHtml([{ at: 14, title: t("tlUpdOpen"), sub: t("tlUpdOpenSub") }, updPush], "mtl-b");
     const updKinds = UPDATE_KINDS.filter((k) => (d.updates_kinds || []).includes(k)).map((k) => t(`updKind_${k}`));
     const updOwn = (d.updates_exclude || []).length + (d.updates_include || []).length;
@@ -6035,7 +6043,7 @@ class DevicePanel extends HTMLElement {
   _monOutageHtml(d, changes, errors, ui) {
     const t = (k, ...a) => this._t(k, ...a);
     const short = this._delayShort(errors);
-    const target = Boolean(d.notify_service && d.notify_service !== "none");
+    const target = this._hasTarget(d, "outage");
     const oa = d.offline_after;
     const nd = d.notify_delay;
     const max = Math.max(Number.isInteger(oa) ? oa : 0, Number.isInteger(nd) ? nd : 0);
@@ -6054,6 +6062,7 @@ class DevicePanel extends HTMLElement {
       ${ui.row("flaky_outages", t("optFlaky"), ui.num("flaky_outages", t("unitOutages"), t("optFlaky")), t("optFlakyShort"), t("optFlakyInfo"))}
       ${ui.row("startup_grace", t("optGrace"), ui.num("startup_grace", t("minuteUnit"), t("optGrace")), t("optGraceShort"), t("optGraceInfo"))}
       <div class="mon-grp">${escape(t("grpNotify"))}</div>
+      ${ui.targetRow("outage")}
       ${ui.row("notify_outage", t("optOutage"), ui.sw("notify_outage", t("optOutage")), target || !d.notify_outage ? t("optOutageShort") : null, null, target || !d.notify_outage ? null : t("noTargetWarn"))}
       ${ui.row("notify_online", t("optOnline"), ui.sw("notify_online", t("optOnline")), t("optOnlineShort"), null)}
       ${ui.row("notify_group", t("optGroup"), ui.sw("notify_group", t("optGroup")), t("optGroupShort"), null)}
@@ -6065,7 +6074,7 @@ class DevicePanel extends HTMLElement {
 
   _monBatteryHtml(d, changes, errors, ui) {
     const t = (k, ...a) => this._t(k, ...a);
-    const target = Boolean(d.notify_service && d.notify_service !== "none");
+    const target = this._hasTarget(d, "battery");
     const daily = d.battery_push_mode === "daily";
     const time = errors.battery_push_time ? this._settings.data.values.battery_push_time : d.battery_push_time;
     const push =
@@ -6080,6 +6089,7 @@ class DevicePanel extends HTMLElement {
     return `${tl}<div class="opt-error mtl-err" data-tl-error="battery_low" ${errors.battery_low ? "" : "hidden"}>${escape(errors.battery_low || "")}</div>
       <div class="opt-short mtl-note">${escape(t("tlBatNote"))}</div>
       <div class="mon-grp">${escape(t("grpNotify"))}</div>
+      ${ui.targetRow("battery")}
       ${ui.row("battery_push", t("optBatteryPush"), ui.sw("battery_push", t("optBatteryPush")), noTarget ? null : t("optBatteryPushShort"), t("optBatteryPushInfo"), noTarget ? t("noTargetWarn") : null)}
       ${
         d.battery_push
@@ -6109,7 +6119,7 @@ class DevicePanel extends HTMLElement {
   _chargeHtml(d, changes, errors, ui) {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
-    const target = Boolean(d.notify_service && d.notify_service !== "none");
+    const target = this._hasTarget(d, "charge");
     const noTarget = d.notify_charge && !target;
     const push = target && d.notify_charge;
     // Stufen 100, 95, 90, 80 oder "Eigener Wert" mit Zahlenfeld (seit 1.38.0).
@@ -6129,6 +6139,7 @@ class DevicePanel extends HTMLElement {
     let html = `${tl}<div class="opt-error mtl-err" data-tl-error="charge_rise,charge_full" ${errors.charge_rise || errors.charge_full ? "" : "hidden"}>${escape(errors.charge_rise || errors.charge_full || "")}</div>
       <div class="opt-short mtl-note">${escape(t("optChargeRiseShort"))} ${escape(t("optChargeFullShort"))}</div>
       <div class="mon-grp">${escape(t("grpNotify"))}</div>
+      ${ui.targetRow("charge")}
       ${ui.row("notify_charge", t("optCharge"), ui.sw("notify_charge", t("optCharge")), noTarget ? null : t("optChargeShort"), null, noTarget ? t("noTargetWarn") : null)}`;
     if (!d.notify_charge) return html;
     // Ladung beendet (seit 1.40.0): bleibt der Stand ohne Ladeanzeige am Gerät so lange unverändert, endet "lädt";
@@ -6210,7 +6221,7 @@ class DevicePanel extends HTMLElement {
   // Batterie: Zeitstrahl mit Sammelfenster, Meldung, Inhalt mit Vorschau, Abweichungen.
   _monNewHtml(d, changes, errors, ui) {
     const t = (k, ...a) => this._t(k, ...a);
-    const target = Boolean(d.notify_service && d.notify_service !== "none");
+    const target = this._hasTarget(d, "new");
     const noTarget = d.notify_new && !target;
     const tl = this._ptlHtml(
       [{ cls: "mk-p", title: t("optNewWindow"), html: this._tlInput(d, "new_window", t("minuteUnit"), t("optNewWindow"), errors.new_window, changes.has("new_window")), w: 100 }],
@@ -6220,6 +6231,7 @@ class DevicePanel extends HTMLElement {
     return `${tl}<div class="opt-error mtl-err" data-tl-error="new_window" ${errors.new_window ? "" : "hidden"}>${escape(errors.new_window || "")}</div>
       <div class="opt-short mtl-note">${escape(t("tlNewNote"))}</div>
       <div class="mon-grp">${escape(t("grpNotify"))}</div>
+      ${ui.targetRow("new")}
       ${ui.row("notify_new", t("optNewNotify"), ui.sw("notify_new", t("optNewNotify")), noTarget ? null : t("optNewNotifyShort"), null, noTarget ? t("noTargetWarn") : null)}
       ${ui.row("new_persistent", t("optPersistent"), ui.sw("new_persistent", t("optPersistent")), t("optNewPersistentShort"), null)}
       ${this._newFieldsHtml(d, changes)}
@@ -6238,7 +6250,7 @@ class DevicePanel extends HTMLElement {
 
   _monUpdatesHtml(d, changes, errors, ui) {
     const t = (k, ...a) => this._t(k, ...a);
-    const target = Boolean(d.notify_service && d.notify_service !== "none");
+    const target = this._hasTarget(d, "updates");
     const noTarget = d.notify_updates && !target;
     const mode = d.updates_mode || "daily";
     const time = d.updates_time || "";
@@ -6281,6 +6293,7 @@ class DevicePanel extends HTMLElement {
       : "";
     return `<div class="opt-short mtl-note">${escape(t("updNote"))}</div>
       <div class="mon-grp">${escape(t("grpNotify"))}</div>
+      ${ui.targetRow("updates")}
       ${ui.row("notify_updates", t("optUpdNotify"), ui.sw("notify_updates", t("optUpdNotify")), noTarget ? null : t("optUpdNotifyShort"), null, noTarget ? t("noTargetWarn") : null)}
       ${
         d.notify_updates
@@ -6376,9 +6389,9 @@ class DevicePanel extends HTMLElement {
     const gOff = val("offline_after");
     const gDelay = val("notify_delay");
     const eff = Number.isInteger(off) ? off : gOff;
-    const target = Boolean(d.notify_service && d.notify_service !== "none");
+    const tgt = (topic) => this._hasTarget(d, topic);
     const has = (key) => (d[key] || []).includes(dom);
-    const pushOn = target && d.notify_outage && !has("notify_exclude_integrations");
+    const pushOn = tgt("outage") && d.notify_outage && !has("notify_exclude_integrations");
     const fmt = (m) => t("offlineMin", m);
     const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
     const origin = (own, would) =>
@@ -6392,9 +6405,9 @@ class DevicePanel extends HTMLElement {
     let tl;
     if (unmon) tl = `<div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("integUnmonInfo"))}</p></div></div>`;
     else {
-      const reason = target ? t("tlSwitchedOff") : t("tlNoTarget");
+      const reason = tgt("outage") ? t("tlSwitchedOff") : t("tlNoTarget");
       const later = pushOn && gDelay < eff;
-      const rows = this._outageRows(eff, gDelay, pushOn, has("notify_exclude_integrations") && target && d.notify_outage ? t("tlIntegOff") : reason, later ? gDelay : null);
+      const rows = this._outageRows(eff, gDelay, pushOn, has("notify_exclude_integrations") && tgt("outage") && d.notify_outage ? t("tlIntegOff") : reason, later ? gDelay : null);
       tl = this._ptlHtml(rows) + (later ? `<div class="opt-short mtl-note">${escape(t("integPushLater", fmt(eff)))}</div>` : "");
     }
     // Ausgefallen nach: Standard oder feste Zeiten; "Nicht überwachen" ist der Schalter darüber.
@@ -6409,7 +6422,7 @@ class DevicePanel extends HTMLElement {
     // je Reiter die Grafik wie im globalen Reiter (hier mit den für die Integration wirksamen Werten).
     const wrap = (h) => `<div class="${unmon ? "mon-dis" : ""}">${h}</div>`;
     const empty = (key) => `<div class="opt-short mon-empty">${escape(t(key))}</div>`;
-    const reasonOf = (excluded) => (excluded ? t("tlIntegOff") : target ? t("tlSwitchedOff") : t("tlNoTarget"));
+    const reasonOf = (excluded, topic) => (excluded ? t("tlIntegOff") : tgt(topic) ? t("tlSwitchedOff") : t("tlNoTarget"));
     // Ausfall
     const outHtml =
       tl +
@@ -6419,7 +6432,7 @@ class DevicePanel extends HTMLElement {
       wrap(
         opt(!same(Number.isInteger(off) ? off : null, Number.isInteger((saved.offline_after_integrations || {})[dom]) ? saved.offline_after_integrations[dom] : null), t("optOfflineAfter"), offSel, origin(Number.isInteger(off), fmt(gOff))) +
           listSw("notify_exclude_integrations", t("optPushOutage")) +
-          (target && d.notify_outage ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integPushGlobalOff" : "noTargetWarn"))}</div>`) +
+          (tgt("outage") && d.notify_outage ? "" : `<div class="opt-short mon-hint">${escape(t(tgt("outage") ? "integPushGlobalOff" : "noTargetWarn"))}</div>`) +
           listSw("persistent_exclude_integrations", t("optPersistent"))
       );
     // Batterie und Laden: nur sinnvoll mit Batteriegeräten oder eigener Einstellung (zum Zurücksetzen).
@@ -6445,7 +6458,7 @@ class DevicePanel extends HTMLElement {
           : ""
       }</span>`;
       // Grafik wie im globalen Reiter: Schwelle (der Integration oder global) und Push
-      const batPushOn = target && d.battery_push && !has("battery_push_exclude_integrations");
+      const batPushOn = tgt("battery") && d.battery_push && !has("battery_push_exclude_integrations");
       const daily = d.battery_push_mode === "daily";
       const lowMark = mode === "off" ? { at: 14, cls: "mk-off", title: t("devBatOff"), sub: "" } : { at: 14, title: t("tlLow", mode === "own" ? b : std), sub: t("tlRed") };
       const batTl = this._tlHtml(
@@ -6453,7 +6466,7 @@ class DevicePanel extends HTMLElement {
           lowMark,
           batPushOn && mode !== "off"
             ? { at: 80, cls: "mk-p", title: daily ? t("tlDaily", val("battery_push_time")) : t("tlInstant"), sub: daily ? t(d.battery_push_daily === "all" ? "tlDailyAll" : "tlDailyNew") : t("tlInstantSub") }
-            : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: mode === "off" ? t("devBatOff") : reasonOf(has("battery_push_exclude_integrations") && target && d.battery_push) },
+            : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: mode === "off" ? t("devBatOff") : reasonOf(has("battery_push_exclude_integrations") && tgt("battery") && d.battery_push, "battery") },
         ],
         "mtl-b"
       );
@@ -6463,7 +6476,7 @@ class DevicePanel extends HTMLElement {
           opt(!same(b, (saved.battery_low_integrations || {})[dom]), t("optBatteryLow"), batSel, origin(mode !== "default", `${std} %`),
             `<div class="opt-error" data-bat-error ${errors.battery_low_integrations && bad ? "" : "hidden"}>${escape(bad ? errors.battery_low_integrations || "" : "")}</div>`, " bat-row") +
             listSw("battery_push_exclude_integrations", t("optBatPush")) +
-            (target && d.battery_push ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integBatPushGlobalOff" : "noTargetWarn"))}</div>`)
+            (tgt("battery") && d.battery_push ? "" : `<div class="opt-short mon-hint">${escape(t(tgt("battery") ? "integBatPushGlobalOff" : "noTargetWarn"))}</div>`)
         );
       // Laden (seit 1.32.0): derselbe Wert wie die Liste im Reiter "Laden"; Standard ist aus.
       const chargeOn = has("charge_integrations");
@@ -6476,9 +6489,9 @@ class DevicePanel extends HTMLElement {
       const chargeTl = this._tlHtml(
         [
           { at: 14, title: t("tlChargeRise", riseMap[dom] ?? gRise), sub: t("tlChargeRiseSub") },
-          target && d.notify_charge && chargeOn
+          tgt("charge") && d.notify_charge && chargeOn
             ? { at: 80, cls: "mk-p", title: t("tlChargeFull", fullMap[dom] ?? gFull), sub: t("tlChargeFullSub") }
-            : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: !chargeOn ? t("tlSwitchedOff") : target ? t("tlSwitchedOff") : t("tlNoTarget") },
+            : { at: 80, cls: "mk-off", title: t("tlNoPush"), sub: !chargeOn ? t("tlSwitchedOff") : tgt("charge") ? t("tlSwitchedOff") : t("tlNoTarget") },
         ],
         "mtl-b"
       );
@@ -6488,7 +6501,7 @@ class DevicePanel extends HTMLElement {
           opt(chargeOn !== (saved.charge_integrations || []).includes(dom), t("optCharge"),
             swi(`data-cinteg="${escape(dom)}"`, chargeOn, `${t("optCharge")}: ${item.name}`),
             origin(chargeOn, t("devChargeOff").toLowerCase())) +
-            (target && d.notify_charge ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integChargeGlobalOff" : "noTargetWarn"))}</div>`)
+            (tgt("charge") && d.notify_charge ? "" : `<div class="opt-short mon-hint">${escape(t(tgt("charge") ? "integChargeGlobalOff" : "noTargetWarn"))}</div>`)
         );
       // Eigenes "Voll ab" und eigener Anstieg der Integration (seit 1.35.0): ohne Wahl gilt der globale Wert, das Gerät geht vor.
       if (chargeOn) {
@@ -6524,13 +6537,13 @@ class DevicePanel extends HTMLElement {
       }
     }
     // Neue Geräte (seit 1.24.0): Override pro Integration; gilt auch bei "Nicht überwachen".
-    const newPush = target && d.notify_new && !has("new_exclude_integrations");
+    const newPush = tgt("new") && d.notify_new && !has("new_exclude_integrations");
     const newHtml =
-      this._ptlHtml(this._newRows(val("new_window"), newPush, reasonOf(has("new_exclude_integrations") && target && d.notify_new)), false, "tlFound") +
+      this._ptlHtml(this._newRows(val("new_window"), newPush, reasonOf(has("new_exclude_integrations") && tgt("new") && d.notify_new, "new")), false, "tlFound") +
       opt(has("new_exclude_integrations") !== (saved.new_exclude_integrations || []).includes(dom), t("optNewNotify"),
         `<label class="switch"><input type="checkbox" data-list="new_exclude_integrations" data-value="${escape(dom)}" ${has("new_exclude_integrations") ? "" : "checked"} aria-label="${escape(`${t("optNewNotify")}: ${item.name}`)}"><span></span></label>`,
         origin(has("new_exclude_integrations"))) +
-      (target && d.notify_new ? "" : `<div class="opt-short mon-hint">${escape(t(target ? "integNewGlobalOff" : "noTargetWarn"))}</div>`);
+      (tgt("new") && d.notify_new ? "" : `<div class="opt-short mon-hint">${escape(t(tgt("new") ? "integNewGlobalOff" : "noTargetWarn"))}</div>`);
     // Empfang (seit 1.17.0): Warnschwelle je Funkart der Integration; gilt auch bei
     // "Nicht überwachen", weil sie nur die Markierung betrifft.
     const sigRows = this._sigRowsHtml(d, dom);
@@ -6735,7 +6748,17 @@ class DevicePanel extends HTMLElement {
       sub: [x.area, x.integration].filter(Boolean).join(" · "),
       badge: `<span class="ibadge type">${typeIcon(x.type, 18)}</span>`,
     }));
-    const ui = { row, sw, select, num, targets, infoBtn };
+    // Eigenes Ziel je Reiter (seit 2.18.0): "Standard" folgt dem Ziel aus der Übersicht
+    const stdLabel = () => {
+      const global = d.notify_service;
+      if (!global || global === "none") return t("notifyStdNone");
+      return t("notifyStd", targets.find(([v]) => v === global)?.[1] || global);
+    };
+    const targetRow = (topic) => {
+      const key = `notify_service_${topic}`;
+      return row(key, t("optNotifyTargetTab"), select(key, [["", stdLabel()], ...targets.filter(([v]) => v !== "none")], t("optNotifyTargetTab")), t("optNotifyTargetTabShort"), null);
+    };
+    const ui = { row, sw, select, num, targets, infoBtn, targetRow };
     // Titel eines neuen Themas (seit 1.43.0): überall derselbe grosse Stil (.set-title, wie .mon-grp)
     const ttl = (key) => `<div class="set-title">${escape(t(key))}</div>`;
     const devTab = ["integrations", "types", "devs", "devset"].includes(st.sub?.devices) ? st.sub.devices : "integrations";

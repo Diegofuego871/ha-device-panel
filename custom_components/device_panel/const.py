@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "137"
+PANEL_VERSION = "138"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -210,6 +210,20 @@ PERSISTENT_BATTERY_ID = f"{DOMAIN}_battery"
 # das Gerät im Panel oder die Geräteseite von HA.
 CONF_NOTIFY_SERVICE = "notify_service"
 NOTIFY_NONE = "none"
+# Eigenes Ziel je Reiter (seit 2.18.0): leer = das globale Ziel aus der Übersicht, sonst ein notify-Dienst oder
+# eine notify-Entität; ein Reiter ohne eigenes Ziel folgt dem globalen. Schlüssel: Reiter -> Option.
+CONF_NOTIFY_SERVICE_OUTAGE = "notify_service_outage"
+CONF_NOTIFY_SERVICE_BATTERY = "notify_service_battery"
+CONF_NOTIFY_SERVICE_CHARGE = "notify_service_charge"
+CONF_NOTIFY_SERVICE_NEW = "notify_service_new"
+CONF_NOTIFY_SERVICE_UPDATES = "notify_service_updates"
+NOTIFY_TOPICS = {
+    "outage": CONF_NOTIFY_SERVICE_OUTAGE,
+    "battery": CONF_NOTIFY_SERVICE_BATTERY,
+    "charge": CONF_NOTIFY_SERVICE_CHARGE,
+    "new": CONF_NOTIFY_SERVICE_NEW,
+    "updates": CONF_NOTIFY_SERVICE_UPDATES,
+}
 CONF_NOTIFY_CLICK = "notify_click_target"
 # Push bei Ausfall (sofort, sobald ein Gerät als ausgefallen gilt) und bei
 # Rückkehr, Sammelausfall als eine Meldung; Standard aus, damit ein Update

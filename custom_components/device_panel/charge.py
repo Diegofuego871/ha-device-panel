@@ -39,13 +39,12 @@ from .const import (
     CONF_NOTIFY_CHARGE,
     CONF_NOTIFY_CHARGE_STOP,
     CONF_NOTIFY_CLICK,
-    CONF_NOTIFY_SERVICE,
     DOMAIN,
     NOTIFY_NONE,
     STORAGE_VERSION,
 )
 from .devices import device_charge_opts, device_settings, monitored_devices, primary_domain
-from .options_api import effective
+from .options_api import notify_target, effective
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -169,7 +168,7 @@ class ChargeNotifier:
         if device is None or not self.enabled(opts, hass, device):
             activity.record(hass, "info", "charge", "charge_full_off", name, dev, level=round(done["level"]), full=copts[CONF_CHARGE_FULL])
             return
-        if opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE:
+        if notify_target(opts, "charge") == NOTIFY_NONE:
             activity.record(hass, "warning", "charge", "charge_no_target", name, dev, level=round(done["level"]))
             return
         if done["seconds"] is not None:
@@ -252,7 +251,7 @@ class ChargeNotifier:
             stopped.append(dev)
             name = device.name_by_user or device.name or dev
             args = {"level": round(st["last"]), "minutes": copts[CONF_CHARGE_STALL], "full": copts[CONF_CHARGE_FULL]}
-            if opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE:
+            if notify_target(opts, "charge") == NOTIFY_NONE:
                 activity.record(hass, "info", "charge", "charge_stopped_no_target", name, dev, **args)
             elif not copts[CONF_NOTIFY_CHARGE_STOP]:
                 activity.record(hass, "info", "charge", "charge_stopped_push_off", name, dev, **args)
@@ -329,7 +328,7 @@ class ChargeNotifier:
         hass = self.hass
         opts = effective(hass)
         device = dr.async_get(hass).async_get(dev)
-        if device is None or opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE:
+        if device is None or notify_target(opts, "charge") == NOTIFY_NONE:
             return
         area = ar.async_get(hass).async_get_area(device.area_id) if device.area_id else None
         name = device.name_by_user or device.name or dev
@@ -338,7 +337,7 @@ class ChargeNotifier:
         if area:
             parts.append(area.name)
         await push.async_push(
-            hass, opts[CONF_NOTIFY_SERVICE], push.title(hass, opts, "charge_stop", "charge_stop_title", name=name), " · ".join(parts),
+            hass, notify_target(opts, "charge"), push.title(hass, opts, "charge_stop", "charge_stop_title", name=name), " · ".join(parts),
             push.notification_data(
                 hass, f"{DOMAIN}_charge_{dev}", push.device_url(opts[CONF_NOTIFY_CLICK], dev),
                 icon=await push_icon.async_integration_icon(hass, primary_domain(hass, device)),
@@ -349,12 +348,12 @@ class ChargeNotifier:
         hass = self.hass
         opts = effective(hass)
         device = dr.async_get(hass).async_get(dev)
-        if device is None or opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE:
+        if device is None or notify_target(opts, "charge") == NOTIFY_NONE:
             return
         area = ar.async_get(hass).async_get_area(device.area_id) if device.area_id else None
         name = device.name_by_user or device.name or dev
         await push.async_push(
-            hass, opts[CONF_NOTIFY_SERVICE], push.title(hass, opts, "charge", "charge_title", name=name), self.message(done, area.name if area else None),
+            hass, notify_target(opts, "charge"), push.title(hass, opts, "charge", "charge_title", name=name), self.message(done, area.name if area else None),
             push.notification_data(
                 hass, f"{DOMAIN}_charge_{dev}", push.device_url(opts[CONF_NOTIFY_CLICK], dev),
                 icon=await push_icon.async_integration_icon(hass, primary_domain(hass, device)),

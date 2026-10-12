@@ -8,7 +8,7 @@ stehen hier einmal und gelten für beide Oberflächen.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from typing import Any
 
 import re
@@ -108,6 +108,7 @@ from .const import (
     CONF_FLAKY_OUTAGES,
     CONF_NOTIFY_CLICK,
     CONF_NOTIFY_SERVICE,
+    NOTIFY_TOPICS,
     CONF_OFFLINE_AFTER,
     CONF_OFFLINE_INTEGRATIONS,
     CONF_SHOW_DISABLED,
@@ -374,6 +375,16 @@ def _notify_target(value: Any) -> str:
     return text
 
 
+def _notify_override(value: Any) -> str:
+    """Eigenes Ziel eines Reiters: leer = globales Ziel, sonst notify-Dienst oder -Entität."""
+    text = str(value or "").strip()
+    if not text or text == NOTIFY_NONE:
+        return ""
+    if not isinstance(value, str) or not _NOTIFY_RE.match(text):
+        raise vol.Invalid("notify-Dienst oder notify-Entität erwartet")
+    return text
+
+
 def charge_map(key: str):
     """Prüfung einer Zuordnung {Domain: ganze Zahl im Bereich der Option key} (eigene Lade-Werte pro Integration)."""
 
@@ -562,6 +573,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_SIGNAL_LOW_INTEGRATIONS): signal_integrations_map,
         vol.Optional(CONF_OFFLINE_INTEGRATIONS): offline_map,
         vol.Optional(CONF_NOTIFY_SERVICE): _notify_target,
+        **{vol.Optional(key): _notify_override for key in NOTIFY_TOPICS.values()},
         vol.Optional(CONF_AI_TASK): _ai_task,
         vol.Optional(CONF_AI_PROMPT): ai_prompt,
         vol.Optional(CONF_NOTIFY_CLICK): vol.In(CLICK_TARGETS),
@@ -647,6 +659,10 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
         values[CONF_OFFLINE_INTEGRATIONS] = {}
     target = str(options.get(CONF_NOTIFY_SERVICE) or "").strip()
     values[CONF_NOTIFY_SERVICE] = target if _NOTIFY_RE.match(target) else NOTIFY_NONE
+    # Eigenes Ziel je Reiter (seit 2.18.0): ungültig oder leer = das globale Ziel
+    for key in NOTIFY_TOPICS.values():
+        own = str(options.get(key) or "").strip()
+        values[key] = own if _NOTIFY_RE.match(own) else ""
     task = str(options.get(CONF_AI_TASK) or "").strip()
     values[CONF_AI_TASK] = task if _AI_TASK_RE.match(task) else ""
     try:
@@ -702,10 +718,16 @@ def exclusions(hass: HomeAssistant) -> tuple[set[str], set[str]]:
     return set(values[CONF_EXCLUDE_INTEGRATIONS]), set(values[CONF_EXCLUDE_TYPES])
 
 
-def notify_targets(hass: HomeAssistant, current: str) -> list[dict[str, Any]]:
+def notify_target(opts: Mapping[str, Any], topic: str) -> str:
+    """Ziel der Meldungen eines Reiters (outage, battery, charge, new, updates): das eigene, sonst das globale (seit 2.18.0)."""
+    return str(opts.get(NOTIFY_TOPICS[topic]) or "") or opts[CONF_NOTIFY_SERVICE]
+
+
+def notify_targets(hass: HomeAssistant, current: str, extra: Iterable[str] = ()) -> list[dict[str, Any]]:
     """
     Push-Ziele für Panel und Optionsdialog (wie unifi_dynamic): klassische
     notify-Dienste (auch Gruppen) und notify-Entitäten. "none" steht vorne.
+    extra: weitere gewählte Ziele (eigene Ziele der Reiter), die es nicht mehr geben könnte.
     """
     targets: list[dict[str, Any]] = [{"value": NOTIFY_NONE, "kind": "none"}]
     known: set[str] = set()
@@ -720,8 +742,9 @@ def notify_targets(hass: HomeAssistant, current: str) -> list[dict[str, Any]]:
         if entity_id not in known:
             targets.append({"value": entity_id, "kind": "entity"})
     # Ein früher gewähltes Ziel, das es nicht mehr gibt, bleibt wählbar.
-    if current not in {t["value"] for t in targets}:
-        targets.append({"value": current, "kind": "missing"})
+    for value in dict.fromkeys([current, *[e for e in extra if e]]):
+        if value not in {t["value"] for t in targets}:
+            targets.append({"value": value, "kind": "missing"})
     return targets
 
 

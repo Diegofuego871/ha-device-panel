@@ -379,6 +379,12 @@ HA-Nachbau prüfen.
   Meldung und "wieder normal" mit eigenem Titel und Inhalt stehen im selben Schritt, darunter Vorschau und "Test senden"
   (der Test kennt so Empfänger, Lautstärke und Wiederholung).
 
+## Empfänger pro Reiter (seit 2.18.0)
+
+- In den Reitern Ausfall, Batterie, Laden, Neu und Updates steht direkt unter der Überschrift "Meldung" die Zeile
+  "Empfänger" (normale Optionszeile mit Auswahl, `ui.targetRow`). Erster Eintrag "Standard (<globales Ziel>)" bzw.
+  "Standard (kein Ziel)"; "Kein Ziel" fehlt in der Liste. Die Zeile zählt wie jede Option für den Punkt am Reiter.
+
 ## Magic Push: ein Pfeil zum Auf- und Zuklappen (seit 2.17.1)
 
 - Zeile "Schritt n von 5 · Angabe" über den Balken hat eine feste Höhe (18 px, `.mg-stephead`), damit ein Emoji (iPhone: höher als der Text) die Balken nicht verschiebt; lange Angaben werden mit "…" gekürzt (seit 2.17.2).

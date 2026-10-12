@@ -484,6 +484,12 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
 - Verbindungsabbrüche still überbrücken, Polling im Hintergrund pausieren.
 - Statistik-Fenster mit Tabs, Zeitraum 24 Std./7/30 Tage, Loader.
 
+## Empfänger pro Reiter (seit 2.18.0)
+
+Das Push-Ziel (`notify_service`) ist die Vorgabe für alle Meldungen. Jeder Reiter mit Meldungen (Ausfall, Batterie, Laden,
+Neu, Updates) kann es mit `notify_service_<reiter>` überschreiben; leer folgt dem globalen. Es gibt keine Ziele pro
+Integration oder Gerät. Magic Push wählt sein Ziel weiter pro Meldung.
+
 ## Magic Push (seit 2.6.0, Wunsch des Nutzers)
 
 Eigene Meldungen pro Gerät ohne Automation, im vierten Reiter des Geräte-Popups. Der Assistent zum Anlegen und Bearbeiten öffnet seit 2.11.0 in einem eigenen Fenster (Vollbild auf dem Handy); der Reiter zeigt die Liste. Schritte seit 2.15.0: Bedingungen · Wie lange · Versand · Text · Name. Die Bedingung ist seit 2.15.0 ein Baum aus Und/Oder (eine Ebene Gruppen, höchstens 10 Bedingungen, 4 Gruppen), jede Bedingung mit eigener Entität, Art, Wert und eigenem Rücksetzwert; Dauer, Wiederholung und "wieder normal" gelten für das Ganze, Variable `{conditions}`. Seit 2.17.0 gibt es `reset_for_s`: "wieder normal" und eine neue Episode erst, wenn die Bedingung so lange durchgehend nicht mehr gilt (Vorgabe 0 = sofort; neue Meldungen im Assistenten starten mit 60 s). Bei "Und" verhindert `unavailable` die Meldung, bei "Oder" wird es übergangen.

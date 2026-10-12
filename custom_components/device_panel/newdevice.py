@@ -32,7 +32,6 @@ from .const import (
     CONF_NEW_WINDOW,
     CONF_NOTIFY_CLICK,
     CONF_NOTIFY_NEW,
-    CONF_NOTIFY_SERVICE,
     DOMAIN,
     NEW_RECENT_MAX,
     NOTIFY_NONE,
@@ -40,7 +39,7 @@ from .const import (
     STORAGE_VERSION,
 )
 from .devices import async_device_facts, primary_domain, shown_devices
-from .options_api import effective
+from .options_api import notify_target, effective
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -144,8 +143,8 @@ class NewDeviceNotifier:
         if not items:
             return
         for i in items:
-            activity.record(hass, "info", "new", "new_no_target" if opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE else "new_found", i["name"], i["id"])
-        if opts[CONF_NOTIFY_SERVICE] != NOTIFY_NONE:
+            activity.record(hass, "info", "new", "new_no_target" if notify_target(opts, "new") == NOTIFY_NONE else "new_found", i["name"], i["id"])
+        if notify_target(opts, "new") != NOTIFY_NONE:
             await self._async_push(opts, items)
         if opts[CONF_NEW_PERSISTENT]:
             self._update_persistent(items)
@@ -162,7 +161,7 @@ class NewDeviceNotifier:
 
     async def _async_push(self, opts: dict[str, Any], items: list[dict[str, Any]]) -> None:
         hass = self.hass
-        target = opts[CONF_NOTIFY_SERVICE]
+        target = notify_target(opts, "new")
         if len(items) > 1:
             # Mehrere: eine Sammelmeldung, je Gerät der Name, die Angaben in Klammern.
             lines = []

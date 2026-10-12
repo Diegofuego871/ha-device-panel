@@ -23,7 +23,6 @@ from homeassistant.util import dt as dt_util
 
 from . import activity, push
 from .const import (
-    CONF_NOTIFY_SERVICE,
     CONF_NOTIFY_UPDATES,
     CONF_UPDATES_EXCLUDE,
     CONF_UPDATES_INCLUDE,
@@ -40,7 +39,7 @@ from .const import (
     UPDATES_REPEATS,
     UPDATES_WEEKLY,
 )
-from .options_api import effective
+from .options_api import notify_target, effective
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -228,10 +227,10 @@ class UpdateNotifier:
         open_ids = {s.entity_id for s in hass.states.async_all("update") if s.state == "on"}
         self._known = {k: v for k, v in self._known.items() if k in open_ids}
         if items:
-            activity.record(hass, "info", "updates", "updates_no_target" if opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE else "updates_sent", "Home Assistant", count=len(items))
-        if items and opts[CONF_NOTIFY_SERVICE] != NOTIFY_NONE:
+            activity.record(hass, "info", "updates", "updates_no_target" if notify_target(opts, "updates") == NOTIFY_NONE else "updates_sent", "Home Assistant", count=len(items))
+        if items and notify_target(opts, "updates") != NOTIFY_NONE:
             await push.async_push(
-                hass, opts[CONF_NOTIFY_SERVICE], push.title(hass, opts, "updates", "update_title"), self.message(items),
+                hass, notify_target(opts, "updates"), push.title(hass, opts, "updates", "update_title"), self.message(items),
                 push.notification_data(hass, f"{DOMAIN}_updates", UPDATES_URL),
             )
         for item in items:

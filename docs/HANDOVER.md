@@ -3,7 +3,19 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.17.1, Magic Push: robuster bei Absturz und Neustart)
+## Stand (2.18.0, eigener Empfänger pro Reiter)
+
+- 2.18.0 (Wunsch des Nutzers, Screenshot "Überwachung und Meldungen"): Optionen `notify_service_outage|battery|charge|new|updates`
+  (`const.NOTIFY_TOPICS`), leer = das globale `notify_service`. `options_api.notify_target(opts, topic)` löst auf; die fünf
+  Module (`outage`, `battery`, `charge`, `newdevice`, `updates`) und `devices.py` (Push-Flags im Popup) benutzen es statt
+  `opts[CONF_NOTIFY_SERVICE]`. `values_from` macht ungültige Werte zu "", `PANEL_SCHEMA` nimmt leer oder `notify.*`, "none"
+  wird zu leer. `notify_targets(hass, current, extra)` und WS `get_options` führen eigene Ziele, die es nicht mehr gibt,
+  als "missing". Panel: `_hasTarget(d, topic)`, `ui.targetRow(topic)` (Zeile direkt unter "Meldung", Auswahl "Standard (…)" +
+  Ziele ohne "Kein Ziel"), Übersicht/Zusammenfassung/Integrationen rechnen je Reiter (`tg`, `tgt`). Magic Push hat sein
+  Ziel weiter pro Meldung. Die Live-Aktivität beim Laden (geplant, Version 2.19.0) folgt dem Ziel des Reiters "Laden".
+  Tests: `tests/test_notify_topics.py`, `notify-e2e`. 2.17.2 (Schrittbalken) ist nicht veröffentlicht, in 2.18.0 enthalten.
+
+## Stand davor (2.17.1, Magic Push: robuster bei Absturz und Neustart)
 
 - 2.17.1 (Frage des Nutzers zur Neustart-Festigkeit): `_fire` und `_resolve` schreiben mit `_save_now()` sofort
   (`async_save`, nicht mehr nur `async_delay_save(…, 5)`), damit ein Absturz nach dem Senden keine Doppelmeldung auslöst.

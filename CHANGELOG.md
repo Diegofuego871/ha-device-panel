@@ -7,7 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.18.0] - 2026-10-12
+
+Monitoring and notifications: an own recipient for each tab.
+
+### Added
+
+- Each tab with notifications (Outage, Battery, Charging, New, Updates) can now have its own recipient (requested by
+  the user). In the tab, directly under "Notification", there is a new row "Recipient". "Default" follows the target from
+  the tab "Overview" and is the starting point, so nothing changes for existing installations. Any other notify service,
+  group or entity can be chosen instead; "No target" is not offered there (to switch notifications off, use the switch
+  of the tab). A tab with its own target also sends when the global target is "No target". The overview timeline, the
+  list of integrations and the warning "Without a target no push is sent" take the tab's target into account. A target that
+  no longer exists stays selectable (marked as missing), like the global one.
+
 ## [2.17.2] - 2026-10-12
+
+Not released; included in 2.18.0.
 
 Magic Push: the step bars of the assistant stay at the same height.
 
@@ -2611,7 +2627,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.17.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.2
+[2.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.18.0
 [2.17.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.1
 [2.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.0
 [2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0

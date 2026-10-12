@@ -45,7 +45,6 @@ from .const import (
     CONF_NOTIFY_GROUP,
     CONF_NOTIFY_ONLINE,
     CONF_NOTIFY_OUTAGE,
-    CONF_NOTIFY_SERVICE,
     CONF_OUTAGE_PERSISTENT,
     CONF_PERSISTENT_EXCLUDE,
     DOMAIN,
@@ -57,7 +56,7 @@ from .const import (
     STORAGE_VERSION,
 )
 from .devices import async_device_facts, async_mute_device, device_settings, notify_muted_until, primary_domain
-from .options_api import effective
+from .options_api import notify_target, effective
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -200,7 +199,7 @@ class OutageNotifier:
             self._store.async_delay_save(self._data, 1)
         self._log_flush(opts, due, False, now)
         self._log_flush(opts, came_back or [], True, now)
-        if opts[CONF_NOTIFY_SERVICE] != NOTIFY_NONE:
+        if notify_target(opts, "outage") != NOTIFY_NONE:
             if due and opts[CONF_NOTIFY_OUTAGE]:
                 await self._async_push(opts, [x for x in due if self._pushable(opts, x[0], now)], online=False)
             if came_back and opts[CONF_NOTIFY_ONLINE]:
@@ -216,7 +215,7 @@ class OutageNotifier:
         for dev, value in items:
             device = registry.async_get(dev)
             name = (device.name_by_user or device.name or dev) if device is not None else dev
-            if opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE:
+            if notify_target(opts, "outage") == NOTIFY_NONE:
                 code = "no_target"
             elif not (opts[CONF_NOTIFY_ONLINE] if online else opts[CONF_NOTIFY_OUTAGE]):
                 code = "off"
@@ -251,7 +250,7 @@ class OutageNotifier:
     async def _async_push(self, opts: dict[str, Any], items: list[tuple[str, float]], online: bool) -> None:
         hass = self.hass
         dev_reg = dr.async_get(hass)
-        target = opts[CONF_NOTIFY_SERVICE]
+        target = notify_target(opts, "outage")
         info: list[dict[str, Any]] = []
         for dev, value in items:
             device = dev_reg.async_get(dev)

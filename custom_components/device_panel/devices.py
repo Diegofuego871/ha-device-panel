@@ -56,7 +56,6 @@ from .const import (
     CONF_NOTIFY_EXCLUDE,
     CONF_NOTIFY_ONLINE,
     CONF_NOTIFY_OUTAGE,
-    CONF_NOTIFY_SERVICE,
     CONF_OUTAGE_PERSISTENT,
     CONF_PERSISTENT_EXCLUDE,
     MONITOR_OFF,
@@ -82,7 +81,7 @@ from .const import (
     CONF_EXCLUDE_DEVICES,
     CONF_TYPE_INTEGRATIONS,
 )
-from .options_api import battery_threshold, effective, offline_after_for, signal_default
+from .options_api import battery_threshold, effective, notify_target, offline_after_for, signal_default
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -357,7 +356,7 @@ def _notify_default(opts: dict[str, Any], domain: str | None) -> dict[str, Any]:
     (Optionen, ohne Einstellung des Geräts); "integration" nennt sie, wenn sie
     von den globalen Schaltern abweicht.
     """
-    push_on = opts[CONF_NOTIFY_SERVICE] != NOTIFY_NONE and (opts[CONF_NOTIFY_OUTAGE] or opts[CONF_NOTIFY_ONLINE])
+    push_on = notify_target(opts, "outage") != NOTIFY_NONE and (opts[CONF_NOTIFY_OUTAGE] or opts[CONF_NOTIFY_ONLINE])
     ex_push = bool(domain) and domain in opts[CONF_NOTIFY_EXCLUDE]
     ex_pers = bool(domain) and domain in opts[CONF_PERSISTENT_EXCLUDE]
     return {
@@ -388,7 +387,7 @@ def _battery_fields(
         "battery_default": {
             "pct": own if own is not None else opts[CONF_BATTERY_LOW],
             "integration": domain if own is not None else None,
-            "push": bool(opts[CONF_BATTERY_PUSH]) and opts[CONF_NOTIFY_SERVICE] != NOTIFY_NONE and not push_off,
+            "push": bool(opts[CONF_BATTERY_PUSH]) and notify_target(opts, "battery") != NOTIFY_NONE and not push_off,
             "push_integration": domain if push_off else None,
         },
     }

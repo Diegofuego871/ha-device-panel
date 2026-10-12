@@ -43,7 +43,6 @@ from .const import (
     CONF_BATTERY_PUSH_MODE,
     CONF_BATTERY_PUSH_TIME,
     CONF_NOTIFY_CLICK,
-    CONF_NOTIFY_SERVICE,
     DAILY_ALL,
     DOMAIN,
     NOTIFY_NONE,
@@ -52,7 +51,7 @@ from .const import (
     STORAGE_VERSION,
 )
 from .devices import async_device_facts, battery, device_battery_threshold, device_settings, monitored_devices, primary_domain
-from .options_api import effective
+from .options_api import notify_target, effective
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -140,7 +139,7 @@ class BatteryWatch:
         ids = list(self._low) if opts[CONF_BATTERY_PUSH_DAILY] == DAILY_ALL else [d for d in self._pending if d in self._low]
         self._pending = set()
         self._save()
-        if ids and opts[CONF_BATTERY_PUSH] and opts[CONF_NOTIFY_SERVICE] != NOTIFY_NONE:
+        if ids and opts[CONF_BATTERY_PUSH] and notify_target(opts, "battery") != NOTIFY_NONE:
             await self._async_push(opts, self._low, ids, summary=True)
 
     @callback
@@ -209,7 +208,7 @@ class BatteryWatch:
         new = [dev for dev in low if dev not in self._low]
         for dev in new:
             self._log_new(opts, dev, low[dev])
-        push_key = (opts[CONF_BATTERY_PUSH], opts[CONF_NOTIFY_SERVICE])
+        push_key = (opts[CONF_BATTERY_PUSH], notify_target(opts, "battery"))
         switched = self._push_key is not None and push_key != self._push_key
         self._push_key = push_key
         pending = (self._pending | set(new)) & set(low)
@@ -222,7 +221,7 @@ class BatteryWatch:
         else:
             # Noch offene aus dem Modus "täglich" (eben umgestellt) gehen nicht verloren.
             to_push = list(low) if switched else [d for d in low if d in new or d in self._pending]
-            if to_push and opts[CONF_BATTERY_PUSH] and opts[CONF_NOTIFY_SERVICE] != NOTIFY_NONE:
+            if to_push and opts[CONF_BATTERY_PUSH] and notify_target(opts, "battery") != NOTIFY_NONE:
                 await self._async_push(opts, low, to_push)
             pending = set()
         self._update_persistent(opts, low, bool(new))
@@ -238,7 +237,7 @@ class BatteryWatch:
         activity.record(hass, "info", "battery", "battery_new", item["name"], dev, level=self._level_text(item["level"]))
         if not opts[CONF_BATTERY_PUSH]:
             code = "battery_push_off"
-        elif opts[CONF_NOTIFY_SERVICE] == NOTIFY_NONE:
+        elif notify_target(opts, "battery") == NOTIFY_NONE:
             code = "battery_no_target"
         elif opts[CONF_BATTERY_PUSH_MODE] == PUSH_DAILY:
             code = "battery_daily"
@@ -287,7 +286,7 @@ class BatteryWatch:
 
     async def _async_push(self, opts: dict[str, Any], low: dict[str, dict[str, Any]], new: list[str], summary: bool = False) -> None:
         hass = self.hass
-        target = opts[CONF_NOTIFY_SERVICE]
+        target = notify_target(opts, "battery")
         ordered = self._order(low, [d for d in new if self._pushable(opts, d)])
         if not ordered:
             return

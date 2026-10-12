@@ -7,7 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.18.0] - 2026-10-12
+
+Überwachung und Meldungen: ein eigener Empfänger pro Reiter.
+
+### Hinzugefügt
+
+- Jeder Reiter mit Meldungen (Ausfall, Batterie, Laden, Neu, Updates) kann jetzt einen eigenen Empfänger haben (Wunsch
+  des Nutzers). Im Reiter steht direkt unter "Meldung" die neue Zeile "Empfänger". "Standard" folgt dem Ziel aus dem Reiter
+  "Übersicht" und ist die Vorgabe, für bestehende Installationen ändert sich also nichts. Statt dessen lässt sich ein
+  anderer notify-Dienst, eine Gruppe oder eine Entität wählen; "Kein Ziel" gibt es dort nicht (Meldungen ausschalten geht
+  mit dem Schalter des Reiters). Ein Reiter mit eigenem Ziel sendet auch dann, wenn das globale Ziel "Kein Ziel" ist.
+  Zeitstrahl der Übersicht, Liste der Integrationen und die Warnung "Ohne Ziel kommt kein Push" berücksichtigen das Ziel
+  des Reiters. Ein Ziel, das es nicht mehr gibt, bleibt wählbar (als fehlend markiert), wie beim globalen.
+
 ## [2.17.2] - 2026-10-12
+
+Nicht veröffentlicht; enthalten in 2.18.0.
 
 Magic Push: die Schrittbalken des Assistenten stehen immer gleich hoch.
 
@@ -2698,7 +2714,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.17.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.2
+[2.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.18.0
 [2.17.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.1
 [2.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.0
 [2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0

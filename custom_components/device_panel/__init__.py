@@ -52,6 +52,7 @@ from .const import (
     CONF_CHARGE_RISE,
     CONF_CHARGE_STALL,
     CONF_NOTIFY_SERVICE,
+    NOTIFY_TOPICS,
     INT_RANGES,
     DATA_AVAILABILITY,
     DATA_BATTERY,
@@ -718,7 +719,11 @@ async def _ws_get_options(
             "panel": update_check.panel_settings(hass),
             "catalog": {**await async_catalog(hass), "updates": updates.catalog(hass)},
             "limits": options_api.limits(),
-            "notify_targets": options_api.notify_targets(hass, options_api.current_values(entry)[CONF_NOTIFY_SERVICE]),
+            "notify_targets": options_api.notify_targets(
+                hass,
+                options_api.current_values(entry)[CONF_NOTIFY_SERVICE],
+                [options_api.current_values(entry)[key] for key in NOTIFY_TOPICS.values()],
+            ),
             "overrides": await async_device_overrides(hass),
             # Standard-Prompt für den Profi-Modus (Anzeigen, Kopieren, Zurücksetzen).
             "ai_prompt_default": DEFAULT_PROMPT,

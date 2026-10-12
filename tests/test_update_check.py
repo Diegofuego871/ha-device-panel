@@ -11,7 +11,7 @@ from homeassistant.helpers import issue_registry as ir
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.device_panel import update_check
-from custom_components.device_panel.const import CONF_UPDATE_CHECK, DOMAIN, EMOJI_KEYS
+from custom_components.device_panel.const import CONF_UPDATE_CHECK, DOMAIN, EMOJI_KEYS, NOTIFY_TOPICS
 
 from .conftest import REAL_GET_JSON
 
@@ -105,6 +105,8 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
     assert result["values"] == {
         # Emoji der Meldungen: None = Standard (seit 2.2.0)
         **{key: None for key in EMOJI_KEYS.values()},
+        # Eigenes Ziel je Reiter: leer = das globale (seit 2.18.0)
+        **{key: "" for key in NOTIFY_TOPICS.values()},
         CONF_UPDATE_CHECK: True,
         "exclude_integrations": [],
         "exclude_types": [],
