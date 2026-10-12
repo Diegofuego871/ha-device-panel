@@ -6177,6 +6177,17 @@ class DevicePanel extends HTMLElement {
         ui.editWhenLoaded(btn.dataset.id);
       } else if (action === "timer-restart") {
         await this._tmAllToggle(btn.dataset.id, true);
+      } else if (action === "timer-delete" || action === "timer-delete-no") {
+        // Löschen mit Rückfrage (seit 2.24.1): erst die Karte mit "Löschen?", dann erst weg
+        all.confirmId = action === "timer-delete" ? btn.dataset.id : null;
+        this._renderTmAll();
+      } else if (action === "timer-delete-yes") {
+        ui.ui.error = "";
+        await ui.remove(btn.dataset.id);
+        all.confirmId = null;
+        if (ui.ui.error) all.err = ui.ui.error;
+        else all.flash = this._t("tmDeleted");
+        this._renderTmAll();
       }
     });
     dlg.addEventListener("change", (ev) => {

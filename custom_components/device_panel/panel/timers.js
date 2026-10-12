@@ -543,11 +543,11 @@ export class TimerUi {
       ? ""
       : `<div class="mg-acts"><button type="button" class="linkbtn" ${this.a(all, "timer-edit")} data-device="${esc(tm.device_id)}" data-id="${esc(tm.id)}">${esc(t("tmActEdit"))}</button>
         ${again ? `<button type="button" class="linkbtn" ${this.a(all, "timer-restart")} data-id="${esc(tm.id)}">${esc(t("tmActRestart"))}</button>` : ""}${
-          // Im Fenster mit allen Timern nur bearbeiten und ein-/ausschalten (kein Ausführen, kein Löschen, kein Neuanlegen)
+          // Im Fenster mit allen Timern: bearbeiten, ein-/ausschalten und löschen (seit 2.24.1), kein Ausführen, kein Neuanlegen
           all.dlg ? "" : `
-        <button type="button" class="linkbtn" ${this.a(all, "timer-run")} data-id="${esc(tm.id)}">${esc(t("tmActRun"))}</button>
-        <button type="button" class="linkbtn danger" ${this.a(all, "timer-delete")} data-id="${esc(tm.id)}">${esc(t("tmActDelete"))}</button>`
-        }</div>`;
+        <button type="button" class="linkbtn" ${this.a(all, "timer-run")} data-id="${esc(tm.id)}">${esc(t("tmActRun"))}</button>`
+        }
+        <button type="button" class="linkbtn danger" ${this.a(all, "timer-delete")} data-id="${esc(tm.id)}">${esc(t("tmActDelete"))}</button></div>`;
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("tmDeleteAsk", tm.name))}</b><small>${esc(t("tmDeleteNote"))}</small>
           <div class="mg-btns small"><button type="button" class="dlg-btn" ${this.a(all, "timer-delete-no")}>${esc(t("tmCancel"))}</button><button type="button" class="dlg-btn danger" ${this.a(all, "timer-delete-yes")} data-id="${esc(tm.id)}">${esc(t("tmDeleteYes"))}</button></div></div>`

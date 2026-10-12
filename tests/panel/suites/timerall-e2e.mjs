@@ -43,7 +43,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] zwei Geräte, je eine Karte mit Gerätename`, await wait(`return r.querySelectorAll("dialog.tmall-dlg .mg-dcard").length === 2 && [...r.querySelectorAll("dialog.tmall-dlg .mg-dhead b")].map((e) => e.textContent).length === 2`), await ev(`return [...r.querySelectorAll("dialog.tmall-dlg .mg-dhead b")].map((e) => e.textContent).join("|")`));
     await tap('dialog.tmall-dlg [data-tma="timer-fold-all"]');
     check(`[${tag}] ausgeklappt: beide Timer, Gerät klar erkennbar`, await wait(`return r.querySelectorAll("dialog.tmall-dlg .mg-card").length === 2 && r.querySelectorAll("dialog.tmall-dlg .mg-dcard").length === 2`));
-    check(`[${tag}] nur Bearbeiten und Ein/Aus: kein Neu, kein Löschen, kein Ausführen`, await ev(`const d = r.querySelector("dialog.tmall-dlg"); return !d.querySelector('[data-tm="add"], .mg-add') && !d.querySelector('[data-tma="timer-delete"], [data-tma="timer-run"]') && d.querySelectorAll('[data-tma="timer-edit"]').length === 2 && d.querySelectorAll('input[data-tma="timer-toggle"]').length === 2`));
+    check(`[${tag}] Bearbeiten, Ein/Aus und Löschen: kein Neu, kein Ausführen`, await ev(`const d = r.querySelector("dialog.tmall-dlg"); return !d.querySelector('[data-tm="add"], .mg-add') && !d.querySelector('[data-tma="timer-run"]') && d.querySelectorAll('[data-tma="timer-delete"]').length === 2 && d.querySelectorAll('[data-tma="timer-edit"]').length === 2 && d.querySelectorAll('input[data-tma="timer-toggle"]').length === 2`));
     check(`[${tag}] Aktionen ${mobile ? "mit 44 px Trefferhöhe" : "unverändert"}`, await ev(`const hs = [...r.querySelectorAll("dialog.tmall-dlg .mg-acts .linkbtn, dialog.tmall-dlg .mg-dfoot .linkbtn")].map((e) => e.getBoundingClientRect().height); return hs.length > 0 && hs.every((h) => ${mobile ? "h >= 43.5" : "h < 40"})`));
     await p.screenshot({ path: `${outDir}/timerall-${tag.replace("/", "-")}.png` });
 
@@ -70,6 +70,15 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.timer-dlg [data-tm="close"]');
     await wait(`return !r.querySelector("dialog.timer-dlg").open`);
     check(`[${tag}] danach wieder das Fenster mit allen Timern`, await ev(`return r.querySelector("dialog.tmall-dlg").open && r.querySelectorAll("dialog.tmall-dlg .mg-dcard").length === 2`));
+
+    // Löschen mit Rückfrage (2.24.1): erst Nein, dann Ja
+    await tap('dialog.tmall-dlg [data-tma="timer-delete"][data-id="aaaaaaaaaaa2"]');
+    check(`[${tag}] Löschen: Rückfrage in der Karte, noch nichts gelöscht`, await wait(`return !!r.querySelector('dialog.tmall-dlg [data-tma="timer-delete-yes"][data-id="aaaaaaaaaaa2"]')`) && (await calls("device_panel/timer_delete")).length === 0);
+    await tap('dialog.tmall-dlg [data-tma="timer-delete-no"]');
+    check(`[${tag}] Nein: Rückfrage weg, beide Timer da`, await wait(`return !r.querySelector('dialog.tmall-dlg [data-tma="timer-delete-yes"]') && r.querySelectorAll("dialog.tmall-dlg .mg-card").length === 2`));
+    await tap('dialog.tmall-dlg [data-tma="timer-delete"][data-id="aaaaaaaaaaa2"]');
+    await tap('dialog.tmall-dlg [data-tma="timer-delete-yes"][data-id="aaaaaaaaaaa2"]');
+    check(`[${tag}] Ja: timer_delete gesendet, Timer aus der Liste`, await wait(`return r.querySelectorAll("dialog.tmall-dlg .mg-card").length === 1`) && (await calls("device_panel/timer_delete")).at(-1)?.timer_id === "aaaaaaaaaaa2");
 
     await tap("dialog.tmall-dlg [data-tma-close]");
     check(`[${tag}] Schliessen`, await wait(`return !r.querySelector("dialog.tmall-dlg").open`));

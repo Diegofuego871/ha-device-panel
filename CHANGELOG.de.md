@@ -9,6 +9,10 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.24.1] - 2026-10-12
 
+### Hinzugefügt
+
+- Das Fenster mit allen Timern (Stoppuhr-Knopf) hat jetzt auch "Löschen", mit derselben Rückfrage wie im Geräte-Reiter. Es hat weiterhin kein "Jetzt ausführen" und keine Möglichkeit, Timer anzulegen.
+
 ### Geändert
 
 - Auf dem Handy öffnet jetzt auch das Geräte-Popup als Vollbild, wie die Einstellungen und das Blatt "Ansicht". Der Hintergrund zum Antippen entfällt, das Kreuz und "Schliessen" schliessen es.

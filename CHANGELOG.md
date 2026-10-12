@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.24.1] - 2026-10-12
 
+### Added
+
+- The window with all timers (stopwatch button) now also has "Delete", with the same confirmation as in the device tab. It still has no "Run now" and no way to create timers.
+
 ### Changed
 
 - On the phone the device pop-up now also opens full screen, like the settings and the view sheet. There is no background left to tap, the cross and "Close" close it.
