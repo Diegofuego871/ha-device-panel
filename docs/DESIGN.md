@@ -440,6 +440,11 @@ HA-Nachbau prüfen.
 - Chip "Favoriten": nur ein rotes Herz (42 px breit, ohne Text und Zahl), aktiv mit roter Umrandung und leicht rotem Grund;
   Standard gleich nach "Alle", nicht angeheftet.
 
+## Fenster "Alle Timer" (seit 2.22.0)
+
+- Glocke (42 px rund wie Protokoll und Zahnrad) in der Kopfzeile; öffnet ein Vollbild-Fenster (auch auf dem Desktop) mit der Übersicht
+  der Einstellungen (Suche, Filter, Karten pro Gerät mit Gerätename), nur Bearbeiten und Ein/Aus.
+
 ## Magic Push: Rückfrage beim Schliessen (seit 2.16.0)
 
 - "Änderungen verwerfen?" ist ein Pop-up in der Mitte des Assistenten-Fensters über abgedunkeltem Hintergrund

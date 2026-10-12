@@ -32,6 +32,11 @@ Favoriten und automatische Updates (beides Wunsch des Nutzers): ein Herz auf der
   nach Updates sucht und eine Version findet, bekommt sie sofort installiert, ohne ein zweites Mal "Aktualisieren" zu
   drücken. Eine fehlgeschlagene Installation steht im Protokoll und wird bei der nächsten täglichen Prüfung wiederholt.
   Ohne HACS geschieht nichts. Der Schalter ist eine Panel-Einstellung für die ganze Instanz und gilt mit "Speichern".
+- Neuer Glocken-Knopf in der Kopfzeile der Geräteliste, neben Protokoll und Zahnrad. Er öffnet ein Vollbild-Fenster mit
+  allen Timern aller Geräte, nach Gerät gruppiert, damit klar ist, zu welchem Gerät jeder gehört (Suche, Filter Alle,
+  Aktiv, Aus, Läuft, alle einklappen, "Gerät öffnen"). Dort lässt sich ein Timer bearbeiten (der Assistent öffnet
+  darüber) und ein- oder ausschalten. Neue Timer legst du dort nicht an (das bleibt im Reiter "Timer" eines Geräts),
+  und löschen oder ausführen geht dort auch nicht.
 
 ### Geändert
 

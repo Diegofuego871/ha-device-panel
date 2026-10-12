@@ -29,6 +29,10 @@ Favorites and automatic updates (both requested by the user): a heart on the dev
   shows "Restart now". If a user checks by hand ("Check for updates") and a version is found, it is installed at once,
   without pressing "Update" a second time. A failed installation is logged and tried again at the next daily check.
   Nothing happens without HACS. The switch is a panel setting for the whole instance and applies with "Save".
+- New bell button in the header of the device list, next to the log and the gear. It opens a full-screen window with all
+  timers of all devices, grouped by device so it is clear which device each one belongs to (search, filter All, On, Off,
+  Running, collapse all, "Open device"). There you can edit a timer (the assistant opens on top) and switch it on or off.
+  You cannot create new timers there (that stays in the tab "Timer" of a device), and you cannot delete or run them.
 
 ### Changed
 

@@ -65,9 +65,9 @@ button { font: inherit; color: inherit; }
   background: none; color: var(--dp-text2); cursor: pointer; }
 .search-clear:hover { background: var(--dp-hover); color: var(--dp-text); }
 .search-clear[hidden] { display: none; }
-.gear-btn, .log-btn { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--dp-divider);
+.gear-btn, .log-btn, .tmall-btn { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--dp-divider);
   background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
-.gear-btn:hover, .log-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
+.gear-btn:hover, .log-btn:hover, .tmall-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
 .content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 20px 16px; }
 /* Kopf, Chips und Fusszeile bleiben beim seitlichen Scrollen der Tabelle stehen. */
 .hero, .chips, .foot { position: sticky; left: 0; }
@@ -1193,7 +1193,7 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   dialog.settings[open] { display: flex; flex-direction: column; }
   dialog.settings[open] > * { flex-shrink: 0; }
   dialog.settings[open] > .dlg-body { flex-grow: 1; }
-  .toolbar .gear-btn, .toolbar .log-btn { width: 38px; height: 38px; }
+  .toolbar .gear-btn, .toolbar .log-btn, .toolbar .tmall-btn { width: 38px; height: 38px; }
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   .dlg-head { padding: 18px 12px 12px 16px; }
   .dlg-quick { padding: 0 16px 6px; }
@@ -1204,6 +1204,14 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 }
 
 /* Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1): Fenster gross auf dem Desktop, auf dem Handy vollflächig */
+/* Fenster "Alle Timer" (seit 2.22.0): immer Vollbild, Inhalt in lesbarer Breite */
+dialog.tmall-dlg { padding: 0; border: none; border-radius: 0; background: var(--dp-card); color: var(--dp-text); overflow: hidden; width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; overscroll-behavior: contain; }
+dialog.tmall-dlg[open] { display: flex; flex-direction: column; }
+dialog.tmall-dlg::backdrop { background: rgba(0,0,0,0.5); }
+.tmall-dlg .dlg-head { flex: none; position: static; padding-left: max(22px, calc((100% - 860px) / 2)); padding-right: max(16px, calc((100% - 860px) / 2)); }
+.tmall-dlg .dlg-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 22px 24px; }
+.tm-all-wrap { max-width: 860px; margin: 0 auto; }
+@media (max-width: 700px) { .tmall-dlg .dlg-body { padding: 0 16px 20px; } }
 dialog.log-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
   width: min(1040px, calc(100vw - 48px)); height: min(780px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
 dialog.log-dlg[open] { display: flex; flex-direction: column; }

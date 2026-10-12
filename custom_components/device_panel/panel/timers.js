@@ -417,8 +417,13 @@ export class TimerUi {
     };
   }
 
-  allQuery() {
-    return String(this.host._settings?.search?.timers || "").trim();
+  // Attribut für Aktionen: in den Einstellungen "data-set", im Fenster mit allen Timern (all.dlg) "data-tma"
+  a(all, action) {
+    return all.dlg ? `data-tma="${action}"` : `data-set="${action}"`;
+  }
+
+  allQuery(all) {
+    return String(all?.dlg ? all.query || "" : this.host._settings?.search?.timers || "").trim();
   }
 
   haystack(tm) {
@@ -443,7 +448,7 @@ export class TimerUi {
   }
 
   isFiltering(all) {
-    return Boolean(this.allQuery()) || (all.filter || "all") !== "all";
+    return Boolean(this.allQuery(all)) || (all.filter || "all") !== "all";
   }
 
   isOpen(all, id, nGroups) {
@@ -453,7 +458,7 @@ export class TimerUi {
   }
 
   visibleGroups(all, devices) {
-    const q = this.allQuery();
+    const q = this.allQuery(all);
     const filter = all.filter || "all";
     return this.allGroups(all, devices)
       .map((g) => ({ ...g, shown: g.timers.filter((x) => this.passes(x, q, filter)) }))
@@ -480,21 +485,21 @@ export class TimerUi {
   overviewHtml(all, devices) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
-    let html = `<p class="mg-note">${esc(t("tmAllIntro"))}</p>`;
+    let html = `<p class="mg-note">${esc(t(all.dlg ? "tmAllDlgIntro" : "tmAllIntro"))}</p>`;
     if (all.flash) html += `<div class="mg-flash" role="status">${esc(all.flash)}</div>`;
     if (all.error && !all.timers) {
-      return `${html}<div class="dlg-error">${esc(t("tmLoadError", all.error))}</div><button type="button" class="qbtn" data-set="timer-reload">${esc(t("tmRetry"))}</button>`;
+      return `${html}<div class="dlg-error">${esc(t("tmLoadError", all.error))}</div><button type="button" class="qbtn" ${this.a(all, "timer-reload")}>${esc(t("tmRetry"))}</button>`;
     }
     if (all.err) html += `<div class="dlg-error">${esc(all.err)}</div>`;
     if (!all.timers) return `${html}<p class="mg-note">${esc(t("tmLoading"))}</p>`;
     if (!all.timers.length) return `${html}<p class="mg-empty">${esc(t("tmAllEmpty"))}</p>`;
-    const q = String(this.host._settings?.search?.timers || "");
+    const q = all.dlg ? String(all.query || "") : String(this.host._settings?.search?.timers || "");
     const ph = t("listSearch");
-    html += `<label class="list-search" data-for="timers">${this.h.mdi("search", 18)}<input type="search" data-lsearch="timers" value="${esc(q)}" placeholder="${esc(ph)}" aria-label="${esc(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n"></span>${this.host._fieldClearHtml("data-lclear", "timers", q)}</label>`;
+    html += `<label class="list-search" data-for="timers">${this.h.mdi("search", 18)}<input type="search" data-lsearch="timers" value="${esc(q)}" placeholder="${esc(ph)}" aria-label="${esc(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n"></span>${this.host._fieldClearHtml(all.dlg ? "data-tma-clear" : "data-lclear", "timers", q)}</label>`;
     const c = this.allCounts(all.timers);
     const filter = all.filter || "all";
     html += `<div class="sub-tabs mg-tabs mg-filter" role="tablist">${[["all", "tmFilterAll"], ["on", "tmFilterOn"], ["off", "tmFilterOff"], ["running", "tmFilterRunning"]]
-      .map(([k, label]) => `<button type="button" role="tab" class="sub-tab two${k === filter ? " on" : ""}" data-set="timer-filter" data-v="${k}" aria-selected="${k === filter}"><span class="tab-l">${esc(t(label))}</span> <span class="tab-s">${c[k]}</span></button>`)
+      .map(([k, label]) => `<button type="button" role="tab" class="sub-tab two${k === filter ? " on" : ""}" ${this.a(all, "timer-filter")} data-v="${k}" aria-selected="${k === filter}"><span class="tab-l">${esc(t(label))}</span> <span class="tab-s">${c[k]}</span></button>`)
       .join("")}</div>`;
     return `${html}<div data-tm-all-zone data-q="${esc(q)}">${this.overviewListHtml(all, devices)}</div>`;
   }
@@ -508,7 +513,7 @@ export class TimerUi {
     all.shown = { n: shown, total: all.timers.length, filtering: this.isFiltering(all) };
     if (!groups.length) return `<p class="mg-note mg-none">${esc(t("listSearchNone"))}</p>`;
     const anyOpen = groups.some((g) => this.isOpen(all, g.id, nGroups));
-    let html = `<div class="mg-allcount"><span class="mg-count">${esc(t("tmAllCount", shown, groups.length))}</span><button type="button" class="linkbtn" data-set="timer-fold-all">${esc(t(anyOpen ? "tmFoldAll" : "tmUnfoldAll"))}</button></div>`;
+    let html = `<div class="mg-allcount"><span class="mg-count">${esc(t("tmAllCount", shown, groups.length))}</span><button type="button" class="linkbtn" ${this.a(all, "timer-fold-all")}>${esc(t(anyOpen ? "tmFoldAll" : "tmUnfoldAll"))}</button></div>`;
     for (const g of groups) {
       const open = this.isOpen(all, g.id, nGroups);
       const offN = g.shown.filter((x) => !x.enabled).length;
@@ -516,12 +521,12 @@ export class TimerUi {
       const sum = open
         ? g.dev?.area || g.dev?.integration?.name ? `<small>${esc([g.dev?.area, g.dev?.integration?.name].filter(Boolean).join(" · "))}</small>` : ""
         : `<small class="mg-dsum">${esc(t("tmSumTimers", g.shown.length))}${offN ? ` · ${esc(t("tmSumOff", offN))}` : ""}${nextTm ? ` · <span class="mg-on">${esc(t("tmSumNext", this.localText(nextTm.due_local)))}</span>` : ""}</small>`;
-      html += `<div class="mg-dcard${open ? "" : " closed"}"><button type="button" class="mg-dhead" data-set="timer-fold-dev" data-device="${esc(g.id)}" aria-expanded="${open}">
+      html += `<div class="mg-dcard${open ? "" : " closed"}"><button type="button" class="mg-dhead" ${this.a(all, "timer-fold-dev")} data-device="${esc(g.id)}" aria-expanded="${open}">
         <span class="mg-devic" aria-hidden="true">${this.h.typeIcon(g.dev?.type || "other", 18)}</span>
         <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span><span class="mg-badge">${g.shown.length}</span>${this.chevHtml(open)}</button>`;
       if (open) {
         html += g.shown.map((x) => this.overviewCardHtml(x, all)).join("");
-        html += `<div class="mg-dfoot"><button type="button" class="linkbtn" data-set="timer-device" data-device="${esc(g.id)}">${esc(t("tmAllOpenDevice"))} ›</button></div>`;
+        html += `<div class="mg-dfoot"><button type="button" class="linkbtn" ${this.a(all, "timer-device")} data-device="${esc(g.id)}">${esc(t("tmAllOpenDevice"))} ›</button></div>`;
       }
       html += `</div>`;
     }
@@ -532,17 +537,20 @@ export class TimerUi {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const confirming = all.confirmId === tm.id;
-    const sw = `<label class="switch"><input type="checkbox" data-set="timer-toggle" data-id="${esc(tm.id)}"${tm.enabled ? " checked" : ""} aria-label="${esc(tm.name)}"><span></span></label>`;
+    const sw = `<label class="switch"><input type="checkbox" ${this.a(all, "timer-toggle")} data-id="${esc(tm.id)}"${tm.enabled ? " checked" : ""} aria-label="${esc(tm.name)}"><span></span></label>`;
     const again = !tm.enabled && (tm.done || tm.kind !== "repeat");
     const acts = confirming
       ? ""
-      : `<div class="mg-acts"><button type="button" class="linkbtn" data-set="timer-edit" data-device="${esc(tm.device_id)}" data-id="${esc(tm.id)}">${esc(t("tmActEdit"))}</button>
-        ${again ? `<button type="button" class="linkbtn" data-set="timer-restart" data-id="${esc(tm.id)}">${esc(t("tmActRestart"))}</button>` : ""}
-        <button type="button" class="linkbtn" data-set="timer-run" data-id="${esc(tm.id)}">${esc(t("tmActRun"))}</button>
-        <button type="button" class="linkbtn danger" data-set="timer-delete" data-id="${esc(tm.id)}">${esc(t("tmActDelete"))}</button></div>`;
+      : `<div class="mg-acts"><button type="button" class="linkbtn" ${this.a(all, "timer-edit")} data-device="${esc(tm.device_id)}" data-id="${esc(tm.id)}">${esc(t("tmActEdit"))}</button>
+        ${again ? `<button type="button" class="linkbtn" ${this.a(all, "timer-restart")} data-id="${esc(tm.id)}">${esc(t("tmActRestart"))}</button>` : ""}${
+          // Im Fenster mit allen Timern nur bearbeiten und ein-/ausschalten (kein Ausführen, kein Löschen, kein Neuanlegen)
+          all.dlg ? "" : `
+        <button type="button" class="linkbtn" ${this.a(all, "timer-run")} data-id="${esc(tm.id)}">${esc(t("tmActRun"))}</button>
+        <button type="button" class="linkbtn danger" ${this.a(all, "timer-delete")} data-id="${esc(tm.id)}">${esc(t("tmActDelete"))}</button>`
+        }</div>`;
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("tmDeleteAsk", tm.name))}</b><small>${esc(t("tmDeleteNote"))}</small>
-          <div class="mg-btns small"><button type="button" class="dlg-btn" data-set="timer-delete-no">${esc(t("tmCancel"))}</button><button type="button" class="dlg-btn danger" data-set="timer-delete-yes" data-id="${esc(tm.id)}">${esc(t("tmDeleteYes"))}</button></div></div>`
+          <div class="mg-btns small"><button type="button" class="dlg-btn" ${this.a(all, "timer-delete-no")}>${esc(t("tmCancel"))}</button><button type="button" class="dlg-btn danger" ${this.a(all, "timer-delete-yes")} data-id="${esc(tm.id)}">${esc(t("tmDeleteYes"))}</button></div></div>`
       : "";
     const status = this.statusHtml(tm);
     const next = tm.running ? `<span class="mg-on">${esc(t("tmRunningShort"))}</span>` : tm.enabled && tm.due_local ? `${esc(t("tmNextRun"))} <span class="mg-on">${esc(this.localText(tm.due_local))}</span>` : tm.done ? esc(t("tmDone")) : esc(t("tmDisabled"));
@@ -557,7 +565,7 @@ export class TimerUi {
   // --- Aktionen auf Timern (Popup und Übersicht) ------------------------------
 
   replaceTimer(timer) {
-    for (const list of [this.data?.timers, this.host._settings?.timersAll?.timers]) {
+    for (const list of [this.data?.timers, this.host._settings?.timersAll?.timers, this.host._tmAll?.timers]) {
       if (!list) continue;
       const i = list.findIndex((x) => x.id === timer.id);
       if (i >= 0) list[i] = { ...list[i], ...timer };
@@ -614,6 +622,7 @@ export class TimerUi {
     if (this.host._devTab === "timer" && this.root?.isConnected && !this.wizardOpen()) this.paint();
     this.host._renderDevice?.(true);
     if (this.host._settings?.timersAll) this.host._renderSettings?.();
+    this.host._renderTimersAll?.();
   }
 
   // --- Assistent: Stand -------------------------------------------------------
@@ -736,6 +745,7 @@ export class TimerUi {
     if (this.standalone) {
       this.reset();
       this.host._loadTimersAll?.();
+      this.host._loadTmAll?.();
       return;
     }
     this.paint();

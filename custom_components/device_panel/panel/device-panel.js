@@ -261,6 +261,7 @@ const MDI = {
   heartOutline: "M12.1,18.55L12,18.65L11.89,18.55C7.14,14.24 4,11.39 4,8.5C4,6.5 5.5,5 7.5,5C9.04,5 10.54,6 11.07,7.36H12.93C13.46,6 14.96,5 16.5,5C18.5,5 20,6.5 20,8.5C20,11.39 16.86,14.24 12.1,18.55M16.5,3C14.76,3 13.09,3.81 12,5.08C10.91,3.81 9.24,3 7.5,3C4.42,3 2,5.41 2,8.5C2,12.27 5.4,15.36 10.55,20.03L12,21.35L13.45,20.04C18.6,15.36 22,12.27 22,8.5C22,5.41 19.58,3 16.5,3Z",
   signalOff: "M18,3V16.18L21,19.18V3H18M4.28,5L3,6.27L10.73,14H8V21H11V14.27L13,16.27V21H16V19.27L19.73,23L21,21.72L4.28,5M13,9V11.18L16,14.18V9H13M3,18V21H6V18H3Z",
   timer: "M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M19.03,7.39L20.45,5.97C20,5.46 19.55,5 19.04,4.56L17.62,6C16.07,4.74 14.12,4 12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22C17,22 21,17.97 21,13C21,10.88 20.26,8.93 19.03,7.39M11,14H13V8H11M15,1H9V3H15V1Z",
+  bell: "M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M14,21A2,2 0 0,1 12,23A2,2 0 0,1 10,21",
   bellOff: "M20.84,22.73L18.11,20H3V19L5,17V11C5,9.86 5.29,8.73 5.83,7.72L1.11,3L2.39,1.73L22.11,21.46L20.84,22.73M19,15.8V11C19,7.9 16.97,5.17 14,4.29C14,4.19 14,4.1 14,4A2,2 0 0,0 12,2A2,2 0 0,0 10,4C10,4.1 10,4.19 10,4.29C9.39,4.47 8.8,4.74 8.26,5.09L19,15.8M12,23A2,2 0 0,0 14,21H10A2,2 0 0,0 12,23Z",
   batteryOff: "M22.11 21.46L2.39 1.73L1.11 3L6 7.89V20.67C6 21.4 6.6 22 7.33 22H16.67C17.4 22 18 21.4 18 20.67V19.89L20.84 22.73L22.11 21.46M16 18H8V9.89L16 17.89V18M8.2 4H9V2H15V4H16.67C17.4 4 18 4.6 18 5.33V15.8L16 13.8V6H10.2L8.2 4Z",
   chevronDown: "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z",
@@ -1144,16 +1145,18 @@ class DevicePanel extends HTMLElement {
         <label class="searchbox">${mdi("search", 20)}<input class="search" type="search" placeholder="${escape(this._t("search"))}" aria-label="${escape(this._t("search"))}">
           <button type="button" class="search-clear" title="${escape(this._t("searchClear"))}" aria-label="${escape(this._t("searchClear"))}" hidden>${mdi("close", 18)}</button></label>
         <button type="button" class="view-btn" aria-expanded="false" title="${escape(this._t("viewBtn"))}" aria-label="${escape(this._t("viewBtn"))}">${mdi("cols", 20)}<span>${escape(this._t("viewBtn"))}</span></button>
+        <button type="button" class="tmall-btn" title="${escape(this._t("tmAllBtn"))}" aria-label="${escape(this._t("tmAllBtn"))}">${mdi("bell", 22)}</button>
         <button type="button" class="log-btn" title="${escape(this._t("logBtn"))}" aria-label="${escape(this._t("logBtn"))}">${mdi("log", 22)}</button>
         <button type="button" class="gear-btn" title="${escape(this._t("settingsBtn"))}" aria-label="${escape(this._t("settingsBtn"))}">${mdi("gear", 22)}</button>
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg timer-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg timer-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="tmall-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
     root.querySelector(".log-btn").addEventListener("click", () => this._openLog());
+    root.querySelector(".tmall-btn").addEventListener("click", () => this._openTmAll());
     root.querySelector(".toast").addEventListener("click", (ev) => {
       if (!ev.target.closest("[data-toast-action]") || !this._toastAction) return;
       const { run } = this._toastAction;
@@ -1258,6 +1261,7 @@ class DevicePanel extends HTMLElement {
     this._bindAreas(root.querySelector(".area-pop"), root.querySelector("dialog.area-sheet"));
     this._bindPulse(root.querySelector("dialog.pulse-dlg"));
     this._bindLog(root.querySelector("dialog.log-dlg"));
+    this._bindTmAll(root.querySelector("dialog.tmall-dlg"));
     this._bindPrompt(root.querySelector("dialog.prompt-dlg"));
     this._bindNotes(root.querySelector("dialog.notes-dlg"));
     // Auf dem Handy gibt der Browser beim Schliessen eines Fensters den Fokus an die antippte Kachel zurück und zeigt dort einen
@@ -3756,6 +3760,7 @@ class DevicePanel extends HTMLElement {
     if (this._settings?.timersAll) {
       this._loadTimersAll();
     }
+    this._loadTmAll();
   }
 
   // Entitäten und Kurzstatistik (7 Tage) holt erst das Popup.
@@ -6102,6 +6107,161 @@ class DevicePanel extends HTMLElement {
       all.error = errText(err);
     }
     if (this._settings === st) this._renderSettings();
+  }
+
+  // --- Fenster "Alle Timer" (seit 2.22.0): Glocke in der Kopfzeile, Vollbild, alle Timer aller Geräte ---------------------------
+  // Nur ansehen, bearbeiten und ein-/ausschalten; neue Timer gibt es nur im Popup eines Geräts.
+  _openTmAll() {
+    const dlg = this.shadowRoot.querySelector("dialog.tmall-dlg");
+    if (!dlg) return;
+    this._tmAll = { dlg: true, timers: null, error: null, confirmId: null, flash: "", err: "", filter: "all", open: {}, sopen: {}, query: "" };
+    this._renderTmAllFrame();
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+    if (window.matchMedia?.(TOUCH_QUERY).matches) this.shadowRoot.activeElement?.blur();
+    this._loadTmAll();
+  }
+
+  _closeTmAll() {
+    const dlg = this.shadowRoot.querySelector("dialog.tmall-dlg");
+    this._tmAll = null;
+    if (dlg?.open) {
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    }
+  }
+
+  _renderTmAllFrame() {
+    const dlg = this.shadowRoot.querySelector("dialog.tmall-dlg");
+    const t = (k, ...a) => this._t(k, ...a);
+    dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("bell", 28)}</span>
+        <div class="dlg-title"><h2>${escape(t("tmAllTitle"))}</h2><div class="dlg-sub">${escape(t("tmAllSub"))}</div></div>
+        <button type="button" class="dlg-close" data-tma-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+      <div class="dlg-body"><div class="tm-all-wrap" data-tma-body></div></div>`;
+    this._renderTmAll();
+  }
+
+  _renderTmAll() {
+    const all = this._tmAll;
+    const body = this.shadowRoot.querySelector("dialog.tmall-dlg [data-tma-body]");
+    if (!all || !body) return;
+    // Beim Neuzeichnen die Suche behalten (Fokus und Cursor), sonst ginge die Eingabe verloren
+    const focus = this.shadowRoot.activeElement?.matches?.("[data-lsearch]") ? this.shadowRoot.activeElement : null;
+    const pos = focus ? [focus.selectionStart, focus.selectionEnd] : null;
+    const scroll = body.closest(".dlg-body")?.scrollTop || 0;
+    setHtml(body, this._timers.overviewHtml(all, this._devices));
+    const sh = all.shown;
+    const cnt = body.querySelector(".list-search .n");
+    if (cnt && sh) cnt.textContent = sh.filtering ? this._t("listSearchOf", sh.n, sh.total) : "";
+    const dlgBody = body.closest(".dlg-body");
+    if (dlgBody) dlgBody.scrollTop = scroll;
+    if (focus) {
+      const input = body.querySelector("[data-lsearch]");
+      input?.focus();
+      if (input && pos) input.setSelectionRange(pos[0], pos[1]);
+    }
+  }
+
+  async _loadTmAll() {
+    const all = this._tmAll;
+    if (!all) return;
+    try {
+      const r = await this._hass.callWS({ type: "device_panel/timer_list" });
+      all.timers = r.timers;
+      all.error = null;
+      this._timers._today = r.today;
+      this._timers._offset = Number.isFinite(r.now) ? r.now * 1000 - Date.now() : 0;
+    } catch (err) {
+      all.error = errText(err);
+    }
+    if (this._tmAll === all) this._renderTmAll();
+  }
+
+  _bindTmAll(dlg) {
+    this._trackBusy(dlg);
+    dlg.addEventListener("click", async (ev) => {
+      if (ev.target === dlg) {
+        const r = dlg.getBoundingClientRect();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closeTmAll();
+        return;
+      }
+      const all = this._tmAll;
+      if (!all) return;
+      if (ev.target.closest("[data-tma-close]")) {
+        this._closeTmAll();
+        return;
+      }
+      const clear = ev.target.closest("[data-tma-clear]");
+      if (clear) {
+        all.query = "";
+        all.sopen = {};
+        this._renderTmAll();
+        return;
+      }
+      const btn = ev.target.closest("button[data-tma]");
+      if (!btn || btn.disabled) return;
+      const action = btn.dataset.tma;
+      const ui = this._timers;
+      all.flash = "";
+      all.err = "";
+      if (action === "timer-reload") {
+        all.error = null;
+        this._loadTmAll();
+      } else if (action === "timer-device") {
+        this._openDevice(btn.dataset.device, "timer");
+      } else if (action === "timer-filter") {
+        all.filter = btn.dataset.v;
+        all.sopen = {};
+        this._renderTmAll();
+      } else if (action === "timer-fold-dev" || action === "timer-fold-all") {
+        if (action === "timer-fold-dev") ui.toggleFold(all, this._devices, btn.dataset.device);
+        else ui.foldAll(all, this._devices);
+        const zone = dlg.querySelector("[data-tm-all-zone]");
+        if (zone) zone.innerHTML = ui.overviewListHtml(all, this._devices);
+      } else if (action === "timer-edit") {
+        ui.open(btn.dataset.device, true);
+        ui.editWhenLoaded(btn.dataset.id);
+      } else if (action === "timer-restart") {
+        await this._tmAllToggle(btn.dataset.id, true);
+      }
+    });
+    dlg.addEventListener("change", (ev) => {
+      const el = ev.target;
+      if (el.matches?.('input[data-tma="timer-toggle"]')) this._tmAllToggle(el.dataset.id, el.checked);
+    });
+    dlg.addEventListener("input", (ev) => {
+      const el = ev.target;
+      const all = this._tmAll;
+      if (!all || !el.matches?.("[data-lsearch]")) return;
+      all.query = el.value;
+      all.sopen = {};
+      // Nur die Liste neu zeichnen, das Suchfeld behält Fokus und Cursor
+      const zone = dlg.querySelector("[data-tm-all-zone]");
+      if (zone) zone.innerHTML = this._timers.overviewListHtml(all, this._devices);
+      const cnt = dlg.querySelector(".list-search .n");
+      if (cnt && all.shown) cnt.textContent = all.shown.filtering ? this._t("listSearchOf", all.shown.n, all.shown.total) : "";
+      const x = dlg.querySelector("[data-tma-clear]");
+      if (x) x.hidden = !el.value;
+    });
+    dlg.addEventListener("close", () => {
+      this._tmAll = null;
+    });
+  }
+
+  async _tmAllToggle(id, enabled) {
+    const all = this._tmAll;
+    if (!all) return;
+    try {
+      const r = await this._hass.callWS({ type: "device_panel/timer_enable", timer_id: id, enabled });
+      const i = all.timers.findIndex((x) => x.id === id);
+      if (i >= 0) all.timers[i] = { ...all.timers[i], ...r.timer };
+      this._timers.replaceTimer(r.timer);
+    } catch (err) {
+      all.err = this._t("tmToggleError", errText(err));
+    }
+    if (this._tmAll === all) this._renderTmAll();
   }
 
   async _timersAllAction(action, btn) {
