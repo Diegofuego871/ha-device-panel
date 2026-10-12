@@ -24,6 +24,12 @@ Automatic updates install as soon as a version is found.
   does not know the new version yet, this is noted in the log (debug mode) and tried again at the next check.
 - Home Assistant is still never restarted by itself.
 
+### Changed
+
+- The log button moved from the header of the device list to the header of the settings dialog, left of the cross, which
+  gives the header room again (it got crowded with the timer button). The log still opens as before, on top of the
+  settings.
+
 ## [2.23.0] - 2026-10-12
 
 A window with all timers, one symbol for timers everywhere, and a better Favorites chip on the phone.

@@ -34,11 +34,13 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const rows = () => ev(`return r.querySelectorAll("dialog.log-dlg .lg-row").length`);
   const chipN = (attr, id) => ev(`return r.querySelector('dialog.log-dlg [${attr}="${id}"] .n')?.textContent`);
 
-  // Knopf in der Kopfzeile, vor dem Zahnrad
-  const order = await ev(`return [...r.querySelectorAll(".toolbar > button")].map(x => x.className.split(" ")[0])`);
-  check(`[${tag}] Knopf "${T_.btn}" vor dem Zahnrad`, order.indexOf("log-btn") !== -1 && order.indexOf("log-btn") === order.indexOf("gear-btn") - 1, JSON.stringify(order));
-  check(`[${tag}] Knopf mit Beschriftung`, (await ev(`return r.querySelector(".log-btn").getAttribute("aria-label")`)) === T_.btn);
-  await tap(".log-btn");
+  // Seit 2.23.1: Knopf im Kopf der Einstellungen, links vom Kreuz (nicht mehr in der Kopfzeile der Liste)
+  check(`[${tag}] Kopfzeile der Liste ohne Protokoll-Knopf`, await ev(`return !r.querySelector(".toolbar .log-btn")`));
+  await tap(".gear-btn");
+  await wait(`return r.querySelector("dialog.settings")?.open && !!r.querySelector('dialog.settings [data-set="log"]')`);
+  check(`[${tag}] Knopf "${T_.btn}" im Kopf der Einstellungen, vor dem Kreuz, mit Beschriftung`, await ev(`const b = r.querySelector('dialog.settings [data-set="log"]'); return b.getAttribute("aria-label") === ${JSON.stringify(T_.btn)} && b.nextElementSibling === r.querySelector('dialog.settings [data-set="close"]')`));
+  await p.waitForTimeout(600);
+  await tap('dialog.settings [data-set="log"]');
   check(`[${tag}] Fenster offen, Titel`, (await wait(`return r.querySelector("dialog.log-dlg")?.open && r.querySelectorAll("dialog.log-dlg .lg-row").length > 0`)) && (await text("dialog.log-dlg h2")) === T_.title);
   const geo = await ev(`const d=r.querySelector("dialog.log-dlg").getBoundingClientRect(); return [Math.round(d.left), Math.round(d.width), Math.round(d.top), Math.round(d.height), innerWidth, innerHeight]`);
   if (mobile) check(`[${tag}] Handy: Fenster füllt den Bildschirm`, geo[0] === 0 && geo[1] === geo[4] && geo[2] === 0 && Math.abs(geo[3] - geo[5]) <= 1, JSON.stringify(geo));
@@ -123,7 +125,9 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
 
   // Schliessen: Nachfragen hört auf
   await tap("dialog.log-dlg [data-lg-close]");
-  check(`[${tag}] Fenster zu`, await wait(`return !r.querySelector("dialog.log-dlg").open`));
+  check(`[${tag}] Fenster zu, die Einstellungen darunter bleiben`, await wait(`return !r.querySelector("dialog.log-dlg").open`) && (await ev(`return r.querySelector("dialog.settings").open`)));
+  await tap('dialog.settings [data-set="close"]');
+  await wait(`return !r.querySelector("dialog.settings").open`);
   const n0 = (await calls("device_panel/get_log")).length;
   await p.waitForTimeout(4500);
   check(`[${tag}] zu: keine Abfragen mehr`, (await calls("device_panel/get_log")).length === n0, `${n0} -> ${(await calls("device_panel/get_log")).length}`);

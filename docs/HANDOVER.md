@@ -10,6 +10,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   `hass.data["hacs"].repositories.get_by_full_name(...).update_repository(force=True)`, bestmöglich). Panel: `_loadVersion` installiert bei
   jeder Erkennung, pro Version und Sitzung einmal (`v.autoTried`), mit "Nach Updates suchen" erneut. Nicht geprüft: echtes HACS.
 
+- 2.23.1 auch: Protokoll-Knopf (`data-set="log"`, Klasse `dlg-close dlg-log`) im Kopf der Einstellungen statt `.log-btn` in der Kopfzeile;
+  öffnet `dialog.log-dlg` über den Einstellungen. Suiten `log`, `busy` angepasst.
+
 ## Davor (2.22.0, Favoriten)
 
 - 2.22.0 (Wunsch des Nutzers): Herz im Kopf des Geräte-Popups (`.dlg-fav`, `data-dlg="fav"`, sofort, ohne Entwurf) und Chip

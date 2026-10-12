@@ -1146,7 +1146,6 @@ class DevicePanel extends HTMLElement {
           <button type="button" class="search-clear" title="${escape(this._t("searchClear"))}" aria-label="${escape(this._t("searchClear"))}" hidden>${mdi("close", 18)}</button></label>
         <button type="button" class="view-btn" aria-expanded="false" title="${escape(this._t("viewBtn"))}" aria-label="${escape(this._t("viewBtn"))}">${mdi("cols", 20)}<span>${escape(this._t("viewBtn"))}</span></button>
         <button type="button" class="tmall-btn" title="${escape(this._t("tmAllBtn"))}" aria-label="${escape(this._t("tmAllBtn"))}">${mdi("timer", 22)}</button>
-        <button type="button" class="log-btn" title="${escape(this._t("logBtn"))}" aria-label="${escape(this._t("logBtn"))}">${mdi("log", 22)}</button>
         <button type="button" class="gear-btn" title="${escape(this._t("settingsBtn"))}" aria-label="${escape(this._t("settingsBtn"))}">${mdi("gear", 22)}</button>
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
@@ -1155,7 +1154,6 @@ class DevicePanel extends HTMLElement {
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
-    root.querySelector(".log-btn").addEventListener("click", () => this._openLog());
     root.querySelector(".tmall-btn").addEventListener("click", () => this._openTmAll());
     root.querySelector(".toast").addEventListener("click", (ev) => {
       if (!ev.target.closest("[data-toast-action]") || !this._toastAction) return;
@@ -5738,6 +5736,7 @@ class DevicePanel extends HTMLElement {
     const t = (k, ...a) => this._t(k, ...a);
     const head = `<div class="dlg-head"><span class="dlg-avatar">${mdi("gear", 28)}</span>
         <div class="dlg-title"><h2>${escape(t("settingsTitle"))}</h2><div class="dlg-sub">${escape(t("settingsSub"))}</div></div>
+        <button type="button" class="dlg-close dlg-log" data-set="log" title="${escape(t("logBtn"))}" aria-label="${escape(t("logBtn"))}">${mdi("log", 18)}</button>
         <button type="button" class="dlg-close" data-set="close" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>`;
     let body;
     if (st.loading) body = `<p class="dlg-note">${escape(t("settingsLoading"))}</p>`;
@@ -7494,6 +7493,8 @@ class DevicePanel extends HTMLElement {
       const st = this._settings;
       const action = btn.dataset.set;
       if (action === "close") this._requestCloseSettings();
+      // Protokoll (seit 2.23.1 hier statt in der Kopfzeile der Liste): öffnet über den Einstellungen, danach wieder sie
+      else if (action === "log") this._openLog();
       else if (action.startsWith("magic-") && action !== "magic-toggle") this._magicAllAction(action, btn);
       else if (action.startsWith("timer-") && action !== "timer-toggle") this._timersAllAction(action, btn);
       else if (action === "save") this._saveSettings();

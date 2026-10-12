@@ -25,6 +25,12 @@ Automatische Updates installieren, sobald eine Version gefunden wird.
   Version noch nicht, steht das im Protokoll (Debug-Modus) und es wird bei der nächsten Prüfung erneut versucht.
 - Home Assistant startet weiterhin nie von selbst neu.
 
+### Geändert
+
+- Der Protokoll-Knopf ist aus der Kopfzeile der Geräteliste in den Kopf des Einstellungsdialogs gewandert, links vom
+  Kreuz. So hat die Kopfzeile wieder Platz (sie wurde mit dem Timer-Knopf eng). Das Protokoll öffnet wie bisher, jetzt
+  über den Einstellungen.
+
 ## [2.23.0] - 2026-10-12
 
 Ein Fenster mit allen Timern, überall dasselbe Symbol für Timer und ein besserer Favoriten-Chip auf dem Handy.
