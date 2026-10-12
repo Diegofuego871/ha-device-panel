@@ -9,11 +9,11 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.24.0] - 2026-10-12
 
-Einstellungen öffnen auf dem Handy als Vollbild.
+Einstellungen und Blatt "Ansicht" öffnen auf dem Handy als Vollbild.
 
 ### Geändert
 
-- Auf dem Handy füllen die Einstellungen jetzt den ganzen Bildschirm (wie das Fenster aller Timer), statt als Blatt oben einen Streifen der Liste freizulassen. Auf breiten Bildschirmen ändert sich nichts.
+- Auf dem Handy füllen die Einstellungen und das Blatt "Ansicht" (Sortierung und Darstellung) jetzt den ganzen Bildschirm (wie das Fenster aller Timer), statt oben einen Streifen der Liste freizulassen. Der Hintergrund zum Antippen entfällt, das Kreuz schliesst. Auf breiten Bildschirmen ändert sich nichts.
 
 ## [2.23.1] - 2026-10-12
 

@@ -193,6 +193,8 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Handy: Knopf oben entfällt, Zeile "Sortierung & Ansicht" statt Pille`, (await ev(`return getComputedStyle(r.querySelector(".view-btn")).display === "none"`)) && (await ev(`return r.querySelector(".sort-btn .lbl").textContent`)) === T.viewLine);
       await tap(".sort-btn");
       check(`[${tag}] Blatt "Ansicht"`, (await wait(`return r.querySelector("dialog.view").open`)) && (await ev(`return r.querySelector("dialog.view h2").textContent`)) === T.title);
+      const vbox = await ev(`const q = r.querySelector("dialog.view").getBoundingClientRect(); const a = r.querySelector("dialog.view .dlg-actions")?.getBoundingClientRect(); return [Math.round(q.width), Math.round(q.height), Math.round(q.top), innerWidth, innerHeight, a ? Math.round(a.bottom) : -1]`);
+      check(`[${tag}] Blatt "Ansicht": Vollbild, Knopfleiste am unteren Rand`, vbox[0] === vbox[3] && vbox[1] === vbox[4] && vbox[2] === 0 && Math.abs(vbox[5] - vbox[4]) <= 1, JSON.stringify(vbox));
       await tap('dialog.view [data-vsort="battery"]');
       check(`[${tag}] Batterie gewählt`, (await sortText()).startsWith(T.sortBattery) && (await ev(`return r.querySelector('dialog.view [data-vsort="battery"]').classList.contains("on")`)));
       await p.screenshot({ path: `${outDir}/view-sheet-${tag.replace("/", "-")}.png` });
@@ -227,9 +229,9 @@ for (const lang of ["de", "en"]) {
       await wait(`return r.querySelector("dialog.view").open`);
       await tap('dialog.view [data-vreset]');
       check(`[${tag}] Zurücksetzen im Blatt`, (await sortText()) === T.sortDefault && (await ev(`return !!r.querySelector(".gh") && r.querySelector('dialog.view .vlist .vrow').dataset.key === "connection"`)));
-      // Tipp auf den Hintergrund schliesst
-      await p.mouse.click(195, 120);
-      check(`[${tag}] Hintergrund schliesst`, await wait(`return !r.querySelector("dialog.view").open`));
+      // Vollbild (2.24.0): kein Hintergrund mehr, das Kreuz schliesst
+      await tap("dialog.view .dlg-close");
+      check(`[${tag}] Kreuz schliesst`, await wait(`return !r.querySelector("dialog.view").open`));
     }
     check(`[${tag}] kein fehlender Text`, !(await ev(`return r.innerHTML.includes("undefined") || r.innerHTML.includes("NaN")`)));
     check(`[${tag}] keine JS-Fehler`, errors.length === 0, errors.join("; "));

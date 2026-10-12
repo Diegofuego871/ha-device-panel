@@ -1277,8 +1277,11 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
 @media (max-width: 600px) {
   dialog.device, dialog.settings, dialog.pulse-dlg, dialog.area-sheet, dialog.prompt-dlg, dialog.notes-dlg { height: 92%; max-height: 92%; }
   dialog.stat-dlg { height: 86%; max-height: 86%; }
-  /* Einstellungen auf dem Handy als Vollbild (seit 2.23.1, Wunsch des Nutzers) */
-  dialog.settings { height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
+  /* Einstellungen und Ansicht auf dem Handy als Vollbild (seit 2.24.0, Wunsch des Nutzers) */
+  dialog.settings, dialog.view { height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
+  dialog.view[open] { display: flex; flex-direction: column; }
+  dialog.view[open] > * { flex-shrink: 0; }
+  dialog.view[open] > .dlg-body { flex-grow: 1; }
 }
 
 /* Material (seit 2.0.0b1, Wunsch des Nutzers, Variante B aus docs/mockups/apple-design-v1): Geräte-Popup, Einstellungen und Protokoll sind

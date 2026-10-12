@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.24.0] - 2026-10-12
 
-Settings open full screen on the phone.
+Settings and the view sheet open full screen on the phone.
 
 ### Changed
 
-- On the phone the settings now fill the whole screen (like the window of all timers) instead of a sheet that leaves a strip of the list visible at the top. On wide screens nothing changes.
+- On the phone the settings and the sheet "View" (sort and display) now fill the whole screen (like the window of all timers) instead of a sheet that leaves a strip of the list visible at the top. There is no background left to tap, the cross closes them. On wide screens nothing changes.
 
 ## [2.23.1] - 2026-10-12
 
