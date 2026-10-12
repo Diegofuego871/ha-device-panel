@@ -128,7 +128,7 @@
           "updates_kinds": "Home Assistant (Core, OS, Supervisor), Add-ons, HACS, Geräte-Firmware. Übersprungene Versionen werden nie gemeldet.",
           "timers_pause": "Solange das an ist, schaltet kein Timer etwas (zum Beispiel in den Ferien). Sie überspringen ihre Zeiten und laufen danach weiter.",
           "timers_catch_up": "Lief Home Assistant zur Zeit eines Timers nicht, läuft er trotzdem, wenn der Start innerhalb dieser Zeit kommt. Spätere werden übersprungen und im Protokoll vermerkt. 0 = nie.",
-          "timers_notify_error": "Eine Meldung, wenn ein Timer nicht schalten konnte (Gerät nicht erreichbar). Sie geht an den eigenen Empfänger des Timers, sonst an das Standard-Ziel.",
+          "timers_notify_error": "Eine Push-Meldung (keine anhaltende, nichts unter Reparaturen), wenn ein Timer auch nach drei Versuchen nicht schalten konnte (sofort und zwei weitere Male im Abstand von 5 Minuten). Sie geht an den eigenen Empfänger des Timers, sonst an das Push-Ziel; ist dort \"keine Meldung\" gewählt, steht es nur im Protokoll. Ein Timer mit eigenem Push sendet sie immer.",
           "notify_charge": "Eine Push-Meldung, sobald ein Gerät voll geladen ist. Standardmässig aus; einschalten pro Integration (unten) oder pro Gerät (Geräte-Popup). Nur für wiederaufladbare Geräte: eine neue Batterie sieht wie Laden aus.",
           "charge_full": "Stand, der als voll gilt (50 bis 100). Manche Geräte melden nie 100 %.",
           "charge_rise": "Laden gilt als erkannt, wenn der Stand so viele Prozent über den tiefsten Stand seit dem letzten Entladen steigt (5 bis 80).",

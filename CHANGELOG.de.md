@@ -30,6 +30,17 @@ Automatische Updates installieren, sobald eine Version gefunden wird.
 - Der Protokoll-Knopf ist aus der Kopfzeile der Geräteliste in den Kopf des Einstellungsdialogs gewandert, links vom
   Kreuz. So hat die Kopfzeile wieder Platz (sie wurde mit dem Timer-Knopf eng). Das Protokoll öffnet wie bisher, jetzt
   über den Einstellungen.
+- Die Sammlung aller Timer ist aus Einstellungen › Timer entfernt; sie steht im Fenster hinter dem Stoppuhr-Knopf in der
+  Kopfzeile der Geräteliste. Der Abschnitt behält nur die Optionen (alle Timer pausieren, Verpasste Timer nachholen, Bei
+  Fehler benachrichtigen).
+- "Bei Fehler benachrichtigen" ist jetzt genau beschrieben (Info-Knopf bei der Option, Hinweis im Assistenten,
+  Optionstext in der Integration): Es ist eine normale Push-Meldung (Dienst, Gruppe oder Entität), keine anhaltende
+  Benachrichtigung in Home Assistant und nichts unter Reparaturen. Sie kommt erst, nachdem der Timer es dreimal versucht
+  hat (sofort und zwei weitere Male im Abstand von 5 Minuten), auch beim Zurückschalten. Sie geht an den eigenen
+  Empfänger des Timers, sonst an das Push-Ziel unter "Überwachung und Meldungen"; steht dort "Keine Meldung", wird
+  nichts gesendet und es steht nur im Protokoll (Kategorie Timer). Ein Timer mit "Per Push melden" sendet sie immer. Auf
+  dem Handy ersetzt eine neuere Meldung desselben Timers die ältere. Verpasste Läufe (Home Assistant lief nicht) und
+  pausierte Timer melden nichts, sie stehen nur im Protokoll.
 - Überall derselbe Abstand zwischen benachbarten runden Knöpfen in den Kopfzeilen, damit sie sich gut mit dem Finger
   treffen lassen: 22 px zwischen Protokoll-Knopf und Kreuz in den Einstellungen, zwischen Stoppuhr-Knopf und Zahnrad in
   der Kopfzeile der Geräteliste und zwischen Herz und Kreuz im Geräte-Popup (wie bisher).

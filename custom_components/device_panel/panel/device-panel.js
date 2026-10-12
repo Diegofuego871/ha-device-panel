@@ -3755,9 +3755,6 @@ class DevicePanel extends HTMLElement {
     if (this._settings?.magicAll) {
       this._loadMagicAll();
     }
-    if (this._settings?.timersAll) {
-      this._loadTimersAll();
-    }
     this._loadTmAll();
   }
 
@@ -5691,10 +5688,7 @@ class DevicePanel extends HTMLElement {
       return d.ai_prompt ? `${base} · ${this._t("sumAiPrompt")}` : base;
     }
     if (id === "timers") {
-      const all = this._settings?.timersAll?.timers;
-      if (!all) return this._t(d.timers_pause ? "sumTimersPaused" : "sumTimersIdle");
-      const n = all.length;
-      return n ? this._t("sumTimers", n, all.filter((x) => x.enabled).length, Boolean(d.timers_pause)) : this._t(d.timers_pause ? "sumTimersPaused" : "sumTimersNone");
+      return this._t(d.timers_pause ? "sumTimersPaused" : "sumTimersIdle");
     }
     if (id === "monitor") {
       // Während der Eingabe ungültig: der gespeicherte Wert gilt weiter.
@@ -5808,21 +5802,6 @@ class DevicePanel extends HTMLElement {
       const cnt = root.querySelector('.list-search[data-for="magic"] .n');
       if (cnt && sh) cnt.textContent = sh.filtering ? this._t("listSearchOf", sh.n, sh.total) : "";
       const x = root.querySelector('[data-lclear="magic"]');
-      if (x) x.hidden = !q;
-    }
-    // Übersicht Timer (seit 2.21.0): wie Magic Push
-    const tzone = root.querySelector("[data-tm-all-zone]");
-    if (tzone && st?.timersAll?.timers) {
-      const q = String(st.search?.timers || "");
-      if (tzone.dataset.q !== q) {
-        tzone.dataset.q = q;
-        st.timersAll.sopen = {};
-        tzone.innerHTML = this._timers.overviewListHtml(st.timersAll, this._devices);
-      }
-      const sh = st.timersAll.shown;
-      const cnt = root.querySelector('.list-search[data-for="timers"] .n');
-      if (cnt && sh) cnt.textContent = sh.filtering ? this._t("listSearchOf", sh.n, sh.total) : "";
-      const x = root.querySelector('[data-lclear="timers"]');
       if (x) x.hidden = !q;
     }
     for (const wrap of root.querySelectorAll(".srch-rows[data-srch]")) {
@@ -6082,32 +6061,6 @@ class DevicePanel extends HTMLElement {
     if (this._settings === st) this._renderSettings();
   }
 
-  // Timer (seit 2.21.0): alle Timer aller Geräte, nach Gerät. Laden wie bei Magic Push; nach dem Schliessen eines Popups neu.
-  _monTimersHtml() {
-    const st = this._settings;
-    if (!st.timersAll) {
-      st.timersAll = { timers: null, error: null, confirmId: null, flash: "", err: "", filter: "all", open: {}, sopen: {} };
-      this._loadTimersAll();
-    }
-    return this._timers.overviewHtml(st.timersAll, this._devices);
-  }
-
-  async _loadTimersAll() {
-    const st = this._settings;
-    if (!st?.timersAll) return;
-    const all = st.timersAll;
-    try {
-      const r = await this._hass.callWS({ type: "device_panel/timer_list" });
-      all.timers = r.timers;
-      all.error = null;
-      this._timers._today = r.today;
-      this._timers._offset = Number.isFinite(r.now) ? r.now * 1000 - Date.now() : 0;
-    } catch (err) {
-      all.error = errText(err);
-    }
-    if (this._settings === st) this._renderSettings();
-  }
-
   // --- Fenster "Alle Timer" (seit 2.22.0): Glocke in der Kopfzeile, Vollbild, alle Timer aller Geräte ---------------------------
   // Nur ansehen, bearbeiten und ein-/ausschalten; neue Timer gibt es nur im Popup eines Geräts.
   _openTmAll() {
@@ -6261,76 +6214,6 @@ class DevicePanel extends HTMLElement {
       all.err = this._t("tmToggleError", errText(err));
     }
     if (this._tmAll === all) this._renderTmAll();
-  }
-
-  async _timersAllAction(action, btn) {
-    const st = this._settings;
-    const all = st?.timersAll;
-    if (!all) return;
-    const t = (k, ...a) => this._t(k, ...a);
-    const id = btn.dataset.id;
-    const ui = this._timers;
-    all.flash = "";
-    all.err = "";
-    if (action === "timer-reload") {
-      all.error = null;
-      this._loadTimersAll();
-      return;
-    }
-    if (action === "timer-device") {
-      this._openDevice(btn.dataset.device, "timer");
-      return;
-    }
-    if (action === "timer-filter") {
-      all.filter = btn.dataset.v;
-      all.sopen = {};
-      if (this._settings === st) this._renderSettings();
-      return;
-    }
-    if (action === "timer-fold-dev" || action === "timer-fold-all") {
-      if (action === "timer-fold-dev") ui.toggleFold(all, this._devices, btn.dataset.device);
-      else ui.foldAll(all, this._devices);
-      const zone = this.shadowRoot.querySelector("dialog.settings [data-tm-all-zone]");
-      if (zone) zone.innerHTML = ui.overviewListHtml(all, this._devices);
-      return;
-    }
-    if (action === "timer-edit") {
-      // Direkt das Fenster des Assistenten, ohne das Popup des Geräts dahinter
-      ui.open(btn.dataset.device, true);
-      ui.editWhenLoaded(id);
-      return;
-    }
-    if (action === "timer-delete") all.confirmId = id;
-    else if (action === "timer-delete-no") all.confirmId = null;
-    else if (action === "timer-delete-yes") {
-      try {
-        await this._hass.callWS({ type: "device_panel/timer_delete", timer_id: id });
-        all.timers = all.timers.filter((x) => x.id !== id);
-        all.flash = t("tmDeleted");
-      } catch (err) {
-        all.err = t("tmDeleteError", errText(err));
-      }
-      all.confirmId = null;
-    } else if (action === "timer-toggle" || action === "timer-restart") {
-      try {
-        const r = await this._hass.callWS({ type: "device_panel/timer_enable", timer_id: id, enabled: action === "timer-restart" ? true : btn.checked });
-        const i = all.timers.findIndex((x) => x.id === id);
-        if (i >= 0) all.timers[i] = { ...all.timers[i], ...r.timer };
-      } catch (err) {
-        all.err = t("tmToggleError", errText(err));
-      }
-    } else if (action === "timer-run") {
-      try {
-        const r = await this._hass.callWS({ type: "device_panel/timer_run", timer_id: id });
-        const i = all.timers.findIndex((x) => x.id === id);
-        if (i >= 0) all.timers[i] = { ...all.timers[i], ...r.timer };
-        if (r.ok) all.flash = t("tmRunDone");
-        else all.err = t("tmRunFailed", t(`tmReason_${r.reason || "error"}`));
-      } catch (err) {
-        all.err = t("tmRunFailed", errText(err));
-      }
-    }
-    if (this._settings === st) this._renderSettings();
   }
 
   async _magicAllAction(action, btn) {
@@ -7430,11 +7313,9 @@ class DevicePanel extends HTMLElement {
         ttl("ttlAiPrompt") +
         this._aiPromptHtml(d, changes.has("ai_prompt")),
       timers:
-        this._monTimersHtml() +
-        ttl("ttlTimersGeneral") +
         row("timers_pause", t("optTimersPause"), sw("timers_pause", t("optTimersPause")), t("optTimersPauseShort"), null) +
         row("timers_catch_up", t("optTimersCatchUp"), num("timers_catch_up", t("minuteUnit"), t("optTimersCatchUp")), t("optTimersCatchUpShort"), null) +
-        row("timers_notify_error", t("optTimersNotifyError"), sw("timers_notify_error", t("optTimersNotifyError")), t("optTimersNotifyErrorShort"), null),
+        row("timers_notify_error", t("optTimersNotifyError"), sw("timers_notify_error", t("optTimersNotifyError")), t("optTimersNotifyErrorShort"), t("optTimersNotifyErrorInfo")),
       updates:
         row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
         autoUpdateRow(),
@@ -7496,7 +7377,6 @@ class DevicePanel extends HTMLElement {
       // Protokoll (seit 2.23.1 hier statt in der Kopfzeile der Liste): öffnet über den Einstellungen, danach wieder sie
       else if (action === "log") this._openLog();
       else if (action.startsWith("magic-") && action !== "magic-toggle") this._magicAllAction(action, btn);
-      else if (action.startsWith("timer-") && action !== "timer-toggle") this._timersAllAction(action, btn);
       else if (action === "save") this._saveSettings();
       else if (action === "tab" || action === "goto" || action === "integ" || action === "ifilter") {
         // Reiter, Sprung aus Übersicht oder Abschnitt "Integrationen", Liste
@@ -7698,10 +7578,6 @@ class DevicePanel extends HTMLElement {
       const el = ev.target;
       if (el.matches?.('input[data-set="magic-toggle"]')) {
         this._magicAllAction("magic-toggle", el);
-        return;
-      }
-      if (el.matches?.('input[data-set="timer-toggle"]')) {
-        this._timersAllAction("timer-toggle", el);
         return;
       }
       if (st?.draft && el.tagName === "SELECT" && el.dataset.cfull !== undefined) {

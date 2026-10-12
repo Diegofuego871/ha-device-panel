@@ -146,11 +146,11 @@ export class TimerUi {
     } catch (err) {
       if (this.deviceId !== deviceId) return;
       this.error = this.h.errText(err);
-      const all = this.standalone ? this.host._settings?.timersAll : null;
+      const all = this.standalone ? this.host._tmAll : null;
       if (all) {
         all.err = this.t("tmLoadError", this.error);
         this._pendingEdit = null;
-        this.host._renderSettings?.();
+        this.host._renderTmAll?.();
       }
     }
     this.loading = false;
@@ -565,7 +565,7 @@ export class TimerUi {
   // --- Aktionen auf Timern (Popup und Übersicht) ------------------------------
 
   replaceTimer(timer) {
-    for (const list of [this.data?.timers, this.host._settings?.timersAll?.timers, this.host._tmAll?.timers]) {
+    for (const list of [this.data?.timers, this.host._tmAll?.timers]) {
       if (!list) continue;
       const i = list.findIndex((x) => x.id === timer.id);
       if (i >= 0) list[i] = { ...list[i], ...timer };
@@ -608,7 +608,7 @@ export class TimerUi {
     try {
       await this.call({ type: "device_panel/timer_delete", timer_id: id });
       if (this.data) this.data.timers = this.data.timers.filter((x) => x.id !== id);
-      const all = this.host._settings?.timersAll;
+      const all = this.host._tmAll;
       if (all?.timers) all.timers = all.timers.filter((x) => x.id !== id);
       this.ui.confirmId = null;
       this.ui.error = "";
@@ -621,8 +621,7 @@ export class TimerUi {
   afterChange() {
     if (this.host._devTab === "timer" && this.root?.isConnected && !this.wizardOpen()) this.paint();
     this.host._renderDevice?.(true);
-    if (this.host._settings?.timersAll) this.host._renderSettings?.();
-    this.host._renderTimersAll?.();
+    this.host._renderTmAll?.();
   }
 
   // --- Assistent: Stand -------------------------------------------------------
@@ -744,7 +743,6 @@ export class TimerUi {
     this.closeWin();
     if (this.standalone) {
       this.reset();
-      this.host._loadTimersAll?.();
       this.host._loadTmAll?.();
       return;
     }

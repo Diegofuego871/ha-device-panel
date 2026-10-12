@@ -12,10 +12,10 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { dateSwitch: "Bestimmtes Datum", onceNoDate: "Ohne Datum schaltet der Timer beim nächsten Eintreffen der Uhrzeit", plug: "Steckdose", look: "Darstellung", tab: "Timer", add: "Neuer Timer", q1: "Was soll geschaltet werden?", q2: "Wann soll geschaltet werden?", q3: "Soll eine Push-Meldung kommen?", q4: "Name und Prüfung", step1: "Schritt 1 von 4", step4: "Schritt 4 von 4",
+  de: { infoFail1: "keine anhaltende Benachrichtigung", infoFail2: "dreimal versucht", infoFail3: "Push-Ziel", dateSwitch: "Bestimmtes Datum", onceNoDate: "Ohne Datum schaltet der Timer beim nächsten Eintreffen der Uhrzeit", plug: "Steckdose", look: "Darstellung", tab: "Timer", add: "Neuer Timer", q1: "Was soll geschaltet werden?", q2: "Wann soll geschaltet werden?", q3: "Soll eine Push-Meldung kommen?", q4: "Name und Prüfung", step1: "Schritt 1 von 4", step4: "Schritt 4 von 4",
     empty: "Noch keine Timer", noEnt: "keine Entität, die ein Timer schalten kann", daily: "Täglich", weekly: "Wöchentlich", monthly: "Monatlich", def: "Standard aus den Einstellungen", pushTitle: "⏱️ Timer: Bewässerung",
     one: "1 aktiv", delAsk: "Timer \"Bewässerung\" löschen?", discard: "Änderungen verwerfen?", sec: "Timer", pauseLabel: "Alle Timer pausieren", saved: "Timer gespeichert.", running: "läuft", hit: "1 von 2" },
-  en: { dateSwitch: "Specific date", onceNoDate: "Without a date the timer switches the next time the clock reaches this time", plug: "Plug", look: "Appearance", tab: "Timer", add: "New timer", q1: "What should be switched?", q2: "When should it switch?", q3: "Should a push notification come?", q4: "Name and check", step1: "Step 1 of 4", step4: "Step 4 of 4",
+  en: { infoFail1: "not a persistent notification", infoFail2: "tried three times", infoFail3: "push target", dateSwitch: "Specific date", onceNoDate: "Without a date the timer switches the next time the clock reaches this time", plug: "Plug", look: "Appearance", tab: "Timer", add: "New timer", q1: "What should be switched?", q2: "When should it switch?", q3: "Should a push notification come?", q4: "Name and check", step1: "Step 1 of 4", step4: "Step 4 of 4",
     empty: "No timers yet", noEnt: "no entity a timer can switch", daily: "Daily", weekly: "Weekly", monthly: "Monthly", def: "Default from the settings", pushTitle: "⏱️ Timer: Bewässerung",
     one: "1 on", delAsk: "Delete timer \"Bewässerung\"?", discard: "Discard changes?", sec: "Timers", pauseLabel: "Pause all timers", saved: "Timer saved.", running: "running", hit: "1 of 2" },
 };
@@ -236,34 +236,12 @@ for (const lang of ["de", "en"]) {
     const titles = await ev(`return [...r.querySelectorAll("dialog.settings .set-sec-title")].map((e) => e.firstChild.textContent.trim()).join("|")`);
     check(`[${tag}] Abschnitt "${T.sec}" zwischen Überwachung und Darstellung`, titles.includes(`${T.sec}|`) && titles.indexOf(T.sec) > titles.indexOf(lang === "de" ? "Überwachung" : "Monitoring") && titles.indexOf(T.sec) < titles.indexOf(T.look), titles);
     await tap('[data-set="section"][data-id="timers"]');
-    check(`[${tag}] aufgeklappt: zwei Geräte, eingeklappt mit Kurzfassung`, await wait(`return r.querySelectorAll("dialog.settings .mg-dcard").length === 2 && r.querySelectorAll("dialog.settings .mg-card").length === 0 && r.querySelectorAll("dialog.settings .mg-dsum").length === 2`));
-    await tap('dialog.settings [data-set="timer-fold-all"]');
-    check(`[${tag}] Alle ausklappen: 2 Timer`, await wait(`return r.querySelectorAll("dialog.settings .mg-card").length === 2`));
-    check(`[${tag}] Filter mit Zahlen`, (await ev(`return [...r.querySelectorAll('dialog.settings [data-set="timer-filter"] .tab-s')].map((e) => e.textContent).join()`)) === "2,2,0,0");
-    await ev(`const i = r.querySelector('dialog.settings input[data-lsearch="timers"]'); i.focus();`);
-    await p.keyboard.type("nacht");
-    check(`[${tag}] Suche "nacht": ${T.hit}`, await wait(`return r.querySelectorAll("dialog.settings .mg-card").length === 1 && r.querySelector('dialog.settings .list-search .n').textContent.includes("1")`), await text("dialog.settings .list-search .n"));
-    await tap('dialog.settings [data-lclear="timers"]');
-    check(`[${tag}] X leert die Suche (Geräte bleiben wie vor der Suche)`, await wait(`return r.querySelectorAll("dialog.settings .mg-dcard").length === 2`));
-    await tap('dialog.settings [data-set="timer-filter"][data-v="running"]');
-    check(`[${tag}] Filter "Läuft": keine Treffer`, await wait(`return !!r.querySelector("dialog.settings .mg-none")`));
-    await tap('dialog.settings [data-set="timer-filter"][data-v="all"]');
-    await wait(`return r.querySelectorAll("dialog.settings .mg-dcard").length === 2`);
-    if (!(await ev(`return r.querySelectorAll("dialog.settings .mg-card").length === 2`))) await tap('dialog.settings [data-set="timer-fold-all"]');
-    check(`[${tag}] wieder alle offen`, await wait(`return r.querySelectorAll("dialog.settings .mg-card").length === 2`));
+    // Seit 2.23.1 steht die Sammlung aller Timer im Fenster der Kopfzeile (Stoppuhr, Suite timerall); hier nur noch die Optionen
+    check(`[${tag}] Abschnitt "${T.sec}": nur Optionen, keine Sammlung aller Timer mehr`, await wait(`const d = r.querySelector("dialog.settings"); return !!d.querySelector('input[data-opt="timers_pause"]') && !d.querySelector(".mg-dcard, .mg-card, [data-lsearch], [data-tm-all-zone]") && ![...d.querySelectorAll("[data-set]")].some((e) => e.dataset.set.startsWith("timer-"))`));
     await p.screenshot({ path: `${outDir}/timer-settings-${tag.replace("/", "-")}.png` });
-    // Ein-/Ausschalten in der Übersicht
-    await tap('dialog.settings input[data-set="timer-toggle"]');
-    check(`[${tag}] Übersicht: ausschalten ruft timer_enable`, await wait(`return r.querySelectorAll("dialog.settings .mg-card.off").length === 1`) && (await calls("device_panel/timer_enable")).at(-1)?.enabled === false);
-    // Löschen mit Bestätigung
-    await tap('dialog.settings [data-set="timer-delete"]');
-    check(`[${tag}] Übersicht: Löschen fragt nach`, await wait(`return !!r.querySelector("dialog.settings .mg-confirm")`));
-    await tap('dialog.settings [data-set="timer-delete-no"]');
-    // Bearbeiten öffnet den Assistenten ohne Popup
-    await tap('dialog.settings [data-set="timer-edit"]');
-    check(`[${tag}] Übersicht: Bearbeiten öffnet den Assistenten, kein Popup dahinter`, await wait(`return r.querySelector("dialog.timer-dlg")?.open`) && !(await ev(`return r.querySelector("dialog.device").open`)));
-    await tap(`${win} [data-tm="close"]`);
-    await wait(`return !r.querySelector("dialog.timer-dlg").open`);
+    // Meldung bei Fehler: genau beschrieben (Info-Knopf)
+    await tap('dialog.settings [data-set="info"][data-key="timers_notify_error"]');
+    check(`[${tag}] "Bei Fehler benachrichtigen": Info nennt Art, Zeitpunkt und Ziel der Meldung`, await wait(`const x = r.querySelector("dialog.settings .opt-info")?.textContent || ""; return x.includes(${JSON.stringify(T.infoFail1)}) && x.includes(${JSON.stringify(T.infoFail2)}) && x.includes(${JSON.stringify(T.infoFail3)})`), await text("dialog.settings .opt-info"));
     // Allgemein: Pause und Nachholen
     check(`[${tag}] Allgemein: Pause aus, Nachholen 10 Min., Fehlermeldung an`, await ev(`return !r.querySelector('dialog.settings input[data-opt="timers_pause"]').checked && r.querySelector('dialog.settings input[data-opt="timers_catch_up"]').value === "10" && r.querySelector('dialog.settings input[data-opt="timers_notify_error"]').checked`));
     await tap('dialog.settings input[data-opt="timers_pause"]');

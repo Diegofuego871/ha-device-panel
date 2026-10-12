@@ -13,6 +13,11 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 - 2.23.1 auch: Protokoll-Knopf (`data-set="log"`, Klasse `dlg-close dlg-log`) im Kopf der Einstellungen statt `.log-btn` in der Kopfzeile;
   öffnet `dialog.log-dlg` über den Einstellungen. Suiten `log`, `busy` angepasst.
 
+- 2.23.1 auch: Einstellungen › Timer zeigt nur noch die Optionen (Sammlung aller Timer entfernt: `_monTimersHtml`, `_loadTimersAll`,
+  `_timersAllAction` und `st.timersAll` weg; nur noch das Fenster `_tmAll`). Fehlermeldung des Timers genau beschrieben
+  (`optTimersNotifyErrorInfo`): normale Push-Meldung über `push.async_push` (Tag `device_panel_timer_<id>`), nicht anhaltend, nach 3 Versuchen,
+  Ziel Timer-Ziel sonst `notify_service`, bei "none" nur Protokoll `timer_no_target`.
+
 ## Davor (2.22.0, Favoriten)
 
 - 2.22.0 (Wunsch des Nutzers): Herz im Kopf des Geräte-Popups (`.dlg-fav`, `data-dlg="fav"`, sofort, ohne Entwurf) und Chip

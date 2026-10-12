@@ -29,6 +29,16 @@ Automatic updates install as soon as a version is found.
 - The log button moved from the header of the device list to the header of the settings dialog, left of the cross, which
   gives the header room again (it got crowded with the timer button). The log still opens as before, on top of the
   settings.
+- The collection of all timers is removed from Settings › Timer; it lives in the window behind the stopwatch button in the
+  header of the device list. The section keeps only the options (pause all timers, make up missed timers, notify on
+  failure).
+- "Notify on failure" is now described exactly (info button next to the option, hint in the assistant, option text in the
+  integration): it is a normal push notification (service, group or entity), not a persistent notification in Home Assistant
+  and nothing under Repairs. It is sent only after the timer tried three times (at once and twice more, 5 minutes apart),
+  also when switching back. It goes to the timer's own recipient, otherwise to the push target under "Monitoring and
+  notifications"; if that says "No notification", nothing is sent and it only appears in the log (category Timer). A timer
+  with "Report by push" on always sends it. On the phone a newer notification of the same timer replaces the older one.
+  Missed runs (Home Assistant was not running) and paused timers send nothing, they only appear in the log.
 - Same distance everywhere between neighbouring round buttons in the headers, so they are easy to hit with a finger: 22 px
   between the log button and the cross in the settings, between the stopwatch button and the gear in the header of the
   device list, and between the heart and the cross in the device pop-up (as before).

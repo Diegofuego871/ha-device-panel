@@ -128,7 +128,7 @@
           "updates_kinds": "Home Assistant (core, OS, supervisor), add-ons, HACS, device firmware. Skipped versions are never reported.",
           "timers_pause": "While on, no timer switches anything (for example on holiday). They skip their times and carry on afterwards.",
           "timers_catch_up": "If Home Assistant was not running when a timer was due, it still runs when started within this time. Later ones are skipped and noted in the log. 0 = never.",
-          "timers_notify_error": "A notification when a timer could not switch (device not reachable). Goes to the timer's own recipient, otherwise to the default target.",
+          "timers_notify_error": "A push notification (not a persistent one, nothing under Repairs) when a timer could not switch even after three attempts (at once and twice more, 5 minutes apart). Goes to the timer's own recipient, otherwise to the push target; if that is \"none\", it only appears in the log. A timer with its own push switched on always sends it.",
           "notify_charge": "A push notification as soon as a device is fully charged. Off by default; switch it on per integration (below) or per device (device pop-up). Only for rechargeable devices: a new battery looks like charging.",
           "charge_full": "Level that counts as full (50 to 100). Some devices never report 100 %.",
           "charge_rise": "Charging is detected when the level rises this many percent above the lowest level since the last discharge (5 to 80).",
