@@ -36,6 +36,7 @@ for (const lang of ["de", "en"]) {
 
     check(`[${tag}] Stoppuhr in der Kopfzeile mit Beschriftung "${T.btn}"`, await ev(`const b = r.querySelector(".toolbar .tmall-btn"); return !!b && b.getAttribute("aria-label") === ${JSON.stringify(T.btn)} && !!b.querySelector("svg")`));
     // Abstand Stoppuhr zum Zahnrad = Abstand Herz zum Kreuz im Geräte-Popup (22 px)
+    check(`[${tag}] Stoppuhr genau mittig: links zum Nachbarn = rechts zum Zahnrad (22 px)`, await ev(`const a = r.querySelector(".toolbar .tmall-btn").getBoundingClientRect(), b = r.querySelector(".toolbar .gear-btn").getBoundingClientRect(), s = [...r.querySelectorAll(".toolbar > *")].slice(0, [...r.querySelectorAll(".toolbar > *")].indexOf(r.querySelector(".toolbar .tmall-btn"))).reverse().find((e) => e.getBoundingClientRect().width > 0).getBoundingClientRect(); const l = Math.round(a.left - s.right), rr = Math.round(b.left - a.right); return l === rr && rr === 22`));
     check(`[${tag}] Abstand Stoppuhr zum Zahnrad 22 px`, (await ev(`const a = r.querySelector(".toolbar .tmall-btn").getBoundingClientRect(), b = r.querySelector(".toolbar .gear-btn").getBoundingClientRect(); return Math.round(b.left - a.right)`)) === 22);
     await tap(".tmall-btn");
     check(`[${tag}] Fenster offen, Titel "${T.title}" · "${T.sub}"`, await wait(`const d = r.querySelector("dialog.tmall-dlg"); return d?.open && d.querySelector("h2").textContent === ${JSON.stringify(T.title)} && d.querySelector(".dlg-sub").textContent === ${JSON.stringify(T.sub)}`));
