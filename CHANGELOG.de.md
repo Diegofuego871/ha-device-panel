@@ -7,6 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.16.0] - 2026-10-12
+
+Magic Push: die Rückfrage "Änderungen verwerfen?" als Pop-up in der Mitte.
+
+### Geändert
+
+- Schliesst man den Assistenten mit nicht gespeicherten Änderungen (Wunsch des Nutzers), fragt er "Änderungen verwerfen?"
+  jetzt in einem Pop-up in der Mitte des Fensters mit abgedunkeltem Hintergrund, nicht mehr in der Knopfleiste unten. So
+  fällt sie auf. Alles dahinter ist gesperrt, bis man antwortet, und der Fokus liegt auf "Weiter bearbeiten", damit Enter
+  nichts verwirft.
+
 ## [2.15.0] - 2026-10-11
 
 Magic Push: mehrere verknüpfte Bedingungen (Und/Oder, mit Gruppen), alle auf der ersten Seite des Assistenten.
@@ -2627,6 +2638,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.16.0
 [2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0
 [2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0
 [2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0

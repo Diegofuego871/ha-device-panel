@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.16.0] - 2026-10-12
+
+Magic Push: the "Discard changes?" question as a pop-up in the middle.
+
+### Changed
+
+- Closing the assistant with unsaved changes (requested by the user) now asks "Discard changes?" in a pop-up in the middle
+  of the window, with a dimmed background, instead of in the button bar at the bottom. It is harder to miss. Everything
+  behind it is locked until you answer, and the focus sits on "Keep editing", so Enter discards nothing.
+
 ## [2.15.0] - 2026-10-11
 
 Magic Push: several linked conditions (And/Or, with groups), all on the first page of the assistant.
@@ -2544,6 +2554,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.16.0
 [2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0
 [2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0
 [2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0

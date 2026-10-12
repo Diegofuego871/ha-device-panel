@@ -405,7 +405,10 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] freier Zustand: "ist" und "ändert sich", Wörter der Entität`, (await ev(`return [...r.querySelectorAll('${W} .sub-tabs [data-mg="kind"]')].map(b => b.dataset.kind).join()`)) === "is,change" && (await ev(`return [...r.querySelectorAll('${W} [data-mg="state"]')].map(b => b.textContent.trim()).join()`)) === (lang === "de" ? "nass,trocken" : "wet,dry"));
     check(`[${tag}] Schritt 1 mit Bedingung ohne Querscrollen`, (await overflow()) <= 0);
     await tap('[data-mg="cancel"]');
-    check(`[${tag}] Abbrechen mit Änderungen fragt nach "${T.discard}"`, await wait(`return r.querySelector('${W} .mgw-discard b')?.textContent.trim() === ${JSON.stringify(T.discard)} && !r.querySelector('${W} [data-mg="next"]')`));
+    check(`[${tag}] Abbrechen mit Änderungen fragt nach "${T.discard}"`, await wait(`return r.querySelector('${W} .mgw-discard b')?.textContent.trim() === ${JSON.stringify(T.discard)}`));
+    check(`[${tag}] Rückfrage steht als Pop-up in der Mitte des Fensters, der Rest ist gesperrt`, await ev(`const d = r.querySelector("${W}").getBoundingClientRect(); const c = r.querySelector('${W} .mgw-discard').getBoundingClientRect(); const o = r.querySelector('${W} .mgw-ov').getBoundingClientRect();
+      return Math.abs((c.left + c.width / 2) - (d.left + d.width / 2)) < 2 && Math.abs((c.top + c.height / 2) - (d.top + d.height / 2)) < 2 && c.width < d.width && Math.abs(o.width - d.width) < 2 && Math.abs(o.height - d.height) < 2 && [...r.querySelectorAll('${W} .mgw-body, ${W} .mgw-foot, ${W} .mgw-head')].every((n) => n.hasAttribute('inert'))`));
+    check(`[${tag}] Rückfrage: Fokus liegt auf der sicheren Antwort (Weiter bearbeiten)`, await ev(`return r.querySelector('${W} [data-mg="discard-no"]') === r.activeElement`));
     await tap('[data-mg="discard-no"]');
     check(`[${tag}] "Weiter bearbeiten": Fenster und Stand bleiben`, await wait(`return !r.querySelector('${W} .mgw-discard') && r.querySelector("${W}").open && !!r.querySelector('${W} .mg-lcard.open')`));
     await p.keyboard.press("Escape");

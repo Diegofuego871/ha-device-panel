@@ -3,7 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.15.0, Magic Push: mehrere verknüpfte Bedingungen)
+## Stand (2.16.0, Magic Push: Rückfrage beim Schliessen als Pop-up)
+
+- 2.16.0 (Wunsch des Nutzers, Screenshot): "Änderungen verwerfen?" steht nicht mehr in `.mgw-foot`, sondern als Pop-up in
+  der Mitte des Fensters: `.mgw-ov` (absolut über dem ganzen `dialog.magic-dlg`, abgedunkelt) mit `.mgw-discard` (Karte).
+  Kopf, Fortschritt, Inhalt und Fuss tragen dabei `inert`, Fokus auf `discard-no` (`paintWindow`). Test: `magic-e2e`.
+
+## Stand davor (2.15.0, Magic Push: mehrere verknüpfte Bedingungen)
 
 - 2.15.0 (Wunsch des Nutzers, Mockups `docs/mockups/magic-conditions-v1`, Variante "Eine Seite"): Schritte 1 Bedingungen ·
   2 Wie lange · 3 Versand · 4 Text · 5 Name. Regel hat `conditions` = `{"op": "and"|"or", "items": [Blatt | Gruppe]}`,

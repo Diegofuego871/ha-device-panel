@@ -379,6 +379,11 @@ HA-Nachbau prüfen.
   Meldung und "wieder normal" mit eigenem Titel und Inhalt stehen im selben Schritt, darunter Vorschau und "Test senden"
   (der Test kennt so Empfänger, Lautstärke und Wiederholung).
 
+## Magic Push: Rückfrage beim Schliessen (seit 2.16.0)
+
+- "Änderungen verwerfen?" ist ein Pop-up in der Mitte des Assistenten-Fensters über abgedunkeltem Hintergrund
+  (`.mgw-ov`/`.mgw-discard`), nicht in der Knopfleiste. Beide Knöpfe gleich breit, "Weiter bearbeiten" hat den Fokus.
+
 ## Magic Push: Bedingungen auf Seite 1 (seit 2.15.0, docs/mockups/magic-conditions-v1, "Eine Seite")
 
 - Schritte: Bedingungen · Wie lange · Versand · Text · Name. Seite 1 ist leer ein Entitätswähler, danach eine Liste von

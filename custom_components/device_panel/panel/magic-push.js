@@ -706,6 +706,8 @@ export class MagicPush {
     this.fitWindow();
     this.placeSide(win);
     this.paintZones();
+    // Rückfrage: Fokus auf die sichere Antwort, damit Enter nichts verwirft
+    if (this.wiz?.confirmClose) win.querySelector('[data-mg="discard-no"]')?.focus({ preventScroll: true });
     for (const [sel, top] of scrolls) {
       const el = win.querySelector(sel);
       if (el) el.scrollTop = top;
@@ -1510,17 +1512,21 @@ export class MagicPush {
     const last = step === STEPS;
     const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-mg="${step === 1 ? "cancel" : "back"}">${esc(step === 1 ? t("mgCancel") : t("mgBack"))}</button>
       ${last ? `<button type="button" class="dlg-btn primary" data-mg="save"${this.canNext() && !w.saving ? "" : " disabled"}>${esc(t("mgSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-mg="next"${this.canNext() ? "" : " disabled"}>${esc(t("mgNext"))}</button>`}</div>`;
-    const discard = `<div class="mgw-discard" role="alertdialog" aria-label="${esc(t("mgDiscardTitle"))}"><b>${esc(t("mgDiscardTitle"))}</b><small>${esc(t("mgDiscardNote"))}</small>
-      <div class="mg-btns small"><button type="button" class="dlg-btn" data-mg="discard-no">${esc(t("mgDiscardNo"))}</button><button type="button" class="dlg-btn danger" data-mg="discard-yes">${esc(t("mgDiscardYes"))}</button></div></div>`;
+    // Rückfrage beim Schliessen als Pop-up in der Mitte des Fensters (seit 2.16.0); der Rest dahinter ist gesperrt (inert)
+    const lock = w.confirmClose ? " inert" : "";
+    const discard = w.confirmClose
+      ? `<div class="mgw-ov"><div class="mgw-discard" role="alertdialog" aria-modal="true" aria-label="${esc(t("mgDiscardTitle"))}"><b>${esc(t("mgDiscardTitle"))}</b><small>${esc(t("mgDiscardNote"))}</small>
+      <div class="mg-btns"><button type="button" class="dlg-btn" data-mg="discard-no">${esc(t("mgDiscardNo"))}</button><button type="button" class="dlg-btn danger" data-mg="discard-yes">${esc(t("mgDiscardYes"))}</button></div></div></div>`
+      : "";
     const device = this.host._devices?.find((d) => d.id === this.deviceId)?.name || "";
-    return `<div class="mgw-head"><div class="mgw-t"><b>${esc(w.editing ? t("mgEditing") : t("mgNew"))}</b>${device ? `<small>${esc(device)}</small>` : ""}</div>
+    return `<div class="mgw-head"${lock}><div class="mgw-t"><b>${esc(w.editing ? t("mgEditing") : t("mgNew"))}</b>${device ? `<small>${esc(device)}</small>` : ""}</div>
         <button type="button" class="dlg-close" data-mg="close" title="${esc(t("close"))}" aria-label="${esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>
-      <div class="mgw-prog"><div class="mg-stephead"><span>${esc(t("mgStepOf", step, STEPS))}</span><span>${esc(where)}</span></div>
+      <div class="mgw-prog"${lock}><div class="mg-stephead"><span>${esc(t("mgStepOf", step, STEPS))}</span><span>${esc(where)}</span></div>
         <div class="mg-steps">${bars}</div></div>
-      <div class="mgw-body"><div class="mgw-main"><div class="mg-big">${esc(t(step === 1 && !w.adding && this.leavesOf().length ? "mgQ_1b" : `mgQ_${step}`))}</div>
+      <div class="mgw-body"${lock}><div class="mgw-main"><div class="mg-big">${esc(t(step === 1 && !w.adding && this.leavesOf().length ? "mgQ_1b" : `mgQ_${step}`))}</div>
         ${body}
         ${w.error ? `<div class="dlg-error" role="alert">${esc(w.error)}</div>` : ""}</div></div>
-      <div class="mgw-foot">${w.confirmClose ? discard : nav}</div>`;
+      <div class="mgw-foot"${lock}>${nav}</div>${discard}`;
   }
 
   // Schritt 1 (seit 2.15.0): alle Bedingungen an einem Ort. Ohne Bedingung (und beim Hinzufügen) die Auswahl der Entität

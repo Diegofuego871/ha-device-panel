@@ -1488,8 +1488,12 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .mgw-side > :first-child { margin-top: 0; }
 .mgw-foot { padding: 10px 22px calc(14px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--dp-divider); background: var(--dp-card); }
 .mgw-foot .mg-btns { margin-top: 0; }
-.mgw-discard b { display: block; font-size: 14px; font-weight: 600; }
-.mgw-discard small { display: block; margin-top: 2px; color: var(--dp-text2); font-size: 12.5px; line-height: 1.4; }
+.mgw-ov { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; background: rgba(0,0,0,0.55); }
+.mgw-discard { width: min(340px, 100%); box-sizing: border-box; padding: 20px 20px 16px; border-radius: 18px; background: var(--dp-card); color: var(--dp-text); box-shadow: 0 10px 40px rgba(0,0,0,0.45); border: 1px solid var(--dp-divider); text-align: center; }
+.mgw-discard b { display: block; font-size: 17px; font-weight: 600; }
+.mgw-discard small { display: block; margin-top: 6px; color: var(--dp-text2); font-size: 13.5px; line-height: 1.45; }
+.mgw-discard .mg-btns { margin-top: 16px; }
+.mgw-discard .dlg-btn { flex: 1 1 0; min-width: 0; }
 @media (max-width: 700px) {
   /* --mgw-top/--mgw-h: sichtbare Fläche ohne Tastatur (magic-push.js, fitWindow) */
   dialog.magic-dlg { width: 100%; max-width: 100%; height: var(--mgw-h, 100%); max-height: 100%; margin: 0; border-radius: 0; inset-block-start: var(--mgw-top, 0px); inset-block-end: auto; }
