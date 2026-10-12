@@ -41,7 +41,14 @@ for (const lang of ["de", "en"]) {
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
     const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
     const handle = async (sel) => (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
-    const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
+    // Einstellungen werden bei Versionsprüfung neu gezeichnet: Element neu suchen, wenn es ersetzt wurde (unter Last auf CI)
+    const tap = async (sel) => {
+      for (let versuch = 1; ; versuch++) {
+        const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel);
+        try { await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); return; }
+        catch (err) { if (versuch >= 4 || !/not attached|not stable/.test(String(err))) throw err; await p.waitForTimeout(250); }
+      }
+    };
     const text = (s) => ev(`return (r.querySelector(${JSON.stringify(s)})?.textContent || "").replace(/\\s+/g," ").trim()`);
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
     const setCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_options").map((m) => m.values));
