@@ -437,7 +437,7 @@ HA-Nachbau prüfen.
 ## Favoriten (seit 2.22.0)
 
 - Herz im Kopf des Geräte-Popups: runder Knopf (36 px) links vom Kreuz, Umriss grau, als Favorit rot und gefüllt.
-- Chip "Favoriten": nur ein rotes Herz (34 px breit, ohne Text und Zahl), aktiv mit roter Umrandung und leicht rotem Grund;
+- Chip "Favoriten": nur ein rotes Herz (42 px breit, ohne Text und Zahl), aktiv mit roter Umrandung und leicht rotem Grund;
   Standard gleich nach "Alle", nicht angeheftet.
 
 ## Magic Push: Rückfrage beim Schliessen (seit 2.16.0)

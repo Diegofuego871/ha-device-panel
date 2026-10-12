@@ -445,13 +445,13 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
   background: var(--dp-subtle); color: var(--dp-text2); cursor: pointer; }
 .dlg-close:hover { background: var(--dp-hover); color: var(--dp-text); }
 /* Herz im Kopf des Geräte-Popups (seit 2.22.0): wie das Kreuz ein runder Knopf, rot sobald Favorit */
-.dlg-fav { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border: none; border-radius: 50%;
+.dlg-fav { flex: none; display: grid; place-items: center; width: 36px; height: 36px; margin-right: 8px; border: none; border-radius: 50%;
   background: var(--dp-subtle); color: var(--dp-text2); cursor: pointer; transition: color .2s ease, background .2s ease; }
 .dlg-fav:hover { background: var(--dp-hover); color: var(--dp-error); }
 .dlg-fav.on { color: var(--dp-error); }
 .dlg-fav:focus-visible { outline: 2px solid var(--dp-error); outline-offset: 1px; }
 /* Chip "Favoriten": nur das rote Herz, schmal (kein Text, keine Zahl) */
-.chip.hint.fv.bare { gap: 0; padding: 0; width: 34px; justify-content: center; }
+.chip.hint.fv.bare { flex: none; box-sizing: border-box; gap: 0; padding: 0; width: 42px; justify-content: center; }
 .chip.hint.fv svg { color: var(--dp-error); }
 .chip.hint.fv.on { background: var(--dp-error-soft); border-color: var(--dp-error); }
 .dlg-quick { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 22px 6px; }

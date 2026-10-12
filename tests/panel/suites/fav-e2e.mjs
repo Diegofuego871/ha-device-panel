@@ -36,9 +36,9 @@ for (const lang of ["de", "en"]) {
     // Chip: gleich nach "Alle", nur Herz, nicht angeheftet
     const order = await ev(`return [...r.querySelectorAll(".chips .chip")].map(x => x.dataset.conn || x.dataset.hint || "x")`);
     check(`[${tag}] Chip "Favoriten" steht als zweiter, gleich nach "Alle"`, order[0] === "all" && order[1] === "favorites", JSON.stringify(order));
-    const chipInfo = await ev(`const c = r.querySelector('.chips [data-hint="favorites"]'); const s = getComputedStyle(c); return { text: c.textContent.trim(), label: c.getAttribute("aria-label"), w: Math.round(c.getBoundingClientRect().width), red: getComputedStyle(c.querySelector("svg")).color, pinned: !!c.closest(".chip-pin"), on: c.getAttribute("aria-pressed") }`);
+    const chipInfo = await ev(`const c = r.querySelector('.chips [data-hint="favorites"]'); const s = getComputedStyle(c); return { text: c.textContent.trim(), label: c.getAttribute("aria-label"), w: Math.round(c.getBoundingClientRect().width), css: getComputedStyle(c).flexShrink, red: getComputedStyle(c.querySelector("svg")).color, pinned: !!c.closest(".chip-pin"), on: c.getAttribute("aria-pressed") }`);
     check(`[${tag}] nur ein Herz: kein Text, keine Zahl`, chipInfo.text === "" && chipInfo.label === T.chip, JSON.stringify(chipInfo));
-    check(`[${tag}] schmal (höchstens 40 px) und rot`, chipInfo.w <= 40 && /rgb\(2[0-5]\d, \d+, \d+\)|rgb\(\d{3}, \d{2}, \d{2}\)/.test(chipInfo.red), JSON.stringify(chipInfo));
+    check(`[${tag}] schmal (40 bis 48 px, nicht gestaucht) und rot`, chipInfo.w >= 40 && chipInfo.w <= 48 && /rgb\(2[0-5]\d, \d+, \d+\)|rgb\(\d{3}, \d{2}, \d{2}\)/.test(chipInfo.red), JSON.stringify(chipInfo));
     check(`[${tag}] nicht festgepinnt, nur "Alle" ist es`, !chipInfo.pinned && (await ev(`return [...r.querySelectorAll(".chips .chip-pin .chip")].map(x => x.dataset.conn).join()`)) === "all");
 
     // Ohne Favoriten zeigt der Filter nichts

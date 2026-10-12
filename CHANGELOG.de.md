@@ -41,6 +41,9 @@ Favoriten und automatische Updates (beides Wunsch des Nutzers): ein Herz auf der
   ist der Unterschied zu "Täglich"); beim erneuten Einschalten wartet er auf das nächste Mal. Mit Datum funktioniert
   alles wie bisher. In der Liste steht ein solcher
   Timer als "einmalig" und "Einmalig, nächstes Mal um 06:30".
+- Der Chip "Favoriten" ist etwas breiter (42 px) und schrumpft in der scrollenden Chip-Leiste auf dem Handy nicht mehr
+  (er wurde auf etwa 18 px gestaucht), damit das Herz nicht eingequetscht wirkt. Das Herz im Geräte-Popup sitzt etwas
+  weiter vom Kreuz entfernt.
 - Der Schalter auf den Timer-Karten im Geräte-Popup ist etwas grösser (44 × 24 px statt 36 × 20 px).
 - Geräte-Popup auf dem Handy: Die kleinen Symbole bleiben. Das Symbol des Reiters "Magic Push" ist jetzt eine Glocke (🔔)
   statt der Funken, die zu wenig nach Benachrichtigung aussahen.
