@@ -58,7 +58,7 @@ def _states_many(hass: HomeAssistant, entity_ids: list[str], start: datetime, en
 
 
 def evaluate_tree(
-    rows_by: dict[str, list[tuple[float, str]]], tree: dict[str, Any], for_s: int, now: float, start: float
+    rows_by: dict[str, list[tuple[float, str]]], tree: dict[str, Any], for_s: int, now: float, start: float, reset_for_s: int = 0
 ) -> tuple[list[list[Any]], list[dict[str, Any]], int, list[list[list[Any]]]]:
     """
     Wie evaluate, aber für mehrere verknüpfte Bedingungen (seit 2.15.0): Der Verlauf aller Entitäten wird in Abschnitte
@@ -110,6 +110,9 @@ def evaluate_tree(
             if reset and held >= for_s and eval_tree(tree, lambda lf, ts=ts: leaf_hold(lf, state_at(lf["entity_id"], ts))) is True:
                 current[1] = end
                 continue
+            # Zurücksetzen erst nach Dauer: ein kürzerer Unterbruch gehört noch zur selben Episode (current[1] bleibt)
+            if reset_for_s > 0 and held >= for_s and end - current[1] < reset_for_s:
+                continue
             _close(current, values, kind, for_s, now, intervals, fires)
             current = None
     if current is not None:
@@ -121,7 +124,7 @@ def evaluate_tree(
 
 
 def evaluate(
-    rows: list[tuple[float, str]], kind: str, value: Any, for_s: int, now: float, reset_value: Any = None
+    rows: list[tuple[float, str]], kind: str, value: Any, for_s: int, now: float, reset_value: Any = None, reset_for_s: int = 0
 ) -> tuple[list[list[Any]], list[dict[str, Any]], int]:
     """
     Abschnitte, in denen die Bedingung galt, und die Auslösungen daraus.
@@ -166,6 +169,9 @@ def evaluate(
                 held = ts - current[0]
                 if reset_value not in (None, "") and held >= for_s and reset_met(kind, value, reset_value, state) is False:
                     current[1] = end
+                    continue
+                # Zurücksetzen erst nach Dauer: ein kürzerer Unterbruch gehört noch zur selben Episode
+                if reset_for_s > 0 and held >= for_s and end - current[1] < reset_for_s:
                     continue
                 _close(current, values, kind, for_s, now, intervals, fires)
                 current = None
@@ -213,6 +219,7 @@ async def async_history(
     now: float | None = None,
     reset_value: Any = None,
     conditions: Any = None,
+    reset_for_s: int = 0,
 ) -> dict[str, Any]:
     """Rückblick der letzten 24 Stunden für eine Regel (noch nicht gespeichert); mit mehreren Bedingungen über alle."""
     tree = clean_conditions(hass, conditions) if conditions and len(tree_leaves_raw(conditions)) > 1 else None
@@ -237,7 +244,7 @@ async def async_history(
         result["available"] = False
         return result
     if tree is not None:
-        return await _async_history_tree(hass, tree, for_s, now, start, result)
+        return await _async_history_tree(hass, tree, for_s, now, start, result, reset_for_s)
     try:
         from homeassistant.components.recorder import get_instance  # noqa: PLC0415
 
@@ -254,7 +261,7 @@ async def async_history(
         return result
     result["empty"] = False
     result["points"] = points(rows, start, now)
-    result["intervals"], result["fires"], result["count"] = evaluate(rows, kind, value, for_s, now, reset_value)
+    result["intervals"], result["fires"], result["count"] = evaluate(rows, kind, value, for_s, now, reset_value, reset_for_s)
     return result
 
 
@@ -271,7 +278,9 @@ def tree_leaves_raw(raw: Any) -> list[Any]:
     return out
 
 
-async def _async_history_tree(hass: HomeAssistant, tree: dict[str, Any], for_s: int, now: float, start: float, result: dict[str, Any]) -> dict[str, Any]:
+async def _async_history_tree(
+    hass: HomeAssistant, tree: dict[str, Any], for_s: int, now: float, start: float, result: dict[str, Any], reset_for_s: int = 0
+) -> dict[str, Any]:
     """Rückblick für verknüpfte Bedingungen: Verläufe aller beteiligten Entitäten, ausgewertet mit evaluate_tree."""
     leaves = tree_leaves(tree)
     entity_ids = list(dict.fromkeys(leaf["entity_id"] for leaf in leaves))
@@ -290,6 +299,6 @@ async def _async_history_tree(hass: HomeAssistant, tree: dict[str, Any], for_s: 
         return result
     result["empty"] = False
     result["points"] = points(rows_by.get(entity_ids[0], []), start, now)
-    result["intervals"], result["fires"], result["count"], spans = evaluate_tree(rows_by, tree, for_s, now, start)
+    result["intervals"], result["fires"], result["count"], spans = evaluate_tree(rows_by, tree, for_s, now, start, reset_for_s)
     result["leaves"] = [{"entity_id": leaf["entity_id"], "kind": leaf["kind"], "intervals": spans[i]} for i, leaf in enumerate(leaves)]
     return result

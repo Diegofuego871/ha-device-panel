@@ -3,7 +3,20 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.16.0, Magic Push: Rückfrage beim Schliessen als Pop-up)
+## Stand (2.17.0, Magic Push: Zurücksetzen erst nach Dauer)
+
+- 2.17.0 (Wunsch des Nutzers, gegen Flattern bei "Automatisch"): Regelfeld `reset_for_s` (0 bis 7 Tage, Vorgabe 0, bei
+  "ändert sich" immer 0). Engine (`magic.py`): in `_evaluate` startet bei nicht mehr geltender Bedingung (und nach der
+  Meldung) statt `_resolve` ein Timer in `self._rtimers` (`_on_reset_timer`); gilt die Bedingung vorher wieder (oder liegt
+  sie in der Zone des Rücksetzwerts), wird er verworfen (`_cancel_reset`), die Episode läuft weiter, nichts wird gemeldet.
+  Vor der Meldung gibt es keine Wartezeit. Nicht erreichbar (`None`) setzt nichts zurück. `_cancel` räumt beide Timer.
+  Rückblick: `evaluate`/`evaluate_tree` nehmen `reset_for_s` (ein kürzerer Unterbruch bleibt in der Episode), WS
+  `magic_history` hat `reset_for_s`. Panel: neuer Block `resetForHtml` in Schritt 2 (`rfor`, `rfor-own`, `rfor-unit`,
+  Zone `rforhint`), Entwurf `reset_for_s`/`resetForOwn`, neue Meldungen mit 60 s, `draftFrom` liest den gespeicherten Wert;
+  Satz `zurück nach …`. Tests: `tests/test_magic_conditions.py` (Abschnitt "Zurücksetzen erst nach Dauer"), `magic-e2e`.
+  2.16.0 (Pop-up, Touch-Ziele) ist nicht veröffentlicht und in 2.17.0 enthalten.
+
+## Stand davor (2.16.0, Magic Push: Rückfrage beim Schliessen als Pop-up)
 
 - 2.16.0 (Wunsch des Nutzers, Screenshot): "Änderungen verwerfen?" steht nicht mehr in `.mgw-foot`, sondern als Pop-up in
   der Mitte des Fensters: `.mgw-ov` (absolut über dem ganzen `dialog.magic-dlg`, abgedunkelt) mit `.mgw-discard` (Karte).

@@ -150,11 +150,20 @@ for (const lang of ["de", "en"]) {
     await fill('input[data-mg="for-own"]', "45");
     await ev(`const s=r.querySelector('${W} select[data-mg="for-unit"]'); s.value="60"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
     check(`[${tag}] wieder gültig: "Weiter" frei`, await wait(`return r.querySelector('${W} [data-mg="next"]').disabled === false`));
+    // Zurücksetzen erst nach Dauer (2.17.0): neue Meldung startet mit 1 Min., gleiche Bedienung wie "für mindestens"
+    check(`[${tag}] Zurücksetzen erst nach: sechs Vorschläge, 1 Min. ist vorgewählt, Erklärung dazu`, await wait(`return r.querySelectorAll('${W} [data-mg="rfor"]').length === 6 && r.querySelector('${W} [data-mg="rfor"].on')?.dataset.s === "60" && !!r.querySelector('${W} [data-mg-zone="rforhint"] .mg-note')`));
+    await tap('[data-mg="rfor"][data-s="300"]');
+    check(`[${tag}] Zurücksetzen nach 5 Min. gewählt, die Dauer "für mindestens" bleibt`, await wait(`return r.querySelector('${W} [data-mg="rfor"].on')?.dataset.s === "300" && !r.querySelector('${W} [data-mg="for"].on') && r.querySelector('${W} input[data-mg="for-own"]').value === "45"`));
+    await fill('input[data-mg="rfor-own"]', "99");
+    await ev(`const s=r.querySelector('${W} select[data-mg="rfor-unit"]'); s.value="86400"; s.dispatchEvent(new Event("change",{bubbles:true}));`);
+    check(`[${tag}] Zurücksetzen: zu lange Zeit gibt Hinweis und sperrt "Weiter"`, await wait(`return r.querySelector('${W} [data-mg-zone="rforhint"]')?.textContent.includes(${JSON.stringify(T.hint)}) && r.querySelector('${W} [data-mg="next"]').disabled === true`));
+    await tap('[data-mg="rfor"][data-s="300"]');
+    check(`[${tag}] Zurücksetzen: Vorschlag 5 Min. wieder gewählt, "Weiter" frei`, await wait(`return r.querySelector('${W} [data-mg="rfor"].on')?.dataset.s === "300" && r.querySelector('${W} [data-mg="next"]').disabled === false`));
     check(`[${tag}] Rückblick: "${T.once}"`, await wait(`return r.querySelector('${W} .mg-hist')?.textContent.includes(${JSON.stringify(T.once)})`), await text(`${W} .mg-hist`));
     check(`[${tag}] Rückblick-Diagramm mit Schwelle (eine Bedingung)`, await wait(`return !!r.querySelector('${W} svg.mg-spark line')`));
     await p.waitForTimeout(700);
     const histCall = (await calls("magic_history")).at(-1);
-    check(`[${tag}] Rückblick bekommt Dauer, Schwelle und Rücksetzwert, ohne Bedingungsbaum`, histCall?.for_s === 2700 && histCall.value === 12 && histCall.reset_value === 14 && !("conditions" in histCall), JSON.stringify(histCall));
+    check(`[${tag}] Rückblick bekommt Dauer, Schwelle und Rücksetzwert, ohne Bedingungsbaum`, histCall?.for_s === 2700 && histCall.value === 12 && histCall.reset_value === 14 && histCall.reset_for_s === 300 && !("conditions" in histCall), JSON.stringify(histCall));
     check(`[${tag}] Schritt 2 ohne Querscrollen`, (await overflow()) <= 0, String(await overflow()));
     await p.screenshot({ path: `${outDir}/magic-${tag.replace("/", "-")}-2.png` });
     await next();
@@ -247,7 +256,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-mg="save"]');
     check(`[${tag}] gespeichert: Liste mit Hinweis`, await wait(`return r.querySelector('${root} .mg-flash')?.textContent.trim() === ${JSON.stringify(T.saved)} && r.querySelectorAll('${root} .mg-card').length === 1`));
     const saved = (await calls("magic_save")).at(-1)?.rule;
-    check(`[${tag}] Server bekommt alle Felder`, saved && saved.entity_id === "sensor.temp" && saved.kind === "below" && saved.value === 12 && saved.for_s === 2700 && saved.repeat_s === 10800 && saved.recover === true && saved.recover_message === "Keller wieder warm: {value} {unit}" && saved.message === "Keller kalt: {value} {unit} (unter {threshold}) ✔" && saved.target === "notify.familie" && saved.reset_value === 14 && saved.critical === true && saved.critical_volume === 7 && saved.body === "Aktuell {value} {unit}\nSchwelle {threshold} {unit}" && saved.recover_body === "Wieder {value} {unit} nach {duration}" && saved.name === "Keller kalt" && saved.device_id === "d", JSON.stringify(saved));
+    check(`[${tag}] Server bekommt alle Felder`, saved && saved.entity_id === "sensor.temp" && saved.kind === "below" && saved.value === 12 && saved.for_s === 2700 && saved.repeat_s === 10800 && saved.recover === true && saved.recover_message === "Keller wieder warm: {value} {unit}" && saved.message === "Keller kalt: {value} {unit} (unter {threshold}) ✔" && saved.target === "notify.familie" && saved.reset_value === 14 && saved.reset_for_s === 300 && saved.critical === true && saved.critical_volume === 7 && saved.body === "Aktuell {value} {unit}\nSchwelle {threshold} {unit}" && saved.recover_body === "Wieder {value} {unit} nach {duration}" && saved.name === "Keller kalt" && saved.device_id === "d", JSON.stringify(saved));
     check(`[${tag}] Reiter zeigt "${T.active1}"`, await wait(`return r.querySelector('.sub-tab[data-tab="magic"] .tab-s')?.textContent.trim() === ${JSON.stringify(T.active1)}`));
     check(`[${tag}] Karte: Name, Satz, noch nie ausgelöst`, (await text(`${root} .mg-card .mg-t b`)) === "Keller kalt" && (await text(`${root} .mg-card .mg-t small`)).includes("12") && (await text(`${root} .mg-status`)).includes(T.never));
     check(`[${tag}] Karte nennt den Rücksetzwert`, (await text(`${root} .mg-card .mg-t small`)).includes(lang === "de" ? "zurück ab 14 °C" : "back from 14 °C"), await text(`${root} .mg-card .mg-t small`));
@@ -281,7 +290,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Bearbeiten: Schrittleiste antippbar, Bedingung "Temperatur" offen`, (await ev(`return r.querySelectorAll('${W} button.mg-stp').length`)) === 5 && (await text(`${W} .mg-lcard.open .mg-t b`)) === "Temperatur");
     check(`[${tag}] Bearbeiten: eigener Rücksetzwert 14 ist da`, await wait(`return r.querySelector('${W} [data-mg="reset-mode"][data-own="1"]')?.classList.contains("on") && r.querySelector('${W} input[data-mg="reset-value"]').value === "14"`));
     await tap('button.mg-stp[data-step="2"]');
-    check(`[${tag}] Bearbeiten: Schritt 2 hat die Dauer 45 Min.`, await wait(`return r.querySelector('${W} input[data-mg="for-own"]').value === "45"`));
+    check(`[${tag}] Bearbeiten: Schritt 2 hat die Dauer 45 Min. und "Zurücksetzen nach" 5 Min.`, await wait(`return r.querySelector('${W} input[data-mg="for-own"]').value === "45" && r.querySelector('${W} [data-mg="rfor"].on')?.dataset.s === "300"`));
     await tap('button.mg-stp[data-step="5"]');
     await headingOk(T.q5);
     check(`[${tag}] Sprung zu Schritt 5: Name, Text und Empfänger übernommen`, (await ev(`return r.querySelector('${W} input[data-mg="name"]').value`)) === "Kellertemperatur");
@@ -326,6 +335,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-mg="kind"][data-kind="change"]');
     check(`[${tag}] ändert sich: kein Abschnitt "Zurücksetzen", keine Knöpfe zum Hinzufügen`, !(await ev(`return !!r.querySelector('${W} [data-mg="reset-mode"]') || !!r.querySelector('${W} [data-mg="add-cond"]')`)));
     await next();
+    check(`[${tag}] ändert sich: kein "Zurücksetzen erst nach" in Schritt 2`, await wait(`return !!r.querySelector('${W} [data-mg="for"]') && !r.querySelector('${W} [data-mg="rfor"]')`));
     await next();
     check(`[${tag}] ändert sich: keine Wiederholung (Schritt 3)`, (await ev(`return !r.querySelector('${W} [data-mg="repeat"]')`)));
     await next();

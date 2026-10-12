@@ -27,7 +27,7 @@ let LEAF_SEQ = 0;
 const leafId = () => `c${(LEAF_SEQ += 1)}`;
 const PREVIEW_DELAY_MS = 300;
 // Felder, die der Server in einer Meldung annimmt (alles andere, etwa "active", würde er ablehnen).
-const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "reset_value", "message", "body", "recover", "recover_message", "recover_body", "repeat_s", "target", "enabled", "critical", "critical_volume", "conditions"];
+const RULE_KEYS = ["id", "device_id", "entity_id", "name", "kind", "value", "for_s", "reset_value", "message", "body", "recover", "recover_message", "recover_body", "repeat_s", "target", "enabled", "critical", "critical_volume", "conditions", "reset_for_s"];
 
 // Zeichen vor dem Eintrag: nach Geräteklasse, sonst nach Art der Entität.
 const EMOJI_CLASS = {
@@ -416,6 +416,7 @@ export class MagicPush {
     if (rule.kind !== "change") {
       parts.push(this.repeatText(rule.repeat_s));
       if (rule.recover) parts.push(this.t("mgSentenceRecover"));
+      if (rule.reset_for_s) parts.push(this.t("mgSentenceResetFor", this.fmtDur(rule.reset_for_s)));
     }
     if (!many && rule.kind !== "change" && rule.reset_value != null && rule.reset_value !== "") parts.push(this.resetSentence(rule));
     if (rule.critical) parts.push(this.t("mgSentenceCritical", rule.critical_volume ?? VOLUME_MAX));
@@ -654,6 +655,7 @@ export class MagicPush {
       kind: first.kind,
       value: first.value,
       for_s: d.for_s,
+      reset_for_s: d.kind === "change" ? 0 : d.reset_for_s,
       reset_value: first.reset_value,
       message: d.message,
       body: d.body,
@@ -964,6 +966,9 @@ export class MagicPush {
       value: "",
       for_s: 600,
       forOwn: { text: "", unit: 60 },
+      // Zurücksetzen erst nach Dauer (seit 2.17.0): neue Meldungen starten mit 1 Min. gegen Flattern um die Schwelle
+      reset_for_s: 60,
+      resetForOwn: { text: "", unit: 60 },
       // Eigener Rücksetzwert (seit 2.8.0); ohne: zurückgesetzt, sobald die Bedingung nicht mehr gilt
       resetOwn: false,
       reset_value: "",
@@ -1002,6 +1007,7 @@ export class MagicPush {
     Object.assign(d, {
       id: rule.id,
       for_s: rule.for_s,
+      reset_for_s: rule.reset_for_s || 0,
       message: rule.message,
       body: rule.body || "",
       recover: Boolean(rule.recover),
@@ -1018,6 +1024,7 @@ export class MagicPush {
     });
     this.syncPrimary(d);
     if (!PRESET_FOR.includes(d.for_s)) d.forOwn = splitSeconds(d.for_s, FOR_UNITS);
+    if (!PRESET_FOR.includes(d.reset_for_s)) d.resetForOwn = splitSeconds(d.reset_for_s, FOR_UNITS);
     if (d.repeat_s && !PRESET_REPEAT.includes(d.repeat_s)) d.repeatOwn = splitSeconds(d.repeat_s, REPEAT_UNITS);
     return d;
   }
@@ -1204,11 +1211,33 @@ export class MagicPush {
     this.markPresets();
   }
 
+  // Wartezeit zum Zurücksetzen (seit 2.17.0), gleiche Bedienung wie "für mindestens"
+  setResetForSeconds(seconds) {
+    const d = this.wiz.draft;
+    d.reset_for_s = seconds;
+    d.resetForOwn.text = "";
+    this.paint();
+    this.requestHistory();
+  }
+
+  applyOwnResetFor() {
+    const d = this.wiz.draft;
+    const n = parseNumber(d.resetForOwn.text);
+    if (n != null && n >= 0) d.reset_for_s = Math.round(n * d.resetForOwn.unit);
+    this.syncNav();
+    this.paintZones(["chart", "rforhint"]);
+    this.requestHistory();
+    this.markPresets();
+  }
+
   // Die Voreinstellungen leuchten nur, wenn sie gelten und keine eigene Zeit getippt ist.
   markPresets() {
     const d = this.wiz.draft;
     for (const btn of this.qa('[data-mg="for"]')) {
       this.setOn(btn, !d.forOwn.text && Number(btn.dataset.s) === d.for_s);
+    }
+    for (const btn of this.qa('[data-mg="rfor"]')) {
+      this.setOn(btn, !d.resetForOwn.text && Number(btn.dataset.s) === d.reset_for_s);
     }
     for (const btn of this.qa('[data-mg="repeat"]')) {
       this.setOn(btn, !d.repeatOwn.text && Number(btn.dataset.s) === d.repeat_s);
@@ -1245,6 +1274,13 @@ export class MagicPush {
     return d.for_s > this.limit("for", 604800);
   }
 
+  resetForError() {
+    const d = this.wiz.draft;
+    if (d.kind === "change") return false;
+    if (d.resetForOwn.text && parseNumber(d.resetForOwn.text) == null) return true;
+    return d.reset_for_s > this.limit("for", 604800);
+  }
+
   repeatError() {
     const d = this.wiz.draft;
     if (d.repeatOwn.text && parseNumber(d.repeatOwn.text) == null) return true;
@@ -1257,7 +1293,7 @@ export class MagicPush {
       const leaves = this.leavesOf();
       return leaves.length > 0 && !this.wiz.adding && leaves.every((l) => this.leafValid(l));
     }
-    if (step === 2) return !this.forError();
+    if (step === 2) return !this.forError() && !this.resetForError();
     if (step === 3) return !this.repeatError();
     if (step === 4) return d.message.trim() !== "" && (!d.recover || d.kind === "change" || d.recover_message.trim() !== "");
     return d.name.trim() !== "";
@@ -1292,7 +1328,7 @@ export class MagicPush {
     if (!w || w.step !== 2) return;
     window.clearTimeout(this._histTimer);
     const leaves = this.leavesOf();
-    if (!leaves.length || !leaves.every((l) => this.leafValid(l)) || this.forError()) {
+    if (!leaves.length || !leaves.every((l) => this.leafValid(l)) || this.forError() || this.resetForError()) {
       w.hist = null;
       this.paintZones(["chart", "hist"]);
       return;
@@ -1344,6 +1380,7 @@ export class MagicPush {
     const seq = (this._seq += 1);
     const first = this.leafPayload(this.leavesOf()[0]);
     const msg = { type: "device_panel/magic_history", entity_id: first.entity_id, kind: first.kind, for_s: d.for_s };
+    if (first.kind !== "change" && d.reset_for_s > 0) msg.reset_for_s = d.reset_for_s;
     if (first.value != null) msg.value = first.value;
     if (first.reset_value != null) msg.reset_value = first.reset_value;
     // Mehrere Bedingungen: der Rückblick rechnet über alle (seit 2.15.0)
@@ -1700,6 +1737,7 @@ export class MagicPush {
         <input class="mg-pill num mg-ownin" type="text" inputmode="decimal" data-mg="for-own" value="${esc(d.forOwn.text)}" placeholder="${esc(t("mgOwnPh"))}" aria-label="${esc(t("mgOwnTime"))}" autocomplete="off">
         <select class="mg-pill" data-mg="for-unit" aria-label="${esc(t("mgOwnTime"))}">${FOR_UNITS.map((u) => `<option value="${u}"${u === d.forOwn.unit ? " selected" : ""}>${esc(t(`mgUnit_${u}`))}</option>`).join("")}</select></div>
       <div data-mg-zone="forhint">${this.forHintHtml()}</div>
+      ${d.kind === "change" ? "" : this.resetForHtml()}
       <div data-mg-zone="chart">${this.reviewChartHtml()}</div>
       <div data-mg-zone="hist">${this.histHtml()}</div>`;
   }
@@ -1786,6 +1824,25 @@ export class MagicPush {
     return `<div class="sub-tabs mg-tabs${cls ? ` ${cls}` : ""}" role="radiogroup">${items
       .map((i) => `<button type="button" role="radio" class="sub-tab${i.on ? " on" : ""}" aria-checked="${Boolean(i.on)}" ${i.attrs}>${esc(i.label)}</button>`)
       .join("")}</div>`;
+  }
+
+  // Zurücksetzen erst nach Dauer (seit 2.17.0): "wieder normal" und eine neue Meldung erst, wenn es so lange nicht mehr gilt
+  resetForHtml() {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const d = this.wiz.draft;
+    return `<div class="mg-rfor"><div class="mg-k">${esc(t("mgResetFor"))}</div>
+      ${this.tabsHtml(PRESET_FOR.map((s) => ({ on: !d.resetForOwn.text && d.reset_for_s === s, attrs: `data-mg="rfor" data-s="${s}"`, label: this.fmtDur(s) })))}
+      <div class="mg-own"><span>${esc(t("mgOwnTime"))}</span>
+        <input class="mg-pill num mg-ownin" type="text" inputmode="decimal" data-mg="rfor-own" value="${esc(d.resetForOwn.text)}" placeholder="${esc(t("mgOwnPh"))}" aria-label="${esc(t("mgOwnTime"))}" autocomplete="off">
+        <select class="mg-pill" data-mg="rfor-unit" aria-label="${esc(t("mgOwnTime"))}">${FOR_UNITS.map((u) => `<option value="${u}"${u === d.resetForOwn.unit ? " selected" : ""}>${esc(t(`mgUnit_${u}`))}</option>`).join("")}</select></div>
+      <div data-mg-zone="rforhint">${this.resetForHintHtml()}</div></div>`;
+  }
+
+  resetForHintHtml() {
+    if (this.resetForError()) return `<div class="opt-error">${this.esc(this.t("mgTooLong", this.fmtDur(this.limit("for", 604800))))}</div>`;
+    const s = this.wiz.draft.reset_for_s;
+    return `<div class="mg-note">${this.esc(s > 0 ? this.t("mgResetForHint", this.fmtDur(s)) : this.t("mgResetForHintNow"))}</div>`;
   }
 
   forHintHtml() {
@@ -1912,6 +1969,7 @@ export class MagicPush {
       if (name === "chart") el.innerHTML = this.wiz.step === 2 ? this.reviewChartHtml() : this.chartHtml(this.wiz.leafHist, this.curLeaf());
       else if (name === "hist") el.innerHTML = this.histHtml();
       else if (name === "forhint") el.innerHTML = this.forHintHtml();
+      else if (name === "rforhint") el.innerHTML = this.resetForHintHtml();
       else if (name === "resethint") el.innerHTML = this.resetHintHtml();
       else if (name === "pvr") el.innerHTML = this.pvHtml("recover");
       else el.innerHTML = this.pvHtml(this.wiz.step === 4 ? "main" : undefined);
@@ -2213,6 +2271,9 @@ export class MagicPush {
       case "for":
         this.setForSeconds(Number(el.dataset.s));
         break;
+      case "rfor":
+        this.setResetForSeconds(Number(el.dataset.s));
+        break;
       case "repeat":
         this.setRepeatSeconds(Number(el.dataset.s));
         break;
@@ -2279,6 +2340,9 @@ export class MagicPush {
     else if (action === "for-own") {
       this.wiz.draft.forOwn.text = el.value;
       this.applyOwnFor();
+    } else if (action === "rfor-own") {
+      this.wiz.draft.resetForOwn.text = el.value;
+      this.applyOwnResetFor();
     } else if (action === "repeat-own") {
       this.wiz.draft.repeatOwn.text = el.value;
       this.applyOwnRepeat();
@@ -2310,6 +2374,9 @@ export class MagicPush {
     if (action === "for-unit") {
       d.forOwn.unit = Number(el.value);
       this.applyOwnFor();
+    } else if (action === "rfor-unit") {
+      d.resetForOwn.unit = Number(el.value);
+      this.applyOwnResetFor();
     } else if (action === "repeat-unit") {
       d.repeatOwn.unit = Number(el.value);
       this.applyOwnRepeat();

@@ -7,7 +7,29 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.17.0] - 2026-10-12
+
+Magic Push: "Zurücksetzen erst nach" einer Dauer, gegen Flattern um die Schwelle.
+
+### Hinzugefügt
+
+- Neue Einstellung in Schritt 2 ("Wie lange"): "Zurücksetzen erst, wenn es nicht mehr gilt für mindestens" (Wunsch des
+  Nutzers). Die Meldung gilt erst als erledigt ("wieder normal", und eine neue Meldung ist möglich), wenn die Bedingung so
+  lange durchgehend nicht mehr gegolten hat. Ein Wert, der kürzer um die Schwelle schwankt, bleibt eine Meldung, statt
+  "Meldung, wieder normal, Meldung, ..." hintereinander zu schicken. Gleiche Bedienung wie "für mindestens": Sofort,
+  1 Min., 5 Min., 10 Min., 30 Min., 1 Std. oder eigene Zeit (bis 7 Tage). Es lässt sich mit "Eigener Wert" kombinieren (die
+  Zeit beginnt erst, wenn der Rücksetzwert erreicht ist) und mit mehreren Bedingungen (gilt für das Ganze). Nicht
+  verfügbar bei "ändert sich".
+- Der Rückblick (Seite 2) berücksichtigt die Einstellung: kurze Unterbrüche gehören zur selben Episode.
+
+### Geändert
+
+- Neue Meldungen starten mit 1 Min.; "Sofort" ergibt das bisherige Verhalten. Bestehende Meldungen behalten "Sofort",
+  für sie ändert sich nichts, bis man sie bearbeitet.
+
 ## [2.16.0] - 2026-10-12
+
+Nicht veröffentlicht; enthalten in 2.17.0.
 
 Magic Push: die Rückfrage "Änderungen verwerfen?" als Pop-up in der Mitte.
 
@@ -2641,7 +2663,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.16.0
+[2.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.0
 [2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0
 [2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0
 [2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0

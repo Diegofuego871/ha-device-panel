@@ -290,3 +290,142 @@ async def test_history_with_conditions(hass: HomeAssistant, setup, hass_ws_clien
     assert not (await client.receive_json())["success"]
     await client.send_json({"id": 2, "type": f"{DOMAIN}/magic_history", "entity_id": temp, "kind": "below", "value": 12, "for_s": 0, "conditions": _tree("and", _leaf(temp, "below", 12), _leaf(window, "is", "on"))})
     assert (await client.receive_json())["success"]
+
+
+# -- Zurücksetzen erst nach Dauer (2.17.0) -----------------------------------------------------
+
+
+async def test_reset_for_validation(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    device = _device(hass, "Klimasensor Keller")
+    temp = _sensor(hass, device, "temp", "20", "temperature", "°C")
+    magic_push = hass.data[DATA_MAGIC]
+    assert (await magic_push.async_save_rule(_rule(device, temp)))["reset_for_s"] == 0  # Vorgabe: sofort wie bisher
+    saved = await magic_push.async_save_rule(_rule(device, temp, name="zwei", reset_for_s=300))
+    assert saved["reset_for_s"] == 300
+    for bad in (-1, magic.FOR_MAX + 1, "x"):
+        with pytest.raises(vol.Invalid):
+            await magic_push.async_save_rule(_rule(device, temp, name="bad", reset_for_s=bad))
+    # "ändert sich" kennt kein Zurücksetzen
+    change = await magic_push.async_save_rule(_rule(device, temp, kind="change", value=None, name="Änderung", reset_for_s=300))
+    assert change["reset_for_s"] == 0
+    # Alte gespeicherte Regeln ohne das Feld laufen weiter (sofort)
+    legacy = {k: v for k, v in saved.items() if k != "reset_for_s"}
+    assert magic.clean_stored(legacy)["reset_for_s"] == 0
+
+
+async def test_reset_for_delays_recover_and_swallows_flapping(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Unter 12 melden, "wieder normal" erst, wenn es 5 Minuten durchgehend nicht mehr gilt; Flattern bleibt eine Episode."""
+    calls = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    device = _device(hass, "Klimasensor Keller")
+    temp = _sensor(hass, device, "temp", "20", "temperature", "°C")
+    magic_push = hass.data[DATA_MAGIC]
+    await magic_push.async_save_rule(_rule(device, temp, for_s=0, reset_for_s=300, recover=True, recover_message="Wieder warm: {value}"))
+
+    async def set_temp(value: str) -> None:
+        hass.states.async_set(temp, value, TEMP)
+        await _tick(hass, freezer, 0)
+
+    await set_temp("11")
+    assert len(calls) == 1
+    # Flattern um die Schwelle: weder "wieder normal" noch eine zweite Meldung
+    for value in ("12.5", "11", "12.5", "11", "12.5"):
+        await set_temp(value)
+        await _tick(hass, freezer, 100)
+    assert len(calls) == 1
+    # 12.5 hält jetzt 100 s; nach insgesamt 300 s durchgehend normal kommt "wieder normal"
+    await _tick(hass, freezer, 150)
+    assert len(calls) == 1
+    await _tick(hass, freezer, 60)
+    assert len(calls) == 2 and calls[1].data["title"] == "Wieder warm: 12.5"
+    # neue Episode: wieder eine Meldung
+    await set_temp("11")
+    assert len(calls) == 3
+
+
+async def test_reset_for_with_reset_zone_and_before_firing(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Mit eigenem Rücksetzwert zählt die Dauer erst ab dem Rücksetzwert; vor der Meldung gibt es keine Wartezeit."""
+    calls = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    device = _device(hass, "Klimasensor Keller")
+    temp = _sensor(hass, device, "temp", "20", "temperature", "°C")
+    magic_push = hass.data[DATA_MAGIC]
+    await magic_push.async_save_rule(_rule(device, temp, for_s=0, reset_value=14, reset_for_s=300, recover=True, recover_message="Wieder warm"))
+
+    async def set_temp(value: str) -> None:
+        hass.states.async_set(temp, value, TEMP)
+        await _tick(hass, freezer, 0)
+
+    await set_temp("11")
+    assert len(calls) == 1
+    await set_temp("13")  # Zwischenbereich: keine Wartezeit läuft
+    await _tick(hass, freezer, 1000)
+    assert len(calls) == 1
+    await set_temp("14.5")  # Rücksetzwert erreicht: Wartezeit beginnt
+    await _tick(hass, freezer, 200)
+    await set_temp("13")  # zurück in die Zone: Wartezeit verfällt
+    await _tick(hass, freezer, 400)
+    assert len(calls) == 1
+    await set_temp("14.5")
+    await _tick(hass, freezer, 301)
+    assert len(calls) == 2 and calls[1].data["title"] == "Wieder warm"
+
+async def test_reset_for_not_before_firing(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Vor der Meldung (Dauer 600) beginnt ein Ausflug die Dauer von vorn; die Wartezeit zum Zurücksetzen gilt nicht."""
+    calls = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    device = _device(hass, "Klimasensor Keller")
+    temp = _sensor(hass, device, "temp", "20", "temperature", "°C")
+    magic_push = hass.data[DATA_MAGIC]
+    await magic_push.async_save_rule(_rule(device, temp, for_s=600, reset_for_s=300))
+    hass.states.async_set(temp, "11", TEMP)
+    await _tick(hass, freezer, 300)
+    hass.states.async_set(temp, "20", TEMP)
+    await _tick(hass, freezer, 0)
+    hass.states.async_set(temp, "11", TEMP)
+    await _tick(hass, freezer, 400)
+    assert calls == []  # die Dauer begann nach dem Ausflug von vorn
+    await _tick(hass, freezer, 201)
+    assert len(calls) == 1
+
+
+async def test_reset_for_with_or_conditions(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    calls = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    device = _device(hass, "Klimasensor Keller")
+    temp = _sensor(hass, device, "temp", "20", "temperature", "°C")
+    window = _sensor(hass, device, "window", "off", "window", domain="binary_sensor")
+    magic_push = hass.data[DATA_MAGIC]
+    tree = _tree("or", _leaf(temp, "below", 12), _leaf(window, "is", "on"))
+    await magic_push.async_save_rule(_rule(device, temp, for_s=0, reset_for_s=120, conditions=tree, recover=True, recover_message="Alles gut"))
+    hass.states.async_set(temp, "11", TEMP)
+    await _tick(hass, freezer, 0)
+    assert len(calls) == 1
+    hass.states.async_set(window, "on")  # zweite Bedingung übernimmt, die erste fällt weg
+    hass.states.async_set(temp, "20", TEMP)
+    await _tick(hass, freezer, 0)
+    await _tick(hass, freezer, 500)
+    assert len(calls) == 1  # "Oder" gilt weiter, nichts wird zurückgesetzt
+    hass.states.async_set(window, "off")
+    await _tick(hass, freezer, 0)
+    await _tick(hass, freezer, 119)
+    assert len(calls) == 1
+    await _tick(hass, freezer, 2)
+    assert len(calls) == 2
+
+
+def test_history_with_reset_for() -> None:
+    now = 10000.0
+    rows = [(0.0, "14"), (1000.0, "11"), (1500.0, "13"), (1700.0, "11"), (3000.0, "14.5")]
+    # ohne Wartezeit: zwei Abschnitte
+    assert magic_history.evaluate(rows, "below", 12, 60, now)[2] == 2
+    # mit 300 s: der Unterbruch von 200 s gehört zur selben Episode (1000 bis 3000), eine Auslösung
+    intervals, fires, count = magic_history.evaluate(rows, "below", 12, 60, now, None, 300)
+    assert count == 1 and fires[0]["start"] == 1000.0 and fires[0]["end"] == 3000.0 and len(intervals) == 1
+    # mit 100 s: der Unterbruch ist länger, zwei Auslösungen
+    assert magic_history.evaluate(rows, "below", 12, 60, now, None, 100)[2] == 2
+    # Baum mit zwei Bedingungen: gleiche Rechnung
+    tree = _tree("and", _leaf("sensor.a", "below", 12), _leaf("sensor.b", "is", "on"))
+    rows_by = {"sensor.a": rows, "sensor.b": [(0.0, "on")]}
+    assert magic_history.evaluate_tree(rows_by, tree, 60, now, 0.0)[2] == 2
+    assert magic_history.evaluate_tree(rows_by, tree, 60, now, 0.0, 300)[2] == 1

@@ -570,6 +570,8 @@ async def _ws_magic_test(hass: HomeAssistant, connection: websocket_api.ActiveCo
         vol.Optional("reset_value"): vol.Any(None, str, int, float),
         # Mehrere verknüpfte Bedingungen (seit 2.15.0): Baum statt der einen Bedingung
         vol.Optional("conditions"): vol.Any(None, dict),
+        # Zurücksetzen erst nach Dauer (seit 2.17.0)
+        vol.Optional("reset_for_s", default=0): vol.All(int, vol.Range(min=0, max=magic.FOR_MAX)),
     }
 )
 @websocket_api.require_admin
@@ -578,7 +580,7 @@ async def _ws_magic_history(hass: HomeAssistant, connection: websocket_api.Activ
     """Rückblick: wie oft wäre die Meldung in den letzten 24 Stunden gekommen?"""
     try:
         result = await async_magic_history(
-            hass, msg["entity_id"], msg["kind"], msg.get("value"), msg["for_s"], reset_value=msg.get("reset_value"), conditions=msg.get("conditions")
+            hass, msg["entity_id"], msg["kind"], msg.get("value"), msg["for_s"], reset_value=msg.get("reset_value"), conditions=msg.get("conditions"), reset_for_s=msg["reset_for_s"]
         )
     except vol.Invalid as err:
         _magic_error(connection, msg, err)

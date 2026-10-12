@@ -379,6 +379,12 @@ HA-Nachbau prüfen.
   Meldung und "wieder normal" mit eigenem Titel und Inhalt stehen im selben Schritt, darunter Vorschau und "Test senden"
   (der Test kennt so Empfänger, Lautstärke und Wiederholung).
 
+## Magic Push: Zurücksetzen erst nach Dauer (seit 2.17.0)
+
+- Schritt 2 hat unter "für mindestens" einen zweiten Block "Zurücksetzen erst, wenn es nicht mehr gilt für mindestens"
+  (`.mg-rfor`, durch eine Linie getrennt): gleiche Reiterleiste (Sofort … 1 Std.) und eigene Zeit wie die Dauer, darunter
+  eine Erklärung, die sich mit dem Wert ändert. Bei "ändert sich" fehlt der Block.
+
 ## Magic Push: Rückfrage beim Schliessen (seit 2.16.0)
 
 - "Änderungen verwerfen?" ist ein Pop-up in der Mitte des Assistenten-Fensters über abgedunkeltem Hintergrund

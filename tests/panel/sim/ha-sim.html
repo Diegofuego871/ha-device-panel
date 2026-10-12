@@ -1071,7 +1071,9 @@
           }
           check(r);
           if (r.conditions && leavesOf(r).length < 2) r.conditions = null;
-          if (r.kind === "change") { r.value = null; r.recover = false; r.repeat_s = 0; }
+          if (r.kind === "change") { r.value = null; r.recover = false; r.repeat_s = 0; r.reset_for_s = 0; }
+          r.reset_for_s ||= 0;
+          if (r.reset_for_s < 0 || r.reset_for_s > 7 * 86400) fail("Dauer ungültig");
           r.recover_message ||= "";
           r.target ||= null;
           r.name = String(r.name).trim().replace(/\s+/g, " ");

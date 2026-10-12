@@ -7,7 +7,28 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.17.0] - 2026-10-12
+
+Magic Push: "Reset only after" a duration, against flapping around the threshold.
+
+### Added
+
+- New setting in step 2 ("How long"): "Reset only when it no longer holds for at least" (requested by the user). The
+  message counts as done ("back to normal", and a new message becomes possible) only once the condition has not held for
+  this long in a row. A value that swings around the threshold for less time stays one message instead of sending
+  "message, back to normal, message, ..." in a row. Same controls as "for at least": Immediately, 1 min, 5 min, 10 min,
+  30 min, 1 h or a custom time (up to 7 days). It combines with "Own value" (the time only starts once the reset value
+  is reached) and with several conditions (it applies to the whole). Not available for "changes".
+- The look back (page 2) takes the setting into account: short interruptions belong to the same episode.
+
+### Changed
+
+- New messages start with 1 min; "Immediately" gives the previous behaviour. Existing messages keep "Immediately", so
+  nothing changes for them until you edit them.
+
 ## [2.16.0] - 2026-10-12
+
+Not released; included in 2.17.0.
 
 Magic Push: the "Discard changes?" question as a pop-up in the middle.
 
@@ -2556,7 +2577,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.16.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.16.0
+[2.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.0
 [2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0
 [2.13.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.13.0
 [2.12.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.12.0

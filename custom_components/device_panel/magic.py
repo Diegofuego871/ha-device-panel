@@ -485,6 +485,9 @@ RULE_SCHEMA = vol.Schema(
         # Kritische Mitteilung (seit 2.7.0): durchbricht stumm und "Nicht stören"; Lautstärke 1 bis 10 (iOS: 0.1 bis 1.0)
         # Eigener Rücksetzwert (seit 2.8.0): leer = zurückgesetzt, sobald die Bedingung nicht mehr gilt (wie bisher)
         vol.Optional("reset_value", default=None): vol.Any(None, "", _threshold),
+        # Zurücksetzen erst nach Dauer (seit 2.17.0): die Bedingung muss so lange nicht mehr gelten (und im Zwischenbereich
+        # des Rücksetzwerts nicht mehr liegen), bevor "wieder normal" kommt und eine neue Episode möglich ist; 0 = sofort
+        vol.Optional("reset_for_s", default=0): _seconds(FOR_MAX),
         # Verknüpfte Bedingungen (seit 2.15.0), geprüft in clean_rule
         vol.Optional("conditions", default=None): vol.Any(None, dict),
         vol.Optional("critical", default=False): bool,
@@ -546,6 +549,7 @@ def clean_rule(hass: HomeAssistant, raw: dict[str, Any]) -> dict[str, Any]:
         rule["reset_value"] = None
         rule["recover"] = False
         rule["repeat_s"] = 0
+        rule["reset_for_s"] = 0
     rule["recover_message"] = rule.get("recover_message") or ""
     if rule["recover"] and not rule["recover_message"]:
         raise vol.Invalid("Für die Meldung bei wieder normal fehlt der Text")
@@ -664,6 +668,8 @@ class MagicPush:
         self._runtime: dict[str, dict[str, Any]] = {}
         self._by_entity: dict[str, list[dict[str, Any]]] = {}
         self._timers: dict[str, CALLBACK_TYPE] = {}
+        # Wartezeit bis zum Zurücksetzen (reset_for_s), getrennt von Dauer/Wiederholung
+        self._rtimers: dict[str, CALLBACK_TYPE] = {}
         self._pending: dict[str, dict[str, str]] = {}
         self._unsub_track: CALLBACK_TYPE | None = None
         self._unsubs: list[CALLBACK_TYPE] = []
@@ -704,9 +710,10 @@ class MagicPush:
         if self._unsub_track is not None:
             self._unsub_track()
             self._unsub_track = None
-        for cancel in self._timers.values():
+        for cancel in (*self._timers.values(), *self._rtimers.values()):
             cancel()
         self._timers = {}
+        self._rtimers = {}
         # Ausstehendes sofort schreiben (die Dauer überlebt so den Neustart)
         await self._store.async_save(self._data())
 
@@ -757,7 +764,7 @@ class MagicPush:
                 raise vol.Invalid(f"Höchstens {MAX_PER_DEVICE} Meldungen pro Gerät")
             rule["id"] = uuid.uuid4().hex[:12]
         rule["created"] = existing["created"] if existing and "created" in existing else time.time()
-        changed = existing is None or any(existing.get(k) != rule.get(k) for k in ("entity_id", "kind", "value", "reset_value", "conditions", "for_s", "repeat_s", "recover"))
+        changed = existing is None or any(existing.get(k) != rule.get(k) for k in ("entity_id", "kind", "value", "reset_value", "conditions", "for_s", "repeat_s", "recover", "reset_for_s"))
         self._rules[rule["id"]] = rule
         if changed:
             self._reset(rule["id"])
@@ -834,6 +841,11 @@ class MagicPush:
     def _cancel(self, rule_id: str) -> None:
         if (cancel := self._timers.pop(rule_id, None)) is not None:
             cancel()
+        self._cancel_reset(rule_id)
+
+    def _cancel_reset(self, rule_id: str) -> None:
+        if (cancel := self._rtimers.pop(rule_id, None)) is not None:
+            cancel()
 
     def _met(self, rule: dict[str, Any]) -> bool | None:
         """Gilt die ganze Bedingung jetzt? None: nicht beurteilbar (Entität nicht erreichbar)."""
@@ -878,6 +890,8 @@ class MagicPush:
         if state is None or met is None:
             return
         if met:
+            # Die Bedingung gilt wieder, bevor die Wartezeit zum Zurücksetzen um war: gleiche Episode, nichts wird gemeldet
+            self._cancel_reset(rule_id)
             if rt["since"] is None:
                 rt["since"] = now
                 rt["fired"] = False
@@ -892,8 +906,30 @@ class MagicPush:
             # Schon gemeldet und ein eigener Rücksetzwert gesetzt: im Zwischenbereich bleibt alles still und gemeldet,
             # zurückgesetzt wird erst am Rücksetzwert. Vor der Meldung gilt die Bedingung durchgehend, sonst von vorn.
             if rt["fired"] and has_reset(rule) and self._held(rule) is True:
+                self._cancel_reset(rule_id)
+                return
+            # Zurücksetzen erst nach der eingestellten Dauer (seit 2.17.0); vor der Meldung gibt es nichts zu melden
+            if rt["fired"] and rule["reset_for_s"] > 0:
+                if rule_id not in self._rtimers:
+                    self._rtimers[rule_id] = async_call_later(self.hass, rule["reset_for_s"], partial(self._on_reset_timer, rule_id))
                 return
             self._resolve(rule, state, now)
+
+    @callback
+    def _on_reset_timer(self, rule_id: str, _now: Any) -> None:
+        """Wartezeit zum Zurücksetzen um: gilt die Bedingung noch nicht wieder, ist die Episode zu Ende."""
+        self._rtimers.pop(rule_id, None)
+        rule = self._rules.get(rule_id)
+        if rule is None or not rule["enabled"] or rule["kind"] == "change":
+            return
+        rt = self.runtime(rule_id)
+        state = self.hass.states.get(rule["entity_id"])
+        if rt["since"] is None or not rt["fired"] or state is None:
+            return
+        # None (nicht erreichbar) setzt nichts zurück; die nächste Änderung stösst die Wartezeit neu an
+        if self._met(rule) is not False or (has_reset(rule) and self._held(rule) is True):
+            return
+        self._resolve(rule, state, time.time())
 
     def _arm(self, rule: dict[str, Any], state: State, now: float) -> None:
         rt = self.runtime(rule["id"])

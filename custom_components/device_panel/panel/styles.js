@@ -1318,6 +1318,8 @@ a.dlg-btn { display: inline-flex; align-items: center; justify-content: center; 
 
 .lg-pill.magic { background: var(--dp-primary-soft); color: var(--dp-primary); }
 /* Magic Push (seit 2.6.0, docs/mockups/magic-push-v2): Liste der Meldungen und Assistent im Geräte-Popup */
+.mg-rfor { margin-top: 24px; padding-top: 4px; border-top: 1px solid var(--dp-divider); }
+.mg-rfor .mg-note, .mg-rfor .opt-error { margin-top: 10px; }
 .mg-note { margin: 0 0 6px; color: var(--dp-text2); font-size: 12.5px; line-height: 1.4; }
 .mg-empty { margin: 12px 0 0; color: var(--dp-text2); font-size: 14px; line-height: 1.45; }
 .mg-flash { margin: 8px 0; padding: 8px 12px; border-radius: 10px; background: var(--dp-success-soft); color: var(--dp-success); font-size: 13px; }
