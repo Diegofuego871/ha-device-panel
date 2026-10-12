@@ -40,6 +40,8 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await wait(`return r.querySelector("dialog.settings")?.open && !!r.querySelector('dialog.settings [data-set="log"]')`);
   check(`[${tag}] Knopf "${T_.btn}" im Kopf der Einstellungen, vor dem Kreuz, mit Beschriftung`, await ev(`const b = r.querySelector('dialog.settings [data-set="log"]'); return b.getAttribute("aria-label") === ${JSON.stringify(T_.btn)} && b.nextElementSibling === r.querySelector('dialog.settings [data-set="close"]')`));
   await p.waitForTimeout(600);
+  // Abstand Protokoll-Knopf zum Kreuz = Abstand Herz zum Kreuz im Geräte-Popup (22 px, gut mit dem Finger zu treffen)
+  check(`[${tag}] Abstand Protokoll-Knopf zum Kreuz 22 px`, (await ev(`const a = r.querySelector('dialog.settings [data-set="log"]').getBoundingClientRect(), b = r.querySelector('dialog.settings [data-set="close"]').getBoundingClientRect(); return Math.round(b.left - a.right)`)) === 22);
   await tap('dialog.settings [data-set="log"]');
   check(`[${tag}] Fenster offen, Titel`, (await wait(`return r.querySelector("dialog.log-dlg")?.open && r.querySelectorAll("dialog.log-dlg .lg-row").length > 0`)) && (await text("dialog.log-dlg h2")) === T_.title);
   const geo = await ev(`const d=r.querySelector("dialog.log-dlg").getBoundingClientRect(); return [Math.round(d.left), Math.round(d.width), Math.round(d.top), Math.round(d.height), innerWidth, innerHeight]`);

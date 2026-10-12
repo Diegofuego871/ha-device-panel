@@ -67,6 +67,7 @@ button { font: inherit; color: inherit; }
 .search-clear[hidden] { display: none; }
 .gear-btn, .tmall-btn { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--dp-divider);
   background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
+.tmall-btn { margin-right: 10px; }
 .gear-btn:hover, .tmall-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
 .content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 20px 16px; }
 /* Kopf, Chips und Fusszeile bleiben beim seitlichen Scrollen der Tabelle stehen. */
@@ -447,6 +448,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 /* Herz im Kopf des Geräte-Popups (seit 2.22.0): wie das Kreuz ein runder Knopf, rot sobald Favorit */
 .dlg-fav { flex: none; display: grid; place-items: center; width: 36px; height: 36px; margin-right: 8px; border: none; border-radius: 50%;
   background: var(--dp-subtle); color: var(--dp-text2); cursor: pointer; transition: color .2s ease, background .2s ease; }
+.dlg-log { margin-right: 8px; }
 .dlg-fav:hover { background: var(--dp-hover); color: var(--dp-error); }
 .dlg-fav.on { color: var(--dp-error); }
 .dlg-fav:focus-visible { outline: 2px solid var(--dp-error); outline-offset: 1px; }
@@ -1194,6 +1196,7 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   dialog.settings[open] > * { flex-shrink: 0; }
   dialog.settings[open] > .dlg-body { flex-grow: 1; }
   .toolbar .gear-btn, .toolbar .tmall-btn { width: 38px; height: 38px; }
+  .toolbar .tmall-btn { margin-right: 14px; }
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   .dlg-head { padding: 18px 12px 12px 16px; }
   .dlg-quick { padding: 0 16px 6px; }

@@ -29,6 +29,9 @@ Automatic updates install as soon as a version is found.
 - The log button moved from the header of the device list to the header of the settings dialog, left of the cross, which
   gives the header room again (it got crowded with the timer button). The log still opens as before, on top of the
   settings.
+- Same distance everywhere between neighbouring round buttons in the headers, so they are easy to hit with a finger: 22 px
+  between the log button and the cross in the settings, between the stopwatch button and the gear in the header of the
+  device list, and between the heart and the cross in the device pop-up (as before).
 
 ## [2.23.0] - 2026-10-12
 

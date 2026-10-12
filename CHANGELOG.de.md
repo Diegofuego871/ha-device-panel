@@ -30,6 +30,9 @@ Automatische Updates installieren, sobald eine Version gefunden wird.
 - Der Protokoll-Knopf ist aus der Kopfzeile der Geräteliste in den Kopf des Einstellungsdialogs gewandert, links vom
   Kreuz. So hat die Kopfzeile wieder Platz (sie wurde mit dem Timer-Knopf eng). Das Protokoll öffnet wie bisher, jetzt
   über den Einstellungen.
+- Überall derselbe Abstand zwischen benachbarten runden Knöpfen in den Kopfzeilen, damit sie sich gut mit dem Finger
+  treffen lassen: 22 px zwischen Protokoll-Knopf und Kreuz in den Einstellungen, zwischen Stoppuhr-Knopf und Zahnrad in
+  der Kopfzeile der Geräteliste und zwischen Herz und Kreuz im Geräte-Popup (wie bisher).
 
 ## [2.23.0] - 2026-10-12
 

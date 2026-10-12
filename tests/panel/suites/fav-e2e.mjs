@@ -50,6 +50,7 @@ for (const lang of ["de", "en"]) {
     // Herz im Popup
     await tap(mobile ? '.mc[data-open="b"]' : 'tr[data-open="b"]');
     check(`[${tag}] Popup: Herz neben dem Kreuz, leer`, await wait(`const h = r.querySelector('dialog.device .dlg-head .dlg-fav'); return !!h && !h.classList.contains("on") && h.getAttribute("aria-label") === ${JSON.stringify(T.add)} && h.nextElementSibling === r.querySelector("dialog.device .dlg-close")`));
+    check(`[${tag}] Abstand Herz zum Kreuz 22 px (gleich wie Protokoll- und Stoppuhr-Knopf)`, (await ev(`const a = r.querySelector("dialog.device .dlg-fav").getBoundingClientRect(), b = r.querySelector("dialog.device .dlg-close").getBoundingClientRect(); return Math.round(b.left - a.right)`)) === 22);
     await tap('dialog.device .dlg-fav');
     check(`[${tag}] Herz antippen: Favorit, Beschriftung wechselt`, await wait(`const h = r.querySelector('dialog.device .dlg-fav'); return h.classList.contains("on") && h.getAttribute("aria-pressed") === "true" && h.getAttribute("aria-label") === ${JSON.stringify(T.remove)}`));
     check(`[${tag}] Popup bleibt offen, nichts im Entwurf`, await ev(`return r.querySelector("dialog.device").open && !r.querySelector('dialog.device [data-dlg="save"]')`));

@@ -35,6 +35,8 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(([a, c]) => { (window.__timers ||= { list: [], seq: 1, runs: [], tests: [] }).list.push(a, c); }, [SEED("aaaaaaaaaaa1", "d", "Bewässerung", true), SEED("aaaaaaaaaaa2", "a", "Nachtlicht", false)]);
 
     check(`[${tag}] Stoppuhr in der Kopfzeile mit Beschriftung "${T.btn}"`, await ev(`const b = r.querySelector(".toolbar .tmall-btn"); return !!b && b.getAttribute("aria-label") === ${JSON.stringify(T.btn)} && !!b.querySelector("svg")`));
+    // Abstand Stoppuhr zum Zahnrad = Abstand Herz zum Kreuz im Geräte-Popup (22 px)
+    check(`[${tag}] Abstand Stoppuhr zum Zahnrad 22 px`, (await ev(`const a = r.querySelector(".toolbar .tmall-btn").getBoundingClientRect(), b = r.querySelector(".toolbar .gear-btn").getBoundingClientRect(); return Math.round(b.left - a.right)`)) === 22);
     await tap(".tmall-btn");
     check(`[${tag}] Fenster offen, Titel "${T.title}" · "${T.sub}"`, await wait(`const d = r.querySelector("dialog.tmall-dlg"); return d?.open && d.querySelector("h2").textContent === ${JSON.stringify(T.title)} && d.querySelector(".dlg-sub").textContent === ${JSON.stringify(T.sub)}`));
     check(`[${tag}] Vollbild (auch auf dem Desktop)`, await ev(`const d = r.querySelector("dialog.tmall-dlg").getBoundingClientRect(); return Math.abs(d.width - window.innerWidth) <= 1 && Math.abs(d.height - window.innerHeight) <= 1`));
