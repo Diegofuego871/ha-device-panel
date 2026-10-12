@@ -12,7 +12,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.util import dt as dt_util
 
 from . import options_api, timers
-from .const import CONF_NOTIFY_SERVICE, DATA_TIMERS, DOMAIN
+from .const import DATA_TIMERS, DOMAIN
 
 
 def _manager(hass: HomeAssistant) -> timers.TimerManager | None:
@@ -50,7 +50,7 @@ def ws_timer_get(hass: HomeAssistant, connection: websocket_api.ActiveConnection
             "timers": [timers.timer_payload(hass, manager, t) for t in rows],
             "entities": timers.switchable_entities(hass, msg["device_id"]),
             "targets": timers.targets(hass, [t["target"] for t in rows if t.get("target")]),
-            "default_target": options_api.effective(hass)[CONF_NOTIFY_SERVICE],
+            "default_target": options_api.notify_target(options_api.effective(hass), "timers"),
             "limits": _limits(),
             "now": time.time(),
             "today": dt_util.now().strftime("%Y-%m-%d"),

@@ -25,6 +25,10 @@ Automatische Updates installieren, sobald eine Version gefunden wird.
   Version noch nicht, steht das im Protokoll (Debug-Modus) und es wird bei der nächsten Prüfung erneut versucht.
 - Home Assistant startet weiterhin nie von selbst neu.
 
+### Hinzugefügt
+
+- Einstellungen › Timer hat eine neue Zeile "Empfänger" (wie bei den Reitern der Überwachung und Meldungen): die Gruppe, der Dienst oder die Entität, die die Meldungen aller Timer erhält (Fehlermeldung und "Per Push melden"). Standard ist das Push-Ziel der Übersicht, wie bisher. Ein Empfänger am einzelnen Timer geht weiterhin vor; der Assistent zeigt den wirksamen Standard.
+
 ### Geändert
 
 - Der Protokoll-Knopf ist aus der Kopfzeile der Geräteliste in den Kopf des Einstellungsdialogs gewandert, links vom

@@ -42,7 +42,6 @@ from homeassistant.util import dt as dt_util
 from . import activity, push, push_icon
 from .const import (
     CONF_NOTIFY_CLICK,
-    CONF_NOTIFY_SERVICE,
     CONF_TIMERS_CATCH_UP,
     CONF_TIMERS_NOTIFY_ERROR,
     CONF_TIMERS_PAUSE,
@@ -52,7 +51,7 @@ from .const import (
 )
 from .devices import primary_domain
 from .magic import entity_label, targets_payload
-from .options_api import effective
+from .options_api import effective, notify_target
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -686,7 +685,7 @@ class TimerManager:
 
     def target(self, timer: dict[str, Any]) -> str:
         """Ziel dieses Timers: das eigene, sonst das Standard-Ziel aus den Einstellungen."""
-        return timer.get("target") or effective(self.hass)[CONF_NOTIFY_SERVICE]
+        return timer.get("target") or notify_target(effective(self.hass), "timers")
 
     def texts(self, timer: dict[str, Any], *, action: str, ok: bool = True, reason: str = "error", now: float | None = None) -> tuple[str, str]:
         """Titel und Zeile der Meldung; fest vorgegeben (push.py), mit echten Namen und Uhrzeit."""

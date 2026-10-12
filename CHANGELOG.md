@@ -24,6 +24,10 @@ Automatic updates install as soon as a version is found.
   does not know the new version yet, this is noted in the log (debug mode) and tried again at the next check.
 - Home Assistant is still never restarted by itself.
 
+### Added
+
+- Settings › Timer has a new row "Recipient" (like on the tabs of Monitoring and notifications): the group, service or entity that receives the notifications of all timers (failure message and "Report by push"). Default is the push target of the Overview, as before. A recipient set on a single timer still takes precedence; the assistant shows the effective default.
+
 ### Changed
 
 - The log button moved from the header of the device list to the header of the settings dialog, left of the cross, which

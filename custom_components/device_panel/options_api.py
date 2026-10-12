@@ -734,7 +734,7 @@ def exclusions(hass: HomeAssistant) -> tuple[set[str], set[str]]:
 
 
 def notify_target(opts: Mapping[str, Any], topic: str) -> str:
-    """Ziel der Meldungen eines Reiters (outage, battery, charge, new, updates): das eigene, sonst das globale (seit 2.18.0)."""
+    """Ziel der Meldungen eines Reiters (outage, battery, charge, new, updates, timers): das eigene, sonst das globale (seit 2.18.0)."""
     return str(opts.get(NOTIFY_TOPICS[topic]) or "") or opts[CONF_NOTIFY_SERVICE]
 
 

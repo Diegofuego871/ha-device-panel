@@ -21,7 +21,7 @@ from .test_updates import _update, _wait
 def test_default_is_global() -> None:
     values = options_api.values_from({"notify_service": "notify.handy"})
     assert all(values[key] == "" for key in NOTIFY_TOPICS.values())
-    assert [options_api.notify_target(values, topic) for topic in NOTIFY_TOPICS] == ["notify.handy"] * 5
+    assert [options_api.notify_target(values, topic) for topic in NOTIFY_TOPICS] == ["notify.handy"] * 6
     # Ohne globales Ziel: "none", solange ein Reiter kein eigenes hat
     none = options_api.values_from({})
     assert options_api.notify_target(none, "charge") == "none"

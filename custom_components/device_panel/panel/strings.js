@@ -593,7 +593,7 @@ export const STRINGS = {
     optTimersNotifyError: "Bei Fehler benachrichtigen",
     optTimersNotifyErrorShort: "Eine Push-Meldung, wenn ein Timer auch nach drei Versuchen nicht schalten konnte.",
     optTimersNotifyErrorInfo:
-      "Was: eine normale Push-Meldung (Dienst, Gruppe oder Entität), keine anhaltende Benachrichtigung in Home Assistant und keine Meldung unter Reparaturen. Titel \"⚠️ Timer fehlgeschlagen: <Name>\", Text \"<Entität> konnte nicht geschaltet werden: <Grund> · <Uhrzeit>\". Wann: erst wenn der Timer es dreimal versucht hat (sofort und zwei weitere Male im Abstand von 5 Minuten); das gilt auch für das Zurückschalten. Wohin: an den eigenen Empfänger des Timers, sonst an das Push-Ziel unter \"Überwachung und Meldungen\". Steht dort \"Keine Meldung\", kommt nichts, es steht nur im Protokoll (Kategorie Timer). Hat ein Timer \"Per Push melden\" an, kommt die Fehlermeldung immer, auch wenn dieser Schalter aus ist. Auf dem Handy ersetzt eine neuere Meldung desselben Timers die ältere. Verpasste Läufe (Home Assistant lief nicht) und pausierte Timer melden nichts, sie stehen nur im Protokoll.",
+      "Was: eine normale Push-Meldung (Dienst, Gruppe oder Entität), keine anhaltende Benachrichtigung in Home Assistant und keine Meldung unter Reparaturen. Titel \"⚠️ Timer fehlgeschlagen: <Name>\", Text \"<Entität> konnte nicht geschaltet werden: <Grund> · <Uhrzeit>\". Wann: erst wenn der Timer es dreimal versucht hat (sofort und zwei weitere Male im Abstand von 5 Minuten); das gilt auch für das Zurückschalten. Wohin: an den eigenen Empfänger des Timers, sonst an den Empfänger der Timer in den Timer-Einstellungen; ist dort \"Standard\" gewählt, an das Push-Ziel unter \"Überwachung und Meldungen\". Steht dort \"Keine Meldung\", kommt nichts, es steht nur im Protokoll (Kategorie Timer). Hat ein Timer \"Per Push melden\" an, kommt die Fehlermeldung immer, auch wenn dieser Schalter aus ist. Auf dem Handy ersetzt eine neuere Meldung desselben Timers die ältere. Verpasste Läufe (Home Assistant lief nicht) und pausierte Timer melden nichts, sie stehen nur im Protokoll.",
     logCat_timer: "Timer",
     discardTitle: "Änderungen verwerfen?",
     discardNote: "Was du in diesem Fenster eingestellt hast, geht verloren.",
@@ -1079,6 +1079,7 @@ export const STRINGS = {
     devSaveError: "Konnte nicht gespeichert werden:",
     optNotifyTarget: "Ziel",
     optNotifyTargetShort: "notify-Dienst oder -Entität, z. B. die Companion-App. Gilt für alle Meldungen, ausser ein Reiter wählt ein eigenes Ziel.",
+    optTimersTargetShort: "Wohin die Meldungen der Timer gehen (Fehlermeldung und \"Per Push melden\"). Standard: das Ziel aus dem Reiter \"Übersicht\". Ein Timer mit eigenem Empfänger geht vor.",
     optNotifyTargetTab: "Empfänger",
     optNotifyTargetTabShort: "Standard: das Ziel aus dem Reiter \"Übersicht\". Hier lässt sich für die Meldungen dieses Reiters ein anderes wählen.",
     notifyStd: (name) => `Standard (${name})`,
@@ -2037,7 +2038,7 @@ export const STRINGS = {
     optTimersNotifyError: "Notify on failure",
     optTimersNotifyErrorShort: "A push notification when a timer could not switch even after three attempts.",
     optTimersNotifyErrorInfo:
-      "What: a normal push notification (service, group or entity), not a persistent notification in Home Assistant and nothing under Repairs. Title \"⚠️ Timer failed: <name>\", text \"<entity> could not be switched: <reason> · <time>\". When: only after the timer tried three times (at once and twice more, 5 minutes apart); this also applies to switching back. Where: to the timer's own recipient, otherwise to the push target under \"Monitoring and notifications\". If that says \"No notification\", nothing is sent, it only appears in the log (category Timer). A timer with \"Report by push\" on always sends the failure, even if this switch is off. On the phone a newer notification of the same timer replaces the older one. Missed runs (Home Assistant was not running) and paused timers send nothing, they only appear in the log.",
+      "What: a normal push notification (service, group or entity), not a persistent notification in Home Assistant and nothing under Repairs. Title \"⚠️ Timer failed: <name>\", text \"<entity> could not be switched: <reason> · <time>\". When: only after the timer tried three times (at once and twice more, 5 minutes apart); this also applies to switching back. Where: to the timer's own recipient, otherwise to the timers' recipient in the timer settings; if that is \"Default\", to the push target under \"Monitoring and notifications\". If that says \"No notification\", nothing is sent, it only appears in the log (category Timer). A timer with \"Report by push\" on always sends the failure, even if this switch is off. On the phone a newer notification of the same timer replaces the older one. Missed runs (Home Assistant was not running) and paused timers send nothing, they only appear in the log.",
     logCat_timer: "Timer",
     discardTitle: "Discard changes?",
     discardNote: "Everything you set in this window will be lost.",
@@ -2522,6 +2523,7 @@ export const STRINGS = {
     devSaveError: "Could not be saved:",
     optNotifyTarget: "Target",
     optNotifyTargetShort: "notify service or entity, e.g. the Companion app. Applies to all notifications unless a tab picks its own target.",
+    optTimersTargetShort: "Where the timers' notifications go (failure message and \"Report by push\"). Default: the target from the tab \"Overview\". A timer with its own recipient takes precedence.",
     optNotifyTargetTab: "Recipient",
     optNotifyTargetTabShort: "Default: the target from the tab \"Overview\". Here you can pick a different one for the messages of this tab.",
     notifyStd: (name) => `Default (${name})`,

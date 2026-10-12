@@ -244,13 +244,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] "Bei Fehler benachrichtigen": Info nennt Art, Zeitpunkt und Ziel der Meldung`, await wait(`const x = r.querySelector("dialog.settings .opt-info")?.textContent || ""; return x.includes(${JSON.stringify(T.infoFail1)}) && x.includes(${JSON.stringify(T.infoFail2)}) && x.includes(${JSON.stringify(T.infoFail3)})`), await text("dialog.settings .opt-info"));
     // Allgemein: Pause und Nachholen
     check(`[${tag}] Allgemein: Pause aus, Nachholen 10 Min., Fehlermeldung an`, await ev(`return !r.querySelector('dialog.settings input[data-opt="timers_pause"]').checked && r.querySelector('dialog.settings input[data-opt="timers_catch_up"]').value === "10" && r.querySelector('dialog.settings input[data-opt="timers_notify_error"]').checked`));
+    check(`[${tag}] Empfänger der Timer: Auswahl vor der Fehlermeldung, Standard gewählt, "Kein Ziel" nicht wählbar`, await ev(`const s = r.querySelector('dialog.settings select[data-opt="notify_service_timers"]'); const n = r.querySelector('dialog.settings input[data-opt="timers_notify_error"]'); return !!s && s.value === "" && ![...s.options].some((o) => o.value === "none") && s.closest(".opt").compareDocumentPosition(n.closest(".opt")) & Node.DOCUMENT_POSITION_FOLLOWING`));
+    { const h = await handle('dialog.settings select[data-opt="notify_service_timers"]'); await h.scrollIntoViewIfNeeded(); await h.selectOption("notify.familie"); }
     await tap('dialog.settings input[data-opt="timers_pause"]');
     await fill('dialog.settings input[data-opt="timers_catch_up"]', "30");
-    check(`[${tag}] Entwurf: zwei Änderungen, Abschnitt markiert`, await wait(`return r.querySelector('dialog.settings .set-count')?.textContent.includes("2")`));
+    check(`[${tag}] Entwurf: drei Änderungen, Abschnitt markiert`, await wait(`return r.querySelector('dialog.settings .set-count')?.textContent.includes("3")`));
     await tap('dialog.settings [data-set="save"]');
     await wait(`return r.querySelector("dialog.settings .set-count.saved")`);
     const so = (await calls("device_panel/set_options")).at(-1)?.values;
-    check(`[${tag}] gespeichert: set_options mit Pause und 30 Min.`, so && so.timers_pause === true && so.timers_catch_up === 30, JSON.stringify(so));
+    check(`[${tag}] gespeichert: set_options mit Pause und 30 Min.`, so && so.timers_pause === true && so.timers_catch_up === 30 && so.notify_service_timers === "notify.familie", JSON.stringify(so));
     check(`[${tag}] Zusammenfassung zeigt "pausiert"`, /(pausiert|paused)/.test(await text('[data-id="timers"] .set-sec-sum')), await text('[data-id="timers"] .set-sec-sum'));
     await tap('dialog.settings .dlg-actions [data-set="close"]');
 

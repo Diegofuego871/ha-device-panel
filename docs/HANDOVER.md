@@ -16,7 +16,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 - 2.23.1 auch: Einstellungen › Timer zeigt nur noch die Optionen (Sammlung aller Timer entfernt: `_monTimersHtml`, `_loadTimersAll`,
   `_timersAllAction` und `st.timersAll` weg; nur noch das Fenster `_tmAll`). Fehlermeldung des Timers genau beschrieben
   (`optTimersNotifyErrorInfo`): normale Push-Meldung über `push.async_push` (Tag `device_panel_timer_<id>`), nicht anhaltend, nach 3 Versuchen,
-  Ziel Timer-Ziel sonst `notify_service`, bei "none" nur Protokoll `timer_no_target`.
+  Ziel Timer-Ziel, sonst `notify_service_timers` (neues Reiter-Ziel `timers` in `NOTIFY_TOPICS`, Zeile "Empfänger" in Einstellungen › Timer), sonst `notify_service`, bei "none" nur Protokoll `timer_no_target`.
 
 ## Davor (2.22.0, Favoriten)
 

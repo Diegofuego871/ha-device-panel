@@ -5411,7 +5411,7 @@ class DevicePanel extends HTMLElement {
     return [
       ["devices", ["show_service_devices", "show_disabled_devices", ...SUB_TAB_KEYS.integrations, ...SUB_TAB_KEYS.types, ...SUB_TAB_KEYS.devs, ...SUB_TAB_KEYS.devset]],
       ["monitor", Object.values(MON_TAB_KEYS).flat()],
-      ["timers", ["timers_pause", "timers_catch_up", "timers_notify_error"]],
+      ["timers", ["timers_pause", "timers_catch_up", "notify_service_timers", "timers_notify_error"]],
       ["look", [...SUB_TAB_KEYS.chips]],
       ["ai", ["ai_assessment", "ai_task_entity", "ai_prompt"]],
       ["updates", ["update_check"]],
@@ -7235,9 +7235,9 @@ class DevicePanel extends HTMLElement {
       if (!global || global === "none") return t("notifyStdNone");
       return t("notifyStd", targets.find(([v]) => v === global)?.[1] || global);
     };
-    const targetRow = (topic) => {
+    const targetRow = (topic, shortKey = "optNotifyTargetTabShort") => {
       const key = `notify_service_${topic}`;
-      return row(key, t("optNotifyTargetTab"), select(key, [["", stdLabel()], ...targets.filter(([v]) => v !== "none")], t("optNotifyTargetTab")), t("optNotifyTargetTabShort"), null);
+      return row(key, t("optNotifyTargetTab"), select(key, [["", stdLabel()], ...targets.filter(([v]) => v !== "none")], t("optNotifyTargetTab")), t(shortKey), null);
     };
     const ui = { row, sw, select, num, targets, infoBtn, targetRow };
     // Titel eines neuen Themas (seit 1.43.0): überall derselbe grosse Stil (.set-title, wie .mon-grp)
@@ -7315,6 +7315,7 @@ class DevicePanel extends HTMLElement {
       timers:
         row("timers_pause", t("optTimersPause"), sw("timers_pause", t("optTimersPause")), t("optTimersPauseShort"), null) +
         row("timers_catch_up", t("optTimersCatchUp"), num("timers_catch_up", t("minuteUnit"), t("optTimersCatchUp")), t("optTimersCatchUpShort"), null) +
+        ui.targetRow("timers", "optTimersTargetShort") +
         row("timers_notify_error", t("optTimersNotifyError"), sw("timers_notify_error", t("optTimersNotifyError")), t("optTimersNotifyErrorShort"), t("optTimersNotifyErrorInfo")),
       updates:
         row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +

@@ -242,6 +242,23 @@ async def test_push_goes_to_default_or_own_target(hass: HomeAssistant, setup, fr
     assert familie[0].data["title"] == "⏱️ Timer: Mit Ziel"
 
 
+async def test_timers_target_overrides_global(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Eigenes Ziel der Timer in den Einstellungen: geht vor dem globalen, das Ziel des Timers geht vor beiden."""
+    async_mock_service(hass, "switch", "turn_on")
+    handy = async_mock_service(hass, "notify", "handy")
+    tablet = async_mock_service(hass, "notify", "tablet")
+    familie = async_mock_service(hass, "notify", "familie")
+    await _options(hass, notify_service="notify.handy", notify_service_timers="notify.tablet")
+    manager = hass.data[DATA_TIMERS]
+    device = _device(hass, "Steckdose Terrasse")
+    plug = _switch(hass, device)
+    await manager.async_save_timer(_raw(device, plug, name="Standard", delay_s=60, push=True))
+    await manager.async_save_timer(_raw(device, plug, name="Mit Ziel", delay_s=60, push=True, target="notify.familie"))
+    await _tick(hass, freezer, 61)
+    assert len(handy) == 0 and len(tablet) == 1 and len(familie) == 1
+    assert tablet[0].data["title"] == "⏱️ Timer: Standard"
+
+
 async def test_push_texts_for_toggle_and_cover(hass: HomeAssistant, setup) -> None:  # noqa: F811
     manager = hass.data[DATA_TIMERS]
     device = _device(hass, "Rollo")

@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "156"
+PANEL_VERSION = "157"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -236,12 +236,14 @@ CONF_NOTIFY_SERVICE_BATTERY = "notify_service_battery"
 CONF_NOTIFY_SERVICE_CHARGE = "notify_service_charge"
 CONF_NOTIFY_SERVICE_NEW = "notify_service_new"
 CONF_NOTIFY_SERVICE_UPDATES = "notify_service_updates"
+CONF_NOTIFY_SERVICE_TIMERS = "notify_service_timers"
 NOTIFY_TOPICS = {
     "outage": CONF_NOTIFY_SERVICE_OUTAGE,
     "battery": CONF_NOTIFY_SERVICE_BATTERY,
     "charge": CONF_NOTIFY_SERVICE_CHARGE,
     "new": CONF_NOTIFY_SERVICE_NEW,
     "updates": CONF_NOTIFY_SERVICE_UPDATES,
+    "timers": CONF_NOTIFY_SERVICE_TIMERS,
 }
 CONF_NOTIFY_CLICK = "notify_click_target"
 # Push bei Ausfall (sofort, sobald ein Gerät als ausgefallen gilt) und bei
