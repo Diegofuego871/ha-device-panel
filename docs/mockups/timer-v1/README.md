@@ -135,7 +135,7 @@ Umgesetzt in 2.21.0, die Fragen 1 bis 5 und 7 vom Nutzer nicht beantwortet, daru
 4. Nachholen als Zahl in Minuten (0 bis 60, Standard 10, 0 = nie) statt Aus/10 Min./1 Std.; mindestens 90 s Toleranz.
 5. Einmalige Timer bleiben als "erledigt" (Knopf "Erneut starten"), Countdowns räumen sich nach 24 Std. selbst auf; den Knopf
    "Aufräumen" gibt es nicht.
-7. Symbole über dem Text auf dem Handy; vom Nutzer in 2.22.0 verworfen (zu ungenau): immer Text, bei Platzmangel neue Zeile (3 + 2).
+7. Symbole über dem Text auf dem Handy (nur CSS, der Text der Reiter bleibt unverändert).
 8. Gebaut: "Alle Timer pausieren", "Ausführen", Protokoll. Nicht gebaut: Marke "⏱ n" in der Geräteliste, Chip "Mit Timer".
 
 Neu erzeugen: `CHROMIUM_PATH=... node docs/mockups/timer-v1/src/render.mjs`

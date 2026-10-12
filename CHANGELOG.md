@@ -30,11 +30,6 @@ Favorites and automatic updates (both requested by the user): a heart on the dev
   without pressing "Update" a second time. A failed installation is logged and tried again at the next daily check.
   Nothing happens without HACS. The switch is a panel setting for the whole instance and applies with "Save".
 
-### Changed
-
-- The tab bar of the device pop-up shows text on the phone again, no symbols (the symbols of 2.21.0 were too vague).
-  What does not fit starts a new line: three tabs per row, two below.
-
 ## [2.21.0] - 2026-10-12
 
 Timer: switch an entity of a device once or on a schedule (requested by the user).

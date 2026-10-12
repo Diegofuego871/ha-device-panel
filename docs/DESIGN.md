@@ -432,7 +432,7 @@ HA-Nachbau prüfen.
   `.tm-timein`/`.tm-datein`. Push als Schalter mit Vorschau der Mitteilung.
 - Einstellungen: Abschnitt "Timer" gleich aufgebaut wie die Magic-Push-Übersicht (`mg-dcard` je Gerät, Suche, Filter
   Alle/Aktiv/Aus/Läuft, "Alle einklappen"), darunter "Allgemein" mit den drei Optionen.
-- Reiterleiste: fünf Reiter, immer Text (seit 2.22.0 keine Symbole mehr); auf dem Handy (bis 600 px) drei pro Zeile, die übrigen in einer neuen Zeile.
+- Reiterleiste: fünf Reiter; Handy (bis 600 px) mit Symbol über dem Text (`::before`, Emoji), Text unverändert.
 
 ## Favoriten (seit 2.22.0)
 

@@ -1,4 +1,4 @@
-// Timer (2.21.0): fünfter Reiter im Geräte-Popup (Text, auf dem Handy in zwei Zeilen), Liste im Wecker-Stil (Zähler im Reiter),
+// Timer (2.21.0): fünfter Reiter im Geräte-Popup (auf dem Handy Symbole), Liste im Wecker-Stil (Zähler im Reiter),
 // Assistent in vier Schritten (Was · Wann · Meldung · Name und Prüfung) für Countdown, Einmal und Wiederholt
 // (täglich, wöchentlich, monatlich), Zurückschalten, eigene Zeit, Fehler im Bereich, Push mit Empfänger und Vorschau,
 // Test senden, Speichern, Ein-/Ausschalten, Ausführen, Löschen mit Bestätigung, Bearbeiten mit Rückfrage beim
@@ -63,12 +63,15 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab="timer"]')`);
     const tabs = await ev(`return [...r.querySelectorAll("dialog.device .sub-tabs > button")].map((b) => b.dataset.tab).join()`);
     check(`[${tag}] fünf Reiter, Timer als letzter`, tabs === "ov,set,ent,magic,timer", tabs);
-    // Seit 2.22.0 immer Text (keine Symbole); was keinen Platz hat, beginnt eine neue Zeile (Handy: 3 + 2, Desktop: eine Zeile)
-    const rows = await ev(`const bar = r.querySelector("dialog.device .sub-tabs"); const tops = [...bar.querySelectorAll("button")].map((b) => Math.round(b.getBoundingClientRect().top)); return { rows: new Set(tops).size, overflow: bar.scrollWidth > bar.clientWidth + 1, texts: [...bar.querySelectorAll("button")].every((b) => b.textContent.trim().length > 2 && getComputedStyle(b).fontSize !== "0px" && getComputedStyle(b, "::before").content === "none"), perRow: tops.filter((x) => x === tops[0]).length }`);
-    check(`[${tag}] ${mobile ? "Handy: zwei Zeilen (3 + 2)" : "Desktop: eine Zeile"}, ohne Überlauf, alle mit Text, keine Symbole`, rows.rows === (mobile ? 2 : 1) && !rows.overflow && rows.texts && rows.perRow === (mobile ? 3 : 5), JSON.stringify(rows));
+    const fit = await ev(`const bar = r.querySelector("dialog.device .sub-tabs"); return [bar.scrollWidth <= bar.clientWidth + 1, [...bar.querySelectorAll("button")].every((b) => b.getBoundingClientRect().top === bar.querySelector("button").getBoundingClientRect().top)]`);
+    check(`[${tag}] alle Reiter in einer Zeile ohne Überlauf`, fit[0] && fit[1], JSON.stringify(fit));
     await tap('dialog.device [data-tab="timer"]');
     check(`[${tag}] Reiter "${T.tab}": Kopf und Hinweis`, await wait(`return r.querySelector(".tm-root h3")?.textContent === ${JSON.stringify(T.tab)} && r.querySelector(".tm-root .mg-add")`));
     check(`[${tag}] leer: "${T.empty}"`, (await cardsText()).includes(T.empty));
+    if (mobile) {
+      const lab = await ev(`const on = r.querySelector('dialog.device .sub-tab.on'); const other = r.querySelector('dialog.device .sub-tab[data-tab="ent"]'); return [on.textContent.trim(), getComputedStyle(other).fontSize, getComputedStyle(on, "::before").content]`);
+      check(`[${tag}] Handy: gewählter Reiter mit Beschriftung, die anderen nur Symbol`, lab[0] === T.tab && lab[1] === "0px", JSON.stringify(lab));
+    }
 
     // --- Assistent: Schritt 1 ------------------------------------------------------------------------------------
     await tap('.tm-root [data-tm="add"]');
