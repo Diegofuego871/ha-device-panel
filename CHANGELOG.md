@@ -13,7 +13,8 @@ Settings and the view sheet open full screen on the phone.
 
 ### Changed
 
-- On the phone the settings and the sheet "View" (sort and display) now fill the whole screen (like the window of all timers) instead of a sheet that leaves a strip of the list visible at the top. There is no background left to tap, the cross closes them. On wide screens nothing changes.
+- On the phone the settings and the sheet "View" (sort and display) now fill the whole screen (like the window of all timers) instead of a sheet that leaves a strip of the list visible at the top. There is no background left to tap, the cross closes them.
+- On the phone the actions on the cards of the timer and Magic Push overviews ("Edit", "Delete", "Open device") are easier to hit: larger text, 44 px tall touch areas and a bit more space between them. On wide screens nothing changes.
 
 ## [2.23.1] - 2026-10-12
 

@@ -44,6 +44,7 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.tmall-dlg [data-tma="timer-fold-all"]');
     check(`[${tag}] ausgeklappt: beide Timer, Gerät klar erkennbar`, await wait(`return r.querySelectorAll("dialog.tmall-dlg .mg-card").length === 2 && r.querySelectorAll("dialog.tmall-dlg .mg-dcard").length === 2`));
     check(`[${tag}] nur Bearbeiten und Ein/Aus: kein Neu, kein Löschen, kein Ausführen`, await ev(`const d = r.querySelector("dialog.tmall-dlg"); return !d.querySelector('[data-tm="add"], .mg-add') && !d.querySelector('[data-tma="timer-delete"], [data-tma="timer-run"]') && d.querySelectorAll('[data-tma="timer-edit"]').length === 2 && d.querySelectorAll('input[data-tma="timer-toggle"]').length === 2`));
+    check(`[${tag}] Aktionen ${mobile ? "mit 44 px Trefferhöhe" : "unverändert"}`, await ev(`const hs = [...r.querySelectorAll("dialog.tmall-dlg .mg-acts .linkbtn, dialog.tmall-dlg .mg-dfoot .linkbtn")].map((e) => e.getBoundingClientRect().height); return hs.length > 0 && hs.every((h) => ${mobile ? "h >= 43.5" : "h < 40"})`));
     await p.screenshot({ path: `${outDir}/timerall-${tag.replace("/", "-")}.png` });
 
     // Suche und Filter
