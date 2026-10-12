@@ -38,6 +38,7 @@ from .const import (
     CONF_CHARGE_STALL,
     CONF_NOTIFY_CHARGE,
     CONF_NOTIFY_CHARGE_STOP,
+    CONF_CHARGE_LIVE,
     CONF_NOTIFY_UPDATES,
     CONF_UPDATES_KINDS,
     CONF_UPDATES_MODE,
@@ -290,6 +291,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Required(CONF_CHARGE_RISE, default=values[CONF_CHARGE_RISE]): _number(CONF_CHARGE_RISE),
                     vol.Required(CONF_NOTIFY_CHARGE_STOP, default=values[CONF_NOTIFY_CHARGE_STOP]): bool,
                     vol.Required(CONF_CHARGE_STALL, default=values[CONF_CHARGE_STALL]): _number(CONF_CHARGE_STALL),
+                    # Live-Aktivität beim Laden (seit 2.19.0)
+                    vol.Required(CONF_CHARGE_LIVE, default=values[CONF_CHARGE_LIVE]): bool,
                     vol.Optional(CONF_CHARGE_INTEGRATIONS, default=values[CONF_CHARGE_INTEGRATIONS]): SelectSelector(
                         SelectSelectorConfig(options=integrations, multiple=True, mode=SelectSelectorMode.DROPDOWN)
                     ),

@@ -173,6 +173,8 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
     # Lademeldung: Geräte neu bestimmen.
     if (charge_notifier := hass.data.get(DATA_CHARGE)) is not None:
         await charge_notifier.async_rebuild()
+        # Live-Aktivität: eine geänderte Einstellung oder ein anderes Ziel wirkt sofort (ausschalten beendet sie)
+        charge_notifier.live_check()
     # Update-Erinnerung: Zeitpunkt oder Ausschalten.
     if (update_notifier := hass.data.get(DATA_UPDATES)) is not None:
         await update_notifier.async_options_changed()
@@ -833,6 +835,8 @@ def _signal_setting(value: Any) -> Any:
         # "Ladung beendet nach" und Push bei beendeter Ladung (seit 1.41.0): None = Integration bzw. global.
         vol.Optional("charge_stall"): vol.Any(None, vol.All(int, vol.Range(*INT_RANGES[CONF_CHARGE_STALL]))),
         vol.Optional("charge_stop"): vol.Any(None, bool),
+        # Live-Aktivität beim Laden (seit 2.19.0): None = Integration bzw. global.
+        vol.Optional("charge_live"): vol.Any(None, bool),
     }
 )
 @websocket_api.require_admin
@@ -844,13 +848,14 @@ async def _ws_set_device_settings(
     if dr.async_get(hass).async_get(msg["device_id"]) is None:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
         return
-    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop") if k in msg}
+    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live") if k in msg}
     await async_set_device_settings(hass, msg["device_id"], **changes)
     # Batterie-Warnung sofort nachführen (Push, anhaltende Benachrichtigung).
     if "battery" in changes and (watch := hass.data.get(DATA_BATTERY)) is not None:
         await watch.async_check()
-    if "charge" in changes and (charge := hass.data.get(DATA_CHARGE)) is not None:
+    if ("charge" in changes or "charge_live" in changes) and (charge := hass.data.get(DATA_CHARGE)) is not None:
         await charge.async_rebuild()
+        charge.live_check()
     connection.send_result(msg["id"], changes)
 
 

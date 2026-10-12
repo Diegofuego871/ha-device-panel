@@ -86,6 +86,8 @@ from .const import (
     CONF_CHARGE_RISE_INTEGRATIONS,
     CONF_CHARGE_STALL_INTEGRATIONS,
     CONF_CHARGE_STOP_INTEGRATIONS,
+    CONF_CHARGE_LIVE,
+    CONF_CHARGE_LIVE_INTEGRATIONS,
     CONF_BATTERY_PERSISTENT,
     CONF_BATTERY_PUSH,
     CONF_EXCLUDE_DEVICES,
@@ -146,6 +148,7 @@ BOOL_OPTIONS: tuple[tuple[str, bool], ...] = (
     (CONF_NOTIFY_UPDATES, False),
     (CONF_NOTIFY_CHARGE, False),
     (CONF_NOTIFY_CHARGE_STOP, False),
+    (CONF_CHARGE_LIVE, False),
     (CONF_SHOW_SERVICE, False),
     (CONF_SHOW_DISABLED, False),
     (CONF_UPDATE_CHECK, DEFAULT_UPDATE_CHECK),
@@ -569,6 +572,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_CHARGE_RISE_INTEGRATIONS): charge_map(CONF_CHARGE_RISE),
         vol.Optional(CONF_CHARGE_STALL_INTEGRATIONS): charge_map(CONF_CHARGE_STALL),
         vol.Optional(CONF_CHARGE_STOP_INTEGRATIONS): bool_map,
+        vol.Optional(CONF_CHARGE_LIVE_INTEGRATIONS): bool_map,
         vol.Optional(CONF_SIGNAL_LOW): signal_map,
         vol.Optional(CONF_SIGNAL_LOW_INTEGRATIONS): signal_integrations_map,
         vol.Optional(CONF_OFFLINE_INTEGRATIONS): offline_map,
@@ -644,6 +648,10 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
         values[CONF_CHARGE_STOP_INTEGRATIONS] = bool_map(options.get(CONF_CHARGE_STOP_INTEGRATIONS))
     except vol.Invalid:
         values[CONF_CHARGE_STOP_INTEGRATIONS] = {}
+    try:
+        values[CONF_CHARGE_LIVE_INTEGRATIONS] = bool_map(options.get(CONF_CHARGE_LIVE_INTEGRATIONS))
+    except vol.Invalid:
+        values[CONF_CHARGE_LIVE_INTEGRATIONS] = {}
     try:
         values[CONF_SIGNAL_LOW] = signal_map(options.get(CONF_SIGNAL_LOW))
     except vol.Invalid:

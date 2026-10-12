@@ -7,7 +7,36 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.19.0] - 2026-10-12
+
+Live-Aktivität beim Laden (iPhone) und Live-Update (Android 16).
+
+### Hinzugefügt
+
+- Ein Gerät, das lädt, kann seinen Fortschritt jetzt als Live-Aktivität auf dem Sperrbildschirm und in der Dynamic Island
+  (iPhone, Companion-App, ab iOS 17.2) oder als Live-Update (Android 16) zeigen (Wunsch des Nutzers). Sie zeigt "62 % von
+  80 %" mit Fortschrittsbalken, das Ziel ist das "Voll ab" des Geräts, also nicht immer 100 %. Sie läuft unabhängig von der
+  Push-Meldung "Laden melden". Standardmässig aus; einschalten global (Reiter "Laden"), pro Integration (Reiter
+  "Integrationen", Abschnitt "Laden") oder pro Gerät (Geräte-Popup, Gruppe "Laden"); das Gerät geht vor, wie bei den
+  anderen Lade-Einstellungen. Empfänger ist das Ziel des Reiters "Laden" (ein notify-Dienst oder eine Gruppe; eine
+  notify-Entität kann das nicht).
+- Stille Updates: der Start darf melden, jedes weitere Update ist still (iOS `silent`, Android `alert_once`), höchstens
+  alle 4 Minuten und nur, wenn sich der Prozentwert geändert hat; so vibriert das Telefon nicht bei jedem Aktualisieren.
+  Ist das Ziel erreicht, zeigt die Aktivität 10 Minuten "Geladen" und wird dann entfernt (`clear_notification`). Sie endet
+  auch, wenn die Ladung endet (Stand unverändert für die Zeit "Ladung beendet nach") oder das Ladegerät abgezogen wird.
+- Wischt der Nutzer die Aktivität weg, kommen für diese Ladung keine Updates mehr (sonst startete jedes Update eine neue,
+  auf iOS mit Benachrichtigung). Android meldet das mit `mobile_app_notification_cleared`; für iOS sendet Core noch kein
+  Ereignis (Pull Request home-assistant/core#183255 ist noch offen), die Integration hört auf
+  `mobile_app_live_activity_dismissed` und nutzt es, sobald Core es liefert. Bis dahin kommt eine weggewischte Aktivität
+  mit dem nächsten Update zurück (frühestens nach 4 Minuten). Bei einer notify-Gruppe als Ziel lässt sich nicht
+  unterscheiden, welches Telefon es war, darum stoppt das ganze Ziel.
+- Die Live-Aktivität überlebt einen Neustart von Home Assistant. Das Aktivitätsprotokoll zeigt Start, Ziel, Ende und
+  Wegwischen.
+- Optionsdialog: neue Option "Laden: Live-Aktivität beim Laden".
+
 ## [2.18.0] - 2026-10-12
+
+Nicht veröffentlicht; enthalten in 2.19.0.
 
 Überwachung und Meldungen: ein eigener Empfänger pro Reiter.
 
@@ -23,7 +52,7 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.17.2] - 2026-10-12
 
-Nicht veröffentlicht; enthalten in 2.18.0.
+Nicht veröffentlicht; enthalten in 2.19.0.
 
 Magic Push: die Schrittbalken des Assistenten stehen immer gleich hoch.
 
@@ -2714,7 +2743,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.18.0
+[2.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.19.0
 [2.17.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.1
 [2.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.0
 [2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0

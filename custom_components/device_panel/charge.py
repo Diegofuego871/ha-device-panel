@@ -35,11 +35,16 @@ from .const import (
     CONF_CHARGE_FULL,
     CONF_CHARGE_INTEGRATIONS,
     CONF_CHARGE_RISE,
+    CONF_CHARGE_LIVE,
     CONF_CHARGE_STALL,
     CONF_NOTIFY_CHARGE,
     CONF_NOTIFY_CHARGE_STOP,
     CONF_NOTIFY_CLICK,
     DOMAIN,
+    LIVE_EVENT_CLEARED,
+    LIVE_EVENT_DISMISSED,
+    LIVE_INTERVAL,
+    LIVE_KEEP,
     NOTIFY_NONE,
     STORAGE_VERSION,
 )
@@ -84,6 +89,10 @@ class ChargeNotifier:
         self._entities: dict[str, str] = {}
         self._unsub_track: CALLBACK_TYPE | None = None
         self._unsubs: list[CALLBACK_TYPE] = []
+        # Live-Aktivität beim Laden (seit 2.19.0), je Gerät: tag, phase ("active", "done", "dismissed"), at (letztes
+        # Senden), level (zuletzt gesendet), done_at. Wird mitgespeichert: nach einem Neustart läuft sie weiter.
+        self._live: dict[str, dict[str, Any]] = {}
+        self._live_warned: set[str] = set()
 
     async def async_start(self) -> None:
         stored = await self._store.async_load() or {}
@@ -93,6 +102,16 @@ class ChargeNotifier:
                 k: v for k, v in raw.items()
                 if isinstance(k, str) and isinstance(v, dict) and all(isinstance(v.get(f), (int, float)) for f in ("min", "min_at", "last"))
             }
+        live = stored.get("live") if isinstance(stored, dict) else None
+        if isinstance(live, dict):
+            self._live = {
+                k: v for k, v in live.items()
+                if isinstance(k, str) and isinstance(v, dict) and isinstance(v.get("tag"), str) and v.get("phase") in ("active", "done", "dismissed")
+                and isinstance(v.get("at"), (int, float)) and isinstance(v.get("level"), (int, float))
+            }
+        # Wegwischen: iOS (Ereignis in Core, sobald vorhanden) und Android (Benachrichtigung entfernt), beide mit dem Tag.
+        self._unsubs.append(self.hass.bus.async_listen(LIVE_EVENT_DISMISSED, self._on_live_event))
+        self._unsubs.append(self.hass.bus.async_listen(LIVE_EVENT_CLEARED, self._on_live_event))
         # Neue Entitäten und Geräte (Register) ändern, welche Sensoren zu beobachten sind.
         # Alle überwachten Geräte mit Batterie werden beobachtet (für "lädt gerade" im Panel);
         # die Meldung bei "voll" geht nur an die eingeschalteten.
@@ -155,6 +174,7 @@ class ChargeNotifier:
         now = time.time()
         was = self.charging(dev, now, copts) is not None
         done = self.step(dev, level, now, copts)
+        self._live_eval(dev, now)
         device = dr.async_get(self.hass).async_get(dev)
         name = (device.name_by_user or device.name or dev) if device is not None else dev
         st = self._state.get(dev) or {}
@@ -222,6 +242,7 @@ class ChargeNotifier:
     @callback
     def _on_tick(self, _now: Any) -> None:
         self.check_stalls(time.time())
+        self.live_check()
 
     def check_stalls(self, now: float) -> list[str]:
         """
@@ -238,10 +259,14 @@ class ChargeNotifier:
             if st.get("done") or st.get("stopped"):
                 continue
             device = registry.async_get(dev)
-            if device is None or not self.enabled(opts, hass, device) or charging_entity(hass, er.async_entries_for_device(ereg, dev)):
+            if device is None or charging_entity(hass, er.async_entries_for_device(ereg, dev)):
                 continue
             # "Ladung beendet nach" und der Push dazu: Gerät, sonst Integration, sonst global (seit 1.41.0).
             copts = device_charge_opts(hass, opts, dev)
+            push_on = self.enabled(opts, hass, device)
+            # Auch mit nur der Live-Aktivität (2.19.0) muss "beendet" erkannt werden, sonst bliebe sie nach dem Abziehen stehen
+            if not push_on and not copts[CONF_CHARGE_LIVE]:
+                continue
             if now - st.get("up_at", now) < copts[CONF_CHARGE_STALL] * 60:
                 continue
             # Nur wer jetzt nach dem Stand lädt (vor dem Merker "beendet"), sonst gäbe es nichts zu beenden.
@@ -249,6 +274,8 @@ class ChargeNotifier:
                 continue
             st["stopped"] = True
             stopped.append(dev)
+            if not push_on:
+                continue
             name = device.name_by_user or device.name or dev
             args = {"level": round(st["last"]), "minutes": copts[CONF_CHARGE_STALL], "full": copts[CONF_CHARGE_FULL]}
             if notify_target(opts, "charge") == NOTIFY_NONE:
@@ -297,8 +324,170 @@ class ChargeNotifier:
             return None
         return self.charging(device.id, now, device_charge_opts(self.hass, opts, device.id))
 
+    # -- Live-Aktivität beim Laden (seit 2.19.0) ---------------------------------------
+
+    def _is_charging(self, device: dr.DeviceEntry, now: float, copts: dict[str, Any]) -> bool:
+        """
+        Lädt das Gerät jetzt: die Ladeanzeige, wenn es eine hat und sie etwas meldet, sonst der Anstieg des Stands. Anders als
+        bei "lädt" im Panel kommt es hier nicht auf die Lademeldung an: Wer die Live-Aktivität einschaltet, sagt damit,
+        dass das Gerät wiederaufladbar ist.
+        """
+        entries = er.async_entries_for_device(er.async_get(self.hass), device.id)
+        entity_id = charging_entity(self.hass, entries)
+        state = self.hass.states.get(entity_id) if entity_id else None
+        if state is not None and state.state not in ("unknown", "unavailable"):
+            return state.state in ("on", "charging")
+        return self.charging(device.id, now, copts) is not None
+
+    @callback
+    def live_check(self) -> None:
+        """Alle Geräte neu beurteilen: jede Minute und nach einer geänderten Einstellung."""
+        now = time.time()
+        for dev in {*self._state, *self._live}:
+            self._live_eval(dev, now)
+
+    def _live_eval(self, dev: str, now: float) -> None:
+        """
+        Eine Live-Aktivität starten, aktualisieren oder beenden. Stille Updates höchstens alle LIVE_INTERVAL Sekunden und nur
+        bei neuem Prozentwert (sonst vibriert das Telefon bei jedem Aktualisieren). Ziel ist das "Voll ab" des Geräts.
+        """
+        hass = self.hass
+        opts = effective(hass)
+        device = dr.async_get(hass).async_get(dev)
+        live = self._live.get(dev)
+        copts = device_charge_opts(hass, opts, dev) if device is not None else None
+        enabled = copts is not None and bool(copts[CONF_CHARGE_LIVE])
+        st = self._state.get(dev)
+        if live is None:
+            if not enabled or st is None or device is None or copts is None:
+                return
+            if st["last"] >= copts[CONF_CHARGE_FULL] or not self._is_charging(device, now, copts):
+                self._live_warned.discard(dev)
+                return
+            name = device.name_by_user or device.name or dev
+            if notify_target(opts, "charge") == NOTIFY_NONE:
+                if dev not in self._live_warned:
+                    self._live_warned.add(dev)
+                    activity.record(hass, "warning", "charge", "charge_live_no_target", name, dev, level=round(st["last"]))
+                return
+            self._live[dev] = {"tag": f"{DOMAIN}_live_{dev}", "phase": "active", "at": now, "level": st["last"], "done_at": None}
+            self._save()
+            activity.record(hass, "info", "charge", "charge_live_start", name, dev, level=round(st["last"]), full=copts[CONF_CHARGE_FULL])
+            self._live_send(dev, update=False)
+            return
+        if not enabled or device is None or copts is None:
+            self._live_end(dev, "charge_live_why_off", clear=live["phase"] != "dismissed")
+            return
+        full = copts[CONF_CHARGE_FULL]
+        level = st["last"] if st else live["level"]
+        phase = live["phase"]
+        if phase == "dismissed":
+            # Weggewischt: für diese Ladung kommt nichts mehr; erst wenn sie vorbei ist, gilt die nächste wieder
+            if level >= full or not self._is_charging(device, now, copts):
+                self._live.pop(dev, None)
+                self._save()
+            return
+        if phase == "done":
+            if now - (live.get("done_at") or now) >= LIVE_KEEP:
+                self._live_end(dev, "charge_live_why_done")
+            return
+        if level >= full:
+            live.update(phase="done", done_at=now, level=level, at=now)
+            self._save()
+            name = device.name_by_user or device.name or dev
+            activity.record(hass, "info", "charge", "charge_live_done", name, dev, full=full, minutes=LIVE_KEEP // 60)
+            self._live_send(dev, update=True, done=True)
+            return
+        if not self._is_charging(device, now, copts):
+            self._live_end(dev, "charge_live_why_stopped")
+            return
+        if now - live["at"] >= LIVE_INTERVAL and round(level) != round(live["level"]):
+            live.update(at=now, level=level)
+            self._save()
+            self._live_send(dev, update=True)
+
+    def _live_end(self, dev: str, why: str, clear: bool = True) -> None:
+        """Live-Aktivität beenden: Eintrag zuerst weg (ein Ereignis auf unser eigenes Beenden gilt dann nicht als Wegwischen), dann clear_notification."""
+        live = self._live.pop(dev, None)
+        if live is None:
+            return
+        self._live_warned.discard(dev)
+        self._save()
+        hass = self.hass
+        device = dr.async_get(hass).async_get(dev)
+        name = (device.name_by_user or device.name or dev) if device is not None else dev
+        activity.record(hass, "info", "charge", "charge_live_end", name, dev, reason=activity.text(hass, why))
+        if clear:
+            hass.async_create_task(push.async_live_clear(hass, notify_target(effective(hass), "charge"), live["tag"]))
+
+    def _live_send(self, dev: str, *, update: bool, done: bool = False) -> None:
+        """
+        Start oder Update senden. Daten für iOS (Live-Aktivität) und Android (Live-Update) zugleich: live_update, tag, progress
+        und progress_max, Symbol, kurzer Text. Updates sind auf iOS "silent" (nur der Start darf melden) und auf Android
+        "alert_once".
+        """
+        hass = self.hass
+        opts = effective(hass)
+        device = dr.async_get(hass).async_get(dev)
+        live = self._live.get(dev)
+        st = self._state.get(dev)
+        if device is None or live is None or st is None:
+            return
+        full = int(device_charge_opts(hass, opts, dev)[CONF_CHARGE_FULL])
+        level = int(round(full if done else min(live["level"], full)))
+        name = device.name_by_user or device.name or dev
+        url = push.device_url(opts[CONF_NOTIFY_CLICK], dev)
+        data: dict[str, Any] = {
+            "tag": live["tag"],
+            "live_update": True,
+            "progress": level,
+            "progress_max": full,
+            "notification_icon": "mdi:battery-check" if done else "mdi:battery-charging",
+            "critical_text": f"{level} %",
+            "url": url,
+            "clickAction": url,
+            "alert_once": True,
+        }
+        if update:
+            data["silent"] = True
+        if done:
+            title = push.title(hass, opts, "charge", "charge_live_done_title", name=name)
+            message = push.text(hass, "charge_live_done", full=full)
+        else:
+            title = push.title(hass, opts, "charge", "charge_live_title", name=name)
+            message = push.text(hass, "charge_live_progress", level=level, full=full)
+        hass.async_create_task(push.async_live(hass, notify_target(opts, "charge"), name, title, message, data))
+
+    @callback
+    def _on_live_event(self, event: Event) -> None:
+        """
+        Der Nutzer hat die Live-Aktivität weggewischt: für diese Ladung kommen keine Updates mehr (sonst startete jedes Update
+        sie neu, auf iOS mit Alarm). iOS: Ereignis von Core (Pull Request home-assistant/core#183255, noch nicht in jeder
+        Version), Android: mobile_app_notification_cleared. Beide tragen den Tag. Nicht unterscheidbar ist, welches Telefon
+        einer Gruppe es war; das Ziel gilt als Ganzes.
+        """
+        data = event.data
+        tag = data.get("tag")
+        if not isinstance(tag, str):
+            inner = data.get("data")
+            tag = inner.get("tag") if isinstance(inner, dict) else None
+        if not isinstance(tag, str):
+            return
+        now = time.time()
+        for dev, live in self._live.items():
+            if live["tag"] != tag or live["phase"] == "dismissed":
+                continue
+            # Ein Ersetzen durch unser Update kurz davor ist kein Wegwischen
+            if event.event_type == LIVE_EVENT_CLEARED and now - live["at"] < 5:
+                continue
+            live["phase"] = "dismissed"
+            self._save()
+            device = dr.async_get(self.hass).async_get(dev)
+            name = (device.name_by_user or device.name or dev) if device is not None else dev
+            activity.record(self.hass, "info", "charge", "charge_live_dismissed", name, dev, target=notify_target(effective(self.hass), "charge"))
+
     def _save(self) -> None:
-        self._store.async_delay_save(lambda: {"state": self._state}, 1)
+        self._store.async_delay_save(lambda: {"state": self._state, "live": self._live}, 1)
 
     async def async_stop(self) -> None:
         if self._unsub_track is not None:
@@ -308,7 +497,7 @@ class ChargeNotifier:
             unsub()
         self._unsubs = []
         # Sofort schreiben: ein verzögerter Termin legte die Datei nach dem Entfernen neu an.
-        await self._store.async_save({"state": self._state})
+        await self._store.async_save({"state": self._state, "live": self._live})
 
     def message(self, done: dict[str, Any], area: str | None) -> str:
         """"100 % · in 1 Std. 40 Min. von 22 % · Büro" (Dauer nur, wenn das Laden beobachtet wurde)."""

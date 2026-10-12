@@ -7,7 +7,35 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.19.0] - 2026-10-12
+
+Live activity while charging (iPhone) and live update (Android 16).
+
+### Added
+
+- A device that charges can now show its progress as a live activity on the lock screen and in the Dynamic Island (iPhone,
+  Companion app, iOS 17.2 or later) or as a live update (Android 16) (requested by the user). It shows "62 % of 80 %" with a
+  progress bar, where the goal is the "Full from" level of the device, so not always 100 %. It works independently of the
+  push notification "Report charging". Off by default; switch it on globally (tab "Charging"), per integration (tab
+  "Integrations", section "Charging") or per device (device pop-up, group "Charging"); the device comes first, like the
+  other charging settings. The recipient is the target of the tab "Charging" (a notify service or group; a notify entity
+  cannot do this).
+- Quiet updates: the start may notify, every further update is silent (iOS `silent`, Android `alert_once`), at most every
+  4 minutes and only when the percentage changed, so the phone does not vibrate on every refresh. When the goal is reached
+  the activity shows "Charged" for 10 minutes and is then removed (`clear_notification`). It also ends when the charge
+  stops (level unchanged for the time "Charging stopped after") or the charger is unplugged.
+- If the user swipes the activity away, no further updates are sent for this charge (otherwise every update would start
+  a new activity, on iOS with a notification). Android reports it with `mobile_app_notification_cleared`; for iOS Core
+  does not yet send an event (pull request home-assistant/core#183255 is still open), the app listens for
+  `mobile_app_live_activity_dismissed` and will use it as soon as Core provides it. Until then a swiped-away activity
+  comes back with the next update (every 4 minutes at the earliest). With a notify group as target it cannot be told which
+  phone it was, so the whole target stops.
+- The live activity survives a restart of Home Assistant. The activity log shows start, goal, end and swiping away.
+- Options dialog: new option "Charging: live activity while charging".
+
 ## [2.18.0] - 2026-10-12
+
+Not released; included in 2.19.0.
 
 Monitoring and notifications: an own recipient for each tab.
 
@@ -23,7 +51,7 @@ Monitoring and notifications: an own recipient for each tab.
 
 ## [2.17.2] - 2026-10-12
 
-Not released; included in 2.18.0.
+Not released; included in 2.19.0.
 
 Magic Push: the step bars of the assistant stay at the same height.
 
@@ -2627,7 +2655,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.18.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.18.0
+[2.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.19.0
 [2.17.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.1
 [2.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.0
 [2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0

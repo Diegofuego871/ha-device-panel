@@ -379,6 +379,15 @@ HA-Nachbau prüfen.
   Meldung und "wieder normal" mit eigenem Titel und Inhalt stehen im selben Schritt, darunter Vorschau und "Test senden"
   (der Test kennt so Empfänger, Lautstärke und Wiederholung).
 
+## Live-Aktivität beim Laden (seit 2.19.0)
+
+- Reiter "Laden": eigene Gruppe "Live-Aktivität" mit dem Schalter "Live-Aktivität beim Laden" (global, aus) und einem Hinweis
+  zu Voraussetzungen und stillen Updates; sie steht vor dem frühen Rückgabepunkt (`if (!d.notify_charge) return html`), weil sie
+  unabhängig von der Lademeldung ist.
+- Integration (Detail, Abschnitt "Laden"): Auswahl "Standard (ein/aus)" / Ein / Aus (`data-clive-integ`); Gerät
+  (Popup, Gruppe "Laden"): Auswahl "Wie Integration" / Ein / Aus (`dev-charge-live`). "Voll ab", Anstieg und "Ladung beendet
+  nach" erscheinen jetzt auch bei nur eingeschalteter Live-Aktivität, der Push bei beendeter Ladung nur mit Lademeldung.
+
 ## Empfänger pro Reiter (seit 2.18.0)
 
 - In den Reitern Ausfall, Batterie, Laden, Neu und Updates steht direkt unter der Überschrift "Meldung" die Zeile

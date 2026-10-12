@@ -70,6 +70,10 @@ TEXTS: dict[str, dict[str, str]] = {
         "charge_jump": "von {start} %",
         "charge_stop_title": "Ladung beendet: {name}",
         "charge_stalled": "Stand seit {duration} unverändert",
+        "charge_live_title": "Lädt: {name}",
+        "charge_live_progress": "{level} % von {full} %",
+        "charge_live_done_title": "Geladen: {name}",
+        "charge_live_done": "Ziel {full} % erreicht",
         "update_title": "Home Assistant Update",
         "update_message": "{count} verfügbar:",
         "update_line": "{name} {installed} → {latest}",
@@ -132,6 +136,10 @@ TEXTS: dict[str, dict[str, str]] = {
         "charge_jump": "from {start} %",
         "charge_stop_title": "Charging stopped: {name}",
         "charge_stalled": "level unchanged for {duration}",
+        "charge_live_title": "Charging: {name}",
+        "charge_live_progress": "{level} % of {full} %",
+        "charge_live_done_title": "Charged: {name}",
+        "charge_live_done": "Target of {full} % reached",
         "update_title": "Home Assistant update",
         "update_message": "{count} available:",
         "update_line": "{name} {installed} → {latest}",
@@ -231,6 +239,38 @@ def device_actions(hass: HomeAssistant, url: str, device_id: str) -> list[dict[s
         {"action": "URI", "title": text(hass, "action_open"), "uri": url},
         {"action": f"{MUTE_ACTION_PREFIX}{device_id}", "title": text(hass, "action_mute")},
     ]
+
+
+async def async_live(hass: HomeAssistant, target: str, name: str, title: str, message: str, data: dict[str, Any]) -> bool:
+    """
+    Live-Aktivität (iOS) bzw. Live-Update (Android) über einen notify-Dienst (seit 2.19.0; Gruppen reichen die Daten an
+    ihre Mitglieder weiter). Eine notify-Entität kennt nur Titel und Text und kann das nicht; ein Dienst, der die
+    Zusatzdaten ablehnt, auch nicht: dann gibt es keinen zweiten Versuch ohne Daten (das wäre eine gewöhnliche Meldung).
+    """
+    domain, _, object_id = target.partition(".")
+    if domain != "notify" or not hass.services.has_service("notify", object_id) or object_id == "send_message":
+        activity.record(hass, "error", "charge", "charge_live_unsupported", name, target=target)
+        return False
+    try:
+        await hass.services.async_call("notify", object_id, {"title": title, "message": message, "data": data}, blocking=True)
+    except Exception as err:  # noqa: BLE001 - eine Meldung darf die Überwachung nie stören
+        _LOGGER.warning("Live-Aktivität an '%s' fehlgeschlagen: %s", target, err)
+        activity.record(hass, "error", "charge", "charge_live_failed", name, target=target)
+        return False
+    return True
+
+
+async def async_live_clear(hass: HomeAssistant, target: str, tag: str) -> bool:
+    """Live-Aktivität beenden: clear_notification mit demselben Tag (beide Plattformen)."""
+    domain, _, object_id = target.partition(".")
+    if domain != "notify" or not hass.services.has_service("notify", object_id) or object_id == "send_message":
+        return False
+    try:
+        await hass.services.async_call("notify", object_id, {"message": "clear_notification", "data": {"tag": tag}}, blocking=True)
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.debug("Live-Aktivität beenden an '%s' fehlgeschlagen: %s", target, err)
+        return False
+    return True
 
 
 async def async_push(

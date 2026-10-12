@@ -70,6 +70,7 @@
           "charge_rise": "Laden: erkannt bei Anstieg um (%)",
           "notify_charge_stop": "Laden: Push, wenn die Ladung endet",
           "charge_stall": "Laden: beendet nach (Min.)",
+          "charge_live": "Laden: Live-Aktivität beim Laden",
           "charge_integrations": "Laden: Integrationen mit Meldung"
         },
         "data_description": {
@@ -127,6 +128,7 @@
           "charge_rise": "Laden gilt als erkannt, wenn der Stand so viele Prozent über den tiefsten Stand seit dem letzten Entladen steigt (5 bis 80).",
           "notify_charge_stop": "Eine Push-Meldung, wenn eine Ladung endet, bevor das Gerät voll ist (der Stand bleibt die unten eingestellte Zeit unverändert), zum Beispiel bei einem Ladelimit. Standardmässig aus; nur für Geräte, bei denen die Lademeldung an ist. Nicht für Geräte mit eigener Ladeanzeige.",
           "charge_stall": "Die Ladung gilt als beendet, wenn der Stand so viele Minuten unverändert bleibt (5 bis 120). Manche Geräte melden gegen Ende des Ladens nur alle paar Minuten, darum etwas Luft lassen.",
+          "charge_live": "Eine Live-Aktivität (iPhone) bzw. ein Live-Update (Android 16) zeigt den Fortschritt, solange ein Gerät lädt, bis zu seinem \"Voll ab\". Die Updates kommen still etwa alle 4 Minuten. Standardmässig aus; einschalten pro Integration (Überwachung und Meldungen › Integrationen) oder pro Gerät (Geräte-Popup). Geht an das Ziel des Reiters \"Laden\". Wegwischen stoppt die Updates für diese Ladung.",
           "charge_integrations": "Integrationen, deren Geräte das Laden melden (ein Gerät kann im Popup abweichen)."
         }
       }

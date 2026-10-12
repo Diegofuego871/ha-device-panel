@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "138"
+PANEL_VERSION = "139"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -166,6 +166,16 @@ CONF_CHARGE_STALL_INTEGRATIONS = "charge_stall_integrations"
 CONF_CHARGE_STOP_INTEGRATIONS = "charge_stop_integrations"
 DEFAULT_CHARGE_RISE = 20
 CONF_CHARGE_INTEGRATIONS = "charge_integrations"
+# Live-Aktivität beim Laden (seit 2.19.0, iOS Live-Aktivität, Android Live-Update): wie der Push bei beendeter Ladung
+# global (CONF_CHARGE_LIVE, aus), pro Integration ({Domain: bool}) und pro Gerät; das Gerät geht vor. Unabhängig von der
+# Lademeldung. Ziel: das des Reiters "Laden". Stille Updates höchstens alle LIVE_INTERVAL Sekunden und nur bei neuem
+# Prozentwert; "Geladen" bleibt LIVE_KEEP Sekunden stehen. Wischt der Nutzer sie weg, kommt nichts mehr für diese Ladung.
+CONF_CHARGE_LIVE = "charge_live"
+CONF_CHARGE_LIVE_INTEGRATIONS = "charge_live_integrations"
+LIVE_INTERVAL = 4 * 60
+LIVE_KEEP = 10 * 60
+LIVE_EVENT_DISMISSED = "mobile_app_live_activity_dismissed"
+LIVE_EVENT_CLEARED = "mobile_app_notification_cleared"
 CHARGE_JUMP_FROM = 90
 # Wieder scharf, wenn der Stand so viele Punkte unter "voll" fällt.
 CHARGE_REARM = 10

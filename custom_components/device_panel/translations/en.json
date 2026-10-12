@@ -70,6 +70,7 @@
           "charge_rise": "Charging: detected at a rise of (%)",
           "notify_charge_stop": "Charging: push when charging stops",
           "charge_stall": "Charging: stopped after (min)",
+          "charge_live": "Charging: live activity while charging",
           "charge_integrations": "Charging: integrations with a notification"
         },
         "data_description": {
@@ -127,6 +128,7 @@
           "charge_rise": "Charging is detected when the level rises this many percent above the lowest level since the last discharge (5 to 80).",
           "notify_charge_stop": "A push notification when a charge ends before the device is full (the level stays unchanged for the time below), for example with a charge limit. Off by default; only for devices whose charging notification is on. Not for devices with a charging indicator of their own.",
           "charge_stall": "The charge counts as stopped when the level stays unchanged this many minutes (5 to 120). Some devices report only every few minutes near the end of a charge, so leave room.",
+          "charge_live": "A live activity (iPhone) or live update (Android 16) shows the progress while a device charges, up to its \"full from\" level. Updates arrive silently about every 4 minutes. Off by default; switch it on per integration (Monitoring and notifications › Integrations) or per device (device pop-up). Goes to the target of the tab \"Charging\". Swiping it away stops the updates for this charge.",
           "charge_integrations": "Integrations whose devices report when charged (a device can differ in its pop-up)."
         }
       }

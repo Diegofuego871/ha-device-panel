@@ -3,7 +3,28 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.18.0, eigener Empfänger pro Reiter)
+## Stand (2.19.0, Live-Aktivität beim Laden)
+
+- 2.19.0 (Wunsch des Nutzers; Entscheide: gleicher Empfänger wie die Lademeldung, 10 Min. "Geladen", iOS und Android, nur
+  Prozent, Takt 4 Min., Wegwisch-Ereignis ausgewertet). Option `charge_live` (global, aus), `charge_live_integrations`
+  (`bool_map`), Gerät `charge_live` in den Geräte-Einstellungen; Auflösung `devices.charge_live_value` und
+  `device_charge_opts()[CONF_CHARGE_LIVE]` (Gerät, Integration, global), unabhängig von `notify_charge`. Ziel:
+  `notify_target(opts, "charge")`. Engine in `charge.py` (`ChargeNotifier`): `_live_eval(dev, now)` (aus `_on_state` und
+  jede Minute `live_check()`), Zustand `self._live[dev] = {tag, phase active|done|dismissed, at, level, done_at}`, im Store
+  `device_panel.charge` unter `live`; Start, wenn geladen wird (`_is_charging`: Ladeanzeige oder Anstieg, ohne Bedingung der
+  Lademeldung) und Stand unter "Voll ab"; Updates `silent` höchstens alle `LIVE_INTERVAL` (240 s) und nur bei neuem
+  gerundetem Prozentwert; bei "Voll ab" ein Update "Geladen", nach `LIVE_KEEP` (600 s) `clear_notification`; Ende bei
+  beendeter Ladung (`check_stalls` merkt "beendet" jetzt auch für Geräte nur mit Live-Aktivität) oder ausgeschaltet.
+  Daten: `live_update`, `tag` (`device_panel_live_<Gerät>`, nicht der der Meldung), `progress`, `progress_max` (= "Voll ab"),
+  `notification_icon`, `critical_text`, `url`/`clickAction`, `alert_once`, bei Updates `silent`; Versand `push.async_live` und
+  `async_live_clear` (nur notify-Dienste, Entitäten können es nicht, kein Wiederholen ohne Daten). Wegwischen:
+  `_on_live_event` hört auf `mobile_app_live_activity_dismissed` (iOS, Core-PR #183255, bei Redaktionsschluss offen) und
+  `mobile_app_notification_cleared` (Android; ein Ereignis in den 5 s nach unserem Senden gilt als Ersetzen); Tag aus
+  `data.tag` oder `data.data.tag`; Phase "dismissed" = für diese Ladung nichts mehr. Bei einer Gruppe als Ziel stoppt das
+  ganze Ziel. Tests: `tests/test_charge_live.py`. Offen: auf iPhone und Android prüfen (Start, stilles Update, Wegwischen,
+  Gruppe als Ziel).
+
+## Stand davor (2.18.0, eigener Empfänger pro Reiter)
 
 - 2.18.0 (Wunsch des Nutzers, Screenshot "Überwachung und Meldungen"): Optionen `notify_service_outage|battery|charge|new|updates`
   (`const.NOTIFY_TOPICS`), leer = das globale `notify_service`. `options_api.notify_target(opts, topic)` löst auf; die fünf

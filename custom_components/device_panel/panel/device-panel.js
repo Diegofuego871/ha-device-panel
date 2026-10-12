@@ -341,14 +341,14 @@ const UPDATE_KINDS = ["core", "addons", "hacs", "devices"];
 const MON_TAB_KEYS = {
   overview: ["notify_service", "notify_click_target"],
   outage: ["notify_service_outage", "offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "emoji_outage", "emoji_group", "emoji_online", "reset_offline", "reset_notify"],
-  charge: ["notify_service_charge", "notify_charge", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations", "emoji_charge", "emoji_charge_stop"],
+  charge: ["notify_service_charge", "notify_charge", "charge_live", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations", "emoji_charge", "emoji_charge_stop"],
   battery: ["notify_service_battery", "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "emoji_battery", "reset_battery"],
   new: ["notify_service_new", "notify_new", "new_window", "new_persistent", "new_fields", "emoji_new"],
   updates: ["notify_service_updates", "notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include", "emoji_updates"],
   sig: ["signal_low", "reset_signal"],
   // Magic Push (seit 2.10.0): die Meldungen gehören den Geräten und werden sofort gespeichert, nicht mit "Speichern"
   magic: [],
-  integ: ["offline_after_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
+  integ: ["offline_after_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
 
 // Reiter der Abschnitte "Geräte im Panel" und "Darstellung" (seit 1.0.0,
@@ -457,7 +457,7 @@ const promptHtml = (text) => escape(text).replace(/\{(language|facts(?:_[a-z]+)?
 const CHARGE_FULL_PRESETS = [100, 95, 90, 80];
 const CHARGE_FULL_OWN_START = 85;
 const CHARGE_FULL_RANGE = [50, 100];
-const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations", "signal_low_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations"];
+const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations", "signal_low_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations"];
 // Liste der Integrationen mit Lademeldung (seit 1.32.0 auch hier einstellbar): zurücksetzen = aus, der Standard.
 const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"];
 
@@ -613,6 +613,7 @@ const devOwnCount = (d) =>
     d.charge_rise_setting != null,
     d.charge_stall_setting != null,
     d.charge_stop_setting != null,
+    d.charge_live_setting != null,
     d.notify_off || (d.notify_mute_until && Date.parse(d.notify_mute_until) > Date.now()),
   ].filter(Boolean).length;
 const hasOverride = (d) => d.offline_setting != null || d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual) || d.signal_setting != null;
@@ -1258,6 +1259,8 @@ class DevicePanel extends HTMLElement {
           this._chargeStallRangeError = null;
           this._setDeviceSettings(this._detailId, { charge_stall: v });
         }
+      } else if (el.matches?.('select[data-dlg="dev-charge-live"]')) {
+        this._setDeviceSettings(this._detailId, { charge_live: el.value === "on" ? true : el.value === "off" ? false : null });
       } else if (el.matches?.('select[data-dlg="dev-charge-stop"]')) {
         this._setDeviceSettings(this._detailId, { charge_stop: el.value === "on" ? true : el.value === "off" ? false : null });
       } else if (el.matches?.('input[data-dlg="dev-charge-rise-val"]')) {
@@ -3486,6 +3489,7 @@ class DevicePanel extends HTMLElement {
         if ("charge_rise" in changes) d.charge_rise_setting = changes.charge_rise;
         if ("charge_stall" in changes) d.charge_stall_setting = changes.charge_stall;
         if ("charge_stop" in changes) d.charge_stop_setting = changes.charge_stop;
+        if ("charge_live" in changes) d.charge_live_setting = changes.charge_live;
       }
     } catch (err) {
       this._devSetError = errText(err);
@@ -3753,8 +3757,19 @@ class DevicePanel extends HTMLElement {
         cs,
         t("devCharge")
       )}</div>${origin(cs !== "default", cd.integration, "", t("devChargeShort"))}</div>`;
-      // Eigene Werte der Lademeldung (seit 1.35.0): "Voll ab" und Anstieg, wie global; nur wenn sie für das Gerät gilt.
-      if (cs === "on" || (cs === "default" && cd.on)) {
+      // Live-Aktivität beim Laden (seit 2.19.0): unabhängig von der Lademeldung; Gerät, sonst Integration, sonst global.
+      const liveSet = d.charge_live_setting;
+      const liveMode = liveSet == null ? "default" : liveSet ? "on" : "off";
+      parts.chg += `<div class="opt${liveSet != null ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeLive"))}</span>${sel(
+        "dev-charge-live",
+        [["default", t("devChargeLiveDefault", Boolean(cd.live), Boolean(cd.live_integration))], ["on", t("devChargeOn")], ["off", t("devChargeOff")]],
+        liveMode,
+        t("devChargeLive")
+      )}</div>${origin(liveSet != null, cd.live_integration, "", t("devChargeLiveShort"))}</div>`;
+      const liveOn = liveSet === true || (liveSet == null && Boolean(cd.live));
+      const pushOn = cs === "on" || (cs === "default" && cd.on);
+      // Eigene Werte (seit 1.35.0): "Voll ab" (bei der Live-Aktivität das Ziel) und Anstieg, wie global; wenn Meldung oder Live-Aktivität gilt.
+      if (pushOn || liveOn) {
         const gFull = cd.full ?? 100;
         const gRise = cd.rise ?? 20;
         const fullSet = d.charge_full_setting;
@@ -3805,14 +3820,17 @@ class DevicePanel extends HTMLElement {
               }`
             : ""
         }${origin(stallMode === "own", cd.stall_integration, stallMode === "own" || cd.stall_integration ? t("originDefaultWould", t("offlineMin", gStall)) : "", t("devChargeStallShort"))}</div>`;
-        const stopSet = d.charge_stop_setting;
-        const stopMode = stopSet == null ? "default" : stopSet ? "on" : "off";
-        parts.chg += `<div class="opt${stopSet != null ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeStop"))}</span>${sel(
-          "dev-charge-stop",
-          [["default", t("devChargeStopDefault", Boolean(cd.stop), Boolean(cd.stop_integration))], ["on", t("devChargeOn")], ["off", t("devChargeOff")]],
-          stopMode,
-          t("devChargeStop")
-        )}</div>${origin(stopSet != null, cd.stop_integration, "", t("devChargeStopShort"))}</div>`;
+        // Push bei beendeter Ladung: nur mit Lademeldung
+        if (pushOn) {
+          const stopSet = d.charge_stop_setting;
+          const stopMode = stopSet == null ? "default" : stopSet ? "on" : "off";
+          parts.chg += `<div class="opt${stopSet != null ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeStop"))}</span>${sel(
+            "dev-charge-stop",
+            [["default", t("devChargeStopDefault", Boolean(cd.stop), Boolean(cd.stop_integration))], ["on", t("devChargeOn")], ["off", t("devChargeOff")]],
+            stopMode,
+            t("devChargeStop")
+          )}</div>${origin(stopSet != null, cd.stop_integration, "", t("devChargeStopShort"))}</div>`;
+        }
       }
     }
     // Stumm (Knopf "24 Std. stumm" in der Meldung): eigene Option mit Ende;
@@ -3869,7 +3887,7 @@ class DevicePanel extends HTMLElement {
     const ownTab = {
       out: d.offline_setting != null || silenced,
       bat: d.battery_setting != null,
-      chg: [d.charge_setting, d.charge_full_setting, d.charge_rise_setting, d.charge_stall_setting, d.charge_stop_setting].some((v) => v != null),
+      chg: [d.charge_setting, d.charge_full_setting, d.charge_rise_setting, d.charge_stall_setting, d.charge_stop_setting, d.charge_live_setting].some((v) => v != null),
       sig: d.signal_setting != null,
     };
     const tabs = [["out", "tabOutage"], ["bat", "tabBattery"], ["chg", "tabCharge"], ["sig", "tabSignal"]];
@@ -5890,7 +5908,7 @@ class DevicePanel extends HTMLElement {
     const chargeOn = new Set(d.charge_integrations || []);
     const list = (cat.integrations || []).filter((i) => !hidden.has(i.domain)).map((i) => ({ domain: i.domain, name: i.name, devices: i.devices }));
     const known = new Set(list.map((x) => x.domain));
-    for (const dom of [...Object.keys(offMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush, ...noNew, ...chargeOn, ...Object.keys(d.charge_full_integrations || {}), ...Object.keys(d.charge_rise_integrations || {}), ...Object.keys(d.charge_stall_integrations || {}), ...Object.keys(d.charge_stop_integrations || {})]) {
+    for (const dom of [...Object.keys(offMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush, ...noNew, ...chargeOn, ...Object.keys(d.charge_full_integrations || {}), ...Object.keys(d.charge_rise_integrations || {}), ...Object.keys(d.charge_stall_integrations || {}), ...Object.keys(d.charge_stop_integrations || {}), ...Object.keys(d.charge_live_integrations || {})]) {
       if (known.has(dom) || hidden.has(dom)) continue;
       known.add(dom);
       list.push({ domain: dom, name: this._integrations[dom] || dom, devices: 0 });
@@ -5909,8 +5927,9 @@ class DevicePanel extends HTMLElement {
       const cr = (d.charge_rise_integrations || {})[x.domain];
       const cs = (d.charge_stall_integrations || {})[x.domain];
       const cp = (d.charge_stop_integrations || {})[x.domain];
-      const chargeVals = [cf != null ? t("diffChargeFull", cf) : "", cr != null ? t("diffChargeRise", cr) : "", cs != null ? t("diffChargeStall", cs) : "", cp != null ? t("diffChargeStop", cp) : ""].filter(Boolean);
-      const chargeDiff = chargeOn.has(x.domain) ? t("diffCharge") + (chargeVals.length ? ` (${chargeVals.join(", ")})` : "") : null;
+      const cl = (d.charge_live_integrations || {})[x.domain];
+      const chargeVals = [cf != null ? t("diffChargeFull", cf) : "", cr != null ? t("diffChargeRise", cr) : "", cs != null ? t("diffChargeStall", cs) : "", cp != null ? t("diffChargeStop", cp) : "", cl != null ? t("diffChargeLive", cl) : ""].filter(Boolean);
+      const chargeDiff = chargeOn.has(x.domain) ? t("diffCharge") + (chargeVals.length ? ` (${chargeVals.join(", ")})` : "") : cl != null ? t("diffChargeLive", cl) : null;
       const diff = unmon ? t("integUnmon") : [out, batText, chargeDiff, newDiff, sigDiff].filter(Boolean).join(" · ");
       return { ...x, batDevices: bat.get(x.domain) || 0, unmon, out, bat: batText, noNew: noNew.has(x.domain), sig: sigDiff, own: Boolean(unmon || out || batText || chargeDiff || newDiff || sigDiff), diff };
     });
@@ -6141,6 +6160,10 @@ class DevicePanel extends HTMLElement {
       <div class="mon-grp">${escape(t("grpNotify"))}</div>
       ${ui.targetRow("charge")}
       ${ui.row("notify_charge", t("optCharge"), ui.sw("notify_charge", t("optCharge")), noTarget ? null : t("optChargeShort"), null, noTarget ? t("noTargetWarn") : null)}`;
+    // Live-Aktivität beim Laden (seit 2.19.0): unabhängig von der Lademeldung; pro Integration und Gerät einstellbar
+    const liveNoTarget = d.charge_live && !target;
+    html += `<div class="mon-grp">${escape(t("grpLive"))}</div>
+      ${ui.row("charge_live", t("optChargeLive"), ui.sw("charge_live", t("optChargeLive")), liveNoTarget ? null : t("optChargeLiveShort"), t("optChargeLiveInfo"), liveNoTarget ? t("noTargetWarn") : null)}`;
     if (!d.notify_charge) return html;
     // Ladung beendet (seit 1.40.0): bleibt der Stand ohne Ladeanzeige am Gerät so lange unverändert, endet "lädt";
     // der Push dazu hat einen eigenen Schalter (standardmässig aus).
@@ -6436,7 +6459,7 @@ class DevicePanel extends HTMLElement {
           listSw("persistent_exclude_integrations", t("optPersistent"))
       );
     // Batterie und Laden: nur sinnvoll mit Batteriegeräten oder eigener Einstellung (zum Zurücksetzen).
-    const chargeMaps = ["charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations"];
+    const chargeMaps = ["charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations"];
     const hasBat = Boolean(item.batDevices || dom in batMap || has("battery_push_exclude_integrations") || has("charge_integrations") || chargeMaps.some((k) => dom in (d[k] || {})));
     const b = batMap[dom];
     const mode = b === "off" ? "off" : b === undefined ? "default" : "own";
@@ -6480,6 +6503,11 @@ class DevicePanel extends HTMLElement {
         );
       // Laden (seit 1.32.0): derselbe Wert wie die Liste im Reiter "Laden"; Standard ist aus.
       const chargeOn = has("charge_integrations");
+      // Live-Aktivität beim Laden (seit 2.19.0): Standard (global), Ein, Aus; unabhängig von der Lademeldung
+      const liveOwn = (d.charge_live_integrations || {})[dom];
+      const liveOn = liveOwn ?? Boolean(val("charge_live"));
+      const liveSel = `<span class="opt-select"><select data-clive-integ="${escape(dom)}" ${unmon ? "disabled" : ""} aria-label="${escape(`${t("optChargeLive")}: ${item.name}`)}"><option value="default"${liveOwn == null ? " selected" : ""}>${escape(t("integChargeLiveDefault", Boolean(val("charge_live"))))}</option><option value="on"${liveOwn === true ? " selected" : ""}>${escape(t("devChargeOn"))}</option><option value="off"${liveOwn === false ? " selected" : ""}>${escape(t("devChargeOff"))}</option></select>${mdi("chevronDown", 18)}</span>`;
+      const liveRow = opt((liveOwn ?? null) !== ((saved.charge_live_integrations || {})[dom] ?? null), t("optChargeLive"), liveSel, origin(liveOwn != null, liveOwn != null ? t(liveOwn ? "devChargeOn" : "devChargeOff") : ""));
       const gFull = val("charge_full");
       const gRise = val("charge_rise");
       const fullMap = d.charge_full_integrations || {};
@@ -6501,10 +6529,11 @@ class DevicePanel extends HTMLElement {
           opt(chargeOn !== (saved.charge_integrations || []).includes(dom), t("optCharge"),
             swi(`data-cinteg="${escape(dom)}"`, chargeOn, `${t("optCharge")}: ${item.name}`),
             origin(chargeOn, t("devChargeOff").toLowerCase())) +
-            (tgt("charge") && d.notify_charge ? "" : `<div class="opt-short mon-hint">${escape(t(tgt("charge") ? "integChargeGlobalOff" : "noTargetWarn"))}</div>`)
+            (tgt("charge") && d.notify_charge ? "" : `<div class="opt-short mon-hint">${escape(t(tgt("charge") ? "integChargeGlobalOff" : "noTargetWarn"))}</div>`) +
+            liveRow
         );
       // Eigenes "Voll ab" und eigener Anstieg der Integration (seit 1.35.0): ohne Wahl gilt der globale Wert, das Gerät geht vor.
-      if (chargeOn) {
+      if (chargeOn || liveOn) {
         const choices = (presets, own) => [...new Set([...presets, own].filter((v) => Number.isInteger(v)))].sort((a, b) => a - b);
         const chargeSel = (attr, own, g, values, label, ownOption = false) => {
           const custom = ownOption && own != null && !values.includes(own);
@@ -6532,7 +6561,7 @@ class DevicePanel extends HTMLElement {
             opt((fullMap[dom] ?? null) !== (savedFull[dom] ?? null), t("optChargeFull"), chargeSel("data-cfull-integ", fullMap[dom], gFull, CHARGE_FULL_PRESETS, t("optChargeFull"), true), origin(fullMap[dom] != null, fullMap[dom] != null ? `${gFull} %` : ""), fullOwn(fullMap[dom])) +
               opt((riseMap[dom] ?? null) !== (savedRise[dom] ?? null), t("optChargeRise"), chargeSel("data-crise-integ", riseMap[dom], gRise, choices([2, 3, 5, 10, 15, 20, 25, 30, 40, 50, 60, 80], riseMap[dom]), t("optChargeRise")), origin(riseMap[dom] != null, riseMap[dom] != null ? `${gRise} %` : "")) +
               opt((stallMap[dom] ?? null) !== ((saved.charge_stall_integrations || {})[dom] ?? null), t("optChargeStall"), stallSel, origin(stallMap[dom] != null, stallMap[dom] != null ? t("offlineMin", gStall) : "")) +
-              opt((stopMap[dom] ?? null) !== ((saved.charge_stop_integrations || {})[dom] ?? null), t("optChargeStop"), stopSel, origin(stopOwn != null, stopOwn != null ? t(val("notify_charge_stop") ? "devChargeOn" : "devChargeOff") : ""))
+              (chargeOn ? opt((stopMap[dom] ?? null) !== ((saved.charge_stop_integrations || {})[dom] ?? null), t("optChargeStop"), stopSel, origin(stopOwn != null, stopOwn != null ? t(val("notify_charge_stop") ? "devChargeOn" : "devChargeOff") : "")) : "")
           );
       }
     }
@@ -7148,10 +7177,10 @@ class DevicePanel extends HTMLElement {
         this._renderSettings();
         return;
       }
-      if (st?.draft && el.tagName === "SELECT" && (el.dataset.cstallInteg || el.dataset.cstopInteg)) {
-        // Eigenes "Ladung beendet nach" bzw. eigener Push bei beendeter Ladung einer Integration: "default" = global.
-        const key = el.dataset.cstallInteg ? "charge_stall_integrations" : "charge_stop_integrations";
-        const dom = el.dataset.cstallInteg || el.dataset.cstopInteg;
+      if (st?.draft && el.tagName === "SELECT" && (el.dataset.cstallInteg || el.dataset.cstopInteg || el.dataset.cliveInteg)) {
+        // Eigenes "Ladung beendet nach", eigener Push bei beendeter Ladung bzw. eigene Live-Aktivität einer Integration: "default" = global.
+        const key = el.dataset.cstallInteg ? "charge_stall_integrations" : el.dataset.cliveInteg ? "charge_live_integrations" : "charge_stop_integrations";
+        const dom = el.dataset.cstallInteg || el.dataset.cstopInteg || el.dataset.cliveInteg;
         const map = { ...(st.draft[key] || {}) };
         if (el.value === "default") delete map[dom];
         else map[dom] = key === "charge_stall_integrations" ? Number(el.value) : el.value === "on";

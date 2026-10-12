@@ -484,6 +484,14 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
 - Verbindungsabbrüche still überbrücken, Polling im Hintergrund pausieren.
 - Statistik-Fenster mit Tabs, Zeitraum 24 Std./7/30 Tage, Loader.
 
+## Live-Aktivität beim Laden (seit 2.19.0, Wunsch des Nutzers)
+
+Optional (aus), global, pro Integration und pro Gerät, unabhängig von der Lademeldung. Zeigt auf iPhone (Live-Aktivität, iOS
+17.2+) und Android 16 (Live-Update) den Ladefortschritt bis zum "Voll ab" des Geräts. Gleicher Empfänger wie die Lademeldung
+(Ziel des Reiters "Laden"). Stille Updates höchstens alle 4 Minuten und nur bei neuem Prozentwert; nach dem Ziel bleibt
+"Geladen" 10 Minuten stehen. Wischt der Nutzer sie weg, kommen für diese Ladung keine Updates mehr (nur wirksam, wo das
+System das meldet: Android heute, iOS sobald Core das Ereignis liefert).
+
 ## Empfänger pro Reiter (seit 2.18.0)
 
 Das Push-Ziel (`notify_service`) ist die Vorgabe für alle Meldungen. Jeder Reiter mit Meldungen (Ausfall, Batterie, Laden,
