@@ -86,7 +86,7 @@ for (const mobile of [false, true]) {
   check(`[${tag}] Reiter: Kapsel gleitet und landet am gewählten Reiter`, between && Math.abs(g1[0] - target[0]) < 1.5 && Math.abs(g1[1] - target[1]) < 1.5, JSON.stringify({ g0, g1, target, seen: seen.map((x) => x.map(Math.round).join(":")).join(" ") }));
 
   // Gerät: Reiter im Popup mit Kapsel
-  await tap(".dlg-close");
+  await tap(`dialog.settings .dlg-actions [data-set="close"]`);
   await ev(`r.querySelector("dialog.settings")?.close?.()`);
   await tap('.dev[data-open="c"], .mrow[data-open="c"]');
   await wait(`return !!r.querySelector("dialog.device .sub-tab")`);
