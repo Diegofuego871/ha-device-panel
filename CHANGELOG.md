@@ -23,6 +23,7 @@ Favorite timers (heart), and the title in the header only disappears on the phon
 
 ### Fixed
 
+- Window with all timers: a timer that has switched and is waiting to switch back ("switch back afterwards") now counts as running: it appears under the tab "Running" (and counts there), and its card says when it switches back ("back off: today 06:30"). Before, only countdown timers were "running".
 - Window with all timers on iPhone: the intro text above the search field changed its size depending on the list (larger and three lines with an empty list), which moved the search field and the tab bar. The panel now turns off the automatic text enlargement of iOS, so the text and the tab bar keep the same size and height on every tab.
 - Window with all timers: after typing a search, the cross in the search field could leave the old hits on screen (the list was not redrawn when it looked unchanged). Fixed; it also applies after expanding or collapsing devices.
 

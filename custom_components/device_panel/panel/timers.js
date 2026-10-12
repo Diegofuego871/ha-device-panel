@@ -424,7 +424,7 @@ export class TimerUi {
       all: timers.length,
       on: timers.filter((x) => x.enabled).length,
       off: timers.filter((x) => !x.enabled).length,
-      running: timers.filter((x) => x.running).length,
+      running: timers.filter((x) => x.running || x.reverting).length,
       fav: timers.filter((x) => this.isStar(x.id)).length,
     };
   }
@@ -460,7 +460,7 @@ export class TimerUi {
   passes(tm, q, filter) {
     if (filter === "on" && !tm.enabled) return false;
     if (filter === "off" && tm.enabled) return false;
-    if (filter === "running" && !tm.running) return false;
+    if (filter === "running" && !tm.running && !tm.reverting) return false;
     if (filter === "fav" && !this.isStar(tm.id)) return false;
     return !q || this.haystack(tm).includes(q.toLowerCase());
   }
@@ -579,6 +579,9 @@ export class TimerUi {
           <div class="mg-btns small"><button type="button" class="dlg-btn" ${this.a(all, "timer-delete-no")}>${esc(t("tmCancel"))}</button><button type="button" class="dlg-btn danger" ${this.a(all, "timer-delete-yes")} data-id="${esc(tm.id)}">${esc(t("tmDeleteYes"))}</button></div></div>`
       : "";
     const status = this.statusHtml(tm);
+    // Wartet auf das Zurückschalten: wann, steht in der Zeile (Reiter "Läuft", seit 2.26.0)
+    const backWord = tm.reverting && tm.revert_local && opposite(tm.action) ? this.t(`tmRes_${resKey(tm.domain, opposite(tm.action))}`) : "";
+    if (backWord) status.unshift(`<span class="mg-on">${esc(t("tmBackAtRow", backWord, this.localText(tm.revert_local)))}</span>`);
     const next = tm.running ? `<span class="mg-on">${esc(t("tmRunningShort"))}</span>` : tm.enabled && tm.due_local ? `${esc(t("tmNextRun"))} <span class="mg-on">${esc(this.localText(tm.due_local))}</span>` : tm.done ? esc(t("tmDone")) : esc(t("tmDisabled"));
     return `<div class="mg-card${tm.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${timerEmoji(tm.domain)}</span>
       <div class="mg-t"><b>${esc(tm.name)}</b><small>${esc(this.sentence(tm))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${acts}${confirm}</div>`;

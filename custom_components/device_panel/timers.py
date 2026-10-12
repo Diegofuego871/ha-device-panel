@@ -788,6 +788,8 @@ def timer_payload(hass: HomeAssistant, manager: TimerManager, timer: dict[str, A
         "last": rt["last"],
         "done": rt["done"],
         "running": timer["kind"] == "countdown" and timer["enabled"] and rt["due"] is not None,
+        # Wartet auf das Zurückschalten (seit 2.26.0): der Timer ist geschaltet, die Rückstellung steht noch aus; zählt für den Reiter "Läuft"
+        "reverting": rt["revert_due"] is not None,
         "entity_name": entity["name"],
         "entity_state": entity["state"],
         "entity_missing": not exists,

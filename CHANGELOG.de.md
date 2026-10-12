@@ -23,6 +23,7 @@ Lieblings-Timer (Herz), und der Titel in der Kopfzeile entfällt nur noch auf de
 
 ### Behoben
 
+- Fenster mit allen Timern: Ein Timer, der geschaltet hat und auf das Zurückschalten wartet ("Danach wieder zurückschalten"), gilt jetzt als laufend: Er steht im Reiter "Läuft" (und wird dort mitgezählt), und seine Karte sagt, wann er zurückschaltet ("wieder aus: heute 06:30"). Vorher galten nur Countdown-Timer als "läuft".
 - Fenster mit allen Timern auf dem iPhone: Der Einleitungstext über dem Suchfeld änderte seine Grösse je nach Liste (grösser und dreizeilig bei leerer Liste), und Suchfeld und Reiterleiste verschoben sich. Das Panel schaltet jetzt die automatische Textvergrösserung von iOS ab, damit bleiben Text und Reiterleiste auf jedem Reiter gleich gross und gleich hoch.
 - Fenster mit allen Timern: Nach dem Tippen einer Suche konnte das Kreuz im Suchfeld die alten Treffer stehen lassen (die Liste wurde nicht neu gezeichnet, weil sie unverändert aussah). Behoben; das gilt auch nach dem Auf- und Zuklappen von Geräten.
 

@@ -185,9 +185,13 @@ async def test_switch_back_after_duration(hass: HomeAssistant, setup, freezer) -
     assert len(on) == 1 and off == []
     rt = manager.runtime(saved["id"])
     assert rt["revert_action"] == "off" and rt["revert_due"] is not None
+    # Solange das Zurückschalten aussteht, meldet die Nutzlast "reverting" (Reiter "Läuft", seit 2.26.0), danach nicht mehr
+    payload = timers.timer_payload(hass, manager, manager.get(saved["id"]))
+    assert payload["reverting"] is True and payload["revert_local"] is not None and payload["running"] is False
     await _tick(hass, freezer, 121)
     assert len(off) == 1 and off[0].data["entity_id"] == plug
     assert manager.runtime(saved["id"])["revert_due"] is None
+    assert timers.timer_payload(hass, manager, manager.get(saved["id"]))["reverting"] is False
 
 
 async def test_unreachable_entity_retries_then_fails(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811

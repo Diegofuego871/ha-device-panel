@@ -1068,7 +1068,7 @@
         const payload = (r) => {
           const e = entOf(r);
           const now = Date.now() / 1000;
-          return { ...r, due: r.enabled ? r.__due : null, due_local: r.enabled && r.__due ? local(r.__due) : null, revert_due: null, revert_local: null, last: r.__last || null, done: r.__done || null,
+          return { ...r, due: r.enabled ? r.__due : null, due_local: r.enabled && r.__due ? local(r.__due) : null, revert_due: r.__revert || null, revert_local: r.__revert ? local(r.__revert) : null, reverting: Boolean(r.__revert), last: r.__last || null, done: r.__done || null,
             running: r.kind === "countdown" && r.enabled && Boolean(r.__due), entity_name: e ? e.name : r.entity_id, entity_state: e ? e.state : null, entity_missing: !e, domain: String(r.entity_id).split(".")[0], actions: e ? e.actions : [],
             next_runs: r.enabled && r.kind !== "countdown" ? runsOf(r, now) : [], device_name: (window.__devices.find((d) => d.id === r.device_id) || {}).name || "" };
         };

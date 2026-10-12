@@ -59,6 +59,18 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.tmall-dlg [data-tma="timer-filter"][data-v="all"]');
     await wait(`return r.querySelectorAll("dialog.tmall-dlg .mg-dcard").length > 0`);
 
+    // Wartet ein Timer auf das Zurückschalten, zählt er zu "Läuft" (2.26.0), mit Angabe, wann
+    await p.evaluate(() => { window.__timers.list[0].__revert = Date.now() / 1000 + 3 * 3600; });
+    await ev(`r.host._loadTmAll()`);
+    check(`[${tag}] Zurückschalten steht aus: Reiter "Läuft" zählt 1`, await wait(`return r.querySelector('dialog.tmall-dlg .mg-filter .sub-tab[data-v="running"] .tab-s')?.textContent === "1"`));
+    await tap('dialog.tmall-dlg [data-tma="timer-filter"][data-v="running"]');
+    check(`[${tag}] Reiter "Läuft": der Timer steht dort, mit "wieder aus: …"`, await wait(`const c = r.querySelectorAll("dialog.tmall-dlg .mg-card"); return c.length === 1 && /(wieder aus|back off|wieder ein|back on)/.test(c[0].querySelector(".mg-status").textContent) && c[0].querySelector(".mg-status").textContent.includes(":")`), await ev(`return r.querySelector("dialog.tmall-dlg .mg-status")?.textContent || ""`));
+    await p.evaluate(() => { delete window.__timers.list[0].__revert; });
+    await ev(`r.host._loadTmAll()`);
+    check(`[${tag}] Zurückgeschaltet: Reiter "Läuft" leer`, await wait(`return r.querySelector('dialog.tmall-dlg .mg-filter .sub-tab[data-v="running"] .tab-s')?.textContent === "0"`));
+    await tap('dialog.tmall-dlg [data-tma="timer-filter"][data-v="all"]');
+    await wait(`return r.querySelectorAll("dialog.tmall-dlg .mg-card").length === 2`);
+
     // Suche und Filter
     await ev(`r.querySelector('dialog.tmall-dlg input[data-lsearch="timers"]').focus()`);
     await p.keyboard.type("nacht");
