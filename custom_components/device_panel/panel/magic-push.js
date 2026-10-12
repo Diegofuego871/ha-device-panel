@@ -927,7 +927,7 @@ export class MagicPush {
         : `<small class="mg-dsum">${esc(t("mgSumMsgs", g.shown.length))}${offN ? ` · ${esc(t("mgSumOff", offN))}` : ""}${firing ? ` · <span class="mg-on">${esc(t("mgSumFired", firing))}</span>` : ""}${g.off ? ` · <span class="mg-warn">${esc(t("mgUnreachable"))}</span>` : ""}</small>`;
       html += `<div class="mg-dcard${open ? "" : " closed"}"><button type="button" class="mg-dhead" data-set="magic-fold-dev" data-device="${esc(g.id)}" aria-expanded="${open}">
         <span class="mg-devic${g.off ? " off" : ""}" aria-hidden="true">${this.h.typeIcon(g.dev?.type || "other", 18)}</span>
-        <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span>${g.off && open ? `<span class="mg-devoff">${esc(t("statusOffline"))}</span>` : ""}<span class="mg-badge">${g.shown.length}</span><span class="mg-chev" aria-hidden="true">${open ? "▾" : "▸"}</span></button>`;
+        <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span>${g.off && open ? `<span class="mg-devoff">${esc(t("statusOffline"))}</span>` : ""}<span class="mg-badge">${g.shown.length}</span>${this.chevHtml(open)}</button>`;
       if (open) {
         html += g.shown.map((r) => this.overviewCardHtml(r, all)).join("");
         html += `<div class="mg-dfoot"><button type="button" class="linkbtn" data-set="magic-device" data-device="${esc(g.id)}">${esc(t("mgAllOpenDevice"))} ›</button></div>`;
@@ -1587,7 +1587,7 @@ export class MagicPush {
     if (free) html += this.pickCardHtml(free, true, this.t("mgFreeBadge"), free.entity_id);
     const open = w.free.open;
     html += `<button type="button" class="mg-card mg-pick mg-freebtn" data-mg="free-open" aria-expanded="${open}"><span class="mg-row"><span class="mg-ic" aria-hidden="true">🔎</span>
-      <span class="mg-t"><b>${esc(free ? this.t("mgFreeChange") : this.t("mgFreeOpen"))}</b><small>${esc(this.t("mgFreeSub"))}</small></span><span class="mg-chev" aria-hidden="true">${open ? "▴" : "▾"}</span></span></button>`;
+      <span class="mg-t"><b>${esc(free ? this.t("mgFreeChange") : this.t("mgFreeOpen"))}</b><small>${esc(this.t("mgFreeSub"))}</small></span>${this.chevHtml(open)}</span></button>`;
     if (open) {
       html += `<div class="mg-free"><input class="mg-input" type="search" data-mg="free-query" value="${esc(w.free.query)}" placeholder="${esc(this.t("mgFreeSearch"))}" aria-label="${esc(this.t("mgFreeSearch"))}" autocomplete="off">
         <div data-mg-zone="freelist">${this.freeListHtml()}</div></div>`;
@@ -1640,6 +1640,11 @@ export class MagicPush {
   }
 
   // Eine Bedingung: Kopf (Name, Satz, jetziger Wert) und, wenn offen, der Editor
+  // Pfeil zum Auf- und Zuklappen, überall gleich (Bedingungen, Empfänger, freie Entität, Geräte-Karten): nach unten, offen nach oben
+  chevHtml(open) {
+    return `<span class="mg-lchev${open ? " up" : ""}" aria-hidden="true">${this.h.mdi("chevronDown", 24)}</span>`;
+  }
+
   leafHtml(lf) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
@@ -1649,7 +1654,7 @@ export class MagicPush {
     const sub = [this.leafValid(lf) || lf.kind === "change" ? this.condText(lf, e) : t("mgCondIncomplete"), now ? t("mgNowValue", now) : ""].filter(Boolean).join(" · ");
     return `<div class="mg-lcard${open ? " open" : ""}"><div class="mg-lhead">
       <button type="button" class="mg-lmain" data-mg="leaf-open" data-uid="${esc(lf.uid)}" aria-expanded="${open}"><span class="mg-ic" aria-hidden="true">${emojiFor(e)}</span>
-        <span class="mg-t"><b>${esc(e?.name || lf.entity_id)}</b><small>${esc(sub)}</small></span><span class="mg-lchev${open ? " up" : ""}" aria-hidden="true">${this.h.mdi("chevronDown", 24)}</span></button>
+        <span class="mg-t"><b>${esc(e?.name || lf.entity_id)}</b><small>${esc(sub)}</small></span>${this.chevHtml(open)}</button>
       <button type="button" class="mg-xbtn" data-mg="leaf-del" data-uid="${esc(lf.uid)}" title="${esc(t("mgRemoveCond"))}" aria-label="${esc(t("mgRemoveCond"))}">${this.h.mdi("close", 22)}</button></div>
       ${open ? this.leafEditorHtml(lf, e) : ""}</div>`;
   }
@@ -1874,7 +1879,7 @@ export class MagicPush {
     const change = d.kind === "change";
     const targetSub = d.target || (String(this.data.default_target || "").startsWith("notify.") ? this.data.default_target : t("mgTargetNone"));
     let html = `<div class="mg-k">${esc(t("mgTarget"))}</div>
-      <button type="button" class="mg-sel" data-mg="target-toggle" aria-expanded="${this.wiz.targetOpen}"><span>${esc(d.target ? this.niceTarget(d.target) : t("mgTargetDefault"))}<small>${esc(targetSub)}</small></span><span aria-hidden="true">${this.wiz.targetOpen ? "▴" : "▾"}</span></button>`;
+      <button type="button" class="mg-sel" data-mg="target-toggle" aria-expanded="${this.wiz.targetOpen}"><span>${esc(d.target ? this.niceTarget(d.target) : t("mgTargetDefault"))}<small>${esc(targetSub)}</small></span>${this.chevHtml(this.wiz.targetOpen)}</button>`;
     if (this.wiz.targetOpen) html += `<div class="mg-list" role="listbox">${this.targetListHtml()}</div>`;
     html += `<p class="mg-hint">${esc(t("mgTargetHint"))}</p>
       <div class="mg-optrow"><div>${esc(t("mgCritical"))}<small>${esc(t("mgCriticalHint"))}</small></div><label class="switch"><input type="checkbox" data-mg="critical"${d.critical ? " checked" : ""} aria-label="${esc(t("mgCritical"))}"><span></span></label></div>`;

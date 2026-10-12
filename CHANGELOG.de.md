@@ -22,6 +22,13 @@ Magic Push: robuster bei Absturz und Neustart von Home Assistant.
   noch derselbe, kommt die Meldung gleich beim Start; hat sich der Wert inzwischen zurückgeändert, wird nichts gesendet.
   Vorher ging so eine Änderung verloren.
 
+### Geändert
+
+- Der Pfeil zum Auf- und Zuklappen ist in Magic Push jetzt überall derselbe (Wunsch des Nutzers): bei den Bedingungs-
+  Karten, bei der Auswahl des Empfängers in Schritt 3, bei "Freie Entität wählen" und bei den Geräte-Karten in den
+  Einstellungen. Vorher hatten Schritt 3 und die Übersicht ein kleines Text-Dreieck in anderer Grösse, das beim Öffnen
+  sogar die Grösse wechselte. Jetzt ist es überall derselbe grössere Pfeil, zu: nach unten, offen: nach oben.
+
 ## [2.17.0] - 2026-10-12
 
 Magic Push: "Zurücksetzen erst nach" einer Dauer, gegen Flattern um die Schwelle.

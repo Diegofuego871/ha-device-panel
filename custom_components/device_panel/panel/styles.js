@@ -1433,7 +1433,6 @@ input.mg-pill { cursor: text; }
 /* Freie Entität im Assistenten (Schritt 1, ganz unten) */
 .mg-freehead { margin-top: 18px; }
 .mg-freebtn { border: 1.5px dashed color-mix(in srgb, var(--dp-primary) 45%, transparent); background: none; }
-.mg-chev { flex: none; color: var(--dp-text2); }
 .mg-lchev { flex: none; display: grid; place-items: center; width: 40px; height: 40px; margin: -8px -6px -8px 0; color: var(--dp-text); transition: transform .2s ease; }
 .mg-lchev.up { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) { .mg-lchev { transition: none; } }

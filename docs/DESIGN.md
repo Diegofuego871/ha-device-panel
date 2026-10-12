@@ -379,6 +379,12 @@ HA-Nachbau prüfen.
   Meldung und "wieder normal" mit eigenem Titel und Inhalt stehen im selben Schritt, darunter Vorschau und "Test senden"
   (der Test kennt so Empfänger, Lautstärke und Wiederholung).
 
+## Magic Push: ein Pfeil zum Auf- und Zuklappen (seit 2.17.1)
+
+- Überall gleich: `chevHtml(open)` in `magic-push.js` (mdi chevronDown 24, Klasse `.mg-lchev`, 40 px Fläche, offen um 180°
+  gedreht): Bedingungs-Karten, Empfänger-Auswahl, "Freie Entität", Geräte-Karten der Übersicht. Keine Text-Dreiecke
+  (▾ ▴ ▸) mehr.
+
 ## Magic Push: Zurücksetzen erst nach Dauer (seit 2.17.0)
 
 - Schritt 2 hat unter "für mindestens" einen zweiten Block "Zurücksetzen erst, wenn es nicht mehr gilt für mindestens"

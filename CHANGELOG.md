@@ -21,6 +21,13 @@ Magic Push: more robust across crashes and restarts of Home Assistant.
   same, the message comes right at the start; if the value changed back in the meantime, nothing is sent. Before, such
   a change was lost.
 
+### Changed
+
+- The arrow to fold and unfold is now the same everywhere in Magic Push (requested by the user): on the condition
+  cards, on the recipient selection in step 3, on "Choose a free entity" and on the device cards in the settings. Before,
+  step 3 and the overview used a small text triangle of a different size, which also changed size when opened. Now it is
+  the same larger arrow, pointing down when closed and up when open.
+
 ## [2.17.0] - 2026-10-12
 
 Magic Push: "Reset only after" a duration, against flapping around the threshold.
