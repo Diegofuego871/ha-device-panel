@@ -203,7 +203,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] zu: Kurzfassung mit "aus" und "ausgelöst"`, await ev(`const h=r.querySelector('${body} .mg-dhead[data-device="h"]'); const d=r.querySelector('${body} .mg-dhead[data-device="d"]'); return /(1 aus|1 off)/.test(h.textContent) && /(1 ausgelöst|1 triggered)/.test(d.textContent)`));
     await type(input, "gamma");
     check(`[${tag}] Suche in zugeklappten Karten: Treffer aufgeklappt`, (await waitNames("Gamma")) && (await ev(`return r.querySelectorAll('${body} .mg-dhead').length`)) === 1, await cardNames());
-    await tap(`${body} [data-lclear="magic"]`);
+    // Suche getippt, Einstellungen geschlossen und neu geöffnet: Suche ist leer, die Liste vollständig (nicht die alte Trefferliste)
+    await tap('dialog.settings .dlg-actions [data-set="close"]');
+    await wait(`return !r.querySelector("dialog.settings").open`);
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+    if (!(await ev(`return !!r.querySelector("dialog.settings .mon-tabs")`))) await tap('[data-set="section"][data-id="monitor"]');
+    await tap('dialog.settings .mon-tab[data-key="magic"]');
+    await wait(`return !!r.querySelector('${input}')`);
+    check(`[${tag}] Einstellungen neu geöffnet nach einer Suche: Feld leer, alle Karten wieder da`, await wait(`return r.querySelector('${input}').value === "" && r.querySelectorAll('${body} .mg-dhead').length > 1`), await ev(`return r.querySelector('${input}').value + "|" + r.querySelectorAll('${body} .mg-dhead').length`));
     // "Gerät öffnen" in der aufgeklappten Karte
     await tap(`${body} .mg-dhead[data-device="h"]`);
     await tap(`${body} [data-set="magic-device"][data-device="h"]`);
