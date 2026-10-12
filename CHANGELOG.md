@@ -7,13 +7,25 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [2.25.0] - 2026-10-12
+## [2.26.0] - 2026-10-12
 
-Panel updates (time of the daily check, push notification, red dot while a restart is pending) and a leaner header on the phone.
+Favorite timers, and the title in the header only disappears on the phone.
+
+### Added
+
+- Window with all timers: a star right of "Delete" on every timer card. A starred timer's device moves to the top and is expanded from the start, and within a device the starred timers come first. The stars belong to the user (stored in the Home Assistant user data like the favorite devices, so they follow you to other devices). The star is a different symbol from the heart of favorite devices on purpose.
 
 ### Changed
 
-- On the phone the visible title "Devices" above the list is gone (the application is already called "Device Panel" right above it); the logo stays and the search field takes over the space, the timer button stays centred. The title remains for screen readers; on wide screens it stays visible.
+- The title "Devices" in the header is visible again on wide screens (from 700 px); on the phone it stays gone, as in 2.25.0. The timer button stays centred on both.
+
+## [2.25.0] - 2026-10-12
+
+Panel updates (time of the daily check, push notification, red dot while a restart is pending) and a leaner header without the title.
+
+### Changed
+
+- The visible title "Devices" above the list is gone (the application is already called "Device Panel"); the logo stays and the search field takes over the space. The title remains for screen readers.
 
 ### Added
 
@@ -2852,6 +2864,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.26.0
 [2.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.25.0
 [2.24.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.1
 [2.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.0

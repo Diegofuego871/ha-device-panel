@@ -7,13 +7,25 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
-## [2.25.0] - 2026-10-12
+## [2.26.0] - 2026-10-12
 
-Panel-Updates (Uhrzeit der täglichen Prüfung, Push-Meldung, roter Punkt bei ausstehendem Neustart) und eine schlankere Kopfzeile auf dem Handy.
+Lieblings-Timer, und der Titel in der Kopfzeile entfällt nur noch auf dem Handy.
+
+### Hinzugefügt
+
+- Fenster mit allen Timern: ein Stern rechts von "Löschen" auf jeder Timer-Karte. Das Gerät eines Timers mit Stern rückt nach ganz oben und ist von Anfang an aufgeklappt, und im Gerät stehen die Timer mit Stern zuoberst. Die Sterne gehören dem Benutzer (gespeichert in den Benutzerdaten von Home Assistant wie die Favoriten-Geräte, sie folgen dir also auf andere Geräte). Der Stern ist bewusst ein anderes Symbol als das Herz der Favoriten-Geräte.
 
 ### Geändert
 
-- Auf dem Handy entfällt der sichtbare Titel "Geräte" über der Liste (die Anwendung heisst direkt darüber schon "Device Panel"); das Logo bleibt, das Suchfeld übernimmt den Platz, der Timer-Knopf bleibt mittig. Für Screenreader bleibt der Titel erhalten; auf breiten Bildschirmen bleibt er sichtbar.
+- Der Titel "Geräte" in der Kopfzeile ist auf breiten Bildschirmen (ab 700 px) wieder sichtbar; auf dem Handy bleibt er weg, wie in 2.25.0. Der Timer-Knopf bleibt auf beiden mittig.
+
+## [2.25.0] - 2026-10-12
+
+Panel-Updates (Uhrzeit der täglichen Prüfung, Push-Meldung, roter Punkt bei ausstehendem Neustart) und eine schlankere Kopfzeile ohne Titel.
+
+### Geändert
+
+- Der sichtbare Titel "Geräte" über der Liste entfällt (die Anwendung heisst schon "Device Panel"); das Logo bleibt, das Suchfeld übernimmt den Platz. Für Screenreader bleibt der Titel erhalten.
 
 ### Hinzugefügt
 
@@ -2953,6 +2965,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.26.0
 [2.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.25.0
 [2.24.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.1
 [2.24.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.0

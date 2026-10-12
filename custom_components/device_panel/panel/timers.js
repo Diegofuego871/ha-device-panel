@@ -437,7 +437,15 @@ export class TimerUi {
       if (!groups.has(tm.device_id)) groups.set(tm.device_id, { id: tm.device_id, name: tm.device_name || dev?.name || "", dev, timers: [] });
       groups.get(tm.device_id).timers.push(tm);
     }
-    return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name));
+    // Lieblings-Timer (Stern, seit 2.26.0): Geräte mit Stern zuerst, im Gerät die Timer mit Stern zuerst
+    const starred = (tm) => (this.isStar(tm.id) ? 0 : 1);
+    for (const g of groups.values()) g.timers.sort((a, b) => starred(a) - starred(b));
+    const first = (g) => (g.timers.some((tm) => this.isStar(tm.id)) ? 0 : 1);
+    return [...groups.values()].sort((a, b) => first(a) - first(b) || a.name.localeCompare(b.name));
+  }
+
+  isStar(id) {
+    return Boolean(this.host._tmStars?.has(id));
   }
 
   passes(tm, q, filter) {
@@ -454,6 +462,8 @@ export class TimerUi {
   isOpen(all, id, nGroups) {
     if (this.isFiltering(all)) return all.sopen?.[id] !== false;
     if (all.open && id in all.open) return all.open[id];
+    // Ein Gerät mit Lieblings-Timer ist von Anfang an aufgeklappt (seit 2.26.0)
+    if ((all.timers || []).some((tm) => tm.device_id === id && this.isStar(tm.id))) return true;
     return nGroups === 1;
   }
 
@@ -547,7 +557,8 @@ export class TimerUi {
           all.dlg ? "" : `
         <button type="button" class="linkbtn" ${this.a(all, "timer-run")} data-id="${esc(tm.id)}">${esc(t("tmActRun"))}</button>`
         }
-        <button type="button" class="linkbtn danger" ${this.a(all, "timer-delete")} data-id="${esc(tm.id)}">${esc(t("tmActDelete"))}</button></div>`;
+        <button type="button" class="linkbtn danger" ${this.a(all, "timer-delete")} data-id="${esc(tm.id)}">${esc(t("tmActDelete"))}</button>
+        <button type="button" class="linkbtn star${this.isStar(tm.id) ? " on" : ""}" ${this.a(all, "timer-star")} data-id="${esc(tm.id)}" aria-pressed="${this.isStar(tm.id)}" title="${esc(t(this.isStar(tm.id) ? "tmStarRemove" : "tmStarAdd"))}" aria-label="${esc(t(this.isStar(tm.id) ? "tmStarRemove" : "tmStarAdd"))}">${this.h.mdi(this.isStar(tm.id) ? "star" : "starOutline", 20)}</button></div>`;
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("tmDeleteAsk", tm.name))}</b><small>${esc(t("tmDeleteNote"))}</small>
           <div class="mg-btns small"><button type="button" class="dlg-btn" ${this.a(all, "timer-delete-no")}>${esc(t("tmCancel"))}</button><button type="button" class="dlg-btn danger" ${this.a(all, "timer-delete-yes")} data-id="${esc(tm.id)}">${esc(t("tmDeleteYes"))}</button></div></div>`

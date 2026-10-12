@@ -1397,6 +1397,10 @@ a.dlg-btn { display: inline-flex; align-items: center; justify-content: center; 
 .mg-radio.on { border: 7px solid var(--dp-primary); }
 .mg-acts { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; padding-left: 50px; font-size: 13px; }
 .linkbtn.danger { color: var(--dp-error); }
+/* Stern des Lieblings-Timers (seit 2.26.0): rechts von "Löschen", mit Abstand, gelb wenn gesetzt */
+.mg-acts .linkbtn.star { display: inline-flex; align-items: center; margin-left: 14px; color: var(--dp-text2); }
+.mg-acts .linkbtn.star.on { color: var(--dp-warning); }
+.mg-acts .linkbtn.star:hover { text-decoration: none; color: var(--dp-warning); }
 /* Handy: Aktionen der Karten (Bearbeiten, Löschen, Gerät öffnen) mit Fläche für den Finger (seit 2.24.0): grössere Schrift, 44 px Trefferhöhe, mehr Abstand */
 @media (max-width: 700px) {
   .mg-acts { gap: 0 4px; margin-top: 2px; padding-left: 38px; font-size: 15px; }

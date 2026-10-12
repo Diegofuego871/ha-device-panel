@@ -33,6 +33,8 @@ const VIEW_KEY = "device_panel_view";
 const VIEW_SAVE_DELAY_MS = 400;
 // Favoriten pro Benutzer (seit 2.22.0), gleiche Ablage wie die Ansicht
 const FAV_KEY = "device_panel_favorites";
+// Lieblings-Timer (seit 2.26.0): Timer-IDs pro Benutzer, gleich gespeichert wie die Favoriten-Geräte
+const TSTAR_KEY = "device_panel_timer_stars";
 // Spalten nach "Gerät" (fest vorne): Schlüssel, Text, Standard sichtbar.
 // Der Schlüssel ist zugleich der Sortierschlüssel der Spalte.
 const COLUMNS = [
@@ -258,6 +260,8 @@ const MDI = {
   lock: "M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z",
   sparkle: "M12,1L9,9L1,12L9,15L12,23L15,15L23,12L15,9L12,1Z",
   heart: "M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.42 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.42 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z",
+  star: "M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z",
+  starOutline: "M12,15.39L8.24,17.66L9.23,13.38L5.91,10.5L10.29,10.13L12,6.1L13.71,10.13L18.09,10.5L14.77,13.38L15.76,17.66M22,9.24L14.81,8.63L12,2L9.19,8.63L2,9.24L7.45,13.97L5.82,21L12,17.27L18.18,21L16.54,13.97L22,9.24Z",
   heartOutline: "M12.1,18.55L12,18.65L11.89,18.55C7.14,14.24 4,11.39 4,8.5C4,6.5 5.5,5 7.5,5C9.04,5 10.54,6 11.07,7.36H12.93C13.46,6 14.96,5 16.5,5C18.5,5 20,6.5 20,8.5C20,11.39 16.86,14.24 12.1,18.55M16.5,3C14.76,3 13.09,3.81 12,5.08C10.91,3.81 9.24,3 7.5,3C4.42,3 2,5.41 2,8.5C2,12.27 5.4,15.36 10.55,20.03L12,21.35L13.45,20.04C18.6,15.36 22,12.27 22,8.5C22,5.41 19.58,3 16.5,3Z",
   signalOff: "M18,3V16.18L21,19.18V3H18M4.28,5L3,6.27L10.73,14H8V21H11V14.27L13,16.27V21H16V19.27L19.73,23L21,21.72L4.28,5M13,9V11.18L16,14.18V9H13M3,18V21H6V18H3Z",
   timer: "M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M19.03,7.39L20.45,5.97C20,5.46 19.55,5 19.04,4.56L17.62,6C16.07,4.74 14.12,4 12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22C17,22 21,17.97 21,13C21,10.88 20.26,8.93 19.03,7.39M11,14H13V8H11M15,1H9V3H15V1Z",
@@ -859,6 +863,77 @@ class DevicePanel extends HTMLElement {
     }
   }
 
+  // --- Lieblings-Timer (seit 2.26.0) ------------------------------------------
+  // Der Stern in "Alle Timer": Timer mit Stern stehen ganz oben, ihr Gerät aufgeklappt. Gehört dem Benutzer (Benutzerdaten von HA,
+  // lokale Kopie als Rückfall, der neuere Stand gewinnt).
+  get _tmStars() {
+    return (this.__tmStars ||= new Set());
+  }
+
+  _tmStarData() {
+    return { ids: [...this._tmStars].sort(), updated: this._tmStarUpdated || 0 };
+  }
+
+  _setTmStars(raw) {
+    const ids = Array.isArray(raw?.ids) ? raw.ids.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 64) : [];
+    this.__tmStars = new Set(ids.slice(0, 2000));
+    this._tmStarUpdated = Number(raw?.updated) || 0;
+  }
+
+  async _loadTmStars() {
+    try {
+      const raw = window.localStorage.getItem(TSTAR_KEY);
+      if (raw) this._setTmStars(JSON.parse(raw));
+    } catch {
+      // ohne localStorage: leer, bis HA antwortet
+    }
+    let value = null;
+    try {
+      const result = await this._hass.callWS({ type: "frontend/get_user_data", key: TSTAR_KEY });
+      value = result ? result.value : null;
+    } catch (err) {
+      console.warn("device-panel: Lieblings-Timer von HA nicht verfügbar", err);
+      return;
+    }
+    this._tmStarLoaded = true;
+    if (value && !this._tmStarDirty && (Number(value.updated) || 0) >= (this._tmStarUpdated || 0)) {
+      this._setTmStars(value);
+      try {
+        window.localStorage.setItem(TSTAR_KEY, JSON.stringify(this._tmStarData()));
+      } catch {
+        // nur ein Rückfall
+      }
+      this._renderTmAll?.();
+      return;
+    }
+    if (this._tmStarUpdated) await this._saveTmStars();
+  }
+
+  async _saveTmStars() {
+    if (!this._hass || !this._tmStarLoaded) return;
+    try {
+      await this._hass.callWS({ type: "frontend/set_user_data", key: TSTAR_KEY, value: this._tmStarData() });
+      this._tmStarDirty = false;
+    } catch (err) {
+      console.warn("device-panel: Lieblings-Timer nicht bei HA gespeichert", err);
+    }
+  }
+
+  _toggleTmStar(id) {
+    if (!id) return;
+    if (this._tmStars.has(id)) this._tmStars.delete(id);
+    else this._tmStars.add(id);
+    this._tmStarUpdated = Date.now();
+    this._tmStarDirty = true;
+    try {
+      window.localStorage.setItem(TSTAR_KEY, JSON.stringify(this._tmStarData()));
+    } catch {
+      // nur ein Rückfall
+    }
+    window.clearTimeout(this._tmStarTimer);
+    this._tmStarTimer = window.setTimeout(() => this._saveTmStars(), VIEW_SAVE_DELAY_MS);
+  }
+
   _toggleFav(id) {
     if (!id) return;
     if (this._favs.has(id)) this._favs.delete(id);
@@ -958,6 +1033,7 @@ class DevicePanel extends HTMLElement {
       this._loadLocalFavs();
       this._loadUserView();
       this._loadUserFavs();
+      this._loadTmStars();
       this._fetch();
       this._brandReady = this._brandStart();
       this._versionDotInit();
@@ -6209,6 +6285,9 @@ class DevicePanel extends HTMLElement {
         ui.editWhenLoaded(btn.dataset.id);
       } else if (action === "timer-restart") {
         await this._tmAllToggle(btn.dataset.id, true);
+      } else if (action === "timer-star") {
+        this._toggleTmStar(btn.dataset.id);
+        this._renderTmAll();
       } else if (action === "timer-delete" || action === "timer-delete-no") {
         // Löschen mit Rückfrage (seit 2.24.1): erst die Karte mit "Löschen?", dann erst weg
         all.confirmId = action === "timer-delete" ? btn.dataset.id : null;

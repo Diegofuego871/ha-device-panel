@@ -72,6 +72,21 @@ for (const lang of ["de", "en"]) {
     await wait(`return !r.querySelector("dialog.timer-dlg").open`);
     check(`[${tag}] danach wieder das Fenster mit allen Timern`, await ev(`return r.querySelector("dialog.tmall-dlg").open && r.querySelectorAll("dialog.tmall-dlg .mg-dcard").length === 2`));
 
+    // Lieblings-Timer (2.26.0): Stern rechts von "Löschen", Gerät mit Stern zuerst und aufgeklappt, pro Benutzer gespeichert
+    const names = () => ev(`return [...r.querySelectorAll("dialog.tmall-dlg .mg-dhead .mg-t b")].map((e) => e.textContent.trim()).join("|")`);
+    const order0 = await names();
+    const lastId = await ev(`const h = [...r.querySelectorAll("dialog.tmall-dlg .mg-dcard")].at(-1); return h.querySelector('[data-tma="timer-star"]').dataset.id`);
+    check(`[${tag}] Stern: neben "Löschen" (rechts davon), nicht gesetzt`, await ev(`const c = r.querySelector('dialog.tmall-dlg .mg-acts'); const [e, d, s] = [...c.querySelectorAll(".linkbtn")].filter((x) => x.dataset.tma !== "timer-restart"); return e.dataset.tma === "timer-edit" && d.dataset.tma === "timer-delete" && s.dataset.tma === "timer-star" && !s.classList.contains("on") && s.getBoundingClientRect().left - d.getBoundingClientRect().right >= 12`));
+    check(`[${tag}] Stern: Fläche ${mobile ? "mindestens 44 px" : "klein"} und Beschriftung`, await ev(`const s = r.querySelector('dialog.tmall-dlg [data-tma="timer-star"]'); return s.getAttribute("aria-label").length > 5 && ${mobile ? "s.getBoundingClientRect().height >= 43.5" : "true"}`));
+    await tap(`dialog.tmall-dlg [data-tma="timer-star"][data-id="${lastId}"]`);
+    check(`[${tag}] Stern gesetzt: Gerät rückt nach ganz oben und ist aufgeklappt`, await wait(`const c = r.querySelector("dialog.tmall-dlg .mg-dcard"); const s = c.querySelector('[data-tma="timer-star"]'); return s.dataset.id === ${JSON.stringify(lastId)} && s.classList.contains("on") && s.getAttribute("aria-pressed") === "true" && !c.classList.contains("closed")`) && (await names()) !== order0);
+    const saved = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "frontend/set_user_data" && m.key === "device_panel_timer_stars"));
+    let st = [];
+    for (let i = 0; i < 30 && !st.length; i++) { await p.waitForTimeout(200); st = await saved(); }
+    check(`[${tag}] Stern gespeichert: Benutzerdaten mit der Timer-ID`, st.length > 0 && JSON.stringify(st.at(-1).value.ids) === JSON.stringify([lastId]), JSON.stringify(st.at(-1)));
+    await tap(`dialog.tmall-dlg [data-tma="timer-star"][data-id="${lastId}"]`);
+    check(`[${tag}] Stern entfernt: Reihenfolge wie vorher`, await wait(`return !r.querySelector('dialog.tmall-dlg [data-tma="timer-star"].on')`) && (await names()) === order0);
+
     // Löschen mit Rückfrage (2.24.1): erst Nein, dann Ja
     await tap('dialog.tmall-dlg [data-tma="timer-delete"][data-id="aaaaaaaaaaa2"]');
     check(`[${tag}] Löschen: Rückfrage in der Karte, noch nichts gelöscht`, await wait(`return !!r.querySelector('dialog.tmall-dlg [data-tma="timer-delete-yes"][data-id="aaaaaaaaaaa2"]')`) && (await calls("device_panel/timer_delete")).length === 0);
