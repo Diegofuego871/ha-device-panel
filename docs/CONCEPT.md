@@ -489,6 +489,12 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
 Herz im Geräte-Popup markiert ein Gerät als Favorit (pro Benutzer, HA-Benutzerdaten). Der Chip "Favoriten" (nur rotes Herz)
 filtert darauf; global ein-/ausblendbar und verschiebbar wie die übrigen Chips, Standard an zweiter Stelle, nicht angeheftet.
 
+## Auto-Update (seit 2.22.0, Wunsch des Nutzers)
+
+Optional, nur mit der täglichen Prüfung. Nach der Prüfung installiert die Integration eine neuere Version über HACS
+(`update.install`), auch bei geschlossenem Panel; der Neustart von Home Assistant bleibt immer Sache des Benutzers (Hinweis im
+Protokoll und unter "Reparaturen"). Von Hand gesucht und gefunden wird sofort installiert (ohne zweiten Knopfdruck).
+
 ## Timer (seit 2.21.0, Wunsch des Nutzers)
 
 Schaltet eine schaltbare Entität eines Geräts ohne Automation: einmalig (in X Minuten oder an einem Datum) oder wiederholt

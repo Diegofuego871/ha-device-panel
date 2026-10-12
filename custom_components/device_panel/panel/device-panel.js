@@ -4926,7 +4926,7 @@ class DevicePanel extends HTMLElement {
       st.draft = { ...data.values };
       this._applyPanelSettings(data.panel);
       // Vorabversionen (ganze Instanz) gelten wie alles andere erst mit "Speichern".
-      st.extraBase = { prerelease: Boolean(this._prerelease) };
+      st.extraBase = { prerelease: Boolean(this._prerelease), auto_update: Boolean(this._autoUpdate) };
       st.extra = { ...st.extraBase };
     } catch (err) {
       if (this._settings !== st) return;
@@ -5365,6 +5365,8 @@ class DevicePanel extends HTMLElement {
     if (!panel) return;
     this._prerelease = panel.prerelease === true;
     this._prereleaseHacs = panel.prerelease_hacs || null;
+    // Automatisch installieren (seit 2.22.0): wirkt nur zusammen mit der täglichen Prüfung
+    this._autoUpdate = panel.auto_update === true;
   }
 
   _settingsEntryChanges() {
@@ -5676,7 +5678,10 @@ class DevicePanel extends HTMLElement {
   }
 
   _settingsSummary(id, d) {
-    if (id === "updates") return this._t(d.update_check ? "sumUpdatesOn" : "sumUpdatesOff");
+    if (id === "updates") {
+      const auto = Boolean(this._settings?.extra ? this._settings.extra.auto_update : this._autoUpdate);
+      return this._t(d.update_check ? (auto ? "sumUpdatesAuto" : "sumUpdatesOn") : "sumUpdatesOff");
+    }
     if (id === "ai") {
       const task = (this._settings?.data?.catalog?.ai_tasks || []).find((x) => x.value === d.ai_task_entity);
       const base = d.ai_assessment ? this._t("sumAiOn", task?.name || d.ai_task_entity || "") : this._t("sumAiOff");
@@ -7033,6 +7038,14 @@ class DevicePanel extends HTMLElement {
         ${info && st.info.has(key) ? `<div class="opt-info">${escape(info)}</div>` : ""}</div>`;
     };
     const sw = (key, label) => `<label class="switch"><input type="checkbox" data-opt="${key}" ${d[key] ? "checked" : ""} aria-label="${escape(label)}"><span></span></label>`;
+    // Automatisch installieren (seit 2.22.0): Panel-Einstellung der Instanz (wie "Vorabversionen"), nur mit der täglichen Prüfung
+    const autoUpdateRow = () => {
+      const daily = Boolean(d.update_check);
+      const on = daily && Boolean(st.extra ? st.extra.auto_update : this._autoUpdate);
+      const changed = Boolean(st.extra) && st.extra.auto_update !== st.extraBase.auto_update;
+      const control = `<label class="switch"><input type="checkbox" data-auto-update ${on ? "checked" : ""} ${daily && st.extra ? "" : "disabled"} aria-label="${escape(t("optAutoUpdate"))}"><span></span></label>`;
+      return row("auto_update", t("optAutoUpdate"), control, daily ? t("optAutoUpdateShort") : t("optAutoUpdateNeedsCheck"), t("optAutoUpdateInfo")).replace('class="opt', changed ? 'class="opt changed' : 'class="opt');
+    };
     const select = (key, options, label) => `<span class="opt-select"><select data-opt="${key}" aria-label="${escape(label)}">${options
         .map(([v, text]) => `<option value="${escape(v)}"${v === d[key] ? " selected" : ""}>${escape(text)}</option>`)
         .join("")}</select>${mdi("chevronDown", 18)}</span>`;
@@ -7263,7 +7276,9 @@ class DevicePanel extends HTMLElement {
         row("timers_pause", t("optTimersPause"), sw("timers_pause", t("optTimersPause")), t("optTimersPauseShort"), null) +
         row("timers_catch_up", t("optTimersCatchUp"), num("timers_catch_up", t("minuteUnit"), t("optTimersCatchUp")), t("optTimersCatchUpShort"), null) +
         row("timers_notify_error", t("optTimersNotifyError"), sw("timers_notify_error", t("optTimersNotifyError")), t("optTimersNotifyErrorShort"), null),
-      updates: row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")),
+      updates:
+        row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
+        autoUpdateRow(),
     };
     const titles = {
       devices: "secDevices", monitor: "secMonitor", timers: "secTimers", look: "secLook", ai: "secAiSettings", updates: "secUpdates",
@@ -7667,6 +7682,8 @@ class DevicePanel extends HTMLElement {
         if (el.checked) delete own[el.dataset.imon];
         else own[el.dataset.imon] = "off";
         st.draft.offline_after_integrations = own;
+      } else if (el.dataset.autoUpdate !== undefined) {
+        if (st.extra) st.extra.auto_update = el.checked;
       } else if (el.dataset.opt) st.draft[el.dataset.opt] = el.checked;
       else if (el.dataset.list) {
         // Angezeigt = nicht in der Liste der Ausschlüsse.
@@ -7857,6 +7874,10 @@ class DevicePanel extends HTMLElement {
         // eingeschaltet hat.
         if (!this._prerelease) await this._disableHacsPrerelease();
       }
+      if (extra.includes("auto_update")) {
+        const panel = await this._hass.callWS({ type: "device_panel/set_panel", auto_update: st.extra.auto_update });
+        this._applyPanelSettings(panel);
+      }
       if (anyReset) await this._hass.callWS({ type: "device_panel/reset_device_settings", ...resets });
       // Erkennung, Batterie-Schwelle, Ausschlüsse und Anzeige ändern die Liste sofort.
       const quiet = ["update_check", "battery_push", "battery_persistent", "notify_service", "notify_click_target"];
@@ -7886,7 +7907,7 @@ class DevicePanel extends HTMLElement {
     st.data = data;
     st.draft = { ...data.values };
     if (data.panel) this._applyPanelSettings(data.panel);
-    st.extraBase = { prerelease: Boolean(this._prerelease) };
+    st.extraBase = { prerelease: Boolean(this._prerelease), auto_update: Boolean(this._autoUpdate) };
     st.extra = { ...st.extraBase };
     st.resets = { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set() };
     st.saving = false;
@@ -8115,6 +8136,17 @@ class DevicePanel extends HTMLElement {
     if (v.data && v.data.error && !v.data.latest && !v.data.prerelease) v.error = v.data.error;
     if (this._versionState().betaBlocked) await this._loadHacsSwitch();
     this._renderSettingsVersion();
+    // Automatisch installieren (seit 2.22.0): wer von Hand prüft und ein Update findet, muss nicht ein zweites Mal
+    // "Aktualisieren" drücken. Nur mit der täglichen Prüfung; der Neustart bleibt Sache des Benutzers.
+    if (force && this._autoActive()) {
+      const s = this._versionState();
+      if (s.canInstall && !s.inProgress && !v.installing && !s.restart) await this._versionAction("install");
+    }
+  }
+
+  // Automatisch installieren gilt nur, solange die tägliche Prüfung eingeschaltet ist (gespeicherter Stand).
+  _autoActive() {
+    return Boolean(this._autoUpdate) && this._settings?.data?.values?.update_check !== false;
   }
 
   // Dienst über WebSocket statt hass.callService: der zeigt bei einem

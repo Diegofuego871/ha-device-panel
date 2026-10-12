@@ -150,6 +150,10 @@
     }
   },
   "issues": {
+    "restart_required": {
+      "title": "Home Assistant neu starten, um das Device-Panel-Update abzuschliessen",
+      "description": "Version {latest} wurde automatisch installiert (läuft: {installed}). Home Assistant neu starten, damit sie gilt."
+    },
     "update_available": {
       "title": "Device Panel {latest} ist verfügbar",
       "description": "Installiert ist {installed}. Aktualisieren über HACS oder über das Zahnrad im Device Panel (Einstellungen). Die tägliche Prüfung lässt sich in den Optionen der Integration ausschalten."

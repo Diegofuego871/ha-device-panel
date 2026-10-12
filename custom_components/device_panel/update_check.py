@@ -5,8 +5,10 @@ Die installierte Version kommt aus dem Manifest der laufenden Integration,
 die neueste aus den GitHub-Releases des Repositories. Das ist der Rückfall,
 wenn HACS fehlt, und ergänzt HACS, das nur alle paar Tage prüft. Auf Wunsch
 prüft die Integration täglich selbst und meldet eine neue Version unter
-"Reparaturen". Installiert wird hier nichts: das bleibt HACS (update.install)
-vorbehalten, ausgelöst vom Panel.
+"Reparaturen". Installiert wird immer über HACS (update.install): auf Knopfdruck
+vom Panel, und seit 2.22.0 auf Wunsch automatisch nach der täglichen Prüfung
+(Panel-Einstellung auto_update; nur zusammen mit der täglichen Prüfung). Der
+Neustart von Home Assistant bleibt immer Sache des Benutzers.
 """
 
 from __future__ import annotations
@@ -20,6 +22,7 @@ from typing import Any
 
 from aiohttp import ClientError, ClientTimeout
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.event import async_call_later, async_track_time_interval
@@ -49,7 +52,10 @@ _TIMER_KEY = f"{DOMAIN}_update_timer"
 # selbst eingeschaltet hat (nur den schaltet es wieder aus).
 PANEL_DATA_KEY = f"{DOMAIN}_panel_settings"
 PANEL_STORE_KEY = f"{DOMAIN}.panel"
-PANEL_DEFAULTS: dict[str, Any] = {"prerelease": False, "prerelease_hacs": None}
+PANEL_DEFAULTS: dict[str, Any] = {"prerelease": False, "prerelease_hacs": None, "auto_update": False}
+RESTART_ISSUE_ID = "restart_required"
+# HACS braucht für Download und Entpacken etwas; danach gilt der Versuch als gescheitert.
+INSTALL_TIMEOUT = 300
 ISSUE_ID = "update_available"
 DAILY = timedelta(days=1)
 # Erste Prüfung nach dem Start zufällig verteilt, damit nicht alle
@@ -233,6 +239,86 @@ async def async_refresh_issue(hass: HomeAssistant, release: dict[str, Any] | Non
         ir.async_delete_issue(hass, DOMAIN, ISSUE_ID)
 
 
+def auto_update_active(hass: HomeAssistant) -> bool:
+    """Automatisch installieren: eingeschaltet und nur mit der täglichen Prüfung (sonst wirkungslos)."""
+    return bool(panel_settings(hass).get("auto_update")) and _enabled(hass)
+
+
+def _hacs_update_entity(hass: HomeAssistant) -> str | None:
+    """Update-Entität von HACS für dieses Repository: am Link des Releases, sonst am Titel (wie im Panel)."""
+    registry = er.async_get(hass)
+    fallback = None
+    for entry in registry.entities.values():
+        if entry.platform != "hacs" or entry.domain != "update" or entry.disabled_by is not None:
+            continue
+        state = hass.states.get(entry.entity_id)
+        if state is None:
+            continue
+        if f"/{GITHUB_REPO.lower()}/" in str(state.attributes.get("release_url") or "").lower():
+            return entry.entity_id
+        if fallback is None and str(state.attributes.get("title") or "").strip().lower() == "device panel":
+            fallback = entry.entity_id
+    return fallback
+
+
+async def async_auto_install(hass: HomeAssistant) -> bool:
+    """
+    Nach der täglichen Prüfung: ist eine neuere Version da, über HACS installieren (update.install). Nur mit
+    "auto_update" und eingeschalteter täglicher Prüfung; eine Vorabversion nur, wenn Vorabversionen angeboten werden.
+    Danach bleibt der Neustart dem Benutzer überlassen: Eintrag im Protokoll und Meldung unter "Reparaturen".
+    Liefert True, wenn installiert wurde.
+    """
+    from . import activity  # noqa: PLC0415 (activity importiert push, das seinerseits update_check kennt)
+
+    if not auto_update_active(hass):
+        return False
+    lock = hass.data.setdefault(f"{DOMAIN}_auto_update_lock", asyncio.Lock())
+    if lock.locked():
+        return False
+    async with lock:
+        entity_id = _hacs_update_entity(hass)
+        if entity_id is None:
+            return False
+        try:
+            # HACS prüft sonst nur alle paar Tage: die Entität selbst neu laden lassen
+            await hass.services.async_call("homeassistant", "update_entity", {"entity_id": entity_id}, blocking=True)
+        except Exception:  # noqa: BLE001 (nicht kritisch: dann gilt der bisherige Stand von HACS)
+            pass
+        state = hass.states.get(entity_id)
+        if state is None:
+            return False
+        attrs = state.attributes
+        latest, installed_hacs = attrs.get("latest_version"), attrs.get("installed_version")
+        running = await async_installed_version(hass)
+        if not latest or not running or compare_versions(latest, running) <= 0:
+            return False
+        # Schon heruntergeladen, wartet nur noch auf den Neustart
+        if installed_hacs and compare_versions(installed_hacs, running) > 0 and compare_versions(installed_hacs, latest) >= 0:
+            return False
+        if attrs.get("in_progress"):
+            return False
+        if is_prerelease(latest) and not panel_settings(hass).get("prerelease"):
+            return False
+        try:
+            async with asyncio.timeout(INSTALL_TIMEOUT):
+                await hass.services.async_call("update", "install", {"entity_id": entity_id}, blocking=True)
+        except Exception as err:  # noqa: BLE001 (jede Ursache gehört ins Protokoll; am nächsten Tag neuer Versuch)
+            activity.record(hass, "warning", "updates", "auto_update_failed", "Device Panel", None, version=latest, error=str(err) or type(err).__name__)
+            return False
+        activity.record(hass, "info", "updates", "auto_update_done", "Device Panel", None, version=latest)
+        ir.async_create_issue(
+            hass,
+            DOMAIN,
+            RESTART_ISSUE_ID,
+            is_fixable=False,
+            is_persistent=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key=RESTART_ISSUE_ID,
+            translation_placeholders={"latest": latest, "installed": running},
+        )
+        return True
+
+
 @callback
 def async_start_daily(hass: HomeAssistant) -> None:
     """Tägliche Prüfung starten (einmal pro Instanz)."""
@@ -242,6 +328,7 @@ def async_start_daily(hass: HomeAssistant) -> None:
 
     async def _run(_now: Any = None) -> None:
         await async_refresh_issue(hass)
+        await async_auto_install(hass)
 
     async def _first(_now: Any) -> None:
         await _run()
@@ -280,6 +367,7 @@ async def async_load_panel_settings(hass: HomeAssistant) -> dict[str, Any]:
         hass.data[PANEL_DATA_KEY] = {
             "prerelease": prerelease,
             "prerelease_hacs": str(stored["prerelease_hacs"]) if stored.get("prerelease_hacs") else None,
+            "auto_update": bool(stored.get("auto_update")),
         }
     return hass.data[PANEL_DATA_KEY]
 
@@ -293,6 +381,8 @@ async def async_set_panel_settings(hass: HomeAssistant, values: dict[str, Any]) 
     current = await async_load_panel_settings(hass)
     if "prerelease" in values:
         current["prerelease"] = bool(values["prerelease"])
+    if "auto_update" in values:
+        current["auto_update"] = bool(values["auto_update"])
     if "prerelease_hacs" in values:
         current["prerelease_hacs"] = str(values["prerelease_hacs"]) if values["prerelease_hacs"] else None
     await _panel_store(hass).async_save(dict(current))

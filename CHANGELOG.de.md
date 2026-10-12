@@ -9,7 +9,7 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.22.0] - 2026-10-12
 
-Favoriten: ein Herz auf der Geräteseite und ein Filter-Chip, der nur ein rotes Herz zeigt (Wunsch des Nutzers).
+Favoriten und automatische Updates (beides Wunsch des Nutzers): ein Herz auf der Geräteseite mit einem Filter-Chip, der nur ein rotes Herz zeigt, und eine Option, Updates automatisch zu installieren.
 
 ### Hinzugefügt
 
@@ -23,6 +23,15 @@ Favoriten: ein Herz auf der Geräteseite und ein Filter-Chip, der nur ein rotes 
   übrigen Chips lässt er sich ausblenden (Einstellungen › Darstellung › Filter-Chips; "Favoriten") und per Ziehen
   verschieben. Installationen mit gespeicherter Chip-Folge bekommen ihn gleich nach "Alle" (hinter der Anheft-Linie),
   bis sie ihn verschieben.
+- Updates automatisch installieren (Einstellungen › Panel-Version, neuer Schalter unter "Täglich nach Updates suchen").
+  Eingeschaltet installiert die Integration eine neuere Version gleich nach ihrer täglichen Prüfung über HACS (wie der
+  Knopf "Aktualisieren"), auch bei geschlossenem Panel. Das geht nur zusammen mit der täglichen Prüfung: ist sie aus,
+  ist der Schalter gesperrt und ohne Wirkung. Eine Vorabversion wird nur installiert, wenn Vorabversionen angeboten
+  werden. Home Assistant startet nie von selbst neu: Nach der Installation steht im Protokoll (Kategorie "Updates") und
+  unter Einstellungen → Reparaturen, dass ein Neustart nötig ist, und das Panel zeigt "Jetzt neu starten". Wer von Hand
+  nach Updates sucht und eine Version findet, bekommt sie sofort installiert, ohne ein zweites Mal "Aktualisieren" zu
+  drücken. Eine fehlgeschlagene Installation steht im Protokoll und wird bei der nächsten täglichen Prüfung wiederholt.
+  Ohne HACS geschieht nichts. Der Schalter ist eine Panel-Einstellung für die ganze Instanz und gilt mit "Speichern".
 
 ## [2.21.0] - 2026-10-12
 

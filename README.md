@@ -92,7 +92,7 @@ Only on a button press, with an AI task of Home Assistant. No keys, credentials 
 2. Install "Device Panel" and restart Home Assistant.
 3. Settings → Devices & services → Add integration → "Device Panel".
 
-Updates: the settings (gear icon) show the installed and the newest version and update via HACS. Pre-releases (`b` or `rc` in the number) are optional: "Show pre-releases" → "Enable in HACS".
+Updates: the settings (gear icon) show the installed and the newest version and update via HACS. Pre-releases (`b` or `rc` in the number) are optional: "Show pre-releases" → "Enable in HACS". Optionally "Install updates automatically" (needs the daily check): a found version is installed through HACS, you only restart Home Assistant yourself.
 
 ### Manual
 

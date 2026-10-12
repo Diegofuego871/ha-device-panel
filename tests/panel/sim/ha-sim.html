@@ -552,7 +552,7 @@
   // (Update-Entität, Schalter "Pre-release"), Optionen und Panel-Einstellungen.
   window.__version = { installed: "0.4.0", latest: "0.4.0" };
   window.__pre = null;
-  window.__panelSettings = { prerelease: false, prerelease_hacs: null };
+  window.__panelSettings = { prerelease: false, prerelease_hacs: null, auto_update: false };
   // Protokoll (seit 1.38.0), erfundene Einträge: at = Sekunden vor jetzt
   {
     const now = Date.now() / 1000;
@@ -698,6 +698,7 @@
       if (msg.type === "device_panel/set_panel") {
         if ("prerelease" in msg) window.__panelSettings.prerelease = msg.prerelease;
         if ("prerelease_hacs" in msg) window.__panelSettings.prerelease_hacs = msg.prerelease_hacs;
+        if ("auto_update" in msg) window.__panelSettings.auto_update = msg.auto_update;
         return { ...window.__panelSettings };
       }
       if (msg.type === "device_panel/get_options") {

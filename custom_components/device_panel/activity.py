@@ -35,6 +35,9 @@ _PY_LEVEL = {"debug": logging.DEBUG, "info": logging.INFO, "warning": logging.WA
 TEXTS: dict[str, dict[str, str]] = {
     "de": {
         "sys_start": "gestartet (Version {version})",
+        "auto_update_done": "Version {version} automatisch installiert, Home Assistant muss neu gestartet werden",
+        "auto_update_failed": "Version {version} konnte nicht automatisch installiert werden: {error}",
+        "auto_update_failed_d": "Neuer Versuch bei der nächsten täglichen Prüfung",
         "magic_fired": "ausgelöst, Meldung wird gesendet: {title}",
         "magic_repeat": "Wert bleibt so, Meldung wird wiederholt: {title}",
         "magic_recovered": "wieder normal, Meldung wird gesendet: {title}",
@@ -101,6 +104,9 @@ TEXTS: dict[str, dict[str, str]] = {
     },
     "en": {
         "sys_start": "started (version {version})",
+        "auto_update_done": "version {version} installed automatically, Home Assistant must be restarted",
+        "auto_update_failed": "version {version} could not be installed automatically: {error}",
+        "auto_update_failed_d": "trying again at the next daily check",
         "magic_fired": "triggered, sending the notification: {title}",
         "magic_repeat": "value stays the same, repeating the notification: {title}",
         "magic_recovered": "back to normal, sending the notification: {title}",

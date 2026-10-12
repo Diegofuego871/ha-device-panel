@@ -1380,9 +1380,15 @@ export const STRINGS = {
     unhideError: "Einblenden fehlgeschlagen:",
     secUpdates: "Panel-Version",
     sumUpdatesOn: "Tägliche Prüfung · neue Version unter \"Reparaturen\"",
+    sumUpdatesAuto: "Tägliche Prüfung · installiert automatisch",
     sumUpdatesOff: "Keine automatische Prüfung",
     optUpdateCheck: "Täglich nach Updates suchen",
     optUpdateCheckShort: "Meldet eine neue Version unter Einstellungen → Reparaturen.",
+    optAutoUpdate: "Updates automatisch installieren",
+    optAutoUpdateShort: "Installiert eine gefundene Version über HACS, auch bei \"Nach Updates suchen\". Home Assistant startet nicht von selbst neu.",
+    optAutoUpdateNeedsCheck: "Nur möglich mit eingeschalteter täglicher Prüfung.",
+    optAutoUpdateInfo:
+      "Nach jeder täglichen Prüfung installiert das Panel eine neuere Version selbst (über HACS, wie der Knopf \"Aktualisieren\"); eine Vorabversion nur, wenn Vorabversionen angeboten werden. Prüfst du von Hand und es gibt ein Update, wird es sofort installiert, du musst nicht ein zweites Mal drücken. Den Neustart von Home Assistant machst du weiterhin selbst: Bis dahin läuft noch die alte Version, und unter Einstellungen → Reparaturen sowie im Protokoll steht ein Hinweis. Ohne HACS oder ohne tägliche Prüfung geschieht nichts.",
     optUpdateCheckInfo:
       "Fragt einmal täglich die veröffentlichten Releases auf GitHub ab, die erste Prüfung zufällig 5–65 Minuten nach dem Start. Ergänzt HACS, das nur alle paar Tage prüft; wer die doppelte Meldung nicht möchte, schaltet es aus. Vorabversionen werden dort nie gemeldet.",
     verName: (v) => `Device Panel ${v}`,
@@ -2808,9 +2814,15 @@ export const STRINGS = {
     unhideError: "Could not show the device:",
     secUpdates: "Panel version",
     sumUpdatesOn: "Daily check · new version under \"Repairs\"",
+    sumUpdatesAuto: "Daily check · installs automatically",
     sumUpdatesOff: "No automatic check",
     optUpdateCheck: "Check for updates daily",
     optUpdateCheckShort: "Reports a new version under Settings → Repairs.",
+    optAutoUpdate: "Install updates automatically",
+    optAutoUpdateShort: "Installs a found version through HACS, also on \"Check for updates\". Home Assistant does not restart by itself.",
+    optAutoUpdateNeedsCheck: "Only possible with the daily check turned on.",
+    optAutoUpdateInfo:
+      "After each daily check the panel installs a newer version itself (through HACS, like the \"Update\" button); a pre-release only if pre-releases are offered. If you check by hand and there is an update, it is installed at once, you do not have to press a second time. You still restart Home Assistant yourself: until then the old version keeps running, and a note appears under Settings → Repairs and in the log. Nothing happens without HACS or without the daily check.",
     optUpdateCheckInfo:
       "Queries the published releases on GitHub once a day, the first check at a random time 5–65 minutes after startup. Complements HACS, which only checks every few days; turn it off if you don't want the duplicate notice. Pre-releases are never reported there.",
     verName: (v) => `Device Panel ${v}`,

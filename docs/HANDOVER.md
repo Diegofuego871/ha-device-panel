@@ -16,6 +16,19 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   Chip angepasst, `fixed-e2e` wartet jetzt auf die verschwundene Zeile (war eine Wettlauf-Prüfung). Nicht umgesetzt:
   Herz in der Geräteliste/Kachel, Sortierung nach Favoriten. Auf einem echten Gerät nicht geprüft.
 
+- Auto-Update (ebenfalls 2.22.0): Panel-Einstellung `auto_update` (Store `device_panel.panel`, `set_panel`, mit `prerelease` in
+  `st.extra` des Panels, gilt mit "Speichern"; Schalter `data-auto-update` im Abschnitt "Panel-Version" unter
+  "Täglich nach Updates suchen", gesperrt ohne tägliche Prüfung). Backend `update_check.async_auto_install(hass)`, aufgerufen
+  nach jeder täglichen Prüfung (`_run`): nur wenn `auto_update_active` (Schalter und `update_check`); HACS-Entität über
+  die Entity-Registry (`_hacs_update_entity`, Release-Link oder Titel), `homeassistant.update_entity`, dann `update.install`
+  (Timeout 300 s), wenn HACS' `latest_version` über der laufenden Version liegt, nicht schon geladen ist (`installed_version`
+  über der laufenden) und nicht läuft; Vorabversion nur mit eingeschaltetem "Vorabversionen". Danach Protokoll
+  (`auto_update_done`/`_failed`, Kategorie "updates") und Reparatur-Meldung `restart_required` (nicht persistent, verschwindet
+  mit dem Neustart). Der Neustart bleibt beim Benutzer. Im Panel installiert `_loadVersion(true)` (Knopf "Nach Updates
+  suchen") sofort, wenn `_autoActive()`; das blosse Öffnen der Einstellungen installiert nicht. Tests `test_update_check.py`
+  (sechs neue), Suite `autoupdate-e2e`. Nicht geprüft: echtes HACS (Entität, `update.install`-Dauer, Verhalten bei
+  Vorabversionen) und der Ablauf über Nacht.
+
 ## Davor (2.21.0, Timer)
 
 - 2.21.0 (Wunsch des Nutzers, Mockups `docs/mockups/timer-v1`): Timer, die eine schaltbare Entität eines Geräts einmalig

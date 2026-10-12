@@ -7,8 +7,9 @@ from typing import Any
 import pytest
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType, InvalidData
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant_custom_component.common import MockConfigEntry, async_mock_service
 
 from custom_components.device_panel import update_check
 from custom_components.device_panel.const import CONF_UPDATE_CHECK, DOMAIN, EMOJI_KEYS, NOTIFY_TOPICS
@@ -179,7 +180,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
     assert result["limits"] == {
         "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [1, 50], "notify_delay": [1, 60], "new_window": [1, 60], "updates_window": [1, 60], "charge_full": [50, 100], "charge_rise": [2, 80], "charge_stall": [5, 120], "timers_catch_up": [0, 60],
     }
-    assert set(result["panel"]) == {"prerelease", "prerelease_hacs"}
+    assert set(result["panel"]) == {"prerelease", "prerelease_hacs", "auto_update"}
 
     await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {CONF_UPDATE_CHECK: False}})
     assert (await client.receive_json())["result"] == {"changed": True}
@@ -326,9 +327,9 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
 async def test_panel_settings_persist(hass: HomeAssistant, entry, hass_ws_client, hass_storage: dict[str, Any]) -> None:
     client = await hass_ws_client(hass)
     await client.send_json({"id": 1, "type": f"{DOMAIN}/set_panel", "prerelease": True, "prerelease_hacs": "switch.device_panel_pre_release"})
-    assert (await client.receive_json())["result"] == {"prerelease": True, "prerelease_hacs": "switch.device_panel_pre_release"}
+    assert (await client.receive_json())["result"] == {"prerelease": True, "prerelease_hacs": "switch.device_panel_pre_release", "auto_update": False}
     stored = hass_storage[f"{DOMAIN}.panel"]["data"]
-    assert stored == {"prerelease": True, "prerelease_hacs": "switch.device_panel_pre_release"}
+    assert stored == {"prerelease": True, "prerelease_hacs": "switch.device_panel_pre_release", "auto_update": False}
     await client.send_json({"id": 2, "type": f"{DOMAIN}/set_panel", "prerelease_hacs": None})
     assert (await client.receive_json())["result"]["prerelease_hacs"] is None
 
@@ -537,3 +538,90 @@ async def test_options_flow_hide_chips(hass: HomeAssistant, entry) -> None:
     result = await hass.config_entries.options.async_init(entry.entry_id)
     with pytest.raises(InvalidData):
         await hass.config_entries.options.async_configure(result["flow_id"], {"hide_chips": ["alle"]})
+
+
+# -- Automatisch installieren (seit 2.22.0) --------------------------------------
+
+
+async def _hacs_entity(hass: HomeAssistant, installed: str, latest: str, **extra: Any) -> str:
+    """Update-Entität von HACS für dieses Repository (Registry-Eintrag und Zustand)."""
+    entity = er.async_get(hass).async_get_or_create("update", "hacs", "device_panel_x", suggested_object_id="device_panel_update")
+    hass.states.async_set(
+        entity.entity_id,
+        "on",
+        {"installed_version": installed, "latest_version": latest, "release_url": f"https://github.com/{update_check.GITHUB_REPO}/releases/tag/v{latest}", **extra},
+    )
+    return entity.entity_id
+
+
+async def _auto_setup(hass: HomeAssistant, entry, github_offline, auto: bool = True, prerelease: bool = False) -> list:
+    await update_check.async_set_panel_settings(hass, {"auto_update": auto, "prerelease": prerelease})
+    async_mock_service(hass, "homeassistant", "update_entity")
+    return async_mock_service(hass, "update", "install")
+
+
+async def test_auto_update_installs_and_asks_for_restart(hass: HomeAssistant, entry, github_offline) -> None:
+    installed = await update_check.async_installed_version(hass)
+    calls = await _auto_setup(hass, entry, github_offline)
+    entity = await _hacs_entity(hass, installed, "99.0.0")
+    assert await update_check.async_auto_install(hass) is True
+    assert [c.data["entity_id"] for c in calls] == [entity]
+    issue = ir.async_get(hass).async_get_issue(DOMAIN, update_check.RESTART_ISSUE_ID)
+    assert issue is not None and issue.translation_placeholders == {"latest": "99.0.0", "installed": installed}
+
+
+async def test_auto_update_needs_switch_and_daily_check(hass: HomeAssistant, entry, github_offline) -> None:
+    installed = await update_check.async_installed_version(hass)
+    calls = await _auto_setup(hass, entry, github_offline, auto=False)
+    await _hacs_entity(hass, installed, "99.0.0")
+    assert await update_check.async_auto_install(hass) is False
+    # Schalter an, aber tägliche Prüfung aus: wirkungslos
+    await update_check.async_set_panel_settings(hass, {"auto_update": True})
+    hass.config_entries.async_update_entry(entry, options={**entry.options, CONF_UPDATE_CHECK: False})
+    await hass.async_block_till_done()
+    assert update_check.auto_update_active(hass) is False
+    assert await update_check.async_auto_install(hass) is False
+    assert calls == []
+
+
+async def test_auto_update_skips_current_pending_restart_and_beta(hass: HomeAssistant, entry, github_offline) -> None:
+    installed = await update_check.async_installed_version(hass)
+    calls = await _auto_setup(hass, entry, github_offline)
+    await _hacs_entity(hass, installed, installed)  # nichts Neues
+    assert await update_check.async_auto_install(hass) is False
+    await _hacs_entity(hass, "99.0.0", "99.0.0")  # schon geladen, wartet auf den Neustart
+    assert await update_check.async_auto_install(hass) is False
+    await _hacs_entity(hass, installed, "99.1.0b1")  # Vorabversion ohne den Wunsch danach
+    assert await update_check.async_auto_install(hass) is False
+    await _hacs_entity(hass, installed, "99.0.0", in_progress=True)
+    assert await update_check.async_auto_install(hass) is False
+    assert calls == []
+    await update_check.async_set_panel_settings(hass, {"prerelease": True})
+    await _hacs_entity(hass, installed, "99.1.0b1")
+    assert await update_check.async_auto_install(hass) is True
+    assert len(calls) == 1
+
+
+async def test_auto_update_failure_is_logged_not_raised(hass: HomeAssistant, entry, github_offline) -> None:
+    from custom_components.device_panel import activity
+
+    installed = await update_check.async_installed_version(hass)
+    await update_check.async_set_panel_settings(hass, {"auto_update": True})
+    async_mock_service(hass, "homeassistant", "update_entity")
+    await _hacs_entity(hass, installed, "99.0.0")  # kein Dienst update.install registriert
+    assert await update_check.async_auto_install(hass) is False
+    assert any(e["cat"] == "updates" and "99.0.0" in e["text"] for e in activity.get(hass).entries)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, update_check.RESTART_ISSUE_ID) is None
+
+
+async def test_auto_update_without_hacs_does_nothing(hass: HomeAssistant, entry, github_offline) -> None:
+    calls = await _auto_setup(hass, entry, github_offline)
+    assert await update_check.async_auto_install(hass) is False
+    assert calls == []
+
+
+async def test_set_panel_auto_update(hass: HomeAssistant, entry, hass_ws_client, hass_storage: dict[str, Any]) -> None:
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_panel", "auto_update": True})
+    assert (await client.receive_json())["result"]["auto_update"] is True
+    assert hass_storage[f"{DOMAIN}.panel"]["data"]["auto_update"] is True

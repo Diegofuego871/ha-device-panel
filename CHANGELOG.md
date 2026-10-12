@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.22.0] - 2026-10-12
 
-Favorites: a heart on the device page and a filter chip with only a red heart (requested by the user).
+Favorites and automatic updates (both requested by the user): a heart on the device page with a filter chip showing only a red heart, and an option to install updates automatically.
 
 ### Added
 
@@ -21,6 +21,14 @@ Favorites: a heart on the device page and a filter chip with only a red heart (r
   after "All", active, and not pinned (only "All" stays pinned by default). Like the other chips it can be hidden
   (Settings › Display › Filter chips; "Favorites") and moved by dragging. Installations with a saved chip order get it
   right after "All" (behind the pin line) until they move it.
+- Install updates automatically (Settings › Panel version, new switch under "Check for updates daily"). When on, the
+  integration installs a newer version through HACS (like the "Update" button) right after its daily check, with the
+  panel closed. It only works together with the daily check: with the daily check off the switch is locked and has no
+  effect. A pre-release is installed only if pre-releases are offered. Home Assistant is never restarted by itself:
+  after the installation the log (category "Updates") and Settings → Repairs say that a restart is needed, and the panel
+  shows "Restart now". If a user checks by hand ("Check for updates") and a version is found, it is installed at once,
+  without pressing "Update" a second time. A failed installation is logged and tried again at the next daily check.
+  Nothing happens without HACS. The switch is a panel setting for the whole instance and applies with "Save".
 
 ## [2.21.0] - 2026-10-12
 
