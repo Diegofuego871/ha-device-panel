@@ -3,7 +3,14 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.22.0, Favoriten)
+## Stand (2.23.1, Auto-Update bei jeder Erkennung)
+
+- 2.23.1: `update_check.async_refresh_issue` stösst bei einer neueren Version `async_auto_install` an (Start, tägliche Prüfung, WS `version`
+  beim Öffnen der Einstellungen); `async_auto_install` lädt vorher das HACS-Repository neu (`_async_hacs_refresh`, HACS-Interna
+  `hass.data["hacs"].repositories.get_by_full_name(...).update_repository(force=True)`, bestmöglich). Panel: `_loadVersion` installiert bei
+  jeder Erkennung, pro Version und Sitzung einmal (`v.autoTried`), mit "Nach Updates suchen" erneut. Nicht geprüft: echtes HACS.
+
+## Davor (2.22.0, Favoriten)
 
 - 2.22.0 (Wunsch des Nutzers): Herz im Kopf des Geräte-Popups (`.dlg-fav`, `data-dlg="fav"`, sofort, ohne Entwurf) und Chip
   "Favoriten" (nur rotes Herz, `bare`-Eintrag in `HINTS` mit `key: "favorites"`, `.chip.hint.fv.bare`, immer sichtbar).

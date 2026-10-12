@@ -75,9 +75,9 @@ for (const lang of ["de", "en"]) {
     await setHacs({ installed_version: "0.4.0", latest_version: "0.5.0" });
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .ver-slot .ver")`);
-    // Beim blossen Öffnen wird nicht installiert (das tut die tägliche Prüfung im Hintergrund)
-    await p.waitForTimeout(600);
-    check(`[${tag}] Öffnen allein installiert nichts`, (await services()).filter((s) => s.service === "install").length === 0);
+    // Seit 2.23.0 installiert schon das Öffnen (die Erkennung), und zwar genau einmal je Version und Sitzung
+    check(`[${tag}] Öffnen erkennt 0.5.0 und installiert sofort, genau einmal`, await (async () => { for (let i = 0; i < 40; i++) { const s = (await services()).filter((x) => x.service === "install"); if (s.length) { await p.waitForTimeout(500); const n = (await services()).filter((x) => x.service === "install"); return n.length === 1 && n[0].data.entity_id === HACS_ID; } await p.waitForTimeout(100); } return false; })(), JSON.stringify(await services()));
+    await p.evaluate(() => { window.__services = []; });
     await tap('[data-ver="check"]');
     check(`[${tag}] "Nach Updates suchen" findet 0.5.0 und installiert sofort`, await (async () => { for (let i = 0; i < 40; i++) { const s = (await services()).filter((x) => x.service === "install"); if (s.length) return s.length === 1 && s[0].domain === "update" && s[0].data.entity_id === HACS_ID; await p.waitForTimeout(100); } return false; })(), JSON.stringify(await services()));
     // HACS hat geladen: Neustart bleibt Sache des Benutzers
@@ -86,7 +86,7 @@ for (const lang of ["de", "en"]) {
     const t = await verText();
     check(`[${tag}] danach: "${T.restart}", Neustart-Knopf, kein automatischer Neustart`, t.includes(T.restart) && await ev(`return !!r.querySelector('[data-ver="restart"]')`) && !(await services()).some((s) => s.service === "restart"), t);
 
-    // Auto aus: von Hand suchen installiert nicht
+    // Auto aus: weder Öffnen noch Suchen installiert
     await p.evaluate(() => { window.__panelSettings.auto_update = false; window.__services = []; window.__version = { installed: "0.4.0", latest: "0.6.0" }; });
     await setHacs({ installed_version: "0.4.0", latest_version: "0.6.0" });
     await ev(`r.host._applyPanelSettings({ prerelease: false, auto_update: false })`);

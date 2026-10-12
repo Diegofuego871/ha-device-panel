@@ -625,3 +625,38 @@ async def test_set_panel_auto_update(hass: HomeAssistant, entry, hass_ws_client,
     await client.send_json({"id": 1, "type": f"{DOMAIN}/set_panel", "auto_update": True})
     assert (await client.receive_json())["result"]["auto_update"] is True
     assert hass_storage[f"{DOMAIN}.panel"]["data"]["auto_update"] is True
+
+
+async def test_auto_update_starts_as_soon_as_a_check_finds_a_version(hass: HomeAssistant, entry, github_offline) -> None:
+    """Seit 2.23.0: jede Prüfung, die eine neuere Version findet, stösst die Installation an (nicht nur der tägliche Lauf)."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    installed = await update_check.async_installed_version(hass)
+    calls = await _auto_setup(hass, entry, github_offline)
+    github_offline[LATEST] = (_release("v99.0.0"), None)
+    # HACS kennt die Version erst nach dem Neuladen des Repositories (hier: das Neuladen setzt sie)
+    entity = await _hacs_entity(hass, installed, installed)
+    repo = MagicMock()
+
+    async def refresh(**_kwargs: Any) -> None:
+        await _hacs_entity(hass, installed, "99.0.0")
+
+    repo.update_repository = AsyncMock(side_effect=refresh)
+    hacs = MagicMock()
+    hacs.repositories.get_by_full_name.return_value = repo
+    hass.data["hacs"] = hacs
+    await update_check.async_refresh_issue(hass)
+    await hass.async_block_till_done()
+    repo.update_repository.assert_awaited()
+    assert [c.data["entity_id"] for c in calls] == [entity]
+    assert ir.async_get(hass).async_get_issue(DOMAIN, update_check.RESTART_ISSUE_ID) is not None
+
+
+async def test_no_install_trigger_when_auto_update_is_off(hass: HomeAssistant, entry, github_offline) -> None:
+    installed = await update_check.async_installed_version(hass)
+    calls = await _auto_setup(hass, entry, github_offline, auto=False)
+    github_offline[LATEST] = (_release("v99.0.0"), None)
+    await _hacs_entity(hass, installed, "99.0.0")
+    await update_check.async_refresh_issue(hass)
+    await hass.async_block_till_done()
+    assert calls == []

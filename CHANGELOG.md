@@ -7,6 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.23.1] - 2026-10-12
+
+Automatic updates install as soon as a version is found.
+
+### Fixed
+
+- "Install updates automatically" now starts the installation as soon as any check finds a newer version, as intended. Before,
+  it only ran after the daily check and, in the panel, only on "Check for updates", so opening the settings showed
+  "Version available" without installing. Now every detection triggers it: the check after the start of Home Assistant,
+  the daily check, opening the settings and "Check for updates". In the panel this is tried once per version and session
+  (a failed attempt is not repeated in a loop; "Check for updates" tries again).
+- Before the installation the integration asks HACS to reload the versions of this repository (as the panel does). HACS
+  itself only checks every few hours and often did not know a fresh release yet, so the installation did not start.
+  This uses internals of HACS on a best-effort basis; without them it falls back to refreshing the update entity. If HACS
+  does not know the new version yet, this is noted in the log (debug mode) and tried again at the next check.
+- Home Assistant is still never restarted by itself.
+
 ## [2.23.0] - 2026-10-12
 
 A window with all timers, one symbol for timers everywhere, and a better Favorites chip on the phone.
@@ -2774,6 +2791,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.23.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.1
 [2.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.0
 [2.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.22.0
 [2.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.21.0

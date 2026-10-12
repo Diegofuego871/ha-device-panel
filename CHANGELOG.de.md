@@ -7,6 +7,24 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.23.1] - 2026-10-12
+
+Automatische Updates installieren, sobald eine Version gefunden wird.
+
+### Behoben
+
+- "Updates automatisch installieren" startet die Installation jetzt, sobald irgendeine Prüfung eine neuere Version findet,
+  wie gedacht. Vorher lief es nur nach der täglichen Prüfung und im Panel nur bei "Nach Updates suchen"; beim Öffnen der
+  Einstellungen stand "Version verfügbar", ohne dass installiert wurde. Jetzt löst jede Erkennung es aus: die Prüfung nach
+  dem Start von Home Assistant, die tägliche Prüfung, das Öffnen der Einstellungen und "Nach Updates suchen". Im Panel gibt
+  es pro Version und Sitzung einen Versuch (ein Fehlschlag wird nicht in einer Schleife wiederholt; "Nach Updates suchen"
+  versucht es erneut).
+- Vor der Installation lässt die Integration HACS die Versionen dieses Repositories neu laden (wie das Panel). HACS selbst
+  prüft nur alle paar Stunden und kannte ein frisches Release oft noch nicht, darum startete die Installation nicht.
+  Das nutzt HACS-Interna bestmöglich; ohne sie bleibt es beim Aktualisieren der Update-Entität. Kennt HACS die neue
+  Version noch nicht, steht das im Protokoll (Debug-Modus) und es wird bei der nächsten Prüfung erneut versucht.
+- Home Assistant startet weiterhin nie von selbst neu.
+
 ## [2.23.0] - 2026-10-12
 
 Ein Fenster mit allen Timern, überall dasselbe Symbol für Timer und ein besserer Favoriten-Chip auf dem Handy.
@@ -2873,6 +2891,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.23.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.1
 [2.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.0
 [2.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.22.0
 [2.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.21.0

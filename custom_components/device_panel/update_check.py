@@ -14,6 +14,7 @@ Neustart von Home Assistant bleibt immer Sache des Benutzers.
 from __future__ import annotations
 
 import asyncio
+import logging
 import random
 import re
 import time
@@ -44,6 +45,7 @@ ERROR_RETRY_SECONDS = 300
 TIMEOUT = ClientTimeout(total=10)
 RATE_LIMIT = "rate_limit"
 
+_LOGGER = logging.getLogger(__name__)
 _CACHE_KEY = f"{DOMAIN}_latest_release"
 _PRE_CACHE_KEY = f"{DOMAIN}_latest_prerelease"
 _TIMER_KEY = f"{DOMAIN}_update_timer"
@@ -224,6 +226,10 @@ async def async_refresh_issue(hass: HomeAssistant, release: dict[str, Any] | Non
     if not installed or not latest:
         return
     if compare_versions(latest, installed) > 0:
+        # Automatisch installieren (seit 2.23.0): sobald irgendeine Prüfung eine neuere Version findet (Start, tägliche Prüfung,
+        # Öffnen der Einstellungen), nicht erst nach einem eigenen Lauf. Läuft im Hintergrund, die Prüfung wartet nicht darauf.
+        if auto_update_active(hass):
+            hass.async_create_task(async_auto_install(hass), f"{DOMAIN}_auto_install")
         ir.async_create_issue(
             hass,
             DOMAIN,
@@ -261,9 +267,24 @@ def _hacs_update_entity(hass: HomeAssistant) -> str | None:
     return fallback
 
 
+async def _async_hacs_refresh(hass: HomeAssistant) -> None:
+    """
+    HACS die Versionen des Repositories neu laden lassen (wie "Informationen aktualisieren" im Panel). HACS prüft sonst nur alle
+    paar Stunden, und die Update-Entität kennt eine eben erschienene Version dann noch nicht. Bestmöglich: ohne diese
+    HACS-Interna (andere Version, kein HACS) bleibt es beim Aktualisieren der Entität.
+    """
+    try:
+        hacs = hass.data.get("hacs")
+        repo = hacs.repositories.get_by_full_name(GITHUB_REPO.lower()) if hacs is not None else None
+        if repo is not None:
+            await repo.update_repository(ignore_issues=True, force=True)
+    except Exception:  # noqa: BLE001 (nicht kritisch)
+        _LOGGER.debug("HACS-Repository konnte nicht aktualisiert werden", exc_info=True)
+
+
 async def async_auto_install(hass: HomeAssistant) -> bool:
     """
-    Nach der täglichen Prüfung: ist eine neuere Version da, über HACS installieren (update.install). Nur mit
+    Sobald eine Prüfung eine neuere Version findet (Start, tägliche Prüfung, Öffnen der Einstellungen): ist sie da, über HACS installieren (update.install). Nur mit
     "auto_update" und eingeschalteter täglicher Prüfung; eine Vorabversion nur, wenn Vorabversionen angeboten werden.
     Danach bleibt der Neustart dem Benutzer überlassen: Eintrag im Protokoll und Meldung unter "Reparaturen".
     Liefert True, wenn installiert wurde.
@@ -279,8 +300,9 @@ async def async_auto_install(hass: HomeAssistant) -> bool:
         entity_id = _hacs_update_entity(hass)
         if entity_id is None:
             return False
+        await _async_hacs_refresh(hass)
         try:
-            # HACS prüft sonst nur alle paar Tage: die Entität selbst neu laden lassen
+            # Danach die Entität selbst neu laden lassen
             await hass.services.async_call("homeassistant", "update_entity", {"entity_id": entity_id}, blocking=True)
         except Exception:  # noqa: BLE001 (nicht kritisch: dann gilt der bisherige Stand von HACS)
             pass
@@ -291,6 +313,8 @@ async def async_auto_install(hass: HomeAssistant) -> bool:
         latest, installed_hacs = attrs.get("latest_version"), attrs.get("installed_version")
         running = await async_installed_version(hass)
         if not latest or not running or compare_versions(latest, running) <= 0:
+            # GitHub kennt eine neuere Version, HACS noch nicht: im nächsten Durchgang wieder (Debug-Protokoll)
+            activity.record(hass, "debug", "updates", "auto_update_wait", "Device Panel", None, hacs=latest or "?", running=running or "?")
             return False
         # Schon heruntergeladen, wartet nur noch auf den Neustart
         if installed_hacs and compare_versions(installed_hacs, running) > 0 and compare_versions(installed_hacs, latest) >= 0:
@@ -328,7 +352,6 @@ def async_start_daily(hass: HomeAssistant) -> None:
 
     async def _run(_now: Any = None) -> None:
         await async_refresh_issue(hass)
-        await async_auto_install(hass)
 
     async def _first(_now: Any) -> None:
         await _run()

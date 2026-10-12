@@ -8296,11 +8296,15 @@ class DevicePanel extends HTMLElement {
     if (v.data && v.data.error && !v.data.latest && !v.data.prerelease) v.error = v.data.error;
     if (this._versionState().betaBlocked) await this._loadHacsSwitch();
     this._renderSettingsVersion();
-    // Automatisch installieren (seit 2.22.0): wer von Hand prüft und ein Update findet, muss nicht ein zweites Mal
-    // "Aktualisieren" drücken. Nur mit der täglichen Prüfung; der Neustart bleibt Sache des Benutzers.
-    if (force && this._autoActive()) {
+    // Automatisch installieren (seit 2.22.0, ab 2.23.0 bei jeder Erkennung): sobald eine neuere Version gefunden wird (Öffnen der
+    // Einstellungen oder "Nach Updates suchen"), wird sie installiert, ohne "Aktualisieren". Nur mit der täglichen Prüfung; der
+    // Neustart bleibt Sache des Benutzers. Ohne Knopfdruck pro Version nur ein Versuch je Sitzung (kein Dauerlauf bei Fehlern).
+    if (this._autoActive()) {
       const s = this._versionState();
-      if (s.canInstall && !s.inProgress && !v.installing && !s.restart) await this._versionAction("install");
+      if (s.canInstall && !s.inProgress && !v.installing && !s.restart && (force || v.autoTried !== s.latest)) {
+        v.autoTried = s.latest;
+        await this._versionAction("install");
+      }
     }
   }
 
