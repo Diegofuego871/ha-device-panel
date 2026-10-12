@@ -381,6 +381,7 @@ HA-Nachbau prüfen.
 
 ## Magic Push: ein Pfeil zum Auf- und Zuklappen (seit 2.17.1)
 
+- Zeile "Schritt n von 5 · Angabe" über den Balken hat eine feste Höhe (18 px, `.mg-stephead`), damit ein Emoji (iPhone: höher als der Text) die Balken nicht verschiebt; lange Angaben werden mit "…" gekürzt (seit 2.17.2).
 - Schrittbalken im Kopf des Assistenten: 6 px dick (`.mg-stp`), Tippfläche 34 px hoch (`::after` mit `inset: -14px 0`).
 
 - Überall gleich: `chevHtml(open)` in `magic-push.js` (mdi chevronDown 24, Klasse `.mg-lchev`, 40 px Fläche, offen um 180°

@@ -1354,8 +1354,10 @@ a.dlg-btn { display: inline-flex; align-items: center; justify-content: center; 
 .mg-btns { display: flex; gap: 8px; margin-top: 14px; }
 .mg-btns.small { margin-top: 8px; }
 .mg-btns.small .dlg-btn { height: 36px; }
-.mg-stephead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--dp-text2); font-size: 12px; }
-.mg-stephead span:last-child { text-align: right; overflow-wrap: anywhere; }
+/* Feste Höhe: ein Emoji in der Angabe rechts macht die Zeile sonst höher, und die Balken darunter rutschen von Schritt zu Schritt */
+.mg-stephead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; height: 18px; line-height: 18px; overflow: hidden; color: var(--dp-text2); font-size: 12px; }
+.mg-stephead span { white-space: nowrap; }
+.mg-stephead span:last-child { min-width: 0; text-align: right; overflow: hidden; text-overflow: ellipsis; }
 .mg-steps { display: flex; align-items: center; gap: 6px; margin: 6px 0 12px; }
 .mg-stp { position: relative; flex: 1; height: 6px; padding: 0; border: 0; border-radius: 3px; background: var(--dp-bar-off); }
 .mg-stp.on { background: var(--dp-primary); }

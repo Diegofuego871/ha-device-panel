@@ -7,6 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.17.2] - 2026-10-12
+
+Magic Push: die Schrittbalken des Assistenten stehen immer gleich hoch.
+
+### Behoben
+
+- Die Schrittbalken oben im Assistenten springen nicht mehr von Schritt zu Schritt (vom Nutzer gemeldet): Ein Symbol in
+  der Zeile darüber (zum Beispiel das Thermometer ab Schritt 2) machte diese Zeile auf dem Handy höher, sodass die Balken
+  einige Pixel tiefer standen als in Schritt 1. Die Zeile hat jetzt eine feste Höhe, und ein langer Name der Entität wird
+  mit "..." gekürzt statt umgebrochen.
+
 ## [2.17.1] - 2026-10-12
 
 Magic Push: robuster bei Absturz und Neustart von Home Assistant.
@@ -2687,6 +2698,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.17.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.2
 [2.17.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.1
 [2.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.0
 [2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0

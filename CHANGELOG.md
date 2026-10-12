@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.17.2] - 2026-10-12
+
+Magic Push: the step bars of the assistant stay at the same height.
+
+### Fixed
+
+- The step bars at the top of the assistant no longer jump from step to step (reported by the user): a symbol in the line
+  above them (for example the thermometer from step 2 on) made that line taller on the phone, so the bars sat a few pixels
+  lower than in step 1. The line now has a fixed height, and a long entity name is shortened with "..." instead of
+  wrapping.
+
 ## [2.17.1] - 2026-10-12
 
 Magic Push: more robust across crashes and restarts of Home Assistant.
@@ -2600,6 +2611,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.17.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.2
 [2.17.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.1
 [2.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.0
 [2.15.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.15.0

@@ -290,10 +290,18 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Bearbeiten: Schrittleiste antippbar, Bedingung "Temperatur" offen`, (await ev(`return r.querySelectorAll('${W} button.mg-stp').length`)) === 5 && (await text(`${W} .mg-lcard.open .mg-t b`)) === "Temperatur");
     check(`[${tag}] Bearbeiten: eigener Rücksetzwert 14 ist da`, await wait(`return r.querySelector('${W} [data-mg="reset-mode"][data-own="1"]')?.classList.contains("on") && r.querySelector('${W} input[data-mg="reset-value"]').value === "14"`));
     check(`[${tag}] Schrittleiste: Balken 6 px dick, Tippfläche 34 px hoch`, await ev(`const b=r.querySelector('${W} button.mg-stp'); const a=getComputedStyle(b, '::after'); return Math.round(b.getBoundingClientRect().height) === 6 && parseFloat(a.top) === -14 && parseFloat(a.bottom) === -14`));
+    const barTop = () => ev(`const b=r.querySelector('${W} .mg-steps').getBoundingClientRect(); const h=r.querySelector('${W} .mgw-t').getBoundingClientRect(); return Math.round((b.top - h.top) * 10) / 10`);
+    const bar1 = await barTop();
     await tap('button.mg-stp[data-step="2"]');
+    check(`[${tag}] Schrittbalken stehen in Schritt 2 gleich hoch wie in Schritt 1 (trotz Emoji)`, (await barTop()) === bar1, `${bar1} / ${await barTop()}`);
+    // Ein Emoji kann je nach Schrift höher sein als der Text (iPhone): eine grosse Schrift in der Angabe darf die Balken nicht verschieben
+    await ev(`const s=r.querySelector('${W} .mg-stephead span:last-child'); s.style.fontSize="34px"; s.style.lineHeight="normal"`);
+    check(`[${tag}] Schrittbalken bleiben stehen, auch wenn die Angabe über der Leiste höher wird`, (await barTop()) === bar1, `${bar1} / ${await barTop()}`);
+    await ev(`const s=r.querySelector('${W} .mg-stephead span:last-child'); s.style.fontSize=""; s.style.lineHeight=""`);
     check(`[${tag}] Bearbeiten: Schritt 2 hat die Dauer 45 Min. und "Zurücksetzen nach" 5 Min.`, await wait(`return r.querySelector('${W} input[data-mg="for-own"]').value === "45" && r.querySelector('${W} [data-mg="rfor"].on')?.dataset.s === "300"`));
     await tap('button.mg-stp[data-step="5"]');
     await headingOk(T.q5);
+    check(`[${tag}] Schrittbalken in Schritt 5 gleich hoch`, (await barTop()) === bar1, `${bar1} / ${await barTop()}`);
     check(`[${tag}] Sprung zu Schritt 5: Name, Text und Empfänger übernommen`, (await ev(`return r.querySelector('${W} input[data-mg="name"]').value`)) === "Kellertemperatur");
     await tap('button.mg-stp[data-step="3"]');
     check(`[${tag}] Schritt 3 übernimmt Gruppe, Wiederholung und kritische Mitteilung`, (await text(`${W} .mg-sel`)).includes("notify.familie") && (await ev(`return r.querySelector('${W} input[data-mg="repeat-own"]').value`)) === "3" && (await ev(`return r.querySelector('${W} input[data-mg="critical"]').checked && r.querySelector('${W} input[data-mg="volume"]').value === "7"`)));
