@@ -1145,7 +1145,7 @@ class DevicePanel extends HTMLElement {
         <label class="searchbox">${mdi("search", 20)}<input class="search" type="search" placeholder="${escape(this._t("search"))}" aria-label="${escape(this._t("search"))}">
           <button type="button" class="search-clear" title="${escape(this._t("searchClear"))}" aria-label="${escape(this._t("searchClear"))}" hidden>${mdi("close", 18)}</button></label>
         <button type="button" class="view-btn" aria-expanded="false" title="${escape(this._t("viewBtn"))}" aria-label="${escape(this._t("viewBtn"))}">${mdi("cols", 20)}<span>${escape(this._t("viewBtn"))}</span></button>
-        <button type="button" class="tmall-btn" title="${escape(this._t("tmAllBtn"))}" aria-label="${escape(this._t("tmAllBtn"))}">${mdi("bell", 22)}</button>
+        <button type="button" class="tmall-btn" title="${escape(this._t("tmAllBtn"))}" aria-label="${escape(this._t("tmAllBtn"))}">${mdi("timer", 22)}</button>
         <button type="button" class="log-btn" title="${escape(this._t("logBtn"))}" aria-label="${escape(this._t("logBtn"))}">${mdi("log", 22)}</button>
         <button type="button" class="gear-btn" title="${escape(this._t("settingsBtn"))}" aria-label="${escape(this._t("settingsBtn"))}">${mdi("gear", 22)}</button>
       </div>
@@ -6136,7 +6136,7 @@ class DevicePanel extends HTMLElement {
   _renderTmAllFrame() {
     const dlg = this.shadowRoot.querySelector("dialog.tmall-dlg");
     const t = (k, ...a) => this._t(k, ...a);
-    dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("bell", 28)}</span>
+    dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("timer", 28)}</span>
         <div class="dlg-title"><h2>${escape(t("tmAllTitle"))}</h2><div class="dlg-sub">${escape(t("tmAllSub"))}</div></div>
         <button type="button" class="dlg-close" data-tma-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body"><div class="tm-all-wrap" data-tma-body></div></div>`;

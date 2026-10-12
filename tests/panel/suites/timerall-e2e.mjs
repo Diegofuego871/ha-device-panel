@@ -1,4 +1,4 @@
-// Fenster "Alle Timer" (2.22.0, Wunsch des Nutzers): Glocke in der Kopfzeile, Vollbild, alle Timer aller Geräte nach Gerät,
+// Fenster "Alle Timer" (2.22.0, Wunsch des Nutzers): Stoppuhr in der Kopfzeile, Vollbild, alle Timer aller Geräte nach Gerät,
 // bearbeiten sowie ein-/ausschalten, aber nichts Neues anlegen (und weder löschen noch ausführen). Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
@@ -34,7 +34,7 @@ for (const lang of ["de", "en"]) {
     // zwei Timer an zwei Geräten (einer aus)
     await p.evaluate(([a, c]) => { (window.__timers ||= { list: [], seq: 1, runs: [], tests: [] }).list.push(a, c); }, [SEED("aaaaaaaaaaa1", "d", "Bewässerung", true), SEED("aaaaaaaaaaa2", "a", "Nachtlicht", false)]);
 
-    check(`[${tag}] Glocke in der Kopfzeile mit Beschriftung "${T.btn}"`, await ev(`const b = r.querySelector(".toolbar .tmall-btn"); return !!b && b.getAttribute("aria-label") === ${JSON.stringify(T.btn)} && !!b.querySelector("svg")`));
+    check(`[${tag}] Stoppuhr in der Kopfzeile mit Beschriftung "${T.btn}"`, await ev(`const b = r.querySelector(".toolbar .tmall-btn"); return !!b && b.getAttribute("aria-label") === ${JSON.stringify(T.btn)} && !!b.querySelector("svg")`));
     await tap(".tmall-btn");
     check(`[${tag}] Fenster offen, Titel "${T.title}" · "${T.sub}"`, await wait(`const d = r.querySelector("dialog.tmall-dlg"); return d?.open && d.querySelector("h2").textContent === ${JSON.stringify(T.title)} && d.querySelector(".dlg-sub").textContent === ${JSON.stringify(T.sub)}`));
     check(`[${tag}] Vollbild (auch auf dem Desktop)`, await ev(`const d = r.querySelector("dialog.tmall-dlg").getBoundingClientRect(); return Math.abs(d.width - window.innerWidth) <= 1 && Math.abs(d.height - window.innerHeight) <= 1`));

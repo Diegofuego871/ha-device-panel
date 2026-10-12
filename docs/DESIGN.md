@@ -442,7 +442,7 @@ HA-Nachbau prüfen.
 
 ## Fenster "Alle Timer" (seit 2.22.0)
 
-- Glocke (42 px rund wie Protokoll und Zahnrad) in der Kopfzeile; öffnet ein Vollbild-Fenster (auch auf dem Desktop) mit der Übersicht
+- Stoppuhr (42 px rund wie Protokoll und Zahnrad; Timer haben überall dieses Symbol, die Glocke gehört Magic Push) in der Kopfzeile; öffnet ein Vollbild-Fenster (auch auf dem Desktop) mit der Übersicht
   der Einstellungen (Suche, Filter, Karten pro Gerät mit Gerätename), nur Bearbeiten und Ein/Aus.
 
 ## Magic Push: Rückfrage beim Schliessen (seit 2.16.0)
