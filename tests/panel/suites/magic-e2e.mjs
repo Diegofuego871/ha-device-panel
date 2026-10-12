@@ -289,6 +289,7 @@ for (const lang of ["de", "en"]) {
     await headingOk(T.q1b);
     check(`[${tag}] Bearbeiten: Schrittleiste antippbar, Bedingung "Temperatur" offen`, (await ev(`return r.querySelectorAll('${W} button.mg-stp').length`)) === 5 && (await text(`${W} .mg-lcard.open .mg-t b`)) === "Temperatur");
     check(`[${tag}] Bearbeiten: eigener Rücksetzwert 14 ist da`, await wait(`return r.querySelector('${W} [data-mg="reset-mode"][data-own="1"]')?.classList.contains("on") && r.querySelector('${W} input[data-mg="reset-value"]').value === "14"`));
+    check(`[${tag}] Schrittleiste: Balken 6 px dick, Tippfläche 34 px hoch`, await ev(`const b=r.querySelector('${W} button.mg-stp'); const a=getComputedStyle(b, '::after'); return Math.round(b.getBoundingClientRect().height) === 6 && parseFloat(a.top) === -14 && parseFloat(a.bottom) === -14`));
     await tap('button.mg-stp[data-step="2"]');
     check(`[${tag}] Bearbeiten: Schritt 2 hat die Dauer 45 Min. und "Zurücksetzen nach" 5 Min.`, await wait(`return r.querySelector('${W} input[data-mg="for-own"]').value === "45" && r.querySelector('${W} [data-mg="rfor"].on')?.dataset.s === "300"`));
     await tap('button.mg-stp[data-step="5"]');

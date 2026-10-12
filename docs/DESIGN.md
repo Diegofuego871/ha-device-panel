@@ -381,6 +381,8 @@ HA-Nachbau prüfen.
 
 ## Magic Push: ein Pfeil zum Auf- und Zuklappen (seit 2.17.1)
 
+- Schrittbalken im Kopf des Assistenten: 6 px dick (`.mg-stp`), Tippfläche 34 px hoch (`::after` mit `inset: -14px 0`).
+
 - Überall gleich: `chevHtml(open)` in `magic-push.js` (mdi chevronDown 24, Klasse `.mg-lchev`, 40 px Fläche, offen um 180°
   gedreht): Bedingungs-Karten, Empfänger-Auswahl, "Freie Entität", Geräte-Karten der Übersicht. Keine Text-Dreiecke
   (▾ ▴ ▸) mehr.

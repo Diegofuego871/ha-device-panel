@@ -24,6 +24,8 @@ Magic Push: robuster bei Absturz und Neustart von Home Assistant.
 
 ### Geändert
 
+- Die Schrittbalken oben im Assistenten sind etwas dicker (6 statt 4 px) und haben eine grössere Tippfläche (34 statt
+  24 px), damit sie besser zu treffen und deutlicher zu sehen sind (Wunsch des Nutzers).
 - Der Pfeil zum Auf- und Zuklappen ist in Magic Push jetzt überall derselbe (Wunsch des Nutzers): bei den Bedingungs-
   Karten, bei der Auswahl des Empfängers in Schritt 3, bei "Freie Entität wählen" und bei den Geräte-Karten in den
   Einstellungen. Vorher hatten Schritt 3 und die Übersicht ein kleines Text-Dreieck in anderer Grösse, das beim Öffnen

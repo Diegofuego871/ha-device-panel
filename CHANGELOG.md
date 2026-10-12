@@ -23,6 +23,8 @@ Magic Push: more robust across crashes and restarts of Home Assistant.
 
 ### Changed
 
+- The step bars at the top of the assistant are slightly thicker (6 instead of 4 px) and have a larger tap area (34 instead
+  of 24 px), so they are easier to hit and easier to see (requested by the user).
 - The arrow to fold and unfold is now the same everywhere in Magic Push (requested by the user): on the condition
   cards, on the recipient selection in step 3, on "Choose a free entity" and on the device cards in the settings. Before,
   step 3 and the overview used a small text triangle of a different size, which also changed size when opened. Now it is

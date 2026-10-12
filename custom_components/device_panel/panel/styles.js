@@ -1357,10 +1357,10 @@ a.dlg-btn { display: inline-flex; align-items: center; justify-content: center; 
 .mg-stephead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; color: var(--dp-text2); font-size: 12px; }
 .mg-stephead span:last-child { text-align: right; overflow-wrap: anywhere; }
 .mg-steps { display: flex; align-items: center; gap: 6px; margin: 6px 0 12px; }
-.mg-stp { position: relative; flex: 1; height: 4px; padding: 0; border: 0; border-radius: 2px; background: var(--dp-bar-off); }
+.mg-stp { position: relative; flex: 1; height: 6px; padding: 0; border: 0; border-radius: 3px; background: var(--dp-bar-off); }
 .mg-stp.on { background: var(--dp-primary); }
 button.mg-stp { cursor: pointer; }
-button.mg-stp::after { content: ""; position: absolute; inset: -10px 0; }
+button.mg-stp::after { content: ""; position: absolute; inset: -14px 0; }
 .mg-big { margin: 4px 0 8px; font-size: 20px; font-weight: 600; line-height: 1.25; }
 .mg-k { margin: 12px 0 4px; color: var(--dp-text2); font-size: 12px; }
 .mg-k.first { margin-top: 0; }
