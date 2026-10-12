@@ -7,6 +7,25 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.23.0] - 2026-10-12
+
+Ein Fenster mit allen Timern, überall dasselbe Symbol für Timer und ein besserer Favoriten-Chip auf dem Handy.
+
+### Hinzugefügt
+
+- Neuer Stoppuhr-Knopf (⏱️, dasselbe Symbol wie der Reiter "Timer") in der Kopfzeile der Geräteliste, neben Protokoll und Zahnrad. Er öffnet ein Vollbild-Fenster mit
+  allen Timern aller Geräte, nach Gerät gruppiert, damit klar ist, zu welchem Gerät jeder gehört (Suche, Filter Alle,
+  Aktiv, Aus, Läuft, alle einklappen, "Gerät öffnen"). Dort lässt sich ein Timer bearbeiten (der Assistent öffnet
+  darüber) und ein- oder ausschalten. Neue Timer legst du dort nicht an (das bleibt im Reiter "Timer" eines Geräts),
+  und löschen oder ausführen geht dort auch nicht.
+
+### Geändert
+
+- Timer haben überall dasselbe Symbol: die Stoppuhr (⏱️), auch auf dem neuen Knopf in der Kopfzeile und im Fenster mit allen Timern.
+- Der Chip "Favoriten" ist etwas breiter (42 px) und schrumpft in der scrollenden Chip-Leiste auf dem Handy nicht mehr
+  (er wurde auf etwa 18 px gestaucht), damit das Herz nicht eingequetscht wirkt. Das Herz im Geräte-Popup sitzt etwas
+  weiter vom Kreuz entfernt.
+
 ## [2.22.0] - 2026-10-12
 
 Favoriten und automatische Updates (beides Wunsch des Nutzers): ein Herz auf der Geräteseite mit einem Filter-Chip, der nur ein rotes Herz zeigt, und eine Option, Updates automatisch zu installieren.
@@ -32,11 +51,6 @@ Favoriten und automatische Updates (beides Wunsch des Nutzers): ein Herz auf der
   nach Updates sucht und eine Version findet, bekommt sie sofort installiert, ohne ein zweites Mal "Aktualisieren" zu
   drücken. Eine fehlgeschlagene Installation steht im Protokoll und wird bei der nächsten täglichen Prüfung wiederholt.
   Ohne HACS geschieht nichts. Der Schalter ist eine Panel-Einstellung für die ganze Instanz und gilt mit "Speichern".
-- Neuer Stoppuhr-Knopf (⏱️, dasselbe Symbol wie der Reiter "Timer") in der Kopfzeile der Geräteliste, neben Protokoll und Zahnrad. Er öffnet ein Vollbild-Fenster mit
-  allen Timern aller Geräte, nach Gerät gruppiert, damit klar ist, zu welchem Gerät jeder gehört (Suche, Filter Alle,
-  Aktiv, Aus, Läuft, alle einklappen, "Gerät öffnen"). Dort lässt sich ein Timer bearbeiten (der Assistent öffnet
-  darüber) und ein- oder ausschalten. Neue Timer legst du dort nicht an (das bleibt im Reiter "Timer" eines Geräts),
-  und löschen oder ausführen geht dort auch nicht.
 
 ### Geändert
 
@@ -46,9 +60,6 @@ Favoriten und automatische Updates (beides Wunsch des Nutzers): ein Herz auf der
   ist der Unterschied zu "Täglich"); beim erneuten Einschalten wartet er auf das nächste Mal. Mit Datum funktioniert
   alles wie bisher. In der Liste steht ein solcher
   Timer als "einmalig" und "Einmalig, nächstes Mal um 06:30".
-- Der Chip "Favoriten" ist etwas breiter (42 px) und schrumpft in der scrollenden Chip-Leiste auf dem Handy nicht mehr
-  (er wurde auf etwa 18 px gestaucht), damit das Herz nicht eingequetscht wirkt. Das Herz im Geräte-Popup sitzt etwas
-  weiter vom Kreuz entfernt.
 - Der Schalter auf den Timer-Karten im Geräte-Popup ist etwas grösser (44 × 24 px statt 36 × 20 px).
 - Geräte-Popup auf dem Handy: Die kleinen Symbole bleiben. Das Symbol des Reiters "Magic Push" ist jetzt eine Glocke (🔔)
   statt der Funken, die zu wenig nach Benachrichtigung aussahen.
@@ -2862,6 +2873,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.0
 [2.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.22.0
 [2.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.21.0
 [2.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.20.0

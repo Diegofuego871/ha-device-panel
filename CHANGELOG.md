@@ -7,6 +7,24 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.23.0] - 2026-10-12
+
+A window with all timers, one symbol for timers everywhere, and a better Favorites chip on the phone.
+
+### Added
+
+- New stopwatch button (⏱️, the same symbol as the tab "Timer") in the header of the device list, next to the log and the gear. It opens a full-screen window with all
+  timers of all devices, grouped by device so it is clear which device each one belongs to (search, filter All, On, Off,
+  Running, collapse all, "Open device"). There you can edit a timer (the assistant opens on top) and switch it on or off.
+  You cannot create new timers there (that stays in the tab "Timer" of a device), and you cannot delete or run them.
+
+### Changed
+
+- Timers have the same symbol everywhere: the stopwatch (⏱️), also on the new header button and in the window of all timers.
+- The "Favorites" chip is a little wider (42 px) and no longer shrinks in the scrolling chip bar on the phone (it was
+  squeezed to about 18 px), so the heart no longer looks squeezed. The heart in the device pop-up sits a little further
+  from the cross.
+
 ## [2.22.0] - 2026-10-12
 
 Favorites and automatic updates (both requested by the user): a heart on the device page with a filter chip showing only a red heart, and an option to install updates automatically.
@@ -29,10 +47,6 @@ Favorites and automatic updates (both requested by the user): a heart on the dev
   shows "Restart now". If a user checks by hand ("Check for updates") and a version is found, it is installed at once,
   without pressing "Update" a second time. A failed installation is logged and tried again at the next daily check.
   Nothing happens without HACS. The switch is a panel setting for the whole instance and applies with "Save".
-- New stopwatch button (⏱️, the same symbol as the tab "Timer") in the header of the device list, next to the log and the gear. It opens a full-screen window with all
-  timers of all devices, grouped by device so it is clear which device each one belongs to (search, filter All, On, Off,
-  Running, collapse all, "Open device"). There you can edit a timer (the assistant opens on top) and switch it on or off.
-  You cannot create new timers there (that stays in the tab "Timer" of a device), and you cannot delete or run them.
 
 ### Changed
 
@@ -40,9 +54,6 @@ Favorites and automatic updates (both requested by the user): a heart on the dev
   fills in tomorrow. Without a date the timer switches the next time the clock reaches the chosen time, today or
   tomorrow. After that it is always switched off and has to be enabled again (that is the difference to "Daily");
   enabling it again waits for the next time. With a date it works as before. In the list such a timer shows "once" and "Once, next time at 06:30".
-- The "Favorites" chip is a little wider (42 px) and no longer shrinks in the scrolling chip bar on the phone (it was
-  squeezed to about 18 px), so the heart no longer looks squeezed. The heart in the device pop-up sits a little further
-  from the cross.
 - The switch on the timer cards in the device pop-up is a little larger (44 × 24 px instead of 36 × 20 px).
 - Device pop-up on the phone: the small symbols stay. The symbol of the "Magic Push" tab is now a bell (🔔) instead of
   the sparkle, which looked too little like a notification.
@@ -2763,6 +2774,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.23.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.23.0
 [2.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.22.0
 [2.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.21.0
 [2.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.20.0
