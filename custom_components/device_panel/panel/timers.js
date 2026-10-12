@@ -215,8 +215,19 @@ export class TimerUi {
     return `${this.dateText(local)} ${local.time}`;
   }
 
+  // Dauer auf die Sekunde genau, ohne Rundung (seit 2.26.0): 690 Min. = "11 Std. 30 Min.", nicht "11 Std."; Nullen entfallen
   fmtDur(seconds) {
-    return this.host._fmtSeconds(seconds, true);
+    const total = Math.max(0, Math.round(Number(seconds) || 0));
+    const d = Math.floor(total / 86400);
+    const h = Math.floor((total % 86400) / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    const parts = [];
+    if (d) parts.push(`${d} ${this.t("dayUnit")}`);
+    if (h) parts.push(`${h} ${this.t("hourUnit")}`);
+    if (m) parts.push(`${m} ${this.t("minuteUnit")}`);
+    if (s || !parts.length) parts.push(`${s} ${this.t("tmSecUnit")}`);
+    return parts.join(" ");
   }
 
   fmtClock(seconds) {

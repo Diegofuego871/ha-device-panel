@@ -18,6 +18,7 @@ Favorite timers, and the title in the header only disappears on the phone.
 ### Changed
 
 - The title "Devices" in the header is visible again on wide screens (from 700 px); on the phone it stays gone, as in 2.25.0. The timer button stays centred on both.
+- Timer durations are shown exactly, down to the second, instead of being rounded: 690 minutes now read "11 h 30 min" (before "11 h"), 90 seconds "1 min 30 s". This applies to the result line of the assistant, the sentence of a timer, and the range messages.
 
 ## [2.25.0] - 2026-10-12
 

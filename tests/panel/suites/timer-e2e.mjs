@@ -82,6 +82,11 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-tm="bdur"][data-s="1800"]`);
     await fill(`${win} [data-tm="back-own"]`, "20");
     check(`[${tag}] eigene Zeit 20 Min.: Satz mit "wieder aus"`, await wait(`return /20 (Min\\.|min)/.test(r.querySelector("dialog.timer-dlg .tm-result")?.textContent || "") && !r.querySelector('dialog.timer-dlg [data-tm="bdur"].on, dialog.timer-dlg [data-tm="bdur"][aria-checked="true"]')`), await text(`${win} .tm-result`));
+    // Dauer auf die Minute genau (2.26.0): 690 Min. = 11 Std. 30 Min., nicht "11 Std."
+    await fill(`${win} [data-tm="back-own"]`, "690");
+    check(`[${tag}] 690 Min.: Satz zeigt "11 ${lang === "de" ? "Std." : "h"} 30 ${lang === "de" ? "Min." : "min"}"`, await wait(`return (r.querySelector("dialog.timer-dlg .tm-result")?.textContent || "").includes(${JSON.stringify(lang === "de" ? "11 Std. 30 Min." : "11 h 30 min")})`), await text(`${win} .tm-result`));
+    await fill(`${win} [data-tm="back-own"]`, "1.5");
+    check(`[${tag}] 1,5 Min.: "1 ${lang === "de" ? "Min. 30 Sek." : "min 30 s"}"`, await wait(`return (r.querySelector("dialog.timer-dlg .tm-result")?.textContent || "").includes(${JSON.stringify(lang === "de" ? "1 Min. 30 Sek." : "1 min 30 s")})`), await text(`${win} .tm-result`));
     await fill(`${win} [data-tm="back-own"]`, "0.01");
     check(`[${tag}] zu kurze Zeit: Fehler am Feld, Weiter gesperrt`, await wait(`return !!r.querySelector('dialog.timer-dlg [data-tm-err="back"]:not([hidden])')`) && await disabled(nextBtn));
     await fill(`${win} [data-tm="back-own"]`, "20");
