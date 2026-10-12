@@ -885,18 +885,6 @@ export class TimerUi {
     }
   }
 
-  // Datum gesetzt oder geleert: "Datum leeren" und den Hinweis nachführen, ohne das Feld neu zu zeichnen (ein offener Datumswähler bliebe sonst nicht offen)
-  syncDate() {
-    const row = this.q(".tm-daterow");
-    const d = this.wiz?.draft;
-    if (!row || !d) return;
-    const btn = row.querySelector('[data-tm="date-clear"]');
-    if (d.date && !btn) row.insertAdjacentHTML("beforeend", `<button type="button" class="linkbtn" data-tm="date-clear">${this.esc(this.t("tmDateClear"))}</button>`);
-    else if (!d.date && btn) btn.remove();
-    const hint = row.parentElement.querySelector(".mg-hint");
-    if (hint) hint.textContent = this.t(d.date ? "tmOnceNote" : "tmOnceNoteNoDate");
-  }
-
   syncNav() {
     const next = this.q('[data-tm="nav-next"], [data-tm="nav-save"]');
     if (next) next.disabled = !this.canNext() || Boolean(this.wiz?.saving);
@@ -988,8 +976,10 @@ export class TimerUi {
         ${this.delayError() ? `<div class="opt-error" data-tm-err="delay">${esc(this.delayError())}</div>` : ""}
         <p class="mg-hint">${esc(t("tmCountdownNote"))}</p>`;
     } else if (d.kind === "once") {
-      html += `<div class="mg-k">${esc(t("tmDate"))} <span class="tm-opt">${esc(t("tmDateOptional"))}</span></div>
-        <div class="tm-daterow"><input class="mg-input tm-datein" type="date" data-tm="date" value="${esc(d.date)}" min="${esc(this.data.today || "")}" aria-label="${esc(t("tmDate"))}">${d.date ? `<button type="button" class="linkbtn" data-tm="date-clear">${esc(t("tmDateClear"))}</button>` : ""}</div>
+      // Schalter "Bestimmtes Datum" (aus = nächstes Eintreffen der Uhrzeit, an = Datum, zuerst morgen)
+      html += `<div class="mg-optrow"><div>${esc(t("tmDateSwitch"))}</div><label class="switch"><input type="checkbox" data-tm="date-on"${d.date ? " checked" : ""} aria-label="${esc(t("tmDateSwitch"))}"><span></span></label></div>${
+        d.date ? `<input class="mg-input tm-datein" type="date" data-tm="date" value="${esc(d.date)}" min="${esc(this.data.today || "")}" aria-label="${esc(t("tmDate"))}">` : ""
+      }
         <div class="mg-k">${esc(t("tmTime"))}</div>
         <input class="mg-input tm-timein" type="time" data-tm="time" value="${esc(d.time)}" aria-label="${esc(t("tmTime"))}">
         <p class="mg-hint">${esc(t(d.date ? "tmOnceNote" : "tmOnceNoteNoDate"))}</p>`;
@@ -1214,11 +1204,6 @@ export class TimerUi {
         this.paint();
         this.requestPreview();
         break;
-      case "date-clear":
-        w.draft.date = "";
-        this.paint();
-        this.requestPreview();
-        break;
       case "wd": {
         const day = Number(el.dataset.d);
         const set = new Set(w.draft.weekdays);
@@ -1294,7 +1279,6 @@ export class TimerUi {
         break;
       case "date":
         d.date = el.value;
-        this.syncDate();
         this.syncNav();
         this.requestPreview();
         break;
@@ -1375,6 +1359,12 @@ export class TimerUi {
         this.paint();
         this.requestPreview();
         break;
+      case "date-on":
+        d.date = el.checked ? this.tomorrow() : "";
+        this.paint();
+        this.syncNav();
+        this.requestPreview();
+        break;
       case "enabled":
         d.enabled = el.checked;
         this.requestPreview();
@@ -1386,7 +1376,6 @@ export class TimerUi {
         break;
       case "date":
         d.date = el.value;
-        this.syncDate();
         this.syncNav();
         this.requestPreview();
         break;

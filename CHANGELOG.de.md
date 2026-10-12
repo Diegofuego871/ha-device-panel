@@ -35,10 +35,11 @@ Favoriten und automatische Updates (beides Wunsch des Nutzers): ein Herz auf der
 
 ### Geändert
 
-- Timer "Einmal": Das Datum darf leer bleiben und ist standardmässig leer. Ohne Datum schaltet der Timer, wenn die
-  gewählte Uhrzeit das nächste Mal eintrifft, heute oder morgen. Danach ist er immer ausgeschaltet und muss neu
-  aktiviert werden (das ist der Unterschied zu "Täglich"); beim erneuten Einschalten wartet er auf das nächste Mal.
-  Mit Datum funktioniert alles wie bisher. "Datum leeren" neben dem Feld leert es wieder. In der Liste steht ein solcher
+- Timer "Einmal": Ein Datum ist optional. Ein neuer Schalter "Bestimmtes Datum" (standardmässig aus) zeigt das
+  Datumsfeld; beim Einschalten steht das morgige Datum darin. Ohne Datum schaltet der Timer, wenn die gewählte Uhrzeit
+  das nächste Mal eintrifft, heute oder morgen. Danach ist er immer ausgeschaltet und muss neu aktiviert werden (das
+  ist der Unterschied zu "Täglich"); beim erneuten Einschalten wartet er auf das nächste Mal. Mit Datum funktioniert
+  alles wie bisher. In der Liste steht ein solcher
   Timer als "einmalig" und "Einmalig, nächstes Mal um 06:30".
 - Geräte-Popup auf dem Handy: Die kleinen Symbole bleiben. Das Symbol des Reiters "Magic Push" ist jetzt eine Glocke (🔔)
   statt der Funken, die zu wenig nach Benachrichtigung aussahen.

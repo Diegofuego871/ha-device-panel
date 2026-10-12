@@ -31,8 +31,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - Timer "Einmal" ohne Datum (2.22.0, Wunsch des Nutzers): `date` darf `None` sein (Standard im Assistenten); `timers.once_at(timer,
   tz, after)` liefert dann das nächste Eintreffen der Uhrzeit (wie täglich), `first_due`/`next_runs` übergeben "jetzt"; Prüfung
-  "Vergangenheit" nur mit Datum; Einschalten plant neu. Panel: Feld leer, `data-tm="date-clear"`, `syncDate()` (ohne Neuzeichnen
-  des Datumsfelds), `whenText` "Einmalig, nächstes Mal um …". Der Schalter geht danach immer aus (wie bei jedem einmaligen Timer).
+  "Vergangenheit" nur mit Datum; Einschalten plant neu. Panel: Schalter `data-tm="date-on"` ("Bestimmtes Datum", aus; an setzt morgen ein und zeigt das Datumsfeld), `whenText` "Einmalig, nächstes Mal um …". Der Schalter geht danach immer aus (wie bei jedem einmaligen Timer).
 
 ## Davor (2.21.0, Timer)
 
