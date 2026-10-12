@@ -35,6 +35,8 @@ for (const lang of ["de", "en"]) {
     const s = await handle('select[data-dlg="conn"]');
     await s.selectOption("zigbee");
     await wait(`return r.querySelector('select[data-dlg="conn"]')?.value === "zigbee"`);
+    await tap('dialog.device [data-dlg="save"]');
+    await wait(`return r.querySelector("dialog.device .set-count.saved")`);
     await tap('dialog.device [data-dlg="close"]');
     await wait(`return !r.querySelector("dialog.device").open`);
     await f.evaluate(() => document.querySelector("device-panel")._fetch());
@@ -50,7 +52,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Zähler am Reiter = Geräte mit eigener Einstellung (mindestens das Gerät "p")`, Number(await count()) >= 1, await count());
     const n0 = Number(await count());
     await tap('[data-key="connection:p"]');
-    check(`[${tag}] zum Zurücksetzen markiert: Zähler sinkt, eine Änderung`, (await wait(`return r.querySelector('[data-key="devset"] .sub-n').textContent === ${JSON.stringify(String(n0 - 1 || ""))} || r.querySelector('[data-key="devset"] .sub-n').hidden`)) && (await text(".set-count")).startsWith("1"), `${await count()} / ${await text(".set-count")}`);
+    check(`[${tag}] zum Zurücksetzen markiert: Zähler sinkt, eine Änderung`, (await wait(`return r.querySelector('[data-key="devset"] .sub-n').textContent === ${JSON.stringify(String(n0 - 1 || ""))} || r.querySelector('[data-key="devset"] .sub-n').hidden`)) && (await text("dialog.settings .set-count")).startsWith("1"), `${await count()} / ${await text("dialog.settings .set-count")}`);
     await tap('[data-key="connection:p"]');
     check(`[${tag}] Rückgängig: Zähler wieder ${n0}`, await wait(`return r.querySelector('[data-key="devset"] .sub-n').textContent === ${JSON.stringify(String(n0))}`));
 

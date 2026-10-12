@@ -4,7 +4,7 @@
 // Speicherfehler, kein Fokus auf der Auswahl am Handy. Deutsch und Englisch,
 // Desktop und Handy.
 import { chromium } from "playwright-core";
-import { launchOptions, outDir } from "../lib.mjs";
+import { launchOptions, outDir, savePending } from "../lib.mjs";
 
 const b = await chromium.launch(launchOptions);
 let ok = true;
@@ -38,10 +38,10 @@ for (const lang of ["de", "en"]) {
     const handle = async (sel) => (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
     const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
-    const calls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_connection").map(({ device_id, connection }) => ({ device_id, connection })));
+    const calls = async () => { await savePending(f, R); return p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_connection").map(({ device_id, connection }) => ({ device_id, connection }))); };
     const chip = (k) => ev(`return r.querySelector('.chip[data-conn="${k}"] .n')?.textContent || ""`);
     const open = async (id) => { await tap(`.dev[data-open="${id}"]`); await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector('select[data-dlg="conn"]')`); };
-    const close = async () => { await tap('dialog.device [data-dlg="close"]'); await wait(`return !r.querySelector("dialog.device").open`); };
+    const close = async () => { await tap('dialog.device [data-dlg="close"]'); await ev(`const d=r.querySelector("dialog.discard-dlg"); if (d?.open) d.querySelector('[data-dd="yes"]').click(); return 1`); await wait(`return !r.querySelector("dialog.device").open`); };
     const sel = () => ev(`const s=r.querySelector('select[data-dlg="conn"]'); return s.value + "|" + s.options[s.selectedIndex].textContent`);
 
     check(`[${tag}] Ausgangslage`, (await chip("unknown")) === "1" && (await chip("zigbee")) === "5");
@@ -72,6 +72,7 @@ for (const lang of ["de", "en"]) {
     // Speicherfehler
     await p.evaluate(() => { window.__connFails = "Keine Berechtigung"; });
     await (await handle('select[data-dlg="conn"]')).selectOption("cloud");
+    await tap('dialog.device [data-dlg="save"]');
     check(`[${tag}] Speicherfehler angezeigt`, await wait(`return (r.querySelector('select[data-dlg="conn"]').closest(".tile").querySelector(".warn")?.textContent || "").startsWith(${JSON.stringify(T.err)})`));
     await p.evaluate(() => { window.__connFails = null; });
     await close();
@@ -117,7 +118,7 @@ for (const lang of ["de", "en"]) {
     const sh = await handle('select[data-conn-integ="shelly"]');
     await sh.scrollIntoViewIfNeeded();
     await sh.selectOption("ethernet");
-    check(`[${tag}] Entwurf`, await wait(`return r.querySelector('select[data-conn-integ="shelly"]')?.value === "ethernet"`) && (await text(".set-count")) === T.one && (await text('[data-id="devices"] .set-sec-sum')).includes(T.sumOne) && await ev(`return r.querySelector('select[data-conn-integ="shelly"]').closest(".opt-select").classList.contains("changed")`));
+    check(`[${tag}] Entwurf`, await wait(`return r.querySelector('select[data-conn-integ="shelly"]')?.value === "ethernet"`) && (await text("dialog.settings .set-count")) === T.one && (await text('[data-id="devices"] .set-sec-sum')).includes(T.sumOne) && await ev(`return r.querySelector('select[data-conn-integ="shelly"]').closest(".opt-select").classList.contains("changed")`));
     if (mobile) {
       const over = await ev(`const d=r.querySelector("dialog.settings"); return d.scrollWidth - d.clientWidth`);
       check(`[${tag}] Handy ohne Überlauf`, over <= 1, String(over));
@@ -125,7 +126,7 @@ for (const lang of ["de", "en"]) {
     await ev(`r.querySelector('select[data-conn-integ="shelly"]').closest(".ex-row").scrollIntoView({ block: "center" })`);
     await p.screenshot({ path: `${outDir}/conn-integ-${tag.replace("/", "-")}.png` });
     await tap('dialog.settings [data-set="save"]');
-    check(`[${tag}] gespeichert`, await wait(`return r.querySelector(".set-count")?.classList.contains("saved")`) && JSON.stringify((await setCalls()).at(-1)) === JSON.stringify({ connection_integrations: { shelly: "ethernet" } }), JSON.stringify((await setCalls()).at(-1)));
+    check(`[${tag}] gespeichert`, await wait(`return r.querySelector("dialog.settings .set-count")?.classList.contains("saved")`) && JSON.stringify((await setCalls()).at(-1)) === JSON.stringify({ connection_integrations: { shelly: "ethernet" } }), JSON.stringify((await setCalls()).at(-1)));
     await tap('dialog.settings .dlg-actions [data-set="close"]');
     check(`[${tag}] Chips folgen`, await wait(`return r.querySelector('.chip[data-conn="ethernet"] .n')?.textContent === "2" && r.querySelector('.chip[data-conn="wifi"] .n')?.textContent === ${JSON.stringify(String(wifiBefore - 2))}`), `${await chip("ethernet")}/${await chip("wifi")}`);
     check(`[${tag}] Liste zeigt LAN`, (await ev(`return r.querySelector('.dev[data-open="d"]').textContent`)).includes(T.lan));
@@ -145,11 +146,12 @@ for (const lang of ["de", "en"]) {
     await sh2.scrollIntoViewIfNeeded();
     await sh2.selectOption("");
     await tap('dialog.settings [data-set="save"]');
-    check(`[${tag}] zurück auf Erkennung`, await wait(`return r.querySelector(".set-count")?.classList.contains("saved")`) && JSON.stringify((await setCalls()).at(-1)) === JSON.stringify({ connection_integrations: {} }));
+    check(`[${tag}] zurück auf Erkennung`, await wait(`return r.querySelector("dialog.settings .set-count")?.classList.contains("saved")`) && JSON.stringify((await setCalls()).at(-1)) === JSON.stringify({ connection_integrations: {} }));
     await tap('dialog.settings .dlg-actions [data-set="close"]');
     // Eigene Einstellung (seit 0.17.0): Symbol, Chip, gesammelt zurücksetzen
     await open("p");
     await (await handle('select[data-dlg="conn"]')).selectOption("zigbee");
+    await savePending(f, R);
     await wait(`return r.querySelector('select[data-dlg="conn"]')?.value === "zigbee"`);
     await close();
     check(`[${tag}] Symbol in der Liste`, await wait(`return r.querySelector('.dev[data-open="p"] .ovr.conn')?.title === ${JSON.stringify(T.ovrTip)}`), await ev(`return r.querySelector('.dev[data-open="p"] .ovr.conn')?.title || "fehlt"`));
@@ -160,10 +162,10 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="subtab"][data-key="devset"]');
     check(`[${tag}] Übersicht in "Pro Gerät"`, (await text('[data-key="connection:p"]') === "" || true) && (await ev(`return [...r.querySelectorAll(".ovr-opt .opt-label")].map(e=>e.textContent).includes(${JSON.stringify(T.ovrTitle)}) && !!r.querySelector('[data-key="connection:p"]')`)));
     await tap('[data-key="connection:p"]');
-    check(`[${tag}] zum Zurücksetzen markiert`, (await ev(`return r.querySelector('[data-key="connection:p"]').closest(".ovr-row").querySelector(".ovr-val").textContent.replace(/\\s+/g," ").trim()`)) === T.ovrBack && (await text(".set-count")) === T.one);
+    check(`[${tag}] zum Zurücksetzen markiert`, (await ev(`return r.querySelector('[data-key="connection:p"]').closest(".ovr-row").querySelector(".ovr-val").textContent.replace(/\\s+/g," ").trim()`)) === T.ovrBack && (await text("dialog.settings .set-count")) === T.one);
     await tap('dialog.settings [data-set="save"]');
     const resetCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/reset_device_settings").map(({ battery, notify, connection }) => ({ battery, notify, connection })));
-    check(`[${tag}] zurückgesetzt`, await wait(`return r.querySelector(".set-count")?.classList.contains("saved")`) && JSON.stringify((await resetCalls()).at(-1)) === JSON.stringify({ battery: [], notify: [], connection: ["p"] }), JSON.stringify((await resetCalls()).at(-1)));
+    check(`[${tag}] zurückgesetzt`, await wait(`return r.querySelector("dialog.settings .set-count")?.classList.contains("saved")`) && JSON.stringify((await resetCalls()).at(-1)) === JSON.stringify({ battery: [], notify: [], connection: ["p"] }), JSON.stringify((await resetCalls()).at(-1)));
     await tap('dialog.settings .dlg-actions [data-set="close"]');
     check(`[${tag}] Symbol weg`, await wait(`return !r.querySelector('.dev[data-open="p"] .ovr.conn')`));
 

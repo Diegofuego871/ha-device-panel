@@ -5,7 +5,7 @@
 // Einstellungen (Abschnitt "Verbindungsart"). dBm und LQI. Deutsch und
 // Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
-import { launchOptions, outDir, ensureDevTab } from "../lib.mjs";
+import { launchOptions, outDir, ensureDevTab, savePending } from "../lib.mjs";
 
 const b = await chromium.launch(launchOptions);
 let ok = true;
@@ -42,13 +42,13 @@ for (const lang of ["de", "en"]) {
     const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
     const wait = async (code) => { await ensureDevTab(f, R, code); return f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false); };
-    const calls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").map(({ type, id, ...rest }) => rest));
+    const calls = async () => { await savePending(f, R); return p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").map(({ type, id, ...rest }) => rest)); };
     const weak = () => ev(`return r.querySelector('.chip.hint[data-hint="signal"] .n')?.textContent || "0"`);
     const open = async (id) => {
       await tap(`.dev[data-open="${id}"]`);
       await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector(".dev-set")`);
     };
-    const close = async () => { await tap('dialog.device [data-dlg="close"]'); await wait(`return !r.querySelector("dialog.device").open`); };
+    const close = async () => { await savePending(f, R); await tap('dialog.device [data-dlg="close"]'); await wait(`return !r.querySelector("dialog.device").open`); };
     const sel = () => ev(`const s=r.querySelector('select[data-dlg="dev-sig"]'); return s ? s.value + "|" + s.options[s.selectedIndex].textContent : ""`);
     const typeVal = async (value) => {
       const inp = await handle('input[data-dlg="dev-sig-val"]');

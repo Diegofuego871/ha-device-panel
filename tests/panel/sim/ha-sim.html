@@ -598,6 +598,7 @@
   };
   window.__pushHass = pushHass;
   document.querySelector("home-assistant").hass = {
+    themes: { darkMode: params.get("theme") !== "light" },
     language,
     locale: { language },
     connected: true,

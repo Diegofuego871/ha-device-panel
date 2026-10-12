@@ -116,6 +116,7 @@ for (const lang of ["de", "en"]) {
     await monTab("outage");
     await tap('[data-key="notify:f"]');
     await tap('dialog.settings .dlg-actions [data-set="close"]');
+    await ev(`const d=r.querySelector("dialog.discard-dlg"); if (d?.open) d.querySelector('[data-dd="yes"]').click(); return 1`);
     const n = (await resets()).length;
     await openSettings();
     await monTab("outage");

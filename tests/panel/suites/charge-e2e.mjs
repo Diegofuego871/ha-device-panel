@@ -3,7 +3,7 @@
 // Integrationen mit Schaltern und Vorschau; im Geräte-Popup die Zeile "Laden melden"
 // (Standard = Integration, Ein, Aus). Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
-import { launchOptions, outDir } from "../lib.mjs";
+import { launchOptions, outDir, savePending } from "../lib.mjs";
 const b = await chromium.launch(launchOptions);
 let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
@@ -28,7 +28,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const wait = (c) => f.waitForFunction(new Function(`const r=${R};` + c), null, { timeout: 5000 }).then(() => true, () => false);
   const text = (s) => ev(`return (r.querySelector(${JSON.stringify(s)})?.innerText || "").replace(/\\s+/g," ").trim()`);
   const optCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_options").map((m) => m.values));
-  const devCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").map(({ type, id, ...rest }) => rest));
+  const devCalls = async () => { await savePending(f, R); return p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").map(({ type, id, ...rest }) => rest)); };
 
   await tap(".gear-btn");
   await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
@@ -116,6 +116,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await wait(`return !!r.querySelector('.ilist-row[data-key="matter"]')`);
   check(`[${tag}] Zurück im Unterreiter: Matter wieder ohne "${T_.diffOn}"`, !(await text('.ilist-row[data-key="matter"] .ilist-diff')).includes(T_.diffOn));
   await tap('dialog.settings [data-set="close"]').catch(() => {});
+  await ev(`const d=r.querySelector("dialog.discard-dlg"); if (d?.open) d.querySelector('[data-dd="yes"]').click(); return 1`);
   await ev(`const d=r.querySelector("dialog.settings"); if (d?.open) d.close(); return 1`);
 
   // Popup: Thermostat Bad (Matter, 22 %), ZHA-Gerät Bewegungsmelder (Integration ein)
@@ -150,7 +151,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await (await handle('select[data-dlg="dev-charge-rise"]')).selectOption("default");
   await (await handle('select[data-dlg="dev-charge-full"]')).selectOption("default");
   await wait(`return r.querySelector('select[data-dlg="dev-charge-full"]')?.value === "default" && !r.querySelector('input[data-dlg="dev-charge-rise-val"]')`);
-  check(`[${tag}] zurück auf global (null)`, JSON.stringify((await devCalls()).slice(-2)) === JSON.stringify([{ device_id: "c", charge_rise: null }, { device_id: "c", charge_full: null }]), JSON.stringify((await devCalls()).slice(-2)));
+  check(`[${tag}] zurück auf global (null)`, JSON.stringify((await devCalls()).at(-1)) === JSON.stringify({ device_id: "c", charge_rise: null, charge_full: null }), JSON.stringify((await devCalls()).slice(-2)));
   await (await handle('select[data-dlg="dev-charge"]')).selectOption("off");
   await wait(`return r.querySelector('select[data-dlg="dev-charge"]')?.value === "off"`);
   check(`[${tag}] Aus gesendet`, JSON.stringify((await devCalls()).at(-1)) === JSON.stringify({ device_id: "c", charge: false }));

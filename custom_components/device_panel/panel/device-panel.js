@@ -849,6 +849,9 @@ class DevicePanel extends HTMLElement {
   set hass(hass) {
     const first = !this._hass;
     this._hass = hass;
+    // Hell oder dunkel für die Stile: im hellen Design sind die Fenster deckend (sonst wirken sie über dem
+    // abgedunkelten Hintergrund grau)
+    this.toggleAttribute("light", !(hass?.themes?.darkMode ?? window.matchMedia?.("(prefers-color-scheme: dark)").matches));
     if (first) {
       this._build();
       this._loadUserView();
@@ -1044,7 +1047,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
@@ -1057,6 +1060,7 @@ class DevicePanel extends HTMLElement {
       run();
     });
     this._bindSettings(root.querySelector("dialog.settings"));
+    this._bindDiscard(root.querySelector("dialog.discard-dlg"));
     const search = root.querySelector(".search");
     const clear = root.querySelector(".search-clear");
     search.addEventListener("input", () => {
@@ -1326,6 +1330,11 @@ class DevicePanel extends HTMLElement {
         }
       } else if (el.matches?.('select[data-dlg="dev-notify"]') && el.value !== "mute") this._setDeviceSettings(this._detailId, { notify: el.value !== "off" });
     });
+    // Escape: mit offenen Änderungen erst fragen (seit 2.20.0)
+    dlg.addEventListener("cancel", (ev) => {
+      ev.preventDefault();
+      this._requestCloseDevice();
+    });
     dlg.addEventListener("close", () => {
       if (!dlg.open) this._resetDevice();
     });
@@ -1371,6 +1380,7 @@ class DevicePanel extends HTMLElement {
       // Welche Geräte gezeigt werden (Dienst-Geräte, deaktivierte, Ausschlüsse),
       // entscheidet das Backend nach den Einstellungen.
       this._devices = result.devices || [];
+      this._reapplyDevDraft();
       this._integrations = result.integrations || {};
       this._flakyOutages = result.flaky_outages || 3;
       this._batteryLow = result.battery_low;
@@ -3439,66 +3449,179 @@ class DevicePanel extends HTMLElement {
     }
   }
 
-  // Typ von Hand: sofort in der Liste zeigen, dann vom Server bestätigen lassen.
-  async _setDeviceType(id, kind) {
-    const d = this._devices.find((x) => x.id === id);
-    this._typeError = null;
-    try {
-      await this._hass.callWS({ type: "device_panel/set_device_type", device_id: id, device_type: kind });
-      if (d) {
-        d.type = kind || d.type_integration || d.type_auto || d.type;
-        d.type_manual = Boolean(kind);
-      }
-    } catch (err) {
-      this._typeError = errText(err);
-    }
-    this._render();
-    this._fetch(true);
+  // --- Einheitlich speichern (seit 2.20.0) -----------------------------------------------------------------------
+  // Typ, Verbindungsart und alle Einstellungen eines Geräts werden gesammelt und mit "Speichern" übernommen, wie die
+  // Einstellungen im Zahnrad. Schliessen mit offenen Änderungen fragt in der Mitte "Änderungen verwerfen?" (wie der
+  // Assistent von Magic Push). Das Gerät zeigt die gewählten Werte schon vorher (Entwurf in this._devDraft).
+
+  // Wert eines Felds so, wie ihn der Server annimmt (null = Standard bzw. automatisch)
+  _devGet(d, key) {
+    // Meldungen: "aus" und "stumm bis" zusammen, weil jede Wahl im Popup ein "stumm bis" aufhebt
+    if (key === "notify") return `${d.notify_off ? 1 : 0}|${d.notify_mute_until || ""}`;
+    if (key === "type") return d.type_manual ? d.type : null;
+    if (key === "connection") return d.connection_manual ? d.connection : null;
+    return d[`${key}_setting`] ?? null;
   }
 
-  // Verbindungsart von Hand: wie der Typ sofort zeigen, dann bestätigen lassen.
-  async _setDeviceConnection(id, kind) {
+  _devPut(d, key, value) {
+    if (key === "notify") {
+      const [off, mute] = String(value).split("|");
+      d.notify_off = off === "1";
+      d.notify_mute_until = mute || null;
+    }
+    else if (key === "type") {
+      d.type = value || d.type_integration || d.type_auto || d.type;
+      d.type_manual = Boolean(value);
+    } else if (key === "connection") {
+      d.connection = value || d.connection_integration || (d.connection_auto !== undefined ? d.connection_auto : d.connection);
+      d.connection_manual = Boolean(value);
+    } else d[`${key}_setting`] = value;
+  }
+
+  _devEdit(id, changes) {
     const d = this._devices.find((x) => x.id === id);
+    if (!d) return;
+    if (this._devDraft?.id !== id) this._devDraft = { id, orig: {}, cur: {} };
+    const dr = this._devDraft;
+    for (let [key, value] of Object.entries(changes)) {
+      if (key === "notify" && typeof value === "boolean") value = value ? "0|" : "1|";
+      if (!(key in dr.orig)) dr.orig[key] = this._devGet(d, key);
+      dr.cur[key] = value;
+      this._devPut(d, key, value);
+    }
+    this._devSetError = null;
+    this._devSaved = false;
+    this._render();
+  }
+
+  // Geänderte Felder (ein Feld, das wieder auf den alten Wert steht, zählt nicht)
+  _devChanges() {
+    const dr = this._devDraft;
+    if (!dr) return [];
+    return Object.keys(dr.orig).filter((k) => JSON.stringify(dr.cur[k] ?? null) !== JSON.stringify(dr.orig[k] ?? null));
+  }
+
+  // Nach dem Neuladen der Liste die noch nicht gespeicherten Werte wieder einsetzen
+  _reapplyDevDraft() {
+    const dr = this._devDraft;
+    if (!dr) return;
+    const d = this._devices.find((x) => x.id === dr.id);
+    if (d) for (const [key, value] of Object.entries(dr.cur)) this._devPut(d, key, value);
+  }
+
+  _devDiscard() {
+    const dr = this._devDraft;
+    if (!dr) return;
+    const d = this._devices.find((x) => x.id === dr.id);
+    if (d) for (const [key, value] of Object.entries(dr.orig)) this._devPut(d, key, value);
+    this._devDraft = null;
+    this._devSaved = false;
+  }
+
+  async _devSave() {
+    const dr = this._devDraft;
+    const keys = this._devChanges();
+    if (!dr || !keys.length || this._devSaving) return;
+    this._devSaving = true;
+    this._devSetError = null;
+    this._renderDevice();
+    // Fehler dort anzeigen, wo der Wert steht (Typ, Verbindungsart, sonst Einstellungen)
+    let step = "settings";
+    this._typeError = null;
     this._connError = null;
     try {
-      await this._hass.callWS({ type: "device_panel/set_device_connection", device_id: id, connection: kind });
-      if (d) {
-        d.connection = kind || d.connection_integration || (d.connection_auto !== undefined ? d.connection_auto : d.connection);
-        d.connection_manual = Boolean(kind);
+      if (keys.includes("type")) {
+        step = "type";
+        await this._hass.callWS({ type: "device_panel/set_device_type", device_id: dr.id, device_type: dr.cur.type ?? null });
       }
+      if (keys.includes("connection")) {
+        step = "connection";
+        await this._hass.callWS({ type: "device_panel/set_device_connection", device_id: dr.id, connection: dr.cur.connection ?? null });
+      }
+      step = "settings";
+      const settings = {};
+      for (const key of keys) if (key !== "type" && key !== "connection") settings[key] = key === "notify" ? String(dr.cur[key]).startsWith("0") : dr.cur[key] ?? null;
+      if (Object.keys(settings).length) await this._hass.callWS({ type: "device_panel/set_device_settings", device_id: dr.id, ...settings });
+      this._devDraft = null;
+      this._devSaved = true;
     } catch (err) {
-      this._connError = errText(err);
+      if (step === "type") this._typeError = errText(err);
+      else if (step === "connection") this._connError = errText(err);
+      else this._devSetError = errText(err);
     }
+    this._devSaving = false;
     this._render();
     this._fetch(true);
   }
 
-  // Einstellungen des Geräts: sofort speichern (wie der Typ), dann neu laden.
-  async _setDeviceSettings(id, changes) {
-    const d = this._devices.find((x) => x.id === id);
-    this._devSetError = null;
-    try {
-      await this._hass.callWS({ type: "device_panel/set_device_settings", device_id: id, ...changes });
-      if (d) {
-        if ("battery" in changes) d.battery_setting = changes.battery;
-        if ("notify" in changes) d.notify_off = !changes.notify;
-        if ("signal" in changes) d.signal_setting = changes.signal;
-        if ("offline" in changes) d.offline_setting = changes.offline;
-        if ("charge" in changes) d.charge_setting = changes.charge;
-        if ("charge_full" in changes) d.charge_full_setting = changes.charge_full;
-        if ("charge_rise" in changes) d.charge_rise_setting = changes.charge_rise;
-        if ("charge_stall" in changes) d.charge_stall_setting = changes.charge_stall;
-        if ("charge_stop" in changes) d.charge_stop_setting = changes.charge_stop;
-        if ("charge_live" in changes) d.charge_live_setting = changes.charge_live;
-      }
-    } catch (err) {
-      this._devSetError = errText(err);
+  // Schliessen: ohne Änderung sofort, sonst erst fragen; "after" läuft danach (zum Beispiel zur Geräteseite)
+  _requestCloseDevice(after) {
+    if (!this._devChanges().length) {
+      this._closeDevice();
+      after?.();
+      return;
     }
-    this._render();
-    this._fetch(true);
+    this._askDiscard(() => {
+      this._devDiscard();
+      this._closeDevice();
+      this._fetch(true);
+      after?.();
+    });
+  }
+
+  // Rückfrage "Änderungen verwerfen?" als Pop-up in der Mitte, über jedem Fenster (eigenes modales Fenster)
+  _askDiscard(onYes) {
+    const dlg = this.shadowRoot.querySelector("dialog.discard-dlg");
+    if (!dlg) {
+      onYes();
+      return;
+    }
+    this._discardYes = onYes;
+    dlg.innerHTML = `<div class="dd-card" role="alertdialog" aria-labelledby="dd-t"><b id="dd-t">${escape(this._t("discardTitle"))}</b><small>${escape(this._t("discardNote"))}</small>
+      <div class="dd-btns"><button type="button" class="dlg-btn" data-dd="no">${escape(this._t("discardNo"))}</button><button type="button" class="dlg-btn danger" data-dd="yes">${escape(this._t("discardYes"))}</button></div></div>`;
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+    // Fokus auf die sichere Antwort, damit Enter nichts verwirft
+    dlg.querySelector('[data-dd="no"]')?.focus({ preventScroll: true });
+  }
+
+  _bindDiscard(dlg) {
+    dlg.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("[data-dd]");
+      if (!btn) return;
+      const run = btn.dataset.dd === "yes" ? this._discardYes : null;
+      this._discardYes = null;
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+      run?.();
+    });
+    // Escape: zurück ins Bearbeiten
+    dlg.addEventListener("close", () => {
+      this._discardYes = null;
+    });
+  }
+
+  _setDeviceType(id, kind) {
+    this._typeError = null;
+    this._devEdit(id, { type: kind });
+  }
+
+  _setDeviceConnection(id, kind) {
+    this._connError = null;
+    this._devEdit(id, { connection: kind });
+  }
+
+  _setDeviceSettings(id, changes) {
+    this._devEdit(id, changes);
   }
 
   _resetDevice() {
+    // Offene Änderungen verfallen mit dem Schliessen (Rückfrage kam vorher)
+    this._devDiscard();
+    this._devSaved = false;
+    this._devSaving = false;
     this._rename = null;
     this._hideError = null;
     this._connError = null;
@@ -4084,8 +4207,7 @@ class DevicePanel extends HTMLElement {
         <div class="dlg-body" role="tabpanel">${body}
           ${this._hideError ? `<div class="dlg-error">${escape(this._t("hideError"))} ${escape(this._hideError)}</div>` : ""}
         </div>
-        <div class="dlg-actions two"><button type="button" class="dlg-btn hide-btn" data-dlg="hide">${mdi("eyeOff", 18)}${escape(this._t("hideDevice"))}</button>
-          <button type="button" class="dlg-btn" data-dlg="close">${escape(this._t("close"))}</button></div>`;
+        ${this._devActionsHtml()}`;
     }
     // Fokus und Scrollposition über den Neuaufbau retten (Abfrage alle 10 s).
     const active = this.shadowRoot.activeElement;
@@ -4105,22 +4227,34 @@ class DevicePanel extends HTMLElement {
     if (sel) refocus(dlg.querySelector(sel));
   }
 
+  // Fuss des Popups: mit Änderungen Zähler, "Abbrechen" und "Speichern" (wie im Zahnrad), sonst "Gerät ausblenden" und "Schliessen"
+  _devActionsHtml() {
+    const n = this._devChanges().length;
+    if (n) {
+      return `<div class="dlg-actions"><span class="set-count" role="status">${escape(this._t("settingsChanges", n))}</span>
+        <button type="button" class="dlg-btn" data-dlg="close">${escape(this._t("settingsCancel"))}</button>
+        <button type="button" class="dlg-btn primary" data-dlg="save" ${this._devSaving ? "disabled" : ""}>${escape(this._devSaving ? this._t("settingsSaving") : this._t("settingsSave"))}</button></div>`;
+    }
+    return `<div class="dlg-actions two">${this._devSaved ? `<span class="set-count saved" role="status">${escape(this._t("settingsSavedShort"))}</span>` : ""}<button type="button" class="dlg-btn hide-btn" data-dlg="hide">${mdi("eyeOff", 18)}${escape(this._t("hideDevice"))}</button>
+          <button type="button" class="dlg-btn" data-dlg="close">${escape(this._t("close"))}</button></div>`;
+  }
+
   _onDeviceClick(ev) {
     const dlg = ev.currentTarget;
     // Klick auf den Hintergrund (ausserhalb des Inhalts) schliesst.
     if (ev.target === dlg) {
       const r = dlg.getBoundingClientRect();
-      if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closeDevice();
+      if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._requestCloseDevice();
       return;
     }
     const btn = ev.target.closest("[data-dlg]");
     if (!btn || btn.disabled) return;
     const action = btn.dataset.dlg;
-    if (action === "close") this._closeDevice();
+    if (action === "close") this._requestCloseDevice();
+    else if (action === "save") this._devSave();
     else if (action === "open-device") {
       const id = this._detailId;
-      this._closeDevice();
-      this._navigate(`/config/devices/device/${id}`);
+      this._requestCloseDevice(() => this._navigate(`/config/devices/device/${id}`));
     } else if (action === "stat") this._openStat(btn.dataset.range, btn.dataset.kind);
     else if (action === "more-info") this._openMoreInfo(btn.dataset.entity);
     else if (action === "copy-id") this._copyId(btn);
@@ -4673,6 +4807,20 @@ class DevicePanel extends HTMLElement {
     }
     st.loading = false;
     this._renderSettings();
+  }
+
+  // Schliessen: mit ungespeicherten Änderungen erst fragen "Änderungen verwerfen?" (seit 2.20.0)
+  _requestCloseSettings(after) {
+    const st = this._settings;
+    if (st && !st.loading && !st.error && this._settingsChanges().length) {
+      this._askDiscard(() => {
+        this._closeSettings();
+        after?.();
+      });
+      return;
+    }
+    this._closeSettings();
+    after?.();
   }
 
   _closeSettings() {
@@ -6883,6 +7031,11 @@ class DevicePanel extends HTMLElement {
   }
 
   _bindSettings(dialog) {
+    // Escape: mit ungespeicherten Änderungen erst fragen (seit 2.20.0)
+    dialog.addEventListener("cancel", (ev) => {
+      ev.preventDefault();
+      this._requestCloseSettings();
+    });
     dialog.addEventListener("click", (ev) => {
       const lclear = ev.target.closest("[data-lclear]");
       if (lclear) {
@@ -6903,14 +7056,14 @@ class DevicePanel extends HTMLElement {
       }
       if (ev.target === dialog) {
         const r = dialog.getBoundingClientRect();
-        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closeSettings();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._requestCloseSettings();
         return;
       }
       const btn = ev.target.closest("[data-set]");
       if (!btn || btn.disabled || !this._settings) return;
       const st = this._settings;
       const action = btn.dataset.set;
-      if (action === "close") this._closeSettings();
+      if (action === "close") this._requestCloseSettings();
       else if (action.startsWith("magic-") && action !== "magic-toggle") this._magicAllAction(action, btn);
       else if (action === "save") this._saveSettings();
       else if (action === "tab" || action === "goto" || action === "integ" || action === "ifilter") {
@@ -7883,8 +8036,7 @@ class DevicePanel extends HTMLElement {
     } else if (action === "hacs-device") {
       const sw = this._hacsPreReleaseSwitch();
       if (sw && sw.deviceId) {
-        this._closeSettings();
-        this._navigate(`/config/devices/device/${sw.deviceId}`);
+        this._requestCloseSettings(() => this._navigate(`/config/devices/device/${sw.deviceId}`));
       }
     } else if (action === "check") {
       await this._loadVersion(true);

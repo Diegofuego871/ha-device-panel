@@ -3,7 +3,27 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.19.0, Live-Aktivität beim Laden)
+## Stand (2.20.0, einheitlich speichern)
+
+- 2.20.0 (Wunsch des Nutzers): Geräte-Popup und Zahnrad speichern nur noch mit "Speichern"; Schliessen mit Änderungen
+  fragt "Änderungen verwerfen?" (`dialog.discard-dlg`, eigenes modales Fenster, `_askDiscard(onYes)`). Geräte-Entwurf
+  `this._devDraft = {id, orig, cur}` (`_devEdit`, `_devChanges`, `_devDiscard`, `_devSave`, `_requestCloseDevice(after)`,
+  `_reapplyDevDraft()` nach jedem `list_devices`): Werte werden direkt im Gerät (`this._devices`) gesetzt, `orig` merkt den
+  gespeicherten Stand; `_setDeviceType/_setDeviceConnection/_setDeviceSettings` sind nur noch Hüllen um `_devEdit`.
+  `_devSave` sendet erst Typ, dann Verbindungsart, dann einen gemeinsamen `set_device_settings`; Fehler stehen beim Wert
+  (`_typeError`, `_connError`, `_devSetError`) und der Entwurf bleibt. Bewusst sofort geblieben: Umbenennen, Gerät
+  ausblenden, Listenaktionen von Magic Push, "Anpassen", Filter. Neue Suite `savecheck-e2e`; Suiten, die im Popup etwas
+  wählen, klicken danach `[data-dlg="save"]`. Auf einem echten Gerät noch nicht geprüft.
+
+## Nächste Funktion: Timer (Mockups fertig, Entscheid offen)
+
+- Wunsch des Nutzers (2026-10-12): Timer, die eine schaltbare Entität eines Geräts einmalig (in X Min. oder an einem Datum)
+  oder geplant (täglich, wöchentlich, monatlich) schalten. Reiter "Timer" im Geräte-Popup, eigener aufklappbarer Abschnitt
+  "Timer" in den Einstellungen (Suche, aktivieren/deaktivieren). Mockups, Konzept, technisches Vorgehen und acht offene
+  Fragen mit Empfehlung: `docs/mockups/timer-v1/README.md`. Es ist noch nichts gebaut; zuerst die Fragen mit dem Nutzer
+  klären (vor allem Reiterleiste auf dem Handy mit fünf Reitern, Fehlerfall, Neustart).
+
+## Davor (2.19.0, Live-Aktivität beim Laden)
 
 - 2.19.0 (Wunsch des Nutzers; Entscheide: gleicher Empfänger wie die Lademeldung, 10 Min. "Geladen", iOS und Android, nur
   Prozent, Takt 4 Min., Wegwisch-Ereignis ausgewertet). Option `charge_live` (global, aus), `charge_live_integrations`

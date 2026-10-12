@@ -7,6 +7,34 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.20.0] - 2026-10-12
+
+Speichern funktioniert überall gleich, und das helle Design wirkt nicht mehr ausgegraut (beides Wunsch des Nutzers).
+
+### Geändert
+
+- Änderungen im Geräte-Popup gelten jetzt erst mit "Speichern", wie im Einstellungsdialog (Zahnrad). Das betrifft den
+  Typ, die Verbindungsart und alle Einstellungen eines Geräts (Ausfall, Meldungen, Batterie, Laden, Empfang). Bis dahin
+  zeigt das Gerät die gewählten Werte, der Fuss zeigt "n Änderungen" mit "Abbrechen" und "Speichern", und es wird
+  nichts gesendet. "Speichern" sendet je Art einen Aufruf (Typ, Verbindungsart, Einstellungen) und lässt das Popup mit
+  "Gespeichert" offen. Eine Änderung, die wieder auf den alten Wert steht, zählt nicht. Der Entwurf übersteht das
+  Auffrischen der Liste, das alle 10 Sekunden läuft.
+- Schliessen mit ungespeicherten Änderungen (Knopf "Abbrechen", Kreuz, Tipp auf den Hintergrund, Escape oder "HA-Geräteseite
+  öffnen") fragt in einem Pop-up in der Mitte "Änderungen verwerfen?" mit "Weiter bearbeiten" oder "Verwerfen", dasselbe
+  Pop-up wie im Assistenten von Magic Push. Das gilt jetzt für das Geräte-Popup und für den Einstellungsdialog (Zahnrad).
+  Ohne Änderung schliesst alles sofort. Schlägt das Speichern fehl, bleibt der Entwurf stehen und der Fehler erscheint
+  beim Wert.
+- Weiterhin sofort (ohne Entwurf): ein Gerät umbenennen, ein Gerät ausblenden, die Listenaktionen von Magic Push
+  (ein- oder ausschalten, löschen), die Dialoge "Anpassen" und die Filter. Jedes davon ist eine einzelne Aktion, keine
+  Gruppe von Einstellungen.
+
+### Behoben
+
+- Helles Design: Das Geräte-Popup und der Einstellungsdialog (Zahnrad) wirken nicht mehr ausgegraut. Die durchscheinende
+  Glasoptik, gedacht für das dunkle Design, wurde über dem abgedunkelten Hintergrund grau. Im hellen Design sind die
+  Fenster, Kopf, Reiter und Knöpfe jetzt rein weiss (Kacheln nur ganz leicht abgesetzt); grau erscheint nur beim
+  Darüberfahren. Das dunkle Design und das Blatt auf dem Handy (Breite bis 600 px) bleiben unverändert; grau war das Desktop-Fenster.
+
 ## [2.19.0] - 2026-10-12
 
 Live-Aktivität beim Laden (iPhone) und Live-Update (Android 16).
@@ -2743,6 +2771,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.20.0
 [2.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.19.0
 [2.17.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.1
 [2.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.0

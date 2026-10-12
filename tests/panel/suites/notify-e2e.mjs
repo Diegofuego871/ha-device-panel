@@ -234,6 +234,7 @@ for (const lang of ["de", "en"]) {
     await p.waitForTimeout(400);
     await p.screenshot({ path: `${outDir}/notify-popup-${tag.replace("/", "-")}.png` });
     await pick('select[data-dlg="dev-notify"]', "on");
+    await tap('dialog.device [data-dlg="save"]');
     check(`[${tag}] "Globale Einstellung" hebt stumm auf`, await wait(`const s=r.querySelector('select[data-dlg="dev-notify"]'); return s && s.value === "on" && s.options.length === 2`) && JSON.stringify((await calls("device_panel/set_device_settings")).at(-1)) .includes('"notify":true'), JSON.stringify((await calls("device_panel/set_device_settings")).at(-1)));
     check(`[${tag}] Option "${T.notifyOn}"`, (await ev(`const s=r.querySelector('select[data-dlg="dev-notify"]'); return s.options[s.selectedIndex].textContent`)) === T.notifyOn);
 

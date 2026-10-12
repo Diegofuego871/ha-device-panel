@@ -1,7 +1,7 @@
 // "Voll ab" (1.38.0): Stufen 100, 95, 90, 80 und "Eigener Wert" (Zahl, 50 bis 100) im Geräte-Popup, global (Batterie › Laden)
 // und pro Integration. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
-import { launchOptions } from "../lib.mjs";
+import { launchOptions, savePending } from "../lib.mjs";
 const b = await chromium.launch(launchOptions);
 let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
@@ -22,7 +22,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
   const wait = (c) => f.waitForFunction(new Function(`const r=${R};` + c), null, { timeout: 5000 }).then(() => true, () => false);
   const opts = (sel) => ev(`return [...r.querySelector(${JSON.stringify(sel)}).options].map(o => o.value + "|" + o.textContent.trim())`);
-  const devCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").map(({ type, id, ...rest }) => rest));
+  const devCalls = async () => { await savePending(f, R); return p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").map(({ type, id, ...rest }) => rest)); };
 
   // Global: Einstellungen › Batterie › Laden
   await tap(".gear-btn");

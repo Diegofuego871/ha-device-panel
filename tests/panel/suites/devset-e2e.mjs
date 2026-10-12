@@ -12,11 +12,11 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     sec: "Einstellungen für dieses Gerät", def: "Globaler Wert (15 %)", own: "Eigene Warnschwelle", short: "Globaler Wert: 15 %.", notifyOn: "Globale Einstellung",
-    range: "Erlaubt: 1 bis 50", notifyOff: "Aus für dieses Gerät", saveErr: "Konnte nicht gespeichert werden:",
+    one1: "1 Änderung", two2: "2 Änderungen", range: "Erlaubt: 1 bis 50", notifyOff: "Aus für dieses Gerät", saveErr: "Konnte nicht gespeichert werden:",
   },
   en: {
     sec: "Settings for this device", def: "Global value (15 %)", own: "Own warning threshold", short: "Global value: 15 %.", notifyOn: "Global setting",
-    range: "Allowed: 1 to 50", notifyOff: "Off for this device", saveErr: "Could not be saved:",
+    one1: "1 change", two2: "2 changes", range: "Allowed: 1 to 50", notifyOff: "Off for this device", saveErr: "Could not be saved:",
   },
 };
 
@@ -44,6 +44,7 @@ for (const lang of ["de", "en"]) {
       await tap(`.dev[data-open="${id}"]`);
       await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector('select[data-dlg="dev-notify"]')`);
     };
+    const save = async () => { await tap('dialog.device [data-dlg="save"]'); return wait(`return r.querySelector("dialog.device .set-count.saved")`); };
     const close = async () => { await tap('dialog.device [data-dlg="close"]'); await wait(`return !r.querySelector("dialog.device").open`); };
 
     check(`[${tag}] Ausgangslage: 2 schwache Batterien`, (await lowChip()) === "2");
@@ -55,7 +56,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] kein "wie eingestellt" mehr`, !(await ev(`return /wie eingestellt|as configured/i.test(r.querySelector("dialog.device").textContent)`)));
     check(`[${tag}] Kurzzeile`, (await text('select[data-dlg="dev-bat"]').then(() => ev(`return r.querySelector('select[data-dlg="dev-bat"]').closest(".opt").querySelector(".origin").title`))).startsWith(T.short));
     await (await handle('select[data-dlg="dev-bat"]')).selectOption("own");
-    check(`[${tag}] eigene Schwelle beginnt beim geltenden Wert`, await wait(`return r.querySelector('input[data-dlg="dev-bat-pct"]')?.value === "15"`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "c", battery: 15 }), JSON.stringify((await calls()).at(-1)));
+    check(`[${tag}] eigene Schwelle beginnt beim geltenden Wert, noch nichts gesendet`, await wait(`return r.querySelector('input[data-dlg="dev-bat-pct"]')?.value === "15"`) && (await calls()).length === 0 && (await text("dialog.device .set-count")) === T.one1, JSON.stringify((await calls()).at(-1)));
     const inp = await handle('input[data-dlg="dev-bat-pct"]');
     if (mobile) await inp.tap(); else await inp.click();
     await inp.fill("");
@@ -66,7 +67,9 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Eingabe übersteht das Abfragen`, (await ev(`return r.querySelector('input[data-dlg="dev-bat-pct"]').value`)) === "3");
     await inp.type("0");
     await inp.press("Tab");
-    check(`[${tag}] 30 % gespeichert`, await wait(`return true`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "c", battery: 30 }), JSON.stringify((await calls()).at(-1)));
+    check(`[${tag}] 30 % im Entwurf, nichts gesendet`, (await calls()).length === 0 && (await lowChip()) === "2", String((await calls()).length));
+    await save();
+    check(`[${tag}] 30 % gespeichert`, JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "c", battery: 30 }) && (await calls()).length === 1, JSON.stringify((await calls()).at(-1)));
     check(`[${tag}] Liste: jetzt 3 schwache`, await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "3"`), await lowChip());
     // Ungültig: nichts gespeichert, Hinweis
     const n = (await calls()).length;
@@ -86,13 +89,15 @@ for (const lang of ["de", "en"]) {
     if (mobile) await inp3.tap(); else await inp3.click();
     await inp3.fill("30");
     await inp3.press("Tab");
-    check(`[${tag}] gültiger Wert: Hinweis weg, gespeichert`, await wait(`return !r.querySelector("[data-dev-range]") && !r.querySelector('input[data-dlg="dev-bat-pct"]').closest(".opt-input").classList.contains("bad")`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "c", battery: 30 }) && (await calls()).length === n + 1, JSON.stringify((await calls()).at(-1)));
+    check(`[${tag}] gültiger Wert (wie gespeichert): Hinweis weg, keine Änderung`, await wait(`return !r.querySelector("[data-dev-range]") && !r.querySelector('input[data-dlg="dev-bat-pct"]').closest(".opt-input").classList.contains("bad")`) && (await calls()).length === n && (await text("dialog.device .set-count")) === "", JSON.stringify((await calls()).at(-1)));
     // Ab 1 Prozent erlaubt (1.41.0), 0 nicht
     const inp4 = await handle('input[data-dlg="dev-bat-pct"]');
     if (mobile) await inp4.tap(); else await inp4.click();
     await inp4.fill("1");
     await inp4.press("Tab");
-    check(`[${tag}] 1 % erlaubt und gespeichert`, await wait(`return !r.querySelector("[data-dev-range]")`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "c", battery: 1 }), JSON.stringify((await calls()).at(-1)));
+    await wait(`return !r.querySelector("[data-dev-range]")`);
+    await save();
+    check(`[${tag}] 1 % erlaubt und gespeichert`, JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "c", battery: 1 }), JSON.stringify((await calls()).at(-1)));
     const inp5 = await handle('input[data-dlg="dev-bat-pct"]');
     if (mobile) await inp5.tap(); else await inp5.click();
     await inp5.fill("0");
@@ -104,25 +109,29 @@ for (const lang of ["de", "en"]) {
     await inp6.fill("30");
     await inp6.press("Tab");
     await wait(`return !r.querySelector("[data-dev-range]")`);
+    await save();
     await close();
 
     // Temperatur Keller (BTHome, 0 %): Warnung aus
     await open("a");
     await (await handle('select[data-dlg="dev-bat"]')).selectOption("off");
-    check(`[${tag}] Batterie aus gespeichert`, await wait(`return r.querySelector('select[data-dlg="dev-bat"]')?.value === "off"`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "a", battery: "off" }));
-    check(`[${tag}] Liste: wieder 2 schwache`, await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`), await lowChip());
+    check(`[${tag}] Batterie aus im Entwurf`, await wait(`return r.querySelector('select[data-dlg="dev-bat"]')?.value === "off"`) && !(await calls()).some((c) => c.device_id === "a"));
     // Meldungen aus
     // Wie ein Benutzer: Auswahl hat den Fokus, dann neue Wahl
     const notifySel = await handle('select[data-dlg="dev-notify"]');
     await notifySel.focus();
     await notifySel.selectOption("off");
-    check(`[${tag}] Meldungen aus gespeichert`, await wait(`return r.querySelector('select[data-dlg="dev-notify"]')?.value === "off"`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "a", notify: false }));
+    check(`[${tag}] Meldungen aus im Entwurf, Zähler 2`, await wait(`return r.querySelector('select[data-dlg="dev-notify"]')?.value === "off"`) && (await text("dialog.device .set-count")) === T.two2);
     // Nach dem Neuaufbau (Speichern und Abfrage): auf dem Handy keine fokussierte
     // Auswahl, sonst öffnet iOS sie sofort wieder; am Desktop bleibt der Fokus.
     await f.evaluate(() => document.querySelector("device-panel")._fetch());
     await p.waitForTimeout(400);
     const focused = await ev(`const a=r.activeElement; return a ? a.tagName + ":" + (a.dataset.dlg || "") : "none"`);
     check(`[${tag}] Fokus nach Änderung`, mobile ? !focused.startsWith("SELECT") : focused === "SELECT:dev-notify", focused);
+    check(`[${tag}] Entwurf übersteht das Abfragen`, (await ev(`return r.querySelector('select[data-dlg="dev-notify"]').value`)) === "off" && (await ev(`return r.querySelector('select[data-dlg="dev-bat"]').value`)) === "off");
+    await save();
+    check(`[${tag}] ein Aufruf mit beiden Werten`, JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "a", battery: "off", notify: false }), JSON.stringify((await calls()).at(-1)));
+    check(`[${tag}] Liste: wieder 2 schwache`, await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`), await lowChip());
     check(`[${tag}] als geändert markiert`, await ev(`return r.querySelector('select[data-dlg="dev-notify"]').closest(".opt").classList.contains("changed")`));
     await close();
     await open("a");
@@ -131,7 +140,8 @@ for (const lang of ["de", "en"]) {
     await (await handle('select[data-dlg="dev-bat"]')).selectOption("default");
     await wait(`return r.querySelector('select[data-dlg="dev-bat"]')?.value === "default"`);
     await (await handle('select[data-dlg="dev-notify"]')).selectOption("on");
-    check(`[${tag}] zurückgestellt`, await wait(`return r.querySelector('select[data-dlg="dev-notify"]')?.value === "on"`) && JSON.stringify((await calls()).slice(-2)) === JSON.stringify([{ device_id: "a", battery: null }, { device_id: "a", notify: true }]));
+    await save();
+    check(`[${tag}] zurückgestellt`, await wait(`return r.querySelector('select[data-dlg="dev-notify"]')?.value === "on"`) && JSON.stringify((await calls()).at(-1)) === JSON.stringify({ device_id: "a", battery: null, notify: true }), JSON.stringify((await calls()).at(-1)));
     await close();
 
     // Gerät ohne Batterie: nur die Meldungen
@@ -140,12 +150,18 @@ for (const lang of ["de", "en"]) {
     // Fehler beim Speichern
     await p.evaluate(() => { window.__devSetFails = "Keine Berechtigung"; });
     await (await handle('select[data-dlg="dev-notify"]')).selectOption("off");
+    await tap('dialog.device [data-dlg="save"]');
     check(`[${tag}] Speicherfehler angezeigt`, await wait(`return (r.querySelector("dialog.device .dev-set .opt-error")?.textContent || "").includes("Keine Berechtigung")`) && (await text("dialog.device .dev-set .opt-error")).startsWith(T.saveErr));
     await p.evaluate(() => { window.__devSetFails = null; });
-    await close();
+    // Entwurf bleibt nach dem Fehler: Schliessen fragt, Verwerfen schliesst
+    await tap('dialog.device [data-dlg="close"]');
+    check(`[${tag}] Schliessen mit Entwurf fragt nach`, await ev(`return r.querySelector("dialog.discard-dlg").open`));
+    await tap('dialog.discard-dlg [data-dd="yes"]');
+    await wait(`return !r.querySelector("dialog.device").open`);
     // Matter zurück auf den globalen Wert
     await open("c");
     await (await handle('select[data-dlg="dev-bat"]')).selectOption("default");
+    await save();
     check(`[${tag}] Matter zurück`, await wait(`return r.querySelector('.chip.hint[data-hint="battery"] .n')?.textContent === "2"`));
     await close();
 

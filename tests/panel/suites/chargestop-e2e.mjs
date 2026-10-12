@@ -1,7 +1,7 @@
 // "Ladung beendet nach" und Push bei beendeter Ladung (1.41.0): Übersteuerung pro Gerät (Popup) und pro Integration
 // (Einstellungen), Gerät vor Integration vor global. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
-import { launchOptions } from "../lib.mjs";
+import { launchOptions, savePending } from "../lib.mjs";
 const b = await chromium.launch(launchOptions);
 let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
@@ -25,7 +25,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
   const wait = (c) => f.waitForFunction(new Function(`const r=${R};` + c), null, { timeout: 5000 }).then(() => true, () => false);
   const opts = (sel) => ev(`return [...r.querySelector(${JSON.stringify(sel)}).options].map(o => o.value + "|" + o.textContent.trim())`);
-  const devCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").map(({ type, id, ...rest }) => rest));
+  const devCalls = async () => { await savePending(f, R); return p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").map(({ type, id, ...rest }) => rest)); };
   const text = (s) => ev(`return (r.querySelector(${JSON.stringify(s)})?.innerText || "").replace(/\\s+/g," ").trim()`);
 
   // --- Geräte-Popup ---
@@ -54,7 +54,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] Popup: Reiter zählt die eigenen Einstellungen (Lademeldung, Zeit, Push = 3)`, (await text('dialog.device [data-tab="set"]')).includes(lang === "de" ? "3 eigene" : "3 custom"), await text('dialog.device [data-tab="set"]'));
   await (await handle('select[data-dlg="dev-charge-stall"]')).selectOption("default");
   await (await handle('select[data-dlg="dev-charge-stop"]')).selectOption("default");
-  check(`[${tag}] Popup: zurück auf Standard (null)`, (await wait(`const d=r.host._devices.find((x) => x.id === "b"); return d.charge_stall_setting == null && d.charge_stop_setting == null && !r.querySelector('input[data-dlg="dev-charge-stall-val"]')`)) && JSON.stringify((await devCalls()).slice(-2)) === JSON.stringify([{ device_id: "b", charge_stall: null }, { device_id: "b", charge_stop: null }]), JSON.stringify((await devCalls()).slice(-2)));
+  check(`[${tag}] Popup: zurück auf Standard (null)`, (await wait(`const d=r.host._devices.find((x) => x.id === "b"); return d.charge_stall_setting == null && d.charge_stop_setting == null && !r.querySelector('input[data-dlg="dev-charge-stall-val"]')`)) && JSON.stringify((await devCalls()).at(-1)) === JSON.stringify({ device_id: "b", charge_stall: null, charge_stop: null }), JSON.stringify((await devCalls()).slice(-2)));
   await tap('dialog.device [data-dlg="close"]');
   await wait(`return !r.querySelector("dialog.device").open`);
 

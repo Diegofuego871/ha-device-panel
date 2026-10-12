@@ -464,6 +464,14 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .dlg-btn.primary { border-color: var(--dp-primary); background: var(--dp-primary); color: #fff; font-weight: 500; }
 .dlg-btn.primary:hover { background: color-mix(in srgb, var(--dp-primary) 88%, #000); }
 .dlg-btn:disabled { opacity: .45; cursor: default; }
+/* Rückfrage "Änderungen verwerfen?" (seit 2.20.0): eigenes modales Fenster in der Mitte, über jedem anderen Fenster */
+dialog.discard-dlg { padding: 0; border: none; background: transparent; overflow: visible; max-width: calc(100vw - 32px); color: var(--dp-text); }
+dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
+.dd-card { width: min(340px, calc(100vw - 32px)); box-sizing: border-box; padding: 20px 20px 16px; border-radius: 18px; background: var(--dp-card); box-shadow: 0 10px 40px rgba(0,0,0,0.45); border: 1px solid var(--dp-divider); text-align: center; }
+.dd-card b { display: block; font-size: 17px; font-weight: 600; }
+.dd-card small { display: block; margin-top: 6px; color: var(--dp-text2); font-size: 13.5px; line-height: 1.45; }
+.dd-btns { display: flex; gap: 8px; margin-top: 16px; }
+.dd-btns .dlg-btn { flex: 1 1 0; min-width: 0; }
 .set-count { align-self: center; color: var(--dp-text2); font-size: 12px; white-space: nowrap; }
 .set-count:empty { display: none; }
 .set-count.saved { color: var(--dp-success); font-weight: 500; }
@@ -1272,6 +1280,19 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
     dialog.device .tile, dialog.device .st-tile, dialog.settings .nf-note, dialog.settings .pv { background: color-mix(in srgb, var(--dp-text) 9%, transparent); border-color: color-mix(in srgb, var(--dp-text) 14%, transparent); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--dp-text) 12%, transparent); }
     dialog.device .dev-set { background: color-mix(in srgb, var(--dp-text) 5%, transparent); }
   }
+}
+/* Helles Design am Desktop (seit 2.20.0, ab 601 px; das Handy-Blatt bleibt wie es war): Fenster, Kopf, Reiter und Fuss deckend weiss statt durchscheinend (die Unschärfe über dem
+   abgedunkelten Hintergrund machte das ganze Blatt grau); Kacheln nur ganz leicht abgesetzt. Grau nur beim Darüberfahren. */
+@media (min-width: 601px) {
+:host([light]) dialog.device, :host([light]) dialog.settings, :host([light]) dialog.log-dlg { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.35), 0 0 0 1px color-mix(in srgb, var(--dp-text) 8%, transparent); }
+:host([light]) dialog.device::backdrop, :host([light]) dialog.settings::backdrop, :host([light]) dialog.log-dlg::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0,0,0,0.4); }
+:host([light]) dialog.device .dlg-head, :host([light]) dialog.settings .dlg-head, :host([light]) dialog.log-dlg .dlg-head, :host([light]) dialog.device .dev-tabs { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+:host([light]) dialog.device .dlg-actions, :host([light]) dialog.settings .dlg-actions, :host([light]) dialog.log-dlg .dlg-actions { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; border-top: 1px solid var(--dp-divider); padding-top: 14px; }
+:host([light]) dialog.device .tile, :host([light]) dialog.device .st-tile, :host([light]) dialog.settings .nf-note, :host([light]) dialog.settings .pv { background: color-mix(in srgb, var(--dp-text) 3.5%, var(--dp-card)); border-color: color-mix(in srgb, var(--dp-text) 10%, var(--dp-card)); box-shadow: none; }
+:host([light]) dialog.device .dev-set { background: color-mix(in srgb, var(--dp-text) 2.5%, var(--dp-card)); }
+:host([light]) dialog.device .dlg-btn, :host([light]) dialog.settings .dlg-btn { background: var(--dp-card); border-color: color-mix(in srgb, var(--dp-text) 18%, var(--dp-card)); }
+:host([light]) dialog.device .dlg-btn.primary, :host([light]) dialog.settings .dlg-btn.primary { background: var(--dp-primary); border-color: transparent; }
 }
 /* Liste (seit 2.0.1): grosser Titel, weiche Tiefe der Kacheln, Chip-Leiste als Material, Gruppentitel im neuen Titelstil */
 .toolbar h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; }

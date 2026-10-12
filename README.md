@@ -80,6 +80,7 @@ Only on a button press, with an AI task of Home Assistant. No keys, credentials 
 - Device type and connection type are detected automatically. You can fix either per integration; a value set by hand on the device comes first. The type only applies in the panel, not in Home Assistant.
 - Signal history comes from the recorder or, for ZHA, Bluetooth and unrecorded sensors, from the panel itself.
 - Every setting shows where it comes from: default, integration or device.
+- Changes in the device pop-up and in the settings take effect only with "Save". Closing with unsaved changes asks "Discard changes?".
 - Nothing security-relevant (tokens, keys) is ever shown in the panel.
 
 ## Installation

@@ -3,7 +3,7 @@
 // Gerät mit dem Standardwert, Auswahl "Wie Integration" / "Eigene Zeit" /
 // "Nicht überwachen", Zurücksetzen in den Einstellungen. DE/EN, Desktop/Handy.
 import { chromium } from "playwright-core";
-import { launchOptions, outDir, ensureDevTab } from "../lib.mjs";
+import { launchOptions, outDir, ensureDevTab, savePending } from "../lib.mjs";
 
 const b = await chromium.launch(launchOptions);
 let ok = true;
@@ -48,7 +48,7 @@ for (const lang of ["de", "en"]) {
     };
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
     const wait = async (code) => { await ensureDevTab(f, R, code); return f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false); };
-    const calls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").map(({ type, ...rest }) => rest));
+    const calls = async () => { await savePending(f, R); return p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").map(({ type, ...rest }) => rest)); };
     const row = (name) => `r.querySelector('select[data-dlg="${name}"]').closest(".opt")`;
     const origin = (name) => ev(`const o=${row(name)}.querySelector(".opt-origin"); return [o.querySelector(".origin").textContent.trim(), o.querySelector(".origin").className.replace("origin ",""), o.textContent.replace(o.querySelector(".origin").textContent,"").trim()]`);
     const openDev = async (id) => {
@@ -87,6 +87,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Gerät in der Liste: eigene Zeit`, await wait(`return r.host._devices.find((d) => d.id === "e").offline_after === 90`));
     // Nicht überwachen
     await (await handle('select[data-dlg="dev-off"]')).selectOption("off");
+    await savePending(f, R);
     check(`[${tag}] "${T.none}" gesendet, Gerät ohne Status`, await wait(`const d=r.host._devices.find((x) => x.id === "e"); return d.unmonitored === true && d.online == null`) && (await calls()).at(-1).offline === "off");
     // Der Status kommt mit der nächsten Abfrage; nach einer Berührung wartet das Popup kurz (siehe _dlgBusy).
     await wait(`return (r.querySelector("dialog.device .dlg-title .pill, dialog.device .dlg-head .pill")?.textContent || "").includes(${JSON.stringify(T.pill)})`);
@@ -94,6 +95,7 @@ for (const lang of ["de", "en"]) {
     await p.screenshot({ path: `${outDir}/origin-own-${tag.replace("/", "-")}.png` });
     // Zurück: Standard
     await (await handle('select[data-dlg="dev-off"]')).selectOption("default");
+    await savePending(f, R);
     check(`[${tag}] zurück auf Standard, null gesendet`, await wait(`return r.host._devices.find((d) => d.id === "e").offline_setting === null`) && (await calls()).at(-1).offline === null);
     await tap('dialog.device [data-dlg="close"]');
     await wait(`return !r.querySelector("dialog.device").open`);

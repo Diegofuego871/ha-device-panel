@@ -153,7 +153,13 @@ for (const lang of ["de", "en"]) {
 
     // Abbrechen verwirft
     await tap('dialog.settings .dlg-actions [data-set="close"]');
-    check(`[${tag}] Abbrechen schliesst ohne Speichern`, !(await isOpen()) && (await calls("device_panel/set_options")).length === 0 && (await calls("device_panel/set_panel")).length === 0);
+    const ddOpen = () => ev(`return r.querySelector("dialog.discard-dlg").open`);
+    check(`[${tag}] Abbrechen mit Änderungen fragt nach, Dialog bleibt offen`, (await ddOpen()) && (await isOpen()));
+    await tap('dialog.discard-dlg [data-dd="no"]');
+    check(`[${tag}] "Weiter bearbeiten" behält den Entwurf`, !(await ddOpen()) && (await isOpen()) && (await text(".set-count")) === T.two);
+    await tap('dialog.settings .dlg-actions [data-set="close"]');
+    await tap('dialog.discard-dlg [data-dd="yes"]');
+    check(`[${tag}] Verwerfen schliesst ohne Speichern`, !(await isOpen()) && !(await ddOpen()) && (await calls("device_panel/set_options")).length === 0 && (await calls("device_panel/set_panel")).length === 0);
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     check(`[${tag}] nach Abbrechen unverändert`, (await text('[data-id="updates"] .set-sec-sum')) === T.sumOn && (await text(".set-count")) === "");
@@ -226,6 +232,7 @@ for (const lang of ["de", "en"]) {
     await tap('input[data-list-all="exclude_types"]');
     check(`[${tag}] nochmals: alle ausgeblendet`, (await text('[data-id="devices"] .set-sec-sum')) === `${T.sumTypesAll} · ${T.sumDisp}` && await ev(`return [...r.querySelectorAll('input[data-list="exclude_types"]')].every(i=>!i.checked)`), await text('[data-id="devices"] .set-sec-sum'));
     await tap('dialog.settings .dlg-actions [data-set="close"]');
+    await tap('dialog.discard-dlg [data-dd="yes"]');
     // Integration wieder einblenden
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
@@ -519,6 +526,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Speicherfehler angezeigt`, await wait(`return (r.querySelector("dialog.settings .dlg-error")?.textContent || "").includes("Keine Berechtigung")`) && (await text("dialog.settings .dlg-error")).startsWith(T.saveErr) && await isOpen());
     await p.evaluate(() => { window.__setOptsFails = null; });
     await tap('dialog.settings .dlg-head [data-set="close"]');
+    await tap('dialog.discard-dlg [data-dd="yes"]');
 
     // Fehler beim Laden
     await p.evaluate(() => { window.__getOptsFails = true; });

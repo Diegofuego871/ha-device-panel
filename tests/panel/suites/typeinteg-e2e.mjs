@@ -4,7 +4,7 @@
 // zurück auf Automatisch. Deutsch und Englisch, Desktop und Handy, echte
 // Klicks/Taps.
 import { chromium } from "playwright-core";
-import { launchOptions, outDir } from "../lib.mjs";
+import { launchOptions, outDir, savePending } from "../lib.mjs";
 
 const b = await chromium.launch(launchOptions);
 let ok = true;
@@ -45,7 +45,7 @@ for (const lang of ["de", "en"]) {
     const text = (s) => ev(`return (r.querySelector(${JSON.stringify(s)})?.textContent || "").replace(/\\s+/g," ").trim()`);
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
     const setCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_options").map((m) => m.values));
-    const typeCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_type").map(({ device_id, device_type }) => ({ device_id, device_type })));
+    const typeCalls = async () => { await savePending(f, R); return p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_type").map(({ device_id, device_type }) => ({ device_id, device_type }))); };
     const open = async (id) => { await tap(`.dev[data-open="${id}"]`); await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab=\"set\"]')`); await tap('dialog.device [data-tab="set"]'); await wait(`return r.querySelector('select[data-dlg="type"]')`); };
     const close = async () => { await tap('dialog.device [data-dlg="close"]'); await wait(`return !r.querySelector("dialog.device").open`); };
     const sel = () => ev(`const s=r.querySelector('select[data-dlg="type"]'); return s.value + "|" + s.options[s.selectedIndex].textContent`);

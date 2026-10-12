@@ -14,6 +14,7 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 // Erwartete Texte ausgeschrieben (nicht aus strings.js), siehe table-e2e.
 const TEXT = {
   de: {
+    one1: "1 Änderung",
     pill: "Ausgefallen seit 2 Std. 14 Min.", sub: "Bewegung / Präsenz · Flur", open: "HA-Geräteseite öffnen",
     secs: ["Statistik", "Verbindung", "Gerät"], tabs: ["Übersicht", "Einstellungen", "Entitäten · 3", "Magic Push"], tabOwn: "Einstellungen 1 eigene", setSecs: ["Typ und Verbindung", "Einstellungen für dieses Gerät"], entSecs: ["Entitäten · 3"],
     tile24: ["Verfügbarkeit 24 Std.", "90,2%", "2 Unterbrüche · längster 2 Std. 14 Min."],
@@ -27,6 +28,7 @@ const TEXT = {
     typeAuto: "Automatisch: Steckdose", manual: "von Hand gesetzt", sw: "Schalter", outlet: "Steckdose", typeErr: "Typ konnte nicht gespeichert werden:",
   },
   en: {
+    one1: "1 change",
     pill: "Offline for 2 h 14 min", sub: "Motion / presence · Flur", open: "Open device page",
     secs: ["Statistics", "Connection", "Device"], tabs: ["Overview", "Settings", "Entities · 3", "Magic Push"], tabOwn: "Settings 1 custom", setSecs: ["Type and connection", "Settings for this device"], entSecs: ["Entities · 3"],
     tile24: ["Availability 24 h", "90.2%", "2 outages · longest 2 h 14 min"],
@@ -242,6 +244,9 @@ for (const lang of ["de", "en"]) {
     };
     check(`[${tag}] Typ-Auswahl automatisch`, (await ev(`const s=r.querySelector('dialog.device select[data-dlg="type"]'); return s.value === "" && s.options[0].textContent`)) === T.typeAuto);
     await sel("switch");
+    check(`[${tag}] Typ: bis Speichern kein Aufruf, Zähler`, (await calls("device_panel/set_device_type")).length === 0 && (await text("dialog.device .set-count")) === T.one1);
+    await tap('dialog.device [data-dlg="save"]');
+    await wait(`return r.querySelector("dialog.device .set-count.saved")`);
     const st = await calls("device_panel/set_device_type");
     check(`[${tag}] set_device_type`, st.at(-1)?.device_id === "k" && st.at(-1)?.device_type === "switch", JSON.stringify(st));
     check(`[${tag}] Reiter mit eigener Einstellung: Name und Zahl auf zwei Zeilen, Zahl kleiner`, await ev(`const t = r.querySelector('dialog.device [data-tab="set"]'); const l = t.querySelector(".tab-l"), n = t.querySelector(".tab-s"); if (!l || !n) return false; const a = l.getBoundingClientRect(), b = n.getBoundingClientRect(); return b.top >= a.bottom - 1 && parseFloat(getComputedStyle(n).fontSize) < parseFloat(getComputedStyle(l).fontSize) && t.scrollWidth <= t.clientWidth && !!t.getAttribute("aria-label")`));
@@ -250,13 +255,20 @@ for (const lang of ["de", "en"]) {
     const rowType = await ev(`const e=r.querySelector('[data-open="k"]'); return e.textContent`);
     check(`[${tag}] Liste zeigt neuen Typ`, rowType.includes(T.sw), rowType);
     await sel("");
+    await tap('dialog.device [data-dlg="save"]');
+    await wait(`return r.querySelector("dialog.device .set-count.saved")`);
     check(`[${tag}] zurück auf automatisch`, (await calls("device_panel/set_device_type")).at(-1)?.device_type === null && await wait(`return !r.querySelector("dialog.device").textContent.includes(${JSON.stringify(T.manual)})`));
     await p.evaluate(() => { window.__typeFails = "Keine Berechtigung"; });
     await sel("light");
+    await tap('dialog.device [data-dlg="save"]');
     check(`[${tag}] Fehler beim Typ angezeigt`, await wait(`return (r.querySelector("dialog.device .tile-v small.warn")?.textContent || "").startsWith(${JSON.stringify(T.typeErr)})`));
     await p.evaluate(() => { window.__typeFails = null; });
     await p.screenshot({ path: `${outDir}/popup-type-${lang}-${mobile ? "mobile" : "desktop"}.png` });
+    // Nach dem Fehler bleibt der Entwurf: Schliessen fragt nach
     await tap('dialog.device [data-dlg="close"]');
+    check(`[${tag}] Schliessen mit Entwurf fragt nach`, await ev(`return r.querySelector("dialog.discard-dlg").open && r.querySelector("dialog.device").open`));
+    await tap('dialog.discard-dlg [data-dd="yes"]');
+    check(`[${tag}] Verwerfen schliesst, Typ unverändert`, await wait(`return !r.querySelector("dialog.device").open`) && (await calls("device_panel/set_device_type")).length === 3);
 
     // HA-Geräteseite öffnen: Navigation im Elternfenster, Popup zu
     await tap(mobile ? '.mc[data-open="b"]' : 'tr[data-open="b"]');

@@ -2,7 +2,7 @@
 // (Einstellungen › Integrationen › Laden) und pro Gerät (Popup, Gruppe "Laden"); Gerät vor Integration vor global.
 // Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
-import { launchOptions, outDir } from "../lib.mjs";
+import { launchOptions, outDir, savePending } from "../lib.mjs";
 const b = await chromium.launch(launchOptions);
 let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
@@ -26,7 +26,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
   const wait = (c) => f.waitForFunction(new Function(`const r=${R};` + c), null, { timeout: 5000 }).then(() => true, () => false);
   const opts = (sel) => ev(`return [...r.querySelector(${JSON.stringify(sel)}).options].map(o => o.value + "|" + o.textContent.trim())`);
-  const devCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").map(({ type, id, ...rest }) => rest));
+  const devCalls = async () => { await savePending(f, R); return p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_device_settings").map(({ type, id, ...rest }) => rest)); };
   const optCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_options").map((m) => m.values));
   const text = (s) => ev(`return (r.querySelector(${JSON.stringify(s)})?.innerText || "").replace(/\\s+/g," ").trim()`);
 
@@ -46,10 +46,11 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await (await handle('select[data-dlg="dev-charge"]')).selectOption("on");
   check(`[${tag}] Popup: mit Lademeldung kommt der Push bei beendeter Ladung dazu`, await wait(`return !!r.querySelector('select[data-dlg="dev-charge-stop"]')`));
   await (await handle('select[data-dlg="dev-charge-live"]')).selectOption("off");
-  check(`[${tag}] Popup: Aus gesendet (false)`, (await wait(`return r.host._devices.find((d) => d.id === "b").charge_live_setting === false`)) && JSON.stringify((await devCalls()).at(-1)) === JSON.stringify({ device_id: "b", charge_live: false }));
+  check(`[${tag}] Popup: Aus gesendet (false)`, (await wait(`return r.host._devices.find((d) => d.id === "b").charge_live_setting === false`)) && (await devCalls()).at(-1).charge_live === false);
   await (await handle('select[data-dlg="dev-charge-live"]')).selectOption("default");
-  check(`[${tag}] Popup: zurück auf Standard (null)`, (await wait(`return r.host._devices.find((d) => d.id === "b").charge_live_setting == null`)) && JSON.stringify((await devCalls()).at(-1)) === JSON.stringify({ device_id: "b", charge_live: null }));
+  check(`[${tag}] Popup: zurück auf Standard (null)`, (await wait(`return r.host._devices.find((d) => d.id === "b").charge_live_setting == null`)) && (await devCalls()).at(-1).charge_live === null);
   await (await handle('select[data-dlg="dev-charge"]')).selectOption("default");
+  await savePending(f, R);
   await tap('dialog.device [data-dlg="close"]');
   await wait(`return !r.querySelector("dialog.device").open`);
 

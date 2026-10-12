@@ -7,6 +7,31 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.20.0] - 2026-10-12
+
+Saving works the same everywhere, and the light theme no longer looks greyed out (both requested by the user).
+
+### Changed
+
+- Changes in the device pop-up now take effect only with "Save", like in the settings dialog (gear). This covers the type,
+  the connection type and all settings of a device (outage, notifications, battery, charging, signal). Until then the
+  device shows the chosen values, the footer shows "n changes" with "Cancel" and "Save", and nothing is sent. "Save"
+  sends one call per kind (type, connection type, settings) and keeps the pop-up open with "Saved". A change set back
+  to its old value does not count. The draft survives the refresh of the list that runs every 10 seconds.
+- Closing a window with unsaved changes (button "Cancel", cross, tap on the background, Escape, or "Open device page")
+  asks in a centered pop-up "Discard changes?" with "Keep editing" or "Discard", the same pop-up as in the Magic Push
+  assistant. This now applies to the device pop-up and to the settings dialog (gear). Without changes, everything
+  closes at once. If saving fails, the draft stays and the error appears next to the value.
+- Still immediate (no draft): renaming a device, hiding a device, the list actions of Magic Push (switch on or off,
+  delete), the dialogs "Customize" and the filters. Each of them is a single action, not a group of settings.
+
+### Fixed
+
+- Light theme: the device pop-up and the settings dialog (gear) no longer look greyed out. The translucent glass look,
+  made for the dark theme, turned grey over the dimmed background. In the light theme the windows, header, tabs and
+  buttons are now plain white (tiles only very slightly set off); grey only appears on hover. The dark theme and the
+  sheet on the phone (width up to 600 px) are unchanged; it was the desktop window that looked grey.
+
 ## [2.19.0] - 2026-10-12
 
 Live activity while charging (iPhone) and live update (Android 16).
@@ -2655,6 +2680,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.20.0
 [2.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.19.0
 [2.17.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.1
 [2.17.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.17.0

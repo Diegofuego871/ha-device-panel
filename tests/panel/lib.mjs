@@ -37,3 +37,11 @@ export async function ensureIntegTab(frame, root, code) {
   if (!hit) return;
   await frame.evaluate(new Function(`const r=${root}; const b=r.querySelector('[data-set="isub"][data-key="${hit[1]}"]'); if (b && !b.classList.contains("on")) b.click();`));
 }
+
+// Seit 2.20.0 gelten Änderungen im Geräte-Popup erst mit "Speichern". Suiten, die danach die gesendeten Aufrufe prüfen,
+// speichern vorher einen offenen Entwurf (nichts zu tun, wenn keiner da ist). Das "nichts gesendet vor Speichern"
+// prüfen savecheck-e2e und devset-e2e.
+export async function savePending(frame, root) {
+  const clicked = await frame.evaluate(new Function(`const r=${root}; const d=r.querySelector("dialog.device"); const b=d?.open && d.querySelector('[data-dlg="save"]:not([disabled])'); if (b) b.click(); return !!b;`));
+  if (clicked) await frame.waitForFunction(new Function(`const r=${root}; return !!r.querySelector("dialog.device .set-count.saved") || !r.querySelector('dialog.device [data-dlg="save"]')`), null, { timeout: 5000 }).catch(() => {});
+}

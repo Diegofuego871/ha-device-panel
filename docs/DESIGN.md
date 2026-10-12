@@ -409,6 +409,20 @@ HA-Nachbau prüfen.
   (`.mg-rfor`, durch eine Linie getrennt): gleiche Reiterleiste (Sofort … 1 Std.) und eigene Zeit wie die Dauer, darunter
   eine Erklärung, die sich mit dem Wert ändert. Bei "ändert sich" fehlt der Block.
 
+## Helles Design: deckende Fenster (seit 2.20.0)
+
+- Die Glasoptik (64 % Deckkraft, Unschärfe) gilt nur im dunklen Design und auf dem Handy-Blatt (bis 600 px, dort wirkt sie hell gut). Am Desktop im hellen Design setzt das Panel das Host-Attribut `light`
+  (aus `hass.themes.darkMode`, sonst `prefers-color-scheme`); `@media (min-width: 601px) { :host([light]) … }` macht Geräte-Popup, Zahnrad und Protokoll
+  deckend weiss ohne Unschärfe, Kacheln nur 3,5 % abgesetzt. Grau nur beim Darüberfahren. Der Simulator setzt
+  `themes.darkMode` über `?theme=light`.
+
+## Einheitlich speichern (seit 2.20.0)
+
+- Geräte-Popup und Zahnrad: Änderungen sind ein Entwurf, der Fuss zeigt "n Änderungen", "Abbrechen" und "Speichern"
+  (ohne Änderung "Gerät ausblenden" und "Schliessen"; nach dem Speichern "Gespeichert"). Jedes Schliessen mit Änderungen
+  (Abbrechen, Kreuz, Hintergrund, Escape, Geräteseite) zeigt dasselbe mittige Pop-up wie Magic Push (`dialog.discard-dlg`,
+  `.dd-card`, `.dd-btns`), Fokus auf "Weiter bearbeiten". Einzelaktionen (umbenennen, ausblenden, Listenaktionen) bleiben sofort.
+
 ## Magic Push: Rückfrage beim Schliessen (seit 2.16.0)
 
 - "Änderungen verwerfen?" ist ein Pop-up in der Mitte des Assistenten-Fensters über abgedunkeltem Hintergrund
