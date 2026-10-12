@@ -9,11 +9,11 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.26.0] - 2026-10-12
 
-Lieblings-Timer, und der Titel in der Kopfzeile entfällt nur noch auf dem Handy.
+Lieblings-Timer (Herz), und der Titel in der Kopfzeile entfällt nur noch auf dem Handy.
 
 ### Hinzugefügt
 
-- Fenster mit allen Timern: ein Stern rechts von "Löschen" auf jeder Timer-Karte. Das Gerät eines Timers mit Stern rückt nach ganz oben und ist von Anfang an aufgeklappt, und im Gerät stehen die Timer mit Stern zuoberst. Die Sterne gehören dem Benutzer (gespeichert in den Benutzerdaten von Home Assistant wie die Favoriten-Geräte, sie folgen dir also auf andere Geräte). Der Stern ist bewusst ein anderes Symbol als das Herz der Favoriten-Geräte.
+- Fenster mit allen Timern: ein Herz rechts von "Löschen" auf jeder Timer-Karte markiert einen Lieblings-Timer. Sobald es mindestens einen gibt, hat die Filterleiste einen fünften Reiter mit Herz (und der Anzahl), der nur die Lieblings-Timer zeigt, ihre Geräte aufgeklappt, und das Fenster öffnet immer auf diesem Reiter. Wird der letzte Lieblings-Timer entfernt, verschwindet der Reiter. Die Herzen gehören dem Benutzer (gespeichert in den Benutzerdaten von Home Assistant wie die Favoriten-Geräte, sie folgen dir also auf andere Geräte).
 
 ### Geändert
 

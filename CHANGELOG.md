@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.26.0] - 2026-10-12
 
-Favorite timers, and the title in the header only disappears on the phone.
+Favorite timers (heart), and the title in the header only disappears on the phone.
 
 ### Added
 
-- Window with all timers: a star right of "Delete" on every timer card. A starred timer's device moves to the top and is expanded from the start, and within a device the starred timers come first. The stars belong to the user (stored in the Home Assistant user data like the favorite devices, so they follow you to other devices). The star is a different symbol from the heart of favorite devices on purpose.
+- Window with all timers: a heart right of "Delete" on every timer card marks a favorite timer. As soon as there is at least one favorite, the filter bar gets a fifth tab with a heart (and the count), showing only the favorites with their devices expanded, and the window always opens on that tab. When the last favorite is removed, the tab disappears. The hearts belong to the user (stored in the Home Assistant user data like the favorite devices, so they follow you to other devices).
 
 ### Changed
 

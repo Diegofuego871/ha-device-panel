@@ -425,6 +425,7 @@ export class TimerUi {
       on: timers.filter((x) => x.enabled).length,
       off: timers.filter((x) => !x.enabled).length,
       running: timers.filter((x) => x.running).length,
+      fav: timers.filter((x) => this.isStar(x.id)).length,
     };
   }
 
@@ -448,13 +449,10 @@ export class TimerUi {
       if (!groups.has(tm.device_id)) groups.set(tm.device_id, { id: tm.device_id, name: tm.device_name || dev?.name || "", dev, timers: [] });
       groups.get(tm.device_id).timers.push(tm);
     }
-    // Lieblings-Timer (Stern, seit 2.26.0): Geräte mit Stern zuerst, im Gerät die Timer mit Stern zuerst
-    const starred = (tm) => (this.isStar(tm.id) ? 0 : 1);
-    for (const g of groups.values()) g.timers.sort((a, b) => starred(a) - starred(b));
-    const first = (g) => (g.timers.some((tm) => this.isStar(tm.id)) ? 0 : 1);
-    return [...groups.values()].sort((a, b) => first(a) - first(b) || a.name.localeCompare(b.name));
+    return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  // Lieblings-Timer (Herz, seit 2.26.0): liegen pro Benutzer in den Benutzerdaten, eigener Reiter in "Alle Timer"
   isStar(id) {
     return Boolean(this.host._tmStars?.has(id));
   }
@@ -463,6 +461,7 @@ export class TimerUi {
     if (filter === "on" && !tm.enabled) return false;
     if (filter === "off" && tm.enabled) return false;
     if (filter === "running" && !tm.running) return false;
+    if (filter === "fav" && !this.isStar(tm.id)) return false;
     return !q || this.haystack(tm).includes(q.toLowerCase());
   }
 
@@ -473,8 +472,6 @@ export class TimerUi {
   isOpen(all, id, nGroups) {
     if (this.isFiltering(all)) return all.sopen?.[id] !== false;
     if (all.open && id in all.open) return all.open[id];
-    // Ein Gerät mit Lieblings-Timer ist von Anfang an aufgeklappt (seit 2.26.0)
-    if ((all.timers || []).some((tm) => tm.device_id === id && this.isStar(tm.id))) return true;
     return nGroups === 1;
   }
 
@@ -518,9 +515,16 @@ export class TimerUi {
     const ph = t("listSearch");
     html += `<label class="list-search" data-for="timers">${this.h.mdi("search", 18)}<input type="search" data-lsearch="timers" value="${esc(q)}" placeholder="${esc(ph)}" aria-label="${esc(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n"></span>${this.host._fieldClearHtml(all.dlg ? "data-tma-clear" : "data-lclear", "timers", q)}</label>`;
     const c = this.allCounts(all.timers);
+    // Reiter mit Herz (seit 2.26.0): nur, solange es einen Lieblings-Timer gibt; das Fenster öffnet dann auf diesem Reiter
+    if (all.dlg && !all.tabInit) {
+      all.tabInit = true;
+      if (c.fav) all.filter = "fav";
+    }
+    if ((all.filter || "all") === "fav" && !c.fav) all.filter = "all";
     const filter = all.filter || "all";
-    html += `<div class="sub-tabs mg-tabs mg-filter" role="tablist">${[["all", "tmFilterAll"], ["on", "tmFilterOn"], ["off", "tmFilterOff"], ["running", "tmFilterRunning"]]
-      .map(([k, label]) => `<button type="button" role="tab" class="sub-tab two${k === filter ? " on" : ""}" ${this.a(all, "timer-filter")} data-v="${k}" aria-selected="${k === filter}"><span class="tab-l">${esc(t(label))}</span> <span class="tab-s">${c[k]}</span></button>`)
+    const tabs = [["all", "tmFilterAll"], ["on", "tmFilterOn"], ["off", "tmFilterOff"], ["running", "tmFilterRunning"], ...(c.fav ? [["fav", "tmFilterFav"]] : [])];
+    html += `<div class="sub-tabs mg-tabs mg-filter" role="tablist">${tabs
+      .map(([k, label]) => `<button type="button" role="tab" class="sub-tab two${k === filter ? " on" : ""}${k === "fav" ? " fav" : ""}" ${this.a(all, "timer-filter")} data-v="${k}" aria-selected="${k === filter}"${k === "fav" ? ` aria-label="${esc(t(label))}"` : ""}><span class="tab-l">${k === "fav" ? this.h.mdi("heart", 16) : esc(t(label))}</span> <span class="tab-s">${c[k]}</span></button>`)
       .join("")}</div>`;
     return `${html}<div data-tm-all-zone data-q="${esc(q)}">${this.overviewListHtml(all, devices)}</div>`;
   }
@@ -569,7 +573,7 @@ export class TimerUi {
         <button type="button" class="linkbtn" ${this.a(all, "timer-run")} data-id="${esc(tm.id)}">${esc(t("tmActRun"))}</button>`
         }
         <button type="button" class="linkbtn danger" ${this.a(all, "timer-delete")} data-id="${esc(tm.id)}">${esc(t("tmActDelete"))}</button>
-        <button type="button" class="linkbtn star${this.isStar(tm.id) ? " on" : ""}" ${this.a(all, "timer-star")} data-id="${esc(tm.id)}" aria-pressed="${this.isStar(tm.id)}" title="${esc(t(this.isStar(tm.id) ? "tmStarRemove" : "tmStarAdd"))}" aria-label="${esc(t(this.isStar(tm.id) ? "tmStarRemove" : "tmStarAdd"))}">${this.h.mdi(this.isStar(tm.id) ? "star" : "starOutline", 20)}</button></div>`;
+        <button type="button" class="linkbtn fav${this.isStar(tm.id) ? " on" : ""}" ${this.a(all, "timer-star")} data-id="${esc(tm.id)}" aria-pressed="${this.isStar(tm.id)}" title="${esc(t(this.isStar(tm.id) ? "tmFavRemove" : "tmFavAdd"))}" aria-label="${esc(t(this.isStar(tm.id) ? "tmFavRemove" : "tmFavAdd"))}">${this.h.mdi(this.isStar(tm.id) ? "heart" : "heartOutline", 20)}</button></div>`;
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("tmDeleteAsk", tm.name))}</b><small>${esc(t("tmDeleteNote"))}</small>
           <div class="mg-btns small"><button type="button" class="dlg-btn" ${this.a(all, "timer-delete-no")}>${esc(t("tmCancel"))}</button><button type="button" class="dlg-btn danger" ${this.a(all, "timer-delete-yes")} data-id="${esc(tm.id)}">${esc(t("tmDeleteYes"))}</button></div></div>`

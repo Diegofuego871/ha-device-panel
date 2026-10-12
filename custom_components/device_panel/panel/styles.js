@@ -1397,10 +1397,13 @@ a.dlg-btn { display: inline-flex; align-items: center; justify-content: center; 
 .mg-radio.on { border: 7px solid var(--dp-primary); }
 .mg-acts { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; padding-left: 50px; font-size: 13px; }
 .linkbtn.danger { color: var(--dp-error); }
-/* Stern des Lieblings-Timers (seit 2.26.0): rechts von "Löschen", mit Abstand, gelb wenn gesetzt */
-.mg-acts .linkbtn.star { display: inline-flex; align-items: center; margin-left: 14px; color: var(--dp-text2); }
-.mg-acts .linkbtn.star.on { color: var(--dp-warning); }
-.mg-acts .linkbtn.star:hover { text-decoration: none; color: var(--dp-warning); }
+/* Herz des Lieblings-Timers (seit 2.26.0): rechts von "Löschen", mit Abstand, rot wenn gesetzt (wie das Herz der Favoriten-Geräte) */
+.mg-acts .linkbtn.fav { display: inline-flex; align-items: center; margin-left: 14px; color: var(--dp-text2); }
+.mg-acts .linkbtn.fav.on { color: var(--dp-error); }
+.mg-acts .linkbtn.fav:hover { text-decoration: none; color: var(--dp-error); }
+.mg-filter .sub-tab.fav .tab-l { display: inline-flex; color: var(--dp-error); }
+/* Die Filter von "Alle Timer" bleiben eine Zeile, auch mit dem fünften Reiter (Herz): die Regeln für viele Reiter würden umbrechen */
+.sub-tabs.mg-filter { grid-auto-flow: column !important; grid-template-columns: none !important; }
 /* Handy: Aktionen der Karten (Bearbeiten, Löschen, Gerät öffnen) mit Fläche für den Finger (seit 2.24.0): grössere Schrift, 44 px Trefferhöhe, mehr Abstand */
 @media (max-width: 700px) {
   .mg-acts { gap: 0 4px; margin-top: 2px; padding-left: 38px; font-size: 15px; }
