@@ -33,6 +33,11 @@ Favoriten und automatische Updates (beides Wunsch des Nutzers): ein Herz auf der
   drücken. Eine fehlgeschlagene Installation steht im Protokoll und wird bei der nächsten täglichen Prüfung wiederholt.
   Ohne HACS geschieht nichts. Der Schalter ist eine Panel-Einstellung für die ganze Instanz und gilt mit "Speichern".
 
+### Geändert
+
+- Die Reiterleiste des Geräte-Popups zeigt auf dem Handy wieder Text, keine Symbole (die Symbole aus 2.21.0 waren zu
+  ungenau). Was keinen Platz hat, beginnt eine neue Zeile: drei Reiter pro Zeile, darunter zwei.
+
 ## [2.21.0] - 2026-10-12
 
 Timer: eine Entität eines Geräts einmalig oder nach Plan schalten (Wunsch des Nutzers).

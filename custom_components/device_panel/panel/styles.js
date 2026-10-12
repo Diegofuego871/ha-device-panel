@@ -1588,19 +1588,9 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .tm-sum { margin-top: 8px; padding: 12px 14px; border-radius: 14px; background: var(--dp-primary-soft); font-size: 14.5px; line-height: 1.45; }
 .tm-sum b { font-weight: 600; }
 .tm-result { margin-top: 10px; }
-/* Reiterleiste im Geräte-Popup mit fünf Reitern: auf dem Handy Symbole, die Beschriftung nur am gewählten Reiter (Entscheid zu Frage 7 in docs/mockups/timer-v1) */
+/* Reiterleiste im Geräte-Popup mit fünf Reitern (seit 2.22.0): auf dem Handy bleibt es bei Text (keine Symbole, Wunsch des Nutzers); was keinen
+   Platz hat, beginnt eine neue Zeile: drei Reiter pro Zeile, darunter zwei */
 @media (max-width: 600px) {
-  .dev-tabs .sub-tabs { display: flex; gap: 2px; }
-  .dev-tabs .sub-tab { flex: 1 1 0; min-width: 0; padding: 0 4px; font-size: 0; }
-  .dev-tabs .sub-tab::before { font-size: 18px; line-height: 1; }
-  .dev-tabs .sub-tab[data-tab="ov"]::before { content: "📊"; }
-  .dev-tabs .sub-tab[data-tab="set"]::before { content: "⚙️"; }
-  .dev-tabs .sub-tab[data-tab="ent"]::before { content: "🧩"; }
-  .dev-tabs .sub-tab[data-tab="magic"]::before { content: "✨"; }
-  .dev-tabs .sub-tab[data-tab="timer"]::before { content: "⏱️"; }
-  .dev-tabs .sub-tab.two:not(.on) > * { display: none; }
-  .dev-tabs .sub-tab.on { flex: 2.8 1 0; gap: 6px; font-size: 13.5px; }
-  .dev-tabs .sub-tab.on.two::before { display: none; }
-  .dev-tabs .sub-tab.on.two .tab-l { font-size: 13px; }
+  .dev-tabs .sub-tabs:has(> .sub-tab:nth-child(5)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 `;

@@ -29,6 +29,9 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   (sechs neue), Suite `autoupdate-e2e`. Nicht geprüft: echtes HACS (Entität, `update.install`-Dauer, Verhalten bei
   Vorabversionen) und der Ablauf über Nacht.
 
+- Reiterleiste des Geräte-Popups (2.22.0, Wunsch des Nutzers): keine Emoji-Symbole mehr auf dem Handy, Text wie in den
+  Einstellungen; fünf Reiter brechen als 3 + 2 um (`.dev-tabs .sub-tabs:has(> .sub-tab:nth-child(5))`, bis 600 px).
+
 ## Davor (2.21.0, Timer)
 
 - 2.21.0 (Wunsch des Nutzers, Mockups `docs/mockups/timer-v1`): Timer, die eine schaltbare Entität eines Geräts einmalig
