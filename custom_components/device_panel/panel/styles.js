@@ -1556,6 +1556,10 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .tm-clock .time { font-size: 34px; font-weight: 300; letter-spacing: -.02em; line-height: 1; font-variant-numeric: tabular-nums; }
 .tm-clock .time small { font-size: 14px; font-weight: 400; margin-left: 6px; color: var(--dp-text2); letter-spacing: 0; }
 .tm-clock .grow { flex: 1; min-width: 0; }
+/* Schalter der Timer-Karte etwas grösser als der Standard (44 × 24 statt 36 × 20 px, Wunsch des Nutzers) */
+.tm-clock .switch { width: 44px; height: 24px; }
+.tm-clock .switch span::after { width: 20px; height: 20px; }
+.tm-clock .switch input:checked + span::after { left: 22px; }
 .tm-clock .name { margin-top: 6px; font-size: 14px; font-weight: 600; }
 .tm-clock .what { margin-top: 2px; color: var(--dp-text2); font-size: 12.5px; line-height: 1.35; }
 .tm-days { display: flex; gap: 5px; margin-top: 9px; }

@@ -36,6 +36,7 @@ Favorites and automatic updates (both requested by the user): a heart on the dev
   fills in tomorrow. Without a date the timer switches the next time the clock reaches the chosen time, today or
   tomorrow. After that it is always switched off and has to be enabled again (that is the difference to "Daily");
   enabling it again waits for the next time. With a date it works as before. In the list such a timer shows "once" and "Once, next time at 06:30".
+- The switch on the timer cards in the device pop-up is a little larger (44 × 24 px instead of 36 × 20 px).
 - Device pop-up on the phone: the small symbols stay. The symbol of the "Magic Push" tab is now a bell (🔔) instead of
   the sparkle, which looked too little like a notification.
 
