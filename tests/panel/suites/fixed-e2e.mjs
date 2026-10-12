@@ -36,7 +36,7 @@ for (const lang of ["de", "en"]) {
         await scrollTo(0);
         await wait(`return r.querySelectorAll(".dev").length > 1`);
         const name = flat ? "Liste" : "Gruppen";
-        check(`[${tag}] ${name}: oben Kacheln, keine Zeile`, (await rect(".hero")).visible && !(await rect(".hs-in")).visible);
+        check(`[${tag}] ${name}: oben Kacheln, keine Zeile`, (await rect(".hero")).visible && (await wait(`return getComputedStyle(r.querySelector(".hs-in")).display === "none"`)), JSON.stringify([await rect(".hero"), await rect(".hs-in")]));
         await scrollTo(1000);
         check(`[${tag}] ${name}: Zeile erscheint`, await wait(`return getComputedStyle(r.querySelector(".hs-in")).display === "flex"`));
         const strip = await rect(".hs-in"), chips = await rect(".chips"), th = await rect("th");

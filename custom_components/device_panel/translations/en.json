@@ -252,7 +252,8 @@
         "signal": "Weak signal",
         "update": "Update available",
         "override": "Own setting",
-        "new": "New"
+        "new": "New",
+        "favorites": "Favorites"
       }
     },
     "updates_mode": {

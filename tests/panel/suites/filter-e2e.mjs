@@ -56,7 +56,7 @@ for (const lang of ["de", "en"]) {
     // erneutes Antippen hebt den Filter auf.
     check(`[${tag}] Alle zählt die Treffer`, (await chipN('.chip[data-conn="all"]')) === 2, String(await chipN('.chip[data-conn="all"]')));
     check(`[${tag}] Chip ohne Treffer gedämpft`, await ev(`return r.querySelector('.chip[data-conn="wifi"]').classList.contains("zero") && r.querySelector('.chip[data-conn="wifi"] .n').textContent === "0"`));
-    const sels = await ev(`return [...r.querySelectorAll('.chip[data-conn]:not([data-conn="all"]), .chip[data-hint]')].map(c=>c.dataset.conn ? '.chip[data-conn="'+c.dataset.conn+'"]' : '.chip[data-hint="'+c.dataset.hint+'"]')`);
+    const sels = await ev(`return [...r.querySelectorAll('.chip[data-conn]:not([data-conn="all"]), .chip[data-hint]:not([data-hint="favorites"])')].map(c=>c.dataset.conn ? '.chip[data-conn="'+c.dataset.conn+'"]' : '.chip[data-hint="'+c.dataset.hint+'"]')`);
     const wrong = [];
     for (const sel of sels) {
       const n = await chipN(sel);

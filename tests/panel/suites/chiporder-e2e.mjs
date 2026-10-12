@@ -16,8 +16,8 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 // Standardfolge der Liste (seit 1.18.0 fest: "Alle" angeheftet, alle Verbindungsarten, auch
 // ohne Geräte) und der Leiste (nur, was zutrifft).
-const DEFAULT = "all,pin,integration,new,offline,problems,battery,batteries,charging,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override";
-const BAR = "all,integration,|,new,offline,problems,battery,batteries,|,area,|,thread,wifi,ble,zigbee,cloud,network,unknown,zwave,|,signal,update";
+const DEFAULT = "all,pin,favorites,integration,new,offline,problems,battery,batteries,charging,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override";
+const BAR = "all,favorites,|,integration,|,new,offline,problems,battery,batteries,|,area,|,thread,wifi,ble,zigbee,cloud,network,unknown,zwave,|,signal,update";
 // Vorschau und Leiste vergleichen ohne das Pin-Zeichen (leerer Eintrag) der Vorschau.
 const norm = (t) => t.split("#").filter(Boolean).join("#");
 const TEXT = {
@@ -111,7 +111,7 @@ for (const lang of ["de", "en"]) {
 
     // 2. "Alle" hinter die Hinweise ziehen: Trenner zwischen den Arten
     await drag(sel("all"), sel("area"));
-    const m1 = "pin,integration,new,offline,problems,battery,batteries,charging,all,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override";
+    const m1 = "pin,favorites,integration,new,offline,problems,battery,batteries,charging,all,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override";
     check(`[${tag}] "Alle" nach hinten gezogen`, await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === ${JSON.stringify(m1)}`), await rowOrder());
     check(`[${tag}] als Änderung, Zusammenfassung, Knopf "${T.reset}"`, (await text(".set-count")) === T.one && (await text('[data-id="look"] .set-sec-sum')).endsWith(T.order) && (await text('[data-set="drag-reset"]')) === T.reset, `${await text(".set-count")} / ${await text('[data-id="look"] .set-sec-sum')}`);
     check(`[${tag}] Vorschau folgt der Folge: "${T.fixed}" hinter den Hinweisen`, await wait(`return [...r.querySelectorAll(".chip-prev-pills > *")].map((c) => c.classList.contains("vsep") ? "|" : c.textContent.replace(/\\s+/g," ").trim()).join("#").includes(${JSON.stringify(`#|#${T.fixed} 16#|#`)})`), await prevTexts());
@@ -119,7 +119,7 @@ for (const lang of ["de", "en"]) {
       // Pfeiltaste: "Update" eins nach unten, der Fokus bleibt am Griff
       await (await handle(sel("update"))).focus();
       await p.keyboard.press("ArrowDown");
-      check(`[${tag}] Pfeiltaste verschiebt, Fokus bleibt`, (await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === "pin,integration,new,offline,problems,battery,batteries,charging,all,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,override,update"`)) && (await ev(`return r.activeElement?.dataset.key === "update"`)), await rowOrder());
+      check(`[${tag}] Pfeiltaste verschiebt, Fokus bleibt`, (await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === "pin,favorites,integration,new,offline,problems,battery,batteries,charging,all,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,override,update"`)) && (await ev(`return r.activeElement?.dataset.key === "update"`)), await rowOrder());
       await p.keyboard.press("ArrowUp");
       await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === ${JSON.stringify(m1)}`);
     }
@@ -127,7 +127,7 @@ for (const lang of ["de", "en"]) {
     await p.screenshot({ path: `${outDir}/chiporder-settings-${tag.replace("/", "-")}.png` });
     check(`[${tag}] gespeichert: volle Folge in chip_order`, (await save()) && JSON.stringify((await lastSet())?.chip_order) === JSON.stringify(m1.split(",")), JSON.stringify(await lastSet()));
     const b1 = await bar();
-    check(`[${tag}] Leiste: "Alle" hinter den Hinweisen, nichts angeheftet, Trenner zwischen den Arten`, b1 === "integration,|,new,offline,problems,battery,batteries,|,all,|,area,|,thread,wifi,ble,zigbee,cloud,network,unknown,zwave,|,signal,update" && !(await ev(`return !!r.querySelector(".chips .chip-pin")`)), b1);
+    check(`[${tag}] Leiste: "Alle" hinter den Hinweisen, nichts angeheftet, Trenner zwischen den Arten`, b1 === "favorites,|,integration,|,new,offline,problems,battery,batteries,|,all,|,area,|,thread,wifi,ble,zigbee,cloud,network,unknown,zwave,|,signal,update" && !(await ev(`return !!r.querySelector(".chips .chip-pin")`)), b1);
     await p.screenshot({ path: `${outDir}/chiporder-bar-${tag.replace("/", "-")}.png` });
 
     // 3. Weite Wege (nur Desktop, hohes Fenster): Batterie ganz nach vorn, Zigbee hinter die Verbindungsarten
@@ -135,11 +135,11 @@ for (const lang of ["de", "en"]) {
       await openChips();
       await drag(sel("batteries"), sel("integration"));
       await drag(sel("zigbee"), sel("signal"));
-      const m2 = "pin,batteries,integration,new,offline,problems,battery,charging,all,area,thread,wifi,ble,ethernet,cloud,matter,network,unknown,zwave,zigbee,signal,update,override";
+      const m2 = "pin,favorites,batteries,integration,new,offline,problems,battery,charging,all,area,thread,wifi,ble,ethernet,cloud,matter,network,unknown,zwave,zigbee,signal,update,override";
       check(`[${tag}] Batterie ganz vorn, Zigbee hinter den Verbindungsarten`, await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === ${JSON.stringify(m2)}`), await rowOrder());
       check(`[${tag}] gespeichert`, (await save()) && JSON.stringify((await lastSet())?.chip_order) === JSON.stringify(m2.split(",")), JSON.stringify(await lastSet()));
       const b2 = await bar();
-      check(`[${tag}] Leiste: Batterie zuerst, Zigbee am Ende der Verbindungsarten`, b2.startsWith("batteries,|,integration,|,new") && b2.includes("zwave,zigbee,|,signal"), b2);
+      check(`[${tag}] Leiste: Batterie zuerst, Zigbee am Ende der Verbindungsarten`, b2.startsWith("favorites,batteries,|,integration,|,new") && b2.includes("zwave,zigbee,|,signal"), b2);
     }
 
     // 4. Verbindungsart ausblenden: fehlt in Leiste und Vorschau, kein Trenner-Rest
@@ -162,20 +162,20 @@ for (const lang of ["de", "en"]) {
     // 5b. Anheften (1.15.0, Variante B; seit 1.18.0 ist ab Werk "Alle" angeheftet): Marker "pin" als
     // Linie in der Liste; die sichtbaren Chips davor kleben auf dem Handy links, die Vorschau zeigt die Haftkante
     await openChips();
-    check(`[${tag}] Anheft-Linie hinter "${T.fixed}", nur "${T.fixed}" angeheftet`, (await ev(`return !!r.querySelector('.pin-line .pin-tab [data-key="pin"]')`)) && (await ev(`return [...r.querySelectorAll(".chips .chip-pin .chip")].map((c) => c.dataset.conn).join()`)) === "all" && (await ev(`return !!r.querySelector(".chip-prev-strip .chip-pin")`)) && (await rowOrder()).startsWith("all,pin,integration"), await rowOrder());
+    check(`[${tag}] Anheft-Linie hinter "${T.fixed}", nur "${T.fixed}" angeheftet`, (await ev(`return !!r.querySelector('.pin-line .pin-tab [data-key="pin"]')`)) && (await ev(`return [...r.querySelectorAll(".chips .chip-pin .chip")].map((c) => c.dataset.conn).join()`)) === "all" && (await ev(`return !!r.querySelector(".chip-prev-strip .chip-pin")`)) && (await rowOrder()).startsWith("all,pin,favorites,integration"), await rowOrder());
     check(`[${tag}] Linie ohne Schalter, mit Etikett`, await ev(`const row=r.querySelector(".pin-line"); return !row.querySelector("input") && row.querySelector(".pin-tab span:last-child").textContent.trim() === ${JSON.stringify(T.pin)}`));
     await (await handle(sel("pin"))).focus();
     await p.keyboard.press("ArrowDown");
-    check(`[${tag}] Linie eins nach unten (Pfeiltaste, hinter Integration)`, (await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === "all,integration,pin,new,offline,problems,battery,batteries,charging,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override"`)) && (await ev(`return r.activeElement?.dataset.key === "pin"`)), await rowOrder());
+    check(`[${tag}] Linie eins nach unten (Pfeiltaste, hinter Integration)`, (await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === "all,favorites,pin,integration,new,offline,problems,battery,batteries,charging,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override"`)) && (await ev(`return r.activeElement?.dataset.key === "pin"`)), await rowOrder());
     // Alle, Integration, Neu und Ausgefallen anheften: Linie noch zwei nach unten
     await p.keyboard.press("ArrowDown");
     await p.keyboard.press("ArrowDown");
-    await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === "all,integration,new,offline,pin,problems,battery,batteries,charging,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override"`);
+    await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === "all,favorites,integration,new,pin,offline,problems,battery,batteries,charging,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override"`);
     check(`[${tag}] Vorschau: Pin-Zeichen an der Kante, Handy-Leiste mit Haftgruppe`, (await ev(`return !!r.querySelector(".chip-prev-pills .chip-prev-pin") && !!r.querySelector(".chip-prev-strip .chip-pin")`)) && (await text(".chip-prev-t.phone")) === T.phone, await text(".chip-prev-t.phone"));
-    check(`[${tag}] gespeichert mit Marker`, (await save()) && JSON.stringify((await lastSet())?.chip_order?.slice(0, 6)) === JSON.stringify(["all", "integration", "new", "offline", "pin", "problems"]), JSON.stringify(await lastSet()));
+    check(`[${tag}] gespeichert mit Marker`, (await save()) && JSON.stringify((await lastSet())?.chip_order?.slice(0, 6)) === JSON.stringify(["all", "favorites", "integration", "new", "pin", "offline"]), JSON.stringify(await lastSet()));
     const grp = () => ev(`const g=r.querySelector(".chips .chip-pin"); if (!g) return null; return { n: g.querySelectorAll(".chip").length, vsep: g.querySelectorAll(".vsep").length, next: g.nextElementSibling?.className || "", w: g.offsetWidth, wide: g.classList.contains("too-wide"), cls: g.parentElement.className }`);
     const g1 = await grp();
-    check(`[${tag}] Leiste: vier Chips in der Haftgruppe (Alle, Integration, Neu, Ausgefallen), keine Linie an der Kante`, g1 && g1.n === 4 && !g1.next.includes("vsep") && !(await ev(`return !!r.querySelector(".chips .chip-pin + .vsep")`)), JSON.stringify(g1));
+    check(`[${tag}] Leiste: vier Chips in der Haftgruppe (Alle, Favoriten, Integration, Neu), keine Linie an der Kante`, g1 && g1.n === 4 && !g1.next.includes("vsep") && !(await ev(`return !!r.querySelector(".chips .chip-pin + .vsep")`)), JSON.stringify(g1));
     if (mobile) {
       check(`[${tag}] Handy: vier Chips sind mehr als 60 % der Leiste, die Haftgruppe scrollt mit (Grenze)`, g1.wide === true, JSON.stringify(g1));
       // Nur "Alle" angeheftet (Standard): Marker wieder hinter "Alle" (Pfeiltaste hoch)
@@ -215,7 +215,7 @@ for (const lang of ["de", "en"]) {
     // 7. Gespeicherte Folge ohne Verbindungsarten (aus 1.13.0): sie kommen hinter "Alle"
     await p.evaluate(() => { window.__opts.chip_order = ["batteries", "area", "integration", "all", "problems", "battery", "signal", "update", "override", "new"]; });
     await openChips();
-    check(`[${tag}] ältere Folge ohne Verbindungsarten: sie folgen "Alle" nach Anzahl`, (await rowOrder()) === "pin,batteries,area,integration,all,zigbee,wifi,thread,zwave,ble,network,cloud,unknown,matter,ethernet,offline,problems,battery,signal,update,override,new,charging", await rowOrder());
+    check(`[${tag}] ältere Folge ohne Verbindungsarten: sie folgen "Alle" nach Anzahl`, (await rowOrder()) === "pin,batteries,area,integration,all,favorites,zigbee,wifi,thread,zwave,ble,network,cloud,unknown,matter,ethernet,offline,problems,battery,signal,update,override,new,charging", await rowOrder());
     await tap('dialog.settings .dlg-actions [data-set="close"]');
 
     check(`[${tag}] kein fehlender Text`, !(await ev(`return r.innerHTML.includes("undefined") || r.innerHTML.includes("NaN")`)));

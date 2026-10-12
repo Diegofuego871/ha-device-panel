@@ -3,7 +3,20 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.21.0, Timer)
+## Stand (2.22.0, Favoriten)
+
+- 2.22.0 (Wunsch des Nutzers): Herz im Kopf des Geräte-Popups (`.dlg-fav`, `data-dlg="fav"`, sofort, ohne Entwurf) und Chip
+  "Favoriten" (nur rotes Herz, `bare`-Eintrag in `HINTS` mit `key: "favorites"`, `.chip.hint.fv.bare`, immer sichtbar).
+  Favoriten gehören dem Benutzer: IDs in `frontend/set_user_data` unter `device_panel_favorites` (`{ids, updated}`, lokale
+  Kopie in localStorage, neuerer Stand gewinnt, wie die Ansicht); `_applyFavs()` setzt `d.fav` auf jedes Gerät (nach
+  `list_devices` und jedem Tipp), `_toggleFav(id)`. Chip-Option: `CHIP_KEYS` bekommt `favorites` (hide_chips, Auswahlliste,
+  `CHIP_ORDER_KEYS`); Standardfolge `all, pin, favorites, integration, …`; gespeicherte Folgen ohne `favorites` bekommen es
+  in `chipOrder()` gleich nach "Alle" und hinter dem Anheft-Marker. Der Chip hat keine Zahl und keinen Text (`aria-label`
+  und `title` aus `hintFavorites`). Suite `fav-e2e`; `chiporder`, `hidechips`, `filter`, `integ`, `table` an den neuen
+  Chip angepasst, `fixed-e2e` wartet jetzt auf die verschwundene Zeile (war eine Wettlauf-Prüfung). Nicht umgesetzt:
+  Herz in der Geräteliste/Kachel, Sortierung nach Favoriten. Auf einem echten Gerät nicht geprüft.
+
+## Davor (2.21.0, Timer)
 
 - 2.21.0 (Wunsch des Nutzers, Mockups `docs/mockups/timer-v1`): Timer, die eine schaltbare Entität eines Geräts einmalig
   (Countdown "In X Min." oder Datum mit Uhrzeit) oder wiederholt (täglich, wöchentlich mit Wochentagen, monatlich) schalten,

@@ -49,9 +49,9 @@ for (const lang of ["de", "en"]) {
     await wait(`return !!r.querySelector('.chip[data-conn="thread"]')`);
     const total = await rows();
 
-    // Standardfolge seit 1.18.0: "Alle" (angeheftet), dann "Integration", dann die Hinweise
+    // Standardfolge seit 1.18.0: "Alle" (angeheftet), dann das Herz (Favoriten), "Integration", dann die Hinweise
     const order = await ev(`return [...r.querySelectorAll(".chips .chip")].slice(0, 3).map(c=>c.classList.contains("integ") ? "integ" : c.dataset.conn === "all" ? "all" : "other").join()`);
-    check(`[${tag}] Chip "${T.chip}" steht hinter "Alle"`, order.startsWith("all,integ,other") && (await text(".chips .chip.integ")) === T.chip, order);
+    check(`[${tag}] Chip "${T.chip}" steht hinter "Alle"`, order.startsWith("all,other,integ") && (await text(".chips .chip.integ")) === T.chip, order);
 
     // Auswahl öffnen: neun Integrationen mit Zahlen, Suche, alphabetisch
     check(`[${tag}] Auswahl öffnet`, await openInteg() && await isOpen());

@@ -31,6 +31,8 @@ const NARROW_QUERY = "(max-width: 600px)";
 // Panel offen ist.
 const VIEW_KEY = "device_panel_view";
 const VIEW_SAVE_DELAY_MS = 400;
+// Favoriten pro Benutzer (seit 2.22.0), gleiche Ablage wie die Ansicht
+const FAV_KEY = "device_panel_favorites";
 // Spalten nach "Gerät" (fest vorne): Schlüssel, Text, Standard sichtbar.
 // Der Schlüssel ist zugleich der Sortierschlüssel der Spalte.
 const COLUMNS = [
@@ -255,6 +257,8 @@ const MDI = {
   closeCircle: "M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z",
   lock: "M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z",
   sparkle: "M12,1L9,9L1,12L9,15L12,23L15,15L23,12L15,9L12,1Z",
+  heart: "M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.42 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.42 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z",
+  heartOutline: "M12.1,18.55L12,18.65L11.89,18.55C7.14,14.24 4,11.39 4,8.5C4,6.5 5.5,5 7.5,5C9.04,5 10.54,6 11.07,7.36H12.93C13.46,6 14.96,5 16.5,5C18.5,5 20,6.5 20,8.5C20,11.39 16.86,14.24 12.1,18.55M16.5,3C14.76,3 13.09,3.81 12,5.08C10.91,3.81 9.24,3 7.5,3C4.42,3 2,5.41 2,8.5C2,12.27 5.4,15.36 10.55,20.03L12,21.35L13.45,20.04C18.6,15.36 22,12.27 22,8.5C22,5.41 19.58,3 16.5,3Z",
   signalOff: "M18,3V16.18L21,19.18V3H18M4.28,5L3,6.27L10.73,14H8V21H11V14.27L13,16.27V21H16V19.27L19.73,23L21,21.72L4.28,5M13,9V11.18L16,14.18V9H13M3,18V21H6V18H3Z",
   timer: "M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M19.03,7.39L20.45,5.97C20,5.46 19.55,5 19.04,4.56L17.62,6C16.07,4.74 14.12,4 12,4A9,9 0 0,0 3,13A9,9 0 0,0 12,22C17,22 21,17.97 21,13C21,10.88 20.26,8.93 19.03,7.39M11,14H13V8H11M15,1H9V3H15V1Z",
   bellOff: "M20.84,22.73L18.11,20H3V19L5,17V11C5,9.86 5.29,8.73 5.83,7.72L1.11,3L2.39,1.73L22.11,21.46L20.84,22.73M19,15.8V11C19,7.9 16.97,5.17 14,4.29C14,4.19 14,4.1 14,4A2,2 0 0,0 12,2A2,2 0 0,0 10,4C10,4.1 10,4.19 10,4.29C9.39,4.47 8.8,4.74 8.26,5.09L19,15.8M12,23A2,2 0 0,0 14,21H10A2,2 0 0,0 12,23Z",
@@ -364,7 +368,7 @@ const RESTART_WAIT_MS = 5 * 60 * 1000;
 // Schlüssel, Symbol. Die Texte stehen in strings.js (chipOther).
 const CHIP_OTHER = [
   ["area", "home"], ["integration", "puzzle"], ["offline", "closeCircle"], ["problems", "alert"], ["batteries", "battery"], ["battery", "battery"],
-  ["signal", "signal"], ["update", "update"], ["override", "tune"], ["new", "sparkle"], ["charging", "batteryCharging"],
+  ["signal", "signal"], ["update", "update"], ["override", "tune"], ["new", "sparkle"], ["charging", "batteryCharging"], ["favorites", "heart"],
 ];
 // Reihenfolge aller Chips über der Liste (seit 1.13.0, seit 1.14.0 eine Folge,
 // wie const.CHIP_ORDER_KEYS): "all", jede Verbindungsart und die übrigen Chips.
@@ -377,7 +381,7 @@ const chipKind = (key) => (key === "area" || key === "integration" ? "scope" : k
 // Nutzers): "Alle" ist angeheftet, dann die Hinweise, dann die Verbindungsarten,
 // hinten die seltenen Chips.
 const CHIP_DEFAULT = [
-  "all", "pin", "integration", "new", "offline", "problems", "battery", "batteries", "charging", "area",
+  "all", "pin", "favorites", "integration", "new", "offline", "problems", "battery", "batteries", "charging", "area",
   "thread", "wifi", "ble", "zigbee", "ethernet", "cloud", "matter", "network", "unknown", "zwave",
   "signal", "update", "override",
 ];
@@ -392,7 +396,7 @@ function chipOrder(order, connOrder, counts) {
   const out = (order || []).filter((k, i, a) => known.includes(k) && a.indexOf(k) === i);
   if (!out.length) {
     // Nur eine eigene Folge der Verbindungsarten aus 1.12.0 (ohne chip_order) behält ihre Anordnung.
-    if ((connOrder || []).length) return ["pin", "area", "integration", "all", ...types, ...CHIP_TAIL];
+    if ((connOrder || []).length) return ["pin", "area", "integration", "all", "favorites", ...types, ...CHIP_TAIL.filter((k) => k !== "favorites")];
     return [...CHIP_DEFAULT];
   }
   const missing = types.filter((k) => !out.includes(k));
@@ -404,6 +408,11 @@ function chipOrder(order, connOrder, counts) {
   }
   // Der Chip "Ausgefallen" (seit 1.16.0) fehlt in älteren Folgen: vor "Warnungen".
   if (!out.includes("offline") && out.includes("problems")) out.splice(out.indexOf("problems"), 0, "offline");
+  // Das Herz (seit 2.22.0) fehlt in älteren Folgen: gleich nach "Alle", aber hinter dem Anheft-Marker, damit es nicht festklebt.
+  if (!out.includes("favorites")) {
+    const a = out.indexOf("all"), p = out.indexOf("pin");
+    out.splice(p > a && a >= 0 ? p + 1 : a >= 0 ? a + 1 : Math.max(p + 1, 0), 0, "favorites");
+  }
   const full = [...out, ...["area", "integration", "all", ...CHIP_TAIL].filter((k) => !out.includes(k))];
   // Der Anheft-Marker fehlt in Folgen vor 1.15.0: ganz vorn, nichts angeheftet.
   return full.includes("pin") ? full : ["pin", ...full];
@@ -684,6 +693,8 @@ const HINTS = [
   { key: "update", cls: "u", icon: "update", label: "hintUpdate", test: (d) => Boolean(d.update) },
   { key: "override", cls: "o", icon: "tune", label: "hintOverride", test: hasOverride },
   { key: "new", cls: "nw", icon: "sparkle", label: "hintNew", test: (d) => Boolean(d.new) },
+  // Favoriten (seit 2.22.0): nur das rote Herz, ohne Text und Zahl; erscheint immer (auch ohne Favoriten), damit man es findet
+  { key: "favorites", cls: "fv", icon: "heart", label: "hintFavorites", test: (d) => Boolean(d.fav), bare: true },
 ];
 
 class DevicePanel extends HTMLElement {
@@ -691,6 +702,11 @@ class DevicePanel extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._devices = [];
+    // Favoriten (seit 2.22.0): Geräte-IDs des Benutzers, gespeichert wie die Ansicht in den HA-Benutzerdaten
+    this._favs = new Set();
+    this._favUpdated = 0;
+    this._favDirty = false;
+    this._favLoaded = false;
     this._integrations = {};
     this._offset = 0;
     this._serverNow = null;
@@ -781,6 +797,87 @@ class DevicePanel extends HTMLElement {
     this._view.hint = value;
   }
 
+  // --- Favoriten (seit 2.22.0) ---------------------------------------------
+  // Das Herz im Kopf des Popups; die Geräte-IDs gehören dem Benutzer (HA-Benutzerdaten, lokale Kopie als Rückfall,
+  // beim Laden gewinnt der neuere Stand wie bei der Ansicht). Jedes Gerät trägt "fav" für Filter und Herz.
+  _applyFavs() {
+    for (const d of this._devices) d.fav = this._favs.has(d.id);
+  }
+
+  _favData() {
+    return { ids: [...this._favs].sort(), updated: this._favUpdated };
+  }
+
+  _setFavs(raw) {
+    const ids = Array.isArray(raw?.ids) ? raw.ids.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 64) : [];
+    this._favs = new Set(ids.slice(0, 5000));
+    this._favUpdated = Number(raw?.updated) || 0;
+    this._applyFavs();
+  }
+
+  _loadLocalFavs() {
+    try {
+      const raw = window.localStorage.getItem(FAV_KEY);
+      if (raw) this._setFavs(JSON.parse(raw));
+    } catch {
+      // Ohne localStorage gilt eine leere Liste bis HA antwortet.
+    }
+  }
+
+  async _loadUserFavs() {
+    let value = null;
+    try {
+      const result = await this._hass.callWS({ type: "frontend/get_user_data", key: FAV_KEY });
+      value = result ? result.value : null;
+    } catch (err) {
+      console.warn("device-panel: Favoriten von HA nicht verfügbar", err);
+      return;
+    }
+    this._favLoaded = true;
+    if (value && !this._favDirty && (Number(value.updated) || 0) >= this._favUpdated) {
+      this._setFavs(value);
+      try {
+        window.localStorage.setItem(FAV_KEY, JSON.stringify(this._favData()));
+      } catch {
+        // siehe _toggleFav
+      }
+      this._render();
+      this._renderDevice(true);
+      return;
+    }
+    if (this._favUpdated) await this._saveUserFavs();
+  }
+
+  async _saveUserFavs() {
+    if (!this._hass || !this._favLoaded) return;
+    try {
+      await this._hass.callWS({ type: "frontend/set_user_data", key: FAV_KEY, value: this._favData() });
+      this._favDirty = false;
+    } catch (err) {
+      console.warn("device-panel: Favoriten nicht bei HA gespeichert", err);
+    }
+  }
+
+  _toggleFav(id) {
+    if (!id) return;
+    if (this._favs.has(id)) this._favs.delete(id);
+    else this._favs.add(id);
+    this._favUpdated = Date.now();
+    this._favDirty = true;
+    this._applyFavs();
+    try {
+      window.localStorage.setItem(FAV_KEY, JSON.stringify(this._favData()));
+    } catch {
+      // Lokale Kopie ist nur ein Rückfall.
+    }
+    window.clearTimeout(this._favTimer);
+    this._favTimer = window.setTimeout(() => this._saveUserFavs(), VIEW_SAVE_DELAY_MS);
+    // Zeigt der Filter "Favoriten" und fällt das Gerät heraus, bleibt es im offenen Popup bis zum Schliessen
+    this._devForce = true;
+    this._renderDevice();
+    this._render();
+  }
+
   _loadLocalView() {
     try {
       const raw = window.localStorage.getItem(VIEW_KEY);
@@ -857,7 +954,9 @@ class DevicePanel extends HTMLElement {
     this.toggleAttribute("light", !(hass?.themes?.darkMode ?? window.matchMedia?.("(prefers-color-scheme: dark)").matches));
     if (first) {
       this._build();
+      this._loadLocalFavs();
       this._loadUserView();
+      this._loadUserFavs();
       this._fetch();
       this._brandReady = this._brandStart();
     } else if (this._settings) {
@@ -1385,6 +1484,7 @@ class DevicePanel extends HTMLElement {
       // Welche Geräte gezeigt werden (Dienst-Geräte, deaktivierte, Ausschlüsse),
       // entscheidet das Backend nach den Einstellungen.
       this._devices = result.devices || [];
+      this._applyFavs();
       this._reapplyDevDraft();
       this._integrations = result.integrations || {};
       this._flakyOutages = result.flaky_outages || 3;
@@ -3028,10 +3128,14 @@ class DevicePanel extends HTMLElement {
     // Hinweise als Filter-Chips, nur wenn sie bei irgendeinem Gerät zutreffen
     // (oder aktiv sind).
     const rest = all.filter((d) => this._scopePass(d) && this._connPass(d) && this._problemPass(d) && this._searchPass(d));
-    for (const { key, cls, icon, label, test } of HINTS) {
+    for (const { key, cls, icon, label, test, bare } of HINTS) {
       const on = this._hint === key;
-      if (this._hideChips.has(key) || (!on && !all.some(test))) {
+      if (this._hideChips.has(key) || (!on && !bare && !all.some(test))) {
         parts.set(key, "");
+        continue;
+      }
+      if (bare) {
+        parts.set(key, `<button type="button" class="chip hint bare ${cls} ${on ? "on" : ""}" data-hint="${key}" aria-pressed="${on}" title="${escape(this._t(label))}" aria-label="${escape(this._t(label))}">${mdi(icon, 16)}</button>`);
         continue;
       }
       const n = rest.filter(test).length;
@@ -4139,6 +4243,10 @@ class DevicePanel extends HTMLElement {
     }
     const close = `<button type="button" class="dlg-close" data-dlg="close" title="${escape(this._t("close"))}" aria-label="${escape(this._t("close"))}">${mdi("close", 18)}</button>`;
     const d = this._devices.find((x) => x.id === this._detailId);
+    const favLabel = d ? this._t(d.fav ? "favRemove" : "favAdd") : "";
+    const heart = d
+      ? `<button type="button" class="dlg-fav${d.fav ? " on" : ""}" data-dlg="fav" aria-pressed="${Boolean(d.fav)}" title="${escape(favLabel)}" aria-label="${escape(favLabel)}">${mdi(d.fav ? "heart" : "heartOutline", 18)}</button>`
+      : "";
     // Eigene Schwelle wird gerade getippt: nicht neu aufbauen, sonst ginge die
     // Eingabe beim nächsten Abfragen (alle 10 s) verloren.
     const typing = this.shadowRoot.activeElement;
@@ -4217,7 +4325,7 @@ class DevicePanel extends HTMLElement {
       html = `<div class="dlg-head"><span class="dlg-avatar ${avatar}">${typeIcon(d.type, 28)}</span>
           <div class="dlg-title">${this._nameHtml(d)}
             <div class="dlg-sub">${status}<span>${[this._t(typeKey(d.type)), d.area].filter(Boolean).map(escape).join(" · ")}</span></div>${whyHtml}</div>
-          ${close}</div>
+          ${heart}${close}</div>
         <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device">${mdi("open", 17)}${escape(this._t("openDevicePage"))}</button></div>
         <div class="dev-tabs">${tabs}</div>
         <div class="dlg-body" role="tabpanel">${body}
@@ -4276,6 +4384,7 @@ class DevicePanel extends HTMLElement {
     } else if (action === "stat") this._openStat(btn.dataset.range, btn.dataset.kind);
     else if (action === "more-info") this._openMoreInfo(btn.dataset.entity);
     else if (action === "copy-id") this._copyId(btn);
+    else if (action === "fav") this._toggleFav(this._detailId);
     else if (action === "rename") this._renameStart();
     else if (action === "rename-cancel") this._renameCancel();
     else if (action === "rename-save") this._renameSave(this.shadowRoot.querySelector('input[data-dlg="rename-input"]')?.value ?? "");
@@ -5521,8 +5630,12 @@ class DevicePanel extends HTMLElement {
       const n = devs.filter(test).length;
       parts.set(key, hideChips.has(key) || !n ? "" : pill(`${mdi(icon, 15)}<span>${escape(t(label))}</span> <span class="n">${n}</span>`, cls));
     }
-    for (const { key, cls, icon, label, test } of HINTS) {
+    for (const { key, cls, icon, label, test, bare } of HINTS) {
       const n = devs.filter(test).length;
+      if (bare) {
+        parts.set(key, hideChips.has(key) ? "" : pill(mdi(icon, 16), `hint bare ${cls}`));
+        continue;
+      }
       parts.set(key, hideChips.has(key) || !n ? "" : pill(`${mdi(icon, 15)}<span>${escape(t(label))}</span> <span class="n">${n}</span>`, `hint ${cls}`));
     }
     const order = this._dragOrder(d);

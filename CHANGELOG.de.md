@@ -7,6 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.22.0] - 2026-10-12
+
+Favoriten: ein Herz auf der Geräteseite und ein Filter-Chip, der nur ein rotes Herz zeigt (Wunsch des Nutzers).
+
+### Hinzugefügt
+
+- Herz am oberen Rand des Geräte-Popups, links vom Kreuz. Ein Tipp markiert das Gerät als Favorit (rotes, gefülltes
+  Herz) oder nimmt die Markierung weg. Es gilt sofort, ohne "Speichern", wie das Umbenennen. Die Favoriten gehören dem
+  einzelnen Benutzer (in den Benutzerdaten von Home Assistant gespeichert, mit lokaler Kopie als Rückfall) und sind auf
+  Desktop und Handy dieselben.
+- Neuer Filter-Chip "Favoriten": nur ein kleines rotes Herz, ohne Text und Zahl, damit er wenig Platz braucht. Er zeigt
+  die mit dem Herz markierten Geräte; ein zweiter Tipp oder "Alle" hebt den Filter auf. Standardmässig ist er der
+  zweite Chip, gleich nach "Alle", aktiv und nicht angeheftet (angeheftet bleibt standardmässig nur "Alle"). Wie die
+  übrigen Chips lässt er sich ausblenden (Einstellungen › Darstellung › Filter-Chips; "Favoriten") und per Ziehen
+  verschieben. Installationen mit gespeicherter Chip-Folge bekommen ihn gleich nach "Alle" (hinter der Anheft-Linie),
+  bis sie ihn verschieben.
+
 ## [2.21.0] - 2026-10-12
 
 Timer: eine Entität eines Geräts einmalig oder nach Plan schalten (Wunsch des Nutzers).
@@ -2816,6 +2833,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.22.0
 [2.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.21.0
 [2.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.20.0
 [2.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.19.0

@@ -7,6 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.22.0] - 2026-10-12
+
+Favorites: a heart on the device page and a filter chip with only a red heart (requested by the user).
+
+### Added
+
+- Heart at the top of the device pop-up, left of the cross. A tap marks the device as a favorite (red, filled heart) or
+  removes the mark. It takes effect at once, without "Save", like renaming. The favorites belong to each user (stored in
+  the Home Assistant user data, with a local copy as fallback) and are the same on desktop and phone.
+- New filter chip "Favorites": only a small red heart, no text and no number, so it takes little space. It shows the
+  devices marked with the heart; a second tap, or "All", clears the filter. By default it is the second chip, right
+  after "All", active, and not pinned (only "All" stays pinned by default). Like the other chips it can be hidden
+  (Settings › Display › Filter chips; "Favorites") and moved by dragging. Installations with a saved chip order get it
+  right after "All" (behind the pin line) until they move it.
+
 ## [2.21.0] - 2026-10-12
 
 Timer: switch an entity of a device once or on a schedule (requested by the user).
@@ -2723,6 +2738,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.22.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.22.0
 [2.21.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.21.0
 [2.20.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.20.0
 [2.19.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.19.0

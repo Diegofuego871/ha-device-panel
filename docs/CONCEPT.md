@@ -484,6 +484,11 @@ Pfade beziehen sich auf jenes Repository, Stand v2.16.0.
 - Verbindungsabbrüche still überbrücken, Polling im Hintergrund pausieren.
 - Statistik-Fenster mit Tabs, Zeitraum 24 Std./7/30 Tage, Loader.
 
+## Favoriten (seit 2.22.0, Wunsch des Nutzers)
+
+Herz im Geräte-Popup markiert ein Gerät als Favorit (pro Benutzer, HA-Benutzerdaten). Der Chip "Favoriten" (nur rotes Herz)
+filtert darauf; global ein-/ausblendbar und verschiebbar wie die übrigen Chips, Standard an zweiter Stelle, nicht angeheftet.
+
 ## Timer (seit 2.21.0, Wunsch des Nutzers)
 
 Schaltet eine schaltbare Entität eines Geräts ohne Automation: einmalig (in X Minuten oder an einem Datum) oder wiederholt

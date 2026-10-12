@@ -9,7 +9,7 @@
 ## What you get
 
 - **Overview:** devices online, who is offline and since when, an outage pulse over 24 hours with group outages
-- **Device list** grouped into offline, unstable and online, with search, filters by area and integration, filter chips and your own columns
+- **Device list** grouped into offline, unstable and online, with search, filters by area and integration, filter chips (including a favorites heart) and your own columns
 - **Per device:** availability, outages, signal and battery in a pop-up, with history and statistics
 - **Notifications you control:** outage, back online, low battery and new devices as push (each title starts with a fitting emoji) or persistent notification, per integration; a push shows the icon of its integration and an emoji you can change per notification; each tab (outage, battery, charging, new devices, updates) can send to its own recipient, by default the global target
 - **Magic Push:** your own messages per device without an automation: pick a value, say when (above, below, is, changes, optionally several conditions linked with And/Or and groups, for how long, how long it must stay normal before it is reset, and where each is reset), choose the recipient (optionally as a critical notification with a volume) and how often to repeat, write the title and the content with variables that fit the value, and see a preview and a look back at the last 24 hours before you save; the assistant opens in its own window (full screen on the phone), name, rename and delete messages in the tab "Magic Push" of the device, any entity of Home Assistant can serve as the value, and one overview in the settings lists all messages of all devices in one card per device, with search and filter

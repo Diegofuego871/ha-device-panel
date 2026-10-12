@@ -77,7 +77,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Puls-Kurve und Marke`, await ev(`return !!r.querySelector(".pchart path.line") && r.querySelectorAll(".pchart .imark").length === 1`));
 
     // Hinweise als Chips
-    const hints = await ev(`return [...r.querySelectorAll(".chip.hint")].map(b=>b.textContent.replace(/\\s+/g," ").trim())`);
+    const hints = await ev(`return [...r.querySelectorAll(".chip.hint:not(.bare)")].map(b=>b.textContent.replace(/\\s+/g," ").trim())`);
     check(`[${tag}] Hinweis-Chips 2/3/2, Neu`, JSON.stringify(hints) === JSON.stringify(T.hints), JSON.stringify(hints));
 
     // Gruppen und Reihenfolge

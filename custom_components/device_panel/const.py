@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "141"
+PANEL_VERSION = "142"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -366,10 +366,11 @@ CONF_CONNECTION_ORDER = "connection_order"
 # für alle Benutzer): Bereich, Integration, "Ausgefallen", "Warnungen" und die Hinweise.
 # "Alle" bleibt immer. Ein ausgeblendeter Chip hebt seinen Filter auf.
 CONF_HIDE_CHIPS = "hide_chips"
+# Seit 2.22.0: "favorites" (Herz, nur Symbol; die Favoriten selbst gehören dem Benutzer und liegen in HA-Benutzerdaten).
 # Seit 1.16.0: "offline" ("Ausgefallen", nur ausgefallene Geräte) und "problems"
 # ("Warnungen": instabil, Batterie niedrig, schwacher Empfang, keine Daten, ohne
 # Ausfälle; der Schlüssel blieb, damit gespeicherte Einstellungen gültig bleiben).
-CHIP_KEYS = ("area", "integration", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging")
+CHIP_KEYS = ("area", "integration", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites")
 CONNECTION_TYPES = ("zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown")
 # Reihenfolge aller Chips über der Liste (seit 1.13.0, seit 1.14.0 eine Folge):
 # "all" und jede Verbindungsart sind Einträge wie die übrigen Chips. Leer =

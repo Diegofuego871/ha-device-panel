@@ -252,7 +252,8 @@
         "signal": "Schwacher Empfang",
         "update": "Update verfügbar",
         "override": "Eigene Einstellung",
-        "new": "Neu"
+        "new": "Neu",
+        "favorites": "Favoriten"
       }
     },
     "updates_mode": {
