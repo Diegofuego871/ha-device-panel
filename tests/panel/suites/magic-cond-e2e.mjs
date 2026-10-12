@@ -91,6 +91,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Gruppe auf "alle": UND in der Gruppe`, await wait(`return r.querySelector('${W} .mg-group .mg-join')?.textContent.trim() === ${JSON.stringify(T.and)}`));
     check(`[${tag}] Kapsel der Gruppen-Leiste liegt unter dem gewählten Knopf`, await (async () => { await p.waitForTimeout(700); return (await ev(`const b=r.querySelector('${W} .mg-group .sub-tabs'); const p=b?.querySelector(":scope > .seg-pill"); const on=b?.querySelector(".sub-tab.on"); if(!p||!on) return "none"; const m=new DOMMatrix(getComputedStyle(p).transform); return [Math.round(m.m41-on.offsetLeft), Math.round(m.m42-on.offsetTop)].join()`)) === "0,0"; })());
     check(`[${tag}] Schritt 1 ohne Querscrollen`, (await ev(`const d=r.querySelector("${W}"); return d.scrollWidth - d.clientWidth`)) <= 0);
+    check(`[${tag}] Touch-Ziele: Entfernen-Knopf (x) mindestens 44 px, Pfeil mindestens 40 px und sichtbar`, await ev(`const x=[...r.querySelectorAll('${W} .mg-lcard [data-mg="leaf-del"], ${W} [data-mg="group-del"]')]; const c=[...r.querySelectorAll('${W} .mg-lchev')]; return x.length > 0 && c.length > 0 && x.every((b) => { const q=b.getBoundingClientRect(); return q.width >= 44 && q.height >= 44; }) && c.every((b) => { const q=b.getBoundingClientRect(); return q.width >= 40 && q.height >= 40 && !!b.querySelector('svg'); })`));
     await p.screenshot({ path: `${outDir}/magic-cond-${tag.replace("/", "-")}-1.png` });
 
     // --- Entität ändern, entfernen ---

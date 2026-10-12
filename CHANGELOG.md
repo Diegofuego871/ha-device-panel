@@ -16,6 +16,8 @@ Magic Push: the "Discard changes?" question as a pop-up in the middle.
 - Closing the assistant with unsaved changes (requested by the user) now asks "Discard changes?" in a pop-up in the middle
   of the window, with a dimmed background, instead of in the button bar at the bottom. It is harder to miss. Everything
   behind it is locked until you answer, and the focus sits on "Keep editing", so Enter discards nothing.
+- The condition cards in step 1 are easier to hit with a finger (requested by the user): the arrow to fold a condition is
+  bigger and brighter, and the "x" to remove a condition or group has a 44 px touch target with a larger symbol.
 
 ## [2.15.0] - 2026-10-11
 

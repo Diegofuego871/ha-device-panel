@@ -17,6 +17,9 @@ Magic Push: die Rückfrage "Änderungen verwerfen?" als Pop-up in der Mitte.
   jetzt in einem Pop-up in der Mitte des Fensters mit abgedunkeltem Hintergrund, nicht mehr in der Knopfleiste unten. So
   fällt sie auf. Alles dahinter ist gesperrt, bis man antwortet, und der Fokus liegt auf "Weiter bearbeiten", damit Enter
   nichts verwirft.
+- Die Bedingungs-Karten in Schritt 1 sind mit dem Finger leichter zu treffen (Wunsch des Nutzers): der Pfeil zum
+  Zuklappen ist grösser und heller, das "x" zum Entfernen einer Bedingung oder Gruppe hat eine Fläche von 44 px mit
+  grösserem Symbol.
 
 ## [2.15.0] - 2026-10-11
 

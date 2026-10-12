@@ -1432,6 +1432,9 @@ input.mg-pill { cursor: text; }
 .mg-freehead { margin-top: 18px; }
 .mg-freebtn { border: 1.5px dashed color-mix(in srgb, var(--dp-primary) 45%, transparent); background: none; }
 .mg-chev { flex: none; color: var(--dp-text2); }
+.mg-lchev { flex: none; display: grid; place-items: center; width: 40px; height: 40px; margin: -8px -6px -8px 0; color: var(--dp-text); transition: transform .2s ease; }
+.mg-lchev.up { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .mg-lchev { transition: none; } }
 .mg-free { margin-top: 8px; }
 /* Beim Hochscrollen unter dem Kopf und den Reitern des Popups anhalten (Kopf und Reiter bleiben stehen) */
 .mg-card .mg-input { scroll-margin-top: calc(var(--dev-head-h, 100px) + 70px); }
@@ -1445,7 +1448,7 @@ input.mg-pill { cursor: text; }
 .mg-lmain { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; padding: 12px 8px 12px 14px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .mg-lmain:hover { background: var(--dp-hover); }
 .mg-lmain:focus-visible, .mg-xbtn:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
-.mg-xbtn { flex: none; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--dp-text2); cursor: pointer; }
+.mg-xbtn { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--dp-text2); cursor: pointer; }
 .mg-xbtn:hover { background: var(--dp-hover); color: var(--dp-error); }
 .mg-ledit { padding: 0 14px 12px; border-top: 1px solid var(--dp-divider); }
 .mg-chgent { display: block; margin: 12px 0 0; font-size: 13px; }

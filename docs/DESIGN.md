@@ -383,6 +383,8 @@ HA-Nachbau prüfen.
 
 - "Änderungen verwerfen?" ist ein Pop-up in der Mitte des Assistenten-Fensters über abgedunkeltem Hintergrund
   (`.mgw-ov`/`.mgw-discard`), nicht in der Knopfleiste. Beide Knöpfe gleich breit, "Weiter bearbeiten" hat den Fokus.
+- Bedingungs-Karten: Entfernen-Knopf (`.mg-xbtn`) 44 × 44 px mit Symbol 22, Pfeil (`.mg-lchev`, mdi chevronDown, dreht
+  sich beim Öffnen) 40 px hoch und in Textfarbe, damit beides mit dem Finger leicht zu treffen ist.
 
 ## Magic Push: Bedingungen auf Seite 1 (seit 2.15.0, docs/mockups/magic-conditions-v1, "Eine Seite")
 

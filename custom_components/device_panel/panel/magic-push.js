@@ -1598,7 +1598,7 @@ export class MagicPush {
     const inner = g.items.map((lf, i) => `${i ? `<div class="mg-join">${esc(t(g.op === "or" ? "mgOrWord" : "mgAndWord"))}</div>` : ""}${this.leafHtml(lf)}`).join("");
     const full = this.leavesOf().length >= this.limit("leaves", 10);
     return `<div class="mg-group"><div class="mg-ghead"><b>${esc(t("mgGroup"))}</b>${tabs}
-      <button type="button" class="mg-xbtn" data-mg="group-del" data-uid="${esc(g.uid)}" title="${esc(t("mgRemoveGroup"))}" aria-label="${esc(t("mgRemoveGroup"))}">${this.h.mdi("close", 16)}</button></div>
+      <button type="button" class="mg-xbtn" data-mg="group-del" data-uid="${esc(g.uid)}" title="${esc(t("mgRemoveGroup"))}" aria-label="${esc(t("mgRemoveGroup"))}">${this.h.mdi("close", 22)}</button></div>
       ${inner}${full ? "" : `<button type="button" class="linkbtn mg-addin" data-mg="add-in" data-uid="${esc(g.uid)}">${esc(t("mgAddInGroup"))}</button>`}</div>`;
   }
 
@@ -1612,8 +1612,8 @@ export class MagicPush {
     const sub = [this.leafValid(lf) || lf.kind === "change" ? this.condText(lf, e) : t("mgCondIncomplete"), now ? t("mgNowValue", now) : ""].filter(Boolean).join(" · ");
     return `<div class="mg-lcard${open ? " open" : ""}"><div class="mg-lhead">
       <button type="button" class="mg-lmain" data-mg="leaf-open" data-uid="${esc(lf.uid)}" aria-expanded="${open}"><span class="mg-ic" aria-hidden="true">${emojiFor(e)}</span>
-        <span class="mg-t"><b>${esc(e?.name || lf.entity_id)}</b><small>${esc(sub)}</small></span><span class="mg-chev" aria-hidden="true">${open ? "▴" : "▾"}</span></button>
-      <button type="button" class="mg-xbtn" data-mg="leaf-del" data-uid="${esc(lf.uid)}" title="${esc(t("mgRemoveCond"))}" aria-label="${esc(t("mgRemoveCond"))}">${this.h.mdi("close", 16)}</button></div>
+        <span class="mg-t"><b>${esc(e?.name || lf.entity_id)}</b><small>${esc(sub)}</small></span><span class="mg-lchev${open ? " up" : ""}" aria-hidden="true">${this.h.mdi("chevronDown", 24)}</span></button>
+      <button type="button" class="mg-xbtn" data-mg="leaf-del" data-uid="${esc(lf.uid)}" title="${esc(t("mgRemoveCond"))}" aria-label="${esc(t("mgRemoveCond"))}">${this.h.mdi("close", 22)}</button></div>
       ${open ? this.leafEditorHtml(lf, e) : ""}</div>`;
   }
 

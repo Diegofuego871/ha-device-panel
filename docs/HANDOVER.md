@@ -8,6 +8,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 - 2.16.0 (Wunsch des Nutzers, Screenshot): "Änderungen verwerfen?" steht nicht mehr in `.mgw-foot`, sondern als Pop-up in
   der Mitte des Fensters: `.mgw-ov` (absolut über dem ganzen `dialog.magic-dlg`, abgedunkelt) mit `.mgw-discard` (Karte).
   Kopf, Fortschritt, Inhalt und Fuss tragen dabei `inert`, Fokus auf `discard-no` (`paintWindow`). Test: `magic-e2e`.
+  Ebenfalls 2.16.0: Touch-Ziele der Bedingungs-Karten grösser (`.mg-xbtn` 44 px, Pfeil `.mg-lchev`).
 
 ## Stand davor (2.15.0, Magic Push: mehrere verknüpfte Bedingungen)
 
