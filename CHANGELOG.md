@@ -17,7 +17,6 @@ App launcher: calmer normal view, more space in the header.
 - A favorite appears only in the section "Favorites", not a second time in its group (the search still finds every app).
 - The launcher keeps its height while you type in the search.
 - Phone: more space between the buttons in the header (the search field is a little narrower).
-- Hints with "Undo" (reset, delete) appear inside the launcher window; they stay clear of the edit mode switch.
 
 ## [2.31.0] - 2026-10-13
 

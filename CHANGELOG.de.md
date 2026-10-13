@@ -17,7 +17,6 @@ App-Launcher: ruhigere normale Ansicht, mehr Platz in der Kopfzeile.
 - Ein Favorit steht nur im Abschnitt "Favoriten", nicht noch einmal in seiner Gruppe (die Suche findet weiterhin jede App).
 - Der Launcher behält seine Höhe, während man im Suchfeld tippt.
 - Handy: mehr Platz zwischen den Knöpfen in der Kopfzeile (das Suchfeld ist dafür etwas schmaler).
-- Hinweise mit "Rückgängig" (Zurücksetzen, Löschen) erscheinen im Launcher-Fenster; sie verschwinden beim Wechsel des Bearbeiten-Modus.
 
 ## [2.31.0] - 2026-10-13
 
