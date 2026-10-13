@@ -146,18 +146,20 @@ export class AppLauncher {
   }
 
   // Apps einer Gruppe in der Reihenfolge des Benutzers; neue (noch nicht einsortierte) hinten, in der Standardfolge.
-  group(g, withHidden = false) {
+  // noFav: Favoriten stehen nur im Abschnitt Favoriten, nicht noch einmal in ihrer Gruppe (ausser bei der Suche)
+  group(g, withHidden = false, noFav = false) {
     const order = this.data.order[g] || [];
     const rank = (a) => {
       const i = order.indexOf(a.id);
       return i < 0 ? order.length : i;
     };
     const items = this._all().filter((a) => a.group === g);
+    const favIds = new Set(noFav ? this.favs().map((a) => a.id) : []);
     return items
       .map((a, i) => [a, i])
       .sort((x, y) => rank(x[0]) - rank(y[0]) || x[1] - y[1])
       .map(([a]) => a)
-      .filter((a) => withHidden || !this.isHidden(a));
+      .filter((a) => (withHidden || !this.isHidden(a)) && !(noFav && favIds.has(a.id)));
   }
 
   // Favoriten in der Reihenfolge des Benutzers; was nicht (mehr) existiert oder ausgeblendet ist, fällt weg.
@@ -471,7 +473,7 @@ export class AppLauncher {
       any = true;
     }
     for (const g of GROUPS) {
-      let items = this.group(g).filter(match);
+      let items = this.group(g, false, !q).filter(match);
       const adding = g === "own" && !q;
       if (!items.length && !adding) continue;
       any = true;
@@ -521,7 +523,8 @@ export class AppLauncher {
       <div class="ap-h">${escape(this.t("appsGrpFav"))}<span class="ap-hh" aria-hidden="true">${mdi("heart", 13)}</span></div>`;
     out += favs.length ? `<div class="ap-box fav" data-ap-box="fav">${favs.map((a) => this._editRow(a)).join("")}</div>` : `<p class="ap-note">${escape(this.t("appsNoFav", MAX_FAV))}</p>`;
     for (const g of GROUPS) {
-      const items = this.group(g, true);
+      const items = this.group(g, true, true);
+      if (!items.length && g !== "own") continue;
       out += `<div class="ap-h">${escape(this._groupTitle(g))}</div>`;
       if (items.length) out += `<div class="ap-box" data-ap-box="${g}">${items.map((a) => this._editRow(a)).join("")}</div>`;
       if (g === "own") {
@@ -545,6 +548,7 @@ export class AppLauncher {
     const search = edit ? "" : `<label class="ap-search">${mdi("search", 18)}<input class="ap-q" type="search" value="${escape(this.ui.q)}" placeholder="${escape(this.t("appsSearch"))}" aria-label="${escape(this.t("appsSearch"))}" autocomplete="off"></label>`;
     const html = `${head}<div class="ap-body">${search}<div class="ap-list">${edit ? this._editHtml() : this._listHtml()}</div></div>`;
     const scroll = dlg.scrollTop;
+    dlg.style.minHeight = "";
     // Kein setHtml-Vergleich: _search ändert die Liste von Hand, der letzte String würde dann nicht mehr stimmen
     const q = this.root.activeElement?.matches?.(".ap-q") ? this.root.activeElement : null;
     const caret = q ? q.selectionStart : 0;
@@ -561,6 +565,8 @@ export class AppLauncher {
   // Beim Tippen bleibt das Suchfeld stehen: nur die Liste ersetzen
   _search(value) {
     this.ui.q = value;
+    // Das Fenster wird beim Suchen nicht kleiner: die Höhe von vorher bleibt als Mindesthöhe, bis es neu aufgebaut wird
+    if (this.dlg && !this.dlg.style.minHeight) this.dlg.style.minHeight = `${this.dlg.offsetHeight}px`;
     const list = this.dlg?.querySelector(".ap-list");
     if (list) list.innerHTML = this._listHtml();
   }

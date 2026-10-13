@@ -14,7 +14,7 @@ App-Launcher: nützliche Seiten mit einem Tipp, Favoriten in der Kopfzeile, eige
 ### Hinzugefügt
 
 - App-Launcher: Ein Knopf in der Kopfzeile (Rastersymbol) öffnet einen Launcher mit Apps in drei Gruppen. Device Panel: Timer (die Übersicht aller Timer), Magic Push (die Einstellungen beim Reiter Magic Push) und das Protokoll. Home Assistant: Automationen, Szenen, Skripte, Helfer, Geräte, Entitäten, Integrationen, Werkzeuge, Bereiche, Verlauf, Logbuch und Backups (die Verwaltungsseiten nur für Administratoren). Eigene: eigene Links. Ein Suchfeld filtert die Apps.
-- Favoriten: Im Bearbeiten-Modus legt das Herz an einer App sie als Knopf in die Kopfzeile; die normale Ansicht zeigt keine Herzen, nur eines hinter der Überschrift "Favoriten". Der Stoppuhr-Knopf der Timer ist dort nur noch der erste Favorit (der Standard). Bis zu fünf Favoriten; auf dem Desktop stehen alle in der Kopfzeile, am Handy nur der erste. Im Bearbeiten-Modus zeigt eine gestrichelte Linie diese Grenze. Das Zahnrad bleibt ganz rechts.
+- Favoriten: Im Bearbeiten-Modus legt das Herz an einer App sie als Knopf in die Kopfzeile; die normale Ansicht zeigt keine Herzen, nur eines hinter der Überschrift "Favoriten". Ein Favorit steht nur im Abschnitt "Favoriten", nicht noch einmal in seiner Gruppe. Der Stoppuhr-Knopf der Timer ist dort nur noch der erste Favorit (der Standard). Bis zu fünf Favoriten; auf dem Desktop stehen alle in der Kopfzeile, am Handy nur der erste. Im Bearbeiten-Modus zeigt eine gestrichelte Linie diese Grenze. Das Zahnrad bleibt ganz rechts.
 - Bearbeiten-Modus: Ziehen am Griff (oder die Pfeiltasten darauf) sortiert in jeder Gruppe; das Auge blendet eine App aus (eine ausgeblendete App ist kein Favorit mehr), das Herz setzt Favoriten, "Auf Standard zurücksetzen" stellt Auswahl, Reihenfolge und Ausgeblendetes wieder her (mit "Rückgängig"). Das Protokoll lässt sich nicht ausblenden, es ist der einzige Zugang zum Debug-Modus. Ein Schalter "Raster | Liste" wählt die Darstellung, getrennt für Desktop und Handy.
 - Eigene Apps: Name, Symbol und Ziel. Ohne das Kontrollkästchen "Externer Link" ist das Ziel eine Seite von Home Assistant (beginnt mit "/"), sonst eine Adresse mit https:// oder http://, die immer in einem neuen Browser-Tab öffnet (`noopener noreferrer`, Home Assistant bleibt offen); andere Schemata wie javascript: werden abgelehnt. Externe Links tragen eine kleine Link-Marke. Eigene Apps lassen sich ändern, löschen (mit "Rückgängig") und zu Favoriten machen.
 - Alles wird pro Benutzer in den Benutzerdaten von Home Assistant gespeichert (mit lokaler Kopie im Browser, der neuere Stand gewinnt), wie die Herzen der Geräte und Timer.
@@ -23,6 +23,7 @@ App-Launcher: nützliche Seiten mit einem Tipp, Favoriten in der Kopfzeile, eige
 
 - Der Protokoll-Knopf ist aus dem Kopf der Einstellungen in den Launcher gewandert (App "Protokoll"). Der Stoppuhr-Knopf in der Kopfzeile ist jetzt der Favorit "Timer" und lässt sich dort entfernen.
 - Die Beschriftung des Timer-Knopfs lautet "Timer" (vorher "Alle Timer").
+- Handy: mehr Platz zwischen den Knöpfen in der Kopfzeile (das Suchfeld ist dafür etwas schmaler); der Launcher behält seine Höhe, während man im Suchfeld tippt.
 
 ## [2.30.0] - 2026-10-13
 

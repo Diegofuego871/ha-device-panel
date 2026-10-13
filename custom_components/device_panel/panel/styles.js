@@ -1217,7 +1217,7 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   dialog.settings[open] > .dlg-body { flex-grow: 1; }
   .toolbar .gear-btn, .toolbar .tmall-btn, .toolbar .apps-btn { width: 38px; height: 38px; }
   /* Handy: der Platz zwischen Suchfeld und Zahnrad bleibt wie vorher (Suchfeld nicht schmaler), nur gleichmässig geteilt: 8 + 7 px auf beiden Seiten */
-  .toolbar .tmall-btn, .toolbar .apps-btn { margin: 0 -1px; }
+  .toolbar .tmall-btn, .toolbar .apps-btn { margin: 0 3px; } /* Abstand zwischen den Knöpfen 14 px (Wunsch des Nutzers: war zu eng), das Suchfeld wird dafür schmaler */
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   .dlg-head { padding: 18px 12px 12px 16px; }
   .dlg-quick { padding: 0 16px 6px; }

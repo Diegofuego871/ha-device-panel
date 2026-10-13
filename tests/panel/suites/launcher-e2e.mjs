@@ -86,7 +86,7 @@ for (const lang of ["de", "en"]) {
     await open();
     check(`[${tag}] Launcher offen: Knopf aktiv, aria-expanded`, await ev(`const b = r.querySelector(".apps-btn"); return b.classList.contains("on") && b.getAttribute("aria-expanded") === "true"`));
     check(`[${tag}] Titel "${T.title}", Gruppen ${JSON.stringify(T.groups)}`, (await text(`${D} .ap-title`)) === T.title && JSON.stringify(await ev(`return [...r.querySelectorAll("${D} .ap-h")].map((h) => h.firstChild.textContent.trim())`)) === JSON.stringify(T.groups));
-    check(`[${tag}] Device Panel: Timer, Magic Push, Protokoll; Home Assistant: ${mobile ? 6 : 8} Kacheln, "Alle 12"`, await ev(`const g = [...r.querySelectorAll("${D} .ap-grid")]; return g[1].children.length === 3 && g[2].children.length === ${mobile ? 6 : 8} && /12/.test(r.querySelector("${D} .ap-more").textContent)`));
+    check(`[${tag}] Device Panel: Magic Push, Protokoll (Timer steht schon bei den Favoriten); Home Assistant: ${mobile ? 6 : 8} Kacheln, "Alle 12"`, await ev(`const g = [...r.querySelectorAll("${D} .ap-grid")]; return g[1].children.length === 2 && g[2].children.length === ${mobile ? 6 : 8} && /12/.test(r.querySelector("${D} .ap-more").textContent)`));
     const geo = await ev(`const d = r.querySelector("${D}").getBoundingClientRect(), a = r.querySelector(".apps-btn").getBoundingClientRect(); return [Math.round(d.left), Math.round(d.width), Math.round(d.top), Math.round(d.bottom), Math.round(a.bottom), Math.round(a.right), innerWidth, innerHeight]`);
     if (mobile) check(`[${tag}] Handy: Blatt über die ganze Breite, unten`, geo[0] === 0 && geo[1] === geo[6] && geo[3] === geo[7], JSON.stringify(geo));
     else check(`[${tag}] Desktop: Fenster unter dem Knopf, nicht über den Rand`, geo[2] >= geo[4] && geo[0] + geo[1] <= geo[6] - 8 && geo[0] >= 8 && geo[1] <= 450, JSON.stringify(geo));
@@ -109,14 +109,16 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] sechster Favorit: Hinweis "${T.max}", Favoriten unverändert`, (await text(`${D} .ap-snack`)) === T.max && (await data()).fav.length === 5, await text(`${D} .ap-snack`));
     await tap(`${D} [data-ap="done"]`);
     check(`[${tag}] Normale Ansicht: kein Strich, kein Hinweis zur Kopfzeile am Handy, keine Herzen; fünf Favoriten als Kacheln`, await ev(`return !r.querySelector("${D} .ap-vl, ${D} .ap-hline, ${D} .ap-fav, ${D} .ap-note") && r.querySelectorAll('${D} [data-ap="fav"]').length === 0 && r.querySelectorAll("${D} .ap-grid")[0].children.length === 5`));
+    check(`[${tag}] Favoriten stehen nur bei den Favoriten, nicht noch einmal in ihrer Gruppe`, await ev(`return ["timer", "auto", "scene", "script", "helper"].every((id) => r.querySelectorAll('${D} [data-ap="open"][data-id="' + id + '"]').length === 1) && r.querySelectorAll("${D} .ap-grid")[1].children.length === 2`));
     await shot("2-fuenf-favoriten");
 
     // --- Suche
+    const h0 = await ev(`return r.querySelector("${D}").getBoundingClientRect().height`);
     await ev(`r.querySelector("${D} .ap-q").focus()`);
     await (await handle(`${D} .ap-q`)).fill(lang === "de" ? "automat" : "automat");
     check(`[${tag}] Suche "automat": nur Automationen, ohne Favoriten-Abschnitt`, await ev(`const t = [...r.querySelectorAll("${D} .ap-tile .ap-nm")].map((e) => e.textContent); return t.length === 1 && t[0] === ${JSON.stringify(T.auto)} && r.querySelectorAll("${D} .ap-h").length === 1`));
     await (await handle(`${D} .ap-q`)).fill("zzzz");
-    check(`[${tag}] Suche ohne Treffer: "${T.none}"`, (await text(`${D} .ap-note`)) === T.none);
+    check(`[${tag}] Suche ohne Treffer: "${T.none}", das Fenster wird dabei nicht kleiner`, (await text(`${D} .ap-note`)) === T.none && (await ev(`return r.querySelector("${D}").getBoundingClientRect().height`)) >= h0 - 1, `${h0} -> ${await ev(`return r.querySelector("${D}").getBoundingClientRect().height`)}`);
     await (await handle(`${D} .ap-q`)).fill("");
     check(`[${tag}] Suche leer: wieder alle Gruppen`, await ev(`return r.querySelectorAll("${D} .ap-h").length === 4`));
 
@@ -149,7 +151,7 @@ for (const lang of ["de", "en"]) {
     const lay = (await data()).layout;
     check(`[${tag}] Darstellung "${T.list}" gilt nur für ${mobile ? "das Handy" : "den Desktop"} (das andere bleibt Raster)`, mobile ? lay.phone === "list" && lay.desktop === "grid" : lay.desktop === "list" && lay.phone === "grid", JSON.stringify(lay));
     // Auge: Szenen ausblenden, kein Favorit mehr, Knopf weg
-    await tap(`${D} [data-ap-box="ha"] [data-ap="hide"][data-id="scene"]`);
+    await tap(`${D} [data-ap-box="fav"] [data-ap="hide"][data-id="scene"]`);
     let d = await data();
     check(`[${tag}] Auge: Szenen ausgeblendet und kein Favorit mehr, Knopf weg`, d.hidden.includes("scene") && !d.fav.includes("scene") && !(await pins()).includes("scene") && (await ev(`return r.querySelector('${D} [data-ap-box="ha"] .ap-erow[data-id="scene"]').classList.contains("hid")`)));
     await tap(`${D} [data-ap-box="ha"] [data-ap="hide"][data-id="scene"]`);
