@@ -20,7 +20,7 @@ App launcher: the symbols and colors of Home Assistant.
 
 Not released; included in 2.35.0.
 
-App launcher: custom app are created only in edit mode.
+App launcher: custom apps are created only in edit mode.
 
 ### Changed
 
