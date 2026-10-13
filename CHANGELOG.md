@@ -22,6 +22,8 @@ Debug mode across restarts, AI assessment calls a charge a charge.
 
 ## [2.31.1] - 2026-10-13
 
+Not released; included in 2.32.0.
+
 App launcher: calmer normal view, more space in the header.
 
 ### Changed
@@ -3019,7 +3021,6 @@ First pre-release.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.32.0
-[2.31.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.1
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0
 [2.28.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.5
