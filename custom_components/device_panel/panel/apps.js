@@ -455,7 +455,7 @@ export class AppLauncher {
 
   _row(a) {
     const { escape, mdi } = this.h;
-    const inner = `<span class="ap-ico sm">${this._icon(a, 20)}</span><span class="ap-t"><b>${escape(a.name)}${this._badge(a)}</b><small>${escape(a.sub)}</small></span>${a.ext ? `<span class="ap-ext in" title="${escape(this.t("appsExtMark"))}">${mdi("link", 14)}</span>` : ""}`;
+    const inner = `<span class="ap-ico sm">${this._icon(a, 20)}</span><span class="ap-t"><b>${escape(a.name)}${this._badge(a)}</b></span>${a.ext ? `<span class="ap-ext in" title="${escape(this.t("appsExtMark"))}">${mdi("link", 14)}</span>` : ""}`;
     return `<div class="ap-row">${this._main(a, "ap-main row", inner)}</div>`;
   }
 

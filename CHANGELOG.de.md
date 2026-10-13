@@ -15,6 +15,10 @@ Favicon in Originalfarben.
 
 - Favicon einer eigenen App: Es erschien blau eingefärbt und, wenn dunkel (zum Beispiel GitHub), im dunklen Design kaum sichtbar, weil es auf dem blauen Kreis der Symbole sass. Es behält jetzt seine Originalfarben auf einer hellen, abgerundeten Fläche, ohne den blauen Kreis, im Launcher (Raster und Liste), im Bearbeiten-Modus, in der Vorschau und im Knopf der Kopfzeile.
 
+### Geändert
+
+- Launcher, Listenansicht: Jede Zeile zeigt nur den Titel, nicht mehr den Pfad oder die Adresse darunter (der Bearbeiten-Modus zeigt sie weiter; die Suche findet Apps weiterhin auch über den Pfad).
+
 ## [2.33.0] - 2026-10-13
 
 App-Launcher: Favicon für eigene Apps mit externem Link.

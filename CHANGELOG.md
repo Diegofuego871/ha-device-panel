@@ -15,6 +15,10 @@ Favicon in its original colors.
 
 - Favicon of a custom app: it appeared tinted blue and, if dark (for example GitHub), barely visible on the dark background, because it sat on the blue circle of the icons. It now keeps its original colors on a light rounded tile, without the blue circle, in the launcher (grid and list), in edit mode, in the preview and in the button of the header.
 
+### Changed
+
+- Launcher, list view: each row shows only the title, no longer the path or address below it (the edit mode still shows them; the search still finds apps by path).
+
 ## [2.33.0] - 2026-10-13
 
 App launcher: favicon for custom apps with an external link.

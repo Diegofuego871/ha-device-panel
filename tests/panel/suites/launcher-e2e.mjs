@@ -179,7 +179,7 @@ for (const lang of ["de", "en"]) {
     }
     // Zurück: Fertig, Liste statt Raster
     await tap(`${D} [data-ap="done"]`);
-    check(`[${tag}] Fertig: Liste, ohne Strich`, await ev(`return !!r.querySelector("${D} .ap-rows .ap-row") && !r.querySelector("${D} .ap-hline") && !r.querySelector("${D} .ap-grid .ap-tile.ap-add") `));
+    check(`[${tag}] Fertig: Liste nur mit Titeln (keine Pfade), ohne Strich`, await ev(`return !!r.querySelector("${D} .ap-rows .ap-row") && !r.querySelector("${D} .ap-rows .ap-t small") && [...r.querySelectorAll("${D} .ap-rows .ap-t")].every((e) => !e.textContent.includes("/config") && !e.textContent.includes("http")) && !r.querySelector("${D} .ap-hline") && !r.querySelector("${D} .ap-grid .ap-tile.ap-add") `));
     await shot("4-liste");
 
     // --- Eigene Apps
