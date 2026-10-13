@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.28.3] - 2026-10-13
+
+Fenster mit allen Timern auf dem Desktop als Popup.
+
+### Geändert
+
+- Fenster mit allen Timern: Auf dem Desktop ist es jetzt ein Popup wie das Protokoll (mittig, abgerundet, die Seite dahinter abgedunkelt) statt die ganze Seite zu füllen. Auf dem Handy (bis 700 px) bleibt es vollflächig. Der Hinweis oben nennt jetzt auch den Plus-Knopf.
+
 ## [2.28.2] - 2026-10-13
 
 Timer-Assistent: "Jetzt ausführen" ist ein richtiger Knopf.
@@ -14,7 +22,6 @@ Timer-Assistent: "Jetzt ausführen" ist ein richtiger Knopf.
 ### Geändert
 
 - Timer-Assistent: "Jetzt ausführen" ist kein kleiner Textlink mehr, sondern ein Knopf mit Rahmen, 44 px hoch und mit grösserer Schrift, damit er sich auf dem Touch-Bildschirm gut treffen lässt. Die Rückmeldung ("Ausgeführt.") steht daneben.
-- Fenster mit allen Timern: Auf dem Desktop ist es jetzt ein Popup wie das Protokoll (mittig, abgerundet, die Seite dahinter abgedunkelt) statt die ganze Seite zu füllen. Auf dem Handy (bis 700 px) bleibt es vollflächig. Der Hinweis oben nennt jetzt auch den Plus-Knopf.
 
 ### Behoben
 
@@ -3022,7 +3029,8 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.28.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.2
+[2.28.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.3
+[2.28.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.28.2
 [2.28.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.1
 [2.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.0
 [2.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.1

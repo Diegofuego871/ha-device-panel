@@ -62,7 +62,8 @@ Bereich. Vorbild in Aufbau, Arbeitsweise und Design ist die Integration
 - Tags und Releases legt der Nutzer selbst an, immer mit Ziel `main`
   (Sessions können keine Tags pushen). Claude darf jederzeit auf `main`
   pushen, auch bevor der Nutzer den Tag der aktuellen Version angelegt hat.
-  Ob ein Tag existiert, prüft Claude auf GitHub.
+  Ob ein Tag existiert, prüft Claude auf GitHub, unmittelbar vor jedem Push: Tags und Releases, mit und ohne "v"-Präfix
+  (der Nutzer hat 2.28.2 ohne "v" angelegt; die Tag-Liste allein zeigt so etwas nicht oben).
 - Korrekturen an einer Version, deren Tag noch nicht existiert, bleiben in
   derselben Version (CHANGELOG-Abschnitt ergänzen). Neue Funktionen
   bekommen wie gewohnt eine neue Nummer, auch wenn die vorige noch keinen
