@@ -13,8 +13,14 @@ Entscheide des Nutzers zu launcher-v1 (2026-10-13):
 - `1-Launcher.png`: Launcher normal: Desktop (Favoriten mit senkrechtem Strich nach dem ersten) und Handy (Blatt, Kopfzeile nur mit dem Timer)
 - `2-Bearbeiten-Desktop.png`: Bearbeiten-Modus: Ziehgriff, Auge, Herz, waagrechter Strich "Kopfzeile am Handy", gezogener Eintrag
 - `3-Bearbeiten-Handy.png`: Bearbeiten-Modus auf dem Handy (44 px Zeilen)
+- `4-Liste.png`: Darstellung "Liste" (Desktop), mit demselben Strich, waagrecht
+
+6. Nachtrag: Der Benutzer wählt **Raster oder Liste** selbst, mit einem Schalter ("Darstellung") im Bearbeiten-Modus.
 
 ## Verhalten
+
+- **Darstellung**: Schalter Raster/Liste (Reiterleiste mit gleitender Kapsel) oben im Bearbeiten-Modus. Standard Raster. Gespeichert pro Benutzer
+  und getrennt für Desktop und Handy (wie die Ansicht der Geräteliste). Der Bearbeiten-Modus selbst zeigt immer die Liste (zum Ziehen).
 
 - **Favoriten**: Das Herz hängt einen Eintrag hinten an. Der **erste** Favorit steht am Handy in der Kopfzeile, auf dem Desktop **alle**.
   Zieht man einen anderen auf Platz 1, übernimmt er diesen Platz in der Kopfzeile des Handys. Ein ausgeblendeter Eintrag ist auch kein Favorit mehr.

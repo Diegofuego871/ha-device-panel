@@ -167,6 +167,8 @@ const CSS2 = `
 .lc-hline { display: flex; align-items: center; gap: 8px; margin: 2px 6px; color: var(--dp-text2); font-size: 11.5px; }
 .lc-hline::before, .lc-hline::after { content: ""; flex: 1; border-top: 1.5px dashed color-mix(in srgb, var(--dp-text2) 55%, transparent); }
 .lc-hline span { display: inline-flex; align-items: center; gap: 5px; }
+.lc-view { display: flex; align-items: center; gap: 10px; margin: 8px 4px 0; font-size: 13px; color: var(--dp-text2); }
+.lc-view .seg-sw { margin-left: auto; }
 .lc-reset { display: flex; align-items: center; gap: 8px; margin: 10px 4px 0; padding-top: 10px; border-top: 1px solid var(--dp-divider); color: var(--dp-primary); font-size: 13.5px; }
 .lc-reset .r { margin-left: auto; color: var(--dp-text2); font-size: 12px; }
 `;
@@ -230,16 +232,24 @@ const erow = (a, o = {}) => `<div class="lc-erow${o.hid ? " hid" : ""}${o.lift ?
   <span class="n">${a.n}<small>${a.sub || ""}</small></span>
   ${o.lock ? `<span class="a" title="immer sichtbar">${ic("lock", 18)}</span>` : `<span class="a">${ic(o.hid ? "eyeOff" : "eye", 20)}</span>`}
   ${a.own ? `<span class="a">${ic("pencilO", 18)}</span><span class="a del">${ic("close", 18)}</span>` : `<span class="a${a.pin ? " on" : ""}">${ic(a.pin ? "heart" : "heartO", 20)}</span>`}</div>`;
+const viewSwitch = (on) => `<div class="lc-view"><span>Darstellung</span><span class="seg-sw"><button type="button" class="${on === "Raster" ? "on" : ""}">Raster</button><button type="button" class="${on === "Liste" ? "on" : ""}">Liste</button></span></div>`;
 const hline = `<div class="lc-hline"><span>${ic("phone", 13)} Kopfzeile am Handy: nur der oberste Favorit</span></div>`;
 
 const popEdit = (style) => `<div class="lc-pop" style="${style}"><div class="lc-ehead"><b>Apps bearbeiten</b><span class="sp">${ic("check", 16)} Fertig</span></div>
   <div class="lc-note" style="margin:0 4px 2px">Ziehen sortiert, das Auge blendet aus, das Herz macht zum Favoriten. Gilt nur für dich.</div>
+  ${viewSwitch("Liste")}
   ${head("Favoriten ♥")}
   ${erow({ ...APPS.ha[0], pin: true }, { lift: true })}<div class="lc-drop"></div>${erow({ ...APPS.panel[0], pin: true })}${hline}${erow({ id: "x", n: "Szenen", i: "palette", sub: "/config/scene", pin: true })}
   ${head("Device Panel")}${erow(APPS.panel[1])}${erow({ ...APPS.panel[2], sub: "immer sichtbar: einziger Zugang zum Debug-Modus" }, { lock: true })}
   ${head("Home Assistant")}${erow(APPS.ha[1])}${erow(APPS.ha[2], { hid: true })}<div class="lc-note" style="margin:4px 8px">… 9 weitere</div>
   ${head("Eigene")}${APPS.own.map((a) => erow(a)).join("")}
   <div class="lc-reset">${ic("restore", 18)}<span>Auf Standard zurücksetzen</span><span class="r">Auswahl, Reihenfolge, Ausgeblendetes</span></div></div>`;
+
+const popList = (style) => `<div class="lc-pop" style="${style}"><div class="lc-ehead"><b>Apps</b><span class="sp" style="background:none;color:var(--dp-primary);padding:0 4px">${ic("pencilO", 16)} Bearbeiten</span></div>${search}
+  ${head("Favoriten ♥")}${row({ ...APPS.panel[0], pin: true })}${hline}${row({ ...APPS.ha[0], pin: true })}${row({ id: "x", n: "Szenen", i: "palette", sub: "/config/scene", pin: true })}
+  ${head("Device Panel")}${APPS.panel.slice(1).map((a) => row(a)).join("")}
+  ${head("Home Assistant")}${APPS.ha.slice(1, 4).map((a) => row(a)).join("")}<div class="lc-row"><span class="ico">${ic("chev", 20)}</span><span class="t"><b style="color:var(--dp-primary)">Alle anzeigen</b></span></div>
+  ${head("Eigene")}${APPS.own.map((a) => row(a)).join("")}</div>`;
 
 async function img1() {
   const out = [];
@@ -279,7 +289,7 @@ async function img2() {
   const file = `${tmp}2-d.png`;
   await p.screenshot({ path: file, clip: { x: 0, y: 40, width: 1400, height: 1000 } });
   await ctx.close();
-  return [[file, "Bearbeiten (Desktop): Ziehgriff links, Auge (ausblenden), Herz. \"Automationen\" wird auf Platz 1 gezogen (blaue Linie): Der Timer rutscht unter den Strich und fehlt am Handy in der Kopfzeile. Protokoll lässt sich nicht ausblenden.", 1000]];
+  return [[file, "Bearbeiten (Desktop): Schalter Raster/Liste, Ziehgriff links, Auge (ausblenden), Herz. \"Automationen\" wird auf Platz 1 gezogen (blaue Linie): Der Timer rutscht unter den Strich und fehlt am Handy in der Kopfzeile. Protokoll lässt sich nicht ausblenden.", 1000]];
 }
 
 async function img3() {
@@ -298,7 +308,23 @@ async function img3() {
   return [[file, "Bearbeiten (Handy): gleiche Zeilen, grosse Trefferflächen (44 px)", 330]];
 }
 
+async function img4() {
+  const out = [];
+  {
+    const { ctx, p, ev } = await page(false, { css: CSS + CSS2 });
+    await toolbar(ev, "pins", false, true);
+    await ev(`const b = r.querySelectorAll(".toolbar .lc-btn"); const l = b[b.length - 1].getBoundingClientRect(); r.querySelector(".toolbar").insertAdjacentHTML("beforeend", arg.replace("STYLE", "top:" + (l.bottom + 8) + "px;left:" + (l.right - 360) + "px;width:370px"));`, popList("STYLE"));
+    await p.waitForTimeout(250);
+    const file = `${tmp}4-d.png`;
+    await p.screenshot({ path: file, clip: { x: 0, y: 40, width: 1400, height: 1000 } });
+    out.push([file, "Darstellung \"Liste\" (Desktop): derselbe Strich, waagrecht", 900]);
+    await ctx.close();
+  }
+  return out;
+}
+
 await compose("1-Launcher.png", await img1());
 await compose("2-Bearbeiten-Desktop.png", await img2());
 await compose("3-Bearbeiten-Handy.png", await img3());
+await compose("4-Liste.png", await img4());
 await close();
