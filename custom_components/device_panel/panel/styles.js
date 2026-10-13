@@ -423,6 +423,15 @@ svg.strip .s2 { fill: var(--dp-bar-off); }
 dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.cols-dlg, dialog.prompt-dlg, dialog.notes-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
   box-shadow: var(--dp-shadow); overflow: auto; overscroll-behavior: contain; max-height: calc(100% - 48px);
   clip-path: inset(0 round 22px); /* die eigene Scrollleiste des Dialogs liegt sonst eckig über der Rundung (rechts oben/unten) */ }
+/* Schmale Scrollleiste ohne Pfeile (seit 2.29.1, Wunsch des Nutzers): die klassische Leiste mit Pfeilen sass in den runden Ecken und wurde dort
+   abgeschnitten. Der Abstand oben und unten (margin) hält den Griff aus den Rundungen heraus. Firefox/Safari: dünn nach Standard. */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+*::-webkit-scrollbar-track { background: transparent; margin: 18px 0; }
+*::-webkit-scrollbar-corner { background: transparent; }
+*::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--dp-text2) 40%, transparent); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--dp-text2) 65%, transparent); background-clip: padding-box; }
+@supports not selector(::-webkit-scrollbar) { dialog { scrollbar-width: thin; } }
 dialog.view { width: min(640px, calc(100vw - 32px)); }
 /* Grosse Fenster auf dem Desktop einheitlich (seit 2.28.5, Wunsch des Nutzers): Geräte-Popup, Einstellungen, Timer und Protokoll gleich gross */
 dialog.device, dialog.settings { width: min(880px, calc(100vw - 48px)); }

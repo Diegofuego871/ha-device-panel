@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.29.1] - 2026-10-13
+
+Slimmer scrollbars without arrows.
+
+### Fixed
+
+- Scrollbars on the desktop: the classic bar with arrows lay in the rounded corners of the pop-ups and the arrows were cut off. The bars are now slim, without arrows, and keep a distance from the corners. In the pop-ups and in all lists with their own scrollbar.
+
 ## [2.29.0] - 2026-10-13
 
 More in the debug log.
@@ -2958,6 +2966,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.29.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.1
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0
 [2.28.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.5
 [2.28.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.3

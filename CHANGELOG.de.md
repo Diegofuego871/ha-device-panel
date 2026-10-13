@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.29.1] - 2026-10-13
+
+Schmalere Scrollleisten ohne Pfeile.
+
+### Behoben
+
+- Scrollleisten auf dem Desktop: Die klassische Leiste mit Pfeilen lag in den runden Ecken der Popups, und die Pfeile wurden dort abgeschnitten. Die Leisten sind jetzt schmal, ohne Pfeile und halten Abstand zu den Ecken. In den Popups und in allen Listen mit eigener Scrollleiste.
+
 ## [2.29.0] - 2026-10-13
 
 Mehr im Debug-Protokoll.
@@ -3059,6 +3067,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.29.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.1
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0
 [2.28.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.5
 [2.28.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.3
