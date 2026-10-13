@@ -10,23 +10,22 @@ import { setup } from "../../_lib/mock.mjs";
 const { page, compose, close } = await setup(8998, import.meta.url);
 const tmp = new URL("./out/", import.meta.url).pathname;
 
-// App-Schlüssel -> HA-Farbe (Zuordnung wie in den Einstellungen von HA; Panel-Apps und Verlauf/Logbuch haben dort keine Entsprechung)
-const COL = {
-  timer: "#00838F", magic: "#8E24AA", log: "#4A5963",
-  auto: "#518C43", scene: "#518C43", script: "#518C43",
-  helper: "#0D47A1", dev: "#0D47A1", ent: "#0D47A1", integ: "#0D47A1",
-  area: "#E48629", tools: "#7A5AA6", backup: "#301ABE", hist: "#B1345C", book: "#3263C3",
-};
-const A = Object.entries(COL).map(([k, c]) => `.ap-ico:is([data-id="${k}"] *), [data-id="${k}"] .ap-ico { background: ${c}; color: #fff; }`).join("\n");
-const B = Object.entries(COL).map(([k, c]) => `[data-id="${k}"] .ap-ico { background: color-mix(in srgb, ${c} 18%, transparent); color: ${c}; }`).join("\n");
+// Symbol und Farbe je App: exakt wie im Frontend von Home Assistant (home-assistant-frontend 20260930, Konfigurationsseiten: iconPath und
+// iconColor der jeweiligen Seite). Verlauf und Logbuch haben dort keine Entsprechung (Seitenleiste ohne Farbe): MDI chart-box und
+// format-list-bulleted-type, Farben aus der HA-Palette. Panel-Apps behalten ihr Symbol, Farben aus der HA-Palette.
+import { readFileSync } from "node:fs";
+const HA = JSON.parse(readFileSync(new URL("./ha-icons.json", import.meta.url), "utf8"));
+const COL = { timer: "#00838F", magic: "#8E24AA", log: "#4A5963", ...Object.fromEntries(Object.entries(HA).map(([k, v]) => [k, v.color])) };
 const CSS_A = Object.entries(COL).map(([k, c]) => `[data-id="${k}"] .ap-ico { background: ${c}; color: #fff; }`).join("\n");
-void A;
+const B = Object.entries(COL).map(([k, c]) => `[data-id="${k}"] .ap-ico { background: color-mix(in srgb, ${c} 18%, transparent); color: ${c}; }`).join("\n");
 
 async function shotOf(mobile, css, name, { list = false } = {}) {
   const { ctx, p, ev } = await page(mobile, { css });
   if (list) await ev(`localStorage.setItem("device_panel_apps", JSON.stringify({ layout: { desktop: "list", phone: "list" } }))`);
   await ev(`r.querySelector(".apps-btn").click();`);
   await p.waitForTimeout(500);
+  // Symbole der HA-Seiten: die Pfade von Home Assistant statt der eigenen
+  await ev(`for (const [k, v] of Object.entries(arg)) for (const el of r.querySelectorAll('[data-id="' + k + '"] .ap-ico path')) el.setAttribute("d", v.path);`, HA);
   const file = `${tmp}${name}.png`;
   await p.screenshot({ path: file, ...(mobile ? {} : { clip: { x: 700, y: 40, width: 700, height: 760 } }) });
   await ctx.close();
