@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.28.2] - 2026-10-13
+
+Timer-Assistent: "Jetzt ausführen" ist ein richtiger Knopf.
+
+### Geändert
+
+- Timer-Assistent: "Jetzt ausführen" ist kein kleiner Textlink mehr, sondern ein Knopf mit Rahmen, 44 px hoch und mit grösserer Schrift, damit er sich auf dem Touch-Bildschirm gut treffen lässt. Die Rückmeldung ("Ausgeführt.") steht daneben.
+
+### Behoben
+
+- Protokoll: Der Debug-Modus bleibt eingeschaltet, bis Home Assistant neu startet. Bisher lud jedes gespeicherte Ändern der Einstellungen die Integration neu, wodurch Debug ausging und das Protokoll leer wurde. Das Protokoll bleibt jetzt über solche Neuladungen erhalten.
+
 ## [2.28.1] - 2026-10-13
 
 Timer-Assistent: Der angezeigte Zustand aktualisiert sich nach "Jetzt ausführen".
@@ -3009,6 +3021,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.28.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.2
 [2.28.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.1
 [2.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.0
 [2.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.1

@@ -214,7 +214,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if (timer_manager := hass.data.pop(DATA_TIMERS, None)) is not None:
         await timer_manager.async_stop()
     update_check.async_stop_daily(hass)
-    hass.data.pop(DATA_ACTIVITY, None)
+    # Das Protokoll (und der Debug-Schalter) bleibt beim Entladen stehen: Jedes Speichern der Einstellungen lädt die
+    # Integration neu und hätte sonst den Debug-Modus ausgeschaltet. Es gilt bis zum Neustart von HA (siehe async_remove_entry).
     return True
 
 
@@ -235,7 +236,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     if isinstance(state := hass.data.get(DATA_PUSH_ICONS), dict):
         state["missing"].clear()
     # Geladene Stände vergessen: ein neues Einrichten ohne Neustart beginnt leer.
-    for key in (DATA_TYPE_OVERRIDES, DATA_DEVICE_SETTINGS, DATA_CONNECTION_OVERRIDES, update_check.PANEL_DATA_KEY):
+    for key in (DATA_ACTIVITY, DATA_TYPE_OVERRIDES, DATA_DEVICE_SETTINGS, DATA_CONNECTION_OVERRIDES, update_check.PANEL_DATA_KEY):
         hass.data.pop(key, None)
 
 

@@ -1634,6 +1634,9 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .tm-sum { margin-top: 8px; padding: 12px 14px; border-radius: 14px; background: var(--dp-primary-soft); font-size: 14.5px; line-height: 1.45; }
 .tm-sum b { font-weight: 600; }
 .tm-result { margin-top: 10px; }
+/* Testknopf "Jetzt ausführen": echter Knopf mit Touch-Fläche (44 px), Rückmeldung daneben */
+.tm-tryrow { gap: 8px 14px; margin-top: 12px; font-size: 14px; }
+.tm-try { flex: 0 0 auto; height: 44px; padding: 0 22px; font-size: 15px; font-weight: 500; color: var(--dp-primary); border-color: var(--dp-primary); }
 /* Reiterleiste im Geräte-Popup mit fünf Reitern: auf dem Handy Symbole, die Beschriftung nur am gewählten Reiter (Entscheid zu Frage 7 in docs/mockups/timer-v1) */
 @media (max-width: 600px) {
   .dev-tabs .sub-tabs { display: flex; gap: 2px; }

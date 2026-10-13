@@ -621,3 +621,21 @@ async def test_try_switches_once_without_timer_or_log(hass: HomeAssistant, setup
         await manager.async_try("switch.plug", "open")
     with pytest.raises(vol.Invalid):
         await manager.async_try("sensor.temp", "off")
+
+
+async def test_log_and_debug_survive_reload(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Jedes Speichern der Einstellungen lädt die Integration neu: Debug-Schalter und Protokoll müssen das überstehen (2.28.2)."""
+    from custom_components.device_panel import activity
+
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    activity.set_debug(hass, True)
+    activity.record(hass, "debug", "timer", "timer_test", "Vorher")
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    snap = activity.snapshot(hass)
+    assert snap["debug"] is True
+    assert any(e["title"] == "Vorher" for e in snap["entries"])
+    # Entfernen der Integration räumt das Protokoll weg
+    assert await hass.config_entries.async_remove(entry.entry_id) is not None
+    await hass.async_block_till_done()
+    assert activity.snapshot(hass)["debug"] is False

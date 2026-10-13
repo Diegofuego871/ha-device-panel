@@ -45,7 +45,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelectorAll('${win} [data-tm="pick"]').length > 0`);
     await tap(`${win} [data-tm="pick"]`);
     await wait(`return !!r.querySelector('${win} [data-tm="try"]')`);
-    check(`[${tag}] Schritt "Was schalten": Knopf "${T.btn}" unter dem Ergebnis`, await ev(`const d = r.querySelector("${win}"); const b = d.querySelector('[data-tm="try"]'); const e = d.querySelector(".tm-result"); return b.textContent.trim() === ${JSON.stringify(T.btn)} && b.getBoundingClientRect().top >= e.getBoundingClientRect().bottom - 1`));
+    check(`[${tag}] Schritt "Was schalten": Knopf "${T.btn}" unter dem Ergebnis, Touch-Fläche mind. 44 px, Schrift mind. 15 px`, await ev(`const d = r.querySelector("${win}"); const b = d.querySelector('[data-tm="try"]'); const e = d.querySelector(".tm-result"); const q = b.getBoundingClientRect(); return b.textContent.trim() === ${JSON.stringify(T.btn)} && q.top >= e.getBoundingClientRect().bottom - 1 && q.height >= 44 && parseFloat(getComputedStyle(b).fontSize) >= 15 && getComputedStyle(b).borderTopStyle === "solid"`));
     await tap(`${win} [data-tm="action"][data-v="off"]`);
     const before = await ev(`return r.querySelector('${win} [data-tm="pick"][aria-checked="true"] .mg-val')?.textContent.trim()`);
     await tap(`${win} [data-tm="try"]`);

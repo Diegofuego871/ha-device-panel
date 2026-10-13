@@ -1097,9 +1097,9 @@ export class TimerUi {
     const w = this.wiz;
     const row = w.tried?.busy
       ? `<span class="opt-short">${this.esc(this.t("tmTryBusy"))}</span>`
-      : `<button type="button" class="linkbtn" data-tm="try">${this.esc(this.t("tmTryBtn"))}</button>${w.tried?.text ? `<span class="${w.tried.failed ? "opt-error" : "opt-short"}" role="status">${this.esc(w.tried.text)}</span>` : ""}`;
+      : `<button type="button" class="dlg-btn tm-try" data-tm="try">${this.esc(this.t("tmTryBtn"))}</button>${w.tried?.text ? `<span class="${w.tried.failed ? "opt-error" : "opt-short"}" role="status">${this.esc(w.tried.text)}</span>` : ""}`;
     return `<p class="mg-note tm-result">${this.esc(this.t("tmResult", this.sentenceOf({ entity_id: d.entity_id, action: d.action, back_s: d.back_s }, e.name)))}</p>
-      <div class="mg-testrow">${row}</div><p class="mg-hint">${this.esc(this.t("tmTryNote"))}</p>`;
+      <div class="mg-testrow tm-tryrow">${row}</div><p class="mg-hint">${this.esc(this.t("tmTryNote"))}</p>`;
   }
 
   // Testknopf: schaltet die gewählte Entität jetzt, ohne Timer und ohne Zurückschalten
