@@ -1711,8 +1711,6 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-t b .ap-badge { position: static; margin-left: 6px; }
 .ap-ext { position: absolute; right: 8px; bottom: 6px; display: inline-flex; color: var(--dp-text2); }
 .ap-ext.in { position: static; margin-right: 4px; }
-.ap-add { flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 12px 4px 8px; font-size: 12px; line-height: 1.2; text-align: center; background: none; border: 1.5px dashed color-mix(in srgb, var(--dp-primary) 55%, transparent); color: var(--dp-primary); cursor: pointer; font: inherit; }
-.ap-add .ap-ico { background: none; }
 
 .ap-rows { display: block; }
 .ap-row { position: relative; display: flex; align-items: center; min-height: 52px; border-radius: 0; }
@@ -1721,8 +1719,6 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-t { flex: 1; min-width: 0; font-size: 14.5px; }
 .ap-t b { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ap-t small { display: block; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dp-text2); font-size: 12px; }
-.ap-add-row { width: 100%; padding: 0 6px; gap: 12px; border: 0; background: none; color: var(--dp-primary); font: inherit; text-align: left; cursor: pointer; }
-.ap-add-row .ap-t b { color: var(--dp-primary); }
 /* Bearbeiten-Modus */
 .ap-view { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 14px; }
 .ap-view small { display: block; color: var(--dp-text2); font-size: 11.5px; }

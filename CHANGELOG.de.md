@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.34.0] - 2026-10-13
+
+App-Launcher: Eigene Apps legt man nur im Bearbeiten-Modus an.
+
+### Geändert
+
+- App-Launcher, normale Ansicht: Die Kachel "Eigene App" (Plus) entfällt, ebenso die Überschrift "Eigene", wenn darunter nichts zu zeigen ist. Eine eigene App legt man im Bearbeiten-Modus an ("Bearbeiten", dann "Eigene App hinzufügen"). Die Überschrift erscheint wieder, sobald es eine eigene App gibt, die kein Favorit ist (ein Favorit steht nur bei den Favoriten; ist Ihre einzige eigene App ein Favorit, gibt es keinen Abschnitt "Eigene").
+
 ## [2.33.1] - 2026-10-13
 
 Favicon in Originalfarben, Launcher-Liste nur mit Titel, kein "Erneut starten" mehr bei den Timern.
@@ -3153,6 +3161,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.34.0
 [2.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.1
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0

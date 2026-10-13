@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.34.0] - 2026-10-13
+
+App launcher: custom apps are created only in edit mode.
+
+### Changed
+
+- App launcher, normal view: the tile "Custom app" (plus) is gone, and so is the heading "Custom" when there is nothing to show under it. A custom app is created in edit mode ("Edit", then "Add custom app"). The heading comes back as soon as a custom app is there that is not a favorite (a favorite appears only under "Favorites"; if your only custom app is a favorite, there is no "Custom" section).
+
 ## [2.33.1] - 2026-10-13
 
 Favicon in its original colors, launcher list with titles only, no more "Start again" in timers.
@@ -3052,6 +3060,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.34.0
 [2.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.1
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0

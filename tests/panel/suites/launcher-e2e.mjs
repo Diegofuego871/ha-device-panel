@@ -85,7 +85,8 @@ for (const lang of ["de", "en"]) {
     // --- Launcher öffnen
     await open();
     check(`[${tag}] Launcher offen: Knopf aktiv, aria-expanded`, await ev(`const b = r.querySelector(".apps-btn"); return b.classList.contains("on") && b.getAttribute("aria-expanded") === "true"`));
-    check(`[${tag}] Titel "${T.title}", Gruppen ${JSON.stringify(T.groups)}`, (await text(`${D} .ap-title`)) === T.title && JSON.stringify(await ev(`return [...r.querySelectorAll("${D} .ap-h")].map((h) => h.firstChild.textContent.trim())`)) === JSON.stringify(T.groups));
+    // ohne eigene Apps fehlt der Abschnitt "Eigene" (2.34.0)
+    check(`[${tag}] Titel "${T.title}", Gruppen ${JSON.stringify(T.groups.slice(0, 3))}`, (await text(`${D} .ap-title`)) === T.title && JSON.stringify(await ev(`return [...r.querySelectorAll("${D} .ap-h")].map((h) => h.firstChild.textContent.trim())`)) === JSON.stringify(T.groups.slice(0, 3)));
     check(`[${tag}] Device Panel: Magic Push, Protokoll (Timer steht schon bei den Favoriten); Home Assistant: ${mobile ? 6 : 8} Kacheln, "Alle 12"`, await ev(`const g = [...r.querySelectorAll("${D} .ap-grid")]; return g[1].children.length === 2 && g[2].children.length === ${mobile ? 6 : 8} && /12/.test(r.querySelector("${D} .ap-more").textContent)`));
     const geo = await ev(`const d = r.querySelector("${D}").getBoundingClientRect(), a = r.querySelector(".apps-btn").getBoundingClientRect(); return [Math.round(d.left), Math.round(d.width), Math.round(d.top), Math.round(d.bottom), Math.round(a.bottom), Math.round(a.right), innerWidth, innerHeight]`);
     if (mobile) check(`[${tag}] Handy: Blatt über die ganze Breite, unten`, geo[0] === 0 && geo[1] === geo[6] && geo[3] === geo[7], JSON.stringify(geo));
@@ -120,7 +121,7 @@ for (const lang of ["de", "en"]) {
     await (await handle(`${D} .ap-q`)).fill("zzzz");
     check(`[${tag}] Suche ohne Treffer: "${T.none}", das Fenster wird dabei nicht kleiner`, (await text(`${D} .ap-note`)) === T.none && (await ev(`return r.querySelector("${D}").getBoundingClientRect().height`)) >= h0 - 1, `${h0} -> ${await ev(`return r.querySelector("${D}").getBoundingClientRect().height`)}`);
     await (await handle(`${D} .ap-q`)).fill("");
-    check(`[${tag}] Suche leer: wieder alle Gruppen`, await ev(`return r.querySelectorAll("${D} .ap-h").length === 4`));
+    check(`[${tag}] Suche leer: wieder alle Gruppen`, await ev(`return r.querySelectorAll("${D} .ap-h").length === 3`));
 
     // --- Öffnen: HA-Seite (Navigation), Protokoll, Magic Push, Timer
     await tap(`${D} .ap-grid [data-ap="open"][data-id="auto"]`);
@@ -182,7 +183,9 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Fertig: Liste nur mit Titeln (keine Pfade), ohne Strich`, await ev(`return !!r.querySelector("${D} .ap-rows .ap-row") && !r.querySelector("${D} .ap-rows .ap-t small") && [...r.querySelectorAll("${D} .ap-rows .ap-t")].every((e) => !e.textContent.includes("/config") && !e.textContent.includes("http")) && !r.querySelector("${D} .ap-hline") && !r.querySelector("${D} .ap-grid .ap-tile.ap-add") `));
     await shot("4-liste");
 
-    // --- Eigene Apps
+    // --- Eigene Apps (2.34.0: nur im Bearbeiten-Modus anlegen; in der normalen Ansicht weder Plus-Kachel noch leerer Abschnitt "Eigene")
+    check(`[${tag}] normale Ansicht ohne eigene Apps: kein Plus (keine Kachel "Eigene App"), kein Abschnitt "${T.groups[3]}"`, await ev(`return !r.querySelector('${D} [data-ap="add"]') && !r.querySelector("${D} .ap-add, ${D} .ap-add-row") && ![...r.querySelectorAll("${D} .ap-h")].some((h) => h.textContent.includes(${JSON.stringify(T.groups[3])}))`));
+    await tap(`${D} [data-ap="edit"]`);
     await tap(`${D} [data-ap="add"]`);
     const F = "dialog.app-dlg";
     check(`[${tag}] Formular "${T.formNew}": Kontrollkästchen aus, Beschriftung "${T.labelPage}"`, (await wait(`return r.querySelector("${F}")?.open`)) && (await text(`${F} .ap-title`)) === T.formNew && !(await ev(`return r.querySelector('${F} [data-f="ext"]').checked`)) && (await text(`${F} [data-f-label]`)) === T.labelPage);
@@ -216,6 +219,9 @@ for (const lang of ["de", "en"]) {
     await tap(`${F} [data-ap="fsave"]`);
     d = await data();
     check(`[${tag}] externe App gespeichert`, d.custom.length === 2 && d.custom[1].ext === true && d.custom[1].url === "https://example.org/start", JSON.stringify(d.custom));
+    await wait(`return !r.querySelector("${F}").open`);
+    await tap(`${D} [data-ap="done"]`);
+    check(`[${tag}] normale Ansicht mit eigenen Apps: Abschnitt "${T.groups[3]}" da, weiterhin kein Plus`, await ev(`return [...r.querySelectorAll("${D} .ap-h")].some((h) => h.textContent.includes(${JSON.stringify(T.groups[3])})) && !r.querySelector('${D} [data-ap="add"]')`));
     check(`[${tag}] externer Link ist ein Verweis: neuer Tab, noopener noreferrer, Marke`, await ev(`const a = r.querySelector('${D} a[data-ap="ext"]'); return !!a && a.target === "_blank" && /noopener/.test(a.rel) && /noreferrer/.test(a.rel) && a.href === "https://example.org/start" && !!a.querySelector(".ap-ext")`));
     const popup = ctx.waitForEvent("page", { timeout: 8000 });
     await tap(`${D} a[data-ap="ext"]`);

@@ -459,14 +459,6 @@ export class AppLauncher {
     return `<div class="ap-row">${this._main(a, "ap-main row", inner)}</div>`;
   }
 
-  _addEntry(list) {
-    const { escape, mdi } = this.h;
-    if (this.data.custom.length >= MAX_CUSTOM) return "";
-    return list
-      ? `<button type="button" class="ap-row ap-add-row" data-ap="add"><span class="ap-ico sm">${mdi("plus", 20)}</span><span class="ap-t"><b>${escape(this.t("appsAddLong"))}</b></span></button>`
-      : `<button type="button" class="ap-tile ap-add" data-ap="add"><span class="ap-ico">${mdi("plus", 24)}</span><span class="ap-nm">${escape(this.t("appsAdd"))}</span></button>`;
-  }
-
   _groupTitle(g) {
     return this.t(g === "panel" ? "appsGrpPanel" : g === "ha" ? "appsGrpHa" : "appsGrpOwn");
   }
@@ -489,8 +481,8 @@ export class AppLauncher {
     }
     for (const g of GROUPS) {
       let items = this.group(g, false, !q).filter(match);
-      const adding = g === "own" && !q;
-      if (!items.length && !adding) continue;
+      // Eigene Apps legt man nur im Bearbeiten-Modus an: ohne Eintrag zum Zeigen fehlt auch der Abschnitt
+      if (!items.length) continue;
       any = true;
       let more = "";
       if (g === "ha" && !q) {
@@ -501,7 +493,7 @@ export class AppLauncher {
         }
       }
       out += `<div class="ap-h">${escape(this._groupTitle(g))}${more}</div>`;
-      out += list ? `<div class="ap-rows">${items.map((a) => this._row(a)).join("")}${adding ? this._addEntry(true) : ""}</div>` : `<div class="ap-grid">${items.map((a) => this._tile(a)).join("")}${adding ? this._addEntry(false) : ""}</div>`;
+      out += list ? `<div class="ap-rows">${items.map((a) => this._row(a)).join("")}</div>` : `<div class="ap-grid">${items.map((a) => this._tile(a)).join("")}</div>`;
     }
     if (!any) out += `<p class="ap-note">${escape(this.t("appsNone"))}</p>`;
     return out;

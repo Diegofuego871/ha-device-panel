@@ -131,6 +131,9 @@ for (const lang of ["de", "en"]) {
     if (mobile) await tap(`${D} [data-ap-box="fav"] [data-ap-drag][data-id="${id}"]`).catch(() => {});
     check(`[${tag}] Favorit: in der Kopfzeile (${mobile ? "am Handy nur der erste, hier später" : "Desktop"}) als Verweis mit Favicon`, mobile ? (await data()).fav.includes(id) : await ev(`const a = r.querySelector('.toolbar a.app-pin'); return !!a?.querySelector("img.ap-fi") && a.target === "_blank"`));
     await tap(`${D} [data-ap="done"]`);
+    // Die einzige eigene App ist Favorit und steht nur bei den Favoriten: der Abschnitt "Eigene" fehlt ganz, ein Plus gibt es nicht (2.34.0)
+    const OWN = lang === "de" ? "Eigene" : "Custom";
+    check(`[${tag}] einzige eigene App ist Favorit: kein Abschnitt "${OWN}", kein Plus`, await ev(`return ![...r.querySelectorAll("${D} .ap-h")].some((h) => h.textContent.includes(${JSON.stringify(OWN)})) && !r.querySelector('${D} [data-ap="add"]')`));
 
     // Ändern: Reiter "Favicon" ist vorgewählt, Bild da; zurück zum Symbol entfernt das Favicon
     await tap(`${D} [data-ap="edit"]`);
