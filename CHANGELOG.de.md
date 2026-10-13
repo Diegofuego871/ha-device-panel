@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.28.4] - 2026-10-13
+
+Fenster mit allen Timern so gross wie die Einstellungen.
+
+### Geändert
+
+- Fenster mit allen Timern: Auf dem Desktop hat es jetzt dieselbe Grösse wie die Einstellungen und das Geräte-Popup (640 px breit statt 860 px).
+
 ## [2.28.3] - 2026-10-13
 
 Fenster mit allen Timern auf dem Desktop als Popup.
@@ -3029,6 +3037,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.28.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.4
 [2.28.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.3
 [2.28.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.28.2
 [2.28.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.1

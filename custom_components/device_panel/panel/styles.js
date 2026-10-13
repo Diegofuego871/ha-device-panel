@@ -1214,9 +1214,9 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 }
 
 /* Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1): Fenster gross auf dem Desktop, auf dem Handy vollflächig */
-/* Fenster "Alle Timer": Popup wie das Protokoll auf dem Desktop (seit 2.28.3), auf dem Handy (bis 700 px) vollflächig */
+/* Fenster "Alle Timer": Popup auf dem Desktop, gleich gross wie Einstellungen und Geräte-Popup (seit 2.28.3), auf dem Handy (bis 700 px) vollflächig */
 dialog.tmall-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
-  width: min(860px, calc(100vw - 48px)); height: min(780px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
+  width: min(640px, calc(100vw - 32px)); height: min(780px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
 dialog.tmall-dlg[open] { display: flex; flex-direction: column; }
 dialog.tmall-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .tmall-dlg .dlg-head { flex: none; position: static; }

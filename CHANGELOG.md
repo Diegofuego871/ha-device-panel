@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.28.4] - 2026-10-13
+
+Window with all timers as wide as the settings.
+
+### Changed
+
+- Window with all timers: on the desktop it now has the same size as the settings and the device pop-up (640 px wide instead of 860 px).
+
 ## [2.28.3] - 2026-10-13
 
 Window with all timers as a pop-up on the desktop.
@@ -2928,6 +2936,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.28.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.4
 [2.28.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.3
 [2.28.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.28.2
 [2.28.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.1

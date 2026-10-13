@@ -41,6 +41,14 @@ for (const lang of ["de", "en"]) {
     await tap(".tmall-btn");
     check(`[${tag}] Fenster offen, Titel "${T.title}" · "${T.sub}"`, await wait(`const d = r.querySelector("dialog.tmall-dlg"); return d?.open && d.querySelector("h2").textContent === ${JSON.stringify(T.title)} && d.querySelector(".dlg-sub").textContent === ${JSON.stringify(T.sub)}`));
     check(`[${tag}] ${mobile ? "Vollbild auf dem Handy" : "Popup auf dem Desktop (nicht vollflächig, mittig, mit Rundung und Rand um das Fenster)"}`, await ev(`const el = r.querySelector("dialog.tmall-dlg"), d = el.getBoundingClientRect(); const full = Math.abs(d.width - window.innerWidth) <= 1 && Math.abs(d.height - window.innerHeight) <= 1; const centred = Math.abs((d.left + d.width / 2) - window.innerWidth / 2) <= 2; return ${mobile ? "full" : "!full && d.width <= 862 && d.height <= window.innerHeight - 40 && centred && parseFloat(getComputedStyle(el).borderTopLeftRadius) >= 20"}`));
+    if (!mobile) {
+      // Gleiche Grösse wie das Einstellungs-Fenster (Wunsch des Nutzers): beide nacheinander öffnen und die Masse vergleichen
+      const tm = await ev(`const d = r.querySelector("dialog.tmall-dlg").getBoundingClientRect(); return JSON.stringify([Math.round(d.width), Math.round(d.height)])`);
+      await ev(`r.querySelector("dialog.settings").showModal();`);
+      const st = await ev(`const d = r.querySelector("dialog.settings").getBoundingClientRect(); return JSON.stringify([Math.round(d.width), Math.round(d.height)])`);
+      await ev(`r.querySelector("dialog.settings").close();`);
+      check(`[${tag}] Timer-Fenster gleich gross wie Einstellungen`, tm === st, `${tm} gegen ${st}`);
+    }
     check(`[${tag}] zwei Geräte, je eine Karte mit Gerätename`, await wait(`return r.querySelectorAll("dialog.tmall-dlg .mg-dcard").length === 2 && [...r.querySelectorAll("dialog.tmall-dlg .mg-dhead b")].map((e) => e.textContent).length === 2`), await ev(`return [...r.querySelectorAll("dialog.tmall-dlg .mg-dhead b")].map((e) => e.textContent).join("|")`));
     await tap('dialog.tmall-dlg [data-tma="timer-fold-all"]');
     check(`[${tag}] ausgeklappt: beide Timer, Gerät klar erkennbar`, await wait(`return r.querySelectorAll("dialog.tmall-dlg .mg-card").length === 2 && r.querySelectorAll("dialog.tmall-dlg .mg-dcard").length === 2`));
