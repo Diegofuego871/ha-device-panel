@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.31.1] - 2026-10-13
+
+App launcher: calmer normal view, more space in the header.
+
+### Changed
+
+- Launcher, normal view: no hearts on the apps any more, only one heart next to the heading "Favorites". Favorites are set in edit mode. The dashed line with the phone hint is shown only in edit mode, and the first favorite is no longer larger than the others.
+- A favorite appears only in the section "Favorites", not a second time in its group (the search still finds every app).
+- The launcher keeps its height while you type in the search.
+- Phone: more space between the buttons in the header (the search field is a little narrower).
+- Hints with "Undo" (reset, delete) appear inside the launcher window; they stay clear of the edit mode switch.
+
 ## [2.31.0] - 2026-10-13
 
 App launcher: useful pages one tap away, favorites in the header, your own links.
@@ -14,7 +26,7 @@ App launcher: useful pages one tap away, favorites in the header, your own links
 ### Added
 
 - App launcher: a button in the header (grid icon) opens a launcher with apps in three groups. Device Panel: Timer (the overview of all timers), Magic Push (the settings at the Magic Push tab) and the log. Home Assistant: automations, scenes, scripts, helpers, devices, entities, integrations, tools, areas, history, logbook and backups (the management pages only for administrators). Custom: your own links. A search field filters the apps.
-- Favorites: in edit mode the heart on an app puts it as a button into the header; the normal view shows no hearts, only one next to the heading "Favorites". A favorite appears only in the section "Favorites", not a second time in its group. The stopwatch button of the timers is now just the first favorite (the default). Up to five favorites; on the desktop all of them stand in the header, on the phone only the first one. In edit mode a dashed line marks this border. The gear stays at the far right.
+- Favorites: the heart on an app puts it as a button into the header, in its place the stopwatch button of the timers is now just the first favorite (the default). Up to five favorites; on the desktop all of them stand in the header, on the phone only the first one. In the launcher a dashed line marks this border (vertical in the grid, horizontal in the list). The gear stays at the far right.
 - Edit mode: drag the handle (or the arrow keys on it) to sort, in every group; the eye hides an app (a hidden app is no longer a favorite), the heart sets favorites, "Reset to default" restores selection, order and hidden apps (with "Undo"). The log cannot be hidden, it is the only way to the debug mode. A switch "Grid | List" chooses the view, separately for the desktop and the phone.
 - Custom apps: name, icon and target. Without the check box "External link" the target is a page of Home Assistant (starts with "/"), otherwise an address with https:// or http://, which always opens in a new browser tab (`noopener noreferrer`, Home Assistant stays open); other schemes such as javascript: are rejected. External links carry a small link mark. Custom apps can be edited, deleted (with "Undo") and made favorites.
 - Everything is saved per user in the user data of Home Assistant (with a local copy in the browser, the newer state wins), like the hearts of devices and timers.
@@ -23,8 +35,6 @@ App launcher: useful pages one tap away, favorites in the header, your own links
 
 - The log button moved from the header of the settings into the launcher (app "Log"). The stopwatch button in the header is now the favorite "Timer" and can be removed from there.
 - The label of the timer button reads "Timer" (before "All timers").
-- Phone: more space between the buttons in the header (the search field is a little narrower); the launcher keeps its height while you type in the search.
-
 ## [2.30.0] - 2026-10-13
 
 Not released; included in 2.31.0.
@@ -2996,6 +3006,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.31.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.1
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0
 [2.28.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.5
