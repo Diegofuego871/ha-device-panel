@@ -4,7 +4,7 @@
 // Über #4A5963, Dashboards #B1345C). Alles im echten Panel (Nachbau, erfundene Daten), Farben per Stil nach App-Schlüssel.
 //   1: Variante A (Empfehlung): Kreis in der HA-Farbe, weisses Symbol, wie in den Einstellungen von HA; Desktop und Handy
 //   2: Variante B: helle Fläche in der HA-Farbe, Symbol in der HA-Farbe (ruhiger)
-//   3: Vorher (jetzt: alles blau) und Nachher (A) in der Liste, Handy
+//   3: Vorher (jetzt: alles blau) und Nachher (A), Handy
 // Aufruf: CHROMIUM_PATH=... node docs/mockups/launcher-v3/src/render.mjs
 import { setup } from "../../_lib/mock.mjs";
 const { page, compose, close } = await setup(8998, import.meta.url);
@@ -41,7 +41,7 @@ await compose("2-Variante-B.png", [
   [await shotOf(true, B, "2m"), "B, Handy", 300],
 ]);
 await compose("3-Vorher-Nachher.png", [
-  [await shotOf(true, "", "3v", { list: true }), "Vorher (jetzt): alle Symbole blau", 300],
-  [await shotOf(true, CSS_A, "3n", { list: true }), "Nachher (A): Liste mit HA-Farben", 300],
+  [await shotOf(true, "", "3v"), "Vorher (jetzt): alle Symbole blau, eigene Symbole", 300],
+  [await shotOf(true, CSS_A, "3n"), "Nachher (A): HA-Symbole und -Farben", 300],
 ]);
 await close();
