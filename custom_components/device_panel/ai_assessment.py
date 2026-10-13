@@ -25,6 +25,7 @@ from homeassistant.util import dt as dt_util
 from .ai_prompt import DEFAULT_PROMPT, GROUP_PLACEHOLDERS, render_prompt
 from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK, SIGNAL_OFF, SIGNAL_WEAK_DBM, SIGNAL_WEAK_LQI
 from .battery_history import async_battery_history, battery_entity
+from .charge import ChargeNotifier
 from .devices import async_list_devices, device_battery_threshold
 from .options_api import effective
 
@@ -128,9 +129,12 @@ def battery_year(history: dict[str, Any], now: float) -> dict[str, Any] | None:
         "days_covered": max(0, round((now - points[0][0]) / 86400)),
     }
     changes = history.get("changes") or []
-    out["battery_changes"] = len(changes)
+    # Ist für das Gerät die Lademeldung aktiv, ist ein Anstieg ein Ladevorgang und kein Batteriewechsel (seit 2.32.0, wie im
+    # Fenster "Batterie"): Die KI soll ihn "Laden" nennen und nicht auf einen Wechsel schliessen.
+    kind = "charge" if history.get("charging") else "change"
+    out[f"battery_{kind}s"] = len(changes)
     if changes:
-        out["recent_changes"] = [
+        out[f"recent_{kind}s"] = [
             {"days_ago": max(0, round((now - c["at"]) / 86400)), "from_percent": c["from"], "to_percent": c["to"]}
             for c in reversed(changes[-BATTERY_CHANGES_MAX:])
         ]
@@ -417,7 +421,8 @@ async def _extras(hass: HomeAssistant, device: dict[str, Any], log: Any, now: fl
         entity_id = battery_entity(hass, er.async_entries_for_device(er.async_get(hass), device["id"])) if reg else None
         if reg is not None and entity_id:
             threshold = device_battery_threshold(hass, effective(hass), reg)
-            history = await async_battery_history(hass, entity_id, "365d", threshold, now)
+            charging = ChargeNotifier.enabled(effective(hass), hass, reg)
+            history = await async_battery_history(hass, entity_id, "365d", threshold, now, charging=charging)
             extra["forecast"] = history["forecast"]
             extra["battery_year"] = battery_year(history, now)
     return extra

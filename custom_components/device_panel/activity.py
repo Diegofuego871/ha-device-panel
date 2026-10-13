@@ -4,7 +4,9 @@ entscheiden und warum etwas nicht kam ("Lademeldung aus", "kein Push-Ziel", "stu
 Einträge liegen nur im Arbeitsspeicher (Ringspeicher, die letzten MAX_ENTRIES) und gehen beim
 Neustart verloren: Das Protokoll dient der Fehlersuche, nicht der Aufbewahrung. Debug-Einträge
 (Zwischenstände wie jeder neue Batteriestand) werden nur aufgezeichnet, solange der Schalter im
-Protokoll-Fenster an ist. Zusätzlich gehen die Einträge ans Python-Protokoll von Home Assistant
+Protokoll-Fenster an ist. Der Schalter bleibt seit 2.32.0 über Neustarts von Home Assistant
+erhalten, aber nur DEBUG_HOURS Stunden lang (Wunsch des Nutzers): Er merkt sich sein Ablaufdatum
+in einer kleinen Datei und schaltet sich dann von selbst aus. Zusätzlich gehen die Einträge ans Python-Protokoll von Home Assistant
 (Warnungen und Fehler sind dort ohnehin sichtbar).
 
 Texte stehen in der Sprache der Instanz wie die Push-Meldungen (DE und EN mit denselben
@@ -19,13 +21,19 @@ import time
 from collections import deque
 from typing import Any
 
-from homeassistant.core import HomeAssistant
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.helpers.event import async_call_later
+from homeassistant.helpers.storage import Store
+from homeassistant.util import dt as dt_util
 
-from .const import DATA_ACTIVITY
+from .const import DATA_ACTIVITY, DOMAIN, STORAGE_VERSION
 
 _LOGGER = logging.getLogger(__name__)
 
 MAX_ENTRIES = 500
+# So lange bleibt der Debug-Schalter an (auch über Neustarts), danach schaltet er sich aus.
+DEBUG_HOURS = 48
+STORE_KEY = f"{DOMAIN}.debug"
 LEVELS = ("debug", "info", "warning", "error")
 CATEGORIES = ("charge", "outage", "battery", "new", "updates", "magic", "timer", "push", "system")
 
@@ -35,6 +43,9 @@ _PY_LEVEL = {"debug": logging.DEBUG, "info": logging.INFO, "warning": logging.WA
 TEXTS: dict[str, dict[str, str]] = {
     "de": {
         "sys_start": "gestartet (Version {version})",
+        "debug_restored": "Debug-Modus nach dem Start wieder eingeschaltet",
+        "debug_restored_d": "läuft noch bis {until}",
+        "debug_expired": "Debug-Modus nach {hours} Stunden ausgeschaltet",
         "auto_update_done": "Version {version} automatisch installiert, Home Assistant muss neu gestartet werden",
         "auto_update_failed": "Version {version} konnte nicht automatisch installiert werden: {error}",
         "auto_update_failed_d": "Neuer Versuch bei der nächsten Prüfung",
@@ -118,6 +129,9 @@ TEXTS: dict[str, dict[str, str]] = {
     },
     "en": {
         "sys_start": "started (version {version})",
+        "debug_restored": "debug mode switched on again after the start",
+        "debug_restored_d": "runs until {until}",
+        "debug_expired": "debug mode switched off after {hours} hours",
         "auto_update_done": "version {version} installed automatically, Home Assistant must be restarted",
         "auto_update_failed": "version {version} could not be installed automatically: {error}",
         "auto_update_failed_d": "trying again at the next check",
@@ -208,7 +222,16 @@ class ActivityLog:
     def __init__(self) -> None:
         self.entries: deque[dict[str, Any]] = deque(maxlen=MAX_ENTRIES)
         self.debug = False
+        # Zeitpunkt (Unix), zu dem der Debug-Schalter ausläuft; None bei ausgeschaltetem Schalter
+        self.debug_until: float | None = None
+        self.restored = False
+        self._expiry: CALLBACK_TYPE | None = None
         self.since = time.time()
+
+    def cancel_expiry(self) -> None:
+        if self._expiry is not None:
+            self._expiry()
+            self._expiry = None
 
 
 def get(hass: HomeAssistant) -> ActivityLog:
@@ -254,11 +277,70 @@ def text(hass: HomeAssistant, code: str, **args: Any) -> str:
 def snapshot(hass: HomeAssistant) -> dict[str, Any]:
     """Für das Panel: alle Einträge (neueste zuletzt), Schalter, Beginn."""
     log = get(hass)
-    return {"entries": list(log.entries), "debug": log.debug, "since": log.since, "max": MAX_ENTRIES}
+    return {
+        "entries": list(log.entries),
+        "debug": log.debug,
+        "debug_until": log.debug_until if log.debug else None,
+        "since": log.since,
+        "max": MAX_ENTRIES,
+    }
+
+
+def _save(hass: HomeAssistant) -> None:
+    """Ablaufdatum des Schalters merken (verzögert, auch beim Beenden von HA geschrieben)."""
+    log = get(hass)
+    Store(hass, STORAGE_VERSION, STORE_KEY).async_delay_save(lambda: {"debug_until": log.debug_until if log.debug else None}, 1)
+
+
+def _arm(hass: HomeAssistant, log: ActivityLog) -> None:
+    """Zeitgeber setzen, der den Schalter zum Ablaufdatum ausschaltet."""
+    log.cancel_expiry()
+    if not log.debug or log.debug_until is None:
+        return
+
+    @callback
+    def expire(now: Any) -> None:
+        log._expiry = None  # noqa: SLF001 (gehört demselben Modul)
+        # Zeit des Zeitgebers statt der Uhr: so gilt, was HA als Zeitpunkt des Auslösens meldet (auch in Tests)
+        if log.debug and log.debug_until is not None and now.timestamp() >= log.debug_until - 1:
+            log.debug = False
+            log.debug_until = None
+            record(hass, "info", "system", "debug_expired", "Device Panel", hours=DEBUG_HOURS)
+            _save(hass)
+
+    log._expiry = async_call_later(hass, max(1.0, log.debug_until - time.time()), expire)  # noqa: SLF001
 
 
 def set_debug(hass: HomeAssistant, on: bool) -> None:
-    get(hass).debug = bool(on)
+    """Schalter setzen: an für DEBUG_HOURS Stunden (neu gezählt ab jetzt), aus sofort."""
+    log = get(hass)
+    log.debug = bool(on)
+    log.debug_until = time.time() + DEBUG_HOURS * 3600 if log.debug else None
+    _arm(hass, log)
+    _save(hass)
+
+
+async def async_restore(hass: HomeAssistant) -> None:
+    """Beim Start: einen noch nicht abgelaufenen Debug-Schalter wieder einschalten (nur einmal je Start von HA)."""
+    log = get(hass)
+    if log.restored:
+        return
+    log.restored = True
+    data = await Store(hass, STORAGE_VERSION, STORE_KEY).async_load() or {}
+    until = data.get("debug_until")
+    if isinstance(until, (int, float)) and until > time.time():
+        log.debug = True
+        log.debug_until = float(until)
+        _arm(hass, log)
+        stamp = dt_util.as_local(dt_util.utc_from_timestamp(until)).strftime("%d.%m. %H:%M")
+        record(hass, "info", "system", "debug_restored", "Device Panel", until=stamp)
+
+
+async def async_forget(hass: HomeAssistant) -> None:
+    """Integration entfernt: Zeitgeber stoppen, gemerkten Schalter löschen."""
+    if (log := hass.data.get(DATA_ACTIVITY)) is not None:
+        log.cancel_expiry()
+    await Store(hass, STORAGE_VERSION, STORE_KEY).async_remove()
 
 
 def clear(hass: HomeAssistant) -> None:

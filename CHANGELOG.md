@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.32.0] - 2026-10-13
+
+Debug mode across restarts, AI assessment calls a charge a charge.
+
+### Changed
+
+- Log, debug mode: the switch now stays on for 48 hours, also across restarts of Home Assistant, and then switches itself off (an entry in the log says so). Next to the switch the window shows until when it runs. After a restart an entry notes that the mode was switched on again. Switching it off by hand ends it at once. The entries of the log themselves are still only kept in memory and are lost on a restart.
+- AI assessment: if the charge notification is active for the device, a rise of the level in the battery history of the last 12 months is given to the AI as a charge ("battery_charges", "recent_charges") and no longer as a battery change; the default prompt tells it to call such a rise a charge. Devices without the charge notification keep the battery changes.
+
 ## [2.31.1] - 2026-10-13
 
 App launcher: calmer normal view, more space in the header.
@@ -3005,6 +3014,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.32.0
 [2.31.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.1
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0

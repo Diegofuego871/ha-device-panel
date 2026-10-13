@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.32.0] - 2026-10-13
+
+Debug-Modus über Neustarts, die KI-Einschätzung nennt einen Ladevorgang Laden.
+
+### Geändert
+
+- Protokoll, Debug-Modus: Der Schalter bleibt jetzt 48 Stunden eingeschaltet, auch über Neustarts von Home Assistant, und schaltet sich dann selbst aus (ein Eintrag im Protokoll sagt es). Neben dem Schalter zeigt das Fenster, bis wann er läuft. Nach einem Neustart vermerkt ein Eintrag, dass der Modus wieder eingeschaltet wurde. Von Hand ausgeschaltet, endet er sofort. Die Einträge des Protokolls selbst liegen weiterhin nur im Arbeitsspeicher und gehen beim Neustart verloren.
+- KI-Einschätzung: Ist für das Gerät die Lademeldung aktiv, geht ein Anstieg des Stands im Batterie-Verlauf der letzten 12 Monate als Ladevorgang an die KI ("battery_charges", "recent_charges") und nicht mehr als Batteriewechsel; der Standard-Prompt sagt ihr, einen solchen Anstieg Laden zu nennen. Geräte ohne Lademeldung behalten die Batteriewechsel.
+
 ## [2.31.1] - 2026-10-13
 
 App-Launcher: ruhigere normale Ansicht, mehr Platz in der Kopfzeile.
@@ -3106,6 +3115,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.32.0
 [2.31.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.1
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0

@@ -693,7 +693,8 @@
           if (log.debug) log.entries.push({ at: Date.now() / 1000 - 2, level: "debug", cat: "charge", title: "Aqua10 Roller", text: "level 23 %, low point 11 %, full from 100 %, rise 20 points", detail: "", device_id: "e" });
         }
         if (msg.type === "device_panel/clear_log") log.entries = [];
-        return { entries: log.entries.map((e) => ({ ...e })), debug: log.debug, since: log.since, max: 500 };
+        if (msg.type === "device_panel/set_log") log.until = log.debug ? Date.now() / 1000 + 48 * 3600 : null;
+        return { entries: log.entries.map((e) => ({ ...e })), debug: log.debug, debug_until: log.debug ? log.until || Date.now() / 1000 + 48 * 3600 : null, since: log.since, max: 500 };
       }
       if (msg.type === "device_panel/set_panel") {
         if ("prerelease" in msg) window.__panelSettings.prerelease = msg.prerelease;

@@ -3,6 +3,14 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.32.0, Debug-Modus über Neustarts)
+
+- 2.32.0: Der Debug-Schalter des Protokolls bleibt 48 Stunden (`activity.DEBUG_HOURS`), auch über Neustarts von HA: Ablaufdatum in `.storage/device_panel.debug`
+  (`activity.STORE_KEY`, `{"debug_until": ts|null}`), `activity.async_restore` beim Start (einmal je Start, `log.restored`), Zeitgeber `async_call_later`
+  schaltet ihn aus (`debug_expired`), `activity.async_forget` beim Entfernen. WS `get_log`/`set_log` liefern `debug_until`; das Fenster zeigt "· bis …".
+  Die Einträge selbst bleiben im Arbeitsspeicher. KI-Einschätzung: `battery_year` nennt bei aktiver Lademeldung `battery_charges`/`recent_charges`
+  (`history["charging"]`), der Standard-Prompt (`ai_prompt`) sagt der KI, einen Anstieg Laden zu nennen.
+
 ## Stand (2.31.1, App-Launcher)
 
 - 2.31.0 und 2.31.1: App-Launcher (`panel/apps.js`, Klasse `AppLauncher`, Mockups `docs/mockups/launcher-v1`/`launcher-v2`). Knopf `.apps-btn` und Favoriten

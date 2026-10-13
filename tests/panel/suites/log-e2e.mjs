@@ -98,11 +98,13 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] ohne Debug kein Chip "Debug"`, !(await ev(`return !!r.querySelector('dialog.log-dlg [data-lg-level="debug"]')`)));
   await tap("dialog.log-dlg [data-lg-debug]");
   check(`[${tag}] Debug an: set_log gesendet`, await wait(`return r.querySelector("dialog.log-dlg [data-lg-debug]").checked && !!r.querySelector('dialog.log-dlg [data-lg-level="debug"]')`) && (await calls("device_panel/set_log")).at(-1)?.debug === true);
+  check(`[${tag}] Debug an: Ablaufzeit (48 Stunden) steht neben dem Schalter, der Hinweis nennt die 48 Stunden`, (await text('dialog.log-dlg [data-lg="dbuntil"]')).startsWith(lang === "de" ? "· bis " : "· until ") && (await ev(`return r.querySelector("dialog.log-dlg .lg-check").title.includes("48")`)), await text('dialog.log-dlg [data-lg="dbuntil"]'));
   check(`[${tag}] Chips mit "Debug"`, JSON.stringify(await texts('dialog.log-dlg [data-lg="levels"] .chip > span:not(.n):not(.lg-dot)')) === JSON.stringify(T_.levelsDebug));
   await tap('dialog.log-dlg [data-lg-level="debug"]');
   check(`[${tag}] Stufe Debug: ein Eintrag`, (await wait(`return r.querySelectorAll("dialog.log-dlg .lg-row").length === 1`)) && (await text("dialog.log-dlg .lg-row")).includes("level 23 %, low point"));
   await tap('dialog.log-dlg [data-lg-level="all"]');
   await tap("dialog.log-dlg [data-lg-debug]");
+  check(`[${tag}] Debug aus: keine Ablaufzeit mehr`, await wait(`return r.querySelector('dialog.log-dlg [data-lg="dbuntil"]').textContent === ""`));
   check(`[${tag}] Debug aus: set_log false`, await wait(`return !r.querySelector("dialog.log-dlg [data-lg-debug]").checked`) && (await calls("device_panel/set_log")).at(-1)?.debug === false);
 
   // Kopieren

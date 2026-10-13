@@ -374,6 +374,46 @@ def test_battery_forecast_is_flagged_uncertain() -> None:
         assert word in DEFAULT_PROMPT, word
 
 
+def test_battery_year_charges() -> None:
+    """2.32.0: Mit aktiver Lademeldung heisst ein Anstieg Laden (battery_charges), nicht Batteriewechsel; der Prompt sagt es."""
+    from datetime import UTC, datetime  # noqa: PLC0415
+
+    day = 86400
+    now = datetime(2026, 10, 15, 12, tzinfo=UTC).timestamp()
+    points = [[now - (30 - i) * day, 90 - i] for i in range(31)]
+    changes = [{"at": now - 10 * day, "from": 20, "to": 100}]
+    year = ai_assessment.battery_year({"points": points, "changes": changes, "charging": True}, now)
+    assert year["battery_charges"] == 1 and year["recent_charges"] == [{"days_ago": 10, "from_percent": 20, "to_percent": 100}]
+    assert "battery_changes" not in year and "recent_changes" not in year
+    plain = ai_assessment.battery_year({"points": points, "changes": changes, "charging": False}, now)
+    assert plain["battery_changes"] == 1 and "battery_charges" not in plain
+    assert "battery_charges" in ai_assessment.DEFAULT_PROMPT and "never a battery change" in ai_assessment.DEFAULT_PROMPT
+
+
+async def test_extras_charging_flag(hass: HomeAssistant, setup) -> None:
+    """2.32.0: _extras fragt den Batterie-Verlauf mit dem Lade-Schalter des Geräts ab."""
+    from unittest.mock import patch  # noqa: PLC0415
+
+    from custom_components.device_panel.devices import async_list_devices  # noqa: PLC0415
+
+    dev = _lamp(hass)
+    batt = er.async_get(hass).async_get_or_create("sensor", "test", f"{dev.id}-c", device_id=dev.id, original_device_class="battery")
+    hass.states.async_set(batt.entity_id, "80", {"device_class": "battery", "unit_of_measurement": "%"})
+    log = hass.data[DATA_AVAILABILITY]
+    log.evaluate()
+    device = next(d for d in (await async_list_devices(hass, log))["devices"] if d["id"] == dev.id)
+    seen: list[bool] = []
+    real = ai_assessment.async_battery_history
+
+    async def spy(*args, **kwargs):
+        seen.append(kwargs.get("charging"))
+        return await real(*args, **kwargs)
+
+    with patch.object(ai_assessment, "async_battery_history", spy), patch.object(ai_assessment.ChargeNotifier, "enabled", return_value=True):
+        await ai_assessment._extras(hass, device, log, time.time())
+    assert seen == [True]
+
+
 async def test_extras_week_and_forecast(hass: HomeAssistant, setup) -> None:
     """_extras holt 7 Tage aus dem Protokoll und die Prognose aus dem Batterie-Verlauf."""
     from custom_components.device_panel.devices import async_list_devices  # noqa: PLC0415

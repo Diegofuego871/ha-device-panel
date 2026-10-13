@@ -3035,7 +3035,7 @@ class DevicePanel extends HTMLElement {
     const log = this._logState();
     try {
       const res = await this._callWithTimeout(msg, 10000);
-      Object.assign(log, { entries: res.entries || [], debug: Boolean(res.debug), since: res.since ?? null, max: res.max || 500, loaded: true, error: null });
+      Object.assign(log, { entries: res.entries || [], debug: Boolean(res.debug), debugUntil: res.debug ? res.debug_until ?? null : null, since: res.since ?? null, max: res.max || 500, loaded: true, error: null });
     } catch (err) {
       log.error = errText(err);
       log.loaded = true;
@@ -3058,7 +3058,7 @@ class DevicePanel extends HTMLElement {
         <label class="list-search lg-search">${mdi("search", 18)}<input type="search" data-lg-search value="${escape(this._logUi.q)}" placeholder="${escape(t("logSearch"))}" aria-label="${escape(t("logSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this._fieldClearHtml("data-lg-clear", "", this._logUi.q)}</label>
         <div class="lg-chips" data-lg="levels"></div>
         <div class="lg-chips" data-lg="cats"></div>
-        <label class="lg-check" title="${escape(t("logDebugHint"))}"><input type="checkbox" data-lg-debug><span>${escape(t("logDebug"))}</span></label>
+        <label class="lg-check" title="${escape(t("logDebugHint"))}"><input type="checkbox" data-lg-debug><span>${escape(t("logDebug"))}</span><small data-lg="dbuntil"></small></label>
       </div>
       <div class="lg-list" data-lg="list" role="list"></div>
       <div class="lg-foot"><span data-lg="count"></span><span class="sp"></span>
@@ -3135,6 +3135,8 @@ class DevicePanel extends HTMLElement {
     setHtml(ct, cats.map((x) => chip("data-lg-cat", x, ui.cat)).join(""));
     const check = dlg.querySelector("[data-lg-debug]");
     if (check.checked !== log.debug) check.checked = log.debug;
+    // Der Schalter läuft 48 Stunden (auch über Neustarts von HA): wann er sich ausschaltet
+    dlg.querySelector('[data-lg="dbuntil"]').textContent = log.debug && log.debugUntil ? t("logDebugUntil", this._fmtTime(log.debugUntil, true)) : "";
     const shown = this._logFiltered();
     let body = "";
     if (log.error) body += `<div class="dlg-error">${escape(t("logError"))} ${escape(log.error)}</div>`;

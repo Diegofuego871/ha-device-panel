@@ -130,3 +130,55 @@ async def test_ws_log_needs_admin(hass: HomeAssistant, hass_ws_client, hass_admi
     await client.send_json({"id": 1, "type": f"{DOMAIN}/get_log"})
     response = await client.receive_json()
     assert response["success"] is False and response["error"]["code"] == "unauthorized"
+
+
+async def test_debug_survives_restart_for_48_hours(hass: HomeAssistant, hass_storage: dict[str, Any]) -> None:
+    """2.32.0: Der Debug-Schalter bleibt über Neustarts von HA, 48 Stunden lang, und schaltet sich dann selbst aus."""
+    import time  # noqa: PLC0415
+    from datetime import timedelta  # noqa: PLC0415
+
+    from homeassistant.util import dt as dt_util  # noqa: PLC0415
+    from pytest_homeassistant_custom_component.common import async_fire_time_changed  # noqa: PLC0415
+
+    from custom_components.device_panel.const import DATA_ACTIVITY  # noqa: PLC0415
+
+    before = time.time()
+    activity.set_debug(hass, True)
+    until = activity.snapshot(hass)["debug_until"]
+    assert abs(until - (before + activity.DEBUG_HOURS * 3600)) < 5 and activity.DEBUG_HOURS == 48
+    # geschrieben (verzögert), danach Neustart: der Stand von HA im Arbeitsspeicher ist weg, die Datei bleibt
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=5))
+    await hass.async_block_till_done()
+    assert hass_storage[activity.STORE_KEY]["data"] == {"debug_until": until}
+    hass.data.pop(DATA_ACTIVITY).cancel_expiry()
+    assert activity.snapshot(hass)["debug"] is False
+    await activity.async_restore(hass)
+    snap = activity.snapshot(hass)
+    assert snap["debug"] is True and snap["debug_until"] == until
+    assert [e["text"] for e in snap["entries"]] == ["Debug-Modus nach dem Start wieder eingeschaltet"] or [e["text"] for e in snap["entries"]] == ["debug mode switched on again after the start"]
+    # nur einmal je Start: ein zweites Wiederherstellen ändert nichts
+    n = len(snap["entries"])
+    await activity.async_restore(hass)
+    assert len(activity.snapshot(hass)["entries"]) == n
+    # nach 48 Stunden schaltet er sich selbst aus
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(hours=48, minutes=1))
+    await hass.async_block_till_done()
+    snap = activity.snapshot(hass)
+    assert snap["debug"] is False and snap["debug_until"] is None
+    assert any("48" in e["text"] for e in snap["entries"])
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(hours=48, minutes=1, seconds=10))
+    await hass.async_block_till_done()
+    assert hass_storage[activity.STORE_KEY]["data"] == {"debug_until": None}
+
+
+async def test_expired_debug_stays_off_after_restart(hass: HomeAssistant, hass_storage: dict[str, Any]) -> None:
+    """2.32.0: Ein abgelaufenes Ablaufdatum schaltet den Debug-Modus beim Start nicht wieder ein."""
+    import time  # noqa: PLC0415
+
+    hass_storage[activity.STORE_KEY] = {"version": 1, "minor_version": 1, "key": activity.STORE_KEY, "data": {"debug_until": time.time() - 60}}
+    await activity.async_restore(hass)
+    assert activity.snapshot(hass)["debug"] is False and activity.snapshot(hass)["entries"] == []
+    # Schalter aus: nichts mehr gemerkt
+    activity.set_debug(hass, True)
+    activity.set_debug(hass, False)
+    assert activity.snapshot(hass)["debug_until"] is None

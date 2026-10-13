@@ -118,6 +118,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async_mark_start(hass)
     # Protokoll (seit 1.38.0): der Eintrag "gestartet" nennt die Version, die gerade läuft.
     integration = await async_get_integration(hass, DOMAIN)
+    await activity.async_restore(hass)
     activity.record(hass, "info", "system", "sys_start", "Device Panel", version=str(integration.version))
     await _async_register_push_path(hass)
     await _async_register_push_icons(hass)
@@ -216,7 +217,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     update_check.async_stop_daily(hass)
     activity.record(hass, "debug", "system", "sys_stop", "Device Panel")
     # Das Protokoll (und der Debug-Schalter) bleibt beim Entladen stehen: Jedes Speichern der Einstellungen lädt die
-    # Integration neu und hätte sonst den Debug-Modus ausgeschaltet. Es gilt bis zum Neustart von HA (siehe async_remove_entry).
+    # Integration neu und hätte sonst den Debug-Modus ausgeschaltet. Der Schalter gilt 48 Stunden, auch über Neustarts
+    # von HA (siehe activity.async_restore; entfernt wird er in async_remove_entry).
     return True
 
 
@@ -229,6 +231,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     Panel-Einstellungen. HA ruft
     das erst nach dem Entladen auf; dort wurde alles Ausstehende geschrieben.
     """
+    await activity.async_forget(hass)
     for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, MAGIC_STORE_KEY, TIMERS_STORE_KEY, update_check.PANEL_STORE_KEY):
         await Store(hass, STORAGE_VERSION, key).async_remove()
     # Heruntergeladene Icons der Meldungen; der statische Pfad bleibt bis zum
@@ -1018,7 +1021,7 @@ def _ws_get_log(hass: HomeAssistant, connection: websocket_api.ActiveConnection,
 @websocket_api.require_admin
 @callback
 def _ws_set_log(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
-    """Debug-Einträge aufzeichnen oder nicht (nur bis zum nächsten Neustart)."""
+    """Debug-Einträge aufzeichnen oder nicht (an: 48 Stunden, auch über Neustarts von HA)."""
     activity.set_debug(hass, msg["debug"])
     connection.send_result(msg["id"], activity.snapshot(hass))
 
