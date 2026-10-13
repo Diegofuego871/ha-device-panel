@@ -8,8 +8,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { btn: "Alle Timer", title: "Timer", sub: "Alle Geräte", edit: "Bearbeiten", hit: "1 von 2", q1: "Was soll geschaltet werden?" },
-  en: { btn: "All timers", title: "Timers", sub: "All devices", edit: "Edit", hit: "1 of 2", q1: "What should be switched?" },
+  de: { btn: "Timer", title: "Timer", sub: "Alle Geräte", edit: "Bearbeiten", hit: "1 von 2", q1: "Was soll geschaltet werden?" },
+  en: { btn: "Timers", title: "Timers", sub: "All devices", edit: "Edit", hit: "1 of 2", q1: "What should be switched?" },
 };
 const SEED = (id, device, name, enabled) => ({ id, device_id: device, entity_id: "switch.plug", name, action: "on", back_s: null, kind: "repeat", delay_s: null, date: null, time: "06:30", repeat: "daily", weekdays: null, mday: null, enabled, push: false, target: null, created: Date.now() / 1000 });
 
@@ -34,10 +34,9 @@ for (const lang of ["de", "en"]) {
     // zwei Timer an zwei Geräten (einer aus)
     await p.evaluate(([a, c]) => { (window.__timers ||= { list: [], seq: 1, runs: [], tests: [] }).list.push(a, c); }, [SEED("aaaaaaaaaaa1", "d", "Bewässerung", true), SEED("aaaaaaaaaaa2", "a", "Nachtlicht", false)]);
 
-    check(`[${tag}] Stoppuhr in der Kopfzeile mit Beschriftung "${T.btn}"`, await ev(`const b = r.querySelector(".toolbar .tmall-btn"); return !!b && b.getAttribute("aria-label") === ${JSON.stringify(T.btn)} && !!b.querySelector("svg")`));
-    // Abstand Stoppuhr zum Zahnrad = Abstand Herz zum Kreuz im Geräte-Popup (22 px)
-    check(`[${tag}] Stoppuhr genau mittig: links zum Nachbarn = rechts zum Zahnrad (Handy 15 px, Desktop 22 px)`, await ev(`const a = r.querySelector(".toolbar .tmall-btn").getBoundingClientRect(), b = r.querySelector(".toolbar .gear-btn").getBoundingClientRect(), s = [...r.querySelectorAll(".toolbar > *")].slice(0, [...r.querySelectorAll(".toolbar > *")].indexOf(r.querySelector(".toolbar .tmall-btn"))).reverse().find((e) => e.getBoundingClientRect().width > 0).getBoundingClientRect(); const l = Math.round(a.left - s.right), rr = Math.round(b.left - a.right); return l === rr && rr === ${mobile ? 15 : 22}`));
-    check(`[${tag}] Abstand Stoppuhr zum Zahnrad (Handy 15 px, Desktop 22 px)`, (await ev(`const a = r.querySelector(".toolbar .tmall-btn").getBoundingClientRect(), b = r.querySelector(".toolbar .gear-btn").getBoundingClientRect(); return Math.round(b.left - a.right)`)) === (mobile ? 15 : 22));
+    check(`[${tag}] Stoppuhr (Favorit Timer) in der Kopfzeile mit Beschriftung "${T.btn}"`, await ev(`const b = r.querySelector(".toolbar .tmall-btn"); return !!b && b.getAttribute("aria-label") === ${JSON.stringify(T.btn)} && !!b.querySelector("svg")`));
+    // Seit 2.31.0 sitzen Favoriten und Launcher-Knopf zwischen Suchfeld und Zahnrad: links und rechts derselbe Abstand
+    check(`[${tag}] Knöpfe genau mittig: Suchfeld bis Stoppuhr = Launcher-Knopf bis Zahnrad`, await ev(`const q = (s) => r.querySelector(s).getBoundingClientRect(); const all = [...r.querySelectorAll(".toolbar > *, .toolbar .app-pins > *")], first = r.querySelector(".toolbar .tmall-btn"), prev = all.slice(0, all.indexOf(first)).reverse().find((e) => e.getBoundingClientRect().width > 0).getBoundingClientRect(); const l = Math.round(q(".toolbar .tmall-btn").left - prev.right), rr = Math.round(q(".toolbar .gear-btn").left - q(".toolbar .apps-btn").right); return l === rr && l >= 6`));
     await tap(".tmall-btn");
     check(`[${tag}] Fenster offen, Titel "${T.title}" · "${T.sub}"`, await wait(`const d = r.querySelector("dialog.tmall-dlg"); return d?.open && d.querySelector("h2").textContent === ${JSON.stringify(T.title)} && d.querySelector(".dlg-sub").textContent === ${JSON.stringify(T.sub)}`));
     check(`[${tag}] ${mobile ? "Vollbild auf dem Handy" : "Popup auf dem Desktop (nicht vollflächig, mittig, mit Rundung und Rand um das Fenster)"}`, await ev(`const el = r.querySelector("dialog.tmall-dlg"), d = el.getBoundingClientRect(); const full = Math.abs(d.width - window.innerWidth) <= 1 && Math.abs(d.height - window.innerHeight) <= 1; const centred = Math.abs((d.left + d.width / 2) - window.innerWidth / 2) <= 2; return ${mobile ? "full" : "!full && d.width <= 882 && d.height <= window.innerHeight - 40 && centred && parseFloat(getComputedStyle(el).borderTopLeftRadius) >= 20"}`));

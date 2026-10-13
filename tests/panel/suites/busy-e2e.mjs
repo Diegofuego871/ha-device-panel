@@ -49,10 +49,10 @@ for (const mobile of [false, true]) {
   await tap('dialog.device [data-dlg="close"]');
 
   // Protokoll: neuer Eintrag kommt nicht mitten in einer Wischbewegung der Liste
-  await tap(".gear-btn");
-  await wait(`return !!r.querySelector('dialog.settings [data-set="log"]')`);
+  await tap(".apps-btn");
+  await wait(`return !!r.querySelector('dialog.apps-dlg [data-ap="open"][data-id="log"]')`);
   await p.waitForTimeout(600);
-  await tap('dialog.settings [data-set="log"]');
+  await tap('dialog.apps-dlg [data-ap="open"][data-id="log"]');
   await wait(`return r.querySelector("dialog.log-dlg")?.open && r.querySelectorAll("dialog.log-dlg .lg-row").length > 0`);
   const rows = () => ev(`return r.querySelectorAll("dialog.log-dlg .lg-row").length`);
   const n = await rows();
@@ -63,7 +63,6 @@ for (const mobile of [false, true]) {
   check(`[${tag}] Protokoll: während des Wischens unverändert`, (await rows()) === n, `${n} -> ${await rows()}`);
   check(`[${tag}] Protokoll: danach mit dem neuen Eintrag`, await wait(`return r.querySelectorAll("dialog.log-dlg .lg-row").length === ${n + 1}`, 6000), String(await rows()));
   await tap("dialog.log-dlg [data-lg-close]");
-  await tap('dialog.settings [data-set="close"]');
   check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
   await ctx.close();
 }

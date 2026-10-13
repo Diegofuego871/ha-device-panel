@@ -3,6 +3,17 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.31.0, App-Launcher)
+
+- 2.31.0: App-Launcher (`panel/apps.js`, Klasse `AppLauncher`, Mockups `docs/mockups/launcher-v1`/`launcher-v2`). Knopf `.apps-btn` und Favoriten
+  `.app-pin` (Klasse auch `.tmall-btn`) in `.toolbar`; Fenster `dialog.apps-dlg` (Popover unter dem Knopf, am Handy Blatt), Formular `dialog.app-dlg`.
+  Stand pro Benutzer: `frontend/set_user_data` unter `device_panel_apps` (`{fav, hidden, order, custom, layout, updated}`, lokale Kopie, neuerer Stand
+  gewinnt, `sanitizeApps` prüft alles). Höchstens 5 Favoriten (`MAX_FAV`), am Handy nur der erste in der Kopfzeile. Raster/Liste getrennt für
+  Desktop und Handy (`layout.desktop`/`layout.phone`). Protokoll (`locked`) nicht ausblendbar und nur noch hier (Knopf im Kopf der Einstellungen
+  entfernt). Externe Links: `<a target="_blank" rel="noopener noreferrer">`, nur https/http (`checkTarget`). Hinweise mit "Rückgängig" erscheinen
+  im Fenster (`snack`), weil der Toast der Seite unter dem modalen Fenster liegt. `_openSettings(tab)` nimmt den Reiter (Magic Push aus dem
+  Launcher). Suite `launcher-e2e`; `log`, `busy`, `timerall` angepasst.
+
 ## Stand (2.23.1, Auto-Update bei jeder Erkennung)
 
 - 2.23.1: `update_check.async_refresh_issue` stösst bei einer neueren Version `async_auto_install` an (Start, tägliche Prüfung, WS `version`

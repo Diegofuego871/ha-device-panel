@@ -68,13 +68,15 @@ button { font: inherit; color: inherit; }
   background: none; color: var(--dp-text2); cursor: pointer; }
 .search-clear:hover { background: var(--dp-hover); color: var(--dp-text); }
 .search-clear[hidden] { display: none; }
-.gear-btn, .tmall-btn { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--dp-divider);
+.gear-btn, .tmall-btn, .apps-btn { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--dp-divider);
   background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
-.tmall-btn { margin: 0 10px; } /* gleicher Abstand links (Suchfeld) und rechts (Zahnrad): genau mittig, skaliert mit der Breite */
+.tmall-btn, .apps-btn { margin: 0 -2px; text-decoration: none; } /* Favoriten und Launcher-Knopf rücken enger zusammen (8 px), links vom ersten und rechts vom letzten 10 px */
+.app-pins { display: contents; }
 .gear-btn { position: relative; }
 /* Roter Punkt: Update installiert, Neustart steht aus (seit 2.25.0) */
 .gear-btn.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-bg); }
-.gear-btn:hover, .tmall-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
+.gear-btn:hover, .tmall-btn:hover, .apps-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
+.apps-btn.on { background: var(--dp-primary-soft); border-color: transparent; color: var(--dp-primary); }
 .content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 20px 16px; }
 /* Kopf, Chips und Fusszeile bleiben beim seitlichen Scrollen der Tabelle stehen. */
 .hero, .chips, .foot { position: sticky; left: 0; }
@@ -466,7 +468,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 /* Herz im Kopf des Geräte-Popups (seit 2.22.0): wie das Kreuz ein runder Knopf, rot sobald Favorit */
 .dlg-fav { flex: none; display: grid; place-items: center; width: 36px; height: 36px; margin-right: 8px; border: none; border-radius: 50%;
   background: var(--dp-subtle); color: var(--dp-text2); cursor: pointer; transition: color .2s ease, background .2s ease; }
-.dlg-log, .dlg-add { margin-right: 8px; }
+.dlg-add { margin-right: 8px; }
 .dlg-fav:hover { background: var(--dp-hover); color: var(--dp-error); }
 .dlg-fav.on { color: var(--dp-error); }
 .dlg-fav:focus-visible { outline: 2px solid var(--dp-error); outline-offset: 1px; }
@@ -1213,9 +1215,9 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   dialog.settings[open] { display: flex; flex-direction: column; }
   dialog.settings[open] > * { flex-shrink: 0; }
   dialog.settings[open] > .dlg-body { flex-grow: 1; }
-  .toolbar .gear-btn, .toolbar .tmall-btn { width: 38px; height: 38px; }
+  .toolbar .gear-btn, .toolbar .tmall-btn, .toolbar .apps-btn { width: 38px; height: 38px; }
   /* Handy: der Platz zwischen Suchfeld und Zahnrad bleibt wie vorher (Suchfeld nicht schmaler), nur gleichmässig geteilt: 8 + 7 px auf beiden Seiten */
-  .toolbar .tmall-btn { margin: 0 7px; }
+  .toolbar .tmall-btn, .toolbar .apps-btn { margin: 0 -1px; }
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   .dlg-head { padding: 18px 12px 12px 16px; }
   .dlg-quick { padding: 0 16px 6px; }
@@ -1670,4 +1672,129 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
   .dev-tabs .sub-tab.on.two::before { display: none; }
   .dev-tabs .sub-tab.on.two .tab-l { font-size: 13px; }
 }
+/* App-Launcher (seit 2.31.0, docs/mockups/launcher-v2): Fenster unter dem Knopf in der Kopfzeile (Desktop) oder Blatt von unten (Handy). */
+dialog.apps-dlg, dialog.app-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow);
+  overflow: auto; overscroll-behavior: contain; max-height: calc(100% - 48px); clip-path: inset(0 round 22px); }
+dialog.apps-dlg { width: min(450px, calc(100vw - 32px)); margin: 0; inset: auto; border: 1px solid var(--dp-divider); }
+dialog.app-dlg { width: min(480px, calc(100vw - 32px)); }
+dialog.apps-dlg::backdrop { background: transparent; }
+dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
+.ap-head { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 8px; padding: 14px 14px 6px 18px; background: var(--dp-card); }
+.ap-title { flex: 1; min-width: 0; font-size: 17px; font-weight: 600; }
+.ap-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 6px; border: 0; border-radius: 8px; background: none; color: var(--dp-primary); font: inherit; font-size: 13.5px; cursor: pointer; }
+.ap-link:hover { background: var(--dp-primary-soft); }
+.ap-done { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--dp-primary); color: #fff; font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; }
+.ap-x { display: none; place-items: center; flex: none; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--dp-subtle); color: var(--dp-text2); cursor: pointer; }
+.ap-x.show { display: grid; }
+.ap-body { padding: 0 14px 14px; }
+.ap-search { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--dp-divider); border-radius: 999px; background: var(--dp-input); color: var(--dp-text2); }
+.ap-q { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--dp-text); font: inherit; font-size: 14px; }
+.ap-q::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.ap-h { display: flex; align-items: center; gap: 6px; margin: 14px 4px 6px; color: var(--dp-text2); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; }
+.ap-more { margin-left: auto; padding: 4px 2px; border: 0; background: none; color: var(--dp-primary); font: inherit; font-size: 12.5px; letter-spacing: 0; text-transform: none; cursor: pointer; }
+.ap-note { margin: 6px 4px 0; color: var(--dp-text2); font-size: 12px; line-height: 1.4; }
+.ap-note.first { margin-top: 0; }
+.ap-note svg { vertical-align: -2px; }
+.ap-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.ap-tile { position: relative; box-sizing: border-box; display: flex; min-height: 84px; border-radius: 14px; background: var(--dp-subtle); color: var(--dp-text); font: inherit; }
+.ap-tile.pin { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--dp-primary) 55%, transparent); }
+.ap-main { display: flex; flex: 1; min-width: 0; align-items: center; border: 0; background: none; color: inherit; font: inherit; text-decoration: none; cursor: pointer; border-radius: inherit; }
+.ap-tile > .ap-main { flex-direction: column; justify-content: center; gap: 6px; padding: 12px 4px 8px; font-size: 12px; line-height: 1.2; text-align: center; }
+.ap-tile > .ap-main:hover, .ap-row > .ap-main:hover { background: var(--dp-hover); }
+.ap-main:focus-visible, .ap-heart:focus-visible, .ap-a:focus-visible, .ap-drag:focus-visible, .ap-ic:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
+.ap-nm { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; max-width: 100%; overflow: hidden; overflow-wrap: break-word; }
+.ap-rest .ap-nm { font-size: 11px; letter-spacing: -.01em; }
+.ap-rest > .ap-tile > .ap-main { padding-left: 2px; padding-right: 2px; }
+.ap-ico { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--dp-primary-soft); color: var(--dp-primary); }
+.ap-ico.sm { width: 34px; height: 34px; }
+.ap-heart { position: absolute; top: 0; right: 0; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--dp-text2); cursor: pointer; }
+.ap-heart.on { color: var(--dp-error); }
+.ap-heart.dis, .ap-a.dis { opacity: .35; cursor: default; }
+.ap-badge { position: absolute; top: 7px; left: 7px; padding: 1px 6px; border-radius: 99px; background: var(--dp-warning-soft); color: var(--dp-warning); font-size: 10px; font-weight: 600; }
+.ap-t b .ap-badge { position: static; margin-left: 6px; }
+.ap-ext { position: absolute; right: 8px; bottom: 6px; display: inline-flex; color: var(--dp-text2); }
+.ap-ext.in { position: static; margin-right: 4px; }
+.ap-add { flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 12px 4px 8px; font-size: 12px; line-height: 1.2; text-align: center; background: none; border: 1.5px dashed color-mix(in srgb, var(--dp-primary) 55%, transparent); color: var(--dp-primary); cursor: pointer; font: inherit; }
+.ap-add .ap-ico { background: none; }
+.ap-fav { display: grid; grid-template-columns: minmax(0, 1fr) 16px minmax(0, 4fr); align-items: stretch; }
+.ap-fav.one { grid-template-columns: minmax(0, 1fr); width: 25%; }
+
+.ap-rest { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.ap-vl { position: relative; margin: 2px 7px; border-left: 1.5px dashed color-mix(in srgb, var(--dp-text2) 55%, transparent); }
+.ap-vl span { position: absolute; top: -2px; left: -9px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--dp-card); color: var(--dp-text2); }
+.ap-rows { display: block; }
+.ap-row { position: relative; display: flex; align-items: center; min-height: 52px; border-radius: 0; }
+.ap-row + .ap-row, .ap-row + .ap-hline, .ap-hline + .ap-row { border-top: 1px solid var(--dp-divider); }
+.ap-row > .ap-main.row { border-radius: 0; gap: 12px; padding: 0 6px; min-height: 52px; text-align: left; }
+.ap-row .ap-heart { position: static; flex: none; width: 44px; height: 44px; }
+.ap-t { flex: 1; min-width: 0; font-size: 14.5px; }
+.ap-t b { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ap-t small { display: block; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dp-text2); font-size: 12px; }
+.ap-add-row { width: 100%; padding: 0 6px; gap: 12px; border: 0; background: none; color: var(--dp-primary); font: inherit; text-align: left; cursor: pointer; }
+.ap-add-row .ap-t b { color: var(--dp-primary); }
+.ap-hline { display: flex; align-items: center; gap: 8px; margin: 2px 6px; color: var(--dp-text2); font-size: 11.5px; }
+.ap-hline::before, .ap-hline::after { content: ""; flex: 1; border-top: 1.5px dashed color-mix(in srgb, var(--dp-text2) 55%, transparent); }
+.ap-hline span { display: inline-flex; align-items: center; gap: 5px; }
+/* Bearbeiten-Modus */
+.ap-view { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 14px; }
+.ap-view small { display: block; color: var(--dp-text2); font-size: 11.5px; }
+.ap-view .sub-tabs { flex: none; width: 190px; margin: 0; }
+.ap-box { display: block; }
+.ap-erow { position: relative; display: flex; align-items: center; gap: 6px; min-height: 48px; padding: 0 2px 0 0; border-radius: 0; background: var(--dp-card); font-size: 14.5px; }
+.ap-erow + .ap-erow { border-top: 1px solid var(--dp-divider); }
+.ap-erow.hid { opacity: .55; }
+.ap-erow.hid .ap-t b { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--dp-text2) 60%, transparent); }
+.ap-erow.lift { z-index: 3; border-radius: 12px; margin: 2px -4px; padding: 0 6px 0 4px; border: 1px solid color-mix(in srgb, var(--dp-primary) 45%, transparent); box-shadow: 0 8px 22px rgba(0,0,0,.28); }
+.ap-drag { flex: none; display: grid; place-items: center; width: 30px; height: 44px; padding: 0; border: 0; background: none; color: var(--dp-text2); cursor: grab; touch-action: none; }
+.ap-drag:active { cursor: grabbing; }
+.ap-a { flex: none; display: grid; place-items: center; width: 36px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--dp-text2); cursor: pointer; }
+.ap-a:hover:not(.dis) { background: var(--dp-hover); color: var(--dp-text); }
+.ap-a.heart.on { color: var(--dp-error); }
+.ap-a.del { color: var(--dp-error); }
+/* Grenze der Kopfzeile am Handy: gestrichelte Linie mit Beschriftung über der zweiten Zeile der Favoriten */
+.ap-box.fav > .ap-erow:nth-child(2) { margin-top: 24px; }
+.ap-box.fav > .ap-erow:nth-child(2)::before { content: attr(data-mark); position: absolute; left: 0; right: 0; top: -22px; display: flex; align-items: center; justify-content: center; height: 20px;
+  border-top: 1.5px dashed color-mix(in srgb, var(--dp-text2) 55%, transparent); color: var(--dp-text2); font-size: 11.5px; line-height: 1; padding-top: 3px; box-sizing: border-box; }
+.ap-addbtn { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 6px; border: 0; border-radius: 12px; background: none; color: var(--dp-primary); font: inherit; font-size: 14px; cursor: pointer; }
+.ap-addbtn:hover { background: var(--dp-primary-soft); }
+.ap-reset { display: flex; align-items: center; gap: 8px; margin: 14px 4px 0; padding-top: 10px; border-top: 1px solid var(--dp-divider); font-size: 12px; color: var(--dp-text2); }
+.ap-reset .ap-link { padding: 0; font-size: 13.5px; }
+.ap-reset > span { margin-left: auto; text-align: right; }
+/* Formular "Eigene App" */
+.ap-f { display: block; margin: 14px 0 0; }
+.ap-f > span { display: block; margin-bottom: 6px; color: var(--dp-text2); font-size: 12.5px; }
+.ap-in { box-sizing: border-box; width: 100%; height: 44px; padding: 0 14px; border: 1px solid var(--dp-divider); border-radius: 12px; background: var(--dp-input); color: var(--dp-text); font: inherit; font-size: 16px; }
+.ap-in:focus { outline: 2px solid var(--dp-primary); outline-offset: -1px; border-color: transparent; }
+.ap-icons { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.ap-ic { display: grid; place-items: center; height: 40px; padding: 0; border: 0; border-radius: 12px; background: var(--dp-subtle); color: var(--dp-text2); cursor: pointer; }
+.ap-ic.on { background: var(--dp-primary-soft); color: var(--dp-primary); box-shadow: inset 0 0 0 1.5px var(--dp-primary); }
+.ap-chk { display: flex; align-items: center; gap: 12px; min-height: 48px; margin-top: 10px; cursor: pointer; font-size: 14.5px; }
+.ap-chk input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--dp-primary); }
+.ap-chk small { display: block; color: var(--dp-text2); font-size: 12px; }
+.ap-hint { margin: 6px 2px 0; color: var(--dp-text2); font-size: 12px; line-height: 1.4; }
+.ap-prev { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 10px 12px; border-radius: 14px; background: var(--dp-subtle); }
+.ap-prev .ap-tile { flex: none; width: 88px; background: var(--dp-card); }
+.ap-prev .ap-tile > .ap-main { cursor: default; }
+.ap-prev p { margin: 0; color: var(--dp-text2); font-size: 12.5px; line-height: 1.4; }
+.ap-err { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--dp-error-soft); color: var(--dp-error); font-size: 14px; }
+.ap-err[hidden] { display: none; }
+.ap-snack { position: sticky; bottom: 10px; z-index: 5; box-sizing: border-box; display: flex; align-items: center; gap: 14px; width: max-content; max-width: calc(100% - 28px); margin: 0 auto 10px; padding: 10px 16px;
+  border-radius: 12px; background: #323232; color: #fff; font-size: 14px; line-height: 1.35; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+.ap-snack.act { padding: 6px 8px 6px 16px; }
+.ap-snack button { flex: none; height: 32px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: #8ecbff; font: inherit; font-weight: 600; cursor: pointer; }
+.ap-snack button:hover { background: rgba(255,255,255,.1); }
+.ap-acts { position: sticky; bottom: 0; display: flex; gap: 10px; padding: 12px 14px 16px; background: var(--dp-card); }
+@media (max-width: 600px) {
+  dialog.apps-dlg, dialog.app-dlg { width: 100%; max-width: 100%; margin: auto 0 0; inset: auto 0 0 0; border: none; border-radius: 22px 22px 0 0; max-height: 92%; }
+  dialog.apps-dlg::backdrop { background: rgba(0,0,0,0.5); }
+  .ap-x { display: grid; }
+  .ap-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ap-fav { grid-template-columns: minmax(0, 1fr) 16px minmax(0, 2fr); }
+  .ap-fav.one { width: calc(100% / 3); }
+  .ap-rest { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ap-view .sub-tabs { width: 170px; }
+  .ap-ic { height: 44px; }
+  .ap-a { width: 38px; height: 44px; }
+}
+@media (prefers-reduced-motion: no-preference) { .ap-tile, .ap-erow { transition: background .15s ease; } }
 `;
