@@ -269,3 +269,20 @@ async def test_history_flags_devices_with_charge_notification(hass: HomeAssistan
     await async_set_device_settings(hass, dev.id, charge=True)
     on = (await _ws(client, 2, type=f"{DOMAIN}/battery_history", device_id=dev.id, range="7d"))["result"]
     assert on["charging"] is True
+
+
+async def test_history_flags_devices_with_own_charging_indicator(hass: HomeAssistant, hass_ws_client) -> None:
+    """2.33.0 (Variante A): Ein Gerät mit eigener Ladeanzeige gilt als aufladbar, auch ohne Lademeldung: "Laden" statt "Wechsel"."""
+    from homeassistant.helpers import entity_registry as er  # noqa: PLC0415
+
+    dev, bat = _battery_device(hass)
+    hass.states.async_set(bat, "80", {"device_class": "battery", "unit_of_measurement": "%"})
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    assert (await _ws(client, 1, type=f"{DOMAIN}/battery_history", device_id=dev.id, range="7d"))["result"]["charging"] is False
+    indicator = er.async_get(hass).async_get_or_create("binary_sensor", "test", f"{dev.id}-charging", device_id=dev.id, original_device_class="battery_charging")
+    hass.states.async_set(indicator.entity_id, "off", {"device_class": "battery_charging"})
+    assert (await _ws(client, 2, type=f"{DOMAIN}/battery_history", device_id=dev.id, range="7d"))["result"]["charging"] is True
+    # ein deaktivierter Indikator zählt nicht
+    er.async_get(hass).async_update_entity(indicator.entity_id, disabled_by=er.RegistryEntryDisabler.USER)
+    assert (await _ws(client, 3, type=f"{DOMAIN}/battery_history", device_id=dev.id, range="7d"))["result"]["charging"] is False

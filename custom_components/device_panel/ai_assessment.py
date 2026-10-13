@@ -421,7 +421,7 @@ async def _extras(hass: HomeAssistant, device: dict[str, Any], log: Any, now: fl
         entity_id = battery_entity(hass, er.async_entries_for_device(er.async_get(hass), device["id"])) if reg else None
         if reg is not None and entity_id:
             threshold = device_battery_threshold(hass, effective(hass), reg)
-            charging = ChargeNotifier.enabled(effective(hass), hass, reg)
+            charging = ChargeNotifier.rechargeable(effective(hass), hass, reg)
             history = await async_battery_history(hass, entity_id, "365d", threshold, now, charging=charging)
             extra["forecast"] = history["forecast"]
             extra["battery_year"] = battery_year(history, now)

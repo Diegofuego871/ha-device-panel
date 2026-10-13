@@ -9,7 +9,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   HA liest die Seite (`<link rel="icon">`, sonst `/favicon.ico`), 5 s je Abruf, 100 KB, Bildart am Inhalt erkannt (`sniff`), keine Zertifikatsprüfung
   (`verify_ssl=False`, nur ein öffentliches Bild), Fehlercodes `invalid_url`, `unreachable`, `not_found`, `too_large`. Panel `apps.js`: Formular mit
   Reiterleiste `data-set="fsrc"` (Symbol | Favicon), Knopf `data-f-fetch`; die App trägt `favicon` (Data-URI, `isFavicon` prüft Bildart und Länge,
-  `sanitizeApps` nur bei `ext`); `_icon(a, size)` zeigt es statt des Symbols (Launcher, Bearbeiten-Modus, Kopfzeile, Vorschau). Suiten `launcherfav`,
+  `sanitizeApps` nur bei `ext`); Batterie-Fenster/KI: `ChargeNotifier.rechargeable` (Lademeldung ODER eigene Ladeanzeige `charging_entity`) steuert "Laden" statt "Wechsel"; `_icon(a, size)` zeigt es statt des Symbols (Launcher, Bearbeiten-Modus, Kopfzeile, Vorschau). Suiten `launcherfav`,
   pytest `test_favicon.py`.
 
 ## Stand (2.32.0, Debug-Modus über Neustarts)

@@ -409,7 +409,7 @@ async def test_extras_charging_flag(hass: HomeAssistant, setup) -> None:
         seen.append(kwargs.get("charging"))
         return await real(*args, **kwargs)
 
-    with patch.object(ai_assessment, "async_battery_history", spy), patch.object(ai_assessment.ChargeNotifier, "enabled", return_value=True):
+    with patch.object(ai_assessment, "async_battery_history", spy), patch.object(ai_assessment.ChargeNotifier, "rechargeable", return_value=True):
         await ai_assessment._extras(hass, device, log, time.time())
     assert seen == [True]
 

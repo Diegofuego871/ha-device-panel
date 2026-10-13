@@ -19,6 +19,7 @@ App-Launcher: Favicon für eigene Apps mit externem Link.
 ### Geändert
 
 - Formular "Eigene App": Die Reihenfolge ist jetzt Name, externer Link, Adresse, Bild (Symbol oder Favicon), damit das Favicon freigegeben ist, bevor man dort ankommt.
+- Fenster "Batterie" und KI-Einschätzung: Ein Gerät gilt als eines, das geladen wird (statt neue Batterien zu bekommen), nicht nur bei eingeschalteter Lademeldung, sondern auch, wenn es eine eigene Ladeanzeige hat (Binärsensor der Klasse "Batterie lädt" oder der Batteriestatus der Companion-App). Ein Anstieg heisst dann Laden ("Laden", "Aufgeladen", "seit dem Laden am …"), auch ohne Lademeldung. Geräte mit keinem von beiden behalten "Wechsel", weil das Panel dort Laden und neue Batterien nicht unterscheiden kann.
 
 ## [2.32.0] - 2026-10-13
 

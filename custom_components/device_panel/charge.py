@@ -135,6 +135,18 @@ class ChargeNotifier:
         domain = primary_domain(hass, device)
         return bool(domain) and domain in opts[CONF_CHARGE_INTEGRATIONS]
 
+    @staticmethod
+    def rechargeable(opts: dict[str, Any], hass: HomeAssistant, device: dr.DeviceEntry) -> bool:
+        """
+        Ist das ein Gerät, das geladen wird (nicht: dessen Batterie gewechselt wird)? Ja, wenn die Lademeldung für es an
+        ist oder es eine eigene Ladeanzeige hat (Binärsensor battery_charging, Batteriestatus der Companion-App). Seit 2.33.0
+        (Wunsch des Nutzers): Das Fenster "Batterie" und die KI-Einschätzung nennen einen Anstieg dann "Laden" und
+        nicht "Wechsel", auch ohne Lademeldung. Ohne beides kann das Panel Laden und Wechsel nicht unterscheiden.
+        """
+        if ChargeNotifier.enabled(opts, hass, device):
+            return True
+        return charging_entity(hass, er.async_entries_for_device(er.async_get(hass), device.id)) is not None
+
     async def async_rebuild(self) -> None:
         """Beobachtete Batteriesensoren neu bestimmen (Optionen, Gerät, Register)."""
         hass = self.hass

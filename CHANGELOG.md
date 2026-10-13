@@ -19,6 +19,7 @@ App launcher: favicon for custom apps with an external link.
 ### Changed
 
 - Form "Custom app": the order is now name, external link, address, image (icon or favicon), so that the favicon is released before you reach it.
+- Battery window and AI assessment: a device counts as one that is charged (not fitted with new batteries) not only with the charge notification switched on, but also when it has a charging indicator of its own (a binary sensor of the class "battery charging" or the battery state of the companion app). A rise of the level is then called a charge ("Charge", "Charged", "since the charge on …") even without the charge notification. Devices with neither keep "Change", because the panel cannot tell a charge from new batteries there.
 
 ## [2.32.0] - 2026-10-13
 

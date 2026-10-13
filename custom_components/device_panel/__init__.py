@@ -416,7 +416,7 @@ async def _ws_battery_history(
         return
     threshold = device_battery_threshold(hass, options_api.effective(hass), device)
     opts = options_api.effective(hass)
-    charging = ChargeNotifier.enabled(opts, hass, device)
+    charging = ChargeNotifier.rechargeable(opts, hass, device)
     connection.send_result(msg["id"], await async_battery_history(hass, entity_id, msg["range"], threshold, charging=charging))
 
 
