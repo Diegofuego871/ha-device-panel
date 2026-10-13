@@ -154,6 +154,14 @@ class OutageNotifier:
         self._refresh = True
         await self.async_flush()
 
+    def _debug(self, dev: str, code: str, **args: Any) -> None:
+        """Debug-Eintrag zu einem Gerät (nur bei eingeschaltetem Schalter; der Name wird nur dann gesucht)."""
+        if not activity.get(self.hass).debug:
+            return
+        device = dr.async_get(self.hass).async_get(dev)
+        name = (device.name_by_user or device.name or dev) if device is not None else dev
+        activity.record(self.hass, "debug", "outage", code, name, dev, **args)
+
     async def async_handle(self, changes: list[tuple[str, Any, float]]) -> None:
         came_back: list[tuple[str, float]] = []
         new_outage = False
@@ -168,20 +176,26 @@ class OutageNotifier:
                     # Rückkehr nennt die ganze Dauer.
                     self._offline[dev] = start
                     self._notified.add(dev)
+                    self._debug(dev, "outage_resumed", time=_local_time(start))
                     continue
                 self._offline[dev] = at
                 new_outage = True
+                self._debug(dev, "outage_seen", minutes=effective(self.hass)[CONF_NOTIFY_DELAY])
             elif state == ONLINE and dev in self._offline:
                 start = self._offline.pop(dev)
                 dirty = True
                 if dev in self._notified:
                     self._notified.discard(dev)
                     came_back.append((dev, max(0.0, at - start)))
+                    self._debug(dev, "outage_back_notified", duration=push.duration(self.hass, max(0.0, at - start)))
+                else:
+                    self._debug(dev, "outage_back_silent", duration=push.duration(self.hass, max(0.0, at - start)))
             elif state == "gone":
                 # Nicht mehr überwacht: vergessen, ohne Meldung.
                 if self._offline.pop(dev, None) is not None:
                     dirty = True
                 self._notified.discard(dev)
+                self._debug(dev, "outage_gone")
         if dirty:
             self._store.async_delay_save(self._data, 1)
         await self.async_flush(new_outage=new_outage, came_back=came_back)

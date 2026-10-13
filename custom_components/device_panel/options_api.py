@@ -18,6 +18,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
+from . import activity
 from .ai_prompt import ai_prompt
 from .const import (
     BATTERY_FIELDS,
@@ -842,5 +843,8 @@ def apply_values(hass: HomeAssistant, entry: ConfigEntry, values: dict[str, Any]
         raise vol.Invalid("\"Erst melden nach\" darf nicht kürzer sein als \"Ausgefallen nach\"", path=[CONF_NOTIFY_DELAY])
     if options == dict(entry.options):
         return False
+    # Debug-Protokoll: nur die Namen der geänderten Einstellungen, nie die Werte (Push-Ziele, Texte)
+    keys = sorted(k for k in clean if entry.options.get(k) != options.get(k))
     hass.config_entries.async_update_entry(entry, options=options)
+    activity.record(hass, "debug", "system", "options_saved", "Device Panel", keys=", ".join(keys[:15]) + (f" (+{len(keys) - 15})" if len(keys) > 15 else ""))
     return True

@@ -391,3 +391,16 @@ async def test_new_low_is_logged_with_reason(hass: HomeAssistant, watch: Battery
     await watch.async_check()
     texts = [e["text"] for e in activity.snapshot(hass)["entries"] if e["cat"] == "battery" and e["title"] == "Sensor Keller"]
     assert texts == ["battery 10 % below the threshold: newly low", "battery push is off: no notification"]
+
+
+async def test_debug_log_summary_only_on_change(hass: HomeAssistant, watch: BatteryWatch) -> None:
+    """Debug-Protokoll (2.29.0): eine Zusammenfassung pro Prüfung, nur wenn sich die Zahlen ändern."""
+    from custom_components.device_panel import activity
+
+    activity.set_debug(hass, True)
+    device = _device(hass, "Sensor")
+    _battery(hass, device, "50")
+    await watch.async_check()
+    await watch.async_check()
+    summaries = [e for e in activity.snapshot(hass)["entries"] if e["level"] == "debug" and e["cat"] == "battery"]
+    assert len(summaries) == 1

@@ -639,3 +639,18 @@ async def test_log_and_debug_survive_reload(hass: HomeAssistant, setup) -> None:
     assert await hass.config_entries.async_remove(entry.entry_id) is not None
     await hass.async_block_till_done()
     assert activity.snapshot(hass)["debug"] is False
+
+
+async def test_debug_log_shows_next_run(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Debug-Protokoll (2.29.0): der geplante nächste Lauf eines Timers steht drin, nur bei eingeschaltetem Schalter."""
+    from custom_components.device_panel import activity
+
+    manager = hass.data[DATA_TIMERS]
+    device = _device(hass, "Steckdose")
+    plug = _switch(hass, device)
+    await manager.async_save_timer(_raw(device, plug))
+    assert not [e for e in activity.snapshot(hass)["entries"] if e["level"] == "debug"]
+    activity.set_debug(hass, True)
+    await manager.async_save_timer({**_raw(device, plug), "name": "Zweiter"})
+    entries = [e for e in activity.snapshot(hass)["entries"] if e["level"] == "debug" and e["cat"] == "timer"]
+    assert entries and entries[-1]["title"] == "Zweiter" and ("nächster Lauf" in entries[-1]["text"] or "next run" in entries[-1]["text"])

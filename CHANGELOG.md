@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.29.0] - 2026-10-13
+
+More in the debug log.
+
+### Added
+
+- Log, debug mode: more intermediate steps are recorded while the switch is on. Outage: a device is detected as offline (with the waiting time before the notification), an outage that began before a gap, the return of a device (with or without notification), a device that is no longer monitored. Battery: one summary per check (devices checked, low, new), only when the numbers change. Timers: the planned next run or switch-back. System: which settings were saved (only the names, never the values), device settings and device type set by hand, and the unloading of the integration. Nothing is recorded with the switch off.
+
 ## [2.28.5] - 2026-10-13
 
 Larger pop-ups on the desktop, rounded corners, same size for settings, device, timers and log.
@@ -47,7 +55,7 @@ Timer assistant: "Run now" is a proper button.
 
 ### Fixed
 
-- Log: the debug mode stays on until Home Assistant restarts. Before, every saved change in the settings reloaded the integration, which switched debug off and emptied the log. The log is now kept across such reloads.
+- Log: the log and the debug mode are now kept when the integration is reloaded (they are only lost when Home Assistant restarts or the integration is removed). Note: saving settings never reloaded the integration; the log is emptied by a restart of Home Assistant.
 
 ## [2.28.1] - 2026-10-13
 
@@ -2950,6 +2958,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0
 [2.28.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.5
 [2.28.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.3
 [2.28.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.28.2

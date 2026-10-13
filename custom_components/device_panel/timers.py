@@ -533,6 +533,9 @@ class TimerManager:
         if not points:
             return
         when = max(min(points), time.time() + 1)
+        if activity.get(self.hass).debug:
+            revert = rt["revert_due"] is not None and min(points) == rt["revert_due"]
+            activity.record(self.hass, "debug", "timer", "timer_armed_revert" if revert else "timer_armed", timer["name"], timer["device_id"], when=dt_util.as_local(dt_util.utc_from_timestamp(when)).strftime("%d.%m. %H:%M:%S"))
         self._handles[timer_id] = async_track_point_in_utc_time(
             self.hass, partial(self._on_timer, timer_id), dt_util.utc_from_timestamp(when)
         )

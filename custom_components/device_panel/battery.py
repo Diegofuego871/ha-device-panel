@@ -67,6 +67,8 @@ class BatteryWatch:
         self._low: dict[str, dict[str, Any]] = {}
         # Täglich: seit der letzten Tagesmeldung neu schwach geworden.
         self._pending: set[str] = set()
+        # Letzte Zusammenfassung im Debug-Protokoll (nur bei Änderung neu schreiben, sonst läuft es voll)
+        self._last_summary: tuple[int, int, int] | None = None
         self._message: str | None = None
         self._shown = False
         # Erste Prüfung nach dem Start oder nach geänderten Optionen: die
@@ -180,6 +182,7 @@ class BatteryWatch:
         opts = effective(hass)
         area_reg = ar.async_get(hass)
         low: dict[str, dict[str, Any]] = {}
+        checked = 0
         for device, entries in monitored_devices(hass, opts):
             # Schwelle des Geräts, sonst der Integration, sonst die allgemeine;
             # None: Warnung für dieses Gerät aus (und vergessen).
@@ -194,6 +197,7 @@ class BatteryWatch:
                 if known is not None:
                     low[device.id] = known
                 continue
+            checked += 1
             level = info["level"]
             is_low = info["low"] or (
                 known is not None and level is not None and level <= threshold + BATTERY_REARM
@@ -208,6 +212,10 @@ class BatteryWatch:
         new = [dev for dev in low if dev not in self._low]
         for dev in new:
             self._log_new(opts, dev, low[dev])
+        summary = (checked, len(low), len(new))
+        if summary != self._last_summary:
+            self._last_summary = summary
+            activity.record(hass, "debug", "battery", "battery_check", devices=checked, low=len(low), new=len(new))
         push_key = (opts[CONF_BATTERY_PUSH], notify_target(opts, "battery"))
         switched = self._push_key is not None and push_key != self._push_key
         self._push_key = push_key

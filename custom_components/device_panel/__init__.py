@@ -214,6 +214,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if (timer_manager := hass.data.pop(DATA_TIMERS, None)) is not None:
         await timer_manager.async_stop()
     update_check.async_stop_daily(hass)
+    activity.record(hass, "debug", "system", "sys_stop", "Device Panel")
     # Das Protokoll (und der Debug-Schalter) bleibt beim Entladen stehen: Jedes Speichern der Einstellungen lädt die
     # Integration neu und hätte sonst den Debug-Modus ausgeschaltet. Es gilt bis zum Neustart von HA (siehe async_remove_entry).
     return True
@@ -785,6 +786,8 @@ async def _ws_set_device_type(
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
         return
     await async_set_type_override(hass, msg["device_id"], msg["device_type"])
+    device = dr.async_get(hass).async_get(msg["device_id"])
+    activity.record(hass, "debug", "system", "device_type_saved", (device.name_by_user or device.name or "") if device else "", msg["device_id"], value=str(msg["device_type"] or "automatisch"))
     connection.send_result(msg["id"], {"device_type": msg["device_type"]})
 
 
@@ -863,6 +866,8 @@ async def _ws_set_device_settings(
         return
     changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live") if k in msg}
     await async_set_device_settings(hass, msg["device_id"], **changes)
+    device = dr.async_get(hass).async_get(msg["device_id"])
+    activity.record(hass, "debug", "system", "device_settings_saved", (device.name_by_user or device.name or "") if device else "", msg["device_id"], keys=", ".join(sorted(changes)))
     # Batterie-Warnung sofort nachführen (Push, anhaltende Benachrichtigung).
     if "battery" in changes and (watch := hass.data.get(DATA_BATTERY)) is not None:
         await watch.async_check()

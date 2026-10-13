@@ -222,3 +222,33 @@ async def test_outage_decisions_are_logged(hass: HomeAssistant, setup, freezer) 
     texts = [(e["cat"], e["title"], e["text"]) for e in activity.snapshot(hass)["entries"] if e["cat"] == "outage"]
     assert any(t[1] == "Lampe" and t[2].endswith(": sending the notification") and t[2].startswith("offline since") for t in texts), texts
     assert any(t[1] == "Lampe" and t[2].startswith("back online after") and t[2].endswith("online notifications are off") for t in texts), texts
+
+
+async def test_debug_log_follows_outage_and_options(hass: HomeAssistant, setup, freezer) -> None:
+    """Debug-Protokoll (2.29.0): Ausfall erkannt, Rückkehr (ohne Meldung) und gespeicherte Einstellungen, nur bei eingeschaltetem Schalter."""
+    from custom_components.device_panel import activity, options_api
+
+    lamp = _device(hass, "Lampe")
+    light = _entity(hass, lamp, "light", "l", "on")
+    await _options(hass, notify_service="notify.handy", notify_outage=True, notify_online=True, notify_delay=5)
+    setup.evaluate()
+    # Schalter aus: keine Debug-Einträge
+    hass.states.async_set(light, "unavailable")
+    await _tick(hass, setup, freezer, 3)
+    assert not [e for e in activity.snapshot(hass)["entries"] if e["level"] == "debug"]
+    hass.states.async_set(light, "on")
+    await _tick(hass, setup, freezer, 0.5)
+    # Schalter an
+    activity.set_debug(hass, True)
+    hass.states.async_set(light, "unavailable")
+    await _tick(hass, setup, freezer, 3)
+    hass.states.async_set(light, "on")
+    await _tick(hass, setup, freezer, 0.5)
+    codes = [(e["cat"], e["text"]) for e in activity.snapshot(hass)["entries"] if e["level"] == "debug" and e["title"] == "Lampe"]
+    assert any("als ausgefallen erkannt" in t or "detected as offline" in t for _c, t in codes), codes
+    assert any("wieder erreichbar" in t or "reachable again" in t for _c, t in codes), codes
+    # Einstellungen speichern: nur die Namen der Schlüssel, nie die Werte
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    assert options_api.apply_values(hass, entry, {"notify_delay": 7})
+    saved = [e for e in activity.snapshot(hass)["entries"] if e["level"] == "debug" and e["cat"] == "system"]
+    assert saved and "notify_delay" in saved[-1]["text"] and "7" not in saved[-1]["text"].split(":", 1)[1]
