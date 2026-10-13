@@ -117,6 +117,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Bearbeiten-Modus: Zeile zeigt das Favicon statt des Symbols`, await ev(`const row = r.querySelector('${D} [data-ap-box="own"] .ap-erow[data-id="${id}"]'); return !!row?.querySelector(".ap-fi") && !row.querySelector(".ap-ico svg:not(.ap-fi)")`));
     await tap(`${D} [data-ap="done"]`);
     check(`[${tag}] Launcher (Kachel): Favicon statt Symbol`, await ev(`const t = r.querySelector('${D} .ap-grid [data-id="${id}"]'); return !!t?.querySelector(".ap-ico img.ap-fi") && !t.querySelector(".ap-ico svg")`));
+    // Originalfarben: kein blauer Kreis hinter dem Favicon, weisse Fläche, keine Färbung durch Filter oder Deckkraft
+    check(`[${tag}] Favicon in Originalfarben: Kreis ohne Hintergrund, Bild auf weisser Fläche, ohne Filter und Transparenz`, await ev(`const t = r.querySelector('${D} .ap-grid [data-id="${id}"]'); const ico = t.querySelector(".ap-ico"), img = ico.querySelector("img.ap-fi"); const a = getComputedStyle(ico), b = getComputedStyle(img); return a.backgroundColor === "rgba(0, 0, 0, 0)" && a.backgroundImage === "none" && b.backgroundColor === "rgb(255, 255, 255)" && b.filter === "none" && b.opacity === "1" && b.mixBlendMode === "normal"`));
     await shot("2-launcher");
     // Favicon wird mit gespeichert (HA)
     await p.waitForTimeout(700);

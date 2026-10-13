@@ -1754,9 +1754,14 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-in { box-sizing: border-box; width: 100%; height: 44px; padding: 0 14px; border: 1px solid var(--dp-divider); border-radius: 12px; background: var(--dp-input); color: var(--dp-text); font: inherit; font-size: 16px; }
 .ap-in:focus { outline: 2px solid var(--dp-primary); outline-offset: -1px; border-color: transparent; }
 .ap-icons { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
-.ap-fi { display: block; border-radius: 5px; object-fit: contain; }
-.ap-ico .ap-fi { border-radius: 4px; }
-.tmall-btn .ap-fi { border-radius: 5px; }
+/* Favicon in Originalfarben (seit 2.33.1, Wunsch des Nutzers): kein blauer Kreis, kein Umfärben; auf einer hellen, abgerundeten Fläche,
+   damit auch dunkle Symbole (zum Beispiel GitHub) im dunklen Design zu sehen sind */
+.ap-fi { display: block; box-sizing: content-box; padding: 2px; border-radius: 7px; background: #fff; object-fit: contain;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--dp-text) 14%, transparent); }
+.ap-ico:has(> .ap-fi) { background: none; }
+.ap-ico > .ap-fi { width: 32px; height: 32px; }
+.ap-ico.sm > .ap-fi { width: 26px; height: 26px; }
+.tmall-btn .ap-fi { width: 24px; height: 24px; }
 .ap-f .sub-tabs { margin: 0 0 10px; }
 .sub-tab:disabled { opacity: .4; cursor: default; }
 .ap-icons[hidden], .ap-favpane[hidden] { display: none; }

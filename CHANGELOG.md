@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.33.1] - 2026-10-13
+
+Favicon in its original colors.
+
+### Fixed
+
+- Favicon of a custom app: it appeared tinted blue and, if dark (for example GitHub), barely visible on the dark background, because it sat on the blue circle of the icons. It now keeps its original colors on a light rounded tile, without the blue circle, in the launcher (grid and list), in edit mode, in the preview and in the button of the header.
+
 ## [2.33.0] - 2026-10-13
 
 App launcher: favicon for custom apps with an external link.
@@ -3036,6 +3044,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.1
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0

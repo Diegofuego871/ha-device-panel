@@ -3,13 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.33.0, Favicon für externe Links)
+## Stand (2.33.1, Favicon für externe Links)
 
-- 2.33.0: Eigene Apps mit externem Link können ihr Favicon als Symbol verwenden. Backend `favicon.py` (WS `device_panel/fetch_favicon`, nur Administratoren):
+- 2.33.0/2.33.1: Eigene Apps mit externem Link können ihr Favicon als Symbol verwenden. Backend `favicon.py` (WS `device_panel/fetch_favicon`, nur Administratoren):
   HA liest die Seite (`<link rel="icon">`, sonst `/favicon.ico`), 5 s je Abruf, 100 KB, Bildart am Inhalt erkannt (`sniff`), keine Zertifikatsprüfung
   (`verify_ssl=False`, nur ein öffentliches Bild), Fehlercodes `invalid_url`, `unreachable`, `not_found`, `too_large`. Panel `apps.js`: Formular mit
   Reiterleiste `data-set="fsrc"` (Symbol | Favicon), Knopf `data-f-fetch`; die App trägt `favicon` (Data-URI, `isFavicon` prüft Bildart und Länge,
-  `sanitizeApps` nur bei `ext`); Batterie-Fenster/KI: `ChargeNotifier.rechargeable` (Lademeldung ODER eigene Ladeanzeige `charging_entity`) steuert "Laden" statt "Wechsel"; `_icon(a, size)` zeigt es statt des Symbols (Launcher, Bearbeiten-Modus, Kopfzeile, Vorschau). Suiten `launcherfav`,
+  `sanitizeApps` nur bei `ext`); Batterie-Fenster/KI: `ChargeNotifier.rechargeable` (Lademeldung ODER eigene Ladeanzeige `charging_entity`) steuert "Laden" statt "Wechsel"; `_icon(a, size)` zeigt es statt des Symbols (Launcher, Bearbeiten-Modus, Kopfzeile, Vorschau); seit 2.33.1 in Originalfarben auf weisser Fläche (`.ap-fi`, `.ap-ico:has(> .ap-fi)` ohne blauen Kreis). Suiten `launcherfav`,
   pytest `test_favicon.py`.
 
 ## Stand (2.32.0, Debug-Modus über Neustarts)

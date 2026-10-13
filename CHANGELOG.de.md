@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.33.1] - 2026-10-13
+
+Favicon in Originalfarben.
+
+### Behoben
+
+- Favicon einer eigenen App: Es erschien blau eingefärbt und, wenn dunkel (zum Beispiel GitHub), im dunklen Design kaum sichtbar, weil es auf dem blauen Kreis der Symbole sass. Es behält jetzt seine Originalfarben auf einer hellen, abgerundeten Fläche, ohne den blauen Kreis, im Launcher (Raster und Liste), im Bearbeiten-Modus, in der Vorschau und im Knopf der Kopfzeile.
+
 ## [2.33.0] - 2026-10-13
 
 App-Launcher: Favicon für eigene Apps mit externem Link.
@@ -3137,6 +3145,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.1
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0
