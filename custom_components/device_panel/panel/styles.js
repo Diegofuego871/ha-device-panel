@@ -454,7 +454,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 /* Herz im Kopf des Geräte-Popups (seit 2.22.0): wie das Kreuz ein runder Knopf, rot sobald Favorit */
 .dlg-fav { flex: none; display: grid; place-items: center; width: 36px; height: 36px; margin-right: 8px; border: none; border-radius: 50%;
   background: var(--dp-subtle); color: var(--dp-text2); cursor: pointer; transition: color .2s ease, background .2s ease; }
-.dlg-log { margin-right: 8px; }
+.dlg-log, .dlg-add { margin-right: 8px; }
 .dlg-fav:hover { background: var(--dp-hover); color: var(--dp-error); }
 .dlg-fav.on { color: var(--dp-error); }
 .dlg-fav:focus-visible { outline: 2px solid var(--dp-error); outline-offset: 1px; }

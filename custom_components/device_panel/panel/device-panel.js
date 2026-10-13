@@ -6205,6 +6205,7 @@ class DevicePanel extends HTMLElement {
     const t = (k, ...a) => this._t(k, ...a);
     dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("timer", 28)}</span>
         <div class="dlg-title"><h2>${escape(t("tmAllTitle"))}</h2><div class="dlg-sub">${escape(t("tmAllSub"))}</div></div>
+        <button type="button" class="dlg-close dlg-add" data-tma="timer-add" title="${escape(t("tmAddBtn"))}" aria-label="${escape(t("tmAddBtn"))}">${mdi("plus", 18)}</button>
         <button type="button" class="dlg-close" data-tma-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body"><div class="tm-all-wrap" data-tma-body></div></div>`;
     this._renderTmAll();
@@ -6296,6 +6297,9 @@ class DevicePanel extends HTMLElement {
         ui.editWhenLoaded(btn.dataset.id);
       } else if (action === "timer-restart") {
         await this._tmAllToggle(btn.dataset.id, true);
+      } else if (action === "timer-add") {
+        // Neuer Timer: der Assistent mit dem Schritt "Gerät wählen" davor (seit 2.27.0)
+        ui.startNewFromAll();
       } else if (action === "timer-star") {
         this._toggleTmStar(btn.dataset.id);
         this._renderTmAll();

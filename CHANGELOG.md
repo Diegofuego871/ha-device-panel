@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.27.0] - 2026-10-13
+
+Add a timer straight from the window with all timers.
+
+### Added
+
+- Window with all timers: a "+" button in the header (between the title and the cross) starts the timer assistant. It is the same assistant as on a device, with one extra first step on its own page: you choose the device first (search by name, area or integration; only devices with something a timer can switch are listed). After that everything works as usual, and the progress bar shows five steps. Saving or closing returns to the list of all timers.
+
 ## [2.26.0] - 2026-10-12
 
 Favorite timers (heart), and the title in the header only disappears on the phone.
@@ -2872,6 +2880,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.0
 [2.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.26.0
 [2.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.25.0
 [2.24.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.1

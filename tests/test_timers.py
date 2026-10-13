@@ -590,3 +590,17 @@ async def test_once_requires_time_but_not_date(hass: HomeAssistant, setup) -> No
     plug = _switch(hass, device)
     with pytest.raises(vol.Invalid, match="Uhrzeit"):
         await manager.async_save_timer(_raw(device, plug, kind="once", date=None, time=None, delay_s=None))
+
+
+async def test_switchable_devices_lists_only_switchable(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """"Timer hinzufügen" (2.27.0): nur Geräte mit schaltbarer, aktiver, sichtbarer Entität, nach Name sortiert."""
+    ent = er.async_get(hass)
+    dev_b = _device(hass, "Zeta Steckdose")
+    dev_a = _device(hass, "Alpha Lampe")
+    dev_s = _device(hass, "Nur Sensor")
+    ent.async_get_or_create("switch", "t", "b1", device_id=dev_b.id)
+    ent.async_get_or_create("light", "t", "a1", device_id=dev_a.id)
+    ent.async_get_or_create("light", "t", "a2", device_id=dev_a.id)
+    ent.async_get_or_create("sensor", "t", "s1", device_id=dev_s.id)
+    out = timers.switchable_devices(hass)
+    assert [(d["name"], d["entities"]) for d in out] == [("Alpha Lampe", 2), ("Zeta Steckdose", 1)]

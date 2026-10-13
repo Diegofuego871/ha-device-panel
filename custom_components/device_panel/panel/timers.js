@@ -764,6 +764,88 @@ export class TimerUi {
     this.requestPreview();
   }
 
+  // Neuer Timer aus dem Fenster aller Timer (seit 2.27.0): derselbe Assistent mit einem Schritt mehr davor, der das Gerät wählt
+  async startNewFromAll() {
+    this.reset();
+    this.standalone = true;
+    this.view = "wizard";
+    const draft = { id: null, device_id: null, entity_id: "", action: "on", back_s: 0, backOwn: { text: "", unit: 60 }, kind: "repeat", delay_s: 1800, delayOwn: { text: "", unit: 60 }, date: "", time: "06:30", repeat: "daily", weekdays: [0, 1, 2, 3, 4], mday: 1, mdayOwn: false, enabled: true, push: false, target: "", name: "" };
+    const w = (this.wiz = { pick: true, step: 0, editing: false, draft, pv: null, pvError: "", test: null, targetOpen: false, error: "", saving: false, devices: null, devQuery: "", pickId: "", loadingDev: false });
+    w.snap = JSON.stringify(draft);
+    this.paint();
+    try {
+      const r = await this.call({ type: "device_panel/timer_devices" });
+      if (this.wiz !== w) return;
+      w.devices = r.devices;
+    } catch (err) {
+      if (this.wiz !== w) return;
+      w.devices = [];
+      w.error = this.t("tmLoadError", this.h.errText(err));
+    }
+    this.paint();
+  }
+
+  // Schritt 0 verlassen: schaltbare Entitäten und Ziele des gewählten Geräts laden, dann weiter zu "Was schalten"
+  async chooseDevice() {
+    const w = this.wiz;
+    if (!w || !w.pickId || w.loadingDev) return;
+    w.loadingDev = true;
+    w.error = "";
+    this.paint();
+    try {
+      if (this.deviceId !== w.pickId || !this.data) {
+        const id = w.pickId;
+        const result = await this.call({ type: "device_panel/timer_get", device_id: id });
+        if (this.wiz !== w) return;
+        this.deviceId = id;
+        this.data = result;
+        this._offset = Number.isFinite(result.now) ? result.now * 1000 - Date.now() : 0;
+        w.draft = this.newDraft();
+        w.snap = JSON.stringify(w.draft);
+        w.pv = null;
+      }
+    } catch (err) {
+      if (this.wiz !== w) return;
+      w.loadingDev = false;
+      w.error = this.t("tmLoadError", this.h.errText(err));
+      this.paint();
+      return;
+    }
+    w.loadingDev = false;
+    this.setStep(1);
+  }
+
+  // Schritt 0: Gerät wählen (nur Geräte mit schaltbarer Entität), mit Suche
+  step0Html() {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const w = this.wiz;
+    return `<p class="mg-note">${esc(t("tmPickDeviceNote"))}</p>
+      <label class="list-search" data-for="tm-devs">${this.h.mdi("search", 18)}<input type="search" data-tm="dev-search" value="${esc(w.devQuery)}" placeholder="${esc(t("listSearch"))}" aria-label="${esc(t("listSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <div data-tm-zone="devs">${this.devsHtml()}</div>`;
+  }
+
+  devsHtml() {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const w = this.wiz;
+    if (!w.devices) return `<p class="mg-note">${esc(t("tmLoading"))}</p>`;
+    const q = String(w.devQuery || "").trim().toLowerCase();
+    const rows = w.devices
+      .map((x) => {
+        const dev = this.host._devices?.find((d) => d.id === x.id);
+        const sub = [dev?.area, dev?.integration?.name].filter(Boolean).join(" · ");
+        return { ...x, name: dev?.name || x.name, sub, type: dev?.type || "other" };
+      })
+      .filter((x) => !q || `${x.name} ${x.sub}`.toLowerCase().includes(q));
+    if (!rows.length) return `<p class="mg-note mg-none">${esc(t(w.devices.length ? "listSearchNone" : "tmNoSwitchableDevices"))}</p>`;
+    return rows
+      .map((x) => `<button type="button" class="mg-card mg-pick" data-tm="dev" data-id="${esc(x.id)}" role="radio" aria-checked="${w.pickId === x.id}">
+        <span class="mg-row"><span class="mg-devic" aria-hidden="true">${this.h.typeIcon(x.type, 18)}</span><span class="mg-t"><b>${esc(x.name)}</b>${x.sub ? `<small>${esc(x.sub)}</small>` : ""}</span>
+        <span class="mg-val">${esc(t("tmDevEntities", x.entities))}</span><span class="mg-radio${w.pickId === x.id ? " on" : ""}"></span></span></button>`)
+      .join("");
+  }
+
   closeWizard() {
     window.clearTimeout(this._pvTimer);
     this._pvSeq = (this._pvSeq || 0) + 1;
@@ -809,6 +891,7 @@ export class TimerUi {
   }
 
   canNext(step = this.wiz.step) {
+    if (step === 0) return Boolean(this.wiz.pickId) && !this.wiz.loadingDev;
     const d = this.wiz.draft;
     const e = this.entity(d.entity_id);
     if (step === 1) return Boolean(e) && e.actions.includes(d.action) && !this.backError();
@@ -918,6 +1001,7 @@ export class TimerUi {
       if (name === "result") el.innerHTML = this.resultHtml();
       else if (name === "runs") el.innerHTML = this.runsHtml();
       else if (name === "summary") el.innerHTML = this.summaryHtml();
+      else if (name === "devs") el.innerHTML = this.devsHtml();
       else el.innerHTML = this.pvHtml();
     }
   }
@@ -954,24 +1038,28 @@ export class TimerUi {
     const t = (k, ...a) => this.t(k, ...a);
     const w = this.wiz;
     const step = w.step;
-    const bars = Array.from({ length: STEPS }, (_, i) => {
-      const n = i + 1;
+    // Mit "Timer hinzufügen" im Fenster aller Timer kommt Schritt 0 (Gerät wählen) davor: eine Seite mehr, die Anzeige zählt ab 1
+    const first = w.pick ? 0 : 1;
+    const total = w.pick ? STEPS + 1 : STEPS;
+    const shown = (n) => (w.pick ? n + 1 : n);
+    const bars = Array.from({ length: total }, (_, i) => {
+      const n = i + first;
       const on = n <= step ? " on" : "";
-      const open = w.editing || n < step;
+      const open = (w.editing || n < step) && !(n >= 1 && !this.data);
       return open
-        ? `<button type="button" class="mg-stp${on}" data-tm="goto" data-step="${n}" aria-label="${esc(`${t("tmStepOf", n, STEPS)}: ${t(`tmStepName_${n}`)}`)}"></button>`
+        ? `<button type="button" class="mg-stp${on}" data-tm="goto" data-step="${n}" aria-label="${esc(`${t("tmStepOf", shown(n), total)}: ${t(`tmStepName_${n}`)}`)}"></button>`
         : `<span class="mg-stp${on}"></span>`;
     }).join("");
-    const body = [this.step1Html, this.step2Html, this.step3Html, this.step4Html][step - 1].call(this);
+    const body = [this.step0Html, this.step1Html, this.step2Html, this.step3Html, this.step4Html][step].call(this);
     const last = step === STEPS;
-    const quick = last ? "" : `<button type="button" class="dlg-btn quick" data-tm="nav-quick"${this.canSaveAll() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("tmSaving") : t("tmSave"))}</button>`;
-    const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-tm="${step === 1 ? "nav-cancel" : "nav-back"}">${esc(step === 1 ? t("tmCancel") : t("tmBack"))}</button>
+    const quick = last || step === 0 ? "" : `<button type="button" class="dlg-btn quick" data-tm="nav-quick"${this.canSaveAll() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("tmSaving") : t("tmSave"))}</button>`;
+    const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-tm="${step === first ? "nav-cancel" : "nav-back"}">${esc(step === first ? t("tmCancel") : t("tmBack"))}</button>
       ${quick}
       ${last ? `<button type="button" class="dlg-btn primary" data-tm="nav-save"${this.canNext() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("tmSaving") : t("tmSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-tm="nav-next"${this.canNext() ? "" : " disabled"}>${esc(t("tmNext"))}</button>`}</div>`;
-    const device = this.host._devices?.find((x) => x.id === this.deviceId)?.name || "";
+    const device = (step > 0 || !w.pick) && this.deviceId ? this.host._devices?.find((x) => x.id === this.deviceId)?.name || w.devices?.find((x) => x.id === this.deviceId)?.name || "" : "";
     return `<div class="mgw-head"><div class="mgw-t"><b>${esc(w.editing ? t("tmEditing") : t("tmNew"))}</b>${device ? `<small>${esc(device)}</small>` : ""}</div>
         <button type="button" class="dlg-close" data-tm="close" title="${esc(t("close"))}" aria-label="${esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>
-      <div class="mgw-prog"><div class="mg-stephead"><span>${esc(t("tmStepOf", step, STEPS))}</span><span>${esc(t(`tmStepName_${step}`))}</span></div>
+      <div class="mgw-prog"><div class="mg-stephead"><span>${esc(t("tmStepOf", shown(step), total))}</span><span>${esc(t(`tmStepName_${step}`))}</span></div>
         <div class="mg-steps">${bars}</div></div>
       <div class="mgw-body"><div class="mgw-main"><div class="mg-big">${esc(t(`tmQ_${step}`))}</div>
         ${body}
@@ -1163,7 +1251,7 @@ export class TimerUi {
   }
 
   setStep(step) {
-    this.wiz.step = Math.min(Math.max(step, 1), STEPS);
+    this.wiz.step = Math.min(Math.max(step, this.wiz.pick ? 0 : 1), STEPS);
     this.paint();
     this.scrollTop();
     this.requestPreview();
@@ -1212,8 +1300,14 @@ export class TimerUi {
       case "nav-back":
         this.setStep(w.step - 1);
         break;
+      case "dev":
+        w.pickId = id;
+        this.paint();
+        break;
       case "nav-next":
-        if (this.canNext()) this.setStep(w.step + 1);
+        if (!this.canNext()) break;
+        if (w.step === 0) this.chooseDevice();
+        else this.setStep(w.step + 1);
         break;
       case "nav-quick":
         if (this.canSaveAll()) this.save();
@@ -1312,6 +1406,10 @@ export class TimerUi {
     if (!w || !this.inScope(el) || !el.dataset?.tm) return;
     const d = w.draft;
     switch (el.dataset.tm) {
+      case "dev-search":
+        w.devQuery = el.value;
+        this.paintZones(["devs"]);
+        break;
       case "back-own":
         d.backOwn.text = el.value;
         d.back_s = this.parseOwn(el.value, d.backOwn.unit) || 0;

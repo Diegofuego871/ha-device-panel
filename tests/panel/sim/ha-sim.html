@@ -1074,6 +1074,10 @@
         };
         const strip = (r) => Object.fromEntries(Object.entries(r).filter(([k]) => !k.startsWith("__")));
         const today = () => ymd(new Date());
+        if (msg.type.endsWith("timer_devices")) {
+          if (window.__timerDevicesFail) throw new Error(window.__timerDevicesFail);
+          return { devices: window.__devices.filter((d) => entsOf(d.id).length).map((d) => ({ id: d.id, name: d.name, entities: entsOf(d.id).length })).sort((a, b) => a.name.localeCompare(b.name)) };
+        }
         if (msg.type.endsWith("timer_get")) {
           if (!window.__devices.find((d) => d.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
           if (window.__timerLoadFails) throw new Error(window.__timerLoadFails);

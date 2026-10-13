@@ -773,6 +773,22 @@ def switchable_entities(hass: HomeAssistant, device_id: str) -> list[dict[str, A
     return [entity_payload(hass, e.entity_id) for e in sorted(wanted, key=lambda e: (e.entity_category is not None, e.entity_id))]
 
 
+def switchable_devices(hass: HomeAssistant) -> list[dict[str, Any]]:
+    """Geräte mit mindestens einer Entität, die ein Timer schalten kann (für "Timer hinzufügen" im Fenster aller Timer, seit 2.27.0)."""
+    counts: dict[str, int] = {}
+    for entry in er.async_get(hass).entities.values():
+        if entry.device_id and entry.domain in SERVICES and entry.disabled_by is None and entry.hidden_by is None:
+            counts[entry.device_id] = counts.get(entry.device_id, 0) + 1
+    devices = dr.async_get(hass)
+    out = []
+    for device_id, n in counts.items():
+        device = devices.async_get(device_id)
+        if device is None or device.disabled_by is not None:
+            continue
+        out.append({"id": device_id, "name": device.name_by_user or device.name or device_id, "entities": n})
+    return sorted(out, key=lambda d: d["name"].casefold())
+
+
 def timer_payload(hass: HomeAssistant, manager: TimerManager, timer: dict[str, Any]) -> dict[str, Any]:
     """Timer mit Stand für das Panel: nächster Lauf, Zurückschalten, zuletzt, erledigt, Entität."""
     rt = manager.runtime(timer["id"])

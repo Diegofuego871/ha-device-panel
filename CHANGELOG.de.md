@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.27.0] - 2026-10-13
+
+Timer direkt im Fenster aller Timer hinzufügen.
+
+### Hinzugefügt
+
+- Fenster mit allen Timern: Ein "+"-Knopf in der Kopfzeile (zwischen Titel und Kreuz) startet den Timer-Assistenten. Es ist derselbe Assistent wie am Gerät, mit einem zusätzlichen ersten Schritt auf einer eigenen Seite: Zuerst wählst du das Gerät (Suche nach Name, Bereich oder Integration; aufgeführt sind nur Geräte mit etwas, das ein Timer schalten kann). Danach läuft alles wie gewohnt, und die Fortschrittsleiste zeigt fünf Schritte. Speichern oder Schliessen führt zurück zur Liste aller Timer.
+
 ## [2.26.0] - 2026-10-12
 
 Lieblings-Timer (Herz), und der Titel in der Kopfzeile entfällt nur noch auf dem Handy.
@@ -2973,6 +2981,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.0
 [2.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.26.0
 [2.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.25.0
 [2.24.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.24.1

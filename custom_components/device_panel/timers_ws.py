@@ -34,6 +34,14 @@ def _limits() -> dict[str, Any]:
     }
 
 
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/timer_devices"})
+@websocket_api.require_admin
+@callback
+def ws_timer_devices(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Geräte, für die sich ein Timer anlegen lässt (erster Schritt von "Timer hinzufügen" im Fenster aller Timer)."""
+    connection.send_result(msg["id"], {"devices": timers.switchable_devices(hass)})
+
+
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/timer_get", vol.Required("device_id"): str})
 @websocket_api.require_admin
 @callback
@@ -175,4 +183,4 @@ async def ws_timer_test(hass: HomeAssistant, connection: websocket_api.ActiveCon
     connection.send_result(msg["id"], {"sent": sent})
 
 
-COMMANDS = (ws_timer_get, ws_timer_list, ws_timer_save, ws_timer_delete, ws_timer_enable, ws_timer_run, ws_timer_preview, ws_timer_test)
+COMMANDS = (ws_timer_devices, ws_timer_get, ws_timer_list, ws_timer_save, ws_timer_delete, ws_timer_enable, ws_timer_run, ws_timer_preview, ws_timer_test)
