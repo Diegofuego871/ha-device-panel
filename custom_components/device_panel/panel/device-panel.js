@@ -3136,7 +3136,7 @@ class DevicePanel extends HTMLElement {
     const check = dlg.querySelector("[data-lg-debug]");
     if (check.checked !== log.debug) check.checked = log.debug;
     // Der Schalter läuft 48 Stunden (auch über Neustarts von HA): wann er sich ausschaltet
-    dlg.querySelector('[data-lg="dbuntil"]').textContent = log.debug && log.debugUntil ? t("logDebugUntil", this._fmtTime(log.debugUntil, true)) : "";
+    dlg.querySelector('[data-lg="dbuntil"]').textContent = log.debug && log.debugUntil ? t("logDebugUntil", this._fmtTime(log.debugUntil, true)) : t("logDebugFor");
     const shown = this._logFiltered();
     let body = "";
     if (log.error) body += `<div class="dlg-error">${escape(t("logError"))} ${escape(log.error)}</div>`;

@@ -709,8 +709,9 @@ export class TimerUi {
       weekdays: tm.weekdays?.length ? [...tm.weekdays] : [0, 1, 2, 3, 4],
       mday: tm.mday ?? 1,
       mdayOwn: tm.mday != null && tm.mday !== 1 && tm.mday !== 15 && tm.mday !== -1,
-      // Ein erledigter Timer wird beim Bearbeiten wieder scharf
-      enabled: tm.done ? true : tm.enabled,
+      // Ein einmaliger Timer ist nach dem Lauf aus und bleibt es beim Bearbeiten: Er muss von Hand wieder eingeschaltet werden
+      // (Schalter in Schritt 5, Schalter in der Liste oder "Nochmal"); bis 2.32.0 schaltete das Bearbeiten ihn von selbst wieder ein.
+      enabled: tm.enabled,
       push: Boolean(tm.push),
       target: tm.target || "",
       name: tm.name,

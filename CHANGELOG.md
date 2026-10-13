@@ -13,8 +13,12 @@ Debug mode across restarts, AI assessment calls a charge a charge.
 
 ### Changed
 
-- Log, debug mode: the switch now stays on for 48 hours, also across restarts of Home Assistant, and then switches itself off (an entry in the log says so). Next to the switch the window shows until when it runs. After a restart an entry notes that the mode was switched on again. Switching it off by hand ends it at once. The entries of the log themselves are still only kept in memory and are lost on a restart.
+- Log, debug mode: the switch now stays on for 48 hours, also across restarts of Home Assistant, and then switches itself off (an entry in the log says so). Next to the switch the window always shows "48 h" and, while it is on, until when it runs. After a restart an entry notes that the mode was switched on again. Switching it off by hand ends it at once. The entries of the log themselves are still only kept in memory and are lost on a restart.
 - AI assessment: if the charge notification is active for the device, a rise of the level in the battery history of the last 12 months is given to the AI as a charge ("battery_charges", "recent_charges") and no longer as a battery change; the default prompt tells it to call such a rise a charge. Devices without the charge notification keep the battery changes.
+
+### Fixed
+
+- Timers: a one-time timer ("In …" or "Once") that has run is switched off, and editing it no longer switches it on again by itself: the switch "Active" in the wizard stays off, and "Save" keeps it off. It has to be switched on by hand again (switch in the wizard, switch in the list or "Start again"). A timer that has not run yet stays on when edited. Until now editing a finished timer silently re-armed it.
 
 ## [2.31.1] - 2026-10-13
 

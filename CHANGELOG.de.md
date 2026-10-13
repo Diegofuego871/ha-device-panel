@@ -13,8 +13,12 @@ Debug-Modus über Neustarts, die KI-Einschätzung nennt einen Ladevorgang Laden.
 
 ### Geändert
 
-- Protokoll, Debug-Modus: Der Schalter bleibt jetzt 48 Stunden eingeschaltet, auch über Neustarts von Home Assistant, und schaltet sich dann selbst aus (ein Eintrag im Protokoll sagt es). Neben dem Schalter zeigt das Fenster, bis wann er läuft. Nach einem Neustart vermerkt ein Eintrag, dass der Modus wieder eingeschaltet wurde. Von Hand ausgeschaltet, endet er sofort. Die Einträge des Protokolls selbst liegen weiterhin nur im Arbeitsspeicher und gehen beim Neustart verloren.
+- Protokoll, Debug-Modus: Der Schalter bleibt jetzt 48 Stunden eingeschaltet, auch über Neustarts von Home Assistant, und schaltet sich dann selbst aus (ein Eintrag im Protokoll sagt es). Neben dem Schalter steht immer "48 Std." und, solange er an ist, bis wann er läuft. Nach einem Neustart vermerkt ein Eintrag, dass der Modus wieder eingeschaltet wurde. Von Hand ausgeschaltet, endet er sofort. Die Einträge des Protokolls selbst liegen weiterhin nur im Arbeitsspeicher und gehen beim Neustart verloren.
 - KI-Einschätzung: Ist für das Gerät die Lademeldung aktiv, geht ein Anstieg des Stands im Batterie-Verlauf der letzten 12 Monate als Ladevorgang an die KI ("battery_charges", "recent_charges") und nicht mehr als Batteriewechsel; der Standard-Prompt sagt ihr, einen solchen Anstieg Laden zu nennen. Geräte ohne Lademeldung behalten die Batteriewechsel.
+
+### Behoben
+
+- Timer: Ein einmaliger Timer ("In …" oder "Einmal") ist nach dem Lauf aus, und das Bearbeiten schaltet ihn nicht mehr von selbst wieder ein: Der Schalter "Aktiv" im Assistenten bleibt aus, und "Speichern" lässt ihn aus. Er muss von Hand wieder eingeschaltet werden (Schalter im Assistenten, Schalter in der Liste oder "Erneut starten"). Ein noch nicht gelaufener Timer bleibt beim Bearbeiten an. Bisher hat das Bearbeiten eines erledigten Timers ihn stillschweigend wieder scharf gemacht.
 
 ## [2.31.1] - 2026-10-13
 

@@ -59,7 +59,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] Chips Stufe`, JSON.stringify(await texts('dialog.log-dlg [data-lg="levels"] .chip > span:not(.n):not(.lg-dot)')) === JSON.stringify(T_.levels), JSON.stringify(await texts('dialog.log-dlg [data-lg="levels"] .chip')));
   check(`[${tag}] Chips Bereich`, JSON.stringify(await texts('dialog.log-dlg [data-lg="cats"] .chip > span:not(.n):not(.lg-dot)')) === JSON.stringify(T_.cats));
   check(`[${tag}] Zahlen: Warnung 1, Fehler 1, Push 2`, (await chipN("data-lg-level", "warning")) === "1" && (await chipN("data-lg-level", "error")) === "1" && (await chipN("data-lg-cat", "push")) === "2");
-  check(`[${tag}] Debug-Schalter im Fenster, aus`, (await text("dialog.log-dlg .lg-check")) === T_.debug && !(await ev(`return r.querySelector("dialog.log-dlg [data-lg-debug]").checked`)));
+  check(`[${tag}] Debug-Schalter im Fenster, aus, mit "48" daneben`, (await text("dialog.log-dlg .lg-check")) === `${T_.debug} ${lang === "de" ? "· 48 Std." : "· 48 h"}` && !(await ev(`return r.querySelector("dialog.log-dlg [data-lg-debug]").checked`)));
   // "Alle" bleibt in beiden Chip-Zeilen stehen, wenn seitlich gescrollt wird (nur dort ist die Zeile breiter als das Fenster)
   if (mobile) {
     const pin = await ev(`const out = []; for (const k of ["levels", "cats"]) { const row = r.querySelector('dialog.log-dlg [data-lg="' + k + '"]'); row.scrollLeft = row.scrollWidth; const a = row.querySelector(".chip").getBoundingClientRect(), b = row.getBoundingClientRect(); out.push([row.scrollWidth > row.clientWidth, Math.abs(a.left - b.left) <= 1, getComputedStyle(row.querySelector(".chip")).position]); row.scrollLeft = 0; } return out`);
@@ -98,13 +98,13 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] ohne Debug kein Chip "Debug"`, !(await ev(`return !!r.querySelector('dialog.log-dlg [data-lg-level="debug"]')`)));
   await tap("dialog.log-dlg [data-lg-debug]");
   check(`[${tag}] Debug an: set_log gesendet`, await wait(`return r.querySelector("dialog.log-dlg [data-lg-debug]").checked && !!r.querySelector('dialog.log-dlg [data-lg-level="debug"]')`) && (await calls("device_panel/set_log")).at(-1)?.debug === true);
-  check(`[${tag}] Debug an: Ablaufzeit (48 Stunden) steht neben dem Schalter, der Hinweis nennt die 48 Stunden`, (await text('dialog.log-dlg [data-lg="dbuntil"]')).startsWith(lang === "de" ? "· bis " : "· until ") && (await ev(`return r.querySelector("dialog.log-dlg .lg-check").title.includes("48")`)), await text('dialog.log-dlg [data-lg="dbuntil"]'));
+  check(`[${tag}] Debug an: Ablaufzeit (48 Stunden) steht neben dem Schalter, der Hinweis nennt die 48 Stunden`, (await text('dialog.log-dlg [data-lg="dbuntil"]')).startsWith(lang === "de" ? "· 48 Std., bis " : "· 48 h, until ") && (await ev(`return r.querySelector("dialog.log-dlg .lg-check").title.includes("48")`)), await text('dialog.log-dlg [data-lg="dbuntil"]'));
   check(`[${tag}] Chips mit "Debug"`, JSON.stringify(await texts('dialog.log-dlg [data-lg="levels"] .chip > span:not(.n):not(.lg-dot)')) === JSON.stringify(T_.levelsDebug));
   await tap('dialog.log-dlg [data-lg-level="debug"]');
   check(`[${tag}] Stufe Debug: ein Eintrag`, (await wait(`return r.querySelectorAll("dialog.log-dlg .lg-row").length === 1`)) && (await text("dialog.log-dlg .lg-row")).includes("level 23 %, low point"));
   await tap('dialog.log-dlg [data-lg-level="all"]');
   await tap("dialog.log-dlg [data-lg-debug]");
-  check(`[${tag}] Debug aus: keine Ablaufzeit mehr`, await wait(`return r.querySelector('dialog.log-dlg [data-lg="dbuntil"]').textContent === ""`));
+  check(`[${tag}] Debug aus: nur noch "48" daneben, keine Ablaufzeit`, await wait(`return r.querySelector('dialog.log-dlg [data-lg="dbuntil"]').textContent === ${JSON.stringify(lang === "de" ? "· 48 Std." : "· 48 h")}`));
   check(`[${tag}] Debug aus: set_log false`, await wait(`return !r.querySelector("dialog.log-dlg [data-lg-debug]").checked`) && (await calls("device_panel/set_log")).at(-1)?.debug === false);
 
   // Kopieren

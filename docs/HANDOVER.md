@@ -7,7 +7,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - 2.32.0: Der Debug-Schalter des Protokolls bleibt 48 Stunden (`activity.DEBUG_HOURS`), auch über Neustarts von HA: Ablaufdatum in `.storage/device_panel.debug`
   (`activity.STORE_KEY`, `{"debug_until": ts|null}`), `activity.async_restore` beim Start (einmal je Start, `log.restored`), Zeitgeber `async_call_later`
-  schaltet ihn aus (`debug_expired`), `activity.async_forget` beim Entfernen. WS `get_log`/`set_log` liefern `debug_until`; das Fenster zeigt "· bis …".
+  schaltet ihn aus (`debug_expired`), `activity.async_forget` beim Entfernen. WS `get_log`/`set_log` liefern `debug_until`; das Fenster zeigt "· 48 Std." bzw. "· 48 Std., bis …". Timer: `timers.js` (Vorbelegung beim Bearbeiten) lässt `enabled` eines erledigten Timers aus (vorher `tm.done ? true : tm.enabled`), Suite `timerdone`.
   Die Einträge selbst bleiben im Arbeitsspeicher. KI-Einschätzung: `battery_year` nennt bei aktiver Lademeldung `battery_charges`/`recent_charges`
   (`history["charging"]`), der Standard-Prompt (`ai_prompt`) sagt der KI, einen Anstieg Laden zu nennen.
 
