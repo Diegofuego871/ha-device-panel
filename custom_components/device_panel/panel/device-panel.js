@@ -6327,8 +6327,6 @@ class DevicePanel extends HTMLElement {
       } else if (action === "timer-edit") {
         ui.open(btn.dataset.device, true);
         ui.editWhenLoaded(btn.dataset.id);
-      } else if (action === "timer-restart") {
-        await this._tmAllToggle(btn.dataset.id, true);
       } else if (action === "timer-add") {
         // Neuer Timer: der Assistent mit dem Schritt "Gerät wählen" davor (seit 2.27.0)
         ui.startNewFromAll();

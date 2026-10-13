@@ -9,7 +9,7 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.33.1] - 2026-10-13
 
-Favicon in Originalfarben.
+Favicon in Originalfarben, Launcher-Liste nur mit Titel, kein "Erneut starten" mehr bei den Timern.
 
 ### Behoben
 
@@ -18,6 +18,10 @@ Favicon in Originalfarben.
 ### Geändert
 
 - Launcher, Listenansicht: Jede Zeile zeigt nur den Titel, nicht mehr den Pfad oder die Adresse darunter (der Bearbeiten-Modus zeigt sie weiter; die Suche findet Apps weiterhin auch über den Pfad).
+
+### Entfernt
+
+- Timer: Der Knopf "Erneut starten" im Geräte-Popup und im Fenster mit allen Timern entfällt. Er tat dasselbe wie der Schalter des Timers (wieder einschalten), den jede Karte ohnehin hat.
 
 ## [2.33.0] - 2026-10-13
 
@@ -46,7 +50,7 @@ Debug-Modus über Neustarts, die KI-Einschätzung nennt einen Ladevorgang Laden.
 
 ### Behoben
 
-- Timer: Ein einmaliger Timer ("In …" oder "Einmal") ist nach dem Lauf aus, und das Bearbeiten schaltet ihn nicht mehr von selbst wieder ein: Der Schalter "Aktiv" im Assistenten bleibt aus, und "Speichern" lässt ihn aus. Er muss von Hand wieder eingeschaltet werden (Schalter im Assistenten, Schalter in der Liste oder "Erneut starten"). Ein noch nicht gelaufener Timer bleibt beim Bearbeiten an. Bisher hat das Bearbeiten eines erledigten Timers ihn stillschweigend wieder scharf gemacht.
+- Timer: Ein einmaliger Timer ("In …" oder "Einmal") ist nach dem Lauf aus, und das Bearbeiten schaltet ihn nicht mehr von selbst wieder ein: Der Schalter "Aktiv" im Assistenten bleibt aus, und "Speichern" lässt ihn aus. Er muss von Hand wieder eingeschaltet werden (Schalter im Assistenten oder Schalter in der Liste). Ein noch nicht gelaufener Timer bleibt beim Bearbeiten an. Bisher hat das Bearbeiten eines erledigten Timers ihn stillschweigend wieder scharf gemacht.
 
 ## [2.31.1] - 2026-10-13
 

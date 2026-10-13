@@ -363,11 +363,9 @@ export class TimerUi {
     else if (tm.done) next = `<span class="tm-tag grey">${esc(t("tmDone"))}</span>`;
     else next = `<span>${esc(t("tmDisabled"))}</span>`;
     if (tm.revert_local) next += `<span>${esc(t("tmRevertAt", tm.revert_local.time))}</span>`;
-    const again = !tm.enabled && (tm.done || tm.kind !== "repeat");
     const acts = confirming
       ? ""
       : `<span class="acts"><button type="button" class="linkbtn" data-tm="edit" data-id="${esc(tm.id)}">${esc(t("tmActEdit"))}</button>
-         ${again ? `<button type="button" class="linkbtn" data-tm="restart" data-id="${esc(tm.id)}">${esc(t("tmActRestart"))}</button>` : ""}
          <button type="button" class="linkbtn" data-tm="run" data-id="${esc(tm.id)}"${this.ui.busy === tm.id ? " disabled" : ""}>${esc(t("tmActRun"))}</button>
          <button type="button" class="linkbtn danger" data-tm="delete" data-id="${esc(tm.id)}">${esc(t("tmActDelete"))}</button></span>`;
     const confirm = confirming
@@ -563,11 +561,10 @@ export class TimerUi {
     const t = (k, ...a) => this.t(k, ...a);
     const confirming = all.confirmId === tm.id;
     const sw = `<label class="switch"><input type="checkbox" ${this.a(all, "timer-toggle")} data-id="${esc(tm.id)}"${tm.enabled ? " checked" : ""} aria-label="${esc(tm.name)}"><span></span></label>`;
-    const again = !tm.enabled && (tm.done || tm.kind !== "repeat");
     const acts = confirming
       ? ""
       : `<div class="mg-acts"><button type="button" class="linkbtn" ${this.a(all, "timer-edit")} data-device="${esc(tm.device_id)}" data-id="${esc(tm.id)}">${esc(t("tmActEdit"))}</button>
-        ${again ? `<button type="button" class="linkbtn" ${this.a(all, "timer-restart")} data-id="${esc(tm.id)}">${esc(t("tmActRestart"))}</button>` : ""}${
+        ${
           // Im Fenster mit allen Timern: bearbeiten, ein-/ausschalten und löschen (seit 2.24.1), kein Ausführen, kein Neuanlegen
           all.dlg ? "" : `
         <button type="button" class="linkbtn" ${this.a(all, "timer-run")} data-id="${esc(tm.id)}">${esc(t("tmActRun"))}</button>`
@@ -611,10 +608,6 @@ export class TimerUi {
       if (input) input.checked = !enabled;
     }
     this.afterChange();
-  }
-
-  async restart(id) {
-    await this.toggle(id, true);
   }
 
   async run(id) {
@@ -1316,9 +1309,6 @@ export class TimerUi {
       }
       case "run":
         this.run(id);
-        break;
-      case "restart":
-        this.restart(id);
         break;
       case "delete":
         this.ui.confirmId = id;

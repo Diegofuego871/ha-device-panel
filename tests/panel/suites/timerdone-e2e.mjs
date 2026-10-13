@@ -1,6 +1,6 @@
 // Erledigter einmaliger Timer (2.32.0, Fehler vom Nutzer gemeldet): Nach dem Lauf ist der Timer aus ("erledigt"), und das Bearbeiten
 // schaltet ihn nicht mehr von selbst wieder ein. Der Schalter "Aktiv" im Assistenten bleibt aus, "Speichern" sendet enabled=false;
-// nur von Hand (Schalter im Assistenten, Schalter in der Liste, "Erneut starten") wird er wieder scharf. Ein noch nicht gelaufener
+// nur von Hand (Schalter im Assistenten, Schalter in der Liste) wird er wieder scharf. Den Knopf "Erneut starten" gibt es seit 2.33.1 nicht mehr (er tat dasselbe wie der Schalter). Ein noch nicht gelaufener
 // Timer bleibt beim Bearbeiten an. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions } from "../lib.mjs";
@@ -45,6 +45,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("${all}")?.open`);
     const toggleOf = (id) => ev(`return r.querySelector('${all} [data-tma="timer-toggle"][data-id="${id}"]')?.checked`);
     check(`[${tag}] erledigter Timer ist aus, wartender an`, (await toggleOf("aaaaaaaaaaa1")) === false && (await toggleOf("aaaaaaaaaaa2")) === true);
+    check(`[${tag}] kein Knopf "Erneut starten" im Fenster mit allen Timern`, await ev(`return !r.querySelector('${all} [data-tma="timer-restart"]') && ![...r.querySelectorAll("${all} .linkbtn")].some((x) => /Erneut starten|Start again/.test(x.textContent))`));
     check(`[${tag}] erledigter Timer trägt "${T.done}"`, await ev(`const c = [...r.querySelectorAll("${all} .mg-card")].find((x) => x.querySelector('[data-id="aaaaaaaaaaa1"]')); return !!c && c.textContent.includes(${JSON.stringify(T.done)})`));
 
     // Bearbeiten des erledigten Timers: Schalter bleibt aus, Speichern sendet enabled=false

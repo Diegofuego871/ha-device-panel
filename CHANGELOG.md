@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.33.1] - 2026-10-13
 
-Favicon in its original colors.
+Favicon in its original colors, launcher list with titles only, no more "Start again" in timers.
 
 ### Fixed
 
@@ -18,6 +18,10 @@ Favicon in its original colors.
 ### Changed
 
 - Launcher, list view: each row shows only the title, no longer the path or address below it (the edit mode still shows them; the search still finds apps by path).
+
+### Removed
+
+- Timers: the button "Start again" in the device popup and in the window with all timers is gone. It did the same as the switch of the timer (switch on again), which every card already has.
 
 ## [2.33.0] - 2026-10-13
 
@@ -46,7 +50,7 @@ Debug mode across restarts, AI assessment calls a charge a charge.
 
 ### Fixed
 
-- Timers: a one-time timer ("In …" or "Once") that has run is switched off, and editing it no longer switches it on again by itself: the switch "Active" in the wizard stays off, and "Save" keeps it off. It has to be switched on by hand again (switch in the wizard, switch in the list or "Start again"). A timer that has not run yet stays on when edited. Until now editing a finished timer silently re-armed it.
+- Timers: a one-time timer ("In …" or "Once") that has run is switched off, and editing it no longer switches it on again by itself: the switch "Active" in the wizard stays off, and "Save" keeps it off. It has to be switched on by hand again (switch in the wizard or switch in the list). A timer that has not run yet stays on when edited. Until now editing a finished timer silently re-armed it.
 
 ## [2.31.1] - 2026-10-13
 
