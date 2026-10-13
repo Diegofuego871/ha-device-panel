@@ -23,6 +23,8 @@ App-Launcher: Favicon für eigene Apps mit externem Link.
 
 ## [2.32.0] - 2026-10-13
 
+Nicht veröffentlicht; enthalten in 2.33.0.
+
 Debug-Modus über Neustarts, die KI-Einschätzung nennt einen Ladevorgang Laden.
 
 ### Geändert
@@ -36,7 +38,7 @@ Debug-Modus über Neustarts, die KI-Einschätzung nennt einen Ladevorgang Laden.
 
 ## [2.31.1] - 2026-10-13
 
-Nicht veröffentlicht; enthalten in 2.32.0.
+Nicht veröffentlicht; enthalten in 2.33.0.
 
 App-Launcher: ruhigere normale Ansicht, mehr Platz in der Kopfzeile.
 
@@ -3136,7 +3138,6 @@ Erste Vorabversion.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0
-[2.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.32.0
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0
 [2.28.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.5
