@@ -323,8 +323,34 @@ async function img4() {
   return out;
 }
 
+// Dialog "Eigene App hinzufügen" mit Checkbox "Externer Link": aus = Seite in Home Assistant, an = Adresse, neuer Tab
+async function img5() {
+  const out = [];
+  for (const ext of [false, true]) {
+    const { ctx, p, ev } = await page(false, { css: CSS + CSS2 });
+    await toolbar(ev, "pins", false, true);
+    const app = ext ? { n: "Router", i: "web", ext: true } : { n: "Kamera Eingang", i: "cam" };
+    await ev(`r.querySelector(".toolbar").insertAdjacentHTML("beforeend", arg);`, `<div class="lc-dim"></div><div class="lc-dlg" style="top:90px;left:470px">
+      <h3>Eigene App hinzufügen</h3><p class="sub">Ein Link zu einer Seite von Home Assistant oder zu einer Adresse im Netz.</p>
+      <div class="lc-f"><label>Name</label><div class="lc-in">${app.n}</div></div>
+      <div class="lc-f"><label class="lg-check" style="display:flex;align-items:center;gap:10px;color:var(--dp-text);font-size:14px"><input type="checkbox" ${ext ? "checked" : ""}><span>Externer Link (öffnet in einem neuen Tab)</span></label></div>
+      <div class="lc-f"><label>${ext ? "Adresse" : "Seite in Home Assistant"}</label><div class="lc-in f">${ext ? "https://router.local" : "/lovelace/kameras"}</div>
+        <div class="lc-hint">${ext ? "Muss mit https:// oder http:// beginnen. Öffnet immer in einem neuen Tab, Home Assistant bleibt offen." : "Beginnt mit \"/\", zum Beispiel /config/automation/dashboard. Öffnet in Home Assistant."}</div></div>
+      <div class="lc-f"><label>Symbol</label><div class="lc-icons">${["cam", "home", "web", "calendar", "bar", "bolt", "map", "wrench"].map((k, i) => `<span class="${(ext ? 2 : 0) === i ? "on" : ""}">${ic(k, 22)}</span>`).join("")}</div></div>
+      <div class="lc-f"><label>Vorschau</label><div class="lc-prev">${tile(app)}<p>${ext ? "Das kleine Kettensymbol unten rechts zeigt: öffnet in einem neuen Tab." : "So erscheint die Kachel."}</p></div></div>
+      <div class="lc-acts"><span class="p">Speichern</span><span>Abbrechen</span></div></div>`);
+    await p.waitForTimeout(250);
+    const file = `${tmp}5-${ext ? "ext" : "int"}.png`;
+    await p.screenshot({ path: file, clip: { x: 380, y: 60, width: 640, height: 780 } });
+    out.push([file, ext ? "Häkchen gesetzt: externe Adresse, neuer Tab" : "Häkchen aus: Seite in Home Assistant", 560]);
+    await ctx.close();
+  }
+  return out;
+}
+
 await compose("1-Launcher.png", await img1());
 await compose("2-Bearbeiten-Desktop.png", await img2());
 await compose("3-Bearbeiten-Handy.png", await img3());
 await compose("4-Liste.png", await img4());
+await compose("5-Eigene-App.png", await img5());
 await close();

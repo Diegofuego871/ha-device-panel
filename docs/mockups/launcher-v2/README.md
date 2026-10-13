@@ -14,8 +14,11 @@ Entscheide des Nutzers zu launcher-v1 (2026-10-13):
 - `2-Bearbeiten-Desktop.png`: Bearbeiten-Modus: Ziehgriff, Auge, Herz, waagrechter Strich "Kopfzeile am Handy", gezogener Eintrag
 - `3-Bearbeiten-Handy.png`: Bearbeiten-Modus auf dem Handy (44 px Zeilen)
 - `4-Liste.png`: Darstellung "Liste" (Desktop), mit demselben Strich, waagrecht
+- `5-Eigene-App.png`: Dialog "Eigene App": Kontrollkästchen "Externer Link" aus (Seite in HA) und ein (Adresse, neuer Tab)
 
 6. Nachtrag: Der Benutzer wählt **Raster oder Liste** selbst, mit einem Schalter ("Darstellung") im Bearbeiten-Modus.
+
+7. Nachtrag: Eigene Apps können einen **externen Link** haben (Kontrollkästchen). Externe Links öffnen **immer in einem neuen Browser-Tab**.
 
 ## Verhalten
 
@@ -27,6 +30,11 @@ Entscheide des Nutzers zu launcher-v1 (2026-10-13):
 - **Strich**: im Raster senkrecht (mit Handy-Symbol) nach dem ersten Favoriten, im Bearbeiten-Modus waagrecht mit Beschriftung.
 - **Bearbeiten**: Ziehgriff links in jeder Zeile (Sortieren innerhalb der Gruppe), Auge (ausblenden/einblenden), Herz; eigene Apps zusätzlich
   Stift (ändern) und Kreuz (löschen). "Auf Standard zurücksetzen" stellt Auswahl, Reihenfolge und Ausgeblendetes wieder her.
+- **Eigene App**: Name, Symbol, Ziel. Kontrollkästchen "Externer Link (öffnet in einem neuen Tab)":
+  - aus: Seite in Home Assistant, muss mit "/" beginnen (zum Beispiel `/config/automation/dashboard`), Navigation wie bei den
+    vorinstallierten Links, Home Assistant bleibt im selben Tab.
+  - ein: Adresse, muss mit `https://` oder `http://` beginnen (andere Schemata wie `javascript:` werden abgelehnt). Öffnet immer in einem
+    neuen Tab (`noopener noreferrer`), Home Assistant bleibt offen. Die Kachel trägt ein kleines Kettensymbol als Merkmal.
 - **Nicht ausblendbar**: Protokoll (sonst gäbe es keinen Zugang mehr zum Debug-Modus).
 - **Standard** für neue Benutzer: Timer ist Favorit, alles sichtbar, Reihenfolge wie im Mockup.
 - **Speicherort**: ein Eintrag in den Benutzerdaten von HA (`frontend/set_user_data`), lokale Kopie im Browser wie bei den Herzen der Timer.
