@@ -7,7 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.28.5] - 2026-10-13
+
+Larger pop-ups on the desktop, rounded corners, same size for settings, device, timers and log.
+
+### Changed
+
+- Desktop: the large windows (device pop-up, settings, window with all timers, log) now have the same size, 880 px wide, and are up to 1100 px high instead of 780 px, as far as the screen allows. The statistics, pulse and notes windows are higher as well. On the phone nothing changes.
+
+### Fixed
+
+- Settings, device pop-up and other pop-ups with their own scrollbar: the right corners were square where the scrollbar lay over the rounding. The pop-ups are now clipped to their rounded shape, so the scrollbar stays inside the corners.
+
 ## [2.28.4] - 2026-10-13
+
+Not released; included in 2.28.5.
 
 Window with all timers as wide as the settings.
 
@@ -2936,7 +2950,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.28.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.4
+[2.28.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.5
 [2.28.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.3
 [2.28.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.28.2
 [2.28.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.1

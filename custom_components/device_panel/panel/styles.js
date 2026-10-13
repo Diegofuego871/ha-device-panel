@@ -421,8 +421,11 @@ svg.strip .s2 { fill: var(--dp-bar-off); }
    Blatt von unten. Der Dialog scrollt selbst, Kopf und Aktionsleiste
    bleiben per sticky sichtbar (wie unifi_dynamic). */
 dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.cols-dlg, dialog.prompt-dlg, dialog.notes-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
-  box-shadow: var(--dp-shadow); overflow: auto; overscroll-behavior: contain; max-height: calc(100% - 48px); }
-dialog.device, dialog.settings, dialog.view { width: min(640px, calc(100vw - 32px)); }
+  box-shadow: var(--dp-shadow); overflow: auto; overscroll-behavior: contain; max-height: calc(100% - 48px);
+  clip-path: inset(0 round 22px); /* die eigene Scrollleiste des Dialogs liegt sonst eckig über der Rundung (rechts oben/unten) */ }
+dialog.view { width: min(640px, calc(100vw - 32px)); }
+/* Grosse Fenster auf dem Desktop einheitlich (seit 2.28.5, Wunsch des Nutzers): Geräte-Popup, Einstellungen, Timer und Protokoll gleich gross */
+dialog.device, dialog.settings { width: min(880px, calc(100vw - 48px)); }
 dialog.area-sheet, dialog.cols-dlg { width: min(420px, calc(100vw - 32px)); }
 dialog.stat-dlg, dialog.pulse-dlg, dialog.prompt-dlg, dialog.notes-dlg { width: min(560px, calc(100vw - 32px)); }
 dialog.device::backdrop, dialog.settings::backdrop, dialog.view::backdrop, dialog.area-sheet::backdrop, dialog.pulse-dlg::backdrop, dialog.cols-dlg::backdrop, dialog.prompt-dlg::backdrop, dialog.notes-dlg::backdrop { background: rgba(0,0,0,0.5); }
@@ -1214,9 +1217,9 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 }
 
 /* Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1): Fenster gross auf dem Desktop, auf dem Handy vollflächig */
-/* Fenster "Alle Timer": Popup auf dem Desktop, gleich gross wie Einstellungen und Geräte-Popup (seit 2.28.3), auf dem Handy (bis 700 px) vollflächig */
+/* Fenster "Alle Timer": Popup auf dem Desktop, gleich gross wie Einstellungen und Geräte-Popup (seit 2.28.3, Grösse seit 2.28.5 wie die anderen grossen Fenster), auf dem Handy (bis 700 px) vollflächig */
 dialog.tmall-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
-  width: min(640px, calc(100vw - 32px)); height: min(780px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
+  width: min(880px, calc(100vw - 48px)); height: min(1100px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
 dialog.tmall-dlg[open] { display: flex; flex-direction: column; }
 dialog.tmall-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .tmall-dlg .dlg-head { flex: none; position: static; }
@@ -1227,7 +1230,7 @@ dialog.tmall-dlg::backdrop { background: rgba(0,0,0,0.5); }
   .tmall-dlg .dlg-body { padding: 0 16px 20px; }
 }
 dialog.log-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
-  width: min(1040px, calc(100vw - 48px)); height: min(780px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
+  width: min(880px, calc(100vw - 48px)); height: min(1100px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
 dialog.log-dlg[open] { display: flex; flex-direction: column; }
 dialog.log-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .log-dlg .dlg-head { flex: none; position: static; }
@@ -1281,7 +1284,9 @@ button.lg-row:hover { background: var(--dp-hover); }
 
 /* Feste Höhe (seit 1.41.0, Wunsch des Nutzers): Fenster mit Reitern oder wechselndem Inhalt bleiben gleich hoch, egal welcher Reiter
    gewählt ist. Kopf, Reiter und Knöpfe bleiben stehen, der Inhalt füllt den Rest und scrollt, wenn er länger ist. */
-dialog.device, dialog.settings, dialog.stat-dlg, dialog.pulse-dlg, dialog.area-sheet, dialog.prompt-dlg, dialog.notes-dlg { height: min(780px, calc(100% - 48px)); }
+dialog.area-sheet, dialog.prompt-dlg { height: min(780px, calc(100% - 48px)); }
+/* Inhaltsreiche Fenster dürfen auf dem Desktop deutlich höher sein (seit 2.28.5, Wunsch des Nutzers) */
+dialog.device, dialog.settings, dialog.stat-dlg, dialog.pulse-dlg, dialog.notes-dlg { height: min(1100px, calc(100% - 48px)); }
 dialog.device[open], dialog.settings[open], dialog.stat-dlg[open], dialog.pulse-dlg[open], dialog.area-sheet[open], dialog.prompt-dlg[open], dialog.notes-dlg[open] { display: flex; flex-direction: column; }
 dialog.device[open] > *, dialog.settings[open] > *, dialog.stat-dlg[open] > *, dialog.pulse-dlg[open] > *, dialog.area-sheet[open] > *, dialog.prompt-dlg[open] > *, dialog.notes-dlg[open] > * { flex-shrink: 0; }
 dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-dlg[open] > .dlg-body, dialog.pulse-dlg[open] > .dlg-body, dialog.area-sheet[open] > .dlg-body, dialog.prompt-dlg[open] > .dlg-body, dialog.notes-dlg[open] > .dlg-body { flex-grow: 1; }
@@ -1289,7 +1294,7 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
   dialog.device, dialog.settings, dialog.pulse-dlg, dialog.area-sheet, dialog.prompt-dlg, dialog.notes-dlg { height: 92%; max-height: 92%; }
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   /* Einstellungen, Ansicht und Geräte-Popup auf dem Handy als Vollbild (seit 2.24.0, Wunsch des Nutzers) */
-  dialog.settings, dialog.view, dialog.device { height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
+  dialog.settings, dialog.view, dialog.device { height: 100%; max-height: 100%; margin: 0; border-radius: 0; clip-path: none; }
   dialog.view[open] { display: flex; flex-direction: column; }
   dialog.view[open] > * { flex-shrink: 0; }
   dialog.view[open] > .dlg-body { flex-grow: 1; }

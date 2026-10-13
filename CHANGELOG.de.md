@@ -7,7 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.28.5] - 2026-10-13
+
+Grössere Popups auf dem Desktop, abgerundete Ecken, Einstellungen, Gerät, Timer und Protokoll gleich gross.
+
+### Geändert
+
+- Desktop: Die grossen Fenster (Geräte-Popup, Einstellungen, Fenster mit allen Timern, Protokoll) haben jetzt dieselbe Grösse, 880 px breit, und sind bis zu 1100 px hoch statt 780 px, soweit der Bildschirm es zulässt. Die Fenster für Statistik, Puls und Notizen sind ebenfalls höher. Auf dem Handy ändert sich nichts.
+
+### Behoben
+
+- Einstellungen, Geräte-Popup und weitere Popups mit eigener Scrollleiste: Die rechten Ecken waren eckig, weil die Scrollleiste über der Rundung lag. Die Popups werden jetzt auf ihre runde Form beschnitten, die Scrollleiste bleibt innerhalb der Ecken.
+
 ## [2.28.4] - 2026-10-13
+
+Nicht veröffentlicht; enthalten in 2.28.5.
 
 Fenster mit allen Timern so gross wie die Einstellungen.
 
@@ -3037,7 +3051,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.28.4]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.4
+[2.28.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.5
 [2.28.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.3
 [2.28.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/2.28.2
 [2.28.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.1
