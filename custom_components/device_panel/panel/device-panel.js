@@ -5852,8 +5852,8 @@ class DevicePanel extends HTMLElement {
     const saved = !changes.length && st.saved;
     const actions = `<div class="dlg-actions">
         <span class="set-count${saved ? " saved" : ""}" role="status">${changes.length ? escape(t("settingsChanges", changes.length)) : saved ? escape(t("settingsSavedShort")) : ""}</span>
-        <button type="button" class="dlg-btn" data-set="close">${escape(changes.length ? t("settingsCancel") : t("close"))}</button>
-        <button type="button" class="dlg-btn primary" data-set="save" ${canSave ? "" : "disabled"}>${escape(st.saving ? t("settingsSaving") : t("settingsSave"))}</button></div>`;
+        <button type="button" class="dlg-btn primary" data-set="save" ${canSave ? "" : "disabled"}>${escape(st.saving ? t("settingsSaving") : t("settingsSave"))}</button>
+        <button type="button" class="dlg-btn" data-set="close">${escape(changes.length ? t("settingsCancel") : t("close"))}</button></div>`;
     // Die Versionszeile (.ver-slot) ändert sich oft (Prüfung, HACS) und wird
     // dann allein ersetzt (_renderSettingsVersion), nicht der ganze Dialog.
     const html = `${head}<div class="dlg-body">${body}</div>${actions}`;

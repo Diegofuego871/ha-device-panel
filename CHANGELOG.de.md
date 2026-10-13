@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.27.1] - 2026-10-13
+
+Einstellungen: Der Schliessen-Knopf steht rechts.
+
+### Geändert
+
+- Einstellungen: "Schliessen" (mit offenen Änderungen "Abbrechen") steht jetzt rechts und "Speichern" links, damit der schliessende Knopf wie in den Popups immer auf derselben Seite ist.
+
 ## [2.27.0] - 2026-10-13
 
 Timer direkt im Fenster aller Timer hinzufügen.
@@ -2981,6 +2989,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.1
 [2.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.0
 [2.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.26.0
 [2.25.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.25.0

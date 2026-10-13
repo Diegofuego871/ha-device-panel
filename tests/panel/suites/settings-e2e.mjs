@@ -129,6 +129,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Versionszeile`, (await text("dialog.settings .ver-slot")).includes(T.ver));
     check(`[${tag}] Schalter Vorabversionen`, (await text("dialog.settings .ver-opt-l")) === T.pre && (await ev(`return r.querySelector('[data-ver="prerelease"]').getAttribute("aria-checked")`)) === "false");
     check(`[${tag}] Abschnitt mit Zusammenfassung`, (await text('[data-id="updates"] .set-sec-title')) === T.sec && (await text('[data-id="updates"] .set-sec-sum')) === T.sumOn, await text('[data-id="updates"] .set-sec-sum'));
+    check(`[${tag}] Schliessen steht rechts von Speichern`, await ev(`const b = r.querySelector('dialog.settings .dlg-actions [data-set="close"]').getBoundingClientRect(), s = r.querySelector('dialog.settings [data-set="save"]').getBoundingClientRect(); return b.left > s.left`));
     check(`[${tag}] Speichern gesperrt ohne Änderung, Knopf "Schliessen"`, await ev(`return r.querySelector('[data-set="save"]').disabled`) && (await text(".set-count")) === "" && (await text('dialog.settings .dlg-actions [data-set="close"]')) === T.closeBtn);
     if (mobile) {
       const geo = await ev(`const d=r.querySelector("dialog.settings").getBoundingClientRect(); return [Math.round(d.left), Math.round(d.width), Math.round(d.bottom), innerWidth, innerHeight]`);
