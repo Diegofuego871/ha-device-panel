@@ -7,7 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.30.0] - 2026-10-13
+
+Battery history: a charge is called a charge.
+
+### Changed
+
+- Battery history window: if the charge notification is active for the device, a rise of the level is no longer called a "change" of the battery but a charge: the mark in the chart reads "Charge", the list "Charged", and the texts say "since the charge on …" (also in the forecast). Devices without the charge notification keep "Change".
+
 ## [2.29.1] - 2026-10-13
+
+Not released; included in 2.30.0.
 
 Slimmer scrollbars without arrows.
 
@@ -2966,7 +2976,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.29.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.1
+[2.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.30.0
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0
 [2.28.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.5
 [2.28.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.3

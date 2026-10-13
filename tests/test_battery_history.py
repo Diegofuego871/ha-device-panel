@@ -251,3 +251,21 @@ async def test_history_carries_the_forecast_independent_of_the_range(recorder_mo
     await _ws(client, 11, type=f"{DOMAIN}/set_device_settings", device_id=dev.id, battery="off")
     off = (await _ws(client, 12, type=f"{DOMAIN}/battery_history", device_id=dev.id, range="7d"))["result"]["forecast"]
     assert off["target"] == 0 and off["target_is_zero"] is True and off["days"] > own["days"]
+
+
+async def test_history_flags_devices_with_charge_notification(hass: HomeAssistant, hass_ws_client) -> None:
+    """Lademeldung aktiv (2.30.0): das Panel nennt einen Anstieg "Laden" statt "Wechsel"; Wahl am Gerät oder Integration."""
+    from custom_components.device_panel.devices import async_set_device_settings
+
+    dev, bat = _battery_device(hass)
+    hass.states.async_set(bat, "80", {"device_class": "battery", "unit_of_measurement": "%"})
+    await _setup(hass)
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "notify_charge": True})
+    await hass.async_block_till_done()
+    client = await hass_ws_client(hass)
+    off = (await _ws(client, 1, type=f"{DOMAIN}/battery_history", device_id=dev.id, range="7d"))["result"]
+    assert off["charging"] is False
+    await async_set_device_settings(hass, dev.id, charge=True)
+    on = (await _ws(client, 2, type=f"{DOMAIN}/battery_history", device_id=dev.id, range="7d"))["result"]
+    assert on["charging"] is True

@@ -291,9 +291,12 @@ async def _load(
 
 
 async def async_battery_history(
-    hass: HomeAssistant, entity_id: str, range_key: str, threshold: int | None, now: float | None = None
+    hass: HomeAssistant, entity_id: str, range_key: str, threshold: int | None, now: float | None = None, charging: bool = False
 ) -> dict[str, Any]:
-    """Punkte, Quelle, Wechsel, Schwelle und Prognose für das Fenster "Batterie"."""
+    """
+    Punkte, Quelle, Wechsel, Schwelle und Prognose für das Fenster "Batterie". charging: Für das Gerät ist die Lademeldung
+    aktiv (seit 2.30.0): Ein Anstieg ist dann ein Ladevorgang, kein Batteriewechsel; das Panel beschriftet ihn entsprechend.
+    """
     now = now if now is not None else time.time()
     days = RANGES.get(range_key, 1)
     start = now - days * 86400
@@ -305,6 +308,7 @@ async def async_battery_history(
         "points": [],
         "first": None,
         "changes": [],
+        "charging": charging,
         "threshold": threshold,
         "steady_since": None,
         "period": "hour",

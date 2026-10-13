@@ -15,11 +15,13 @@ const TEXT = {
     title: "Batterie", ranges: ["24 Std.", "7 Tage", "30 Tage", "3 Monate", "6 Monate", "12 Monate"], hint: "Verlauf", since: "−36 % seit dem Wechsel am ", perDay: "etwa 0,5 % pro Tag",
     minmax: /^Tiefster \d+ % · höchster \d+ %/, thr: "Schwach ab 15 %", change: "Wechsel", changed: "Batterie gewechselt", statsDay: "Aus dem Recorder (Langzeitstatistik: Tagesmittel, auch über 10 Tage hinaus).", stats: "Aus dem Recorder (Langzeitstatistik",
     hist: "Aus dem Verlauf des Recorders.", histLong: "keine Langzeitstatistik", now: "jetzt",
+    cSince: "−36 % seit dem Laden am ", cChange: "Laden", cChanged: "Aufgeladen",
   },
   en: {
     title: "Battery", ranges: ["24 h", "7 days", "30 days", "3 months", "6 months", "12 months"], hint: "History", since: "−36 % since the change on ", perDay: "about 0.5 % per day",
     minmax: /^Lowest \d+ % · highest \d+ %/, thr: "Low from 15 %", change: "Change", changed: "Battery changed", statsDay: "From the recorder (long-term statistics: daily means, also beyond 10 days).", stats: "From the recorder (long-term statistics",
     hist: "From the recorder history.", histLong: "keeps no long-term statistics", now: "now",
+    cSince: "−36 % since the charge on ", cChange: "Charge", cChanged: "Charged",
   },
 };
 
@@ -81,6 +83,17 @@ for (const lang of ["de", "en"]) {
     // 24 Std.: Verlauf
     await range("24h");
     check(`[${tag}] 24 Std.: Verlauf des Recorders`, T.minmax.test(await text("dialog.stat-dlg .avail-facts")) && (await text("dialog.stat-dlg .bh-src")) === T.hist && !(await ev(`return !!r.querySelector("dialog.stat-dlg .bh-chg-l")`)));
+    // Lademeldung aktiv: der Anstieg ist ein Ladevorgang, kein Wechsel
+    await p.evaluate(() => { window.__batCharging = true; });
+    await range("30d");
+    await range("90d");
+    check(`[${tag}] Lademeldung aktiv: "seit dem Laden", Marke "${T.cChange}", Liste "${T.cChanged}"`, (await text("dialog.stat-dlg .avail-facts")).startsWith(T.cSince) && (await text("dialog.stat-dlg .bh-chg-l")) === T.cChange && (await text("dialog.stat-dlg .avail-list div span:first-child")) === T.cChanged, `${await text("dialog.stat-dlg .avail-facts")} / ${await text("dialog.stat-dlg .bh-chg-l")} / ${await text("dialog.stat-dlg .avail-list div span:first-child")}`);
+    check(`[${tag}] Lademeldung aktiv: Prognose spricht nicht von "Wechsel"`, !/Wechsel|change/i.test(await text("dialog.stat-dlg .bh-fc")), await text("dialog.stat-dlg .bh-fc"));
+    await p.evaluate(() => { window.__batCharging = false; });
+    await range("30d");
+    await range("90d");
+    check(`[${tag}] ohne Lademeldung weiter "Wechsel"`, (await text("dialog.stat-dlg .bh-chg-l")) === T.change);
+    await range("30d");
     // Ohne Langzeitstatistik: Hinweis
     await p.evaluate(() => { window.__batSource = "history"; });
     await range("90d");

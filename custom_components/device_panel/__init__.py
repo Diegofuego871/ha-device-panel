@@ -411,7 +411,9 @@ async def _ws_battery_history(
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "no battery level")
         return
     threshold = device_battery_threshold(hass, options_api.effective(hass), device)
-    connection.send_result(msg["id"], await async_battery_history(hass, entity_id, msg["range"], threshold))
+    opts = options_api.effective(hass)
+    charging = ChargeNotifier.enabled(opts, hass, device)
+    connection.send_result(msg["id"], await async_battery_history(hass, entity_id, msg["range"], threshold, charging=charging))
 
 
 def _magic(hass: HomeAssistant) -> MagicPush | None:

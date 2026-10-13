@@ -1805,9 +1805,11 @@ class DevicePanel extends HTMLElement {
 
   // Prognose-Block im Batterie-Verlauf (seit 1.5.0). Unabhängig vom
   // gewählten Zeitraum: das Backend rechnet immer über höchstens 365 Tage.
-  _batForecastHtml(fc) {
+  _batForecastHtml(fc, charging = false) {
     if (!fc || !fc.status) return "";
-    const t = (k, ...a) => this._t(k, ...a);
+    // Mit aktiver Lademeldung ist ein Anstieg ein Ladevorgang, kein Batteriewechsel (seit 2.30.0): eigene Wortwahl "seit dem Laden"
+    const c = charging ? "C" : "";
+    const t = (k, ...a) => this._t(k + (k.startsWith("batFc") && k.endsWith("Change") ? c : ""), ...a);
     const zero = !!fc.target_is_zero;
     const note = `<p class="bh-fc-note">${escape(t("batFcNote"))}</p>`;
     const wrap = (cls, inner) => `<div class="bh-fc ${cls}"><div class="bh-fc-h">${escape(t("batFcTitle"))}</div>${inner}${note}</div>`;
@@ -4787,7 +4789,8 @@ class DevicePanel extends HTMLElement {
     const key = this._histKey(range);
     if (!h || h.key !== key || (!h.data && h.loading)) return `<div class="avail"><p class="dlg-note">${escape(t("loadingDetail"))}</p></div>`;
     if (!h.data) return `<div class="dlg-error">${escape(t("error"))} ${escape(h.error || "")}</div>`;
-    const { start, end, points = [], changes = [], threshold, source, steady_since: steady, forecast } = h.data;
+    const { start, end, points = [], changes = [], threshold, source, steady_since: steady, forecast, charging = false } = h.data;
+    const cs = charging ? "C" : "";
     if (!points.length) return `<div class="avail"><p class="dlg-note">${escape(t("batNoData"))}</p></div><p class="dlg-note bh-src">${escape(t("batSrcNone"))}</p>`;
     const span = end - start;
     const x = (at) => Math.max(0, Math.min(1000, ((at - start) / span) * 1000));
@@ -4798,7 +4801,7 @@ class DevicePanel extends HTMLElement {
     const facts = [];
     const last = changes[changes.length - 1];
     if (last) {
-      facts.push(t("batSince", Math.round(cur - last.to), this._fmtDate(last.at)));
+      facts.push(t("batSince" + cs, Math.round(cur - last.to), this._fmtDate(last.at)));
       const days = (end - last.at) / 86400;
       if (days >= 1 && last.to > cur) facts.push(t("batPerDay", fmt((last.to - cur) / days)));
     } else {
@@ -4817,7 +4820,7 @@ class DevicePanel extends HTMLElement {
     const labels =
       [100, 50, 0].map((v) => `<span class="bh-y" style="top:${y(v)}%">${v} %</span>`).join("") +
       (Number.isInteger(threshold) ? `<span class="bh-thr-l" style="bottom:${threshold}%">${escape(t("batThreshold", threshold))}</span>` : "") +
-      changes.map((c) => `<span class="bh-chg-l" style="left:${(x(c.at) / 10).toFixed(2)}%">${escape(t("batChange"))}</span>`).join("") +
+      changes.map((c) => `<span class="bh-chg-l" style="left:${(x(c.at) / 10).toFixed(2)}%">${escape(t("batChange" + cs))}</span>`).join("") +
       `<span class="bh-dot" style="top:${y(cur)}%"></span>`;
     const ticks = this._ticks(start, end, range)
       .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
@@ -4826,12 +4829,12 @@ class DevicePanel extends HTMLElement {
       ? `<div class="avail-list">${changes
           .slice()
           .reverse()
-          .map((c) => `<div><span>${escape(t("batChanged"))}</span><span class="d">${escape(this._fmtTime(c.at, true))} · ${c.from} % → ${c.to} %</span></div>`)
+          .map((c) => `<div><span>${escape(t("batChanged" + cs))}</span><span class="d">${escape(this._fmtTime(c.at, true))} · ${c.from} % → ${c.to} %</span></div>`)
           .join("")}</div>`
       : "";
     const srcKey = source === "statistics" ? (h.data.period === "day" ? "batSrcStatsDay" : "batSrcStats") : source === "history" ? (["30d", "90d", "180d", "365d"].includes(range) ? "batSrcHistoryLong" : "batSrcHistory") : "batSrcNone";
     return `<div class="avail bh"><div class="avail-top"><span class="avail-pct">${escape(String(Math.round(cur)))}<small>%</small></span><span class="avail-facts">${escape(facts.join(" · "))}</span></div>
-        ${this._batForecastHtml(forecast)}
+        ${this._batForecastHtml(forecast, charging)}
         <div class="bh-plot"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}${thr}
           <path class="bh-area" d="${area}"/><path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/>${marks}</svg>${labels}</div>
         <div class="avail-ticks bh-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>${list}</div>

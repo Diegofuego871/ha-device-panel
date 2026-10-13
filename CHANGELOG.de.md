@@ -7,7 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.30.0] - 2026-10-13
+
+Batterie-Verlauf: Ein Ladevorgang heisst Ladevorgang.
+
+### Geändert
+
+- Fenster "Batterie" (Verlauf): Ist für das Gerät die Lademeldung aktiv, heisst ein Anstieg des Stands nicht mehr "Wechsel" der Batterie, sondern Ladevorgang: Die Marke im Diagramm lautet "Laden", die Liste "Aufgeladen", und die Texte sagen "seit dem Laden am …" (auch bei der Prognose). Geräte ohne Lademeldung behalten "Wechsel".
+
 ## [2.29.1] - 2026-10-13
+
+Nicht veröffentlicht; enthalten in 2.30.0.
 
 Schmalere Scrollleisten ohne Pfeile.
 
@@ -3067,7 +3077,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.29.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.1
+[2.30.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.30.0
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0
 [2.28.5]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.5
 [2.28.3]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.3
