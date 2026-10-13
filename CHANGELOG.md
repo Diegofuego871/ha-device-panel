@@ -7,15 +7,28 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.35.0] - 2026-10-13
+
+App launcher: the symbols and colors of Home Assistant.
+
+### Changed
+
+- App launcher: the apps of Home Assistant show the same symbol and color as the page they open in the settings of Home Assistant, taken from the frontend of Home Assistant itself: a circle in the color of the page with a white symbol. Automations, scenes and scripts are green, helpers purple, devices, entities, integrations and areas indigo, tools violet, backups blue; history and logbook have no color in Home Assistant, so they get a color from its palette. The apps of the Device Panel (timer, Magic Push, log) keep their symbol and get a color of the same palette; your own apps get the main color, and a favicon stays as it is, without a circle.
+- The buttons of the favorites in the header show the same symbol as the launcher, without a color.
+
 ## [2.34.0] - 2026-10-13
 
-App launcher: custom apps are created only in edit mode.
+Not released; included in 2.35.0.
+
+App launcher: custom app are created only in edit mode.
 
 ### Changed
 
 - App launcher, normal view: the tile "Custom app" (plus) is gone, and so is the heading "Custom" when there is nothing to show under it. A custom app is created in edit mode ("Edit", then "Add custom app"). The heading comes back as soon as a custom app is there that is not a favorite (a favorite appears only under "Favorites"; if your only custom app is a favorite, there is no "Custom" section).
 
 ## [2.33.1] - 2026-10-13
+
+Not released; included in 2.35.0.
 
 Favicon in its original colors, launcher list with titles only, no more "Start again" in timers.
 
@@ -3060,8 +3073,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.34.0
-[2.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.1
+[2.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.0
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0

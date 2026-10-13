@@ -1706,6 +1706,8 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-nm { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; max-width: 100%; overflow: hidden; overflow-wrap: break-word; }
 .ap-ico { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--dp-primary-soft); color: var(--dp-primary); }
 .ap-ico.sm { width: 34px; height: 34px; }
+/* Eigene Apps ohne Favicon: Kreis in der Hauptfarbe, weisses Symbol (Apps von HA und des Panels tragen ihre Farbe als Stil) */
+.ap-ico.own { background: var(--dp-primary); color: #fff; }
 .ap-a.dis { opacity: .35; cursor: default; }
 .ap-badge { position: absolute; top: 7px; left: 7px; padding: 1px 6px; border-radius: 99px; background: var(--dp-warning-soft); color: var(--dp-warning); font-size: 10px; font-weight: 600; }
 .ap-t b .ap-badge { position: static; margin-left: 6px; }

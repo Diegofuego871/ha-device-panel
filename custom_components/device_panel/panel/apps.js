@@ -38,6 +38,25 @@ const BUILTIN = [
   { id: "book", group: "ha", icon: "logbook", path: "/logbook" },
   { id: "backup", group: "ha", icon: "reset", path: "/config/backup", admin: true },
 ];
+// Symbol und Farbe der Apps von Home Assistant, genau wie im Frontend von HA (home-assistant-frontend 20260930, Konfigurationsseiten:
+// iconPath und iconColor der jeweiligen Seite), damit der Launcher dasselbe Bild zeigt wie die Seite, auf die er verlinkt. Verlauf und
+// Logbuch haben dort keine Farbe (Seitenleiste): MDI chart-box und format-list-bulleted-type, Farben aus der HA-Palette.
+// Neu in 2.35.0: Kreis in dieser Farbe, weisses Symbol. Die Apps des Panels behalten ihr Symbol, nur die Farbe kommt dazu.
+const HA_LOOK = {
+  auto: { c: "#518C43", p: "M12,2A2,2 0 0,1 14,4C14,4.74 13.6,5.39 13,5.73V7H14A7,7 0 0,1 21,14H22A1,1 0 0,1 23,15V18A1,1 0 0,1 22,19H21V20A2,2 0 0,1 19,22H5A2,2 0 0,1 3,20V19H2A1,1 0 0,1 1,18V15A1,1 0 0,1 2,14H3A7,7 0 0,1 10,7H11V5.73C10.4,5.39 10,4.74 10,4A2,2 0 0,1 12,2M7.5,13A2.5,2.5 0 0,0 5,15.5A2.5,2.5 0 0,0 7.5,18A2.5,2.5 0 0,0 10,15.5A2.5,2.5 0 0,0 7.5,13M16.5,13A2.5,2.5 0 0,0 14,15.5A2.5,2.5 0 0,0 16.5,18A2.5,2.5 0 0,0 19,15.5A2.5,2.5 0 0,0 16.5,13Z" },
+  scene: { c: "#518C43", p: "M17.5,12A1.5,1.5 0 0,1 16,10.5A1.5,1.5 0 0,1 17.5,9A1.5,1.5 0 0,1 19,10.5A1.5,1.5 0 0,1 17.5,12M14.5,8A1.5,1.5 0 0,1 13,6.5A1.5,1.5 0 0,1 14.5,5A1.5,1.5 0 0,1 16,6.5A1.5,1.5 0 0,1 14.5,8M9.5,8A1.5,1.5 0 0,1 8,6.5A1.5,1.5 0 0,1 9.5,5A1.5,1.5 0 0,1 11,6.5A1.5,1.5 0 0,1 9.5,8M6.5,12A1.5,1.5 0 0,1 5,10.5A1.5,1.5 0 0,1 6.5,9A1.5,1.5 0 0,1 8,10.5A1.5,1.5 0 0,1 6.5,12M12,3A9,9 0 0,0 3,12A9,9 0 0,0 12,21A1.5,1.5 0 0,0 13.5,19.5C13.5,19.11 13.35,18.76 13.11,18.5C12.88,18.23 12.73,17.88 12.73,17.5A1.5,1.5 0 0,1 14.23,16H16A5,5 0 0,0 21,11C21,6.58 16.97,3 12,3Z" },
+  script: { c: "#518C43", p: "M17.8,20C17.4,21.2 16.3,22 15,22H5C3.3,22 2,20.7 2,19V18H5L14.2,18C14.6,19.2 15.7,20 17,20H17.8M19,2C20.7,2 22,3.3 22,5V6H20V5C20,4.4 19.6,4 19,4C18.4,4 18,4.4 18,5V18H17C16.4,18 16,17.6 16,17V16H5V5C5,3.3 6.3,2 8,2H19M8,6V8H15V6H8M8,10V12H14V10H8Z" },
+  helper: { c: "#4D2EA4", p: "M21.71 20.29L20.29 21.71A1 1 0 0 1 18.88 21.71L7 9.85A3.81 3.81 0 0 1 6 10A4 4 0 0 1 2.22 4.7L4.76 7.24L5.29 6.71L6.71 5.29L7.24 4.76L4.7 2.22A4 4 0 0 1 10 6A3.81 3.81 0 0 1 9.85 7L21.71 18.88A1 1 0 0 1 21.71 20.29M2.29 18.88A1 1 0 0 0 2.29 20.29L3.71 21.71A1 1 0 0 0 5.12 21.71L10.59 16.25L7.76 13.42M20 2L16 4V6L13.83 8.17L15.83 10.17L18 8H20L22 4Z" },
+  dev: { c: "#2D338F", p: "M3 6H21V4H3C1.9 4 1 4.9 1 6V18C1 19.1 1.9 20 3 20H7V18H3V6M13 12H9V13.78C8.39 14.33 8 15.11 8 16C8 16.89 8.39 17.67 9 18.22V20H13V18.22C13.61 17.67 14 16.88 14 16S13.61 14.33 13 13.78V12M11 17.5C10.17 17.5 9.5 16.83 9.5 16S10.17 14.5 11 14.5 12.5 15.17 12.5 16 11.83 17.5 11 17.5M22 8H16C15.5 8 15 8.5 15 9V19C15 19.5 15.5 20 16 20H22C22.5 20 23 19.5 23 19V9C23 8.5 22.5 8 22 8M21 18H17V10H21V18Z" },
+  ent: { c: "#2D338F", p: "M11,13.5V21.5H3V13.5H11M12,2L17.5,11H6.5L12,2M17.5,13C20,13 22,15 22,17.5C22,20 20,22 17.5,22C15,22 13,20 13,17.5C13,15 15,13 17.5,13Z" },
+  integ: { c: "#2D338F", p: "M20.5,11H19V7C19,5.89 18.1,5 17,5H13V3.5A2.5,2.5 0 0,0 10.5,1A2.5,2.5 0 0,0 8,3.5V5H4A2,2 0 0,0 2,7V10.8H3.5C5,10.8 6.2,12 6.2,13.5C6.2,15 5,16.2 3.5,16.2H2V20A2,2 0 0,0 4,22H7.8V20.5C7.8,19 9,17.8 10.5,17.8C12,17.8 13.2,19 13.2,20.5V22H17A2,2 0 0,0 19,20V16H20.5A2.5,2.5 0 0,0 23,13.5A2.5,2.5 0 0,0 20.5,11Z" },
+  area: { c: "#2D338F", p: "M12.5 7C12.5 5.89 13.39 5 14.5 5H18C19.1 5 20 5.9 20 7V9.16C18.84 9.57 18 10.67 18 11.97V14H12.5V7M6 11.96V14H11.5V7C11.5 5.89 10.61 5 9.5 5H6C4.9 5 4 5.9 4 7V9.15C5.16 9.56 6 10.67 6 11.96M20.66 10.03C19.68 10.19 19 11.12 19 12.12V15H5V12C5 10.9 4.11 10 3 10S1 10.9 1 12V17C1 18.1 1.9 19 3 19V21H5V19H19V21H21V19C22.1 19 23 18.1 23 17V12C23 10.79 21.91 9.82 20.66 10.03Z" },
+  tools: { c: "#7A5AA6", p: "M2 19.63L13.43 8.2L12.72 7.5L14.14 6.07L12 3.89C13.2 2.7 15.09 2.7 16.27 3.89L19.87 7.5L18.45 8.91H21.29L22 9.62L18.45 13.21L17.74 12.5V9.62L16.27 11.04L15.56 10.33L4.13 21.76L2 19.63Z" },
+  backup: { c: "#0D47A1", p: "M12,3A9,9 0 0,0 3,12H0L4,16L8,12H5A7,7 0 0,1 12,5A7,7 0 0,1 19,12A7,7 0 0,1 12,19C10.5,19 9.09,18.5 7.94,17.7L6.5,19.14C8.04,20.3 9.94,21 12,21A9,9 0 0,0 21,12A9,9 0 0,0 12,3M14,12A2,2 0 0,0 12,10A2,2 0 0,0 10,12A2,2 0 0,0 12,14A2,2 0 0,0 14,12Z" },
+  hist: { c: "#3263C3", p: "M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M9 17H7V10H9V17M13 17H11V7H13V17M17 17H15V13H17V17Z" },
+  book: { c: "#00838F", p: "M5,9.5L7.5,14H2.5L5,9.5M3,4H7V8H3V4M5,20A2,2 0 0,0 7,18A2,2 0 0,0 5,16A2,2 0 0,0 3,18A2,2 0 0,0 5,20M9,5V7H21V5H9M9,19H21V17H9V19M9,13H21V11H9V13Z" },
+};
+const PANEL_COLOR = { timer: "#00838F", magic: "#8E24AA", log: "#4A5963" };
 export const APP_ICONS = ["web", "home", "camera", "map", "bolt", "calendar", "bar", "wrench", "store", "desktop", "robot", "palette", "script", "devices", "shape", "tools"];
 
 // Favicon einer eigenen App mit externem Link (seit 2.33.0): kleines Bild als Data-URI (base64), vom Server geholt (favicon.py).
@@ -141,7 +160,7 @@ export class AppLauncher {
   _all() {
     const admin = this._admin();
     const t = (k) => this.t(k);
-    const builtin = BUILTIN.filter((a) => admin || !a.admin).map((a) => ({ ...a, name: t(`app_${a.id}`), sub: a.path || t(`app_${a.id}_sub`) }));
+    const builtin = BUILTIN.filter((a) => admin || !a.admin).map((a) => ({ ...a, name: t(`app_${a.id}`), sub: a.path || t(`app_${a.id}_sub`), look: HA_LOOK[a.id] || null, color: HA_LOOK[a.id]?.c || PANEL_COLOR[a.id] || null }));
     const own = this.data.custom.map((c) => ({ id: c.id, group: "own", icon: c.icon, name: c.name, sub: c.url, url: c.url, ext: c.ext, favicon: c.favicon, custom: true }));
     return [...builtin, ...own];
   }
@@ -430,7 +449,18 @@ export class AppLauncher {
   // Symbol der App: das Favicon (eigene App mit externem Link), sonst das gewählte Symbol
   _icon(a, size) {
     const { escape, mdi } = this.h;
-    return a.favicon ? `<img class="ap-fi" src="${escape(a.favicon)}" width="${size}" height="${size}" alt="" draggable="false">` : mdi(a.icon, size);
+    if (a.favicon) return `<img class="ap-fi" src="${escape(a.favicon)}" width="${size}" height="${size}" alt="" draggable="false">`;
+    // Apps von HA: das Symbol von HA selbst (HA_LOOK), sonst das gewählte oder eigene Symbol
+    if (a.look) return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="${a.look.p}"/></svg>`;
+    return mdi(a.icon, size);
+  }
+
+  // Kreis um das Symbol: Apps von HA und des Panels in ihrer Farbe (weisses Symbol), eigene Apps in der Hauptfarbe; ein Favicon
+  // bleibt ohne Kreis (eigene Fläche, siehe .ap-fi)
+  _ico(a, size, sm = false) {
+    const style = a.color && !a.favicon ? ` style="background:${a.color};color:#fff"` : "";
+    const own = !a.color && !a.favicon ? " own" : "";
+    return `<span class="ap-ico${sm ? " sm" : ""}${own}"${style}>${this._icon(a, size)}</span>`;
   }
 
   // Knopf oder Verweis einer App: externe Links sind <a> (neuer Tab, kein Zugriff auf das Panel), alles andere <button>
@@ -449,13 +479,13 @@ export class AppLauncher {
   _tile(a) {
     const { escape, mdi } = this.h;
     const pin = this.data.fav.includes(a.id);
-    return `<div class="ap-tile${pin ? " pin" : ""}">${this._main(a, "ap-main", `<span class="ap-ico">${this._icon(a, 22)}</span><span class="ap-nm">${escape(a.name)}</span>`)}
+    return `<div class="ap-tile${pin ? " pin" : ""}">${this._main(a, "ap-main", `${this._ico(a, 22)}<span class="ap-nm">${escape(a.name)}</span>`)}
       ${this._badge(a)}${a.ext ? `<span class="ap-ext" title="${escape(this.t("appsExtMark"))}">${mdi("link", 12)}</span>` : ""}</div>`;
   }
 
   _row(a) {
     const { escape, mdi } = this.h;
-    const inner = `<span class="ap-ico sm">${this._icon(a, 20)}</span><span class="ap-t"><b>${escape(a.name)}${this._badge(a)}</b></span>${a.ext ? `<span class="ap-ext in" title="${escape(this.t("appsExtMark"))}">${mdi("link", 14)}</span>` : ""}`;
+    const inner = `${this._ico(a, 20, true)}<span class="ap-t"><b>${escape(a.name)}${this._badge(a)}</b></span>${a.ext ? `<span class="ap-ext in" title="${escape(this.t("appsExtMark"))}">${mdi("link", 14)}</span>` : ""}`;
     return `<div class="ap-row">${this._main(a, "ap-main row", inner)}</div>`;
   }
 
@@ -515,7 +545,7 @@ export class AppLauncher {
       : "";
     return `<div class="ap-erow${hid ? " hid" : ""}" data-id="${escape(a.id)}" data-mark="${escape(this.t("appsPhoneMark"))}">
       <button type="button" class="ap-drag" data-ap-drag data-id="${escape(a.id)}" title="${escape(this.t("appsDragHint"))}" aria-label="${escape(this.t("appsDrag", a.name))}">${mdi("drag", 18)}</button>
-      <span class="ap-ico sm">${this._icon(a, 18)}</span><span class="ap-t"><b>${escape(a.name)}${a.ext ? ` <span class="ap-ext in">${mdi("link", 12)}</span>` : ""}</b><small>${escape(a.sub)}</small></span>
+      ${this._ico(a, 18, true)}<span class="ap-t"><b>${escape(a.name)}${a.ext ? ` <span class="ap-ext in">${mdi("link", 12)}</span>` : ""}</b><small>${escape(a.sub)}</small></span>
       ${eye}${heart}${own}</div>`;
   }
 
@@ -648,7 +678,7 @@ export class AppLauncher {
     const f = this.ui.form;
     if (!el || !f) return;
     const { escape, mdi } = this.h;
-    el.innerHTML = `<span class="ap-main"><span class="ap-ico">${this._icon({ icon: f.icon, favicon: f.src === "favicon" ? f.favicon : null }, 22)}</span><span class="ap-nm">${escape(f.name.trim() || this.t("appsFName"))}</span></span>${f.ext ? `<span class="ap-ext">${mdi("link", 12)}</span>` : ""}`;
+    el.innerHTML = `<span class="ap-main">${this._ico({ icon: f.icon, favicon: f.src === "favicon" ? f.favicon : null }, 22)}<span class="ap-nm">${escape(f.name.trim() || this.t("appsFName"))}</span></span>${f.ext ? `<span class="ap-ext">${mdi("link", 12)}</span>` : ""}`;
   }
 
   // Beschriftung, Hinweis und Vorschau nachführen, ohne das Fenster neu zu bauen (Fokus und Tastatur bleiben)

@@ -7,7 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.35.0] - 2026-10-13
+
+App-Launcher: die Symbole und Farben von Home Assistant.
+
+### Geändert
+
+- App-Launcher: Die Apps von Home Assistant zeigen dasselbe Symbol und dieselbe Farbe wie die Seite, die sie öffnen, in den Einstellungen von Home Assistant, übernommen aus dem Frontend von Home Assistant selbst: ein Kreis in der Farbe der Seite mit weissem Symbol. Automationen, Szenen und Skripte sind grün, Helfer violett, Geräte, Entitäten, Integrationen und Bereiche indigo, Werkzeuge violettgrau, Backups blau; Verlauf und Logbuch haben in Home Assistant keine Farbe und bekommen eine aus dessen Palette. Die Apps des Device Panels (Timer, Magic Push, Protokoll) behalten ihr Symbol und bekommen eine Farbe derselben Palette; eigene Apps erhalten die Hauptfarbe, ein Favicon bleibt, wie es ist, ohne Kreis.
+- Die Knöpfe der Favoriten in der Kopfzeile zeigen dasselbe Symbol wie der Launcher, ohne Farbe.
+
 ## [2.34.0] - 2026-10-13
+
+Nicht veröffentlicht; enthalten in 2.35.0.
 
 App-Launcher: Eigene Apps legt man nur im Bearbeiten-Modus an.
 
@@ -16,6 +27,8 @@ App-Launcher: Eigene Apps legt man nur im Bearbeiten-Modus an.
 - App-Launcher, normale Ansicht: Die Kachel "Eigene App" (Plus) entfällt, ebenso die Überschrift "Eigene", wenn darunter nichts zu zeigen ist. Eine eigene App legt man im Bearbeiten-Modus an ("Bearbeiten", dann "Eigene App hinzufügen"). Die Überschrift erscheint wieder, sobald es eine eigene App gibt, die kein Favorit ist (ein Favorit steht nur bei den Favoriten; ist Ihre einzige eigene App ein Favorit, gibt es keinen Abschnitt "Eigene").
 
 ## [2.33.1] - 2026-10-13
+
+Nicht veröffentlicht; enthalten in 2.35.0.
 
 Favicon in Originalfarben, Launcher-Liste nur mit Titel, kein "Erneut starten" mehr bei den Timern.
 
@@ -3161,8 +3174,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.34.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.34.0
-[2.33.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.1
+[2.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.0
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0
