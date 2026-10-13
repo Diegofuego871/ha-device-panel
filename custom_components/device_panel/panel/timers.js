@@ -1115,7 +1115,23 @@ export class TimerUi {
     } catch (err) {
       w.tried = { text: this.t("tmTryFail", this.h.errText(err)), failed: true };
     }
-    if (this.wiz === w) this.paintZones(["result"]);
+    if (this.wiz !== w) return;
+    this.paintZones(["result"]);
+    await this.refreshStates(w);
+  }
+
+  // Die Zustände der Entitäten kommen beim Öffnen des Assistenten; nach dem Testschalten neu holen, sonst zeigt die Karte
+  // weiter den alten Stand ("ein", obwohl gerade ausgeschaltet wurde). Der Entwurf bleibt unberührt.
+  async refreshStates(w) {
+    if (!this.deviceId) return;
+    try {
+      const r = await this.call({ type: "device_panel/timer_get", device_id: this.deviceId });
+      if (this.wiz !== w || !Array.isArray(r?.entities)) return;
+      this.data.entities = r.entities;
+      this.paint();
+    } catch {
+      // Der Stand bleibt wie er war; das Ergebnis des Schaltens steht schon da
+    }
   }
 
   // Schritt 2: Wann

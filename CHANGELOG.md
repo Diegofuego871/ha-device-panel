@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.28.1] - 2026-10-13
+
+Timer assistant: the state shown updates after "Run now".
+
+### Fixed
+
+- Timer assistant, step "What to switch": after "Run now" the card kept showing the old state ("on" although it had just been switched off). The states are now fetched again after switching.
+
 ## [2.28.0] - 2026-10-13
 
 Test button in the timer assistant.
@@ -2900,6 +2908,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.28.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.1
 [2.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.0
 [2.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.1
 [2.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.0

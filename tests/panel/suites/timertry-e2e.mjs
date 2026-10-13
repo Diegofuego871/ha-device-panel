@@ -7,8 +7,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { btn: "Jetzt ausführen", done: "Ausgeführt.", fail: "Nicht ausgeführt: Das Gerät ist nicht erreichbar." },
-  en: { btn: "Run now", done: "Done.", fail: "Not run: The device is unreachable." },
+  de: { off: "aus", btn: "Jetzt ausführen", done: "Ausgeführt.", fail: "Nicht ausgeführt: Das Gerät ist nicht erreichbar." },
+  en: { off: "off", btn: "Run now", done: "Done.", fail: "Not run: The device is unreachable." },
 };
 
 for (const lang of ["de", "en"]) {
@@ -46,8 +46,11 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-tm="pick"]`);
     await wait(`return !!r.querySelector('${win} [data-tm="try"]')`);
     check(`[${tag}] Schritt "Was schalten": Knopf "${T.btn}" unter dem Ergebnis`, await ev(`const d = r.querySelector("${win}"); const b = d.querySelector('[data-tm="try"]'); const e = d.querySelector(".tm-result"); return b.textContent.trim() === ${JSON.stringify(T.btn)} && b.getBoundingClientRect().top >= e.getBoundingClientRect().bottom - 1`));
+    await tap(`${win} [data-tm="action"][data-v="off"]`);
+    const before = await ev(`return r.querySelector('${win} [data-tm="pick"][aria-checked="true"] .mg-val')?.textContent.trim()`);
     await tap(`${win} [data-tm="try"]`);
     check(`[${tag}] Tippen: timer_try mit Entität und Aktion, Rückmeldung "${T.done}", kein Timer gespeichert`, await wait(`return r.querySelector('${win} .mg-testrow .opt-short')?.textContent === ${JSON.stringify(T.done)}`) && (await tries()).length === 1 && !!(await tries())[0].entity_id && !!(await tries())[0].action && (await calls("device_panel/timer_save")).length === 0);
+    check(`[${tag}] Zustand der Karte aktualisiert sich ("${T.off}", vorher "${before}")`, before !== T.off && await wait(`return r.querySelector('${win} [data-tm="pick"][aria-checked="true"] .mg-val')?.textContent.trim() === ${JSON.stringify(T.off)}`));
     await p.screenshot({ path: `${outDir}/timertry-${tag.replace("/", "-")}.png` });
     await p.evaluate(() => { window.__timerTryFail = "unavailable"; });
     await tap(`${win} [data-tm="try"]`);

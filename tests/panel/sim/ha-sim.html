@@ -1009,7 +1009,8 @@
           { entity_id: "switch.plug", name: de ? "Steckdose" : "Plug", domain: "switch", state: "on", available: true, actions: ["on", "off", "toggle"] },
           { entity_id: "light.led", name: "LED-Ring", domain: "light", state: "off", available: true, actions: ["on", "off", "toggle"] },
         ];
-        const entsOf = (id) => (window.__timerEntities && id in window.__timerEntities ? window.__timerEntities[id] : DEFAULT_ENTS);
+        // Zustände, die "Jetzt ausführen" gesetzt hat, überleben die Aufrufe (DEFAULT_ENTS entsteht bei jedem Aufruf neu)
+        const entsOf = (id) => (window.__timerEntities && id in window.__timerEntities ? window.__timerEntities[id] : DEFAULT_ENTS).map((e) => ((window.__tryState ||= {})[e.entity_id] ? { ...e, state: window.__tryState[e.entity_id] } : e));
         const entOf = (r) => entsOf(r.device_id).find((e) => e.entity_id === r.entity_id);
         const lastDay = (y, m) => new Date(y, m + 1, 0).getDate();
         const at = (y, m, d, hh, mm) => new Date(y, m, d, hh, mm, 0, 0).getTime() / 1000;
@@ -1145,6 +1146,10 @@
         }
         if (msg.type.endsWith("timer_try")) {
           (T.tries ||= []).push({ entity_id: msg.entity_id, action: msg.action });
+          if (!window.__timerTryFail) {
+            const now = (window.__tryState ||= {})[msg.entity_id] || (DEFAULT_ENTS.find((x) => x.entity_id === msg.entity_id) || {}).state;
+            window.__tryState[msg.entity_id] = msg.action === "on" ? "on" : msg.action === "off" ? "off" : now === "on" ? "off" : "on";
+          }
           return window.__timerTryFail ? { ok: false, reason: window.__timerTryFail } : { ok: true, reason: null };
         }
         if (msg.type.endsWith("timer_test")) {

@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.28.1] - 2026-10-13
+
+Timer-Assistent: Der angezeigte Zustand aktualisiert sich nach "Jetzt ausführen".
+
+### Behoben
+
+- Timer-Assistent, Schritt "Was schalten": Nach "Jetzt ausführen" zeigte die Karte weiter den alten Zustand ("ein", obwohl gerade ausgeschaltet wurde). Die Zustände werden nach dem Schalten jetzt neu geholt.
+
 ## [2.28.0] - 2026-10-13
 
 Testknopf im Timer-Assistenten.
@@ -3001,6 +3009,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.28.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.1
 [2.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.0
 [2.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.1
 [2.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.0
