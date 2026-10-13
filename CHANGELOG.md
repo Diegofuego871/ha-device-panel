@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.33.0] - 2026-10-13
+
+App launcher: favicon for custom apps with an external link.
+
+### Added
+
+- Custom apps with an external link can use the favicon of the site instead of an icon. In the form a switch "Icon | Favicon" (the favicon only with "External link" on) and the button "Load favicon" (only with a valid https:// or http:// address). Home Assistant fetches the icon, not the browser: it reads the site for `<link rel="icon">`, otherwise takes `/favicon.ico`. This also works with http:// and with devices in the home network (a router), and the browser loads nothing from the foreign site when the launcher opens. Limits: 5 seconds per request, 100 KB, only images (PNG, ICO, GIF, JPEG, WebP, SVG, recognised by content); no cookies or credentials are sent, and the certificate is not checked so that devices with their own certificate work. The command is for administrators only.
+- The favicon is saved as a small image in the user data of Home Assistant with the app and replaces the icon everywhere: launcher (grid and list), edit mode, preview and the button in the header. Switching back to "Icon" removes it. Messages explain why no favicon was found (none, too large, not reachable).
+
+### Changed
+
+- Form "Custom app": the order is now name, external link, address, image (icon or favicon), so that the favicon is released before you reach it.
+
 ## [2.32.0] - 2026-10-13
 
 Debug mode across restarts, AI assessment calls a charge a charge.
@@ -3020,6 +3033,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0
 [2.32.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.32.0
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0
 [2.29.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.29.0

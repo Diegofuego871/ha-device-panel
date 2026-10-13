@@ -696,6 +696,12 @@
         if (msg.type === "device_panel/set_log") log.until = log.debug ? Date.now() / 1000 + 48 * 3600 : null;
         return { entries: log.entries.map((e) => ({ ...e })), debug: log.debug, debug_until: log.debug ? log.until || Date.now() / 1000 + 48 * 3600 : null, since: log.since, max: 500 };
       }
+      // Favicon einer Seite (seit 2.33.0): ein kleines PNG; window.__faviconFail = Fehlercode (not_found, too_large, unreachable, invalid_url)
+      if (msg.type === "device_panel/fetch_favicon") {
+        await new Promise((r) => setTimeout(r, window.__faviconDelay || 60));
+        if (window.__faviconFail || /nofavicon/.test(msg.url)) throw { code: window.__faviconFail || "not_found", message: "favicon" };
+        return { icon: window.__favicon || "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" };
+      }
       if (msg.type === "device_panel/set_panel") {
         if ("prerelease" in msg) window.__panelSettings.prerelease = msg.prerelease;
         if ("prerelease_hacs" in msg) window.__panelSettings.prerelease_hacs = msg.prerelease_hacs;

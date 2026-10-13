@@ -1754,6 +1754,18 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-in { box-sizing: border-box; width: 100%; height: 44px; padding: 0 14px; border: 1px solid var(--dp-divider); border-radius: 12px; background: var(--dp-input); color: var(--dp-text); font: inherit; font-size: 16px; }
 .ap-in:focus { outline: 2px solid var(--dp-primary); outline-offset: -1px; border-color: transparent; }
 .ap-icons { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.ap-fi { display: block; border-radius: 5px; object-fit: contain; }
+.ap-ico .ap-fi { border-radius: 4px; }
+.tmall-btn .ap-fi { border-radius: 5px; }
+.ap-f .sub-tabs { margin: 0 0 10px; }
+.sub-tab:disabled { opacity: .4; cursor: default; }
+.ap-icons[hidden], .ap-favpane[hidden] { display: none; }
+.ap-favrow { display: flex; align-items: center; gap: 14px; padding: 10px 12px; border-radius: 14px; background: var(--dp-subtle); }
+.ap-favbox { display: grid; place-items: center; flex: none; width: 52px; height: 52px; border-radius: 14px; background: var(--dp-card); border: 1px dashed var(--dp-divider); }
+.ap-favctl { flex: 1; min-width: 0; }
+.ap-favctl .dlg-btn { flex: none; min-height: 42px; width: 100%; }
+.ap-favctl .dlg-btn:disabled { opacity: .45; cursor: default; }
+.ap-favctl .ap-hint { margin: 6px 0 0; }
 .ap-ic { display: grid; place-items: center; height: 40px; padding: 0; border: 0; border-radius: 12px; background: var(--dp-subtle); color: var(--dp-text2); cursor: pointer; }
 .ap-ic.on { background: var(--dp-primary-soft); color: var(--dp-primary); box-shadow: inset 0 0 0 1.5px var(--dp-primary); }
 .ap-chk { display: flex; align-items: center; gap: 12px; min-height: 48px; margin-top: 10px; cursor: pointer; font-size: 14.5px; }

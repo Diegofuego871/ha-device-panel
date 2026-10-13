@@ -40,6 +40,12 @@ const BUILTIN = [
 ];
 export const APP_ICONS = ["web", "home", "camera", "map", "bolt", "calendar", "bar", "wrench", "store", "desktop", "robot", "palette", "script", "devices", "shape", "tools"];
 
+// Favicon einer eigenen App mit externem Link (seit 2.33.0): kleines Bild als Data-URI (base64), vom Server geholt (favicon.py).
+// Nur bekannte Bildarten, damit in den Benutzerdaten nie etwas anderes landet; höchstens FAVICON_MAX Zeichen (etwa 100 KB).
+const FAVICON_MAX = 140000;
+const FAVICON_RE = /^data:image\/(png|x-icon|gif|jpeg|webp|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$/;
+export const isFavicon = (v) => typeof v === "string" && v.length <= FAVICON_MAX && FAVICON_RE.test(v);
+
 const defaults = () => ({ fav: ["timer"], hidden: [], order: {}, custom: [], layout: { desktop: "grid", phone: "grid" }, updated: 0 });
 const ids = (list, max) =>
   Array.isArray(list) ? [...new Set(list.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 64))].slice(0, max) : [];
@@ -72,7 +78,10 @@ export function sanitizeApps(raw) {
       const name = String(c.name ?? "").trim().slice(0, NAME_MAX);
       const id = typeof c.id === "string" && c.id.length > 0 && c.id.length <= 64 ? c.id : null;
       if (!url || !name || !id) return null;
-      return { id, name, icon: APP_ICONS.includes(c.icon) ? c.icon : "web", url, ext };
+      const app = { id, name, icon: APP_ICONS.includes(c.icon) ? c.icon : "web", url, ext };
+      // Das Favicon gibt es nur bei externen Links
+      if (ext && isFavicon(c.favicon)) app.favicon = c.favicon;
+      return app;
     })
     .filter(Boolean)
     .slice(0, MAX_CUSTOM);
@@ -133,7 +142,7 @@ export class AppLauncher {
     const admin = this._admin();
     const t = (k) => this.t(k);
     const builtin = BUILTIN.filter((a) => admin || !a.admin).map((a) => ({ ...a, name: t(`app_${a.id}`), sub: a.path || t(`app_${a.id}_sub`) }));
-    const own = this.data.custom.map((c) => ({ id: c.id, group: "own", icon: c.icon, name: c.name, sub: c.url, url: c.url, ext: c.ext, custom: true }));
+    const own = this.data.custom.map((c) => ({ id: c.id, group: "own", icon: c.icon, name: c.name, sub: c.url, url: c.url, ext: c.ext, favicon: c.favicon, custom: true }));
     return [...builtin, ...own];
   }
 
@@ -405,7 +414,7 @@ export class AppLauncher {
     const html = pins
       .map((a) => {
         const label = escape(a.name);
-        const icon = mdi(a.icon, 22);
+        const icon = this._icon(a, 22);
         return a.ext
           ? `<a class="tmall-btn app-pin" href="${escape(a.url)}" target="_blank" rel="noopener noreferrer" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</a>`
           : `<button type="button" class="tmall-btn app-pin" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</button>`;
@@ -417,6 +426,12 @@ export class AppLauncher {
   }
 
   // --- Fenster ------------------------------------------------------------------
+
+  // Symbol der App: das Favicon (eigene App mit externem Link), sonst das gewählte Symbol
+  _icon(a, size) {
+    const { escape, mdi } = this.h;
+    return a.favicon ? `<img class="ap-fi" src="${escape(a.favicon)}" width="${size}" height="${size}" alt="" draggable="false">` : mdi(a.icon, size);
+  }
 
   // Knopf oder Verweis einer App: externe Links sind <a> (neuer Tab, kein Zugriff auf das Panel), alles andere <button>
   _main(a, cls, inner) {
@@ -434,13 +449,13 @@ export class AppLauncher {
   _tile(a) {
     const { escape, mdi } = this.h;
     const pin = this.data.fav.includes(a.id);
-    return `<div class="ap-tile${pin ? " pin" : ""}">${this._main(a, "ap-main", `<span class="ap-ico">${mdi(a.icon, 22)}</span><span class="ap-nm">${escape(a.name)}</span>`)}
+    return `<div class="ap-tile${pin ? " pin" : ""}">${this._main(a, "ap-main", `<span class="ap-ico">${this._icon(a, 22)}</span><span class="ap-nm">${escape(a.name)}</span>`)}
       ${this._badge(a)}${a.ext ? `<span class="ap-ext" title="${escape(this.t("appsExtMark"))}">${mdi("link", 12)}</span>` : ""}</div>`;
   }
 
   _row(a) {
     const { escape, mdi } = this.h;
-    const inner = `<span class="ap-ico sm">${mdi(a.icon, 20)}</span><span class="ap-t"><b>${escape(a.name)}${this._badge(a)}</b><small>${escape(a.sub)}</small></span>${a.ext ? `<span class="ap-ext in" title="${escape(this.t("appsExtMark"))}">${mdi("link", 14)}</span>` : ""}`;
+    const inner = `<span class="ap-ico sm">${this._icon(a, 20)}</span><span class="ap-t"><b>${escape(a.name)}${this._badge(a)}</b><small>${escape(a.sub)}</small></span>${a.ext ? `<span class="ap-ext in" title="${escape(this.t("appsExtMark"))}">${mdi("link", 14)}</span>` : ""}`;
     return `<div class="ap-row">${this._main(a, "ap-main row", inner)}</div>`;
   }
 
@@ -508,7 +523,7 @@ export class AppLauncher {
       : "";
     return `<div class="ap-erow${hid ? " hid" : ""}" data-id="${escape(a.id)}" data-mark="${escape(this.t("appsPhoneMark"))}">
       <button type="button" class="ap-drag" data-ap-drag data-id="${escape(a.id)}" title="${escape(this.t("appsDragHint"))}" aria-label="${escape(this.t("appsDrag", a.name))}">${mdi("drag", 18)}</button>
-      <span class="ap-ico sm">${mdi(a.icon, 18)}</span><span class="ap-t"><b>${escape(a.name)}${a.ext ? ` <span class="ap-ext in">${mdi("link", 12)}</span>` : ""}</b><small>${escape(a.sub)}</small></span>
+      <span class="ap-ico sm">${this._icon(a, 18)}</span><span class="ap-t"><b>${escape(a.name)}${a.ext ? ` <span class="ap-ext in">${mdi("link", 12)}</span>` : ""}</b><small>${escape(a.sub)}</small></span>
       ${eye}${heart}${own}</div>`;
   }
 
@@ -575,7 +590,10 @@ export class AppLauncher {
 
   openForm(id = null) {
     const c = id ? this.data.custom.find((x) => x.id === id) : null;
-    this.ui.form = c ? { id: c.id, name: c.name, icon: c.icon, ext: c.ext, url: c.url } : { id: null, name: "", icon: "web", ext: false, url: "" };
+    // src: welches Bild die App zeigt, "icon" (gewähltes Symbol) oder "favicon" (nur bei externem Link, nach "Favicon laden")
+    this.ui.form = c
+      ? { id: c.id, name: c.name, icon: c.icon, ext: c.ext, url: c.url, favicon: c.favicon || null, src: c.favicon ? "favicon" : "icon", busy: false, msg: "" }
+      : { id: null, name: "", icon: "web", ext: false, url: "", favicon: null, src: "icon", busy: false, msg: "" };
     const dlg = this.fdlg;
     if (!dlg) return;
     this._renderForm();
@@ -614,15 +632,23 @@ export class AppLauncher {
         <button type="button" class="ap-x show" data-ap="fclose" title="${escape(this.t("close"))}" aria-label="${escape(this.t("close"))}">${mdi("close", 18)}</button></div>
       <div class="ap-body">
         <label class="ap-f"><span>${escape(this.t("appsFName"))}</span><input class="ap-in" data-f="name" maxlength="${NAME_MAX}" value="${escape(f.name)}" autocomplete="off"></label>
-        <div class="ap-f"><span>${escape(this.t("appsFIcon"))}</span><div class="ap-icons">${icons}</div></div>
         <label class="ap-chk"><input type="checkbox" data-f="ext"${f.ext ? " checked" : ""}><span>${escape(this.t("appsFExt"))}<small>${escape(this.t("appsFExtSub"))}</small></span></label>
         <label class="ap-f"><span data-f-label>${escape(tx.label)}</span><input class="ap-in" data-f="url" type="text" inputmode="url" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="${URL_MAX}" placeholder="${escape(tx.ph)}" value="${escape(f.url)}"></label>
         <div class="ap-hint" data-f-hint>${escape(tx.hint)}</div>
+        <div class="ap-f"><span>${escape(this.t("appsFIcon"))}</span>
+          <div class="sub-tabs" role="tablist" aria-label="${escape(this.t("appsFIcon"))}">
+            <button type="button" role="tab" class="sub-tab" data-set="fsrc" data-v="icon">${escape(this.t("appsFSrcIcon"))}</button>
+            <button type="button" role="tab" class="sub-tab" data-set="fsrc" data-v="favicon">${escape(this.t("appsFSrcFav"))}</button></div>
+          <div class="ap-icons" data-f-pane="icon">${icons}</div>
+          <div class="ap-favpane" data-f-pane="favicon" hidden>
+            <div class="ap-favrow"><span class="ap-favbox" data-f-favimg></span>
+              <div class="ap-favctl"><button type="button" class="dlg-btn" data-ap="ffetch" data-f-fetch>${escape(this.t("appsFFetch"))}</button>
+                <div class="ap-hint" data-f-favmsg></div></div></div></div></div>
         <div class="ap-prev"><div class="ap-tile" data-f-prev></div><p>${escape(this.t("appsFPrev"))}</p></div>
         <div class="ap-err" data-f-err role="alert" hidden></div>
       </div>
       <div class="ap-acts"><button type="button" class="dlg-btn" data-ap="fclose">${escape(this.t("settingsCancel"))}</button><button type="button" class="dlg-btn primary" data-ap="fsave">${escape(this.t("settingsSave"))}</button></div>`;
-    this._formPreview();
+    this._formSync();
   }
 
   _formPreview() {
@@ -630,7 +656,7 @@ export class AppLauncher {
     const f = this.ui.form;
     if (!el || !f) return;
     const { escape, mdi } = this.h;
-    el.innerHTML = `<span class="ap-main"><span class="ap-ico">${mdi(f.icon, 22)}</span><span class="ap-nm">${escape(f.name.trim() || this.t("appsFName"))}</span></span>${f.ext ? `<span class="ap-ext">${mdi("link", 12)}</span>` : ""}`;
+    el.innerHTML = `<span class="ap-main"><span class="ap-ico">${this._icon({ icon: f.icon, favicon: f.src === "favicon" ? f.favicon : null }, 22)}</span><span class="ap-nm">${escape(f.name.trim() || this.t("appsFName"))}</span></span>${f.ext ? `<span class="ap-ext">${mdi("link", 12)}</span>` : ""}`;
   }
 
   // Beschriftung, Hinweis und Vorschau nachführen, ohne das Fenster neu zu bauen (Fokus und Tastatur bleiben)
@@ -646,7 +672,52 @@ export class AppLauncher {
       b.classList.toggle("on", b.dataset.icon === f.icon);
       b.setAttribute("aria-pressed", String(b.dataset.icon === f.icon));
     });
+    // Das Favicon gibt es nur bei einem externen Link; sonst zurück zum Symbol
+    if (!f.ext && f.src === "favicon") f.src = "icon";
+    const url = f.ext ? checkTarget(f.url, true) : null;
+    dlg.querySelectorAll('[data-set="fsrc"]').forEach((b) => {
+      const on = b.dataset.v === f.src;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-selected", String(on));
+      if (b.dataset.v === "favicon") b.disabled = !f.ext;
+    });
+    dlg.querySelector('[data-f-pane="icon"]').hidden = f.src !== "icon";
+    dlg.querySelector('[data-f-pane="favicon"]').hidden = f.src !== "favicon";
+    const { escape } = this.h;
+    dlg.querySelector("[data-f-favimg]").innerHTML = f.favicon ? `<img class="ap-fi" src="${escape(f.favicon)}" width="32" height="32" alt="" draggable="false">` : "";
+    const btn = dlg.querySelector("[data-f-fetch]");
+    btn.disabled = f.busy || !url;
+    btn.textContent = this.t(f.busy ? "appsFFetching" : f.favicon ? "appsFFetchAgain" : "appsFFetch");
+    // Hinweis: Fehler oder Erfolg, sonst warum der Knopf gesperrt ist bzw. was er tut
+    dlg.querySelector("[data-f-favmsg]").textContent = f.msg || this.t(url ? "appsFFavHint" : "appsFFavNeedUrl");
     this._formPreview();
+  }
+
+  // Favicon über Home Assistant holen (WS device_panel/fetch_favicon); Fehlercodes siehe favicon.py
+  async fetchFavicon() {
+    const f = this.ui.form;
+    const url = f && f.ext ? checkTarget(f.url, true) : null;
+    if (!f || f.busy || !url) return;
+    f.busy = true;
+    f.msg = "";
+    this._formSync();
+    try {
+      const res = await this.host._callWithTimeout({ type: "device_panel/fetch_favicon", url }, 20000);
+      if (this.ui.form !== f) return;
+      if (!isFavicon(res?.icon)) throw { code: "not_found" };
+      f.favicon = res.icon;
+      f.src = "favicon";
+      f.msg = this.t("appsFFavDone");
+    } catch (err) {
+      if (this.ui.form !== f) return;
+      const keys = { invalid_url: "appsFErrFavUrl", not_found: "appsFErrFavNone", too_large: "appsFErrFavBig", unreachable: "appsFErrFavDown" };
+      f.msg = this.t(keys[err?.code] || "appsFErrFavFail");
+    } finally {
+      if (this.ui.form === f) {
+        f.busy = false;
+        this._formSync();
+      }
+    }
   }
 
   _formError(text) {
@@ -663,10 +734,13 @@ export class AppLauncher {
     if (!name) return this._formError(this.t("appsFErrName"));
     const url = checkTarget(f.url, f.ext);
     if (!url) return this._formError(this.t(f.ext ? "appsFErrExt" : "appsFErrPage"));
-    if (f.id) this.data.custom = this.data.custom.map((c) => (c.id === f.id ? { id: c.id, name, icon: f.icon, url, ext: f.ext } : c));
+    const useFav = f.ext && f.src === "favicon";
+    if (useFav && !isFavicon(f.favicon)) return this._formError(this.t("appsFErrFavNeed"));
+    const app = { name, icon: f.icon, url, ext: f.ext, ...(useFav ? { favicon: f.favicon } : {}) };
+    if (f.id) this.data.custom = this.data.custom.map((c) => (c.id === f.id ? { id: c.id, ...app } : c));
     else {
       const id = `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
-      this.data.custom = [...this.data.custom, { id, name, icon: f.icon, url, ext: f.ext }];
+      this.data.custom = [...this.data.custom, { id, ...app }];
     }
     this.closeForm();
     this._changed();
@@ -696,12 +770,23 @@ export class AppLauncher {
         if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this.closeForm();
         return;
       }
+      const tab = ev.target.closest('[data-set="fsrc"]');
+      if (tab) {
+        if (!tab.disabled && this.ui.form) {
+          this.ui.form.src = tab.dataset.v;
+          this._formError("");
+          this._formSync();
+        }
+        return;
+      }
       const b = ev.target.closest("[data-ap]");
       if (!b) return;
-      if (b.dataset.ap === "fclose") this.closeForm();
+      if (b.dataset.ap === "ffetch") this.fetchFavicon();
+      else if (b.dataset.ap === "fclose") this.closeForm();
       else if (b.dataset.ap === "fsave") this.saveForm();
       else if (b.dataset.ap === "ficon") {
         this.ui.form.icon = b.dataset.icon;
+        this.ui.form.src = "icon";
         this._formSync();
       }
     });
@@ -713,7 +798,7 @@ export class AppLauncher {
       else if (k === "url") f.url = ev.target.value;
       else if (k === "ext") f.ext = ev.target.checked;
       this._formError("");
-      if (k === "ext") this._formSync();
+      if (k === "ext" || k === "url") this._formSync();
       else if (k === "name") this._formPreview();
     });
     fdlg.addEventListener("keydown", (ev) => {

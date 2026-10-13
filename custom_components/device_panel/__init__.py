@@ -29,6 +29,7 @@ from .updates import STORE_KEY as UPDATES_STORE_KEY, UpdateNotifier
 from .newdevice import NewDeviceNotifier
 from .battery_history import RANGES as BATTERY_RANGES
 from .battery_history import async_battery_history, battery_entity
+from .favicon import FaviconError, async_fetch_favicon
 from .outage import STORE_KEY as NOTIFY_STORE_KEY
 from .outage import OutageNotifier
 from .signal_history import RANGES as SIGNAL_RANGES
@@ -1026,6 +1027,19 @@ def _ws_set_log(hass: HomeAssistant, connection: websocket_api.ActiveConnection,
     connection.send_result(msg["id"], activity.snapshot(hass))
 
 
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/fetch_favicon", vol.Required("url"): str})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_fetch_favicon(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Favicon einer Seite für eine eigene App im Launcher holen (seit 2.33.0): Data-URI oder Fehlercode (siehe favicon.py)."""
+    try:
+        icon = await async_fetch_favicon(hass, msg["url"])
+    except FaviconError as err:
+        connection.send_error(msg["id"], err.code, err.code)
+        return
+    connection.send_result(msg["id"], {"icon": icon})
+
+
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/clear_log"})
 @websocket_api.require_admin
 @callback
@@ -1045,6 +1059,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_device)
     websocket_api.async_register_command(hass, _ws_availability)
     websocket_api.async_register_command(hass, _ws_battery_history)
+    websocket_api.async_register_command(hass, _ws_fetch_favicon)
     websocket_api.async_register_command(hass, _ws_version)
     websocket_api.async_register_command(hass, _ws_release_notes)
     websocket_api.async_register_command(hass, _ws_set_panel)
