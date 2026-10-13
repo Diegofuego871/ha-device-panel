@@ -424,14 +424,6 @@ export class AppLauncher {
       : `<button type="button" class="${cls}" data-ap="open" data-id="${escape(a.id)}">${inner}</button>`;
   }
 
-  _heart(a, large = false) {
-    const { escape, mdi } = this.h;
-    const fav = this.data.fav.includes(a.id);
-    const full = !fav && this.favs().length >= MAX_FAV;
-    const label = escape(fav ? this.t("appsUnfav", a.name) : full ? this.t("appsFavMax", MAX_FAV) : this.t("appsFav", a.name));
-    return `<button type="button" class="ap-heart${fav ? " on" : ""}${full ? " dis" : ""}" data-ap="fav" data-id="${escape(a.id)}" aria-pressed="${fav}" ${full ? 'aria-disabled="true" ' : ""}title="${label}" aria-label="${label}">${mdi(fav ? "heart" : "heartOutline", large ? 20 : 16)}</button>`;
-  }
-
   _badge(a) {
     // "Debug": nur wenn das Protokoll geladen ist und der Debug-Modus läuft
     return a.id === "log" && this.host._log?.debug ? `<span class="ap-badge">${this.h.escape(this.t("appsDebug"))}</span>` : "";
@@ -441,13 +433,13 @@ export class AppLauncher {
     const { escape, mdi } = this.h;
     const pin = this.data.fav.includes(a.id);
     return `<div class="ap-tile${pin ? " pin" : ""}">${this._main(a, "ap-main", `<span class="ap-ico">${mdi(a.icon, 22)}</span><span class="ap-nm">${escape(a.name)}</span>`)}
-      ${this._heart(a)}${this._badge(a)}${a.ext ? `<span class="ap-ext" title="${escape(this.t("appsExtMark"))}">${mdi("link", 12)}</span>` : ""}</div>`;
+      ${this._badge(a)}${a.ext ? `<span class="ap-ext" title="${escape(this.t("appsExtMark"))}">${mdi("link", 12)}</span>` : ""}</div>`;
   }
 
   _row(a) {
     const { escape, mdi } = this.h;
     const inner = `<span class="ap-ico sm">${mdi(a.icon, 20)}</span><span class="ap-t"><b>${escape(a.name)}${this._badge(a)}</b><small>${escape(a.sub)}</small></span>${a.ext ? `<span class="ap-ext in" title="${escape(this.t("appsExtMark"))}">${mdi("link", 14)}</span>` : ""}`;
-    return `<div class="ap-row">${this._main(a, "ap-main row", inner)}${this._heart(a, true)}</div>`;
+    return `<div class="ap-row">${this._main(a, "ap-main row", inner)}</div>`;
   }
 
   _addEntry(list) {
@@ -472,17 +464,10 @@ export class AppLauncher {
     let any = false;
     const favs = this.favs();
     if (!q) {
-      out += `<div class="ap-h">${escape(this.t("appsGrpFav"))} ♥</div>`;
+      out += `<div class="ap-h">${escape(this.t("appsGrpFav"))}<span class="ap-hh" aria-hidden="true">${mdi("heart", 13)}</span></div>`;
       if (!favs.length) out += `<p class="ap-note">${escape(this.t("appsNoFav", MAX_FAV))}</p>`;
-      else {
-        const phoneNote = favs.length > 1 ? `<p class="ap-note">${mdi("phone", 12)} ${escape(this.t(this.narrow() ? "appsPhoneNote" : "appsDeskNote"))}</p>` : "";
-        if (list) {
-          out += `<div class="ap-rows">${this._row(favs[0])}${favs.length > 1 ? `<div class="ap-hline"><span>${mdi("phone", 13)} ${escape(this.t("appsPhoneMark"))}</span></div>` : ""}${favs.slice(1).map((a) => this._row(a)).join("")}</div>`;
-        } else {
-          out += `<div class="ap-fav${favs.length > 1 ? "" : " one"}">${this._tile(favs[0])}${favs.length > 1 ? `<div class="ap-vl"><span>${mdi("phone", 12)}</span></div><div class="ap-rest">${favs.slice(1).map((a) => this._tile(a)).join("")}</div>` : ""}</div>`;
-        }
-        out += phoneNote;
-      }
+      // Kein Strich und kein Hinweis zur Kopfzeile am Handy: das zeigt nur der Bearbeiten-Modus
+      else out += list ? `<div class="ap-rows">${favs.map((a) => this._row(a)).join("")}</div>` : `<div class="ap-grid">${favs.map((a) => this._tile(a)).join("")}</div>`;
       any = true;
     }
     for (const g of GROUPS) {
@@ -533,7 +518,7 @@ export class AppLauncher {
     let out = `<p class="ap-note first">${escape(this.t("appsEditNote"))}</p>
       <div class="ap-view"><span>${escape(this.t("appsView"))}<small>${escape(this.t(this.narrow() ? "appsViewPhone" : "appsViewDesk"))}</small></span>
         <span class="sub-tabs" role="tablist" aria-label="${escape(this.t("appsView"))}">${seg("grid", this.t("appsViewGrid"))}${seg("list", this.t("appsViewList"))}</span></div>
-      <div class="ap-h">${escape(this.t("appsGrpFav"))} ♥</div>`;
+      <div class="ap-h">${escape(this.t("appsGrpFav"))}<span class="ap-hh" aria-hidden="true">${mdi("heart", 13)}</span></div>`;
     out += favs.length ? `<div class="ap-box fav" data-ap-box="fav">${favs.map((a) => this._editRow(a)).join("")}</div>` : `<p class="ap-note">${escape(this.t("appsNoFav", MAX_FAV))}</p>`;
     for (const g of GROUPS) {
       const items = this.group(g, true);
@@ -763,11 +748,13 @@ export class AppLauncher {
         return this.toggleHidden(id);
       case "edit":
         this.ui.edit = true;
+        this.ui.snack = null;
         this.render();
         dlg.scrollTop = 0;
         return;
       case "done":
         this.ui.edit = false;
+        this.ui.snack = null;
         this.render();
         dlg.scrollTop = 0;
         return;

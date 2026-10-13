@@ -1690,6 +1690,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-search { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--dp-divider); border-radius: 999px; background: var(--dp-input); color: var(--dp-text2); }
 .ap-q { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--dp-text); font: inherit; font-size: 14px; }
 .ap-q::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.ap-hh { display: inline-flex; margin-left: 2px; color: var(--dp-error); }
 .ap-h { display: flex; align-items: center; gap: 6px; margin: 14px 4px 6px; color: var(--dp-text2); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; }
 .ap-more { margin-left: auto; padding: 4px 2px; border: 0; background: none; color: var(--dp-primary); font: inherit; font-size: 12.5px; letter-spacing: 0; text-transform: none; cursor: pointer; }
 .ap-note { margin: 6px 4px 0; color: var(--dp-text2); font-size: 12px; line-height: 1.4; }
@@ -1701,40 +1702,27 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-main { display: flex; flex: 1; min-width: 0; align-items: center; border: 0; background: none; color: inherit; font: inherit; text-decoration: none; cursor: pointer; border-radius: inherit; }
 .ap-tile > .ap-main { flex-direction: column; justify-content: center; gap: 6px; padding: 12px 4px 8px; font-size: 12px; line-height: 1.2; text-align: center; }
 .ap-tile > .ap-main:hover, .ap-row > .ap-main:hover { background: var(--dp-hover); }
-.ap-main:focus-visible, .ap-heart:focus-visible, .ap-a:focus-visible, .ap-drag:focus-visible, .ap-ic:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
+.ap-main:focus-visible, .ap-a:focus-visible, .ap-drag:focus-visible, .ap-ic:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
 .ap-nm { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; max-width: 100%; overflow: hidden; overflow-wrap: break-word; }
-.ap-rest .ap-nm { font-size: 11px; letter-spacing: -.01em; }
-.ap-rest > .ap-tile > .ap-main { padding-left: 2px; padding-right: 2px; }
 .ap-ico { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--dp-primary-soft); color: var(--dp-primary); }
 .ap-ico.sm { width: 34px; height: 34px; }
-.ap-heart { position: absolute; top: 0; right: 0; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--dp-text2); cursor: pointer; }
-.ap-heart.on { color: var(--dp-error); }
-.ap-heart.dis, .ap-a.dis { opacity: .35; cursor: default; }
+.ap-a.dis { opacity: .35; cursor: default; }
 .ap-badge { position: absolute; top: 7px; left: 7px; padding: 1px 6px; border-radius: 99px; background: var(--dp-warning-soft); color: var(--dp-warning); font-size: 10px; font-weight: 600; }
 .ap-t b .ap-badge { position: static; margin-left: 6px; }
 .ap-ext { position: absolute; right: 8px; bottom: 6px; display: inline-flex; color: var(--dp-text2); }
 .ap-ext.in { position: static; margin-right: 4px; }
 .ap-add { flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 12px 4px 8px; font-size: 12px; line-height: 1.2; text-align: center; background: none; border: 1.5px dashed color-mix(in srgb, var(--dp-primary) 55%, transparent); color: var(--dp-primary); cursor: pointer; font: inherit; }
 .ap-add .ap-ico { background: none; }
-.ap-fav { display: grid; grid-template-columns: minmax(0, 1fr) 16px minmax(0, 4fr); align-items: stretch; }
-.ap-fav.one { grid-template-columns: minmax(0, 1fr); width: 25%; }
 
-.ap-rest { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.ap-vl { position: relative; margin: 2px 7px; border-left: 1.5px dashed color-mix(in srgb, var(--dp-text2) 55%, transparent); }
-.ap-vl span { position: absolute; top: -2px; left: -9px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; background: var(--dp-card); color: var(--dp-text2); }
 .ap-rows { display: block; }
 .ap-row { position: relative; display: flex; align-items: center; min-height: 52px; border-radius: 0; }
-.ap-row + .ap-row, .ap-row + .ap-hline, .ap-hline + .ap-row { border-top: 1px solid var(--dp-divider); }
+.ap-row + .ap-row { border-top: 1px solid var(--dp-divider); }
 .ap-row > .ap-main.row { border-radius: 0; gap: 12px; padding: 0 6px; min-height: 52px; text-align: left; }
-.ap-row .ap-heart { position: static; flex: none; width: 44px; height: 44px; }
 .ap-t { flex: 1; min-width: 0; font-size: 14.5px; }
 .ap-t b { display: block; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ap-t small { display: block; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dp-text2); font-size: 12px; }
 .ap-add-row { width: 100%; padding: 0 6px; gap: 12px; border: 0; background: none; color: var(--dp-primary); font: inherit; text-align: left; cursor: pointer; }
 .ap-add-row .ap-t b { color: var(--dp-primary); }
-.ap-hline { display: flex; align-items: center; gap: 8px; margin: 2px 6px; color: var(--dp-text2); font-size: 11.5px; }
-.ap-hline::before, .ap-hline::after { content: ""; flex: 1; border-top: 1.5px dashed color-mix(in srgb, var(--dp-text2) 55%, transparent); }
-.ap-hline span { display: inline-flex; align-items: center; gap: 5px; }
 /* Bearbeiten-Modus */
 .ap-view { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 14px; }
 .ap-view small { display: block; color: var(--dp-text2); font-size: 11.5px; }
@@ -1789,9 +1777,6 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
   dialog.apps-dlg::backdrop { background: rgba(0,0,0,0.5); }
   .ap-x { display: grid; }
   .ap-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .ap-fav { grid-template-columns: minmax(0, 1fr) 16px minmax(0, 2fr); }
-  .ap-fav.one { width: calc(100% / 3); }
-  .ap-rest { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ap-view .sub-tabs { width: 170px; }
   .ap-ic { height: 44px; }
   .ap-a { width: 38px; height: 44px; }
