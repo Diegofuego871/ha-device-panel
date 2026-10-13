@@ -14,6 +14,7 @@ Timer assistant: "Run now" is a proper button.
 ### Changed
 
 - Timer assistant: "Run now" is no longer a small text link but a button with an outline, 44 px high and with larger text, so it is easy to hit on a touch screen. The message ("Done.") stands next to it.
+- Window with all timers: on the desktop it is now a pop-up like the log (centred, rounded, with the page dimmed behind it) instead of filling the whole page. On the phone (up to 700 px) it stays full screen. The note at the top now also mentions the plus button.
 
 ### Fixed
 

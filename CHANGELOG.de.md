@@ -14,6 +14,7 @@ Timer-Assistent: "Jetzt ausführen" ist ein richtiger Knopf.
 ### Geändert
 
 - Timer-Assistent: "Jetzt ausführen" ist kein kleiner Textlink mehr, sondern ein Knopf mit Rahmen, 44 px hoch und mit grösserer Schrift, damit er sich auf dem Touch-Bildschirm gut treffen lässt. Die Rückmeldung ("Ausgeführt.") steht daneben.
+- Fenster mit allen Timern: Auf dem Desktop ist es jetzt ein Popup wie das Protokoll (mittig, abgerundet, die Seite dahinter abgedunkelt) statt die ganze Seite zu füllen. Auf dem Handy (bis 700 px) bleibt es vollflächig. Der Hinweis oben nennt jetzt auch den Plus-Knopf.
 
 ### Behoben
 

@@ -1214,14 +1214,18 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 }
 
 /* Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1): Fenster gross auf dem Desktop, auf dem Handy vollflächig */
-/* Fenster "Alle Timer" (seit 2.22.0): immer Vollbild, Inhalt in lesbarer Breite */
-dialog.tmall-dlg { padding: 0; border: none; border-radius: 0; background: var(--dp-card); color: var(--dp-text); overflow: hidden; width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; overscroll-behavior: contain; }
+/* Fenster "Alle Timer": Popup wie das Protokoll auf dem Desktop (seit 2.28.2), auf dem Handy (bis 700 px) vollflächig */
+dialog.tmall-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
+  width: min(860px, calc(100vw - 48px)); height: min(780px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
 dialog.tmall-dlg[open] { display: flex; flex-direction: column; }
 dialog.tmall-dlg::backdrop { background: rgba(0,0,0,0.5); }
-.tmall-dlg .dlg-head { flex: none; position: static; padding-left: max(22px, calc((100% - 860px) / 2)); padding-right: max(16px, calc((100% - 860px) / 2)); }
+.tmall-dlg .dlg-head { flex: none; position: static; }
 .tmall-dlg .dlg-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 22px 24px; }
-.tm-all-wrap { max-width: 860px; margin: 0 auto; }
-@media (max-width: 700px) { .tmall-dlg .dlg-body { padding: 0 16px 20px; } }
+.tm-all-wrap { margin: 0 auto; }
+@media (max-width: 700px) {
+  dialog.tmall-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
+  .tmall-dlg .dlg-body { padding: 0 16px 20px; }
+}
 dialog.log-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
   width: min(1040px, calc(100vw - 48px)); height: min(780px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
 dialog.log-dlg[open] { display: flex; flex-direction: column; }
@@ -1297,15 +1301,15 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
    "Transparenz reduzieren" bleiben die Blätter deckend wie bisher. */
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   @media not (prefers-reduced-transparency: reduce) {
-    dialog.device, dialog.settings, dialog.log-dlg { background: color-mix(in srgb, var(--dp-card) 64%, transparent);
+    dialog.device, dialog.settings, dialog.log-dlg, dialog.tmall-dlg { background: color-mix(in srgb, var(--dp-card) 64%, transparent);
       -webkit-backdrop-filter: blur(30px) saturate(190%); backdrop-filter: blur(30px) saturate(190%);
       box-shadow: inset 0 1.5px 0 color-mix(in srgb, var(--dp-text) 30%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--dp-text) 8%, transparent), 0 24px 70px rgba(0,0,0,0.55); }
-    dialog.device::backdrop, dialog.settings::backdrop, dialog.log-dlg::backdrop { background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-    dialog.device .dlg-head, dialog.settings .dlg-head, dialog.log-dlg .dlg-head { background: color-mix(in srgb, var(--dp-card) 60%, transparent);
+    dialog.device::backdrop, dialog.settings::backdrop, dialog.log-dlg::backdrop, dialog.tmall-dlg::backdrop { background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+    dialog.device .dlg-head, dialog.settings .dlg-head, dialog.log-dlg .dlg-head, dialog.tmall-dlg .dlg-head { background: color-mix(in srgb, var(--dp-card) 60%, transparent);
       -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
     dialog.device .dev-tabs { background: color-mix(in srgb, var(--dp-card) 60%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
     dialog.device .dev-tabs::after { display: none; }
-    dialog.device .dlg-actions, dialog.settings .dlg-actions, dialog.log-dlg .dlg-actions { border-top: none; padding-top: 24px;
+    dialog.device .dlg-actions, dialog.settings .dlg-actions, dialog.log-dlg .dlg-actions, dialog.tmall-dlg .dlg-actions { border-top: none; padding-top: 24px;
       background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--dp-card) 85%, transparent) 42%);
       -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
     dialog.device .dlg-btn, dialog.settings .dlg-btn { background: color-mix(in srgb, var(--dp-text) 8%, transparent); border-color: color-mix(in srgb, var(--dp-text) 12%, transparent); }
@@ -1317,11 +1321,11 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
 /* Helles Design am Desktop (seit 2.20.0, ab 601 px; das Handy-Blatt bleibt wie es war): Fenster, Kopf, Reiter und Fuss deckend weiss statt durchscheinend (die Unschärfe über dem
    abgedunkelten Hintergrund machte das ganze Blatt grau); Kacheln nur ganz leicht abgesetzt. Grau nur beim Darüberfahren. */
 @media (min-width: 601px) {
-:host([light]) dialog.device, :host([light]) dialog.settings, :host([light]) dialog.log-dlg { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none;
+:host([light]) dialog.device, :host([light]) dialog.settings, :host([light]) dialog.log-dlg, :host([light]) dialog.tmall-dlg { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none;
   box-shadow: 0 24px 70px rgba(0,0,0,0.35), 0 0 0 1px color-mix(in srgb, var(--dp-text) 8%, transparent); }
-:host([light]) dialog.device::backdrop, :host([light]) dialog.settings::backdrop, :host([light]) dialog.log-dlg::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0,0,0,0.4); }
-:host([light]) dialog.device .dlg-head, :host([light]) dialog.settings .dlg-head, :host([light]) dialog.log-dlg .dlg-head, :host([light]) dialog.device .dev-tabs { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; }
-:host([light]) dialog.device .dlg-actions, :host([light]) dialog.settings .dlg-actions, :host([light]) dialog.log-dlg .dlg-actions { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; border-top: 1px solid var(--dp-divider); padding-top: 14px; }
+:host([light]) dialog.device::backdrop, :host([light]) dialog.settings::backdrop, :host([light]) dialog.log-dlg::backdrop, :host([light]) dialog.tmall-dlg::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0,0,0,0.4); }
+:host([light]) dialog.device .dlg-head, :host([light]) dialog.settings .dlg-head, :host([light]) dialog.log-dlg .dlg-head, :host([light]) dialog.tmall-dlg .dlg-head, :host([light]) dialog.device .dev-tabs { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+:host([light]) dialog.device .dlg-actions, :host([light]) dialog.settings .dlg-actions, :host([light]) dialog.log-dlg .dlg-actions, :host([light]) dialog.tmall-dlg .dlg-actions { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; border-top: 1px solid var(--dp-divider); padding-top: 14px; }
 :host([light]) dialog.device .tile, :host([light]) dialog.device .st-tile, :host([light]) dialog.settings .nf-note, :host([light]) dialog.settings .pv { background: color-mix(in srgb, var(--dp-text) 3.5%, var(--dp-card)); border-color: color-mix(in srgb, var(--dp-text) 10%, var(--dp-card)); box-shadow: none; }
 :host([light]) dialog.device .dev-set { background: color-mix(in srgb, var(--dp-text) 2.5%, var(--dp-card)); }
 :host([light]) dialog.device .dlg-btn, :host([light]) dialog.settings .dlg-btn { background: var(--dp-card); border-color: color-mix(in srgb, var(--dp-text) 18%, var(--dp-card)); }

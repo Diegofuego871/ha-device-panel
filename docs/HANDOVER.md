@@ -53,7 +53,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   tz, after)` liefert dann das nächste Eintreffen der Uhrzeit (wie täglich), `first_due`/`next_runs` übergeben "jetzt"; Prüfung
   "Vergangenheit" nur mit Datum; Einschalten plant neu. Panel: Schalter `data-tm="date-on"` ("Bestimmtes Datum", aus; an setzt morgen ein und zeigt das Datumsfeld), `whenText` "Einmalig, nächstes Mal um …". Der Schalter geht danach immer aus (wie bei jedem einmaligen Timer).
 
-- Fenster "Alle Timer" (2.23.0, Wunsch des Nutzers): Stoppuhr (Symbol `timer`, wie der Reiter Timer; die Glocke gehört Magic Push) `.tmall-btn` in der Kopfzeile, Dialog `dialog.tmall-dlg` (immer Vollbild,
+- Fenster "Alle Timer" (2.23.0, Wunsch des Nutzers): Stoppuhr (Symbol `timer`, wie der Reiter Timer; die Glocke gehört Magic Push) `.tmall-btn` in der Kopfzeile, Dialog `dialog.tmall-dlg` (seit 2.28.2 Popup wie das Protokoll auf dem Desktop, bis 700 px Vollbild; vorher immer Vollbild,
   Inhalt max. 860 px). Eigener Zustand `this._tmAll` (`dlg: true`, `query`), nutzt `TimerUi.overviewHtml/overviewListHtml/overviewCardHtml`
   mit Attribut `data-tma` statt `data-set` (`TimerUi.a(all, action)`); nur Bearbeiten (Assistent darüber, `ui.open(device, true)`),
   Ein/Aus, Neu starten, Filter, Suche, Falten, "Gerät öffnen"; kein Neuanlegen, Löschen, Ausführen. Laden `_loadTmAll`,
