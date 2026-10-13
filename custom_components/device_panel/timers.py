@@ -740,6 +740,13 @@ class TimerManager:
             "next_runs": next_runs(timer, time.time(), self.tz),
         }
 
+    async def async_try(self, entity_id: str, action: str) -> tuple[bool, str | None]:
+        """Jetzt ausführen im Assistenten (seit 2.28.0): schaltet einmal, ohne Timer, Zurückschalten, Protokoll und Meldung."""
+        domain = entity_id.split(".", 1)[0]
+        if domain not in SERVICES or action not in SERVICES[domain]:
+            raise vol.Invalid("action not possible for this entity")
+        return await self._async_call({"entity_id": entity_id, "action": action, "name": entity_id}, action)
+
     async def async_test(self, raw: dict[str, Any]) -> bool:
         """Test: die echte Meldung (ohne zu schalten) an den gewählten Empfänger."""
         timer = self.clean({**raw, "enabled": True}, existing=None)

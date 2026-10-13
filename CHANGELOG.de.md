@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.28.0] - 2026-10-13
+
+Testknopf im Timer-Assistenten.
+
+### Hinzugefügt
+
+- Timer-Assistent, Schritt "Was schalten": Ein Knopf "Jetzt ausführen" unter der Ergebniszeile schaltet die gewählte Entität mit der gewählten Aktion sofort, als Test. Es wird nichts gespeichert, es gibt keine Rückschaltung, keine Push-Meldung und keinen Protokolleintrag. Eine kurze Meldung sagt, ob es geklappt hat oder warum nicht (zum Beispiel "Das Gerät ist nicht erreichbar").
+
+### Geändert
+
+- Symbol in der Seitenleiste: ein Haus mit Balken ("home-analytics") statt des Symbols mit zwei Geräten, das wie Handys aussah. Home Assistant zeigt das alte Symbol unter Umständen, bis die Seite neu geladen wird.
+
 ## [2.27.1] - 2026-10-13
 
 Einstellungen: Der Schliessen-Knopf steht rechts.
@@ -2989,6 +3001,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.0
 [2.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.1
 [2.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.0
 [2.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.26.0

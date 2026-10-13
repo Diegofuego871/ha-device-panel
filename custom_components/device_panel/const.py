@@ -7,13 +7,13 @@ DOMAIN = "device_panel"
 # Panel: eingebautes iframe-Panel (siehe docs/LEARNINGS.md).
 PANEL_URL_PATH = "device-panel"
 PANEL_TITLE = "Device Panel"
-PANEL_ICON = "mdi:devices"
+PANEL_ICON = "mdi:home-analytics"
 PANEL_DIR = "panel"
 PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "174"
+PANEL_VERSION = "175"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in

@@ -1143,6 +1143,10 @@
           return { title: `⏱️ Timer: ${name}`, message: r.action === "toggle" ? (de ? `${e.name} wurde umgeschaltet · ${clock}` : `${e.name} was toggled · ${clock}`) : (de ? `${e.name} ist jetzt ${word} · ${clock}` : `${e.name} is now ${word} · ${clock}`), name,
             target: r.target || window.__opts.notify_service, next_runs: runsOf(r, Date.now() / 1000) };
         }
+        if (msg.type.endsWith("timer_try")) {
+          (T.tries ||= []).push({ entity_id: msg.entity_id, action: msg.action });
+          return window.__timerTryFail ? { ok: false, reason: window.__timerTryFail } : { ok: true, reason: null };
+        }
         if (msg.type.endsWith("timer_test")) {
           check({ ...msg.timer, enabled: true });
           T.tests.push(msg.timer);

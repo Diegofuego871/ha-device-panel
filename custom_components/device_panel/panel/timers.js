@@ -1094,7 +1094,28 @@ export class TimerUi {
     const d = this.wiz.draft;
     const e = this.entity(d.entity_id);
     if (!e) return "";
-    return `<p class="mg-note tm-result">${this.esc(this.t("tmResult", this.sentenceOf({ entity_id: d.entity_id, action: d.action, back_s: d.back_s }, e.name)))}</p>`;
+    const w = this.wiz;
+    const row = w.tried?.busy
+      ? `<span class="opt-short">${this.esc(this.t("tmTryBusy"))}</span>`
+      : `<button type="button" class="linkbtn" data-tm="try">${this.esc(this.t("tmTryBtn"))}</button>${w.tried?.text ? `<span class="${w.tried.failed ? "opt-error" : "opt-short"}" role="status">${this.esc(w.tried.text)}</span>` : ""}`;
+    return `<p class="mg-note tm-result">${this.esc(this.t("tmResult", this.sentenceOf({ entity_id: d.entity_id, action: d.action, back_s: d.back_s }, e.name)))}</p>
+      <div class="mg-testrow">${row}</div><p class="mg-hint">${this.esc(this.t("tmTryNote"))}</p>`;
+  }
+
+  // Testknopf: schaltet die gewählte Entität jetzt, ohne Timer und ohne Zurückschalten
+  async tryNow() {
+    const w = this.wiz;
+    if (!w || w.tried?.busy) return;
+    const d = w.draft;
+    w.tried = { busy: true };
+    this.paintZones(["result"]);
+    try {
+      const r = await this.call({ type: "device_panel/timer_try", entity_id: d.entity_id, action: d.action });
+      w.tried = r.ok ? { text: this.t("tmTryDone") } : { text: this.t("tmTryFail", this.t(r.reason === "unavailable" ? "tmTryUnavailable" : "tmTryError")), failed: true };
+    } catch (err) {
+      w.tried = { text: this.t("tmTryFail", this.h.errText(err)), failed: true };
+    }
+    if (this.wiz === w) this.paintZones(["result"]);
   }
 
   // Schritt 2: Wann
@@ -1322,6 +1343,7 @@ export class TimerUi {
         const e = this.entity(id);
         if (!e) break;
         w.draft.entity_id = id;
+        w.tried = null;
         if (!e.actions.includes(w.draft.action)) w.draft.action = e.actions[0];
         if (!opposite(w.draft.action)) w.draft.back_s = 0;
         this.paint();
@@ -1329,6 +1351,7 @@ export class TimerUi {
       }
       case "action":
         w.draft.action = el.dataset.v;
+        w.tried = null;
         if (!opposite(w.draft.action)) {
           w.draft.back_s = 0;
           w.draft.backOwn = { text: "", unit: 60 };
@@ -1390,6 +1413,9 @@ export class TimerUi {
         break;
       case "test":
         this.sendTest();
+        break;
+      case "try":
+        this.tryNow();
         break;
       default:
     }

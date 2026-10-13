@@ -604,3 +604,20 @@ async def test_switchable_devices_lists_only_switchable(hass: HomeAssistant, set
     ent.async_get_or_create("sensor", "t", "s1", device_id=dev_s.id)
     out = timers.switchable_devices(hass)
     assert [(d["name"], d["entities"]) for d in out] == [("Alpha Lampe", 2), ("Zeta Steckdose", 1)]
+
+
+async def test_try_switches_once_without_timer_or_log(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Testknopf (2.28.0): schaltet sofort, speichert nichts, plant kein Zurückschalten; ungültige Aktion und fehlende Entität werden abgelehnt."""
+    manager = hass.data[DATA_TIMERS]
+    calls = async_mock_service(hass, "switch", "turn_off")
+    hass.states.async_set("switch.plug", "on")
+    assert await manager.async_try("switch.plug", "off") == (True, None)
+    assert len(calls) == 1 and calls[0].data["entity_id"] == "switch.plug"
+    assert manager.timers() == []
+    assert await manager.async_try("switch.gone", "off") == (False, "missing")
+    hass.states.async_set("switch.plug", "unavailable")
+    assert await manager.async_try("switch.plug", "off") == (False, "unavailable")
+    with pytest.raises(vol.Invalid):
+        await manager.async_try("switch.plug", "open")
+    with pytest.raises(vol.Invalid):
+        await manager.async_try("sensor.temp", "off")

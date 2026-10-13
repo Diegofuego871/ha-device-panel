@@ -183,4 +183,21 @@ async def ws_timer_test(hass: HomeAssistant, connection: websocket_api.ActiveCon
     connection.send_result(msg["id"], {"sent": sent})
 
 
-COMMANDS = (ws_timer_devices, ws_timer_get, ws_timer_list, ws_timer_save, ws_timer_delete, ws_timer_enable, ws_timer_run, ws_timer_preview, ws_timer_test)
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/timer_try", vol.Required("entity_id"): str, vol.Required("action"): str})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_timer_try(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Jetzt ausführen aus dem Assistenten: die gewählte Entität und Aktion sofort schalten, ohne Rückschaltung."""
+    manager = _manager(hass)
+    if manager is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "integration not set up")
+        return
+    try:
+        ok, reason = await manager.async_try(msg["entity_id"], msg["action"])
+    except vol.Invalid as err:
+        _error(connection, msg, err)
+        return
+    connection.send_result(msg["id"], {"ok": ok, "reason": reason})
+
+
+COMMANDS = (ws_timer_try, ws_timer_devices, ws_timer_get, ws_timer_list, ws_timer_save, ws_timer_delete, ws_timer_enable, ws_timer_run, ws_timer_preview, ws_timer_test)

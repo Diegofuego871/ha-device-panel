@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.28.0] - 2026-10-13
+
+Test button in the timer assistant.
+
+### Added
+
+- Timer assistant, step "What to switch": a "Run now" button under the result line switches the chosen entity with the chosen action immediately, as a test. Nothing is saved, there is no switching back, no push and no log entry. A short message says whether it worked or why not (for example "The device is unreachable").
+
+### Changed
+
+- Sidebar icon: a house with bars ("home-analytics") instead of the two-devices symbol, which looked like phones. Home Assistant may show the old icon until the page is reloaded.
+
 ## [2.27.1] - 2026-10-13
 
 Settings: the close button is on the right.
@@ -2888,6 +2900,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.28.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.28.0
 [2.27.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.1
 [2.27.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.27.0
 [2.26.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.26.0
