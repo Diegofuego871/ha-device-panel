@@ -186,7 +186,7 @@ async def test_sample_records_the_receiver_of_bluetooth_devices(hass: HomeAssist
 
 
 async def test_bluetooth_prefers_the_live_value_over_the_sensor_of_the_device(hass: HomeAssistant, monkeypatch) -> None:
-    """SwitchBot und ähnliche (2.41.1): Wert und Empfänger kommen aus Bluetooth (bester Empfang), der Sensor des Geräts ist nur Ersatz."""
+    """SwitchBot und ähnliche (2.41.2): Wert und Empfänger kommen aus Bluetooth (bester Empfang), der Sensor des Geräts ist nur Ersatz."""
     from custom_components.device_panel import devices
 
     await _setup(hass)
