@@ -267,7 +267,7 @@ def signal_source(
 ) -> tuple[dict[str, Any] | None, str | None, str | None]:
     """
     (Empfang, Empfänger, Quelle) wie in der Liste: ZHA vor dem Sensor,
-    Bluetooth (seit 2.41.0) vor dem Sensor des Geräts. Quelle ist die Entität
+    Bluetooth (seit 2.41.1) vor dem Sensor des Geräts. Quelle ist die Entität
     des Sensors oder "zha" bzw. "ble" (Wert direkt aus der Integration, ohne
     Verlauf im Recorder; signal_history zeichnet ihn selbst auf).
     """
