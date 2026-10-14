@@ -452,6 +452,8 @@
       types: TYPE_ORDER.map((t) => ({ type: t, devices: byType[t] || 0 })),
       // KI-Aufgaben von HA (erfunden); __aiTasks = [] für "keine".
       ai_tasks: window.__aiTasks || [{ value: "ai_task.openai", name: "OpenAI" }, { value: "ai_task.lokal", name: "Lokales Modell" }],
+      // Wie ai_assessment.ai_ready (2.38.0); ?noai=1 oder __aiReady = false: keine KI-Aufgabe, die Funktion lässt sich nicht einschalten.
+      ai_ready: window.__aiReady !== false && !params.get("noai"),
       battery: Object.entries(bat).map(([domain, v]) => ({ domain, name: integrations[domain] || domain, ...v })).sort((a, b) => b.devices - a.devices || a.name.localeCompare(b.name)),
       // Wie updates.catalog: alle update-Entitäten nach Art und Name (erfunden); __updates = [] für "keine".
       updates: window.__updates || UPDATE_ITEMS,
@@ -762,6 +764,10 @@
         for (const [k, [min, max]] of Object.entries(LIMITS)) {
           const v = msg.values[k];
           if (k in msg.values && (!Number.isInteger(v) || v < min || v > max)) throw { code: "invalid_format", message: `${k} out of range` };
+        }
+        // Wie options_api.apply_values (2.38.0): KI-Einschätzung nur mit KI-Aufgabe einschalten
+        if (msg.values.ai_assessment === true && !window.__opts.ai_assessment && (window.__aiReady === false || params.get("noai"))) {
+          throw { code: "invalid_format", message: 'Keine KI-Aufgabe ausgewählt: In Home Assistant unter "KI-Vorschläge" (/config/ai) bei "Aufgaben zur Datengenerierung" eine KI-Task-Entität wählen, dann lässt sich die KI-Einschätzung einschalten' };
         }
         if ("ai_prompt" in msg.values) {
           // Wie ai_prompt.ai_prompt: leer oder Standard = Standard; sonst {facts} Pflicht, nur {language} und {facts}, höchstens 6000 Zeichen.

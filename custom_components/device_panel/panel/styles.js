@@ -577,6 +577,9 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .opt-input:focus-within { border-color: var(--dp-primary); }
 .opt.changed > .opt-line .opt-input { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 .opt.invalid > .opt-line .opt-input { border-color: var(--dp-error); box-shadow: inset 0 0 0 1px var(--dp-error); }
+.opt-link { margin: -2px 0 6px; }
+.set-link { display: inline-flex; align-items: center; gap: 4px; padding: 4px 0; border: 0; background: none; color: var(--dp-primary); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.set-link:hover { text-decoration: underline; }
 .opt-error { margin-top: 3px; color: var(--dp-error); font-size: 12px; line-height: 1.35; }
 /* Auswahl plus Uhrzeit nebeneinander (Batterie täglich um …). */
 .opt-pair { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
@@ -702,6 +705,7 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .ex-head.multi > span:first-child { flex: 1; }
 .ex-head.multi .ex-col { text-align: center; }
 .ex-row .switch input:disabled + span { opacity: .35; }
+.opt .switch input:disabled + span { opacity: .45; cursor: not-allowed; }
 /* Auswahlspalte der Integrationen ("Typ", früher "Ausgefallen nach"): breiter als die Schalter. */
 .ex-col.sel { width: 176px; }
 /* Zwei Auswahl-Spalten (Typ und Verbindungsart der Integrationen, seit 2.0.4): etwas schmaler */

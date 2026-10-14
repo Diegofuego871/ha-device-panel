@@ -63,7 +63,7 @@ Every device can override the defaults in the "Settings" tab of its pop-up: its 
 |---|---|
 | <img src="docs/screenshots/en/ai.png" alt="Device pop-up with the AI assessment"> | <img src="docs/screenshots/en/settings-ai.png" alt="Settings with the prompt in expert mode"> |
 
-Only on a button press, with an AI task of Home Assistant. No keys, credentials or IDs are sent. Groups of facts such as `{facts_area}` and `{facts_hub}` can be used in the prompt, a preview shows the exact text.
+Only on a button press, with an AI task of Home Assistant: the function can only be switched on once an AI task is chosen in Home Assistant under "AI suggestions" (the settings link there). No keys, credentials or IDs are sent. Groups of facts such as `{facts_area}` and `{facts_hub}` can be used in the prompt, a preview shows the exact text.
 
 ### On the phone
 

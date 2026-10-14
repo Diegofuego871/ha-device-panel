@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.38.0] - 2026-10-14
+
+KI-Einschätzung: Link zu den KI-Einstellungen von Home Assistant, und nur mit einer KI-Aufgabe.
+
+### Hinzugefügt
+
+- Einstellungen, "KI-Einschätzung": Ein Link "KI-Vorschläge in Home Assistant öffnen" führt zu den KI-Einstellungen von Home Assistant (`/config/ai`, dort wählt man die KI-Aufgabe bei "Aufgaben zur Datengenerierung").
+
+### Geändert
+
+- Der Schalter "Knopf "Mit KI einschätzen" zeigen" lässt sich nur einschalten, wenn es eine KI-Aufgabe gibt: eine in Home Assistant unter "KI-Vorschläge" bei "Aufgaben zur Datengenerierung" gewählte (oder eine hier gewählte, die noch existiert). Ohne sie ist der Schalter gesperrt, und eine Meldung sagt warum und was zu tun ist: "Keine KI-Aufgabe ausgewählt. Wähle in Home Assistant unter "KI-Vorschläge" bei "Aufgaben zur Datengenerierung" eine KI-Task-Entität aus. Erst dann lässt sich die KI-Einschätzung hier einschalten." Der Server prüft es ebenfalls, eine Anfrage am Panel vorbei wird mit derselben Meldung abgelehnt. Ist die Funktion schon eingeschaltet und die KI-Aufgabe fällt weg, bleibt sie an, mit einem Hinweis, und andere Einstellungen lassen sich weiter speichern.
+- Die Hinweise zur KI-Aufgabe verweisen jetzt auf "KI-Vorschläge" statt auf "Einstellungen → System → Allgemein".
+
 ## [2.37.0] - 2026-10-14
 
 Ein Zeichen, dass die automatischen Updates aktiv sind.
@@ -3202,6 +3215,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.38.0
 [2.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.37.0
 [2.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.0
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0

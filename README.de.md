@@ -63,7 +63,7 @@ Jedes Gerät kann im Reiter "Einstellungen" seines Popups die Standardwerte übe
 |---|---|
 | <img src="docs/screenshots/de/ai.png" alt="Geräte-Popup mit der KI-Einschätzung"> | <img src="docs/screenshots/de/settings-ai.png" alt="Einstellungen mit dem Prompt im Profi-Modus"> |
 
-Nur auf Knopfdruck, mit einer KI-Aufgabe von Home Assistant. Es gehen keine Schlüssel, Zugangsdaten oder IDs raus. Im Prompt lassen sich Gruppen der Fakten wie `{facts_area}` und `{facts_hub}` nutzen, eine Vorschau zeigt den genauen Text.
+Nur auf Knopfdruck, mit einer KI-Aufgabe von Home Assistant: Die Funktion lässt sich erst einschalten, wenn in Home Assistant unter "KI-Vorschläge" eine KI-Aufgabe gewählt ist (der Link dorthin steht in den Einstellungen). Es gehen keine Schlüssel, Zugangsdaten oder IDs raus. Im Prompt lassen sich Gruppen der Fakten wie `{facts_area}` und `{facts_hub}` nutzen, eine Vorschau zeigt den genauen Text.
 
 ### Auf dem Handy
 

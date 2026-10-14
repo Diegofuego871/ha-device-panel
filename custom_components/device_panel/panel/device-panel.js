@@ -7287,7 +7287,7 @@ class DevicePanel extends HTMLElement {
         ${warn ? `<div class="opt-warn">${mdi("alert", 14)}<span>${escape(warn)}</span></div>` : ""}
         ${info && st.info.has(key) ? `<div class="opt-info">${escape(info)}</div>` : ""}</div>`;
     };
-    const sw = (key, label) => `<label class="switch"><input type="checkbox" data-opt="${key}" ${d[key] ? "checked" : ""} aria-label="${escape(label)}"><span></span></label>`;
+    const sw = (key, label, locked = false) => `<label class="switch"><input type="checkbox" data-opt="${key}" ${d[key] ? "checked" : ""}${locked ? " disabled" : ""} aria-label="${escape(label)}"><span></span></label>`;
     // Automatisch installieren (seit 2.22.0): Panel-Einstellung der Instanz (wie "Vorabversionen"), nur mit der täglichen Prüfung
     const autoUpdateRow = () => {
       const daily = Boolean(d.update_check);
@@ -7368,6 +7368,9 @@ class DevicePanel extends HTMLElement {
     };
     // KI-Aufgaben von HA; eine früher gewählte, die es nicht mehr gibt, bleibt sichtbar.
     const aiTasks = [...(st.data.catalog?.ai_tasks || [])];
+    // Ältere Rückmeldung des Backends ohne das Feld: wie bisher einschaltbar
+    const aiReady = st.data.catalog?.ai_ready !== false;
+    const aiBlocked = !aiReady && !d.ai_assessment;
     if (d.ai_task_entity && !aiTasks.some((x) => x.value === d.ai_task_entity)) aiTasks.push({ value: d.ai_task_entity, name: d.ai_task_entity });
     const integrations = (st.data.catalog?.integrations || []).map((i) => ({
       value: i.domain,
@@ -7524,7 +7527,10 @@ class DevicePanel extends HTMLElement {
             ),
       ai:
         ttl("ttlAiShow") +
-        row("ai_assessment", t("optAi"), sw("ai_assessment", t("optAi")), t("optAiShort"), t("optAiInfo")) +
+        // Ohne KI-Aufgabe (in Home Assistant unter "KI-Vorschläge" gewählt oder hier) lässt sich die Funktion nicht einschalten (seit 2.38.0);
+        // schon Eingeschaltetes bleibt, mit Hinweis. Der Link führt zu /config/ai.
+        row("ai_assessment", t("optAi"), sw("ai_assessment", t("optAi"), aiBlocked), t("optAiShort"), t("optAiInfo"), aiReady ? null : t(d.ai_assessment ? "aiLost" : "aiNotReady")) +
+        `<div class="opt-link"><button type="button" class="set-link" data-ai-open>${escape(t("aiOpenHa"))}${mdi("chevronRight", 16)}</button></div>` +
         (d.ai_assessment
           ? ttl("ttlAiTask") + row(
               "ai_task_entity",
@@ -7585,6 +7591,11 @@ class DevicePanel extends HTMLElement {
         if (input) input.value = "";
         this._applyListSearch(dialog);
         if (input && !window.matchMedia?.(TOUCH_QUERY).matches) input.focus();
+        return;
+      }
+      // Link zu den KI-Einstellungen von Home Assistant (seit 2.38.0): die Einstellungen schliessen (mit Rückfrage bei Änderungen), dann hin
+      if (ev.target.closest("[data-ai-open]")) {
+        this._requestCloseSettings(() => this._navigate("/config/ai"));
         return;
       }
       const verBtn = ev.target.closest("[data-ver]");

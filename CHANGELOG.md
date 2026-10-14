@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.38.0] - 2026-10-14
+
+AI assessment: link to the AI settings of Home Assistant, and only with an AI task.
+
+### Added
+
+- Settings, "AI assessment": a link "Open AI suggestions in Home Assistant" leads to the AI settings of Home Assistant (`/config/ai`, where the AI task for "Data generation tasks" is chosen).
+
+### Changed
+
+- The switch "Show the button "Assess with AI"" can only be switched on if there is an AI task: one chosen in Home Assistant under "AI suggestions" for "Data generation tasks" (or one chosen here that still exists). Without it the switch is locked and a message says why and what to do: "No AI task selected. In Home Assistant, under "AI suggestions", choose an AI task entity for "Data generation tasks". Only then can the AI assessment be switched on here." The server checks this too, so a request that bypasses the panel is refused with the same message. If the function is already on and the AI task disappears, it stays on, with a note, and other settings can still be saved.
+- The hints on the AI task now point to "AI suggestions" instead of "Settings → System → General".
+
 ## [2.37.0] - 2026-10-14
 
 A sign that automatic updates are active.
@@ -3101,6 +3114,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.38.0
 [2.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.37.0
 [2.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.0
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0
