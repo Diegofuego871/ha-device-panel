@@ -168,8 +168,8 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
       await tap(`.dev[data-open="${noBat}"]`);
       await wait(`return r.querySelector("dialog.device")?.open`);
       await tap('dialog.device [data-tab="set"]');
-      await tap('dialog.device [data-stab="chg"]');
-      check(`[${tag}] Gerät ohne Batterie: keine Zeile "${T_.row}"`, await ev(`return !r.querySelector('select[data-dlg="dev-charge"]')`));
+      // Reiter "Laden" entfällt ohne Ladestand (seit 2.46.0)
+      check(`[${tag}] Gerät ohne Batterie: kein Reiter "Laden", keine Zeile "${T_.row}"`, await ev(`return !r.querySelector('dialog.device [data-stab="chg"]') && !r.querySelector('select[data-dlg="dev-charge"]')`));
       await tap('dialog.device [data-dlg="close"]');
     }
   }

@@ -115,7 +115,7 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 
 ### Die Arten von Meldungen
 
-Jede Art hat in den Einstellungen einen eigenen Reiter. Ausfall, Batterie, Laden, Neue Geräte und Empfang sind auch Reiter jeder Integration, und Ausfall, Batterie, Laden und Empfang Reiter jedes Geräts, damit die drei Ebenen für jede davon gelten.
+Jede Art hat in den Einstellungen einen eigenen Reiter. Ausfall, Batterie, Laden, Neue Geräte und Empfang sind auch Reiter jeder Integration, und Ausfall, Batterie, Laden und Empfang Reiter jedes Geräts (ein Gerät zeigt nur die Reiter, für die es etwas gibt: ohne Batterie entfallen "Batterie" und "Laden", ohne Empfangswert "Empfang"), damit die drei Ebenen für jede davon gelten.
 
 | Ausfall | Batterie | Laden |
 |---|---|---|

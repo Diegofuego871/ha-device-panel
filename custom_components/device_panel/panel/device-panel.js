@@ -4275,8 +4275,8 @@ class DevicePanel extends HTMLElement {
       t("devNotifyShort")
     )}</div>`;
     // Gleiche Reiter wie in den Einstellungen und im Detail einer Integration (seit 1.42.0): Ausfall | Batterie | Laden | Empfang,
-    // je Reiter die Grafik wie im globalen Reiter mit den für das Gerät wirksamen Werten. Die Reiter gibt es immer; was das
-    // Gerät nicht kann (keine Batterie, kein Empfang), sagt ein Hinweis.
+    // je Reiter die Grafik wie im globalen Reiter mit den für das Gerät wirksamen Werten. Reiter ohne Inhalt (keine Batterie,
+    // kein Empfang) entfallen seit 2.46.0.
     const od = d.offline_default || { minutes: 2, integration: null, global: 2 };
     const offOwn = d.offline_setting;
     const offEff = offOwn === "off" ? "off" : Number.isInteger(offOwn) ? offOwn : od.minutes;
@@ -4315,9 +4315,11 @@ class DevicePanel extends HTMLElement {
       chg: [d.charge_setting, d.charge_full_setting, d.charge_rise_setting, d.charge_stall_setting, d.charge_stop_setting, d.charge_live_setting].some((v) => v != null),
       sig: d.signal_setting != null,
     };
-    const tabs = [["out", "tabOutage"], ["bat", "tabBattery"], ["chg", "tabCharge"], ["sig", "tabSignal"]];
+    // Reiter ohne Inhalt entfallen (seit 2.46.0): ohne Batterie, Ladestand oder Empfang bliebe nur der Hinweis.
+    const hasTab = { out: true, bat: Boolean(d.has_battery), chg: d.battery?.level != null, sig: hasSignal };
+    const tabs = [["out", "tabOutage"], ["bat", "tabBattery"], ["chg", "tabCharge"], ["sig", "tabSignal"]].filter(([id]) => hasTab[id]);
     const cur = tabs.some(([id]) => id === this._devSub) ? this._devSub : "out";
-    const tabBar = `<div class="sub-tabs lvl-tabs" role="tablist">${tabs
+    const tabBar = tabs.length < 2 ? "" : `<div class="sub-tabs lvl-tabs" role="tablist">${tabs
       .map(([id, key]) => `<button type="button" role="tab" class="sub-tab${id === cur ? " on" : ""}${ownTab[id] ? " chg" : ""}" data-dlg="stab" data-stab="${id}" aria-selected="${id === cur}">${escape(t(key))}</button>`)
       .join("")}</div>`;
     const err = this._devSetError ? `<div class="opt-error">${escape(t("devSaveError"))} ${escape(this._devSetError)}</div>` : "";

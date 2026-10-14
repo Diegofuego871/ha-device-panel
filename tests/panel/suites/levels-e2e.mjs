@@ -1,6 +1,6 @@
 // Gleiche Reiter auf allen Ebenen (1.42.0): Einstellungen (Laden als eigener Reiter), Detail einer Integration
 // (Ausfall | Batterie | Laden | Neu | Empfang | Geräte, je mit Grafik) und Geräte-Popup (Ausfall | Batterie | Laden |
-// Empfang, die Reiter gibt es immer). Deutsch und Englisch, Desktop und Handy.
+// Empfang, Reiter ohne Inhalt entfallen). Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
 const b = await chromium.launch(launchOptions);
@@ -83,14 +83,14 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await tap('.dev[data-open="c"]');
   await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab="set"]')`);
   await tap('dialog.device [data-tab="set"]');
-  check(`[${tag}] Popup: Reiter ${T_.dev}`, (await tabsOf("dialog.device .lvl-tabs .sub-tab")) === T_.dev, await tabsOf("dialog.device .lvl-tabs .sub-tab"));
+  // Gerät "c" hat Batterie, aber keinen Empfang: der Reiter "Empfang" entfällt
+  const devTabs = T_.dev.split("|").slice(0, 3).join("|");
+  check(`[${tag}] Popup: Reiter ${devTabs} (ohne Empfang kein Reiter "Empfang")`, (await tabsOf("dialog.device .lvl-tabs .sub-tab")) === devTabs, await tabsOf("dialog.device .lvl-tabs .sub-tab"));
   check(`[${tag}] Popup: zuerst "Ausfall" mit Grafik und Zeile "Ausgefallen nach"`, await ev(`return r.querySelector('dialog.device .lvl-tabs .sub-tab.on').dataset.stab === "out" && !!r.querySelector("dialog.device .lvl-body .ptl") && !!r.querySelector('select[data-dlg="dev-off"]')`));
   for (const [key, graph, row] of [["bat", ".mtl", "dev-bat"], ["chg", ".mtl", "dev-charge"]]) {
     await tap(`dialog.device [data-stab="${key}"]`);
     check(`[${tag}] Popup › ${key}: Grafik und Zeile`, await wait(`return !!r.querySelector("dialog.device .lvl-body ${graph}") && !!r.querySelector('select[data-dlg="${row}"]')`));
   }
-  await tap('dialog.device [data-stab="sig"]');
-  check(`[${tag}] Popup › Empfang: Zeile oder Hinweis, kein Fehler`, await wait(`return !!r.querySelector('select[data-dlg="dev-sig"]') || !!r.querySelector("dialog.device .lvl-body .mon-empty")`));
   // Eigene Einstellung: Punkt am Reiter
   await tap('dialog.device [data-stab="bat"]');
   await (await handle('select[data-dlg="dev-bat"]')).selectOption("own");
@@ -103,16 +103,16 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await tap('dialog.device [data-tab="set"]');
   check(`[${tag}] Popup: beim erneuten Öffnen wieder "Ausfall"`, await ev(`return r.querySelector('dialog.device .lvl-tabs .sub-tab.on').dataset.stab === "out"`));
   await tap('dialog.device [data-dlg="close"]');
-  // Gerät ohne Batterie: die Reiter gibt es, mit Hinweis
-  const noBat = await p.evaluate(() => (window.__devices || []).find((d) => d.battery?.level == null && d.battery?.low == null && !d.has_battery)?.id || null).catch(() => null);
+  // Gerät ohne Batterie: die Reiter "Batterie" und "Laden" entfallen (seit 2.46.0), Ausfall bleibt
+  const noBat = await ev(`const d = r.host._devices.find((x) => !x.has_battery && x.battery?.level == null && x.online !== false && !x.disabled); return d ? d.id : null`);
+  check(`[${tag}] Simulator hat ein Gerät ohne Batterie`, Boolean(noBat));
   if (noBat) {
     await tap(`.dev[data-open="${noBat}"]`);
     await wait(`return r.querySelector("dialog.device")?.open`);
     await tap('dialog.device [data-tab="set"]');
-    await tap('dialog.device [data-stab="bat"]');
-    check(`[${tag}] Popup ohne Batterie: Reiter "Batterie" mit Hinweis "${T_.noBat}"`, await wait(`return r.querySelector("dialog.device .lvl-body .mon-empty")?.textContent.trim() === ${JSON.stringify(T_.noBat)}`));
-    await tap('dialog.device [data-stab="chg"]');
-    check(`[${tag}] Popup ohne Batterie: Reiter "Laden" mit Hinweis`, await wait(`return r.querySelector("dialog.device .lvl-body .mon-empty")?.textContent.trim() === ${JSON.stringify(T_.noBat)}`));
+    check(`[${tag}] Popup ohne Batterie: keine Reiter "Batterie" und "Laden"`, await wait(`return !r.querySelector('dialog.device [data-stab="bat"]') && !r.querySelector('dialog.device [data-stab="chg"]') && !!r.querySelector('dialog.device .dev-set .lvl-body .ptl')`));
+    check(`[${tag}] Popup ohne Batterie: kein Hinweis "${T_.noBat}"`, await ev(`return !r.querySelector("dialog.device .mon-empty")`));
+    await tap('dialog.device [data-dlg="close"]');
   }
   await p.screenshot({ path: `${outDir}/levels-${tag.replace("/", "-")}.png` });
   check(`[${tag}] kein fehlender Text`, !(await ev(`return r.innerHTML.includes("undefined") || r.innerHTML.includes("NaN")`)));

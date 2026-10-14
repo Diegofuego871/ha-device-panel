@@ -7,7 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.46.0] - 2026-10-14
+
+Device pop-up: tabs without content are hidden.
+
+Includes the changes from 2.45.0.
+
+### Changed
+
+- Device pop-up, tab "Settings": the sub-tabs Battery, Charging and Signal only appear when the device has something to show. A device without a battery level (a presence sensor on mains power, for example) no longer has the tabs "Battery" and "Charging" that only said "This device does not report a battery level."; a device without a signal reading has no tab "Signal". The tab "Outage" always stays. If only "Outage" is left, the tab bar is omitted.
+
 ## [2.45.0] - 2026-10-14
+
+Not released; included in 2.46.0.
 
 AI assessment: shorter prompts, more context, the last answer flows in, measurement errors are marked.
 
@@ -3216,7 +3228,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.45.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.45.0
+[2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0
 [2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0
 [2.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.43.0
 [2.41.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.41.2

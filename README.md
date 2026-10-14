@@ -115,7 +115,7 @@ Everything that notifies you follows one principle: you set a default once, chan
 
 ### The kinds of notifications
 
-Each kind has its own tab in the settings. Outage, battery, charging, new devices and signal are also tabs of every integration, and outage, battery, charging and signal tabs of every device, so the three levels apply to each of them.
+Each kind has its own tab in the settings. Outage, battery, charging, new devices and signal are also tabs of every integration, and outage, battery, charging and signal tabs of every device (a device only shows the tabs it has something for: without a battery there is no battery or charging tab, without a signal reading no signal tab), so the three levels apply to each of them.
 
 | Outage | Battery | Charging |
 |---|---|---|

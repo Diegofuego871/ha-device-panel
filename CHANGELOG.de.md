@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.46.0] - 2026-10-14
+
+Geräte-Pop-up: Reiter ohne Inhalt werden ausgeblendet.
+
+Enthält die Änderungen aus 2.45.0.
+
+### Geändert
+
+- Geräte-Pop-up, Reiter "Einstellungen": die Unterreiter Batterie, Laden und Empfang erscheinen nur, wenn das Gerät etwas zu zeigen hat. Ein Gerät ohne Batteriestand (zum Beispiel ein Anwesenheitssensor am Netz) hat die Reiter "Batterie" und "Laden" nicht mehr, die nur "Dieses Gerät meldet keinen Batteriestand." sagten; ein Gerät ohne Empfangswert hat keinen Reiter "Empfang". Der Reiter "Ausfall" bleibt immer. Bleibt nur "Ausfall" übrig, entfällt die Reiterleiste.
+
 ## [2.45.0] - 2026-10-14
+
+Nicht veröffentlicht; enthalten in 2.46.0.
 
 KI-Einschätzung: kürzere Prompts, mehr Zusammenhang, die letzte Antwort fliesst ein, Messfehler werden markiert.
 
@@ -3317,7 +3329,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.45.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.45.0
+[2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0
 [2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0
 [2.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.43.0
 [2.41.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.41.2
