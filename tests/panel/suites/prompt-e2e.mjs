@@ -14,13 +14,13 @@ const MINE = "Kurz auf {language}.\n{facts}";
 const TEXT = {
   de: {
     expert: "Profi-Modus", def: "Standard", own: "Eigener", copied: "Kopiert", sub: "Standard", subOwn: "Eigener Prompt statt Standard", lang: "German",
-    errFacts: "Der Prompt braucht {facts} oder mindestens eine Gruppe wie {facts_device}, sonst bekommt die KI keine Angaben zum Gerät.", errUnknown: "Unbekannter Platzhalter {name}. Erlaubt sind {language}, {facts} und die Gruppen {facts_device}, {facts_history}, {facts_battery}, {facts_signal}, {facts_integration}, {facts_area}, {facts_hub}, {facts_model}.", hint: "{facts} enthält alles. Statt {facts} lassen sich einzelne Gruppen einsetzen, um Umfang und Reihenfolge selbst zu bestimmen.", areaInfo: "Bereich: Geräte im selben Raum, gleicher Funkstandard",
-    sumOwn: "Aus · Eigener Prompt", tabs: "Bearbeiten|Vorschau", count: (n) => `${n} von 6000 Zeichen`, change: "1 Änderung",
+    errFacts: "Der Prompt braucht {facts} oder mindestens eine Gruppe wie {facts_device}, sonst bekommt die KI keine Angaben zum Gerät.", errUnknown: "Unbekannter Platzhalter {name}. Erlaubt sind {language}, {facts} und die Gruppen {facts_device}, {facts_history}, {facts_battery}, {facts_signal}, {facts_integration}, {facts_area}, {facts_hub}, {facts_model} und {facts_previous}.", hint: "{facts} enthält alles. Statt {facts} lassen sich einzelne Gruppen einsetzen, um Umfang und Reihenfolge selbst zu bestimmen.", areaInfo: "Bereich: Geräte im selben Raum, gleicher Funkstandard",
+    sumOwn: "Aus · Eigener Prompt", tabs: "Bearbeiten|Vorschau", count: (n) => `${n} von 12000 Zeichen`, change: "1 Änderung",
   },
   en: {
     expert: "Expert mode", def: "Default", own: "Own", copied: "Copied", sub: "Default", subOwn: "Own prompt instead of the default", lang: "English",
-    errFacts: "The prompt needs {facts} or at least one group such as {facts_device}, otherwise the AI gets no details about the device.", errUnknown: "Unknown placeholder {name}. Allowed are {language}, {facts} and the groups {facts_device}, {facts_history}, {facts_battery}, {facts_signal}, {facts_integration}, {facts_area}, {facts_hub}, {facts_model}.", hint: "{facts} contains everything. Instead of {facts} you can insert single groups to choose scope and order yourself.", areaInfo: "Area: devices in the same room, same radio standard",
-    sumOwn: "Off · Own prompt", tabs: "Edit|Preview", count: (n) => `${n} of 6000 characters`, change: "1 change",
+    errFacts: "The prompt needs {facts} or at least one group such as {facts_device}, otherwise the AI gets no details about the device.", errUnknown: "Unknown placeholder {name}. Allowed are {language}, {facts} and the groups {facts_device}, {facts_history}, {facts_battery}, {facts_signal}, {facts_integration}, {facts_area}, {facts_hub}, {facts_model} and {facts_previous}.", hint: "{facts} contains everything. Instead of {facts} you can insert single groups to choose scope and order yourself.", areaInfo: "Area: devices in the same room, same radio standard",
+    sumOwn: "Off · Own prompt", tabs: "Edit|Preview", count: (n) => `${n} of 12000 characters`, change: "1 change",
   },
 };
 
@@ -78,16 +78,16 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] ohne {facts}: Fehler, Übernehmen gesperrt, Feld rot`, (await text("[data-prompt-error]")) === T.errFacts && (await ev(`return r.querySelector('[data-prompt="apply"]').disabled && r.querySelector(".pr-text").classList.contains("bad") && !r.querySelector("[data-prompt-error]").hidden`)), await text("[data-prompt-error]"));
     await setText("{name} {facts}");
     check(`[${tag}] unbekannter Platzhalter`, (await text("[data-prompt-error]")) === T.errUnknown.replace("{name}", "{name}") && (await ev(`return r.querySelector('[data-prompt="apply"]').disabled`)), await text("[data-prompt-error]"));
-    await setText("x".repeat(6001) + "{facts}");
+    await setText("x".repeat(12001) + "{facts}");
     check(`[${tag}] zu lang`, (await ev(`return r.querySelector('[data-prompt="apply"]').disabled && !r.querySelector("[data-prompt-error]").hidden`)));
     // Chip fügt an der Cursor-Stelle ein
     await setText("Vorher  nachher");
     await ev(`const a=r.querySelector(".pr-text"); a.focus(); a.setSelectionRange(7, 7)`);
     await tap('[data-prompt="insert"][data-key="{facts}"]');
     check(`[${tag}] Chip {facts} an der Cursor-Stelle, Fehler weg`, (await ev(`return r.querySelector(".pr-text").value`)) === "Vorher {facts} nachher" && (await ev(`return r.querySelector("[data-prompt-error]").hidden && !r.querySelector('[data-prompt="apply"]').disabled`)));
-    // Gruppen der Fakten (1.7.0): zehn Chips mit Erklärung, Gruppe allein genügt
+    // Gruppen der Fakten (1.7.0): elf Chips mit Erklärung, Gruppe allein genügt
     const chips = await ev(`return [...r.querySelectorAll('[data-prompt="insert"]')].map(c=>c.dataset.key)`);
-    check(`[${tag}] zehn Chips: {language}, {facts} und acht Gruppen`, JSON.stringify(chips) === JSON.stringify(["{language}", "{facts}", ...["device", "history", "battery", "signal", "integration", "area", "hub", "model"].map((g) => `{facts_${g}}`)]), JSON.stringify(chips));
+    check(`[${tag}] elf Chips: {language}, {facts} und neun Gruppen`, JSON.stringify(chips) === JSON.stringify(["{language}", "{facts}", ...["device", "history", "previous", "battery", "signal", "integration", "area", "hub", "model"].map((g) => `{facts_${g}}`)]), JSON.stringify(chips));
     check(`[${tag}] Chip mit Erklärung (Tooltip) und Hinweis`, (await ev(`return r.querySelector('[data-prompt="insert"][data-key="{facts_area}"]').title`)) === T.areaInfo && (await text("dialog.prompt-dlg .opt-short")) === T.hint, await text("dialog.prompt-dlg .opt-short"));
     await setText("Auf {language}.\n{facts_device}\n{facts_area}");
     check(`[${tag}] nur Gruppen: gültig`, await ev(`return r.querySelector("[data-prompt-error]").hidden && !r.querySelector('[data-prompt="apply"]').disabled`));

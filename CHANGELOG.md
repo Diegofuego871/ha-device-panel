@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.45.0] - 2026-10-14
+
+AI assessment: shorter prompts, more context, the last answer flows in, measurement errors are marked.
+
+### Added
+
+- AI assessment: the panel remembers the last assessment of every device (kept across restarts, at most 150 devices, 30 days). The pop-up shows it again when you open the device, without asking the AI, and the next assessment gets it as the fact `previous_assessment` (how long ago, headline, text, status back then). The default prompt tells the AI to check what has changed since and not to repeat itself blindly. A prompt you edited yourself can use it through the new group `{facts_previous}` or `{facts}`. The remembered texts are deleted when the integration is removed.
+- AI assessment: more context where there is data: `integration_problem` (the integration is not running: setup_retry, setup_error and similar, which alone explains an outage), `entities` (how many entities of the device exist and how many are unavailable), `home_assistant_started_minutes_ago` (an outage right after a restart often belongs to the restart) and `battery_sensor_glitches_7d` (how often the battery sensor reported an impossible value that the panel discarded; the AI is told not to read it as a real drop and to call such a sensor unreliable).
+
+### Changed
+
+- AI assessment: the whole instruction is limited to 18000 characters (about 4500 tokens). Longer facts are trimmed from the least important end: the lists of other devices in the area, of offline devices of the integration and of the hub, then the months of the battery history; everything about the device itself stays. The log (category System) says what was trimmed.
+
 ## [2.44.0] - 2026-10-14
 
 AI assessment: devices that are charged are recognised.
@@ -3203,6 +3216,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.45.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.45.0
 [2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0
 [2.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.43.0
 [2.41.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.41.2

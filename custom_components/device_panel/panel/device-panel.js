@@ -490,7 +490,7 @@ function joinChips(order, parts, mode = "group", mark = "") {
 }
 // Seit 1.7.0 zusätzlich die Gruppen der Fakten ({facts_area} usw., wie
 // ai_prompt.FACT_GROUPS): wer {facts} nicht nutzt, setzt nur Gruppen ein.
-const PROMPT_GROUPS = ["device", "history", "battery", "signal", "integration", "area", "hub", "model"];
+const PROMPT_GROUPS = ["device", "history", "previous", "battery", "signal", "integration", "area", "hub", "model"];
 const PROMPT_VARS = ["{language}", "{facts}", ...PROMPT_GROUPS.map((g) => `{facts_${g}}`)];
 function promptProblem(text) {
   if (text.length > PROMPT_MAX) return ["promptErrLong", PROMPT_MAX];
@@ -763,6 +763,8 @@ class DevicePanel extends HTMLElement {
     this._matter = new Map();
     // KI-Einschätzungen je Gerät (nur im Speicher), Option aus der Geräteliste.
     this._ai = new Map();
+    // Für welche Geräte die gemerkte letzte KI-Einschätzung schon geholt wurde (seit 2.45.0)
+    this._aiLastTried = new Set();
     // Magic Push (seit 2.6.0): eigener Reiter im Geräte-Popup, verwaltet seinen Stand selbst (magic-push.js)
     this._magic = new MagicPush(this, { escape, mdi, errText, logo: LOGO_SMALL, typeIcon });
     // Timer (seit 2.21.0): eigener Reiter im Geräte-Popup und Abschnitt "Timer" in den Einstellungen (timers.js)
@@ -3718,6 +3720,7 @@ class DevicePanel extends HTMLElement {
     if (editRule) this._magic.editWhenLoaded(editRule);
     this._timers.open(id);
     if (editTimer) this._timers.editWhenLoaded(editTimer);
+    this._aiLoadLast(id);
     this._renderDevice();
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
@@ -4610,6 +4613,21 @@ class DevicePanel extends HTMLElement {
       body = `${btn(t("aiButton"))}<div class="opt-short">${escape(t("aiNote"))}</div>`;
     }
     return `<h3>${escape(t("secAi"))}</h3><div class="ai-box">${body}</div>`;
+  }
+
+  // Die letzte Einschätzung bleibt über Neustarts gespeichert (seit 2.45.0): beim Öffnen des Geräts erscheint sie wieder, ohne die KI zu fragen.
+  async _aiLoadLast(id) {
+    if (!this._aiOn || !id || this._ai.has(id) || this._aiLastTried.has(id)) return;
+    this._aiLastTried.add(id);
+    try {
+      const r = await this._hass.callWS({ type: "device_panel/ai_last", device_id: id });
+      if (r && !this._ai.has(id)) {
+        this._ai.set(id, { state: "done", title: r.title, text: r.text, source: r.source, at: r.at });
+        if (this._detailId === id) this._renderDevice();
+      }
+    } catch (err) {
+      // nur eine Zugabe: ohne sie bleibt der Knopf
+    }
   }
 
   async _aiAssess(id) {

@@ -18,6 +18,8 @@ import re
 import time
 from typing import Any
 
+from homeassistant.config_entries import ConfigEntryState
+from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
@@ -28,7 +30,10 @@ from . import activity
 from .ai_prompt import DEFAULT_PROMPT, GROUP_PLACEHOLDERS, render_prompt
 from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK, DATA_SIGNAL, SIGNAL_OFF, SIGNAL_WEAK_DBM, SIGNAL_WEAK_LQI
 from .battery_history import async_battery_history, battery_entity
+from . import ai_memory
+from .battery_guard import get as battery_guard
 from .charge import ChargeNotifier
+from .compat import device_entry_ids
 from .devices import async_list_devices, device_battery_threshold
 from .options_api import effective
 
@@ -44,6 +49,9 @@ SAME_TIME_SECONDS = 300
 # Die letzten Ausfälle der Woche und die Empfänger der letzten 24 Std. in den Fakten (seit 2.42.0).
 OUTAGES_MAX = 6
 RECEIVERS_MAX = 4
+# Längste Anweisung an die KI in Zeichen (seit 2.45.0); darüber werden die Listen der Fakten gekürzt (etwa 4500 Token).
+INSTRUCTIONS_MAX = 18000
+PREVIOUS_TEXT_MAX = 800
 # Bluetooth-Adressen (aa:bb:cc:dd:ee:ff) gehören nicht in die Fakten; HA nennt Proxys oft "Name (Adresse)".
 _MAC_RE = re.compile(r"\s*\(?\b[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5}\b\)?")
 _LOGGER = logging.getLogger(__name__)
@@ -342,6 +350,20 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float, extr
         if setting is not None:
             # Vom Besitzer gesetzt: am Gerät, für die Integration oder global (seit 1.17.0).
             facts["signal"]["own_threshold"] = setting
+    # Läuft die Integration überhaupt (seit 2.45.0)? Ein Eintrag, der nicht "loaded" ist (setup_retry, setup_error ...), erklärt den Ausfall aller Geräte.
+    if problems := extra.get("integration_problem"):
+        facts["integration_problem"] = problems
+    # Wie viele Entitäten des Geräts fehlen: alle (Gerät weg) oder nur einzelne (Teilproblem)?
+    if entities := extra.get("entities"):
+        facts["entities"] = entities
+    if (started := extra.get("home_assistant_started_minutes_ago")) is not None:
+        facts["home_assistant_started_minutes_ago"] = started
+    # Der Batterie-Sensor meldet zwischendurch unmögliche Werte (seit 2.45.0): vom Panel verworfen, aber ein Hinweis auf einen unzuverlässigen Sensor.
+    if (glitches := extra.get("battery_glitches")) and "battery_percent" in facts:
+        facts["battery_sensor_glitches_7d"] = glitches
+    # Die letzte Einschätzung der KI zu diesem Gerät (seit 2.45.0): was hat sich seither geändert?
+    if previous := extra.get("previous"):
+        facts["previous_assessment"] = previous
     # Die letzten Ausfälle der Woche (seit 2.42.0): zu welcher Tageszeit, wie lange? Zeigt Muster wie "jede Nacht um 3 Uhr".
     if outages := extra.get("recent_outages"):
         facts["recent_outages_7d"] = outages
@@ -420,6 +442,72 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float, extr
     if mine:
         facts["mass_outages_24h_involving_this_device"] = mine
     return {k: v for k, v in facts.items() if v is not None}
+
+
+def _shrink_steps() -> list[tuple[str, Any]]:
+    """Schritte, mit denen die Fakten kürzer werden, vom Unwichtigsten zum Wichtigsten; (Name, Funktion auf die Fakten)."""
+
+    def cut(key: str, size: int) -> Any:
+        def run(facts: dict[str, Any]) -> bool:
+            value = facts.get(key)
+            if isinstance(value, list) and len(value) > size:
+                facts[key] = value[:size] if size else None
+                if size == 0:
+                    facts.pop(key, None)
+                return True
+            return False
+
+        return run
+
+    def months(size: int) -> Any:
+        def run(facts: dict[str, Any]) -> bool:
+            monthly = (facts.get("battery_last_12_months") or {}).get("monthly_percent")
+            if isinstance(monthly, dict) and len(monthly) > size:
+                for key in sorted(monthly)[: len(monthly) - size]:
+                    del monthly[key]
+                return True
+            return False
+
+        return run
+
+    def previous(size: int) -> Any:
+        def run(facts: dict[str, Any]) -> bool:
+            item = facts.get("previous_assessment")
+            if isinstance(item, dict) and len(item.get("text", "")) > size:
+                item["text"] = item["text"][:size].rstrip() + " …"
+                return True
+            return False
+
+        return run
+
+    return [
+        ("same_area_devices", cut("same_area_devices", 8)), ("same_area_devices", cut("same_area_devices", 4)),
+        ("same_integration_offline_devices", cut("same_integration_offline_devices", 5)),
+        ("same_hub_offline_devices", cut("same_hub_offline_devices", 5)),
+        ("battery_last_12_months", months(6)), ("recent_outages_7d", cut("recent_outages_7d", 3)),
+        ("previous_assessment", previous(300)), ("same_area_devices", cut("same_area_devices", 0)),
+        ("same_integration_offline_devices", cut("same_integration_offline_devices", 0)),
+        ("same_hub_offline_devices", cut("same_hub_offline_devices", 0)), ("battery_last_12_months", months(3)),
+    ]
+
+
+def fit_facts(facts: dict[str, Any], language: str, template: str = "", limit: int = INSTRUCTIONS_MAX) -> tuple[dict[str, Any], list[str]]:
+    """
+    Die Fakten so kürzen, dass die ganze Anweisung höchstens limit Zeichen hat (seit 2.45.0): zu lange Anweisungen scheitern bei
+    manchen Anbietern oder kosten unnötig. Gekürzt werden zuerst die Listen anderer Geräte, zuletzt die Batterie-Monate; die Angaben
+    zum Gerät selbst bleiben. Gibt (Fakten, Namen der gekürzten Teile) zurück; die Fakten werden nicht verändert, wenn nichts zu kürzen ist.
+    """
+    if len(build_instructions(facts, language, template)) <= limit:
+        return facts, []
+    work = json.loads(json.dumps(facts))
+    trimmed: list[str] = []
+    for name, step in _shrink_steps():
+        if step(work):
+            if name not in trimmed:
+                trimmed.append(name)
+            if len(build_instructions(work, language, template)) <= limit:
+                break
+    return work, trimmed
 
 
 def build_instructions(facts: dict[str, Any], language: str, template: str = "") -> str:
@@ -515,6 +603,28 @@ def _recent_outages(log: Any, device_id: str, now: float) -> list[dict[str, Any]
     return out
 
 
+def _context_extras(hass: HomeAssistant, device_id: str, log: Any, now: float) -> dict[str, Any]:
+    """Zusammenhang, den die Geräteliste nicht zeigt (seit 2.45.0): Zustand der Integration, Entitäten des Geräts, Start von Home Assistant."""
+    extra: dict[str, Any] = {}
+    reg = dr.async_get(hass).async_get(device_id)
+    if reg is not None:
+        problems = sorted({
+            entry.state.value
+            for eid in device_entry_ids(reg)
+            if (entry := hass.config_entries.async_get_entry(eid)) is not None and entry.state is not ConfigEntryState.LOADED
+        })
+        if problems:
+            extra["integration_problem"] = problems
+    entries = [e for e in er.async_entries_for_device(er.async_get(hass), device_id) if not e.disabled_by]
+    if entries:
+        gone = sum(1 for e in entries if (state := hass.states.get(e.entity_id)) is None or state.state == STATE_UNAVAILABLE)
+        extra["entities"] = {"total": len(entries), "unavailable": gone}
+    started = getattr(log, "_started", None)
+    if isinstance(started, (int, float)):
+        extra["home_assistant_started_minutes_ago"] = _minutes(now - started)
+    return extra
+
+
 def _signal_extras(hass: HomeAssistant, device_id: str, now: float) -> dict[str, Any]:
     """Verlauf des Empfangs und Weg des Bluetooth-Empfangs aus der Aufzeichnung des Panels (seit 2.42.0); leer ohne beides."""
     sig = hass.data.get(DATA_SIGNAL)
@@ -556,10 +666,13 @@ async def _extras(hass: HomeAssistant, device: dict[str, Any], log: Any, now: fl
     if log is not None:
         extra["recent_outages"] = _recent_outages(log, device["id"], now)
     extra.update(_signal_extras(hass, device["id"], now))
+    extra.update(_context_extras(hass, device["id"], log, now))
     if device.get("has_battery") and (device.get("battery") or {}).get("level") is not None:
         reg = dr.async_get(hass).async_get(device["id"])
         if reg is not None:
             extra["rechargeable"] = ChargeNotifier.rechargeable(effective(hass), hass, reg)
+        if glitch_entity := battery_entity(hass, er.async_entries_for_device(er.async_get(hass), device["id"])):
+            extra["battery_glitches"] = battery_guard(hass).ignored(glitch_entity, now)
         entity_id = battery_entity(hass, er.async_entries_for_device(er.async_get(hass), device["id"])) if reg else None
         if reg is not None and entity_id:
             threshold = device_battery_threshold(hass, effective(hass), reg)
@@ -580,7 +693,14 @@ async def async_assess(hass: HomeAssistant, device_id: str, language: str, log: 
     if device is None:
         raise AiError("not_found", "device not found")
     now = dt_util.utcnow()
-    facts = build_facts(device, result, now.timestamp(), await _extras(hass, device, log, now.timestamp()))
+    memory = await ai_memory.async_get(hass)
+    extra = await _extras(hass, device, log, now.timestamp())
+    if previous := _previous(memory.get(device_id, now.timestamp()), now.timestamp()):
+        extra["previous"] = previous
+    facts = build_facts(device, result, now.timestamp(), extra)
+    facts, trimmed = fit_facts(facts, language, opts[CONF_AI_PROMPT])
+    if trimmed:
+        activity.record(hass, "info", "system", "ai_trimmed", device["name"], device_id, parts=", ".join(trimmed), limit=INSTRUCTIONS_MAX)
     entity_id = opts[CONF_AI_TASK] or None
     instructions = build_instructions(facts, language, opts[CONF_AI_PROMPT])
     started = time.monotonic()
@@ -608,7 +728,9 @@ async def async_assess(hass: HomeAssistant, device_id: str, language: str, log: 
         hass, "debug", "system", "ai_done", device["name"], device_id,
         chars=len(instructions), answer=len(text), seconds=round(time.monotonic() - started, 1),
     )
-    return {"title": title, "text": body, "source": source_name(hass, entity_id), "at": now.isoformat()}
+    source = source_name(hass, entity_id)
+    memory.set(device_id, title, body, source, facts.get("status"), now.timestamp())
+    return {"title": title, "text": body, "source": source, "at": now.isoformat()}
 
 
 async def async_preview(
@@ -628,6 +750,33 @@ async def async_preview(
     if device is None:
         raise AiError("not_found", "device not found")
     now = dt_util.utcnow().timestamp()
-    facts = build_facts(device, result, now, await _extras(hass, device, log, now))
+    memory = await ai_memory.async_get(hass)
+    extra = await _extras(hass, device, log, now)
+    if previous := _previous(memory.get(device_id, now), now):
+        extra["previous"] = previous
     chosen = template.strip() or effective(hass)[CONF_AI_PROMPT]
+    facts, _trimmed = fit_facts(build_facts(device, result, now, extra), language, chosen)
     return {"text": build_instructions(facts, language, chosen)}
+
+
+def _previous(item: dict[str, Any] | None, now: float) -> dict[str, Any] | None:
+    """Die letzte Einschätzung als Fakt: wie lange her, Überschrift, Text (gekürzt) und der Status damals."""
+    if not item:
+        return None
+    out: dict[str, Any] = {
+        "minutes_ago": _minutes(now - item["at"]),
+        "headline": item.get("title") or None,
+        "text": item["text"][:PREVIOUS_TEXT_MAX],
+        "device_status_then": item.get("status"),
+    }
+    return {k: v for k, v in out.items() if v is not None}
+
+
+async def async_last(hass: HomeAssistant, device_id: str) -> dict[str, Any] | None:
+    """Die gemerkte letzte Einschätzung eines Geräts für das Pop-up ({title, text, source, at}) oder None (Funktion aus, noch keine)."""
+    if not effective(hass)[CONF_AI_ASSESSMENT]:
+        return None
+    item = (await ai_memory.async_get(hass)).get(device_id)
+    if item is None:
+        return None
+    return {"title": item["title"], "text": item["text"], "source": item.get("source"), "at": dt_util.utc_from_timestamp(item["at"]).isoformat()}

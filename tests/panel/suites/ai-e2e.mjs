@@ -111,6 +111,11 @@ for (const lang of ["de", "en"]) {
     await close();
     await open("b");
     check(`[${tag}] Antwort bleibt im Speicher`, (await text(".ai-title")) === T.title && (await calls("device_panel/ai_assess")).length === 1);
+    // Nach einem Neustart (Speicher des Panels leer) kommt die letzte Antwort vom Server (ai_last, seit 2.45.0), ohne die KI zu fragen
+    await close();
+    await ev(`r.host._ai.clear(); r.host._aiLastTried.clear()`);
+    await open("b");
+    check(`[${tag}] gemerkte Antwort kommt vom Server, ohne neuen Aufruf der KI`, await wait(`return !!r.querySelector(".ai-title")`) && (await text(".ai-title")) === T.title && (await calls("device_panel/ai_last")).length >= 1 && (await calls("device_panel/ai_assess")).length === 1);
     await p.evaluate(() => { window.__aiMode = "ok"; });
     await tap(".ai-foot .linkbtn");
     await wait(`return (window.__wsCalls || []).length >= 0`);

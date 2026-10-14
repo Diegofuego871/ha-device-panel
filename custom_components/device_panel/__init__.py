@@ -21,6 +21,7 @@ from homeassistant.loader import async_get_integration
 from . import activity, options_api, update_check, updates
 from .availability import RANGES, AvailabilityLog
 from .availability import STORAGE_KEY as AVAILABILITY_STORE_KEY
+from .ai_memory import DATA_KEY as AI_MEMORY_DATA_KEY, STORE_KEY as AI_MEMORY_STORE_KEY
 from .battery import STORE_KEY as BATTERY_STORE_KEY
 from .battery import BatteryWatch
 from .newdevice import STORE_KEY as NEW_STORE_KEY
@@ -42,7 +43,7 @@ from .magic_history import async_history as async_magic_history
 from .timers import STORE_KEY as TIMERS_STORE_KEY
 from .timers import TimerManager
 from .timers_ws import COMMANDS as TIMER_COMMANDS
-from .ai_assessment import AiError, async_assess, async_preview
+from .ai_assessment import AiError, async_assess, async_last, async_preview
 from .ai_prompt import DEFAULT_PROMPT
 from .const import (
     AI_PROMPT_MAX,
@@ -233,7 +234,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     das erst nach dem Entladen auf; dort wurde alles Ausstehende geschrieben.
     """
     await activity.async_forget(hass)
-    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, MAGIC_STORE_KEY, TIMERS_STORE_KEY, update_check.PANEL_STORE_KEY):
+    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, MAGIC_STORE_KEY, TIMERS_STORE_KEY, AI_MEMORY_STORE_KEY, update_check.PANEL_STORE_KEY):
         await Store(hass, STORAGE_VERSION, key).async_remove()
     # Heruntergeladene Icons der Meldungen; der statische Pfad bleibt bis zum
     # Neustart angemeldet, der Ordner wird bei Bedarf neu angelegt.
@@ -241,7 +242,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     if isinstance(state := hass.data.get(DATA_PUSH_ICONS), dict):
         state["missing"].clear()
     # Geladene Stände vergessen: ein neues Einrichten ohne Neustart beginnt leer.
-    for key in (DATA_ACTIVITY, DATA_TYPE_OVERRIDES, DATA_DEVICE_SETTINGS, DATA_CONNECTION_OVERRIDES, update_check.PANEL_DATA_KEY):
+    for key in (DATA_ACTIVITY, DATA_TYPE_OVERRIDES, DATA_DEVICE_SETTINGS, DATA_CONNECTION_OVERRIDES, AI_MEMORY_DATA_KEY, update_check.PANEL_DATA_KEY):
         hass.data.pop(key, None)
 
 
@@ -905,6 +906,14 @@ async def _ws_ai_assess(
     connection.send_result(msg["id"], result)
 
 
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/ai_last", vol.Required("device_id"): str})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_ai_last(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Die gemerkte letzte KI-Einschätzung eines Geräts (Pop-up beim Öffnen); None, wenn es keine gibt. Fragt die KI nicht."""
+    connection.send_result(msg["id"], await async_last(hass, msg["device_id"]))
+
+
 @websocket_api.websocket_command(
     {
         vol.Required("type"): f"{DOMAIN}/ai_prompt_preview",
@@ -1055,6 +1064,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     hass.data[DATA_WS_REGISTERED] = True
     websocket_api.async_register_command(hass, _ws_list_devices)
     websocket_api.async_register_command(hass, _ws_ai_assess)
+    websocket_api.async_register_command(hass, _ws_ai_last)
     websocket_api.async_register_command(hass, _ws_ai_prompt_preview)
     websocket_api.async_register_command(hass, _ws_device)
     websocket_api.async_register_command(hass, _ws_availability)

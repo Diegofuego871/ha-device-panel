@@ -1019,12 +1019,16 @@
         if (mode === "object") throw 3;
         const task = window.__opts.ai_task_entity;
         const source = (window.__aiTasks || [{ value: "ai_task.openai", name: "OpenAI" }, { value: "ai_task.lokal", name: "Lokales Modell" }]).find((x) => x.value === task)?.name || "OpenAI";
-        return {
+        const answer = {
           title: msg.language === "de" ? "Wahrscheinlich Empfang" : "Probably reception",
           text: msg.language === "de" ? "Der Melder hatte heute kurze Unterbrüche und schwachen Empfang. Ein Router in der Nähe dürfte helfen." : "The sensor had short interruptions today and weak reception. A router nearby should help.",
           source, at: new Date().toISOString(),
         };
+        // Wie ai_memory: die letzte Einschätzung je Gerät bleibt (ai_last)
+        (window.__aiLast ||= {})[msg.device_id] = answer;
+        return answer;
       }
+      if (msg.type === "device_panel/ai_last") return window.__opts.ai_assessment ? window.__aiLast?.[msg.device_id] || null : null;
       if (msg.type === "device_panel/ai_prompt_preview") {
         // Wie ai_assessment.async_preview: schickt nichts, ersetzt {language} und {facts}.
         const dev = window.__devices.find((x) => x.id === msg.device_id);

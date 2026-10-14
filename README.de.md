@@ -213,6 +213,7 @@ Standardmässig aus. Auf Knopfdruck fragt das Panel eine KI-Aufgabe von Home Ass
 
 - **Profi-Modus:** der Prompt ist anpassbar, mit Gruppen von Fakten wie `{facts_area}` und `{facts_hub}`, und eine Vorschau zeigt den genauen Text
 - **Wenn es scheitert:** das Pop-up zeigt die Meldung der KI-Aufgabe, und das Protokoll hält den Grund fest, so lassen sich Kontingent, Schlüssel oder Modell als Ursache finden; eine leere Antwort bekommt einen zweiten Versuch
+- **Gedächtnis:** die letzte Einschätzung jedes Geräts bleibt gespeichert und erscheint beim Öffnen wieder; die nächste bekommt sie mit, so sagt die KI, was sich geändert hat. Lange Fakten werden auf eine feste Grösse gekürzt.
 - **Fakten:** neben dem Gerät selbst sieht die KI die letzten Ausfälle mit Tageszeit, den Empfang der letzten 24 Stunden und 7 Tage und bei Bluetooth die Empfänger, die das Gerät gehört haben (ohne Adressen); sie weiss auch, ob ein Gerät geladen wird (Staubsauger-Roboter, Handy) oder mit Batterien läuft, und spricht dann über Ladegewohnheiten statt über Batterie-Laufzeit
 - **Ohne KI:** das Panel nennt die vermutete gemeinsame Ursache von Sammelausfällen und rechnet die Batterie-Prognose selbst
 

@@ -426,17 +426,18 @@ async def test_extras_week_and_forecast(hass: HomeAssistant, setup) -> None:
     result = await async_list_devices(hass, log)
     device = next(d for d in result["devices"] if d["id"] == dev.id)
     extra = await ai_assessment._extras(hass, device, log, time.time())
-    assert set(extra) == {"week", "recent_outages", "rechargeable", "forecast", "battery_year"} and extra["forecast"]["status"] in {"none", "short"}
+    assert {"week", "recent_outages", "rechargeable", "forecast", "battery_year", "entities", "home_assistant_started_minutes_ago"} <= set(extra) and extra["forecast"]["status"] in {"none", "short"}
     # Ohne Batterie keine Prognose
     plain = {**device, "has_battery": False}
-    assert set(await ai_assessment._extras(hass, plain, log, time.time())) == {"week", "recent_outages"}
+    assert {"week", "recent_outages"} <= set(await ai_assessment._extras(hass, plain, log, time.time()))
+    assert "forecast" not in await ai_assessment._extras(hass, plain, log, time.time())
 
 
 def test_group_placeholders_are_valid_and_alone_enough() -> None:
     """1.7.0: Gruppen statt {facts}; mindestens eine von beiden, sonst no_facts."""
     from custom_components.device_panel.ai_prompt import FACT_GROUPS  # noqa: PLC0415
 
-    assert set(FACT_GROUPS) == {"device", "history", "battery", "signal", "integration", "area", "hub", "model"}
+    assert set(FACT_GROUPS) == {"device", "history", "previous", "battery", "signal", "integration", "area", "hub", "model"}
     assert prompt_problem("Antwort in {language}.\n{facts_device}\n{facts_area}") is None
     assert prompt_problem("Nur {facts_hub}") is None
     assert prompt_problem("Antwort in {language}, ohne Fakten") == "no_facts"

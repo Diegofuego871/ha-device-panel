@@ -29,15 +29,16 @@ PLACEHOLDER_FACTS = "{facts}"
 FACT_GROUPS: dict[str, tuple[str, ...]] = {
     "device": (
         "name", "status", "type", "area", "integration", "manufacturer", "model", "software_version",
-        "connection_type", "connected_via", "update_available", "offline_for_minutes", "offline_start_is_lower_bound",
+        "connection_type", "connected_via", "update_available", "offline_for_minutes", "offline_start_is_lower_bound", "entities",
     ),
-    "history": ("last_24h", "last_7d", "recent_outages_7d", "mass_outages_24h_involving_this_device"),
+    "history": ("last_24h", "last_7d", "recent_outages_7d", "mass_outages_24h_involving_this_device", "home_assistant_started_minutes_ago"),
+    "previous": ("previous_assessment",),
     "battery": (
         "battery_powered", "battery_percent", "battery_low", "battery_kind", "battery_kind_reason", "charging_now", "battery_forecast",
-        "battery_last_12_months",
+        "battery_last_12_months", "battery_sensor_glitches_7d",
     ),
     "signal": ("signal", "bluetooth_receivers_24h"),
-    "integration": ("same_integration_other_devices", "same_integration_offline_devices"),
+    "integration": ("integration_problem", "same_integration_other_devices", "same_integration_offline_devices"),
     "area": ("same_area_other_devices", "same_area_same_connection", "same_area_devices"),
     "hub": ("hub_online", "same_hub_other_devices", "same_hub_offline_devices"),
     "model": ("same_model_other_devices",),
@@ -89,6 +90,18 @@ DEFAULT_PROMPT = (
     "with days_ago and the level before and after. For a device that is charged (not fitted with new batteries) the "
     "rises are given as battery_charges and recent_charges instead: call them charges, never a battery change.\n"
     "- mass_outages_24h_involving_this_device: several devices went offline at almost the same time.\n"
+    "- integration_problem: the integration of the device is not running (setup_retry, setup_error, not_loaded and similar). "
+    "That alone explains an outage of all its devices: name it first.\n"
+    "- entities: how many entities of the device exist and how many are unavailable. All unavailable means the device or its "
+    "connection is gone, a few unavailable a partial problem (one sensor, a sub-function).\n"
+    "- home_assistant_started_minutes_ago: minutes since Home Assistant started. An outage that began right after the start "
+    "often belongs to the restart (devices reconnect slowly), not to the device.\n"
+    "- battery_sensor_glitches_7d: how often the battery sensor reported an impossible value (for example 76 % to 2 % within "
+    "minutes) that the panel discarded. battery_percent is the trusted level. Do not read such values as real drops; "
+    "a sensor that does this is unreliable, say so.\n"
+    "- previous_assessment: your own earlier answer for this device (minutes_ago, headline, text, device_status_then). "
+    "Check whether it still holds: say what has changed since (status, signal, battery, new outages) and what has not; "
+    "do not repeat it blindly, and do not treat it as a fact about the device, it was only an assessment.\n"
     "- recent_outages_7d: the latest outages, newest first, with how long ago, duration, local start time and weekday. "
     "The same time of day or weekday points to a schedule (a router reboot, a timer, interference, a nightly job), "
     "very different times to a fault of the device or its connection.\n"

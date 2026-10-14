@@ -213,6 +213,7 @@ Off by default. On a button press the panel asks an AI task of Home Assistant fo
 
 - **Expert mode:** the prompt is adjustable, with groups of facts such as `{facts_area}` and `{facts_hub}`, and a preview shows the exact text
 - **When it fails:** the pop-up shows the message of the AI task, and the log records the reason, so a quota, key or model problem can be found; an empty answer gets a second try
+- **Memory:** the last assessment of each device is kept and shown again when you open the device; the next assessment gets it, so the AI says what has changed. Long facts are trimmed to a fixed size.
 - **Facts:** besides the device itself the AI sees the latest outages with time of day, the signal of the last 24 hours and 7 days, and for Bluetooth the receivers that heard the device (without addresses); it also knows whether a device is charged (robot vacuum, phone) or runs on batteries and talks about charging habits instead of battery life
 - **Without AI:** the panel names the likely common cause of group outages and calculates the battery forecast by itself
 

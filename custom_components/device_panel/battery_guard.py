@@ -50,7 +50,7 @@ def suspicious(previous: float, level: float, seconds: float) -> bool:
 
 
 class _Entry:
-    __slots__ = ("level", "at", "pending", "since", "seen", "stamp")
+    __slots__ = ("level", "at", "pending", "since", "seen", "stamp", "ignored")
 
     def __init__(self, level: float, at: float, stamp: Any) -> None:
         self.level = level  # letzter glaubwürdiger Stand
@@ -59,6 +59,7 @@ class _Entry:
         self.since = 0.0
         self.seen = 0
         self.stamp = stamp  # zuletzt verarbeiteter Zustand (last_updated): jede Meldung nur einmal
+        self.ignored: list[float] = []  # Zeitpunkte verworfener Messfehler (für die Fakten der KI, seit 2.45.0)
 
 
 class BatteryGuard:
@@ -106,8 +107,15 @@ class BatteryGuard:
             return
         if entry.pending is not None and value >= entry.level - RECOVER:
             activity.record(self.hass, "info", "battery", "bat_spike_ignored", _name(state), level=round(entry.pending), now_level=round(value))
+            entry.ignored = [*entry.ignored[-19:], now]
         entry.pending, entry.seen = None, 0
         entry.level, entry.at = value, now
+
+    def ignored(self, entity_id: str, now: float | None = None, seconds: float = 7 * 86400) -> int:
+        """Wie viele Messfehler des Sensors wurden in den letzten seconds Sekunden verworfen (Wiederanlauf: nur seit dem Start)?"""
+        now = now if now is not None else time.time()
+        entry = self._entries.get(entity_id)
+        return sum(1 for at in entry.ignored if now - at <= seconds) if entry else 0
 
     def _hold_expired(self, entity_id: str, state: Any, entry: _Entry, now: float) -> None:
         if entry.pending is not None and now - entry.since >= HOLD_SECONDS:

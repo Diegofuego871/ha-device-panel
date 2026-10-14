@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.45.0] - 2026-10-14
+
+KI-Einschätzung: kürzere Prompts, mehr Zusammenhang, die letzte Antwort fliesst ein, Messfehler werden markiert.
+
+### Hinzugefügt
+
+- KI-Einschätzung: Das Panel merkt sich die letzte Einschätzung jedes Geräts (bleibt über Neustarts, höchstens 150 Geräte, 30 Tage). Das Pop-up zeigt sie beim Öffnen des Geräts wieder, ohne die KI zu fragen, und die nächste Einschätzung bekommt sie als Fakt `previous_assessment` mit (wie lange her, Überschrift, Text, Status damals). Der Standard-Prompt sagt der KI, zu prüfen, was sich seither geändert hat, und sich nicht blind zu wiederholen. Ein selbst bearbeiteter Prompt kann sie über die neue Gruppe `{facts_previous}` oder `{facts}` nutzen. Die gemerkten Texte werden beim Entfernen der Integration gelöscht.
+- KI-Einschätzung: mehr Zusammenhang, wo es Daten gibt: `integration_problem` (die Integration läuft nicht: setup_retry, setup_error und ähnlich, das erklärt einen Ausfall allein), `entities` (wie viele Entitäten das Gerät hat und wie viele nicht verfügbar sind), `home_assistant_started_minutes_ago` (ein Ausfall kurz nach einem Neustart gehört oft zum Neustart) und `battery_sensor_glitches_7d` (wie oft der Batterie-Sensor einen unmöglichen Wert meldete, den das Panel verworfen hat; die KI soll ihn nicht als echten Abfall lesen und einen solchen Sensor unzuverlässig nennen).
+
+### Geändert
+
+- KI-Einschätzung: Die ganze Anweisung ist auf 18000 Zeichen begrenzt (etwa 4500 Token). Längere Fakten werden vom Unwichtigsten her gekürzt: die Listen anderer Geräte im Bereich, der ausgefallenen Geräte der Integration und des Hubs, danach die Monate des Batterie-Verlaufs; alles zum Gerät selbst bleibt. Das Protokoll (Kategorie System) sagt, was gekürzt wurde.
+
 ## [2.44.0] - 2026-10-14
 
 KI-Einschätzung: Geräte, die geladen werden, werden erkannt.
@@ -3304,6 +3317,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.45.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.45.0
 [2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0
 [2.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.43.0
 [2.41.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.41.2
