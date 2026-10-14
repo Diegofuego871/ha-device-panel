@@ -2,99 +2,254 @@
 
 [English](README.md)
 
-**Alle Geräte von Home Assistant auf einen Blick:** wer gerade ausgefallen ist, wie oft und wie lange Geräte ausfallen, wie voll die Batterien sind und wie gut der Empfang ist.
+**Alle Geräte von Home Assistant auf einen Blick:** wer gerade ausgefallen ist, wie oft und wie lange Geräte ausfallen, wie voll die Batterien sind, wie gut der Empfang ist, und Meldungen, die du an einem Ort steuerst.
 
 <p align="center"><img src="docs/screenshots/de/overview.png" alt="Übersicht mit Verfügbarkeit, ausgefallenen Geräten, Ausfall-Puls und Geräteliste" width="900"></p>
 
-## Das bekommst du
+## Die wichtigsten Funktionen
 
-- **Übersicht:** wie viele Geräte online sind, wer seit wann ausgefallen ist, ein Ausfall-Puls über 24 Stunden mit Sammelausfällen
-- **Geräteliste** nach ausgefallen, instabil und online gruppiert, mit Suche, Filtern nach Bereich und Integration, Filter-Chips (auch ein Favoriten-Herz) und eigenen Spalten; in den Einstellungen unter "Ansicht" lässt sich das Panel zu deiner eigenen Startseite in Home Assistant machen (Browser und Companion-App)
-- **Pro Gerät:** Verfügbarkeit, Unterbrüche, Empfang und Batterie im Popup, mit Verlauf und Statistik
-- **Meldungen unter deiner Kontrolle:** Ausfall, wieder online, schwache Batterie und neue Geräte als Push (jeder Titel beginnt mit einem passenden Emoji) oder anhaltende Benachrichtigung, pro Integration; ein Push zeigt das Icon seiner Integration und ein Emoji, das du pro Meldung ändern kannst; jeder Reiter (Ausfall, Batterie, Laden, Neu, Updates) kann an einen eigenen Empfänger senden, standardmässig das globale Ziel
-- **Magic Push:** eigene Meldungen pro Gerät ohne Automation: Wert wählen, sagen wann (über, unter, ist, ändert sich, auf Wunsch mehrere mit Und/Oder und Gruppen verknüpfte Bedingungen, wie lange, wie lange es wieder normal sein muss, bevor zurückgesetzt wird, und wo jede zurückgesetzt wird), den Empfänger wählen (auf Wunsch als kritische Mitteilung mit Lautstärke) und die Wiederholung, Titel und Inhalt mit passenden Variablen schreiben und vor dem Speichern eine Vorschau und einen Rückblick auf die letzten 24 Stunden sehen; der Assistent öffnet in einem eigenen Fenster (auf dem Handy als Vollbild), Meldungen im Reiter "Magic Push" des Geräts benennen, umbenennen und löschen, als Wert dient auf Wunsch jede Entität von Home Assistant, und eine Übersicht in den Einstellungen listet alle Meldungen aller Geräte in einer Karte pro Gerät, mit Suche und Filter
-- **Timer:** eine Entität eines Geräts einmalig oder nach Plan schalten, ohne Automation: Entität und Aktion wählen (ein, aus, umschalten), auf Wunsch nach einer Weile zurückschalten, und sagen wann (in X Minuten, einmal an einem Datum mit Uhrzeit oder wiederholt täglich, wöchentlich an gewählten Wochentagen oder monatlich), vor dem Speichern mit einem Testknopf "Jetzt ausführen" für den gewählten Schaltvorgang und Prüfung der nächsten Ausführungen; auf Wunsch eine Push-Erinnerung in dem Moment, in dem geschaltet wird (fester Inhalt mit Vorschau, Empfänger pro Timer wählbar, Standard ist ein Empfänger für alle Timer in den Timer-Einstellungen, sonst das Push-Ziel der Einstellungen); die Steuerung läuft in Home Assistant mit dessen Zeitzone, ein Timer schaltet also auch bei geschlossenem Panel und nach einem Neustart (innerhalb eines Nachhol-Fensters, das du einstellst); der Assistent öffnet in einem eigenen Fenster (auf dem Handy als Vollbild), die Timer eines Geräts stehen im Reiter "Timer", und die App "Timer" im Launcher (als Favorit ein Stoppuhr-Knopf in der Kopfzeile) öffnet eine Übersicht aller Timer in einer Karte pro Gerät (Popup auf dem Desktop, Vollbild auf dem Handy), mit Suche und Filter (bearbeiten, ein-/ausschalten, löschen; ein Herz markiert Lieblings-Timer, die einen eigenen Reiter bekommen; ein "+"-Knopf dort fügt einen Timer hinzu, das Gerät wählst du zuerst)
-- **Laden und Updates:** Filter-Chip "Lädt" mit grüner Markierung und Ladebalken (mit dem Ziel, wenn "Voll ab" unter 100 % liegt) für Geräte, die gerade laden (ohne eigene Ladeanzeige nur, wenn die Lademeldung für das Gerät eingeschaltet ist), optional ein Push, wenn ein Gerät voll geladen ist oder die Ladung vorzeitig endet, und auf Wunsch eine Live-Aktivität (iPhone) bzw. ein Live-Update (Android 16) mit dem Ladefortschritt bis zum Ziel des Geräts (stille Updates, standardmässig aus), und eine Update-Erinnerung (täglich, wöchentlich oder sofort), die eigene Automationen ersetzt; beides standardmässig aus; die Update-Erinnerung lässt sich pro App, pro Integration und pro Firmware einstellen
-- **App-Launcher:** ein Knopf in der Kopfzeile öffnet einen Launcher (mit den Symbolen und Farben der Einstellungen von Home Assistant) mit nützlichen Seiten: die Timer, Magic Push und das Protokoll dieser Integration, Seiten von Home Assistant (Automationen, Szenen, Skripte, Helfer, Geräte, Werkzeuge und mehr; die Verwaltungsseiten nur für Administratoren) und eigene Links, im Bearbeiten-Modus angelegt (eine Seite in Home Assistant oder ein externer Link, der immer in einem neuen Browser-Tab öffnet, auf Wunsch mit seinem Favicon als Symbol). Ein Herz markiert bis zu fünf Favoriten, die eigene Knöpfe in der Kopfzeile bekommen (am Handy nur der erste); der Bearbeiten-Modus sortiert durch Ziehen, blendet Apps mit dem Auge aus und wechselt zwischen Raster und Liste. Alles wird pro Benutzer gespeichert
-- **Protokoll:** der Launcher öffnet ein Protokoll (gross auf dem Desktop, vollflächig auf dem Handy), das zeigt, was die Meldungen entscheiden und warum eine nicht kam, mit Filter, Suche und einem zuschaltbaren Debug-Modus (48 Stunden lang eingeschaltet, auch über Neustarts von Home Assistant)
-- **Batterie-Prognose:** wie lange die Batterie bis zur Warnschwelle hält, ohne KI
-- **Meldungen:** Push und anhaltende Benachrichtigung bei Ausfällen und schwacher Batterie, mit Zeitstrahl, wann was ankommt; Standard pro Integration, Ausnahmen pro Gerät
-- **Optionale KI-Einschätzung:** eine Vermutung zur Ursache auf Knopfdruck, der Prompt ist im Profi-Modus anpassbar
-- **Einstellungen im Panel,** auch Updates über HACS, auf Deutsch und Englisch; dieselben Reiter (Ausfall, Batterie, Laden, Neu, Empfang) in den globalen Einstellungen, in jeder Integration und an jedem Gerät
-- **Handy und Desktop,** die Ansicht wird pro Benutzer gespeichert
+- **Alles auf einen Blick:** Geräte online, wer ausgefallen ist und seit wann, instabile Geräte, ein Ausfall-Puls über 24 Stunden mit Sammelausfällen und eine Liste, die du durchsuchen, filtern und sortieren kannst
+- **Verfügbarkeit pro Gerät:** Statistik für 24 Stunden, 7 und 30 Tage mit jedem Ausfall und seiner Dauer, 31 Tage in einem eigenen Protokoll, auch über Neustarts
+- **Batterie-Übersicht mit Meldungen:** ein farbiges Batteriesymbol bei jedem Gerät, eine Warnschwelle (Standard 15 %), Push oder anhaltende Benachrichtigung, ein Verlauf bis 12 Monate mit Prognose, wie lange die Batterie hält, und eine Meldung, wenn ein Gerät voll geladen ist
+- **Empfangs-Übersicht mit Warnungen:** Empfang in dBm oder LQI bei jedem Gerät, eine Warnschwelle pro Verbindungsart, ein Verlauf mit Median und Spanne, und bei Bluetooth der Empfänger (Adapter oder Proxy), über den ein Gerät verbunden ist oder war
+- **Meldungen auf drei Ebenen:** einmal eine Vorgabe setzen, pro Integration ändern, auf einem einzelnen Gerät überschreiben; jede Einstellung zeigt, woher ihr Wert stammt (Grafik unten)
+- **Magic Push:** eigene Meldungen pro Gerät ohne Automation: einen Wert wählen, sagen, wann gemeldet wird, den Text schreiben, fertig
+- **Timer:** eine Entität eines Geräts einmalig oder nach Zeitplan schalten, ohne Automation, mit Testknopf und Vorschau der nächsten Ausführungen
+- **Laden und Updates:** Chip "Lädt" mit Ladebalken, Push, wenn ein Gerät voll ist, Live-Aktivität (iPhone) oder Live-Update (Android 16) und eine Update-Erinnerung, die deine eigenen Automationen ersetzt
+- **Neue Geräte:** eine Markierung "Neu" und ein Chip für drei Tage, dazu ein optionaler Push mit allen neu erschienenen Geräten
+- **App-Launcher und Protokoll:** ein Knopf für nützliche Seiten von Home Assistant und eigene Links, dazu ein Protokoll, das zeigt, was die Meldungen entscheiden und warum eine nicht kam
+- **Optionale KI-Einschätzung:** eine Vermutung zur Ursache auf Knopfdruck, nur mit einer KI-Aufgabe von Home Assistant
+- **Ganz deine Ansicht:** Spalten, Sortierung, Filter, Favoriten und Startseite werden pro Benutzer gespeichert, auf Handy und Desktop
+- **Alles im Panel:** alle Einstellungen, Updates über HACS (auch automatisch), Deutsch und Englisch
 
-## Bilder
+## Übersicht und Geräteliste
+
+Oben steht, wie viele Geräte online sind, wer gerade ausgefallen ist, und der Ausfall-Puls. Darunter ist die Liste in ausgefallene, instabile und online Geräte gegliedert. Jede Zeile zeigt Status, Verbindung, Verfügbarkeit der letzten 24 Stunden, Gerätetyp, Integration, Batterie, Hersteller und Software. Typ und Verbindungsart (Zigbee, Thread, Z-Wave, Matter, Bluetooth, WLAN, Ethernet, Netzwerk, Cloud) werden automatisch erkannt und lassen sich pro Integration oder pro Gerät korrigieren.
 
 ### Ausfälle auf einen Blick
 
-Ausgefallene Geräte mit der Zeit, seit der sie fehlen, instabile Geräte und der Ausfall-Puls. Ein Tipp auf den Puls listet die Geräte mit Unterbrüchen, ein Punkt im Puls zeigt, wer dann weg war.
+Ausgefallene Geräte mit der Zeit, seit der sie weg sind, instabile Geräte (drei oder mehr Ausfälle in 24 Stunden) und der Ausfall-Puls. Ein Tipp auf den Puls listet die Geräte mit Ausfällen, ein Punkt im Puls zeigt, wer damals weg war. Fallen drei oder mehr Geräte gleichzeitig aus, nennt das Panel die vermutete gemeinsame Ursache, zum Beispiel die Integration oder ihren Hub.
 
-<p align="center"><img src="docs/screenshots/de/pulse.png" alt="Fenster mit dem Ausfall-Puls und den Geräten mit Unterbrüchen in 24 Stunden" width="720"></p>
+<p align="center"><img src="docs/screenshots/de/pulse.png" alt="Fenster mit dem Ausfall-Puls und den Geräten mit Ausfällen in 24 Stunden" width="720"></p>
 
-### Alles zu einem Gerät
+### Suchen, filtern, sortieren
 
-Verfügbarkeit, Unterbrüche, Empfang und Batterie als Kacheln, dazu Verbindung, Integration, Hersteller, Modell, Software und alle Entitäten. Typ und Verbindungsart lassen sich hier korrigieren (oder einmal pro Integration in den Einstellungen festlegen), und das Gerät lässt sich umbenennen (in Home Assistant, Entitäts-IDs bleiben).
+Die Suche läuft über alle Spalten. Filter-Chips grenzen die Liste ein: Warnungen, ausgefallen, Batterie, lädt, neue Geräte, Geräte mit eigenen Einstellungen, Favoriten, jede Verbindungsart, dazu ein Bereichs- und ein Integrationsfilter, die sich mit den Chips kombinieren lassen. Ausgeblendete Geräte, Integrationen und Gerätetypen werden weder gezeigt noch überwacht.
 
-<p align="center"><img src="docs/screenshots/de/popup.png" alt="Geräte-Popup mit Statistik, Verbindung und Gerätedaten" width="720"></p>
-
-### Verlauf: Verfügbarkeit, Empfang, Batterie
-
-| Verfügbarkeit | Empfang | Batterie mit Prognose |
+| Warnungen | Batterie | Bereichsfilter |
 |---|---|---|
-| <img src="docs/screenshots/de/availability.png" alt="Verfügbarkeit über 7 Tage mit jedem Unterbruch"> | <img src="docs/screenshots/de/signal.png" alt="Empfangsverlauf mit Median, Spanne und Warnschwelle"> | <img src="docs/screenshots/de/battery.png" alt="Batterie-Verlauf mit Batteriewechsel, Warnschwelle und Prognose"> |
+| <img src="docs/screenshots/de/warnings.png" alt="Liste gefiltert mit dem Chip Warnungen"> | <img src="docs/screenshots/de/batteries.png" alt="Liste gefiltert mit dem Chip Batterie"> | <img src="docs/screenshots/de/area.png" alt="Bereichsfilter mit Etagen und Bereichen"> |
 
-Die Prognose rechnet ab dem letzten Batteriewechsel (höchstens ein Jahr) bis zur Warnschwelle des Geräts und sagt, wie sicher sie ist.
+| Lädt | Neue Geräte |
+|---|---|
+| <img src="docs/screenshots/de/charging.png" alt="Liste gefiltert mit dem Chip Lädt, mit Ladebalken"> | <img src="docs/screenshots/de/new.png" alt="Liste gefiltert mit dem Chip Neu"> |
+
+### Deine eigene Ansicht
+
+Der Knopf "Spalten" öffnet einen Dialog: Spalten mit dem Auge ein- oder ausblenden, per Ziehen in jede Reihenfolge bringen, die Liste gruppieren oder als eine Liste zeigen. Spalten und Reihenfolge werden für Desktop und Handy getrennt gespeichert. Ein Herz markiert Favoriten (eigener Chip), Chips lassen sich ausblenden, umordnen und anheften, und in den Einstellungen unter "Ansicht" machst du das Panel zu deiner eigenen Startseite in Home Assistant (Browser und Companion-App).
+
+<p align="center"><img src="docs/screenshots/de/columns.png" alt="Dialog Anpassen mit Auge und Griff" width="560"></p>
+
+## Alles zu einem Gerät
+
+Ein Tipp auf ein Gerät öffnet ein Pop-up mit Verfügbarkeit, Ausfällen, Empfang und Batterie als Kacheln, dazu Verbindung, Integration, Hersteller, Modell, Software und alle Entitäten. Das Gerät lässt sich umbenennen (in Home Assistant, die Entitäts-IDs bleiben), als Favorit markieren, ausblenden und auf seiner Seite in Home Assistant öffnen. Eine Warnung nennt ihren Grund im Kopf.
+
+<p align="center"><img src="docs/screenshots/de/popup.png" alt="Geräte-Pop-up mit Statistik, Verbindung und Gerätedetails" width="720"></p>
+
+### Statistik und Verlauf
+
+Jede Kachel öffnet ein Fenster mit 24 Stunden, 7 oder 30 Tagen. Die Verfügbarkeit zeigt jeden Ausfall mit Beginn, Ende und Dauer und die Ausfälle pro Tag.
+
+<p align="center"><img src="docs/screenshots/de/availability.png" alt="Verfügbarkeit über 7 Tage mit jedem Ausfall" width="560"></p>
+
+### Empfang und Bluetooth-Weg
+
+Der Empfangsverlauf zeigt den Median als Linie und die Spanne vom schlechtesten bis zum besten Wert als Fläche, dazu die Warnschwelle des Geräts. Er kommt aus dem Recorder oder, bei ZHA, Bluetooth und nicht aufgezeichneten Sensoren, vom Panel selbst. Bluetooth-Geräte bekommen zusätzlich den Abschnitt "Verbunden über": Ein Balken zeigt, über welchen Empfänger (Bluetooth-Adapter oder Proxy) das Gerät gehört wurde, Lücken sind schraffiert, und eine Legende nennt Anteil und mittleren Empfang je Empfänger sowie die letzten Wechsel. Den Weg zeichnet das Panel selbst auf, ab dem Update.
+
+| Empfangsverlauf | Verbunden über (Bluetooth) |
+|---|---|
+| <img src="docs/screenshots/de/signal.png" alt="Empfangsverlauf mit Median, Spanne und Warnschwelle"> | <img src="docs/screenshots/de/signal-via.png" alt="Abschnitt Verbunden über mit Empfängern, Anteil und Wechseln"> |
+
+### Batterie mit Prognose
+
+Der Batterie-Verlauf reicht bis zu 12 Monate zurück, mit markiertem Batteriewechsel. Die Prognose rechnet vom letzten Batteriewechsel (höchstens ein Jahr) bis zur Warnschwelle des Geräts und sagt, wie sicher sie ist.
+
+<p align="center"><img src="docs/screenshots/de/battery.png" alt="Batterie-Verlauf mit Batteriewechsel, Warnschwelle und Prognose" width="560"></p>
 
 ### Einstellungen pro Gerät
 
-Jedes Gerät kann im Reiter "Einstellungen" seines Popups die Standardwerte übersteuern: eine eigene "Ausgefallen nach"-Zeit (oder keine Überwachung), eine eigene Batterie-Warnschwelle, eine eigene Empfang-Warnung sowie Ausfall- und Online-Meldungen aus oder für 24 Stunden stumm, etwa bei einem Ladegerät, das oft absichtlich offline ist. Jede Zeile zeigt, woher der Wert kommt und was der Standard wäre. Ein Symbol neben dem Namen in der Liste zeigt Geräte mit eigenen Einstellungen.
+Jedes Gerät kann die Vorgaben im Reiter "Einstellungen" seines Pop-ups überschreiben: eine eigene "Ausgefallen nach"-Zeit (oder keine Überwachung), Batterie-Warnung, Empfang-Warnung, Laden und Ausfall- und Online-Meldungen ausgeschaltet. Jede Zeile zeigt, woher der Wert stammt und wie der Standard wäre. Ein Symbol neben dem Namen in der Liste markiert Geräte mit eigenen Einstellungen.
 
-<p align="center"><img src="docs/screenshots/de/device-settings.png" alt="Geräte-Popup: Einstellungen für dieses Gerät mit eigener Zeit, eigener Batterie-Warnschwelle und ausgeschalteten Meldungen" width="720"></p>
+<p align="center"><img src="docs/screenshots/de/device-settings.png" alt="Geräte-Pop-up: Einstellungen für dieses Gerät mit eigener Zeit, eigener Batterie-Warnschwelle und Meldungen aus" width="720"></p>
 
-### Meldungen unter deiner Kontrolle
+## Meldungen
 
-| Übersicht als Zeitstrahl | Einstellungen pro Integration |
-|---|---|
-| <img src="docs/screenshots/de/settings-monitor.png" alt="Einstellungen: Zeitstrahl, wann ein Gerät als ausgefallen gilt und wann der Push kommt"> | <img src="docs/screenshots/de/settings-integrations.png" alt="Einstellungen: Liste der Integrationen mit den Abweichungen vom Standard"> |
+Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgabe, änderst sie für alle Geräte einer Integration und überschreibst sie bei Bedarf auf einem einzelnen Gerät. Die genauere Ebene gewinnt.
 
-### KI-Einschätzung (optional, standardmässig aus)
+### Das Prinzip
 
-| Antwort im Popup | Profi-Modus: Prompt |
-|---|---|
-| <img src="docs/screenshots/de/ai.png" alt="Geräte-Popup mit der KI-Einschätzung"> | <img src="docs/screenshots/de/settings-ai.png" alt="Einstellungen mit dem Prompt im Profi-Modus"> |
+<p align="center"><img src="docs/graphics/de/notification-levels.png" alt="Drei Ebenen Allgemein, Integration und Gerät mit einem Beispiel und einer Tabelle, was sich wo einstellen lässt" width="900"></p>
 
-Nur auf Knopfdruck, mit einer KI-Aufgabe von Home Assistant: Die Funktion lässt sich erst einschalten, wenn in Home Assistant unter "KI-Vorschläge" eine KI-Aufgabe gewählt ist (der Link dorthin steht in den Einstellungen). Es gehen keine Schlüssel, Zugangsdaten oder IDs raus. Im Prompt lassen sich Gruppen der Fakten wie `{facts_area}` und `{facts_hub}` nutzen, eine Vorschau zeigt den genauen Text.
+- **Allgemein:** in den Einstellungen unter "Überwachung und Meldungen", die Vorgabe für alle Geräte
+- **Integration:** am selben Ort, Reiter "Integrationen": eine Liste aller Integrationen mit dem, was von der Vorgabe abweicht, und eine Detailseite pro Integration mit eigenen Reitern
+- **Gerät:** im Pop-up des Geräts, Reiter "Einstellungen": nur dieses Gerät, mit der Herkunft jedes Werts
+- **Herkunft:** jede Einstellung sagt, woher sie stammt (Standard, Integration oder Gerät), und ein Chip "Eigene Einstellung" filtert Geräte mit eigenen Werten; in den Einstellungen lassen sie sich einzeln oder alle auf einmal zurücksetzen
 
-### Auf dem Handy
+### Vom Ausfall zur Meldung
 
-| Liste | Popup | Batterie |
+<p align="center"><img src="docs/graphics/de/notification-flow.png" alt="Sechs Schritte vom Ausfall eines Geräts bis zur Meldung, mit der Ebene, die jeden Schritt entscheidet" width="900"></p>
+
+- **Zwei Zeiten, nicht addiert:** "Ausgefallen nach" (Standard 2 Minuten) entscheidet, wann das Panel das Gerät als ausgefallen zeigt, "Erst melden nach" entscheidet, wann die Meldung kommt; beide laufen ab Beginn des Ausfalls, und die zweite kann nicht kürzer sein als die erste
+- **Sammelmeldung:** ab drei Geräten gleichzeitig kommt eine Meldung mit der vermuteten Ursache statt vieler
+- **Wieder online:** "Wieder online" mit der Dauer des Ausfalls ersetzt die Ausfall-Meldung
+- **Knöpfe in der Meldung:** das Gerät im Panel öffnen oder das Gerät in der Companion-App 24 Stunden stumm schalten
+- **Anhaltende Benachrichtigung:** auf Wunsch zusätzlich eine Meldung in Home Assistant, solange Geräte ausgefallen sind, pro Integration
+
+### Wohin die Meldung geht
+
+<p align="center"><img src="docs/graphics/de/notification-targets.png" alt="Ein Push-Ziel für alles, ein eigenes Ziel pro Reiter, Magic Push und Timer wählen ihren Empfänger selbst" width="900"></p>
+
+- **Ein Push-Ziel:** ein Notify-Dienst, eine Gruppe oder eine Notify-Entität für alle Meldungen
+- **Eigenes Ziel pro Reiter:** Ausfall, Batterie, Laden, Neue Geräte, Updates, Panel-Updates und Timer können je an einen anderen Empfänger senden
+- **Aussehen:** jede Meldung zeigt das Symbol ihrer Integration und ein Emoji, das du pro Art ändern kannst; jeder Titel beginnt mit einem passenden Emoji
+
+### Die Arten von Meldungen
+
+Jede Art hat in den Einstellungen einen eigenen Reiter. Ausfall, Batterie, Laden, Neue Geräte und Empfang sind auch Reiter jeder Integration, und Ausfall, Batterie, Laden und Empfang Reiter jedes Geräts, damit die drei Ebenen für jede davon gelten.
+
+| Ausfall | Batterie | Laden |
 |---|---|---|
-| <img src="docs/screenshots/de/overview-mobile.png" alt="Handy: Karten" width="260"> | <img src="docs/screenshots/de/popup-mobile.png" alt="Handy: Popup" width="260"> | <img src="docs/screenshots/de/battery-mobile.png" alt="Handy: Batterie-Verlauf" width="260"> |
+| <img src="docs/screenshots/de/settings-outage.png" alt="Reiter Ausfall: Ausgefallen nach, Erst melden nach, Erkennung und Meldung"> | <img src="docs/screenshots/de/settings-battery.png" alt="Reiter Batterie: Warnschwelle und Push"> | <img src="docs/screenshots/de/settings-charge.png" alt="Reiter Laden: Anstieg, Voll ab, Meldung und Live-Aktivität"> |
+
+| Neu | Updates | Empfang |
+|---|---|---|
+| <img src="docs/screenshots/de/settings-new.png" alt="Reiter Neu: Sammelfenster und Inhalt"> | <img src="docs/screenshots/de/settings-updates.png" alt="Reiter Updates: Update-Erinnerung"> | <img src="docs/screenshots/de/settings-sig.png" alt="Reiter Empfang: Warnschwelle pro Verbindungsart"> |
+
+- **Ausfall und wieder online:** Push, anhaltende Benachrichtigung und Sammelmeldung, mit Beginn, Dauer, Bereich und Integration
+- **Batterie:** einmal pro Gerät beim Unterschreiten der Schwelle (Standard 15 %, von 1 bis 50 %), sofort oder als tägliche Sammelmeldung, mit einer anhaltenden Benachrichtigung aller betroffenen Geräte
+- **Laden:** Push, wenn ein Gerät voll geladen ist ("Voll ab", Standard 100 %) oder die Ladung vorzeitig endet, standardmässig aus und nur für wiederaufladbare Geräte; Geräte, die gerade laden, bekommen den Chip "Lädt" mit grüner Markierung und Ladebalken
+- **Live-Aktivität:** auf Wunsch der Ladefortschritt auf dem Sperrbildschirm (iPhone, Live-Aktivität) oder als Live-Update (Android 16), mit leisen Aktualisierungen, standardmässig aus
+- **Neue Geräte:** ein Sammelfenster, dann eine Meldung mit allen neu erschienenen Geräten; das Gerät trägt drei Tage die Markierung "Neu"
+- **Update-Erinnerung:** täglich, wöchentlich oder sofort für Updates von Home Assistant, Add-ons, HACS und Geräte-Firmware, einstellbar pro App, pro Integration und pro Firmware, auf Wunsch wiederholt, solange ein Update offen bleibt; ersetzt zwei selbstgebaute Automationen
+- **Empfang:** eine Warnschwelle pro Verbindungsart, pro Integration und pro Gerät (Standard schwach unter -80 dBm oder LQI 61), auch abschaltbar
+- **Panel-Updates:** ein optionaler Push einmal pro Version, wenn eine neue Version des Panels gefunden oder installiert wird
+
+<p align="center"><img src="docs/screenshots/de/settings-integrations.png" alt="Einstellungen: Liste der Integrationen mit dem, was von den Vorgaben abweicht" width="720"></p>
+
+<p align="center"><img src="docs/screenshots/de/integ-detail.png" alt="Detail einer Integration mit Reitern für Ausfall, Batterie, Laden, Neu, Empfang und Geräte" width="720"></p>
+
+## Magic Push: eigene Meldungen
+
+Eigene Meldungen pro Gerät ohne Automation, im Reiter "Magic Push" des Geräts.
+
+<p align="center"><img src="docs/screenshots/de/magic-tab.png" alt="Reiter Magic Push eines Geräts mit zwei Meldungen" width="560"></p>
+
+- **Jeder Wert:** einen Wert des Geräts wählen oder eine beliebige Entität von Home Assistant, die dem Gerät zugeordnet bleibt
+- **Wann:** über, unter, ist oder ändert sich; mehrere Bedingungen mit Und/Oder und Gruppen verknüpft; wie lange sie gelten muss; wie lange der Wert normal bleiben muss, bevor zurückgesetzt wird, und bei welchem Wert
+- **Empfänger:** jedes Notify-Ziel, auf Wunsch als kritische Mitteilung mit einer Lautstärke von 1 bis 10, und wie oft wiederholt wird
+- **Text:** Titel und Inhalt mit Variablen, die zum Wert passen (Name, Wert, Einheit, Schwelle, Bereich und mehr), mit Vorschau und einem Rückblick auf die letzten 24 Stunden vor dem Speichern
+- **Assistent:** öffnet in einem eigenen Fenster (Vollbild auf dem Handy), fünf Schritte: Bedingungen, wie lange, Versand, Text, Name
+- **Übersicht:** eine Liste in den Einstellungen zeigt alle Meldungen aller Geräte, eine Karte pro Gerät, mit Suche und Filter
+
+<p align="center"><img src="docs/screenshots/de/magic-wizard.png" alt="Magic-Push-Assistent, Schritt 1: Was soll überwacht werden" width="560"></p>
+
+<p align="center"><img src="docs/screenshots/de/settings-magic.png" alt="Einstellungen: alle Magic-Push-Meldungen aller Geräte, eine Karte pro Gerät" width="720"></p>
+
+## Timer
+
+Schaltet eine Entität eines Geräts einmalig oder nach Zeitplan, ohne Automation.
+
+| Timer eines Geräts | Assistent: wann |
+|---|---|
+| <img src="docs/screenshots/de/timer-tab.png" alt="Reiter Timer eines Geräts mit einem Timer"> | <img src="docs/screenshots/de/timer-wizard.png" alt="Timer-Assistent, Schritt 2: Wann soll geschaltet werden"> |
+
+- **Was:** die Entität und die Aktion wählen (ein, aus, umschalten), auf Wunsch nach einer Weile zurückschalten
+- **Wann:** in X Minuten, einmal an einem Datum und zu einer Uhrzeit oder wiederholt täglich, wöchentlich an gewählten Wochentagen oder monatlich, mit einer Prüfung der nächsten Ausführungen vor dem Speichern
+- **Test:** ein Knopf "Jetzt ausführen" probiert den gewählten Schalter aus
+- **Erinnerung:** auf Wunsch ein Push im Moment des Schaltens, mit Vorschau und eigenem Empfänger
+- **Läuft in Home Assistant:** mit dessen Zeitzone, ein Timer löst also auch bei geschlossenem Panel und nach einem Neustart aus (innerhalb eines Nachhol-Fensters, das du festlegst), und "Alle Timer pausieren" ist ein Schalter
+- **Übersicht:** der Timer-Knopf des Launchers öffnet alle Timer in einer Karte pro Gerät, mit Suche und Filter, bearbeiten, ein- oder ausschalten, löschen und Favoriten
+
+<p align="center"><img src="docs/screenshots/de/timers-all.png" alt="Fenster mit allen Timern, eine Karte pro Gerät" width="720"></p>
+
+## App-Launcher und Protokoll
+
+Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den Symbolen und Farben der Einstellungen von Home Assistant.
+
+| App-Launcher | Protokoll |
+|---|---|
+| <img src="docs/screenshots/de/launcher.png" alt="App-Launcher mit Favoriten, Device Panel und Seiten von Home Assistant"> | <img src="docs/screenshots/de/log.png" alt="Protokoll mit Einträgen der Meldungen und einem Filter"> |
+
+- **Seiten:** Timer, Magic Push und das Protokoll dieser Integration, Seiten von Home Assistant (Automationen, Szenen, Skripte, Helfer, Geräte, Entitäten, Integrationen, Werkzeuge und mehr; die Verwaltungsseiten nur für Administratoren)
+- **Eigene Links:** eine Seite in Home Assistant oder ein externer Link, der in einem neuen Browser-Tab öffnet, auf Wunsch mit seinem Favicon als Symbol
+- **Favoriten:** ein Herz markiert bis zu fünf Apps, die eigene Knöpfe in der Kopfzeile bekommen
+- **Bearbeiten-Modus:** per Ziehen sortieren, Apps mit dem Auge ausblenden, Raster oder Liste; alles wird pro Benutzer gespeichert
+- **Protokoll:** zeigt, was die Meldungen entscheiden und warum eine nicht kam, mit Filter und Suche und einem optionalen Debug-Modus (für 48 Stunden eingeschaltet, auch über Neustarts)
+
+## Einstellungen im Panel
+
+Das Zahnrad öffnet alle Einstellungen auf Deutsch oder Englisch, in Abschnitten. Die Versionsleiste oben zeigt die installierte und die neueste Version und aktualisiert über HACS.
+
+| Geräte im Panel | Ansicht | Timer | Panel-Version |
+|---|---|---|---|
+| <img src="docs/screenshots/de/settings-section-devices.png" alt="Abschnitt Geräte im Panel"> | <img src="docs/screenshots/de/settings-section-look.png" alt="Abschnitt Ansicht mit Startseite und Filter-Chips"> | <img src="docs/screenshots/de/settings-section-timers.png" alt="Abschnitt Timer"> | <img src="docs/screenshots/de/settings-section-updates.png" alt="Abschnitt Panel-Version mit täglicher Prüfung und automatischer Installation"> |
+
+- **Geräte im Panel:** Integrationen, Gerätetypen und einzelne Geräte ausblenden, Typ und Verbindungsart pro Integration festlegen, Geräte mit eigenen Einstellungen sehen und zurücksetzen
+- **Überwachung und Meldungen:** die Reiter Übersicht (ein Zeitstrahl pro Meldung), Ausfall, Batterie, Laden, Neu, Updates, Empfang, Magic Push und Integrationen
+- **Ansicht:** Startseite und Filter-Chips (zeigen, ausblenden, umordnen, anheften)
+- **Timer und KI-Einschätzung:** Pause, Nachhol-Fenster, Empfänger; KI-Aufgabe und Prompt
+- **Panel-Version:** tägliche Prüfung zu einer festen Zeit, optionaler Push, Vorabversionen und automatische Installation über HACS (den Neustart von Home Assistant machst du selbst)
+- **Speichern:** Änderungen im Pop-up und in den Einstellungen gelten erst mit "Speichern"; beim Schliessen mit ungespeicherten Änderungen fragt das Panel "Änderungen verwerfen?"
+
+<p align="center"><img src="docs/screenshots/de/settings-monitor.png" alt="Einstellungen: Zeitstrahl, wann ein Gerät als ausgefallen gilt und wann der Push kommt" width="720"></p>
+
+## KI-Einschätzung (optional)
+
+Standardmässig aus. Auf Knopfdruck fragt das Panel eine KI-Aufgabe von Home Assistant nach einer Vermutung zur Ursache, auf Grundlage von Fakten zum Gerät, seinem Bereich, Hub und ähnlichen Geräten. Die Funktion lässt sich erst einschalten, wenn in Home Assistant unter "KI-Vorschläge" eine KI-Aufgabe gewählt ist (der Link dorthin steht in den Einstellungen). Es werden keine Schlüssel, Zugangsdaten oder IDs gesendet.
+
+| Antwort im Pop-up | Profi-Modus: Prompt |
+|---|---|
+| <img src="docs/screenshots/de/ai.png" alt="Geräte-Pop-up mit der KI-Einschätzung"> | <img src="docs/screenshots/de/settings-ai.png" alt="Einstellungen mit dem Prompt im Profi-Modus"> |
+
+- **Profi-Modus:** der Prompt ist anpassbar, mit Gruppen von Fakten wie `{facts_area}` und `{facts_hub}`, und eine Vorschau zeigt den genauen Text
+- **Ohne KI:** das Panel nennt die vermutete gemeinsame Ursache von Sammelausfällen und rechnet die Batterie-Prognose selbst
+
+## Auf dem Handy
+
+Dasselbe Panel als Karten, mit denselben Pop-ups, Fenstern und Assistenten im Vollbild.
+
+| Liste | Pop-up | Batterie |
+|---|---|---|
+| <img src="docs/screenshots/de/overview-mobile.png" alt="Handy: Karten" width="260"> | <img src="docs/screenshots/de/popup-mobile.png" alt="Handy: Pop-up" width="260"> | <img src="docs/screenshots/de/battery-mobile.png" alt="Handy: Batterie-Verlauf" width="260"> |
+
+| Laden | Launcher | Timer-Assistent | Magic Push |
+|---|---|---|---|
+| <img src="docs/screenshots/de/charging-mobile.png" alt="Handy: ladende Geräte" width="200"> | <img src="docs/screenshots/de/launcher-mobile.png" alt="Handy: App-Launcher" width="200"> | <img src="docs/screenshots/de/timer-wizard-mobile.png" alt="Handy: Timer-Assistent" width="200"> | <img src="docs/screenshots/de/magic-wizard-mobile.png" alt="Handy: Magic-Push-Assistent" width="200"> |
 
 ## Gut zu wissen
 
 - Ein Gerät gilt nach 2 Minuten ohne Lebenszeichen als ausgefallen (einstellbar, pro Integration und pro Gerät).
-- Ein Empfang gilt als schwach unter -80 dBm bzw. LQI 61. Die Warnschwelle lässt sich pro Funkart einstellen, global, pro Integration und pro Gerät, oder ausschalten.
+- Ein Empfang gilt als schwach unter -80 dBm oder LQI 61. Die Warnschwelle lässt sich pro Verbindungsart, allgemein, pro Integration und pro Gerät einstellen oder abschalten.
 - Ein Ausfall dauert, bis Home Assistant das Gerät wieder online sieht, auch über Neustarts. "Mindestens" (≥) heisst: Der Beginn ist nicht bekannt.
 - Das Verfügbarkeitsprotokoll umfasst 31 Tage in einer eigenen Datei, nicht im Recorder. Zeit, in der Home Assistant nicht lief, zählt als "keine Daten".
-- Ausgeblendete Geräte, Integrationen und Gerätetypen werden weder angezeigt noch überwacht. Jeder Filter-Chip lässt sich in den Einstellungen ausblenden und umordnen.
+- Ausgeblendete Geräte, Integrationen und Gerätetypen werden weder gezeigt noch überwacht. Jeder Filter-Chip lässt sich in den Einstellungen ausblenden und umordnen.
 - Batterie-Warnung von 1 bis 50 % (Standard 15 %), pro Integration und pro Gerät.
-- Gerätetyp und Verbindungsart werden automatisch erkannt. Beide lassen sich pro Integration festlegen; ein am Gerät von Hand gesetzter Wert geht vor. Der Typ gilt nur im Panel, nicht in Home Assistant.
+- Gerätetyp und Verbindungsart werden automatisch erkannt. Du kannst beides pro Integration korrigieren; ein von Hand am Gerät gesetzter Wert geht vor. Der Typ gilt nur im Panel, nicht in Home Assistant.
 - Der Empfangsverlauf kommt aus dem Recorder oder, bei ZHA, Bluetooth und nicht aufgezeichneten Sensoren, vom Panel selbst.
-- Bei Bluetooth-Geräten zeigt das Fenster "Empfang" auch "Verbunden über": über welchen Empfänger (Adapter oder Bluetooth-Proxy) das Gerät gehört wurde, mit Anteil, mittlerem Empfang und den letzten Wechseln. Das Panel zeichnet es ab dem Update auf; frühere Wege lassen sich nicht nachträglich herstellen. Bluetooth-Geräte zeigen den Live-Empfang von Bluetooth (bester Empfänger), nicht den Wert ihres eigenen Empfangs-Sensors.
-- Jede Einstellung zeigt, woher sie kommt: Standard, Integration oder Gerät.
-- Änderungen im Geräte-Popup und in den Einstellungen gelten erst mit "Speichern". Schliessen mit ungespeicherten Änderungen fragt "Änderungen verwerfen?".
-- Sicherheitsrelevantes (Tokens, Schlüssel) zeigt das Panel nie an.
+- Bluetooth-Geräte zeigen den Live-Empfang von Bluetooth (bester Empfänger), nicht den Wert ihres eigenen Empfangs-Sensors. Den Weg "Verbunden über" zeichnet das Panel ab dem Update auf; frühere Wege lassen sich nicht nachträglich herstellen.
+- Jede Einstellung zeigt, woher sie stammt: Standard, Integration oder Gerät.
+- Nichts Sicherheitsrelevantes (Tokens, Schlüssel) wird je im Panel angezeigt.
+- Alle Printscreens in dieser Datei zeigen erfundene Daten.
 
 ## Installation
 
-### HACS (Custom Repository)
+### HACS (benutzerdefiniertes Repository)
 
 1. HACS → ⋮ → Benutzerdefinierte Repositories → `https://github.com/Diegofuego871/ha-device-panel`, Typ "Integration".
 2. "Device Panel" installieren und Home Assistant neu starten.
 3. Einstellungen → Geräte & Dienste → Integration hinzufügen → "Device Panel".
 
-Updates: Die Einstellungen (Zahnrad) zeigen die installierte und die neueste Version und aktualisieren über HACS. Vorabversionen (`b` oder `rc` in der Nummer) sind optional: "Vorabversionen anzeigen" → "In HACS freischalten". Auf Wunsch "Updates automatisch installieren" (braucht die tägliche Prüfung): Eine gefundene Version wird über HACS installiert, nur den Neustart von Home Assistant machst du selbst; ein roter Punkt am Zahnrad zeigt, dass der Neustart aussteht. Solange es arbeitet, zeigt die Versionsleiste in den Einstellungen eine kleine Pille "Auto" hinter dem Titel. Die tägliche Prüfung kann zu einer festen Uhrzeit laufen, und eine optionale Push-Meldung (einmal pro Version, Empfänger wählbar) meldet eine gefundene oder installierte Version.
+Updates: Die Einstellungen (Zahnrad) zeigen die installierte und die neueste Version und aktualisieren über HACS. Vorabversionen (`b` oder `rc` in der Nummer) sind optional: "Vorabversionen anzeigen" → "In HACS freischalten". Optional "Updates automatisch installieren" (braucht die tägliche Prüfung): Eine gefundene Version wird über HACS installiert, den Neustart von Home Assistant machst du selbst; ein roter Punkt am Zahnrad zeigt, dass der Neustart aussteht. Solange es arbeitet, zeigt die Versionsleiste in den Einstellungen nach dem Titel eine kleine "Auto"-Pille. Die tägliche Prüfung kann zu einer festen Uhrzeit laufen, und ein optionaler Push (einmal pro Version, Empfänger wählbar) meldet eine gefundene oder installierte Version.
 
 ### Manuell
 
@@ -102,14 +257,14 @@ Updates: Die Einstellungen (Zahnrad) zeigen die installierte und die neueste Ver
 
 ### Entfernen
 
-Einstellungen → Geräte & Dienste → "Device Panel" → ⋮ → Löschen. Das löscht auch die eigenen Dateien der Integration (`.storage/device_panel.*`). Die Registries von Home Assistant ändert sie nie. Danach in HACS entfernen und neu starten.
+Einstellungen → Geräte & Dienste → "Device Panel" → ⋮ → Löschen. Das löscht auch die eigenen Dateien der Integration (`.storage/device_panel.*`). Die Register von Home Assistant werden nie verändert. Danach in HACS entfernen und neu starten.
 
 ## Entwicklung und Tests
 
 - Python mit echtem Home Assistant: `pip install pytest-homeassistant-custom-component` (Python 3.13), dann `python -m pytest`.
-- Panel: `cd tests/panel && npm ci && npx playwright-core install chromium && node run.mjs`. Die Bilder in dieser Datei stammen aus `node readme-shots.mjs` (erfundene Daten).
+- Panel: `cd tests/panel && npm ci && npx playwright-core install chromium && node run.mjs`. Die Printscreens in dieser Datei stammen aus `node readme-shots.mjs` (erfundene Daten), die Grafiken aus `node docs/graphics/render.mjs`.
 
-## Änderungen
+## Änderungsprotokoll
 
 Siehe [CHANGELOG.de.md](CHANGELOG.de.md).
 

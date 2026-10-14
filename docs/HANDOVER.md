@@ -3,6 +3,14 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (README neu, ohne Versionswechsel)
+
+- README.md/README.de.md neu geschrieben (Überblick der Funktionen, drei Grafiken zum Meldungsprinzip, rund 44 Bilder je Sprache). Grafiken: `docs/graphics/render.mjs`
+  (HTML mit Chromium zu PNG, Texte DE/EN im Skript, Ebenen Allgemein/Integration/Gerät, Ablauf vom Ausfall bis zur Meldung, Ziele je Reiter). Printscreens:
+  `tests/panel/readme-shots.mjs` (Fensterbilder als Ausschnitt des Dialogs `shotDlg`, Umgebungsvariablen `SHOTS_OUT/LANGS/MOBILE/ONLY`), danach die genutzten
+  Dateien auf 256 Farben bringen (PIL `quantize`) und nach `docs/screenshots/` legen. Aussagen der README nur aus Code/Konzept belegt: "Erst melden nach" gilt nur
+  allgemein, Ausgefallen nach, Meldungen, Batterie, Empfang, Laden gelten auf drei Ebenen, Neue Geräte und Updates auf zwei (Integration bzw. App).
+
 ## Stand (2.33.1, Favicon für externe Links)
 
 - 2.33.0/2.33.1: Eigene Apps mit externem Link können ihr Favicon als Symbol verwenden. Backend `favicon.py` (WS `device_panel/fetch_favicon`, nur Administratoren):
