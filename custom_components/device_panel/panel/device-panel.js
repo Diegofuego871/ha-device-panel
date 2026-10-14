@@ -23,6 +23,11 @@ const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { TimerUi }, { AppLa
 const POLL_INTERVAL_MS = 10000;
 // Dauer-Anzeigen laufen weiter, ohne dafür neu abzufragen.
 const TICK_MS = 30000;
+// Logos der Integrationen (Brand-Dienst): Token alle 10 Min. erneuern, beim Aufwachen schon nach 5 Min.; ein gescheitertes Bild
+// wird nach 5 Min. neu versucht (2.35.0)
+const BRAND_TOKEN_MS = 10 * 60 * 1000;
+const BRAND_STALE_MS = 5 * 60 * 1000;
+const BRAND_FAIL_MS = 5 * 60 * 1000;
 const NARROW_QUERY = "(max-width: 600px)";
 // Ansicht pro Benutzer (docs/mockups/view-v1): Sortierung, Gruppen oder
 // Liste, Spalten (Desktop) bzw. Angaben auf der Karte (Handy) und die
@@ -1141,6 +1146,7 @@ class DevicePanel extends HTMLElement {
     window.clearTimeout(this._logRetry);
     window.clearTimeout(this._devRetry);
     window.clearInterval(this._brandTimer);
+    window.clearTimeout(this._brandRetry);
     window.clearTimeout(this._brandRender);
     window.clearTimeout(this._retryTimer);
     document.removeEventListener("visibilitychange", this._onVisible);
@@ -1671,6 +1677,7 @@ class DevicePanel extends HTMLElement {
   _wake() {
     this._retries = 0;
     this._fetch();
+    this._brandWake();
   }
 
   // callWS ohne Antwort (Verbindung hängt nach dem Aufwachen) würde _fetching
@@ -3324,18 +3331,47 @@ class DevicePanel extends HTMLElement {
   // (ab 2026.3, /api/brands/integration/<Domain>/icon.png), geschützt durch ein Token
   // (WebSocket brands/access_token, läuft ab: alle 10 Min. neu holen). Nichts geht ins
   // Internet. Ohne Dienst (ältere HA) oder ohne Logo bleibt das Verbindungs-Icon.
+  // Seit 2.35.0 erholt sich das von selbst (Fehler: nach dem Öffnen der Companion-App fehlten alle Logos bis zum Neustart der App):
+  // scheitert die Abfrage (Verbindung verloren), wird sie mit wachsendem Abstand wiederholt, statt es nie wieder zu versuchen;
+  // nur "unknown_command" (ältere HA) beendet es. Beim Aufwachen wird ein altes Token erneuert (die Zeitgeber ruhen im Hintergrund).
   async _brandStart() {
-    const load = async () => {
-      try {
-        const res = await this._hass.callWS({ type: "brands/access_token" });
-        this._brandToken = res?.token || null;
-      } catch {
-        this._brandToken = null;
+    await this._brandLoad();
+    window.clearInterval(this._brandTimer);
+    this._brandTimer = window.setInterval(() => this._brandLoad(), BRAND_TOKEN_MS);
+  }
+
+  async _brandLoad() {
+    if (this._brandOff || this._brandBusy || !this._hass) return;
+    this._brandBusy = true;
+    try {
+      const res = await this._hass.callWS({ type: "brands/access_token" });
+      const token = res?.token || null;
+      this._brandAt = Date.now();
+      this._brandTries = 0;
+      if (token !== this._brandToken) {
+        this._brandToken = token;
+        // Mit neuem Token alle als gescheitert vermerkten Logos neu versuchen (der Fehler kann am alten Token gelegen haben)
+        for (const [domain, state] of this._brandState || []) if (state === "fail") this._brandState.delete(domain);
+        this._brandRenderSoon();
       }
-    };
-    await load();
-    // Nur, wenn der Dienst antwortet (ältere HA kennen ihn nicht).
-    if (this._brandToken) this._brandTimer = window.setInterval(load, 10 * 60 * 1000);
+    } catch (err) {
+      if (err?.code === "unknown_command") {
+        // Ältere HA ohne Brand-Dienst: nicht wieder fragen
+        this._brandOff = true;
+        this._brandToken = null;
+      } else {
+        window.clearTimeout(this._brandRetry);
+        this._brandRetry = window.setTimeout(() => this._brandLoad(), Math.min(60000, 3000 * 2 ** Math.min(this._brandTries++, 5)));
+      }
+    } finally {
+      this._brandBusy = false;
+    }
+  }
+
+  // Beim Aufwachen: kein Token oder ein altes Token erneuern
+  _brandWake() {
+    if (this._brandOff || !this._brandReady) return;
+    if (!this._brandToken || Date.now() - (this._brandAt || 0) > BRAND_STALE_MS) this._brandLoad();
   }
 
   _brandRenderSoon() {
@@ -3365,6 +3401,8 @@ class DevicePanel extends HTMLElement {
   _brandSrc(domain) {
     if (!domain || !this._brandToken) return null;
     this._brandState ||= new Map();
+    // Ein gescheitertes Bild (Netz weg, 401) wird nach einer Weile neu versucht; "kein Logo" (404) kostet dann nur eine Anfrage
+    if (this._brandState.get(domain) === "fail" && Date.now() - (this._brandFailAt?.get(domain) || 0) > (this._brandFailMs ?? BRAND_FAIL_MS)) this._brandState.delete(domain);
     if (!this._brandState.has(domain)) this._brandProbe(domain).then(() => this._brandRenderSoon());
     const known = this._brandState.get(domain);
     return known && known !== "fail" && known !== "pending" ? `/api/brands/integration/${encodeURIComponent(domain)}/${known}?token=${encodeURIComponent(this._brandToken)}` : null;
@@ -3380,6 +3418,7 @@ class DevicePanel extends HTMLElement {
       const next = (i) => {
         if (i >= files.length) {
           this._brandState.set(domain, "fail");
+          (this._brandFailAt ||= new Map()).set(domain, Date.now());
           done();
           return;
         }

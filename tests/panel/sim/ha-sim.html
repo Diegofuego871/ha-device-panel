@@ -719,6 +719,9 @@
       if (msg.type === "brands/access_token") {
         // Wie HA ab 2026.3; ältere HA kennen den Befehl nicht (?nobrands=1).
         if (params.get("nobrands")) throw { code: "unknown_command", message: "Unknown command." };
+        // ?brandsfail=N: die ersten N Abfragen scheitern wie bei verlorener Verbindung (Companion-App nach dem Aufwachen)
+        window.__brandCalls = (window.__brandCalls || 0) + 1;
+        if (window.__brandCalls <= Number(params.get("brandsfail") || 0)) throw { code: 3, message: "Connection lost" };
         return { token: "sim-token" };
       }
       if (msg.type === "device_panel/rename_device") {

@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.35.1] - 2026-10-14
+
+The logos of the integrations come back by themselves.
+
+### Fixed
+
+- Device list: sometimes all integration logos were missing after opening the app (the icon of the connection type was shown instead) until the Companion app was restarted. Causes: if the first request for the access token of the logo service failed (for example because the connection was lost while the app woke up), it was never repeated; a logo whose image failed to load once stayed marked as "no logo" for the whole session; and after waking up an old token was not renewed (the timers rest in the background). Now the request is repeated with growing intervals, a failed logo is tried again after 5 minutes and with every new token, and an old token is renewed when the app wakes up. A Home Assistant without the logo service (before 2026.3) is still asked only once.
+
 ## [2.35.0] - 2026-10-13
 
 App launcher: the symbols and colors of Home Assistant.
@@ -3073,6 +3081,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.35.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.1
 [2.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.0
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0
