@@ -8537,14 +8537,15 @@ class DevicePanel extends HTMLElement {
 
   _versionRowHtml({ v, d, hacs, a, installed, latest, url, inProgress, restart, canInstall, beta, betaBlocked, preSwitch }) {
     const t = (k, ...x) => this._t(k, ...x);
-    // Automatisch installieren ist wirklich aktiv (Schalter und tägliche Prüfung, gespeicherter Stand): bei "Aktuell" ein Abzeichen auf dem
-    // Symbol und ein langsam kreisender Ring (2.37.0, docs/mockups/autoupdate-v1, Variante A mit Ring aus C). Ein gefundenes Update wird bei
-    // aktivem Auto-Update sofort installiert; die Zeile "Update verfügbar" bleibt deshalb ohne Zeichen.
+    // Automatisch installieren ist wirklich aktiv (Schalter und tägliche Prüfung, gespeicherter Stand): bei "Aktuell" die Pille "Auto" hinter
+    // dem Titel, wie die Pille "Beta" (2.38.0, docs/mockups/autoupdate-v1, Variante B; zuerst als Abzeichen mit kreisendem Ring, das war dem
+    // Nutzer zu unruhig und es drehte sich auf seinem Gerät nicht). Ein gefundenes Update wird bei aktivem Auto-Update sofort installiert;
+    // die Zeile "Update verfügbar" bleibt deshalb ohne Zeichen.
     const auto = this._autoActive();
-    const autoMark = () => `<span class="ver-ring" aria-hidden="true"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="19" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="46 14" stroke-linecap="round"/></svg></span><span class="ver-auto" role="img" title="${escape(t("verAutoOn"))}" aria-label="${escape(t("verAutoOn"))}">${mdi("refreshAuto", 11)}</span>`;
+    const autoMark = () => `<span class="ver-auto" role="img" title="${escape(t("verAutoOn"))}" aria-label="${escape(t("verAutoOn"))}">${mdi("refreshAuto", 12)}${escape(t("verAutoTag"))}</span>`;
     const row = (cls, iconName, title, sub, right, mark = "") => `<div class="ver ${cls}${mark ? " auto" : ""}">
-        <span class="ver-ic">${mdi(iconName, 20)}${mark}</span>
-        <div class="ver-t"><b>${escape(title)}</b><small>${escape(sub)}</small></div>
+        <span class="ver-ic">${mdi(iconName, 20)}</span>
+        <div class="ver-t"><b>${escape(title)}${mark}</b><small>${escape(sub)}</small></div>
         ${right ? `<div class="ver-btns">${right}</div>` : ""}</div>`;
     // Release Notes im Fenster (seit 2.3.0); ohne die neueste Version nichts zu zeigen.
     const notes = latest && installed && this._cmpVersion(latest, installed) > 0 ? `<button type="button" class="ver-link" data-ver="notes">${escape(t("verReleaseNotes"))}${mdi("info", 15)}</button>` : "";
@@ -8598,7 +8599,7 @@ class DevicePanel extends HTMLElement {
     const currentNotes = installed ? `<button type="button" class="ver-link" data-ver="notes">${escape(t("verReleaseNotes"))}${mdi("info", 15)}</button>` : "";
     const checked = d.checked_at ? t("verChecked", this._formatRelative(d.checked_at)) : "";
     const err = v.error === "rate_limit" ? t("verRateLimit") : v.error;
-    const sub = v.checking ? t("verCheckingSub") : v.error ? `${t("verCheckError")} ${err}` : [t("verCurrent"), auto ? t("verAuto") : "", checked].filter(Boolean).join(" · ");
+    const sub = v.checking ? t("verCheckingSub") : v.error ? `${t("verCheckError")} ${err}` : [t("verCurrent"), checked].filter(Boolean).join(" · ");
     // Beschriftung bleibt während der Prüfung gleich, nur das Symbol wird
     // zum Spinner: so springt die Zeile nicht (Höhe des Blatts auf dem Handy).
     // Fehlgeschlagene Prüfung nicht mit Häkchen ("aktuell") darstellen.

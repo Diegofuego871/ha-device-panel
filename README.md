@@ -93,7 +93,7 @@ Only on a button press, with an AI task of Home Assistant: the function can only
 2. Install "Device Panel" and restart Home Assistant.
 3. Settings → Devices & services → Add integration → "Device Panel".
 
-Updates: the settings (gear icon) show the installed and the newest version and update via HACS. Pre-releases (`b` or `rc` in the number) are optional: "Show pre-releases" → "Enable in HACS". Optionally "Install updates automatically" (needs the daily check): a found version is installed through HACS, you only restart Home Assistant yourself; a red dot on the gear shows that the restart is pending. While it works, the version bar in the settings shows a small "auto" badge and a slowly circling ring on its symbol. The daily check can run at a set time, and an optional push (once per version, recipient selectable) tells you about a found or installed version.
+Updates: the settings (gear icon) show the installed and the newest version and update via HACS. Pre-releases (`b` or `rc` in the number) are optional: "Show pre-releases" → "Enable in HACS". Optionally "Install updates automatically" (needs the daily check): a found version is installed through HACS, you only restart Home Assistant yourself; a red dot on the gear shows that the restart is pending. While it works, the version bar in the settings shows a small "Auto" pill after the title. The daily check can run at a set time, and an optional push (once per version, recipient selectable) tells you about a found or installed version.
 
 ### Manual
 

@@ -19,6 +19,7 @@ AI assessment: link to the AI settings of Home Assistant, and only with an AI ta
 
 - The switch "Show the button "Assess with AI"" can only be switched on if there is an AI task: one chosen in Home Assistant under "AI suggestions" for "Data generation tasks" (or one chosen here that still exists). Without it the switch is locked and a message says why and what to do: "No AI task selected. In Home Assistant, under "AI suggestions", choose an AI task entity for "Data generation tasks". Only then can the AI assessment be switched on here." The server checks this too, so a request that bypasses the panel is refused with the same message. If the function is already on and the AI task disappears, it stays on, with a note, and other settings can still be saved.
 - The hints on the AI task now point to "AI suggestions" instead of "Settings → System → General".
+- Settings, version bar with active automatic updates (2.37.0): instead of the badge with the circling ring on the symbol, a small pill "Auto" stands after the title (like the pill "Beta"). The symbol stays the plain green check, nothing moves any more (the ring was too restless and did not turn on every device). The subtitle no longer says "automatic"; the pill says it (hovering it reads "Updates are installed automatically"). Same conditions as before: switch and daily check on, only at "Up to date".
 
 ## [2.37.0] - 2026-10-14
 

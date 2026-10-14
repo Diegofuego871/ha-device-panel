@@ -19,6 +19,7 @@ KI-Einschätzung: Link zu den KI-Einstellungen von Home Assistant, und nur mit e
 
 - Der Schalter "Knopf "Mit KI einschätzen" zeigen" lässt sich nur einschalten, wenn es eine KI-Aufgabe gibt: eine in Home Assistant unter "KI-Vorschläge" bei "Aufgaben zur Datengenerierung" gewählte (oder eine hier gewählte, die noch existiert). Ohne sie ist der Schalter gesperrt, und eine Meldung sagt warum und was zu tun ist: "Keine KI-Aufgabe ausgewählt. Wähle in Home Assistant unter "KI-Vorschläge" bei "Aufgaben zur Datengenerierung" eine KI-Task-Entität aus. Erst dann lässt sich die KI-Einschätzung hier einschalten." Der Server prüft es ebenfalls, eine Anfrage am Panel vorbei wird mit derselben Meldung abgelehnt. Ist die Funktion schon eingeschaltet und die KI-Aufgabe fällt weg, bleibt sie an, mit einem Hinweis, und andere Einstellungen lassen sich weiter speichern.
 - Die Hinweise zur KI-Aufgabe verweisen jetzt auf "KI-Vorschläge" statt auf "Einstellungen → System → Allgemein".
+- Einstellungen, Versionsleiste bei aktiven automatischen Updates (2.37.0): Statt des Abzeichens mit dem kreisenden Ring auf dem Symbol steht eine kleine Pille "Auto" hinter dem Titel (wie die Pille "Beta"). Das Symbol bleibt das schlichte grüne Häkchen, nichts bewegt sich mehr (der Ring war zu unruhig und drehte sich nicht auf jedem Gerät). Der Untertitel sagt nicht mehr "automatisch", das sagt die Pille (über ihr steht "Updates werden automatisch installiert"). Die Bedingungen bleiben: Schalter und tägliche Prüfung an, nur bei "Aktuell".
 
 ## [2.37.0] - 2026-10-14
 
