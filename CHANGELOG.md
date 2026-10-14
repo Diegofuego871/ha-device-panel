@@ -17,6 +17,8 @@ A sign that automatic updates are active.
 
 ## [2.36.0] - 2026-10-14
 
+Not released; included in 2.37.0.
+
 Search field: no longer as wide as the whole window.
 
 ### Changed
@@ -3100,7 +3102,6 @@ First pre-release.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.37.0
-[2.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.36.0
 [2.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.0
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0
