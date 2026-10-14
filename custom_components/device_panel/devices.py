@@ -315,6 +315,26 @@ def _ble_signal(hass: HomeAssistant, address: str) -> tuple[dict[str, Any] | Non
         return None, None
 
 
+def ble_receiver(hass: HomeAssistant, device: dr.DeviceEntry) -> tuple[str, str] | None:
+    """
+    (Quelle, Name) des Empfängers, über den ein Bluetooth-Gerät gerade gemeldet wird (Adapter oder Proxy); die Quelle (Adresse) ist
+    stabil, der Name ist der Anzeigename. None: unbekannt (noch nie empfangen, Bluetooth nicht geladen). Seit 2.40.0 für den Verlauf.
+    """
+    address = next((c[1] for c in device.connections if c[0] == dr.CONNECTION_BLUETOOTH), None)
+    if not address or "bluetooth" not in hass.config.components:
+        return None
+    try:
+        from homeassistant.components import bluetooth  # noqa: PLC0415
+
+        info = bluetooth.async_last_service_info(hass, address, connectable=False)
+        if info is None or not info.source:
+            return None
+        scanner = bluetooth.async_scanner_by_source(hass, info.source)
+        return str(info.source), str(getattr(scanner, "name", None) or info.source)
+    except Exception:  # noqa: BLE001 - interne Schnittstelle von HA
+        return None
+
+
 def battery(
     hass: HomeAssistant, entries: list[er.RegistryEntry], threshold: int = DEFAULT_BATTERY_LOW
 ) -> dict[str, Any] | None:

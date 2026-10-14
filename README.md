@@ -81,6 +81,7 @@ Only on a button press, with an AI task of Home Assistant: the function can only
 - Battery warning from 1 to 50 % (default 15 %), per integration and per device.
 - Device type and connection type are detected automatically. You can fix either per integration; a value set by hand on the device comes first. The type only applies in the panel, not in Home Assistant.
 - Signal history comes from the recorder or, for ZHA, Bluetooth and unrecorded sensors, from the panel itself.
+- For Bluetooth devices the signal window also shows "Connected via": which receiver (adapter or Bluetooth proxy) the device was heard through, with share, average signal and the latest switches. Recorded by the panel from the update on; earlier paths cannot be reconstructed.
 - Every setting shows where it comes from: default, integration or device.
 - Changes in the device pop-up and in the settings take effect only with "Save". Closing with unsaved changes asks "Discard changes?".
 - Nothing security-relevant (tokens, keys) is ever shown in the panel.

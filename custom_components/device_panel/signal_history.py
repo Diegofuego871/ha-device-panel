@@ -38,7 +38,7 @@ from .availability import ONLINE
 from .battery_history import STATS_FROM_DAYS, _history, _statistics, held, thin
 from .const import DATA_AVAILABILITY, DOMAIN, STORAGE_VERSION
 from .compat import device_entry_ids
-from .devices import monitored_devices, signal_sensor, signal_source
+from .devices import ble_receiver, monitored_devices, signal_sensor, signal_source
 from .options_api import effective
 from .storage_util import PeriodicSaver
 
@@ -54,6 +54,11 @@ KEEP_HOURS = 31 * 86400
 # Seltener als das Verfügbarkeitsprotokoll: ein verlorener Block nach einem
 # Absturz ist verschmerzbar, die Datei ist grösser.
 SAVE_DELAY = 900
+# Weg des Bluetooth-Empfangs (seit 2.40.0, Wunsch des Nutzers): über welchen Empfänger (Adapter oder Proxy) ein Gerät gemeldet wird. Gespeichert
+# werden nur die Wechsel [Zeit, Quelle] (None = Lücke: ausgefallen oder nicht empfangen), so lange wie die Stunden-Blöcke. Rückwirkend lässt
+# sich der Weg nicht herstellen, HA speichert ihn nirgends: er füllt sich ab dem Update.
+VIA_KEEP = 31 * 86400
+VIA_CHANGES_MAX = 6
 # Quellen, die nur das Panel aufzeichnet.
 LOGGED = ("zha", "ble")
 # Plausible Werte; alles andere ist ein Messfehler (z. B. 0 dBm, 127 dBm).
@@ -115,6 +120,9 @@ class SignalLog:
         # Laufender Block pro Gerät: [Start, Werte]; laufende Stunde: [Start, Blöcke].
         self._open: dict[str, list[Any]] = {}
         self._open_hour: dict[str, list[Any]] = {}
+        # Weg des Bluetooth-Empfangs: Wechsel pro Gerät [Zeit, Quelle|None] und die Anzeigenamen der Quellen
+        self._via: dict[str, list[list[Any]]] = {}
+        self._via_names: dict[str, str] = {}
         self._unsub_tick: CALLBACK_TYPE | None = None
         self._unsub_started: CALLBACK_TYPE | None = None
 
@@ -174,10 +182,25 @@ class SignalLog:
             for dev, o in (stored.get("open_hours") or {}).items()
             if isinstance(o, list) and len(o) == 2 and isinstance(o[1], list)
         }
+        self._via = {}
+        for dev, items in (stored.get("via") or {}).items():
+            if not isinstance(items, list):
+                continue
+            events = [
+                [float(e[0]), e[1] if isinstance(e[1], str) and e[1] else None]
+                for e in items
+                if isinstance(e, list) and len(e) == 2 and isinstance(e[0], (int, float)) and not isinstance(e[0], bool)
+            ]
+            if events:
+                self._via[str(dev)] = sorted(events, key=lambda e: e[0])
+        self._via_names = {str(k): str(v) for k, v in (stored.get("via_names") or {}).items()}
         self.prune(now)
 
     def data(self) -> dict[str, Any]:
-        return {"kind": self._kind, "blocks": self._blocks, "hours": self._hours, "open": self._open, "open_hours": self._open_hour}
+        return {
+            "kind": self._kind, "blocks": self._blocks, "hours": self._hours, "open": self._open, "open_hours": self._open_hour,
+            "via": self._via, "via_names": self._via_names,
+        }
 
     # -- Aufzeichnen -------------------------------------------------------
 
@@ -195,14 +218,18 @@ class SignalLog:
             # er sagt nichts über jetzt.
             events = log.events(device.id) if log is not None else []
             if not events or events[-1][1] != ONLINE:
+                wrote = self.note_gap(device.id, now) or wrote
                 continue
             domains = {e.domain for eid in device_entry_ids(device) if (e := self.hass.config_entries.async_get_entry(eid))}
             signal, _via, source = signal_source(self.hass, device, entries, domains)
             if not signal or signal.get("value") is None:
+                wrote = self.note_gap(device.id, now) or wrote
                 continue
             if source not in LOGGED and (source is None or recorded(self.hass, source)):
                 continue
             self.record(device.id, signal["kind"], float(signal["value"]), now)
+            if source == "ble":
+                wrote = self.note_via(device.id, ble_receiver(self.hass, device), now) or wrote
             wrote = True
         self.prune(now)
         if wrote:
@@ -224,6 +251,27 @@ class SignalLog:
             current = [start, []]
             self._open[dev] = current
         current[1].append(value)
+
+    def note_via(self, dev: str, receiver: tuple[str, str] | None, now: float) -> bool:
+        """Über welchen Empfänger das Gerät jetzt gemeldet wird; nur ein Wechsel wird gespeichert. True, wenn sich etwas änderte."""
+        if receiver is None:
+            return self.note_gap(dev, now)
+        source, name = receiver
+        changed = self._via_names.get(source) != name
+        self._via_names[source] = name
+        events = self._via.setdefault(dev, [])
+        if not events or events[-1][1] != source:
+            events.append([round(now), source])
+            changed = True
+        return changed
+
+    def note_gap(self, dev: str, now: float) -> bool:
+        """Das Gerät wird nicht gemeldet (ausgefallen, nicht empfangen): Lücke im Weg, nur wenn es einen Weg gibt."""
+        events = self._via.get(dev)
+        if events and events[-1][1] is not None:
+            events.append([round(now), None])
+            return True
+        return False
 
     def _close(self, dev: str) -> None:
         current = self._open.pop(dev, None)
@@ -263,11 +311,27 @@ class SignalLog:
                     store[dev] = kept
                 else:
                     store.pop(dev)
+        # Weg: ältere Wechsel weg, den letzten davor behalten (er gilt noch zu Beginn des Zeitraums); Namen nur der verwendeten Quellen
+        limit = now - VIA_KEEP
+        for dev in list(self._via):
+            events = self._via[dev]
+            kept = [e for e in events if e[0] >= limit]
+            older = [e for e in events if e[0] < limit]
+            if older and older[-1][1] is not None:
+                kept.insert(0, older[-1])
+            while kept and kept[0][1] is None:
+                kept.pop(0)
+            if kept:
+                self._via[dev] = kept
+            else:
+                self._via.pop(dev)
+        used = {e[1] for events in self._via.values() for e in events if e[1]}
+        self._via_names = {k: v for k, v in self._via_names.items() if k in used}
         for dev in [d for d in self._kind if d not in self._blocks and d not in self._hours and d not in self._open and d not in self._open_hour]:
             self._kind.pop(dev)
 
     def forget(self, dev: str) -> None:
-        for store in (self._kind, self._blocks, self._hours, self._open, self._open_hour):
+        for store in (self._kind, self._blocks, self._hours, self._open, self._open_hour, self._via):
             store.pop(dev, None)
 
     # -- Abfragen --------------------------------------------------------------
@@ -302,6 +366,63 @@ class SignalLog:
             out.append(_hour(blocks, hour_start))
         return out, HOUR_SECONDS
 
+    def via_summary(self, dev: str, range_key: str, now: float | None = None, points: list[list[float]] | None = None) -> dict[str, Any] | None:
+        """
+        Weg des Empfangs im Zeitraum für das Fenster "Empfang": Abschnitte [von, bis, Nr. des Empfängers | None (Lücke)], je Empfänger Anteil
+        und mittlerer Empfang, die letzten Wechsel. Die Nummern gelten in der Reihenfolge, in der die Empfänger zuerst auftraten (stabile Farben).
+        None: für das Gerät gibt es keinen Weg (kein Bluetooth oder noch nichts aufgezeichnet).
+        """
+        events = self._via.get(dev)
+        if not events:
+            return None
+        now = now if now is not None else time.time()
+        start = now - RANGES.get(range_key, RANGES["24h"])
+        segments: list[list[Any]] = []
+        for i, (ts, source) in enumerate(events):
+            end = events[i + 1][0] if i + 1 < len(events) else now
+            a, b = max(ts, start), min(end, now)
+            if b <= a:
+                continue
+            if segments and segments[-1][2] == source and segments[-1][1] == a:
+                segments[-1][1] = b
+            else:
+                segments.append([a, b, source])
+        if not segments:
+            return None
+        order: list[str] = []
+        for _ts, source in events:
+            if source and source not in order:
+                order.append(source)
+        used = [s for s in order if any(seg[2] == s for seg in segments)]
+        index = {s: i for i, s in enumerate(used)}
+        seconds = {s: sum(b - a for a, b, src in segments if src == s) for s in used}
+        known = sum(seconds.values())
+        sums: dict[str, list[float]] = {}
+        for p in points or []:
+            for a, b, src in segments:
+                if src and a <= p[0] < b:
+                    sums.setdefault(src, []).append(p[1])
+                    break
+        shares = {s: round(seconds[s] / known * 100) if known else 0 for s in used}
+        if known and used:
+            # Rundung: die Anteile ergeben zusammen 100
+            top = max(used, key=lambda s: seconds[s])
+            shares[top] += 100 - sum(shares.values())
+        changes = []
+        for i in range(1, len(events)):
+            before, after = events[i - 1][1], events[i][1]
+            if events[i][0] >= start and before and after and before != after and before in index and after in index:
+                changes.append([round(events[i][0]), index[before], index[after]])
+        return {
+            "since": round(events[0][0]),
+            "receivers": [
+                {"name": self._via_names.get(s, s), "seconds": round(seconds[s]), "share": shares[s], "avg": round(statistics.mean(sums[s]), 1) if s in sums else None}
+                for s in used
+            ],
+            "segments": [[round(a), round(b), index[src] if src else None] for a, b, src in segments],
+            "changes": changes[::-1][:VIA_CHANGES_MAX],
+        }
+
     def first(self, dev: str) -> float | None:
         """Beginn der Aufzeichnung für das Gerät (ältester Block)."""
         starts = [rows[0][0] for rows in (self._hours.get(dev), self._blocks.get(dev)) if rows]
@@ -335,6 +456,8 @@ async def async_signal_history(
         # "not_recorded": Sensor, den der Recorder nicht aufzeichnet.
         "reason": None,
         "steady_since": None,
+        # Weg des Bluetooth-Empfangs (seit 2.40.0), None ohne
+        "via": None,
     }
     # Ohne aktuellen Wert (ausgefallen): Sensor nach der Registry, sonst die
     # eigene Aufzeichnung, falls es eine gibt.
@@ -363,6 +486,8 @@ async def async_signal_history(
             result["source"] = "log"
             # Mitte des Blocks: der Wert gilt für den ganzen Block.
             result["points"] = [[b[0] + bucket / 2, b[1], b[2], b[3]] for b in blocks]
+        # Weg: auch bei ausgefallenem Gerät ("war"), solange es einen gibt
+        result["via"] = log.via_summary(device.id, range_key, now, result["points"])
         return result
     if source is None:
         return result

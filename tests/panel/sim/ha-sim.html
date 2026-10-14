@@ -271,6 +271,32 @@
   // "not-recorded"/"not-recorded-empty" = Sensor, den der Recorder nicht
   // aufzeichnet, "steady" = Recorder ohne Zeile, Wert seit 3 Tagen gleich).
   window.__sigSource = null;
+  // Weg des Bluetooth-Empfangs wie SignalLog.via_summary: Abschnitte [von, bis, Nr. | null], Empfänger mit Anteil und Ø, Wechsel (neueste zuerst).
+  const VIA_NAMES = ["Storen Büro", "Proxy Garage", "Küche", "Bluetooth-Adapter (HA)"];
+  function viaFor(range, start, end, points) {
+    const plan = { "24h": [[22, 0], [8, 1], [38, 0], [4, null], [28, 2]], "7d": [[40, 0], [6, 1], [18, 2], [3, null], [26, 0], [7, 3]], "30d": [[55, 0], [12, 2], [4, null], [20, 0], [9, 3]] }[range];
+    const segments = [];
+    let at = start;
+    for (const [w, k] of plan) {
+      const to = at + ((end - start) * w) / 100;
+      segments.push([Math.round(at), Math.round(to), k]);
+      at = to;
+    }
+    segments[segments.length - 1][1] = Math.round(end);
+    const used = [...new Set(segments.map((x) => x[2]).filter((k) => k != null))].sort((a, b) => a - b);
+    const secs = (k) => segments.filter((x) => x[2] === k).reduce((a, x) => a + x[1] - x[0], 0);
+    const known = used.reduce((a, k) => a + secs(k), 0);
+    const shares = used.map((k) => Math.round((secs(k) / known) * 100));
+    shares[shares.indexOf(Math.max(...shares))] += 100 - shares.reduce((a, b) => a + b, 0);
+    const changes = [];
+    for (let i = 1; i < segments.length; i++) if (segments[i][2] != null && segments[i - 1][2] != null) changes.push([segments[i][0], segments[i - 1][2], segments[i][2]]);
+    return {
+      since: Math.round(end - 9 * D),
+      receivers: used.map((k, i) => ({ name: VIA_NAMES[k], seconds: secs(k), share: shares[i], avg: [-74, -82, -78, -88][k] })),
+      segments: segments.map(([a, b, k]) => [a, b, k == null ? null : used.indexOf(k)]),
+      changes: changes.reverse().map(([t, f, to]) => [t, used.indexOf(f), used.indexOf(to)]).slice(0, 6),
+    };
+  }
   function signalHistory(d, range) {
     const span = { "24h": 1, "7d": 7, "30d": 30 }[range] * D;
     const end = Date.now() / 1000;
@@ -303,7 +329,7 @@
         const spread = kind === "dbm" ? 3 + (seed % 4) : 10 + (seed % 15);
         points.push([t + bucket / 2, med, clamp(med - spread), clamp(med + Math.round(spread / 2))]);
       }
-      return { ...base, source: points.length ? "log" : "none", bucket, points, first };
+      return { ...base, source: points.length ? "log" : "none", bucket, points, first, via: d.connection === "ble" && !window.__viaOff ? viaFor(range, start, end, points) : null };
     }
     const stats = range === "30d";
     const points = [];

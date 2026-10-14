@@ -7,7 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.40.0] - 2026-10-14
+
+Empfang: der Weg des Bluetooth-Empfangs ("Verbunden über").
+
+### Hinzugefügt
+
+- Fenster "Empfang" eines Bluetooth-Geräts: neuer Abschnitt "Verbunden über" unter dem Verlauf, für 24 Std., 7 Tage und 30 Tage. Ein Balken zeigt, über welchen Empfänger (Bluetooth-Adapter von Home Assistant oder ein Bluetooth-Proxy, zum Beispiel "Proxy Garage") das Gerät gehört wurde, eine Farbe je Empfänger; Lücken, in denen das Gerät nicht empfangen wurde, sind schraffiert. Darunter listet eine Legende jeden Empfänger mit seinem Zeitanteil und dem mittleren Empfang ("60 % · Ø -74 dBm"), und die Liste "Wechsel" nennt die letzten Wechsel ("Küche → Storen Büro") mit Zeit. Das Panel hält den Empfänger jede Minute zusammen mit dem Empfang fest und bewahrt ihn 31 Tage in einer eigenen Datei auf. Es zeigt nur, was es selbst aufgezeichnet hat, also seit diesem Update: Ein früherer Weg lässt sich nicht nachträglich herstellen, das Fenster sagt es. Geräte ohne Bluetooth-Empfänger (Zigbee, WLAN und so weiter) und Bluetooth-Geräte ohne aufgezeichneten Weg zeigen nichts Neues. Als Name des Empfängers gilt der, den Home Assistant dem Scanner gibt; die Farben bleiben je Gerät gleich, in der Reihenfolge, in der die Empfänger zuerst auftraten.
+
 ## [2.39.1] - 2026-10-14
+
+Nicht veröffentlicht; enthalten in 2.40.0.
 
 Startseite: wie alle anderen Einstellungen.
 
@@ -3236,7 +3246,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.39.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.1
+[2.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.0
 [2.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.0
 [2.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.38.0
 [2.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.37.0

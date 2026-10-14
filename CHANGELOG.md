@@ -7,7 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.40.0] - 2026-10-14
+
+Signal: the path of Bluetooth reception ("Connected via").
+
+### Added
+
+- Signal window of a Bluetooth device: new section "Connected via" under the history, for 24 h, 7 days and 30 days. A bar shows which receiver (Bluetooth adapter of Home Assistant or a Bluetooth proxy, for example "Living room proxy") the device was heard through, one colour per receiver; gaps where the device was not received are hatched. Below it a legend lists each receiver with its share of the time and its average signal ("60 % · avg -74 dBm"), and the list "Changes" names the latest switches ("Kitchen → Office blinds") with their time. The panel notes the receiver every minute together with the signal and keeps it for 31 days in its own file. It only shows what the panel recorded itself, since this update: an earlier path cannot be reconstructed, and the window says so. Devices without a Bluetooth receiver (Zigbee, Wi-Fi and so on) and Bluetooth devices without a recorded path show nothing new. Per receiver the name is the one Home Assistant gives the scanner; the colours stay the same per device in the order the receivers first appeared.
+
 ## [2.39.1] - 2026-10-14
+
+Not released; included in 2.40.0.
 
 Start page: like all other settings.
 
@@ -3135,7 +3145,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.39.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.1
+[2.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.0
 [2.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.0
 [2.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.38.0
 [2.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.37.0

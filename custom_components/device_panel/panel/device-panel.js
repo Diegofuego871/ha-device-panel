@@ -80,6 +80,8 @@ const SORT_KEYS = ["default", "name", "signal", ...COLUMNS.map(([k]) => k)];
 const SORT_MOBILE = ["default", "name", "status", "avail", "battery", "signal", "integration", "type", "area"];
 // Schwacher Empfang (wie die Ursachen-Regeln in docs/CONCEPT.md).
 const WEAK_DBM = -80;
+// Farben der Empfänger im Weg des Bluetooth-Empfangs (Fenster "Empfang"), nach erstem Auftreten.
+const VIA_COLORS = ["#3B82F6", "#F59E0B", "#10B981", "#8B5CF6", "#EC4899", "#14B8A6"];
 const WEAK_LQI = 60;
 // Eigene Empfang-Schwelle pro Gerät "schwach unter" (wie const.SIGNAL_*_RANGE).
 const SIG_DBM_RANGE = [-110, -40];
@@ -4925,15 +4927,16 @@ class DevicePanel extends HTMLElement {
     const key = this._histKey(range);
     if (!h || h.key !== key || (!h.data && h.loading)) return `<div class="avail"><p class="dlg-note">${escape(t("loadingDetail"))}</p></div>`;
     if (!h.data) return `<div class="dlg-error">${escape(t("error"))} ${escape(h.error || "")}</div>`;
-    const { start, end, points = [], kind, source, bucket, first, current, reason, steady_since: steady } = h.data;
+    const { start, end, points = [], kind, source, bucket, first, current, reason, steady_since: steady, via } = h.data;
     const note = (text) => `<p class="dlg-note bh-src">${escape(text)}</p>`;
+    const viaBlock = via ? this._viaHtml(via, start, end, range) : "";
     // Sensor, den der Recorder nicht aufzeichnet (seit 0.26.0): das Panel zeichnet selbst auf.
     const why = reason === "not_recorded" ? ` ${t("sigSrcNotRecorded")}` : "";
     if (!points.length || !kind) {
       // Aufzeichnung mit älteren Werten (z. B. seit Tagen ausgefallen): sagen, seit wann.
       const empty = why ? `${why.trim()} ${t("sigSrcSoon")}` : t("sigSrcLogEmpty");
       const text = bucket ? (first ? t("sigSrcLog", this._fmtTime(first, true)) + why : empty) : t("sigSrcNone");
-      return `<div class="avail"><p class="dlg-note">${escape(t("batNoData"))}</p></div>${note(text)}`;
+      return `<div class="avail"><p class="dlg-note">${escape(t("batNoData"))}</p></div>${note(text)}${viaBlock}`;
     }
     const dbm = kind === "dbm";
     const med = points.map((p) => p[1]);
@@ -5006,7 +5009,36 @@ class DevicePanel extends HTMLElement {
         <div class="bh-plot"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}${thr}
           ${band ? `<path class="sg-band" d="${band}"/>` : ""}<path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/></svg>${labels}</div>
         <div class="avail-ticks bh-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>${legend}</div>
-      ${note(src)}`;
+      ${note(src)}${viaBlock}`;
+  }
+
+  // Weg des Bluetooth-Empfangs (seit 2.40.0): Balken mit Abschnitten je Empfänger (Lücke
+  // schraffiert), Legende mit Anteil und mittlerem Empfang, die letzten Wechsel. Die Farben
+  // folgen der Reihenfolge, in der die Empfänger zuerst auftraten; sie bleiben je Gerät stabil.
+  _viaHtml(via, start, end, range) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const span = end - start;
+    if (!(span > 0) || !via.segments?.length) return "";
+    const colour = (i) => VIA_COLORS[i % VIA_COLORS.length];
+    const name = (i) => via.receivers[i]?.name ?? "";
+    const bar = via.segments
+      .map(([a, b, i]) => {
+        const width = (((b - a) / span) * 100).toFixed(3);
+        return i == null ? `<i class="gap" style="width:${width}%"></i>` : `<i style="width:${width}%;background:${colour(i)}" title="${escape(name(i))}"></i>`;
+      })
+      .join("");
+    const [ago, middle] = t("viaAxis")[range] || t("viaAxis")["24h"];
+    const legend = via.receivers
+      .map((r, i) => `<div><i class="sv-dot" style="background:${colour(i)}"></i><b>${escape(r.name)}</b><span>${escape(t("viaShare", r.share, r.avg == null ? null : Math.round(r.avg)))}</span></div>`)
+      .join("");
+    const dayOf = (at) => this._fmtTime(at, new Date(at * 1000).toDateString() !== new Date(end * 1000).toDateString());
+    const changes = (via.changes || [])
+      .map(([at, from, to]) => `<p><span>${escape(dayOf(at))}</span><b>${escape(name(from))} → ${escape(name(to))}</b></p>`)
+      .join("");
+    return `<div class="sv"><h3>${escape(t("viaTitle"))}</h3><div class="sv-bar">${bar}</div>
+      <div class="sv-axis"><span>${escape(ago)}</span><span>${escape(middle)}</span><span>${escape(t("now"))}</span></div>
+      <div class="sv-leg">${legend}</div>${changes ? `<div class="sv-chg"><h4>${escape(t("viaChanges"))}</h4>${changes}</div>` : ""}
+      <p class="sv-note">${escape(t("viaNote", this._fmtTime(via.since, true)))}</p></div>`;
   }
 
   _daysHtml(days) {
