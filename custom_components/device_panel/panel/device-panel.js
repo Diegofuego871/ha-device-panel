@@ -38,6 +38,8 @@ const NARROW_QUERY = "(max-width: 600px)";
 const VIEW_KEY = "device_panel_view";
 // Adresse dieses Panels in Home Assistant (const.py: PANEL_URL_PATH); als Startseite wird sie in den Benutzerdaten "core" als default_panel gespeichert
 const PANEL_PATH = "device-panel";
+// Eigener Eintrag in den Benutzerdaten: die bisherige Startseite, die beim Ausschalten zurückkommt
+const START_KEY = "device_panel_start";
 const VIEW_SAVE_DELAY_MS = 400;
 // Favoriten pro Benutzer (seit 2.22.0), gleiche Ablage wie die Ansicht
 const FAV_KEY = "device_panel_favorites";
@@ -5077,38 +5079,43 @@ class DevicePanel extends HTMLElement {
   // Gespeichert wird erst mit "Speichern"; der Entwurf lebt nur im Dialog.
 
   // tab: Abschnitt, bei dem die Einstellungen öffnen (zum Beispiel "magic" aus dem App-Launcher)
-  // Startseite (seit 2.39.0): Ist dieses Panel die Startseite des Benutzers? Das Frontend von HA liest default_panel aus den Benutzerdaten
+  // Startseite (seit 2.39.0, gilt seit 2.39.1 erst mit "Speichern"): Ist dieses Panel die Startseite des Benutzers? Das Frontend von HA liest default_panel aus den Benutzerdaten
   // "core" (userData.default_panel) vor der Systemeinstellung. Die Auswahl im Profil kennt nur eingebaute Seiten und Dashboards, nicht
-  // das Panel einer Integration; deshalb setzt das Panel den Wert selbst, sofort (keine Einstellung, die erst mit "Speichern" gilt).
-  async _loadStartPanel() {
-    const st = this._settings;
+  // das Panel einer Integration; deshalb setzt das Panel den Wert selbst. Wie alles andere gilt die Wahl erst mit "Speichern"
+  // (Entwurf in st.extra.start_panel); beim Einschalten merkt sich das Panel die bisherige Startseite, beim Ausschalten kommt sie zurück.
+  async _readStartPanel() {
     try {
       const r = await this._hass.callWS({ type: "frontend/get_user_data", key: "core" });
-      this._startPanel = { on: r?.value?.default_panel === PANEL_PATH, busy: false, error: null, loaded: true };
+      this._startOn = r?.value?.default_panel === PANEL_PATH;
     } catch (err) {
-      this._startPanel = { on: false, busy: false, error: errText(err), loaded: false };
+      console.warn("device-panel: Startseite von HA nicht lesbar", err);
+      this._startOn = false;
     }
-    if (this._settings === st) this._renderSettings();
   }
 
-  async _setStartPanel(on) {
-    const sp = (this._startPanel ||= { on: false, busy: false, error: null, loaded: true });
-    sp.busy = true;
-    sp.error = null;
-    this._renderSettings();
-    try {
-      // Die übrigen Werte von "core" bleiben erhalten (zum Beispiel andere Einstellungen von HA)
-      const r = await this._hass.callWS({ type: "frontend/get_user_data", key: "core" });
-      const core = { ...(r?.value || {}) };
-      if (on) core.default_panel = PANEL_PATH;
+  async _saveStartPanel(on) {
+    const read = async (key) => (await this._hass.callWS({ type: "frontend/get_user_data", key }))?.value || {};
+    // Die übrigen Werte von "core" bleiben erhalten (zum Beispiel andere Einstellungen von HA)
+    const core = { ...(await read("core")) };
+    const mine = { ...(await read(START_KEY)) };
+    if (on) {
+      // Die bisherige Startseite merken, damit sie beim Ausschalten wiederkommt (nicht, wenn es schon dieses Panel ist)
+      if (core.default_panel && core.default_panel !== PANEL_PATH) mine.previous = core.default_panel;
+      else if (!core.default_panel) delete mine.previous;
+      core.default_panel = PANEL_PATH;
+    } else if (core.default_panel === PANEL_PATH) {
+      if (mine.previous) core.default_panel = mine.previous;
       else delete core.default_panel;
-      await this._hass.callWS({ type: "frontend/set_user_data", key: "core", value: core });
-      sp.on = on;
-    } catch (err) {
-      sp.error = this._t("startErr", errText(err));
+      delete mine.previous;
     }
-    sp.busy = false;
-    this._renderSettings();
+    await this._hass.callWS({ type: "frontend/set_user_data", key: "core", value: core });
+    await this._hass.callWS({ type: "frontend/set_user_data", key: START_KEY, value: mine });
+    this._startOn = on;
+  }
+
+  // Stand der Panel-Einstellungen, die nicht zu den Optionen gehören (Vorabversionen, automatisch installieren, Startseite)
+  _extraBase() {
+    return { prerelease: Boolean(this._prerelease), auto_update: Boolean(this._autoUpdate), start_panel: Boolean(this._startOn) };
   }
 
   async _openSettings(tab = "overview") {
@@ -5131,7 +5138,6 @@ class DevicePanel extends HTMLElement {
     }
     this._blurOnTouch();
     this._loadVersion(false);
-    this._loadStartPanel();
     const st = this._settings;
     try {
       const data = await this._hass.callWS({ type: "device_panel/get_options" });
@@ -5139,11 +5145,13 @@ class DevicePanel extends HTMLElement {
       // Logos der Integrationen vorab laden, damit die Liste gleich vollständig erscheint.
       await this._brandPreloadDomains((data.catalog?.integrations || []).map((i) => i.domain));
       if (this._settings !== st) return;
+      await this._readStartPanel();
+      if (this._settings !== st) return;
       st.data = data;
       st.draft = { ...data.values };
       this._applyPanelSettings(data.panel);
-      // Vorabversionen (ganze Instanz) gelten wie alles andere erst mit "Speichern".
-      st.extraBase = { prerelease: Boolean(this._prerelease), auto_update: Boolean(this._autoUpdate) };
+      // Vorabversionen (ganze Instanz) und Startseite (Benutzer) gelten wie alles andere erst mit "Speichern".
+      st.extraBase = this._extraBase();
       st.extra = { ...st.extraBase };
     } catch (err) {
       if (this._settings !== st) return;
@@ -5932,7 +5940,7 @@ class DevicePanel extends HTMLElement {
     if (id === "look") {
       const chips = (d.hide_connections || []).length + (d.hide_chips || []).length;
       return [
-        this._startPanel?.on ? this._t("sumStartOn") : "",
+        (this._settings?.extra ? this._settings.extra.start_panel : this._startOn) ? this._t("sumStartOn") : "",
         chips ? this._t("sumChipsHidden", chips) : "",
         (d.connection_order || []).length || (d.chip_order || []).length ? this._t("sumChipsOrder") : "",
       ]
@@ -7325,11 +7333,12 @@ class DevicePanel extends HTMLElement {
         ${warn ? `<div class="opt-warn">${mdi("alert", 14)}<span>${escape(warn)}</span></div>` : ""}
         ${info && st.info.has(key) ? `<div class="opt-info">${escape(info)}</div>` : ""}</div>`;
     };
-    // Startseite: eine Benutzereinstellung (Benutzerdaten von HA), die sofort gilt; deshalb kein Entwurf und kein "Speichern"
+    // Startseite: Benutzereinstellung (Benutzerdaten von HA); der Entwurf steht in st.extra, gespeichert wird mit "Speichern"
     const startRow = () => {
-      const sp = this._startPanel || { on: false, busy: true, error: null, loaded: false };
-      const control = `<label class="switch"><input type="checkbox" data-start-panel ${sp.on ? "checked" : ""}${sp.busy || !sp.loaded ? " disabled" : ""} aria-label="${escape(t("optStart"))}"><span></span></label>`;
-      return row("start_panel", t("optStart"), control, t("optStartShort"), null) + (sp.error ? `<div class="opt-error" role="alert">${escape(sp.error)}</div>` : "");
+      const on = Boolean(st.extra ? st.extra.start_panel : this._startOn);
+      const changed = Boolean(st.extra) && st.extra.start_panel !== st.extraBase.start_panel;
+      const control = `<label class="switch"><input type="checkbox" data-start-panel ${on ? "checked" : ""}${st.extra ? "" : " disabled"} aria-label="${escape(t("optStart"))}"><span></span></label>`;
+      return row("start_panel", t("optStart"), control, t("optStartShort"), null).replace('class="opt', changed ? 'class="opt changed' : 'class="opt');
     };
     const sw = (key, label, locked = false) => `<label class="switch"><input type="checkbox" data-opt="${key}" ${d[key] ? "checked" : ""}${locked ? " disabled" : ""} aria-label="${escape(label)}"><span></span></label>`;
     // Automatisch installieren (seit 2.22.0): Panel-Einstellung der Instanz (wie "Vorabversionen"), nur mit der täglichen Prüfung
@@ -8008,9 +8017,7 @@ class DevicePanel extends HTMLElement {
         else own[el.dataset.imon] = "off";
         st.draft.offline_after_integrations = own;
       } else if (el.dataset.startPanel !== undefined) {
-        // Startseite: gilt sofort für den Benutzer, nicht erst mit "Speichern"
-        this._setStartPanel(el.checked);
-        return;
+        if (st.extra) st.extra.start_panel = el.checked;
       } else if (el.dataset.autoUpdate !== undefined) {
         if (st.extra) st.extra.auto_update = el.checked;
       } else if (el.dataset.opt) st.draft[el.dataset.opt] = el.checked;
@@ -8217,6 +8224,7 @@ class DevicePanel extends HTMLElement {
         const panel = await this._hass.callWS({ type: "device_panel/set_panel", auto_update: st.extra.auto_update });
         this._applyPanelSettings(panel);
       }
+      if (extra.includes("start_panel")) await this._saveStartPanel(st.extra.start_panel);
       if (anyReset) await this._hass.callWS({ type: "device_panel/reset_device_settings", ...resets });
       // Erkennung, Batterie-Schwelle, Ausschlüsse und Anzeige ändern die Liste sofort.
       const quiet = ["update_check", "battery_push", "battery_persistent", "notify_service", "notify_click_target"];
@@ -8246,7 +8254,7 @@ class DevicePanel extends HTMLElement {
     st.data = data;
     st.draft = { ...data.values };
     if (data.panel) this._applyPanelSettings(data.panel);
-    st.extraBase = { prerelease: Boolean(this._prerelease), auto_update: Boolean(this._autoUpdate) };
+    st.extraBase = this._extraBase();
     st.extra = { ...st.extraBase };
     st.resets = { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set() };
     st.saving = false;

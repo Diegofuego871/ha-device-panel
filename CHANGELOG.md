@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.39.1] - 2026-10-14
+
+Start page: like all other settings.
+
+### Changed
+
+- Settings, "Start page": the switch "Set as my start page" no longer applies at once but, like all other settings, only with "Save" (it shows the label "changed", counts as a change, and closing without saving asks "Discard changes?"). Switching it on remembers your previous start page of Home Assistant; switching it off and saving brings that one back. Without a previous start page the entry is removed and the default of Home Assistant applies again.
+
 ## [2.39.0] - 2026-10-14
 
 Start page: the panel as your start page of Home Assistant.
@@ -3127,6 +3135,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.39.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.1
 [2.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.0
 [2.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.38.0
 [2.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.37.0

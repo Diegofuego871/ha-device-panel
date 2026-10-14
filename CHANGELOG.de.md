@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.39.1] - 2026-10-14
+
+Startseite: wie alle anderen Einstellungen.
+
+### Geändert
+
+- Einstellungen, "Startseite": Der Schalter "Als meine Startseite festlegen" gilt nicht mehr sofort, sondern wie alle anderen Einstellungen erst mit "Speichern" (er zeigt das Etikett "geändert", zählt als Änderung, und beim Schliessen ohne Speichern fragt das Panel "Änderungen verwerfen?"). Beim Einschalten merkt sich das Panel deine bisherige Startseite von Home Assistant; Ausschalten und Speichern bringt sie zurück. Ohne bisherige Startseite wird der Eintrag entfernt, und es gilt wieder die Vorgabe von Home Assistant.
+
 ## [2.39.0] - 2026-10-14
 
 Startseite: das Panel als Startseite von Home Assistant.
@@ -3228,6 +3236,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.39.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.1
 [2.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.0
 [2.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.38.0
 [2.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.37.0
