@@ -235,7 +235,7 @@ The same panel as cards, with the same pop-ups, windows and assistants in full s
 - An outage lasts until Home Assistant sees the device online again, also across restarts. "At least" (≥) means the start is not known.
 - The availability log covers 31 days in its own file, not the recorder. Time while Home Assistant was not running counts as "no data".
 - Hidden devices, integrations and device types are neither shown nor monitored. Every filter chip can be hidden and reordered in the settings.
-- Battery warning from 1 to 50 % (default 15 %), per integration and per device.
+- Battery warning from 1 to 50 % (default 15 %), per integration and per device. An implausibly fast drop (for example 76 % to 2 % within minutes, a measurement error of some sensors) is held until a later report confirms it; fast-draining batteries such as a vacuum cleaner count at once. Nothing to set.
 - Device type and connection type are detected automatically. You can fix either per integration; a value set by hand on the device comes first. The type only applies in the panel, not in Home Assistant.
 - Signal history comes from the recorder or, for ZHA, Bluetooth and unrecorded sensors, from the panel itself.
 - Bluetooth devices show the live signal of Bluetooth (best receiver), not the value of their own signal sensor. The path "Connected via" is recorded by the panel from the update on; earlier paths cannot be reconstructed.

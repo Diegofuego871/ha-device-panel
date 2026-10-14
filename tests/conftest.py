@@ -9,7 +9,7 @@ import pytest
 
 # Beim Sammeln importieren wie die Testmodule: später ist custom_components
 # je nach Reihenfolge schon das Testpaket von Home Assistant.
-from custom_components.device_panel import update_check
+from custom_components.device_panel import battery_guard, update_check
 
 # Echte Abfrage (vor dem Patch), für Tests mit aioclient_mock.
 REAL_GET_JSON = update_check._async_get_json
@@ -60,3 +60,13 @@ def ai_default(hass, monkeypatch):
     hass.states.async_set("ai_task.standard", "unknown", {"friendly_name": "Standard-KI"})
     monkeypatch.setattr(ai_assessment, "default_entity", lambda _hass: "ai_task.standard")
     return "ai_task.standard"
+
+
+@pytest.fixture(autouse=True)
+def battery_guard_off(request, monkeypatch):
+    """
+    Die Tests der Batterie, des Ladens und der KI setzen Stände sprunghaft (100 dann 20 ohne Zeit dazwischen): ohne den Wächter für
+    Messfehler (2.43.0) laufen sie wie bisher. tests/test_battery_guard.py schaltet ihn mit der Marke "battery_guard" ein.
+    """
+    if request.node.get_closest_marker("battery_guard") is None:
+        monkeypatch.setattr(battery_guard, "JUMP_POINTS", 1000.0)

@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.43.0] - 2026-10-14
+
+Batterie: Messfehler werden von selbst abgefangen, und das Protokoll hält nur Neues fest.
+
+### Geändert
+
+- Batteriestand: Ein unglaubwürdig schneller Abfall wird gehalten, bis er bestätigt ist, ohne dass etwas einzustellen ist. Manche Sensoren melden zwischendurch einen unmöglichen Wert (76 % - 2 % - 68 % innerhalb von Minuten); das löste "Batterie schwach" aus und liess ein Gerät wie ladend aussehen. Das Panel schaut jetzt auf die Geschwindigkeit des Abfalls statt auf den Wert: Ein Abfall gilt nur als verdächtig, wenn er mindestens 25 Punkte beträgt und grösser ist, als eine Batterie seit der letzten Meldung physikalisch verlieren kann (2 Punkte pro Minute plus 10). Ein Staubsauger, der einen Punkt pro Minute verliert, oder ein Sensor, der einmal pro Stunde meldet, wird deshalb nie gehalten. Ein gehaltener Stand wird bestätigt durch eine weitere passende Meldung mindestens 10 Minuten später oder wenn er 30 Minuten unverändert bleibt; kehrt der Stand vorher zurück, wird die Meldung als Messfehler verworfen. Anstiege werden nie gefiltert (Laden und Batteriewechsel sind echt). Liste, Batterie-Warnung, Ladeerkennung und die Fakten für die KI nutzen den glaubwürdigen Stand; jede Entscheidung steht im Protokoll (Kategorie Batterie).
+- Batterie-Verlauf: Solche Einbrüche, auf die der Stand innerhalb einer Stunde zurückkehrt, erscheinen nicht mehr im Diagramm, in der Prognose und in den Fakten für die KI (die Langzeitstatistik glättet sie schon).
+- Protokoll: Die Debug-Zeile "Laden" wird nur noch geschrieben, wenn sich der Stand eines Geräts ändert. Eine Wiederverbindung von Matter- oder Eve-Geräten meldet viele Geräte auf einmal mit demselben Wert und füllte das Protokoll mit gleichen Zeilen (und verdrängte die wichtigen Einträge). Alles andere bleibt so ausführlich wie bisher.
+
 ## [2.42.0] - 2026-10-14
+
+Nicht veröffentlicht; enthalten in 2.43.0.
 
 KI-Einschätzung: Der Grund eines Fehlers ist sichtbar, und die KI bekommt mehr Fakten.
 
@@ -3279,7 +3291,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.42.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.42.0
+[2.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.43.0
 [2.41.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.41.2
 [2.40.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.1
 [2.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.0

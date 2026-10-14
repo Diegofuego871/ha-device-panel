@@ -7,7 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.43.0] - 2026-10-14
+
+Battery: measurement errors are caught by themselves, and the log keeps only what is new.
+
+### Changed
+
+- Battery level: an implausibly fast drop is held until it is confirmed, without any setting. Some sensors report an impossible value in between (76 % - 2 % - 68 % within minutes); that triggered "Battery low" and made a device look like it was charging. The panel now looks at how fast the level fell, not at the value: a drop counts as suspicious only if it is at least 25 points and larger than a battery can physically lose in the time since the last report (2 points per minute plus 10). A vacuum cleaner that loses a point per minute, or a sensor that reports once an hour, is therefore never held. A held level is confirmed by another matching report at least 10 minutes later, or when it stays unchanged for 30 minutes; if the level returns first, the reading is discarded as a measurement error. Rises are never filtered (charging and battery changes are real). The list, the battery warning, the charging detection and the facts for the AI use the trusted level; each decision is written to the log (category Battery).
+- Battery history: such dips that come back within an hour no longer appear in the chart, the forecast and the AI facts (the long-term statistics smooth them already).
+- Log: the debug line "Charging" is only written when the level of a device changes. A reconnection of Matter or Eve devices reports many devices at once with the same value and filled the log with identical lines (and pushed out the entries that matter). Everything else stays as detailed as before.
+
 ## [2.42.0] - 2026-10-14
+
+Not released; included in 2.43.0.
 
 AI assessment: the reason of a failure is visible, and the AI gets more facts.
 
@@ -3178,7 +3190,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.42.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.42.0
+[2.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.43.0
 [2.41.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.41.2
 [2.40.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.1
 [2.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.0

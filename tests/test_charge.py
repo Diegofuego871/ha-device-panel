@@ -423,3 +423,20 @@ def test_bool_and_stall_maps_validate() -> None:
             charge_map("charge_stall")(bad)
     assert values_from({"charge_stall_integrations": {"zha": 4}, "charge_stop_integrations": {"zha": "x"}})["charge_stall_integrations"] == {}
     assert values_from({"charge_stop_integrations": {"zha": "x"}})["charge_stop_integrations"] == {}
+
+
+async def test_unchanged_level_is_not_logged_again(hass: HomeAssistant) -> None:
+    """2.43.0: Wiederverbindungen (Matter, Eve) melden viele Geräte mit gleichem Wert; das Protokoll hält nur Änderungen fest."""
+    from custom_components.device_panel import activity  # noqa: PLC0415
+
+    _device(hass, "Eve Fenster", 100)
+    device, entity = _device(hass, "Eve Tür", 100)
+    await _setup(hass)
+    activity.get(hass).debug = True
+    for attrs in ({"friendly_name": "a"}, {"friendly_name": "b"}):  # gleicher Stand, neue Meldung durch geänderte Attribute
+        hass.states.async_set(entity, "100", {"device_class": "battery", "unit_of_measurement": "%", **attrs})
+        await hass.async_block_till_done()
+    _bat(hass, entity, 99)
+    await hass.async_block_till_done()
+    texts = [e["text"] for e in activity.snapshot(hass)["entries"] if e["title"] == "Eve Tür" and e["cat"] == "charge"]
+    assert len([t for t in texts if t.startswith("level 100 %")]) == 0 and len([t for t in texts if t.startswith("level 99 %")]) == 1

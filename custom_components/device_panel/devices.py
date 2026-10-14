@@ -357,6 +357,12 @@ def battery(
         if _device_class(entry, state) != "battery":
             continue
         if entry.domain == "sensor" and (value := _number(state)) is not None:
+            # Glaubwürdiger Stand (seit 2.43.0): ein unmöglich schneller Abfall (Messfehler) gilt erst nach Bestätigung
+            from .battery_guard import get as battery_guard  # noqa: PLC0415
+
+            value = battery_guard(hass).level(entry.entity_id, state)
+            if value is None:
+                value = _number(state)
             level, found = round(value), True
         elif entry.domain == "binary_sensor" and state is not None and state.state != STATE_UNAVAILABLE:
             low, found = low or state.state == STATE_ON, True

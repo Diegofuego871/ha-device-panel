@@ -27,6 +27,7 @@ from homeassistant.helpers.storage import Store
 
 from . import activity, push, push_icon
 from .battery_history import battery_entity
+from .battery_guard import get as battery_guard
 from .const import (
     CHARGE_DROP,
     CHARGE_JUMP_FROM,
@@ -168,7 +169,7 @@ class ChargeNotifier:
         self._state = {d: s for d, s in self._state.items() if d in keep}
         now = time.time()
         for entity_id, dev in wanted.items():
-            if dev not in self._state and (level := level_of(hass.states.get(entity_id))) is not None:
+            if dev not in self._state and (level := battery_guard(hass).level(entity_id, hass.states.get(entity_id))) is not None:
                 self._state[dev] = {"min": level, "min_at": now, "last": level, "done": level >= device_charge_opts(hass, opts, dev)[CONF_CHARGE_FULL]}
         if wanted:
             self._unsub_track = async_track_state_change_event(hass, list(wanted), self._on_state)
@@ -177,7 +178,8 @@ class ChargeNotifier:
     @callback
     def _on_state(self, event: Event) -> None:
         dev = self._entities.get(event.data["entity_id"])
-        level = level_of(event.data.get("new_state"))
+        # Glaubwürdiger Stand (seit 2.43.0): ein Messfehler (76 % - 2 % - 68 %) soll weder Tiefpunkt noch "lädt" verfälschen
+        level = battery_guard(self.hass).level(event.data["entity_id"], event.data.get("new_state"))
         if dev is None or level is None:
             return
         opts = effective(self.hass)
@@ -185,6 +187,7 @@ class ChargeNotifier:
         copts = device_charge_opts(self.hass, opts, dev)
         now = time.time()
         was = self.charging(dev, now, copts) is not None
+        before = (self._state.get(dev) or {}).get("last")
         done = self.step(dev, level, now, copts)
         self._live_eval(dev, now)
         device = dr.async_get(self.hass).async_get(dev)
@@ -192,7 +195,9 @@ class ChargeNotifier:
         st = self._state.get(dev) or {}
         low = round(st.get("min", level))
         hass = self.hass
-        activity.record(hass, "debug", "charge", "charge_level", name, dev, level=round(level), low=low, full=copts[CONF_CHARGE_FULL], rise=copts[CONF_CHARGE_RISE])
+        # Nur bei geändertem Stand: Wiederverbindungen (Matter, Eve) melden viele Geräte zugleich mit gleichem Wert und füllten das Protokoll (seit 2.43.0)
+        if before is None or round(before) != round(level):
+            activity.record(hass, "debug", "charge", "charge_level", name, dev, level=round(level), low=low, full=copts[CONF_CHARGE_FULL], rise=copts[CONF_CHARGE_RISE])
         if not was and done is None and self.charging(dev, now, copts) is not None:
             activity.record(hass, "info", "charge", "charge_started", name, dev, level=round(level), low=low, rise=copts[CONF_CHARGE_RISE])
         if done is None:

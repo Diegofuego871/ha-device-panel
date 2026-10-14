@@ -235,7 +235,7 @@ Dasselbe Panel als Karten, mit denselben Pop-ups, Fenstern und Assistenten im Vo
 - Ein Ausfall dauert, bis Home Assistant das Gerät wieder online sieht, auch über Neustarts. "Mindestens" (≥) heisst: Der Beginn ist nicht bekannt.
 - Das Verfügbarkeitsprotokoll umfasst 31 Tage in einer eigenen Datei, nicht im Recorder. Zeit, in der Home Assistant nicht lief, zählt als "keine Daten".
 - Ausgeblendete Geräte, Integrationen und Gerätetypen werden weder gezeigt noch überwacht. Jeder Filter-Chip lässt sich in den Einstellungen ausblenden und umordnen.
-- Batterie-Warnung von 1 bis 50 % (Standard 15 %), pro Integration und pro Gerät.
+- Batterie-Warnung von 1 bis 50 % (Standard 15 %), pro Integration und pro Gerät. Ein unglaubwürdig schneller Abfall (zum Beispiel 76 % auf 2 % in wenigen Minuten, ein Messfehler mancher Sensoren) wird gehalten, bis eine spätere Meldung ihn bestätigt; schnell leere Akkus wie ein Staubsauger gelten sofort. Es ist nichts einzustellen.
 - Gerätetyp und Verbindungsart werden automatisch erkannt. Du kannst beides pro Integration korrigieren; ein von Hand am Gerät gesetzter Wert geht vor. Der Typ gilt nur im Panel, nicht in Home Assistant.
 - Der Empfangsverlauf kommt aus dem Recorder oder, bei ZHA, Bluetooth und nicht aufgezeichneten Sensoren, vom Panel selbst.
 - Bluetooth-Geräte zeigen den Live-Empfang von Bluetooth (bester Empfänger), nicht den Wert ihres eigenen Empfangs-Sensors. Den Weg "Verbunden über" zeichnet das Panel ab dem Update auf; frühere Wege lassen sich nicht nachträglich herstellen.

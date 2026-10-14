@@ -23,6 +23,8 @@ from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
+from .battery_guard import despike
+
 _LOGGER = logging.getLogger(__name__)
 
 RANGES = {"24h": 1, "7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365}
@@ -285,6 +287,9 @@ async def _load(
         _LOGGER.warning("Batterie-Verlauf für %s nicht lesbar: %s", entity_id, err)
         points = []
     points = sorted(p for p in points if start <= p[0] <= now)
+    if source == "history":
+        # Messfehler (76 % - 2 % - 68 %) fallen weg (seit 2.43.0); Mittelwerte der Statistik glätten sie schon.
+        points = despike(points)
     # Bis jetzt: der aktuelle Stand gilt seit seiner letzten Änderung.
     points, steady = held(points, state, _value, start, now)
     return points, source, period, steady
