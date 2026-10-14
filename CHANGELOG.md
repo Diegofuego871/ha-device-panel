@@ -17,6 +17,8 @@ Search field: no longer as wide as the whole window.
 
 ## [2.35.1] - 2026-10-14
 
+Not released; included in 2.36.0.
+
 The logos of the integrations come back by themselves.
 
 ### Fixed
@@ -3090,7 +3092,6 @@ First pre-release.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.36.0
-[2.35.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.1
 [2.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.0
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0
 [2.31.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.31.0
