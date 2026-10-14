@@ -398,15 +398,29 @@ async def _generate(hass: HomeAssistant, entity_id: str | None, instructions: st
     return result.data
 
 
+def default_entity(hass: HomeAssistant) -> str | None:
+    """Die KI-Aufgabe, die der Benutzer in Home Assistant unter "KI-Vorschläge" bei "Aufgaben zur Datengenerierung" gewählt hat."""
+    try:
+        from homeassistant.components.ai_task.const import DATA_PREFERENCES  # noqa: PLC0415
+
+        return hass.data[DATA_PREFERENCES].gen_data_entity_id
+    except Exception:  # noqa: BLE001 - Interna von ai_task: ohne sie keine Standard-Aufgabe
+        return None
+
+
+def ai_ready(hass: HomeAssistant, entity_id: str | None = None) -> bool:
+    """Gibt es eine KI-Aufgabe, die die Einschätzung ausführen kann (seit 2.38.0)?
+
+    Ja, wenn eine gewählte Aufgabe (Einstellung des Panels) existiert oder Home Assistant eine Standard-Aufgabe gewählt hat und diese
+    existiert. Ohne beides würde jeder Aufruf mit "no preferred entity" scheitern; dann lässt sich die Funktion nicht einschalten.
+    """
+    return any(e and hass.states.get(e) is not None for e in (entity_id or None, default_entity(hass)))
+
+
 def source_name(hass: HomeAssistant, entity_id: str | None) -> str | None:
     """Name der KI-Aufgabe für "Erstellt von …" (gewählte, sonst die Standard-Aufgabe von HA)."""
     if entity_id is None:
-        try:
-            from homeassistant.components.ai_task.const import DATA_PREFERENCES  # noqa: PLC0415
-
-            entity_id = hass.data[DATA_PREFERENCES].gen_data_entity_id
-        except Exception:  # noqa: BLE001 - Interna von ai_task: ohne sie kein Name
-            return None
+        entity_id = default_entity(hass)
     state = hass.states.get(entity_id) if entity_id else None
     return state.name if state else entity_id
 

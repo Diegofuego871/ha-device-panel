@@ -841,6 +841,17 @@ def apply_values(hass: HomeAssistant, entry: ConfigEntry, values: dict[str, Any]
     options = {**entry.options, **clean}
     if (CONF_NOTIFY_DELAY in clean or CONF_OFFLINE_AFTER in clean) and delay_too_short(options):
         raise vol.Invalid("\"Erst melden nach\" darf nicht kürzer sein als \"Ausgefallen nach\"", path=[CONF_NOTIFY_DELAY])
+    # KI-Einschätzung nur einschalten, wenn es eine KI-Aufgabe gibt (seit 2.38.0): sonst scheitert jeder Aufruf mit "no preferred entity".
+    # Wer sie schon eingeschaltet hat, bleibt unberührt (sonst liesse sich nichts anderes mehr speichern, wenn die Aufgabe wegfällt).
+    if clean.get(CONF_AI_ASSESSMENT) is True and entry.options.get(CONF_AI_ASSESSMENT) is not True:
+        from .ai_assessment import ai_ready  # noqa: PLC0415 - ai_assessment braucht options_api
+
+        if not ai_ready(hass, str(options.get(CONF_AI_TASK) or "") or None):
+            raise vol.Invalid(
+                "Keine KI-Aufgabe ausgewählt: In Home Assistant unter \"KI-Vorschläge\" (/config/ai) bei \"Aufgaben zur Datengenerierung\" "
+                "eine KI-Task-Entität wählen, dann lässt sich die KI-Einschätzung einschalten",
+                path=[CONF_AI_ASSESSMENT],
+            )
     if options == dict(entry.options):
         return False
     # Debug-Protokoll: nur die Namen der geänderten Einstellungen, nie die Werte (Push-Ziele, Texte)

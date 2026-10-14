@@ -50,3 +50,13 @@ def skip_frontend(hass):
     """Das Testpaket bringt das HA-Frontend nicht mit: als geladen markieren."""
     hass.config.components.add("frontend")
     yield
+
+
+@pytest.fixture
+def ai_default(hass, monkeypatch):
+    """Home Assistant hat unter "KI-Vorschläge" eine Aufgabe zur Datengenerierung gewählt (ai_task ist in der CI nicht geladen)."""
+    from custom_components.device_panel import ai_assessment  # noqa: PLC0415
+
+    hass.states.async_set("ai_task.standard", "unknown", {"friendly_name": "Standard-KI"})
+    monkeypatch.setattr(ai_assessment, "default_entity", lambda _hass: "ai_task.standard")
+    return "ai_task.standard"

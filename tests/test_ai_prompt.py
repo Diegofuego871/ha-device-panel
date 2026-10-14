@@ -96,7 +96,7 @@ async def test_option_roundtrip_and_default_is_listed(hass: HomeAssistant, setup
     assert (await client.receive_json())["result"]["values"]["ai_prompt"] == ""
 
 
-async def test_assess_uses_own_prompt(hass: HomeAssistant, setup, hass_ws_client, monkeypatch) -> None:
+async def test_assess_uses_own_prompt(hass: HomeAssistant, setup, hass_ws_client, monkeypatch, ai_default) -> None:
     lamp = _lamp(hass)
     calls: list[str] = []
 

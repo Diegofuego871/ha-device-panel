@@ -87,6 +87,7 @@ async def test_facts_have_no_secrets_and_show_the_situation(hass: HomeAssistant,
 
 
 async def test_assess_needs_option_and_sends_only_on_call(hass: HomeAssistant, setup, hass_ws_client, monkeypatch) -> None:
+    hass.states.async_set("ai_task.test", "unknown")
     lamp = _device(hass, "Lampe")
     _entity(hass, lamp, "light", "l", "on")
     calls: list[tuple[str | None, str]] = []
@@ -122,7 +123,7 @@ async def test_assess_needs_option_and_sends_only_on_call(hass: HomeAssistant, s
 
 
 @pytest.mark.parametrize("code", ["no_ai_task", "timeout", "failed"])
-async def test_assess_errors_reach_the_panel(hass: HomeAssistant, setup, hass_ws_client, monkeypatch, code) -> None:
+async def test_assess_errors_reach_the_panel(hass: HomeAssistant, setup, hass_ws_client, monkeypatch, ai_default, code) -> None:
     lamp = _device(hass, "Lampe")
     _entity(hass, lamp, "light", "l", "on")
 
@@ -149,9 +150,9 @@ async def test_option_is_checked_and_listed(hass: HomeAssistant, setup, hass_ws_
     for i, bad in enumerate(("light.lampe", "ai_task.Gross", 5, "notify.x"), 1):
         await client.send_json({"id": i, "type": f"{DOMAIN}/set_options", "values": {"ai_task_entity": bad}})
         assert (await client.receive_json())["error"]["code"] == "invalid_format", bad
+    hass.states.async_set("ai_task.openai", "unknown", {"friendly_name": "OpenAI Aufgabe"})
     await client.send_json({"id": 10, "type": f"{DOMAIN}/set_options", "values": {"ai_task_entity": "ai_task.openai", "ai_assessment": True}})
     assert (await client.receive_json())["success"]
-    hass.states.async_set("ai_task.openai", "unknown", {"friendly_name": "OpenAI Aufgabe"})
     await client.send_json({"id": 11, "type": f"{DOMAIN}/get_options"})
     result = (await client.receive_json())["result"]
     assert result["values"]["ai_task_entity"] == "ai_task.openai" and result["values"]["ai_assessment"] is True
@@ -161,6 +162,59 @@ async def test_option_is_checked_and_listed(hass: HomeAssistant, setup, hass_ws_
     assert (await client.receive_json())["success"]
     await client.send_json({"id": 13, "type": f"{DOMAIN}/get_options"})
     assert (await client.receive_json())["result"]["values"]["ai_task_entity"] == ""
+
+
+async def test_ai_ready_needs_an_existing_task(hass: HomeAssistant, ai_default, monkeypatch) -> None:
+    """Bereit ist nur, wer eine gewählte oder die Standard-Aufgabe von Home Assistant hat, und diese existiert (2.38.0)."""
+    assert ai_assessment.ai_ready(hass) is True and ai_assessment.ai_ready(hass, "ai_task.weg") is True  # Standard-Aufgabe da
+    monkeypatch.setattr(ai_assessment, "default_entity", lambda _hass: None)
+    assert ai_assessment.ai_ready(hass) is False and ai_assessment.ai_ready(hass, "") is False
+    assert ai_assessment.ai_ready(hass, "ai_task.weg") is False  # gewählt, aber nicht vorhanden
+    hass.states.async_set("ai_task.eigene", "unknown")
+    assert ai_assessment.ai_ready(hass, "ai_task.eigene") is True
+    monkeypatch.setattr(ai_assessment, "default_entity", lambda _hass: "ai_task.entfernt")  # Standard gewählt, Entität gibt es nicht mehr
+    assert ai_assessment.ai_ready(hass) is False
+
+
+async def test_cannot_enable_without_ai_task(hass: HomeAssistant, setup, hass_ws_client) -> None:
+    """Ohne KI-Aufgabe lässt sich die KI-Einschätzung nicht einschalten, mit sprechender Meldung; der Katalog sagt es dem Panel (2.38.0)."""
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/get_options"})
+    assert (await client.receive_json())["result"]["catalog"]["ai_ready"] is False
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {"ai_assessment": True}})
+    msg = await client.receive_json()
+    assert msg["success"] is False and msg["error"]["code"] == "invalid_format"
+    assert "KI-Aufgabe" in msg["error"]["message"] and "/config/ai" in msg["error"]["message"] and "Datengenerierung" in msg["error"]["message"]
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/get_options"})
+    assert (await client.receive_json())["result"]["values"]["ai_assessment"] is False
+    # Eine gewählte Aufgabe, die es nicht gibt, hilft nicht
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/set_options", "values": {"ai_assessment": True, "ai_task_entity": "ai_task.weg"}})
+    assert (await client.receive_json())["success"] is False
+    # Ausschalten und alles andere bleibt möglich
+    await client.send_json({"id": 5, "type": f"{DOMAIN}/set_options", "values": {"ai_assessment": False, "offline_after": 7}})
+    assert (await client.receive_json())["success"] is True
+
+
+async def test_enable_with_default_or_chosen_task(hass: HomeAssistant, setup, hass_ws_client, ai_default) -> None:
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/get_options"})
+    assert (await client.receive_json())["result"]["catalog"]["ai_ready"] is True
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {"ai_assessment": True}})
+    assert (await client.receive_json())["success"] is True
+
+
+async def test_enabled_stays_savable_when_task_disappears(hass: HomeAssistant, setup, hass_ws_client, monkeypatch) -> None:
+    """Schon eingeschaltet und die Aufgabe fällt weg: andere Einstellungen lassen sich weiter speichern, nichts wird von selbst ausgeschaltet."""
+    hass.states.async_set("ai_task.test", "unknown")
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_options", "values": {"ai_assessment": True, "ai_task_entity": "ai_task.test"}})
+    assert (await client.receive_json())["success"] is True
+    hass.states.async_remove("ai_task.test")
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {"ai_assessment": True, "offline_after": 9}})
+    assert (await client.receive_json())["success"] is True
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/get_options"})
+    result = (await client.receive_json())["result"]
+    assert result["values"]["ai_assessment"] is True and result["catalog"]["ai_ready"] is False
 
 
 async def test_real_ai_task_call(hass: HomeAssistant, setup, hass_ws_client) -> None:

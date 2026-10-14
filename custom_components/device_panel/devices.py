@@ -27,6 +27,7 @@ from homeassistant.util import dt as dt_util
 from .compat import device_entry_ids, device_primary_entry_id, registry_devices
 from .const import (
     CONF_AI_ASSESSMENT,
+    CONF_AI_TASK,
     CONF_BATTERY_LOW,
     CONF_BATTERY_LOW_INTEGRATIONS,
     CONF_BATTERY_PUSH,
@@ -1072,6 +1073,8 @@ async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
     integrations.sort(key=lambda x: (-x["devices"], str(x["name"]).lower()))
     battery_list = [{"domain": d, "name": name(d), **v} for d, v in bat.items()]
     battery_list.sort(key=lambda x: (-x["devices"], str(x["name"]).lower()))
+    from .ai_assessment import ai_ready  # noqa: PLC0415 - ai_assessment braucht devices
+
     return {
         "integrations": integrations,
         "types": [{"type": t, "devices": by_type.get(t, 0)} for t in DEVICE_TYPES],
@@ -1081,6 +1084,8 @@ async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
         "ai_tasks": sorted(
             ({"value": s.entity_id, "name": s.name} for s in hass.states.async_all("ai_task")), key=lambda x: str(x["name"]).lower()
         ),
+        # Lässt sich die KI-Einschätzung einschalten? Nur mit einer KI-Aufgabe (seit 2.38.0, siehe ai_assessment.ai_ready).
+        "ai_ready": ai_ready(hass, opts.get(CONF_AI_TASK)),
     }
 
 
