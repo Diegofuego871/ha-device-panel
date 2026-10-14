@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.40.1] - 2026-10-14
+
+Bluetooth: Der Empfänger wird auch bei Geräten gezeigt, deren Empfang aus einem Sensor kommt.
+
+### Behoben
+
+- Bluetooth-Geräte mit eigenem Empfangs-Sensor (zum Beispiel SwitchBot "Bluetooth-Signal") zeigten in der Liste keinen Empfänger ("über Storen Büro") und im Fenster "Empfang" keinen Abschnitt "Verbunden über", obwohl Home Assistant den Empfänger kennt (Einstellungen, Bluetooth, Advertisements). Das Panel fragte Bluetooth nur, wenn ein Gerät keinen Empfangs-Sensor hatte. Jetzt wird der Empfänger bei jedem Bluetooth-Gerät gelesen; der Empfangswert selbst kommt wie bisher aus dem Sensor. Den Weg solcher Geräte zeichnet das Panel ab diesem Update auf, der Abschnitt "Verbunden über" füllt sich mit der Zeit (ohne mittleren Empfang, da die Sensorwerte aus dem Recorder stammen).
+
 ## [2.40.0] - 2026-10-14
 
 Empfang: der Weg des Bluetooth-Empfangs ("Verbunden über").
@@ -3246,6 +3254,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.40.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.1
 [2.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.0
 [2.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.0
 [2.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.38.0

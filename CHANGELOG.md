@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.40.1] - 2026-10-14
+
+Bluetooth: the receiver is also shown for devices whose signal comes from a sensor.
+
+### Fixed
+
+- Bluetooth devices that have their own signal sensor (for example SwitchBot "Bluetooth signal") showed no receiver in the list ("via Office blinds") and no section "Connected via" in the signal window, although Home Assistant knows the receiver (Settings, Bluetooth, Advertisements). The panel only asked Bluetooth when a device had no signal sensor. Now the receiver is read for every Bluetooth device; the signal value itself still comes from the sensor, as before. The panel records the path of such devices from this update on, the section "Connected via" fills over time (without average signal, since the sensor values come from the recorder).
+
 ## [2.40.0] - 2026-10-14
 
 Signal: the path of Bluetooth reception ("Connected via").
@@ -3145,6 +3153,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.40.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.1
 [2.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.0
 [2.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.0
 [2.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.38.0

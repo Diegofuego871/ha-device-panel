@@ -310,7 +310,7 @@
     if (forced === "steady") {
       // Wie battery_history.held: Linie ab der letzten Änderung (höchstens ab Beginn)
       const since = end - 3 * D;
-      return { ...base, source: "history", entity_id: `sensor.${d.id}_signal`, points: [[Math.max(start, since), sig.value], [end, sig.value]], first: Math.max(start, since), steady_since: since };
+      return { ...base, source: "history", entity_id: `sensor.${d.id}_signal`, points: [[Math.max(start, since), sig.value], [end, sig.value]], first: Math.max(start, since), steady_since: since, via: d.connection === "ble" && !window.__viaOff ? { ...viaFor(range, start, end, []), receivers: viaFor(range, start, end, []).receivers.map((r) => ({ ...r, avg: null })) } : null };
     }
     const logged = ["log-empty", "log", "not-recorded", "not-recorded-empty"].includes(forced) || (!forced && ["zigbee", "ble"].includes(d.connection));
     const seed = [...d.id].reduce((a, c) => a + c.charCodeAt(0), 0);

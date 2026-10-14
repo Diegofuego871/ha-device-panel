@@ -86,6 +86,13 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] ohne Weg: kein Abschnitt`, (await via()) === null);
     await p.evaluate(() => { window.__viaOff = false; });
 
+    // Empfang aus einem Sensor des Geräts (Recorder, zum Beispiel SwitchBot): der Weg steht trotzdem da, ohne Ø (es gibt keine Blöcke der Aufzeichnung)
+    await p.evaluate(() => { window.__sigSource = "steady"; });
+    check(`[${tag}] Sensor als Quelle öffnet`, await openSignal("a"));
+    v = await via();
+    check(`[${tag}] Sensor als Quelle: Weg da, Anteile ohne Ø`, v?.legend.length === 3 && v.legend.every(([n, s]) => n && /^\d+ ?%$/.test(s)), JSON.stringify(v?.legend));
+    await p.evaluate(() => { window.__sigSource = null; });
+
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();
   }

@@ -222,14 +222,13 @@ class SignalLog:
                 continue
             domains = {e.domain for eid in device_entry_ids(device) if (e := self.hass.config_entries.async_get_entry(eid))}
             signal, _via, source = signal_source(self.hass, device, entries, domains)
+            # Der Weg gilt für jedes Bluetooth-Gerät, auch wenn sein Empfang aus einem Sensor (Recorder) kommt; ohne Adresse ist er None und ohne Folgen
+            wrote = self.note_via(device.id, ble_receiver(self.hass, device), now) or wrote
             if not signal or signal.get("value") is None:
-                wrote = self.note_gap(device.id, now) or wrote
                 continue
             if source not in LOGGED and (source is None or recorded(self.hass, source)):
                 continue
             self.record(device.id, signal["kind"], float(signal["value"]), now)
-            if source == "ble":
-                wrote = self.note_via(device.id, ble_receiver(self.hass, device), now) or wrote
             wrote = True
         self.prune(now)
         if wrote:
@@ -436,8 +435,16 @@ class SignalLog:
 async def async_signal_history(
     hass: HomeAssistant, log: SignalLog | None, device: dr.DeviceEntry, range_key: str, now: float | None = None
 ) -> dict[str, Any]:
-    """Punkte, Quelle und Art des Empfangs für das Fenster "Empfang"."""
+    """Punkte, Quelle und Art des Empfangs für das Fenster "Empfang", dazu der Weg des Bluetooth-Empfangs (auch bei Sensor oder Recorder als Quelle)."""
     now = now if now is not None else time.time()
+    result = await _signal_points(hass, log, device, range_key, now)
+    if log is not None:
+        # Weg: auch bei ausgefallenem Gerät ("war"), solange es einen gibt; der Mittelwert je Empfänger aus den Punkten, wo es welche gibt
+        result["via"] = log.via_summary(device.id, range_key, now, result["points"])
+    return result
+
+
+async def _signal_points(hass: HomeAssistant, log: SignalLog | None, device: dr.DeviceEntry, range_key: str, now: float) -> dict[str, Any]:
     span = RANGES.get(range_key, RANGES["24h"])
     start = now - span
     entries = er.async_entries_for_device(er.async_get(hass), device.id)
@@ -486,8 +493,6 @@ async def async_signal_history(
             result["source"] = "log"
             # Mitte des Blocks: der Wert gilt für den ganzen Block.
             result["points"] = [[b[0] + bucket / 2, b[1], b[2], b[3]] for b in blocks]
-        # Weg: auch bei ausgefallenem Gerät ("war"), solange es einen gibt
-        result["via"] = log.via_summary(device.id, range_key, now, result["points"])
         return result
     if source is None:
         return result

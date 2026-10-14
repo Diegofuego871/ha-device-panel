@@ -276,9 +276,11 @@ def signal_source(
     if "zha" in domains and (zha := _zha_signal(hass, device.id)):
         signal, source = zha, "zha"
     ble = next((c[1] for c in device.connections if c[0] == dr.CONNECTION_BLUETOOTH), None)
-    if ble and not signal:
-        signal, via = _ble_signal(hass, ble)
-        source = "ble" if signal else None
+    if ble:
+        # Der Empfänger gilt auch, wenn der Wert aus einem Sensor des Geräts kommt (zum Beispiel SwitchBot): den Wert lassen wir dann dem Sensor.
+        live, via = _ble_signal(hass, ble)
+        if not signal:
+            signal, source = live, "ble" if live else None
     return signal, via, source
 
 
