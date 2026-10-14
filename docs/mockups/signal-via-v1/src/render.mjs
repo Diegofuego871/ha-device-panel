@@ -58,7 +58,7 @@ const VARIANTS = {
 };
 
 async function shot(mobile, variant, range, name) {
-  const { ctx, p, ev } = await page(mobile, { css: CSS, freeze: true });
+  const { ctx, p, ev } = await page(mobile, { css: CSS, freeze: true, height: 1300 });
   await ev(`const d = window.parent.__devices?.find?.((x) => x.id === "a"); r.host._detailId = "a";`);
   await p.evaluate(() => { const d = window.__devices.find((x) => x.id === "a"); d.online = true; d.offline_since = null; d.flaky = false; });
   await ev(`r.host._openStat(${JSON.stringify(range)}, "signal");`);
