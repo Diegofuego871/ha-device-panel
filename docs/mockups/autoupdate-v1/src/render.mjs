@@ -40,7 +40,11 @@ async function shot(mobile, mode, name) {
   const file = `${tmp}${name}.png`;
   await p.waitForTimeout(300);
   const box = await ev(`const r2 = r.querySelector("dialog.settings .ver").getBoundingClientRect(); return { x: r2.x, y: r2.y, width: r2.width, height: r2.height }`);
-  await p.screenshot({ path: file, clip: { x: Math.max(0, box.x - 24), y: Math.max(0, box.y - 70), width: Math.min(box.width + 48, mobile ? 390 : 760), height: box.height + 140 } });
+  // Die Koordinaten gelten im Rahmen des Panels: den Versatz des Rahmens in der Seite dazurechnen
+  const off = await p.evaluate(() => { const r = document.querySelector("#panel-frame").getBoundingClientRect(); return { x: r.x, y: r.y }; });
+  const vp = p.viewportSize();
+  const x = Math.max(0, off.x + box.x - 24), y = Math.max(0, off.y + box.y - 24);
+  await p.screenshot({ path: file, clip: { x, y, width: Math.min(box.width + 48, vp.width - x, mobile ? 390 : 760), height: Math.min(box.height + 48, vp.height - y) } });
   await ctx.close();
   return file;
 }
