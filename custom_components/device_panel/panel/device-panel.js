@@ -245,6 +245,7 @@ const MDI = {
   close: "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",
   gear: "M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z",
   verOk: "M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z",
+  refreshAuto: "M12.68 6H11.32L7 16H9L9.73 14H14.27L15 16H17L12.68 6M10.3 12.5L12 8L13.7 12.5H10.3M17.4 20.4L19 22H14V17L16 19C18.39 17.61 20 14.95 20 12C20 7.59 16.41 4 12 4S4 7.59 4 12C4 14.95 5.61 17.53 8 18.92V21.16C4.47 19.61 2 16.1 2 12C2 6.5 6.5 2 12 2S22 6.5 22 12C22 15.53 20.17 18.62 17.4 20.4Z",
   verUp: "M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M12 7L17 12H14V16H10V12H7L12 7Z",
   verCheck: "M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z",
   verDownload: "M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z",
@@ -8525,8 +8526,13 @@ class DevicePanel extends HTMLElement {
 
   _versionRowHtml({ v, d, hacs, a, installed, latest, url, inProgress, restart, canInstall, beta, betaBlocked, preSwitch }) {
     const t = (k, ...x) => this._t(k, ...x);
-    const row = (cls, iconName, title, sub, right) => `<div class="ver ${cls}">
-        <span class="ver-ic">${mdi(iconName, 20)}</span>
+    // Automatisch installieren ist wirklich aktiv (Schalter und tägliche Prüfung, gespeicherter Stand): bei "Aktuell" ein Abzeichen auf dem
+    // Symbol und ein langsam kreisender Ring (2.37.0, docs/mockups/autoupdate-v1, Variante A mit Ring aus C). Ein gefundenes Update wird bei
+    // aktivem Auto-Update sofort installiert; die Zeile "Update verfügbar" bleibt deshalb ohne Zeichen.
+    const auto = this._autoActive();
+    const autoMark = () => `<span class="ver-ring" aria-hidden="true"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="19" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="46 14" stroke-linecap="round"/></svg></span><span class="ver-auto" role="img" title="${escape(t("verAutoOn"))}" aria-label="${escape(t("verAutoOn"))}">${mdi("refreshAuto", 11)}</span>`;
+    const row = (cls, iconName, title, sub, right, mark = "") => `<div class="ver ${cls}${mark ? " auto" : ""}">
+        <span class="ver-ic">${mdi(iconName, 20)}${mark}</span>
         <div class="ver-t"><b>${escape(title)}</b><small>${escape(sub)}</small></div>
         ${right ? `<div class="ver-btns">${right}</div>` : ""}</div>`;
     // Release Notes im Fenster (seit 2.3.0); ohne die neueste Version nichts zu zeigen.
@@ -8581,13 +8587,13 @@ class DevicePanel extends HTMLElement {
     const currentNotes = installed ? `<button type="button" class="ver-link" data-ver="notes">${escape(t("verReleaseNotes"))}${mdi("info", 15)}</button>` : "";
     const checked = d.checked_at ? t("verChecked", this._formatRelative(d.checked_at)) : "";
     const err = v.error === "rate_limit" ? t("verRateLimit") : v.error;
-    const sub = v.checking ? t("verCheckingSub") : v.error ? `${t("verCheckError")} ${err}` : [t("verCurrent"), checked].filter(Boolean).join(" · ");
+    const sub = v.checking ? t("verCheckingSub") : v.error ? `${t("verCheckError")} ${err}` : [t("verCurrent"), auto ? t("verAuto") : "", checked].filter(Boolean).join(" · ");
     // Beschriftung bleibt während der Prüfung gleich, nur das Symbol wird
     // zum Spinner: so springt die Zeile nicht (Höhe des Blatts auf dem Handy).
     // Fehlgeschlagene Prüfung nicht mit Häkchen ("aktuell") darstellen.
     const failed = Boolean(v.error && !v.checking);
     return row(failed ? "err" : "ok", failed ? "alert" : "verOk", t("verName", installed || "?"), sub,
-      `${currentNotes}<button type="button" class="ver-btn" data-ver="check" ${v.checking ? `disabled aria-busy="true" title="${escape(t("verChecking"))}"` : ""}>${v.checking ? `<span class="ver-spin"></span>` : mdi("verCheck", 16)}${escape(t("verCheck"))}</button>`);
+      `${currentNotes}<button type="button" class="ver-btn" data-ver="check" ${v.checking ? `disabled aria-busy="true" title="${escape(t("verChecking"))}"` : ""}>${v.checking ? `<span class="ver-spin"></span>` : mdi("verCheck", 16)}${escape(t("verCheck"))}</button>`, auto && !failed ? autoMark() : "");
   }
 
   _renderSettingsVersion() {

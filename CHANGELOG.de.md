@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.37.0] - 2026-10-14
+
+Ein Zeichen, dass die automatischen Updates aktiv sind.
+
+### Hinzugefügt
+
+- Einstellungen, Versionsleiste: Solange "Updates automatisch installieren" wirklich arbeitet (Schalter an und tägliche Prüfung an, wie gespeichert), trägt das Symbol der Leiste ("Aktuell") ein kleines Abzeichen mit kreisenden Pfeilen und einen langsam kreisenden grünen Ring, und der Untertitel lautet "Aktuell · automatisch". Über dem Abzeichen steht "Updates werden automatisch installiert". Der Ring steht still, wenn auf dem Gerät "Bewegung reduzieren" eingestellt ist. Nur in den Einstellungen (das Zahnrad in der Kopfzeile bleibt unverändert, es behält den roten Punkt für einen ausstehenden Neustart). Ein gefundenes Update wird bei automatischen Updates sofort installiert, die Zeile "Update verfügbar" bleibt deshalb ohne Zeichen.
+
 ## [2.36.0] - 2026-10-14
 
 Suchfeld: nicht mehr so breit wie das ganze Fenster.
@@ -3192,6 +3200,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.37.0
 [2.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.36.0
 [2.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.0
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0

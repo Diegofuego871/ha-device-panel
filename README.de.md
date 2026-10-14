@@ -93,7 +93,7 @@ Nur auf Knopfdruck, mit einer KI-Aufgabe von Home Assistant. Es gehen keine Schl
 2. "Device Panel" installieren und Home Assistant neu starten.
 3. Einstellungen → Geräte & Dienste → Integration hinzufügen → "Device Panel".
 
-Updates: Die Einstellungen (Zahnrad) zeigen die installierte und die neueste Version und aktualisieren über HACS. Vorabversionen (`b` oder `rc` in der Nummer) sind optional: "Vorabversionen anzeigen" → "In HACS freischalten". Auf Wunsch "Updates automatisch installieren" (braucht die tägliche Prüfung): Eine gefundene Version wird über HACS installiert, nur den Neustart von Home Assistant machst du selbst; ein roter Punkt am Zahnrad zeigt, dass der Neustart aussteht. Die tägliche Prüfung kann zu einer festen Uhrzeit laufen, und eine optionale Push-Meldung (einmal pro Version, Empfänger wählbar) meldet eine gefundene oder installierte Version.
+Updates: Die Einstellungen (Zahnrad) zeigen die installierte und die neueste Version und aktualisieren über HACS. Vorabversionen (`b` oder `rc` in der Nummer) sind optional: "Vorabversionen anzeigen" → "In HACS freischalten". Auf Wunsch "Updates automatisch installieren" (braucht die tägliche Prüfung): Eine gefundene Version wird über HACS installiert, nur den Neustart von Home Assistant machst du selbst; ein roter Punkt am Zahnrad zeigt, dass der Neustart aussteht. Solange es arbeitet, zeigt die Versionsleiste in den Einstellungen ein kleines "Auto"-Abzeichen und einen langsam kreisenden Ring auf ihrem Symbol. Die tägliche Prüfung kann zu einer festen Uhrzeit laufen, und eine optionale Push-Meldung (einmal pro Version, Empfänger wählbar) meldet eine gefundene oder installierte Version.
 
 ### Manuell
 

@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.37.0] - 2026-10-14
+
+A sign that automatic updates are active.
+
+### Added
+
+- Settings, version bar: while "Install updates automatically" is really working (switch on and daily check on, as saved), the symbol of the bar ("Up to date") carries a small badge with circling arrows and a slowly circling green ring, and the subtitle reads "Up to date · automatic". Hovering the badge says "Updates are installed automatically". The ring stands still if "reduce motion" is set on the device. Only in the settings (the gear in the header is unchanged, it keeps the red dot for a pending restart). A found update is installed at once with automatic updates, so the line "Update available" stays without the sign.
+
 ## [2.36.0] - 2026-10-14
 
 Search field: no longer as wide as the whole window.
@@ -3091,6 +3099,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.37.0
 [2.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.36.0
 [2.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.0
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0

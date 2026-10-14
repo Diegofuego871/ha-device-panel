@@ -919,6 +919,13 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 
 /* Versionszeile oben in den Einstellungen */
 .ver { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 11px 12px 11px 14px; border-radius: 14px; background: var(--dp-subtle); }
+.ver-ic { position: relative; }
+/* Automatisch installieren ist aktiv (seit 2.37.0): Abzeichen unten rechts auf dem Symbol, bei "Aktuell" dazu ein langsam kreisender Ring */
+.ver-auto { position: absolute; right: -5px; bottom: -5px; display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; background: var(--dp-primary); color: #fff; box-shadow: 0 0 0 2px var(--dp-subtle); }
+.ver-ring { position: absolute; inset: -4px; display: grid; place-items: center; color: var(--dp-success); opacity: .85; pointer-events: none; animation: ver-ring-spin 6s linear infinite; }
+.ver-ring svg { width: 100%; height: 100%; }
+@keyframes ver-ring-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ver-ring { animation: none; } }
 .ver-ic { display: grid; flex: none; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--dp-success-soft); color: var(--dp-success); }
 .ver-t { flex: 1 1 200px; min-width: 0; }
 .ver-t b { font-weight: 500; }
