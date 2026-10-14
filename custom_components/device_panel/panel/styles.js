@@ -59,6 +59,14 @@ button { font: inherit; color: inherit; }
    in beide Richtungen, weil die Tabelle breiter werden kann als das Panel. */
 .toolbar { display: flex; align-items: center; gap: 12px; padding: 14px 20px 12px; }
 .toolbar h1 { margin: 0 6px 0 0; font-size: 20px; font-weight: 500; white-space: nowrap; }
+/* Logo, Titel und Suchfeld bilden eine Gruppe. Schmal und am Handy ohne eigene Wirkung (display: contents); auf breiten Fenstern (ab 1101 px,
+   dort hat der Kopf drei Spalten) endet das Suchfeld mit der Kachel "Gerade ausgefallen", damit das X nicht am äussersten Rand sitzt.
+   Fehlt der Platz (viele Favoriten), gibt die Gruppe nach: das Suchfeld wird schmaler. */
+.tb-main { display: contents; }
+@media (min-width: 1101px) {
+  .tb-main { display: flex; align-items: center; gap: 12px; flex: 0 1 calc(var(--hero-c1) + 12px + var(--hero-c2)); min-width: 0; }
+  .tb-main + .view-btn { margin-left: auto; }
+}
 .searchbox { flex: 1; display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 14px; border-radius: 14px;
   background: var(--dp-input); border: 1px solid var(--dp-divider); color: var(--dp-text2); min-width: 0; }
 .search { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--dp-text); font: inherit; height: 100%; }
@@ -82,7 +90,9 @@ button { font: inherit; color: inherit; }
 .hero, .chips, .foot { position: sticky; left: 0; }
 
 /* Kopf */
-.hero { display: grid; grid-template-columns: minmax(260px, 300px) minmax(300px, 380px) minmax(280px, 1fr); gap: 12px; }
+/* Breite der ersten zwei Kacheln (Verfügbarkeit, Gerade ausgefallen): auch das Suchfeld endet dort (seit 2.36.0, siehe .tb-main) */
+:host { --hero-c1: 300px; --hero-c2: 380px; }
+.hero { display: grid; grid-template-columns: minmax(260px, var(--hero-c1)) minmax(300px, var(--hero-c2)) minmax(280px, 1fr); gap: 12px; }
 .kt { background: var(--dp-card); border-radius: 20px; padding: 16px 18px; border: 1px solid var(--dp-divider); position: relative; overflow: hidden; min-width: 0; }
 .kt .k { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--dp-text2); font-weight: 500; display: flex; align-items: center; gap: 8px; }
 .kt.ring { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 16px; align-items: center; }

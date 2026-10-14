@@ -57,7 +57,7 @@ for (const lang of ["de", "en"]) {
     const search = (text) => ev(`const s=r.querySelector(".search"); s.value=${JSON.stringify(text)}; s.dispatchEvent(new Event("input"))`);
 
     // Kopf
-    check(`[${tag}] ${mobile ? "Handy: Titel nur für Screenreader" : "Desktop: Titel sichtbar"}, Logo bleibt, Suchfeld ${mobile ? "direkt am Logo" : "nach dem Titel"}`, (await ev(`return r.querySelector(".toolbar h1").textContent`)) === T.title && (await ev(`const h = r.querySelector(".toolbar h1").getBoundingClientRect(), l = r.querySelector(".toolbar > svg").getBoundingClientRect(), s = r.querySelector(".toolbar .searchbox").getBoundingClientRect(); return l.width > 20 && (${mobile ? "h.width <= 1 && h.height <= 1 && s.left - l.right < 20" : "h.width > 20 && h.height > 10 && s.left > h.right"})`)));
+    check(`[${tag}] ${mobile ? "Handy: Titel nur für Screenreader" : "Desktop: Titel sichtbar"}, Logo bleibt, Suchfeld ${mobile ? "direkt am Logo" : "nach dem Titel"}`, (await ev(`return r.querySelector(".toolbar h1").textContent`)) === T.title && (await ev(`const h = r.querySelector(".toolbar h1").getBoundingClientRect(), l = r.querySelector(".toolbar svg").getBoundingClientRect(), s = r.querySelector(".toolbar .searchbox").getBoundingClientRect(); return l.width > 20 && (${mobile ? "h.width <= 1 && h.height <= 1 && s.left - l.right < 20" : "h.width > 20 && h.height > 10 && s.left > h.right"})`)));
     check(`[${tag}] Suchfeld`, (await ev(`return r.querySelector(".search").placeholder`)) === T.search);
     const hero = await ev(`return r.querySelector(".hero").textContent.replace(/\\s+/g," ")`);
     check(`[${tag}] Ring 11 ${T.ofTotal}`, hero.includes("11") && hero.includes(T.ofTotal), hero.slice(0, 120));

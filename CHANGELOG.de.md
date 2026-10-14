@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.36.0] - 2026-10-14
+
+Suchfeld: nicht mehr so breit wie das ganze Fenster.
+
+### Geändert
+
+- Desktop (ab 1101 px): Das Suchfeld zieht sich nicht mehr bis zu den Schaltern am äussersten Rand, sondern endet genau mit der Kachel "Gerade ausgefallen" darunter, damit das Kreuz zum Leeren gut erreichbar ist. Die Schalter bleiben am rechten Rand. Fehlt der Platz (zum Beispiel fünf Favoriten bei etwa 1100 px Fensterbreite), gibt das Feld nach und wird schmaler; nichts läuft über. Schmalere Fenster und das Handy bleiben unverändert (das Feld füllt den Rest).
+
 ## [2.35.1] - 2026-10-14
 
 Die Logos der Integrationen kommen von selbst wieder.
@@ -3182,6 +3190,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.36.0
 [2.35.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.1
 [2.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.0
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0

@@ -1280,9 +1280,9 @@ class DevicePanel extends HTMLElement {
 
   _build() {
     this.shadowRoot.innerHTML = `<style>${PANEL_CSS}</style>
-      <div class="toolbar">${LOGO}<h1>${escape(this._t("title"))}</h1>
+      <div class="toolbar"><div class="tb-main">${LOGO}<h1>${escape(this._t("title"))}</h1>
         <label class="searchbox">${mdi("search", 20)}<input class="search" type="search" placeholder="${escape(this._t("search"))}" aria-label="${escape(this._t("search"))}">
-          <button type="button" class="search-clear" title="${escape(this._t("searchClear"))}" aria-label="${escape(this._t("searchClear"))}" hidden>${mdi("close", 18)}</button></label>
+          <button type="button" class="search-clear" title="${escape(this._t("searchClear"))}" aria-label="${escape(this._t("searchClear"))}" hidden>${mdi("close", 18)}</button></label></div>
         <button type="button" class="view-btn" aria-expanded="false" title="${escape(this._t("viewBtn"))}" aria-label="${escape(this._t("viewBtn"))}">${mdi("cols", 20)}<span>${escape(this._t("viewBtn"))}</span></button>
         <span class="app-pins"></span><button type="button" class="apps-btn" aria-haspopup="dialog" aria-expanded="false" title="${escape(this._t("appsBtn"))}" aria-label="${escape(this._t("appsBtn"))}">${mdi("apps", 22)}</button>
         <button type="button" class="gear-btn" title="${escape(this._t("settingsBtn"))}" aria-label="${escape(this._t("settingsBtn"))}">${mdi("gear", 22)}</button>

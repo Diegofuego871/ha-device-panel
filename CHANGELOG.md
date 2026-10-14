@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.36.0] - 2026-10-14
+
+Search field: no longer as wide as the whole window.
+
+### Changed
+
+- Desktop (from 1101 px): the search field no longer stretches to the buttons at the far right but ends exactly with the tile "Offline right now" below it, so the cross to clear it is easy to reach. The buttons stay at the right edge. If there is not enough room (for example five favorites in a window of about 1100 px), the field gives way and gets narrower; nothing overflows. Narrower windows and the phone are unchanged (the field fills the rest).
+
 ## [2.35.1] - 2026-10-14
 
 The logos of the integrations come back by themselves.
@@ -3081,6 +3089,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.36.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.36.0
 [2.35.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.1
 [2.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.0
 [2.33.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.33.0
