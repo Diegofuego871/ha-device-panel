@@ -126,6 +126,34 @@ def _offline_list(devices: list[dict[str, Any]], now: float, extra: Any, ref: fl
     return out
 
 
+# Typen, die geladen und nicht mit Batterien bestückt werden (seit 2.44.0): Staubsauger- und Mähroboter, Handy und Computer.
+RECHARGEABLE_TYPES = ("vacuum", "phone")
+# Ab so vielen Anstiegen im Verlauf eines Jahres gilt ein Gerät als wahrscheinlich geladen (Batteriewechsel gibt es höchstens ein bis zwei).
+RECHARGEABLE_RISES = 3
+
+
+def battery_kind(device: dict[str, Any], rechargeable: bool, year: dict[str, Any] | None) -> tuple[str, str] | None:
+    """
+    Wird das Gerät geladen oder mit neuen Batterien bestückt (seit 2.44.0, Wunsch des Nutzers: das soll erkannt werden)?
+    ("rechargeable" | "probably_rechargeable", Grund) oder None, wenn das Panel es nicht belegen kann; dann entscheidet die KI
+    nach Typ, Hersteller und Modell. Belege in dieser Reihenfolge: Ladeanzeige des Geräts oder eingerichtete Lademeldung,
+    ein Ladevorgang jetzt, ein Typ, der immer geladen wird, viele Anstiege im Verlauf.
+    """
+    charging = device.get("charging") or {}
+    if charging.get("source") == "entity":
+        return "rechargeable", "the device has its own charging indicator"
+    if rechargeable:
+        return "rechargeable", "the charging notification is set up for it (or it has a charging indicator)"
+    if charging:
+        return "rechargeable", "its battery level is rising right now"
+    if device.get("type") in RECHARGEABLE_TYPES:
+        return "rechargeable", f"device type {device['type']} is charged, not fitted with new batteries"
+    rises = (year or {}).get("battery_changes", 0) + (year or {}).get("battery_charges", 0)
+    if rises >= RECHARGEABLE_RISES:
+        return "probably_rechargeable", f"{rises} rises of the level in the history (battery changes are rarer)"
+    return None
+
+
 def battery_year(history: dict[str, Any], now: float) -> dict[str, Any] | None:
     """
     Batterie der letzten 12 Monate in Kürze (seit 1.8.0, Wunsch des Nutzers) aus
@@ -285,9 +313,25 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float, extr
     if (battery := device.get("battery")) and battery.get("level") is not None:
         facts["battery_percent"] = battery["level"]
         facts["battery_low"] = bool(battery.get("low"))
-        if year := extra.get("battery_year"):
+        year = extra.get("battery_year")
+        if year:
             facts["battery_last_12_months"] = year
-        if fc := extra.get("forecast"):
+        # Geladen oder mit Batterien bestückt (seit 2.44.0): bei einem geladenen Gerät sagt "Tage bis zur Warnschwelle" nichts.
+        kind = battery_kind(device, bool(extra.get("rechargeable")), year)
+        if kind:
+            facts["battery_kind"], facts["battery_kind_reason"] = kind
+        if charging := device.get("charging"):
+            since = dt_util.parse_datetime(charging["since"]) if charging.get("since") else None
+            facts["charging_now"] = {
+                k: v
+                for k, v in {
+                    "since_minutes": _minutes(now - since.timestamp()) if since else None,
+                    "from_percent": charging.get("from"),
+                    "percent": charging.get("level"),
+                }.items()
+                if v is not None
+            }
+        if (fc := extra.get("forecast")) and not (kind and kind[0] == "rechargeable"):
             if forecast_fact := battery_forecast_fact(fc):
                 facts["battery_forecast"] = forecast_fact
     if (signal := device.get("signal")) and signal.get("value") is not None:
@@ -514,6 +558,8 @@ async def _extras(hass: HomeAssistant, device: dict[str, Any], log: Any, now: fl
     extra.update(_signal_extras(hass, device["id"], now))
     if device.get("has_battery") and (device.get("battery") or {}).get("level") is not None:
         reg = dr.async_get(hass).async_get(device["id"])
+        if reg is not None:
+            extra["rechargeable"] = ChargeNotifier.rechargeable(effective(hass), hass, reg)
         entity_id = battery_entity(hass, er.async_entries_for_device(er.async_get(hass), device["id"])) if reg else None
         if reg is not None and entity_id:
             threshold = device_battery_threshold(hass, effective(hass), reg)

@@ -32,7 +32,10 @@ FACT_GROUPS: dict[str, tuple[str, ...]] = {
         "connection_type", "connected_via", "update_available", "offline_for_minutes", "offline_start_is_lower_bound",
     ),
     "history": ("last_24h", "last_7d", "recent_outages_7d", "mass_outages_24h_involving_this_device"),
-    "battery": ("battery_powered", "battery_percent", "battery_low", "battery_forecast", "battery_last_12_months"),
+    "battery": (
+        "battery_powered", "battery_percent", "battery_low", "battery_kind", "battery_kind_reason", "charging_now", "battery_forecast",
+        "battery_last_12_months",
+    ),
     "signal": ("signal", "bluetooth_receivers_24h"),
     "integration": ("same_integration_other_devices", "same_integration_offline_devices"),
     "area": ("same_area_other_devices", "same_area_same_connection", "same_area_devices"),
@@ -76,6 +79,9 @@ DEFAULT_PROMPT = (
     "- went_offline_within_5_min_of_this_device: that device failed together with this one.\n"
     "- same_model_other_devices: same manufacturer and model, also by software version.\n"
     "- last_7d: a week of availability. Many interruptions mean a recurring problem, none a one-off.\n"
+    "- battery_kind: rechargeable (charged, for example a robot vacuum, phone or toothbrush) or probably_rechargeable, with "
+    "battery_kind_reason. If it is missing, the panel could not tell: decide from type, manufacturer and model whether the "
+    "device is charged or runs on replaceable batteries, and say so. charging_now: the device is charging right now.\n"
     "- battery_forecast: days_left until the battery warning threshold, with days_range (no max: at least that long) "
     "and days_of_history. If uncertain is true (see uncertain_reasons) or the status says too little history, it is not "
     "reliable: give only a rough range, never a firm date, say it is uncertain, and do not base the cause on it.\n"
@@ -98,14 +104,17 @@ DEFAULT_PROMPT = (
     "likely shared (hub, integration, radio, network or power), not this device. Say whether the offline devices "
     "share an area, a radio standard or a time. Healthy devices in the same area, on the same hub or with the same "
     "radio standard rule such a cause out: say so.\n"
-    "2. Empty or low battery. A battery that lasts much shorter than between earlier changes (or charges) points to the "
+    "2. Empty or low battery. For a rechargeable device never talk about battery life in days or about a battery change: "
+    "a low level only means it needs charging, being offline while discharged is expected, and what matters is how often it is "
+    "charged (battery_charges, recent_charges) and whether it is charging now. A battery that lasts much shorter than between earlier changes (or charges) points to the "
     "device, a long steady decline to normal ageing.\n"
     "3. Weak signal: range or interference. For Zigbee and Thread a mains-powered router device nearby helps, "
     "for Wi-Fi the access point.\n"
     "4. Otherwise the device itself: power supply, a reset or pairing it again. "
     "Mention a pending firmware update if update_available is true.\n"
     "If the device is online and had no interruptions, say in one sentence that everything is fine and stop.\n"
-    "For a battery device add one sentence on the battery over the last 12 months (trend, changes, forecast).\n"
+    "For a battery device add one sentence on the battery over the last 12 months (trend, changes, forecast); "
+    "for a rechargeable device one sentence on its charging habits instead.\n"
     "\n"
     "Answer in {language}. Plain text, no markdown.\n"
     "Line 1: a headline of at most 6 words naming the most likely cause.\n"

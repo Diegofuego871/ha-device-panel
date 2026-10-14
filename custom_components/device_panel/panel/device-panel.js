@@ -399,7 +399,7 @@ const MON_TAB_KEYS = {
 // docs/mockups/content-v1, A) mit den Optionen, die sie ändern.
 // Prompt der KI-Einschätzung (Profi-Modus, seit 1.2.0): wie
 // ai_prompt.prompt_problem im Backend; das Backend prüft beim Speichern nochmals.
-const PROMPT_MAX = 6000;
+const PROMPT_MAX = 12000;
 // So lange gilt "Home Assistant startet neu…", wenn die laufende Version gleich
 // bleibt (Neustart abgebrochen oder nie gekommen); danach erscheint der Knopf wieder.
 const RESTART_WAIT_MS = 5 * 60 * 1000;

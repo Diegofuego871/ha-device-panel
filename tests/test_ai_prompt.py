@@ -426,7 +426,7 @@ async def test_extras_week_and_forecast(hass: HomeAssistant, setup) -> None:
     result = await async_list_devices(hass, log)
     device = next(d for d in result["devices"] if d["id"] == dev.id)
     extra = await ai_assessment._extras(hass, device, log, time.time())
-    assert set(extra) == {"week", "recent_outages", "forecast", "battery_year"} and extra["forecast"]["status"] in {"none", "short"}
+    assert set(extra) == {"week", "recent_outages", "rechargeable", "forecast", "battery_year"} and extra["forecast"]["status"] in {"none", "short"}
     # Ohne Batterie keine Prognose
     plain = {**device, "has_battery": False}
     assert set(await ai_assessment._extras(hass, plain, log, time.time())) == {"week", "recent_outages"}

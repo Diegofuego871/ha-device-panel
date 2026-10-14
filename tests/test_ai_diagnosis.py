@@ -129,3 +129,37 @@ async def test_empty_answer_gets_a_second_try(hass: HomeAssistant, setup, hass_w
     await client.send_json({"id": 3, "type": f"{DOMAIN}/ai_assess", "device_id": lamp.id, "language": "en"})
     msg = await client.receive_json()
     assert msg["error"]["code"] == "empty" and len(calls) == 2
+
+
+def test_battery_kind_is_recognised_from_the_evidence() -> None:
+    from custom_components.device_panel.ai_assessment import battery_kind  # noqa: PLC0415
+
+    assert battery_kind({"charging": {"source": "entity"}}, False, None)[0] == "rechargeable"
+    assert battery_kind({}, True, None) == ("rechargeable", "the charging notification is set up for it (or it has a charging indicator)")
+    assert "rising right now" in battery_kind({"charging": {"source": "level"}}, False, None)[1]
+    assert battery_kind({"type": "vacuum"}, False, None)[0] == "rechargeable"
+    assert battery_kind({"type": "phone"}, False, None)[0] == "rechargeable"
+    # Viele Anstiege im Verlauf: wahrscheinlich geladen; ein Wechsel im Jahr: kein Beleg
+    assert battery_kind({"type": "sensor"}, False, {"battery_changes": 4})[0] == "probably_rechargeable"
+    assert battery_kind({"type": "sensor"}, False, {"battery_charges": 3})[0] == "probably_rechargeable"
+    assert battery_kind({"type": "sensor"}, False, {"battery_changes": 1}) is None
+    assert battery_kind({"type": "sensor"}, False, None) is None
+
+
+def test_facts_tell_a_charged_device_from_a_battery_device() -> None:
+    forecast = {"status": "ok", "days": 120, "days_low": 100, "days_high": 140, "days_used": 200, "target": 15, "confidence": "high"}
+
+    def facts_for(device: dict[str, Any], extra: dict[str, Any]) -> dict[str, Any]:
+        base = {"id": "d", "name": "Gerät", "online": True, "has_battery": True, "battery": {"level": 81, "low": False}}
+        dev = {**base, **device}
+        return build_facts(dev, {"devices": [dev], "integrations": {}, "incidents": []}, time.time(), extra)
+
+    robot = facts_for(
+        {"type": "vacuum", "charging": {"source": "level", "level": 81, "from": 60, "since": "2026-10-14T20:00:00+00:00"}},
+        {"forecast": forecast, "battery_year": {"battery_charges": 12}},
+    )
+    assert robot["battery_kind"] == "rechargeable" and robot["charging_now"]["from_percent"] == 60 and "battery_forecast" not in robot
+    sensor = facts_for({"type": "sensor"}, {"forecast": forecast})
+    assert "battery_kind" not in sensor and sensor["battery_forecast"]["days_left"] == 120  # nicht belegt: die KI entscheidet
+    allowed = {key for keys in FACT_GROUPS.values() for key in keys}
+    assert set(robot) <= allowed and set(sensor) <= allowed

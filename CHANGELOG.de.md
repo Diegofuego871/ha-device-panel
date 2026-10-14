@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.44.0] - 2026-10-14
+
+KI-Einschätzung: Geräte, die geladen werden, werden erkannt.
+
+### Hinzugefügt
+
+- KI-Einschätzung: Die KI weiss jetzt, ob ein Gerät geladen wird oder mit auswechselbaren Batterien läuft. Neue Fakten `battery_kind` ("rechargeable" oder "probably_rechargeable") mit `battery_kind_reason` und `charging_now` (seit wann, von welchem Stand). Das Panel leitet es aus Belegen ab: eine Ladeanzeige des Geräts oder eine eingerichtete Lademeldung, ein Ladevorgang, der gerade läuft, ein Gerätetyp, der immer geladen wird (Staubsauger-Roboter, Handy), oder drei und mehr Anstiege des Stands im Verlauf. Wo das Panel es nicht belegen kann, fehlt der Fakt, und der Prompt sagt der KI, nach Typ, Hersteller und Modell zu entscheiden. Bisher wurde ein Staubsauger-Roboter wie ein Sensor mit Batterie eingeschätzt ("Der Batteriestand ist stabil, die Prognose ist unsicher").
+- KI-Einschätzung: Bei einem geladenen Gerät entfällt die Batterie-Prognose ("Tage bis zur Warnschwelle"), und der Standard-Prompt sagt der KI, über die Ladegewohnheiten zu sprechen (wie oft geladen, lädt es gerade) statt über Batterie-Laufzeit oder einen Batteriewechsel; ein tiefer Stand heisst nur, dass es geladen werden muss.
+
+### Geändert
+
+- KI-Einschätzung: Der längste erlaubte Prompt hat jetzt 12000 statt 6000 Zeichen (Einstellungen, Profi-Modus). Der Standard-Prompt war über 6000 gewachsen und liess sich nach dem Kopieren nicht mehr speichern.
+
 ## [2.43.0] - 2026-10-14
 
 Batterie: Messfehler werden von selbst abgefangen, und das Protokoll hält nur Neues fest.
@@ -3291,6 +3304,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0
 [2.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.43.0
 [2.41.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.41.2
 [2.40.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.1
