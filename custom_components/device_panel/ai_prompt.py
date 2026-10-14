@@ -31,9 +31,9 @@ FACT_GROUPS: dict[str, tuple[str, ...]] = {
         "name", "status", "type", "area", "integration", "manufacturer", "model", "software_version",
         "connection_type", "connected_via", "update_available", "offline_for_minutes", "offline_start_is_lower_bound",
     ),
-    "history": ("last_24h", "last_7d", "mass_outages_24h_involving_this_device"),
+    "history": ("last_24h", "last_7d", "recent_outages_7d", "mass_outages_24h_involving_this_device"),
     "battery": ("battery_powered", "battery_percent", "battery_low", "battery_forecast", "battery_last_12_months"),
-    "signal": ("signal",),
+    "signal": ("signal", "bluetooth_receivers_24h"),
     "integration": ("same_integration_other_devices", "same_integration_offline_devices"),
     "area": ("same_area_other_devices", "same_area_same_connection", "same_area_devices"),
     "hub": ("hub_online", "same_hub_other_devices", "same_hub_offline_devices"),
@@ -83,6 +83,15 @@ DEFAULT_PROMPT = (
     "with days_ago and the level before and after. For a device that is charged (not fitted with new batteries) the "
     "rises are given as battery_charges and recent_charges instead: call them charges, never a battery change.\n"
     "- mass_outages_24h_involving_this_device: several devices went offline at almost the same time.\n"
+    "- recent_outages_7d: the latest outages, newest first, with how long ago, duration, local start time and weekday. "
+    "The same time of day or weekday points to a schedule (a router reboot, a timer, interference, a nightly job), "
+    "very different times to a fault of the device or its connection.\n"
+    "- signal.last_24h and signal.last_7d: median, worst and best signal in that period. A median that is fine "
+    "with a very bad worst value means short dips or switching receivers, a bad median a permanently poor position.\n"
+    "- bluetooth_receivers_24h: the receivers (adapter or Bluetooth proxy) that heard this Bluetooth device in the last "
+    "24 hours with their share of the time and average signal, how often it switched, and whether there were gaps where "
+    "it was not received. Frequent switching between receivers with very different signals explains a fluctuating "
+    "signal; a receiver that is itself offline or far away explains a weak one.\n"
     "\n"
     "Weigh the evidence in this order:\n"
     "1. Hub offline, many devices of the integration, hub or area offline, or a mass outage: the cause is most "

@@ -13,7 +13,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import re
+import time
 from typing import Any
 
 from homeassistant.core import HomeAssistant
@@ -22,8 +24,9 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
+from . import activity
 from .ai_prompt import DEFAULT_PROMPT, GROUP_PLACEHOLDERS, render_prompt
-from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK, SIGNAL_OFF, SIGNAL_WEAK_DBM, SIGNAL_WEAK_LQI
+from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK, DATA_SIGNAL, SIGNAL_OFF, SIGNAL_WEAK_DBM, SIGNAL_WEAK_LQI
 from .battery_history import async_battery_history, battery_entity
 from .charge import ChargeNotifier
 from .devices import async_list_devices, device_battery_threshold
@@ -38,12 +41,25 @@ BATTERY_MONTHS_MAX = 12
 BATTERY_CHANGES_MAX = 6
 # Ausfälle innerhalb dieser Zeit gelten als gleichzeitig mit dem Gerät.
 SAME_TIME_SECONDS = 300
+# Die letzten Ausfälle der Woche und die Empfänger der letzten 24 Std. in den Fakten (seit 2.42.0).
+OUTAGES_MAX = 6
+RECEIVERS_MAX = 4
+# Bluetooth-Adressen (aa:bb:cc:dd:ee:ff) gehören nicht in die Fakten; HA nennt Proxys oft "Name (Adresse)".
+_MAC_RE = re.compile(r"\s*\(?\b[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5}\b\)?")
+_LOGGER = logging.getLogger(__name__)
 
 LANGUAGES = {"de": "German (Swiss spelling: always 'ss', never the sharp s)", "en": "English"}
 
 
+def clean(text: Any) -> Any:
+    """Adressen aus einem Namen entfernen ("Küche (B0:A7:32:46:E3:C2)" wird "Küche"); andere Werte bleiben."""
+    if not isinstance(text, str):
+        return text
+    return _MAC_RE.sub("", text).strip() or text
+
+
 class AiError(Exception):
-    """Fehler mit Code für das Panel: disabled, not_found, no_ai_task, timeout, failed."""
+    """Fehler mit Code für das Panel: disabled, not_found, no_ai_task, timeout, failed, empty."""
 
     def __init__(self, code: str, message: str = "") -> None:
         super().__init__(message or code)
@@ -242,7 +258,7 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float, extr
         "model": device.get("model"),
         "software_version": device.get("sw_version"),
         "connection_type": device.get("connection"),
-        "connected_via": device.get("via"),
+        "connected_via": clean(device.get("via")),
         "update_available": device.get("update"),
     }
     ref = _since(device)
@@ -282,9 +298,19 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float, extr
         if setting is not None:
             # Vom Besitzer gesetzt: am Gerät, für die Integration oder global (seit 1.17.0).
             facts["signal"]["own_threshold"] = setting
+    # Die letzten Ausfälle der Woche (seit 2.42.0): zu welcher Tageszeit, wie lange? Zeigt Muster wie "jede Nacht um 3 Uhr".
+    if outages := extra.get("recent_outages"):
+        facts["recent_outages_7d"] = outages
+    # Empfang der letzten 24 Std. und 7 Tage aus der Aufzeichnung des Panels (seit 2.42.0): Schwankt er, oder ist er dauerhaft schlecht?
+    if (trend := extra.get("signal_trend")) and "signal" in facts:
+        facts["signal"].update(trend)
+    # Bluetooth: über welche Empfänger das Gerät in den letzten 24 Std. gehört wurde (seit 2.42.0). Wechselt es oft zwischen weit
+    # entfernten Empfängern, erklärt das schwankenden Empfang; fällt der Empfänger aus, erklärt es den Ausfall.
+    if path := extra.get("bluetooth_path"):
+        facts["bluetooth_receivers_24h"] = path
     # Hub (Verbindung über ...) im selben Bild: fällt er selbst aus?
     if device.get("via"):
-        hub = next((d for d in devices if d["name"] == device["via"]), None)
+        hub = next((d for d in devices if d["name"] == device["via"] or d["name"] == clean(device["via"])), None)
         if hub is not None:
             facts["hub_online"] = hub.get("online")
         # Andere Geräte am selben Hub (seit 1.6.0): wie viele, wie viele fehlen, wie viele im selben Raum.
@@ -425,11 +451,67 @@ def source_name(hass: HomeAssistant, entity_id: str | None) -> str | None:
     return state.name if state else entity_id
 
 
+def _recent_outages(log: Any, device_id: str, now: float) -> list[dict[str, Any]]:
+    """Die letzten Ausfälle der 7 Tage (neueste zuerst): wie lange her, wie lange, Uhrzeit (Ortszeit) und Wochentag des Beginns."""
+    try:
+        outages = log.history(device_id, "7d", now).get("outages") or []
+    except Exception:  # noqa: BLE001 - die Fakten sind eine Zugabe, die Einschätzung geht auch ohne sie
+        return []
+    out = []
+    for start, end in sorted(outages, reverse=True)[:OUTAGES_MAX]:
+        local = dt_util.as_local(dt_util.utc_from_timestamp(start))
+        still = end >= now - 60
+        out.append({
+            "started_minutes_ago": _minutes(now - start),
+            "duration_minutes": _minutes(end - start),
+            "still_offline": still,
+            "local_start_time": local.strftime("%H:%M"),
+            "weekday": local.strftime("%A"),
+        })
+    return out
+
+
+def _signal_extras(hass: HomeAssistant, device_id: str, now: float) -> dict[str, Any]:
+    """Verlauf des Empfangs und Weg des Bluetooth-Empfangs aus der Aufzeichnung des Panels (seit 2.42.0); leer ohne beides."""
+    sig = hass.data.get(DATA_SIGNAL)
+    if sig is None:
+        return {}
+    extra: dict[str, Any] = {}
+    try:
+        trend: dict[str, Any] = {}
+        points: list[list[float]] = []
+        for key, name in (("24h", "last_24h"), ("7d", "last_7d")):
+            blocks, bucket = sig.history(device_id, key, now)
+            if blocks:
+                med = sorted(b[1] for b in blocks)[len(blocks) // 2]
+                trend[name] = {"median": round(med, 1), "worst": round(min(b[2] for b in blocks), 1), "best": round(max(b[3] for b in blocks), 1)}
+                if key == "24h":
+                    points = [[b[0] + bucket / 2, b[1]] for b in blocks]
+        if trend:
+            extra["signal_trend"] = trend
+        via = sig.via_summary(device_id, "24h", now, points)
+        if via and via.get("receivers"):
+            extra["bluetooth_path"] = {
+                "receivers": [
+                    {"name": clean(r["name"]), "share_percent": r["share"], **({"average_dbm": r["avg"]} if r.get("avg") is not None else {})}
+                    for r in via["receivers"][:RECEIVERS_MAX]
+                ],
+                "switches": len(via.get("changes") or []),
+                "gaps_not_received": any(seg[2] is None for seg in via.get("segments", [])),
+            }
+    except Exception:  # noqa: BLE001 - nur eine Zugabe
+        return {}
+    return extra
+
+
 async def _extras(hass: HomeAssistant, device: dict[str, Any], log: Any, now: float) -> dict[str, Any]:
     """Fakten, die nicht in der Geräteliste stehen (seit 1.6.0): Verfügbarkeit 7 Tage, Batterie-Prognose, Batterie 12 Monate."""
     extra: dict[str, Any] = {}
     if log is not None:
         extra["week"] = log.device_summary(device["id"], 7 * 86400, now)
+    if log is not None:
+        extra["recent_outages"] = _recent_outages(log, device["id"], now)
+    extra.update(_signal_extras(hass, device["id"], now))
     if device.get("has_battery") and (device.get("battery") or {}).get("level") is not None:
         reg = dr.async_get(hass).async_get(device["id"])
         entity_id = battery_entity(hass, er.async_entries_for_device(er.async_get(hass), device["id"])) if reg else None
@@ -454,11 +536,32 @@ async def async_assess(hass: HomeAssistant, device_id: str, language: str, log: 
     now = dt_util.utcnow()
     facts = build_facts(device, result, now.timestamp(), await _extras(hass, device, log, now.timestamp()))
     entity_id = opts[CONF_AI_TASK] or None
-    data = await _generate(hass, entity_id, build_instructions(facts, language, opts[CONF_AI_PROMPT]))
-    text = data if isinstance(data, str) else json.dumps(data, ensure_ascii=False)
-    if not text.strip():
-        raise AiError("failed", "empty answer")
+    instructions = build_instructions(facts, language, opts[CONF_AI_PROMPT])
+    started = time.monotonic()
+    text = ""
+    try:
+        # Eine leere Antwort (zum Beispiel ein Modell, das seine Ausgabe in der Denkphase verbraucht) bekommt einen zweiten Versuch.
+        for attempt in (1, 2):
+            data = await _generate(hass, entity_id, instructions)
+            text = data if isinstance(data, str) else json.dumps(data, ensure_ascii=False)
+            if text.strip():
+                break
+            if attempt == 1:
+                activity.record(hass, "info", "system", "ai_empty_retry", device["name"], device_id)
+        if not text.strip():
+            raise AiError("empty", "the AI task returned an empty answer twice")
+    except AiError as err:
+        # Der Grund steht sonst nur im Protokoll von Home Assistant: hier mit Prompt-Grösse und Aufgabe, damit er sich finden lässt.
+        activity.record(
+            hass, "warning", "system", "ai_failed", device["name"], device_id,
+            reason=err.code, detail=str(err), chars=len(instructions), task=entity_id or source_name(hass, None) or "-",
+        )
+        raise
     title, body = split_answer(text)
+    activity.record(
+        hass, "debug", "system", "ai_done", device["name"], device_id,
+        chars=len(instructions), answer=len(text), seconds=round(time.monotonic() - started, 1),
+    )
     return {"title": title, "text": body, "source": source_name(hass, entity_id), "at": now.isoformat()}
 
 

@@ -7,6 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.42.0] - 2026-10-14
+
+AI assessment: the reason of a failure is visible, and the AI gets more facts.
+
+### Added
+
+- AI assessment: when the AI task reports an error, the pop-up now shows its message under the explanation ("Message of the AI task: ..."), and the log (Settings, log) gets a warning with the reason, the size of the prompt and the AI task. Before, the panel only said "The AI task reported an error", and the reason stood only in the Home Assistant log. A successful run writes a debug line with prompt size, answer size and duration.
+- AI assessment: new facts, each only where there is data: `recent_outages_7d` (the latest outages of the week with how long ago, duration, local start time and weekday, which shows patterns such as "every night at 3"), `signal.last_24h` and `signal.last_7d` (median, worst and best signal from the panel's own recording) and `bluetooth_receivers_24h` (the receivers that heard a Bluetooth device in the last 24 hours with share and average signal, how often it switched, and whether there were gaps). The default prompt explains them; a prompt you edited yourself keeps its text and can use the new facts through the groups `{facts_history}` and `{facts_signal}` or `{facts}`.
+
+### Changed
+
+- AI assessment: an empty answer of the AI task (for example from a reasoning model that uses up its output while thinking) gets a second try; if it is empty again, a clear message names the likely remedy (another model or more output tokens) instead of the general error.
+
+### Fixed
+
+- AI assessment: Bluetooth addresses no longer reach the AI. Home Assistant often names a Bluetooth proxy "Name (B0:A7:32:46:E3:C2)", and that name went into the facts as "connected via" although no addresses are meant to be sent. The address is removed before.
+
 ## [2.41.2] - 2026-10-14
 
 Bluetooth: value and receiver from the same source.
@@ -3161,6 +3178,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.42.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.42.0
 [2.41.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.41.2
 [2.40.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.1
 [2.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.0

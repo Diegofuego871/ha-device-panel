@@ -16,14 +16,14 @@ const TEXT = {
     sec: "KI-Einschätzung", sumOff: "Aus", sumOn: "Ein · OpenAI", sumDefault: "Ein · Standard von Home Assistant", opt: "Knopf \"Mit KI einschätzen\" zeigen", task: "KI-Aufgabe",
     taskDefault: "Standard von Home Assistant", button: "Mit KI einschätzen", head: "Einschätzung", title: "Wahrscheinlich Empfang", by: "Erstellt von \"OpenAI\"",
     again: "Neu erstellen", note: "Gesendet werden Name, Bereich und Werte dieses Geräts sowie Name und Werte von Geräten im selben Bereich, am selben Hub, vom selben Modell und weiterer ausgefallener Geräte derselben Integration, keine Schlüssel oder Zugangsdaten.", retry: "Erneut versuchen",
-    errNo: "Keine KI-Aufgabe verfügbar", errTimeout: "nicht rechtzeitig", errFailed: "Fehler gemeldet", noTasks: "Keine KI-Aufgabe gefunden", working: "wertet",
+    errNo: "Keine KI-Aufgabe verfügbar", errTimeout: "nicht rechtzeitig", errFailed: "Fehler gemeldet", errEmpty: "zweimal eine leere Antwort", detail: "Meldung der KI-Aufgabe: Error talking to OpenAI: 429 quota exceeded", noTasks: "Keine KI-Aufgabe gefunden", working: "wertet",
     byLocal: "Erstellt von \"Lokales Modell\"",
   },
   en: {
     sec: "AI assessment", sumOff: "Off", sumOn: "On · OpenAI", sumDefault: "On · Home Assistant default", opt: "Show the button \"Assess with AI\"", task: "AI task",
     taskDefault: "Default of Home Assistant", button: "Assess with AI", head: "Assessment", title: "Probably reception", by: "Created by \"OpenAI\"",
     again: "Create again", note: "Name, area and values of this device and name and values of devices in the same area, on the same hub, of the same model and other offline devices of the same integration are sent, no keys or credentials.", retry: "Try again",
-    errNo: "No AI task available", errTimeout: "did not answer in time", errFailed: "reported an error", noTasks: "No AI task found", working: "analysing",
+    errNo: "No AI task available", errTimeout: "did not answer in time", errFailed: "reported an error", errEmpty: "empty answer twice", detail: "Message of the AI task: Error talking to OpenAI: 429 quota exceeded", noTasks: "No AI task found", working: "analysing",
     byLocal: "Created by \"Lokales Modell\"",
   },
 };
@@ -126,12 +126,14 @@ for (const lang of ["de", "en"]) {
     await close();
 
     // Fehler
-    for (const [mode, expect] of [["no_ai_task", T.errNo], ["timeout", T.errTimeout], ["failed", T.errFailed]]) {
+    for (const [mode, expect] of [["no_ai_task", T.errNo], ["timeout", T.errTimeout], ["failed", T.errFailed], ["empty", T.errEmpty]]) {
       await p.evaluate((m) => { window.__aiMode = m; }, mode);
       await open("d");
       await tap(".ai-btn");
       check(`[${tag}] Fehler ${mode}: Erklärung`, await wait(`return !!r.querySelector(".ai-box .opt-error")`) && (await text(".ai-box .opt-error")).includes(expect), await text(".ai-box .opt-error"));
       check(`[${tag}] Fehler ${mode}: "${T.retry}"`, (await text(".ai-btn")) === T.retry);
+      // Der Grund der KI-Aufgabe steht dabei (2.42.0), nur bei "failed"
+      check(`[${tag}] Fehler ${mode}: Grund der KI-Aufgabe ${mode === "failed" ? "sichtbar" : "nicht angezeigt"}`, mode === "failed" ? (await text(".ai-box .ai-detail")) === T.detail : !(await ev(`return !!r.querySelector(".ai-box .ai-detail")`)), await text(".ai-box"));
       await close();
       await ev(`r.host._ai.clear()`);
     }

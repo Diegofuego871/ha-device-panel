@@ -4605,7 +4605,7 @@ class DevicePanel extends HTMLElement {
         <div class="ai-foot">${escape(by)} · <button type="button" class="linkbtn" data-dlg="ai">${escape(t("aiAgain"))}</button></div></div>
         <div class="opt-short">${escape(t("aiNote"))}</div>`;
     } else if (st?.state === "error") {
-      body = `<div class="opt-error">${escape(t("aiError", st.error))}</div>${btn(t("aiRetry"))}`;
+      body = `<div class="opt-error">${escape(t("aiError", st.error))}</div>${st.detail ? `<div class="opt-short ai-detail">${escape(t("aiDetail", st.detail))}</div>` : ""}${btn(t("aiRetry"))}`;
     } else {
       body = `${btn(t("aiButton"))}<div class="opt-short">${escape(t("aiNote"))}</div>`;
     }
@@ -4621,8 +4621,10 @@ class DevicePanel extends HTMLElement {
       this._ai.set(id, { state: "done", title: r.title, text: r.text, source: r.source, at: r.at });
     } catch (err) {
       const code = err && typeof err === "object" ? err.code : null;
-      const known = ["disabled", "no_ai_task", "timeout", "failed", "not_found"];
-      this._ai.set(id, { state: "error", error: known.includes(code) ? this._t(`aiErr_${code}`) : errText(err) });
+      const known = ["disabled", "no_ai_task", "timeout", "failed", "empty", "not_found"];
+      // Bei "failed" steht der Grund der KI-Aufgabe in der Meldung (seit 2.42.0): ohne ihn lässt sich der Fehler nicht eingrenzen.
+      const detail = code === "failed" && err.message ? String(err.message).slice(0, 300) : "";
+      this._ai.set(id, { state: "error", error: known.includes(code) ? this._t(`aiErr_${code}`) : errText(err), detail });
     }
     this._devForce = true;
     this._renderDevice();

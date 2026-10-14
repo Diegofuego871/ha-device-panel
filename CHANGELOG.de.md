@@ -7,6 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.42.0] - 2026-10-14
+
+KI-Einschätzung: Der Grund eines Fehlers ist sichtbar, und die KI bekommt mehr Fakten.
+
+### Hinzugefügt
+
+- KI-Einschätzung: Meldet die KI-Aufgabe einen Fehler, zeigt das Pop-up unter der Erklärung jetzt ihre Meldung ("Meldung der KI-Aufgabe: ..."), und das Protokoll (Einstellungen, Protokoll) bekommt eine Warnung mit dem Grund, der Grösse des Prompts und der KI-Aufgabe. Bisher sagte das Panel nur "Die KI-Aufgabe hat einen Fehler gemeldet", und der Grund stand nur im Protokoll von Home Assistant. Ein erfolgreicher Lauf schreibt eine Debug-Zeile mit Grösse von Prompt und Antwort und Dauer.
+- KI-Einschätzung: neue Fakten, je nur wo es Daten gibt: `recent_outages_7d` (die letzten Ausfälle der Woche mit Zeit seit dem Ausfall, Dauer, Ortszeit des Beginns und Wochentag, das zeigt Muster wie "jede Nacht um 3 Uhr"), `signal.last_24h` und `signal.last_7d` (Median, schlechtester und bester Empfang aus der eigenen Aufzeichnung des Panels) und `bluetooth_receivers_24h` (die Empfänger, die ein Bluetooth-Gerät in den letzten 24 Stunden gehört haben, mit Anteil und mittlerem Empfang, wie oft es gewechselt hat und ob es Lücken ohne Empfang gab). Der Standard-Prompt erklärt sie; ein selbst bearbeiteter Prompt behält seinen Text und kann die neuen Fakten über die Gruppen `{facts_history}` und `{facts_signal}` oder `{facts}` nutzen.
+
+### Geändert
+
+- KI-Einschätzung: Eine leere Antwort der KI-Aufgabe (zum Beispiel von einem Modell mit Denkphase, das seine Ausgabe dort verbraucht) bekommt einen zweiten Versuch; ist sie wieder leer, nennt eine klare Meldung die wahrscheinliche Abhilfe (anderes Modell oder mehr Ausgabe-Tokens) statt des allgemeinen Fehlers.
+
+### Behoben
+
+- KI-Einschätzung: Bluetooth-Adressen erreichen die KI nicht mehr. Home Assistant nennt einen Bluetooth-Proxy oft "Name (B0:A7:32:46:E3:C2)", und dieser Name ging als "verbunden über" in die Fakten, obwohl keine Adressen gesendet werden sollen. Die Adresse wird vorher entfernt.
+
 ## [2.41.2] - 2026-10-14
 
 Bluetooth: Wert und Empfänger aus derselben Quelle.
@@ -3262,6 +3279,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.42.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.42.0
 [2.41.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.41.2
 [2.40.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.1
 [2.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.0

@@ -1015,7 +1015,7 @@
         if (!window.__devices.find((x) => x.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
         const mode = window.__aiMode || "ok";
         if (mode === "slow") await new Promise((r) => setTimeout(r, 1500));
-        if (["no_ai_task", "timeout", "failed"].includes(mode)) throw { code: mode, message: "details" };
+        if (["no_ai_task", "timeout", "failed", "empty"].includes(mode)) throw { code: mode, message: mode === "failed" ? "Error talking to OpenAI: 429 quota exceeded" : "details" };
         if (mode === "object") throw 3;
         const task = window.__opts.ai_task_entity;
         const source = (window.__aiTasks || [{ value: "ai_task.openai", name: "OpenAI" }, { value: "ai_task.lokal", name: "Lokales Modell" }]).find((x) => x.value === task)?.name || "OpenAI";
