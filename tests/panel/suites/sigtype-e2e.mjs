@@ -20,7 +20,7 @@ const TEXT = {
     one: "1 Änderung", sum: "Empfang: 1 Funkart angepasst", sum3: "Empfang: 3 Funkarten angepasst", popIntegOff: "Wie Integration (aus)",
     popGlobal: (v) => `Globaler Wert (unter ${v})`, popGlobalOff: "Globaler Wert (aus)", popInteg: (v) => `Wie Integration (unter ${v})`,
     integGlobal: "Globaler Wert (unter -85 dBm)", grp: "Empfang", diff: "Empfang (1 Funkart)", integOrigin: "Integration Shelly",
-    secLook: "Darstellung", own2: "Eigene Warnschwelle", wouldInteg: "Standard wäre -85 dBm",
+    secLook: "Ansicht", own2: "Eigene Warnschwelle", wouldInteg: "Standard wäre -85 dBm",
   },
   en: {
     title: "Signal: warning threshold per connection type", wifi: "Wi-Fi", zigbee: "Zigbee", ble: "Bluetooth", zwave: "Z-Wave",
@@ -30,7 +30,7 @@ const TEXT = {
     one: "1 change", sum: "Signal: 1 connection type adjusted", sum3: "Signal: 3 connection types adjusted", popIntegOff: "Like integration (off)",
     popGlobal: (v) => `Global value (below ${v})`, popGlobalOff: "Global value (off)", popInteg: (v) => `Like integration (below ${v})`,
     integGlobal: "Global value (below -85 dBm)", grp: "Signal", diff: "Signal (1 connection type)", integOrigin: "Integration Shelly",
-    secLook: "Display", own2: "Own warning threshold", wouldInteg: "Default would be -85 dBm",
+    secLook: "View", own2: "Own warning threshold", wouldInteg: "Default would be -85 dBm",
   },
 };
 
@@ -97,7 +97,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Optionen Standard|Eigene|Aus`, (await ev(`return [...r.querySelector('select[data-sig-mode="|wifi"]').options].map(o=>o.textContent).join("|")`)) === `${T.defWifi}|${T.own}|${T.off}`);
     const sigMark = () => ev(`return r.querySelector('.mon-tab[data-key="sig"]').classList.contains("chg")`);
     check(`[${tag}] Reiter Empfang: noch nichts angepasst (kein Punkt)`, !(await sigMark()));
-    check(`[${tag}] Darstellung: keine Empfang-Zusammenfassung mehr`, !(await sec("look")).includes(lang === "de" ? "Empfang" : "Signal"), await sec("look"));
+    check(`[${tag}] Ansicht: keine Empfang-Zusammenfassung mehr`, !(await sec("look")).includes(lang === "de" ? "Empfang" : "Signal"), await sec("look"));
 
     // WLAN: Eigene, Start mit dem Standard; -120 ungültig; -85 gültig
     await pick("|wifi", "own");

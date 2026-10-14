@@ -1494,6 +1494,7 @@
           data = JSON.parse(sessionStorage.getItem("sim_user_data") || "{}");
         } catch {}
         if (msg.type === "frontend/get_user_data") return { value: data[msg.key] ?? null };
+        if (window.__userDataFails) throw new Error(window.__userDataFails);
         data[msg.key] = msg.value;
         sessionStorage.setItem("sim_user_data", JSON.stringify(data));
         return null;

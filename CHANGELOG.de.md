@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.39.0] - 2026-10-14
+
+Startseite: das Panel als Startseite von Home Assistant.
+
+### Hinzugefügt
+
+- Einstellungen, neuer Bereich "Startseite" ganz oben im Abschnitt "Ansicht" (über den Filter-Chips): Der Schalter "Als meine Startseite festlegen" macht dieses Panel zu der Seite, die Home Assistant beim Start öffnet, im Browser und in der Companion-App. Er gilt sofort (kein "Speichern"), nur für dein Konto, und schreibt `default_panel` in deine Benutzerdaten von Home Assistant, ohne die anderen Werte dort anzutasten. Ausschalten entfernt den Eintrag, dann gilt wieder die Vorgabe von Home Assistant. Die Profilseite von Home Assistant kann das nicht, ihre Auswahl listet nur eingebaute Seiten und Dashboards, nicht das Panel einer Integration. Die Zusammenfassung des Abschnitts lautet dann "Deine Startseite". Fehler erscheinen unter dem Schalter.
+
+### Geändert
+
+- Der Einstellungsabschnitt "Darstellung" (englisch "Appearance") heisst jetzt "Ansicht" (englisch "View").
+
 ## [2.38.0] - 2026-10-14
 
 KI-Einschätzung: Link zu den KI-Einstellungen von Home Assistant, und nur mit einer KI-Aufgabe.
@@ -3216,6 +3228,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.0
 [2.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.38.0
 [2.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.37.0
 [2.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.0

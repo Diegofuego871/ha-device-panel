@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.39.0] - 2026-10-14
+
+Start page: the panel as your start page of Home Assistant.
+
+### Added
+
+- Settings, new area "Start page" at the very top of the section "View" (above the filter chips): the switch "Set as my start page" makes this panel the page Home Assistant opens at startup, in the browser and in the Companion app. It applies at once (no "Save"), only for your account, and writes `default_panel` into your user data of Home Assistant without touching the other values there. Switching it off removes it, then the default of Home Assistant applies again. The profile page of Home Assistant cannot do this, its choice only lists built-in pages and dashboards, not the panel of an integration. The section summary then reads "Your start page". Errors are shown under the switch.
+
+### Changed
+
+- The settings section "Appearance" (German "Darstellung") is now called "View" (German "Ansicht").
+
 ## [2.38.0] - 2026-10-14
 
 AI assessment: link to the AI settings of Home Assistant, and only with an AI task.
@@ -3115,6 +3127,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.0
 [2.38.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.38.0
 [2.37.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.37.0
 [2.35.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.35.0

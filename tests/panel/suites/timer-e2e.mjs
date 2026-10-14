@@ -12,10 +12,10 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { infoFail1: "keine anhaltende Benachrichtigung", infoFail2: "dreimal versucht", infoFail3: "Push-Ziel", dateSwitch: "Bestimmtes Datum", onceNoDate: "Ohne Datum schaltet der Timer beim nächsten Eintreffen der Uhrzeit", plug: "Steckdose", look: "Darstellung", tab: "Timer", add: "Neuer Timer", q1: "Was soll geschaltet werden?", q2: "Wann soll geschaltet werden?", q3: "Soll eine Push-Meldung kommen?", q4: "Name und Prüfung", step1: "Schritt 1 von 4", step4: "Schritt 4 von 4",
+  de: { infoFail1: "keine anhaltende Benachrichtigung", infoFail2: "dreimal versucht", infoFail3: "Push-Ziel", dateSwitch: "Bestimmtes Datum", onceNoDate: "Ohne Datum schaltet der Timer beim nächsten Eintreffen der Uhrzeit", plug: "Steckdose", look: "Ansicht", tab: "Timer", add: "Neuer Timer", q1: "Was soll geschaltet werden?", q2: "Wann soll geschaltet werden?", q3: "Soll eine Push-Meldung kommen?", q4: "Name und Prüfung", step1: "Schritt 1 von 4", step4: "Schritt 4 von 4",
     empty: "Noch keine Timer", noEnt: "keine Entität, die ein Timer schalten kann", daily: "Täglich", weekly: "Wöchentlich", monthly: "Monatlich", def: "Standard aus den Einstellungen", pushTitle: "⏱️ Timer: Bewässerung",
     one: "1 aktiv", delAsk: "Timer \"Bewässerung\" löschen?", discard: "Änderungen verwerfen?", sec: "Timer", pauseLabel: "Alle Timer pausieren", saved: "Timer gespeichert.", running: "läuft", hit: "1 von 2" },
-  en: { infoFail1: "not a persistent notification", infoFail2: "tried three times", infoFail3: "push target", dateSwitch: "Specific date", onceNoDate: "Without a date the timer switches the next time the clock reaches this time", plug: "Plug", look: "Appearance", tab: "Timer", add: "New timer", q1: "What should be switched?", q2: "When should it switch?", q3: "Should a push notification come?", q4: "Name and check", step1: "Step 1 of 4", step4: "Step 4 of 4",
+  en: { infoFail1: "not a persistent notification", infoFail2: "tried three times", infoFail3: "push target", dateSwitch: "Specific date", onceNoDate: "Without a date the timer switches the next time the clock reaches this time", plug: "Plug", look: "View", tab: "Timer", add: "New timer", q1: "What should be switched?", q2: "When should it switch?", q3: "Should a push notification come?", q4: "Name and check", step1: "Step 1 of 4", step4: "Step 4 of 4",
     empty: "No timers yet", noEnt: "no entity a timer can switch", daily: "Daily", weekly: "Weekly", monthly: "Monthly", def: "Default from the settings", pushTitle: "⏱️ Timer: Bewässerung",
     one: "1 on", delAsk: "Delete timer \"Bewässerung\"?", discard: "Discard changes?", sec: "Timers", pauseLabel: "Pause all timers", saved: "Timer saved.", running: "running", hit: "1 of 2" },
 };
@@ -252,7 +252,7 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     const titles = await ev(`return [...r.querySelectorAll("dialog.settings .set-sec-title")].map((e) => e.firstChild.textContent.trim()).join("|")`);
-    check(`[${tag}] Abschnitt "${T.sec}" zwischen Überwachung und Darstellung`, titles.includes(`${T.sec}|`) && titles.indexOf(T.sec) > titles.indexOf(lang === "de" ? "Überwachung" : "Monitoring") && titles.indexOf(T.sec) < titles.indexOf(T.look), titles);
+    check(`[${tag}] Abschnitt "${T.sec}" zwischen Überwachung und Ansicht`, titles.includes(`${T.sec}|`) && titles.indexOf(T.sec) > titles.indexOf(lang === "de" ? "Überwachung" : "Monitoring") && titles.indexOf(T.sec) < titles.indexOf(T.look), titles);
     await tap('[data-set="section"][data-id="timers"]');
     // Seit 2.23.1 steht die Sammlung aller Timer im Fenster der Kopfzeile (Stoppuhr, Suite timerall); hier nur noch die Optionen
     check(`[${tag}] Abschnitt "${T.sec}": nur Optionen, keine Sammlung aller Timer mehr`, await wait(`const d = r.querySelector("dialog.settings"); return !!d.querySelector('input[data-opt="timers_pause"]') && !d.querySelector(".mg-dcard, .mg-card, [data-lsearch], [data-tm-all-zone]") && ![...d.querySelectorAll("[data-set]")].some((e) => e.dataset.set.startsWith("timer-"))`));
