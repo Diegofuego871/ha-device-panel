@@ -267,9 +267,9 @@ def signal_source(
 ) -> tuple[dict[str, Any] | None, str | None, str | None]:
     """
     (Empfang, Empfänger, Quelle) wie in der Liste: ZHA vor dem Sensor,
-    Bluetooth nur ohne anderen Wert. Quelle ist die Entität des Sensors oder
-    "zha" bzw. "ble" (Wert direkt aus der Integration, ohne Verlauf im
-    Recorder; signal_history zeichnet ihn selbst auf).
+    Bluetooth (seit 2.41.0) vor dem Sensor des Geräts. Quelle ist die Entität
+    des Sensors oder "zha" bzw. "ble" (Wert direkt aus der Integration, ohne
+    Verlauf im Recorder; signal_history zeichnet ihn selbst auf).
     """
     signal, source = _signal_entity(hass, entries)
     via = None
@@ -277,10 +277,12 @@ def signal_source(
         signal, source = zha, "zha"
     ble = next((c[1] for c in device.connections if c[0] == dr.CONNECTION_BLUETOOTH), None)
     if ble:
-        # Der Empfänger gilt auch, wenn der Wert aus einem Sensor des Geräts kommt (zum Beispiel SwitchBot): den Wert lassen wir dann dem Sensor.
+        # Wert und Empfänger aus derselben Quelle: Der Sensor des Geräts (zum Beispiel SwitchBot "Bluetooth-Signal") liest den Scanner,
+        # der das Gerät steuern kann, nicht den besten Empfang; das widerspräche dem angezeigten Empfänger. Der Sensor bleibt Ersatz,
+        # wenn Bluetooth gerade nichts meldet.
         live, via = _ble_signal(hass, ble)
-        if not signal:
-            signal, source = live, "ble" if live else None
+        if live:
+            signal, source = live, "ble"
     return signal, via, source
 
 

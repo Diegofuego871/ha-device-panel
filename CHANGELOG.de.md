@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.41.0] - 2026-10-14
+
+Bluetooth: Wert und Empfänger aus derselben Quelle.
+
+### Geändert
+
+- Bluetooth-Geräte zeigen jetzt den Live-Empfang von Bluetooth (der beste Empfang über alle Empfänger, wie unter Einstellungen, Bluetooth, Advertisements) statt des Werts ihres eigenen Empfangs-Sensors. Grund: Sensoren wie das SwitchBot "Bluetooth-Signal" lesen den Empfänger, der das Gerät steuern kann, nicht den besten. Das widersprach dem angezeigten Empfänger ("über Proxy Garage") und konnte "Empfang schwach" auslösen, obwohl ein Proxy das Gerät gut hört. Der Sensor bleibt Ersatz, solange Bluetooth nichts meldet. Der Empfangsverlauf dieser Geräte stammt nun aus der eigenen Aufzeichnung des Panels statt aus dem Recorder und beginnt mit diesem Update leer (24 Stunden füllen sich in Minuten, 30 Tage mit der Zeit); die früheren Recorder-Werte werden nicht mehr gezeigt.
+
 ## [2.40.1] - 2026-10-14
 
 Bluetooth: Der Empfänger wird auch bei Geräten gezeigt, deren Empfang aus einem Sensor kommt.
@@ -3254,6 +3262,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.41.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.41.0
 [2.40.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.1
 [2.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.0
 [2.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.0

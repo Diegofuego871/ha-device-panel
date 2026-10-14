@@ -185,8 +185,8 @@ async def test_sample_records_the_receiver_of_bluetooth_devices(hass: HomeAssist
     assert reply["result"]["via"] is None
 
 
-async def test_receiver_is_known_even_if_the_signal_comes_from_a_sensor(hass: HomeAssistant, monkeypatch) -> None:
-    """SwitchBot und ähnliche: der Empfang kommt aus einem Sensor des Geräts, der Empfänger trotzdem aus Bluetooth (Liste, Aufzeichnung, Fenster)."""
+async def test_bluetooth_prefers_the_live_value_over_the_sensor_of_the_device(hass: HomeAssistant, monkeypatch) -> None:
+    """SwitchBot und ähnliche (2.41.0): Wert und Empfänger kommen aus Bluetooth (bester Empfang), der Sensor des Geräts ist nur Ersatz."""
     from custom_components.device_panel import devices
 
     await _setup(hass)
@@ -198,24 +198,24 @@ async def test_receiver_is_known_even_if_the_signal_comes_from_a_sensor(hass: Ho
     )
     sensor = er.async_get(hass).async_get_or_create("sensor", "test", "sb-rssi", device_id=device.id, original_device_class="signal_strength")
     hass.states.async_set(sensor.entity_id, "-100", {"device_class": "signal_strength", "unit_of_measurement": "dBm"})
-    monkeypatch.setattr(devices, "_ble_signal", lambda _hass, _address: ({"kind": "dbm", "value": -70}, BUERO[1]))
+    live: dict[str, Any] = {"v": ({"kind": "dbm", "value": -70}, BUERO[1])}
+    monkeypatch.setattr(devices, "_ble_signal", lambda _hass, _address: live["v"])
     entries = er.async_entries_for_device(er.async_get(hass), device.id)
     signal, via, src = devices.signal_source(hass, device, entries, {"test"})
-    # Wert bleibt der des Sensors, der Empfänger kommt dazu
-    assert signal and signal["value"] == -100 and src == sensor.entity_id and via == BUERO[1]
+    # Live-Wert (-70) statt Sensor (-100), Empfänger dazu, Quelle "ble" (eigene Aufzeichnung statt Recorder)
+    assert signal and signal["value"] == -70 and src == "ble" and via == BUERO[1]
+    # Meldet Bluetooth nichts, bleibt der Sensor Ersatz (ohne Empfänger)
+    live["v"] = (None, None)
+    signal, via, src = devices.signal_source(hass, device, entries, {"test"})
+    assert signal and signal["value"] == -100 and src == sensor.entity_id and via is None
 
+    live["v"] = ({"kind": "dbm", "value": -70}, BUERO[1])
     monkeypatch.setattr(signal_history, "ble_receiver", lambda _hass, _device: BUERO)
-    monkeypatch.setattr(signal_history, "recorded", lambda _hass, _entity: True)
     hass.data[DATA_AVAILABILITY].evaluate()
     log: SignalLog = hass.data[DATA_SIGNAL]
     log.sample()
     assert [e[1] for e in log._via[device.id]] == [BUERO[0]]
-    # Der Wert selbst wird nicht doppelt aufgezeichnet (der Recorder hat ihn)
-    assert not log._open.get(device.id)
-
-    async def fake_points(*_args: Any) -> dict[str, Any]:
-        return {"points": [[NOW - 60, -71.0]], "kind": "dbm"}
-
-    monkeypatch.setattr(signal_history, "_signal_points", fake_points)
+    # Der Wert wird aufgezeichnet (Quelle "ble"): der Verlauf beginnt neu
+    assert log._open[device.id][1] == [-70.0]
     result = await signal_history.async_signal_history(hass, log, device, "24h", time.time() + 3600)
-    assert result["via"]["receivers"][0]["name"] == "Storen Büro"
+    assert result["source"] == "log" and result["via"]["receivers"][0]["name"] == "Storen Büro"

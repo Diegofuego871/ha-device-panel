@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.41.0] - 2026-10-14
+
+Bluetooth: value and receiver from the same source.
+
+### Changed
+
+- Bluetooth devices now show the live signal of Bluetooth (the best reception over all receivers, as in Settings, Bluetooth, Advertisements) instead of the value of their own signal sensor. Reason: sensors such as the SwitchBot "Bluetooth signal" read the receiver that can control the device, not the best one. That contradicted the receiver shown ("via Garage proxy") and could trigger "Weak signal" although a proxy hears the device well. The sensor stays as a fallback while Bluetooth reports nothing. The signal history of these devices now comes from the panel's own recording instead of the recorder and starts empty with this update (24 hours fill within minutes, 30 days over time); the earlier recorder values are no longer shown.
+
 ## [2.40.1] - 2026-10-14
 
 Bluetooth: the receiver is also shown for devices whose signal comes from a sensor.
@@ -3153,6 +3161,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.41.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.41.0
 [2.40.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.1
 [2.40.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.40.0
 [2.39.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.39.0

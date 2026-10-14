@@ -81,7 +81,7 @@ Nur auf Knopfdruck, mit einer KI-Aufgabe von Home Assistant: Die Funktion lässt
 - Batterie-Warnung von 1 bis 50 % (Standard 15 %), pro Integration und pro Gerät.
 - Gerätetyp und Verbindungsart werden automatisch erkannt. Beide lassen sich pro Integration festlegen; ein am Gerät von Hand gesetzter Wert geht vor. Der Typ gilt nur im Panel, nicht in Home Assistant.
 - Der Empfangsverlauf kommt aus dem Recorder oder, bei ZHA, Bluetooth und nicht aufgezeichneten Sensoren, vom Panel selbst.
-- Bei Bluetooth-Geräten zeigt das Fenster "Empfang" auch "Verbunden über": über welchen Empfänger (Adapter oder Bluetooth-Proxy) das Gerät gehört wurde, mit Anteil, mittlerem Empfang und den letzten Wechseln. Das Panel zeichnet es ab dem Update auf; frühere Wege lassen sich nicht nachträglich herstellen.
+- Bei Bluetooth-Geräten zeigt das Fenster "Empfang" auch "Verbunden über": über welchen Empfänger (Adapter oder Bluetooth-Proxy) das Gerät gehört wurde, mit Anteil, mittlerem Empfang und den letzten Wechseln. Das Panel zeichnet es ab dem Update auf; frühere Wege lassen sich nicht nachträglich herstellen. Bluetooth-Geräte zeigen den Live-Empfang von Bluetooth (bester Empfänger), nicht den Wert ihres eigenen Empfangs-Sensors.
 - Jede Einstellung zeigt, woher sie kommt: Standard, Integration oder Gerät.
 - Änderungen im Geräte-Popup und in den Einstellungen gelten erst mit "Speichern". Schliessen mit ungespeicherten Änderungen fragt "Änderungen verwerfen?".
 - Sicherheitsrelevantes (Tokens, Schlüssel) zeigt das Panel nie an.
