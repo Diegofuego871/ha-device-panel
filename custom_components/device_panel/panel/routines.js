@@ -33,7 +33,7 @@ const DELAY_PRESETS = [300, 900, 1800, 3600];
 const BACK_PRESETS = [600, 1800, 3600, 10800];
 const UNITS = [60, 3600, 86400];
 const PREVIEW_DELAY_MS = 300;
-const EMOJI = { switch: "🔌", light: "💡", fan: "🌀", cover: "🪟", lock: "🔒", valve: "🚿", siren: "🚨", humidifier: "💧", input_boolean: "🔘", climate: "🌡️", media_player: "🔊" };
+export const DOMAIN_EMOJI = { switch: "🔌", light: "💡", fan: "🌀", cover: "🪟", lock: "🔒", valve: "🚿", siren: "🚨", humidifier: "💧", input_boolean: "🔘", climate: "🌡️", media_player: "🔊" };
 // Schnellwahl unter den Reglern (zusätzlich zu "Wie zuletzt")
 const QUICK = { brightness_pct: [25, 50, 100], percentage: [25, 50, 100], position: [0, 50, 100], volume_pct: [25, 50, 75] };
 // Farben zur Wahl: Name (Schlüssel rtCol_*), Anzeige, Wert für die Lampe
@@ -77,7 +77,7 @@ export function kelvinRgb(kelvin) {
 const toHex = (rgb) => `#${rgb.map((v) => pad(Math.round(v).toString(16))).join("")}`;
 const fromHex = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 
-export const routineEmoji = (domain) => EMOJI[domain] || "⚡";
+export const routineEmoji = (domain) => DOMAIN_EMOJI[domain] || "⚡";
 
 export function splitSeconds(seconds, units) {
   for (const u of [...units].reverse()) if (seconds >= u && seconds % u === 0) return { text: String(seconds / u), unit: u };

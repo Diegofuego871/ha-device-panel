@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.58.0] - 2026-10-15
+
+Neuer Reiter "Schalter" im Geräte-Popup; die Schliessen-Knöpfe von Protokoll, "Alle Routinen" und Launcher passen zum neuen Aussehen.
+
+### Hinzugefügt
+
+- Geräte-Popup, neuer Reiter "Schalter" (an zweiter Stelle, Emoji 🕹️): alle schaltbaren Entitäten des Geräts (Schalter, Licht, Ventilator, Rollladen, Ventil, Schloss, Sirene, Luftbefeuchter, Klima, Mediaplayer, wie bei den Routinen) als kompakte Kacheln in drei Spalten, je mit Symbol, Name und Zustand ("an" ist farbig, eine Lampe und ein Rollladen zeigen auch Helligkeit und Position). Ein Tipp öffnet die Bedienung von Home Assistant für diese Entität, genau wie die Entität im Reiter "Entitäten" (Dimmen, Farbe, Position, Temperatur sind dort); die Kachel selbst schaltet nie etwas, so dass ein Schloss oder ein Rollladen nicht aus Versehen reagiert. Nicht erreichbare Entitäten sind gedimmt. Ein Gerät ohne Schaltbares hat keinen Reiter (fünf Reiter wie bisher). Mockups: `docs/mockups/switches-v1`.
+
+### Geändert
+
+- Schliessen-Knopf in den Vollbild-Fenstern auf dem Handy (Einstellungen, Protokoll, "Alle Routinen"): Er sitzt jetzt auf gleicher Höhe wie der Einstellungs-Knopf der Übersicht (12 px vom oberen Rand), bleibt also an derselben Stelle, wenn ein Fenster aufgeht.
+- Launcher-Fenster: Sein Schliessen-Knopf hat den grauen Rand wie die anderen runden Knöpfe (Grösse und Lage bleiben, das Fenster ist kein Vollbild).
+
 ## [2.57.0] - 2026-10-15
 
 Reiter mit Emoji und Text auf dem Desktop; der Blitz für Routinen.
@@ -3495,6 +3508,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0
 [2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0
 [2.55.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.55.0
 [2.54.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.0

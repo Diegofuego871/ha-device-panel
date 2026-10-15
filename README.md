@@ -52,7 +52,7 @@ The button "Columns" opens a dialog: show or hide columns with the eye, drag the
 
 ## Everything about one device
 
-A tap on a device opens a pop-up with availability, outages, signal and battery as tiles, plus connection, integration, manufacturer, model, software and all entities. The device can be renamed (in Home Assistant, entity IDs stay), marked as a favorite, hidden, and opened on its page in Home Assistant. A warning names its reason in the header.
+A tap on a device opens a pop-up with availability, outages, signal and battery as tiles, plus connection, integration, manufacturer, model, software and all entities. If the device has something to switch (light, socket, shutter, lock, climate and more), the second tab "Switches" shows it as tiles with symbol and state; a tap opens the Home Assistant controls (dimming, colour, position). The device can be renamed (in Home Assistant, entity IDs stay), marked as a favorite, hidden, and opened on its page in Home Assistant. A warning names its reason in the header.
 
 <p align="center"><img src="docs/screenshots/en/popup.png" alt="Device pop-up with statistics, connection and device details" width="720"></p>
 

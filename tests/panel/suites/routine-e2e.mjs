@@ -62,7 +62,7 @@ for (const lang of ["de", "en"]) {
     await tap('.dev[data-open="d"]');
     await wait(`return r.querySelector("dialog.device")?.open && r.querySelector('dialog.device [data-tab="routine"]')`);
     const tabs = await ev(`return [...r.querySelectorAll("dialog.device .sub-tabs > button")].map((b) => b.dataset.tab).join()`);
-    check(`[${tag}] fünf Reiter, Routine als letzter`, tabs === "ov,set,ent,magic,routine", tabs);
+    check(`[${tag}] sechs Reiter (Schalter an zweiter Stelle), Routine als letzter`, tabs === "ov,sw,set,ent,magic,routine", tabs);
     const fit = await ev(`const bar = r.querySelector("dialog.device .sub-tabs"); return [bar.scrollWidth <= bar.clientWidth + 1, [...bar.querySelectorAll("button")].every((b) => b.getBoundingClientRect().top === bar.querySelector("button").getBoundingClientRect().top)]`);
     check(`[${tag}] alle Reiter in einer Zeile ohne Überlauf`, fit[0] && fit[1], JSON.stringify(fit));
     await tap('dialog.device [data-tab="routine"]');

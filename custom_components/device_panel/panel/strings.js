@@ -914,6 +914,9 @@ export const STRINGS = {
     secNotifyDevice: "Einstellungen für dieses Gerät",
     // Reiter im Geräte-Popup (seit 1.37.0, docs/mockups/popup-tabs-log-v1, R3)
     devTabOverview: "Übersicht",
+    devTabSwitches: "Schalter",
+    swTitle: (n) => `Schalter · ${n}`,
+    swHint: "Ein Tipp öffnet die Bedienung von Home Assistant, wie bei der Entität im Reiter \"Entitäten\" (Dimmen, Farbe, Position und mehr).",
     devTabSettings: "Einstellungen",
     devTabSettingsOwn: (n) => `Einstellungen · ${n} eigene`,
     devTabOwnCount: (n) => `${n} eigene`,
@@ -2642,6 +2645,9 @@ export const STRINGS = {
     secNotifyDevice: "Settings for this device",
     // Tabs in the device pop-up (since 1.37.0, docs/mockups/popup-tabs-log-v1, R3)
     devTabOverview: "Overview",
+    devTabSwitches: "Switches",
+    swTitle: (n) => `Switches · ${n}`,
+    swHint: "A tap opens the Home Assistant controls, like the entity in the tab \"Entities\" (dimming, colour, position and more).",
     devTabSettings: "Settings",
     devTabSettingsOwn: (n) => `Settings · ${n} custom`,
     devTabOwnCount: (n) => `${n} custom`,

@@ -1281,6 +1281,8 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   .toolbar .rtall-btn, .toolbar .apps-btn { margin: 0 3px; } /* Abstand zwischen den Knöpfen 14 px (Wunsch des Nutzers: war zu eng), das Suchfeld wird dafür schmaler */
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   .dlg-head { padding: 18px 12px 12px 16px; }
+  /* Vollbild-Fenster (Einstellungen, Protokoll, Routinen): das Kreuz sitzt auf gleicher Höhe wie der Zahnrad-Knopf der Übersicht (12 px vom oberen Rand) */
+  dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close { margin-top: -6px; }
   .dlg-quick { padding: 0 16px 6px; }
   .dlg-body { padding: 4px 16px 16px; }
   .dlg-actions { padding-left: 16px; padding-right: 16px; }
@@ -1770,6 +1772,7 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
    jeder Reiter trägt ein Emoji. Auf dem Desktop steht es vor der Beschriftung; auf dem Handy zeigt nur der gewählte Reiter die Beschriftung. */
 .dev-tabs .sub-tab::before { margin-right: 6px; font-size: 16px; line-height: 1; }
 .dev-tabs .sub-tab[data-tab="ov"]::before { content: "📊"; }
+.dev-tabs .sub-tab[data-tab="sw"]::before { content: "🕹️"; }
 .dev-tabs .sub-tab[data-tab="set"]::before { content: "⚙️"; }
 .dev-tabs .sub-tab[data-tab="ent"]::before { content: "🧩"; }
 .dev-tabs .sub-tab[data-tab="magic"]::before { content: "🔔"; }
@@ -1789,6 +1792,21 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
   .dev-tabs .sub-tab.on.two::before { display: none; }
   .dev-tabs .sub-tab.on.two .tab-l { font-size: 13px; }
 }
+/* Reiter "Schalter" (seit 2.58.0, docs/mockups/switches-v1, Variante C): kompakte Kacheln, drei Spalten (Handy und Desktop) */
+.sw-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sw-cell { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; padding: 12px 6px 10px; border: 0; border-radius: 16px; background: var(--dp-subtle);
+  color: inherit; font: inherit; text-align: center; cursor: pointer; -webkit-touch-callout: none; }
+.sw-cell:hover { background: var(--dp-hover); }
+.sw-cell:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
+.sw-ic { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: color-mix(in srgb, var(--dp-text) 8%, var(--dp-card)); font-size: 21px; line-height: 1; }
+.sw-cell b { max-width: 100%; font-size: 12.5px; font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; }
+.sw-cell small { max-width: 100%; color: var(--dp-text2); font-size: 11.5px; line-height: 1.2; }
+.sw-cell.on { background: var(--dp-primary-soft); }
+.sw-cell.on:hover { background: var(--dp-primary-soft); filter: brightness(.97); }
+.sw-cell.on .sw-ic { background: var(--dp-primary); }
+.sw-cell.on small { color: var(--dp-primary); font-weight: 500; }
+.sw-cell.bad { opacity: .6; }
+.sw-cell.bad small { color: var(--dp-error); }
 /* App-Launcher (seit 2.31.0, docs/mockups/launcher-v2): Fenster unter dem Knopf in der Kopfzeile (Desktop) oder Blatt von unten (Handy). */
 dialog.apps-dlg, dialog.app-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow);
   overflow: auto; overscroll-behavior: contain; max-height: calc(100% - 48px); clip-path: inset(0 round 22px); }
@@ -1801,7 +1819,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 6px; border: 0; border-radius: 8px; background: none; color: var(--dp-primary); font: inherit; font-size: 13.5px; cursor: pointer; }
 .ap-link:hover { background: var(--dp-primary-soft); }
 .ap-done { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--dp-primary); color: #fff; font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; }
-.ap-x { display: none; place-items: center; flex: none; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--dp-subtle); color: var(--dp-text2); cursor: pointer; }
+.ap-x { display: none; place-items: center; flex: none; width: 36px; height: 36px; border: 1px solid var(--dp-divider); border-radius: 50%; background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
 .ap-x.show { display: grid; }
 .ap-body { padding: 0 14px 14px; }
 .ap-search { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--dp-divider); border-radius: 999px; background: var(--dp-input); color: var(--dp-text2); }

@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.58.0] - 2026-10-15
+
+New tab "Switches" in the device pop-up; the close buttons of the log, "All routines" and the launcher match the new look.
+
+### Added
+
+- Device pop-up, new tab "Switches" (second place, emoji 🕹️): all entities of the device that can be switched (switch, light, fan, shutter, valve, lock, siren, humidifier, climate, media player, as with the routines) as compact tiles in three columns, each with a symbol, the name and the state ("on" tiles are coloured, a lamp and a shutter also show brightness and position). A tap opens the Home Assistant controls of that entity, exactly like the entity in the tab "Entities" (dimming, colour, position, temperature are there); the tile itself never switches anything, so a lock or a shutter cannot react by accident. Entities that cannot be reached are dimmed. A device without anything to switch has no tab (five tabs as before). Mockups: `docs/mockups/switches-v1`.
+
+### Changed
+
+- Close button in the full-screen windows on the phone (settings, log, "All routines"): it now sits at the same height as the settings button of the overview (12 px from the top edge), so it stays in the same place when a window opens.
+- Launcher window: its close button has the grey outline like the other round buttons (size and position unchanged, the window is not full screen).
+
 ## [2.57.0] - 2026-10-15
 
 Tabs with emoji and text on the desktop; the lightning bolt for routines.
@@ -3394,6 +3407,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0
 [2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0
 [2.55.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.55.0
 [2.54.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.0

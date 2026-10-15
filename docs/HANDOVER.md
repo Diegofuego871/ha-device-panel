@@ -3,6 +3,18 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.58.0, Reiter "Schalter", Kreuz in Vollbild-Fenstern)
+
+- Wunsch des Nutzers, Mockups `docs/mockups/switches-v1`, Entscheid: Variante C (kompakte Kacheln, drei Spalten), Emoji 🕹️ für Schalter und ⚡ für Routinen. Reiter `sw` an zweiter Stelle im Geräte-Popup
+  (`device-panel.js`: `_switchEntities(d)` filtert `_detail.data.entities` nach `DOMAIN_EMOJI` aus `routines.js`, `_switchesHtml`), nur wenn das Gerät etwas Schaltbares hat; ist `sw` gewählt und das
+  nächste Gerät hat nichts, gilt "Übersicht". Kachel = `<button class="sw-cell" data-dlg="more-info" data-entity=…>`: Der Tipp geht wie bei der Entitätenliste durch `_openMoreInfo`, es gibt keinen
+  Schaltbefehl. "an" = Zustand in `SWITCH_ON`; Helligkeit (Lampe) und Position (Rollladen) aus den Attributen von `hass.states`. Simulator: `window.__detailExtra` ergänzt Entitäten je Gerät.
+  Suite `switches` (52 Prüfungen).
+- Schliessen-Knopf: in Einstellungen, Protokoll und "Alle Routinen" auf dem Handy 6 px höher (`margin-top: -6px`), damit er auf der Höhe des Zahnrad-Knopfs der Übersicht sitzt (12 px vom oberen Rand,
+  im Nachbau gemessen); Launcher `.ap-x` bekommt nur den grauen Rand.
+- Offene Frage des Nutzers (nicht gebaut): Langer Druck auf eine Kachel. Stand: Tipp = Bedienung von HA, nichts schaltet. Möglich wären Tipp = Umschalten und langer Druck = Bedienung (wie HA-Kacheln),
+  was aber das versehentliche Schalten von Schloss und Rollladen erlaubt.
+
 ## Stand (2.57.0, Emoji und Text in den Reitern auf dem Desktop, Blitz für Routinen)
 
 - Wunsch des Nutzers: Das Emoji der Reiter im Geräte-Popup steht jetzt in jeder Breite (`.dev-tabs .sub-tab[data-tab=…]::before`), auf dem Desktop vor der Beschriftung, auf dem Handy wie

@@ -52,7 +52,7 @@ Der Knopf "Spalten" öffnet einen Dialog: Spalten mit dem Auge ein- oder ausblen
 
 ## Alles zu einem Gerät
 
-Ein Tipp auf ein Gerät öffnet ein Pop-up mit Verfügbarkeit, Ausfällen, Empfang und Batterie als Kacheln, dazu Verbindung, Integration, Hersteller, Modell, Software und alle Entitäten. Das Gerät lässt sich umbenennen (in Home Assistant, die Entitäts-IDs bleiben), als Favorit markieren, ausblenden und auf seiner Seite in Home Assistant öffnen. Eine Warnung nennt ihren Grund im Kopf.
+Ein Tipp auf ein Gerät öffnet ein Pop-up mit Verfügbarkeit, Ausfällen, Empfang und Batterie als Kacheln, dazu Verbindung, Integration, Hersteller, Modell, Software und alle Entitäten. Hat das Gerät etwas Schaltbares (Licht, Steckdose, Rollladen, Schloss, Klima und mehr), zeigt der zweite Reiter "Schalter" es als Kacheln mit Symbol und Zustand; ein Tipp öffnet die Bedienung von Home Assistant (Dimmen, Farbe, Position). Das Gerät lässt sich umbenennen (in Home Assistant, die Entitäts-IDs bleiben), als Favorit markieren, ausblenden und auf seiner Seite in Home Assistant öffnen. Eine Warnung nennt ihren Grund im Kopf.
 
 <p align="center"><img src="docs/screenshots/de/popup.png" alt="Geräte-Pop-up mit Statistik, Verbindung und Gerätedetails" width="720"></p>
 

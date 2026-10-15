@@ -553,6 +553,8 @@
     ];
     if (d.battery) entities.push({ entity_id: `sensor.${slug}_batterie`, name: "Batterie", state: d.online === false ? "unavailable" : String(d.battery.level), unit: "%", category: "diagnostic", liveness: false });
     if (d.signal) entities.push({ entity_id: `sensor.${slug}_signal`, name: "Signal", state: String(d.signal.value), unit: d.signal.kind === "dbm" ? "dBm" : "lqi", category: "diagnostic", liveness: false });
+    // Für Prüfungen: zusätzliche Entitäten je Gerät (window.__detailExtra = { <Geräte-ID>: [Entität, …] })
+    if (window.__detailExtra?.[id]) entities.push(...window.__detailExtra[id]);
     const state = id === "a" ? "setup_retry" : "loaded";
     return {
       id,

@@ -12,7 +12,7 @@
  */
 
 const MODULE_VERSION = new URL(import.meta.url).search;
-const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi }, { AppLauncher }] = await Promise.all([
+const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_EMOJI }, { AppLauncher }] = await Promise.all([
   import(`./strings.js${MODULE_VERSION}`),
   import(`./styles.js${MODULE_VERSION}`),
   import(`./magic-push.js${MODULE_VERSION}`),
@@ -41,6 +41,8 @@ const PANEL_PATH = "device-panel";
 // Eigener Eintrag in den Benutzerdaten: die bisherige Startseite, die beim Ausschalten zurückkommt
 const START_KEY = "device_panel_start";
 const VIEW_SAVE_DELAY_MS = 400;
+// Reiter "Schalter" (seit 2.58.0): was als "an" gilt (farbige Kachel); alles andere (aus, zu, abgeschlossen, Standby …) bleibt grau
+const SWITCH_ON = new Set(["on", "open", "opening", "unlocked", "unlocking", "playing", "heat", "cool", "heat_cool", "auto", "dry", "fan_only", "triggered"]);
 // Favoriten pro Benutzer (seit 2.22.0), gleiche Ablage wie die Ansicht
 const FAV_KEY = "device_panel_favorites";
 // Lieblings-Routine (seit 2.26.0): Routinen-IDs pro Benutzer, gleich gespeichert wie die Favoriten-Geräte
@@ -4416,6 +4418,34 @@ class DevicePanel extends HTMLElement {
     return { text: unit ? `${raw} ${unit}` : String(raw), bad: false };
   }
 
+  // Reiter "Schalter" (seit 2.58.0, docs/mockups/switches-v1, Variante C): die schaltbaren Entitäten des Geräts (dieselben Arten wie bei den
+  // Routinen) als kompakte Kacheln mit Symbol, Name und Zustand. Ein Tipp öffnet die Bedienung von Home Assistant wie die Entität im
+  // Reiter "Entitäten" (Dimmen, Farbe, Position, Temperatur sind dort); geschaltet wird nie durch die Kachel selbst.
+  _switchEntities(d) {
+    const cur = this._detail?.id === d.id ? this._detail : null;
+    return (cur?.data?.entities || []).filter((e) => DOMAIN_EMOJI[e.entity_id.split(".", 1)[0]]);
+  }
+
+  _switchesHtml(list) {
+    const cells = list.map((e) => {
+      const domain = e.entity_id.split(".", 1)[0];
+      const st = this._hass?.states?.[e.entity_id];
+      const raw = st ? st.state : e.state;
+      const { text, bad } = this._formatState(e);
+      const on = SWITCH_ON.has(raw);
+      // Helligkeit einer Lampe und Position eines Rollladens stehen hinter dem Zustand
+      let extra = "";
+      if (on && st) {
+        const level = domain === "light" ? Math.round(Number(st.attributes?.brightness) / 2.55) : domain === "cover" ? Number(st.attributes?.current_position) : NaN;
+        if (Number.isFinite(level)) extra = ` · ${level} %`;
+      }
+      const label = `${text}${extra}`;
+      return `<button type="button" class="sw-cell${on ? " on" : ""}${bad ? " bad" : ""}" data-dlg="more-info" data-entity="${escape(e.entity_id)}" title="${escape(e.entity_id)}" aria-label="${escape(`${e.name}, ${label}`)}">
+        <span class="sw-ic" aria-hidden="true">${DOMAIN_EMOJI[domain]}</span><b>${escape(e.name)}</b><small>${escape(label)}</small></button>`;
+    });
+    return `<div class="sw-grid">${cells.join("")}</div>`;
+  }
+
   _entitiesHtml(d) {
     const cur = this._detail?.id === d.id ? this._detail : null;
     if (!cur || (!cur.data && cur.loading)) return { count: 0, html: `<p class="dlg-note">${escape(this._t("loadingDetail"))}</p>` };
@@ -4516,11 +4546,14 @@ class DevicePanel extends HTMLElement {
       // Reiter (seit 1.37.0, docs/mockups/popup-tabs-log-v1, R3): Übersicht zum Lesen, alle Einstellungen des Geräts
       // in "Einstellungen" (der Zähler nennt die eigenen), Entitäten für sich.
       const own = devOwnCount(d);
-      const tab = ["ov", "set", "ent", "magic", "routine"].includes(this._devTab) ? this._devTab : "ov";
+      const switches = this._switchEntities(d);
+      const tab = ["ov", "sw", "set", "ent", "magic", "routine"].includes(this._devTab) && (this._devTab !== "sw" || switches.length) ? this._devTab : "ov";
       const magicCount = this._magic.count(d.id);
       const routineCount = this._routines.count(d.id);
       const tabs = `<div class="sub-tabs" role="tablist">${[
         ["ov", this._t("devTabOverview"), false],
+        // Schalter (seit 2.58.0): nur, wenn das Gerät etwas Schaltbares hat
+        ...(switches.length ? [["sw", this._t("devTabSwitches"), false]] : []),
         // Mit eigenen Einstellungen auf zwei Zeilen (seit 2.0.10): Name, darunter klein die Zahl
         ["set", this._t("devTabSettings"), own > 0, own ? this._t("devTabOwnCount", own) : ""],
         ["ent", this._t("devTabEntities", ents.count), false],
@@ -4534,7 +4567,9 @@ class DevicePanel extends HTMLElement {
         }</button>`)
         .join("")}</div>`;
       const body =
-        tab === "set"
+        tab === "sw"
+          ? `<h3>${escape(this._t("swTitle", switches.length))}</h3>${this._switchesHtml(switches)}<p class="dlg-note small">${escape(this._t("swHint"))}</p>`
+          : tab === "set"
           ? `<h3>${escape(this._t("secTypeConn"))}</h3><div class="tiles">${this._tile(this._t("typeLabel"), this._typeSelHtml(d, true))}${this._tile(this._t("connType"), this._connSelHtml(d, true))}</div>
           <h3>${escape(this._t("secNotifyDevice"))}</h3>${this._deviceNotifyHtml(d)}
           <p class="dlg-note small">${escape(this._t("devSettingsNote"))}</p>`
