@@ -17,6 +17,8 @@ export class StatusUi {
     this.error = null;
     this.saving = false;
     this._timer = null;
+    // Neustart von Hand (seit 2.63.0): confirm = Teil mit offener Rückfrage, busy = Teil, der gerade neu startet, flash = Hinweis danach
+    this.ui = { confirm: null, busy: null, flash: "", flashTimer: null };
   }
 
   t(key, ...args) {
@@ -59,7 +61,14 @@ export class StatusUi {
         if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this.close();
         return;
       }
-      if (ev.target.closest("[data-st-close]")) this.close();
+      if (ev.target.closest("[data-st-close]")) return this.close();
+      const ask = ev.target.closest("[data-st-restart]");
+      const yes = ev.target.closest("[data-st-restart-yes]");
+      if (ask) this.ui.confirm = ask.dataset.stRestart;
+      else if (ev.target.closest("[data-st-restart-no]")) this.ui.confirm = null;
+      else if (yes) return this.restart(yes.dataset.stRestartYes);
+      else return;
+      this.render();
     });
     dlg.addEventListener("cancel", () => this.close());
     dlg.addEventListener("change", (ev) => {
@@ -97,6 +106,38 @@ export class StatusUi {
     }
     this.saving = false;
     await this.load();
+  }
+
+  // Teil von Hand neu starten (status_restart); danach der neue Stand und ein kurzer Hinweis
+  async restart(part) {
+    if (this.ui.busy) return;
+    this.ui.busy = part;
+    this.error = null;
+    this.render();
+    let failed = null;
+    try {
+      await this.host._hass.callWS({ type: "device_panel/status_restart", part });
+      this.flash(this.t("stRestartDone", this.t(`stPart_${part}`)));
+    } catch (err) {
+      failed = this.h.errText(err);
+    }
+    this.ui.busy = null;
+    this.ui.confirm = null;
+    await this.load();
+    // load() räumt den Fehler weg; der des Neustarts bleibt stehen, bis der nächste Abruf (oder Neustart) kommt
+    if (failed) {
+      this.error = failed;
+      this.render();
+    }
+  }
+
+  flash(text) {
+    window.clearTimeout(this.ui.flashTimer);
+    this.ui.flash = text;
+    this.ui.flashTimer = window.setTimeout(() => {
+      this.ui.flash = "";
+      this.render();
+    }, 8000);
   }
 
   // --- Anzeige -----------------------------------------------------------------
@@ -172,6 +213,25 @@ export class StatusUi {
     return t("stActive");
   }
 
+  // Knopf "Neu starten" nur bei einem Teil, der nicht läuft (verspätet oder steht)
+  actsHtml(p) {
+    if (p.state === "ok" || this.ui.confirm === p.id) return "";
+    const busy = this.ui.busy === p.id;
+    return `<span class="st-acts"><button type="button" class="linkbtn" data-st-restart="${this.h.escape(p.id)}"${this.ui.busy ? " disabled" : ""}>${this.h.escape(this.t(busy ? "stRestartBusy" : "stRestart"))}</button></span>`;
+  }
+
+  // Rückfrage unter der Zeile; was der Neustart tut und was er nicht tut
+  confirmHtml(p) {
+    const { escape } = this.h;
+    const t = (k, ...a) => this.t(k, ...a);
+    const busy = this.ui.busy === p.id;
+    const name = t(`stPart_${p.id}`);
+    return `<div class="st-confirm mg-confirm"><b>${escape(t("stRestartAsk", name))}</b>
+      <small>${escape(t("stRestartNote"))}${p.id === "routines" ? ` ${escape(t("stRestartNoteRoutines"))}` : ""}</small>
+      <div class="mg-btns small"><button type="button" class="dlg-btn" data-st-restart-no${busy ? " disabled" : ""}>${escape(t("rtCancel"))}</button>
+      <button type="button" class="dlg-btn primary" data-st-restart-yes="${escape(p.id)}"${busy ? " disabled" : ""}>${escape(t(busy ? "stRestartBusy" : "stRestartYes"))}</button></div></div>`;
+  }
+
   zoneHtml() {
     const { escape, mdi } = this.h;
     const t = (k, ...a) => this.t(k, ...a);
@@ -184,9 +244,10 @@ export class StatusUi {
       : `<div class="st-banner ok"><span class="ic">${mdi("check", 22)}</span><span><b>${escape(t("stAllOk"))}</b><small>${escape(t("stAllOkSub", d.parts.length))}</small></span></div>`;
     const pill = (state) => `<span class="pill ${state === "ok" ? "on" : state === "late" ? "warn" : "off"}"><span class="pd"></span>${escape(t(`stState_${state}`))}</span>`;
     const parts = [...d.parts].sort((a, b) => PART_ORDER.indexOf(a.id) - PART_ORDER.indexOf(b.id));
-    const rows = parts.map((p) => `<div class="st-line"><span class="st-t"><b>${escape(t(`stPart_${p.id}`))}</b><small>${escape(this.partText(p))}</small></span>${pill(p.state)}</div>`).join("");
+    const rows = parts.map((p) => `<div class="st-line"><span class="st-t"><b>${escape(t(`stPart_${p.id}`))}</b><small>${escape(this.partText(p))}</small>${this.actsHtml(p)}</span>${pill(p.state)}</div>${this.ui.confirm === p.id ? this.confirmHtml(p) : ""}`).join("");
     const started = new Date(d.started * 1000).toLocaleString(this.host._locale?.() || undefined, { dateStyle: "short", timeStyle: "short" });
-    return `<div class="set-title">${escape(t("stStateTitle"))}</div>${banner}<div class="st-card">${rows}</div>
+    const flash = this.ui.flash ? `<div class="st-flash" role="status">${mdi("check", 16)}<span>${escape(this.ui.flash)}</span></div>` : "";
+    return `<div class="set-title">${escape(t("stStateTitle"))}</div>${banner}${flash}<div class="st-card">${rows}</div>
       <p class="st-start">${escape(t("stStart", started, d.routines_loaded, d.routines_missed))}</p>
       ${this.error ? `<div class="dlg-error" role="alert">${escape(this.error)}</div>` : ""}`;
   }

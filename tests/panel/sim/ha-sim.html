@@ -1096,8 +1096,10 @@
           ],
         };
         const isHolder = (id) => id === "@scenes" || id === "@groups";
+        // Viele Szenen (window.__manyScenes): wie bei einer Instanz mit 78 Szenen, damit die Suche der Seite "Was" gezeigt wird
+        const MANY_SCENES = [...HOLDER_ENTS["@scenes"], ...Array.from({ length: 12 }, (_, i) => ({ entity_id: `scene.buero_${i + 1}`, name: `Büro Szene ${i + 1}`, domain: "scene", state: "unknown", available: true, actions: ["activate"], options: [] }))];
         // Zustände, die "Jetzt ausführen" gesetzt hat, überleben die Aufrufe (DEFAULT_ENTS entsteht bei jedem Aufruf neu)
-        const entsOf = (id) => (window.__routineEntities && id in window.__routineEntities ? window.__routineEntities[id] : isHolder(id) ? (window.__noHolders ? [] : HOLDER_ENTS[id]) : DEFAULT_ENTS).map((e) => ((window.__tryState ||= {})[e.entity_id] ? { ...e, state: window.__tryState[e.entity_id] } : e));
+        const entsOf = (id) => (window.__routineEntities && id in window.__routineEntities ? window.__routineEntities[id] : isHolder(id) ? (window.__noHolders ? [] : id === "@scenes" && window.__manyScenes ? MANY_SCENES : HOLDER_ENTS[id]) : DEFAULT_ENTS).map((e) => ((window.__tryState ||= {})[e.entity_id] ? { ...e, state: window.__tryState[e.entity_id] } : e));
         const entOf = (r) => entsOf(r.device_id).find((e) => e.entity_id === r.entity_id);
         const lastDay = (y, m) => new Date(y, m + 1, 0).getDate();
         const at = (y, m, d, hh, mm) => new Date(y, m, d, hh, mm, 0, 0).getTime() / 1000;
@@ -1186,8 +1188,8 @@
         const today = () => ymd(new Date());
         if (msg.type.endsWith("routine_devices")) {
           if (window.__routineDevicesFail) throw new Error(window.__routineDevicesFail);
-          return { devices: [...window.__devices.filter((d) => entsOf(d.id).length).map((d) => ({ id: d.id, name: d.name, entities: entsOf(d.id).length })).sort((a, b) => a.name.localeCompare(b.name)),
-            ...["@scenes", "@groups"].filter((h) => entsOf(h).length).map((h) => ({ id: h, name: "", entities: entsOf(h).length, holder: true }))] };
+          return { devices: [...window.__devices.filter((d) => entsOf(d.id).length).map((d) => ({ id: d.id, name: d.name, entities: entsOf(d.id).length, names: entsOf(d.id).map((e) => e.name) })).sort((a, b) => a.name.localeCompare(b.name)),
+            ...["@scenes", "@groups"].filter((h) => entsOf(h).length).map((h) => ({ id: h, name: "", entities: entsOf(h).length, holder: true, names: entsOf(h).map((e) => e.name) }))] };
         }
         if (msg.type.endsWith("routine_get")) {
           if (!isHolder(msg.device_id) && !window.__devices.find((d) => d.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
@@ -1459,6 +1461,17 @@
         d.type_man = msg.device_type || null;
         applyTypes();
         return { device_type: msg.device_type };
+      }
+      if (msg.type === "device_panel/status_restart") {
+        // Wie status.async_restart: nur ein Teil, der nicht läuft; danach läuft er
+        const now = Date.now() / 1000;
+        const part = window.__statusSnap(now).parts.find((p) => p.id === msg.part);
+        if (!part) throw { code: "invalid_format", message: "Unbekannter Teil" };
+        if (part.state === "ok") throw { code: "invalid_format", message: "Dieser Teil läuft" };
+        if (window.__statusRestartFails) throw { code: "invalid_format", message: "Neustart fehlgeschlagen: kaputt" };
+        (window.__statusRestarts ||= []).push(msg.part);
+        window.__statusStates[msg.part] = "ok";
+        return window.__statusSnap(now);
       }
       if (msg.type === "device_panel/status_get") {
         if (window.__statusFails) throw new Error(window.__statusFails);

@@ -52,6 +52,13 @@ Bereich. Vorbild in Aufbau, Arbeitsweise und Design ist die Integration
   ihren Schlüssel über `data-set`, `data-dlg`, `data-prompt` oder `data-mg` (sonst teilen sich Leisten die Lage).
   Eine Leiste ohne gewählten Knopf (zum Beispiel eigene Zeit getippt) zeigt keine Kapsel.
 
+## Design-Regel: Suchfelder
+
+- Jedes Suchfeld (Eingabe zum Filtern einer Liste) ist ein `<input type="search">` in einem `<label class="list-search">` mit Lupe links und dem
+  Knopf zum Leeren rechts: `this.host._fieldClearHtml("data-fc", "", wert)` (Panel-Hauptklasse: `_fieldClearHtml`). Das X ist nur sichtbar, solange etwas
+  im Feld steht; die zwei Hörer in `device-panel.js` (`input` und `click` auf `[data-fc]`) leeren das Feld, lösen `input` aus und lassen den Fokus im Feld.
+  Kein eigener Handler und keine eigene Gestaltung je Feld; die Hauptsuche (`.search-clear`) und die Bereichssuche haben ihr eigenes bestehendes X.
+
 ## Git und Releases
 
 - Nur auf `main` pushen, keine weiteren Branches. Gilt auch, wenn die

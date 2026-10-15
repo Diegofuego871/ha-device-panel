@@ -1337,6 +1337,25 @@ class DevicePanel extends HTMLElement {
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
     this._apps.bind(root);
+    // X in jedem Suchfeld (seit 2.63.0): ein Knopf mit data-fc neben dem Feld (_fieldClearHtml) leert es und löst "input" aus, damit die Liste
+    // sich wie beim Tippen neu aufbaut; sichtbar ist er nur, solange etwas im Feld steht
+    root.addEventListener("input", (ev) => {
+      const el = ev.target;
+      if (!el.matches?.('input[type="search"]')) return;
+      const btn = el.closest("label")?.querySelector("[data-fc]");
+      if (btn) btn.hidden = !el.value;
+    });
+    root.addEventListener("click", (ev) => {
+      const btn = ev.target.closest?.("[data-fc]");
+      if (!btn) return;
+      const field = btn.closest("label")?.querySelector("input");
+      if (!field) return;
+      ev.preventDefault();
+      field.value = "";
+      field.dispatchEvent(new Event("input", { bubbles: true }));
+      btn.hidden = true;
+      field.focus();
+    });
     this._apps.renderBar();
     root.querySelector(".toast").addEventListener("click", (ev) => {
       if (!ev.target.closest("[data-toast-action]") || !this._toastAction) return;

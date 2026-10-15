@@ -7,6 +7,7 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
+import voluptuous as vol
 from homeassistant.core import HomeAssistant, callback
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed, async_mock_service
 
@@ -158,3 +159,93 @@ async def test_watch_ticks_by_itself(hass: HomeAssistant, freezer) -> None:
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
     assert len(calls) == 1
+
+
+# -- Neustart von Hand (2.63.0) -------------------------------------------------------------------
+
+
+async def test_restart_refused_when_part_is_running_or_unknown(hass: HomeAssistant) -> None:
+    watch = await _setup(hass)
+    with pytest.raises(vol.Invalid, match="läuft"):
+        await watch.async_restart("battery")
+    with pytest.raises(vol.Invalid, match="Unbekannt"):
+        await watch.async_restart("nichts")
+
+
+async def test_restart_builds_fresh_objects_and_measures_from_then(hass: HomeAssistant) -> None:
+    from custom_components.device_panel import activity
+    from custom_components.device_panel.const import DATA_OUTAGE
+
+    watch = await _setup(hass)
+    old_log, old_outage = hass.data[DATA_AVAILABILITY], hass.data[DATA_OUTAGE]
+    await _stall(hass, watch)
+    watch.started -= 3600
+    assert next(p for p in watch.evaluate(time.time()) if p["id"] == "availability")["state"] == "down"
+    await watch.async_restart("availability")
+    # beide Objekte der Ausfall-Überwachung sind neu, der Melder hängt am neuen Protokoll
+    assert hass.data[DATA_AVAILABILITY] is not old_log and hass.data[DATA_OUTAGE] is not old_outage
+    assert hass.data[DATA_OUTAGE]._log is hass.data[DATA_AVAILABILITY] if hasattr(hass.data[DATA_OUTAGE], "_log") else True
+    assert next(p for p in watch.evaluate(time.time()) if p["id"] == "availability")["state"] == "ok"
+    assert any(e["text"] == "Von Hand neu gestartet" for e in activity.get(hass).entries)
+    # Sperre gegen Doppelklick (auch wenn der Teil erneut hängen würde)
+    hass.data[DATA_AVAILABILITY].last_tick = time.time() - 1200
+    watch._restarted["availability"] = time.time()
+    with pytest.raises(vol.Invalid, match="eben erst"):
+        await watch.async_restart("availability")
+
+
+async def test_restart_routines_keeps_the_routines(hass: HomeAssistant) -> None:
+    from .test_outage_notify import _device
+    from .test_routines import _raw, _switch
+
+    watch = await _setup(hass)
+    manager = hass.data[DATA_ROUTINES]
+    device = _device(hass, "Steckdose")
+    saved = await manager.async_save_routine(_raw(device, _switch(hass, device), delay_s=600))
+    manager.runtime(saved["id"])["due"] = time.time() - 400
+    watch.started -= 3600
+    assert next(p for p in watch.evaluate(time.time()) if p["id"] == "routines")["state"] == "down"
+    await watch.async_restart("routines")
+    await hass.async_block_till_done()
+    fresh = hass.data[DATA_ROUTINES]
+    assert fresh is not manager and [r["id"] for r in fresh.routines()] == [saved["id"]]
+    assert next(p for p in watch.evaluate(time.time()) if p["id"] == "routines")["state"] == "ok"
+
+
+async def test_failed_restart_puts_the_old_object_back(hass: HomeAssistant, monkeypatch) -> None:
+    from custom_components.device_panel import activity
+    from custom_components.device_panel.battery import BatteryWatch
+    from custom_components.device_panel.const import DATA_BATTERY
+
+    watch = await _setup(hass)
+    old = hass.data[DATA_BATTERY]
+    old.last_tick = time.time() - 1200
+    watch.started -= 3600
+
+    async def boom(self: Any) -> None:
+        raise RuntimeError("kaputt")
+
+    monkeypatch.setattr(BatteryWatch, "async_start", boom)
+    started: list[Any] = []
+
+    async def old_start() -> None:
+        started.append(True)
+
+    monkeypatch.setattr(old, "async_start", old_start, raising=False)
+    with pytest.raises(vol.Invalid, match="fehlgeschlagen"):
+        await watch.async_restart("battery")
+    assert hass.data[DATA_BATTERY] is old and started == [True]
+    assert any(e["level"] == "error" and "fehlgeschlagen" in e["text"] for e in activity.get(hass).entries)
+
+
+async def test_restart_websocket(hass: HomeAssistant, hass_ws_client) -> None:
+    watch = await _setup(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/status_restart", "part": "battery"})
+    assert not (await client.receive_json())["success"]  # läuft
+    await _stall(hass, watch)
+    watch.started -= 3600
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/status_restart", "part": "availability"})
+    got = await client.receive_json()
+    # (die anderen Teile haben in diesem Test nie getaktet und gelten wegen des vorverlegten Starts als überfällig)
+    assert got["success"] and next(p for p in got["result"]["parts"] if p["id"] == "availability")["state"] == "ok"

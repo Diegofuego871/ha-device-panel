@@ -58,6 +58,16 @@ for (const lang of ["de", "en"]) {
       await tap(`${win} [data-rt="c-add"][data-w="${which}"]`);
       await wait(`return !!r.querySelector('${win} [data-rt="c-search"][data-w="${which}"]')`);
       await fill(`${win} [data-rt="c-search"][data-w="${which}"]`, query);
+      if (!addCond.checked) {
+        addCond.checked = true;
+        check(`[${tag}] Bedingung, Suchfeld: X sichtbar; ein Tipp leert es (Fokus bleibt), danach wieder gefüllt`, await (async () => {
+          const vis = await ev(`const b = r.querySelector('${win} .list-search [data-fc]'); return !!b && !b.hidden`);
+          await tap(`${win} .list-search [data-fc]`);
+          const cleared = await wait(`const i = r.querySelector('${win} [data-rt="c-search"]'); return i.value === "" && r.querySelector('${win} .list-search [data-fc]').hidden && r.activeElement === i`);
+          await fill(`${win} [data-rt="c-search"][data-w="${which}"]`, query);
+          return vis && cleared;
+        })());
+      }
       await wait(`return !!r.querySelector('${win} [data-rt="c-pick"][data-id="${id}"]')`);
       await tap(`${win} [data-rt="c-pick"][data-id="${id}"]`);
       await wait(`return !r.querySelector('${win} [data-rt="c-search"]')`);

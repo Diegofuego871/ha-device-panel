@@ -1589,7 +1589,7 @@ export class MagicPush {
     html += `<button type="button" class="mg-card mg-pick mg-freebtn" data-mg="free-open" aria-expanded="${open}"><span class="mg-row"><span class="mg-ic" aria-hidden="true">🔎</span>
       <span class="mg-t"><b>${esc(free ? this.t("mgFreeChange") : this.t("mgFreeOpen"))}</b><small>${esc(this.t("mgFreeSub"))}</small></span>${this.chevHtml(open)}</span></button>`;
     if (open) {
-      html += `<div class="mg-free"><input class="mg-input" type="search" data-mg="free-query" value="${esc(w.free.query)}" placeholder="${esc(this.t("mgFreeSearch"))}" aria-label="${esc(this.t("mgFreeSearch"))}" autocomplete="off">
+      html += `<div class="mg-free"><label class="list-search">${this.h.mdi("search", 18)}<input type="search" data-mg="free-query" value="${esc(w.free.query)}" placeholder="${esc(this.t("mgFreeSearch"))}" aria-label="${esc(this.t("mgFreeSearch"))}" autocomplete="off">${this.host._fieldClearHtml("data-fc", "", w.free.query)}</label>
         <div data-mg-zone="freelist">${this.freeListHtml()}</div></div>`;
     }
     return html;

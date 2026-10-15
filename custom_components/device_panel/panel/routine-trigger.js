@@ -259,7 +259,7 @@ export const triggerMethods = {
     const t = (k, ...a) => this.t(k, ...a);
     const c = this.cstate(which);
     return `<div class="mg-free"><div class="mg-k">${esc(t("rtCondPickTitle"))}</div>
-      <input class="mg-input" type="search" data-rt="c-search" data-w="${which}" value="${esc(c.query)}" placeholder="${esc(t("rtCondSearch"))}" aria-label="${esc(t("rtCondSearch"))}" autocomplete="off">
+      <label class="list-search">${this.h.mdi("search", 18)}<input type="search" data-rt="c-search" data-w="${which}" value="${esc(c.query)}" placeholder="${esc(t("rtCondSearch"))}" aria-label="${esc(t("rtCondSearch"))}" autocomplete="off">${this.host._fieldClearHtml("data-fc", "", c.query)}</label>
       <div data-rt-zone="cpick-${which}">${this.pickListHtml(which)}</div>
       <button type="button" class="linkbtn" data-rt="c-cancel" data-w="${which}">${esc(t("rtCancel"))}</button></div>`;
   },

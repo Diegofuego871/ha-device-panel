@@ -1829,6 +1829,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-search { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--dp-divider); border-radius: 999px; background: var(--dp-input); color: var(--dp-text2); }
 .ap-q { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--dp-text); font: inherit; font-size: 14px; }
 .ap-q::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+.ap-search .field-clear { margin-right: -6px; }
 .ap-hh { display: inline-flex; margin-left: 2px; color: var(--dp-error); }
 .ap-h { display: flex; align-items: center; gap: 6px; margin: 14px 4px 6px; color: var(--dp-text2); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; }
 .ap-more { margin-left: auto; padding: 4px 2px; border: 0; background: none; color: var(--dp-primary); font: inherit; font-size: 12.5px; letter-spacing: 0; text-transform: none; cursor: pointer; }
@@ -1862,6 +1863,9 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .st-t { flex: 1; min-width: 0; }
 .st-t b { display: block; font-size: 14.5px; font-weight: 600; }
 .st-t small { display: block; margin-top: 2px; color: var(--dp-text2); font-size: 12.5px; line-height: 1.35; }
+.st-acts { display: block; margin-top: 4px; }
+.st-confirm { margin: 0; padding: 12px 14px; border-top: 1px solid var(--dp-divider); border-radius: 0; background: var(--dp-card); }
+.st-flash { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 10px 14px; border-radius: 14px; background: var(--dp-success-soft); color: var(--dp-success); font-size: 13px; }
 .st-start { margin: 12px 2px 0; color: var(--dp-text2); font-size: 12.5px; line-height: 1.4; }
 .ap-badge.bad { background: var(--dp-error-soft); color: var(--dp-error); }
 .ap-t b .ap-badge { position: static; margin-left: 6px; }

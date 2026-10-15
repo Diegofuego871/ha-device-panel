@@ -744,7 +744,7 @@ async def test_scene_without_device_activates_and_notifies(hass: HomeAssistant, 
 
 
 async def test_scene_rules(hass: HomeAssistant, setup) -> None:  # noqa: F811
-    """Eine Szene kennt nur "Aktivieren" und lässt sich nicht zurückschalten; Szenen eines Geräts gehören zum Gerät, nicht zu den Szenen."""
+    """Eine Szene kennt nur "Aktivieren" und lässt sich nicht zurückschalten; Alle Szenen stehen bei "Szenen", auch die eines Geräts."""
     manager = hass.data[DATA_ROUTINES]
     hass.states.async_set("scene.abend", "unknown")
     for raw, message in (
@@ -759,9 +759,14 @@ async def test_scene_rules(hass: HomeAssistant, setup) -> None:  # noqa: F811
         assert message in str(err.value), (raw, str(err.value))
     device = _device(hass, "Hue Zimmer")
     scene = _switch(hass, device, "scene", "unknown", "scene")
-    assert routines.in_holder(hass, routines.HOLDER_SCENES, scene) is False
+    # eine Szene eines Geräts steht auch bei "Szenen" (und weiter bei ihrem Gerät)
+    assert routines.in_holder(hass, routines.HOLDER_SCENES, scene) is True
     assert (await manager.async_save_routine({**_raw(device, scene), "action": "activate"}))["action"] == "activate"
     assert [d["id"] for d in routines.switchable_devices(hass)] == [device.id, routines.HOLDER_SCENES]
+    # die Szene des Geräts steht in der Liste der Szenen, und die Suche findet sie über die Namen im Gerät und bei den Szenen
+    assert scene in routines.holder_entity_ids(hass, routines.HOLDER_SCENES) and "abend" not in routines.holder_entity_ids(hass, routines.HOLDER_SCENES)
+    listing = {d["id"]: d for d in routines.switchable_devices(hass)}
+    assert listing[device.id]["names"] == ["scene"] and len(listing[routines.HOLDER_SCENES]["names"]) == 2
 
 
 async def test_group_without_device_behaves_like_a_lamp(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
@@ -789,8 +794,8 @@ async def test_holders_in_listing_and_websocket(hass: HomeAssistant, setup, hass
     hass.states.async_set("scene.abend", "unknown", {"friendly_name": "Abend"})
     hass.states.async_set("light.gruppe", "on", {"entity_id": ["light.a"], "supported_color_modes": ["onoff"], "friendly_name": "Gruppe"})
     assert routines.switchable_devices(hass) == [
-        {"id": "@scenes", "name": "", "entities": 1, "holder": True},
-        {"id": "@groups", "name": "", "entities": 1, "holder": True},
+        {"id": "@scenes", "name": "", "entities": 1, "holder": True, "names": ["Abend"]},
+        {"id": "@groups", "name": "", "entities": 1, "holder": True, "names": ["Gruppe"]},
     ]
     client = await hass_ws_client(hass)
     await client.send_json({"id": 1, "type": f"{DOMAIN}/routine_get", "device_id": "@scenes"})
@@ -804,3 +809,20 @@ async def test_holders_in_listing_and_websocket(hass: HomeAssistant, setup, hass
     hass.states.async_remove("scene.abend")
     hass.states.async_remove("light.gruppe")
     assert routines.switchable_devices(hass) == []
+
+
+async def test_group_helper_is_found_and_searchable(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Eine Gruppe aus der Gruppen-Integration (Helfer, ohne Gerät, im Bereich) steht bei "Gruppen" und ist über ihren Namen suchbar; auch unerreichbar."""
+    ent = er.async_get(hass)
+    entry = ent.async_get_or_create("light", "group", "esstisch-uid", suggested_object_id="esstisch", original_name="Esstisch")
+    hass.states.async_set(entry.entity_id, "off", {"entity_id": ["light.a", "light.b"], "friendly_name": "Esstisch", "supported_color_modes": ["brightness"]})
+    listing = {d["id"]: d for d in routines.switchable_devices(hass)}
+    assert listing[routines.HOLDER_GROUPS]["names"] == ["Esstisch"]
+    assert routines.in_holder(hass, routines.HOLDER_GROUPS, entry.entity_id)
+    # unerreichbar: HA lässt die Mitgliederliste dann weg, die Plattform "group" reicht
+    hass.states.async_set(entry.entity_id, "unavailable", {"friendly_name": "Esstisch"})
+    assert routines.in_holder(hass, routines.HOLDER_GROUPS, entry.entity_id)
+    # eine einzelne Lampe ohne Mitglieder ist keine Gruppe
+    lone = ent.async_get_or_create("light", "hue", "lone-uid", suggested_object_id="lone")
+    hass.states.async_set(lone.entity_id, "on", {"friendly_name": "Lone"})
+    assert not routines.in_holder(hass, routines.HOLDER_GROUPS, lone.entity_id)

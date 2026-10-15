@@ -28,6 +28,7 @@ from .const import (
     DATA_CHARGE,
     DATA_MAGIC,
     DATA_NEW,
+    DATA_OUTAGE,
     DATA_ROUTINES,
     DATA_SIGNAL,
     DATA_STATUS,
@@ -55,6 +56,19 @@ TICK_PARTS = (
 LOADED_PARTS = (("magic", DATA_MAGIC), ("new", DATA_NEW), ("updates", DATA_UPDATES))
 # Reihenfolge in der Status-App
 ORDER = ("routines", "magic", "availability", "battery", "charge", "new", "updates", "signal")
+# Neustart von Hand (seit 2.63.0): Daten in hass.data je Teil; die Ausfall-Überwachung besteht aus zwei Objekten (Protokoll und Melder)
+RESTART_DATA = {
+    "routines": (DATA_ROUTINES,),
+    "magic": (DATA_MAGIC,),
+    "availability": (DATA_AVAILABILITY, DATA_OUTAGE),
+    "battery": (DATA_BATTERY,),
+    "charge": (DATA_CHARGE,),
+    "new": (DATA_NEW,),
+    "updates": (DATA_UPDATES,),
+    "signal": (DATA_SIGNAL,),
+}
+# Sperre gegen Doppelklick: ein Teil lässt sich frühestens nach dieser Zeit wieder neu starten
+RESTART_COOLDOWN_S = 20
 
 
 def classify(age_s: float, interval_s: float) -> str:
@@ -76,6 +90,8 @@ class StatusWatch:
         # Steht ein Teil beim ersten Prüfen, wird erst beim nächsten gemeldet: nach einem Stocken von Home Assistant (Ruhezustand, Zeitsprung)
         # sind alle Lebenszeichen kurz alt, und die Teile holen sie im selben Takt nach
         self._suspect: set[str] = set()
+        # Zeitpunkt des letzten Neustarts je Teil: ein frisches Objekt hat noch keinen Takt, gemessen wird ab diesem Zeitpunkt
+        self._restarted: dict[str, float] = {}
         self._since: dict[str, float] = {}
         self._unsub: CALLBACK_TYPE | None = None
 
@@ -89,6 +105,10 @@ class StatusWatch:
 
     # -- Prüfen ---------------------------------------------------------------
 
+    def _base(self, key: str) -> float:
+        """Ab wann ein Teil gemessen wird: Start des Wächters, nach einem Neustart von Hand dessen Zeitpunkt."""
+        return max(self.started, self._restarted.get(key, 0.0))
+
     def evaluate(self, now: float) -> list[dict[str, Any]]:
         """Alle Teile mit Zustand ("ok", "late", "down"), Alter des letzten Lebenszeichens und erwartetem Takt (None ohne Takt)."""
         data = self.hass.data
@@ -98,7 +118,7 @@ class StatusWatch:
             parts["routines"] = {"state": "down", "age_s": None, "expect_s": None, "last": None}
         else:
             # Überfällig gemessen ab dem Start des Wächters: was vor dem Start fällig war, holt der Start der Routinen selbst nach
-            overdue = min(manager.overdue_s(now), now - self.started)
+            overdue = min(manager.overdue_s(now), now - self._base("routines"))
             parts["routines"] = {"state": classify(overdue, 0), "age_s": round(overdue), "expect_s": None, "last": None, "loaded": len(manager.routines())}
         for key, data_key, interval in TICK_PARTS:
             part = data.get(data_key)
@@ -106,7 +126,7 @@ class StatusWatch:
                 parts[key] = {"state": "down", "age_s": None, "expect_s": interval, "last": None}
                 continue
             last = getattr(part, "last_tick", None)
-            age = now - (last if last is not None else self.started)
+            age = now - (last if last is not None else self._base(key))
             parts[key] = {"state": classify(age, interval), "age_s": round(age), "expect_s": interval, "last": last}
         for key, data_key in LOADED_PARTS:
             parts[key] = {"state": "ok" if data.get(data_key) is not None else "down", "age_s": None, "expect_s": None, "last": None}
@@ -133,6 +153,77 @@ class StatusWatch:
         """Nur die Zahlen für die Kopfzeile des Panels (rote Punkt)."""
         snap = self.snapshot()
         return {"problems": snap["problems"], "down": snap["down"]}
+
+    # -- Neustart von Hand (seit 2.63.0) -----------------------------------------------
+
+    async def async_restart(self, key: str) -> None:
+        """
+        Einen Teil der Integration auf einem frischen Objekt neu starten (Knopf in der Status-App). Nur ein Teil, der nicht läuft;
+        Home Assistant und andere Integrationen bleiben unberührt. Gelingt der Start nicht, läuft das alte Objekt wieder an.
+        """
+        if key not in RESTART_DATA:
+            raise vol.Invalid("Unbekannter Teil")
+        now = time.time()
+        part = next(p for p in self.evaluate(now) if p["id"] == key)
+        if part["state"] == "ok":
+            raise vol.Invalid("Dieser Teil läuft")
+        if now - self._restarted.get(key, 0.0) < RESTART_COOLDOWN_S:
+            raise vol.Invalid("Dieser Teil wurde eben erst neu gestartet")
+        self._restarted[key] = now
+        hass = self.hass
+        keys = RESTART_DATA[key]
+        old = [hass.data.get(k) for k in keys]
+        fresh: list[Any] = []
+        try:
+            # Das Objekt zuerst anhalten (es schreibt dabei seinen Stand), dann ein frisches aus dem Gespeicherten aufbauen
+            for obj in reversed(old):
+                if obj is not None:
+                    try:
+                        await obj.async_stop()
+                    except Exception:  # noqa: BLE001 - ein hängendes Teil darf den Neustart nicht verhindern
+                        _LOGGER.exception("Status: %s liess sich nicht sauber anhalten", key)
+            fresh = self._build(key)
+            for obj in fresh:
+                await obj.async_start()
+            for k, obj in zip(keys, fresh, strict=True):
+                hass.data[k] = obj
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.exception("Status: Neustart von %s fehlgeschlagen", key)
+            for obj in fresh:
+                try:
+                    await obj.async_stop()
+                except Exception:  # noqa: BLE001
+                    pass
+            for k, obj in zip(keys, old, strict=True):
+                if obj is not None:
+                    try:
+                        await obj.async_start()
+                        hass.data[k] = obj
+                    except Exception:  # noqa: BLE001
+                        _LOGGER.exception("Status: auch das alte Objekt von %s lief nicht wieder an", key)
+            activity.record(hass, "error", "system", "status_restart_failed", self._label(key), error=str(err) or type(err).__name__)
+            raise vol.Invalid(f"Neustart fehlgeschlagen: {err}") from err
+        self._suspect.discard(key)
+        activity.record(hass, "info", "system", "status_restart", self._label(key))
+
+    def _build(self, key: str) -> list[Any]:
+        """Frische Objekte für einen Teil (Importe hier, damit status.py die Teile nicht beim Laden mitzieht)."""
+        from .availability import AvailabilityLog  # noqa: PLC0415
+        from .battery import BatteryWatch  # noqa: PLC0415
+        from .charge import ChargeNotifier  # noqa: PLC0415
+        from .magic import MagicPush  # noqa: PLC0415
+        from .newdevice import NewDeviceNotifier  # noqa: PLC0415
+        from .outage import OutageNotifier  # noqa: PLC0415
+        from .routines import RoutineManager  # noqa: PLC0415
+        from .signal_history import SignalLog  # noqa: PLC0415
+        from .updates import UpdateNotifier  # noqa: PLC0415
+
+        hass = self.hass
+        if key == "availability":
+            log = AvailabilityLog(hass)
+            return [log, OutageNotifier(hass, log)]
+        classes = {"routines": RoutineManager, "magic": MagicPush, "battery": BatteryWatch, "charge": ChargeNotifier, "new": NewDeviceNotifier, "updates": UpdateNotifier, "signal": SignalLog}
+        return [classes[key](hass)]
 
     # -- Takt: melden ----------------------------------------------------------
 
@@ -197,4 +288,21 @@ def ws_status_get(hass: HomeAssistant, connection: websocket_api.ActiveConnectio
     connection.send_result(msg["id"], watch.snapshot())
 
 
-COMMANDS = (ws_status_get,)
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/status_restart", vol.Required("part"): str})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_status_restart(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Einen Teil von Hand neu starten (Knopf der Status-App); Antwort ist der neue Stand."""
+    watch = hass.data.get(DATA_STATUS)
+    if watch is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "integration not set up")
+        return
+    try:
+        await watch.async_restart(msg["part"])
+    except vol.Invalid as err:
+        connection.send_error(msg["id"], websocket_api.ERR_INVALID_FORMAT, str(err.msg if hasattr(err, "msg") else err))
+        return
+    connection.send_result(msg["id"], watch.snapshot())
+
+
+COMMANDS = (ws_status_get, ws_status_restart)

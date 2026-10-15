@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.63.0] - 2026-10-15
+
+Status: einen Teil von Hand neu starten.
+
+### Hinzugefügt
+
+- App "Status": Ein Teil, der "verspätet" ist oder "steht", hat einen Knopf "Neu starten". Zuerst kommt eine Rückfrage ("<Teil> neu starten?"): Es wird nur dieser Teil der Integration auf einem frischen Objekt neu gestartet, nicht Home Assistant und keine andere Integration, und der gespeicherte Stand bleibt erhalten. Bei den Routinen wird nachgeholt, was fällig war, wenn es noch im Nachhol-Fenster liegt, sonst als verpasst vermerkt. Danach erscheint der Hinweis "<Teil> wurde neu gestartet." und der Zustand folgt; ein fehlgeschlagener Neustart zeigt den Fehler im Fenster und setzt das alte Objekt wieder ein. Der Server lehnt den Neustart eines Teils ab, der läuft, und einen zweiten Neustart innerhalb von 20 Sekunden. Das Protokoll vermerkt jeden Neustart ("Von Hand neu gestartet") und jeden Fehlschlag. Neuer WebSocket-Befehl `device_panel/status_restart` (Administratoren).
+- Suchfelder: Jedes Suchfeld hat jetzt denselben Knopf zum Leeren (ein kleines X rechts, nur sichtbar, solange etwas drinsteht): im Routinen-Assistenten (Geräteliste, Entitätenliste, Bedingungs-Suche), im App-Launcher und in der Suche "Freie Entität" von Magic Push; das Protokoll, die Listen der Übersichten und die Hauptsuche hatten es schon. Ein Tipp leert das Feld, die Liste folgt und der Cursor bleibt im Feld. Ein gemeinsamer Mechanismus (`data-fc`) statt eines Handlers pro Feld.
+- Automatisch startet nichts neu: Das riskierte doppelte oder verlorene Ausführungen von Routinen und verdeckte die Ursache eines Stillstands.
+
 ## [2.62.0] - 2026-10-15
+
+Nicht veröffentlicht; enthalten in 2.63.0.
 
 Neue App "Status": Läuft das Panel?
 
@@ -30,8 +42,9 @@ Routinen: Szenen und Gruppen.
 
 - Routinen-Assistent, "Routine hinzufügen" im Fenster "Alle Routinen": Die erste Seite heisst jetzt "Gerät, Gruppe oder Szene?". Nach den Geräten kommen zwei Einträge ohne Gerät: "Szenen" und "Gruppen". Es erscheinen nur Einträge, in denen etwas steht.
 - Szenen (Home Assistant `scene`, ohne Gerät): Die einzige Aktion ist "Aktivieren" (`scene.turn_on`). Eine Szene hat kein Gegenteil, darum gibt es weder die Seite "Zurückschalten" noch eine Optionen-Seite; Zeit oder Auslöser, Zeitfenster, Pause und "nur einmal" gelten wie bei jeder Routine. Push und Protokoll sagen "Szene <Name> aktiviert". "Jetzt ausführen" im Assistenten aktiviert die Szene einmal.
-- Gruppen (ein Licht, Schalter, Ventilator … , das in seinem Attribut `entity_id` andere Entitäten aufführt und kein Gerät hat, zum Beispiel eine Lichtergruppe): Sie verhalten sich wie eine einzelne Lampe, mit Ein, Aus, Umschalten, Optionen für Helligkeit und Farbe und Zurückschalten (auch "wie vorher").
-- Übersicht und Fenster "Alle Routinen": Routinen von Szenen und Gruppen stehen nach den Geräten in eigenen Karten "Szenen" und "Gruppen" (mit eigenem Symbol, ohne den Link "Gerät öffnen"). Eine Szene, die zu einem Gerät gehört (zum Beispiel Hue-Szenen), bleibt bei ihrem Gerät und steht in dessen Reiter Routinen. Szenen erscheinen nicht im Reiter "Schalter" des Geräte-Popups.
+- Gruppen (ein Licht, Schalter, Ventilator … , das in seinem Attribut `entity_id` andere Entitäten aufführt und kein Gerät hat, zum Beispiel eine Lichtergruppe; auch Gruppen der Gruppen-Integration (Helfer) zählen, solange sie nicht erreichbar sind): Sie verhalten sich wie eine einzelne Lampe, mit Ein, Aus, Umschalten, Optionen für Helligkeit und Farbe und Zurückschalten (auch "wie vorher").
+- Übersicht und Fenster "Alle Routinen": Routinen von Szenen und Gruppen stehen nach den Geräten in eigenen Karten "Szenen" und "Gruppen" (mit eigenem Symbol, ohne den Link "Gerät öffnen"). Alle Szenen stehen bei "Szenen", auch die eines Geräts (zum Beispiel Hue-Szenen); diese stehen weiter bei ihrem Gerät und in dessen Reiter Routinen. Szenen erscheinen nicht im Reiter "Schalter" des Geräte-Popups.
+- Die Suche im Assistenten findet auch die Entitäten in Geräten, "Szenen" und "Gruppen" ("alles" findet die Szene "Alles aus"), und die Seite "Was" hat ab 8 Entitäten ein eigenes Suchfeld (eine Instanz mit 78 Szenen braucht es).
 - Die Grenze von 20 Routinen pro Gerät gilt nicht für "Szenen" und "Gruppen" (die Grenze von 200 insgesamt schon).
 - Neuer Wert in den Routinen-Daten: `device_id` darf `@scenes` oder `@groups` sein (WebSocket `routine_devices`, `routine_get`, `routine_list`, `routine_save` nehmen sie an). Skripte werden nicht angeboten.
 
@@ -3558,7 +3571,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.62.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.62.0
+[2.63.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.63.0
 [2.60.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.60.0
 [2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0
 [2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0

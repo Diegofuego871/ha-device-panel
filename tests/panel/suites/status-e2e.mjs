@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { app: "Status", win: "Status", allOk: "Alles läuft", prob1: "Störung: 1 Teil", prob2: "Störung: 2 Teile", up: "läuft", late: "verspätet", down: "steht", pill: "Störung", debug: "Debug", std: "Standard (kein Ziel)", notify: "Bei Stillstand melden" },
-  en: { app: "Status", win: "Status", allOk: "Everything is running", prob1: "Fault: 1 part", prob2: "Fault: 2 parts", up: "running", late: "late", down: "stopped", pill: "Fault", debug: "Debug", std: "Default (no target)", notify: "Alert when something stops" },
+  de: { restart: "Neu starten", askRoutines: "Routinen neu starten?", notHa: "nicht Home Assistant", catchUp: "Nachhol-Fenster", done: "Ausfall-Überwachung wurde neu gestartet.", app: "Status", win: "Status", allOk: "Alles läuft", prob1: "Störung: 1 Teil", prob2: "Störung: 2 Teile", up: "läuft", late: "verspätet", down: "steht", pill: "Störung", debug: "Debug", std: "Standard (kein Ziel)", notify: "Bei Stillstand melden" },
+  en: { restart: "Restart", askRoutines: "Restart Routines?", notHa: "not Home Assistant", catchUp: "catch-up window", done: "Outage monitoring was restarted.", app: "Status", win: "Status", allOk: "Everything is running", prob1: "Fault: 1 part", prob2: "Fault: 2 parts", up: "running", late: "late", down: "stopped", pill: "Fault", debug: "Debug", std: "Default (no target)", notify: "Alert when something stops" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -75,6 +75,24 @@ for (const lang of ["de", "en"]) {
     await p.waitForTimeout(600);
     check(`[${tag}] Schalter aus: set_options mit status_notify false, Anzeige folgt`, (await p.evaluate(() => window.__opts.status_notify)) === false && (await ev(`return r.querySelector("dialog.status-dlg [data-st-notify]").checked === false && r.querySelector("dialog.status-dlg [data-st-target]").value === "notify.familie"`)));
     await p.evaluate(() => { window.__opts.status_notify = true; window.__opts.notify_service_status = ""; });
+
+    // Neustart von Hand: Knopf nur bei Teilen, die nicht laufen; Rückfrage; Abbrechen; Bestätigen; Fehler
+    check(`[${tag}] "${T.restart}": nur bei den zwei gestörten Teilen (Routinen, Ausfall-Überwachung)`, await ev(`const b = [...r.querySelectorAll("dialog.status-dlg [data-st-restart]")].map((x) => x.dataset.stRestart); return JSON.stringify(b) === '["routines","availability"]'`));
+    await tap('dialog.status-dlg [data-st-restart="routines"]');
+    check(`[${tag}] Rückfrage "${T.askRoutines}" mit Hinweis (nicht Home Assistant) und Routinen-Satz`, await wait(`const c = r.querySelector("dialog.status-dlg .st-confirm"); return !!c && c.querySelector("b").textContent.trim() === ${JSON.stringify(T.askRoutines)} && /${T.notHa}/.test(c.textContent) && /${T.catchUp}/.test(c.textContent)`));
+    await p.screenshot({ path: `${outDir}/status-confirm-${tag.replace("/", "-")}.png` });
+    await tap('dialog.status-dlg [data-st-restart-no]');
+    check(`[${tag}] Abbrechen: Rückfrage weg, nichts neu gestartet`, await wait(`return !r.querySelector("dialog.status-dlg .st-confirm")`) && !(await p.evaluate(() => (window.__statusRestarts || []).length)));
+    await p.evaluate(() => { window.__statusRestartFails = true; });
+    await tap('dialog.status-dlg [data-st-restart="availability"]');
+    await tap('dialog.status-dlg [data-st-restart-yes="availability"]');
+    check(`[${tag}] Neustart schlägt fehl: Fehlermeldung im Fenster, Teil bleibt gestört`, await wait(`const d = r.querySelector("dialog.status-dlg"); return /kaputt/.test(d.querySelector(".dlg-error")?.textContent || "") && !!d.querySelector('[data-st-restart="availability"]')`));
+    await p.evaluate(() => { window.__statusRestartFails = false; });
+    await tap('dialog.status-dlg [data-st-restart="availability"]');
+    await tap('dialog.status-dlg [data-st-restart-yes="availability"]');
+    check(`[${tag}] Bestätigen: status_restart für availability, Hinweis "${T.done}", Teil läuft wieder`, await wait(`const d = r.querySelector("dialog.status-dlg"); return d.querySelector(".st-flash")?.textContent.includes(${JSON.stringify(T.done)}) && !d.querySelector('[data-st-restart="availability"]')`) && JSON.stringify(await p.evaluate(() => window.__statusRestarts)) === '["availability"]');
+    check(`[${tag}] Kopf folgt: noch ${T.prob1}`, await wait(`return r.querySelector("dialog.status-dlg .st-banner.bad b")?.textContent.trim() === ${JSON.stringify(T.prob1)}`));
+    await p.evaluate(() => { window.__statusRestarts = []; });
 
     // Entwarnung: Fenster folgt beim nächsten Abruf
     await setStates({});

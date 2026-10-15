@@ -27,6 +27,7 @@ const { triggerMethods, triggerDefaults, triggerFromRoutine, triggerPayload } = 
 
 // Letzter Schritt (Name und Prüfung); die Seite "Optionen" (5) steht in steps() zwischen 1 und 2, nur wenn die Entität etwas kann
 const STEPS = 4;
+const ENT_SEARCH_MIN = 7;
 const OPTS_STEP = 5;
 const BACK_STEP = 6;
 const DELAY_PRESETS = [300, 900, 1800, 3600];
@@ -946,6 +947,7 @@ export class RoutineUi {
         w.draft = this.newDraft();
         w.snap = JSON.stringify(w.draft);
         w.pv = null;
+        w.entQuery = "";
       }
     } catch (err) {
       if (this.wiz !== w) return;
@@ -964,7 +966,7 @@ export class RoutineUi {
     const t = (k, ...a) => this.t(k, ...a);
     const w = this.wiz;
     return `<p class="mg-note">${esc(t("rtPickDeviceNote"))}</p>
-      <label class="list-search" data-for="rt-devs">${this.h.mdi("search", 18)}<input type="search" data-rt="dev-search" value="${esc(w.devQuery)}" placeholder="${esc(t("listSearch"))}" aria-label="${esc(t("listSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <label class="list-search" data-for="rt-devs">${this.h.mdi("search", 18)}<input type="search" data-rt="dev-search" value="${esc(w.devQuery)}" placeholder="${esc(t("listSearch"))}" aria-label="${esc(t("listSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this.host._fieldClearHtml("data-fc", "", w.devQuery)}</label>
       <div data-rt-zone="devs">${this.devsHtml()}</div>`;
   }
 
@@ -976,12 +978,13 @@ export class RoutineUi {
     const q = String(w.devQuery || "").trim().toLowerCase();
     const rows = w.devices
       .map((x) => {
-        if (isHolder(x.id)) return { ...x, name: t(HOLDERS[x.id].key), sub: "", holder: HOLDERS[x.id] };
+        if (isHolder(x.id)) return { ...x, name: t(HOLDERS[x.id].key), sub: "", holder: HOLDERS[x.id], names: x.names || [] };
         const dev = this.host._devices?.find((d) => d.id === x.id);
         const sub = [dev?.area, dev?.integration?.name].filter(Boolean).join(" · ");
-        return { ...x, name: dev?.name || x.name, sub, type: dev?.type || "other" };
+        return { ...x, name: dev?.name || x.name, sub, type: dev?.type || "other", names: x.names || [] };
       })
-      .filter((x) => !q || `${x.name} ${x.sub}`.toLowerCase().includes(q));
+      // Die Suche findet auch eine Entität im Gerät oder in "Szenen" und "Gruppen" (seit 2.63.0): "alles" findet die Szene "Alles aus"
+      .filter((x) => !q || `${x.name} ${x.sub} ${(x.names || []).join(" ")}`.toLowerCase().includes(q));
     if (!rows.length) return `<p class="mg-note mg-none">${esc(t(w.devices.length ? "listSearchNone" : "rtNoSwitchableDevices"))}</p>`;
     return rows
       .map((x) => `<button type="button" class="mg-card mg-pick" data-rt="dev" data-id="${esc(x.id)}" role="radio" aria-checked="${w.pickId === x.id}">
@@ -1155,6 +1158,7 @@ export class RoutineUi {
       else if (name === "runs") el.innerHTML = this.runsHtml();
       else if (name === "summary") el.innerHTML = this.summaryHtml();
       else if (name === "devs") el.innerHTML = this.devsHtml();
+      else if (name === "ents") el.innerHTML = this.entsHtml();
       else if (name === "backsum") el.innerHTML = this.backSumHtml();
       else if (name === "winerr") el.innerHTML = this.winErrHtml();
       else if (name.startsWith("csum-")) el.innerHTML = this.condSumHtml(name.slice(5));
@@ -1247,14 +1251,28 @@ export class RoutineUi {
     const ents = this.data.entities;
     if (!ents.length) return `<p class="mg-note">${esc(t("rtNoEntities"))}</p>`;
     let html = `<p class="mg-note">${esc(t(isHolder(this.deviceId) ? "rtHolderNote" : "rtOnlySwitchable"))}</p>`;
-    html += ents.map((e) => `<button type="button" class="mg-card mg-pick" data-rt="pick" data-id="${esc(e.entity_id)}" role="radio" aria-checked="${d.entity_id === e.entity_id}">
-      <span class="mg-row"><span class="mg-ic" aria-hidden="true">${routineEmoji(e.domain)}</span><span class="mg-t"><b>${esc(e.name)}</b><small>${esc(e.entity_id)}</small></span>
-      <span class="mg-val${e.available ? "" : " off"}">${esc(this.stateWord(e))}</span><span class="mg-radio${d.entity_id === e.entity_id ? " on" : ""}"></span></span></button>`).join("");
+    // Bei vielen Entitäten (78 Szenen) eine Suche (seit 2.63.0)
+    if (ents.length > ENT_SEARCH_MIN) {
+      html += `<label class="list-search" data-for="rt-ents">${this.h.mdi("search", 18)}<input type="search" data-rt="ent-search" value="${esc(this.wiz.entQuery || "")}" placeholder="${esc(t("listSearch"))}" aria-label="${esc(t("listSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this.host._fieldClearHtml("data-fc", "", this.wiz.entQuery || "")}</label>`;
+    }
+    html += `<div data-rt-zone="ents">${this.entsHtml()}</div>`;
     const e = this.entity(d.entity_id);
     if (!e) return html;
     html += `<div class="mg-k">${esc(t("rtAction"))}</div>${this.tabsHtml(e.actions.map((a) => ({ on: d.action === a, attrs: `data-rt="action" data-v="${a}"`, label: t(`rtAct_${actKey(e.domain, a)}`) })))}`;
     if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t(e.domain === "scene" ? "rtSceneNoBack" : "rtToggleNoBack"))}</p>`;
     return `${html}<div data-rt-zone="result">${this.resultHtml()}</div>`;
+  }
+
+  // Die Liste der Entitäten auf Seite "Was", gefiltert nach der Suche (die gewählte bleibt immer sichtbar)
+  entsHtml() {
+    const esc = (v) => this.esc(v);
+    const d = this.wiz.draft;
+    const q = String(this.wiz.entQuery || "").trim().toLowerCase();
+    const rows = this.data.entities.filter((e) => !q || e.entity_id === d.entity_id || `${e.name} ${e.entity_id}`.toLowerCase().includes(q));
+    if (!rows.length) return `<p class="mg-note mg-none">${esc(this.t("listSearchNone"))}</p>`;
+    return rows.map((e) => `<button type="button" class="mg-card mg-pick" data-rt="pick" data-id="${esc(e.entity_id)}" role="radio" aria-checked="${d.entity_id === e.entity_id}">
+      <span class="mg-row"><span class="mg-ic" aria-hidden="true">${routineEmoji(e.domain)}</span><span class="mg-t"><b>${esc(e.name)}</b><small>${esc(e.entity_id)}</small></span>
+      <span class="mg-val${e.available ? "" : " off"}">${esc(this.stateWord(e))}</span><span class="mg-radio${d.entity_id === e.entity_id ? " on" : ""}"></span></span></button>`).join("");
   }
 
   resultHtml() {
@@ -1807,6 +1825,10 @@ export class RoutineUi {
       case "dev-search":
         w.devQuery = el.value;
         this.paintZones(["devs"]);
+        break;
+      case "ent-search":
+        w.entQuery = el.value;
+        this.paintZones(["ents"]);
         break;
       case "opt":
         this.onOptInput(el);

@@ -3,6 +3,15 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.63.0, Status: Neustart von Hand)
+
+- Wunsch des Nutzers: Knopf "Neu starten" je Teil, kein automatischer Neustart (Risiko doppelter oder verlorener Routinenläufe, verdeckt die Ursache). `StatusWatch.async_restart(key)` in `status.py`: nur bei Teil nicht "ok" und nach `RESTART_COOLDOWN_S` (20 s); hält die Objekte an (rückwärts, sie schreiben ihren Stand),
+  baut frische (`_build`; Ausfall-Überwachung = Protokoll und Melder zusammen, der Melder hängt am neuen Protokoll), startet sie und setzt sie in `hass.data` (`RESTART_DATA`). Gelingt der Start nicht, kommen die alten Objekte zurück (Protokolleintrag Fehler). `_restarted[key]` ist die neue Messgrundlage (`_base`), weil ein frisches Objekt noch keinen Takt hat.
+  Routinen: der neue Manager holt Fälliges über `async_at_started`/Resync nach (Nachhol-Fenster), sonst "verpasst". WebSocket `device_panel/status_restart` (Administrator). Panel: Knopf und Rückfrage in `status-ui.js` (`ui.confirm`, `ui.busy`, `restart()`, Hinweis `st-flash`). Simulator: `status_restart`, `__statusRestartFails`, `__statusRestarts`.
+  Tests: fünf neue in `tests/test_status.py`, Suite `status` (112 Prüfungen).
+- X in allen Suchfeldern (Wunsch des Nutzers, überall gleich): `_fieldClearHtml("data-fc", "", text)` neben dem Feld in einem `<label>`; zwei Hörer auf dem Shadow-Root in `device-panel.js` (`input`: Sichtbarkeit; `click`: leeren, `input` auslösen, Fokus). Neue Suchfelder: `type="search"` im `label.list-search` mit diesem Knopf, kein eigener Handler. Suite `searchclear` (18).
+- Offen: an einer echten HA-Instanz nicht erprobt (besonders der Neustart der Routinen mit laufenden Aufträgen).
+
 ## Stand (2.62.0, App "Status": Wächter für die Teile der Integration)
 
 - Wunsch des Nutzers (Watchdog, Stufe 1 und 2; Stufe 3, externer Ping, bleibt zurückgestellt, bis klar ist, ob er Uptime Kuma oder Healthchecks.io nutzt). Mockups `docs/mockups/status-v1` (Variante A). Entscheide: Name "Status"; nur wenn der Nutzer die App selbst
@@ -19,8 +28,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - Wunsch des Nutzers: Beim Anlegen über "Alle Routinen" auch Szenen und Gruppen von Leuchten wählen; Titel "Gerät, Gruppe oder Szene?"; keine Skripte. Umsetzung: Sammelstellen statt Gerät, `device_id` = `@scenes` oder `@groups`
   (`HOLDERS` in `routines.py`; `_DEVICE_RE` lässt sie zu; `is_holder`, `in_holder`, `holder_entity_ids`, `log_device`). Szene = `SERVICES["scene"] = {"activate": ("scene", "turn_on")}`, Aktion `activate` (`ACTIONS`), ohne Gegenteil (`opposite` = None),
-  also ohne Zurückschalten und ohne Optionen; Wort "activated" (Push `routine_text_activated`, Protokoll `routine_run_scene`, `routine_run_scene_manual`). Gruppe = schaltbare Entität (nicht Szene) ohne Gerät mit Liste in `entity_id` (`is_group_state`), verhält sich wie die Lampe.
-  Szenen mit Gerät (Hue) bleiben beim Gerät (`switchable_entities`). Pro Sammelstelle keine Grenze von 20 (nur 200 insgesamt). `clean()` prüft bei Sammelstellen die Zugehörigkeit statt des Geräts; Push ohne Gerät öffnet das Panel ohne Gerät und ohne Integrationsbild;
+  also ohne Zurückschalten und ohne Optionen; Wort "activated" (Push `routine_text_activated`, Protokoll `routine_run_scene`, `routine_run_scene_manual`). Gruppe = schaltbare Entität (nicht Szene) ohne Gerät mit Liste in `entity_id` oder aus der Plattform "group" (`is_group_state`, auch unerreichbar), verhält sich wie die Lampe.
+  Alle Szenen stehen bei "Szenen" (`in_holder`), auch die eines Geräts (Hue); sie stehen zusätzlich bei ihrem Gerät (`switchable_entities`). Die Suche in Schritt 0 trifft auch die Namen der Entitäten (`names` in `switchable_devices`), Schritt "Was" hat ab `ENT_SEARCH_MIN` Entitäten ein Suchfeld (`entsHtml`). Pro Sammelstelle keine Grenze von 20 (nur 200 insgesamt). `clean()` prüft bei Sammelstellen die Zugehörigkeit statt des Geräts; Push ohne Gerät öffnet das Panel ohne Gerät und ohne Integrationsbild;
   das Protokoll hat dort `device_id` None. `switchable_devices` hängt `{"id": "@scenes", "name": "", "entities": n, "holder": True}` an (nur wenn nicht leer); das Panel benennt sie (`rtHolderScenes`, `rtHolderGroups`).
   Panel (`routines.js`): `HOLDERS`, `isHolder`; Schritt 0 mit Emoji statt Gerätesymbol, Übersicht mit eigenen Karten nach den Geräten ohne "Gerät öffnen"; `routineEmoji("scene")` = 🎬, aber nicht in `DOMAIN_EMOJI` (der Reiter "Schalter" zeigt keine Szenen).
   Simulator: `HOLDER_ENTS` (`window.__noHolders` blendet sie aus). Tests: `tests/test_routines.py` (vier neue), Suite `routinescene` (48 Prüfungen), `routineadd` angepasst.

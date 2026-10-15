@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { q0: "Gerät, Gruppe oder Szene?", scenes: "Szenen", groups: "Gruppen", act: "Aktivieren", noBack: "Eine Szene lässt sich nur aktivieren, nicht zurückschalten.", scene: "Abendlicht", count: "2 Szenen", sentence: "Abendlicht aktivieren", step: (n, t) => `Schritt ${n} von ${t}` },
-  en: { q0: "Device, group or scene?", scenes: "Scenes", groups: "Groups", act: "Activate", noBack: "A scene can only be activated, not switched back.", scene: "Abendlicht", count: "2 scenes", sentence: "Abendlicht activate", step: (n, t) => `Step ${n} of ${t}` },
+  de: { film: "filmabend", q0: "Gerät, Gruppe oder Szene?", scenes: "Szenen", groups: "Gruppen", act: "Aktivieren", noBack: "Eine Szene lässt sich nur aktivieren, nicht zurückschalten.", scene: "Abendlicht", count: "2 Szenen", sentence: "Abendlicht aktivieren", step: (n, t) => `Schritt ${n} von ${t}` },
+  en: { film: "movie night", q0: "Device, group or scene?", scenes: "Scenes", groups: "Groups", act: "Activate", noBack: "A scene can only be activated, not switched back.", scene: "Abendlicht", count: "2 scenes", sentence: "Abendlicht activate", step: (n, t) => `Step ${n} of ${t}` },
 };
 
 for (const lang of ["de", "en"]) {
@@ -46,6 +46,12 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] "${T.scenes}" und "${T.groups}" stehen als letzte Einträge`, names.at(-2) === T.scenes && names.at(-1) === T.groups && names.length > 3, JSON.stringify(names));
     check(`[${tag}] Szenen: "${T.count}"`, await ev(`return r.querySelector('${win} [data-rt="dev"][data-id="@scenes"] .mg-val')?.textContent.trim() === ${JSON.stringify(T.count)}`));
 
+    // Suche findet eine Szene über ihren Namen (auch wenn "Szenen" selbst anders heisst)
+    await ev(`const i = r.querySelector('${win} input[data-rt="dev-search"]'); i.focus(); i.value = ${JSON.stringify(T.film)}; i.dispatchEvent(new Event("input", { bubbles: true }))`);
+    check(`[${tag}] Suche "${T.film}" findet "${T.scenes}" über den Namen der Szene darin, sonst nichts`, await wait(`const ids = [...r.querySelectorAll('${win} [data-rt="dev"]')].map((x) => x.dataset.id); return ids.length === 1 && ids[0] === "@scenes"`));
+    await ev(`const i = r.querySelector('${win} input[data-rt="dev-search"]'); i.value = ""; i.dispatchEvent(new Event("input", { bubbles: true }))`);
+    await wait(`return r.querySelectorAll('${win} [data-rt="dev"]').length > 3`);
+
     // Szene
     await tap(`${win} [data-rt="dev"][data-id="@scenes"]`);
     await tap(`${win} [data-rt="nav-next"]`);
@@ -68,6 +74,22 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-rt="close"]`);
     await wait(`return !r.querySelector("${win}")?.open`);
 
+    // Viele Szenen: auf der Seite "Was" gibt es eine Suche
+    await p.evaluate(() => { window.__manyScenes = true; });
+    await tap('dialog.rtall-dlg [data-rta="routine-add"]');
+    await wait(`return r.querySelector("${win} [data-rt='dev'][data-id='@scenes']")`);
+    await tap(`${win} [data-rt="dev"][data-id="@scenes"]`);
+    await tap(`${win} [data-rt="nav-next"]`);
+    await wait(`return r.querySelectorAll("${win} .mg-pick").length === 14`);
+    check(`[${tag}] 14 Szenen: Suchfeld auf der Seite "Was"; "büro szene 1" zeigt 4 (1, 10, 11, 12), die Wahl bleibt beim Filtern`, await ev(`return !!r.querySelector('${win} input[data-rt="ent-search"]')`));
+    await tap(`${win} .mg-pick[data-id="scene.film"]`);
+    await ev(`const i = r.querySelector('${win} input[data-rt="ent-search"]'); i.focus(); i.value = "büro szene 1"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
+    check(`[${tag}] Suche: vier Treffer plus die gewählte Szene, Fokus bleibt im Feld`, await wait(`const ids = [...r.querySelectorAll('${win} .mg-pick')].map((x) => x.dataset.id); return ids.length === 5 && ids.includes("scene.film") && r.activeElement?.matches('input[data-rt="ent-search"]')`));
+    await ev(`const i = r.querySelector('${win} input[data-rt="ent-search"]'); i.value = "zzz"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
+    check(`[${tag}] Suche ohne Treffer: nur die gewählte bleibt, sonst nichts`, await wait(`return r.querySelectorAll('${win} .mg-pick').length === 1`));
+    await p.evaluate(() => { window.__manyScenes = false; });
+    await ev(`r.host._routines.closeWizard()`); // mit Änderung gäbe es sonst die Rückfrage "verwerfen?"
+    await wait(`return !r.querySelector("${win}")?.open`);
     // Gruppe
     await tap('dialog.rtall-dlg [data-rta="routine-add"]');
     await wait(`return r.querySelector("${win} [data-rt='dev'][data-id='@groups']")`);

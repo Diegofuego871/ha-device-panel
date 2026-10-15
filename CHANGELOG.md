@@ -7,7 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.63.0] - 2026-10-15
+
+Status: restart a part by hand.
+
+### Added
+
+- App "Status": a part that is "late" or "stopped" has a button "Restart". A question follows first ("Restart <part>?"): it restarts only this part of the integration on a fresh object, not Home Assistant and no other integration, and the saved state is kept. With routines, what was due is caught up if it is still within the catch-up window, otherwise it is noted as missed. Afterwards a short note "<part> was restarted." appears and the state follows; a failed restart shows the error in the window and puts the old object back. The server refuses a restart of a part that is running and a second restart within 20 seconds. The log notes every restart ("Restarted by hand") and every failure. New WebSocket command `device_panel/status_restart` (administrators).
+- Search fields: every search field now has the same clear button (a small X on the right, visible only while something is typed): in the routine assistant (device list, entity list, condition search), in the app launcher, and in the free-entity search of Magic Push; the log, the overview lists and the main search already had it. A tap empties the field, the list follows and the cursor stays in the field. One shared mechanism (`data-fc`) instead of one handler per field.
+- Nothing restarts automatically: that would risk doubled or lost routine runs and hide the cause of a stop.
+
 ## [2.62.0] - 2026-10-15
+
+Not released; included in 2.63.0.
 
 New app "Status": is the panel running?
 
@@ -30,8 +42,9 @@ Routines: scenes and groups.
 
 - Routine assistant, "Add routine" in the window "All routines": the first page is now "Device, group or scene?". After the devices come two entries without a device: "Scenes" and "Groups". Only entries that contain something are shown.
 - Scenes (Home Assistant `scene`, without a device): the one action is "Activate" (`scene.turn_on`). A scene has no opposite, so there is no page "Switch back" and no options page; time or trigger, time window, pause and "only once" work as for every routine. Push and log say "Scene <name> activated". "Run now" in the assistant activates the scene once.
-- Groups (a light, switch, fan … that lists other entities in its `entity_id` attribute and has no device, for example a light group): they behave like a single lamp, with on, off, toggle, brightness and colour options and switching back (also "as before").
-- Overview and window "All routines": routines of scenes and groups stand in their own cards "Scenes" and "Groups" after the devices (with their own symbol, without the link "Open device"). A scene that belongs to a device (for example Hue scenes) stays with its device and appears in its routine tab. Scenes do not appear in the tab "Switches" of the device pop-up.
+- Groups (a light, switch, fan … that lists other entities in its `entity_id` attribute and has no device, for example a light group; groups of the Group integration (helpers) also count while they are unreachable): they behave like a single lamp, with on, off, toggle, brightness and colour options and switching back (also "as before").
+- Overview and window "All routines": routines of scenes and groups stand in their own cards "Scenes" and "Groups" after the devices (with their own symbol, without the link "Open device"). All scenes appear in "Scenes", also those of a device (for example Hue scenes); those also stay with their device and appear in its routine tab. Scenes do not appear in the tab "Switches" of the device pop-up.
+- The search in the assistant also finds the entities inside devices, "Scenes" and "Groups" (typing "alles" finds the scene "Alles aus"), and the page "What" has its own search field from 8 entities on (an instance with 78 scenes needs it).
 - The limit of 20 routines per device does not apply to "Scenes" and "Groups" (the limit of 200 in total does).
 - New value in the routine data: `device_id` may be `@scenes` or `@groups` (WebSocket `routine_devices`, `routine_get`, `routine_list`, `routine_save` accept them). Scripts are not offered.
 
@@ -3457,7 +3470,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.62.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.62.0
+[2.63.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.63.0
 [2.60.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.60.0
 [2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0
 [2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0

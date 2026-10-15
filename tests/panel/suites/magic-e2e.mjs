@@ -389,6 +389,13 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] ohne Tastatur wieder volle Höhe`, (await ev(`return r.querySelector("${W}").style.getPropertyValue("--mgw-h") === "" && Math.round(r.querySelector("${W}").getBoundingClientRect().height) === innerHeight`)) === true);
     }
     await fill('input[data-mg="free-query"]', "garten regen");
+    check(`[${tag}] Freie Entität: X im Suchfeld sichtbar; ein Tipp leert es und die Liste folgt`, await (async () => {
+      const vis = await ev(`const b = r.querySelector('${W} .list-search [data-fc]'); return !!b && !b.hidden`);
+      await tap(`${W} .list-search [data-fc]`);
+      const cleared = await wait(`const i = r.querySelector('${W} input[data-mg="free-query"]'); const b = r.querySelector('${W} .list-search [data-fc]'); return i.value === "" && b.hidden && r.activeElement === i`);
+      await fill('input[data-mg="free-query"]', "garten regen");
+      return vis && cleared;
+    })());
     check(`[${tag}] Suche nach mehreren Wörtern (Gerät und Name)`, await wait(`const l=[...r.querySelectorAll('${W} [data-mg="free-pick"]')].map(b=>b.dataset.id); return l.length === 1 && l[0] === "binary_sensor.garten_regen"`));
     check(`[${tag}] Treffer nennt Entitäts-ID und Gerät`, (await text(`${W} [data-mg="free-pick"]`)).includes("binary_sensor.garten_regen") && (await text(`${W} [data-mg="free-pick"]`)).includes("Wetterstation Garten"));
     await fill('input[data-mg="free-query"]', "ohne treffer xyz");

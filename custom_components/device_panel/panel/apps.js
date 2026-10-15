@@ -628,7 +628,7 @@ export class AppLauncher {
       ? `<div class="ap-head"><b class="ap-title">${escape(this.t("appsEditTitle"))}</b><button type="button" class="ap-done" data-ap="done">${mdi("check", 16)}<span>${escape(this.t("appsDone"))}</span></button></div>`
       : `<div class="ap-head"><b class="ap-title">${escape(this.t("appsTitle"))}</b><button type="button" class="ap-link" data-ap="edit">${mdi("pencil", 16)}<span>${escape(this.t("appsEditBtn"))}</span></button>
         <button type="button" class="ap-x" data-ap="close" title="${escape(this.t("close"))}" aria-label="${escape(this.t("close"))}">${mdi("close", 18)}</button></div>`;
-    const search = edit ? "" : `<label class="ap-search">${mdi("search", 18)}<input class="ap-q" type="search" value="${escape(this.ui.q)}" placeholder="${escape(this.t("appsSearch"))}" aria-label="${escape(this.t("appsSearch"))}" autocomplete="off"></label>`;
+    const search = edit ? "" : `<label class="ap-search">${mdi("search", 18)}<input class="ap-q" type="search" value="${escape(this.ui.q)}" placeholder="${escape(this.t("appsSearch"))}" aria-label="${escape(this.t("appsSearch"))}" autocomplete="off">${this.host._fieldClearHtml("data-fc", "", this.ui.q)}</label>`;
     const html = `${head}<div class="ap-body">${search}<div class="ap-list">${edit ? this._editHtml() : this._listHtml()}</div></div>`;
     const scroll = dlg.scrollTop;
     dlg.style.minHeight = "";

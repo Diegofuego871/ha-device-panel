@@ -161,22 +161,33 @@ def _no_device(entry: er.RegistryEntry | None) -> bool:
     return entry is None or entry.device_id is None
 
 
-def is_group_state(state: State | None) -> bool:
-    """Gruppe von Entitäten: eine schaltbare Entität (ausser Szene), die Mitglieder in "entity_id" führt (Licht-, Schalter-Gruppe …)."""
-    if state is None or state.domain not in SERVICES or state.domain == "scene":
+def is_group_state(state: State | None, entry: er.RegistryEntry | None = None) -> bool:
+    """
+    Gruppe von Entitäten: eine schaltbare Entität (ausser Szene), die Mitglieder in "entity_id" führt (Licht-, Schalter-Gruppe …) oder von der
+    Gruppen-Integration stammt (Plattform "group"; deren Mitgliederliste fehlt, solange die Gruppe nicht erreichbar ist).
+    """
+    domain = state.domain if state is not None else (entry.domain if entry is not None else "")
+    if domain not in SERVICES or domain == "scene":
+        return False
+    if entry is not None and entry.platform == "group":
+        return True
+    if state is None:
         return False
     members = state.attributes.get("entity_id")
     return isinstance(members, (list, tuple)) and bool(members)
 
 
 def in_holder(hass: HomeAssistant, holder: str, entity_id: str) -> bool:
-    """Gehört die Entität in diese Sammelstelle? Szenen ohne Gerät zu den Szenen, Gruppen ohne Gerät zu den Gruppen."""
+    """
+    Gehört die Entität in diese Sammelstelle? Alle Szenen stehen bei "Szenen" (auch die eines Geräts, etwa Hue-Szenen: sonst wären sie
+    zwischen vielen Geräten schwer zu finden; sie stehen zusätzlich bei ihrem Gerät). Gruppen nur ohne Gerät.
+    """
     entry = er.async_get(hass).async_get(entity_id)
-    if not _no_device(entry) or (entry is None and hass.states.get(entity_id) is None):
+    if entry is None and hass.states.get(entity_id) is None:
         return False
     if holder == HOLDER_SCENES:
         return entity_id.split(".", 1)[0] == "scene"
-    return holder == HOLDER_GROUPS and is_group_state(hass.states.get(entity_id))
+    return holder == HOLDER_GROUPS and _no_device(entry) and is_group_state(hass.states.get(entity_id), entry)
 
 
 def opposite(action: str) -> str | None:
@@ -1556,21 +1567,25 @@ def switchable_entities(hass: HomeAssistant, device_id: str) -> list[dict[str, A
 def switchable_devices(hass: HomeAssistant) -> list[dict[str, Any]]:
     """Geräte mit mindestens einer Entität, die eine Routine schalten kann (für "Routine hinzufügen" im Fenster aller Routinen, seit 2.27.0)."""
     counts: dict[str, int] = {}
-    for entry in er.async_get(hass).entities.values():
-        if entry.device_id and entry.domain in SERVICES and entry.disabled_by is None and actions_for_state(entry.domain, hass.states.get(entry.entity_id)):
-            counts[entry.device_id] = counts.get(entry.device_id, 0) + 1
+    names: dict[str, list[str]] = {}
     devices = dr.async_get(hass)
+    for entry in er.async_get(hass).entities.values():
+        state = hass.states.get(entry.entity_id)
+        if entry.device_id and entry.domain in SERVICES and entry.disabled_by is None and actions_for_state(entry.domain, state):
+            counts[entry.device_id] = counts.get(entry.device_id, 0) + 1
+            # Namen der Entitäten, damit die Suche im Assistenten auch eine Szene oder Lampe in einem Gerät findet (seit 2.63.0)
+            names.setdefault(entry.device_id, []).append(entity_label(entry.entity_id, entry, devices.async_get(entry.device_id), state))
     out = []
     for device_id, n in counts.items():
         device = devices.async_get(device_id)
         if device is None or device.disabled_by is not None:
             continue
-        out.append({"id": device_id, "name": device.name_by_user or device.name or device_id, "entities": n})
+        out.append({"id": device_id, "name": device.name_by_user or device.name or device_id, "entities": n, "names": names.get(device_id, [])})
     out.sort(key=lambda d: d["name"].casefold())
     # Szenen und Gruppen ohne Gerät (seit 2.61.0) zuletzt, nur wenn es welche gibt
     for holder in HOLDERS:
-        if n := len(holder_entity_ids(hass, holder)):
-            out.append({"id": holder, "name": "", "entities": n, "holder": True})
+        if ids := holder_entity_ids(hass, holder):
+            out.append({"id": holder, "name": "", "entities": len(ids), "holder": True, "names": [str((hass.states.get(e).attributes.get("friendly_name") if hass.states.get(e) else None) or e) for e in ids]})
     return out
 
 
