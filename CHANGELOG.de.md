@@ -7,7 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.62.0] - 2026-10-15
+
+Neue App "Status": Läuft das Panel?
+
+### Hinzugefügt
+
+- Launcher, neue App "Status" (Gruppe Device Panel, nur für Administratoren, nicht vorgemerkt): zeigt, ob die Teile der Integration laufen, mit Zustand je Teil ("läuft", "verspätet", "steht"), einem Kopf ("Alles läuft" oder "Störung: N Teile") und der Zeile "Integration gestartet: <Zeit> · N Routinen geladen · M verpasst". Die Teile: Routinen (gemessen daran, ob etwas überfällig ist: fällig, aber nicht gelaufen), Ausfall-Überwachung, Batterie, Laden und Empfangsverlauf (je nach Zeit ihres letzten Takts; verspätet ab dem 4fachen des Takts, mindestens 2 Min.; steht ab dem 10fachen, mindestens 5 Min.), Magic Push, Neue Geräte und Updates (ereignisgesteuert, ohne festen Takt: nur ob sie geladen sind). Mockups: `docs/mockups/status-v1`.
+- Meldung bei Stillstand: Ein Wächter prüft jede Minute; steht ein Teil bei zwei Prüfungen hintereinander (damit ein Stocken von Home Assistant selbst nicht meldet), kommt ein Push "⚠️ Device Panel: <Teil> steht" und, sobald er wieder läuft, "✅ … läuft wieder" (ersetzt die erste Meldung). Die Meldung steht auch im Protokoll. Oben in der App: Schalter "Bei Stillstand melden" (Standard an) und eine Auswahlliste "Empfänger" wie bei den Reitern der Einstellungen ("Standard (…)" = das globale Ziel, oder ein eigenes Ziel); gespeichert als die Optionen `status_notify` und `notify_service_status`.
+- Warnung, wenn nichts gesendet werden kann: Ist der Schalter an, aber weder ein eigenes noch das globale Ziel gewählt, sagt eine rote Zeile unter "Empfänger", dass nichts gemeldet wird.
+- Punkte in der Kopfzeile: ein roter Punkt am Launcher-Knopf, wenn ein Teil verspätet ist oder steht, ein oranger Punkt, solange der Debug-Modus läuft (rot geht vor). Ist die App Status (oder das Protokoll) mit dem Herz angeheftet, sitzt der Punkt an ihrem eigenen Knopf statt am Launcher-Knopf. Im Launcher zeigt die App Status eine rote Pille "Störung", wie "Debug" am Protokoll (die Pille "Debug" erscheint jetzt auch, ohne dass das Protokoll zuerst geöffnet wurde).
+- `list_devices` trägt `debug` und `status` (Zahlen für die Punkte); neuer WebSocket-Befehl `device_panel/status_get` (Administratoren).
+- Grenze: Steht Home Assistant selbst still oder startet neu, kann dieser Wächter es nicht melden; dafür braucht es etwas ausserhalb (zum Beispiel einen externen Ping).
+
 ## [2.61.0] - 2026-10-15
+
+Nicht veröffentlicht; enthalten in 2.62.0.
 
 Routinen: Szenen und Gruppen.
 
@@ -3543,7 +3558,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.61.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.61.0
+[2.62.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.62.0
 [2.60.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.60.0
 [2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0
 [2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0

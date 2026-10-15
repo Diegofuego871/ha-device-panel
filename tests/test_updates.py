@@ -18,7 +18,7 @@ from custom_components.device_panel.updates import catalog, is_wanted
 
 
 async def _setup(hass: HomeAssistant, **options: Any) -> MockConfigEntry:
-    entry = MockConfigEntry(domain=DOMAIN, title="Device Panel", options={"notify_service": "notify.handy", "notify_updates": True, **options})
+    entry = MockConfigEntry(domain=DOMAIN, title="Device Panel", options={"notify_service": "notify.handy", "notify_updates": True, "status_notify": False, **options})
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()

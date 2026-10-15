@@ -912,6 +912,22 @@ class RoutineManager:
         out = [t for t in self._routines.values() if device_id is None or t["device_id"] == device_id]
         return sorted(out, key=lambda t: (t["name"].casefold(), t["id"]))
 
+    def overdue_s(self, now: float) -> float:
+        """Seit wie vielen Sekunden die am längsten überfällige Ausführung oder Rückstellung fällig wäre (0 = nichts überfällig; für die Status-App)."""
+        worst = 0.0
+        for routine in self._routines.values():
+            if not routine["enabled"]:
+                continue
+            rt = self.runtime(routine["id"])
+            for due in (rt["due"], rt["revert_due"]):
+                if due is not None:
+                    worst = max(worst, now - float(due))
+        return worst
+
+    def missed_since(self, since: float) -> int:
+        """Zahl der Routinen, deren letzter Lauf seit "since" verpasst wurde (für die Zeile "Letzter Start" der Status-App)."""
+        return sum(1 for r in self._routines if (last := self.runtime(r).get("last")) and last.get("what") == "missed" and last.get("at", 0) >= since)
+
     def get(self, routine_id: str) -> dict[str, Any] | None:
         return self._routines.get(routine_id)
 

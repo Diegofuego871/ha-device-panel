@@ -43,6 +43,8 @@ from .magic_history import async_history as async_magic_history
 from .routines import STORE_KEY as ROUTINES_STORE_KEY
 from .routines import RoutineManager
 from .routines_ws import COMMANDS as ROUTINE_COMMANDS
+from .status import COMMANDS as STATUS_COMMANDS
+from .status import StatusWatch
 from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, async_ask, async_assess, async_last, async_preview
 from .ai_prompt import DEFAULT_PROMPT
 from .const import (
@@ -74,6 +76,7 @@ from .const import (
     DATA_PUSH_IMAGE,
     DATA_MAGIC,
     DATA_ROUTINES,
+    DATA_STATUS,
     DATA_SIGNAL,
     DATA_TYPE_OVERRIDES,
     DATA_WS_REGISTERED,
@@ -178,6 +181,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         routine_manager = RoutineManager(hass)
         await routine_manager.async_start()
         hass.data[DATA_ROUTINES] = routine_manager
+    # Als Letzter: der Wächter prüft die anderen Teile (status.py)
+    if DATA_STATUS not in hass.data:
+        status_watch = StatusWatch(hass)
+        await status_watch.async_start()
+        hass.data[DATA_STATUS] = status_watch
     await update_check.async_load_panel_settings(hass)
     update_check.async_start_daily(hass)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
@@ -227,6 +235,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await signal_log.async_stop()
     if (magic_push := hass.data.pop(DATA_MAGIC, None)) is not None:
         await magic_push.async_stop()
+    if (status_watch := hass.data.pop(DATA_STATUS, None)) is not None:
+        await status_watch.async_stop()
     if (routine_manager := hass.data.pop(DATA_ROUTINES, None)) is not None:
         await routine_manager.async_stop()
     update_check.async_stop_daily(hass)
@@ -1114,7 +1124,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_set_panel)
     for command in (_ws_magic_get, _ws_magic_list, _ws_magic_entity_search, _ws_magic_save, _ws_magic_delete, _ws_magic_enable, _ws_magic_preview, _ws_magic_test, _ws_magic_history):
         websocket_api.async_register_command(hass, command)
-    for command in ROUTINE_COMMANDS:
+    for command in (*ROUTINE_COMMANDS, *STATUS_COMMANDS):
         websocket_api.async_register_command(hass, command)
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_set_options)

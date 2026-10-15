@@ -25,6 +25,8 @@ const BUILTIN = [
   { id: "routine", group: "panel", icon: "flash", act: "routine" },
   { id: "magic", group: "panel", icon: "bell", act: "magic" },
   { id: "log", group: "panel", icon: "log", act: "log", locked: true },
+  // Status (seit 2.62.0): nur für Administratoren (status_get ist ein Befehl für Administratoren); nicht vorgemerkt, wer ihn in der Kopfzeile will, heftet ihn selbst an
+  { id: "status", group: "panel", icon: "pulse", act: "status", admin: true },
   { id: "auto", group: "ha", icon: "robot", path: "/config/automation/dashboard", admin: true },
   { id: "scene", group: "ha", icon: "palette", path: "/config/scene/dashboard", admin: true },
   { id: "script", group: "ha", icon: "script", path: "/config/script/dashboard", admin: true },
@@ -56,7 +58,7 @@ const HA_LOOK = {
   hist: { c: "#3263C3", p: "M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M9 17H7V10H9V17M13 17H11V7H13V17M17 17H15V13H17V17Z" },
   book: { c: "#00838F", p: "M5,9.5L7.5,14H2.5L5,9.5M3,4H7V8H3V4M5,20A2,2 0 0,0 7,18A2,2 0 0,0 5,16A2,2 0 0,0 3,18A2,2 0 0,0 5,20M9,5V7H21V5H9M9,19H21V17H9V19M9,13H21V11H9V13Z" },
 };
-const PANEL_COLOR = { routine: "#00838F", magic: "#8E24AA", log: "#4A5963" };
+const PANEL_COLOR = { routine: "#00838F", magic: "#8E24AA", log: "#4A5963", status: "#2E7D32" };
 export const APP_ICONS = ["web", "home", "camera", "map", "bolt", "calendar", "bar", "wrench", "store", "desktop", "robot", "palette", "script", "devices", "shape", "tools"];
 
 // Favicon einer eigenen App mit externem Link (seit 2.33.0): kleines Bild als Data-URI (base64), vom Server geholt (favicon.py).
@@ -360,6 +362,7 @@ export class AppLauncher {
     if (a.act === "routine") this.host._openRtAll();
     else if (a.act === "magic") this.host._openSettings("magic");
     else if (a.act === "log") this.host._openLog();
+    else if (a.act === "status") this.host._status.open();
     else if (a.path || a.url) this.host._navigate(a.path || a.url);
   }
 
@@ -431,15 +434,18 @@ export class AppLauncher {
   renderBar() {
     const box = this.root?.querySelector(".app-pins");
     if (!box) return;
+    this._paintLauncherDot();
     const { escape, mdi } = this.h;
     const pins = this.favs().slice(0, this.narrow() ? 1 : MAX_FAV);
     const html = pins
       .map((a) => {
-        const label = escape(a.name);
+        const dot = this.dotLevels().pins[a.id] || "";
+        const label = escape(dot ? `${a.name} · ${this.t(dot === "bad" ? "appsDown" : "appsDebug")}` : a.name);
         const icon = this._icon(a, 22);
+        const cls = `rtall-btn app-pin${dot ? ` has-dot dot-${dot}` : ""}`;
         return a.ext
-          ? `<a class="rtall-btn app-pin" href="${escape(a.url)}" target="_blank" rel="noopener noreferrer" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</a>`
-          : `<button type="button" class="rtall-btn app-pin" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</button>`;
+          ? `<a class="${cls}" href="${escape(a.url)}" target="_blank" rel="noopener noreferrer" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</a>`
+          : `<button type="button" class="${cls}" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</button>`;
       })
       .join("");
     if (this._barHtml === html) return;
@@ -475,8 +481,45 @@ export class AppLauncher {
   }
 
   _badge(a) {
-    // "Debug": nur wenn das Protokoll geladen ist und der Debug-Modus läuft
-    return a.id === "log" && this.host._log?.debug ? `<span class="ap-badge">${this.h.escape(this.t("appsDebug"))}</span>` : "";
+    const { escape } = this.h;
+    // "Debug" (orange) am Protokoll bei laufendem Debug-Modus, "Störung" (rot) am Status, wenn ein Teil nicht läuft (seit 2.62.0)
+    if (a.id === "log" && this.host._debugOn) return `<span class="ap-badge">${escape(this.t("appsDebug"))}</span>`;
+    if (a.id === "status" && this.dotLevels().pins.status) return `<span class="ap-badge bad">${escape(this.t("appsDown"))}</span>`;
+    return "";
+  }
+
+  // Punkte (seit 2.62.0): orange = Debug-Modus, rot = Störung des Status. Ist die App in der Kopfzeile angeheftet, sitzt der Punkt an ihrem
+  // eigenen Knopf, sonst am Launcher-Knopf; rot geht vor orange. Nicht angeheftet und ausgeblendet gilt dasselbe: der Launcher-Knopf zeigt es.
+  dotLevels() {
+    const pinned = new Set(this.favs().slice(0, this.narrow() ? 1 : MAX_FAV).map((a) => a.id));
+    const bad = (this.host._statusSum?.problems || 0) > 0 && this._admin();
+    const warn = Boolean(this.host._debugOn);
+    return { pins: { status: bad ? "bad" : "", log: warn ? "warn" : "" }, launcher: bad && !pinned.has("status") ? "bad" : warn && !pinned.has("log") ? "warn" : "" };
+  }
+
+  // Punkte neu setzen: Launcher-Knopf, angeheftete Knöpfe (über die Kopfzeile) und die Pillen im offenen Launcher
+  _paintLauncherDot() {
+    const btn = this.root?.querySelector(".apps-btn");
+    if (btn) {
+      const level = this.dotLevels().launcher;
+      btn.classList.toggle("has-dot", Boolean(level));
+      btn.classList.toggle("dot-warn", level === "warn");
+      btn.classList.toggle("dot-bad", level === "bad");
+      const base = this.t("appsBtn");
+      const label = level ? `${base} · ${this.t(level === "bad" ? "appsDown" : "appsDebug")}` : base;
+      btn.setAttribute("title", label);
+      btn.setAttribute("aria-label", label);
+    }
+  }
+
+  paintDots() {
+    this.renderBar();
+    // Der offene Launcher zeigt die Pillen: nur neu zeichnen, wenn sich etwas geändert hat (sonst störte es das Bearbeiten und Suchen)
+    const key = JSON.stringify(this.dotLevels().pins);
+    if (key !== this._dotKey) {
+      this._dotKey = key;
+      if (this.dlg?.open && !this.ui.edit) this.render();
+    }
   }
 
   _tile(a) {

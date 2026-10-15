@@ -12,12 +12,13 @@
  */
 
 const MODULE_VERSION = new URL(import.meta.url).search;
-const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_EMOJI }, { AppLauncher }] = await Promise.all([
+const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_EMOJI }, { AppLauncher }, { StatusUi }] = await Promise.all([
   import(`./strings.js${MODULE_VERSION}`),
   import(`./styles.js${MODULE_VERSION}`),
   import(`./magic-push.js${MODULE_VERSION}`),
   import(`./routines.js${MODULE_VERSION}`),
   import(`./apps.js${MODULE_VERSION}`),
+  import(`./status-ui.js${MODULE_VERSION}`),
 ]);
 
 const POLL_INTERVAL_MS = 10000;
@@ -785,6 +786,7 @@ class DevicePanel extends HTMLElement {
     this._routines = new RoutineUi(this, { escape, mdi, errText, logo: LOGO_SMALL, typeIcon });
     // App-Launcher (seit 2.31.0): Knopf in der Kopfzeile, Favoriten, eigene Links (apps.js)
     this._apps = new AppLauncher(this, { escape, mdi });
+    this._status = new StatusUi(this, { escape, mdi, errText });
     this._aiOn = false;
     this._flakyOutages = 3;
     // Chips der Verbindungsart, die nicht erscheinen (Einstellung "Anzeige").
@@ -1330,7 +1332,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
@@ -1441,6 +1443,7 @@ class DevicePanel extends HTMLElement {
     this._bindPulse(root.querySelector("dialog.pulse-dlg"));
     this._bindLog(root.querySelector("dialog.log-dlg"));
     this._bindRtAll(root.querySelector("dialog.rtall-dlg"));
+    this._status.bind(root.querySelector("dialog.status-dlg"));
     this._bindPrompt(root.querySelector("dialog.prompt-dlg"));
     this._bindNotes(root.querySelector("dialog.notes-dlg"));
     // Auf dem Handy gibt der Browser beim Schliessen eines Fensters den Fokus an die antippte Kachel zurück und zeigt dort einen
@@ -1688,6 +1691,10 @@ class DevicePanel extends HTMLElement {
       if (this._hideConn.has(this._conn)) this._conn = "all";
       this._dropHiddenFilters();
       this._pulse = Array.isArray(result.pulse) ? result.pulse : null;
+      // Kopfzeile (seit 2.62.0): Debug-Modus und Störungen des Status für die Punkte am Launcher oder an den angehefteten Apps
+      this._debugOn = result.debug === true;
+      this._statusSum = result.status || { problems: 0, down: 0 };
+      this._apps.paintDots();
       this._incidents = result.incidents || [];
       const serverNow = Date.parse(result.now);
       this._offset = Number.isFinite(serverNow) ? serverNow - Date.now() : 0;
@@ -3088,6 +3095,8 @@ class DevicePanel extends HTMLElement {
     const log = this._logState();
     try {
       const res = await this._callWithTimeout(msg, 10000);
+      this._debugOn = Boolean(res.debug);
+      this._apps.paintDots();
       Object.assign(log, { entries: res.entries || [], debug: Boolean(res.debug), debugUntil: res.debug ? res.debug_until ?? null : null, since: res.since ?? null, max: res.max || 500, loaded: true, error: null });
     } catch (err) {
       log.error = errText(err);

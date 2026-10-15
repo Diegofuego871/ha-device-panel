@@ -19,6 +19,7 @@ ist wählbar (Stand, Bereich, Integration, Hersteller und Modell).
 from __future__ import annotations
 
 import logging
+import time
 from datetime import timedelta
 from typing import Any
 
@@ -118,6 +119,7 @@ class BatteryWatch:
         self.hass.async_create_task(self.async_check())
 
     async def _async_tick(self, _now: Any) -> None:
+        self.last_tick = time.time()  # Lebenszeichen für die Status-App (status.py)
         await self.async_check()
 
     @callback

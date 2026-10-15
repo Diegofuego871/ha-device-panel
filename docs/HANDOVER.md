@@ -3,6 +3,18 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.62.0, App "Status": Wächter für die Teile der Integration)
+
+- Wunsch des Nutzers (Watchdog, Stufe 1 und 2; Stufe 3, externer Ping, bleibt zurückgestellt, bis klar ist, ob er Uptime Kuma oder Healthchecks.io nutzt). Mockups `docs/mockups/status-v1` (Variante A). Entscheide: Name "Status"; nur wenn der Nutzer die App selbst
+  mit dem Herz anheftet, steht ein Knopf in der Kopfzeile; Empfänger als Auswahlliste wie bei den Reitern (nicht als Reiterknöpfe wie im Mockup); Punkte: rot = Störung, orange = Debug, am Launcher-Knopf oder, wenn die App angeheftet ist, an ihrem eigenen Knopf (rot vor orange); Pille "Störung" im Launcher wie "Debug".
+- Backend `status.py`: `StatusWatch` (Daten `DATA_STATUS`, als Letzter gestartet) prüft jede Minute (`CHECK_INTERVAL`). Teile mit Takt (`TICK_PARTS`: availability 30 s, battery, charge, signal je 60 s) setzen `last_tick` in ihrem Takt (je eine Zeile in `availability.py`, `battery.py`, `charge.py`, `signal_history.py`);
+  `classify`: verspätet ab 4 × Takt (mindestens 120 s), steht ab 10 × Takt (mindestens 300 s). Routinen: `RoutineManager.overdue_s(now)` (fällig, aber nicht gelaufen), gemessen ab dem Start des Wächters. Magic Push, Neue Geräte, Updates (`LOADED_PARTS`) sind ereignisgesteuert: nur "geladen".
+  Push erst, wenn ein Teil bei zwei Prüfungen hintereinander steht (`_suspect`, gegen Stocken von HA), einmal je Störung (`_alerted`), Entwarnung beim Wiederlaufen; Je Teil derselbe Tag (`device_panel_status_<teil>`): die Entwarnung ersetzt die Meldung. Optionen `status_notify` (bool, Standard an) und `notify_service_status` (Thema "status" in `NOTIFY_TOPICS`, leer = globales Ziel).
+  `list_devices` trägt `debug` und `status` (Zahlen); WebSocket `device_panel/status_get` (Administrator). Tests: `tests/test_status.py` (10); die Fixtures von `test_outage_notify.py` und `test_updates.py` schalten `status_notify` aus, weil Tests mit grossen Zeitsprüngen sonst Wächter-Meldungen sehen.
+- Panel: `status-ui.js` (`StatusUi`: Fenster `dialog.status-dlg`, Config oben mit `set_options`, Zustand aus `status_get`, alle 10 s neu), Stile `.st-*` und `status-dlg` neben jeder Regel von `rtall-dlg`; `apps.js`: App `status` (admin, `act: "status"`), `dotLevels`, `paintDots`, `_paintLauncherDot` (in `renderBar`), Pillen in `_badge`;
+  `device-panel.js`: `_debugOn` und `_statusSum` aus `list_devices`. Simulator: `window.__statusStates` (je Teil "ok", "late", "down"), `__statusSnap`, `__statusSum`; Suite `status` (80 Prüfungen), `launcher` angepasst (Gruppe Device Panel hat drei Apps).
+- Offen: nicht an einer echten HA-Instanz geprüft (Toleranzen der Takte, Verhalten nach Ruhezustand); Grenze bleibt, dass ein Stillstand von HA selbst nicht gemeldet werden kann.
+
 ## Stand (2.61.0, Routinen: Szenen und Gruppen)
 
 - Wunsch des Nutzers: Beim Anlegen über "Alle Routinen" auch Szenen und Gruppen von Leuchten wählen; Titel "Gerät, Gruppe oder Szene?"; keine Skripte. Umsetzung: Sammelstellen statt Gerät, `device_id` = `@scenes` oder `@groups`

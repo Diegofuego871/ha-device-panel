@@ -20,7 +20,8 @@ from custom_components.device_panel.devices import async_list_devices, async_set
 
 @pytest.fixture
 async def setup(hass: HomeAssistant):
-    entry = MockConfigEntry(domain=DOMAIN, title="Device Panel")
+    # Status-Push aus: Tests mit grossen Zeitsprüngen sollen nur ihre eigenen Meldungen sehen (test_status.py schaltet ihn ein)
+    entry = MockConfigEntry(domain=DOMAIN, title="Device Panel", options={"status_notify": False})
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()

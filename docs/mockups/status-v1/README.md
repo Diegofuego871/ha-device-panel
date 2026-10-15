@@ -15,7 +15,8 @@ Vorschlag (noch nichts umgesetzt, der Nutzer entscheidet):
 
 - Teile: Routinen, Magic Push, Ausfall-Überwachung, Batterie, Laden, Neue Geräte, Updates; je "läuft", "verspätet" (über der Toleranz) oder "steht" (deutlich darüber), mit Zeit des letzten Takts.
 - Kopf: "Alles läuft" (grün) oder "Störung: N Teile" (rot) mit dem Zeitpunkt des Push.
-- Config: Schalter "Bei Stillstand melden" (Standard an), Empfänger als Reiterleiste "Wie die anderen Meldungen | Eigenes Ziel" (Auswahlknöpfe nach der Design-Regel).
+- Config: Schalter "Bei Stillstand melden" (Standard an), Empfänger als Auswahlliste wie bei den Reitern der Einstellungen (Entscheid des Nutzers; im Mockup noch als Reiterleiste gezeichnet).
+- Punkte (Entscheid des Nutzers): rot = Störung, orange = Debug; am Launcher-Knopf, oder am eigenen Knopf, wenn die App angeheftet ist. Der Status-Knopf steht nur in der Kopfzeile, wenn der Nutzer die App selbst anheftet (im Mockup zur Veranschaulichung immer gezeigt).
 - Beim Start der Integration eine Zeile: Zeitpunkt, geladene und verpasste Routinen.
 
 Neu rendern: `CHROMIUM_PATH=... node docs/mockups/status-v1/src/render.mjs`

@@ -7,7 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.62.0] - 2026-10-15
+
+New app "Status": is the panel running?
+
+### Added
+
+- Launcher, new app "Status" (group Device Panel, administrators only, not pinned by default): shows whether the parts of the integration are running, with a state per part ("running", "late", "stopped"), a header ("Everything is running" or "Fault: N parts") and a line "Integration started: <time> · N routines loaded · M missed". The parts: routines (measured by whether something is overdue: due, but did not run), outage monitoring, battery, charging and reception history (each by the time of its last beat; late after 4 times the beat, at least 2 min; stopped after 10 times, at least 5 min), Magic Push, new devices and updates (event-driven, no fixed beat: only whether they are loaded). Mockups: `docs/mockups/status-v1`.
+- Alert when something stops: a watcher checks every minute; a part that is stopped at two checks in a row (so a stall of Home Assistant itself does not alert) triggers one push "⚠️ Device Panel: <part> is down" and, when it runs again, "✅ … is running again" (replaces the first one). The alert goes into the log as well. At the top of the app: switch "Alert when something stops" (default on) and a drop-down "Recipient" like in the tabs of the settings ("Default (…)" = the global target, or an own target); stored as the options `status_notify` and `notify_service_status`.
+- Warning when nothing can be sent: if the switch is on but neither an own nor the global target is chosen, a red line under "Recipient" says that nothing will be reported.
+- Dots in the header: a red dot on the launcher button when a part is late or stopped, an orange dot while debug mode is on (red goes first). If the app Status (or the Log) is pinned with the heart, the dot sits on its own button instead of on the launcher button. In the launcher the app Status shows a red pill "Fault", like "Debug" on the Log (the pill "Debug" now shows without opening the log first).
+- `list_devices` carries `debug` and `status` (numbers for the dots); new WebSocket command `device_panel/status_get` (administrators).
+- Limit: if Home Assistant itself stands still or restarts, this watcher cannot report it; that needs something outside (for example an external ping).
+
 ## [2.61.0] - 2026-10-15
+
+Not released; included in 2.62.0.
 
 Routines: scenes and groups.
 
@@ -3442,7 +3457,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.61.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.61.0
+[2.62.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.62.0
 [2.60.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.60.0
 [2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0
 [2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0

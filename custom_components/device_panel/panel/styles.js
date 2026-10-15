@@ -83,6 +83,10 @@ button { font: inherit; color: inherit; }
 .gear-btn { position: relative; }
 /* Roter Punkt: Update installiert, Neustart steht aus (seit 2.25.0) */
 .gear-btn.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-bg); }
+/* Punkt am Launcher-Knopf und an angehefteten Apps (seit 2.62.0): rot = Störung des Status, orange = Debug-Modus */
+.apps-btn, .app-pin { position: relative; }
+.apps-btn.has-dot::after, .app-pin.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-bg); }
+.apps-btn.dot-warn::after, .app-pin.dot-warn::after { background: var(--dp-warning); }
 .gear-btn:hover, .rtall-btn:hover, .apps-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
 .apps-btn.on { background: var(--dp-primary-soft); border-color: transparent; color: var(--dp-primary); }
 .content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 20px 16px; }
@@ -1282,7 +1286,7 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   .dlg-head { padding: 18px 12px 12px 16px; }
   /* Vollbild-Fenster (Einstellungen, Protokoll, Routinen): das Kreuz sitzt auf gleicher Höhe wie der Zahnrad-Knopf der Übersicht (12 px vom oberen Rand) */
-  dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close { margin-top: -6px; }
+  dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close, dialog.status-dlg .dlg-head .dlg-close { margin-top: -6px; }
   .dlg-quick { padding: 0 16px 14px; }
   .dlg-body { padding: 4px 16px 16px; }
   .dlg-actions { padding-left: 16px; padding-right: 16px; }
@@ -1292,16 +1296,16 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 
 /* Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1): Fenster gross auf dem Desktop, auf dem Handy vollflächig */
 /* Fenster "Alle Routinen": Popup auf dem Desktop, gleich gross wie Einstellungen und Geräte-Popup (seit 2.28.3, Grösse seit 2.28.5 wie die anderen grossen Fenster), auf dem Handy (bis 700 px) vollflächig */
-dialog.rtall-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
+dialog.rtall-dlg, dialog.status-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
   width: min(880px, calc(100vw - 48px)); height: min(1100px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
-dialog.rtall-dlg[open] { display: flex; flex-direction: column; }
-dialog.rtall-dlg::backdrop { background: rgba(0,0,0,0.5); }
-.rtall-dlg .dlg-head { flex: none; position: static; }
-.rtall-dlg .dlg-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 22px 24px; }
+dialog.rtall-dlg[open], dialog.status-dlg[open] { display: flex; flex-direction: column; }
+dialog.rtall-dlg::backdrop, dialog.status-dlg::backdrop { background: rgba(0,0,0,0.5); }
+.rtall-dlg .dlg-head, .status-dlg .dlg-head { flex: none; position: static; }
+.rtall-dlg .dlg-body, .status-dlg .dlg-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 22px 24px; }
 .rt-all-wrap { margin: 0 auto; }
 @media (max-width: 700px) {
-  dialog.rtall-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
-  .rtall-dlg .dlg-body { padding: 0 16px 20px; }
+  dialog.rtall-dlg, dialog.status-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
+  .rtall-dlg .dlg-body, .status-dlg .dlg-body { padding: 0 16px 20px; }
 }
 dialog.log-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
   width: min(880px, calc(100vw - 48px)); height: min(1100px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
@@ -1380,15 +1384,15 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
    "Transparenz reduzieren" bleiben die Blätter deckend wie bisher. */
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   @media not (prefers-reduced-transparency: reduce) {
-    dialog.device, dialog.settings, dialog.log-dlg, dialog.rtall-dlg { background: color-mix(in srgb, var(--dp-card) 64%, transparent);
+    dialog.device, dialog.settings, dialog.log-dlg, dialog.rtall-dlg, dialog.status-dlg { background: color-mix(in srgb, var(--dp-card) 64%, transparent);
       -webkit-backdrop-filter: blur(30px) saturate(190%); backdrop-filter: blur(30px) saturate(190%);
       box-shadow: inset 0 1.5px 0 color-mix(in srgb, var(--dp-text) 30%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--dp-text) 8%, transparent), 0 24px 70px rgba(0,0,0,0.55); }
-    dialog.device::backdrop, dialog.settings::backdrop, dialog.log-dlg::backdrop, dialog.rtall-dlg::backdrop { background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-    dialog.device .dlg-head, dialog.settings .dlg-head, dialog.log-dlg .dlg-head, dialog.rtall-dlg .dlg-head { background: color-mix(in srgb, var(--dp-card) 60%, transparent);
+    dialog.device::backdrop, dialog.settings::backdrop, dialog.log-dlg::backdrop, dialog.rtall-dlg::backdrop, dialog.status-dlg::backdrop { background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+    dialog.device .dlg-head, dialog.settings .dlg-head, dialog.log-dlg .dlg-head, dialog.rtall-dlg .dlg-head, dialog.status-dlg .dlg-head { background: color-mix(in srgb, var(--dp-card) 60%, transparent);
       -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
     dialog.device .dev-tabs { background: color-mix(in srgb, var(--dp-card) 60%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
     dialog.device .dev-tabs::after { display: none; }
-    dialog.device .dlg-actions, dialog.settings .dlg-actions, dialog.log-dlg .dlg-actions, dialog.rtall-dlg .dlg-actions { border-top: none; padding-top: 24px;
+    dialog.device .dlg-actions, dialog.settings .dlg-actions, dialog.log-dlg .dlg-actions, dialog.rtall-dlg .dlg-actions, dialog.status-dlg .dlg-actions { border-top: none; padding-top: 24px;
       background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--dp-card) 85%, transparent) 42%);
       -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
     dialog.device .dlg-btn, dialog.settings .dlg-btn { background: color-mix(in srgb, var(--dp-text) 8%, transparent); border-color: color-mix(in srgb, var(--dp-text) 12%, transparent); }
@@ -1400,11 +1404,11 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
 /* Helles Design am Desktop (seit 2.20.0, ab 601 px; das Handy-Blatt bleibt wie es war): Fenster, Kopf, Reiter und Fuss deckend weiss statt durchscheinend (die Unschärfe über dem
    abgedunkelten Hintergrund machte das ganze Blatt grau); Kacheln nur ganz leicht abgesetzt. Grau nur beim Darüberfahren. */
 @media (min-width: 601px) {
-:host([light]) dialog.device, :host([light]) dialog.settings, :host([light]) dialog.log-dlg, :host([light]) dialog.rtall-dlg { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none;
+:host([light]) dialog.device, :host([light]) dialog.settings, :host([light]) dialog.log-dlg, :host([light]) dialog.rtall-dlg, :host([light]) dialog.status-dlg { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none;
   box-shadow: 0 24px 70px rgba(0,0,0,0.35), 0 0 0 1px color-mix(in srgb, var(--dp-text) 8%, transparent); }
-:host([light]) dialog.device::backdrop, :host([light]) dialog.settings::backdrop, :host([light]) dialog.log-dlg::backdrop, :host([light]) dialog.rtall-dlg::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0,0,0,0.4); }
-:host([light]) dialog.device .dlg-head, :host([light]) dialog.settings .dlg-head, :host([light]) dialog.log-dlg .dlg-head, :host([light]) dialog.rtall-dlg .dlg-head, :host([light]) dialog.device .dev-tabs { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; }
-:host([light]) dialog.device .dlg-actions, :host([light]) dialog.settings .dlg-actions, :host([light]) dialog.log-dlg .dlg-actions, :host([light]) dialog.rtall-dlg .dlg-actions { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; border-top: 1px solid var(--dp-divider); padding-top: 14px; }
+:host([light]) dialog.device::backdrop, :host([light]) dialog.settings::backdrop, :host([light]) dialog.log-dlg::backdrop, :host([light]) dialog.rtall-dlg::backdrop, :host([light]) dialog.status-dlg::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0,0,0,0.4); }
+:host([light]) dialog.device .dlg-head, :host([light]) dialog.settings .dlg-head, :host([light]) dialog.log-dlg .dlg-head, :host([light]) dialog.rtall-dlg .dlg-head, :host([light]) dialog.status-dlg .dlg-head, :host([light]) dialog.device .dev-tabs { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+:host([light]) dialog.device .dlg-actions, :host([light]) dialog.settings .dlg-actions, :host([light]) dialog.log-dlg .dlg-actions, :host([light]) dialog.rtall-dlg .dlg-actions, :host([light]) dialog.status-dlg .dlg-actions { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; border-top: 1px solid var(--dp-divider); padding-top: 14px; }
 :host([light]) dialog.device .tile, :host([light]) dialog.device .st-tile, :host([light]) dialog.settings .nf-note, :host([light]) dialog.settings .pv { background: color-mix(in srgb, var(--dp-text) 3.5%, var(--dp-card)); border-color: color-mix(in srgb, var(--dp-text) 10%, var(--dp-card)); box-shadow: none; }
 :host([light]) dialog.device .dev-set { background: color-mix(in srgb, var(--dp-text) 2.5%, var(--dp-card)); }
 :host([light]) dialog.device .dlg-btn, :host([light]) dialog.settings .dlg-btn { background: var(--dp-card); border-color: color-mix(in srgb, var(--dp-text) 18%, var(--dp-card)); }
@@ -1844,6 +1848,22 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-ico.own { background: var(--dp-primary); color: #fff; }
 .ap-a.dis { opacity: .35; cursor: default; }
 .ap-badge { position: absolute; top: 7px; left: 7px; padding: 1px 6px; border-radius: 99px; background: var(--dp-warning-soft); color: var(--dp-warning); font-size: 10px; font-weight: 600; }
+/* Status-App (seit 2.62.0, docs/mockups/status-v1) */
+.st-wrap .opt { margin-top: 0; }
+.st-banner { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; margin: 0 0 8px; }
+.st-banner.ok { background: var(--dp-success-soft); color: var(--dp-success); }
+.st-banner.bad { background: var(--dp-error-soft); color: var(--dp-error); }
+.st-banner .ic { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: color-mix(in srgb, currentColor 16%, transparent); }
+.st-banner b { display: block; font-size: 15px; font-weight: 600; }
+.st-banner small { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.35; opacity: .9; }
+.st-card { border-radius: 18px; background: var(--dp-subtle); overflow: hidden; }
+.st-line { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--dp-divider); }
+.st-line:first-child { border-top: 0; }
+.st-t { flex: 1; min-width: 0; }
+.st-t b { display: block; font-size: 14.5px; font-weight: 600; }
+.st-t small { display: block; margin-top: 2px; color: var(--dp-text2); font-size: 12.5px; line-height: 1.35; }
+.st-start { margin: 12px 2px 0; color: var(--dp-text2); font-size: 12.5px; line-height: 1.4; }
+.ap-badge.bad { background: var(--dp-error-soft); color: var(--dp-error); }
 .ap-t b .ap-badge { position: static; margin-left: 6px; }
 .ap-ext { position: absolute; right: 8px; bottom: 6px; display: inline-flex; color: var(--dp-text2); }
 .ap-ext.in { position: static; margin-right: 4px; }

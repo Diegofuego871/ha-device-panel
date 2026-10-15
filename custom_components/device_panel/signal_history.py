@@ -160,6 +160,7 @@ class SignalLog:
         self._unsub_tick = async_track_time_interval(self.hass, self._async_tick, SAMPLE_INTERVAL)
 
     async def _async_tick(self, _now: Any) -> None:
+        self.last_tick = time.time()  # Lebenszeichen für die Status-App (status.py)
         self.sample()
 
     def load(self, stored: dict[str, Any], now: float) -> None:

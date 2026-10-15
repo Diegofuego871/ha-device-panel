@@ -24,6 +24,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.loader import async_get_integration
 from homeassistant.util import dt as dt_util
 
+from . import activity
 from .compat import device_entry_ids, device_primary_entry_id, registry_devices
 from .const import (
     CONF_AI_ASSESSMENT,
@@ -70,6 +71,7 @@ from .const import (
     DATA_DEVICE_SETTINGS,
     DATA_CHARGE,
     DATA_STARTED_AT,
+    DATA_STATUS,
     DATA_TYPE_OVERRIDES,
     DEFAULT_BATTERY_LOW,
     DEFAULT_OFFLINE_AFTER,
@@ -1342,6 +1344,9 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         "chip_order": opts[CONF_CHIP_ORDER],
         "pulse": None,
         "incidents": [],
+        # Für die Kopfzeile (seit 2.62.0): Debug-Modus und Störungen der Status-App, damit Punkte am Launcher oder an der angehefteten App stehen
+        "debug": activity.get(hass).debug,
+        "status": status_watch.summary() if (status_watch := hass.data.get(DATA_STATUS)) is not None else {"problems": 0, "down": 0},
         # Filter "Bereich": Bereiche und Etagen in der Reihenfolge, die man in
         # HA festlegt (Einstellungen → Bereiche, Etagen und Zonen).
         **area_catalog(hass),

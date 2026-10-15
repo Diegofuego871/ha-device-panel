@@ -289,6 +289,7 @@ class AvailabilityLog:
         return filled
 
     async def _async_tick(self, _now: datetime) -> None:
+        self.last_tick = time.time()  # Lebenszeichen für die Status-App (status.py)
         self.evaluate()
 
     async def _async_on_stop(self, _event: Event | None) -> None:

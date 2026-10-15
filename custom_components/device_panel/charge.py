@@ -298,6 +298,7 @@ class ChargeNotifier:
 
     @callback
     def _on_tick(self, _now: Any) -> None:
+        self.last_tick = time.time()  # Lebenszeichen für die Status-App (status.py)
         self.check_stalls(time.time())
         self.live_check()
 

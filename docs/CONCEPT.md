@@ -521,6 +521,12 @@ Szenen und Gruppen (seit 2.61.0): Beim Anlegen über "Alle Routinen" wählt der 
 statt Geräte-ID, für Entitäten ohne Gerät). Szene: Aktion "Aktivieren" (`scene.turn_on`), kein Zurückschalten, keine Optionen. Gruppe (Entität mit Mitgliedern in
 `entity_id`): wie eine einzelne Lampe. Skripte gibt es nicht. Einzelheiten: `routines.py` (`HOLDERS`), `docs/HANDOVER.md`.
 
+## Status: Wächter für die Teile der Integration (seit 2.62.0, Wunsch des Nutzers)
+
+App "Status" im Launcher (nur Administratoren). `status.py` prüft jede Minute, ob die Teile leben (Takt der Ausfall-Überwachung, Batterie, Laden, Empfangsverlauf; überfällige Routinen; Magic Push, Neue Geräte und Updates nur "geladen"),
+zeigt "läuft", "verspätet" oder "steht" und schickt bei Stillstand einen Push (Standard: globales Ziel, in der App umstellbar) und eine Entwarnung. Punkte in der Kopfzeile: rot Störung, orange Debug-Modus. Grenze: Steht HA selbst,
+kann der Wächter nichts melden; dafür wäre ein externer Ping nötig (Stufe 3, zurückgestellt). Einzelheiten: `docs/mockups/status-v1/README.md`, `status.py`, `panel/status-ui.js`, `docs/HANDOVER.md`.
+
 ## Live-Aktivität beim Laden (seit 2.19.0, Wunsch des Nutzers)
 
 Optional (aus), global, pro Integration und pro Gerät, unabhängig von der Lademeldung. Zeigt auf iPhone (Live-Aktivität, iOS

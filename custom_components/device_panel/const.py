@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "224"
+PANEL_VERSION = "225"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -238,6 +238,9 @@ CONF_NOTIFY_SERVICE_NEW = "notify_service_new"
 CONF_NOTIFY_SERVICE_UPDATES = "notify_service_updates"
 CONF_NOTIFY_SERVICE_PANELUPDATE = "notify_service_panelupdate"
 CONF_NOTIFY_SERVICE_ROUTINES = "notify_service_routines"
+CONF_NOTIFY_SERVICE_STATUS = "notify_service_status"
+# Status-App (seit 2.62.0): bei Stillstand eines Teils melden (Standard an); das Ziel folgt dem globalen, wenn nichts Eigenes gewählt ist
+CONF_STATUS_NOTIFY = "status_notify"
 # Umbenennung Timer → Routine (2.55.0): so hiessen die gespeicherten Optionen vorher; __init__ übernimmt sie beim Start einmal
 RENAMED_OPTIONS = {
     "timers_pause": "routines_pause",
@@ -252,6 +255,7 @@ NOTIFY_TOPICS = {
     "new": CONF_NOTIFY_SERVICE_NEW,
     "updates": CONF_NOTIFY_SERVICE_UPDATES,
     "routines": CONF_NOTIFY_SERVICE_ROUTINES,
+    "status": CONF_NOTIFY_SERVICE_STATUS,
     "panelupdate": CONF_NOTIFY_SERVICE_PANELUPDATE,
 }
 CONF_NOTIFY_CLICK = "notify_click_target"
@@ -333,6 +337,7 @@ DATA_SIGNAL = f"{DOMAIN}_signal"
 # Magic Push (seit 2.6.0): Regeln pro Gerät, magic.py
 DATA_MAGIC = f"{DOMAIN}_magic"
 DATA_ROUTINES = f"{DOMAIN}_routines"
+DATA_STATUS = f"{DOMAIN}_status"
 
 WS_TYPE_LIST_DEVICES = f"{DOMAIN}/list_devices"
 
