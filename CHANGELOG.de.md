@@ -17,6 +17,10 @@ Enthält die Änderungen aus 2.48.1.
 
 - Live-Aktivität (iPhone) und Live-Update (Android 16) beim Laden: sobald die Schätzung verlässlich ist, beginnt der Text mit "fertig gegen 14:35" (nach Mitternacht "fertig morgen gegen 02:10"), danach der Stand ("fertig gegen 14:35 · 62 % von 100 %"). Die Zeit erscheint mit dem nächsten regulären Update (höchstens alle 4 Minuten, wie bisher), es gibt keinen zusätzlichen Push und keine Einstellung dazu. Das Panel schätzt sie aus den Messungen der laufenden Ladung: die Geschwindigkeit der letzten 30 Minuten, und erst wenn mindestens 5 Minuten und 3 Punkte Anstieg gemessen sind, der Start zeigt also noch keine Zeit. Ein Akku lädt gegen Ende langsamer, darum zählt der Rest über 80 % unterhalb von 80 % doppelt so lang (eine grobe Annahme, noch nicht aus früheren Ladungen des Geräts gelernt). Die Zeit wird auf 5 Minuten gerundet; steht die Ladung still oder läge die Schätzung über 12 Stunden entfernt, erscheint nichts. Das Protokoll (Debug) hält jede Schätzung mit Geschwindigkeit, Messdauer und Ergebnis fest.
 
+### Behoben
+
+- App-Launcher: die Favoriten haben keinen blauen Rand mehr. Alle Kacheln sehen gleich aus; das Herz und der Abschnitt "Favoriten" zeigen schon, welche Favoriten sind.
+
 ## [2.48.1] - 2026-10-15
 
 Nicht veröffentlicht; enthalten in 2.49.0.

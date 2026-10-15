@@ -1745,7 +1745,6 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-note svg { vertical-align: -2px; }
 .ap-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .ap-tile { position: relative; box-sizing: border-box; display: flex; min-height: 84px; border-radius: 14px; background: var(--dp-subtle); color: var(--dp-text); font: inherit; }
-.ap-tile.pin { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--dp-primary) 55%, transparent); }
 .ap-main { display: flex; flex: 1; min-width: 0; align-items: center; border: 0; background: none; color: inherit; font: inherit; text-decoration: none; cursor: pointer; border-radius: inherit; }
 .ap-tile > .ap-main { flex-direction: column; justify-content: center; gap: 6px; padding: 12px 4px 8px; font-size: 12px; line-height: 1.2; text-align: center; }
 .ap-tile > .ap-main:hover, .ap-row > .ap-main:hover { background: var(--dp-hover); }
