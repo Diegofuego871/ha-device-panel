@@ -7,7 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.49.0] - 2026-10-15
+
+Live activity while charging: estimated finish time.
+
+Includes the changes from 2.48.1.
+
+### Added
+
+- Live activity (iPhone) and live update (Android 16) while charging: as soon as the estimate is reliable, the text starts with "done around 14:35" (after midnight "done tomorrow around 02:10"), followed by the level ("done around 14:35 · 62 % of 100 %"). The time appears with the next regular update (at most every 4 minutes, as before), there is no extra push and no setting for it. The panel estimates it from the measurements of the running charge: the speed over the last 30 minutes, and only once at least 5 minutes and 3 points of rise are measured, so the start shows no time yet. A battery charges more slowly towards the end, so below 80 % the remaining part above 80 % counts twice as long (a rough assumption, not yet learned from earlier charges of the device). The time is rounded to 5 minutes; nothing is shown if the charge stands still or the estimate would be more than 12 hours away. The log (debug) records each estimate with speed, measuring time and result.
+
 ## [2.48.1] - 2026-10-15
+
+Not released; included in 2.49.0.
 
 ### Fixed
 
@@ -3264,7 +3276,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.48.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.1
+[2.49.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.49.0
 [2.48.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.0
 [2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0
 [2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0

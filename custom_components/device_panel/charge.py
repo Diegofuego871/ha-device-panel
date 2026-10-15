@@ -24,6 +24,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event, async_track_time_interval
 from homeassistant.helpers.storage import Store
+from homeassistant.util import dt as dt_util
 
 from . import activity, push, push_icon
 from .battery_history import battery_entity
@@ -79,6 +80,45 @@ def charging_entity(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> str
         if entry.domain == "sensor" and entry.platform == "mobile_app" and entry.entity_id.endswith("_battery_state"):
             return entry.entity_id
     return None
+
+
+# Schätzung der Ladezeit für die Live-Aktivität (seit 2.49.0): aus den Messpunkten der laufenden Ladung. Gezeigt wird sie erst, wenn
+# sie trägt: genug Zeit, genug Anstieg. Gegen Ende lädt ein Akku langsamer; ab TAPER_FROM zählt die Restzeit TAPER_FACTOR-fach
+# (grobe Annahme, noch nicht aus früheren Ladungen des Geräts gelernt).
+ETA_WINDOW = 1800.0
+ETA_MIN_SPAN = 300.0
+ETA_MIN_RISE = 3.0
+ETA_TAPER_FROM = 80.0
+ETA_TAPER_FACTOR = 2.0
+ETA_MAX = 12 * 3600.0
+ETA_ROUND = 300.0
+ETA_POINTS_MAX = 60
+
+
+def estimate_finish(points: list[list[float]], level: float, full: float, now: float) -> tuple[float, float, float] | None:
+    """
+    Wann ist das Ladeziel erreicht? points: [[Zeit, Stand], ...] der laufenden Ladung. Gibt (Zeitpunkt, Punkte pro Minute, Minuten
+    der Messung) zurück oder None, wenn die Schätzung (noch) nicht verlässlich ist.
+    """
+    if level >= full:
+        return None
+    window = [p for p in points if now - p[0] <= ETA_WINDOW]
+    if len(window) < 2:
+        return None
+    start_t, start_level = window[0]
+    span = now - start_t
+    rise = level - start_level
+    if span < ETA_MIN_SPAN or rise < ETA_MIN_RISE:
+        return None
+    rate = rise / span  # Punkte pro Sekunde
+    if level >= ETA_TAPER_FROM:
+        seconds = (full - level) / rate
+    else:
+        seconds = (min(full, ETA_TAPER_FROM) - level) / rate + max(0.0, full - ETA_TAPER_FROM) / rate * ETA_TAPER_FACTOR
+    if seconds > ETA_MAX:
+        return None
+    finish = round((now + seconds) / ETA_ROUND) * ETA_ROUND
+    return finish, rate * 60, span / 60
 
 
 class ChargeNotifier:
@@ -387,7 +427,9 @@ class ChargeNotifier:
                     self._live_warned.add(dev)
                     activity.record(hass, "warning", "charge", "charge_live_no_target", name, dev, level=round(st["last"]))
                 return
-            self._live[dev] = {"tag": f"{DOMAIN}_live_{dev}", "phase": "active", "at": now, "level": st["last"], "done_at": None}
+            # Messpunkte der Ladung für die Schätzung: der Tiefpunkt zu Beginn und der jetzige Stand
+            points = [[st["min_at"], st["min"]]] if st.get("min_at", now) < now and st["min"] < st["last"] else []
+            self._live[dev] = {"tag": f"{DOMAIN}_live_{dev}", "phase": "active", "at": now, "level": st["last"], "done_at": None, "pts": [*points, [now, st["last"]]]}
             self._save()
             activity.record(hass, "info", "charge", "charge_live_start", name, dev, level=round(st["last"]), full=copts[CONF_CHARGE_FULL])
             self._live_send(dev, update=False)
@@ -418,6 +460,10 @@ class ChargeNotifier:
         if not self._is_charging(device, now, copts):
             self._live_end(dev, "charge_live_why_stopped")
             return
+        pts = live.setdefault("pts", [])
+        if not pts or pts[-1][1] != level:
+            pts.append([now, level])
+            del pts[:-ETA_POINTS_MAX]
         if now - live["at"] >= LIVE_INTERVAL and round(level) != round(live["level"]):
             live.update(at=now, level=level)
             self._save()
@@ -473,6 +519,16 @@ class ChargeNotifier:
         else:
             title = push.title(hass, opts, "charge", "charge_live_title", name=name)
             message = push.text(hass, "charge_live_progress", level=level, full=full)
+            # Schätzung "fertig gegen 14:35" davor, sobald sie verlässlich ist (mit dem nächsten Update, kein eigener Takt)
+            now = time.time()
+            if (eta := estimate_finish(live.get("pts") or [], st["last"], full, now)) is not None:
+                finish, rate, minutes = eta
+                local = dt_util.as_local(dt_util.utc_from_timestamp(finish))
+                clock = local.strftime("%H:%M")
+                tomorrow = local.date() != dt_util.as_local(dt_util.utc_from_timestamp(now)).date()
+                text = push.text(hass, "charge_live_eta_tomorrow" if tomorrow else "charge_live_eta", time=clock)
+                message = push.text(hass, "charge_live_progress_eta", eta=text, level=level, full=full)
+                activity.record(hass, "debug", "charge", "charge_live_eta", name, dev, rate=round(rate, 2), minutes=round(minutes), level=round(st["last"]), full=full, time=clock)
         hass.async_create_task(push.async_live(hass, notify_target(opts, "charge"), name, title, message, data))
 
     @callback

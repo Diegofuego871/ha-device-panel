@@ -128,7 +128,7 @@ Each kind has its own tab in the settings. Outage, battery, charging, new device
 - **Outage and back online:** push, persistent notification and group message, with start, duration, area and integration
 - **Battery:** once per device when it falls below the threshold (default 15 %, from 1 to 50 %), immediately or as a daily summary, with a persistent notification of all affected devices
 - **Charging:** push when a device is fully charged ("Full from", default 100 %) or the charge stops early, off by default and only for rechargeable devices; devices that charge right now get the chip "Charging" with a green mark and a charge bar
-- **Live activity:** optionally the charge progress on the lock screen (iPhone, live activity) or as a live update (Android 16), with quiet updates, off by default
+- **Live activity:** optionally the charge progress on the lock screen (iPhone, live activity) or as a live update (Android 16), with quiet updates and, once it is reliable, an estimate of when the target is reached ("done around 14:35"), off by default
 - **New devices:** a collecting window, then one message with all devices that appeared; the device carries a "New" mark for three days
 - **Update reminder:** daily, weekly or immediately for updates of Home Assistant, add-ons, HACS and device firmware, adjustable per app, per integration and per firmware, optionally repeated while an update stays open; replaces two hand-made automations
 - **Signal:** a warning threshold per connection type, per integration and per device (default weak below -80 dBm or LQI 61), also switchable off

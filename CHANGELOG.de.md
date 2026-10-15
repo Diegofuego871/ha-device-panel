@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.49.0] - 2026-10-15
+
+Live-Aktivität beim Laden: geschätzte Zeit bis zum Ziel.
+
+Enthält die Änderungen aus 2.48.1.
+
+### Hinzugefügt
+
+- Live-Aktivität (iPhone) und Live-Update (Android 16) beim Laden: sobald die Schätzung verlässlich ist, beginnt der Text mit "fertig gegen 14:35" (nach Mitternacht "fertig morgen gegen 02:10"), danach der Stand ("fertig gegen 14:35 · 62 % von 100 %"). Die Zeit erscheint mit dem nächsten regulären Update (höchstens alle 4 Minuten, wie bisher), es gibt keinen zusätzlichen Push und keine Einstellung dazu. Das Panel schätzt sie aus den Messungen der laufenden Ladung: die Geschwindigkeit der letzten 30 Minuten, und erst wenn mindestens 5 Minuten und 3 Punkte Anstieg gemessen sind, der Start zeigt also noch keine Zeit. Ein Akku lädt gegen Ende langsamer, darum zählt der Rest über 80 % unterhalb von 80 % doppelt so lang (eine grobe Annahme, noch nicht aus früheren Ladungen des Geräts gelernt). Die Zeit wird auf 5 Minuten gerundet; steht die Ladung still oder läge die Schätzung über 12 Stunden entfernt, erscheint nichts. Das Protokoll (Debug) hält jede Schätzung mit Geschwindigkeit, Messdauer und Ergebnis fest.
+
 ## [2.48.1] - 2026-10-15
+
+Nicht veröffentlicht; enthalten in 2.49.0.
 
 ### Behoben
 
@@ -3365,7 +3377,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.48.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.1
+[2.49.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.49.0
 [2.48.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.0
 [2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0
 [2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0

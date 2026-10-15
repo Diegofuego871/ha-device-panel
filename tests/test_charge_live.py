@@ -227,3 +227,53 @@ async def test_survives_restart(hass: HomeAssistant, freezer, hass_storage: dict
 
 def test_module_exports() -> None:
     assert charge_module.LIVE_INTERVAL == 240 and charge_module.LIVE_KEEP == 600
+
+
+def test_estimate_finish_needs_reliable_data() -> None:
+    """2.49.0: die Schätzung erst mit genug Zeit und Anstieg, gegen Ende langsamer, nie über 12 Stunden."""
+    est = charge_module.estimate_finish
+    pts = [[0.0, 30.0], [600.0, 36.0]]  # 0,6 Punkte pro Minute
+    got = est(pts, 36.0, 100.0, 600.0)
+    assert got is not None
+    finish, rate, minutes = got
+    # bis 80 %: 44 Punkte, darüber 20 Punkte doppelt so lang: (44 + 40) / 0,01 pro Sekunde = 8400 s (auf 5 Minuten gerundet)
+    assert abs(finish - (600 + 8400)) <= 300 and finish % 300 == 0 and abs(rate - 0.6) < 1e-6 and minutes == 10
+    assert est([[0.0, 30.0], [200.0, 36.0]], 36.0, 100.0, 200.0) is None  # zu kurz
+    assert est([[0.0, 30.0], [600.0, 32.0]], 32.0, 100.0, 600.0) is None  # zu wenig Anstieg
+    assert est(pts, 100.0, 100.0, 600.0) is None  # Ziel erreicht
+    assert est([[0.0, 30.0]], 30.0, 100.0, 600.0) is None  # ein Punkt
+    assert est([[0.0, 30.0], [1800.0, 33.0]], 33.0, 100.0, 1800.0) is None  # zu langsam: über 12 Stunden
+    # ab 80 % zählt die gemessene Geschwindigkeit ohne Abschlag
+    late = est([[0.0, 80.0], [600.0, 86.0]], 86.0, 100.0, 600.0)
+    assert late is not None and abs(late[0] - (600 + 1400)) <= 300
+    # alte Punkte ausserhalb des Fensters zählen nicht
+    assert est([[0.0, 10.0], [4000.0, 50.0], [4100.0, 50.0]], 50.0, 100.0, 4100.0) is None
+
+
+async def test_live_update_shows_the_finish_time_once_reliable(hass: HomeAssistant, freezer) -> None:
+    """Der Start zeigt noch keine Zeit; das nächste Update trägt "fertig gegen HH:MM" vor dem Stand."""
+    import re  # noqa: PLC0415
+
+    calls, _device_, entity, notifier = await _live_setup(hass)
+    _bat(hass, entity, 55)
+    await hass.async_block_till_done()
+    first = _live_calls(calls)
+    assert len(first) == 1 and first[0].data["message"] == "55 % of 100 %"  # noch keine Schätzung
+    for level in (56, 57, 58, 59, 60, 61):
+        freezer.tick(timedelta(seconds=60))
+        _bat(hass, entity, level)
+        await hass.async_block_till_done()
+    await _tick(hass, freezer, LIVE_INTERVAL)
+    live = _live_calls(calls)
+    assert len(live) == 3
+    # das Update nach 4 Minuten hat noch zu wenig Messzeit, das nächste trägt die Schätzung
+    assert live[1].data["message"].endswith("% of 100 %") and "around" not in live[1].data["message"]
+    assert re.fullmatch(r"done (?:tomorrow )?around \d\d:\d\d · 61 % of 100 %", live[2].data["message"]), live[2].data["message"]
+    assert live[2].data["data"]["critical_text"] == "61 %" and live[2].data["data"]["silent"] is True
+    from custom_components.device_panel import activity  # noqa: PLC0415
+
+    activity.set_debug(hass, True)
+    freezer.tick(timedelta(seconds=60))
+    _bat(hass, entity, 62)
+    await _tick(hass, freezer, LIVE_INTERVAL)
+    assert any("charging estimate" in e["text"] for e in activity.get(hass).entries)

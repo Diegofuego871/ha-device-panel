@@ -128,7 +128,7 @@ Jede Art hat in den Einstellungen einen eigenen Reiter. Ausfall, Batterie, Laden
 - **Ausfall und wieder online:** Push, anhaltende Benachrichtigung und Sammelmeldung, mit Beginn, Dauer, Bereich und Integration
 - **Batterie:** einmal pro Gerät beim Unterschreiten der Schwelle (Standard 15 %, von 1 bis 50 %), sofort oder als tägliche Sammelmeldung, mit einer anhaltenden Benachrichtigung aller betroffenen Geräte
 - **Laden:** Push, wenn ein Gerät voll geladen ist ("Voll ab", Standard 100 %) oder die Ladung vorzeitig endet, standardmässig aus und nur für wiederaufladbare Geräte; Geräte, die gerade laden, bekommen den Chip "Lädt" mit grüner Markierung und Ladebalken
-- **Live-Aktivität:** auf Wunsch der Ladefortschritt auf dem Sperrbildschirm (iPhone, Live-Aktivität) oder als Live-Update (Android 16), mit leisen Aktualisierungen, standardmässig aus
+- **Live-Aktivität:** auf Wunsch der Ladefortschritt auf dem Sperrbildschirm (iPhone, Live-Aktivität) oder als Live-Update (Android 16), mit leisen Aktualisierungen und, sobald sie verlässlich ist, einer Schätzung, wann das Ziel erreicht ist ("fertig gegen 14:35"), standardmässig aus
 - **Neue Geräte:** ein Sammelfenster, dann eine Meldung mit allen neu erschienenen Geräten; das Gerät trägt drei Tage die Markierung "Neu"
 - **Update-Erinnerung:** täglich, wöchentlich oder sofort für Updates von Home Assistant, Add-ons, HACS und Geräte-Firmware, einstellbar pro App, pro Integration und pro Firmware, auf Wunsch wiederholt, solange ein Update offen bleibt; ersetzt zwei selbstgebaute Automationen
 - **Empfang:** eine Warnschwelle pro Verbindungsart, pro Integration und pro Gerät (Standard schwach unter -80 dBm oder LQI 61), auch abschaltbar
