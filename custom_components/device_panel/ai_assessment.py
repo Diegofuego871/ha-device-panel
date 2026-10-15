@@ -683,6 +683,28 @@ async def _extras(hass: HomeAssistant, device: dict[str, Any], log: Any, now: fl
     return extra
 
 
+# Vorübergehende Fehler des Anbieters (seit 2.48.1): "503 UNAVAILABLE, high demand", Überlastung, Gateway-Fehler. Solche Aufrufe
+# gelingen oft Sekunden später; ein Kontingent- oder Schlüsselfehler (429 quota, 401) gehört nicht dazu und wird nicht wiederholt.
+RETRY_DELAYS = (5.0, 15.0)
+_TRANSIENT_RE = re.compile(r"\b(?:502|503|504|529)\b|UNAVAILABLE|high demand|overloaded|temporarily|try again later", re.IGNORECASE)
+
+
+def transient(err: AiError) -> bool:
+    return err.code == "failed" and bool(_TRANSIENT_RE.search(str(err)))
+
+
+async def _generate_retry(hass: HomeAssistant, entity_id: str | None, instructions: str, name: str, device_id: str) -> Any:
+    """_generate; bei einem vorübergehenden Fehler des Anbieters bis zu zweimal nach kurzer Pause noch einmal (Protokoll: Info)."""
+    for attempt, delay in enumerate((*RETRY_DELAYS, None)):
+        try:
+            return await _generate(hass, entity_id, instructions)
+        except AiError as err:
+            if delay is None or not transient(err):
+                raise
+            activity.record(hass, "info", "system", "ai_retry", name, device_id, seconds=round(delay), attempt=attempt + 1, max=len(RETRY_DELAYS), detail=str(err)[:120])
+            await asyncio.sleep(delay)
+
+
 async def _collect(hass: HomeAssistant, device_id: str, log: Any) -> tuple[dict[str, Any], dict[str, Any], Any, Any, dict[str, Any]]:
     """Gemeinsam für Einschätzung und Rückfrage: (Optionen, Gerät, Geräteliste, Zeit, Gedächtnis, Zusatzfakten mit der letzten Einschätzung)."""
     opts = effective(hass)
@@ -714,7 +736,7 @@ async def async_assess(hass: HomeAssistant, device_id: str, language: str, log: 
     try:
         # Eine leere Antwort (zum Beispiel ein Modell, das seine Ausgabe in der Denkphase verbraucht) bekommt einen zweiten Versuch.
         for attempt in (1, 2):
-            data = await _generate(hass, entity_id, instructions)
+            data = await _generate_retry(hass, entity_id, instructions, device["name"], device_id)
             text = data if isinstance(data, str) else json.dumps(data, ensure_ascii=False)
             if text.strip():
                 break
@@ -812,10 +834,10 @@ async def async_ask(
     instructions = build_ask_instructions(facts, language, question, history)
     started = time.monotonic()
     try:
-        data = await _generate(hass, entity_id, instructions)
+        data = await _generate_retry(hass, entity_id, instructions, device["name"], device_id)
         text = data if isinstance(data, str) else json.dumps(data, ensure_ascii=False)
         if not text.strip():
-            data = await _generate(hass, entity_id, instructions)
+            data = await _generate_retry(hass, entity_id, instructions, device["name"], device_id)
             text = data if isinstance(data, str) else json.dumps(data, ensure_ascii=False)
         if not text.strip():
             raise AiError("empty", "the AI task returned an empty answer twice")

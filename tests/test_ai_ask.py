@@ -104,3 +104,46 @@ async def test_ask_failure_goes_to_the_log_and_switched_off_is_refused(hass: Hom
     await client.send_json({"id": 3, "type": f"{DOMAIN}/ai_ask", "device_id": lamp.id, "question": "Warum?", "language": "en"})
     assert (await client.receive_json())["error"]["code"] == "timeout"
     assert any(e["level"] == "warning" and "failed" in e["text"] for e in activity.get(hass).entries)
+
+
+async def test_transient_provider_errors_are_retried(hass: HomeAssistant, setup, hass_ws_client, monkeypatch) -> None:
+    """2.48.1: 503 "high demand" wird wiederholt (Einschätzung und Rückfrage), ein Kontingentfehler nicht."""
+    lamp = _lamp(hass)
+    client = await _enable(hass, hass_ws_client)
+    monkeypatch.setattr(ai_assessment, "RETRY_DELAYS", (0.0, 0.0))
+    calls: list[int] = []
+    outcome = {"fail": 2}
+
+    async def flaky(*_a: Any) -> Any:
+        calls.append(1)
+        if outcome["fail"] > 0:
+            outcome["fail"] -= 1
+            raise AiError("failed", 'Sorry, I had a problem getting a response from Google Generative AI.: {"error": {"code": 503, "status": "UNAVAILABLE"}}')
+        return "Titel\n\nText"
+
+    monkeypatch.setattr(ai_assessment, "_generate", flaky)
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/ai_assess", "device_id": lamp.id, "language": "en"})
+    msg = await client.receive_json()
+    assert msg["success"] and msg["result"]["title"] == "Titel" and len(calls) == 3
+    assert sum("trying again" in e["text"] for e in activity.get(hass).entries) == 2
+    # Rückfrage: ein Fehler, dann Erfolg
+    calls.clear()
+    outcome["fail"] = 1
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/ai_ask", "device_id": lamp.id, "question": "Warum?", "language": "en"})
+    assert (await client.receive_json())["success"] and len(calls) == 2
+    # Dauerhaft überlastet: nach zwei Wiederholungen der Fehler mit dem Grund
+    calls.clear()
+    outcome["fail"] = 99
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/ai_assess", "device_id": lamp.id, "language": "en"})
+    msg = await client.receive_json()
+    assert msg["error"]["code"] == "failed" and "503" in msg["error"]["message"] and len(calls) == 3
+    # Kontingentfehler: kein neuer Versuch
+    calls.clear()
+
+    async def quota(*_a: Any) -> Any:
+        calls.append(1)
+        raise AiError("failed", "Error talking to OpenAI: 429 quota exceeded")
+
+    monkeypatch.setattr(ai_assessment, "_generate", quota)
+    await client.send_json({"id": 5, "type": f"{DOMAIN}/ai_assess", "device_id": lamp.id, "language": "en"})
+    assert (await client.receive_json())["error"]["code"] == "failed" and len(calls) == 1

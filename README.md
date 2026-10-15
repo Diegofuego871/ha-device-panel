@@ -212,7 +212,7 @@ Off by default. On a button press the panel asks an AI task of Home Assistant fo
 | <img src="docs/screenshots/en/ai.png" alt="Device pop-up with the AI assessment"> | <img src="docs/screenshots/en/settings-ai.png" alt="Settings with the prompt in expert mode"> |
 
 - **Expert mode:** the prompt is adjustable, with groups of facts such as `{facts_area}` and `{facts_hub}`, and a preview shows the exact text
-- **When it fails:** the pop-up shows the message of the AI task, and the log records the reason, so a quota, key or model problem can be found; an empty answer gets a second try
+- **When it fails:** the pop-up shows the message of the AI task, and the log records the reason, so a quota, key or model problem can be found; an empty answer gets a second try, and a temporary overload of the provider (for example "503, high demand") is retried twice before an error is shown
 - **Follow-up questions:** under the assessment you can ask the AI more, with suggested questions as pills ("What should I check first?", "Is it the battery?") and a text field for your own; the answers appear as a conversation, at most three per assessment
 - **Memory:** the last assessment of each device is kept and shown again when you open the device; the next assessment gets it, so the AI says what has changed. Long facts are trimmed to a fixed size.
 - **Facts:** besides the device itself the AI sees the latest outages with time of day, the signal of the last 24 hours and 7 days, and for Bluetooth the receivers that heard the device (without addresses); it also knows whether a device is charged (robot vacuum, phone) or runs on batteries and talks about charging habits instead of battery life

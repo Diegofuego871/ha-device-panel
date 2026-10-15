@@ -7,6 +7,12 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.48.1] - 2026-10-15
+
+### Behoben
+
+- KI-Einschätzung und Rückfragen: ist der Anbieter vorübergehend überlastet (zum Beispiel Google "503 UNAVAILABLE, This model is currently experiencing high demand"), versucht das Panel es bis zu zweimal erneut, nach 5 und nach 15 Sekunden, bevor es einen Fehler meldet. Solche Fehler vergehen meist nach Sekunden, und vorher beendete schon der erste die Einschätzung. Jeder neue Versuch steht im Protokoll (Info). Fehler, die ein neuer Versuch nicht behebt, etwa ein erschöpftes Kontingent (429) oder ein falscher Schlüssel, werden weiter sofort gemeldet.
+
 ## [2.48.0] - 2026-10-15
 
 KI-Einschätzung: Rückfragen.
@@ -3359,6 +3365,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.48.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.1
 [2.48.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.0
 [2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0
 [2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0

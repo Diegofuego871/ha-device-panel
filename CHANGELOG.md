@@ -7,6 +7,12 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.48.1] - 2026-10-15
+
+### Fixed
+
+- AI assessment and follow-up questions: when the provider is temporarily overloaded (for example Google "503 UNAVAILABLE, This model is currently experiencing high demand"), the panel now tries again up to two more times, after 5 and 15 seconds, before it reports an error. Such errors usually pass within seconds, and before, the first one ended the assessment. Each new try is written to the log (Info). Errors that a new try cannot fix, such as an exceeded quota (429) or a wrong key, are still reported at once.
+
 ## [2.48.0] - 2026-10-15
 
 AI assessment: follow-up questions.
@@ -3258,6 +3264,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.48.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.1
 [2.48.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.0
 [2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0
 [2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0
