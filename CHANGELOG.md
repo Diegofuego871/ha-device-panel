@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.59.0] - 2026-10-15
+
+Routines: your own time next to the quick choices.
+
+### Added
+
+- Routine assistant, trigger: next to the quick choices there is now a field "or own time" with a unit for every time that had only quick choices: "Holds for at least" (start and switching back; seconds, minutes or hours, from 1 second up to 7 days), "Pause" after a switch (minutes or hours) and "At the latest after" (minutes, hours or days). Typing a value takes the quick choice off (the capsule disappears); clearing the field brings back the default; choosing a quick choice empties the field. An invalid value shows the allowed range under the field and blocks "Next". The pause cannot go below 1 minute, the shortest quick choice, so nobody gets a pause shorter than the default offers; all other fields allow what the server allows. When you edit a routine, a value that is not a quick choice stands in the field.
+
 ## [2.58.0] - 2026-10-15
 
 New tab "Switches" in the device pop-up; the close buttons of the log, "All routines" and the launcher match the new look.
@@ -3407,6 +3415,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.59.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.59.0
 [2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0
 [2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0
 [2.55.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.55.0

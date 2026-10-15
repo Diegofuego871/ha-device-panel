@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.59.0] - 2026-10-15
+
+Routinen: eine eigene Zeit neben den Schnellwahlen.
+
+### Hinzugefügt
+
+- Routinen-Assistent, Auslöser: Neben den Schnellwahlen gibt es jetzt bei jeder Zeit, die nur Schnellwahlen hatte, ein Feld "oder eigene Zeit" mit Einheit: "Mindestens so lange erfüllt" (Start und Zurückschalten; Sekunden, Minuten oder Stunden, von 1 Sekunde bis 7 Tage), "Pause danach" (Minuten oder Stunden) und "Spätestens nach" (Minuten, Stunden oder Tage). Ein getippter Wert nimmt die Schnellwahl weg (die Kapsel verschwindet); leert man das Feld, gilt wieder die Vorgabe; eine Schnellwahl leert das Feld. Ein ungültiger Wert zeigt den erlaubten Bereich unter dem Feld und sperrt "Weiter". Die Pause darf nicht unter 1 Minute fallen, die kleinste Schnellwahl, so dass niemand eine kürzere Pause bekommt, als die Vorgabe anbietet; alle anderen Felder erlauben, was der Server erlaubt. Beim Bearbeiten einer Routine steht ein Wert, der keine Schnellwahl ist, im Feld.
+
 ## [2.58.0] - 2026-10-15
 
 Neuer Reiter "Schalter" im Geräte-Popup; die Schliessen-Knöpfe von Protokoll, "Alle Routinen" und Launcher passen zum neuen Aussehen.
@@ -3508,6 +3516,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.59.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.59.0
 [2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0
 [2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0
 [2.55.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.55.0

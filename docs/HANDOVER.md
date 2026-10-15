@@ -3,6 +3,15 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.59.0, Routinen: eigene Zeit neben den Schnellwahlen)
+
+- Wunsch des Nutzers: Bei den Zeiten des Assistenten, die nur Schnellwahlen hatten, steht ein Feld "oder eigene Zeit" mit Einheit (wie bei "Nach Dauer"/Zurückschalten, die es schon hatten). `routine-trigger.js`:
+  Tabelle `FREE` (je Angabe `sel`, Wert im Entwurf, Feld im Entwurf `…Own`, Einheiten, Grenzen, Vorgabe): `hold` und `bhold` (Mindestens so lange erfüllt, Start und Zurück; Sek./Min./Std., 1 s bis `hold_max`),
+  `pause` (Min./Std., unter 1 Min. = kleinste Schnellwahl nicht erlaubt, bis `pause_max`), `bmax` (Spätestens nach; Min./Std./Tage, `back_min` bis `back_max`). Methoden `freeHtml`, `freeError`, `pickFree`, `typeFree`
+  (Tippen: Kapsel weg, Fehlerzone `ferr-<Schlüssel>` läuft mit; Feld geleert: Vorgabe, ganzes Neuzeichnen), `unitFree`, `freeOk`; `triggerValid`, `backValid`, `draftIncomplete` prüfen mit. `ownHtml` (routines.js) nimmt die Einheiten als Parameter.
+  Der Server lässt weiter Pausen ab 10 s zu (`PAUSE_MIN`); die 1 Minute ist eine Grenze des Assistenten. Ein von Hand (API) gespeicherter Wert unter einer Minute steht beim Bearbeiten im Feld und wird als Fehler gezeigt.
+  Suite `routinetrigger` (176 Prüfungen).
+
 ## Stand (2.58.0, Reiter "Schalter", Kreuz in Vollbild-Fenstern)
 
 - Wunsch des Nutzers, Mockups `docs/mockups/switches-v1`, Entscheid: Variante C (kompakte Kacheln, drei Spalten), Emoji 🕹️ für Schalter und ⚡ für Routinen. Reiter `sw` an zweiter Stelle im Geräte-Popup

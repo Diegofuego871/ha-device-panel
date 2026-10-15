@@ -1173,7 +1173,7 @@
             entities: entsOf(msg.device_id),
             targets: [{ value: "notify.familie", kind: "group" }, { value: "notify.mobile_app_dani_iphone", kind: "service" }, { value: "notify.mobile_app_partner_iphone", kind: "service" }, { value: "notify.kuechen_display", kind: "entity" }],
             default_target: window.__opts.notify_service && window.__opts.notify_service !== "none" ? window.__opts.notify_service : "notify.mobile_app_dani_iphone",
-            limits: { per_device: 20, name: 60, back_min: 10, back_max: 604800, delay_min: 10, delay_max: 604800 },
+            limits: { per_device: 20, name: 60, back_min: 10, back_max: 604800, delay_min: 10, delay_max: 604800, pause_min: 10, pause_max: 86400, hold_max: 604800 },
             now: Date.now() / 1000, today: today(),
           };
         }

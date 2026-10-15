@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { step: (n, t) => `Schritt ${n} von ${t}`, modeTime: "Zu einer Zeit", modeTrig: "Durch einen Auslöser", temp: "Temperatur Garten", below: "unter", rain: "Regen Garten", wet: "nass", op: "oder", hold2: "2 Min.", pause5: "5 Min.", waits: "wartet auf auslöser", backTrig: "wieder wie vorher, wenn", maxNote: "spätestens nach", restore: "Wie vorher", at: "um 23:30 wieder aus", winSame: "Beginn und Ende sind gleich.", back: "Zurückschalten" },
-  en: { step: (n, t) => `Step ${n} of ${t}`, modeTime: "At a time", modeTrig: "By a trigger", temp: "Temperatur Garten", below: "below", rain: "Regen Garten", wet: "wet", op: "or", hold2: "2 min", pause5: "5 min", waits: "waiting for trigger", backTrig: "back as before when", maxNote: "at the latest after", restore: "As before", at: "back off at 23:30", winSame: "Start and end are the same.", back: "Switch back" },
+  de: { step: (n, t) => `Schritt ${n} von ${t}`, modeTime: "Zu einer Zeit", modeTrig: "Durch einen Auslöser", temp: "Temperatur Garten", below: "unter", rain: "Regen Garten", wet: "nass", op: "oder", hold2: "2 Min.", pause5: "5 Min.", waits: "wartet auf auslöser", backTrig: "wieder wie vorher, wenn", maxNote: "spätestens nach", restore: "Wie vorher", at: "um 23:30 wieder aus", winSame: "Beginn und Ende sind gleich.", back: "Zurückschalten", freeRange: "Eigene Zeit: von", minWord: "Min.", ninety: "1 Std\\. 30 Min\\.", unitsHold: "Sek./Min./Std.", unitsPause: "Min./Std." },
+  en: { step: (n, t) => `Step ${n} of ${t}`, modeTime: "At a time", modeTrig: "By a trigger", temp: "Temperatur Garten", below: "below", rain: "Regen Garten", wet: "wet", op: "or", hold2: "2 min", pause5: "5 min", waits: "waiting for trigger", backTrig: "back as before when", maxNote: "at the latest after", restore: "As before", at: "back off at 23:30", winSame: "Start and end are the same.", back: "Switch back", freeRange: "Own time: from", minWord: "min", ninety: "1 h 30 min", unitsHold: "s/min/h", unitsPause: "min/h" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -34,6 +34,7 @@ for (const lang of ["de", "en"]) {
       }
     };
     const fill = async (sel, value) => { const h = await handle(sel); await h.scrollIntoViewIfNeeded(); await h.fill(value); };
+    const pick = async (sel, value) => { const h = await handle(sel); await h.scrollIntoViewIfNeeded(); await h.selectOption(value); };
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
     const calls = (type) => p.evaluate((ty) => window.__wsCalls.filter((m) => m.type === ty), type);
@@ -104,6 +105,23 @@ for (const lang of ["de", "en"]) {
     await fill(`${win} [data-rt="win-to"]`, "06:00");
     await tap(`${win} [data-rt="pause"][data-s="300"]`);
     check(`[${tag}] Pause "${T.pause5}" gewählt`, await wait(`return r.querySelector('${win} [data-rt="pause"][data-s="300"]').classList.contains("on")`));
+    // Freie Zeit neben den Schnellwahlen (2.59.0): Feld und Einheit; die Kapsel verschwindet, Fehler laufen mit, Pause nicht unter 1 Min.
+    check(`[${tag}] Dauer und Pause: Feld "eigene Zeit" mit Einheit; Einheiten ${T.unitsHold} bzw. ${T.unitsPause}`, await ev(`const u = (k) => [...r.querySelectorAll('${win} [data-rt="' + k + '-unit"] option')].map((o) => o.value).join(); return !!r.querySelector('${win} [data-rt="hold-own"]') && !!r.querySelector('${win} [data-rt="pause-own"]') && u("hold") === "1,60,3600" && u("pause") === "60,3600"`));
+    await fill(`${win} [data-rt="hold-own"]`, "45");
+    await pick(`${win} [data-rt="hold-unit"]`, "1");
+    check(`[${tag}] Dauer eigene Zeit 45 Sek.: keine Kapsel mehr, kein Fehler, Weiter frei`, await wait(`return !r.querySelector('${win} [data-rt="hold"][data-w="start"].on') && !r.querySelector('${win} [data-rt-zone="ferr-hold"] .opt-error') && !r.querySelector('${win} [data-rt="nav-next"]').disabled`));
+    await fill(`${win} [data-rt="hold-own"]`, "0");
+    check(`[${tag}] Dauer eigene Zeit 0: Fehler "${T.freeRange}", Weiter gesperrt`, await wait(`return r.querySelector('${win} [data-rt-zone="ferr-hold"] .opt-error')?.textContent.includes(${JSON.stringify(T.freeRange)}) && r.querySelector('${win} [data-rt="nav-next"]').disabled`), await text(`${win} [data-rt-zone="ferr-hold"]`));
+    await tap(`${win} [data-rt="hold"][data-w="start"][data-s="120"]`);
+    check(`[${tag}] Schnellwahl 2 Min.: Feld leer, Kapsel wieder da, Fehler weg`, await wait(`return r.querySelector('${win} [data-rt="hold"][data-s="120"]').classList.contains("on") && r.querySelector('${win} [data-rt="hold-own"]').value === "" && !r.querySelector('${win} [data-rt-zone="ferr-hold"] .opt-error')`));
+    await fill(`${win} [data-rt="pause-own"]`, "0,5");
+    check(`[${tag}] Pause eigene Zeit 30 Sek.: unter 1 Min., Fehler "${T.freeRange}" (von 1 ${T.minWord}), Weiter gesperrt`, await wait(`const e = r.querySelector('${win} [data-rt-zone="ferr-pause"] .opt-error')?.textContent || ""; return e.includes(${JSON.stringify(T.freeRange)}) && e.includes("1 ${T.minWord}") && r.querySelector('${win} [data-rt="nav-next"]').disabled`), await text(`${win} [data-rt-zone="ferr-pause"]`));
+    await fill(`${win} [data-rt="pause-own"]`, "20");
+    check(`[${tag}] Pause eigene Zeit 20 Min.: keine Kapsel, kein Fehler, Weiter frei`, await wait(`return !r.querySelector('${win} [data-rt="pause"].on') && !r.querySelector('${win} [data-rt-zone="ferr-pause"] .opt-error') && !r.querySelector('${win} [data-rt="nav-next"]').disabled`));
+    await fill(`${win} [data-rt="pause-own"]`, "");
+    check(`[${tag}] Pause Feld geleert: zurück auf die Vorgabe 1 Min. (Kapsel)`, await wait(`return r.querySelector('${win} [data-rt="pause"][data-s="60"]').classList.contains("on")`));
+    await fill(`${win} [data-rt="pause-own"]`, "20");
+    await wait(`return !r.querySelector('${win} [data-rt="pause"].on')`);
     await tap(`${win} [data-rt="once-trig"]`);
     check(`[${tag}] "Nur einmal auslösen" an`, await ev(`return r.querySelector('${win} [data-rt="once-trig"]').checked`));
     await p.screenshot({ path: `${outDir}/routinetrigger-${tag.replace("/", "-")}-trigger.png` });
@@ -121,6 +139,12 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-rt="hold"][data-w="back"][data-s="300"]`);
     await tap(`${win} [data-rt="bmax-on"]`);
     await tap(`${win} [data-rt="bmax"][data-s="7200"]`);
+    check(`[${tag}] Zurück: Feld "eigene Zeit" bei Dauer (Sek./Min./Std.) und "Spätestens nach" (Min./Std./Tage)`, await ev(`const u = (k) => [...r.querySelectorAll('${win} [data-rt="' + k + '-unit"] option')].map((o) => o.value).join(); return u("bhold") === "1,60,3600" && u("bmax") === "60,3600,86400"`));
+    await fill(`${win} [data-rt="bhold-own"]`, "x");
+    check(`[${tag}] Zurück Dauer: "x" ist ungültig, Fehler, Weiter gesperrt`, await wait(`return !!r.querySelector('${win} [data-rt-zone="ferr-bhold"] .opt-error') && r.querySelector('${win} [data-rt="nav-next"]').disabled`));
+    await tap(`${win} [data-rt="hold"][data-w="back"][data-s="300"]`);
+    await fill(`${win} [data-rt="bmax-own"]`, "90");
+    check(`[${tag}] "Spätestens nach" eigene Zeit 90 Min.: keine Kapsel, kein Fehler, Satz nennt 1 Std. 30 Min.`, await wait(`return !r.querySelector('${win} [data-rt="bmax"].on') && !r.querySelector('${win} [data-rt-zone="ferr-bmax"] .opt-error') && /${T.ninety}/.test(r.querySelector('${win} [data-rt-zone="backsum"]').textContent)`), await text(`${win} [data-rt-zone="backsum"]`));
     await tap(`${win} [data-rt="bmode"][data-v="restore"]`);
     check(`[${tag}] Zurück durch Auslöser: Satz "${T.backTrig} …, ${T.maxNote} …", "${T.restore}" gewählt`, await wait(`const s = r.querySelector('${win} [data-rt-zone="backsum"] .mg-sumline')?.textContent.toLowerCase() || ""; return s.includes(${JSON.stringify(T.backTrig)}) && s.includes(${JSON.stringify(T.maxNote)})`), await text(`${win} [data-rt-zone="backsum"]`));
     check(`[${tag}] Weiter frei`, await wait(`return !r.querySelector('${win} [data-rt="nav-next"]').disabled`));
@@ -136,8 +160,8 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-rt="nav-save"]`);
     const saved = (await (async () => { for (let i = 0; i < 25; i++) { const c = await calls("device_panel/routine_save"); if (c.length) return c; await p.waitForTimeout(200); } return []; })()).at(-1)?.routine || {};
     const leaves = (t) => (t?.items || []).flatMap((i) => i.items || [i]);
-    check(`[${tag}] routine_save: kind trigger, zwei Bedingungen (und), Dauer 120, Fenster 22:00–06:00, Pause 300, nur einmal`, saved.kind === "trigger" && saved.conditions?.op === "and" && leaves(saved.conditions).length === 2 && saved.hold_s === 120 && saved.window?.from === "22:00" && saved.window?.to === "06:00" && saved.pause_s === 300 && saved.once_trigger === true && saved.time === null, JSON.stringify(saved));
-    check(`[${tag}] routine_save: Zurück durch Auslöser, 5 Min. ohne, spätestens 7200 s, wie vorher`, saved.back_kind === "trigger" && leaves(saved.back_conditions).length === 1 && saved.back_hold_s === 300 && saved.back_max_s === 7200 && saved.back_mode === "restore" && saved.back_s === null && leaves(saved.conditions)[0].kind === "below" && leaves(saved.conditions)[0].value === 5);
+    check(`[${tag}] routine_save: kind trigger, zwei Bedingungen (und), Dauer 120, Fenster 22:00–06:00, Pause 1200 (eigene Zeit), nur einmal`, saved.kind === "trigger" && saved.conditions?.op === "and" && leaves(saved.conditions).length === 2 && saved.hold_s === 120 && saved.window?.from === "22:00" && saved.window?.to === "06:00" && saved.pause_s === 1200 && saved.once_trigger === true && saved.time === null, JSON.stringify(saved));
+    check(`[${tag}] routine_save: Zurück durch Auslöser, 5 Min. ohne, spätestens 5400 s (eigene Zeit), wie vorher`, saved.back_kind === "trigger" && leaves(saved.back_conditions).length === 1 && saved.back_hold_s === 300 && saved.back_max_s === 5400 && saved.back_mode === "restore" && saved.back_s === null && leaves(saved.conditions)[0].kind === "below" && leaves(saved.conditions)[0].value === 5);
     await wait(`return !r.querySelector("${win}")?.open`);
     check(`[${tag}] Liste: Satz mit Bedingung, "${T.waits}"`, await wait(`const t = r.querySelector("dialog.rtall-dlg")?.textContent || ""; return t.includes(${JSON.stringify(T.temp)}) && t.toLowerCase().includes(${JSON.stringify(T.waits)})`), await text("dialog.rtall-dlg .mg-card .mg-t"));
 
@@ -146,6 +170,7 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.rtall-dlg [data-rta="routine-edit"]');
     await wait(`return r.querySelector("${win}")?.open`);
     check(`[${tag}] Bearbeiten: Umschalter auf Auslöser, beide Bedingungen, Zeitfenster an`, await wait(`return r.querySelector('${win} [data-rt="whenmode"][data-v="trigger"]')?.classList.contains("on") && r.querySelectorAll('${win} .mg-lcard').length === 2 && r.querySelector('${win} [data-rt="win-on"]').checked`));
+    check(`[${tag}] Bearbeiten: Pause 20 Min. steht im Feld (keine Kapsel), die Dauer 2 Min. als Kapsel`, await wait(`const o = r.querySelector('${win} [data-rt="pause-own"]'); return o.value === "20" && r.querySelector('${win} [data-rt="pause-unit"]').value === "60" && !r.querySelector('${win} [data-rt="pause"].on') && r.querySelector('${win} [data-rt="hold"][data-s="120"]').classList.contains("on")`));
     await tap(next);
     check(`[${tag}] Bearbeiten: Zurückschalten "Durch Auslöser" mit der Bedingung, spätestens-Schalter an`, await wait(`return r.querySelector('${win} [data-rt="backkind"][data-v="trigger"]').classList.contains("on") && r.querySelectorAll('${win} .mg-lcard').length === 1 && r.querySelector('${win} [data-rt="bmax-on"]').checked`));
     await tap(`${win} [data-rt="close"]`);

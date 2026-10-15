@@ -1150,6 +1150,7 @@ export class RoutineUi {
       else if (name === "backsum") el.innerHTML = this.backSumHtml();
       else if (name === "winerr") el.innerHTML = this.winErrHtml();
       else if (name.startsWith("csum-")) el.innerHTML = this.condSumHtml(name.slice(5));
+      else if (name.startsWith("ferr-")) el.innerHTML = this.freeErrHtml(name.slice(5));
       else if (name === "prev") el.innerHTML = this.prevHtml();
       else el.innerHTML = this.pvHtml();
     }
@@ -1186,12 +1187,12 @@ export class RoutineUi {
       .join("")}</div>`;
   }
 
-  ownHtml(kind, own, label) {
+  ownHtml(kind, own, label, units = UNITS) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     return `<div class="mg-own"><span>${esc(label)}</span>
       <input class="mg-pill num mg-ownin" type="text" inputmode="decimal" data-rt="${kind}-own" value="${esc(own.text)}" placeholder="${esc(t("rtOwnPh"))}" aria-label="${esc(label)}" autocomplete="off">
-      <select class="mg-pill" data-rt="${kind}-unit" aria-label="${esc(label)}">${UNITS.map((u) => `<option value="${u}"${u === own.unit ? " selected" : ""}>${esc(t(`rtUnit_${u}`))}</option>`).join("")}</select></div>`;
+      <select class="mg-pill" data-rt="${kind}-unit" aria-label="${esc(label)}">${units.map((u) => `<option value="${u}"${u === own.unit ? " selected" : ""}>${esc(t(`rtUnit_${u}`))}</option>`).join("")}</select></div>`;
   }
 
   wizardHtml() {

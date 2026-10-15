@@ -14,6 +14,21 @@ const uid = () => `c${++seq}`;
 export const HOLD_PRESETS = [0, 30, 120, 300];
 export const PAUSE_PRESETS = [60, 300, 900, 3600];
 export const MAX_PRESETS = [1800, 3600, 7200, 21600];
+// Freie Zeit neben den Schnellwahlen (seit 2.59.0): Feld mit Einheit, wie bei "Nach Dauer". Je Angabe der Wert im Entwurf, das Feld, die Einheiten,
+// die Grenzen und der Wert ohne Angabe. Die Pause darf nicht unter die kleinste Schnellwahl (1 Min.) fallen; bei den anderen gilt, was der Server erlaubt.
+const FREE = {
+  hold: { sel: '[data-rt="hold"][data-w="start"]', val: "holdS", own: "holdOwn", presets: HOLD_PRESETS, units: [1, 60, 3600], lo: () => 1, hi: (ui) => ui.limit("hold_max", 604800), def: 0 },
+  bhold: { sel: '[data-rt="hold"][data-w="back"]', val: "backHoldS", own: "backHoldOwn", presets: HOLD_PRESETS, units: [1, 60, 3600], lo: () => 1, hi: (ui) => ui.limit("hold_max", 604800), def: 0 },
+  pause: { sel: '[data-rt="pause"]', val: "pauseS", own: "pauseOwn", presets: PAUSE_PRESETS, units: [60, 3600], lo: () => PAUSE_PRESETS[0], hi: (ui) => ui.limit("pause_max", 86400), def: 60 },
+  bmax: { sel: '[data-rt="bmax"]', val: "backMaxS", own: "backMaxOwn", presets: MAX_PRESETS, units: [60, 3600, 86400], lo: (ui) => ui.limit("back_min", 10), hi: (ui) => ui.limit("back_max", 604800), def: 7200 },
+};
+const noOwn = () => ({ text: "", unit: 60 });
+// Ein Wert, der keine Schnellwahl ist, steht beim Bearbeiten im Feld (in der grössten Einheit, die ihn ohne Rest teilt)
+function ownFor(seconds, f) {
+  if (!seconds || f.presets.includes(seconds)) return noOwn();
+  for (const u of [...f.units].reverse()) if (seconds >= u && seconds % u === 0) return { text: String(seconds / u), unit: u };
+  return { text: String(Math.round(seconds / f.units[0])), unit: f.units[0] };
+}
 const LEAF_MAX = 10;
 const GROUP_MAX = 4;
 const ICONS = { binary_sensor: "🔘", sensor: "📈", switch: "🔌", light: "💡", cover: "🪟", lock: "🔒", climate: "🌡️", person: "👤", device_tracker: "📍", input_boolean: "🔘", media_player: "🔊", fan: "🌀", sun: "☀️" };
@@ -38,7 +53,7 @@ export function treeToServer(tree) {
 }
 
 export function triggerDefaults() {
-  return { conds: emptyTree(), holdS: 0, winOn: false, winFrom: "22:00", winTo: "06:00", pauseS: 60, onceTrig: false, backKind: "none", backTime: "23:30", backConds: emptyTree(), backHoldS: 0, backMaxOn: false, backMaxS: 7200 };
+  return { conds: emptyTree(), holdS: 0, winOn: false, winFrom: "22:00", winTo: "06:00", pauseS: 60, onceTrig: false, backKind: "none", backTime: "23:30", backConds: emptyTree(), backHoldS: 0, backMaxOn: false, backMaxS: 7200, holdOwn: noOwn(), backHoldOwn: noOwn(), pauseOwn: noOwn(), backMaxOwn: noOwn() };
 }
 
 export function triggerFromRoutine(rt) {
@@ -56,6 +71,10 @@ export function triggerFromRoutine(rt) {
     backHoldS: rt.back_hold_s || 0,
     backMaxOn: Boolean(rt.back_max_s),
     backMaxS: rt.back_max_s || 7200,
+    holdOwn: ownFor(rt.hold_s, FREE.hold),
+    backHoldOwn: ownFor(rt.back_hold_s, FREE.bhold),
+    pauseOwn: ownFor(rt.pause_s, FREE.pause),
+    backMaxOwn: ownFor(rt.back_max_s, FREE.bmax),
   };
 }
 
@@ -321,18 +340,13 @@ export const triggerMethods = {
         this.requestPreview();
         return true;
       case "hold":
-        d[which === "back" ? "backHoldS" : "holdS"] = Number(el.dataset.s);
-        this.paint();
+        this.pickFree(which === "back" ? "bhold" : "hold", Number(el.dataset.s));
         return true;
       case "pause":
-        d.pauseS = Number(el.dataset.s);
-        this.paint();
-        this.requestPreview();
+        this.pickFree("pause", Number(el.dataset.s));
         return true;
       case "bmax":
-        d.backMaxS = Number(el.dataset.s);
-        this.paint();
-        this.requestPreview();
+        this.pickFree("bmax", Number(el.dataset.s));
         return true;
       default:
     }
@@ -481,6 +495,12 @@ export const triggerMethods = {
         this.requestPreview();
         return true;
       }
+      case "hold-own":
+      case "bhold-own":
+      case "pause-own":
+      case "bmax-own":
+        this.typeFree(rt.slice(0, -4), el.value);
+        return true;
       case "win-from":
         d.winFrom = el.value;
         this.paintZones(["winerr"]);
@@ -507,6 +527,12 @@ export const triggerMethods = {
     if (!this.wiz) return false;
     const d = this.wiz.draft;
     switch (el.dataset.rt) {
+      case "hold-unit":
+      case "bhold-unit":
+      case "pause-unit":
+      case "bmax-unit":
+        this.unitFree(el.dataset.rt.slice(0, -5), Number(el.value));
+        return true;
       case "win-on":
         d.winOn = el.checked;
         this.paint();
@@ -539,7 +565,9 @@ export const triggerMethods = {
     const value = which === "back" ? d.backHoldS : d.holdS;
     const tree = this.treeOf(which);
     if (leavesOf(tree).length === 1 && leavesOf(tree)[0].kind === "change") return "";
-    return `<div class="mg-k">${esc(t("rtHoldLabel"))}</div>${this.tabsHtml(HOLD_PRESETS.map((s) => ({ on: value === s, attrs: `data-rt="hold" data-w="${which}" data-group="${which}" data-s="${s}"`, label: s ? this.fmtDur(s) : t("rtHoldNow") })))}`;
+    const key = which === "back" ? "bhold" : "hold";
+    const own = d[FREE[key].own];
+    return `<div class="mg-k">${esc(t("rtHoldLabel"))}</div>${this.tabsHtml(HOLD_PRESETS.map((s) => ({ on: !own.text && value === s, attrs: `data-rt="hold" data-w="${which}" data-group="${which}" data-s="${s}"`, label: s ? this.fmtDur(s) : t("rtHoldNow") })))}${this.freeHtml(key)}`;
   },
 
   // Seite "Wann", Teil Auslöser: Bedingungen, Dauer, Zeitfenster, Pause, nur einmal
@@ -557,7 +585,7 @@ export const triggerMethods = {
       html += `<div class="rt-winrange"><input class="mg-input rt-timein" type="time" data-rt="win-from" value="${esc(d.winFrom)}" aria-label="${esc(t("rtWinFrom"))}"><span>${esc(t("rtWinTo"))}</span><input class="mg-input rt-timein" type="time" data-rt="win-to" value="${esc(d.winTo)}" aria-label="${esc(t("rtWinTo"))}"></div>`;
       html += `<div data-rt-zone="winerr">${this.winErrHtml()}</div>`;
     }
-    html += `<div class="mg-k rt-sec">${esc(t("rtPauseTitle"))}</div><p class="mg-hint">${esc(t("rtPauseNote"))}</p>${this.tabsHtml(PAUSE_PRESETS.map((s) => ({ on: d.pauseS === s, attrs: `data-rt="pause" data-s="${s}"`, label: this.fmtDur(s) })))}`;
+    html += `<div class="mg-k rt-sec">${esc(t("rtPauseTitle"))}</div><p class="mg-hint">${esc(t("rtPauseNote"))}</p>${this.tabsHtml(PAUSE_PRESETS.map((s) => ({ on: !d.pauseOwn.text && d.pauseS === s, attrs: `data-rt="pause" data-s="${s}"`, label: this.fmtDur(s) })))}${this.freeHtml("pause")}`;
     html += `<div class="mg-optrow"><div>${esc(t("rtOnceTrig"))}<small>${esc(t("rtOnceTrigNote"))}</small></div><label class="switch"><input type="checkbox" data-rt="once-trig"${d.onceTrig ? " checked" : ""} aria-label="${esc(t("rtOnceTrig"))}"><span></span></label></div>`;
     return html;
   },
@@ -566,6 +594,75 @@ export const triggerMethods = {
   condSumHtml(which) {
     const tree = this.treeOf(which);
     return leavesOf(tree).length === 1 ? `<div class="mg-sumline">${this.esc(this.t("rtCondSum", this.treeText(tree)))}</div>` : "";
+  },
+
+  // Freie Zeit (seit 2.59.0): Zeile mit Feld und Einheit unter den Schnellwahlen, darunter der Fehlertext (eigene Zone, damit das Tippen
+  // das Feld nicht neu zeichnet)
+  freeHtml(key) {
+    const f = FREE[key];
+    const t = (k, ...a) => this.t(k, ...a);
+    return `${this.ownHtml(key, this.wiz.draft[f.own], t("rtOwnTime"), f.units)}<div data-rt-zone="ferr-${key}">${this.freeErrHtml(key)}</div>`;
+  },
+
+  freeError(key) {
+    const f = FREE[key];
+    const own = this.wiz.draft[f.own];
+    if (!own.text.trim()) return "";
+    const v = this.wiz.draft[f.val];
+    const lo = f.lo(this);
+    const hi = f.hi(this);
+    return !Number.isFinite(v) || v < lo || v > hi ? this.t("rtFreeRange", this.fmtDur(lo), this.fmtDur(hi)) : "";
+  },
+
+  freeErrHtml(key) {
+    const e = this.freeError(key);
+    return e ? `<div class="opt-error">${this.esc(e)}</div>` : "";
+  },
+
+  // Schnellwahl gewählt: das Feld ist leer
+  pickFree(key, seconds) {
+    const d = this.wiz.draft;
+    const f = FREE[key];
+    d[f.val] = seconds;
+    d[f.own] = { text: "", unit: d[f.own].unit };
+    this.paint();
+    if (key === "pause" || key === "bmax") this.requestPreview();
+  },
+
+  // Zeit getippt: keine Schnellwahl gilt mehr (die Kapsel verschwindet), der Fehlertext und der Satz laufen mit
+  typeFree(key, text) {
+    const d = this.wiz.draft;
+    const f = FREE[key];
+    d[f.own].text = text;
+    d[f.val] = text.trim() === "" ? f.def : this.parseOwn(text, d[f.own].unit);
+    // Feld geleert: es gilt wieder die Vorgabe, deren Kapsel neu gezeichnet wird (das Feld verliert dabei den Fokus)
+    if (text.trim() === "") {
+      this.paint();
+      this.syncNav();
+      this.requestPreview();
+      return;
+    }
+    for (const b of this.qa(`${f.sel}.on`)) {
+      b.classList.remove("on");
+      b.setAttribute("aria-checked", "false");
+    }
+    this.paintZones([`ferr-${key}`, "backsum"]);
+    this.syncNav();
+    this.requestPreview();
+  },
+
+  unitFree(key, unit) {
+    const d = this.wiz.draft;
+    const f = FREE[key];
+    d[f.own].unit = unit;
+    if (d[f.own].text.trim() !== "") d[f.val] = this.parseOwn(d[f.own].text, unit);
+    this.paint();
+    this.requestPreview();
+  },
+
+  // Sind die Angaben dieser Schlüssel in Ordnung? (leer, solange kein eigener Wert getippt ist)
+  freeOk(keys) {
+    return keys.every((k) => !this.freeError(k));
   },
 
   winErrHtml() {
@@ -584,13 +681,13 @@ export const triggerMethods = {
   // sonst stünde "Bedingungen erwartet" schon beim ersten Wechsel zum Auslöser da, bevor jemand etwas eingeben konnte.
   draftIncomplete() {
     const d = this.wiz.draft;
-    return (d.kind === "trigger" && (!treeValid(d.conds) || Boolean(this.winError()))) || (d.backKind === "trigger" && !treeValid(d.backConds));
+    return (d.kind === "trigger" && (!treeValid(d.conds) || Boolean(this.winError()) || !this.freeOk(["hold", "pause"]))) || (d.backKind === "trigger" && (!treeValid(d.backConds) || !this.freeOk(d.backMaxOn ? ["bhold", "bmax"] : ["bhold"])));
   },
 
   // Geht der Schritt "Wann" mit einem Auslöser weiter?
   triggerValid() {
     const d = this.wiz.draft;
-    return treeValid(d.conds) && !this.winError() && !this.wiz.pvError;
+    return treeValid(d.conds) && !this.winError() && this.freeOk(["hold", "pause"]) && !this.wiz.pvError;
   },
 
   // Seite "Zurückschalten" (Schritt 6)
@@ -615,7 +712,7 @@ export const triggerMethods = {
         html += this.holdHtml("back");
         html += `<div class="mg-k rt-sec">${esc(t("rtBackMaxTitle"))}</div><p class="mg-hint">${esc(t("rtBackMaxNote"))}</p>
           <div class="mg-optrow"><div>${esc(t("rtBackMaxSwitch"))}</div><label class="switch"><input type="checkbox" data-rt="bmax-on"${d.backMaxOn ? " checked" : ""} aria-label="${esc(t("rtBackMaxSwitch"))}"><span></span></label></div>`;
-        if (d.backMaxOn) html += this.tabsHtml(MAX_PRESETS.map((s) => ({ on: d.backMaxS === s, attrs: `data-rt="bmax" data-s="${s}"`, label: this.fmtDur(s) })));
+        if (d.backMaxOn) html += this.tabsHtml(MAX_PRESETS.map((s) => ({ on: !d.backMaxOwn.text && d.backMaxS === s, attrs: `data-rt="bmax" data-s="${s}"`, label: this.fmtDur(s) }))) + this.freeHtml("bmax");
       }
     }
     const e = this.entity(d.entity_id);
@@ -637,6 +734,6 @@ export const triggerMethods = {
     if (d.backKind === "none") return true;
     if (d.backKind === "duration") return Boolean(d.back_s) && !this.backError();
     if (d.backKind === "time") return /^\d{2}:\d{2}$/.test(d.backTime || "");
-    return treeValid(d.backConds) && !this.wiz.pvError;
+    return treeValid(d.backConds) && this.freeOk(d.backMaxOn ? ["bhold", "bmax"] : ["bhold"]) && !this.wiz.pvError;
   },
 };
