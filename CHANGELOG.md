@@ -11,11 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 Log: the entries survive a restart of Home Assistant.
 
+Includes the changes from 2.46.1.
+
 ### Changed
 
 - Log: the last 500 entries, debug entries included, are now kept across restarts of Home Assistant. Before, they lived in memory only and were gone after every restart, so the history that explains a problem was missing right when it was needed. The limit stays at 500 entries (the newest ones). The entries are written to the integration's small log file, delayed and at most every 30 seconds (and when Home Assistant stops); "Clear" empties the stored entries too, and removing the integration deletes them. The window says "kept across restarts" instead of "in memory only", and "since" names the start of the kept history.
 
 ## [2.46.1] - 2026-10-15
+
+Not released; included in 2.47.0.
 
 ### Changed
 
@@ -3243,7 +3247,6 @@ First pre-release.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.47.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.47.0
-[2.46.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.1
 [2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0
 [2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0
 [2.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.43.0
