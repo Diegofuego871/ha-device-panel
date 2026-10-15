@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.61.0] - 2026-10-15
+
+Routinen: Szenen und Gruppen.
+
+### Hinzugefügt
+
+- Routinen-Assistent, "Routine hinzufügen" im Fenster "Alle Routinen": Die erste Seite heisst jetzt "Gerät, Gruppe oder Szene?". Nach den Geräten kommen zwei Einträge ohne Gerät: "Szenen" und "Gruppen". Es erscheinen nur Einträge, in denen etwas steht.
+- Szenen (Home Assistant `scene`, ohne Gerät): Die einzige Aktion ist "Aktivieren" (`scene.turn_on`). Eine Szene hat kein Gegenteil, darum gibt es weder die Seite "Zurückschalten" noch eine Optionen-Seite; Zeit oder Auslöser, Zeitfenster, Pause und "nur einmal" gelten wie bei jeder Routine. Push und Protokoll sagen "Szene <Name> aktiviert". "Jetzt ausführen" im Assistenten aktiviert die Szene einmal.
+- Gruppen (ein Licht, Schalter, Ventilator … , das in seinem Attribut `entity_id` andere Entitäten aufführt und kein Gerät hat, zum Beispiel eine Lichtergruppe): Sie verhalten sich wie eine einzelne Lampe, mit Ein, Aus, Umschalten, Optionen für Helligkeit und Farbe und Zurückschalten (auch "wie vorher").
+- Übersicht und Fenster "Alle Routinen": Routinen von Szenen und Gruppen stehen nach den Geräten in eigenen Karten "Szenen" und "Gruppen" (mit eigenem Symbol, ohne den Link "Gerät öffnen"). Eine Szene, die zu einem Gerät gehört (zum Beispiel Hue-Szenen), bleibt bei ihrem Gerät und steht in dessen Reiter Routinen. Szenen erscheinen nicht im Reiter "Schalter" des Geräte-Popups.
+- Die Grenze von 20 Routinen pro Gerät gilt nicht für "Szenen" und "Gruppen" (die Grenze von 200 insgesamt schon).
+- Neuer Wert in den Routinen-Daten: `device_id` darf `@scenes` oder `@groups` sein (WebSocket `routine_devices`, `routine_get`, `routine_list`, `routine_save` nehmen sie an). Skripte werden nicht angeboten.
+
 ## [2.60.0] - 2026-10-15
 
 App-Launcher: Vollbild auf dem Handy.
@@ -3530,6 +3543,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.61.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.61.0
 [2.60.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.60.0
 [2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0
 [2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0

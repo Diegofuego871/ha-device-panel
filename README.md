@@ -164,14 +164,14 @@ Switches an entity of a device once or on a schedule, without an automation.
 |---|---|
 | <img src="docs/screenshots/en/routine-tab.png" alt="Tab Routines of a device with a routine"> | <img src="docs/screenshots/en/routine-wizard.png" alt="Routine assistant, step 2: when should it switch"> |
 
-- **What:** pick the entity and the action (on, off, toggle), optionally switch back after a while
+- **What:** pick the entity and the action (on, off, toggle), optionally switch back after a while. Added through the overview "All routines", the first page is "Device, group or scene?": next to devices there are **scenes** (action "Activate", nothing to switch back) and **groups** (for example a light group, behaves like a single lamp), both without a device
 - **Options:** if the entity can be set when it is turned on, a page of its own follows: light brightness, colour temperature and colour; shutter position; climate target temperature and mode; media volume; fan speed. A preview shows the result (the lamp lights in the chosen colour), nothing is switched by it, and "Run now" tries the real strength; without a setting everything stays "as last used"
 - **Switch back:** after a while back to "off" (the opposite) or "as before": the routine remembers the scene right before switching (for example brightness and colour) and restores it, so a lamp can be briefly brighter and then as it was. Own page "Switch back": never, after a duration, at a time or by a trigger (for example on at 20:00, off when the rain sensor is dry), with "at the latest after" as a safety net
 - **When:** in X minutes, once at a date and time, or repeating daily, weekly on chosen weekdays or monthly, with a check of the next runs before you save; or **by a trigger** instead of a time: any entity, "above" / "below" / "is" / "changes", several conditions with "and" / "or" like Magic Push, "holds for at least", an optional time window (also across midnight), a pause after switching and "only once". Every time has quick choices and a field for your own time (the pause not below 1 minute). It switches only when the condition is newly met
 - **Test:** a button "Run now" tries the chosen switch
 - **Reminder:** optionally a push at the moment it switches, with a preview and its own recipient
 - **Runs in Home Assistant:** with its time zone, so a routine also fires with the panel closed and after a restart (within a catch-up window you set), and "Pause all routines" is one switch
-- **Overview:** the lightning bolt in the header (also in the launcher) opens all routines in one card per device, with search and filter, edit, switch on or off, delete and favorites
+- **Overview:** the lightning bolt in the header (also in the launcher) opens all routines in one card per device (scenes and groups without a device in cards of their own), with search and filter, edit, switch on or off, delete and favorites
 
 <p align="center"><img src="docs/screenshots/en/routines-all.png" alt="Window with all routines, one card per device" width="720"></p>
 

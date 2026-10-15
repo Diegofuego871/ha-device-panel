@@ -1072,8 +1072,19 @@
           { entity_id: "switch.plug", name: de ? "Steckdose" : "Plug", domain: "switch", state: "on", available: true, actions: ["on", "off", "toggle"] },
           { entity_id: "light.led", name: "LED-Ring", domain: "light", state: "off", available: true, actions: ["on", "off", "toggle"] },
         ];
+        // Szenen und Gruppen ohne Gerät (2.61.0): Sammelstellen "@scenes" und "@groups"
+        const HOLDER_ENTS = {
+          "@scenes": [
+            { entity_id: "scene.abendlicht", name: "Abendlicht", domain: "scene", state: "unknown", available: true, actions: ["activate"], options: [] },
+            { entity_id: "scene.film", name: de ? "Filmabend" : "Movie night", domain: "scene", state: "unknown", available: true, actions: ["activate"], options: [] },
+          ],
+          "@groups": [
+            { entity_id: "light.wohnzimmer", name: de ? "Wohnzimmer Leuchten" : "Living room lights", domain: "light", state: "off", available: true, actions: ["on", "off", "toggle"], options: [{ key: "brightness_pct", type: "percent", min: 1, max: 100 }] },
+          ],
+        };
+        const isHolder = (id) => id === "@scenes" || id === "@groups";
         // Zustände, die "Jetzt ausführen" gesetzt hat, überleben die Aufrufe (DEFAULT_ENTS entsteht bei jedem Aufruf neu)
-        const entsOf = (id) => (window.__routineEntities && id in window.__routineEntities ? window.__routineEntities[id] : DEFAULT_ENTS).map((e) => ((window.__tryState ||= {})[e.entity_id] ? { ...e, state: window.__tryState[e.entity_id] } : e));
+        const entsOf = (id) => (window.__routineEntities && id in window.__routineEntities ? window.__routineEntities[id] : isHolder(id) ? (window.__noHolders ? [] : HOLDER_ENTS[id]) : DEFAULT_ENTS).map((e) => ((window.__tryState ||= {})[e.entity_id] ? { ...e, state: window.__tryState[e.entity_id] } : e));
         const entOf = (r) => entsOf(r.device_id).find((e) => e.entity_id === r.entity_id);
         const lastDay = (y, m) => new Date(y, m + 1, 0).getDate();
         const at = (y, m, d, hh, mm) => new Date(y, m, d, hh, mm, 0, 0).getTime() / 1000;
@@ -1121,7 +1132,7 @@
           if (!e) fail("Die Entität gehört nicht zu diesem Gerät");
           if (!e.actions.includes(r.action)) fail("Diese Aktion gibt es für diese Entität nicht");
           if (String(r.name || "").length > 60) fail("Name: höchstens 60 Zeichen");
-          if ((r.back_s || (r.back_kind && r.back_kind !== "none")) && r.action === "toggle") fail("Umschalten lässt sich nicht zurückschalten");
+          if ((r.back_s || (r.back_kind && r.back_kind !== "none")) && (r.action === "toggle" || r.action === "activate")) fail("Umschalten lässt sich nicht zurückschalten");
           // Zurückschalten (2.54.0): none, duration, time, trigger
           const bk = r.back_kind || (r.back_s ? "duration" : "none");
           if (bk === "time" && !r.back_time) fail("Zurückschalten: Uhrzeit fehlt");
@@ -1162,10 +1173,11 @@
         const today = () => ymd(new Date());
         if (msg.type.endsWith("routine_devices")) {
           if (window.__routineDevicesFail) throw new Error(window.__routineDevicesFail);
-          return { devices: window.__devices.filter((d) => entsOf(d.id).length).map((d) => ({ id: d.id, name: d.name, entities: entsOf(d.id).length })).sort((a, b) => a.name.localeCompare(b.name)) };
+          return { devices: [...window.__devices.filter((d) => entsOf(d.id).length).map((d) => ({ id: d.id, name: d.name, entities: entsOf(d.id).length })).sort((a, b) => a.name.localeCompare(b.name)),
+            ...["@scenes", "@groups"].filter((h) => entsOf(h).length).map((h) => ({ id: h, name: "", entities: entsOf(h).length, holder: true }))] };
         }
         if (msg.type.endsWith("routine_get")) {
-          if (!window.__devices.find((d) => d.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
+          if (!isHolder(msg.device_id) && !window.__devices.find((d) => d.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
           if (window.__routineLoadFails) throw new Error(window.__routineLoadFails);
           const mine = T.list.filter((r) => r.device_id === msg.device_id).sort((a, b) => a.name.localeCompare(b.name));
           return {
@@ -1229,6 +1241,7 @@
           const word = r.action === "toggle" ? (de ? "umgeschaltet" : "toggled") : r.action === "on" ? (de ? "ein" : "on") : (de ? "aus" : "off");
           const clock = local(Date.now() / 1000).time;
           const name = String(r.name || "").trim() || e.name;
+          if (r.action === "activate") return { title: `⚡ Routine: ${name}`, message: de ? `Szene ${e.name} aktiviert · ${clock}` : `Scene ${e.name} activated · ${clock}`, name, target: r.target || window.__opts.notify_service, next_runs: runsOf(r, Date.now() / 1000) };
           return { title: `⚡ Routine: ${name}`, message: r.action === "toggle" ? (de ? `${e.name} wurde umgeschaltet · ${clock}` : `${e.name} was toggled · ${clock}`) : (de ? `${e.name} ist jetzt ${word} · ${clock}` : `${e.name} is now ${word} · ${clock}`), name,
             target: r.target || window.__opts.notify_service, next_runs: runsOf(r, Date.now() / 1000) };
         }

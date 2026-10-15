@@ -713,3 +713,94 @@ async def test_old_option_names_are_taken_over(hass: HomeAssistant) -> None:
     assert options["routines_catch_up"] == 60
     assert not [key for key in options if key.startswith("timers_") or key == "notify_service_timers"]
     await hass.data[DATA_ROUTINES].async_stop()
+
+
+# -- Szenen und Gruppen (2.61.0) --------------------------------------------------------------------
+
+
+def _holder_raw(holder: str, entity_id: str, **kwargs: Any) -> dict[str, Any]:
+    return {"device_id": holder, "entity_id": entity_id, "name": "Abendlicht", "action": "activate", "kind": "countdown", "delay_s": 600, **kwargs}
+
+
+async def test_scene_without_device_activates_and_notifies(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Szene ohne Gerät: eigene Sammelstelle, Aktion "Aktivieren" ruft scene.turn_on, Meldung und Protokoll sagen "Szene aktiviert"."""
+    from custom_components.device_panel import activity
+
+    on = async_mock_service(hass, "scene", "turn_on")
+    handy = async_mock_service(hass, "notify", "handy")
+    await _options(hass, notify_service="notify.handy")
+    hass.states.async_set("scene.abend", "unknown", {"friendly_name": "Abend"})
+    manager = hass.data[DATA_ROUTINES]
+    saved = await manager.async_save_routine(_holder_raw(routines.HOLDER_SCENES, "scene.abend", delay_s=60, push=True))
+    await _tick(hass, freezer, 61)
+    assert len(on) == 1 and on[0].data["entity_id"] == "scene.abend"
+    assert handy[0].data["message"].startswith("Szene Abend aktiviert · ")
+    # kein Gerät: Meldung öffnet das Panel, das Protokoll hat keinen Gerätelink
+    assert "device=" not in handy[0].data["data"]["url"]
+    entry = [e for e in activity.get(hass).entries if e["text"].startswith("Szene aktiviert")]
+    assert entry and entry[0]["device_id"] is None
+    payload = routines.routine_payload(hass, manager, manager.get(saved["id"]))
+    assert payload["device_name"] == "" and payload["actions"] == ["activate"] and payload["domain"] == "scene"
+
+
+async def test_scene_rules(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Eine Szene kennt nur "Aktivieren" und lässt sich nicht zurückschalten; Szenen eines Geräts gehören zum Gerät, nicht zu den Szenen."""
+    manager = hass.data[DATA_ROUTINES]
+    hass.states.async_set("scene.abend", "unknown")
+    for raw, message in (
+        (_holder_raw(routines.HOLDER_SCENES, "scene.abend", action="on"), "gibt es für diese Entität nicht"),
+        (_holder_raw(routines.HOLDER_SCENES, "scene.abend", back_s=60), "nicht zurückschalten"),
+        (_holder_raw(routines.HOLDER_GROUPS, "scene.abend"), "gehört nicht"),
+        (_holder_raw(routines.HOLDER_SCENES, "scene.gibtsnicht"), "gehört nicht"),
+        (_holder_raw(routines.HOLDER_SCENES, "scene.abend", options={"brightness_pct": 5}), "keine Schaltoptionen"),
+    ):
+        with pytest.raises(vol.Invalid) as err:
+            await manager.async_save_routine(raw)
+        assert message in str(err.value), (raw, str(err.value))
+    device = _device(hass, "Hue Zimmer")
+    scene = _switch(hass, device, "scene", "unknown", "scene")
+    assert routines.in_holder(hass, routines.HOLDER_SCENES, scene) is False
+    assert (await manager.async_save_routine({**_raw(device, scene), "action": "activate"}))["action"] == "activate"
+    assert [d["id"] for d in routines.switchable_devices(hass)] == [device.id, routines.HOLDER_SCENES]
+
+
+async def test_group_without_device_behaves_like_a_lamp(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Gruppe (Licht mit Mitgliedern, ohne Gerät): ein, aus, Helligkeit und Zurückschalten wie bei einer einzelnen Lampe."""
+    on = async_mock_service(hass, "light", "turn_on")
+    off = async_mock_service(hass, "light", "turn_off")
+    hass.states.async_set("light.wohnzimmer", "off", {"entity_id": ["light.a", "light.b"], "supported_color_modes": ["brightness"], "friendly_name": "Wohnzimmer"})
+    hass.states.async_set("light.einzeln", "off", {"supported_color_modes": ["brightness"]})
+    manager = hass.data[DATA_ROUTINES]
+    with pytest.raises(vol.Invalid):
+        await manager.async_save_routine(_holder_raw(routines.HOLDER_GROUPS, "light.einzeln", action="on"))
+    saved = await manager.async_save_routine(_holder_raw(routines.HOLDER_GROUPS, "light.wohnzimmer", action="on", delay_s=60, back_s=120, options={"brightness_pct": 40}))
+    assert saved["device_id"] == routines.HOLDER_GROUPS
+    await _tick(hass, freezer, 61)
+    assert len(on) == 1 and on[0].data["brightness_pct"] == 40
+    await _tick(hass, freezer, 121)
+    assert len(off) == 1 and off[0].data["entity_id"] == "light.wohnzimmer"
+    # keine Obergrenze pro Gerät für Sammelstellen
+    for _ in range(routines.MAX_PER_DEVICE + 1):
+        await manager.async_save_routine(_holder_raw(routines.HOLDER_GROUPS, "light.wohnzimmer", action="on"))
+
+
+async def test_holders_in_listing_and_websocket(hass: HomeAssistant, setup, hass_ws_client) -> None:  # noqa: F811
+    """Die Sammelstellen erscheinen in der Geräteliste, nur wenn sie etwas enthalten; routine_get und routine_list kennen sie."""
+    hass.states.async_set("scene.abend", "unknown", {"friendly_name": "Abend"})
+    hass.states.async_set("light.gruppe", "on", {"entity_id": ["light.a"], "supported_color_modes": ["onoff"], "friendly_name": "Gruppe"})
+    assert routines.switchable_devices(hass) == [
+        {"id": "@scenes", "name": "", "entities": 1, "holder": True},
+        {"id": "@groups", "name": "", "entities": 1, "holder": True},
+    ]
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/routine_get", "device_id": "@scenes"})
+    got = (await client.receive_json())["result"]
+    assert [(e["entity_id"], e["actions"]) for e in got["entities"]] == [("scene.abend", ["activate"])]
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/routine_save", "routine": _holder_raw("@scenes", "scene.abend")})
+    assert (await client.receive_json())["success"]
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/routine_list"})
+    rows = (await client.receive_json())["result"]["routines"]
+    assert [r["device_id"] for r in rows] == ["@scenes"]
+    hass.states.async_remove("scene.abend")
+    hass.states.async_remove("light.gruppe")
+    assert routines.switchable_devices(hass) == []

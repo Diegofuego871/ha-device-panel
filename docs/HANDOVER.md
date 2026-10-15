@@ -3,6 +3,17 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.61.0, Routinen: Szenen und Gruppen)
+
+- Wunsch des Nutzers: Beim Anlegen über "Alle Routinen" auch Szenen und Gruppen von Leuchten wählen; Titel "Gerät, Gruppe oder Szene?"; keine Skripte. Umsetzung: Sammelstellen statt Gerät, `device_id` = `@scenes` oder `@groups`
+  (`HOLDERS` in `routines.py`; `_DEVICE_RE` lässt sie zu; `is_holder`, `in_holder`, `holder_entity_ids`, `log_device`). Szene = `SERVICES["scene"] = {"activate": ("scene", "turn_on")}`, Aktion `activate` (`ACTIONS`), ohne Gegenteil (`opposite` = None),
+  also ohne Zurückschalten und ohne Optionen; Wort "activated" (Push `routine_text_activated`, Protokoll `routine_run_scene`, `routine_run_scene_manual`). Gruppe = schaltbare Entität (nicht Szene) ohne Gerät mit Liste in `entity_id` (`is_group_state`), verhält sich wie die Lampe.
+  Szenen mit Gerät (Hue) bleiben beim Gerät (`switchable_entities`). Pro Sammelstelle keine Grenze von 20 (nur 200 insgesamt). `clean()` prüft bei Sammelstellen die Zugehörigkeit statt des Geräts; Push ohne Gerät öffnet das Panel ohne Gerät und ohne Integrationsbild;
+  das Protokoll hat dort `device_id` None. `switchable_devices` hängt `{"id": "@scenes", "name": "", "entities": n, "holder": True}` an (nur wenn nicht leer); das Panel benennt sie (`rtHolderScenes`, `rtHolderGroups`).
+  Panel (`routines.js`): `HOLDERS`, `isHolder`; Schritt 0 mit Emoji statt Gerätesymbol, Übersicht mit eigenen Karten nach den Geräten ohne "Gerät öffnen"; `routineEmoji("scene")` = 🎬, aber nicht in `DOMAIN_EMOJI` (der Reiter "Schalter" zeigt keine Szenen).
+  Simulator: `HOLDER_ENTS` (`window.__noHolders` blendet sie aus). Tests: `tests/test_routines.py` (vier neue), Suite `routinescene` (48 Prüfungen), `routineadd` angepasst.
+- Offen: nicht an einer echten HA-Instanz geprüft (Szenen ohne `unique_id`, Licht-Gruppen aus YAML). Gruppen der alten Art (`group.*`) werden nicht angeboten.
+
 ## Stand (2.60.0, App-Launcher als Vollbild auf dem Handy)
 
 - Wunsch des Nutzers: `dialog.apps-dlg` bis 700 px vollflächig (`inset: 0`, ohne Rundung und `clip-path`), Kopf `.ap-head` 12/12/8/16 px, `.ap-x` 38 px: Kreuz 12 px vom oberen und rechten Rand wie bei den anderen Vollbild-Fenstern.

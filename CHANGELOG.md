@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.61.0] - 2026-10-15
+
+Routines: scenes and groups.
+
+### Added
+
+- Routine assistant, "Add routine" in the window "All routines": the first page is now "Device, group or scene?". After the devices come two entries without a device: "Scenes" and "Groups". Only entries that contain something are shown.
+- Scenes (Home Assistant `scene`, without a device): the one action is "Activate" (`scene.turn_on`). A scene has no opposite, so there is no page "Switch back" and no options page; time or trigger, time window, pause and "only once" work as for every routine. Push and log say "Scene <name> activated". "Run now" in the assistant activates the scene once.
+- Groups (a light, switch, fan … that lists other entities in its `entity_id` attribute and has no device, for example a light group): they behave like a single lamp, with on, off, toggle, brightness and colour options and switching back (also "as before").
+- Overview and window "All routines": routines of scenes and groups stand in their own cards "Scenes" and "Groups" after the devices (with their own symbol, without the link "Open device"). A scene that belongs to a device (for example Hue scenes) stays with its device and appears in its routine tab. Scenes do not appear in the tab "Switches" of the device pop-up.
+- The limit of 20 routines per device does not apply to "Scenes" and "Groups" (the limit of 200 in total does).
+- New value in the routine data: `device_id` may be `@scenes` or `@groups` (WebSocket `routine_devices`, `routine_get`, `routine_list`, `routine_save` accept them). Scripts are not offered.
+
 ## [2.60.0] - 2026-10-15
 
 App launcher: full screen on the phone.
@@ -3429,6 +3442,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.61.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.61.0
 [2.60.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.60.0
 [2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0
 [2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0

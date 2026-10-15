@@ -51,7 +51,7 @@ def ws_routine_devices(hass: HomeAssistant, connection: websocket_api.ActiveConn
 def ws_routine_get(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
     """Routinen eines Geräts mit den schaltbaren Entitäten, den Empfängern und dem Standard-Ziel."""
     manager = _manager(hass)
-    if manager is None or dr.async_get(hass).async_get(msg["device_id"]) is None:
+    if manager is None or (not routines.is_holder(msg["device_id"]) and dr.async_get(hass).async_get(msg["device_id"]) is None):
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
         return
     rows = manager.routines(msg["device_id"])
@@ -81,7 +81,7 @@ def ws_routine_list(hass: HomeAssistant, connection: websocket_api.ActiveConnect
     devices = dr.async_get(hass)
     out = []
     for routine in manager.routines():
-        if devices.async_get(routine["device_id"]) is None:
+        if not routines.is_holder(routine["device_id"]) and devices.async_get(routine["device_id"]) is None:
             continue
         out.append(routines.routine_payload(hass, manager, routine))
     connection.send_result(msg["id"], {"routines": out, "now": time.time(), "today": dt_util.now().strftime("%Y-%m-%d")})

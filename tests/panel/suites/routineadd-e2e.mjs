@@ -1,5 +1,5 @@
 // Routine hinzufügen im Fenster aller Routinen (2.27.0, Wunsch des Nutzers): derselbe Assistent wie am Gerät, mit einem Schritt mehr
-// davor ("Für welches Gerät?"). Deutsch und Englisch, Desktop und Handy.
+// davor ("Gerät, Gruppe oder Szene?"). Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
 
@@ -8,8 +8,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { add: "Routine hinzufügen", q0: "Für welches Gerät?", step: (n, t) => `Schritt ${n} von ${t}`, q1: "Was soll geschaltet werden?", cancel: "Abbrechen", back: "Zurück", next: "Weiter" },
-  en: { add: "Add routine", q0: "For which device?", step: (n, t) => `Step ${n} of ${t}`, q1: "What should be switched?", cancel: "Cancel", back: "Back", next: "Next" },
+  de: { add: "Routine hinzufügen", q0: "Gerät, Gruppe oder Szene?", step: (n, t) => `Schritt ${n} von ${t}`, q1: "Was soll geschaltet werden?", cancel: "Abbrechen", back: "Zurück", next: "Weiter" },
+  en: { add: "Add routine", q0: "Device, group or scene?", step: (n, t) => `Step ${n} of ${t}`, q1: "What should be switched?", cancel: "Cancel", back: "Back", next: "Next" },
 };
 
 for (const lang of ["de", "en"]) {

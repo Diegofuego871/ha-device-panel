@@ -517,6 +517,10 @@ eigener Auslöser sein. Neue Seite "Zurückschalten" (Nie / Nach Dauer / Zu eine
 "Spätestens nach" als Sicherung); Start und Ende sind frei kombinierbar. Einzelheiten: `docs/mockups/timer-trigger-v1/README.md`,
 `timer-trigger-v2/README.md`, `routines.py`, `panel/routine-trigger.js`.
 
+Szenen und Gruppen (seit 2.61.0): Beim Anlegen über "Alle Routinen" wählt der erste Schritt ein Gerät, "Gruppen" oder "Szenen" (Sammelstellen `@groups`, `@scenes`
+statt Geräte-ID, für Entitäten ohne Gerät). Szene: Aktion "Aktivieren" (`scene.turn_on`), kein Zurückschalten, keine Optionen. Gruppe (Entität mit Mitgliedern in
+`entity_id`): wie eine einzelne Lampe. Skripte gibt es nicht. Einzelheiten: `routines.py` (`HOLDERS`), `docs/HANDOVER.md`.
+
 ## Live-Aktivität beim Laden (seit 2.19.0, Wunsch des Nutzers)
 
 Optional (aus), global, pro Integration und pro Gerät, unabhängig von der Lademeldung. Zeigt auf iPhone (Live-Aktivität, iOS

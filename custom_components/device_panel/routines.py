@@ -113,9 +113,16 @@ SERVICES: dict[str, dict[str, tuple[str, str]]] = {
     "lock": {"on": ("lock", "lock"), "off": ("lock", "unlock")},
     "climate": {"on": ("climate", "turn_on"), "off": ("climate", "turn_off"), "toggle": ("climate", "toggle")},
     "media_player": {"on": ("media_player", "turn_on"), "off": ("media_player", "turn_off"), "toggle": ("media_player", "toggle")},
+    # Szene (seit 2.61.0): nur auslösen, es gibt weder Aus noch Zurückschalten
+    "scene": {"activate": ("scene", "turn_on")},
 }
 DOMAINS = tuple(SERVICES)
-ACTIONS = ("on", "off", "toggle")
+ACTIONS = ("on", "off", "toggle", "activate")
+# Sammelstellen für Szenen und Gruppen ohne Gerät (seit 2.61.0): stehen dort, wo sonst die Geräte-ID steht, und beginnen mit "@",
+# damit sie nie mit einer echten Geräte-ID zusammenfallen.
+HOLDER_SCENES = "@scenes"
+HOLDER_GROUPS = "@groups"
+HOLDERS = (HOLDER_SCENES, HOLDER_GROUPS)
 BACK_MODES = ("opposite", "restore")
 # Pause zwischen zwei Diensten eines Schaltens (Klima: einschalten, dann Temperatur; Medien: einschalten, dann Lautstärke):
 # Manche Geräte nehmen die zweite Angabe erst an, wenn sie wirklich laufen.
@@ -123,13 +130,13 @@ CALL_GAP_S = 1.0
 # Wort der Meldung nach dem Schalten (push.py: routine_res_*)
 RESULT = {
     ("cover", "on"): "open", ("cover", "off"): "closed", ("valve", "on"): "open", ("valve", "off"): "closed",
-    ("lock", "on"): "locked", ("lock", "off"): "unlocked",
+    ("lock", "on"): "locked", ("lock", "off"): "unlocked", ("scene", "activate"): "activated",
 }
 
 _ID_RE = re.compile(r"^[0-9a-f]{12}$")
 _ENTITY_RE = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
 _NOTIFY_RE = re.compile(r"^notify\.[a-z0-9_]+$")
-_DEVICE_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+_DEVICE_RE = re.compile(r"^(@scenes|@groups|[A-Za-z0-9_-]{1,64})$")
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
@@ -137,6 +144,39 @@ _TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 def actions_for(domain: str) -> list[str]:
     """Aktionen, die eine Routine für diese Art Entität kennt (Schlösser haben kein Umschalten)."""
     return [a for a in ACTIONS if a in SERVICES.get(domain, {})]
+
+
+def is_holder(device_id: str) -> bool:
+    """Sammelstelle für Szenen oder Gruppen statt eines Geräts."""
+    return device_id in HOLDERS
+
+
+def log_device(routine: dict[str, Any]) -> str | None:
+    """Gerät für das Protokoll (zum Öffnen aus dem Eintrag); Szenen und Gruppen haben keines."""
+    return None if is_holder(routine["device_id"]) else routine["device_id"]
+
+
+def _no_device(entry: er.RegistryEntry | None) -> bool:
+    """Entität ohne Gerät (auch ohne Registry-Eintrag, etwa eine Szene aus YAML)."""
+    return entry is None or entry.device_id is None
+
+
+def is_group_state(state: State | None) -> bool:
+    """Gruppe von Entitäten: eine schaltbare Entität (ausser Szene), die Mitglieder in "entity_id" führt (Licht-, Schalter-Gruppe …)."""
+    if state is None or state.domain not in SERVICES or state.domain == "scene":
+        return False
+    members = state.attributes.get("entity_id")
+    return isinstance(members, (list, tuple)) and bool(members)
+
+
+def in_holder(hass: HomeAssistant, holder: str, entity_id: str) -> bool:
+    """Gehört die Entität in diese Sammelstelle? Szenen ohne Gerät zu den Szenen, Gruppen ohne Gerät zu den Gruppen."""
+    entry = er.async_get(hass).async_get(entity_id)
+    if not _no_device(entry) or (entry is None and hass.states.get(entity_id) is None):
+        return False
+    if holder == HOLDER_SCENES:
+        return entity_id.split(".", 1)[0] == "scene"
+    return holder == HOLDER_GROUPS and is_group_state(hass.states.get(entity_id))
 
 
 def opposite(action: str) -> str | None:
@@ -886,11 +926,15 @@ class RoutineManager:
         """Entwurf prüfen (gegen Gerät, Entität, Aktion und Zeitangaben); gibt die bereinigte Routine zurück."""
         routine = ROUTINE_SCHEMA(raw)
         registry = er.async_get(self.hass)
-        if dr.async_get(self.hass).async_get(routine["device_id"]) is None:
-            raise vol.Invalid("Gerät nicht gefunden")
-        entry = registry.async_get(routine["entity_id"])
-        if entry is None or entry.device_id != routine["device_id"]:
-            raise vol.Invalid("Die Entität gehört nicht zu diesem Gerät")
+        if is_holder(routine["device_id"]):
+            if not in_holder(self.hass, routine["device_id"], routine["entity_id"]):
+                raise vol.Invalid("Diese Entität gehört nicht zu den Szenen oder Gruppen")
+        else:
+            if dr.async_get(self.hass).async_get(routine["device_id"]) is None:
+                raise vol.Invalid("Gerät nicht gefunden")
+            entry = registry.async_get(routine["entity_id"])
+            if entry is None or entry.device_id != routine["device_id"]:
+                raise vol.Invalid("Die Entität gehört nicht zu diesem Gerät")
         domain = routine["entity_id"].split(".", 1)[0]
         if domain not in SERVICES:
             raise vol.Invalid("Diese Entität lässt sich nicht schalten")
@@ -924,7 +968,7 @@ class RoutineManager:
     def default_name(self, routine: dict[str, Any]) -> str:
         state = self.hass.states.get(routine["entity_id"])
         entry = er.async_get(self.hass).async_get(routine["entity_id"])
-        device = dr.async_get(self.hass).async_get(routine["device_id"])
+        device = None if is_holder(routine["device_id"]) else dr.async_get(self.hass).async_get(routine["device_id"])
         return entity_label(routine["entity_id"], entry, device, state)[:NAME_MAX]
 
     async def async_save_routine(self, raw: dict[str, Any]) -> dict[str, Any]:
@@ -938,7 +982,7 @@ class RoutineManager:
         if existing is None:
             if len(self._routines) >= MAX_TOTAL:
                 raise vol.Invalid(f"Höchstens {MAX_TOTAL} Routinen insgesamt")
-            if len(self.routines(routine["device_id"])) >= MAX_PER_DEVICE:
+            if not is_holder(routine["device_id"]) and len(self.routines(routine["device_id"])) >= MAX_PER_DEVICE:
                 raise vol.Invalid(f"Höchstens {MAX_PER_DEVICE} Routinen pro Gerät")
             routine["id"] = uuid.uuid4().hex[:12]
         routine["created"] = existing["created"] if existing and "created" in existing else time.time()
@@ -1021,7 +1065,7 @@ class RoutineManager:
         when = max(min(points), time.time() + 1)
         if activity.get(self.hass).debug:
             revert = rt["revert_due"] is not None and min(points) == rt["revert_due"]
-            activity.record(self.hass, "debug", "routine", "routine_armed_revert" if revert else "routine_armed", routine["name"], routine["device_id"], when=dt_util.as_local(dt_util.utc_from_timestamp(when)).strftime("%d.%m. %H:%M:%S"))
+            activity.record(self.hass, "debug", "routine", "routine_armed_revert" if revert else "routine_armed", routine["name"], log_device(routine), when=dt_util.as_local(dt_util.utc_from_timestamp(when)).strftime("%d.%m. %H:%M:%S"))
         self._handles[routine_id] = async_track_point_in_utc_time(
             self.hass, partial(self._on_routine, routine_id), dt_util.utc_from_timestamp(when)
         )
@@ -1089,12 +1133,14 @@ class RoutineManager:
         return push.text(self.hass, f"routine_res_{result_word(routine['entity_id'].split('.', 1)[0], action)}")
 
     def _device_name(self, routine: dict[str, Any]) -> str:
+        if is_holder(routine["device_id"]):
+            return ""  # das Panel nennt die Sammelstelle selbst ("Szenen", "Gruppen")
         device = dr.async_get(self.hass).async_get(routine["device_id"])
         return (device.name_by_user or device.name or "") if device is not None else ""
 
     async def _async_fire(self, routine: dict[str, Any], rt: dict[str, Any], now: float) -> None:
         hass = self.hass
-        name, device = routine["name"], routine["device_id"]
+        name, device = routine["name"], log_device(routine)
         late = now - float(rt["due"])
         if late > self._grace():
             activity.record(hass, "warning", "routine", "routine_missed", name, device, minutes=int(late // 60))
@@ -1111,7 +1157,7 @@ class RoutineManager:
         if ok:
             rt["retry"] = 0
             rt["last"] = {"at": now, "ok": True, "what": "run", "reason": None}
-            activity.record(hass, "info", "routine", "routine_run", name, device, entity=self._entity_name(routine), action=self._action_text(routine, routine["action"]))
+            activity.record(hass, "info", "routine", "routine_run_scene" if routine["action"] == "activate" else "routine_run", name, device, entity=self._entity_name(routine), action=self._action_text(routine, routine["action"]))
             self._plan_revert(routine, rt, now, scene)
             await self._async_notify(routine, ok=True, action=routine["action"])
             self._finish(routine, rt, now)
@@ -1179,7 +1225,7 @@ class RoutineManager:
 
     async def _async_revert(self, routine: dict[str, Any], rt: dict[str, Any], now: float) -> None:
         hass = self.hass
-        name, device = routine["name"], routine["device_id"]
+        name, device = routine["name"], log_device(routine)
         action = rt["revert_action"]
         if action is None:
             rt["revert_due"] = None
@@ -1215,12 +1261,12 @@ class RoutineManager:
             scene = self._take_snapshot(routine, rt)
             ok, reason = await self._async_call(routine, routine["action"], options=routine["options"])
             if ok:
-                activity.record(self.hass, "info", "routine", "routine_run_manual", routine["name"], routine["device_id"], entity=self._entity_name(routine), action=self._action_text(routine, routine["action"]))
+                activity.record(self.hass, "info", "routine", "routine_run_scene_manual" if routine["action"] == "activate" else "routine_run_manual", routine["name"], log_device(routine), entity=self._entity_name(routine), action=self._action_text(routine, routine["action"]))
                 rt["last"] = {"at": now, "ok": True, "what": "run", "reason": None}
                 self._plan_revert(routine, rt, now, scene)
                 await self._async_notify(routine, ok=True, action=routine["action"])
             else:
-                activity.record(self.hass, "error", "routine", "routine_failed", routine["name"], routine["device_id"], entity=self._entity_name(routine))
+                activity.record(self.hass, "error", "routine", "routine_failed", routine["name"], log_device(routine), entity=self._entity_name(routine))
                 rt["last"] = {"at": now, "ok": False, "what": "failed", "reason": reason}
                 await self._async_notify(routine, ok=False, action=routine["action"], reason=reason or "error")
             self._arm(routine_id)
@@ -1330,7 +1376,7 @@ class RoutineManager:
 
     def _skip(self, routine: dict[str, Any], key: str) -> None:
         if activity.get(self.hass).debug:
-            activity.record(self.hass, "debug", "routine", key, routine["name"], routine["device_id"])
+            activity.record(self.hass, "debug", "routine", key, routine["name"], log_device(routine))
 
     def _trigger_fire(self, routine: dict[str, Any]) -> None:
         """Der Auslöser ist eingetreten: schalten, wenn Zeitfenster und Mindestpause es erlauben und die Routine nicht schon eingeschaltet wartet."""
@@ -1384,7 +1430,7 @@ class RoutineManager:
         if action == "restore":
             return push.text(hass, "routine_title", name=routine["name"]), push.text(hass, "routine_text_restored", entity=entity, time=clock)
         word = result_word(domain, action)
-        key = "routine_text_toggled" if word == "toggled" else "routine_text"
+        key = {"toggled": "routine_text_toggled", "activated": "routine_text_activated"}.get(word, "routine_text")
         return push.text(hass, "routine_title", name=routine["name"]), push.text(hass, key, entity=entity, result=push.text(hass, f"routine_res_{word}") if word != "toggled" else "", time=clock)
 
     async def _async_notify(self, routine: dict[str, Any], *, ok: bool, action: str, reason: str = "error") -> None:
@@ -1401,12 +1447,15 @@ class RoutineManager:
         hass = self.hass
         opts = effective(hass)
         target = self.target(routine)
-        device = dr.async_get(hass).async_get(routine["device_id"])
-        if target == NOTIFY_NONE or device is None:
-            activity.record(hass, "info", "routine", "routine_no_target", routine["name"], routine["device_id"])
+        holder = is_holder(routine["device_id"])
+        device = None if holder else dr.async_get(hass).async_get(routine["device_id"])
+        if target == NOTIFY_NONE or (device is None and not holder):
+            activity.record(hass, "info", "routine", "routine_no_target", routine["name"], log_device(routine))
             return False
-        icon = await push_icon.async_integration_icon(hass, primary_domain(hass, device))
-        data = push.notification_data(hass, f"{DOMAIN}_routine_{routine.get('id', 'test')}", push.device_url(opts[CONF_NOTIFY_CLICK], device.id), icon=icon)
+        # Ohne Gerät (Szene, Gruppe) öffnet die Meldung das Panel, ohne Integrationsbild
+        icon = await push_icon.async_integration_icon(hass, primary_domain(hass, device)) if device is not None else None
+        url = push.device_url(opts[CONF_NOTIFY_CLICK], device.id) if device is not None else push.panel_url()
+        data = push.notification_data(hass, f"{DOMAIN}_routine_{routine.get('id', 'test')}", url, icon=icon)
         return await push.async_push(hass, target, title, message, data)
 
     def preview_raw(self, raw: dict[str, Any]) -> dict[str, Any]:
@@ -1436,7 +1485,7 @@ class RoutineManager:
         """Test: die echte Meldung (ohne zu schalten) an den gewählten Empfänger."""
         routine = self.clean({**raw, "enabled": True}, existing=None)
         title, message = self.texts(routine, action=routine["action"])
-        activity.record(self.hass, "info", "routine", "routine_test", routine["name"], routine["device_id"])
+        activity.record(self.hass, "info", "routine", "routine_test", routine["name"], log_device(routine))
         return await self._async_send(routine, title, message)
 
 
@@ -1460,11 +1509,27 @@ def entity_payload(hass: HomeAssistant, entity_id: str) -> dict[str, Any]:
     }
 
 
+def holder_entity_ids(hass: HomeAssistant, holder: str) -> list[str]:
+    """Entitäten einer Sammelstelle (Szenen oder Gruppen ohne Gerät), nach Namen sortiert; deaktivierte und ausgeblendete bleiben weg."""
+    registry = er.async_get(hass)
+    found = []
+    for state in hass.states.async_all():
+        entry = registry.async_get(state.entity_id)
+        if entry is not None and (entry.disabled_by is not None or entry.hidden_by is not None):
+            continue
+        if in_holder(hass, holder, state.entity_id):
+            found.append((str(state.attributes.get("friendly_name") or state.entity_id).casefold(), state.entity_id))
+    return [eid for _, eid in sorted(found)]
+
+
 def switchable_entities(hass: HomeAssistant, device_id: str) -> list[dict[str, Any]]:
     """
     Entitäten des Geräts, die eine Routine schalten kann (ohne deaktivierte). Ausgeblendete zählen mit (seit 2.52.0): "Versteckt" heisst
     nur, dass Home Assistant sie nicht in automatischen Dashboards zeigt, so versteckt es zum Beispiel einzelne Hue-Lampen einer Gruppe.
     """
+    if is_holder(device_id):
+        payloads = [entity_payload(hass, eid) for eid in holder_entity_ids(hass, device_id)]
+        return [p for p in payloads if p["actions"]]
     entries = er.async_entries_for_device(er.async_get(hass), device_id)
     wanted = [e for e in entries if e.domain in SERVICES and e.disabled_by is None]
     payloads = [entity_payload(hass, e.entity_id) for e in sorted(wanted, key=lambda e: (e.entity_category is not None, e.entity_id))]
@@ -1485,7 +1550,12 @@ def switchable_devices(hass: HomeAssistant) -> list[dict[str, Any]]:
         if device is None or device.disabled_by is not None:
             continue
         out.append({"id": device_id, "name": device.name_by_user or device.name or device_id, "entities": n})
-    return sorted(out, key=lambda d: d["name"].casefold())
+    out.sort(key=lambda d: d["name"].casefold())
+    # Szenen und Gruppen ohne Gerät (seit 2.61.0) zuletzt, nur wenn es welche gibt
+    for holder in HOLDERS:
+        if n := len(holder_entity_ids(hass, holder)):
+            out.append({"id": holder, "name": "", "entities": n, "holder": True})
+    return out
 
 
 def routine_payload(hass: HomeAssistant, manager: RoutineManager, routine: dict[str, Any]) -> dict[str, Any]:

@@ -77,7 +77,11 @@ export function kelvinRgb(kelvin) {
 const toHex = (rgb) => `#${rgb.map((v) => pad(Math.round(v).toString(16))).join("")}`;
 const fromHex = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 
-export const routineEmoji = (domain) => DOMAIN_EMOJI[domain] || "⚡";
+// Szenen (seit 2.61.0) stehen nicht in DOMAIN_EMOJI: der Reiter "Schalter" im Geräte-Popup zeigt nur, was sich bedienen lässt
+export const routineEmoji = (domain) => (domain === "scene" ? "🎬" : DOMAIN_EMOJI[domain] || "⚡");
+// Sammelstellen für Szenen und Gruppen ohne Gerät (seit 2.61.0)
+const HOLDERS = { "@scenes": { emoji: "🎬", key: "rtHolderScenes", count: "rtScenesCount" }, "@groups": { emoji: "💡", key: "rtHolderGroups", count: "rtGroupsCount" } };
+export const isHolder = (id) => Object.prototype.hasOwnProperty.call(HOLDERS, id);
 
 export function splitSeconds(seconds, units) {
   for (const u of [...units].reverse()) if (seconds >= u && seconds % u === 0) return { text: String(seconds / u), unit: u };
@@ -310,6 +314,7 @@ export class RoutineUi {
   stateWord(e) {
     if (!e) return "";
     if (!e.available) return this.t("rtUnreachable");
+    if (e.domain === "scene") return ""; // Zustand einer Szene ist der Zeitpunkt der letzten Auslösung, keine Angabe für die Wahl
     const key = `rtState_${e.state}`;
     const word = this.t(key);
     return word == null ? String(e.state ?? "") : word;
@@ -576,10 +581,12 @@ export class RoutineUi {
     const groups = new Map();
     for (const rt of all.routines || []) {
       const dev = devices.find((d) => d.id === rt.device_id);
-      if (!groups.has(rt.device_id)) groups.set(rt.device_id, { id: rt.device_id, name: rt.device_name || dev?.name || "", dev, routines: [] });
+      const holder = isHolder(rt.device_id) ? HOLDERS[rt.device_id] : null;
+      if (!groups.has(rt.device_id)) groups.set(rt.device_id, { id: rt.device_id, name: holder ? this.t(holder.key) : rt.device_name || dev?.name || "", dev, holder, routines: [] });
       groups.get(rt.device_id).routines.push(rt);
     }
-    return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name));
+    // Szenen und Gruppen ohne Gerät stehen nach den Geräten
+    return [...groups.values()].sort((a, b) => Boolean(a.holder) - Boolean(b.holder) || a.name.localeCompare(b.name));
   }
 
   // Lieblings-Routinen (Herz, seit 2.26.0): liegen pro Benutzer in den Benutzerdaten, eigener Reiter in "Alle Routinen"
@@ -674,14 +681,14 @@ export class RoutineUi {
       const offN = g.shown.filter((x) => !x.enabled).length;
       const nextRt = g.shown.filter((x) => x.enabled && x.due_local).sort((a, b) => a.due - b.due)[0];
       const sum = open
-        ? g.dev?.area || g.dev?.integration?.name ? `<small>${esc([g.dev?.area, g.dev?.integration?.name].filter(Boolean).join(" · "))}</small>` : ""
+        ? g.holder ? "" : g.dev?.area || g.dev?.integration?.name ? `<small>${esc([g.dev?.area, g.dev?.integration?.name].filter(Boolean).join(" · "))}</small>` : ""
         : `<small class="mg-dsum">${esc(t("rtSumRoutines", g.shown.length))}${offN ? ` · ${esc(t("rtSumOff", offN))}` : ""}${nextRt ? ` · <span class="mg-on">${esc(t("rtSumNext", this.localText(nextRt.due_local)))}</span>` : ""}</small>`;
       html += `<div class="mg-dcard${open ? "" : " closed"}"><button type="button" class="mg-dhead" ${this.a(all, "routine-fold-dev")} data-device="${esc(g.id)}" aria-expanded="${open}">
-        <span class="mg-devic" aria-hidden="true">${this.h.typeIcon(g.dev?.type || "other", 18)}</span>
+        <span class="mg-devic" aria-hidden="true">${g.holder ? g.holder.emoji : this.h.typeIcon(g.dev?.type || "other", 18)}</span>
         <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span><span class="mg-badge">${g.shown.length}</span>${this.chevHtml(open)}</button>`;
       if (open) {
         html += g.shown.map((x) => this.overviewCardHtml(x, all)).join("");
-        html += `<div class="mg-dfoot"><button type="button" class="linkbtn" ${this.a(all, "routine-device")} data-device="${esc(g.id)}">${esc(t("rtAllOpenDevice"))} ›</button></div>`;
+        if (!g.holder) html += `<div class="mg-dfoot"><button type="button" class="linkbtn" ${this.a(all, "routine-device")} data-device="${esc(g.id)}">${esc(t("rtAllOpenDevice"))} ›</button></div>`;
       }
       html += `</div>`;
     }
@@ -969,6 +976,7 @@ export class RoutineUi {
     const q = String(w.devQuery || "").trim().toLowerCase();
     const rows = w.devices
       .map((x) => {
+        if (isHolder(x.id)) return { ...x, name: t(HOLDERS[x.id].key), sub: "", holder: HOLDERS[x.id] };
         const dev = this.host._devices?.find((d) => d.id === x.id);
         const sub = [dev?.area, dev?.integration?.name].filter(Boolean).join(" · ");
         return { ...x, name: dev?.name || x.name, sub, type: dev?.type || "other" };
@@ -977,8 +985,8 @@ export class RoutineUi {
     if (!rows.length) return `<p class="mg-note mg-none">${esc(t(w.devices.length ? "listSearchNone" : "rtNoSwitchableDevices"))}</p>`;
     return rows
       .map((x) => `<button type="button" class="mg-card mg-pick" data-rt="dev" data-id="${esc(x.id)}" role="radio" aria-checked="${w.pickId === x.id}">
-        <span class="mg-row"><span class="mg-devic" aria-hidden="true">${this.h.typeIcon(x.type, 18)}</span><span class="mg-t"><b>${esc(x.name)}</b>${x.sub ? `<small>${esc(x.sub)}</small>` : ""}</span>
-        <span class="mg-val">${esc(t("rtDevEntities", x.entities))}</span><span class="mg-radio${w.pickId === x.id ? " on" : ""}"></span></span></button>`)
+        <span class="mg-row"><span class="mg-devic" aria-hidden="true">${x.holder ? x.holder.emoji : this.h.typeIcon(x.type, 18)}</span><span class="mg-t"><b>${esc(x.name)}</b>${x.sub ? `<small>${esc(x.sub)}</small>` : ""}</span>
+        <span class="mg-val">${esc(t(x.holder ? x.holder.count : "rtDevEntities", x.entities))}</span><span class="mg-radio${w.pickId === x.id ? " on" : ""}"></span></span></button>`)
       .join("");
   }
 
@@ -1220,7 +1228,7 @@ export class RoutineUi {
     const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-rt="${step === first ? "nav-cancel" : "nav-back"}">${esc(step === first ? t("rtCancel") : t("rtBack"))}</button>
       ${quick}
       ${last ? `<button type="button" class="dlg-btn primary" data-rt="nav-save"${this.canNext() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("rtSaving") : t("rtSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-rt="nav-next"${this.canNext() ? "" : " disabled"}>${esc(t("rtNext"))}</button>`}</div>`;
-    const device = (step > 0 || !w.pick) && this.deviceId ? this.host._devices?.find((x) => x.id === this.deviceId)?.name || w.devices?.find((x) => x.id === this.deviceId)?.name || "" : "";
+    const device = (step > 0 || !w.pick) && this.deviceId ? (isHolder(this.deviceId) ? t(HOLDERS[this.deviceId].key) : this.host._devices?.find((x) => x.id === this.deviceId)?.name || w.devices?.find((x) => x.id === this.deviceId)?.name || "") : "";
     return `<div class="mgw-head"><div class="mgw-t"><b>${esc(w.editing ? t("rtEditing") : t("rtNew"))}</b>${device ? `<small>${esc(device)}</small>` : ""}</div>
         <button type="button" class="dlg-close" data-rt="close" title="${esc(t("close"))}" aria-label="${esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>
       <div class="mgw-prog"><div class="mg-stephead"><span>${esc(t("rtStepOf", shown(step), total))}</span><span>${esc(t(`rtStepName_${step}`))}</span></div>
@@ -1238,14 +1246,14 @@ export class RoutineUi {
     const d = this.wiz.draft;
     const ents = this.data.entities;
     if (!ents.length) return `<p class="mg-note">${esc(t("rtNoEntities"))}</p>`;
-    let html = `<p class="mg-note">${esc(t("rtOnlySwitchable"))}</p>`;
+    let html = `<p class="mg-note">${esc(t(isHolder(this.deviceId) ? "rtHolderNote" : "rtOnlySwitchable"))}</p>`;
     html += ents.map((e) => `<button type="button" class="mg-card mg-pick" data-rt="pick" data-id="${esc(e.entity_id)}" role="radio" aria-checked="${d.entity_id === e.entity_id}">
       <span class="mg-row"><span class="mg-ic" aria-hidden="true">${routineEmoji(e.domain)}</span><span class="mg-t"><b>${esc(e.name)}</b><small>${esc(e.entity_id)}</small></span>
       <span class="mg-val${e.available ? "" : " off"}">${esc(this.stateWord(e))}</span><span class="mg-radio${d.entity_id === e.entity_id ? " on" : ""}"></span></span></button>`).join("");
     const e = this.entity(d.entity_id);
     if (!e) return html;
     html += `<div class="mg-k">${esc(t("rtAction"))}</div>${this.tabsHtml(e.actions.map((a) => ({ on: d.action === a, attrs: `data-rt="action" data-v="${a}"`, label: t(`rtAct_${actKey(e.domain, a)}`) })))}`;
-    if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t("rtToggleNoBack"))}</p>`;
+    if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t(e.domain === "scene" ? "rtSceneNoBack" : "rtToggleNoBack"))}</p>`;
     return `${html}<div data-rt-zone="result">${this.resultHtml()}</div>`;
   }
 
