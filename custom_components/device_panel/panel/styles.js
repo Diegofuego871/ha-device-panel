@@ -912,6 +912,7 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .dev-tabs::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 12px; background: linear-gradient(var(--dp-card), transparent); pointer-events: none; }
 /* Gleiche Reiter auf allen Ebenen (seit 1.42.0): Einstellungen, Integration, Gerät */
 .lvl-tabs { margin: 6px 0 10px; }
+.lvl-title { margin: 12px 0 2px; font-size: 16px; font-weight: 600; color: var(--dp-text); }
 .lvl-body > .mtl, .lvl-body > .ptl { margin-top: 4px; }
 .dev-tabs .sub-tabs { margin: 0; }
 @media (max-width: 700px) { .dev-tabs { padding: 0 16px; } }

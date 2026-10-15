@@ -7,6 +7,12 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.46.1] - 2026-10-15
+
+### Geändert
+
+- Geräte-Pop-up, Reiter "Einstellungen": hat ein Gerät nur die Einstellungen zum Ausfall und entfällt deshalb die Reiterleiste, steht jetzt der Titel "Ausfall" darüber, damit auf den ersten Blick klar ist, wozu die Einstellungen gehören. Mit Reiterleiste gibt es keinen Titel.
+
 ## [2.46.0] - 2026-10-14
 
 Geräte-Pop-up: Reiter ohne Inhalt werden ausgeblendet.
@@ -3329,6 +3335,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.46.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.1
 [2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0
 [2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0
 [2.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.43.0

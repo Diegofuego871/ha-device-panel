@@ -4319,7 +4319,8 @@ class DevicePanel extends HTMLElement {
     const hasTab = { out: true, bat: Boolean(d.has_battery), chg: d.battery?.level != null, sig: hasSignal };
     const tabs = [["out", "tabOutage"], ["bat", "tabBattery"], ["chg", "tabCharge"], ["sig", "tabSignal"]].filter(([id]) => hasTab[id]);
     const cur = tabs.some(([id]) => id === this._devSub) ? this._devSub : "out";
-    const tabBar = tabs.length < 2 ? "" : `<div class="sub-tabs lvl-tabs" role="tablist">${tabs
+    // Ohne Reiterleiste nennt ein Titel, worum es geht (sonst steht die Grafik ohne Überschrift im Rahmen)
+    const tabBar = tabs.length < 2 ? `<div class="lvl-title">${escape(t(tabs[0][1]))}</div>` : `<div class="sub-tabs lvl-tabs" role="tablist">${tabs
       .map(([id, key]) => `<button type="button" role="tab" class="sub-tab${id === cur ? " on" : ""}${ownTab[id] ? " chg" : ""}" data-dlg="stab" data-stab="${id}" aria-selected="${id === cur}">${escape(t(key))}</button>`)
       .join("")}</div>`;
     const err = this._devSetError ? `<div class="opt-error">${escape(t("devSaveError"))} ${escape(this._devSetError)}</div>` : "";
