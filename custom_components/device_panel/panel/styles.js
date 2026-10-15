@@ -557,6 +557,20 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .ai-foot { margin-top: 8px; color: var(--dp-text2); font-size: 12px; }
 .ai-wait { display: flex; align-items: center; gap: 8px; color: var(--dp-text2); animation: ai-pulse 1.4s ease-in-out infinite; }
 @keyframes ai-pulse { 50% { opacity: .5; } }
+/* Rückfragen (seit 2.48.0, docs/mockups/ai-ask-v1) */
+.ai-ask { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.ai-ask-lbl { color: var(--dp-text2); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.ai-thread { display: flex; flex-direction: column; gap: 8px; }
+.ai-q { align-self: flex-end; max-width: 82%; padding: 9px 13px; border-radius: 16px 16px 4px 16px; background: color-mix(in srgb, var(--dp-primary) 22%, var(--dp-card)); overflow-wrap: anywhere; }
+.ai-a { align-self: flex-start; max-width: 92%; padding: 10px 13px; border-radius: 16px 16px 16px 4px; border: 1px solid color-mix(in srgb, #7c4dff 28%, var(--dp-divider)); background: color-mix(in srgb, #7c4dff 7%, var(--dp-card)); line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere; }
+.ai-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ai-chip { min-height: 34px; padding: 6px 13px; border-radius: 999px; border: 1px solid color-mix(in srgb, #7c4dff 40%, var(--dp-divider)); background: color-mix(in srgb, #7c4dff 8%, transparent); color: var(--dp-text); font: inherit; font-size: 13.5px; cursor: pointer; text-align: left; }
+.ai-chip:hover { background: color-mix(in srgb, #7c4dff 16%, transparent); }
+.ai-in { display: flex; gap: 8px; align-items: center; }
+.ai-input { flex: 1; min-width: 0; height: 42px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; border: 1px solid var(--dp-divider); background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 16px; }
+.ai-input:focus-visible { outline: 2px solid #7c4dff; outline-offset: 1px; }
+.ai-send { flex: none; width: 42px; height: 42px; border: 0; border-radius: 50%; display: grid; place-items: center; background: #7c4dff; color: #fff; cursor: pointer; }
+.ai-send:disabled, .ai-input:disabled { opacity: .5; cursor: default; }
 @media (prefers-reduced-motion: reduce) { .ai-wait { animation: none; } }
 .linkbtn { padding: 0; border: none; background: none; color: var(--dp-primary); font: inherit; cursor: pointer; }
 .linkbtn:hover { text-decoration: underline; }

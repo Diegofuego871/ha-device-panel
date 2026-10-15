@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.48.0] - 2026-10-15
+
+KI-Einschätzung: Rückfragen.
+
+Enthält die Änderungen aus 2.46.1 und 2.47.0.
+
+### Hinzugefügt
+
+- KI-Einschätzung: unter einer Einschätzung im Geräte-Pop-up gibt es jetzt den Abschnitt "Nachfragen". Darüber vorgeschlagene Fragen als Pillen (zum Beispiel "Was soll ich zuerst prüfen?", "Ist es die Batterie?" nur bei einem Gerät mit Batterie, "Gibt es ein Muster bei den Ausfällen?" nur nach Ausfällen, "Ist der Empfang das Problem?" nur mit Empfangswert, "Wie sicher ist diese Einschätzung?"), darunter ein Textfeld für eine eigene Frage (Enter oder der Pfeil sendet sie, höchstens 200 Zeichen). Die Antwort erscheint als Gespräch unter der Einschätzung, die Frage rechts, die Antwort links. Die KI bekommt dieselben Angaben wie bei der Einschätzung, ihre eigene frühere Einschätzung, die bisherigen Fragen dieser Einschätzung und die neue Frage, und soll kurz antworten (2 bis 4 Sätze), nur aus den Fakten, und die Frage als Daten statt als Anweisung behandeln. Je Einschätzung gibt es höchstens drei Rückfragen (jede ist ein Aufruf der KI-Aufgabe); "Neu erstellen" beginnt eine neue Einschätzung mit drei neuen Fragen. Eine getippte Frage bleibt beim Neuaufbau des Pop-ups im Feld stehen und kommt nach einem Fehler ins Feld zurück. Das Gespräch lebt im Panel und ist nach dem Neuladen der Seite weg, die Einschätzung selbst bleibt wie bisher. Das Protokoll (Debug) hält jede Rückfrage fest, ein Fehler wird wie bei einer Einschätzung gemeldet.
+
 ## [2.47.0] - 2026-10-15
+
+Nicht veröffentlicht; enthalten in 2.48.0.
 
 Protokoll: die Einträge überstehen einen Neustart von Home Assistant.
 
@@ -3347,7 +3359,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.47.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.47.0
+[2.48.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.0
 [2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0
 [2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0
 [2.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.43.0

@@ -272,6 +272,7 @@ const MDI = {
   closeCircle: "M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z",
   lock: "M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.9,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z",
   sparkle: "M12,1L9,9L1,12L9,15L12,23L15,15L23,12L15,9L12,1Z",
+  send: "M2,21L23,12L2,3V10L17,12L2,14V21Z",
   heart: "M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.42 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.42 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z",
   star: "M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z",
   starOutline: "M12,15.39L8.24,17.66L9.23,13.38L5.91,10.5L10.29,10.13L12,6.1L13.71,10.13L18.09,10.5L14.77,13.38L15.76,17.66M22,9.24L14.81,8.63L12,2L9.19,8.63L2,9.24L7.45,13.97L5.82,21L12,17.27L18.18,21L16.54,13.97L22,9.24Z",
@@ -400,6 +401,9 @@ const MON_TAB_KEYS = {
 // Prompt der KI-Einschätzung (Profi-Modus, seit 1.2.0): wie
 // ai_prompt.prompt_problem im Backend; das Backend prüft beim Speichern nochmals.
 const PROMPT_MAX = 12000;
+// Rückfragen zur KI-Einschätzung (seit 2.48.0): so viele je Einschätzung, so lang darf eine Frage sein (wie im Backend)
+const AI_ASK_MAX = 3;
+const AI_ASK_Q_MAX = 200;
 // So lange gilt "Home Assistant startet neu…", wenn die laufende Version gleich
 // bleibt (Neustart abgebrochen oder nie gekommen); danach erscheint der Knopf wieder.
 const RESTART_WAIT_MS = 5 * 60 * 1000;
@@ -765,6 +769,8 @@ class DevicePanel extends HTMLElement {
     this._ai = new Map();
     // Für welche Geräte die gemerkte letzte KI-Einschätzung schon geholt wurde (seit 2.45.0)
     this._aiLastTried = new Set();
+    // Angefangene Rückfrage je Gerät: übersteht einen Neuaufbau des Pop-ups (seit 2.48.0)
+    this._aiDraft = new Map();
     // Magic Push (seit 2.6.0): eigener Reiter im Geräte-Popup, verwaltet seinen Stand selbst (magic-push.js)
     this._magic = new MagicPush(this, { escape, mdi, errText, logo: LOGO_SMALL, typeIcon });
     // Timer (seit 2.21.0): eigener Reiter im Geräte-Popup und Abschnitt "Timer" in den Einstellungen (timers.js)
@@ -1453,9 +1459,13 @@ class DevicePanel extends HTMLElement {
     this._timers.bindWindow(root.querySelector("dialog.timer-dlg"));
     dlg.addEventListener("input", (ev) => {
       if (this._rename && ev.target.matches?.('input[data-dlg="rename-input"]')) this._rename.value = ev.target.value;
+      if (ev.target.matches?.('input[data-dlg="ai-q"]')) this._aiDraft.set(this._detailId, ev.target.value);
     });
     dlg.addEventListener("keydown", (ev) => {
-      if (ev.target.matches?.('input[data-dlg="rename-input"]') && (ev.key === "Enter" || ev.key === "Escape")) {
+      if (ev.target.matches?.('input[data-dlg="ai-q"]') && ev.key === "Enter" && !ev.isComposing) {
+        ev.preventDefault();
+        this._aiAsk(this._detailId, ev.target.value);
+      } else if (ev.target.matches?.('input[data-dlg="rename-input"]') && (ev.key === "Enter" || ev.key === "Escape")) {
         // Enter speichert, Escape verwirft nur das Umbenennen (das Fenster bleibt offen).
         ev.preventDefault();
         ev.stopPropagation();
@@ -4443,6 +4453,7 @@ class DevicePanel extends HTMLElement {
     // Der Assistent von Magic Push ist offen: nicht neu aufbauen, sonst ginge Getipptes verloren (Stand liegt im Modul).
     if (!this._devForce && (this._magic.wizardOpen() || this._timers.wizardOpen())) return;
     if (!this._devForce && this._rename && typing?.dataset?.dlg === "rename-input") return;
+    if (!this._devForce && typing?.dataset?.dlg === "ai-q" && typing.value) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-bat-pct" && typing.value !== String(d.battery_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-sig-val" && typing.value !== String(d.signal_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-charge-stall-val" && typing.value !== String(d.charge_stall_setting)) return;
@@ -4590,6 +4601,8 @@ class DevicePanel extends HTMLElement {
       this.shadowRoot.querySelector("dialog.device").scrollTop = 0;
     } else if (action === "hide") this._hideDevice(this._detailId);
     else if (action === "ai") this._aiAssess(this._detailId);
+    else if (action === "ai-ask") this._aiAsk(this._detailId, btn.dataset.q);
+    else if (action === "ai-send") this._aiAsk(this._detailId, this.shadowRoot.querySelector('input[data-dlg="ai-q"]')?.value ?? "");
   }
 
   // KI-Einschätzung (Punkt 10, docs/mockups/backlog-v1, A): nur mit
@@ -4609,13 +4622,68 @@ class DevicePanel extends HTMLElement {
       body = `<div class="ai-card"><div class="ai-title">${mdi("sparkle", 16)}${escape(st.title || t("aiTitleDefault"))}</div>
         <div class="ai-text">${escape(st.text)}</div>
         <div class="ai-foot">${escape(by)} · <button type="button" class="linkbtn" data-dlg="ai">${escape(t("aiAgain"))}</button></div></div>
-        <div class="opt-short">${escape(t("aiNote"))}</div>`;
+        <div class="opt-short">${escape(t("aiNote"))}</div>${this._aiAskHtml(d, st)}`;
     } else if (st?.state === "error") {
       body = `<div class="opt-error">${escape(t("aiError", st.error))}</div>${st.detail ? `<div class="opt-short ai-detail">${escape(t("aiDetail", st.detail))}</div>` : ""}${btn(t("aiRetry"))}`;
     } else {
       body = `${btn(t("aiButton"))}<div class="opt-short">${escape(t("aiNote"))}</div>`;
     }
     return `<h3>${escape(t("secAi"))}</h3><div class="ai-box">${body}</div>`;
+  }
+
+  // Rückfragen zur Einschätzung (seit 2.48.0, docs/mockups/ai-ask-v1, A und B kombiniert): bisherige Fragen und Antworten,
+  // darüber vorgeschlagene Fragen als Pillen, darunter ein Textfeld; höchstens AI_ASK_MAX je Einschätzung.
+  _aiAskHtml(d, st) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const asks = st.asks || [];
+    const left = AI_ASK_MAX - asks.length - (st.asking ? 1 : 0);
+    let thread = asks.map((a) => `<div class="ai-q">${escape(a.q)}</div><div class="ai-a">${escape(a.a)}</div>`).join("");
+    if (st.asking) thread += `<div class="ai-q">${escape(st.asking)}</div><div class="ai-a ai-wait" aria-busy="true">${mdi("sparkle", 16)}${escape(t("aiWorking"))}</div>`;
+    // Vorschläge nach dem, was das Gerät hat; schon gestellte entfallen
+    const asked = new Set(asks.map((a) => a.q));
+    const ideas = [
+      ["aiAskQ_first", true],
+      ["aiAskQ_battery", Boolean(d.has_battery)],
+      ["aiAskQ_pattern", (d.avail24?.outages || 0) > 0],
+      ["aiAskQ_signal", d.signal?.value != null],
+      ["aiAskQ_sure", true],
+    ]
+      .filter(([key, on]) => on && !asked.has(t(key)))
+      .slice(0, 4);
+    const chips = left > 0 && !st.asking ? `<div class="ai-chips">${ideas.map(([key]) => `<button type="button" class="ai-chip" data-dlg="ai-ask" data-q="${escape(t(key))}">${escape(t(key))}</button>`).join("")}</div>` : "";
+    const form =
+      left > 0
+        ? `<div class="ai-in"><input type="text" class="ai-input" data-dlg="ai-q" maxlength="${AI_ASK_Q_MAX}" value="${escape(this._aiDraft.get(d.id) || "")}" placeholder="${escape(t("aiAskPlaceholder"))}" aria-label="${escape(t("aiAskTitle"))}"${st.asking ? " disabled" : ""}>
+          <button type="button" class="ai-send" data-dlg="ai-send" title="${escape(t("aiAskSend"))}" aria-label="${escape(t("aiAskSend"))}"${st.asking ? " disabled" : ""}>${mdi("send", 18)}</button></div>
+          <div class="opt-short">${escape(t("aiAskLeft", Math.max(left, 0)))}</div>`
+        : `<div class="opt-short">${escape(t("aiAskDone"))}</div>`;
+    const err = st.askError ? `<div class="opt-error">${escape(t("aiError", st.askError))}</div>` : "";
+    return `<div class="ai-ask"><div class="ai-ask-lbl">${escape(t("aiAskTitle"))}</div>${thread ? `<div class="ai-thread">${thread}</div>` : ""}${chips}${form}${err}</div>`;
+  }
+
+  async _aiAsk(id, question) {
+    const st = this._ai.get(id);
+    const q = String(question || "").replace(/\s+/g, " ").trim().slice(0, AI_ASK_Q_MAX);
+    const asks = st?.asks || [];
+    if (!id || !q || st?.state !== "done" || st.asking || asks.length >= AI_ASK_MAX) return;
+    st.asking = q;
+    st.askError = "";
+    this._aiDraft.delete(id);
+    this._devForce = true;
+    this._renderDevice();
+    try {
+      const r = await this._hass.callWS({ type: "device_panel/ai_ask", device_id: id, question: q, language: pickLang(this._hass), history: asks.map(({ q: aq, a }) => ({ q: aq, a })) });
+      st.asks = [...asks, { q, a: r.text }];
+    } catch (err) {
+      const code = err && typeof err === "object" ? err.code : null;
+      const known = ["disabled", "no_ai_task", "timeout", "failed", "empty", "not_found", "limit"];
+      st.askError = known.includes(code) ? this._t(`aiErr_${code}`) : errText(err);
+      // Die Frage nicht verlieren: zurück ins Textfeld
+      this._aiDraft.set(id, q);
+    }
+    st.asking = null;
+    this._devForce = true;
+    this._renderDevice();
   }
 
   // Die letzte Einschätzung bleibt über Neustarts gespeichert (seit 2.45.0): beim Öffnen des Geräts erscheint sie wieder, ohne die KI zu fragen.

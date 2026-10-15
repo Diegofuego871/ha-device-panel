@@ -1028,6 +1028,16 @@
         (window.__aiLast ||= {})[msg.device_id] = answer;
         return answer;
       }
+      if (msg.type === "device_panel/ai_ask") {
+        // Wie ai_assessment.async_ask: Fehler wie bei ai_assess (__aiMode), höchstens drei Rückfragen je Einschätzung
+        if (!window.__opts.ai_assessment) throw { code: "disabled", message: "AI assessment is switched off" };
+        if (!window.__devices.find((x) => x.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
+        if ((msg.history || []).length >= 3) throw { code: "limit", message: "limit" };
+        const mode = window.__aiMode || "ok";
+        if (mode === "slow") await new Promise((r) => setTimeout(r, 1200));
+        if (["no_ai_task", "timeout", "failed", "empty"].includes(mode)) throw { code: mode, message: mode === "failed" ? "Error talking to OpenAI: 429 quota exceeded" : "details" };
+        return { text: msg.language === "de" ? `Antwort auf: ${msg.question}` : `Answer to: ${msg.question}`, source: "OpenAI", at: new Date().toISOString() };
+      }
       if (msg.type === "device_panel/ai_last") return window.__opts.ai_assessment ? window.__aiLast?.[msg.device_id] || null : null;
       if (msg.type === "device_panel/ai_prompt_preview") {
         // Wie ai_assessment.async_preview: schickt nichts, ersetzt {language} und {facts}.

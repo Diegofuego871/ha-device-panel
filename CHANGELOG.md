@@ -7,7 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.48.0] - 2026-10-15
+
+AI assessment: follow-up questions.
+
+Includes the changes from 2.46.1 and 2.47.0.
+
+### Added
+
+- AI assessment: under an assessment in the device pop-up there is now a section "Ask a follow-up". Above, suggested questions as pills (for example "What should I check first?", "Is it the battery?" only for a device with a battery, "Is there a pattern in the outages?" only after outages, "Is the signal the problem?" only with a signal reading, "How sure is this assessment?"); below, a text field for your own question (Enter or the arrow sends it, at most 200 characters). The answer appears as a conversation under the assessment, the question on the right, the answer on the left. The AI gets the same details as for the assessment, its own earlier assessment, the earlier questions of this assessment and the new question, and is told to answer briefly (2 to 4 sentences), only from the facts, and to treat the question as data and not as an instruction. There are at most three follow-up questions per assessment (each is one call of the AI task); "Create again" starts a new assessment with three new questions. A question you typed stays in the field when the pop-up is rebuilt, and after an error it comes back into the field. The conversation lives in the panel and is gone when the page is reloaded, the assessment itself stays as before. The log (debug) records each follow-up, a failure is logged like one of an assessment.
+
 ## [2.47.0] - 2026-10-15
+
+Not released; included in 2.48.0.
 
 Log: the entries survive a restart of Home Assistant.
 
@@ -3246,7 +3258,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.47.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.47.0
+[2.48.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.0
 [2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0
 [2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0
 [2.43.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.43.0

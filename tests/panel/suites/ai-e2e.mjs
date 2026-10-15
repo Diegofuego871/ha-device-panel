@@ -18,6 +18,7 @@ const TEXT = {
     again: "Neu erstellen", note: "Gesendet werden Name, Bereich und Werte dieses Geräts sowie Name und Werte von Geräten im selben Bereich, am selben Hub, vom selben Modell und weiterer ausgefallener Geräte derselben Integration, keine Schlüssel oder Zugangsdaten.", retry: "Erneut versuchen",
     errNo: "Keine KI-Aufgabe verfügbar", errTimeout: "nicht rechtzeitig", errFailed: "Fehler gemeldet", errEmpty: "zweimal eine leere Antwort", detail: "Meldung der KI-Aufgabe: Error talking to OpenAI: 429 quota exceeded", noTasks: "Keine KI-Aufgabe gefunden", working: "wertet",
     byLocal: "Erstellt von \"Lokales Modell\"",
+    ask: "Nachfragen", ph: "Eigene Frage …", q1: "Was soll ich zuerst prüfen?", q2: "Ist es die Batterie?", answer: (q) => `Antwort auf: ${q}`, left3: "Noch 3 Fragen zu dieser Einschätzung", left2: "Noch 2 Fragen", left1: "Noch 1 Frage", done: "keine Rückfragen mehr möglich", errPre: "Einschätzung fehlgeschlagen:",
   },
   en: {
     sec: "AI assessment", sumOff: "Off", sumOn: "On · OpenAI", sumDefault: "On · Home Assistant default", opt: "Show the button \"Assess with AI\"", task: "AI task",
@@ -25,6 +26,7 @@ const TEXT = {
     again: "Create again", note: "Name, area and values of this device and name and values of devices in the same area, on the same hub, of the same model and other offline devices of the same integration are sent, no keys or credentials.", retry: "Try again",
     errNo: "No AI task available", errTimeout: "did not answer in time", errFailed: "reported an error", errEmpty: "empty answer twice", detail: "Message of the AI task: Error talking to OpenAI: 429 quota exceeded", noTasks: "No AI task found", working: "analysing",
     byLocal: "Created by \"Lokales Modell\"",
+    ask: "Ask a follow-up", ph: "Your own question …", q1: "What should I check first?", q2: "Is it the battery?", answer: (q) => `Answer to: ${q}`, left3: "3 questions left for this assessment", left2: "2 questions left", left1: "1 question left", done: "No more follow-up questions", errPre: "Assessment failed:",
   },
 };
 
@@ -120,6 +122,45 @@ for (const lang of ["de", "en"]) {
     await tap(".ai-foot .linkbtn");
     await wait(`return (window.__wsCalls || []).length >= 0`);
     check(`[${tag}] "${T.again}" ruft erneut auf`, await p.waitForFunction(() => window.__wsCalls.filter((m) => m.type === "device_panel/ai_assess").length === 2, null, { timeout: 5000 }).then(() => true, () => false));
+    // Rückfragen (2.48.0): Pillen darüber, Textfeld darunter, höchstens drei, Antworten als Verlauf
+    check(`[${tag}] Rückfragen: Titel "${T.ask}", Pillen, Textfeld, Zähler`, (await text(".ai-ask-lbl")) === T.ask && (await ev(`return r.querySelectorAll(".ai-chip").length`)) >= 3 && (await ev(`return r.querySelector(".ai-input")?.placeholder`)) === T.ph && (await text(".ai-ask .opt-short")).startsWith(T.left3), await text(".ai-ask .opt-short"));
+    const order2 = await ev(`const a=r.querySelector(".ai-chips").getBoundingClientRect().top, b=r.querySelector(".ai-in").getBoundingClientRect().top; return a < b`);
+    check(`[${tag}] Rückfragen: Pillen stehen über dem Textfeld`, order2);
+    check(`[${tag}] Rückfragen: Pille "Ist es die Batterie?" nur bei Gerät mit Batterie, erste Pille da`, (await ev(`return [...r.querySelectorAll(".ai-chip")].map(x=>x.textContent.trim())`)).includes(T.q1) && (await ev(`return [...r.querySelectorAll(".ai-chip")].some(x=>x.textContent.trim()===${JSON.stringify(T.q2)})`)) === (await ev(`return !!r.host._devices.find(x=>x.id==="b")?.has_battery`)));
+    await p.screenshot({ path: `${outDir}/ai-ask-${tag.replace("/", "-")}.png` });
+    await p.evaluate(() => { window.__aiMode = "slow"; });
+    await tap(".ai-chip");
+    check(`[${tag}] Rückfrage per Pille: Frage erscheint, Wartezustand, Eingabe gesperrt`, await wait(`return r.querySelectorAll(".ai-thread .ai-q").length === 1 && !!r.querySelector(".ai-thread .ai-a.ai-wait") && r.querySelector(".ai-input").disabled`));
+    await p.evaluate(() => { window.__aiMode = "ok"; });
+    check(`[${tag}] Rückfrage: Antwort im Verlauf`, await wait(`return r.querySelectorAll(".ai-thread .ai-a").length === 1 && !r.querySelector(".ai-wait.ai-a") && r.querySelector(".ai-thread .ai-a").textContent.trim() === ${JSON.stringify(T.answer(T.q1))}`), await text(".ai-thread"));
+    const askCall = (await calls("device_panel/ai_ask")).at(-1);
+    check(`[${tag}] Rückfrage: Aufruf mit Gerät, Frage, Sprache, leerem Verlauf`, askCall?.device_id === "b" && askCall.question === T.q1 && askCall.language === lang && askCall.history.length === 0, JSON.stringify(askCall));
+    check(`[${tag}] Rückfrage: gestellte Pille entfällt, Zähler "${T.left2}"`, !(await ev(`return [...r.querySelectorAll(".ai-chip")].some(x=>x.textContent.trim()===${JSON.stringify(T.q1)})`)) && (await text(".ai-ask .opt-short")).startsWith(T.left2), await text(".ai-ask .opt-short"));
+    // Eigene Frage tippen: bleibt beim Neuaufbau (Abfrage alle 10 s) stehen, Enter sendet
+    await tap(".ai-input");
+    await p.keyboard.type("Warum nachts?");
+    await ev(`r.host._renderDevice(true)`);
+    check(`[${tag}] getippte Frage übersteht einen Neuaufbau`, (await ev(`return r.querySelector(".ai-input").value`)) === "Warum nachts?");
+    await p.keyboard.press("Enter");
+    check(`[${tag}] Enter sendet, Feld leer, Verlauf mit der Frage`, await wait(`return r.querySelectorAll(".ai-thread .ai-q").length === 2 && r.querySelector(".ai-input").value === ""`));
+    const own = (await calls("device_panel/ai_ask")).at(-1);
+    check(`[${tag}] eigene Frage: Aufruf mit Verlauf der ersten`, own.question === "Warum nachts?" && own.history.length === 1 && own.history[0].q === T.q1 && own.history[0].a === T.answer(T.q1), JSON.stringify(own));
+    // Fehler: die Frage kommt ins Feld zurück
+    await p.evaluate(() => { window.__aiMode = "timeout"; });
+    await tap(".ai-input");
+    await p.keyboard.type("Noch eine");
+    await tap(".ai-send");
+    check(`[${tag}] Fehler bei der Rückfrage: Meldung, Frage zurück im Feld, Verlauf unverändert`, await wait(`return !!r.querySelector(".ai-ask .opt-error") && r.querySelector(".ai-input").value === "Noch eine" && r.querySelectorAll(".ai-thread .ai-q").length === 2`), await text(".ai-ask .opt-error"));
+    await p.evaluate(() => { window.__aiMode = "ok"; });
+    await tap(".ai-send");
+    check(`[${tag}] dritte Frage: danach keine Pillen, kein Feld, Hinweis "${T.done}"`, await wait(`return r.querySelectorAll(".ai-thread .ai-q").length === 3 && !r.querySelector(".ai-input") && !r.querySelector(".ai-chip")`) && (await text(".ai-ask .opt-short")).includes(T.done), await text(".ai-ask .opt-short"));
+    check(`[${tag}] Rückfragen: höchstens drei Aufrufe`, (await calls("device_panel/ai_ask")).filter((m) => m.device_id === "b").length === 4 /* davon einer mit Fehler */);
+    await p.screenshot({ path: `${outDir}/ai-ask-full-${tag.replace("/", "-")}.png` });
+    const fit2 = await ev(`const d=r.querySelector("dialog.device"); return d.scrollWidth <= d.clientWidth`);
+    check(`[${tag}] Verlauf ohne seitlichen Überlauf`, fit2);
+    // "Neu erstellen" beginnt von vorn
+    await tap(".ai-foot .linkbtn");
+    check(`[${tag}] "${T.again}": Rückfragen beginnen wieder bei drei`, await wait(`return !!r.querySelector(".ai-title") && !r.querySelector(".ai-thread") && !!r.querySelector(".ai-input")`) && (await text(".ai-ask .opt-short")).startsWith(T.left3));
     // Anderes Gerät hat noch keine Antwort
     await close();
     await open("c");

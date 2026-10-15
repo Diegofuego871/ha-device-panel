@@ -17,4 +17,9 @@ Offene Punkte für die Umsetzung (Vorschlag): höchstens 3 Rückfragen je Einsch
 der KI-Aufgabe), Antworten kurz (2 bis 3 Sätze), eigene Frage auf 200 Zeichen begrenzt und wie alle
 Fakten als Daten behandelt (nicht als Anweisung), Rückfragen im Protokoll vermerkt.
 
+## Entscheid des Nutzers (2026-10-15): A und B kombiniert, umgesetzt in 2.48.0
+
+Pillen mit vorgeschlagenen Fragen oben, darunter ein Textfeld für eigene Fragen, beides unter der
+Einschätzung im Pop-up (kein eigenes Fenster); Frage und Antwort als Gespräch.
+
 Neu rendern: `CHROMIUM_PATH=... node docs/mockups/ai-ask-v1/src/render.mjs`

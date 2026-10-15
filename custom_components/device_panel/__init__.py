@@ -43,7 +43,7 @@ from .magic_history import async_history as async_magic_history
 from .timers import STORE_KEY as TIMERS_STORE_KEY
 from .timers import TimerManager
 from .timers_ws import COMMANDS as TIMER_COMMANDS
-from .ai_assessment import AiError, async_assess, async_last, async_preview
+from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, async_ask, async_assess, async_last, async_preview
 from .ai_prompt import DEFAULT_PROMPT
 from .const import (
     AI_PROMPT_MAX,
@@ -906,6 +906,31 @@ async def _ws_ai_assess(
     connection.send_result(msg["id"], result)
 
 
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/ai_ask",
+        vol.Required("device_id"): str,
+        vol.Required("question"): vol.All(str, vol.Length(min=1, max=ASK_QUESTION_MAX)),
+        vol.Optional("language", default="en"): vol.In(("de", "en")),
+        # bisherige Rückfragen dieser Einschätzung (aus dem Panel); mehr als ASK_MAX gibt es nicht
+        vol.Optional("history", default=[]): vol.All(
+            [{vol.Required("q"): vol.All(str, vol.Length(max=ASK_QUESTION_MAX)), vol.Required("a"): vol.All(str, vol.Length(max=ASK_ANSWER_MAX))}],
+            vol.Length(max=ASK_MAX),
+        ),
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_ai_ask(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Rückfrage zur KI-Einschätzung eines Geräts (Pop-up): nur mit eingeschalteter Option und nur auf Knopfdruck, höchstens drei je Einschätzung."""
+    try:
+        result = await async_ask(hass, msg["device_id"], msg["question"], msg["language"], msg["history"], hass.data.get(DATA_AVAILABILITY))
+    except AiError as err:
+        connection.send_error(msg["id"], err.code, str(err))
+        return
+    connection.send_result(msg["id"], result)
+
+
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/ai_last", vol.Required("device_id"): str})
 @websocket_api.require_admin
 @websocket_api.async_response
@@ -1064,6 +1089,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     hass.data[DATA_WS_REGISTERED] = True
     websocket_api.async_register_command(hass, _ws_list_devices)
     websocket_api.async_register_command(hass, _ws_ai_assess)
+    websocket_api.async_register_command(hass, _ws_ai_ask)
     websocket_api.async_register_command(hass, _ws_ai_last)
     websocket_api.async_register_command(hass, _ws_ai_prompt_preview)
     websocket_api.async_register_command(hass, _ws_device)
