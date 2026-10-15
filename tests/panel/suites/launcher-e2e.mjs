@@ -92,7 +92,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Titel "${T.title}", Gruppen ${JSON.stringify(T.groups.slice(0, 3))}`, (await text(`${D} .ap-title`)) === T.title && JSON.stringify(await ev(`return [...r.querySelectorAll("${D} .ap-h")].map((h) => h.firstChild.textContent.trim())`)) === JSON.stringify(T.groups.slice(0, 3)));
     check(`[${tag}] Device Panel: Magic Push, Protokoll (Routine steht schon bei den Favoriten); Home Assistant: ${mobile ? 6 : 8} Kacheln, "Alle 12"`, await ev(`const g = [...r.querySelectorAll("${D} .ap-grid")]; return g[1].children.length === 2 && g[2].children.length === ${mobile ? 6 : 8} && /12/.test(r.querySelector("${D} .ap-more").textContent)`));
     const geo = await ev(`const d = r.querySelector("${D}").getBoundingClientRect(), a = r.querySelector(".apps-btn").getBoundingClientRect(); return [Math.round(d.left), Math.round(d.width), Math.round(d.top), Math.round(d.bottom), Math.round(a.bottom), Math.round(a.right), innerWidth, innerHeight]`);
-    if (mobile) check(`[${tag}] Handy: Blatt über die ganze Breite, unten`, geo[0] === 0 && geo[1] === geo[6] && geo[3] === geo[7], JSON.stringify(geo));
+    // Seit 2.60.0 ist der Launcher auf dem Handy vollflächig wie "Alle Routinen"; das Kreuz sitzt wie der Zahnrad-Knopf (38 px, 12 px oben und rechts)
+    if (mobile) check(`[${tag}] Handy: Vollbild (ganze Breite und Höhe), Kreuz 38 px, 12 px vom oberen und rechten Rand`, geo[0] === 0 && geo[1] === geo[6] && geo[2] === 0 && geo[3] === geo[7] && JSON.stringify(await ev(`const b = r.querySelector("${D} .ap-x").getBoundingClientRect(); return [Math.round(b.width), Math.round(b.height), Math.round(b.top), Math.round(innerWidth - b.right)]`)) === "[38,38,12,12]", JSON.stringify(geo));
     else check(`[${tag}] Desktop: Fenster unter dem Knopf, nicht über den Rand`, geo[2] >= geo[4] && geo[0] + geo[1] <= geo[6] - 8 && geo[0] >= 8 && geo[1] <= 450, JSON.stringify(geo));
     check(`[${tag}] Favoriten: nur Routine; in der normalen Ansicht keine Herzen an den Apps, ein einziges Herz hinter "${T.groups[0]}"`, await ev(`return r.querySelectorAll("${D} .ap-grid")[0].children.length === 1 && r.querySelector("${D} .ap-grid .ap-tile").classList.contains("pin") && r.querySelectorAll('${D} [data-ap="fav"]').length === 0 && r.querySelectorAll("${D} .ap-h .ap-hh svg").length === 1 && r.querySelector("${D} .ap-h").lastElementChild.classList.contains("ap-hh")`));
     await shot("1-launcher");
@@ -285,9 +286,9 @@ for (const lang of ["de", "en"]) {
     }
     await open();
     const fb = await (await p.$("#panel-frame")).boundingBox();
-    if (mobile) await p.touchscreen.tap(fb.x + 195, fb.y + 20);
+    if (mobile) await tap(`${D} .ap-x`); // Vollbild: es gibt kein "neben dem Fenster" mehr, das Kreuz schliesst
     else await p.mouse.click(60, 400);
-    check(`[${tag}] Tipp neben das Fenster schliesst`, await wait(`return !r.querySelector("${D}").open`));
+    check(`[${tag}] ${mobile ? "Kreuz" : "Tipp neben das Fenster"} schliesst`, await wait(`return !r.querySelector("${D}").open`));
 
     // --- Stand bleibt nach dem Neuladen (Benutzerdaten von HA und lokale Kopie)
     const saved = await data();

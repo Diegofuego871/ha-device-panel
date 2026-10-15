@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.60.0, App-Launcher als Vollbild auf dem Handy)
+
+- Wunsch des Nutzers: `dialog.apps-dlg` bis 700 px vollflächig (`inset: 0`, ohne Rundung und `clip-path`), Kopf `.ap-head` 12/12/8/16 px, `.ap-x` 38 px: Kreuz 12 px vom oberen und rechten Rand wie bei den anderen Vollbild-Fenstern.
+  Das Formular `dialog.app-dlg` bleibt ein Blatt, der Desktop ein Popover. Der Test "Tipp neben das Fenster" gilt nur noch am Desktop, am Handy schliesst das Kreuz.
+
 ## Stand (2.59.0, Routinen: eigene Zeit neben den Schnellwahlen)
 
 - Wunsch des Nutzers: Bei den Zeiten des Assistenten, die nur Schnellwahlen hatten, steht ein Feld "oder eigene Zeit" mit Einheit (wie bei "Nach Dauer"/Zurückschalten, die es schon hatten). `routine-trigger.js`:

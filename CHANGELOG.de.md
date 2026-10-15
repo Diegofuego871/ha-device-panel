@@ -7,7 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.60.0] - 2026-10-15
+
+App-Launcher: Vollbild auf dem Handy.
+
+### Geändert
+
+- App-Launcher auf dem Handy: Das Fenster füllt jetzt den ganzen Bildschirm, genau wie "Alle Routinen", und sein Schliessen-Knopf sitzt an derselben Stelle in derselben Grösse (38 px, 12 px vom oberen und rechten Rand). Es war das letzte Fenster, das als Blatt von unten kam. Auf dem Desktop bleibt es ein Fenster unter dem Knopf. Das Formular für eigene Apps bleibt ein Blatt.
+
 ## [2.59.0] - 2026-10-15
+
+Nicht veröffentlicht; enthalten in 2.60.0.
 
 Routinen: eine eigene Zeit neben den Schnellwahlen.
 
@@ -3520,7 +3530,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.59.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.59.0
+[2.60.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.60.0
 [2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0
 [2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0
 [2.55.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.55.0

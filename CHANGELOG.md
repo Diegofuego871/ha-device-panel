@@ -7,7 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.60.0] - 2026-10-15
+
+App launcher: full screen on the phone.
+
+### Changed
+
+- App launcher on the phone: the window now fills the whole screen, exactly like "All routines", and its close button sits in the same place and has the same size (38 px, 12 px from the top and right edge). It was the last window that came up as a sheet from below. On the desktop it stays a window under the button. The form for your own apps stays a sheet.
+
 ## [2.59.0] - 2026-10-15
+
+Not released; included in 2.60.0.
 
 Routines: your own time next to the quick choices.
 
@@ -3419,7 +3429,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.59.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.59.0
+[2.60.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.60.0
 [2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0
 [2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0
 [2.55.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.55.0

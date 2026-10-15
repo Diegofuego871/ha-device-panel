@@ -1922,9 +1922,12 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-snack button:hover { background: rgba(255,255,255,.1); }
 .ap-acts { position: sticky; bottom: 0; display: flex; gap: 10px; padding: 12px 14px 16px; background: var(--dp-card); }
 @media (max-width: 600px) {
-  dialog.apps-dlg, dialog.app-dlg { width: 100%; max-width: 100%; margin: auto 0 0; inset: auto 0 0 0; border: none; border-radius: 22px 22px 0 0; max-height: 92%; }
+  dialog.app-dlg { width: 100%; max-width: 100%; margin: auto 0 0; inset: auto 0 0 0; border: none; border-radius: 22px 22px 0 0; max-height: 92%; }
+  /* Launcher auf dem Handy vollflächig wie "Alle Routinen" (seit 2.60.0, Wunsch des Nutzers); das Kreuz sitzt wie dort (38 px, 12 px vom Rand oben und rechts) */
+  dialog.apps-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; inset: 0; border: none; border-radius: 0; clip-path: none; }
   dialog.apps-dlg::backdrop { background: rgba(0,0,0,0.5); }
-  .ap-x { display: grid; }
+  .ap-head { padding: 12px 12px 8px 16px; }
+  .ap-x { display: grid; width: 38px; height: 38px; }
   .ap-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ap-view .sub-tabs { width: 170px; }
   .ap-ic { height: 44px; }
