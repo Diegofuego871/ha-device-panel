@@ -11,6 +11,10 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 Routinen: eine eigene Zeit neben den Schnellwahlen.
 
+### Geändert
+
+- Geräte-Popup: mehr Abstand (14 statt 6 px) zwischen dem Knopf "HA-Geräteseite öffnen" und der Reiterleiste, die zusammengedrückt wirkte.
+
 ### Hinzugefügt
 
 - Routinen-Assistent, Auslöser: Neben den Schnellwahlen gibt es jetzt bei jeder Zeit, die nur Schnellwahlen hatte, ein Feld "oder eigene Zeit" mit Einheit: "Mindestens so lange erfüllt" (Start und Zurückschalten; Sekunden, Minuten oder Stunden, von 1 Sekunde bis 7 Tage), "Pause danach" (Minuten oder Stunden) und "Spätestens nach" (Minuten, Stunden oder Tage). Ein getippter Wert nimmt die Schnellwahl weg (die Kapsel verschwindet); leert man das Feld, gilt wieder die Vorgabe; eine Schnellwahl leert das Feld. Ein ungültiger Wert zeigt den erlaubten Bereich unter dem Feld und sperrt "Weiter". Die Pause darf nicht unter 1 Minute fallen, die kleinste Schnellwahl, so dass niemand eine kürzere Pause bekommt, als die Vorgabe anbietet; alle anderen Felder erlauben, was der Server erlaubt. Beim Bearbeiten einer Routine steht ein Wert, der keine Schnellwahl ist, im Feld.

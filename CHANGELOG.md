@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 Routines: your own time next to the quick choices.
 
+### Changed
+
+- Device pop-up: more space (14 instead of 6 px) between the button "Open HA device page" and the tab bar, which looked squeezed.
+
 ### Added
 
 - Routine assistant, trigger: next to the quick choices there is now a field "or own time" with a unit for every time that had only quick choices: "Holds for at least" (start and switching back; seconds, minutes or hours, from 1 second up to 7 days), "Pause" after a switch (minutes or hours) and "At the latest after" (minutes, hours or days). Typing a value takes the quick choice off (the capsule disappears); clearing the field brings back the default; choosing a quick choice empties the field. An invalid value shows the allowed range under the field and blocks "Next". The pause cannot go below 1 minute, the shortest quick choice, so nobody gets a pause shorter than the default offers; all other fields allow what the server allows. When you edit a routine, a value that is not a quick choice stands in the field.

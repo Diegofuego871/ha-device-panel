@@ -488,7 +488,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .chip.hint.fv.bare { flex: none; box-sizing: border-box; gap: 0; padding: 0; width: 42px; justify-content: center; }
 .chip.hint.fv svg { color: var(--dp-error); }
 .chip.hint.fv.on { background: var(--dp-error-soft); border-color: var(--dp-error); }
-.dlg-quick { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 22px 6px; }
+.dlg-quick { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 22px 14px; }
 .qbtn { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--dp-divider);
   background: none; color: var(--dp-text); font-size: 13px; cursor: pointer; }
 .qbtn svg { color: var(--dp-text2); }
@@ -1283,7 +1283,7 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   .dlg-head { padding: 18px 12px 12px 16px; }
   /* Vollbild-Fenster (Einstellungen, Protokoll, Routinen): das Kreuz sitzt auf gleicher Höhe wie der Zahnrad-Knopf der Übersicht (12 px vom oberen Rand) */
   dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close { margin-top: -6px; }
-  .dlg-quick { padding: 0 16px 6px; }
+  .dlg-quick { padding: 0 16px 14px; }
   .dlg-body { padding: 4px 16px 16px; }
   .dlg-actions { padding-left: 16px; padding-right: 16px; }
   .st-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
