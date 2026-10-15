@@ -1118,6 +1118,11 @@
           if (!e.actions.includes(r.action)) fail("Diese Aktion gibt es für diese Entität nicht");
           if (String(r.name || "").length > 60) fail("Name: höchstens 60 Zeichen");
           if (r.back_s && r.action === "toggle") fail("Umschalten lässt sich nicht zurückschalten");
+          // Schaltoptionen (2.52.0): nur beim Einschalten und nur, was die Entität kann
+          const given = Object.keys(r.options || {});
+          if (given.length && r.action !== "on") fail("Schaltoptionen gibt es nur beim Einschalten");
+          if (given.some((k) => !(e.options || []).some((o) => o.key === k))) fail("Diese Einstellung unterstützt die Entität nicht");
+          if (r.options && r.options.color_temp_kelvin != null && r.options.rgb_color) fail("Farbtemperatur und Farbe schliessen sich aus");
           if (r.back_s != null && r.back_s !== 0 && (r.back_s < 10 || r.back_s > 604800)) fail("Zurückschalten: ganze Zahl von 10 bis 604800 erwartet");
           if (r.kind === "countdown") { if (!r.delay_s) fail("Dauer fehlt"); if (r.delay_s < 10 || r.delay_s > 604800) fail("Dauer: ganze Zahl von 10 bis 604800 erwartet"); }
           else if (r.kind === "once") { if (!r.time) fail("Uhrzeit fehlt"); if (r.date && r.enabled !== false && !firstDue(r, Date.now() / 1000)) fail("Der Zeitpunkt liegt in der Vergangenheit"); }
@@ -1163,7 +1168,7 @@
           const old = raw.id ? T.list.find((x) => x.id === raw.id) : null;
           if (raw.id && !old) fail("Timer nicht gefunden");
           const e = entOf(raw);
-          const r = { id: old ? old.id : `t${T.seq++}`.padEnd(12, "0"), device_id: raw.device_id, entity_id: raw.entity_id, name: String(raw.name || "").trim() || e.name, action: raw.action, back_s: raw.back_s || null, kind: raw.kind,
+          const r = { id: old ? old.id : `t${T.seq++}`.padEnd(12, "0"), device_id: raw.device_id, entity_id: raw.entity_id, name: String(raw.name || "").trim() || e.name, action: raw.action, options: raw.options || {}, back_mode: raw.back_s && raw.back_mode === "restore" ? "restore" : "opposite", back_s: raw.back_s || null, kind: raw.kind,
             delay_s: raw.kind === "countdown" ? raw.delay_s : null, date: raw.kind === "once" && raw.date ? raw.date : null, time: raw.kind === "countdown" ? null : raw.time, repeat: raw.kind === "repeat" ? raw.repeat : null,
             weekdays: raw.kind === "repeat" && raw.repeat === "weekly" ? [...raw.weekdays].sort() : null, mday: raw.kind === "repeat" && raw.repeat === "monthly" ? raw.mday : null,
             enabled: raw.enabled !== false, push: Boolean(raw.push), target: raw.target || null, created: old ? old.created : Date.now() / 1000 };
@@ -1206,7 +1211,7 @@
             target: r.target || window.__opts.notify_service, next_runs: runsOf(r, Date.now() / 1000) };
         }
         if (msg.type.endsWith("timer_try")) {
-          (T.tries ||= []).push({ entity_id: msg.entity_id, action: msg.action });
+          (T.tries ||= []).push({ entity_id: msg.entity_id, action: msg.action, options: msg.options || {} });
           if (!window.__timerTryFail) {
             const now = (window.__tryState ||= {})[msg.entity_id] || (DEFAULT_ENTS.find((x) => x.entity_id === msg.entity_id) || {}).state;
             window.__tryState[msg.entity_id] = msg.action === "on" ? "on" : msg.action === "off" ? "off" : now === "on" ? "off" : "on";

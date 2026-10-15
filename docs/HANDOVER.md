@@ -3,6 +3,26 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.52.0, Timer: Schaltoptionen und "wie vorher")
+
+- Wunsch des Nutzers nach Mockups `docs/mockups/timer-light-v1` (Variante A, dann als eigene Seite statt Aufklappen in der Karte): Beim Einschalten lässt
+  sich einstellen, wie geschaltet wird, und beim Zurückschalten gibt es "Aus" oder "Wie vorher". Standard unverändert (nichts eingestellt = wie zuletzt).
+- **Backend** `timers.py`: `SERVICES` um `climate` und `media_player` erweitert; `OPTION_SCHEMAS` (light: `brightness_pct`, `color_temp_kelvin`, `rgb_color`;
+  cover: `position`; climate: `temperature`, `hvac_mode`; media_player: `volume_pct`; fan: `percentage`), `clean_options` (Form, nur bei Aktion `on`),
+  `option_specs(state)` (was die Entität kann, aus `supported_features`, `supported_color_modes`, `min_/max_temp` und so weiter; im Payload `entity["options"]`),
+  `validate_options` (gegen die Fähigkeiten, wenn erreichbar), `actions_for_state` (Klima/Medien: ein/aus als Fähigkeit), `service_calls` (Dienstfolge, bei zwei
+  Diensten `CALL_GAP_S` = 1 s Pause), `snapshot_of` / `restore_calls` ("wie vorher"; Szene in `runtime["snapshot"]`, nur wenige Angaben je Art
+  `SNAPSHOT_ATTRS`). Timer-Felder `options` (Standard `{}`) und `back_mode` (`opposite`/`restore`, ohne `back_s` immer `opposite`). `_take_snapshot` behält die
+  Szene, solange ein Zurückschalten aussteht. Lässt sich die Szene nicht herstellen (`restore_calls` gibt `None`), gilt das Gegenstück. WS `timer_try` nimmt `options`.
+  Texte `timer_res_restored`, `timer_text_restored` in `push.py`.
+- **Panel** `timers.js`: neue Seite "Optionen" mit der Nummer 5 (`OPTS_STEP`), in `steps()` zwischen 1 und 2, nur wenn `hasOptions()`; die übrigen Nummern
+  blieben. `stepBy`, `setStep`, `canSaveAll`, Schrittanzeige zählen über `steps()`. Vorschau `prevHtml` (Zone `prev`), Regler `.to-range` (Eingabe aktualisiert nur
+  Vorschau, Wert und Schnellwahl, damit das Ziehen nicht abreisst; `change` zeichnet neu), Farben `.to-col`, Schnellwahl als Reiterleiste (`data-tm="optq"`,
+  `data-group` je Einstellung). Rückstellung `data-tm="bmode"` in Schritt 1 (nur mit Zurückschalten). `sentenceOf` nennt Einstellungen und "wie vorher".
+- Tests: `tests/test_timer_options.py` (16), Suite `timeropts-e2e` (126 Prüfungen), Simulator kennt `options`/`back_mode`.
+- Nicht an echten Geräten geprüft: die Dienstaufrufe von Klima und Medien (vor allem die 1-Sekunden-Pause und `turn_on` vor `set_temperature`/`volume_set`),
+  die Wiederherstellung einer Lampe in den Modi `xy`/`hs`/`rgbww` (nur mit Testwerten), Farbwahl des Browsers auf dem Handy.
+
 ## Stand (README neu, ohne Versionswechsel)
 
 - README.md/README.de.md neu geschrieben (Überblick der Funktionen, drei Grafiken zum Meldungsprinzip, rund 44 Bilder je Sprache). Grafiken: `docs/graphics/render.mjs`

@@ -1850,13 +1850,14 @@ class DevicePanel extends HTMLElement {
     }
   }
 
-  // Dauer in Tagen als Text: Tage bis 45, Monate bis 2 Jahre, danach Jahre.
+  // Dauer in Tagen als Text: Tage bis 45, Monate bis 1 Jahr, danach Jahre und Monate ("2 Jahre 11 Monate", seit 2.52.0).
   _fmtSpan(days) {
     const t = (k, ...a) => this._t(k, ...a);
     if (days > 1825) return t("batFcOver5");
     if (days < 45) return t("batFcDays", Math.max(1, Math.round(days)));
-    if (days < 730) return t("batFcMonths", Math.round(days / 30.4));
-    return t("batFcYears", this._fmtPct(Math.round((days / 365) * 10) / 10));
+    const months = Math.round(days / 30.44);
+    if (months < 12) return t("batFcMonths", months);
+    return t("batFcYears", Math.floor(months / 12), months % 12);
   }
 
   // Prognose-Block im Batterie-Verlauf (seit 1.5.0). Unabhängig vom

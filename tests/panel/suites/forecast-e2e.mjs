@@ -81,6 +81,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Spanne offen: nur Minimum`, /150|5 /.test(await text("dialog.stat-dlg .bh-fc-meta")) && !/ bis | to /.test((await text("dialog.stat-dlg .bh-fc-meta span")) || ""), await text("dialog.stat-dlg .bh-fc-meta"));
     await closeAll();
 
+    // Jahre und Monate: 1070 Tage = 35 Monate = 2 Jahre 11 Monate; 730 Tage = 24 Monate = 2 Jahre; 400 Tage = 13 Monate = 1 Jahr 1 Monat
+    for (const [days, de, en] of [[1070, "2 Jahre 11 Monate", "2 years 11 months"], [730, "2 Jahre", "2 years"], [400, "1 Jahr 1 Monat", "1 year 1 month"], [330, "11 Monate", "11 months"]]) {
+      await force({ ...base, status: "ok", days, at: now + days * D, days_low: days - 30, days_high: days + 30, confidence: "high", r2: 0.9, accelerating: false });
+      await open();
+      const want = lang === "de" ? de : en;
+      check(`[${tag}] ${days} Tage: "${want}"`, (await text("dialog.stat-dlg .bh-fc-main")).includes(want), await text("dialog.stat-dlg .bh-fc-main"));
+      await closeAll();
+    }
+
     // Über 5 Jahre
     await force({ ...base, status: "ok", days: 3000, at: now + 3000 * D, days_low: 2000, days_high: null, confidence: "low", r2: 0.3, accelerating: false });
     await open();

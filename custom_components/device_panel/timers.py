@@ -16,6 +16,12 @@ Minutentakt); er liegt zusammen mit dem Stand im Speicher .storage/device_panel.
 während eines Neustarts fällig wurde, holt der Timer innerhalb der eingestellten Zeit nach (timers_catch_up), sonst wird es
 übersprungen und im Protokoll vermerkt. Nicht erreichbare Entitäten: zwei weitere Versuche im Abstand von 5 Minuten, dann
 Fehlermeldung. Der Text der Push-Meldung ist fest (push.py), mit Vorschau; Empfänger pro Timer, sonst das Standard-Ziel.
+
+Schaltoptionen (seit 2.52.0): Beim Einschalten (bei Rollläden Öffnen) lässt sich einstellen, wie geschaltet wird: Licht mit
+Helligkeit, Farbtemperatur oder Farbe, Rollladen auf eine Position, Klima mit Soll-Temperatur und Modus, Medien mit Lautstärke,
+Ventilator mit Stufe. Was einstellbar ist, liest das Panel aus dem Zustand der Entität (option_specs); ohne Angabe bleibt alles
+wie bisher ("wie zuletzt"). Beim Zurückschalten gibt es zwei Wege: das Gegenstück (aus, zu …) oder "wie vorher": Dann merkt sich
+der Timer unmittelbar vor dem Schalten die Szene der Entität (snapshot_of) und stellt sie danach wieder her (restore_calls).
 """
 
 from __future__ import annotations
@@ -31,7 +37,11 @@ from functools import partial
 from typing import Any
 
 import voluptuous as vol
-from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, callback
+from homeassistant.components.climate import ClimateEntityFeature
+from homeassistant.components.cover import CoverEntityFeature
+from homeassistant.components.fan import FanEntityFeature
+from homeassistant.components.media_player import MediaPlayerEntityFeature
+from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, State, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_point_in_utc_time
@@ -84,9 +94,15 @@ SERVICES: dict[str, dict[str, tuple[str, str]]] = {
     "cover": {"on": ("cover", "open_cover"), "off": ("cover", "close_cover"), "toggle": ("cover", "toggle")},
     "valve": {"on": ("valve", "open_valve"), "off": ("valve", "close_valve"), "toggle": ("valve", "toggle")},
     "lock": {"on": ("lock", "lock"), "off": ("lock", "unlock")},
+    "climate": {"on": ("climate", "turn_on"), "off": ("climate", "turn_off"), "toggle": ("climate", "toggle")},
+    "media_player": {"on": ("media_player", "turn_on"), "off": ("media_player", "turn_off"), "toggle": ("media_player", "toggle")},
 }
 DOMAINS = tuple(SERVICES)
 ACTIONS = ("on", "off", "toggle")
+BACK_MODES = ("opposite", "restore")
+# Pause zwischen zwei Diensten eines Schaltens (Klima: einschalten, dann Temperatur; Medien: einschalten, dann Lautstärke):
+# Manche Geräte nehmen die zweite Angabe erst an, wenn sie wirklich laufen.
+CALL_GAP_S = 1.0
 # Wort der Meldung nach dem Schalten (push.py: timer_res_*)
 RESULT = {
     ("cover", "on"): "open", ("cover", "off"): "closed", ("valve", "on"): "open", ("valve", "off"): "closed",
@@ -114,6 +130,261 @@ def opposite(action: str) -> str | None:
 def result_word(domain: str, action: str) -> str:
     """Schlüssel des Worts in der Meldung ("on", "off", "open", "closed", "locked", "unlocked", "toggled")."""
     return "toggled" if action == "toggle" else RESULT.get((domain, action), action)
+
+
+# -- Schaltoptionen --------------------------------------------------------------------------------
+
+
+def _int_range(low: int, high: int, what: str):
+    """Ganze Zahl im Bereich (Wahrheitswerte zählen nicht)."""
+
+    def check(value: Any) -> int:
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or value != int(value) or not low <= int(value) <= high:
+            raise vol.Invalid(f"{what}: ganze Zahl von {low} bis {high} erwartet")
+        return int(value)
+
+    return check
+
+
+def _temperature(value: Any) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not -50 <= value <= 200:
+        raise vol.Invalid("Temperatur: Zahl von -50 bis 200 erwartet")
+    return round(float(value), 1)
+
+
+_HVAC_MODES = ("heat", "cool", "heat_cool", "auto", "dry", "fan_only")
+
+# Erlaubte Angaben je Art der Entität. Gelten nur beim Einschalten (bei Rollläden Öffnen); ohne Angabe bleibt alles wie zuletzt.
+OPTION_SCHEMAS: dict[str, vol.Schema] = {
+    "light": vol.Schema(
+        {
+            vol.Optional("brightness_pct"): _int_range(1, 100, "Helligkeit"),
+            vol.Optional("color_temp_kelvin"): _int_range(1000, 40000, "Farbtemperatur"),
+            vol.Optional("rgb_color"): vol.All([_int_range(0, 255, "Farbe")], vol.Length(min=3, max=3)),
+        }
+    ),
+    "cover": vol.Schema({vol.Optional("position"): _int_range(0, 100, "Position")}),
+    "climate": vol.Schema({vol.Optional("temperature"): _temperature, vol.Optional("hvac_mode"): vol.In(_HVAC_MODES)}),
+    "media_player": vol.Schema({vol.Optional("volume_pct"): _int_range(0, 100, "Lautstärke")}),
+    "fan": vol.Schema({vol.Optional("percentage"): _int_range(1, 100, "Stufe")}),
+}
+
+
+def clean_options(domain: str, action: str, raw: Any) -> dict[str, Any]:
+    """Schaltoptionen prüfen (Form und Wertebereich, ohne die Entität zu kennen); leer bleibt leer."""
+    if not raw:
+        return {}
+    if not isinstance(raw, dict):
+        raise vol.Invalid("Schaltoptionen ungültig")
+    schema = OPTION_SCHEMAS.get(domain)
+    if schema is None:
+        raise vol.Invalid("Diese Entität hat keine Schaltoptionen")
+    if action != "on":
+        raise vol.Invalid("Schaltoptionen gibt es nur beim Einschalten")
+    out = schema(raw)
+    if "color_temp_kelvin" in out and "rgb_color" in out:
+        raise vol.Invalid("Farbtemperatur und Farbe schliessen sich aus")
+    return out
+
+
+def _features(state: State) -> int:
+    value = state.attributes.get("supported_features")
+    return int(value) if isinstance(value, int) and not isinstance(value, bool) else 0
+
+
+def option_specs(state: State | None, temperature_unit: str = "°C") -> list[dict[str, Any]]:
+    """
+    Was sich an dieser Entität einstellen lässt, als Beschreibung für das Panel (Schlüssel, Art, Grenzen). Leer, wenn nichts
+    einstellbar ist oder die Entität nicht erreichbar ist (dann sind ihre Fähigkeiten nicht bekannt).
+    """
+    if state is None or state.state == "unavailable":
+        return []
+    attrs, feats = state.attributes, _features(state)
+    specs: list[dict[str, Any]] = []
+    if state.domain == "light":
+        modes = set(attrs.get("supported_color_modes") or [])
+        if modes - {"onoff"}:
+            specs.append({"key": "brightness_pct", "type": "percent", "min": 1, "max": 100})
+        if "color_temp" in modes:
+            low = attrs.get("min_color_temp_kelvin")
+            high = attrs.get("max_color_temp_kelvin")
+            specs.append({"key": "color_temp_kelvin", "type": "kelvin", "min": int(low) if low else 2000, "max": int(high) if high else 6500})
+        if modes & {"hs", "xy", "rgb", "rgbw", "rgbww"}:
+            specs.append({"key": "rgb_color", "type": "colour"})
+    elif state.domain == "cover":
+        if feats & CoverEntityFeature.SET_POSITION:
+            specs.append({"key": "position", "type": "percent", "min": 0, "max": 100})
+    elif state.domain == "climate":
+        if feats & ClimateEntityFeature.TARGET_TEMPERATURE:
+            step = attrs.get("target_temp_step") or (0.5 if temperature_unit == "°C" else 1)
+            specs.append({
+                "key": "temperature", "type": "temperature", "unit": temperature_unit, "step": step,
+                "min": attrs.get("min_temp", 7), "max": attrs.get("max_temp", 35),
+            })
+        modes = [m for m in attrs.get("hvac_modes") or [] if m in _HVAC_MODES]
+        if modes:
+            specs.append({"key": "hvac_mode", "type": "choice", "values": modes})
+    elif state.domain == "media_player":
+        if feats & MediaPlayerEntityFeature.VOLUME_SET:
+            specs.append({"key": "volume_pct", "type": "percent", "min": 0, "max": 100})
+    elif state.domain == "fan":
+        if feats & FanEntityFeature.SET_SPEED:
+            specs.append({"key": "percentage", "type": "percent", "min": 1, "max": 100})
+    return specs
+
+
+def validate_options(hass: HomeAssistant, entity_id: str, action: str, raw: Any) -> dict[str, Any]:
+    """Optionen prüfen und, wenn die Entität erreichbar ist, gegen ihre Fähigkeiten (Grenzen, unterstützte Angaben) halten."""
+    domain = entity_id.split(".", 1)[0]
+    options = clean_options(domain, action, raw)
+    if not options:
+        return {}
+    state = hass.states.get(entity_id)
+    specs = {s["key"]: s for s in option_specs(state, hass.config.units.temperature_unit)}
+    if state is None or state.state == "unavailable":
+        return options
+    for key, value in options.items():
+        spec = specs.get(key)
+        if spec is None:
+            raise vol.Invalid("Diese Einstellung unterstützt die Entität nicht")
+        if spec["type"] in ("kelvin", "temperature") and not spec["min"] <= value <= spec["max"]:
+            raise vol.Invalid(f"Wert ausserhalb des Bereichs ({spec['min']} bis {spec['max']})")
+        if spec["type"] == "choice" and value not in spec["values"]:
+            raise vol.Invalid("Diesen Modus unterstützt die Entität nicht")
+    return options
+
+
+def actions_for_state(domain: str, state: State | None) -> list[str]:
+    """
+    Aktionen für eine bestimmte Entität. Bei Klima und Medien nur, was das Gerät kann (Ein-/Ausschalten ist dort eine
+    Fähigkeit); "ein" bleibt auch ohne Einschalten möglich, wenn sich etwas einstellen lässt (Lautstärke eines Lautsprechers).
+    """
+    actions = actions_for(domain)
+    if domain not in ("climate", "media_player") or state is None or state.state == "unavailable":
+        return actions
+    feats = _features(state)
+    on_flag, off_flag = (
+        (ClimateEntityFeature.TURN_ON, ClimateEntityFeature.TURN_OFF) if domain == "climate" else (MediaPlayerEntityFeature.TURN_ON, MediaPlayerEntityFeature.TURN_OFF)
+    )
+    can_on, can_off = bool(feats & on_flag), bool(feats & off_flag)
+    out = []
+    if can_on or option_specs(state):
+        out.append("on")
+    if can_off:
+        out.append("off")
+    if can_on and can_off:
+        out.append("toggle")
+    return out
+
+
+def service_calls(domain: str, entity_id: str, action: str, options: dict[str, Any] | None, feats: int = 0) -> list[tuple[str, str, dict[str, Any]]]:
+    """Die Dienste, die ein Schalten ausführt (Domäne, Dienst, Daten); leer, wenn es die Aktion nicht gibt."""
+    base: dict[str, Any] = {"entity_id": entity_id}
+    if action == "on" and options:
+        if domain in ("light", "fan"):
+            return [(domain, "turn_on", {**base, **options})]
+        if domain == "cover":
+            return [("cover", "set_cover_position", {**base, "position": options["position"]})]
+        calls: list[tuple[str, str, dict[str, Any]]] = []
+        if domain == "climate":
+            if options.get("hvac_mode"):
+                calls.append(("climate", "set_hvac_mode", {**base, "hvac_mode": options["hvac_mode"]}))
+            elif feats & ClimateEntityFeature.TURN_ON:
+                calls.append(("climate", "turn_on", base))
+            if "temperature" in options:
+                calls.append(("climate", "set_temperature", {**base, "temperature": options["temperature"]}))
+            return calls
+        if domain == "media_player":
+            if feats & MediaPlayerEntityFeature.TURN_ON:
+                calls.append(("media_player", "turn_on", base))
+            if "volume_pct" in options:
+                calls.append(("media_player", "volume_set", {**base, "volume_level": options["volume_pct"] / 100}))
+            return calls
+    service = SERVICES.get(domain, {}).get(action)
+    return [(service[0], service[1], base)] if service else []
+
+
+# -- Szene merken und wiederherstellen ("wie vorher") ------------------------------------------------
+
+# Angaben, die für die Wiederherstellung gemerkt werden. Nur diese, damit der Speicher klein und frei von Fremdem bleibt.
+SNAPSHOT_ATTRS: dict[str, tuple[str, ...]] = {
+    "light": ("brightness", "color_mode", "color_temp_kelvin", "hs_color", "xy_color", "rgb_color", "rgbw_color", "rgbww_color"),
+    "cover": ("current_position",),
+    "climate": ("temperature",),
+    "media_player": ("volume_level",),
+    "fan": ("percentage",),
+}
+# Welche Angabe zum Farbmodus der Lampe gehört (nur diese wird zurückgegeben, sonst widerspricht sich der Aufruf)
+_COLOUR_KEY = {"color_temp": "color_temp_kelvin", "hs": "hs_color", "xy": "xy_color", "rgb": "rgb_color", "rgbw": "rgbw_color", "rgbww": "rgbww_color"}
+
+
+def _plain(value: Any) -> Any:
+    """Tupel (Farben) als Liste, damit die Szene im Speicher steht und wieder gelesen werden kann."""
+    return [_plain(v) for v in value] if isinstance(value, (list, tuple)) else value
+
+
+def snapshot_of(state: State | None) -> dict[str, Any] | None:
+    """Die Szene einer Entität vor dem Schalten; None, wenn sie nicht bekannt ist (dann bleibt es beim Gegenstück)."""
+    if state is None or state.state in ("unavailable", "unknown"):
+        return None
+    keep = SNAPSHOT_ATTRS.get(state.domain, ())
+    return {"state": state.state, "attrs": {k: _plain(state.attributes[k]) for k in keep if state.attributes.get(k) is not None}}
+
+
+def restore_calls(domain: str, entity_id: str, snapshot: dict[str, Any], feats: int = 0) -> list[tuple[str, str, dict[str, Any]]] | None:
+    """
+    Dienste, die eine gemerkte Szene wiederherstellen. None: aus dieser Szene lässt sich nichts herstellen (dann gilt das
+    Gegenstück). Leere Liste: es ist nichts zu tun.
+    """
+    state, attrs = snapshot["state"], snapshot["attrs"]
+    base: dict[str, Any] = {"entity_id": entity_id}
+    if domain == "light":
+        if state == "off":
+            return [("light", "turn_off", base)]
+        if state != "on":
+            return None
+        data = dict(base)
+        if "brightness" in attrs:
+            data["brightness"] = attrs["brightness"]
+        key = _COLOUR_KEY.get(attrs.get("color_mode", ""))
+        if key and key in attrs:
+            data[key] = attrs[key]
+        return [("light", "turn_on", data)]
+    if domain == "cover":
+        if state not in ("open", "closed", "opening", "closing"):
+            return None
+        if attrs.get("current_position") is not None:
+            return [("cover", "set_cover_position", {**base, "position": attrs["current_position"]})]
+        return [("cover", "open_cover" if state in ("open", "opening") else "close_cover", base)]
+    if domain == "climate":
+        if state == "off":
+            return [("climate", "turn_off", base)]
+        if state not in _HVAC_MODES:
+            return None
+        calls = [("climate", "set_hvac_mode", {**base, "hvac_mode": state})]
+        if "temperature" in attrs:
+            calls.append(("climate", "set_temperature", {**base, "temperature": attrs["temperature"]}))
+        return calls
+    if domain == "media_player":
+        if state in ("off", "standby"):
+            return [("media_player", "turn_off", base)]
+        calls = [("media_player", "turn_on", base)] if feats & MediaPlayerEntityFeature.TURN_ON else []
+        if "volume_level" in attrs:
+            calls.append(("media_player", "volume_set", {**base, "volume_level": attrs["volume_level"]}))
+        return calls
+    if domain == "fan":
+        if state == "off":
+            return [("fan", "turn_off", base)]
+        if state != "on":
+            return None
+        return [("fan", "turn_on", {**base, **({"percentage": attrs["percentage"]} if "percentage" in attrs else {})})]
+    on_states, off_states = {
+        "valve": (("open", "opening"), ("closed", "closing")),
+        "lock": (("locked",), ("unlocked",)),
+    }.get(domain, (("on",), ("off",)))
+    action = "on" if state in on_states else "off" if state in off_states else None
+    service = SERVICES.get(domain, {}).get(action) if action else None
+    return [(service[0], service[1], base)] if service else None
 
 
 # -- Zeitberechnung ------------------------------------------------------------------------------
@@ -246,6 +517,8 @@ TIMER_SCHEMA = vol.Schema(
         vol.Required("entity_id"): vol.All(str, vol.Match(_ENTITY_RE)),
         vol.Optional("name", default=""): _name,
         vol.Required("action"): vol.In(ACTIONS),
+        vol.Optional("options", default=dict): vol.Any(None, dict),
+        vol.Optional("back_mode", default="opposite"): vol.In(BACK_MODES),
         vol.Optional("back_s", default=None): vol.Any(None, _int_in(BACK_MIN, BACK_MAX, "Zurückschalten"), msg=f"Zurückschalten: ganze Zahl von {BACK_MIN} bis {BACK_MAX} erwartet"),
         vol.Required("kind"): vol.In(KINDS),
         vol.Optional("delay_s", default=None): vol.Any(None, _int_in(DELAY_MIN, DELAY_MAX, "Dauer"), msg=f"Dauer: ganze Zahl von {DELAY_MIN} bis {DELAY_MAX} erwartet"),
@@ -362,6 +635,7 @@ class TimerManager:
         # Form prüfen; die Register-Prüfung läuft nur beim Anlegen. Datum in der Vergangenheit ist hier erlaubt.
         clean_when(timer, dt_util.get_default_time_zone(), check_future=False)
         timer["target"] = timer.get("target") or None
+        timer["options"] = clean_options(timer["entity_id"].split(".", 1)[0], timer["action"], timer["options"])
         return timer
 
     @staticmethod
@@ -371,10 +645,15 @@ class TimerManager:
             return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
 
         last = raw.get("last")
+        snapshot = raw.get("snapshot")
+        if not (isinstance(snapshot, dict) and isinstance(snapshot.get("state"), str) and isinstance(snapshot.get("attrs"), dict)):
+            snapshot = None
         return {
             "due": num("due"),
             "revert_due": num("revert_due"),
             "revert_action": raw.get("revert_action") if raw.get("revert_action") in ("on", "off") else None,
+            # Die Szene vor dem Schalten, wenn nach dem Zurückschalten "wie vorher" gilt
+            "snapshot": snapshot,
             "done": num("done"),
             "retry": int(raw["retry"]) if isinstance(raw.get("retry"), int) else 0,
             "rretry": int(raw["rretry"]) if isinstance(raw.get("rretry"), int) else 0,
@@ -433,6 +712,10 @@ class TimerManager:
             raise vol.Invalid("Diese Aktion gibt es für diese Entität nicht")
         if timer["back_s"] is not None and opposite(timer["action"]) is None:
             raise vol.Invalid("Umschalten lässt sich nicht zurückschalten")
+        timer["options"] = validate_options(self.hass, timer["entity_id"], timer["action"], timer["options"])
+        # "Wie vorher" gilt nur, wenn überhaupt zurückgeschaltet wird
+        if timer["back_s"] is None or opposite(timer["action"]) is None:
+            timer["back_mode"] = "opposite"
         clean_when(timer, self.tz, check_future=existing is None or not self._same_when(existing, timer))
         timer["target"] = timer.get("target") or None
         if not timer["name"]:
@@ -564,21 +847,32 @@ class TimerManager:
     def _grace(self) -> float:
         return max(float(effective(self.hass)[CONF_TIMERS_CATCH_UP]) * 60.0, float(LATE_MIN_S))
 
-    async def _async_call(self, timer: dict[str, Any], action: str) -> tuple[bool, str | None]:
-        """Entität schalten. Rückgabe (geschafft, Grund): Grund "unavailable" oder "error"."""
+    async def _async_call(
+        self, timer: dict[str, Any], action: str, *, options: dict[str, Any] | None = None, snapshot: dict[str, Any] | None = None
+    ) -> tuple[bool, str | None]:
+        """
+        Entität schalten. Rückgabe (geschafft, Grund): Grund "unavailable" oder "error". Mit "options" wird eingeschaltet wie
+        eingestellt, mit "snapshot" die gemerkte Szene wiederhergestellt (ist daraus nichts herzustellen, gilt "action").
+        """
         state = self.hass.states.get(timer["entity_id"])
         if state is None:
             return False, "missing"
         if state.state == "unavailable":
             return False, "unavailable"
         domain = timer["entity_id"].split(".", 1)[0]
-        service = SERVICES[domain].get(action)
-        if service is None:
-            return False, "error"
+        feats = _features(state)
+        calls = restore_calls(domain, timer["entity_id"], snapshot, feats) if snapshot is not None else None
+        if calls is None:
+            calls = service_calls(domain, timer["entity_id"], action, options, feats)
+            if not calls:
+                return False, "error"
         try:
-            await self.hass.services.async_call(service[0], service[1], {"entity_id": timer["entity_id"]}, blocking=True)
+            for i, (call_domain, service, data) in enumerate(calls):
+                if i:
+                    await asyncio.sleep(CALL_GAP_S)
+                await self.hass.services.async_call(call_domain, service, data, blocking=True)
         except Exception:  # noqa: BLE001 - ein Timer darf nie etwas anderes stören
-            _LOGGER.exception("Timer '%s': %s.%s für %s fehlgeschlagen", timer["name"], service[0], service[1], timer["entity_id"])
+            _LOGGER.exception("Timer '%s': Schalten von %s fehlgeschlagen", timer["name"], timer["entity_id"])
             return False, "error"
         return True, None
 
@@ -587,6 +881,8 @@ class TimerManager:
 
     def _action_text(self, timer: dict[str, Any], action: str) -> str:
         """Aktion als Wort für das Protokoll (ein, aus, offen, geschlossen, abgeschlossen, umgeschaltet …)."""
+        if action == "restore":
+            return push.text(self.hass, "timer_res_restored")
         return push.text(self.hass, f"timer_res_{result_word(timer['entity_id'].split('.', 1)[0], action)}")
 
     def _device_name(self, timer: dict[str, Any]) -> str:
@@ -607,12 +903,13 @@ class TimerManager:
             rt["last"] = {"at": now, "ok": False, "what": "paused", "reason": None}
             self._finish(timer, rt, now)
             return
-        ok, reason = await self._async_call(timer, timer["action"])
+        scene = self._take_snapshot(timer, rt)
+        ok, reason = await self._async_call(timer, timer["action"], options=timer["options"])
         if ok:
             rt["retry"] = 0
             rt["last"] = {"at": now, "ok": True, "what": "run", "reason": None}
             activity.record(hass, "info", "timer", "timer_run", name, device, entity=self._entity_name(timer), action=self._action_text(timer, timer["action"]))
-            self._plan_revert(timer, rt, now)
+            self._plan_revert(timer, rt, now, scene)
             await self._async_notify(timer, ok=True, action=timer["action"])
             self._finish(timer, rt, now)
             return
@@ -627,12 +924,21 @@ class TimerManager:
         await self._async_notify(timer, ok=False, action=timer["action"], reason=reason or "error")
         self._finish(timer, rt, now)
 
-    def _plan_revert(self, timer: dict[str, Any], rt: dict[str, Any], now: float) -> None:
+    def _take_snapshot(self, timer: dict[str, Any], rt: dict[str, Any]) -> dict[str, Any] | None:
+        """Die Szene vor dem Schalten, wenn danach "wie vorher" gilt. Wartet noch ein Zurückschalten, gilt dessen Szene weiter."""
+        if timer["back_mode"] != "restore" or not timer["back_s"] or opposite(timer["action"]) is None:
+            return None
+        if rt["revert_due"] is not None:
+            return rt["snapshot"]
+        return snapshot_of(self.hass.states.get(timer["entity_id"]))
+
+    def _plan_revert(self, timer: dict[str, Any], rt: dict[str, Any], now: float, scene: dict[str, Any] | None = None) -> None:
         back = opposite(timer["action"])
         if timer["back_s"] and back:
             rt["revert_due"] = now + float(timer["back_s"])
             rt["revert_action"] = back
             rt["rretry"] = 0
+            rt["snapshot"] = scene
 
     def _finish(self, timer: dict[str, Any], rt: dict[str, Any], now: float) -> None:
         """Nach dem Ausführen (oder Verpassen): wiederholte Timer planen den nächsten, einmalige sind erledigt und aus."""
@@ -652,18 +958,21 @@ class TimerManager:
         if action is None:
             rt["revert_due"] = None
             return
-        ok, reason = await self._async_call(timer, action)
+        scene = rt["snapshot"] if timer["back_mode"] == "restore" else None
+        ok, reason = await self._async_call(timer, action, snapshot=scene)
         if ok:
-            rt.update(revert_due=None, revert_action=None, rretry=0)
-            activity.record(hass, "info", "timer", "timer_revert", name, device, entity=self._entity_name(timer), action=self._action_text(timer, action))
-            await self._async_notify(timer, ok=True, action=action)
+            rt.update(revert_due=None, revert_action=None, rretry=0, snapshot=None)
+            # Wurde die Szene wiederhergestellt, steht im Protokoll und in der Meldung "wie vorher" statt des Gegenstücks
+            shown = "restore" if scene is not None and restore_calls(timer["entity_id"].split(".", 1)[0], timer["entity_id"], scene) is not None else action
+            activity.record(hass, "info", "timer", "timer_revert", name, device, entity=self._entity_name(timer), action=self._action_text(timer, shown))
+            await self._async_notify(timer, ok=True, action=shown)
             return
         if rt["rretry"] < MAX_RETRY:
             rt["rretry"] += 1
             rt["revert_due"] = now + RETRY_S
             activity.record(hass, "warning", "timer", "timer_retry", name, device, entity=self._entity_name(timer), minutes=RETRY_S // 60, count=rt["rretry"], max=MAX_RETRY)
             return
-        rt.update(revert_due=None, revert_action=None, rretry=0)
+        rt.update(revert_due=None, revert_action=None, rretry=0, snapshot=None)
         activity.record(hass, "error", "timer", "timer_failed", name, device, entity=self._entity_name(timer))
         await self._async_notify(timer, ok=False, action=action, reason=reason or "error")
 
@@ -675,11 +984,12 @@ class TimerManager:
         async with self._lock:
             rt = self.runtime(timer_id)
             now = time.time()
-            ok, reason = await self._async_call(timer, timer["action"])
+            scene = self._take_snapshot(timer, rt)
+            ok, reason = await self._async_call(timer, timer["action"], options=timer["options"])
             if ok:
                 activity.record(self.hass, "info", "timer", "timer_run_manual", timer["name"], timer["device_id"], entity=self._entity_name(timer), action=self._action_text(timer, timer["action"]))
                 rt["last"] = {"at": now, "ok": True, "what": "run", "reason": None}
-                self._plan_revert(timer, rt, now)
+                self._plan_revert(timer, rt, now, scene)
                 await self._async_notify(timer, ok=True, action=timer["action"])
             else:
                 activity.record(self.hass, "error", "timer", "timer_failed", timer["name"], timer["device_id"], entity=self._entity_name(timer))
@@ -705,6 +1015,8 @@ class TimerManager:
             return push.text(hass, "timer_fail_title", name=timer["name"]), push.text(
                 hass, "timer_fail_text", entity=entity, reason=push.text(hass, f"timer_reason_{reason}"), time=clock
             )
+        if action == "restore":
+            return push.text(hass, "timer_title", name=timer["name"]), push.text(hass, "timer_text_restored", entity=entity, time=clock)
         word = result_word(domain, action)
         key = "timer_text_toggled" if word == "toggled" else "timer_text"
         return push.text(hass, "timer_title", name=timer["name"]), push.text(hass, key, entity=entity, result=push.text(hass, f"timer_res_{word}") if word != "toggled" else "", time=clock)
@@ -743,12 +1055,16 @@ class TimerManager:
             "next_runs": next_runs(timer, time.time(), self.tz),
         }
 
-    async def async_try(self, entity_id: str, action: str) -> tuple[bool, str | None]:
-        """Jetzt ausführen im Assistenten (seit 2.28.0): schaltet einmal, ohne Timer, Zurückschalten, Protokoll und Meldung."""
+    async def async_try(self, entity_id: str, action: str, options: Any = None) -> tuple[bool, str | None]:
+        """
+        Jetzt ausführen im Assistenten (seit 2.28.0): schaltet einmal, ohne Timer, Zurückschalten, Protokoll und Meldung.
+        Mit Schaltoptionen (seit 2.52.0) in genau der eingestellten Stärke, damit sich prüfen lässt, wie es wirklich wirkt.
+        """
         domain = entity_id.split(".", 1)[0]
         if domain not in SERVICES or action not in SERVICES[domain]:
             raise vol.Invalid("action not possible for this entity")
-        return await self._async_call({"entity_id": entity_id, "action": action, "name": entity_id}, action)
+        clean = validate_options(self.hass, entity_id, action, options)
+        return await self._async_call({"entity_id": entity_id, "action": action, "name": entity_id}, action, options=clean)
 
     async def async_test(self, raw: dict[str, Any]) -> bool:
         """Test: die echte Meldung (ohne zu schalten) an den gewählten Empfänger."""
@@ -772,7 +1088,9 @@ def entity_payload(hass: HomeAssistant, entity_id: str) -> dict[str, Any]:
         "domain": domain,
         "state": state.state if state is not None else None,
         "available": state is not None and state.state != "unavailable",
-        "actions": actions_for(domain),
+        "actions": actions_for_state(domain, state),
+        # Was sich einstellen lässt (seit 2.52.0); leer, wenn nichts oder die Entität gerade nicht erreichbar ist
+        "options": option_specs(state, hass.config.units.temperature_unit),
     }
 
 
@@ -780,14 +1098,16 @@ def switchable_entities(hass: HomeAssistant, device_id: str) -> list[dict[str, A
     """Entitäten des Geräts, die ein Timer schalten kann (ohne ausgeschaltete und ausgeblendete)."""
     entries = er.async_entries_for_device(er.async_get(hass), device_id)
     wanted = [e for e in entries if e.domain in SERVICES and e.disabled_by is None and e.hidden_by is None]
-    return [entity_payload(hass, e.entity_id) for e in sorted(wanted, key=lambda e: (e.entity_category is not None, e.entity_id))]
+    payloads = [entity_payload(hass, e.entity_id) for e in sorted(wanted, key=lambda e: (e.entity_category is not None, e.entity_id))]
+    # Klima und Medien ohne jede Aktion (Gerät kann weder ein noch aus noch etwas einstellen) sind nicht schaltbar
+    return [p for p in payloads if p["actions"]]
 
 
 def switchable_devices(hass: HomeAssistant) -> list[dict[str, Any]]:
     """Geräte mit mindestens einer Entität, die ein Timer schalten kann (für "Timer hinzufügen" im Fenster aller Timer, seit 2.27.0)."""
     counts: dict[str, int] = {}
     for entry in er.async_get(hass).entities.values():
-        if entry.device_id and entry.domain in SERVICES and entry.disabled_by is None and entry.hidden_by is None:
+        if entry.device_id and entry.domain in SERVICES and entry.disabled_by is None and entry.hidden_by is None and actions_for_state(entry.domain, hass.states.get(entry.entity_id)):
             counts[entry.device_id] = counts.get(entry.device_id, 0) + 1
     devices = dr.async_get(hass)
     out = []

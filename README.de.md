@@ -164,6 +164,8 @@ Schaltet eine Entität eines Geräts einmalig oder nach Zeitplan, ohne Automatio
 | <img src="docs/screenshots/de/timer-tab.png" alt="Reiter Timer eines Geräts mit einem Timer"> | <img src="docs/screenshots/de/timer-wizard.png" alt="Timer-Assistent, Schritt 2: Wann soll geschaltet werden"> |
 
 - **Was:** die Entität und die Aktion wählen (ein, aus, umschalten), auf Wunsch nach einer Weile zurückschalten
+- **Optionen:** Kann die Entität beim Einschalten etwas einstellen, folgt eine eigene Seite: Licht Helligkeit, Farbtemperatur und Farbe; Rollladen Position; Klima Soll-Temperatur und Modus; Medien Lautstärke; Ventilator Stufe. Eine Vorschau zeigt das Ergebnis (die Lampe leuchtet in der gewählten Farbe), geschaltet wird damit nichts, und "Jetzt ausführen" probiert die echte Stärke; ohne Angabe bleibt alles "wie zuletzt"
+- **Zurückschalten:** nach einer Weile zurück auf "aus" (das Gegenstück) oder "wie vorher": Der Timer merkt sich die Szene vor dem Schalten (zum Beispiel Helligkeit und Farbe) und stellt sie wieder her, so kann eine Lampe kurz heller werden und danach wieder sein wie vorher
 - **Wann:** in X Minuten, einmal an einem Datum und zu einer Uhrzeit oder wiederholt täglich, wöchentlich an gewählten Wochentagen oder monatlich, mit einer Prüfung der nächsten Ausführungen vor dem Speichern
 - **Test:** ein Knopf "Jetzt ausführen" probiert den gewählten Schalter aus
 - **Erinnerung:** auf Wunsch ein Push im Moment des Schaltens, mit Vorschau und eigenem Empfänger

@@ -9,14 +9,35 @@
  * (dialog.timer-dlg, gleiche Stile wie das von Magic Push). Nächste Ausführungen, Meldungstext und Ziel kommen als
  * Vorschau vom Server (timer_preview), damit Panel und Meldung dieselbe Rechnung benutzen (Zeitzone der Instanz).
  * Timer gehören den Geräten und werden sofort gespeichert, nicht mit "Speichern" der Einstellungen.
+ *
+ * Schaltoptionen (seit 2.52.0, docs/mockups/timer-light-v1): Kann die gewählte Entität beim Einschalten etwas einstellen
+ * (Licht: Helligkeit und Farbe, Rollladen: Position, Klima: Temperatur und Modus, Medien: Lautstärke, Ventilator: Stufe),
+ * kommt zwischen "Was schalten" und "Wann" eine eigene Seite "Optionen" mit einer Vorschau (geschaltet wird dabei nichts).
+ * Die Seite hat die Nummer 5, steht aber in der Reihenfolge an zweiter Stelle (steps()); die übrigen Nummern bleiben, wie sie
+ * waren. Was einstellbar ist, liefert der Server je Entität ("options"); ohne Angabe bleibt alles wie zuletzt.
  */
 
+// Letzter Schritt (Name und Prüfung); die Seite "Optionen" (5) steht in steps() zwischen 1 und 2, nur wenn die Entität etwas kann
 const STEPS = 4;
+const OPTS_STEP = 5;
 const DELAY_PRESETS = [300, 900, 1800, 3600];
 const BACK_PRESETS = [0, 600, 1800, 3600];
 const UNITS = [60, 3600, 86400];
 const PREVIEW_DELAY_MS = 300;
-const EMOJI = { switch: "🔌", light: "💡", fan: "🌀", cover: "🪟", lock: "🔒", valve: "🚿", siren: "🚨", humidifier: "💧", input_boolean: "🔘" };
+const EMOJI = { switch: "🔌", light: "💡", fan: "🌀", cover: "🪟", lock: "🔒", valve: "🚿", siren: "🚨", humidifier: "💧", input_boolean: "🔘", climate: "🌡️", media_player: "🔊" };
+// Schnellwahl unter den Reglern (zusätzlich zu "Wie zuletzt")
+const QUICK = { brightness_pct: [25, 50, 100], percentage: [25, 50, 100], position: [0, 50, 100], volume_pct: [25, 50, 75] };
+// Farben zur Wahl: Name (Schlüssel tmCol_*), Anzeige, Wert für die Lampe
+const COLOURS = [
+  ["red", "#ff3b30", [255, 59, 48]],
+  ["orange", "#ff9500", [255, 149, 0]],
+  ["yellow", "#ffd60a", [255, 214, 10]],
+  ["green", "#34c759", [52, 199, 89]],
+  ["cyan", "#5ac8fa", [90, 200, 250]],
+  ["blue", "#0a84ff", [10, 132, 255]],
+  ["purple", "#af52de", [175, 82, 222]],
+  ["pink", "#ff2d55", [255, 45, 85]],
+];
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
 
 // Schlüssel für Beschriftungen: Knopf/Verb der Aktion und Wort des Ergebnisses je Art der Entität
@@ -34,6 +55,18 @@ const resKey = (domain, action) => {
 };
 const opposite = (action) => (action === "on" ? "off" : action === "off" ? "on" : null);
 const pad = (n) => String(n).padStart(2, "0");
+
+// Farbe einer Lampe bei einer Farbtemperatur (Näherung nach Tanner Helland), nur für die Vorschau
+export function kelvinRgb(kelvin) {
+  const t = Math.min(40000, Math.max(1000, kelvin)) / 100;
+  const clamp = (v) => Math.round(Math.min(255, Math.max(0, v)));
+  const r = t <= 66 ? 255 : 329.698727446 * (t - 60) ** -0.1332047592;
+  const g = t <= 66 ? 99.4708025861 * Math.log(t) - 161.1195681661 : 288.1221695283 * (t - 60) ** -0.0755148492;
+  const b = t >= 66 ? 255 : t <= 19 ? 0 : 138.5177312231 * Math.log(t - 10) - 305.0447927307;
+  return [clamp(r), clamp(g), clamp(b)];
+}
+const toHex = (rgb) => `#${rgb.map((v) => pad(Math.round(v).toString(16))).join("")}`;
+const fromHex = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 
 export const timerEmoji = (domain) => EMOJI[domain] || "⏱️";
 
@@ -260,11 +293,53 @@ export class TimerUi {
     return word == null ? String(e.state ?? "") : word;
   }
 
-  // "Steckdose einschalten, nach 20 Min. wieder aus"
+  // Zahl mit dem Dezimalzeichen der Sprache (21,5)
+  fmtNum(n) {
+    try {
+      return Number(n).toLocaleString(this.host._locale(), { maximumFractionDigits: 2 });
+    } catch (err) {
+      return String(n);
+    }
+  }
+
+  // Farbtemperatur als Wort: warmweiss, neutralweiss, kaltweiss
+  kelvinWord(kelvin) {
+    return this.t(`tmKelvinWord_${kelvin < 3200 ? "warm" : kelvin < 4800 ? "neutral" : "cold"}`);
+  }
+
+  colourName(rgb) {
+    const hit = COLOURS.find(([, , c]) => c.every((v, i) => v === rgb[i]));
+    return hit ? this.t(`tmCol_${hit[0]}`) : this.t("tmColOwn");
+  }
+
+  // Die Einstellungen als Teile: ["40 %", "warmweiss (2700 K)"]; leer, wenn nichts eingestellt ist
+  optionParts(options) {
+    const o = options || {};
+    const unit = this.host._hass?.config?.unit_system?.temperature || "°C";
+    const parts = [];
+    if (o.brightness_pct != null) parts.push(`${o.brightness_pct} %`);
+    if (o.color_temp_kelvin != null) parts.push(`${this.kelvinWord(o.color_temp_kelvin)} (${o.color_temp_kelvin} K)`);
+    if (Array.isArray(o.rgb_color)) parts.push(this.colourName(o.rgb_color));
+    if (o.position != null) parts.push(`${o.position} %`);
+    if (o.temperature != null) parts.push(`${this.fmtNum(o.temperature)} ${unit}`);
+    if (o.hvac_mode) parts.push(this.t(`tmHvac_${o.hvac_mode}`));
+    if (o.volume_pct != null) parts.push(`${o.volume_pct} %`);
+    if (o.percentage != null) parts.push(`${o.percentage} %`);
+    return parts;
+  }
+
+  // "Steckdose einschalten, nach 20 Min. wieder aus"; mit Optionen "Lampe einschalten (40 %, warmweiss), nach 20 Min. wieder wie vorher"
   sentenceOf(tm, entityName) {
     const domain = this.domainOf(tm.entity_id);
-    let text = `${entityName} ${this.t(`tmVerb_${actKey(domain, tm.action)}`)}`;
-    if (tm.back_s && opposite(tm.action)) text += `, ${this.t("tmBackText", this.fmtDur(tm.back_s), this.t(`tmRes_${resKey(domain, opposite(tm.action))}`))}`;
+    const opts = tm.action === "on" ? tm.options : null;
+    const parts = this.optionParts(opts);
+    let verb = this.t(`tmVerb_${actKey(domain, tm.action)}`);
+    if (domain === "cover" && opts?.position != null) verb = this.t("tmVerbPosition", opts.position);
+    else if (parts.length) verb += ` (${parts.join(", ")})`;
+    let text = `${entityName} ${verb}`;
+    if (tm.back_s && opposite(tm.action)) {
+      text += `, ${tm.back_mode === "restore" ? this.t("tmBackTextRestore", this.fmtDur(tm.back_s)) : this.t("tmBackText", this.fmtDur(tm.back_s), this.t(`tmRes_${resKey(domain, opposite(tm.action))}`))}`;
+    }
     return text;
   }
 
@@ -578,7 +653,7 @@ export class TimerUi {
     const status = this.statusHtml(tm);
     // Wartet auf das Zurückschalten: wann, steht in der Zeile (Reiter "Läuft", seit 2.26.0)
     const backWord = tm.reverting && tm.revert_local && opposite(tm.action) ? this.t(`tmRes_${resKey(tm.domain, opposite(tm.action))}`) : "";
-    if (backWord) status.unshift(`<span class="mg-on">${esc(t("tmBackAtRow", backWord, this.localText(tm.revert_local)))}</span>`);
+    if (backWord) status.unshift(`<span class="mg-on">${esc(tm.back_mode === "restore" ? t("tmBackAtRowRestore", this.localText(tm.revert_local)) : t("tmBackAtRow", backWord, this.localText(tm.revert_local)))}</span>`);
     const next = tm.running ? `<span class="mg-on">${esc(t("tmRunningShort"))}</span>` : tm.enabled && tm.due_local ? `${esc(t("tmNextRun"))} <span class="mg-on">${esc(this.localText(tm.due_local))}</span>` : tm.done ? esc(t("tmDone")) : esc(t("tmDisabled"));
     return `<div class="mg-card${tm.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${timerEmoji(tm.domain)}</span>
       <div class="mg-t"><b>${esc(tm.name)}</b><small>${esc(this.sentence(tm))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${acts}${confirm}</div>`;
@@ -662,6 +737,8 @@ export class TimerUi {
       device_id: this.deviceId,
       entity_id: first && this.data.entities.length === 1 ? first.entity_id : "",
       action: "on",
+      options: {},
+      back_mode: "opposite",
       back_s: 0,
       backOwn: { text: "", unit: 60 },
       kind: "repeat",
@@ -691,6 +768,8 @@ export class TimerUi {
       device_id: tm.device_id,
       entity_id: tm.entity_id,
       action: tm.action,
+      options: { ...(tm.options || {}) },
+      back_mode: tm.back_mode || "opposite",
       back_s: tm.back_s || 0,
       backOwn: backPreset ? { text: "", unit: 60 } : back,
       kind: tm.kind,
@@ -719,6 +798,8 @@ export class TimerUi {
       entity_id: d.entity_id,
       name: d.name.trim(),
       action: d.action,
+      options: d.action === "on" ? d.options : {},
+      back_mode: d.back_s ? d.back_mode : "opposite",
       back_s: d.back_s || null,
       kind: d.kind,
       delay_s: d.kind === "countdown" ? d.delay_s : null,
@@ -763,7 +844,7 @@ export class TimerUi {
     this.reset();
     this.standalone = true;
     this.view = "wizard";
-    const draft = { id: null, device_id: null, entity_id: "", action: "on", back_s: 0, backOwn: { text: "", unit: 60 }, kind: "repeat", delay_s: 1800, delayOwn: { text: "", unit: 60 }, date: "", time: "06:30", repeat: "daily", weekdays: [0, 1, 2, 3, 4], mday: 1, mdayOwn: false, enabled: true, push: false, target: "", name: "" };
+    const draft = { id: null, device_id: null, entity_id: "", action: "on", options: {}, back_mode: "opposite", back_s: 0, backOwn: { text: "", unit: 60 }, kind: "repeat", delay_s: 1800, delayOwn: { text: "", unit: 60 }, date: "", time: "06:30", repeat: "daily", weekdays: [0, 1, 2, 3, 4], mday: 1, mdayOwn: false, enabled: true, push: false, target: "", name: "" };
     const w = (this.wiz = { pick: true, step: 0, editing: false, draft, pv: null, pvError: "", test: null, targetOpen: false, error: "", saving: false, devices: null, devQuery: "", pickId: "", loadingDev: false });
     w.snap = JSON.stringify(draft);
     this.paint();
@@ -989,20 +1070,32 @@ export class TimerUi {
 
   paintZones(only) {
     if (!this.win() || !this.wiz) return;
-    for (const name of only || ["result", "runs", "pv", "summary"]) {
+    for (const name of only || ["result", "runs", "pv", "summary", "prev"]) {
       const el = this.q(`[data-tm-zone="${name}"]`);
       if (!el) continue;
       if (name === "result") el.innerHTML = this.resultHtml();
       else if (name === "runs") el.innerHTML = this.runsHtml();
       else if (name === "summary") el.innerHTML = this.summaryHtml();
       else if (name === "devs") el.innerHTML = this.devsHtml();
+      else if (name === "prev") el.innerHTML = this.prevHtml();
       else el.innerHTML = this.pvHtml();
     }
   }
 
   // Alle Schritte gültig: dann darf auf jeder Seite gespeichert werden (seit 2.24.0)
   canSaveAll() {
-    return Array.from({ length: STEPS }, (_, i) => i + 1).every((n) => this.canNext(n));
+    return this.steps().filter((n) => n > 0).every((n) => this.canNext(n));
+  }
+
+  // Kann die Entität beim Einschalten etwas einstellen? Dann gibt es die Seite "Optionen" (nur beim Einschalten, nie beim Umschalten)
+  hasOptions() {
+    const d = this.wiz?.draft;
+    return Boolean(d && d.action === "on" && this.entity(d.entity_id)?.options?.length);
+  }
+
+  // Die Schritte in ihrer Reihenfolge: Gerät (nur aus dem Fenster aller Timer), Was, Optionen (nur wenn möglich), Wann, Meldung, Name
+  steps() {
+    return [...(this.wiz?.pick ? [0] : []), 1, ...(this.hasOptions() ? [OPTS_STEP] : []), 2, 3, 4];
   }
 
   syncNav() {
@@ -1032,19 +1125,21 @@ export class TimerUi {
     const t = (k, ...a) => this.t(k, ...a);
     const w = this.wiz;
     const step = w.step;
-    // Mit "Timer hinzufügen" im Fenster aller Timer kommt Schritt 0 (Gerät wählen) davor: eine Seite mehr, die Anzeige zählt ab 1
-    const first = w.pick ? 0 : 1;
-    const total = w.pick ? STEPS + 1 : STEPS;
-    const shown = (n) => (w.pick ? n + 1 : n);
-    const bars = Array.from({ length: total }, (_, i) => {
-      const n = i + first;
-      const on = n <= step ? " on" : "";
-      const open = (w.editing || n < step) && !(n >= 1 && !this.data);
+    // Mit "Timer hinzufügen" im Fenster aller Timer kommt Schritt 0 (Gerät wählen) davor, mit Schaltoptionen die Seite "Optionen"
+    // dazwischen: Die Anzeige zählt die Seiten, die es gibt
+    const order = this.steps();
+    const pos = Math.max(0, order.indexOf(step));
+    const first = order[0];
+    const total = order.length;
+    const shown = (n) => order.indexOf(n) + 1;
+    const bars = order.map((n, i) => {
+      const on = i <= pos ? " on" : "";
+      const open = (w.editing || i < pos) && !(n >= 1 && !this.data);
       return open
         ? `<button type="button" class="mg-stp${on}" data-tm="goto" data-step="${n}" aria-label="${esc(`${t("tmStepOf", shown(n), total)}: ${t(`tmStepName_${n}`)}`)}"></button>`
         : `<span class="mg-stp${on}"></span>`;
     }).join("");
-    const body = [this.step0Html, this.step1Html, this.step2Html, this.step3Html, this.step4Html][step].call(this);
+    const body = [this.step0Html, this.step1Html, this.step2Html, this.step3Html, this.step4Html, this.stepOptsHtml][step].call(this);
     const last = step === STEPS;
     const quick = last || step === 0 ? "" : `<button type="button" class="dlg-btn quick" data-tm="nav-quick"${this.canSaveAll() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("tmSaving") : t("tmSave"))}</button>`;
     const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-tm="${step === first ? "nav-cancel" : "nav-back"}">${esc(step === first ? t("tmCancel") : t("tmBack"))}</button>
@@ -1080,6 +1175,12 @@ export class TimerUi {
         ${this.tabsHtml(BACK_PRESETS.map((s) => ({ on: !d.backOwn.text && d.back_s === s, attrs: `data-tm="bdur" data-s="${s}"`, label: s ? this.fmtDur(s) : t("tmBackNever") })))}
         ${this.ownHtml("back", d.backOwn, t("tmOwnTime"))}
         ${this.backError() ? `<div class="opt-error" data-tm-err="back">${esc(this.backError())}</div>` : ""}`;
+      // Wohin zurückgestellt wird: das Gegenstück (aus, zu …) oder die Szene vor dem Schalten (seit 2.52.0)
+      if (d.back_s) {
+        html += `<div class="mg-k">${esc(t("tmBackModeLabel"))}</div>
+          ${this.tabsHtml([["opposite", t(`tmAct_${actKey(e.domain, opposite(d.action))}`)], ["restore", t("tmBackModeRestore")]].map(([k, label]) => ({ on: d.back_mode === k, attrs: `data-tm="bmode" data-v="${k}"`, label })))}
+          ${d.back_mode === "restore" ? `<p class="mg-hint">${esc(t("tmBackModeNote"))}</p>` : ""}`;
+      }
     } else html += `<p class="mg-hint">${esc(t("tmToggleNoBack"))}</p>`;
     return `${html}<div data-tm-zone="result">${this.resultHtml()}</div>`;
   }
@@ -1092,7 +1193,7 @@ export class TimerUi {
     const row = w.tried?.busy
       ? `<span class="opt-short">${this.esc(this.t("tmTryBusy"))}</span>`
       : `<button type="button" class="dlg-btn tm-try" data-tm="try">${this.esc(this.t("tmTryBtn"))}</button>${w.tried?.text ? `<span class="${w.tried.failed ? "opt-error" : "opt-short"}" role="status">${this.esc(w.tried.text)}</span>` : ""}`;
-    return `<p class="mg-note tm-result">${this.esc(this.t("tmResult", this.sentenceOf({ entity_id: d.entity_id, action: d.action, back_s: d.back_s }, e.name)))}</p>
+    return `<p class="mg-note tm-result">${this.esc(this.t("tmResult", this.sentenceOf({ entity_id: d.entity_id, action: d.action, back_s: d.back_s, back_mode: d.back_mode, options: d.options }, e.name)))}</p>
       <div class="mg-testrow tm-tryrow">${row}</div><p class="mg-hint">${this.esc(this.t("tmTryNote"))}</p>`;
   }
 
@@ -1104,7 +1205,7 @@ export class TimerUi {
     w.tried = { busy: true };
     this.paintZones(["result"]);
     try {
-      const r = await this.call({ type: "device_panel/timer_try", entity_id: d.entity_id, action: d.action });
+      const r = await this.call({ type: "device_panel/timer_try", entity_id: d.entity_id, action: d.action, options: d.action === "on" ? d.options : {} });
       w.tried = r.ok ? { text: this.t("tmTryDone") } : { text: this.t("tmTryFail", this.t(r.reason === "unavailable" ? "tmTryUnavailable" : "tmTryError")), failed: true };
     } catch (err) {
       w.tried = { text: this.t("tmTryFail", this.h.errText(err)), failed: true };
@@ -1126,6 +1227,158 @@ export class TimerUi {
     } catch {
       // Der Stand bleibt wie er war; das Ergebnis des Schaltens steht schon da
     }
+  }
+
+  // --- Seite "Optionen" (seit 2.52.0) -----------------------------------------
+
+  // Wert aus einem Knopf (Text) in den Wert der Option (Zahl oder Modus) übersetzen
+  optSpecValue(key, text) {
+    const spec = (this.entity(this.wiz.draft.entity_id)?.options || []).find((x) => x.key === key);
+    return spec?.type === "choice" ? text : Number(text);
+  }
+
+  // Eine Angabe setzen oder (null) löschen; Farbtemperatur und Farbe schliessen sich aus
+  setOpt(key, value) {
+    const o = this.wiz.draft.options;
+    if (value === null || value === undefined || (typeof value === "number" && !Number.isFinite(value))) delete o[key];
+    else {
+      o[key] = value;
+      if (key === "color_temp_kelvin") delete o.rgb_color;
+      if (key === "rgb_color") delete o.color_temp_kelvin;
+    }
+    this.wiz.tried = null;
+  }
+
+  // Schnellwahl unter dem Regler: [Beschriftung, Wert]
+  quickValues(spec) {
+    const t = (k, ...a) => this.t(k, ...a);
+    if (spec.type === "kelvin") return [["warm", 2700], ["neutral", 4000], ["cold", 6500]].map(([k, v]) => [t(`tmKelvin_${k}`), Math.min(spec.max, Math.max(spec.min, v))]);
+    if (spec.type === "choice") return spec.values.map((v) => [t(`tmHvac_${v}`), v]);
+    if (spec.type === "temperature") {
+      const step = Number(spec.step) || 0.5;
+      const values = [0.25, 0.5, 0.75].map((f) => Math.min(spec.max, Math.max(spec.min, Math.round((spec.min + (spec.max - spec.min) * f) / step) * step)));
+      return [...new Set(values.map((v) => Number(v.toFixed(2))))].map((v) => [this.fmtNum(v), v]);
+    }
+    return (QUICK[spec.key] || [25, 50, 100]).filter((v) => v >= spec.min && v <= spec.max).map((v) => [`${v} %`, v]);
+  }
+
+  // Der Wert neben der Überschrift eines Reglers
+  optValueText(spec) {
+    const o = this.wiz.draft.options;
+    const v = o[spec.key];
+    if (spec.key === "rgb_color") return Array.isArray(v) ? this.colourName(v) : this.t("tmOptKeep");
+    if (v === undefined) return spec.key === "color_temp_kelvin" && o.rgb_color ? "–" : this.t("tmOptKeep");
+    if (spec.type === "kelvin") return `${v} K`;
+    if (spec.type === "temperature") return `${this.fmtNum(v)} ${spec.unit || "°C"}`;
+    if (spec.type === "choice") return this.t(`tmHvac_${v}`);
+    return `${v} %`;
+  }
+
+  // Schritt 5: Optionen. Vorschau oben (schaltet nichts), darunter ein Regler je Einstellung, unten "Jetzt ausführen"
+  stepOptsHtml() {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const e = this.entity(this.wiz.draft.entity_id);
+    if (!e) return "";
+    return `<p class="mg-note">${esc(t("tmOptNote"))}</p>
+      <div data-tm-zone="prev">${this.prevHtml()}</div>
+      ${e.options.map((spec) => this.optHtml(spec)).join("")}
+      <p class="mg-hint">${esc(t("tmOptPreviewNote"))}</p>
+      <div data-tm-zone="result">${this.resultHtml()}</div>`;
+  }
+
+  // Eine Einstellung: Überschrift mit Wert, Regler (oder Farben), Schnellwahl als Reiterleiste
+  optHtml(spec) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const k = spec.key;
+    const cur = this.wiz.draft.options[k];
+    const head = `<div class="to-k"><span>${esc(t(`tmOpt_${k}`))}</span><b data-tm-val="${esc(k)}">${esc(this.optValueText(spec))}</b></div>`;
+    if (spec.type === "colour") return `${head}${this.coloursHtml()}`;
+    let html = head;
+    if (spec.type !== "choice") {
+      const shown = cur ?? Math.round((spec.min + spec.max) / 2);
+      const fill = ((shown - spec.min) / (spec.max - spec.min)) * 100;
+      const step = spec.type === "temperature" ? spec.step || 0.5 : 1;
+      html += `<input type="range" class="to-range${spec.type === "kelvin" ? " kel" : ""}${cur === undefined ? " unset" : ""}" data-tm="opt" data-k="${esc(k)}" min="${spec.min}" max="${spec.max}" step="${step}" value="${shown}" style="--fill:${fill.toFixed(1)}%" aria-label="${esc(t(`tmOpt_${k}`))}">`;
+      if (spec.type === "kelvin") html += `<div class="to-ends"><span>${esc(t("tmKelvin_warm"))}</span><span>${esc(t("tmKelvin_cold"))}</span></div>`;
+    }
+    const none = cur === undefined && !(k === "color_temp_kelvin" && this.wiz.draft.options.rgb_color);
+    const items = [{ on: none, attrs: `data-tm="optq" data-k="${esc(k)}" data-v="" data-group="${esc(k)}"`, label: t("tmOptKeep") }, ...this.quickValues(spec).map(([label, v]) => ({ on: cur === v, attrs: `data-tm="optq" data-k="${esc(k)}" data-v="${esc(v)}" data-group="${esc(k)}"`, label }))];
+    return `${html}${this.tabsHtml(items)}`;
+  }
+
+  // Farben als Kreise: "Wie zuletzt" (durchgestrichen), acht Farben, eigene Farbe über die Farbwahl des Browsers
+  coloursHtml() {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const o = this.wiz.draft.options;
+    const rgb = o.rgb_color;
+    const known = rgb && COLOURS.some(([, , c]) => c.every((v, i) => v === rgb[i]));
+    const none = !rgb && o.color_temp_kelvin === undefined;
+    const dots = COLOURS.map(([name, hex, c]) => {
+      const on = rgb && c.every((v, i) => v === rgb[i]);
+      return `<button type="button" class="to-col${on ? " on" : ""}" style="background:${hex}" data-tm="optcol" data-v="${c.join(",")}" role="radio" aria-checked="${Boolean(on)}" aria-label="${esc(t(`tmCol_${name}`))}" title="${esc(t(`tmCol_${name}`))}"></button>`;
+    }).join("");
+    return `<div class="to-cols" role="radiogroup" aria-label="${esc(t("tmOpt_rgb_color"))}">
+      <button type="button" class="to-col none${none ? " on" : ""}" data-tm="optcol" data-v="" role="radio" aria-checked="${none}" aria-label="${esc(t("tmOptKeep"))}" title="${esc(t("tmOptKeep"))}"></button>${dots}
+      <label class="to-col more${rgb && !known ? " on" : ""}" title="${esc(t("tmColPick"))}"><input type="color" data-tm="optpick" value="${rgb ? toHex(rgb) : "#ffffff"}" aria-label="${esc(t("tmColPick"))}"></label></div>`;
+  }
+
+  // Vorschau: das Gerät, wie es nach dem Schalten aussieht (Lampe leuchtet in der Farbe, Rollladen steht auf der Position …)
+  prevHtml() {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const d = this.wiz.draft;
+    const e = this.entity(d.entity_id);
+    if (!e) return "";
+    const o = d.options;
+    const parts = this.optionParts(o);
+    let big = "";
+    let style = "";
+    let off = !parts.length;
+    let sub = parts.slice(1).join(" · ");
+    if (e.domain === "light") {
+      const level = (o.brightness_pct ?? 100) / 100;
+      const rgb = Array.isArray(o.rgb_color) ? o.rgb_color : o.color_temp_kelvin ? kelvinRgb(o.color_temp_kelvin) : [255, 197, 120];
+      style = `--pv-c:rgb(${rgb.join(",")});--pv-o:${off ? 0 : (0.2 + 0.5 * level).toFixed(2)};--pv-b:${off ? 1 : (0.55 + 0.45 * level).toFixed(2)}`;
+      big = "<span>💡</span>";
+    } else if (e.domain === "cover") {
+      const pos = o.position ?? 50;
+      style = `--pv-closed:${100 - pos}%`;
+      big = '<span class="to-shade"><i></i></span>';
+      sub = o.position == null ? "" : t(o.position >= 100 ? "tmCoverWord_open" : o.position <= 0 ? "tmCoverWord_closed" : "tmCoverWord_part");
+    } else if (e.domain === "climate") {
+      const colour = { heat: "#ff9500", cool: "#0a84ff", heat_cool: "#af52de", auto: "#34c759", dry: "#5ac8fa", fan_only: "#8e8e93" }[o.hvac_mode] || "var(--dp-text3)";
+      style = `--pv-c:${colour};--pv-o:${off ? 0 : 0.35}`;
+      big = `<span class="to-temp">${o.temperature != null ? `${esc(this.fmtNum(o.temperature))}°` : "–"}</span>`;
+    } else {
+      big = `<span>${esc(timerEmoji(e.domain))}</span>`;
+      const level = (o.volume_pct ?? o.percentage ?? 100) / 100;
+      style = `--pv-c:var(--dp-primary);--pv-o:${off ? 0 : (0.15 + 0.3 * level).toFixed(2)};--pv-b:1`;
+      sub = off ? "" : t(`tmOpt_${e.options[0].key}`);
+    }
+    const main = parts[0] || t("tmOptKeep");
+    if (off) sub = t("tmOptNothing");
+    return `<div class="to-prev${off ? " off" : ""}" style="${style}" role="img" aria-label="${esc(`${e.name}: ${main}${sub ? `, ${sub}` : ""}`)}">
+      <span class="to-prev-n">${esc(e.name)}</span><div class="big">${big}</div><b>${esc(main)}</b><small>${esc(sub)}</small></div>`;
+  }
+
+  // Regler bewegt (Eingabe): nur Vorschau, Wert und Schnellwahl nachführen, den Regler selbst nicht neu zeichnen
+  onOptInput(el) {
+    const spec = (this.entity(this.wiz.draft.entity_id)?.options || []).find((x) => x.key === el.dataset.k);
+    if (!spec) return;
+    this.setOpt(spec.key, Number(el.value));
+    el.classList.remove("unset");
+    el.style.setProperty("--fill", `${(((Number(el.value) - spec.min) / (spec.max - spec.min)) * 100).toFixed(1)}%`);
+    const val = this.q(`[data-tm-val="${spec.key}"]`);
+    if (val) val.textContent = this.optValueText(spec);
+    for (const b of this.qa(`[data-tm="optq"][data-k="${spec.key}"]`)) {
+      const on = b.dataset.v !== "" && this.optSpecValue(spec.key, b.dataset.v) === Number(el.value);
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-checked", String(on));
+    }
+    this.paintZones(["prev", "result"]);
   }
 
   // Schritt 2: Wann
@@ -1186,7 +1439,7 @@ export class TimerUi {
     const d = this.wiz.draft;
     if (!run?.back || !d.back_s || !opposite(d.action)) return "";
     const word = this.t(`tmRes_${resKey(this.domainOf(d.entity_id), opposite(d.action))}`);
-    return `<small>${this.esc(this.t("tmBackAtRow", word, this.localText(run.back)))}</small>`;
+    return `<small>${this.esc(d.back_mode === "restore" ? this.t("tmBackAtRowRestore", this.localText(run.back)) : this.t("tmBackAtRow", word, this.localText(run.back)))}</small>`;
   }
 
   // Schritt 3: Meldung
@@ -1255,7 +1508,7 @@ export class TimerUi {
     const w = this.wiz;
     const d = w.draft;
     const e = this.entity(d.entity_id);
-    const tm = { ...this.payload(), entity_id: d.entity_id, weekdays: d.weekdays, mday: d.mday, time: d.time, date: d.date, delay_s: d.delay_s, back_s: d.back_s };
+    const tm = { ...this.payload(), entity_id: d.entity_id, weekdays: d.weekdays, mday: d.mday, time: d.time, date: d.date, delay_s: d.delay_s, back_s: d.back_s, back_mode: d.back_mode };
     let html = `<div class="tm-sum"><b>${esc(this.whenText(tm))}</b>: ${esc(this.sentenceOf(tm, e?.name || ""))}.`;
     if (d.push) html += `<br>🔔 ${esc(t("tmSumPush", d.target ? this.niceTarget(d.target) : t("tmTargetDefaultShort")))}`;
     html += `</div>`;
@@ -1281,11 +1534,20 @@ export class TimerUi {
     dlg.addEventListener("change", (ev) => this.onChange(ev));
   }
 
+  // Zu einer Seite wechseln (Nummer); gibt es sie nicht (Optionen ohne Optionen), die nächste vorhandene
   setStep(step) {
-    this.wiz.step = Math.min(Math.max(step, this.wiz.pick ? 0 : 1), STEPS);
+    const order = this.steps();
+    this.wiz.step = order.includes(step) ? step : step === OPTS_STEP ? 2 : order.find((n) => n > step) ?? order[order.length - 1];
     this.paint();
     this.scrollTop();
     this.requestPreview();
+  }
+
+  // Eine Seite weiter (+1) oder zurück (-1) in der Reihenfolge der vorhandenen Seiten
+  stepBy(delta) {
+    const order = this.steps();
+    const i = Math.min(Math.max(order.indexOf(this.wiz.step) + delta, 0), order.length - 1);
+    this.setStep(order[i]);
   }
 
   onClick(ev) {
@@ -1326,7 +1588,7 @@ export class TimerUi {
         this.requestClose();
         break;
       case "nav-back":
-        this.setStep(w.step - 1);
+        this.stepBy(-1);
         break;
       case "dev":
         w.pickId = id;
@@ -1335,7 +1597,7 @@ export class TimerUi {
       case "nav-next":
         if (!this.canNext()) break;
         if (w.step === 0) this.chooseDevice();
-        else this.setStep(w.step + 1);
+        else this.stepBy(1);
         break;
       case "nav-quick":
         if (this.canSaveAll()) this.save();
@@ -1350,6 +1612,7 @@ export class TimerUi {
         const e = this.entity(id);
         if (!e) break;
         w.draft.entity_id = id;
+        w.draft.options = {};
         w.tried = null;
         if (!e.actions.includes(w.draft.action)) w.draft.action = e.actions[0];
         if (!opposite(w.draft.action)) w.draft.back_s = 0;
@@ -1359,6 +1622,7 @@ export class TimerUi {
       case "action":
         w.draft.action = el.dataset.v;
         w.tried = null;
+        if (w.draft.action !== "on") w.draft.options = {};
         if (!opposite(w.draft.action)) {
           w.draft.back_s = 0;
           w.draft.backOwn = { text: "", unit: 60 };
@@ -1369,6 +1633,23 @@ export class TimerUi {
         w.draft.back_s = Number(el.dataset.s);
         w.draft.backOwn = { text: "", unit: 60 };
         this.paint();
+        break;
+      case "bmode":
+        w.draft.back_mode = el.dataset.v;
+        this.paint();
+        this.requestPreview();
+        break;
+      case "optq":
+        // Schnellwahl: "" = Wie zuletzt (Angabe löschen), sonst der Wert (Zahl oder Modus)
+        this.setOpt(el.dataset.k, el.dataset.v === "" ? null : this.optSpecValue(el.dataset.k, el.dataset.v));
+        this.paint();
+        this.requestPreview();
+        break;
+      case "optcol":
+        this.setOpt("rgb_color", el.dataset.v ? el.dataset.v.split(",").map(Number) : null);
+        if (!el.dataset.v) this.setOpt("color_temp_kelvin", null);
+        this.paint();
+        this.requestPreview();
         break;
       case "kind":
         w.draft.kind = el.dataset.v;
@@ -1442,6 +1723,14 @@ export class TimerUi {
       case "dev-search":
         w.devQuery = el.value;
         this.paintZones(["devs"]);
+        break;
+      case "opt":
+        this.onOptInput(el);
+        break;
+      case "optpick":
+        // Farbwahl des Browsers: während des Ziehens nur die Vorschau, beim Loslassen (change) alles neu
+        this.setOpt("rgb_color", fromHex(el.value));
+        this.paintZones(["prev", "result"]);
         break;
       case "back-own":
         d.backOwn.text = el.value;
@@ -1531,6 +1820,12 @@ export class TimerUi {
     if (!w || !this.inScope(el) || !el.dataset?.tm) return;
     const d = w.draft;
     switch (el.dataset.tm) {
+      case "opt":
+      case "optpick":
+        // Losgelassen: Farben und Schnellwahl passend zum neuen Wert zeichnen (der Regler sitzt schon richtig)
+        this.paint();
+        this.requestPreview();
+        break;
       case "back-unit":
         d.backOwn.unit = Number(el.value);
         d.back_s = this.parseOwn(d.backOwn.text, d.backOwn.unit) || 0;

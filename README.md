@@ -164,6 +164,8 @@ Switches an entity of a device once or on a schedule, without an automation.
 | <img src="docs/screenshots/en/timer-tab.png" alt="Tab Timer of a device with a timer"> | <img src="docs/screenshots/en/timer-wizard.png" alt="Timer assistant, step 2: when should it switch"> |
 
 - **What:** pick the entity and the action (on, off, toggle), optionally switch back after a while
+- **Options:** if the entity can be set when it is turned on, a page of its own follows: light brightness, colour temperature and colour; shutter position; climate target temperature and mode; media volume; fan speed. A preview shows the result (the lamp lights in the chosen colour), nothing is switched by it, and "Run now" tries the real strength; without a setting everything stays "as last used"
+- **Switch back:** after a while back to "off" (the opposite) or "as before": the timer remembers the scene right before switching (for example brightness and colour) and restores it, so a lamp can be briefly brighter and then as it was
 - **When:** in X minutes, once at a date and time, or repeating daily, weekly on chosen weekdays or monthly, with a check of the next runs before you save
 - **Test:** a button "Run now" tries the chosen switch
 - **Reminder:** optionally a push at the moment it switches, with a preview and its own recipient

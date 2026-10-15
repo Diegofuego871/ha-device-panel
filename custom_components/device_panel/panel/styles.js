@@ -1709,6 +1709,49 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 /* Testknopf "Jetzt ausführen": echter Knopf mit Touch-Fläche (44 px), Rückmeldung daneben */
 .tm-tryrow { gap: 8px 14px; margin-top: 12px; font-size: 14px; }
 .tm-try { flex: 0 0 auto; height: 44px; padding: 0 22px; font-size: 15px; font-weight: 500; color: var(--dp-primary); border-color: var(--dp-primary); }
+/* Seite "Optionen" (2.52.0, docs/mockups/timer-light-v1): Vorschau, Regler, Farben */
+.to-prev { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 8px; padding: 14px 12px 12px; border-radius: 16px; background: var(--dp-subtle); text-align: center; }
+.to-prev-n { color: var(--dp-text2); font-size: 12.5px; }
+.to-prev .big { position: relative; display: grid; place-items: center; width: 92px; height: 92px; margin-top: 6px; border-radius: 50%; font-size: 44px;
+  background: color-mix(in srgb, var(--pv-c, var(--dp-text)) 22%, var(--dp-card)); transition: background .2s; }
+.to-prev .big::before { content: ""; position: absolute; inset: -20px; border-radius: 50%; pointer-events: none; opacity: var(--pv-o, 0); transition: opacity .2s;
+  background: radial-gradient(circle, var(--pv-c, transparent) 0%, transparent 66%); }
+.to-prev .big > span { position: relative; filter: brightness(var(--pv-b, 1)); }
+.to-prev.off .big { background: color-mix(in srgb, var(--dp-text) 8%, var(--dp-card)); }
+.to-prev.off .big > span { filter: grayscale(1) opacity(.6); }
+.to-prev b { margin-top: 8px; font-size: 22px; font-weight: 600; }
+.to-prev small { min-height: 1.3em; color: var(--dp-text2); font-size: 13px; }
+.to-temp { font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.to-shade { position: relative; display: block; width: 58px; height: 58px; overflow: hidden; border: 3px solid var(--dp-text3); border-radius: 8px; background: color-mix(in srgb, #8ec5ff 40%, var(--dp-card)); }
+.to-shade i { position: absolute; inset: 0 0 auto 0; height: var(--pv-closed, 50%); transition: height .2s;
+  background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--dp-text) 30%, var(--dp-card)) 0 5px, color-mix(in srgb, var(--dp-text) 15%, var(--dp-card)) 5px 7px); }
+.to-k { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 16px 0 2px; color: var(--dp-text2); font-size: 12.5px; }
+.to-k b { color: var(--dp-text); font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.to-range { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 34px; margin: 0; background: transparent; cursor: pointer; }
+.to-range::-webkit-slider-runnable-track { height: 8px; border-radius: 4px;
+  background: var(--to-track, linear-gradient(90deg, var(--dp-primary) var(--fill, 50%), color-mix(in srgb, var(--dp-text) 14%, transparent) var(--fill, 50%))); }
+.to-range::-moz-range-track { height: 8px; border-radius: 4px;
+  background: var(--to-track, linear-gradient(90deg, var(--dp-primary) var(--fill, 50%), color-mix(in srgb, var(--dp-text) 14%, transparent) var(--fill, 50%))); }
+.to-range::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; margin-top: -8px; border: 0; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, .45), 0 0 0 3px color-mix(in srgb, var(--dp-primary) 40%, transparent); }
+.to-range::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, .45), 0 0 0 3px color-mix(in srgb, var(--dp-primary) 40%, transparent); }
+.to-range.unset { --to-track: color-mix(in srgb, var(--dp-text) 14%, transparent); }
+.to-range.unset::-webkit-slider-thumb { opacity: .6; }
+.to-range.unset::-moz-range-thumb { opacity: .6; }
+.to-range.kel { --to-track: linear-gradient(90deg, #ff8f2e, #ffd9a6 45%, #ffffff 65%, #bcd8ff); }
+.to-range:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; border-radius: 6px; }
+.to-ends { display: flex; justify-content: space-between; margin: -2px 0 4px; color: var(--dp-text3); font-size: 11.5px; }
+.to-cols { display: flex; flex-wrap: wrap; gap: 9px; margin: 8px 0 4px; }
+.to-col { position: relative; flex: none; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18); }
+.to-col.on { box-shadow: 0 0 0 2px var(--dp-card), 0 0 0 4px var(--dp-primary); }
+.to-col:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 3px; }
+.to-col.none { background: color-mix(in srgb, var(--dp-text) 8%, var(--dp-card)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--dp-text) 30%, transparent); }
+.to-col.none::after { content: ""; position: absolute; left: 7px; right: 7px; top: 50%; height: 2px; border-radius: 1px; transform: rotate(-45deg); background: color-mix(in srgb, var(--dp-text) 45%, transparent); }
+.to-col.none.on { box-shadow: 0 0 0 2px var(--dp-card), 0 0 0 4px var(--dp-primary); }
+.to-col.more { display: block; overflow: hidden; background: conic-gradient(#f44, #fd4, #4d4, #4df, #94f, #f44); }
+.to-col.more.on { overflow: visible; }
+.to-col.more input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
 /* Reiterleiste im Geräte-Popup mit fünf Reitern: auf dem Handy Symbole, die Beschriftung nur am gewählten Reiter (Entscheid zu Frage 7 in docs/mockups/timer-v1) */
 @media (max-width: 600px) {
   .dev-tabs .sub-tabs { display: flex; gap: 2px; }

@@ -7,6 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.52.0] - 2026-10-15
+
+Timers: switching options (brightness, colour, position, temperature, volume, speed) and switching back "as before".
+
+### Added
+
+- Timer, new page "Options" after "What to switch": if the chosen entity can be set when it is turned on, the assistant shows a page of its own with a preview and one control per setting. Light: brightness, colour temperature (with "Warm", "Neutral", "Cold") and colour (eight colours and a free colour from the browser's colour picker); shutter or blind: position (0 to 100 %); climate: target temperature (within the limits and step of the device) and mode (heat, cool, auto and so on, as far as the device has them); media player: volume; fan: speed. The preview shows the lamp in the chosen colour and brightness, the shutter at its position, the target temperature, and so on; nothing is switched by it. Every setting also has "As last used": without a setting everything stays as before, so the default does not change and a timer that sets nothing behaves exactly as it did. The page only exists for "Turn on" (for shutters "Open") and only if the entity offers settings; for other entities the assistant has the same four steps as before. Settings that exclude each other (colour temperature and colour) are cleared against each other.
+- Timer, "Then back to" (appears as soon as switching back is set): "Turn off" (so far the only way, the opposite of the action) or "As before". With "As before" the timer remembers the scene of the entity right before it switches (on or off, brightness and colour of a lamp, position of a shutter, mode and target temperature of a climate device, volume of a media player, speed of a fan) and sets it again after the time, for example "the lamp briefly brighter and then as it was". If the entity was off, it is turned off again; if it was already on, it stays on. The scene is stored and survives a restart. If a timer switches again while its switching back is still waiting, the first scene stays (the lamp does not "return" to the state the timer itself set). If a scene cannot be restored (the state was unknown), the timer falls back to the opposite. The log and the push say "as before".
+- Timers can now also switch climate devices (turn on, turn off, toggle) and media players (the same), and thus also set them. Only what the device can do is offered: "Turn on" and "Turn off" for a device that supports it, and "Turn on" also for a device that cannot be turned on but can be set (a speaker with volume). Between two calls of one switching (turn on, then temperature or volume) the timer waits one second so that the device is ready for the second.
+
+### Changed
+
+- Timer, "Run now" in the assistant uses the chosen settings and therefore switches with exactly the chosen strength; so you can check on the spot how it really looks. As before it switches back nothing and saves no timer.
+- Timer, the sentence in the assistant, the summary and the lists names the settings: "Hue Lamp turn on (50 %, warm white (2700 K)), back as before after 10 min." For shutters with a position: "Rollo move to 50 %".
+- Battery forecast: durations of a year or more are shown in years and months instead of a decimal number: "Lasts about 2 years 11 months" instead of "2.9 years" (also in the range, for example "Range 2 years 10 months to 2 years 11 months"). Below a year it stays months, below 45 days days.
+- Timer assistant: the step display counts the pages that exist (with a page "Options" "Step 3 of 6", without it "Step 3 of 5" from the window of all timers).
+
 ## [2.51.0] - 2026-10-15
 
 AI assessment: the suggested follow-up questions come from the AI.
@@ -3305,6 +3322,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.52.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.0
 [2.51.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.51.0
 [2.49.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.49.0
 [2.48.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.0

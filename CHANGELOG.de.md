@@ -7,6 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.52.0] - 2026-10-15
+
+Timer: Schaltoptionen (Helligkeit, Farbe, Position, Temperatur, Lautstärke, Stufe) und Zurückschalten "wie vorher".
+
+### Hinzugefügt
+
+- Timer, neue Seite "Optionen" nach "Was schalten": Kann die gewählte Entität beim Einschalten etwas einstellen, zeigt der Assistent eine eigene Seite mit Vorschau und je einem Regler pro Einstellung. Licht: Helligkeit, Farbtemperatur (mit "Warm", "Neutral", "Kalt") und Farbe (acht Farben und eine freie Farbe aus der Farbwahl des Browsers); Rollladen oder Store: Position (0 bis 100 %); Klima: Soll-Temperatur (innerhalb der Grenzen und Schritte des Geräts) und Modus (Heizen, Kühlen, Automatik und so weiter, soweit das Gerät sie hat); Mediaplayer: Lautstärke; Ventilator: Stufe. Die Vorschau zeigt die Lampe in der gewählten Farbe und Helligkeit, den Rollladen auf seiner Position, die Soll-Temperatur und so weiter; geschaltet wird damit nichts. Jede Einstellung hat auch "Wie zuletzt": Ohne Angabe bleibt alles wie bisher, der Standard ändert sich also nicht und ein Timer ohne Einstellung verhält sich genau wie vorher. Die Seite gibt es nur für "Einschalten" (bei Rollläden "Öffnen") und nur, wenn die Entität Einstellungen anbietet; bei anderen Entitäten hat der Assistent dieselben vier Schritte wie bisher. Einstellungen, die sich ausschliessen (Farbtemperatur und Farbe), löschen sich gegenseitig.
+- Timer, "Danach zurück auf" (erscheint, sobald Zurückschalten eingestellt ist): "Ausschalten" (bisher der einzige Weg, das Gegenstück der Aktion) oder "Wie vorher". Bei "Wie vorher" merkt sich der Timer unmittelbar vor dem Schalten die Szene der Entität (ein oder aus, Helligkeit und Farbe einer Lampe, Position eines Rollladens, Modus und Soll-Temperatur eines Klimageräts, Lautstärke eines Mediaplayers, Stufe eines Ventilators) und stellt sie nach der Zeit wieder her, zum Beispiel "die Lampe kurz heller und danach wieder wie sie war". War die Entität aus, wird sie wieder ausgeschaltet; war sie schon an, bleibt sie an. Die Szene wird gespeichert und übersteht einen Neustart. Schaltet ein Timer erneut, während sein Zurückschalten noch aussteht, bleibt die erste Szene (die Lampe "kehrt" nicht in den Zustand zurück, den der Timer selbst gesetzt hat). Lässt sich eine Szene nicht herstellen (der Zustand war unbekannt), gilt das Gegenstück. Protokoll und Push nennen "wie vorher".
+- Timer schalten jetzt auch Klimageräte (einschalten, ausschalten, umschalten) und Mediaplayer (dasselbe) und können sie damit auch einstellen. Angeboten wird nur, was das Gerät kann: "Einschalten" und "Ausschalten" bei einem Gerät, das es unterstützt, und "Einschalten" auch bei einem Gerät, das sich nicht einschalten, aber einstellen lässt (ein Lautsprecher mit Lautstärke). Zwischen zwei Aufrufen eines Schaltens (einschalten, dann Temperatur oder Lautstärke) wartet der Timer eine Sekunde, damit das Gerät für den zweiten bereit ist.
+
+### Geändert
+
+- Timer, "Jetzt ausführen" im Assistenten nimmt die gewählten Einstellungen und schaltet damit in genau der gewählten Stärke; so lässt sich sofort prüfen, wie es wirklich aussieht. Wie bisher schaltet es nichts zurück und speichert keinen Timer.
+- Timer, der Satz im Assistenten, in der Zusammenfassung und in den Listen nennt die Einstellungen: "Hue Lamp einschalten (50 %, warmweiss (2700 K)), nach 10 Min. wieder wie vorher." Bei Rollläden mit Position: "Rollo auf 50 % fahren".
+- Batterie-Prognose: Dauern ab einem Jahr stehen in Jahren und Monaten statt als Dezimalzahl: "Reicht noch etwa 2 Jahre 11 Monate" statt "2,9 Jahre" (auch in der Spanne, zum Beispiel "Spanne 2 Jahre 10 Monate bis 2 Jahre 11 Monate"). Unter einem Jahr bleiben es Monate, unter 45 Tagen Tage.
+- Timer-Assistent: Die Schrittanzeige zählt die Seiten, die es gibt (mit der Seite "Optionen" "Schritt 3 von 6", ohne sie aus dem Fenster aller Timer "Schritt 3 von 5").
+
 ## [2.51.0] - 2026-10-15
 
 KI-Einschätzung: die vorgeschlagenen Rückfragen kommen von der KI.
@@ -3406,6 +3423,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.52.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.0
 [2.51.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.51.0
 [2.49.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.49.0
 [2.48.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.0

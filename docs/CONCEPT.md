@@ -504,6 +504,11 @@ Assistant (nicht im Browser), mit der Zeitzone von HA, überlebt Neustarts (nach
 überspringen und im Protokoll vermerken). Reiter "Timer" im Popup, Übersicht und Optionen im Abschnitt "Timer" der
 Einstellungen. Einzelheiten: `docs/mockups/timer-v1/README.md`, `timers.py`.
 
+Schaltoptionen (seit 2.52.0): Beim Einschalten lässt sich einstellen, wie geschaltet wird (Licht Helligkeit und Farbe, Rollladen Position, Klima
+Temperatur und Modus, Medien Lautstärke, Ventilator Stufe), auf einer eigenen Seite "Optionen" des Assistenten mit Vorschau, nur wenn die Entität es
+kann. Beim Zurückschalten gibt es "Aus" (Gegenstück) oder "Wie vorher" (die Szene vor dem Schalten wird gemerkt und wiederhergestellt). Ohne Angabe
+bleibt alles wie zuletzt. Einzelheiten: `docs/mockups/timer-light-v1/README.md`, `timers.py`.
+
 ## Live-Aktivität beim Laden (seit 2.19.0, Wunsch des Nutzers)
 
 Optional (aus), global, pro Integration und pro Gerät, unabhängig von der Lademeldung. Zeigt auf iPhone (Live-Aktivität, iOS

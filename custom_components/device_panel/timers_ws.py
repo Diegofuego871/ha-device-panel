@@ -183,17 +183,19 @@ async def ws_timer_test(hass: HomeAssistant, connection: websocket_api.ActiveCon
     connection.send_result(msg["id"], {"sent": sent})
 
 
-@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/timer_try", vol.Required("entity_id"): str, vol.Required("action"): str})
+@websocket_api.websocket_command(
+    {vol.Required("type"): f"{DOMAIN}/timer_try", vol.Required("entity_id"): str, vol.Required("action"): str, vol.Optional("options"): vol.Any(None, dict)}
+)
 @websocket_api.require_admin
 @websocket_api.async_response
 async def ws_timer_try(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
-    """Jetzt ausführen aus dem Assistenten: die gewählte Entität und Aktion sofort schalten, ohne Rückschaltung."""
+    """Jetzt ausführen aus dem Assistenten: die gewählte Entität und Aktion (mit Schaltoptionen) sofort schalten, ohne Rückschaltung."""
     manager = _manager(hass)
     if manager is None:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "integration not set up")
         return
     try:
-        ok, reason = await manager.async_try(msg["entity_id"], msg["action"])
+        ok, reason = await manager.async_try(msg["entity_id"], msg["action"], msg.get("options"))
     except vol.Invalid as err:
         _error(connection, msg, err)
         return
