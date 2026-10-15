@@ -861,7 +861,7 @@ export const STRINGS = {
     // Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1)
     logBtn: "Protokoll",
     logTitle: "Protokoll",
-    logSub: (max, since) => `Letzte ${max} Einträge${since ? ` seit ${since}` : ""} · nur im Arbeitsspeicher`,
+    logSub: (max, since) => `Letzte ${max} Einträge${since ? ` seit ${since}` : ""} · bleiben nach einem Neustart erhalten`,
     logSearch: "Im Protokoll suchen…",
     logAll: "Alle",
     logLevel_debug: "Debug",
@@ -2442,7 +2442,7 @@ export const STRINGS = {
     // Log (since 1.38.0, docs/mockups/popup-tabs-log-v1, P1)
     logBtn: "Log",
     logTitle: "Log",
-    logSub: (max, since) => `Last ${max} entries${since ? ` since ${since}` : ""} · in memory only`,
+    logSub: (max, since) => `Last ${max} entries${since ? ` since ${since}` : ""} · kept across restarts`,
     logSearch: "Search the log…",
     logAll: "All",
     logLevel_debug: "Debug",

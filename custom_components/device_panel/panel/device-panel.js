@@ -3013,7 +3013,7 @@ class DevicePanel extends HTMLElement {
 
   // --- Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1) ----------------
   // Eigener Knopf in der Kopfzeile, Fenster gross auf dem Desktop, auf dem Handy vollflächig. Die Einträge
-  // liegen im Arbeitsspeicher der Integration (nur Administratoren); das Fenster fragt alle 4 Sekunden nach.
+  // liegen in der Integration und bleiben über Neustarts erhalten (nur Administratoren); das Fenster fragt alle 4 Sekunden nach.
 
   _logState() {
     if (!this._log) {

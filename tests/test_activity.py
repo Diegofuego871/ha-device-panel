@@ -147,9 +147,9 @@ async def test_debug_survives_restart_for_48_hours(hass: HomeAssistant, hass_sto
     until = activity.snapshot(hass)["debug_until"]
     assert abs(until - (before + activity.DEBUG_HOURS * 3600)) < 5 and activity.DEBUG_HOURS == 48
     # geschrieben (verzögert), danach Neustart: der Stand von HA im Arbeitsspeicher ist weg, die Datei bleibt
-    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=5))
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=activity.SAVE_DELAY + 1))
     await hass.async_block_till_done()
-    assert hass_storage[activity.STORE_KEY]["data"] == {"debug_until": until}
+    assert hass_storage[activity.STORE_KEY]["data"]["debug_until"] == until
     hass.data.pop(DATA_ACTIVITY).cancel_expiry()
     assert activity.snapshot(hass)["debug"] is False
     await activity.async_restore(hass)
@@ -168,7 +168,7 @@ async def test_debug_survives_restart_for_48_hours(hass: HomeAssistant, hass_sto
     assert any("48" in e["text"] for e in snap["entries"])
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(hours=48, minutes=1, seconds=10))
     await hass.async_block_till_done()
-    assert hass_storage[activity.STORE_KEY]["data"] == {"debug_until": None}
+    assert hass_storage[activity.STORE_KEY]["data"]["debug_until"] is None
 
 
 async def test_expired_debug_stays_off_after_restart(hass: HomeAssistant, hass_storage: dict[str, Any]) -> None:
@@ -182,3 +182,52 @@ async def test_expired_debug_stays_off_after_restart(hass: HomeAssistant, hass_s
     activity.set_debug(hass, True)
     activity.set_debug(hass, False)
     assert activity.snapshot(hass)["debug_until"] is None
+
+
+async def test_entries_survive_restart(hass: HomeAssistant, hass_storage: dict[str, Any]) -> None:
+    """2.47.0: Die Einträge (Debug eingeschlossen) bleiben über einen Neustart, höchstens MAX_ENTRIES, neueste zuletzt."""
+    from datetime import timedelta  # noqa: PLC0415
+
+    from homeassistant.util import dt as dt_util  # noqa: PLC0415
+    from pytest_homeassistant_custom_component.common import async_fire_time_changed  # noqa: PLC0415
+
+    from custom_components.device_panel.const import DATA_ACTIVITY  # noqa: PLC0415
+
+    activity.set_debug(hass, True)
+    for n in range(activity.MAX_ENTRIES + 20):
+        activity.record(hass, "debug", "charge", "charge_level", f"G{n}", None, level=n % 100, low=40, full=100, rise=20)
+    activity.record(hass, "warning", "system", "debug_expired", "Device Panel", hours=48)
+    # viele Einträge, aber nur ein Schreibvorgang nach der Verzögerung
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=activity.SAVE_DELAY + 1))
+    await hass.async_block_till_done()
+    stored = hass_storage[activity.STORE_KEY]["data"]["entries"]
+    assert len(stored) == activity.MAX_ENTRIES
+    # Neustart: Arbeitsspeicher weg, Datei bleibt
+    before = [(e["at"], e["title"]) for e in activity.snapshot(hass)["entries"]]
+    assert len(before) == activity.MAX_ENTRIES
+    hass.data.pop(DATA_ACTIVITY).cancel_expiry()
+    await activity.async_restore(hass)
+    snap = activity.snapshot(hass)
+    # gleiche Einträge in gleicher Reihenfolge; dazu der Eintrag "Debug-Modus wieder eingeschaltet" ganz am Ende
+    assert [(e["at"], e["title"]) for e in snap["entries"]][:-1] == before[1:]
+    assert snap["entries"][-1]["text"].startswith(("Debug-Modus", "debug mode"))
+    assert snap["since"] <= snap["entries"][0]["at"] + 1
+    # "Leeren" leert auch die Datei
+    activity.clear(hass)
+    async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=2 * activity.SAVE_DELAY + 2))
+    await hass.async_block_till_done()
+    assert hass_storage[activity.STORE_KEY]["data"]["entries"] == []
+
+
+async def test_damaged_stored_entries_are_ignored(hass: HomeAssistant, hass_storage: dict[str, Any]) -> None:
+    """2.47.0: Beschädigte gemerkte Einträge werden übersprungen, gültige bleiben."""
+    import time  # noqa: PLC0415
+
+    good = {"at": time.time() - 100, "level": "info", "cat": "system", "title": "A", "text": "alt", "detail": "", "device_id": None}
+    hass_storage[activity.STORE_KEY] = {
+        "version": 1, "minor_version": 1, "key": activity.STORE_KEY,
+        "data": {"debug_until": None, "entries": [good, "kaputt", {"at": "x"}, {"at": 1, "level": "boese", "text": "t"}, {"at": 2, "level": "info"}]},
+    }
+    await activity.async_restore(hass)
+    entries = activity.snapshot(hass)["entries"]
+    assert [e["text"] for e in entries] == ["alt"]

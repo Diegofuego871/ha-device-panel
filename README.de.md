@@ -184,7 +184,7 @@ Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den
 - **Eigene Links:** eine Seite in Home Assistant oder ein externer Link, der in einem neuen Browser-Tab öffnet, auf Wunsch mit seinem Favicon als Symbol
 - **Favoriten:** ein Herz markiert bis zu fünf Apps, die eigene Knöpfe in der Kopfzeile bekommen
 - **Bearbeiten-Modus:** per Ziehen sortieren, Apps mit dem Auge ausblenden, Raster oder Liste; alles wird pro Benutzer gespeichert
-- **Protokoll:** zeigt, was die Meldungen entscheiden und warum eine nicht kam, mit Filter und Suche und einem optionalen Debug-Modus (für 48 Stunden eingeschaltet, auch über Neustarts)
+- **Protokoll:** zeigt, was die Meldungen entscheiden und warum eine nicht kam, mit Filter und Suche (die letzten 500 Einträge bleiben über Neustarts erhalten) und einem optionalen Debug-Modus (für 48 Stunden eingeschaltet, auch über Neustarts)
 
 ## Einstellungen im Panel
 

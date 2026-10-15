@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.47.0] - 2026-10-15
+
+Protokoll: die Einträge überstehen einen Neustart von Home Assistant.
+
+### Geändert
+
+- Protokoll: die letzten 500 Einträge, Debug-Einträge eingeschlossen, bleiben jetzt über Neustarts von Home Assistant erhalten. Vorher lagen sie nur im Arbeitsspeicher und waren nach jedem Neustart weg, sodass der Verlauf, der ein Problem erklärt, genau dann fehlte, wenn man ihn brauchte. Die Grenze bleibt bei 500 Einträgen (den neuesten). Die Einträge stehen in der kleinen Protokoll-Datei der Integration, verzögert geschrieben, höchstens alle 30 Sekunden (und beim Beenden von Home Assistant); "Leeren" leert auch die gespeicherten Einträge, und beim Entfernen der Integration werden sie gelöscht. Das Fenster sagt "bleiben nach einem Neustart erhalten" statt "nur im Arbeitsspeicher", und "seit" nennt den Beginn des erhaltenen Verlaufs.
+
 ## [2.46.1] - 2026-10-15
 
 ### Geändert
@@ -3335,6 +3343,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.47.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.47.0
 [2.46.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.1
 [2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0
 [2.44.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.44.0

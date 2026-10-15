@@ -1,12 +1,14 @@
 """
 Protokoll der Integration (seit 1.38.0, Knopf "Protokoll" im Panel): zeigt, was die Meldungen
 entscheiden und warum etwas nicht kam ("Lademeldung aus", "kein Push-Ziel", "stumm" …). Die
-Einträge liegen nur im Arbeitsspeicher (Ringspeicher, die letzten MAX_ENTRIES) und gehen beim
-Neustart verloren: Das Protokoll dient der Fehlersuche, nicht der Aufbewahrung. Debug-Einträge
+Einträge liegen in einem Ringspeicher (die letzten MAX_ENTRIES). Seit 2.47.0 bleiben sie über
+Neustarts von Home Assistant erhalten (Wunsch des Nutzers: Debug-Einträge sollen einen Neustart
+überstehen, sonst fehlt genau der Verlauf davor); sie liegen mit dem Debug-Schalter in einer
+kleinen Datei, verzögert geschrieben. Debug-Einträge
 (Zwischenstände wie jeder neue Batteriestand) werden nur aufgezeichnet, solange der Schalter im
 Protokoll-Fenster an ist. Der Schalter bleibt seit 2.32.0 über Neustarts von Home Assistant
 erhalten, aber nur DEBUG_HOURS Stunden lang (Wunsch des Nutzers): Er merkt sich sein Ablaufdatum
-in einer kleinen Datei und schaltet sich dann von selbst aus. Zusätzlich gehen die Einträge ans Python-Protokoll von Home Assistant
+und schaltet sich dann von selbst aus. Zusätzlich gehen die Einträge ans Python-Protokoll von Home Assistant
 (Warnungen und Fehler sind dort ohnehin sichtbar).
 
 Texte stehen in der Sprache der Instanz wie die Push-Meldungen (DE und EN mit denselben
@@ -34,6 +36,8 @@ MAX_ENTRIES = 500
 # So lange bleibt der Debug-Schalter an (auch über Neustarts), danach schaltet er sich aus.
 DEBUG_HOURS = 48
 STORE_KEY = f"{DOMAIN}.debug"
+# Verzögerung des Schreibens: Fasst viele Einträge zu einem Schreibvorgang zusammen (HA schreibt beim Beenden ohnehin).
+SAVE_DELAY = 30
 LEVELS = ("debug", "info", "warning", "error")
 CATEGORIES = ("charge", "outage", "battery", "new", "updates", "magic", "timer", "push", "system")
 
@@ -243,6 +247,8 @@ class ActivityLog:
         # Zeitpunkt (Unix), zu dem der Debug-Schalter ausläuft; None bei ausgeschaltetem Schalter
         self.debug_until: float | None = None
         self.restored = False
+        self.store: Store | None = None  # eine Instanz je Start: so fasst ein Zeitgeber alle Einträge zusammen
+        self.save_pending = False
         self._expiry: CALLBACK_TYPE | None = None
         self.since = time.time()
 
@@ -282,6 +288,7 @@ def record(hass: HomeAssistant, severity: str, cat: str, code: str, name: str = 
         "device_id": device_id,
     }
     log.entries.append(entry)
+    _save(hass)
     _LOGGER.log(_PY_LEVEL[severity], "%s: %s%s", name or cat, text, f" ({entry['detail']})" if entry["detail"] else "")
 
 
@@ -304,10 +311,27 @@ def snapshot(hass: HomeAssistant) -> dict[str, Any]:
     }
 
 
+def _store(hass: HomeAssistant, log: ActivityLog) -> Store:
+    if log.store is None:
+        log.store = Store(hass, STORAGE_VERSION, STORE_KEY)
+    return log.store
+
+
 def _save(hass: HomeAssistant) -> None:
-    """Ablaufdatum des Schalters merken (verzögert, auch beim Beenden von HA geschrieben)."""
+    """
+    Ablaufdatum des Schalters und Einträge merken (verzögert, auch beim Beenden von HA geschrieben). Ein bereits
+    angesetztes Schreiben wird nicht neu gestartet, sonst käme ein stetiger Strom von Einträgen nie zum Schreiben.
+    """
     log = get(hass)
-    Store(hass, STORAGE_VERSION, STORE_KEY).async_delay_save(lambda: {"debug_until": log.debug_until if log.debug else None}, 1)
+    if log.save_pending:
+        return
+    log.save_pending = True
+
+    def data() -> dict[str, Any]:
+        log.save_pending = False
+        return {"debug_until": log.debug_until if log.debug else None, "entries": list(log.entries)}
+
+    _store(hass, log).async_delay_save(data, SAVE_DELAY)
 
 
 def _arm(hass: HomeAssistant, log: ActivityLog) -> None:
@@ -344,7 +368,8 @@ async def async_restore(hass: HomeAssistant) -> None:
     if log.restored:
         return
     log.restored = True
-    data = await Store(hass, STORAGE_VERSION, STORE_KEY).async_load() or {}
+    data = await _store(hass, log).async_load() or {}
+    _restore_entries(log, data.get("entries"))
     until = data.get("debug_until")
     if isinstance(until, (int, float)) and until > time.time():
         log.debug = True
@@ -354,12 +379,32 @@ async def async_restore(hass: HomeAssistant) -> None:
         record(hass, "info", "system", "debug_restored", "Device Panel", until=stamp)
 
 
+def _restore_entries(log: ActivityLog, stored: Any) -> None:
+    """Gemerkte Einträge vor die seit dem Start aufgezeichneten setzen (höchstens MAX_ENTRIES, die neuesten)."""
+    if not isinstance(stored, list):
+        return
+    keys = {"at", "level", "cat", "title", "text", "detail", "device_id"}
+    old = [
+        {k: e.get(k, None if k == "device_id" else "") for k in keys}
+        for e in stored
+        if isinstance(e, dict) and isinstance(e.get("at"), (int, float)) and e.get("level") in LEVELS and isinstance(e.get("text"), str)
+    ]
+    if not old:
+        return
+    merged = sorted([*old, *log.entries], key=lambda e: e["at"])[-MAX_ENTRIES:]
+    log.entries.clear()
+    log.entries.extend(merged)
+    # "Seit" nennt den Beginn des Verlaufs, nicht den letzten Start
+    log.since = min(log.since, merged[0]["at"])
+
+
 async def async_forget(hass: HomeAssistant) -> None:
-    """Integration entfernt: Zeitgeber stoppen, gemerkten Schalter löschen."""
-    if (log := hass.data.get(DATA_ACTIVITY)) is not None:
-        log.cancel_expiry()
-    await Store(hass, STORAGE_VERSION, STORE_KEY).async_remove()
+    """Integration entfernt: Zeitgeber stoppen, gemerkten Schalter und Einträge löschen."""
+    log = get(hass)
+    log.cancel_expiry()
+    await _store(hass, log).async_remove()
 
 
 def clear(hass: HomeAssistant) -> None:
     get(hass).entries.clear()
+    _save(hass)
