@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.56.0] - 2026-10-15
+
+Kreuz, Herz und Plus im Kopf der Fenster sehen aus wie die Knöpfe der Übersicht.
+
+### Geändert
+
+- Die runden Knöpfe im Kopf jedes Fensters (Kreuz, Herz im Geräte-Popup, Plus in "Alle Routinen") sehen jetzt aus wie die Knöpfe der Panel-Übersicht (Einstellungen, Launcher, Favoriten): ein grauer Rand auf der Farbe der Karte statt einer gefüllten grauen Scheibe, und gleich gross (42 px, auf dem Handy 38 px). Auf dem Handy sitzt das Kreuz im selben Abstand zum rechten Rand wie der Einstellungs-Knopf, also an derselben Stelle, wenn ein Fenster über der Übersicht aufgeht.
+
 ## [2.55.0] - 2026-10-15
 
 Aus Timern werden Routinen.
@@ -3476,6 +3484,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.56.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.56.0
 [2.55.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.55.0
 [2.54.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.0
 [2.53.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.53.0

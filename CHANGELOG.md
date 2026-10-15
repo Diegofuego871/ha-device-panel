@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.56.0] - 2026-10-15
+
+Close, heart and plus buttons in the window headers look like the buttons of the overview.
+
+### Changed
+
+- The round buttons in the header of every window (cross, heart in the device pop-up, plus in "All routines") now look like the buttons of the panel overview (settings, launcher, favorites): a grey outline on the card colour instead of a filled grey disc, and the same size (42 px, on the phone 38 px). On the phone the cross sits at the same distance from the right edge as the settings button, so it is in the same place when a window opens over the overview.
+
 ## [2.55.0] - 2026-10-15
 
 Timers are now called routines.
@@ -3375,6 +3383,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.56.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.56.0
 [2.55.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.55.0
 [2.54.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.0
 [2.53.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.53.0

@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.56.0, Kreuz, Herz und Plus wie die Knöpfe der Übersicht)
+
+- Wunsch des Nutzers (Bild vom Handy): `.dlg-close`, `.dlg-fav` (und damit `.dlg-add`) tragen jetzt den Stil von `.gear-btn`: Rand `1px solid var(--dp-divider)`, Fläche `var(--dp-card)`, 42 px,
+  auf dem Handy (bis 600 px) 38 px wie die Knöpfe der Kopfzeile. Auf dem Handy liegt das Kreuz 12 px vom rechten Rand, genau wie das Zahnrad (gemessen im Nachbau); auf dem Desktop
+  sitzt das Fenster mittig, dort stimmt nur die Grösse. Kein neuer Test: `fav-e2e` prüft den Abstand Herz zum Kreuz (22 px), der gleich blieb.
+
 ## Stand (2.55.0, Timer heissen Routinen)
 
 - Wunsch des Nutzers ("Wir nehmen Routinen", keine Überreste): Aus "Timer" wird "Routine", im Text und im Code. Dateien `routines.py`, `routines_ws.py`, `panel/routines.js`,

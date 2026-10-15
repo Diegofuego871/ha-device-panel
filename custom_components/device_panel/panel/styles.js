@@ -472,12 +472,14 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .dn-orig { margin: 0 0 6px; color: var(--dp-text2); font-size: 12.5px; }
 .dlg-title h2 { margin: 2px 0 6px; font-size: 21px; font-weight: 500; overflow-wrap: anywhere; }
 .dlg-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; color: var(--dp-text2); font-size: 13px; }
-.dlg-close { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border: none; border-radius: 50%;
-  background: var(--dp-subtle); color: var(--dp-text2); cursor: pointer; }
+/* Kreuz, Plus und Herz im Kopf der Fenster (seit 2.56.0, Wunsch des Nutzers): wie die Knöpfe der Panel-Übersicht (.gear-btn), rund mit grauem Rand,
+   gleich gross (42 px, auf dem Handy 38 px) und am rechten Rand an derselben Stelle wie das Zahnrad */
+.dlg-close { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--dp-divider); border-radius: 50%;
+  background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
 .dlg-close:hover { background: var(--dp-hover); color: var(--dp-text); }
 /* Herz im Kopf des Geräte-Popups (seit 2.22.0): wie das Kreuz ein runder Knopf, rot sobald Favorit */
-.dlg-fav { flex: none; display: grid; place-items: center; width: 36px; height: 36px; margin-right: 8px; border: none; border-radius: 50%;
-  background: var(--dp-subtle); color: var(--dp-text2); cursor: pointer; transition: color .2s ease, background .2s ease; }
+.dlg-fav { flex: none; display: grid; place-items: center; width: 42px; height: 42px; margin-right: 8px; border: 1px solid var(--dp-divider); border-radius: 50%;
+  background: var(--dp-card); color: var(--dp-text2); cursor: pointer; transition: color .2s ease, background .2s ease; }
 .dlg-add { margin-right: 8px; }
 .dlg-fav:hover { background: var(--dp-hover); color: var(--dp-error); }
 .dlg-fav.on { color: var(--dp-error); }
@@ -1274,7 +1276,7 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   dialog.settings[open] { display: flex; flex-direction: column; }
   dialog.settings[open] > * { flex-shrink: 0; }
   dialog.settings[open] > .dlg-body { flex-grow: 1; }
-  .toolbar .gear-btn, .toolbar .rtall-btn, .toolbar .apps-btn { width: 38px; height: 38px; }
+  .toolbar .gear-btn, .toolbar .rtall-btn, .toolbar .apps-btn, .dlg-close, .dlg-fav { width: 38px; height: 38px; }
   /* Handy: der Platz zwischen Suchfeld und Zahnrad bleibt wie vorher (Suchfeld nicht schmaler), nur gleichmässig geteilt: 8 + 7 px auf beiden Seiten */
   .toolbar .rtall-btn, .toolbar .apps-btn { margin: 0 3px; } /* Abstand zwischen den Knöpfen 14 px (Wunsch des Nutzers: war zu eng), das Suchfeld wird dafür schmaler */
   dialog.stat-dlg { height: 86%; max-height: 86%; }
