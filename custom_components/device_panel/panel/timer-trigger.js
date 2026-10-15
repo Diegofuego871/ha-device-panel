@@ -580,6 +580,13 @@ export const triggerMethods = {
     return d.winFrom === d.winTo ? this.t("tmWinSame") : "";
   },
 
+  // Ist der Entwurf noch unfertig (Bedingung fehlt, Wert leer, Zeitfenster ungültig)? Dann fragt das Panel den Server nicht,
+  // sonst stünde "Bedingungen erwartet" schon beim ersten Wechsel zum Auslöser da, bevor jemand etwas eingeben konnte.
+  draftIncomplete() {
+    const d = this.wiz.draft;
+    return (d.kind === "trigger" && (!treeValid(d.conds) || Boolean(this.winError()))) || (d.backKind === "trigger" && !treeValid(d.backConds));
+  },
+
   // Geht der Schritt "Wann" mit einem Auslöser weiter?
   triggerValid() {
     const d = this.wiz.draft;

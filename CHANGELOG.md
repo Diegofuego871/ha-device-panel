@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.54.1] - 2026-10-15
+
+Timer: no error message when switching to a trigger.
+
+### Fixed
+
+- Timer, trigger: switching to "By a trigger" no longer shows the red message "Conditions expected" before a condition has been entered. The assistant now asks the server for the preview only once the conditions (and a time window, if set) are complete.
+
 ## [2.54.0] - 2026-10-15
 
 Timers: a trigger instead of a time, and switching back by time or trigger.
@@ -3355,6 +3363,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.54.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.1
 [2.54.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.0
 [2.53.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.53.0
 [2.52.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.1

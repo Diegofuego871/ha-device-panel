@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.54.1, Auslöser ohne Fehlermeldung beim Wechsel)
+
+- Beim Wechsel auf "Durch einen Auslöser" fragte `fetchPreview` den Server ohne Bedingung, die Antwort "Bedingungen erwartet" stand als rote Meldung im Fenster. Jetzt überspringt `fetchPreview` die Anfrage, solange `draftIncomplete()` (`timer-trigger.js`: Bedingung fehlt, Wert leer, Zeitfenster ungültig, Zurück-Bedingung fehlt) gilt und leert `pv`/`pvError`. Suite `timertrigger` prüft beides nach 900 ms.
+
 ## Stand (2.54.0, Timer: Auslöser und Zurückschalten per Zeit oder Auslöser)
 
 - Wunsch des Nutzers, Mockups `docs/mockups/timer-trigger-v1`/`v2`, alles nach Empfehlung. **Backend** `timers.py`: `kind: "trigger"` mit `conditions` (Magic-Baum

@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.54.1] - 2026-10-15
+
+Timer: keine Fehlermeldung beim Wechsel auf einen Auslöser.
+
+### Behoben
+
+- Timer, Auslöser: Beim Wechsel auf "Durch einen Auslöser" erscheint nicht mehr die rote Meldung "Bedingungen erwartet", bevor eine Bedingung eingegeben ist. Der Assistent fragt die Vorschau beim Server erst ab, wenn die Bedingungen (und ein gesetztes Zeitfenster) vollständig sind.
+
 ## [2.54.0] - 2026-10-15
 
 Timer: ein Auslöser statt einer Uhrzeit und Zurückschalten per Zeit oder Auslöser.
@@ -3456,6 +3464,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.54.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.1
 [2.54.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.0
 [2.53.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.53.0
 [2.52.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.1

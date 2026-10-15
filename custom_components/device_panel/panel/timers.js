@@ -1057,6 +1057,13 @@ export class TimerUi {
     const w = this.wiz;
     if (!w || !w.draft.entity_id) return;
     const seq = (this._pvSeq = (this._pvSeq || 0) + 1);
+    if (this.draftIncomplete()) {
+      w.pv = null;
+      w.pvError = "";
+      this.paintZones();
+      this.syncNav();
+      return;
+    }
     try {
       const r = await this.call({ type: "device_panel/timer_preview", timer: this.payload() });
       if (seq !== this._pvSeq || this.wiz !== w) return;

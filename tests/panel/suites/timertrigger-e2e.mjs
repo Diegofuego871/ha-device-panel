@@ -68,6 +68,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] mit Zeit und Zurückschalten: sechs Schritte (Schritt 2 von 6)`, (await text(`${win} .mg-stephead span`)) === T.step(2, 5) || (await text(`${win} .mg-stephead span`)) === T.step(3, 6));
     await tap(`${win} [data-tm="whenmode"][data-v="trigger"]`);
     check(`[${tag}] Auslöser: Hinweis, "Bedingung hinzufügen", noch keine Bedingung: Weiter gesperrt`, await ev(`return !!r.querySelector('${win} [data-tm="c-add"]') && !r.querySelector('${win} [data-tm="kind"]') && r.querySelector('${win} [data-tm="nav-next"]').disabled && !!r.querySelector('${win} .mg-note')`));
+    await p.waitForTimeout(900);
+    check(`[${tag}] Auslöser ohne Bedingung: keine Fehlermeldung (Vorschau wird nicht gefragt)`, await ev(`return !r.querySelector('${win} .opt-error')`));
 
     // --- Bedingung 1: Zahl ------------------------------------------------------------------------------------
     await addCond("start", "garten", "sensor.garten_temp");
@@ -112,6 +114,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Seite "${T.back}": Reiterleiste mit vier Arten, Standard "Nie", Hinweis`, await wait(`return r.querySelectorAll('${win} [data-tm="backkind"]').length === 4 && r.querySelector('${win} [data-tm="backkind"][data-v="none"]').classList.contains("on") && !r.querySelector('${win} [data-tm="bmode"]')`));
     await tap(`${win} [data-tm="backkind"][data-v="trigger"]`);
     check(`[${tag}] Durch Auslöser: noch keine Bedingung, Weiter gesperrt`, await ev(`return !!r.querySelector('${win} [data-tm="c-add"][data-w="back"]') && r.querySelector('${win} [data-tm="nav-next"]').disabled`));
+    await p.waitForTimeout(900);
+    check(`[${tag}] Zurück durch Auslöser ohne Bedingung: keine Fehlermeldung`, await ev(`return !r.querySelector('${win} .opt-error')`));
     await addCond("back", "regen", "binary_sensor.garten_regen");
     await tap(`${win} [data-tm="c-state"][data-v="off"]`);
     await tap(`${win} [data-tm="hold"][data-w="back"][data-s="300"]`);
