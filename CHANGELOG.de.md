@@ -19,6 +19,7 @@ Enthält die Änderungen aus 2.48.1.
 
 ### Behoben
 
+- Fenster "Empfang", Abschnitt "Verbunden über": der farbige Balken liegt jetzt genau unter dem Diagramm darüber, auf gleicher Breite und mit denselben Zeitmarken (12:00, 15:00 … jetzt). Vorher lief der Balken über die ganze Breite, während das Diagramm erst nach seiner Achse beginnt, sodass eine Zeit im Diagramm und dieselbe Zeit im Balken nicht übereinander lagen und man am Diagramm nicht ablesen konnte, über welchen Empfänger das Gerät verbunden war. Ohne Diagramm darüber (keine Messwerte, zum Beispiel bei einem ausgefallenen Gerät) behält der Balken die ganze Breite.
 - App-Launcher: die Favoriten haben keinen blauen Rand mehr. Alle Kacheln sehen gleich aus; das Herz und der Abschnitt "Favoriten" zeigen schon, welche Favoriten sind.
 
 ## [2.48.1] - 2026-10-15

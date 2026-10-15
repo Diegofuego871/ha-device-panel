@@ -10,11 +10,11 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
-    title: "Verbunden über", changes: "Wechsel", axis: { "24h": "vor 24 Std.|12 Std.|jetzt", "7d": "vor 7 Tagen|3,5 Tage|jetzt", "30d": "vor 30 Tagen|15 Tage|jetzt" },
+    title: "Verbunden über", changes: "Wechsel", now: "jetzt",
     share: /^\d+ % · Ø -\d+ dBm$/, note: "Vom Panel aufgezeichnet, seit ", noteEnd: "Lücken (schraffiert): Gerät nicht empfangen.",
   },
   en: {
-    title: "Connected via", changes: "Changes", axis: { "24h": "24 h ago|12 h|now", "7d": "7 days ago|3.5 days|now", "30d": "30 days ago|15 days|now" },
+    title: "Connected via", changes: "Changes", now: "now",
     share: /^\d+% · avg -\d+ dBm$/, note: "Recorded by the panel since ", noteEnd: "Gaps (hatched): device not received.",
   },
 };
@@ -50,7 +50,8 @@ for (const lang of ["de", "en"]) {
     const via = () => ev(`const v=r.querySelector("dialog.stat-dlg .sv"); if(!v) return null; const segs=[...v.querySelectorAll(".sv-bar i")]; return {
       title: v.querySelector("h3").textContent, segs: segs.length, gaps: segs.filter(i=>i.classList.contains("gap")).length,
       width: segs.reduce((a,i)=>a+parseFloat(i.style.width),0), colors: new Set(segs.filter(i=>!i.classList.contains("gap")).map(i=>i.style.background)).size,
-      axis: [...v.querySelectorAll(".sv-axis span")].map(x=>x.textContent).join("|"), legend: [...v.querySelectorAll(".sv-leg div")].map(d=>[d.querySelector("b").textContent, d.querySelector("span").textContent]),
+      axis: [...v.querySelectorAll(".sv-ticks span")].map(x=>x.textContent).join("|"), chartAxis: [...r.querySelectorAll("dialog.stat-dlg .bh-ticks span")].map(x=>x.textContent).join("|"),
+      edges: (() => { const b=v.querySelector(".sv-bar").getBoundingClientRect(), p=r.querySelector("dialog.stat-dlg .bh-plot")?.getBoundingClientRect(); if (!p) return null; return [Math.round((b.left-p.left)*10)/10, Math.round((b.right-p.right)*10)/10]; })(), legend: [...v.querySelectorAll(".sv-leg div")].map(d=>[d.querySelector("b").textContent, d.querySelector("span").textContent]),
       dots: [...v.querySelectorAll(".sv-dot")].map(d=>d.style.background).join(), changes: v.querySelector(".sv-chg h4")?.textContent || null, rows: [...v.querySelectorAll(".sv-chg p")].map(x=>x.textContent.replace(/\\s+/g," ")), note: v.querySelector(".sv-note").textContent };`);
 
     // Bluetooth-Gerät: Weg im Fenster "Empfang"
@@ -62,7 +63,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Legende: Name, Anteil und Ø dBm`, v?.legend.every(([n, s]) => n && T.share.test(s)) && v.legend[0][0] === "Storen Büro", JSON.stringify(v?.legend));
     check(`[${tag}] Anteile ergeben 100`, v?.legend.reduce((a, [, s]) => a + parseInt(s), 0) === 100);
     check(`[${tag}] Punkte der Legende haben die Farben des Balkens`, v?.dots.split("),").length === 3);
-    check(`[${tag}] Achse`, v?.axis === T.axis["24h"], v?.axis);
+    check(`[${tag}] Zeitmarken enden mit "${T.now}"`, v?.axis.endsWith(`|${T.now}`), v?.axis);
+    check(`[${tag}] ohne Verlauf darüber (Gerät ausgefallen): Balken über die ganze Breite`, v?.edges === null && (await ev(`return !!r.querySelector("dialog.stat-dlg .sv.sv-full")`)));
     check(`[${tag}] Wechsel: Titel und Zeilen "A → B"`, v?.changes === T.changes && v.rows.length >= 1 && v.rows.every((x) => x.includes(" → ")), JSON.stringify(v?.rows));
     check(`[${tag}] Hinweis: Aufzeichnung seit, Lücken`, v?.note.startsWith(T.note) && v.note.endsWith(T.noteEnd), v?.note);
     check(`[${tag}] Weg steht unter dem Verlauf`, await ev(`const d=r.querySelector("dialog.stat-dlg"); const a=d.querySelector(".bh-src"), s=d.querySelector(".sv"); return !!a && !!s && !!(a.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING)`));
@@ -71,7 +73,7 @@ for (const lang of ["de", "en"]) {
     for (const rg of ["7d", "30d"]) {
       check(`[${tag}] ${rg} lädt`, await range(rg));
       v = await via();
-      check(`[${tag}] ${rg}: ${COUNT[rg]} Empfänger, Achse, Anteile 100`, v?.legend.length === COUNT[rg] && v.axis === T.axis[rg] && v.legend.reduce((a, [, s]) => a + parseInt(s), 0) === 100, JSON.stringify([v?.legend.length, v?.axis]));
+      check(`[${tag}] ${rg}: ${COUNT[rg]} Empfänger, Achse, Anteile 100`, v?.legend.length === COUNT[rg] && v.axis.endsWith(`|${T.now}`) && v.legend.reduce((a, [, s]) => a + parseInt(s), 0) === 100, JSON.stringify([v?.legend.length, v?.axis]));
       check(`[${tag}] ${rg}: Balken zusammen 100 %`, Math.abs(v.width - 100) < 0.1, String(v?.width));
       if (rg === "7d") await p.screenshot({ path: `${outDir}/signalvia-7d-${tag.replace("/", "-")}.png` });
     }
@@ -85,6 +87,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Bluetooth ohne Weg öffnet`, await openSignal("a"));
     check(`[${tag}] ohne Weg: kein Abschnitt`, (await via()) === null);
     await p.evaluate(() => { window.__viaOff = false; });
+
+    // Mit Verlauf darüber (Gerät online): der Balken liegt auf der Breite des Diagramms, gleiche Zeitmarken (seit 2.49.0)
+    await p.evaluate(() => { const d = window.__devices.find((x) => x.id === "a"); d.online = true; d.offline_since = null; d.since_at_least = false; });
+    for (const rg of ["24h", "7d", "30d"]) {
+      check(`[${tag}] online, ${rg}: Fenster mit Verlauf und Weg`, (rg === "24h" ? await openSignal("a") : await range(rg)) && (await wait(`return !!r.querySelector("dialog.stat-dlg .bh-plot") && !!r.querySelector("dialog.stat-dlg .sv")`)));
+      const al = await via();
+      check(`[${tag}] ${rg}: Balken auf der Breite des Diagramms (±1 px), gleiche Zeitmarken`, al && Math.abs(al.edges[0]) <= 1 && Math.abs(al.edges[1]) <= 1 && al.axis === al.chartAxis, JSON.stringify([al?.edges, al?.axis, al?.chartAxis]));
+      if (rg === "24h") await p.screenshot({ path: `${outDir}/signalvia-aligned-${tag.replace("/", "-")}.png` });
+    }
 
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();

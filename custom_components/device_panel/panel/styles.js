@@ -1108,7 +1108,10 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .sv-bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: color-mix(in srgb, var(--dp-text) 8%, transparent); }
 .sv-bar i { display: block; height: 100%; }
 .sv-bar i.gap { background: repeating-linear-gradient(135deg, transparent 0 4px, color-mix(in srgb, var(--dp-text) 14%, transparent) 4px 5px); }
-.sv-axis { display: flex; justify-content: space-between; margin-top: 3px; color: var(--dp-text2); font-size: 11px; }
+/* Balken und Zeitmarken auf der Breite des Diagramms darüber ("Empfang"): links 14 (Rahmen) + 44 (Achse) - 2 (Rand von .sv), rechts 14 - 2 */
+.sv-bar, .sv-ticks { margin-left: 56px; margin-right: 12px; }
+/* ohne Verlauf darüber (keine Messwerte) über die ganze Breite */
+.sv-full .sv-bar, .sv-full .sv-ticks { margin-left: 0; margin-right: 0; }
 .sv-leg { display: grid; gap: 6px; margin-top: 10px; }
 .sv-leg div { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .sv-leg b { font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

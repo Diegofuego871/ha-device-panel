@@ -5020,7 +5020,7 @@ class DevicePanel extends HTMLElement {
     if (!h.data) return `<div class="dlg-error">${escape(t("error"))} ${escape(h.error || "")}</div>`;
     const { start, end, points = [], kind, source, bucket, first, current, reason, steady_since: steady, via } = h.data;
     const note = (text) => `<p class="dlg-note bh-src">${escape(text)}</p>`;
-    const viaBlock = via ? this._viaHtml(via, start, end, range) : "";
+    const viaBlock = via ? this._viaHtml(via, start, end, range, Boolean(points.length && kind)) : "";
     // Sensor, den der Recorder nicht aufzeichnet (seit 0.26.0): das Panel zeichnet selbst auf.
     const why = reason === "not_recorded" ? ` ${t("sigSrcNotRecorded")}` : "";
     if (!points.length || !kind) {
@@ -5106,7 +5106,7 @@ class DevicePanel extends HTMLElement {
   // Weg des Bluetooth-Empfangs (seit 2.40.0): Balken mit Abschnitten je Empfänger (Lücke
   // schraffiert), Legende mit Anteil und mittlerem Empfang, die letzten Wechsel. Die Farben
   // folgen der Reihenfolge, in der die Empfänger zuerst auftraten; sie bleiben je Gerät stabil.
-  _viaHtml(via, start, end, range) {
+  _viaHtml(via, start, end, range, aligned = true) {
     const t = (k, ...a) => this._t(k, ...a);
     const span = end - start;
     if (!(span > 0) || !via.segments?.length) return "";
@@ -5118,7 +5118,10 @@ class DevicePanel extends HTMLElement {
         return i == null ? `<i class="gap" style="width:${width}%"></i>` : `<i style="width:${width}%;background:${colour(i)}" title="${escape(name(i))}"></i>`;
       })
       .join("");
-    const [ago, middle] = t("viaAxis")[range] || t("viaAxis")["24h"];
+    // Dieselben Zeitmarken wie im Verlauf darüber: Balken und Diagramm liegen auf gleicher Breite (seit 2.49.0), das Auge fährt senkrecht
+    const ticks = this._ticks(start, end, range)
+      .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
+      .join("");
     const legend = via.receivers
       .map((r, i) => `<div><i class="sv-dot" style="background:${colour(i)}"></i><b>${escape(r.name)}</b><span>${escape(t("viaShare", r.share, r.avg == null ? null : Math.round(r.avg)))}</span></div>`)
       .join("");
@@ -5126,8 +5129,8 @@ class DevicePanel extends HTMLElement {
     const changes = (via.changes || [])
       .map(([at, from, to]) => `<p><span>${escape(dayOf(at))}</span><b>${escape(name(from))} → ${escape(name(to))}</b></p>`)
       .join("");
-    return `<div class="sv"><h3>${escape(t("viaTitle"))}</h3><div class="sv-bar">${bar}</div>
-      <div class="sv-axis"><span>${escape(ago)}</span><span>${escape(middle)}</span><span>${escape(t("now"))}</span></div>
+    return `<div class="sv${aligned ? "" : " sv-full"}"><h3>${escape(t("viaTitle"))}</h3><div class="sv-bar">${bar}</div>
+      <div class="avail-ticks sv-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>
       <div class="sv-leg">${legend}</div>${changes ? `<div class="sv-chg"><h4>${escape(t("viaChanges"))}</h4>${changes}</div>` : ""}
       <p class="sv-note">${escape(t("viaNote", this._fmtTime(via.since, true)))}</p></div>`;
   }
