@@ -1097,12 +1097,14 @@
           return null;
         };
         const firstDue = (r, now) => {
+          if (r.kind === "trigger") return null;
           if (r.kind === "countdown") return now + r.delay_s;
           if (r.kind === "once" && !r.date) return nextAfter({ ...r, kind: "repeat", repeat: "daily" }, now);
           if (r.kind === "once") { const [y, m, d] = r.date.split("-").map(Number); const [hh, mm] = r.time.split(":").map(Number); const ts = at(y, m - 1, d, hh, mm); return ts > now ? ts : null; }
           return nextAfter(r, now);
         };
         const runsOf0 = (r, now) => {
+          if (r.kind === "trigger") return [];
           if (r.kind === "countdown") return [local(now + r.delay_s)];
           if (r.kind === "once") { const ts = firstDue(r, now); return ts ? [local(ts)] : []; }
           const out = []; let cur = now;
@@ -1117,7 +1119,13 @@
           if (!e) fail("Die Entität gehört nicht zu diesem Gerät");
           if (!e.actions.includes(r.action)) fail("Diese Aktion gibt es für diese Entität nicht");
           if (String(r.name || "").length > 60) fail("Name: höchstens 60 Zeichen");
-          if (r.back_s && r.action === "toggle") fail("Umschalten lässt sich nicht zurückschalten");
+          if ((r.back_s || (r.back_kind && r.back_kind !== "none")) && r.action === "toggle") fail("Umschalten lässt sich nicht zurückschalten");
+          // Zurückschalten (2.54.0): none, duration, time, trigger
+          const bk = r.back_kind || (r.back_s ? "duration" : "none");
+          if (bk === "time" && !r.back_time) fail("Zurückschalten: Uhrzeit fehlt");
+          if (bk === "trigger" && !(r.back_conditions?.items || []).length) fail("Zurückschalten: Bedingungen fehlen");
+          if (bk === "trigger" && JSON.stringify(r.back_conditions).includes(`"${r.entity_id}"`)) fail("Die geschaltete Entität darf nicht ihr eigener Auslöser sein");
+          if (r.back_max_s != null && (r.back_max_s < 10 || r.back_max_s > 604800)) fail("Spätestens nach: ganze Zahl von 10 bis 604800 erwartet");
           // Schaltoptionen (2.52.0): nur beim Einschalten und nur, was die Entität kann
           const given = Object.keys(r.options || {});
           if (given.length && r.action !== "on") fail("Schaltoptionen gibt es nur beim Einschalten");
@@ -1130,14 +1138,23 @@
             if (!r.time || !r.repeat) fail("Uhrzeit und Wiederholung fehlen");
             if (r.repeat === "weekly" && !(r.weekdays || []).length) fail("Mindestens ein Wochentag");
             if (r.repeat === "monthly" && !r.mday) fail("Tag des Monats fehlt");
+          } else if (r.kind === "trigger") {
+            if (!(r.conditions?.items || []).length) fail("Bedingungen fehlen");
+            if (JSON.stringify(r.conditions).includes(`"${r.entity_id}"`)) fail("Die geschaltete Entität darf nicht ihr eigener Auslöser sein");
+            if (r.window && r.window.from === r.window.to) fail("Das Zeitfenster hat keine Dauer: Beginn und Ende sind gleich");
+            if (r.pause_s != null && (r.pause_s < 10 || r.pause_s > 86400)) fail("Pause: ganze Zahl von 10 bis 86400 erwartet");
           } else fail("Art ungültig");
         };
+        // Entitäten der Bedingungen eines Auslösers: bekannte Beispiele, sonst eine schlichte Beschreibung
+        const COND_ENTS = { "sensor.garten_temp": { entity_id: "sensor.garten_temp", name: "Temperatur Garten", domain: "sensor", device_class: "temperature", kind: "number", state: "6.5", available: true, value: "6.5", number: 6.5, unit: "°C", options: [] }, "binary_sensor.garten_regen": { entity_id: "binary_sensor.garten_regen", name: "Regen Garten", domain: "binary_sensor", device_class: "moisture", kind: "state", state: "off", available: true, value: "off", number: null, unit: "", options: [{ value: "on", label: de ? "nass" : "wet" }, { value: "off", label: de ? "trocken" : "dry" }] } };
+        const condEnts = (r) => Object.fromEntries([...JSON.stringify([r.conditions, r.back_conditions]).matchAll(/"entity_id":"([a-z0-9_.]+)"/g)].map((m) => [m[1], COND_ENTS[m[1]] || { entity_id: m[1], name: m[1], domain: m[1].split(".")[0], kind: "state", state: "off", available: true, value: "off", unit: "", options: [] }]));
         const payload = (r) => {
           const e = entOf(r);
           const now = Date.now() / 1000;
           return { ...r, due: r.enabled ? r.__due : null, due_local: r.enabled && r.__due ? local(r.__due) : null, revert_due: r.__revert || null, revert_local: r.__revert ? local(r.__revert) : null, reverting: Boolean(r.__revert), last: r.__last || null, done: r.__done || null,
             running: r.kind === "countdown" && r.enabled && Boolean(r.__due), entity_name: e ? e.name : r.entity_id, entity_state: e ? e.state : null, entity_missing: !e, domain: String(r.entity_id).split(".")[0], actions: e ? e.actions : [],
-            next_runs: r.enabled && r.kind !== "countdown" ? runsOf(r, now) : [], device_name: (window.__devices.find((d) => d.id === r.device_id) || {}).name || "" };
+            next_runs: r.enabled && r.kind !== "countdown" ? runsOf(r, now) : [], device_name: (window.__devices.find((d) => d.id === r.device_id) || {}).name || "",
+            condition_entities: condEnts(r), waiting_end: Boolean(r.__waiting), reverting: Boolean(r.__revert || r.__waiting) };
         };
         const strip = (r) => Object.fromEntries(Object.entries(r).filter(([k]) => !k.startsWith("__")));
         const today = () => ymd(new Date());
@@ -1168,7 +1185,10 @@
           const old = raw.id ? T.list.find((x) => x.id === raw.id) : null;
           if (raw.id && !old) fail("Timer nicht gefunden");
           const e = entOf(raw);
-          const r = { id: old ? old.id : `t${T.seq++}`.padEnd(12, "0"), device_id: raw.device_id, entity_id: raw.entity_id, name: String(raw.name || "").trim() || e.name, action: raw.action, options: raw.options || {}, back_mode: raw.back_s && raw.back_mode === "restore" ? "restore" : "opposite", back_s: raw.back_s || null, kind: raw.kind,
+          const r = { id: old ? old.id : `t${T.seq++}`.padEnd(12, "0"), device_id: raw.device_id, entity_id: raw.entity_id, name: String(raw.name || "").trim() || e.name, action: raw.action, options: raw.options || {},
+            back_kind: raw.back_kind || (raw.back_s ? "duration" : "none"), back_time: raw.back_time || null, back_conditions: raw.back_conditions || null, back_hold_s: raw.back_hold_s || 0, back_max_s: raw.back_max_s || null,
+            conditions: raw.kind === "trigger" ? raw.conditions : null, hold_s: raw.hold_s || 0, window: raw.kind === "trigger" ? raw.window || null : null, pause_s: raw.pause_s || 60, once_trigger: Boolean(raw.once_trigger),
+            back_mode: (raw.back_s || (raw.back_kind && raw.back_kind !== "none")) && raw.back_mode === "restore" ? "restore" : "opposite", back_s: raw.back_kind === "duration" || (!raw.back_kind && raw.back_s) ? raw.back_s || null : null, kind: raw.kind,
             delay_s: raw.kind === "countdown" ? raw.delay_s : null, date: raw.kind === "once" && raw.date ? raw.date : null, time: raw.kind === "countdown" ? null : raw.time, repeat: raw.kind === "repeat" ? raw.repeat : null,
             weekdays: raw.kind === "repeat" && raw.repeat === "weekly" ? [...raw.weekdays].sort() : null, mday: raw.kind === "repeat" && raw.repeat === "monthly" ? raw.mday : null,
             enabled: raw.enabled !== false, push: Boolean(raw.push), target: raw.target || null, created: old ? old.created : Date.now() / 1000 };

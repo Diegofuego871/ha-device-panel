@@ -40,7 +40,7 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("dialog.tmall-dlg")?.open`);
     check(`[${tag}] Fenster aller Timer: Knopf "${T.add}" in der Kopfzeile, links vom Kreuz`, await ev(`const a = r.querySelector('dialog.tmall-dlg [data-tma="timer-add"]'); const c = r.querySelector("dialog.tmall-dlg [data-tma-close]"); return !!a && a.getAttribute("aria-label") === ${JSON.stringify(T.add)} && a.getBoundingClientRect().right <= c.getBoundingClientRect().left`));
     await tap('dialog.tmall-dlg [data-tma="timer-add"]');
-    check(`[${tag}] Assistent offen bei Schritt 1 von 5: "${T.q0}", fünf Segmente`, await wait(`const d = r.querySelector("${win}"); return d?.open && d.querySelector(".mg-big")?.textContent === ${JSON.stringify(T.q0)} && d.querySelector(".mg-stephead span")?.textContent === ${JSON.stringify(T.step(1, 5))} && d.querySelectorAll(".mg-stp").length === 5`));
+    check(`[${tag}] Assistent offen bei Schritt 1 von 6: "${T.q0}", sechs Segmente`, await wait(`const d = r.querySelector("${win}"); return d?.open && d.querySelector(".mg-big")?.textContent === ${JSON.stringify(T.q0)} && d.querySelector(".mg-stephead span")?.textContent === ${JSON.stringify(T.step(1, 6))} && d.querySelectorAll(".mg-stp").length === 6`));
     check(`[${tag}] Geräteliste: nur Geräte mit schaltbarer Entität, Weiter gesperrt, kein "Speichern"`, await wait(`const d = r.querySelector("${win}"); return d.querySelectorAll('[data-tm="dev"]').length > 3 && d.querySelector('[data-tm="nav-next"]').disabled && !d.querySelector('[data-tm="nav-quick"]') && d.querySelector('[data-tm="nav-cancel"]')`));
     // Suche
     const total = await ev(`return r.querySelectorAll('${win} [data-tm="dev"]').length`);
@@ -56,7 +56,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Gerät gewählt: Auswahl markiert, Weiter frei`, await wait(`const d = r.querySelector("${win}"); return d.querySelector('[data-tm="dev"][aria-checked="true"]')?.dataset.id === ${JSON.stringify(dev)} && !d.querySelector('[data-tm="nav-next"]').disabled`));
     await p.screenshot({ path: `${outDir}/timeradd-${tag.replace("/", "-")}-0.png` });
     await tap(`${win} [data-tm="nav-next"]`);
-    check(`[${tag}] Weiter: Schritt 2 von 5 "${T.q1}", Gerätename im Kopf, "Zurück" statt "Abbrechen"`, await wait(`const d = r.querySelector("${win}"); return d.querySelector(".mg-big")?.textContent === ${JSON.stringify(T.q1)} && d.querySelector(".mg-stephead span")?.textContent === ${JSON.stringify(T.step(2, 5))} && !!d.querySelector('[data-tm="nav-back"]') && !d.querySelector('[data-tm="nav-cancel"]') && !!d.querySelector(".mgw-t small")?.textContent.trim()`), await ev(`const d = r.querySelector("${win}"); return [d.querySelector(".mg-big")?.textContent, d.querySelector(".mg-stephead")?.textContent, !!d.querySelector('[data-tm="nav-back"]'), !!d.querySelector('[data-tm="nav-cancel"]'), d.querySelector(".mgw-t")?.textContent].join("|")`));
+    check(`[${tag}] Weiter: Schritt 2 von 6 "${T.q1}", Gerätename im Kopf, "Zurück" statt "Abbrechen"`, await wait(`const d = r.querySelector("${win}"); return d.querySelector(".mg-big")?.textContent === ${JSON.stringify(T.q1)} && d.querySelector(".mg-stephead span")?.textContent === ${JSON.stringify(T.step(2, 6))} && !!d.querySelector('[data-tm="nav-back"]') && !d.querySelector('[data-tm="nav-cancel"]') && !!d.querySelector(".mgw-t small")?.textContent.trim()`), await ev(`const d = r.querySelector("${win}"); return [d.querySelector(".mg-big")?.textContent, d.querySelector(".mg-stephead")?.textContent, !!d.querySelector('[data-tm="nav-back"]'), !!d.querySelector('[data-tm="nav-cancel"]'), d.querySelector(".mgw-t")?.textContent].join("|")`));
     check(`[${tag}] ab Schritt 2 gibt es "Speichern" neben "Weiter"`, await ev(`return !!r.querySelector('${win} [data-tm="nav-quick"]')`));
     // Zurück zu Schritt 1: Auswahl bleibt
     await tap(`${win} [data-tm="nav-back"]`);
@@ -68,7 +68,8 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-tm="nav-next"]`);
     await tap(`${win} [data-tm="nav-next"]`);
     await tap(`${win} [data-tm="nav-next"]`);
-    check(`[${tag}] Schritt 5 von 5: Speichern`, await wait(`const d = r.querySelector("${win}"); return d.querySelector(".mg-stephead span")?.textContent === ${JSON.stringify(T.step(5, 5))} && !!d.querySelector('[data-tm="nav-save"]')`));
+    await tap(`${win} [data-tm="nav-next"]`);
+    check(`[${tag}] Schritt 6 von 6: Speichern`, await wait(`const d = r.querySelector("${win}"); return d.querySelector(".mg-stephead span")?.textContent === ${JSON.stringify(T.step(6, 6))} && !!d.querySelector('[data-tm="nav-save"]')`));
     await p.evaluate(() => { window.__wsCalls = []; });
     await tap(`${win} [data-tm="nav-save"]`);
     const saved = (await (async () => { for (let i = 0; i < 25; i++) { const c = await calls("device_panel/timer_save"); if (c.length) return c; await p.waitForTimeout(200); } return []; })()).at(-1)?.timer;

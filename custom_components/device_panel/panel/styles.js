@@ -1716,6 +1716,11 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 /* Testknopf "Jetzt ausführen": echter Knopf mit Touch-Fläche (44 px), Rückmeldung daneben */
 .tm-tryrow { gap: 8px 14px; margin-top: 12px; font-size: 14px; }
 .tm-try { flex: 0 0 auto; height: 44px; padding: 0 22px; font-size: 15px; font-weight: 500; color: var(--dp-primary); border-color: var(--dp-primary); }
+/* Auslöser und Zurückschalten (2.54.0, docs/mockups/timer-trigger-v1 und -v2) */
+.sub-tabs.mg-two { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mg-k.tm-sec { margin-top: 18px; color: var(--dp-text); font-size: 14px; font-weight: 600; }
+.tm-winrange { display: flex; align-items: center; gap: 10px; margin-top: 8px; color: var(--dp-text2); font-size: 13px; }
+.tm-winrange .mg-input { flex: 1 1 0; min-width: 0; max-width: 170px; font-size: 18px; }
 /* Seite "Optionen" (2.52.0, docs/mockups/timer-light-v1): Vorschau, Regler, Farben */
 .to-prev { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 8px; padding: 14px 12px 12px; border-radius: 16px; background: var(--dp-subtle); text-align: center; }
 .to-prev-n { color: var(--dp-text2); font-size: 12.5px; }

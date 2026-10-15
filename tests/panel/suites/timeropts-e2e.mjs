@@ -62,23 +62,23 @@ for (const lang of ["de", "en"]) {
     await openWizard();
     // Entität ohne Optionen: vier Schritte (plus Gerät)
     await pickEntity("switch.plug");
-    check(`[${tag}] Steckdose ohne Optionen: Schritt 2 von 5, keine Seite "Optionen"`, (await stepText()) === T.step(2, 5));
+    check(`[${tag}] Steckdose ohne Optionen: Schritt 2 von 6, keine Seite "Optionen"`, (await stepText()) === T.step(2, 6));
     await tap(`${win} [data-tm="nav-next"]`);
-    check(`[${tag}] Weiter führt direkt zu "Wann" (Schritt 3 von 5)`, await wait(`return r.querySelector('${win} .mg-stephead span').textContent === ${JSON.stringify(T.step(3, 5))}`));
+    check(`[${tag}] Weiter führt direkt zu "Wann" (Schritt 3 von 6)`, await wait(`return r.querySelector('${win} .mg-stephead span').textContent === ${JSON.stringify(T.step(3, 6))}`));
     await tap(`${win} [data-tm="nav-back"]`);
 
     // Licht: eine Seite mehr
     await pickEntity("light.hue");
-    check(`[${tag}] Licht: sechs Schritte (Schritt 2 von 6)`, (await stepText()) === T.step(2, 6) && (await ev(`return r.querySelectorAll('${win} .mg-stp').length`)) === 6);
+    check(`[${tag}] Licht: sieben Schritte (Schritt 2 von 7)`, (await stepText()) === T.step(2, 7) && (await ev(`return r.querySelectorAll('${win} .mg-stp').length`)) === 7);
     check(`[${tag}] Schritt "Was schalten" zeigt keine Regler`, await ev(`return !r.querySelector('${win} .to-range, ${win} .to-prev')`));
     // Aktion Ausschalten: keine Optionen mehr
     await tap(`${win} [data-tm="action"][data-v="off"]`);
-    check(`[${tag}] Aktion "Ausschalten": die Seite entfällt (Schritt 2 von 5)`, (await stepText()) === T.step(2, 5));
+    check(`[${tag}] Aktion "Ausschalten": die Seite entfällt (Schritt 2 von 6)`, (await stepText()) === T.step(2, 6));
     await tap(`${win} [data-tm="action"][data-v="on"]`);
-    check(`[${tag}] Aktion "Einschalten": die Seite ist wieder da (Schritt 2 von 6)`, (await stepText()) === T.step(2, 6));
+    check(`[${tag}] Aktion "Einschalten": die Seite ist wieder da (Schritt 2 von 7)`, (await stepText()) === T.step(2, 7));
 
     await tap(`${win} [data-tm="nav-next"]`);
-    check(`[${tag}] Weiter: Seite "${T.name}" als Schritt 3 von 6 mit der Frage "${T.q}"`, await wait(`const d = r.querySelector("${win}"); return d.querySelector(".mg-stephead").textContent.includes(${JSON.stringify(T.step(3, 6))}) && d.querySelector(".mg-stephead").textContent.includes(${JSON.stringify(T.name)}) && d.querySelector(".mg-big").textContent === ${JSON.stringify(T.q)}`));
+    check(`[${tag}] Weiter: Seite "${T.name}" als Schritt 3 von 7 mit der Frage "${T.q}"`, await wait(`const d = r.querySelector("${win}"); return d.querySelector(".mg-stephead").textContent.includes(${JSON.stringify(T.step(3, 7))}) && d.querySelector(".mg-stephead").textContent.includes(${JSON.stringify(T.name)}) && d.querySelector(".mg-big").textContent === ${JSON.stringify(T.q)}`));
     check(`[${tag}] Vorschau-Lampe aus mit Hinweis "${T.nothing}", drei Regler (Helligkeit, Farbtemperatur, Farbe)`, await ev(`const d = r.querySelector("${win}"); return d.querySelector(".to-prev.off small").textContent === ${JSON.stringify(T.nothing)} && d.querySelectorAll(".to-range").length === 2 && d.querySelectorAll(".to-cols").length === 1`));
     check(`[${tag}] Wert neben der Überschrift: "${T.keep}"`, (await text(`${win} [data-tm-val="brightness_pct"]`)) === T.keep);
     check(`[${tag}] Reiterleiste "${T.keep}" gewählt, Kapsel vorhanden`, await ev(`const bar = r.querySelector('${win} [data-k="brightness_pct"][data-tm="optq"]').closest(".sub-tabs"); return bar.querySelector(".sub-tab.on")?.dataset.v === "" && !!bar.querySelector(".seg-pill")`));
@@ -111,13 +111,16 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] "Jetzt ausführen" schickt die Optionen mit (50 %, 2700 K)`, tries.length === 1 && tries[0].action === "on" && JSON.stringify(tries[0].options) === JSON.stringify({ brightness_pct: 50, color_temp_kelvin: 2700 }), JSON.stringify(tries));
     check(`[${tag}] Ergebnis-Satz nennt die Einstellung`, (await text(`${win} .tm-result`)).includes("50 %") && (await text(`${win} .tm-result`)).includes(T.warm));
 
-    // Zurück zu "Was schalten": Rückstellung wählbar
-    await tap(`${win} [data-tm="nav-back"]`);
+    // Weiter zur Seite "Zurückschalten" (Optionen → Wann → Zurückschalten): Rückstellung wählbar
+    await tap(`${win} [data-tm="nav-next"]`);
+    await tap(`${win} [data-tm="nav-next"]`);
+    await wait(`return r.querySelectorAll('${win} [data-tm="backkind"]').length === 4`);
     check(`[${tag}] Ohne Zurückschalten gibt es die Wahl der Rückstellung nicht`, await ev(`return !r.querySelector('${win} [data-tm="bmode"]')`));
+    await tap(`${win} [data-tm="backkind"][data-v="duration"]`);
     await tap(`${win} [data-tm="bdur"][data-s="600"]`);
     check(`[${tag}] Mit Zurückschalten: Reiter "${T.off}" und "${T.restore}", Standard "${T.off}"`, await ev(`const tabs = [...r.querySelectorAll('${win} [data-tm="bmode"]')]; return tabs.length === 2 && tabs[0].textContent.trim() === ${JSON.stringify(T.off)} && tabs[0].classList.contains("on") && tabs[1].textContent.trim() === ${JSON.stringify(T.restore)}`));
     await tap(`${win} [data-tm="bmode"][data-v="restore"]`);
-    check(`[${tag}] "${T.restore}": Ergebnis nennt "${T.sentRestore}"`, await wait(`return r.querySelector('${win} .tm-result').textContent.includes(${JSON.stringify(T.sentRestore)})`));
+    check(`[${tag}] "${T.restore}": Satz nennt "${T.sentRestore}"`, await wait(`return r.querySelector('${win} .mg-sumline').textContent.toLowerCase().includes(${JSON.stringify(T.sentRestore.toLowerCase())})`));
     await tap(`${win} [data-tm="nav-quick"]`);
     await wait(`return !r.querySelector("${win}")?.open`);
     const saves = await calls("device_panel/timer_save");

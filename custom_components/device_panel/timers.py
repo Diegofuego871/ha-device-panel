@@ -10,6 +10,15 @@ zurück ("20:00 ein, nach 3 Std. 30 Min. wieder aus"). Der Zeitpunkt hat drei Ar
   oder morgen)
 * repeat: wiederholt zu einer Uhrzeit: täglich, wöchentlich (Wochentage) oder monatlich (Tag des Monats, -1 = letzter)
 
+Auslöser (seit 2.54.0): Statt zu einer Zeit kann ein Timer durch Entitäten ausgelöst werden (kind "trigger"): Bedingungen wie bei
+Magic Push (über, unter, ist, ändert sich; Und/Oder mit einer Ebene Gruppen; optional "mindestens so lange erfüllt"). Er schaltet nur,
+wenn die Bedingung NEU eintritt (Wechsel auf "erfüllt"); ist sie beim Speichern, nach einem Neustart oder beim Beginn des Zeitfensters
+schon erfüllt, schaltet er nicht. Dazu ein Zeitfenster (auch über Mitternacht; ausserhalb wird ein Auslöser übergangen, nicht
+verschoben), eine Mindestpause zwischen zwei Auslösungen und der Schutz, dass eine Entität nicht ihr eigener Auslöser ist. Auch das
+Zurückschalten kennt vier Arten (back_kind): none, duration (back_s), time (back_time, die nächste Uhrzeit nach dem Schalten) und
+trigger (back_conditions, ebenfalls nur beim Eintreten, mit optionalem "spätestens nach" back_max_s als Sicherung). Start und Ende
+lassen sich beliebig kombinieren. Das Zeitfenster gilt nur für den Start.
+
 Einmalige Timer sind nach der Ausführung automatisch aus (bleiben aber in der Liste, "erledigt"); wiederholte laufen weiter.
 Die Uhrzeit gilt in der Zeitzone von Home Assistant. Pro Timer wird nur der nächste Zeitpunkt geplant (kein Abfragen im
 Minutentakt); er liegt zusammen mit dem Stand im Speicher .storage/device_panel.timers und übersteht einen Neustart. Was
@@ -44,12 +53,12 @@ from homeassistant.components.media_player import MediaPlayerEntityFeature
 from homeassistant.core import CALLBACK_TYPE, Event, HomeAssistant, State, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.event import async_track_point_in_utc_time
+from homeassistant.helpers.event import async_call_later, async_track_point_in_utc_time, async_track_state_change_event
 from homeassistant.helpers.start import async_at_started
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from . import activity, push, push_icon
+from . import activity, magic, push, push_icon
 from .const import (
     CONF_NOTIFY_CLICK,
     CONF_TIMERS_CATCH_UP,
@@ -73,7 +82,13 @@ BACK_MIN = 10
 BACK_MAX = 7 * 86400
 DELAY_MIN = 10
 DELAY_MAX = 7 * 86400
-KINDS = ("countdown", "once", "repeat")
+KINDS = ("countdown", "once", "repeat", "trigger")
+BACK_KINDS = ("none", "duration", "time", "trigger")
+# Auslöser: Mindestpause zwischen zwei Auslösungen (Sekunden) und "mindestens so lange erfüllt"
+PAUSE_MIN = 10
+PAUSE_MAX = 86400
+PAUSE_DEFAULT = 60
+HOLD_MAX = magic.FOR_MAX
 REPEATS = ("daily", "weekly", "monthly")
 # Wiederholungen bei nicht erreichbarer Entität: zwei weitere Versuche im Abstand von 5 Minuten
 RETRY_S = 300
@@ -448,7 +463,9 @@ def once_at(timer: dict[str, Any], tz: Any, after: datetime | None = None) -> da
 
 
 def first_due(timer: dict[str, Any], now: float, tz: Any) -> float | None:
-    """Erster Zeitpunkt (Sekunden) eines Timers ab jetzt; None, wenn keiner mehr kommt."""
+    """Erster Zeitpunkt (Sekunden) eines Timers ab jetzt; None, wenn keiner mehr kommt (auch bei einem Auslöser: er wartet auf Ereignisse)."""
+    if timer["kind"] == "trigger":
+        return None
     if timer["kind"] == "countdown":
         return now + float(timer["delay_s"])
     after = dt_util.utc_from_timestamp(now).astimezone(tz)
@@ -467,6 +484,8 @@ def local_parts(ts: float, tz: Any) -> dict[str, Any]:
 
 def next_runs(timer: dict[str, Any], now: float, tz: Any, count: int = 3) -> list[dict[str, Any]]:
     """Die nächsten Ausführungen für die Vorschau, als Ortszeit mit Wochentag (das Panel formatiert selbst)."""
+    if timer["kind"] == "trigger":
+        return []
     out: list[datetime] = []
     after = dt_util.utc_from_timestamp(now).astimezone(tz)
     if timer["kind"] == "countdown":
@@ -483,12 +502,19 @@ def next_runs(timer: dict[str, Any], now: float, tz: Any, count: int = 3) -> lis
                 break
             out.append(nxt)
             cursor = nxt
-    # Mit "danach wieder zurückschalten" (seit 2.26.0) steht zu jeder Ausführung auch der Zeitpunkt des Zurückschaltens
-    back = timer.get("back_s")
-    return [
-        {**local_parts(d.timestamp(), tz), **({"back": local_parts(d.timestamp() + float(back), tz)} if back else {})}
-        for d in out
-    ]
+    # Mit "danach wieder zurückschalten" (seit 2.26.0) steht zu jeder Ausführung auch der Zeitpunkt des Zurückschaltens: nach einer
+    # Dauer oder (seit 2.54.0) zu einer Uhrzeit; beim Zurückschalten durch einen Auslöser gibt es keinen festen Zeitpunkt
+    kind = timer.get("back_kind") or ("duration" if timer.get("back_s") else "none")
+
+    def back_of(d: datetime) -> dict[str, Any]:
+        if kind == "duration" and timer.get("back_s"):
+            return {"back": local_parts(d.timestamp() + float(timer["back_s"]), tz)}
+        if kind == "time" and timer.get("back_time"):
+            at = occurrence_after({"kind": "repeat", "repeat": "daily", "time": timer["back_time"]}, d, tz)
+            return {"back": local_parts(at.timestamp(), tz)} if at else {}
+        return {}
+
+    return [{**local_parts(d.timestamp(), tz), **back_of(d)} for d in out]
 
 
 # -- Prüfen --------------------------------------------------------------------------------------
@@ -520,6 +546,18 @@ TIMER_SCHEMA = vol.Schema(
         vol.Optional("options", default=dict): vol.Any(None, dict),
         vol.Optional("back_mode", default="opposite"): vol.In(BACK_MODES),
         vol.Optional("back_s", default=None): vol.Any(None, _int_in(BACK_MIN, BACK_MAX, "Zurückschalten"), msg=f"Zurückschalten: ganze Zahl von {BACK_MIN} bis {BACK_MAX} erwartet"),
+        # Zurückschalten (seit 2.54.0): none, duration (back_s), time (back_time) oder trigger (back_conditions); None = aus back_s abgeleitet
+        vol.Optional("back_kind", default=None): vol.Any(None, vol.In(BACK_KINDS)),
+        vol.Optional("back_time", default=None): vol.Any(None, vol.All(str, vol.Match(_TIME_RE)), msg="Uhrzeit ungültig"),
+        vol.Optional("back_conditions", default=None): vol.Any(None, dict),
+        vol.Optional("back_hold_s", default=0): vol.All(vol.Coerce(int), vol.Range(min=0, max=HOLD_MAX)),
+        vol.Optional("back_max_s", default=None): vol.Any(None, _int_in(BACK_MIN, BACK_MAX, "Spätestens nach"), msg=f"Spätestens nach: ganze Zahl von {BACK_MIN} bis {BACK_MAX} erwartet"),
+        # Auslöser (seit 2.54.0)
+        vol.Optional("conditions", default=None): vol.Any(None, dict),
+        vol.Optional("hold_s", default=0): vol.All(vol.Coerce(int), vol.Range(min=0, max=HOLD_MAX)),
+        vol.Optional("window", default=None): vol.Any(None, dict),
+        vol.Optional("pause_s", default=PAUSE_DEFAULT): _int_in(PAUSE_MIN, PAUSE_MAX, "Pause"),
+        vol.Optional("once_trigger", default=False): bool,
         vol.Required("kind"): vol.In(KINDS),
         vol.Optional("delay_s", default=None): vol.Any(None, _int_in(DELAY_MIN, DELAY_MAX, "Dauer"), msg=f"Dauer: ganze Zahl von {DELAY_MIN} bis {DELAY_MAX} erwartet"),
         vol.Optional("date", default=None): vol.Any(None, "", vol.All(str, vol.Match(_DATE_RE)), msg="Datum ungültig"),
@@ -536,9 +574,113 @@ TIMER_SCHEMA = vol.Schema(
 )
 
 
+# -- Auslöser: Bedingungen, Zeitfenster, Zurückschalten (seit 2.54.0) ------------------------------
+
+
+_LEAF_KINDS_ALL = ("above", "below", "is", "change")
+
+
+def _leaf_shape(raw: Any) -> dict[str, Any]:
+    """Eine Bedingung beim Laden prüfen, nur die Form (ob es die Entität gerade gibt, ist beim Start noch offen)."""
+    if not isinstance(raw, dict) or not isinstance(raw.get("entity_id"), str) or not _ENTITY_RE.match(raw["entity_id"]):
+        raise vol.Invalid("Bedingung ungültig")
+    kind = raw.get("kind")
+    if kind not in _LEAF_KINDS_ALL:
+        raise vol.Invalid("Art der Bedingung unbekannt")
+    return {"entity_id": raw["entity_id"], "kind": kind, "value": raw.get("value"), "reset_value": None}
+
+
+def tree_shape(raw: Any) -> dict[str, Any]:
+    """Bedingungsbaum beim Laden: Form prüfen und bereinigen, ohne die Entitäten zu kennen."""
+    magic._raw_leaves(raw)  # noqa: SLF001 - gleiche Formprüfung wie bei Magic Push
+    items: list[dict[str, Any]] = []
+    for item in raw["items"]:
+        if isinstance(item, dict) and "items" in item:
+            items.append({"op": item.get("op", "and") if item.get("op") in magic.OPS else "and", "items": [_leaf_shape(x) for x in item["items"]]})
+        else:
+            items.append(_leaf_shape(item))
+    return {"op": raw.get("op") if raw.get("op") in magic.OPS else "and", "items": items}
+
+
+def clean_tree(hass: HomeAssistant, raw: Any) -> dict[str, Any]:
+    """
+    Bedingungen eines Auslösers prüfen: wie bei Magic Push (Entität gibt es, über/unter mit Zahl, ist mit Zustand, Und/Oder mit
+    einer Ebene Gruppen). "Ändert sich" gibt es nur als einzige Bedingung.
+    """
+    if isinstance(raw, dict) and isinstance(raw.get("items"), list) and len(raw["items"]) == 1:
+        only = raw["items"][0]
+        if isinstance(only, dict) and "items" not in only and only.get("kind") == "change":
+            return {"op": "and", "items": [magic._clean_leaf(hass, only, alone=True)]}  # noqa: SLF001
+    tree = magic.clean_conditions(hass, raw)
+    for leaf in magic.tree_leaves(tree):
+        leaf["reset_value"] = None  # der Rücksetzwert von Magic Push gilt bei Timern nicht
+    return tree
+
+
+def sole_change(tree: dict[str, Any]) -> dict[str, Any] | None:
+    """Die Bedingung, wenn der Baum nur aus "ändert sich" besteht (löst bei jedem Wechsel des Zustands aus)."""
+    leaves = magic.tree_leaves(tree)
+    return leaves[0] if len(leaves) == 1 and leaves[0]["kind"] == "change" else None
+
+
+def tree_entities(tree: dict[str, Any] | None) -> list[str]:
+    """Entitäten eines Bedingungsbaums ohne Wiederholung."""
+    return list(dict.fromkeys(leaf["entity_id"] for leaf in magic.tree_leaves(tree))) if tree else []
+
+
+def clean_window(raw: Any) -> dict[str, str] | None:
+    """Zeitfenster {"from": "22:00", "to": "06:00"} (auch über Mitternacht); leer = ganzer Tag."""
+    if not raw:
+        return None
+    if not isinstance(raw, dict) or not all(isinstance(raw.get(k), str) and _TIME_RE.match(raw[k]) for k in ("from", "to")):
+        raise vol.Invalid("Zeitfenster ungültig")
+    if raw["from"] == raw["to"]:
+        raise vol.Invalid("Das Zeitfenster hat keine Dauer: Beginn und Ende sind gleich")
+    return {"from": raw["from"], "to": raw["to"]}
+
+
+def in_window(window: dict[str, str] | None, now_local: datetime) -> bool:
+    """Liegt die Ortszeit im Zeitfenster? Beginn gilt, das Ende nicht mehr; Fenster über Mitternacht (22:00 bis 06:00) gelten für die Nacht."""
+    if not window:
+        return True
+    start, end = (int(a) * 60 + int(b) for a, b in (window["from"].split(":"), window["to"].split(":")))
+    current = now_local.hour * 60 + now_local.minute
+    return start <= current < end if start < end else current >= start or current < end
+
+
+def normalize_back(timer: dict[str, Any]) -> dict[str, Any]:
+    """
+    Zurückschalten nach Art ordnen (none, duration, time, trigger); Nicht-Passendes wird gelöscht. Ohne Angabe der Art gilt wie bisher
+    "duration", wenn back_s gesetzt ist. Die Bedingungen des Zurückschaltens prüft clean(), hier nur Pflichtangaben.
+    """
+    kind = timer.get("back_kind") or ("duration" if timer.get("back_s") else "none")
+    timer["back_kind"] = kind
+    if kind != "duration":
+        timer["back_s"] = None
+    elif timer.get("back_s") is None:
+        raise vol.Invalid("Zurückschalten: Dauer fehlt")
+    if kind != "time":
+        timer["back_time"] = None
+    elif not timer.get("back_time"):
+        raise vol.Invalid("Zurückschalten: Uhrzeit fehlt")
+    if kind != "trigger":
+        timer.update(back_conditions=None, back_hold_s=0, back_max_s=None)
+    elif not timer.get("back_conditions"):
+        raise vol.Invalid("Zurückschalten: Bedingungen fehlen")
+    return timer
+
+
 def clean_when(timer: dict[str, Any], tz: Any, *, check_future: bool = True) -> dict[str, Any]:
     """Zeitangaben nach Art prüfen; nicht Passendes wird auf None gesetzt."""
     kind = timer["kind"]
+    if kind == "trigger":
+        if not timer.get("conditions"):
+            raise vol.Invalid("Bedingungen fehlen")
+        timer["window"] = clean_window(timer.get("window"))
+        timer.update(delay_s=None, date=None, time=None, repeat=None, weekdays=None, mday=None)
+        return timer
+    # Auslöser-Angaben gelten nur für kind "trigger"
+    timer.update(conditions=None, hold_s=0, window=None, once_trigger=False)
     if kind == "countdown":
         if timer["delay_s"] is None:
             raise vol.Invalid("Dauer fehlt")
@@ -588,6 +730,14 @@ class TimerManager:
         self._handles: dict[str, CALLBACK_TYPE] = {}
         self._lock = asyncio.Lock()
         self._unsubs: list[CALLBACK_TYPE] = []
+        # Auslöser (seit 2.54.0): zuletzt gesehener Stand der Bedingungen (gilt sie, kann sie nicht "neu eintreten"), laufende
+        # "mindestens so lange"-Zeiten und die Beobachtung der Entitäten. Nichts davon wird gespeichert: nach einem Neustart
+        # gilt der dann herrschende Stand als Ausgangslage, ein schon erfüllter Auslöser schaltet also nicht.
+        self._met: dict[str, bool | None] = {}
+        self._end_met: dict[str, bool | None] = {}
+        self._holds: dict[tuple[str, str], CALLBACK_TYPE] = {}
+        self._tracked: frozenset[str] = frozenset()
+        self._track: CALLBACK_TYPE | None = None
 
     # -- Start, Stopp -------------------------------------------------------------
 
@@ -615,6 +765,13 @@ class TimerManager:
         for cancel in self._handles.values():
             cancel()
         self._handles = {}
+        for cancel in self._holds.values():
+            cancel()
+        self._holds = {}
+        if self._track is not None:
+            self._track()
+            self._track = None
+            self._tracked = frozenset()
         await self._store.async_save(self._data())
 
     def _data(self) -> dict[str, Any]:
@@ -636,6 +793,11 @@ class TimerManager:
         clean_when(timer, dt_util.get_default_time_zone(), check_future=False)
         timer["target"] = timer.get("target") or None
         timer["options"] = clean_options(timer["entity_id"].split(".", 1)[0], timer["action"], timer["options"])
+        if timer["conditions"]:
+            timer["conditions"] = tree_shape(timer["conditions"])
+        normalize_back(timer)
+        if timer["back_conditions"]:
+            timer["back_conditions"] = tree_shape(timer["back_conditions"])
         return timer
 
     @staticmethod
@@ -654,6 +816,8 @@ class TimerManager:
             "revert_action": raw.get("revert_action") if raw.get("revert_action") in ("on", "off") else None,
             # Die Szene vor dem Schalten, wenn nach dem Zurückschalten "wie vorher" gilt
             "snapshot": snapshot,
+            # Wann der Auslöser zuletzt geschaltet hat (für die Mindestpause, übersteht einen Neustart)
+            "last_trigger": num("last_trigger"),
             "done": num("done"),
             "retry": int(raw["retry"]) if isinstance(raw.get("retry"), int) else 0,
             "rretry": int(raw["rretry"]) if isinstance(raw.get("rretry"), int) else 0,
@@ -668,6 +832,11 @@ class TimerManager:
     async def _async_resync(self) -> None:
         for timer_id in list(self._timers):
             await self._async_process(timer_id)
+            # Ausgangslage der Auslöser: der Stand jetzt (was schon gilt, löst nicht aus)
+            self._init_met(timer_id)
+            if self._waits_for_end(timer_id):
+                self._end_met[timer_id] = self._eval(self._timers[timer_id]["back_conditions"])
+        self._retrack()
         self._cleanup()
 
     @callback
@@ -677,6 +846,7 @@ class TimerManager:
         gone = event.data.get("device_id")
         for timer in [t for t in self._timers.values() if t["device_id"] == gone]:
             self._forget(timer["id"])
+        self._retrack()
         self._save()
 
     # -- Timer --------------------------------------------------------------------
@@ -710,12 +880,20 @@ class TimerManager:
             raise vol.Invalid("Diese Entität lässt sich nicht schalten")
         if timer["action"] not in SERVICES[domain]:
             raise vol.Invalid("Diese Aktion gibt es für diese Entität nicht")
-        if timer["back_s"] is not None and opposite(timer["action"]) is None:
+        normalize_back(timer)
+        if timer["back_kind"] != "none" and opposite(timer["action"]) is None:
             raise vol.Invalid("Umschalten lässt sich nicht zurückschalten")
         timer["options"] = validate_options(self.hass, timer["entity_id"], timer["action"], timer["options"])
         # "Wie vorher" gilt nur, wenn überhaupt zurückgeschaltet wird
-        if timer["back_s"] is None or opposite(timer["action"]) is None:
+        if timer["back_kind"] == "none":
             timer["back_mode"] = "opposite"
+        # Bedingungen des Auslösers und des Zurückschaltens prüfen; die geschaltete Entität darf nicht ihr eigener Auslöser sein
+        if timer["kind"] == "trigger" and timer["conditions"]:
+            timer["conditions"] = clean_tree(self.hass, timer["conditions"])
+        if timer["back_kind"] == "trigger":
+            timer["back_conditions"] = clean_tree(self.hass, timer["back_conditions"])
+        if timer["entity_id"] in tree_entities(timer["conditions"]) + tree_entities(timer["back_conditions"]):
+            raise vol.Invalid("Die geschaltete Entität darf nicht ihr eigener Auslöser sein")
         clean_when(timer, self.tz, check_future=existing is None or not self._same_when(existing, timer))
         timer["target"] = timer.get("target") or None
         if not timer["name"]:
@@ -724,7 +902,7 @@ class TimerManager:
 
     @staticmethod
     def _same_when(old: dict[str, Any], new: dict[str, Any]) -> bool:
-        keys = ("kind", "delay_s", "date", "time", "repeat", "weekdays", "mday")
+        keys = ("kind", "delay_s", "date", "time", "repeat", "weekdays", "mday", "conditions", "hold_s", "window", "pause_s", "once_trigger")
         return all(old.get(k) == new.get(k) for k in keys)
 
     def default_name(self, timer: dict[str, Any]) -> str:
@@ -756,6 +934,8 @@ class TimerManager:
         elif not timer["enabled"]:
             rt["due"] = None
         self._arm(timer["id"])
+        self._init_met(timer["id"])
+        self._retrack()
         await self._store.async_save(self._data())
         return timer
 
@@ -767,6 +947,7 @@ class TimerManager:
         if timer_id not in self._timers:
             return False
         self._forget(timer_id)
+        self._retrack()
         await self._store.async_save(self._data())
         return True
 
@@ -784,6 +965,8 @@ class TimerManager:
             timer["enabled"] = False
             rt.update(due=None, retry=0)
         self._arm(timer_id)
+        self._init_met(timer_id)
+        self._retrack()
         await self._store.async_save(self._data())
         return timer
 
@@ -792,6 +975,10 @@ class TimerManager:
             cancel()
         self._timers.pop(timer_id, None)
         self._runtime.pop(timer_id, None)
+        self._met.pop(timer_id, None)
+        self._end_met.pop(timer_id, None)
+        for which in ("start", "end"):
+            self._cancel_hold(timer_id, which)
 
     def _cleanup(self) -> None:
         """Erledigte Countdowns nach 24 Stunden entfernen."""
@@ -926,23 +1113,46 @@ class TimerManager:
 
     def _take_snapshot(self, timer: dict[str, Any], rt: dict[str, Any]) -> dict[str, Any] | None:
         """Die Szene vor dem Schalten, wenn danach "wie vorher" gilt. Wartet noch ein Zurückschalten, gilt dessen Szene weiter."""
-        if timer["back_mode"] != "restore" or not timer["back_s"] or opposite(timer["action"]) is None:
+        if timer["back_mode"] != "restore" or timer["back_kind"] == "none" or opposite(timer["action"]) is None:
             return None
-        if rt["revert_due"] is not None:
+        if rt["revert_action"] is not None:
             return rt["snapshot"]
         return snapshot_of(self.hass.states.get(timer["entity_id"]))
 
     def _plan_revert(self, timer: dict[str, Any], rt: dict[str, Any], now: float, scene: dict[str, Any] | None = None) -> None:
+        """
+        Das Zurückschalten planen: nach einer Dauer, zur nächsten Uhrzeit oder (durch einen Auslöser) sobald die Bedingung neu
+        eintritt, dann mit "spätestens nach" als Sicherung. Das Gegenstück gilt, solange revert_action gesetzt ist.
+        """
         back = opposite(timer["action"])
-        if timer["back_s"] and back:
+        kind = timer["back_kind"]
+        if kind == "none" or not back:
+            return
+        rt["revert_action"] = back
+        rt["rretry"] = 0
+        rt["snapshot"] = scene
+        if kind == "duration":
             rt["revert_due"] = now + float(timer["back_s"])
-            rt["revert_action"] = back
-            rt["rretry"] = 0
-            rt["snapshot"] = scene
+        elif kind == "time":
+            at = occurrence_after({"kind": "repeat", "repeat": "daily", "time": timer["back_time"]}, dt_util.utc_from_timestamp(now).astimezone(self.tz), self.tz)
+            rt["revert_due"] = at.timestamp() if at else None
+        else:
+            rt["revert_due"] = now + float(timer["back_max_s"]) if timer["back_max_s"] else None
+            # Ausgangslage: was beim Einschalten schon gilt, beendet nichts; erst das nächste Eintreten
+            self._end_met[timer["id"]] = self._eval(timer["back_conditions"])
+            self._retrack()
 
     def _finish(self, timer: dict[str, Any], rt: dict[str, Any], now: float) -> None:
         """Nach dem Ausführen (oder Verpassen): wiederholte Timer planen den nächsten, einmalige sind erledigt und aus."""
         rt["retry"] = 0
+        if timer["kind"] == "trigger":
+            # Ein Auslöser bleibt aktiv und wartet auf das nächste Eintreten; "nur einmal" schaltet ihn danach aus
+            rt["due"] = None
+            if timer["once_trigger"]:
+                rt["done"] = now
+                timer["enabled"] = False
+                self._retrack()
+            return
         if timer["kind"] == "repeat":
             nxt = occurrence_after(timer, dt_util.utc_from_timestamp(max(now, rt["due"] or now)).astimezone(self.tz), self.tz)
             rt["due"] = nxt.timestamp() if nxt else None
@@ -962,6 +1172,7 @@ class TimerManager:
         ok, reason = await self._async_call(timer, action, snapshot=scene)
         if ok:
             rt.update(revert_due=None, revert_action=None, rretry=0, snapshot=None)
+            self._end_done(timer)
             # Wurde die Szene wiederhergestellt, steht im Protokoll und in der Meldung "wie vorher" statt des Gegenstücks
             shown = "restore" if scene is not None and restore_calls(timer["entity_id"].split(".", 1)[0], timer["entity_id"], scene) is not None else action
             activity.record(hass, "info", "timer", "timer_revert", name, device, entity=self._entity_name(timer), action=self._action_text(timer, shown))
@@ -973,6 +1184,7 @@ class TimerManager:
             activity.record(hass, "warning", "timer", "timer_retry", name, device, entity=self._entity_name(timer), minutes=RETRY_S // 60, count=rt["rretry"], max=MAX_RETRY)
             return
         rt.update(revert_due=None, revert_action=None, rretry=0, snapshot=None)
+        self._end_done(timer)
         activity.record(hass, "error", "timer", "timer_failed", name, device, entity=self._entity_name(timer))
         await self._async_notify(timer, ok=False, action=action, reason=reason or "error")
 
@@ -998,6 +1210,144 @@ class TimerManager:
             self._arm(timer_id)
             self._save_now()
             return ok, reason
+
+    # -- Auslöser (seit 2.54.0) ----------------------------------------------------
+
+    def _eval(self, tree: dict[str, Any] | None) -> bool | None:
+        """Gilt die Bedingung jetzt? None: nicht beurteilbar (nicht erreichbar); wie bei Magic Push."""
+        if not tree:
+            return None
+
+        def leaf(item: dict[str, Any]) -> bool | None:
+            state = self.hass.states.get(item["entity_id"])
+            return magic.leaf_met(item, state.state if state is not None else None)
+
+        return magic.eval_tree(tree, leaf)
+
+    def _waits_for_end(self, timer_id: str) -> bool:
+        """Wartet der Timer darauf, dass ein Auslöser ihn zurückschaltet?"""
+        timer = self._timers.get(timer_id)
+        return bool(timer and timer["back_kind"] == "trigger" and self.runtime(timer_id)["revert_action"] is not None)
+
+    def _init_met(self, timer_id: str) -> None:
+        """Ausgangslage eines Auslösers: der Stand jetzt. Was schon gilt, löst nicht aus; erst ein neues Eintreten."""
+        timer = self._timers.get(timer_id)
+        self._cancel_hold(timer_id, "start")
+        if timer is not None and timer["kind"] == "trigger":
+            self._met[timer_id] = self._eval(timer["conditions"])
+        else:
+            self._met.pop(timer_id, None)
+
+    def _retrack(self) -> None:
+        """Die Entitäten beobachten, auf die ein Auslöser oder ein Zurückschalten gerade wartet (ein Abonnement für alle)."""
+        wanted: set[str] = set()
+        for timer in self._timers.values():
+            if timer["kind"] == "trigger" and timer["enabled"]:
+                wanted.update(tree_entities(timer["conditions"]))
+            if self._waits_for_end(timer["id"]):
+                wanted.update(tree_entities(timer["back_conditions"]))
+        if frozenset(wanted) == self._tracked:
+            return
+        if self._track is not None:
+            self._track()
+            self._track = None
+        self._tracked = frozenset(wanted)
+        if wanted:
+            self._track = async_track_state_change_event(self.hass, sorted(wanted), self._on_state)
+
+    @callback
+    def _on_state(self, event: Event) -> None:
+        entity_id = event.data["entity_id"]
+        old, new = event.data.get("old_state"), event.data.get("new_state")
+        for timer in list(self._timers.values()):
+            if timer["kind"] == "trigger" and timer["enabled"] and entity_id in tree_entities(timer["conditions"]):
+                self._on_tree_event(timer, "start", timer["conditions"], timer["hold_s"], old, new)
+            if self._waits_for_end(timer["id"]) and entity_id in tree_entities(timer["back_conditions"]):
+                self._on_tree_event(timer, "end", timer["back_conditions"], timer["back_hold_s"], old, new)
+
+    def _on_tree_event(self, timer: dict[str, Any], which: str, tree: dict[str, Any], hold_s: int, old: State | None, new: State | None) -> None:
+        """Eine Entität der Bedingung hat sich geändert: tritt die Bedingung NEU ein, ist es ein Auslöser."""
+        timer_id = timer["id"]
+        if sole_change(tree) is not None:
+            # "Ändert sich": bei jedem Wechsel des Zustands (nicht bei blossen Attributen und nicht von oder nach "nicht erreichbar")
+            if old is not None and new is not None and old.state != new.state and old.state not in magic.IGNORED and new.state not in magic.IGNORED:
+                self._entered(timer, which)
+            return
+        met = self._eval(tree)
+        memory = self._met if which == "start" else self._end_met
+        before = memory.get(timer_id)
+        if met is None:
+            return
+        memory[timer_id] = met
+        if not met:
+            self._cancel_hold(timer_id, which)
+        elif before is not True:
+            if hold_s:
+                self._schedule_hold(timer, which, hold_s)
+            else:
+                self._entered(timer, which)
+
+    def _schedule_hold(self, timer: dict[str, Any], which: str, seconds: int) -> None:
+        self._cancel_hold(timer["id"], which)
+        self._holds[(timer["id"], which)] = async_call_later(self.hass, seconds, partial(self._on_hold, timer["id"], which))
+
+    def _cancel_hold(self, timer_id: str, which: str) -> None:
+        if (cancel := self._holds.pop((timer_id, which), None)) is not None:
+            cancel()
+
+    @callback
+    def _on_hold(self, timer_id: str, which: str, _now: datetime) -> None:
+        """"Mindestens so lange erfüllt" ist um: gilt die Bedingung noch, löst sie aus."""
+        self._holds.pop((timer_id, which), None)
+        timer = self._timers.get(timer_id)
+        if timer is None:
+            return
+        tree = timer["conditions"] if which == "start" else timer["back_conditions"]
+        if self._eval(tree) is True:
+            self._entered(timer, which)
+
+    def _entered(self, timer: dict[str, Any], which: str) -> None:
+        if which == "start":
+            self._trigger_fire(timer)
+        else:
+            self._end_fire(timer)
+
+    def _skip(self, timer: dict[str, Any], key: str) -> None:
+        if activity.get(self.hass).debug:
+            activity.record(self.hass, "debug", "timer", key, timer["name"], timer["device_id"])
+
+    def _trigger_fire(self, timer: dict[str, Any]) -> None:
+        """Der Auslöser ist eingetreten: schalten, wenn Zeitfenster und Mindestpause es erlauben und der Timer nicht schon eingeschaltet wartet."""
+        if not timer["enabled"]:
+            return
+        rt = self.runtime(timer["id"])
+        now = time.time()
+        if rt["revert_action"] is not None:
+            self._skip(timer, "timer_skip_busy")
+            return
+        if not in_window(timer["window"], dt_util.now(self.tz)):
+            self._skip(timer, "timer_skip_window")
+            return
+        if rt["last_trigger"] is not None and now - rt["last_trigger"] < timer["pause_s"]:
+            self._skip(timer, "timer_skip_pause")
+            return
+        rt["last_trigger"] = now
+        rt["due"] = now
+        self.hass.async_create_task(self._async_process(timer["id"]))
+
+    def _end_fire(self, timer: dict[str, Any]) -> None:
+        """Die Bedingung des Zurückschaltens ist eingetreten: jetzt zurückschalten."""
+        rt = self.runtime(timer["id"])
+        if rt["revert_action"] is None:
+            return
+        rt["revert_due"] = time.time()
+        self.hass.async_create_task(self._async_process(timer["id"]))
+
+    def _end_done(self, timer: dict[str, Any]) -> None:
+        """Zurückgeschaltet (oder aufgegeben): die Beobachtung des Endes ist vorbei."""
+        self._end_met.pop(timer["id"], None)
+        self._cancel_hold(timer["id"], "end")
+        self._retrack()
 
     # -- Meldung ------------------------------------------------------------------
 
@@ -1138,7 +1488,15 @@ def timer_payload(hass: HomeAssistant, manager: TimerManager, timer: dict[str, A
         "done": rt["done"],
         "running": timer["kind"] == "countdown" and timer["enabled"] and rt["due"] is not None,
         # Wartet auf das Zurückschalten (seit 2.26.0): der Timer ist geschaltet, die Rückstellung steht noch aus; zählt für den Reiter "Läuft"
-        "reverting": rt["revert_due"] is not None,
+        "reverting": rt["revert_action"] is not None,
+        # Auslöser (seit 2.54.0): wartet auf das Zurückschalten durch einen Auslöser; Sätze der Bedingungen und die Entitäten dazu
+        "waiting_end": rt["revert_action"] is not None and timer["back_kind"] == "trigger",
+        "last_trigger": rt["last_trigger"],
+        "condition_text": magic.condition_text(hass, {"conditions": timer["conditions"]}) if timer["conditions"] else "",
+        "back_condition_text": magic.condition_text(hass, {"conditions": timer["back_conditions"]}) if timer["back_conditions"] else "",
+        "condition_entities": {
+            eid: magic.entity_descriptor(hass, eid) for eid in dict.fromkeys(tree_entities(timer["conditions"]) + tree_entities(timer["back_conditions"]))
+        },
         "entity_name": entity["name"],
         "entity_state": entity["state"],
         "entity_missing": not exists,

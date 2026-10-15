@@ -15,13 +15,22 @@
  * kommt zwischen "Was schalten" und "Wann" eine eigene Seite "Optionen" mit einer Vorschau (geschaltet wird dabei nichts).
  * Die Seite hat die Nummer 5, steht aber in der Reihenfolge an zweiter Stelle (steps()); die übrigen Nummern bleiben, wie sie
  * waren. Was einstellbar ist, liefert der Server je Entität ("options"); ohne Angabe bleibt alles wie zuletzt.
+ *
+ * Auslöser (seit 2.54.0, docs/mockups/timer-trigger-v1 und -v2): Im Schritt "Wann" wählt ein Umschalter zwischen "Zu einer Zeit" und
+ * "Durch einen Auslöser" (Bedingungen auf Entitäten wie bei Magic Push, Zeitfenster, Pause). Das Zurückschalten hat eine eigene Seite
+ * (Nummer 6, zwischen "Wann" und "Meldung"): nie, nach einer Dauer, zu einer Uhrzeit oder durch einen Auslöser. Der Bedingungs-Editor
+ * und die beiden Seiten stehen in timer-trigger.js und werden hier an die Klasse gehängt.
  */
+
+const MODULE_VERSION = new URL(import.meta.url).search;
+const { triggerMethods, triggerDefaults, triggerFromTimer, triggerPayload } = await import(`./timer-trigger.js${MODULE_VERSION}`);
 
 // Letzter Schritt (Name und Prüfung); die Seite "Optionen" (5) steht in steps() zwischen 1 und 2, nur wenn die Entität etwas kann
 const STEPS = 4;
 const OPTS_STEP = 5;
+const BACK_STEP = 6;
 const DELAY_PRESETS = [300, 900, 1800, 3600];
-const BACK_PRESETS = [0, 600, 1800, 3600];
+const BACK_PRESETS = [600, 1800, 3600, 10800];
 const UNITS = [60, 3600, 86400];
 const PREVIEW_DELAY_MS = 300;
 const EMOJI = { switch: "🔌", light: "💡", fan: "🌀", cover: "🪟", lock: "🔒", valve: "🚿", siren: "🚨", humidifier: "💧", input_boolean: "🔘", climate: "🌡️", media_player: "🔊" };
@@ -108,6 +117,19 @@ export class TimerUi {
 
   esc(value) {
     return this.h.escape(value);
+  }
+
+  // Brücken für timer-trigger.js (die Hilfsfunktionen dieser Datei sind nicht öffentlich)
+  actionKey(domain, action) {
+    return actKey(domain, action);
+  }
+
+  opposite(action) {
+    return opposite(action);
+  }
+
+  backPresets() {
+    return BACK_PRESETS;
   }
 
   wizardOpen() {
@@ -337,14 +359,40 @@ export class TimerUi {
     if (domain === "cover" && opts?.position != null) verb = this.t("tmVerbPosition", opts.position);
     else if (parts.length) verb += ` (${parts.join(", ")})`;
     let text = `${entityName} ${verb}`;
-    if (tm.back_s && opposite(tm.action)) {
-      text += `, ${tm.back_mode === "restore" ? this.t("tmBackTextRestore", this.fmtDur(tm.back_s)) : this.t("tmBackText", this.fmtDur(tm.back_s), this.t(`tmRes_${resKey(domain, opposite(tm.action))}`))}`;
-    }
+    const back = this.backText(tm);
+    if (back) text += `, ${back}`;
     return text;
+  }
+
+  // Das Zurückschalten als Satzteil (seit 2.54.0 mit vier Arten): "nach 20 Min. wieder aus", "um 23:30 wieder wie vorher",
+  // "wieder aus, wenn Terrassentür ist offen, spätestens nach 6 Std."; leer ohne Zurückschalten
+  backText(tm) {
+    const domain = this.domainOf(tm.entity_id);
+    const kind = tm.back_kind || (tm.back_s ? "duration" : "none");
+    if (kind === "none" || !opposite(tm.action)) return "";
+    const word = tm.back_mode === "restore" ? this.t("tmRestoreWord") : this.t(`tmRes_${resKey(domain, opposite(tm.action))}`);
+    if (kind === "duration") return tm.back_s ? this.t("tmBackText", this.fmtDur(tm.back_s), word) : "";
+    if (kind === "time") return tm.back_time ? this.t("tmBackTime", tm.back_time, word) : "";
+    this.learnEnts(tm.condition_entities);
+    const cond = this.treeText(tm.back_conditions);
+    if (!cond) return "";
+    return `${this.t("tmBackTrig", word, cond)}${tm.back_max_s ? `, ${this.t("tmBackMax", this.fmtDur(tm.back_max_s))}` : ""}`;
+  }
+
+  // Der Entwurf als Timer-Angaben für Sätze (wie vom Server, plus Zeit und Wiederholung)
+  draftTm() {
+    const d = this.wiz.draft;
+    return { ...this.payload(), entity_id: d.entity_id, weekdays: d.weekdays, mday: d.mday, time: d.time, date: d.date, delay_s: d.delay_s };
   }
 
   // Wann: "Täglich um 20:00", "Mo, Mi, Fr um 06:30", "Monatlich am 1. um 09:00", "Einmalig, 24.12. um 17:00", "Einmalig, in 30 Min."
   whenText(tm) {
+    if (tm.kind === "trigger") {
+      this.learnEnts(tm.condition_entities);
+      const cond = this.treeText(tm.conditions);
+      const base = cond ? this.t("tmWhenTrigger", cond) : this.t("tmWhenTriggerShort");
+      return tm.window ? `${base}, ${this.t("tmWhenWindow", tm.window.from, tm.window.to)}` : base;
+    }
     if (tm.kind === "countdown") return this.t("tmWhenCountdown", this.fmtDur(tm.delay_s));
     if (tm.kind === "once") return tm.date ? this.t("tmWhenOnce", this.dateText({ date: tm.date }), tm.time) : this.t("tmWhenOnceNext", tm.time);
     if (tm.repeat === "daily") return this.t("tmWhenDaily", tm.time);
@@ -422,6 +470,8 @@ export class TimerUi {
       const rem = Math.max(0, tm.due - this.serverNow());
       const circ = 2 * Math.PI * 26;
       left = `<div class="tm-ring" data-tm-due="${tm.due}" data-total="${total}"><svg viewBox="0 0 62 62" aria-hidden="true"><circle class="bg" cx="31" cy="31" r="26"/><circle class="fg" cx="31" cy="31" r="26" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${(circ * (1 - rem / total)).toFixed(1)}"/></svg><span data-tm-left>${esc(this.fmtClock(rem))}</span></div>`;
+    } else if (tm.kind === "trigger") {
+      left = `<div class="time">⚡<small>${esc(t("tmTrigBadge"))}</small></div>`;
     } else {
       const sub = tm.kind === "once" ? (tm.date ? this.dateText({ date: tm.date }) : t("tmOnceShort")) : tm.repeat === "monthly" ? t("tmMonthlyOn", tm.mday === -1 ? t("tmLastDayShort") : `${tm.mday}.`) : "";
       left = `<div class="time">${esc(tm.time || this.localTimeOf(tm))}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`;
@@ -434,6 +484,7 @@ export class TimerUi {
     const status = this.statusHtml(tm);
     let next;
     if (running) next = `<span>${esc(t("tmRemaining"))} <b data-tm-left2>${esc(this.fmtClock(Math.max(0, tm.due - this.serverNow())))}</b></span>`;
+    else if (tm.kind === "trigger" && tm.enabled) next = `<span>${esc(this.waitsText(tm))}</span>`;
     else if (tm.enabled && tm.due_local) next = `<span>${esc(t("tmNextRun"))} <b>${esc(this.localText(tm.due_local))}</b></span>`;
     else if (tm.done) next = `<span class="tm-tag grey">${esc(t("tmDone"))}</span>`;
     else next = `<span>${esc(t("tmDisabled"))}</span>`;
@@ -451,6 +502,12 @@ export class TimerUi {
       <div class="name">${timerEmoji(domain)} ${esc(tm.name)}</div><div class="what">${what}</div>${days}
       ${status.length ? `<div class="what">${status.join(" · ")}</div>` : ""}
       <div class="next">${next}${acts}</div>${confirm}</div>`;
+  }
+
+  // Ein Auslöser-Timer in der Liste: wartet auf den Auslöser, oder ist eingeschaltet und wartet auf das Zurückschalten
+  waitsText(tm) {
+    this.learnEnts(tm.condition_entities);
+    return tm.waiting_end ? this.t("tmWaitsEnd", this.treeText(tm.back_conditions)) : this.t("tmWaitsTrigger");
   }
 
   localTimeOf(tm) {
@@ -654,7 +711,7 @@ export class TimerUi {
     // Wartet auf das Zurückschalten: wann, steht in der Zeile (Reiter "Läuft", seit 2.26.0)
     const backWord = tm.reverting && tm.revert_local && opposite(tm.action) ? this.t(`tmRes_${resKey(tm.domain, opposite(tm.action))}`) : "";
     if (backWord) status.unshift(`<span class="mg-on">${esc(tm.back_mode === "restore" ? t("tmBackAtRowRestore", this.localText(tm.revert_local)) : t("tmBackAtRow", backWord, this.localText(tm.revert_local)))}</span>`);
-    const next = tm.running ? `<span class="mg-on">${esc(t("tmRunningShort"))}</span>` : tm.enabled && tm.due_local ? `${esc(t("tmNextRun"))} <span class="mg-on">${esc(this.localText(tm.due_local))}</span>` : tm.done ? esc(t("tmDone")) : esc(t("tmDisabled"));
+    const next = tm.running ? `<span class="mg-on">${esc(t("tmRunningShort"))}</span>` : tm.kind === "trigger" && tm.enabled ? `<span class="mg-on">${esc(this.waitsText(tm))}</span>` : tm.enabled && tm.due_local ? `${esc(t("tmNextRun"))} <span class="mg-on">${esc(this.localText(tm.due_local))}</span>` : tm.done ? esc(t("tmDone")) : esc(t("tmDisabled"));
     return `<div class="mg-card${tm.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${timerEmoji(tm.domain)}</span>
       <div class="mg-t"><b>${esc(tm.name)}</b><small>${esc(this.sentence(tm))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${acts}${confirm}</div>`;
   }
@@ -740,6 +797,7 @@ export class TimerUi {
       options: {},
       back_mode: "opposite",
       back_s: 0,
+      ...triggerDefaults(),
       backOwn: { text: "", unit: 60 },
       kind: "repeat",
       delay_s: 1800,
@@ -759,6 +817,7 @@ export class TimerUi {
   }
 
   draftFrom(tm) {
+    this.learnEnts(tm.condition_entities);
     const back = tm.back_s ? splitSeconds(tm.back_s, UNITS) : { text: "", unit: 60 };
     const delay = tm.delay_s ? splitSeconds(tm.delay_s, UNITS) : { text: "", unit: 60 };
     const backPreset = BACK_PRESETS.includes(tm.back_s || 0);
@@ -770,6 +829,7 @@ export class TimerUi {
       action: tm.action,
       options: { ...(tm.options || {}) },
       back_mode: tm.back_mode || "opposite",
+      ...triggerFromTimer(tm),
       back_s: tm.back_s || 0,
       backOwn: backPreset ? { text: "", unit: 60 } : back,
       kind: tm.kind,
@@ -799,12 +859,13 @@ export class TimerUi {
       name: d.name.trim(),
       action: d.action,
       options: d.action === "on" ? d.options : {},
-      back_mode: d.back_s ? d.back_mode : "opposite",
-      back_s: d.back_s || null,
+      back_mode: d.backKind !== "none" ? d.back_mode : "opposite",
+      back_s: d.backKind === "duration" ? d.back_s || null : null,
+      ...triggerPayload(d),
       kind: d.kind,
       delay_s: d.kind === "countdown" ? d.delay_s : null,
       date: d.kind === "once" && d.date ? d.date : null,
-      time: d.kind === "countdown" ? null : d.time,
+      time: d.kind === "countdown" || d.kind === "trigger" ? null : d.time,
       repeat: d.kind === "repeat" ? d.repeat : null,
       weekdays: d.kind === "repeat" && d.repeat === "weekly" ? d.weekdays : null,
       mday: d.kind === "repeat" && d.repeat === "monthly" ? d.mday : null,
@@ -844,7 +905,7 @@ export class TimerUi {
     this.reset();
     this.standalone = true;
     this.view = "wizard";
-    const draft = { id: null, device_id: null, entity_id: "", action: "on", options: {}, back_mode: "opposite", back_s: 0, backOwn: { text: "", unit: 60 }, kind: "repeat", delay_s: 1800, delayOwn: { text: "", unit: 60 }, date: "", time: "06:30", repeat: "daily", weekdays: [0, 1, 2, 3, 4], mday: 1, mdayOwn: false, enabled: true, push: false, target: "", name: "" };
+    const draft = { id: null, device_id: null, entity_id: "", action: "on", options: {}, back_mode: "opposite", back_s: 0, ...triggerDefaults(), backOwn: { text: "", unit: 60 }, kind: "repeat", delay_s: 1800, delayOwn: { text: "", unit: 60 }, date: "", time: "06:30", repeat: "daily", weekdays: [0, 1, 2, 3, 4], mday: 1, mdayOwn: false, enabled: true, push: false, target: "", name: "" };
     const w = (this.wiz = { pick: true, step: 0, editing: false, draft, pv: null, pvError: "", test: null, targetOpen: false, error: "", saving: false, devices: null, devQuery: "", pickId: "", loadingDev: false });
     w.snap = JSON.stringify(draft);
     this.paint();
@@ -959,7 +1020,7 @@ export class TimerUi {
 
   backError() {
     const d = this.wiz.draft;
-    if (!d.back_s) return "";
+    if (d.backKind !== "duration" || !d.back_s) return "";
     const lo = this.limit("back_min", 10);
     const hi = this.limit("back_max", 604800);
     return !Number.isFinite(d.back_s) || d.back_s < lo || d.back_s > hi ? this.t("tmBackRange", this.fmtDur(lo), this.fmtDur(hi)) : "";
@@ -969,8 +1030,10 @@ export class TimerUi {
     if (step === 0) return Boolean(this.wiz.pickId) && !this.wiz.loadingDev;
     const d = this.wiz.draft;
     const e = this.entity(d.entity_id);
-    if (step === 1) return Boolean(e) && e.actions.includes(d.action) && !this.backError();
+    if (step === 1) return Boolean(e) && e.actions.includes(d.action);
+    if (step === BACK_STEP) return this.backValid();
     if (step === 2) {
+      if (d.kind === "trigger") return this.triggerValid();
       if (!/^\d{2}:\d{2}$/.test(d.time || "") && d.kind !== "countdown") return false;
       if (d.kind === "countdown") return !this.delayError();
       // Datum darf fehlen: dann gilt das nächste Eintreffen der Uhrzeit (seit 2.22.0)
@@ -1070,13 +1133,16 @@ export class TimerUi {
 
   paintZones(only) {
     if (!this.win() || !this.wiz) return;
-    for (const name of only || ["result", "runs", "pv", "summary", "prev"]) {
+    for (const name of only || ["result", "runs", "pv", "summary", "prev", "backsum"]) {
       const el = this.q(`[data-tm-zone="${name}"]`);
       if (!el) continue;
       if (name === "result") el.innerHTML = this.resultHtml();
       else if (name === "runs") el.innerHTML = this.runsHtml();
       else if (name === "summary") el.innerHTML = this.summaryHtml();
       else if (name === "devs") el.innerHTML = this.devsHtml();
+      else if (name === "backsum") el.innerHTML = this.backSumHtml();
+      else if (name === "winerr") el.innerHTML = this.winErrHtml();
+      else if (name.startsWith("csum-")) el.innerHTML = this.condSumHtml(name.slice(5));
       else if (name === "prev") el.innerHTML = this.prevHtml();
       else el.innerHTML = this.pvHtml();
     }
@@ -1095,7 +1161,8 @@ export class TimerUi {
 
   // Die Schritte in ihrer Reihenfolge: Gerät (nur aus dem Fenster aller Timer), Was, Optionen (nur wenn möglich), Wann, Meldung, Name
   steps() {
-    return [...(this.wiz?.pick ? [0] : []), 1, ...(this.hasOptions() ? [OPTS_STEP] : []), 2, 3, 4];
+    const d = this.wiz?.draft;
+    return [...(this.wiz?.pick ? [0] : []), 1, ...(this.hasOptions() ? [OPTS_STEP] : []), 2, ...(d && opposite(d.action) ? [BACK_STEP] : []), 3, 4];
   }
 
   syncNav() {
@@ -1139,7 +1206,7 @@ export class TimerUi {
         ? `<button type="button" class="mg-stp${on}" data-tm="goto" data-step="${n}" aria-label="${esc(`${t("tmStepOf", shown(n), total)}: ${t(`tmStepName_${n}`)}`)}"></button>`
         : `<span class="mg-stp${on}"></span>`;
     }).join("");
-    const body = [this.step0Html, this.step1Html, this.step2Html, this.step3Html, this.step4Html, this.stepOptsHtml][step].call(this);
+    const body = [this.step0Html, this.step1Html, this.step2Html, this.step3Html, this.step4Html, this.stepOptsHtml, this.backStepHtml][step].call(this);
     const last = step === STEPS;
     const quick = last || step === 0 ? "" : `<button type="button" class="dlg-btn quick" data-tm="nav-quick"${this.canSaveAll() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("tmSaving") : t("tmSave"))}</button>`;
     const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-tm="${step === first ? "nav-cancel" : "nav-back"}">${esc(step === first ? t("tmCancel") : t("tmBack"))}</button>
@@ -1170,18 +1237,7 @@ export class TimerUi {
     const e = this.entity(d.entity_id);
     if (!e) return html;
     html += `<div class="mg-k">${esc(t("tmAction"))}</div>${this.tabsHtml(e.actions.map((a) => ({ on: d.action === a, attrs: `data-tm="action" data-v="${a}"`, label: t(`tmAct_${actKey(e.domain, a)}`) })))}`;
-    if (opposite(d.action)) {
-      html += `<div class="mg-k">${esc(t("tmBackLabel"))}</div>
-        ${this.tabsHtml(BACK_PRESETS.map((s) => ({ on: !d.backOwn.text && d.back_s === s, attrs: `data-tm="bdur" data-s="${s}"`, label: s ? this.fmtDur(s) : t("tmBackNever") })))}
-        ${this.ownHtml("back", d.backOwn, t("tmOwnTime"))}
-        ${this.backError() ? `<div class="opt-error" data-tm-err="back">${esc(this.backError())}</div>` : ""}`;
-      // Wohin zurückgestellt wird: das Gegenstück (aus, zu …) oder die Szene vor dem Schalten (seit 2.52.0)
-      if (d.back_s) {
-        html += `<div class="mg-k">${esc(t("tmBackModeLabel"))}</div>
-          ${this.tabsHtml([["opposite", t(`tmAct_${actKey(e.domain, opposite(d.action))}`)], ["restore", t("tmBackModeRestore")]].map(([k, label]) => ({ on: d.back_mode === k, attrs: `data-tm="bmode" data-v="${k}"`, label })))}
-          ${d.back_mode === "restore" ? `<p class="mg-hint">${esc(t("tmBackModeNote"))}</p>` : ""}`;
-      }
-    } else html += `<p class="mg-hint">${esc(t("tmToggleNoBack"))}</p>`;
+    if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t("tmToggleNoBack"))}</p>`;
     return `${html}<div data-tm-zone="result">${this.resultHtml()}</div>`;
   }
 
@@ -1193,7 +1249,7 @@ export class TimerUi {
     const row = w.tried?.busy
       ? `<span class="opt-short">${this.esc(this.t("tmTryBusy"))}</span>`
       : `<button type="button" class="dlg-btn tm-try" data-tm="try">${this.esc(this.t("tmTryBtn"))}</button>${w.tried?.text ? `<span class="${w.tried.failed ? "opt-error" : "opt-short"}" role="status">${this.esc(w.tried.text)}</span>` : ""}`;
-    return `<p class="mg-note tm-result">${this.esc(this.t("tmResult", this.sentenceOf({ entity_id: d.entity_id, action: d.action, back_s: d.back_s, back_mode: d.back_mode, options: d.options }, e.name)))}</p>
+    return `<p class="mg-note tm-result">${this.esc(this.t("tmResult", this.sentenceOf(this.draftTm(), e.name)))}</p>
       <div class="mg-testrow tm-tryrow">${row}</div><p class="mg-hint">${this.esc(this.t("tmTryNote"))}</p>`;
   }
 
@@ -1386,7 +1442,13 @@ export class TimerUi {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const d = this.wiz.draft;
-    let html = this.tabsHtml([["countdown", "tmKindIn"], ["once", "tmKindOnce"], ["repeat", "tmKindRepeat"]].map(([k, label]) => ({ on: d.kind === k, attrs: `data-tm="kind" data-v="${k}"`, label: t(label) })));
+    // Umschalter "Zu einer Zeit | Durch einen Auslöser" (seit 2.54.0)
+    const mode = this.tabsHtml([
+      { on: d.kind !== "trigger", attrs: 'data-tm="whenmode" data-v="time"', label: t("tmWhenModeTime") },
+      { on: d.kind === "trigger", attrs: 'data-tm="whenmode" data-v="trigger"', label: t("tmWhenModeTrigger") },
+    ]);
+    if (d.kind === "trigger") return `${mode}${this.triggerPageHtml()}<div data-tm-zone="runs">${this.runsHtml()}</div>`;
+    let html = mode + this.tabsHtml([["countdown", "tmKindIn"], ["once", "tmKindOnce"], ["repeat", "tmKindRepeat"]].map(([k, label]) => ({ on: d.kind === k, attrs: `data-tm="kind" data-v="${k}"`, label: t(label) })));
     if (d.kind === "countdown") {
       html += `<div class="mg-k">${esc(t("tmInLabel"))}</div>
         ${this.tabsHtml(DELAY_PRESETS.map((s) => ({ on: !d.delayOwn.text && d.delay_s === s, attrs: `data-tm="delay" data-s="${s}"`, label: this.fmtDur(s) })))}
@@ -1425,7 +1487,7 @@ export class TimerUi {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const w = this.wiz;
-    if (w.pvError && w.step === 2) return `<div class="opt-error" role="alert">${esc(w.pvError)}</div>`;
+    if (w.pvError && (w.step === 2 || w.step === BACK_STEP)) return `<div class="opt-error" role="alert">${esc(w.pvError)}</div>`;
     const runs = w.pv?.next_runs;
     if (!runs?.length) return "";
     const label = w.draft.kind === "countdown" ? t("tmRunsAt") : t("tmNextRuns");
@@ -1508,12 +1570,13 @@ export class TimerUi {
     const w = this.wiz;
     const d = w.draft;
     const e = this.entity(d.entity_id);
-    const tm = { ...this.payload(), entity_id: d.entity_id, weekdays: d.weekdays, mday: d.mday, time: d.time, date: d.date, delay_s: d.delay_s, back_s: d.back_s, back_mode: d.back_mode };
+    const tm = this.draftTm();
     let html = `<div class="tm-sum"><b>${esc(this.whenText(tm))}</b>: ${esc(this.sentenceOf(tm, e?.name || ""))}.`;
     if (d.push) html += `<br>🔔 ${esc(t("tmSumPush", d.target ? this.niceTarget(d.target) : t("tmTargetDefaultShort")))}`;
     html += `</div>`;
     const first = w.pv?.next_runs?.[0];
-    if (first) html += `<div class="mg-k">${esc(t("tmNextRun2"))}</div><div class="tm-next"><div><span>${esc(this.localText(first))}</span>${this.backLine(first)}</div></div>`;
+    if (d.kind === "trigger") html += `<div class="mg-k">${esc(t("tmTrigState"))}</div><div class="tm-next"><div><span>${esc(t("tmWaitsTrigger"))}</span></div></div>`;
+    else if (first) html += `<div class="mg-k">${esc(t("tmNextRun2"))}</div><div class="tm-next"><div><span>${esc(this.localText(first))}</span>${this.backLine(first)}</div></div>`;
     else if (w.pvError) html += `<div class="opt-error" role="alert">${esc(w.pvError)}</div>`;
     return html;
   }
@@ -1537,7 +1600,7 @@ export class TimerUi {
   // Zu einer Seite wechseln (Nummer); gibt es sie nicht (Optionen ohne Optionen), die nächste vorhandene
   setStep(step) {
     const order = this.steps();
-    this.wiz.step = order.includes(step) ? step : step === OPTS_STEP ? 2 : order.find((n) => n > step) ?? order[order.length - 1];
+    this.wiz.step = order.includes(step) ? step : step === OPTS_STEP ? 2 : step === BACK_STEP ? 3 : order.find((n) => n > step) ?? order[order.length - 1];
     this.paint();
     this.scrollTop();
     this.requestPreview();
@@ -1615,7 +1678,10 @@ export class TimerUi {
         w.draft.options = {};
         w.tried = null;
         if (!e.actions.includes(w.draft.action)) w.draft.action = e.actions[0];
-        if (!opposite(w.draft.action)) w.draft.back_s = 0;
+        if (!opposite(w.draft.action)) {
+          w.draft.back_s = 0;
+          w.draft.backKind = "none";
+        }
         this.paint();
         break;
       }
@@ -1625,6 +1691,7 @@ export class TimerUi {
         if (w.draft.action !== "on") w.draft.options = {};
         if (!opposite(w.draft.action)) {
           w.draft.back_s = 0;
+          w.draft.backKind = "none";
           w.draft.backOwn = { text: "", unit: 60 };
         }
         this.paint();
@@ -1706,6 +1773,7 @@ export class TimerUi {
         this.tryNow();
         break;
       default:
+        this.onTriggerClick(el);
     }
   }
 
@@ -1765,6 +1833,7 @@ export class TimerUi {
         d.touched.name = true;
         break;
       default:
+        this.onTriggerInput(el);
     }
   }
 
@@ -1790,7 +1859,7 @@ export class TimerUi {
         box.textContent = err;
         box.hidden = !err;
       }
-      this.paintZones(["result"]);
+      this.paintZones(["result", "backsum"]);
     } else {
       const err = this.delayError();
       let box = win.querySelector('[data-tm-err="delay"]');
@@ -1864,6 +1933,10 @@ export class TimerUi {
         this.requestPreview();
         break;
       default:
+        this.onTriggerChange(el);
     }
   }
 }
+
+// Bedingungs-Editor, Auslöser und Zurückschalten (timer-trigger.js)
+Object.assign(TimerUi.prototype, triggerMethods);

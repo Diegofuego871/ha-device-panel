@@ -509,6 +509,14 @@ Temperatur und Modus, Medien Lautstärke, Ventilator Stufe), auf einer eigenen S
 kann. Beim Zurückschalten gibt es "Aus" (Gegenstück) oder "Wie vorher" (die Szene vor dem Schalten wird gemerkt und wiederhergestellt). Ohne Angabe
 bleibt alles wie zuletzt. Einzelheiten: `docs/mockups/timer-light-v1/README.md`, `timers.py`.
 
+Auslöser (seit 2.54.0): Statt einer Zeit kann eine Bedingung auslösen (Umschalter "Zu einer Zeit | Durch einen Auslöser" auf der Seite "Wann"),
+aufgebaut wie bei Magic Push (über/unter/ist/ändert sich, Und/Oder, eine Ebene Gruppen, "Mindestens so lange erfüllt"). Ausgelöst wird nur beim
+Eintreten: Eine beim Speichern, nach einem Neustart oder zu Fensterbeginn schon erfüllte Bedingung löst nicht aus. Zeitfenster gilt nur für den Start
+(ausserhalb ignoriert, nicht verschoben), Mindestpause (Standard 1 Min.), "Nur einmal auslösen" (Standard aus), die geschaltete Entität darf nicht ihr
+eigener Auslöser sein. Neue Seite "Zurückschalten" (Nie / Nach Dauer / Zu einer Zeit / Durch einen Auslöser, "Ausschalten" oder "Wie vorher",
+"Spätestens nach" als Sicherung); Start und Ende sind frei kombinierbar. Einzelheiten: `docs/mockups/timer-trigger-v1/README.md`,
+`timer-trigger-v2/README.md`, `timers.py`, `panel/timer-trigger.js`.
+
 ## Live-Aktivität beim Laden (seit 2.19.0, Wunsch des Nutzers)
 
 Optional (aus), global, pro Integration und pro Gerät, unabhängig von der Lademeldung. Zeigt auf iPhone (Live-Aktivität, iOS

@@ -3,6 +3,24 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.54.0, Timer: Auslöser und Zurückschalten per Zeit oder Auslöser)
+
+- Wunsch des Nutzers, Mockups `docs/mockups/timer-trigger-v1`/`v2`, alles nach Empfehlung. **Backend** `timers.py`: `kind: "trigger"` mit `conditions` (Magic-Baum
+  `{op, items[leaf|group]}`, wiederverwendet aus `magic.py`: `clean_conditions`, `eval_tree`, `leaf_met`, `condition_text`), `hold_s`, `window {from,to}`,
+  `pause_s` (Standard 60, 10 bis 86400), `once_trigger`; Rückschalten `back_kind` (none/duration/time/trigger), `back_s`, `back_time`, `back_conditions`,
+  `back_hold_s`, `back_max_s`, `back_mode`. Zustand im Arbeitsspeicher (`_met`, `_end_met`, `_holds`, ein Abo `async_track_state_change_event` über `_retrack`);
+  Eintreten nur aus "nicht erfüllt" (`_init_met` setzt die Ausgangslage beim Start/Speichern). Auslösen über `rt["due"]=now` + `_async_process` (nutzt die
+  vorhandene Retry-/Verpasst-Logik), Ende über `rt["revert_due"]=now`. Übersprungen wird mit `timer_skip_window`/`_pause`/`_busy` (`activity.py`).
+  Sperre eigene Entität in `clean()`. Payload: `reverting`, `waiting_end`, `last_trigger`, `condition_text`, `back_condition_text`, `condition_entities`.
+- **Panel**: neue Datei `timer-trigger.js` (per `import()` mit Cache-Buster in `timers.js`, Methoden per `Object.assign` an `TimerUi`): Bedingungs-Editor,
+  Seite "Wann" (Umschalter `whenmode`), Seite "Zurückschalten" (`BACK_STEP = 6`, in `steps()` nach "Wann", nur bei `opposite(action)`). Schreibzonen
+  `winerr`, `csum-start/back`, `backsum` in `paintZones`. Wichtig: Das `change`-Ereignis von `c-value` zeichnet nicht neu (sonst ersetzt der Fokuswechsel
+  den Knopf unter dem Zeiger und der Klick auf "+" geht verloren).
+- Tests: `tests/test_timer_trigger.py` (21), Suite `timertrigger-e2e` (124 Prüfungen); `timer`, `timeradd`, `timeropts` an die sechs Seiten angepasst.
+- Nicht an einer echten Instanz geprüft: das Auslöse-Verhalten mit echten Entitäten; Haltezeiten ("Mindestens so lange") gehen bei einem Neustart verloren
+  (nicht gespeichert); Auslöser, die während eines wartenden Zurückschaltens eintreffen, werden übersprungen (`timer_skip_busy`); das Zeitfeld folgt dem
+  Zeitformat des Browsers.
+
 ## Stand (2.53.0, KI-Bereich abgesetzt)
 
 - Wunsch des Nutzers, Mockups `docs/mockups/ai-frame-v1`, Variante A: `_aiHtml` setzt alles in `.ai-box` (Rahmen, violett getönt) mit Kopfzeile `.ai-head` ("KI-Einschätzung" = `secAiSettings`, rechts die Quelle `st.source`); der frühere Abschnittstitel `<h3>` steht jetzt in der Kopfzeile. Einschätzung (`.ai-card` ohne eigenen Rahmen) und Rückfragen (`.ai-ask` mit gestrichelter Linie oben) liegen innen. Fusszeile zeigt nur noch die Zeit (`aiAt`, vorher `aiBy` mit Quelle). Tests: `ai-e2e` angepasst (Titel, Quelle in der Kopfzeile).

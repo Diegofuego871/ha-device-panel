@@ -7,6 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.54.0] - 2026-10-15
+
+Timers: a trigger instead of a time, and switching back by time or trigger.
+
+### Added
+
+- Timer, page "When": a switch "At a time | By a trigger". With "By a trigger" the timer switches when conditions are met, built like Magic Push: any entity, "above", "below", "is" or "changes", several conditions with "and" / "or" and one level of groups, and optionally "Holds for at least" (immediately, 30 s, 2 min, 5 min). The condition text appears as a sentence ("When Temperatur Garten is below 5."). The timer only switches when the condition is newly met: if it is already met when the timer is saved, after a restart or when the time window begins, nothing happens until it has been unmet in between.
+- Timer, trigger: time window ("Only in a time window", for example 22:00 to 06:00, also across midnight). The window applies only to the start: outside it nothing happens, and a condition met outside the window is not postponed.
+- Timer, trigger: minimum pause after a switch (1, 5, 15 or 60 min, default 1 min) and the switch "Trigger only once" (default off; afterwards the timer turns itself off).
+- Timer, new page "Switch back" (replaces the switching-back controls of the page "What"): "Never", "After a duration", "At a time" or "By a trigger", each with "Turn off" or "As before". The return trigger counts only when it is newly met and has the same conditions and "Holds for at least" as the start. As a safety net, "At the latest after" (30 min to 6 h) switches back even if the trigger never comes. Start and end can be combined freely: for example on at 20:00 and off when the rain sensor is dry, or on by a trigger and off at a time.
+- Timer, lists and summary: a timer with a trigger shows the sentence and "waits for trigger" instead of the next run, with a bolt badge in the lists; the log and the push name the reason ("skipped: outside the time window", "skipped: pause", "skipped: switching back still waiting").
+- Protection: the switched entity cannot be its own trigger (also not in the return trigger).
+
+### Changed
+
+- Timer assistant: the pages are now What, Options (only if available), When, Switch back (only for actions with an opposite), Message and Name; the switching-back controls moved from "What" to the new page. Existing timers keep their behaviour unchanged.
+
 ## [2.53.0] - 2026-10-15
 
 AI assessment: the AI area is set apart from the rest of the device pop-up.
@@ -3338,6 +3355,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.54.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.0
 [2.53.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.53.0
 [2.52.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.1
 [2.52.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.0

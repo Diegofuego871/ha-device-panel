@@ -31,6 +31,9 @@ def _limits() -> dict[str, Any]:
         "back_max": timers.BACK_MAX,
         "delay_min": timers.DELAY_MIN,
         "delay_max": timers.DELAY_MAX,
+        "pause_min": timers.PAUSE_MIN,
+        "pause_max": timers.PAUSE_MAX,
+        "hold_max": timers.HOLD_MAX,
     }
 
 

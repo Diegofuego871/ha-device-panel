@@ -12,10 +12,10 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { infoFail1: "keine anhaltende Benachrichtigung", infoFail2: "dreimal versucht", infoFail3: "Push-Ziel", dateSwitch: "Bestimmtes Datum", onceNoDate: "Ohne Datum schaltet der Timer beim nächsten Eintreffen der Uhrzeit", plug: "Steckdose", look: "Ansicht", tab: "Timer", add: "Neuer Timer", q1: "Was soll geschaltet werden?", q2: "Wann soll geschaltet werden?", q3: "Soll eine Push-Meldung kommen?", q4: "Name und Prüfung", step1: "Schritt 1 von 4", step4: "Schritt 4 von 4",
+  de: { infoFail1: "keine anhaltende Benachrichtigung", infoFail2: "dreimal versucht", infoFail3: "Push-Ziel", dateSwitch: "Bestimmtes Datum", onceNoDate: "Ohne Datum schaltet der Timer beim nächsten Eintreffen der Uhrzeit", plug: "Steckdose", look: "Ansicht", tab: "Timer", add: "Neuer Timer", q1: "Was soll geschaltet werden?", q2: "Wann soll geschaltet werden?", q3: "Soll eine Push-Meldung kommen?", q4: "Name und Prüfung", step1: "Schritt 1 von 5", step4: "Schritt 5 von 5",
     empty: "Noch keine Timer", noEnt: "keine Entität, die ein Timer schalten kann", daily: "Täglich", weekly: "Wöchentlich", monthly: "Monatlich", def: "Standard aus den Einstellungen", pushTitle: "⏱️ Timer: Bewässerung",
     one: "1 aktiv", delAsk: "Timer \"Bewässerung\" löschen?", discard: "Änderungen verwerfen?", sec: "Timer", pauseLabel: "Alle Timer pausieren", saved: "Timer gespeichert.", running: "läuft", hit: "1 von 2" },
-  en: { infoFail1: "not a persistent notification", infoFail2: "tried three times", infoFail3: "push target", dateSwitch: "Specific date", onceNoDate: "Without a date the timer switches the next time the clock reaches this time", plug: "Plug", look: "View", tab: "Timer", add: "New timer", q1: "What should be switched?", q2: "When should it switch?", q3: "Should a push notification come?", q4: "Name and check", step1: "Step 1 of 4", step4: "Step 4 of 4",
+  en: { infoFail1: "not a persistent notification", infoFail2: "tried three times", infoFail3: "push target", dateSwitch: "Specific date", onceNoDate: "Without a date the timer switches the next time the clock reaches this time", plug: "Plug", look: "View", tab: "Timer", add: "New timer", q1: "What should be switched?", q2: "When should it switch?", q3: "Should a push notification come?", q4: "Name and check", step1: "Step 1 of 5", step4: "Step 5 of 5",
     empty: "No timers yet", noEnt: "no entity a timer can switch", daily: "Daily", weekly: "Weekly", monthly: "Monthly", def: "Default from the settings", pushTitle: "⏱️ Timer: Bewässerung",
     one: "1 on", delAsk: "Delete timer \"Bewässerung\"?", discard: "Discard changes?", sec: "Timers", pauseLabel: "Pause all timers", saved: "Timer saved.", running: "running", hit: "1 of 2" },
 };
@@ -78,24 +78,11 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Fenster offen, Schritt 1`, await wait(`return r.querySelector("dialog.timer-dlg")?.open && r.querySelector("dialog.timer-dlg .mg-big")?.textContent === ${JSON.stringify(T.q1)}`) && (await text(`${win} .mg-stephead span`)) === T.step1);
     check(`[${tag}] zwei schaltbare Entitäten, Weiter gesperrt`, (await ev(`return r.querySelectorAll("dialog.timer-dlg .mg-pick").length`)) === 2 && await disabled(nextBtn));
     await tap(`${win} .mg-pick[data-id="switch.plug"]`);
-    check(`[${tag}] Steckdose gewählt, Aktion und Zurückschalten sichtbar`, await wait(`return !r.querySelector('dialog.timer-dlg [data-tm="nav-next"]').disabled && r.querySelectorAll('dialog.timer-dlg [data-tm="action"]').length === 3 && r.querySelectorAll('dialog.timer-dlg [data-tm="bdur"]').length === 4`));
-    await tap(`${win} [data-tm="bdur"][data-s="1800"]`);
-    await fill(`${win} [data-tm="back-own"]`, "20");
-    check(`[${tag}] eigene Zeit 20 Min.: Satz mit "wieder aus"`, await wait(`return /20 (Min\\.|min)/.test(r.querySelector("dialog.timer-dlg .tm-result")?.textContent || "") && !r.querySelector('dialog.timer-dlg [data-tm="bdur"].on, dialog.timer-dlg [data-tm="bdur"][aria-checked="true"]')`), await text(`${win} .tm-result`));
-    // Dauer auf die Minute genau (2.26.0): 690 Min. = 11 Std. 30 Min., nicht "11 Std."
-    await fill(`${win} [data-tm="back-own"]`, "690");
-    check(`[${tag}] 690 Min.: Satz zeigt "11 ${lang === "de" ? "Std." : "h"} 30 ${lang === "de" ? "Min." : "min"}"`, await wait(`return (r.querySelector("dialog.timer-dlg .tm-result")?.textContent || "").includes(${JSON.stringify(lang === "de" ? "11 Std. 30 Min." : "11 h 30 min")})`), await text(`${win} .tm-result`));
-    await fill(`${win} [data-tm="back-own"]`, "1.5");
-    check(`[${tag}] 1,5 Min.: "1 ${lang === "de" ? "Min. 30 Sek." : "min 30 s"}"`, await wait(`return (r.querySelector("dialog.timer-dlg .tm-result")?.textContent || "").includes(${JSON.stringify(lang === "de" ? "1 Min. 30 Sek." : "1 min 30 s")})`), await text(`${win} .tm-result`));
-    await fill(`${win} [data-tm="back-own"]`, "0.01");
-    check(`[${tag}] zu kurze Zeit: Fehler am Feld, Weiter gesperrt`, await wait(`return !!r.querySelector('dialog.timer-dlg [data-tm-err="back"]:not([hidden])')`) && await disabled(nextBtn));
-    await fill(`${win} [data-tm="back-own"]`, "20");
+    check(`[${tag}] Steckdose gewählt, Aktion sichtbar, das Zurückschalten steht nicht mehr hier`, await wait(`return !r.querySelector('dialog.timer-dlg [data-tm="nav-next"]').disabled && r.querySelectorAll('dialog.timer-dlg [data-tm="action"]').length === 3 && !r.querySelector('dialog.timer-dlg [data-tm="bdur"]')`));
     await tap(`${win} [data-tm="action"][data-v="toggle"]`);
-    check(`[${tag}] Umschalten: kein Zurückschalten`, await wait(`return !r.querySelector('dialog.timer-dlg [data-tm="bdur"]') && !!r.querySelector("dialog.timer-dlg .mg-hint")`));
+    check(`[${tag}] Umschalten: kein Zurückschalten, eine Seite weniger (Schritt 1 von 4)`, await wait(`return !!r.querySelector("dialog.timer-dlg .mg-hint") && r.querySelector("dialog.timer-dlg .mg-stephead span")?.textContent.includes(${JSON.stringify(lang === "de" ? "von 4" : "of 4")})`));
     await tap(`${win} [data-tm="action"][data-v="on"]`);
-    await tap(`${win} [data-tm="bdur"][data-s="1800"]`);
-    await tap(`${win} [data-tm="bdur"][data-s="0"]`);
-    await fill(`${win} [data-tm="back-own"]`, "20");
+    check(`[${tag}] Einschalten: wieder fünf Schritte`, await wait(`return r.querySelector("dialog.timer-dlg .mg-stephead span")?.textContent === ${JSON.stringify(T.step1)}`));
     await p.screenshot({ path: `${outDir}/timer-w1-${tag.replace("/", "-")}.png` });
     await tap(nextBtn);
 
@@ -134,6 +121,24 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-tm="kind"][data-v="repeat"]`);
     await tap(`${win} [data-tm="repeat"][data-v="weekly"]`);
     await p.screenshot({ path: `${outDir}/timer-w2-${tag.replace("/", "-")}.png` });
+    await tap(nextBtn);
+
+    // --- Schritt 3 (Zurückschalten, seit 2.54.0 eine eigene Seite) -------------------------------------------------
+    check(`[${tag}] Seite Zurückschalten: Reiterleiste Nie / Nach Dauer / Zu einer Zeit / Durch Auslöser, Standard Nie`, await wait(`return r.querySelectorAll('dialog.timer-dlg [data-tm="backkind"]').length === 4 && r.querySelector('dialog.timer-dlg [data-tm="backkind"][data-v="none"]').classList.contains("on")`));
+    await tap(`${win} [data-tm="backkind"][data-v="duration"]`);
+    check(`[${tag}] Nach Dauer: vier Voreinstellungen, "Danach zurück auf" Ausschalten/Wie vorher`, await wait(`return r.querySelectorAll('dialog.timer-dlg [data-tm="bdur"]').length === 4 && r.querySelectorAll('dialog.timer-dlg [data-tm="bmode"]').length === 2`));
+    await tap(`${win} [data-tm="bdur"][data-s="1800"]`);
+    await fill(`${win} [data-tm="back-own"]`, "20");
+    check(`[${tag}] eigene Zeit 20 Min.: Satz mit "wieder aus"`, await wait(`return /20 (Min\\.|min)/.test(r.querySelector("dialog.timer-dlg .mg-sumline")?.textContent || "") && !r.querySelector('dialog.timer-dlg [data-tm="bdur"].on, dialog.timer-dlg [data-tm="bdur"][aria-checked="true"]')`), await text(`${win} .mg-sumline`));
+    // Dauer auf die Minute genau (2.26.0): 690 Min. = 11 Std. 30 Min., nicht "11 Std."
+    await fill(`${win} [data-tm="back-own"]`, "690");
+    check(`[${tag}] 690 Min.: Satz zeigt "11 ${lang === "de" ? "Std." : "h"} 30 ${lang === "de" ? "Min." : "min"}"`, await wait(`return (r.querySelector("dialog.timer-dlg .mg-sumline")?.textContent || "").includes(${JSON.stringify(lang === "de" ? "11 Std. 30 Min." : "11 h 30 min")})`), await text(`${win} .mg-sumline`));
+    await fill(`${win} [data-tm="back-own"]`, "1.5");
+    check(`[${tag}] 1,5 Min.: "1 ${lang === "de" ? "Min. 30 Sek." : "min 30 s"}"`, await wait(`return (r.querySelector("dialog.timer-dlg .mg-sumline")?.textContent || "").includes(${JSON.stringify(lang === "de" ? "1 Min. 30 Sek." : "1 min 30 s")})`), await text(`${win} .mg-sumline`));
+    await fill(`${win} [data-tm="back-own"]`, "0.01");
+    check(`[${tag}] zu kurze Zeit: Fehler am Feld, Weiter gesperrt`, await wait(`return !!r.querySelector('dialog.timer-dlg [data-tm-err="back"]:not([hidden])')`) && await disabled(nextBtn));
+    await fill(`${win} [data-tm="back-own"]`, "20");
+    await p.screenshot({ path: `${outDir}/timer-w2b-${tag.replace("/", "-")}.png` });
     await tap(nextBtn);
 
     // --- Schritt 3: Meldung --------------------------------------------------------------------------------------
@@ -208,6 +213,7 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-tm="delay"][data-s="900"]`);
     await tap(nextBtn);
     await tap(nextBtn);
+    await tap(nextBtn);
     await tap(`${win} [data-tm="nav-save"]`);
     check(`[${tag}] Countdown gespeichert: läuft mit Ring und Restzeit`, await wait(`return r.querySelectorAll(".tm-root .tm-clock").length === 2 && !!r.querySelector(".tm-root .tm-ring [data-tm-left]") && /\\d{2}:\\d{2}/.test(r.querySelector(".tm-root .tm-ring").textContent)`));
     const left1 = await text(".tm-root [data-tm-left]");
@@ -242,6 +248,7 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} .mg-pick[data-id="switch.plug"]`);
     await tap(nextBtn);
     await tap(`${win} [data-tm="repeat"][data-v="daily"]`);
+    await tap(nextBtn);
     await tap(nextBtn);
     await tap(nextBtn);
     await fill(`${win} [data-tm="name"]`, "Nachtlicht");

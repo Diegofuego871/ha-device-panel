@@ -7,6 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.54.0] - 2026-10-15
+
+Timer: ein Auslöser statt einer Uhrzeit und Zurückschalten per Zeit oder Auslöser.
+
+### Hinzugefügt
+
+- Timer, Seite "Wann": ein Umschalter "Zu einer Zeit | Durch einen Auslöser". Bei "Durch einen Auslöser" schaltet der Timer, wenn Bedingungen erfüllt sind, aufgebaut wie bei Magic Push: beliebige Entität, "über", "unter", "ist" oder "ändert sich", mehrere Bedingungen mit "und" / "oder" und einer Ebene Gruppen, auf Wunsch "Mindestens so lange erfüllt" (sofort, 30 Sek., 2 Min., 5 Min.). Die Bedingung erscheint als Satz ("Wenn Temperatur Garten unter 5 ist."). Der Timer schaltet nur, wenn die Bedingung neu eintritt: Ist sie beim Speichern des Timers, nach einem Neustart oder zu Beginn des Zeitfensters schon erfüllt, passiert nichts, bis sie zwischenzeitlich nicht mehr erfüllt war.
+- Timer, Auslöser: Zeitfenster ("Nur in einem Zeitfenster", zum Beispiel 22:00 bis 06:00, auch über Mitternacht). Das Fenster gilt nur für den Start: Ausserhalb passiert nichts, und eine ausserhalb erfüllte Bedingung wird nicht auf später verschoben.
+- Timer, Auslöser: Mindestpause nach einem Schalten (1, 5, 15 oder 60 Min., Standard 1 Min.) und der Schalter "Nur einmal auslösen" (Standard aus; danach schaltet sich der Timer selbst aus).
+- Timer, neue Seite "Zurückschalten" (ersetzt die Rückschalt-Steuerung der Seite "Was"): "Nie", "Nach Dauer", "Zu einer Zeit" oder "Durch einen Auslöser", jeweils mit "Ausschalten" oder "Wie vorher". Der Zurück-Auslöser zählt nur beim Eintreten und hat dieselben Bedingungen und "Mindestens so lange erfüllt" wie der Start. Als Sicherung schaltet "Spätestens nach" (30 Min. bis 6 Std.) auch dann zurück, wenn der Auslöser nie kommt. Start und Ende lassen sich beliebig kombinieren: zum Beispiel um 20:00 ein und aus, wenn der Regensensor trocken ist, oder per Auslöser ein und zu einer Zeit aus.
+- Timer, Listen und Zusammenfassung: Ein Timer mit Auslöser zeigt den Satz und "wartet auf Auslöser" statt der nächsten Ausführung, in den Listen mit einem Blitz-Zeichen; Protokoll und Push nennen den Grund ("übersprungen: ausserhalb des Zeitfensters", "übersprungen: Pause", "übersprungen: Zurückschalten wartet noch").
+- Schutz: Die geschaltete Entität darf nicht ihr eigener Auslöser sein (auch nicht im Zurück-Auslöser).
+
+### Geändert
+
+- Timer-Assistent: Die Seiten sind jetzt Was, Optionen (nur wenn vorhanden), Wann, Zurückschalten (nur bei Aktionen mit Gegenstück), Meldung und Name; die Rückschalt-Steuerung ist von "Was" auf die neue Seite gewandert. Bestehende Timer verhalten sich unverändert.
+
 ## [2.53.0] - 2026-10-15
 
 KI-Einschätzung: Der KI-Bereich ist vom Rest des Geräte-Popups abgesetzt.
@@ -3439,6 +3456,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.54.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.0
 [2.53.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.53.0
 [2.52.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.1
 [2.52.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.0
