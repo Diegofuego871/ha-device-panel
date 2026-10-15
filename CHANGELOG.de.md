@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.52.1] - 2026-10-15
+
+Timer: Auch ausgeblendete Entitäten lassen sich schalten.
+
+### Behoben
+
+- Timer: Auch ausgeblendete Entitäten lassen sich jetzt schalten. Bisher liess der Timer-Assistent jede Entität weg, die Home Assistant als "versteckt" markiert, so dass ein Gerät, dessen einziges Licht versteckt ist (zum Beispiel einzelne Hue-Lampen einer Gruppe, die Hue versteckt), "Dieses Gerät hat keine Entität, die ein Timer schalten kann" zeigte. Versteckt heisst nur, dass Home Assistant die Entität nicht in automatischen Dashboards zeigt; schalten lässt sie sich wie jede andere. Deaktivierte Entitäten bleiben ausgeschlossen, denn sie haben keinen Zustand. Dasselbe gilt für die Geräteliste bei "Timer hinzufügen" im Fenster aller Timer.
+
 ## [2.52.0] - 2026-10-15
 
 Timer: Schaltoptionen (Helligkeit, Farbe, Position, Temperatur, Lautstärke, Stufe) und Zurückschalten "wie vorher".
@@ -3423,6 +3431,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.52.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.1
 [2.52.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.0
 [2.51.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.51.0
 [2.49.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.49.0

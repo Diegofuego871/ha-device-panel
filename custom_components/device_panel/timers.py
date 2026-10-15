@@ -1095,9 +1095,12 @@ def entity_payload(hass: HomeAssistant, entity_id: str) -> dict[str, Any]:
 
 
 def switchable_entities(hass: HomeAssistant, device_id: str) -> list[dict[str, Any]]:
-    """Entitäten des Geräts, die ein Timer schalten kann (ohne ausgeschaltete und ausgeblendete)."""
+    """
+    Entitäten des Geräts, die ein Timer schalten kann (ohne deaktivierte). Ausgeblendete zählen mit (seit 2.52.0): "Versteckt" heisst
+    nur, dass Home Assistant sie nicht in automatischen Dashboards zeigt, so versteckt es zum Beispiel einzelne Hue-Lampen einer Gruppe.
+    """
     entries = er.async_entries_for_device(er.async_get(hass), device_id)
-    wanted = [e for e in entries if e.domain in SERVICES and e.disabled_by is None and e.hidden_by is None]
+    wanted = [e for e in entries if e.domain in SERVICES and e.disabled_by is None]
     payloads = [entity_payload(hass, e.entity_id) for e in sorted(wanted, key=lambda e: (e.entity_category is not None, e.entity_id))]
     # Klima und Medien ohne jede Aktion (Gerät kann weder ein noch aus noch etwas einstellen) sind nicht schaltbar
     return [p for p in payloads if p["actions"]]
@@ -1107,7 +1110,7 @@ def switchable_devices(hass: HomeAssistant) -> list[dict[str, Any]]:
     """Geräte mit mindestens einer Entität, die ein Timer schalten kann (für "Timer hinzufügen" im Fenster aller Timer, seit 2.27.0)."""
     counts: dict[str, int] = {}
     for entry in er.async_get(hass).entities.values():
-        if entry.device_id and entry.domain in SERVICES and entry.disabled_by is None and entry.hidden_by is None and actions_for_state(entry.domain, hass.states.get(entry.entity_id)):
+        if entry.device_id and entry.domain in SERVICES and entry.disabled_by is None and actions_for_state(entry.domain, hass.states.get(entry.entity_id)):
             counts[entry.device_id] = counts.get(entry.device_id, 0) + 1
     devices = dr.async_get(hass)
     out = []

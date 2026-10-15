@@ -355,3 +355,19 @@ async def test_old_timers_without_options_still_load(hass: HomeAssistant, setup)
     timer = timers.TimerManager._clean_stored(raw)
     assert timer["options"] == {} and timer["back_mode"] == "opposite"
     assert timers.TimerManager._clean_runtime({"snapshot": "kaputt"})["snapshot"] is None
+
+
+async def test_hidden_entities_can_be_switched_but_disabled_ones_cannot(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Ausgeblendete Entitäten (zum Beispiel einzelne Hue-Lampen einer Gruppe) sind schaltbar, deaktivierte nicht."""
+    from homeassistant.helpers import entity_registry as er
+
+    device = _device(hass, "Badwanne")
+    registry = er.async_get(hass)
+    shown = _switch(hass, device, "shown", "off", "light")
+    hidden = _switch(hass, device, "hidden", "off", "light")
+    disabled = _switch(hass, device, "disabled", "off", "light")
+    registry.async_update_entity(hidden, hidden_by=er.RegistryEntryHider.INTEGRATION)
+    registry.async_update_entity(disabled, disabled_by=er.RegistryEntryDisabler.USER)
+    ids = {e["entity_id"] for e in timers.switchable_entities(hass, device.id)}
+    assert ids == {shown, hidden}
+    assert [d["entities"] for d in timers.switchable_devices(hass)] == [2]

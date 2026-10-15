@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.52.1] - 2026-10-15
+
+Timer: hidden entities can be switched too.
+
+### Fixed
+
+- Timer: hidden entities can now be switched too. Before, the timer assistant left out every entity Home Assistant marks as "hidden", so a device whose only light is hidden (for example single Hue lamps of a group, which Hue hides) showed "This device has no entity a timer can switch". Hidden only means that Home Assistant does not show the entity in automatic dashboards; it can be switched like any other. Disabled entities stay excluded, because they have no state. The same goes for the device list in "Add timer" of the window of all timers.
+
 ## [2.52.0] - 2026-10-15
 
 Timers: switching options (brightness, colour, position, temperature, volume, speed) and switching back "as before".
@@ -3322,6 +3330,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.52.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.1
 [2.52.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.0
 [2.51.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.51.0
 [2.49.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.49.0
