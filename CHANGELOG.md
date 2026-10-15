@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.53.0] - 2026-10-15
+
+AI assessment: the AI area is set apart from the rest of the device pop-up.
+
+### Changed
+
+- Device pop-up, AI assessment: everything that comes from the AI (the button, the assessment, the follow-up questions with their suggestions and text field) now stands in one frame with a coloured header "AI assessment" and, once there is an assessment, the source (for example "Google AI Task") on the right. Inside, the assessment and the follow-up questions are separated by a dashed line, and below the frame "Connection" and "Device" begin clearly. Before, assessment, chat and the sections below flowed into each other, so it was hard to see what belongs to the AI and what does not. The line "Created 10:41 · Create again" under the assessment now shows only the time, since the source is in the header. The note about what is sent stays inside the frame.
+
 ## [2.52.1] - 2026-10-15
 
 Timer: hidden entities can be switched too.
@@ -3330,6 +3338,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.53.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.53.0
 [2.52.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.1
 [2.52.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.0
 [2.51.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.51.0

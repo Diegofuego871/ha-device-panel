@@ -4618,21 +4618,24 @@ class DevicePanel extends HTMLElement {
     const st = this._ai.get(d.id);
     const btn = (label) => `<button type="button" class="qbtn ai-btn" data-dlg="ai">${mdi("sparkle", 16)}${escape(label)}</button>`;
     let body;
+    let source = "";
     if (st?.state === "loading") {
       body = `<div class="ai-card" aria-busy="true"><div class="ai-wait">${mdi("sparkle", 16)}${escape(t("aiWorking"))}</div></div>`;
     } else if (st?.state === "done") {
       const at = this._fmtTime(Date.parse(st.at) / 1000, false);
-      const by = st.source ? t("aiBy", st.source, at) : at;
+      source = st.source || "";
       body = `<div class="ai-card"><div class="ai-title">${mdi("sparkle", 16)}${escape(st.title || t("aiTitleDefault"))}</div>
         <div class="ai-text">${escape(st.text)}</div>
-        <div class="ai-foot">${escape(by)} · <button type="button" class="linkbtn" data-dlg="ai">${escape(t("aiAgain"))}</button></div></div>
+        <div class="ai-foot">${escape(t("aiAt", at))} · <button type="button" class="linkbtn" data-dlg="ai">${escape(t("aiAgain"))}</button></div></div>
         <div class="opt-short">${escape(t("aiNote"))}</div>${this._aiAskHtml(d, st)}`;
     } else if (st?.state === "error") {
       body = `<div class="opt-error">${escape(t("aiError", st.error))}</div>${st.detail ? `<div class="opt-short ai-detail">${escape(t("aiDetail", st.detail))}</div>` : ""}${btn(t("aiRetry"))}`;
     } else {
       body = `${btn(t("aiButton"))}<div class="opt-short">${escape(t("aiNote"))}</div>`;
     }
-    return `<h3>${escape(t("secAi"))}</h3><div class="ai-box">${body}</div>`;
+    // Alles, was von der KI kommt, steht in einem Rahmen mit Kopfzeile und Quelle (seit 2.53.0, docs/mockups/ai-frame-v1, A):
+    // Einschätzung und Rückfragen sind so klar von "Verbindung" und "Gerät" darunter getrennt.
+    return `<div class="ai-box"><div class="ai-head">${mdi("sparkle", 16)}<h3>${escape(t("secAiSettings"))}</h3>${source ? `<small>${escape(source)}</small>` : ""}</div>${body}</div>`;
   }
 
   // Rückfragen zur Einschätzung (seit 2.48.0, docs/mockups/ai-ask-v1, A und B kombiniert): bisherige Fragen und Antworten,

@@ -546,11 +546,18 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .opt-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; }
 .opt-label { display: inline-flex; align-items: center; gap: 2px; min-width: 0; }
 /* KI-Einschätzung im Geräte-Popup (Punkt 10) */
-.ai-box { display: flex; flex-direction: column; gap: 8px; }
+.ai-box { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; overflow: hidden; border: 1.5px solid color-mix(in srgb, #7c4dff 55%, var(--dp-divider)); border-radius: 18px;
+  background: color-mix(in srgb, #7c4dff 7%, var(--dp-card)); }
+.ai-head { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: color-mix(in srgb, #7c4dff 20%, var(--dp-card)); color: var(--dp-text); }
+.ai-head svg { flex: none; color: #7c4dff; }
+.dlg-body .ai-head h3 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none; color: inherit; }
+.ai-head small { margin-left: auto; min-width: 0; color: var(--dp-text2); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-box > :not(.ai-head):not(.ai-card):not(.ai-ask) { margin-left: 14px; margin-right: 14px; }
+.ai-box > .ai-btn { margin-top: 4px; }
+.ai-box > :last-child:not(.ai-ask) { margin-bottom: 12px; }
 .ai-btn { align-self: flex-start; }
 .ai-btn svg { color: #7c4dff; }
-.ai-card { padding: 12px 14px; border: 1px solid color-mix(in srgb, #7c4dff 28%, var(--dp-divider)); border-radius: 14px;
-  background: linear-gradient(135deg, color-mix(in srgb, #7c4dff 9%, var(--dp-card)), color-mix(in srgb, var(--dp-primary) 7%, var(--dp-card))); }
+.ai-card { padding: 4px 14px 0; border: 0; background: transparent; }
 .ai-title { display: flex; align-items: center; gap: 6px; font-weight: 600; }
 .ai-title svg, .ai-wait svg { flex: none; color: #7c4dff; }
 .ai-text { margin-top: 6px; line-height: 1.45; white-space: pre-line; }
@@ -558,7 +565,7 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .ai-wait { display: flex; align-items: center; gap: 8px; color: var(--dp-text2); animation: ai-pulse 1.4s ease-in-out infinite; }
 @keyframes ai-pulse { 50% { opacity: .5; } }
 /* Rückfragen (seit 2.48.0, docs/mockups/ai-ask-v1) */
-.ai-ask { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+.ai-ask { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 12px 14px 14px; border-top: 1px dashed color-mix(in srgb, #7c4dff 45%, var(--dp-divider)); }
 .ai-ask-lbl { color: var(--dp-text2); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
 .ai-thread { display: flex; flex-direction: column; gap: 8px; }
 .ai-q { align-self: flex-end; max-width: 82%; padding: 9px 13px; border-radius: 16px 16px 4px 16px; background: color-mix(in srgb, var(--dp-primary) 22%, var(--dp-card)); overflow-wrap: anywhere; }

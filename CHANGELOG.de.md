@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.53.0] - 2026-10-15
+
+KI-Einschätzung: Der KI-Bereich ist vom Rest des Geräte-Popups abgesetzt.
+
+### Geändert
+
+- Geräte-Popup, KI-Einschätzung: Alles, was von der KI kommt (der Knopf, die Einschätzung, die Rückfragen mit ihren Vorschlägen und dem Textfeld), steht jetzt in einem Rahmen mit farbiger Kopfzeile "KI-Einschätzung" und, sobald es eine Einschätzung gibt, der Quelle (zum Beispiel "Google AI Task") rechts. Innen sind Einschätzung und Rückfragen durch eine gestrichelte Linie getrennt, und unter dem Rahmen beginnen "Verbindung" und "Gerät" deutlich. Vorher flossen Einschätzung, Chat und die Abschnitte darunter ineinander, so dass schwer zu erkennen war, was zur KI gehört und was nicht. Die Zeile "Erstellt 10:41 · Neu erstellen" unter der Einschätzung zeigt jetzt nur noch die Zeit, denn die Quelle steht in der Kopfzeile. Der Hinweis, was gesendet wird, bleibt im Rahmen.
+
 ## [2.52.1] - 2026-10-15
 
 Timer: Auch ausgeblendete Entitäten lassen sich schalten.
@@ -3431,6 +3439,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.53.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.53.0
 [2.52.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.1
 [2.52.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.0
 [2.51.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.51.0

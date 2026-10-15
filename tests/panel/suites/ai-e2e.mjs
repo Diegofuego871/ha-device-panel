@@ -14,7 +14,7 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     sec: "KI-Einschätzung", sumOff: "Aus", sumOn: "Ein · OpenAI", sumDefault: "Ein · Standard von Home Assistant", opt: "Knopf \"Mit KI einschätzen\" zeigen", task: "KI-Aufgabe",
-    taskDefault: "Standard von Home Assistant", button: "Mit KI einschätzen", head: "Einschätzung", title: "Wahrscheinlich Empfang", by: "Erstellt von \"OpenAI\"",
+    taskDefault: "Standard von Home Assistant", button: "Mit KI einschätzen", head: "KI-Einschätzung", title: "Wahrscheinlich Empfang", by: "Erstellt ",
     again: "Neu erstellen", note: "Gesendet werden Name, Bereich und Werte dieses Geräts sowie Name und Werte von Geräten im selben Bereich, am selben Hub, vom selben Modell und weiterer ausgefallener Geräte derselben Integration, keine Schlüssel oder Zugangsdaten.", retry: "Erneut versuchen",
     errNo: "Keine KI-Aufgabe verfügbar", errTimeout: "nicht rechtzeitig", errFailed: "Fehler gemeldet", errEmpty: "zweimal eine leere Antwort", detail: "Meldung der KI-Aufgabe: Error talking to OpenAI: 429 quota exceeded", noTasks: "Keine KI-Aufgabe gefunden", working: "wertet",
     byLocal: "Erstellt von \"Lokales Modell\"",
@@ -22,7 +22,7 @@ const TEXT = {
   },
   en: {
     sec: "AI assessment", sumOff: "Off", sumOn: "On · OpenAI", sumDefault: "On · Home Assistant default", opt: "Show the button \"Assess with AI\"", task: "AI task",
-    taskDefault: "Default of Home Assistant", button: "Assess with AI", head: "Assessment", title: "Probably reception", by: "Created by \"OpenAI\"",
+    taskDefault: "Default of Home Assistant", button: "Assess with AI", head: "AI assessment", title: "Probably reception", by: "Created ",
     again: "Create again", note: "Name, area and values of this device and name and values of devices in the same area, on the same hub, of the same model and other offline devices of the same integration are sent, no keys or credentials.", retry: "Try again",
     errNo: "No AI task available", errTimeout: "did not answer in time", errFailed: "reported an error", errEmpty: "empty answer twice", detail: "Message of the AI task: Error talking to OpenAI: 429 quota exceeded", noTasks: "No AI task found", working: "analysing",
     byLocal: "Created by \"Lokales Modell\"",
@@ -105,7 +105,7 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { window.__aiMode = "slow"; });
     await tap(".ai-btn");
     check(`[${tag}] Wartezustand`, await wait(`return !!r.querySelector('.ai-card[aria-busy="true"]')`) && (await text(".ai-wait")).includes(T.working));
-    check(`[${tag}] Karte mit Überschrift, Text, Quelle und "${T.again}"`, await wait(`return !!r.querySelector(".ai-title") && !!r.querySelector(".ai-foot")`) && (await text(".ai-title")) === T.title && (await text(".ai-text")).length > 20 && (await text(".ai-foot")).startsWith(T.by) && (await text(".ai-foot .linkbtn")) === T.again, await text(".ai-foot"));
+    check(`[${tag}] Karte mit Überschrift, Text, Quelle und "${T.again}"`, await wait(`return !!r.querySelector(".ai-title") && !!r.querySelector(".ai-foot")`) && (await text(".ai-title")) === T.title && (await text(".ai-text")).length > 20 && (await text(".ai-foot")).startsWith(T.by) && (await text(".ai-head small")) === "OpenAI" && (await text(".ai-foot .linkbtn")) === T.again, await text(".ai-foot"));
     const call = (await calls("device_panel/ai_assess")).at(-1);
     check(`[${tag}] ein Aufruf mit Gerät und Sprache`, (await calls("device_panel/ai_assess")).length === 1 && call.device_id === "b" && call.language === lang, JSON.stringify(call));
     await p.screenshot({ path: `${outDir}/ai-answer-${tag.replace("/", "-")}.png` });
@@ -186,7 +186,7 @@ for (const lang of ["de", "en"]) {
     // Gewählte KI-Aufgabe als Quelle
     await p.evaluate(() => { window.__opts.ai_task_entity = "ai_task.lokal"; });
     await tap(".ai-btn");
-    check(`[${tag}] Quelle folgt der gewählten Aufgabe`, await wait(`return r.querySelector(".ai-foot")?.textContent.includes("Lokales Modell")`), await text(".ai-foot"));
+    check(`[${tag}] Quelle folgt der gewählten Aufgabe`, await wait(`return r.querySelector(".ai-head small")?.textContent === "Lokales Modell"`), await text(".ai-head"));
     await close();
 
     // Fehler

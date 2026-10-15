@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.53.0, KI-Bereich abgesetzt)
+
+- Wunsch des Nutzers, Mockups `docs/mockups/ai-frame-v1`, Variante A: `_aiHtml` setzt alles in `.ai-box` (Rahmen, violett getönt) mit Kopfzeile `.ai-head` ("KI-Einschätzung" = `secAiSettings`, rechts die Quelle `st.source`); der frühere Abschnittstitel `<h3>` steht jetzt in der Kopfzeile. Einschätzung (`.ai-card` ohne eigenen Rahmen) und Rückfragen (`.ai-ask` mit gestrichelter Linie oben) liegen innen. Fusszeile zeigt nur noch die Zeit (`aiAt`, vorher `aiBy` mit Quelle). Tests: `ai-e2e` angepasst (Titel, Quelle in der Kopfzeile).
+
 ## Stand (2.52.0, Timer: Schaltoptionen und "wie vorher")
 
 - Wunsch des Nutzers nach Mockups `docs/mockups/timer-light-v1` (Variante A, dann als eigene Seite statt Aufklappen in der Karte): Beim Einschalten lässt
