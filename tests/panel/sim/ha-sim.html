@@ -1227,7 +1227,7 @@
           const word = r.action === "toggle" ? (de ? "umgeschaltet" : "toggled") : r.action === "on" ? (de ? "ein" : "on") : (de ? "aus" : "off");
           const clock = local(Date.now() / 1000).time;
           const name = String(r.name || "").trim() || e.name;
-          return { title: `⏱️ Routine: ${name}`, message: r.action === "toggle" ? (de ? `${e.name} wurde umgeschaltet · ${clock}` : `${e.name} was toggled · ${clock}`) : (de ? `${e.name} ist jetzt ${word} · ${clock}` : `${e.name} is now ${word} · ${clock}`), name,
+          return { title: `⚡ Routine: ${name}`, message: r.action === "toggle" ? (de ? `${e.name} wurde umgeschaltet · ${clock}` : `${e.name} was toggled · ${clock}`) : (de ? `${e.name} ist jetzt ${word} · ${clock}` : `${e.name} is now ${word} · ${clock}`), name,
             target: r.target || window.__opts.notify_service, next_runs: runsOf(r, Date.now() / 1000) };
         }
         if (msg.type.endsWith("routine_try")) {

@@ -77,7 +77,7 @@ export function kelvinRgb(kelvin) {
 const toHex = (rgb) => `#${rgb.map((v) => pad(Math.round(v).toString(16))).join("")}`;
 const fromHex = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 
-export const routineEmoji = (domain) => EMOJI[domain] || "⏱️";
+export const routineEmoji = (domain) => EMOJI[domain] || "⚡";
 
 export function splitSeconds(seconds, units) {
   for (const u of [...units].reverse()) if (seconds >= u && seconds % u === 0) return { text: String(seconds / u), unit: u };

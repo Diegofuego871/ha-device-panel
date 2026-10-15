@@ -22,7 +22,7 @@ const GROUPS = ["panel", "ha", "own"];
 // Eingebaute Apps. act: Funktion des Panels, path: Seite von Home Assistant (admin: nur für Administratoren). Namen und Untertitel
 // stehen in strings.js (app_<id>, app_<id>_sub).
 const BUILTIN = [
-  { id: "routine", group: "panel", icon: "timer", act: "routine" },
+  { id: "routine", group: "panel", icon: "flash", act: "routine" },
   { id: "magic", group: "panel", icon: "bell", act: "magic" },
   { id: "log", group: "panel", icon: "log", act: "log", locked: true },
   { id: "auto", group: "ha", icon: "robot", path: "/config/automation/dashboard", admin: true },

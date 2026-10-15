@@ -13,10 +13,10 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: { infoFail1: "keine anhaltende Benachrichtigung", infoFail2: "dreimal versucht", infoFail3: "Push-Ziel", dateSwitch: "Bestimmtes Datum", onceNoDate: "Ohne Datum schaltet die Routine beim nächsten Eintreffen der Uhrzeit", plug: "Steckdose", look: "Ansicht", tab: "Routinen", add: "Neue Routine", q1: "Was soll geschaltet werden?", q2: "Wann soll geschaltet werden?", q3: "Soll eine Push-Meldung kommen?", q4: "Name und Prüfung", step1: "Schritt 1 von 5", step4: "Schritt 5 von 5",
-    empty: "Noch keine Routinen", noEnt: "keine Entität, die eine Routine schalten kann", daily: "Täglich", weekly: "Wöchentlich", monthly: "Monatlich", def: "Standard aus den Einstellungen", pushTitle: "⏱️ Routine: Bewässerung",
+    empty: "Noch keine Routinen", noEnt: "keine Entität, die eine Routine schalten kann", daily: "Täglich", weekly: "Wöchentlich", monthly: "Monatlich", def: "Standard aus den Einstellungen", pushTitle: "⚡ Routine: Bewässerung",
     one: "1 aktiv", delAsk: "Routine \"Bewässerung\" löschen?", discard: "Änderungen verwerfen?", sec: "Routinen", pauseLabel: "Alle Routinen pausieren", saved: "Routine gespeichert.", running: "läuft", hit: "1 von 2" },
   en: { infoFail1: "not a persistent notification", infoFail2: "tried three times", infoFail3: "push target", dateSwitch: "Specific date", onceNoDate: "Without a date the routine switches the next time the clock reaches this time", plug: "Plug", look: "View", tab: "Routines", add: "New routine", q1: "What should be switched?", q2: "When should it switch?", q3: "Should a push notification come?", q4: "Name and check", step1: "Step 1 of 5", step4: "Step 5 of 5",
-    empty: "No routines yet", noEnt: "no entity a routine can switch", daily: "Daily", weekly: "Weekly", monthly: "Monthly", def: "Default from the settings", pushTitle: "⏱️ Routine: Bewässerung",
+    empty: "No routines yet", noEnt: "no entity a routine can switch", daily: "Daily", weekly: "Weekly", monthly: "Monthly", def: "Default from the settings", pushTitle: "⚡ Routine: Bewässerung",
     one: "1 on", delAsk: "Delete routine \"Bewässerung\"?", discard: "Discard changes?", sec: "Routines", pauseLabel: "Pause all routines", saved: "Routine saved.", running: "running", hit: "1 of 2" },
 };
 
@@ -144,7 +144,7 @@ for (const lang of ["de", "en"]) {
     // --- Schritt 3: Meldung --------------------------------------------------------------------------------------
     check(`[${tag}] Schritt 3: Meldung aus, kein Empfänger`, await wait(`return r.querySelector("dialog.routine-dlg .mg-big")?.textContent === ${JSON.stringify(T.q3)} && !r.querySelector('dialog.routine-dlg [data-rt="push"]').checked && !r.querySelector('dialog.routine-dlg [data-rt="target-toggle"]')`));
     await tap(`${win} [data-rt="push"]`);
-    check(`[${tag}] Push an: Empfänger "${T.def}", Vorschau mit festem Text`, await wait(`return r.querySelector('dialog.routine-dlg [data-rt="target-toggle"] span')?.textContent.startsWith(${JSON.stringify(T.def)}) && r.querySelector("dialog.routine-dlg .pv-title")?.textContent === ${JSON.stringify("⏱️ Routine: " + T.plug)} && /Steckdose|Plug/.test(r.querySelector("dialog.routine-dlg .pv-text")?.textContent || "")`), await text(`${win} .pv-card`));
+    check(`[${tag}] Push an: Empfänger "${T.def}", Vorschau mit festem Text`, await wait(`return r.querySelector('dialog.routine-dlg [data-rt="target-toggle"] span')?.textContent.startsWith(${JSON.stringify(T.def)}) && r.querySelector("dialog.routine-dlg .pv-title")?.textContent === ${JSON.stringify("⚡ Routine: " + T.plug)} && /Steckdose|Plug/.test(r.querySelector("dialog.routine-dlg .pv-text")?.textContent || "")`), await text(`${win} .pv-card`));
     await tap(`${win} [data-rt="target-toggle"]`);
     check(`[${tag}] Liste: Standard, Gruppen, Dienste, Entitäten`, await wait(`return r.querySelectorAll('dialog.routine-dlg [data-rt="target"]').length === 5 && !!r.querySelector("dialog.routine-dlg .mg-opt-head")`));
     await tap(`${win} [data-rt="target"][data-v="notify.familie"]`);
@@ -261,7 +261,7 @@ for (const lang of ["de", "en"]) {
     const titles = await ev(`return [...r.querySelectorAll("dialog.settings .set-sec-title")].map((e) => e.firstChild.textContent.trim()).join("|")`);
     check(`[${tag}] Abschnitt "${T.sec}" zwischen Überwachung und Ansicht`, titles.includes(`${T.sec}|`) && titles.indexOf(T.sec) > titles.indexOf(lang === "de" ? "Überwachung" : "Monitoring") && titles.indexOf(T.sec) < titles.indexOf(T.look), titles);
     await tap('[data-set="section"][data-id="routines"]');
-    // Seit 2.23.1 steht die Sammlung aller Routinen im Fenster der Kopfzeile (Stoppuhr, Suite routineall); hier nur noch die Optionen
+    // Seit 2.23.1 steht die Sammlung aller Routinen im Fenster der Kopfzeile (Blitz, Suite routineall); hier nur noch die Optionen
     check(`[${tag}] Abschnitt "${T.sec}": nur Optionen, keine Sammlung aller Routinen mehr`, await wait(`const d = r.querySelector("dialog.settings"); return !!d.querySelector('input[data-opt="routines_pause"]') && !d.querySelector(".mg-dcard, .mg-card, [data-lsearch], [data-rt-all-zone]") && ![...d.querySelectorAll("[data-set]")].some((e) => e.dataset.set.startsWith("routine-"))`));
     await p.screenshot({ path: `${outDir}/routine-settings-${tag.replace("/", "-")}.png` });
     // Meldung bei Fehler: genau beschrieben (Info-Knopf)

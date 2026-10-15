@@ -3,6 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.57.0, Emoji und Text in den Reitern auf dem Desktop, Blitz für Routinen)
+
+- Wunsch des Nutzers: Das Emoji der Reiter im Geräte-Popup steht jetzt in jeder Breite (`.dev-tabs .sub-tab[data-tab=…]::before`), auf dem Desktop vor der Beschriftung, auf dem Handy wie
+  bisher nur das Symbol (die Beschriftung nur am gewählten Reiter). Zweizeilige Reiter sind auf dem Desktop ein Raster (Emoji über beide Zeilen). Routinen: ⚡ als Reiter-Emoji, Symbol `flash`
+  (Kopfzeile, Launcher, Kopf des Fensters "Alle Routinen") und Titel der Push-Meldung "⚡ Routine: …". Das Symbol `timer` bleibt für die Marke "Ausgefallen nach" (Zeit) in Gebrauch.
+- Offen: der Reiter "Schalter" (Mockups `docs/mockups/switches-v1`) ist noch nicht gebaut; der Nutzer hat nur den Blitz für Routinen gewählt, Schalter-Emoji und Anzeige (A/B/C) stehen aus.
+
 ## Stand (2.56.0, Kreuz, Herz und Plus wie die Knöpfe der Übersicht)
 
 - Wunsch des Nutzers (Bild vom Handy): `.dlg-close`, `.dlg-fav` (und damit `.dlg-add`) tragen jetzt den Stil von `.gear-btn`: Rand `1px solid var(--dp-divider)`, Fläche `var(--dp-card)`, 42 px,
@@ -13,8 +20,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - Wunsch des Nutzers ("Wir nehmen Routinen", keine Überreste): Aus "Timer" wird "Routine", im Text und im Code. Dateien `routines.py`, `routines_ws.py`, `panel/routines.js`,
   `panel/routine-trigger.js`, Klassen `RoutineManager`/`RoutineUi`, WS `device_panel/routine_*` (Feld `routine_id`), CSS `.rt-*`, Attribute `data-rt`/`data-rta`, Texte `rt*`,
-  Reiter-Id `routine`, Einstellungs-Abschnitt `routines`, Protokoll-Kategorie `routine`, Push-Tag `device_panel_routine_<id>`. Das Symbol heisst weiter `timer`
-  (so heisst das Zeichen bei MDI), das Emoji der Meldung und des Reiters auf dem Handy bleibt vorerst ⏱️.
+  Reiter-Id `routine`, Einstellungs-Abschnitt `routines`, Protokoll-Kategorie `routine`, Push-Tag `device_panel_routine_<id>`. Das Symbol war bis 2.56.0 `timer` (MDI),
+  seit 2.57.0 ist Symbol, Reiter-Emoji und Titel der Meldung der Blitz (`flash`, ⚡).
 - **Übernahme gespeicherter Daten (je einmal, bleibt im Code, bis die Version breit verteilt ist):** Speicherdatei `device_panel.timers` (Schlüssel `timers`) → `device_panel.routines`
   (`RoutineManager._async_load_stored`, `LEGACY_STORE_KEY`; die neue Datei gewinnt, die alte wird nur übernommen und gelöscht, wenn die neue fehlt); Optionen
   `timers_pause`/`timers_catch_up`/`timers_notify_error`/`notify_service_timers` (`const.RENAMED_OPTIONS`, `__init__._migrate_options` vor allem anderen in `async_setup_entry`);
@@ -156,7 +163,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   tz, after)` liefert dann das nächste Eintreffen der Uhrzeit (wie täglich), `first_due`/`next_runs` übergeben "jetzt"; Prüfung
   "Vergangenheit" nur mit Datum; Einschalten plant neu. Panel: Schalter `data-rt="date-on"` ("Bestimmtes Datum", aus; an setzt morgen ein und zeigt das Datumsfeld), `whenText` "Einmalig, nächstes Mal um …". Der Schalter geht danach immer aus (wie bei jedem einmaligen Routine).
 
-- Fenster "Alle Routinen" (2.23.0, Wunsch des Nutzers): Stoppuhr (Symbol `routine`, wie der Reiter Routine; die Glocke gehört Magic Push) `.rtall-btn` in der Kopfzeile, Dialog `dialog.rtall-dlg` (seit 2.28.3 Popup wie das Protokoll auf dem Desktop, bis 700 px Vollbild; vorher immer Vollbild,
+- Fenster "Alle Routinen" (2.23.0, Wunsch des Nutzers): Blitz (Symbol `flash`, wie der Reiter Routinen; die Glocke gehört Magic Push) `.rtall-btn` in der Kopfzeile, Dialog `dialog.rtall-dlg` (seit 2.28.3 Popup wie das Protokoll auf dem Desktop, bis 700 px Vollbild; vorher immer Vollbild,
   Inhalt max. 860 px). Eigener Zustand `this._rtAll` (`dlg: true`, `query`), nutzt `RoutineUi.overviewHtml/overviewListHtml/overviewCardHtml`
   mit Attribut `data-rta` statt `data-set` (`RoutineUi.a(all, action)`); nur Bearbeiten (Assistent darüber, `ui.open(device, true)`),
   Ein/Aus, Neu starten, Filter, Suche, Falten, "Gerät öffnen"; kein Neuanlegen, Löschen, Ausführen. Laden `_loadTmAll`,

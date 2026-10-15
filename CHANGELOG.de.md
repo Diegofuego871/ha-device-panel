@@ -7,7 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.57.0] - 2026-10-15
+
+Reiter mit Emoji und Text auf dem Desktop; der Blitz für Routinen.
+
+### Geändert
+
+- Geräte-Popup, Desktop: Jeder Reiter zeigt jetzt sein Emoji vor der Beschriftung ("📊 Übersicht", "⚙️ Einstellungen", "🧩 Entitäten", "🔔 Magic Push", "⚡ Routinen"). Bisher zeigte nur das Handy Emoji (und die Beschriftung nur am gewählten Reiter), der Desktop nur Text. Auf dem Handy ändert sich nichts. Reiter mit zweiter Zeile ("2 aktiv") behalten sie, das Emoji steht links neben beiden Zeilen.
+- Routinen bekommen den Blitz statt der Stoppuhr: als Emoji des Reiters, als Symbol des Knopfs in der Kopfzeile (und im Launcher und im Kopf des Fensters "Alle Routinen") und in der Push-Meldung ("⚡ Routine: <Name>"). Die Stoppuhr passte nicht mehr zu einer Routine, die auch durch einen Auslöser starten kann.
+
 ## [2.56.0] - 2026-10-15
+
+Nicht veröffentlicht; enthalten in 2.57.0.
 
 Kreuz, Herz und Plus im Kopf der Fenster sehen aus wie die Knöpfe der Übersicht.
 
@@ -3484,7 +3495,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.56.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.56.0
+[2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0
 [2.55.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.55.0
 [2.54.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.0
 [2.53.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.53.0

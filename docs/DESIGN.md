@@ -442,7 +442,7 @@ HA-Nachbau prüfen.
 
 ## Fenster "Alle Routinen" (seit 2.23.0)
 
-- Stoppuhr (42 px rund wie Protokoll und Zahnrad; Routinen haben überall dieses Symbol, die Glocke gehört Magic Push) in der Kopfzeile; öffnet ein Vollbild-Fenster (auch auf dem Desktop) mit der Übersicht
+- Blitz (42 px rund wie Protokoll und Zahnrad; Routinen haben überall dieses Symbol, die Glocke gehört Magic Push) in der Kopfzeile; öffnet ein Vollbild-Fenster (auch auf dem Desktop) mit der Übersicht
   der Einstellungen (Suche, Filter, Karten pro Gerät mit Gerätename), nur Bearbeiten und Ein/Aus.
 
 ## Magic Push: Rückfrage beim Schliessen (seit 2.16.0)

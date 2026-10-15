@@ -7,7 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.57.0] - 2026-10-15
+
+Tabs with emoji and text on the desktop; the lightning bolt for routines.
+
+### Changed
+
+- Device pop-up, desktop: every tab now shows its emoji in front of the label ("📊 Overview", "⚙️ Settings", "🧩 Entities", "🔔 Magic Push", "⚡ Routines"). Before, only the phone showed emoji (and the label only on the chosen tab); the desktop showed text alone. On the phone nothing changes. Tabs with a second line ("2 on") keep it, with the emoji to the left of both lines.
+- Routines get the lightning bolt instead of the stopwatch: as the emoji of the tab, as the symbol of the button in the header (and in the launcher, and in the header of the window "All routines"), and in the push notification ("⚡ Routine: <name>"). The stopwatch no longer fit a routine that can also start by a trigger.
+
 ## [2.56.0] - 2026-10-15
+
+Not released; included in 2.57.0.
 
 Close, heart and plus buttons in the window headers look like the buttons of the overview.
 
@@ -3383,7 +3394,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.56.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.56.0
+[2.57.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.57.0
 [2.55.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.55.0
 [2.54.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.0
 [2.53.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.53.0

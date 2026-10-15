@@ -252,9 +252,9 @@ async def test_push_goes_to_default_or_own_target(hass: HomeAssistant, setup, fr
     await manager.async_save_routine(_raw(device, plug, name="Still", delay_s=60))
     await _tick(hass, freezer, 61)
     assert len(handy) == 1 and len(familie) == 1
-    assert handy[0].data["title"] == "⏱️ Routine: Bewässerung"
+    assert handy[0].data["title"] == "⚡ Routine: Bewässerung"
     assert handy[0].data["message"].startswith("plug ist jetzt ein · ")
-    assert familie[0].data["title"] == "⏱️ Routine: Mit Ziel"
+    assert familie[0].data["title"] == "⚡ Routine: Mit Ziel"
 
 
 async def test_routines_target_overrides_global(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
@@ -271,7 +271,7 @@ async def test_routines_target_overrides_global(hass: HomeAssistant, setup, free
     await manager.async_save_routine(_raw(device, plug, name="Mit Ziel", delay_s=60, push=True, target="notify.familie"))
     await _tick(hass, freezer, 61)
     assert len(handy) == 0 and len(tablet) == 1 and len(familie) == 1
-    assert tablet[0].data["title"] == "⏱️ Routine: Standard"
+    assert tablet[0].data["title"] == "⚡ Routine: Standard"
 
 
 async def test_push_texts_for_toggle_and_cover(hass: HomeAssistant, setup) -> None:  # noqa: F811
@@ -292,7 +292,7 @@ async def test_preview_and_test_send(hass: HomeAssistant, setup) -> None:  # noq
     plug = _switch(hass, device)
     raw = _raw(device, plug, name="", kind="repeat", repeat="weekly", time="06:30", weekdays=[0, 2, 4], delay_s=None, push=True)
     preview = manager.preview_raw(raw)
-    assert preview["title"] == "⏱️ Routine: plug" and preview["target"] == "notify.handy" and len(preview["next_runs"]) == 3
+    assert preview["title"] == "⚡ Routine: plug" and preview["target"] == "notify.handy" and len(preview["next_runs"]) == 3
     assert await manager.async_test(raw) is True and len(handy) == 1
     # Testen schaltet nichts und legt nichts an
     assert manager.routines() == []
@@ -514,7 +514,7 @@ async def test_websocket_commands(hass: HomeAssistant, setup, hass_ws_client) ->
     assert not (await call("routine_get", device_id="nichtda"))["success"]
 
     preview = await call("routine_preview", routine=_raw(device, plug, kind="once", date=(datetime.now(ZURICH) + timedelta(days=2)).strftime("%Y-%m-%d"), time="17:00", delay_s=None))
-    assert preview["success"] and preview["result"]["title"] == "⏱️ Routine: Gartenlicht" and len(preview["result"]["next_runs"]) == 1
+    assert preview["success"] and preview["result"]["title"] == "⚡ Routine: Gartenlicht" and len(preview["result"]["next_runs"]) == 1
     assert (await call("routine_test", routine=_raw(device, plug, push=True)))["result"] == {"sent": True}
 
     saved = await call("routine_save", routine=_raw(device, plug, push=True, target="notify.familie"))

@@ -1766,18 +1766,26 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .to-col.more { display: block; overflow: hidden; background: conic-gradient(#f44, #fd4, #4d4, #4df, #94f, #f44); }
 .to-col.more.on { overflow: visible; }
 .to-col.more input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
-/* Reiterleiste im Geräte-Popup mit fünf Reitern: auf dem Handy Symbole, die Beschriftung nur am gewählten Reiter (Entscheid zu Frage 7 in docs/mockups/timer-v1) */
+/* Reiterleiste im Geräte-Popup (Handy: seit 2.21.0, docs/mockups/timer-v1, Entscheid zu Frage 7; Desktop: seit 2.57.0, Wunsch des Nutzers):
+   jeder Reiter trägt ein Emoji. Auf dem Desktop steht es vor der Beschriftung; auf dem Handy zeigt nur der gewählte Reiter die Beschriftung. */
+.dev-tabs .sub-tab::before { margin-right: 6px; font-size: 16px; line-height: 1; }
+.dev-tabs .sub-tab[data-tab="ov"]::before { content: "📊"; }
+.dev-tabs .sub-tab[data-tab="set"]::before { content: "⚙️"; }
+.dev-tabs .sub-tab[data-tab="ent"]::before { content: "🧩"; }
+.dev-tabs .sub-tab[data-tab="magic"]::before { content: "🔔"; }
+.dev-tabs .sub-tab[data-tab="routine"]::before { content: "⚡"; }
+/* Zweizeilige Reiter (Name, darunter die Zahl): das Emoji steht links über beide Zeilen */
+.dev-tabs .sub-tab.two { display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; justify-content: center; align-content: center; column-gap: 0; row-gap: 1px; }
+.dev-tabs .sub-tab.two::before { grid-row: 1 / span 2; align-self: center; }
+.dev-tabs .sub-tab.two .tab-l, .dev-tabs .sub-tab.two .tab-s { grid-column: 2; }
 @media (max-width: 600px) {
   .dev-tabs .sub-tabs { display: flex; gap: 2px; }
   .dev-tabs .sub-tab { flex: 1 1 0; min-width: 0; padding: 0 4px; font-size: 0; }
-  .dev-tabs .sub-tab::before { font-size: 18px; line-height: 1; }
-  .dev-tabs .sub-tab[data-tab="ov"]::before { content: "📊"; }
-  .dev-tabs .sub-tab[data-tab="set"]::before { content: "⚙️"; }
-  .dev-tabs .sub-tab[data-tab="ent"]::before { content: "🧩"; }
-  .dev-tabs .sub-tab[data-tab="magic"]::before { content: "🔔"; }
-  .dev-tabs .sub-tab[data-tab="routine"]::before { content: "⏱️"; }
+  .dev-tabs .sub-tab::before { margin-right: 0; font-size: 18px; }
+  .dev-tabs .sub-tab.two { display: flex; }
   .dev-tabs .sub-tab.two:not(.on) > * { display: none; }
   .dev-tabs .sub-tab.on { flex: 2.8 1 0; gap: 6px; font-size: 13.5px; }
+  .dev-tabs .sub-tab.on::before { margin-right: 0; }
   .dev-tabs .sub-tab.on.two::before { display: none; }
   .dev-tabs .sub-tab.on.two .tab-l { font-size: 13px; }
 }
