@@ -84,6 +84,7 @@ from .const import (
     CONF_EXCLUDE_DEVICES,
     CONF_TYPE_INTEGRATIONS,
 )
+from .labels import strip_address
 from .options_api import battery_threshold, effective, notify_target, offline_after_for, signal_default
 
 _LOGGER = logging.getLogger(__name__)
@@ -313,7 +314,7 @@ def _ble_signal(hass: HomeAssistant, address: str) -> tuple[dict[str, Any] | Non
         if info is None:
             return None, None
         scanner = bluetooth.async_scanner_by_source(hass, info.source)
-        via = getattr(scanner, "name", None) or info.source
+        via = strip_address(getattr(scanner, "name", None) or info.source)
         return {"kind": "dbm", "value": info.rssi}, via
     except Exception:  # noqa: BLE001
         return None, None

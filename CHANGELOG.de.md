@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.50.0] - 2026-10-15
+
+Fenster "Empfang": Empfängernamen ohne Adressen, Hinweis auf einen weit entfernten Empfänger.
+
+### Hinzugefügt
+
+- Fenster "Empfang", Abschnitt "Verbunden über": wurde das Gerät mindestens 10 % der Zeit über einen Empfänger gehört, dessen mittleres Signal mindestens 10 dBm schwächer war als das des Hauptempfängers, sagt das ein kurzer Hinweis, zum Beispiel "Über "Storen Küche" lief der Empfang 13 % der Zeit, im Mittel -97 dBm: 20 dBm schwächer als über "Shelly Eingang EG Aussen" (Ø -77 dBm). Das kann die Einbrüche im Verlauf erklären." (höchstens zwei Hinweise). Das Panel kann daran nichts ändern: Home Assistant wählt den Empfänger, und das Panel ändert keine anderen Integrationen. Es hilft ein näherer Proxy oder dass der weit entfernte das Gerät nicht mehr erreicht.
+
+### Geändert
+
+- Empfängernamen erscheinen ohne Bluetooth-Adressen: Home Assistant nennt einen Proxy oft "Name (E4:B3:23:17:F5:3A)", was die Zeilen in der Legende, in der Liste der Wechsel und bei "Verbunden über" lang machte. Heissen zwei Empfänger gleich, bleibt bei ihnen die Adresse, damit man sie noch unterscheiden kann. Die gespeicherten Namen bleiben unverändert.
+
 ## [2.49.0] - 2026-10-15
 
 Live-Aktivität beim Laden: geschätzte Zeit bis zum Ziel.
@@ -3382,6 +3394,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.50.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.50.0
 [2.49.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.49.0
 [2.48.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.0
 [2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0

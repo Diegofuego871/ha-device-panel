@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.50.0] - 2026-10-15
+
+Signal window: receiver names without addresses, hint for a distant receiver.
+
+### Added
+
+- Signal window, section "Connected via": if the device was received through a receiver for at least 10 % of the time whose average signal was at least 10 dBm weaker than that of the main receiver, a short hint says so, for example "Through "Storen Küche" the device was received 13 % of the time, on average -97 dBm: 20 dBm weaker than through "Shelly Eingang EG Aussen" (avg -77 dBm). That can explain the dips in the chart." (at most two hints). The panel cannot change this: Home Assistant picks the receiver, and the panel does not change other integrations. It helps to bring a closer proxy or to keep the distant one from reaching the device.
+
+### Changed
+
+- Receiver names are shown without Bluetooth addresses: Home Assistant often names a proxy "Name (E4:B3:23:17:F5:3A)", which made the lines in the legend, in the list of changes and in "Connected via" long. If two receivers have the same name, the address stays for them, so that they can still be told apart. The stored names stay unchanged.
+
 ## [2.49.0] - 2026-10-15
 
 Live activity while charging: estimated finish time.
@@ -3281,6 +3293,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.50.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.50.0
 [2.49.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.49.0
 [2.48.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.0
 [2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0

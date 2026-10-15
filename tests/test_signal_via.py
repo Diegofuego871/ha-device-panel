@@ -219,3 +219,23 @@ async def test_bluetooth_prefers_the_live_value_over_the_sensor_of_the_device(ha
     assert log._open[device.id][1] == [-70.0]
     result = await signal_history.async_signal_history(hass, log, device, "24h", time.time() + 3600)
     assert result["source"] == "log" and result["via"]["receivers"][0]["name"] == "Storen Büro"
+
+
+def test_receiver_names_are_shown_without_addresses(hass: HomeAssistant) -> None:
+    """2.50.0: "Name (Adresse)" erscheint im Panel als "Name"; heissen zwei Empfänger gleich, bleibt die Adresse bei ihnen."""
+    log = SignalLog(hass)
+    log.note_via("a", ("E4:B3:23:17:F5:3A", "Shelly Eingang EG Aussen (E4:B3:23:17:F5:3A)"), NOW - 7200)
+    log.note_via("a", ("FC:B4:67:0E:B5:3E", "Storen Küche (FC:B4:67:0E:B5:3E)"), NOW - 3600)
+    names = [r["name"] for r in log.via_summary("a", "24h", NOW)["receivers"]]
+    assert names == ["Shelly Eingang EG Aussen", "Storen Küche"]
+    # Die gespeicherten Namen bleiben unverändert (nur die Anzeige ändert sich)
+    assert log._via_names["E4:B3:23:17:F5:3A"].endswith("(E4:B3:23:17:F5:3A)")
+    # Zwei gleiche Namen: sonst nicht zu unterscheiden
+    twin = SignalLog(hass)
+    twin.note_via("b", ("AA:AA:AA:AA:AA:01", "Proxy (AA:AA:AA:AA:AA:01)"), NOW - 7200)
+    twin.note_via("b", ("AA:AA:AA:AA:AA:02", "Proxy (AA:AA:AA:AA:AA:02)"), NOW - 3600)
+    assert [r["name"] for r in twin.via_summary("b", "24h", NOW)["receivers"]] == ["Proxy (AA:AA:AA:AA:AA:01)", "Proxy (AA:AA:AA:AA:AA:02)"]
+    # Nur eine Adresse als Name bleibt, wie sie ist
+    only = SignalLog(hass)
+    only.note_via("c", ("AA:BB:CC:00:00:09", "AA:BB:CC:00:00:09"), NOW - 100)
+    assert only.via_summary("c", "24h", NOW)["receivers"][0]["name"] == "AA:BB:CC:00:00:09"

@@ -108,6 +108,14 @@ for (const lang of ["de", "en"]) {
       const box = document.createElement("div"); box.innerHTML = html; return [...box.querySelectorAll(".sv-bar i")].map((i) => i.className + ":" + parseFloat(i.style.width)).join("|");`);
     check(`[${tag}] Abschnitte an ihrer Zeit: Anfang leer, Lücke schraffiert, Ende leer`, withGap === "none:10|:20|gap:20|:40|none:10", withGap);
 
+    // Hinweis auf einen weiter entfernten Empfänger (seit 2.50.0)
+    const far = await ev(`const f = (rec) => { const box = document.createElement("div"); box.innerHTML = r.host._viaHtml({ receivers: rec, segments: [[1000, 2000, 0]], changes: [], since: 1000 }, 1000, 2000, "24h"); return [...box.querySelectorAll(".sv-far")].map((x) => x.textContent.trim()); };
+      return { yes: f([{ name: "Shelly Eingang EG Aussen", share: 87, avg: -77 }, { name: "Storen Küche", share: 13, avg: -97 }]), shortTime: f([{ name: "A", share: 95, avg: -77 }, { name: "B", share: 5, avg: -97 }]), small: f([{ name: "A", share: 60, avg: -77 }, { name: "B", share: 40, avg: -85 }]), noAvg: f([{ name: "A", share: 60, avg: null }, { name: "B", share: 40, avg: -97 }]), two: f([{ name: "A", share: 50, avg: -70 }, { name: "B", share: 30, avg: -90 }, { name: "C", share: 20, avg: -95 }]) };`);
+    check(`[${tag}] Hinweis: weiter entfernter Empfänger (13 %, 20 dBm schwächer) wird genannt`, far.yes.length === 1 && far.yes[0].includes("Storen Küche") && far.yes[0].includes("Shelly Eingang EG Aussen") && far.yes[0].includes("13") && far.yes[0].includes("-97") && far.yes[0].includes("20"), JSON.stringify(far.yes));
+    check(`[${tag}] Hinweis: nicht bei unter 10 % der Zeit, unter 10 dBm Unterschied oder ohne Mittelwert`, far.shortTime.length === 0 && far.small.length === 0 && far.noAvg.length === 0, JSON.stringify([far.shortTime, far.small, far.noAvg]));
+    check(`[${tag}] Hinweis: höchstens zwei`, far.two.length === 2, JSON.stringify(far.two));
+    check(`[${tag}] Hinweis im Simulator (kleine Unterschiede): keiner`, await ev(`return r.querySelectorAll(".sv-far").length === 0`));
+
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();
   }

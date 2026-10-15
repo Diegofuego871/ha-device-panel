@@ -39,6 +39,7 @@ from .battery_history import STATS_FROM_DAYS, _history, _statistics, held, thin
 from .const import DATA_AVAILABILITY, DOMAIN, STORAGE_VERSION
 from .compat import device_entry_ids
 from .devices import ble_receiver, monitored_devices, signal_sensor, signal_source
+from .labels import strip_address
 from .options_api import effective
 from .storage_util import PeriodicSaver
 
@@ -402,6 +403,9 @@ class SignalLog:
                 if src and a <= p[0] < b:
                     sums.setdefault(src, []).append(p[1])
                     break
+        # Anzeigenamen ohne Adresse (seit 2.50.0); heissen zwei Empfänger gleich, bleibt bei ihnen die Adresse, sonst sind sie nicht zu unterscheiden
+        shown = {s: strip_address(self._via_names.get(s, s)) for s in used}
+        names = {s: (shown[s] if list(shown.values()).count(shown[s]) == 1 else self._via_names.get(s, s)) for s in used}
         shares = {s: round(seconds[s] / known * 100) if known else 0 for s in used}
         if known and used:
             # Rundung: die Anteile ergeben zusammen 100
@@ -415,7 +419,7 @@ class SignalLog:
         return {
             "since": round(events[0][0]),
             "receivers": [
-                {"name": self._via_names.get(s, s), "seconds": round(seconds[s]), "share": shares[s], "avg": round(statistics.mean(sums[s]), 1) if s in sums else None}
+                {"name": names[s], "seconds": round(seconds[s]), "share": shares[s], "avg": round(statistics.mean(sums[s]), 1) if s in sums else None}
                 for s in used
             ],
             "segments": [[round(a), round(b), index[src] if src else None] for a, b, src in segments],

@@ -28,6 +28,7 @@ from homeassistant.util import dt as dt_util
 
 from . import activity
 from .ai_prompt import DEFAULT_PROMPT, GROUP_PLACEHOLDERS, render_prompt
+from .labels import strip_address
 from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK, DATA_SIGNAL, SIGNAL_OFF, SIGNAL_WEAK_DBM, SIGNAL_WEAK_LQI
 from .battery_history import async_battery_history, battery_entity
 from . import ai_memory
@@ -53,7 +54,6 @@ RECEIVERS_MAX = 4
 INSTRUCTIONS_MAX = 18000
 PREVIOUS_TEXT_MAX = 800
 # Bluetooth-Adressen (aa:bb:cc:dd:ee:ff) gehören nicht in die Fakten; HA nennt Proxys oft "Name (Adresse)".
-_MAC_RE = re.compile(r"\s*\(?\b[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5}\b\)?")
 _LOGGER = logging.getLogger(__name__)
 
 LANGUAGES = {"de": "German (Swiss spelling: always 'ss', never the sharp s)", "en": "English"}
@@ -61,9 +61,7 @@ LANGUAGES = {"de": "German (Swiss spelling: always 'ss', never the sharp s)", "e
 
 def clean(text: Any) -> Any:
     """Adressen aus einem Namen entfernen ("Küche (B0:A7:32:46:E3:C2)" wird "Küche"); andere Werte bleiben."""
-    if not isinstance(text, str):
-        return text
-    return _MAC_RE.sub("", text).strip() or text
+    return strip_address(text)
 
 
 class AiError(Exception):

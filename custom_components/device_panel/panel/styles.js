@@ -1122,6 +1122,7 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .sv-chg h4 { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--dp-text2); letter-spacing: 0.04em; text-transform: uppercase; }
 .sv-chg p { margin: 0; padding: 5px 0; font-size: 13px; display: flex; gap: 8px; align-items: baseline; }
 .sv-chg p span { flex: none; min-width: 92px; white-space: nowrap; color: var(--dp-text2); font-size: 12px; }
+.sv-far { margin: 10px 0 0; padding: 8px 12px; border-left: 3px solid var(--dp-warning); border-radius: 4px 10px 10px 4px; background: color-mix(in srgb, var(--dp-warning) 10%, transparent); font-size: 13px; line-height: 1.4; }
 .sv-note { margin: 8px 0 0; color: var(--dp-text2); font-size: 12px; line-height: 1.4; }
 .bh-fc { margin: 12px 0 6px; padding: 12px 14px; border-radius: 12px; background: var(--dp-bg); border-left: 3px solid var(--dp-success); }
 .bh-fc.muted { border-left-color: var(--dp-subtle); }

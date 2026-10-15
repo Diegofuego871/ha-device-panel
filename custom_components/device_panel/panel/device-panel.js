@@ -403,6 +403,9 @@ const MON_TAB_KEYS = {
 const PROMPT_MAX = 12000;
 // Rückfragen zur KI-Einschätzung (seit 2.48.0): so viele je Einschätzung, so lang darf eine Frage sein (wie im Backend)
 const AI_ASK_MAX = 3;
+// Hinweis "weiter entfernter Empfänger" im Fenster "Empfang" (seit 2.50.0): ab so vielen Prozent der Zeit und so vielen dBm schwächer als der Hauptempfänger
+const VIA_FAR_SHARE = 10;
+const VIA_FAR_DBM = 10;
 const AI_ASK_Q_MAX = 200;
 // So lange gilt "Home Assistant startet neu…", wenn die laufende Version gleich
 // bleibt (Neustart abgebrochen oder nie gekommen); danach erscheint der Knopf wieder.
@@ -5132,13 +5135,23 @@ class DevicePanel extends HTMLElement {
     const legend = via.receivers
       .map((r, i) => `<div><i class="sv-dot" style="background:${colour(i)}"></i><b>${escape(r.name)}</b><span>${escape(t("viaShare", r.share, r.avg == null ? null : Math.round(r.avg)))}</span></div>`)
       .join("");
+    // Hinweis auf einen weiter entfernten Empfänger (seit 2.50.0): lief der Empfang längere Zeit über einen Empfänger, der im Mittel
+    // deutlich schwächer war als der Hauptempfänger, erklärt das die Einbrüche im Verlauf. Beheben kann das Panel es nicht (Home Assistant wählt).
+    const rated = via.receivers.map((r, i) => ({ ...r, i })).filter((r) => r.avg != null);
+    const main = rated.reduce((best, r) => (!best || r.share > best.share ? r : best), null);
+    const far = main
+      ? rated.filter((r) => r.i !== main.i && r.share >= VIA_FAR_SHARE && main.avg - r.avg >= VIA_FAR_DBM).sort((a, b) => b.share - a.share).slice(0, 2)
+      : [];
+    const farHtml = far
+      .map((r) => `<p class="sv-far">${escape(t("viaFar", r.name, r.share, Math.round(r.avg), main.name, Math.round(main.avg), Math.round(main.avg - r.avg)))}</p>`)
+      .join("");
     const dayOf = (at) => this._fmtTime(at, new Date(at * 1000).toDateString() !== new Date(end * 1000).toDateString());
     const changes = (via.changes || [])
       .map(([at, from, to]) => `<p><span>${escape(dayOf(at))}</span><b>${escape(name(from))} → ${escape(name(to))}</b></p>`)
       .join("");
     return `<div class="sv${aligned ? "" : " sv-full"}"><h3>${escape(t("viaTitle"))}</h3><div class="sv-bar">${bar}</div>
       <div class="avail-ticks sv-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>
-      <div class="sv-leg">${legend}</div>${changes ? `<div class="sv-chg"><h4>${escape(t("viaChanges"))}</h4>${changes}</div>` : ""}
+      <div class="sv-leg">${legend}</div>${farHtml}${changes ? `<div class="sv-chg"><h4>${escape(t("viaChanges"))}</h4>${changes}</div>` : ""}
       <p class="sv-note">${escape(t("viaNote", this._fmtTime(via.since, true)))}</p></div>`;
   }
 

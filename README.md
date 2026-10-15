@@ -64,7 +64,7 @@ Each tile opens a window with 24 hours, 7 or 30 days. Availability shows every o
 
 ### Signal and Bluetooth path
 
-The signal history shows the median as a line and the range from worst to best value as an area, with the warning threshold of the device. It comes from the recorder or, for ZHA, Bluetooth and unrecorded sensors, from the panel itself. Bluetooth devices also get the section "Connected via": a bar shows through which receiver (Bluetooth adapter or proxy) the device was heard, gaps are hatched, and a legend gives share and average signal per receiver plus the latest switches. The panel records this path itself, from the update on.
+The signal history shows the median as a line and the range from worst to best value as an area, with the warning threshold of the device. It comes from the recorder or, for ZHA, Bluetooth and unrecorded sensors, from the panel itself. Bluetooth devices also get the section "Connected via": a bar shows through which receiver (Bluetooth adapter or proxy) the device was heard, gaps are hatched, and a legend gives share and average signal per receiver plus the latest switches (receiver names without addresses). If the device was heard for a longer time through a much weaker receiver, a hint says so. The panel records this path itself, from the update on.
 
 | Signal history | Connected via (Bluetooth) |
 |---|---|
