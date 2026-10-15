@@ -14,7 +14,8 @@
 - **Signal overview with warnings:** signal strength in dBm or LQI on every device, a warning threshold per connection type, a history with median and range, and for Bluetooth the receiver (adapter or proxy) a device is or was connected through
 - **Notifications on three levels:** set a default once, change it per integration, override it on a single device; every setting shows where its value comes from (graphic below)
 - **Magic Push:** your own messages per device without an automation: pick a value, say when it should notify, write the text, done
-- **Routines:** switch an entity of a device once or on a schedule without an automation, with a test button and a preview of the next runs
+- **Routines:** switch an entity of a device at a time or by a trigger (any entity, with conditions like Magic Push) without an automation, switch back by time, duration or trigger, with a test button and a preview of the next runs
+- **Switches tab:** every device with something to switch shows it as tiles; a tap opens the Home Assistant controls (dimming, colour, position)
 - **Charging and updates:** "Charging" chip with a charge bar, push when a device is full, live activity (iPhone) or live update (Android 16), and an update reminder that replaces your own automations
 - **New devices:** a "New" mark and chip for three days, and an optional push with all devices that appeared
 - **App launcher and log:** one button for useful pages of Home Assistant and your own links, plus a log that shows what the notifications decide and why one did not come
@@ -166,11 +167,11 @@ Switches an entity of a device once or on a schedule, without an automation.
 - **What:** pick the entity and the action (on, off, toggle), optionally switch back after a while
 - **Options:** if the entity can be set when it is turned on, a page of its own follows: light brightness, colour temperature and colour; shutter position; climate target temperature and mode; media volume; fan speed. A preview shows the result (the lamp lights in the chosen colour), nothing is switched by it, and "Run now" tries the real strength; without a setting everything stays "as last used"
 - **Switch back:** after a while back to "off" (the opposite) or "as before": the routine remembers the scene right before switching (for example brightness and colour) and restores it, so a lamp can be briefly brighter and then as it was. Own page "Switch back": never, after a duration, at a time or by a trigger (for example on at 20:00, off when the rain sensor is dry), with "at the latest after" as a safety net
-- **When:** in X minutes, once at a date and time, or repeating daily, weekly on chosen weekdays or monthly, with a check of the next runs before you save; or **by a trigger** instead of a time: any entity, "above" / "below" / "is" / "changes", several conditions with "and" / "or" like Magic Push, "holds for at least", an optional time window (also across midnight), a pause after switching and "only once". It switches only when the condition is newly met
+- **When:** in X minutes, once at a date and time, or repeating daily, weekly on chosen weekdays or monthly, with a check of the next runs before you save; or **by a trigger** instead of a time: any entity, "above" / "below" / "is" / "changes", several conditions with "and" / "or" like Magic Push, "holds for at least", an optional time window (also across midnight), a pause after switching and "only once". Every time has quick choices and a field for your own time (the pause not below 1 minute). It switches only when the condition is newly met
 - **Test:** a button "Run now" tries the chosen switch
 - **Reminder:** optionally a push at the moment it switches, with a preview and its own recipient
 - **Runs in Home Assistant:** with its time zone, so a routine also fires with the panel closed and after a restart (within a catch-up window you set), and "Pause all routines" is one switch
-- **Overview:** the routine button of the launcher opens all routines in one card per device, with search and filter, edit, switch on or off, delete and favorites
+- **Overview:** the lightning bolt in the header (also in the launcher) opens all routines in one card per device, with search and filter, edit, switch on or off, delete and favorites
 
 <p align="center"><img src="docs/screenshots/en/routines-all.png" alt="Window with all routines, one card per device" width="720"></p>
 
