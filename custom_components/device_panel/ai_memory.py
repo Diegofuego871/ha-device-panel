@@ -21,6 +21,9 @@ DATA_KEY = f"{DOMAIN}_ai_memory"
 MAX_DEVICES = 150
 MAX_AGE = 30 * 86400
 TEXT_MAX = 2000
+# Vorschläge für Rückfragen (seit 2.51.0): so viele, so lang (wie in ai_assessment)
+NEXT_MAX = 3
+NEXT_LENGTH = 60
 
 
 class AiMemory:
@@ -39,6 +42,7 @@ class AiMemory:
                     "text": item["text"][:TEXT_MAX],
                     "source": item.get("source") if isinstance(item.get("source"), str) else None,
                     "status": item.get("status") if isinstance(item.get("status"), str) else None,
+                    "next": [s[:NEXT_LENGTH] for s in (item.get("next") or []) if isinstance(s, str) and s.strip()][:NEXT_MAX] if isinstance(item.get("next"), list) else [],
                 }
 
     def get(self, device_id: str, now: float | None = None) -> dict[str, Any] | None:
@@ -47,8 +51,13 @@ class AiMemory:
             return None
         return item
 
-    def set(self, device_id: str, title: str, text: str, source: str | None, status: str | None, now: float | None = None) -> None:
-        self._data[device_id] = {"at": now if now is not None else time.time(), "title": title, "text": text[:TEXT_MAX], "source": source, "status": status}
+    def set(
+        self, device_id: str, title: str, text: str, source: str | None, status: str | None, now: float | None = None, suggestions: list[str] | None = None
+    ) -> None:
+        self._data[device_id] = {
+            "at": now if now is not None else time.time(), "title": title, "text": text[:TEXT_MAX], "source": source, "status": status,
+            "next": [s[:NEXT_LENGTH] for s in (suggestions or [])][:NEXT_MAX],
+        }
         if len(self._data) > MAX_DEVICES:
             for dev, _item in sorted(self._data.items(), key=lambda kv: kv[1]["at"])[: len(self._data) - MAX_DEVICES]:
                 del self._data[dev]

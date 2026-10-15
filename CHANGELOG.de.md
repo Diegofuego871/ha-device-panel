@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.51.0] - 2026-10-15
+
+KI-Einschätzung: die vorgeschlagenen Rückfragen kommen von der KI.
+
+Enthält die Änderungen aus 2.50.0.
+
+### Geändert
+
+- KI-Einschätzung, Rückfragen: die Pillen über dem Textfeld sind nicht mehr immer dieselben. Die KI schlägt selbst bis zu drei Anschlussfragen vor, die zum Gerät und zu ihrer letzten Antwort passen, zum Beispiel "Läuft der Router nachts neu?" oder "Wie alt ist die Batterie?". Sie hängt sie als letzte Zeile an dieselbe Antwort (kein zusätzlicher Aufruf, keine zusätzlichen Kosten); das Panel schneidet die Zeile ab und zeigt sie als Pillen. Nach jeder Antwort gibt es neue Vorschläge, gestellte Fragen fallen weg. Die Vorschläge bleiben mit der letzten Einschätzung gespeichert, auch über Neustarts. Das gilt auch für einen selbst geänderten Prompt, weil die Bitte um die Zeile vom Panel angefügt wird und nicht Teil des Prompts ist; die Vorschau im Profi-Modus zeigt sie. Schickt die KI keine Vorschläge (oder ist die Zeile beschädigt), bleiben die bisherigen festen Fragen als Rückfall.
+
 ## [2.50.0] - 2026-10-15
+
+Nicht veröffentlicht; enthalten in 2.51.0.
 
 Fenster "Empfang": Empfängernamen ohne Adressen, Hinweis auf einen weit entfernten Empfänger.
 
@@ -3394,7 +3406,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.50.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.50.0
+[2.51.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.51.0
 [2.49.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.49.0
 [2.48.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.0
 [2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0

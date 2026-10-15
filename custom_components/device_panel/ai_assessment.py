@@ -523,6 +523,43 @@ def build_instructions(facts: dict[str, Any], language: str, template: str = "")
     return render_prompt(template or DEFAULT_PROMPT, dump(facts), lang, groups)
 
 
+# Vorschläge für Rückfragen (seit 2.51.0): Die KI hängt sie in derselben Antwort an eine letzte Zeile "NEXT: a | b | c". Das Panel zeigt sie
+# als Pillen; so passen sie zum Gerät und zur Antwort und kosten keinen zusätzlichen Aufruf. Fehlt die Zeile, gibt es feste Vorschläge.
+NEXT_MARKER = "NEXT:"
+NEXT_MAX = 3
+NEXT_LENGTH = 60
+_NEXT_RE = re.compile(r"^[\s*_#>-]*NEXT\s*:[\s*_]*(?P<items>.*?)[\s*_]*$", re.IGNORECASE)
+
+
+def next_instruction(language: str) -> str:
+    """Zusatz an der Anweisung (nicht Teil des Prompts, den der Nutzer ändern kann): die Zeile mit den Vorschlägen."""
+    lang = LANGUAGES.get(language, LANGUAGES["en"])
+    return (
+        f"\n\nAfter everything else, add one final line that starts with \"{NEXT_MARKER}\" followed by up to {NEXT_MAX} short follow-up "
+        f"questions the owner could ask next, separated by \" | \", in {lang}, each at most 45 characters. They must be specific to this device "
+        "and to what you just said (name a value, a cause or a check), not generic, and not repeat earlier questions. This line is not part of "
+        "the answer, add nothing after it."
+    )
+
+
+def split_next(text: str) -> tuple[str, list[str]]:
+    """Die Zeile "NEXT: …" am Ende abtrennen: (Text ohne sie, Vorschläge). Ohne Zeile bleibt der Text, die Liste ist leer."""
+    lines = text.rstrip().split("\n")
+    for i in range(len(lines) - 1, -1, -1):
+        if not lines[i].strip():
+            continue
+        match = _NEXT_RE.match(lines[i])
+        if not match:
+            return text, []
+        items: list[str] = []
+        for raw in match.group("items").split("|"):
+            item = clean(re.sub(r"^\s*(?:\d+[.)]\s+|[-–•*_]+\s*)|[\s\"„“”*_]+$", "", raw).strip(' "„“”'))
+            if item and item.lower() not in {x.lower() for x in items}:
+                items.append(item[:NEXT_LENGTH])
+        return "\n".join(lines[:i]).rstrip(), items[:NEXT_MAX]
+    return text, []
+
+
 def split_answer(text: str) -> tuple[str, str]:
     """Erste Zeile als Überschrift, wenn sie kurz ist und Text folgt; sonst nur Text."""
     clean = text.strip()
@@ -728,14 +765,16 @@ async def async_assess(hass: HomeAssistant, device_id: str, language: str, log: 
     if trimmed:
         activity.record(hass, "info", "system", "ai_trimmed", device["name"], device_id, parts=", ".join(trimmed), limit=INSTRUCTIONS_MAX)
     entity_id = opts[CONF_AI_TASK] or None
-    instructions = build_instructions(facts, language, opts[CONF_AI_PROMPT])
+    instructions = build_instructions(facts, language, opts[CONF_AI_PROMPT]) + next_instruction(language)
     started = time.monotonic()
     text = ""
+    suggestions: list[str] = []
     try:
         # Eine leere Antwort (zum Beispiel ein Modell, das seine Ausgabe in der Denkphase verbraucht) bekommt einen zweiten Versuch.
         for attempt in (1, 2):
             data = await _generate_retry(hass, entity_id, instructions, device["name"], device_id)
             text = data if isinstance(data, str) else json.dumps(data, ensure_ascii=False)
+            text, suggestions = split_next(text)
             if text.strip():
                 break
             if attempt == 1:
@@ -755,8 +794,8 @@ async def async_assess(hass: HomeAssistant, device_id: str, language: str, log: 
         chars=len(instructions), answer=len(text), seconds=round(time.monotonic() - started, 1),
     )
     source = source_name(hass, entity_id)
-    memory.set(device_id, title, body, source, facts.get("status"), now.timestamp())
-    return {"title": title, "text": body, "source": source, "at": now.isoformat()}
+    memory.set(device_id, title, body, source, facts.get("status"), now.timestamp(), suggestions)
+    return {"title": title, "text": body, "source": source, "at": now.isoformat(), "next": suggestions}
 
 
 # Rückfragen (seit 2.48.0): höchstens ASK_MAX je Einschätzung (jede ist ein Aufruf der KI-Aufgabe), kurze Fragen und Antworten.
@@ -829,14 +868,15 @@ async def async_ask(
     if trimmed:
         activity.record(hass, "info", "system", "ai_trimmed", device["name"], device_id, parts=", ".join(trimmed), limit=INSTRUCTIONS_MAX)
     entity_id = opts[CONF_AI_TASK] or None
-    instructions = build_ask_instructions(facts, language, question, history)
+    instructions = build_ask_instructions(facts, language, question, history) + next_instruction(language)
     started = time.monotonic()
+    suggestions: list[str] = []
     try:
         data = await _generate_retry(hass, entity_id, instructions, device["name"], device_id)
-        text = data if isinstance(data, str) else json.dumps(data, ensure_ascii=False)
+        text, suggestions = split_next(data if isinstance(data, str) else json.dumps(data, ensure_ascii=False))
         if not text.strip():
             data = await _generate_retry(hass, entity_id, instructions, device["name"], device_id)
-            text = data if isinstance(data, str) else json.dumps(data, ensure_ascii=False)
+            text, suggestions = split_next(data if isinstance(data, str) else json.dumps(data, ensure_ascii=False))
         if not text.strip():
             raise AiError("empty", "the AI task returned an empty answer twice")
     except AiError as err:
@@ -849,7 +889,8 @@ async def async_ask(
         hass, "debug", "system", "ai_ask_done", device["name"], device_id,
         question=question[:80], chars=len(instructions), answer=len(text), seconds=round(time.monotonic() - started, 1),
     )
-    return {"text": text.strip(), "source": source_name(hass, entity_id), "at": now.isoformat()}
+    asked = {h["q"].lower() for h in history} | {question.lower()}
+    return {"text": text.strip(), "source": source_name(hass, entity_id), "at": now.isoformat(), "next": [s for s in suggestions if s.lower() not in asked]}
 
 
 async def async_preview(
@@ -875,7 +916,7 @@ async def async_preview(
         extra["previous"] = previous
     chosen = template.strip() or effective(hass)[CONF_AI_PROMPT]
     facts, _trimmed = fit_facts(build_facts(device, result, now, extra), language, chosen)
-    return {"text": build_instructions(facts, language, chosen)}
+    return {"text": build_instructions(facts, language, chosen) + next_instruction(language)}
 
 
 def _previous(item: dict[str, Any] | None, now: float) -> dict[str, Any] | None:
@@ -898,4 +939,7 @@ async def async_last(hass: HomeAssistant, device_id: str) -> dict[str, Any] | No
     item = (await ai_memory.async_get(hass)).get(device_id)
     if item is None:
         return None
-    return {"title": item["title"], "text": item["text"], "source": item.get("source"), "at": dt_util.utc_from_timestamp(item["at"]).isoformat()}
+    return {
+        "title": item["title"], "text": item["text"], "source": item.get("source"), "at": dt_util.utc_from_timestamp(item["at"]).isoformat(),
+        "next": item.get("next") or [],
+    }

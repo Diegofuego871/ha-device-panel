@@ -1023,6 +1023,7 @@
           title: msg.language === "de" ? "Wahrscheinlich Empfang" : "Probably reception",
           text: msg.language === "de" ? "Der Melder hatte heute kurze Unterbrüche und schwachen Empfang. Ein Router in der Nähe dürfte helfen." : "The sensor had short interruptions today and weak reception. A router nearby should help.",
           source, at: new Date().toISOString(),
+          next: window.__aiNoNext ? [] : msg.language === "de" ? ["Läuft der Router nachts neu?", "Wie alt ist die Batterie?", "Was heisst Median?"] : ["Does the router restart at night?", "How old is the battery?", "What does median mean?"],
         };
         // Wie ai_memory: die letzte Einschätzung je Gerät bleibt (ai_last)
         (window.__aiLast ||= {})[msg.device_id] = answer;
@@ -1036,7 +1037,11 @@
         const mode = window.__aiMode || "ok";
         if (mode === "slow") await new Promise((r) => setTimeout(r, 1200));
         if (["no_ai_task", "timeout", "failed", "empty"].includes(mode)) throw { code: mode, message: mode === "failed" ? "Error talking to OpenAI: 429 quota exceeded" : "details" };
-        return { text: msg.language === "de" ? `Antwort auf: ${msg.question}` : `Answer to: ${msg.question}`, source: "OpenAI", at: new Date().toISOString() };
+        const n = (msg.history || []).length + 1;
+        return {
+          text: msg.language === "de" ? `Antwort auf: ${msg.question}` : `Answer to: ${msg.question}`, source: "OpenAI", at: new Date().toISOString(),
+          next: window.__aiNoNext ? [] : msg.language === "de" ? [`Folgefrage ${n}a?`, `Folgefrage ${n}b?`] : [`Follow-up ${n}a?`, `Follow-up ${n}b?`],
+        };
       }
       if (msg.type === "device_panel/ai_last") return window.__opts.ai_assessment ? window.__aiLast?.[msg.device_id] || null : null;
       if (msg.type === "device_panel/ai_prompt_preview") {

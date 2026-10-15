@@ -7,7 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.51.0] - 2026-10-15
+
+AI assessment: the suggested follow-up questions come from the AI.
+
+Includes the changes from 2.50.0.
+
+### Changed
+
+- AI assessment, follow-up questions: the pills above the text field are no longer always the same. The AI itself suggests up to three follow-up questions that fit the device and its last answer, for example "Does the router restart at night?" or "How old is the battery?". It adds them as a last line to the same answer (no extra call, no extra cost); the panel cuts the line off and shows it as pills. After every answer there are new suggestions, questions that were asked disappear. The suggestions are kept with the last assessment, also across restarts. This works with a prompt you edited yourself too, because the request for the line is added by the panel and is not part of the prompt; the preview in expert mode shows it. If the AI sends no suggestions (or the line is damaged), the former fixed questions stay as a fallback.
+
 ## [2.50.0] - 2026-10-15
+
+Not released; included in 2.51.0.
 
 Signal window: receiver names without addresses, hint for a distant receiver.
 
@@ -3293,7 +3305,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.50.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.50.0
+[2.51.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.51.0
 [2.49.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.49.0
 [2.48.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.48.0
 [2.46.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.46.0

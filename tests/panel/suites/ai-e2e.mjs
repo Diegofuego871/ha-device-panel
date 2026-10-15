@@ -41,6 +41,8 @@ for (const lang of ["de", "en"]) {
     const errors = [];
     p.on("pageerror", (e) => errors.push(e.message));
     await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}`);
+    // Zuerst ohne Vorschläge der KI: dann gelten die festen Pillen (Rückfall); die der KI folgen weiter unten
+    await p.evaluate(() => { window.__aiNoNext = true; });
     const f = await (await p.waitForSelector("#panel-frame")).contentFrame();
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`));
     const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
@@ -161,6 +163,22 @@ for (const lang of ["de", "en"]) {
     // "Neu erstellen" beginnt von vorn
     await tap(".ai-foot .linkbtn");
     check(`[${tag}] "${T.again}": Rückfragen beginnen wieder bei drei`, await wait(`return !!r.querySelector(".ai-title") && !r.querySelector(".ai-thread") && !!r.querySelector(".ai-input")`) && (await text(".ai-ask .opt-short")).startsWith(T.left3));
+    // Vorschläge der KI (seit 2.51.0): statt der festen Pillen, nach jeder Antwort neue, gestellte fallen weg, bleiben über einen Neustart
+    await p.evaluate(() => { window.__aiNoNext = false; });
+    await tap(".ai-foot .linkbtn");
+    const NEXT1 = lang === "de" ? ["Läuft der Router nachts neu?", "Wie alt ist die Batterie?", "Was heisst Median?"] : ["Does the router restart at night?", "How old is the battery?", "What does median mean?"];
+    const chipTexts = () => ev(`return [...r.querySelectorAll(".ai-chip")].map(x=>x.textContent.trim())`);
+    check(`[${tag}] Vorschläge der KI statt der festen Pillen`, await wait(`return r.querySelectorAll(".ai-chip").length === 3 && r.querySelector(".ai-chip").textContent.trim() === ${JSON.stringify(NEXT1[0])}`) && JSON.stringify(await chipTexts()) === JSON.stringify(NEXT1), JSON.stringify(await chipTexts()));
+    await p.screenshot({ path: `${outDir}/ai-next-${tag.replace("/", "-")}.png` });
+    await tap(".ai-chip");
+    const follow = lang === "de" ? ["Folgefrage 1a?", "Folgefrage 1b?"] : ["Follow-up 1a?", "Follow-up 1b?"];
+    check(`[${tag}] Pille gewählt: Frage gesendet, danach neue Vorschläge zur Antwort, die gestellte fehlt`, await wait(`return r.querySelectorAll(".ai-thread .ai-a").length === 1 && !r.querySelector(".ai-wait.ai-a") && r.querySelectorAll(".ai-chip").length === 2`) && (await calls("device_panel/ai_ask")).at(-1).question === NEXT1[0] && JSON.stringify(await chipTexts()) === JSON.stringify(follow), JSON.stringify(await chipTexts()));
+    // Nach einem Neustart (Speicher des Panels leer) kommen die gemerkten Vorschläge mit der Einschätzung
+    await close();
+    await ev(`r.host._ai.clear(); r.host._aiLastTried.clear()`);
+    await open("b");
+    check(`[${tag}] Vorschläge bleiben mit der gemerkten Einschätzung erhalten`, await wait(`return r.querySelectorAll(".ai-chip").length === 3`) && JSON.stringify(await chipTexts()) === JSON.stringify(NEXT1), JSON.stringify(await chipTexts()));
+    await p.evaluate(() => { window.__aiNoNext = true; });
     // Anderes Gerät hat noch keine Antwort
     await close();
     await open("c");

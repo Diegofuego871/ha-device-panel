@@ -147,3 +147,63 @@ async def test_transient_provider_errors_are_retried(hass: HomeAssistant, setup,
     monkeypatch.setattr(ai_assessment, "_generate", quota)
     await client.send_json({"id": 5, "type": f"{DOMAIN}/ai_assess", "device_id": lamp.id, "language": "en"})
     assert (await client.receive_json())["error"]["code"] == "failed" and len(calls) == 1
+
+
+def test_split_next_parses_the_suggestion_line() -> None:
+    """2.51.0: die letzte Zeile "NEXT: a | b | c" wird abgetrennt, bereinigt und begrenzt."""
+    from custom_components.device_panel.ai_assessment import split_next  # noqa: PLC0415
+
+    text, items = split_next('Titel\n\nText.\n\nNEXT: Wie lange hält der Akku noch? | "Ist der Router schuld?" | 3. Was kostet ein Ersatz?\n')
+    assert text == "Titel\n\nText." and items == ["Wie lange hält der Akku noch?", "Ist der Router schuld?", "Was kostet ein Ersatz?"]
+    # Markdown, Gross-/Kleinschreibung, Doppelte, mehr als drei, Adressen, Länge
+    text, items = split_next("Antwort\n**next:** A? | a? | B? | C? | D (B0:A7:32:46:E3:C2)?** \n")
+    assert text == "Antwort" and items == ["A?", "B?", "C?"]
+    assert split_next("x\nNEXT: " + "y" * 200)[1] == ["y" * 60]
+    # Ohne Zeile oder nicht als letzte: nichts ändert sich
+    assert split_next("Nur Text.\nZweite Zeile") == ("Nur Text.\nZweite Zeile", [])
+    assert split_next("NEXT: A? | B?\nund danach noch Text") == ("NEXT: A? | B?\nund danach noch Text", [])
+    assert split_next("") == ("", []) and split_next("NEXT:") == ("", [])
+
+
+async def test_assessment_and_ask_deliver_suggestions(hass: HomeAssistant, setup, hass_ws_client, monkeypatch) -> None:
+    lamp = _lamp(hass)
+    client = await _enable(hass, hass_ws_client)
+    seen: list[str] = []
+    answers = ["Überschrift\n\nText der Einschätzung.\n\nNEXT: Läuft der Router nachts neu? | Wie alt ist die Batterie? | Was heisst Median?", "Die Antwort.\nNEXT: Läuft der Router nachts neu? | Neue Frage?"]
+
+    async def fake(_h: Any, _e: Any, instructions: str) -> Any:
+        seen.append(instructions)
+        return answers.pop(0)
+
+    monkeypatch.setattr(ai_assessment, "_generate", fake)
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/ai_assess", "device_id": lamp.id, "language": "de"})
+    msg = await client.receive_json()
+    assert msg["success"] and msg["result"]["text"] == "Text der Einschätzung." and "NEXT" not in msg["result"]["text"]
+    assert msg["result"]["next"] == ["Läuft der Router nachts neu?", "Wie alt ist die Batterie?", "Was heisst Median?"]
+    assert 'starts with "NEXT:"' in seen[0] and "German" in seen[0].rsplit("NEXT:", 1)[0]
+    # gespeichert: ai_last liefert die Vorschläge nach einem Neustart
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/ai_last", "device_id": lamp.id})
+    assert (await client.receive_json())["result"]["next"] == ["Läuft der Router nachts neu?", "Wie alt ist die Batterie?", "Was heisst Median?"]
+    # Rückfrage: eigene Vorschläge, bereits gestellte Fragen fallen weg
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/ai_ask", "device_id": lamp.id, "question": "Läuft der Router nachts neu?", "language": "de"})
+    msg = await client.receive_json()
+    assert msg["success"] and msg["result"]["text"] == "Die Antwort." and msg["result"]["next"] == ["Neue Frage?"]
+    assert 'starts with "NEXT:"' in seen[1]
+    # Die Vorschau im Profi-Modus zeigt den Zusatz, damit sie dem entspricht, was an die KI geht
+    from custom_components.device_panel.ai_assessment import async_preview  # noqa: PLC0415
+
+    assert "NEXT:" in (await async_preview(hass, lamp.id, "en", "", None))["text"]
+
+
+async def test_answer_with_only_the_suggestion_line_counts_as_empty(hass: HomeAssistant, setup, hass_ws_client, monkeypatch) -> None:
+    lamp = _lamp(hass)
+    client = await _enable(hass, hass_ws_client)
+    calls: list[int] = []
+
+    async def fake(*_a: Any) -> Any:
+        calls.append(1)
+        return "NEXT: A? | B?"
+
+    monkeypatch.setattr(ai_assessment, "_generate", fake)
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/ai_assess", "device_id": lamp.id, "language": "en"})
+    assert (await client.receive_json())["error"]["code"] == "empty" and len(calls) == 2

@@ -4642,18 +4642,21 @@ class DevicePanel extends HTMLElement {
     const left = AI_ASK_MAX - asks.length - (st.asking ? 1 : 0);
     let thread = asks.map((a) => `<div class="ai-q">${escape(a.q)}</div><div class="ai-a">${escape(a.a)}</div>`).join("");
     if (st.asking) thread += `<div class="ai-q">${escape(st.asking)}</div><div class="ai-a ai-wait" aria-busy="true">${mdi("sparkle", 16)}${escape(t("aiWorking"))}</div>`;
-    // Vorschläge nach dem, was das Gerät hat; schon gestellte entfallen
-    const asked = new Set(asks.map((a) => a.q));
-    const ideas = [
+    // Vorschläge (seit 2.51.0): die der KI zu ihrer letzten Antwort; ohne sie feste, nach dem, was das Gerät hat. Gestellte entfallen.
+    const asked = new Set(asks.map((a) => a.q.toLowerCase()));
+    const own = (st.next || []).filter((q) => !asked.has(q.toLowerCase())).slice(0, 3);
+    const fixed = [
       ["aiAskQ_first", true],
       ["aiAskQ_battery", Boolean(d.has_battery)],
       ["aiAskQ_pattern", (d.avail24?.outages || 0) > 0],
       ["aiAskQ_signal", d.signal?.value != null],
       ["aiAskQ_sure", true],
     ]
-      .filter(([key, on]) => on && !asked.has(t(key)))
+      .filter(([key, on]) => on && !asked.has(t(key).toLowerCase()))
+      .map(([key]) => t(key))
       .slice(0, 4);
-    const chips = left > 0 && !st.asking ? `<div class="ai-chips">${ideas.map(([key]) => `<button type="button" class="ai-chip" data-dlg="ai-ask" data-q="${escape(t(key))}">${escape(t(key))}</button>`).join("")}</div>` : "";
+    const ideas = own.length ? own : fixed;
+    const chips = left > 0 && !st.asking ? `<div class="ai-chips">${ideas.map((q) => `<button type="button" class="ai-chip" data-dlg="ai-ask" data-q="${escape(q)}">${escape(q)}</button>`).join("")}</div>` : "";
     const form =
       left > 0
         ? `<div class="ai-in"><input type="text" class="ai-input" data-dlg="ai-q" maxlength="${AI_ASK_Q_MAX}" value="${escape(this._aiDraft.get(d.id) || "")}" placeholder="${escape(t("aiAskPlaceholder"))}" aria-label="${escape(t("aiAskTitle"))}"${st.asking ? " disabled" : ""}>
@@ -4677,6 +4680,8 @@ class DevicePanel extends HTMLElement {
     try {
       const r = await this._hass.callWS({ type: "device_panel/ai_ask", device_id: id, question: q, language: pickLang(this._hass), history: asks.map(({ q: aq, a }) => ({ q: aq, a })) });
       st.asks = [...asks, { q, a: r.text }];
+      // Neue Vorschläge zur Antwort; ohne welche bleiben die bisherigen (ohne die gestellten)
+      if (Array.isArray(r.next) && r.next.length) st.next = r.next;
     } catch (err) {
       const code = err && typeof err === "object" ? err.code : null;
       const known = ["disabled", "no_ai_task", "timeout", "failed", "empty", "not_found", "limit"];
@@ -4696,7 +4701,7 @@ class DevicePanel extends HTMLElement {
     try {
       const r = await this._hass.callWS({ type: "device_panel/ai_last", device_id: id });
       if (r && !this._ai.has(id)) {
-        this._ai.set(id, { state: "done", title: r.title, text: r.text, source: r.source, at: r.at });
+        this._ai.set(id, { state: "done", title: r.title, text: r.text, source: r.source, at: r.at, next: r.next || [] });
         if (this._detailId === id) this._renderDevice();
       }
     } catch (err) {
@@ -4710,7 +4715,7 @@ class DevicePanel extends HTMLElement {
     this._renderDevice();
     try {
       const r = await this._hass.callWS({ type: "device_panel/ai_assess", device_id: id, language: pickLang(this._hass) });
-      this._ai.set(id, { state: "done", title: r.title, text: r.text, source: r.source, at: r.at });
+      this._ai.set(id, { state: "done", title: r.title, text: r.text, source: r.source, at: r.at, next: r.next || [] });
     } catch (err) {
       const code = err && typeof err === "object" ? err.code : null;
       const known = ["disabled", "no_ai_task", "timeout", "failed", "empty", "not_found"];
