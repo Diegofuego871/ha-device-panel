@@ -1106,7 +1106,8 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .sv { margin: 16px 2px 4px; }
 .sv h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--dp-text); }
 .sv-bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: color-mix(in srgb, var(--dp-text) 8%, transparent); }
-.sv-bar i { display: block; height: 100%; }
+.sv-bar i { display: block; height: 100%; flex: none; }
+.sv-bar i.none { background: transparent; }
 .sv-bar i.gap { background: repeating-linear-gradient(135deg, transparent 0 4px, color-mix(in srgb, var(--dp-text) 14%, transparent) 4px 5px); }
 /* Balken und Zeitmarken auf der Breite des Diagramms darüber ("Empfang"): links 14 (Rahmen) + 44 (Achse) - 2 (Rand von .sv), rechts 14 - 2 */
 .sv-bar, .sv-ticks { margin-left: 56px; margin-right: 12px; }

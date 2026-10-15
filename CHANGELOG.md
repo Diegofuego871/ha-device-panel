@@ -19,7 +19,7 @@ Includes the changes from 2.48.1.
 
 ### Fixed
 
-- Signal window, section "Connected via": the colour bar now lies exactly under the chart above, on the same width and with the same time marks (12:00, 15:00 … now). Before, the bar ran across the whole width while the chart starts after its axis, so a time in the chart and the same time in the bar were not above each other and you could not read from the chart which receiver the device was connected to. Without a chart above (no measurements, for example for a device that is offline) the bar keeps the whole width.
+- Signal window, section "Connected via": the colour bar now lies exactly under the chart above, on the same width and with the same time marks (12:00, 15:00 … now). Before, the bar ran across the whole width while the chart starts after its axis, so a time in the chart and the same time in the bar were not above each other and you could not read from the chart which receiver the device was connected to. Without a chart above (no measurements, for example for a device that is offline) the bar keeps the whole width. With a young recording the bar starts at the beginning of the recording: the time before it stays empty on the left and "now" is always at the far right, so the bar grows from the right instead of from the left (before, it ran from the left edge and left the empty rest on the right, which was confusing at the start).
 - App launcher: the favorites no longer have a blue border. All tiles look the same; the heart and the section "Favorites" already show which are favorites.
 
 ## [2.48.1] - 2026-10-15

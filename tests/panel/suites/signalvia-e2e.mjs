@@ -97,6 +97,17 @@ for (const lang of ["de", "en"]) {
       if (rg === "24h") await p.screenshot({ path: `${outDir}/signalvia-aligned-${tag.replace("/", "-")}.png` });
     }
 
+    // Junge Aufzeichnung (seit 2.49.0): der Balken beginnt erst bei ihrem Beginn, davor bleibt es links leer, "jetzt" liegt rechts
+    const young = await ev(`const h = r.host; const start = 1000, end = 2000;
+      const html = h._viaHtml({ receivers: [{ name: "A", share: 70, avg: -70 }, { name: "B", share: 30, avg: -80 }], segments: [[1600, 1800, 0], [1800, 2000, 1]], changes: [], since: 1600 }, start, end, "24h");
+      const box = document.createElement("div"); box.innerHTML = html;
+      const items = [...box.querySelectorAll(".sv-bar i")];
+      return { classes: items.map((i) => i.className), widths: items.map((i) => parseFloat(i.style.width)), ticks: box.querySelectorAll(".sv-ticks span").length > 0 };`);
+    check(`[${tag}] junge Aufzeichnung: links leer (60 %), dann zwei Abschnitte bis rechts, zusammen 100 %`, young.classes[0] === "none" && Math.abs(young.widths[0] - 60) < 0.1 && young.classes.length === 3 && Math.abs(young.widths.reduce((x, y) => x + y, 0) - 100) < 0.1, JSON.stringify(young));
+    const withGap = await ev(`const html = r.host._viaHtml({ receivers: [{ name: "A", share: 100, avg: -70 }], segments: [[1100, 1300, 0], [1300, 1500, null], [1500, 1900, 0]], changes: [], since: 1100 }, 1000, 2000, "24h");
+      const box = document.createElement("div"); box.innerHTML = html; return [...box.querySelectorAll(".sv-bar i")].map((i) => i.className + ":" + parseFloat(i.style.width)).join("|");`);
+    check(`[${tag}] Abschnitte an ihrer Zeit: Anfang leer, Lücke schraffiert, Ende leer`, withGap === "none:10|:20|gap:20|:40|none:10", withGap);
+
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();
   }

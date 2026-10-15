@@ -5112,12 +5112,19 @@ class DevicePanel extends HTMLElement {
     if (!(span > 0) || !via.segments?.length) return "";
     const colour = (i) => VIA_COLORS[i % VIA_COLORS.length];
     const name = (i) => via.receivers[i]?.name ?? "";
-    const bar = via.segments
-      .map(([a, b, i]) => {
-        const width = (((b - a) / span) * 100).toFixed(3);
-        return i == null ? `<i class="gap" style="width:${width}%"></i>` : `<i style="width:${width}%;background:${colour(i)}" title="${escape(name(i))}"></i>`;
-      })
-      .join("");
+    // Jeder Abschnitt steht an seiner Zeit (seit 2.49.0): was vor dem Beginn der Aufzeichnung liegt, bleibt links leer ("none"),
+    // damit "jetzt" auch bei einer jungen Aufzeichnung ganz rechts liegt und der Balken von rechts her wächst, nicht von links.
+    let cursor = start;
+    const blank = (to) => (to - cursor > span * 0.0005 ? `<i class="none" style="width:${(((to - cursor) / span) * 100).toFixed(3)}%"></i>` : "");
+    const parts = [];
+    for (const [a, b, i] of via.segments) {
+      parts.push(blank(a));
+      const width = (((b - a) / span) * 100).toFixed(3);
+      parts.push(i == null ? `<i class="gap" style="width:${width}%"></i>` : `<i style="width:${width}%;background:${colour(i)}" title="${escape(name(i))}"></i>`);
+      cursor = b;
+    }
+    parts.push(blank(end));
+    const bar = parts.join("");
     // Dieselben Zeitmarken wie im Verlauf darüber: Balken und Diagramm liegen auf gleicher Breite (seit 2.49.0), das Auge fährt senkrecht
     const ticks = this._ticks(start, end, range)
       .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
