@@ -426,7 +426,7 @@
     if (!["{facts}", ...PROMPT_GROUPS].some((v) => text.includes(v))) return "no_facts";
     return null;
   };
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [2, 80], charge_stall: [5, 120], timers_catch_up: [0, 60] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [2, 80], charge_stall: [5, 120], routines_catch_up: [0, 60] };
   // Inhalt der Batterie-Meldung wie options_api.BATTERY_FIELDS (seit 0.34.0).
   const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
   // Inhalt der Meldung bei neuen Geräten wie const.NEW_FIELDS (seit 1.24.0).
@@ -604,13 +604,13 @@
   window.__opts = {
     offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, offline_after_integrations: {}, battery_push: false, battery_persistent: false,
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
-    exclude_integrations: [], exclude_types: [], exclude_devices: [], notify_service: "none", notify_service_outage: "", notify_service_battery: "", notify_service_charge: "", notify_service_new: "", notify_service_updates: "", notify_service_timers: "", notify_service_panelupdate: "", update_check_time: "", update_notify: false, notify_click_target: "panel",
+    exclude_integrations: [], exclude_types: [], exclude_devices: [], notify_service: "none", notify_service_outage: "", notify_service_battery: "", notify_service_charge: "", notify_service_new: "", notify_service_updates: "", notify_service_routines: "", notify_service_panelupdate: "", update_check_time: "", update_notify: false, notify_click_target: "panel",
     notify_outage: false, notify_online: false, notify_group: true, hide_chips: [], hide_connections: [], connection_order: [], chip_order: [], connection_integrations: {}, type_integrations: {},
     show_service_devices: false, show_disabled_devices: false, update_check: true, ai_assessment: false, ai_task_entity: "", ai_prompt: "",
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
-    timers_pause: false, timers_catch_up: 10, timers_notify_error: true,
+    routines_pause: false, routines_catch_up: 10, routines_notify_error: true,
     notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, notify_charge_stop: false, charge_stall: 15, charge_integrations: [], charge_full_integrations: {}, charge_rise_integrations: {}, charge_stall_integrations: {}, charge_stop_integrations: {}, charge_live: false, charge_live_integrations: {}, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
     // Emoji der Push-Meldungen: null = Standard (seit 2.2.0)
     emoji_outage: null, emoji_group: null, emoji_online: null, emoji_battery: null, emoji_charge: null, emoji_charge_stop: null, emoji_new: null, emoji_updates: null,
@@ -1058,9 +1058,9 @@
         const values = { "{language}": lang, "{facts}": facts, ...Object.fromEntries(PROMPT_GROUPS.map((g) => [g, g === "{facts_device}" ? device : "{}"])) };
         return { text: (draft || window.__opts.ai_prompt || AI_PROMPT_DEFAULT).replace(/\{[A-Za-z_][A-Za-z0-9_]*\}/g, (m) => values[m] ?? m) };
       }
-      // Timer (2.21.0): Timer pro Gerät im Speicher der Seite, Prüfung und Zeitberechnung ungefähr wie im Backend
-      if (typeof msg.type === "string" && msg.type.startsWith("device_panel/timer_")) {
-        const T = (window.__timers ||= { list: [], seq: 1, runs: [], tests: [] });
+      // Routine (2.21.0): Routine pro Gerät im Speicher der Seite, Prüfung und Zeitberechnung ungefähr wie im Backend
+      if (typeof msg.type === "string" && msg.type.startsWith("device_panel/routine_")) {
+        const T = (window.__routines ||= { list: [], seq: 1, runs: [], tests: [] });
         const fail = (message) => { throw { code: "invalid_format", message }; };
         const pad = (n) => String(n).padStart(2, "0");
         const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -1071,7 +1071,7 @@
           { entity_id: "light.led", name: "LED-Ring", domain: "light", state: "off", available: true, actions: ["on", "off", "toggle"] },
         ];
         // Zustände, die "Jetzt ausführen" gesetzt hat, überleben die Aufrufe (DEFAULT_ENTS entsteht bei jedem Aufruf neu)
-        const entsOf = (id) => (window.__timerEntities && id in window.__timerEntities ? window.__timerEntities[id] : DEFAULT_ENTS).map((e) => ((window.__tryState ||= {})[e.entity_id] ? { ...e, state: window.__tryState[e.entity_id] } : e));
+        const entsOf = (id) => (window.__routineEntities && id in window.__routineEntities ? window.__routineEntities[id] : DEFAULT_ENTS).map((e) => ((window.__tryState ||= {})[e.entity_id] ? { ...e, state: window.__tryState[e.entity_id] } : e));
         const entOf = (r) => entsOf(r.device_id).find((e) => e.entity_id === r.entity_id);
         const lastDay = (y, m) => new Date(y, m + 1, 0).getDate();
         const at = (y, m, d, hh, mm) => new Date(y, m, d, hh, mm, 0, 0).getTime() / 1000;
@@ -1158,16 +1158,16 @@
         };
         const strip = (r) => Object.fromEntries(Object.entries(r).filter(([k]) => !k.startsWith("__")));
         const today = () => ymd(new Date());
-        if (msg.type.endsWith("timer_devices")) {
-          if (window.__timerDevicesFail) throw new Error(window.__timerDevicesFail);
+        if (msg.type.endsWith("routine_devices")) {
+          if (window.__routineDevicesFail) throw new Error(window.__routineDevicesFail);
           return { devices: window.__devices.filter((d) => entsOf(d.id).length).map((d) => ({ id: d.id, name: d.name, entities: entsOf(d.id).length })).sort((a, b) => a.name.localeCompare(b.name)) };
         }
-        if (msg.type.endsWith("timer_get")) {
+        if (msg.type.endsWith("routine_get")) {
           if (!window.__devices.find((d) => d.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
-          if (window.__timerLoadFails) throw new Error(window.__timerLoadFails);
+          if (window.__routineLoadFails) throw new Error(window.__routineLoadFails);
           const mine = T.list.filter((r) => r.device_id === msg.device_id).sort((a, b) => a.name.localeCompare(b.name));
           return {
-            timers: mine.map((r) => payload(strip(r) && r)).map((p) => strip(p)),
+            routines: mine.map((r) => payload(strip(r) && r)).map((p) => strip(p)),
             entities: entsOf(msg.device_id),
             targets: [{ value: "notify.familie", kind: "group" }, { value: "notify.mobile_app_dani_iphone", kind: "service" }, { value: "notify.mobile_app_partner_iphone", kind: "service" }, { value: "notify.kuechen_display", kind: "entity" }],
             default_target: window.__opts.notify_service && window.__opts.notify_service !== "none" ? window.__opts.notify_service : "notify.mobile_app_dani_iphone",
@@ -1175,15 +1175,15 @@
             now: Date.now() / 1000, today: today(),
           };
         }
-        if (msg.type.endsWith("timer_list")) {
-          if (window.__timerListFails) throw new Error(window.__timerListFails);
-          return { timers: T.list.map((r) => strip(payload(r))), now: Date.now() / 1000, today: today() };
+        if (msg.type.endsWith("routine_list")) {
+          if (window.__routineListFails) throw new Error(window.__routineListFails);
+          return { routines: T.list.map((r) => strip(payload(r))), now: Date.now() / 1000, today: today() };
         }
-        if (msg.type.endsWith("timer_save")) {
-          const raw = msg.timer;
+        if (msg.type.endsWith("routine_save")) {
+          const raw = msg.routine;
           check(raw);
           const old = raw.id ? T.list.find((x) => x.id === raw.id) : null;
-          if (raw.id && !old) fail("Timer nicht gefunden");
+          if (raw.id && !old) fail("Routine nicht gefunden");
           const e = entOf(raw);
           const r = { id: old ? old.id : `t${T.seq++}`.padEnd(12, "0"), device_id: raw.device_id, entity_id: raw.entity_id, name: String(raw.name || "").trim() || e.name, action: raw.action, options: raw.options || {},
             back_kind: raw.back_kind || (raw.back_s ? "duration" : "none"), back_time: raw.back_time || null, back_conditions: raw.back_conditions || null, back_hold_s: raw.back_hold_s || 0, back_max_s: raw.back_max_s || null,
@@ -1196,52 +1196,52 @@
           if (old) T.list.splice(T.list.indexOf(old), 1);
           T.list.push(r);
           T.saved = (T.saved || 0) + 1;
-          return { timer: strip(payload(r)) };
+          return { routine: strip(payload(r)) };
         }
-        if (msg.type.endsWith("timer_delete")) {
-          const i = T.list.findIndex((x) => x.id === msg.timer_id);
-          if (i < 0) throw { code: "not_found", message: "timer not found" };
+        if (msg.type.endsWith("routine_delete")) {
+          const i = T.list.findIndex((x) => x.id === msg.routine_id);
+          if (i < 0) throw { code: "not_found", message: "routine not found" };
           T.list.splice(i, 1);
-          return { deleted: msg.timer_id };
+          return { deleted: msg.routine_id };
         }
-        if (msg.type.endsWith("timer_enable")) {
-          const r = T.list.find((x) => x.id === msg.timer_id);
-          if (!r) throw { code: "not_found", message: "timer not found" };
+        if (msg.type.endsWith("routine_enable")) {
+          const r = T.list.find((x) => x.id === msg.routine_id);
+          if (!r) throw { code: "not_found", message: "routine not found" };
           if (msg.enabled) { r.__due = firstDue(r, Date.now() / 1000); if (!r.__due) fail("Der Zeitpunkt liegt in der Vergangenheit"); r.__done = null; }
           else r.__due = null;
           r.enabled = msg.enabled;
-          return { timer: strip(payload(r)) };
+          return { routine: strip(payload(r)) };
         }
-        if (msg.type.endsWith("timer_run")) {
-          const r = T.list.find((x) => x.id === msg.timer_id);
-          if (!r) throw { code: "not_found", message: "timer not found" };
+        if (msg.type.endsWith("routine_run")) {
+          const r = T.list.find((x) => x.id === msg.routine_id);
+          if (!r) throw { code: "not_found", message: "routine not found" };
           T.runs.push(r.id);
-          const ok = !window.__timerRunFails;
+          const ok = !window.__routineRunFails;
           r.__last = { at: Date.now() / 1000, ok, what: ok ? "run" : "failed", reason: ok ? null : "unavailable" };
-          return { ok, reason: ok ? null : "unavailable", timer: strip(payload(r)) };
+          return { ok, reason: ok ? null : "unavailable", routine: strip(payload(r)) };
         }
-        if (msg.type.endsWith("timer_preview")) {
-          const r = { ...msg.timer, enabled: true };
+        if (msg.type.endsWith("routine_preview")) {
+          const r = { ...msg.routine, enabled: true };
           check(r);
           const e = entOf(r);
           const word = r.action === "toggle" ? (de ? "umgeschaltet" : "toggled") : r.action === "on" ? (de ? "ein" : "on") : (de ? "aus" : "off");
           const clock = local(Date.now() / 1000).time;
           const name = String(r.name || "").trim() || e.name;
-          return { title: `⏱️ Timer: ${name}`, message: r.action === "toggle" ? (de ? `${e.name} wurde umgeschaltet · ${clock}` : `${e.name} was toggled · ${clock}`) : (de ? `${e.name} ist jetzt ${word} · ${clock}` : `${e.name} is now ${word} · ${clock}`), name,
+          return { title: `⏱️ Routine: ${name}`, message: r.action === "toggle" ? (de ? `${e.name} wurde umgeschaltet · ${clock}` : `${e.name} was toggled · ${clock}`) : (de ? `${e.name} ist jetzt ${word} · ${clock}` : `${e.name} is now ${word} · ${clock}`), name,
             target: r.target || window.__opts.notify_service, next_runs: runsOf(r, Date.now() / 1000) };
         }
-        if (msg.type.endsWith("timer_try")) {
+        if (msg.type.endsWith("routine_try")) {
           (T.tries ||= []).push({ entity_id: msg.entity_id, action: msg.action, options: msg.options || {} });
-          if (!window.__timerTryFail) {
+          if (!window.__routineTryFail) {
             const now = (window.__tryState ||= {})[msg.entity_id] || (DEFAULT_ENTS.find((x) => x.entity_id === msg.entity_id) || {}).state;
             window.__tryState[msg.entity_id] = msg.action === "on" ? "on" : msg.action === "off" ? "off" : now === "on" ? "off" : "on";
           }
-          return window.__timerTryFail ? { ok: false, reason: window.__timerTryFail } : { ok: true, reason: null };
+          return window.__routineTryFail ? { ok: false, reason: window.__routineTryFail } : { ok: true, reason: null };
         }
-        if (msg.type.endsWith("timer_test")) {
-          check({ ...msg.timer, enabled: true });
-          T.tests.push(msg.timer);
-          return { sent: window.__timerTestFail ? false : true };
+        if (msg.type.endsWith("routine_test")) {
+          check({ ...msg.routine, enabled: true });
+          T.tests.push(msg.routine);
+          return { sent: window.__routineTestFail ? false : true };
         }
       }
       // Magic Push (2.6.0): Meldungen pro Gerät im Speicher der Seite, Prüfung ungefähr wie im Backend

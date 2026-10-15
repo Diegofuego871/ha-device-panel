@@ -14,7 +14,7 @@
 - **Empfangs-Übersicht mit Warnungen:** Empfang in dBm oder LQI bei jedem Gerät, eine Warnschwelle pro Verbindungsart, ein Verlauf mit Median und Spanne, und bei Bluetooth der Empfänger (Adapter oder Proxy), über den ein Gerät verbunden ist oder war
 - **Meldungen auf drei Ebenen:** einmal eine Vorgabe setzen, pro Integration ändern, auf einem einzelnen Gerät überschreiben; jede Einstellung zeigt, woher ihr Wert stammt (Grafik unten)
 - **Magic Push:** eigene Meldungen pro Gerät ohne Automation: einen Wert wählen, sagen, wann gemeldet wird, den Text schreiben, fertig
-- **Timer:** eine Entität eines Geräts einmalig oder nach Zeitplan schalten, ohne Automation, mit Testknopf und Vorschau der nächsten Ausführungen
+- **Routinen:** eine Entität eines Geräts einmalig oder nach Zeitplan schalten, ohne Automation, mit Testknopf und Vorschau der nächsten Ausführungen
 - **Laden und Updates:** Chip "Lädt" mit Ladebalken, Push, wenn ein Gerät voll ist, Live-Aktivität (iPhone) oder Live-Update (Android 16) und eine Update-Erinnerung, die deine eigenen Automationen ersetzt
 - **Neue Geräte:** eine Markierung "Neu" und ein Chip für drei Tage, dazu ein optionaler Push mit allen neu erschienenen Geräten
 - **App-Launcher und Protokoll:** ein Knopf für nützliche Seiten von Home Assistant und eigene Links, dazu ein Protokoll, das zeigt, was die Meldungen entscheiden und warum eine nicht kam
@@ -107,10 +107,10 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 
 ### Wohin die Meldung geht
 
-<p align="center"><img src="docs/graphics/de/notification-targets.png" alt="Ein Push-Ziel für alles, ein eigenes Ziel pro Reiter, Magic Push und Timer wählen ihren Empfänger selbst" width="900"></p>
+<p align="center"><img src="docs/graphics/de/notification-targets.png" alt="Ein Push-Ziel für alles, ein eigenes Ziel pro Reiter, Magic Push und Routinen wählen ihren Empfänger selbst" width="900"></p>
 
 - **Ein Push-Ziel:** ein Notify-Dienst, eine Gruppe oder eine Notify-Entität für alle Meldungen
-- **Eigenes Ziel pro Reiter:** Ausfall, Batterie, Laden, Neue Geräte, Updates, Panel-Updates und Timer können je an einen anderen Empfänger senden
+- **Eigenes Ziel pro Reiter:** Ausfall, Batterie, Laden, Neue Geräte, Updates, Panel-Updates und Routinen können je an einen anderen Empfänger senden
 - **Aussehen:** jede Meldung zeigt das Symbol ihrer Integration und ein Emoji, das du pro Art ändern kannst; jeder Titel beginnt mit einem passenden Emoji
 
 ### Die Arten von Meldungen
@@ -155,24 +155,24 @@ Eigene Meldungen pro Gerät ohne Automation, im Reiter "Magic Push" des Geräts.
 
 <p align="center"><img src="docs/screenshots/de/settings-magic.png" alt="Einstellungen: alle Magic-Push-Meldungen aller Geräte, eine Karte pro Gerät" width="720"></p>
 
-## Timer
+## Routinen
 
 Schaltet eine Entität eines Geräts einmalig oder nach Zeitplan, ohne Automation.
 
-| Timer eines Geräts | Assistent: wann |
+| Routinen eines Geräts | Assistent: wann |
 |---|---|
-| <img src="docs/screenshots/de/timer-tab.png" alt="Reiter Timer eines Geräts mit einem Timer"> | <img src="docs/screenshots/de/timer-wizard.png" alt="Timer-Assistent, Schritt 2: Wann soll geschaltet werden"> |
+| <img src="docs/screenshots/de/routine-tab.png" alt="Reiter Routinen eines Geräts mit einer Routine"> | <img src="docs/screenshots/de/routine-wizard.png" alt="Routinen-Assistent, Schritt 2: Wann soll geschaltet werden"> |
 
 - **Was:** die Entität und die Aktion wählen (ein, aus, umschalten), auf Wunsch nach einer Weile zurückschalten
 - **Optionen:** Kann die Entität beim Einschalten etwas einstellen, folgt eine eigene Seite: Licht Helligkeit, Farbtemperatur und Farbe; Rollladen Position; Klima Soll-Temperatur und Modus; Medien Lautstärke; Ventilator Stufe. Eine Vorschau zeigt das Ergebnis (die Lampe leuchtet in der gewählten Farbe), geschaltet wird damit nichts, und "Jetzt ausführen" probiert die echte Stärke; ohne Angabe bleibt alles "wie zuletzt"
-- **Zurückschalten:** nach einer Weile zurück auf "aus" (das Gegenstück) oder "wie vorher": Der Timer merkt sich die Szene vor dem Schalten (zum Beispiel Helligkeit und Farbe) und stellt sie wieder her, so kann eine Lampe kurz heller werden und danach wieder sein wie vorher. Eigene Seite "Zurückschalten": nie, nach einer Dauer, zu einer Zeit oder durch einen Auslöser (zum Beispiel um 20:00 ein, aus wenn der Regensensor trocken ist), mit "spätestens nach" als Sicherung
+- **Zurückschalten:** nach einer Weile zurück auf "aus" (das Gegenstück) oder "wie vorher": Die Routine merkt sich die Szene vor dem Schalten (zum Beispiel Helligkeit und Farbe) und stellt sie wieder her, so kann eine Lampe kurz heller werden und danach wieder sein wie vorher. Eigene Seite "Zurückschalten": nie, nach einer Dauer, zu einer Zeit oder durch einen Auslöser (zum Beispiel um 20:00 ein, aus wenn der Regensensor trocken ist), mit "spätestens nach" als Sicherung
 - **Wann:** in X Minuten, einmal an einem Datum und zu einer Uhrzeit oder wiederholt täglich, wöchentlich an gewählten Wochentagen oder monatlich, mit einer Prüfung der nächsten Ausführungen vor dem Speichern; oder **durch einen Auslöser** statt einer Uhrzeit: beliebige Entität, "über" / "unter" / "ist" / "ändert sich", mehrere Bedingungen mit "und" / "oder" wie bei Magic Push, "mindestens so lange erfüllt", ein optionales Zeitfenster (auch über Mitternacht), eine Pause nach dem Schalten und "nur einmal". Es schaltet nur, wenn die Bedingung neu eintritt
 - **Test:** ein Knopf "Jetzt ausführen" probiert den gewählten Schalter aus
 - **Erinnerung:** auf Wunsch ein Push im Moment des Schaltens, mit Vorschau und eigenem Empfänger
-- **Läuft in Home Assistant:** mit dessen Zeitzone, ein Timer löst also auch bei geschlossenem Panel und nach einem Neustart aus (innerhalb eines Nachhol-Fensters, das du festlegst), und "Alle Timer pausieren" ist ein Schalter
-- **Übersicht:** der Timer-Knopf des Launchers öffnet alle Timer in einer Karte pro Gerät, mit Suche und Filter, bearbeiten, ein- oder ausschalten, löschen und Favoriten
+- **Läuft in Home Assistant:** mit dessen Zeitzone, eine Routine löst also auch bei geschlossenem Panel und nach einem Neustart aus (innerhalb eines Nachhol-Fensters, das du festlegst), und "Alle Routinen pausieren" ist ein Schalter
+- **Übersicht:** der Routinen-Knopf des Launchers öffnet alle Routinen in einer Karte pro Gerät, mit Suche und Filter, bearbeiten, ein- oder ausschalten, löschen und Favoriten
 
-<p align="center"><img src="docs/screenshots/de/timers-all.png" alt="Fenster mit allen Timern, eine Karte pro Gerät" width="720"></p>
+<p align="center"><img src="docs/screenshots/de/routines-all.png" alt="Fenster mit allen Routinen, eine Karte pro Gerät" width="720"></p>
 
 ## App-Launcher und Protokoll
 
@@ -182,7 +182,7 @@ Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den
 |---|---|
 | <img src="docs/screenshots/de/launcher.png" alt="App-Launcher mit Favoriten, Device Panel und Seiten von Home Assistant"> | <img src="docs/screenshots/de/log.png" alt="Protokoll mit Einträgen der Meldungen und einem Filter"> |
 
-- **Seiten:** Timer, Magic Push und das Protokoll dieser Integration, Seiten von Home Assistant (Automationen, Szenen, Skripte, Helfer, Geräte, Entitäten, Integrationen, Werkzeuge und mehr; die Verwaltungsseiten nur für Administratoren)
+- **Seiten:** Routinen, Magic Push und das Protokoll dieser Integration, Seiten von Home Assistant (Automationen, Szenen, Skripte, Helfer, Geräte, Entitäten, Integrationen, Werkzeuge und mehr; die Verwaltungsseiten nur für Administratoren)
 - **Eigene Links:** eine Seite in Home Assistant oder ein externer Link, der in einem neuen Browser-Tab öffnet, auf Wunsch mit seinem Favicon als Symbol
 - **Favoriten:** ein Herz markiert bis zu fünf Apps, die eigene Knöpfe in der Kopfzeile bekommen
 - **Bearbeiten-Modus:** per Ziehen sortieren, Apps mit dem Auge ausblenden, Raster oder Liste; alles wird pro Benutzer gespeichert
@@ -192,14 +192,14 @@ Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den
 
 Das Zahnrad öffnet alle Einstellungen auf Deutsch oder Englisch, in Abschnitten. Die Versionsleiste oben zeigt die installierte und die neueste Version und aktualisiert über HACS.
 
-| Geräte im Panel | Ansicht | Timer | Panel-Version |
+| Geräte im Panel | Ansicht | Routinen | Panel-Version |
 |---|---|---|---|
-| <img src="docs/screenshots/de/settings-section-devices.png" alt="Abschnitt Geräte im Panel"> | <img src="docs/screenshots/de/settings-section-look.png" alt="Abschnitt Ansicht mit Startseite und Filter-Chips"> | <img src="docs/screenshots/de/settings-section-timers.png" alt="Abschnitt Timer"> | <img src="docs/screenshots/de/settings-section-updates.png" alt="Abschnitt Panel-Version mit täglicher Prüfung und automatischer Installation"> |
+| <img src="docs/screenshots/de/settings-section-devices.png" alt="Abschnitt Geräte im Panel"> | <img src="docs/screenshots/de/settings-section-look.png" alt="Abschnitt Ansicht mit Startseite und Filter-Chips"> | <img src="docs/screenshots/de/settings-section-routines.png" alt="Abschnitt Routine"> | <img src="docs/screenshots/de/settings-section-updates.png" alt="Abschnitt Panel-Version mit täglicher Prüfung und automatischer Installation"> |
 
 - **Geräte im Panel:** Integrationen, Gerätetypen und einzelne Geräte ausblenden, Typ und Verbindungsart pro Integration festlegen, Geräte mit eigenen Einstellungen sehen und zurücksetzen
 - **Überwachung und Meldungen:** die Reiter Übersicht (ein Zeitstrahl pro Meldung), Ausfall, Batterie, Laden, Neu, Updates, Empfang, Magic Push und Integrationen
 - **Ansicht:** Startseite und Filter-Chips (zeigen, ausblenden, umordnen, anheften)
-- **Timer und KI-Einschätzung:** Pause, Nachhol-Fenster, Empfänger; KI-Aufgabe und Prompt
+- **Routinen und KI-Einschätzung:** Pause, Nachhol-Fenster, Empfänger; KI-Aufgabe und Prompt
 - **Panel-Version:** tägliche Prüfung zu einer festen Zeit, optionaler Push, Vorabversionen und automatische Installation über HACS (den Neustart von Home Assistant machst du selbst)
 - **Speichern:** Änderungen im Pop-up und in den Einstellungen gelten erst mit "Speichern"; beim Schliessen mit ungespeicherten Änderungen fragt das Panel "Änderungen verwerfen?"
 
@@ -228,9 +228,9 @@ Dasselbe Panel als Karten, mit denselben Pop-ups, Fenstern und Assistenten im Vo
 |---|---|---|
 | <img src="docs/screenshots/de/overview-mobile.png" alt="Handy: Karten" width="260"> | <img src="docs/screenshots/de/popup-mobile.png" alt="Handy: Pop-up" width="260"> | <img src="docs/screenshots/de/battery-mobile.png" alt="Handy: Batterie-Verlauf" width="260"> |
 
-| Laden | Launcher | Timer-Assistent | Magic Push |
+| Laden | Launcher | Routinen-Assistent | Magic Push |
 |---|---|---|---|
-| <img src="docs/screenshots/de/charging-mobile.png" alt="Handy: ladende Geräte" width="200"> | <img src="docs/screenshots/de/launcher-mobile.png" alt="Handy: App-Launcher" width="200"> | <img src="docs/screenshots/de/timer-wizard-mobile.png" alt="Handy: Timer-Assistent" width="200"> | <img src="docs/screenshots/de/magic-wizard-mobile.png" alt="Handy: Magic-Push-Assistent" width="200"> |
+| <img src="docs/screenshots/de/charging-mobile.png" alt="Handy: ladende Geräte" width="200"> | <img src="docs/screenshots/de/launcher-mobile.png" alt="Handy: App-Launcher" width="200"> | <img src="docs/screenshots/de/routine-wizard-mobile.png" alt="Handy: Routinen-Assistent" width="200"> | <img src="docs/screenshots/de/magic-wizard-mobile.png" alt="Handy: Magic-Push-Assistent" width="200"> |
 
 ## Gut zu wissen
 

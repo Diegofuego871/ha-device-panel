@@ -23,10 +23,10 @@ const HA = {
   tools: ["#7A5AA6", "M2 19.63L13.43 8.2L12.72 7.5"],
   backup: ["#0D47A1", "M12,3A9,9 0 0,0 3,12H0L4,16L8,12H5"],
 };
-const PANEL = { timer: "#00838F", magic: "#8E24AA", log: "#4A5963" };
+const PANEL = { routine: "#00838F", magic: "#8E24AA", log: "#4A5963" };
 const SEED = JSON.stringify({
   device_panel_apps: {
-    fav: ["timer", "auto", "c1"], hidden: [], order: {}, layout: {}, updated: 1,
+    fav: ["routine", "auto", "c1"], hidden: [], order: {}, layout: {}, updated: 1,
     custom: [
       { id: "c1", name: "Mein Link", icon: "web", url: "/lovelace/x", ext: false },
       { id: "c2", name: "NAS", icon: "web", url: "https://nas.example", ext: true, favicon: PNG },
@@ -79,9 +79,9 @@ for (const lang of ["de", "en"]) {
 
     // Kopfzeile: dasselbe Symbol (HA), aber ohne Farbe
     await ev(`r.querySelector("${D}").close()`);
-    const pin = await ev(`const a = r.querySelector('.toolbar .app-pin[data-app-pin="${mobile ? "timer" : "auto"}"]'); if (!a) return null; return { d: a.querySelector("svg path")?.getAttribute("d") || "", bg: getComputedStyle(a).backgroundColor }`);
+    const pin = await ev(`const a = r.querySelector('.toolbar .app-pin[data-app-pin="${mobile ? "routine" : "auto"}"]'); if (!a) return null; return { d: a.querySelector("svg path")?.getAttribute("d") || "", bg: getComputedStyle(a).backgroundColor }`);
     const wantPin = mobile ? null : HA.auto;
-    check(`[${tag}] Kopfzeile: ${mobile ? "Timer als erster Favorit" : "Automationen mit Symbol von HA"}, ohne Farbkreis`, !!pin && (mobile || pin.d.startsWith(wantPin[1])) && pin.bg !== rgb(HA.auto[0]) && pin.bg !== rgb(PANEL.timer), JSON.stringify(pin && { ...pin, d: pin.d.slice(0, 20) }));
+    check(`[${tag}] Kopfzeile: ${mobile ? "Routine als erster Favorit" : "Automationen mit Symbol von HA"}, ohne Farbkreis`, !!pin && (mobile || pin.d.startsWith(wantPin[1])) && pin.bg !== rgb(HA.auto[0]) && pin.bg !== rgb(PANEL.routine), JSON.stringify(pin && { ...pin, d: pin.d.slice(0, 20) }));
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();
   }

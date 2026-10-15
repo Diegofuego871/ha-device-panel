@@ -1,6 +1,6 @@
 // Printscreens für die README (docs/screenshots/{de,en}/): aus dem HA-Nachbau
 // mit erfundenen Daten, Desktop hell, Handy dunkel. Aufruf: node readme-shots.mjs
-// Zum Ausprobieren: SHOTS_OUT=/pfad SHOTS_LANGS=de SHOTS_MOBILE=0 SHOTS_ONLY=settings-,timer- node readme-shots.mjs.
+// Zum Ausprobieren: SHOTS_OUT=/pfad SHOTS_LANGS=de SHOTS_MOBILE=0 SHOTS_ONLY=settings-,routine- node readme-shots.mjs.
 // Das Skript erzeugt mehr Bilder, als die README zeigt: nach dem Lauf nur die dort verwendeten Dateien nach docs/screenshots/{de,en}/
 // übernehmen (README.md und README.de.md nennen sie; verlustfrei auf 256 Farben gebracht, das spart etwa 60 % Platz). Port 8950 muss frei sein.
 // Die Grafiken zum Meldungsprinzip stehen unter docs/graphics/ (node docs/graphics/render.mjs).
@@ -153,12 +153,12 @@ for (const lang of langs) {
       if (tab) { await wait(`return !!r.querySelector(".mon-tab")`); await tap(`.mon-tab[data-key="${tab}"]`); await ev(`r.querySelector("dialog.settings .mon-tabs").scrollIntoView({ block: "start" })`); }
       await p.waitForTimeout(300);
     };
-    // Erfundene Daten: Timer, Magic-Push-Meldungen, Ladevorgänge
+    // Erfundene Daten: Routine, Magic-Push-Meldungen, Ladevorgänge
     await p.evaluate(() => {
-      const timer = (id, device, name, extra = {}) => ({ id, device_id: device, entity_id: "switch.plug", name, action: "on", back_s: null, kind: "repeat", delay_s: null, date: null, time: "06:30", repeat: "daily", weekdays: null, mday: null, enabled: true, push: false, target: null, created: Date.now() / 1000, ...extra });
-      (window.__timers ||= { list: [], seq: 1, runs: [], tests: [] }).list.push(
-        timer("aaaaaaaaaaa1", "d", "Bewässerung Morgen", { time: "06:30", back_s: 900 }),
-        timer("aaaaaaaaaaa2", "a", "Nachtlicht", { action: "off", time: "23:00", repeat: "weekly", weekdays: [0, 1, 2, 3, 4] }),
+      const routine = (id, device, name, extra = {}) => ({ id, device_id: device, entity_id: "switch.plug", name, action: "on", back_s: null, kind: "repeat", delay_s: null, date: null, time: "06:30", repeat: "daily", weekdays: null, mday: null, enabled: true, push: false, target: null, created: Date.now() / 1000, ...extra });
+      (window.__routines ||= { list: [], seq: 1, runs: [], tests: [] }).list.push(
+        routine("aaaaaaaaaaa1", "d", "Bewässerung Morgen", { time: "06:30", back_s: 900 }),
+        routine("aaaaaaaaaaa2", "a", "Nachtlicht", { action: "off", time: "23:00", repeat: "weekly", weekdays: [0, 1, 2, 3, 4] }),
       );
       const rule = (id, device, name, entity, extra = {}) => ({ id, device_id: device, entity_id: entity, name, kind: "below", value: 12, for_s: 600, message: "Meldung {value}", body: "", recover: false, recover_message: "", recover_body: "", repeat_s: 0, target: null, enabled: true, critical: false, critical_volume: 10, reset_value: null, ...extra });
       window.__opts.notify_service = "notify.mobile_app_iphone";
@@ -177,7 +177,7 @@ for (const lang of langs) {
       }
     });
     await step("settings-section-", async () => {
-      for (const id of ["devices", "look", "timers", "updates"]) {
+      for (const id of ["devices", "look", "routines", "updates"]) {
         await settingsOpen(id);
         await ev(`r.querySelector('[data-set="section"][data-id="${id}"]').scrollIntoView({ block: "start" })`);
         await shotDlg(`settings-section-${id}`, "dialog.settings");
@@ -197,24 +197,24 @@ for (const lang of langs) {
       await wait(`return r.querySelector("dialog.log-dlg")?.open`);
       await shotDlg("log", "dialog.log-dlg");
     });
-    await step("timers-all", async () => {
-      await tap('.toolbar .app-pin[data-app-pin="timer"]');
-      await wait(`return r.querySelector("dialog.tmall-dlg")?.open`);
-      await tap('dialog.tmall-dlg [data-tma="timer-fold-all"]');
-      await wait(`return r.querySelectorAll("dialog.tmall-dlg .mg-card").length >= 2`);
-      await shotDlg("timers-all", "dialog.tmall-dlg");
+    await step("routines-all", async () => {
+      await tap('.toolbar .app-pin[data-app-pin="routine"]');
+      await wait(`return r.querySelector("dialog.rtall-dlg")?.open`);
+      await tap('dialog.rtall-dlg [data-rta="routine-fold-all"]');
+      await wait(`return r.querySelectorAll("dialog.rtall-dlg .mg-card").length >= 2`);
+      await shotDlg("routines-all", "dialog.rtall-dlg");
     });
-    await step("timer-", async () => {
+    await step("routine-", async () => {
       await open("d");
-      await tap('dialog.device [data-tab="timer"]');
-      await wait(`return !!r.querySelector(".tm-root .mg-card")`);
-      await shotDlg("timer-tab", "dialog.device");
-      await tap('.tm-root [data-tm="add"]');
-      await wait(`return r.querySelector("dialog.timer-dlg")?.open`);
-      await tap('dialog.timer-dlg .mg-pick');
-      await tap('dialog.timer-dlg [data-tm="nav-next"]');
+      await tap('dialog.device [data-tab="routine"]');
+      await wait(`return !!r.querySelector(".rt-root .mg-card")`);
+      await shotDlg("routine-tab", "dialog.device");
+      await tap('.rt-root [data-rt="add"]');
+      await wait(`return r.querySelector("dialog.routine-dlg")?.open`);
+      await tap('dialog.routine-dlg .mg-pick');
+      await tap('dialog.routine-dlg [data-rt="nav-next"]');
       await p.waitForTimeout(400);
-      await shotDlg("timer-wizard", "dialog.timer-dlg");
+      await shotDlg("routine-wizard", "dialog.routine-dlg");
     });
     await step("magic-", async () => {
       await open("d");

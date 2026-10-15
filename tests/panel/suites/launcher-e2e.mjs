@@ -12,7 +12,7 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     title: "Apps", edit: "Bearbeiten", editTitle: "Apps bearbeiten", groups: ["Favoriten", "Device Panel", "Home Assistant", "Eigene"],
-    max: "Höchstens 5 Favoriten. Nimm zuerst einen anderen heraus.", none: "Keine Treffer.", auto: "Automationen", timerPin: "Timer",
+    max: "Höchstens 5 Favoriten. Nimm zuerst einen anderen heraus.", none: "Keine Treffer.", auto: "Automationen", routinePin: "Routinen",
     errName: "Bitte einen Namen eingeben.", errPage: 'Die Seite muss mit "/" beginnen, zum Beispiel /config/automation/dashboard.',
     errExt: "Die Adresse muss mit https:// oder http:// beginnen.", labelPage: "Seite in Home Assistant", labelAddr: "Adresse",
     formNew: "Eigene App", formEdit: "Eigene App ändern", resetDone: "Auf Standard zurückgesetzt.", undo: "Rückgängig", removed: "Kamera Eingang gelöscht.",
@@ -20,7 +20,7 @@ const TEXT = {
   },
   en: {
     title: "Apps", edit: "Edit", editTitle: "Edit apps", groups: ["Favorites", "Device Panel", "Home Assistant", "Custom"],
-    max: "At most 5 favorites. Remove another one first.", none: "No matches.", auto: "Automations", timerPin: "Timers",
+    max: "At most 5 favorites. Remove another one first.", none: "No matches.", auto: "Automations", routinePin: "Routines",
     errName: "Please enter a name.", errPage: 'The page must start with "/", for example /config/automation/dashboard.',
     errExt: "The address must start with https:// or http://.", labelPage: "Page in Home Assistant", labelAddr: "Address",
     formNew: "Custom app", formEdit: "Edit custom app", resetDone: "Reset to default.", undo: "Undo", removed: "Kamera Eingang deleted.",
@@ -43,7 +43,10 @@ const TEXT = {
   check(`Bereinigen: höchstens ${MAX_FAV} Favoriten, nur Texte, keine Doppelten`, s.fav.length === MAX_FAV && s.fav.every((x) => typeof x === "string") && JSON.stringify(s.order.ha) === '["q","r"]' && !("evil" in s.order) && JSON.stringify(s.hidden) === '["x"]');
   check("Bereinigen: Darstellung, unbekanntes Symbol, ungültige und leere eigene Apps",
     s.layout.desktop === "list" && s.layout.phone === "grid" && s.custom.length === 1 && s.custom[0].name === "Kamera" && s.custom[0].icon === "web");
-  check("Bereinigen: ohne Angaben der Standard (Timer ist Favorit)", JSON.stringify(sanitizeApps(null).fav) === '["timer"]' && sanitizeApps("x").custom.length === 0);
+  check("Bereinigen: ohne Angaben der Standard (Routine ist Favorit)", JSON.stringify(sanitizeApps(null).fav) === '["routine"]' && sanitizeApps("x").custom.length === 0);
+  // Umbenennung Timer → Routine (2.55.0): die App hiess vorher "timer"; Favoriten, Ausgeblendetes und Reihenfolge behalten sie
+  const legacy = sanitizeApps({ fav: ["timer", "magic"], hidden: ["timer", "log"], order: { panel: ["log", "timer"] }, custom: [], layout: {}, updated: 1 });
+  check("Bereinigen: alte App \"timer\" heisst \"routine\" (Favorit, Ausgeblendetes, Reihenfolge)", JSON.stringify([legacy.fav, legacy.hidden, legacy.order.panel]) === JSON.stringify([["routine", "magic"], ["routine", "log"], ["log", "routine"]]), JSON.stringify(legacy));
 }
 
 for (const lang of ["de", "en"]) {
@@ -77,9 +80,9 @@ for (const lang of ["de", "en"]) {
     const shot = (name) => p.screenshot({ path: `${outDir}/launcher-${name}-${lang}-${mobile ? "mobile" : "desktop"}.png` });
     const closeLauncher = async () => { await ev(`r.host._apps.close()`); await wait(`return !r.querySelector("${D}").open`); };
 
-    // --- Kopfzeile: Timer als Favorit, Launcher-Knopf, Zahnrad ganz rechts
-    check(`[${tag}] Kopfzeile: Timer-Favorit, Launcher-Knopf, Zahnrad zuletzt`, await ev(`const t = [...r.querySelectorAll(".toolbar .app-pin, .toolbar .apps-btn, .toolbar .gear-btn")]; return t.length === 3 && t[0].dataset.appPin === "timer" && t[1].classList.contains("apps-btn") && t[2].classList.contains("gear-btn") && r.querySelector(".toolbar").lastElementChild === t[2]`));
-    check(`[${tag}] Timer-Knopf mit Beschriftung "${T.timerPin}", Launcher-Knopf mit "${T.title}"`, await ev(`return r.querySelector(".toolbar .app-pin").getAttribute("aria-label") === ${JSON.stringify(T.timerPin)} && r.querySelector(".apps-btn").getAttribute("aria-label") === ${JSON.stringify(T.title)}`));
+    // --- Kopfzeile: Routine als Favorit, Launcher-Knopf, Zahnrad ganz rechts
+    check(`[${tag}] Kopfzeile: Routinen-Favorit, Launcher-Knopf, Zahnrad zuletzt`, await ev(`const t = [...r.querySelectorAll(".toolbar .app-pin, .toolbar .apps-btn, .toolbar .gear-btn")]; return t.length === 3 && t[0].dataset.appPin === "routine" && t[1].classList.contains("apps-btn") && t[2].classList.contains("gear-btn") && r.querySelector(".toolbar").lastElementChild === t[2]`));
+    check(`[${tag}] Routinen-Knopf mit Beschriftung "${T.routinePin}", Launcher-Knopf mit "${T.title}"`, await ev(`return r.querySelector(".toolbar .app-pin").getAttribute("aria-label") === ${JSON.stringify(T.routinePin)} && r.querySelector(".apps-btn").getAttribute("aria-label") === ${JSON.stringify(T.title)}`));
     check(`[${tag}] Knöpfe mindestens ${mobile ? 38 : 42} px gross`, await ev(`return [...r.querySelectorAll(".toolbar .app-pin, .toolbar .apps-btn, .toolbar .gear-btn")].every((e) => { const b = e.getBoundingClientRect(); return b.width >= ${mobile ? 38 : 42} && b.height >= ${mobile ? 38 : 42}; })`));
 
     // --- Launcher öffnen
@@ -87,30 +90,30 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Launcher offen: Knopf aktiv, aria-expanded`, await ev(`const b = r.querySelector(".apps-btn"); return b.classList.contains("on") && b.getAttribute("aria-expanded") === "true"`));
     // ohne eigene Apps fehlt der Abschnitt "Eigene" (2.34.0)
     check(`[${tag}] Titel "${T.title}", Gruppen ${JSON.stringify(T.groups.slice(0, 3))}`, (await text(`${D} .ap-title`)) === T.title && JSON.stringify(await ev(`return [...r.querySelectorAll("${D} .ap-h")].map((h) => h.firstChild.textContent.trim())`)) === JSON.stringify(T.groups.slice(0, 3)));
-    check(`[${tag}] Device Panel: Magic Push, Protokoll (Timer steht schon bei den Favoriten); Home Assistant: ${mobile ? 6 : 8} Kacheln, "Alle 12"`, await ev(`const g = [...r.querySelectorAll("${D} .ap-grid")]; return g[1].children.length === 2 && g[2].children.length === ${mobile ? 6 : 8} && /12/.test(r.querySelector("${D} .ap-more").textContent)`));
+    check(`[${tag}] Device Panel: Magic Push, Protokoll (Routine steht schon bei den Favoriten); Home Assistant: ${mobile ? 6 : 8} Kacheln, "Alle 12"`, await ev(`const g = [...r.querySelectorAll("${D} .ap-grid")]; return g[1].children.length === 2 && g[2].children.length === ${mobile ? 6 : 8} && /12/.test(r.querySelector("${D} .ap-more").textContent)`));
     const geo = await ev(`const d = r.querySelector("${D}").getBoundingClientRect(), a = r.querySelector(".apps-btn").getBoundingClientRect(); return [Math.round(d.left), Math.round(d.width), Math.round(d.top), Math.round(d.bottom), Math.round(a.bottom), Math.round(a.right), innerWidth, innerHeight]`);
     if (mobile) check(`[${tag}] Handy: Blatt über die ganze Breite, unten`, geo[0] === 0 && geo[1] === geo[6] && geo[3] === geo[7], JSON.stringify(geo));
     else check(`[${tag}] Desktop: Fenster unter dem Knopf, nicht über den Rand`, geo[2] >= geo[4] && geo[0] + geo[1] <= geo[6] - 8 && geo[0] >= 8 && geo[1] <= 450, JSON.stringify(geo));
-    check(`[${tag}] Favoriten: nur Timer; in der normalen Ansicht keine Herzen an den Apps, ein einziges Herz hinter "${T.groups[0]}"`, await ev(`return r.querySelectorAll("${D} .ap-grid")[0].children.length === 1 && r.querySelector("${D} .ap-grid .ap-tile").classList.contains("pin") && r.querySelectorAll('${D} [data-ap="fav"]').length === 0 && r.querySelectorAll("${D} .ap-h .ap-hh svg").length === 1 && r.querySelector("${D} .ap-h").lastElementChild.classList.contains("ap-hh")`));
+    check(`[${tag}] Favoriten: nur Routine; in der normalen Ansicht keine Herzen an den Apps, ein einziges Herz hinter "${T.groups[0]}"`, await ev(`return r.querySelectorAll("${D} .ap-grid")[0].children.length === 1 && r.querySelector("${D} .ap-grid .ap-tile").classList.contains("pin") && r.querySelectorAll('${D} [data-ap="fav"]').length === 0 && r.querySelectorAll("${D} .ap-h .ap-hh svg").length === 1 && r.querySelector("${D} .ap-h").lastElementChild.classList.contains("ap-hh")`));
     await shot("1-launcher");
 
     // --- Favoriten (nur im Bearbeiten-Modus): Herz, Kopfzeile, Handy nur der erste, Speichern bei HA
     await tap(`${D} [data-ap="edit"]`);
     const heartOf = (id) => `${D} [data-ap-box="ha"] [data-ap="fav"][data-id="${id}"]`;
     await tap(heartOf("auto"));
-    check(`[${tag}] Herz an "${T.auto}": zweiter Favorit, ${mobile ? "Kopfzeile am Handy bleibt bei einem Knopf" : "zwei Knöpfe in der Kopfzeile"}`, JSON.stringify(await pins()) === JSON.stringify(mobile ? ["timer"] : ["timer", "auto"]), JSON.stringify(await pins()));
+    check(`[${tag}] Herz an "${T.auto}": zweiter Favorit, ${mobile ? "Kopfzeile am Handy bleibt bei einem Knopf" : "zwei Knöpfe in der Kopfzeile"}`, JSON.stringify(await pins()) === JSON.stringify(mobile ? ["routine"] : ["routine", "auto"]), JSON.stringify(await pins()));
     await p.waitForTimeout(700);
     const sc = await setCalls();
-    check(`[${tag}] bei HA gespeichert (Benutzerdaten, Favoriten in Reihenfolge)`, sc.length >= 1 && JSON.stringify(sc.at(-1).value.fav) === '["timer","auto"]', JSON.stringify(sc.at(-1)?.value?.fav));
+    check(`[${tag}] bei HA gespeichert (Benutzerdaten, Favoriten in Reihenfolge)`, sc.length >= 1 && JSON.stringify(sc.at(-1).value.fav) === '["routine","auto"]', JSON.stringify(sc.at(-1)?.value?.fav));
     for (const id of ["scene", "script", "helper"]) await tap(heartOf(id));
-    check(`[${tag}] fünf Favoriten: ${mobile ? "Kopfzeile am Handy nur der erste" : "fünf Knöpfe in der Kopfzeile, Zahnrad bleibt rechts"}`, JSON.stringify(await pins()) === JSON.stringify(mobile ? ["timer"] : ["timer", "auto", "scene", "script", "helper"]) && (await ev(`return r.querySelector(".toolbar").lastElementChild.classList.contains("gear-btn")`)), JSON.stringify(await pins()));
+    check(`[${tag}] fünf Favoriten: ${mobile ? "Kopfzeile am Handy nur der erste" : "fünf Knöpfe in der Kopfzeile, Zahnrad bleibt rechts"}`, JSON.stringify(await pins()) === JSON.stringify(mobile ? ["routine"] : ["routine", "auto", "scene", "script", "helper"]) && (await ev(`return r.querySelector(".toolbar").lastElementChild.classList.contains("gear-btn")`)), JSON.stringify(await pins()));
     check(`[${tag}] fünf Favoriten: Herz an den übrigen Apps gesperrt`, await ev(`return r.querySelector('${heartOf("dev")}').classList.contains("dis")`));
     // aria-disabled: Playwright tippt nicht darauf, ein Benutzer schon (Hinweis erscheint)
     await (await handle(heartOf("dev"))).click({ force: true });
     check(`[${tag}] sechster Favorit: Hinweis "${T.max}", Favoriten unverändert`, (await text(`${D} .ap-snack`)) === T.max && (await data()).fav.length === 5, await text(`${D} .ap-snack`));
     await tap(`${D} [data-ap="done"]`);
     check(`[${tag}] Normale Ansicht: kein Strich, kein Hinweis zur Kopfzeile am Handy, keine Herzen; fünf Favoriten als Kacheln`, await ev(`return !r.querySelector("${D} .ap-vl, ${D} .ap-hline, ${D} .ap-fav, ${D} .ap-note") && r.querySelectorAll('${D} [data-ap="fav"]').length === 0 && r.querySelectorAll("${D} .ap-grid")[0].children.length === 5`));
-    check(`[${tag}] Favoriten stehen nur bei den Favoriten, nicht noch einmal in ihrer Gruppe`, await ev(`return ["timer", "auto", "scene", "script", "helper"].every((id) => r.querySelectorAll('${D} [data-ap="open"][data-id="' + id + '"]').length === 1) && r.querySelectorAll("${D} .ap-grid")[1].children.length === 2`));
+    check(`[${tag}] Favoriten stehen nur bei den Favoriten, nicht noch einmal in ihrer Gruppe`, await ev(`return ["routine", "auto", "scene", "script", "helper"].every((id) => r.querySelectorAll('${D} [data-ap="open"][data-id="' + id + '"]').length === 1) && r.querySelectorAll("${D} .ap-grid")[1].children.length === 2`));
     await shot("2-fuenf-favoriten");
 
     // --- Suche
@@ -123,7 +126,7 @@ for (const lang of ["de", "en"]) {
     await (await handle(`${D} .ap-q`)).fill("");
     check(`[${tag}] Suche leer: wieder alle Gruppen`, await ev(`return r.querySelectorAll("${D} .ap-h").length === 3`));
 
-    // --- Öffnen: HA-Seite (Navigation), Protokoll, Magic Push, Timer
+    // --- Öffnen: HA-Seite (Navigation), Protokoll, Magic Push, Routine
     await tap(`${D} .ap-grid [data-ap="open"][data-id="auto"]`);
     check(`[${tag}] Tipp auf "${T.auto}": Seite von HA, Launcher zu`, (await wait(`return !r.querySelector("${D}").open`)) && new URL(p.url()).pathname === "/config/automation/dashboard", p.url());
     await open();
@@ -137,9 +140,9 @@ for (const lang of ["de", "en"]) {
     await p.waitForTimeout(800);
     await tap('dialog.settings [data-set="close"]');
     await wait(`return !r.querySelector("dialog.settings").open`);
-    await tap(".toolbar .app-pin[data-app-pin=\"timer\"]");
-    check(`[${tag}] Timer-Knopf in der Kopfzeile öffnet "Alle Timer"`, await wait(`return r.querySelector("dialog.tmall-dlg")?.open`));
-    await ev(`r.querySelector("dialog.tmall-dlg").close()`);
+    await tap(".toolbar .app-pin[data-app-pin=\"routine\"]");
+    check(`[${tag}] Routinen-Knopf in der Kopfzeile öffnet "Alle Routinen"`, await wait(`return r.querySelector("dialog.rtall-dlg")?.open`));
+    await ev(`r.querySelector("dialog.rtall-dlg").close()`);
 
     // --- Bearbeiten-Modus
     await open();
@@ -163,8 +166,8 @@ for (const lang of ["de", "en"]) {
     await handleBtn.focus();
     await p.keyboard.press("ArrowUp");
     d = await data();
-    check(`[${tag}] Pfeiltaste am Griff: Automationen auf Platz 1`, d.fav[0] === "auto" && d.fav[1] === "timer", JSON.stringify(d.fav));
-    check(`[${tag}] ${mobile ? "Handy: in der Kopfzeile steht jetzt nur Automationen" : "Desktop: Kopfzeile folgt der Reihenfolge"}`, JSON.stringify(await pins()) === JSON.stringify(mobile ? ["auto"] : ["auto", "timer", "script", "helper"]), JSON.stringify(await pins()));
+    check(`[${tag}] Pfeiltaste am Griff: Automationen auf Platz 1`, d.fav[0] === "auto" && d.fav[1] === "routine", JSON.stringify(d.fav));
+    check(`[${tag}] ${mobile ? "Handy: in der Kopfzeile steht jetzt nur Automationen" : "Desktop: Kopfzeile folgt der Reihenfolge"}`, JSON.stringify(await pins()) === JSON.stringify(mobile ? ["auto"] : ["auto", "routine", "script", "helper"]), JSON.stringify(await pins()));
     check(`[${tag}] Fokus bleibt am Griff`, await ev(`return r.activeElement?.dataset?.id === "auto" && r.activeElement.hasAttribute("data-ap-drag")`));
     if (!mobile) {
       // Ziehen mit der Maus: "helper" über "auto"
@@ -235,7 +238,7 @@ for (const lang of ["de", "en"]) {
     // Externe App als Favorit: Kopfzeile zeigt einen Verweis
     await open();
     await tap(`${D} [data-ap="edit"]`);
-    // vier Favoriten (timer, auto, script, helper): einer ist frei
+    // vier Favoriten (routine, auto, script, helper): einer ist frei
     await tap(`${D} [data-ap-box="own"] [data-ap="fav"][data-id="${d.custom[1].id}"]`);
     d = await data();
     check(`[${tag}] externe App als Favorit (fünfter)`, d.fav.length === 5 && d.fav.includes(d.custom[1].id));
@@ -258,7 +261,7 @@ for (const lang of ["de", "en"]) {
     const before = await data();
     await tap(`${D} [data-ap="reset"]`);
     d = await data();
-    check(`[${tag}] Zurücksetzen: Favorit nur Timer, nichts ausgeblendet, eigene Apps und Darstellung bleiben`, JSON.stringify(d.fav) === '["timer"]' && d.hidden.length === 0 && d.custom.length === 2 && d.layout.desktop === before.layout.desktop && d.layout.phone === before.layout.phone && (await text(`${D} .ap-snack`)).startsWith(T.resetDone));
+    check(`[${tag}] Zurücksetzen: Favorit nur Routine, nichts ausgeblendet, eigene Apps und Darstellung bleiben`, JSON.stringify(d.fav) === '["routine"]' && d.hidden.length === 0 && d.custom.length === 2 && d.layout.desktop === before.layout.desktop && d.layout.phone === before.layout.phone && (await text(`${D} .ap-snack`)).startsWith(T.resetDone));
     await tap(`${D} .ap-snack [data-ap="snack"]`);
     check(`[${tag}] Rückgängig stellt die Favoriten wieder her`, JSON.stringify((await data()).fav) === JSON.stringify(before.fav));
     await tap(`${D} [data-ap="reset"]`);

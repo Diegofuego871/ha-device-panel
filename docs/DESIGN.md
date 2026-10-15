@@ -423,14 +423,14 @@ HA-Nachbau prüfen.
   (Abbrechen, Kreuz, Hintergrund, Escape, Geräteseite) zeigt dasselbe mittige Pop-up wie Magic Push (`dialog.discard-dlg`,
   `.dd-card`, `.dd-btns`), Fokus auf "Weiter bearbeiten". Einzelaktionen (umbenennen, ausblenden, Listenaktionen) bleiben sofort.
 
-## Timer (seit 2.21.0, docs/mockups/timer-v1)
+## Routinen (seit 2.21.0, docs/mockups/timer-v1; bis 2.54 hiessen sie Timer)
 
-- Reiter "Timer" im Popup: Uhr-Karten (`.tm-clock`, grosse Uhrzeit, Name, Ergebnis, Wochentage `.tm-days`, Zeile "nächster Lauf"
-  mit Bearbeiten/Ausführen/Löschen); Countdown mit Ring. Neuer Timer: gestrichelte Fläche "Neuer Timer".
-- Assistent im eigenen Fenster wie Magic Push (`dialog.magic-dlg.timer-dlg`, vier Schritte); Wahl in Reiterform nur über
-  `.sub-tabs`/`.mon-tabs` mit Kapsel (Regel Auswahlknöpfe), Wochentage als runde Knöpfe `.tm-wd`, Uhrzeit und Datum als
-  `.tm-timein`/`.tm-datein`. Push als Schalter mit Vorschau der Mitteilung.
-- Einstellungen: Abschnitt "Timer" gleich aufgebaut wie die Magic-Push-Übersicht (`mg-dcard` je Gerät, Suche, Filter
+- Reiter "Routinen" im Popup: Uhr-Karten (`.rt-clock`, grosse Uhrzeit, Name, Ergebnis, Wochentage `.rt-days`, Zeile "nächster Lauf"
+  mit Bearbeiten/Ausführen/Löschen); Countdown mit Ring. Neue Routine: gestrichelte Fläche "Neue Routine".
+- Assistent im eigenen Fenster wie Magic Push (`dialog.magic-dlg.routine-dlg`, vier Schritte); Wahl in Reiterform nur über
+  `.sub-tabs`/`.mon-tabs` mit Kapsel (Regel Auswahlknöpfe), Wochentage als runde Knöpfe `.rt-wd`, Uhrzeit und Datum als
+  `.rt-timein`/`.rt-datein`. Push als Schalter mit Vorschau der Mitteilung.
+- Einstellungen: Abschnitt "Routinen" gleich aufgebaut wie die Magic-Push-Übersicht (`mg-dcard` je Gerät, Suche, Filter
   Alle/Aktiv/Aus/Läuft, "Alle einklappen"), darunter "Allgemein" mit den drei Optionen.
 - Reiterleiste: fünf Reiter; Handy (bis 600 px) mit Symbol über dem Text (`::before`, Emoji), Text unverändert.
 
@@ -440,9 +440,9 @@ HA-Nachbau prüfen.
 - Chip "Favoriten": nur ein rotes Herz (42 px breit, ohne Text und Zahl), aktiv mit roter Umrandung und leicht rotem Grund;
   Standard gleich nach "Alle", nicht angeheftet.
 
-## Fenster "Alle Timer" (seit 2.23.0)
+## Fenster "Alle Routinen" (seit 2.23.0)
 
-- Stoppuhr (42 px rund wie Protokoll und Zahnrad; Timer haben überall dieses Symbol, die Glocke gehört Magic Push) in der Kopfzeile; öffnet ein Vollbild-Fenster (auch auf dem Desktop) mit der Übersicht
+- Stoppuhr (42 px rund wie Protokoll und Zahnrad; Routinen haben überall dieses Symbol, die Glocke gehört Magic Push) in der Kopfzeile; öffnet ein Vollbild-Fenster (auch auf dem Desktop) mit der Übersicht
   der Einstellungen (Suche, Filter, Karten pro Gerät mit Gerätename), nur Bearbeiten und Ein/Aus.
 
 ## Magic Push: Rückfrage beim Schliessen (seit 2.16.0)

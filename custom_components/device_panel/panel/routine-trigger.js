@@ -1,10 +1,10 @@
 /**
- * Timer mit Auslöser (seit 2.54.0, docs/mockups/timer-trigger-v1 und timer-trigger-v2): Ein Timer schaltet statt zu einer Uhrzeit
+ * Routine mit Auslöser (seit 2.54.0, docs/mockups/timer-trigger-v1 und timer-trigger-v2): Eine Routine schaltet statt zu einer Uhrzeit
  * durch Bedingungen auf beliebigen Entitäten, und auch das Zurückschalten kann durch eine Uhrzeit oder einen Auslöser geschehen.
  * Die Bedingungen sind dieselben wie bei Magic Push (über, unter, ist, ändert sich; Und/Oder mit einer Ebene Gruppen).
  *
- * Diese Datei hängt ihre Methoden an die Klasse TimerUi (timers.js): Bedingungs-Editor, Seiten "Wann: Auslöser" und "Zurückschalten",
- * Satz der Bedingungen. Wer sie lädt, ist timers.js (mit derselben Versionsnummer wie das Panel, damit der Zwischenspeicher
+ * Diese Datei hängt ihre Methoden an die Klasse RoutineUi (routines.js): Bedingungs-Editor, Seiten "Wann: Auslöser" und "Zurückschalten",
+ * Satz der Bedingungen. Wer sie lädt, ist routines.js (mit derselben Versionsnummer wie das Panel, damit der Zwischenspeicher
  * des Browsers nicht eine alte Datei liefert).
  */
 
@@ -41,21 +41,21 @@ export function triggerDefaults() {
   return { conds: emptyTree(), holdS: 0, winOn: false, winFrom: "22:00", winTo: "06:00", pauseS: 60, onceTrig: false, backKind: "none", backTime: "23:30", backConds: emptyTree(), backHoldS: 0, backMaxOn: false, backMaxS: 7200 };
 }
 
-export function triggerFromTimer(tm) {
+export function triggerFromRoutine(rt) {
   return {
-    conds: tm.conditions ? treeFromServer(tm.conditions) : emptyTree(),
-    holdS: tm.hold_s || 0,
-    winOn: Boolean(tm.window),
-    winFrom: tm.window?.from || "22:00",
-    winTo: tm.window?.to || "06:00",
-    pauseS: tm.pause_s || 60,
-    onceTrig: Boolean(tm.once_trigger),
-    backKind: tm.back_kind || (tm.back_s ? "duration" : "none"),
-    backTime: tm.back_time || "23:30",
-    backConds: tm.back_conditions ? treeFromServer(tm.back_conditions) : emptyTree(),
-    backHoldS: tm.back_hold_s || 0,
-    backMaxOn: Boolean(tm.back_max_s),
-    backMaxS: tm.back_max_s || 7200,
+    conds: rt.conditions ? treeFromServer(rt.conditions) : emptyTree(),
+    holdS: rt.hold_s || 0,
+    winOn: Boolean(rt.window),
+    winFrom: rt.window?.from || "22:00",
+    winTo: rt.window?.to || "06:00",
+    pauseS: rt.pause_s || 60,
+    onceTrig: Boolean(rt.once_trigger),
+    backKind: rt.back_kind || (rt.back_s ? "duration" : "none"),
+    backTime: rt.back_time || "23:30",
+    backConds: rt.back_conditions ? treeFromServer(rt.back_conditions) : emptyTree(),
+    backHoldS: rt.back_hold_s || 0,
+    backMaxOn: Boolean(rt.back_max_s),
+    backMaxS: rt.back_max_s || 7200,
   };
 }
 
@@ -85,10 +85,10 @@ function leafValid(leaf, tree) {
 }
 export const treeValid = (tree) => leavesOf(tree).length > 0 && leavesOf(tree).every((l) => leafValid(l, tree));
 
-// --- Methoden für TimerUi ---------------------------------------------------------------------------
+// --- Methoden für RoutineUi ---------------------------------------------------------------------------
 
 export const triggerMethods = {
-  // Angaben zu Entitäten (Name, Art, Einheit, Zustände) aus dem Server (Timer-Liste, Suche) für Sätze und Karten
+  // Angaben zu Entitäten (Name, Art, Einheit, Zustände) aus dem Server (Routinen-Liste, Suche) für Sätze und Karten
   learnEnts(list) {
     this._ents ||= {};
     for (const e of Array.isArray(list) ? list : Object.values(list || {})) if (e?.entity_id) this._ents[e.entity_id] = e;
@@ -114,11 +114,11 @@ export const triggerMethods = {
     const e = this.entDesc(leaf.entity_id);
     const name = withName ? e?.name || leaf.entity_id : "";
     let text;
-    if (leaf.kind === "change") text = t("tmCondSentChange", name);
+    if (leaf.kind === "change") text = t("rtCondSentChange", name);
     else if (leaf.kind === "above" || leaf.kind === "below") {
       const unit = e?.unit ? ` ${e.unit}` : "";
-      text = t(leaf.kind === "above" ? "tmCondSentAbove" : "tmCondSentBelow", name, `${this.fmtNum(Number(String(leaf.value).replace(",", ".")))}${unit}`);
-    } else text = t("tmCondSentIs", name, this.stateLabel(e, leaf.value));
+      text = t(leaf.kind === "above" ? "rtCondSentAbove" : "rtCondSentBelow", name, `${this.fmtNum(Number(String(leaf.value).replace(",", ".")))}${unit}`);
+    } else text = t("rtCondSentIs", name, this.stateLabel(e, leaf.value));
     return text.trim();
   },
 
@@ -127,7 +127,7 @@ export const triggerMethods = {
     const t = (k, ...a) => this.t(k, ...a);
     const node = (n, nested) => {
       const parts = n.items.map((i) => (i.items ? node(i, true) : this.leafText(i)));
-      const text = parts.join(` ${t(n.op === "or" ? "tmCondOr" : "tmCondAnd")} `);
+      const text = parts.join(` ${t(n.op === "or" ? "rtCondOr" : "rtCondAnd")} `);
       return nested && parts.length > 1 ? `(${text})` : text;
     };
     return tree?.items?.length ? node(tree, false) : "";
@@ -156,20 +156,20 @@ export const triggerMethods = {
     let html = "";
     if (leaves.length >= 2) {
       html += this.tabsHtml([
-        { on: tree.op === "and", attrs: `data-tm="c-op" data-w="${which}" data-v="and"`, label: t("tmCondOpAnd") },
-        { on: tree.op === "or", attrs: `data-tm="c-op" data-w="${which}" data-v="or"`, label: t("tmCondOpOr") },
+        { on: tree.op === "and", attrs: `data-rt="c-op" data-w="${which}" data-v="and"`, label: t("rtCondOpAnd") },
+        { on: tree.op === "or", attrs: `data-rt="c-op" data-w="${which}" data-v="or"`, label: t("rtCondOpOr") },
       ]);
-      html += `<div class="mg-sumline"><b>${esc(t("tmCondWhen"))}</b> ${esc(this.treeText(tree))}</div>`;
+      html += `<div class="mg-sumline"><b>${esc(t("rtCondWhen"))}</b> ${esc(this.treeText(tree))}</div>`;
     }
     tree.items.forEach((item, i) => {
-      if (i) html += `<div class="mg-join">${esc(t(tree.op === "or" ? "tmCondOr" : "tmCondAnd"))}</div>`;
+      if (i) html += `<div class="mg-join">${esc(t(tree.op === "or" ? "rtCondOr" : "rtCondAnd"))}</div>`;
       html += item.items ? this.groupHtml(which, item) : this.leafHtml(which, item);
     });
     if (c.add) return `${html}${this.pickerHtml(which)}`;
     if (leaves.length === 1 && leaves[0].kind === "change") return html;
-    if (leaves.length >= LEAF_MAX) return `${html}<p class="mg-hint">${esc(t("tmCondLimit", LEAF_MAX))}</p>`;
-    html += `<div class="mg-adds"><button type="button" class="mg-add" data-tm="c-add" data-w="${which}">${this.h.mdi("plus", 18)}${esc(t("tmCondAdd"))}</button>`;
-    if (tree.items.filter((i) => i.items).length < GROUP_MAX && leaves.length) html += `<button type="button" class="mg-add" data-tm="c-addgroup" data-w="${which}">${this.h.mdi("plus", 18)}${esc(t("tmCondAddGroup"))}</button>`;
+    if (leaves.length >= LEAF_MAX) return `${html}<p class="mg-hint">${esc(t("rtCondLimit", LEAF_MAX))}</p>`;
+    html += `<div class="mg-adds"><button type="button" class="mg-add" data-rt="c-add" data-w="${which}">${this.h.mdi("plus", 18)}${esc(t("rtCondAdd"))}</button>`;
+    if (tree.items.filter((i) => i.items).length < GROUP_MAX && leaves.length) html += `<button type="button" class="mg-add" data-rt="c-addgroup" data-w="${which}">${this.h.mdi("plus", 18)}${esc(t("rtCondAddGroup"))}</button>`;
     return `${html}</div>`;
   },
 
@@ -178,16 +178,16 @@ export const triggerMethods = {
     const t = (k, ...a) => this.t(k, ...a);
     const tabs = this.tabsHtml(
       [
-        { on: g.op === "and", attrs: `data-tm="c-gop" data-w="${which}" data-group="${esc(g.uid)}" data-uid="${esc(g.uid)}" data-v="and"`, label: t("tmCondGroupAll") },
-        { on: g.op === "or", attrs: `data-tm="c-gop" data-w="${which}" data-group="${esc(g.uid)}" data-uid="${esc(g.uid)}" data-v="or"`, label: t("tmCondGroupAny") },
+        { on: g.op === "and", attrs: `data-rt="c-gop" data-w="${which}" data-group="${esc(g.uid)}" data-uid="${esc(g.uid)}" data-v="and"`, label: t("rtCondGroupAll") },
+        { on: g.op === "or", attrs: `data-rt="c-gop" data-w="${which}" data-group="${esc(g.uid)}" data-uid="${esc(g.uid)}" data-v="or"`, label: t("rtCondGroupAny") },
       ],
       "mg-mini"
     );
-    const inner = g.items.map((lf, i) => `${i ? `<div class="mg-join">${esc(t(g.op === "or" ? "tmCondOr" : "tmCondAnd"))}</div>` : ""}${this.leafHtml(which, lf)}`).join("");
+    const inner = g.items.map((lf, i) => `${i ? `<div class="mg-join">${esc(t(g.op === "or" ? "rtCondOr" : "rtCondAnd"))}</div>` : ""}${this.leafHtml(which, lf)}`).join("");
     const full = leavesOf(this.treeOf(which)).length >= LEAF_MAX;
-    return `<div class="mg-group"><div class="mg-ghead"><b>${esc(t("tmCondGroup"))}</b>${tabs}
-      <button type="button" class="mg-xbtn" data-tm="c-gdel" data-w="${which}" data-uid="${esc(g.uid)}" title="${esc(t("tmCondRemoveGroup"))}" aria-label="${esc(t("tmCondRemoveGroup"))}">${this.h.mdi("close", 22)}</button></div>
-      ${inner}${full ? "" : `<button type="button" class="linkbtn mg-addin" data-tm="c-addin" data-w="${which}" data-uid="${esc(g.uid)}">${esc(t("tmCondAddIn"))}</button>`}</div>`;
+    return `<div class="mg-group"><div class="mg-ghead"><b>${esc(t("rtCondGroup"))}</b>${tabs}
+      <button type="button" class="mg-xbtn" data-rt="c-gdel" data-w="${which}" data-uid="${esc(g.uid)}" title="${esc(t("rtCondRemoveGroup"))}" aria-label="${esc(t("rtCondRemoveGroup"))}">${this.h.mdi("close", 22)}</button></div>
+      ${inner}${full ? "" : `<button type="button" class="linkbtn mg-addin" data-rt="c-addin" data-w="${which}" data-uid="${esc(g.uid)}">${esc(t("rtCondAddIn"))}</button>`}</div>`;
   },
 
   leafHtml(which, lf) {
@@ -197,17 +197,17 @@ export const triggerMethods = {
     const open = this.cstate(which).cur === lf.uid;
     const tree = this.treeOf(which);
     const now = e ? this.entValue(e) : "";
-    const sub = [leafValid(lf, tree) ? this.leafText(lf, false) : t("tmCondIncomplete"), now ? t("tmCondNow", now) : ""].filter(Boolean).join(" · ");
+    const sub = [leafValid(lf, tree) ? this.leafText(lf, false) : t("rtCondIncomplete"), now ? t("rtCondNow", now) : ""].filter(Boolean).join(" · ");
     return `<div class="mg-lcard${open ? " open" : ""}"><div class="mg-lhead">
-      <button type="button" class="mg-lmain" data-tm="c-open" data-w="${which}" data-uid="${esc(lf.uid)}" aria-expanded="${open}"><span class="mg-ic" aria-hidden="true">${this.entIcon(e)}</span>
+      <button type="button" class="mg-lmain" data-rt="c-open" data-w="${which}" data-uid="${esc(lf.uid)}" aria-expanded="${open}"><span class="mg-ic" aria-hidden="true">${this.entIcon(e)}</span>
         <span class="mg-t"><b>${esc(e?.name || lf.entity_id)}</b><small>${esc(sub)}</small></span>${this.chevHtml(open)}</button>
-      <button type="button" class="mg-xbtn" data-tm="c-del" data-w="${which}" data-uid="${esc(lf.uid)}" title="${esc(t("tmCondRemove"))}" aria-label="${esc(t("tmCondRemove"))}">${this.h.mdi("close", 22)}</button></div>
+      <button type="button" class="mg-xbtn" data-rt="c-del" data-w="${which}" data-uid="${esc(lf.uid)}" title="${esc(t("rtCondRemove"))}" aria-label="${esc(t("rtCondRemove"))}">${this.h.mdi("close", 22)}</button></div>
       ${open ? this.leafEditorHtml(which, lf, e) : ""}</div>`;
   },
 
   entValue(e) {
     if (!e) return "";
-    if (!e.available) return this.t("tmUnreachable");
+    if (!e.available) return this.t("rtUnreachable");
     return e.kind === "number" && e.unit ? `${e.value} ${e.unit}` : String(e.value ?? "");
   },
 
@@ -215,22 +215,22 @@ export const triggerMethods = {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     if (!e) return "";
-    let kinds = e.kind === "number" ? [["above", "tmCondKindAbove"], ["below", "tmCondKindBelow"], ["is", "tmCondKindIs"]] : [["is", "tmCondKindIsState"]];
-    if (sole(this.treeOf(which))) kinds = [...kinds, ["change", "tmCondKindChange"]];
-    let html = `<div class="mg-ledit">${this.tabsHtml(kinds.map(([k, label]) => ({ on: lf.kind === k, attrs: `data-tm="c-kind" data-w="${which}" data-uid="${esc(lf.uid)}" data-group="${esc(lf.uid)}" data-kind="${k}"`, label: t(label) })))}`;
+    let kinds = e.kind === "number" ? [["above", "rtCondKindAbove"], ["below", "rtCondKindBelow"], ["is", "rtCondKindIs"]] : [["is", "rtCondKindIsState"]];
+    if (sole(this.treeOf(which))) kinds = [...kinds, ["change", "rtCondKindChange"]];
+    let html = `<div class="mg-ledit">${this.tabsHtml(kinds.map(([k, label]) => ({ on: lf.kind === k, attrs: `data-rt="c-kind" data-w="${which}" data-uid="${esc(lf.uid)}" data-group="${esc(lf.uid)}" data-kind="${k}"`, label: t(label) })))}`;
     if (lf.kind === "above" || lf.kind === "below" || (lf.kind === "is" && e.kind === "number")) {
-      html += `<div class="mg-k">${esc(t("tmCondThreshold"))}${e.unit ? ` <span class="mg-unit">· ${esc(e.unit)}</span>` : ""}</div>
-        <div class="sub-tabs mg-tabs mg-stepper"><button type="button" class="sub-tab" data-tm="c-step" data-w="${which}" data-uid="${esc(lf.uid)}" data-dir="-1" aria-label="${esc(t("tmCondMinus"))}">−</button>
-        <input class="mg-valin" type="text" inputmode="decimal" data-tm="c-value" data-w="${which}" data-uid="${esc(lf.uid)}" value="${esc(lf.value)}" aria-label="${esc(t("tmCondThreshold"))}" autocomplete="off">
-        <button type="button" class="sub-tab" data-tm="c-step" data-w="${which}" data-uid="${esc(lf.uid)}" data-dir="1" aria-label="${esc(t("tmCondPlus"))}">+</button></div>`;
+      html += `<div class="mg-k">${esc(t("rtCondThreshold"))}${e.unit ? ` <span class="mg-unit">· ${esc(e.unit)}</span>` : ""}</div>
+        <div class="sub-tabs mg-tabs mg-stepper"><button type="button" class="sub-tab" data-rt="c-step" data-w="${which}" data-uid="${esc(lf.uid)}" data-dir="-1" aria-label="${esc(t("rtCondMinus"))}">−</button>
+        <input class="mg-valin" type="text" inputmode="decimal" data-rt="c-value" data-w="${which}" data-uid="${esc(lf.uid)}" value="${esc(lf.value)}" aria-label="${esc(t("rtCondThreshold"))}" autocomplete="off">
+        <button type="button" class="sub-tab" data-rt="c-step" data-w="${which}" data-uid="${esc(lf.uid)}" data-dir="1" aria-label="${esc(t("rtCondPlus"))}">+</button></div>`;
     } else if (lf.kind === "is") {
       if (e.options?.length) {
-        html += `<div class="mg-k">${esc(t("tmCondPickState"))}</div>${this.tabsHtml(e.options.map((o) => ({ on: String(lf.value) === String(o.value), attrs: `data-tm="c-state" data-w="${which}" data-uid="${esc(lf.uid)}" data-group="${esc(lf.uid)}s" data-v="${esc(o.value)}"`, label: o.label })))}`;
+        html += `<div class="mg-k">${esc(t("rtCondPickState"))}</div>${this.tabsHtml(e.options.map((o) => ({ on: String(lf.value) === String(o.value), attrs: `data-rt="c-state" data-w="${which}" data-uid="${esc(lf.uid)}" data-group="${esc(lf.uid)}s" data-v="${esc(o.value)}"`, label: o.label })))}`;
       } else {
-        html += `<div class="mg-k">${esc(t("tmCondStateFree"))}</div><input class="mg-input" type="text" data-tm="c-value" data-w="${which}" data-uid="${esc(lf.uid)}" value="${esc(lf.value)}" autocomplete="off">`;
+        html += `<div class="mg-k">${esc(t("rtCondStateFree"))}</div><input class="mg-input" type="text" data-rt="c-value" data-w="${which}" data-uid="${esc(lf.uid)}" value="${esc(lf.value)}" autocomplete="off">`;
       }
     }
-    html += `<button type="button" class="linkbtn mg-chgent" data-tm="c-ent" data-w="${which}" data-uid="${esc(lf.uid)}">${esc(t("tmCondChangeEntity"))}</button></div>`;
+    html += `<button type="button" class="linkbtn mg-chgent" data-rt="c-ent" data-w="${which}" data-uid="${esc(lf.uid)}">${esc(t("rtCondChangeEntity"))}</button></div>`;
     return html;
   },
 
@@ -239,10 +239,10 @@ export const triggerMethods = {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const c = this.cstate(which);
-    return `<div class="mg-free"><div class="mg-k">${esc(t("tmCondPickTitle"))}</div>
-      <input class="mg-input" type="search" data-tm="c-search" data-w="${which}" value="${esc(c.query)}" placeholder="${esc(t("tmCondSearch"))}" aria-label="${esc(t("tmCondSearch"))}" autocomplete="off">
-      <div data-tm-zone="cpick-${which}">${this.pickListHtml(which)}</div>
-      <button type="button" class="linkbtn" data-tm="c-cancel" data-w="${which}">${esc(t("tmCancel"))}</button></div>`;
+    return `<div class="mg-free"><div class="mg-k">${esc(t("rtCondPickTitle"))}</div>
+      <input class="mg-input" type="search" data-rt="c-search" data-w="${which}" value="${esc(c.query)}" placeholder="${esc(t("rtCondSearch"))}" aria-label="${esc(t("rtCondSearch"))}" autocomplete="off">
+      <div data-rt-zone="cpick-${which}">${this.pickListHtml(which)}</div>
+      <button type="button" class="linkbtn" data-rt="c-cancel" data-w="${which}">${esc(t("rtCancel"))}</button></div>`;
   },
 
   pickListHtml(which) {
@@ -250,11 +250,11 @@ export const triggerMethods = {
     const t = (k, ...a) => this.t(k, ...a);
     const c = this.cstate(which);
     if (c.error) return `<div class="opt-error">${esc(c.error)}</div>`;
-    if (c.loading && !c.results) return `<p class="mg-hint">${esc(t("tmCondSearching"))}</p>`;
-    if (!c.results?.length) return `<p class="mg-hint">${esc(t("tmCondSearchNone"))}</p>`;
+    if (c.loading && !c.results) return `<p class="mg-hint">${esc(t("rtCondSearching"))}</p>`;
+    if (!c.results?.length) return `<p class="mg-hint">${esc(t("rtCondSearchNone"))}</p>`;
     return `<div class="mg-list" role="listbox">${c.results
       .map(
-        (e) => `<button type="button" class="mg-opt-row" role="option" data-tm="c-pick" data-w="${which}" data-id="${esc(e.entity_id)}"><span><b>${this.entIcon(e)} ${esc(e.name)}</b><br><small>${esc([e.entity_id, e.device_name].filter(Boolean).join(" · "))}</small></span><span class="mg-freeval">${esc(this.entValue(e))}</span></button>`
+        (e) => `<button type="button" class="mg-opt-row" role="option" data-rt="c-pick" data-w="${which}" data-id="${esc(e.entity_id)}"><span><b>${this.entIcon(e)} ${esc(e.name)}</b><br><small>${esc([e.entity_id, e.device_name].filter(Boolean).join(" · "))}</small></span><span class="mg-freeval">${esc(this.entValue(e))}</span></button>`
       )
       .join("")}</div>`;
   },
@@ -277,7 +277,7 @@ export const triggerMethods = {
         c.error = this.h.errText(err);
       }
       c.loading = false;
-      const zone = this.q(`[data-tm-zone="cpick-${which}"]`);
+      const zone = this.q(`[data-rt-zone="cpick-${which}"]`);
       if (zone) zone.innerHTML = this.pickListHtml(which);
     }, query ? 250 : 0);
   },
@@ -303,11 +303,11 @@ export const triggerMethods = {
   // Klicks des Bedingungs-Editors; true, wenn behandelt
   onTriggerClick(el) {
     const w = this.wiz;
-    const tm = el.dataset.tm;
-    if (!w || (!tm?.startsWith("c-") && !["whenmode", "backkind", "hold", "pause", "bmax"].includes(tm))) return false;
+    const rt = el.dataset.rt;
+    if (!w || (!rt?.startsWith("c-") && !["whenmode", "backkind", "hold", "pause", "bmax"].includes(rt))) return false;
     const d = w.draft;
     const which = el.dataset.w;
-    switch (tm) {
+    switch (rt) {
       case "whenmode":
         d.kind = el.dataset.v === "trigger" ? "trigger" : d.kind === "trigger" ? "repeat" : d.kind;
         this.paint();
@@ -339,7 +339,7 @@ export const triggerMethods = {
     const tree = this.treeOf(which);
     const c = this.cstate(which);
     const id = el.dataset.uid;
-    switch (tm) {
+    switch (rt) {
       case "c-add":
         c.add = { group: null, change: null };
         c.query = "";
@@ -463,10 +463,10 @@ export const triggerMethods = {
   },
 
   onTriggerInput(el) {
-    const tm = el.dataset.tm;
+    const rt = el.dataset.rt;
     if (!this.wiz) return false;
     const d = this.wiz.draft;
-    switch (tm) {
+    switch (rt) {
       case "c-search": {
         const c = this.cstate(el.dataset.w);
         c.query = el.value;
@@ -506,7 +506,7 @@ export const triggerMethods = {
   onTriggerChange(el) {
     if (!this.wiz) return false;
     const d = this.wiz.draft;
-    switch (el.dataset.tm) {
+    switch (el.dataset.rt) {
       case "win-on":
         d.winOn = el.checked;
         this.paint();
@@ -539,7 +539,7 @@ export const triggerMethods = {
     const value = which === "back" ? d.backHoldS : d.holdS;
     const tree = this.treeOf(which);
     if (leavesOf(tree).length === 1 && leavesOf(tree)[0].kind === "change") return "";
-    return `<div class="mg-k">${esc(t("tmHoldLabel"))}</div>${this.tabsHtml(HOLD_PRESETS.map((s) => ({ on: value === s, attrs: `data-tm="hold" data-w="${which}" data-group="${which}" data-s="${s}"`, label: s ? this.fmtDur(s) : t("tmHoldNow") })))}`;
+    return `<div class="mg-k">${esc(t("rtHoldLabel"))}</div>${this.tabsHtml(HOLD_PRESETS.map((s) => ({ on: value === s, attrs: `data-rt="hold" data-w="${which}" data-group="${which}" data-s="${s}"`, label: s ? this.fmtDur(s) : t("rtHoldNow") })))}`;
   },
 
   // Seite "Wann", Teil Auslöser: Bedingungen, Dauer, Zeitfenster, Pause, nur einmal
@@ -547,25 +547,25 @@ export const triggerMethods = {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const d = this.wiz.draft;
-    let html = `<p class="mg-note">${esc(t("tmTrigNote"))}</p><div class="mg-k tm-sec">${esc(t("tmTrigWhen"))}</div>${this.condEditorHtml("start")}`;
-    if (!leavesOf(d.conds).length) return `${html}<p class="mg-hint">${esc(t("tmTrigNone"))}</p>`;
-    html += `<div data-tm-zone="csum-start">${this.condSumHtml("start")}</div>`;
+    let html = `<p class="mg-note">${esc(t("rtTrigNote"))}</p><div class="mg-k rt-sec">${esc(t("rtTrigWhen"))}</div>${this.condEditorHtml("start")}`;
+    if (!leavesOf(d.conds).length) return `${html}<p class="mg-hint">${esc(t("rtTrigNone"))}</p>`;
+    html += `<div data-rt-zone="csum-start">${this.condSumHtml("start")}</div>`;
     html += this.holdHtml("start");
-    html += `<div class="mg-k tm-sec">${esc(t("tmWinTitle"))}</div><p class="mg-hint">${esc(t("tmWinNote"))}</p>
-      <div class="mg-optrow"><div>${esc(t("tmWinSwitch"))}</div><label class="switch"><input type="checkbox" data-tm="win-on"${d.winOn ? " checked" : ""} aria-label="${esc(t("tmWinSwitch"))}"><span></span></label></div>`;
+    html += `<div class="mg-k rt-sec">${esc(t("rtWinTitle"))}</div><p class="mg-hint">${esc(t("rtWinNote"))}</p>
+      <div class="mg-optrow"><div>${esc(t("rtWinSwitch"))}</div><label class="switch"><input type="checkbox" data-rt="win-on"${d.winOn ? " checked" : ""} aria-label="${esc(t("rtWinSwitch"))}"><span></span></label></div>`;
     if (d.winOn) {
-      html += `<div class="tm-winrange"><input class="mg-input tm-timein" type="time" data-tm="win-from" value="${esc(d.winFrom)}" aria-label="${esc(t("tmWinFrom"))}"><span>${esc(t("tmWinTo"))}</span><input class="mg-input tm-timein" type="time" data-tm="win-to" value="${esc(d.winTo)}" aria-label="${esc(t("tmWinTo"))}"></div>`;
-      html += `<div data-tm-zone="winerr">${this.winErrHtml()}</div>`;
+      html += `<div class="rt-winrange"><input class="mg-input rt-timein" type="time" data-rt="win-from" value="${esc(d.winFrom)}" aria-label="${esc(t("rtWinFrom"))}"><span>${esc(t("rtWinTo"))}</span><input class="mg-input rt-timein" type="time" data-rt="win-to" value="${esc(d.winTo)}" aria-label="${esc(t("rtWinTo"))}"></div>`;
+      html += `<div data-rt-zone="winerr">${this.winErrHtml()}</div>`;
     }
-    html += `<div class="mg-k tm-sec">${esc(t("tmPauseTitle"))}</div><p class="mg-hint">${esc(t("tmPauseNote"))}</p>${this.tabsHtml(PAUSE_PRESETS.map((s) => ({ on: d.pauseS === s, attrs: `data-tm="pause" data-s="${s}"`, label: this.fmtDur(s) })))}`;
-    html += `<div class="mg-optrow"><div>${esc(t("tmOnceTrig"))}<small>${esc(t("tmOnceTrigNote"))}</small></div><label class="switch"><input type="checkbox" data-tm="once-trig"${d.onceTrig ? " checked" : ""} aria-label="${esc(t("tmOnceTrig"))}"><span></span></label></div>`;
+    html += `<div class="mg-k rt-sec">${esc(t("rtPauseTitle"))}</div><p class="mg-hint">${esc(t("rtPauseNote"))}</p>${this.tabsHtml(PAUSE_PRESETS.map((s) => ({ on: d.pauseS === s, attrs: `data-rt="pause" data-s="${s}"`, label: this.fmtDur(s) })))}`;
+    html += `<div class="mg-optrow"><div>${esc(t("rtOnceTrig"))}<small>${esc(t("rtOnceTrigNote"))}</small></div><label class="switch"><input type="checkbox" data-rt="once-trig"${d.onceTrig ? " checked" : ""} aria-label="${esc(t("rtOnceTrig"))}"><span></span></label></div>`;
     return html;
   },
 
   // Satz zur einzelnen Bedingung; eigene Zone, damit das Tippen im Wertfeld ihn ohne Neuzeichnen nachführt
   condSumHtml(which) {
     const tree = this.treeOf(which);
-    return leavesOf(tree).length === 1 ? `<div class="mg-sumline">${this.esc(this.t("tmCondSum", this.treeText(tree)))}</div>` : "";
+    return leavesOf(tree).length === 1 ? `<div class="mg-sumline">${this.esc(this.t("rtCondSum", this.treeText(tree)))}</div>` : "";
   },
 
   winErrHtml() {
@@ -576,8 +576,8 @@ export const triggerMethods = {
   winError() {
     const d = this.wiz.draft;
     if (!d.winOn) return "";
-    if (!/^\d{2}:\d{2}$/.test(d.winFrom || "") || !/^\d{2}:\d{2}$/.test(d.winTo || "")) return this.t("tmWinInvalid");
-    return d.winFrom === d.winTo ? this.t("tmWinSame") : "";
+    if (!/^\d{2}:\d{2}$/.test(d.winFrom || "") || !/^\d{2}:\d{2}$/.test(d.winTo || "")) return this.t("rtWinInvalid");
+    return d.winFrom === d.winTo ? this.t("rtWinSame") : "";
   },
 
   // Ist der Entwurf noch unfertig (Bedingung fehlt, Wert leer, Zeitfenster ungültig)? Dann fragt das Panel den Server nicht,
@@ -598,37 +598,37 @@ export const triggerMethods = {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const d = this.wiz.draft;
-    const kinds = [["none", "tmBackKindNone"], ["duration", "tmBackKindDuration"], ["time", "tmBackKindTime"], ["trigger", "tmBackKindTrigger"]];
-    let html = this.tabsHtml(kinds.map(([k, label]) => ({ on: d.backKind === k, attrs: `data-tm="backkind" data-v="${k}"`, label: t(label) })), "mg-two");
-    if (d.backKind === "none") return `${html}<p class="mg-note">${esc(t("tmBackNoneNote"))}</p>`;
+    const kinds = [["none", "rtBackKindNone"], ["duration", "rtBackKindDuration"], ["time", "rtBackKindTime"], ["trigger", "rtBackKindTrigger"]];
+    let html = this.tabsHtml(kinds.map(([k, label]) => ({ on: d.backKind === k, attrs: `data-rt="backkind" data-v="${k}"`, label: t(label) })), "mg-two");
+    if (d.backKind === "none") return `${html}<p class="mg-note">${esc(t("rtBackNoneNote"))}</p>`;
     if (d.backKind === "duration") {
-      html += `<div class="mg-k">${esc(t("tmBackAfter"))}</div>
-        ${this.tabsHtml(this.backPresets().map((s) => ({ on: !d.backOwn.text && d.back_s === s, attrs: `data-tm="bdur" data-s="${s}"`, label: this.fmtDur(s) })))}
-        ${this.ownHtml("back", d.backOwn, t("tmOwnTime"))}
-        ${this.backError() ? `<div class="opt-error" data-tm-err="back">${esc(this.backError())}</div>` : ""}`;
+      html += `<div class="mg-k">${esc(t("rtBackAfter"))}</div>
+        ${this.tabsHtml(this.backPresets().map((s) => ({ on: !d.backOwn.text && d.back_s === s, attrs: `data-rt="bdur" data-s="${s}"`, label: this.fmtDur(s) })))}
+        ${this.ownHtml("back", d.backOwn, t("rtOwnTime"))}
+        ${this.backError() ? `<div class="opt-error" data-rt-err="back">${esc(this.backError())}</div>` : ""}`;
     } else if (d.backKind === "time") {
-      html += `<div class="mg-k">${esc(t("tmBackTimeLabel"))}</div><input class="mg-input tm-timein" type="time" data-tm="back-time" value="${esc(d.backTime)}" aria-label="${esc(t("tmBackTimeLabel"))}"><p class="mg-hint">${esc(t("tmBackTimeNote"))}</p>`;
+      html += `<div class="mg-k">${esc(t("rtBackTimeLabel"))}</div><input class="mg-input rt-timein" type="time" data-rt="back-time" value="${esc(d.backTime)}" aria-label="${esc(t("rtBackTimeLabel"))}"><p class="mg-hint">${esc(t("rtBackTimeNote"))}</p>`;
     } else {
-      html += `<p class="mg-note">${esc(t("tmBackTrigNote"))}</p><div class="mg-k tm-sec">${esc(t("tmBackTrigWhen"))}</div>${this.condEditorHtml("back")}`;
-      html += `<div data-tm-zone="csum-back">${this.condSumHtml("back")}</div>`;
+      html += `<p class="mg-note">${esc(t("rtBackTrigNote"))}</p><div class="mg-k rt-sec">${esc(t("rtBackTrigWhen"))}</div>${this.condEditorHtml("back")}`;
+      html += `<div data-rt-zone="csum-back">${this.condSumHtml("back")}</div>`;
       if (leavesOf(d.backConds).length) {
         html += this.holdHtml("back");
-        html += `<div class="mg-k tm-sec">${esc(t("tmBackMaxTitle"))}</div><p class="mg-hint">${esc(t("tmBackMaxNote"))}</p>
-          <div class="mg-optrow"><div>${esc(t("tmBackMaxSwitch"))}</div><label class="switch"><input type="checkbox" data-tm="bmax-on"${d.backMaxOn ? " checked" : ""} aria-label="${esc(t("tmBackMaxSwitch"))}"><span></span></label></div>`;
-        if (d.backMaxOn) html += this.tabsHtml(MAX_PRESETS.map((s) => ({ on: d.backMaxS === s, attrs: `data-tm="bmax" data-s="${s}"`, label: this.fmtDur(s) })));
+        html += `<div class="mg-k rt-sec">${esc(t("rtBackMaxTitle"))}</div><p class="mg-hint">${esc(t("rtBackMaxNote"))}</p>
+          <div class="mg-optrow"><div>${esc(t("rtBackMaxSwitch"))}</div><label class="switch"><input type="checkbox" data-rt="bmax-on"${d.backMaxOn ? " checked" : ""} aria-label="${esc(t("rtBackMaxSwitch"))}"><span></span></label></div>`;
+        if (d.backMaxOn) html += this.tabsHtml(MAX_PRESETS.map((s) => ({ on: d.backMaxS === s, attrs: `data-rt="bmax" data-s="${s}"`, label: this.fmtDur(s) })));
       }
     }
     const e = this.entity(d.entity_id);
     if (e && !(d.backKind === "trigger" && !leavesOf(d.backConds).length)) {
-      html += `<div class="mg-k">${esc(t("tmBackModeLabel"))}</div>${this.tabsHtml([["opposite", t(`tmAct_${this.actionKey(e.domain, this.opposite(d.action))}`)], ["restore", t("tmBackModeRestore")]].map(([k, label]) => ({ on: d.back_mode === k, attrs: `data-tm="bmode" data-v="${k}"`, label })))}`;
-      if (d.back_mode === "restore") html += `<p class="mg-hint">${esc(t("tmBackModeNote"))}</p>`;
+      html += `<div class="mg-k">${esc(t("rtBackModeLabel"))}</div>${this.tabsHtml([["opposite", t(`rtAct_${this.actionKey(e.domain, this.opposite(d.action))}`)], ["restore", t("rtBackModeRestore")]].map(([k, label]) => ({ on: d.back_mode === k, attrs: `data-rt="bmode" data-v="${k}"`, label })))}`;
+      if (d.back_mode === "restore") html += `<p class="mg-hint">${esc(t("rtBackModeNote"))}</p>`;
     }
-    return `${html}<div data-tm-zone="backsum">${this.backSumHtml()}</div><div data-tm-zone="runs">${this.runsHtml()}</div>`;
+    return `${html}<div data-rt-zone="backsum">${this.backSumHtml()}</div><div data-rt-zone="runs">${this.runsHtml()}</div>`;
   },
 
   // Der Satz zum Zurückschalten unter den Einstellungen ("Nach 20 Min. wieder aus."); eigene Zone, damit er beim Tippen mitläuft
   backSumHtml() {
-    const sentence = this.backText(this.draftTm());
+    const sentence = this.backText(this.draftRt());
     return sentence ? `<div class="mg-sumline">${this.esc(sentence.charAt(0).toUpperCase() + sentence.slice(1))}.</div>` : "";
   },
 

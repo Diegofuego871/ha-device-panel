@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.55.0] - 2026-10-15
+
+Aus Timern werden Routinen.
+
+### Geändert
+
+- "Timer" heisst jetzt überall "Routine": der Reiter im Geräte-Popup ("Routinen"), die App im Launcher und der Knopf in der Kopfzeile, das Fenster "Alle Routinen", der Abschnitt in den Einstellungen (alle pausieren, Verpasste nachholen, Empfänger, bei Fehler benachrichtigen), die Push-Meldungen ("⏱️ Routine: <Name>", "⚠️ Routine fehlgeschlagen: <Name>"), die Kategorie im Protokoll, die README und die Printscreens. Da eine Routine jetzt auch durch einen Auslöser starten und per Zeit oder Auslöser zurückschalten kann, beschrieb "Timer" sie nicht mehr. Wie Routinen arbeiten, ändert sich nicht.
+- Alles Gespeicherte bleibt: die Routinen (die Speicherdatei `device_panel.timers` wird beim ersten Start zu `device_panel.routines`, samt laufendem Stand), die vier Einstellungen (`timers_pause`, `timers_catch_up`, `timers_notify_error`, `notify_service_timers` werden zu `routines_pause`, `routines_catch_up`, `routines_notify_error`, `notify_service_routines`), die Lieblings-Routinen (Herzen) und der Eintrag "Timer" im Launcher mit seinem Platz bei den Favoriten.
+- Die internen Namen folgen dem neuen Namen: Dateien (`routines.py`, `routines_ws.py`, `routines.js`, `routine-trigger.js`), die WebSocket-Befehle (`device_panel/routine_*`, Feld `routine_id`), die CSS-Klassen (`rt-*`) und die Texte (`rt*`). Wer die alten Befehle (`device_panel/timer_*`) aufruft, muss auf die neuen wechseln.
+
 ## [2.54.1] - 2026-10-15
+
+Nicht veröffentlicht; enthalten in 2.55.0.
 
 Timer: keine Fehlermeldung beim Wechsel auf einen Auslöser.
 
@@ -3464,7 +3476,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.54.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.1
+[2.55.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.55.0
 [2.54.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.0
 [2.53.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.53.0
 [2.52.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.1

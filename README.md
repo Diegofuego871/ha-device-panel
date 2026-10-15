@@ -14,7 +14,7 @@
 - **Signal overview with warnings:** signal strength in dBm or LQI on every device, a warning threshold per connection type, a history with median and range, and for Bluetooth the receiver (adapter or proxy) a device is or was connected through
 - **Notifications on three levels:** set a default once, change it per integration, override it on a single device; every setting shows where its value comes from (graphic below)
 - **Magic Push:** your own messages per device without an automation: pick a value, say when it should notify, write the text, done
-- **Timer:** switch an entity of a device once or on a schedule without an automation, with a test button and a preview of the next runs
+- **Routines:** switch an entity of a device once or on a schedule without an automation, with a test button and a preview of the next runs
 - **Charging and updates:** "Charging" chip with a charge bar, push when a device is full, live activity (iPhone) or live update (Android 16), and an update reminder that replaces your own automations
 - **New devices:** a "New" mark and chip for three days, and an optional push with all devices that appeared
 - **App launcher and log:** one button for useful pages of Home Assistant and your own links, plus a log that shows what the notifications decide and why one did not come
@@ -107,10 +107,10 @@ Everything that notifies you follows one principle: you set a default once, chan
 
 ### Where the notification goes
 
-<p align="center"><img src="docs/graphics/en/notification-targets.png" alt="One push target for everything, an own target per tab, Magic Push and timers choose their recipient themselves" width="900"></p>
+<p align="center"><img src="docs/graphics/en/notification-targets.png" alt="One push target for everything, an own target per tab, Magic Push and routines choose their recipient themselves" width="900"></p>
 
 - **One push target:** a notify service, group or notify entity for all messages
-- **Own target per tab:** outage, battery, charging, new devices, updates, panel updates and timers can each send to another recipient
+- **Own target per tab:** outage, battery, charging, new devices, updates, panel updates and routines can each send to another recipient
 - **Look:** every notification shows the icon of its integration and an emoji that you can change per kind; each title starts with a fitting emoji
 
 ### The kinds of notifications
@@ -155,24 +155,24 @@ Your own notifications per device without an automation, in the tab "Magic Push"
 
 <p align="center"><img src="docs/screenshots/en/settings-magic.png" alt="Settings: all Magic Push messages of all devices, one card per device" width="720"></p>
 
-## Timer
+## Routines
 
 Switches an entity of a device once or on a schedule, without an automation.
 
-| Timer of a device | Assistant: when |
+| Routines of a device | Assistant: when |
 |---|---|
-| <img src="docs/screenshots/en/timer-tab.png" alt="Tab Timer of a device with a timer"> | <img src="docs/screenshots/en/timer-wizard.png" alt="Timer assistant, step 2: when should it switch"> |
+| <img src="docs/screenshots/en/routine-tab.png" alt="Tab Routines of a device with a routine"> | <img src="docs/screenshots/en/routine-wizard.png" alt="Routine assistant, step 2: when should it switch"> |
 
 - **What:** pick the entity and the action (on, off, toggle), optionally switch back after a while
 - **Options:** if the entity can be set when it is turned on, a page of its own follows: light brightness, colour temperature and colour; shutter position; climate target temperature and mode; media volume; fan speed. A preview shows the result (the lamp lights in the chosen colour), nothing is switched by it, and "Run now" tries the real strength; without a setting everything stays "as last used"
-- **Switch back:** after a while back to "off" (the opposite) or "as before": the timer remembers the scene right before switching (for example brightness and colour) and restores it, so a lamp can be briefly brighter and then as it was. Own page "Switch back": never, after a duration, at a time or by a trigger (for example on at 20:00, off when the rain sensor is dry), with "at the latest after" as a safety net
+- **Switch back:** after a while back to "off" (the opposite) or "as before": the routine remembers the scene right before switching (for example brightness and colour) and restores it, so a lamp can be briefly brighter and then as it was. Own page "Switch back": never, after a duration, at a time or by a trigger (for example on at 20:00, off when the rain sensor is dry), with "at the latest after" as a safety net
 - **When:** in X minutes, once at a date and time, or repeating daily, weekly on chosen weekdays or monthly, with a check of the next runs before you save; or **by a trigger** instead of a time: any entity, "above" / "below" / "is" / "changes", several conditions with "and" / "or" like Magic Push, "holds for at least", an optional time window (also across midnight), a pause after switching and "only once". It switches only when the condition is newly met
 - **Test:** a button "Run now" tries the chosen switch
 - **Reminder:** optionally a push at the moment it switches, with a preview and its own recipient
-- **Runs in Home Assistant:** with its time zone, so a timer also fires with the panel closed and after a restart (within a catch-up window you set), and "Pause all timers" is one switch
-- **Overview:** the timer button of the launcher opens all timers in one card per device, with search and filter, edit, switch on or off, delete and favorites
+- **Runs in Home Assistant:** with its time zone, so a routine also fires with the panel closed and after a restart (within a catch-up window you set), and "Pause all routines" is one switch
+- **Overview:** the routine button of the launcher opens all routines in one card per device, with search and filter, edit, switch on or off, delete and favorites
 
-<p align="center"><img src="docs/screenshots/en/timers-all.png" alt="Window with all timers, one card per device" width="720"></p>
+<p align="center"><img src="docs/screenshots/en/routines-all.png" alt="Window with all routines, one card per device" width="720"></p>
 
 ## App launcher and log
 
@@ -182,7 +182,7 @@ A button in the header opens a launcher with useful pages, in the symbols and co
 |---|---|
 | <img src="docs/screenshots/en/launcher.png" alt="App launcher with favorites, Device Panel and Home Assistant pages"> | <img src="docs/screenshots/en/log.png" alt="Log with entries of the notifications and a filter"> |
 
-- **Pages:** timers, Magic Push and the log of this integration, pages of Home Assistant (automations, scenes, scripts, helpers, devices, entities, integrations, tools and more; administrators only for the management pages)
+- **Pages:** routines, Magic Push and the log of this integration, pages of Home Assistant (automations, scenes, scripts, helpers, devices, entities, integrations, tools and more; administrators only for the management pages)
 - **Your own links:** a page in Home Assistant or an external link that opens in a new browser tab, with its favicon as icon if you like
 - **Favorites:** a heart marks up to five apps that get their own buttons in the header
 - **Edit mode:** sort by dragging, hide apps with the eye, grid or list; everything is saved per user
@@ -192,14 +192,14 @@ A button in the header opens a launcher with useful pages, in the symbols and co
 
 The gear opens all settings in German or English, in sections. The version bar on top shows the installed and the newest version and updates via HACS.
 
-| Devices in the panel | View | Timers | Panel version |
+| Devices in the panel | View | Routines | Panel version |
 |---|---|---|---|
-| <img src="docs/screenshots/en/settings-section-devices.png" alt="Section Devices in the panel"> | <img src="docs/screenshots/en/settings-section-look.png" alt="Section View with start page and filter chips"> | <img src="docs/screenshots/en/settings-section-timers.png" alt="Section Timers"> | <img src="docs/screenshots/en/settings-section-updates.png" alt="Section Panel version with daily check and automatic installation"> |
+| <img src="docs/screenshots/en/settings-section-devices.png" alt="Section Devices in the panel"> | <img src="docs/screenshots/en/settings-section-look.png" alt="Section View with start page and filter chips"> | <img src="docs/screenshots/en/settings-section-routines.png" alt="Section Routines"> | <img src="docs/screenshots/en/settings-section-updates.png" alt="Section Panel version with daily check and automatic installation"> |
 
 - **Devices in the panel:** hide integrations, device types and single devices, set type and connection type per integration, see and reset devices with their own settings
 - **Monitoring and notifications:** the tabs Overview (a timeline per notification), Outage, Battery, Charging, New, Updates, Signal, Magic Push and Integrations
 - **View:** start page and filter chips (show, hide, reorder, pin)
-- **Timers and AI assessment:** pause, catch-up window, recipient; AI task and prompt
+- **Routines and AI assessment:** pause, catch-up window, recipient; AI task and prompt
 - **Panel version:** daily check at a set time, optional push, pre-releases and automatic installation via HACS (you only restart Home Assistant yourself)
 - **Saving:** changes in the pop-up and in the settings apply only with "Save"; closing with unsaved changes asks "Discard changes?"
 
@@ -228,9 +228,9 @@ The same panel as cards, with the same pop-ups, windows and assistants in full s
 |---|---|---|
 | <img src="docs/screenshots/en/overview-mobile.png" alt="Phone: cards" width="260"> | <img src="docs/screenshots/en/popup-mobile.png" alt="Phone: pop-up" width="260"> | <img src="docs/screenshots/en/battery-mobile.png" alt="Phone: battery history" width="260"> |
 
-| Charging | Launcher | Timer assistant | Magic Push |
+| Charging | Launcher | Routine assistant | Magic Push |
 |---|---|---|---|
-| <img src="docs/screenshots/en/charging-mobile.png" alt="Phone: charging devices" width="200"> | <img src="docs/screenshots/en/launcher-mobile.png" alt="Phone: app launcher" width="200"> | <img src="docs/screenshots/en/timer-wizard-mobile.png" alt="Phone: timer assistant" width="200"> | <img src="docs/screenshots/en/magic-wizard-mobile.png" alt="Phone: Magic Push assistant" width="200"> |
+| <img src="docs/screenshots/en/charging-mobile.png" alt="Phone: charging devices" width="200"> | <img src="docs/screenshots/en/launcher-mobile.png" alt="Phone: app launcher" width="200"> | <img src="docs/screenshots/en/routine-wizard-mobile.png" alt="Phone: routine assistant" width="200"> | <img src="docs/screenshots/en/magic-wizard-mobile.png" alt="Phone: Magic Push assistant" width="200"> |
 
 ## Good to know
 

@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "216"
+PANEL_VERSION = "217"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -185,13 +185,13 @@ CHARGE_REARM = 10
 CHARGE_DROP = 5
 CHARGE_STALE = 2 * 3600
 DATA_CHARGE = f"{DOMAIN}_charge"
-# Timer (seit 2.21.0): alle pausieren (Ferien), verpasste Timer nach einem Neustart nachholen (Minuten; 0 = nie), bei einem
-# Fehler benachrichtigen (an das Standard-Ziel, wenn der Timer keine eigene Meldung hat).
-CONF_TIMERS_PAUSE = "timers_pause"
-CONF_TIMERS_CATCH_UP = "timers_catch_up"
-CONF_TIMERS_NOTIFY_ERROR = "timers_notify_error"
-DEFAULT_TIMERS_CATCH_UP = 10
-TIMERS_CATCH_UP_CHOICES = (0, 10, 60)
+# Routine (seit 2.21.0): alle pausieren (Ferien), verpasste Routinen nach einem Neustart nachholen (Minuten; 0 = nie), bei einem
+# Fehler benachrichtigen (an das Standard-Ziel, wenn die Routine keine eigene Meldung hat).
+CONF_ROUTINES_PAUSE = "routines_pause"
+CONF_ROUTINES_CATCH_UP = "routines_catch_up"
+CONF_ROUTINES_NOTIFY_ERROR = "routines_notify_error"
+DEFAULT_ROUTINES_CATCH_UP = 10
+ROUTINES_CATCH_UP_CHOICES = (0, 10, 60)
 
 INT_RANGES = {
     CONF_NEW_WINDOW: (1, 60),
@@ -204,7 +204,7 @@ INT_RANGES = {
     CONF_STARTUP_GRACE: (0, 30),
     CONF_BATTERY_LOW: (1, 50),
     CONF_NOTIFY_DELAY: (1, 60),
-    CONF_TIMERS_CATCH_UP: (0, 60),
+    CONF_ROUTINES_CATCH_UP: (0, 60),
 }
 # Integrationen ohne Push bei schwacher Batterie (seit 0.34.0, Reiter
 # "Integrationen" in "Überwachung und Meldungen"); Schwelle und anhaltende
@@ -237,14 +237,21 @@ CONF_NOTIFY_SERVICE_CHARGE = "notify_service_charge"
 CONF_NOTIFY_SERVICE_NEW = "notify_service_new"
 CONF_NOTIFY_SERVICE_UPDATES = "notify_service_updates"
 CONF_NOTIFY_SERVICE_PANELUPDATE = "notify_service_panelupdate"
-CONF_NOTIFY_SERVICE_TIMERS = "notify_service_timers"
+CONF_NOTIFY_SERVICE_ROUTINES = "notify_service_routines"
+# Umbenennung Timer → Routine (2.55.0): so hiessen die gespeicherten Optionen vorher; __init__ übernimmt sie beim Start einmal
+RENAMED_OPTIONS = {
+    "timers_pause": "routines_pause",
+    "timers_catch_up": "routines_catch_up",
+    "timers_notify_error": "routines_notify_error",
+    "notify_service_timers": "notify_service_routines",
+}
 NOTIFY_TOPICS = {
     "outage": CONF_NOTIFY_SERVICE_OUTAGE,
     "battery": CONF_NOTIFY_SERVICE_BATTERY,
     "charge": CONF_NOTIFY_SERVICE_CHARGE,
     "new": CONF_NOTIFY_SERVICE_NEW,
     "updates": CONF_NOTIFY_SERVICE_UPDATES,
-    "timers": CONF_NOTIFY_SERVICE_TIMERS,
+    "routines": CONF_NOTIFY_SERVICE_ROUTINES,
     "panelupdate": CONF_NOTIFY_SERVICE_PANELUPDATE,
 }
 CONF_NOTIFY_CLICK = "notify_click_target"
@@ -325,7 +332,7 @@ DATA_AVAILABILITY = f"{DOMAIN}_availability"
 DATA_SIGNAL = f"{DOMAIN}_signal"
 # Magic Push (seit 2.6.0): Regeln pro Gerät, magic.py
 DATA_MAGIC = f"{DOMAIN}_magic"
-DATA_TIMERS = f"{DOMAIN}_timers"
+DATA_ROUTINES = f"{DOMAIN}_routines"
 
 WS_TYPE_LIST_DEVICES = f"{DOMAIN}/list_devices"
 

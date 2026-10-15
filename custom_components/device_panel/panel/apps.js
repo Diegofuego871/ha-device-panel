@@ -1,13 +1,13 @@
 /**
  * App-Launcher (seit 2.31.0, docs/mockups/launcher-v2).
  *
- * Ein Knopf in der Kopfzeile öffnet eine Übersicht nützlicher Seiten ("Apps"): eigene Funktionen des Panels (Timer, Magic Push,
+ * Ein Knopf in der Kopfzeile öffnet eine Übersicht nützlicher Seiten ("Apps"): eigene Funktionen des Panels (Routine, Magic Push,
  * Protokoll), Seiten von Home Assistant und eigene Links des Benutzers. Mit dem Herz markierte Apps (höchstens fünf) stehen als
  * Knöpfe direkt in der Kopfzeile, am Handy nur die erste. Der Bearbeiten-Modus sortiert (Ziehen), blendet aus (Auge) und
  * wählt Favoriten; die Darstellung (Raster oder Liste) wählt der Benutzer selbst, getrennt für Desktop und Handy.
  *
  * Alles gehört dem Benutzer: ein Eintrag in den Benutzerdaten von HA (frontend/set_user_data) mit lokaler Kopie im Browser, wie
- * die Herzen der Geräte und Timer. Der neuere Stand gewinnt. Das Protokoll ist nicht ausblendbar, sonst gäbe es keinen Zugang mehr
+ * die Herzen der Geräte und Routine. Der neuere Stand gewinnt. Das Protokoll ist nicht ausblendbar, sonst gäbe es keinen Zugang mehr
  * zum Debug-Modus. Externe Links öffnen immer in einem neuen Browser-Tab; als Ziel erlaubt sind nur https:// und http://.
  */
 
@@ -22,7 +22,7 @@ const GROUPS = ["panel", "ha", "own"];
 // Eingebaute Apps. act: Funktion des Panels, path: Seite von Home Assistant (admin: nur für Administratoren). Namen und Untertitel
 // stehen in strings.js (app_<id>, app_<id>_sub).
 const BUILTIN = [
-  { id: "timer", group: "panel", icon: "timer", act: "timer" },
+  { id: "routine", group: "panel", icon: "timer", act: "routine" },
   { id: "magic", group: "panel", icon: "bell", act: "magic" },
   { id: "log", group: "panel", icon: "log", act: "log", locked: true },
   { id: "auto", group: "ha", icon: "robot", path: "/config/automation/dashboard", admin: true },
@@ -56,7 +56,7 @@ const HA_LOOK = {
   hist: { c: "#3263C3", p: "M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M9 17H7V10H9V17M13 17H11V7H13V17M17 17H15V13H17V17Z" },
   book: { c: "#00838F", p: "M5,9.5L7.5,14H2.5L5,9.5M3,4H7V8H3V4M5,20A2,2 0 0,0 7,18A2,2 0 0,0 5,16A2,2 0 0,0 3,18A2,2 0 0,0 5,20M9,5V7H21V5H9M9,19H21V17H9V19M9,13H21V11H9V13Z" },
 };
-const PANEL_COLOR = { timer: "#00838F", magic: "#8E24AA", log: "#4A5963" };
+const PANEL_COLOR = { routine: "#00838F", magic: "#8E24AA", log: "#4A5963" };
 export const APP_ICONS = ["web", "home", "camera", "map", "bolt", "calendar", "bar", "wrench", "store", "desktop", "robot", "palette", "script", "devices", "shape", "tools"];
 
 // Favicon einer eigenen App mit externem Link (seit 2.33.0): kleines Bild als Data-URI (base64), vom Server geholt (favicon.py).
@@ -65,9 +65,12 @@ const FAVICON_MAX = 140000;
 const FAVICON_RE = /^data:image\/(png|x-icon|gif|jpeg|webp|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$/;
 export const isFavicon = (v) => typeof v === "string" && v.length <= FAVICON_MAX && FAVICON_RE.test(v);
 
-const defaults = () => ({ fav: ["timer"], hidden: [], order: {}, custom: [], layout: { desktop: "grid", phone: "grid" }, updated: 0 });
+const defaults = () => ({ fav: ["routine"], hidden: [], order: {}, custom: [], layout: { desktop: "grid", phone: "grid" }, updated: 0 });
+// Umbenennung Timer → Routine (2.55.0): die App hiess vorher "timer"; Favoriten, Ausgeblendetes und Reihenfolge behalten sie
 const ids = (list, max) =>
-  Array.isArray(list) ? [...new Set(list.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 64))].slice(0, max) : [];
+  Array.isArray(list)
+    ? [...new Set(list.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 64).map((x) => (x === "timer" ? "routine" : x)))].slice(0, max)
+    : [];
 
 // Ziel prüfen: extern nur https:// und http:// (nie javascript: und Verwandte), intern eine Seite von HA ("/…", nicht "//host").
 // Gibt das bereinigte Ziel zurück, sonst null.
@@ -354,7 +357,7 @@ export class AppLauncher {
     const a = this.app(id);
     if (!a || a.ext) return;
     this.close();
-    if (a.act === "timer") this.host._openTmAll();
+    if (a.act === "routine") this.host._openRtAll();
     else if (a.act === "magic") this.host._openSettings("magic");
     else if (a.act === "log") this.host._openLog();
     else if (a.path || a.url) this.host._navigate(a.path || a.url);
@@ -435,8 +438,8 @@ export class AppLauncher {
         const label = escape(a.name);
         const icon = this._icon(a, 22);
         return a.ext
-          ? `<a class="tmall-btn app-pin" href="${escape(a.url)}" target="_blank" rel="noopener noreferrer" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</a>`
-          : `<button type="button" class="tmall-btn app-pin" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</button>`;
+          ? `<a class="rtall-btn app-pin" href="${escape(a.url)}" target="_blank" rel="noopener noreferrer" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</a>`
+          : `<button type="button" class="rtall-btn app-pin" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</button>`;
       })
       .join("");
     if (this._barHtml === html) return;

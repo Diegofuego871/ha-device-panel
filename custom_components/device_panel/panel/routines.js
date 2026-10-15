@@ -1,14 +1,14 @@
 /**
- * Timer im Geräte-Popup und in den Einstellungen (seit 2.21.0, docs/mockups/timer-v1).
+ * Routinen im Geräte-Popup und in den Einstellungen (seit 2.21.0, docs/mockups/timer-v1).
  *
- * Ein Timer schaltet eine schaltbare Entität eines Geräts einmalig (in X Minuten oder an einem Datum) oder wiederholt
+ * Eine Routine schaltet eine schaltbare Entität eines Geräts einmalig (in X Minuten oder an einem Datum) oder wiederholt
  * (täglich, wöchentlich, monatlich), auf Wunsch mit "danach wieder zurückschalten" und einer Push-Meldung mit festem
- * Inhalt. Aufbau wie Magic Push (magic-push.js): Der Reiter im Popup schreibt nur in einen eigenen Behälter (.tm-root)
+ * Inhalt. Aufbau wie Magic Push (magic-push.js): Der Reiter im Popup schreibt nur in einen eigenen Behälter (.rt-root)
  * und hält seinen Stand im Speicher; das Popup baut sich alle 10 Sekunden neu auf, darum setzt attach() den Behälter
  * danach wieder zusammen. Der Assistent (vier Schritte: Was · Wann · Meldung · Name und Prüfung) hat ein eigenes Fenster
- * (dialog.timer-dlg, gleiche Stile wie das von Magic Push). Nächste Ausführungen, Meldungstext und Ziel kommen als
- * Vorschau vom Server (timer_preview), damit Panel und Meldung dieselbe Rechnung benutzen (Zeitzone der Instanz).
- * Timer gehören den Geräten und werden sofort gespeichert, nicht mit "Speichern" der Einstellungen.
+ * (dialog.routine-dlg, gleiche Stile wie das von Magic Push). Nächste Ausführungen, Meldungstext und Ziel kommen als
+ * Vorschau vom Server (routine_preview), damit Panel und Meldung dieselbe Rechnung benutzen (Zeitzone der Instanz).
+ * Routinen gehören den Geräten und werden sofort gespeichert, nicht mit "Speichern" der Einstellungen.
  *
  * Schaltoptionen (seit 2.52.0, docs/mockups/timer-light-v1): Kann die gewählte Entität beim Einschalten etwas einstellen
  * (Licht: Helligkeit und Farbe, Rollladen: Position, Klima: Temperatur und Modus, Medien: Lautstärke, Ventilator: Stufe),
@@ -19,11 +19,11 @@
  * Auslöser (seit 2.54.0, docs/mockups/timer-trigger-v1 und -v2): Im Schritt "Wann" wählt ein Umschalter zwischen "Zu einer Zeit" und
  * "Durch einen Auslöser" (Bedingungen auf Entitäten wie bei Magic Push, Zeitfenster, Pause). Das Zurückschalten hat eine eigene Seite
  * (Nummer 6, zwischen "Wann" und "Meldung"): nie, nach einer Dauer, zu einer Uhrzeit oder durch einen Auslöser. Der Bedingungs-Editor
- * und die beiden Seiten stehen in timer-trigger.js und werden hier an die Klasse gehängt.
+ * und die beiden Seiten stehen in routine-trigger.js und werden hier an die Klasse gehängt.
  */
 
 const MODULE_VERSION = new URL(import.meta.url).search;
-const { triggerMethods, triggerDefaults, triggerFromTimer, triggerPayload } = await import(`./timer-trigger.js${MODULE_VERSION}`);
+const { triggerMethods, triggerDefaults, triggerFromRoutine, triggerPayload } = await import(`./routine-trigger.js${MODULE_VERSION}`);
 
 // Letzter Schritt (Name und Prüfung); die Seite "Optionen" (5) steht in steps() zwischen 1 und 2, nur wenn die Entität etwas kann
 const STEPS = 4;
@@ -36,7 +36,7 @@ const PREVIEW_DELAY_MS = 300;
 const EMOJI = { switch: "🔌", light: "💡", fan: "🌀", cover: "🪟", lock: "🔒", valve: "🚿", siren: "🚨", humidifier: "💧", input_boolean: "🔘", climate: "🌡️", media_player: "🔊" };
 // Schnellwahl unter den Reglern (zusätzlich zu "Wie zuletzt")
 const QUICK = { brightness_pct: [25, 50, 100], percentage: [25, 50, 100], position: [0, 50, 100], volume_pct: [25, 50, 75] };
-// Farben zur Wahl: Name (Schlüssel tmCol_*), Anzeige, Wert für die Lampe
+// Farben zur Wahl: Name (Schlüssel rtCol_*), Anzeige, Wert für die Lampe
 const COLOURS = [
   ["red", "#ff3b30", [255, 59, 48]],
   ["orange", "#ff9500", [255, 149, 0]],
@@ -77,14 +77,14 @@ export function kelvinRgb(kelvin) {
 const toHex = (rgb) => `#${rgb.map((v) => pad(Math.round(v).toString(16))).join("")}`;
 const fromHex = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 
-export const timerEmoji = (domain) => EMOJI[domain] || "⏱️";
+export const routineEmoji = (domain) => EMOJI[domain] || "⏱️";
 
 export function splitSeconds(seconds, units) {
   for (const u of [...units].reverse()) if (seconds >= u && seconds % u === 0) return { text: String(seconds / u), unit: u };
   return { text: String(Math.round(seconds / units[0])), unit: units[0] };
 }
 
-export class TimerUi {
+export class RoutineUi {
   constructor(host, deps) {
     this.host = host;
     this.h = deps;
@@ -119,7 +119,7 @@ export class TimerUi {
     return this.h.escape(value);
   }
 
-  // Brücken für timer-trigger.js (die Hilfsfunktionen dieser Datei sind nicht öffentlich)
+  // Brücken für routine-trigger.js (die Hilfsfunktionen dieser Datei sind nicht öffentlich)
   actionKey(domain, action) {
     return actKey(domain, action);
   }
@@ -137,7 +137,7 @@ export class TimerUi {
   }
 
   win() {
-    return this.host.shadowRoot?.querySelector("dialog.timer-dlg") || null;
+    return this.host.shadowRoot?.querySelector("dialog.routine-dlg") || null;
   }
 
   q(selector) {
@@ -159,24 +159,24 @@ export class TimerUi {
     win.innerHTML = "";
   }
 
-  // Zahl der eingeschalteten Timer für die Beschriftung des Reiters (null: noch nicht geladen)
+  // Zahl der eingeschalteten Routinen für die Beschriftung des Reiters (null: noch nicht geladen)
   count(deviceId) {
     if (!this.data || this.deviceId !== deviceId) return null;
-    return this.data.timers.filter((x) => x.enabled).length;
+    return this.data.routines.filter((x) => x.enabled).length;
   }
 
   // --- Laden ------------------------------------------------------------------
 
-  editWhenLoaded(timerId) {
-    this._pendingEdit = timerId;
+  editWhenLoaded(routineId) {
+    this._pendingEdit = routineId;
     this.applyPending();
   }
 
   applyPending() {
     if (!this._pendingEdit || !this.data) return;
-    const timer = this.data.timers.find((x) => x.id === this._pendingEdit);
+    const routine = this.data.routines.find((x) => x.id === this._pendingEdit);
     this._pendingEdit = null;
-    if (timer) this.startWizard(timer);
+    if (routine) this.startWizard(routine);
   }
 
   open(deviceId, standalone = false) {
@@ -193,7 +193,7 @@ export class TimerUi {
     this.loading = !this.data;
     this.error = null;
     try {
-      const result = await this.host._hass.callWS({ type: "device_panel/timer_get", device_id: deviceId });
+      const result = await this.host._hass.callWS({ type: "device_panel/routine_get", device_id: deviceId });
       if (this.deviceId !== deviceId) return;
       this.data = result;
       this._offset = Number.isFinite(result.now) ? result.now * 1000 - Date.now() : 0;
@@ -201,11 +201,11 @@ export class TimerUi {
     } catch (err) {
       if (this.deviceId !== deviceId) return;
       this.error = this.h.errText(err);
-      const all = this.standalone ? this.host._tmAll : null;
+      const all = this.standalone ? this.host._rtAll : null;
       if (all) {
-        all.err = this.t("tmLoadError", this.error);
+        all.err = this.t("rtLoadError", this.error);
         this._pendingEdit = null;
-        this.host._renderTmAll?.();
+        this.host._renderRtAll?.();
       }
     }
     this.loading = false;
@@ -214,7 +214,7 @@ export class TimerUi {
 
   refresh() {
     if (this.host._detailId !== this.deviceId) return;
-    if (this.host._devTab === "timer" && this.root?.isConnected) this.paint();
+    if (this.host._devTab === "routine" && this.root?.isConnected) this.paint();
     this.host._renderDevice(true);
   }
 
@@ -244,7 +244,7 @@ export class TimerUi {
 
   // Wochentag kurz (0 = Montag)
   wd(i) {
-    return this.t("tmWd")[i];
+    return this.t("rtWd")[i];
   }
 
   dateText(local, withWeekday = true) {
@@ -264,8 +264,8 @@ export class TimerUi {
       const [y, m, d] = today.split("-").map(Number);
       const tomorrow = new Date(Date.UTC(y, m - 1, d + 1));
       const tom = `${tomorrow.getUTCFullYear()}-${pad(tomorrow.getUTCMonth() + 1)}-${pad(tomorrow.getUTCDate())}`;
-      if (local.date === today) return `${this.t("tmToday")} ${local.time}`;
-      if (local.date === tom) return `${this.t("tmTomorrow")} ${local.time}`;
+      if (local.date === today) return `${this.t("rtToday")} ${local.time}`;
+      if (local.date === tom) return `${this.t("rtTomorrow")} ${local.time}`;
     }
     return `${this.dateText(local)} ${local.time}`;
   }
@@ -281,7 +281,7 @@ export class TimerUi {
     if (d) parts.push(`${d} ${this.t("dayUnit")}`);
     if (h) parts.push(`${h} ${this.t("hourUnit")}`);
     if (m) parts.push(`${m} ${this.t("minuteUnit")}`);
-    if (s || !parts.length) parts.push(`${s} ${this.t("tmSecUnit")}`);
+    if (s || !parts.length) parts.push(`${s} ${this.t("rtSecUnit")}`);
     return parts.join(" ");
   }
 
@@ -299,7 +299,7 @@ export class TimerUi {
 
   targetSub() {
     const d = this.data?.default_target;
-    return String(d || "").startsWith("notify.") ? d : this.t("tmTargetNone");
+    return String(d || "").startsWith("notify.") ? d : this.t("rtTargetNone");
   }
 
   limit(name, fallback) {
@@ -309,8 +309,8 @@ export class TimerUi {
   // Wort des Zustands einer Entität
   stateWord(e) {
     if (!e) return "";
-    if (!e.available) return this.t("tmUnreachable");
-    const key = `tmState_${e.state}`;
+    if (!e.available) return this.t("rtUnreachable");
+    const key = `rtState_${e.state}`;
     const word = this.t(key);
     return word == null ? String(e.state ?? "") : word;
   }
@@ -326,12 +326,12 @@ export class TimerUi {
 
   // Farbtemperatur als Wort: warmweiss, neutralweiss, kaltweiss
   kelvinWord(kelvin) {
-    return this.t(`tmKelvinWord_${kelvin < 3200 ? "warm" : kelvin < 4800 ? "neutral" : "cold"}`);
+    return this.t(`rtKelvinWord_${kelvin < 3200 ? "warm" : kelvin < 4800 ? "neutral" : "cold"}`);
   }
 
   colourName(rgb) {
     const hit = COLOURS.find(([, , c]) => c.every((v, i) => v === rgb[i]));
-    return hit ? this.t(`tmCol_${hit[0]}`) : this.t("tmColOwn");
+    return hit ? this.t(`rtCol_${hit[0]}`) : this.t("rtColOwn");
   }
 
   // Die Einstellungen als Teile: ["40 %", "warmweiss (2700 K)"]; leer, wenn nichts eingestellt ist
@@ -344,64 +344,64 @@ export class TimerUi {
     if (Array.isArray(o.rgb_color)) parts.push(this.colourName(o.rgb_color));
     if (o.position != null) parts.push(`${o.position} %`);
     if (o.temperature != null) parts.push(`${this.fmtNum(o.temperature)} ${unit}`);
-    if (o.hvac_mode) parts.push(this.t(`tmHvac_${o.hvac_mode}`));
+    if (o.hvac_mode) parts.push(this.t(`rtHvac_${o.hvac_mode}`));
     if (o.volume_pct != null) parts.push(`${o.volume_pct} %`);
     if (o.percentage != null) parts.push(`${o.percentage} %`);
     return parts;
   }
 
   // "Steckdose einschalten, nach 20 Min. wieder aus"; mit Optionen "Lampe einschalten (40 %, warmweiss), nach 20 Min. wieder wie vorher"
-  sentenceOf(tm, entityName) {
-    const domain = this.domainOf(tm.entity_id);
-    const opts = tm.action === "on" ? tm.options : null;
+  sentenceOf(rt, entityName) {
+    const domain = this.domainOf(rt.entity_id);
+    const opts = rt.action === "on" ? rt.options : null;
     const parts = this.optionParts(opts);
-    let verb = this.t(`tmVerb_${actKey(domain, tm.action)}`);
-    if (domain === "cover" && opts?.position != null) verb = this.t("tmVerbPosition", opts.position);
+    let verb = this.t(`rtVerb_${actKey(domain, rt.action)}`);
+    if (domain === "cover" && opts?.position != null) verb = this.t("rtVerbPosition", opts.position);
     else if (parts.length) verb += ` (${parts.join(", ")})`;
     let text = `${entityName} ${verb}`;
-    const back = this.backText(tm);
+    const back = this.backText(rt);
     if (back) text += `, ${back}`;
     return text;
   }
 
   // Das Zurückschalten als Satzteil (seit 2.54.0 mit vier Arten): "nach 20 Min. wieder aus", "um 23:30 wieder wie vorher",
   // "wieder aus, wenn Terrassentür ist offen, spätestens nach 6 Std."; leer ohne Zurückschalten
-  backText(tm) {
-    const domain = this.domainOf(tm.entity_id);
-    const kind = tm.back_kind || (tm.back_s ? "duration" : "none");
-    if (kind === "none" || !opposite(tm.action)) return "";
-    const word = tm.back_mode === "restore" ? this.t("tmRestoreWord") : this.t(`tmRes_${resKey(domain, opposite(tm.action))}`);
-    if (kind === "duration") return tm.back_s ? this.t("tmBackText", this.fmtDur(tm.back_s), word) : "";
-    if (kind === "time") return tm.back_time ? this.t("tmBackTime", tm.back_time, word) : "";
-    this.learnEnts(tm.condition_entities);
-    const cond = this.treeText(tm.back_conditions);
+  backText(rt) {
+    const domain = this.domainOf(rt.entity_id);
+    const kind = rt.back_kind || (rt.back_s ? "duration" : "none");
+    if (kind === "none" || !opposite(rt.action)) return "";
+    const word = rt.back_mode === "restore" ? this.t("rtRestoreWord") : this.t(`rtRes_${resKey(domain, opposite(rt.action))}`);
+    if (kind === "duration") return rt.back_s ? this.t("rtBackText", this.fmtDur(rt.back_s), word) : "";
+    if (kind === "time") return rt.back_time ? this.t("rtBackTime", rt.back_time, word) : "";
+    this.learnEnts(rt.condition_entities);
+    const cond = this.treeText(rt.back_conditions);
     if (!cond) return "";
-    return `${this.t("tmBackTrig", word, cond)}${tm.back_max_s ? `, ${this.t("tmBackMax", this.fmtDur(tm.back_max_s))}` : ""}`;
+    return `${this.t("rtBackTrig", word, cond)}${rt.back_max_s ? `, ${this.t("rtBackMax", this.fmtDur(rt.back_max_s))}` : ""}`;
   }
 
-  // Der Entwurf als Timer-Angaben für Sätze (wie vom Server, plus Zeit und Wiederholung)
-  draftTm() {
+  // Der Entwurf als Routinen-Angaben für Sätze (wie vom Server, plus Zeit und Wiederholung)
+  draftRt() {
     const d = this.wiz.draft;
     return { ...this.payload(), entity_id: d.entity_id, weekdays: d.weekdays, mday: d.mday, time: d.time, date: d.date, delay_s: d.delay_s };
   }
 
   // Wann: "Täglich um 20:00", "Mo, Mi, Fr um 06:30", "Monatlich am 1. um 09:00", "Einmalig, 24.12. um 17:00", "Einmalig, in 30 Min."
-  whenText(tm) {
-    if (tm.kind === "trigger") {
-      this.learnEnts(tm.condition_entities);
-      const cond = this.treeText(tm.conditions);
-      const base = cond ? this.t("tmWhenTrigger", cond) : this.t("tmWhenTriggerShort");
-      return tm.window ? `${base}, ${this.t("tmWhenWindow", tm.window.from, tm.window.to)}` : base;
+  whenText(rt) {
+    if (rt.kind === "trigger") {
+      this.learnEnts(rt.condition_entities);
+      const cond = this.treeText(rt.conditions);
+      const base = cond ? this.t("rtWhenTrigger", cond) : this.t("rtWhenTriggerShort");
+      return rt.window ? `${base}, ${this.t("rtWhenWindow", rt.window.from, rt.window.to)}` : base;
     }
-    if (tm.kind === "countdown") return this.t("tmWhenCountdown", this.fmtDur(tm.delay_s));
-    if (tm.kind === "once") return tm.date ? this.t("tmWhenOnce", this.dateText({ date: tm.date }), tm.time) : this.t("tmWhenOnceNext", tm.time);
-    if (tm.repeat === "daily") return this.t("tmWhenDaily", tm.time);
-    if (tm.repeat === "weekly") return this.t("tmWhenWeekly", (tm.weekdays || []).map((i) => this.wd(i)).join(", "), tm.time);
-    return this.t("tmWhenMonthly", tm.mday === -1 ? this.t("tmLastDayShort") : `${tm.mday}.`, tm.time);
+    if (rt.kind === "countdown") return this.t("rtWhenCountdown", this.fmtDur(rt.delay_s));
+    if (rt.kind === "once") return rt.date ? this.t("rtWhenOnce", this.dateText({ date: rt.date }), rt.time) : this.t("rtWhenOnceNext", rt.time);
+    if (rt.repeat === "daily") return this.t("rtWhenDaily", rt.time);
+    if (rt.repeat === "weekly") return this.t("rtWhenWeekly", (rt.weekdays || []).map((i) => this.wd(i)).join(", "), rt.time);
+    return this.t("rtWhenMonthly", rt.mday === -1 ? this.t("rtLastDayShort") : `${rt.mday}.`, rt.time);
   }
 
-  sentence(tm) {
-    return `${this.whenText(tm)} · ${this.sentenceOf(tm, tm.entity_name || tm.entity_id)}`;
+  sentence(rt) {
+    return `${this.whenText(rt)} · ${this.sentenceOf(rt, rt.entity_name || rt.entity_id)}`;
   }
 
   // --- Reiter im Popup --------------------------------------------------------
@@ -419,106 +419,106 @@ export class TimerUi {
   listHtml() {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
-    let html = `<h3>${esc(t("tmTab"))}</h3><p class="mg-note">${esc(t("tmIntro"))}</p>`;
+    let html = `<h3>${esc(t("rtTab"))}</h3><p class="mg-note">${esc(t("rtIntro"))}</p>`;
     if (this.ui.flash) html += `<div class="mg-flash" role="status">${esc(this.ui.flash)}</div>`;
     if (this.ui.error) html += `<div class="dlg-error">${esc(this.ui.error)}</div>`;
     if (!this.data) {
       if (this.error) {
-        return `${html}<div class="dlg-error">${esc(t("tmLoadError", this.error))}</div><button type="button" class="qbtn" data-tm="reload">${esc(t("tmRetry"))}</button>`;
+        return `${html}<div class="dlg-error">${esc(t("rtLoadError", this.error))}</div><button type="button" class="qbtn" data-rt="reload">${esc(t("rtRetry"))}</button>`;
       }
-      return `${html}<p class="mg-note">${esc(t("tmLoading"))}</p>`;
+      return `${html}<p class="mg-note">${esc(t("rtLoading"))}</p>`;
     }
-    const timers = this.data.timers;
-    if (!timers.length) html += `<p class="mg-empty">${esc(this.data.entities.length ? t("tmEmpty") : t("tmNoEntities"))}</p>`;
-    html += timers.map((x) => this.clockHtml(x)).join("");
-    const full = timers.length >= this.limit("per_device", 20);
-    if (full) html += `<p class="mg-hint">${esc(t("tmLimit", this.limit("per_device", 20)))}</p>`;
-    else if (this.data.entities.length) html += `<button type="button" class="mg-add" data-tm="add">${this.h.mdi("plus", 18)}${esc(t("tmAdd"))}</button>`;
+    const routines = this.data.routines;
+    if (!routines.length) html += `<p class="mg-empty">${esc(this.data.entities.length ? t("rtEmpty") : t("rtNoEntities"))}</p>`;
+    html += routines.map((x) => this.clockHtml(x)).join("");
+    const full = routines.length >= this.limit("per_device", 20);
+    if (full) html += `<p class="mg-hint">${esc(t("rtLimit", this.limit("per_device", 20)))}</p>`;
+    else if (this.data.entities.length) html += `<button type="button" class="mg-add" data-rt="add">${this.h.mdi("plus", 18)}${esc(t("rtAdd"))}</button>`;
     return html;
   }
 
   // Zeile unter dem Satz: zuletzt, Fehler, verpasst, Entität
-  statusHtml(tm) {
+  statusHtml(rt) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const out = [];
-    if (tm.entity_missing) out.push(`<span class="mg-warn">${esc(t("tmEntityMissing"))}</span>`);
-    const last = tm.last;
+    if (rt.entity_missing) out.push(`<span class="mg-warn">${esc(t("rtEntityMissing"))}</span>`);
+    const last = rt.last;
     if (last) {
       const ago = this.serverNow() - last.at;
-      const when = ago < 60 ? t("tmJustNow") : t("tmAgo", this.host._fmtSeconds(ago, true));
-      if (last.what === "failed") out.push(`<span class="mg-warn">${esc(t("tmFailed", t(`tmReason_${last.reason || "error"}`)))}</span> ${esc(when)}`);
-      else if (last.what === "retry") out.push(`<span class="mg-warn">${esc(t("tmRetrying", t(`tmReason_${last.reason || "error"}`)))}</span>`);
-      else if (last.what === "missed") out.push(`<span class="mg-warn">${esc(t("tmMissed"))}</span> ${esc(when)}`);
-      else if (last.what === "paused") out.push(esc(t("tmSkippedPaused")) + ` ${esc(when)}`);
-      else if (last.ok) out.push(esc(t("tmLastRun", when)));
+      const when = ago < 60 ? t("rtJustNow") : t("rtAgo", this.host._fmtSeconds(ago, true));
+      if (last.what === "failed") out.push(`<span class="mg-warn">${esc(t("rtFailed", t(`rtReason_${last.reason || "error"}`)))}</span> ${esc(when)}`);
+      else if (last.what === "retry") out.push(`<span class="mg-warn">${esc(t("rtRetrying", t(`rtReason_${last.reason || "error"}`)))}</span>`);
+      else if (last.what === "missed") out.push(`<span class="mg-warn">${esc(t("rtMissed"))}</span> ${esc(when)}`);
+      else if (last.what === "paused") out.push(esc(t("rtSkippedPaused")) + ` ${esc(when)}`);
+      else if (last.ok) out.push(esc(t("rtLastRun", when)));
     }
     return out;
   }
 
   // Wecker-Stil (docs/mockups/timer-v1, Variante B): Uhrzeit gross, Wochentage als Zeile, darunter nächster Lauf
-  clockHtml(tm) {
+  clockHtml(rt) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
-    const confirming = this.ui.confirmId === tm.id;
-    const domain = tm.domain || this.domainOf(tm.entity_id);
-    const name = tm.entity_name || tm.entity_id;
-    const running = tm.running && tm.due;
+    const confirming = this.ui.confirmId === rt.id;
+    const domain = rt.domain || this.domainOf(rt.entity_id);
+    const name = rt.entity_name || rt.entity_id;
+    const running = rt.running && rt.due;
     let left;
     if (running) {
-      const total = Number(tm.delay_s) || 1;
-      const rem = Math.max(0, tm.due - this.serverNow());
+      const total = Number(rt.delay_s) || 1;
+      const rem = Math.max(0, rt.due - this.serverNow());
       const circ = 2 * Math.PI * 26;
-      left = `<div class="tm-ring" data-tm-due="${tm.due}" data-total="${total}"><svg viewBox="0 0 62 62" aria-hidden="true"><circle class="bg" cx="31" cy="31" r="26"/><circle class="fg" cx="31" cy="31" r="26" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${(circ * (1 - rem / total)).toFixed(1)}"/></svg><span data-tm-left>${esc(this.fmtClock(rem))}</span></div>`;
-    } else if (tm.kind === "trigger") {
-      left = `<div class="time">⚡<small>${esc(t("tmTrigBadge"))}</small></div>`;
+      left = `<div class="rt-ring" data-rt-due="${rt.due}" data-total="${total}"><svg viewBox="0 0 62 62" aria-hidden="true"><circle class="bg" cx="31" cy="31" r="26"/><circle class="fg" cx="31" cy="31" r="26" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${(circ * (1 - rem / total)).toFixed(1)}"/></svg><span data-rt-left>${esc(this.fmtClock(rem))}</span></div>`;
+    } else if (rt.kind === "trigger") {
+      left = `<div class="time">⚡<small>${esc(t("rtTrigBadge"))}</small></div>`;
     } else {
-      const sub = tm.kind === "once" ? (tm.date ? this.dateText({ date: tm.date }) : t("tmOnceShort")) : tm.repeat === "monthly" ? t("tmMonthlyOn", tm.mday === -1 ? t("tmLastDayShort") : `${tm.mday}.`) : "";
-      left = `<div class="time">${esc(tm.time || this.localTimeOf(tm))}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`;
+      const sub = rt.kind === "once" ? (rt.date ? this.dateText({ date: rt.date }) : t("rtOnceShort")) : rt.repeat === "monthly" ? t("rtMonthlyOn", rt.mday === -1 ? t("rtLastDayShort") : `${rt.mday}.`) : "";
+      left = `<div class="time">${esc(rt.time || this.localTimeOf(rt))}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`;
     }
-    const sw = `<label class="switch"><input type="checkbox" data-tm="toggle" data-id="${esc(tm.id)}"${tm.enabled ? " checked" : ""} aria-label="${esc(tm.name)}"><span></span></label>`;
-    const what = `${this.sentenceOf(tm, name)}${tm.kind === "countdown" ? ` · ${t("tmOnceShort")}` : ""}${tm.push ? ` · 🔔 ${esc(tm.target ? this.niceTarget(tm.target) : t("tmTargetDefaultShort"))}` : ""}`;
-    const days = tm.kind === "repeat" && (tm.repeat === "daily" || tm.repeat === "weekly")
-      ? `<div class="tm-days">${WEEKDAYS.map((i) => `<i class="${tm.repeat === "daily" || (tm.weekdays || []).includes(i) ? "on" : ""}">${esc(this.wd(i))}</i>`).join("")}</div>`
+    const sw = `<label class="switch"><input type="checkbox" data-rt="toggle" data-id="${esc(rt.id)}"${rt.enabled ? " checked" : ""} aria-label="${esc(rt.name)}"><span></span></label>`;
+    const what = `${this.sentenceOf(rt, name)}${rt.kind === "countdown" ? ` · ${t("rtOnceShort")}` : ""}${rt.push ? ` · 🔔 ${esc(rt.target ? this.niceTarget(rt.target) : t("rtTargetDefaultShort"))}` : ""}`;
+    const days = rt.kind === "repeat" && (rt.repeat === "daily" || rt.repeat === "weekly")
+      ? `<div class="rt-days">${WEEKDAYS.map((i) => `<i class="${rt.repeat === "daily" || (rt.weekdays || []).includes(i) ? "on" : ""}">${esc(this.wd(i))}</i>`).join("")}</div>`
       : "";
-    const status = this.statusHtml(tm);
+    const status = this.statusHtml(rt);
     let next;
-    if (running) next = `<span>${esc(t("tmRemaining"))} <b data-tm-left2>${esc(this.fmtClock(Math.max(0, tm.due - this.serverNow())))}</b></span>`;
-    else if (tm.kind === "trigger" && tm.enabled) next = `<span>${esc(this.waitsText(tm))}</span>`;
-    else if (tm.enabled && tm.due_local) next = `<span>${esc(t("tmNextRun"))} <b>${esc(this.localText(tm.due_local))}</b></span>`;
-    else if (tm.done) next = `<span class="tm-tag grey">${esc(t("tmDone"))}</span>`;
-    else next = `<span>${esc(t("tmDisabled"))}</span>`;
-    if (tm.revert_local) next += `<span>${esc(t("tmRevertAt", tm.revert_local.time))}</span>`;
+    if (running) next = `<span>${esc(t("rtRemaining"))} <b data-rt-left2>${esc(this.fmtClock(Math.max(0, rt.due - this.serverNow())))}</b></span>`;
+    else if (rt.kind === "trigger" && rt.enabled) next = `<span>${esc(this.waitsText(rt))}</span>`;
+    else if (rt.enabled && rt.due_local) next = `<span>${esc(t("rtNextRun"))} <b>${esc(this.localText(rt.due_local))}</b></span>`;
+    else if (rt.done) next = `<span class="rt-tag grey">${esc(t("rtDone"))}</span>`;
+    else next = `<span>${esc(t("rtDisabled"))}</span>`;
+    if (rt.revert_local) next += `<span>${esc(t("rtRevertAt", rt.revert_local.time))}</span>`;
     const acts = confirming
       ? ""
-      : `<span class="acts"><button type="button" class="linkbtn" data-tm="edit" data-id="${esc(tm.id)}">${esc(t("tmActEdit"))}</button>
-         <button type="button" class="linkbtn" data-tm="run" data-id="${esc(tm.id)}"${this.ui.busy === tm.id ? " disabled" : ""}>${esc(t("tmActRun"))}</button>
-         <button type="button" class="linkbtn danger" data-tm="delete" data-id="${esc(tm.id)}">${esc(t("tmActDelete"))}</button></span>`;
+      : `<span class="acts"><button type="button" class="linkbtn" data-rt="edit" data-id="${esc(rt.id)}">${esc(t("rtActEdit"))}</button>
+         <button type="button" class="linkbtn" data-rt="run" data-id="${esc(rt.id)}"${this.ui.busy === rt.id ? " disabled" : ""}>${esc(t("rtActRun"))}</button>
+         <button type="button" class="linkbtn danger" data-rt="delete" data-id="${esc(rt.id)}">${esc(t("rtActDelete"))}</button></span>`;
     const confirm = confirming
-      ? `<div class="mg-confirm"><b>${esc(t("tmDeleteAsk", tm.name))}</b><small>${esc(t("tmDeleteNote"))}</small>
-          <div class="mg-btns small"><button type="button" class="dlg-btn" data-tm="delete-no">${esc(t("tmCancel"))}</button><button type="button" class="dlg-btn danger" data-tm="delete-yes" data-id="${esc(tm.id)}">${esc(t("tmDeleteYes"))}</button></div></div>`
+      ? `<div class="mg-confirm"><b>${esc(t("rtDeleteAsk", rt.name))}</b><small>${esc(t("rtDeleteNote"))}</small>
+          <div class="mg-btns small"><button type="button" class="dlg-btn" data-rt="delete-no">${esc(t("rtCancel"))}</button><button type="button" class="dlg-btn danger" data-rt="delete-yes" data-id="${esc(rt.id)}">${esc(t("rtDeleteYes"))}</button></div></div>`
       : "";
-    return `<div class="tm-clock${tm.enabled ? "" : " off"}"><div class="top">${left}<span class="grow"></span>${sw}</div>
-      <div class="name">${timerEmoji(domain)} ${esc(tm.name)}</div><div class="what">${what}</div>${days}
+    return `<div class="rt-clock${rt.enabled ? "" : " off"}"><div class="top">${left}<span class="grow"></span>${sw}</div>
+      <div class="name">${routineEmoji(domain)} ${esc(rt.name)}</div><div class="what">${what}</div>${days}
       ${status.length ? `<div class="what">${status.join(" · ")}</div>` : ""}
       <div class="next">${next}${acts}</div>${confirm}</div>`;
   }
 
-  // Ein Auslöser-Timer in der Liste: wartet auf den Auslöser, oder ist eingeschaltet und wartet auf das Zurückschalten
-  waitsText(tm) {
-    this.learnEnts(tm.condition_entities);
-    return tm.waiting_end ? this.t("tmWaitsEnd", this.treeText(tm.back_conditions)) : this.t("tmWaitsTrigger");
+  // Eine Auslöser-Routine in der Liste: wartet auf den Auslöser, oder ist eingeschaltet und wartet auf das Zurückschalten
+  waitsText(rt) {
+    this.learnEnts(rt.condition_entities);
+    return rt.waiting_end ? this.t("rtWaitsEnd", this.treeText(rt.back_conditions)) : this.t("rtWaitsTrigger");
   }
 
-  localTimeOf(tm) {
-    return tm.due_local?.time || "";
+  localTimeOf(rt) {
+    return rt.due_local?.time || "";
   }
 
   // Restzeit eines laufenden Countdowns jede Sekunde nachführen, ohne den Behälter neu zu zeichnen
   startTick() {
     window.clearInterval(this._tick);
     this._tick = null;
-    if (!this.root?.querySelector("[data-tm-due]")) return;
+    if (!this.root?.querySelector("[data-rt-due]")) return;
     this._tick = window.setInterval(() => {
       if (!this.root?.isConnected) {
         window.clearInterval(this._tick);
@@ -526,17 +526,17 @@ export class TimerUi {
         return;
       }
       let expired = false;
-      for (const el of this.root.querySelectorAll("[data-tm-due]")) {
-        const rem = Number(el.dataset.tmDue) - this.serverNow();
+      for (const el of this.root.querySelectorAll("[data-rt-due]")) {
+        const rem = Number(el.dataset.rtDue) - this.serverNow();
         if (rem <= 0) expired = true;
         const total = Number(el.dataset.total) || 1;
         const text = this.fmtClock(rem);
-        const span = el.querySelector("[data-tm-left]");
+        const span = el.querySelector("[data-rt-left]");
         if (span) span.textContent = text;
         const fg = el.querySelector("circle.fg");
         if (fg) fg.setAttribute("stroke-dashoffset", String((2 * Math.PI * 26 * (1 - Math.max(0, rem) / total)).toFixed(1)));
-        const card = el.closest(".tm-clock");
-        const b = card?.querySelector("[data-tm-left2]");
+        const card = el.closest(".rt-clock");
+        const b = card?.querySelector("[data-rt-left2]");
         if (b) b.textContent = text;
       }
       if (expired) {
@@ -547,52 +547,52 @@ export class TimerUi {
     }, 1000);
   }
 
-  // --- Einstellungen: Übersicht aller Timer -----------------------------------
+  // --- Einstellungen: Übersicht aller Routinen -----------------------------------
 
-  allCounts(timers) {
+  allCounts(routines) {
     return {
-      all: timers.length,
-      on: timers.filter((x) => x.enabled).length,
-      off: timers.filter((x) => !x.enabled).length,
-      running: timers.filter((x) => x.running || x.reverting).length,
-      fav: timers.filter((x) => this.isStar(x.id)).length,
+      all: routines.length,
+      on: routines.filter((x) => x.enabled).length,
+      off: routines.filter((x) => !x.enabled).length,
+      running: routines.filter((x) => x.running || x.reverting).length,
+      fav: routines.filter((x) => this.isStar(x.id)).length,
     };
   }
 
-  // Attribut für Aktionen: in den Einstellungen "data-set", im Fenster mit allen Timern (all.dlg) "data-tma"
+  // Attribut für Aktionen: in den Einstellungen "data-set", im Fenster mit allen Routinen (all.dlg) "data-rta"
   a(all, action) {
-    return all.dlg ? `data-tma="${action}"` : `data-set="${action}"`;
+    return all.dlg ? `data-rta="${action}"` : `data-set="${action}"`;
   }
 
   allQuery(all) {
-    return String(all?.dlg ? all.query || "" : this.host._settings?.search?.timers || "").trim();
+    return String(all?.dlg ? all.query || "" : this.host._settings?.search?.routines || "").trim();
   }
 
-  haystack(tm) {
-    return `${tm.name} ${tm.device_name} ${tm.entity_name} ${tm.entity_id} ${this.sentence(tm)} ${tm.target || ""}`.toLowerCase();
+  haystack(rt) {
+    return `${rt.name} ${rt.device_name} ${rt.entity_name} ${rt.entity_id} ${this.sentence(rt)} ${rt.target || ""}`.toLowerCase();
   }
 
   allGroups(all, devices) {
     const groups = new Map();
-    for (const tm of all.timers || []) {
-      const dev = devices.find((d) => d.id === tm.device_id);
-      if (!groups.has(tm.device_id)) groups.set(tm.device_id, { id: tm.device_id, name: tm.device_name || dev?.name || "", dev, timers: [] });
-      groups.get(tm.device_id).timers.push(tm);
+    for (const rt of all.routines || []) {
+      const dev = devices.find((d) => d.id === rt.device_id);
+      if (!groups.has(rt.device_id)) groups.set(rt.device_id, { id: rt.device_id, name: rt.device_name || dev?.name || "", dev, routines: [] });
+      groups.get(rt.device_id).routines.push(rt);
     }
     return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  // Lieblings-Timer (Herz, seit 2.26.0): liegen pro Benutzer in den Benutzerdaten, eigener Reiter in "Alle Timer"
+  // Lieblings-Routinen (Herz, seit 2.26.0): liegen pro Benutzer in den Benutzerdaten, eigener Reiter in "Alle Routinen"
   isStar(id) {
-    return Boolean(this.host._tmStars?.has(id));
+    return Boolean(this.host._rtStars?.has(id));
   }
 
-  passes(tm, q, filter) {
-    if (filter === "on" && !tm.enabled) return false;
-    if (filter === "off" && tm.enabled) return false;
-    if (filter === "running" && !tm.running && !tm.reverting) return false;
-    if (filter === "fav" && !this.isStar(tm.id)) return false;
-    return !q || this.haystack(tm).includes(q.toLowerCase());
+  passes(rt, q, filter) {
+    if (filter === "on" && !rt.enabled) return false;
+    if (filter === "off" && rt.enabled) return false;
+    if (filter === "running" && !rt.running && !rt.reverting) return false;
+    if (filter === "fav" && !this.isStar(rt.id)) return false;
+    return !q || this.haystack(rt).includes(q.toLowerCase());
   }
 
   isFiltering(all) {
@@ -609,7 +609,7 @@ export class TimerUi {
     const q = this.allQuery(all);
     const filter = all.filter || "all";
     return this.allGroups(all, devices)
-      .map((g) => ({ ...g, shown: g.timers.filter((x) => this.passes(x, q, filter)) }))
+      .map((g) => ({ ...g, shown: g.routines.filter((x) => this.passes(x, q, filter)) }))
       .filter((g) => g.shown.length);
   }
 
@@ -633,30 +633,30 @@ export class TimerUi {
   overviewHtml(all, devices) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
-    let html = `<p class="mg-note">${esc(t(all.dlg ? "tmAllDlgIntro" : "tmAllIntro"))}</p>`;
+    let html = `<p class="mg-note">${esc(t(all.dlg ? "rtAllDlgIntro" : "rtAllIntro"))}</p>`;
     if (all.flash) html += `<div class="mg-flash" role="status">${esc(all.flash)}</div>`;
-    if (all.error && !all.timers) {
-      return `${html}<div class="dlg-error">${esc(t("tmLoadError", all.error))}</div><button type="button" class="qbtn" ${this.a(all, "timer-reload")}>${esc(t("tmRetry"))}</button>`;
+    if (all.error && !all.routines) {
+      return `${html}<div class="dlg-error">${esc(t("rtLoadError", all.error))}</div><button type="button" class="qbtn" ${this.a(all, "routine-reload")}>${esc(t("rtRetry"))}</button>`;
     }
     if (all.err) html += `<div class="dlg-error">${esc(all.err)}</div>`;
-    if (!all.timers) return `${html}<p class="mg-note">${esc(t("tmLoading"))}</p>`;
-    if (!all.timers.length) return `${html}<p class="mg-empty">${esc(t("tmAllEmpty"))}</p>`;
-    const q = all.dlg ? String(all.query || "") : String(this.host._settings?.search?.timers || "");
+    if (!all.routines) return `${html}<p class="mg-note">${esc(t("rtLoading"))}</p>`;
+    if (!all.routines.length) return `${html}<p class="mg-empty">${esc(t("rtAllEmpty"))}</p>`;
+    const q = all.dlg ? String(all.query || "") : String(this.host._settings?.search?.routines || "");
     const ph = t("listSearch");
-    html += `<label class="list-search" data-for="timers">${this.h.mdi("search", 18)}<input type="search" data-lsearch="timers" value="${esc(q)}" placeholder="${esc(ph)}" aria-label="${esc(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n"></span>${this.host._fieldClearHtml(all.dlg ? "data-tma-clear" : "data-lclear", "timers", q)}</label>`;
-    const c = this.allCounts(all.timers);
-    // Reiter mit Herz (seit 2.26.0): nur, solange es einen Lieblings-Timer gibt; das Fenster öffnet dann auf diesem Reiter
+    html += `<label class="list-search" data-for="routines">${this.h.mdi("search", 18)}<input type="search" data-lsearch="routines" value="${esc(q)}" placeholder="${esc(ph)}" aria-label="${esc(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n"></span>${this.host._fieldClearHtml(all.dlg ? "data-rta-clear" : "data-lclear", "routines", q)}</label>`;
+    const c = this.allCounts(all.routines);
+    // Reiter mit Herz (seit 2.26.0): nur, solange es eine Lieblings-Routine gibt; das Fenster öffnet dann auf diesem Reiter
     if (all.dlg && !all.tabInit) {
       all.tabInit = true;
       if (c.fav) all.filter = "fav";
     }
     if ((all.filter || "all") === "fav" && !c.fav) all.filter = "all";
     const filter = all.filter || "all";
-    const tabs = [["all", "tmFilterAll"], ["on", "tmFilterOn"], ["off", "tmFilterOff"], ["running", "tmFilterRunning"], ...(c.fav ? [["fav", "tmFilterFav"]] : [])];
+    const tabs = [["all", "rtFilterAll"], ["on", "rtFilterOn"], ["off", "rtFilterOff"], ["running", "rtFilterRunning"], ...(c.fav ? [["fav", "rtFilterFav"]] : [])];
     html += `<div class="sub-tabs mg-tabs mg-filter" role="tablist">${tabs
-      .map(([k, label]) => `<button type="button" role="tab" class="sub-tab two${k === filter ? " on" : ""}${k === "fav" ? " fav" : ""}" ${this.a(all, "timer-filter")} data-v="${k}" aria-selected="${k === filter}"${k === "fav" ? ` aria-label="${esc(t(label))}"` : ""}><span class="tab-l">${k === "fav" ? this.h.mdi("heart", 16) : esc(t(label))}</span> <span class="tab-s">${c[k]}</span></button>`)
+      .map(([k, label]) => `<button type="button" role="tab" class="sub-tab two${k === filter ? " on" : ""}${k === "fav" ? " fav" : ""}" ${this.a(all, "routine-filter")} data-v="${k}" aria-selected="${k === filter}"${k === "fav" ? ` aria-label="${esc(t(label))}"` : ""}><span class="tab-l">${k === "fav" ? this.h.mdi("heart", 16) : esc(t(label))}</span> <span class="tab-s">${c[k]}</span></button>`)
       .join("")}</div>`;
-    return `${html}<div data-tm-all-zone data-q="${esc(q)}">${this.overviewListHtml(all, devices)}</div>`;
+    return `${html}<div data-rt-all-zone data-q="${esc(q)}">${this.overviewListHtml(all, devices)}</div>`;
   }
 
   overviewListHtml(all, devices) {
@@ -665,78 +665,78 @@ export class TimerUi {
     const groups = this.visibleGroups(all, devices);
     const nGroups = this.allGroups(all, devices).length;
     const shown = groups.reduce((n, g) => n + g.shown.length, 0);
-    all.shown = { n: shown, total: all.timers.length, filtering: this.isFiltering(all) };
+    all.shown = { n: shown, total: all.routines.length, filtering: this.isFiltering(all) };
     if (!groups.length) return `<p class="mg-note mg-none">${esc(t("listSearchNone"))}</p>`;
     const anyOpen = groups.some((g) => this.isOpen(all, g.id, nGroups));
-    let html = `<div class="mg-allcount"><span class="mg-count">${esc(t("tmAllCount", shown, groups.length))}</span><button type="button" class="linkbtn" ${this.a(all, "timer-fold-all")}>${esc(t(anyOpen ? "tmFoldAll" : "tmUnfoldAll"))}</button></div>`;
+    let html = `<div class="mg-allcount"><span class="mg-count">${esc(t("rtAllCount", shown, groups.length))}</span><button type="button" class="linkbtn" ${this.a(all, "routine-fold-all")}>${esc(t(anyOpen ? "rtFoldAll" : "rtUnfoldAll"))}</button></div>`;
     for (const g of groups) {
       const open = this.isOpen(all, g.id, nGroups);
       const offN = g.shown.filter((x) => !x.enabled).length;
-      const nextTm = g.shown.filter((x) => x.enabled && x.due_local).sort((a, b) => a.due - b.due)[0];
+      const nextRt = g.shown.filter((x) => x.enabled && x.due_local).sort((a, b) => a.due - b.due)[0];
       const sum = open
         ? g.dev?.area || g.dev?.integration?.name ? `<small>${esc([g.dev?.area, g.dev?.integration?.name].filter(Boolean).join(" · "))}</small>` : ""
-        : `<small class="mg-dsum">${esc(t("tmSumTimers", g.shown.length))}${offN ? ` · ${esc(t("tmSumOff", offN))}` : ""}${nextTm ? ` · <span class="mg-on">${esc(t("tmSumNext", this.localText(nextTm.due_local)))}</span>` : ""}</small>`;
-      html += `<div class="mg-dcard${open ? "" : " closed"}"><button type="button" class="mg-dhead" ${this.a(all, "timer-fold-dev")} data-device="${esc(g.id)}" aria-expanded="${open}">
+        : `<small class="mg-dsum">${esc(t("rtSumRoutines", g.shown.length))}${offN ? ` · ${esc(t("rtSumOff", offN))}` : ""}${nextRt ? ` · <span class="mg-on">${esc(t("rtSumNext", this.localText(nextRt.due_local)))}</span>` : ""}</small>`;
+      html += `<div class="mg-dcard${open ? "" : " closed"}"><button type="button" class="mg-dhead" ${this.a(all, "routine-fold-dev")} data-device="${esc(g.id)}" aria-expanded="${open}">
         <span class="mg-devic" aria-hidden="true">${this.h.typeIcon(g.dev?.type || "other", 18)}</span>
         <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span><span class="mg-badge">${g.shown.length}</span>${this.chevHtml(open)}</button>`;
       if (open) {
         html += g.shown.map((x) => this.overviewCardHtml(x, all)).join("");
-        html += `<div class="mg-dfoot"><button type="button" class="linkbtn" ${this.a(all, "timer-device")} data-device="${esc(g.id)}">${esc(t("tmAllOpenDevice"))} ›</button></div>`;
+        html += `<div class="mg-dfoot"><button type="button" class="linkbtn" ${this.a(all, "routine-device")} data-device="${esc(g.id)}">${esc(t("rtAllOpenDevice"))} ›</button></div>`;
       }
       html += `</div>`;
     }
     return html;
   }
 
-  overviewCardHtml(tm, all) {
+  overviewCardHtml(rt, all) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
-    const confirming = all.confirmId === tm.id;
-    const sw = `<label class="switch"><input type="checkbox" ${this.a(all, "timer-toggle")} data-id="${esc(tm.id)}"${tm.enabled ? " checked" : ""} aria-label="${esc(tm.name)}"><span></span></label>`;
+    const confirming = all.confirmId === rt.id;
+    const sw = `<label class="switch"><input type="checkbox" ${this.a(all, "routine-toggle")} data-id="${esc(rt.id)}"${rt.enabled ? " checked" : ""} aria-label="${esc(rt.name)}"><span></span></label>`;
     const acts = confirming
       ? ""
-      : `<div class="mg-acts"><button type="button" class="linkbtn" ${this.a(all, "timer-edit")} data-device="${esc(tm.device_id)}" data-id="${esc(tm.id)}">${esc(t("tmActEdit"))}</button>
+      : `<div class="mg-acts"><button type="button" class="linkbtn" ${this.a(all, "routine-edit")} data-device="${esc(rt.device_id)}" data-id="${esc(rt.id)}">${esc(t("rtActEdit"))}</button>
         ${
-          // Im Fenster mit allen Timern: bearbeiten, ein-/ausschalten und löschen (seit 2.24.1), kein Ausführen, kein Neuanlegen
+          // Im Fenster mit allen Routinen: bearbeiten, ein-/ausschalten und löschen (seit 2.24.1), kein Ausführen, kein Neuanlegen
           all.dlg ? "" : `
-        <button type="button" class="linkbtn" ${this.a(all, "timer-run")} data-id="${esc(tm.id)}">${esc(t("tmActRun"))}</button>`
+        <button type="button" class="linkbtn" ${this.a(all, "routine-run")} data-id="${esc(rt.id)}">${esc(t("rtActRun"))}</button>`
         }
-        <button type="button" class="linkbtn danger" ${this.a(all, "timer-delete")} data-id="${esc(tm.id)}">${esc(t("tmActDelete"))}</button>
-        <button type="button" class="linkbtn fav${this.isStar(tm.id) ? " on" : ""}" ${this.a(all, "timer-star")} data-id="${esc(tm.id)}" aria-pressed="${this.isStar(tm.id)}" title="${esc(t(this.isStar(tm.id) ? "tmFavRemove" : "tmFavAdd"))}" aria-label="${esc(t(this.isStar(tm.id) ? "tmFavRemove" : "tmFavAdd"))}">${this.h.mdi(this.isStar(tm.id) ? "heart" : "heartOutline", 20)}</button></div>`;
+        <button type="button" class="linkbtn danger" ${this.a(all, "routine-delete")} data-id="${esc(rt.id)}">${esc(t("rtActDelete"))}</button>
+        <button type="button" class="linkbtn fav${this.isStar(rt.id) ? " on" : ""}" ${this.a(all, "routine-star")} data-id="${esc(rt.id)}" aria-pressed="${this.isStar(rt.id)}" title="${esc(t(this.isStar(rt.id) ? "rtFavRemove" : "rtFavAdd"))}" aria-label="${esc(t(this.isStar(rt.id) ? "rtFavRemove" : "rtFavAdd"))}">${this.h.mdi(this.isStar(rt.id) ? "heart" : "heartOutline", 20)}</button></div>`;
     const confirm = confirming
-      ? `<div class="mg-confirm"><b>${esc(t("tmDeleteAsk", tm.name))}</b><small>${esc(t("tmDeleteNote"))}</small>
-          <div class="mg-btns small"><button type="button" class="dlg-btn" ${this.a(all, "timer-delete-no")}>${esc(t("tmCancel"))}</button><button type="button" class="dlg-btn danger" ${this.a(all, "timer-delete-yes")} data-id="${esc(tm.id)}">${esc(t("tmDeleteYes"))}</button></div></div>`
+      ? `<div class="mg-confirm"><b>${esc(t("rtDeleteAsk", rt.name))}</b><small>${esc(t("rtDeleteNote"))}</small>
+          <div class="mg-btns small"><button type="button" class="dlg-btn" ${this.a(all, "routine-delete-no")}>${esc(t("rtCancel"))}</button><button type="button" class="dlg-btn danger" ${this.a(all, "routine-delete-yes")} data-id="${esc(rt.id)}">${esc(t("rtDeleteYes"))}</button></div></div>`
       : "";
-    const status = this.statusHtml(tm);
+    const status = this.statusHtml(rt);
     // Wartet auf das Zurückschalten: wann, steht in der Zeile (Reiter "Läuft", seit 2.26.0)
-    const backWord = tm.reverting && tm.revert_local && opposite(tm.action) ? this.t(`tmRes_${resKey(tm.domain, opposite(tm.action))}`) : "";
-    if (backWord) status.unshift(`<span class="mg-on">${esc(tm.back_mode === "restore" ? t("tmBackAtRowRestore", this.localText(tm.revert_local)) : t("tmBackAtRow", backWord, this.localText(tm.revert_local)))}</span>`);
-    const next = tm.running ? `<span class="mg-on">${esc(t("tmRunningShort"))}</span>` : tm.kind === "trigger" && tm.enabled ? `<span class="mg-on">${esc(this.waitsText(tm))}</span>` : tm.enabled && tm.due_local ? `${esc(t("tmNextRun"))} <span class="mg-on">${esc(this.localText(tm.due_local))}</span>` : tm.done ? esc(t("tmDone")) : esc(t("tmDisabled"));
-    return `<div class="mg-card${tm.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${timerEmoji(tm.domain)}</span>
-      <div class="mg-t"><b>${esc(tm.name)}</b><small>${esc(this.sentence(tm))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${acts}${confirm}</div>`;
+    const backWord = rt.reverting && rt.revert_local && opposite(rt.action) ? this.t(`rtRes_${resKey(rt.domain, opposite(rt.action))}`) : "";
+    if (backWord) status.unshift(`<span class="mg-on">${esc(rt.back_mode === "restore" ? t("rtBackAtRowRestore", this.localText(rt.revert_local)) : t("rtBackAtRow", backWord, this.localText(rt.revert_local)))}</span>`);
+    const next = rt.running ? `<span class="mg-on">${esc(t("rtRunningShort"))}</span>` : rt.kind === "trigger" && rt.enabled ? `<span class="mg-on">${esc(this.waitsText(rt))}</span>` : rt.enabled && rt.due_local ? `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>` : rt.done ? esc(t("rtDone")) : esc(t("rtDisabled"));
+    return `<div class="mg-card${rt.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${routineEmoji(rt.domain)}</span>
+      <div class="mg-t"><b>${esc(rt.name)}</b><small>${esc(this.sentence(rt))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${acts}${confirm}</div>`;
   }
 
   chevHtml(open) {
     return `<span class="mg-lchev${open ? " up" : ""}" aria-hidden="true">${this.h.mdi("chevronDown", 24)}</span>`;
   }
 
-  // --- Aktionen auf Timern (Popup und Übersicht) ------------------------------
+  // --- Aktionen auf Routinen (Popup und Übersicht) ------------------------------
 
-  replaceTimer(timer) {
-    for (const list of [this.data?.timers, this.host._tmAll?.timers]) {
+  replaceRoutine(routine) {
+    for (const list of [this.data?.routines, this.host._rtAll?.routines]) {
       if (!list) continue;
-      const i = list.findIndex((x) => x.id === timer.id);
-      if (i >= 0) list[i] = { ...list[i], ...timer };
+      const i = list.findIndex((x) => x.id === routine.id);
+      if (i >= 0) list[i] = { ...list[i], ...routine };
     }
   }
 
   async toggle(id, enabled, input) {
     try {
-      const r = await this.call({ type: "device_panel/timer_enable", timer_id: id, enabled });
-      this.replaceTimer(r.timer);
+      const r = await this.call({ type: "device_panel/routine_enable", routine_id: id, enabled });
+      this.replaceRoutine(r.routine);
       this.ui.error = "";
     } catch (err) {
-      this.ui.error = this.t("tmToggleError", this.h.errText(err));
+      this.ui.error = this.t("rtToggleError", this.h.errText(err));
       if (input) input.checked = !enabled;
     }
     this.afterChange();
@@ -747,12 +747,12 @@ export class TimerUi {
     this.ui.busy = id;
     this.afterChange();
     try {
-      const r = await this.call({ type: "device_panel/timer_run", timer_id: id });
-      this.replaceTimer(r.timer);
-      this.ui.error = r.ok ? "" : this.t("tmRunFailed", this.t(`tmReason_${r.reason || "error"}`));
-      this.ui.flash = r.ok ? this.t("tmRunDone") : "";
+      const r = await this.call({ type: "device_panel/routine_run", routine_id: id });
+      this.replaceRoutine(r.routine);
+      this.ui.error = r.ok ? "" : this.t("rtRunFailed", this.t(`rtReason_${r.reason || "error"}`));
+      this.ui.flash = r.ok ? this.t("rtRunDone") : "";
     } catch (err) {
-      this.ui.error = this.t("tmRunFailed", this.h.errText(err));
+      this.ui.error = this.t("rtRunFailed", this.h.errText(err));
     }
     this.ui.busy = null;
     this.afterChange();
@@ -760,22 +760,22 @@ export class TimerUi {
 
   async remove(id) {
     try {
-      await this.call({ type: "device_panel/timer_delete", timer_id: id });
-      if (this.data) this.data.timers = this.data.timers.filter((x) => x.id !== id);
-      const all = this.host._tmAll;
-      if (all?.timers) all.timers = all.timers.filter((x) => x.id !== id);
+      await this.call({ type: "device_panel/routine_delete", routine_id: id });
+      if (this.data) this.data.routines = this.data.routines.filter((x) => x.id !== id);
+      const all = this.host._rtAll;
+      if (all?.routines) all.routines = all.routines.filter((x) => x.id !== id);
       this.ui.confirmId = null;
       this.ui.error = "";
     } catch (err) {
-      this.ui.error = this.t("tmDeleteError", this.h.errText(err));
+      this.ui.error = this.t("rtDeleteError", this.h.errText(err));
     }
     this.afterChange();
   }
 
   afterChange() {
-    if (this.host._devTab === "timer" && this.root?.isConnected && !this.wizardOpen()) this.paint();
+    if (this.host._devTab === "routine" && this.root?.isConnected && !this.wizardOpen()) this.paint();
     this.host._renderDevice?.(true);
-    this.host._renderTmAll?.();
+    this.host._renderRtAll?.();
   }
 
   // --- Assistent: Stand -------------------------------------------------------
@@ -816,37 +816,37 @@ export class TimerUi {
     };
   }
 
-  draftFrom(tm) {
-    this.learnEnts(tm.condition_entities);
-    const back = tm.back_s ? splitSeconds(tm.back_s, UNITS) : { text: "", unit: 60 };
-    const delay = tm.delay_s ? splitSeconds(tm.delay_s, UNITS) : { text: "", unit: 60 };
-    const backPreset = BACK_PRESETS.includes(tm.back_s || 0);
-    const delayPreset = DELAY_PRESETS.includes(tm.delay_s || 0);
+  draftFrom(rt) {
+    this.learnEnts(rt.condition_entities);
+    const back = rt.back_s ? splitSeconds(rt.back_s, UNITS) : { text: "", unit: 60 };
+    const delay = rt.delay_s ? splitSeconds(rt.delay_s, UNITS) : { text: "", unit: 60 };
+    const backPreset = BACK_PRESETS.includes(rt.back_s || 0);
+    const delayPreset = DELAY_PRESETS.includes(rt.delay_s || 0);
     return {
-      id: tm.id,
-      device_id: tm.device_id,
-      entity_id: tm.entity_id,
-      action: tm.action,
-      options: { ...(tm.options || {}) },
-      back_mode: tm.back_mode || "opposite",
-      ...triggerFromTimer(tm),
-      back_s: tm.back_s || 0,
+      id: rt.id,
+      device_id: rt.device_id,
+      entity_id: rt.entity_id,
+      action: rt.action,
+      options: { ...(rt.options || {}) },
+      back_mode: rt.back_mode || "opposite",
+      ...triggerFromRoutine(rt),
+      back_s: rt.back_s || 0,
       backOwn: backPreset ? { text: "", unit: 60 } : back,
-      kind: tm.kind,
-      delay_s: tm.delay_s || 1800,
-      delayOwn: delayPreset || !tm.delay_s ? { text: "", unit: 60 } : delay,
-      date: tm.date || "",
-      time: tm.time || "06:30",
-      repeat: tm.repeat || "daily",
-      weekdays: tm.weekdays?.length ? [...tm.weekdays] : [0, 1, 2, 3, 4],
-      mday: tm.mday ?? 1,
-      mdayOwn: tm.mday != null && tm.mday !== 1 && tm.mday !== 15 && tm.mday !== -1,
-      // Ein einmaliger Timer ist nach dem Lauf aus und bleibt es beim Bearbeiten: Er muss von Hand wieder eingeschaltet werden
+      kind: rt.kind,
+      delay_s: rt.delay_s || 1800,
+      delayOwn: delayPreset || !rt.delay_s ? { text: "", unit: 60 } : delay,
+      date: rt.date || "",
+      time: rt.time || "06:30",
+      repeat: rt.repeat || "daily",
+      weekdays: rt.weekdays?.length ? [...rt.weekdays] : [0, 1, 2, 3, 4],
+      mday: rt.mday ?? 1,
+      mdayOwn: rt.mday != null && rt.mday !== 1 && rt.mday !== 15 && rt.mday !== -1,
+      // Eine einmalige Routine ist nach dem Lauf aus und bleibt es beim Bearbeiten: Sie muss von Hand wieder eingeschaltet werden
       // (Schalter in Schritt 5, Schalter in der Liste oder "Nochmal"); bis 2.32.0 schaltete das Bearbeiten ihn von selbst wieder ein.
-      enabled: tm.enabled,
-      push: Boolean(tm.push),
-      target: tm.target || "",
-      name: tm.name,
+      enabled: rt.enabled,
+      push: Boolean(rt.push),
+      target: rt.target || "",
+      name: rt.name,
       touched: { name: true },
     };
   }
@@ -877,14 +877,14 @@ export class TimerUi {
     return raw;
   }
 
-  startWizard(timer = null) {
+  startWizard(routine = null) {
     this.view = "wizard";
     this.ui.flash = "";
     this.ui.error = "";
     this.wiz = {
-      step: timer ? 2 : 1,
-      editing: Boolean(timer),
-      draft: timer ? this.draftFrom(timer) : this.newDraft(),
+      step: routine ? 2 : 1,
+      editing: Boolean(routine),
+      draft: routine ? this.draftFrom(routine) : this.newDraft(),
       pv: null,
       pvError: "",
       test: null,
@@ -893,14 +893,14 @@ export class TimerUi {
       saving: false,
     };
     // Eine einzige schaltbare Entität ist schon gewählt: gleich zu "Wann"
-    if (!timer && this.wiz.draft.entity_id) this.wiz.step = 1;
+    if (!routine && this.wiz.draft.entity_id) this.wiz.step = 1;
     this.wiz.snap = JSON.stringify(this.wiz.draft);
     this.paint();
     this.scrollTop();
     this.requestPreview();
   }
 
-  // Neuer Timer aus dem Fenster aller Timer (seit 2.27.0): derselbe Assistent mit einem Schritt mehr davor, der das Gerät wählt
+  // Neue Routine aus dem Fenster aller Routinen (seit 2.27.0): derselbe Assistent mit einem Schritt mehr davor, der das Gerät wählt
   async startNewFromAll() {
     this.reset();
     this.standalone = true;
@@ -910,13 +910,13 @@ export class TimerUi {
     w.snap = JSON.stringify(draft);
     this.paint();
     try {
-      const r = await this.call({ type: "device_panel/timer_devices" });
+      const r = await this.call({ type: "device_panel/routine_devices" });
       if (this.wiz !== w) return;
       w.devices = r.devices;
     } catch (err) {
       if (this.wiz !== w) return;
       w.devices = [];
-      w.error = this.t("tmLoadError", this.h.errText(err));
+      w.error = this.t("rtLoadError", this.h.errText(err));
     }
     this.paint();
   }
@@ -931,7 +931,7 @@ export class TimerUi {
     try {
       if (this.deviceId !== w.pickId || !this.data) {
         const id = w.pickId;
-        const result = await this.call({ type: "device_panel/timer_get", device_id: id });
+        const result = await this.call({ type: "device_panel/routine_get", device_id: id });
         if (this.wiz !== w) return;
         this.deviceId = id;
         this.data = result;
@@ -943,7 +943,7 @@ export class TimerUi {
     } catch (err) {
       if (this.wiz !== w) return;
       w.loadingDev = false;
-      w.error = this.t("tmLoadError", this.h.errText(err));
+      w.error = this.t("rtLoadError", this.h.errText(err));
       this.paint();
       return;
     }
@@ -956,16 +956,16 @@ export class TimerUi {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const w = this.wiz;
-    return `<p class="mg-note">${esc(t("tmPickDeviceNote"))}</p>
-      <label class="list-search" data-for="tm-devs">${this.h.mdi("search", 18)}<input type="search" data-tm="dev-search" value="${esc(w.devQuery)}" placeholder="${esc(t("listSearch"))}" aria-label="${esc(t("listSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-      <div data-tm-zone="devs">${this.devsHtml()}</div>`;
+    return `<p class="mg-note">${esc(t("rtPickDeviceNote"))}</p>
+      <label class="list-search" data-for="rt-devs">${this.h.mdi("search", 18)}<input type="search" data-rt="dev-search" value="${esc(w.devQuery)}" placeholder="${esc(t("listSearch"))}" aria-label="${esc(t("listSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <div data-rt-zone="devs">${this.devsHtml()}</div>`;
   }
 
   devsHtml() {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const w = this.wiz;
-    if (!w.devices) return `<p class="mg-note">${esc(t("tmLoading"))}</p>`;
+    if (!w.devices) return `<p class="mg-note">${esc(t("rtLoading"))}</p>`;
     const q = String(w.devQuery || "").trim().toLowerCase();
     const rows = w.devices
       .map((x) => {
@@ -974,11 +974,11 @@ export class TimerUi {
         return { ...x, name: dev?.name || x.name, sub, type: dev?.type || "other" };
       })
       .filter((x) => !q || `${x.name} ${x.sub}`.toLowerCase().includes(q));
-    if (!rows.length) return `<p class="mg-note mg-none">${esc(t(w.devices.length ? "listSearchNone" : "tmNoSwitchableDevices"))}</p>`;
+    if (!rows.length) return `<p class="mg-note mg-none">${esc(t(w.devices.length ? "listSearchNone" : "rtNoSwitchableDevices"))}</p>`;
     return rows
-      .map((x) => `<button type="button" class="mg-card mg-pick" data-tm="dev" data-id="${esc(x.id)}" role="radio" aria-checked="${w.pickId === x.id}">
+      .map((x) => `<button type="button" class="mg-card mg-pick" data-rt="dev" data-id="${esc(x.id)}" role="radio" aria-checked="${w.pickId === x.id}">
         <span class="mg-row"><span class="mg-devic" aria-hidden="true">${this.h.typeIcon(x.type, 18)}</span><span class="mg-t"><b>${esc(x.name)}</b>${x.sub ? `<small>${esc(x.sub)}</small>` : ""}</span>
-        <span class="mg-val">${esc(t("tmDevEntities", x.entities))}</span><span class="mg-radio${w.pickId === x.id ? " on" : ""}"></span></span></button>`)
+        <span class="mg-val">${esc(t("rtDevEntities", x.entities))}</span><span class="mg-radio${w.pickId === x.id ? " on" : ""}"></span></span></button>`)
       .join("");
   }
 
@@ -990,7 +990,7 @@ export class TimerUi {
     this.closeWin();
     if (this.standalone) {
       this.reset();
-      this.host._loadTmAll?.();
+      this.host._loadRtAll?.();
       return;
     }
     this.paint();
@@ -1015,7 +1015,7 @@ export class TimerUi {
     const d = this.wiz.draft;
     const lo = this.limit("delay_min", 10);
     const hi = this.limit("delay_max", 604800);
-    return d.kind === "countdown" && (!Number.isFinite(d.delay_s) || d.delay_s < lo || d.delay_s > hi) ? this.t("tmDelayRange", this.fmtDur(lo), this.fmtDur(hi)) : "";
+    return d.kind === "countdown" && (!Number.isFinite(d.delay_s) || d.delay_s < lo || d.delay_s > hi) ? this.t("rtDelayRange", this.fmtDur(lo), this.fmtDur(hi)) : "";
   }
 
   backError() {
@@ -1023,7 +1023,7 @@ export class TimerUi {
     if (d.backKind !== "duration" || !d.back_s) return "";
     const lo = this.limit("back_min", 10);
     const hi = this.limit("back_max", 604800);
-    return !Number.isFinite(d.back_s) || d.back_s < lo || d.back_s > hi ? this.t("tmBackRange", this.fmtDur(lo), this.fmtDur(hi)) : "";
+    return !Number.isFinite(d.back_s) || d.back_s < lo || d.back_s > hi ? this.t("rtBackRange", this.fmtDur(lo), this.fmtDur(hi)) : "";
   }
 
   canNext(step = this.wiz.step) {
@@ -1065,7 +1065,7 @@ export class TimerUi {
       return;
     }
     try {
-      const r = await this.call({ type: "device_panel/timer_preview", timer: this.payload() });
+      const r = await this.call({ type: "device_panel/routine_preview", routine: this.payload() });
       if (seq !== this._pvSeq || this.wiz !== w) return;
       w.pv = r;
       w.pvError = "";
@@ -1084,11 +1084,11 @@ export class TimerUi {
     w.test = { busy: true };
     this.paintZones(["pv"]);
     try {
-      const r = await this.call({ type: "device_panel/timer_test", timer: this.payload() });
+      const r = await this.call({ type: "device_panel/routine_test", routine: this.payload() });
       const to = w.draft.target || this.data.default_target;
-      w.test = { text: r.sent ? this.t("tmTestSent", to && to !== "none" ? this.niceTarget(to) : "") : this.t("tmTestFail"), failed: !r.sent };
+      w.test = { text: r.sent ? this.t("rtTestSent", to && to !== "none" ? this.niceTarget(to) : "") : this.t("rtTestFail"), failed: !r.sent };
     } catch (err) {
-      w.test = { text: this.t("tmTestError", this.h.errText(err)), failed: true };
+      w.test = { text: this.t("rtTestError", this.h.errText(err)), failed: true };
     }
     if (this.wiz === w) this.paintZones(["pv"]);
   }
@@ -1100,21 +1100,21 @@ export class TimerUi {
     w.error = "";
     this.paintWindow();
     try {
-      const r = await this.call({ type: "device_panel/timer_save", timer: this.payload() });
-      const list = this.data?.timers;
+      const r = await this.call({ type: "device_panel/routine_save", routine: this.payload() });
+      const list = this.data?.routines;
       if (list) {
-        const i = list.findIndex((x) => x.id === r.timer.id);
-        if (i >= 0) list[i] = r.timer;
-        else list.push(r.timer);
+        const i = list.findIndex((x) => x.id === r.routine.id);
+        if (i >= 0) list[i] = r.routine;
+        else list.push(r.routine);
         list.sort((a, b) => a.name.localeCompare(b.name));
       }
-      this.ui.flash = this.t("tmSaved");
+      this.ui.flash = this.t("rtSaved");
       w.saving = false;
       w.snap = JSON.stringify(w.draft);
       this.closeWizard();
     } catch (err) {
       w.saving = false;
-      w.error = this.t("tmSaveError", this.h.errText(err));
+      w.error = this.t("rtSaveError", this.h.errText(err));
       if (this.wiz === w) this.paintWindow();
     }
   }
@@ -1141,7 +1141,7 @@ export class TimerUi {
   paintZones(only) {
     if (!this.win() || !this.wiz) return;
     for (const name of only || ["result", "runs", "pv", "summary", "prev", "backsum"]) {
-      const el = this.q(`[data-tm-zone="${name}"]`);
+      const el = this.q(`[data-rt-zone="${name}"]`);
       if (!el) continue;
       if (name === "result") el.innerHTML = this.resultHtml();
       else if (name === "runs") el.innerHTML = this.runsHtml();
@@ -1166,16 +1166,16 @@ export class TimerUi {
     return Boolean(d && d.action === "on" && this.entity(d.entity_id)?.options?.length);
   }
 
-  // Die Schritte in ihrer Reihenfolge: Gerät (nur aus dem Fenster aller Timer), Was, Optionen (nur wenn möglich), Wann, Meldung, Name
+  // Die Schritte in ihrer Reihenfolge: Gerät (nur aus dem Fenster aller Routinen), Was, Optionen (nur wenn möglich), Wann, Meldung, Name
   steps() {
     const d = this.wiz?.draft;
     return [...(this.wiz?.pick ? [0] : []), 1, ...(this.hasOptions() ? [OPTS_STEP] : []), 2, ...(d && opposite(d.action) ? [BACK_STEP] : []), 3, 4];
   }
 
   syncNav() {
-    const next = this.q('[data-tm="nav-next"], [data-tm="nav-save"]');
+    const next = this.q('[data-rt="nav-next"], [data-rt="nav-save"]');
     if (next) next.disabled = !this.canNext() || Boolean(this.wiz?.saving);
-    const quick = this.q('[data-tm="nav-quick"]');
+    const quick = this.q('[data-rt="nav-quick"]');
     if (quick) quick.disabled = !this.canSaveAll() || Boolean(this.wiz?.saving);
   }
 
@@ -1190,8 +1190,8 @@ export class TimerUi {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     return `<div class="mg-own"><span>${esc(label)}</span>
-      <input class="mg-pill num mg-ownin" type="text" inputmode="decimal" data-tm="${kind}-own" value="${esc(own.text)}" placeholder="${esc(t("tmOwnPh"))}" aria-label="${esc(label)}" autocomplete="off">
-      <select class="mg-pill" data-tm="${kind}-unit" aria-label="${esc(label)}">${UNITS.map((u) => `<option value="${u}"${u === own.unit ? " selected" : ""}>${esc(t(`tmUnit_${u}`))}</option>`).join("")}</select></div>`;
+      <input class="mg-pill num mg-ownin" type="text" inputmode="decimal" data-rt="${kind}-own" value="${esc(own.text)}" placeholder="${esc(t("rtOwnPh"))}" aria-label="${esc(label)}" autocomplete="off">
+      <select class="mg-pill" data-rt="${kind}-unit" aria-label="${esc(label)}">${UNITS.map((u) => `<option value="${u}"${u === own.unit ? " selected" : ""}>${esc(t(`rtUnit_${u}`))}</option>`).join("")}</select></div>`;
   }
 
   wizardHtml() {
@@ -1199,7 +1199,7 @@ export class TimerUi {
     const t = (k, ...a) => this.t(k, ...a);
     const w = this.wiz;
     const step = w.step;
-    // Mit "Timer hinzufügen" im Fenster aller Timer kommt Schritt 0 (Gerät wählen) davor, mit Schaltoptionen die Seite "Optionen"
+    // Mit "Routine hinzufügen" im Fenster aller Routinen kommt Schritt 0 (Gerät wählen) davor, mit Schaltoptionen die Seite "Optionen"
     // dazwischen: Die Anzeige zählt die Seiten, die es gibt
     const order = this.steps();
     const pos = Math.max(0, order.indexOf(step));
@@ -1210,21 +1210,21 @@ export class TimerUi {
       const on = i <= pos ? " on" : "";
       const open = (w.editing || i < pos) && !(n >= 1 && !this.data);
       return open
-        ? `<button type="button" class="mg-stp${on}" data-tm="goto" data-step="${n}" aria-label="${esc(`${t("tmStepOf", shown(n), total)}: ${t(`tmStepName_${n}`)}`)}"></button>`
+        ? `<button type="button" class="mg-stp${on}" data-rt="goto" data-step="${n}" aria-label="${esc(`${t("rtStepOf", shown(n), total)}: ${t(`rtStepName_${n}`)}`)}"></button>`
         : `<span class="mg-stp${on}"></span>`;
     }).join("");
     const body = [this.step0Html, this.step1Html, this.step2Html, this.step3Html, this.step4Html, this.stepOptsHtml, this.backStepHtml][step].call(this);
     const last = step === STEPS;
-    const quick = last || step === 0 ? "" : `<button type="button" class="dlg-btn quick" data-tm="nav-quick"${this.canSaveAll() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("tmSaving") : t("tmSave"))}</button>`;
-    const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-tm="${step === first ? "nav-cancel" : "nav-back"}">${esc(step === first ? t("tmCancel") : t("tmBack"))}</button>
+    const quick = last || step === 0 ? "" : `<button type="button" class="dlg-btn quick" data-rt="nav-quick"${this.canSaveAll() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("rtSaving") : t("rtSave"))}</button>`;
+    const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-rt="${step === first ? "nav-cancel" : "nav-back"}">${esc(step === first ? t("rtCancel") : t("rtBack"))}</button>
       ${quick}
-      ${last ? `<button type="button" class="dlg-btn primary" data-tm="nav-save"${this.canNext() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("tmSaving") : t("tmSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-tm="nav-next"${this.canNext() ? "" : " disabled"}>${esc(t("tmNext"))}</button>`}</div>`;
+      ${last ? `<button type="button" class="dlg-btn primary" data-rt="nav-save"${this.canNext() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("rtSaving") : t("rtSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-rt="nav-next"${this.canNext() ? "" : " disabled"}>${esc(t("rtNext"))}</button>`}</div>`;
     const device = (step > 0 || !w.pick) && this.deviceId ? this.host._devices?.find((x) => x.id === this.deviceId)?.name || w.devices?.find((x) => x.id === this.deviceId)?.name || "" : "";
-    return `<div class="mgw-head"><div class="mgw-t"><b>${esc(w.editing ? t("tmEditing") : t("tmNew"))}</b>${device ? `<small>${esc(device)}</small>` : ""}</div>
-        <button type="button" class="dlg-close" data-tm="close" title="${esc(t("close"))}" aria-label="${esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>
-      <div class="mgw-prog"><div class="mg-stephead"><span>${esc(t("tmStepOf", shown(step), total))}</span><span>${esc(t(`tmStepName_${step}`))}</span></div>
+    return `<div class="mgw-head"><div class="mgw-t"><b>${esc(w.editing ? t("rtEditing") : t("rtNew"))}</b>${device ? `<small>${esc(device)}</small>` : ""}</div>
+        <button type="button" class="dlg-close" data-rt="close" title="${esc(t("close"))}" aria-label="${esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>
+      <div class="mgw-prog"><div class="mg-stephead"><span>${esc(t("rtStepOf", shown(step), total))}</span><span>${esc(t(`rtStepName_${step}`))}</span></div>
         <div class="mg-steps">${bars}</div></div>
-      <div class="mgw-body"><div class="mgw-main"><div class="mg-big">${esc(t(`tmQ_${step}`))}</div>
+      <div class="mgw-body"><div class="mgw-main"><div class="mg-big">${esc(t(`rtQ_${step}`))}</div>
         ${body}
         ${w.error ? `<div class="dlg-error" role="alert">${esc(w.error)}</div>` : ""}</div></div>
       <div class="mgw-foot">${nav}</div>`;
@@ -1236,16 +1236,16 @@ export class TimerUi {
     const t = (k, ...a) => this.t(k, ...a);
     const d = this.wiz.draft;
     const ents = this.data.entities;
-    if (!ents.length) return `<p class="mg-note">${esc(t("tmNoEntities"))}</p>`;
-    let html = `<p class="mg-note">${esc(t("tmOnlySwitchable"))}</p>`;
-    html += ents.map((e) => `<button type="button" class="mg-card mg-pick" data-tm="pick" data-id="${esc(e.entity_id)}" role="radio" aria-checked="${d.entity_id === e.entity_id}">
-      <span class="mg-row"><span class="mg-ic" aria-hidden="true">${timerEmoji(e.domain)}</span><span class="mg-t"><b>${esc(e.name)}</b><small>${esc(e.entity_id)}</small></span>
+    if (!ents.length) return `<p class="mg-note">${esc(t("rtNoEntities"))}</p>`;
+    let html = `<p class="mg-note">${esc(t("rtOnlySwitchable"))}</p>`;
+    html += ents.map((e) => `<button type="button" class="mg-card mg-pick" data-rt="pick" data-id="${esc(e.entity_id)}" role="radio" aria-checked="${d.entity_id === e.entity_id}">
+      <span class="mg-row"><span class="mg-ic" aria-hidden="true">${routineEmoji(e.domain)}</span><span class="mg-t"><b>${esc(e.name)}</b><small>${esc(e.entity_id)}</small></span>
       <span class="mg-val${e.available ? "" : " off"}">${esc(this.stateWord(e))}</span><span class="mg-radio${d.entity_id === e.entity_id ? " on" : ""}"></span></span></button>`).join("");
     const e = this.entity(d.entity_id);
     if (!e) return html;
-    html += `<div class="mg-k">${esc(t("tmAction"))}</div>${this.tabsHtml(e.actions.map((a) => ({ on: d.action === a, attrs: `data-tm="action" data-v="${a}"`, label: t(`tmAct_${actKey(e.domain, a)}`) })))}`;
-    if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t("tmToggleNoBack"))}</p>`;
-    return `${html}<div data-tm-zone="result">${this.resultHtml()}</div>`;
+    html += `<div class="mg-k">${esc(t("rtAction"))}</div>${this.tabsHtml(e.actions.map((a) => ({ on: d.action === a, attrs: `data-rt="action" data-v="${a}"`, label: t(`rtAct_${actKey(e.domain, a)}`) })))}`;
+    if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t("rtToggleNoBack"))}</p>`;
+    return `${html}<div data-rt-zone="result">${this.resultHtml()}</div>`;
   }
 
   resultHtml() {
@@ -1254,13 +1254,13 @@ export class TimerUi {
     if (!e) return "";
     const w = this.wiz;
     const row = w.tried?.busy
-      ? `<span class="opt-short">${this.esc(this.t("tmTryBusy"))}</span>`
-      : `<button type="button" class="dlg-btn tm-try" data-tm="try">${this.esc(this.t("tmTryBtn"))}</button>${w.tried?.text ? `<span class="${w.tried.failed ? "opt-error" : "opt-short"}" role="status">${this.esc(w.tried.text)}</span>` : ""}`;
-    return `<p class="mg-note tm-result">${this.esc(this.t("tmResult", this.sentenceOf(this.draftTm(), e.name)))}</p>
-      <div class="mg-testrow tm-tryrow">${row}</div><p class="mg-hint">${this.esc(this.t("tmTryNote"))}</p>`;
+      ? `<span class="opt-short">${this.esc(this.t("rtTryBusy"))}</span>`
+      : `<button type="button" class="dlg-btn rt-try" data-rt="try">${this.esc(this.t("rtTryBtn"))}</button>${w.tried?.text ? `<span class="${w.tried.failed ? "opt-error" : "opt-short"}" role="status">${this.esc(w.tried.text)}</span>` : ""}`;
+    return `<p class="mg-note rt-result">${this.esc(this.t("rtResult", this.sentenceOf(this.draftRt(), e.name)))}</p>
+      <div class="mg-testrow rt-tryrow">${row}</div><p class="mg-hint">${this.esc(this.t("rtTryNote"))}</p>`;
   }
 
-  // Testknopf: schaltet die gewählte Entität jetzt, ohne Timer und ohne Zurückschalten
+  // Testknopf: schaltet die gewählte Entität jetzt, ohne Routine und ohne Zurückschalten
   async tryNow() {
     const w = this.wiz;
     if (!w || w.tried?.busy) return;
@@ -1268,10 +1268,10 @@ export class TimerUi {
     w.tried = { busy: true };
     this.paintZones(["result"]);
     try {
-      const r = await this.call({ type: "device_panel/timer_try", entity_id: d.entity_id, action: d.action, options: d.action === "on" ? d.options : {} });
-      w.tried = r.ok ? { text: this.t("tmTryDone") } : { text: this.t("tmTryFail", this.t(r.reason === "unavailable" ? "tmTryUnavailable" : "tmTryError")), failed: true };
+      const r = await this.call({ type: "device_panel/routine_try", entity_id: d.entity_id, action: d.action, options: d.action === "on" ? d.options : {} });
+      w.tried = r.ok ? { text: this.t("rtTryDone") } : { text: this.t("rtTryFail", this.t(r.reason === "unavailable" ? "rtTryUnavailable" : "rtTryError")), failed: true };
     } catch (err) {
-      w.tried = { text: this.t("tmTryFail", this.h.errText(err)), failed: true };
+      w.tried = { text: this.t("rtTryFail", this.h.errText(err)), failed: true };
     }
     if (this.wiz !== w) return;
     this.paintZones(["result"]);
@@ -1283,7 +1283,7 @@ export class TimerUi {
   async refreshStates(w) {
     if (!this.deviceId) return;
     try {
-      const r = await this.call({ type: "device_panel/timer_get", device_id: this.deviceId });
+      const r = await this.call({ type: "device_panel/routine_get", device_id: this.deviceId });
       if (this.wiz !== w || !Array.isArray(r?.entities)) return;
       this.data.entities = r.entities;
       this.paint();
@@ -1315,8 +1315,8 @@ export class TimerUi {
   // Schnellwahl unter dem Regler: [Beschriftung, Wert]
   quickValues(spec) {
     const t = (k, ...a) => this.t(k, ...a);
-    if (spec.type === "kelvin") return [["warm", 2700], ["neutral", 4000], ["cold", 6500]].map(([k, v]) => [t(`tmKelvin_${k}`), Math.min(spec.max, Math.max(spec.min, v))]);
-    if (spec.type === "choice") return spec.values.map((v) => [t(`tmHvac_${v}`), v]);
+    if (spec.type === "kelvin") return [["warm", 2700], ["neutral", 4000], ["cold", 6500]].map(([k, v]) => [t(`rtKelvin_${k}`), Math.min(spec.max, Math.max(spec.min, v))]);
+    if (spec.type === "choice") return spec.values.map((v) => [t(`rtHvac_${v}`), v]);
     if (spec.type === "temperature") {
       const step = Number(spec.step) || 0.5;
       const values = [0.25, 0.5, 0.75].map((f) => Math.min(spec.max, Math.max(spec.min, Math.round((spec.min + (spec.max - spec.min) * f) / step) * step)));
@@ -1329,11 +1329,11 @@ export class TimerUi {
   optValueText(spec) {
     const o = this.wiz.draft.options;
     const v = o[spec.key];
-    if (spec.key === "rgb_color") return Array.isArray(v) ? this.colourName(v) : this.t("tmOptKeep");
-    if (v === undefined) return spec.key === "color_temp_kelvin" && o.rgb_color ? "–" : this.t("tmOptKeep");
+    if (spec.key === "rgb_color") return Array.isArray(v) ? this.colourName(v) : this.t("rtOptKeep");
+    if (v === undefined) return spec.key === "color_temp_kelvin" && o.rgb_color ? "–" : this.t("rtOptKeep");
     if (spec.type === "kelvin") return `${v} K`;
     if (spec.type === "temperature") return `${this.fmtNum(v)} ${spec.unit || "°C"}`;
-    if (spec.type === "choice") return this.t(`tmHvac_${v}`);
+    if (spec.type === "choice") return this.t(`rtHvac_${v}`);
     return `${v} %`;
   }
 
@@ -1343,11 +1343,11 @@ export class TimerUi {
     const t = (k, ...a) => this.t(k, ...a);
     const e = this.entity(this.wiz.draft.entity_id);
     if (!e) return "";
-    return `<p class="mg-note">${esc(t("tmOptNote"))}</p>
-      <div data-tm-zone="prev">${this.prevHtml()}</div>
+    return `<p class="mg-note">${esc(t("rtOptNote"))}</p>
+      <div data-rt-zone="prev">${this.prevHtml()}</div>
       ${e.options.map((spec) => this.optHtml(spec)).join("")}
-      <p class="mg-hint">${esc(t("tmOptPreviewNote"))}</p>
-      <div data-tm-zone="result">${this.resultHtml()}</div>`;
+      <p class="mg-hint">${esc(t("rtOptPreviewNote"))}</p>
+      <div data-rt-zone="result">${this.resultHtml()}</div>`;
   }
 
   // Eine Einstellung: Überschrift mit Wert, Regler (oder Farben), Schnellwahl als Reiterleiste
@@ -1356,18 +1356,18 @@ export class TimerUi {
     const t = (k, ...a) => this.t(k, ...a);
     const k = spec.key;
     const cur = this.wiz.draft.options[k];
-    const head = `<div class="to-k"><span>${esc(t(`tmOpt_${k}`))}</span><b data-tm-val="${esc(k)}">${esc(this.optValueText(spec))}</b></div>`;
+    const head = `<div class="to-k"><span>${esc(t(`rtOpt_${k}`))}</span><b data-rt-val="${esc(k)}">${esc(this.optValueText(spec))}</b></div>`;
     if (spec.type === "colour") return `${head}${this.coloursHtml()}`;
     let html = head;
     if (spec.type !== "choice") {
       const shown = cur ?? Math.round((spec.min + spec.max) / 2);
       const fill = ((shown - spec.min) / (spec.max - spec.min)) * 100;
       const step = spec.type === "temperature" ? spec.step || 0.5 : 1;
-      html += `<input type="range" class="to-range${spec.type === "kelvin" ? " kel" : ""}${cur === undefined ? " unset" : ""}" data-tm="opt" data-k="${esc(k)}" min="${spec.min}" max="${spec.max}" step="${step}" value="${shown}" style="--fill:${fill.toFixed(1)}%" aria-label="${esc(t(`tmOpt_${k}`))}">`;
-      if (spec.type === "kelvin") html += `<div class="to-ends"><span>${esc(t("tmKelvin_warm"))}</span><span>${esc(t("tmKelvin_cold"))}</span></div>`;
+      html += `<input type="range" class="to-range${spec.type === "kelvin" ? " kel" : ""}${cur === undefined ? " unset" : ""}" data-rt="opt" data-k="${esc(k)}" min="${spec.min}" max="${spec.max}" step="${step}" value="${shown}" style="--fill:${fill.toFixed(1)}%" aria-label="${esc(t(`rtOpt_${k}`))}">`;
+      if (spec.type === "kelvin") html += `<div class="to-ends"><span>${esc(t("rtKelvin_warm"))}</span><span>${esc(t("rtKelvin_cold"))}</span></div>`;
     }
     const none = cur === undefined && !(k === "color_temp_kelvin" && this.wiz.draft.options.rgb_color);
-    const items = [{ on: none, attrs: `data-tm="optq" data-k="${esc(k)}" data-v="" data-group="${esc(k)}"`, label: t("tmOptKeep") }, ...this.quickValues(spec).map(([label, v]) => ({ on: cur === v, attrs: `data-tm="optq" data-k="${esc(k)}" data-v="${esc(v)}" data-group="${esc(k)}"`, label }))];
+    const items = [{ on: none, attrs: `data-rt="optq" data-k="${esc(k)}" data-v="" data-group="${esc(k)}"`, label: t("rtOptKeep") }, ...this.quickValues(spec).map(([label, v]) => ({ on: cur === v, attrs: `data-rt="optq" data-k="${esc(k)}" data-v="${esc(v)}" data-group="${esc(k)}"`, label }))];
     return `${html}${this.tabsHtml(items)}`;
   }
 
@@ -1381,11 +1381,11 @@ export class TimerUi {
     const none = !rgb && o.color_temp_kelvin === undefined;
     const dots = COLOURS.map(([name, hex, c]) => {
       const on = rgb && c.every((v, i) => v === rgb[i]);
-      return `<button type="button" class="to-col${on ? " on" : ""}" style="background:${hex}" data-tm="optcol" data-v="${c.join(",")}" role="radio" aria-checked="${Boolean(on)}" aria-label="${esc(t(`tmCol_${name}`))}" title="${esc(t(`tmCol_${name}`))}"></button>`;
+      return `<button type="button" class="to-col${on ? " on" : ""}" style="background:${hex}" data-rt="optcol" data-v="${c.join(",")}" role="radio" aria-checked="${Boolean(on)}" aria-label="${esc(t(`rtCol_${name}`))}" title="${esc(t(`rtCol_${name}`))}"></button>`;
     }).join("");
-    return `<div class="to-cols" role="radiogroup" aria-label="${esc(t("tmOpt_rgb_color"))}">
-      <button type="button" class="to-col none${none ? " on" : ""}" data-tm="optcol" data-v="" role="radio" aria-checked="${none}" aria-label="${esc(t("tmOptKeep"))}" title="${esc(t("tmOptKeep"))}"></button>${dots}
-      <label class="to-col more${rgb && !known ? " on" : ""}" title="${esc(t("tmColPick"))}"><input type="color" data-tm="optpick" value="${rgb ? toHex(rgb) : "#ffffff"}" aria-label="${esc(t("tmColPick"))}"></label></div>`;
+    return `<div class="to-cols" role="radiogroup" aria-label="${esc(t("rtOpt_rgb_color"))}">
+      <button type="button" class="to-col none${none ? " on" : ""}" data-rt="optcol" data-v="" role="radio" aria-checked="${none}" aria-label="${esc(t("rtOptKeep"))}" title="${esc(t("rtOptKeep"))}"></button>${dots}
+      <label class="to-col more${rgb && !known ? " on" : ""}" title="${esc(t("rtColPick"))}"><input type="color" data-rt="optpick" value="${rgb ? toHex(rgb) : "#ffffff"}" aria-label="${esc(t("rtColPick"))}"></label></div>`;
   }
 
   // Vorschau: das Gerät, wie es nach dem Schalten aussieht (Lampe leuchtet in der Farbe, Rollladen steht auf der Position …)
@@ -1410,19 +1410,19 @@ export class TimerUi {
       const pos = o.position ?? 50;
       style = `--pv-closed:${100 - pos}%`;
       big = '<span class="to-shade"><i></i></span>';
-      sub = o.position == null ? "" : t(o.position >= 100 ? "tmCoverWord_open" : o.position <= 0 ? "tmCoverWord_closed" : "tmCoverWord_part");
+      sub = o.position == null ? "" : t(o.position >= 100 ? "rtCoverWord_open" : o.position <= 0 ? "rtCoverWord_closed" : "rtCoverWord_part");
     } else if (e.domain === "climate") {
       const colour = { heat: "#ff9500", cool: "#0a84ff", heat_cool: "#af52de", auto: "#34c759", dry: "#5ac8fa", fan_only: "#8e8e93" }[o.hvac_mode] || "var(--dp-text3)";
       style = `--pv-c:${colour};--pv-o:${off ? 0 : 0.35}`;
       big = `<span class="to-temp">${o.temperature != null ? `${esc(this.fmtNum(o.temperature))}°` : "–"}</span>`;
     } else {
-      big = `<span>${esc(timerEmoji(e.domain))}</span>`;
+      big = `<span>${esc(routineEmoji(e.domain))}</span>`;
       const level = (o.volume_pct ?? o.percentage ?? 100) / 100;
       style = `--pv-c:var(--dp-primary);--pv-o:${off ? 0 : (0.15 + 0.3 * level).toFixed(2)};--pv-b:1`;
-      sub = off ? "" : t(`tmOpt_${e.options[0].key}`);
+      sub = off ? "" : t(`rtOpt_${e.options[0].key}`);
     }
-    const main = parts[0] || t("tmOptKeep");
-    if (off) sub = t("tmOptNothing");
+    const main = parts[0] || t("rtOptKeep");
+    if (off) sub = t("rtOptNothing");
     return `<div class="to-prev${off ? " off" : ""}" style="${style}" role="img" aria-label="${esc(`${e.name}: ${main}${sub ? `, ${sub}` : ""}`)}">
       <span class="to-prev-n">${esc(e.name)}</span><div class="big">${big}</div><b>${esc(main)}</b><small>${esc(sub)}</small></div>`;
   }
@@ -1434,9 +1434,9 @@ export class TimerUi {
     this.setOpt(spec.key, Number(el.value));
     el.classList.remove("unset");
     el.style.setProperty("--fill", `${(((Number(el.value) - spec.min) / (spec.max - spec.min)) * 100).toFixed(1)}%`);
-    const val = this.q(`[data-tm-val="${spec.key}"]`);
+    const val = this.q(`[data-rt-val="${spec.key}"]`);
     if (val) val.textContent = this.optValueText(spec);
-    for (const b of this.qa(`[data-tm="optq"][data-k="${spec.key}"]`)) {
+    for (const b of this.qa(`[data-rt="optq"][data-k="${spec.key}"]`)) {
       const on = b.dataset.v !== "" && this.optSpecValue(spec.key, b.dataset.v) === Number(el.value);
       b.classList.toggle("on", on);
       b.setAttribute("aria-checked", String(on));
@@ -1451,42 +1451,42 @@ export class TimerUi {
     const d = this.wiz.draft;
     // Umschalter "Zu einer Zeit | Durch einen Auslöser" (seit 2.54.0)
     const mode = this.tabsHtml([
-      { on: d.kind !== "trigger", attrs: 'data-tm="whenmode" data-v="time"', label: t("tmWhenModeTime") },
-      { on: d.kind === "trigger", attrs: 'data-tm="whenmode" data-v="trigger"', label: t("tmWhenModeTrigger") },
+      { on: d.kind !== "trigger", attrs: 'data-rt="whenmode" data-v="time"', label: t("rtWhenModeTime") },
+      { on: d.kind === "trigger", attrs: 'data-rt="whenmode" data-v="trigger"', label: t("rtWhenModeTrigger") },
     ]);
-    if (d.kind === "trigger") return `${mode}${this.triggerPageHtml()}<div data-tm-zone="runs">${this.runsHtml()}</div>`;
-    let html = mode + this.tabsHtml([["countdown", "tmKindIn"], ["once", "tmKindOnce"], ["repeat", "tmKindRepeat"]].map(([k, label]) => ({ on: d.kind === k, attrs: `data-tm="kind" data-v="${k}"`, label: t(label) })));
+    if (d.kind === "trigger") return `${mode}${this.triggerPageHtml()}<div data-rt-zone="runs">${this.runsHtml()}</div>`;
+    let html = mode + this.tabsHtml([["countdown", "rtKindIn"], ["once", "rtKindOnce"], ["repeat", "rtKindRepeat"]].map(([k, label]) => ({ on: d.kind === k, attrs: `data-rt="kind" data-v="${k}"`, label: t(label) })));
     if (d.kind === "countdown") {
-      html += `<div class="mg-k">${esc(t("tmInLabel"))}</div>
-        ${this.tabsHtml(DELAY_PRESETS.map((s) => ({ on: !d.delayOwn.text && d.delay_s === s, attrs: `data-tm="delay" data-s="${s}"`, label: this.fmtDur(s) })))}
-        ${this.ownHtml("delay", d.delayOwn, t("tmOwnTime"))}
-        ${this.delayError() ? `<div class="opt-error" data-tm-err="delay">${esc(this.delayError())}</div>` : ""}
-        <p class="mg-hint">${esc(t("tmCountdownNote"))}</p>`;
+      html += `<div class="mg-k">${esc(t("rtInLabel"))}</div>
+        ${this.tabsHtml(DELAY_PRESETS.map((s) => ({ on: !d.delayOwn.text && d.delay_s === s, attrs: `data-rt="delay" data-s="${s}"`, label: this.fmtDur(s) })))}
+        ${this.ownHtml("delay", d.delayOwn, t("rtOwnTime"))}
+        ${this.delayError() ? `<div class="opt-error" data-rt-err="delay">${esc(this.delayError())}</div>` : ""}
+        <p class="mg-hint">${esc(t("rtCountdownNote"))}</p>`;
     } else if (d.kind === "once") {
       // Schalter "Bestimmtes Datum" (aus = nächstes Eintreffen der Uhrzeit, an = Datum, zuerst morgen)
-      html += `<div class="mg-optrow"><div>${esc(t("tmDateSwitch"))}</div><label class="switch"><input type="checkbox" data-tm="date-on"${d.date ? " checked" : ""} aria-label="${esc(t("tmDateSwitch"))}"><span></span></label></div>${
-        d.date ? `<input class="mg-input tm-datein" type="date" data-tm="date" value="${esc(d.date)}" min="${esc(this.data.today || "")}" aria-label="${esc(t("tmDate"))}">` : ""
+      html += `<div class="mg-optrow"><div>${esc(t("rtDateSwitch"))}</div><label class="switch"><input type="checkbox" data-rt="date-on"${d.date ? " checked" : ""} aria-label="${esc(t("rtDateSwitch"))}"><span></span></label></div>${
+        d.date ? `<input class="mg-input rt-datein" type="date" data-rt="date" value="${esc(d.date)}" min="${esc(this.data.today || "")}" aria-label="${esc(t("rtDate"))}">` : ""
       }
-        <div class="mg-k">${esc(t("tmTime"))}</div>
-        <input class="mg-input tm-timein" type="time" data-tm="time" value="${esc(d.time)}" aria-label="${esc(t("tmTime"))}">
-        <p class="mg-hint">${esc(t(d.date ? "tmOnceNote" : "tmOnceNoteNoDate"))}</p>`;
+        <div class="mg-k">${esc(t("rtTime"))}</div>
+        <input class="mg-input rt-timein" type="time" data-rt="time" value="${esc(d.time)}" aria-label="${esc(t("rtTime"))}">
+        <p class="mg-hint">${esc(t(d.date ? "rtOnceNote" : "rtOnceNoteNoDate"))}</p>`;
     } else {
-      html += `<div class="mg-k">${esc(t("tmTime"))}</div>
-        <input class="mg-input tm-timein" type="time" data-tm="time" value="${esc(d.time)}" aria-label="${esc(t("tmTime"))}">
-        <div class="mg-k">${esc(t("tmRepeatLabel"))}</div>
-        ${this.tabsHtml([["daily", "tmDaily"], ["weekly", "tmWeekly"], ["monthly", "tmMonthly"]].map(([k, label]) => ({ on: d.repeat === k, attrs: `data-tm="repeat" data-v="${k}"`, label: t(label) })))}`;
+      html += `<div class="mg-k">${esc(t("rtTime"))}</div>
+        <input class="mg-input rt-timein" type="time" data-rt="time" value="${esc(d.time)}" aria-label="${esc(t("rtTime"))}">
+        <div class="mg-k">${esc(t("rtRepeatLabel"))}</div>
+        ${this.tabsHtml([["daily", "rtDaily"], ["weekly", "rtWeekly"], ["monthly", "rtMonthly"]].map(([k, label]) => ({ on: d.repeat === k, attrs: `data-rt="repeat" data-v="${k}"`, label: t(label) })))}`;
       if (d.repeat === "weekly") {
-        html += `<div class="mg-k">${esc(t("tmDaysLabel"))}</div><div class="tm-wd" role="group" aria-label="${esc(t("tmDaysLabel"))}">${WEEKDAYS.map((i) => `<button type="button" class="${d.weekdays.includes(i) ? "on" : ""}" data-tm="wd" data-d="${i}" aria-pressed="${d.weekdays.includes(i)}">${esc(this.wd(i))}</button>`).join("")}</div>`;
+        html += `<div class="mg-k">${esc(t("rtDaysLabel"))}</div><div class="rt-wd" role="group" aria-label="${esc(t("rtDaysLabel"))}">${WEEKDAYS.map((i) => `<button type="button" class="${d.weekdays.includes(i) ? "on" : ""}" data-rt="wd" data-d="${i}" aria-pressed="${d.weekdays.includes(i)}">${esc(this.wd(i))}</button>`).join("")}</div>`;
       } else if (d.repeat === "monthly") {
         const sel = d.mdayOwn ? "own" : d.mday === 1 ? "1" : d.mday === 15 ? "15" : d.mday === -1 ? "last" : "own";
-        html += `<div class="mg-k">${esc(t("tmMonthDay"))}</div>
-          ${this.tabsHtml([["1", "1."], ["15", "15."], ["last", t("tmLastDay")], ["own", t("tmOtherDay")]].map(([k, label]) => ({ on: sel === k, attrs: `data-tm="mday" data-v="${k}"`, label })))}
-          ${sel === "own" ? `<div class="mg-own"><span>${esc(t("tmMonthDay"))}</span><input class="mg-pill num mg-ownin" type="text" inputmode="numeric" data-tm="mday-own" value="${esc(d.mday > 0 ? d.mday : "")}" placeholder="1–31" aria-label="${esc(t("tmMonthDay"))}" autocomplete="off"></div>` : ""}
-          <p class="mg-hint">${esc(t("tmMonthNote"))}</p>`;
+        html += `<div class="mg-k">${esc(t("rtMonthDay"))}</div>
+          ${this.tabsHtml([["1", "1."], ["15", "15."], ["last", t("rtLastDay")], ["own", t("rtOtherDay")]].map(([k, label]) => ({ on: sel === k, attrs: `data-rt="mday" data-v="${k}"`, label })))}
+          ${sel === "own" ? `<div class="mg-own"><span>${esc(t("rtMonthDay"))}</span><input class="mg-pill num mg-ownin" type="text" inputmode="numeric" data-rt="mday-own" value="${esc(d.mday > 0 ? d.mday : "")}" placeholder="1–31" aria-label="${esc(t("rtMonthDay"))}" autocomplete="off"></div>` : ""}
+          <p class="mg-hint">${esc(t("rtMonthNote"))}</p>`;
       }
-      html += `<p class="mg-hint">${esc(t("tmTzNote"))}</p>`;
+      html += `<p class="mg-hint">${esc(t("rtTzNote"))}</p>`;
     }
-    return `${html}<div data-tm-zone="runs">${this.runsHtml()}</div>`;
+    return `${html}<div data-rt-zone="runs">${this.runsHtml()}</div>`;
   }
 
   // Nächste Ausführungen (vom Server, Zeitzone der Instanz)
@@ -1497,18 +1497,18 @@ export class TimerUi {
     if (w.pvError && (w.step === 2 || w.step === BACK_STEP)) return `<div class="opt-error" role="alert">${esc(w.pvError)}</div>`;
     const runs = w.pv?.next_runs;
     if (!runs?.length) return "";
-    const label = w.draft.kind === "countdown" ? t("tmRunsAt") : t("tmNextRuns");
+    const label = w.draft.kind === "countdown" ? t("rtRunsAt") : t("rtNextRuns");
     // Mit "danach wieder zurückschalten": darunter, wann es wieder ein-/ausgeschaltet wird (vom Server auf die Minute genau gerechnet)
     const rows = runs.map((r) => `<div><span>${esc(this.dateText(r))}</span><span>${esc(r.time)}</span>${this.backLine(r)}</div>`).join("");
-    return `<div class="mg-k">${esc(label)}</div><div class="tm-next">${rows}</div>`;
+    return `<div class="mg-k">${esc(label)}</div><div class="rt-next">${rows}</div>`;
   }
 
   // Zeile "wieder aus: morgen 06:50" unter einer Ausführung, wenn zurückgeschaltet wird (seit 2.26.0)
   backLine(run) {
     const d = this.wiz.draft;
     if (!run?.back || !d.back_s || !opposite(d.action)) return "";
-    const word = this.t(`tmRes_${resKey(this.domainOf(d.entity_id), opposite(d.action))}`);
-    return `<small>${this.esc(d.back_mode === "restore" ? this.t("tmBackAtRowRestore", this.localText(run.back)) : this.t("tmBackAtRow", word, this.localText(run.back)))}</small>`;
+    const word = this.t(`rtRes_${resKey(this.domainOf(d.entity_id), opposite(d.action))}`);
+    return `<small>${this.esc(d.back_mode === "restore" ? this.t("rtBackAtRowRestore", this.localText(run.back)) : this.t("rtBackAtRow", word, this.localText(run.back)))}</small>`;
   }
 
   // Schritt 3: Meldung
@@ -1516,14 +1516,14 @@ export class TimerUi {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const d = this.wiz.draft;
-    let html = `<p class="mg-note">${esc(t("tmPushNote"))}</p>
-      <div class="mg-optrow"><div>${esc(t("tmPushSwitch"))}</div><label class="switch"><input type="checkbox" data-tm="push"${d.push ? " checked" : ""} aria-label="${esc(t("tmPushSwitch"))}"><span></span></label></div>`;
-    if (!d.push) return `${html}<p class="mg-hint">${esc(t("tmPushOffNote"))}</p>`;
-    html += `<div class="mg-k">${esc(t("tmRecipient"))}</div>
-      <button type="button" class="mg-sel" data-tm="target-toggle" aria-expanded="${this.wiz.targetOpen}"><span>${esc(d.target ? this.niceTarget(d.target) : t("tmTargetDefault"))}<small>${esc(d.target || this.targetSub())}</small></span>${this.chevHtml(this.wiz.targetOpen)}</button>`;
+    let html = `<p class="mg-note">${esc(t("rtPushNote"))}</p>
+      <div class="mg-optrow"><div>${esc(t("rtPushSwitch"))}</div><label class="switch"><input type="checkbox" data-rt="push"${d.push ? " checked" : ""} aria-label="${esc(t("rtPushSwitch"))}"><span></span></label></div>`;
+    if (!d.push) return `${html}<p class="mg-hint">${esc(t("rtPushOffNote"))}</p>`;
+    html += `<div class="mg-k">${esc(t("rtRecipient"))}</div>
+      <button type="button" class="mg-sel" data-rt="target-toggle" aria-expanded="${this.wiz.targetOpen}"><span>${esc(d.target ? this.niceTarget(d.target) : t("rtTargetDefault"))}<small>${esc(d.target || this.targetSub())}</small></span>${this.chevHtml(this.wiz.targetOpen)}</button>`;
     if (this.wiz.targetOpen) html += `<div class="mg-list" role="listbox">${this.targetListHtml()}</div>`;
-    html += `<p class="mg-hint">${esc(t("tmTargetHint"))}</p>`;
-    return `${html}<div data-tm-zone="pv">${this.pvHtml()}</div>`;
+    html += `<p class="mg-hint">${esc(t("rtTargetHint"))}</p>`;
+    return `${html}<div data-rt-zone="pv">${this.pvHtml()}</div>`;
   }
 
   targetListHtml() {
@@ -1531,9 +1531,9 @@ export class TimerUi {
     const t = (k, ...a) => this.t(k, ...a);
     const d = this.wiz.draft;
     const row = (value, title, sub) =>
-      `<button type="button" class="mg-opt-row${d.target === value ? " on" : ""}" data-tm="target" data-v="${esc(value)}" role="option" aria-selected="${d.target === value}"><span>${esc(title)}${sub ? `<br><small>${esc(sub)}</small>` : ""}</span>${d.target === value ? "<span>✓</span>" : ""}</button>`;
-    let html = row("", t("tmTargetDefault"), this.targetSub());
-    for (const [kind, label] of [["group", "tmTargetGroups"], ["service", "tmTargetServices"], ["entity", "tmTargetEntities"], ["missing", "tmTargetMissing"]]) {
+      `<button type="button" class="mg-opt-row${d.target === value ? " on" : ""}" data-rt="target" data-v="${esc(value)}" role="option" aria-selected="${d.target === value}"><span>${esc(title)}${sub ? `<br><small>${esc(sub)}</small>` : ""}</span>${d.target === value ? "<span>✓</span>" : ""}</button>`;
+    let html = row("", t("rtTargetDefault"), this.targetSub());
+    for (const [kind, label] of [["group", "rtTargetGroups"], ["service", "rtTargetServices"], ["entity", "rtTargetEntities"], ["missing", "rtTargetMissing"]]) {
       const list = this.data.targets.filter((x) => x.kind === kind);
       if (!list.length) continue;
       html += `<div class="mg-opt-head">${esc(t(label))}</div>${list.map((x) => row(x.value, this.niceTarget(x.value), x.value)).join("")}`;
@@ -1548,13 +1548,13 @@ export class TimerUi {
     const w = this.wiz;
     if (!w.draft.push) return "";
     let inner;
-    if (w.pvError) inner = `<div class="opt-error">${esc(t("tmPvError", w.pvError))}</div>`;
+    if (w.pvError) inner = `<div class="opt-error">${esc(t("rtPvError", w.pvError))}</div>`;
     else if (!w.pv) inner = `<div class="pv-text">…</div>`;
     else inner = `<div class="pv-title">${esc(w.pv.title)}</div><div class="pv-text">${esc(w.pv.message)}</div>`;
     const test = w.test?.busy
-      ? `<div class="mg-testrow"><span class="opt-short">${esc(t("tmTestBusy"))}</span></div>`
-      : `<div class="mg-testrow"><button type="button" class="linkbtn" data-tm="test">${esc(t("tmTestSend"))}</button>${w.test?.text ? `<span class="${w.test.failed ? "opt-error" : "opt-short"}" role="status">${esc(w.test.text)}</span>` : ""}</div>`;
-    return `<div class="mg-pv"><div class="pv-k">${esc(t("tmPvLabel"))}</div><div class="pv-card"><div class="pv-app">${this.h.logo}${esc(t("tmPvApp"))}</div>${inner}</div><div class="opt-short">${esc(t("tmPvNote"))}</div>${test}</div>`;
+      ? `<div class="mg-testrow"><span class="opt-short">${esc(t("rtTestBusy"))}</span></div>`
+      : `<div class="mg-testrow"><button type="button" class="linkbtn" data-rt="test">${esc(t("rtTestSend"))}</button>${w.test?.text ? `<span class="${w.test.failed ? "opt-error" : "opt-short"}" role="status">${esc(w.test.text)}</span>` : ""}</div>`;
+    return `<div class="mg-pv"><div class="pv-k">${esc(t("rtPvLabel"))}</div><div class="pv-card"><div class="pv-app">${this.h.logo}${esc(t("rtPvApp"))}</div>${inner}</div><div class="opt-short">${esc(t("rtPvNote"))}</div>${test}</div>`;
   }
 
   // Schritt 4: Name und Prüfung
@@ -1564,11 +1564,11 @@ export class TimerUi {
     const d = this.wiz.draft;
     const e = this.entity(d.entity_id);
     const placeholder = e ? e.name : "";
-    return `<label class="mg-k" for="tm-name">${esc(t("tmName"))}</label>
-      <input id="tm-name" class="mg-input" type="text" maxlength="${this.limit("name", 60)}" data-tm="name" value="${esc(d.name)}" placeholder="${esc(placeholder)}" autocomplete="off">
-      <p class="mg-hint">${esc(t("tmNameHint"))}</p>
-      <div data-tm-zone="summary">${this.summaryHtml()}</div>
-      <div class="mg-optrow"><div>${esc(t("tmEnabled"))}<small>${esc(t("tmEnabledNote"))}</small></div><label class="switch"><input type="checkbox" data-tm="enabled"${d.enabled ? " checked" : ""} aria-label="${esc(t("tmEnabled"))}"><span></span></label></div>`;
+    return `<label class="mg-k" for="rt-name">${esc(t("rtName"))}</label>
+      <input id="rt-name" class="mg-input" type="text" maxlength="${this.limit("name", 60)}" data-rt="name" value="${esc(d.name)}" placeholder="${esc(placeholder)}" autocomplete="off">
+      <p class="mg-hint">${esc(t("rtNameHint"))}</p>
+      <div data-rt-zone="summary">${this.summaryHtml()}</div>
+      <div class="mg-optrow"><div>${esc(t("rtEnabled"))}<small>${esc(t("rtEnabledNote"))}</small></div><label class="switch"><input type="checkbox" data-rt="enabled"${d.enabled ? " checked" : ""} aria-label="${esc(t("rtEnabled"))}"><span></span></label></div>`;
   }
 
   summaryHtml() {
@@ -1577,13 +1577,13 @@ export class TimerUi {
     const w = this.wiz;
     const d = w.draft;
     const e = this.entity(d.entity_id);
-    const tm = this.draftTm();
-    let html = `<div class="tm-sum"><b>${esc(this.whenText(tm))}</b>: ${esc(this.sentenceOf(tm, e?.name || ""))}.`;
-    if (d.push) html += `<br>🔔 ${esc(t("tmSumPush", d.target ? this.niceTarget(d.target) : t("tmTargetDefaultShort")))}`;
+    const rt = this.draftRt();
+    let html = `<div class="rt-sum"><b>${esc(this.whenText(rt))}</b>: ${esc(this.sentenceOf(rt, e?.name || ""))}.`;
+    if (d.push) html += `<br>🔔 ${esc(t("rtSumPush", d.target ? this.niceTarget(d.target) : t("rtTargetDefaultShort")))}`;
     html += `</div>`;
     const first = w.pv?.next_runs?.[0];
-    if (d.kind === "trigger") html += `<div class="mg-k">${esc(t("tmTrigState"))}</div><div class="tm-next"><div><span>${esc(t("tmWaitsTrigger"))}</span></div></div>`;
-    else if (first) html += `<div class="mg-k">${esc(t("tmNextRun2"))}</div><div class="tm-next"><div><span>${esc(this.localText(first))}</span>${this.backLine(first)}</div></div>`;
+    if (d.kind === "trigger") html += `<div class="mg-k">${esc(t("rtTrigState"))}</div><div class="rt-next"><div><span>${esc(t("rtWaitsTrigger"))}</span></div></div>`;
+    else if (first) html += `<div class="mg-k">${esc(t("rtNextRun2"))}</div><div class="rt-next"><div><span>${esc(this.localText(first))}</span>${this.backLine(first)}</div></div>`;
     else if (w.pvError) html += `<div class="opt-error" role="alert">${esc(w.pvError)}</div>`;
     return html;
   }
@@ -1621,11 +1621,11 @@ export class TimerUi {
   }
 
   onClick(ev) {
-    const el = ev.target.closest?.("[data-tm]");
+    const el = ev.target.closest?.("[data-rt]");
     if (!el || !this.inScope(el) || el.disabled) return;
     const w = this.wiz;
     const id = el.dataset.id;
-    switch (el.dataset.tm) {
+    switch (el.dataset.rt) {
       case "reload":
         this.error = null;
         this.paint();
@@ -1635,8 +1635,8 @@ export class TimerUi {
         this.startWizard();
         break;
       case "edit": {
-        const tm = this.data?.timers.find((x) => x.id === id);
-        if (tm) this.startWizard(tm);
+        const rt = this.data?.routines.find((x) => x.id === id);
+        if (rt) this.startWizard(rt);
         break;
       }
       case "run":
@@ -1792,9 +1792,9 @@ export class TimerUi {
   onInput(ev) {
     const el = ev.target;
     const w = this.wiz;
-    if (!w || !this.inScope(el) || !el.dataset?.tm) return;
+    if (!w || !this.inScope(el) || !el.dataset?.rt) return;
     const d = w.draft;
-    switch (el.dataset.tm) {
+    switch (el.dataset.rt) {
       case "dev-search":
         w.devQuery = el.value;
         this.paintZones(["devs"]);
@@ -1849,17 +1849,17 @@ export class TimerUi {
     const w = this.wiz;
     const win = this.win();
     // Eigene Zeit getippt: keine Voreinstellung gilt mehr, die Kapsel verschwindet
-    for (const b of win.querySelectorAll(`[data-tm="${kind === "back" ? "bdur" : "delay"}"].on`)) {
+    for (const b of win.querySelectorAll(`[data-rt="${kind === "back" ? "bdur" : "delay"}"].on`)) {
       b.classList.remove("on");
       b.setAttribute("aria-checked", "false");
     }
     if (kind === "back") {
       const err = this.backError();
-      let box = win.querySelector('[data-tm-err="back"]');
+      let box = win.querySelector('[data-rt-err="back"]');
       if (err && !box) {
         box = document.createElement("div");
         box.className = "opt-error";
-        box.dataset.tmErr = "back";
+        box.dataset.rtErr = "back";
         win.querySelector(".mg-own")?.after(box);
       }
       if (box) {
@@ -1869,11 +1869,11 @@ export class TimerUi {
       this.paintZones(["result", "backsum"]);
     } else {
       const err = this.delayError();
-      let box = win.querySelector('[data-tm-err="delay"]');
+      let box = win.querySelector('[data-rt-err="delay"]');
       if (err && !box) {
         box = document.createElement("div");
         box.className = "opt-error";
-        box.dataset.tmErr = "delay";
+        box.dataset.rtErr = "delay";
         win.querySelector(".mg-own")?.after(box);
       }
       if (box) {
@@ -1889,13 +1889,13 @@ export class TimerUi {
   onChange(ev) {
     const el = ev.target;
     const w = this.wiz;
-    if (el.dataset?.tm === "toggle" && this.inScope(el)) {
+    if (el.dataset?.rt === "toggle" && this.inScope(el)) {
       this.toggle(el.dataset.id, el.checked, el);
       return;
     }
-    if (!w || !this.inScope(el) || !el.dataset?.tm) return;
+    if (!w || !this.inScope(el) || !el.dataset?.rt) return;
     const d = w.draft;
-    switch (el.dataset.tm) {
+    switch (el.dataset.rt) {
       case "opt":
       case "optpick":
         // Losgelassen: Farben und Schnellwahl passend zum neuen Wert zeichnen (der Regler sitzt schon richtig)
@@ -1945,5 +1945,5 @@ export class TimerUi {
   }
 }
 
-// Bedingungs-Editor, Auslöser und Zurückschalten (timer-trigger.js)
-Object.assign(TimerUi.prototype, triggerMethods);
+// Bedingungs-Editor, Auslöser und Zurückschalten (routine-trigger.js)
+Object.assign(RoutineUi.prototype, triggerMethods);

@@ -12,11 +12,11 @@
  */
 
 const MODULE_VERSION = new URL(import.meta.url).search;
-const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { TimerUi }, { AppLauncher }] = await Promise.all([
+const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi }, { AppLauncher }] = await Promise.all([
   import(`./strings.js${MODULE_VERSION}`),
   import(`./styles.js${MODULE_VERSION}`),
   import(`./magic-push.js${MODULE_VERSION}`),
-  import(`./timers.js${MODULE_VERSION}`),
+  import(`./routines.js${MODULE_VERSION}`),
   import(`./apps.js${MODULE_VERSION}`),
 ]);
 
@@ -43,8 +43,10 @@ const START_KEY = "device_panel_start";
 const VIEW_SAVE_DELAY_MS = 400;
 // Favoriten pro Benutzer (seit 2.22.0), gleiche Ablage wie die Ansicht
 const FAV_KEY = "device_panel_favorites";
-// Lieblings-Timer (seit 2.26.0): Timer-IDs pro Benutzer, gleich gespeichert wie die Favoriten-Geräte
-const TSTAR_KEY = "device_panel_timer_stars";
+// Lieblings-Routine (seit 2.26.0): Routinen-IDs pro Benutzer, gleich gespeichert wie die Favoriten-Geräte
+const TSTAR_KEY = "device_panel_routine_stars";
+// Umbenennung Timer → Routine (2.55.0): so hiess der Eintrag vorher; _loadRtStars übernimmt ihn einmal
+const LEGACY_TSTAR_KEY = "device_panel_timer_stars";
 // Spalten nach "Gerät" (fest vorne): Schlüssel, Text, Standard sichtbar.
 // Der Schlüssel ist zugleich der Sortierschlüssel der Spalte.
 const COLUMNS = [
@@ -776,8 +778,8 @@ class DevicePanel extends HTMLElement {
     this._aiDraft = new Map();
     // Magic Push (seit 2.6.0): eigener Reiter im Geräte-Popup, verwaltet seinen Stand selbst (magic-push.js)
     this._magic = new MagicPush(this, { escape, mdi, errText, logo: LOGO_SMALL, typeIcon });
-    // Timer (seit 2.21.0): eigener Reiter im Geräte-Popup und Abschnitt "Timer" in den Einstellungen (timers.js)
-    this._timers = new TimerUi(this, { escape, mdi, errText, logo: LOGO_SMALL, typeIcon });
+    // Routine (seit 2.21.0): eigener Reiter im Geräte-Popup und Abschnitt "Routinen" in den Einstellungen (routines.js)
+    this._routines = new RoutineUi(this, { escape, mdi, errText, logo: LOGO_SMALL, typeIcon });
     // App-Launcher (seit 2.31.0): Knopf in der Kopfzeile, Favoriten, eigene Links (apps.js)
     this._apps = new AppLauncher(this, { escape, mdi });
     this._aiOn = false;
@@ -910,75 +912,93 @@ class DevicePanel extends HTMLElement {
     }
   }
 
-  // --- Lieblings-Timer (seit 2.26.0) ------------------------------------------
-  // Der Stern in "Alle Timer": Timer mit Stern stehen ganz oben, ihr Gerät aufgeklappt. Gehört dem Benutzer (Benutzerdaten von HA,
+  // --- Lieblings-Routine (seit 2.26.0) ------------------------------------------
+  // Der Stern in "Alle Routinen": Routinen mit Stern stehen ganz oben, ihr Gerät aufgeklappt. Gehört dem Benutzer (Benutzerdaten von HA,
   // lokale Kopie als Rückfall, der neuere Stand gewinnt).
-  get _tmStars() {
-    return (this.__tmStars ||= new Set());
+  get _rtStars() {
+    return (this.__rtStars ||= new Set());
   }
 
-  _tmStarData() {
-    return { ids: [...this._tmStars].sort(), updated: this._tmStarUpdated || 0 };
+  _rtStarData() {
+    return { ids: [...this._rtStars].sort(), updated: this._rtStarUpdated || 0 };
   }
 
-  _setTmStars(raw) {
+  _setRtStars(raw) {
     const ids = Array.isArray(raw?.ids) ? raw.ids.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 64) : [];
-    this.__tmStars = new Set(ids.slice(0, 2000));
-    this._tmStarUpdated = Number(raw?.updated) || 0;
+    this.__rtStars = new Set(ids.slice(0, 2000));
+    this._rtStarUpdated = Number(raw?.updated) || 0;
   }
 
-  async _loadTmStars() {
+  async _loadRtStars() {
     try {
-      const raw = window.localStorage.getItem(TSTAR_KEY);
-      if (raw) this._setTmStars(JSON.parse(raw));
+      const raw = window.localStorage.getItem(TSTAR_KEY) || window.localStorage.getItem(LEGACY_TSTAR_KEY);
+      if (raw) this._setRtStars(JSON.parse(raw));
+      window.localStorage.removeItem(LEGACY_TSTAR_KEY);
     } catch {
       // ohne localStorage: leer, bis HA antwortet
     }
     let value = null;
+    let legacy = false;
     try {
       const result = await this._hass.callWS({ type: "frontend/get_user_data", key: TSTAR_KEY });
       value = result ? result.value : null;
+      if (!value) {
+        const old = await this._hass.callWS({ type: "frontend/get_user_data", key: LEGACY_TSTAR_KEY });
+        value = old ? old.value : null;
+        legacy = Boolean(value);
+      }
     } catch (err) {
-      console.warn("device-panel: Lieblings-Timer von HA nicht verfügbar", err);
+      console.warn("device-panel: Lieblings-Routine von HA nicht verfügbar", err);
       return;
     }
-    this._tmStarLoaded = true;
-    if (value && !this._tmStarDirty && (Number(value.updated) || 0) >= (this._tmStarUpdated || 0)) {
-      this._setTmStars(value);
+    this._rtStarLoaded = true;
+    if (value && !this._rtStarDirty && (Number(value.updated) || 0) >= (this._rtStarUpdated || 0)) {
+      this._setRtStars(value);
       try {
-        window.localStorage.setItem(TSTAR_KEY, JSON.stringify(this._tmStarData()));
+        window.localStorage.setItem(TSTAR_KEY, JSON.stringify(this._rtStarData()));
       } catch {
         // nur ein Rückfall
       }
-      this._renderTmAll?.();
+      this._renderRtAll?.();
+      if (legacy) await this._moveLegacyStars();
       return;
     }
-    if (this._tmStarUpdated) await this._saveTmStars();
+    if (this._rtStarUpdated) await this._saveRtStars();
   }
 
-  async _saveTmStars() {
-    if (!this._hass || !this._tmStarLoaded) return;
+  // Die Sterne unter dem neuen Namen speichern und den alten Eintrag leeren
+  async _moveLegacyStars() {
+    await this._saveRtStars();
     try {
-      await this._hass.callWS({ type: "frontend/set_user_data", key: TSTAR_KEY, value: this._tmStarData() });
-      this._tmStarDirty = false;
-    } catch (err) {
-      console.warn("device-panel: Lieblings-Timer nicht bei HA gespeichert", err);
+      await this._hass.callWS({ type: "frontend/set_user_data", key: LEGACY_TSTAR_KEY, value: null });
+    } catch {
+      // bleibt dann liegen, schadet nicht
     }
   }
 
-  _toggleTmStar(id) {
-    if (!id) return;
-    if (this._tmStars.has(id)) this._tmStars.delete(id);
-    else this._tmStars.add(id);
-    this._tmStarUpdated = Date.now();
-    this._tmStarDirty = true;
+  async _saveRtStars() {
+    if (!this._hass || !this._rtStarLoaded) return;
     try {
-      window.localStorage.setItem(TSTAR_KEY, JSON.stringify(this._tmStarData()));
+      await this._hass.callWS({ type: "frontend/set_user_data", key: TSTAR_KEY, value: this._rtStarData() });
+      this._rtStarDirty = false;
+    } catch (err) {
+      console.warn("device-panel: Lieblings-Routine nicht bei HA gespeichert", err);
+    }
+  }
+
+  _toggleRtStar(id) {
+    if (!id) return;
+    if (this._rtStars.has(id)) this._rtStars.delete(id);
+    else this._rtStars.add(id);
+    this._rtStarUpdated = Date.now();
+    this._rtStarDirty = true;
+    try {
+      window.localStorage.setItem(TSTAR_KEY, JSON.stringify(this._rtStarData()));
     } catch {
       // nur ein Rückfall
     }
-    window.clearTimeout(this._tmStarTimer);
-    this._tmStarTimer = window.setTimeout(() => this._saveTmStars(), VIEW_SAVE_DELAY_MS);
+    window.clearTimeout(this._rtStarTimer);
+    this._rtStarTimer = window.setTimeout(() => this._saveRtStars(), VIEW_SAVE_DELAY_MS);
   }
 
   _toggleFav(id) {
@@ -1080,7 +1100,7 @@ class DevicePanel extends HTMLElement {
       this._loadLocalFavs();
       this._loadUserView();
       this._loadUserFavs();
-      this._loadTmStars();
+      this._loadRtStars();
       this._apps.load();
       this._fetch();
       this._brandReady = this._brandStart();
@@ -1194,7 +1214,7 @@ class DevicePanel extends HTMLElement {
     const reduced = () => Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
     const keyOf = (bar) => {
       const b = bar.querySelector("button");
-      return `${bar.closest("dialog")?.className || "page"}|${b ? b.dataset.set || b.dataset.dlg || b.dataset.prompt || b.dataset.mg || b.dataset.tm || "" : ""}|${b?.dataset.group || ""}`;
+      return `${bar.closest("dialog")?.className || "page"}|${b ? b.dataset.set || b.dataset.dlg || b.dataset.prompt || b.dataset.mg || b.dataset.rt || "" : ""}|${b?.dataset.group || ""}`;
     };
     const apply = (pill, r) => {
       pill.style.width = `${r.w}px`;
@@ -1307,7 +1327,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg timer-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="tmall-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
@@ -1417,7 +1437,7 @@ class DevicePanel extends HTMLElement {
     this._bindAreas(root.querySelector(".area-pop"), root.querySelector("dialog.area-sheet"));
     this._bindPulse(root.querySelector("dialog.pulse-dlg"));
     this._bindLog(root.querySelector("dialog.log-dlg"));
-    this._bindTmAll(root.querySelector("dialog.tmall-dlg"));
+    this._bindRtAll(root.querySelector("dialog.rtall-dlg"));
     this._bindPrompt(root.querySelector("dialog.prompt-dlg"));
     this._bindNotes(root.querySelector("dialog.notes-dlg"));
     // Auf dem Handy gibt der Browser beim Schliessen eines Fensters den Fokus an die antippte Kachel zurück und zeigt dort einen
@@ -1458,8 +1478,8 @@ class DevicePanel extends HTMLElement {
     dlg.addEventListener("click", (ev) => this._onDeviceClick(ev));
     this._magic.bind(dlg);
     this._magic.bindWindow(root.querySelector("dialog.magic-dlg"));
-    this._timers.bind(dlg);
-    this._timers.bindWindow(root.querySelector("dialog.timer-dlg"));
+    this._routines.bind(dlg);
+    this._routines.bindWindow(root.querySelector("dialog.routine-dlg"));
     dlg.addEventListener("input", (ev) => {
       if (this._rename && ev.target.matches?.('input[data-dlg="rename-input"]')) this._rename.value = ev.target.value;
       if (ev.target.matches?.('input[data-dlg="ai-q"]')) this._aiDraft.set(this._detailId, ev.target.value);
@@ -3155,7 +3175,7 @@ class DevicePanel extends HTMLElement {
     if (log.debug || log.entries.some((e) => e.level === "debug")) levels.push(["debug", t("logLevel_debug"), count((e) => e.level === "debug" && inCat(e) && inText(e))]);
     for (const l of ["info", "warning", "error"]) levels.push([l, t(`logLevel_${l}`), count((e) => e.level === l && inCat(e) && inText(e))]);
     const cats = [["all", t("logAll"), count((e) => inLevel(e) && inText(e))]];
-    for (const c of ["charge", "outage", "battery", "push", "magic", "timer", "updates", "new", "system"]) cats.push([c, t(`logCat_${c}`), count((e) => e.cat === c && inLevel(e) && inText(e))]);
+    for (const c of ["charge", "outage", "battery", "push", "magic", "routine", "updates", "new", "system"]) cats.push([c, t(`logCat_${c}`), count((e) => e.cat === c && inLevel(e) && inText(e))]);
     const dot = (l) => (l === "all" ? "" : `<span class="lg-dot ${l}"></span>`);
     const chip = (attr, [id, label, n], on) =>
       `<button type="button" class="chip${on === id ? " on" : ""}" ${attr}="${id}" aria-pressed="${on === id}">${dot(id)}<span>${escape(label)}</span><span class="n">${n}</span></button>`;
@@ -3180,7 +3200,7 @@ class DevicePanel extends HTMLElement {
       const open = e.device_id && this._devices.some((x) => x.id === e.device_id);
       const tag = open ? "button" : "div";
       body += `<${tag}${open ? ` type="button" data-lg-open="${escape(e.device_id)}"` : ""} class="lg-row ${e.level}" role="listitem">
-        <span class="lg-tm">${escape(this._logTime(e))}</span><span class="lg-lv"><span class="lg-dot ${e.level}" title="${escape(t(`logLevel_${e.level}`))}"></span></span>
+        <span class="lg-rt">${escape(this._logTime(e))}</span><span class="lg-lv"><span class="lg-dot ${e.level}" title="${escape(t(`logLevel_${e.level}`))}"></span></span>
         <span class="lg-cat"><span class="lg-pill ${e.cat}">${escape(t(`logCat_${e.cat}`))}</span></span>
         <span class="lg-msg">${e.title ? `<b>${escape(e.title)}</b> · ` : ""}${escape(e.text)}${e.detail ? `<small>${escape(e.detail)}</small>` : ""}</span></${tag}>`;
     }
@@ -3722,7 +3742,7 @@ class DevicePanel extends HTMLElement {
   // --- Geräte-Popup ---------------------------------------------------------
 
   // tab: Reiter, mit dem das Popup beginnt; editRule: Meldung, die der Assistent von Magic Push gleich öffnet
-  _openDevice(id, tab = "ov", editRule = null, editTimer = null) {
+  _openDevice(id, tab = "ov", editRule = null, editRoutine = null) {
     const dlg = this.shadowRoot.querySelector("dialog.device");
     if (!dlg || !id) return;
     this._closeStat();
@@ -3732,8 +3752,8 @@ class DevicePanel extends HTMLElement {
     this._detail = null;
     this._magic.open(id);
     if (editRule) this._magic.editWhenLoaded(editRule);
-    this._timers.open(id);
-    if (editTimer) this._timers.editWhenLoaded(editTimer);
+    this._routines.open(id);
+    if (editRoutine) this._routines.editWhenLoaded(editRoutine);
     this._aiLoadLast(id);
     this._renderDevice();
     if (!dlg.open) {
@@ -3951,12 +3971,12 @@ class DevicePanel extends HTMLElement {
     this._detail = null;
     this._hist = null;
     this._magic.reset();
-    this._timers.reset();
+    this._routines.reset();
     // Im Popup können Meldungen geändert worden sein: die Übersicht in den Einstellungen neu laden
     if (this._settings?.magicAll) {
       this._loadMagicAll();
     }
-    this._loadTmAll();
+    this._loadRtAll();
   }
 
   // Entitäten und Kurzstatistik (7 Tage) holt erst das Popup.
@@ -4455,7 +4475,7 @@ class DevicePanel extends HTMLElement {
     // Eingabe beim nächsten Abfragen (alle 10 s) verloren.
     const typing = this.shadowRoot.activeElement;
     // Der Assistent von Magic Push ist offen: nicht neu aufbauen, sonst ginge Getipptes verloren (Stand liegt im Modul).
-    if (!this._devForce && (this._magic.wizardOpen() || this._timers.wizardOpen())) return;
+    if (!this._devForce && (this._magic.wizardOpen() || this._routines.wizardOpen())) return;
     if (!this._devForce && this._rename && typing?.dataset?.dlg === "rename-input") return;
     if (!this._devForce && typing?.dataset?.dlg === "ai-q" && typing.value) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-bat-pct" && typing.value !== String(d.battery_setting)) return;
@@ -4495,9 +4515,9 @@ class DevicePanel extends HTMLElement {
       // Reiter (seit 1.37.0, docs/mockups/popup-tabs-log-v1, R3): Übersicht zum Lesen, alle Einstellungen des Geräts
       // in "Einstellungen" (der Zähler nennt die eigenen), Entitäten für sich.
       const own = devOwnCount(d);
-      const tab = ["ov", "set", "ent", "magic", "timer"].includes(this._devTab) ? this._devTab : "ov";
+      const tab = ["ov", "set", "ent", "magic", "routine"].includes(this._devTab) ? this._devTab : "ov";
       const magicCount = this._magic.count(d.id);
-      const timerCount = this._timers.count(d.id);
+      const routineCount = this._routines.count(d.id);
       const tabs = `<div class="sub-tabs" role="tablist">${[
         ["ov", this._t("devTabOverview"), false],
         // Mit eigenen Einstellungen auf zwei Zeilen (seit 2.0.10): Name, darunter klein die Zahl
@@ -4505,10 +4525,10 @@ class DevicePanel extends HTMLElement {
         ["ent", this._t("devTabEntities", ents.count), false],
         // Magic Push: mit eingeschalteten Meldungen ebenfalls zweizeilig (Name, darunter klein die Zahl)
         ["magic", this._t("mgTab"), false, magicCount ? this._t("mgTabActive", magicCount) : ""],
-        // Timer (seit 2.21.0): ebenfalls zweizeilig mit der Zahl der eingeschalteten
-        ["timer", this._t("tmTab"), false, timerCount ? this._t("tmTabActive", timerCount) : ""],
+        // Routine (seit 2.21.0): ebenfalls zweizeilig mit der Zahl der eingeschalteten
+        ["routine", this._t("rtTab"), false, routineCount ? this._t("rtTabActive", routineCount) : ""],
       ]
-        .map(([id, label, chg, sub]) => `<button type="button" role="tab" class="sub-tab${sub ? " two" : ""}${id === tab ? " on" : ""}${chg ? " chg" : ""}" data-dlg="tab" data-tab="${id}" aria-selected="${id === tab}"${sub ? ` aria-label="${escape(id === "magic" ? this._t("mgTabAria", magicCount) : id === "timer" ? this._t("tmTabAria", timerCount) : this._t("devTabSettingsOwn", own))}"` : ""}>${
+        .map(([id, label, chg, sub]) => `<button type="button" role="tab" class="sub-tab${sub ? " two" : ""}${id === tab ? " on" : ""}${chg ? " chg" : ""}" data-dlg="tab" data-tab="${id}" aria-selected="${id === tab}"${sub ? ` aria-label="${escape(id === "magic" ? this._t("mgTabAria", magicCount) : id === "routine" ? this._t("rtTabAria", routineCount) : this._t("devTabSettingsOwn", own))}"` : ""}>${
           sub ? `<span class="tab-l">${escape(label)}</span> <span class="tab-s">${escape(sub)}</span>` : escape(label)
         }</button>`)
         .join("")}</div>`;
@@ -4519,8 +4539,8 @@ class DevicePanel extends HTMLElement {
           <p class="dlg-note small">${escape(this._t("devSettingsNote"))}</p>`
           : tab === "magic"
             ? `<div class="mg-root"></div>`
-            : tab === "timer"
-              ? `<div class="tm-root"></div>`
+            : tab === "routine"
+              ? `<div class="rt-root"></div>`
             : tab === "ent"
               ? `<h3>${escape(this._t("secEntities", ents.count))}</h3>${ents.html}`
               : `<h3>${escape(this._t("secStats"))}</h3>${this._statTilesHtml(d)}
@@ -4552,8 +4572,8 @@ class DevicePanel extends HTMLElement {
     // Magic Push füllt seinen Behälter nach jedem Neuaufbau aus dem eigenen Stand.
     const mgRoot = d && this._devTab === "magic" ? dlg.querySelector(".mg-root") : null;
     if (mgRoot) this._magic.attach(mgRoot);
-    const tmRoot = d && this._devTab === "timer" ? dlg.querySelector(".tm-root") : null;
-    if (tmRoot) this._timers.attach(tmRoot);
+    const rtRoot = d && this._devTab === "routine" ? dlg.querySelector(".rt-root") : null;
+    if (rtRoot) this._routines.attach(rtRoot);
     dlg.scrollTop = scroll;
     if (sel) refocus(dlg.querySelector(sel));
   }
@@ -5791,7 +5811,7 @@ class DevicePanel extends HTMLElement {
     return [
       ["devices", ["show_service_devices", "show_disabled_devices", ...SUB_TAB_KEYS.integrations, ...SUB_TAB_KEYS.types, ...SUB_TAB_KEYS.devs, ...SUB_TAB_KEYS.devset]],
       ["monitor", Object.values(MON_TAB_KEYS).flat()],
-      ["timers", ["timers_pause", "timers_catch_up", "notify_service_timers", "timers_notify_error"]],
+      ["routines", ["routines_pause", "routines_catch_up", "notify_service_routines", "routines_notify_error"]],
       ["look", [...SUB_TAB_KEYS.chips]],
       ["ai", ["ai_assessment", "ai_task_entity", "ai_prompt"]],
       ["updates", ["update_check", "update_check_time", "update_notify", "notify_service_panelupdate"]],
@@ -6068,8 +6088,8 @@ class DevicePanel extends HTMLElement {
       const base = d.ai_assessment ? this._t("sumAiOn", task?.name || d.ai_task_entity || "") : this._t("sumAiOff");
       return d.ai_prompt ? `${base} · ${this._t("sumAiPrompt")}` : base;
     }
-    if (id === "timers") {
-      return this._t(d.timers_pause ? "sumTimersPaused" : "sumTimersIdle");
+    if (id === "routines") {
+      return this._t(d.routines_pause ? "sumRoutinesPaused" : "sumRoutinesIdle");
     }
     if (id === "monitor") {
       // Während der Eingabe ungültig: der gespeicherte Wert gilt weiter.
@@ -6442,57 +6462,57 @@ class DevicePanel extends HTMLElement {
     if (this._settings === st) this._renderSettings();
   }
 
-  // --- Fenster "Alle Timer" (seit 2.22.0): Glocke in der Kopfzeile, Vollbild, alle Timer aller Geräte ---------------------------
-  // Nur ansehen, bearbeiten und ein-/ausschalten; neue Timer gibt es nur im Popup eines Geräts.
-  _openTmAll() {
-    const dlg = this.shadowRoot.querySelector("dialog.tmall-dlg");
+  // --- Fenster "Alle Routinen" (seit 2.22.0): Glocke in der Kopfzeile, Vollbild, alle Routinen aller Geräte ---------------------------
+  // Nur ansehen, bearbeiten und ein-/ausschalten; neue Routinen gibt es nur im Popup eines Geräts.
+  _openRtAll() {
+    const dlg = this.shadowRoot.querySelector("dialog.rtall-dlg");
     if (!dlg) return;
-    this._tmAll = { dlg: true, timers: null, error: null, confirmId: null, flash: "", err: "", filter: "all", open: {}, sopen: {}, query: "" };
-    this._renderTmAllFrame();
+    this._rtAll = { dlg: true, routines: null, error: null, confirmId: null, flash: "", err: "", filter: "all", open: {}, sopen: {}, query: "" };
+    this._renderRtAllFrame();
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
       else dlg.setAttribute("open", "");
     }
     if (window.matchMedia?.(TOUCH_QUERY).matches) this.shadowRoot.activeElement?.blur();
-    this._loadTmAll();
+    this._loadRtAll();
   }
 
   // Die Liste wurde ohne den Zwischenspeicher von setHtml verändert (Suche tippen, Ausklappen): beim nächsten vollen Neuzeichnen darf
   // dieser nicht "unverändert" melden, sonst bliebe die alte Liste stehen (Suche leeren zeigte nach dem Tippen die Trefferliste weiter)
-  _tmAllStale(dlg) {
-    const body = dlg.querySelector("[data-tma-body]");
+  _rtAllStale(dlg) {
+    const body = dlg.querySelector("[data-rta-body]");
     if (body) lastHtml.delete(body);
   }
 
-  _closeTmAll() {
-    const dlg = this.shadowRoot.querySelector("dialog.tmall-dlg");
-    this._tmAll = null;
+  _closeRtAll() {
+    const dlg = this.shadowRoot.querySelector("dialog.rtall-dlg");
+    this._rtAll = null;
     if (dlg?.open) {
       if (typeof dlg.close === "function") dlg.close();
       else dlg.removeAttribute("open");
     }
   }
 
-  _renderTmAllFrame() {
-    const dlg = this.shadowRoot.querySelector("dialog.tmall-dlg");
+  _renderRtAllFrame() {
+    const dlg = this.shadowRoot.querySelector("dialog.rtall-dlg");
     const t = (k, ...a) => this._t(k, ...a);
     dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("timer", 28)}</span>
-        <div class="dlg-title"><h2>${escape(t("tmAllTitle"))}</h2><div class="dlg-sub">${escape(t("tmAllSub"))}</div></div>
-        <button type="button" class="dlg-close dlg-add" data-tma="timer-add" title="${escape(t("tmAddBtn"))}" aria-label="${escape(t("tmAddBtn"))}">${mdi("plus", 18)}</button>
-        <button type="button" class="dlg-close" data-tma-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
-      <div class="dlg-body"><div class="tm-all-wrap" data-tma-body></div></div>`;
-    this._renderTmAll();
+        <div class="dlg-title"><h2>${escape(t("rtAllTitle"))}</h2><div class="dlg-sub">${escape(t("rtAllSub"))}</div></div>
+        <button type="button" class="dlg-close dlg-add" data-rta="routine-add" title="${escape(t("rtAddBtn"))}" aria-label="${escape(t("rtAddBtn"))}">${mdi("plus", 18)}</button>
+        <button type="button" class="dlg-close" data-rta-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+      <div class="dlg-body"><div class="rt-all-wrap" data-rta-body></div></div>`;
+    this._renderRtAll();
   }
 
-  _renderTmAll() {
-    const all = this._tmAll;
-    const body = this.shadowRoot.querySelector("dialog.tmall-dlg [data-tma-body]");
+  _renderRtAll() {
+    const all = this._rtAll;
+    const body = this.shadowRoot.querySelector("dialog.rtall-dlg [data-rta-body]");
     if (!all || !body) return;
     // Beim Neuzeichnen die Suche behalten (Fokus und Cursor), sonst ginge die Eingabe verloren
     const focus = this.shadowRoot.activeElement?.matches?.("[data-lsearch]") ? this.shadowRoot.activeElement : null;
     const pos = focus ? [focus.selectionStart, focus.selectionEnd] : null;
     const scroll = body.closest(".dlg-body")?.scrollTop || 0;
-    setHtml(body, this._timers.overviewHtml(all, this._devices));
+    setHtml(body, this._routines.overviewHtml(all, this._devices));
     const sh = all.shown;
     const cnt = body.querySelector(".list-search .n");
     if (cnt && sh) cnt.textContent = sh.filtering ? this._t("listSearchOf", sh.n, sh.total) : "";
@@ -6505,124 +6525,124 @@ class DevicePanel extends HTMLElement {
     }
   }
 
-  async _loadTmAll() {
-    const all = this._tmAll;
+  async _loadRtAll() {
+    const all = this._rtAll;
     if (!all) return;
     try {
-      const r = await this._hass.callWS({ type: "device_panel/timer_list" });
-      all.timers = r.timers;
+      const r = await this._hass.callWS({ type: "device_panel/routine_list" });
+      all.routines = r.routines;
       all.error = null;
-      this._timers._today = r.today;
-      this._timers._offset = Number.isFinite(r.now) ? r.now * 1000 - Date.now() : 0;
+      this._routines._today = r.today;
+      this._routines._offset = Number.isFinite(r.now) ? r.now * 1000 - Date.now() : 0;
     } catch (err) {
       all.error = errText(err);
     }
-    if (this._tmAll === all) this._renderTmAll();
+    if (this._rtAll === all) this._renderRtAll();
   }
 
-  _bindTmAll(dlg) {
+  _bindRtAll(dlg) {
     this._trackBusy(dlg);
     dlg.addEventListener("click", async (ev) => {
       if (ev.target === dlg) {
         const r = dlg.getBoundingClientRect();
-        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closeTmAll();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closeRtAll();
         return;
       }
-      const all = this._tmAll;
+      const all = this._rtAll;
       if (!all) return;
-      if (ev.target.closest("[data-tma-close]")) {
-        this._closeTmAll();
+      if (ev.target.closest("[data-rta-close]")) {
+        this._closeRtAll();
         return;
       }
-      const clear = ev.target.closest("[data-tma-clear]");
+      const clear = ev.target.closest("[data-rta-clear]");
       if (clear) {
         all.query = "";
         all.sopen = {};
-        this._renderTmAll();
+        this._renderRtAll();
         // Hat das Feld den Fokus, behält das Neuzeichnen seinen Text: ausdrücklich leeren
         const field = dlg.querySelector("input[data-lsearch]");
         if (field) field.value = "";
         return;
       }
-      const btn = ev.target.closest("button[data-tma]");
+      const btn = ev.target.closest("button[data-rta]");
       if (!btn || btn.disabled) return;
-      const action = btn.dataset.tma;
-      const ui = this._timers;
+      const action = btn.dataset.rta;
+      const ui = this._routines;
       all.flash = "";
       all.err = "";
-      if (action === "timer-reload") {
+      if (action === "routine-reload") {
         all.error = null;
-        this._loadTmAll();
-      } else if (action === "timer-device") {
-        this._openDevice(btn.dataset.device, "timer");
-      } else if (action === "timer-filter") {
+        this._loadRtAll();
+      } else if (action === "routine-device") {
+        this._openDevice(btn.dataset.device, "routine");
+      } else if (action === "routine-filter") {
         all.filter = btn.dataset.v;
         all.sopen = {};
-        this._renderTmAll();
-      } else if (action === "timer-fold-dev" || action === "timer-fold-all") {
-        if (action === "timer-fold-dev") ui.toggleFold(all, this._devices, btn.dataset.device);
+        this._renderRtAll();
+      } else if (action === "routine-fold-dev" || action === "routine-fold-all") {
+        if (action === "routine-fold-dev") ui.toggleFold(all, this._devices, btn.dataset.device);
         else ui.foldAll(all, this._devices);
-        const zone = dlg.querySelector("[data-tm-all-zone]");
+        const zone = dlg.querySelector("[data-rt-all-zone]");
         if (zone) zone.innerHTML = ui.overviewListHtml(all, this._devices);
-        this._tmAllStale(dlg);
-      } else if (action === "timer-edit") {
+        this._rtAllStale(dlg);
+      } else if (action === "routine-edit") {
         ui.open(btn.dataset.device, true);
         ui.editWhenLoaded(btn.dataset.id);
-      } else if (action === "timer-add") {
-        // Neuer Timer: der Assistent mit dem Schritt "Gerät wählen" davor (seit 2.27.0)
+      } else if (action === "routine-add") {
+        // Neue Routine: der Assistent mit dem Schritt "Gerät wählen" davor (seit 2.27.0)
         ui.startNewFromAll();
-      } else if (action === "timer-star") {
-        this._toggleTmStar(btn.dataset.id);
-        this._renderTmAll();
-      } else if (action === "timer-delete" || action === "timer-delete-no") {
+      } else if (action === "routine-star") {
+        this._toggleRtStar(btn.dataset.id);
+        this._renderRtAll();
+      } else if (action === "routine-delete" || action === "routine-delete-no") {
         // Löschen mit Rückfrage (seit 2.24.1): erst die Karte mit "Löschen?", dann erst weg
-        all.confirmId = action === "timer-delete" ? btn.dataset.id : null;
-        this._renderTmAll();
-      } else if (action === "timer-delete-yes") {
+        all.confirmId = action === "routine-delete" ? btn.dataset.id : null;
+        this._renderRtAll();
+      } else if (action === "routine-delete-yes") {
         ui.ui.error = "";
         await ui.remove(btn.dataset.id);
         all.confirmId = null;
         if (ui.ui.error) all.err = ui.ui.error;
-        else all.flash = this._t("tmDeleted");
-        this._renderTmAll();
+        else all.flash = this._t("rtDeleted");
+        this._renderRtAll();
       }
     });
     dlg.addEventListener("change", (ev) => {
       const el = ev.target;
-      if (el.matches?.('input[data-tma="timer-toggle"]')) this._tmAllToggle(el.dataset.id, el.checked);
+      if (el.matches?.('input[data-rta="routine-toggle"]')) this._rtAllToggle(el.dataset.id, el.checked);
     });
     dlg.addEventListener("input", (ev) => {
       const el = ev.target;
-      const all = this._tmAll;
+      const all = this._rtAll;
       if (!all || !el.matches?.("[data-lsearch]")) return;
       all.query = el.value;
       all.sopen = {};
       // Nur die Liste neu zeichnen, das Suchfeld behält Fokus und Cursor
-      const zone = dlg.querySelector("[data-tm-all-zone]");
-      if (zone) zone.innerHTML = this._timers.overviewListHtml(all, this._devices);
-      this._tmAllStale(dlg);
+      const zone = dlg.querySelector("[data-rt-all-zone]");
+      if (zone) zone.innerHTML = this._routines.overviewListHtml(all, this._devices);
+      this._rtAllStale(dlg);
       const cnt = dlg.querySelector(".list-search .n");
       if (cnt && all.shown) cnt.textContent = all.shown.filtering ? this._t("listSearchOf", all.shown.n, all.shown.total) : "";
-      const x = dlg.querySelector("[data-tma-clear]");
+      const x = dlg.querySelector("[data-rta-clear]");
       if (x) x.hidden = !el.value;
     });
     dlg.addEventListener("close", () => {
-      this._tmAll = null;
+      this._rtAll = null;
     });
   }
 
-  async _tmAllToggle(id, enabled) {
-    const all = this._tmAll;
+  async _rtAllToggle(id, enabled) {
+    const all = this._rtAll;
     if (!all) return;
     try {
-      const r = await this._hass.callWS({ type: "device_panel/timer_enable", timer_id: id, enabled });
-      const i = all.timers.findIndex((x) => x.id === id);
-      if (i >= 0) all.timers[i] = { ...all.timers[i], ...r.timer };
-      this._timers.replaceTimer(r.timer);
+      const r = await this._hass.callWS({ type: "device_panel/routine_enable", routine_id: id, enabled });
+      const i = all.routines.findIndex((x) => x.id === id);
+      if (i >= 0) all.routines[i] = { ...all.routines[i], ...r.routine };
+      this._routines.replaceRoutine(r.routine);
     } catch (err) {
-      all.err = this._t("tmToggleError", errText(err));
+      all.err = this._t("rtToggleError", errText(err));
     }
-    if (this._tmAll === all) this._renderTmAll();
+    if (this._rtAll === all) this._renderRtAll();
   }
 
   async _magicAllAction(action, btn) {
@@ -7753,11 +7773,11 @@ class DevicePanel extends HTMLElement {
           : "") +
         ttl("ttlAiPrompt") +
         this._aiPromptHtml(d, changes.has("ai_prompt")),
-      timers:
-        row("timers_pause", t("optTimersPause"), sw("timers_pause", t("optTimersPause")), t("optTimersPauseShort"), null) +
-        row("timers_catch_up", t("optTimersCatchUp"), num("timers_catch_up", t("minuteUnit"), t("optTimersCatchUp")), t("optTimersCatchUpShort"), null) +
-        ui.targetRow("timers", "optTimersTargetShort") +
-        row("timers_notify_error", t("optTimersNotifyError"), sw("timers_notify_error", t("optTimersNotifyError")), t("optTimersNotifyErrorShort"), t("optTimersNotifyErrorInfo")),
+      routines:
+        row("routines_pause", t("optRoutinesPause"), sw("routines_pause", t("optRoutinesPause")), t("optRoutinesPauseShort"), null) +
+        row("routines_catch_up", t("optRoutinesCatchUp"), num("routines_catch_up", t("minuteUnit"), t("optRoutinesCatchUp")), t("optRoutinesCatchUpShort"), null) +
+        ui.targetRow("routines", "optRoutinesTargetShort") +
+        row("routines_notify_error", t("optRoutinesNotifyError"), sw("routines_notify_error", t("optRoutinesNotifyError")), t("optRoutinesNotifyErrorShort"), t("optRoutinesNotifyErrorInfo")),
       updates:
         row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
         checkTimeRow() +
@@ -7765,7 +7785,7 @@ class DevicePanel extends HTMLElement {
         updateNotifyRows(),
     };
     const titles = {
-      devices: "secDevices", monitor: "secMonitor", timers: "secTimers", look: "secLook", ai: "secAiSettings", updates: "secUpdates",
+      devices: "secDevices", monitor: "secMonitor", routines: "secRoutines", look: "secLook", ai: "secAiSettings", updates: "secUpdates",
     };
     return (
       `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +

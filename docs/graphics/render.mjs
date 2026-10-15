@@ -57,13 +57,13 @@ const TEXT = {
     flTl: ["Gerät weg", "Ausgefallen nach: im Panel ausgefallen", "Erst melden nach: Push kommt", "Zurück: wieder online"],
     // Grafik 3: Ziele
     rtTitle: "Wohin die Meldung geht",
-    rtSub: "Ein Push-Ziel für alles, bei Bedarf ein eigenes je Reiter. Magic Push und Timer wählen selbst.",
+    rtSub: "Ein Push-Ziel für alles, bei Bedarf ein eigenes je Reiter. Magic Push und Routinen wählen selbst.",
     rtGlobal: "Push-Ziel", rtGlobalSub: "Einstellungen › Überwachung und Meldungen › Übersicht", rtGlobalEx: "z. B. notify.mobile_app_iphone",
-    rtTabs: [["Ausfall", ""], ["Batterie", "eigenes Ziel"], ["Laden", ""], ["Neu", ""], ["Updates", ""], ["Timer", "eigenes Ziel"]],
+    rtTabs: [["Ausfall", ""], ["Batterie", "eigenes Ziel"], ["Laden", ""], ["Neu", ""], ["Updates", ""], ["Routinen", "eigenes Ziel"]],
     rtFollow: "folgt dem Push-Ziel", rtOwn: "eigenes Ziel",
     rtOwnTitle: "Wählen ihren Empfänger selbst",
     rtOwn1: ["Magic Push", "je Meldung eines Geräts"],
-    rtOwn2: ["Timer", "je Timer, sonst das Ziel des Reiters Timer"],
+    rtOwn2: ["Routinen", "je Routine, sonst das Ziel des Reiters Routinen"],
   },
   en: {
     lvTitle: "Set it once, override where needed",
@@ -110,13 +110,13 @@ const TEXT = {
     flBy: "decides",
     flTl: ["Device gone", "Offline after: offline in the panel", "Report only after: push arrives", "Back: online again"],
     rtTitle: "Where the notification goes",
-    rtSub: "One push target for everything, an own one per tab if needed. Magic Push and timers choose themselves.",
+    rtSub: "One push target for everything, an own one per tab if needed. Magic Push and routines choose themselves.",
     rtGlobal: "Push target", rtGlobalSub: "Settings › Monitoring and notifications › Overview", rtGlobalEx: "e.g. notify.mobile_app_iphone",
-    rtTabs: [["Outage", ""], ["Battery", "own target"], ["Charging", ""], ["New", ""], ["Updates", ""], ["Timer", "own target"]],
+    rtTabs: [["Outage", ""], ["Battery", "own target"], ["Charging", ""], ["New", ""], ["Updates", ""], ["Routines", "own target"]],
     rtFollow: "follows the push target", rtOwn: "own target",
     rtOwnTitle: "Choose their recipient themselves",
     rtOwn1: ["Magic Push", "per message of a device"],
-    rtOwn2: ["Timer", "per timer, otherwise the target of the Timer tab"],
+    rtOwn2: ["Routines", "per routine, otherwise the target of the Routines tab"],
   },
 };
 

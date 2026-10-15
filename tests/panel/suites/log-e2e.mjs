@@ -8,9 +8,9 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { btn: "Protokoll", title: "Protokoll", levels: ["Alle", "Info", "Warnung", "Fehler"], levelsDebug: ["Alle", "Debug", "Info", "Warnung", "Fehler"], cats: ["Alle", "Laden", "Ausfall", "Batterie", "Push", "Magic Push", "Timer", "Updates", "Neu", "System"], today: "Heute", yesterday: "Gestern",
+  de: { btn: "Protokoll", title: "Protokoll", levels: ["Alle", "Info", "Warnung", "Fehler"], levelsDebug: ["Alle", "Debug", "Info", "Warnung", "Fehler"], cats: ["Alle", "Laden", "Ausfall", "Batterie", "Push", "Magic Push", "Routinen", "Updates", "Neu", "System"], today: "Heute", yesterday: "Gestern",
     none: "Keine Einträge für diesen Filter.", empty: "Noch keine Einträge.", count: "10 Einträge", countShown: "10 Einträge, 2 gezeigt", debug: "Debug-Einträge aufzeichnen", copied: "Kopiert", sub: "Letzte 500 Einträge", err: "Protokoll konnte nicht geladen werden:" },
-  en: { btn: "Log", title: "Log", levels: ["All", "Info", "Warning", "Error"], levelsDebug: ["All", "Debug", "Info", "Warning", "Error"], cats: ["All", "Charging", "Outage", "Battery", "Push", "Magic Push", "Timer", "Updates", "New", "System"], today: "Today", yesterday: "Yesterday",
+  en: { btn: "Log", title: "Log", levels: ["All", "Info", "Warning", "Error"], levelsDebug: ["All", "Debug", "Info", "Warning", "Error"], cats: ["All", "Charging", "Outage", "Battery", "Push", "Magic Push", "Routines", "Updates", "New", "System"], today: "Today", yesterday: "Yesterday",
     none: "No entries for this filter.", empty: "No entries yet.", count: "10 entries", countShown: "10 entries, 2 shown", debug: "Record debug entries", copied: "Copied", sub: "Last 500 entries", err: "Could not load the log:" },
 };
 for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
@@ -50,7 +50,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] Fenster offen, Titel`, (await wait(`return r.querySelector("dialog.log-dlg")?.open && r.querySelectorAll("dialog.log-dlg .lg-row").length > 0`)) && (await text("dialog.log-dlg h2")) === T_.title);
   const geo = await ev(`const d=r.querySelector("dialog.log-dlg").getBoundingClientRect(); return [Math.round(d.left), Math.round(d.width), Math.round(d.top), Math.round(d.height), innerWidth, innerHeight]`);
   if (mobile) check(`[${tag}] Handy: Fenster füllt den Bildschirm`, geo[0] === 0 && geo[1] === geo[4] && geo[2] === 0 && Math.abs(geo[3] - geo[5]) <= 1, JSON.stringify(geo));
-  else check(`[${tag}] Desktop: Fenster gross (880 px breit wie Einstellungen, Geräte-Popup und Timer)`, geo[1] === 880 && geo[3] > 600, JSON.stringify(geo));
+  else check(`[${tag}] Desktop: Fenster gross (880 px breit wie Einstellungen, Geräte-Popup und Routine)`, geo[1] === 880 && geo[3] > 600, JSON.stringify(geo));
   check(`[${tag}] Untertitel`, (await text("dialog.log-dlg .dlg-sub")).startsWith(T_.sub), await text("dialog.log-dlg .dlg-sub"));
   check(`[${tag}] zehn Einträge, Zähler im Fuss`, (await rows()) === 10 && (await text('dialog.log-dlg [data-lg="count"]')) === T_.count, await text('dialog.log-dlg [data-lg="count"]'));
   check(`[${tag}] Tage "${T_.today}" und "${T_.yesterday}"`, JSON.stringify((await texts("dialog.log-dlg .lg-day")).map((s) => s.toLowerCase())) === JSON.stringify([T_.today, T_.yesterday].map((s) => s.toLowerCase())), JSON.stringify(await texts("dialog.log-dlg .lg-day")));

@@ -7,7 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.55.0] - 2026-10-15
+
+Timers are now called routines.
+
+### Changed
+
+- "Timer" is now "Routine" everywhere: the tab in the device pop-up ("Routines"), the launcher app and the button in the header, the window "All routines", the section in the settings (pause all, catch up missed ones, recipient, notify on failure), the push notifications ("⏱️ Routine: <name>", "⚠️ Routine failed: <name>"), the log category, the README and the screenshots. Since a routine can now also start by a trigger and switch back by time or trigger, "timer" no longer described it. How routines work does not change.
+- Everything you saved stays: routines (the storage file `device_panel.timers` moves to `device_panel.routines` on the first start, with its running state), the four settings (`timers_pause`, `timers_catch_up`, `timers_notify_error`, `notify_service_timers` become `routines_pause`, `routines_catch_up`, `routines_notify_error`, `notify_service_routines`), the favorite routines (hearts) and the launcher entry "Timer" with its place among the favorites.
+- Internal names follow the new name: files (`routines.py`, `routines_ws.py`, `routines.js`, `routine-trigger.js`), the WebSocket commands (`device_panel/routine_*`, field `routine_id`), the CSS classes (`rt-*`) and the strings (`rt*`). Anyone who calls the old commands (`device_panel/timer_*`) has to switch to the new ones.
+
 ## [2.54.1] - 2026-10-15
+
+Not released; included in 2.55.0.
 
 Timer: no error message when switching to a trigger.
 
@@ -3363,7 +3375,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.54.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.1
+[2.55.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.55.0
 [2.54.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.54.0
 [2.53.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.53.0
 [2.52.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.52.1

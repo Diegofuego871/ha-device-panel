@@ -41,9 +41,9 @@ from .const import (
     CONF_CHARGE_LIVE,
     CONF_NOTIFY_UPDATES,
     CONF_UPDATES_KINDS,
-    CONF_TIMERS_CATCH_UP,
-    CONF_TIMERS_NOTIFY_ERROR,
-    CONF_TIMERS_PAUSE,
+    CONF_ROUTINES_CATCH_UP,
+    CONF_ROUTINES_NOTIFY_ERROR,
+    CONF_ROUTINES_PAUSE,
     CONF_UPDATES_MODE,
     CONF_UPDATES_REPEAT,
     CONF_UPDATES_TIME,
@@ -323,10 +323,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                             options=list(UPDATE_KINDS), multiple=True, mode=SelectSelectorMode.LIST, translation_key="update_kind"
                         )
                     ),
-                    # Timer (Abschnitt "Timer" im Panel, seit 2.21.0).
-                    vol.Required(CONF_TIMERS_PAUSE, default=values[CONF_TIMERS_PAUSE]): bool,
-                    vol.Required(CONF_TIMERS_CATCH_UP, default=values[CONF_TIMERS_CATCH_UP]): _number(CONF_TIMERS_CATCH_UP),
-                    vol.Required(CONF_TIMERS_NOTIFY_ERROR, default=values[CONF_TIMERS_NOTIFY_ERROR]): bool,
+                    # Routine (Abschnitt "Routinen" im Panel, seit 2.21.0).
+                    vol.Required(CONF_ROUTINES_PAUSE, default=values[CONF_ROUTINES_PAUSE]): bool,
+                    vol.Required(CONF_ROUTINES_CATCH_UP, default=values[CONF_ROUTINES_CATCH_UP]): _number(CONF_ROUTINES_CATCH_UP),
+                    vol.Required(CONF_ROUTINES_NOTIFY_ERROR, default=values[CONF_ROUTINES_NOTIFY_ERROR]): bool,
                     # Pro Integration (Reiter "Integrationen" im Panel). Eigenes
                     # "Ausgefallen nach", z. B. "zha: 60" oder "hue: off".
                     vol.Optional(CONF_OFFLINE_INTEGRATIONS, default=values[CONF_OFFLINE_INTEGRATIONS] or {}): ObjectSelector(),

@@ -3,49 +3,64 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.55.0, Timer heissen Routinen)
+
+- Wunsch des Nutzers ("Wir nehmen Routinen", keine Überreste): Aus "Timer" wird "Routine", im Text und im Code. Dateien `routines.py`, `routines_ws.py`, `panel/routines.js`,
+  `panel/routine-trigger.js`, Klassen `RoutineManager`/`RoutineUi`, WS `device_panel/routine_*` (Feld `routine_id`), CSS `.rt-*`, Attribute `data-rt`/`data-rta`, Texte `rt*`,
+  Reiter-Id `routine`, Einstellungs-Abschnitt `routines`, Protokoll-Kategorie `routine`, Push-Tag `device_panel_routine_<id>`. Das Symbol heisst weiter `timer`
+  (so heisst das Zeichen bei MDI), das Emoji der Meldung und des Reiters auf dem Handy bleibt vorerst ⏱️.
+- **Übernahme gespeicherter Daten (je einmal, bleibt im Code, bis die Version breit verteilt ist):** Speicherdatei `device_panel.timers` (Schlüssel `timers`) → `device_panel.routines`
+  (`RoutineManager._async_load_stored`, `LEGACY_STORE_KEY`; die neue Datei gewinnt, die alte wird nur übernommen und gelöscht, wenn die neue fehlt); Optionen
+  `timers_pause`/`timers_catch_up`/`timers_notify_error`/`notify_service_timers` (`const.RENAMED_OPTIONS`, `__init__._migrate_options` vor allem anderen in `async_setup_entry`);
+  Benutzerdaten `device_panel_timer_stars` → `device_panel_routine_stars` (`_loadRtStars`, alter Eintrag wird auf `null` gesetzt) und die Launcher-App `timer` → `routine` in
+  `sanitizeApps` (Favoriten, Ausgeblendetes, Reihenfolge). Tests: `test_routines.py` (3 am Ende), Suite `routinelegacy`, `launcher` (Bereinigen).
+- Die alten Mockup-Ordner (`docs/mockups/timer-*`) und die Einträge im CHANGELOG bis 2.54.1 behalten den Namen "Timer": Sie beschreiben, was damals galt.
+- Die deutschen Texte brauchten die Grammatik von Hand (die Routine, Mehrzahl Routinen, "sie" statt "er"); die Umbenennung selbst lief mit einem Skript, danach wurden die
+  deutschen Sätze einzeln geprüft. Wer weitere Texte ergänzt: Reiter, Titel und Zahlen im Plural ("Routinen"), Einzelnes "Routine".
+
 ## Stand (2.54.1, Auslöser ohne Fehlermeldung beim Wechsel)
 
-- Beim Wechsel auf "Durch einen Auslöser" fragte `fetchPreview` den Server ohne Bedingung, die Antwort "Bedingungen erwartet" stand als rote Meldung im Fenster. Jetzt überspringt `fetchPreview` die Anfrage, solange `draftIncomplete()` (`timer-trigger.js`: Bedingung fehlt, Wert leer, Zeitfenster ungültig, Zurück-Bedingung fehlt) gilt und leert `pv`/`pvError`. Suite `timertrigger` prüft beides nach 900 ms.
+- Beim Wechsel auf "Durch einen Auslöser" fragte `fetchPreview` den Server ohne Bedingung, die Antwort "Bedingungen erwartet" stand als rote Meldung im Fenster. Jetzt überspringt `fetchPreview` die Anfrage, solange `draftIncomplete()` (`routine-trigger.js`: Bedingung fehlt, Wert leer, Zeitfenster ungültig, Zurück-Bedingung fehlt) gilt und leert `pv`/`pvError`. Suite `routinetrigger` prüft beides nach 900 ms.
 
-## Stand (2.54.0, Timer: Auslöser und Zurückschalten per Zeit oder Auslöser)
+## Stand (2.54.0, Routine: Auslöser und Zurückschalten per Zeit oder Auslöser)
 
-- Wunsch des Nutzers, Mockups `docs/mockups/timer-trigger-v1`/`v2`, alles nach Empfehlung. **Backend** `timers.py`: `kind: "trigger"` mit `conditions` (Magic-Baum
+- Wunsch des Nutzers, Mockups `docs/mockups/timer-trigger-v1`/`v2`, alles nach Empfehlung. **Backend** `routines.py`: `kind: "trigger"` mit `conditions` (Magic-Baum
   `{op, items[leaf|group]}`, wiederverwendet aus `magic.py`: `clean_conditions`, `eval_tree`, `leaf_met`, `condition_text`), `hold_s`, `window {from,to}`,
   `pause_s` (Standard 60, 10 bis 86400), `once_trigger`; Rückschalten `back_kind` (none/duration/time/trigger), `back_s`, `back_time`, `back_conditions`,
   `back_hold_s`, `back_max_s`, `back_mode`. Zustand im Arbeitsspeicher (`_met`, `_end_met`, `_holds`, ein Abo `async_track_state_change_event` über `_retrack`);
   Eintreten nur aus "nicht erfüllt" (`_init_met` setzt die Ausgangslage beim Start/Speichern). Auslösen über `rt["due"]=now` + `_async_process` (nutzt die
-  vorhandene Retry-/Verpasst-Logik), Ende über `rt["revert_due"]=now`. Übersprungen wird mit `timer_skip_window`/`_pause`/`_busy` (`activity.py`).
+  vorhandene Retry-/Verpasst-Logik), Ende über `rt["revert_due"]=now`. Übersprungen wird mit `routine_skip_window`/`_pause`/`_busy` (`activity.py`).
   Sperre eigene Entität in `clean()`. Payload: `reverting`, `waiting_end`, `last_trigger`, `condition_text`, `back_condition_text`, `condition_entities`.
-- **Panel**: neue Datei `timer-trigger.js` (per `import()` mit Cache-Buster in `timers.js`, Methoden per `Object.assign` an `TimerUi`): Bedingungs-Editor,
+- **Panel**: neue Datei `routine-trigger.js` (per `import()` mit Cache-Buster in `routines.js`, Methoden per `Object.assign` an `RoutineUi`): Bedingungs-Editor,
   Seite "Wann" (Umschalter `whenmode`), Seite "Zurückschalten" (`BACK_STEP = 6`, in `steps()` nach "Wann", nur bei `opposite(action)`). Schreibzonen
   `winerr`, `csum-start/back`, `backsum` in `paintZones`. Wichtig: Das `change`-Ereignis von `c-value` zeichnet nicht neu (sonst ersetzt der Fokuswechsel
   den Knopf unter dem Zeiger und der Klick auf "+" geht verloren).
-- Tests: `tests/test_timer_trigger.py` (21), Suite `timertrigger-e2e` (124 Prüfungen); `timer`, `timeradd`, `timeropts` an die sechs Seiten angepasst.
+- Tests: `tests/test_routine_trigger.py` (21), Suite `routinetrigger-e2e` (124 Prüfungen); `routine`, `routineadd`, `routineopts` an die sechs Seiten angepasst.
 - Nicht an einer echten Instanz geprüft: das Auslöse-Verhalten mit echten Entitäten; Haltezeiten ("Mindestens so lange") gehen bei einem Neustart verloren
-  (nicht gespeichert); Auslöser, die während eines wartenden Zurückschaltens eintreffen, werden übersprungen (`timer_skip_busy`); das Zeitfeld folgt dem
+  (nicht gespeichert); Auslöser, die während eines wartenden Zurückschaltens eintreffen, werden übersprungen (`routine_skip_busy`); das Zeitfeld folgt dem
   Zeitformat des Browsers.
 
 ## Stand (2.53.0, KI-Bereich abgesetzt)
 
 - Wunsch des Nutzers, Mockups `docs/mockups/ai-frame-v1`, Variante A: `_aiHtml` setzt alles in `.ai-box` (Rahmen, violett getönt) mit Kopfzeile `.ai-head` ("KI-Einschätzung" = `secAiSettings`, rechts die Quelle `st.source`); der frühere Abschnittstitel `<h3>` steht jetzt in der Kopfzeile. Einschätzung (`.ai-card` ohne eigenen Rahmen) und Rückfragen (`.ai-ask` mit gestrichelter Linie oben) liegen innen. Fusszeile zeigt nur noch die Zeit (`aiAt`, vorher `aiBy` mit Quelle). Tests: `ai-e2e` angepasst (Titel, Quelle in der Kopfzeile).
 
-## Stand (2.52.0, Timer: Schaltoptionen und "wie vorher")
+## Stand (2.52.0, Routine: Schaltoptionen und "wie vorher")
 
 - Wunsch des Nutzers nach Mockups `docs/mockups/timer-light-v1` (Variante A, dann als eigene Seite statt Aufklappen in der Karte): Beim Einschalten lässt
   sich einstellen, wie geschaltet wird, und beim Zurückschalten gibt es "Aus" oder "Wie vorher". Standard unverändert (nichts eingestellt = wie zuletzt).
-- **Backend** `timers.py`: `SERVICES` um `climate` und `media_player` erweitert; `OPTION_SCHEMAS` (light: `brightness_pct`, `color_temp_kelvin`, `rgb_color`;
+- **Backend** `routines.py`: `SERVICES` um `climate` und `media_player` erweitert; `OPTION_SCHEMAS` (light: `brightness_pct`, `color_temp_kelvin`, `rgb_color`;
   cover: `position`; climate: `temperature`, `hvac_mode`; media_player: `volume_pct`; fan: `percentage`), `clean_options` (Form, nur bei Aktion `on`),
   `option_specs(state)` (was die Entität kann, aus `supported_features`, `supported_color_modes`, `min_/max_temp` und so weiter; im Payload `entity["options"]`),
   `validate_options` (gegen die Fähigkeiten, wenn erreichbar), `actions_for_state` (Klima/Medien: ein/aus als Fähigkeit), `service_calls` (Dienstfolge, bei zwei
   Diensten `CALL_GAP_S` = 1 s Pause), `snapshot_of` / `restore_calls` ("wie vorher"; Szene in `runtime["snapshot"]`, nur wenige Angaben je Art
-  `SNAPSHOT_ATTRS`). Timer-Felder `options` (Standard `{}`) und `back_mode` (`opposite`/`restore`, ohne `back_s` immer `opposite`). `_take_snapshot` behält die
-  Szene, solange ein Zurückschalten aussteht. Lässt sich die Szene nicht herstellen (`restore_calls` gibt `None`), gilt das Gegenstück. WS `timer_try` nimmt `options`.
-  Texte `timer_res_restored`, `timer_text_restored` in `push.py`.
-- **Panel** `timers.js`: neue Seite "Optionen" mit der Nummer 5 (`OPTS_STEP`), in `steps()` zwischen 1 und 2, nur wenn `hasOptions()`; die übrigen Nummern
+  `SNAPSHOT_ATTRS`). Routinen-Felder `options` (Standard `{}`) und `back_mode` (`opposite`/`restore`, ohne `back_s` immer `opposite`). `_take_snapshot` behält die
+  Szene, solange ein Zurückschalten aussteht. Lässt sich die Szene nicht herstellen (`restore_calls` gibt `None`), gilt das Gegenstück. WS `routine_try` nimmt `options`.
+  Texte `routine_res_restored`, `routine_text_restored` in `push.py`.
+- **Panel** `routines.js`: neue Seite "Optionen" mit der Nummer 5 (`OPTS_STEP`), in `steps()` zwischen 1 und 2, nur wenn `hasOptions()`; die übrigen Nummern
   blieben. `stepBy`, `setStep`, `canSaveAll`, Schrittanzeige zählen über `steps()`. Vorschau `prevHtml` (Zone `prev`), Regler `.to-range` (Eingabe aktualisiert nur
-  Vorschau, Wert und Schnellwahl, damit das Ziehen nicht abreisst; `change` zeichnet neu), Farben `.to-col`, Schnellwahl als Reiterleiste (`data-tm="optq"`,
-  `data-group` je Einstellung). Rückstellung `data-tm="bmode"` in Schritt 1 (nur mit Zurückschalten). `sentenceOf` nennt Einstellungen und "wie vorher".
-- Tests: `tests/test_timer_options.py` (16), Suite `timeropts-e2e` (126 Prüfungen), Simulator kennt `options`/`back_mode`.
+  Vorschau, Wert und Schnellwahl, damit das Ziehen nicht abreisst; `change` zeichnet neu), Farben `.to-col`, Schnellwahl als Reiterleiste (`data-rt="optq"`,
+  `data-group` je Einstellung). Rückstellung `data-rt="bmode"` in Schritt 1 (nur mit Zurückschalten). `sentenceOf` nennt Einstellungen und "wie vorher".
+- Tests: `tests/test_routine_options.py` (16), Suite `routineopts-e2e` (126 Prüfungen), Simulator kennt `options`/`back_mode`.
 - Nicht an echten Geräten geprüft: die Dienstaufrufe von Klima und Medien (vor allem die 1-Sekunden-Pause und `turn_on` vor `set_temperature`/`volume_set`),
   die Wiederherstellung einer Lampe in den Modi `xy`/`hs`/`rgbww` (nur mit Testwerten), Farbwahl des Browsers auf dem Handy.
 
@@ -70,20 +85,20 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - 2.32.0: Der Debug-Schalter des Protokolls bleibt 48 Stunden (`activity.DEBUG_HOURS`), auch über Neustarts von HA: Ablaufdatum in `.storage/device_panel.debug`
   (`activity.STORE_KEY`, `{"debug_until": ts|null}`), `activity.async_restore` beim Start (einmal je Start, `log.restored`), Zeitgeber `async_call_later`
-  schaltet ihn aus (`debug_expired`), `activity.async_forget` beim Entfernen. WS `get_log`/`set_log` liefern `debug_until`; das Fenster zeigt "· 48 Std." bzw. "· 48 Std., bis …". Timer: `timers.js` (Vorbelegung beim Bearbeiten) lässt `enabled` eines erledigten Timers aus (vorher `tm.done ? true : tm.enabled`), Suite `timerdone`.
+  schaltet ihn aus (`debug_expired`), `activity.async_forget` beim Entfernen. WS `get_log`/`set_log` liefern `debug_until`; das Fenster zeigt "· 48 Std." bzw. "· 48 Std., bis …". Routine: `routines.js` (Vorbelegung beim Bearbeiten) lässt `enabled` eines erledigten Routines aus (vorher `rt.done ? true : rt.enabled`), Suite `routinedone`.
   Die Einträge selbst bleiben im Arbeitsspeicher. KI-Einschätzung: `battery_year` nennt bei aktiver Lademeldung `battery_charges`/`recent_charges`
   (`history["charging"]`), der Standard-Prompt (`ai_prompt`) sagt der KI, einen Anstieg Laden zu nennen.
 
 ## Stand (2.31.1, App-Launcher)
 
 - 2.31.0 und 2.31.1: App-Launcher (`panel/apps.js`, Klasse `AppLauncher`, Mockups `docs/mockups/launcher-v1`/`launcher-v2`). Knopf `.apps-btn` und Favoriten
-  `.app-pin` (Klasse auch `.tmall-btn`) in `.toolbar`; Fenster `dialog.apps-dlg` (Popover unter dem Knopf, am Handy Blatt), Formular `dialog.app-dlg`.
+  `.app-pin` (Klasse auch `.rtall-btn`) in `.toolbar`; Fenster `dialog.apps-dlg` (Popover unter dem Knopf, am Handy Blatt), Formular `dialog.app-dlg`.
   Stand pro Benutzer: `frontend/set_user_data` unter `device_panel_apps` (`{fav, hidden, order, custom, layout, updated}`, lokale Kopie, neuerer Stand
   gewinnt, `sanitizeApps` prüft alles). Höchstens 5 Favoriten (`MAX_FAV`; Herzen nur im Bearbeiten-Modus, ein Favorit steht nur im Abschnitt Favoriten), am Handy nur der erste in der Kopfzeile (der Strich dazu nur im Bearbeiten-Modus, nicht in der normalen Ansicht). Raster/Liste getrennt für
   Desktop und Handy (`layout.desktop`/`layout.phone`). Protokoll (`locked`) nicht ausblendbar und nur noch hier (Knopf im Kopf der Einstellungen
   entfernt). Externe Links: `<a target="_blank" rel="noopener noreferrer">`, nur https/http (`checkTarget`). Hinweise mit "Rückgängig" erscheinen
   im Fenster (`snack`), weil der Toast der Seite unter dem modalen Fenster liegt. `_openSettings(tab)` nimmt den Reiter (Magic Push aus dem
-  Launcher). Suite `launcher-e2e`; `log`, `busy`, `timerall` angepasst.
+  Launcher). Suite `launcher-e2e`; `log`, `busy`, `routineall` angepasst.
 
 ## Stand (2.23.1, Auto-Update bei jeder Erkennung)
 
@@ -100,10 +115,10 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 - 2.23.1 auch: Protokoll-Knopf (`data-set="log"`, Klasse `dlg-close dlg-log`) im Kopf der Einstellungen statt `.log-btn` in der Kopfzeile;
   öffnet `dialog.log-dlg` über den Einstellungen. Suiten `log`, `busy` angepasst.
 
-- 2.23.1 auch: Einstellungen › Timer zeigt nur noch die Optionen (Sammlung aller Timer entfernt: `_monTimersHtml`, `_loadTimersAll`,
-  `_timersAllAction` und `st.timersAll` weg; nur noch das Fenster `_tmAll`). Fehlermeldung des Timers genau beschrieben
-  (`optTimersNotifyErrorInfo`): normale Push-Meldung über `push.async_push` (Tag `device_panel_timer_<id>`), nicht anhaltend, nach 3 Versuchen,
-  Ziel Timer-Ziel, sonst `notify_service_timers` (neues Reiter-Ziel `timers` in `NOTIFY_TOPICS`, Zeile "Empfänger" in Einstellungen › Timer), sonst `notify_service`, bei "none" nur Protokoll `timer_no_target`.
+- 2.23.1 auch: Einstellungen › Routinen zeigt nur noch die Optionen (Sammlung aller Routinen entfernt: `_monRoutinesHtml`, `_loadRoutinesAll`,
+  `_routinesAllAction` und `st.routinesAll` weg; nur noch das Fenster `_rtAll`). Fehlermeldung der Routine genau beschrieben
+  (`optRoutinesNotifyErrorInfo`): normale Push-Meldung über `push.async_push` (Tag `device_panel_routine_<id>`), nicht anhaltend, nach 3 Versuchen,
+  Ziel Routinen-Ziel, sonst `notify_service_routines` (neues Reiter-Ziel `routines` in `NOTIFY_TOPICS`, Zeile "Empfänger" in Einstellungen › Routinen), sonst `notify_service`, bei "none" nur Protokoll `routine_no_target`.
 
 ## Davor (2.22.0, Favoriten)
 
@@ -131,37 +146,37 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   (sechs neue), Suite `autoupdate-e2e`. Nicht geprüft: echtes HACS (Entität, `update.install`-Dauer, Verhalten bei
   Vorabversionen) und der Ablauf über Nacht.
 
-- Timer "Einmal" ohne Datum (2.22.0, Wunsch des Nutzers): `date` darf `None` sein (Standard im Assistenten); `timers.once_at(timer,
+- Routine "Einmal" ohne Datum (2.22.0, Wunsch des Nutzers): `date` darf `None` sein (Standard im Assistenten); `routines.once_at(routine,
   tz, after)` liefert dann das nächste Eintreffen der Uhrzeit (wie täglich), `first_due`/`next_runs` übergeben "jetzt"; Prüfung
-  "Vergangenheit" nur mit Datum; Einschalten plant neu. Panel: Schalter `data-tm="date-on"` ("Bestimmtes Datum", aus; an setzt morgen ein und zeigt das Datumsfeld), `whenText` "Einmalig, nächstes Mal um …". Der Schalter geht danach immer aus (wie bei jedem einmaligen Timer).
+  "Vergangenheit" nur mit Datum; Einschalten plant neu. Panel: Schalter `data-rt="date-on"` ("Bestimmtes Datum", aus; an setzt morgen ein und zeigt das Datumsfeld), `whenText` "Einmalig, nächstes Mal um …". Der Schalter geht danach immer aus (wie bei jedem einmaligen Routine).
 
-- Fenster "Alle Timer" (2.23.0, Wunsch des Nutzers): Stoppuhr (Symbol `timer`, wie der Reiter Timer; die Glocke gehört Magic Push) `.tmall-btn` in der Kopfzeile, Dialog `dialog.tmall-dlg` (seit 2.28.3 Popup wie das Protokoll auf dem Desktop, bis 700 px Vollbild; vorher immer Vollbild,
-  Inhalt max. 860 px). Eigener Zustand `this._tmAll` (`dlg: true`, `query`), nutzt `TimerUi.overviewHtml/overviewListHtml/overviewCardHtml`
-  mit Attribut `data-tma` statt `data-set` (`TimerUi.a(all, action)`); nur Bearbeiten (Assistent darüber, `ui.open(device, true)`),
+- Fenster "Alle Routinen" (2.23.0, Wunsch des Nutzers): Stoppuhr (Symbol `routine`, wie der Reiter Routine; die Glocke gehört Magic Push) `.rtall-btn` in der Kopfzeile, Dialog `dialog.rtall-dlg` (seit 2.28.3 Popup wie das Protokoll auf dem Desktop, bis 700 px Vollbild; vorher immer Vollbild,
+  Inhalt max. 860 px). Eigener Zustand `this._rtAll` (`dlg: true`, `query`), nutzt `RoutineUi.overviewHtml/overviewListHtml/overviewCardHtml`
+  mit Attribut `data-rta` statt `data-set` (`RoutineUi.a(all, action)`); nur Bearbeiten (Assistent darüber, `ui.open(device, true)`),
   Ein/Aus, Neu starten, Filter, Suche, Falten, "Gerät öffnen"; kein Neuanlegen, Löschen, Ausführen. Laden `_loadTmAll`,
-  Aktualisierung nach Assistent/Popup über `closeWizard`, `_resetDevice`, `afterChange`. Suite `timerall-e2e`.
+  Aktualisierung nach Assistent/Popup über `closeWizard`, `_resetDevice`, `afterChange`. Suite `routineall-e2e`.
 
-## Davor (2.21.0, Timer)
+## Davor (2.21.0, Routine)
 
-- 2.21.0 (Wunsch des Nutzers, Mockups `docs/mockups/timer-v1`): Timer, die eine schaltbare Entität eines Geräts einmalig
+- 2.21.0 (Wunsch des Nutzers, Mockups `docs/mockups/timer-v1`): Routine, die eine schaltbare Entität eines Geräts einmalig
   (Countdown "In X Min." oder Datum mit Uhrzeit) oder wiederholt (täglich, wöchentlich mit Wochentagen, monatlich) schalten,
-  optional mit "danach zurückschalten" und mit Push pro Timer (Schalter, fester Inhalt, Vorschau, Empfänger wählbar,
-  Standard = `effective(hass)["notify_service"]`; Push nur, wenn der Timer schaltet).
-  **Backend** `timers.py`: Klasse `TimerManager` (Speicher `.storage/device_panel.timers` mit `timers` und `runtime`; je Timer
-  ein `async_track_point_in_utc_time` für min(fällig, Zurückschalten); `asyncio.Lock`; Toleranz = max(`timers_catch_up` * 60,
+  optional mit "danach zurückschalten" und mit Push pro Routine (Schalter, fester Inhalt, Vorschau, Empfänger wählbar,
+  Standard = `effective(hass)["notify_service"]`; Push nur, wenn die Routine schaltet).
+  **Backend** `routines.py`: Klasse `RoutineManager` (Speicher `.storage/device_panel.routines` mit `routines` und `runtime`; je Routine
+  ein `async_track_point_in_utc_time` für min(fällig, Zurückschalten); `asyncio.Lock`; Toleranz = max(`routines_catch_up` * 60,
   90 s), Verpasstes wird übersprungen (wiederholt: nächster Termin, einmalig: erledigt); zwei Wiederholungen nach 300 s;
   Countdown räumt sich nach 86400 s auf; Zeitzone von HA, Sommerzeit über UTC-Rundweg, monatlich fällt auf den letzten
-  Tag, `mday = -1` = letzter Tag), `occurrence_after/first_due/next_runs`, `TIMER_SCHEMA`, `switchable_entities`,
-  `timer_payload`. Befehle in `timers_ws.py` (`device_panel/timer_get|list|save|delete|enable|run|preview|test`).
-  Push-Texte in `push.py` (`timer_*`), Protokoll-Kategorie "timer" in `activity.py`. Optionen `timers_pause`,
-  `timers_catch_up` (Minuten, 0 bis 60, Standard 10), `timers_notify_error` (Standard an).
-  **Panel** `panel/timers.js` (`TimerUi`, wie `magic-push.js`): Reiter "Timer" im Popup (Behälter `.tm-root`, `attach(root)`
-  nach jedem Neuzeichnen), Assistent in eigenem Fenster `dialog.magic-dlg.timer-dlg` (Magic-Push-CSS `mgw-*`, `mg-*`;
-  Schlüssel `data-tm`, in `_initSeg` über `dataset.tm`), Übersicht in den Einstellungen (Abschnitt "timers", `data-set="timer-*"`,
-  Suchschlüssel `timers`). Reiterleiste: fünf Reiter, auf dem Handy (bis 600 px) Symbole per `::before`. Simulator
-  `tests/panel/sim/ha-sim.html` kennt die Timer-Befehle; Suite `timer-e2e` (258 Prüfungen), Python `tests/test_timers.py`.
+  Tag, `mday = -1` = letzter Tag), `occurrence_after/first_due/next_runs`, `ROUTINE_SCHEMA`, `switchable_entities`,
+  `routine_payload`. Befehle in `routines_ws.py` (`device_panel/routine_get|list|save|delete|enable|run|preview|test`).
+  Push-Texte in `push.py` (`routine_*`), Protokoll-Kategorie "routine" in `activity.py`. Optionen `routines_pause`,
+  `routines_catch_up` (Minuten, 0 bis 60, Standard 10), `routines_notify_error` (Standard an).
+  **Panel** `panel/routines.js` (`RoutineUi`, wie `magic-push.js`): Reiter "Routinen" im Popup (Behälter `.rt-root`, `attach(root)`
+  nach jedem Neuzeichnen), Assistent in eigenem Fenster `dialog.magic-dlg.routine-dlg` (Magic-Push-CSS `mgw-*`, `mg-*`;
+  Schlüssel `data-rt`, in `_initSeg` über `dataset.rt`), Übersicht in den Einstellungen (Abschnitt "routines", `data-set="routine-*"`,
+  Suchschlüssel `routines`). Reiterleiste: fünf Reiter, auf dem Handy (bis 600 px) Symbole per `::before`. Simulator
+  `tests/panel/sim/ha-sim.html` kennt die Routinen-Befehle; Suite `routine-e2e` (258 Prüfungen), Python `tests/test_routines.py`.
   Offen: Entscheide 1 bis 5 und 7 der Mockup-Fragen sind nach Empfehlung gefallen (siehe `docs/mockups/timer-v1/README.md`),
-  Marke "⏱ n" und Chip "Mit Timer" in der Geräteliste fehlen; nichts auf einem echten Gerät und Handy geprüft (vor allem
+  Marke "⏱ n" und Chip "Mit Routine" in der Geräteliste fehlen; nichts auf einem echten Gerät und Handy geprüft (vor allem
   das Schalten über einen Neustart, Sommerzeit und die Push-Zustellung).
 
 ## Davor (2.20.0, einheitlich speichern)
@@ -223,7 +238,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - 2.17.0 (Wunsch des Nutzers, gegen Flattern bei "Automatisch"): Regelfeld `reset_for_s` (0 bis 7 Tage, Vorgabe 0, bei
   "ändert sich" immer 0). Engine (`magic.py`): in `_evaluate` startet bei nicht mehr geltender Bedingung (und nach der
-  Meldung) statt `_resolve` ein Timer in `self._rtimers` (`_on_reset_timer`); gilt die Bedingung vorher wieder (oder liegt
+  Meldung) statt `_resolve` einen Timer in `self._rtimers` (`_on_reset_timer`); gilt die Bedingung vorher wieder (oder liegt
   sie in der Zone des Rücksetzwerts), wird er verworfen (`_cancel_reset`), die Episode läuft weiter, nichts wird gemeldet.
   Vor der Meldung gibt es keine Wartezeit. Nicht erreichbar (`None`) setzt nichts zurück. `_cancel` räumt beide Timer.
   Rückblick: `evaluate`/`evaluate_tree` nehmen `reset_for_s` (ein kürzerer Unterbruch bleibt in der Episode), WS
@@ -369,7 +384,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   "wieder normal" konfigurierbar, Text für "wieder normal" frei wie der erste, Empfänger wählbar mit Standard =
   Push-Ziel der Einstellungen, Rückblick 24 Std. (darf leer sein), unavailable/unknown melden nichts, Meldungen
   benennen/umbenennen/löschen, Name als fünfter Schritt). Backend: `magic.py` (Regeln, Prüfung `clean_rule`,
-  `cond_met`, Variablen `render`, Klasse `MagicPush` mit Zustandsverfolgung, Timern für Dauer und Wiederholung,
+  `cond_met`, Variablen `render`, Klasse `MagicPush` mit Zustandsverfolgung, Timer für Dauer und Wiederholung,
   Store `device_panel.magic`), `magic_history.py` (Rückblick über den Recorder, gleiche `cond_met`), WS `magic_get/
   save/delete/enable/preview/test/history`. Panel: `panel/magic-push.js` (Klasse `MagicPush`, verwaltet Liste und
   Assistent selbst in `.mg-root`; `attach()` nach jedem Neuaufbau des Popups; solange der Assistent offen ist, baut

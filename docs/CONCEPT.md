@@ -495,19 +495,19 @@ Optional, nur mit der täglichen Prüfung. Nach der Prüfung installiert die Int
 (`update.install`), auch bei geschlossenem Panel; der Neustart von Home Assistant bleibt immer Sache des Benutzers (Hinweis im
 Protokoll und unter "Reparaturen"). Von Hand gesucht und gefunden wird sofort installiert (ohne zweiten Knopfdruck).
 
-## Timer (seit 2.21.0, Wunsch des Nutzers)
+## Routinen (seit 2.21.0, Wunsch des Nutzers; bis 2.54 hiessen sie Timer)
 
 Schaltet eine schaltbare Entität eines Geräts ohne Automation: einmalig (in X Minuten oder an einem Datum) oder wiederholt
 (täglich, wöchentlich, monatlich), auf Wunsch mit "danach zurückschalten" und mit Push-Erinnerung in dem Moment, in dem
 geschaltet wird (fester Inhalt, Vorschau, Empfänger wählbar, Standard das Push-Ziel der Einstellungen). Läuft in Home
-Assistant (nicht im Browser), mit der Zeitzone von HA, überlebt Neustarts (nachholen innerhalb von `timers_catch_up`, sonst
-überspringen und im Protokoll vermerken). Reiter "Timer" im Popup, Übersicht und Optionen im Abschnitt "Timer" der
-Einstellungen. Einzelheiten: `docs/mockups/timer-v1/README.md`, `timers.py`.
+Assistant (nicht im Browser), mit der Zeitzone von HA, überlebt Neustarts (nachholen innerhalb von `routines_catch_up`, sonst
+überspringen und im Protokoll vermerken). Reiter "Routinen" im Popup, Übersicht und Optionen im Abschnitt "Routinen" der
+Einstellungen. Einzelheiten: `docs/mockups/timer-v1/README.md`, `routines.py`.
 
 Schaltoptionen (seit 2.52.0): Beim Einschalten lässt sich einstellen, wie geschaltet wird (Licht Helligkeit und Farbe, Rollladen Position, Klima
 Temperatur und Modus, Medien Lautstärke, Ventilator Stufe), auf einer eigenen Seite "Optionen" des Assistenten mit Vorschau, nur wenn die Entität es
 kann. Beim Zurückschalten gibt es "Aus" (Gegenstück) oder "Wie vorher" (die Szene vor dem Schalten wird gemerkt und wiederhergestellt). Ohne Angabe
-bleibt alles wie zuletzt. Einzelheiten: `docs/mockups/timer-light-v1/README.md`, `timers.py`.
+bleibt alles wie zuletzt. Einzelheiten: `docs/mockups/timer-light-v1/README.md`, `routines.py`.
 
 Auslöser (seit 2.54.0): Statt einer Zeit kann eine Bedingung auslösen (Umschalter "Zu einer Zeit | Durch einen Auslöser" auf der Seite "Wann"),
 aufgebaut wie bei Magic Push (über/unter/ist/ändert sich, Und/Oder, eine Ebene Gruppen, "Mindestens so lange erfüllt"). Ausgelöst wird nur beim
@@ -515,7 +515,7 @@ Eintreten: Eine beim Speichern, nach einem Neustart oder zu Fensterbeginn schon 
 (ausserhalb ignoriert, nicht verschoben), Mindestpause (Standard 1 Min.), "Nur einmal auslösen" (Standard aus), die geschaltete Entität darf nicht ihr
 eigener Auslöser sein. Neue Seite "Zurückschalten" (Nie / Nach Dauer / Zu einer Zeit / Durch einen Auslöser, "Ausschalten" oder "Wie vorher",
 "Spätestens nach" als Sicherung); Start und Ende sind frei kombinierbar. Einzelheiten: `docs/mockups/timer-trigger-v1/README.md`,
-`timer-trigger-v2/README.md`, `timers.py`, `panel/timer-trigger.js`.
+`timer-trigger-v2/README.md`, `routines.py`, `panel/routine-trigger.js`.
 
 ## Live-Aktivität beim Laden (seit 2.19.0, Wunsch des Nutzers)
 

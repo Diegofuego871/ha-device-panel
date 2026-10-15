@@ -40,13 +40,14 @@ from . import magic
 from .magic import STORE_KEY as MAGIC_STORE_KEY
 from .magic import MagicPush
 from .magic_history import async_history as async_magic_history
-from .timers import STORE_KEY as TIMERS_STORE_KEY
-from .timers import TimerManager
-from .timers_ws import COMMANDS as TIMER_COMMANDS
+from .routines import STORE_KEY as ROUTINES_STORE_KEY
+from .routines import RoutineManager
+from .routines_ws import COMMANDS as ROUTINE_COMMANDS
 from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, async_ask, async_assess, async_last, async_preview
 from .ai_prompt import DEFAULT_PROMPT
 from .const import (
     AI_PROMPT_MAX,
+    RENAMED_OPTIONS,
     BATTERY_OFF,
     SIGNAL_DBM_RANGE,
     SIGNAL_LQI_RANGE,
@@ -72,7 +73,7 @@ from .const import (
     DATA_PUSH_ICONS,
     DATA_PUSH_IMAGE,
     DATA_MAGIC,
-    DATA_TIMERS,
+    DATA_ROUTINES,
     DATA_SIGNAL,
     DATA_TYPE_OVERRIDES,
     DATA_WS_REGISTERED,
@@ -116,8 +117,20 @@ from .devices import (
 _LOGGER = logging.getLogger(__name__)
 
 
+def _migrate_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Umbenennung Timer → Routine (2.55.0): die Optionen unter ihren alten Namen übernehmen, solange sie dort noch stehen."""
+    old = {key: new for key, new in RENAMED_OPTIONS.items() if key in entry.options}
+    if not old:
+        return
+    options = {key: value for key, value in entry.options.items() if key not in old}
+    for key, new in old.items():
+        options.setdefault(new, entry.options[key])
+    hass.config_entries.async_update_entry(entry, options=options)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async_mark_start(hass)
+    _migrate_options(hass, entry)
     # Protokoll (seit 1.38.0): der Eintrag "gestartet" nennt die Version, die gerade läuft.
     integration = await async_get_integration(hass, DOMAIN)
     await activity.async_restore(hass)
@@ -161,10 +174,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         magic_push = MagicPush(hass)
         await magic_push.async_start()
         hass.data[DATA_MAGIC] = magic_push
-    if DATA_TIMERS not in hass.data:
-        timer_manager = TimerManager(hass)
-        await timer_manager.async_start()
-        hass.data[DATA_TIMERS] = timer_manager
+    if DATA_ROUTINES not in hass.data:
+        routine_manager = RoutineManager(hass)
+        await routine_manager.async_start()
+        hass.data[DATA_ROUTINES] = routine_manager
     await update_check.async_load_panel_settings(hass)
     update_check.async_start_daily(hass)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
@@ -214,8 +227,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await signal_log.async_stop()
     if (magic_push := hass.data.pop(DATA_MAGIC, None)) is not None:
         await magic_push.async_stop()
-    if (timer_manager := hass.data.pop(DATA_TIMERS, None)) is not None:
-        await timer_manager.async_stop()
+    if (routine_manager := hass.data.pop(DATA_ROUTINES, None)) is not None:
+        await routine_manager.async_stop()
     update_check.async_stop_daily(hass)
     activity.record(hass, "debug", "system", "sys_stop", "Device Panel")
     # Das Protokoll (und der Debug-Schalter) bleibt beim Entladen stehen: Jedes Speichern der Einstellungen lädt die
@@ -234,7 +247,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     das erst nach dem Entladen auf; dort wurde alles Ausstehende geschrieben.
     """
     await activity.async_forget(hass)
-    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, MAGIC_STORE_KEY, TIMERS_STORE_KEY, AI_MEMORY_STORE_KEY, update_check.PANEL_STORE_KEY):
+    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, MAGIC_STORE_KEY, ROUTINES_STORE_KEY, AI_MEMORY_STORE_KEY, update_check.PANEL_STORE_KEY):
         await Store(hass, STORAGE_VERSION, key).async_remove()
     # Heruntergeladene Icons der Meldungen; der statische Pfad bleibt bis zum
     # Neustart angemeldet, der Ordner wird bei Bedarf neu angelegt.
@@ -1101,7 +1114,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_set_panel)
     for command in (_ws_magic_get, _ws_magic_list, _ws_magic_entity_search, _ws_magic_save, _ws_magic_delete, _ws_magic_enable, _ws_magic_preview, _ws_magic_test, _ws_magic_history):
         websocket_api.async_register_command(hass, command)
-    for command in TIMER_COMMANDS:
+    for command in ROUTINE_COMMANDS:
         websocket_api.async_register_command(hass, command)
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_set_options)

@@ -8,7 +8,7 @@ const b = await chromium.launch(launchOptions);
 let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
-const FIVE = JSON.stringify({ device_panel_apps: { fav: ["timer", "magic", "log", "auto", "scene"], hidden: [], order: {}, layout: {}, custom: [], updated: 1 } });
+const FIVE = JSON.stringify({ device_panel_apps: { fav: ["routine", "magic", "log", "auto", "scene"], hidden: [], order: {}, layout: {}, custom: [], updated: 1 } });
 
 async function open(width, { mobile = false, five = false, lang = "de" } = {}) {
   const ctx = await b.newContext(mobile ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : { viewport: { width, height: 900 } });
@@ -49,7 +49,7 @@ for (const lang of ["de", "en"]) {
   for (const [width, mobile] of [[1100, false], [900, false], [390, true]]) {
     const { ctx, ev, errors } = await open(width, { mobile, lang });
     const g = await geo(ev);
-    const gapToBtn = mobile ? await ev(`const s = r.querySelector(".toolbar .searchbox").getBoundingClientRect(), n = r.querySelector(".toolbar .tmall-btn").getBoundingClientRect(); return n.left - s.right`) : g.vLeft - g.sRight;
+    const gapToBtn = mobile ? await ev(`const s = r.querySelector(".toolbar .searchbox").getBoundingClientRect(), n = r.querySelector(".toolbar .rtall-btn").getBoundingClientRect(); return n.left - s.right`) : g.vLeft - g.sRight;
     check(`[${lang}/${mobile ? "Handy" : width}] Suchfeld füllt den Rest bis zu den Schaltern (Abstand ≤ 20 px)`, gapToBtn >= 0 && gapToBtn <= 20 && g.sWidth > 150, `Abstand ${gapToBtn.toFixed(1)}, Breite ${g.sWidth.toFixed(1)}`);
     check(`[${lang}/${mobile ? "Handy" : width}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();

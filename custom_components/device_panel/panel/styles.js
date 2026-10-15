@@ -5,7 +5,7 @@
  */
 export const PANEL_CSS = `
 :host {
-  /* iOS vergrössert sonst die Schrift einzelner Textblöcke je nach Inhalt (Timer-Fenster: Einleitung grösser, wenn die Liste leer ist) */
+  /* iOS vergrössert sonst die Schrift einzelner Textblöcke je nach Inhalt (Routinen-Fenster: Einleitung grösser, wenn die Liste leer ist) */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   --dp-bg: var(--primary-background-color, #f4f6f9);
@@ -76,14 +76,14 @@ button { font: inherit; color: inherit; }
   background: none; color: var(--dp-text2); cursor: pointer; }
 .search-clear:hover { background: var(--dp-hover); color: var(--dp-text); }
 .search-clear[hidden] { display: none; }
-.gear-btn, .tmall-btn, .apps-btn { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--dp-divider);
+.gear-btn, .rtall-btn, .apps-btn { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--dp-divider);
   background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
-.tmall-btn, .apps-btn { margin: 0 -2px; text-decoration: none; } /* Favoriten und Launcher-Knopf rücken enger zusammen (8 px), links vom ersten und rechts vom letzten 10 px */
+.rtall-btn, .apps-btn { margin: 0 -2px; text-decoration: none; } /* Favoriten und Launcher-Knopf rücken enger zusammen (8 px), links vom ersten und rechts vom letzten 10 px */
 .app-pins { display: contents; }
 .gear-btn { position: relative; }
 /* Roter Punkt: Update installiert, Neustart steht aus (seit 2.25.0) */
 .gear-btn.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-bg); }
-.gear-btn:hover, .tmall-btn:hover, .apps-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
+.gear-btn:hover, .rtall-btn:hover, .apps-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
 .apps-btn.on { background: var(--dp-primary-soft); border-color: transparent; color: var(--dp-primary); }
 .content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 20px 16px; }
 /* Kopf, Chips und Fusszeile bleiben beim seitlichen Scrollen der Tabelle stehen. */
@@ -445,7 +445,7 @@ dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet,
 *::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--dp-text2) 65%, transparent); background-clip: padding-box; }
 @supports not selector(::-webkit-scrollbar) { dialog { scrollbar-width: thin; } }
 dialog.view { width: min(640px, calc(100vw - 32px)); }
-/* Grosse Fenster auf dem Desktop einheitlich (seit 2.28.5, Wunsch des Nutzers): Geräte-Popup, Einstellungen, Timer und Protokoll gleich gross */
+/* Grosse Fenster auf dem Desktop einheitlich (seit 2.28.5, Wunsch des Nutzers): Geräte-Popup, Einstellungen, Routinen und Protokoll gleich gross */
 dialog.device, dialog.settings { width: min(880px, calc(100vw - 48px)); }
 dialog.area-sheet, dialog.cols-dlg { width: min(420px, calc(100vw - 32px)); }
 dialog.stat-dlg, dialog.pulse-dlg, dialog.prompt-dlg, dialog.notes-dlg { width: min(560px, calc(100vw - 32px)); }
@@ -1274,9 +1274,9 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   dialog.settings[open] { display: flex; flex-direction: column; }
   dialog.settings[open] > * { flex-shrink: 0; }
   dialog.settings[open] > .dlg-body { flex-grow: 1; }
-  .toolbar .gear-btn, .toolbar .tmall-btn, .toolbar .apps-btn { width: 38px; height: 38px; }
+  .toolbar .gear-btn, .toolbar .rtall-btn, .toolbar .apps-btn { width: 38px; height: 38px; }
   /* Handy: der Platz zwischen Suchfeld und Zahnrad bleibt wie vorher (Suchfeld nicht schmaler), nur gleichmässig geteilt: 8 + 7 px auf beiden Seiten */
-  .toolbar .tmall-btn, .toolbar .apps-btn { margin: 0 3px; } /* Abstand zwischen den Knöpfen 14 px (Wunsch des Nutzers: war zu eng), das Suchfeld wird dafür schmaler */
+  .toolbar .rtall-btn, .toolbar .apps-btn { margin: 0 3px; } /* Abstand zwischen den Knöpfen 14 px (Wunsch des Nutzers: war zu eng), das Suchfeld wird dafür schmaler */
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   .dlg-head { padding: 18px 12px 12px 16px; }
   .dlg-quick { padding: 0 16px 6px; }
@@ -1287,17 +1287,17 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 }
 
 /* Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1): Fenster gross auf dem Desktop, auf dem Handy vollflächig */
-/* Fenster "Alle Timer": Popup auf dem Desktop, gleich gross wie Einstellungen und Geräte-Popup (seit 2.28.3, Grösse seit 2.28.5 wie die anderen grossen Fenster), auf dem Handy (bis 700 px) vollflächig */
-dialog.tmall-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
+/* Fenster "Alle Routinen": Popup auf dem Desktop, gleich gross wie Einstellungen und Geräte-Popup (seit 2.28.3, Grösse seit 2.28.5 wie die anderen grossen Fenster), auf dem Handy (bis 700 px) vollflächig */
+dialog.rtall-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
   width: min(880px, calc(100vw - 48px)); height: min(1100px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
-dialog.tmall-dlg[open] { display: flex; flex-direction: column; }
-dialog.tmall-dlg::backdrop { background: rgba(0,0,0,0.5); }
-.tmall-dlg .dlg-head { flex: none; position: static; }
-.tmall-dlg .dlg-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 22px 24px; }
-.tm-all-wrap { margin: 0 auto; }
+dialog.rtall-dlg[open] { display: flex; flex-direction: column; }
+dialog.rtall-dlg::backdrop { background: rgba(0,0,0,0.5); }
+.rtall-dlg .dlg-head { flex: none; position: static; }
+.rtall-dlg .dlg-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 22px 24px; }
+.rt-all-wrap { margin: 0 auto; }
 @media (max-width: 700px) {
-  dialog.tmall-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
-  .tmall-dlg .dlg-body { padding: 0 16px 20px; }
+  dialog.rtall-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
+  .rtall-dlg .dlg-body { padding: 0 16px 20px; }
 }
 dialog.log-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
   width: min(880px, calc(100vw - 48px)); height: min(1100px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }
@@ -1328,7 +1328,7 @@ button.lg-row:hover { background: var(--dp-hover); }
 .lg-row.warning { background: linear-gradient(90deg, var(--dp-warning-soft), transparent 40%); }
 .lg-row.error { background: linear-gradient(90deg, var(--dp-error-soft), transparent 40%); }
 .lg-row.debug { color: var(--dp-text2); }
-.lg-tm { color: var(--dp-text2); font-variant-numeric: tabular-nums; font-size: 12.5px; padding-top: 1px; }
+.lg-rt { color: var(--dp-text2); font-variant-numeric: tabular-nums; font-size: 12.5px; padding-top: 1px; }
 .lg-lv { padding-top: 5px; }
 .lg-msg { min-width: 0; overflow-wrap: anywhere; }
 .lg-msg b { font-weight: 600; }
@@ -1348,8 +1348,8 @@ button.lg-row:hover { background: var(--dp-hover); }
   .lg-bar { padding: 4px 16px 10px; }
   .lg-list { padding: 0 16px 8px; }
   .lg-foot { padding-left: 16px; padding-right: 16px; }
-  .lg-row { grid-template-columns: 14px auto 1fr; grid-template-areas: "lv tm cat" ". msg msg"; gap: 4px 10px; padding: 10px 2px; }
-  .lg-lv { grid-area: lv; } .lg-tm { grid-area: tm; font-weight: 600; color: var(--dp-text); padding-top: 0; align-self: center; } .lg-cat { grid-area: cat; } .lg-msg { grid-area: msg; font-size: 14px; }
+  .lg-row { grid-template-columns: 14px auto 1fr; grid-template-areas: "lv rt cat" ". msg msg"; gap: 4px 10px; padding: 10px 2px; }
+  .lg-lv { grid-area: lv; } .lg-rt { grid-area: rt; font-weight: 600; color: var(--dp-text); padding-top: 0; align-self: center; } .lg-cat { grid-area: cat; } .lg-msg { grid-area: msg; font-size: 14px; }
 }
 
 /* Feste Höhe (seit 1.41.0, Wunsch des Nutzers): Fenster mit Reitern oder wechselndem Inhalt bleiben gleich hoch, egal welcher Reiter
@@ -1376,15 +1376,15 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
    "Transparenz reduzieren" bleiben die Blätter deckend wie bisher. */
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   @media not (prefers-reduced-transparency: reduce) {
-    dialog.device, dialog.settings, dialog.log-dlg, dialog.tmall-dlg { background: color-mix(in srgb, var(--dp-card) 64%, transparent);
+    dialog.device, dialog.settings, dialog.log-dlg, dialog.rtall-dlg { background: color-mix(in srgb, var(--dp-card) 64%, transparent);
       -webkit-backdrop-filter: blur(30px) saturate(190%); backdrop-filter: blur(30px) saturate(190%);
       box-shadow: inset 0 1.5px 0 color-mix(in srgb, var(--dp-text) 30%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--dp-text) 8%, transparent), 0 24px 70px rgba(0,0,0,0.55); }
-    dialog.device::backdrop, dialog.settings::backdrop, dialog.log-dlg::backdrop, dialog.tmall-dlg::backdrop { background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-    dialog.device .dlg-head, dialog.settings .dlg-head, dialog.log-dlg .dlg-head, dialog.tmall-dlg .dlg-head { background: color-mix(in srgb, var(--dp-card) 60%, transparent);
+    dialog.device::backdrop, dialog.settings::backdrop, dialog.log-dlg::backdrop, dialog.rtall-dlg::backdrop { background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+    dialog.device .dlg-head, dialog.settings .dlg-head, dialog.log-dlg .dlg-head, dialog.rtall-dlg .dlg-head { background: color-mix(in srgb, var(--dp-card) 60%, transparent);
       -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
     dialog.device .dev-tabs { background: color-mix(in srgb, var(--dp-card) 60%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
     dialog.device .dev-tabs::after { display: none; }
-    dialog.device .dlg-actions, dialog.settings .dlg-actions, dialog.log-dlg .dlg-actions, dialog.tmall-dlg .dlg-actions { border-top: none; padding-top: 24px;
+    dialog.device .dlg-actions, dialog.settings .dlg-actions, dialog.log-dlg .dlg-actions, dialog.rtall-dlg .dlg-actions { border-top: none; padding-top: 24px;
       background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--dp-card) 85%, transparent) 42%);
       -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
     dialog.device .dlg-btn, dialog.settings .dlg-btn { background: color-mix(in srgb, var(--dp-text) 8%, transparent); border-color: color-mix(in srgb, var(--dp-text) 12%, transparent); }
@@ -1396,11 +1396,11 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
 /* Helles Design am Desktop (seit 2.20.0, ab 601 px; das Handy-Blatt bleibt wie es war): Fenster, Kopf, Reiter und Fuss deckend weiss statt durchscheinend (die Unschärfe über dem
    abgedunkelten Hintergrund machte das ganze Blatt grau); Kacheln nur ganz leicht abgesetzt. Grau nur beim Darüberfahren. */
 @media (min-width: 601px) {
-:host([light]) dialog.device, :host([light]) dialog.settings, :host([light]) dialog.log-dlg, :host([light]) dialog.tmall-dlg { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none;
+:host([light]) dialog.device, :host([light]) dialog.settings, :host([light]) dialog.log-dlg, :host([light]) dialog.rtall-dlg { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none;
   box-shadow: 0 24px 70px rgba(0,0,0,0.35), 0 0 0 1px color-mix(in srgb, var(--dp-text) 8%, transparent); }
-:host([light]) dialog.device::backdrop, :host([light]) dialog.settings::backdrop, :host([light]) dialog.log-dlg::backdrop, :host([light]) dialog.tmall-dlg::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0,0,0,0.4); }
-:host([light]) dialog.device .dlg-head, :host([light]) dialog.settings .dlg-head, :host([light]) dialog.log-dlg .dlg-head, :host([light]) dialog.tmall-dlg .dlg-head, :host([light]) dialog.device .dev-tabs { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; }
-:host([light]) dialog.device .dlg-actions, :host([light]) dialog.settings .dlg-actions, :host([light]) dialog.log-dlg .dlg-actions, :host([light]) dialog.tmall-dlg .dlg-actions { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; border-top: 1px solid var(--dp-divider); padding-top: 14px; }
+:host([light]) dialog.device::backdrop, :host([light]) dialog.settings::backdrop, :host([light]) dialog.log-dlg::backdrop, :host([light]) dialog.rtall-dlg::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0,0,0,0.4); }
+:host([light]) dialog.device .dlg-head, :host([light]) dialog.settings .dlg-head, :host([light]) dialog.log-dlg .dlg-head, :host([light]) dialog.rtall-dlg .dlg-head, :host([light]) dialog.device .dev-tabs { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; }
+:host([light]) dialog.device .dlg-actions, :host([light]) dialog.settings .dlg-actions, :host([light]) dialog.log-dlg .dlg-actions, :host([light]) dialog.rtall-dlg .dlg-actions { background: var(--dp-card); -webkit-backdrop-filter: none; backdrop-filter: none; border-top: 1px solid var(--dp-divider); padding-top: 14px; }
 :host([light]) dialog.device .tile, :host([light]) dialog.device .st-tile, :host([light]) dialog.settings .nf-note, :host([light]) dialog.settings .pv { background: color-mix(in srgb, var(--dp-text) 3.5%, var(--dp-card)); border-color: color-mix(in srgb, var(--dp-text) 10%, var(--dp-card)); box-shadow: none; }
 :host([light]) dialog.device .dev-set { background: color-mix(in srgb, var(--dp-text) 2.5%, var(--dp-card)); }
 :host([light]) dialog.device .dlg-btn, :host([light]) dialog.settings .dlg-btn { background: var(--dp-card); border-color: color-mix(in srgb, var(--dp-text) 18%, var(--dp-card)); }
@@ -1479,12 +1479,12 @@ a.dlg-btn { display: inline-flex; align-items: center; justify-content: center; 
 .mg-radio.on { border: 7px solid var(--dp-primary); }
 .mg-acts { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; padding-left: 50px; font-size: 13px; }
 .linkbtn.danger { color: var(--dp-error); }
-/* Herz des Lieblings-Timers (seit 2.26.0): rechts von "Löschen", mit Abstand, rot wenn gesetzt (wie das Herz der Favoriten-Geräte) */
+/* Herz der Lieblings-Routine (seit 2.26.0): rechts von "Löschen", mit Abstand, rot wenn gesetzt (wie das Herz der Favoriten-Geräte) */
 .mg-acts .linkbtn.fav { display: inline-flex; align-items: center; margin-left: 14px; color: var(--dp-text2); }
 .mg-acts .linkbtn.fav.on { color: var(--dp-error); }
 .mg-acts .linkbtn.fav:hover { text-decoration: none; color: var(--dp-error); }
 .mg-filter .sub-tab.fav .tab-l { display: inline-flex; color: var(--dp-error); }
-/* Die Filter von "Alle Timer" bleiben eine Zeile, auch mit dem fünften Reiter (Herz): die Regeln für viele Reiter würden umbrechen */
+/* Die Filter von "Alle Routinen" bleiben eine Zeile, auch mit dem fünften Reiter (Herz): die Regeln für viele Reiter würden umbrechen */
 .sub-tabs.mg-filter { grid-auto-flow: column !important; grid-template-columns: none !important; }
 /* Handy: Aktionen der Karten (Bearbeiten, Löschen, Gerät öffnen) mit Fläche für den Finger (seit 2.24.0): grössere Schrift, 44 px Trefferhöhe, mehr Abstand */
 @media (max-width: 700px) {
@@ -1669,58 +1669,58 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
   .set-sec-sum { display: none; }
 }
 
-/* Timer (seit 2.21.0, docs/mockups/timer-v1): Wecker-Stil im Popup, Assistent mit den Stilen von Magic Push (dialog.magic-dlg) */
-.tm-clock { margin-top: 8px; padding: 12px 14px; border-radius: 16px; background: var(--dp-subtle); }
-.tm-clock.off { opacity: .7; }
-.tm-clock .top { display: flex; align-items: center; gap: 10px; }
-.tm-clock .time { font-size: 34px; font-weight: 300; letter-spacing: -.02em; line-height: 1; font-variant-numeric: tabular-nums; }
-.tm-clock .time small { font-size: 14px; font-weight: 400; margin-left: 6px; color: var(--dp-text2); letter-spacing: 0; }
-.tm-clock .grow { flex: 1; min-width: 0; }
-/* Schalter der Timer-Karte etwas grösser als der Standard (44 × 24 statt 36 × 20 px, Wunsch des Nutzers) */
-.tm-clock .switch { width: 44px; height: 24px; }
-.tm-clock .switch span::after { width: 20px; height: 20px; }
-.tm-clock .switch input:checked + span::after { left: 22px; }
-.tm-clock .name { margin-top: 6px; font-size: 14px; font-weight: 600; }
-.tm-clock .what { margin-top: 2px; color: var(--dp-text2); font-size: 12.5px; line-height: 1.35; }
-.tm-days { display: flex; gap: 5px; margin-top: 9px; }
-.tm-days i { flex: 1; max-width: 34px; height: 26px; display: grid; place-items: center; border-radius: 8px; font-style: normal; font-size: 11.5px; color: var(--dp-text2); background: color-mix(in srgb, var(--dp-text) 6%, transparent); }
-.tm-days i.on { background: var(--dp-primary-soft); color: var(--dp-primary); font-weight: 600; }
-.tm-clock .next { margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--dp-divider); display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; color: var(--dp-text2); font-size: 12.5px; }
-.tm-clock .next b { color: var(--dp-text); font-weight: 600; font-variant-numeric: tabular-nums; }
-.tm-clock .next .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 4px 16px; }
-.tm-ring { flex: none; position: relative; width: 62px; height: 62px; }
-.tm-ring svg { width: 62px; height: 62px; transform: rotate(-90deg); }
-.tm-ring circle { fill: none; stroke-width: 6; }
-.tm-ring .bg { stroke: color-mix(in srgb, var(--dp-text) 12%, transparent); }
-.tm-ring .fg { stroke: var(--dp-primary); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
-.tm-ring span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.tm-tag { display: inline-block; padding: 1px 8px; border-radius: 99px; background: var(--dp-primary-soft); color: var(--dp-primary); font-size: 11.5px; font-weight: 500; }
-.tm-tag.grey { background: var(--dp-subtle); color: var(--dp-text2); }
+/* Routine (seit 2.21.0, docs/mockups/timer-v1): Wecker-Stil im Popup, Assistent mit den Stilen von Magic Push (dialog.magic-dlg) */
+.rt-clock { margin-top: 8px; padding: 12px 14px; border-radius: 16px; background: var(--dp-subtle); }
+.rt-clock.off { opacity: .7; }
+.rt-clock .top { display: flex; align-items: center; gap: 10px; }
+.rt-clock .time { font-size: 34px; font-weight: 300; letter-spacing: -.02em; line-height: 1; font-variant-numeric: tabular-nums; }
+.rt-clock .time small { font-size: 14px; font-weight: 400; margin-left: 6px; color: var(--dp-text2); letter-spacing: 0; }
+.rt-clock .grow { flex: 1; min-width: 0; }
+/* Schalter die Routine-Karte etwas grösser als der Standard (44 × 24 statt 36 × 20 px, Wunsch des Nutzers) */
+.rt-clock .switch { width: 44px; height: 24px; }
+.rt-clock .switch span::after { width: 20px; height: 20px; }
+.rt-clock .switch input:checked + span::after { left: 22px; }
+.rt-clock .name { margin-top: 6px; font-size: 14px; font-weight: 600; }
+.rt-clock .what { margin-top: 2px; color: var(--dp-text2); font-size: 12.5px; line-height: 1.35; }
+.rt-days { display: flex; gap: 5px; margin-top: 9px; }
+.rt-days i { flex: 1; max-width: 34px; height: 26px; display: grid; place-items: center; border-radius: 8px; font-style: normal; font-size: 11.5px; color: var(--dp-text2); background: color-mix(in srgb, var(--dp-text) 6%, transparent); }
+.rt-days i.on { background: var(--dp-primary-soft); color: var(--dp-primary); font-weight: 600; }
+.rt-clock .next { margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--dp-divider); display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; color: var(--dp-text2); font-size: 12.5px; }
+.rt-clock .next b { color: var(--dp-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.rt-clock .next .acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.rt-ring { flex: none; position: relative; width: 62px; height: 62px; }
+.rt-ring svg { width: 62px; height: 62px; transform: rotate(-90deg); }
+.rt-ring circle { fill: none; stroke-width: 6; }
+.rt-ring .bg { stroke: color-mix(in srgb, var(--dp-text) 12%, transparent); }
+.rt-ring .fg { stroke: var(--dp-primary); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+.rt-ring span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.rt-tag { display: inline-block; padding: 1px 8px; border-radius: 99px; background: var(--dp-primary-soft); color: var(--dp-primary); font-size: 11.5px; font-weight: 500; }
+.rt-tag.grey { background: var(--dp-subtle); color: var(--dp-text2); }
 /* Assistent */
-.tm-wd { display: flex; gap: 6px; margin-top: 6px; }
-.tm-wd button { flex: 1; max-width: 44px; height: 44px; border: none; border-radius: 50%; font: inherit; font-size: 13.5px; color: var(--dp-text); cursor: pointer;
+.rt-wd { display: flex; gap: 6px; margin-top: 6px; }
+.rt-wd button { flex: 1; max-width: 44px; height: 44px; border: none; border-radius: 50%; font: inherit; font-size: 13.5px; color: var(--dp-text); cursor: pointer;
   background: color-mix(in srgb, var(--dp-text) 7%, var(--dp-card)); }
-.tm-wd button.on { background: var(--dp-primary); color: #fff; font-weight: 600; }
-.tm-wd button:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
-.tm-timein, .tm-datein { box-sizing: border-box; height: 46px; font-size: 20px; font-variant-numeric: tabular-nums; }
-.tm-timein { width: 160px; }
-.tm-datein { width: 220px; max-width: 100%; }
-.tm-next { margin-top: 8px; border-radius: 14px; background: var(--dp-subtle); padding: 4px 14px; }
-.tm-next div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; padding: 8px 0; font-size: 13.5px; border-top: 1px solid var(--dp-divider); }
-.tm-next div:first-child { border-top: 0; }
-.tm-next small { flex: 0 0 100%; margin-top: -4px; color: var(--dp-text2); font-size: 12.5px; }
-.tm-next div span:last-child { color: var(--dp-text2); }
-.tm-sum { margin-top: 8px; padding: 12px 14px; border-radius: 14px; background: var(--dp-primary-soft); font-size: 14.5px; line-height: 1.45; }
-.tm-sum b { font-weight: 600; }
-.tm-result { margin-top: 10px; }
+.rt-wd button.on { background: var(--dp-primary); color: #fff; font-weight: 600; }
+.rt-wd button:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
+.rt-timein, .rt-datein { box-sizing: border-box; height: 46px; font-size: 20px; font-variant-numeric: tabular-nums; }
+.rt-timein { width: 160px; }
+.rt-datein { width: 220px; max-width: 100%; }
+.rt-next { margin-top: 8px; border-radius: 14px; background: var(--dp-subtle); padding: 4px 14px; }
+.rt-next div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; padding: 8px 0; font-size: 13.5px; border-top: 1px solid var(--dp-divider); }
+.rt-next div:first-child { border-top: 0; }
+.rt-next small { flex: 0 0 100%; margin-top: -4px; color: var(--dp-text2); font-size: 12.5px; }
+.rt-next div span:last-child { color: var(--dp-text2); }
+.rt-sum { margin-top: 8px; padding: 12px 14px; border-radius: 14px; background: var(--dp-primary-soft); font-size: 14.5px; line-height: 1.45; }
+.rt-sum b { font-weight: 600; }
+.rt-result { margin-top: 10px; }
 /* Testknopf "Jetzt ausführen": echter Knopf mit Touch-Fläche (44 px), Rückmeldung daneben */
-.tm-tryrow { gap: 8px 14px; margin-top: 12px; font-size: 14px; }
-.tm-try { flex: 0 0 auto; height: 44px; padding: 0 22px; font-size: 15px; font-weight: 500; color: var(--dp-primary); border-color: var(--dp-primary); }
+.rt-tryrow { gap: 8px 14px; margin-top: 12px; font-size: 14px; }
+.rt-try { flex: 0 0 auto; height: 44px; padding: 0 22px; font-size: 15px; font-weight: 500; color: var(--dp-primary); border-color: var(--dp-primary); }
 /* Auslöser und Zurückschalten (2.54.0, docs/mockups/timer-trigger-v1 und -v2) */
 .sub-tabs.mg-two { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.mg-k.tm-sec { margin-top: 18px; color: var(--dp-text); font-size: 14px; font-weight: 600; }
-.tm-winrange { display: flex; align-items: center; gap: 10px; margin-top: 8px; color: var(--dp-text2); font-size: 13px; }
-.tm-winrange .mg-input { flex: 1 1 0; min-width: 0; max-width: 170px; font-size: 18px; }
+.mg-k.rt-sec { margin-top: 18px; color: var(--dp-text); font-size: 14px; font-weight: 600; }
+.rt-winrange { display: flex; align-items: center; gap: 10px; margin-top: 8px; color: var(--dp-text2); font-size: 13px; }
+.rt-winrange .mg-input { flex: 1 1 0; min-width: 0; max-width: 170px; font-size: 18px; }
 /* Seite "Optionen" (2.52.0, docs/mockups/timer-light-v1): Vorschau, Regler, Farben */
 .to-prev { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 8px; padding: 14px 12px 12px; border-radius: 16px; background: var(--dp-subtle); text-align: center; }
 .to-prev-n { color: var(--dp-text2); font-size: 12.5px; }
@@ -1773,7 +1773,7 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
   .dev-tabs .sub-tab[data-tab="set"]::before { content: "⚙️"; }
   .dev-tabs .sub-tab[data-tab="ent"]::before { content: "🧩"; }
   .dev-tabs .sub-tab[data-tab="magic"]::before { content: "🔔"; }
-  .dev-tabs .sub-tab[data-tab="timer"]::before { content: "⏱️"; }
+  .dev-tabs .sub-tab[data-tab="routine"]::before { content: "⏱️"; }
   .dev-tabs .sub-tab.two:not(.on) > * { display: none; }
   .dev-tabs .sub-tab.on { flex: 2.8 1 0; gap: 6px; font-size: 13.5px; }
   .dev-tabs .sub-tab.on.two::before { display: none; }
@@ -1865,7 +1865,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-ico:has(> .ap-fi) { background: none; }
 .ap-ico > .ap-fi { width: 32px; height: 32px; }
 .ap-ico.sm > .ap-fi { width: 26px; height: 26px; }
-.tmall-btn .ap-fi { width: 24px; height: 24px; }
+.rtall-btn .ap-fi { width: 24px; height: 24px; }
 .ap-f .sub-tabs { margin: 0 0 10px; }
 .sub-tab:disabled { opacity: .4; cursor: default; }
 .ap-icons[hidden], .ap-favpane[hidden] { display: none; }

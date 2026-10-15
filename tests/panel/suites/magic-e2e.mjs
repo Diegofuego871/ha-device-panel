@@ -60,7 +60,7 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { window.__opts.notify_service = "notify.mobile_app_dani_iphone"; });
     await tap('.dev[data-open="d"]');
     await wait(`return r.querySelector("dialog.device")?.open && r.querySelector(".sub-tabs")`);
-    check(`[${tag}] fünf Reiter, vierter "Magic Push", fünfter "Timer"`, (await ev(`return [...r.querySelectorAll("dialog.device .dev-tabs .sub-tab")].map(b => b.dataset.tab).join()`)) === "ov,set,ent,magic,timer");
+    check(`[${tag}] fünf Reiter, vierter "Magic Push", fünfter "Routinen"`, (await ev(`return [...r.querySelectorAll("dialog.device .dev-tabs .sub-tab")].map(b => b.dataset.tab).join()`)) === "ov,set,ent,magic,routine");
     check(`[${tag}] ohne Meldung keine Zahl im Reiter`, (await ev(`return r.querySelector('.sub-tab[data-tab="magic"]').classList.contains("two")`)) === false);
 
     // --- Liste leer ---
