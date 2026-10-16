@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.79.0, "Alle Routinen pausieren" im Fenster "Routinen")
+
+- Wunsch des Nutzers (Screenshot des Fensters, Satz abgebrochen: "Ganz oben am besten:"): die Einstellung "Alle Routinen pausieren" auch in der Routinen-Übersicht spiegeln, ganz oben. Umgesetzt als Schalter über dem Hinweis (`routines.js` `pauseHtml`, nur im Fenster, `all.dlg`), mit Warnhinweis bei Pause; sofort gespeichert (`set_options` `routines_pause`, `device-panel.js` `_rtAllPause`), kein Entwurf. Der Nutzer hat nur "ganz oben" gesagt: die Gestalt (Schalterzeile mit Satz) ist meine Wahl nach dem Muster der Einstellungen, keine Mockups.
+- Backend: `ws_routine_list` liefert `paused` (`options_api.effective`). Test in `test_routines`, Suite `routineall` (Reihenfolge, sofort gespeichert, Neuöffnen, Fehlerfall). Simulator `routine_list` mit `paused`.
+- Fehler dabei gefunden: der verzögerte "close"-Hörer von `dialog.rtall-dlg` (wie schon bei `mgall-dlg`) löschte den Stand eines inzwischen neu geöffneten Fensters; er löscht nur noch bei geschlossenem Fenster.
+
 ## Stand (2.78.0, Abweichungen am Ende der Reiter Laden und Empfang)
 
 - Wunsch des Nutzers (Screenshots Laden und Batterie): im Reiter Laden sieht man nicht, auf welchen Geräten ein Override besteht; einheitlich "immer am Schluss ein Abschnitt Abweichungen pro Integration und Gerät" (Ausnahme Neue Geräte). Keine Mockups: der Aufbau ist der des Reiters Batterie.

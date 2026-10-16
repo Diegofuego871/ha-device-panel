@@ -171,7 +171,7 @@ Schaltet eine Entität eines Geräts einmalig oder nach Zeitplan, ohne Automatio
 - **Test:** ein Knopf "Jetzt ausführen" probiert den gewählten Schalter aus
 - **Erinnerung:** auf Wunsch ein Push im Moment des Schaltens, mit Vorschau und eigenem Empfänger
 - **Läuft in Home Assistant:** mit dessen Zeitzone, eine Routine löst also auch bei geschlossenem Panel und nach einem Neustart aus (innerhalb eines Nachhol-Fensters, das du festlegst), und "Alle Routinen pausieren" ist ein Schalter
-- **Übersicht:** der Blitz in der Kopfzeile (auch im Launcher) öffnet alle Routinen in einer Karte pro Gerät (Szenen und Gruppen ohne Gerät in eigenen Karten), mit Suche und Filter, bearbeiten, ausführen, ein- oder ausschalten, löschen und Favoriten
+- **Übersicht:** der Blitz in der Kopfzeile (auch im Launcher) öffnet alle Routinen in einer Karte pro Gerät (Szenen und Gruppen ohne Gerät in eigenen Karten), mit Suche und Filter, bearbeiten, ausführen, ein- oder ausschalten, löschen und Favoriten; ganz oben der Schalter "Alle Routinen pausieren" (derselbe wie in den Einstellungen, gilt sofort)
 
 <p align="center"><img src="docs/screenshots/de/routines-all.png" alt="Fenster mit allen Routinen, eine Karte pro Gerät" width="720"></p>
 

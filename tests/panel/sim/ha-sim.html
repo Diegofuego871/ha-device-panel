@@ -1221,7 +1221,7 @@
         }
         if (msg.type.endsWith("routine_list")) {
           if (window.__routineListFails) throw new Error(window.__routineListFails);
-          return { routines: T.list.map((r) => strip(payload(r))), now: Date.now() / 1000, today: today() };
+          return { routines: T.list.map((r) => strip(payload(r))), now: Date.now() / 1000, today: today(), paused: Boolean(window.__opts.routines_pause) };
         }
         if (msg.type.endsWith("routine_save")) {
           const raw = msg.routine;

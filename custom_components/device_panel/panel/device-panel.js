@@ -6578,6 +6578,7 @@ class DevicePanel extends HTMLElement {
       const r = await this._hass.callWS({ type: "device_panel/routine_list" });
       all.routines = r.routines;
       all.error = null;
+      all.paused = Boolean(r.paused);
       this._routines._today = r.today;
       this._routines._offset = Number.isFinite(r.now) ? r.now * 1000 - Date.now() : 0;
     } catch (err) {
@@ -6659,6 +6660,7 @@ class DevicePanel extends HTMLElement {
     dlg.addEventListener("change", (ev) => {
       const el = ev.target;
       if (el.matches?.('input[data-rta="routine-toggle"]')) this._rtAllToggle(el.dataset.id, el.checked);
+      else if (el.matches?.('input[data-rta="routines-pause"]')) this._rtAllPause(el.checked);
     });
     dlg.addEventListener("input", (ev) => {
       const el = ev.target;
@@ -6675,8 +6677,9 @@ class DevicePanel extends HTMLElement {
       const x = dlg.querySelector("[data-rta-clear]");
       if (x) x.hidden = !el.value;
     });
+    // "close" kommt verzögert: wurde das Fenster inzwischen neu geöffnet, gehört der Stand dem neuen Öffnen
     dlg.addEventListener("close", () => {
-      this._rtAll = null;
+      if (!dlg.open) this._rtAll = null;
     });
   }
 
@@ -6702,6 +6705,22 @@ class DevicePanel extends HTMLElement {
     if (this._rtAll !== all) return;
     all.ran = ran;
     this._renderRtAll();
+  }
+
+  // "Alle Routinen pausieren" im Fenster (seit 2.79.0): speichert sofort die Option routines_pause, wie die Einstellung "Routinen"
+  async _rtAllPause(paused) {
+    const all = this._rtAll;
+    if (!all || all.pauseBusy) return;
+    all.pauseBusy = true;
+    all.err = "";
+    try {
+      await this._hass.callWS({ type: "device_panel/set_options", values: { routines_pause: paused } });
+      all.paused = paused;
+    } catch (err) {
+      all.err = this._t("rtToggleError", errText(err));
+    }
+    all.pauseBusy = false;
+    if (this._rtAll === all) this._renderRtAll();
   }
 
   async _rtAllToggle(id, enabled) {

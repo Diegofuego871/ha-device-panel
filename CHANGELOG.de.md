@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.79.0] - 2026-10-16
+
+Fenster "Routinen": der Schalter "Alle Routinen pausieren" steht ganz oben.
+
+### Hinzugefügt
+
+- Fenster "Routinen" (Blitz in der Kopfzeile): Ganz oben steht **Alle Routinen pausieren**, derselbe Schalter wie in den Einstellungen unter "Routinen". Er gilt sofort, ohne "Speichern", und beide Orte zeigen denselben Stand (Option `routines_pause`). Ist die Pause an, steht darunter in Warnfarbe "Pausiert: Es schaltet nichts, bis du wieder einschaltest. Die Routinen überspringen ihre Zeiten."; sonst die kurze Erklärung. Schlägt das Speichern fehl, erscheint die Fehlermeldung im Fenster und der Schalter bleibt, wie er war.
+- Die Antwort von `device_panel/routine_list` nennt den Stand als `paused`, damit das Fenster ihn ohne zweiten Aufruf zeigt.
+
+### Behoben
+
+- Fenster "Routinen" und "Magic Push": Wurde das Fenster geschlossen und gleich wieder geöffnet, konnte das verzögerte Schliessen-Ereignis den Stand des neuen Öffnens löschen (die Liste blieb dann ohne Reaktion auf Tipps). Es löscht ihn nur noch, wenn das Fenster zu ist.
+
 ## [2.78.0] - 2026-10-16
 
 Einstellungen, Überwachung und Meldungen: Die Reiter "Laden" und "Empfang" enden wie die anderen mit einem Abschnitt "Abweichungen".
@@ -3775,6 +3788,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0
 [2.78.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.78.0
 [2.76.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.76.0
 [2.75.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.75.0

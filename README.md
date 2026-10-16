@@ -171,7 +171,7 @@ Switches an entity of a device once or on a schedule, without an automation.
 - **Test:** a button "Run now" tries the chosen switch
 - **Reminder:** optionally a push at the moment it switches, with a preview and its own recipient
 - **Runs in Home Assistant:** with its time zone, so a routine also fires with the panel closed and after a restart (within a catch-up window you set), and "Pause all routines" is one switch
-- **Overview:** the lightning bolt in the header (also in the launcher) opens all routines in one card per device (scenes and groups without a device in cards of their own), with search and filter, edit, run, switch on or off, delete and favorites
+- **Overview:** the lightning bolt in the header (also in the launcher) opens all routines in one card per device (scenes and groups without a device in cards of their own), with search and filter, edit, run, switch on or off, delete and favorites; at the very top the switch "Pause all routines" (same as in the settings, applies at once)
 
 <p align="center"><img src="docs/screenshots/en/routines-all.png" alt="Window with all routines, one card per device" width="720"></p>
 

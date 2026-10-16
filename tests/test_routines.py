@@ -523,7 +523,14 @@ async def test_websocket_commands(hass: HomeAssistant, setup, hass_ws_client) ->
     assert saved["result"]["routine"]["entity_name"] == "plug" and saved["result"]["routine"]["running"] is True
     bad = await call("routine_save", routine={**_raw(device, plug), "delay_s": None})
     assert not bad["success"] and bad["error"]["code"] == "invalid_format"
-    assert (await call("routine_list"))["result"]["routines"][0]["device_name"] == "Steckdose Terrasse"
+    listed = (await call("routine_list"))["result"]
+    assert listed["routines"][0]["device_name"] == "Steckdose Terrasse"
+    # Das Fenster "Routinen" zeigt "Alle Routinen pausieren" (2.79.0): der Stand kommt mit der Liste, gesetzt wird er über set_options
+    assert listed["paused"] is False
+    assert (await call("set_options", values={"routines_pause": True}))["success"]
+    assert (await call("routine_list"))["result"]["paused"] is True
+    assert (await call("set_options", values={"routines_pause": False}))["success"]
+    assert (await call("routine_list"))["result"]["paused"] is False
     assert (await call("routine_get", device_id=device.id))["result"]["routines"][0]["id"] == routine_id
 
     disabled = await call("routine_enable", routine_id=routine_id, enabled=False)

@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.79.0] - 2026-10-16
+
+Window "Routines": the switch "Pause all routines" stands at the very top.
+
+### Added
+
+- Window "Routines" (lightning bolt in the header): at the very top stands **Pause all routines**, the same switch as in the settings under "Routines". It applies at once, without "Save", and both places show the same state (option `routines_pause`). While paused, a note in warning colour says "Paused: nothing switches until you turn it on again. The routines skip their times."; otherwise the short explanation. If saving fails, the error shows in the window and the switch stays as it was.
+- The answer of `device_panel/routine_list` carries the state as `paused`, so the window shows it without a second call.
+
+### Fixed
+
+- Windows "Routines" and "Magic Push": if the window was closed and opened again at once, the delayed close event could wipe the state of the new opening (the list then did not react to taps). It now only wipes it when the window is closed.
+
 ## [2.78.0] - 2026-10-16
 
 Settings, monitoring and notifications: the tabs "Charging" and "Signal" end like the others with a section "Exceptions".
@@ -3674,6 +3687,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0
 [2.78.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.78.0
 [2.76.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.76.0
 [2.75.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.75.0

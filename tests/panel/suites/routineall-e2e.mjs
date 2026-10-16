@@ -8,8 +8,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { btn: "Routinen", title: "Routinen", sub: "Alle Geräte", edit: "Bearbeiten", hit: "1 von 2", q1: "Was soll geschaltet werden?", run: "Ausführen", done: "Ausgeführt.", fail: "Konnte nicht schalten" },
-  en: { btn: "Routines", title: "Routines", sub: "All devices", edit: "Edit", hit: "1 of 2", q1: "What should be switched?", run: "Run", done: "Done.", fail: "Could not switch" },
+  de: { pause: "Alle Routinen pausieren", note: "Pausiert: Es schaltet nichts", short: "Nichts schaltet, bis du wieder einschaltest", btn: "Routinen", title: "Routinen", sub: "Alle Geräte", edit: "Bearbeiten", hit: "1 von 2", q1: "Was soll geschaltet werden?", run: "Ausführen", done: "Ausgeführt.", fail: "Konnte nicht schalten" },
+  en: { pause: "Pause all routines", note: "Paused: nothing switches", short: "Nothing switches until you turn it on again", btn: "Routines", title: "Routines", sub: "All devices", edit: "Edit", hit: "1 of 2", q1: "What should be switched?", run: "Run", done: "Done.", fail: "Could not switch" },
 };
 const SEED = (id, device, name, enabled) => ({ id, device_id: device, entity_id: "switch.plug", name, action: "on", back_s: null, kind: "repeat", delay_s: null, date: null, time: "06:30", repeat: "daily", weekdays: null, mday: null, enabled, push: false, target: null, created: Date.now() / 1000 });
 
@@ -39,6 +39,25 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Knöpfe genau mittig: Suchfeld bis Blitz = Launcher-Knopf bis Zahnrad`, await ev(`const q = (s) => r.querySelector(s).getBoundingClientRect(); const all = [...r.querySelectorAll(".toolbar > *, .toolbar .searchbox, .toolbar .app-pins > *")], first = r.querySelector(".toolbar .rtall-btn"), prev = all.slice(0, all.indexOf(first)).reverse().find((e) => e.getBoundingClientRect().width > 0).getBoundingClientRect(); const l = Math.round(q(".toolbar .rtall-btn").left - prev.right), rr = Math.round(q(".toolbar .gear-btn").left - q(".toolbar .apps-btn").right); return l === rr && l >= 6`));
     await tap(".rtall-btn");
     check(`[${tag}] Fenster offen, Titel "${T.title}" · "${T.sub}"`, await wait(`const d = r.querySelector("dialog.rtall-dlg"); return d?.open && d.querySelector("h2").textContent === ${JSON.stringify(T.title)} && d.querySelector(".dlg-sub").textContent === ${JSON.stringify(T.sub)}`));
+    // "Alle Routinen pausieren" ganz oben (2.79.0): Spiegel der Einstellung, gilt sofort ohne "Speichern"
+    const body = "dialog.rtall-dlg [data-rta-body]";
+    const pauseSw = `${body} input[data-rta="routines-pause"]`;
+    check(`[${tag}] Pause: "${T.pause}" ganz oben (vor dem Hinweis), aus, mit dem Satz "${T.short}"`, await wait(`const b = r.querySelector("${body}"); const first = b.firstElementChild; return !!first && first.classList.contains("rt-pause") && first.querySelector(".opt-label").textContent.trim() === ${JSON.stringify(T.pause)} && !first.querySelector("input").checked && first.textContent.includes(${JSON.stringify(T.short)}) && !!(first.compareDocumentPosition(b.querySelector(".mg-note")) & Node.DOCUMENT_POSITION_FOLLOWING)`));
+    await p.screenshot({ path: `${outDir}/routineall-pause-off-${tag.replace("/", "-")}.png` });
+    await p.evaluate(() => { window.__wsCalls = []; });
+    await tap(pauseSw);
+    check(`[${tag}] Pause einschalten: sofort set_options routines_pause true, Schalter an, Warnung "${T.note}"`, await wait(`const f = r.querySelector("${body} .rt-pause"); return f.querySelector("input").checked && f.classList.contains("on") && !!f.querySelector(".opt-warn") && f.textContent.includes(${JSON.stringify(T.note)})`) && JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values) === '{"routines_pause":true}' && await p.evaluate(() => window.__opts.routines_pause === true));
+    await p.screenshot({ path: `${outDir}/routineall-pause-${tag.replace("/", "-")}.png` });
+    // Das Fenster neu öffnen: der Stand bleibt (kommt aus dem Server)
+    await ev(`r.host._closeRtAll(); r.host._openRtAll()`);
+    check(`[${tag}] Pause: nach Neuöffnen noch an`, await wait(`const f = r.querySelector("${body} .rt-pause"); return !!f && f.querySelector("input").checked`));
+    await tap(pauseSw);
+    check(`[${tag}] Pause ausschalten: set_options routines_pause false, Warnung weg`, await wait(`const f = r.querySelector("${body} .rt-pause"); return !f.querySelector("input").checked && !f.querySelector(".opt-warn")`) && JSON.stringify((await calls("device_panel/set_options")).at(-1)?.values) === '{"routines_pause":false}');
+    // Speichern schlägt fehl: Fehler im Fenster, der Schalter bleibt aus
+    await p.evaluate(() => { window.__setOptsFails = "Verbindung weg"; });
+    await tap(pauseSw);
+    check(`[${tag}] Pause: Speichern fehlgeschlagen, Fehlermeldung, Schalter bleibt aus`, await wait(`const b = r.querySelector("${body}"); return (b.querySelector(".dlg-error")?.textContent || "").includes("Verbindung weg") && !b.querySelector(".rt-pause input").checked`));
+    await p.evaluate(() => { window.__setOptsFails = null; });
     check(`[${tag}] ${mobile ? "Vollbild auf dem Handy" : "Popup auf dem Desktop (nicht vollflächig, mittig, mit Rundung und Rand um das Fenster)"}`, await ev(`const el = r.querySelector("dialog.rtall-dlg"), d = el.getBoundingClientRect(); const full = Math.abs(d.width - window.innerWidth) <= 1 && Math.abs(d.height - window.innerHeight) <= 1; const centred = Math.abs((d.left + d.width / 2) - window.innerWidth / 2) <= 2; return ${mobile ? "full" : "!full && d.width <= 882 && d.height <= window.innerHeight - 40 && centred && parseFloat(getComputedStyle(el).borderTopLeftRadius) >= 20"}`));
     if (!mobile) {
       // Gleiche Grösse wie Einstellungen, Geräte-Popup und Protokoll (Wunsch des Nutzers): nacheinander öffnen und die Masse vergleichen

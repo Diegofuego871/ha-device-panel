@@ -641,10 +641,22 @@ export class RoutineUi {
     }
   }
 
+  // Schalter "Alle Routinen pausieren"; pausiert, steht darunter in Warnfarbe, dass nichts schaltet
+  pauseHtml(all) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const label = esc(t("optRoutinesPause"));
+    return `<div class="opt rt-pause${all.paused ? " on" : ""}"><div class="opt-line"><span class="opt-label">${label}</span>
+        <label class="switch"><input type="checkbox" data-rta="routines-pause" ${all.paused ? "checked" : ""}${all.pauseBusy ? " disabled" : ""} aria-label="${label}"><span></span></label></div>
+        ${all.paused ? `<div class="opt-warn" role="status">${this.h.mdi("alert", 14)}<span>${esc(t("rtPausedNote"))}</span></div>` : `<div class="opt-short">${esc(t("optRoutinesPauseShort"))}</div>`}</div>`;
+  }
+
   overviewHtml(all, devices) {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
-    let html = `<p class="mg-note">${esc(t(all.dlg ? "rtAllDlgIntro" : "rtAllIntro"))}</p>`;
+    // "Alle Routinen pausieren" ganz oben (seit 2.79.0, Spiegel der Einstellung "Routinen"): gilt sofort, ohne "Speichern"
+    let html = all.dlg && typeof all.paused === "boolean" ? this.pauseHtml(all) : "";
+    html += `<p class="mg-note">${esc(t(all.dlg ? "rtAllDlgIntro" : "rtAllIntro"))}</p>`;
     if (all.flash) html += `<div class="mg-flash" role="status">${esc(all.flash)}</div>`;
     if (all.error && !all.routines) {
       return `${html}<div class="dlg-error">${esc(t("rtLoadError", all.error))}</div><button type="button" class="qbtn" ${this.a(all, "routine-reload")}>${esc(t("rtRetry"))}</button>`;
