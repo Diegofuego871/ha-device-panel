@@ -1473,30 +1473,52 @@
         window.__statusStates[msg.part] = "ok";
         return window.__statusSnap(now);
       }
+      if (msg.type === "device_panel/status_system_enable") {
+        // Wie system_stats.ws_status_system_enable: schaltet die ausgeschalteten Sensoren der Art ein
+        (window.__systemEnabled ||= []).push(msg.kind);
+        window.__systemOff = false;
+        return { enabled: [`sensor.system_monitor_${msg.kind}`] };
+      }
       if (msg.type === "device_panel/status_system") {
         // Wie system_stats.async_system: drei Kurven (Festplatte mit Zeitraum), Sensoren zur Auswahl; Erfindung statt Messung
         if (window.__systemFails) throw new Error(window.__systemFails);
         const now = Date.now() / 1000;
         const range = msg.range || "24h";
         const days = { "24h": 1, "30d": 30, "6m": 180, "1y": 365 }[range];
-        const curve = (n, f) => Array.from({ length: n }, (_, i) => [now - days * 86400 + (i / (n - 1)) * days * 86400, f(i / (n - 1))]);
+        const curve = (n, f, d) => Array.from({ length: n }, (_, i) => [now - d * 86400 + (i / (n - 1)) * d * 86400, f(i / (n - 1))]);
         const own = (k) => window.__opts[`status_${k}_entity`] || "";
+        const off = Boolean(window.__systemOff);
+        const base = (id, d) => ({ id, entity_id: null, name: "", scope: "none", mode: "percent", unit: "%", axis_max: 100, start: now - d * 86400, end: now, days: d, current: null, avg: null, max: null, source: "none", size: null, disabled: [], points: [], missing: false });
         const mk = (id, scope, name, entity, d, f, cur, source = "statistics") => {
-          const pts = window.__systemNone ? [] : curve(d === 1 ? 288 : 200, f);
+          if (window.__systemNone || off) return { ...base(id, d), disabled: off ? [{ entity_id: `sensor.system_monitor_${id}`, name: `System Monitor ${id}` }, { entity_id: `sensor.system_monitor_${id}_2`, name: `System Monitor ${id} frei` }] : [] };
+          const pts = curve(d === 1 ? 288 : 200, f, d);
           const vals = pts.map((p) => p[1]);
-          return { id, entity_id: window.__systemNone ? null : entity, name, scope: window.__systemNone ? "none" : own(id) ? "own" : scope, start: now - d * 86400, end: now, days: d, current: window.__systemNone ? null : cur,
-            avg: vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null, max: vals.length ? Math.round(Math.max(...vals) * 10) / 10 : null,
-            source: window.__systemNone ? "none" : source, points: pts.map(([t, v]) => [t, Math.round(v * 10) / 10]), missing: false };
+          return { ...base(id, d), entity_id: entity, name, scope: own(id) ? "own" : scope, current: cur, avg: Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10, max: Math.round(Math.max(...vals) * 10) / 10,
+            source, points: pts.map(([t, v]) => [t, Math.round(v * 10) / 10]) };
         };
         const diskSource = range === "24h" ? "history" : window.__systemNoStats ? "history" : "statistics";
+        let disk = { ...mk("disk", "host", "Festplatte /", "sensor.system_monitor_disk_use_percent", days, (x) => 38 + 22 * x, 60, diskSource), size: window.__systemNoSize ? null : { used: 318.4, free: 212.3, total: 530.7, unit: "GiB" } };
+        if (window.__systemNoSize) disk.disabled = [{ entity_id: "sensor.system_monitor_belegter_massenspeicher", name: "Belegter Massenspeicher /" }, { entity_id: "sensor.system_monitor_freier_massenspeicher", name: "Freier Massenspeicher /" }];
+        // Nur "belegt" in Gigabyte (wie auf der Instanz des Nutzers): die Karte zeigt Gigabyte statt Prozent
+        if (window.__systemAbsolute || own("disk") === "sensor.system_monitor_belegter_massenspeicher") {
+          disk = { ...mk("disk", "host", "Belegter Massenspeicher /", "sensor.system_monitor_belegter_massenspeicher", days, (x) => 290 + 28.4 * x, 318.4, diskSource), mode: "absolute", unit: "GiB", axis_max: 500, size: null,
+            disabled: window.__systemNoSize ? [] : [{ entity_id: "sensor.system_monitor_freier_massenspeicher", name: "Freier Massenspeicher /" }] };
+        }
+        const filler = Array.from({ length: 90 }, (_, i) => ({ entity_id: `sensor.fuellung_${i + 1}`, name: `Füllung ${String(i + 1).padStart(2, "0")}`, unit: "%", pref: true }));
         return {
           range,
+          integrations: { systemmonitor: !window.__systemNoInteg, hassio: false },
           metrics: [
             mk("cpu", "host", "Prozessornutzung", "sensor.system_monitor_processor_use", 1, (x) => 14 + 12 * Math.sin(x * 14) + (x > 0.8 && x < 0.86 ? 55 : 0), 17, "history"),
             mk("ram", "host", "Arbeitsspeicher", "sensor.system_monitor_memory_use_percent", 1, (x) => 52 + 6 * Math.sin(x * 5), 54, "history"),
-            { ...mk("disk", "host", "Festplatte /", "sensor.system_monitor_disk_use_percent", days, (x) => 38 + 22 * x, 60, diskSource), size: window.__systemNoSize ? null : { used: 318.4, free: 212.3, total: 530.7, unit: "GiB" } },
+            disk,
           ],
-          candidates: [{ entity_id: "sensor.mein_server_cpu", name: "Mein Server CPU" }, { entity_id: "sensor.nas_speicher", name: "NAS Speicher" }],
+          candidates: [
+            { entity_id: "sensor.mein_server_cpu", name: "Mein Server CPU", unit: "%", pref: true }, { entity_id: "sensor.nas_speicher", name: "NAS Speicher", unit: "%", pref: true },
+            { entity_id: "sensor.system_monitor_arbeitsspeicherauslastung", name: "System Monitor Arbeitsspeicherauslastung", unit: "%", pref: true },
+            { entity_id: "sensor.system_monitor_belegter_massenspeicher", name: "System Monitor Belegter Massenspeicher /", unit: "GiB", pref: true },
+            { entity_id: "sensor.wohnzimmer_temperatur", name: "Wohnzimmer Temperatur", unit: "°C", pref: false }, ...filler,
+          ],
         };
       }
       if (msg.type === "device_panel/status_get") {

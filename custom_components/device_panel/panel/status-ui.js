@@ -10,6 +10,8 @@ const REFRESH_MS = 10000;
 // Systemwerte (CPU, RAM, Festplatte): alle 60 Sekunden neu, nicht bei jedem Takt des Fensters
 const SYS_EVERY = 6;
 const SYS_RANGES = ["24h", "30d", "6m", "1y"];
+// Höchstens so viele Sensoren zeigt die Auswahl auf einmal (der Rest folgt nach der Eingabe)
+const PICK_MAX = 60;
 const SYS_OPTION = { cpu: "status_cpu_entity", ram: "status_ram_entity", disk: "status_disk_entity" };
 const PART_ORDER = ["routines", "magic", "availability", "battery", "charge", "new", "updates", "signal"];
 
@@ -28,7 +30,7 @@ export class StatusUi {
     this.range = "24h";
     this._ticks = 0;
     // Neustart von Hand (seit 2.63.0): confirm = Teil mit offener Rückfrage, busy = Teil, der gerade neu startet, flash = Hinweis danach
-    this.ui = { confirm: null, busy: null, flash: "", flashTimer: null };
+    this.ui = { confirm: null, busy: null, flash: "", flashTimer: null, pick: null, pickQ: "", enabled: {}, enabling: null };
   }
 
   t(key, ...args) {
@@ -77,6 +79,25 @@ export class StatusUi {
         return;
       }
       if (ev.target.closest("[data-st-close]")) return this.close();
+      if (ev.target.closest("[data-st-add]")) {
+        // Die Seite "Integration hinzufügen" von Home Assistant, gleich bei "System Monitor" (nur öffnen, nichts wird geändert)
+        this.close();
+        this.host._navigate?.("/config/integrations/dashboard/add?domain=systemmonitor");
+        return;
+      }
+      const enable = ev.target.closest("[data-st-enable]");
+      if (enable) return this.enable(enable.dataset.stEnable);
+      const pick = ev.target.closest("[data-st-pick]");
+      if (pick) {
+        const kind = pick.dataset.stPick;
+        this.ui.pick = this.ui.pick === kind ? null : kind;
+        this.ui.pickQ = "";
+        this.render();
+        if (this.ui.pick) this.dlg.querySelector("[data-st-pickq]")?.focus();
+        return;
+      }
+      const choose = ev.target.closest("[data-st-choose]");
+      if (choose) return this.choose(choose.dataset.stKind, choose.dataset.stChoose);
       const range = ev.target.closest("[data-st-range]");
       if (range) {
         if (SYS_RANGES.includes(range.dataset.stRange) && range.dataset.stRange !== this.range) {
@@ -93,12 +114,18 @@ export class StatusUi {
       else return;
       this.render();
     });
+    // Suche in der Sensor-Auswahl: nur die Liste neu zeichnen, damit das Feld den Fokus behält
+    dlg.addEventListener("input", (ev) => {
+      if (!ev.target.matches?.("[data-st-pickq]")) return;
+      this.ui.pickQ = ev.target.value;
+      const list = this.dlg.querySelector("[data-st-picklist]");
+      if (list && this.ui.pick) list.innerHTML = this.pickListHtml(this.ui.pick);
+    });
     dlg.addEventListener("cancel", () => this.close());
     dlg.addEventListener("change", (ev) => {
       const el = ev.target;
       if (el.matches("[data-st-notify]")) this.save({ status_notify: el.checked });
       else if (el.matches("[data-st-target]")) this.save({ notify_service_status: el.value });
-      else if (el.matches("[data-st-metric]") && SYS_OPTION[el.dataset.stMetric]) this.save({ [SYS_OPTION[el.dataset.stMetric]]: el.value }).then(() => this.loadSystem());
     });
   }
 
@@ -127,10 +154,39 @@ export class StatusUi {
       if (range !== this.range) return;
       this.sys = res;
       this.sysError = null;
+      // "Eingeschaltet"-Hinweis nur, solange die Sensoren noch fehlen; sind sie da (oder fehlt nichts mehr), gilt er nicht mehr
+      for (const m of res.metrics) if (!m.disabled?.length) delete this.ui.enabled[m.id];
     } catch (err) {
       this.sysError = this.h.errText(err);
     }
     this.render();
+  }
+
+  // Ausgeschaltete Sensoren einschalten (nur auf Knopfdruck, nur System Monitor und Supervisor); HA lädt die Integration von selbst neu
+  async enable(kind) {
+    if (this.ui.enabling) return;
+    this.ui.enabling = kind;
+    this.render();
+    try {
+      await this.host._hass.callWS({ type: "device_panel/status_system_enable", kind });
+      this.ui.enabled[kind] = true;
+      this.sysError = null;
+      // Die Integration lädt nach etwa 30 Sekunden neu; danach einmal nachsehen (sonst beim nächsten Takt)
+      window.setTimeout(() => this.dlg?.open && this.loadSystem(), 45000);
+    } catch (err) {
+      this.sysError = this.h.errText(err);
+    }
+    this.ui.enabling = null;
+    this.render();
+  }
+
+  // Sensor für eine Art wählen ("" = automatisch)
+  async choose(kind, entityId) {
+    if (!SYS_OPTION[kind]) return;
+    this.ui.pick = null;
+    this.ui.pickQ = "";
+    await this.save({ [SYS_OPTION[kind]]: entityId });
+    await this.loadSystem();
   }
 
   async save(values) {
@@ -194,7 +250,7 @@ export class StatusUi {
     const body = this.dlg?.querySelector("[data-st-body]");
     if (!body) return;
     // Auswahl nicht zerstören, solange sie geöffnet ist (Neuzeichnen alle 10 Sekunden)
-    if (this.host.shadowRoot.activeElement?.matches?.("[data-st-target], [data-st-metric]")) return;
+    if (this.host.shadowRoot.activeElement?.matches?.("[data-st-target], [data-st-pickq]")) return;
     const scroll = body.closest(".dlg-body")?.scrollTop || 0;
     body.innerHTML = this.html();
     const sc = body.closest(".dlg-body");
@@ -290,23 +346,47 @@ export class StatusUi {
       ${this.error ? `<div class="dlg-error" role="alert">${escape(this.error)}</div>` : ""}`;
   }
 
-  // Eine Kurve (0 bis 100 %) mit Fläche, Hilfslinien bei 0, 50 und 100 und dem aktuellen Punkt
+  // Eine Kurve mit Fläche und Hilfslinien bei 0, halber und voller Höhe (Prozent: 0 bis 100; sonst bis zur Achse des Sensors)
   plotHtml(m) {
     const { escape } = this.h;
     const span = m.end - m.start || 1;
     const x = (at) => Math.max(0, Math.min(1000, ((at - m.start) / span) * 1000));
-    const y = (v) => 100 - Math.max(0, Math.min(100, v));
+    const top = m.mode === "absolute" ? m.axis_max || 1 : 100;
+    const y = (v) => 100 - Math.max(0, Math.min(100, (v / top) * 100));
     const pts = m.points;
     const line = pts.map(([at, v], i) => `${i ? "L" : "M"}${x(at).toFixed(1)},${y(v).toFixed(2)}`).join(" ");
     const area = `${line} L${x(pts[pts.length - 1][0]).toFixed(1)},100 L${x(pts[0][0]).toFixed(1)},100 Z`;
-    const grid = [0, 50, 100].map((v) => `<line class="bh-grid" x1="0" x2="1000" y1="${y(v)}" y2="${y(v)}" vector-effect="non-scaling-stroke"/>`).join("");
-    const labels = [100, 50, 0].map((v) => `<span class="st-sys-y" style="top:${y(v)}%">${v}</span>`).join("");
-    return `<div class="st-sys-plot" data-st-plot="${escape(m.id)}"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}<path class="bh-area" d="${area}"/><path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/></svg>${labels}</div>`;
+    const marks = [top, top / 2, 0];
+    // Zeitstrahl (seit 2.70.0): Uhrzeiten bei 24 Std. (alle 3 Stunden), sonst Tage bzw. Monate; wie bei Batterie und Empfang
+    const ticks = this.ticks(m);
+    const vlines = ticks.map((tk) => `<line class="bh-grid bh-v" x1="${(tk.pos * 10).toFixed(1)}" x2="${(tk.pos * 10).toFixed(1)}" y1="0" y2="100" vector-effect="non-scaling-stroke"/>`).join("");
+    const grid = vlines + marks.map((v) => `<line class="bh-grid" x1="0" x2="1000" y1="${y(v)}" y2="${y(v)}" vector-effect="non-scaling-stroke"/>`).join("");
+    const labels = marks.map((v) => `<span class="st-sys-y" style="top:${y(v)}%">${this.num(v)}</span>`).join("");
+    const tickRow = `<div class="avail-ticks bh-ticks st-sys-ticks" data-st-ticks>${ticks
+      .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
+      .join("")}<span class="now-label">${escape(this.t("stSysNow"))}</span></div>`;
+    return `<div class="st-sys-plot" data-st-plot="${escape(m.id)}"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}<path class="bh-area" d="${area}"/><path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/></svg>${labels}</div>${tickRow}`;
+  }
+
+  // Marken des Zeitstrahls je Zeitraum (die Hilfsfunktion des Panels kennt 24h, 30d, 180d und 365d)
+  ticks(m) {
+    const mode = { 1: "24h", 30: "30d", 180: "180d", 365: "365d" }[m.days] || "24h";
+    return this.host._ticks?.(m.start, m.end, mode) || [];
   }
 
   // Zahl im Format der HA-Sprache, eine Nachkommastelle nur wenn nötig
   num(n) {
     return Number(n).toLocaleString(this.host._locale?.() || undefined, { maximumFractionDigits: 1 });
+  }
+
+  // Knopf "Einschalten" für ausgeschaltete Sensoren (mit Namen), danach der Hinweis, dass HA die Integration gleich neu lädt
+  enableHtml(m) {
+    const { escape } = this.h;
+    const t = (k, ...a) => this.t(k, ...a);
+    if (!m.disabled?.length) return "";
+    if (this.ui.enabled[m.id]) return `<p class="st-sys-note ok" role="status">${escape(t("stSysEnabled"))}</p>`;
+    const names = m.disabled.map((d) => d.name).join(", ");
+    return `<p class="st-sys-note"><small>${escape(names)}</small></p><div class="st-sys-act"><button type="button" class="dlg-btn" data-st-enable="${escape(m.id)}"${this.ui.enabling ? " disabled" : ""}>${escape(t(this.ui.enabling === m.id ? "stSysEnabling" : "stSysEnable"))}</button></div>`;
   }
 
   metricHtml(m) {
@@ -315,48 +395,92 @@ export class StatusUi {
     const title = t(`stSys${m.id[0].toUpperCase()}${m.id.slice(1)}`);
     const range = m.id === "disk" ? this.range : "24h";
     const scope = m.scope === "own" ? m.name : m.scope === "none" ? "" : t(`stSysScope_${m.scope}`);
-    const val = m.current == null ? `<span class="st-sys-val"><small>–</small></span>` : `<span class="st-sys-val">${escape(String(Math.round(m.current)))}<small>%</small></span>`;
+    const absolute = m.mode === "absolute";
+    const val =
+      m.current == null
+        ? `<span class="st-sys-val"><small>–</small></span>`
+        : absolute
+          ? `<span class="st-sys-val">${escape(this.num(m.current))}<small>${escape(m.unit)}</small></span>`
+          : `<span class="st-sys-val">${escape(String(Math.round(m.current)))}<small>%</small></span>`;
     const tabs =
       m.id === "disk"
         ? `<div class="sub-tabs" role="tablist">${SYS_RANGES.map((k) => `<button type="button" role="tab" class="sub-tab${k === this.range ? " on" : ""}" data-st-range="${k}" aria-selected="${k === this.range}">${escape(t(`stSysRange_${k}`))}</button>`).join("")}</div>`
         : "";
     let body;
-    if (!m.entity_id) body = `<p class="st-sys-note">${escape(t("stSysNone"))}</p>`;
+    if (!m.entity_id) {
+      // Ohne "System Monitor": sagen, wie man es hinzufügt (nicht zwingend, die Auswahl unten nimmt jeden Sensor)
+      const noInteg = this.sys && this.sys.integrations && !this.sys.integrations.systemmonitor && !m.disabled?.length;
+      body = `<p class="st-sys-note">${escape(t(m.disabled?.length ? "stSysOff" : noInteg ? "stSysNoInteg" : "stSysNone"))}</p>${this.enableHtml(m)}${
+        noInteg ? `<div class="st-sys-act"><button type="button" class="dlg-btn" data-st-add>${escape(t("stSysAdd"))}</button></div>` : ""
+      }`;
+    }
     else if (m.missing) body = `<p class="st-sys-note warn">${escape(t("stSysMissing"))}</p>`;
     else if (!m.points.length) body = `<p class="st-sys-note">${escape(t("stSysNoData"))}</p>`;
     else {
-      const stats = m.avg != null && m.max != null ? t("stSysAvgMax", Math.round(m.avg), Math.round(m.max)) : "";
-      body = `${this.plotHtml(m)}<div class="st-sys-foot"><span>${escape(t(`stSysAgo_${range}`))}</span><span class="mid">${escape(stats)}</span><span>${escape(t("stSysNow"))}</span></div>
+      const stats =
+        m.avg != null && m.max != null ? (absolute ? t("stSysAvgMaxUnit", this.num(m.avg), this.num(m.max), m.unit) : t("stSysAvgMax", Math.round(m.avg), Math.round(m.max))) : "";
+      body = `${this.plotHtml(m)}<div class="st-sys-foot"><span>${escape(t(`stSysAgo_${range}`))}</span><span class="mid">${escape(stats)}</span></div>
         ${range !== "24h" && m.source !== "statistics" ? `<p class="st-sys-note">${escape(t("stSysNoStats"))}</p>` : ""}`;
     }
     // Festplatte: wie viel das in Gigabyte ist (seit 2.69.0), sonst ein Hinweis, welche Sensoren dazu fehlen
     const sz = m.size;
     const size = sz
       ? `<div class="st-sys-size" data-st-size>${escape(t("stSysSize", this.num(sz.used), this.num(sz.total), sz.unit, this.num(sz.free)))}</div>`
-      : m.id === "disk" && m.entity_id && !m.missing && m.scope === "host"
-        ? `<p class="st-sys-note">${escape(t("stSysSizeHint"))}</p>`
+      : m.id === "disk" && m.entity_id && !m.missing && m.disabled?.length
+        ? `<p class="st-sys-note">${escape(t(absolute ? "stSysSizeOffAbs" : "stSysSizeOff"))}</p>${this.enableHtml(m)}`
         : "";
     return `<div class="st-sys" data-st-metric-card="${escape(m.id)}"><div class="st-sys-head"><span class="st-sys-t"><b>${escape(title)}</b>${scope ? `<small>${escape(scope)}</small>` : ""}</span>${val}</div>${size}${tabs}${body}</div>`;
   }
 
-  // Auswahl des Sensors je Art: automatisch oder ein eigener (Sensoren in Prozent)
-  sourceHtml() {
-    const { escape } = this.h;
+  // Sensoren zur Auswahl für die Art: Prozent-Sensoren für CPU und RAM, bei der Festplatte auch Sensoren in Gigabyte; gefiltert nach der Eingabe
+  pickOptions(kind) {
+    const q = this.ui.pickQ.trim().toLowerCase();
+    const own = this.cfg?.values?.[SYS_OPTION[kind]] || "";
+    // Alle Sensor-Entitäten mit Zahl; die naheliegenden (Prozent, bei der Festplatte auch Gigabyte) stehen vorn, den Rest findet die Suche
+    const fits = (c) => c.pref && (kind === "disk" || c.unit === "%");
+    let list = [...(this.sys?.candidates || [])].sort((a, b) => Number(fits(b)) - Number(fits(a)));
+    // Gewählt, aber nicht (mehr) in der Liste: trotzdem anzeigen, damit die Wahl sichtbar bleibt
+    if (own && !list.some((c) => c.entity_id === own)) list = [{ entity_id: own, name: own, unit: "" }, ...list];
+    return list.filter((c) => !q || `${c.name} ${c.entity_id}`.toLowerCase().includes(q));
+  }
+
+  pickListHtml(kind) {
+    const { escape, mdi } = this.h;
     const t = (k, ...a) => this.t(k, ...a);
-    const sys = this.sys;
-    const rows = sys.metrics
+    const own = this.cfg?.values?.[SYS_OPTION[kind]] || "";
+    const m = this.sys.metrics.find((x) => x.id === kind);
+    const autoName = m && m.scope !== "own" && m.entity_id ? m.name : "";
+    const q = this.ui.pickQ.trim();
+    const all = this.pickOptions(kind);
+    const shown = all.slice(0, PICK_MAX);
+    const row = (id, name, sub) => `<button type="button" class="st-opt${id === own ? " on" : ""}" role="radio" aria-checked="${id === own}" data-st-kind="${escape(kind)}" data-st-choose="${escape(id)}"><span class="st-opt-t"><b>${escape(name)}</b>${sub ? `<small>${escape(sub)}</small>` : ""}</span>${id === own ? mdi("check", 18) : ""}</button>`;
+    const rows = [
+      // "Automatisch" steht immer oben (auch wenn die Suche sonst nichts findet), solange nichts getippt ist
+      ...(q ? [] : [row("", autoName ? t("stSysAuto", autoName) : t("stSysAutoNone"), "")]),
+      ...shown.map((c) => row(c.entity_id, c.name, c.name === c.entity_id ? "" : c.entity_id)),
+    ];
+    if (!shown.length) rows.push(`<p class="st-sys-note">${escape(t("listSearchNone"))}</p>`);
+    if (all.length > shown.length) rows.push(`<p class="st-sys-note">${escape(t("stSysPickMore", all.length - shown.length))}</p>`);
+    return rows.join("");
+  }
+
+  // Auswahl des Sensors je Art: automatisch oder ein eigener, mit Suchfeld (eine Liste mit Dutzenden Sensoren lässt sich sonst nicht lesen)
+  sourceHtml() {
+    const { escape, mdi } = this.h;
+    const t = (k, ...a) => this.t(k, ...a);
+    const rows = this.sys.metrics
       .map((m) => {
         const own = this.cfg?.values?.[SYS_OPTION[m.id]] || "";
-        const list = sys.candidates.slice();
-        // Gewählt, aber nicht (mehr) in der Liste: trotzdem anzeigen, damit die Wahl sichtbar bleibt
-        if (own && !list.some((c) => c.entity_id === own)) list.unshift({ entity_id: own, name: own });
-        const autoName = m.scope !== "own" && m.entity_id ? m.name : "";
-        const auto = autoName ? t("stSysAuto", autoName) : t("stSysAutoNone");
-        const options = [["", auto], ...list.map((c) => [c.entity_id, c.name === c.entity_id ? c.name : `${c.name} (${c.entity_id})`])];
-        const select = `<span class="opt-select"><select data-st-metric="${escape(m.id)}" aria-label="${escape(t(`stSys${m.id[0].toUpperCase()}${m.id.slice(1)}`))}">${options
-          .map(([val, text]) => `<option value="${escape(val)}"${val === own ? " selected" : ""}>${escape(text)}</option>`)
-          .join("")}</select>${this.h.mdi("chevronDown", 18)}</span>`;
-        return `<div class="opt"><div class="opt-line"><span class="opt-label">${escape(t(`stSys${m.id[0].toUpperCase()}${m.id.slice(1)}`))}</span>${select}</div></div>`;
+        const known = own && this.sys.candidates.find((c) => c.entity_id === own);
+        const label = own ? known?.name || own : m.entity_id && m.scope !== "own" ? t("stSysAuto", m.name) : t("stSysAutoNone");
+        const open = this.ui.pick === m.id;
+        const title = t(`stSys${m.id[0].toUpperCase()}${m.id.slice(1)}`);
+        const picker = open
+          ? `<div class="st-pick"><label class="list-search" data-for="st-pick">${mdi("search", 18)}<input type="search" data-st-pickq value="${escape(this.ui.pickQ)}" placeholder="${escape(t("stSysPickSearch"))}" aria-label="${escape(t("stSysPickSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this.host._fieldClearHtml("data-fc", "", this.ui.pickQ)}</label>
+              <div class="st-pick-list" role="radiogroup" data-st-picklist>${this.pickListHtml(m.id)}</div></div>`
+          : "";
+        return `<div class="opt"><div class="opt-line"><span class="opt-label">${escape(title)}</span>
+          <button type="button" class="st-pickbtn" data-st-pick="${escape(m.id)}" aria-expanded="${open}" aria-label="${escape(title)}"><span>${escape(label)}</span>${mdi("chevronDown", 18)}</button></div>${picker}</div>`;
       })
       .join("");
     return `<div class="set-title">${escape(t("stSysSrcTitle"))}</div>${rows}<div class="opt-short">${escape(t("stSysSrcShort"))}</div>`;

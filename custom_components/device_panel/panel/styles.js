@@ -1871,8 +1871,24 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .st-sys-plot { position: relative; height: 84px; margin: 8px 0 0 30px; }
 .st-sys-plot .bh-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .st-sys-y { position: absolute; left: -30px; width: 24px; transform: translateY(-50%); text-align: right; color: var(--dp-text3); font-size: 10.5px; }
-.st-sys-foot { display: flex; justify-content: space-between; gap: 8px; margin: 4px 0 0 30px; font-size: 11.5px; color: var(--dp-text3); }
+.st-sys-ticks { margin-left: 30px; }
+.bh-grid.bh-v { stroke-dasharray: 2 4; opacity: 0.7; }
+.st-sys-foot { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0 0 30px; font-size: 11.5px; color: var(--dp-text3); }
 .st-sys-foot .mid { color: var(--dp-text2); text-align: center; flex: 1; }
+.st-sys-act { margin: 6px 0 0; }
+.st-sys-note.ok { color: var(--dp-success); }
+.st-pickbtn { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; max-width: 62%; min-width: 0; padding: 8px 12px; border: 1px solid var(--dp-divider); border-radius: 12px; background: var(--dp-card); color: inherit; font: inherit; font-size: 14px; cursor: pointer; }
+.st-pickbtn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-pickbtn:focus-visible, .st-opt:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
+.st-pick { margin: 8px 0 4px; }
+.st-pick-list { margin: 8px 0 0; max-height: 260px; overflow-y: auto; border-radius: 14px; background: var(--dp-subtle); }
+.st-opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px 14px; border: 0; border-top: 1px solid var(--dp-divider); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.st-opt:first-child { border-top: 0; }
+.st-opt:hover { background: var(--dp-hover); }
+.st-opt.on { color: var(--dp-primary); }
+.st-opt-t { min-width: 0; }
+.st-opt-t b { display: block; font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.st-opt-t small { display: block; margin-top: 1px; font-size: 12px; color: var(--dp-text2); overflow-wrap: anywhere; }
 .st-sys-note { margin: 8px 0 0; font-size: 12.5px; color: var(--dp-text2); line-height: 1.4; }
 .st-sys-note.warn { color: var(--dp-warning); }
 .st-card { border-radius: 18px; background: var(--dp-subtle); overflow: hidden; }

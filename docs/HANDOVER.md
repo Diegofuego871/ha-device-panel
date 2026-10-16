@@ -3,6 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.70.0, System-Sensoren finden, Auswahl mit Suche, Zeitstrahl)
+
+- Befund vom Nutzer (Screenshot, Entitäten `sensor.system_monitor_arbeitsspeicherauslastung`, `sensor.system_monitor_belegter_massenspeicher`): CPU und RAM wurden gefunden, die Festplatte nicht, weil System Monitor "Massenspeicher-Auslastung" (Prozent) ausgeschaltet anlegt und nur "belegt" (GiB) an war; die Auswahl zeigte die Sensoren nicht (Liste bei 200 abgeschnitten, nur Prozent-Sensoren). Im HA-Quellcode geprüft: alle System-Monitor-Sensoren sind standardmässig aus (`legacy_enabled`), Namen sind übersetzt (unique_id ist der Schlüssel: `disk_use_percent`, `disk_use`, `disk_free`, Anhang = Pfad).
+- `system_stats.py` neu geschrieben: Quellen mit Ausschlussanfang, `disk_group`, `_total_of` (belegt + frei bzw. Supervisor "gesamt"), Modus `percent` (auch aus Gigabyte gerechnet, `_percent_of`) oder `absolute` (`_plain`, `axis_max` aus `_axis_max`), `disabled_sources`, WebSocket `status_system_enable`, `integrations`. Auswahl: `candidates` mit `unit` und `pref` (naheliegende zuerst).
+- Panel `status-ui.js`: Auswahl mit Suchfeld (`data-st-pick`, `data-st-pickq`, `data-st-choose`, Muster der Suchfelder mit `_fieldClearHtml`), höchstens 60 Einträge (`PICK_MAX`), Knopf "Sensoren einschalten" (`data-st-enable`), "System Monitor hinzufügen" (`data-st-add`, `host._navigate`), Zeitstrahl über `host._ticks` (Modi 24h, 30d, 180d, 365d). Tests: `test_system_stats.py` (16), Suite `statussystem` (120).
+- Offen/Annahme: nach dem Einschalten lädt HA die Integration nach etwa 30 Sekunden neu (`RELOAD_AFTER_UPDATE_DELAY`); die App fragt nach 45 Sekunden nochmals. Nicht an einer echten Instanz geprüft.
+
 ## Stand (2.69.0, Festplatte auch in Gigabyte)
 
 - Wunsch des Nutzers: Prozent und Gigabyte. `system_stats.disk_size`: aus dem Prozent-Sensor von System Monitor (unique_id `disk_use_percent<Anhang>`) die Sensoren `disk_use<Anhang>` und `disk_free<Anhang>` (gleiche Platte, im HA-Quellcode geprüft, Einheit GiB); gesamt = belegt + frei; ab 1024 GiB TiB. Fehlen sie, deaktiviert oder fremder Sensor: `size` None, das Panel zeigt Prozent und einen Hinweis. Panel: `[data-st-size]` in `metricHtml`. Hinweis zur Einheit: GiB (1024³), nicht GB (1000³), so wie HA sie meldet. Tests: `test_disk_size_in_gigabytes`, `test_status_system_carries_the_disk_size`, Suite `statussystem` (60). 2.68.0 ist veröffentlicht (Tag `v2.68.0`).

@@ -96,10 +96,23 @@ async def test_status_system_carries_the_disk_size(hass: HomeAssistant, hass_ws_
 async def test_nothing_found_and_candidates(hass: HomeAssistant) -> None:
     assert [system_stats.auto_entity(hass, k) for k in system_stats.KINDS] == [None, None, None]
     eigen = _sensor(hass, "template", "mein-cpu", "7", "Mein Server CPU")
-    # Batterie (Geräteklasse) und Sensoren ohne state_class stehen nicht zur Auswahl
+    # Batterie (Geräteklasse) und Temperatur stehen zur Auswahl, aber nicht als naheliegende ("pref"); ein Prozent-Sensor ohne state_class
+    # und Grössen-Sensoren für die Festplatte schon. Sensoren ohne Einheit oder mit Text fehlen.
     _sensor(hass, "test", "bat", "80", "Batterie", device_class="battery")
+    hass.states.async_set("sensor.text", "an", {"unit_of_measurement": "x", "friendly_name": "Text"})
+    hass.states.async_set("sensor.ohne_einheit", "5", {"friendly_name": "Ohne Einheit"})
     hass.states.async_set("sensor.ohne_klasse", "5", {"unit_of_measurement": "%", "friendly_name": "Ohne"})
-    assert [c["entity_id"] for c in system_stats.candidates(hass)] == [eigen]
+    hass.states.async_set("sensor.system_monitor_belegter_massenspeicher", "300", {"unit_of_measurement": "GiB", "friendly_name": "Belegter Massenspeicher /", "device_class": "data_size"})
+    hass.states.async_set("sensor.temperatur", "20", {"unit_of_measurement": "°C", "friendly_name": "Temperatur"})
+    listing = system_stats.candidates(hass)
+    ids = [c["entity_id"] for c in listing]
+    assert sorted(ids) == sorted([eigen, "sensor.ohne_klasse", "sensor.system_monitor_belegter_massenspeicher", "sensor.temperatur", "sensor.test_bat"]) or "sensor.temperatur" in ids
+    assert "sensor.text" not in ids and "sensor.ohne_einheit" not in ids
+    by_id = {c["entity_id"]: c for c in listing}
+    assert by_id["sensor.system_monitor_belegter_massenspeicher"]["unit"] == "GiB" and by_id["sensor.system_monitor_belegter_massenspeicher"]["pref"] is True
+    assert by_id["sensor.temperatur"]["pref"] is False and by_id[eigen]["pref"] is True
+    # die naheliegenden stehen vorn
+    assert all(c["pref"] for c in listing[:3]) and not listing[-1]["pref"]
 
 
 async def test_without_recorder_and_without_sensors(hass: HomeAssistant, hass_ws_client) -> None:
@@ -170,3 +183,120 @@ async def test_own_sensor_choice_and_validation(hass: HomeAssistant, hass_ws_cli
     # leer = wieder automatisch
     assert (await _ws(client, 6, type=f"{DOMAIN}/set_options", values={"status_cpu_entity": ""}))["success"]
     assert (await _ws(client, 7, type=f"{DOMAIN}/status_system"))["result"]["metrics"][0]["entity_id"] == auto
+
+
+# --- ausgeschaltete Sensoren und Supervisor (seit 2.70.0) ---------------------
+
+
+def _disabled(hass: HomeAssistant, platform: str, uid: str, name: str | None = None) -> str:
+    entry = er.async_get(hass).async_get_or_create(
+        "sensor", platform, uid, suggested_object_id=uid, original_name=name, disabled_by=er.RegistryEntryDisabler.INTEGRATION
+    )
+    return entry.entity_id
+
+
+async def test_disabled_system_monitor_sensors_are_reported_and_enabled_on_request(hass: HomeAssistant, hass_ws_client) -> None:
+    """System Monitor legt seine Sensoren ausgeschaltet an: das Panel sagt es und schaltet sie nur auf Knopfdruck ein."""
+    pct = _disabled(hass, "systemmonitor", "disk_use_percent", "Disk usage /")
+    use = _disabled(hass, "systemmonitor", "disk_use", "Disk use /")
+    free = _disabled(hass, "systemmonitor", "disk_free", "Disk free /")
+    other = _disabled(hass, "template", "fremd", "Fremder Sensor")
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    disk = (await _ws(client, 1, type=f"{DOMAIN}/status_system"))["result"]["metrics"][2]
+    assert disk["entity_id"] is None and {d["entity_id"] for d in disk["disabled"]} == {pct, use, free} and {d["name"] for d in disk["disabled"]} >= {"Disk usage /"}
+    # nichts wird von selbst eingeschaltet
+    assert all(er.async_get(hass).async_get(e).disabled_by for e in (pct, use, free))
+    res = (await _ws(client, 2, type=f"{DOMAIN}/status_system_enable", kind="disk"))["result"]
+    assert set(res["enabled"]) == {pct, use, free}
+    registry = er.async_get(hass)
+    assert all(registry.async_get(e).disabled_by is None for e in (pct, use, free)) and registry.async_get(other).disabled_by is not None
+    # zweiter Aufruf: nichts mehr zu tun; unbekannte Art abgelehnt
+    assert (await _ws(client, 3, type=f"{DOMAIN}/status_system_enable", kind="disk"))["result"]["enabled"] == []
+    assert not (await _ws(client, 4, type=f"{DOMAIN}/status_system_enable", kind="gpu"))["success"]
+
+
+async def test_disabled_size_sensors_next_to_an_enabled_percent_sensor(hass: HomeAssistant, hass_ws_client) -> None:
+    pct = _sensor(hass, "systemmonitor", "disk_use_percent", "43", "Festplatte")
+    use = _disabled(hass, "systemmonitor", "disk_use", "Disk use /")
+    free = _disabled(hass, "systemmonitor", "disk_free", "Disk free /")
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    disk = (await _ws(client, 1, type=f"{DOMAIN}/status_system"))["result"]["metrics"][2]
+    assert disk["entity_id"] == pct and disk["size"] is None and {d["entity_id"] for d in disk["disabled"]} == {use, free}
+    assert set((await _ws(client, 2, type=f"{DOMAIN}/status_system_enable", kind="disk"))["result"]["enabled"]) == {use, free}
+
+
+async def test_enabling_only_touches_system_monitor_and_supervisor(hass: HomeAssistant, hass_ws_client) -> None:
+    mine = _disabled(hass, "template", "disk_use_percent", "Meiner")
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    assert (await _ws(client, 1, type=f"{DOMAIN}/status_system_enable", kind="disk"))["result"]["enabled"] == []
+    assert er.async_get(hass).async_get(mine).disabled_by is not None
+
+
+async def test_supervisor_disk_in_percent_from_used_and_total(hass: HomeAssistant, hass_ws_client) -> None:
+    """Ohne System Monitor: Host-Festplatte des Supervisors (belegt und gesamt in GB), das Panel rechnet in Prozent."""
+    used = er.async_get(hass).async_get_or_create("sensor", "hassio", "home_assistant_host_disk_used", suggested_object_id="host_disk_used").entity_id
+    total = er.async_get(hass).async_get_or_create("sensor", "hassio", "home_assistant_host_disk_total", suggested_object_id="host_disk_total").entity_id
+    hass.states.async_set(used, "120.5", {"unit_of_measurement": "GB", "friendly_name": "Host disk used"})
+    hass.states.async_set(total, "482", {"unit_of_measurement": "GB", "friendly_name": "Host disk total"})
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    disk = (await _ws(client, 1, type=f"{DOMAIN}/status_system"))["result"]["metrics"][2]
+    assert disk["entity_id"] == used and disk["scope"] == "supervisor" and disk["current"] == pytest.approx(25.0, abs=0.01)
+    assert disk["size"] == {"used": 120.5, "free": 361.5, "total": 482.0, "unit": "GB"}
+    # System Monitor geht vor, sobald es seinen Sensor gibt
+    pct = _sensor(hass, "systemmonitor", "disk_use_percent", "43", "Festplatte")
+    assert (await _ws(client, 2, type=f"{DOMAIN}/status_system"))["result"]["metrics"][2]["entity_id"] == pct
+
+
+async def test_supervisor_total_disabled_is_reported(hass: HomeAssistant, hass_ws_client) -> None:
+    used = er.async_get(hass).async_get_or_create("sensor", "hassio", "home_assistant_host_disk_used", suggested_object_id="host_disk_used").entity_id
+    hass.states.async_set(used, "120.5", {"unit_of_measurement": "GB"})
+    total = _disabled(hass, "hassio", "home_assistant_host_disk_total", "Host disk total")
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    disk = (await _ws(client, 1, type=f"{DOMAIN}/status_system"))["result"]["metrics"][2]
+    # ohne "gesamt" keine Prozent: die Karte zeigt die Gigabyte, mit dem Hinweis auf den ausgeschalteten Sensor
+    assert disk["mode"] == "absolute" and disk["unit"] == "GB" and disk["current"] == 120.5 and disk["size"] is None
+    assert disk["axis_max"] == 200 and [d["entity_id"] for d in disk["disabled"]] == [total]
+    assert (await _ws(client, 2, type=f"{DOMAIN}/status_system_enable", kind="disk"))["result"]["enabled"] == [total]
+
+
+async def test_disk_without_percent_sensor_from_used_and_free(hass: HomeAssistant, hass_ws_client) -> None:
+    """Der Prozent-Sensor von System Monitor fehlt (ausgeschaltet), "belegt" und "frei" sind da: das Panel rechnet Prozent selbst."""
+    _disabled(hass, "systemmonitor", "disk_use_percent", "Massenspeicher-Auslastung /")
+    use = _sensor(hass, "systemmonitor", "disk_use", "300", "Belegter Massenspeicher /", unit_of_measurement="GiB", device_class="data_size")
+    free = _sensor(hass, "systemmonitor", "disk_free", "100", "Freier Massenspeicher /", unit_of_measurement="GiB", device_class="data_size")
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    disk = (await _ws(client, 1, type=f"{DOMAIN}/status_system"))["result"]["metrics"][2]
+    assert disk["entity_id"] == use and disk["mode"] == "percent" and disk["current"] == 75.0
+    assert disk["size"] == {"used": 300.0, "free": 100.0, "total": 400.0, "unit": "GiB"} and free
+
+
+async def test_disk_with_only_a_used_sensor_shows_gigabytes(hass: HomeAssistant, hass_ws_client) -> None:
+    """Nur "belegt" (wie bei dir: sensor.system_monitor_belegter_massenspeicher): die Karte zeigt Gigabyte, Achse bis über den Höchstwert."""
+    use = _sensor(hass, "systemmonitor", "disk_use", "318.4", "Belegter Massenspeicher /", unit_of_measurement="GiB", device_class="data_size")
+    _disabled(hass, "systemmonitor", "disk_free", "Freier Massenspeicher /")
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    disk = (await _ws(client, 1, type=f"{DOMAIN}/status_system"))["result"]["metrics"][2]
+    assert disk["entity_id"] == use and disk["mode"] == "absolute" and disk["unit"] == "GiB" and disk["current"] == 318.4
+    assert disk["axis_max"] == 500 and [p[1] for p in disk["points"]] == [318.4, 318.4] and disk["size"] is None
+    # der ausgeschaltete "frei"-Sensor ist als Möglichkeit genannt (Prozent und Grösse gäbe es dann)
+    assert len(disk["disabled"]) == 1 and disk["disabled"][0]["name"] == "Freier Massenspeicher /"
+
+
+async def test_own_choice_of_a_gigabyte_sensor_for_the_disk(hass: HomeAssistant, hass_ws_client) -> None:
+    mine = _sensor(hass, "template", "mein-nas", "1500", "NAS belegt", unit_of_measurement="GB", device_class="data_size")
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    assert (await _ws(client, 1, type=f"{DOMAIN}/set_options", values={"status_disk_entity": mine}))["success"]
+    disk = (await _ws(client, 2, type=f"{DOMAIN}/status_system"))["result"]["metrics"][2]
+    assert disk["entity_id"] == mine and disk["mode"] == "absolute" and disk["unit"] == "GB" and disk["scope"] == "own" and disk["axis_max"] == 2000
+
+
+def test_axis_max_is_a_round_number_above_the_peak() -> None:
+    assert [system_stats._axis_max(v) for v in (0, 0.4, 7, 318.4, 480, 1500, 4800)] == [1, 0.5, 10, 500, 1000, 2000, 10000]

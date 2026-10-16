@@ -7,6 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.70.0] - 2026-10-16
+
+Status app, system: find the disk sensors, choose entities with a search, times on the graphs.
+
+### Added
+
+- Choose the sensor with a search field: under "Source of the values" each kind opens a list of **sensor entities** (name and `sensor.…` below it, not devices) with the usual search field and its clear button; "Automatic" stays on top. All sensors with a number and a unit are offered, the likely ones (percent without a device class; for the disk also sizes in bytes) first, the rest is found by typing. Before, a plain drop-down cut off after 200 entries could not show sensors like `sensor.system_monitor_arbeitsspeicherauslastung` or `sensor.system_monitor_belegter_massenspeicher`.
+- Disk without a percent sensor: "System Monitor" creates "Disk usage" (percent) switched off, often only "Disk use" in gigabytes is on. The card now finds that sensor on its own. With "Disk free" also on, the percentage is calculated (used / (used + free)) and the size is shown; with only "Disk use" the card shows the gigabytes (for example "318.4 GiB") with its own axis instead of percent. Sensors from the Supervisor integration ("Host disk used" and "total") are used too when there is no System Monitor. Any sensor in bytes or another unit can also be chosen for the disk; the card then shows its own unit.
+- Sensors that exist but are switched off (System Monitor and the Supervisor create most of them that way): the card names them and has a button "Switch on sensors". Only on that press, only sensors of System Monitor and the Supervisor; Home Assistant then reloads the integration itself and the values show up after about a minute. New WebSocket command `device_panel/status_system_enable` (administrators, parameter `kind`).
+- "System Monitor" not set up: the card says so and that it is not required (an own sensor can be chosen), and a button "Add System Monitor" opens the page "Add integration" of Home Assistant at that integration (it only opens the page, nothing is changed). `device_panel/status_system` carries `integrations` (`systemmonitor`, `hassio`) for this.
+- Graphs with a time axis: clock times under the curve (every 3 hours for 24 hours, days for 30 days, months for 6 months and 1 year) with faint vertical lines, and "now" at the right.
+
+### Changed
+
+- `device_panel/status_system`: each card carries `mode` (`percent` or `absolute`), `unit`, `axis_max` and `disabled`; `candidates` carry `unit` and `pref`.
+
 ## [2.69.0] - 2026-10-16
 
 Status app: the disk in gigabytes as well as percent.
@@ -3530,6 +3546,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.70.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.0
 [2.69.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.69.0
 [2.68.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.68.0
 [2.66.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.66.0

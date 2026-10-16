@@ -2,10 +2,17 @@
 System-Werte für die Status-App (seit 2.68.0): CPU, Arbeitsspeicher und Festplatte von Home Assistant als Kurve.
 
 Die Werte kommen aus Sensoren, die es in Home Assistant schon gibt, und aus dem Recorder; das Panel zeichnet nichts selbst auf.
-Gefunden werden sie automatisch: zuerst die Integration "System Monitor" (Prozessor, Arbeitsspeicher und Festplatte in Prozent,
-Host-Werte), für CPU und Arbeitsspeicher sonst die Werte von Home Assistant Core der Supervisor-Integration (nur der Prozess, nicht
-der Host: das Panel sagt es dazu). Wer andere Sensoren hat, wählt sie in der App (Optionen status_cpu_entity, status_ram_entity,
-status_disk_entity; leer = automatisch).
+Gefunden werden sie automatisch (über den unique_id der Sensoren, nicht über den Namen: der ist übersetzt):
+
+- CPU und Arbeitsspeicher: die Integration "System Monitor" (Prozent, der Host), sonst die Werte von Home Assistant Core der
+  Supervisor-Integration (nur der Prozess, nicht der Host: das Panel sagt es dazu).
+- Festplatte: "System Monitor" in Prozent; fehlt der Prozent-Sensor, aber "belegt" (und "frei") ist da, rechnet das Panel selbst
+  (belegt / (belegt + frei)); sonst "belegt" und "gesamt" des Hosts aus der Supervisor-Integration; gibt es nur einen Sensor in
+  Gigabyte ohne Gegenstück, zeigt die Karte die Gigabyte statt Prozent (seit 2.70.0).
+
+Beide Integrationen legen viele dieser Sensoren ausgeschaltet an: Sind sie nur ausgeschaltet, sagt das Panel es und schaltet sie
+auf Knopfdruck ein. Wer andere Sensoren hat, wählt sie in der App (Optionen status_cpu_entity, status_ram_entity,
+status_disk_entity; leer = automatisch); bei der Festplatte darf es auch ein Sensor in Gigabyte sein.
 
 Zeitraum: CPU und Arbeitsspeicher immer 24 Std., die Festplatte 24 Std., 30 Tage, 6 Monate oder 1 Jahr. Ab 30 Tagen kommt die
 Langzeitstatistik des Recorders (Stundenmittel, ab 6 Monaten Tagesmittel), davor der Verlauf; ohne Statistik reicht der Verlauf nur so
@@ -15,12 +22,14 @@ weit wie die Aufbewahrung des Recorders.
 from __future__ import annotations
 
 import logging
+import math
 import time
+from collections.abc import Callable
 from typing import Any
 
 import voluptuous as vol
 from homeassistant.components import websocket_api
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
@@ -38,93 +47,246 @@ STATS_FROM_DAYS = 30
 DAILY_FROM_DAYS = 180
 # So viele Punkte zeichnet eine kleine Grafik sinnvoll
 MAX_POINTS = 300
-# Quellen in der Reihenfolge der Wahl: (Plattform, unique_id-Anfang, Bezug); der Bezug sagt dem Nutzer, was gemessen wird
-AUTO_SOURCES: dict[str, tuple[tuple[str, str, str], ...]] = {
-    "cpu": (("systemmonitor", "processor_use", "host"), ("hassio", "home_assistant_core_cpu_percent", "core")),
-    "ram": (("systemmonitor", "memory_use_percent", "host"), ("hassio", "home_assistant_core_memory_percent", "core")),
-    "disk": (("systemmonitor", "disk_use_percent", "host"),),
+# Quellen in der Reihenfolge der Wahl: (Plattform, unique_id-Anfang, nicht mit diesem Anfang, Bezug); der Bezug sagt dem Nutzer, was gemessen wird
+AUTO_SOURCES: dict[str, tuple[tuple[str, str, str, str], ...]] = {
+    "cpu": (("systemmonitor", "processor_use", "", "host"), ("hassio", "home_assistant_core_cpu_percent", "", "core")),
+    "ram": (("systemmonitor", "memory_use_percent", "", "host"), ("hassio", "home_assistant_core_memory_percent", "", "core")),
+    "disk": (
+        ("systemmonitor", "disk_use_percent", "", "host"),
+        ("systemmonitor", "disk_use", "disk_use_percent", "host"),
+        ("hassio", "home_assistant_host_disk_used", "", "supervisor"),
+    ),
 }
-# Höchstens so viele Sensoren zur Auswahl in der App
-CANDIDATES_MAX = 200
-# Grösse des Speichers (seit 2.69.0): Einheiten, die System Monitor und andere Sensoren melden, in Byte
+# Supervisor: gesamte Grösse des Hosts (der Prozentwert fehlt dort, er wird aus belegt und gesamt gerechnet)
+_SUPERVISOR_USED = "home_assistant_host_disk_used"
+_SUPERVISOR_TOTAL = "home_assistant_host_disk_total"
+# Nur Sensoren dieser Plattformen schaltet das Panel auf Knopfdruck ein
+_ENABLE_PLATFORMS = ("systemmonitor", "hassio")
+# Höchstens so viele Sensoren zur Auswahl in der App (die App filtert nach Eingabe)
+CANDIDATES_MAX = 2000
+# Einheiten der Grössen-Sensoren (System Monitor meldet GiB), in Byte
 _BYTES = {"B": 1, "kB": 1e3, "MB": 1e6, "GB": 1e9, "TB": 1e12, "KiB": 1024, "MiB": 1024**2, "GiB": 1024**3, "TiB": 1024**4}
-_DISK_PERCENT_PREFIX = "disk_use_percent"
+# Sensoren der Festplatte von System Monitor: Prozent, belegt, frei (der Anhang am unique_id nennt die Platte: "" für "/")
+_DISK_KEYS = ("disk_use_percent", "disk_use", "disk_free")
+
+
+def _entries(hass: HomeAssistant, platform: str, prefix: str, exclude: str = "") -> list[er.RegistryEntry]:
+    """Sensoren der Plattform, deren unique_id mit prefix beginnt (und nicht mit exclude)."""
+    return [
+        e
+        for e in er.async_get(hass).entities.values()
+        if e.domain == "sensor"
+        and e.platform == platform
+        and e.unique_id
+        and str(e.unique_id).startswith(prefix)
+        and not (exclude and str(e.unique_id).startswith(exclude))
+    ]
+
+
+def _main(entries: list[er.RegistryEntry], prefix: str) -> er.RegistryEntry:
+    """Mehrere Festplatten: die Hauptplatte ("/") hat genau diesen unique_id, die anderen hängen den Pfad an."""
+    return ([e for e in entries if str(e.unique_id) == prefix] or sorted(entries, key=lambda e: str(e.unique_id)))[0]
 
 
 def auto_entity(hass: HomeAssistant, kind: str) -> tuple[str, str] | None:
-    """Sensor, den das Panel für die Art von selbst wählt: (entity_id, "host" | "core"), sonst None."""
-    entries = [e for e in er.async_get(hass).entities.values() if e.domain == "sensor" and not e.disabled_by and e.unique_id]
-    for platform, prefix, scope in AUTO_SOURCES[kind]:
-        found = [e for e in entries if e.platform == platform and str(e.unique_id).startswith(prefix)]
-        if not found:
-            continue
-        # Mehrere Festplatten: die Hauptplatte ("/") hat genau diesen unique_id, die anderen hängen den Pfad an
-        exact = [e for e in found if str(e.unique_id) == prefix]
-        return (exact or sorted(found, key=lambda e: str(e.unique_id)))[0].entity_id, scope
+    """Sensor, den das Panel für die Art von selbst wählt: (entity_id, "host" | "core" | "supervisor"), sonst None. Ausgeschaltete zählen nicht."""
+    for platform, prefix, exclude, scope in AUTO_SOURCES[kind]:
+        found = [e for e in _entries(hass, platform, prefix, exclude) if not e.disabled_by]
+        if found:
+            return _main(found, prefix).entity_id, scope
     return None
 
 
+def disk_group(hass: HomeAssistant, entity_id: str) -> dict[str, er.RegistryEntry | None] | None:
+    """Prozent, belegt und frei derselben Platte, wenn der Sensor von System Monitor ist (sonst None); fehlende Sensoren sind None."""
+    registry = er.async_get(hass)
+    entry = registry.async_get(entity_id)
+    if entry is None or entry.platform != "systemmonitor" or not entry.unique_id:
+        return None
+    uid = str(entry.unique_id)
+    for key in _DISK_KEYS:  # "disk_use_percent" vor "disk_use": der längere Anfang gewinnt
+        if uid.startswith(key):
+            suffix = uid[len(key) :]
+            break
+    else:
+        return None
+    group: dict[str, er.RegistryEntry | None] = {}
+    for k in _DISK_KEYS:
+        other = registry.async_get_entity_id("sensor", "systemmonitor", k + suffix)
+        group[k] = registry.async_get(other) if other else None
+    return group
+
+
+def disabled_sources(hass: HomeAssistant, kind: str, found: str | None = None) -> list[er.RegistryEntry]:
+    """
+    Ausgeschaltete Sensoren, die für die Art fehlen (seit 2.70.0). found = Sensor, den die Auswahl schon liefert: dann bei der
+    Festplatte von System Monitor die ausgeschalteten Sensoren derselben Platte (Prozent, belegt, frei), sonst nichts. Ohne Fund alle
+    Sensoren der ersten Quelle, bei der es welche gibt (System Monitor vor Supervisor).
+    """
+    registry = er.async_get(hass)
+    if found:
+        entry = registry.async_get(found)
+        if kind == "disk" and entry is not None and entry.platform == "hassio" and str(entry.unique_id) == _SUPERVISOR_USED:
+            total_id = registry.async_get_entity_id("sensor", "hassio", _SUPERVISOR_TOTAL)
+            total = registry.async_get(total_id) if total_id else None
+            return [total] if total is not None and total.disabled_by else []
+        group = disk_group(hass, found) if kind == "disk" else None
+        return [e for e in (group or {}).values() if e is not None and e.disabled_by]
+    for platform, prefix, exclude, _scope in AUTO_SOURCES[kind]:
+        entries = _entries(hass, platform, prefix, exclude)
+        if not entries:
+            continue
+        main = _main(entries, prefix)
+        group = [main]
+        if kind == "disk" and platform == "systemmonitor":
+            group = [e for e in (disk_group(hass, main.entity_id) or {}).values() if e is not None]
+        elif kind == "disk" and platform == "hassio":
+            total = registry.async_get_entity_id("sensor", "hassio", _SUPERVISOR_TOTAL)
+            group += [registry.async_get(total)] if total else []
+        return [e for e in group if e is not None and e.disabled_by]
+    return []
+
+
 def candidates(hass: HomeAssistant) -> list[dict[str, str]]:
-    """Sensoren in Prozent ohne Geräteklasse (Batterie, Feuchte … haben eine): zur Auswahl in der App, nach Namen sortiert."""
+    """
+    Entitäten zur Auswahl in der App (Sensor-Entitäten, nicht Geräte), nach Namen sortiert: jeder Sensor mit Zahl und Einheit. "pref"
+    kennzeichnet die naheliegenden (Prozent ohne Geräteklasse, Batterie und Feuchte haben eine, und Grössen in Byte); die App zeigt
+    sie zuerst, den Rest findet die Suche.
+    """
     out = []
     for state in hass.states.async_all("sensor"):
-        if state.attributes.get("unit_of_measurement") != "%" or state.attributes.get("device_class") or not state.attributes.get("state_class"):
+        unit = str(state.attributes.get("unit_of_measurement") or "")
+        try:
+            float(state.state)
+        except (TypeError, ValueError):
+            if state.state not in ("unavailable", "unknown") or not unit:
+                continue
+        if not unit:
             continue
-        out.append({"entity_id": state.entity_id, "name": str(state.attributes.get("friendly_name") or state.entity_id)})
-    out.sort(key=lambda c: c["name"].casefold())
+        pref = (unit == "%" and not state.attributes.get("device_class")) or unit in _BYTES
+        out.append({"entity_id": state.entity_id, "name": str(state.attributes.get("friendly_name") or state.entity_id), "unit": unit, "pref": pref})
+    out.sort(key=lambda c: (not c["pref"], c["name"].casefold()))
     return out[:CANDIDATES_MAX]
 
 
-def _size(state: Any) -> tuple[float, str] | None:
-    """Wert und Einheit eines Grössen-Sensors (Zahl, bekannte Einheit), sonst None."""
+def _size(state: State | None) -> tuple[float, str] | None:
+    """Wert und Einheit eines Grössen-Sensors (bekannte Einheit, Zahl ab 0), sonst None."""
     if state is None:
         return None
-    unit = str(state.attributes.get("unit_of_measurement") or "")
     try:
         value = float(state.state)
     except (TypeError, ValueError):
         return None
-    return (value, unit) if unit in _BYTES and value >= 0 else None
+    unit = str(state.attributes.get("unit_of_measurement") or "")
+    return (value, unit) if unit in _BYTES and value >= 0 and math.isfinite(value) else None
 
 
-def disk_size(hass: HomeAssistant, percent_entity: str) -> dict[str, Any] | None:
-    """
-    Belegt, frei und gesamt der Festplatte (seit 2.69.0), wenn der Prozent-Sensor von "System Monitor" ist: dieselbe Platte hat dort
-    die Sensoren "Festplatte belegt" und "Festplatte frei" (gleicher Anhang am unique_id: "" für "/", sonst "_<Pfad>"). Gesamt = belegt + frei.
-    Einheit wie beim Sensor (System Monitor meldet GiB), ab 1000 bzw. 1024 in TB bzw. TiB. Ohne die beiden Sensoren (sie sind je nach
-    Version standardmässig aus) None; dann zeigt das Panel nur Prozent.
-    """
-    registry = er.async_get(hass)
-    entry = registry.async_get(percent_entity)
-    if entry is None or entry.platform != "systemmonitor" or not str(entry.unique_id).startswith(_DISK_PERCENT_PREFIX):
-        return None
-    suffix = str(entry.unique_id)[len(_DISK_PERCENT_PREFIX):]
-    found: dict[str, Any] = {}
-    for key in ("disk_use", "disk_free"):
-        entity_id = registry.async_get_entity_id("sensor", "systemmonitor", key + suffix)
-        sensor = registry.async_get(entity_id) if entity_id else None
-        if sensor is None or sensor.disabled_by:
-            return None
-        found[key] = _size(hass.states.get(sensor.entity_id))
-    used, free = found["disk_use"], found["disk_free"]
-    if used is None or free is None:
-        return None
-    unit = used[1]
-    free_in_unit = free[0] * _BYTES[free[1]] / _BYTES[unit]
-    values = {"used": used[0], "free": free_in_unit, "total": used[0] + free_in_unit}
+def _size_dict(used: float, free: float, total: float, unit: str) -> dict[str, Any]:
+    """Grösse fürs Panel, ab 1000 bzw. 1024 in TB bzw. TiB, auf eine Nachkommastelle."""
+    values = {"used": used, "free": free, "total": total}
     big = {"GiB": ("TiB", 1024), "GB": ("TB", 1000)}.get(unit)
-    if big and values["total"] >= big[1]:
+    if big and total >= big[1]:
         unit = big[0]
         values = {k: v / big[1] for k, v in values.items()}
-    return {**{k: round(v, 1) for k, v in values.items()}, "unit": unit}
+    return {**{k: round(max(v, 0.0), 1) for k, v in values.items()}, "unit": unit}
 
 
-async def _points(hass: HomeAssistant, entity_id: str, days: int, now: float) -> tuple[list[tuple[float, float]], str, str]:
-    """Punkte der letzten days Tage: (Punkte, Quelle "statistics"|"history"|"none", Periode "5min"|"hour"|"day")."""
+def _total_of(hass: HomeAssistant, entity_id: str, used: tuple[float, str]) -> float | None:
+    """
+    Gesamtgrösse der Platte in der Einheit des "belegt"-Sensors, wenn sich daraus ein Prozentwert rechnen lässt: bei System Monitor
+    belegt + frei (beide eingeschaltet und lesbar), beim Supervisor der Sensor "gesamt". Sonst None (dann zeigt die Karte Gigabyte).
+    """
+    registry = er.async_get(hass)
+    entry = registry.async_get(entity_id)
+    if entry is None:
+        return None
+    if entry.platform == "systemmonitor":
+        free_entry = (disk_group(hass, entity_id) or {}).get("disk_free")
+        if free_entry is None or free_entry.disabled_by:
+            return None
+        free = _size(hass.states.get(free_entry.entity_id))
+        return None if free is None else used[0] + free[0] * _BYTES[free[1]] / _BYTES[used[1]]
+    if entry.platform == "hassio" and str(entry.unique_id) == _SUPERVISOR_USED:
+        total_id = registry.async_get_entity_id("sensor", "hassio", _SUPERVISOR_TOTAL)
+        total_entry = registry.async_get(total_id) if total_id else None
+        if total_entry is None or total_entry.disabled_by:
+            return None
+        total = _size(hass.states.get(total_entry.entity_id))
+        return None if total is None or total[0] <= 0 else total[0] * _BYTES[total[1]] / _BYTES[used[1]]
+    return None
+
+
+def disk_size(hass: HomeAssistant, entity_id: str) -> dict[str, Any] | None:
+    """
+    Belegt, frei und gesamt der Festplatte (seit 2.69.0) aus den Sensoren "belegt" und "frei" von System Monitor derselben Platte
+    (gesamt = belegt + frei); der übergebene Sensor darf der Prozent- oder einer der beiden anderen sein. Einheit wie beim Sensor
+    (GiB), ab 1000 bzw. 1024 in TB bzw. TiB. Ohne beide, ausgeschaltet oder nicht lesbar: None (das Panel zeigt dann nur Prozent).
+    """
+    group = disk_group(hass, entity_id)
+    if not group:
+        return None
+    sizes = {}
+    for key in ("disk_use", "disk_free"):
+        entry = group[key]
+        if entry is None or entry.disabled_by:
+            return None
+        sizes[key] = _size(hass.states.get(entry.entity_id))
+    used, free = sizes["disk_use"], sizes["disk_free"]
+    if used is None or free is None:
+        return None
+    free_in_unit = free[0] * _BYTES[free[1]] / _BYTES[used[1]]
+    return _size_dict(used[0], free_in_unit, used[0] + free_in_unit, used[1])
+
+
+def _percent_of(scale: float) -> Callable[[str], float | None]:
+    """Zustand (Gigabyte belegt) als Prozent der Platte lesen; ausserhalb von 0 bis 100 gilt der Wert als Messfehler."""
+
+    def parse(text: str) -> float | None:
+        try:
+            value = float(text) * scale
+        except (TypeError, ValueError):
+            return None
+        return value if 0 <= value <= 100.5 else None
+
+    return parse
+
+
+def _plain(text: str) -> float | None:
+    """Zustand als Zahl ab 0 (Sensor in Gigabyte ohne Gegenstück: die Karte zeigt den Wert selbst)."""
+    try:
+        value = float(text)
+    except (TypeError, ValueError):
+        return None
+    return value if value >= 0 and math.isfinite(value) else None
+
+
+def _axis_max(top: float) -> float:
+    """Obere Grenze der Achse, etwas über dem höchsten Wert (1, 2, 2.5, 5 oder 10 mal eine Zehnerpotenz)."""
+    if top <= 0:
+        return 1.0
+    power = 10 ** math.floor(math.log10(top * 1.05))
+    for step in (1, 2, 2.5, 5, 10):
+        if top * 1.05 <= step * power:
+            return float(step * power)
+    return float(10 * power)
+
+
+def _disabled_payload(entries: list[er.RegistryEntry]) -> list[dict[str, str]]:
+    """Ausgeschaltete Sensoren für das Panel: Entität und Name (so wie ihn Home Assistant zeigt)."""
+    return [{"entity_id": e.entity_id, "name": str(e.name or e.original_name or e.entity_id)} for e in entries]
+
+
+async def _points(
+    hass: HomeAssistant, entity_id: str, days: int, now: float, parse: Callable[[str], float | None] = _value, scale: float = 1.0
+) -> tuple[list[tuple[float, float]], str, str]:
+    """
+    Punkte der letzten days Tage: (Punkte, Quelle "statistics"|"history"|"none", Periode "hour"|"day"). parse liest einen Zustand
+    (der Verlauf), scale rechnet die Werte der Statistik um (Gigabyte belegt in Prozent der Platte).
+    """
     start = now - days * 86400
     state = hass.states.get(entity_id)
     if "recorder" not in hass.config.components:
-        points, _steady = held([], state, _value, start, now)
+        points, _steady = held([], state, parse, start, now)
         return points, "none", "hour"
     from homeassistant.components.recorder import get_instance  # noqa: PLC0415
 
@@ -137,11 +299,12 @@ async def _points(hass: HomeAssistant, entity_id: str, days: int, now: float) ->
             period = "day" if days >= DAILY_FROM_DAYS else "hour"
             points = await instance.async_add_executor_job(_statistics, hass, entity_id, start_dt, end_dt, period)
             if points is not None:
+                points = [(t, v * scale) for t, v in points]
                 source = "statistics"
             else:
                 period = "hour"
         if points is None:
-            points = await instance.async_add_executor_job(_history, hass, entity_id, start_dt, end_dt)
+            points = await instance.async_add_executor_job(_history, hass, entity_id, start_dt, end_dt, parse)
     except Exception as err:  # noqa: BLE001
         # Recorder nicht bereit oder Abfrage fehlgeschlagen: wie ohne Daten, aber im Log sichtbar
         _LOGGER.warning("Systemwert %s nicht lesbar: %s", entity_id, err)
@@ -149,12 +312,12 @@ async def _points(hass: HomeAssistant, entity_id: str, days: int, now: float) ->
     points = sorted(p for p in points if start <= p[0] <= now)
     recorded = bool(points)
     # Bis jetzt: der aktuelle Stand gilt seit seiner letzten Änderung
-    points, _steady = held(points, state, _value, start, now)
+    points, _steady = held(points, state, parse, start, now)
     return points, source if recorded else "none", period
 
 
 async def async_metric(hass: HomeAssistant, kind: str, own: str, days: int, now: float) -> dict[str, Any]:
-    """Eine Kurve: Sensor (eigener oder automatisch), aktueller Wert, Mittel und Spitze, Punkte."""
+    """Eine Kurve: Sensor (eigener oder automatisch), aktueller Wert, Mittel und Spitze, Punkte. mode "percent" (0 bis 100) oder "absolute" (Einheit des Sensors)."""
     scope = "own"
     entity_id = own
     if not entity_id:
@@ -166,6 +329,9 @@ async def async_metric(hass: HomeAssistant, kind: str, own: str, days: int, now:
         "entity_id": entity_id or None,
         "name": str(state.attributes.get("friendly_name") or entity_id) if state is not None else (entity_id or ""),
         "scope": scope,
+        "mode": "percent",
+        "unit": "%",
+        "axis_max": 100,
         "start": now - days * 86400,
         "end": now,
         "days": days,
@@ -174,22 +340,49 @@ async def async_metric(hass: HomeAssistant, kind: str, own: str, days: int, now:
         "max": None,
         "source": "none",
         "size": None,
+        # Ausgeschaltete Sensoren, die es gäbe (Einschalten auf Knopfdruck); leer, wenn nichts fehlt
+        "disabled": [],
         "points": [],
         # Die Auswahl der App zeigt "gewählt, aber es gibt ihn nicht mehr" (Sensor gelöscht)
         "missing": bool(entity_id) and state is None,
     }
-    if kind == "disk" and entity_id and state is not None:
-        out["size"] = disk_size(hass, entity_id)
-    if not entity_id or state is None:
+    if not entity_id:
+        # Nichts gefunden: gibt es die Sensoren ausgeschaltet?
+        out["disabled"] = _disabled_payload(disabled_sources(hass, kind))
         return out
-    points, source, _period = await _points(hass, entity_id, days, now)
+    if state is None:
+        return out
+    parse, scale = _value, 1.0
+    unit = str(state.attributes.get("unit_of_measurement") or "")
+    if unit != "%":
+        used = _size(state)
+        total = _total_of(hass, entity_id, used) if used is not None else None
+        if used is not None and total:
+            # Gigabyte belegt, Gesamtgrösse bekannt: Prozent rechnen und die Grösse dazu zeigen
+            scale = 100 / total
+            parse = _percent_of(scale)
+            out["size"] = _size_dict(used[0], total - used[0], total, used[1])
+        else:
+            # Ein Sensor ohne Gegenstück (oder in anderer Einheit): die Karte zeigt seinen Wert, nicht Prozent
+            parse = _plain
+            out["mode"], out["unit"] = "absolute", unit
+    elif kind == "disk":
+        out["size"] = disk_size(hass, entity_id)
+    if kind == "disk" and out["size"] is None and scope in ("host", "supervisor"):
+        # Prozent oder belegt gefunden, aber "frei" bzw. "gesamt" (für Prozent und Grösse) ausgeschaltet?
+        out["disabled"] = _disabled_payload(disabled_sources(hass, kind, entity_id))
+    points, source, _period = await _points(hass, entity_id, days, now, parse, scale)
     out["source"] = source
-    out["current"] = _value(state.state)
+    out["current"] = parse(state.state)
     if points:
         values = [v for _t, v in points]
         out["avg"] = round(sum(values) / len(values), 1)
         out["max"] = round(max(values), 1)
         out["points"] = [[round(t, 1), round(v, 1)] for t, v in thin(points, out["start"], now, MAX_POINTS)]
+    if out["mode"] == "absolute":
+        out["axis_max"] = _axis_max(max(out["max"] or 0.0, out["current"] or 0.0))
+    if out["current"] is not None:
+        out["current"] = round(out["current"], 1)
     return out
 
 
@@ -201,7 +394,9 @@ async def async_system(hass: HomeAssistant, range_key: str, now: float | None = 
     for kind in KINDS:
         days = RANGES.get(range_key, 1) if kind == "disk" else 1
         metrics.append(await async_metric(hass, kind, str(opts.get(OPTION_OF[kind]) or ""), days, now))
-    return {"range": range_key if range_key in RANGES else "24h", "metrics": metrics, "candidates": candidates(hass)}
+    # Ob die Integrationen eingerichtet sind: ohne "System Monitor" sagt die App, wie man es hinzufügt (nicht zwingend, es gibt die Auswahl)
+    integrations = {"systemmonitor": bool(hass.config_entries.async_entries("systemmonitor")), "hassio": "hassio" in hass.config.components}
+    return {"range": range_key if range_key in RANGES else "24h", "metrics": metrics, "candidates": candidates(hass), "integrations": integrations}
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/status_system", vol.Optional("range", default="24h"): vol.In(tuple(RANGES))})
@@ -212,4 +407,24 @@ async def ws_status_system(hass: HomeAssistant, connection: websocket_api.Active
     connection.send_result(msg["id"], await async_system(hass, msg["range"]))
 
 
-COMMANDS = (ws_status_system,)
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/status_system_enable", vol.Required("kind"): vol.In(KINDS)})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_status_system_enable(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """
+    Ausgeschaltete Sensoren für CPU, Arbeitsspeicher oder Festplatte einschalten (seit 2.70.0), nur auf Knopfdruck in der Status-App und
+    nur Sensoren von System Monitor und Supervisor. Home Assistant lädt die Integration danach von selbst neu (nach etwa 30 Sekunden).
+    """
+    kind = msg["kind"]
+    own = str(effective(hass).get(OPTION_OF[kind]) or "")
+    found = own or (auto_entity(hass, kind) or ("", ""))[0]
+    entries = [e for e in disabled_sources(hass, kind, found or None) if e.platform in _ENABLE_PLATFORMS]
+    registry = er.async_get(hass)
+    for entry in entries:
+        registry.async_update_entity(entry.entity_id, disabled_by=None)
+    if entries:
+        _LOGGER.info("Status-App: Sensoren eingeschaltet: %s", ", ".join(e.entity_id for e in entries))
+    connection.send_result(msg["id"], {"enabled": [e.entity_id for e in entries]})
+
+
+COMMANDS = (ws_status_system, ws_status_system_enable)

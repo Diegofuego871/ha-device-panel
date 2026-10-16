@@ -7,6 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.70.0] - 2026-10-16
+
+Status-App, System: die Festplatten-Sensoren finden, Entitäten mit Suche wählen, Uhrzeiten in den Grafiken.
+
+### Hinzugefügt
+
+- Sensor mit Suchfeld wählen: Unter "Quelle der Werte" öffnet jede Art eine Liste von **Sensor-Entitäten** (Name und darunter `sensor.…`, keine Geräte) mit dem gewohnten Suchfeld samt X; "Automatisch" bleibt oben. Angeboten werden alle Sensoren mit Zahl und Einheit, die naheliegenden (Prozent ohne Geräteklasse; bei der Festplatte auch Grössen in Byte) zuerst, den Rest findet die Eingabe. Vorher konnte eine einfache Auswahlliste, die bei 200 Einträgen abbrach, Sensoren wie `sensor.system_monitor_arbeitsspeicherauslastung` oder `sensor.system_monitor_belegter_massenspeicher` nicht zeigen.
+- Festplatte ohne Prozent-Sensor: "System Monitor" legt "Massenspeicher-Auslastung" (Prozent) ausgeschaltet an, oft ist nur "Belegter Massenspeicher" in Gigabyte an. Die Karte findet diesen Sensor jetzt von selbst. Ist auch "Freier Massenspeicher" an, rechnet sie den Prozentwert (belegt / (belegt + frei)) und zeigt die Grösse; mit nur "Belegter Massenspeicher" zeigt die Karte die Gigabyte (zum Beispiel "318,4 GiB") mit eigener Achse statt Prozent. Auch die Sensoren der Supervisor-Integration ("Host disk used" und "total") dienen, wenn es kein System Monitor gibt. Für die Festplatte lässt sich auch jeder Sensor in Byte oder mit anderer Einheit wählen; die Karte zeigt dann seine Einheit.
+- Sensoren, die es gibt, die aber ausgeschaltet sind (System Monitor und der Supervisor legen die meisten so an): Die Karte nennt sie und hat den Knopf "Sensoren einschalten". Nur auf diesen Druck, nur Sensoren von System Monitor und Supervisor; Home Assistant lädt die Integration danach selbst neu, die Werte erscheinen nach etwa einer Minute. Neuer WebSocket-Befehl `device_panel/status_system_enable` (Administratoren, Parameter `kind`).
+- "System Monitor" nicht eingerichtet: Die Karte sagt es und dass es nicht zwingend ist (ein eigener Sensor lässt sich wählen); ein Knopf "System Monitor hinzufügen" öffnet die Seite "Integration hinzufügen" von Home Assistant bei dieser Integration (er öffnet nur die Seite, nichts wird geändert). `device_panel/status_system` liefert dafür `integrations` (`systemmonitor`, `hassio`).
+- Grafiken mit Zeitstrahl: Uhrzeiten unter der Kurve (alle 3 Stunden bei 24 Stunden, Tage bei 30 Tagen, Monate bei 6 Monaten und 1 Jahr) mit feinen senkrechten Linien und "jetzt" rechts.
+
+### Geändert
+
+- `device_panel/status_system`: Jede Karte trägt `mode` (`percent` oder `absolute`), `unit`, `axis_max` und `disabled`; `candidates` tragen `unit` und `pref`.
+
 ## [2.69.0] - 2026-10-16
 
 Status-App: die Festplatte in Gigabyte und in Prozent.
@@ -3631,6 +3647,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.70.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.0
 [2.69.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.69.0
 [2.68.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.68.0
 [2.66.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.66.0
