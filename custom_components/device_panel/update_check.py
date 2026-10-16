@@ -570,26 +570,33 @@ async def async_release_notes(
         if age < (ERROR_RETRY_SECONDS if hit["error"] else CACHE_SECONDS) and not (force and age >= FORCE_MIN_SECONDS):
             return hit
     result: dict[str, Any] = {"checked_at": time.time(), "entries": [], "language": wanted, "error": None}
-    tag = f"v{latest}"
+    # Der Tag heisst je nach Release "v2.63.0" oder "2.63.0" (der Nutzer legt Releases selbst an,
+    # mal mit, mal ohne "v"): beide Schreibweisen versuchen, sonst gibt es "HTTP 404".
+    tags = [f"v{latest}", latest]
     names = ["CHANGELOG.de.md", "CHANGELOG.md"] if wanted == "de" else ["CHANGELOG.md"]
     error: str | None = None
     for name in names:
-        text, error = await _async_get_text(hass, f"{RAW_URL}/{tag}/{name}")
-        if text is None:
-            continue
-        entries = select_sections(changelog_sections(text), installed, latest)
-        if entries:
-            result["entries"] = [{k: x[k] for k in ("version", "date", "notes")} for x in entries]
-            result["language"] = "de" if name.endswith(".de.md") else "en"
+        for tag in tags:
+            text, error = await _async_get_text(hass, f"{RAW_URL}/{tag}/{name}")
+            if text is None:
+                continue
+            entries = select_sections(changelog_sections(text), installed, latest)
+            if entries:
+                result["entries"] = [{k: x[k] for k in ("version", "date", "notes")} for x in entries]
+                result["language"] = "de" if name.endswith(".de.md") else "en"
+                break
+        if result["entries"]:
             break
     if not result["entries"]:
         # Rückfall: der Text des GitHub-Releases (Englisch), nur für die neueste Version.
-        data, error = await _async_get_json(hass, f"{TAG_RELEASE_URL}/{tag}")
-        if isinstance(data, dict) and isinstance(data.get("body"), str) and data["body"].strip():
-            published = str(data.get("published_at") or "")[:10] or None
-            result["entries"] = [{"version": latest, "date": published, "notes": data["body"].strip()[:NOTES_MAX_BYTES]}]
-            result["language"] = "en"
-            error = None
+        for tag in tags:
+            data, error = await _async_get_json(hass, f"{TAG_RELEASE_URL}/{tag}")
+            if isinstance(data, dict) and isinstance(data.get("body"), str) and data["body"].strip():
+                published = str(data.get("published_at") or "")[:10] or None
+                result["entries"] = [{"version": latest, "date": published, "notes": data["body"].strip()[:NOTES_MAX_BYTES]}]
+                result["language"] = "en"
+                error = None
+                break
     result["error"] = None if result["entries"] else (error or "HTTP 404")
     if len(cache) > 20:
         cache.clear()

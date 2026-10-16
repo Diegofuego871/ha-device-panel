@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.64.0] - 2026-10-16
+
+Einstellungen: bei jedem Öffnen nach einer neuen Version suchen.
+
+### Geändert
+
+- Einstellungen, Abschnitt "Panel-Version": Bei jedem Öffnen der Einstellungen fragt das Panel jetzt sofort bei GitHub nach der neuesten Version (bisher galt die Antwort von bis zu 6 Stunden vorher, ausser du drücktest "Nach Updates suchen"). Während der Prüfung läuft die gewohnte Anzeige "Prüft". Der Server fragt GitHub weiter höchstens einmal pro Minute, mehrmaliges Öffnen kurz hintereinander verbraucht also das Limit von GitHub nicht; der Knopf "Nach Updates suchen" arbeitet wie bisher. Das Öffnen lädt HACS nicht von sich aus neu und verwirft keinen früheren Installationsfehler; läuft gerade eine Installation oder ein Neustart, bleibt der aktuelle Stand stehen. Kennt GitHub eine neuere Version als HACS, wird HACS einmal für diese Version neu geladen, auch wenn sie beim Öffnen gefunden wurde.
+
+### Behoben
+
+- Fenster Release Notes: "Die Release Notes konnten nicht geladen werden: HTTP 404" bei Releases, deren Tag kein "v" trägt (zum Beispiel 2.63.0). Die Notes werden jetzt unter "v2.63.0" und unter "2.63.0" gesucht, in den Changelog-Dateien wie im GitHub-Release-Text.
+
 ## [2.63.0] - 2026-10-15
 
 Status: einen Teil von Hand neu starten.
@@ -3571,6 +3583,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.64.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.64.0
 [2.63.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.63.0
 [2.60.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.60.0
 [2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0

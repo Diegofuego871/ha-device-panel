@@ -5376,7 +5376,10 @@ class DevicePanel extends HTMLElement {
       else dialog.setAttribute("open", "");
     }
     this._blurOnTouch();
-    this._loadVersion(false);
+    // Beim Öffnen immer frisch bei GitHub nachsehen (seit 2.64.0), nicht erst nach 6 Stunden; läuft gerade eine Installation oder ein Neustart,
+    // bleibt es beim bisherigen Stand, damit nichts dazwischenfährt
+    const busyVersion = this._version?.installing || this._version?.restarting;
+    this._loadVersion(!busyVersion, { open: true });
     const st = this._settings;
     try {
       const data = await this._hass.callWS({ type: "device_panel/get_options" });
@@ -8663,12 +8666,14 @@ class DevicePanel extends HTMLElement {
     }
   }
 
-  async _loadVersion(force = false) {
+  // open: Prüfung beim Öffnen der Einstellungen. Wie auf Knopfdruck frisch bei GitHub (höchstens einmal pro Minute, der Server begrenzt es), aber ohne HACS
+  // von sich aus neu zu laden und ohne eine frühere Fehlermeldung der Installation zu verwerfen
+  async _loadVersion(force = false, { open = false } = {}) {
     const v = (this._version = this._version || {});
     if (force) {
       v.checking = true;
-      // Neue Prüfung: alte Meldungen verwerfen, der neue Stand zählt.
-      v.installError = null;
+      // Neue Prüfung auf Knopfdruck: alte Meldungen verwerfen, der neue Stand zählt.
+      if (!open) v.installError = null;
     }
     v.error = null;
     this._renderSettingsVersion();
@@ -8688,14 +8693,15 @@ class DevicePanel extends HTMLElement {
       ),
     ];
     // HACS prüft sonst nur alle paar Tage: auf Knopfdruck sofort neu laden.
-    if (force) jobs.push(this._refreshHacs());
+    if (force && !open) jobs.push(this._refreshHacs());
     await Promise.all(jobs);
     // GitHub kennt eine neuere Version als HACS: HACS einmal pro Sitzung
     // auch ohne Knopfdruck nachladen lassen, sonst lässt sie sich nicht über
     // HACS installieren.
     const { hacs, a, latest } = this._versionState();
-    if (!force && hacs && !v.hacsRefreshed && latest && (!a.latest_version || this._cmpVersion(latest, a.latest_version) > 0)) {
-      v.hacsRefreshed = true;
+    // (einmal je neu gefundene Version, auch bei der Prüfung beim Öffnen der Einstellungen)
+    if ((!force || open) && hacs && v.hacsRefreshedFor !== latest && latest && (!a.latest_version || this._cmpVersion(latest, a.latest_version) > 0)) {
+      v.hacsRefreshedFor = latest;
       // Während HACS nachlädt, nicht zum Klick auf "Nach Updates suchen"
       // auffordern: das Panel erledigt genau das gerade selbst.
       v.hacsSyncing = true;

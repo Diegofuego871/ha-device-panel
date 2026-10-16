@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.64.0] - 2026-10-16
+
+Settings: look for a new version every time they are opened.
+
+### Changed
+
+- Settings, section "Panel version": every time the settings are opened, the panel now asks GitHub for the newest version right away (before, it used the answer of up to 6 hours ago unless you pressed "Check for updates"). While it checks, the usual "checking" display shows. The server still asks GitHub at most once per minute, so opening the settings several times in a row does not use up GitHub's limit; the button "Check for updates" works as before. Opening does not reload HACS on its own and does not drop an earlier install error; while an installation or a restart is running, the settings keep the current state. If GitHub knows a newer version than HACS, HACS is reloaded once for that version, also when it was found on opening.
+
+### Fixed
+
+- Release notes window: "The release notes could not be loaded: HTTP 404" for releases whose tag has no "v" (such as 2.63.0). The notes are now looked up under both "v2.63.0" and "2.63.0", in the changelog files as well as in the GitHub release text.
+
 ## [2.63.0] - 2026-10-15
 
 Status: restart a part by hand.
@@ -3470,6 +3482,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.64.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.64.0
 [2.63.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.63.0
 [2.60.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.60.0
 [2.58.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.58.0

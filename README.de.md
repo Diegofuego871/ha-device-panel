@@ -202,7 +202,7 @@ Das Zahnrad öffnet alle Einstellungen auf Deutsch oder Englisch, in Abschnitten
 - **Überwachung und Meldungen:** die Reiter Übersicht (ein Zeitstrahl pro Meldung), Ausfall, Batterie, Laden, Neu, Updates, Empfang, Magic Push und Integrationen
 - **Ansicht:** Startseite und Filter-Chips (zeigen, ausblenden, umordnen, anheften)
 - **Routinen und KI-Einschätzung:** Pause, Nachhol-Fenster, Empfänger; KI-Aufgabe und Prompt
-- **Panel-Version:** tägliche Prüfung zu einer festen Zeit, optionaler Push, Vorabversionen und automatische Installation über HACS (den Neustart von Home Assistant machst du selbst)
+- **Panel-Version:** Prüfung bei jedem Öffnen der Einstellungen (höchstens einmal pro Minute), tägliche Prüfung zu einer festen Zeit, optionaler Push, Vorabversionen und automatische Installation über HACS (den Neustart von Home Assistant machst du selbst)
 - **Speichern:** Änderungen im Pop-up und in den Einstellungen gelten erst mit "Speichern"; beim Schliessen mit ungespeicherten Änderungen fragt das Panel "Änderungen verwerfen?"
 
 <p align="center"><img src="docs/screenshots/de/settings-monitor.png" alt="Einstellungen: Zeitstrahl, wann ein Gerät als ausgefallen gilt und wann der Push kommt" width="720"></p>

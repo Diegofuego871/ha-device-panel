@@ -55,6 +55,15 @@ for (const mobile of [false, true]) {
   const services = () => p.evaluate(() => window.__services);
   const has = (sel) => ev(`return !!r.querySelector(${JSON.stringify(sel)})`);
 
+  // 0. Beim Öffnen der Einstellungen immer frisch bei GitHub nachsehen (2.64.0), nicht erst nach 6 Stunden und ohne HACS von sich aus neu zu laden
+  await p.evaluate(() => { window.__wsCalls = []; window.__services = []; });
+  await open();
+  await p.waitForTimeout(300);
+  const openCalls = await p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/version"));
+  check(`[${tag}] Einstellungen öffnen: Prüfung frisch (force), mit Vorabversion`, openCalls.length >= 1 && openCalls[0].force === true && openCalls[0].prerelease === true, JSON.stringify(openCalls));
+  check(`[${tag}] Einstellungen öffnen: HACS wird nicht von sich aus neu geladen`, !(await services()).some((s) => s.service === "update_entity"));
+  check(`[${tag}] Einstellungen öffnen: die Anzeige zeigt "geprüft" ohne Fehler`, !/nicht erreichbar|not reachable|failed/i.test(await verText()), await verText());
+
   // 1. Ohne HACS, aktuell
   await open();
   let t = await verText();

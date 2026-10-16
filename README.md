@@ -202,7 +202,7 @@ The gear opens all settings in German or English, in sections. The version bar o
 - **Monitoring and notifications:** the tabs Overview (a timeline per notification), Outage, Battery, Charging, New, Updates, Signal, Magic Push and Integrations
 - **View:** start page and filter chips (show, hide, reorder, pin)
 - **Routines and AI assessment:** pause, catch-up window, recipient; AI task and prompt
-- **Panel version:** daily check at a set time, optional push, pre-releases and automatic installation via HACS (you only restart Home Assistant yourself)
+- **Panel version:** a check every time the settings are opened (at most once per minute), daily check at a set time, optional push, pre-releases and automatic installation via HACS (you only restart Home Assistant yourself)
 - **Saving:** changes in the pop-up and in the settings apply only with "Save"; closing with unsaved changes asks "Discard changes?"
 
 <p align="center"><img src="docs/screenshots/en/settings-monitor.png" alt="Settings: timeline of when a device counts as offline and when the push arrives" width="720"></p>

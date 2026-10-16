@@ -118,6 +118,19 @@ async def test_release_body_as_last_resort(hass: HomeAssistant, texts, github_of
     assert result["entries"] == [{"version": "2.2.0", "date": "2026-10-11", "notes": "## 2.2.0\n\nText"}]
 
 
+async def test_tag_without_v_prefix(hass: HomeAssistant, texts, github_offline) -> None:
+    """Release ohne "v" im Tag (2.63.0): Datei und Release werden trotzdem gefunden (Fehler HTTP 404, 2.64.0)."""
+    files, _calls = texts
+    files[f"{update_check.RAW_URL}/2.2.0/CHANGELOG.md"] = CHANGELOG_EN
+    result = await update_check.async_release_notes(hass, "2.0.6", "2.2.0", "en")
+    assert result["error"] is None and [e["version"] for e in result["entries"]] == ["2.2.0", "2.1.0", "2.0.10"]
+    # Auch der Rückfall auf den Release-Text findet den Tag ohne "v"
+    files.clear()
+    github_offline[f"{update_check.TAG_RELEASE_URL}/2.2.0"] = ({"body": "## 2.2.0\n\nText", "published_at": "2026-10-11T10:00:00Z"}, None)
+    result = await update_check.async_release_notes(hass, "2.0.6", "2.2.0", "de", force=True)
+    assert result["error"] is None and result["entries"][0]["notes"] == "## 2.2.0\n\nText"
+
+
 async def test_error_when_nothing_found(hass: HomeAssistant, texts) -> None:
     result = await update_check.async_release_notes(hass, "2.0.6", "2.2.0", "en")
     assert result["entries"] == [] and result["error"] == "HTTP 404"

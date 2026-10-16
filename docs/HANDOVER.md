@@ -3,6 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.64.0, Einstellungen prüfen beim Öffnen auf eine neue Version)
+
+- Wunsch des Nutzers: Bei jedem Öffnen der Einstellungen wird frisch nach einer neuen Version gesucht. `_openSettings` ruft `_loadVersion(true, { open: true })` (nicht, wenn gerade `installing` oder `restarting`): `force` umgeht den 6-Stunden-Zwischenspeicher
+  (`CACHE_SECONDS`), der Server begrenzt weiter auf einmal pro Minute (`FORCE_MIN_SECONDS`); `open` lädt HACS nicht von sich aus neu (`_refreshHacs` nur auf Knopfdruck) und verwirft `installError` nicht. Das automatische Nachladen von HACS läuft einmal je neu gefundener Version
+  (`v.hacsRefreshedFor`, vorher ein Schalter für die ganze Sitzung). Suite `version`: neuer Block 0 (80 Prüfungen). Zwei GitHub-Abfragen je Prüfung (Release und Vorabversionen) bei 60 pro Stunde ohne Anmeldung: Fehler "rate_limit" wird bereits angezeigt.
+- Fehler "HTTP 404" im Fenster Release Notes: `update_check.async_release_notes` baute den Tag fest als `v{Version}`; der Nutzer legt Releases teils ohne "v" an (2.63.0). Jetzt werden beide Schreibweisen versucht (Rohdateien CHANGELOG(.de).md und Release-Text). Test `test_tag_without_v_prefix`. Tag-Prüfung vor dem Push: immer Tags UND Releases, mit und ohne "v".
+
 ## Stand (2.63.0, Status: Neustart von Hand)
 
 - Wunsch des Nutzers: Knopf "Neu starten" je Teil, kein automatischer Neustart (Risiko doppelter oder verlorener Routinenläufe, verdeckt die Ursache). `StatusWatch.async_restart(key)` in `status.py`: nur bei Teil nicht "ok" und nach `RESTART_COOLDOWN_S` (20 s); hält die Objekte an (rückwärts, sie schreiben ihren Stand),
