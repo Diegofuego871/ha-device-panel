@@ -136,6 +136,12 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "status_cpu_entity": "",
         "status_ram_entity": "",
         "status_disk_entity": "",
+        "status_cpu_alert": True,
+        "status_ram_alert": True,
+        "status_disk_alert": True,
+        "status_cpu_limit": 99,
+        "status_ram_limit": 99,
+        "status_disk_limit": 99,
         "ai_prompt": "",
         "battery_push": False,
         "battery_persistent": False,
@@ -186,6 +192,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
     }
     assert result["limits"] == {
         "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [1, 50], "notify_delay": [1, 60], "new_window": [1, 60], "updates_window": [1, 60], "charge_full": [50, 100], "charge_rise": [2, 80], "charge_stall": [5, 120], "routines_catch_up": [0, 60],
+        "status_cpu_limit": [1, 100], "status_ram_limit": [1, 100], "status_disk_limit": [1, 100],
     }
     assert set(result["panel"]) == {"prerelease", "prerelease_hacs", "auto_update"}
 

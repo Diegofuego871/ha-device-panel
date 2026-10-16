@@ -22,7 +22,13 @@ from homeassistant.helpers.event import async_track_time_interval
 
 from . import activity, push
 from .const import (
+    CONF_STATUS_CPU_ALERT,
+    CONF_STATUS_CPU_LIMIT,
+    CONF_STATUS_DISK_ALERT,
+    CONF_STATUS_DISK_LIMIT,
     CONF_STATUS_NOTIFY,
+    CONF_STATUS_RAM_ALERT,
+    CONF_STATUS_RAM_LIMIT,
     DATA_AVAILABILITY,
     DATA_BATTERY,
     DATA_CHARGE,
@@ -44,6 +50,18 @@ CHECK_INTERVAL = timedelta(seconds=60)
 # Verspätet ab dem 4fachen des Takts (mindestens 2 Min.), steht ab dem 10fachen (mindestens 5 Min.): Home Assistant darf kurz stocken
 LATE_FACTOR, LATE_MIN_S = 4, 120
 DOWN_FACTOR, DOWN_MIN_S = 10, 300
+
+# Meldung bei hoher Auslastung (seit 2.71.0): je Art Schalter und Grenze; gemeldet wird erst, wenn der Wert so viele Prüfungen (Minuten) in
+# Folge über der Grenze liegt (kurze Spitzen melden nichts), "wieder unter der Grenze" erst nach so vielen Prüfungen darunter und mit
+# LOAD_MARGIN Prozentpunkten Abstand (sonst piept ein Wert, der um die Grenze pendelt)
+LOAD_KINDS = {
+    "cpu": (CONF_STATUS_CPU_ALERT, CONF_STATUS_CPU_LIMIT),
+    "ram": (CONF_STATUS_RAM_ALERT, CONF_STATUS_RAM_LIMIT),
+    "disk": (CONF_STATUS_DISK_ALERT, CONF_STATUS_DISK_LIMIT),
+}
+LOAD_HOLD = 3
+LOAD_CLEAR = 2
+LOAD_MARGIN = 2.0
 
 # Teile mit festem Takt: (Schlüssel, Daten in hass.data, Takt in Sekunden)
 TICK_PARTS = (
@@ -93,6 +111,8 @@ class StatusWatch:
         # Zeitpunkt des letzten Neustarts je Teil: ein frisches Objekt hat noch keinen Takt, gemessen wird ab diesem Zeitpunkt
         self._restarted: dict[str, float] = {}
         self._since: dict[str, float] = {}
+        # Auslastung je Art (cpu, ram, disk): Prüfungen über/unter der Grenze, ob gemeldet, seit wann
+        self._load: dict[str, dict[str, Any]] = {}
         self._unsub: CALLBACK_TYPE | None = None
 
     async def async_start(self) -> None:
@@ -228,8 +248,67 @@ class StatusWatch:
     # -- Takt: melden ----------------------------------------------------------
 
     @callback
+    def _check_load(self) -> None:
+        """CPU, Arbeitsspeicher und Festplatte gegen die Grenze prüfen (jede Minute); Push bei hoher Auslastung und bei Rückkehr."""
+        from .system_stats import current_percent  # noqa: PLC0415 - system_stats zieht Recorder-Hilfen, erst bei Bedarf
+
+        opts = effective(self.hass)
+        for kind, (alert_key, limit_key) in LOAD_KINDS.items():
+            st = self._load.setdefault(kind, {"over": 0, "under": 0, "alerted": False, "since": 0.0})
+            limit = opts[limit_key]
+            value = current_percent(self.hass, kind) if opts[alert_key] else None
+            if value is None:
+                # Schalter aus oder kein Wert: zählt nicht; eine offene Meldung bleibt offen (es gibt nichts zu entwarnen)
+                st["over"] = st["under"] = 0
+                continue
+            if value >= limit:
+                st["under"] = 0
+                st["over"] += 1
+                if st["over"] == 1:
+                    st["since"] = time.time()
+                if st["over"] >= LOAD_HOLD and not st["alerted"]:
+                    st["alerted"] = True
+                    minutes = max(1, int((time.time() - st["since"]) // 60))
+                    what = push.text(self.hass, f"status_what_{kind}")
+                    activity.record(self.hass, "warning", "system", "status_load", what, value=round(value), limit=limit)
+                    self.hass.async_create_task(self._async_notify_load(kind, up=False, value=value, limit=limit, minutes=minutes))
+            elif value < limit - LOAD_MARGIN:
+                st["over"] = 0
+                if st["alerted"]:
+                    st["under"] += 1
+                    if st["under"] >= LOAD_CLEAR:
+                        st["alerted"] = False
+                        st["under"] = 0
+                        what = push.text(self.hass, f"status_what_{kind}")
+                        activity.record(self.hass, "info", "system", "status_load_ok", what, value=round(value), limit=limit)
+                        self.hass.async_create_task(self._async_notify_load(kind, up=True, value=value, limit=limit))
+            else:
+                # Knapp unter der Grenze: weder neu zählen noch entwarnen
+                st["over"] = 0
+                st["under"] = 0
+
+    async def _async_notify_load(self, kind: str, *, up: bool, value: float, limit: int, minutes: int = 0) -> None:
+        """Push bei hoher Auslastung oder Rückkehr, an das Ziel der Status-App (sonst das globale); eine Meldung je Art, "wieder unter" ersetzt sie."""
+        opts = effective(self.hass)
+        target = notify_target(opts, "status")
+        if target == NOTIFY_NONE:
+            return
+        hass = self.hass
+        clock = time.strftime("%H:%M", time.localtime())
+        what = push.text(hass, f"status_what_{kind}")
+        if up:
+            title = push.text(hass, "status_load_ok_title", what=what, limit=limit)
+            message = push.text(hass, "status_load_ok_text", value=round(value), time=clock)
+        else:
+            title = push.text(hass, "status_load_title", what=what, value=round(value))
+            message = push.text(hass, "status_load_text", limit=limit, minutes=minutes, time=clock)
+        data = push.notification_data(hass, f"device_panel_status_load_{kind}", push.panel_url(app="status"))
+        await push.async_push(hass, target, title, message, data)
+
+    @callback
     def _on_tick(self, _now: Any) -> None:
         now = time.time()
+        self._check_load()
         for part in self.evaluate(now):
             key, state = part["id"], part["state"]
             if state != "ok":

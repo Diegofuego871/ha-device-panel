@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "234"
+PANEL_VERSION = "235"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -245,6 +245,15 @@ CONF_STATUS_NOTIFY = "status_notify"
 CONF_STATUS_CPU_ENTITY = "status_cpu_entity"
 CONF_STATUS_RAM_ENTITY = "status_ram_entity"
 CONF_STATUS_DISK_ENTITY = "status_disk_entity"
+# Meldung bei hoher Auslastung (seit 2.71.0): je Art ein Schalter (Standard an) und eine Grenze in Prozent (Standard 99)
+CONF_STATUS_CPU_ALERT = "status_cpu_alert"
+CONF_STATUS_RAM_ALERT = "status_ram_alert"
+CONF_STATUS_DISK_ALERT = "status_disk_alert"
+CONF_STATUS_CPU_LIMIT = "status_cpu_limit"
+CONF_STATUS_RAM_LIMIT = "status_ram_limit"
+CONF_STATUS_DISK_LIMIT = "status_disk_limit"
+DEFAULT_STATUS_LIMIT = 99
+INT_RANGES.update({CONF_STATUS_CPU_LIMIT: (1, 100), CONF_STATUS_RAM_LIMIT: (1, 100), CONF_STATUS_DISK_LIMIT: (1, 100)})
 # Umbenennung Timer → Routine (2.55.0): so hiessen die gespeicherten Optionen vorher; __init__ übernimmt sie beim Start einmal
 RENAMED_OPTIONS = {
     "timers_pause": "routines_pause",

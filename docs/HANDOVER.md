@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.71.0, Meldung bei hoher Auslastung, Pille am Launcher)
+
+- Wunsch des Nutzers: Push bei hoher CPU/RAM/Festplatte, Grenze frei, Standard 99 % und an. `status.py`: `_check_load` (jede Minute im Takt des Wächters), `LOAD_HOLD` 3 Prüfungen über der Grenze, `LOAD_CLEAR` 2 darunter, `LOAD_MARGIN` 2 Punkte; `_async_notify_load` mit tag `device_panel_status_load_<art>` (Entwarnung ersetzt), Ziel wie die Stillstandsmeldung (`notify_target(opts, "status")`), Link `?app=status`. Wert über `system_stats.current_percent` (gleicher Sensor wie die Karte, Gigabyte mit Gesamtgrösse in Prozent). Optionen `status_<art>_alert` (bool, True) und `status_<art>_limit` (int 99, Bereich 1 bis 100 in `INT_RANGES.update` in `const.py`). Panel: `loadHtml()` in `status-ui.js` (Eingabe `.opt-input` mit Prozent, Schalter, Fehler am Feld, `saveLimit`; `render(force)` wegen des Fokus). Nicht persistiert: eine offene Meldung wird nach HA-Neustart erneut gesendet. Tests: fünf in `tests/test_status.py`, Suite `statusload` (32).
+- Pille "Debug"/"Störung" an der Launcher-Kachel (Screenshot des Nutzers): `.ap-badge` oben mittig, Kachel oben 18 px Polster (`styles.js`); Prüfung in Suite `status` (Geometrie: Pille endet über dem Symbol).
+
 ## Stand (2.70.1, Einschalten mit Rückfrage, "pending", Verlauf bleibt)
 
 - Nutzer drückte "Sensoren einschalten", obwohl schon Werte da waren: die Karte meldete danach "existiert nicht mehr" (neuer Sensor ohne Zustand bis zum Neuladen der Integration, 30 s `RELOAD_AFTER_UPDATE_DELAY` in `config_entries.py` geprüft) und die Kurve war leer (Prozent-Sensor hat erst ab jetzt Werte). Behoben: `auto_entity` bevorzugt Sensoren mit Zustand; `pending`/`off`/`missing` getrennt (`missing` nur ohne Registry-Eintrag); `_longer_history` rechnet den längeren Verlauf von "belegt" in Prozent um; im Panel Rückfrage `data-st-enable-ask` → `data-st-enable` mit Liste, Folgen und Rückgängig-Hinweis. Tests: `test_freshly_enabled_sensor_does_not_replace_a_working_one`, `test_new_percent_sensor_keeps_the_longer_history_of_used`, `test_own_choice_switched_off_in_ha_is_reported`; Suite `statussystem` (132).

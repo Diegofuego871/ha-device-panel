@@ -7,7 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.71.0] - 2026-10-16
+
+Status-App: Push bei hoher Auslastung von CPU, Arbeitsspeicher und Festplatte; die Pille "Debug" überlappt das Symbol nicht mehr.
+
+### Hinzugefügt
+
+- Meldung bei hoher Auslastung: In der Status-App steht unter "Meldung bei Stillstand" ein neuer Abschnitt "Meldung bei hoher Auslastung" mit je einer Zeile für **Prozessor (CPU)**, **Arbeitsspeicher (RAM)** und **Festplatte**: ein Schalter (Standard an) und eine Grenze in Prozent (Standard 99, frei von 1 bis 100). Ein Push, wenn der Wert **3 Minuten in Folge** auf oder über der Grenze liegt (kurze Spitzen melden nichts, geprüft wird jede Minute): "⚠️ Device Panel: Prozessor bei 99 %". Liegt er klar wieder darunter (mindestens 2 Punkte, 2 Prüfungen lang), folgt eine Entwarnung, "✅ Device Panel: Prozessor wieder unter 99 %", die die erste Meldung ersetzt. Ein Wert, der um die Grenze pendelt, piept nicht dauernd. Ein Tipp auf die Meldung öffnet die Status-App. Empfänger ist derselbe wie bei "Bei Stillstand melden" (eigenes Ziel oder der Standard); die Warnung "Es ist kein Ziel gewählt" gilt jetzt auch für diese Meldungen. Das Protokoll hält beide Meldungen fest. Der Wert ist der, den die Karte zeigt (eigener Sensor oder automatisch gefunden; ein Sensor in Gigabyte mit bekannter Gesamtgrösse wird in Prozent umgerechnet). Nur Werte in Prozent lassen sich vergleichen: bei einem Sensor in Gigabyte ohne Gesamtgrösse oder ohne Sensor gibt es keine Meldung, und die Zeile sagt es. Neue Optionen `status_cpu_alert`, `status_ram_alert`, `status_disk_alert` (Standard an) und `status_cpu_limit`, `status_ram_limit`, `status_disk_limit` (Standard 99). Eine ungültige Grenze zeigt einen Fehler am Feld und wird nicht gespeichert. Grenze: Eine Meldung, die beim Neustart von Home Assistant offen ist, wird erneut gesendet, wenn der Wert nach 3 Minuten noch zu hoch ist.
+
+### Behoben
+
+- App-Launcher: Die Pillen "Debug" und "Störung" an einer Kachel sitzen nicht mehr auf dem Symbol. Sie stehen jetzt mittig darüber (die Kachel hat oben mehr Platz), am Desktop wie auf dem Handy.
+
 ## [2.70.1] - 2026-10-16
+
+Nicht veröffentlicht; enthalten in 2.71.0.
 
 Status-App, System: nach dem Einschalten von Sensoren scheint nichts mehr verloren.
 
@@ -3660,7 +3674,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.70.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.1
+[2.71.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.71.0
 [2.70.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.0
 [2.69.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.69.0
 [2.68.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.68.0

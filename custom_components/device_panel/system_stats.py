@@ -324,6 +324,23 @@ async def _points(
     return points, source if recorded else "none", period
 
 
+def current_percent(hass: HomeAssistant, kind: str) -> float | None:
+    """
+    Aktuelle Auslastung in Prozent für die Meldung bei hoher Auslastung (seit 2.71.0): derselbe Sensor wie die Karte (eigene Wahl oder
+    automatisch), bei einem Sensor in Gigabyte in Prozent der Platte umgerechnet. None, wenn es keinen Wert in Prozent gibt (kein Sensor,
+    nicht lesbar, oder nur Gigabyte ohne Gesamtgrösse): dann gibt es keine Meldung.
+    """
+    entity_id = str(effective(hass).get(OPTION_OF[kind]) or "") or (auto_entity(hass, kind) or ("", ""))[0]
+    state = hass.states.get(entity_id) if entity_id else None
+    if state is None:
+        return None
+    if str(state.attributes.get("unit_of_measurement") or "") == "%":
+        return _value(state.state)
+    used = _size(state)
+    total = _total_of(hass, entity_id, used) if used is not None else None
+    return _percent_of(100 / total)(state.state) if used is not None and total else None
+
+
 async def _longer_history(
     hass: HomeAssistant, percent_entity: str, days: int, now: float, points: list[tuple[float, float]], source: str
 ) -> tuple[list[tuple[float, float]], str]:

@@ -1841,7 +1841,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .ap-tile { position: relative; box-sizing: border-box; display: flex; min-height: 84px; border-radius: 14px; background: var(--dp-subtle); color: var(--dp-text); font: inherit; }
 .ap-main { display: flex; flex: 1; min-width: 0; align-items: center; border: 0; background: none; color: inherit; font: inherit; text-decoration: none; cursor: pointer; border-radius: inherit; }
-.ap-tile > .ap-main { flex-direction: column; justify-content: center; gap: 6px; padding: 12px 4px 8px; font-size: 12px; line-height: 1.2; text-align: center; }
+.ap-tile > .ap-main { flex-direction: column; justify-content: center; gap: 6px; padding: 18px 4px 8px; font-size: 12px; line-height: 1.2; text-align: center; }
 .ap-tile > .ap-main:hover, .ap-row > .ap-main:hover { background: var(--dp-hover); }
 .ap-main:focus-visible, .ap-a:focus-visible, .ap-drag:focus-visible, .ap-ic:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
 .ap-nm { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; max-width: 100%; overflow: hidden; overflow-wrap: break-word; }
@@ -1850,7 +1850,8 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 /* Eigene Apps ohne Favicon: Kreis in der Hauptfarbe, weisses Symbol (Apps von HA und des Panels tragen ihre Farbe als Stil) */
 .ap-ico.own { background: var(--dp-primary); color: #fff; }
 .ap-a.dis { opacity: .35; cursor: default; }
-.ap-badge { position: absolute; top: 7px; left: 7px; padding: 1px 6px; border-radius: 99px; background: var(--dp-warning-soft); color: var(--dp-warning); font-size: 10px; font-weight: 600; }
+/* Pille "Debug" / "Störung" an der Kachel: oben in der Mitte, über dem Symbol (das Polster oben ist dafür 18 px; bei 7 px links überlappte sie das Symbol) */
+.ap-badge { position: absolute; top: 3px; left: 50%; transform: translateX(-50%); padding: 0 6px; border-radius: 99px; background: var(--dp-warning-soft); color: var(--dp-warning); font-size: 9.5px; line-height: 14px; font-weight: 600; white-space: nowrap; }
 /* Status-App (seit 2.62.0, docs/mockups/status-v1) */
 .st-wrap .opt { margin-top: 0; }
 .st-banner { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 18px; margin: 0 0 8px; }
@@ -1875,6 +1876,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .bh-grid.bh-v { stroke-dasharray: 2 4; opacity: 0.7; }
 .st-sys-foot { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0 0 30px; font-size: 11.5px; color: var(--dp-text3); }
 .st-sys-foot .mid { color: var(--dp-text2); text-align: center; flex: 1; }
+.st-ctl { display: inline-flex; align-items: center; gap: 14px; flex: none; }
 .st-sys-act { margin: 6px 0 0; }
 .st-sys-list { margin: 4px 0 6px 18px; padding: 0; font-size: 13px; } .st-sys-list small { color: var(--dp-text2); }
 .st-sys .st-confirm { margin: 8px 0 0; background: var(--dp-bg); }

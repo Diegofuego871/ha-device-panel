@@ -12,6 +12,7 @@ const SYS_EVERY = 6;
 const SYS_RANGES = ["24h", "30d", "6m", "1y"];
 // Höchstens so viele Sensoren zeigt die Auswahl auf einmal (der Rest folgt nach der Eingabe)
 const PICK_MAX = 60;
+const LOAD_KINDS = ["cpu", "ram", "disk"];
 const SYS_OPTION = { cpu: "status_cpu_entity", ram: "status_ram_entity", disk: "status_disk_entity" };
 const PART_ORDER = ["routines", "magic", "availability", "battery", "charge", "new", "updates", "signal"];
 
@@ -30,7 +31,7 @@ export class StatusUi {
     this.range = "24h";
     this._ticks = 0;
     // Neustart von Hand (seit 2.63.0): confirm = Teil mit offener Rückfrage, busy = Teil, der gerade neu startet, flash = Hinweis danach
-    this.ui = { confirm: null, busy: null, flash: "", flashTimer: null, pick: null, pickQ: "", enabled: {}, enabling: null, enableAsk: null };
+    this.ui = { confirm: null, busy: null, flash: "", flashTimer: null, pick: null, pickQ: "", enabled: {}, enabling: null, enableAsk: null, limitErr: {} };
   }
 
   t(key, ...args) {
@@ -138,6 +139,8 @@ export class StatusUi {
       const el = ev.target;
       if (el.matches("[data-st-notify]")) this.save({ status_notify: el.checked });
       else if (el.matches("[data-st-target]")) this.save({ notify_service_status: el.value });
+      else if (el.matches("[data-st-alert]") && LOAD_KINDS.includes(el.dataset.stAlert)) this.save({ [`status_${el.dataset.stAlert}_alert`]: el.checked });
+      else if (el.matches("[data-st-limit]") && LOAD_KINDS.includes(el.dataset.stLimit)) this.saveLimit(el.dataset.stLimit, el.value);
     });
   }
 
@@ -148,7 +151,7 @@ export class StatusUi {
     try {
       const [snap, opts] = await Promise.all([call({ type: "device_panel/status_get" }), call({ type: "device_panel/get_options" })]);
       this.data = snap;
-      this.cfg = { values: opts.values, targets: opts.notify_targets || [] };
+      this.cfg = { values: opts.values, targets: opts.notify_targets || [], limits: opts.limits || {} };
       this.error = null;
       this.host._statusSum = { problems: snap.problems, down: snap.down };
       this.host._apps?.paintDots();
@@ -200,6 +203,20 @@ export class StatusUi {
     this.ui.pickQ = "";
     await this.save({ [SYS_OPTION[kind]]: entityId });
     await this.loadSystem();
+  }
+
+  // Grenze der Auslastungsmeldung: ganze Zahl im erlaubten Bereich, sonst Fehler am Feld und nichts gespeichert
+  async saveLimit(kind, text) {
+    const [lo, hi] = this.cfg?.limits?.[`status_${kind}_limit`] || [1, 100];
+    const n = Number(String(text).trim());
+    if (!String(text).trim() || !Number.isInteger(n) || n < lo || n > hi) {
+      this.ui.limitErr[kind] = String(text);
+      this.render(true);
+      return;
+    }
+    delete this.ui.limitErr[kind];
+    await this.save({ [`status_${kind}_limit`]: n });
+    this.render(true);
   }
 
   async save(values) {
@@ -259,11 +276,11 @@ export class StatusUi {
     this.render();
   }
 
-  render() {
+  render(force = false) {
     const body = this.dlg?.querySelector("[data-st-body]");
     if (!body) return;
     // Auswahl nicht zerstören, solange sie geöffnet ist (Neuzeichnen alle 10 Sekunden)
-    if (this.host.shadowRoot.activeElement?.matches?.("[data-st-target], [data-st-pickq]")) return;
+    if (!force && this.host.shadowRoot.activeElement?.matches?.("[data-st-target], [data-st-pickq], [data-st-limit]")) return;
     const scroll = body.closest(".dlg-body")?.scrollTop || 0;
     body.innerHTML = this.html();
     const sc = body.closest(".dlg-body");
@@ -287,7 +304,7 @@ export class StatusUi {
     const own = v.notify_service_status || "";
     // Kein Ziel (weder eigenes noch globales): der Schalter ist an, aber es geht nichts raus. Das soll nicht still bleiben.
     const target = own || global;
-    const noTarget = Boolean(v.status_notify) && (!target || target === "none");
+    const noTarget = (Boolean(v.status_notify) || LOAD_KINDS.some((k) => v[`status_${k}_alert`])) && (!target || target === "none");
     const select = `<span class="opt-select"><select data-st-target aria-label="${escape(t("optNotifyTargetTab"))}">${options
       .map(([val, text]) => `<option value="${escape(val)}"${val === own ? " selected" : ""}>${escape(text)}</option>`)
       .join("")}</select>${this.h.mdi("chevronDown", 18)}</span>`;
@@ -298,6 +315,28 @@ export class StatusUi {
       <div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("optNotifyTargetTab"))}</span>${select}</div>
         <div class="opt-short">${escape(t("stTargetShort"))}</div>
         ${noTarget ? `<div class="opt-warn" data-st-notarget role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stNoTarget"))}</span></div>` : ""}</div>`;
+  }
+
+  // Meldung bei hoher Auslastung (seit 2.71.0): je Art Schalter und Grenze in Prozent; derselbe Empfänger wie oben
+  loadHtml() {
+    const { escape } = this.h;
+    const t = (k, ...a) => this.t(k, ...a);
+    if (!this.cfg) return "";
+    const v = this.cfg.values;
+    const rows = LOAD_KINDS.map((kind) => {
+      const name = t(`stSys${kind[0].toUpperCase()}${kind.slice(1)}`);
+      const [lo, hi] = this.cfg.limits?.[`status_${kind}_limit`] || [1, 100];
+      const err = this.ui.limitErr[kind];
+      const metric = this.sys?.metrics?.find((m) => m.id === kind);
+      // Nur ein Prozentwert lässt sich mit der Grenze vergleichen; bei einem Sensor in Gigabyte (oder keinem) gibt es keine Meldung
+      const noPercent = metric && (!metric.entity_id || metric.mode === "absolute");
+      return `<div class="opt${err !== undefined ? " invalid" : ""}"><div class="opt-line"><span class="opt-label">${escape(name)}</span>
+          <span class="st-ctl"><span class="opt-input${err !== undefined ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="${lo}" max="${hi}" data-st-limit="${kind}" value="${escape(err !== undefined ? err : v[`status_${kind}_limit`])}" aria-label="${escape(t("stLoadLimit", name))}"><span class="unit">%</span></span>
+          <label class="switch"><input type="checkbox" data-st-alert="${kind}" ${v[`status_${kind}_alert`] ? "checked" : ""} aria-label="${escape(t("stLoadOn", name))}"><span></span></label></span></div>
+          ${err !== undefined ? `<div class="opt-warn" role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stLoadRange", lo, hi))}</span></div>` : ""}
+          ${noPercent && v[`status_${kind}_alert`] ? `<div class="opt-short">${escape(t("stLoadNoPercent"))}</div>` : ""}</div>`;
+    }).join("");
+    return `<div class="set-title">${escape(t("stLoadTitle"))}</div>${rows}<div class="opt-short">${escape(t("stLoadShort"))}</div>`;
   }
 
   // Alter als Satz: "vor 8 Sek.", "vor 3 Min.", "vor 2 Std."
@@ -516,6 +555,6 @@ export class StatusUi {
   }
 
   html() {
-    return `${this.configHtml()}${this.zoneHtml()}${this.systemHtml()}`;
+    return `${this.configHtml()}${this.loadHtml()}${this.zoneHtml()}${this.systemHtml()}`;
   }
 }

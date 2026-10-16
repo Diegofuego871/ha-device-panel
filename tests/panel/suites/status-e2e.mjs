@@ -126,6 +126,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Debug-Modus: oranger Punkt am Launcher-Knopf`, await wait(`const b = r.querySelector(".apps-btn"); return b.classList.contains("dot-warn") && !b.classList.contains("dot-bad")`));
     await openLauncher();
     check(`[${tag}] Launcher: Pille "${T.debug}" am Protokoll, ohne den Protokoll-Dialog geöffnet zu haben`, await ev(`const t = r.querySelector('dialog.apps-dlg [data-id="log"]').closest(".ap-tile, .ap-row"); return t.querySelector(".ap-badge")?.textContent.trim() === ${JSON.stringify(T.debug)}`));
+    // Die Pille überlappt das Symbol nicht (Desktop und Handy; sie sass vorher links oben auf dem Symbol, 2.71.0)
+    check(`[${tag}] Launcher: Pille "${T.debug}" liegt über dem Symbol, nicht darauf, und innerhalb der Kachel`, await ev(`const t = r.querySelector('dialog.apps-dlg [data-id="log"]').closest(".ap-tile"); if (!t) return true; const b = t.querySelector(".ap-badge").getBoundingClientRect(); const i = t.querySelector(".ap-ico").getBoundingClientRect(); const c = t.getBoundingClientRect(); return b.bottom <= i.top + 0.5 && b.top >= c.top && b.left >= c.left && b.right <= c.right`));
     await closeLauncher();
     await setStates({ routines: "down" });
     await refetch();

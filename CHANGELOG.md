@@ -7,7 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.71.0] - 2026-10-16
+
+Status app: push alert at high CPU, memory and disk load; the "Debug" pill no longer overlaps the icon.
+
+### Added
+
+- Alert at high load: in the Status app, below "Alert when something stops", a new section "Alert at high load" with one row each for **processor (CPU)**, **memory (RAM)** and **disk**: a switch (default on) and a limit in percent (default 99, free from 1 to 100). One push when the value stays at or above the limit for **3 minutes in a row** (short peaks send nothing, the check runs every minute): "⚠️ Device Panel: Processor at 99 %". When it is clearly below the limit again (at least 2 points under it, for 2 checks) an all-clear follows, "✅ Device Panel: Processor back below 99 %", which replaces the first push. A value that hovers around the limit does not chatter. Tapping the push opens the Status app. The recipient is the same as for "Alert when something stops" (own target or the default); the warning "No target chosen" now also covers these alerts. The log notes both messages. The value is the one the card shows (own sensor or found automatically; a sensor in gigabytes with a known total is converted to percent). Only values in percent can be compared: for a sensor in gigabytes without a total, or no sensor, there is no alert and the row says so. New options `status_cpu_alert`, `status_ram_alert`, `status_disk_alert` (default true) and `status_cpu_limit`, `status_ram_limit`, `status_disk_limit` (default 99). An invalid limit shows an error at the field and is not saved. Limits: a message that is open when Home Assistant restarts is sent again if the value is still too high after 3 minutes.
+
+### Fixed
+
+- App launcher: the "Debug" and "Fault" pills on a tile no longer sit on top of the icon. They now stand centred above it (the tile has more room at the top), on the desktop and on the phone.
+
 ## [2.70.1] - 2026-10-16
+
+Not released; included in 2.71.0.
 
 Status app, system: after switching on sensors, nothing seems lost any more.
 
@@ -3559,7 +3573,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.70.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.1
+[2.71.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.71.0
 [2.70.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.0
 [2.69.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.69.0
 [2.68.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.68.0
