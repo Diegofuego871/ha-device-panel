@@ -34,7 +34,7 @@ const DELAY_PRESETS = [300, 900, 1800, 3600];
 const BACK_PRESETS = [600, 1800, 3600, 10800];
 const UNITS = [60, 3600, 86400];
 const PREVIEW_DELAY_MS = 300;
-export const DOMAIN_EMOJI = { switch: "🔌", light: "💡", fan: "🌀", cover: "🪟", lock: "🔒", valve: "🚿", siren: "🚨", humidifier: "💧", input_boolean: "🔘", climate: "🌡️", media_player: "🔊" };
+export const DOMAIN_EMOJI = { number: "🎚️", select: "🔽", switch: "🔌", light: "💡", fan: "🌀", cover: "🪟", lock: "🔒", valve: "🚿", siren: "🚨", humidifier: "💧", input_boolean: "🔘", climate: "🌡️", media_player: "🔊" };
 // Schnellwahl unter den Reglern (zusätzlich zu "Wie zuletzt")
 const QUICK = { brightness_pct: [25, 50, 100], percentage: [25, 50, 100], position: [0, 50, 100], volume_pct: [25, 50, 75] };
 // Farben zur Wahl: Name (Schlüssel rtCol_*), Anzeige, Wert für die Lampe
@@ -64,6 +64,8 @@ const resKey = (domain, action) => {
   return action;
 };
 const opposite = (action) => (action === "on" ? "off" : action === "off" ? "on" : null);
+// Lässt sich nach dieser Aktion zurückschalten? Ein/Aus mit dem Gegenstück, "setzen" (Zahl, Auswahl; seit 2.80.0) nur mit "wie vorher"
+const canBack = (action) => opposite(action) !== null || action === "set";
 const pad = (n) => String(n).padStart(2, "0");
 
 // Farbe einer Lampe bei einer Farbtemperatur (Näherung nach Tanner Helland), nur für die Vorschau
@@ -359,9 +361,24 @@ export class RoutineUi {
     return parts;
   }
 
+  // Der Wert, auf den "setzen" stellt: vom Server (set_text) oder aus dem Entwurf (Zahl mit Einheit der Entität, Auswahl)
+  setText(rt) {
+    if (rt.set_text) return rt.set_text;
+    const o = rt.options || {};
+    if (o.option !== undefined) return String(o.option);
+    if (o.value === undefined) return "";
+    const unit = (this.entity(rt.entity_id)?.options || []).find((x) => x.key === "value")?.unit;
+    return `${this.fmtNum(o.value)}${unit ? ` ${unit}` : ""}`;
+  }
+
   // "Steckdose einschalten, nach 20 Min. wieder aus"; mit Optionen "Lampe einschalten (40 %, warmweiss), nach 20 Min. wieder wie vorher"
   sentenceOf(rt, entityName) {
     const domain = this.domainOf(rt.entity_id);
+    if (rt.action === "set") {
+      const set = this.t("rtVerbSet", this.setText(rt));
+      const back = this.backText(rt);
+      return `${entityName} ${set}${back ? `, ${back}` : ""}`;
+    }
     const opts = rt.action === "on" ? rt.options : null;
     const parts = this.optionParts(opts);
     let verb = this.t(`rtVerb_${actKey(domain, rt.action)}`);
@@ -378,8 +395,8 @@ export class RoutineUi {
   backText(rt) {
     const domain = this.domainOf(rt.entity_id);
     const kind = rt.back_kind || (rt.back_s ? "duration" : "none");
-    if (kind === "none" || !opposite(rt.action)) return "";
-    const word = rt.back_mode === "restore" ? this.t("rtRestoreWord") : this.t(`rtRes_${resKey(domain, opposite(rt.action))}`);
+    if (kind === "none" || !canBack(rt.action)) return "";
+    const word = rt.back_mode === "restore" || rt.action === "set" ? this.t("rtRestoreWord") : this.t(`rtRes_${resKey(domain, opposite(rt.action))}`);
     if (kind === "duration") return rt.back_s ? this.t("rtBackText", this.fmtDur(rt.back_s), word) : "";
     if (kind === "time") return rt.back_time ? this.t("rtBackTime", rt.back_time, word) : "";
     this.learnEnts(rt.condition_entities);
@@ -730,8 +747,8 @@ export class RoutineUi {
     const ran = all.dlg && all.ran?.id === rt.id ? `<div class="${all.ran.ok ? "mg-flash" : "dlg-error"} rt-ran" role="status" data-rt-ran>${esc(all.ran.text)}</div>` : "";
     const status = this.statusHtml(rt);
     // Wartet auf das Zurückschalten: wann, steht in der Zeile (Reiter "Läuft", seit 2.26.0)
-    const backWord = rt.reverting && rt.revert_local && opposite(rt.action) ? this.t(`rtRes_${resKey(rt.domain, opposite(rt.action))}`) : "";
-    if (backWord) status.unshift(`<span class="mg-on">${esc(rt.back_mode === "restore" ? t("rtBackAtRowRestore", this.localText(rt.revert_local)) : t("rtBackAtRow", backWord, this.localText(rt.revert_local)))}</span>`);
+    const backWord = rt.reverting && rt.revert_local && canBack(rt.action) ? (rt.action === "set" ? t("rtRestoreWord") : this.t(`rtRes_${resKey(rt.domain, opposite(rt.action))}`)) : "";
+    if (backWord) status.unshift(`<span class="mg-on">${esc(rt.back_mode === "restore" || rt.action === "set" ? t("rtBackAtRowRestore", this.localText(rt.revert_local)) : t("rtBackAtRow", backWord, this.localText(rt.revert_local)))}</span>`);
     const next = rt.running ? `<span class="mg-on">${esc(t("rtRunningShort"))}</span>` : rt.kind === "trigger" && rt.enabled ? `<span class="mg-on">${esc(this.waitsText(rt))}</span>` : rt.enabled && rt.due_local ? `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>` : rt.done ? esc(t("rtDone")) : esc(t("rtDisabled"));
     return `<div class="mg-card${rt.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${routineEmoji(rt.domain)}</span>
       <div class="mg-t"><b>${esc(rt.name)}</b><small>${esc(this.sentence(rt))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${acts}${ran}${confirm}</div>`;
@@ -879,8 +896,8 @@ export class RoutineUi {
       entity_id: d.entity_id,
       name: d.name.trim(),
       action: d.action,
-      options: d.action === "on" ? d.options : {},
-      back_mode: d.backKind !== "none" ? d.back_mode : "opposite",
+      options: d.action === "on" || d.action === "set" ? d.options : {},
+      back_mode: d.backKind !== "none" ? (d.action === "set" ? "restore" : d.back_mode) : "opposite",
       back_s: d.backKind === "duration" ? d.back_s || null : null,
       ...triggerPayload(d),
       kind: d.kind,
@@ -976,6 +993,30 @@ export class RoutineUi {
     this.setStep(1);
   }
 
+  // "Setzen" (Zahl, Auswahl; seit 2.80.0): der Entwurf beginnt mit dem Wert, den die Entität jetzt hat, und mit "wie vorher" als einzigem Weg zurück
+  initSet(d, e) {
+    if (d.action !== "set" || !e) return;
+    d.back_mode = "restore";
+    const spec = (e.options || [])[0];
+    if (!spec || d.options.value !== undefined || d.options.option !== undefined) return;
+    if (spec.type === "number") {
+      const now = Number(e.state);
+      const v = Number.isFinite(now) ? now : spec.min;
+      d.options = { value: Math.min(spec.max, Math.max(spec.min, v)) };
+    } else if (spec.type === "pick") {
+      d.options = { option: spec.values.includes(e.state) ? e.state : spec.values[0] };
+    }
+  }
+
+  // Ist der Wert zum Setzen gültig? Zahl im Bereich der Entität, Auswahl aus ihrer Liste (ist sie gerade nicht erreichbar, genügt ein Wert)
+  setValid(d, e) {
+    const spec = (e?.options || [])[0];
+    const o = d.options || {};
+    if (e?.domain === "number") return Number.isFinite(o.value) && (!spec || (o.value >= spec.min && o.value <= spec.max));
+    if (e?.domain === "select") return typeof o.option === "string" && o.option !== "" && (!spec || spec.values.includes(o.option));
+    return true;
+  }
+
   // Eine einzeln gefundene Szene oder Gruppe gleich als Entität setzen (Aktion wie beim Antippen auf der Seite "Was")
   preselect(entityId) {
     const e = entityId ? this.entity(entityId) : null;
@@ -984,7 +1025,8 @@ export class RoutineUi {
     d.entity_id = entityId;
     d.options = {};
     if (!e.actions.includes(d.action)) d.action = e.actions[0];
-    if (!opposite(d.action)) {
+    this.initSet(d, e);
+    if (!canBack(d.action)) {
       d.back_s = 0;
       d.backKind = "none";
     }
@@ -1098,7 +1140,7 @@ export class RoutineUi {
     if (step === 0) return Boolean(this.wiz.pickId) && !this.wiz.loadingDev;
     const d = this.wiz.draft;
     const e = this.entity(d.entity_id);
-    if (step === 1) return Boolean(e) && e.actions.includes(d.action);
+    if (step === 1) return Boolean(e) && e.actions.includes(d.action) && (d.action !== "set" || this.setValid(d, e));
     if (step === BACK_STEP) return this.backValid();
     if (step === 2) {
       if (d.kind === "trigger") return this.triggerValid();
@@ -1248,7 +1290,7 @@ export class RoutineUi {
     const d = this.wiz?.draft;
     // Eine gewählte Szene hat nichts mehr zu bestimmen (nur "Aktivieren"): die Seite "Was" entfällt (seit 2.67.0)
     const sceneChosen = this.chosenWhat()?.domain === "scene";
-    return [...(this.wiz?.pick ? [0] : []), ...(sceneChosen ? [] : [1]), ...(this.hasOptions() ? [OPTS_STEP] : []), 2, ...(d && opposite(d.action) ? [BACK_STEP] : []), 3, 4];
+    return [...(this.wiz?.pick ? [0] : []), ...(sceneChosen ? [] : [1]), ...(this.hasOptions() ? [OPTS_STEP] : []), 2, ...(d && canBack(d.action) ? [BACK_STEP] : []), 3, 4];
   }
 
   syncNav() {
@@ -1329,9 +1371,39 @@ export class RoutineUi {
       html += `<div data-rt-zone="ents">${this.entsHtml()}</div>`;
     }
     if (!e) return html;
+    // Die einzige Entität des Geräts ist schon gewählt, aber eine Zahl oder Auswahl: ihre Aktion ist "setzen", nicht "ein"
+    if (!e.actions.includes(d.action)) {
+      d.action = e.actions[0];
+      this.initSet(d, e);
+    }
     html += `<div class="mg-k">${esc(t("rtAction"))}</div>${this.tabsHtml(e.actions.map((a) => ({ on: d.action === a, attrs: `data-rt="action" data-v="${a}"`, label: t(`rtAct_${actKey(e.domain, a)}`) })))}`;
-    if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t(e.domain === "scene" ? "rtSceneNoBack" : "rtToggleNoBack"))}</p>`;
+    if (d.action === "set") html += this.setValueHtml(e);
+    else if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t(e.domain === "scene" ? "rtSceneNoBack" : "rtToggleNoBack"))}</p>`;
     return `${html}<div data-rt-zone="result">${this.resultHtml()}</div>`;
+  }
+
+  // Der Wert zum Setzen (Zahl: Regler und Zahlenfeld; Auswahl: Knöpfe oder Liste), auf der Seite "Was" unter der Aktion
+  setValueHtml(e) {
+    const esc = (v) => this.esc(v);
+    const t = (k, ...a) => this.t(k, ...a);
+    const d = this.wiz.draft;
+    const spec = (e.options || [])[0];
+    if (!spec) return `<p class="mg-hint">${esc(t("rtSetUnavailable"))}</p>`;
+    if (spec.type === "pick") {
+      const items = spec.values.map((v) => ({ on: d.options.option === v, attrs: `data-rt="setopt" data-v="${esc(v)}" data-group="setopt"`, label: v }));
+      const body = spec.values.length <= 5
+        ? this.tabsHtml(items)
+        : `<span class="opt-select"><select data-rt="setopt" aria-label="${esc(t("rtSetOption"))}">${spec.values.map((v) => `<option value="${esc(v)}"${d.options.option === v ? " selected" : ""}>${esc(v)}</option>`).join("")}</select>${this.h.mdi("chevronDown", 18)}</span>`;
+      return `<div class="mg-k">${esc(t("rtSetOption"))}</div>${body}`;
+    }
+    const v = d.options.value ?? spec.min;
+    const fill = spec.max > spec.min ? ((Math.min(spec.max, Math.max(spec.min, v)) - spec.min) / (spec.max - spec.min)) * 100 : 0;
+    const shown = this.setText({ options: { value: v }, entity_id: e.entity_id });
+    return `<div class="mg-k">${esc(t("rtSetValue"))}</div>
+      <div class="to-k"><span>${esc(e.name)}</span><b data-rt-val="set">${esc(shown)}</b></div>
+      <input type="range" class="to-range" data-rt="setnum" min="${spec.min}" max="${spec.max}" step="${spec.step}" value="${v}" style="--fill:${fill.toFixed(1)}%" aria-label="${esc(t("rtSetValue"))}">
+      <div class="rt-setnum"><input type="number" class="mg-input" inputmode="decimal" data-rt="setnum" min="${spec.min}" max="${spec.max}" step="${spec.step}" value="${v}" aria-label="${esc(t("rtSetValue"))}">${spec.unit ? `<span>${esc(spec.unit)}</span>` : ""}</div>
+      <div class="opt-error" data-rt-err="set" ${this.setValid(d, e) ? "hidden" : ""}>${esc(t("rtSetRange", this.fmtNum(spec.min), this.fmtNum(spec.max)))}</div>`;
   }
 
   // Die Liste der Entitäten auf Seite "Was", gefiltert nach der Suche (die gewählte bleibt immer sichtbar)
@@ -1366,8 +1438,8 @@ export class RoutineUi {
     w.tried = { busy: true };
     this.paintZones(["result"]);
     try {
-      const r = await this.call({ type: "device_panel/routine_try", entity_id: d.entity_id, action: d.action, options: d.action === "on" ? d.options : {} });
-      w.tried = r.ok ? { text: this.t("rtTryDone") } : { text: this.t("rtTryFail", this.t(r.reason === "unavailable" ? "rtTryUnavailable" : "rtTryError")), failed: true };
+      const r = await this.call({ type: "device_panel/routine_try", entity_id: d.entity_id, action: d.action, options: d.action === "on" || d.action === "set" ? d.options : {} });
+      w.tried = r.ok ? { text: this.t("rtTryDone") } : { text: this.t("rtTryFail", this.t(r.reason === "unavailable" ? "rtTryUnavailable" : r.reason === "timeout" ? "rtTryTimeout" : "rtTryError")), failed: true };
     } catch (err) {
       w.tried = { text: this.t("rtTryFail", this.h.errText(err)), failed: true };
     }
@@ -1604,9 +1676,9 @@ export class RoutineUi {
   // Zeile "wieder aus: morgen 06:50" unter einer Ausführung, wenn zurückgeschaltet wird (seit 2.26.0)
   backLine(run) {
     const d = this.wiz.draft;
-    if (!run?.back || !d.back_s || !opposite(d.action)) return "";
-    const word = this.t(`rtRes_${resKey(this.domainOf(d.entity_id), opposite(d.action))}`);
-    return `<small>${this.esc(d.back_mode === "restore" ? this.t("rtBackAtRowRestore", this.localText(run.back)) : this.t("rtBackAtRow", word, this.localText(run.back)))}</small>`;
+    if (!run?.back || !d.back_s || !canBack(d.action)) return "";
+    const word = d.action === "set" ? "" : this.t(`rtRes_${resKey(this.domainOf(d.entity_id), opposite(d.action))}`);
+    return `<small>${this.esc(d.back_mode === "restore" || d.action === "set" ? this.t("rtBackAtRowRestore", this.localText(run.back)) : this.t("rtBackAtRow", word, this.localText(run.back)))}</small>`;
   }
 
   // Schritt 3: Meldung
@@ -1789,7 +1861,8 @@ export class RoutineUi {
         w.draft.options = {};
         w.tried = null;
         if (!e.actions.includes(w.draft.action)) w.draft.action = e.actions[0];
-        if (!opposite(w.draft.action)) {
+        this.initSet(w.draft, e);
+        if (!canBack(w.draft.action)) {
           w.draft.back_s = 0;
           w.draft.backKind = "none";
         }
@@ -1800,12 +1873,21 @@ export class RoutineUi {
         w.draft.action = el.dataset.v;
         w.tried = null;
         if (w.draft.action !== "on") w.draft.options = {};
-        if (!opposite(w.draft.action)) {
+        this.initSet(w.draft, this.entity(w.draft.entity_id));
+        if (!canBack(w.draft.action)) {
           w.draft.back_s = 0;
           w.draft.backKind = "none";
           w.draft.backOwn = { text: "", unit: 60 };
         }
         this.paint();
+        break;
+      case "setopt":
+        // Auswahl (select): Knopf; die Auswahlliste meldet sich über "change"
+        if (el.tagName === "SELECT") break;
+        w.draft.options = { option: el.dataset.v };
+        w.tried = null;
+        this.paint();
+        this.requestPreview();
         break;
       case "bdur":
         w.draft.back_s = Number(el.dataset.s);
@@ -1910,6 +1992,24 @@ export class RoutineUi {
       case "opt":
         this.onOptInput(el);
         break;
+      case "setnum": {
+        // Regler und Zahlenfeld gehören zusammen: beide führen den Wert nach, die Vorschau und die Prüfung laufen mit
+        const e = this.entity(w.draft.entity_id);
+        const spec = (e?.options || [])[0];
+        const value = el.value === "" ? NaN : Number(el.value);
+        w.draft.options = { value };
+        w.tried = null;
+        for (const other of this.qa('[data-rt="setnum"]')) if (other !== el) other.value = el.value;
+        if (spec && Number.isFinite(value)) this.q('input[type="range"][data-rt="setnum"]')?.style.setProperty("--fill", `${(spec.max > spec.min ? ((Math.min(spec.max, Math.max(spec.min, value)) - spec.min) / (spec.max - spec.min)) * 100 : 0).toFixed(1)}%`);
+        const val = this.q('[data-rt-val="set"]');
+        if (val) val.textContent = Number.isFinite(value) ? this.setText({ options: { value }, entity_id: w.draft.entity_id }) : "–";
+        const err = this.q('[data-rt-err="set"]');
+        if (err) err.hidden = this.setValid(w.draft, e);
+        this.paintZones(["result"]);
+        this.syncNav();
+        this.requestPreview();
+        break;
+      }
       case "optpick":
         // Farbwahl des Browsers: während des Ziehens nur die Vorschau, beim Loslassen (change) alles neu
         this.setOpt("rgb_color", fromHex(el.value));
@@ -2004,6 +2104,12 @@ export class RoutineUi {
     if (!w || !this.inScope(el) || !el.dataset?.rt) return;
     const d = w.draft;
     switch (el.dataset.rt) {
+      case "setopt":
+        d.options = { option: el.value };
+        w.tried = null;
+        this.paint();
+        this.requestPreview();
+        break;
       case "opt":
       case "optpick":
         // Losgelassen: Farben und Schnellwahl passend zum neuen Wert zeichnen (der Regler sitzt schon richtig)

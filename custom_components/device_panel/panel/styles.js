@@ -1744,6 +1744,10 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .mg-k.rt-sec { margin-top: 18px; color: var(--dp-text); font-size: 14px; font-weight: 600; }
 .rt-winrange { display: flex; align-items: center; gap: 10px; margin-top: 8px; color: var(--dp-text2); font-size: 13px; }
 .rt-winrange .mg-input { flex: 1 1 0; min-width: 0; max-width: 170px; font-size: 18px; }
+/* Zahl zum Setzen (Routine auf Zahl-Entität): Zahlenfeld neben der Einheit unter dem Regler (seit 2.80.0) */
+.rt-setnum { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.rt-setnum .mg-input { flex: 0 1 150px; min-width: 0; font-size: 18px; }
+.rt-setnum span { color: var(--dp-text2); }
 /* Seite "Optionen" (2.52.0, docs/mockups/timer-light-v1): Vorschau, Regler, Farben */
 .to-prev { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 8px; padding: 14px 12px 12px; border-radius: 16px; background: var(--dp-subtle); text-align: center; }
 .to-prev-n { color: var(--dp-text2); font-size: 12.5px; }

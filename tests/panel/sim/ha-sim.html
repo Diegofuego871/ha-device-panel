@@ -1163,6 +1163,14 @@
           if (!e.actions.includes(r.action)) fail("Diese Aktion gibt es für diese Entität nicht");
           if (String(r.name || "").length > 60) fail("Name: höchstens 60 Zeichen");
           if ((r.back_s || (r.back_kind && r.back_kind !== "none")) && (r.action === "toggle" || r.action === "activate")) fail("Umschalten lässt sich nicht zurückschalten");
+          // Setzen (2.80.0): Zahl im Bereich oder Wert aus der Auswahl ist Pflicht; zurück nur mit "wie vorher"
+          if (r.action === "set") {
+            const spec = (e.options || [])[0];
+            const given = r.options || {};
+            if (e.domain === "number" && (typeof given.value !== "number" || (spec && (given.value < spec.min || given.value > spec.max)))) fail("Wert ausserhalb des Bereichs");
+            if (e.domain === "select" && (typeof given.option !== "string" || (spec && !spec.values.includes(given.option)))) fail("Diese Auswahl gibt es bei der Entität nicht");
+            if ((r.back_s || (r.back_kind && r.back_kind !== "none")) && r.back_mode !== "restore") fail("Nach setzen geht Zurück nur mit wie vorher");
+          }
           // Zurückschalten (2.54.0): none, duration, time, trigger
           const bk = r.back_kind || (r.back_s ? "duration" : "none");
           if (bk === "time" && !r.back_time) fail("Zurückschalten: Uhrzeit fehlt");
@@ -1171,7 +1179,7 @@
           if (r.back_max_s != null && (r.back_max_s < 10 || r.back_max_s > 604800)) fail("Spätestens nach: ganze Zahl von 10 bis 604800 erwartet");
           // Schaltoptionen (2.52.0): nur beim Einschalten und nur, was die Entität kann
           const given = Object.keys(r.options || {});
-          if (given.length && r.action !== "on") fail("Schaltoptionen gibt es nur beim Einschalten");
+          if (given.length && r.action !== "on" && r.action !== "set") fail("Schaltoptionen gibt es nur beim Einschalten");
           if (given.some((k) => !(e.options || []).some((o) => o.key === k))) fail("Diese Einstellung unterstützt die Entität nicht");
           if (r.options && r.options.color_temp_kelvin != null && r.options.rgb_color) fail("Farbtemperatur und Farbe schliessen sich aus");
           if (r.back_s != null && r.back_s !== 0 && (r.back_s < 10 || r.back_s > 604800)) fail("Zurückschalten: ganze Zahl von 10 bis 604800 erwartet");
@@ -1195,7 +1203,7 @@
           const e = entOf(r);
           const now = Date.now() / 1000;
           return { ...r, due: r.enabled ? r.__due : null, due_local: r.enabled && r.__due ? local(r.__due) : null, revert_due: r.__revert || null, revert_local: r.__revert ? local(r.__revert) : null, reverting: Boolean(r.__revert), last: r.__last || null, done: r.__done || null,
-            running: r.kind === "countdown" && r.enabled && Boolean(r.__due), entity_name: e ? e.name : r.entity_id, entity_state: e ? e.state : null, entity_missing: !e, domain: String(r.entity_id).split(".")[0], actions: e ? e.actions : [],
+            running: r.kind === "countdown" && r.enabled && Boolean(r.__due), entity_name: e ? e.name : r.entity_id, set_text: r.action === "set" ? (r.options.option ?? `${r.options.value}${(e?.options?.[0]?.unit) ? ` ${e.options[0].unit}` : ""}`) : "", entity_state: e ? e.state : null, entity_missing: !e, domain: String(r.entity_id).split(".")[0], actions: e ? e.actions : [],
             next_runs: r.enabled && r.kind !== "countdown" ? runsOf(r, now) : [], device_name: (window.__devices.find((d) => d.id === r.device_id) || {}).name || "",
             condition_entities: condEnts(r), waiting_end: Boolean(r.__waiting), reverting: Boolean(r.__revert || r.__waiting) };
         };

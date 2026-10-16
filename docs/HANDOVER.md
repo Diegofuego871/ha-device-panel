@@ -3,6 +3,14 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.80.0, Routinen setzen Zahlen und Auswahlen, 45-s-Zeitlimit)
+
+- Wunsch des Nutzers (Display mit `number.*_uhr_helligkeit`): Routinen sollen `number` und `select` setzen, beides auch im Reiter "Schalter"; hängende Befehle enden nach fest 45 s, ohne Einstellung. Entscheidungen des Nutzers, keine Mockups. Kein `button`.
+- Backend (`routines.py`): SERVICES `number.set_value`/`select.select_option`, Aktion `set` (Optionen `value` bzw. `option`, geprüft in `clean_options`/`validate_options` gegen `option_specs`), Zurück nur `restore` (`can_back`, `restore_calls` für number/select), `CALL_TIMEOUT_S = 45` um jeden Dienstaufruf (`asyncio.timeout`; Grund `timeout`). HA führt den abgebrochenen Dienst weiter aus. Texte in `push.py` (`routine_text_set`, `routine_res_set`, `routine_reason_timeout`).
+- Panel: `routines.js` (`initSet`, `setValid`, `setValueHtml`, Handler `setnum`/`setopt`), `routine-trigger.js` (Hinweis statt Zurück-Reiter), `DOMAIN_EMOJI` mit number/select (Reiter "Schalter" listet sie über dieses Verzeichnis). Suiten `routineset`, `switchesnum`; Simulator prüft `set`.
+- Fehler aus Video des Nutzers (Status-App, Reiterkapsel springt hin und her): `_initSeg` startete bei einem Neuzeichnen innerhalb von 500 ms wieder am ursprünglichen Ausgang. Jetzt wird die Lage der fahrenden Kapsel Bild für Bild mitgeschrieben (`live`) und das Neuzeichnen setzt dort an. Suite `segjump` (alt: 5 Rückschritte, neu: 0).
+- Risiko: Geräte mit sehr vielen number-Entitäten (ESPHome-Display) füllen den Reiter "Schalter" (Konfig-Kategorie steht am Ende).
+
 ## Stand (2.79.0, "Alle Routinen pausieren" im Fenster "Routinen")
 
 - Wunsch des Nutzers (Screenshot des Fensters, Satz abgebrochen: "Ganz oben am besten:"): die Einstellung "Alle Routinen pausieren" auch in der Routinen-Übersicht spiegeln, ganz oben. Umgesetzt als Schalter über dem Hinweis (`routines.js` `pauseHtml`, nur im Fenster, `all.dlg`), mit Warnhinweis bei Pause; sofort gespeichert (`set_options` `routines_pause`, `device-panel.js` `_rtAllPause`), kein Entwurf. Der Nutzer hat nur "ganz oben" gesagt: die Gestalt (Schalterzeile mit Satz) ist meine Wahl nach dem Muster der Einstellungen, keine Mockups.

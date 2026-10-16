@@ -1259,7 +1259,10 @@ class DevicePanel extends HTMLElement {
         const moved = Boolean(prev) && !same(prev, rect);
         // Wird die Leiste mitten in der Fahrt noch einmal neu gezeichnet, startet die Kapsel wieder am ursprünglichen Ausgang.
         const now = Date.now();
-        const from = moved ? prev : prev?.from && now - prev.t < 500 ? prev.from : null;
+        // Mitten in der Fahrt gezeichnet (zum Beispiel weil gleich nach dem Tipp Daten eintreffen): von der echten Lage der alten
+        // Kapsel weiterfahren, nicht vom ursprünglichen Ausgang (das sah wie ein Sprung zurück aus).
+        const flying = Boolean(prev?.live) && now - prev.t < 340;
+        const from = flying ? prev.live : moved ? prev : null;
         const animate = Boolean(from) && !still && !reduced();
         if (!animate) instant(pill, rect);
         else if (fresh) {
@@ -1271,7 +1274,22 @@ class DevicePanel extends HTMLElement {
           window.clearTimeout(pill._goT);
           pill._goT = window.setTimeout(() => pill.classList.remove("go"), 320);
         }
-        this._segLast.set(key, { ...rect, from: animate ? from : null, t: moved ? now : prev?.t || 0 });
+        const entry = { ...rect, live: null, t: moved ? now : prev?.t || 0 };
+        this._segLast.set(key, entry);
+        if (animate) {
+          // Lage der Kapsel während der Fahrt mitschreiben (Bild für Bild), damit ein Neuzeichnen dort ansetzen kann
+          const t0 = performance.now();
+          const track = () => {
+            if (this._segLast.get(key) !== entry || !pill.isConnected || performance.now() - t0 > 340) {
+              if (this._segLast.get(key) === entry) entry.live = null;
+              return;
+            }
+            const m = new DOMMatrixReadOnly(getComputedStyle(pill).transform);
+            entry.live = { x: m.m41, y: m.m42, w: pill.offsetWidth, h: pill.offsetHeight };
+            window.requestAnimationFrame(track);
+          };
+          window.requestAnimationFrame(track);
+        }
       }
     };
     // Nur bei echter Breitenänderung (Fenster öffnet, Drehen); die erste Meldung beim Beobachten ist keine.

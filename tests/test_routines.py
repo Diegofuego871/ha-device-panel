@@ -835,3 +835,94 @@ async def test_group_helper_is_found_and_searchable(hass: HomeAssistant, setup) 
     lone = ent.async_get_or_create("light", "hue", "lone-uid", suggested_object_id="lone")
     hass.states.async_set(lone.entity_id, "on", {"friendly_name": "Lone"})
     assert not routines.in_holder(hass, routines.HOLDER_GROUPS, lone.entity_id)
+
+
+# -- Zahl und Auswahl setzen (2.80.0) und Zeitlimit des Schaltbefehls ----------------------------------
+
+
+def _number(hass: HomeAssistant, device: dr.DeviceEntry, state: str = "53.0") -> str:
+    entity = _switch(hass, device, key="helligkeit", state=state, domain="number")
+    hass.states.async_set(entity, state, {"min": 0, "max": 100, "step": 1, "unit_of_measurement": "%"})
+    return entity
+
+
+def _select(hass: HomeAssistant, device: dr.DeviceEntry, state: str = "Grau") -> str:
+    entity = _switch(hass, device, key="farbe", state=state, domain="select")
+    hass.states.async_set(entity, state, {"options": ["Grau", "Weiss", "Schwarz"]})
+    return entity
+
+
+async def test_set_number_and_select(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """"Setzen" für number und select: Dienst mit dem Wert, Prüfung gegen Grenzen und Auswahl, Meldung mit Wert und Einheit."""
+    set_value = async_mock_service(hass, "number", "set_value")
+    select = async_mock_service(hass, "select", "select_option")
+    manager = hass.data[DATA_ROUTINES]
+    device = _device(hass, "Display")
+    number = _number(hass, device)
+    choice = _select(hass, device)
+    assert routines.actions_for_state("number", hass.states.get(number)) == ["set"]
+    payload = routines.entity_payload(hass, number)
+    assert payload["actions"] == ["set"] and payload["options"][0] == {"key": "value", "type": "number", "unit": "%", "min": 0.0, "max": 100.0, "step": 1.0}
+    assert routines.entity_payload(hass, choice)["options"] == [{"key": "option", "type": "pick", "values": ["Grau", "Weiss", "Schwarz"]}]
+    # Ungültig: Wert fehlt, ausserhalb der Grenzen, nicht in der Auswahl, Option bei "on"
+    for raw in (
+        _raw(device, number, action="set"),
+        _raw(device, number, action="set", options={"value": 150}),
+        _raw(device, number, action="set", options={"value": "viel"}),
+        _raw(device, number, action="on"),
+        _raw(device, choice, action="set", options={"option": "Pink"}),
+        _raw(device, choice, action="set", options={"value": 3}),
+    ):
+        with pytest.raises(vol.Invalid):
+            manager.clean(raw)
+    saved = await manager.async_save_routine(_raw(device, number, action="set", options={"value": 20}, delay_s=60))
+    saved2 = await manager.async_save_routine(_raw(device, choice, action="set", options={"option": "Weiss"}, delay_s=60, name="Farbe"))
+    await _tick(hass, freezer, 61)
+    assert [c.data for c in set_value] == [{"entity_id": number, "value": 20.0}]
+    assert [c.data for c in select] == [{"entity_id": choice, "option": "Weiss"}]
+    assert manager.get(saved["id"])["options"] == {"value": 20.0} and manager.get(saved2["id"])["options"] == {"option": "Weiss"}
+    assert manager.set_value_text(manager.get(saved["id"])) == "20 %" and manager.set_value_text(manager.get(saved2["id"])) == "Weiss"
+    title, line = manager.texts(manager.get(saved["id"]), action="set")
+    assert "auf 20 %" in line and "gesetzt" in line
+
+
+async def test_set_goes_back_only_as_before(hass: HomeAssistant, setup, freezer) -> None:  # noqa: F811
+    """Nach "setzen" gibt es kein Gegenstück: Zurück geht nur mit "wie vorher" und stellt den alten Wert wieder her."""
+    set_value = async_mock_service(hass, "number", "set_value")
+    manager = hass.data[DATA_ROUTINES]
+    device = _device(hass, "Display")
+    number = _number(hass, device, "53.0")
+    # "Gegenteil" gibt es nicht, "wie vorher" wird erzwungen
+    saved = await manager.async_save_routine(_raw(device, number, action="set", options={"value": 20}, delay_s=60, back_s=120, back_kind="duration"))
+    assert manager.get(saved["id"])["back_mode"] == "restore"
+    await _tick(hass, freezer, 61)
+    assert [c.data["value"] for c in set_value] == [20.0]
+    rt = manager.runtime(saved["id"])
+    assert rt["revert_action"] == "set" and rt["snapshot"] == {"state": "53.0", "attrs": {}}
+    hass.states.async_set(number, "20.0", {"min": 0, "max": 100, "step": 1, "unit_of_measurement": "%"})
+    await _tick(hass, freezer, 121)
+    assert [c.data["value"] for c in set_value] == [20.0, 53.0]
+    assert manager.runtime(saved["id"])["revert_due"] is None
+    # Umschalten bleibt ohne Zurück; ein Schalter mit "setzen" gibt es nicht
+    plug = _switch(hass, device)
+    with pytest.raises(vol.Invalid):
+        manager.clean(_raw(device, plug, action="set", options={"value": 1}))
+
+
+async def test_hanging_call_times_out_and_does_not_block_others(hass: HomeAssistant, setup, monkeypatch) -> None:  # noqa: F811
+    """Antwortet ein Gerät nicht, endet der Befehl nach dem Zeitlimit als Fehler "timeout"; die Sperre ist frei (2.80.0)."""
+    import asyncio  # noqa: PLC0415
+
+    async def hang(call) -> None:  # noqa: ANN001
+        # Länger als das Zeitlimit des Tests, aber endlich: HA führt den Dienst als eigene Aufgabe weiter, die beim Beenden mitläuft
+        await asyncio.sleep(0.3)
+
+    hass.services.async_register("switch", "turn_on", hang)
+    manager = hass.data[DATA_ROUTINES]
+    device = _device(hass, "Steckdose")
+    plug = _switch(hass, device)
+    monkeypatch.setattr(routines, "CALL_TIMEOUT_S", 0.05)
+    ok, reason = await manager._async_call({"name": "x", "entity_id": plug}, "on")
+    assert (ok, reason) == (False, "timeout")
+    # Die Sperre ist nach dem Fehler wieder zu haben
+    assert not manager._lock.locked()

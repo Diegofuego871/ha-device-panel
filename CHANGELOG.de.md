@@ -7,6 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.80.0] - 2026-10-17
+
+Routinen können Zahlen und Auswahlen setzen; ein hängender Schaltbefehl endet nach 45 Sekunden.
+
+### Hinzugefügt
+
+- Routinen: neue Aktion **Setzen** für `number`- und `select`-Entitäten (zum Beispiel die Helligkeit eines Displays oder eine Betriebsart). Der Assistent zeigt bei einer Zahl einen Regler und ein Zahlenfeld mit Einheit und erlaubtem Bereich, bei einer Auswahl Knöpfe (bei mehr als fünf Werten eine Liste); der Wert wird gegen Bereich und Optionen der Entität geprüft. Eine solche Routine geht nur mit **Wie vorher** zurück (der Wert direkt vor dem Schalten wird wiederhergestellt); ein Gegenteil gibt es nicht. Testknopf, Vorschau, Sätze und Push ("Helligkeit auf 60 % gesetzt · 14:32") kennen die neue Aktion. `button`-Entitäten sind nicht enthalten.
+- Geräte-Popup, Reiter "Schalter": `number`- und `select`-Entitäten erscheinen ebenfalls als Kacheln (Zustand sichtbar, ein Tipp öffnet die Bedienung von Home Assistant; die Kachel schaltet nichts).
+
+### Geändert
+
+- Routinen: Jeder Schaltbefehl endet nach **45 Sekunden** (fest, ohne Einstellung). Ein Befehl, der nicht antwortet (zum Beispiel ein Cloud-Gerät), zählt als Fehler mit dem Grund "keine Antwort des Geräts" und wird nach 5 Minuten höchstens zweimal wiederholt; andere Routinen warten nicht mehr darauf. Grenze: Home Assistant führt einen abgebrochenen Dienstaufruf weiter aus, ein sehr langsames Gerät kann also trotzdem spät schalten.
+
+### Behoben
+
+- Reiterleisten (die gleitende Kapsel): Wurde die Leiste gleich nach einem Tipp neu gezeichnet (zum Beispiel weil im Status-Fenster frische Daten eintrafen), sprang die Kapsel an den Ausgangspunkt zurück und fuhr neu los, es sah aus wie ein Hin- und Herspringen. Sie fährt jetzt von der Stelle weiter, an der sie wirklich steht. Behebt das Springen im Status-Fenster und an jeder anderen Stelle mit Reiterleisten.
+
 ## [2.79.0] - 2026-10-16
 
 Fenster "Routinen": der Schalter "Alle Routinen pausieren" steht ganz oben.
@@ -3788,6 +3805,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0
 [2.78.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.78.0
 [2.76.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.76.0

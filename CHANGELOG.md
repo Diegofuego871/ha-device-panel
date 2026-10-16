@@ -7,6 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.80.0] - 2026-10-17
+
+Routines can set numbers and selections; a hanging switching command ends after 45 seconds.
+
+### Added
+
+- Routines: new action **Set** for `number` and `select` entities (for example the brightness of a display or an operating mode). The assistant shows a slider and a number field with the unit and the allowed range for a number, buttons (or a list for more than five values) for a selection; the value is checked against the range and the options of the entity. A routine of this kind goes back only with **As before** (the value right before switching is restored); the opposite does not exist. The test button, the preview, the sentences and the push ("Brightness set to 60 % · 14:32") know the new action. `button` entities are not included.
+- Pop-up of the device, tab "Switches": `number` and `select` entities appear as tiles too (state shown, a tap opens the control of Home Assistant; nothing is switched by the tile).
+
+### Changed
+
+- Routines: every switching command ends after **45 seconds** (fixed, no option). A command that does not answer (for example a cloud device) counts as an error with the reason "the device did not answer" and is tried again after 5 minutes, at most twice; other routines no longer wait for it. Limit: Home Assistant keeps running a cancelled service call, so a very slow device can still switch late.
+
+### Fixed
+
+- Tab bars (the sliding capsule): if the bar was redrawn right after a tap (for example because fresh data arrived in the Status window), the capsule jumped back to its starting point and drove again, so it looked like it hopped to and fro. It now continues from where it really is. Fixes the hopping in the Status window and every other place with tab bars.
+
 ## [2.79.0] - 2026-10-16
 
 Window "Routines": the switch "Pause all routines" stands at the very top.
@@ -3687,6 +3704,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0
 [2.78.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.78.0
 [2.76.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.76.0

@@ -716,7 +716,10 @@ export const triggerMethods = {
       }
     }
     const e = this.entity(d.entity_id);
-    if (e && !(d.backKind === "trigger" && !leavesOf(d.backConds).length)) {
+    if (e && d.action === "set") {
+      // Nach "setzen" gibt es kein Gegenstück: Zurück geht nur auf den Wert von vorher
+      if (d.backKind !== "none" && !(d.backKind === "trigger" && !leavesOf(d.backConds).length)) html += `<p class="mg-hint">${esc(t("rtBackSetNote"))}</p>`;
+    } else if (e && !(d.backKind === "trigger" && !leavesOf(d.backConds).length)) {
       html += `<div class="mg-k">${esc(t("rtBackModeLabel"))}</div>${this.tabsHtml([["opposite", t(`rtAct_${this.actionKey(e.domain, this.opposite(d.action))}`)], ["restore", t("rtBackModeRestore")]].map(([k, label]) => ({ on: d.back_mode === k, attrs: `data-rt="bmode" data-v="${k}"`, label })))}`;
       if (d.back_mode === "restore") html += `<p class="mg-hint">${esc(t("rtBackModeNote"))}</p>`;
     }

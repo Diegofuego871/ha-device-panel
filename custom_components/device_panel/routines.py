@@ -115,8 +115,11 @@ SERVICES: dict[str, dict[str, tuple[str, str]]] = {
     "media_player": {"on": ("media_player", "turn_on"), "off": ("media_player", "turn_off"), "toggle": ("media_player", "toggle")},
     # Szene (seit 2.61.0): nur auslösen, es gibt weder Aus noch Zurückschalten
     "scene": {"activate": ("scene", "turn_on")},
+    # Zahl und Auswahl (seit 2.80.0): nur setzen (Wert in den Schaltoptionen), zurück geht über "wie vorher"
+    "number": {"set": ("number", "set_value")},
+    "select": {"set": ("select", "select_option")},
 }
-ACTIONS = ("on", "off", "toggle", "activate")
+ACTIONS = ("on", "off", "toggle", "activate", "set")
 # Sammelstellen für Szenen und Gruppen ohne Gerät (seit 2.61.0): stehen dort, wo sonst die Geräte-ID steht, und beginnen mit "@",
 # damit sie nie mit einer echten Geräte-ID zusammenfallen.
 HOLDER_SCENES = "@scenes"
@@ -126,6 +129,9 @@ BACK_MODES = ("opposite", "restore")
 # Pause zwischen zwei Diensten eines Schaltens (Klima: einschalten, dann Temperatur; Medien: einschalten, dann Lautstärke):
 # Manche Geräte nehmen die zweite Angabe erst an, wenn sie wirklich laufen.
 CALL_GAP_S = 1.0
+# Höchste Wartezeit auf die Antwort eines Schaltbefehls (seit 2.80.0): Antwortet ein Gerät nicht, hielte der Befehl sonst die Sperre
+# für alle Routinen fest. Danach gilt er als fehlgeschlagen (Grund "timeout"), die Wiederholung nach 5 Minuten folgt wie bei jedem Fehler.
+CALL_TIMEOUT_S = 45
 # Wort der Meldung nach dem Schalten (push.py: routine_res_*)
 RESULT = {
     ("cover", "on"): "open", ("cover", "off"): "closed", ("valve", "on"): "open", ("valve", "off"): "closed",
@@ -194,6 +200,11 @@ def opposite(action: str) -> str | None:
     return {"on": "off", "off": "on"}.get(action)
 
 
+def can_back(action: str) -> bool:
+    """Lässt sich nach dieser Aktion zurückschalten? Ein/Aus mit dem Gegenstück, "setzen" nur mit "wie vorher"."""
+    return opposite(action) is not None or action == "set"
+
+
 def result_word(domain: str, action: str) -> str:
     """Schlüssel des Worts in der Meldung ("on", "off", "open", "closed", "locked", "unlocked", "toggled")."""
     return "toggled" if action == "toggle" else RESULT.get((domain, action), action)
@@ -219,6 +230,18 @@ def _temperature(value: Any) -> float:
     return round(float(value), 1)
 
 
+def _number(value: Any) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not -1e9 <= value <= 1e9 or value != value:
+        raise vol.Invalid("Wert: Zahl erwartet")
+    return float(value)
+
+
+def _option(value: Any) -> str:
+    if not isinstance(value, str) or not 1 <= len(value) <= 255:
+        raise vol.Invalid("Auswahl: Text erwartet")
+    return value
+
+
 _HVAC_MODES = ("heat", "cool", "heat_cool", "auto", "dry", "fan_only")
 
 # Erlaubte Angaben je Art der Entität. Gelten nur beim Einschalten (bei Rollläden Öffnen); ohne Angabe bleibt alles wie zuletzt.
@@ -234,11 +257,16 @@ OPTION_SCHEMAS: dict[str, vol.Schema] = {
     "climate": vol.Schema({vol.Optional("temperature"): _temperature, vol.Optional("hvac_mode"): vol.In(_HVAC_MODES)}),
     "media_player": vol.Schema({vol.Optional("volume_pct"): _int_range(0, 100, "Lautstärke")}),
     "fan": vol.Schema({vol.Optional("percentage"): _int_range(1, 100, "Stufe")}),
+    # Zahl und Auswahl (seit 2.80.0): der Wert ist Pflicht und gehört zur Aktion "set"
+    "number": vol.Schema({vol.Required("value"): _number}),
+    "select": vol.Schema({vol.Required("option"): _option}),
 }
 
 
 def clean_options(domain: str, action: str, raw: Any) -> dict[str, Any]:
     """Schaltoptionen prüfen (Form und Wertebereich, ohne die Entität zu kennen); leer bleibt leer."""
+    if action == "set" and not raw:
+        raise vol.Invalid("Es fehlt der Wert, der gesetzt werden soll")
     if not raw:
         return {}
     if not isinstance(raw, dict):
@@ -246,8 +274,8 @@ def clean_options(domain: str, action: str, raw: Any) -> dict[str, Any]:
     schema = OPTION_SCHEMAS.get(domain)
     if schema is None:
         raise vol.Invalid("Diese Entität hat keine Schaltoptionen")
-    if action != "on":
-        raise vol.Invalid("Schaltoptionen gibt es nur beim Einschalten")
+    if action != ("set" if domain in ("number", "select") else "on"):
+        raise vol.Invalid("Schaltoptionen gibt es nur beim Einschalten" if domain not in ("number", "select") else "Diese Entität kennt nur das Setzen")
     out = schema(raw)
     if "color_temp_kelvin" in out and "rgb_color" in out:
         raise vol.Invalid("Farbtemperatur und Farbe schliessen sich aus")
@@ -297,6 +325,18 @@ def option_specs(state: State | None, temperature_unit: str = "°C") -> list[dic
     elif state.domain == "fan":
         if feats & FanEntityFeature.SET_SPEED:
             specs.append({"key": "percentage", "type": "percent", "min": 1, "max": 100})
+    elif state.domain == "number":
+        low, high = attrs.get("min"), attrs.get("max")
+        step = attrs.get("step")
+        specs.append({
+            "key": "value", "type": "number", "unit": attrs.get("unit_of_measurement") or "",
+            "min": float(low) if isinstance(low, (int, float)) else 0.0, "max": float(high) if isinstance(high, (int, float)) else 100.0,
+            "step": float(step) if isinstance(step, (int, float)) and step > 0 else 1.0,
+        })
+    elif state.domain == "select":
+        values = [str(o) for o in attrs.get("options") or [] if isinstance(o, str)]
+        if values:
+            specs.append({"key": "option", "type": "pick", "values": values})
     return specs
 
 
@@ -318,6 +358,10 @@ def validate_options(hass: HomeAssistant, entity_id: str, action: str, raw: Any)
             raise vol.Invalid(f"Wert ausserhalb des Bereichs ({spec['min']} bis {spec['max']})")
         if spec["type"] == "choice" and value not in spec["values"]:
             raise vol.Invalid("Diesen Modus unterstützt die Entität nicht")
+        if spec["type"] == "number" and not spec["min"] <= value <= spec["max"]:
+            raise vol.Invalid(f"Wert ausserhalb des Bereichs ({spec['min']:g} bis {spec['max']:g})")
+        if spec["type"] == "pick" and value not in spec["values"]:
+            raise vol.Invalid("Diese Auswahl gibt es bei der Entität nicht")
     return options
 
 
@@ -347,6 +391,12 @@ def actions_for_state(domain: str, state: State | None) -> list[str]:
 def service_calls(domain: str, entity_id: str, action: str, options: dict[str, Any] | None, feats: int = 0) -> list[tuple[str, str, dict[str, Any]]]:
     """Die Dienste, die ein Schalten ausführt (Domäne, Dienst, Daten); leer, wenn es die Aktion nicht gibt."""
     base: dict[str, Any] = {"entity_id": entity_id}
+    if action == "set":
+        if domain == "number" and options and "value" in options:
+            return [("number", "set_value", {**base, "value": options["value"]})]
+        if domain == "select" and options and "option" in options:
+            return [("select", "select_option", {**base, "option": options["option"]})]
+        return []
     if action == "on" and options:
         if domain in ("light", "fan"):
             return [(domain, "turn_on", {**base, **options})]
@@ -445,6 +495,13 @@ def restore_calls(domain: str, entity_id: str, snapshot: dict[str, Any], feats: 
         if state != "on":
             return None
         return [("fan", "turn_on", {**base, **({"percentage": attrs["percentage"]} if "percentage" in attrs else {})})]
+    if domain == "number":
+        try:
+            return [("number", "set_value", {**base, "value": float(state)})]
+        except (TypeError, ValueError):
+            return None
+    if domain == "select":
+        return [("select", "select_option", {**base, "option": state})] if isinstance(state, str) and state else None
     on_states, off_states = {
         "valve": (("open", "opening"), ("closed", "closing")),
         "lock": (("locked",), ("unlocked",)),
@@ -967,12 +1024,14 @@ class RoutineManager:
         if routine["action"] not in SERVICES[domain]:
             raise vol.Invalid("Diese Aktion gibt es für diese Entität nicht")
         normalize_back(routine)
-        if routine["back_kind"] != "none" and opposite(routine["action"]) is None:
+        if routine["back_kind"] != "none" and not can_back(routine["action"]):
             raise vol.Invalid("Umschalten lässt sich nicht zurückschalten")
         routine["options"] = validate_options(self.hass, routine["entity_id"], routine["action"], routine["options"])
-        # "Wie vorher" gilt nur, wenn überhaupt zurückgeschaltet wird
+        # "Wie vorher" gilt nur, wenn überhaupt zurückgeschaltet wird; nach "setzen" gibt es kein Gegenstück, nur "wie vorher"
         if routine["back_kind"] == "none":
             routine["back_mode"] = "opposite"
+        elif routine["action"] == "set":
+            routine["back_mode"] = "restore"
         # Bedingungen des Auslösers und des Zurückschaltens prüfen; die geschaltete Entität darf nicht ihr eigener Auslöser sein
         if routine["kind"] == "trigger" and routine["conditions"]:
             routine["conditions"] = clean_tree(self.hass, routine["conditions"])
@@ -1143,10 +1202,15 @@ class RoutineManager:
             if not calls:
                 return False, "error"
         try:
-            for i, (call_domain, service, data) in enumerate(calls):
-                if i:
-                    await asyncio.sleep(CALL_GAP_S)
-                await self.hass.services.async_call(call_domain, service, data, blocking=True)
+            async with asyncio.timeout(CALL_TIMEOUT_S):
+                for i, (call_domain, service, data) in enumerate(calls):
+                    if i:
+                        await asyncio.sleep(CALL_GAP_S)
+                    await self.hass.services.async_call(call_domain, service, data, blocking=True)
+        except TimeoutError:
+            # Das Gerät antwortet nicht: die Sperre frei geben, damit die anderen Routinen nicht mit hängen
+            _LOGGER.warning("Routine '%s': %s antwortet nach %s Sekunden nicht", routine["name"], routine["entity_id"], CALL_TIMEOUT_S)
+            return False, "timeout"
         except Exception:  # noqa: BLE001 - eine Routine darf nie etwas anderes stören
             _LOGGER.exception("Routine '%s': Schalten von %s fehlgeschlagen", routine["name"], routine["entity_id"])
             return False, "error"
@@ -1159,7 +1223,21 @@ class RoutineManager:
         """Aktion als Wort für das Protokoll (ein, aus, offen, geschlossen, abgeschlossen, umgeschaltet …)."""
         if action == "restore":
             return push.text(self.hass, "routine_res_restored")
+        if action == "set":
+            return push.text(self.hass, "routine_res_set", value=self.set_value_text(routine))
         return push.text(self.hass, f"routine_res_{result_word(routine['entity_id'].split('.', 1)[0], action)}")
+
+    def set_value_text(self, routine: dict[str, Any]) -> str:
+        """Der Wert, auf den "setzen" stellt, als Text: Zahl mit Einheit der Entität oder die gewählte Auswahl."""
+        options = routine.get("options") or {}
+        if "option" in options:
+            return str(options["option"])
+        value = options.get("value")
+        if value is None:
+            return ""
+        state = self.hass.states.get(routine["entity_id"])
+        unit = state.attributes.get("unit_of_measurement") if state is not None else None
+        return f"{value:g} {unit}" if unit else f"{value:g}"
 
     def _device_name(self, routine: dict[str, Any]) -> str:
         if is_holder(routine["device_id"]):
@@ -1204,7 +1282,7 @@ class RoutineManager:
 
     def _take_snapshot(self, routine: dict[str, Any], rt: dict[str, Any]) -> dict[str, Any] | None:
         """Die Szene vor dem Schalten, wenn danach "wie vorher" gilt. Wartet noch ein Zurückschalten, gilt dessen Szene weiter."""
-        if routine["back_mode"] != "restore" or routine["back_kind"] == "none" or opposite(routine["action"]) is None:
+        if routine["back_mode"] != "restore" or routine["back_kind"] == "none" or not can_back(routine["action"]):
             return None
         if rt["revert_action"] is not None:
             return rt["snapshot"]
@@ -1215,9 +1293,12 @@ class RoutineManager:
         Das Zurückschalten planen: nach einer Dauer, zur nächsten Uhrzeit oder (durch einen Auslöser) sobald die Bedingung neu
         eintritt, dann mit "spätestens nach" als Sicherung. Das Gegenstück gilt, solange revert_action gesetzt ist.
         """
-        back = opposite(routine["action"])
+        back = "set" if routine["action"] == "set" else opposite(routine["action"])
         kind = routine["back_kind"]
         if kind == "none" or not back:
+            return
+        # Nach "setzen" gibt es nur "wie vorher": war der Wert vorher nicht bekannt, ist nichts zurückzusetzen
+        if routine["action"] == "set" and scene is None:
             return
         rt["revert_action"] = back
         rt["rretry"] = 0
@@ -1459,6 +1540,8 @@ class RoutineManager:
         if action == "restore":
             return push.text(hass, "routine_title", name=routine["name"]), push.text(hass, "routine_text_restored", entity=entity, time=clock)
         word = result_word(domain, action)
+        if word == "set":
+            return push.text(hass, "routine_title", name=routine["name"]), push.text(hass, "routine_text_set", entity=entity, value=self.set_value_text(routine), time=clock)
         key = {"toggled": "routine_text_toggled", "activated": "routine_text_activated"}.get(word, "routine_text")
         return push.text(hass, "routine_title", name=routine["name"]), push.text(hass, key, entity=entity, result=push.text(hass, f"routine_res_{word}") if word != "toggled" else "", time=clock)
 
@@ -1624,6 +1707,8 @@ def routine_payload(hass: HomeAssistant, manager: RoutineManager, routine: dict[
         "entity_missing": not exists,
         "domain": entity["domain"],
         "actions": entity["actions"],
+        # Wert, auf den "setzen" stellt (Zahl mit Einheit oder Auswahl), für den Satz im Panel (seit 2.80.0)
+        "set_text": manager.set_value_text(routine) if routine["action"] == "set" else "",
         "next_runs": next_runs(routine, time.time(), manager.tz) if routine["enabled"] and routine["kind"] != "countdown" else [],
         "device_name": manager._device_name(routine),
     }
