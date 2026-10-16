@@ -625,7 +625,7 @@
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
-    routines_pause: false, routines_catch_up: 10, routines_notify_error: true, status_notify: true, notify_service_status: "",
+    routines_pause: false, routines_catch_up: 10, routines_notify_error: true, status_notify: true, notify_service_status: "", status_cpu_entity: "", status_ram_entity: "", status_disk_entity: "",
     notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, notify_charge_stop: false, charge_stall: 15, charge_integrations: [], charge_full_integrations: {}, charge_rise_integrations: {}, charge_stall_integrations: {}, charge_stop_integrations: {}, charge_live: false, charge_live_integrations: {}, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
     // Emoji der Push-Meldungen: null = Standard (seit 2.2.0)
     emoji_outage: null, emoji_group: null, emoji_online: null, emoji_battery: null, emoji_charge: null, emoji_charge_stop: null, emoji_new: null, emoji_updates: null,
@@ -1472,6 +1472,32 @@
         (window.__statusRestarts ||= []).push(msg.part);
         window.__statusStates[msg.part] = "ok";
         return window.__statusSnap(now);
+      }
+      if (msg.type === "device_panel/status_system") {
+        // Wie system_stats.async_system: drei Kurven (Festplatte mit Zeitraum), Sensoren zur Auswahl; Erfindung statt Messung
+        if (window.__systemFails) throw new Error(window.__systemFails);
+        const now = Date.now() / 1000;
+        const range = msg.range || "24h";
+        const days = { "24h": 1, "30d": 30, "6m": 180, "1y": 365 }[range];
+        const curve = (n, f) => Array.from({ length: n }, (_, i) => [now - days * 86400 + (i / (n - 1)) * days * 86400, f(i / (n - 1))]);
+        const own = (k) => window.__opts[`status_${k}_entity`] || "";
+        const mk = (id, scope, name, entity, d, f, cur, source = "statistics") => {
+          const pts = window.__systemNone ? [] : curve(d === 1 ? 288 : 200, f);
+          const vals = pts.map((p) => p[1]);
+          return { id, entity_id: window.__systemNone ? null : entity, name, scope: window.__systemNone ? "none" : own(id) ? "own" : scope, start: now - d * 86400, end: now, days: d, current: window.__systemNone ? null : cur,
+            avg: vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null, max: vals.length ? Math.round(Math.max(...vals) * 10) / 10 : null,
+            source: window.__systemNone ? "none" : source, points: pts.map(([t, v]) => [t, Math.round(v * 10) / 10]), missing: false };
+        };
+        const diskSource = range === "24h" ? "history" : window.__systemNoStats ? "history" : "statistics";
+        return {
+          range,
+          metrics: [
+            mk("cpu", "host", "Prozessornutzung", "sensor.system_monitor_processor_use", 1, (x) => 14 + 12 * Math.sin(x * 14) + (x > 0.8 && x < 0.86 ? 55 : 0), 17, "history"),
+            mk("ram", "host", "Arbeitsspeicher", "sensor.system_monitor_memory_use_percent", 1, (x) => 52 + 6 * Math.sin(x * 5), 54, "history"),
+            mk("disk", "host", "Festplatte /", "sensor.system_monitor_disk_use_percent", days, (x) => 38 + 22 * x, 60, diskSource),
+          ],
+          candidates: [{ entity_id: "sensor.mein_server_cpu", name: "Mein Server CPU" }, { entity_id: "sensor.nas_speicher", name: "NAS Speicher" }],
+        };
       }
       if (msg.type === "device_panel/status_get") {
         if (window.__statusFails) throw new Error(window.__statusFails);

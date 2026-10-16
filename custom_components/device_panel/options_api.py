@@ -121,7 +121,10 @@ from .const import (
     CONF_STARTUP_GRACE,
     CONF_ROUTINES_CATCH_UP,
     CONF_ROUTINES_NOTIFY_ERROR,
+    CONF_STATUS_CPU_ENTITY,
+    CONF_STATUS_DISK_ENTITY,
     CONF_STATUS_NOTIFY,
+    CONF_STATUS_RAM_ENTITY,
     CONF_ROUTINES_PAUSE,
     CONF_AI_ASSESSMENT,
     CONF_AI_PROMPT,
@@ -187,6 +190,7 @@ _DEVICE_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 _UPDATE_ID_RE = re.compile(r"^update\.[a-z0-9_]+$")
 _NOTIFY_RE = re.compile(r"^notify\.[a-z0-9_]+$")
 _AI_TASK_RE = re.compile(r"^ai_task\.[a-z0-9_]+$")
+_SENSOR_RE = re.compile(r"^sensor\.[a-z0-9_]+$")
 _TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
@@ -370,6 +374,16 @@ def chip_order(value: Any) -> list[str]:
     if not isinstance(value, list) or not all(v in CHIP_ORDER_KEYS for v in value):
         raise vol.Invalid(f"Liste von Chips erwartet ({', '.join(CHIP_ORDER_KEYS)})")
     return list(dict.fromkeys(value))
+
+
+def _sensor_option(value: Any) -> str:
+    """Sensor für die Systemwerte der Status-App: sensor-Entität oder leer (= automatisch)."""
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if not isinstance(value, str) or not _SENSOR_RE.match(text):
+        raise vol.Invalid("sensor-Entität erwartet")
+    return text
 
 
 def _ai_task(value: Any) -> str:
@@ -593,6 +607,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_NOTIFY_SERVICE): _notify_target,
         **{vol.Optional(key): _notify_override for key in NOTIFY_TOPICS.values()},
         vol.Optional(CONF_AI_TASK): _ai_task,
+        **{vol.Optional(key): _sensor_option for key in (CONF_STATUS_CPU_ENTITY, CONF_STATUS_RAM_ENTITY, CONF_STATUS_DISK_ENTITY)},
         vol.Optional(CONF_AI_PROMPT): ai_prompt,
         vol.Optional(CONF_NOTIFY_CLICK): vol.In(CLICK_TARGETS),
         vol.Optional(CONF_BATTERY_PUSH_MODE): vol.In(PUSH_MODES),
@@ -685,6 +700,9 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     for key in NOTIFY_TOPICS.values():
         own = str(options.get(key) or "").strip()
         values[key] = own if _NOTIFY_RE.match(own) else ""
+    for key in (CONF_STATUS_CPU_ENTITY, CONF_STATUS_RAM_ENTITY, CONF_STATUS_DISK_ENTITY):
+        sensor = str(options.get(key) or "").strip()
+        values[key] = sensor if _SENSOR_RE.match(sensor) else ""
     task = str(options.get(CONF_AI_TASK) or "").strip()
     values[CONF_AI_TASK] = task if _AI_TASK_RE.match(task) else ""
     try:

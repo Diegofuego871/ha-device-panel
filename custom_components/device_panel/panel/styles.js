@@ -1859,6 +1859,21 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .st-banner .ic { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: color-mix(in srgb, currentColor 16%, transparent); }
 .st-banner b { display: block; font-size: 15px; font-weight: 600; }
 .st-banner small { display: block; margin-top: 2px; font-size: 12.5px; line-height: 1.35; opacity: .9; }
+.st-sys { margin: 0 0 10px; padding: 12px 14px 10px; border-radius: 18px; background: var(--dp-subtle); }
+.st-sys-head { display: flex; align-items: baseline; gap: 10px; }
+.st-sys-t { flex: 1; min-width: 0; }
+.st-sys-t b { display: block; font-size: 14.5px; font-weight: 600; }
+.st-sys-t small { display: block; margin-top: 1px; font-size: 12px; color: var(--dp-text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-sys-val { font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.st-sys-val small { font-size: 14px; margin-left: 2px; color: var(--dp-text2); }
+.st-sys .sub-tabs { margin: 8px 0 0; }
+.st-sys-plot { position: relative; height: 84px; margin: 8px 0 0 30px; }
+.st-sys-plot .bh-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.st-sys-y { position: absolute; left: -30px; width: 24px; transform: translateY(-50%); text-align: right; color: var(--dp-text3); font-size: 10.5px; }
+.st-sys-foot { display: flex; justify-content: space-between; gap: 8px; margin: 4px 0 0 30px; font-size: 11.5px; color: var(--dp-text3); }
+.st-sys-foot .mid { color: var(--dp-text2); text-align: center; flex: 1; }
+.st-sys-note { margin: 8px 0 0; font-size: 12.5px; color: var(--dp-text2); line-height: 1.4; }
+.st-sys-note.warn { color: var(--dp-warning); }
 .st-card { border-radius: 18px; background: var(--dp-subtle); overflow: hidden; }
 .st-line { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--dp-divider); }
 .st-line:first-child { border-top: 0; }

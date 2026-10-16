@@ -44,6 +44,7 @@ from .routines import STORE_KEY as ROUTINES_STORE_KEY
 from .routines import RoutineManager
 from .routines_ws import COMMANDS as ROUTINE_COMMANDS
 from .status import COMMANDS as STATUS_COMMANDS
+from .system_stats import COMMANDS as SYSTEM_COMMANDS
 from .status import StatusWatch
 from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, async_ask, async_assess, async_last, async_preview
 from .ai_prompt import DEFAULT_PROMPT
@@ -1124,7 +1125,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_set_panel)
     for command in (_ws_magic_get, _ws_magic_list, _ws_magic_entity_search, _ws_magic_save, _ws_magic_delete, _ws_magic_enable, _ws_magic_preview, _ws_magic_test, _ws_magic_history):
         websocket_api.async_register_command(hass, command)
-    for command in (*ROUTINE_COMMANDS, *STATUS_COMMANDS):
+    for command in (*ROUTINE_COMMANDS, *STATUS_COMMANDS, *SYSTEM_COMMANDS):
         websocket_api.async_register_command(hass, command)
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_set_options)

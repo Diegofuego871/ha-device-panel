@@ -3,9 +3,14 @@
  * Stillstand: Schalter und Empfänger als Auswahlliste wie bei den Reitern der Einstellungen), darunter der Zustand der Teile (läuft,
  * verspätet, steht) und die Zeile zum letzten Start. Die Zahlen kommen von device_panel/status_get (status.py), die Einstellungen
  * lesen und schreiben get_options / set_options; das Fenster fragt alle 10 Sekunden neu, solange es offen ist.
+ * Seit 2.68.0 zeigt der Abschnitt "System" CPU, Arbeitsspeicher und Festplatte als kleine Kurven (system_stats.py, device_panel/status_system).
  */
 
 const REFRESH_MS = 10000;
+// Systemwerte (CPU, RAM, Festplatte): alle 60 Sekunden neu, nicht bei jedem Takt des Fensters
+const SYS_EVERY = 6;
+const SYS_RANGES = ["24h", "30d", "6m", "1y"];
+const SYS_OPTION = { cpu: "status_cpu_entity", ram: "status_ram_entity", disk: "status_disk_entity" };
 const PART_ORDER = ["routines", "magic", "availability", "battery", "charge", "new", "updates", "signal"];
 
 export class StatusUi {
@@ -17,6 +22,11 @@ export class StatusUi {
     this.error = null;
     this.saving = false;
     this._timer = null;
+    // System: Antwort von status_system, Zeitraum der Festplatte, Zähler für das Nachladen
+    this.sys = null;
+    this.sysError = null;
+    this.range = "24h";
+    this._ticks = 0;
     // Neustart von Hand (seit 2.63.0): confirm = Teil mit offener Rückfrage, busy = Teil, der gerade neu startet, flash = Hinweis danach
     this.ui = { confirm: null, busy: null, flash: "", flashTimer: null };
   }
@@ -40,8 +50,13 @@ export class StatusUi {
       else dlg.setAttribute("open", "");
     }
     this.load();
+    this.loadSystem();
+    this._ticks = 0;
     window.clearInterval(this._timer);
-    this._timer = window.setInterval(() => this.load(), REFRESH_MS);
+    this._timer = window.setInterval(() => {
+      this.load();
+      if (++this._ticks % SYS_EVERY === 0) this.loadSystem();
+    }, REFRESH_MS);
   }
 
   close() {
@@ -62,6 +77,14 @@ export class StatusUi {
         return;
       }
       if (ev.target.closest("[data-st-close]")) return this.close();
+      const range = ev.target.closest("[data-st-range]");
+      if (range) {
+        if (SYS_RANGES.includes(range.dataset.stRange) && range.dataset.stRange !== this.range) {
+          this.range = range.dataset.stRange;
+          this.loadSystem();
+        }
+        return;
+      }
       const ask = ev.target.closest("[data-st-restart]");
       const yes = ev.target.closest("[data-st-restart-yes]");
       if (ask) this.ui.confirm = ask.dataset.stRestart;
@@ -75,6 +98,7 @@ export class StatusUi {
       const el = ev.target;
       if (el.matches("[data-st-notify]")) this.save({ status_notify: el.checked });
       else if (el.matches("[data-st-target]")) this.save({ notify_service_status: el.value });
+      else if (el.matches("[data-st-metric]") && SYS_OPTION[el.dataset.stMetric]) this.save({ [SYS_OPTION[el.dataset.stMetric]]: el.value }).then(() => this.loadSystem());
     });
   }
 
@@ -91,6 +115,20 @@ export class StatusUi {
       this.host._apps?.paintDots();
     } catch (err) {
       this.error = this.h.errText(err);
+    }
+    this.render();
+  }
+
+  // CPU, Arbeitsspeicher, Festplatte (status_system); der Zeitraum gilt nur für die Festplatte
+  async loadSystem() {
+    const range = this.range;
+    try {
+      const res = await this.host._hass.callWS({ type: "device_panel/status_system", range });
+      if (range !== this.range) return;
+      this.sys = res;
+      this.sysError = null;
+    } catch (err) {
+      this.sysError = this.h.errText(err);
     }
     this.render();
   }
@@ -156,7 +194,7 @@ export class StatusUi {
     const body = this.dlg?.querySelector("[data-st-body]");
     if (!body) return;
     // Auswahl nicht zerstören, solange sie geöffnet ist (Neuzeichnen alle 10 Sekunden)
-    if (this.host.shadowRoot.activeElement?.matches?.("[data-st-target]")) return;
+    if (this.host.shadowRoot.activeElement?.matches?.("[data-st-target], [data-st-metric]")) return;
     const scroll = body.closest(".dlg-body")?.scrollTop || 0;
     body.innerHTML = this.html();
     const sc = body.closest(".dlg-body");
@@ -252,7 +290,75 @@ export class StatusUi {
       ${this.error ? `<div class="dlg-error" role="alert">${escape(this.error)}</div>` : ""}`;
   }
 
+  // Eine Kurve (0 bis 100 %) mit Fläche, Hilfslinien bei 0, 50 und 100 und dem aktuellen Punkt
+  plotHtml(m) {
+    const { escape } = this.h;
+    const span = m.end - m.start || 1;
+    const x = (at) => Math.max(0, Math.min(1000, ((at - m.start) / span) * 1000));
+    const y = (v) => 100 - Math.max(0, Math.min(100, v));
+    const pts = m.points;
+    const line = pts.map(([at, v], i) => `${i ? "L" : "M"}${x(at).toFixed(1)},${y(v).toFixed(2)}`).join(" ");
+    const area = `${line} L${x(pts[pts.length - 1][0]).toFixed(1)},100 L${x(pts[0][0]).toFixed(1)},100 Z`;
+    const grid = [0, 50, 100].map((v) => `<line class="bh-grid" x1="0" x2="1000" y1="${y(v)}" y2="${y(v)}" vector-effect="non-scaling-stroke"/>`).join("");
+    const labels = [100, 50, 0].map((v) => `<span class="st-sys-y" style="top:${y(v)}%">${v}</span>`).join("");
+    return `<div class="st-sys-plot" data-st-plot="${escape(m.id)}"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}<path class="bh-area" d="${area}"/><path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/></svg>${labels}</div>`;
+  }
+
+  metricHtml(m) {
+    const { escape } = this.h;
+    const t = (k, ...a) => this.t(k, ...a);
+    const title = t(`stSys${m.id[0].toUpperCase()}${m.id.slice(1)}`);
+    const range = m.id === "disk" ? this.range : "24h";
+    const scope = m.scope === "own" ? m.name : m.scope === "none" ? "" : t(`stSysScope_${m.scope}`);
+    const val = m.current == null ? `<span class="st-sys-val"><small>–</small></span>` : `<span class="st-sys-val">${escape(String(Math.round(m.current)))}<small>%</small></span>`;
+    const tabs =
+      m.id === "disk"
+        ? `<div class="sub-tabs" role="tablist">${SYS_RANGES.map((k) => `<button type="button" role="tab" class="sub-tab${k === this.range ? " on" : ""}" data-st-range="${k}" aria-selected="${k === this.range}">${escape(t(`stSysRange_${k}`))}</button>`).join("")}</div>`
+        : "";
+    let body;
+    if (!m.entity_id) body = `<p class="st-sys-note">${escape(t("stSysNone"))}</p>`;
+    else if (m.missing) body = `<p class="st-sys-note warn">${escape(t("stSysMissing"))}</p>`;
+    else if (!m.points.length) body = `<p class="st-sys-note">${escape(t("stSysNoData"))}</p>`;
+    else {
+      const stats = m.avg != null && m.max != null ? t("stSysAvgMax", Math.round(m.avg), Math.round(m.max)) : "";
+      body = `${this.plotHtml(m)}<div class="st-sys-foot"><span>${escape(t(`stSysAgo_${range}`))}</span><span class="mid">${escape(stats)}</span><span>${escape(t("stSysNow"))}</span></div>
+        ${range !== "24h" && m.source !== "statistics" ? `<p class="st-sys-note">${escape(t("stSysNoStats"))}</p>` : ""}`;
+    }
+    return `<div class="st-sys" data-st-metric-card="${escape(m.id)}"><div class="st-sys-head"><span class="st-sys-t"><b>${escape(title)}</b>${scope ? `<small>${escape(scope)}</small>` : ""}</span>${val}</div>${tabs}${body}</div>`;
+  }
+
+  // Auswahl des Sensors je Art: automatisch oder ein eigener (Sensoren in Prozent)
+  sourceHtml() {
+    const { escape } = this.h;
+    const t = (k, ...a) => this.t(k, ...a);
+    const sys = this.sys;
+    const rows = sys.metrics
+      .map((m) => {
+        const own = this.cfg?.values?.[SYS_OPTION[m.id]] || "";
+        const list = sys.candidates.slice();
+        // Gewählt, aber nicht (mehr) in der Liste: trotzdem anzeigen, damit die Wahl sichtbar bleibt
+        if (own && !list.some((c) => c.entity_id === own)) list.unshift({ entity_id: own, name: own });
+        const autoName = m.scope !== "own" && m.entity_id ? m.name : "";
+        const auto = autoName ? t("stSysAuto", autoName) : t("stSysAutoNone");
+        const options = [["", auto], ...list.map((c) => [c.entity_id, c.name === c.entity_id ? c.name : `${c.name} (${c.entity_id})`])];
+        const select = `<span class="opt-select"><select data-st-metric="${escape(m.id)}" aria-label="${escape(t(`stSys${m.id[0].toUpperCase()}${m.id.slice(1)}`))}">${options
+          .map(([val, text]) => `<option value="${escape(val)}"${val === own ? " selected" : ""}>${escape(text)}</option>`)
+          .join("")}</select>${this.h.mdi("chevronDown", 18)}</span>`;
+        return `<div class="opt"><div class="opt-line"><span class="opt-label">${escape(t(`stSys${m.id[0].toUpperCase()}${m.id.slice(1)}`))}</span>${select}</div></div>`;
+      })
+      .join("");
+    return `<div class="set-title">${escape(t("stSysSrcTitle"))}</div>${rows}<div class="opt-short">${escape(t("stSysSrcShort"))}</div>`;
+  }
+
+  systemHtml() {
+    const { escape } = this.h;
+    const t = (k, ...a) => this.t(k, ...a);
+    if (!this.sys) return `<div class="set-title">${escape(t("stSysTitle"))}</div><p class="mg-note">${escape(this.sysError ? t("stSysError", this.sysError) : t("stSysLoading"))}</p>`;
+    return `<div class="set-title">${escape(t("stSysTitle"))}</div>${this.sys.metrics.map((m) => this.metricHtml(m)).join("")}
+      ${this.sysError ? `<div class="dlg-error" role="alert">${escape(t("stSysError", this.sysError))}</div>` : ""}${this.sourceHtml()}`;
+  }
+
   html() {
-    return `${this.configHtml()}${this.zoneHtml()}`;
+    return `${this.configHtml()}${this.zoneHtml()}${this.systemHtml()}`;
   }
 }

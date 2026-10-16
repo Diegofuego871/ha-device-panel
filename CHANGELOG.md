@@ -7,7 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.68.0] - 2026-10-16
+
+Status app: small graphs for CPU, memory and disk.
+
+### Added
+
+- Status app, new section "System": three cards with the current value and a small graph from the recorder. **Processor (CPU)** and **memory (RAM)** show the last 24 hours; the **disk** has a bar to choose 24 hours, 30 days, 6 months or 1 year (long periods come from the long-term statistics of the recorder: hourly means, from 6 months daily means). Every card shows "24 h ago" to "now" and the average and peak of the period. The panel records nothing itself: the values come from sensors Home Assistant already has.
+- Sensors are found automatically: first the integration "System Monitor" (processor, memory and disk in percent, the host), for CPU and memory otherwise the values of Home Assistant Core from the Supervisor integration (marked "Home Assistant Core (the process only)", because they are not the host). Several disks: the main disk ("/") first. Nothing found: a hint on every card says to enable "System Monitor". Under "Source of the values" each kind can instead be set to an own sensor (any sensor in percent with a state class); stored as the options `status_cpu_entity`, `status_ram_entity` and `status_disk_entity` (empty = automatic). A chosen sensor that no longer exists is reported, not silently replaced.
+- New WebSocket command `device_panel/status_system` (administrators; parameter `range`: `24h`, `30d`, `6m`, `1y`, only for the disk). The window asks again every 60 seconds.
+
 ## [2.67.0] - 2026-10-16
+
+Not released; included in 2.68.0.
 
 Routine assistant: no second choice after a scene or group was picked.
 
@@ -3510,7 +3522,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.67.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.67.0
+[2.68.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.68.0
 [2.66.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.66.0
 [2.65.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.65.0
 [2.64.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.64.0

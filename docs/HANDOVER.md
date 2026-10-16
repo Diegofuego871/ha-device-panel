@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.68.0, Status-App: System-Grafiken)
+
+- Wunsch des Nutzers: kleine Grafiken von HA im Status, CPU und RAM 24 Std., Festplatte mit 24 Std./30 Tage/6 Monate/1 Jahr. Quelle weiss der Nutzer nicht: automatisch + Auswahl in der App. `system_stats.py`: `auto_entity` (Registry: Plattform `systemmonitor` mit unique_id `processor_use` / `memory_use_percent` / `disk_use_percent`, sonst `hassio` `home_assistant_core_cpu_percent` / `_memory_percent`, geprüft im HA-Quellcode: System Monitor `slugify(key_argument)`, hassio `home_assistant_core_{key}`), `candidates` (Sensoren in % ohne Geräteklasse, mit state_class), Kurven über `battery_history._history/_statistics/held/thin` (ab 30 Tagen Statistik, ab 180 Tagen Tagesmittel). WebSocket `device_panel/status_system` (`range`), Optionen `status_cpu_entity|ram|disk` (leer = automatisch, in `options_api` validiert). Panel: Abschnitt "System" in `status-ui.js` (`metricHtml`, `plotHtml`, `sourceHtml`, Reiterleiste `data-st-range` mit Schlüssel `st-range` in `_initSeg`), alle 60 Sekunden neu. Nicht prüfbar ohne echte Instanz: ob "System Monitor" die Entitäten bei dir anlegt (Disk-Sensor ist je nach Version standardmässig aus).
+- Simulator: `status_system` (erfundene Kurven), `__systemNone`, `__systemNoStats`, `__systemFails`. Tests: `tests/test_system_stats.py` (5), Suite `statussystem` (52).
+- 2.67.0 hat keinen Tag und ist übersprungen ("Nicht veröffentlicht").
+
 ## Stand (2.67.0, keine zweite Auswahl nach Szene oder Gruppe)
 
 - Wunsch des Nutzers (Screenshots: Seite "Was" zeigte die Liste der Szenen/Gruppen noch einmal): `chosenWhat()` in `routines.js` liefert die auf Seite 1 gewählte Szene/Gruppe (nur Anlegen aus dem Fenster aller Routinen, `w.pick && w.pickEnt`). Szene: `steps()` lässt Schritt 1 weg (Seite "Wann" folgt direkt, vier Seiten). Gruppe: Seite 1 zeigt nur die Aktion (Titel `rtQ_1_fixed`, Name `rtStepName_1_fixed`), keine Liste. Beim Bearbeiten (`w.pick` false) bleibt die Liste, der Bearbeiten-Assistent startet bei "Wann". Suiten `routinescene` (80), `searchclear` (Liste per `wiz.pickEnt = ""`).

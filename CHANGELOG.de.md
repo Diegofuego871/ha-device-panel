@@ -7,7 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.68.0] - 2026-10-16
+
+Status-App: kleine Grafiken für CPU, Arbeitsspeicher und Festplatte.
+
+### Hinzugefügt
+
+- Status-App, neuer Abschnitt "System": drei Karten mit dem aktuellen Wert und einer kleinen Grafik aus dem Recorder. **Prozessor (CPU)** und **Arbeitsspeicher (RAM)** zeigen die letzten 24 Stunden; die **Festplatte** hat eine Leiste mit 24 Stunden, 30 Tagen, 6 Monaten oder 1 Jahr (lange Zeiträume kommen aus der Langzeitstatistik des Recorders: Stundenmittel, ab 6 Monaten Tagesmittel). Jede Karte zeigt "vor 24 Std." bis "jetzt" sowie Durchschnitt und Spitze des Zeitraums. Das Panel zeichnet selbst nichts auf: Die Werte kommen von Sensoren, die Home Assistant schon hat.
+- Die Sensoren werden automatisch gefunden: zuerst die Integration "System Monitor" (Prozessor, Arbeitsspeicher und Festplatte in Prozent, der Host), für CPU und Arbeitsspeicher sonst die Werte von Home Assistant Core aus der Supervisor-Integration (gekennzeichnet "Home Assistant Core (nur der Prozess)", weil sie nicht den Host messen). Mehrere Festplatten: die Hauptplatte ("/") zuerst. Wird nichts gefunden, sagt ein Hinweis auf jeder Karte, dass "System Monitor" einzuschalten ist. Unter "Quelle der Werte" lässt sich jede Art stattdessen auf einen eigenen Sensor stellen (jeder Sensor in Prozent mit Zustandsklasse); gespeichert als Optionen `status_cpu_entity`, `status_ram_entity` und `status_disk_entity` (leer = automatisch). Ein gewählter Sensor, den es nicht mehr gibt, wird gemeldet und nicht stillschweigend ersetzt.
+- Neuer WebSocket-Befehl `device_panel/status_system` (Administratoren; Parameter `range`: `24h`, `30d`, `6m`, `1y`, nur für die Festplatte). Das Fenster fragt alle 60 Sekunden neu.
+
 ## [2.67.0] - 2026-10-16
+
+Nicht veröffentlicht; enthalten in 2.68.0.
 
 Routinen-Assistent: keine zweite Auswahl, nachdem eine Szene oder Gruppe gewählt wurde.
 
@@ -3611,7 +3623,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.67.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.67.0
+[2.68.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.68.0
 [2.66.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.66.0
 [2.65.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.65.0
 [2.64.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.64.0
