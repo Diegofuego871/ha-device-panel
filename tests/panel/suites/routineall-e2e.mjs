@@ -1,5 +1,5 @@
 // Fenster "Alle Routinen" (2.22.0, Wunsch des Nutzers): Blitz in der Kopfzeile, Vollbild, alle Routinen aller Geräte nach Gerät,
-// bearbeiten sowie ein-/ausschalten, aber nichts Neues anlegen (und weder löschen noch ausführen). Deutsch und Englisch, Desktop und Handy.
+// bearbeiten, ein-/ausschalten, löschen und (seit 2.74.0) ausführen. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
 
@@ -8,8 +8,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { btn: "Routinen", title: "Routinen", sub: "Alle Geräte", edit: "Bearbeiten", hit: "1 von 2", q1: "Was soll geschaltet werden?" },
-  en: { btn: "Routines", title: "Routines", sub: "All devices", edit: "Edit", hit: "1 of 2", q1: "What should be switched?" },
+  de: { btn: "Routinen", title: "Routinen", sub: "Alle Geräte", edit: "Bearbeiten", hit: "1 von 2", q1: "Was soll geschaltet werden?", run: "Ausführen", done: "Ausgeführt.", fail: "Konnte nicht schalten" },
+  en: { btn: "Routines", title: "Routines", sub: "All devices", edit: "Edit", hit: "1 of 2", q1: "What should be switched?", run: "Run", done: "Done.", fail: "Could not switch" },
 };
 const SEED = (id, device, name, enabled) => ({ id, device_id: device, entity_id: "switch.plug", name, action: "on", back_s: null, kind: "repeat", delay_s: null, date: null, time: "06:30", repeat: "daily", weekdays: null, mday: null, enabled, push: false, target: null, created: Date.now() / 1000 });
 
@@ -56,9 +56,25 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] zwei Geräte, je eine Karte mit Gerätename`, await wait(`return r.querySelectorAll("dialog.rtall-dlg .mg-dcard").length === 2 && [...r.querySelectorAll("dialog.rtall-dlg .mg-dhead b")].map((e) => e.textContent).length === 2`), await ev(`return [...r.querySelectorAll("dialog.rtall-dlg .mg-dhead b")].map((e) => e.textContent).join("|")`));
     await tap('dialog.rtall-dlg [data-rta="routine-fold-all"]');
     check(`[${tag}] ausgeklappt: beide Routinen, Gerät klar erkennbar`, await wait(`return r.querySelectorAll("dialog.rtall-dlg .mg-card").length === 2 && r.querySelectorAll("dialog.rtall-dlg .mg-dcard").length === 2`));
-    check(`[${tag}] Bearbeiten, Ein/Aus und Löschen: kein Neu, kein Ausführen`, await ev(`const d = r.querySelector("dialog.rtall-dlg"); return !d.querySelector('[data-rt="add"], .mg-add') && !d.querySelector('[data-rta="routine-run"]') && d.querySelectorAll('[data-rta="routine-delete"]').length === 2 && d.querySelectorAll('[data-rta="routine-edit"]').length === 2 && d.querySelectorAll('input[data-rta="routine-toggle"]').length === 2`));
+    check(`[${tag}] Bearbeiten, Ausführen, Ein/Aus und Löschen, kein Neu in der Liste`, await ev(`const d = r.querySelector("dialog.rtall-dlg"); return !d.querySelector('[data-rt="add"], .mg-add') && d.querySelectorAll('[data-rta="routine-run"]').length === 2 && [...d.querySelectorAll('[data-rta="routine-run"]')].every((b) => b.textContent.trim() === ${JSON.stringify(T.run)}) && d.querySelectorAll('[data-rta="routine-delete"]').length === 2 && d.querySelectorAll('[data-rta="routine-edit"]').length === 2 && d.querySelectorAll('input[data-rta="routine-toggle"]').length === 2`));
     check(`[${tag}] Aktionen ${mobile ? "mit 44 px Trefferhöhe" : "unverändert"}`, await ev(`const hs = [...r.querySelectorAll("dialog.rtall-dlg .mg-acts .linkbtn, dialog.rtall-dlg .mg-dfoot .linkbtn")].map((e) => e.getBoundingClientRect().height); return hs.length > 0 && hs.every((h) => ${mobile ? "h >= 43.5" : "h < 40"})`));
     await p.screenshot({ path: `${outDir}/routineall-${tag.replace("/", "-")}.png` });
+
+    // Ausführen (seit 2.74.0): sofort, ohne Rückfrage; das Ergebnis steht in der Karte der Routine, die anderen bleiben ohne
+    await p.evaluate(() => { window.__wsCalls = []; window.__routines.runs = []; });
+    await tap('dialog.rtall-dlg [data-rta="routine-run"][data-id="aaaaaaaaaaa2"]');
+    check(`[${tag}] "${T.run}": routine_run mit der Routine (auch wenn sie aus ist), "${T.done}" in ihrer Karte`, await wait(`const n = r.querySelector('dialog.rtall-dlg [data-rta="routine-run"][data-id="aaaaaaaaaaa2"]').closest(".mg-card").querySelector("[data-rt-ran]"); return n?.textContent.trim() === ${JSON.stringify(T.done)} && n.classList.contains("mg-flash") && r.querySelectorAll("dialog.rtall-dlg [data-rt-ran]").length === 1`) && JSON.stringify(await p.evaluate(() => window.__routines.runs)) === '["aaaaaaaaaaa2"]' && (await calls("device_panel/routine_run")).length === 1);
+    check(`[${tag}] Rückmeldung bündig mit den Aktionen, Karte bleibt im Fenster sichtbar`, await ev(`const n = r.querySelector("dialog.rtall-dlg [data-rt-ran]"); const a = n.closest(".mg-card").querySelector(".mg-acts .linkbtn"); return Math.abs(n.getBoundingClientRect().left - a.getBoundingClientRect().left) <= 2`));
+    await p.screenshot({ path: `${outDir}/routineall-${tag.replace("/", "-")}-run.png` });
+    // Fehler (Gerät nicht erreichbar): rote Meldung in der Karte
+    await p.evaluate(() => { window.__routineRunFails = true; });
+    await tap('dialog.rtall-dlg [data-rta="routine-run"][data-id="aaaaaaaaaaa1"]');
+    check(`[${tag}] Ausführen schlägt fehl: "${T.fail} …" rot in der Karte dieser Routine, die alte Meldung ist weg`, await wait(`const n = r.querySelector('dialog.rtall-dlg [data-rta="routine-run"][data-id="aaaaaaaaaaa1"]').closest(".mg-card").querySelector("[data-rt-ran]"); return !!n && n.classList.contains("dlg-error") && n.textContent.includes(${JSON.stringify(T.fail)}) && r.querySelectorAll("dialog.rtall-dlg [data-rt-ran]").length === 1`));
+    await p.evaluate(() => { window.__routineRunFails = false; });
+    // Eine andere Aktion (Reiter "Alle") räumt die Meldung weg
+    await tap('dialog.rtall-dlg [data-rta="routine-filter"][data-v="all"]');
+    check(`[${tag}] nächste Aktion: Meldung weg`, await wait(`return !r.querySelector("dialog.rtall-dlg [data-rt-ran]")`));
+    await ev(`r.querySelector("dialog.rtall-dlg .dlg-body").scrollTop = 0`);
 
     // Die Reiterleiste bleibt auf derselben Höhe, die Schrift der Einleitung gleich gross, egal was die Liste zeigt (2.26.0)
     const geo = () => ev(`const d = r.querySelector("dialog.rtall-dlg"); return JSON.stringify([Math.round(d.querySelector(".mg-filter").getBoundingClientRect().top), getComputedStyle(d.querySelector(".mg-note")).fontSize, Math.round(d.querySelector(".mg-note").getBoundingClientRect().height)])`);
@@ -110,7 +126,7 @@ for (const lang of ["de", "en"]) {
     // Lieblings-Routine (2.26.0): Herz rechts von "Löschen"; ab dem ersten ein Reiter mit Herz, das Fenster öffnet darauf, alles aufgeklappt
     const tabsText = () => ev(`return [...r.querySelectorAll("dialog.rtall-dlg .mg-filter .sub-tab")].map((e) => e.dataset.v).join(",")`);
     const lastId = await ev(`const h = [...r.querySelectorAll("dialog.rtall-dlg .mg-dcard")].at(-1); return h.querySelector('[data-rta="routine-star"]').dataset.id`);
-    check(`[${tag}] Herz: neben "Löschen" (rechts davon), nicht gesetzt; noch kein Reiter mit Herz`, await ev(`const c = r.querySelector('dialog.rtall-dlg .mg-acts'); const [e, d, s] = [...c.querySelectorAll(".linkbtn")]; return e.dataset.rta === "routine-edit" && d.dataset.rta === "routine-delete" && s.dataset.rta === "routine-star" && s.classList.contains("fav") && !s.classList.contains("on") && s.getBoundingClientRect().left - d.getBoundingClientRect().right >= 12`) && (await tabsText()) === "all,on,off,running");
+    check(`[${tag}] Herz: neben "Löschen" (rechts davon), nicht gesetzt; noch kein Reiter mit Herz`, await ev(`const c = r.querySelector('dialog.rtall-dlg .mg-acts'); const [e, x, d, s] = [...c.querySelectorAll(".linkbtn")]; return e.dataset.rta === "routine-edit" && x.dataset.rta === "routine-run" && d.dataset.rta === "routine-delete" && s.dataset.rta === "routine-star" && s.classList.contains("fav") && !s.classList.contains("on") && s.getBoundingClientRect().left - d.getBoundingClientRect().right >= 12`) && (await tabsText()) === "all,on,off,running");
     check(`[${tag}] Herz: Fläche ${mobile ? "mindestens 44 px" : "klein"} und Beschriftung`, await ev(`const s = r.querySelector('dialog.rtall-dlg [data-rta="routine-star"]'); return s.getAttribute("aria-label").length > 5 && ${mobile ? "s.getBoundingClientRect().height >= 43.5" : "true"}`));
     await tap(`dialog.rtall-dlg [data-rta="routine-star"][data-id="${lastId}"]`);
     check(`[${tag}] Herz gesetzt: Reiter mit Herz erscheint (Zahl 1), Ansicht bleibt "Alle"`, await wait(`const f = r.querySelector('dialog.rtall-dlg .mg-filter .sub-tab[data-v="fav"]'); return !!f && f.querySelector(".tab-s").textContent === "1" && !!f.querySelector("svg") && f.getAttribute("aria-label").length > 3 && r.querySelector('dialog.rtall-dlg .mg-filter .sub-tab.on').dataset.v === "all" && r.querySelectorAll("dialog.rtall-dlg .mg-card").length === 2`));

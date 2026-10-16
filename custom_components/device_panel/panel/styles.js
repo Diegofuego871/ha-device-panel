@@ -1491,6 +1491,8 @@ a.dlg-btn { display: inline-flex; align-items: center; justify-content: center; 
 .mg-radio { flex: none; width: 22px; height: 22px; box-sizing: border-box; border: 2px solid var(--dp-divider); border-radius: 50%; }
 .mg-radio.on { border: 7px solid var(--dp-primary); }
 .mg-acts { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 8px; padding-left: 50px; font-size: 13px; }
+/* Ergebnis von "Ausführen" im Fenster mit allen Routinen (seit 2.74.0): unter den Aktionen, bündig mit ihnen */
+.mg-card .rt-ran { margin: 8px 0 0 50px; }
 .linkbtn.danger { color: var(--dp-error); }
 /* Herz der Lieblings-Routine (seit 2.26.0): rechts von "Löschen", mit Abstand, rot wenn gesetzt (wie das Herz der Favoriten-Geräte) */
 .mg-acts .linkbtn.fav { display: inline-flex; align-items: center; margin-left: 14px; color: var(--dp-text2); }
@@ -1501,8 +1503,12 @@ a.dlg-btn { display: inline-flex; align-items: center; justify-content: center; 
 .sub-tabs.mg-filter { grid-auto-flow: column !important; grid-template-columns: none !important; }
 /* Handy: Aktionen der Karten (Bearbeiten, Löschen, Gerät öffnen) mit Fläche für den Finger (seit 2.24.0): grössere Schrift, 44 px Trefferhöhe, mehr Abstand */
 @media (max-width: 700px) {
-  .mg-acts { gap: 0 4px; margin-top: 2px; padding-left: 38px; font-size: 15px; }
+  .mg-acts { gap: 0 2px; margin-top: 2px; padding-left: 38px; font-size: 15px; }
+  .mg-card .rt-ran { margin-left: 38px; }
   .mg-acts .linkbtn, .mg-dfoot .linkbtn { min-height: 44px; padding: 0 12px; }
+  /* Vier Aktionen (Bearbeiten, Ausführen, Löschen, Herz; seit 2.74.0) passen auf 390 px in eine Zeile: etwas weniger Rand links und rechts */
+  .mg-acts .linkbtn { padding: 0 7px; }
+  .mg-acts .linkbtn.fav { margin-left: 10px; }
   .mg-dfoot { padding: 0 14px 0 44px; font-size: 15px; }
 }
 .dlg-btn.danger { border-color: var(--dp-error); color: var(--dp-error); }

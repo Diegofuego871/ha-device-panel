@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.74.0, "Ausführen" im Fenster "Alle Routinen")
+
+- Wunsch des Nutzers (Screenshot der Übersicht): pro Routine "Ausführen". Seit 2.24.1 war es dort bewusst weggelassen; jetzt `routines.js` `overviewCardHtml` immer mit `routine-run`, im Fenster `data-rta`. `device-panel.js` `_rtAllRun` (wie `_rtAllToggle`): `routine_run`, Ergebnis als `all.ran = {id, ok, text}` in der Karte (`[data-rt-ran]`, `.rt-ran`), weil oben in der langen Liste nicht sichtbar; jede andere Aktion setzt `all.ran` zurück; `all.busy` sperrt doppelte Klicks. Handy: `.mg-acts .linkbtn` 7 px seitlich, Herz 10 px Abstand (gemessen: vier Knöpfe auf 390 px DE in einer Zeile, Abstand Löschen-Herz 12 px wie vom Test verlangt). Tests: Suite `routineall` (144).
+
 ## Stand (2.73.0, Status-App mit drei Reitern Dienste/System/Einstellungen)
 
 - Vorschlag des Nutzers, von mir bestätigt: erster Reiter `services` (Teile, `zoneHtml`), zweiter `system` (Kurven, `systemHtml` ohne Überschrift), dritter `settings`. `STATE_TABS` in `status-ui.js`; `open(tab)` setzt den Reiter nur beim frischen Öffnen (sonst bleibt er). Systemwerte (`loadSystem`) nur bei `system` und `settings` (beim Reiterwechsel, beim Öffnen und im 60-s-Takt); `settings` braucht sie für Kandidaten und Quelle. Deep-Link `?app=status&tab=system` (`push.panel_url(app, tab)`, `_deepLink` in `device-panel.js`): die Meldung bei hoher Auslastung in `status.py` nutzt es, die bei Stillstand nicht. Offene Idee, nicht umgesetzt: ein Punkt am Reiter "System", wenn eine Grenze überschritten ist (heute zeigt der erste Reiter und der rote Punkt am Launcher nur die Dienste). Tests: `statustabs` (92), `statussystem` (148, öffnet mit Reiter "System"), `deeplink` (48, neu: `tab=system`), `test_status` (Link).

@@ -707,24 +707,22 @@ export class RoutineUi {
     const acts = confirming
       ? ""
       : `<div class="mg-acts"><button type="button" class="linkbtn" ${this.a(all, "routine-edit")} data-device="${esc(rt.device_id)}" data-id="${esc(rt.id)}">${esc(t("rtActEdit"))}</button>
-        ${
-          // Im Fenster mit allen Routinen: bearbeiten, ein-/ausschalten und löschen (seit 2.24.1), kein Ausführen, kein Neuanlegen
-          all.dlg ? "" : `
-        <button type="button" class="linkbtn" ${this.a(all, "routine-run")} data-id="${esc(rt.id)}">${esc(t("rtActRun"))}</button>`
-        }
+        <button type="button" class="linkbtn" ${this.a(all, "routine-run")} data-id="${esc(rt.id)}"${(all.dlg ? all.busy : this.ui.busy) === rt.id ? " disabled" : ""}>${esc(t("rtActRun"))}</button>
         <button type="button" class="linkbtn danger" ${this.a(all, "routine-delete")} data-id="${esc(rt.id)}">${esc(t("rtActDelete"))}</button>
         <button type="button" class="linkbtn fav${this.isStar(rt.id) ? " on" : ""}" ${this.a(all, "routine-star")} data-id="${esc(rt.id)}" aria-pressed="${this.isStar(rt.id)}" title="${esc(t(this.isStar(rt.id) ? "rtFavRemove" : "rtFavAdd"))}" aria-label="${esc(t(this.isStar(rt.id) ? "rtFavRemove" : "rtFavAdd"))}">${this.h.mdi(this.isStar(rt.id) ? "heart" : "heartOutline", 20)}</button></div>`;
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("rtDeleteAsk", rt.name))}</b><small>${esc(t("rtDeleteNote"))}</small>
           <div class="mg-btns small"><button type="button" class="dlg-btn" ${this.a(all, "routine-delete-no")}>${esc(t("rtCancel"))}</button><button type="button" class="dlg-btn danger" ${this.a(all, "routine-delete-yes")} data-id="${esc(rt.id)}">${esc(t("rtDeleteYes"))}</button></div></div>`
       : "";
+    // Ergebnis von "Ausführen" im Fenster mit allen Routinen (seit 2.74.0): direkt in der Karte, oben in einer langen Liste sähe man es nicht
+    const ran = all.dlg && all.ran?.id === rt.id ? `<div class="${all.ran.ok ? "mg-flash" : "dlg-error"} rt-ran" role="status" data-rt-ran>${esc(all.ran.text)}</div>` : "";
     const status = this.statusHtml(rt);
     // Wartet auf das Zurückschalten: wann, steht in der Zeile (Reiter "Läuft", seit 2.26.0)
     const backWord = rt.reverting && rt.revert_local && opposite(rt.action) ? this.t(`rtRes_${resKey(rt.domain, opposite(rt.action))}`) : "";
     if (backWord) status.unshift(`<span class="mg-on">${esc(rt.back_mode === "restore" ? t("rtBackAtRowRestore", this.localText(rt.revert_local)) : t("rtBackAtRow", backWord, this.localText(rt.revert_local)))}</span>`);
     const next = rt.running ? `<span class="mg-on">${esc(t("rtRunningShort"))}</span>` : rt.kind === "trigger" && rt.enabled ? `<span class="mg-on">${esc(this.waitsText(rt))}</span>` : rt.enabled && rt.due_local ? `${esc(t("rtNextRun"))} <span class="mg-on">${esc(this.localText(rt.due_local))}</span>` : rt.done ? esc(t("rtDone")) : esc(t("rtDisabled"));
     return `<div class="mg-card${rt.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${routineEmoji(rt.domain)}</span>
-      <div class="mg-t"><b>${esc(rt.name)}</b><small>${esc(this.sentence(rt))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${acts}${confirm}</div>`;
+      <div class="mg-t"><b>${esc(rt.name)}</b><small>${esc(this.sentence(rt))}</small><small class="mg-status">${[next, ...status].join(" · ")}</small></div>${sw}</div>${acts}${ran}${confirm}</div>`;
   }
 
   chevHtml(open) {

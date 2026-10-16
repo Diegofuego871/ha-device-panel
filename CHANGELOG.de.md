@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.74.0] - 2026-10-16
+
+Fenster "Alle Routinen": jede Routine lässt sich dort ausführen.
+
+### Hinzugefügt
+
+- Fenster mit allen Routinen (Blitz in der Kopfzeile): Jede Routine hat neben "Bearbeiten" einen Knopf **Ausführen**, wie im Popup des Geräts. Er schaltet sofort, ohne Rückfrage, auch wenn die Routine ausgeschaltet ist; der Zeitplan bleibt, wie er ist, ein Zurückschalten wird geplant. Das Ergebnis steht in der Karte dieser Routine ("Ausgeführt." grün oder "Konnte nicht schalten: …" rot, zum Beispiel "nicht erreichbar"), nicht oben in der langen Liste; die nächste Aktion im Fenster räumt es weg. Die Einleitung des Fensters nennt es mit.
+
+### Geändert
+
+- Handy: Die Aktionen unter einer Routine oder einer Magic-Push-Regel (Bearbeiten, Ausführen, Löschen, Herz) sind seitlich etwas schmaler (7 statt 12 px), damit die vier auf 390 px in eine Zeile passen; die Höhe von 44 px für den Finger bleibt.
+
 ## [2.73.0] - 2026-10-16
 
 Status-App: drei Reiter, "Dienste", "System" und "Einstellungen"; die Meldung bei hoher Auslastung öffnet "System".
@@ -3698,6 +3710,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.74.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.74.0
 [2.73.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.73.0
 [2.72.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.72.0
 [2.71.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.71.0

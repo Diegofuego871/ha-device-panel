@@ -6644,6 +6644,7 @@ class DevicePanel extends HTMLElement {
       const ui = this._routines;
       all.flash = "";
       all.err = "";
+      if (action !== "routine-run") all.ran = null;
       if (action === "routine-reload") {
         all.error = null;
         this._loadRtAll();
@@ -6665,6 +6666,8 @@ class DevicePanel extends HTMLElement {
       } else if (action === "routine-add") {
         // Neue Routine: der Assistent mit dem Schritt "Gerät wählen" davor (seit 2.27.0)
         ui.startNewFromAll();
+      } else if (action === "routine-run") {
+        this._rtAllRun(btn.dataset.id);
       } else if (action === "routine-star") {
         this._toggleRtStar(btn.dataset.id);
         this._renderRtAll();
@@ -6703,6 +6706,30 @@ class DevicePanel extends HTMLElement {
     dlg.addEventListener("close", () => {
       this._rtAll = null;
     });
+  }
+
+  // Ausführen aus dem Fenster mit allen Routinen (seit 2.74.0): wie im Popup sofort, ohne Rückfrage; der Zeitplan bleibt, wie er ist
+  async _rtAllRun(id) {
+    const all = this._rtAll;
+    if (!all || all.busy) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    all.busy = id;
+    all.ran = null;
+    this._renderRtAll();
+    let ran;
+    try {
+      const r = await this._hass.callWS({ type: "device_panel/routine_run", routine_id: id });
+      const i = all.routines.findIndex((x) => x.id === id);
+      if (i >= 0) all.routines[i] = { ...all.routines[i], ...r.routine };
+      this._routines.replaceRoutine(r.routine);
+      ran = { id, ok: r.ok, text: r.ok ? t("rtRunDone") : t("rtRunFailed", t(`rtReason_${r.reason || "error"}`)) };
+    } catch (err) {
+      ran = { id, ok: false, text: t("rtRunFailed", errText(err)) };
+    }
+    all.busy = null;
+    if (this._rtAll !== all) return;
+    all.ran = ran;
+    this._renderRtAll();
   }
 
   async _rtAllToggle(id, enabled) {

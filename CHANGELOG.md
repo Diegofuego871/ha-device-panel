@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.74.0] - 2026-10-16
+
+Window "All routines": every routine can be run from there.
+
+### Added
+
+- Window with all routines (lightning bolt in the header): each routine has a button **Run** next to "Edit", like in the pop-up of the device. It switches at once, without asking, also when the routine is switched off; the schedule stays as it is, a switch-back is planned. The result shows in the card of that routine ("Done." in green or "Could not switch: …" in red, for example "not reachable"), not at the top of the long list; the next action in the window clears it. The introduction of the window names it too.
+
+### Changed
+
+- Phone: the actions under a routine or Magic Push rule (Edit, Run, Delete, heart) are a little narrower at the sides (7 instead of 12 px), so the four fit on one line at 390 px; the height of 44 px for the finger stays.
+
 ## [2.73.0] - 2026-10-16
 
 Status app: three tabs, "Services", "System" and "Settings"; the alert at high load opens "System".
@@ -3597,6 +3609,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.74.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.74.0
 [2.73.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.73.0
 [2.72.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.72.0
 [2.71.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.71.0
