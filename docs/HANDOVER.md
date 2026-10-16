@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.76.0, Status-App nicht mehr ausblendbar)
+
+- Wunsch des Nutzers (Screenshot der Bearbeiten-Liste): Status wie das Protokoll mit Schloss statt Auge, weil dort die Einstellungen der Meldungen liegen; verschieben und als Favorit geht weiter. Routinen und Magic Push bleiben ausblendbar, standardmässig sichtbar. `apps.js`: `status` mit `locked: true` (`isHidden` ignoriert die Angabe in `hidden`, ein früher Ausgeblendeter ist wieder da); Hinweis am Schloss je App `appsLocked_<id>` (`appsLocked_log`, `appsLocked_status`). Test in `launcher-e2e`.
+- Der Screenshot des Nutzers zeigte noch "Läuft das Panel?" unter Status: das ist der Stand vor 2.74.0 (zwischengespeicherte Seite, die Unterzeile entfällt seit 2.74.0).
+
 ## Stand (2.75.0, Magic Push als eigene App mit eigenem Fenster)
 
 - Wunsch des Nutzers (Screenshot der Einstellungen, Reiter "Magic Push"): der ganze Teil raus aus den Einstellungen, eigene App wie Protokoll oder Status, mit eigenem, eigenständigem Pop-up wie bei den Routinen ("sind keine Einstellungen"). Keine Mockups: der Nutzer nannte das Muster selbst (Fenster "Alle Routinen").

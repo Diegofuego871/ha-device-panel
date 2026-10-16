@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.76.0] - 2026-10-16
+
+The app "Status" can no longer be hidden.
+
+### Changed
+
+- App launcher, edit mode: the app **Status** gets a lock instead of the eye, like the log. It can no longer be hidden, because the settings of the alerts live there (when something stops and at high load, recipient, source of the values). Sorting and choosing it as a favorite still work. If someone had already hidden it, it is visible again. **Routines** and **Magic Push** can still be hidden with the eye and are visible by default. The hint on the lock names the reason for each app.
+
 ## [2.75.0] - 2026-10-16
 
 Magic Push is an app of its own with its own window, no longer a tab in the settings.
@@ -3637,6 +3645,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.76.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.76.0
 [2.75.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.75.0
 [2.73.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.73.0
 [2.72.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.72.0

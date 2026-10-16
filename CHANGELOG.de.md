@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.76.0] - 2026-10-16
+
+Die App "Status" lässt sich nicht mehr ausblenden.
+
+### Geändert
+
+- App-Launcher, Bearbeiten: Die App **Status** bekommt wie das Protokoll ein Schloss statt des Auges. Sie lässt sich nicht mehr ausblenden, weil dort die Einstellungen der Meldungen liegen (bei Stillstand und bei hoher Auslastung, Empfänger, Quelle der Werte). Verschieben und als Favorit wählen geht weiterhin. Hatte jemand sie schon ausgeblendet, ist sie wieder sichtbar. **Routinen** und **Magic Push** lassen sich weiterhin mit dem Auge ausblenden und sind standardmässig sichtbar. Der Hinweis am Schloss nennt den Grund je App.
+
 ## [2.75.0] - 2026-10-16
 
 Magic Push ist eine eigene App mit eigenem Fenster und nicht mehr ein Reiter in den Einstellungen.
@@ -3738,6 +3746,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.76.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.76.0
 [2.75.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.75.0
 [2.73.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.73.0
 [2.72.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.72.0

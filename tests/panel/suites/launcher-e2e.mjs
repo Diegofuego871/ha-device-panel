@@ -153,6 +153,12 @@ for (const lang of ["de", "en"]) {
     // Status ohne Zeile unter dem Namen (seit 2.74.0: der Satz "Läuft das Panel?" passte nicht mehr); die anderen Apps behalten ihre
     check(`[${tag}] Bearbeiten: die Zeile "Status" hat keine Unterzeile, kein "undefined"; andere Apps (zum Beispiel Automationen) haben ihre`, await ev(`const row = (id) => r.querySelector('${D} .ap-erow[data-id="' + id + '"]'); const st = row("status"), au = row("auto"); return !!st && !st.querySelector(".ap-t small") && !st.textContent.includes("undefined") && !!au && !!au.querySelector(".ap-t small")`));
     check(`[${tag}] Bearbeiten: Strich vor dem zweiten Favoriten, Ziehgriff, Auge, Herz je Zeile; Protokoll mit Schloss statt Auge`, await ev(`const box = r.querySelector('${D} [data-ap-box="fav"]'); const row = r.querySelector('${D} [data-ap-box="panel"] .ap-erow[data-id="log"]'); return box.children.length === 5 && !!box.children[1].dataset.mark && [...r.querySelectorAll("${D} .ap-erow")].every((e) => e.querySelector("[data-ap-drag]") && e.querySelector('[data-ap="fav"]')) && !row.querySelector('[data-ap="hide"]') && !!row.querySelector(".ap-a.dis")`));
+    // Seit 2.76.0: Status wie das Protokoll mit Schloss (nicht ausblendbar, aber verschiebbar und als Favorit wählbar); Routinen und Magic Push behalten das Auge
+    check(`[${tag}] Bearbeiten: Status mit Schloss statt Auge, verschiebbar, mit Herz; Routinen und Magic Push mit Auge`, await ev(`const row = (id) => r.querySelector('${D} .ap-erow[data-id="' + id + '"]'); const st = row("status"); return !!st && !st.querySelector('[data-ap="hide"]') && !!st.querySelector(".ap-a.dis") && !!st.querySelector("[data-ap-drag]") && !!st.querySelector('[data-ap="fav"]') && ["routine", "magic"].every((id) => !!row(id)?.querySelector('[data-ap="hide"]'))`));
+    // Ein früher ausgeblendeter Status bleibt sichtbar (die Angabe wird ignoriert)
+    await ev(`r.host._apps.data.hidden = ["status", "magic"]; r.host._apps.render?.()`);
+    check(`[${tag}] "status" in der Liste der ausgeblendeten Apps: Status bleibt sichtbar, Magic Push nicht`, await ev(`const a = r.host._apps; const by = (id) => a.app(id); return !a.isHidden(by("status")) && a.isHidden(by("magic"))`));
+    await ev(`r.host._apps.data.hidden = []; r.host._apps.render?.()`);
     await shot("3-bearbeiten");
     await tap(`${D} [data-set="layout"][data-v="list"]`);
     const lay = (await data()).layout;

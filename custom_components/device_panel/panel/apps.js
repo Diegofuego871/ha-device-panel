@@ -25,8 +25,9 @@ const BUILTIN = [
   { id: "routine", group: "panel", icon: "flash", act: "routine" },
   { id: "magic", group: "panel", icon: "bell", act: "magic" },
   { id: "log", group: "panel", icon: "log", act: "log", locked: true },
-  // Status (seit 2.62.0): nur für Administratoren (status_get ist ein Befehl für Administratoren); nicht vorgemerkt, wer ihn in der Kopfzeile will, heftet ihn selbst an
-  { id: "status", group: "panel", icon: "pulse", act: "status", admin: true },
+  // Status (seit 2.62.0): nur für Administratoren (status_get ist ein Befehl für Administratoren); nicht vorgemerkt, wer ihn in der Kopfzeile will, heftet ihn selbst an.
+  // Seit 2.76.0 nicht mehr ausblendbar (locked): dort liegen die Einstellungen der Meldungen
+  { id: "status", group: "panel", icon: "pulse", act: "status", admin: true, locked: true },
   { id: "auto", group: "ha", icon: "robot", path: "/config/automation/dashboard", admin: true },
   { id: "scene", group: "ha", icon: "palette", path: "/config/scene/dashboard", admin: true },
   { id: "script", group: "ha", icon: "script", path: "/config/script/dashboard", admin: true },
@@ -579,7 +580,7 @@ export class AppLauncher {
     const { escape, mdi } = this.h;
     const hid = this.isHidden(a);
     const eye = a.locked
-      ? `<span class="ap-a dis" title="${escape(this.t("appsLocked"))}" aria-label="${escape(this.t("appsLocked"))}">${mdi("lock", 18)}</span>`
+      ? `<span class="ap-a dis" title="${escape(this.t(`appsLocked_${a.id}`))}" aria-label="${escape(this.t(`appsLocked_${a.id}`))}">${mdi("lock", 18)}</span>`
       : `<button type="button" class="ap-a" data-ap="hide" data-id="${escape(a.id)}" aria-pressed="${!hid}" title="${escape(this.t(hid ? "appsShow" : "appsHide", a.name))}" aria-label="${escape(this.t(hid ? "appsShow" : "appsHide", a.name))}">${mdi(hid ? "eyeOff" : "eye", 20)}</button>`;
     const fav = this.data.fav.includes(a.id);
     const full = !fav && this.favs().length >= MAX_FAV;
