@@ -170,7 +170,7 @@ for (const lang of langs) {
     });
 
     await step("settings-", async () => {
-      for (const tabKey of ["outage", "battery", "charge", "new", "updates", "sig", "magic"]) {
+      for (const tabKey of ["outage", "battery", "charge", "new", "updates", "sig"]) {
         await settingsOpen("monitor", tabKey);
         await shotDlg(`settings-${tabKey}`, "dialog.settings");
         await closeDialogs();
@@ -203,6 +203,11 @@ for (const lang of langs) {
       await tap('dialog.rtall-dlg [data-rta="routine-fold-all"]');
       await wait(`return r.querySelectorAll("dialog.rtall-dlg .mg-card").length >= 2`);
       await shotDlg("routines-all", "dialog.rtall-dlg");
+    });
+    await step("magic-all", async () => {
+      await ev(`r.host._openMagicAll()`);
+      await wait(`return r.querySelectorAll("dialog.mgall-dlg .mg-dhead").length >= 2`);
+      await shotDlg("magic-all", "dialog.mgall-dlg");
     });
     await step("routine-", async () => {
       await open("d");

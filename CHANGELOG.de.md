@@ -7,7 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.75.0] - 2026-10-16
+
+Magic Push ist eine eigene App mit eigenem Fenster und nicht mehr ein Reiter in den Einstellungen.
+
+Enthält die Änderungen von 2.74.0.
+
+### Geändert
+
+- Magic Push: Die Übersicht aller Meldungen aller Geräte ist aus den Einstellungen ("Überwachung und Meldungen", Reiter "Magic Push") ausgezogen und öffnet als **eigenes Fenster**, wie "Alle Routinen": Glocke im Kopf, Titel "Magic Push", Untertitel "Alle Geräte", Kreuz zum Schliessen. Es sind keine Einstellungen im eigentlichen Sinn, die Meldungen gehören den Geräten und werden sofort gespeichert. Inhalt und Bedienung sind unverändert: eine Karte pro Gerät, Suche, Filter (Alle, An, Aus, Ausgelöst), Karten ein- und ausklappen, ein- und ausschalten, bearbeiten (öffnet das Fenster des Assistenten), löschen mit Rückfrage und "Gerät öffnen". Neue Meldungen legt man weiterhin im Popup des Geräts an, im Reiter "Magic Push". Das Fenster lädt die Liste nach, wenn ein Geräte-Popup geschlossen wird; nach dem Schliessen und erneuten Öffnen ist die Suche leer.
+- Die App "Magic Push" im Launcher öffnet dieses Fenster (vorher die Einstellungen beim Reiter "Magic Push").
+- Einstellungen, "Überwachung und Meldungen": Der Reiter "Magic Push" entfällt, es bleiben acht Reiter (Übersicht, Ausfall, Batterie, Laden, Neu, Updates, Empfang, Integrationen), auf dem Desktop in vier Spalten und zwei Zeilen. Auch der Eintrag in der Suche der Einstellungen ist weg.
+- README: Das Bild der Übersicht zeigt das neue Fenster (`magic-all.png`, vorher `settings-magic.png`); das Bild der Einstellungen mit den Reitern ist neu aufgenommen.
+
 ## [2.74.0] - 2026-10-16
+
+Nicht veröffentlicht; enthalten in 2.75.0.
 
 Fenster "Alle Routinen": jede Routine lässt sich dort ausführen; Meldung bei hoher Auslastung mit Mindestdauer; Korrekturen aus dem Prüfbericht (Routinen, Push, Texte).
 
@@ -3723,7 +3738,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.74.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.74.0
+[2.75.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.75.0
 [2.73.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.73.0
 [2.72.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.72.0
 [2.71.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.71.0

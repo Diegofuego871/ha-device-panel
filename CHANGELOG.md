@@ -7,7 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.75.0] - 2026-10-16
+
+Magic Push is an app of its own with its own window, no longer a tab in the settings.
+
+Includes the changes from 2.74.0.
+
+### Changed
+
+- Magic Push: the overview of all messages of all devices has moved out of the settings ("Monitoring and notifications", tab "Magic Push") and opens as a **window of its own**, like "All routines": bell in the header, title "Magic Push", subtitle "All devices", cross to close. These are not settings in the true sense, the messages belong to the devices and are saved at once. Content and use are unchanged: one card per device, search, filter (All, On, Off, Triggered), fold cards in and out, switch on and off, edit (opens the window of the assistant), delete with confirmation and "Open device". New messages are still created in the pop-up of the device, in the tab "Magic Push". The window reloads the list when a device pop-up is closed; after closing and opening it again the search is empty.
+- The app "Magic Push" in the launcher opens this window (before: the settings at the tab "Magic Push").
+- Settings, "Monitoring and notifications": the tab "Magic Push" is gone, eight tabs remain (Overview, Outage, Battery, Charging, New, Updates, Signal, Integrations), in four columns and two rows on the desktop. Its entry in the search of the settings is gone too.
+- README: the picture of the overview shows the new window (`magic-all.png`, before `settings-magic.png`); the picture of the settings with the tabs is new.
+
 ## [2.74.0] - 2026-10-16
+
+Not released; included in 2.75.0.
 
 Window "All routines": every routine can be run from there; alert at high load with a minimum duration; fixes from the code review (routines, push, texts).
 
@@ -3622,7 +3637,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.74.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.74.0
+[2.75.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.75.0
 [2.73.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.73.0
 [2.72.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.72.0
 [2.71.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.71.0

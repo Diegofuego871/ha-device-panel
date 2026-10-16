@@ -287,11 +287,11 @@ export class MagicPush {
       if (this.deviceId !== deviceId) return;
       this.error = this.h.errText(err);
       // Aus der Übersicht geöffnet: der Fehler gehört dorthin (es gibt kein Popup, das ihn zeigt)
-      const all = this.standalone ? this.host._settings?.magicAll : null;
+      const all = this.standalone ? this.host._mgAll : null;
       if (all) {
         all.err = this.t("mgLoadError", this.error);
         this._pendingEdit = null;
-        this.host._renderSettings?.();
+        this.host._renderMagicAll?.();
       }
     }
     this.loading = false;
@@ -799,14 +799,14 @@ export class MagicPush {
     return `<div class="mg-card${r.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${emojiFor(e)}</span>${title}${renaming ? "" : sw}</div>${acts}${confirm}</div>`;
   }
 
-  // --- Übersicht aller Meldungen (Reiter "Magic Push" in den Einstellungen, seit 2.10.0) --------------------------
+  // --- Übersicht aller Meldungen (eigenes Fenster der App "Magic Push", seit 2.75.0; bis 2.74.0 ein Reiter in den Einstellungen) --------------------------
 
   // Seit 2.13.0 (docs/mockups/magic-overview-v1, Variante B): pro Gerät eine einklappbare Karte (Kopf mit Symbol, Name,
   // Bereich und Integration, Zahl; zu: Kurzfassung), darin die Meldungen mit Schalter, Bearbeiten und Löschen; darüber
   // Suchfeld und Filter (Alle, An, Aus, Ausgelöst). Neue Meldungen gibt es hier nicht, sie entstehen im Popup des Geräts.
-  // Suche und Filter klappen die Treffer auf; der Zustand "zu/offen" gilt, solange die Einstellungen offen sind.
-  allQuery() {
-    return String(this.host._settings?.search?.magic || "").trim();
+  // Suche und Filter klappen die Treffer auf; der Zustand "zu/offen" gilt, solange das Fenster offen ist.
+  allQuery(all) {
+    return String(all?.query || "").trim();
   }
 
   collate() {
@@ -855,7 +855,7 @@ export class MagicPush {
 
   // Filter aktiv? Dann sind die Treffer aufgeklappt (eigener Zustand, der beim Ändern von Suche und Filter neu beginnt)
   isFiltering(all) {
-    return Boolean(this.allQuery()) || (all.filter || "all") !== "all";
+    return Boolean(this.allQuery(all)) || (all.filter || "all") !== "all";
   }
 
   isOpen(all, id, nGroups) {
@@ -876,7 +876,7 @@ export class MagicPush {
   }
 
   visibleGroups(all, devices) {
-    const q = this.allQuery();
+    const q = this.allQuery(all);
     const filter = all.filter || "all";
     return this.allGroups(all, devices)
       .map((g) => ({ ...g, shown: g.rules.filter((r) => this.passes(r, g, q, filter)) }))
@@ -889,18 +889,18 @@ export class MagicPush {
     let html = `<p class="mg-note">${esc(t("mgAllIntro"))}</p>`;
     if (all.flash) html += `<div class="mg-flash" role="status">${esc(all.flash)}</div>`;
     if (all.error && !all.rules) {
-      return `${html}<div class="dlg-error">${esc(t("mgLoadError", all.error))}</div><button type="button" class="qbtn" data-set="magic-reload">${esc(t("mgRetry"))}</button>`;
+      return `${html}<div class="dlg-error">${esc(t("mgLoadError", all.error))}</div><button type="button" class="qbtn" data-mga="magic-reload">${esc(t("mgRetry"))}</button>`;
     }
     if (all.err) html += `<div class="dlg-error">${esc(all.err)}</div>`;
     if (!all.rules) return `${html}<p class="mg-note">${esc(t("mgLoading"))}</p>`;
     if (!all.rules.length) return `${html}<p class="mg-empty">${esc(t("mgAllEmpty"))}</p>`;
-    const q = String(this.host._settings?.search?.magic || "");
+    const q = String(all.query || "");
     const ph = t("listSearch");
-    html += `<label class="list-search" data-for="magic">${this.h.mdi("search", 18)}<input type="search" data-lsearch="magic" value="${esc(q)}" placeholder="${esc(ph)}" aria-label="${esc(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n"></span>${this.host._fieldClearHtml("data-lclear", "magic", q)}</label>`;
+    html += `<label class="list-search" data-for="magic">${this.h.mdi("search", 18)}<input type="search" data-lsearch="magic" value="${esc(q)}" placeholder="${esc(ph)}" aria-label="${esc(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n"></span>${this.host._fieldClearHtml("data-mga-clear", "magic", q)}</label>`;
     const c = this.allCounts(all.rules);
     const filter = all.filter || "all";
     html += `<div class="sub-tabs mg-tabs mg-filter" role="tablist">${[["all", "mgFilterAll"], ["on", "mgFilterOn"], ["off", "mgFilterOff"], ["fired", "mgFilterFired"]]
-      .map(([k, label]) => `<button type="button" role="tab" class="sub-tab two${k === filter ? " on" : ""}" data-set="magic-filter" data-v="${k}" aria-selected="${k === filter}"><span class="tab-l">${esc(t(label))}</span> <span class="tab-s">${c[k]}</span></button>`)
+      .map(([k, label]) => `<button type="button" role="tab" class="sub-tab two${k === filter ? " on" : ""}" data-mga="magic-filter" data-v="${k}" aria-selected="${k === filter}"><span class="tab-l">${esc(t(label))}</span> <span class="tab-s">${c[k]}</span></button>`)
       .join("")}</div>`;
     return `${html}<div data-mg-all-zone data-q="${esc(q)}">${this.overviewListHtml(all, devices)}</div>`;
   }
@@ -915,7 +915,7 @@ export class MagicPush {
     all.shown = { n: shown, total: all.rules.length, filtering: this.isFiltering(all) };
     if (!groups.length) return `<p class="mg-note mg-none">${esc(t("listSearchNone"))}</p>`;
     const anyOpen = groups.some((g) => this.isOpen(all, g.id, nGroups));
-    let html = `<div class="mg-allcount"><span class="mg-count">${esc(t("mgAllCount", shown, groups.length))}</span><button type="button" class="linkbtn" data-set="magic-fold-all">${esc(t(anyOpen ? "mgFoldAll" : "mgUnfoldAll"))}</button></div>`;
+    let html = `<div class="mg-allcount"><span class="mg-count">${esc(t("mgAllCount", shown, groups.length))}</span><button type="button" class="linkbtn" data-mga="magic-fold-all">${esc(t(anyOpen ? "mgFoldAll" : "mgUnfoldAll"))}</button></div>`;
     for (const g of groups) {
       const open = this.isOpen(all, g.id, nGroups);
       const firing = g.shown.filter((r) => r.enabled && r.active).length;
@@ -925,12 +925,12 @@ export class MagicPush {
           ? `<small>${esc(g.sub)}</small>`
           : ""
         : `<small class="mg-dsum">${esc(t("mgSumMsgs", g.shown.length))}${offN ? ` · ${esc(t("mgSumOff", offN))}` : ""}${firing ? ` · <span class="mg-on">${esc(t("mgSumFired", firing))}</span>` : ""}${g.off ? ` · <span class="mg-warn">${esc(t("mgUnreachable"))}</span>` : ""}</small>`;
-      html += `<div class="mg-dcard${open ? "" : " closed"}"><button type="button" class="mg-dhead" data-set="magic-fold-dev" data-device="${esc(g.id)}" aria-expanded="${open}">
+      html += `<div class="mg-dcard${open ? "" : " closed"}"><button type="button" class="mg-dhead" data-mga="magic-fold-dev" data-device="${esc(g.id)}" aria-expanded="${open}">
         <span class="mg-devic${g.off ? " off" : ""}" aria-hidden="true">${this.h.typeIcon(g.dev?.type || "other", 18)}</span>
         <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span>${g.off && open ? `<span class="mg-devoff">${esc(t("statusOffline"))}</span>` : ""}<span class="mg-badge">${g.shown.length}</span>${this.chevHtml(open)}</button>`;
       if (open) {
         html += g.shown.map((r) => this.overviewCardHtml(r, all)).join("");
-        html += `<div class="mg-dfoot"><button type="button" class="linkbtn" data-set="magic-device" data-device="${esc(g.id)}">${esc(t("mgAllOpenDevice"))} ›</button></div>`;
+        html += `<div class="mg-dfoot"><button type="button" class="linkbtn" data-mga="magic-device" data-device="${esc(g.id)}">${esc(t("mgAllOpenDevice"))} ›</button></div>`;
       }
       html += `</div>`;
     }
@@ -941,14 +941,14 @@ export class MagicPush {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const confirming = all.confirmId === r.id;
-    const sw = `<label class="switch"><input type="checkbox" data-set="magic-toggle" data-id="${esc(r.id)}"${r.enabled ? " checked" : ""} aria-label="${esc(r.name)}"><span></span></label>`;
+    const sw = `<label class="switch"><input type="checkbox" data-mga="magic-toggle" data-id="${esc(r.id)}"${r.enabled ? " checked" : ""} aria-label="${esc(r.name)}"><span></span></label>`;
     const acts = confirming
       ? ""
-      : `<div class="mg-acts"><button type="button" class="linkbtn" data-set="magic-edit" data-device="${esc(r.device_id)}" data-id="${esc(r.id)}">${esc(t("mgActEdit"))}</button>
-        <button type="button" class="linkbtn danger" data-set="magic-delete" data-id="${esc(r.id)}">${esc(t("mgActDelete"))}</button></div>`;
+      : `<div class="mg-acts"><button type="button" class="linkbtn" data-mga="magic-edit" data-device="${esc(r.device_id)}" data-id="${esc(r.id)}">${esc(t("mgActEdit"))}</button>
+        <button type="button" class="linkbtn danger" data-mga="magic-delete" data-id="${esc(r.id)}">${esc(t("mgActDelete"))}</button></div>`;
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("mgDeleteAsk", r.name))}</b><small>${esc(t("mgDeleteNote"))}</small>
-          <div class="mg-btns small"><button type="button" class="dlg-btn" data-set="magic-delete-no">${esc(t("mgCancel"))}</button><button type="button" class="dlg-btn danger" data-set="magic-delete-yes" data-id="${esc(r.id)}">${esc(t("mgDeleteYes"))}</button></div></div>`
+          <div class="mg-btns small"><button type="button" class="dlg-btn" data-mga="magic-delete-no">${esc(t("mgCancel"))}</button><button type="button" class="dlg-btn danger" data-mga="magic-delete-yes" data-id="${esc(r.id)}">${esc(t("mgDeleteYes"))}</button></div></div>`
       : "";
     return `<div class="mg-card${r.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${emojiFor(this.entityOf(r))}</span>
       <div class="mg-t"><b>${esc(r.name)}</b><small>${esc(this.sentence(r))}</small><small class="mg-status">${this.statusParts(r).join(" · ")}</small></div>${sw}</div>${acts}${confirm}</div>`;
@@ -1070,7 +1070,7 @@ export class MagicPush {
     this.closeWin();
     this.paint();
     if (this.standalone) {
-      // Aus der Übersicht in den Einstellungen geöffnet: kein Popup dahinter, die Übersicht neu laden
+      // Aus dem Fenster mit allen Meldungen geöffnet: kein Popup dahinter, die Übersicht neu laden
       this.reset();
       this.host._loadMagicAll?.();
       return;

@@ -3,6 +3,14 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.75.0, Magic Push als eigene App mit eigenem Fenster)
+
+- Wunsch des Nutzers (Screenshot der Einstellungen, Reiter "Magic Push"): der ganze Teil raus aus den Einstellungen, eigene App wie Protokoll oder Status, mit eigenem, eigenständigem Pop-up wie bei den Routinen ("sind keine Einstellungen"). Keine Mockups: der Nutzer nannte das Muster selbst (Fenster "Alle Routinen").
+- Neu `dialog.mgall-dlg` in `device-panel.js`: `_openMagicAll/_closeMagicAll/_renderMagicAllFrame/_renderMagicAll/_loadMagicAll/_bindMagicAll/_magicAllAction/_mgAllStale`, Stand `this._mgAll` (`dlg: true`, `query`), Rumpf `[data-mga-body]`, Aktionen `data-mga="magic-…"`, Suche `data-lsearch="magic"` mit `data-mga-clear`, Schliessen `data-mga-close`. Der "close"-Hörer setzt `_mgAll` nur zurück, wenn das Fenster nicht schon wieder offen ist (das Ereignis kommt verzögert). `magic-push.js` `overviewHtml` und Verwandte lesen die Suche aus `all.query`; `standalone` meldet Fehler an `host._mgAll`. App `magic` in `apps.js` ruft `_openMagicAll()`. Nach dem Schliessen eines Geräte-Popups lädt `_loadMagicAll()` (ohne Wirkung, wenn das Fenster zu ist).
+- Aus den Einstellungen entfernt: Reiter `magic` (`MON_TAB_KEYS`, Reiterliste, `_monMagicHtml`), `st.magicAll`, Suche `search.magic`, Hörer. Die Reiterleiste hat acht Reiter (Desktop vier Spalten, Handy ebenfalls vier, siehe `styles.js` `nth-child(8)`). `_openSettings(tab)` behält den Parameter, nichts ruft ihn mehr mit einem Reiter auf. CSS: `mgall-dlg` überall neben `rtall-dlg`.
+- Tests: `magicall-e2e` neu auf das Fenster (acht Reiter in den Einstellungen, Fenster ohne Plus, übrige Prüfungen wie zuvor), `launcher-e2e` (Magic Push öffnet das Fenster). `readme-shots.mjs` nimmt `magic-all` statt `settings-magic` auf. In dieser Sitzung lief Chromium nur mit `CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`.
+- Offen, vom Nutzer zu entscheiden: Empfänger der Status-Meldungen (Empfehlung: eigener Abschnitt "Empfänger der Meldungen" oben, ohne Backend-Änderung); Geräte ohne aktivierte Entität (zum Beispiel reiner Bluetooth-Proxy) werden nicht gelistet (Hinweis in die README oder Anzeige "nicht überwachbar").
+
 ## Stand (2.74.0, Korrekturen aus dem Prüfbericht)
 
 - Prüfbericht (gesamtes Repository) und Freigabe des Nutzers: W1 `routines.py` `_async_process` misst die Verspätung ab dem Start der Verarbeitung (`queued`), nicht erst nach der Sperre (kein Zeitlimit um den Schaltbefehl, Entscheid des Nutzers); W2 doppelter Schlüssel `integNone` (Liste: `integNoneList`); W3 `status.py` Uhrzeit mit `dt_util.now()`. Push: `push.async_push` wiederholt bei vorübergehenden Fehlern einmal mit denselben Zusatzdaten (`RETRY_DELAY_S`), nur bei `_REJECTED` (Prüffehler) gleich ohne. Status-Fenster fragt nicht ab, solange das Dokument verdeckt ist. `pytest.ini`: `error::DeprecationWarning:custom_components`. Entfernt: 14 ungenutzte Texte (u. a. `app_status_sub`: die Bearbeiten-Liste im Launcher zeigt bei "Status" keine Unterzeile), `level_of`, `recent`, `LIST_OPTIONS`, `CATEGORIES`, `WS_TYPE_LIST_DEVICES`, `ROUTINES_CATCH_UP_CHOICES`, `DOMAINS`. Danach auf Wunsch des Nutzers (Protokoll: CPU-Meldungen, aber 100-%-Spitze nicht auf der Kurve): `system_stats.thin_peaks` (je Abschnitt der höchste Wert statt Mittel, nur CPU/RAM; `thin` mittelte, "Spitze" nahm Rohwerte) und Option `status_load_minutes` (1 bis 60, Standard 3; Zahl der Prüfungen in Folge, ersetzt die feste `LOAD_HOLD`; eine Zeile "Mindestdauer" in `loadHtml`, `MINUTES_KEY`, `intBad`). Bewusst nicht gemacht (Empfehlung "Lassen"): teilweise gescheitertes Einrichten, Favicon-Abruf im eigenen Netz; optional offen: Lint-Kleinigkeiten (`asyncio.TimeoutError`, `zip` ohne `strict`). Tests: `tests/test_audit_fixes.py` (7), Suite `launcher` (Unterzeile).
@@ -232,8 +240,8 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
   gewinnt, `sanitizeApps` prüft alles). Höchstens 5 Favoriten (`MAX_FAV`; Herzen nur im Bearbeiten-Modus, ein Favorit steht nur im Abschnitt Favoriten), am Handy nur der erste in der Kopfzeile (der Strich dazu nur im Bearbeiten-Modus, nicht in der normalen Ansicht). Raster/Liste getrennt für
   Desktop und Handy (`layout.desktop`/`layout.phone`). Protokoll (`locked`) nicht ausblendbar und nur noch hier (Knopf im Kopf der Einstellungen
   entfernt). Externe Links: `<a target="_blank" rel="noopener noreferrer">`, nur https/http (`checkTarget`). Hinweise mit "Rückgängig" erscheinen
-  im Fenster (`snack`), weil der Toast der Seite unter dem modalen Fenster liegt. `_openSettings(tab)` nimmt den Reiter (Magic Push aus dem
-  Launcher). Suite `launcher-e2e`; `log`, `busy`, `routineall` angepasst.
+  im Fenster (`snack`), weil der Toast der Seite unter dem modalen Fenster liegt. `_openSettings(tab)` nahm den Reiter (bis 2.74.0 Magic Push aus dem
+  Launcher, seit 2.75.0 öffnet die App ein eigenes Fenster). Suite `launcher-e2e`; `log`, `busy`, `routineall` angepasst.
 
 ## Stand (2.23.1, Auto-Update bei jeder Erkennung)
 

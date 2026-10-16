@@ -397,8 +397,6 @@ const MON_TAB_KEYS = {
   new: ["notify_service_new", "notify_new", "new_window", "new_persistent", "new_fields", "emoji_new"],
   updates: ["notify_service_updates", "notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include", "emoji_updates"],
   sig: ["signal_low", "reset_signal"],
-  // Magic Push (seit 2.10.0): die Meldungen gehören den Geräten und werden sofort gespeichert, nicht mit "Speichern"
-  magic: [],
   integ: ["offline_after_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
 
@@ -1339,7 +1337,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
@@ -1469,6 +1467,7 @@ class DevicePanel extends HTMLElement {
     this._bindPulse(root.querySelector("dialog.pulse-dlg"));
     this._bindLog(root.querySelector("dialog.log-dlg"));
     this._bindRtAll(root.querySelector("dialog.rtall-dlg"));
+    this._bindMagicAll(root.querySelector("dialog.mgall-dlg"));
     this._status.bind(root.querySelector("dialog.status-dlg"));
     this._bindPrompt(root.querySelector("dialog.prompt-dlg"));
     this._bindNotes(root.querySelector("dialog.notes-dlg"));
@@ -4009,10 +4008,8 @@ class DevicePanel extends HTMLElement {
     this._hist = null;
     this._magic.reset();
     this._routines.reset();
-    // Im Popup können Meldungen geändert worden sein: die Übersicht in den Einstellungen neu laden
-    if (this._settings?.magicAll) {
-      this._loadMagicAll();
-    }
+    // Im Popup können Meldungen geändert worden sein: die Fenster mit allen Meldungen und Routinen neu laden
+    this._loadMagicAll();
     this._loadRtAll();
   }
 
@@ -5323,7 +5320,7 @@ class DevicePanel extends HTMLElement {
   // set_options) plus die gemeinsamen Panel-Einstellungen (Vorabversionen).
   // Gespeichert wird erst mit "Speichern"; der Entwurf lebt nur im Dialog.
 
-  // tab: Abschnitt, bei dem die Einstellungen öffnen (zum Beispiel "magic" aus dem App-Launcher)
+  // tab: Abschnitt, bei dem die Einstellungen öffnen (seit 2.75.0 ruft niemand mehr mit einem Reiter auf)
   // Startseite (seit 2.39.0, gilt seit 2.39.1 erst mit "Speichern"): Ist dieses Panel die Startseite des Benutzers? Das Frontend von HA liest default_panel aus den Benutzerdaten
   // "core" (userData.default_panel) vor der Systemeinstellung. Die Auswahl im Profil kennt nur eingebaute Seiten und Dashboards, nicht
   // das Panel einer Integration; deshalb setzt das Panel den Wert selbst. Wie alles andere gilt die Wahl erst mit "Speichern"
@@ -6263,21 +6260,6 @@ class DevicePanel extends HTMLElement {
 
   _applyListSearch(root) {
     const st = this._settings;
-    // Übersicht Magic Push (seit 2.13.0): Karten statt Zeilen, darum eigener Neuaufbau des Listenteils bei geänderter Suche
-    const zone = root.querySelector("[data-mg-all-zone]");
-    if (zone && st?.magicAll?.rules) {
-      const q = String(st.search?.magic || "");
-      if (zone.dataset.q !== q) {
-        zone.dataset.q = q;
-        st.magicAll.sopen = {};
-        zone.innerHTML = this._magic.overviewListHtml(st.magicAll, this._devices);
-      }
-      const sh = st.magicAll.shown;
-      const cnt = root.querySelector('.list-search[data-for="magic"] .n');
-      if (cnt && sh) cnt.textContent = sh.filtering ? this._t("listSearchOf", sh.n, sh.total) : "";
-      const x = root.querySelector('[data-lclear="magic"]');
-      if (x) x.hidden = !q;
-    }
     for (const wrap of root.querySelectorAll(".srch-rows[data-srch]")) {
       const key = wrap.dataset.srch;
       const q = String(st?.search?.[key] || "").trim().toLowerCase();
@@ -6481,7 +6463,7 @@ class DevicePanel extends HTMLElement {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
     const tab = MON_TAB_KEYS[st.tab] ? st.tab : "overview";
-    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["charge", "tabCharge"], ["new", "tabNew"], ["updates", "tabUpdates"], ["sig", "tabSignal"], ["magic", "tabMagic"], ["integ", "tabInteg"]]
+    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["charge", "tabCharge"], ["new", "tabNew"], ["updates", "tabUpdates"], ["sig", "tabSignal"], ["integ", "tabInteg"]]
       .map(([id, key]) => {
         const keys = MON_TAB_KEYS[id];
         // Punkt am Reiter: dort gibt es eine Änderung (blau) oder einen Fehler (rot).
@@ -6502,37 +6484,10 @@ class DevicePanel extends HTMLElement {
             ? this._monUpdatesHtml(d, changes, errors, ui)
           : tab === "sig"
             ? this._monSigHtml(d)
-          : tab === "magic"
-            ? this._monMagicHtml()
           : tab === "integ"
             ? this._monIntegHtml(d, changes, errors)
             : this._monOverviewHtml(d, errors, ui);
     return `<div class="mon-tabs" role="tablist">${tabs}</div><div class="mon-body" role="tabpanel">${body}</div>`;
-  }
-
-  // Magic Push (seit 2.10.0): alle Meldungen aller Geräte, nach Gerät. Die Liste wird beim ersten Zeigen geladen und nach dem
-  // Schliessen eines Geräte-Popups neu (dort kann man sie ändern).
-  _monMagicHtml() {
-    const st = this._settings;
-    if (!st.magicAll) {
-      st.magicAll = { rules: null, error: null, confirmId: null, flash: "", err: "", filter: "all", open: {}, sopen: {} };
-      this._loadMagicAll();
-    }
-    return this._magic.overviewHtml(st.magicAll, this._devices);
-  }
-
-  async _loadMagicAll() {
-    const st = this._settings;
-    if (!st?.magicAll) return;
-    const all = st.magicAll;
-    try {
-      const r = await this._hass.callWS({ type: "device_panel/magic_list" });
-      all.rules = r.rules;
-      all.error = null;
-    } catch (err) {
-      all.error = errText(err);
-    }
-    if (this._settings === st) this._renderSettings();
   }
 
   // --- Fenster "Alle Routinen" (seit 2.22.0): Glocke in der Kopfzeile, Vollbild, alle Routinen aller Geräte ---------------------------
@@ -6745,10 +6700,139 @@ class DevicePanel extends HTMLElement {
     if (this._rtAll === all) this._renderRtAll();
   }
 
-  async _magicAllAction(action, btn) {
-    const st = this._settings;
-    const all = st?.magicAll;
+  // --- Fenster "Magic Push" (seit 2.75.0): eigene App wie Routinen, alle Meldungen aller Geräte, nach Gerät ------------------------
+  // Vorher ein Reiter in den Einstellungen; die Meldungen gehören den Geräten und werden sofort gespeichert, es sind keine
+  // Einstellungen. Nur ansehen, bearbeiten, ein-/ausschalten und löschen; neue Meldungen gibt es im Popup eines Geräts.
+  _openMagicAll() {
+    const dlg = this.shadowRoot.querySelector("dialog.mgall-dlg");
+    if (!dlg) return;
+    this._mgAll = { dlg: true, rules: null, error: null, confirmId: null, flash: "", err: "", filter: "all", open: {}, sopen: {}, query: "" };
+    this._renderMagicAllFrame();
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+    if (window.matchMedia?.(TOUCH_QUERY).matches) this.shadowRoot.activeElement?.blur();
+    this._loadMagicAll();
+  }
+
+  // Die Liste wurde ohne den Zwischenspeicher von setHtml verändert (Suche tippen, Ausklappen): beim nächsten vollen Neuzeichnen
+  // darf dieser nicht "unverändert" melden, sonst bliebe die alte Liste stehen
+  _mgAllStale(dlg) {
+    const body = dlg.querySelector("[data-mga-body]");
+    if (body) lastHtml.delete(body);
+  }
+
+  _closeMagicAll() {
+    const dlg = this.shadowRoot.querySelector("dialog.mgall-dlg");
+    this._mgAll = null;
+    if (dlg?.open) {
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    }
+  }
+
+  _renderMagicAllFrame() {
+    const dlg = this.shadowRoot.querySelector("dialog.mgall-dlg");
+    const t = (k, ...a) => this._t(k, ...a);
+    dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("bell", 28)}</span>
+        <div class="dlg-title"><h2>${escape(t("mgAllTitle"))}</h2><div class="dlg-sub">${escape(t("mgAllSub"))}</div></div>
+        <button type="button" class="dlg-close" data-mga-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+      <div class="dlg-body"><div class="rt-all-wrap" data-mga-body></div></div>`;
+    this._renderMagicAll();
+  }
+
+  _renderMagicAll() {
+    const all = this._mgAll;
+    const body = this.shadowRoot.querySelector("dialog.mgall-dlg [data-mga-body]");
+    if (!all || !body) return;
+    // Beim Neuzeichnen die Suche behalten (Fokus und Cursor), sonst ginge die Eingabe verloren
+    const focus = this.shadowRoot.activeElement?.matches?.("[data-lsearch]") ? this.shadowRoot.activeElement : null;
+    const pos = focus ? [focus.selectionStart, focus.selectionEnd] : null;
+    const scroll = body.closest(".dlg-body")?.scrollTop || 0;
+    setHtml(body, this._magic.overviewHtml(all, this._devices));
+    const sh = all.shown;
+    const cnt = body.querySelector(".list-search .n");
+    if (cnt && sh) cnt.textContent = sh.filtering ? this._t("listSearchOf", sh.n, sh.total) : "";
+    const dlgBody = body.closest(".dlg-body");
+    if (dlgBody) dlgBody.scrollTop = scroll;
+    if (focus) {
+      const input = body.querySelector("[data-lsearch]");
+      input?.focus();
+      if (input && pos) input.setSelectionRange(pos[0], pos[1]);
+    }
+  }
+
+  async _loadMagicAll() {
+    const all = this._mgAll;
     if (!all) return;
+    try {
+      const r = await this._hass.callWS({ type: "device_panel/magic_list" });
+      all.rules = r.rules;
+      all.error = null;
+    } catch (err) {
+      all.error = errText(err);
+    }
+    if (this._mgAll === all) this._renderMagicAll();
+  }
+
+  _bindMagicAll(dlg) {
+    this._trackBusy(dlg);
+    dlg.addEventListener("click", (ev) => {
+      if (ev.target === dlg) {
+        const r = dlg.getBoundingClientRect();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closeMagicAll();
+        return;
+      }
+      const all = this._mgAll;
+      if (!all) return;
+      if (ev.target.closest("[data-mga-close]")) {
+        this._closeMagicAll();
+        return;
+      }
+      const clear = ev.target.closest("[data-mga-clear]");
+      if (clear) {
+        all.query = "";
+        all.sopen = {};
+        this._renderMagicAll();
+        // Hat das Feld den Fokus, behält das Neuzeichnen seinen Text: ausdrücklich leeren
+        const field = dlg.querySelector("input[data-lsearch]");
+        if (field) field.value = "";
+        return;
+      }
+      const btn = ev.target.closest("button[data-mga]");
+      if (!btn || btn.disabled) return;
+      this._magicAllAction(btn.dataset.mga, btn);
+    });
+    dlg.addEventListener("change", (ev) => {
+      const el = ev.target;
+      if (el.matches?.('input[data-mga="magic-toggle"]')) this._magicAllAction("magic-toggle", el);
+    });
+    dlg.addEventListener("input", (ev) => {
+      const el = ev.target;
+      const all = this._mgAll;
+      if (!all || !el.matches?.("[data-lsearch]")) return;
+      all.query = el.value;
+      all.sopen = {};
+      // Nur die Liste neu zeichnen, das Suchfeld behält Fokus und Cursor
+      const zone = dlg.querySelector("[data-mg-all-zone]");
+      if (zone) zone.innerHTML = this._magic.overviewListHtml(all, this._devices);
+      this._mgAllStale(dlg);
+      const cnt = dlg.querySelector(".list-search .n");
+      if (cnt && all.shown) cnt.textContent = all.shown.filtering ? this._t("listSearchOf", all.shown.n, all.shown.total) : "";
+      const x = dlg.querySelector("[data-mga-clear]");
+      if (x) x.hidden = !el.value;
+    });
+    // "close" kommt verzögert: wurde das Fenster inzwischen neu geöffnet, gehört der Stand dem neuen Öffnen
+    dlg.addEventListener("close", () => {
+      if (!dlg.open) this._mgAll = null;
+    });
+  }
+
+  async _magicAllAction(action, btn) {
+    const all = this._mgAll;
+    if (!all) return;
+    const dlg = this.shadowRoot.querySelector("dialog.mgall-dlg");
     const t = (k, ...a) => this._t(k, ...a);
     const id = btn.dataset.id;
     all.flash = "";
@@ -6766,14 +6850,15 @@ class DevicePanel extends HTMLElement {
     if (action === "magic-filter") {
       all.filter = btn.dataset.v;
       all.sopen = {};
-      if (this._settings === st) this._renderSettings();
+      this._renderMagicAll();
       return;
     }
     if (action === "magic-fold-dev" || action === "magic-fold-all") {
       if (action === "magic-fold-dev") this._magic.toggleFold(all, this._devices, btn.dataset.device);
       else this._magic.foldAll(all, this._devices);
-      const zone = this.shadowRoot.querySelector("dialog.settings [data-mg-all-zone]");
+      const zone = dlg?.querySelector("[data-mg-all-zone]");
       if (zone) zone.innerHTML = this._magic.overviewListHtml(all, this._devices);
+      if (dlg) this._mgAllStale(dlg);
       return;
     }
     if (action === "magic-edit") {
@@ -6802,7 +6887,7 @@ class DevicePanel extends HTMLElement {
         all.err = t("mgListError", errText(err));
       }
     }
-    if (this._settings === st) this._renderSettings();
+    if (this._mgAll === all) this._renderMagicAll();
   }
 
   // Zeitstrahl: Linie mit Marken in festen Abständen (nicht massstäblich). Eine Marke hat
@@ -7943,7 +8028,6 @@ class DevicePanel extends HTMLElement {
       const st = this._settings;
       const action = btn.dataset.set;
       if (action === "close") this._requestCloseSettings();
-      else if (action.startsWith("magic-") && action !== "magic-toggle") this._magicAllAction(action, btn);
       else if (action === "save") this._saveSettings();
       else if (action === "tab" || action === "goto" || action === "integ" || action === "ifilter") {
         // Reiter, Sprung aus Übersicht oder Abschnitt "Integrationen", Liste
@@ -8148,10 +8232,6 @@ class DevicePanel extends HTMLElement {
     dialog.addEventListener("change", (ev) => {
       const st = this._settings;
       const el = ev.target;
-      if (el.matches?.('input[data-set="magic-toggle"]')) {
-        this._magicAllAction("magic-toggle", el);
-        return;
-      }
       if (st?.draft && el.tagName === "SELECT" && el.dataset.cfull !== undefined) {
         // "own": mit einem Wert ausserhalb der Stufen beginnen (der bisherige eigene Wert, sonst 85).
         st.draft.charge_full = el.value === "own" ? (Number.isInteger(st.draft.charge_full) && !CHARGE_FULL_PRESETS.includes(st.draft.charge_full) ? st.draft.charge_full : CHARGE_FULL_OWN_START) : Number(el.value);

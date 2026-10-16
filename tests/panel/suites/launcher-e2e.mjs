@@ -137,10 +137,10 @@ for (const lang of ["de", "en"]) {
     await wait(`return !r.querySelector("dialog.log-dlg").open`);
     await open();
     await tap(`${D} .ap-grid [data-ap="open"][data-id="magic"]`);
-    check(`[${tag}] Magic Push: Einstellungen öffnen beim Reiter Magic Push`, await wait(`const s = r.querySelector("dialog.settings"); return s?.open && !!s.querySelector('[data-set="tab"][data-key="magic"].on')`));
+    check(`[${tag}] Magic Push: eigenes Fenster, keine Einstellungen`, await wait(`const m = r.querySelector("dialog.mgall-dlg"); return m?.open && !r.querySelector("dialog.settings").open && !r.querySelector("${D}").open`));
     await p.waitForTimeout(800);
-    await tap('dialog.settings [data-set="close"]');
-    await wait(`return !r.querySelector("dialog.settings").open`);
+    await tap("dialog.mgall-dlg [data-mga-close]");
+    await wait(`return !r.querySelector("dialog.mgall-dlg").open`);
     await tap(".toolbar .app-pin[data-app-pin=\"routine\"]");
     check(`[${tag}] Routinen-Knopf in der Kopfzeile öffnet "Alle Routinen"`, await wait(`return r.querySelector("dialog.rtall-dlg")?.open`));
     await ev(`r.querySelector("dialog.rtall-dlg").close()`);

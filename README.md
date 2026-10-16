@@ -150,11 +150,11 @@ Your own notifications per device without an automation, in the tab "Magic Push"
 - **Recipient:** any notify target, optionally as a critical notification with a volume from 1 to 10, and how often to repeat
 - **Text:** title and content with variables that fit the value (name, value, unit, threshold, area and more), a preview and a look back at the last 24 hours before you save
 - **Assistant:** opens in its own window (full screen on the phone), five steps: conditions, how long, delivery, text, name
-- **Overview:** one list in the settings shows all messages of all devices, one card per device, with search and filter
+- **Overview:** the app "Magic Push" (in the launcher) opens a window with all messages of all devices, one card per device, with search and filter
 
 <p align="center"><img src="docs/screenshots/en/magic-wizard.png" alt="Magic Push assistant, step 1: what should be monitored" width="560"></p>
 
-<p align="center"><img src="docs/screenshots/en/settings-magic.png" alt="Settings: all Magic Push messages of all devices, one card per device" width="720"></p>
+<p align="center"><img src="docs/screenshots/en/magic-all.png" alt="Window Magic Push: all messages of all devices, one card per device" width="720"></p>
 
 ## Routines
 
@@ -199,7 +199,7 @@ The gear opens all settings in German or English, in sections. The version bar o
 | <img src="docs/screenshots/en/settings-section-devices.png" alt="Section Devices in the panel"> | <img src="docs/screenshots/en/settings-section-look.png" alt="Section View with start page and filter chips"> | <img src="docs/screenshots/en/settings-section-routines.png" alt="Section Routines"> | <img src="docs/screenshots/en/settings-section-updates.png" alt="Section Panel version with daily check and automatic installation"> |
 
 - **Devices in the panel:** hide integrations, device types and single devices, set type and connection type per integration, see and reset devices with their own settings
-- **Monitoring and notifications:** the tabs Overview (a timeline per notification), Outage, Battery, Charging, New, Updates, Signal, Magic Push and Integrations
+- **Monitoring and notifications:** the tabs Overview (a timeline per notification), Outage, Battery, Charging, New, Updates, Signal and Integrations
 - **View:** start page and filter chips (show, hide, reorder, pin)
 - **Routines and AI assessment:** pause, catch-up window, recipient; AI task and prompt
 - **Status app:** whether the parts of the integration run, with push alerts and a restart button (also an alert when CPU, memory or disk reach a limit you set, default 99 %, for a minimum duration you set, default 3 minutes); below, small graphs for CPU, memory and disk of Home Assistant (24 hours; the disk also 30 days, 6 months, 1 year), from the sensors of "System Monitor" or your own (chosen from a searchable list of sensor entities; switched-off sensors can be switched on with one button). Three tabs: "Services" (the parts), "System" (the graphs) and "Settings" (alerts, limits, sources; they only apply after "Save").

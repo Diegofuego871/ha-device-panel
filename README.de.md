@@ -150,11 +150,11 @@ Eigene Meldungen pro Gerät ohne Automation, im Reiter "Magic Push" des Geräts.
 - **Empfänger:** jedes Notify-Ziel, auf Wunsch als kritische Mitteilung mit einer Lautstärke von 1 bis 10, und wie oft wiederholt wird
 - **Text:** Titel und Inhalt mit Variablen, die zum Wert passen (Name, Wert, Einheit, Schwelle, Bereich und mehr), mit Vorschau und einem Rückblick auf die letzten 24 Stunden vor dem Speichern
 - **Assistent:** öffnet in einem eigenen Fenster (Vollbild auf dem Handy), fünf Schritte: Bedingungen, wie lange, Versand, Text, Name
-- **Übersicht:** eine Liste in den Einstellungen zeigt alle Meldungen aller Geräte, eine Karte pro Gerät, mit Suche und Filter
+- **Übersicht:** die App "Magic Push" (im Launcher) öffnet ein Fenster mit allen Meldungen aller Geräte, eine Karte pro Gerät, mit Suche und Filter
 
 <p align="center"><img src="docs/screenshots/de/magic-wizard.png" alt="Magic-Push-Assistent, Schritt 1: Was soll überwacht werden" width="560"></p>
 
-<p align="center"><img src="docs/screenshots/de/settings-magic.png" alt="Einstellungen: alle Magic-Push-Meldungen aller Geräte, eine Karte pro Gerät" width="720"></p>
+<p align="center"><img src="docs/screenshots/de/magic-all.png" alt="Fenster Magic Push: alle Meldungen aller Geräte, eine Karte pro Gerät" width="720"></p>
 
 ## Routinen
 
@@ -199,7 +199,7 @@ Das Zahnrad öffnet alle Einstellungen auf Deutsch oder Englisch, in Abschnitten
 | <img src="docs/screenshots/de/settings-section-devices.png" alt="Abschnitt Geräte im Panel"> | <img src="docs/screenshots/de/settings-section-look.png" alt="Abschnitt Ansicht mit Startseite und Filter-Chips"> | <img src="docs/screenshots/de/settings-section-routines.png" alt="Abschnitt Routine"> | <img src="docs/screenshots/de/settings-section-updates.png" alt="Abschnitt Panel-Version mit täglicher Prüfung und automatischer Installation"> |
 
 - **Geräte im Panel:** Integrationen, Gerätetypen und einzelne Geräte ausblenden, Typ und Verbindungsart pro Integration festlegen, Geräte mit eigenen Einstellungen sehen und zurücksetzen
-- **Überwachung und Meldungen:** die Reiter Übersicht (ein Zeitstrahl pro Meldung), Ausfall, Batterie, Laden, Neu, Updates, Empfang, Magic Push und Integrationen
+- **Überwachung und Meldungen:** die Reiter Übersicht (ein Zeitstrahl pro Meldung), Ausfall, Batterie, Laden, Neu, Updates, Empfang und Integrationen
 - **Ansicht:** Startseite und Filter-Chips (zeigen, ausblenden, umordnen, anheften)
 - **Routinen und KI-Einschätzung:** Pause, Nachhol-Fenster, Empfänger; KI-Aufgabe und Prompt
 - **Status-App:** ob die Teile der Integration laufen, mit Push-Meldung und Neustart-Knopf (auch eine Meldung, wenn CPU, Arbeitsspeicher oder Festplatte eine frei wählbare Grenze erreichen, Standard 99 %, für eine frei wählbare Mindestdauer, Standard 3 Minuten); darunter kleine Grafiken zu CPU, Arbeitsspeicher und Festplatte von Home Assistant (24 Stunden; die Festplatte auch 30 Tage, 6 Monate, 1 Jahr), aus den Sensoren von "System Monitor" oder eigenen (aus einer durchsuchbaren Liste von Sensor-Entitäten gewählt; ausgeschaltete Sensoren lassen sich mit einem Knopf einschalten). Drei Reiter: "Dienste" (die Teile), "System" (die Grafiken) und "Einstellungen" (Meldungen, Grenzen, Quellen; sie gelten erst nach "Speichern").

@@ -360,7 +360,7 @@ export class AppLauncher {
     if (!a || a.ext) return;
     this.close();
     if (a.act === "routine") this.host._openRtAll();
-    else if (a.act === "magic") this.host._openSettings("magic");
+    else if (a.act === "magic") this.host._openMagicAll();
     else if (a.act === "log") this.host._openLog();
     else if (a.act === "status") this.host._status.open();
     else if (a.path || a.url) this.host._navigate(a.path || a.url);
