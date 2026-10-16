@@ -358,7 +358,7 @@ export class StatusUi {
     const dlg = this.dlg;
     const { escape, mdi } = this.h;
     dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("pulse", 28)}</span>
-        <div class="dlg-title"><h2>${escape(this.t("stTitle"))}</h2><div class="dlg-sub">${escape(this.t("stSub"))}</div></div>
+        <div class="dlg-title"><h2>${escape(this.t("stTitle"))}</h2></div>
         <button type="button" class="dlg-close" data-st-close title="${escape(this.t("close"))}" aria-label="${escape(this.t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body"><div class="st-wrap" data-st-body></div></div><div data-st-foot></div>`;
     this.render();

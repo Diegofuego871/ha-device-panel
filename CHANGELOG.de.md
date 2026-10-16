@@ -15,6 +15,7 @@ Status-App: drei Reiter, "Dienste", "System" und "Einstellungen"; die Meldung be
 
 - Status-App: Die Grafiken haben einen eigenen Reiter. Die Reiter heissen jetzt **Dienste** (die Teile der Integration mit ihren Pillen und Neustart-Knöpfen; das war "Zustand"), **System** (Prozessor, Arbeitsspeicher und Festplatte als Grafiken, ohne eigene Überschrift) und **Einstellungen** (unverändert: Meldungen, Grenzen, Quelle der Werte, gespeichert mit "Speichern"). Das Fenster öffnet auf "Dienste". Die Systemwerte werden nur geholt, solange "System" oder "Einstellungen" offen ist, nicht mehr alle 60 Sekunden im Hintergrund.
 - Der Push bei hoher Auslastung öffnet die Status-App gleich im Reiter "System": Sein Link ist `/device-panel?app=status&tab=system`. Der Push bei einem stehenden Teil öffnet weiter "Dienste". Der Parameter `tab` (`services`, `system`, `settings`) verschwindet danach aus der Adresse, wie `app`.
+- Status-App: Die Zeile "Läuft das Panel?" unter dem Titel des Fensters entfällt; sie passt nicht mehr, seit die App auch das System zeigt.
 
 ## [2.72.0] - 2026-10-16
 

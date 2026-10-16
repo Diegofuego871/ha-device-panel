@@ -6,6 +6,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 ## Stand (2.73.0, Status-App mit drei Reitern Dienste/System/Einstellungen)
 
 - Vorschlag des Nutzers, von mir bestätigt: erster Reiter `services` (Teile, `zoneHtml`), zweiter `system` (Kurven, `systemHtml` ohne Überschrift), dritter `settings`. `STATE_TABS` in `status-ui.js`; `open(tab)` setzt den Reiter nur beim frischen Öffnen (sonst bleibt er). Systemwerte (`loadSystem`) nur bei `system` und `settings` (beim Reiterwechsel, beim Öffnen und im 60-s-Takt); `settings` braucht sie für Kandidaten und Quelle. Deep-Link `?app=status&tab=system` (`push.panel_url(app, tab)`, `_deepLink` in `device-panel.js`): die Meldung bei hoher Auslastung in `status.py` nutzt es, die bei Stillstand nicht. Offene Idee, nicht umgesetzt: ein Punkt am Reiter "System", wenn eine Grenze überschritten ist (heute zeigt der erste Reiter und der rote Punkt am Launcher nur die Dienste). Tests: `statustabs` (92), `statussystem` (148, öffnet mit Reiter "System"), `deeplink` (48, neu: `tab=system`), `test_status` (Link).
+- Die Zeile "Läuft das Panel?" unter dem Titel entfällt (Wunsch des Nutzers, passt nicht mehr): `stSub` gestrichen, Titel im Kopf mittig zum Symbol (`dialog.status-dlg .dlg-title` in `styles.js`). Die Kachel im Launcher trägt den Satz noch (`app_status_sub`), bewusst nicht geändert.
 
 ## Stand (2.72.0, Status-App mit Reitern Zustand/Einstellungen und Speichern)
 

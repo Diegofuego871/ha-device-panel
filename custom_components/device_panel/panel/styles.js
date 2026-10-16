@@ -476,6 +476,9 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .dn-orig { margin: 0 0 6px; color: var(--dp-text2); font-size: 12.5px; }
 .dlg-title h2 { margin: 2px 0 6px; font-size: 21px; font-weight: 500; overflow-wrap: anywhere; }
 .dlg-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; color: var(--dp-text2); font-size: 13px; }
+/* Status-App (seit 2.73.0): nur der Titel, ohne Zeile darunter; er steht mittig zum Symbol */
+dialog.status-dlg .dlg-title { align-self: center; }
+dialog.status-dlg .dlg-title h2 { margin: 0; }
 /* Kreuz, Plus und Herz im Kopf der Fenster (seit 2.56.0, Wunsch des Nutzers): wie die Knöpfe der Panel-Übersicht (.gear-btn), rund mit grauem Rand,
    gleich gross (42 px, auf dem Handy 38 px) und am rechten Rand an derselben Stelle wie das Zahnrad */
 .dlg-close { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--dp-divider); border-radius: 50%;

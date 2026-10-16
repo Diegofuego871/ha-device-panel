@@ -15,6 +15,7 @@ Status app: three tabs, "Services", "System" and "Settings"; the alert at high l
 
 - Status app: the graphs have their own tab. The tabs are now **Services** (the parts of the integration with their pills and restart buttons; this was "State"), **System** (processor, memory and disk as graphs, without a heading of their own) and **Settings** (unchanged: alerts, limits, source of the values, saved with "Save"). The window opens on "Services". The system values are only fetched while "System" or "Settings" is open, no longer every 60 seconds in the background.
 - The push at high load opens the Status app straight on the tab "System": its link is `/device-panel?app=status&tab=system`. The push for a stopped part still opens "Services". The parameter `tab` (`services`, `system`, `settings`) is removed from the address afterwards, like `app`.
+- Status app: the line "Is the panel running?" under the title of the window is gone; it no longer fits now that the app also shows the system.
 
 ## [2.72.0] - 2026-10-16
 

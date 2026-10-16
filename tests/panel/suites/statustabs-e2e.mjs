@@ -42,6 +42,7 @@ for (const lang of ["de", "en"]) {
     await ev(`r.host._status.open()`);
     await wait(`return r.querySelectorAll("${win} .st-line").length === 8`);
     check(`[${tag}] drei Reiter "${T.tabs.join('", "')}", der erste gewählt, gleitende Kapsel, Dienste zu sehen`, await wait(`const d = r.querySelector("${win}"); const t = [...d.querySelectorAll(".sub-tabs [data-st-tab]")]; return t.length === 3 && t.map((x) => x.textContent.trim()).join("|") === ${JSON.stringify(T.tabs.join("|"))} && t[0].classList.contains("on") && !!d.querySelector(".sub-tabs .seg-pill") && !!d.querySelector(".st-banner")`));
+    check(`[${tag}] Kopf des Fensters: nur der Titel "Status", keine Zeile darunter`, await ev(`const t = r.querySelector("${win} .dlg-head .dlg-title"); return t.querySelector("h2").textContent.trim() === "Status" && !t.querySelector(".dlg-sub") && !r.querySelector("${win} .dlg-head .dlg-sub")`));
     check(`[${tag}] Reiter "${T.tabs[0]}": keine Kurven, keine Einstellungen (Schalter, Empfänger, Grenzen, Quelle), keine Leiste mit Speichern`, await ev(`const d = r.querySelector("${win}"); return !d.querySelector(".st-sys, [data-st-notify], [data-st-target], [data-st-limit], [data-st-pick]") && !d.querySelector("[data-st-foot] .dlg-actions")`));
 
     // Reiter "System": die drei Kurven, sonst nichts; erst jetzt werden die Systemwerte geholt
