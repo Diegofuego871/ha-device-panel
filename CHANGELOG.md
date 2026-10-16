@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.69.0] - 2026-10-16
+
+Status app: the disk in gigabytes as well as percent.
+
+### Added
+
+- Status app, card "Disk": under the percentage the size, for example "318.4 of 530.7 GiB used · 212.3 GiB free" (the unit as Home Assistant reports it, GiB; from 1024 GiB in TiB). The numbers come from the sensors "Disk use" and "Disk free" of the integration "System Monitor" for the same disk (total = used + free). Without these two sensors (they may be switched off by default) the card shows the percentage only, with a hint which sensors to enable. With an own sensor chosen for the disk there is no size. `device_panel/status_system` carries it as `size` (`used`, `free`, `total`, `unit`) in the disk entry.
+
 ## [2.68.0] - 2026-10-16
 
 Status app: small graphs for CPU, memory and disk.
@@ -3522,6 +3530,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.69.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.69.0
 [2.68.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.68.0
 [2.66.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.66.0
 [2.65.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.65.0

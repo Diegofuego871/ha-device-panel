@@ -304,6 +304,11 @@ export class StatusUi {
     return `<div class="st-sys-plot" data-st-plot="${escape(m.id)}"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}<path class="bh-area" d="${area}"/><path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/></svg>${labels}</div>`;
   }
 
+  // Zahl im Format der HA-Sprache, eine Nachkommastelle nur wenn nötig
+  num(n) {
+    return Number(n).toLocaleString(this.host._locale?.() || undefined, { maximumFractionDigits: 1 });
+  }
+
   metricHtml(m) {
     const { escape } = this.h;
     const t = (k, ...a) => this.t(k, ...a);
@@ -324,7 +329,14 @@ export class StatusUi {
       body = `${this.plotHtml(m)}<div class="st-sys-foot"><span>${escape(t(`stSysAgo_${range}`))}</span><span class="mid">${escape(stats)}</span><span>${escape(t("stSysNow"))}</span></div>
         ${range !== "24h" && m.source !== "statistics" ? `<p class="st-sys-note">${escape(t("stSysNoStats"))}</p>` : ""}`;
     }
-    return `<div class="st-sys" data-st-metric-card="${escape(m.id)}"><div class="st-sys-head"><span class="st-sys-t"><b>${escape(title)}</b>${scope ? `<small>${escape(scope)}</small>` : ""}</span>${val}</div>${tabs}${body}</div>`;
+    // Festplatte: wie viel das in Gigabyte ist (seit 2.69.0), sonst ein Hinweis, welche Sensoren dazu fehlen
+    const sz = m.size;
+    const size = sz
+      ? `<div class="st-sys-size" data-st-size>${escape(t("stSysSize", this.num(sz.used), this.num(sz.total), sz.unit, this.num(sz.free)))}</div>`
+      : m.id === "disk" && m.entity_id && !m.missing && m.scope === "host"
+        ? `<p class="st-sys-note">${escape(t("stSysSizeHint"))}</p>`
+        : "";
+    return `<div class="st-sys" data-st-metric-card="${escape(m.id)}"><div class="st-sys-head"><span class="st-sys-t"><b>${escape(title)}</b>${scope ? `<small>${escape(scope)}</small>` : ""}</span>${val}</div>${size}${tabs}${body}</div>`;
   }
 
   // Auswahl des Sensors je Art: automatisch oder ein eigener (Sensoren in Prozent)

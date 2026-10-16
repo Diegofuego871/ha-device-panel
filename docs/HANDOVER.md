@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.69.0, Festplatte auch in Gigabyte)
+
+- Wunsch des Nutzers: Prozent und Gigabyte. `system_stats.disk_size`: aus dem Prozent-Sensor von System Monitor (unique_id `disk_use_percent<Anhang>`) die Sensoren `disk_use<Anhang>` und `disk_free<Anhang>` (gleiche Platte, im HA-Quellcode geprüft, Einheit GiB); gesamt = belegt + frei; ab 1024 GiB TiB. Fehlen sie, deaktiviert oder fremder Sensor: `size` None, das Panel zeigt Prozent und einen Hinweis. Panel: `[data-st-size]` in `metricHtml`. Hinweis zur Einheit: GiB (1024³), nicht GB (1000³), so wie HA sie meldet. Tests: `test_disk_size_in_gigabytes`, `test_status_system_carries_the_disk_size`, Suite `statussystem` (60). 2.68.0 ist veröffentlicht (Tag `v2.68.0`).
+
 ## Stand (2.68.0, Status-App: System-Grafiken)
 
 - Wunsch des Nutzers: kleine Grafiken von HA im Status, CPU und RAM 24 Std., Festplatte mit 24 Std./30 Tage/6 Monate/1 Jahr. Quelle weiss der Nutzer nicht: automatisch + Auswahl in der App. `system_stats.py`: `auto_entity` (Registry: Plattform `systemmonitor` mit unique_id `processor_use` / `memory_use_percent` / `disk_use_percent`, sonst `hassio` `home_assistant_core_cpu_percent` / `_memory_percent`, geprüft im HA-Quellcode: System Monitor `slugify(key_argument)`, hassio `home_assistant_core_{key}`), `candidates` (Sensoren in % ohne Geräteklasse, mit state_class), Kurven über `battery_history._history/_statistics/held/thin` (ab 30 Tagen Statistik, ab 180 Tagen Tagesmittel). WebSocket `device_panel/status_system` (`range`), Optionen `status_cpu_entity|ram|disk` (leer = automatisch, in `options_api` validiert). Panel: Abschnitt "System" in `status-ui.js` (`metricHtml`, `plotHtml`, `sourceHtml`, Reiterleiste `data-st-range` mit Schlüssel `st-range` in `_initSeg`), alle 60 Sekunden neu. Nicht prüfbar ohne echte Instanz: ob "System Monitor" die Entitäten bei dir anlegt (Disk-Sensor ist je nach Version standardmässig aus).

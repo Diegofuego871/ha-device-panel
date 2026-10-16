@@ -57,6 +57,42 @@ async def test_auto_detection_prefers_system_monitor(hass: HomeAssistant) -> Non
     assert system_stats.auto_entity(hass, "disk") == (other, "host")
 
 
+def _disk_trio(hass: HomeAssistant, suffix: str = "", used: str = "412", free: str = "541", unit: str = "GiB") -> str:
+    """Die drei Festplatten-Sensoren von System Monitor; gibt den Prozent-Sensor zurück."""
+    pct = _sensor(hass, "systemmonitor", "disk_use_percent" + suffix, "43", "Festplatte")
+    for key, value in (("disk_use", used), ("disk_free", free)):
+        entry = er.async_get(hass).async_get_or_create("sensor", "systemmonitor", key + suffix, suggested_object_id=key + suffix)
+        hass.states.async_set(entry.entity_id, value, {"unit_of_measurement": unit, "state_class": "measurement"})
+    return pct
+
+
+async def test_disk_size_in_gigabytes(hass: HomeAssistant) -> None:
+    pct = _disk_trio(hass)
+    assert system_stats.disk_size(hass, pct) == {"used": 412.0, "free": 541.0, "total": 953.0, "unit": "GiB"}
+    # Ab 1024 GiB in TiB
+    big = _disk_trio(hass, "_daten", used="1500", free="900")
+    assert system_stats.disk_size(hass, big) == {"used": 1.5, "free": 0.9, "total": 2.3, "unit": "TiB"}
+    # Frei in anderer Einheit: umgerechnet in die Einheit von "belegt" (1024 MiB = 1 GiB)
+    mixed = _disk_trio(hass, "_misch", used="10", free="2048", unit="GiB")
+    hass.states.async_set(er.async_get(hass).async_get_entity_id("sensor", "systemmonitor", "disk_free_misch"), "2048", {"unit_of_measurement": "MiB"})
+    assert system_stats.disk_size(hass, mixed)["total"] == 12.0
+    # Ein Sensor nicht lesbar, deaktiviert oder fremd: keine Grösse, nur Prozent
+    hass.states.async_set(er.async_get(hass).async_get_entity_id("sensor", "systemmonitor", "disk_free"), "unavailable", {"unit_of_measurement": "GiB"})
+    assert system_stats.disk_size(hass, pct) is None
+    er.async_get(hass).async_update_entity(er.async_get(hass).async_get_entity_id("sensor", "systemmonitor", "disk_use_daten"), disabled_by=er.RegistryEntryDisabler.USER)
+    assert system_stats.disk_size(hass, big) is None
+    assert system_stats.disk_size(hass, _sensor(hass, "template", "eigene-platte", "50", "Eigene")) is None
+
+
+async def test_status_system_carries_the_disk_size(hass: HomeAssistant, hass_ws_client) -> None:
+    pct = _disk_trio(hass)
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    metrics = (await _ws(client, 1, type=f"{DOMAIN}/status_system"))["result"]["metrics"]
+    assert metrics[2]["entity_id"] == pct and metrics[2]["size"] == {"used": 412.0, "free": 541.0, "total": 953.0, "unit": "GiB"}
+    assert metrics[0]["size"] is None and metrics[1]["size"] is None
+
+
 async def test_nothing_found_and_candidates(hass: HomeAssistant) -> None:
     assert [system_stats.auto_entity(hass, k) for k in system_stats.KINDS] == [None, None, None]
     eigen = _sensor(hass, "template", "mein-cpu", "7", "Mein Server CPU")

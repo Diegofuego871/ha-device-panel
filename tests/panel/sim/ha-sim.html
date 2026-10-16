@@ -1494,7 +1494,7 @@
           metrics: [
             mk("cpu", "host", "Prozessornutzung", "sensor.system_monitor_processor_use", 1, (x) => 14 + 12 * Math.sin(x * 14) + (x > 0.8 && x < 0.86 ? 55 : 0), 17, "history"),
             mk("ram", "host", "Arbeitsspeicher", "sensor.system_monitor_memory_use_percent", 1, (x) => 52 + 6 * Math.sin(x * 5), 54, "history"),
-            mk("disk", "host", "Festplatte /", "sensor.system_monitor_disk_use_percent", days, (x) => 38 + 22 * x, 60, diskSource),
+            { ...mk("disk", "host", "Festplatte /", "sensor.system_monitor_disk_use_percent", days, (x) => 38 + 22 * x, 60, diskSource), size: window.__systemNoSize ? null : { used: 318.4, free: 212.3, total: 530.7, unit: "GiB" } },
           ],
           candidates: [{ entity_id: "sensor.mein_server_cpu", name: "Mein Server CPU" }, { entity_id: "sensor.nas_speicher", name: "NAS Speicher" }],
         };

@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.69.0] - 2026-10-16
+
+Status-App: die Festplatte in Gigabyte und in Prozent.
+
+### Hinzugefügt
+
+- Status-App, Karte "Festplatte": unter dem Prozentwert die Grösse, zum Beispiel "318,4 von 530,7 GiB belegt · 212,3 GiB frei" (die Einheit, wie Home Assistant sie meldet, GiB; ab 1024 GiB in TiB). Die Zahlen kommen von den Sensoren "Belegter Massenspeicher" und "Freier Massenspeicher" der Integration "System Monitor" für dieselbe Platte (gesamt = belegt + frei). Ohne diese zwei Sensoren (sie können standardmässig aus sein) zeigt die Karte nur Prozent, mit einem Hinweis, welche Sensoren einzuschalten sind. Mit einem eigenen Sensor für die Festplatte gibt es keine Grösse. `device_panel/status_system` liefert sie als `size` (`used`, `free`, `total`, `unit`) im Eintrag der Festplatte.
+
 ## [2.68.0] - 2026-10-16
 
 Status-App: kleine Grafiken für CPU, Arbeitsspeicher und Festplatte.
@@ -3623,6 +3631,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.69.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.69.0
 [2.68.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.68.0
 [2.66.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.66.0
 [2.65.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.65.0

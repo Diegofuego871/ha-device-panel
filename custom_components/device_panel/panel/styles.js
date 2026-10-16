@@ -1866,6 +1866,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .st-sys-t small { display: block; margin-top: 1px; font-size: 12px; color: var(--dp-text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .st-sys-val { font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .st-sys-val small { font-size: 14px; margin-left: 2px; color: var(--dp-text2); }
+.st-sys-size { margin: 2px 0 0; font-size: 12.5px; color: var(--dp-text2); font-variant-numeric: tabular-nums; }
 .st-sys .sub-tabs { margin: 8px 0 0; }
 .st-sys-plot { position: relative; height: 84px; margin: 8px 0 0 30px; }
 .st-sys-plot .bh-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }

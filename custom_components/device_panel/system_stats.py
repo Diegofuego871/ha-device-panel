@@ -46,6 +46,9 @@ AUTO_SOURCES: dict[str, tuple[tuple[str, str, str], ...]] = {
 }
 # Höchstens so viele Sensoren zur Auswahl in der App
 CANDIDATES_MAX = 200
+# Grösse des Speichers (seit 2.69.0): Einheiten, die System Monitor und andere Sensoren melden, in Byte
+_BYTES = {"B": 1, "kB": 1e3, "MB": 1e6, "GB": 1e9, "TB": 1e12, "KiB": 1024, "MiB": 1024**2, "GiB": 1024**3, "TiB": 1024**4}
+_DISK_PERCENT_PREFIX = "disk_use_percent"
 
 
 def auto_entity(hass: HomeAssistant, kind: str) -> tuple[str, str] | None:
@@ -70,6 +73,50 @@ def candidates(hass: HomeAssistant) -> list[dict[str, str]]:
         out.append({"entity_id": state.entity_id, "name": str(state.attributes.get("friendly_name") or state.entity_id)})
     out.sort(key=lambda c: c["name"].casefold())
     return out[:CANDIDATES_MAX]
+
+
+def _size(state: Any) -> tuple[float, str] | None:
+    """Wert und Einheit eines Grössen-Sensors (Zahl, bekannte Einheit), sonst None."""
+    if state is None:
+        return None
+    unit = str(state.attributes.get("unit_of_measurement") or "")
+    try:
+        value = float(state.state)
+    except (TypeError, ValueError):
+        return None
+    return (value, unit) if unit in _BYTES and value >= 0 else None
+
+
+def disk_size(hass: HomeAssistant, percent_entity: str) -> dict[str, Any] | None:
+    """
+    Belegt, frei und gesamt der Festplatte (seit 2.69.0), wenn der Prozent-Sensor von "System Monitor" ist: dieselbe Platte hat dort
+    die Sensoren "Festplatte belegt" und "Festplatte frei" (gleicher Anhang am unique_id: "" für "/", sonst "_<Pfad>"). Gesamt = belegt + frei.
+    Einheit wie beim Sensor (System Monitor meldet GiB), ab 1000 bzw. 1024 in TB bzw. TiB. Ohne die beiden Sensoren (sie sind je nach
+    Version standardmässig aus) None; dann zeigt das Panel nur Prozent.
+    """
+    registry = er.async_get(hass)
+    entry = registry.async_get(percent_entity)
+    if entry is None or entry.platform != "systemmonitor" or not str(entry.unique_id).startswith(_DISK_PERCENT_PREFIX):
+        return None
+    suffix = str(entry.unique_id)[len(_DISK_PERCENT_PREFIX):]
+    found: dict[str, Any] = {}
+    for key in ("disk_use", "disk_free"):
+        entity_id = registry.async_get_entity_id("sensor", "systemmonitor", key + suffix)
+        sensor = registry.async_get(entity_id) if entity_id else None
+        if sensor is None or sensor.disabled_by:
+            return None
+        found[key] = _size(hass.states.get(sensor.entity_id))
+    used, free = found["disk_use"], found["disk_free"]
+    if used is None or free is None:
+        return None
+    unit = used[1]
+    free_in_unit = free[0] * _BYTES[free[1]] / _BYTES[unit]
+    values = {"used": used[0], "free": free_in_unit, "total": used[0] + free_in_unit}
+    big = {"GiB": ("TiB", 1024), "GB": ("TB", 1000)}.get(unit)
+    if big and values["total"] >= big[1]:
+        unit = big[0]
+        values = {k: v / big[1] for k, v in values.items()}
+    return {**{k: round(v, 1) for k, v in values.items()}, "unit": unit}
 
 
 async def _points(hass: HomeAssistant, entity_id: str, days: int, now: float) -> tuple[list[tuple[float, float]], str, str]:
@@ -126,10 +173,13 @@ async def async_metric(hass: HomeAssistant, kind: str, own: str, days: int, now:
         "avg": None,
         "max": None,
         "source": "none",
+        "size": None,
         "points": [],
         # Die Auswahl der App zeigt "gewählt, aber es gibt ihn nicht mehr" (Sensor gelöscht)
         "missing": bool(entity_id) and state is None,
     }
+    if kind == "disk" and entity_id and state is not None:
+        out["size"] = disk_size(hass, entity_id)
     if not entity_id or state is None:
         return out
     points, source, _period = await _points(hass, entity_id, days, now)

@@ -8,8 +8,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { title: "System", cpu: "Prozessor (CPU)", ram: "Arbeitsspeicher (RAM)", disk: "Festplatte", host: "Host", ago24: "vor 24 Std.", ago30: "vor 30 Tagen", ago6: "vor 6 Monaten", ago1y: "vor 1 Jahr", now: "jetzt", r: ["24 Std.", "30 Tage", "6 Monate", "1 Jahr"], noStats: "keine Langzeitstatistik", none: "Kein Sensor gefunden", src: "Quelle der Werte", auto: "Automatisch (Prozessornutzung)" },
-  en: { title: "System", cpu: "Processor (CPU)", ram: "Memory (RAM)", disk: "Disk", host: "Host", ago24: "24 h ago", ago30: "30 days ago", ago6: "6 months ago", ago1y: "1 year ago", now: "now", r: ["24 h", "30 days", "6 months", "1 year"], noStats: "no long-term statistics", none: "No sensor found", src: "Source of the values", auto: "Automatic (Prozessornutzung)" },
+  de: { title: "System", cpu: "Prozessor (CPU)", ram: "Arbeitsspeicher (RAM)", disk: "Festplatte", host: "Host", ago24: "vor 24 Std.", ago30: "vor 30 Tagen", ago6: "vor 6 Monaten", ago1y: "vor 1 Jahr", now: "jetzt", r: ["24 Std.", "30 Tage", "6 Monate", "1 Jahr"], noStats: "keine Langzeitstatistik", none: "Kein Sensor gefunden", src: "Quelle der Werte", auto: "Automatisch (Prozessornutzung)", size: "{u} von {t} GiB belegt · {f} GiB frei", sizeHint: "Belegter Massenspeicher" },
+  en: { title: "System", cpu: "Processor (CPU)", ram: "Memory (RAM)", disk: "Disk", host: "Host", ago24: "24 h ago", ago30: "30 days ago", ago6: "6 months ago", ago1y: "1 year ago", now: "now", r: ["24 h", "30 days", "6 months", "1 year"], noStats: "no long-term statistics", none: "No sensor found", src: "Source of the values", auto: "Automatic (Prozessornutzung)", size: "{u} of {t} GiB used · {f} GiB free", sizeHint: "Disk use" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -43,6 +43,14 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Abschnitt "${T.title}" mit drei Karten: ${T.cpu}, ${T.ram}, ${T.disk}`, await ev(`const d = r.querySelector("${win}"); const t = [...d.querySelectorAll(".st-sys .st-sys-t b")].map((x) => x.textContent.trim()); return JSON.stringify(t) === ${JSON.stringify(JSON.stringify([T.cpu, T.ram, T.disk]))} && [...d.querySelectorAll(".set-title")].some((x) => x.textContent.trim() === ${JSON.stringify(T.title)})`));
     check(`[${tag}] Karte ${T.cpu}: Wert 17 %, "${T.host}", Kurve, "${T.ago24}" bis "${T.now}", Ø und Spitze`, await ev(`const c = r.querySelector('${card("cpu")}'); return c.querySelector(".st-sys-val").textContent.replace(/\\s/g, "") === "17%" && c.querySelector(".st-sys-t small").textContent.trim() === ${JSON.stringify(T.host)} && !!c.querySelector(".st-sys-plot path.bh-line") && c.querySelector(".st-sys-foot").textContent.includes(${JSON.stringify(T.ago24)}) && c.querySelector(".st-sys-foot").textContent.includes(${JSON.stringify(T.now)}) && /\\d+ % · .*\\d+ %/.test(c.querySelector(".st-sys-foot .mid").textContent)`));
     check(`[${tag}] CPU und RAM ohne Zeitraumleiste, die Festplatte mit vier Knöpfen und gleitender Kapsel`, await wait(`const d = r.querySelector("${win}"); return !d.querySelector('${card("cpu")} .sub-tabs') && !d.querySelector('${card("ram")} .sub-tabs') && JSON.stringify([...d.querySelectorAll('${card("disk")} .sub-tab')].map((x) => x.textContent.trim())) === ${JSON.stringify(JSON.stringify(T.r))} && !!d.querySelector('${card("disk")} .sub-tabs > .seg-pill')`));
+    // Festplatte in Gigabyte: "318,4 von 530,7 GiB belegt · 212,3 GiB frei" (Zahlenformat der HA-Sprache), nur bei der Festplatte
+    check(`[${tag}] Festplatte zeigt Prozent und Grösse: ${T.size}`, await ev(`const t = r.querySelector('${card("disk")} [data-st-size]')?.textContent.trim(); const n = (v) => v.toLocaleString(r.host._locale?.() || undefined, { maximumFractionDigits: 1 }); return t === ${JSON.stringify(T.size)}.replace("{u}", n(318.4)).replace("{t}", n(530.7)).replace("{f}", n(212.3)) && r.querySelector('${card("disk")} .st-sys-val').textContent.replace(/\\s/g, "") === "60%" && !r.querySelector('${card("cpu")} [data-st-size]') && !r.querySelector('${card("ram")} [data-st-size]')`));
+    await p.evaluate(() => { window.__systemNoSize = true; });
+    await ev(`r.host._status.loadSystem()`);
+    check(`[${tag}] ohne Grössen-Sensoren: nur Prozent, Hinweis auf die Sensoren von System Monitor`, await wait(`const c = r.querySelector('${card("disk")}'); return !c.querySelector("[data-st-size]") && c.querySelector(".st-sys-note")?.textContent.includes(${JSON.stringify(T.sizeHint)}) && c.querySelector(".st-sys-val").textContent.replace(/\\s/g, "") === "60%"`));
+    await p.evaluate(() => { window.__systemNoSize = false; });
+    await ev(`r.host._status.loadSystem()`);
+    await wait(`return !!r.querySelector('${card("disk")} [data-st-size]')`);
     await ev(`r.querySelector('${win} .st-sys').scrollIntoView({ block: "start" })`);
     await p.waitForTimeout(300);
     await p.screenshot({ path: `${outDir}/statussystem-${tag.replace("/", "-")}-0.png` });
