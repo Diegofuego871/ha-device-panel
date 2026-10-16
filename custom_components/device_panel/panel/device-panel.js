@@ -1307,12 +1307,15 @@ class DevicePanel extends HTMLElement {
     const id = url.searchParams.get("device");
     // App aus einer Meldung (seit 2.66.0): /device-panel?app=status öffnet die Status-App, nur für Administratoren
     const app = url.searchParams.get("app");
+    // Reiter der Status-App (seit 2.73.0): ?app=status&tab=system öffnet gleich die Kurven (Meldung bei hoher Auslastung)
+    const tab = url.searchParams.get("tab");
     if (!id && app !== "status") return;
     url.searchParams.delete("device");
     url.searchParams.delete("app");
+    url.searchParams.delete("tab");
     top.history.replaceState(top.history.state, "", url.pathname + url.search + url.hash);
     if (id) this._openDevice(id);
-    else if (this._hass?.user?.is_admin !== false) this._status.open();
+    else if (this._hass?.user?.is_admin !== false) this._status.open(tab || undefined);
   }
 
   // Zahlen und Uhrzeit im Format der HA-Sprache des Benutzers (z. B. de-CH).

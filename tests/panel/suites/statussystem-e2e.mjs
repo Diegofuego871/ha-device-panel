@@ -37,13 +37,16 @@ for (const lang of ["de", "en"]) {
     const win = "dialog.status-dlg";
     const card = (id) => `${win} [data-st-metric-card="${id}"]`;
     const goSettings = () => tap(`${win} [data-st-tab="settings"]`);
-    const goState = () => tap(`${win} [data-st-tab="state"]`);
+    const goSystem = () => tap(`${win} [data-st-tab="system"]`);
     const save = () => tap(`${win} [data-st-save]`);
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g, " ").trim()`);
 
     await ev(`r.host._status.open()`);
+    // Seit 2.73.0 stehen die Kurven im Reiter "System"; die Systemwerte werden erst dort geholt
+    check(`[${tag}] Reiter "Dienste" (erster): keine Kurven, noch keine Abfrage der Systemwerte`, await wait(`return r.querySelectorAll("${win} .st-line").length === 8 && !r.querySelector("${win} .st-sys")`) && (await calls("device_panel/status_system")).length === 0);
+    await goSystem();
     await wait(`return r.querySelectorAll("${win} .st-sys").length === 3`);
-    check(`[${tag}] Abschnitt "${T.title}" mit drei Karten: ${T.cpu}, ${T.ram}, ${T.disk}`, await ev(`const d = r.querySelector("${win}"); const t = [...d.querySelectorAll(".st-sys .st-sys-t b")].map((x) => x.textContent.trim()); return JSON.stringify(t) === ${JSON.stringify(JSON.stringify([T.cpu, T.ram, T.disk]))} && [...d.querySelectorAll(".set-title")].some((x) => x.textContent.trim() === ${JSON.stringify(T.title)})`));
+    check(`[${tag}] Reiter "${T.title}" mit drei Karten: ${T.cpu}, ${T.ram}, ${T.disk}`, await ev(`const d = r.querySelector("${win}"); const t = [...d.querySelectorAll(".st-sys .st-sys-t b")].map((x) => x.textContent.trim()); return JSON.stringify(t) === ${JSON.stringify(JSON.stringify([T.cpu, T.ram, T.disk]))} && !d.querySelector(".set-title")`));
     check(`[${tag}] Karte ${T.cpu}: Wert 17 %, "${T.host}", Kurve, "${T.ago24}" bis "${T.now}", Ø und Spitze`, await ev(`const c = r.querySelector('${card("cpu")}'); return c.querySelector(".st-sys-val").textContent.replace(/\\s/g, "") === "17%" && c.querySelector(".st-sys-t small").textContent.trim() === ${JSON.stringify(T.host)} && !!c.querySelector(".st-sys-plot path.bh-line") && c.querySelector(".st-sys-foot").textContent.includes(${JSON.stringify(T.ago24)}) && c.querySelector("[data-st-ticks] .now-label").textContent.trim() === ${JSON.stringify(T.now)} && /\\d+ % · .*\\d+ %/.test(c.querySelector(".st-sys-foot .mid").textContent)`));
     check(`[${tag}] CPU und RAM ohne Zeitraumleiste, die Festplatte mit vier Knöpfen und gleitender Kapsel`, await wait(`const d = r.querySelector("${win}"); return !d.querySelector('${card("cpu")} .sub-tabs') && !d.querySelector('${card("ram")} .sub-tabs') && JSON.stringify([...d.querySelectorAll('${card("disk")} .sub-tab')].map((x) => x.textContent.trim())) === ${JSON.stringify(JSON.stringify(T.r))} && !!d.querySelector('${card("disk")} .sub-tabs > .seg-pill')`));
     // Festplatte in Gigabyte: "318,4 von 530,7 GiB belegt · 212,3 GiB frei" (Zahlenformat der HA-Sprache), nur bei der Festplatte
@@ -75,7 +78,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] zurück auf "24 Std.": "${T.ago24}", kein Hinweis`, await wait(`const c = r.querySelector('${card("disk")}'); return c.querySelector(".st-sys-foot").textContent.includes(${JSON.stringify(T.ago24)}) && !c.querySelector(".st-sys-note")`));
 
     // Quelle: automatisch oder ein eigener Sensor; Auswahl mit Suchfeld (Entitäten, nicht Geräte); seit 2.72.0 im Reiter "Einstellungen"
-    check(`[${tag}] Reiter "Zustand": keine Auswahl der Quelle mehr (sie steht im Reiter Einstellungen)`, await ev(`return !r.querySelector('${win} .st-pickbtn')`));
+    check(`[${tag}] Reiter "System": keine Auswahl der Quelle mehr (sie steht im Reiter Einstellungen)`, await ev(`return !r.querySelector('${win} .st-pickbtn')`));
     await goSettings();
     check(`[${tag}] "${T.src}": drei Auswahlknöpfe, Voreinstellung "${T.auto}"`, await ev(`const b = [...r.querySelectorAll('${win} .st-pickbtn')]; return b.length === 3 && b[0].textContent.trim() === ${JSON.stringify(T.auto)} && !r.querySelector('${win} select[data-st-metric]')`));
     await tap(`${win} [data-st-pick="ram"]`);
@@ -106,7 +109,7 @@ for (const lang of ["de", "en"]) {
     const sawBoth = await (async () => { for (let i = 0; i < 25; i++) { const o = (await calls("device_panel/set_options")).at(-1); if (o && (await calls("device_panel/status_system")).length > 0) return o.values.status_cpu_entity === "sensor.mein_server_cpu"; await p.waitForTimeout(200); } return false; })();
     check(`[${tag}] eigener Sensor: set_options mit status_cpu_entity, danach neue Abfrage der Werte`, sawBoth);
     check(`[${tag}] Einstellungen: Knopf ${T.cpu} nennt den eigenen Sensor`, await wait(`return r.querySelector('${win} [data-st-pick="cpu"]').textContent.includes("Mein Server CPU")`));
-    await goState();
+    await goSystem();
     check(`[${tag}] Karte ${T.cpu} nennt jetzt den eigenen Sensor`, await wait(`return r.querySelector('${card("cpu")} .st-sys-t small').textContent.trim() === "Prozessornutzung"`));
     await goSettings();
 
@@ -116,7 +119,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Festplatte: Suche "massenspeicher" findet den Sensor in GiB (belegter Massenspeicher)`, await wait(`const rows = [...r.querySelectorAll("${win} .st-pick-list .st-opt")]; return rows.length === 1 && rows[0].dataset.stChoose === "sensor.system_monitor_belegter_massenspeicher"`));
     await tap(`${win} .st-pick-list .st-opt`);
     await save();
-    await goState();
+    await goSystem();
     check(`[${tag}] Festplatte in Gigabyte: Wert "318,4 GiB" statt Prozent, Achse bis 500, Ø und Spitze in GiB`, await wait(`const c = r.querySelector('${card("disk")}'); const n = (v) => v.toLocaleString(r.host._locale?.() || undefined, { maximumFractionDigits: 1 }); return c.querySelector(".st-sys-val").textContent.replace(/\\s/g, "") === n(318.4) + "GiB" && [...c.querySelectorAll(".st-sys-y")].map((x) => x.textContent).join("|") === [n(500), n(250), "0"].join("|") && /GiB.*GiB/.test(c.querySelector(".st-sys-foot .mid").textContent) && !c.querySelector("[data-st-size]")`));
     check(`[${tag}] fehlt "frei": Hinweis mit dem Namen des ausgeschalteten Sensors und Knopf "Sensoren einschalten"`, await ev(`const c = r.querySelector('${card("disk")}'); return c.textContent.includes("Freier Massenspeicher") && !!c.querySelector("[data-st-enable-ask]")`));
     await p.evaluate(() => { window.__wsCalls = []; });
@@ -133,7 +136,7 @@ for (const lang of ["de", "en"]) {
     for (const k of ["disk", "cpu", "ram"]) { await tap(`${win} [data-st-pick="${k}"]`); await tap(`${win} .st-pick-list .st-opt`); await p.waitForTimeout(150); }
     await save();
     await wait(`return !r.querySelector("${win} [data-st-save]:not([disabled])")`);
-    await goState();
+    await goSystem();
 
     // Sensoren ausgeschaltet gefunden: Hinweis mit Namen und Knopf zum Einschalten
     await p.evaluate(() => { window.__systemOff = true; window.__wsCalls = []; });
@@ -155,7 +158,7 @@ for (const lang of ["de", "en"]) {
     await tap(`${card("disk")} [data-st-add]`);
     check(`[${tag}] Knopf öffnet in Home Assistant die Seite "Integration hinzufügen" für System Monitor (Fenster schliesst)`, await wait(`return !r.querySelector("${win}").open`) && (await p.evaluate(() => location.pathname + location.search)) === "/config/integrations/dashboard/add?domain=systemmonitor");
     await p.evaluate(() => { window.__systemNone = false; window.__systemNoInteg = false; });
-    await ev(`r.host._status.open()`);
+    await ev(`r.host._status.open("system")`);
     await wait(`return r.querySelectorAll("${win} .st-sys").length === 3 && r.querySelector('${card("cpu")} .st-sys-plot')`);
 
     // Eben eingeschaltet, Integration lädt noch neu: kein Fehler, sondern ein ruhiger Hinweis

@@ -4,8 +4,9 @@
  * verspätet, steht) und die Zeile zum letzten Start. Die Zahlen kommen von device_panel/status_get (status.py), die Einstellungen
  * lesen und schreiben get_options / set_options; das Fenster fragt alle 10 Sekunden neu, solange es offen ist.
  * Seit 2.68.0 zeigt der Abschnitt "System" CPU, Arbeitsspeicher und Festplatte als kleine Kurven (system_stats.py, device_panel/status_system).
- * Seit 2.72.0 hat die App zwei Reiter: "Zustand" (Teile und Kurven) und "Einstellungen" (Meldungen, Grenzen, Quelle der Werte). Die
- * Einstellungen sind ein Entwurf (this.draft) und gelten erst nach "Speichern"; beim Schliessen mit Änderungen fragt die App nach.
+ * Seit 2.72.0 hat die App Reiter, seit 2.73.0 drei: "Dienste" (die Teile der Integration), "System" (CPU, Arbeitsspeicher, Festplatte als
+ * Kurven) und "Einstellungen" (Meldungen, Grenzen, Quelle der Werte). Die Einstellungen sind ein Entwurf (this.draft) und gelten erst nach
+ * "Speichern"; beim Schliessen mit Änderungen fragt die App nach. Die Systemwerte werden nur geholt, solange "System" oder "Einstellungen" offen ist.
  */
 
 const REFRESH_MS = 10000;
@@ -15,7 +16,7 @@ const SYS_RANGES = ["24h", "30d", "6m", "1y"];
 // Höchstens so viele Sensoren zeigt die Auswahl auf einmal (der Rest folgt nach der Eingabe)
 const PICK_MAX = 60;
 const LOAD_KINDS = ["cpu", "ram", "disk"];
-const STATE_TABS = ["state", "settings"];
+const STATE_TABS = ["services", "system", "settings"];
 const SYS_OPTION = { cpu: "status_cpu_entity", ram: "status_ram_entity", disk: "status_disk_entity" };
 const PART_ORDER = ["routines", "magic", "availability", "battery", "charge", "new", "updates", "signal"];
 
@@ -36,7 +37,7 @@ export class StatusUi {
     this.range = "24h";
     this._ticks = 0;
     // Neustart von Hand (seit 2.63.0): confirm = Teil mit offener Rückfrage, busy = Teil, der gerade neu startet, flash = Hinweis danach
-    this.ui = { confirm: null, busy: null, flash: "", flashTimer: null, pick: null, pickQ: "", enabled: {}, enabling: null, enableAsk: null, tab: "state", saved: false, saveError: "" };
+    this.ui = { confirm: null, busy: null, flash: "", flashTimer: null, pick: null, pickQ: "", enabled: {}, enabling: null, enableAsk: null, tab: "services", saved: false, saveError: "" };
   }
 
   t(key, ...args) {
@@ -49,12 +50,13 @@ export class StatusUi {
 
   // --- Öffnen und Schliessen ---------------------------------------------------
 
-  open() {
+  // tab: Reiter beim frischen Öffnen (Meldung bei hoher Auslastung öffnet "system"); sonst "services"
+  open(tab = "services") {
     const dlg = this.dlg;
     if (!dlg) return;
     if (!dlg.open) {
       this.resetDraft();
-      this.ui.tab = "state";
+      this.ui.tab = STATE_TABS.includes(tab) ? tab : "services";
     }
     this.frame();
     if (!dlg.open) {
@@ -62,12 +64,12 @@ export class StatusUi {
       else dlg.setAttribute("open", "");
     }
     this.load();
-    this.loadSystem();
+    if (this.ui.tab !== "services") this.loadSystem();
     this._ticks = 0;
     window.clearInterval(this._timer);
     this._timer = window.setInterval(() => {
       this.load();
-      if (++this._ticks % SYS_EVERY === 0) this.loadSystem();
+      if (++this._ticks % SYS_EVERY === 0 && this.ui.tab !== "services") this.loadSystem();
     }, REFRESH_MS);
   }
 
@@ -107,6 +109,8 @@ export class StatusUi {
           const sc = this.dlg.querySelector(".dlg-body");
           this.render(true);
           if (sc) sc.scrollTop = 0;
+          // Systemwerte erst jetzt holen (im Reiter "Dienste" braucht man sie nicht)
+          if (this.ui.tab !== "services") this.loadSystem();
         }
         return;
       }
@@ -653,18 +657,18 @@ export class StatusUi {
   systemHtml() {
     const { escape } = this.h;
     const t = (k, ...a) => this.t(k, ...a);
-    if (!this.sys) return `<div class="set-title">${escape(t("stSysTitle"))}</div><p class="mg-note">${escape(this.sysError ? t("stSysError", this.sysError) : t("stSysLoading"))}</p>`;
-    return `<div class="set-title">${escape(t("stSysTitle"))}</div>${this.sys.metrics.map((m) => this.metricHtml(m)).join("")}
+    if (!this.sys) return `<p class="mg-note">${escape(this.sysError ? t("stSysError", this.sysError) : t("stSysLoading"))}</p>`;
+    return `${this.sys.metrics.map((m) => this.metricHtml(m)).join("")}
       ${this.sysError ? `<div class="dlg-error" role="alert">${escape(t("stSysError", this.sysError))}</div>` : ""}`;
   }
 
-  // Reiterleiste "Zustand" | "Einstellungen"; ein Punkt am zweiten zeigt ungespeicherte Änderungen, solange man im ersten ist
+  // Reiterleiste "Dienste" | "System" | "Einstellungen"; ein Punkt an den Einstellungen zeigt ungespeicherte Änderungen in den anderen Reitern
   tabsHtml() {
     const { escape } = this.h;
     const mark = this.changes().length ? " chg" : "";
     return `<div class="sub-tabs" role="tablist">${STATE_TABS.map((id) => {
       const on = id === this.ui.tab;
-      return `<button type="button" role="tab" class="sub-tab${on ? " on" : ""}${id === "settings" && !on ? mark : ""}" data-st-tab="${id}" aria-selected="${on}">${escape(this.t(id === "state" ? "stTabState" : "stTabSettings"))}</button>`;
+      return `<button type="button" role="tab" class="sub-tab${on ? " on" : ""}${id === "settings" && !on ? mark : ""}" data-st-tab="${id}" aria-selected="${on}">${escape(this.t(`stTab_${id}`))}</button>`;
     }).join("")}</div>`;
   }
 
@@ -676,7 +680,7 @@ export class StatusUi {
   }
 
   html() {
-    const body = this.ui.tab === "settings" ? this.settingsHtml() : `${this.zoneHtml()}${this.systemHtml()}`;
+    const body = this.ui.tab === "settings" ? this.settingsHtml() : this.ui.tab === "system" ? this.systemHtml() : this.zoneHtml();
     return `${this.tabsHtml()}${body}`;
   }
 }

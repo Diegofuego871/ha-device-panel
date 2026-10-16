@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.73.0] - 2026-10-16
+
+Status app: three tabs, "Services", "System" and "Settings"; the alert at high load opens "System".
+
+### Changed
+
+- Status app: the graphs have their own tab. The tabs are now **Services** (the parts of the integration with their pills and restart buttons; this was "State"), **System** (processor, memory and disk as graphs, without a heading of their own) and **Settings** (unchanged: alerts, limits, source of the values, saved with "Save"). The window opens on "Services". The system values are only fetched while "System" or "Settings" is open, no longer every 60 seconds in the background.
+- The push at high load opens the Status app straight on the tab "System": its link is `/device-panel?app=status&tab=system`. The push for a stopped part still opens "Services". The parameter `tab` (`services`, `system`, `settings`) is removed from the address afterwards, like `app`.
+
 ## [2.72.0] - 2026-10-16
 
 Status app: two tabs, "State" and "Settings"; the settings only apply after "Save".
@@ -3587,6 +3596,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.73.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.73.0
 [2.72.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.72.0
 [2.71.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.71.0
 [2.70.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.0

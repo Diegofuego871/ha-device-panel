@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.73.0] - 2026-10-16
+
+Status-App: drei Reiter, "Dienste", "System" und "Einstellungen"; die Meldung bei hoher Auslastung öffnet "System".
+
+### Geändert
+
+- Status-App: Die Grafiken haben einen eigenen Reiter. Die Reiter heissen jetzt **Dienste** (die Teile der Integration mit ihren Pillen und Neustart-Knöpfen; das war "Zustand"), **System** (Prozessor, Arbeitsspeicher und Festplatte als Grafiken, ohne eigene Überschrift) und **Einstellungen** (unverändert: Meldungen, Grenzen, Quelle der Werte, gespeichert mit "Speichern"). Das Fenster öffnet auf "Dienste". Die Systemwerte werden nur geholt, solange "System" oder "Einstellungen" offen ist, nicht mehr alle 60 Sekunden im Hintergrund.
+- Der Push bei hoher Auslastung öffnet die Status-App gleich im Reiter "System": Sein Link ist `/device-panel?app=status&tab=system`. Der Push bei einem stehenden Teil öffnet weiter "Dienste". Der Parameter `tab` (`services`, `system`, `settings`) verschwindet danach aus der Adresse, wie `app`.
+
 ## [2.72.0] - 2026-10-16
 
 Status-App: zwei Reiter, "Zustand" und "Einstellungen"; die Einstellungen gelten erst nach "Speichern".
@@ -3688,6 +3697,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.73.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.73.0
 [2.72.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.72.0
 [2.71.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.71.0
 [2.70.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.0

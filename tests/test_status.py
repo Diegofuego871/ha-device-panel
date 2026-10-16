@@ -300,7 +300,7 @@ async def test_high_load_alerts_after_three_checks_and_clears_with_margin(hass: 
     _ticks(watch, 1)
     await hass.async_block_till_done()
     assert len(handy) == 1 and handy[0].data["title"] == "⚠️ Device Panel: Prozessor bei 99 %"
-    assert "über der Grenze von 99 %" in handy[0].data["message"] and handy[0].data["data"]["url"] == "/device-panel?app=status"
+    assert "über der Grenze von 99 %" in handy[0].data["message"] and handy[0].data["data"]["url"] == "/device-panel?app=status&tab=system"
     assert handy[0].data["data"]["tag"] == "device_panel_status_load_cpu"
     _ticks(watch, 5)
     await hass.async_block_till_done()

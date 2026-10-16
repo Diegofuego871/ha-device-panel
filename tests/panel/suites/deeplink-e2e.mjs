@@ -53,6 +53,12 @@ for (const lang of ["de", "en"]) {
     await p.evaluate((l) => { history.pushState(null, "", `?lang=${l}&app=status`); window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } })); }, lang);
     check(`[${tag}] ?app=status öffnet die Status-App`, await wait(`return r.querySelector("dialog.status-dlg")?.open`));
     check(`[${tag}] Parameter app entfernt`, (await p.evaluate(() => location.search)) === `?lang=${lang}`);
+    check(`[${tag}] ohne tab: Reiter "Dienste"`, await wait(`return r.querySelector('dialog.status-dlg [data-st-tab="services"]')?.classList.contains("on")`));
+    await f.evaluate(new Function(`${R}.host._status.close()`));
+    // Meldung bei hoher Auslastung (seit 2.73.0): ?app=status&tab=system öffnet gleich den Reiter "System", beide Parameter verschwinden
+    await p.evaluate((l) => { history.pushState(null, "", `?lang=${l}&app=status&tab=system`); window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } })); }, lang);
+    check(`[${tag}] ?app=status&tab=system öffnet die Status-App im Reiter "System"`, await wait(`const d = r.querySelector("dialog.status-dlg"); return d?.open && d.querySelector('[data-st-tab="system"]')?.classList.contains("on")`));
+    check(`[${tag}] Parameter app und tab entfernt`, (await p.evaluate(() => location.search)) === `?lang=${lang}`);
     await f.evaluate(new Function(`${R}.host._status.close()`));
     check(`[${tag}] keine JS-Fehler`, errors.length === 0, errors.join("; "));
     await ctx.close();

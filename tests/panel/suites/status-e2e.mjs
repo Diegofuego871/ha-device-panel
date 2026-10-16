@@ -58,7 +58,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Fenster "${T.win}" offen, Launcher zu`, await wait(`return r.querySelector("dialog.status-dlg")?.open && !r.querySelector("dialog.apps-dlg")?.open`));
     await wait(`return r.querySelectorAll("dialog.status-dlg .st-line").length === 8`);
     check(`[${tag}] Kopf "${T.prob2}", acht Teile mit Pillen (steht, verspätet, läuft)`, await ev(`const d = r.querySelector("dialog.status-dlg"); const pills = [...d.querySelectorAll(".st-line .pill")].map((x) => x.textContent.trim()); return d.querySelector(".st-banner.bad b")?.textContent.trim() === ${JSON.stringify(T.prob2)} && pills.length === 8 && pills[0] === ${JSON.stringify(T.down)} && pills[2] === ${JSON.stringify(T.late)} && pills.filter((x) => x === ${JSON.stringify(T.up)}).length === 6`));
-    check(`[${tag}] Reiter "Zustand" zuerst: Kopf und Teile, keine Einstellungen (Schalter, Empfänger)`, await ev(`const d = r.querySelector("dialog.status-dlg"); const tabs = [...d.querySelectorAll(".sub-tabs [data-st-tab]")]; return tabs.length === 2 && tabs[0].classList.contains("on") && !!d.querySelector(".st-banner") && !d.querySelector("[data-st-notify], [data-st-target]") && !d.querySelector("[data-st-foot] .dlg-actions")`));
+    check(`[${tag}] Reiter "Dienste" zuerst: Kopf und Teile, weder Kurven noch Einstellungen`, await ev(`const d = r.querySelector("dialog.status-dlg"); const tabs = [...d.querySelectorAll(".sub-tabs [data-st-tab]")]; return tabs.length === 3 && tabs[0].classList.contains("on") && !!d.querySelector(".st-banner") && !d.querySelector(".st-sys") && !d.querySelector("[data-st-notify], [data-st-target]") && !d.querySelector("[data-st-foot] .dlg-actions")`));
     check(`[${tag}] Start-Zeile mit Routinen geladen und verpasst`, await ev(`return /3/.test(r.querySelector("dialog.status-dlg .st-start").textContent)`));
     await tap(`dialog.status-dlg [data-st-tab="settings"]`);
     check(`[${tag}] Reiter "Einstellungen": Schalter "${T.notify}" an, Auswahl Empfänger mit "${T.std}" gewählt; kein Zustand darin`, await ev(`const d = r.querySelector("dialog.status-dlg"); const sw = d.querySelector("[data-st-notify]"); const sel = d.querySelector("[data-st-target]"); return sw.checked && sel.options[sel.selectedIndex].textContent.trim() === ${JSON.stringify(T.std)} && !d.querySelector(".st-banner, .st-line")`));
@@ -78,7 +78,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Speichern: ein einziges set_options mit notify_service_status und status_notify false`, sets.length === 1 && sets[0].notify_service_status === "notify.familie" && sets[0].status_notify === false, JSON.stringify(sets));
     check(`[${tag}] Anzeige folgt dem Gespeicherten`, (await p.evaluate(() => window.__opts.status_notify)) === false && (await ev(`return r.querySelector("dialog.status-dlg [data-st-notify]").checked === false && r.querySelector("dialog.status-dlg [data-st-target]").value === "notify.familie"`)));
     await p.evaluate(() => { window.__opts.status_notify = true; window.__opts.notify_service_status = ""; });
-    await tap(`dialog.status-dlg [data-st-tab="state"]`);
+    await tap(`dialog.status-dlg [data-st-tab="services"]`);
 
     // Neustart von Hand: Knopf nur bei Teilen, die nicht laufen; Rückfrage; Abbrechen; Bestätigen; Fehler
     check(`[${tag}] "${T.restart}": nur bei den zwei gestörten Teilen (Routinen, Ausfall-Überwachung)`, await ev(`const b = [...r.querySelectorAll("dialog.status-dlg [data-st-restart]")].map((x) => x.dataset.stRestart); return JSON.stringify(b) === '["routines","availability"]'`));

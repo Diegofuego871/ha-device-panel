@@ -302,7 +302,7 @@ class StatusWatch:
         else:
             title = push.text(hass, "status_load_title", what=what, value=round(value))
             message = push.text(hass, "status_load_text", limit=limit, minutes=minutes, time=clock)
-        data = push.notification_data(hass, f"device_panel_status_load_{kind}", push.panel_url(app="status"))
+        data = push.notification_data(hass, f"device_panel_status_load_{kind}", push.panel_url(app="status", tab="system"))
         await push.async_push(hass, target, title, message, data)
 
     @callback

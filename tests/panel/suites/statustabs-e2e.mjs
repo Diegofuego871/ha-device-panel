@@ -1,4 +1,4 @@
-// Status-App, Reiter "Zustand" und "Einstellungen" (2.72.0): die Einstellungen (Meldung bei Stillstand, Meldung bei hoher Auslastung,
+// Status-App, Reiter "Dienste", "System" und "Einstellungen" (2.72.0, drei Reiter seit 2.73.0): die Einstellungen (Meldung bei Stillstand, Meldung bei hoher Auslastung,
 // Quelle der Werte) stehen im zweiten Reiter und gelten erst nach "Speichern"; Entwurf, Zähler, Verwerfen, Rückfrage beim Schliessen.
 // Deutsch und Englisch, Desktop und Handy, mit echten Klicks und Taps.
 import { chromium } from "playwright-core";
@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { tabs: ["Zustand", "Einstellungen"], titles: ["Meldung bei Stillstand", "Meldung bei hoher Auslastung", "Quelle der Werte"], one: "1 Änderung", two: "2 Änderungen", saved: "Gespeichert", close: "Schliessen", discard: "Verwerfen", keep: "Weiter bearbeiten" },
-  en: { tabs: ["State", "Settings"], titles: ["Alert when something stops", "Alert at high load", "Source of the values"], one: "1 change", two: "2 changes", saved: "Saved", close: "Close", discard: "Discard", keep: "Keep editing" },
+  de: { tabs: ["Dienste", "System", "Einstellungen"], titles: ["Meldung bei Stillstand", "Meldung bei hoher Auslastung", "Quelle der Werte"], one: "1 Änderung", two: "2 Änderungen", saved: "Gespeichert", close: "Schliessen", discard: "Verwerfen", keep: "Weiter bearbeiten" },
+  en: { tabs: ["Services", "System", "Settings"], titles: ["Alert when something stops", "Alert at high load", "Source of the values"], one: "1 change", two: "2 changes", saved: "Saved", close: "Close", discard: "Discard", keep: "Keep editing" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -41,11 +41,19 @@ for (const lang of ["de", "en"]) {
 
     await ev(`r.host._status.open()`);
     await wait(`return r.querySelectorAll("${win} .st-line").length === 8`);
-    check(`[${tag}] zwei Reiter "${T.tabs.join('", "')}", der erste gewählt, gleitende Kapsel, Zustand zu sehen`, await wait(`const d = r.querySelector("${win}"); const t = [...d.querySelectorAll(".sub-tabs [data-st-tab]")]; return t.length === 2 && t.map((x) => x.textContent.trim()).join("|") === ${JSON.stringify(T.tabs.join("|"))} && t[0].classList.contains("on") && !!d.querySelector(".sub-tabs .seg-pill") && !!d.querySelector(".st-banner")`));
-    check(`[${tag}] Reiter "${T.tabs[0]}": keine Einstellungen (Schalter, Empfänger, Grenzen, Quelle), keine Leiste mit Speichern`, await ev(`const d = r.querySelector("${win}"); return !d.querySelector("[data-st-notify], [data-st-target], [data-st-limit], [data-st-pick]") && !d.querySelector("[data-st-foot] .dlg-actions")`));
+    check(`[${tag}] drei Reiter "${T.tabs.join('", "')}", der erste gewählt, gleitende Kapsel, Dienste zu sehen`, await wait(`const d = r.querySelector("${win}"); const t = [...d.querySelectorAll(".sub-tabs [data-st-tab]")]; return t.length === 3 && t.map((x) => x.textContent.trim()).join("|") === ${JSON.stringify(T.tabs.join("|"))} && t[0].classList.contains("on") && !!d.querySelector(".sub-tabs .seg-pill") && !!d.querySelector(".st-banner")`));
+    check(`[${tag}] Reiter "${T.tabs[0]}": keine Kurven, keine Einstellungen (Schalter, Empfänger, Grenzen, Quelle), keine Leiste mit Speichern`, await ev(`const d = r.querySelector("${win}"); return !d.querySelector(".st-sys, [data-st-notify], [data-st-target], [data-st-limit], [data-st-pick]") && !d.querySelector("[data-st-foot] .dlg-actions")`));
+
+    // Reiter "System": die drei Kurven, sonst nichts; erst jetzt werden die Systemwerte geholt
+    await p.evaluate(() => { window.__wsCalls = []; });
+    await tap(`${win} [data-st-tab="system"]`);
+    check(`[${tag}] Reiter "${T.tabs[1]}": drei Karten, kein Zustand, keine Einstellungen, keine Leiste, Systemwerte geholt`, await wait(`const d = r.querySelector("${win}"); return d.querySelectorAll(".st-sys").length === 3 && d.querySelector('[data-st-tab="system"]').classList.contains("on") && !d.querySelector(".st-banner, .st-line, [data-st-notify], [data-st-limit], .set-title") && !d.querySelector("[data-st-foot] .dlg-actions")`) && (await calls("device_panel/status_system")).length >= 1);
+    await p.waitForTimeout(500);
+    await p.screenshot({ path: `${outDir}/statustabs-${tag.replace("/", "-")}-sys.png` });
+    await tap(`${win} [data-st-tab="services"]`);
 
     await tap(`${win} [data-st-tab="settings"]`);
-    check(`[${tag}] Reiter "${T.tabs[1]}": die drei Abschnitte "${T.titles.join('", "')}" in dieser Folge, kein Zustand`, await wait(`const d = r.querySelector("${win}"); const t = [...d.querySelectorAll(".set-title")].map((x) => x.textContent.trim()); return JSON.stringify(t) === ${JSON.stringify(JSON.stringify(T.titles))} && !d.querySelector(".st-banner, .st-line, .st-sys") && d.querySelector('[data-st-tab="settings"]').classList.contains("on")`));
+    check(`[${tag}] Reiter "${T.tabs[2]}": die drei Abschnitte "${T.titles.join('", "')}" in dieser Folge, kein Zustand`, await wait(`const d = r.querySelector("${win}"); const t = [...d.querySelectorAll(".set-title")].map((x) => x.textContent.trim()); return JSON.stringify(t) === ${JSON.stringify(JSON.stringify(T.titles))} && !d.querySelector(".st-banner, .st-line, .st-sys") && d.querySelector('[data-st-tab="settings"]').classList.contains("on")`));
     check(`[${tag}] ohne Änderung: Knopf "${T.close}", "Speichern" gesperrt, kein Zähler`, await ev(`const d = r.querySelector("${win}"); const btns = [...d.querySelectorAll("[data-st-foot] .dlg-btn")]; return d.querySelector("[data-st-save]").disabled && btns.length === 2 && btns[1].textContent.trim() === ${JSON.stringify(T.close)} && !d.querySelector("[data-st-count]").textContent.trim()`));
     await p.screenshot({ path: `${outDir}/statustabs-${tag.replace("/", "-")}-0.png` });
 
@@ -56,8 +64,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Schalter "Bei Stillstand melden" aus: Zähler "${T.one}", "Speichern" aktiv, Knopf "${T.discard}", nichts geschickt`, (await count()) === T.one && await ev(`const d = r.querySelector("${win}"); const btns = [...d.querySelectorAll("[data-st-foot] .dlg-btn")]; return !d.querySelector("[data-st-save]").disabled && btns[1].textContent.trim() === ${JSON.stringify(T.discard)}`) && (await calls("device_panel/set_options")).length === 0);
 
     // Reiter wechseln behält den Entwurf; der Reiter "Einstellungen" trägt einen Punkt
-    await tap(`${win} [data-st-tab="state"]`);
-    check(`[${tag}] Reiter "${T.tabs[0]}": Punkt am Reiter "${T.tabs[1]}" (ungespeichert), keine Leiste unten`, await wait(`const d = r.querySelector("${win}"); return d.querySelector('[data-st-tab="settings"]').classList.contains("chg") && !!d.querySelector(".st-banner") && !d.querySelector("[data-st-foot] .dlg-actions")`));
+    await tap(`${win} [data-st-tab="services"]`);
+    check(`[${tag}] Reiter "${T.tabs[0]}": Punkt am Reiter "${T.tabs[2]}" (ungespeichert), keine Leiste unten`, await wait(`const d = r.querySelector("${win}"); return d.querySelector('[data-st-tab="settings"]').classList.contains("chg") && !!d.querySelector(".st-banner") && !d.querySelector("[data-st-foot] .dlg-actions")`));
     await tap(`${win} [data-st-tab="settings"]`);
     check(`[${tag}] zurück: Schalter noch aus, Zähler "${T.one}", Punkt weg`, await wait(`const d = r.querySelector("${win}"); return d.querySelector("[data-st-notify]").checked === false && d.querySelector("[data-st-count]").textContent.trim() === ${JSON.stringify(T.one)} && !d.querySelector('[data-st-tab="settings"]').classList.contains("chg")`));
 
@@ -84,8 +92,11 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} .dlg-head [data-st-close]`);
     await tap(`dialog.discard-dlg [data-dd="yes"]`);
     check(`[${tag}] "${T.discard}": Fenster zu, nichts geschickt`, await wait(`return !r.querySelector("${win}").open`) && (await calls("device_panel/set_options")).length === 0);
+    await ev(`r.host._status.open("system")`);
+    check(`[${tag}] erneut mit open("system") geöffnet (wie der Push bei hoher Auslastung): Reiter "${T.tabs[1]}", Kurven, Entwurf weg`, await wait(`const d = r.querySelector("${win}"); return d.open && d.querySelector('[data-st-tab="system"]').classList.contains("on") && d.querySelectorAll(".st-sys").length === 3`));
+    await ev(`r.host._status.close()`);
     await ev(`r.host._status.open()`);
-    check(`[${tag}] erneut geöffnet: Reiter "${T.tabs[0]}", Entwurf weg (Grenze 99)`, await wait(`const d = r.querySelector("${win}"); return d.open && d.querySelector('[data-st-tab="state"]').classList.contains("on") && !!d.querySelector(".st-banner")`) && (await ev(`return r.querySelector("${win}").open`)));
+    check(`[${tag}] erneut geöffnet: Reiter "${T.tabs[0]}", Entwurf weg (Grenze 99)`, await wait(`const d = r.querySelector("${win}"); return d.open && d.querySelector('[data-st-tab="services"]').classList.contains("on") && !!d.querySelector(".st-banner")`) && (await ev(`return r.querySelector("${win}").open`)));
     await tap(`${win} [data-st-tab="settings"]`);
     check(`[${tag}] Grenze Festplatte wieder 99`, await wait(`return r.querySelector('${win} [data-st-limit="disk"]').value === "99"`));
 
