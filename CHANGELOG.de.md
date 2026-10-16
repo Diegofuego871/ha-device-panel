@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.67.0] - 2026-10-16
+
+Routinen-Assistent: keine zweite Auswahl, nachdem eine Szene oder Gruppe gewählt wurde.
+
+### Geändert
+
+- Routinen-Assistent: Eine Szene oder Gruppe, die auf der ersten Seite gewählt wurde, wird nicht noch einmal abgefragt. Bei einer **Szene** gibt es nichts mehr zu bestimmen (die einzige Aktion ist "Aktivieren"), darum entfällt die Seite "Was": Nach der ersten Seite geht es gleich zu "Wann" (vier Seiten statt fünf). Eine **Gruppe** behält eine Seite, die jetzt "Aktion" heisst und fragt "Was soll mit "<Name>" geschehen?": nur Einschalten / Ausschalten / Umschalten, keine Liste aller Gruppen mehr. Beim Bearbeiten einer Routine bleibt die Seite "Was" mit ihrer Liste wie bisher.
+
 ## [2.66.0] - 2026-10-16
 
 Routinen-Assistent: eine Liste mit Filter und Pille; die Statusmeldung öffnet die Status-App.
@@ -3603,6 +3611,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.67.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.67.0
 [2.66.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.66.0
 [2.65.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.65.0
 [2.64.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.64.0

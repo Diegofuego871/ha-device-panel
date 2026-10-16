@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.67.0] - 2026-10-16
+
+Routine assistant: no second choice after a scene or group was picked.
+
+### Changed
+
+- Routine assistant: a scene or group picked on the first page is not asked for again. A **scene** has nothing left to define (the only action is "Activate"), so the page "What" is dropped: after the first page it goes straight to "When" (four pages instead of five). A **group** keeps one page, now called "Action" with the question "What should happen with "<name>"?": only On / Off / Toggle, no list of all groups any more. When a routine is edited, the page "What" with its list stays as before.
+
 ## [2.66.0] - 2026-10-16
 
 Routine assistant: one list with a filter and a pill; the status alert opens the Status app.
@@ -3502,6 +3510,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.67.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.67.0
 [2.66.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.66.0
 [2.65.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.65.0
 [2.64.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.64.0

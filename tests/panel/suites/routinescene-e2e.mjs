@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { all: "Alle", film: "filmabend", q0: "Gerät, Gruppe oder Szene?", scenes: "Szenen", groups: "Gruppen", act: "Aktivieren", kindScene: "Szene", kindGroup: "Gruppe", grp: "leuchten", noBack: "Eine Szene lässt sich nur aktivieren, nicht zurückschalten.", scene: "Abendlicht", count: "2 Szenen", sentence: "Abendlicht aktivieren", step: (n, t) => `Schritt ${n} von ${t}` },
-  en: { all: "All", film: "movie night", q0: "Device, group or scene?", scenes: "Scenes", groups: "Groups", act: "Activate", kindScene: "Scene", kindGroup: "Group", grp: "living room", noBack: "A scene can only be activated, not switched back.", scene: "Abendlicht", count: "2 scenes", sentence: "Abendlicht activate", step: (n, t) => `Step ${n} of ${t}` },
+  de: { fixedQ: 'Was soll mit "', all: "Alle", film: "filmabend", q0: "Gerät, Gruppe oder Szene?", scenes: "Szenen", groups: "Gruppen", act: "Aktivieren", kindScene: "Szene", kindGroup: "Gruppe", grp: "leuchten", noBack: "Eine Szene lässt sich nur aktivieren, nicht zurückschalten.", scene: "Abendlicht", count: "2 Szenen", sentence: "Abendlicht aktivieren", step: (n, t) => `Schritt ${n} von ${t}` },
+  en: { fixedQ: 'What should happen with "', all: "All", film: "movie night", q0: "Device, group or scene?", scenes: "Scenes", groups: "Groups", act: "Activate", kindScene: "Scene", kindGroup: "Group", grp: "living room", noBack: "A scene can only be activated, not switched back.", scene: "Abendlicht", count: "2 scenes", sentence: "Abendlicht activate", step: (n, t) => `Step ${n} of ${t}` },
 };
 
 for (const lang of ["de", "en"]) {
@@ -63,7 +63,7 @@ for (const lang of ["de", "en"]) {
     // Antippen und "Weiter": die Szene ist auf der Seite "Was" schon gewählt, die Aktion gesetzt
     await tap(`${win} [data-rt="dev"][data-ent="scene.film"]`);
     await tap(`${win} [data-rt="nav-next"]`);
-    check(`[${tag}] Szene aus der Suche: auf "Was" vorgewählt, Aktion "${T.act}", Weiter ohne weiteren Tipp möglich`, await wait(`const d = r.querySelector("${win}"); return d.querySelector('.mg-pick[data-id="scene.film"][aria-checked="true"]') && d.querySelector('[data-rt="action"]')?.textContent.trim() === ${JSON.stringify(T.act)} && !d.querySelector('[data-rt="nav-next"]').disabled`));
+    check(`[${tag}] Szene aus der Suche: "Was" entfällt, es geht gleich zu "Wann" (Schritt 2 von 4), Weiter möglich`, await wait(`const d = r.querySelector("${win}"); return d.querySelector(".mg-stephead")?.firstElementChild.textContent === ${JSON.stringify(T.step(2, 4))} && !d.querySelector('[data-rt="nav-next"]').disabled`));
     await tap(`${win} [data-rt="nav-back"]`);
     await wait(`return r.querySelector('${win} input[data-rt="dev-search"]')`);
     // Gruppe über ihren Namen: eigene Zeile mit Art "${T.kindGroup}"
@@ -75,11 +75,9 @@ for (const lang of ["de", "en"]) {
     // Szene
     await tap(`${win} [data-rt="dev"][data-ent="scene.abendlicht"]`);
     await tap(`${win} [data-rt="nav-next"]`);
-    await wait(`return r.querySelectorAll("${win} .mg-pick").length === 2`);
-    check(`[${tag}] Schritt 2: nur die Szenen, Kopf nennt "${T.scenes}"`, await ev(`const d = r.querySelector("${win}"); return d.querySelectorAll(".mg-pick").length === 2 && d.querySelector(".mgw-t small")?.textContent.trim() === ${JSON.stringify(T.scenes)}`));
-    await tap(`${win} .mg-pick[data-id="scene.abendlicht"]`);
-    check(`[${tag}] Aktion: nur "${T.act}", Hinweis "kein Zurückschalten", Satz "${T.sentence}"`, await wait(`const d = r.querySelector("${win}"); const a = [...d.querySelectorAll('[data-rt="action"]')]; return a.length === 1 && a[0].textContent.trim() === ${JSON.stringify(T.act)} && d.querySelector(".mg-hint")?.textContent.trim() === ${JSON.stringify(T.noBack)} && d.querySelector(".rt-result")?.textContent.includes(${JSON.stringify(T.sentence)})`));
-    check(`[${tag}] Szene: fünf Schritte (kein Optionen-, kein Zurückschalten-Schritt)`, (await stepsOf()) === 5, String(await stepsOf()));
+    // Eine gewählte Szene hat nichts mehr zu bestimmen: die Seite "Was" entfällt, es geht gleich zu "Wann" (vier Schritte)
+    await wait(`return r.querySelector("${win} .mg-stephead")?.firstElementChild.textContent === ${JSON.stringify(T.step(2, 4))}`);
+    check(`[${tag}] Szene: kein Schritt "Was" mehr, keine Liste, keine zweite Auswahl; vier Schritte, Seite 2 ist "Wann"`, await ev(`const d = r.querySelector("${win}"); return d.querySelectorAll(".mg-pick").length === 0 && !d.querySelector(".rt-fixed") && !d.querySelector('[data-rt="action"]') && d.querySelector(".mgw-t small")?.textContent.trim() === ${JSON.stringify(T.scenes)}`) && (await stepsOf()) === 4, String(await stepsOf()));
     await p.screenshot({ path: `${outDir}/routinescene-${tag.replace("/", "-")}-1.png` });
     await tap(`${win} [data-rt="nav-quick"]`);
     const saved = (await (async () => { for (let i = 0; i < 25; i++) { const c = await calls("device_panel/routine_save"); if (c.length) return c; await p.waitForTimeout(200); } return []; })()).at(-1)?.routine;
@@ -94,12 +92,11 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-rt="close"]`);
     await wait(`return !r.querySelector("${win}")?.open`);
 
-    // Viele Szenen: auf der Seite "Was" gibt es eine Suche
+    // Viele Szenen: beim Bearbeiten zeigt die Seite "Was" die Liste, ab 8 Einträgen mit Suche
     await p.evaluate(() => { window.__manyScenes = true; });
-    await tap('dialog.rtall-dlg [data-rta="routine-add"]');
-    await wait(`return r.querySelector("${win} [data-rt='dev'][data-ent='scene.film']")`);
-    await tap(`${win} [data-rt="dev"][data-ent="scene.film"]`);
-    await tap(`${win} [data-rt="nav-next"]`);
+    await tap('dialog.rtall-dlg [data-rta="routine-edit"]');
+    await wait(`return r.querySelector("${win}")?.open`);
+    await tap(`${win} .mg-stp[data-step="1"]`);
     await wait(`return r.querySelectorAll("${win} .mg-pick").length === 14`);
     check(`[${tag}] 14 Szenen: Suchfeld auf der Seite "Was"; "büro szene 1" zeigt 4 (1, 10, 11, 12), die Wahl bleibt beim Filtern`, await ev(`return !!r.querySelector('${win} input[data-rt="ent-search"]')`));
     await tap(`${win} .mg-pick[data-id="scene.film"]`);
@@ -115,8 +112,9 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("${win} [data-rt='dev'][data-ent='light.wohnzimmer']")`);
     await tap(`${win} [data-rt="dev"][data-ent="light.wohnzimmer"]`);
     await tap(`${win} [data-rt="nav-next"]`);
-    await wait(`return r.querySelector("${win} .mg-pick")`);
-    await tap(`${win} .mg-pick[data-id="light.wohnzimmer"]`);
+    await wait(`return r.querySelector("${win} [data-rt='action']")`);
+    await p.screenshot({ path: `${outDir}/routinescene-${tag.replace("/", "-")}-2.png` });
+    check(`[${tag}] Gruppe: Seite 2 fragt nur nach der Aktion ("${T.fixedQ}…"), keine Liste, keine zweite Auswahl`, await ev(`const d = r.querySelector("${win}"); return d.querySelectorAll(".mg-pick").length === 0 && !d.querySelector('[data-rt="ent-search"]') && d.querySelector(".mg-big").textContent.startsWith(${JSON.stringify(T.fixedQ)})`));
     check(`[${tag}] Gruppe: Ein/Aus/Umschalten, sieben Schritte (mit Optionen und Zurückschalten)`, await wait(`return r.querySelectorAll('${win} [data-rt="action"]').length === 3`) && (await stepsOf()) === 7, String(await stepsOf()));
     check(`[${tag}] keine Konsolenfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();

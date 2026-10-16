@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.67.0, keine zweite Auswahl nach Szene oder Gruppe)
+
+- Wunsch des Nutzers (Screenshots: Seite "Was" zeigte die Liste der Szenen/Gruppen noch einmal): `chosenWhat()` in `routines.js` liefert die auf Seite 1 gewählte Szene/Gruppe (nur Anlegen aus dem Fenster aller Routinen, `w.pick && w.pickEnt`). Szene: `steps()` lässt Schritt 1 weg (Seite "Wann" folgt direkt, vier Seiten). Gruppe: Seite 1 zeigt nur die Aktion (Titel `rtQ_1_fixed`, Name `rtStepName_1_fixed`), keine Liste. Beim Bearbeiten (`w.pick` false) bleibt die Liste, der Bearbeiten-Assistent startet bei "Wann". Suiten `routinescene` (80), `searchclear` (Liste per `wiz.pickEnt = ""`).
+
 ## Stand (2.66.0, eine Liste mit Filter und Pille; Statusmeldung öffnet die Status-App)
 
 - Wunsch des Nutzers: alle Objekte direkt anzeigen, Filter oben oder Pille. Gebaut: beides. `pickRows()` in `routines.js` liefert Geräte, Gruppen, Szenen einzeln (`kind`); Filterleiste `data-rt="dev-kind"` (Reiterleiste `.sub-tabs`, Zahlen wie im Fenster aller Routinen, nur wenn es Szenen oder Gruppen ohne Gerät gibt); Pille `.mg-kind` (Szene primär, Gruppe grün) statt "N Entitäten". Die Sammelzeilen und `ITEM_ROWS_MAX` (2.65.0) sind weg. Kein Mockup vorab: der Nutzer hatte beide Varianten genannt, Screenshots `tests/panel/output/routinescene-*-0.png`; bei Änderungswunsch Variante anpassen.

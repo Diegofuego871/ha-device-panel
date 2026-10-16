@@ -1226,10 +1226,19 @@ export class RoutineUi {
     return Boolean(d && d.action === "on" && this.entity(d.entity_id)?.options?.length);
   }
 
+  // Die auf der ersten Seite gewählte einzelne Szene oder Gruppe (nur beim Anlegen aus dem Fenster aller Routinen), sonst null
+  chosenWhat() {
+    const w = this.wiz;
+    if (!w?.pick || !w.pickEnt || !isHolder(this.deviceId) || !this.data || w.draft?.entity_id !== w.pickEnt) return null;
+    return this.entity(w.pickEnt) || null;
+  }
+
   // Die Schritte in ihrer Reihenfolge: Gerät (nur aus dem Fenster aller Routinen), Was, Optionen (nur wenn möglich), Wann, Meldung, Name
   steps() {
     const d = this.wiz?.draft;
-    return [...(this.wiz?.pick ? [0] : []), 1, ...(this.hasOptions() ? [OPTS_STEP] : []), 2, ...(d && opposite(d.action) ? [BACK_STEP] : []), 3, 4];
+    // Eine gewählte Szene hat nichts mehr zu bestimmen (nur "Aktivieren"): die Seite "Was" entfällt (seit 2.67.0)
+    const sceneChosen = this.chosenWhat()?.domain === "scene";
+    return [...(this.wiz?.pick ? [0] : []), ...(sceneChosen ? [] : [1]), ...(this.hasOptions() ? [OPTS_STEP] : []), 2, ...(d && opposite(d.action) ? [BACK_STEP] : []), 3, 4];
   }
 
   syncNav() {
@@ -1282,9 +1291,9 @@ export class RoutineUi {
     const device = (step > 0 || !w.pick) && this.deviceId ? (isHolder(this.deviceId) ? t(HOLDERS[this.deviceId].key) : this.host._devices?.find((x) => x.id === this.deviceId)?.name || w.devices?.find((x) => x.id === this.deviceId)?.name || "") : "";
     return `<div class="mgw-head"><div class="mgw-t"><b>${esc(w.editing ? t("rtEditing") : t("rtNew"))}</b>${device ? `<small>${esc(device)}</small>` : ""}</div>
         <button type="button" class="dlg-close" data-rt="close" title="${esc(t("close"))}" aria-label="${esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>
-      <div class="mgw-prog"><div class="mg-stephead"><span>${esc(t("rtStepOf", shown(step), total))}</span><span>${esc(t(`rtStepName_${step}`))}</span></div>
+      <div class="mgw-prog"><div class="mg-stephead"><span>${esc(t("rtStepOf", shown(step), total))}</span><span>${esc(t(step === 1 && this.chosenWhat() ? "rtStepName_1_fixed" : `rtStepName_${step}`))}</span></div>
         <div class="mg-steps">${bars}</div></div>
-      <div class="mgw-body"><div class="mgw-main"><div class="mg-big">${esc(t(`rtQ_${step}`))}</div>
+      <div class="mgw-body"><div class="mgw-main"><div class="mg-big">${esc(step === 1 && this.chosenWhat() ? t("rtQ_1_fixed", this.chosenWhat().name) : t(`rtQ_${step}`))}</div>
         ${body}
         ${w.error ? `<div class="dlg-error" role="alert">${esc(w.error)}</div>` : ""}</div></div>
       <div class="mgw-foot">${nav}</div>`;
@@ -1297,13 +1306,18 @@ export class RoutineUi {
     const d = this.wiz.draft;
     const ents = this.data.entities;
     if (!ents.length) return `<p class="mg-note">${esc(t("rtNoEntities"))}</p>`;
-    let html = `<p class="mg-note">${esc(t(isHolder(this.deviceId) ? "rtHolderNote" : "rtOnlySwitchable"))}</p>`;
-    // Bei vielen Entitäten (78 Szenen) eine Suche (seit 2.63.0)
-    if (ents.length > ENT_SEARCH_MIN) {
-      html += `<label class="list-search" data-for="rt-ents">${this.h.mdi("search", 18)}<input type="search" data-rt="ent-search" value="${esc(this.wiz.entQuery || "")}" placeholder="${esc(t("listSearch"))}" aria-label="${esc(t("listSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this.host._fieldClearHtml("data-fc", "", this.wiz.entQuery || "")}</label>`;
-    }
-    html += `<div data-rt-zone="ents">${this.entsHtml()}</div>`;
     const e = this.entity(d.entity_id);
+    let html = "";
+    // Eine einzelne Szene oder Gruppe ist auf der ersten Seite schon gewählt (seit 2.67.0): keine zweite Auswahl, nur noch die Aktion.
+    // Beim Bearbeiten einer Routine bleibt die Liste.
+    if (!this.chosenWhat()) {
+      html += `<p class="mg-note">${esc(t(isHolder(this.deviceId) ? "rtHolderNote" : "rtOnlySwitchable"))}</p>`;
+      // Bei vielen Entitäten (78 Szenen) eine Suche (seit 2.63.0)
+      if (ents.length > ENT_SEARCH_MIN) {
+        html += `<label class="list-search" data-for="rt-ents">${this.h.mdi("search", 18)}<input type="search" data-rt="ent-search" value="${esc(this.wiz.entQuery || "")}" placeholder="${esc(t("listSearch"))}" aria-label="${esc(t("listSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this.host._fieldClearHtml("data-fc", "", this.wiz.entQuery || "")}</label>`;
+      }
+      html += `<div data-rt-zone="ents">${this.entsHtml()}</div>`;
+    }
     if (!e) return html;
     html += `<div class="mg-k">${esc(t("rtAction"))}</div>${this.tabsHtml(e.actions.map((a) => ({ on: d.action === a, attrs: `data-rt="action" data-v="${a}"`, label: t(`rtAct_${actKey(e.domain, a)}`) })))}`;
     if (!opposite(d.action)) html += `<p class="mg-hint">${esc(t(e.domain === "scene" ? "rtSceneNoBack" : "rtToggleNoBack"))}</p>`;

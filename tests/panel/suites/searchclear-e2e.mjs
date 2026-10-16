@@ -58,6 +58,8 @@ for (const mobile of [false, true]) {
   await tap('dialog.rtall-dlg [data-rta="routine-add"]');
   await wait(`return r.querySelector("${win} [data-rt='dev'][data-ent='scene.film']")`);
   await tap(`${win} [data-rt="dev"][data-ent="scene.film"]`);
+  // Die Liste der Seite "Was" erscheint nur beim Bearbeiten; hier ohne Vorwahl der Szene
+  await ev(`r.host._routines.wiz.pickEnt = ""`);
   await tap(`${win} [data-rt="nav-next"]`);
   await wait(`return r.querySelectorAll("${win} .mg-pick").length === 14`);
   await cycle("Assistent, Entitäten", `${win} .list-search`, `${win} input[data-rt="ent-search"]`, "0");
