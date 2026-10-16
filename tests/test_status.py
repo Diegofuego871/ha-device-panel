@@ -368,3 +368,33 @@ async def test_load_options_defaults_and_range(hass: HomeAssistant, hass_ws_clie
     assert not (await client.receive_json())["success"]
     await client.send_json({"id": 4, "type": f"{DOMAIN}/set_options", "values": {"status_cpu_limit": 0}})
     assert not (await client.receive_json())["success"]
+
+
+async def test_load_minutes_option_controls_how_long_before_the_alert(hass: HomeAssistant, hass_ws_client) -> None:
+    """Mindestdauer (seit 2.74.0): Zahl der Prüfungen in Folge über der Grenze; Standard 3, 1 = gleich beim ersten Mal."""
+    handy = async_mock_service(hass, "notify", "handy")
+    ids = _load_sensors(hass)
+    watch = await _setup(hass, status_load_minutes=1)
+    handy.clear()
+    hass.states.async_set(ids["cpu"], "100", {"unit_of_measurement": "%"})
+    _ticks(watch, 1)
+    await hass.async_block_till_done()
+    assert [c.data["title"] for c in handy] == ["⚠️ Device Panel: Prozessor bei 100 %"]
+    # 5 Prüfungen: nach vier nichts, bei der fünften die Meldung (Arbeitsspeicher)
+    from custom_components.device_panel.const import CONF_STATUS_LOAD_MINUTES  # noqa: PLC0415
+
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    hass.config_entries.async_update_entry(entry, options={**entry.options, CONF_STATUS_LOAD_MINUTES: 5})
+    handy.clear()
+    hass.states.async_set(ids["ram"], "100", {"unit_of_measurement": "%"})
+    _ticks(watch, 4)
+    await hass.async_block_till_done()
+    assert handy == []
+    _ticks(watch, 1)
+    await hass.async_block_till_done()
+    assert [c.data["title"] for c in handy] == ["⚠️ Device Panel: Arbeitsspeicher bei 100 %"]
+    # Grenzen der Option: 1 bis 60
+    client = await hass_ws_client(hass)
+    for i, (value, ok) in enumerate(((60, True), (1, True), (0, False), (61, False), ("3", False)), 1):
+        await client.send_json({"id": i, "type": f"{DOMAIN}/set_options", "values": {"status_load_minutes": value}})
+        assert (await client.receive_json())["success"] is ok, value

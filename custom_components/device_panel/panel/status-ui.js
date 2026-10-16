@@ -16,6 +16,8 @@ const SYS_RANGES = ["24h", "30d", "6m", "1y"];
 // Höchstens so viele Sensoren zeigt die Auswahl auf einmal (der Rest folgt nach der Eingabe)
 const PICK_MAX = 60;
 const LOAD_KINDS = ["cpu", "ram", "disk"];
+// Mindestdauer der Meldung bei hoher Auslastung (seit 2.74.0): Zahl der Prüfungen in Folge (eine je Minute)
+const MINUTES_KEY = "status_load_minutes";
 const STATE_TABS = ["services", "system", "settings"];
 const SYS_OPTION = { cpu: "status_cpu_entity", ram: "status_ram_entity", disk: "status_disk_entity" };
 const PART_ORDER = ["routines", "magic", "availability", "battery", "charge", "new", "updates", "signal"];
@@ -68,6 +70,8 @@ export class StatusUi {
     this._ticks = 0;
     window.clearInterval(this._timer);
     this._timer = window.setInterval(() => {
+      // Nichts holen, solange das Panel verdeckt ist (wie die Liste der Geräte); beim Zurückkehren kommt der nächste Takt
+      if (document.visibilityState === "hidden") return;
       this.load();
       if (++this._ticks % SYS_EVERY === 0 && this.ui.tab !== "services") this.loadSystem();
     }, REFRESH_MS);
@@ -171,6 +175,9 @@ export class StatusUi {
         // Grenze: beim Tippen nur den Entwurf und die Leiste unten nachführen (das Feld behält den Fokus), Fehler zeigt "change"
         this.setDraft(`status_${ev.target.dataset.stLimit}_limit`, ev.target.value);
         this.renderFoot();
+      } else if (ev.target.matches?.("[data-st-minutes]")) {
+        this.setDraft(MINUTES_KEY, ev.target.value);
+        this.renderFoot();
       }
     });
     // Esc: wie Schliessen (mit Rückfrage, wenn Änderungen offen sind)
@@ -184,6 +191,7 @@ export class StatusUi {
       else if (el.matches("[data-st-target]")) this.setDraft("notify_service_status", el.value);
       else if (el.matches("[data-st-alert]") && LOAD_KINDS.includes(el.dataset.stAlert)) this.setDraft(`status_${el.dataset.stAlert}_alert`, el.checked);
       else if (el.matches("[data-st-limit]") && LOAD_KINDS.includes(el.dataset.stLimit)) this.setDraft(`status_${el.dataset.stLimit}_limit`, el.value);
+      else if (el.matches("[data-st-minutes]")) this.setDraft(MINUTES_KEY, el.value);
       else return;
       this.render(true);
     });
@@ -279,14 +287,25 @@ export class StatusUi {
     return Object.keys(this.draft);
   }
 
-  // Grenze ungültig: leer, keine ganze Zahl oder ausserhalb des erlaubten Bereichs
-  limitBad(kind) {
-    const key = `status_${kind}_limit`;
+  // Zahl im Entwurf ungültig: leer, keine ganze Zahl oder ausserhalb des erlaubten Bereichs (Grenze 1 bis 100, Mindestdauer 1 bis 60)
+  intBad(key, fallback = [1, 100]) {
     if (!(key in this.draft)) return false;
-    const [lo, hi] = this.cfg?.limits?.[key] || [1, 100];
+    const [lo, hi] = this.cfg?.limits?.[key] || fallback;
     const text = String(this.draft[key]).trim();
     const n = Number(text);
     return !text || !Number.isInteger(n) || n < lo || n > hi;
+  }
+
+  limitBad(kind) {
+    return this.intBad(`status_${kind}_limit`);
+  }
+
+  minutesBad() {
+    return this.intBad(MINUTES_KEY, [1, 60]);
+  }
+
+  anyBad() {
+    return LOAD_KINDS.some((k) => this.limitBad(k)) || this.minutesBad();
   }
 
   // Beim Schliessen mit offenen Änderungen fragen (wie im Fenster Einstellungen), sonst gleich ausführen
@@ -300,10 +319,9 @@ export class StatusUi {
 
   // Alle Änderungen in einem Zug speichern; das Fenster bleibt offen, "Gespeichert" erscheint kurz
   async saveAll() {
-    const errors = LOAD_KINDS.filter((k) => this.limitBad(k));
-    if (this.saving || !this.changes().length || errors.length) return;
+    if (this.saving || !this.changes().length || this.anyBad()) return;
     const values = {};
-    for (const [key, value] of Object.entries(this.draft)) values[key] = key.endsWith("_limit") ? Number(String(value).trim()) : value;
+    for (const [key, value] of Object.entries(this.draft)) values[key] = key.endsWith("_limit") || key === MINUTES_KEY ? Number(String(value).trim()) : value;
     this.saving = true;
     this.ui.saveError = "";
     this.render(true);
@@ -368,7 +386,7 @@ export class StatusUi {
     const body = this.dlg?.querySelector("[data-st-body]");
     if (!body) return;
     // Auswahl nicht zerstören, solange sie geöffnet ist (Neuzeichnen alle 10 Sekunden)
-    if (!force && this.host.shadowRoot.activeElement?.matches?.("[data-st-target], [data-st-pickq], [data-st-limit]")) return;
+    if (!force && this.host.shadowRoot.activeElement?.matches?.("[data-st-target], [data-st-pickq], [data-st-limit], [data-st-minutes]")) return;
     const scroll = body.closest(".dlg-body")?.scrollTop || 0;
     body.innerHTML = this.html();
     const sc = body.closest(".dlg-body");
@@ -387,7 +405,7 @@ export class StatusUi {
     const { escape } = this.h;
     const t = (k, ...a) => this.t(k, ...a);
     const n = this.changes().length;
-    const bad = LOAD_KINDS.some((k) => this.limitBad(k));
+    const bad = this.anyBad();
     const saved = !n && this.ui.saved;
     const status = n ? t("settingsChanges", n) : saved ? t("settingsSavedShort") : "";
     foot.innerHTML = `<div class="dlg-actions"><span class="set-count${saved ? " saved" : ""}" role="status" data-st-count>${escape(status)}</span>
@@ -430,7 +448,6 @@ export class StatusUi {
     const { escape } = this.h;
     const t = (k, ...a) => this.t(k, ...a);
     if (!this.cfg) return "";
-    const v = this.cfg.values;
     const rows = LOAD_KINDS.map((kind) => {
       const name = t(`stSys${kind[0].toUpperCase()}${kind.slice(1)}`);
       const [lo, hi] = this.cfg.limits?.[`status_${kind}_limit`] || [1, 100];
@@ -444,7 +461,13 @@ export class StatusUi {
           ${err !== undefined ? `<div class="opt-warn" role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stLoadRange", lo, hi))}</span></div>` : ""}
           ${noPercent && this.val(`status_${kind}_alert`) ? `<div class="opt-short">${escape(t("stLoadNoPercent"))}</div>` : ""}</div>`;
     }).join("");
-    return `<div class="set-title">${escape(t("stLoadTitle"))}</div>${rows}<div class="opt-short">${escape(t("stLoadShort"))}</div>`;
+    // Mindestdauer für alle drei: wie viele Prüfungen (Minuten) in Folge der Wert über der Grenze liegen muss
+    const [mlo, mhi] = this.cfg.limits?.[MINUTES_KEY] || [1, 60];
+    const mbad = this.minutesBad();
+    const minutes = `<div class="opt${mbad ? " invalid" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("stLoadMinutes"))}</span>
+        <span class="st-ctl"><span class="opt-input${mbad ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="${mlo}" max="${mhi}" data-st-minutes value="${escape(String(this.val(MINUTES_KEY)))}" aria-label="${escape(t("stLoadMinutes"))}"><span class="unit">${escape(t("stLoadMinUnit"))}</span></span><span class="st-pad" aria-hidden="true"></span></span></div>
+        ${mbad ? `<div class="opt-warn" role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stLoadMinRange", mlo, mhi))}</span></div>` : ""}</div>`;
+    return `<div class="set-title">${escape(t("stLoadTitle"))}</div>${rows}${minutes}<div class="opt-short">${escape(t("stLoadShort", this.val(MINUTES_KEY)))}</div>`;
   }
 
   // Alter als Satz: "vor 8 Sek.", "vor 3 Min.", "vor 2 Std."

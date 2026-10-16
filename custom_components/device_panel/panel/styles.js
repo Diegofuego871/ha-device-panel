@@ -1886,6 +1886,8 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .st-sys-foot { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0 0 30px; font-size: 11.5px; color: var(--dp-text3); }
 .st-sys-foot .mid { color: var(--dp-text2); text-align: center; flex: 1; }
 .st-ctl { display: inline-flex; align-items: center; gap: 14px; flex: none; }
+/* Platz des Schalters in der Zeile Mindestdauer, damit das Feld über denen der Grenzen steht (seit 2.74.0) */
+.st-ctl .st-pad { flex: none; width: 36px; height: 20px; }
 .st-sys-act { margin: 6px 0 0; }
 .st-sys-list { margin: 4px 0 6px 18px; padding: 0; font-size: 13px; } .st-sys-list small { color: var(--dp-text2); }
 .st-sys .st-confirm { margin: 8px 0 0; background: var(--dp-bg); }

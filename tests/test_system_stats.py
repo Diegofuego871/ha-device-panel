@@ -367,3 +367,18 @@ async def test_new_percent_sensor_keeps_the_longer_history_of_used(recorder_mock
     # Verlauf von "belegt": seit etwa 20 Stunden, in Prozent der Platte (300 von 418,4 GiB = 71,7 %)
     assert disk["points"][0][0] <= now.timestamp() - 19 * 3600 and disk["points"][0][1] == pytest.approx(300 / 418.4 * 100, abs=0.2)
     assert disk["size"] == {"used": 318.4, "free": 100.0, "total": 418.4, "unit": "GiB"}
+
+
+def test_thin_peaks_keeps_a_short_spike_that_the_mean_would_hide() -> None:
+    """CPU/RAM: je Abschnitt der höchste Wert (2.74.0); das Mittel verschluckte einen Ausschlag von ein paar Minuten."""
+    from custom_components.device_panel.battery_history import thin
+
+    start, end = 0.0, 86400.0
+    points = [(i * 30.0, 100.0 if 40000 <= i * 30.0 <= 40150 else 3.0) for i in range(2880)]
+    peaks = system_stats.thin_peaks(points, start, end, 300)
+    mean = thin(points, start, end, 300)
+    assert len(peaks) <= 301 and max(v for _t, v in peaks) == 100.0
+    assert max(v for _t, v in mean) < 70  # genau das sah man auf der Karte: "Spitze 100 %", Kurve nur etwa die Hälfte
+    # zeitlich geordnet, letzter Punkt bleibt, kurze Reihen unverändert
+    assert [t for t, _v in peaks] == sorted(t for t, _v in peaks) and peaks[-1] == points[-1]
+    assert system_stats.thin_peaks(points[:10], start, end, 300) == points[:10]

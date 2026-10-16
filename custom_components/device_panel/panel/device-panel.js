@@ -2622,7 +2622,6 @@ class DevicePanel extends HTMLElement {
   _renderAreaList() {
     const box = this.shadowRoot.querySelector(this._narrowQuery.matches ? "dialog.area-sheet .alist" : ".area-pop .alist");
     if (!box) return;
-    const t = (k, ...a) => this._t(k, ...a);
     const picked = this._pickPicked();
     const all = this._pickGroups();
     const q = this._areaQuery.trim().toLowerCase();
@@ -7367,7 +7366,7 @@ class DevicePanel extends HTMLElement {
     const anyOwn = INTEG_OWN_MAPS.some((k) => Object.keys(d[k] || {}).length) || INTEG_OWN_LISTS.some((k) => (d[k] || []).length);
     return `<div class="opt-short mon-intro">${escape(t("integListIntro"))}</div>
       <div class="mon-flt">${chip("all", t("filterAll", items.length))}${chip("own", t("filterOwn", own.length))}<button type="button" class="ovr-all integ-all" data-set="integ-reset-all" ${anyOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("ovrResetAll"))}</button></div>
-      ${shown.length ? this._searchHtml("integ", shown.length) + `<div class="ilist srch-rows" data-srch="integ">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>` : `<div class="opt-short mon-empty">${escape(t(items.length ? "integNoneOwn" : "integNone"))}</div>`}`;
+      ${shown.length ? this._searchHtml("integ", shown.length) + `<div class="ilist srch-rows" data-srch="integ">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>` : `<div class="opt-short mon-empty">${escape(t(items.length ? "integNoneOwn" : "integNoneList"))}</div>`}`;
   }
 
   // Alle Einstellungen einer Integration (notify-v3, Bild 3): Zeitstrahl mit

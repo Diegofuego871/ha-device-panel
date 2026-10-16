@@ -284,6 +284,24 @@ def _disabled_payload(entries: list[er.RegistryEntry]) -> list[dict[str, str]]:
     return [{"entity_id": e.entity_id, "name": str(e.name or e.original_name or e.entity_id)} for e in entries]
 
 
+def thin_peaks(points: list[tuple[float, float]], start: float, end: float, limit: int = MAX_POINTS) -> list[tuple[float, float]]:
+    """
+    Höchstens limit Punkte wie battery_history.thin, aber der höchste Wert je gleich langem Abschnitt statt des Mittels (zu seiner
+    Zeit): ein Ausschlag von ein paar Minuten bleibt auf der Kurve sichtbar und passt zur "Spitze" darunter. Der letzte Punkt bleibt.
+    """
+    if len(points) <= limit:
+        return points
+    size = (end - start) / limit
+    peaks: dict[int, tuple[float, float]] = {}
+    for t, v in points[:-1]:
+        i = min(limit - 1, int((t - start) // size))
+        if i not in peaks or v > peaks[i][1]:
+            peaks[i] = (t, v)
+    out = [peaks[i] for i in sorted(peaks)]
+    out.append(points[-1])
+    return out
+
+
 async def _points(
     hass: HomeAssistant, entity_id: str, days: int, now: float, parse: Callable[[str], float | None] = _value, scale: float = 1.0
 ) -> tuple[list[tuple[float, float]], str, str]:
@@ -437,7 +455,9 @@ async def async_metric(hass: HomeAssistant, kind: str, own: str, days: int, now:
         values = [v for _t, v in points]
         out["avg"] = round(sum(values) / len(values), 1)
         out["max"] = round(max(values), 1)
-        out["points"] = [[round(t, 1), round(v, 1)] for t, v in thin(points, out["start"], now, MAX_POINTS)]
+        # CPU und Arbeitsspeicher: je Abschnitt der höchste Wert, sonst verschwindet ein kurzer Ausschlag im Mittel (2.74.0)
+        shrink = thin_peaks if kind in ("cpu", "ram") else thin
+        out["points"] = [[round(t, 1), round(v, 1)] for t, v in shrink(points, out["start"], now, MAX_POINTS)]
     if out["mode"] == "absolute":
         out["axis_max"] = _axis_max(max(out["max"] or 0.0, out["current"] or 0.0))
     if out["current"] is not None:

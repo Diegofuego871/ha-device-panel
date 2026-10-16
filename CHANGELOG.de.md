@@ -9,15 +9,28 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.74.0] - 2026-10-16
 
-Fenster "Alle Routinen": jede Routine lässt sich dort ausführen.
+Fenster "Alle Routinen": jede Routine lässt sich dort ausführen; Meldung bei hoher Auslastung mit Mindestdauer; Korrekturen aus dem Prüfbericht (Routinen, Push, Texte).
 
 ### Hinzugefügt
 
 - Fenster mit allen Routinen (Blitz in der Kopfzeile): Jede Routine hat neben "Bearbeiten" einen Knopf **Ausführen**, wie im Popup des Geräts. Er schaltet sofort, ohne Rückfrage, auch wenn die Routine ausgeschaltet ist; der Zeitplan bleibt, wie er ist, ein Zurückschalten wird geplant. Das Ergebnis steht in der Karte dieser Routine ("Ausgeführt." grün oder "Konnte nicht schalten: …" rot, zum Beispiel "nicht erreichbar"), nicht oben in der langen Liste; die nächste Aktion im Fenster räumt es weg. Die Einleitung des Fensters nennt es mit.
+- Status-App, Einstellungen, "Meldung bei hoher Auslastung": neue Zeile **Mindestdauer** (1 bis 60 Minuten, Standard 3, für Prozessor, Arbeitsspeicher und Festplatte). Der Wert muss bei so vielen Prüfungen in Folge (eine Prüfung je Minute) auf oder über der Grenze liegen, bevor der Push kommt; 1 meldet bei der ersten Prüfung, eine höhere Zahl übergeht längere Spitzen. Bisher war es fest 3. Neue Option `status_load_minutes`. Der Hinweis unter dem Abschnitt nennt die aktuelle Zahl.
 
 ### Geändert
 
 - Handy: Die Aktionen unter einer Routine oder einer Magic-Push-Regel (Bearbeiten, Ausführen, Löschen, Herz) sind seitlich etwas schmaler (7 statt 12 px), damit die vier auf 390 px in eine Zeile passen; die Höhe von 44 px für den Finger bleibt.
+- App-Launcher, Bearbeiten-Liste: Die Zeile "Läuft das Panel?" unter "Status" entfällt (die anderen Apps behalten ihre Zeile).
+- Push: Bei Zusatzdaten (Tag, Link) wird ein **vorübergehender** Fehler (Netz, Zeitüberschreitung) nach 2 Sekunden einmal mit denselben Daten wiederholt; bisher ging der zweite Versuch immer ohne sie hinaus, die Entwarnung ersetzte dann die erste Meldung nicht und ein Tipp öffnete die App nicht. Nur wenn das Ziel die Zusatzdaten **ablehnt** (zum Beispiel Telegram, E-Mail), folgt wie bisher gleich die schlichte Meldung; scheitert auch die Wiederholung, geht sie als letzter Ausweg schlicht hinaus.
+- Status-Fenster: Es fragt nicht mehr alle 10 Sekunden nach, solange das Panel verdeckt ist (wie die Liste der Geräte).
+- Tests: Die Unit-Tests behandeln veraltete Aufrufe (Deprecation-Warnungen) aus dem eigenen Code der Integration als Fehler (die von Home Assistant selbst bleiben aus), damit so etwas wie bei 1.31.1 auffällt; neue Tests für die Punkte dieses Abschnitts.
+- Aufgeräumt: 14 ungenutzte Texte sowie 7 ungenutzte Code-Teile (Python) und Variablen (JavaScript) entfernt; am Verhalten ändert sich nichts.
+
+### Behoben
+
+- Status-App, Reiter "System": Die Kurven von Prozessor und Arbeitsspeicher zeigen eine kurze Spitze. Bisher war jeder Abschnitt der Kurve (etwa 5 Minuten) das Mittel seiner Werte, sodass eine Spitze von ein paar Minuten bei 100 % wie 30 bis 60 % aussah, während "Spitze 100 %" unter der Kurve die Rohwerte nahm. Jetzt zeigt jeder Abschnitt seinen höchsten Wert; der Durchschnitt unter der Kurve bleibt. Festplatte und die längeren Zeiträume bleiben wie sie waren.
+- Routinen: Ein Schaltbefehl, der nicht antwortet (zum Beispiel ein Cloud-Gerät), lässt andere Routinen, die gleichzeitig fällig sind, nicht mehr "verpasst" werden. Sie warteten auf die Sperre und zählten ihre Verspätung ab dem Moment, in dem sie sie bekamen; nach mehr als der Nachholzeit (Standard 10 Minuten) wurden sie übersprungen und nie geschaltet. Die Verspätung zählt jetzt ab dem Zeitgeber; eine solche Routine läuft spät statt nie. Eine Routine, die wirklich zu spät dran ist (Home Assistant war aus), gilt weiter als verpasst.
+- Filter "Integration": Der Eintrag für Geräte ohne Integration hiess "Keine Integrationen." statt "Ohne Integration" (ein Text-Schlüssel war doppelt definiert). Die leere Liste behält "Keine Integrationen."; ein Test findet doppelte Text-Schlüssel jetzt.
+- Status-Meldungen: Die Uhrzeit im Push ("… · 14:32") steht in der Zeitzone von Home Assistant, nicht mehr in der des Systems (in einem Container ohne Zeitzone war es UTC).
 
 ## [2.73.0] - 2026-10-16
 

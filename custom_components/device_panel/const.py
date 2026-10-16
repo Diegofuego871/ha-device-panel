@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "239"
+PANEL_VERSION = "240"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -191,7 +191,6 @@ CONF_ROUTINES_PAUSE = "routines_pause"
 CONF_ROUTINES_CATCH_UP = "routines_catch_up"
 CONF_ROUTINES_NOTIFY_ERROR = "routines_notify_error"
 DEFAULT_ROUTINES_CATCH_UP = 10
-ROUTINES_CATCH_UP_CHOICES = (0, 10, 60)
 
 INT_RANGES = {
     CONF_NEW_WINDOW: (1, 60),
@@ -253,7 +252,17 @@ CONF_STATUS_CPU_LIMIT = "status_cpu_limit"
 CONF_STATUS_RAM_LIMIT = "status_ram_limit"
 CONF_STATUS_DISK_LIMIT = "status_disk_limit"
 DEFAULT_STATUS_LIMIT = 99
-INT_RANGES.update({CONF_STATUS_CPU_LIMIT: (1, 100), CONF_STATUS_RAM_LIMIT: (1, 100), CONF_STATUS_DISK_LIMIT: (1, 100)})
+# Wie lange die Auslastung über der Grenze liegen muss, bis die Meldung kommt (seit 2.74.0): Zahl der Prüfungen in Folge, eine je Minute
+CONF_STATUS_LOAD_MINUTES = "status_load_minutes"
+DEFAULT_STATUS_LOAD_MINUTES = 3
+INT_RANGES.update(
+    {
+        CONF_STATUS_CPU_LIMIT: (1, 100),
+        CONF_STATUS_RAM_LIMIT: (1, 100),
+        CONF_STATUS_DISK_LIMIT: (1, 100),
+        CONF_STATUS_LOAD_MINUTES: (1, 60),
+    }
+)
 # Umbenennung Timer → Routine (2.55.0): so hiessen die gespeicherten Optionen vorher; __init__ übernimmt sie beim Start einmal
 RENAMED_OPTIONS = {
     "timers_pause": "routines_pause",
@@ -351,8 +360,6 @@ DATA_SIGNAL = f"{DOMAIN}_signal"
 DATA_MAGIC = f"{DOMAIN}_magic"
 DATA_ROUTINES = f"{DOMAIN}_routines"
 DATA_STATUS = f"{DOMAIN}_status"
-
-WS_TYPE_LIST_DEVICES = f"{DOMAIN}/list_devices"
 
 # Versionsprüfung (GitHub-Releases) und Abgleich mit HACS, wie unifi_dynamic.
 GITHUB_REPO = "Diegofuego871/ha-device-panel"

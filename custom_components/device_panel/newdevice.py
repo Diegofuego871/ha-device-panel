@@ -62,10 +62,6 @@ class NewDeviceNotifier:
     def pending(self) -> dict[str, float]:
         return self._pending
 
-    @property
-    def recent(self) -> list[dict[str, Any]]:
-        return self._recent
-
     async def async_start(self) -> None:
         stored = await self._store.async_load() or {}
         if isinstance(stored, dict) and isinstance(raw := stored.get("recent"), list):

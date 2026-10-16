@@ -39,7 +39,6 @@ STORE_KEY = f"{DOMAIN}.debug"
 # Verzögerung des Schreibens: Fasst viele Einträge zu einem Schreibvorgang zusammen (HA schreibt beim Beenden ohnehin).
 SAVE_DELAY = 30
 LEVELS = ("debug", "info", "warning", "error")
-CATEGORIES = ("charge", "outage", "battery", "new", "updates", "magic", "routine", "push", "system")
 
 _PY_LEVEL = {"debug": logging.DEBUG, "info": logging.INFO, "warning": logging.WARNING, "error": logging.ERROR}
 

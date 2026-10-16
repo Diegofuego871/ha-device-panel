@@ -150,6 +150,8 @@ for (const lang of ["de", "en"]) {
     await tap(`${D} [data-ap="edit"]`);
     check(`[${tag}] Bearbeiten: Titel "${T.editTitle}", Fertig, Darstellung Raster | Liste mit Kapsel`, (await text(`${D} .ap-title`)) === T.editTitle && !!(await handle(`${D} [data-ap="done"]`))
       && (await wait(`return !!r.querySelector("${D} .ap-view .sub-tabs .seg-pill")`)) && JSON.stringify(await ev(`return [...r.querySelectorAll("${D} .ap-view .sub-tab")].map((e) => e.textContent)`)) === JSON.stringify([T.grid, T.list]));
+    // Status ohne Zeile unter dem Namen (seit 2.74.0: der Satz "Läuft das Panel?" passte nicht mehr); die anderen Apps behalten ihre
+    check(`[${tag}] Bearbeiten: die Zeile "Status" hat keine Unterzeile, kein "undefined"; andere Apps (zum Beispiel Automationen) haben ihre`, await ev(`const row = (id) => r.querySelector('${D} .ap-erow[data-id="' + id + '"]'); const st = row("status"), au = row("auto"); return !!st && !st.querySelector(".ap-t small") && !st.textContent.includes("undefined") && !!au && !!au.querySelector(".ap-t small")`));
     check(`[${tag}] Bearbeiten: Strich vor dem zweiten Favoriten, Ziehgriff, Auge, Herz je Zeile; Protokoll mit Schloss statt Auge`, await ev(`const box = r.querySelector('${D} [data-ap-box="fav"]'); const row = r.querySelector('${D} [data-ap-box="panel"] .ap-erow[data-id="log"]'); return box.children.length === 5 && !!box.children[1].dataset.mark && [...r.querySelectorAll("${D} .ap-erow")].every((e) => e.querySelector("[data-ap-drag]") && e.querySelector('[data-ap="fav"]')) && !row.querySelector('[data-ap="hide"]') && !!row.querySelector(".ap-a.dis")`));
     await shot("3-bearbeiten");
     await tap(`${D} [data-set="layout"][data-v="list"]`);

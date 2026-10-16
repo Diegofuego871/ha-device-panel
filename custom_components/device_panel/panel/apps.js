@@ -165,7 +165,7 @@ export class AppLauncher {
   _all() {
     const admin = this._admin();
     const t = (k) => this.t(k);
-    const builtin = BUILTIN.filter((a) => admin || !a.admin).map((a) => ({ ...a, name: t(`app_${a.id}`), sub: a.path || t(`app_${a.id}_sub`), look: HA_LOOK[a.id] || null, color: HA_LOOK[a.id]?.c || PANEL_COLOR[a.id] || null }));
+    const builtin = BUILTIN.filter((a) => admin || !a.admin).map((a) => ({ ...a, name: t(`app_${a.id}`), sub: a.path || t(`app_${a.id}_sub`) || "", look: HA_LOOK[a.id] || null, color: HA_LOOK[a.id]?.c || PANEL_COLOR[a.id] || null }));
     const own = this.data.custom.map((c) => ({ id: c.id, group: "own", icon: c.icon, name: c.name, sub: c.url, url: c.url, ext: c.ext, favicon: c.favicon, custom: true }));
     return [...builtin, ...own];
   }
@@ -435,7 +435,7 @@ export class AppLauncher {
     const box = this.root?.querySelector(".app-pins");
     if (!box) return;
     this._paintLauncherDot();
-    const { escape, mdi } = this.h;
+    const { escape } = this.h;
     const pins = this.favs().slice(0, this.narrow() ? 1 : MAX_FAV);
     const html = pins
       .map((a) => {
@@ -544,7 +544,7 @@ export class AppLauncher {
     const { escape, mdi } = this.h;
     const q = this.ui.q.trim().toLowerCase();
     const list = this.data.layout[this.layoutKey()] === "list";
-    const match = (a) => !q || `${a.name} ${a.sub}`.toLowerCase().includes(q);
+    const match = (a) => !q || `${a.name} ${a.sub || ""}`.toLowerCase().includes(q);
     let out = "";
     let any = false;
     const favs = this.favs();
@@ -591,7 +591,7 @@ export class AppLauncher {
       : "";
     return `<div class="ap-erow${hid ? " hid" : ""}" data-id="${escape(a.id)}" data-mark="${escape(this.t("appsPhoneMark"))}">
       <button type="button" class="ap-drag" data-ap-drag data-id="${escape(a.id)}" title="${escape(this.t("appsDragHint"))}" aria-label="${escape(this.t("appsDrag", a.name))}">${mdi("drag", 18)}</button>
-      ${this._ico(a, 18, true)}<span class="ap-t"><b>${escape(a.name)}${a.ext ? ` <span class="ap-ext in">${mdi("link", 12)}</span>` : ""}</b><small>${escape(a.sub)}</small></span>
+      ${this._ico(a, 18, true)}<span class="ap-t"><b>${escape(a.name)}${a.ext ? ` <span class="ap-ext in">${mdi("link", 12)}</span>` : ""}</b>${a.sub ? `<small>${escape(a.sub)}</small>` : ""}</span>
       ${eye}${heart}${own}</div>`;
   }
 

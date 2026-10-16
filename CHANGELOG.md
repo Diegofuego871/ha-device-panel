@@ -9,15 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.74.0] - 2026-10-16
 
-Window "All routines": every routine can be run from there.
+Window "All routines": every routine can be run from there; alert at high load with a minimum duration; fixes from the code review (routines, push, texts).
 
 ### Added
 
 - Window with all routines (lightning bolt in the header): each routine has a button **Run** next to "Edit", like in the pop-up of the device. It switches at once, without asking, also when the routine is switched off; the schedule stays as it is, a switch-back is planned. The result shows in the card of that routine ("Done." in green or "Could not switch: …" in red, for example "not reachable"), not at the top of the long list; the next action in the window clears it. The introduction of the window names it too.
+- Status app, settings, "Alert at high load": new row **Minimum duration** (1 to 60 minutes, default 3, for processor, memory and disk). The value must be at or above the limit at that many checks in a row (one check per minute) before the push comes; 1 reports at the first check, a higher number ignores longer peaks. Before, it was fixed at 3. New option `status_load_minutes`. The hint under the section names the current number.
 
 ### Changed
 
 - Phone: the actions under a routine or Magic Push rule (Edit, Run, Delete, heart) are a little narrower at the sides (7 instead of 12 px), so the four fit on one line at 390 px; the height of 44 px for the finger stays.
+- App launcher, edit list: the line "Is the panel running?" under "Status" is gone (the other apps keep their line).
+- Push: with additional data (tag, link) a **temporary** error (network, timeout) is tried once more with the same data after 2 seconds; before, the second attempt always went out without them, so the all-clear did not replace the first message and a tap did not open the app. Only when the target **rejects** the additional data (for example Telegram, e-mail) does the plain message follow at once, as before; if the retry fails as well, it goes out plain as a last resort.
+- Status window: it no longer asks every 10 seconds while the panel is hidden (like the list of devices).
+- Tests: the unit tests treat deprecation warnings from the integration's own code as errors (those of Home Assistant stay off), so a deprecated call like the one of 1.31.1 shows up; new tests for the points of this section.
+- Cleaned up: 14 unused texts and 7 unused code parts (Python) and variables (JavaScript) removed; no change in behaviour.
+
+### Fixed
+
+- Status app, tab "System": the curves of processor and memory show a short peak. Before, every section of the curve (about 5 minutes) was the mean of its values, so a peak of a few minutes at 100 % looked like 30 to 60 %, while "Peak 100 %" under the curve used the raw values. Now each section shows its highest value; the average under the curve is unchanged. Disk and the longer ranges stay as they were.
+- Routines: a switching command that does not answer (for example a cloud device) no longer makes other routines due at the same time "missed". They waited for the lock and counted their delay from the moment they got it, so after more than the catch-up time (default 10 minutes) they were skipped and never switched. The delay now counts from the timer; such a routine runs late instead of never. A routine that really is too late (Home Assistant was off) is still "missed".
+- Filter "Integration": the entry for devices without integration read "No integrations." instead of "No integration" (a text key was defined twice). The empty list keeps "No integrations."; a test now finds duplicate text keys.
+- Status alerts: the time in the push ("… · 14:32") is in the time zone of Home Assistant, no longer in that of the system (in a container without time zone it was UTC).
 
 ## [2.73.0] - 2026-10-16
 

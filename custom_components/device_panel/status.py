@@ -19,6 +19,7 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.util import dt as dt_util
 
 from . import activity, push
 from .const import (
@@ -26,6 +27,7 @@ from .const import (
     CONF_STATUS_CPU_LIMIT,
     CONF_STATUS_DISK_ALERT,
     CONF_STATUS_DISK_LIMIT,
+    CONF_STATUS_LOAD_MINUTES,
     CONF_STATUS_NOTIFY,
     CONF_STATUS_RAM_ALERT,
     CONF_STATUS_RAM_LIMIT,
@@ -59,7 +61,6 @@ LOAD_KINDS = {
     "ram": (CONF_STATUS_RAM_ALERT, CONF_STATUS_RAM_LIMIT),
     "disk": (CONF_STATUS_DISK_ALERT, CONF_STATUS_DISK_LIMIT),
 }
-LOAD_HOLD = 3
 LOAD_CLEAR = 2
 LOAD_MARGIN = 2.0
 
@@ -253,6 +254,7 @@ class StatusWatch:
         from .system_stats import current_percent  # noqa: PLC0415 - system_stats zieht Recorder-Hilfen, erst bei Bedarf
 
         opts = effective(self.hass)
+        hold = opts[CONF_STATUS_LOAD_MINUTES]
         for kind, (alert_key, limit_key) in LOAD_KINDS.items():
             st = self._load.setdefault(kind, {"over": 0, "under": 0, "alerted": False, "since": 0.0})
             limit = opts[limit_key]
@@ -266,7 +268,7 @@ class StatusWatch:
                 st["over"] += 1
                 if st["over"] == 1:
                     st["since"] = time.time()
-                if st["over"] >= LOAD_HOLD and not st["alerted"]:
+                if st["over"] >= hold and not st["alerted"]:
                     st["alerted"] = True
                     minutes = max(1, int((time.time() - st["since"]) // 60))
                     what = push.text(self.hass, f"status_what_{kind}")
@@ -294,7 +296,7 @@ class StatusWatch:
         if target == NOTIFY_NONE:
             return
         hass = self.hass
-        clock = time.strftime("%H:%M", time.localtime())
+        clock = dt_util.now().strftime("%H:%M")
         what = push.text(hass, f"status_what_{kind}")
         if up:
             title = push.text(hass, "status_load_ok_title", what=what, limit=limit)
@@ -341,7 +343,7 @@ class StatusWatch:
         if target == NOTIFY_NONE:
             return
         hass = self.hass
-        clock = time.strftime("%H:%M", time.localtime())
+        clock = dt_util.now().strftime("%H:%M")
         part = self._label(key)
         if up:
             title, message = push.text(hass, "status_up_title", part=part), push.text(hass, "status_up_text", time=clock)

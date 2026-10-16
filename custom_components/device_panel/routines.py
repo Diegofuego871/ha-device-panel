@@ -116,7 +116,6 @@ SERVICES: dict[str, dict[str, tuple[str, str]]] = {
     # Szene (seit 2.61.0): nur auslösen, es gibt weder Aus noch Zurückschalten
     "scene": {"activate": ("scene", "turn_on")},
 }
-DOMAINS = tuple(SERVICES)
 ACTIONS = ("on", "off", "toggle", "activate")
 # Sammelstellen für Szenen und Gruppen ohne Gerät (seit 2.61.0): stehen dort, wo sonst die Geräte-ID steht, und beginnen mit "@",
 # damit sie nie mit einer echten Geräte-ID zusammenfallen.
@@ -1103,6 +1102,9 @@ class RoutineManager:
         self.hass.async_create_task(self._async_process(routine_id))
 
     async def _async_process(self, routine_id: str) -> None:
+        # Verspätung ab hier messen, nicht erst nach der Sperre: Hängt der Schaltbefehl einer anderen Routine, wartet diese hier,
+        # ohne dass sie deshalb als "verpasst" gilt (sie läuft dann spät, statt nie)
+        queued = time.time()
         async with self._lock:
             routine = self._routines.get(routine_id)
             if routine is None:
@@ -1112,7 +1114,7 @@ class RoutineManager:
             if rt["revert_due"] is not None and rt["revert_due"] <= now:
                 await self._async_revert(routine, rt, now)
             if routine["enabled"] and rt["due"] is not None and rt["due"] <= now:
-                await self._async_fire(routine, rt, now)
+                await self._async_fire(routine, rt, now, queued)
             self._arm(routine_id)
             self._save_now()
 
@@ -1165,10 +1167,10 @@ class RoutineManager:
         device = dr.async_get(self.hass).async_get(routine["device_id"])
         return (device.name_by_user or device.name or "") if device is not None else ""
 
-    async def _async_fire(self, routine: dict[str, Any], rt: dict[str, Any], now: float) -> None:
+    async def _async_fire(self, routine: dict[str, Any], rt: dict[str, Any], now: float, queued: float | None = None) -> None:
         hass = self.hass
         name, device = routine["name"], log_device(routine)
-        late = now - float(rt["due"])
+        late = min(now, queued if queued is not None else now) - float(rt["due"])
         if late > self._grace():
             activity.record(hass, "warning", "routine", "routine_missed", name, device, minutes=int(late // 60))
             rt["last"] = {"at": now, "ok": False, "what": "missed", "reason": None}

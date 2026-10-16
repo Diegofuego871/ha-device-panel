@@ -58,15 +58,6 @@ _LOGGER = logging.getLogger(__name__)
 STORE_KEY = f"{DOMAIN}.charge"
 
 
-def level_of(state: Any) -> float | None:
-    """Prozent aus dem Zustand eines Batteriesensors, sonst None."""
-    try:
-        value = float(state.state)
-    except (AttributeError, TypeError, ValueError):
-        return None
-    return value if 0 <= value <= 100 else None
-
-
 def charging_entity(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> str | None:
     """
     Ladeanzeige des Geräts, wenn es eine hat: Binärsensor mit Geräteklasse battery_charging

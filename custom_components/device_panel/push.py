@@ -5,16 +5,24 @@ Instanz (wie unifi_dynamic, notification.py und msg.py).
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
+import voluptuous as vol
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 
 from . import activity
 from .options_api import emoji_for
 from .const import CLICK_DEVICE, DATA_PUSH_IMAGE, MUTE_ACTION_PREFIX, NOTIFY_NONE, PANEL_URL_PATH
 
 _LOGGER = logging.getLogger(__name__)
+
+# Fehler, mit denen ein Ziel die Zusatzdaten ablehnt (Prüfung der Eingabe); alles andere (Netz, Zeitüberschreitung) ist vorübergehend
+_REJECTED = (vol.Invalid, ValueError, TypeError, ServiceValidationError)
+# Pause vor dem zweiten Versuch mit denselben Zusatzdaten nach einem vorübergehenden Fehler
+RETRY_DELAY_S = 2.0
 
 # Texte der Meldungen. Platzhalter mit str.format; DE und EN mit denselben
 # Schlüsseln (tests/test_translations.py prüft das).
@@ -386,13 +394,23 @@ async def async_push(
     plain: dict[str, Any] = {"title": title, "message": message}
     if hass.services.has_service("notify", object_id):
         if data:
-            try:
-                await hass.services.async_call("notify", object_id, {**plain, "data": data}, blocking=True)
-                activity.record(hass, "info", "push", "push_sent", target, title=title)
-                return True
-            except Exception as err:  # noqa: BLE001
-                _LOGGER.debug("Zusatzdaten abgelehnt (%s)", err)
-                activity.record(hass, "debug", "push", "push_extra", target)
+            # Zweiter Versuch mit denselben Zusatzdaten nur nach einem vorübergehenden Fehler: Ohne sie fehlten Tag und Link,
+            # eine Entwarnung ersetzte die erste Meldung nicht, und ein Tipp öffnete die App nicht
+            for attempt in (1, 2):
+                try:
+                    await hass.services.async_call("notify", object_id, {**plain, "data": data}, blocking=True)
+                    activity.record(hass, "info", "push", "push_sent", target, title=title)
+                    return True
+                except _REJECTED as err:
+                    _LOGGER.debug("Zusatzdaten abgelehnt (%s)", err)
+                    activity.record(hass, "debug", "push", "push_extra", target)
+                    break
+                except Exception as err:  # noqa: BLE001
+                    _LOGGER.debug("Push an '%s' mit Zusatzdaten fehlgeschlagen, Versuch %d (%s)", target, attempt, err)
+                    if attempt == 1:
+                        await asyncio.sleep(RETRY_DELAY_S)
+                    else:
+                        activity.record(hass, "debug", "push", "push_extra", target)
         try:
             await hass.services.async_call("notify", object_id, plain, blocking=True)
             activity.record(hass, "info", "push", "push_sent", target, title=title)
