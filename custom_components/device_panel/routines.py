@@ -1583,9 +1583,12 @@ def switchable_devices(hass: HomeAssistant) -> list[dict[str, Any]]:
         out.append({"id": device_id, "name": device.name_by_user or device.name or device_id, "entities": n, "names": names.get(device_id, [])})
     out.sort(key=lambda d: d["name"].casefold())
     # Szenen und Gruppen ohne Gerät (seit 2.61.0) zuletzt, nur wenn es welche gibt
+    registry = er.async_get(hass)
     for holder in HOLDERS:
         if ids := holder_entity_ids(hass, holder):
-            out.append({"id": holder, "name": "", "entities": len(ids), "holder": True, "names": [str((hass.states.get(e).attributes.get("friendly_name") if hass.states.get(e) else None) or e) for e in ids]})
+            # items: jede Szene und Gruppe einzeln, damit der Assistent sie bei der Suche direkt als eigene Zeile zeigt (seit 2.65.0)
+            items = [{"id": e, "name": entity_label(e, registry.async_get(e), None, hass.states.get(e))} for e in ids]
+            out.append({"id": holder, "name": "", "entities": len(ids), "holder": True, "names": [i["name"] for i in items], "items": items})
     return out
 
 

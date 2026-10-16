@@ -794,8 +794,8 @@ async def test_holders_in_listing_and_websocket(hass: HomeAssistant, setup, hass
     hass.states.async_set("scene.abend", "unknown", {"friendly_name": "Abend"})
     hass.states.async_set("light.gruppe", "on", {"entity_id": ["light.a"], "supported_color_modes": ["onoff"], "friendly_name": "Gruppe"})
     assert routines.switchable_devices(hass) == [
-        {"id": "@scenes", "name": "", "entities": 1, "holder": True, "names": ["Abend"]},
-        {"id": "@groups", "name": "", "entities": 1, "holder": True, "names": ["Gruppe"]},
+        {"id": "@scenes", "name": "", "entities": 1, "holder": True, "names": ["Abend"], "items": [{"id": "scene.abend", "name": "Abend"}]},
+        {"id": "@groups", "name": "", "entities": 1, "holder": True, "names": ["Gruppe"], "items": [{"id": "light.gruppe", "name": "Gruppe"}]},
     ]
     client = await hass_ws_client(hass)
     await client.send_json({"id": 1, "type": f"{DOMAIN}/routine_get", "device_id": "@scenes"})
@@ -818,6 +818,8 @@ async def test_group_helper_is_found_and_searchable(hass: HomeAssistant, setup) 
     hass.states.async_set(entry.entity_id, "off", {"entity_id": ["light.a", "light.b"], "friendly_name": "Esstisch", "supported_color_modes": ["brightness"]})
     listing = {d["id"]: d for d in routines.switchable_devices(hass)}
     assert listing[routines.HOLDER_GROUPS]["names"] == ["Esstisch"]
+    # jede Gruppe einzeln, damit die Suche sie als eigene Zeile zeigen kann (2.65.0)
+    assert listing[routines.HOLDER_GROUPS]["items"] == [{"id": entry.entity_id, "name": "Esstisch"}]
     assert routines.in_holder(hass, routines.HOLDER_GROUPS, entry.entity_id)
     # unerreichbar: HA lässt die Mitgliederliste dann weg, die Plattform "group" reicht
     hass.states.async_set(entry.entity_id, "unavailable", {"friendly_name": "Esstisch"})

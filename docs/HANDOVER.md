@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.65.0, Szenen und Gruppen direkt in der Suche des Routinen-Assistenten)
+
+- Wunsch des Nutzers (Screenshot: Suche "grupp" fand nur den Sammeleintrag "Gruppen"): niemand soll die Wörter "Szene" oder "Gruppe" suchen müssen; jede Szene, Gruppe und jeder Helfer soll über den eigenen Namen direkt gefunden werden. `routines.switchable_devices` liefert bei den Sammelstellen `items` [{id, name}] (Name wie auf der Seite "Was", `entity_label`). `devsHtml` in `routines.js`: mit Suchtext je Treffer eine eigene Zeile (`data-id` = Sammelstelle, `data-ent` = Entität, rechts die Art "Szene"/"Gruppe"), höchstens `ITEM_ROWS_MAX` (40) mit Hinweis `rtMoreResults`; ohne Suchtext nur die beiden Sammelzeilen. `w.pickEnt` + `preselect()` setzen die Entität und die Aktion beim "Weiter" (wie das Antippen auf "Was"). Reiter (Geräte/Gruppen/Szenen) bewusst nicht gebaut: der Nutzer wollte lieber die direkte Suche. 2.64.0 ist veröffentlicht (Tag `v2.64.0`), 2.65.0 folgt direkt. Suite `routinescene` (72), Test `test_holders_in_listing_and_websocket`, `test_group_helper_is_found_and_searchable`.
+
 ## Stand (2.64.0, Einstellungen prüfen beim Öffnen auf eine neue Version)
 
 - Wunsch des Nutzers: Bei jedem Öffnen der Einstellungen wird frisch nach einer neuen Version gesucht. `_openSettings` ruft `_loadVersion(true, { open: true })` (nicht, wenn gerade `installing` oder `restarting`): `force` umgeht den 6-Stunden-Zwischenspeicher

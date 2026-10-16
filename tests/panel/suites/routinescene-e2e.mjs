@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { film: "filmabend", q0: "Gerät, Gruppe oder Szene?", scenes: "Szenen", groups: "Gruppen", act: "Aktivieren", noBack: "Eine Szene lässt sich nur aktivieren, nicht zurückschalten.", scene: "Abendlicht", count: "2 Szenen", sentence: "Abendlicht aktivieren", step: (n, t) => `Schritt ${n} von ${t}` },
-  en: { film: "movie night", q0: "Device, group or scene?", scenes: "Scenes", groups: "Groups", act: "Activate", noBack: "A scene can only be activated, not switched back.", scene: "Abendlicht", count: "2 scenes", sentence: "Abendlicht activate", step: (n, t) => `Step ${n} of ${t}` },
+  de: { film: "filmabend", q0: "Gerät, Gruppe oder Szene?", scenes: "Szenen", groups: "Gruppen", act: "Aktivieren", kindScene: "Szene", kindGroup: "Gruppe", grp: "leuchten", noBack: "Eine Szene lässt sich nur aktivieren, nicht zurückschalten.", scene: "Abendlicht", count: "2 Szenen", sentence: "Abendlicht aktivieren", step: (n, t) => `Schritt ${n} von ${t}` },
+  en: { film: "movie night", q0: "Device, group or scene?", scenes: "Scenes", groups: "Groups", act: "Activate", kindScene: "Scene", kindGroup: "Group", grp: "living room", noBack: "A scene can only be activated, not switched back.", scene: "Abendlicht", count: "2 scenes", sentence: "Abendlicht activate", step: (n, t) => `Step ${n} of ${t}` },
 };
 
 for (const lang of ["de", "en"]) {
@@ -48,7 +48,16 @@ for (const lang of ["de", "en"]) {
 
     // Suche findet eine Szene über ihren Namen (auch wenn "Szenen" selbst anders heisst)
     await ev(`const i = r.querySelector('${win} input[data-rt="dev-search"]'); i.focus(); i.value = ${JSON.stringify(T.film)}; i.dispatchEvent(new Event("input", { bubbles: true }))`);
-    check(`[${tag}] Suche "${T.film}" findet "${T.scenes}" über den Namen der Szene darin, sonst nichts`, await wait(`const ids = [...r.querySelectorAll('${win} [data-rt="dev"]')].map((x) => x.dataset.id); return ids.length === 1 && ids[0] === "@scenes"`));
+    check(`[${tag}] Suche "${T.film}" zeigt die Szene selbst als eigene Zeile (mit Art "${T.kindScene}"), nicht nur "${T.scenes}"`, await wait(`const rows = [...r.querySelectorAll('${win} [data-rt="dev"]')]; return rows.length === 1 && rows[0].dataset.id === "@scenes" && rows[0].dataset.ent === "scene.film" && rows[0].querySelector(".mg-val").textContent.trim() === ${JSON.stringify(T.kindScene)} && rows[0].querySelector("b").textContent.trim().toLowerCase() === ${JSON.stringify(T.film)}`));
+    // Antippen und "Weiter": die Szene ist auf der Seite "Was" schon gewählt, die Aktion gesetzt
+    await tap(`${win} [data-rt="dev"][data-ent="scene.film"]`);
+    await tap(`${win} [data-rt="nav-next"]`);
+    check(`[${tag}] Szene aus der Suche: auf "Was" vorgewählt, Aktion "${T.act}", Weiter ohne weiteren Tipp möglich`, await wait(`const d = r.querySelector("${win}"); return d.querySelector('.mg-pick[data-id="scene.film"][aria-checked="true"]') && d.querySelector('[data-rt="action"]')?.textContent.trim() === ${JSON.stringify(T.act)} && !d.querySelector('[data-rt="nav-next"]').disabled`));
+    await tap(`${win} [data-rt="nav-back"]`);
+    await wait(`return r.querySelector('${win} input[data-rt="dev-search"]')`);
+    // Gruppe über ihren Namen: eigene Zeile mit Art "${T.kindGroup}"
+    await ev(`const i = r.querySelector('${win} input[data-rt="dev-search"]'); i.value = ${JSON.stringify(T.grp)}; i.dispatchEvent(new Event("input", { bubbles: true }))`);
+    check(`[${tag}] Suche "${T.grp}" zeigt die Gruppe als eigene Zeile (Art "${T.kindGroup}")`, await wait(`const g = r.querySelector('${win} [data-rt="dev"][data-ent="light.wohnzimmer"]'); return g && g.dataset.id === "@groups" && g.querySelector(".mg-val").textContent.trim() === ${JSON.stringify(T.kindGroup)}`));
     await ev(`const i = r.querySelector('${win} input[data-rt="dev-search"]'); i.value = ""; i.dispatchEvent(new Event("input", { bubbles: true }))`);
     await wait(`return r.querySelectorAll('${win} [data-rt="dev"]').length > 3`);
 

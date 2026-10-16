@@ -1189,7 +1189,7 @@
         if (msg.type.endsWith("routine_devices")) {
           if (window.__routineDevicesFail) throw new Error(window.__routineDevicesFail);
           return { devices: [...window.__devices.filter((d) => entsOf(d.id).length).map((d) => ({ id: d.id, name: d.name, entities: entsOf(d.id).length, names: entsOf(d.id).map((e) => e.name) })).sort((a, b) => a.name.localeCompare(b.name)),
-            ...["@scenes", "@groups"].filter((h) => entsOf(h).length).map((h) => ({ id: h, name: "", entities: entsOf(h).length, holder: true, names: entsOf(h).map((e) => e.name) }))] };
+            ...["@scenes", "@groups"].filter((h) => entsOf(h).length).map((h) => ({ id: h, name: "", entities: entsOf(h).length, holder: true, names: entsOf(h).map((e) => e.name), items: entsOf(h).map((e) => ({ id: e.entity_id, name: e.name })) }))] };
         }
         if (msg.type.endsWith("routine_get")) {
           if (!isHolder(msg.device_id) && !window.__devices.find((d) => d.id === msg.device_id)) throw { code: "not_found", message: "device not found" };

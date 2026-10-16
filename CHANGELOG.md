@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.65.0] - 2026-10-16
+
+Routine assistant: every scene and group is found directly by its name.
+
+### Changed
+
+- Routine assistant, first page ("Device, group or scene?"): typing a name in the search now shows every matching scene and group as a row of its own (with its symbol and the kind "Scene" or "Group" on the right), no longer only the collective entries "Scenes" and "Groups". A tap and "Next" lead to the page "What" with that scene or group already chosen and its action set. Nobody has to know the words "scene" or "group" any more; helper groups (Group integration) are found the same way. Without a search the list stays short (devices, then "Scenes" and "Groups"). The search shows at most 40 such rows and says how many more matches there are. The device list of the server (`routine_devices`) carries the single entries as `items` (`id`, `name`) for the collective entries.
+
 ## [2.64.0] - 2026-10-16
 
 Settings: look for a new version every time they are opened.
@@ -3482,6 +3490,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.65.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.65.0
 [2.64.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.64.0
 [2.63.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.63.0
 [2.60.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.60.0
