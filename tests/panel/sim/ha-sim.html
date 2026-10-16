@@ -1504,6 +1504,8 @@
           disk = { ...mk("disk", "host", "Belegter Massenspeicher /", "sensor.system_monitor_belegter_massenspeicher", days, (x) => 290 + 28.4 * x, 318.4, diskSource), mode: "absolute", unit: "GiB", axis_max: 500, size: null,
             disabled: window.__systemNoSize ? [] : [{ entity_id: "sensor.system_monitor_freier_massenspeicher", name: "Freier Massenspeicher /" }] };
         }
+        // Eben eingeschaltet, Integration lädt noch neu (kein Zustand): Karte der Festplatte "pending"
+        if (window.__systemPending) disk = { ...base("disk", days), entity_id: "sensor.system_monitor_massenspeicher_auslastung", name: "Massenspeicher-Auslastung /", scope: "host", pending: true };
         const filler = Array.from({ length: 90 }, (_, i) => ({ entity_id: `sensor.fuellung_${i + 1}`, name: `Füllung ${String(i + 1).padStart(2, "0")}`, unit: "%", pref: true }));
         return {
           range,

@@ -30,7 +30,7 @@ export class StatusUi {
     this.range = "24h";
     this._ticks = 0;
     // Neustart von Hand (seit 2.63.0): confirm = Teil mit offener Rückfrage, busy = Teil, der gerade neu startet, flash = Hinweis danach
-    this.ui = { confirm: null, busy: null, flash: "", flashTimer: null, pick: null, pickQ: "", enabled: {}, enabling: null };
+    this.ui = { confirm: null, busy: null, flash: "", flashTimer: null, pick: null, pickQ: "", enabled: {}, enabling: null, enableAsk: null };
   }
 
   t(key, ...args) {
@@ -83,6 +83,18 @@ export class StatusUi {
         // Die Seite "Integration hinzufügen" von Home Assistant, gleich bei "System Monitor" (nur öffnen, nichts wird geändert)
         this.close();
         this.host._navigate?.("/config/integrations/dashboard/add?domain=systemmonitor");
+        return;
+      }
+      // Einschalten mit Rückfrage: erst nennt die App, was geändert wird, dann der Knopf "Einschalten"
+      const enableAsk = ev.target.closest("[data-st-enable-ask]");
+      if (enableAsk) {
+        this.ui.enableAsk = enableAsk.dataset.stEnableAsk;
+        this.render();
+        return;
+      }
+      if (ev.target.closest("[data-st-enable-no]")) {
+        this.ui.enableAsk = null;
+        this.render();
         return;
       }
       const enable = ev.target.closest("[data-st-enable]");
@@ -166,6 +178,7 @@ export class StatusUi {
   async enable(kind) {
     if (this.ui.enabling) return;
     this.ui.enabling = kind;
+    this.ui.enableAsk = null;
     this.render();
     try {
       await this.host._hass.callWS({ type: "device_panel/status_system_enable", kind });
@@ -385,8 +398,14 @@ export class StatusUi {
     const t = (k, ...a) => this.t(k, ...a);
     if (!m.disabled?.length) return "";
     if (this.ui.enabled[m.id]) return `<p class="st-sys-note ok" role="status">${escape(t("stSysEnabled"))}</p>`;
-    const names = m.disabled.map((d) => d.name).join(", ");
-    return `<p class="st-sys-note"><small>${escape(names)}</small></p><div class="st-sys-act"><button type="button" class="dlg-btn" data-st-enable="${escape(m.id)}"${this.ui.enabling ? " disabled" : ""}>${escape(t(this.ui.enabling === m.id ? "stSysEnabling" : "stSysEnable"))}</button></div>`;
+    const list = m.disabled.map((d) => `<li>${escape(d.name)} <small>(${escape(d.entity_id)})</small></li>`).join("");
+    if (this.ui.enableAsk === m.id || this.ui.enabling === m.id) {
+      const busy = this.ui.enabling === m.id;
+      return `<div class="st-confirm mg-confirm" data-st-enable-confirm><b>${escape(t("stSysEnableAsk"))}</b><ul class="st-sys-list">${list}</ul><small>${escape(t("stSysEnableNote"))}</small>
+        <div class="mg-btns small"><button type="button" class="dlg-btn" data-st-enable-no${busy ? " disabled" : ""}>${escape(t("rtCancel"))}</button>
+        <button type="button" class="dlg-btn primary" data-st-enable="${escape(m.id)}"${this.ui.enabling ? " disabled" : ""}>${escape(t(busy ? "stSysEnabling" : "stSysEnableYes"))}</button></div></div>`;
+    }
+    return `<ul class="st-sys-list">${list}</ul><div class="st-sys-act"><button type="button" class="dlg-btn" data-st-enable-ask="${escape(m.id)}"${this.ui.enabling ? " disabled" : ""}>${escape(t("stSysEnable"))}</button></div>`;
   }
 
   metricHtml(m) {
@@ -415,6 +434,8 @@ export class StatusUi {
       }`;
     }
     else if (m.missing) body = `<p class="st-sys-note warn">${escape(t("stSysMissing"))}</p>`;
+    else if (m.pending) body = `<p class="st-sys-note" role="status">${escape(t("stSysPending"))}</p>`;
+    else if (m.off) body = `<p class="st-sys-note warn">${escape(t("stSysOwnOff"))}</p>${this.enableHtml(m)}`;
     else if (!m.points.length) body = `<p class="st-sys-note">${escape(t("stSysNoData"))}</p>`;
     else {
       const stats =

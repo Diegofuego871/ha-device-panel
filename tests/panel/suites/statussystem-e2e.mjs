@@ -8,8 +8,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { title: "System", cpu: "Prozessor (CPU)", ram: "Arbeitsspeicher (RAM)", disk: "Festplatte", host: "Host", ago24: "vor 24 Std.", ago30: "vor 30 Tagen", ago6: "vor 6 Monaten", ago1y: "vor 1 Jahr", now: "jetzt", r: ["24 Std.", "30 Tage", "6 Monate", "1 Jahr"], noStats: "keine Langzeitstatistik", none: "Kein Sensor gefunden", src: "Quelle der Werte", auto: "Automatisch (Prozessornutzung)", enable: "Sensoren einschalten", enabled: "Eingeschaltet", add: "System Monitor hinzufügen", optional: "nicht zwingend", size: "{u} von {t} GiB belegt · {f} GiB frei", sizeHint: "Belegter Massenspeicher" },
-  en: { title: "System", cpu: "Processor (CPU)", ram: "Memory (RAM)", disk: "Disk", host: "Host", ago24: "24 h ago", ago30: "30 days ago", ago6: "6 months ago", ago1y: "1 year ago", now: "now", r: ["24 h", "30 days", "6 months", "1 year"], noStats: "no long-term statistics", none: "No sensor found", src: "Source of the values", auto: "Automatic (Prozessornutzung)", enable: "Switch on sensors", enabled: "Switched on", add: "Add System Monitor", optional: "not required", size: "{u} of {t} GiB used · {f} GiB free", sizeHint: "Belegter Massenspeicher" },
+  de: { title: "System", cpu: "Prozessor (CPU)", ram: "Arbeitsspeicher (RAM)", disk: "Festplatte", host: "Host", ago24: "vor 24 Std.", ago30: "vor 30 Tagen", ago6: "vor 6 Monaten", ago1y: "vor 1 Jahr", now: "jetzt", r: ["24 Std.", "30 Tage", "6 Monate", "1 Jahr"], noStats: "keine Langzeitstatistik", none: "Kein Sensor gefunden", src: "Quelle der Werte", auto: "Automatisch (Prozessornutzung)", enable: "Sensoren einschalten", undo: "Rückgängig", pending: "lädt die Integration gerade neu", enabled: "Eingeschaltet", add: "System Monitor hinzufügen", optional: "nicht zwingend", size: "{u} von {t} GiB belegt · {f} GiB frei", sizeHint: "Belegter Massenspeicher" },
+  en: { title: "System", cpu: "Processor (CPU)", ram: "Memory (RAM)", disk: "Disk", host: "Host", ago24: "24 h ago", ago30: "30 days ago", ago6: "6 months ago", ago1y: "1 year ago", now: "now", r: ["24 h", "30 days", "6 months", "1 year"], noStats: "no long-term statistics", none: "No sensor found", src: "Source of the values", auto: "Automatic (Prozessornutzung)", enable: "Switch on sensors", undo: "To undo", pending: "is reloading the integration", enabled: "Switched on", add: "Add System Monitor", optional: "not required", size: "{u} of {t} GiB used · {f} GiB free", sizeHint: "Belegter Massenspeicher" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -47,7 +47,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Festplatte zeigt Prozent und Grösse: ${T.size}`, await ev(`const t = r.querySelector('${card("disk")} [data-st-size]')?.textContent.trim(); const n = (v) => v.toLocaleString(r.host._locale?.() || undefined, { maximumFractionDigits: 1 }); return t === ${JSON.stringify(T.size)}.replace("{u}", n(318.4)).replace("{t}", n(530.7)).replace("{f}", n(212.3)) && r.querySelector('${card("disk")} .st-sys-val').textContent.replace(/\\s/g, "") === "60%" && !r.querySelector('${card("cpu")} [data-st-size]') && !r.querySelector('${card("ram")} [data-st-size]')`));
     await p.evaluate(() => { window.__systemNoSize = true; });
     await ev(`r.host._status.loadSystem()`);
-    check(`[${tag}] ohne Grössen-Sensoren: nur Prozent, Hinweis auf die Sensoren von System Monitor`, await wait(`const c = r.querySelector('${card("disk")}'); return !c.querySelector("[data-st-size]") && c.textContent.includes(${JSON.stringify(T.sizeHint)}) && !!c.querySelector("[data-st-enable]") && c.querySelector(".st-sys-val").textContent.replace(/\\s/g, "") === "60%"`));
+    check(`[${tag}] ohne Grössen-Sensoren: nur Prozent, Hinweis auf die Sensoren von System Monitor`, await wait(`const c = r.querySelector('${card("disk")}'); return !c.querySelector("[data-st-size]") && c.textContent.includes(${JSON.stringify(T.sizeHint)}) && !!c.querySelector("[data-st-enable-ask]") && c.querySelector(".st-sys-val").textContent.replace(/\\s/g, "") === "60%"`));
     await p.evaluate(() => { window.__systemNoSize = false; });
     await ev(`r.host._status.loadSystem()`);
     await wait(`return !!r.querySelector('${card("disk")} [data-st-size]')`);
@@ -104,8 +104,14 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Festplatte: Suche "massenspeicher" findet den Sensor in GiB (belegter Massenspeicher)`, await wait(`const rows = [...r.querySelectorAll("${win} .st-pick-list .st-opt")]; return rows.length === 1 && rows[0].dataset.stChoose === "sensor.system_monitor_belegter_massenspeicher"`));
     await tap(`${win} .st-pick-list .st-opt`);
     check(`[${tag}] Festplatte in Gigabyte: Wert "318,4 GiB" statt Prozent, Achse bis 500, Ø und Spitze in GiB`, await wait(`const c = r.querySelector('${card("disk")}'); const n = (v) => v.toLocaleString(r.host._locale?.() || undefined, { maximumFractionDigits: 1 }); return c.querySelector(".st-sys-val").textContent.replace(/\\s/g, "") === n(318.4) + "GiB" && [...c.querySelectorAll(".st-sys-y")].map((x) => x.textContent).join("|") === [n(500), n(250), "0"].join("|") && /GiB.*GiB/.test(c.querySelector(".st-sys-foot .mid").textContent) && !c.querySelector("[data-st-size]")`));
-    check(`[${tag}] fehlt "frei": Hinweis mit dem Namen des ausgeschalteten Sensors und Knopf "Sensoren einschalten"`, await ev(`const c = r.querySelector('${card("disk")}'); return c.textContent.includes("Freier Massenspeicher") && !!c.querySelector("[data-st-enable]")`));
+    check(`[${tag}] fehlt "frei": Hinweis mit dem Namen des ausgeschalteten Sensors und Knopf "Sensoren einschalten"`, await ev(`const c = r.querySelector('${card("disk")}'); return c.textContent.includes("Freier Massenspeicher") && !!c.querySelector("[data-st-enable-ask]")`));
     await p.evaluate(() => { window.__wsCalls = []; });
+    // Rückfrage: nennt die Sensoren mit Entität und was geschieht; "Abbrechen" ändert nichts
+    await tap(`${card("disk")} [data-st-enable-ask]`);
+    check(`[${tag}] Knopf fragt zuerst: Liste der Sensoren (Name und sensor.…), Hinweis was geschieht und wie man es rückgängig macht`, await wait(`const c = r.querySelector('${card("disk")} [data-st-enable-confirm]'); return !!c && c.querySelectorAll("li").length >= 1 && /sensor\\./.test(c.textContent) && c.textContent.includes(${JSON.stringify(T.undo)})`) && (await calls("device_panel/status_system_enable")).length === 0);
+    await tap(`${card("disk")} [data-st-enable-no]`);
+    check(`[${tag}] Abbrechen: nichts geschickt, Knopf wieder da`, await wait(`return !r.querySelector('${card("disk")} [data-st-enable-confirm]') && !!r.querySelector('${card("disk")} [data-st-enable-ask]')`) && (await calls("device_panel/status_system_enable")).length === 0);
+    await tap(`${card("disk")} [data-st-enable-ask]`);
     await tap(`${card("disk")} [data-st-enable]`);
     check(`[${tag}] Knopf: status_system_enable mit kind disk, danach Hinweis "Home Assistant lädt die Integration neu"`, await wait(`return r.querySelector('${card("disk")} .st-sys-note.ok')?.textContent.includes(${JSON.stringify(T.enabled)})`) && (await calls("device_panel/status_system_enable")).some((m) => m.kind === "disk"));
     // zurück auf automatisch (Festplatte, CPU, RAM) für den Rest
@@ -114,7 +120,8 @@ for (const lang of ["de", "en"]) {
     // Sensoren ausgeschaltet gefunden: Hinweis mit Namen und Knopf zum Einschalten
     await p.evaluate(() => { window.__systemOff = true; window.__wsCalls = []; });
     await ev(`r.host._status.loadSystem()`);
-    check(`[${tag}] Sensoren nur ausgeschaltet: jede Karte nennt sie und hat den Knopf "${T.enable}"`, await wait(`const c = [...r.querySelectorAll("${win} .st-sys")]; return c.length === 3 && c.every((x) => x.querySelector("[data-st-enable]")?.textContent.trim() === ${JSON.stringify(T.enable)} && x.textContent.includes("System Monitor"))`));
+    check(`[${tag}] Sensoren nur ausgeschaltet: jede Karte nennt sie und hat den Knopf "${T.enable}"`, await wait(`const c = [...r.querySelectorAll("${win} .st-sys")]; return c.length === 3 && c.every((x) => x.querySelector("[data-st-enable-ask]")?.textContent.trim() === ${JSON.stringify(T.enable)} && x.textContent.includes("System Monitor"))`));
+    await tap(`${card("cpu")} [data-st-enable-ask]`);
     await tap(`${card("cpu")} [data-st-enable]`);
     check(`[${tag}] Einschalten: status_system_enable mit kind cpu, der Hinweis "${T.enabled}" folgt`, await wait(`return r.querySelector('${card("cpu")} .st-sys-note.ok')?.textContent.includes(${JSON.stringify(T.enabled)})`) && (await calls("device_panel/status_system_enable")).some((m) => m.kind === "cpu"));
     await p.evaluate(() => { window.__systemOff = false; });
@@ -132,6 +139,13 @@ for (const lang of ["de", "en"]) {
     await p.evaluate(() => { window.__systemNone = false; window.__systemNoInteg = false; });
     await ev(`r.host._status.open()`);
     await wait(`return r.querySelectorAll("${win} .st-sys").length === 3 && r.querySelector('${card("cpu")} .st-sys-plot')`);
+
+    // Eben eingeschaltet, Integration lädt noch neu: kein Fehler, sondern ein ruhiger Hinweis
+    await p.evaluate(() => { window.__systemPending = true; });
+    await ev(`r.host._status.loadSystem()`);
+    check(`[${tag}] Sensor eben eingeschaltet: Hinweis "${T.pending}" statt "existiert nicht mehr"`, await wait(`const c = r.querySelector('${card("disk")}'); return c.querySelector(".st-sys-note")?.textContent.includes(${JSON.stringify(T.pending)}) && !c.querySelector(".st-sys-note.warn")`));
+    await p.evaluate(() => { window.__systemPending = false; });
+    await ev(`r.host._status.loadSystem()`);
 
     // Fehler beim Lesen: Meldung, die Karten bleiben
     await p.evaluate(() => { window.__systemFails = "boom"; });

@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.70.1] - 2026-10-16
+
+Status app, system: after switching on sensors, nothing seems lost any more.
+
+### Changed
+
+- The button "Switch on sensors" asks first: it lists the sensors (name and entity), says what happens (only the sensors themselves are switched on, nothing is deleted, existing histories stay, Home Assistant reloads the integration after about 30 seconds and the sensors are briefly unavailable) and how to undo it (Settings, Devices & services, Entities). "Cancel" changes nothing.
+
+### Fixed
+
+- Right after switching on, the card said "The chosen sensor no longer exists." The newly switched-on sensor has no state until Home Assistant has reloaded the integration. Now the card stays with the sensor that has values (for the disk "Disk use" in gigabytes) and switches to the new one as soon as it has a state; if only the new one exists, it says it is reloading (not an error). A chosen sensor that is switched off in Home Assistant is reported as such.
+- Disk: a freshly switched-on percent sensor only has values from now on, so the curve looked empty ("history lost"). If "Disk use" and "Disk free" are on, the longer history of "Disk use" is converted to percent as long as it reaches further back than the percent sensor. Nothing was ever deleted.
+
 ## [2.70.0] - 2026-10-16
 
 Status app, system: find the disk sensors, choose entities with a search, times on the graphs.
@@ -3546,6 +3559,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.70.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.1
 [2.70.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.0
 [2.69.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.69.0
 [2.68.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.68.0

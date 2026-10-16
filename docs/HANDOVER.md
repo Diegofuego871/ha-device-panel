@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.70.1, Einschalten mit Rückfrage, "pending", Verlauf bleibt)
+
+- Nutzer drückte "Sensoren einschalten", obwohl schon Werte da waren: die Karte meldete danach "existiert nicht mehr" (neuer Sensor ohne Zustand bis zum Neuladen der Integration, 30 s `RELOAD_AFTER_UPDATE_DELAY` in `config_entries.py` geprüft) und die Kurve war leer (Prozent-Sensor hat erst ab jetzt Werte). Behoben: `auto_entity` bevorzugt Sensoren mit Zustand; `pending`/`off`/`missing` getrennt (`missing` nur ohne Registry-Eintrag); `_longer_history` rechnet den längeren Verlauf von "belegt" in Prozent um; im Panel Rückfrage `data-st-enable-ask` → `data-st-enable` mit Liste, Folgen und Rückgängig-Hinweis. Tests: `test_freshly_enabled_sensor_does_not_replace_a_working_one`, `test_new_percent_sensor_keeps_the_longer_history_of_used`, `test_own_choice_switched_off_in_ha_is_reported`; Suite `statussystem` (132).
+
 ## Stand (2.70.0, System-Sensoren finden, Auswahl mit Suche, Zeitstrahl)
 
 - Befund vom Nutzer (Screenshot, Entitäten `sensor.system_monitor_arbeitsspeicherauslastung`, `sensor.system_monitor_belegter_massenspeicher`): CPU und RAM wurden gefunden, die Festplatte nicht, weil System Monitor "Massenspeicher-Auslastung" (Prozent) ausgeschaltet anlegt und nur "belegt" (GiB) an war; die Auswahl zeigte die Sensoren nicht (Liste bei 200 abgeschnitten, nur Prozent-Sensoren). Im HA-Quellcode geprüft: alle System-Monitor-Sensoren sind standardmässig aus (`legacy_enabled`), Namen sind übersetzt (unique_id ist der Schlüssel: `disk_use_percent`, `disk_use`, `disk_free`, Anhang = Pfad).

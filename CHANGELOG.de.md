@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.70.1] - 2026-10-16
+
+Status-App, System: nach dem Einschalten von Sensoren scheint nichts mehr verloren.
+
+### Geändert
+
+- Der Knopf "Sensoren einschalten" fragt zuerst: Er listet die Sensoren (Name und Entität), sagt, was geschieht (nur die Sensoren selbst werden eingeschaltet, nichts wird gelöscht, vorhandene Verläufe bleiben, Home Assistant lädt die Integration nach etwa 30 Sekunden neu und die Sensoren sind kurz nicht verfügbar) und wie man es rückgängig macht (Einstellungen, Geräte & Dienste, Entitäten). "Abbrechen" ändert nichts.
+
+### Behoben
+
+- Gleich nach dem Einschalten sagte die Karte "Der gewählte Sensor existierte nicht mehr." Ein eben eingeschalteter Sensor hat keinen Zustand, bis Home Assistant die Integration neu geladen hat. Jetzt bleibt die Karte bei dem Sensor mit Werten (bei der Festplatte "Belegter Massenspeicher" in Gigabyte) und wechselt zum neuen, sobald er einen Zustand hat; gibt es nur den neuen, sagt sie, dass er gerade neu lädt (kein Fehler). Ein gewählter Sensor, der in Home Assistant ausgeschaltet ist, wird als solcher gemeldet.
+- Festplatte: Ein frisch eingeschalteter Prozent-Sensor hat erst ab jetzt Werte, die Kurve sah leer aus ("Verlauf verloren"). Sind "Belegter" und "Freier Massenspeicher" an, wird der längere Verlauf von "belegt" in Prozent umgerechnet, solange er weiter zurückreicht als der des Prozent-Sensors. Gelöscht wurde nie etwas.
+
 ## [2.70.0] - 2026-10-16
 
 Status-App, System: die Festplatten-Sensoren finden, Entitäten mit Suche wählen, Uhrzeiten in den Grafiken.
@@ -3647,6 +3660,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.70.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.1
 [2.70.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.0
 [2.69.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.69.0
 [2.68.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.68.0

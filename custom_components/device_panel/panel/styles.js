@@ -1876,6 +1876,8 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .st-sys-foot { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0 0 30px; font-size: 11.5px; color: var(--dp-text3); }
 .st-sys-foot .mid { color: var(--dp-text2); text-align: center; flex: 1; }
 .st-sys-act { margin: 6px 0 0; }
+.st-sys-list { margin: 4px 0 6px 18px; padding: 0; font-size: 13px; } .st-sys-list small { color: var(--dp-text2); }
+.st-sys .st-confirm { margin: 8px 0 0; background: var(--dp-bg); }
 .st-sys-note.ok { color: var(--dp-success); }
 .st-pickbtn { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; max-width: 62%; min-width: 0; padding: 8px 12px; border: 1px solid var(--dp-divider); border-radius: 12px; background: var(--dp-card); color: inherit; font: inherit; font-size: 14px; cursor: pointer; }
 .st-pickbtn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

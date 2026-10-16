@@ -178,11 +178,16 @@ async def test_own_sensor_choice_and_validation(hass: HomeAssistant, hass_ws_cli
     assert not (await _ws(client, 4, type=f"{DOMAIN}/set_options", values={"status_cpu_entity": "light.wohnzimmer"}))["success"]
     # gewählt, aber der Sensor ist weg: gemeldet statt still auf automatisch zurückgefallen
     hass.states.async_remove(own)
-    gone = (await _ws(client, 5, type=f"{DOMAIN}/status_system"))["result"]["metrics"][0]
-    assert gone["entity_id"] == own and gone["missing"] is True and gone["points"] == []
+    # Zustand weg, Eintrag noch da (Integration lädt gerade neu): "pending", noch kein Fehler
+    waiting = (await _ws(client, 5, type=f"{DOMAIN}/status_system"))["result"]["metrics"][0]
+    assert waiting["entity_id"] == own and waiting["pending"] is True and waiting["missing"] is False and waiting["points"] == []
+    # Eintrag auch weg: gelöscht
+    er.async_get(hass).async_remove(own)
+    gone = (await _ws(client, 6, type=f"{DOMAIN}/status_system"))["result"]["metrics"][0]
+    assert gone["entity_id"] == own and gone["missing"] is True and gone["pending"] is False and gone["points"] == []
     # leer = wieder automatisch
-    assert (await _ws(client, 6, type=f"{DOMAIN}/set_options", values={"status_cpu_entity": ""}))["success"]
-    assert (await _ws(client, 7, type=f"{DOMAIN}/status_system"))["result"]["metrics"][0]["entity_id"] == auto
+    assert (await _ws(client, 7, type=f"{DOMAIN}/set_options", values={"status_cpu_entity": ""}))["success"]
+    assert (await _ws(client, 8, type=f"{DOMAIN}/status_system"))["result"]["metrics"][0]["entity_id"] == auto
 
 
 # --- ausgeschaltete Sensoren und Supervisor (seit 2.70.0) ---------------------
@@ -300,3 +305,65 @@ async def test_own_choice_of_a_gigabyte_sensor_for_the_disk(hass: HomeAssistant,
 
 def test_axis_max_is_a_round_number_above_the_peak() -> None:
     assert [system_stats._axis_max(v) for v in (0, 0.4, 7, 318.4, 480, 1500, 4800)] == [1, 0.5, 10, 500, 1000, 2000, 10000]
+
+
+async def test_freshly_enabled_sensor_does_not_replace_a_working_one(hass: HomeAssistant, hass_ws_client) -> None:
+    """
+    Nach dem Einschalten hat der neue Sensor bis zum Neuladen der Integration (etwa 30 Sekunden) keinen Zustand: die Karte bleibt bei dem
+    Sensor mit Werten und sagt nicht "existiert nicht mehr" (so sah es beim Nutzer aus, 2.70.0).
+    """
+    use = _sensor(hass, "systemmonitor", "disk_use", "318.4", "Belegter Massenspeicher /", unit_of_measurement="GiB", device_class="data_size")
+    pct_entry = er.async_get(hass).async_get_or_create("sensor", "systemmonitor", "disk_use_percent", suggested_object_id="massenspeicher_auslastung")
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    disk = (await _ws(client, 1, type=f"{DOMAIN}/status_system"))["result"]["metrics"][2]
+    # Prozent-Sensor eingeschaltet, aber ohne Zustand: weiter "belegt" (Gigabyte) mit Werten
+    assert disk["entity_id"] == use and disk["mode"] == "absolute" and disk["pending"] is False and disk["missing"] is False
+    # kommt der Zustand, gewinnt der Prozent-Sensor wieder
+    hass.states.async_set(pct_entry.entity_id, "43", {"unit_of_measurement": "%", "state_class": "measurement"})
+    disk = (await _ws(client, 2, type=f"{DOMAIN}/status_system"))["result"]["metrics"][2]
+    assert disk["entity_id"] == pct_entry.entity_id and disk["mode"] == "percent"
+    # nur der eben eingeschaltete ohne Zustand: "pending" statt "existiert nicht mehr"
+    hass.states.async_remove(pct_entry.entity_id)
+    hass.states.async_remove(use)
+    disk = (await _ws(client, 3, type=f"{DOMAIN}/status_system"))["result"]["metrics"][2]
+    assert disk["entity_id"] in (pct_entry.entity_id, use) and disk["pending"] is True and disk["missing"] is False
+
+
+async def test_own_choice_switched_off_in_ha_is_reported(hass: HomeAssistant, hass_ws_client) -> None:
+    off = _disabled(hass, "systemmonitor", "processor_use", "Prozessornutzung")
+    other = _disabled(hass, "template", "mein-ding", "Mein Ding")
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    assert (await _ws(client, 1, type=f"{DOMAIN}/set_options", values={"status_cpu_entity": off}))["success"]
+    cpu = (await _ws(client, 2, type=f"{DOMAIN}/status_system"))["result"]["metrics"][0]
+    assert cpu["off"] is True and cpu["pending"] is False and cpu["missing"] is False and [d["entity_id"] for d in cpu["disabled"]] == [off]
+    # ein Sensor einer anderen Plattform: gemeldet, aber nicht zum Einschalten angeboten
+    assert (await _ws(client, 3, type=f"{DOMAIN}/set_options", values={"status_cpu_entity": other}))["success"]
+    cpu = (await _ws(client, 4, type=f"{DOMAIN}/status_system"))["result"]["metrics"][0]
+    assert cpu["off"] is True and cpu["disabled"] == []
+
+
+async def test_new_percent_sensor_keeps_the_longer_history_of_used(recorder_mock, hass: HomeAssistant, hass_ws_client, freezer) -> None:
+    """Der eben eingeschaltete Prozent-Sensor hat nur Werte ab jetzt; der Verlauf von "belegt" wird in Prozent umgerechnet (nichts geht verloren)."""
+    now = dt_util.utcnow()
+    use = er.async_get(hass).async_get_or_create("sensor", "systemmonitor", "disk_use", suggested_object_id="belegt").entity_id
+    free = er.async_get(hass).async_get_or_create("sensor", "systemmonitor", "disk_free", suggested_object_id="frei").entity_id
+    pct = er.async_get(hass).async_get_or_create("sensor", "systemmonitor", "disk_use_percent", suggested_object_id="prozent").entity_id
+    attrs = {"unit_of_measurement": "GiB", "state_class": "measurement", "device_class": "data_size"}
+    for at, value in ((now - timedelta(hours=20), "300"), (now - timedelta(hours=10), "310")):
+        freezer.move_to(at)
+        hass.states.async_set(use, value, attrs)
+        await async_wait_recording_done(hass)
+    freezer.move_to(now)
+    hass.states.async_set(use, "318.4", attrs)
+    hass.states.async_set(free, "100", attrs)
+    hass.states.async_set(pct, "76.1", {"unit_of_measurement": "%", "state_class": "measurement"})
+    await async_wait_recording_done(hass)
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    disk = (await _ws(client, 1, type=f"{DOMAIN}/status_system"))["result"]["metrics"][2]
+    assert disk["entity_id"] == pct and disk["mode"] == "percent"
+    # Verlauf von "belegt": seit etwa 20 Stunden, in Prozent der Platte (300 von 418,4 GiB = 71,7 %)
+    assert disk["points"][0][0] <= now.timestamp() - 19 * 3600 and disk["points"][0][1] == pytest.approx(300 / 418.4 * 100, abs=0.2)
+    assert disk["size"] == {"used": 318.4, "free": 100.0, "total": 418.4, "unit": "GiB"}

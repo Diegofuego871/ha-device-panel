@@ -89,12 +89,20 @@ def _main(entries: list[er.RegistryEntry], prefix: str) -> er.RegistryEntry:
 
 
 def auto_entity(hass: HomeAssistant, kind: str) -> tuple[str, str] | None:
-    """Sensor, den das Panel für die Art von selbst wählt: (entity_id, "host" | "core" | "supervisor"), sonst None. Ausgeschaltete zählen nicht."""
+    """
+    Sensor, den das Panel für die Art von selbst wählt: (entity_id, "host" | "core" | "supervisor"), sonst None. Ausgeschaltete zählen
+    nicht. Sensoren mit Zustand gehen vor: Ein eben eingeschalteter Sensor hat bis zum Neuladen der Integration (etwa 30 Sekunden)
+    keinen Zustand, bis dahin bleibt die Karte bei dem Sensor, der Werte hat (seit 2.70.0).
+    """
+    waiting: tuple[str, str] | None = None
     for platform, prefix, exclude, scope in AUTO_SOURCES[kind]:
         found = [e for e in _entries(hass, platform, prefix, exclude) if not e.disabled_by]
-        if found:
-            return _main(found, prefix).entity_id, scope
-    return None
+        live = [e for e in found if hass.states.get(e.entity_id) is not None]
+        if live:
+            return _main(live, prefix).entity_id, scope
+        if found and waiting is None:
+            waiting = _main(found, prefix).entity_id, scope
+    return waiting
 
 
 def disk_group(hass: HomeAssistant, entity_id: str) -> dict[str, er.RegistryEntry | None] | None:
@@ -316,6 +324,26 @@ async def _points(
     return points, source if recorded else "none", period
 
 
+async def _longer_history(
+    hass: HomeAssistant, percent_entity: str, days: int, now: float, points: list[tuple[float, float]], source: str
+) -> tuple[list[tuple[float, float]], str]:
+    """Verlauf aus "belegt" in Prozent, wenn er weiter zurückreicht als der des Prozent-Sensors (mindestens eine Stunde früher)."""
+    group = disk_group(hass, percent_entity) or {}
+    use_entry = group.get("disk_use")
+    if use_entry is None or use_entry.disabled_by:
+        return points, source
+    used = _size(hass.states.get(use_entry.entity_id))
+    total = _total_of(hass, use_entry.entity_id, used) if used is not None else None
+    if used is None or not total:
+        return points, source
+    other, other_source, _period = await _points(hass, use_entry.entity_id, days, now, _percent_of(100 / total), 100 / total)
+    if other_source == "none" or not other:
+        return points, source
+    if source != "none" and points and points[0][0] <= other[0][0] + 3600:
+        return points, source
+    return other, other_source
+
+
 async def async_metric(hass: HomeAssistant, kind: str, own: str, days: int, now: float) -> dict[str, Any]:
     """Eine Kurve: Sensor (eigener oder automatisch), aktueller Wert, Mittel und Spitze, Punkte. mode "percent" (0 bis 100) oder "absolute" (Einheit des Sensors)."""
     scope = "own"
@@ -343,9 +371,19 @@ async def async_metric(hass: HomeAssistant, kind: str, own: str, days: int, now:
         # Ausgeschaltete Sensoren, die es gäbe (Einschalten auf Knopfdruck); leer, wenn nichts fehlt
         "disabled": [],
         "points": [],
-        # Die Auswahl der App zeigt "gewählt, aber es gibt ihn nicht mehr" (Sensor gelöscht)
-        "missing": bool(entity_id) and state is None,
+        # Gewählt, aber es gibt ihn nicht mehr (Sensor gelöscht): "missing". Eben eingeschaltet, die Integration lädt noch neu: "pending".
+        # In Home Assistant ausgeschaltet (eigene Wahl): "off".
+        "missing": False,
+        "pending": False,
+        "off": False,
     }
+    entry = er.async_get(hass).async_get(entity_id) if entity_id else None
+    if entity_id and state is None:
+        out["missing"] = entry is None
+        out["off"] = entry is not None and bool(entry.disabled_by)
+        out["pending"] = entry is not None and not entry.disabled_by
+        if out["off"] and entry is not None and entry.platform in _ENABLE_PLATFORMS:
+            out["disabled"] = _disabled_payload([entry])
     if not entity_id:
         # Nichts gefunden: gibt es die Sensoren ausgeschaltet?
         out["disabled"] = _disabled_payload(disabled_sources(hass, kind))
@@ -372,6 +410,10 @@ async def async_metric(hass: HomeAssistant, kind: str, own: str, days: int, now:
         # Prozent oder belegt gefunden, aber "frei" bzw. "gesamt" (für Prozent und Grösse) ausgeschaltet?
         out["disabled"] = _disabled_payload(disabled_sources(hass, kind, entity_id))
     points, source, _period = await _points(hass, entity_id, days, now, parse, scale)
+    if kind == "disk" and out["mode"] == "percent" and scope in ("host", "own"):
+        # Ein eben eingeschalteter Prozent-Sensor hat erst ab jetzt Werte; "belegt" läuft schon länger. Ist die Gesamtgrösse bekannt, den
+        # längeren Verlauf von "belegt" in Prozent umrechnen, damit er nicht verloren scheint (seit 2.70.0)
+        points, source = await _longer_history(hass, entity_id, days, now, points, source)
     out["source"] = source
     out["current"] = parse(state.state)
     if points:
