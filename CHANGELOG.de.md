@@ -7,7 +7,27 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.78.0] - 2026-10-16
+
+Einstellungen, Überwachung und Meldungen: Die Reiter "Laden" und "Empfang" enden wie die anderen mit einem Abschnitt "Abweichungen".
+
+Enthält die Änderungen von 2.77.0.
+
+### Hinzugefügt
+
+- Reiter "Laden": Am Ende steht neu der Abschnitt **Abweichungen** mit dem Kasten "N Integrationen weichen ab" (mit den Werten, zum Beispiel "Shelly: Laden an (voll ab 90 %)", und dem Sprung zu "Integrationen") und der Liste **"Eigene Werte der Lademeldung auf Geräten"**. Bisher sah man in den Einstellungen nicht, auf welchen Geräten die Lademeldung vom Standard abweicht. Die Liste zeigt je Gerät alle eigenen Werte (Laden an oder aus, voll ab, Anstieg, Ende nach, Push bei Ende, Live), mit Bereich und Integration. Ein Kreuz setzt ein Gerät zurück, "Alle zurücksetzen" alle; zurückgesetzt wird wie bei den anderen Reitern erst beim Speichern, danach gelten wieder die Integration bzw. die globalen Werte. Der Abschnitt steht auch bei ausgeschalteter Lademeldung da, weil Geräte trotzdem eigene Werte haben können. Er steht ganz unten, nach der Liste "Pro Integration".
+- Unter "Geräte im Panel" › "Geräte-Einstellungen" und im Detail einer Integration steht dieselbe Liste für die Lademeldung neben den anderen. Auf der Übersicht führt "N Geräte" in der Zeile "Laden" jetzt zu diesem Reiter und zählt alle Geräte mit eigenen Lade-Werten (bisher nur die mit eigenem Schalter).
+- Neue Antwort-Liste `overrides.charge` in `get_options` und neuer Parameter `charge` bei `device_panel/reset_device_settings` (nimmt alle eigenen Lade-Werte der genannten Geräte zurück; die Antwort zählt auch `charge`).
+
+### Geändert
+
+- Reiter "Empfang": Im Abschnitt "Abweichungen" steht nun wie bei Ausfall, Batterie und Neu zuerst der Kasten "N Integrationen weichen ab", dann die Liste der Geräte mit eigener Schwelle.
+- Lange Werte in der Liste (Lademeldung mit mehreren eigenen Werten) stehen unter dem Namen des Geräts über die ganze Breite, damit der Name nicht gequetscht wird.
+- Der Reiter "Neu" bleibt, wie er ist: Dort gibt es keine Werte pro Gerät, nur den Kasten der Integrationen.
+
 ## [2.77.0] - 2026-10-16
+
+Nicht veröffentlicht; enthalten in 2.78.0.
 
 Status-App: die Mindestdauer der Meldung bei hoher Auslastung gilt je Art (Prozessor, Arbeitsspeicher, Festplatte), der Empfänger hat einen eigenen Abschnitt.
 
@@ -3755,7 +3775,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.77.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.77.0
+[2.78.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.78.0
 [2.76.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.76.0
 [2.75.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.75.0
 [2.73.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.73.0

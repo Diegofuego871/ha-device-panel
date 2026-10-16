@@ -41,7 +41,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] Warnung: Abweichungen mit Bezug "${T_.diff}", ohne Laden`, await ev(`return [...r.querySelectorAll(".mon-grp")].some(g => g.textContent.trim() === ${JSON.stringify(T_.diff)}) && !r.querySelector('input[data-opt="notify_charge"]')`));
   await tap('.mon-tab[data-key="charge"]');
   await wait(`return !!r.querySelector('input[data-opt="notify_charge"]')`);
-  check(`[${tag}] Laden: ohne Abweichungen und Warnschwelle`, await ev(`return ![...r.querySelectorAll(".mon-grp")].some(g => g.textContent.trim() === ${JSON.stringify(T_.diff)}) && !r.querySelector('input[data-opt="battery_low"]')`));
+  check(`[${tag}] Laden: ohne Abweichungen von "Schwach ab" und Warnschwelle`, await ev(`return ![...r.querySelectorAll(".mon-grp")].some(g => g.textContent.trim() === ${JSON.stringify(T_.diff)}) && !r.querySelector('input[data-opt="battery_low"]')`));
   check(`[${tag}] Lademeldung: Schalter aus, keine Liste der Integrationen`, !(await ev(`return r.querySelector('input[data-opt="notify_charge"]').checked`)) && !(await ev(`return !!r.querySelector("input[data-cinteg]")`)));
   // Zeitstrahl wie bei der Warnung (1.35.0): Anstieg und "Voll ab" im Zeitstrahl, auch bei ausgeschalteter Meldung
   const tlInfo = await ev(`const m=[...r.querySelectorAll(".mtl .mtl-mk")]; return [m.length, !!m[0]?.querySelector('input[data-opt="charge_rise"]'), !!m[1]?.querySelector("select[data-cfull]"), m[1]?.classList.contains("mk-off"), r.querySelector('input[data-opt="charge_rise"]')?.value, r.querySelector("select[data-cfull]")?.value]`);

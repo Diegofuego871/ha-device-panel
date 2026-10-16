@@ -392,7 +392,7 @@ const UPDATE_KINDS = ["core", "addons", "hacs", "devices"];
 const MON_TAB_KEYS = {
   overview: ["notify_service", "notify_click_target"],
   outage: ["notify_service_outage", "offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "emoji_outage", "emoji_group", "emoji_online", "reset_offline", "reset_notify"],
-  charge: ["notify_service_charge", "notify_charge", "charge_live", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations", "emoji_charge", "emoji_charge_stop"],
+  charge: ["notify_service_charge", "notify_charge", "charge_live", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations", "emoji_charge", "emoji_charge_stop", "reset_charge"],
   battery: ["notify_service_battery", "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "emoji_battery", "reset_battery"],
   new: ["notify_service_new", "notify_new", "new_window", "new_persistent", "new_fields", "emoji_new"],
   updates: ["notify_service_updates", "notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include", "emoji_updates"],
@@ -525,7 +525,7 @@ const SUB_TAB_KEYS = {
   integrations: ["exclude_integrations", "type_integrations", "connection_integrations"],
   types: ["exclude_types"],
   devs: ["exclude_devices"],
-  devset: ["reset_connection", "reset_signal", "reset_offline", "reset_notify", "reset_battery"],
+  devset: ["reset_connection", "reset_signal", "reset_offline", "reset_notify", "reset_battery", "reset_charge"],
   chips: ["hide_chips", "hide_connections", "connection_order", "chip_order"],
 };
 
@@ -5367,7 +5367,7 @@ class DevicePanel extends HTMLElement {
     // Wert zurückgeht (Variante A, docs/mockups/override-v1).
     this._settings = {
       loading: true, error: null, saveError: null, saving: false, data: null, draft: null, open: new Set(tab === "overview" ? [] : ["monitor"]), info: new Set(),
-      resets: { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set() },
+      resets: { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set(), charge: new Set() },
       // Reiter von "Überwachung und Meldungen", gewählte Integration, Filter der Liste.
       tab, integ: null, integFilter: "all",
       // Reiter von "Geräte im Panel" und "Darstellung".
@@ -5867,6 +5867,7 @@ class DevicePanel extends HTMLElement {
       ...[...st.resets.connection].map(() => "reset_connection"),
       ...[...st.resets.signal].map(() => "reset_signal"),
       ...[...st.resets.offline].map(() => "reset_offline"),
+      ...[...st.resets.charge].map(() => "reset_charge"),
     ];
   }
 
@@ -6046,7 +6047,7 @@ class DevicePanel extends HTMLElement {
   // und, wie bei den anderen Reitern, die Geräte mit eigener Schwelle unter "Abweichungen".
   _monSigHtml(d) {
     const t = (k, ...a) => this._t(k, ...a);
-    return `${this._sigGlobalHtml(d)}<div class="mon-grp">${escape(t("grpDiff"))}</div>${this._overridesHtml("signal")}`;
+    return `${this._sigGlobalHtml(d)}<div class="mon-grp">${escape(t("grpDiff"))}</div>${this._integDiffBox(d, "sig")}${this._overridesHtml("signal")}`;
   }
 
   // Globale Warnschwellen des Empfangs pro Funkart (Reiter "Empfang").
@@ -6137,7 +6138,7 @@ class DevicePanel extends HTMLElement {
     if (id === "devset") {
       // Geräte mit eigener Einstellung, die nicht zum Zurücksetzen markiert sind
       const st = this._settings;
-      return ["offline", "notify", "battery", "connection", "signal"].reduce((n, k) => n + (st?.data?.overrides?.[k] || []).filter((x) => !st.resets[k].has(x.id)).length, 0);
+      return ["offline", "notify", "battery", "connection", "signal", "charge"].reduce((n, k) => n + (st?.data?.overrides?.[k] || []).filter((x) => !st.resets[k].has(x.id)).length, 0);
     }
     if (id === "integrations") return (d.exclude_integrations || []).length;
     if (id === "types") return (d.exclude_types || []).length;
@@ -6310,6 +6311,21 @@ class DevicePanel extends HTMLElement {
     return out;
   }
 
+  // Eigene Werte der Lademeldung eines Geräts als Text (seit 2.78.0): an/aus, voll ab, Anstieg, Ende, Push bei Ende, Live
+  _chargeOwnText(v) {
+    const t = (k, ...a) => this._t(k, ...a);
+    return [
+      v.on === undefined ? "" : v.on ? t("diffCharge") : t("ovrChargeOff"),
+      v.full === undefined ? "" : t("diffChargeFull", v.full),
+      v.rise === undefined ? "" : t("diffChargeRise", v.rise),
+      v.stall === undefined ? "" : t("diffChargeStall", v.stall),
+      v.stop === undefined ? "" : t("diffChargeStop", v.stop),
+      v.live === undefined ? "" : t("diffChargeLive", v.live),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }
+
   // Geräte mit eigener Einstellung (Batterie oder Meldungen), einzeln oder
   // alle zurücksetzen; gilt mit "Speichern" (Variante A, docs/mockups/override-v1).
   _overridesHtml(kind) {
@@ -6318,12 +6334,14 @@ class DevicePanel extends HTMLElement {
     const list = st.data.overrides?.[kind] || [];
     const marked = st.resets[kind];
     const all = list.length > 0 && list.every((x) => marked.has(x.id));
-    const pre = { battery: "ovrBat", notify: "ovrNotify", connection: "ovrConn", signal: "ovrSig", offline: "ovrTime" }[kind];
+    const pre = { battery: "ovrBat", notify: "ovrNotify", connection: "ovrConn", signal: "ovrSig", offline: "ovrTime", charge: "ovrCharge" }[kind];
     const btn = list.length
       ? `<button type="button" class="ovr-all" data-set="ovr-all" data-key="${kind}" ${all ? "disabled" : ""}>${mdi("reset", 15)}${escape(t("ovrResetAll"))}</button>`
       : "";
     const value = (x) =>
-      kind === "connection"
+      kind === "charge"
+        ? this._chargeOwnText(x.value)
+        : kind === "connection"
         ? t(CONN[x.value]?.key || "connUnknown")
         : kind === "offline"
           ? x.value === "off" ? t("offlineNone") : t("offlineMin", x.value)
@@ -6332,13 +6350,13 @@ class DevicePanel extends HTMLElement {
           : kind === "signal"
             ? t("ovrSigValue", sigLimitText(x.value))
             : `${x.value} %`;
-    const back = kind === "connection" ? t("ovrToAuto") : kind === "offline" ? t("ovrToInteg") : t("ovrToGlobal");
+    const back = kind === "connection" ? t("ovrToAuto") : kind === "offline" || kind === "charge" ? t("ovrToInteg") : t("ovrToGlobal");
     const rows = list
       .map((x) => {
         const on = marked.has(x.id);
         const sub = [x.area, x.integration, x.hidden ? t("ovrHidden") : null].filter(Boolean).join(" · ");
         const label = t(on ? "ovrUndo" : "ovrReset", x.name);
-        return `<div class="ovr-row${on ? " reset" : ""}"><span class="ovr-name">${escape(x.name)}${sub ? `<small>${escape(sub)}</small>` : ""}</span>
+        return `<div class="ovr-row${on ? " reset" : ""}${kind === "charge" ? " long" : ""}"><span class="ovr-name">${escape(x.name)}${sub ? `<small>${escape(sub)}</small>` : ""}</span>
           <span class="ovr-val">${on ? `<s>${escape(value(x))}</s> ${escape(back)}` : escape(value(x))}</span>
           <button type="button" class="ovr-x" data-set="ovr-one" data-key="${kind}:${escape(x.id)}" title="${escape(label)}" aria-label="${escape(label)}">${mdi(on ? "reset" : "close", 16)}</button></div>`;
       })
@@ -6989,7 +7007,7 @@ class DevicePanel extends HTMLElement {
       const chargeVals = [cf != null ? t("diffChargeFull", cf) : "", cr != null ? t("diffChargeRise", cr) : "", cs != null ? t("diffChargeStall", cs) : "", cp != null ? t("diffChargeStop", cp) : "", cl != null ? t("diffChargeLive", cl) : ""].filter(Boolean);
       const chargeDiff = chargeOn.has(x.domain) ? t("diffCharge") + (chargeVals.length ? ` (${chargeVals.join(", ")})` : "") : cl != null ? t("diffChargeLive", cl) : null;
       const diff = unmon ? t("integUnmon") : [out, batText, chargeDiff, newDiff, sigDiff].filter(Boolean).join(" · ");
-      return { ...x, batDevices: bat.get(x.domain) || 0, unmon, out, bat: batText, noNew: noNew.has(x.domain), sig: sigDiff, own: Boolean(unmon || out || batText || chargeDiff || newDiff || sigDiff), diff };
+      return { ...x, batDevices: bat.get(x.domain) || 0, unmon, out, bat: batText, chg: chargeDiff, noNew: noNew.has(x.domain), sig: sigDiff, own: Boolean(unmon || out || batText || chargeDiff || newDiff || sigDiff), diff };
     });
   }
 
@@ -7009,8 +7027,8 @@ class DevicePanel extends HTMLElement {
   // Kasten "N Integrationen weichen ab" mit Sprung in den Reiter "Integrationen".
   _integDiffBox(d, kind) {
     const t = (k, ...a) => this._t(k, ...a);
-    const items = this._integItems(d).filter((x) => (kind === "out" ? x.unmon || x.out : kind === "new" ? x.noNew : x.bat));
-    const text = items.map((x) => `${x.name}: ${kind === "out" ? (x.unmon ? t("integUnmon") : x.out) : kind === "new" ? t("diffNoNew") : x.bat}`).join(" · ");
+    const items = this._integItems(d).filter((x) => (kind === "out" ? x.unmon || x.out : kind === "new" ? x.noNew : kind === "charge" ? x.chg : kind === "sig" ? x.sig : x.bat));
+    const text = items.map((x) => `${x.name}: ${kind === "out" ? (x.unmon ? t("integUnmon") : x.out) : kind === "new" ? t("diffNoNew") : kind === "charge" ? x.chg : kind === "sig" ? x.sig : x.bat}`).join(" · ");
     return `<div class="opt mon-diff"><div class="opt-line"><span class="opt-label">${escape(t("diffIntegTitle", items.length))}</span><button type="button" class="lnk" data-set="goto" data-key="integ" data-filter="${items.length ? "own" : "all"}">${escape(t("diffIntegGo"))}</button></div>
       <div class="opt-short">${escape(items.length ? text : t("diffIntegNone"))}</div></div>`;
   }
@@ -7071,12 +7089,12 @@ class DevicePanel extends HTMLElement {
       "mtl-b"
     );
     const chargeInteg = (d.charge_integrations || []).length;
-    const chargeDev = this._devices.filter((x) => x.charge_setting != null).length;
+    const chargeDev = (st.data?.overrides?.charge || []).length;
     const chargeDiff = `<div class="lane-diff">${
       chargeInteg || chargeDev
         ? `${escape(t("laneChargeOn"))} ${[
             chargeInteg ? `<button type="button" class="lnk" data-set="goto" data-key="integ" data-filter="own">${escape(t("diffInteg", chargeInteg))}</button>` : "",
-            chargeDev ? escape(t("diffDev", chargeDev)) : "",
+            chargeDev ? `<button type="button" class="lnk" data-set="tab" data-key="charge">${escape(t("diffDev", chargeDev))}</button>` : "",
           ]
             .filter(Boolean)
             .join(" · ")}`
@@ -7222,7 +7240,9 @@ class DevicePanel extends HTMLElement {
     const liveNoTarget = d.charge_live && !target;
     html += `<div class="mon-grp">${escape(t("grpLive"))}</div>
       ${ui.row("charge_live", t("optChargeLive"), ui.sw("charge_live", t("optChargeLive")), liveNoTarget ? null : t("optChargeLiveShort"), t("optChargeLiveInfo"), liveNoTarget ? t("noTargetWarn") : null)}`;
-    if (!d.notify_charge) return html;
+    // Abweichungen am Schluss (seit 2.78.0, wie bei den anderen Reitern): Integrationen und Geräte mit eigenen Werten
+    const diffHtml = `<div class="mon-grp">${escape(t("grpDiff"))}</div>${this._integDiffBox(d, "charge")}${this._overridesHtml("charge")}`;
+    if (!d.notify_charge) return html + diffHtml;
     // Ladung beendet (seit 1.40.0): bleibt der Stand ohne Ladeanzeige am Gerät so lange unverändert, endet "lädt";
     // der Push dazu hat einen eigenen Schalter (standardmässig aus).
     html += ui.row("charge_stall", t("optChargeStall"), ui.num("charge_stall", t("minuteUnit"), t("optChargeStall")), t("optChargeStallShort"), null) +
@@ -7248,7 +7268,7 @@ class DevicePanel extends HTMLElement {
     html += `<div class="pv"><div class="pv-k">${escape(t("pvLabel"))}</div><div class="pv-card"><div class="pv-app">${LOGO_SMALL}${escape(t("pvApp"))}</div>
       <div class="pv-title">${this._pveHtml(d, "charge")}${escape(t("pvChargeTitle", name))}</div><div class="pv-text">${escape(`${d.charge_full ?? 100} %`)} · ${escape(t("pvChargeFrom", this._fmtSeconds(6000), 22))} · ${area}</div></div>
       <div class="opt-short">${escape(t("pvChargeNote"))}</div></div>`;
-    return html + integList;
+    return html + integList + diffHtml;
   }
 
   // Inhalt der Batterie-Meldung (seit 0.34.0, notify-v2 Bild 4: anpassbar wie
@@ -7637,14 +7657,14 @@ class DevicePanel extends HTMLElement {
     const sigHtml = sigRows ? `<div class="opt-short sig-intro">${escape(t("sigIntegShort"))}</div>${sigRows}` : empty("integNoSignal");
     // Geräte der Integration mit eigener Einstellung, zum Zurücksetzen wie im Reiter.
     const ov = st.data.overrides || {};
-    const devs = ["offline", "notify", "battery"].flatMap((kind) => (ov[kind] || []).filter((x) => x.domain === dom).map((x) => ({ kind, x })));
+    const devs = ["offline", "notify", "battery", "charge"].flatMap((kind) => (ov[kind] || []).filter((x) => x.domain === dom).map((x) => ({ kind, x })));
     const devsHtml = devs.length
       ? `<div class="ovr-list">${devs
           .map(({ kind, x }) => {
             const on = st.resets[kind].has(x.id);
-            const value = kind === "offline" ? (x.value === "off" ? t("ovrKindUnmon") : t("ovrKindOffline", fmt(x.value))) : kind === "notify" ? t("ovrKindNotify") : t("ovrKindBattery", x.value);
+            const value = kind === "offline" ? (x.value === "off" ? t("ovrKindUnmon") : t("ovrKindOffline", fmt(x.value))) : kind === "notify" ? t("ovrKindNotify") : kind === "charge" ? this._chargeOwnText(x.value) : t("ovrKindBattery", x.value);
             const label = t(on ? "ovrUndo" : "ovrReset", x.name);
-            return `<div class="ovr-row${on ? " reset" : ""}"><span class="ovr-name">${escape(x.name)}${x.area ? `<small>${escape(x.area)}</small>` : ""}</span>
+            return `<div class="ovr-row${on ? " reset" : ""}${kind === "charge" ? " long" : ""}"><span class="ovr-name">${escape(x.name)}${x.area ? `<small>${escape(x.area)}</small>` : ""}</span>
             <span class="ovr-val">${on ? `<s>${escape(value)}</s> ${escape(t("ovrToInteg"))}` : escape(value)}</span>
             <button type="button" class="ovr-x" data-set="ovr-one" data-key="${kind}:${escape(x.id)}" title="${escape(label)}" aria-label="${escape(label)}">${mdi(on ? "reset" : "close", 16)}</button></div>`;
           })
@@ -7912,7 +7932,7 @@ class DevicePanel extends HTMLElement {
           : devTab === "devset"
             ? // Alle Geräte mit eigener Einstellung an einem Ort (seit 2.0.7); jede Liste steht auch beim jeweiligen Thema.
               `<div class="opt-short ex-intro">${escape(t("devSetIntro"))}</div>` +
-              ["offline", "notify", "battery", "connection", "signal"].map((k) => this._overridesHtml(k)).join("")
+              ["offline", "notify", "battery", "connection", "signal", "charge"].map((k) => this._overridesHtml(k)).join("")
           : devTab === "devs"
             ? hiddenDevs.length
               ? exTable("exclude_devices", hiddenDevs, t("hiddenIntro"), false, null, t("hiddenShowAll"))
@@ -8557,7 +8577,7 @@ class DevicePanel extends HTMLElement {
     if (!st) return;
     const changes = this._settingsEntryChanges();
     const extra = this._settingsExtraChanges();
-    const resets = { battery: [...st.resets.battery], notify: [...st.resets.notify], connection: [...st.resets.connection], signal: [...st.resets.signal], offline: [...st.resets.offline] };
+    const resets = { battery: [...st.resets.battery], notify: [...st.resets.notify], connection: [...st.resets.connection], signal: [...st.resets.signal], offline: [...st.resets.offline], charge: [...st.resets.charge] };
     const anyReset = Object.values(resets).some((list) => list.length > 0);
     if ((!changes.length && !extra.length && !anyReset) || Object.keys(this._settingsErrors()).length) return;
     st.saving = true;
@@ -8611,7 +8631,7 @@ class DevicePanel extends HTMLElement {
     if (data.panel) this._applyPanelSettings(data.panel);
     st.extraBase = this._extraBase();
     st.extra = { ...st.extraBase };
-    st.resets = { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set() };
+    st.resets = { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set(), charge: new Set() };
     st.saving = false;
     st.saved = true;
     this._renderSettings();

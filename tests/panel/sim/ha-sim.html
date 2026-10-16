@@ -517,6 +517,15 @@
       connection: devices.filter((d) => d.id in window.__connOverrides).map((d) => ({ ...info(d), value: window.__connOverrides[d.id] })).sort(byName),
       signal: devices.filter((d) => d.id in s.signal).map((d) => ({ ...info(d), value: s.signal[d.id] })).sort(byName),
       offline: devices.filter((d) => d.id in s.offline).map((d) => ({ ...info(d), value: s.offline[d.id] })).sort(byName),
+      // Wie das Backend (seit 2.78.0): alle eigenen Werte der Lademeldung eines Geräts
+      charge: devices
+        .map((d) => {
+          const v = {};
+          for (const [key, short] of [["charge", "on"], ["chargeFull", "full"], ["chargeRise", "rise"], ["chargeStall", "stall"], ["chargeStop", "stop"], ["chargeLive", "live"]]) if (d.id in s[key]) v[short] = s[key][d.id];
+          return Object.keys(v).length ? { ...info(d), value: v } : null;
+        })
+        .filter(Boolean)
+        .sort(byName),
     };
   }
   const integrations = {
@@ -798,7 +807,13 @@
         for (const id of new Set(msg.signal || [])) if (id in s.signal) { delete s.signal[id]; signal++; }
         let offline = 0;
         for (const id of new Set(msg.offline || [])) if (id in s.offline) { delete s.offline[id]; offline++; }
-        return { battery, notify, connection, signal, offline };
+        let charge = 0;
+        for (const id of new Set(msg.charge || [])) {
+          let any = false;
+          for (const key of ["charge", "chargeFull", "chargeRise", "chargeStall", "chargeStop", "chargeLive"]) if (id in s[key]) { delete s[key][id]; any = true; }
+          if (any) charge++;
+        }
+        return { battery, notify, connection, signal, offline, charge };
       }
       if (msg.type === "device_panel/set_options") {
         if (window.__setOptsFails) throw new Error(window.__setOptsFails);

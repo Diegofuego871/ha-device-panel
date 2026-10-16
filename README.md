@@ -200,6 +200,7 @@ The gear opens all settings in German or English, in sections. The version bar o
 
 - **Devices in the panel:** hide integrations, device types and single devices, set type and connection type per integration, see and reset devices with their own settings
 - **Monitoring and notifications:** the tabs Overview (a timeline per notification), Outage, Battery, Charging, New, Updates, Signal and Integrations
+- **Exceptions:** every tab of "Monitoring and notifications" (except "New devices" for devices) ends with the integrations and devices that differ from the default, with a reset (also under "Devices in the panel" › "Device settings")
 - **View:** start page and filter chips (show, hide, reorder, pin)
 - **Routines and AI assessment:** pause, catch-up window, recipient; AI task and prompt
 - **Status app:** whether the parts of the integration run, with push alerts and a restart button (also an alert when CPU, memory or disk reach a limit you set, default 99 %, each for a minimum duration you set, default 3 minutes); below, small graphs for CPU, memory and disk of Home Assistant (24 hours; the disk also 30 days, 6 months, 1 year), from the sensors of "System Monitor" or your own (chosen from a searchable list of sensor entities; switched-off sensors can be switched on with one button). Three tabs: "Services" (the parts), "System" (the graphs) and "Settings" (alerts, limits, sources; they only apply after "Save").

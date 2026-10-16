@@ -635,6 +635,10 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .ovr-val { color: var(--dp-primary); font-weight: 500; white-space: nowrap; }
 .ovr-val s { color: var(--dp-text2); font-weight: 400; }
 .ovr-row.reset .ovr-name { color: var(--dp-text2); }
+/* Lange Werte (Lademeldung: mehrere eigene Werte): unter Name und Knopf, über die ganze Breite, damit der Name nicht gequetscht wird */
+.ovr-row.long { flex-wrap: wrap; row-gap: 0; }
+.ovr-row.long .ovr-x { order: 2; }
+.ovr-row.long .ovr-val { order: 3; flex: 1 1 100%; padding: 0 0 8px; white-space: normal; }
 .ovr-x { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border: none; border-radius: 50%; background: none; color: var(--dp-text2); cursor: pointer; }
 .ovr-x:hover { background: var(--dp-hover); color: var(--dp-text); }
 .ovr-x:focus-visible, .ovr-all:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }

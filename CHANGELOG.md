@@ -7,7 +7,27 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.78.0] - 2026-10-16
+
+Settings, monitoring and notifications: the tabs "Charging" and "Signal" end like the others with a section "Exceptions".
+
+Includes the changes from 2.77.0.
+
+### Added
+
+- Tab "Charging": the end now has a section **Exceptions** with the box "N integrations differ" (with the values, for example "Shelly: Charging on (full from 90 %)", and the jump to "Integrations") and the list **"Own charging values on devices"**. Before, the settings did not show on which devices the charging alert differs from the default. The list shows every own value per device (charging on or off, full from, rise, ended after, push at end, live), with area and integration. A cross resets one device, "Reset all" all of them; as in the other tabs the reset only happens on save, after which the integration or the global values apply again. The section is there when the charging alert is off too, because devices can still have own values. It stands at the very bottom, after the list "Per integration".
+- Under "Devices in the panel" › "Device settings" and in the detail of an integration the same list for the charging alert stands next to the others. On the overview "N devices" in the row "Charging" now leads to this tab and counts all devices with own charging values (before only those with an own switch).
+- New list `overrides.charge` in `get_options` and new parameter `charge` for `device_panel/reset_device_settings` (takes back all own charging values of the named devices; the answer counts `charge` too).
+
+### Changed
+
+- Tab "Signal": in the section "Exceptions" the box "N integrations differ" now comes first, as in Outage, Battery and New, then the list of devices with their own threshold.
+- Long values in the list (charging alert with several own values) stand under the name of the device over the full width, so the name is not squeezed.
+- The tab "New" stays as it is: there are no values per device, only the box of the integrations.
+
 ## [2.77.0] - 2026-10-16
+
+Not released; included in 2.78.0.
 
 Status app: the minimum duration of the alert at high load is set per kind (processor, memory, disk), the recipient has a section of its own.
 
@@ -3654,7 +3674,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.77.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.77.0
+[2.78.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.78.0
 [2.76.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.76.0
 [2.75.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.75.0
 [2.73.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.73.0

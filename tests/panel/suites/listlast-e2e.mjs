@@ -51,7 +51,8 @@ for (const mobile of [false, true]) {
   check(`[${tag}] Laden: Emoji vor der Liste`, await before(".emo-box", '[data-srch="charge"]'));
   check(`[${tag}] Laden: Vorschau vor der Liste`, await before(".pv", '[data-srch="charge"]'));
   check(`[${tag}] Laden: Überschrift der Liste nach der Vorschau`, await ev(`const t=[...r.querySelectorAll(".mon-body .mon-grp")].pop(); const pv=r.querySelector(".pv"); return !!t && (pv.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_FOLLOWING) > 0 && !!t.nextElementSibling`));
-  check(`[${tag}] Laden: die Liste ist der letzte Block`, await lastBlock('[data-srch="charge"]'));
+  // Seit 2.78.0 folgen auf die Liste nur noch die Abweichungen (Kasten der Integrationen, Liste der Geräte), wie bei den anderen Reitern
+  check(`[${tag}] Laden: nach der Liste folgen nur noch die Abweichungen (Überschrift, Kasten, Liste der Geräte)`, await ev(`const L=r.querySelector('[data-srch="charge"]'); const body=L.closest(".mon-body"); const tail=[...body.children].filter((e)=>L.parentElement===body ? true : true); const g=[...body.querySelectorAll(".mon-grp")].pop(); const ovr=body.querySelector(".ovr-opt"); const last=body.lastElementChild; return !!(L.compareDocumentPosition(g) & Node.DOCUMENT_POSITION_FOLLOWING) && !!body.querySelector(".mon-diff") && last === ovr`));
 
   // Updates: Arten, Emoji, Vorschau, dann die Liste "Einzelne Apps und Integrationen"
   await tab("updates");

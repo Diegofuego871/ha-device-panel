@@ -200,6 +200,7 @@ Das Zahnrad öffnet alle Einstellungen auf Deutsch oder Englisch, in Abschnitten
 
 - **Geräte im Panel:** Integrationen, Gerätetypen und einzelne Geräte ausblenden, Typ und Verbindungsart pro Integration festlegen, Geräte mit eigenen Einstellungen sehen und zurücksetzen
 - **Überwachung und Meldungen:** die Reiter Übersicht (ein Zeitstrahl pro Meldung), Ausfall, Batterie, Laden, Neu, Updates, Empfang und Integrationen
+- **Abweichungen:** jeder Reiter von "Überwachung und Meldungen" (bei "Neue Geräte" ohne Geräte) endet mit den Integrationen und Geräten, die vom Standard abweichen, mit Zurücksetzen (auch unter "Geräte im Panel" › "Geräte-Einstellungen")
 - **Ansicht:** Startseite und Filter-Chips (zeigen, ausblenden, umordnen, anheften)
 - **Routinen und KI-Einschätzung:** Pause, Nachhol-Fenster, Empfänger; KI-Aufgabe und Prompt
 - **Status-App:** ob die Teile der Integration laufen, mit Push-Meldung und Neustart-Knopf (auch eine Meldung, wenn CPU, Arbeitsspeicher oder Festplatte eine frei wählbare Grenze erreichen, Standard 99 %, je für eine frei wählbare Mindestdauer, Standard 3 Minuten); darunter kleine Grafiken zu CPU, Arbeitsspeicher und Festplatte von Home Assistant (24 Stunden; die Festplatte auch 30 Tage, 6 Monate, 1 Jahr), aus den Sensoren von "System Monitor" oder eigenen (aus einer durchsuchbaren Liste von Sensor-Entitäten gewählt; ausgeschaltete Sensoren lassen sich mit einem Knopf einschalten). Drei Reiter: "Dienste" (die Teile), "System" (die Grafiken) und "Einstellungen" (Meldungen, Grenzen, Quellen; sie gelten erst nach "Speichern").

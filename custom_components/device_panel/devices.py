@@ -955,6 +955,10 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
     await _async_save_devices(hass)
 
 
+# Eigene Werte der Lademeldung eines Geräts (Schlüssel in device_settings) und ihre Kurznamen für die Übersicht
+CHARGE_SETTING_KEYS = {"charge": "on", "charge_full": "full", "charge_rise": "rise", "charge_stall": "stall", "charge_stop": "stop", "charge_live": "live"}
+
+
 async def async_reset_device_settings(
     hass: HomeAssistant,
     battery: list[str],
@@ -962,11 +966,13 @@ async def async_reset_device_settings(
     connection: list[str] | None = None,
     signal: list[str] | None = None,
     offline: list[str] | None = None,
+    charge: list[str] | None = None,
 ) -> dict[str, int]:
     """
     Einstellungen mehrerer Geräte auf den globalen Wert zurück (Einstellungen,
     "Alle zurücksetzen" oder einzeln); die Verbindungsart von Hand zurück auf
-    Integration bzw. Erkennung. Nur die genannten Geräte: ein Wert, der
+    Integration bzw. Erkennung; "charge" nimmt alle eigenen Werte der Lademeldung
+    eines Geräts zurück (seit 2.78.0). Nur die genannten Geräte: ein Wert, der
     inzwischen dazukam, bleibt. Gibt zurück, wie viele es waren.
     """
     await async_load_type_overrides(hass)
@@ -983,9 +989,14 @@ async def async_reset_device_settings(
     done_signal = sum(1 for dev in set(signal or []) if sig.pop(dev, None) is not None)
     off = settings.setdefault("offline", {})
     done_offline = sum(1 for dev in set(offline or []) if off.pop(dev, None) is not None)
-    if done_battery or done_notify or done_conn or done_signal or done_offline:
+    done_charge = 0
+    for dev in set(charge or []):
+        # Ein Gerät zählt einmal, auch wenn mehrere seiner Lade-Werte wegfallen
+        if sum(settings.setdefault(key, {}).pop(dev, None) is not None for key in CHARGE_SETTING_KEYS):
+            done_charge += 1
+    if done_battery or done_notify or done_conn or done_signal or done_offline or done_charge:
         await _async_save_devices(hass)
-    return {"battery": done_battery, "notify": done_notify, "connection": done_conn, "signal": done_signal, "offline": done_offline}
+    return {"battery": done_battery, "notify": done_notify, "connection": done_conn, "signal": done_signal, "offline": done_offline, "charge": done_charge}
 
 
 async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str, Any]]]:
@@ -1004,7 +1015,8 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
     items: dict[str, dict[str, Any]] = {}
     signal = settings.get("signal", {})
     offline = settings.get("offline", {})
-    for dev in {*settings["battery"], *settings["notify_off"], *conns, *signal, *offline}:
+    charge_devs = {dev for key in CHARGE_SETTING_KEYS for dev in settings.get(key, {})}
+    for dev in {*settings["battery"], *settings["notify_off"], *conns, *signal, *offline, *charge_devs}:
         device = dev_reg.async_get(dev)
         if device is None:
             continue
@@ -1036,6 +1048,15 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
         "signal": sorted(({**items[dev], "value": value} for dev, value in signal.items() if dev in items), key=by_name),
         # "Ausgefallen nach" des Geräts (seit 0.31.0): "off" oder Minuten.
         "offline": sorted(({**items[dev], "value": value} for dev, value in offline.items() if dev in items), key=by_name),
+        # Lademeldung des Geräts (seit 2.78.0): alle eigenen Werte (an/aus, voll ab, Anstieg, Ende, Push bei Ende, Live)
+        "charge": sorted(
+            (
+                {**items[dev], "value": {short: settings[key][dev] for key, short in CHARGE_SETTING_KEYS.items() if dev in settings.get(key, {})}}
+                for dev in charge_devs
+                if dev in items
+            ),
+            key=by_name,
+        ),
     }
 
 

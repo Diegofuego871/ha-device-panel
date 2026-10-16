@@ -74,13 +74,13 @@ async def test_overrides_listed_and_reset(hass: HomeAssistant, setup, hass_ws_cl
     # Zurücksetzen: nur die genannten, unbekannte zählen nicht
     res = await _ws(client, n, type=f"{DOMAIN}/reset_device_settings", battery=[bad.id, "gibtsnicht"], notify=[lampe.id])
     n += 1
-    assert res["result"] == {"battery": 1, "notify": 1, "connection": 0, "signal": 0, "offline": 0}
+    assert res["result"] == {"battery": 1, "notify": 1, "connection": 0, "signal": 0, "offline": 0, "charge": 0}
     over = (await _ws(client, n, type=f"{DOMAIN}/get_options"))["result"]["overrides"]
     n += 1
     assert [i["name"] for i in over["battery"]] == ["Wassersensor"]
     assert [i["name"] for i in over["notify"]] == ["Thermostat"]
     # Leere Anfrage: nichts zu tun
-    assert (await _ws(client, n, type=f"{DOMAIN}/reset_device_settings"))["result"] == {"battery": 0, "notify": 0, "connection": 0, "signal": 0, "offline": 0}
+    assert (await _ws(client, n, type=f"{DOMAIN}/reset_device_settings"))["result"] == {"battery": 0, "notify": 0, "connection": 0, "signal": 0, "offline": 0, "charge": 0}
 
 
 async def test_deleted_device_kept_but_not_listed(hass: HomeAssistant, setup, hass_ws_client, hass_storage: dict[str, Any]) -> None:
@@ -89,7 +89,7 @@ async def test_deleted_device_kept_but_not_listed(hass: HomeAssistant, setup, ha
     assert (await _ws(client, 1, type=f"{DOMAIN}/set_device_settings", device_id=gone.id, notify=False))["success"]
     dr.async_get(hass).async_remove_device(gone.id)
     await hass.async_block_till_done()
-    assert (await _ws(client, 2, type=f"{DOMAIN}/get_options"))["result"]["overrides"] == {"battery": [], "notify": [], "connection": [], "signal": [], "offline": []}
+    assert (await _ws(client, 2, type=f"{DOMAIN}/get_options"))["result"]["overrides"] == {"battery": [], "notify": [], "connection": [], "signal": [], "offline": [], "charge": []}
     # Gespeichert bleibt er: HA stellt das Gerät mit derselben ID wieder her
     from custom_components.device_panel.devices import device_settings  # noqa: PLC0415
 
@@ -142,7 +142,7 @@ async def test_connection_by_hand(hass: HomeAssistant, setup, hass_ws_client, ha
     over = (await _ws(client, next(ids), type=f"{DOMAIN}/get_options"))["result"]["overrides"]["connection"]
     assert [(i["name"], i["value"]) for i in over] == [("Glücksklee", "ble")]
     res = await _ws(client, next(ids), type=f"{DOMAIN}/reset_device_settings", connection=[dev.id, "gibtsnicht"])
-    assert res["result"] == {"battery": 0, "notify": 0, "connection": 1, "signal": 0, "offline": 0}
+    assert res["result"] == {"battery": 0, "notify": 0, "connection": 1, "signal": 0, "offline": 0, "charge": 0}
     assert (await listed())["connection_manual"] is False
     await hass.async_block_till_done()
     assert hass_storage[f"{DOMAIN}.devices"]["data"]["connections"] == {}
@@ -211,7 +211,7 @@ async def test_signal_setting(hass: HomeAssistant, setup, hass_ws_client, hass_s
     assert [(i["name"], i["value"]) for i in over] == [("Kontakt", 40), ("Präsenzsensor", "off")]
     # Zurücksetzen einzeln und im Popup (None)
     res = await _ws(client, next(ids), type=f"{DOMAIN}/reset_device_settings", signal=[zig.id, "gibtsnicht"])
-    assert res["result"] == {"battery": 0, "notify": 0, "connection": 0, "signal": 1, "offline": 0}
+    assert res["result"] == {"battery": 0, "notify": 0, "connection": 0, "signal": 1, "offline": 0, "charge": 0}
     assert await setting(zig.id) is None
     assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_device_settings", device_id=sensor.id, signal=None))["success"]
     assert await setting(sensor.id) is None
@@ -232,3 +232,44 @@ async def test_signal_setting_loaded(hass: HomeAssistant, hass_storage: dict[str
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     assert device_settings(hass)["signal"] == {"a": -95, "b": "off", "e": 120}
+
+
+async def test_charge_overrides_listed_and_reset(hass: HomeAssistant, setup, hass_ws_client, hass_storage: dict[str, Any]) -> None:
+    """Eigene Werte der Lademeldung pro Gerät (2.78.0): Übersicht mit allen Werten in get_options, Zurücksetzen nimmt alle auf einmal."""
+    bad = _device(hass, "Thermostat", domain="zha")
+    _entity(hass, bad, "sensor", "bat", "40", original_device_class="battery")
+    uhr = _device(hass, "Wecker")
+    _entity(hass, uhr, "sensor", "bat", "60", original_device_class="battery")
+    plain = _device(hass, "Lampe")
+    _entity(hass, plain, "light", "l", "on")
+    client = await hass_ws_client(hass)
+    ids = iter(range(1, 100))
+    for payload in (
+        {"device_id": bad.id, "charge": True, "charge_full": 90, "charge_rise": 15},
+        {"device_id": uhr.id, "charge_live": True, "charge_stop": False, "charge_stall": 30},
+    ):
+        assert (await _ws(client, next(ids), type=f"{DOMAIN}/set_device_settings", **payload))["success"]
+
+    async def listed() -> dict[str, Any]:
+        over = (await _ws(client, next(ids), type=f"{DOMAIN}/get_options"))["result"]["overrides"]["charge"]
+        return {i["name"]: i["value"] for i in over}
+
+    assert await listed() == {
+        "Thermostat": {"on": True, "full": 90, "rise": 15},
+        "Wecker": {"live": True, "stop": False, "stall": 30},
+    }
+    # Ein Gerät ohne eigene Lade-Werte steht nicht in der Liste
+    assert "Lampe" not in await listed()
+    # Zurücksetzen: alle Werte des Geräts, zählt einmal je Gerät; unbekannte und leere Angaben stören nicht
+    res = await _ws(client, next(ids), type=f"{DOMAIN}/reset_device_settings", charge=[bad.id, "gibtsnicht", plain.id])
+    assert res["result"] == {"battery": 0, "notify": 0, "connection": 0, "signal": 0, "offline": 0, "charge": 1}
+    assert await listed() == {"Wecker": {"live": True, "stop": False, "stall": 30}}
+    stored = hass_storage[f"{DOMAIN}.devices"]["data"]
+    assert bad.id not in stored.get("charge", {}) and bad.id not in stored.get("charge_full", {}) and bad.id not in stored.get("charge_rise", {})
+    assert stored["charge_live"] == {uhr.id: True}
+    # Ohne Angabe nichts, der zweite Aufruf findet nichts mehr
+    res = await _ws(client, next(ids), type=f"{DOMAIN}/reset_device_settings", charge=[bad.id])
+    assert res["result"]["charge"] == 0
+    res = await _ws(client, next(ids), type=f"{DOMAIN}/reset_device_settings", charge=[uhr.id])
+    assert res["result"]["charge"] == 1
+    assert await listed() == {}

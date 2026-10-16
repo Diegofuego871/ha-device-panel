@@ -1061,6 +1061,8 @@ async def _ws_rename_device(
         vol.Optional("signal", default=[]): [str],
         # "Ausgefallen nach" des Geräts: zurück auf Integration bzw. global.
         vol.Optional("offline", default=[]): [str],
+        # Lademeldung des Geräts: alle eigenen Werte zurück auf Integration bzw. global.
+        vol.Optional("charge", default=[]): [str],
     }
 )
 @websocket_api.require_admin
@@ -1069,7 +1071,7 @@ async def _ws_reset_device_settings(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
     """Einstellungen pro Gerät zurücksetzen, gibt die Zahl der Geräte zurück."""
-    done = await async_reset_device_settings(hass, msg["battery"], msg["notify"], msg["connection"], msg["signal"], msg["offline"])
+    done = await async_reset_device_settings(hass, msg["battery"], msg["notify"], msg["connection"], msg["signal"], msg["offline"], msg["charge"])
     # Batterie-Warnung sofort nachführen (Push, anhaltende Benachrichtigung).
     if done["battery"] and (watch := hass.data.get(DATA_BATTERY)) is not None:
         await watch.async_check()

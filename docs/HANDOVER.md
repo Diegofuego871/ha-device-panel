@@ -3,6 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.78.0, Abweichungen am Ende der Reiter Laden und Empfang)
+
+- Wunsch des Nutzers (Screenshots Laden und Batterie): im Reiter Laden sieht man nicht, auf welchen Geräten ein Override besteht; einheitlich "immer am Schluss ein Abschnitt Abweichungen pro Integration und Gerät" (Ausnahme Neue Geräte). Keine Mockups: der Aufbau ist der des Reiters Batterie.
+- Bestand vorher: Ausfall (Kasten + `offline` + `notify`) und Batterie hatten ihn, Neu nur den Kasten (es gibt keine Werte pro Gerät), Empfang nur die Geräteliste ohne Kasten, Laden nichts. Jetzt: `_integDiffBox(d, "charge" | "sig")` (`_integItems` liefert `chg`), `_overridesHtml("charge")`, Laden ruft beides am Ende auf (auch bei ausgeschalteter Lademeldung, nach der Liste "Pro Integration"), Empfang den Kasten vor der Geräteliste. Updates unverändert: die Listen dort (`updates_exclude`/`updates_include`) sind die Einstellung selbst, keine Werte pro Gerät.
+- Backend: `devices.py` `CHARGE_SETTING_KEYS`, `async_device_overrides` liefert `charge` (je Gerät ein Wörterbuch `on/full/rise/stall/stop/live`), `async_reset_device_settings(..., charge)` nimmt alle sechs Schlüssel zurück und zählt je Gerät einmal; WebSocket `reset_device_settings` hat `charge`. Panel: `st.resets.charge`, `reset_charge` in `MON_TAB_KEYS.charge` und `SUB_TAB_KEYS.devset`, `_chargeOwnText`, Zeilenklasse `.ovr-row.long` (Wert unter dem Namen), Liste auch unter Geräte-Einstellungen und im Detail einer Integration, Übersicht zählt `overrides.charge`.
+- Tests: neue Suite `chargediff-e2e`, `test_overrides` (neuer Test, `charge` in den Antworten), `test_availability`, Simulator (`overrides().charge`, Reset).
+
 ## Stand (2.77.0, Mindestdauer je Art, Empfänger als eigener Abschnitt)
 
 - Wunsch des Nutzers: je Position (CPU, RAM, Festplatte) eine eigene Mindestdauer, "die Anforderungen sind ganz unterschiedlich". Optionen `status_cpu_minutes`, `status_ram_minutes`, `status_disk_minutes` (1 bis 60, Standard 3, `const.py` `INT_RANGES`); `status.py` `LOAD_KINDS` trägt als dritten Wert den Schlüssel, `_check_load` liest `hold` je Art. Die gemeinsame `status_load_minutes` (2.74.0, mit 2.75.0 veröffentlicht) entfällt; `__init__._migrate_options` übernimmt sie beim Start einmal für alle drei Arten (`setdefault`, eine schon gesetzte eigene bleibt) und löscht sie (`LEGACY_STATUS_LOAD_MINUTES`).
