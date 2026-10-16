@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.72.0] - 2026-10-16
+
+Status app: two tabs, "State" and "Settings"; the settings only apply after "Save".
+
+### Added
+
+- Status app, new tab bar "State" | "Settings". "State" keeps what you look at (the parts with their pills, the restart buttons, the three graphs). "Settings" holds everything you can change: "Alert when something stops" (switch and recipient), "Alert at high load" (switch and limit for CPU, memory and disk) and "Source of the values" (automatic or an own sensor). The tab opens on "State".
+- Saving is deliberate: a switch, a limit, the recipient or a chosen sensor is only a draft until "Save" is pressed; then everything goes out in one call (`set_options`) and the window stays open with "Saved". The bar at the bottom shows the number of open changes ("1 change", "2 changes"), "Save" (only active when something changed and all limits are valid) and "Discard" (back to the saved values); without changes the second button reads "Close". While there are unsaved changes, a dot on the tab "Settings" shows it on the tab "State". Closing the window (cross, click outside, Esc) or opening the "System Monitor" page with unsaved changes asks "Discard changes?" first. A value set back to the saved one counts as no change.
+
+### Changed
+
+- Before, every switch, the recipient, each limit and each chosen sensor was saved at once. That is gone: nothing changes until "Save". An invalid limit (empty, not a whole number, outside 1 to 100) still shows the error at the field and now also blocks "Save".
+- The hints on the cards "No sensor found" point to the tab "Settings" instead of "below".
+
 ## [2.71.0] - 2026-10-16
 
 Status app: push alert at high CPU, memory and disk load; the "Debug" pill no longer overlaps the icon.
@@ -3573,6 +3587,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.72.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.72.0
 [2.71.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.71.0
 [2.70.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.0
 [2.69.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.69.0

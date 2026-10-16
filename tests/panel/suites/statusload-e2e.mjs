@@ -1,5 +1,6 @@
 // Status-App, Meldung bei hoher Auslastung (2.71.0): je CPU, Arbeitsspeicher und Festplatte ein Schalter (Standard an) und eine Grenze in
-// Prozent (Standard 99); ungültige Grenze zeigt einen Fehler und wird nicht gespeichert. Deutsch und Englisch, Desktop und Handy.
+// Prozent (Standard 99); ungültige Grenze zeigt einen Fehler und wird nicht gespeichert. Seit 2.72.0 im Reiter "Einstellungen": die Werte
+// sind ein Entwurf und gelten erst nach "Speichern". Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
 
@@ -28,9 +29,12 @@ for (const lang of ["de", "en"]) {
     const calls = (type) => p.evaluate((ty) => window.__wsCalls.filter((m) => m.type === ty), type);
     const win = "dialog.status-dlg";
     const setField = (sel, value) => ev(`const i = r.querySelector(${JSON.stringify(sel)}); i.focus(); i.value = ${JSON.stringify(value)}; i.dispatchEvent(new Event("change", { bubbles: true }))`);
+    const save = async () => { await ev(`const b = r.querySelector("${win} [data-st-save]"); if (!b.disabled) b.click()`); };
     const lastOpts = async () => { for (let i = 0; i < 25; i++) { const o = (await calls("device_panel/set_options")).at(-1); if (o) return o.values; await p.waitForTimeout(200); } return null; };
 
     await ev(`r.host._status.open()`);
+    await wait(`return !!r.querySelector('${win} [data-st-tab="settings"]')`);
+    await ev(`r.querySelector('${win} [data-st-tab="settings"]').click()`);
     await wait(`return r.querySelectorAll("${win} [data-st-limit]").length === 3`);
     check(`[${tag}] Abschnitt "${T.title}": drei Zeilen (${T.names.join(", ")}), alle an, Grenze 99 %`, await ev(`const d = r.querySelector("${win}"); const rows = [...d.querySelectorAll("[data-st-limit]")]; const names = rows.map((x) => x.closest(".opt-line").querySelector(".opt-label").textContent.trim()); return [...d.querySelectorAll(".set-title")].some((x) => x.textContent.trim() === ${JSON.stringify(T.title)}) && JSON.stringify(names) === ${JSON.stringify(JSON.stringify(T.names))} && rows.every((x) => x.value === "99") && [...d.querySelectorAll("[data-st-alert]")].every((x) => x.checked)`));
     await ev(`r.querySelector('${win} [data-st-limit="cpu"]').scrollIntoView({ block: "center" })`);
@@ -40,23 +44,30 @@ for (const lang of ["de", "en"]) {
     // Grenze ändern: gespeichert als Zahl
     await p.evaluate(() => { window.__wsCalls = []; });
     await setField(`${win} [data-st-limit="cpu"]`, "85");
+    await p.waitForTimeout(300);
+    check(`[${tag}] Grenze Prozessor 85 getippt: noch nichts gespeichert, "Speichern" aktiv`, (await calls("device_panel/set_options")).length === 0 && await ev(`return !r.querySelector("${win} [data-st-save]").disabled`));
+    await save();
     const v1 = await lastOpts();
-    check(`[${tag}] Grenze Prozessor 85: set_options mit status_cpu_limit 85 (Zahl)`, v1 && v1.status_cpu_limit === 85 && Number.isInteger(v1.status_cpu_limit));
+    check(`[${tag}] Speichern: set_options mit status_cpu_limit 85 (Zahl)`, v1 && v1.status_cpu_limit === 85 && Number.isInteger(v1.status_cpu_limit));
     await wait(`return r.querySelector('${win} [data-st-limit="cpu"]').value === "85"`);
 
     // Ungültig: Fehler am Feld, nichts gespeichert, der eingetippte Wert bleibt stehen
     await p.evaluate(() => { window.__wsCalls = []; });
     await setField(`${win} [data-st-limit="ram"]`, "150");
     check(`[${tag}] Grenze 150: Fehler "${T.range}" am Feld, rote Umrandung, nichts gespeichert`, await wait(`const d = r.querySelector("${win}"); const row = d.querySelector('[data-st-limit="ram"]').closest(".opt"); return row.classList.contains("invalid") && !!row.querySelector(".opt-input.bad") && row.querySelector('[role="alert"]').textContent.includes(${JSON.stringify(T.range)}) && d.querySelector('[data-st-limit="ram"]').value === "150"`) && (await calls("device_panel/set_options")).length === 0);
+    check(`[${tag}] ungültige Grenze: "Speichern" gesperrt, ein Klick darauf schickt nichts`, await ev(`return r.querySelector("${win} [data-st-save]").disabled`) && await (async () => { await ev(`r.querySelector("${win} [data-st-save]").click()`); await p.waitForTimeout(300); return (await calls("device_panel/set_options")).length === 0; })());
     await setField(`${win} [data-st-limit="ram"]`, "0");
     check(`[${tag}] Grenze 0 und leer und Dezimalzahl: ebenfalls abgelehnt`, await wait(`return !!r.querySelector('${win} [data-st-limit="ram"]').closest(".opt.invalid")`) && await (async () => { for (const bad of ["", "9.5", "abc"]) { await setField(`${win} [data-st-limit="ram"]`, bad); await p.waitForTimeout(150); } return (await calls("device_panel/set_options")).length === 0; })());
     await setField(`${win} [data-st-limit="ram"]`, "90");
+    await wait(`return !r.querySelector("${win} [data-st-save]").disabled`);
+    await save();
     const v2 = await lastOpts();
     check(`[${tag}] gültige Grenze 90 danach: gespeichert, Fehler weg`, v2 && v2.status_ram_limit === 90 && await wait(`return !r.querySelector("${win} .opt.invalid")`));
 
     // Schalter
     await p.evaluate(() => { window.__wsCalls = []; });
     await ev(`const i = r.querySelector('${win} [data-st-alert="disk"]'); i.checked = false; i.dispatchEvent(new Event("change", { bubbles: true }))`);
+    await save();
     const v3 = await lastOpts();
     check(`[${tag}] Schalter Festplatte aus: set_options mit status_disk_alert false`, v3 && v3.status_disk_alert === false && await wait(`return !r.querySelector('${win} [data-st-alert="disk"]').checked && r.querySelector('${win} [data-st-alert="cpu"]').checked`));
 

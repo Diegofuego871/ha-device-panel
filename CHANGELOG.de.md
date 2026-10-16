@@ -7,6 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.72.0] - 2026-10-16
+
+Status-App: zwei Reiter, "Zustand" und "Einstellungen"; die Einstellungen gelten erst nach "Speichern".
+
+### Hinzugefügt
+
+- Status-App, neue Reiterleiste "Zustand" | "Einstellungen". "Zustand" behält, was man ansieht (die Teile mit ihren Pillen, die Neustart-Knöpfe, die drei Grafiken). "Einstellungen" enthält alles, was sich ändern lässt: "Meldung bei Stillstand" (Schalter und Empfänger), "Meldung bei hoher Auslastung" (Schalter und Grenze für CPU, Arbeitsspeicher und Festplatte) und "Quelle der Werte" (automatisch oder ein eigener Sensor). Beim Öffnen steht der Reiter auf "Zustand".
+- Speichern ist Absicht: Ein Schalter, eine Grenze, der Empfänger oder ein gewählter Sensor ist nur ein Entwurf, bis "Speichern" gedrückt wird; dann geht alles in einem Aufruf (`set_options`) hinaus, und das Fenster bleibt offen mit "Gespeichert". Die Leiste unten zeigt die Zahl der offenen Änderungen ("1 Änderung", "2 Änderungen"), "Speichern" (nur aktiv, wenn etwas geändert ist und alle Grenzen gültig sind) und "Verwerfen" (zurück auf die gespeicherten Werte); ohne Änderung heisst der zweite Knopf "Schliessen". Solange es ungespeicherte Änderungen gibt, zeigt ein Punkt am Reiter "Einstellungen" das im Reiter "Zustand". Wer das Fenster schliesst (Kreuz, Klick daneben, Esc) oder die Seite "System Monitor" öffnet, wird bei ungespeicherten Änderungen zuerst gefragt "Änderungen verwerfen?". Ein Wert, der wieder dem gespeicherten gleicht, zählt nicht als Änderung.
+
+### Geändert
+
+- Bisher wurde jeder Schalter, der Empfänger, jede Grenze und jeder gewählte Sensor sofort gespeichert. Das entfällt: Es ändert sich nichts, bevor "Speichern" gedrückt ist. Eine ungültige Grenze (leer, keine ganze Zahl, ausserhalb von 1 bis 100) zeigt weiterhin den Fehler am Feld und sperrt jetzt zusätzlich "Speichern".
+- Die Hinweise auf den Karten "Kein Sensor gefunden" verweisen auf den Reiter "Einstellungen" statt auf "unten".
+
 ## [2.71.0] - 2026-10-16
 
 Status-App: Push bei hoher Auslastung von CPU, Arbeitsspeicher und Festplatte; die Pille "Debug" überlappt das Symbol nicht mehr.
@@ -3674,6 +3688,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.72.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.72.0
 [2.71.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.71.0
 [2.70.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.70.0
 [2.69.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.69.0

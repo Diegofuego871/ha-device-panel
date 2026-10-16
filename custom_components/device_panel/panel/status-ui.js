@@ -4,6 +4,8 @@
  * verspätet, steht) und die Zeile zum letzten Start. Die Zahlen kommen von device_panel/status_get (status.py), die Einstellungen
  * lesen und schreiben get_options / set_options; das Fenster fragt alle 10 Sekunden neu, solange es offen ist.
  * Seit 2.68.0 zeigt der Abschnitt "System" CPU, Arbeitsspeicher und Festplatte als kleine Kurven (system_stats.py, device_panel/status_system).
+ * Seit 2.72.0 hat die App zwei Reiter: "Zustand" (Teile und Kurven) und "Einstellungen" (Meldungen, Grenzen, Quelle der Werte). Die
+ * Einstellungen sind ein Entwurf (this.draft) und gelten erst nach "Speichern"; beim Schliessen mit Änderungen fragt die App nach.
  */
 
 const REFRESH_MS = 10000;
@@ -13,6 +15,7 @@ const SYS_RANGES = ["24h", "30d", "6m", "1y"];
 // Höchstens so viele Sensoren zeigt die Auswahl auf einmal (der Rest folgt nach der Eingabe)
 const PICK_MAX = 60;
 const LOAD_KINDS = ["cpu", "ram", "disk"];
+const STATE_TABS = ["state", "settings"];
 const SYS_OPTION = { cpu: "status_cpu_entity", ram: "status_ram_entity", disk: "status_disk_entity" };
 const PART_ORDER = ["routines", "magic", "availability", "battery", "charge", "new", "updates", "signal"];
 
@@ -24,6 +27,8 @@ export class StatusUi {
     this.cfg = null;
     this.error = null;
     this.saving = false;
+    // Entwurf der Einstellungen: nur die geänderten Optionen (Schlüssel wie in set_options); Grenzen bleiben als getippter Text stehen
+    this.draft = {};
     this._timer = null;
     // System: Antwort von status_system, Zeitraum der Festplatte, Zähler für das Nachladen
     this.sys = null;
@@ -31,7 +36,7 @@ export class StatusUi {
     this.range = "24h";
     this._ticks = 0;
     // Neustart von Hand (seit 2.63.0): confirm = Teil mit offener Rückfrage, busy = Teil, der gerade neu startet, flash = Hinweis danach
-    this.ui = { confirm: null, busy: null, flash: "", flashTimer: null, pick: null, pickQ: "", enabled: {}, enabling: null, enableAsk: null, limitErr: {} };
+    this.ui = { confirm: null, busy: null, flash: "", flashTimer: null, pick: null, pickQ: "", enabled: {}, enabling: null, enableAsk: null, tab: "state", saved: false, saveError: "" };
   }
 
   t(key, ...args) {
@@ -47,6 +52,10 @@ export class StatusUi {
   open() {
     const dlg = this.dlg;
     if (!dlg) return;
+    if (!dlg.open) {
+      this.resetDraft();
+      this.ui.tab = "state";
+    }
     this.frame();
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
@@ -65,6 +74,7 @@ export class StatusUi {
   close() {
     window.clearInterval(this._timer);
     this._timer = null;
+    this.resetDraft();
     const dlg = this.dlg;
     if (dlg?.open) {
       if (typeof dlg.close === "function") dlg.close();
@@ -76,14 +86,34 @@ export class StatusUi {
     dlg.addEventListener("click", (ev) => {
       if (ev.target === dlg) {
         const r = dlg.getBoundingClientRect();
-        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this.close();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this.guard(() => this.close());
         return;
       }
-      if (ev.target.closest("[data-st-close]")) return this.close();
+      if (ev.target.closest("[data-st-close]")) return this.guard(() => this.close());
       if (ev.target.closest("[data-st-add]")) {
         // Die Seite "Integration hinzufügen" von Home Assistant, gleich bei "System Monitor" (nur öffnen, nichts wird geändert)
-        this.close();
-        this.host._navigate?.("/config/integrations/dashboard/add?domain=systemmonitor");
+        this.guard(() => {
+          this.close();
+          this.host._navigate?.("/config/integrations/dashboard/add?domain=systemmonitor");
+        });
+        return;
+      }
+      const tab = ev.target.closest("[data-st-tab]");
+      if (tab) {
+        if (STATE_TABS.includes(tab.dataset.stTab) && tab.dataset.stTab !== this.ui.tab) {
+          this.ui.tab = tab.dataset.stTab;
+          this.ui.pick = null;
+          this.ui.pickQ = "";
+          const sc = this.dlg.querySelector(".dlg-body");
+          this.render(true);
+          if (sc) sc.scrollTop = 0;
+        }
+        return;
+      }
+      if (ev.target.closest("[data-st-save]")) return this.saveAll();
+      if (ev.target.closest("[data-st-discard]")) {
+        this.resetDraft();
+        this.render(true);
         return;
       }
       // Einschalten mit Rückfrage: erst nennt die App, was geändert wird, dann der Knopf "Einschalten"
@@ -127,20 +157,31 @@ export class StatusUi {
       else return;
       this.render();
     });
-    // Suche in der Sensor-Auswahl: nur die Liste neu zeichnen, damit das Feld den Fokus behält
     dlg.addEventListener("input", (ev) => {
-      if (!ev.target.matches?.("[data-st-pickq]")) return;
-      this.ui.pickQ = ev.target.value;
-      const list = this.dlg.querySelector("[data-st-picklist]");
-      if (list && this.ui.pick) list.innerHTML = this.pickListHtml(this.ui.pick);
+      // Suche in der Sensor-Auswahl: nur die Liste neu zeichnen, damit das Feld den Fokus behält
+      if (ev.target.matches?.("[data-st-pickq]")) {
+        this.ui.pickQ = ev.target.value;
+        const list = this.dlg.querySelector("[data-st-picklist]");
+        if (list && this.ui.pick) list.innerHTML = this.pickListHtml(this.ui.pick);
+      } else if (ev.target.matches?.("[data-st-limit]") && LOAD_KINDS.includes(ev.target.dataset.stLimit)) {
+        // Grenze: beim Tippen nur den Entwurf und die Leiste unten nachführen (das Feld behält den Fokus), Fehler zeigt "change"
+        this.setDraft(`status_${ev.target.dataset.stLimit}_limit`, ev.target.value);
+        this.renderFoot();
+      }
     });
-    dlg.addEventListener("cancel", () => this.close());
+    // Esc: wie Schliessen (mit Rückfrage, wenn Änderungen offen sind)
+    dlg.addEventListener("cancel", (ev) => {
+      ev.preventDefault();
+      this.guard(() => this.close());
+    });
     dlg.addEventListener("change", (ev) => {
       const el = ev.target;
-      if (el.matches("[data-st-notify]")) this.save({ status_notify: el.checked });
-      else if (el.matches("[data-st-target]")) this.save({ notify_service_status: el.value });
-      else if (el.matches("[data-st-alert]") && LOAD_KINDS.includes(el.dataset.stAlert)) this.save({ [`status_${el.dataset.stAlert}_alert`]: el.checked });
-      else if (el.matches("[data-st-limit]") && LOAD_KINDS.includes(el.dataset.stLimit)) this.saveLimit(el.dataset.stLimit, el.value);
+      if (el.matches("[data-st-notify]")) this.setDraft("status_notify", el.checked);
+      else if (el.matches("[data-st-target]")) this.setDraft("notify_service_status", el.value);
+      else if (el.matches("[data-st-alert]") && LOAD_KINDS.includes(el.dataset.stAlert)) this.setDraft(`status_${el.dataset.stAlert}_alert`, el.checked);
+      else if (el.matches("[data-st-limit]") && LOAD_KINDS.includes(el.dataset.stLimit)) this.setDraft(`status_${el.dataset.stLimit}_limit`, el.value);
+      else return;
+      this.render(true);
     });
   }
 
@@ -196,40 +237,83 @@ export class StatusUi {
     this.render();
   }
 
-  // Sensor für eine Art wählen ("" = automatisch)
-  async choose(kind, entityId) {
+  // Sensor für eine Art wählen ("" = automatisch); gilt erst nach "Speichern"
+  choose(kind, entityId) {
     if (!SYS_OPTION[kind]) return;
     this.ui.pick = null;
     this.ui.pickQ = "";
-    await this.save({ [SYS_OPTION[kind]]: entityId });
-    await this.loadSystem();
-  }
-
-  // Grenze der Auslastungsmeldung: ganze Zahl im erlaubten Bereich, sonst Fehler am Feld und nichts gespeichert
-  async saveLimit(kind, text) {
-    const [lo, hi] = this.cfg?.limits?.[`status_${kind}_limit`] || [1, 100];
-    const n = Number(String(text).trim());
-    if (!String(text).trim() || !Number.isInteger(n) || n < lo || n > hi) {
-      this.ui.limitErr[kind] = String(text);
-      this.render(true);
-      return;
-    }
-    delete this.ui.limitErr[kind];
-    await this.save({ [`status_${kind}_limit`]: n });
+    this.setDraft(SYS_OPTION[kind], entityId);
     this.render(true);
   }
 
-  async save(values) {
-    if (this.saving) return;
+  // --- Entwurf der Einstellungen -----------------------------------------------
+
+  resetDraft() {
+    this.draft = {};
+    this.ui.saved = false;
+    this.ui.saveError = "";
+    this.ui.pick = null;
+    this.ui.pickQ = "";
+  }
+
+  // Wert einer Option: der Entwurf, sonst der gespeicherte Stand
+  val(key) {
+    return key in this.draft ? this.draft[key] : this.cfg?.values?.[key];
+  }
+
+  // Entwurf nachführen; ein Wert, der dem gespeicherten gleicht, ist keine Änderung mehr
+  setDraft(key, value) {
+    const cur = this.cfg?.values?.[key];
+    const same = typeof cur === "number" ? String(value).trim() === String(cur) : value === cur || (cur === undefined && value === "");
+    if (same) delete this.draft[key];
+    else this.draft[key] = value;
+    this.ui.saved = false;
+    this.ui.saveError = "";
+  }
+
+  changes() {
+    return Object.keys(this.draft);
+  }
+
+  // Grenze ungültig: leer, keine ganze Zahl oder ausserhalb des erlaubten Bereichs
+  limitBad(kind) {
+    const key = `status_${kind}_limit`;
+    if (!(key in this.draft)) return false;
+    const [lo, hi] = this.cfg?.limits?.[key] || [1, 100];
+    const text = String(this.draft[key]).trim();
+    const n = Number(text);
+    return !text || !Number.isInteger(n) || n < lo || n > hi;
+  }
+
+  // Beim Schliessen mit offenen Änderungen fragen (wie im Fenster Einstellungen), sonst gleich ausführen
+  guard(run) {
+    if (!this.changes().length) return run();
+    this.host._askDiscard(() => {
+      this.resetDraft();
+      run();
+    });
+  }
+
+  // Alle Änderungen in einem Zug speichern; das Fenster bleibt offen, "Gespeichert" erscheint kurz
+  async saveAll() {
+    const errors = LOAD_KINDS.filter((k) => this.limitBad(k));
+    if (this.saving || !this.changes().length || errors.length) return;
+    const values = {};
+    for (const [key, value] of Object.entries(this.draft)) values[key] = key.endsWith("_limit") ? Number(String(value).trim()) : value;
     this.saving = true;
+    this.ui.saveError = "";
+    this.render(true);
     try {
       await this.host._hass.callWS({ type: "device_panel/set_options", values });
-      this.error = null;
+      this.draft = {};
+      this.ui.saved = true;
     } catch (err) {
-      this.error = this.h.errText(err);
+      this.ui.saveError = this.h.errText(err);
     }
     this.saving = false;
-    await this.load();
+    // Eine neue Quelle ändert die Karten: beides neu holen
+    await Promise.all([this.load(), this.loadSystem()]);
+    this.render(true);
   }
 
   // Teil von Hand neu starten (status_restart); danach der neue Stand und ein kurzer Hinweis
@@ -272,7 +356,7 @@ export class StatusUi {
     dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("pulse", 28)}</span>
         <div class="dlg-title"><h2>${escape(this.t("stTitle"))}</h2><div class="dlg-sub">${escape(this.t("stSub"))}</div></div>
         <button type="button" class="dlg-close" data-st-close title="${escape(this.t("close"))}" aria-label="${escape(this.t("close"))}">${mdi("close", 18)}</button></div>
-      <div class="dlg-body"><div class="st-wrap" data-st-body></div></div>`;
+      <div class="dlg-body"><div class="st-wrap" data-st-body></div></div><div data-st-foot></div>`;
     this.render();
   }
 
@@ -285,6 +369,26 @@ export class StatusUi {
     body.innerHTML = this.html();
     const sc = body.closest(".dlg-body");
     if (sc) sc.scrollTop = scroll;
+    this.renderFoot();
+  }
+
+  // Leiste unten mit Speichern: nur im Reiter "Einstellungen", getrennt vom Rest, damit das Tippen in einem Feld sie nachführen kann
+  renderFoot() {
+    const foot = this.dlg?.querySelector("[data-st-foot]");
+    if (!foot) return;
+    if (this.ui.tab !== "settings" || !this.cfg) {
+      foot.innerHTML = "";
+      return;
+    }
+    const { escape } = this.h;
+    const t = (k, ...a) => this.t(k, ...a);
+    const n = this.changes().length;
+    const bad = LOAD_KINDS.some((k) => this.limitBad(k));
+    const saved = !n && this.ui.saved;
+    const status = n ? t("settingsChanges", n) : saved ? t("settingsSavedShort") : "";
+    foot.innerHTML = `<div class="dlg-actions"><span class="set-count${saved ? " saved" : ""}" role="status" data-st-count>${escape(status)}</span>
+      <button type="button" class="dlg-btn primary" data-st-save ${n && !bad && !this.saving ? "" : "disabled"}>${escape(this.saving ? t("settingsSaving") : t("settingsSave"))}</button>
+      ${n ? `<button type="button" class="dlg-btn" data-st-discard>${escape(t("discardYes"))}</button>` : `<button type="button" class="dlg-btn" data-st-close>${escape(t("close"))}</button>`}</div>`;
   }
 
   targetLabel(x) {
@@ -301,16 +405,16 @@ export class StatusUi {
     const global = v.notify_service;
     const stdLabel = !global || global === "none" ? t("notifyStdNone") : t("notifyStd", targets.find(([val]) => val === global)?.[1] || global);
     const options = [["", stdLabel], ...targets.filter(([val]) => val !== "none")];
-    const own = v.notify_service_status || "";
+    const own = this.val("notify_service_status") || "";
     // Kein Ziel (weder eigenes noch globales): der Schalter ist an, aber es geht nichts raus. Das soll nicht still bleiben.
     const target = own || global;
-    const noTarget = (Boolean(v.status_notify) || LOAD_KINDS.some((k) => v[`status_${k}_alert`])) && (!target || target === "none");
+    const noTarget = (Boolean(this.val("status_notify")) || LOAD_KINDS.some((k) => this.val(`status_${k}_alert`))) && (!target || target === "none");
     const select = `<span class="opt-select"><select data-st-target aria-label="${escape(t("optNotifyTargetTab"))}">${options
       .map(([val, text]) => `<option value="${escape(val)}"${val === own ? " selected" : ""}>${escape(text)}</option>`)
       .join("")}</select>${this.h.mdi("chevronDown", 18)}</span>`;
     return `<div class="set-title">${escape(t("stCfgTitle"))}</div>
       <div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("stNotify"))}</span>
-        <label class="switch"><input type="checkbox" data-st-notify ${v.status_notify ? "checked" : ""} aria-label="${escape(t("stNotify"))}"><span></span></label></div>
+        <label class="switch"><input type="checkbox" data-st-notify ${this.val("status_notify") ? "checked" : ""} aria-label="${escape(t("stNotify"))}"><span></span></label></div>
         <div class="opt-short">${escape(t("stNotifyShort"))}</div></div>
       <div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("optNotifyTargetTab"))}</span>${select}</div>
         <div class="opt-short">${escape(t("stTargetShort"))}</div>
@@ -326,15 +430,15 @@ export class StatusUi {
     const rows = LOAD_KINDS.map((kind) => {
       const name = t(`stSys${kind[0].toUpperCase()}${kind.slice(1)}`);
       const [lo, hi] = this.cfg.limits?.[`status_${kind}_limit`] || [1, 100];
-      const err = this.ui.limitErr[kind];
+      const err = this.limitBad(kind) ? String(this.draft[`status_${kind}_limit`]) : undefined;
       const metric = this.sys?.metrics?.find((m) => m.id === kind);
       // Nur ein Prozentwert lässt sich mit der Grenze vergleichen; bei einem Sensor in Gigabyte (oder keinem) gibt es keine Meldung
       const noPercent = metric && (!metric.entity_id || metric.mode === "absolute");
       return `<div class="opt${err !== undefined ? " invalid" : ""}"><div class="opt-line"><span class="opt-label">${escape(name)}</span>
-          <span class="st-ctl"><span class="opt-input${err !== undefined ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="${lo}" max="${hi}" data-st-limit="${kind}" value="${escape(err !== undefined ? err : v[`status_${kind}_limit`])}" aria-label="${escape(t("stLoadLimit", name))}"><span class="unit">%</span></span>
-          <label class="switch"><input type="checkbox" data-st-alert="${kind}" ${v[`status_${kind}_alert`] ? "checked" : ""} aria-label="${escape(t("stLoadOn", name))}"><span></span></label></span></div>
+          <span class="st-ctl"><span class="opt-input${err !== undefined ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="${lo}" max="${hi}" data-st-limit="${kind}" value="${escape(String(this.val(`status_${kind}_limit`)))}" aria-label="${escape(t("stLoadLimit", name))}"><span class="unit">%</span></span>
+          <label class="switch"><input type="checkbox" data-st-alert="${kind}" ${this.val(`status_${kind}_alert`) ? "checked" : ""} aria-label="${escape(t("stLoadOn", name))}"><span></span></label></span></div>
           ${err !== undefined ? `<div class="opt-warn" role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stLoadRange", lo, hi))}</span></div>` : ""}
-          ${noPercent && v[`status_${kind}_alert`] ? `<div class="opt-short">${escape(t("stLoadNoPercent"))}</div>` : ""}</div>`;
+          ${noPercent && this.val(`status_${kind}_alert`) ? `<div class="opt-short">${escape(t("stLoadNoPercent"))}</div>` : ""}</div>`;
     }).join("");
     return `<div class="set-title">${escape(t("stLoadTitle"))}</div>${rows}<div class="opt-short">${escape(t("stLoadShort"))}</div>`;
   }
@@ -495,7 +599,7 @@ export class StatusUi {
   // Sensoren zur Auswahl für die Art: Prozent-Sensoren für CPU und RAM, bei der Festplatte auch Sensoren in Gigabyte; gefiltert nach der Eingabe
   pickOptions(kind) {
     const q = this.ui.pickQ.trim().toLowerCase();
-    const own = this.cfg?.values?.[SYS_OPTION[kind]] || "";
+    const own = this.val(SYS_OPTION[kind]) || "";
     // Alle Sensor-Entitäten mit Zahl; die naheliegenden (Prozent, bei der Festplatte auch Gigabyte) stehen vorn, den Rest findet die Suche
     const fits = (c) => c.pref && (kind === "disk" || c.unit === "%");
     let list = [...(this.sys?.candidates || [])].sort((a, b) => Number(fits(b)) - Number(fits(a)));
@@ -507,7 +611,7 @@ export class StatusUi {
   pickListHtml(kind) {
     const { escape, mdi } = this.h;
     const t = (k, ...a) => this.t(k, ...a);
-    const own = this.cfg?.values?.[SYS_OPTION[kind]] || "";
+    const own = this.val(SYS_OPTION[kind]) || "";
     const m = this.sys.metrics.find((x) => x.id === kind);
     const autoName = m && m.scope !== "own" && m.entity_id ? m.name : "";
     const q = this.ui.pickQ.trim();
@@ -530,7 +634,7 @@ export class StatusUi {
     const t = (k, ...a) => this.t(k, ...a);
     const rows = this.sys.metrics
       .map((m) => {
-        const own = this.cfg?.values?.[SYS_OPTION[m.id]] || "";
+        const own = this.val(SYS_OPTION[m.id]) || "";
         const known = own && this.sys.candidates.find((c) => c.entity_id === own);
         const label = own ? known?.name || own : m.entity_id && m.scope !== "own" ? t("stSysAuto", m.name) : t("stSysAutoNone");
         const open = this.ui.pick === m.id;
@@ -551,10 +655,28 @@ export class StatusUi {
     const t = (k, ...a) => this.t(k, ...a);
     if (!this.sys) return `<div class="set-title">${escape(t("stSysTitle"))}</div><p class="mg-note">${escape(this.sysError ? t("stSysError", this.sysError) : t("stSysLoading"))}</p>`;
     return `<div class="set-title">${escape(t("stSysTitle"))}</div>${this.sys.metrics.map((m) => this.metricHtml(m)).join("")}
-      ${this.sysError ? `<div class="dlg-error" role="alert">${escape(t("stSysError", this.sysError))}</div>` : ""}${this.sourceHtml()}`;
+      ${this.sysError ? `<div class="dlg-error" role="alert">${escape(t("stSysError", this.sysError))}</div>` : ""}`;
+  }
+
+  // Reiterleiste "Zustand" | "Einstellungen"; ein Punkt am zweiten zeigt ungespeicherte Änderungen, solange man im ersten ist
+  tabsHtml() {
+    const { escape } = this.h;
+    const mark = this.changes().length ? " chg" : "";
+    return `<div class="sub-tabs" role="tablist">${STATE_TABS.map((id) => {
+      const on = id === this.ui.tab;
+      return `<button type="button" role="tab" class="sub-tab${on ? " on" : ""}${id === "settings" && !on ? mark : ""}" data-st-tab="${id}" aria-selected="${on}">${escape(this.t(id === "state" ? "stTabState" : "stTabSettings"))}</button>`;
+    }).join("")}</div>`;
+  }
+
+  settingsHtml() {
+    const { escape } = this.h;
+    const source = this.sys ? this.sourceHtml() : `<div class="set-title">${escape(this.t("stSysSrcTitle"))}</div><p class="mg-note">${escape(this.sysError ? this.t("stSysError", this.sysError) : this.t("stSysLoading"))}</p>`;
+    const err = this.ui.saveError ? `<div class="dlg-error" role="alert">${escape(this.t("settingsSaveError"))} ${escape(this.ui.saveError)}</div>` : "";
+    return `${this.configHtml()}${this.loadHtml()}${source}${err}`;
   }
 
   html() {
-    return `${this.configHtml()}${this.loadHtml()}${this.zoneHtml()}${this.systemHtml()}`;
+    const body = this.ui.tab === "settings" ? this.settingsHtml() : `${this.zoneHtml()}${this.systemHtml()}`;
+    return `${this.tabsHtml()}${body}`;
   }
 }
