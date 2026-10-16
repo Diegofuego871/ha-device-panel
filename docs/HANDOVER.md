@@ -3,6 +3,14 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.77.0, Mindestdauer je Art, Empfänger als eigener Abschnitt)
+
+- Wunsch des Nutzers: je Position (CPU, RAM, Festplatte) eine eigene Mindestdauer, "die Anforderungen sind ganz unterschiedlich". Optionen `status_cpu_minutes`, `status_ram_minutes`, `status_disk_minutes` (1 bis 60, Standard 3, `const.py` `INT_RANGES`); `status.py` `LOAD_KINDS` trägt als dritten Wert den Schlüssel, `_check_load` liest `hold` je Art. Die gemeinsame `status_load_minutes` (2.74.0, mit 2.75.0 veröffentlicht) entfällt; `__init__._migrate_options` übernimmt sie beim Start einmal für alle drei Arten (`setdefault`, eine schon gesetzte eigene bleibt) und löscht sie (`LEGACY_STATUS_LOAD_MINUTES`).
+- Panel: `status-ui.js` `minutesKey(kind)`, `minutesBad(kind)`; je Art eine zweite Zeile `.opt-line.st-min` im selben Block (Kästchen rechtsbündig mit dem der Grenze, `st-pad`), `data-st-minutes="<kind>"`. Der Hinweis `stLoadShort` ist ein fester Text ohne Zahl.
+- Empfänger: Antwort des Nutzers "oke das passt" auf die Empfehlung: eigener Abschnitt `stTargetTitle` "Empfänger der Meldungen" ganz oben (`configHtml`), darunter "Meldung bei Stillstand" nur mit dem Schalter. Keine Backend-Änderung.
+- Geräte ohne aktivierte Entität (zum Beispiel reiner Bluetooth-Proxy): Antwort "wir lassen es so", keine Änderung und kein README-Hinweis.
+- Tests: `statusload-e2e` (je Art Mindestdauer, Fehler im Block, Speichern von drei Werten, Reihenfolge der Abschnitte), `test_status` (je Art, Migration), `test_update_check`, Simulator.
+
 ## Stand (2.76.0, Status-App nicht mehr ausblendbar)
 
 - Wunsch des Nutzers (Screenshot der Bearbeiten-Liste): Status wie das Protokoll mit Schloss statt Auge, weil dort die Einstellungen der Meldungen liegen; verschieben und als Favorit geht weiter. Routinen und Magic Push bleiben ausblendbar, standardmässig sichtbar. `apps.js`: `status` mit `locked: true` (`isHidden` ignoriert die Angabe in `hidden`, ein früher Ausgeblendeter ist wieder da); Hinweis am Schloss je App `appsLocked_<id>` (`appsLocked_log`, `appsLocked_status`). Test in `launcher-e2e`.

@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { tabs: ["Dienste", "System", "Einstellungen"], titles: ["Meldung bei Stillstand", "Meldung bei hoher Auslastung", "Quelle der Werte"], one: "1 Änderung", two: "2 Änderungen", saved: "Gespeichert", close: "Schliessen", discard: "Verwerfen", keep: "Weiter bearbeiten" },
-  en: { tabs: ["Services", "System", "Settings"], titles: ["Alert when something stops", "Alert at high load", "Source of the values"], one: "1 change", two: "2 changes", saved: "Saved", close: "Close", discard: "Discard", keep: "Keep editing" },
+  de: { tabs: ["Dienste", "System", "Einstellungen"], titles: ["Empfänger der Meldungen", "Meldung bei Stillstand", "Meldung bei hoher Auslastung", "Quelle der Werte"], one: "1 Änderung", two: "2 Änderungen", saved: "Gespeichert", close: "Schliessen", discard: "Verwerfen", keep: "Weiter bearbeiten" },
+  en: { tabs: ["Services", "System", "Settings"], titles: ["Recipient of the alerts", "Alert when something stops", "Alert at high load", "Source of the values"], one: "1 change", two: "2 changes", saved: "Saved", close: "Close", discard: "Discard", keep: "Keep editing" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -54,7 +54,7 @@ for (const lang of ["de", "en"]) {
     await tap(`${win} [data-st-tab="services"]`);
 
     await tap(`${win} [data-st-tab="settings"]`);
-    check(`[${tag}] Reiter "${T.tabs[2]}": die drei Abschnitte "${T.titles.join('", "')}" in dieser Folge, kein Zustand`, await wait(`const d = r.querySelector("${win}"); const t = [...d.querySelectorAll(".set-title")].map((x) => x.textContent.trim()); return JSON.stringify(t) === ${JSON.stringify(JSON.stringify(T.titles))} && !d.querySelector(".st-banner, .st-line, .st-sys") && d.querySelector('[data-st-tab="settings"]').classList.contains("on")`));
+    check(`[${tag}] Reiter "${T.tabs[2]}": die vier Abschnitte "${T.titles.join('", "')}" in dieser Folge, kein Zustand`, await wait(`const d = r.querySelector("${win}"); const t = [...d.querySelectorAll(".set-title")].map((x) => x.textContent.trim()); return JSON.stringify(t) === ${JSON.stringify(JSON.stringify(T.titles))} && !d.querySelector(".st-banner, .st-line, .st-sys") && d.querySelector('[data-st-tab="settings"]').classList.contains("on")`));
     check(`[${tag}] ohne Änderung: Knopf "${T.close}", "Speichern" gesperrt, kein Zähler`, await ev(`const d = r.querySelector("${win}"); const btns = [...d.querySelectorAll("[data-st-foot] .dlg-btn")]; return d.querySelector("[data-st-save]").disabled && btns.length === 2 && btns[1].textContent.trim() === ${JSON.stringify(T.close)} && !d.querySelector("[data-st-count]").textContent.trim()`));
     await p.screenshot({ path: `${outDir}/statustabs-${tag.replace("/", "-")}-0.png` });
 

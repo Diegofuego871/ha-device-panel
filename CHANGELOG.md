@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.77.0] - 2026-10-16
+
+Status app: the minimum duration of the alert at high load is set per kind (processor, memory, disk), the recipient has a section of its own.
+
+### Changed
+
+- Status app, settings, "Alert at high load": the **minimum duration** is no longer one number for all but is set per kind. Under the limit of processor, memory and disk there is a row "Minimum duration" of its own (1 to 60 minutes, default 3 each). The needs differ: a processor may jump to 100 % for a moment, a disk should be reported at once. An error (empty, not a whole number, outside 1 to 60) shows in the block of that kind and blocks "Save". New options `status_cpu_minutes`, `status_ram_minutes` and `status_disk_minutes`; the former common option `status_load_minutes` is gone. If it was set, its value is kept for all three kinds at the first start (an own one that was already set stays), after that each can be changed alone. The hint under the section no longer names a number.
+- Status app, settings: the **recipient** has a section of its own, "Recipient of the alerts", at the very top. It applies to all alerts of the Status app (when something stops and at high load); before, the choice stood under "Alert when something stops" although it also governs the alert at high load. Below follow "Alert when something stops" (only the switch now), "Alert at high load" and the source of the values. The warning "No target is chosen" stands at the recipient and now names high load too. The stored options do not change (`notify_service_status` stays).
+
 ## [2.76.0] - 2026-10-16
 
 The app "Status" can no longer be hidden.
@@ -3645,6 +3654,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.77.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.77.0
 [2.76.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.76.0
 [2.75.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.75.0
 [2.73.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.73.0

@@ -16,8 +16,8 @@ const SYS_RANGES = ["24h", "30d", "6m", "1y"];
 // Höchstens so viele Sensoren zeigt die Auswahl auf einmal (der Rest folgt nach der Eingabe)
 const PICK_MAX = 60;
 const LOAD_KINDS = ["cpu", "ram", "disk"];
-// Mindestdauer der Meldung bei hoher Auslastung (seit 2.74.0): Zahl der Prüfungen in Folge (eine je Minute)
-const MINUTES_KEY = "status_load_minutes";
+// Mindestdauer der Meldung bei hoher Auslastung (seit 2.74.0, seit 2.77.0 je Art): Zahl der Prüfungen in Folge (eine je Minute)
+const minutesKey = (kind) => `status_${kind}_minutes`;
 const STATE_TABS = ["services", "system", "settings"];
 const SYS_OPTION = { cpu: "status_cpu_entity", ram: "status_ram_entity", disk: "status_disk_entity" };
 const PART_ORDER = ["routines", "magic", "availability", "battery", "charge", "new", "updates", "signal"];
@@ -175,8 +175,8 @@ export class StatusUi {
         // Grenze: beim Tippen nur den Entwurf und die Leiste unten nachführen (das Feld behält den Fokus), Fehler zeigt "change"
         this.setDraft(`status_${ev.target.dataset.stLimit}_limit`, ev.target.value);
         this.renderFoot();
-      } else if (ev.target.matches?.("[data-st-minutes]")) {
-        this.setDraft(MINUTES_KEY, ev.target.value);
+      } else if (ev.target.matches?.("[data-st-minutes]") && LOAD_KINDS.includes(ev.target.dataset.stMinutes)) {
+        this.setDraft(minutesKey(ev.target.dataset.stMinutes), ev.target.value);
         this.renderFoot();
       }
     });
@@ -191,7 +191,7 @@ export class StatusUi {
       else if (el.matches("[data-st-target]")) this.setDraft("notify_service_status", el.value);
       else if (el.matches("[data-st-alert]") && LOAD_KINDS.includes(el.dataset.stAlert)) this.setDraft(`status_${el.dataset.stAlert}_alert`, el.checked);
       else if (el.matches("[data-st-limit]") && LOAD_KINDS.includes(el.dataset.stLimit)) this.setDraft(`status_${el.dataset.stLimit}_limit`, el.value);
-      else if (el.matches("[data-st-minutes]")) this.setDraft(MINUTES_KEY, el.value);
+      else if (el.matches("[data-st-minutes]") && LOAD_KINDS.includes(el.dataset.stMinutes)) this.setDraft(minutesKey(el.dataset.stMinutes), el.value);
       else return;
       this.render(true);
     });
@@ -300,12 +300,12 @@ export class StatusUi {
     return this.intBad(`status_${kind}_limit`);
   }
 
-  minutesBad() {
-    return this.intBad(MINUTES_KEY, [1, 60]);
+  minutesBad(kind) {
+    return this.intBad(minutesKey(kind), [1, 60]);
   }
 
   anyBad() {
-    return LOAD_KINDS.some((k) => this.limitBad(k)) || this.minutesBad();
+    return LOAD_KINDS.some((k) => this.limitBad(k) || this.minutesBad(k));
   }
 
   // Beim Schliessen mit offenen Änderungen fragen (wie im Fenster Einstellungen), sonst gleich ausführen
@@ -321,7 +321,7 @@ export class StatusUi {
   async saveAll() {
     if (this.saving || !this.changes().length || this.anyBad()) return;
     const values = {};
-    for (const [key, value] of Object.entries(this.draft)) values[key] = key.endsWith("_limit") || key === MINUTES_KEY ? Number(String(value).trim()) : value;
+    for (const [key, value] of Object.entries(this.draft)) values[key] = key.endsWith("_limit") || key.endsWith("_minutes") ? Number(String(value).trim()) : value;
     this.saving = true;
     this.ui.saveError = "";
     this.render(true);
@@ -434,13 +434,15 @@ export class StatusUi {
     const select = `<span class="opt-select"><select data-st-target aria-label="${escape(t("optNotifyTargetTab"))}">${options
       .map(([val, text]) => `<option value="${escape(val)}"${val === own ? " selected" : ""}>${escape(text)}</option>`)
       .join("")}</select>${this.h.mdi("chevronDown", 18)}</span>`;
-    return `<div class="set-title">${escape(t("stCfgTitle"))}</div>
-      <div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("stNotify"))}</span>
-        <label class="switch"><input type="checkbox" data-st-notify ${this.val("status_notify") ? "checked" : ""} aria-label="${escape(t("stNotify"))}"><span></span></label></div>
-        <div class="opt-short">${escape(t("stNotifyShort"))}</div></div>
+    // Empfänger (seit 2.77.0 ein eigener Abschnitt oben): gilt für alle Meldungen der Status-App, bei Stillstand wie bei hoher Auslastung
+    return `<div class="set-title">${escape(t("stTargetTitle"))}</div>
       <div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("optNotifyTargetTab"))}</span>${select}</div>
         <div class="opt-short">${escape(t("stTargetShort"))}</div>
-        ${noTarget ? `<div class="opt-warn" data-st-notarget role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stNoTarget"))}</span></div>` : ""}</div>`;
+        ${noTarget ? `<div class="opt-warn" data-st-notarget role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stNoTarget"))}</span></div>` : ""}</div>
+      <div class="set-title">${escape(t("stCfgTitle"))}</div>
+      <div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("stNotify"))}</span>
+        <label class="switch"><input type="checkbox" data-st-notify ${this.val("status_notify") ? "checked" : ""} aria-label="${escape(t("stNotify"))}"><span></span></label></div>
+        <div class="opt-short">${escape(t("stNotifyShort"))}</div></div>`;
   }
 
   // Meldung bei hoher Auslastung (seit 2.71.0): je Art Schalter und Grenze in Prozent; derselbe Empfänger wie oben
@@ -455,19 +457,18 @@ export class StatusUi {
       const metric = this.sys?.metrics?.find((m) => m.id === kind);
       // Nur ein Prozentwert lässt sich mit der Grenze vergleichen; bei einem Sensor in Gigabyte (oder keinem) gibt es keine Meldung
       const noPercent = metric && (!metric.entity_id || metric.mode === "absolute");
-      return `<div class="opt${err !== undefined ? " invalid" : ""}"><div class="opt-line"><span class="opt-label">${escape(name)}</span>
+      const [mlo, mhi] = this.cfg.limits?.[minutesKey(kind)] || [1, 60];
+      const mbad = this.minutesBad(kind);
+      return `<div class="opt${err !== undefined || mbad ? " invalid" : ""}"><div class="opt-line"><span class="opt-label">${escape(name)}</span>
           <span class="st-ctl"><span class="opt-input${err !== undefined ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="${lo}" max="${hi}" data-st-limit="${kind}" value="${escape(String(this.val(`status_${kind}_limit`)))}" aria-label="${escape(t("stLoadLimit", name))}"><span class="unit">%</span></span>
           <label class="switch"><input type="checkbox" data-st-alert="${kind}" ${this.val(`status_${kind}_alert`) ? "checked" : ""} aria-label="${escape(t("stLoadOn", name))}"><span></span></label></span></div>
           ${err !== undefined ? `<div class="opt-warn" role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stLoadRange", lo, hi))}</span></div>` : ""}
+          <div class="opt-line st-min"><span class="opt-label">${escape(t("stLoadMinutes"))}</span>
+          <span class="st-ctl"><span class="opt-input${mbad ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="${mlo}" max="${mhi}" data-st-minutes="${kind}" value="${escape(String(this.val(minutesKey(kind))))}" aria-label="${escape(t("stLoadMinutesOf", name))}"><span class="unit">${escape(t("stLoadMinUnit"))}</span></span><span class="st-pad" aria-hidden="true"></span></span></div>
+          ${mbad ? `<div class="opt-warn" role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stLoadMinRange", mlo, mhi))}</span></div>` : ""}
           ${noPercent && this.val(`status_${kind}_alert`) ? `<div class="opt-short">${escape(t("stLoadNoPercent"))}</div>` : ""}</div>`;
     }).join("");
-    // Mindestdauer für alle drei: wie viele Prüfungen (Minuten) in Folge der Wert über der Grenze liegen muss
-    const [mlo, mhi] = this.cfg.limits?.[MINUTES_KEY] || [1, 60];
-    const mbad = this.minutesBad();
-    const minutes = `<div class="opt${mbad ? " invalid" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("stLoadMinutes"))}</span>
-        <span class="st-ctl"><span class="opt-input${mbad ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="${mlo}" max="${mhi}" data-st-minutes value="${escape(String(this.val(MINUTES_KEY)))}" aria-label="${escape(t("stLoadMinutes"))}"><span class="unit">${escape(t("stLoadMinUnit"))}</span></span><span class="st-pad" aria-hidden="true"></span></span></div>
-        ${mbad ? `<div class="opt-warn" role="alert">${this.h.mdi("alert", 14)}<span>${escape(t("stLoadMinRange", mlo, mhi))}</span></div>` : ""}</div>`;
-    return `<div class="set-title">${escape(t("stLoadTitle"))}</div>${rows}${minutes}<div class="opt-short">${escape(t("stLoadShort", this.val(MINUTES_KEY)))}</div>`;
+    return `<div class="set-title">${escape(t("stLoadTitle"))}</div>${rows}<div class="opt-short">${escape(t("stLoadShort"))}</div>`;
   }
 
   // Alter als Satz: "vor 8 Sek.", "vor 3 Min.", "vor 2 Std."

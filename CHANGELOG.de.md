@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.77.0] - 2026-10-16
+
+Status-App: die Mindestdauer der Meldung bei hoher Auslastung gilt je Art (Prozessor, Arbeitsspeicher, Festplatte), der Empfänger hat einen eigenen Abschnitt.
+
+### Geändert
+
+- Status-App, Einstellungen, "Meldung bei hoher Auslastung": Die **Mindestdauer** ist nicht mehr eine Zahl für alle, sondern gilt je Art. Unter der Grenze von Prozessor, Arbeitsspeicher und Festplatte steht eine eigene Zeile "Mindestdauer" (1 bis 60 Minuten, Standard je 3). Die Anforderungen sind verschieden: ein Prozessor darf kurz auf 100 % springen, eine Festplatte sollte gleich gemeldet werden. Ein Fehler (leer, keine ganze Zahl, ausserhalb 1 bis 60) zeigt sich im Block der betroffenen Art und sperrt "Speichern". Neue Optionen `status_cpu_minutes`, `status_ram_minutes` und `status_disk_minutes`; die bisherige gemeinsame Option `status_load_minutes` entfällt. Wer sie gesetzt hatte, behält den Wert beim ersten Start für alle drei Arten (eine bereits gesetzte eigene bleibt), danach lässt er sich einzeln ändern. Der Hinweis unter dem Abschnitt nennt keine Zahl mehr.
+- Status-App, Einstellungen: Der **Empfänger** hat einen eigenen Abschnitt "Empfänger der Meldungen" ganz oben. Er gilt für alle Meldungen der Status-App (bei Stillstand und bei hoher Auslastung); vorher stand die Auswahl unter "Meldung bei Stillstand", obwohl sie auch die Meldung bei hoher Auslastung betrifft. Darunter folgen "Meldung bei Stillstand" (nur noch der Schalter), "Meldung bei hoher Auslastung" und die Quelle der Werte. Die Warnung "Es ist kein Ziel gewählt" steht beim Empfänger und nennt nun auch die hohe Auslastung. Keine Änderung an den gespeicherten Optionen (`notify_service_status` bleibt).
+
 ## [2.76.0] - 2026-10-16
 
 Die App "Status" lässt sich nicht mehr ausblenden.
@@ -3746,6 +3755,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.77.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.77.0
 [2.76.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.76.0
 [2.75.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.75.0
 [2.73.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.73.0

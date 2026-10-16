@@ -50,6 +50,10 @@ from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, a
 from .ai_prompt import DEFAULT_PROMPT
 from .const import (
     AI_PROMPT_MAX,
+    CONF_STATUS_CPU_MINUTES,
+    CONF_STATUS_DISK_MINUTES,
+    CONF_STATUS_RAM_MINUTES,
+    LEGACY_STATUS_LOAD_MINUTES,
     RENAMED_OPTIONS,
     BATTERY_OFF,
     SIGNAL_DBM_RANGE,
@@ -122,13 +126,17 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def _migrate_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Umbenennung Timer → Routine (2.55.0): die Optionen unter ihren alten Namen übernehmen, solange sie dort noch stehen."""
+    """Optionen unter ihren alten Namen übernehmen: Timer → Routine (2.55.0), eine Mindestdauer für alle → je Art eine (2.77.0)."""
     old = {key: new for key, new in RENAMED_OPTIONS.items() if key in entry.options}
-    if not old:
+    legacy = LEGACY_STATUS_LOAD_MINUTES in entry.options
+    if not old and not legacy:
         return
-    options = {key: value for key, value in entry.options.items() if key not in old}
+    options = {key: value for key, value in entry.options.items() if key not in old and key != LEGACY_STATUS_LOAD_MINUTES}
     for key, new in old.items():
         options.setdefault(new, entry.options[key])
+    if legacy:
+        for key in (CONF_STATUS_CPU_MINUTES, CONF_STATUS_RAM_MINUTES, CONF_STATUS_DISK_MINUTES):
+            options.setdefault(key, entry.options[LEGACY_STATUS_LOAD_MINUTES])
     hass.config_entries.async_update_entry(entry, options=options)
 
 

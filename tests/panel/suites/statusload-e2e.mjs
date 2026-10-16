@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { title: "Meldung bei hoher Auslastung", names: ["Prozessor (CPU)", "Arbeitsspeicher (RAM)", "Festplatte"], range: "zwischen 1 und 100", noPercent: "keinen Prozentwert", minLabel: "Mindestdauer", minRange: "zwischen 1 und 60", hint: "bei 3 Prüfungen in Folge", hint5: "bei 5 Prüfungen in Folge" },
-  en: { title: "Alert at high load", names: ["Processor (CPU)", "Memory (RAM)", "Disk"], range: "between 1 and 100", noPercent: "no percentage", minLabel: "Minimum duration", minRange: "between 1 and 60", hint: "at 3 checks in a row", hint5: "at 5 checks in a row" },
+  de: { title: "Meldung bei hoher Auslastung", names: ["Prozessor (CPU)", "Arbeitsspeicher (RAM)", "Festplatte"], range: "zwischen 1 und 100", noPercent: "keinen Prozentwert", minLabel: "Mindestdauer", minRange: "zwischen 1 und 60", own: "je ihre eigene Mindestdauer", recTitle: "Empfänger der Meldungen", stopTitle: "Meldung bei Stillstand" },
+  en: { title: "Alert at high load", names: ["Processor (CPU)", "Memory (RAM)", "Disk"], range: "between 1 and 100", noPercent: "no percentage", minLabel: "Minimum duration", minRange: "between 1 and 60", own: "each have their own minimum duration", recTitle: "Recipient of the alerts", stopTitle: "Alert when something stops" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -71,20 +71,25 @@ for (const lang of ["de", "en"]) {
     const v3 = await lastOpts();
     check(`[${tag}] Schalter Festplatte aus: set_options mit status_disk_alert false`, v3 && v3.status_disk_alert === false && await wait(`return !r.querySelector('${win} [data-st-alert="disk"]').checked && r.querySelector('${win} [data-st-alert="cpu"]').checked`));
 
-    // Mindestdauer (2.74.0): wie viele Prüfungen in Folge über der Grenze, bevor gemeldet wird; Standard 3, 1 bis 60
-    const mSel = `${win} [data-st-minutes]`;
-    check(`[${tag}] Zeile "${T.minLabel}" nach den drei Arten: Standard 3 Min., Hinweis "${T.hint}", Kästchen rechtsbündig mit denen der Grenzen`, await ev(`const d = r.querySelector("${win}"); const m = d.querySelector("[data-st-minutes]"); const l = d.querySelector('[data-st-limit="cpu"]'); const rows = [...d.querySelectorAll(".opt")]; return !!m && m.value === "3" && m.closest(".opt").querySelector(".opt-label").textContent.trim() === ${JSON.stringify(T.minLabel)} && rows.indexOf(m.closest(".opt")) > rows.indexOf(d.querySelector('[data-st-limit="disk"]').closest(".opt")) && Math.abs(m.closest(".opt-input").getBoundingClientRect().right - l.closest(".opt-input").getBoundingClientRect().right) <= 1 && d.textContent.includes(${JSON.stringify(T.hint)})`));
+    // Mindestdauer (2.74.0, seit 2.77.0 je Art): wie viele Prüfungen in Folge über der Grenze, bevor gemeldet wird; Standard 3, 1 bis 60
+    const mSel = (k) => `${win} [data-st-minutes="${k}"]`;
+    check(`[${tag}] unter jeder der drei Arten eine Zeile "${T.minLabel}" (Standard 3 Min.) im selben Block, Kästchen rechtsbündig mit dem der Grenze, Hinweis "${T.own}"`, await ev(`const d = r.querySelector("${win}"); return ["cpu", "ram", "disk"].every((k) => { const m = d.querySelector('[data-st-minutes="' + k + '"]'); const l = d.querySelector('[data-st-limit="' + k + '"]'); return !!m && m.value === "3" && m.closest(".opt") === l.closest(".opt") && m.closest(".opt-line").querySelector(".opt-label").textContent.trim() === ${JSON.stringify(T.minLabel)} && Math.abs(m.closest(".opt-input").getBoundingClientRect().right - l.closest(".opt-input").getBoundingClientRect().right) <= 1; }) && d.querySelectorAll("[data-st-minutes]").length === 3 && d.textContent.includes(${JSON.stringify(T.own)})`));
     await p.evaluate(() => { window.__wsCalls = []; });
-    for (const bad of ["0", "61", "", "2.5", "abc"]) await setField(mSel, bad);
-    check(`[${tag}] Mindestdauer 0, 61, leer, Dezimalzahl, Text: Fehler "${T.minRange}", "Speichern" gesperrt, nichts geschickt`, await wait(`const d = r.querySelector("${win}"); const o = d.querySelector("[data-st-minutes]").closest(".opt"); return o.classList.contains("invalid") && o.querySelector('[role="alert"]').textContent.includes(${JSON.stringify(T.minRange)}) && d.querySelector("[data-st-save]").disabled`) && (await calls("device_panel/set_options")).length === 0);
-    await setField(mSel, "5");
-    check(`[${tag}] Mindestdauer 5: Hinweis nennt "${T.hint5}", Fehler weg, "Speichern" aktiv`, await wait(`const d = r.querySelector("${win}"); return d.textContent.includes(${JSON.stringify(T.hint5)}) && !d.querySelector("[data-st-minutes]").closest(".opt").classList.contains("invalid") && !d.querySelector("[data-st-save]").disabled`));
+    for (const bad of ["0", "61", "", "2.5", "abc"]) await setField(mSel("cpu"), bad);
+    check(`[${tag}] Mindestdauer Prozessor 0, 61, leer, Dezimalzahl, Text: Fehler "${T.minRange}" nur im Block des Prozessors, "Speichern" gesperrt, nichts geschickt`, await wait(`const d = r.querySelector("${win}"); const o = d.querySelector('[data-st-minutes="cpu"]').closest(".opt"); return o.classList.contains("invalid") && o.querySelector('[role="alert"]').textContent.includes(${JSON.stringify(T.minRange)}) && !d.querySelector('[data-st-minutes="ram"]').closest(".opt").classList.contains("invalid") && d.querySelector("[data-st-save]").disabled`) && (await calls("device_panel/set_options")).length === 0);
+    await setField(mSel("cpu"), "2");
+    await setField(mSel("ram"), "5");
+    await setField(mSel("disk"), "30");
+    check(`[${tag}] Mindestdauer 2, 5 und 30: Fehler weg, "Speichern" aktiv`, await wait(`const d = r.querySelector("${win}"); return !d.querySelector(".opt.invalid") && !d.querySelector("[data-st-save]").disabled && d.querySelector('[data-st-minutes="ram"]').value === "5" && d.querySelector('[data-st-minutes="disk"]').value === "30"`));
     await save();
     const vm = await lastOpts();
-    check(`[${tag}] Speichern: set_options mit status_load_minutes 5 (Zahl), sonst nichts`, vm && vm.status_load_minutes === 5 && Number.isInteger(vm.status_load_minutes) && Object.keys(vm).length === 1, JSON.stringify(vm));
-    await setField(mSel, "3");
+    check(`[${tag}] Speichern: set_options mit status_cpu_minutes 2, status_ram_minutes 5, status_disk_minutes 30 (Zahlen), sonst nichts`, vm && vm.status_cpu_minutes === 2 && vm.status_ram_minutes === 5 && vm.status_disk_minutes === 30 && Object.keys(vm).length === 3, JSON.stringify(vm));
+    for (const k of ["cpu", "ram", "disk"]) await setField(mSel(k), "3");
     await save();
     await lastOpts();
+
+    // Empfänger (2.77.0): eigener Abschnitt ganz oben, der Schalter für Stillstand darunter
+    check(`[${tag}] Empfänger: Abschnitt "${T.recTitle}" vor "${T.stopTitle}" und "${T.title}", mit der Auswahl des Ziels; der Schalter bei Stillstand steht im Abschnitt darunter`, await ev(`const d = r.querySelector("${win}"); const titles = [...d.querySelectorAll(".set-title")].map((e) => e.textContent.trim()); const sel = d.querySelector("[data-st-target]"); const sw = d.querySelector("[data-st-notify]"); const pos = (e) => e.compareDocumentPosition(sel); return titles.slice(0, 3).join("|") === ${JSON.stringify(`${T.recTitle}|${T.stopTitle}|${T.title}`)} && !!sel && !!sw && !!(d.querySelectorAll(".set-title")[0].compareDocumentPosition(sel) & Node.DOCUMENT_POSITION_FOLLOWING) && !!(sel.compareDocumentPosition(d.querySelectorAll(".set-title")[1]) & Node.DOCUMENT_POSITION_FOLLOWING) && !!(d.querySelectorAll(".set-title")[1].compareDocumentPosition(sw) & Node.DOCUMENT_POSITION_FOLLOWING)`));
 
     // Sensor ohne Prozentwert (Gigabyte): Hinweis, dass es keine Meldung gibt
     await ev(`r.activeElement?.blur()`);

@@ -370,31 +370,46 @@ async def test_load_options_defaults_and_range(hass: HomeAssistant, hass_ws_clie
     assert not (await client.receive_json())["success"]
 
 
-async def test_load_minutes_option_controls_how_long_before_the_alert(hass: HomeAssistant, hass_ws_client) -> None:
-    """Mindestdauer (seit 2.74.0): Zahl der Prüfungen in Folge über der Grenze; Standard 3, 1 = gleich beim ersten Mal."""
+async def test_load_minutes_are_set_per_kind(hass: HomeAssistant, hass_ws_client) -> None:
+    """Mindestdauer je Art (seit 2.77.0): CPU, RAM und Festplatte haben je ihre Zahl der Prüfungen in Folge; Standard 3, 1 = gleich beim ersten Mal."""
     handy = async_mock_service(hass, "notify", "handy")
     ids = _load_sensors(hass)
-    watch = await _setup(hass, status_load_minutes=1)
+    watch = await _setup(hass, status_cpu_minutes=1, status_ram_minutes=5)
     handy.clear()
-    hass.states.async_set(ids["cpu"], "100", {"unit_of_measurement": "%"})
+    for kind in ("cpu", "ram", "disk"):
+        hass.states.async_set(ids[kind], "100", {"unit_of_measurement": "%"})
+    # Erste Prüfung: nur der Prozessor (1 Minute)
     _ticks(watch, 1)
     await hass.async_block_till_done()
     assert [c.data["title"] for c in handy] == ["⚠️ Device Panel: Prozessor bei 100 %"]
-    # 5 Prüfungen: nach vier nichts, bei der fünften die Meldung (Arbeitsspeicher)
-    from custom_components.device_panel.const import CONF_STATUS_LOAD_MINUTES  # noqa: PLC0415
-
-    entry = hass.config_entries.async_entries(DOMAIN)[0]
-    hass.config_entries.async_update_entry(entry, options={**entry.options, CONF_STATUS_LOAD_MINUTES: 5})
+    # Nach drei Prüfungen kommt die Festplatte (Standard 3), der Arbeitsspeicher (5) noch nicht
     handy.clear()
-    hass.states.async_set(ids["ram"], "100", {"unit_of_measurement": "%"})
-    _ticks(watch, 4)
+    _ticks(watch, 2)
     await hass.async_block_till_done()
-    assert handy == []
-    _ticks(watch, 1)
+    assert [c.data["title"] for c in handy] == ["⚠️ Device Panel: Festplatte bei 100 %"]
+    # Bei der fünften der Arbeitsspeicher
+    handy.clear()
+    _ticks(watch, 2)
     await hass.async_block_till_done()
     assert [c.data["title"] for c in handy] == ["⚠️ Device Panel: Arbeitsspeicher bei 100 %"]
-    # Grenzen der Option: 1 bis 60
+    # Grenzen der Optionen: 1 bis 60, je Art
     client = await hass_ws_client(hass)
-    for i, (value, ok) in enumerate(((60, True), (1, True), (0, False), (61, False), ("3", False)), 1):
-        await client.send_json({"id": i, "type": f"{DOMAIN}/set_options", "values": {"status_load_minutes": value}})
-        assert (await client.receive_json())["success"] is ok, value
+    i = 0
+    for key in ("status_cpu_minutes", "status_ram_minutes", "status_disk_minutes"):
+        for value, ok in ((60, True), (1, True), (0, False), (61, False), ("3", False)):
+            i += 1
+            await client.send_json({"id": i, "type": f"{DOMAIN}/set_options", "values": {key: value}})
+            assert (await client.receive_json())["success"] is ok, (key, value)
+    # Die alte gemeinsame Option gibt es nicht mehr
+    await client.send_json({"id": i + 1, "type": f"{DOMAIN}/set_options", "values": {"status_load_minutes": 3}})
+    assert not (await client.receive_json())["success"]
+
+
+async def test_old_common_minutes_option_is_taken_over_per_kind(hass: HomeAssistant) -> None:
+    """Wer vor 2.77.0 eine gemeinsame Mindestdauer gesetzt hatte, behält sie für alle drei Arten; eine schon gesetzte eigene bleibt."""
+    entry = MockConfigEntry(domain=DOMAIN, title="Device Panel", options={"status_load_minutes": 7, "status_ram_minutes": 2})
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert "status_load_minutes" not in entry.options
+    assert (entry.options["status_cpu_minutes"], entry.options["status_ram_minutes"], entry.options["status_disk_minutes"]) == (7, 2, 7)

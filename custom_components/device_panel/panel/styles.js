@@ -1888,6 +1888,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .st-ctl { display: inline-flex; align-items: center; gap: 14px; flex: none; }
 /* Platz des Schalters in der Zeile Mindestdauer, damit das Feld über denen der Grenzen steht (seit 2.74.0) */
 .st-ctl .st-pad { flex: none; width: 36px; height: 20px; }
+.opt-line.st-min { margin-top: 8px; } /* Mindestdauer unter der Grenze: die zwei Kästchen sollen sich nicht berühren */
 .st-sys-act { margin: 6px 0 0; }
 .st-sys-list { margin: 4px 0 6px 18px; padding: 0; font-size: 13px; } .st-sys-list small { color: var(--dp-text2); }
 .st-sys .st-confirm { margin: 8px 0 0; background: var(--dp-bg); }

@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "242"
+PANEL_VERSION = "243"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -252,15 +252,21 @@ CONF_STATUS_CPU_LIMIT = "status_cpu_limit"
 CONF_STATUS_RAM_LIMIT = "status_ram_limit"
 CONF_STATUS_DISK_LIMIT = "status_disk_limit"
 DEFAULT_STATUS_LIMIT = 99
-# Wie lange die Auslastung über der Grenze liegen muss, bis die Meldung kommt (seit 2.74.0): Zahl der Prüfungen in Folge, eine je Minute
-CONF_STATUS_LOAD_MINUTES = "status_load_minutes"
+# Wie lange die Auslastung über der Grenze liegen muss, bis die Meldung kommt: Zahl der Prüfungen in Folge, eine je Minute.
+# Seit 2.74.0 eine Zahl für alle (status_load_minutes), seit 2.77.0 je Art eine eigene (der alte Wert wird beim Start übernommen)
+CONF_STATUS_CPU_MINUTES = "status_cpu_minutes"
+CONF_STATUS_RAM_MINUTES = "status_ram_minutes"
+CONF_STATUS_DISK_MINUTES = "status_disk_minutes"
+LEGACY_STATUS_LOAD_MINUTES = "status_load_minutes"
 DEFAULT_STATUS_LOAD_MINUTES = 3
 INT_RANGES.update(
     {
         CONF_STATUS_CPU_LIMIT: (1, 100),
         CONF_STATUS_RAM_LIMIT: (1, 100),
         CONF_STATUS_DISK_LIMIT: (1, 100),
-        CONF_STATUS_LOAD_MINUTES: (1, 60),
+        CONF_STATUS_CPU_MINUTES: (1, 60),
+        CONF_STATUS_RAM_MINUTES: (1, 60),
+        CONF_STATUS_DISK_MINUTES: (1, 60),
     }
 )
 # Umbenennung Timer → Routine (2.55.0): so hiessen die gespeicherten Optionen vorher; __init__ übernimmt sie beim Start einmal

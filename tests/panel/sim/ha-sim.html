@@ -426,7 +426,7 @@
     if (!["{facts}", ...PROMPT_GROUPS].some((v) => text.includes(v))) return "no_facts";
     return null;
   };
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [2, 80], charge_stall: [5, 120], routines_catch_up: [0, 60], status_cpu_limit: [1, 100], status_ram_limit: [1, 100], status_disk_limit: [1, 100], status_load_minutes: [1, 60] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [2, 80], charge_stall: [5, 120], routines_catch_up: [0, 60], status_cpu_limit: [1, 100], status_ram_limit: [1, 100], status_disk_limit: [1, 100], status_cpu_minutes: [1, 60], status_ram_minutes: [1, 60], status_disk_minutes: [1, 60] };
   // Inhalt der Batterie-Meldung wie options_api.BATTERY_FIELDS (seit 0.34.0).
   const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
   // Inhalt der Meldung bei neuen Geräten wie const.NEW_FIELDS (seit 1.24.0).
@@ -625,7 +625,7 @@
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
-    routines_pause: false, routines_catch_up: 10, routines_notify_error: true, status_notify: true, notify_service_status: "", status_cpu_alert: true, status_ram_alert: true, status_disk_alert: true, status_cpu_limit: 99, status_ram_limit: 99, status_disk_limit: 99, status_load_minutes: 3, status_cpu_entity: "", status_ram_entity: "", status_disk_entity: "",
+    routines_pause: false, routines_catch_up: 10, routines_notify_error: true, status_notify: true, notify_service_status: "", status_cpu_alert: true, status_ram_alert: true, status_disk_alert: true, status_cpu_limit: 99, status_ram_limit: 99, status_disk_limit: 99, status_cpu_minutes: 3, status_ram_minutes: 3, status_disk_minutes: 3, status_cpu_entity: "", status_ram_entity: "", status_disk_entity: "",
     notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, notify_charge_stop: false, charge_stall: 15, charge_integrations: [], charge_full_integrations: {}, charge_rise_integrations: {}, charge_stall_integrations: {}, charge_stop_integrations: {}, charge_live: false, charge_live_integrations: {}, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
     // Emoji der Push-Meldungen: null = Standard (seit 2.2.0)
     emoji_outage: null, emoji_group: null, emoji_online: null, emoji_battery: null, emoji_charge: null, emoji_charge_stop: null, emoji_new: null, emoji_updates: null,

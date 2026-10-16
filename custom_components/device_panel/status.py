@@ -25,12 +25,14 @@ from . import activity, push
 from .const import (
     CONF_STATUS_CPU_ALERT,
     CONF_STATUS_CPU_LIMIT,
+    CONF_STATUS_CPU_MINUTES,
     CONF_STATUS_DISK_ALERT,
     CONF_STATUS_DISK_LIMIT,
-    CONF_STATUS_LOAD_MINUTES,
+    CONF_STATUS_DISK_MINUTES,
     CONF_STATUS_NOTIFY,
     CONF_STATUS_RAM_ALERT,
     CONF_STATUS_RAM_LIMIT,
+    CONF_STATUS_RAM_MINUTES,
     DATA_AVAILABILITY,
     DATA_BATTERY,
     DATA_CHARGE,
@@ -57,9 +59,9 @@ DOWN_FACTOR, DOWN_MIN_S = 10, 300
 # Folge über der Grenze liegt (kurze Spitzen melden nichts), "wieder unter der Grenze" erst nach so vielen Prüfungen darunter und mit
 # LOAD_MARGIN Prozentpunkten Abstand (sonst piept ein Wert, der um die Grenze pendelt)
 LOAD_KINDS = {
-    "cpu": (CONF_STATUS_CPU_ALERT, CONF_STATUS_CPU_LIMIT),
-    "ram": (CONF_STATUS_RAM_ALERT, CONF_STATUS_RAM_LIMIT),
-    "disk": (CONF_STATUS_DISK_ALERT, CONF_STATUS_DISK_LIMIT),
+    "cpu": (CONF_STATUS_CPU_ALERT, CONF_STATUS_CPU_LIMIT, CONF_STATUS_CPU_MINUTES),
+    "ram": (CONF_STATUS_RAM_ALERT, CONF_STATUS_RAM_LIMIT, CONF_STATUS_RAM_MINUTES),
+    "disk": (CONF_STATUS_DISK_ALERT, CONF_STATUS_DISK_LIMIT, CONF_STATUS_DISK_MINUTES),
 }
 LOAD_CLEAR = 2
 LOAD_MARGIN = 2.0
@@ -254,8 +256,8 @@ class StatusWatch:
         from .system_stats import current_percent  # noqa: PLC0415 - system_stats zieht Recorder-Hilfen, erst bei Bedarf
 
         opts = effective(self.hass)
-        hold = opts[CONF_STATUS_LOAD_MINUTES]
-        for kind, (alert_key, limit_key) in LOAD_KINDS.items():
+        for kind, (alert_key, limit_key, minutes_key) in LOAD_KINDS.items():
+            hold = opts[minutes_key]
             st = self._load.setdefault(kind, {"over": 0, "under": 0, "alerted": False, "since": 0.0})
             limit = opts[limit_key]
             value = current_percent(self.hass, kind) if opts[alert_key] else None
