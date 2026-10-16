@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.66.0] - 2026-10-16
+
+Routinen-Assistent: eine Liste mit Filter und Pille; die Statusmeldung öffnet die Status-App.
+
+### Hinzugefügt
+
+- Statusmeldung: Ein Tipp auf die Push-Meldung "⚠️ Device Panel: <Teil> steht" (und auf "✅ … läuft wieder") öffnet jetzt direkt die Status-App statt der Übersicht. Der Link ist `/device-panel?app=status`; er wird danach aus der Adresse entfernt, wie `?device=`. Die App bekommen nur Administratoren (wie im Launcher).
+
+### Geändert
+
+- Routinen-Assistent, erste Seite ("Gerät, Gruppe oder Szene?"): Jedes Gerät, jede Gruppe und jede Szene steht als eigene Zeile in der Liste, ohne dass man zuerst suchen muss (Geräte, dann Gruppen, dann Szenen). Die Sammeleinträge "Szenen" und "Gruppen" entfallen. Eine Filterleiste oben (Alle, Geräte, Gruppen, Szenen, je mit ihrer Zahl) schränkt die Liste ein; sie erscheint nur, wenn es Gruppen oder Szenen ohne Gerät gibt. Gruppen und Szenen tragen rechts eine kleine Pille ("Gruppe" / "Szene"), Geräte behalten "N Entitäten". Die Suche arbeitet über den gewählten Filter und findet ein Gerät weiter über die Szenen und Lampen darin. Ein Tipp und "Weiter" führen auf die Seite "Was" mit der Szene oder Gruppe schon gewählt. Die Grenze von 40 Zeilen aus 2.65.0 entfällt, der Filter ersetzt sie.
+
 ## [2.65.0] - 2026-10-16
 
 Routinen-Assistent: Jede Szene und Gruppe wird direkt über ihren Namen gefunden.
@@ -3591,6 +3603,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.66.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.66.0
 [2.65.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.65.0
 [2.64.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.64.0
 [2.63.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.63.0

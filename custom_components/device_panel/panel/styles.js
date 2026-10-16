@@ -1482,6 +1482,8 @@ a.dlg-btn { display: inline-flex; align-items: center; justify-content: center; 
 .mg-status .mg-on { color: var(--dp-primary); font-weight: 500; }
 .mg-status .mg-warn { color: var(--dp-warning); font-weight: 500; }
 .mg-val { text-align: right; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.mg-kind { padding: 2px 9px; border-radius: 99px; background: var(--dp-primary-soft); color: var(--dp-primary); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.mg-kind.group { background: var(--dp-success-soft); color: var(--dp-success); }
 .mg-val.off { color: var(--dp-text2); font-size: 12.5px; font-weight: 400; }
 .mg-radio { flex: none; width: 22px; height: 22px; box-sizing: border-box; border: 2px solid var(--dp-divider); border-radius: 50%; }
 .mg-radio.on { border: 7px solid var(--dp-primary); }

@@ -269,7 +269,7 @@ class StatusWatch:
         else:
             title, message = push.text(hass, "status_down_title", part=part), push.text(hass, "status_down_text", minutes=minutes, time=clock)
         # Eine Meldung je Teil: "läuft wieder" ersetzt "steht"
-        data = push.notification_data(hass, f"device_panel_status_{key}", push.panel_url())
+        data = push.notification_data(hass, f"device_panel_status_{key}", push.panel_url(app="status"))
         await push.async_push(hass, target, title, message, data)
 
 

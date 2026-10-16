@@ -263,9 +263,11 @@ def duration(hass: HomeAssistant, seconds: float) -> str:
     return text(hass, "dur_days", d=days, h=hours)
 
 
-def panel_url(device_id: str | None = None) -> str:
-    """Panel, mit Gerät öffnet es dessen Popup (?device=)."""
-    return f"/{PANEL_URL_PATH}?device={device_id}" if device_id else f"/{PANEL_URL_PATH}"
+def panel_url(device_id: str | None = None, app: str | None = None) -> str:
+    """Panel; mit Gerät öffnet es dessen Popup (?device=), mit App die App, zum Beispiel "status" (?app=, seit 2.66.0)."""
+    if device_id:
+        return f"/{PANEL_URL_PATH}?device={device_id}"
+    return f"/{PANEL_URL_PATH}?app={app}" if app else f"/{PANEL_URL_PATH}"
 
 
 def device_url(click: str, device_id: str) -> str:

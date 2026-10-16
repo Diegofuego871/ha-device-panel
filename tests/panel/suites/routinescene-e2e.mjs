@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { film: "filmabend", q0: "Gerät, Gruppe oder Szene?", scenes: "Szenen", groups: "Gruppen", act: "Aktivieren", kindScene: "Szene", kindGroup: "Gruppe", grp: "leuchten", noBack: "Eine Szene lässt sich nur aktivieren, nicht zurückschalten.", scene: "Abendlicht", count: "2 Szenen", sentence: "Abendlicht aktivieren", step: (n, t) => `Schritt ${n} von ${t}` },
-  en: { film: "movie night", q0: "Device, group or scene?", scenes: "Scenes", groups: "Groups", act: "Activate", kindScene: "Scene", kindGroup: "Group", grp: "living room", noBack: "A scene can only be activated, not switched back.", scene: "Abendlicht", count: "2 scenes", sentence: "Abendlicht activate", step: (n, t) => `Step ${n} of ${t}` },
+  de: { all: "Alle", film: "filmabend", q0: "Gerät, Gruppe oder Szene?", scenes: "Szenen", groups: "Gruppen", act: "Aktivieren", kindScene: "Szene", kindGroup: "Gruppe", grp: "leuchten", noBack: "Eine Szene lässt sich nur aktivieren, nicht zurückschalten.", scene: "Abendlicht", count: "2 Szenen", sentence: "Abendlicht aktivieren", step: (n, t) => `Schritt ${n} von ${t}` },
+  en: { all: "All", film: "movie night", q0: "Device, group or scene?", scenes: "Scenes", groups: "Groups", act: "Activate", kindScene: "Scene", kindGroup: "Group", grp: "living room", noBack: "A scene can only be activated, not switched back.", scene: "Abendlicht", count: "2 scenes", sentence: "Abendlicht activate", step: (n, t) => `Step ${n} of ${t}` },
 };
 
 for (const lang of ["de", "en"]) {
@@ -42,13 +42,24 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("dialog.rtall-dlg")?.open`);
     await tap('dialog.rtall-dlg [data-rta="routine-add"]');
     check(`[${tag}] Titel "${T.q0}"`, await wait(`return r.querySelector("${win} .mg-big")?.textContent === ${JSON.stringify(T.q0)}`));
-    const names = await ev(`return [...r.querySelectorAll('${win} [data-rt="dev"]')].map((x) => x.querySelector("b").textContent.trim())`);
-    check(`[${tag}] "${T.scenes}" und "${T.groups}" stehen als letzte Einträge`, names.at(-2) === T.scenes && names.at(-1) === T.groups && names.length > 3, JSON.stringify(names));
-    check(`[${tag}] Szenen: "${T.count}"`, await ev(`return r.querySelector('${win} [data-rt="dev"][data-id="@scenes"] .mg-val')?.textContent.trim() === ${JSON.stringify(T.count)}`));
+    // Jede Szene und Gruppe als eigene Zeile mit Pille; Geräte zuerst, dann Gruppen, dann Szenen
+    const kinds = await ev(`return [...r.querySelectorAll('${win} [data-rt="dev"]')].map((x) => x.querySelector(".mg-kind")?.textContent.trim() || "")`);
+    const firstKind = kinds.findIndex((k) => k);
+    check(`[${tag}] Geräte ohne Pille zuerst, dann Gruppe "${T.kindGroup}", dann Szenen "${T.kindScene}" mit Pille`, firstKind > 0 && kinds.slice(0, firstKind).every((k) => !k) && kinds[firstKind] === T.kindGroup && kinds.at(-1) === T.kindScene && kinds.filter((k) => k === T.kindScene).length === 2, JSON.stringify(kinds));
+    check(`[${tag}] Filter oben: Alle, Geräte, "${T.groups}", "${T.scenes}" mit Zahlen`, await ev(`const t = [...r.querySelectorAll('${win} [data-rt="dev-kind"]')].map((x) => x.querySelector(".tab-l").textContent.trim() + ":" + x.querySelector(".tab-s").textContent.trim()); return t.length === 4 && t[0].startsWith(${JSON.stringify(T.all)}) && t[2] === ${JSON.stringify(T.groups + ":1")} && t[3] === ${JSON.stringify(T.scenes + ":2")}`));
+    await tap(`${win} [data-rt="dev-kind"][data-v="scene"]`);
+    check(`[${tag}] Filter "${T.scenes}": nur die zwei Szenen`, await wait(`const rows = [...r.querySelectorAll('${win} [data-rt="dev"]')]; return rows.length === 2 && rows.every((x) => x.dataset.id === "@scenes")`));
+    await p.screenshot({ path: `${outDir}/routinescene-${tag.replace("/", "-")}-0b.png` });
+    await tap(`${win} [data-rt="dev-kind"][data-v="group"]`);
+    check(`[${tag}] Filter "${T.groups}": nur die Gruppe`, await wait(`const rows = [...r.querySelectorAll('${win} [data-rt="dev"]')]; return rows.length === 1 && rows[0].dataset.ent === "light.wohnzimmer"`));
+    await tap(`${win} [data-rt="dev-kind"][data-v="device"]`);
+    check(`[${tag}] Filter "Geräte": keine Pille`, await wait(`const rows = [...r.querySelectorAll('${win} [data-rt="dev"]')]; return rows.length > 1 && rows.every((x) => !x.querySelector(".mg-kind"))`));
+    await tap(`${win} [data-rt="dev-kind"][data-v="all"]`);
+    await p.screenshot({ path: `${outDir}/routinescene-${tag.replace("/", "-")}-0.png` });
 
     // Suche findet eine Szene über ihren Namen (auch wenn "Szenen" selbst anders heisst)
     await ev(`const i = r.querySelector('${win} input[data-rt="dev-search"]'); i.focus(); i.value = ${JSON.stringify(T.film)}; i.dispatchEvent(new Event("input", { bubbles: true }))`);
-    check(`[${tag}] Suche "${T.film}" zeigt die Szene selbst als eigene Zeile (mit Art "${T.kindScene}"), nicht nur "${T.scenes}"`, await wait(`const rows = [...r.querySelectorAll('${win} [data-rt="dev"]')]; return rows.length === 1 && rows[0].dataset.id === "@scenes" && rows[0].dataset.ent === "scene.film" && rows[0].querySelector(".mg-val").textContent.trim() === ${JSON.stringify(T.kindScene)} && rows[0].querySelector("b").textContent.trim().toLowerCase() === ${JSON.stringify(T.film)}`));
+    check(`[${tag}] Suche "${T.film}" zeigt die Szene selbst als eigene Zeile (mit Art "${T.kindScene}"), nicht nur "${T.scenes}"`, await wait(`const rows = [...r.querySelectorAll('${win} [data-rt="dev"]')]; return rows.length === 1 && rows[0].dataset.id === "@scenes" && rows[0].dataset.ent === "scene.film" && rows[0].querySelector(".mg-kind").textContent.trim() === ${JSON.stringify(T.kindScene)} && rows[0].querySelector("b").textContent.trim().toLowerCase() === ${JSON.stringify(T.film)}`));
     // Antippen und "Weiter": die Szene ist auf der Seite "Was" schon gewählt, die Aktion gesetzt
     await tap(`${win} [data-rt="dev"][data-ent="scene.film"]`);
     await tap(`${win} [data-rt="nav-next"]`);
@@ -57,12 +68,12 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector('${win} input[data-rt="dev-search"]')`);
     // Gruppe über ihren Namen: eigene Zeile mit Art "${T.kindGroup}"
     await ev(`const i = r.querySelector('${win} input[data-rt="dev-search"]'); i.value = ${JSON.stringify(T.grp)}; i.dispatchEvent(new Event("input", { bubbles: true }))`);
-    check(`[${tag}] Suche "${T.grp}" zeigt die Gruppe als eigene Zeile (Art "${T.kindGroup}")`, await wait(`const g = r.querySelector('${win} [data-rt="dev"][data-ent="light.wohnzimmer"]'); return g && g.dataset.id === "@groups" && g.querySelector(".mg-val").textContent.trim() === ${JSON.stringify(T.kindGroup)}`));
+    check(`[${tag}] Suche "${T.grp}" zeigt die Gruppe als eigene Zeile (Art "${T.kindGroup}")`, await wait(`const g = r.querySelector('${win} [data-rt="dev"][data-ent="light.wohnzimmer"]'); return g && g.dataset.id === "@groups" && g.querySelector(".mg-kind").textContent.trim() === ${JSON.stringify(T.kindGroup)}`));
     await ev(`const i = r.querySelector('${win} input[data-rt="dev-search"]'); i.value = ""; i.dispatchEvent(new Event("input", { bubbles: true }))`);
     await wait(`return r.querySelectorAll('${win} [data-rt="dev"]').length > 3`);
 
     // Szene
-    await tap(`${win} [data-rt="dev"][data-id="@scenes"]`);
+    await tap(`${win} [data-rt="dev"][data-ent="scene.abendlicht"]`);
     await tap(`${win} [data-rt="nav-next"]`);
     await wait(`return r.querySelectorAll("${win} .mg-pick").length === 2`);
     check(`[${tag}] Schritt 2: nur die Szenen, Kopf nennt "${T.scenes}"`, await ev(`const d = r.querySelector("${win}"); return d.querySelectorAll(".mg-pick").length === 2 && d.querySelector(".mgw-t small")?.textContent.trim() === ${JSON.stringify(T.scenes)}`));
@@ -86,8 +97,8 @@ for (const lang of ["de", "en"]) {
     // Viele Szenen: auf der Seite "Was" gibt es eine Suche
     await p.evaluate(() => { window.__manyScenes = true; });
     await tap('dialog.rtall-dlg [data-rta="routine-add"]');
-    await wait(`return r.querySelector("${win} [data-rt='dev'][data-id='@scenes']")`);
-    await tap(`${win} [data-rt="dev"][data-id="@scenes"]`);
+    await wait(`return r.querySelector("${win} [data-rt='dev'][data-ent='scene.film']")`);
+    await tap(`${win} [data-rt="dev"][data-ent="scene.film"]`);
     await tap(`${win} [data-rt="nav-next"]`);
     await wait(`return r.querySelectorAll("${win} .mg-pick").length === 14`);
     check(`[${tag}] 14 Szenen: Suchfeld auf der Seite "Was"; "büro szene 1" zeigt 4 (1, 10, 11, 12), die Wahl bleibt beim Filtern`, await ev(`return !!r.querySelector('${win} input[data-rt="ent-search"]')`));
@@ -101,8 +112,8 @@ for (const lang of ["de", "en"]) {
     await wait(`return !r.querySelector("${win}")?.open`);
     // Gruppe
     await tap('dialog.rtall-dlg [data-rta="routine-add"]');
-    await wait(`return r.querySelector("${win} [data-rt='dev'][data-id='@groups']")`);
-    await tap(`${win} [data-rt="dev"][data-id="@groups"]`);
+    await wait(`return r.querySelector("${win} [data-rt='dev'][data-ent='light.wohnzimmer']")`);
+    await tap(`${win} [data-rt="dev"][data-ent="light.wohnzimmer"]`);
     await tap(`${win} [data-rt="nav-next"]`);
     await wait(`return r.querySelector("${win} .mg-pick")`);
     await tap(`${win} .mg-pick[data-id="light.wohnzimmer"]`);

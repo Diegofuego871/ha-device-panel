@@ -82,8 +82,9 @@ const fromHex = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
 export const routineEmoji = (domain) => (domain === "scene" ? "🎬" : DOMAIN_EMOJI[domain] || "⚡");
 // Sammelstellen für Szenen und Gruppen ohne Gerät (seit 2.61.0)
 const HOLDERS = { "@scenes": { emoji: "🎬", key: "rtHolderScenes", count: "rtScenesCount", kind: "rtKindScene" }, "@groups": { emoji: "💡", key: "rtHolderGroups", count: "rtGroupsCount", kind: "rtKindGroup" } };
-// Höchstzahl der einzelnen Szenen und Gruppen, die die Suche im Assistenten als eigene Zeilen zeigt
-const ITEM_ROWS_MAX = 40;
+// Art der Einträge auf der ersten Seite des Assistenten: Filter oben und Pille an Szenen und Gruppen (seit 2.66.0)
+const KIND_OF = { "@scenes": "scene", "@groups": "group" };
+const KIND_TABS = [["all", "rtFilterAll"], ["device", "rtKindDevices"], ["group", "rtHolderGroups"], ["scene", "rtHolderScenes"]];
 export const isHolder = (id) => Object.prototype.hasOwnProperty.call(HOLDERS, id);
 
 export function splitSeconds(seconds, units) {
@@ -979,12 +980,40 @@ export class RoutineUi {
     }
   }
 
-  // Schritt 0: Gerät wählen (nur Geräte mit schaltbarer Entität), mit Suche
+  // Alle Einträge der ersten Seite einzeln: Geräte, dann Gruppen, dann Szenen (jede Szene und Gruppe ohne Gerät eine eigene Zeile)
+  pickRows() {
+    const w = this.wiz;
+    const devices = (w.devices || [])
+      .filter((x) => !isHolder(x.id))
+      .map((x) => {
+        const dev = this.host._devices?.find((d) => d.id === x.id);
+        const sub = [dev?.area, dev?.integration?.name].filter(Boolean).join(" · ");
+        return { kind: "device", id: x.id, ent: "", name: dev?.name || x.name, sub, type: dev?.type || "other", entities: x.entities, names: x.names || [] };
+      });
+    const singles = (w.devices || [])
+      .filter((x) => isHolder(x.id))
+      .flatMap((x) => (x.items || []).map((i) => ({ kind: KIND_OF[x.id], id: x.id, ent: i.id, name: i.name, sub: "", holder: HOLDERS[x.id], names: [i.id] })));
+    const byName = (a, b) => a.name.localeCompare(b.name);
+    return [...devices, ...singles.filter((x) => x.kind === "group").sort(byName), ...singles.filter((x) => x.kind === "scene").sort(byName)];
+  }
+
+  // Schritt 0: Gerät, Gruppe oder Szene wählen, mit Filter nach Art und Suche
   step0Html() {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
     const w = this.wiz;
+    const all = this.pickRows();
+    const count = (k) => (k === "all" ? all.length : all.filter((x) => x.kind === k).length);
+    // Der Filter erscheint nur, wenn es Gruppen oder Szenen ohne Gerät gibt
+    const tabs = all.some((x) => x.kind !== "device") ? KIND_TABS.filter(([k]) => count(k) > 0) : [];
+    const kind = tabs.some(([k]) => k === w.devKind) ? w.devKind : "all";
+    const bar = tabs.length
+      ? `<div class="sub-tabs mg-tabs mg-filter" role="tablist">${tabs
+          .map(([k, label]) => `<button type="button" role="tab" class="sub-tab two${k === kind ? " on" : ""}" data-rt="dev-kind" data-v="${k}" aria-selected="${k === kind}"><span class="tab-l">${esc(t(label))}</span> <span class="tab-s">${count(k)}</span></button>`)
+          .join("")}</div>`
+      : "";
     return `<p class="mg-note">${esc(t("rtPickDeviceNote"))}</p>
+      ${bar}
       <label class="list-search" data-for="rt-devs">${this.h.mdi("search", 18)}<input type="search" data-rt="dev-search" value="${esc(w.devQuery)}" placeholder="${esc(t("listSearch"))}" aria-label="${esc(t("listSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this.host._fieldClearHtml("data-fc", "", w.devQuery)}</label>
       <div data-rt-zone="devs">${this.devsHtml()}</div>`;
   }
@@ -995,37 +1024,20 @@ export class RoutineUi {
     const w = this.wiz;
     if (!w.devices) return `<p class="mg-note">${esc(t("rtLoading"))}</p>`;
     const q = String(w.devQuery || "").trim().toLowerCase();
-    const rows = w.devices
+    const kind = w.devKind || "all";
+    // Die Suche findet auch eine Entität im Gerät (seit 2.63.0): "alles" findet das Gerät mit der Szene "Alles aus"
+    const rows = this.pickRows().filter((x) => (kind === "all" || x.kind === kind) && (!q || `${x.name} ${x.sub} ${x.names.join(" ")}`.toLowerCase().includes(q)));
+    if (!rows.length) return `<p class="mg-note mg-none">${esc(t(w.devices.length ? "listSearchNone" : "rtNoSwitchableDevices"))}</p>`;
+    const picked = `${w.pickId}|${w.pickEnt || ""}`;
+    return rows
       .map((x) => {
-        if (isHolder(x.id)) return { ...x, name: t(HOLDERS[x.id].key), sub: "", holder: HOLDERS[x.id], names: [] };
-        const dev = this.host._devices?.find((d) => d.id === x.id);
-        const sub = [dev?.area, dev?.integration?.name].filter(Boolean).join(" · ");
-        return { ...x, name: dev?.name || x.name, sub, type: dev?.type || "other", names: x.names || [] };
+        const on = picked === `${x.id}|${x.ent}`;
+        const right = x.holder ? `<span class="mg-kind ${x.kind}">${esc(t(x.holder.kind))}</span>` : `<span class="mg-val">${esc(t("rtDevEntities", x.entities))}</span>`;
+        return `<button type="button" class="mg-card mg-pick" data-rt="dev" data-id="${esc(x.id)}" data-ent="${esc(x.ent)}" role="radio" aria-checked="${on}">
+        <span class="mg-row"><span class="mg-devic" aria-hidden="true">${x.holder ? x.holder.emoji : this.h.typeIcon(x.type, 18)}</span><span class="mg-t"><b>${esc(x.name)}</b>${x.sub ? `<small>${esc(x.sub)}</small>` : ""}</span>
+        ${right}<span class="mg-radio${on ? " on" : ""}"></span></span></button>`;
       })
-      // Die Suche findet auch eine Entität im Gerät (seit 2.63.0): "alles" findet das Gerät mit der Szene "Alles aus"
-      .filter((x) => !q || `${x.name} ${x.sub} ${(x.names || []).join(" ")}`.toLowerCase().includes(q));
-    // Szenen und Gruppen ohne Gerät: bei der Suche jede einzeln als eigene Zeile (seit 2.65.0), sonst nur die beiden Sammelzeilen
-    const items = q
-      ? w.devices
-          .filter((x) => isHolder(x.id))
-          .flatMap((x) => (x.items || []).filter((i) => i.name.toLowerCase().includes(q) || i.id.toLowerCase().includes(q)).map((i) => ({ ...i, holderId: x.id, holder: HOLDERS[x.id] })))
-          .sort((a, b) => a.name.localeCompare(b.name))
-      : [];
-    if (!rows.length && !items.length) return `<p class="mg-note mg-none">${esc(t(w.devices.length ? "listSearchNone" : "rtNoSwitchableDevices"))}</p>`;
-    const key = (id, ent) => `${id}|${ent || ""}`;
-    const picked = key(w.pickId, w.pickEnt);
-    const holderRows = rows.filter((x) => x.holder && !q).concat(rows.filter((x) => x.holder && q && x.name.toLowerCase().includes(q)));
-    const deviceRows = rows.filter((x) => !x.holder);
-    const card = (id, ent, emoji, name, sub, val) => `<button type="button" class="mg-card mg-pick" data-rt="dev" data-id="${esc(id)}" data-ent="${esc(ent)}" role="radio" aria-checked="${picked === key(id, ent)}">
-        <span class="mg-row"><span class="mg-devic" aria-hidden="true">${emoji}</span><span class="mg-t"><b>${esc(name)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>
-        <span class="mg-val">${esc(val)}</span><span class="mg-radio${picked === key(id, ent) ? " on" : ""}"></span></span></button>`;
-    const shown = items.slice(0, ITEM_ROWS_MAX);
-    return [
-      ...deviceRows.map((x) => card(x.id, "", this.h.typeIcon(x.type, 18), x.name, x.sub, t("rtDevEntities", x.entities))),
-      ...shown.map((i) => card(i.holderId, i.id, i.holder.emoji, i.name, "", t(i.holder.kind))),
-      ...holderRows.map((x) => card(x.id, "", x.holder.emoji, x.name, "", t(x.holder.count, x.entities))),
-      items.length > shown.length ? `<p class="mg-note">${esc(t("rtMoreResults", items.length - shown.length))}</p>` : "",
-    ].join("");
+      .join("");
   }
 
   closeWizard() {
@@ -1721,6 +1733,10 @@ export class RoutineUi {
         break;
       case "nav-back":
         this.stepBy(-1);
+        break;
+      case "dev-kind":
+        w.devKind = el.dataset.v;
+        this.paint();
         break;
       case "dev":
         w.pickId = id;

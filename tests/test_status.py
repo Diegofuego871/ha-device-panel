@@ -125,6 +125,17 @@ async def test_push_off_and_own_target(hass: HomeAssistant) -> None:
     assert handy == [] and len(status_target) >= 1
 
 
+async def test_push_opens_the_status_app(hass: HomeAssistant) -> None:
+    """Tippen auf die Statusmeldung führt in die Status-App (?app=status), nicht auf die Übersicht (seit 2.66.0)."""
+    handy = async_mock_service(hass, "notify", "handy")
+    watch = await _setup(hass)
+    await _stall(hass, watch)
+    for _ in range(2):
+        watch._on_tick(None)
+    await hass.async_block_till_done()
+    assert handy and handy[0].data["data"]["url"] == "/device-panel?app=status" and handy[0].data["data"]["clickAction"] == "/device-panel?app=status"
+
+
 async def test_no_push_without_target(hass: HomeAssistant) -> None:
     handy = async_mock_service(hass, "notify", "handy")
     watch = await _setup(hass, notify_service="none")

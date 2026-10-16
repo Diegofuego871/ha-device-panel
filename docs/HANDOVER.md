@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.66.0, eine Liste mit Filter und Pille; Statusmeldung öffnet die Status-App)
+
+- Wunsch des Nutzers: alle Objekte direkt anzeigen, Filter oben oder Pille. Gebaut: beides. `pickRows()` in `routines.js` liefert Geräte, Gruppen, Szenen einzeln (`kind`); Filterleiste `data-rt="dev-kind"` (Reiterleiste `.sub-tabs`, Zahlen wie im Fenster aller Routinen, nur wenn es Szenen oder Gruppen ohne Gerät gibt); Pille `.mg-kind` (Szene primär, Gruppe grün) statt "N Entitäten". Die Sammelzeilen und `ITEM_ROWS_MAX` (2.65.0) sind weg. Kein Mockup vorab: der Nutzer hatte beide Varianten genannt, Screenshots `tests/panel/output/routinescene-*-0.png`; bei Änderungswunsch Variante anpassen.
+- Statusmeldung: `push.panel_url(app="status")` → `/device-panel?app=status`; `_deepLink` in `device-panel.js` öffnet `this._status.open()` (nur Administratoren) und entfernt den Parameter. Test `test_push_opens_the_status_app`, Suite `deeplink`.
+- 2.65.0 ist veröffentlicht (Tag `v2.65.0`).
+
 ## Stand (2.65.0, Szenen und Gruppen direkt in der Suche des Routinen-Assistenten)
 
 - Wunsch des Nutzers (Screenshot: Suche "grupp" fand nur den Sammeleintrag "Gruppen"): niemand soll die Wörter "Szene" oder "Gruppe" suchen müssen; jede Szene, Gruppe und jeder Helfer soll über den eigenen Namen direkt gefunden werden. `routines.switchable_devices` liefert bei den Sammelstellen `items` [{id, name}] (Name wie auf der Seite "Was", `entity_label`). `devsHtml` in `routines.js`: mit Suchtext je Treffer eine eigene Zeile (`data-id` = Sammelstelle, `data-ent` = Entität, rechts die Art "Szene"/"Gruppe"), höchstens `ITEM_ROWS_MAX` (40) mit Hinweis `rtMoreResults`; ohne Suchtext nur die beiden Sammelzeilen. `w.pickEnt` + `preselect()` setzen die Entität und die Aktion beim "Weiter" (wie das Antippen auf "Was"). Reiter (Geräte/Gruppen/Szenen) bewusst nicht gebaut: der Nutzer wollte lieber die direkte Suche. 2.64.0 ist veröffentlicht (Tag `v2.64.0`), 2.65.0 folgt direkt. Suite `routinescene` (72), Test `test_holders_in_listing_and_websocket`, `test_group_helper_is_found_and_searchable`.

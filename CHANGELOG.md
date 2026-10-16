@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.66.0] - 2026-10-16
+
+Routine assistant: one list with a filter and a pill; the status alert opens the Status app.
+
+### Added
+
+- Status alert: a tap on the push "⚠️ Device Panel: <part> is down" (and on "✅ … is running again") now opens the Status app directly instead of the overview. The link is `/device-panel?app=status`; it is removed from the address afterwards, like `?device=`. Only administrators get the app (the same as in the launcher).
+
+### Changed
+
+- Routine assistant, first page ("Device, group or scene?"): every device, every group and every scene stands in the list as a row of its own, without searching first (devices, then groups, then scenes). The collective entries "Scenes" and "Groups" are gone. A filter bar on top (All, Devices, Groups, Scenes, each with its number) narrows the list; it only shows when there are groups or scenes without a device. Groups and scenes carry a small pill ("Group" / "Scene") on the right, devices keep "N entities". The search works over the chosen filter and still finds a device by the scenes and lamps in it. A tap and "Next" lead to the page "What" with the scene or group already chosen. The limit of 40 rows from 2.65.0 is gone, the filter replaces it.
+
 ## [2.65.0] - 2026-10-16
 
 Routine assistant: every scene and group is found directly by its name.
@@ -3490,6 +3502,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.66.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.66.0
 [2.65.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.65.0
 [2.64.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.64.0
 [2.63.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.63.0

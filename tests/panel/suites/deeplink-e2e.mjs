@@ -46,6 +46,14 @@ for (const lang of ["de", "en"]) {
     // Unbekanntes Gerät (gelöscht, ausgeblendet): Hinweis statt Fehler
     await p.evaluate((l) => { history.pushState(null, "", `?lang=${l}&device=gibtsnicht`); window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } })); }, lang);
     check(`[${tag}] unbekanntes Gerät: Hinweis`, await wait(`return r.querySelector("dialog.device")?.open && (r.querySelector("dialog.device .dlg-note")?.textContent || "") === ${JSON.stringify(TEXT[lang].gone)}`), await text("dialog.device .dlg-note"));
+    await f.evaluate(new Function(`${R}.querySelector('dialog.device [data-dlg="close"]').click()`));
+    await wait(`return !r.querySelector("dialog.device").open`);
+
+    // App aus einer Meldung (Status, seit 2.66.0): ?app=status öffnet die Status-App, der Parameter verschwindet
+    await p.evaluate((l) => { history.pushState(null, "", `?lang=${l}&app=status`); window.dispatchEvent(new CustomEvent("location-changed", { detail: { replace: false } })); }, lang);
+    check(`[${tag}] ?app=status öffnet die Status-App`, await wait(`return r.querySelector("dialog.status-dlg")?.open`));
+    check(`[${tag}] Parameter app entfernt`, (await p.evaluate(() => location.search)) === `?lang=${lang}`);
+    await f.evaluate(new Function(`${R}.host._status.close()`));
     check(`[${tag}] keine JS-Fehler`, errors.length === 0, errors.join("; "));
     await ctx.close();
   }
