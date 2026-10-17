@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 AI assessment: button "Remove".
 
-Includes the changes from 2.85.0, 2.84.0 and 2.83.0.
-
 ### Added
 
 - Pop-up of the device, AI assessment: next to "Create again" a new button **Remove** takes the assessment away, from the pop-up and from the memory (new command `device_panel/ai_clear`). The button "Assess with AI" stands there again; a new assessment is one tap away. It stays away when the pop-up is opened again, because the remembered assessment is gone. It also no longer flows into the context of a later assessment. No confirmation, since it is easy to recreate. A long assessment (with follow-up questions) could not be got rid of before.
@@ -20,8 +18,6 @@ Includes the changes from 2.85.0, 2.84.0 and 2.83.0.
 ## [2.85.0] - 2026-10-17
 
 App launcher: the apps "View" and "Settings".
-
-Not released; included in 2.86.0.
 
 Includes the changes from 2.84.0 and 2.83.0.
 
@@ -3777,6 +3773,7 @@ First pre-release.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.86.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.86.0
+[2.85.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.85.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0
