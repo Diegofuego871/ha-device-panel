@@ -3,9 +3,15 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.85.0, Apps "Ansicht" und "Einstellungen" im Launcher)
+
+- Wunsch des Nutzers (Screenshot Launcher, Gruppe "Device Panel"): die Ansichtseinstellungen (Symbol Auge mit Zahnrad, farbig) und die normalen Einstellungen als Apps; beide ausblendbar (nicht `locked`), weil es einen zweiten Weg gibt (Knöpfe in der Kopfzeile), standardmässig sichtbar. `apps.js` `BUILTIN` `view`/`settings`, `PANEL_COLOR`, Aktion `host._openView()` (Handy: Blatt, sonst Dialog "Spalten") und `host._openSettings()`. `MDI.viewSettings` ist ein zusammengesetztes Symbol (Auge mit durch eine Maske ausgeschnittenem Zahnrad); `mdiPath` nimmt Einträge, die mit "<" beginnen, als fertiges SVG-Innenleben.
+- Pille "Neustart" (rot) an der Karte "Einstellungen", solange der rote Punkt am Zahnrad der Kopfzeile steht (`_gearDot` setzt `host._gearRestart` und ruft `_apps.paintDots()`; `apps.js` `_badge`); bewusst kein Punkt am Launcher-Knopf (Wunsch des Nutzers). Test in `updatecfg`. Der Punkt am Zahnrad bedeutet heute nur "Neustart nach Update steht aus"; die Störung eines Dienstes zeigt die Status-App (Pille "Störung", Punkt am Launcher-Knopf), nicht die Einstellungen.
+- Die Ansicht-Reiter (Spalten, Filter-Chips) und das Symbol in der Zeile "Sortierung & Ansicht" (Mockups `docs/mockups/view-v3`) sind noch nicht umgesetzt; der Entscheid des Nutzers zum Speichern der Filter-Chips im Reiter steht aus.
+
 ## Stand (2.84.0, Knopf "HA-Seite der Integration öffnen")
 
-- Wunsch des Nutzers (Screenshot Popup): neben "HA-Geräteseite öffnen" ein Knopf im gleichen Stil, der die HA-Seite der Integration des Geräts öffnet. `device-panel.js`: Action `open-integration` (`/config/integrations/integration/<domain>`, Domain aus `d.integration.domain`, nur `[a-z0-9_]`), schliesst über `_requestCloseDevice` (fragt bei Entwurf nach). Ohne Integration kein Knopf. Pfad der Seite nach dem HA-Frontend, nicht in einer echten HA-Instanz geprüft.
+- Wunsch des Nutzers (Screenshot Popup): neben "HA-Geräteseite öffnen" ein Knopf im gleichen Stil, der die HA-Seite der Integration des Geräts öffnet. `device-panel.js`: Action `open-integration` (`/config/integrations/integration/<domain>`, Domain aus `d.integration.domain`, nur `[a-z0-9_]`), schliesst über `_requestCloseDevice` (fragt bei Entwurf nach). Ohne Integration kein Knopf. Beschriftung (auf Wunsch kurz, ein Schema, beide Knöpfe auf einer Zeile auch auf dem Handy): "Gerät in HA öffnen" / "Integration in HA öffnen" (EN "Open device in HA" / "Open integration in HA"), `.q-t` mit Auslassungspunkten erst unter etwa 350 px. Pfad der Seite nach dem HA-Frontend, nicht in einer echten HA-Instanz geprüft.
 - Offen aus dem Gespräch: Mockups `docs/mockups/view-v3` (Ansicht an einem Ort, Symbol B Auge mit Zahnrad): Entscheid des Nutzers zu "sofort speichern" im Reiter "Filter-Chips" steht aus.
 
 ## Stand (2.83.0, Gerätetyp "Display")

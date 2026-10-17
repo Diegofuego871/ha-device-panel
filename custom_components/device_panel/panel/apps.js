@@ -28,6 +28,9 @@ const BUILTIN = [
   // Status (seit 2.62.0): nur für Administratoren (status_get ist ein Befehl für Administratoren); nicht vorgemerkt, wer ihn in der Kopfzeile will, heftet ihn selbst an.
   // Seit 2.76.0 nicht mehr ausblendbar (locked): dort liegen die Einstellungen der Meldungen
   { id: "status", group: "panel", icon: "pulse", act: "status", admin: true, locked: true },
+  // Ansicht und Einstellungen (seit 2.85.0): beides auch über die Knöpfe in der Kopfzeile erreichbar, darum ausblendbar (nicht locked)
+  { id: "view", group: "panel", icon: "viewSettings", act: "view" },
+  { id: "settings", group: "panel", icon: "gear", act: "settings" },
   { id: "auto", group: "ha", icon: "robot", path: "/config/automation/dashboard", admin: true },
   { id: "scene", group: "ha", icon: "palette", path: "/config/scene/dashboard", admin: true },
   { id: "script", group: "ha", icon: "script", path: "/config/script/dashboard", admin: true },
@@ -59,7 +62,7 @@ const HA_LOOK = {
   hist: { c: "#3263C3", p: "M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M9 17H7V10H9V17M13 17H11V7H13V17M17 17H15V13H17V17Z" },
   book: { c: "#00838F", p: "M5,9.5L7.5,14H2.5L5,9.5M3,4H7V8H3V4M5,20A2,2 0 0,0 7,18A2,2 0 0,0 5,16A2,2 0 0,0 3,18A2,2 0 0,0 5,20M9,5V7H21V5H9M9,19H21V17H9V19M9,13H21V11H9V13Z" },
 };
-const PANEL_COLOR = { routine: "#00838F", magic: "#8E24AA", log: "#4A5963", status: "#2E7D32" };
+const PANEL_COLOR = { routine: "#00838F", magic: "#8E24AA", log: "#4A5963", status: "#2E7D32", view: "#1E88E5", settings: "#8D6E63" };
 export const APP_ICONS = ["web", "home", "camera", "map", "bolt", "calendar", "bar", "wrench", "store", "desktop", "robot", "palette", "script", "devices", "shape", "tools"];
 
 // Favicon einer eigenen App mit externem Link (seit 2.33.0): kleines Bild als Data-URI (base64), vom Server geholt (favicon.py).
@@ -364,6 +367,8 @@ export class AppLauncher {
     else if (a.act === "magic") this.host._openMagicAll();
     else if (a.act === "log") this.host._openLog();
     else if (a.act === "status") this.host._status.open();
+    else if (a.act === "view") this.host._openView();
+    else if (a.act === "settings") this.host._openSettings();
     else if (a.path || a.url) this.host._navigate(a.path || a.url);
   }
 
@@ -486,6 +491,8 @@ export class AppLauncher {
     // "Debug" (orange) am Protokoll bei laufendem Debug-Modus, "Störung" (rot) am Status, wenn ein Teil nicht läuft (seit 2.62.0)
     if (a.id === "log" && this.host._debugOn) return `<span class="ap-badge">${escape(this.t("appsDebug"))}</span>`;
     if (a.id === "status" && this.dotLevels().pins.status) return `<span class="ap-badge bad">${escape(this.t("appsDown"))}</span>`;
+    // "Neustart" (rot) an den Einstellungen, solange der rote Punkt am Zahnrad der Kopfzeile steht (Neustart nach einem Update ausstehend, seit 2.85.0)
+    if (a.id === "settings" && this.host._gearRestart) return `<span class="ap-badge bad">${escape(this.t("appsRestartPending"))}</span>`;
     return "";
   }
 
@@ -516,7 +523,7 @@ export class AppLauncher {
   paintDots() {
     this.renderBar();
     // Der offene Launcher zeigt die Pillen: nur neu zeichnen, wenn sich etwas geändert hat (sonst störte es das Bearbeiten und Suchen)
-    const key = JSON.stringify(this.dotLevels().pins);
+    const key = JSON.stringify([this.dotLevels().pins, Boolean(this.host._gearRestart)]);
     if (key !== this._dotKey) {
       this._dotKey = key;
       if (this.dlg?.open && !this.ui.edit) this.render();

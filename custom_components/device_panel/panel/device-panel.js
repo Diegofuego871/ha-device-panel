@@ -320,6 +320,9 @@ const MDI = {
   wrench: "M22.61,19L13.53,9.91C14.46,7.57 14,4.81 12.09,2.91C9.79,0.61 6.21,0.4 3.66,2.26L7.5,6.11L6.08,7.5L2.25,3.69C0.39,6.23 0.6,9.82 2.9,12.11C4.76,13.97 7.47,14.46 9.79,13.59L18.9,22.7C19.29,23.09 19.92,23.09 20.31,22.7L22.61,20.4C23,20 23,19.39 22.61,19M19.61,20.59L10.15,11.13C9.54,11.58 8.86,11.85 8.15,11.95C6.79,12.15 5.36,11.74 4.32,10.7C3.37,9.76 2.93,8.5 3,7.26L6.09,10.35L10.33,6.11L7.24,3C8.5,2.95 9.73,3.39 10.68,4.33C11.76,5.41 12.17,6.9 11.92,8.29C11.8,9 11.5,9.66 11.04,10.25L20.5,19.7L19.61,20.59Z",
   desktop: "M21,16H3V4H21M21,2H3C1.89,2 1,2.89 1,4V16A2,2 0 0,0 3,18H10V20H8V22H16V20H14V18H21A2,2 0 0,0 23,16V4C23,2.89 22.1,2 21,2Z",
 };
+// Zusammengesetztes Symbol (seit 2.85.0): Auge mit kleinem Zahnrad für "Ansicht" (Einstellungen der Ansicht), das Zahnrad schneidet das Auge aus.
+// Beginnt ein Eintrag mit "<", ist er fertiges SVG-Innenleben (siehe mdiPath), sonst ein einzelner Pfad.
+MDI.viewSettings = `<defs><mask id="dp-vs-mask"><rect width="24" height="24" fill="#fff"/><circle cx="17.7" cy="17.5" r="6.4" fill="#000"/></mask></defs><g mask="url(#dp-vs-mask)"><path fill="currentColor" transform="translate(-0.5 -1.6) scale(.92)" d="${MDI.eye}"/></g><path fill="currentColor" transform="translate(11.5 11.3) scale(.52)" d="${MDI.gear}"/>`;
 // Gerätetypen (devices.DEVICE_TYPES), gleiche Schlüssel wie im Backend.
 const TYPE_ICONS = {
   phone: "M17,19H7V5H17M17,1H7C5.89,1 5,1.89 5,3V21A2,2 0 0,0 7,23H17A2,2 0 0,0 19,21V3C19,1.89 18.1,1 17,1Z",
@@ -349,7 +352,7 @@ const TYPE_ICONS = {
 // Reihenfolge wie const.DEVICE_TYPES im Backend.
 const TYPE_ORDER = ["hub", "phone", "network", "climate", "lock", "cover", "valve", "vacuum", "camera", "alarm", "media", "display", "fan", "light", "outlet", "switch", "motion", "contact", "safety", "energy", "sensor", "button", "other"];
 const mdiPath = (d, size) =>
-  `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="${d}"/></svg>`;
+  `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true">${d.startsWith("<") ? d : `<path fill="currentColor" d="${d}"/>`}</svg>`;
 const mdi = (name, size = 18) => mdiPath(MDI[name], size);
 const typeIcon = (type, size = 18) => mdiPath(TYPE_ICONS[type] || TYPE_ICONS.other, size);
 const typeKey = (type) => (TYPE_ICONS[type] ? `type${type[0].toUpperCase()}${type.slice(1)}` : "typeOther");
@@ -1141,6 +1144,9 @@ class DevicePanel extends HTMLElement {
     const on = Boolean(s.restart && !this._version.restarting);
     if (btn.classList.contains("has-dot") === on) return;
     btn.classList.toggle("has-dot", on);
+    // Die Karte "Einstellungen" im Launcher zeigt dafür eine Pille (kein Punkt am Launcher-Knopf, seit 2.85.0)
+    this._gearRestart = on;
+    this._apps?.paintDots?.();
     const label = on ? `${this._t("settingsBtn")} · ${this._t("settingsBtnRestart")}` : this._t("settingsBtn");
     btn.setAttribute("title", label);
     btn.setAttribute("aria-label", label);
@@ -2284,6 +2290,12 @@ class DevicePanel extends HTMLElement {
     dlg.scrollTop = 0;
     // Kein Fokusrahmen beim Öffnen per Tipp (showModal fokussiert den ersten Knopf).
     if (window.matchMedia?.(TOUCH_QUERY).matches) this.shadowRoot.activeElement?.blur();
+  }
+
+  // Ansicht öffnen (App "Ansicht" im Launcher, seit 2.85.0): Handy das Blatt, sonst der Dialog "Spalten" wie der Knopf in der Kopfzeile
+  _openView() {
+    if (this._narrowQuery.matches) this._openViewSheet();
+    else if (!this._colsOpen) this._toggleCols(true);
   }
 
   _closeViewSheet() {
@@ -4696,7 +4708,7 @@ class DevicePanel extends HTMLElement {
           <div class="dlg-title">${this._nameHtml(d)}
             <div class="dlg-sub">${status}<span>${[this._t(typeKey(d.type)), d.area].filter(Boolean).map(escape).join(" · ")}</span></div>${whyHtml}</div>
           ${heart}${close}</div>
-        <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device" aria-label="${escape(this._t("openDevicePage"))}">${mdi("open", 17)}<span class="q-long">${escape(this._t("openDevicePage"))}</span><span class="q-short">${escape(this._t("openDevicePageShort"))}</span></button>${d.integration?.domain ? `<button type="button" class="qbtn" data-dlg="open-integration" data-domain="${escape(d.integration.domain)}" aria-label="${escape(this._t("openIntegPage"))}">${mdi("open", 17)}<span class="q-long">${escape(this._t("openIntegPage"))}</span><span class="q-short">${escape(this._t("openIntegPageShort"))}</span></button>` : ""}</div>
+        <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device">${mdi("open", 17)}<span class="q-t">${escape(this._t("openDevicePage"))}</span></button>${d.integration?.domain ? `<button type="button" class="qbtn" data-dlg="open-integration" data-domain="${escape(d.integration.domain)}">${mdi("open", 17)}<span class="q-t">${escape(this._t("openIntegPage"))}</span></button>` : ""}</div>
         <div class="dev-tabs">${tabs}</div>
         <div class="dlg-body" role="tabpanel">${body}
           ${this._hideError ? `<div class="dlg-error">${escape(this._t("hideError"))} ${escape(this._hideError)}</div>` : ""}

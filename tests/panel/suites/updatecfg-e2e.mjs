@@ -9,8 +9,8 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const HACS_ID = "update.device_panel_update";
 const TEXT = {
-  de: { time: "Uhrzeit der Prüfung", auto: "Automatisch", notify: "Per Push melden", recipient: "Empfänger", std: "Standard", need: "Nur möglich mit eingeschalteter täglicher Prüfung.", dot: "Neustart steht aus" },
-  en: { time: "Time of the check", auto: "Automatic", notify: "Notify by push", recipient: "Recipient", std: "Default", need: "Only possible with the daily check turned on.", dot: "restart pending" },
+  de: { time: "Uhrzeit der Prüfung", auto: "Automatisch", notify: "Per Push melden", recipient: "Empfänger", std: "Standard", need: "Nur möglich mit eingeschalteter täglicher Prüfung.", dot: "Neustart steht aus", pill: "Neustart" },
+  en: { time: "Time of the check", auto: "Automatic", notify: "Notify by push", recipient: "Recipient", std: "Default", need: "Only possible with the daily check turned on.", dot: "restart pending", pill: "Restart" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -84,11 +84,19 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] HACS hat 0.5.0 installiert, 0.4.0 läuft: roter Punkt, Beschriftung "${T.dot}"`, await wait(`const b = r.querySelector(".gear-btn"); return b.classList.contains("has-dot") && b.getAttribute("aria-label").includes(${JSON.stringify(T.dot)}) && b.title.includes(${JSON.stringify(T.dot)})`) || (await (async () => { await p.waitForTimeout(5200); await p.evaluate(() => window.__pushHass()); return wait(`return r.querySelector(".gear-btn").classList.contains("has-dot")`); })()));
     check(`[${tag}] Punkt sitzt oben rechts am Zahnrad (rot)`, await ev(`const b = r.querySelector(".gear-btn"); const s = getComputedStyle(b, "::after"); return s.position === "absolute" && s.width === "10px" && s.backgroundColor !== "rgba(0, 0, 0, 0)" && s.content !== "none"`));
     await p.screenshot({ path: `/tmp/updatecfg-${tag.replace("/", "-")}.png` }).catch(() => {});
+    // Launcher (2.85.0): die Karte "Einstellungen" trägt die rote Pille, der Launcher-Knopf bekommt keinen Punkt dafür
+    await tap(".apps-btn");
+    check(`[${tag}] Launcher: Karte Einstellungen mit roter Pille "${T.pill}", Launcher-Knopf ohne Punkt`, (await wait(`return r.querySelector('dialog.apps-dlg [data-ap="open"][data-id="settings"]')?.parentElement.querySelector(".ap-badge.bad")?.textContent === ${JSON.stringify(T.pill)}`)) && (await ev(`return !r.querySelector(".apps-btn").classList.contains("has-dot")`)));
+    await p.keyboard.press("Escape");
+    await wait(`return !r.querySelector("dialog.apps-dlg").open`);
     // Neustart erledigt (neue Version läuft): Punkt weg
     await p.evaluate(() => { window.__version = { installed: "0.5.0", latest: "0.5.0" }; });
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     check(`[${tag}] neue Version läuft: Punkt weg`, await wait(`return !r.querySelector(".gear-btn").classList.contains("has-dot")`));
+    await ev(`r.querySelector("dialog.settings").close()`);
+    await tap(".apps-btn");
+    check(`[${tag}] Launcher: Pille weg, sobald der Punkt weg ist`, await wait(`const b = r.querySelector('dialog.apps-dlg [data-ap="open"][data-id="settings"]'); return !!b && !b.parentElement.querySelector(".ap-badge")`));
     check(`[${tag}] keine JS-Fehler`, errors.length === 0, errors.join("; "));
     await ctx.close();
   }

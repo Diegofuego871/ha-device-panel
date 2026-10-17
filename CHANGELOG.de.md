@@ -7,15 +7,31 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
-## [2.84.0] - 2026-10-17
+## [2.85.0] - 2026-10-17
 
-Geräte-Popup: Knopf "HA-Seite der Integration öffnen".
+App-Launcher: die Apps "Ansicht" und "Einstellungen".
 
-Enthält die Änderungen von 2.83.0.
+Enthält die Änderungen von 2.84.0 und 2.83.0.
 
 ### Hinzugefügt
 
-- Geräte-Popup, neben "HA-Geräteseite öffnen": der Knopf **HA-Seite der Integration öffnen** (im gleichen Stil, auf derselben Zeile; auf dem Handy heissen beide "Gerät in HA" und "Integration in HA", damit sie nebeneinander passen). Er öffnet die Seite der Integration dieses Geräts in Home Assistant (zum Beispiel die ESPHome-Seite bei einem ESPHome-Gerät) und schliesst das Popup; bei ungespeicherten Änderungen fragt er zuerst nach, wie bei der Geräteseite. Geräte ohne Integration haben den Knopf nicht.
+- App-Launcher, Gruppe "Device Panel": zwei neue Apps, **Ansicht** (Symbol: Auge mit kleinem Zahnrad, in Blau) und **Einstellungen** (Zahnrad, in Braungrau). "Ansicht" öffnet den Dialog "Spalten" (auf dem Handy das Blatt "Ansicht") mit Sortierung, Spalten und Filter-Chips; "Einstellungen" öffnet die zentralen Einstellungen. Beides erreicht man auch über die Knöpfe in der Kopfzeile, darum kann der Benutzer sie im Bearbeiten-Modus **ausblenden** (Auge), wie Routinen und Magic Push; standardmässig sind beide sichtbar. Sie lassen sich auch als Favorit wählen.
+- App-Launcher: die Karte **Einstellungen** zeigt eine rote Pille "Neustart", solange der rote Punkt am Zahnrad der Kopfzeile steht (Neustart nach einem Update ausstehend). Der Launcher-Knopf bekommt dafür keinen Punkt; der Punkt bleibt nur am Zahnrad in der Kopfzeile. Weg, sobald die neue Version läuft.
+- Symbole können jetzt aus mehreren Formen zusammengesetzt sein (das Auge mit ausgeschnittenem Zahnrad); bisher war ein Symbol eine einzelne Form.
+
+## [2.84.0] - 2026-10-17
+
+Geräte-Popup: Knopf "Integration in HA öffnen".
+
+Nicht veröffentlicht; enthalten in 2.85.0.
+
+### Hinzugefügt
+
+- Geräte-Popup, neben dem Geräte-Knopf: der Knopf **Integration in HA öffnen** (im gleichen Stil, auf derselben Zeile, auch auf dem Handy). Beide Knöpfe folgen einem Schema und sind kürzer als vorher: "Gerät in HA öffnen" und "Integration in HA öffnen". Er öffnet die Seite der Integration dieses Geräts in Home Assistant (zum Beispiel die ESPHome-Seite bei einem ESPHome-Gerät) und schliesst das Popup; bei ungespeicherten Änderungen fragt er zuerst nach, wie bei der Geräteseite. Geräte ohne Integration haben den Knopf nicht.
+
+### Geändert
+
+- Geräte-Popup: der Knopf "HA-Geräteseite öffnen" heisst jetzt **"Gerät in HA öffnen"** (kürzer, im gleichen Schema wie der Knopf zur Integration).
 
 ## [2.83.0] - 2026-10-17
 
@@ -3849,7 +3865,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.84.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.84.0
+[2.85.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.85.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0

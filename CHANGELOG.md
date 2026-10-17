@@ -7,15 +7,31 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [2.84.0] - 2026-10-17
+## [2.85.0] - 2026-10-17
 
-Pop-up of the device: button "Open integration page".
+App launcher: the apps "View" and "Settings".
 
-Includes the changes from 2.83.0.
+Includes the changes from 2.84.0 and 2.83.0.
 
 ### Added
 
-- Pop-up of the device, next to "Open device page": the button **Open integration page** (same style, on the same line; on the phone both read "Device in HA" and "Integration in HA" so they fit side by side). It opens the page of the integration of this device in Home Assistant (for example the ESPHome page for an ESPHome device) and closes the pop-up; with unsaved changes it asks first, like the device page. Devices without integration have no such button.
+- App launcher, group "Device Panel": two new apps, **View** (symbol: eye with a small gear, in blue) and **Settings** (gear, in brown-grey). "View" opens the dialog "Columns" (on the phone the sheet "View") with sorting, columns and filter chips; "Settings" opens the central settings. Both can also be reached by the buttons in the header, so the user can **hide them** in edit mode (eye), like Routines and Magic Push; both are visible by default. They can be made favorites too.
+- App launcher: the card **Settings** shows a red pill "Restart" as long as the red dot sits on the gear in the header (restart pending after an update). The launcher button gets no dot for it; the dot stays only at the gear in the header. Gone as soon as the new version runs.
+- Symbols may now be put together from several shapes (the eye with the gear cut out of it); until now a symbol was one single shape.
+
+## [2.84.0] - 2026-10-17
+
+Pop-up of the device: button "Open integration in HA".
+
+Not released; included in 2.85.0.
+
+### Added
+
+- Pop-up of the device, next to the device button: the button **Open integration in HA** (same style, on the same line, also on the phone). Both buttons follow one scheme and are shorter than before: "Open device in HA" and "Open integration in HA". It opens the page of the integration of this device in Home Assistant (for example the ESPHome page for an ESPHome device) and closes the pop-up; with unsaved changes it asks first, like the device page. Devices without integration have no such button.
+
+### Changed
+
+- Pop-up of the device: the button "Open device page" is now **"Open device in HA"** (shorter, same scheme as the integration button).
 
 ## [2.83.0] - 2026-10-17
 
@@ -3748,7 +3764,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.84.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.84.0
+[2.85.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.85.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0
