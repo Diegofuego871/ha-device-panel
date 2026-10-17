@@ -7,9 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.86.0] - 2026-10-17
+
+KI-Einschätzung: Knopf "Entfernen".
+
+Enthält die Änderungen von 2.85.0, 2.84.0 und 2.83.0.
+
+### Hinzugefügt
+
+- Geräte-Popup, KI-Einschätzung: neben "Neu erstellen" nimmt der neue Knopf **Entfernen** die Einschätzung weg, aus dem Popup und aus dem Speicher (neuer Befehl `device_panel/ai_clear`). Der Knopf "Mit KI einschätzen" steht dann wieder da; eine neue Einschätzung ist einen Tipp entfernt. Sie bleibt beim erneuten Öffnen des Popups weg, weil die gemerkte Einschätzung gelöscht ist, und fliesst auch nicht mehr in den Kontext einer späteren Einschätzung ein. Ohne Rückfrage, weil sie sich leicht neu erstellen lässt. Eine lange Einschätzung (mit Rückfragen) wurde man bisher nicht los.
+
 ## [2.85.0] - 2026-10-17
 
 App-Launcher: die Apps "Ansicht" und "Einstellungen".
+
+Nicht veröffentlicht; enthalten in 2.86.0.
 
 Enthält die Änderungen von 2.84.0 und 2.83.0.
 
@@ -3865,7 +3877,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.85.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.85.0
+[2.86.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.86.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0

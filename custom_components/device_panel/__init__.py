@@ -46,7 +46,7 @@ from .routines_ws import COMMANDS as ROUTINE_COMMANDS
 from .status import COMMANDS as STATUS_COMMANDS
 from .system_stats import COMMANDS as SYSTEM_COMMANDS
 from .status import StatusWatch
-from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, async_ask, async_assess, async_last, async_preview
+from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, async_ask, async_assess, async_clear, async_last, async_preview
 from .ai_prompt import DEFAULT_PROMPT
 from .const import (
     AI_PROMPT_MAX,
@@ -971,6 +971,14 @@ async def _ws_ai_last(hass: HomeAssistant, connection: websocket_api.ActiveConne
     connection.send_result(msg["id"], await async_last(hass, msg["device_id"]))
 
 
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/ai_clear", vol.Required("device_id"): str})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_ai_clear(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Die gemerkte KI-Einschätzung eines Geräts entfernen (Knopf "Entfernen" im Pop-up, seit 2.86.0); True, wenn eine da war."""
+    connection.send_result(msg["id"], await async_clear(hass, msg["device_id"]))
+
+
 @websocket_api.websocket_command(
     {
         vol.Required("type"): f"{DOMAIN}/ai_prompt_preview",
@@ -1125,6 +1133,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_ai_assess)
     websocket_api.async_register_command(hass, _ws_ai_ask)
     websocket_api.async_register_command(hass, _ws_ai_last)
+    websocket_api.async_register_command(hass, _ws_ai_clear)
     websocket_api.async_register_command(hass, _ws_ai_prompt_preview)
     websocket_api.async_register_command(hass, _ws_device)
     websocket_api.async_register_command(hass, _ws_availability)

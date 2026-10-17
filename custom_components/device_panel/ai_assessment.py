@@ -932,6 +932,14 @@ def _previous(item: dict[str, Any] | None, now: float) -> dict[str, Any] | None:
     return {k: v for k, v in out.items() if v is not None}
 
 
+async def async_clear(hass: HomeAssistant, device_id: str) -> bool:
+    """Die gemerkte Einschätzung eines Geräts entfernen (gilt auch für den Kontext späterer Einschätzungen); True, wenn eine da war."""
+    memory = await ai_memory.async_get(hass)
+    had = memory.get(device_id) is not None
+    memory.forget(device_id)
+    return had
+
+
 async def async_last(hass: HomeAssistant, device_id: str) -> dict[str, Any] | None:
     """Die gemerkte letzte Einschätzung eines Geräts für das Pop-up ({title, text, source, at}) oder None (Funktion aus, noch keine)."""
     if not effective(hass)[CONF_AI_ASSESSMENT]:

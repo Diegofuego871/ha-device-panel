@@ -1073,6 +1073,7 @@
           next: window.__aiNoNext ? [] : msg.language === "de" ? [`Folgefrage ${n}a?`, `Folgefrage ${n}b?`] : [`Follow-up ${n}a?`, `Follow-up ${n}b?`],
         };
       }
+      if (msg.type === "device_panel/ai_clear") { const had = Boolean(window.__aiLast?.[msg.device_id]); if (had) delete window.__aiLast[msg.device_id]; return had; }
       if (msg.type === "device_panel/ai_last") return window.__opts.ai_assessment ? window.__aiLast?.[msg.device_id] || null : null;
       if (msg.type === "device_panel/ai_prompt_preview") {
         // Wie ai_assessment.async_preview: schickt nichts, ersetzt {language} und {facts}.

@@ -4788,6 +4788,7 @@ class DevicePanel extends HTMLElement {
     } else if (action === "hide") this._hideDevice(this._detailId);
     else if (action === "ai") this._aiAssess(this._detailId);
     else if (action === "ai-ask") this._aiAsk(this._detailId, btn.dataset.q);
+    else if (action === "ai-clear") this._aiClear(this._detailId);
     else if (action === "ai-send") this._aiAsk(this._detailId, this.shadowRoot.querySelector('input[data-dlg="ai-q"]')?.value ?? "");
   }
 
@@ -4808,7 +4809,7 @@ class DevicePanel extends HTMLElement {
       source = st.source || "";
       body = `<div class="ai-card"><div class="ai-title">${mdi("sparkle", 16)}${escape(st.title || t("aiTitleDefault"))}</div>
         <div class="ai-text">${escape(st.text)}</div>
-        <div class="ai-foot">${escape(t("aiAt", at))} · <button type="button" class="linkbtn" data-dlg="ai">${escape(t("aiAgain"))}</button></div></div>
+        <div class="ai-foot">${escape(t("aiAt", at))} · <button type="button" class="linkbtn" data-dlg="ai">${escape(t("aiAgain"))}</button> · <button type="button" class="linkbtn" data-dlg="ai-clear">${escape(t("aiClear"))}</button></div></div>
         <div class="opt-short">${escape(t("aiNote"))}</div>${this._aiAskHtml(d, st)}`;
     } else if (st?.state === "error") {
       body = `<div class="opt-error">${escape(t("aiError", st.error))}</div>${st.detail ? `<div class="opt-short ai-detail">${escape(t("aiDetail", st.detail))}</div>` : ""}${btn(t("aiRetry"))}`;
@@ -4892,6 +4893,21 @@ class DevicePanel extends HTMLElement {
       }
     } catch (err) {
       // nur eine Zugabe: ohne sie bleibt der Knopf
+    }
+  }
+
+  // Einschätzung entfernen (seit 2.86.0): weg aus dem Pop-up und aus dem Speicher; der Knopf "Mit KI einschätzen" steht wieder da.
+  // Ohne Rückfrage, weil sie sich mit einem Tipp neu erstellen lässt; beim Öffnen wird sie nicht wieder geholt.
+  async _aiClear(id) {
+    if (!id || this._ai.get(id)?.state !== "done") return;
+    this._ai.delete(id);
+    this._aiLastTried.add(id);
+    this._renderDevice();
+    try {
+      await this._hass.callWS({ type: "device_panel/ai_clear", device_id: id });
+    } catch (err) {
+      // Im Speicher bleibt sie dann stehen; beim nächsten Öffnen kommt sie wieder (Neuladen der Seite holt sie erneut)
+      this._aiLastTried.delete(id);
     }
   }
 

@@ -150,3 +150,30 @@ async def test_discarded_glitches_are_counted(hass: HomeAssistant, setup) -> Non
         guard.level("sensor.x", st(70, base + 600), base + 600)
     now = t0 + 3 * 3600
     assert guard.ignored("sensor.x", now) == 3 and guard.ignored("sensor.x", now + 8 * 86400) == 0 and guard.ignored("sensor.y", now) == 0
+
+
+async def test_ai_clear_removes_the_remembered_assessment(hass: HomeAssistant, setup, hass_ws_client, monkeypatch) -> None:
+    """Knopf "Entfernen" (2.86.0): ai_clear löscht die gemerkte Einschätzung; ai_last liefert danach nichts, ein zweites Mal ist es False."""
+    dev, _source = _device(hass)
+    er.async_get(hass).async_get_or_create("light", "test", f"{dev.id}-l", device_id=dev.id)
+    hass.states.async_set("ai_task.test", "unknown")
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_options", "values": {"ai_assessment": True, "ai_task_entity": "ai_task.test"}})
+    assert (await client.receive_json())["success"]
+
+    async def fake(_hass: HomeAssistant, _entity: str | None, instructions: str) -> Any:
+        return "Überschrift\n\nText."
+
+    monkeypatch.setattr(ai_assessment, "_generate", fake)
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/ai_clear", "device_id": dev.id})
+    assert (await client.receive_json())["result"] is False  # nichts da
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/ai_assess", "device_id": dev.id, "language": "en"})
+    assert (await client.receive_json())["success"]
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/ai_last", "device_id": dev.id})
+    assert (await client.receive_json())["result"]["title"] == "Überschrift"
+    await client.send_json({"id": 5, "type": f"{DOMAIN}/ai_clear", "device_id": dev.id})
+    assert (await client.receive_json())["result"] is True
+    await client.send_json({"id": 6, "type": f"{DOMAIN}/ai_last", "device_id": dev.id})
+    assert (await client.receive_json())["result"] is None
+    await client.send_json({"id": 7, "type": f"{DOMAIN}/ai_clear", "device_id": dev.id})
+    assert (await client.receive_json())["result"] is False

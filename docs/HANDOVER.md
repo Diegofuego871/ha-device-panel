@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.86.0, KI-Einschätzung entfernen)
+
+- Wunsch des Nutzers (Screenshot Popup): ein Knopf, der die KI-Einschätzung wegnimmt, sie nimmt viel Platz ein. Umsetzung: Knopf "Entfernen" in der Fusszeile der Karte (`data-dlg="ai-clear"`, `_aiClear`), Backend `ai_assessment.async_clear` und WebSocket-Befehl `device_panel/ai_clear` (nur Administratoren, `AiMemory.forget`, liefert True, wenn eine da war). Ohne Rückfrage (leicht neu erstellbar). Die Einschätzung fliesst damit auch nicht mehr in den Kontext der nächsten ein. Tests: `test_ai_context`, Suite `aiclear`; Simulator kennt `ai_clear`.
+
 ## Stand (2.85.0, Apps "Ansicht" und "Einstellungen" im Launcher)
 
 - Wunsch des Nutzers (Screenshot Launcher, Gruppe "Device Panel"): die Ansichtseinstellungen (Symbol Auge mit Zahnrad, farbig) und die normalen Einstellungen als Apps; beide ausblendbar (nicht `locked`), weil es einen zweiten Weg gibt (Knöpfe in der Kopfzeile), standardmässig sichtbar. `apps.js` `BUILTIN` `view`/`settings`, `PANEL_COLOR`, Aktion `host._openView()` (Handy: Blatt, sonst Dialog "Spalten") und `host._openSettings()`. `MDI.viewSettings` ist ein zusammengesetztes Symbol (Auge mit durch eine Maske ausgeschnittenem Zahnrad); `mdiPath` nimmt Einträge, die mit "<" beginnen, als fertiges SVG-Innenleben.
