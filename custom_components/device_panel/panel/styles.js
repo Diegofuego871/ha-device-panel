@@ -1068,6 +1068,13 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .ent-copy:hover { background: var(--dp-hover); color: var(--dp-text); }
 .ent-copy:focus-visible { outline: 2px solid var(--dp-primary); }
 .ent-copy.done { color: var(--dp-success); }
+.dl-list { margin-bottom: 4px; }
+.entities li.dl-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; font-size: 14px; cursor: pointer; }
+.entities li.dl-row:hover { background: var(--dp-hover); }
+.entities li.dl-row:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
+.dl-row .ent-name small { overflow-wrap: anywhere; }
+.dl-ic { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin: -4px -6px -4px 0; color: var(--dp-text2); }
+.dl-ic.done { color: var(--dp-success); }
 .ent-state.bad { color: var(--dp-error); }
 
 /* Statistik-Fenster */

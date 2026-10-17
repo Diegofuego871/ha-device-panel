@@ -3,6 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.82.0, Link zum Gerät kopieren)
+
+- Wunsch des Nutzers (Screenshot Reiter Entitäten): ganz unten ein kopierbarer Link, der direkt zu dieser Geräteansicht führt, automatisch zusammengesetzt. Entscheide: nur im Reiter Entitäten, Adresse des Browsers; Frage, ob es in der App geht: zusätzlich "App-Link kopieren". Keine Mockups (Aufbau wie die Entitätenliste).
+- `device-panel.js`: `_deviceLink(id, kind)` (web: `top.location.origin` + `/device-panel?device=<id>`, app: `homeassistant://navigate/...`), `_deviceLinksHtml(d)` am Ende des Reiters "ent", `_copyLink` (Action `copy-link`, `_copyText`, Häkchen). Klasse `dl-row`/`dl-list` (nicht `lnk`: die gibt es schon als Link-Knopf). Die URL wird bei jedem Zeichnen und beim Kopieren neu gebildet.
+- Nicht geprüft: ob die Companion-App den App-Link öffnet (nur nach Dokumentation aufgebaut) und ob ein https-Link in der App oder im Browser aufgeht; Letzteres hängt vom Handy ab.
+- Suite `devlink` (Abschnitt, Adressen, Zwischenablage, Tastatur, Deep-Link öffnet dasselbe Gerät).
+
 ## Stand (2.81.0, Knopf "Home Assistant neu starten" im Launcher)
 
 - Wunsch des Nutzers (Screenshot des Launchers): oben ein Neustart-Knopf mit Bestätigung. Entscheide des Nutzers: Platz links neben "Bearbeiten", eigenes Rückfragefenster im Panel-Stil, nur Administratoren. Keine Mockups (Aufbau von Nutzer benannt, Knopf wie `.ap-x`).

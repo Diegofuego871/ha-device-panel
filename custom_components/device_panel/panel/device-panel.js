@@ -4532,6 +4532,45 @@ class DevicePanel extends HTMLElement {
     return { count: list.length, html: list.length ? `<ul class="entities">${items}</ul>${hint}` : "" };
   }
 
+  // Link zu diesem Gerät (seit 2.82.0): öffnet das Popup über /device-panel?device=<id> (Deep-Link, siehe _openFromUrl).
+  // web: Adresse, mit der der Benutzer gerade in HA ist; app: Schema der Companion-App (homeassistant://navigate/..., Aufbau nach der
+  // Dokumentation der App, ob sie sich damit öffnet, hängt vom Handy ab). Zusammengesetzt beim Zeichnen und beim Kopieren.
+  _deviceLink(id, kind) {
+    const path = `${PANEL_PATH}?device=${encodeURIComponent(id)}`;
+    if (kind === "app") return `homeassistant://navigate/${path}`;
+    let origin = "";
+    try {
+      origin = top.location.origin;
+    } catch {
+      origin = window.location.origin;
+    }
+    return `${origin}/${path}`;
+  }
+
+  _deviceLinksHtml(d) {
+    const row = (kind, label) => {
+      const url = this._deviceLink(d.id, kind);
+      return `<li class="dl-row" role="button" tabindex="0" data-dlg="copy-link" data-kind="${kind}">
+        <span class="ent-name">${escape(label)}<small>${escape(url)}</small></span>
+        <span class="dl-ic" aria-hidden="true">${mdi("copy", 16)}</span></li>`;
+    };
+    return `<h3>${escape(this._t("secDeviceLink"))}</h3><ul class="entities dl-list">${row("web", this._t("linkWeb"))}${row("app", this._t("linkApp"))}</ul>
+      <p class="dlg-note small">${escape(this._t("linkNote"))}</p>`;
+  }
+
+  async _copyLink(row) {
+    if (!(await this._copyText(this._deviceLink(this._detailId, row.dataset.kind), null))) return;
+    const ic = row.querySelector(".dl-ic");
+    if (!ic) return;
+    ic.classList.add("done");
+    ic.innerHTML = mdi("check", 16);
+    window.setTimeout(() => {
+      if (!ic.isConnected) return;
+      ic.classList.remove("done");
+      ic.innerHTML = mdi("copy", 16);
+    }, 1500);
+  }
+
   // Berührt der Benutzer das Fenster gerade oder wischt er darin? Dann baut das Abfragen (alle 10 s) den Inhalt nicht
   // neu auf: Auf dem iPhone bricht ein ersetzter Inhalt die Wischbewegung ab, die Seite dahinter scrollt mit und löst
   // das Neuladen der App aus (Rückmeldung des Nutzers).
@@ -4645,7 +4684,7 @@ class DevicePanel extends HTMLElement {
             : tab === "routine"
               ? `<div class="rt-root"></div>`
             : tab === "ent"
-              ? `<h3>${escape(this._t("secEntities", ents.count))}</h3>${ents.html}`
+              ? `<h3>${escape(this._t("secEntities", ents.count))}</h3>${ents.html}${this._deviceLinksHtml(d)}`
               : `<h3>${escape(this._t("secStats"))}</h3>${this._statTilesHtml(d)}
           ${this._aiHtml(d)}
           <h3>${escape(this._t("secConnection"))}</h3>${this._connSectionHtml(d)}
@@ -4712,6 +4751,7 @@ class DevicePanel extends HTMLElement {
     } else if (action === "stat") this._openStat(btn.dataset.range, btn.dataset.kind);
     else if (action === "more-info") this._openMoreInfo(btn.dataset.entity);
     else if (action === "copy-id") this._copyId(btn);
+    else if (action === "copy-link") this._copyLink(btn);
     else if (action === "fav") this._toggleFav(this._detailId);
     else if (action === "rename") this._renameStart();
     else if (action === "rename-cancel") this._renameCancel();

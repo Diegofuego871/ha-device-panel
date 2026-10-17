@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.82.0] - 2026-10-17
+
+Geräte-Popup, Reiter "Entitäten": den Link zum Gerät kopieren.
+
+### Hinzugefügt
+
+- Geräte-Popup, Reiter "Entitäten": ganz am Ende der Abschnitt **Link zu diesem Gerät** mit zwei Zeilen. **Link kopieren** kopiert die Adresse, mit der du gerade in Home Assistant bist, plus `/device-panel?device=<id>`; öffnet man ihn, zeigt das Panel dieses Gerät (derselbe Deep-Link wie beim Push). **App-Link kopieren** kopiert `homeassistant://navigate/device-panel?device=<id>`, die Form für die Home-Assistant-App. Ein Tipp zeigt ein Häkchen. Die Links werden beim Zeichnen und beim Kopieren zusammengesetzt, passen also immer zur benutzten Adresse. Grenzen: Von unterwegs geht ein Link nur, wenn seine Adresse von aussen erreichbar ist; ob der App-Link die Home-Assistant-App öffnet, hängt vom Handy ab (die Form folgt der Dokumentation der App, auf einem Handy nicht getestet).
+
 ## [2.81.0] - 2026-10-17
 
 App-Launcher: Knopf "Home Assistant neu starten" mit Rückfrage.
@@ -3813,6 +3821,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.81.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.81.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0

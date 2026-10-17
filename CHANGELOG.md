@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.82.0] - 2026-10-17
+
+Pop-up of the device, tab "Entities": copy the link to the device.
+
+### Added
+
+- Pop-up of the device, tab "Entities": at the very end the section **Link to this device** with two rows. **Copy link** copies the address you are using for Home Assistant right now plus `/device-panel?device=<id>`; opening it shows this device in the panel (the same deep link the push uses). **Copy app link** copies `homeassistant://navigate/device-panel?device=<id>`, the form of the Home Assistant app. A tap shows a check mark. The links are put together when drawing and when copying, so they always match the address in use. Limits: away from home a link works only if its address is reachable from outside; whether the app link opens the Home Assistant app depends on the phone (the form follows the documentation of the app, not tested on a phone).
+
 ## [2.81.0] - 2026-10-17
 
 App launcher: button "Restart Home Assistant" with a confirmation.
@@ -3712,6 +3720,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.81.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.81.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0
