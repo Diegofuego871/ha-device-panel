@@ -15,6 +15,10 @@ AI assessment: can be collapsed.
 
 - Pop-up of the device: the **AI assessment** can be **collapsed**. The header of the frame is now a button with an arrow; collapsed, only the header remains (the assessment, the follow-up questions and the note are hidden, a running request goes on). The state is saved **per user** (with the favorites, in the user data of Home Assistant, a local copy as fallback), so it stays collapsed in every device and after reloading until the user opens it again.
 
+### Changed
+
+- The sub-tab **"Default page"** in the settings section "Panel" is now called **"General"**.
+
 ## [2.89.0] - 2026-10-17
 
 Easter egg: a heartbeat in the pulse chart.

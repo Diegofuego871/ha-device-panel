@@ -1,7 +1,7 @@
 // Ansicht mit "Speichern" (2.87.0, docs/mockups/view-v3): Der Dialog "Ansicht" hat zwei Reiter, "Spalten" (Handy "Sortierung", pro Benutzer)
 // und "Filter-Chips" (für alle, nur Administratoren). Beide ändern nur einen Entwurf; "Speichern" schreibt die Chips an die Optionen und die
 // Ansicht in die Benutzerdaten, Schliessen mit Entwurf fragt nach. Ohne Administratorrecht gibt es nur den Reiter "Spalten" und keine
-// Optionen werden geladen. Der Abschnitt "Panel" der Einstellungen hat die Unterreiter "Standardseite" und "Updates". Alle Speichern-Knöpfe
+// Optionen werden geladen. Der Abschnitt "Panel" der Einstellungen hat die Unterreiter "Allgemein" und "Updates". Alle Speichern-Knöpfe
 // tragen das Disketten-Symbol. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions } from "../lib.mjs";
@@ -11,8 +11,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { cols: "Spalten", sort: "Sortierung", chips: "Filter-Chips", global: "Gilt für alle Benutzer, nur Administratoren sehen diesen Reiter.", panel: "Panel", start: "Standardseite", upd: "Updates", two: "2 Änderungen" },
-  en: { cols: "Columns", sort: "Sorting", chips: "Filter chips", global: "Applies to all users; only administrators see this tab.", panel: "Panel", start: "Default page", upd: "Updates", two: "2 changes" },
+  de: { cols: "Spalten", sort: "Sortierung", chips: "Filter-Chips", global: "Gilt für alle Benutzer, nur Administratoren sehen diesen Reiter.", panel: "Panel", start: "Allgemein", upd: "Updates", two: "2 Änderungen" },
+  en: { cols: "Columns", sort: "Sorting", chips: "Filter chips", global: "Applies to all users; only administrators see this tab.", panel: "Panel", start: "General", upd: "Updates", two: "2 changes" },
 };
 
 for (const lang of ["de", "en"]) {

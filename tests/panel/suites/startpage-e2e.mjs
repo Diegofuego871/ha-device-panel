@@ -1,5 +1,5 @@
 // Startseite (2.39.0, Wunsch des Nutzers; 2.39.1: gilt wie alles andere erst mit "Speichern"; seit 2.87.0 im Abschnitt "Panel", Unterreiter
-// "Standardseite"): Bereich "Startseite" mit dem Schalter "Als meine Startseite festlegen" und dem Hinweis "Gilt nur für dich". Die Wahl ist ein Entwurf (Etikett
+// "Allgemein"): Bereich "Startseite" mit dem Schalter "Als meine Startseite festlegen" und dem Hinweis "Gilt nur für dich". Die Wahl ist ein Entwurf (Etikett
 // "geändert", Zähler, "Speichern", Rückfrage beim Schliessen) und wird erst beim Speichern als default_panel ("device-panel") in die Benutzerdaten
 // "core" von Home Assistant geschrieben (frontend/set_user_data), ohne die übrigen Werte zu verlieren. Beim Einschalten merkt sich das Panel die
 // bisherige Startseite und stellt sie beim Ausschalten wieder her; ohne bisherige fällt der Eintrag weg (Vorgabe von HA). Fehler beim Speichern

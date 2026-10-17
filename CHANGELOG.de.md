@@ -15,6 +15,10 @@ KI-Einschätzung: lässt sich zuklappen.
 
 - Geräte-Popup: die **KI-Einschätzung** lässt sich **zuklappen**. Die Kopfzeile des Rahmens ist jetzt ein Knopf mit Pfeil; zugeklappt bleibt nur die Kopfzeile (Einschätzung, Rückfragen und Hinweis sind weg, eine laufende Anfrage läuft weiter). Der Stand wird **pro Benutzer** gespeichert (zusammen mit den Favoriten, in den Benutzerdaten von Home Assistant, eine lokale Kopie als Rückfall), bleibt also in jedem Gerät und nach dem Neuladen zugeklappt, bis der Benutzer sie wieder öffnet.
 
+### Geändert
+
+- Der Unterreiter **"Standardseite"** im Abschnitt "Panel" der Einstellungen heisst jetzt **"Allgemein"**.
+
 ## [2.89.0] - 2026-10-17
 
 Easter Egg: ein Herzschlag im Puls-Diagramm.

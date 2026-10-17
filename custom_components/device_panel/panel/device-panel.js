@@ -8057,7 +8057,7 @@ class DevicePanel extends HTMLElement {
     // Titel eines neuen Themas (seit 1.43.0): überall derselbe grosse Stil (.set-title, wie .mon-grp)
     const ttl = (key) => `<div class="set-title">${escape(t(key))}</div>`;
     const devTab = ["integrations", "types", "devs", "devset"].includes(st.sub?.devices) ? st.sub.devices : "integrations";
-    // Abschnitt "Panel" (seit 2.87.0): Unterreiter "Standardseite" und "Updates"
+    // Abschnitt "Panel" (seit 2.87.0): Unterreiter "Allgemein" und "Updates"
     const panelTab = st.sub?.panel === "pstart" ? "pstart" : "pupdates";
     // Reiter innerhalb eines Abschnitts; Zähler = ausgeblendete Einträge,
     // Punkt = Änderung im Entwurf (wie bei den Reitern der Überwachung).
@@ -8095,7 +8095,7 @@ class DevicePanel extends HTMLElement {
             : `<div class="nf-note integ-goto">${mdi("info", 16)}<div><p>${escape(t("integGoto"))} <button type="button" class="lnk" data-set="goto" data-key="integ">${escape(t("integGotoLink"))}</button></p></div></div>` +
               exTable("exclude_integrations", integrations, `${t("integIntroShow")} ${t("typeIntegIntro")}`, false, null, null, [typeExtra, connExtra])),
       // Wie Geräte erscheinen, nicht ob (seit 1.0.0).
-      // Standardseite und Updates des Panels (seit 2.87.0): die Startseite gilt nur für den Benutzer, alles andere für die Instanz; die Versionszeile steht oben ausserhalb
+      // Allgemein (Startseite) und Updates des Panels (seit 2.87.0): die Startseite gilt nur für den Benutzer, alles andere für die Instanz; die Versionszeile steht oben ausserhalb
       updates:
         subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"]], panelTab) +
         (panelTab === "pstart"
