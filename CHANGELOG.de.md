@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.81.0] - 2026-10-17
+
+App-Launcher: Knopf "Home Assistant neu starten" mit Rückfrage.
+
+### Hinzugefügt
+
+- App-Launcher (nur Administratoren): Ein Ein/Aus-Knopf in der Kopfzeile, links von "Bearbeiten", startet Home Assistant neu. Er fragt immer zuerst in einem eigenen Fenster ("Home Assistant neu starten?", mit dem Hinweis, dass Integrationen, Routinen und Verbindungen einige Minuten nicht verfügbar sind); die sichere Antwort "Abbrechen" hat den Fokus, Escape bricht ebenfalls ab. Erst "Neu starten" ruft den Dienst `homeassistant.restart` auf. Das Recht (nur Administratoren) prüft Home Assistant selbst, und es lehnt den Neustart bei ungültiger Konfiguration ab; die Ablehnung erscheint als Hinweis im Launcher. Die abbrechende Verbindung während des Neustarts ist kein Fehler. Im Bearbeiten-Modus und für Benutzer ohne Administratorrecht fehlt der Knopf.
+
 ## [2.80.0] - 2026-10-17
 
 Routinen können Zahlen und Auswahlen setzen; ein hängender Schaltbefehl endet nach 45 Sekunden.
@@ -3805,6 +3813,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.81.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.81.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0
 [2.78.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.78.0

@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.81.0, Knopf "Home Assistant neu starten" im Launcher)
+
+- Wunsch des Nutzers (Screenshot des Launchers): oben ein Neustart-Knopf mit Bestätigung. Entscheide des Nutzers: Platz links neben "Bearbeiten", eigenes Rückfragefenster im Panel-Stil, nur Administratoren. Keine Mockups (Aufbau von Nutzer benannt, Knopf wie `.ap-x`).
+- `apps.js`: `.ap-pw` in der Kopfzeile (nur `_admin()` und nicht im Bearbeiten-Modus), `data-ap="restart"` fragt über `host._askConfirm`; `device-panel.js`: `_askDiscard` ist jetzt ein Sonderfall von `_askConfirm(keys, onYes)` (dasselbe Fenster `discard-dlg`, Fokus auf der sicheren Antwort), `_restartHa()` ruft `homeassistant.restart` über `_callService`; Verbindungsabbruch ist kein Fehler (`isConnectionError`), Ablehnung durch HA erscheint als Snack. Das Recht prüft HA (`async_register_admin_service`), das Panel blendet den Knopf nur aus. Die Einstellungen haben weiter ihren eigenen Neustart-Knopf mit `window.confirm` (Versionszeile), unverändert.
+- Suite `restart` (Rückfrage, Abbrechen, Escape, Bestätigen genau ein Aufruf, Fehler, Verbindungsabbruch, Bearbeiten-Modus, Nicht-Administrator).
+
 ## Stand (2.80.0, Routinen setzen Zahlen und Auswahlen, 45-s-Zeitlimit)
 
 - Wunsch des Nutzers (Display mit `number.*_uhr_helligkeit`): Routinen sollen `number` und `select` setzen, beides auch im Reiter "Schalter"; hängende Befehle enden nach fest 45 s, ohne Einstellung. Entscheidungen des Nutzers, keine Mockups. Kein `button`.

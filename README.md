@@ -177,7 +177,7 @@ Switches an entity of a device once or on a schedule, without an automation.
 
 ## App launcher and log
 
-A button in the header opens a launcher with useful pages, in the symbols and colors of the settings of Home Assistant.
+A button in the header opens a launcher with useful pages, in the symbols and colors of the settings of Home Assistant. Administrators also find a power button there that restarts Home Assistant, always after a confirmation.
 
 | App launcher | Log |
 |---|---|

@@ -1841,6 +1841,8 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-title { flex: 1; min-width: 0; font-size: 17px; font-weight: 600; }
 .ap-link { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 6px; border: 0; border-radius: 8px; background: none; color: var(--dp-primary); font: inherit; font-size: 13.5px; cursor: pointer; }
 .ap-link:hover { background: var(--dp-primary-soft); }
+.ap-pw { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; color: var(--dp-text2); cursor: pointer; }
+.ap-pw:hover { background: var(--dp-hover); color: var(--dp-error); }
 .ap-done { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--dp-primary); color: #fff; font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; }
 .ap-x { display: none; place-items: center; flex: none; width: 36px; height: 36px; border: 1px solid var(--dp-divider); border-radius: 50%; background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
 .ap-x.show { display: grid; }
@@ -2010,6 +2012,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
   dialog.apps-dlg::backdrop { background: rgba(0,0,0,0.5); }
   .ap-head { padding: 12px 12px 8px 16px; }
   .ap-x { display: grid; width: 38px; height: 38px; }
+  .ap-pw { width: 38px; height: 38px; }
   .ap-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ap-view .sub-tabs { width: 170px; }
   .ap-ic { height: 44px; }

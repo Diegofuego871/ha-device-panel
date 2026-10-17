@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.81.0] - 2026-10-17
+
+App launcher: button "Restart Home Assistant" with a confirmation.
+
+### Added
+
+- App launcher (administrators only): a power button in the header, left of "Edit", restarts Home Assistant. It always asks first in a window of its own ("Restart Home Assistant?", with the note that integrations, routines and connections are unavailable for a few minutes); the safe answer "Cancel" has the focus, Escape cancels too. Only "Restart" calls the service `homeassistant.restart`. Home Assistant itself checks the right (administrators only) and refuses the restart if the configuration is invalid; the refusal shows as a note in the launcher. The broken connection during the restart is no error. The button is missing in edit mode and for users who are not administrators.
+
 ## [2.80.0] - 2026-10-17
 
 Routines can set numbers and selections; a hanging switching command ends after 45 seconds.
@@ -3704,6 +3712,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.81.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.81.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0
 [2.78.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.78.0

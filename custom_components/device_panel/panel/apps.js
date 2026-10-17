@@ -627,7 +627,7 @@ export class AppLauncher {
     const edit = this.ui.edit;
     const head = edit
       ? `<div class="ap-head"><b class="ap-title">${escape(this.t("appsEditTitle"))}</b><button type="button" class="ap-done" data-ap="done">${mdi("check", 16)}<span>${escape(this.t("appsDone"))}</span></button></div>`
-      : `<div class="ap-head"><b class="ap-title">${escape(this.t("appsTitle"))}</b><button type="button" class="ap-link" data-ap="edit">${mdi("pencil", 16)}<span>${escape(this.t("appsEditBtn"))}</span></button>
+      : `<div class="ap-head"><b class="ap-title">${escape(this.t("appsTitle"))}</b>${this._admin() ? `<button type="button" class="ap-pw" data-ap="restart" title="${escape(this.t("appsRestart"))}" aria-label="${escape(this.t("appsRestart"))}">${mdi("power", 18)}</button>` : ""}<button type="button" class="ap-link" data-ap="edit">${mdi("pencil", 16)}<span>${escape(this.t("appsEditBtn"))}</span></button>
         <button type="button" class="ap-x" data-ap="close" title="${escape(this.t("close"))}" aria-label="${escape(this.t("close"))}">${mdi("close", 18)}</button></div>`;
     const search = edit ? "" : `<label class="ap-search">${mdi("search", 18)}<input class="ap-q" type="search" value="${escape(this.ui.q)}" placeholder="${escape(this.t("appsSearch"))}" aria-label="${escape(this.t("appsSearch"))}" autocomplete="off">${this.host._fieldClearHtml("data-fc", "", this.ui.q)}</label>`;
     const html = `${head}<div class="ap-body">${search}<div class="ap-list">${edit ? this._editHtml() : this._listHtml()}</div></div>`;
@@ -893,6 +893,9 @@ export class AppLauncher {
     switch (b.dataset.ap) {
       case "open":
         return this.open(id);
+      case "restart":
+        // Immer mit Rückfrage; die sichere Antwort hat den Fokus
+        return this.host._askConfirm({ title: "restartTitle", note: "restartNote", no: "restartNo", yes: "restartYes" }, () => this.host._restartHa());
       case "ext":
         // Verweis öffnet von selbst in einem neuen Tab; Fenster danach zu
         window.setTimeout(() => this.close(), 0);

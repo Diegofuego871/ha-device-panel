@@ -261,6 +261,7 @@ const MDI = {
   verCheck: "M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z",
   verDownload: "M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z",
   flask: "M5,19A1,1 0 0,0 6,20H18A1,1 0 0,0 19,19C19,18.79 18.93,18.59 18.82,18.43L13,8.35V4H11V8.35L5.18,18.43C5.07,18.59 5,18.79 5,19M6,22A3,3 0 0,1 3,19C3,18.4 3.18,17.84 3.5,17.37L9,7.81V6A1,1 0 0,1 8,5V4A2,2 0 0,1 10,2H14A2,2 0 0,1 16,4V5A1,1 0 0,1 15,6V7.81L20.5,17.37C20.82,17.84 21,18.4 21,19A3,3 0 0,1 18,22H6M13,16L14.34,14.66L16.27,18H7.73L10.39,13.39L13,16M12.5,12A0.5,0.5 0 0,1 13,12.5A0.5,0.5 0 0,1 12.5,13A0.5,0.5 0 0,1 12,12.5A0.5,0.5 0 0,1 12.5,12Z",
+  power: "M16.56,5.44L15.11,6.89C16.84,7.94 18,9.83 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12C6,9.83 7.16,7.94 8.88,6.88L7.44,5.44C5.36,6.88 4,9.28 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12C20,9.28 18.64,6.88 16.56,5.44M13,3H11V13H13",
   reset: "M12,4C14.1,4 16.1,4.8 17.6,6.3C20.7,9.4 20.7,14.5 17.6,17.6C15.8,19.5 13.3,20.2 10.9,19.9L11.4,17.9C13.1,18.1 14.9,17.5 16.2,16.2C18.5,13.9 18.5,10.1 16.2,7.7C15.1,6.6 13.5,6 12,6V10.6L7,5.6L12,0.6V4M6.3,17.6C3.7,15 3.3,11 5.1,7.9L6.6,9.4C5.5,11.6 5.9,14.4 7.8,16.2C8.3,16.7 8.9,17.1 9.6,17.4L9,19.4C8,19 7.1,18.4 6.3,17.6Z",
   info: "M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
   cols: "M16,5V18H21V5M4,18H9V5H4M10,18H15V5H10V18Z",
@@ -3959,20 +3960,37 @@ class DevicePanel extends HTMLElement {
 
   // Rückfrage "Änderungen verwerfen?" als Pop-up in der Mitte, über jedem Fenster (eigenes modales Fenster)
   _askDiscard(onYes) {
+    this._askConfirm({ title: "discardTitle", note: "discardNote", no: "discardNo", yes: "discardYes" }, onYes);
+  }
+
+  // Dieselbe Rückfrage für andere Entscheidungen (zum Beispiel "Home Assistant neu starten?"); keys: Textschlüssel
+  _askConfirm(keys, onYes) {
     const dlg = this.shadowRoot.querySelector("dialog.discard-dlg");
     if (!dlg) {
       onYes();
       return;
     }
     this._discardYes = onYes;
-    dlg.innerHTML = `<div class="dd-card" role="alertdialog" aria-labelledby="dd-t"><b id="dd-t">${escape(this._t("discardTitle"))}</b><small>${escape(this._t("discardNote"))}</small>
-      <div class="dd-btns"><button type="button" class="dlg-btn" data-dd="no">${escape(this._t("discardNo"))}</button><button type="button" class="dlg-btn danger" data-dd="yes">${escape(this._t("discardYes"))}</button></div></div>`;
+    dlg.innerHTML = `<div class="dd-card" role="alertdialog" aria-labelledby="dd-t"><b id="dd-t">${escape(this._t(keys.title))}</b><small>${escape(this._t(keys.note))}</small>
+      <div class="dd-btns"><button type="button" class="dlg-btn" data-dd="no">${escape(this._t(keys.no))}</button><button type="button" class="dlg-btn danger" data-dd="yes">${escape(this._t(keys.yes))}</button></div></div>`;
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
       else dlg.setAttribute("open", "");
     }
-    // Fokus auf die sichere Antwort, damit Enter nichts verwirft
+    // Fokus auf die sichere Antwort, damit Enter nichts auslöst
     dlg.querySelector('[data-dd="no"]')?.focus({ preventScroll: true });
+  }
+
+  // Home Assistant neu starten (Knopf im Launcher, seit 2.81.0): erst nach der Rückfrage. Den Dienst prüft HA selbst (nur Administratoren)
+  // und lehnt bei ungültiger Konfiguration ab; beim Neustart bricht die Verbindung ab, das ist kein Fehler.
+  async _restartHa() {
+    const apps = this._apps;
+    apps?.snack(this._t("restartStarting"));
+    try {
+      await this._callService("homeassistant", "restart", {});
+    } catch (err) {
+      if (!isConnectionError(err)) apps?.snack(`${this._t("verRestartError")} ${errText(err)}`);
+    }
   }
 
   _bindDiscard(dlg) {
