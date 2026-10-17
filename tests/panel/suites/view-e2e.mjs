@@ -1,10 +1,8 @@
-// Ansicht pro Benutzer (docs/mockups/view-v1): Desktop mit Dialog
-// "Anpassen" (seit 0.26.0, docs/mockups/customize-v1: Auge, ziehen,
-// Pfeiltasten, Standard wiederherstellen), Sortieren im
-// Spaltenkopf, "Gruppen | Liste"; Handy mit Zeile "Sortiert nach" und Blatt
-// "Ansicht" (Sortierung, Richtung, Darstellung, Angaben auf der Karte).
-// Gespeichert pro Benutzer (frontend/set_user_data), getrennt für Desktop
-// und Handy, samt Filter-Chips. Deutsch und Englisch.
+// Ansicht pro Benutzer (docs/mockups/view-v1, seit 2.87.0 view-v3): Dialog "Ansicht" (Einstellungen-Dialog im Modus "Ansicht",
+// Reiter "Spalten" bzw. "Sortierung" und "Filter-Chips"). Desktop: Auge, ziehen, Pfeiltasten, Standard wiederherstellen,
+// "Gruppen | Liste", Sortieren im Spaltenkopf; Handy: Zeile "Sortierung & Ansicht", Sortierung, Richtung, Darstellung, Angaben auf der Karte.
+// Änderungen sind ein Entwurf (die Liste zeigt sie gleich), gespeichert wird erst mit "Speichern" (frontend/set_user_data),
+// Schliessen fragt nach und stellt den gespeicherten Stand wieder her. Getrennt für Desktop und Handy, samt Filter-Chips. Deutsch und Englisch.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
 
@@ -14,14 +12,14 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
-    btn: "Spalten", status: "Status", area: "Bereich", battery: "Batterie", avail: "Verfügbarkeit 24 Std.", list: "Liste",
+    btn: "Ansicht", status: "Status", area: "Bereich", battery: "Batterie", avail: "Verfügbarkeit 24 Std.", list: "Liste",
     sortDefault: "Standard (Ausfälle zuerst)", sortBattery: "Batterie", title: "Ansicht", viewLine: "Sortierung & Ansicht",
-    customize: "Anpassen", restore: "Standard wiederherstellen", done: "Fertig", fixed: "Gerät immer sichtbar", hideArea: "Bereich einblenden",
+    save: "Speichern", restore: "Standard wiederherstellen", done: "Fertig", fixed: "Gerät immer sichtbar", hideArea: "Bereich einblenden",
   },
   en: {
-    btn: "Columns", status: "Status", area: "Area", battery: "Battery", avail: "Availability 24 h", list: "List",
+    btn: "View", status: "Status", area: "Area", battery: "Battery", avail: "Availability 24 h", list: "List",
     sortDefault: "Default (offline first)", sortBattery: "Battery", title: "View", viewLine: "Sorting & view",
-    customize: "Customize", restore: "Restore default", done: "Done", fixed: "Device always visible", hideArea: "Show Area",
+    save: "Save", restore: "Restore default", done: "Done", fixed: "Device always visible", hideArea: "Show Area",
   },
 };
 const DEFAULT_COLS = "status,connection,avail,type,integration,battery,model,software,area,outages,via";
@@ -83,23 +81,24 @@ for (const lang of ["de", "en"]) {
 
     if (!mobile) {
       const heads = () => ev(`return [...r.querySelectorAll("thead th")].map(t=>t.textContent.trim()).join("|")`);
-      check(`[${tag}] Knopf "Spalten"`, (await ev(`return r.querySelector(".view-btn").textContent.trim()`)) === T.btn);
+      check(`[${tag}] Knopf "${T.btn}"`, (await ev(`return r.querySelector(".view-btn").textContent.trim()`)) === T.btn);
       await tap(".view-btn");
       // Dialog "Anpassen" wie HA (0.26.0, docs/mockups/customize-v1, A)
-      const D = "dialog.cols-dlg";
+      const D = "dialog.settings";
+      const save = async () => { await tap(`${D} [data-set="save"]`); await wait(`return r.querySelector("${D} .set-count.saved")`); };
       const state = () => ev(`return [...r.querySelectorAll('${D} [data-vtoggle]')].map(i=>i.dataset.key+(i.getAttribute("aria-pressed")==="true"?"+":"-")).join()`);
-      check(`[${tag}] Dialog "Anpassen" mit allen Spalten`, (await wait(`return r.querySelector("${D}").open`)) && (await text(`${D} h2`)) === T.customize && (await ev(`return [...r.querySelectorAll('${D} [data-vtoggle]')].map(i=>i.dataset.key).join()`)) === DEFAULT_COLS);
+      check(`[${tag}] Dialog "Anpassen" mit allen Spalten`, (await wait(`return r.querySelector("${D}").open`)) && (await text(`${D} h2`)) === T.title && (await ev(`return [...r.querySelectorAll('${D} [data-vtoggle]')].map(i=>i.dataset.key).join()`)) === DEFAULT_COLS);
       check(`[${tag}] aria-expanded`, (await ev(`return r.querySelector(".view-btn").getAttribute("aria-expanded")`)) === "true");
       check(`[${tag}] "Gerät" fest, Auge gesperrt`, (await ev(`const v=r.querySelector("${D} .vrow.fixed .vl"); return v.firstChild.textContent + " " + v.querySelector("small").textContent`)) === T.fixed && (await ev(`return !!r.querySelector("${D} .vrow.fixed .eye.dis") && !r.querySelector("${D} .vrow.fixed [data-vdrag]")`)));
       check(`[${tag}] ausgeblendete grau, ohne Griff, Auge zu`, (await ev(`const row=r.querySelector('${D} .vrow[data-key="area"]'); return row.classList.contains("off") && !row.querySelector("[data-vdrag]") && row.querySelector(".eye").getAttribute("aria-label")`)) === T.hideArea);
-      check(`[${tag}] Knöpfe unten`, (await text(`${D} .dlg-actions [data-vreset]`)) === T.restore && (await text(`${D} .dlg-actions [data-vdone]`)) === T.done);
+      check(`[${tag}] Knöpfe: "${T.restore}" im Reiter, unten "${T.save}" (mit Symbol, gesperrt) und "Schliessen"`, (await text(`${D} [data-vreset]`)) === T.restore && (await text(`${D} .dlg-actions [data-set="save"]`)) === T.save && (await ev(`const b=r.querySelector("${D} .dlg-actions [data-set='save']"); return b.disabled && !!b.querySelector("svg")`)));
       // Bereich ein, Status aus (Auge)
       await tap(`${D} [data-vtoggle="cols"][data-key="area"]`);
       await tap(`${D} [data-vtoggle="cols"][data-key="status"]`);
       const h1 = await heads();
       check(`[${tag}] Bereich ein, Status aus`, h1.endsWith(`|${T.area}`) && !h1.includes(`|${T.status}|`), h1);
       check(`[${tag}] Bereich nicht mehr unter dem Namen`, !(await ev(`return !!r.querySelector("tr.dev td:first-child .sub")`)));
-      check(`[${tag}] Dialog bleibt offen`, await ev(`return r.querySelector("${D}").open`));
+      check(`[${tag}] Dialog bleibt offen, "Speichern" frei, noch nichts gespeichert`, (await ev(`return r.querySelector("${D}").open && !r.querySelector("${D} [data-set='save']").disabled`)) && !(await lastSaved())?.desktop?.cols?.find(([k]) => k === "area")?.[1]);
       // Batterie nach oben ziehen (Maus), auf die Höhe von Status (ausgeblendet, ohne Griff)
       await drag(`${D} .vrow[data-key="battery"] .drag-h`, `${D} .vrow[data-key="status"] .vl`);
       check(`[${tag}] Batterie nach oben gezogen`, (await heads()).split("|")[1] === T.battery, await heads());
@@ -107,7 +106,8 @@ for (const lang of ["de", "en"]) {
       await (await handle(`${D} [data-vdrag][data-key="battery"]`)).focus();
       await p.keyboard.press("ArrowDown");
       check(`[${tag}] Pfeiltaste verschiebt`, (await ev(`return [...r.querySelectorAll('${D} [data-vtoggle]')].map(i=>i.dataset.key).slice(0,2).join()`)) === "status,battery" && (await ev(`return r.activeElement?.dataset.key === "battery"`)));
-      check(`[${tag}] gespeichert (Desktop)`, await savedSoon((v) => v.desktop.cols[1][0] === "battery" && v.desktop.cols.find(([k]) => k === "area")[1] === true && v.mobile.cols[0][0] === "status"));
+      await save();
+      check(`[${tag}] gespeichert (Desktop) erst mit "Speichern"`, await savedSoon((v) => v.desktop.cols[1][0] === "battery" && v.desktop.cols.find(([k]) => k === "area")[1] === true && v.mobile.cols[0][0] === "status"));
       await ev(`r.activeElement?.blur()`);
       await p.screenshot({ path: `${outDir}/view-cols-${tag.replace("/", "-")}.png` });
       // Escape schliesst, auch direkt nach einem Auge (Neuaufbau ersetzt das
@@ -118,14 +118,26 @@ for (const lang of ["de", "en"]) {
       await p.keyboard.press("Escape");
       // Der Knopf folgt dem Ereignis "close", das nach dem Schliessen
       // asynchron kommt: beides zusammen abwarten.
-      check(`[${tag}] Escape schliesst`, await wait(`return !r.querySelector("${D}").open && r.querySelector(".view-btn").getAttribute("aria-expanded") === "false"`));
-      // Standard wiederherstellen, Fertig
+      check(`[${tag}] Escape schliesst (ohne Änderung ohne Rückfrage)`, await wait(`return !r.querySelector("${D}").open && r.querySelector(".view-btn").getAttribute("aria-expanded") === "false"`));
+      // Schliessen mit Entwurf fragt nach; "Verwerfen" stellt die Liste auf den gespeicherten Stand zurück
+      await tap(".view-btn");
+      await wait(`return r.querySelector("${D}").open`);
+      const before = await heads();
+      await tap(`${D} [data-vtoggle="cols"][data-key="battery"]`);
+      check(`[${tag}] Entwurf: Liste zeigt es gleich`, (await heads()) !== before);
+      await p.keyboard.press("Escape");
+      check(`[${tag}] Escape mit Entwurf fragt nach`, await wait(`return !!r.querySelector("dialog.discard-dlg[open] [data-dd='yes']")`));
+      await tap("dialog.discard-dlg [data-dd='yes']");
+      check(`[${tag}] verworfen: Dialog zu, Liste und Speicher wie vorher`, (await wait(`return !r.querySelector("${D}").open`)) && (await heads()) === before && (await lastSaved()).desktop.cols.find(([k]) => k === "battery")[1] === true);
+      // Standard wiederherstellen, Speichern
       await tap(".view-btn");
       await wait(`return r.querySelector("${D}").open`);
       await tap(`${D} [data-vreset="cols"]`);
       check(`[${tag}] Standard wiederherstellen`, (await state()) === "status+,connection+,avail+,type+,integration+,battery+,model+,software+,area-,outages-,via-", await state());
-      await tap(`${D} .dlg-actions [data-vdone]`);
-      check(`[${tag}] Fertig schliesst`, await wait(`return !r.querySelector("${D}").open`));
+      await save();
+      check(`[${tag}] Speichern: Standard gespeichert, Dialog bleibt offen`, (await savedSoon((v) => v.desktop.cols[0][0] === "status" && v.desktop.cols.find(([k]) => k === "area")[1] === false)) && (await ev(`return r.querySelector("${D}").open`)));
+      await tap(`${D} .dlg-actions [data-set="close"]`);
+      check(`[${tag}] Schliessen schliesst`, await wait(`return !r.querySelector("${D}").open`));
       // Klick auf den Hintergrund schliesst, ohne ein Gerät zu öffnen
       await tap(".view-btn");
       await wait(`return r.querySelector("${D}").open`);
@@ -149,16 +161,17 @@ for (const lang of ["de", "en"]) {
       // Der Schalter "Gruppen | Liste" steht seit 1.12.0 im Dialog "Spalten", nicht mehr in der Chip-Zeile.
       check(`[${tag}] kein Schalter in der Chip-Zeile`, !(await ev(`return !!r.querySelector(".chips [data-flat], .chips .vseg")`)));
       await tap(".view-btn");
-      await wait(`return r.querySelector("dialog.cols-dlg").open`);
-      check(`[${tag}] Dialog "Spalten": Gruppen | Liste, Gruppen aktiv, Hinweis`, (await ev(`return [...r.querySelectorAll('dialog.cols-dlg [data-vflat]')].map(b=>b.dataset.vflat + (b.classList.contains("on") ? "+" : "-")).join()`)) === "0+,1-" && (await text("dialog.cols-dlg .vnote")).startsWith(lang === "de" ? "Gruppen:" : "Groups:"), await text("dialog.cols-dlg .vnote"));
-      await tap('dialog.cols-dlg [data-vflat="1"]');
-      check(`[${tag}] Liste gewählt, Dialog bleibt offen`, await wait(`return r.querySelector('dialog.cols-dlg [data-vflat="1"]').classList.contains("on") && r.querySelector("dialog.cols-dlg").open`));
-      await tap('dialog.cols-dlg [data-vreset]');
-      check(`[${tag}] "${T.restore}" stellt auch Gruppen wieder her`, await wait(`return r.host._view.flat === false && r.querySelector('dialog.cols-dlg [data-vflat="0"]').classList.contains("on")`));
-      await tap('dialog.cols-dlg [data-vflat="1"]');
+      await wait(`return r.querySelector("${D}").open`);
+      check(`[${tag}] Dialog "Spalten": Gruppen | Liste, Gruppen aktiv, Hinweis`, (await ev(`return [...r.querySelectorAll('dialog.settings [data-vflat]')].map(b=>b.dataset.vflat + (b.classList.contains("on") ? "+" : "-")).join()`)) === "0+,1-" && (await text("dialog.settings .vnote")).startsWith(lang === "de" ? "Gruppen:" : "Groups:"), await text("dialog.settings .vnote"));
+      await tap('dialog.settings [data-vflat="1"]');
+      check(`[${tag}] Liste gewählt, Dialog bleibt offen`, await wait(`return r.querySelector('dialog.settings [data-vflat="1"]').classList.contains("on") && r.querySelector("dialog.settings").open`));
+      await tap('dialog.settings [data-vreset]');
+      check(`[${tag}] "${T.restore}" stellt auch Gruppen wieder her`, await wait(`return r.host._view.flat === false && r.querySelector('dialog.settings [data-vflat="0"]').classList.contains("on")`));
+      await tap('dialog.settings [data-vflat="1"]');
       await wait(`return r.host._view.flat === true`);
-      await tap('dialog.cols-dlg [data-vdone]');
-      await wait(`return !r.querySelector("dialog.cols-dlg").open`);
+      await save();
+      await tap('dialog.settings .dlg-actions [data-set="close"]');
+      await wait(`return !r.querySelector("dialog.settings").open`);
       await tap('th .th-sort[data-sort="battery"]');
       const bats = await ev(`return [...r.querySelectorAll("tr.dev")].map(tr=>{const m=tr.children[6].textContent.match(/(\\d+) %/); return m?Number(m[1]):null})`);
       const withVal = bats.filter((x) => x != null);
@@ -191,22 +204,26 @@ for (const lang of ["de", "en"]) {
       const sortText = () => ev(`return r.querySelector(".sort-btn .val").textContent.trim()`);
       check(`[${tag}] Zeile "Sortiert nach"`, (await sortText()) === T.sortDefault, await sortText());
       check(`[${tag}] Handy: Knopf oben entfällt, Zeile "Sortierung & Ansicht" statt Pille`, (await ev(`return getComputedStyle(r.querySelector(".view-btn")).display === "none"`)) && (await ev(`return r.querySelector(".sort-btn .lbl").textContent`)) === T.viewLine);
+      const save = async () => { await tap('dialog.settings [data-set="save"]'); await wait(`return r.querySelector("dialog.settings .set-count.saved")`); };
       await tap(".sort-btn");
-      check(`[${tag}] Blatt "Ansicht"`, (await wait(`return r.querySelector("dialog.view").open`)) && (await ev(`return r.querySelector("dialog.view h2").textContent`)) === T.title);
-      const vbox = await ev(`const q = r.querySelector("dialog.view").getBoundingClientRect(); const a = r.querySelector("dialog.view .dlg-actions")?.getBoundingClientRect(); return [Math.round(q.width), Math.round(q.height), Math.round(q.top), innerWidth, innerHeight, a ? Math.round(a.bottom) : -1]`);
+      check(`[${tag}] Blatt "Ansicht"`, (await wait(`return r.querySelector("dialog.settings").open`)) && (await ev(`return r.querySelector("dialog.settings h2").textContent`)) === T.title);
+      const vbox = await ev(`const q = r.querySelector("dialog.settings").getBoundingClientRect(); const a = r.querySelector("dialog.settings .dlg-actions")?.getBoundingClientRect(); return [Math.round(q.width), Math.round(q.height), Math.round(q.top), innerWidth, innerHeight, a ? Math.round(a.bottom) : -1]`);
       check(`[${tag}] Blatt "Ansicht": Vollbild, Knopfleiste am unteren Rand`, vbox[0] === vbox[3] && vbox[1] === vbox[4] && vbox[2] === 0 && Math.abs(vbox[5] - vbox[4]) <= 1, JSON.stringify(vbox));
-      await tap('dialog.view [data-vsort="battery"]');
-      check(`[${tag}] Batterie gewählt`, (await sortText()).startsWith(T.sortBattery) && (await ev(`return r.querySelector('dialog.view [data-vsort="battery"]').classList.contains("on")`)));
+      await tap('dialog.settings [data-vsort="battery"]');
+      check(`[${tag}] Batterie gewählt`, (await sortText()).startsWith(T.sortBattery) && (await ev(`return r.querySelector('dialog.settings [data-vsort="battery"]').classList.contains("on")`)));
       await p.screenshot({ path: `${outDir}/view-sheet-${tag.replace("/", "-")}.png` });
       // Angaben: Verbindung aus, Bereich aus, Batterie ein
-      await tap('dialog.view [data-vtoggle="fields"][data-key="connection"]');
-      await tap('dialog.view [data-vtoggle="fields"][data-key="area"]');
-      await tap('dialog.view [data-vtoggle="fields"][data-key="battery"]');
+      await tap('dialog.settings [data-vtoggle="fields"][data-key="connection"]');
+      await tap('dialog.settings [data-vtoggle="fields"][data-key="area"]');
+      await tap('dialog.settings [data-vtoggle="fields"][data-key="battery"]');
       // Batterie per Finger ganz nach oben
-      await drag('dialog.view .vrow[data-key="battery"] .drag-h', 'dialog.view .vrow[data-key="connection"] .drag-h');
-      check(`[${tag}] Batterie zuoberst`, (await ev(`return r.querySelector('dialog.view .vlist .vrow')?.dataset.key`)) === "battery");
-      await tap('dialog.view .dlg-actions [data-vdone]');
-      check(`[${tag}] Fertig schliesst`, await wait(`return !r.querySelector("dialog.view").open`));
+      await drag('dialog.settings .vrow[data-key="battery"] .drag-h', 'dialog.settings .vrow[data-key="connection"] .drag-h');
+      check(`[${tag}] Batterie zuoberst`, (await ev(`return r.querySelector('dialog.settings .vlist .vrow')?.dataset.key`)) === "battery");
+      check(`[${tag}] Entwurf: Karte zeigt es gleich, noch nichts gespeichert`, (await ev(`return r.host._view.fields[0][0] === "battery"`)) && !((await lastSaved())?.mobile?.sort === "battery"));
+      await save();
+      check(`[${tag}] gespeichert (Handy)`, await savedSoon((v) => v.mobile.sort === "battery" && v.mobile.fields[0][0] === "battery"));
+      await tap('dialog.settings .dlg-actions [data-set="close"]');
+      check(`[${tag}] Schliessen schliesst`, await wait(`return !r.querySelector("dialog.settings").open`));
       const card = await ev(`const c=[...r.querySelectorAll(".mc")].find(x=>x.textContent.includes("Temperatur Keller")); return { sb: !!c.querySelector(".sb"), meta: c.querySelector(".sb2")?.textContent || "" }`);
       check(`[${tag}] Karte ohne Verbindungszeile, Batterie vorn, ohne Bereich`, !card.sb && card.meta.trim().startsWith("0 %") && !card.meta.includes("Keller"), JSON.stringify(card));
       // Gruppen: nach Batterie innerhalb der Gruppen
@@ -214,11 +231,12 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Ausgefallene nach Batterie`, JSON.stringify(off) === JSON.stringify(["Temperatur Keller", "Bewegungsmelder Flur", "Thermostat Bad", "Steckdose Terrasse"]), JSON.stringify(off));
       // Richtung absteigend und Liste
       await tap(".sort-btn");
-      await wait(`return r.querySelector("dialog.view").open`);
-      await tap('dialog.view [data-vdir="desc"]');
-      await tap('dialog.view [data-vflat="1"]');
-      await tap('dialog.view .dlg-actions [data-vdone]');
-      await wait(`return !r.querySelector("dialog.view").open`);
+      await wait(`return r.querySelector("dialog.settings").open`);
+      await tap('dialog.settings [data-vdir="desc"]');
+      await tap('dialog.settings [data-vflat="1"]');
+      await save();
+      await tap('dialog.settings .dlg-actions [data-set="close"]');
+      await wait(`return !r.querySelector("dialog.settings").open`);
       const names = await ev(`return [...r.querySelectorAll(".dev")].map(d=>(d.querySelector(".nm")||d.children[1]).childNodes[0].textContent.trim())`);
       check(`[${tag}] Liste ohne Köpfe, höchste Batterie zuerst`, !(await ev(`return !!r.querySelector(".gh")`)) && names[0].startsWith("Rauchmelder Flur"), names.slice(0, 3).join(" | "));
       check(`[${tag}] gespeichert (Handy)`, await savedSoon((v) => v.mobile.sort === "battery" && v.mobile.dir === "desc" && v.mobile.flat === true && v.mobile.fields[0][0] === "battery" && v.desktop.sort === "default"));
@@ -226,12 +244,19 @@ for (const lang of ["de", "en"]) {
       await p.screenshot({ path: `${outDir}/view-list-${tag.replace("/", "-")}.png` });
       // Zurücksetzen im Blatt
       await tap(".sort-btn");
-      await wait(`return r.querySelector("dialog.view").open`);
-      await tap('dialog.view [data-vreset]');
-      check(`[${tag}] Zurücksetzen im Blatt`, (await sortText()) === T.sortDefault && (await ev(`return !!r.querySelector(".gh") && r.querySelector('dialog.view .vlist .vrow').dataset.key === "connection"`)));
-      // Vollbild (2.24.0): kein Hintergrund mehr, das Kreuz schliesst
-      await tap("dialog.view .dlg-close");
-      check(`[${tag}] Kreuz schliesst`, await wait(`return !r.querySelector("dialog.view").open`));
+      await wait(`return r.querySelector("dialog.settings").open`);
+      await tap('dialog.settings [data-vreset]');
+      check(`[${tag}] Zurücksetzen im Blatt`, (await sortText()) === T.sortDefault && (await ev(`return !!r.querySelector(".gh") && r.querySelector('dialog.settings .vlist .vrow').dataset.key === "connection"`)));
+      // Kreuz mit Entwurf: fragt nach; "Verwerfen" stellt den gespeicherten Stand wieder her (Batterie, absteigend, Liste)
+      await tap("dialog.settings .dlg-close");
+      check(`[${tag}] Kreuz mit Entwurf fragt nach`, await wait(`return !!r.querySelector("dialog.discard-dlg[open] [data-dd='yes']")`));
+      await tap("dialog.discard-dlg [data-dd='yes']");
+      check(`[${tag}] verworfen: Blatt zu, gespeicherte Sortierung zurück`, (await wait(`return !r.querySelector("dialog.settings").open`)) && (await sortText()).startsWith(T.sortBattery) && (await ev(`return r.host._view.flat === true && r.host._view.dir === "desc"`)));
+      // Vollbild (2.24.0): kein Hintergrund mehr, das Kreuz schliesst (ohne Entwurf ohne Rückfrage)
+      await tap(".sort-btn");
+      await wait(`return r.querySelector("dialog.settings").open`);
+      await tap("dialog.settings .dlg-close");
+      check(`[${tag}] Kreuz schliesst`, await wait(`return !r.querySelector("dialog.settings").open`));
     }
     check(`[${tag}] kein fehlender Text`, !(await ev(`return r.innerHTML.includes("undefined") || r.innerHTML.includes("NaN")`)));
     check(`[${tag}] keine JS-Fehler`, errors.length === 0, errors.join("; "));

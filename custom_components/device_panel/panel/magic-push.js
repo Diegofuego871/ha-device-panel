@@ -783,7 +783,7 @@ export class MagicPush {
     const status = this.statusParts(r);
     const title = renaming
       ? `<div class="mg-t"><input class="mg-input" type="text" data-mg="rename-input" maxlength="${this.limit("name", 60)}" value="${esc(this.ui.renameValue)}" aria-label="${esc(t("mgRenameLabel"))}">
-          <div class="mg-btns small"><button type="button" class="dlg-btn" data-mg="rename-cancel">${esc(t("mgCancel"))}</button><button type="button" class="dlg-btn primary" data-mg="rename-save">${esc(t("mgSave"))}</button></div></div>`
+          <div class="mg-btns small"><button type="button" class="dlg-btn" data-mg="rename-cancel">${esc(t("mgCancel"))}</button><button type="button" class="dlg-btn primary" data-mg="rename-save">${this.h.mdi("save", 18)}${esc(t("mgSave"))}</button></div></div>`
       : `<div class="mg-t"><b>${esc(r.name)}</b><small>${esc(this.sentence(r))}</small><small class="mg-status">${status.join(" · ")}</small></div>`;
     const sw = `<label class="switch"><input type="checkbox" data-mg="toggle" data-id="${esc(r.id)}"${r.enabled ? " checked" : ""} aria-label="${esc(r.name)}"><span></span></label>`;
     let acts = "";
@@ -1548,7 +1548,7 @@ export class MagicPush {
     else body = this.step5Html();
     const last = step === STEPS;
     const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-mg="${step === 1 ? "cancel" : "back"}">${esc(step === 1 ? t("mgCancel") : t("mgBack"))}</button>
-      ${last ? `<button type="button" class="dlg-btn primary" data-mg="save"${this.canNext() && !w.saving ? "" : " disabled"}>${esc(t("mgSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-mg="next"${this.canNext() ? "" : " disabled"}>${esc(t("mgNext"))}</button>`}</div>`;
+      ${last ? `<button type="button" class="dlg-btn primary" data-mg="save"${this.canNext() && !w.saving ? "" : " disabled"}>${this.h.mdi("save", 18)}${esc(t("mgSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-mg="next"${this.canNext() ? "" : " disabled"}>${esc(t("mgNext"))}</button>`}</div>`;
     // Rückfrage beim Schliessen als Pop-up in der Mitte des Fensters (seit 2.16.0); der Rest dahinter ist gesperrt (inert)
     const lock = w.confirmClose ? " inert" : "";
     const discard = w.confirmClose

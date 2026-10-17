@@ -409,7 +409,7 @@ export class StatusUi {
     const saved = !n && this.ui.saved;
     const status = n ? t("settingsChanges", n) : saved ? t("settingsSavedShort") : "";
     foot.innerHTML = `<div class="dlg-actions"><span class="set-count${saved ? " saved" : ""}" role="status" data-st-count>${escape(status)}</span>
-      <button type="button" class="dlg-btn primary" data-st-save ${n && !bad && !this.saving ? "" : "disabled"}>${escape(this.saving ? t("settingsSaving") : t("settingsSave"))}</button>
+      <button type="button" class="dlg-btn primary" data-st-save ${n && !bad && !this.saving ? "" : "disabled"}>${this.h.mdi("save", 18)}${escape(this.saving ? t("settingsSaving") : t("settingsSave"))}</button>
       ${n ? `<button type="button" class="dlg-btn" data-st-discard>${escape(t("discardYes"))}</button>` : `<button type="button" class="dlg-btn" data-st-close>${escape(t("close"))}</button>`}</div>`;
   }
 

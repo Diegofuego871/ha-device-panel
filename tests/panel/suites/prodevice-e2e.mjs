@@ -57,10 +57,14 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Rückgängig: Zähler wieder ${n0}`, await wait(`return r.querySelector('[data-key="devset"] .sub-n').textContent === ${JSON.stringify(String(n0))}`));
 
     // Darstellung: nur noch Filter-Chips
-    await tap('[data-set="section"][data-id="devices"]');
-    await tap('[data-set="section"][data-id="look"]');
-    check(`[${tag}] Darstellung: keine Unterreiter, keine Listen für Verbindungsart und Empfang`, await ev(`return !r.querySelector('[data-id="look"] ~ .set-sec-body .sub-tab') && !r.querySelector('select[data-sig-mode]') && !r.querySelector(".ovr-opt") && !!r.querySelector(".ex-title")`));
-    await tap('[data-set="section"][data-id="look"]');
+    await tap('dialog.settings [data-set="close"]');
+    await tap(mobile ? "[data-view-open]" : ".view-btn");
+    await wait(`return !!r.querySelector("dialog.settings .sub-tab")`);
+    await tap('[data-set="vtab"][data-key="chips"]');
+    check(`[${tag}] Ansicht › Filter-Chips: keine Listen für Verbindungsart und Empfang`, await ev(`return r.querySelectorAll("dialog.settings .sub-tab").length === 2 && !r.querySelector('select[data-sig-mode]') && !r.querySelector(".ovr-opt") && !!r.querySelector(".ex-title")`));
+    await tap('dialog.settings [data-set="close"]');
+    await tap(".gear-btn");
+    await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
 
     // Überwachung und Meldungen: Reiter Empfang
     await tap('[data-set="section"][data-id="monitor"]');

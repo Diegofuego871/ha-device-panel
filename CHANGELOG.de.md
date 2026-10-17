@@ -7,9 +7,31 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.87.0] - 2026-10-17
+
+Ansicht mit "Speichern": ein Dialog "Ansicht" mit zwei Reitern; das Panel bekommt die Unterreiter "Standardseite" und "Updates".
+
+Enthält die Änderungen aus 2.86.0.
+
+### Hinzugefügt
+
+- Dialog **Ansicht** (Knopf "Ansicht" über der Liste; am Handy die Zeile "Sortierung & Ansicht"; auch die App "Ansicht" im Launcher): ein Dialog mit zwei Reitern. **Spalten** (am Handy **Sortierung**) enthält, was bisher im Dialog "Spalten" und im Blatt "Ansicht" stand: Gruppen oder Liste, Spalten (Desktop), Sortierung, Richtung und Angaben auf der Karte (Handy). Das gilt **pro Benutzer**, für Desktop und Handy getrennt. **Filter-Chips** enthält den Chip-Editor (zeigen, ausblenden, umordnen, anheften, Vorschau), aus den Einstellungen hierher gezogen; das gilt für **alle Benutzer**, und nur **Administratoren** sehen den Reiter. Ohne Administratorrecht hat der Dialog nur den ersten Reiter und lädt keine Optionen.
+- **Speichern** für die Ansicht: beide Reiter ändern nur einen Entwurf. Die Liste dahinter zeigt die Änderung gleich, behalten wird sie (pro Benutzer in den Benutzerdaten, die Chips in den Optionen der Integration) aber erst mit **Speichern**. Der Zähler nennt beide Änderungen, ein Punkt markiert den geänderten Reiter. Schliessen mit Entwurf fragt "Änderungen verwerfen?"; "Verwerfen" stellt die Liste auf den gespeicherten Stand zurück. Der Reiter "Filter-Chips" lässt sich auch speichern, während er noch lädt.
+- Die Einstellungen: der Abschnitt **Panel** (bisher "Panel-Version") hat zwei Unterreiter. **Standardseite**: der Schalter "Als meine Startseite festlegen" mit dem Hinweis "Gilt nur für dich, nicht für andere Benutzer". **Updates**: Versionszeile, Vorabversionen, Prüfung, Uhrzeit und automatische Installation wie bisher.
+- Jeder **Speichern**-Knopf trägt jetzt das Disketten-Symbol vor dem Text, im gleichen Stil wie das Auge am Ausblenden-Knopf: Geräte-Popup, Einstellungen, die Fenster von Status, Routinen und Magic Push sowie der Launcher.
+- Das Symbol "Auge mit kleinem Zahnrad" steht jetzt auch am Knopf "Ansicht" und in der Zeile "Sortierung & Ansicht" am Handy (vorher: das Spaltensymbol und die Sortierpfeile).
+
+### Geändert
+
+- Der Knopf "Spalten" heisst jetzt **Ansicht** (Titel des Dialogs "Ansicht"); der alte Dialog "Spalten" und das Blatt "Ansicht" entfallen, ersetzt durch den Dialog oben.
+- Der Abschnitt "Ansicht" entfällt in den Einstellungen; Startseite und Filter-Chips sind wie oben beschrieben umgezogen.
+- Ein Filter oder Bereich, der in der Liste gewählt wird (Bereich, Integration, Chips, Sortierung im Tabellenkopf), gilt weiter sofort und wird gleich gespeichert; nur die Einstellungen im Dialog "Ansicht" warten auf "Speichern".
+
 ## [2.86.0] - 2026-10-17
 
 KI-Einschätzung: Knopf "Entfernen".
+
+Nicht veröffentlicht; enthalten in 2.87.0.
 
 ### Hinzugefügt
 
@@ -3873,7 +3895,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.86.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.86.0
+[2.87.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.87.0
 [2.85.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.85.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0

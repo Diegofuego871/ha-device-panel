@@ -42,9 +42,9 @@ for (const lang of ["de", "en"]) {
     const chips = () => ev(`return [...r.querySelectorAll(".chip[data-conn]")].map(c=>c.dataset.conn).join()`);
     const lastSet = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_options").at(-1)?.values);
     const openDisplay = async () => {
-      await tap(".gear-btn");
-      await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-      await tap('[data-set="section"][data-id="look"]');
+      await tap(mobile ? "[data-view-open]" : ".view-btn");
+      await wait(`return !!r.querySelector("dialog.settings .sub-tab")`);
+      await tap('[data-set="vtab"][data-key="chips"]');
     };
     // Speichern: Dialog bleibt offen ("Gespeichert"), danach schliessen.
     const save = async () => {
@@ -60,14 +60,14 @@ for (const lang of ["de", "en"]) {
     await tap('.chip[data-conn="thread"]');
     check(`[${tag}] Thread-Filter aktiv`, await wait(`return r.querySelectorAll(".dev[data-open]").length === 2`));
     await openDisplay();
-    check(`[${tag}] Darstellung: nur die Filter-Chips, ohne Unterreiter`, await ev(`return !r.querySelector("dialog.settings .sub-tab") && !!r.querySelector("dialog.settings .ex-title")`));
+    check(`[${tag}] Ansicht, Reiter Filter-Chips: nur zwei Reiter (Spalten, Filter-Chips)`, await ev(`return r.querySelectorAll("dialog.settings .sub-tab").length === 2 && !!r.querySelector("dialog.settings .ex-title")`));
     const rows = await ev(`return [...r.querySelectorAll('input[data-list="hide_connections"]')].map(i=>i.dataset.value + (i.checked ? "+" : "-")).join()`);
     check(`[${tag}] alle Arten angezeigt, auch ohne Geräte (Matter, LAN)`, rows === "thread+,wifi+,ble+,zigbee+,ethernet+,cloud+,matter+,network+,unknown+,zwave+", rows);
     check(`[${tag}] Zeile mit Zahl`, (await ev(`const row=r.querySelector('input[data-list="hide_connections"][data-value="thread"]').closest(".ex-row"); return row.querySelector(".ex-name").firstChild.textContent + "|" + row.querySelector("small").textContent`)) === `${T.thread}|${T.threadSub}`);
     await tap('input[data-list="hide_connections"][data-value="thread"]');
     await tap('input[data-list="hide_connections"][data-value="ble"]');
-    check(`[${tag}] Zusammenfassung und Zähler`, (await text('[data-id="look"] .set-sec-sum')) === T.two && (await text(".set-count")) === T.one, `${await text('[data-id="look"] .set-sec-sum')} / ${await text(".set-count")}`);
-    await ev(`r.querySelector('input[data-list="hide_connections"]').closest(".set-sec-body").scrollIntoView({ block: "end" })`);
+    check(`[${tag}] Zusammenfassung und Zähler`, (await ev(`return !!r.querySelector('.sub-tab[data-key="chips"].chg')`)) && (await text(".set-count")) === T.one, await text(".set-count"));
+    await ev(`r.querySelector('input[data-list="hide_connections"]').closest(".dlg-body").scrollIntoView({ block: "end" })`);
     await p.screenshot({ path: `${outDir}/chips-settings-${tag.replace("/", "-")}.png` });
     check(`[${tag}] gespeichert`, (await save()) && JSON.stringify(await lastSet()) === JSON.stringify({ hide_connections: ["ble", "thread"] }), JSON.stringify(await lastSet()));
     check(`[${tag}] Chips ohne Thread und Bluetooth`, await wait(`return ![...r.querySelectorAll(".chip[data-conn]")].some(c=>["thread","ble"].includes(c.dataset.conn))`), await chips());

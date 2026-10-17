@@ -270,6 +270,7 @@ const MDI = {
   arrowUp: "M13,20H11V8L5.5,13.5L4.08,12.08L12,4.16L19.92,12.08L18.5,13.5L13,8V20Z",
   arrowDown: "M11,4H13V16L18.5,10.5L19.92,11.92L12,19.84L4.08,11.92L5.5,10.5L11,16V4Z",
   check: "M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z",
+  save: "M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z",
   drag: "M9,3H11V5H9V3M13,3H15V5H13V3M9,7H11V9H9V7M13,7H15V9H13V7M9,11H11V13H9V11M13,11H15V13H13V11M9,15H11V17H9V15M13,15H15V17H13V15M9,19H11V21H9V19M13,19H15V21H13V19Z",
   tune: "M8 13C6.14 13 4.59 14.28 4.14 16H2V18H4.14C4.59 19.72 6.14 21 8 21S11.41 19.72 11.86 18H22V16H11.86C11.41 14.28 9.86 13 8 13M8 19C6.9 19 6 18.1 6 17C6 15.9 6.9 15 8 15S10 15.9 10 17C10 18.1 9.1 19 8 19M19.86 6C19.41 4.28 17.86 3 16 3S12.59 4.28 12.14 6H2V8H12.14C12.59 9.72 14.14 11 16 11S19.41 9.72 19.86 8H22V6H19.86M16 9C14.9 9 14 8.1 14 7C14 5.9 14.9 5 16 5S18 5.9 18 7C18 8.1 17.1 9 16 9Z",
   filter: "M6,13H18V11H6M3,6V8H21V6M10,18H14V16H10V18Z",
@@ -532,6 +533,8 @@ const SUB_TAB_KEYS = {
   devs: ["exclude_devices"],
   devset: ["reset_connection", "reset_signal", "reset_offline", "reset_notify", "reset_battery", "reset_charge"],
   chips: ["hide_chips", "hide_connections", "connection_order", "chip_order"],
+  pstart: ["start_panel"],
+  pupdates: ["update_check", "update_check_time", "update_notify", "notify_service_panelupdate", "prerelease", "auto_update"],
 };
 
 // Empfang in vier Stufen (gut -> schlecht), Farben wie unifi_dynamic.
@@ -775,7 +778,6 @@ class DevicePanel extends HTMLElement {
     this._viewUpdated = 0;
     this._viewLoaded = false;
     this._viewDirty = false;
-    this._colsOpen = false;
     this._matter = new Map();
     // KI-Einschätzungen je Gerät (nur im Speicher), Option aus der Geräteliste.
     this._ai = new Map();
@@ -1166,8 +1168,7 @@ class DevicePanel extends HTMLElement {
     window.addEventListener("focus", this._onWake);
     // Wechsel zwischen Desktop und Handy: andere Ansicht, offene Auswahl zu.
     this._onNarrow = () => {
-      this._toggleCols(false);
-      this._closeViewSheet();
+      if (this._settings?.mode === "view") this._closeSettings();
       this._closeAreas();
       this._apps.onNarrow();
       this._render();
@@ -1357,13 +1358,13 @@ class DevicePanel extends HTMLElement {
       <div class="toolbar"><div class="tb-main">${LOGO}<h1>${escape(this._t("title"))}</h1>
         <label class="searchbox">${mdi("search", 20)}<input class="search" type="search" placeholder="${escape(this._t("search"))}" aria-label="${escape(this._t("search"))}">
           <button type="button" class="search-clear" title="${escape(this._t("searchClear"))}" aria-label="${escape(this._t("searchClear"))}" hidden>${mdi("close", 18)}</button></label></div>
-        <button type="button" class="view-btn" aria-expanded="false" title="${escape(this._t("viewBtn"))}" aria-label="${escape(this._t("viewBtn"))}">${mdi("cols", 20)}<span>${escape(this._t("viewBtn"))}</span></button>
+        <button type="button" class="view-btn" aria-expanded="false" title="${escape(this._t("viewBtn"))}" aria-label="${escape(this._t("viewBtn"))}">${mdi("viewSettings", 20)}<span>${escape(this._t("viewBtn"))}</span></button>
         <span class="app-pins"></span><button type="button" class="apps-btn" aria-haspopup="dialog" aria-expanded="false" title="${escape(this._t("appsBtn"))}" aria-label="${escape(this._t("appsBtn"))}">${mdi("apps", 22)}</button>
         <button type="button" class="gear-btn" title="${escape(this._t("settingsBtn"))}" aria-label="${escape(this._t("settingsBtn"))}">${mdi("gear", 22)}</button>
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="view"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="cols-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
@@ -1426,7 +1427,7 @@ class DevicePanel extends HTMLElement {
         return;
       }
       if (ev.target.closest("[data-view-open]")) {
-        this._openViewSheet();
+        this._openView();
         return;
       }
       if (ev.target.closest("[data-area-clear]")) {
@@ -1484,11 +1485,8 @@ class DevicePanel extends HTMLElement {
       this._saveView();
       this._render();
     });
-    root.querySelector(".view-btn").addEventListener("click", () => {
-      if (this._narrowQuery.matches) this._openViewSheet();
-      else this._toggleCols(!this._colsOpen);
-    });
-    this._bindViewControls(root.querySelector("dialog.cols-dlg"), root.querySelector("dialog.view"));
+    root.querySelector(".view-btn").addEventListener("click", () => this._openView());
+    this._bindViewControls(root.querySelector("dialog.settings"));
     this._bindAreas(root.querySelector(".area-pop"), root.querySelector("dialog.area-sheet"));
     this._bindPulse(root.querySelector("dialog.pulse-dlg"));
     this._bindLog(root.querySelector("dialog.log-dlg"));
@@ -2144,19 +2142,18 @@ class DevicePanel extends HTMLElement {
 
   // --- Ansicht: Spalten, Sortierung, Gruppen/Liste ---------------------------
 
-  // Änderung an der Ansicht: sofort sichtbar und gespeichert (keine
-  // "Speichern"-Taste, wie die Spaltenwahl in unifi_dynamic).
-  _setView(patch) {
+  // Änderung an der Ansicht: sofort sichtbar und gespeichert (Filter, Bereiche). Im Dialog "Ansicht" (draft) nur sichtbar,
+  // gespeichert wird mit "Speichern" des Dialogs.
+  _setView(patch, { draft = false } = {}) {
     // Fokus am Schalter bzw. Griff halten: der Neuaufbau ersetzt ihn, und
     // ohne Fokus im Panel erreichte Escape es nicht mehr (echtes HA).
     const a = this.shadowRoot.activeElement;
     const ds = a?.dataset || {};
     const sel = ds.vtoggle ? `[data-vtoggle="${ds.vtoggle}"][data-key="${ds.key}"]` : ds.vdrag ? `[data-vdrag="${ds.vdrag}"][data-key="${ds.key}"]` : null;
     Object.assign(this._view, patch);
-    this._saveView();
+    if (!draft) this._saveView();
     this._render();
-    if (this._colsOpen) this._renderCols();
-    if (this.shadowRoot.querySelector("dialog.view")?.open) this._renderViewSheet();
+    if (this._settings?.mode === "view") this._renderSettings();
     if (sel) this.shadowRoot.querySelector(sel)?.focus({ preventScroll: true });
   }
 
@@ -2221,26 +2218,6 @@ class DevicePanel extends HTMLElement {
     };
   }
 
-  // Dialog "Anpassen" wie in HA (seit 0.26.0, docs/mockups/customize-v1, A;
-  // vorher ein Popover unter dem Knopf).
-  _toggleCols(open) {
-    const dlg = this.shadowRoot.querySelector("dialog.cols-dlg");
-    const btn = this.shadowRoot.querySelector(".view-btn");
-    if (!dlg || !btn) return;
-    this._colsOpen = open;
-    btn.classList.toggle("on", open);
-    btn.setAttribute("aria-expanded", String(open));
-    if (!open) {
-      if (dlg.open) dlg.close();
-      return;
-    }
-    this._renderCols();
-    if (!dlg.open) {
-      if (typeof dlg.showModal === "function") dlg.showModal();
-      else dlg.setAttribute("open", "");
-    }
-  }
-
   // Liste zum Ein-/Ausblenden und Verschieben (Spalten bzw. Angaben).
   // Wie HA "Anpassen": Griff links, Name, Auge rechts; ausgeblendete grau
   // und ohne Griff (ihre Lage zählt erst, wenn sie wieder sichtbar sind).
@@ -2258,105 +2235,118 @@ class DevicePanel extends HTMLElement {
       .join("");
   }
 
-  _renderCols() {
-    const dlg = this.shadowRoot.querySelector("dialog.cols-dlg");
-    if (!dlg) return;
-    const t = (k, ...a) => this._t(k, ...a);
-    const scroll = dlg.scrollTop;
-    const changed = setHtml(
-      dlg,
-      `<div class="dlg-head"><span class="dlg-avatar">${mdi("cols", 28)}</span>
-        <div class="dlg-title"><h2>${escape(t("customizeTitle"))}</h2><div class="dlg-sub">${escape(t("customizeSub"))}</div></div>
-        <button type="button" class="dlg-close" data-vdone title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
-      <div class="dlg-body"><div class="vline first"><span>${escape(t("viewGroupsOrList"))}</span>${this._vseg("vflat", [["0", escape(t("viewGroups"))], ["1", escape(t("viewList"))]], this._view.flat ? "1" : "0")}</div>
-        <div class="vnote">${escape(t("viewGroupsNote"))}</div>
-        <h3>${escape(t("viewBtn"))}</h3><p class="dlg-note small">${escape(t("customizeHint"))}</p>
-        <div class="vrow fixed"><span class="drag-h ph" aria-hidden="true"></span><span class="vl">${escape(t("colName"))}<small>${escape(t("colFixed"))}</small></span>
-          <span class="eye dis" aria-hidden="true">${mdi("eye", 20)}</span></div>
-        <div class="vlist" data-vlist="cols">${this._orderRowsHtml(this._view.cols, COLUMNS, "cols")}</div></div>
-      <div class="dlg-actions split"><button type="button" class="dlg-btn text" data-vreset="cols">${escape(t("restoreDefault"))}</button><button type="button" class="dlg-btn primary" data-vdone>${escape(t("viewDone"))}</button></div>`
-    );
-    if (changed) dlg.scrollTop = scroll;
-  }
-
-  _openViewSheet() {
-    const dlg = this.shadowRoot.querySelector("dialog.view");
-    if (!dlg) return;
-    this._renderViewSheet();
-    if (!dlg.open) {
-      if (typeof dlg.showModal === "function") dlg.showModal();
-      else dlg.setAttribute("open", "");
-    }
-    dlg.scrollTop = 0;
-    // Kein Fokusrahmen beim Öffnen per Tipp (showModal fokussiert den ersten Knopf).
-    if (window.matchMedia?.(TOUCH_QUERY).matches) this.shadowRoot.activeElement?.blur();
-  }
-
-  // Ansicht öffnen (App "Ansicht" im Launcher, seit 2.85.0): Handy das Blatt, sonst der Dialog "Spalten" wie der Knopf in der Kopfzeile
-  _openView() {
-    if (this._narrowQuery.matches) this._openViewSheet();
-    else if (!this._colsOpen) this._toggleCols(true);
-  }
-
-  _closeViewSheet() {
-    const dlg = this.shadowRoot.querySelector("dialog.view");
-    if (dlg?.open) dlg.close();
-  }
-
-  // Umschalter (Segment) der Dialoge "Anpassen" und "Ansicht".
+  // Umschalter (Segment) im Dialog "Ansicht".
   _vseg(attr, items, value) {
     return `<span class="seg-sw" role="group">${items
       .map(([val, label]) => `<button type="button" data-${attr}="${val}" class="${val === value ? "on" : ""}" aria-pressed="${val === value}">${label}</button>`)
       .join("")}</span>`;
   }
 
-  _renderViewSheet() {
-    const dlg = this.shadowRoot.querySelector("dialog.view");
-    if (!dlg) return;
+  // Ansicht (seit 2.87.0): ein Dialog mit zwei Reitern, im Dialog der Einstellungen. "Spalten" (Handy: "Sortierung") gilt pro Benutzer,
+  // "Filter-Chips" für alle Benutzer (nur Administratoren). Änderungen sind ein Entwurf: die Liste dahinter zeigt sie gleich,
+  // gespeichert wird erst mit "Speichern" (docs/mockups/view-v3).
+  _openView() {
+    const btn = this.shadowRoot.querySelector(".view-btn");
+    btn?.classList.add("on");
+    btn?.setAttribute("aria-expanded", "true");
+    this._openSettings("view");
+  }
+
+  _viewAdmin() {
+    return this._hass?.user?.is_admin !== false;
+  }
+
+  // Stand der Ansicht beim Öffnen, zum Vergleichen und Zurückstellen
+  _viewSnap() {
+    const v = this._view;
+    return { sort: v.sort, dir: v.dir, flat: v.flat, cols: v.cols.map((x) => [...x]), fields: v.fields.map((x) => [...x]) };
+  }
+
+  _viewChanged() {
+    const base = this._settings?.viewBase;
+    return Boolean(base) && JSON.stringify(this._viewSnap()) !== JSON.stringify(base.snap);
+  }
+
+  // Schliessen ohne Speichern: die Liste kehrt zum gespeicherten Stand zurück
+  _revertView() {
+    const base = this._settings?.viewBase;
+    if (!base || !this._viewChanged()) return;
+    Object.assign(this._views[base.kind], JSON.parse(JSON.stringify(base.snap)));
+    this._render();
+  }
+
+  // Beschriftung des Reiters "Spalten" (Handy: "Sortierung")
+  _viewColsLabel() {
+    return this._t(this._narrowQuery.matches ? "viewTabSort" : "viewTabCols");
+  }
+
+  // Inhalt des Reiters "Spalten": Desktop Gruppen/Liste und Spalten, Handy Sortierung und Angaben der Kachel
+  _viewControlsHtml() {
     const t = (k, ...a) => this._t(k, ...a);
     const v = this._view;
-    const seg = (attr, items, value) => this._vseg(attr, items, value);
+    const reset = (what) => `<div class="drag-reset"><button type="button" class="ovr-all" data-vreset="${what}">${mdi("reset", 15)}${escape(t("restoreDefault"))}</button></div>`;
+    const groups = `<div class="vline first"><span>${escape(t("viewGroupsOrList"))}</span>${this._vseg("vflat", [["0", escape(t("viewGroups"))], ["1", escape(t("viewList"))]], v.flat ? "1" : "0")}</div>
+      <div class="vnote">${escape(t("viewGroupsNote"))}</div>`;
+    const intro = `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t(this._narrowQuery.matches ? "viewSubMobile" : "customizeSub"))}</p></div></div>`;
+    if (!this._narrowQuery.matches) {
+      return `${intro}${groups}
+        <h3>${escape(t("viewTabCols"))}</h3><p class="dlg-note small">${escape(t("customizeHint"))}</p>
+        <div class="vrow fixed"><span class="drag-h ph" aria-hidden="true"></span><span class="vl">${escape(t("colName"))}<small>${escape(t("colFixed"))}</small></span>
+          <span class="eye dis" aria-hidden="true">${mdi("eye", 20)}</span></div>
+        <div class="vlist" data-vlist="cols">${this._orderRowsHtml(v.cols, COLUMNS, "cols")}</div>${reset("cols")}`;
+    }
     const pills = SORT_MOBILE.map((key) => {
       const on = v.sort === key;
       return `<button type="button" class="vpill${on ? " on" : ""}" data-vsort="${key}" aria-pressed="${on}">${on ? mdi("check", 15) : ""}${escape(this._sortLabel(key))}</button>`;
     }).join("");
-    const body = `<h3>${escape(t("sortBy"))}</h3><div class="vpills">${pills}</div>
-      <div class="vline"><span>${escape(t("sortDir"))}</span>${seg("vdir", [["asc", `${mdi("arrowUp", 14)} ${escape(t("sortAsc"))}`], ["desc", `${mdi("arrowDown", 14)} ${escape(t("sortDesc"))}`]], v.dir)}</div>
-      <h3>${escape(t("viewDisplay"))}</h3>
-      <div class="vline first"><span>${escape(t("viewGroupsOrList"))}</span>${seg("vflat", [["0", escape(t("viewGroups"))], ["1", escape(t("viewList"))]], v.flat ? "1" : "0")}</div>
-      <div class="vnote">${escape(t("viewGroupsNote"))}</div>
+    return `${intro}<h3>${escape(t("sortBy"))}</h3><div class="vpills">${pills}</div>
+      <div class="vline"><span>${escape(t("sortDir"))}</span>${this._vseg("vdir", [["asc", `${mdi("arrowUp", 14)} ${escape(t("sortAsc"))}`], ["desc", `${mdi("arrowDown", 14)} ${escape(t("sortDesc"))}`]], v.dir)}</div>
+      <h3>${escape(t("viewDisplay"))}</h3>${groups}
       <h3>${escape(t("viewFields"))}</h3><div class="vnote top">${escape(t("viewFieldsNote"))}</div>
-      <div class="vlist" data-vlist="fields">${this._orderRowsHtml(v.fields, CARD_FIELDS, "fields")}</div>`;
-    const html = `<div class="dlg-head"><span class="dlg-avatar">${mdi("cols", 28)}</span>
-        <div class="dlg-title"><h2>${escape(t("viewTitle"))}</h2><div class="dlg-sub">${escape(t("viewSubMobile"))}</div></div>
-        <button type="button" class="dlg-close" data-vdone title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
-      <div class="dlg-body">${body}</div>
-      <div class="dlg-actions split"><button type="button" class="dlg-btn text" data-vreset="sheet">${escape(t("restoreDefault"))}</button><button type="button" class="dlg-btn primary" data-vdone>${escape(t("viewDone"))}</button></div>`;
-    // Der Dialog scrollt selbst; Position beim Neuaufbau halten.
-    const scroll = dlg.scrollTop;
-    if (setHtml(dlg, html)) dlg.scrollTop = scroll;
+      <div class="vlist" data-vlist="fields">${this._orderRowsHtml(v.fields, CARD_FIELDS, "fields")}</div>${reset("sheet")}`;
   }
 
-  // Bedienung von Popover (Desktop) und Blatt (Handy): Schalter, Ziehen am
-  // Griff (Maus und Finger, Pointer-Events), Pfeiltasten, Auswahl.
-  _bindViewControls(pop, sheet) {
+  // Körper des Dialogs im Modus "Ansicht": Reiterleiste (nur mit beiden Reitern) und der gewählte Reiter
+  _viewBodyHtml(changes) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    const admin = this._viewAdmin();
+    const tab = admin && st.vtab === "chips" ? "chips" : "cols";
+    const mark = (id) => (id === "cols" ? this._viewChanged() : SUB_TAB_KEYS.chips.some((k) => changes.has(k))) ? " chg" : "";
+    const bar = admin
+      ? `<div class="sub-tabs" role="tablist">${[["cols", this._viewColsLabel()], ["chips", t("viewTabChips")]]
+          .map(([id, label]) => `<button type="button" role="tab" class="sub-tab${id === tab ? " on" : ""}${mark(id)}" data-set="vtab" data-key="${id}" aria-selected="${id === tab}">${escape(label)}</button>`)
+          .join("")}</div>`
+      : "";
+    let inner;
+    if (tab === "cols") inner = this._viewControlsHtml();
+    else if (st.loading) inner = `<p class="dlg-note">${escape(t("settingsLoading"))}</p>`;
+    else if (st.error) inner = `<div class="dlg-error">${escape(t("settingsLoadError"))} ${escape(st.error)}</div>`;
+    else inner = `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("viewChipsGlobal"))}</p></div></div>${this._settingsBodyHtml()}`;
+    return `${bar}${inner}${st.saveError ? `<div class="dlg-error">${escape(t("settingsSaveError"))} ${escape(st.saveError)}</div>` : ""}`;
+  }
+
+  // Bedienung der Ansicht im Dialog der Einstellungen: Auge, Ziehen am Griff (Maus und Finger, Pointer-Events), Pfeiltasten, Auswahl.
+  // Alles ändert nur den Entwurf (_setView mit draft).
+  _bindViewControls(dialog) {
     const listOf = (kind) => (kind === "cols" ? "cols" : "fields");
-    // Auge: ein- oder ausblenden (seit 0.26.0 Knopf statt Schalter).
+    const draft = (patch) => this._setView(patch, { draft: true });
+    const inView = () => this._settings?.mode === "view";
     const toggle = (ev) => {
       const el = ev.target.closest?.("[data-vtoggle]");
       if (!el) return false;
       const key = listOf(el.dataset.vtoggle);
-      this._setView({ [key]: this._view[key].map(([k, on]) => [k, k === el.dataset.key ? !on : on]) });
+      draft({ [key]: this._view[key].map(([k, on]) => [k, k === el.dataset.key ? !on : on]) });
       return true;
     };
     const reorder = (kind, keys) => {
       const key = listOf(kind);
       const map = new Map(this._view[key]);
-      this._setView({ [key]: keys.map((k) => [k, map.get(k)]) });
+      draft({ [key]: keys.map((k) => [k, map.get(k)]) });
     };
-    const keyMove = (ev) => {
+    dialog.addEventListener("keydown", (ev) => {
       const h = ev.target.closest?.("[data-vdrag]");
-      if (!h || (ev.key !== "ArrowUp" && ev.key !== "ArrowDown")) return;
+      if (!inView() || !h || (ev.key !== "ArrowUp" && ev.key !== "ArrowDown")) return;
       ev.preventDefault();
       const kind = h.dataset.vdrag;
       const keys = this._view[listOf(kind)].map(([k]) => k);
@@ -2366,10 +2356,10 @@ class DevicePanel extends HTMLElement {
       [keys[i], keys[j]] = [keys[j], keys[i]];
       // Fokus bleibt am Griff (_setView), die nächste Pfeiltaste schiebt weiter.
       reorder(kind, keys);
-    };
-    const drag = (ev, scroller) => {
+    });
+    dialog.addEventListener("pointerdown", (ev) => {
       const h = ev.target.closest?.("[data-vdrag]");
-      if (!h || (ev.pointerType === "mouse" && ev.button !== 0)) return;
+      if (!inView() || !h || (ev.pointerType === "mouse" && ev.button !== 0)) return;
       ev.preventDefault();
       const row = h.closest(".vrow");
       const box = row?.parentElement;
@@ -2378,11 +2368,9 @@ class DevicePanel extends HTMLElement {
       row.classList.add("lift");
       const move = (e) => {
         const y = e.clientY;
-        if (scroller) {
-          const sr = scroller.getBoundingClientRect();
-          if (y < sr.top + 50) scroller.scrollTop -= 10;
-          else if (y > sr.bottom - 60) scroller.scrollTop += 10;
-        }
+        const sr = dialog.getBoundingClientRect();
+        if (y < sr.top + 50) dialog.scrollTop -= 10;
+        else if (y > sr.bottom - 60) dialog.scrollTop += 10;
         const after = [...box.children].find((r) => {
           if (r === row) return false;
           const b = r.getBoundingClientRect();
@@ -2402,30 +2390,20 @@ class DevicePanel extends HTMLElement {
       win.addEventListener("pointermove", move);
       win.addEventListener("pointerup", up);
       win.addEventListener("pointercancel", up);
-    };
-
-    pop.addEventListener("keydown", keyMove);
-    pop.addEventListener("pointerdown", (ev) => drag(ev, pop));
-    pop.addEventListener("click", (ev) => {
-      // Klick auf den Hintergrund schliesst wie bei den übrigen Dialogen.
-      if (ev.target === pop) {
-        const r = pop.getBoundingClientRect();
-        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._toggleCols(false);
-        return;
-      }
-      if (toggle(ev)) return;
-      const flat = ev.target.closest("[data-vflat]");
-      if (flat) this._setView({ flat: flat.dataset.vflat === "1" });
-      else if (ev.target.closest("[data-vreset]")) this._setView({ cols: defaultView().cols, flat: defaultView().flat });
-      else if (ev.target.closest("[data-vdone]")) this._toggleCols(false);
     });
-    // Escape schliesst den Dialog selbst: Knopf nachführen.
-    pop.addEventListener("close", () => {
-      if (!this._colsOpen) return;
-      this._colsOpen = false;
-      const btn = this.shadowRoot.querySelector(".view-btn");
-      btn?.classList.remove("on");
-      btn?.setAttribute("aria-expanded", "false");
+    dialog.addEventListener("click", (ev) => {
+      if (!inView()) return;
+      if (toggle(ev)) return;
+      const el = ev.target.closest("[data-vsort],[data-vdir],[data-vflat],[data-vreset]");
+      if (!el) return;
+      if (el.dataset.vsort) draft({ sort: el.dataset.vsort, dir: el.dataset.vsort === this._view.sort ? this._view.dir : "asc" });
+      else if (el.dataset.vdir) draft({ dir: el.dataset.vdir });
+      else if (el.dataset.vflat) draft({ flat: el.dataset.vflat === "1" });
+      else if (el.dataset.vreset === "cols") draft({ cols: defaultView().cols, flat: defaultView().flat });
+      else {
+        const d = defaultView();
+        draft({ sort: d.sort, dir: d.dir, flat: d.flat, fields: d.fields });
+      }
     });
     // Ein Klick in die Liste, der ein Popover schliesst (Filter "Bereich"),
     // öffnet kein Gerät (wie unifi_dynamic).
@@ -2442,22 +2420,6 @@ class DevicePanel extends HTMLElement {
       },
       true
     );
-    sheet.addEventListener("keydown", keyMove);
-    sheet.addEventListener("pointerdown", (ev) => drag(ev, sheet));
-    sheet.addEventListener("click", (ev) => {
-      // Tipp auf den Hintergrund schliesst wie bei den übrigen Blättern.
-      if (ev.target === sheet) return this._closeViewSheet();
-      if (toggle(ev)) return;
-      const el = ev.target.closest("[data-vsort],[data-vdir],[data-vflat],[data-vreset],[data-vdone]");
-      if (!el) return;
-      if (el.dataset.vsort) this._setView({ sort: el.dataset.vsort, dir: el.dataset.vsort === this._view.sort ? this._view.dir : "asc" });
-      else if (el.dataset.vdir) this._setView({ dir: el.dataset.vdir });
-      else if (el.dataset.vflat) this._setView({ flat: el.dataset.vflat === "1" });
-      else if (el.dataset.vreset !== undefined) {
-        const d = defaultView();
-        this._setView({ sort: d.sort, dir: d.dir, flat: d.flat, fields: d.fields });
-      } else this._closeViewSheet();
-    });
   }
 
   // --- Filter "Bereich" (seit 0.23.0, docs/mockups/area-v1, A) -------------
@@ -2614,7 +2576,6 @@ class DevicePanel extends HTMLElement {
     } else {
       const pop = this.shadowRoot.querySelector(".area-pop");
       if (!pop) return;
-      this._toggleCols(false);
       pop.innerHTML = `<h4>${escape(this._pk("Title"))}</h4><div class="vsub">${escape(this._pk("Sub"))}</div>${search}<div class="alist"></div><div class="vfoot afoot"></div>`;
       pop.hidden = false;
       this._renderAreaList();
@@ -3420,7 +3381,7 @@ class DevicePanel extends HTMLElement {
     const label = this._sortLabel(v.sort);
     const dir = v.sort === "default" ? "" : mdi(v.dir === "asc" ? "arrowUp" : "arrowDown", 14);
     const title = this._t("viewLineTitle");
-    return `<button type="button" class="sort-btn" data-view-open aria-label="${escape(`${title}: ${label}`)}">${mdi("sort", 16)}<span class="lbl">${escape(title)}</span><span class="val">${escape(label)}</span>${dir}${mdi("chevronDown", 16)}</button>`;
+    return `<button type="button" class="sort-btn" data-view-open aria-label="${escape(`${title}: ${label}`)}">${mdi("viewSettings", 16)}<span class="lbl">${escape(title)}</span><span class="val">${escape(label)}</span>${dir}${mdi("chevronDown", 16)}</button>`;
   }
 
   _avatar(d, size = 18) {
@@ -4741,7 +4702,7 @@ class DevicePanel extends HTMLElement {
     if (n) {
       return `<div class="dlg-actions"><span class="set-count" role="status">${escape(this._t("settingsChanges", n))}</span>
         <button type="button" class="dlg-btn" data-dlg="close">${escape(this._t("settingsCancel"))}</button>
-        <button type="button" class="dlg-btn primary" data-dlg="save" ${this._devSaving ? "disabled" : ""}>${escape(this._devSaving ? this._t("settingsSaving") : this._t("settingsSave"))}</button></div>`;
+        <button type="button" class="dlg-btn primary" data-dlg="save" ${this._devSaving ? "disabled" : ""}>${mdi("save", 18)}${escape(this._devSaving ? this._t("settingsSaving") : this._t("settingsSave"))}</button></div>`;
     }
     return `<div class="dlg-actions two">${this._devSaved ? `<span class="set-count saved" role="status">${escape(this._t("settingsSavedShort"))}</span>` : ""}<button type="button" class="dlg-btn hide-btn" data-dlg="hide">${mdi("eyeOff", 18)}${escape(this._t("hideDevice"))}</button>
           <button type="button" class="dlg-btn" data-dlg="close">${escape(this._t("close"))}</button></div>`;
@@ -5484,6 +5445,14 @@ class DevicePanel extends HTMLElement {
       // Reiter von "Geräte im Panel" und "Darstellung".
       sub: { devices: "integrations", integ: "out" },
     };
+    // Ansicht (seit 2.87.0): derselbe Dialog, Reiter "Spalten" und "Filter-Chips"; Stand beim Öffnen merken, um zurückzustellen
+    const view = tab === "view";
+    const viewAdmin = view && this._viewAdmin();
+    if (view) {
+      Object.assign(this._settings, { mode: "view", vtab: "cols", viewBase: { kind: this._narrowQuery.matches ? "mobile" : "desktop", snap: this._viewSnap() } });
+      // Ohne Administratorrecht gibt es nur den Reiter "Spalten": nichts zu laden
+      if (!viewAdmin) this._settings.loading = false;
+    }
     this._renderSettings();
     if (!dialog.open) {
       if (typeof dialog.showModal === "function") dialog.showModal();
@@ -5493,15 +5462,16 @@ class DevicePanel extends HTMLElement {
     // Beim Öffnen immer frisch bei GitHub nachsehen (seit 2.64.0), nicht erst nach 6 Stunden; läuft gerade eine Installation oder ein Neustart,
     // bleibt es beim bisherigen Stand, damit nichts dazwischenfährt
     const busyVersion = this._version?.installing || this._version?.restarting;
-    this._loadVersion(!busyVersion, { open: true });
+    if (!view) this._loadVersion(!busyVersion, { open: true });
     const st = this._settings;
+    if (view && !viewAdmin) return;
     try {
       const data = await this._hass.callWS({ type: "device_panel/get_options" });
       if (this._settings !== st) return;
       // Logos der Integrationen vorab laden, damit die Liste gleich vollständig erscheint.
       await this._brandPreloadDomains((data.catalog?.integrations || []).map((i) => i.domain));
       if (this._settings !== st) return;
-      await this._readStartPanel();
+      if (!view) await this._readStartPanel();
       if (this._settings !== st) return;
       st.data = data;
       st.draft = { ...data.values };
@@ -5520,7 +5490,7 @@ class DevicePanel extends HTMLElement {
   // Schliessen: mit ungespeicherten Änderungen erst fragen "Änderungen verwerfen?" (seit 2.20.0)
   _requestCloseSettings(after) {
     const st = this._settings;
-    if (st && !st.loading && !st.error && this._settingsChanges().length) {
+    if (st && (st.mode === "view" || (!st.loading && !st.error)) && this._settingsChanges().length) {
       this._askDiscard(() => {
         this._closeSettings();
         after?.();
@@ -5533,6 +5503,10 @@ class DevicePanel extends HTMLElement {
 
   _closeSettings() {
     const dialog = this.shadowRoot.querySelector("dialog.settings");
+    this._revertView();
+    const viewBtn = this.shadowRoot.querySelector(".view-btn");
+    viewBtn?.classList.remove("on");
+    viewBtn?.setAttribute("aria-expanded", "false");
     this._settings = null;
     this._closePrompt();
     this._closeNotes();
@@ -5983,7 +5957,7 @@ class DevicePanel extends HTMLElement {
   }
 
   _settingsChanges() {
-    return [...this._settingsEntryChanges(), ...this._settingsExtraChanges(), ...this._settingsResetChanges()];
+    return [...this._settingsEntryChanges(), ...this._settingsExtraChanges(), ...this._settingsResetChanges(), ...(this._viewChanged() ? ["view"] : [])];
   }
 
   // Abschnitte mit ihren Optionen. Seit 0.34.0 (docs/mockups/notify-v3)
@@ -5994,9 +5968,8 @@ class DevicePanel extends HTMLElement {
       ["devices", ["show_service_devices", "show_disabled_devices", ...SUB_TAB_KEYS.integrations, ...SUB_TAB_KEYS.types, ...SUB_TAB_KEYS.devs, ...SUB_TAB_KEYS.devset]],
       ["monitor", Object.values(MON_TAB_KEYS).flat()],
       ["routines", ["routines_pause", "routines_catch_up", "notify_service_routines", "routines_notify_error"]],
-      ["look", [...SUB_TAB_KEYS.chips]],
       ["ai", ["ai_assessment", "ai_task_entity", "ai_prompt"]],
-      ["updates", ["update_check", "update_check_time", "update_notify", "notify_service_panelupdate"]],
+      ["updates", [...SUB_TAB_KEYS.pstart, ...SUB_TAB_KEYS.pupdates]],
     ];
   }
 
@@ -6262,6 +6235,7 @@ class DevicePanel extends HTMLElement {
 
   _settingsSummary(id, d) {
     if (id === "updates") {
+      if (this._settings?.sub?.panel === "pstart") return this._t((this._settings?.extra ? this._settings.extra.start_panel : this._startOn) ? "sumStartOn" : "sumStartOff");
       const auto = Boolean(this._settings?.extra ? this._settings.extra.auto_update : this._autoUpdate);
       return this._t(d.update_check ? (auto ? "sumUpdatesAuto" : "sumUpdatesOn") : "sumUpdatesOff");
     }
@@ -6294,16 +6268,6 @@ class DevicePanel extends HTMLElement {
       const conn = Object.keys(d.connection_integrations || {}).length;
       return (hidden.some(Boolean) ? `${this._t("sumDevHidden", ...hidden)} · ` : "") + (typed ? `${this._t("sumTypeInteg", typed)} · ` : "") + (conn ? `${this._t("sumConnInteg", conn)} · ` : "") + this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices));
     }
-    if (id === "look") {
-      const chips = (d.hide_connections || []).length + (d.hide_chips || []).length;
-      return [
-        (this._settings?.extra ? this._settings.extra.start_panel : this._startOn) ? this._t("sumStartOn") : "",
-        chips ? this._t("sumChipsHidden", chips) : "",
-        (d.connection_order || []).length || (d.chip_order || []).length ? this._t("sumChipsOrder") : "",
-      ]
-        .filter(Boolean)
-        .join(" · ") || this._t("sumLookStd");
-    }
     return "";
   }
 
@@ -6312,22 +6276,25 @@ class DevicePanel extends HTMLElement {
     const st = this._settings;
     if (!dialog || !st) return;
     const t = (k, ...a) => this._t(k, ...a);
-    const head = `<div class="dlg-head"><span class="dlg-avatar">${mdi("gear", 28)}</span>
-        <div class="dlg-title"><h2>${escape(t("settingsTitle"))}</h2><div class="dlg-sub">${escape(t("settingsSub"))}</div></div>
+    const viewMode = st.mode === "view";
+    const head = `<div class="dlg-head"><span class="dlg-avatar">${mdi(viewMode ? "viewSettings" : "gear", 28)}</span>
+        <div class="dlg-title"><h2>${escape(t(viewMode ? "viewTitle" : "settingsTitle"))}</h2><div class="dlg-sub">${escape(t(viewMode ? "viewSub" : "settingsSub"))}</div></div>
         <button type="button" class="dlg-close" data-set="close" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>`;
+    const changes = this._settingsChanges();
     let body;
-    if (st.loading) body = `<p class="dlg-note">${escape(t("settingsLoading"))}</p>`;
+    if (viewMode) body = this._viewBodyHtml(new Set(changes));
+    else if (st.loading) body = `<p class="dlg-note">${escape(t("settingsLoading"))}</p>`;
     else if (st.error) body = `<div class="dlg-error">${escape(t("settingsLoadError"))} ${escape(st.error)}</div>`;
     else body = this._settingsBodyHtml();
-    const changes = this._settingsChanges();
-    const canSave = !st.loading && !st.error && !st.saving && changes.length > 0 && !Object.keys(this._settingsErrors()).length;
+    // Die Ansicht lässt sich auch speichern, solange die Filter-Chips noch laden
+    const canSave = (viewMode || (!st.loading && !st.error)) && !st.saving && changes.length > 0 && !Object.keys(this._settingsErrors()).length;
     // Nach dem Speichern bleibt der Dialog offen (Wunsch des Nutzers): kurz
     // "Gespeichert" statt des Zählers; ohne Änderung heisst der Knopf "Schliessen".
     if (changes.length) st.saved = false;
     const saved = !changes.length && st.saved;
     const actions = `<div class="dlg-actions">
         <span class="set-count${saved ? " saved" : ""}" role="status">${changes.length ? escape(t("settingsChanges", changes.length)) : saved ? escape(t("settingsSavedShort")) : ""}</span>
-        <button type="button" class="dlg-btn primary" data-set="save" ${canSave ? "" : "disabled"}>${escape(st.saving ? t("settingsSaving") : t("settingsSave"))}</button>
+        <button type="button" class="dlg-btn primary" data-set="save" ${canSave ? "" : "disabled"}>${mdi("save", 18)}${escape(st.saving ? t("settingsSaving") : t("settingsSave"))}</button>
         <button type="button" class="dlg-btn" data-set="close">${escape(changes.length ? t("settingsCancel") : t("close"))}</button></div>`;
     // Die Versionszeile (.ver-slot) ändert sich oft (Prüfung, HACS) und wird
     // dann allein ersetzt (_renderSettingsVersion), nicht der ganze Dialog.
@@ -8034,12 +8001,14 @@ class DevicePanel extends HTMLElement {
     // Titel eines neuen Themas (seit 1.43.0): überall derselbe grosse Stil (.set-title, wie .mon-grp)
     const ttl = (key) => `<div class="set-title">${escape(t(key))}</div>`;
     const devTab = ["integrations", "types", "devs", "devset"].includes(st.sub?.devices) ? st.sub.devices : "integrations";
+    // Abschnitt "Panel" (seit 2.87.0): Unterreiter "Standardseite" und "Updates"
+    const panelTab = st.sub?.panel === "pstart" ? "pstart" : "pupdates";
     // Reiter innerhalb eines Abschnitts; Zähler = ausgeblendete Einträge,
     // Punkt = Änderung im Entwurf (wie bei den Reitern der Überwachung).
-    const subTabs = (group, items) =>
+    const subTabs = (group, items, cur = devTab) =>
       `<div class="sub-tabs" role="tablist">${items
         .map(([id, key]) => {
-          const on = id === devTab;
+          const on = id === cur;
           const mark = SUB_TAB_KEYS[id].some((k) => changes.has(k)) ? " chg" : "";
           const n = this._subCount(id, d);
           return `<button type="button" role="tab" class="sub-tab${on ? " on" : ""}${mark}" data-set="subtab" data-group="${group}" data-key="${id}" aria-selected="${on}">${escape(t(key))}<span class="sub-n"${n ? "" : " hidden"}>${n}</span></button>`;
@@ -8070,9 +8039,18 @@ class DevicePanel extends HTMLElement {
             : `<div class="nf-note integ-goto">${mdi("info", 16)}<div><p>${escape(t("integGoto"))} <button type="button" class="lnk" data-set="goto" data-key="integ">${escape(t("integGotoLink"))}</button></p></div></div>` +
               exTable("exclude_integrations", integrations, `${t("integIntroShow")} ${t("typeIntegIntro")}`, false, null, null, [typeExtra, connExtra])),
       // Wie Geräte erscheinen, nicht ob (seit 1.0.0).
-      look:
-        // Startseite (seit 2.39.0): ganz oben, noch vor den Filter-Chips
-        ttl("ttlStart") + startRow() +
+      // Standardseite und Updates des Panels (seit 2.87.0): die Startseite gilt nur für den Benutzer, alles andere für die Instanz
+      updates:
+        subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"]], panelTab) +
+        (panelTab === "pstart"
+          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow()
+          : `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
+            row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
+            checkTimeRow() +
+            autoUpdateRow() +
+            updateNotifyRows()),
+      // Filter-Chips (seit 2.87.0 im Dialog "Ansicht", Reiter "Filter-Chips"):
+      chips:
         // Alle Chips in einer Liste (seit 1.14.0, docs/mockups/chip-order-v3, D2):
         // Reihenfolge, Ausblenden und Vorschau der Leiste, gilt für alle. Seit 2.0.7 ohne Unterreiter
         // (Verbindungsart und Empfang sind nach "Geräte im Panel" und "Überwachung und Meldungen" gezogen).
@@ -8113,17 +8091,13 @@ class DevicePanel extends HTMLElement {
         row("routines_catch_up", t("optRoutinesCatchUp"), num("routines_catch_up", t("minuteUnit"), t("optRoutinesCatchUp")), t("optRoutinesCatchUpShort"), null) +
         ui.targetRow("routines", "optRoutinesTargetShort") +
         row("routines_notify_error", t("optRoutinesNotifyError"), sw("routines_notify_error", t("optRoutinesNotifyError")), t("optRoutinesNotifyErrorShort"), t("optRoutinesNotifyErrorInfo")),
-      updates:
-        row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
-        checkTimeRow() +
-        autoUpdateRow() +
-        updateNotifyRows(),
     };
     const titles = {
-      devices: "secDevices", monitor: "secMonitor", routines: "secRoutines", look: "secLook", ai: "secAiSettings", updates: "secUpdates",
+      devices: "secDevices", monitor: "secMonitor", routines: "secRoutines", ai: "secAiSettings", updates: "secPanel",
     };
+    // Dialog "Ansicht": nur der Block der Filter-Chips (Rahmen und Reiter baut _viewBodyHtml)
+    if (st.mode === "view") return fields.chips;
     return (
-      `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
       this._settingsSections()
         .map(([id, keys]) => {
           const open = st.open.has(id);
@@ -8198,6 +8172,9 @@ class DevicePanel extends HTMLElement {
         if (action !== "ifilter") this.shadowRoot.querySelector("dialog.settings .mon-tabs")?.scrollIntoView({ block: action === "goto" ? "start" : "nearest" });
       } else if (action === "subtab") {
         st.sub[btn.dataset.group] = btn.dataset.key;
+        this._renderSettings();
+      } else if (action === "vtab") {
+        st.vtab = btn.dataset.key;
         this._renderSettings();
       } else if (action === "isub") {
         // Reiter im Detail einer Integration (seit 1.42.0)
@@ -8709,7 +8686,8 @@ class DevicePanel extends HTMLElement {
     const extra = this._settingsExtraChanges();
     const resets = { battery: [...st.resets.battery], notify: [...st.resets.notify], connection: [...st.resets.connection], signal: [...st.resets.signal], offline: [...st.resets.offline], charge: [...st.resets.charge] };
     const anyReset = Object.values(resets).some((list) => list.length > 0);
-    if ((!changes.length && !extra.length && !anyReset) || Object.keys(this._settingsErrors()).length) return;
+    const viewChanged = this._viewChanged();
+    if ((!changes.length && !extra.length && !anyReset && !viewChanged) || Object.keys(this._settingsErrors()).length) return;
     st.saving = true;
     st.saveError = null;
     this._renderSettings();
@@ -8731,6 +8709,11 @@ class DevicePanel extends HTMLElement {
       }
       if (extra.includes("start_panel")) await this._saveStartPanel(st.extra.start_panel);
       if (anyReset) await this._hass.callWS({ type: "device_panel/reset_device_settings", ...resets });
+      // Ansicht (pro Benutzer): erst jetzt speichern, die Liste zeigt sie schon
+      if (viewChanged) {
+        this._saveView();
+        st.viewBase.snap = this._viewSnap();
+      }
       // Erkennung, Batterie-Schwelle, Ausschlüsse und Anzeige ändern die Liste sofort.
       const quiet = ["update_check", "battery_push", "battery_persistent", "notify_service", "notify_click_target"];
       // Zurückgesetzte Geräte: Symbole und Batterie-Markierung in der Liste.
@@ -8748,6 +8731,13 @@ class DevicePanel extends HTMLElement {
   // Backends (bereinigte Werte, Übersicht der Geräte-Einstellungen, Katalog).
   // Aufgeklappte Abschnitte und Infos bleiben.
   async _reloadSettings(st) {
+    // Ansicht ohne geladene Optionen (kein Administrator): es gibt nichts nachzuladen
+    if (!st.data) {
+      st.saving = false;
+      st.saved = true;
+      this._renderSettings();
+      return;
+    }
     let data = null;
     try {
       data = await this._hass.callWS({ type: "device_panel/get_options" });

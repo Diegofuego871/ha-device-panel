@@ -7,9 +7,31 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.87.0] - 2026-10-17
+
+View with "Save": one dialog "View" with two tabs; the panel gets sub-tabs "Default page" and "Updates".
+
+Includes the changes from 2.86.0.
+
+### Added
+
+- Dialog **View** (button "View" above the list; on the phone the row "Sorting & view"; also the app "View" in the launcher): one dialog with two tabs. **Columns** (on the phone **Sorting**) holds what was in the dialog "Columns" and the sheet "View" before: group or list, columns (desktop), sorting, direction and details on the card (phone). It applies **per user**, separately for desktop and phone. **Filter chips** holds the chip editor (show, hide, reorder, pin, preview), moved here from the settings; it applies to **all users** and only **administrators** see the tab. Without the administrator right the dialog has only the first tab and loads no options.
+- **Save** for the view: both tabs only change a draft. The list behind shows the change at once, but it is kept (per user in the user data, the chips in the options of the integration) only with **Save**. The counter shows both changes, a dot marks the changed tab. Closing with a draft asks "Discard changes?"; "Discard" puts the list back to the saved state. The tab "Filter chips" can be saved while still loading.
+- The settings: the section **Panel** (until now "Panel version") has two sub-tabs. **Default page**: the switch "Set as my start page" with the note "Applies only to you, not to other users". **Updates**: the version line, pre-releases, check, time and automatic installation as before.
+- Every **Save** button now carries the floppy disk symbol in front of the text, in the same style as the eye on the hide button: pop-up of the device, settings, the dialogs of Status, Routines and Magic Push, and the launcher.
+- The symbol "eye with a small gear" now also stands on the button "View" and on the row "Sorting & view" on the phone (before: the columns symbol and the sorting arrows).
+
+### Changed
+
+- The button "Columns" is now called **View** (dialog title "View"); the old dialog "Columns" and the sheet "View" are gone, replaced by the dialog above.
+- The section "View" is gone from the settings; start page and filter chips moved as described above.
+- A filter or area chosen in the list (area, integration, chips, table head sorting) still applies and is saved at once; only the settings in the dialog "View" wait for "Save".
+
 ## [2.86.0] - 2026-10-17
 
 AI assessment: button "Remove".
+
+Not released; included in 2.87.0.
 
 ### Added
 
@@ -3772,7 +3794,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.86.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.86.0
+[2.87.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.87.0
 [2.85.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.85.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0

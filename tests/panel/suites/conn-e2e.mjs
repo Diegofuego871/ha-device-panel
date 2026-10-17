@@ -104,13 +104,14 @@ for (const lang of ["de", "en"]) {
     const setCalls = () => p.evaluate(() => window.__wsCalls.filter((m) => m.type === "device_panel/set_options").map((m) => m.values));
     const text = (s) => ev(`return (r.querySelector(${JSON.stringify(s)})?.textContent || "").replace(/\\s+/g," ").trim()`);
     const wifiBefore = Number(await chip("wifi"));
+    // Seit 2.87.0: die Filter-Chips stehen im Dialog "Ansicht" (kein Reiter Verbindungsart, keine Liste der Integrationen)
+    await tap(mobile ? "[data-view-open]" : ".view-btn");
+    await wait(`return !!r.querySelector("dialog.settings .sub-tab")`);
+    await tap('[data-set="vtab"][data-key="chips"]');
+    check(`[${tag}] Ansicht › Filter-Chips ohne Liste der Integrationen`, await ev(`return r.querySelectorAll("dialog.settings .sub-tab").length === 2 && !r.querySelector('select[data-conn-integ]') && !r.querySelector('.ovr-opt')`));
+    await tap('dialog.settings [data-set="close"]');
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    check(`[${tag}] Abschnitt Darstellung: Standardansicht (ohne Verbindungsart)`, (await text('[data-id="look"] .set-sec-sum')) === T.sumLook, await text('[data-id="look"] .set-sec-sum'));
-    // Seit 2.0.7: "Darstellung" hat nur noch die Filter-Chips (kein Reiter Verbindungsart mehr)
-    await tap('[data-set="section"][data-id="look"]');
-    check(`[${tag}] Darstellung ohne Unterreiter und ohne Liste der Integrationen`, await ev(`return !r.querySelector('[data-id="look"] ~ .set-sec-body .sub-tabs') && !r.querySelector('select[data-conn-integ]') && !r.querySelector('.ovr-opt')`));
-    await tap('[data-set="section"][data-id="look"]');
     await tap('[data-set="section"][data-id="devices"]');
     await wait(`return !!r.querySelector('select[data-conn-integ="shelly"]')`);
     const shellyRow = await ev(`const s=r.querySelector('select[data-conn-integ="shelly"]'); return s ? [s.title, s.value, s.options[0].textContent, s.options.length] : null`);

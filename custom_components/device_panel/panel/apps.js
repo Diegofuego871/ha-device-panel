@@ -723,7 +723,7 @@ export class AppLauncher {
         <div class="ap-prev"><div class="ap-tile" data-f-prev></div><p>${escape(this.t("appsFPrev"))}</p></div>
         <div class="ap-err" data-f-err role="alert" hidden></div>
       </div>
-      <div class="ap-acts"><button type="button" class="dlg-btn" data-ap="fclose">${escape(this.t("settingsCancel"))}</button><button type="button" class="dlg-btn primary" data-ap="fsave">${escape(this.t("settingsSave"))}</button></div>`;
+      <div class="ap-acts"><button type="button" class="dlg-btn" data-ap="fclose">${escape(this.t("settingsCancel"))}</button><button type="button" class="dlg-btn primary" data-ap="fsave">${mdi("save", 18)}${escape(this.t("settingsSave"))}</button></div>`;
     this._formSync();
   }
 

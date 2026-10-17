@@ -49,10 +49,10 @@ for (const lang of ["de", "en"]) {
     const present = () => ev(`const c=r.querySelector(".chips"); return { area: !!c.querySelector(".chip.area:not(.integ)"), integration: !!c.querySelector(".chip.integ"), problems: !!c.querySelector("[data-problems]"), hints: [...c.querySelectorAll("[data-hint]")].map(x=>x.dataset.hint).join() }`);
     const openChips = async () => {
       if (!(await ev(`return r.querySelector("dialog.settings")?.open`))) {
-        await tap(".gear-btn");
-        await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
+        await tap(mobile ? "[data-view-open]" : ".view-btn");
+        await wait(`return !!r.querySelector("dialog.settings .sub-tab")`);
       }
-      if ((await ev(`return r.querySelector('[data-set="section"][data-id="look"]').getAttribute("aria-expanded")`)) !== "true") await tap('[data-set="section"][data-id="look"]');
+      if ((await ev(`return r.querySelector('[data-set="vtab"][data-key="chips"]').classList.contains("on")`)) !== true) await tap('[data-set="vtab"][data-key="chips"]');
       return wait(`return !!r.querySelector('input[data-list="hide_chips"]')`);
     };
     const save = async () => {
@@ -69,13 +69,13 @@ for (const lang of ["de", "en"]) {
 
     // Tabelle "Weitere Chips"
     check(`[${tag}] Reiter öffnet`, await openChips());
-    const heads = await ev(`return [...r.querySelectorAll(".set-sec-body .ex-title")].map(x=>x.textContent)`);
+    const heads = await ev(`return [...r.querySelectorAll(".dlg-body .ex-title")].map(x=>x.textContent)`);
     check(`[${tag}] eine Überschrift "${T.title}" (seit 1.14.0 eine Liste)`, JSON.stringify(heads) === JSON.stringify([T.title]), JSON.stringify(heads));
     const rows = await ev(`return [...r.querySelectorAll('input[data-list="hide_chips"]')].map(i=>i.dataset.value + (i.checked ? "+" : "-")).join()`);
     check(`[${tag}] zehn Zeilen in fester Reihenfolge, alle an`, rows === KEYS.map((k) => `${k}+`).join(), rows);
     const labels = await ev(`return [...r.querySelectorAll('input[data-list="hide_chips"]')].map(i=>i.closest(".ex-row").querySelector(".ex-name").firstChild.textContent)`);
     check(`[${tag}] Beschriftungen`, JSON.stringify(labels) === JSON.stringify(T.labels), JSON.stringify(labels));
-    check(`[${tag}] Hinweistext`, T.intro.test(await ev(`return r.querySelector('input[data-list="hide_chips"]').closest(".set-sec-body").querySelector(".ex-intro").textContent`)));
+    check(`[${tag}] Hinweistext`, T.intro.test(await ev(`return r.querySelector('input[data-list="hide_chips"]').closest(".dlg-body").querySelector(".ex-intro").textContent`)));
 
     // Filter aktiv machen: Probleme, Hinweis "Schwacher Empfang", Bereich Küche, Integration Zigbee
     await ev(`const h=r.host; h._problems = true; h._hint = "signal"; h._view.areas = ["kueche"]; h._view.integs = ["zha"]; h._saveView(); h._render()`);
@@ -84,7 +84,7 @@ for (const lang of ["de", "en"]) {
     // Bereich, Integration, Warnungen und "Schwacher Empfang" ausblenden
     await tap('input[data-list="hide_chips"][data-value="area"]');
     await tap('input[data-list="hide_chips"][data-value="integration"]');
-    check(`[${tag}] Zusammenfassung "${T.sumTwo}"`, (await text('[data-id="look"] .set-sec-sum')).includes(T.sumTwo), await text('[data-id="look"] .set-sec-sum'));
+    check(`[${tag}] Zusammenfassung "${T.sumTwo}"`, (await ev(`return !!r.querySelector('.sub-tab[data-key="chips"].chg')`)));
     await tap('input[data-list="hide_chips"][data-value="problems"]');
     await tap('input[data-list="hide_chips"][data-value="signal"]');
     await ev(`r.querySelector('input[data-list="hide_chips"]').scrollIntoView({ block: "center" })`);
@@ -110,7 +110,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] gemischt: zuerst alle an`, await ev(`return [...r.querySelectorAll('input[data-list="hide_chips"]')].every(i=>i.checked)`));
     await tap('input[data-list-all="chips"]');
     check(`[${tag}] alle aus`, await ev(`return [...r.querySelectorAll('input[data-list="hide_chips"]')].every(i=>!i.checked)`));
-    check(`[${tag}] Zusammenfassung "${T.sumAll}" (plus Verbindungsart)`, (await text('[data-id="look"] .set-sec-sum')).includes(T.sumAll), await text('[data-id="look"] .set-sec-sum'));
+    check(`[${tag}] Zusammenfassung "${T.sumAll}" (plus Verbindungsart)`, (await ev(`return !!r.querySelector('.sub-tab[data-key="chips"].chg')`)));
     const savedAll = (await save()) && (await lastSet());
     check(`[${tag}] alle zehn Chips und alle zehn Verbindungsarten gespeichert`, savedAll && savedAll.hide_chips?.join() === SAVED_KEYS.join() && savedAll.hide_connections?.length === 10, JSON.stringify(savedAll));
     const none = await wait(`const c=r.querySelector(".chips"); return !c.querySelector("[data-hint]") && !c.querySelector("[data-problems]")`) && await present();

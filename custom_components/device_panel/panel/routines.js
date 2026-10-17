@@ -1336,10 +1336,10 @@ export class RoutineUi {
     }).join("");
     const body = [this.step0Html, this.step1Html, this.step2Html, this.step3Html, this.step4Html, this.stepOptsHtml, this.backStepHtml][step].call(this);
     const last = step === STEPS;
-    const quick = last || step === 0 ? "" : `<button type="button" class="dlg-btn quick" data-rt="nav-quick"${this.canSaveAll() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("rtSaving") : t("rtSave"))}</button>`;
+    const quick = last || step === 0 ? "" : `<button type="button" class="dlg-btn quick" data-rt="nav-quick"${this.canSaveAll() && !w.saving ? "" : " disabled"}>${this.h.mdi("save", 18)}${esc(w.saving ? t("rtSaving") : t("rtSave"))}</button>`;
     const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-rt="${step === first ? "nav-cancel" : "nav-back"}">${esc(step === first ? t("rtCancel") : t("rtBack"))}</button>
       ${quick}
-      ${last ? `<button type="button" class="dlg-btn primary" data-rt="nav-save"${this.canNext() && !w.saving ? "" : " disabled"}>${esc(w.saving ? t("rtSaving") : t("rtSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-rt="nav-next"${this.canNext() ? "" : " disabled"}>${esc(t("rtNext"))}</button>`}</div>`;
+      ${last ? `<button type="button" class="dlg-btn primary" data-rt="nav-save"${this.canNext() && !w.saving ? "" : " disabled"}>${this.h.mdi("save", 18)}${esc(w.saving ? t("rtSaving") : t("rtSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-rt="nav-next"${this.canNext() ? "" : " disabled"}>${esc(t("rtNext"))}</button>`}</div>`;
     const device = (step > 0 || !w.pick) && this.deviceId ? (isHolder(this.deviceId) ? t(HOLDERS[this.deviceId].key) : this.host._devices?.find((x) => x.id === this.deviceId)?.name || w.devices?.find((x) => x.id === this.deviceId)?.name || "") : "";
     return `<div class="mgw-head"><div class="mgw-t"><b>${esc(w.editing ? t("rtEditing") : t("rtNew"))}</b>${device ? `<small>${esc(device)}</small>` : ""}</div>
         <button type="button" class="dlg-close" data-rt="close" title="${esc(t("close"))}" aria-label="${esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>

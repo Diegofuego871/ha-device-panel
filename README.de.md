@@ -47,7 +47,7 @@ Die Suche läuft über alle Spalten. Filter-Chips grenzen die Liste ein: Warnung
 
 ### Deine eigene Ansicht
 
-Der Knopf "Spalten" öffnet einen Dialog: Spalten mit dem Auge ein- oder ausblenden, per Ziehen in jede Reihenfolge bringen, die Liste gruppieren oder als eine Liste zeigen. Spalten und Reihenfolge werden für Desktop und Handy getrennt gespeichert. Ein Herz markiert Favoriten (eigener Chip), Chips lassen sich ausblenden, umordnen und anheften, und in den Einstellungen unter "Ansicht" machst du das Panel zu deiner eigenen Startseite in Home Assistant (Browser und Companion-App).
+Der Knopf "Ansicht" (Handy: die Zeile "Sortierung & Ansicht") öffnet einen Dialog mit zwei Reitern. "Spalten" (Handy: "Sortierung"): Spalten mit dem Auge ein- oder ausblenden, per Ziehen in jede Reihenfolge bringen, die Liste gruppieren oder als eine Liste zeigen; das gilt pro Benutzer, für Desktop und Handy getrennt. "Filter-Chips" (nur Administratoren): Chips ausblenden, umordnen und anheften, das gilt für alle Benutzer. Änderungen zeigt die Liste gleich, übernommen werden sie erst mit "Speichern"; beim Schliessen fragt das Panel "Änderungen verwerfen?". Ein Herz markiert Favoriten (eigener Chip), und in den Einstellungen unter "Panel" › "Standardseite" machst du das Panel zu deiner eigenen Startseite in Home Assistant (Browser und Companion-App).
 
 <p align="center"><img src="docs/screenshots/de/columns.png" alt="Dialog Anpassen mit Auge und Griff" width="560"></p>
 
@@ -195,17 +195,17 @@ Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den
 
 Das Zahnrad öffnet alle Einstellungen auf Deutsch oder Englisch, in Abschnitten. Die Versionsleiste oben zeigt die installierte und die neueste Version und aktualisiert über HACS.
 
-| Geräte im Panel | Ansicht | Routinen | Panel-Version |
-|---|---|---|---|
-| <img src="docs/screenshots/de/settings-section-devices.png" alt="Abschnitt Geräte im Panel"> | <img src="docs/screenshots/de/settings-section-look.png" alt="Abschnitt Ansicht mit Startseite und Filter-Chips"> | <img src="docs/screenshots/de/settings-section-routines.png" alt="Abschnitt Routine"> | <img src="docs/screenshots/de/settings-section-updates.png" alt="Abschnitt Panel-Version mit täglicher Prüfung und automatischer Installation"> |
+| Geräte im Panel | Routinen | Panel |
+|---|---|---|
+| <img src="docs/screenshots/de/settings-section-devices.png" alt="Abschnitt Geräte im Panel"> | <img src="docs/screenshots/de/settings-section-routines.png" alt="Abschnitt Routine"> | <img src="docs/screenshots/de/settings-section-updates.png" alt="Abschnitt Panel mit täglicher Prüfung und automatischer Installation"> |
 
 - **Geräte im Panel:** Integrationen, Gerätetypen und einzelne Geräte ausblenden, Typ und Verbindungsart pro Integration festlegen, Geräte mit eigenen Einstellungen sehen und zurücksetzen
 - **Überwachung und Meldungen:** die Reiter Übersicht (ein Zeitstrahl pro Meldung), Ausfall, Batterie, Laden, Neu, Updates, Empfang und Integrationen
 - **Abweichungen:** jeder Reiter von "Überwachung und Meldungen" (bei "Neue Geräte" ohne Geräte) endet mit den Integrationen und Geräten, die vom Standard abweichen, mit Zurücksetzen (auch unter "Geräte im Panel" › "Geräte-Einstellungen")
-- **Ansicht:** Startseite und Filter-Chips (zeigen, ausblenden, umordnen, anheften)
+- **Ansicht:** liegt nicht mehr in den Einstellungen, sondern im Dialog "Ansicht" über der Liste (Spalten und Sortierung pro Benutzer, Filter-Chips für alle); beide Reiter haben ein eigenes "Speichern"
 - **Routinen und KI-Einschätzung:** Pause, Nachhol-Fenster, Empfänger; KI-Aufgabe und Prompt
 - **Status-App:** ob die Teile der Integration laufen, mit Push-Meldung und Neustart-Knopf (auch eine Meldung, wenn CPU, Arbeitsspeicher oder Festplatte eine frei wählbare Grenze erreichen, Standard 99 %, je für eine frei wählbare Mindestdauer, Standard 3 Minuten); darunter kleine Grafiken zu CPU, Arbeitsspeicher und Festplatte von Home Assistant (24 Stunden; die Festplatte auch 30 Tage, 6 Monate, 1 Jahr), aus den Sensoren von "System Monitor" oder eigenen (aus einer durchsuchbaren Liste von Sensor-Entitäten gewählt; ausgeschaltete Sensoren lassen sich mit einem Knopf einschalten). Drei Reiter: "Dienste" (die Teile), "System" (die Grafiken) und "Einstellungen" (Meldungen, Grenzen, Quellen; sie gelten erst nach "Speichern").
-- **Panel-Version:** Prüfung bei jedem Öffnen der Einstellungen (höchstens einmal pro Minute), tägliche Prüfung zu einer festen Zeit, optionaler Push, Vorabversionen und automatische Installation über HACS (den Neustart von Home Assistant machst du selbst)
+- **Panel:** zwei Unterreiter. "Standardseite": das Panel als deine Startseite in Home Assistant (gilt nur für dich). "Updates": Prüfung bei jedem Öffnen der Einstellungen (höchstens einmal pro Minute), tägliche Prüfung zu einer festen Zeit, optionaler Push, Vorabversionen und automatische Installation über HACS (den Neustart von Home Assistant machst du selbst)
 - **Speichern:** Änderungen im Pop-up und in den Einstellungen gelten erst mit "Speichern"; beim Schliessen mit ungespeicherten Änderungen fragt das Panel "Änderungen verwerfen?"
 
 <p align="center"><img src="docs/screenshots/de/settings-monitor.png" alt="Einstellungen: Zeitstrahl, wann ein Gerät als ausgefallen gilt und wann der Push kommt" width="720"></p>

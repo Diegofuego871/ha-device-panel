@@ -35,11 +35,11 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Symbole in Farbe (Kreis blau und braungrau), "Ansicht" mit zusammengesetztem Symbol (Maske, Zahnrad)`, await ev(`const c = (id) => getComputedStyle(r.querySelector('${D} [data-id="' + id + '"] .ap-ico')).backgroundColor; return c("view") === "rgb(30, 136, 229)" && c("settings") === "rgb(141, 110, 99)" && !!r.querySelector('${D} [data-id="view"] svg mask') && r.querySelector('${D} [data-id="view"] svg').querySelectorAll("path").length === 2`));
     await p.screenshot({ path: `${outDir}/launcherview-${lang}-${mobile ? "mobile" : "desktop"}.png` });
 
-    // Ansicht: Handy das Blatt, Desktop der Dialog "Spalten"; der Launcher schliesst
+    // Ansicht: der Dialog "Ansicht" (Einstellungen im Modus Ansicht, Handy Vollbild); der Launcher schliesst
     await tap(tile("view"));
-    check(`[${tag}] "${T.view}" öffnet ${mobile ? "das Blatt Ansicht" : "den Dialog Spalten"}, Launcher zu`, (await wait(`return r.querySelector("${mobile ? "dialog.view" : "dialog.cols-dlg"}")?.open && !r.querySelector("${D}").open`)));
-    await ev(`const d = r.querySelector("${mobile ? "dialog.view" : "dialog.cols-dlg"}"); d.querySelector("[data-vdone]").click()`);
-    await wait(`return !r.querySelector("${mobile ? "dialog.view" : "dialog.cols-dlg"}").open`);
+    check(`[${tag}] "${T.view}" öffnet den Dialog Ansicht, Launcher zu`, (await wait(`return r.querySelector("dialog.settings")?.open && !r.querySelector("${D}").open`)));
+    await ev(`const d = r.querySelector("dialog.settings"); d.querySelector('.dlg-actions [data-set="close"]').click()`);
+    await wait(`return !r.querySelector("dialog.settings").open`);
 
     // Einstellungen
     await open();

@@ -52,9 +52,9 @@ check("Einstellungen: kein Fokusring nach dem Schliessen", !(await ring()), awai
 
 // Ansicht (Zeile Sortierung & Ansicht)
 await tap(".sort-btn");
-await wait(`return r.querySelector("dialog.view")?.open`);
-await tap("dialog.view .dlg-actions [data-vdone]");
-await wait(`return !r.querySelector("dialog.view").open`);
+await wait(`return r.querySelector("dialog.settings")?.open`);
+await tap('dialog.settings .dlg-actions [data-set="close"]');
+await wait(`return !r.querySelector("dialog.settings").open`);
 await p.waitForTimeout(300);
 check("Ansicht: kein Fokusring nach dem Schliessen", !(await ring()), await focused());
 

@@ -97,7 +97,6 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Optionen Standard|Eigene|Aus`, (await ev(`return [...r.querySelector('select[data-sig-mode="|wifi"]').options].map(o=>o.textContent).join("|")`)) === `${T.defWifi}|${T.own}|${T.off}`);
     const sigMark = () => ev(`return r.querySelector('.mon-tab[data-key="sig"]').classList.contains("chg")`);
     check(`[${tag}] Reiter Empfang: noch nichts angepasst (kein Punkt)`, !(await sigMark()));
-    check(`[${tag}] Ansicht: keine Empfang-Zusammenfassung mehr`, !(await sec("look")).includes(lang === "de" ? "Empfang" : "Signal"), await sec("look"));
 
     // WLAN: Eigene, Start mit dem Standard; -120 ungültig; -85 gültig
     await pick("|wifi", "own");

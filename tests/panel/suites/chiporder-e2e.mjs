@@ -52,9 +52,9 @@ for (const lang of ["de", "en"]) {
     const sel = (key) => `.drag-list[data-drag-list="chip_order"] [data-key="${key}"]`;
     const openChips = async () => {
       await ev(`if (r.querySelector("dialog.settings")?.open) r.querySelector('dialog.settings [data-set="close"]').click()`);
-      await tap(".gear-btn");
-      await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-      await tap('[data-set="section"][data-id="look"]');
+      await tap(mobile ? "[data-view-open]" : ".view-btn");
+      await wait(`return !!r.querySelector("dialog.settings .sub-tab")`);
+      await tap('[data-set="vtab"][data-key="chips"]');
       await wait(`return !!r.querySelector('.drag-list[data-drag-list="chip_order"]')`);
     };
     const save = async () => {
@@ -113,7 +113,7 @@ for (const lang of ["de", "en"]) {
     await drag(sel("all"), sel("area"));
     const m1 = "pin,favorites,integration,new,offline,problems,battery,batteries,charging,all,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override";
     check(`[${tag}] "Alle" nach hinten gezogen`, await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === ${JSON.stringify(m1)}`), await rowOrder());
-    check(`[${tag}] als Änderung, Zusammenfassung, Knopf "${T.reset}"`, (await text(".set-count")) === T.one && (await text('[data-id="look"] .set-sec-sum')).endsWith(T.order) && (await text('[data-set="drag-reset"]')) === T.reset, `${await text(".set-count")} / ${await text('[data-id="look"] .set-sec-sum')}`);
+    check(`[${tag}] als Änderung, Zusammenfassung, Knopf "${T.reset}"`, (await text(".set-count")) === T.one && (await ev(`return !!r.querySelector('.sub-tab[data-key="chips"].chg')`)) && (await text('[data-set="drag-reset"]')) === T.reset, await text(".set-count"));
     check(`[${tag}] Vorschau folgt der Folge: "${T.fixed}" hinter den Hinweisen`, await wait(`return [...r.querySelectorAll(".chip-prev-pills > *")].map((c) => c.classList.contains("vsep") ? "|" : c.textContent.replace(/\\s+/g," ").trim()).join("#").includes(${JSON.stringify(`#|#${T.fixed} 16#|#`)})`), await prevTexts());
     if (!mobile) {
       // Pfeiltaste: "Update" eins nach unten, der Fokus bleibt am Griff

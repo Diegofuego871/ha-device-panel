@@ -271,9 +271,9 @@ dialog.area-sheet .arow.in { padding-left: 16px; }
 .vrow.off .eye { color: var(--dp-text3); }
 .eye.dis { opacity: .35; cursor: default; }
 .eye.dis:hover { background: none; color: var(--dp-text2); }
-dialog.cols-dlg .vrow { min-height: 44px; padding-left: 0; border-bottom: 1px solid var(--dp-divider); border-radius: 0; font-size: 14.5px; }
-dialog.cols-dlg .vlist .vrow:last-child { border-bottom: 0; }
-dialog.cols-dlg .vrow.lift { border-radius: 10px; }
+dialog.settings .vrow { min-height: 44px; padding-left: 0; border-bottom: 1px solid var(--dp-divider); border-radius: 0; font-size: 14.5px; }
+dialog.settings .vlist .vrow:last-child { border-bottom: 0; }
+dialog.settings .vrow.lift { border-radius: 10px; }
 .dlg-actions.split { justify-content: space-between; }
 .dlg-actions.split .dlg-btn { flex: 0 0 auto; }
 .dlg-actions.split .dlg-btn.primary { min-width: 120px; }
@@ -314,9 +314,6 @@ th.sorted .th-sort svg { opacity: 1; }
 .vline .seg-sw button { display: inline-flex; align-items: center; gap: 4px; }
 .vnote { margin-top: 6px; color: var(--dp-text2); font-size: 12px; line-height: 1.4; }
 .vnote.top { margin: 0 0 6px; }
-dialog.view .vrow { min-height: 46px; padding-left: 0; border-bottom: 1px solid var(--dp-divider); border-radius: 0; font-size: 14.5px; }
-dialog.view .vrow:last-child { border-bottom: 0; }
-dialog.view .vrow.lift { border-radius: 10px; }
 
 /* Tabelle als Karte. Kein overflow an der Karte: sie würde zum Scroll-
    Container, und die Kopfzeile klebte nicht mehr (siehe LEARNINGS). */
@@ -436,7 +433,7 @@ svg.strip .s2 { fill: var(--dp-bar-off); }
    Hintergrund, Esc und Fokusfalle liefert der Browser. Auf dem Handy als
    Blatt von unten. Der Dialog scrollt selbst, Kopf und Aktionsleiste
    bleiben per sticky sichtbar (wie unifi_dynamic). */
-dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.cols-dlg, dialog.prompt-dlg, dialog.notes-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
+dialog.device, dialog.stat-dlg, dialog.settings, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg, dialog.notes-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text);
   box-shadow: var(--dp-shadow); overflow: auto; overscroll-behavior: contain; max-height: calc(100% - 48px);
   clip-path: inset(0 round 22px); /* die eigene Scrollleiste des Dialogs liegt sonst eckig über der Rundung (rechts oben/unten) */ }
 /* Schmale Scrollleiste ohne Pfeile (seit 2.29.1, Wunsch des Nutzers): die klassische Leiste mit Pfeilen sass in den runden Ecken und wurde dort
@@ -448,12 +445,11 @@ dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet,
 *::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--dp-text2) 40%, transparent); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
 *::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--dp-text2) 65%, transparent); background-clip: padding-box; }
 @supports not selector(::-webkit-scrollbar) { dialog { scrollbar-width: thin; } }
-dialog.view { width: min(640px, calc(100vw - 32px)); }
 /* Grosse Fenster auf dem Desktop einheitlich (seit 2.28.5, Wunsch des Nutzers): Geräte-Popup, Einstellungen, Routinen und Protokoll gleich gross */
 dialog.device, dialog.settings { width: min(880px, calc(100vw - 48px)); }
-dialog.area-sheet, dialog.cols-dlg { width: min(420px, calc(100vw - 32px)); }
+dialog.area-sheet { width: min(420px, calc(100vw - 32px)); }
 dialog.stat-dlg, dialog.pulse-dlg, dialog.prompt-dlg, dialog.notes-dlg { width: min(560px, calc(100vw - 32px)); }
-dialog.device::backdrop, dialog.settings::backdrop, dialog.view::backdrop, dialog.area-sheet::backdrop, dialog.pulse-dlg::backdrop, dialog.cols-dlg::backdrop, dialog.prompt-dlg::backdrop, dialog.notes-dlg::backdrop { background: rgba(0,0,0,0.5); }
+dialog.device::backdrop, dialog.settings::backdrop, dialog.area-sheet::backdrop, dialog.pulse-dlg::backdrop, dialog.prompt-dlg::backdrop, dialog.notes-dlg::backdrop { background: rgba(0,0,0,0.5); }
 /* Dialog dahinter stark gedimmt und unscharf, sein X ausgeblendet: so ist
    klar, welches Fenster gerade gilt. */
 dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
@@ -757,6 +753,7 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .nf-note svg { flex: none; margin-top: 1px; color: var(--dp-primary); }
 .nf-note p { margin: 0; }
 .nf-note p + p { margin-top: 6px; color: var(--dp-text); }
+.nf-note.view-own { margin: 12px 0 14px; }
 .nf-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; font-size: 14px; }
 .pv { margin-top: 12px; padding: 12px; border-radius: 14px; background: var(--dp-subtle); }
 .pv-k { margin-bottom: 8px; color: var(--dp-text2); font-size: 12px; }
@@ -1275,8 +1272,8 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   .chips.scrolled .chip-pin::after { opacity: 1; }
   .chips .chip-pin.too-wide { position: static; }
   .foot .tap { display: none; }
-  dialog.device, dialog.stat-dlg, dialog.settings, dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg, dialog.notes-dlg { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
-  dialog.view, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg, dialog.notes-dlg { max-height: 92%; }
+  dialog.device, dialog.stat-dlg, dialog.settings, dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg, dialog.notes-dlg { width: 100%; max-width: 100%; margin: auto 0 0; border-radius: 22px 22px 0 0; }
+  dialog.area-sheet, dialog.pulse-dlg, dialog.prompt-dlg, dialog.notes-dlg { max-height: 92%; }
   .pwin .pchart { height: 96px; }
   /* Handy: der Knopf oben entfällt (seit 2.0.5); die Zeile "Sortierung & Ansicht" unter den Chips öffnet dasselbe Blatt */
   .view-btn { display: none; }
@@ -1389,10 +1386,7 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
   dialog.device, dialog.settings, dialog.pulse-dlg, dialog.area-sheet, dialog.prompt-dlg, dialog.notes-dlg { height: 92%; max-height: 92%; }
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   /* Einstellungen, Ansicht und Geräte-Popup auf dem Handy als Vollbild (seit 2.24.0, Wunsch des Nutzers) */
-  dialog.settings, dialog.view, dialog.device { height: 100%; max-height: 100%; margin: 0; border-radius: 0; clip-path: none; }
-  dialog.view[open] { display: flex; flex-direction: column; }
-  dialog.view[open] > * { flex-shrink: 0; }
-  dialog.view[open] > .dlg-body { flex-grow: 1; }
+  dialog.settings, dialog.device { height: 100%; max-height: 100%; margin: 0; border-radius: 0; clip-path: none; }
 }
 
 /* Material (seit 2.0.0b1, Wunsch des Nutzers, Variante B aus docs/mockups/apple-design-v1): Geräte-Popup, Einstellungen und Protokoll sind

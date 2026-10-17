@@ -1,5 +1,5 @@
-// Startseite (2.39.0, Wunsch des Nutzers; 2.39.1: gilt wie alles andere erst mit "Speichern"): Der Abschnitt "Darstellung" heisst "Ansicht" und hat
-// ganz oben, vor den Filter-Chips, den Bereich "Startseite" mit dem Schalter "Als meine Startseite festlegen". Die Wahl ist ein Entwurf (Etikett
+// Startseite (2.39.0, Wunsch des Nutzers; 2.39.1: gilt wie alles andere erst mit "Speichern"; seit 2.87.0 im Abschnitt "Panel", Unterreiter
+// "Standardseite"): Bereich "Startseite" mit dem Schalter "Als meine Startseite festlegen" und dem Hinweis "Gilt nur für dich". Die Wahl ist ein Entwurf (Etikett
 // "geändert", Zähler, "Speichern", Rückfrage beim Schliessen) und wird erst beim Speichern als default_panel ("device-panel") in die Benutzerdaten
 // "core" von Home Assistant geschrieben (frontend/set_user_data), ohne die übrigen Werte zu verlieren. Beim Einschalten merkt sich das Panel die
 // bisherige Startseite und stellt sie beim Ausschalten wieder her; ohne bisherige fällt der Eintrag weg (Vorgabe von HA). Fehler beim Speichern
@@ -12,8 +12,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { sec: "Ansicht", title: "Startseite", label: "Als meine Startseite festlegen", chips: "Filter-Chips", sum: "Deine Startseite" },
-  en: { sec: "View", title: "Start page", label: "Set as my start page", chips: "Filter chips", sum: "Your start page" },
+  de: { sec: "Panel", title: "Startseite", label: "Als meine Startseite festlegen", note: "Gilt nur für dich, nicht für andere Benutzer.", sum: "Deine Startseite" },
+  en: { sec: "Panel", title: "Start page", label: "Set as my start page", note: "Applies only to you, not to other users.", sum: "Your start page" },
 };
 
 async function open(lang, mobile, seed = null) {
@@ -38,7 +38,8 @@ async function open(lang, mobile, seed = null) {
   const userData = (key) => p.evaluate((k) => JSON.parse(sessionStorage.getItem("sim_user_data") || "{}")[k] ?? {}, key);
   await tap(".gear-btn");
   await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-  await tap('[data-set="section"][data-id="look"]');
+  await tap('[data-set="section"][data-id="updates"]');
+  await tap('[data-set="subtab"][data-group="panel"][data-key="pstart"]');
   await wait(`return !!r.querySelector('input[data-start-panel]')`);
   return { ctx, p, ev, tap, wait, errors, userData };
 }
@@ -48,16 +49,16 @@ for (const lang of ["de", "en"]) {
   for (const mobile of [false, true]) {
     const tag = `${lang}/${mobile ? "mobile" : "desktop"}`;
 
-    // Name des Abschnitts, Reihenfolge: Bereich "Startseite" vor den Filter-Chips
+    // Name des Abschnitts, Reihenfolge: Hinweis, Bereich "Startseite", Schalter
     {
       const { ctx, p, ev, tap, wait, errors, userData } = await open(lang, mobile, { core: { other: 1, default_panel: "lovelace" } });
-      check(`[${tag}] Abschnitt heisst "${T.sec}"`, (await ev(`return r.querySelector('[data-id="look"] .set-sec-title').textContent.trim()`)) === T.sec);
-      const order = await ev(`const body = r.querySelector('[data-id="look"]').parentElement; const items = [...body.querySelectorAll(".set-title, .ex-title, input[data-start-panel]")]; return items.map((e) => e.matches("input") ? "switch" : e.textContent.trim())`);
-      check(`[${tag}] ganz oben: "${T.title}", dann der Schalter, dann "${T.chips}"`, order[0] === T.title && order[1] === "switch" && order[2] === T.chips, JSON.stringify(order));
+      check(`[${tag}] Abschnitt heisst "${T.sec}"`, (await ev(`return r.querySelector('[data-id="updates"] .set-sec-title').textContent.trim()`)) === T.sec);
+      const order = await ev(`const body = r.querySelector('[data-id="updates"]').parentElement; const items = [...body.querySelectorAll(".nf-note, .set-title, input[data-start-panel]")]; return items.map((e) => e.matches("input") ? "switch" : e.textContent.trim())`);
+      check(`[${tag}] ganz oben: Hinweis "${T.note}", dann "${T.title}", dann der Schalter`, order[0] === T.note && order[1] === T.title && order[2] === "switch", JSON.stringify(order));
       check(`[${tag}] Schalter "${T.label}": aus (HA hat eine andere Startseite), frei, nichts zu speichern`, await ev(`const i = r.querySelector('input[data-start-panel]'); return !i.checked && !i.disabled && i.getAttribute("aria-label") === ${JSON.stringify(T.label)} && r.querySelector('[data-set="save"]').disabled`));
       await tap("input[data-start-panel]");
       check(`[${tag}] eingeschaltet: Entwurf (Etikett "geändert", Zähler, "Speichern" frei), noch nichts in den Benutzerdaten`, await wait(`const i = r.querySelector('input[data-start-panel]'); return i.checked && i.closest(".opt").classList.contains("changed") && !r.querySelector('[data-set="save"]').disabled && /^1 /.test(r.querySelector(".set-count")?.textContent || "")`) && (await userData("core")).default_panel === "lovelace", JSON.stringify(await userData("core")));
-      check(`[${tag}] Zusammenfassung des Abschnitts nennt "${T.sum}"`, (await ev(`return r.querySelector('[data-id="look"] .set-sec-sum').textContent`)).includes(T.sum));
+      check(`[${tag}] Zusammenfassung des Abschnitts nennt "${T.sum}"`, (await ev(`return r.querySelector('[data-id="updates"] .set-sec-sum').textContent`)).includes(T.sum));
       await tap('[data-set="save"]');
       check(`[${tag}] gespeichert: default_panel = device-panel, übrige Werte bleiben, bisherige Startseite gemerkt`, await wait(`return r.querySelector('[data-set="save"]').disabled && !r.querySelector('input[data-start-panel]').closest(".opt").classList.contains("changed")`) && JSON.stringify(await userData("core")) === JSON.stringify({ other: 1, default_panel: "device-panel" }) && JSON.stringify(await userData("device_panel_start")) === JSON.stringify({ previous: "lovelace" }), JSON.stringify([await userData("core"), await userData("device_panel_start")]));
       await tap("input[data-start-panel]");

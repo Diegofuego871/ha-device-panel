@@ -72,8 +72,10 @@ for (const mobile of [false, true]) {
   check(`[${tag}] Batterie: Emoji und Vorschau vor den Abweichungen`, (await before(".emo-box", ".ovr-opt")) && (await before(".pv", ".ovr-opt")));
 
   // Darstellung: "Reihenfolge zurücksetzen" über der Chip-Liste
-  await tap('[data-set="section"][data-id="monitor"]');
-  await tap('[data-set="section"][data-id="look"]');
+  await ev(`r.host._closeSettings()`);
+  await tap(mobile ? "[data-view-open]" : ".view-btn");
+  await wait(`return !!r.querySelector("dialog.settings .sub-tab")`);
+  await tap('[data-set="vtab"][data-key="chips"]');
   await ev(`r.host._settings.draft.chip_order = ["all"]; r.host._renderSettings()`);
   await wait(`return !!r.querySelector(".drag-reset") && !!r.querySelector(".drag-list")`);
   check(`[${tag}] Darstellung: Zurücksetzen vor der Chip-Liste, nichts dahinter`, (await before(".drag-reset", ".drag-list")) && (await ev(`const L=r.querySelector(".drag-list"); return !L.nextElementSibling`)));

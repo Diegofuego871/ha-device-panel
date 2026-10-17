@@ -3,6 +3,14 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.87.0, Ansicht mit "Speichern", Disketten-Symbol)
+
+- Wunsch des Nutzers (Mockups `docs/mockups/view-v3`): die Ansicht an einem Ort, mit eigenem "Speichern" (nicht sofort) für beide Reiter ("Spalten"/"Sortierung" pro Benutzer, "Filter-Chips" für alle, nur Administratoren). Umsetzung: der Dialog der Einstellungen (`dialog.settings`) hat einen Modus `st.mode = "view"` (`_openSettings("view")`, `_openView()`), Reiter `st.vtab` (`data-set="vtab"`). `_viewBodyHtml()` baut Reiterleiste und Reiter; der Chips-Reiter ist `fields.chips` aus `_settingsBodyHtml()` (liefert im Modus "view" nur diesen Block). Ansicht-Entwurf: `_setView(patch, { draft: true })` überspringt `_saveView()`; `st.viewBase = { kind, snap }` ist der Stand beim Öffnen, `_viewChanged()` vergleicht (`"view"` zählt als Änderung in `_settingsChanges`), `_saveSettings` ruft `_saveView()` und setzt `viewBase.snap` neu, `_closeSettings` ruft `_revertView()` (Schliessen mit Entwurf fragt vorher über `_requestCloseSettings`). Nicht-Administratoren: nur Reiter "Spalten", `get_options` wird nicht geladen (`_reloadSettings` kommt ohne `st.data` aus). `_bindViewControls(dialog)` bindet Auge, Ziehen, Pfeiltasten, Sortierung, Gruppen/Liste, Standard; der Hörer `_swallowUntil` (Bereichsfilter) liegt weiter dort. Die alten Dialoge `cols-dlg` und `dialog.view` sind weg (`_toggleCols`, `_renderCols`, `_openViewSheet`, `_renderViewSheet` entfernt). `_setAreas`/`_setIntegs`/`_cycleSort` speichern weiter sofort (Filter in der Liste, kein Dialog).
+- Einstellungen: Abschnitt "look" entfällt; Abschnitt `updates` heisst "Panel" (`secPanel`) mit Unterreitern `pstart` ("Standardseite", Startseite-Schalter, Hinweis `startOwnNote`) und `pupdates` ("Updates", Versionszeile `.ver-slot` jetzt im Reiter, nicht mehr über den Abschnitten); `st.sub.panel`, Vorgabe "pupdates". `SUB_TAB_KEYS.pstart/pupdates`.
+- Disketten-Symbol (`MDI.save`) an allen Speichern-Knöpfen (Geräte-Popup, Einstellungen, Status, Routinen, Magic Push, Launcher). Symbol `viewSettings` am Knopf "Ansicht" (vorher "Spalten") und in der Handy-Zeile.
+- Tests: neue Suite `viewsave`; angepasst: `view`, `focus`, `launcherview`, `startpage`, `chiporder`, `chips`, `hidechips`, `conn`, `listlast`, `listsearch`, `prodevice`, `sigtype`.
+- Offen: die README-Bilder `docs/screenshots/*/settings-section-updates.png` und `columns.png` zeigen noch den alten Stand (Panel-Version, Dialog "Anpassen"); `settings-section-look.png` wird nicht mehr verwendet. Neu aufnehmen.
+
 ## Stand (2.86.0, KI-Einschätzung entfernen)
 
 - Wunsch des Nutzers (Screenshot Popup): ein Knopf, der die KI-Einschätzung wegnimmt, sie nimmt viel Platz ein. Umsetzung: Knopf "Entfernen" in der Fusszeile der Karte (`data-dlg="ai-clear"`, `_aiClear`), Backend `ai_assessment.async_clear` und WebSocket-Befehl `device_panel/ai_clear` (nur Administratoren, `AiMemory.forget`, liefert True, wenn eine da war). Ohne Rückfrage (leicht neu erstellbar). Die Einschätzung fliesst damit auch nicht mehr in den Kontext der nächsten ein. Tests: `test_ai_context`, Suite `aiclear`; Simulator kennt `ai_clear`.
@@ -11,12 +19,12 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 
 - Wunsch des Nutzers (Screenshot Launcher, Gruppe "Device Panel"): die Ansichtseinstellungen (Symbol Auge mit Zahnrad, farbig) und die normalen Einstellungen als Apps; beide ausblendbar (nicht `locked`), weil es einen zweiten Weg gibt (Knöpfe in der Kopfzeile), standardmässig sichtbar. `apps.js` `BUILTIN` `view`/`settings`, `PANEL_COLOR`, Aktion `host._openView()` (Handy: Blatt, sonst Dialog "Spalten") und `host._openSettings()`. `MDI.viewSettings` ist ein zusammengesetztes Symbol (Auge mit durch eine Maske ausgeschnittenem Zahnrad); `mdiPath` nimmt Einträge, die mit "<" beginnen, als fertiges SVG-Innenleben.
 - Pille "Neustart" (rot) an der Karte "Einstellungen", solange der rote Punkt am Zahnrad der Kopfzeile steht (`_gearDot` setzt `host._gearRestart` und ruft `_apps.paintDots()`; `apps.js` `_badge`); bewusst kein Punkt am Launcher-Knopf (Wunsch des Nutzers). Test in `updatecfg`. Der Punkt am Zahnrad bedeutet heute nur "Neustart nach Update steht aus"; die Störung eines Dienstes zeigt die Status-App (Pille "Störung", Punkt am Launcher-Knopf), nicht die Einstellungen.
-- Die Ansicht-Reiter (Spalten, Filter-Chips) und das Symbol in der Zeile "Sortierung & Ansicht" (Mockups `docs/mockups/view-v3`) sind noch nicht umgesetzt; der Entscheid des Nutzers zum Speichern der Filter-Chips im Reiter steht aus.
+- (Die Ansicht-Reiter folgten in 2.87.0.)
 
 ## Stand (2.84.0, Knopf "HA-Seite der Integration öffnen")
 
 - Wunsch des Nutzers (Screenshot Popup): neben "HA-Geräteseite öffnen" ein Knopf im gleichen Stil, der die HA-Seite der Integration des Geräts öffnet. `device-panel.js`: Action `open-integration` (`/config/integrations/integration/<domain>`, Domain aus `d.integration.domain`, nur `[a-z0-9_]`), schliesst über `_requestCloseDevice` (fragt bei Entwurf nach). Ohne Integration kein Knopf. Beschriftung (auf Wunsch kurz, ein Schema, beide Knöpfe auf einer Zeile auch auf dem Handy): "Gerät in HA öffnen" / "Integration in HA öffnen" (EN "Open device in HA" / "Open integration in HA"), `.q-t` mit Auslassungspunkten erst unter etwa 350 px. Pfad der Seite nach dem HA-Frontend, nicht in einer echten HA-Instanz geprüft.
-- Offen aus dem Gespräch: Mockups `docs/mockups/view-v3` (Ansicht an einem Ort, Symbol B Auge mit Zahnrad): Entscheid des Nutzers zu "sofort speichern" im Reiter "Filter-Chips" steht aus.
+- (view-v3 ist in 2.87.0 umgesetzt, mit "Speichern".)
 
 ## Stand (2.83.0, Gerätetyp "Display")
 
