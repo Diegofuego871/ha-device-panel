@@ -4696,7 +4696,7 @@ class DevicePanel extends HTMLElement {
           <div class="dlg-title">${this._nameHtml(d)}
             <div class="dlg-sub">${status}<span>${[this._t(typeKey(d.type)), d.area].filter(Boolean).map(escape).join(" · ")}</span></div>${whyHtml}</div>
           ${heart}${close}</div>
-        <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device">${mdi("open", 17)}${escape(this._t("openDevicePage"))}</button></div>
+        <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device" aria-label="${escape(this._t("openDevicePage"))}">${mdi("open", 17)}<span class="q-long">${escape(this._t("openDevicePage"))}</span><span class="q-short">${escape(this._t("openDevicePageShort"))}</span></button>${d.integration?.domain ? `<button type="button" class="qbtn" data-dlg="open-integration" data-domain="${escape(d.integration.domain)}" aria-label="${escape(this._t("openIntegPage"))}">${mdi("open", 17)}<span class="q-long">${escape(this._t("openIntegPage"))}</span><span class="q-short">${escape(this._t("openIntegPageShort"))}</span></button>` : ""}</div>
         <div class="dev-tabs">${tabs}</div>
         <div class="dlg-body" role="tabpanel">${body}
           ${this._hideError ? `<div class="dlg-error">${escape(this._t("hideError"))} ${escape(this._hideError)}</div>` : ""}
@@ -4748,7 +4748,11 @@ class DevicePanel extends HTMLElement {
     const action = btn.dataset.dlg;
     if (action === "close") this._requestCloseDevice();
     else if (action === "save") this._devSave();
-    else if (action === "open-device") {
+    else if (action === "open-integration") {
+      // HA-Seite der Integration dieses Geräts (seit 2.84.0); der Domainname kommt aus dem Registry-Eintrag, nicht aus freier Eingabe
+      const domain = btn.dataset.domain;
+      if (/^[a-z0-9_]+$/.test(domain || "")) this._requestCloseDevice(() => this._navigate(`/config/integrations/integration/${domain}`));
+    } else if (action === "open-device") {
       const id = this._detailId;
       this._requestCloseDevice(() => this._navigate(`/config/devices/device/${id}`));
     } else if (action === "stat") this._openStat(btn.dataset.range, btn.dataset.kind);

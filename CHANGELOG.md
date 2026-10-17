@@ -7,9 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.84.0] - 2026-10-17
+
+Pop-up of the device: button "Open integration page".
+
+Includes the changes from 2.83.0.
+
+### Added
+
+- Pop-up of the device, next to "Open device page": the button **Open integration page** (same style, on the same line; on the phone both read "Device in HA" and "Integration in HA" so they fit side by side). It opens the page of the integration of this device in Home Assistant (for example the ESPHome page for an ESPHome device) and closes the pop-up; with unsaved changes it asks first, like the device page. Devices without integration have no such button.
+
 ## [2.83.0] - 2026-10-17
 
 New device type "Display".
+
+Not released; included in 2.84.0.
 
 ### Added
 
@@ -3736,7 +3748,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.83.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.83.0
+[2.84.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.84.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0

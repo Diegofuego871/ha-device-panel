@@ -498,7 +498,8 @@ dialog.status-dlg .dlg-title h2 { margin: 0; }
 .dlg-quick { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 22px 14px; }
 .qbtn { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--dp-divider);
   background: none; color: var(--dp-text); font-size: 13px; cursor: pointer; }
-.qbtn svg { color: var(--dp-text2); }
+.qbtn svg { color: var(--dp-text2); flex: none; }
+.qbtn .q-short { display: none; }
 .qbtn:hover { background: var(--dp-hover); }
 .dlg-body { padding: 4px 22px 18px; }
 .dlg-body h3 { display: flex; align-items: center; gap: 8px; margin: 18px 0 8px; font-size: 12px; font-weight: 500; color: var(--dp-text2);
@@ -1301,7 +1302,11 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   .dlg-head { padding: 18px 12px 12px 16px; }
   /* Vollbild-Fenster (Einstellungen, Protokoll, Routinen): das Kreuz sitzt auf gleicher Höhe wie der Zahnrad-Knopf der Übersicht (12 px vom oberen Rand) */
   dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close, dialog.mgall-dlg .dlg-head .dlg-close, dialog.status-dlg .dlg-head .dlg-close { margin-top: -6px; }
-  .dlg-quick { padding: 0 16px 14px; }
+  .dlg-quick { padding: 0 16px 14px; flex-wrap: nowrap; gap: 6px; }
+  /* Handy: beide Knöpfe (Geräteseite, Seite der Integration) auf einer Zeile, darum die kurze Beschriftung */
+  .qbtn { padding: 0 12px; gap: 6px; min-width: 0; white-space: nowrap; }
+  .qbtn .q-long { display: none; }
+  .qbtn .q-short { display: inline; overflow: hidden; text-overflow: ellipsis; }
   .dlg-body { padding: 4px 16px 16px; }
   .dlg-actions { padding-left: 16px; padding-right: 16px; }
   .st-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }

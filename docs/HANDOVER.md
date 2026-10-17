@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.84.0, Knopf "HA-Seite der Integration öffnen")
+
+- Wunsch des Nutzers (Screenshot Popup): neben "HA-Geräteseite öffnen" ein Knopf im gleichen Stil, der die HA-Seite der Integration des Geräts öffnet. `device-panel.js`: Action `open-integration` (`/config/integrations/integration/<domain>`, Domain aus `d.integration.domain`, nur `[a-z0-9_]`), schliesst über `_requestCloseDevice` (fragt bei Entwurf nach). Ohne Integration kein Knopf. Pfad der Seite nach dem HA-Frontend, nicht in einer echten HA-Instanz geprüft.
+- Offen aus dem Gespräch: Mockups `docs/mockups/view-v3` (Ansicht an einem Ort, Symbol B Auge mit Zahnrad): Entscheid des Nutzers zu "sofort speichern" im Reiter "Filter-Chips" steht aus.
+
 ## Stand (2.83.0, Gerätetyp "Display")
 
 - Wunsch des Nutzers (Screenshot Büro Display, Typ "Sonstiges"): die Typen kommen vom Panel (`const.DEVICE_TYPES`, Erkennung in `devices.device_type`), nicht von HA. Neu: "display" nach "media" (Backend, `TYPE_ORDER`/`TYPE_ICONS`/`typeDisplay` im Panel, `strings.json` + Übersetzungen, Simulator). Ohne automatische Erkennung (ESPHome-Displays haben `number`/`select`/`light`/`switch`, kein sicheres Merkmal); Wahl von Hand am Gerät oder pro Integration. Tests: `test_translations` (Panel gleich Backend), `test_type_integration`.

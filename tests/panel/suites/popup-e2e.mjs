@@ -15,7 +15,7 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
     one1: "1 Änderung",
-    pill: "Ausgefallen seit 2 Std. 14 Min.", sub: "Bewegung / Präsenz · Flur", open: "HA-Geräteseite öffnen",
+    pill: "Ausgefallen seit 2 Std. 14 Min.", sub: "Bewegung / Präsenz · Flur", open: "HA-Geräteseite öffnen", openInteg: "HA-Seite der Integration öffnen",
     secs: ["Statistik", "Verbindung", "Gerät"], tabs: ["Übersicht", "Einstellungen", "Entitäten · 3", "Magic Push", "Routinen"], tabOwn: "Einstellungen 1 eigene", setSecs: ["Typ und Verbindung", "Einstellungen für dieses Gerät"], entSecs: ["Entitäten · 3", "Link zu diesem Gerät"],
     tile24: ["Verfügbarkeit 24 Std.", "90,2%", "2 Unterbrüche · längster 2 Std. 14 Min."],
     tile7: ["Unterbrüche 7 Tage", "3", "zusammen 2 Std. 41 Min."], signal: ["Empfang", "LQI 38", "schwach"], battery: ["Batterie", "8%", "niedrig"],
@@ -29,7 +29,7 @@ const TEXT = {
   },
   en: {
     one1: "1 change",
-    pill: "Offline for 2 h 14 min", sub: "Motion / presence · Flur", open: "Open device page",
+    pill: "Offline for 2 h 14 min", sub: "Motion / presence · Flur", open: "Open device page", openInteg: "Open integration page",
     secs: ["Statistics", "Connection", "Device"], tabs: ["Overview", "Settings", "Entities · 3", "Magic Push", "Routines"], tabOwn: "Settings 1 custom", setSecs: ["Type and connection", "Settings for this device"], entSecs: ["Entities · 3", "Link to this device"],
     tile24: ["Availability 24 h", "90.2%", "2 outages · longest 2 h 14 min"],
     tile7: ["Outages 7 days", "3", "2 h 41 min in total"], signal: ["Signal", "LQI 38", "weak"], battery: ["Battery", "8%", "low"],
@@ -74,7 +74,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Name`, (await text("dialog.device h2")) === "Bewegungsmelder Flur");
     check(`[${tag}] Status-Pille`, (await text("dialog.device .dlg-sub .pill.off")) === T.pill, await text("dialog.device .dlg-sub"));
     check(`[${tag}] Typ und Bereich`, (await text("dialog.device .dlg-sub")).endsWith(T.sub), await text("dialog.device .dlg-sub"));
-    check(`[${tag}] Knopf HA-Geräteseite`, (await text('[data-dlg="open-device"]')) === T.open);
+    check(`[${tag}] Knopf HA-Geräteseite`, (await text('[data-dlg="open-device"] .q-long')) === T.open);
     check(`[${tag}] Abschnitte`, await wait(`return [...r.querySelectorAll("dialog.device h3")].map(h=>h.textContent.trim()).join("|") === ${JSON.stringify(T.secs.join("|"))}`),
       JSON.stringify(await texts("dialog.device h3")));
     const devCalls = await calls("device_panel/device");
@@ -278,6 +278,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] HA-Geräteseite`, (await p.evaluate(() => window.__nav.at(-1))) === "/config/devices/device/b" && !(await isOpen("device")));
     // Seit dem HA-Frontend 20260930 geht der Pfeil oben links nur mit history.state.from im Verlauf zurück (ins Panel)
     check(`[${tag}] Verlaufseintrag merkt, woher man kam (history.state.from)`, await p.evaluate(() => history.state?.from === "/ha-sim.html"), JSON.stringify(await p.evaluate(() => history.state)));
+
+    // HA-Seite der Integration (2.84.0): Knopf im gleichen Stil, navigiert zur Seite der Integration, Popup zu
+    await tap(mobile ? '.mc[data-open="b"]' : 'tr[data-open="b"]');
+    check(`[${tag}] Knopf "${T.openInteg}" im Stil der Geräteseite`, await ev(`const a = r.querySelector('[data-dlg="open-device"]'), q = r.querySelector('[data-dlg="open-integration"]'); return !!q && q.className === a.className && q.querySelector(".q-long").textContent.trim() === ${JSON.stringify(T.openInteg)}`));
+    // Handy (390 px): beide Knöpfe auf einer Zeile, gleiche Höhe, innerhalb des Fensters, kurze Beschriftung
+    if (mobile) check(`[${tag}] Handy: beide Knöpfe auf einer Zeile, kurze Beschriftung`, await ev(`const a = r.querySelector('[data-dlg="open-device"]').getBoundingClientRect(), q = r.querySelector('[data-dlg="open-integration"]').getBoundingClientRect(), d = r.querySelector("dialog.device").getBoundingClientRect(); return Math.abs(a.top - q.top) < 1 && a.height === q.height && q.right <= d.right - 12 && a.right < q.left && getComputedStyle(r.querySelector('[data-dlg="open-device"] .q-long')).display === "none" && getComputedStyle(r.querySelector('[data-dlg="open-device"] .q-short')).display !== "none"`));
+    else check(`[${tag}] Desktop: beide Knöpfe auf einer Zeile mit voller Beschriftung`, await ev(`const a = r.querySelector('[data-dlg="open-device"]').getBoundingClientRect(), q = r.querySelector('[data-dlg="open-integration"]').getBoundingClientRect(); return Math.abs(a.top - q.top) < 1 && getComputedStyle(r.querySelector('[data-dlg="open-integration"] .q-long')).display !== "none"`));
+    await tap('[data-dlg="open-integration"]');
+    check(`[${tag}] HA-Seite der Integration`, (await p.evaluate(() => /^\/config\/integrations\/integration\/[a-z0-9_]+$/.test(window.__nav.at(-1)))) && !(await isOpen("device")), await p.evaluate(() => window.__nav.at(-1)));
 
     check(`[${tag}] kein fehlender Text`, !(await ev(`return r.innerHTML.includes("undefined") || r.innerHTML.includes("NaN")`)));
     const over = await ev(`return document.documentElement.scrollWidth - innerWidth`);

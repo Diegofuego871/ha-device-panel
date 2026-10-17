@@ -7,9 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.84.0] - 2026-10-17
+
+Geräte-Popup: Knopf "HA-Seite der Integration öffnen".
+
+Enthält die Änderungen von 2.83.0.
+
+### Hinzugefügt
+
+- Geräte-Popup, neben "HA-Geräteseite öffnen": der Knopf **HA-Seite der Integration öffnen** (im gleichen Stil, auf derselben Zeile; auf dem Handy heissen beide "Gerät in HA" und "Integration in HA", damit sie nebeneinander passen). Er öffnet die Seite der Integration dieses Geräts in Home Assistant (zum Beispiel die ESPHome-Seite bei einem ESPHome-Gerät) und schliesst das Popup; bei ungespeicherten Änderungen fragt er zuerst nach, wie bei der Geräteseite. Geräte ohne Integration haben den Knopf nicht.
+
 ## [2.83.0] - 2026-10-17
 
 Neuer Gerätetyp "Display".
+
+Nicht veröffentlicht; enthalten in 2.84.0.
 
 ### Hinzugefügt
 
@@ -3837,7 +3849,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.83.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.83.0
+[2.84.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.84.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0
