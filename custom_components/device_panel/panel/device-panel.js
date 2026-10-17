@@ -383,6 +383,9 @@ const CONN_MANUAL = Object.keys(CONN).filter((k) => k !== "unknown");
 
 const LOGO = `<svg width="30" height="30" viewBox="22 22 212 212" aria-hidden="true"><defs><linearGradient id="dpg" x1="28" y1="20" x2="228" y2="236" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7ADFFD"/><stop offset=".5" stop-color="#22A9F9"/><stop offset="1" stop-color="#1C7DF9"/></linearGradient></defs><path d="M60 44 H112 A84 84 0 0 1 112 212 H60 Z" fill="none" stroke="url(#dpg)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><path d="M86 128 H104 L118 94 L136 164 L150 128 H168" fill="none" stroke="url(#dpg)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 // Kleines Logo für die Vorschau einer Push-Meldung.
+// Easter Egg (seit 2.89.0): Zahl der Klicks aufs Logo und Dauer des Herzschlags
+const EE_TAPS = 5;
+const EE_MS = 5400;
 const LOGO_SMALL = LOGO.replace('width="30" height="30"', 'width="14" height="14"').replaceAll("dpg", "dpgs");
 // Inhalt einer Ausfall-Meldung in fester Reihenfolge (wie const.NOTIFY_FIELDS).
 // Zeiten der Auswahl "Ausgefallen nach" pro Integration (Minuten, 1 bis 1440).
@@ -1480,6 +1483,8 @@ class DevicePanel extends HTMLElement {
       this._render();
     });
     root.querySelector(".view-btn").addEventListener("click", () => this._openView());
+    // Easter Egg (seit 2.89.0): fünfmal schnell aufs Logo, dann schlägt das Herz im Puls-Diagramm
+    root.querySelector(".tb-main > svg")?.addEventListener("click", () => this._logoTap());
     this._bindViewControls(root.querySelector("dialog.settings"));
     this._bindAreas(root.querySelector(".area-pop"), root.querySelector("dialog.area-sheet"));
     this._bindPulse(root.querySelector("dialog.pulse-dlg"));
@@ -2879,6 +2884,41 @@ class DevicePanel extends HTMLElement {
   // 0.34.0 färbte die ganze Kurve grün, sobald gerade niemand fehlte; dann
   // waren auch die Höcker grün. Eigene Pfade statt Verlauf (linearGradient):
   // url(#id) im Shadow DOM ist auf älteren WebViews unzuverlässig.
+  // --- Easter Egg: Herzschlag im Puls-Diagramm (seit 2.89.0) ----------------------------------------------
+  // Fünf Klicks aufs Logo, jeder höchstens 1,5 s nach dem vorigen; dann zeichnet sich einige Sekunden lang ein Herzschlag in die Kachel "Puls".
+  // Der Zustand ist nur eine Endzeit: das Diagramm wird laufend neu aufgebaut (Abfrage, Minutentakt), das Overlay kommt dann mit der richtigen
+  // Phase (negative Verzögerung) wieder, die Animation springt nicht. Ohne Kachel (keine Daten) gibt es nur einen kurzen Hinweis.
+  _logoTap() {
+    const now = Date.now();
+    const taps = (this._eeTaps || []).filter((t) => now - t < 1500);
+    taps.push(now);
+    this._eeTaps = taps.length >= EE_TAPS ? [] : taps;
+    if (taps.length < EE_TAPS) return;
+    this._eeAt = now;
+    this._eeUntil = now + EE_MS;
+    this._render();
+    window.clearTimeout(this._eeTimer);
+    this._eeTimer = window.setTimeout(() => this._render(), EE_MS + 100);
+    if (!this.shadowRoot.querySelector(".pchart.ee")) this._toast("💓");
+  }
+
+  _heartOn() {
+    return Date.now() < (this._eeUntil || 0);
+  }
+
+  // Ein Herzschlag-Strich über die ganze Breite: drei Schläge (P-Welle, Ausschlag, T-Welle); die Linie wird von links aufgedeckt
+  _heartbeatSvg(W, H) {
+    const base = H * 0.62;
+    let d = `M0 ${base}`;
+    for (const x0 of [W * 0.1, W * 0.43, W * 0.76]) {
+      const u = W * 0.0125;
+      d += ` H${(x0).toFixed(1)} q${(2 * u).toFixed(1)} -8 ${(4 * u).toFixed(1)} 0 h${(2 * u).toFixed(1)} l${u.toFixed(1)} 6 l${(2 * u).toFixed(1)} -${(base - 8).toFixed(1)} l${(2 * u).toFixed(1)} ${(base + 10).toFixed(1)} l${u.toFixed(1)} -${(H - 8 - base).toFixed(1)} h${(2 * u).toFixed(1)} q${(3 * u).toFixed(1)} -14 ${(6 * u).toFixed(1)} 0`;
+    }
+    d += ` H${W}`;
+    const delay = `-${Math.max(0, (Date.now() - (this._eeAt || Date.now())) / 1000).toFixed(2)}s`;
+    return `<svg class="ee-ecg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true" style="--ee-delay:${delay}"><path d="${d}" vector-effect="non-scaling-stroke"/></svg>`;
+  }
+
   _pulseChartHtml(p, incidents, tap = false, sel = null) {
     const n = p.length;
     const max = Math.max(...p);
@@ -2924,9 +2964,10 @@ class DevicePanel extends HTMLElement {
     const ticks = this._ticks(start, end, "24h")
       .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
       .join("");
-    return `<div class="pchart${max ? "" : " quiet"}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="${tap ? "false" : "true"}">
+    const beat = !tap && this._heartOn() ? this._heartbeatSvg(W, H) : "";
+    return `<div class="pchart${max ? "" : " quiet"}${beat ? " ee" : ""}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="${tap ? "false" : "true"}">
         <line class="base" x1="0" x2="${W}" y1="${H - 0.5}" y2="${H - 0.5}" vector-effect="non-scaling-stroke"/>
-        ${areas}${lines}${hits}</svg>${marks}</div>
+        ${areas}${lines}${hits}</svg>${beat}${marks}</div>
       <div class="pticks">${ticks}<span class="now-label">${escape(this._t("now"))}</span></div>`;
   }
 
@@ -2958,7 +2999,7 @@ class DevicePanel extends HTMLElement {
     // Mit Unterbrüchen öffnet die Kachel das Fenster mit den Geräten
     // (seit 0.26.0, docs/mockups/pulse-v1, A).
     const open = affected ? ` tap" data-pulse-open role="button" tabindex="0" aria-label="${escape(this._t("pulseOpen"))}` : "";
-    return `<div class="kt pul${open}"><div class="k">${mdi("pulse", 16)}${escape(this._t("pulseTitle"))}${this._scopeHtml()}${affected ? `<span class="kchev">${mdi("chevron", 16)}</span>` : ""}</div>
+    return `<div class="kt pul${this._heartOn() ? " ee" : ""}${open}"><div class="k">${mdi("pulse", 16)}${escape(this._t("pulseTitle"))}${this._scopeHtml()}${affected ? `<span class="kchev">${mdi("chevron", 16)}</span>` : ""}</div>
       ${this._pulseChartHtml(p, incidents)}${note}</div>`;
   }
 

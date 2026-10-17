@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.89.0] - 2026-10-17
+
+Easter Egg: ein Herzschlag im Puls-Diagramm.
+
+### Hinzugefügt
+
+- **Easter Egg:** fünfmal schnell aufs Logo oben links tippen (jeder Tipp höchstens 1,5 Sekunden nach dem vorigen), und einige Sekunden lang zeichnet sich ein Herzschlag über das Puls-Diagramm, drei Schläge, während das Diagramm zurücktritt und das Puls-Symbol pocht. Es lässt sich wiederholen, übersteht den Neuaufbau des Diagramms und beachtet "Bewegung reduzieren" (die Linie blendet dann nur ein und aus, ohne sich zu bewegen). Ohne Puls-Kachel (noch keine Daten) erscheint stattdessen ein kleines 💓.
+
 ## [2.88.0] - 2026-10-17
 
 Der Einstellungs-Knopf ist ein Favorit: nur noch in der Kopfzeile, wenn der Benutzer ihn anheftet; am Handy zwei angeheftete Knöpfe.
@@ -3909,6 +3917,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.89.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.89.0
 [2.88.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.88.0
 [2.85.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.85.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0

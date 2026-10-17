@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.89.0] - 2026-10-17
+
+Easter egg: a heartbeat in the pulse chart.
+
+### Added
+
+- **Easter egg:** tap the logo at the top left five times in quick succession (each tap within 1.5 seconds of the one before) and a heartbeat draws itself across the pulse chart for a few seconds, three beats, while the chart steps back and the pulse symbol thumps. It repeats on request, survives the chart being redrawn meanwhile, and respects "reduce motion" (the line then only fades in and out, without moving). Without the pulse tile (no data yet) a small 💓 appears instead.
+
 ## [2.88.0] - 2026-10-17
 
 The settings button is a favorite: pinned in the header only when the user wants it; on the phone two pinned buttons.
@@ -3808,6 +3816,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.89.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.89.0
 [2.88.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.88.0
 [2.85.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.85.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0

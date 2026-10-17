@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.89.0, Easter Egg Herzschlag)
+
+- Wunsch des Nutzers: fünf schnelle Klicks aufs Logo oben links lassen im Puls-Diagramm einige Sekunden lang einen Herzschlag schlagen. `device-panel.js`: `_logoTap()` (Klick-Zähler `_eeTaps`, `EE_TAPS = 5`, je höchstens 1,5 s Abstand), Zustand nur als Endzeit `_eeUntil` (`EE_MS = 5400`), `_heartOn()`, `_heartbeatSvg(W, H)` (Pfad mit drei Schlägen, über dem Diagramm in `.pchart`, `non-scaling-stroke`; nur in der Kachel, nicht im Fenster "Puls"). Die Kachel wird laufend neu aufgebaut: das Overlay kommt mit negativer `animation-delay` (CSS-Variable `--ee-delay`) in der richtigen Phase wieder. Stile `.ee-ecg`, `.pchart.ee`, `.kt.ee` (Aufdecken per `clip-path`, Ausblenden, Pochen des Symbols; `prefers-reduced-motion` ohne Bewegung). Ohne Kachel nur ein Hinweis 💓. Nicht in der README (Überraschung), nur im CHANGELOG. Test: `heartbeat`.
+- v2.88.0 ist veröffentlicht (Tag auf 0998e12).
+
 ## Stand (2.88.0, Einstellungen als Favorit)
 
 - Wunsch des Nutzers (Screenshot Launcher im Bearbeiten-Modus): das Zahnrad steht nicht mehr fest in der Kopfzeile, nur noch wenn der Benutzer "Einstellungen" anheftet; am Handy zwei angeheftete Knöpfe (`PHONE_PINS = 2` in `apps.js`, vorher einer), die gestrichelte Linie im Launcher-Bearbeiten-Modus sitzt vor der dritten Zeile (`styles.js`, `appsPhoneMark`); Standard-Favoriten `["routine","settings"]`.

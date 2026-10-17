@@ -153,6 +153,15 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 .pchart .line { fill: none; stroke: var(--dp-error); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 /* Grün nur, wo die Kurve auf 0 liegt (seit 0.34.1). */
 .pchart .line.ok { stroke: var(--dp-success); }
+/* Easter Egg (seit 2.89.0): Herzschlag über dem Puls-Diagramm; das Diagramm tritt kurz zurück, die Linie wird von links aufgedeckt, dreimal */
+.pchart.ee .line, .pchart.ee .area { opacity: .25; }
+.ee-ecg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; animation: ee-reveal 1.7s linear 3 both, ee-fade 5.4s linear both; animation-delay: var(--ee-delay, 0s), var(--ee-delay, 0s); }
+.ee-ecg path { fill: none; stroke: var(--dp-primary); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--dp-primary) 55%, transparent)); }
+.kt.ee .k svg { color: var(--dp-error); transform-origin: center; animation: ee-thump .85s ease-in-out infinite; }
+@keyframes ee-reveal { from { clip-path: inset(-12px 100% -12px 0); } to { clip-path: inset(-12px 0 -12px 0); } }
+@keyframes ee-fade { 0%, 88% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes ee-thump { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.18); } }
+@media (prefers-reduced-motion: reduce) { .ee-ecg { animation: ee-fade 5.4s linear both; animation-delay: var(--ee-delay, 0s); } .kt.ee .k svg { animation: none; } }
 .pchart .imark { position: absolute; top: -4px; bottom: 0; width: 0; border-left: 1.5px dashed var(--dp-error); }
 .pchart .imark::before { content: ""; position: absolute; top: -3px; left: -5px; width: 8px; height: 8px; border-radius: 50%;
   background: var(--dp-error); box-shadow: 0 0 0 3px var(--dp-error-soft); }
