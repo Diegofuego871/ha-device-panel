@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.90.0] - 2026-10-17
+
+AI assessment: can be collapsed.
+
+### Added
+
+- Pop-up of the device: the **AI assessment** can be **collapsed**. The header of the frame is now a button with an arrow; collapsed, only the header remains (the assessment, the follow-up questions and the note are hidden, a running request goes on). The state is saved **per user** (with the favorites, in the user data of Home Assistant, a local copy as fallback), so it stays collapsed in every device and after reloading until the user opens it again.
+
 ## [2.89.0] - 2026-10-17
 
 Easter egg: a heartbeat in the pulse chart.
@@ -3816,6 +3824,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.90.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.90.0
 [2.89.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.89.0
 [2.88.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.88.0
 [2.85.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.85.0

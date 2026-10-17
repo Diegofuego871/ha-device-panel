@@ -872,14 +872,31 @@ class DevicePanel extends HTMLElement {
   }
 
   _favData() {
-    return { ids: [...this._favs].sort(), updated: this._favUpdated };
+    // aiFold (seit 2.90.0): die KI-Einschätzung im Popup ist zugeklappt, pro Benutzer, im selben Datensatz wie die Favoriten
+    return { ids: [...this._favs].sort(), aiFold: Boolean(this._aiFold), updated: this._favUpdated };
   }
 
   _setFavs(raw) {
     const ids = Array.isArray(raw?.ids) ? raw.ids.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 64) : [];
     this._favs = new Set(ids.slice(0, 5000));
     this._favUpdated = Number(raw?.updated) || 0;
+    this._aiFold = raw?.aiFold === true;
     this._applyFavs();
+  }
+
+  // KI-Einschätzung zu- oder aufklappen; gespeichert wie die Favoriten (lokal sofort, bei HA verzögert)
+  _toggleAiFold() {
+    this._aiFold = !this._aiFold;
+    this._favUpdated = Date.now();
+    this._favDirty = true;
+    try {
+      window.localStorage.setItem(FAV_KEY, JSON.stringify(this._favData()));
+    } catch {
+      // Lokale Kopie ist nur ein Rückfall.
+    }
+    window.clearTimeout(this._favTimer);
+    this._favTimer = window.setTimeout(() => this._saveUserFavs(), VIEW_SAVE_DELAY_MS);
+    this._renderDevice();
   }
 
   _loadLocalFavs() {
@@ -4785,6 +4802,7 @@ class DevicePanel extends HTMLElement {
     else if (action === "ai") this._aiAssess(this._detailId);
     else if (action === "ai-ask") this._aiAsk(this._detailId, btn.dataset.q);
     else if (action === "ai-clear") this._aiClear(this._detailId);
+    else if (action === "ai-fold") this._toggleAiFold();
     else if (action === "ai-send") this._aiAsk(this._detailId, this.shadowRoot.querySelector('input[data-dlg="ai-q"]')?.value ?? "");
   }
 
@@ -4814,7 +4832,10 @@ class DevicePanel extends HTMLElement {
     }
     // Alles, was von der KI kommt, steht in einem Rahmen mit Kopfzeile und Quelle (seit 2.53.0, docs/mockups/ai-frame-v1, A):
     // Einschätzung und Rückfragen sind so klar von "Verbindung" und "Gerät" darunter getrennt.
-    return `<div class="ai-box"><div class="ai-head">${mdi("sparkle", 16)}<h3>${escape(t("secAiSettings"))}</h3>${source ? `<small>${escape(source)}</small>` : ""}</div>${body}</div>`;
+    // Zuklappbar (seit 2.90.0): die Kopfzeile ist der Knopf, zugeklappt bleibt nur sie; der Stand gehört dem Benutzer
+    const fold = Boolean(this._aiFold);
+    const label = escape(t(fold ? "aiExpand" : "aiCollapse"));
+    return `<div class="ai-box${fold ? " fold" : ""}"><button type="button" class="ai-head" data-dlg="ai-fold" aria-expanded="${!fold}" title="${label}" aria-label="${label}">${mdi("sparkle", 16)}<h3>${escape(t("secAiSettings"))}</h3>${source && !fold ? `<small>${escape(source)}</small>` : ""}<span class="ai-chev">${mdi("chevronDown", 18)}</span></button>${fold ? "" : body}</div>`;
   }
 
   // Rückfragen zur Einschätzung (seit 2.48.0, docs/mockups/ai-ask-v1, A und B kombiniert): bisherige Fragen und Antworten,

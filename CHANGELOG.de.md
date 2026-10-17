@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.90.0] - 2026-10-17
+
+KI-Einschätzung: lässt sich zuklappen.
+
+### Hinzugefügt
+
+- Geräte-Popup: die **KI-Einschätzung** lässt sich **zuklappen**. Die Kopfzeile des Rahmens ist jetzt ein Knopf mit Pfeil; zugeklappt bleibt nur die Kopfzeile (Einschätzung, Rückfragen und Hinweis sind weg, eine laufende Anfrage läuft weiter). Der Stand wird **pro Benutzer** gespeichert (zusammen mit den Favoriten, in den Benutzerdaten von Home Assistant, eine lokale Kopie als Rückfall), bleibt also in jedem Gerät und nach dem Neuladen zugeklappt, bis der Benutzer sie wieder öffnet.
+
 ## [2.89.0] - 2026-10-17
 
 Easter Egg: ein Herzschlag im Puls-Diagramm.
@@ -3917,6 +3925,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.90.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.90.0
 [2.89.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.89.0
 [2.88.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.88.0
 [2.85.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.85.0

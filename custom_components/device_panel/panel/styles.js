@@ -566,6 +566,14 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .ai-head { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: color-mix(in srgb, #7c4dff 20%, var(--dp-card)); color: var(--dp-text); }
 .ai-head svg { flex: none; color: #7c4dff; }
 .dlg-body .ai-head h3 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none; color: inherit; }
+button.ai-head { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; }
+button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px; }
+.ai-chev { flex: none; display: grid; place-items: center; margin-left: 6px; color: var(--dp-text2); transition: transform .2s; }
+.ai-head small + .ai-chev { margin-left: 8px; }
+.ai-head h3 + .ai-chev { margin-left: auto; }
+.ai-box:not(.fold) .ai-chev { transform: rotate(180deg); }
+.ai-box.fold > .ai-head { margin-bottom: 0; }
+@media (prefers-reduced-motion: reduce) { .ai-chev { transition: none; } }
 .ai-head small { margin-left: auto; min-width: 0; color: var(--dp-text2); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ai-box > :not(.ai-head):not(.ai-card):not(.ai-ask) { margin-left: 14px; margin-right: 14px; }
 .ai-box > .ai-btn { margin-top: 4px; }

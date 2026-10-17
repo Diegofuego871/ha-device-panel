@@ -108,6 +108,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Karte mit Überschrift, Text, Quelle und "${T.again}"`, await wait(`return !!r.querySelector(".ai-title") && !!r.querySelector(".ai-foot")`) && (await text(".ai-title")) === T.title && (await text(".ai-text")).length > 20 && (await text(".ai-foot")).startsWith(T.by) && (await text(".ai-head small")) === "OpenAI" && (await text(".ai-foot .linkbtn")) === T.again, await text(".ai-foot"));
     const call = (await calls("device_panel/ai_assess")).at(-1);
     check(`[${tag}] ein Aufruf mit Gerät und Sprache`, (await calls("device_panel/ai_assess")).length === 1 && call.device_id === "b" && call.language === lang, JSON.stringify(call));
+    // Zuklappen (2.90.0): die Kopfzeile klappt die Einschätzung zu, der Stand gehört dem Benutzer (Datensatz der Favoriten)
+    check(`[${tag}] Kopfzeile ist ein Knopf, aufgeklappt (aria-expanded)`, await ev(`const h = r.querySelector(".ai-box > button.ai-head"); return !!h && h.getAttribute("aria-expanded") === "true" && !!r.querySelector(".ai-card")`));
+    await tap(".ai-head");
+    check(`[${tag}] zugeklappt: nur die Kopfzeile bleibt, aria-expanded false`, await wait(`const b = r.querySelector(".ai-box"); return b.classList.contains("fold") && !r.querySelector(".ai-card") && !r.querySelector(".ai-box .opt-short") && r.querySelector(".ai-head").getAttribute("aria-expanded") === "false"`));
+    check(`[${tag}] gespeichert beim Benutzer (aiFold, lokal und bei HA)`, (await wait(`return JSON.parse(localStorage.getItem("device_panel_favorites") || "{}").aiFold === true`)) && (await p.evaluate(async () => { for (let i = 0; i < 20; i++) { const v = JSON.parse(sessionStorage.getItem("sim_user_data") || "{}").device_panel_favorites; if (v?.aiFold === true) return true; await new Promise((r) => setTimeout(r, 100)); } return false; })));
+    await ev(`r.host._renderDevice(true)`);
+    check(`[${tag}] bleibt zugeklappt (auch nach Neuaufbau und in einem anderen Gerät)`, await ev(`return r.querySelector(".ai-box").classList.contains("fold")`));
+    await tap(".ai-head");
+    check(`[${tag}] wieder aufgeklappt: Einschätzung da`, await wait(`return !r.querySelector(".ai-box").classList.contains("fold") && !!r.querySelector(".ai-card")`));
     await p.screenshot({ path: `${outDir}/ai-answer-${tag.replace("/", "-")}.png` });
     const fit = await ev(`const d=r.querySelector("dialog.device"); const c=r.querySelector(".ai-card").getBoundingClientRect(); return [d.scrollWidth <= d.clientWidth, c.right <= d.getBoundingClientRect().right + 1]`);
     check(`[${tag}] Karte ohne seitlichen Überlauf`, fit.every(Boolean), JSON.stringify(fit));
