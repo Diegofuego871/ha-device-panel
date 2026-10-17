@@ -14,7 +14,7 @@ const R = `document.querySelector("device-panel").shadowRoot`;
 
 const TEXT = {
   de: {
-    gear: "Einstellungen", title: "Einstellungen", sub: "Device Panel · gilt für alle Benutzer", sec: "Panel-Version",
+    gear: "Einstellungen", title: "Einstellungen", sub: "Device Panel · gilt für alle Benutzer", sec: "Panel",
     sumOn: "Tägliche Prüfung · neue Version unter \"Reparaturen\"", sumOff: "Keine automatische Prüfung",
     opt: "Täglich nach Updates suchen", short: "Meldet eine neue Version unter Einstellungen → Reparaturen.", info: "Fragt einmal täglich",
     changed: "geändert", one: "1 Änderung", two: "2 Änderungen", save: "Speichern", cancel: "Abbrechen", savedShort: "Gespeichert", closeBtn: "Schliessen",
@@ -51,7 +51,7 @@ const TEXT = {
     filterOwn2: "Abweichend 2", filterOwn0: "Abweichend 0",
   },
   en: {
-    gear: "Settings", title: "Settings", sub: "Device Panel · applies to all users", sec: "Panel version",
+    gear: "Settings", title: "Settings", sub: "Device Panel · applies to all users", sec: "Panel",
     sumOn: "Daily check · new version under \"Repairs\"", sumOff: "No automatic check",
     opt: "Check for updates daily", short: "Reports a new version under Settings → Repairs.", info: "Queries the published releases",
     changed: "changed", one: "1 change", two: "2 changes", save: "Save", cancel: "Cancel", savedShort: "Saved", closeBtn: "Close",
@@ -256,7 +256,7 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     const order = await ev(`return [...r.querySelectorAll(".set-sec-head")].map(h=>h.dataset.id).join(",")`);
-    check(`[${tag}] Abschnitte (notify-v3)`, order === "devices,monitor,routines,look,ai,updates", order);
+    check(`[${tag}] Abschnitte (notify-v3)`, order === "devices,monitor,routines,ai,updates", order);
     check(`[${tag}] Überwachung und Meldungen zusammengefasst`, (await text('[data-id="monitor"] .set-sec-title')) === T.secMon && (await text('[data-id="monitor"] .set-sec-sum')) === T.sumMon(2), await text('[data-id="monitor"] .set-sec-sum'));
     await tap('[data-set="section"][data-id="monitor"]');
     check(`[${tag}] Reiter "Übersicht" zuerst`, await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "overview" && r.querySelectorAll(".lane").length === 5`));

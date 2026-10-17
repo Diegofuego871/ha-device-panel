@@ -74,9 +74,9 @@ for (const lang of ["de", "en"]) {
     await wait(`return !!r.querySelector("${D} .set-sec")`);
     check(`[${tag}] Abschnitt "${T.panel}", kein Abschnitt "Ansicht"`, (await text('[data-id="updates"] .set-sec-title')) === T.panel && !(await ev(`return !!r.querySelector('[data-id="look"]')`)));
     await tap('[data-set="section"][data-id="updates"]');
-    check(`[${tag}] Unterreiter "${T.start}" und "${T.upd}", Updates gewählt mit Versionszeile`, (await ev(`return [...r.querySelectorAll('${D} .sub-tab[data-group="panel"]')].map((t) => t.firstChild.textContent.trim()).join("|")`)) === `${T.start}|${T.upd}` && (await ev(`return r.querySelector('${D} .sub-tab.on[data-group="panel"]').dataset.key`)) === "pupdates" && (await ev(`return !!r.querySelector("${D} .ver-slot")`)));
+    check(`[${tag}] Unterreiter "${T.start}" und "${T.upd}", Updates gewählt, Versionszeile ganz oben vor den Abschnitten`, (await ev(`return [...r.querySelectorAll('${D} .sub-tab[data-group="panel"]')].map((t) => t.firstChild.textContent.trim()).join("|")`)) === `${T.start}|${T.upd}` && (await ev(`return r.querySelector('${D} .sub-tab.on[data-group="panel"]').dataset.key`)) === "pupdates" && (await ev(`return r.querySelector("${D} .dlg-body").firstElementChild.classList.contains("ver-slot")`)) && (await ev(`return !r.querySelector('${D} .sub-tab[data-key="pupdates"]').closest(".set-sec-body").querySelector(".ver-slot")`)));
     await tap(`${D} .sub-tab[data-key="pstart"]`);
-    check(`[${tag}] "${T.start}": Schalter für die Startseite, keine Versionszeile`, (await ev(`return !!r.querySelector("${D} input[data-start-panel]") && !r.querySelector("${D} .ver-slot")`)));
+    check(`[${tag}] "${T.start}": Schalter für die Startseite, die Versionszeile bleibt oben`, (await ev(`return !!r.querySelector("${D} input[data-start-panel]") && r.querySelector("${D} .dlg-body").firstElementChild.classList.contains("ver-slot")`)));
     await tap(`${D} .dlg-actions [data-set="close"]`);
     await wait(`return !r.querySelector("${D}").open`);
 

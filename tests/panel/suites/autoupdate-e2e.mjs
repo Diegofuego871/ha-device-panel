@@ -1,4 +1,4 @@
-// Automatisch installieren (2.22.0, Wunsch des Nutzers): Schalter in Einstellungen › Panel-Version, nur zusammen mit der
+// Automatisch installieren (2.22.0, Wunsch des Nutzers): Schalter in Einstellungen › Panel, nur zusammen mit der
 // täglichen Prüfung; wer von Hand nach Updates sucht und eines findet, muss nicht ein zweites Mal "Aktualisieren"
 // drücken. Der Neustart bleibt Sache des Benutzers. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";

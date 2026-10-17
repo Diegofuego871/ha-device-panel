@@ -8033,13 +8033,12 @@ class DevicePanel extends HTMLElement {
             : `<div class="nf-note integ-goto">${mdi("info", 16)}<div><p>${escape(t("integGoto"))} <button type="button" class="lnk" data-set="goto" data-key="integ">${escape(t("integGotoLink"))}</button></p></div></div>` +
               exTable("exclude_integrations", integrations, `${t("integIntroShow")} ${t("typeIntegIntro")}`, false, null, null, [typeExtra, connExtra])),
       // Wie Geräte erscheinen, nicht ob (seit 1.0.0).
-      // Standardseite und Updates des Panels (seit 2.87.0): die Startseite gilt nur für den Benutzer, alles andere für die Instanz
+      // Standardseite und Updates des Panels (seit 2.87.0): die Startseite gilt nur für den Benutzer, alles andere für die Instanz; die Versionszeile steht oben ausserhalb
       updates:
         subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"]], panelTab) +
         (panelTab === "pstart"
           ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow()
-          : `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
-            row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
+          : row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
             checkTimeRow() +
             autoUpdateRow() +
             updateNotifyRows()),
@@ -8091,7 +8090,10 @@ class DevicePanel extends HTMLElement {
     };
     // Dialog "Ansicht": nur der Block der Filter-Chips (Rahmen und Reiter baut _viewBodyHtml)
     if (st.mode === "view") return fields.chips;
+    // Die Versionszeile (Prüfen, Installieren, Vorabversionen) steht wie immer ganz oben, vor den Abschnitten (Wunsch des Nutzers, 2.88.0):
+    // schnell erreichbar und beim Öffnen gleich zu sehen; im Abschnitt "Panel" › "Updates" bleiben nur die Einstellungen
     return (
+      `<div class="ver-slot">${(this._verSlotHtml = this._versionHtml())}</div>` +
       this._settingsSections()
         .map(([id, keys]) => {
           const open = st.open.has(id);
