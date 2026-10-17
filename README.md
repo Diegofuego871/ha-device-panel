@@ -186,14 +186,14 @@ A button in the header opens a launcher with useful pages, in the symbols and co
 - **Pages:** routines, Magic Push and the log of this integration, pages of Home Assistant (automations, scenes, scripts, helpers, devices, entities, integrations, tools and more; administrators only for the management pages)
 - **Your own links:** a page in Home Assistant or an external link that opens in a new browser tab, with its favicon as icon if you like
 - **View and Settings:** two apps in the group "Device Panel" open the view settings (sorting, columns, filter chips) and the central settings, so everything is found in one place; both can be hidden because the header buttons lead there too
-- **Favorites:** a heart marks up to five apps that get their own buttons in the header
+- **Favorites:** a heart marks up to five apps that get their own buttons in the header (on the phone the first two); by default these are Routines and Settings. The gear no longer sits there permanently, only when the app "Settings" is pinned; it cannot be hidden. If a restart is pending, the launcher button shows the red dot as long as Settings is not pinned
 - **Edit mode:** sort by dragging, hide apps with the eye (Log and Status stay visible, marked with a lock), grid or list; everything is saved per user
 - **Status:** an app for administrators that shows whether the parts of the integration are running (routines, outage monitoring, battery, charging, reception history, Magic Push, new devices, updates: "running", "late" or "stopped"). If a part stops, you get a push (to the default target, or to a target you choose in the app) and an all-clear when it runs again; a stopped or late part has a button to restart just that part by hand. A red dot on the launcher button, or on the Status button if you pinned it, shows a fault; an orange dot shows that debug mode is on. Limit: if Home Assistant itself stands still, nothing can report it
 - **Log:** shows what the notifications decide and why one did not come, with filter and search (the last 500 entries are kept across restarts), and an optional debug mode (switched on for 48 hours, also across restarts)
 
 ## Settings in the panel
 
-The gear opens all settings in German or English, in sections. The version bar on top shows the installed and the newest version and updates via HACS.
+The gear (the pinned app "Settings", or the launcher) opens all settings in German or English, in sections. The version bar on top shows the installed and the newest version and updates via HACS.
 
 | Devices in the panel | Routines | Panel |
 |---|---|---|

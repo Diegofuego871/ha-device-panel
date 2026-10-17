@@ -81,6 +81,7 @@ button { font: inherit; color: inherit; }
 .rtall-btn, .apps-btn { margin: 0 -2px; text-decoration: none; } /* Favoriten und Launcher-Knopf rücken enger zusammen (8 px), links vom ersten und rechts vom letzten 10 px */
 .app-pins { display: contents; }
 .gear-btn { position: relative; }
+.toolbar .apps-btn:last-child { margin-right: 0; } /* seit 2.88.0 steht der Launcher-Knopf ganz rechts (das Zahnrad ist ein Favorit): bündig mit dem Rand wie vorher das Zahnrad, auch am Handy */
 /* Roter Punkt: Update installiert, Neustart steht aus (seit 2.25.0) */
 .gear-btn.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-bg); }
 /* Punkt am Launcher-Knopf und an angehefteten Apps (seit 2.62.0): rot = Störung des Status, orange = Debug-Modus */
@@ -1959,9 +1960,9 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-a:hover:not(.dis) { background: var(--dp-hover); color: var(--dp-text); }
 .ap-a.heart.on { color: var(--dp-error); }
 .ap-a.del { color: var(--dp-error); }
-/* Grenze der Kopfzeile am Handy: gestrichelte Linie mit Beschriftung über der zweiten Zeile der Favoriten */
-.ap-box.fav > .ap-erow:nth-child(2) { margin-top: 24px; }
-.ap-box.fav > .ap-erow:nth-child(2)::before { content: attr(data-mark); position: absolute; left: 0; right: 0; top: -22px; display: flex; align-items: center; justify-content: center; height: 20px;
+/* Grenze der Kopfzeile am Handy: gestrichelte Linie mit Beschriftung über der dritten Zeile der Favoriten (am Handy gelten die ersten zwei) */
+.ap-box.fav > .ap-erow:nth-child(3) { margin-top: 24px; }
+.ap-box.fav > .ap-erow:nth-child(3)::before { content: attr(data-mark); position: absolute; left: 0; right: 0; top: -22px; display: flex; align-items: center; justify-content: center; height: 20px;
   border-top: 1.5px dashed color-mix(in srgb, var(--dp-text2) 55%, transparent); color: var(--dp-text2); font-size: 11.5px; line-height: 1; padding-top: 3px; box-sizing: border-box; }
 .ap-addbtn { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 6px; border: 0; border-radius: 12px; background: none; color: var(--dp-primary); font: inherit; font-size: 14px; cursor: pointer; }
 .ap-addbtn:hover { background: var(--dp-primary-soft); }

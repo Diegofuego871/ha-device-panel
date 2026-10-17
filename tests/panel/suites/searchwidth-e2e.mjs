@@ -23,7 +23,7 @@ async function open(width, { mobile = false, five = false, lang = "de" } = {}) {
   await p.waitForTimeout(300);
   return { ctx, p, ev, errors };
 }
-const geo = (ev) => ev(`const q = (s) => r.querySelector(s)?.getBoundingClientRect(); const s = q(".toolbar .searchbox"), t = q(".hero > :nth-child(2)"), g = q(".toolbar .gear-btn"), tb = q(".toolbar"), v = q(".toolbar .view-btn"), x = q(".toolbar .search-clear"), h = q(".toolbar h1"), host = r.host.getBoundingClientRect(); return { sRight: s.right, sLeft: s.left, sWidth: s.width, tRight: t?.right, gRight: g.right, tbRight: tb.right, vLeft: v.left, hRight: h.right, hostRight: host.right, scroll: r.querySelector(".toolbar").scrollWidth > r.querySelector(".toolbar").clientWidth + 1 }`);
+const geo = (ev) => ev(`const q = (s) => r.querySelector(s)?.getBoundingClientRect(); const s = q(".toolbar .searchbox"), t = q(".hero > :nth-child(2)"), g = q(".toolbar .apps-btn"), tb = q(".toolbar"), v = q(".toolbar .view-btn"), x = q(".toolbar .search-clear"), h = q(".toolbar h1"), host = r.host.getBoundingClientRect(); return { sRight: s.right, sLeft: s.left, sWidth: s.width, tRight: t?.right, gRight: g.right, tbRight: tb.right, vLeft: v.left, hRight: h.right, hostRight: host.right, scroll: r.querySelector(".toolbar").scrollWidth > r.querySelector(".toolbar").clientWidth + 1 }`);
 
 for (const lang of ["de", "en"]) {
   for (const width of [1101, 1280, 1400, 1920]) {
@@ -35,13 +35,13 @@ for (const lang of ["de", "en"]) {
     check(`[${lang}/${width}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();
   }
-  // Fünf Favoriten bei knapp 1101 px: das Suchfeld gibt nach, nichts läuft über, der Zahnrad-Knopf bleibt am Rand
+  // Fünf Favoriten bei knapp 1101 px: das Suchfeld gibt nach, nichts läuft über, der Launcher-Knopf bleibt am Rand
   for (const width of [1101, 1180, 1400]) {
     const { ctx, ev, errors } = await open(width, { five: true, lang });
     const g = await geo(ev);
     const pins = await ev(`return r.querySelectorAll(".toolbar .app-pin").length`);
     check(`[${lang}/${width}/5 Favoriten] fünf Knöpfe, Suchfeld nie breiter als die Kachel, Leiste läuft nicht über`, pins === 5 && g.sRight <= g.tRight + 1 && !g.scroll && g.vLeft >= g.sRight, `Knöpfe ${pins}, Suchfeld ${g.sRight.toFixed(1)}, Kachel ${g.tRight.toFixed(1)}`);
-    check(`[${lang}/${width}/5 Favoriten] Zahnrad am rechten Rand, Suchfeld noch breit genug (> 200 px)`, Math.abs(g.gRight - (g.hostRight - 20)) <= 1 && g.sWidth > 200, `Zahnrad ${g.gRight.toFixed(1)}, Suchfeld ${g.sWidth.toFixed(1)}`);
+    check(`[${lang}/${width}/5 Favoriten] Launcher-Knopf am rechten Rand, Suchfeld noch breit genug (> 200 px)`, Math.abs(g.gRight - (g.hostRight - 20)) <= 1 && g.sWidth > 200, `Launcher-Knopf ${g.gRight.toFixed(1)}, Suchfeld ${g.sWidth.toFixed(1)}`);
     await ctx.close();
     void errors;
   }

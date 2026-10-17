@@ -7,11 +7,25 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.88.0] - 2026-10-17
+
+Der Einstellungs-Knopf ist ein Favorit: nur noch in der Kopfzeile, wenn der Benutzer ihn anheftet; am Handy zwei angeheftete Knöpfe.
+
+Enthält die Änderungen aus 2.87.0 und 2.86.0.
+
+### Geändert
+
+- Das Zahnrad steht **nicht mehr fest** am rechten Ende der Kopfzeile. Die App **Einstellungen** ist jetzt ein Favorit wie die anderen und steht nur dann in der Kopfzeile, wenn sie angeheftet ist (Herz im Launcher). **Standardmässig sind die Einstellungen ein Favorit**, zusammen mit den Routinen: beide stehen angeheftet in der Kopfzeile. Der Launcher-Knopf sitzt jetzt ganz rechts.
+- **Handy:** die Kopfzeile trägt jetzt **zwei** angeheftete Knöpfe (vorher: einer, dazu das feste Zahnrad). Die gestrichelte Linie im Bearbeiten-Modus des Launchers ("Kopfzeile am Handy: nur die obersten zwei Favoriten") rutscht unter den zweiten Favoriten.
+- Die App **Einstellungen** lässt sich **nicht mehr ausblenden** (Schloss statt Auge), weil es ohne das feste Zahnrad keinen Weg mehr in die Einstellungen gäbe, wenn sie ausgeblendet und nicht angeheftet ist. Eine früher gespeicherte Markierung "ausgeblendet" wird ignoriert.
+- **Bestehende gespeicherte Favoriten** bekommen die Einstellungen einmal als zweiten Favoriten (am Handy sieht die Kopfzeile dann aus wie bisher: erster Favorit und Einstellungen); wer sie löst, behält es so. Ohne gespeicherte Favoriten gilt der neue Standard (Routinen, Einstellungen).
+- Roter Punkt "Neustart steht aus" (nach einem Update): wie bisher am Zahnrad, wenn die **Einstellungen angeheftet** sind; **sonst am Launcher-Knopf** (die Beschriftung sagt "Neustart steht aus"). Die Karte **Einstellungen** im Launcher zeigt in beiden Fällen die rote Pille "Neustart".
+
 ## [2.87.0] - 2026-10-17
 
 Ansicht mit "Speichern": ein Dialog "Ansicht" mit zwei Reitern; das Panel bekommt die Unterreiter "Standardseite" und "Updates".
 
-Enthält die Änderungen aus 2.86.0.
+Nicht veröffentlicht; enthalten in 2.88.0.
 
 ### Hinzugefügt
 
@@ -31,7 +45,7 @@ Enthält die Änderungen aus 2.86.0.
 
 KI-Einschätzung: Knopf "Entfernen".
 
-Nicht veröffentlicht; enthalten in 2.87.0.
+Nicht veröffentlicht; enthalten in 2.88.0.
 
 ### Hinzugefügt
 
@@ -3895,7 +3909,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.87.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.87.0
+[2.88.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.88.0
 [2.85.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.85.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0

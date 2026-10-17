@@ -1122,7 +1122,7 @@ class DevicePanel extends HTMLElement {
     }
   }
 
-  // Roter Punkt am Zahnrad, solange ein Update installiert ist und der Neustart noch aussteht (seit 2.25.0). Nötig ist die laufende
+  // Roter Punkt an den Einstellungen (angeheftet am Knopf, sonst am Launcher), solange ein Update installiert ist und der Neustart noch aussteht (seit 2.25.0). Nötig ist die laufende
   // Version vom Server, darum beim Start einmal abfragen (aus dem Zwischenspeicher, kein Aufruf bei GitHub, wenn frisch).
   async _versionDotInit() {
     try {
@@ -1140,18 +1140,14 @@ class DevicePanel extends HTMLElement {
     const t = Date.now();
     if (!now && this._dotAt && t - this._dotAt < 5000) return;
     this._dotAt = t;
-    const btn = this.shadowRoot?.querySelector(".gear-btn");
-    if (!btn || !this._version?.data) return;
+    if (!this._version?.data) return;
     const s = this._versionState();
     const on = Boolean(s.restart && !this._version.restarting);
-    if (btn.classList.contains("has-dot") === on) return;
-    btn.classList.toggle("has-dot", on);
-    // Die Karte "Einstellungen" im Launcher zeigt dafür eine Pille (kein Punkt am Launcher-Knopf, seit 2.85.0)
+    if (Boolean(this._gearRestart) === on) return;
+    // Seit 2.88.0 steht das Zahnrad nicht mehr fest in der Kopfzeile: der Punkt sitzt am angehefteten Knopf der Einstellungen, sonst am
+    // Launcher-Knopf (AppLauncher.dotLevels); die Karte "Einstellungen" im Launcher zeigt in jedem Fall die Pille "Neustart"
     this._gearRestart = on;
     this._apps?.paintDots?.();
-    const label = on ? `${this._t("settingsBtn")} · ${this._t("settingsBtnRestart")}` : this._t("settingsBtn");
-    btn.setAttribute("title", label);
-    btn.setAttribute("aria-label", label);
   }
 
   connectedCallback() {
@@ -1360,14 +1356,12 @@ class DevicePanel extends HTMLElement {
           <button type="button" class="search-clear" title="${escape(this._t("searchClear"))}" aria-label="${escape(this._t("searchClear"))}" hidden>${mdi("close", 18)}</button></label></div>
         <button type="button" class="view-btn" aria-expanded="false" title="${escape(this._t("viewBtn"))}" aria-label="${escape(this._t("viewBtn"))}">${mdi("viewSettings", 20)}<span>${escape(this._t("viewBtn"))}</span></button>
         <span class="app-pins"></span><button type="button" class="apps-btn" aria-haspopup="dialog" aria-expanded="false" title="${escape(this._t("appsBtn"))}" aria-label="${escape(this._t("appsBtn"))}">${mdi("apps", 22)}</button>
-        <button type="button" class="gear-btn" title="${escape(this._t("settingsBtn"))}" aria-label="${escape(this._t("settingsBtn"))}">${mdi("gear", 22)}</button>
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
       <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
-    root.querySelector(".gear-btn").addEventListener("click", () => this._openSettings());
     this._apps.bind(root);
     // X in jedem Suchfeld (seit 2.63.0): ein Knopf mit data-fc neben dem Feld (_fieldClearHtml) leert es und löst "input" aus, damit die Liste
     // sich wie beim Tippen neu aufbaut; sichtbar ist er nur, solange etwas im Feld steht

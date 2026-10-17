@@ -47,15 +47,15 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] "${T.settings}" öffnet die Einstellungen`, await wait(`return r.querySelector("dialog.settings")?.open && !r.querySelector("${D}").open`));
     await ev(`r.querySelector("dialog.settings").close()`);
 
-    // Beide ausblendbar (kein Schloss), standardmässig sichtbar; ausgeblendet fehlen sie im Launcher und erscheinen im Bearbeiten-Modus abgeblendet
+    // "Ansicht" ist ausblendbar (kein Schloss), standardmässig sichtbar; ausgeblendet fehlt sie im Launcher. "Einstellungen" ist seit 2.88.0 nicht mehr
+    // ausblendbar (Schloss), weil das Zahnrad nicht mehr fest in der Kopfzeile steht: sonst gäbe es keinen Weg mehr in die Einstellungen
     await open();
     await tap(`${D} [data-ap="edit"]`);
-    check(`[${tag}] Bearbeiten: beide mit Auge (nicht gesperrt)`, await ev(`return ["view", "settings"].every((id) => { const row = r.querySelector('${D} .ap-row [data-ap="hide"][data-id="' + id + '"]') || r.querySelector('${D} [data-ap="hide"][data-id="' + id + '"]'); return !!row && !row.disabled; })`));
+    check(`[${tag}] Bearbeiten: "Ansicht" mit Auge, "Einstellungen" gesperrt (Schloss, kein Auge)`, await ev(`const hide = (id) => r.querySelector('${D} [data-ap="hide"][data-id="' + id + '"]'); const row = r.querySelector('${D} .ap-erow[data-id="settings"]'); return !!hide("view") && !hide("view").disabled && !hide("settings") && !!row && !!row.querySelector(".ap-a.dis svg")`));
     await tap(`${D} [data-ap="hide"][data-id="view"]`);
-    await tap(`${D} [data-ap="hide"][data-id="settings"]`);
     await tap(`${D} [data-ap="done"]`);
-    check(`[${tag}] ausgeblendet: beide fehlen im Launcher, die Knöpfe in der Kopfzeile bleiben`, (await wait(`return !r.querySelector('${tile("view")}') && !r.querySelector('${tile("settings")}')`)) && (await ev(`return !!r.querySelector(".gear-btn") && !!r.querySelector(".view-btn, [data-view-open]")`)));
-    check(`[${tag}] gespeichert (Benutzerdaten)`, await ev(`const h = r.host._apps.data.hidden || []; return h.includes("view") && h.includes("settings")`));
+    check(`[${tag}] ausgeblendet: "Ansicht" fehlt im Launcher, "Einstellungen" bleibt; die Knöpfe in der Kopfzeile bleiben`, (await wait(`return !r.querySelector('${tile("view")}') && !!r.querySelector('${tile("settings")}')`)) && (await ev(`return !!r.querySelector(".gear-btn") && !!r.querySelector(".view-btn, [data-view-open]")`)));
+    check(`[${tag}] gespeichert (Benutzerdaten)`, await ev(`const h = r.host._apps.data.hidden || []; return h.includes("view") && !h.includes("settings")`));
     check(`[${tag}] kein fehlender Text, keine JS-Fehler`, !(await ev(`return r.innerHTML.includes("undefined") || r.innerHTML.includes("NaN")`)) && errors.length === 0, errors.join("; "));
     await ctx.close();
   }

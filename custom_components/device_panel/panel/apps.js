@@ -13,6 +13,8 @@
 
 export const APPS_KEY = "device_panel_apps";
 export const MAX_FAV = 5;
+// Angeheftete Knöpfe in der Kopfzeile am Handy (seit 2.88.0 zwei, vorher einer; das Zahnrad steht nicht mehr fest dort)
+const PHONE_PINS = 2;
 const MAX_CUSTOM = 30;
 const NAME_MAX = 40;
 const URL_MAX = 300;
@@ -28,9 +30,11 @@ const BUILTIN = [
   // Status (seit 2.62.0): nur für Administratoren (status_get ist ein Befehl für Administratoren); nicht vorgemerkt, wer ihn in der Kopfzeile will, heftet ihn selbst an.
   // Seit 2.76.0 nicht mehr ausblendbar (locked): dort liegen die Einstellungen der Meldungen
   { id: "status", group: "panel", icon: "pulse", act: "status", admin: true, locked: true },
-  // Ansicht und Einstellungen (seit 2.85.0): beides auch über die Knöpfe in der Kopfzeile erreichbar, darum ausblendbar (nicht locked)
+  // Ansicht (seit 2.85.0): auch über den Knopf "Ansicht" bzw. die Zeile "Sortierung & Ansicht" erreichbar, darum ausblendbar (nicht locked).
+  // Einstellungen: seit 2.88.0 nicht mehr ausblendbar (locked), weil das Zahnrad nicht mehr fest in der Kopfzeile steht: ohne diese App
+  // gäbe es keinen Weg mehr in die Einstellungen. Standardmässig ein Favorit, also in der Kopfzeile angeheftet.
   { id: "view", group: "panel", icon: "viewSettings", act: "view" },
-  { id: "settings", group: "panel", icon: "gear", act: "settings" },
+  { id: "settings", group: "panel", icon: "gear", act: "settings", locked: true },
   { id: "auto", group: "ha", icon: "robot", path: "/config/automation/dashboard", admin: true },
   { id: "scene", group: "ha", icon: "palette", path: "/config/scene/dashboard", admin: true },
   { id: "script", group: "ha", icon: "script", path: "/config/script/dashboard", admin: true },
@@ -71,7 +75,8 @@ const FAVICON_MAX = 140000;
 const FAVICON_RE = /^data:image\/(png|x-icon|gif|jpeg|webp|svg\+xml);base64,[A-Za-z0-9+/]+={0,2}$/;
 export const isFavicon = (v) => typeof v === "string" && v.length <= FAVICON_MAX && FAVICON_RE.test(v);
 
-const defaults = () => ({ fav: ["routine"], hidden: [], order: {}, custom: [], layout: { desktop: "grid", phone: "grid" }, updated: 0 });
+// v: Stand der Form; v2 (2.88.0) heftet die Einstellungen standardmässig an (einmal für bestehende Daten, siehe sanitizeApps)
+const defaults = () => ({ v: 2, fav: ["routine", "settings"], hidden: [], order: {}, custom: [], layout: { desktop: "grid", phone: "grid" }, updated: 0 });
 // Umbenennung Timer → Routine (2.55.0): die App hiess vorher "timer"; Favoriten, Ausgeblendetes und Reihenfolge behalten sie
 const ids = (list, max) =>
   Array.isArray(list)
@@ -114,8 +119,13 @@ export function sanitizeApps(raw) {
     .filter(Boolean)
     .slice(0, MAX_CUSTOM);
   const layout = (v) => (v === "list" ? "list" : "grid");
+  let fav = Array.isArray(raw.fav) ? ids(raw.fav, MAX_FAV) : d.fav;
+  // Bestehende Daten (vor 2.88.0): das Zahnrad stand fest in der Kopfzeile; jetzt ist es ein Favorit. Einmal als zweiter eintragen
+  // (am Handy bleibt so "erster Favorit und Einstellungen" wie bisher), später lässt es sich wieder lösen.
+  if (Array.isArray(raw.fav) && raw.v !== 2 && !fav.includes("settings")) fav = [...fav.slice(0, 1), "settings", ...fav.slice(1)].slice(0, MAX_FAV);
   return {
-    fav: Array.isArray(raw.fav) ? ids(raw.fav, MAX_FAV) : d.fav,
+    v: 2,
+    fav,
     hidden: ids(raw.hidden, 200),
     order: Object.fromEntries(GROUPS.map((g) => [g, ids(raw.order?.[g], 200)])),
     custom,
@@ -428,7 +438,7 @@ export class AppLauncher {
     dlg.style.cssText = `top:${top}px;left:${left}px;max-height:${Math.max(240, window.innerHeight - top - 16)}px`;
   }
 
-  // Wechsel zwischen Desktop und Handy: Fenster zu, Kopfzeile neu (am Handy nur der erste Favorit)
+  // Wechsel zwischen Desktop und Handy: Fenster zu, Kopfzeile neu (am Handy nur die ersten zwei Favoriten)
   onNarrow() {
     this.close();
     if (this.fdlg?.open) this.fdlg.close();
@@ -442,13 +452,14 @@ export class AppLauncher {
     if (!box) return;
     this._paintLauncherDot();
     const { escape } = this.h;
-    const pins = this.favs().slice(0, this.narrow() ? 1 : MAX_FAV);
+    const pins = this.favs().slice(0, this._pinCount());
     const html = pins
       .map((a) => {
         const dot = this.dotLevels().pins[a.id] || "";
-        const label = escape(dot ? `${a.name} · ${this.t(dot === "bad" ? "appsDown" : "appsDebug")}` : a.name);
+        const label = escape(dot ? `${a.name} · ${this._dotWhy(a.id, dot)}` : a.name);
         const icon = this._icon(a, 22);
-        const cls = `rtall-btn app-pin${dot ? ` has-dot dot-${dot}` : ""}`;
+        // "gear-btn": der angeheftete Knopf der Einstellungen (seit 2.88.0 kein fester Knopf mehr; Tests und Stile kennen ihn so)
+        const cls = `rtall-btn app-pin${a.id === "settings" ? " gear-btn" : ""}${dot ? ` has-dot dot-${dot}` : ""}`;
         return a.ext
           ? `<a class="${cls}" href="${escape(a.url)}" target="_blank" rel="noopener noreferrer" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</a>`
           : `<button type="button" class="${cls}" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</button>`;
@@ -496,13 +507,32 @@ export class AppLauncher {
     return "";
   }
 
-  // Punkte (seit 2.62.0): orange = Debug-Modus, rot = Störung des Status. Ist die App in der Kopfzeile angeheftet, sitzt der Punkt an ihrem
-  // eigenen Knopf, sonst am Launcher-Knopf; rot geht vor orange. Nicht angeheftet und ausgeblendet gilt dasselbe: der Launcher-Knopf zeigt es.
+  _pinCount() {
+    return this.narrow() ? PHONE_PINS : MAX_FAV;
+  }
+
+  // Grund des Punktes für Beschriftung und Hilfetext
+  _dotWhy(id, level) {
+    if (id === "settings") return this.t("settingsBtnRestart");
+    return this.t(level === "bad" ? "appsDown" : "appsDebug");
+  }
+
+  // Punkte (seit 2.62.0): orange = Debug-Modus, rot = Störung des Status; seit 2.88.0 rot auch für "Neustart steht aus" (Einstellungen). Ist die
+  // App in der Kopfzeile angeheftet, sitzt der Punkt an ihrem eigenen Knopf, sonst am Launcher-Knopf; rot geht vor orange. Nicht angeheftet und
+  // ausgeblendet gilt dasselbe: der Launcher-Knopf zeigt es. Das Zahnrad steht nicht mehr fest in der Kopfzeile, darum gilt für die
+  // Einstellungen dasselbe wie für Status und Protokoll.
   dotLevels() {
-    const pinned = new Set(this.favs().slice(0, this.narrow() ? 1 : MAX_FAV).map((a) => a.id));
+    const pinned = new Set(this.favs().slice(0, this._pinCount()).map((a) => a.id));
     const bad = (this.host._statusSum?.problems || 0) > 0 && this._admin();
+    const restart = Boolean(this.host._gearRestart);
     const warn = Boolean(this.host._debugOn);
-    return { pins: { status: bad ? "bad" : "", log: warn ? "warn" : "" }, launcher: bad && !pinned.has("status") ? "bad" : warn && !pinned.has("log") ? "warn" : "" };
+    // Grund für den Launcher-Knopf: der erste rote, sonst der orange
+    const why = bad && !pinned.has("status") ? "status" : restart && !pinned.has("settings") ? "settings" : warn && !pinned.has("log") ? "log" : "";
+    return {
+      pins: { status: bad ? "bad" : "", settings: restart ? "bad" : "", log: warn ? "warn" : "" },
+      launcher: why === "log" ? "warn" : why ? "bad" : "",
+      why,
+    };
   }
 
   // Punkte neu setzen: Launcher-Knopf, angeheftete Knöpfe (über die Kopfzeile) und die Pillen im offenen Launcher
@@ -514,7 +544,7 @@ export class AppLauncher {
       btn.classList.toggle("dot-warn", level === "warn");
       btn.classList.toggle("dot-bad", level === "bad");
       const base = this.t("appsBtn");
-      const label = level ? `${base} · ${this.t(level === "bad" ? "appsDown" : "appsDebug")}` : base;
+      const label = level ? `${base} · ${this._dotWhy(this.dotLevels().why, level)}` : base;
       btn.setAttribute("title", label);
       btn.setAttribute("aria-label", label);
     }

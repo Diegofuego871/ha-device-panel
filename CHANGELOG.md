@@ -7,11 +7,25 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.88.0] - 2026-10-17
+
+The settings button is a favorite: pinned in the header only when the user wants it; on the phone two pinned buttons.
+
+Includes the changes from 2.87.0 and 2.86.0.
+
+### Changed
+
+- The gear **no longer sits permanently** at the right end of the header. The app **Settings** is now a favorite like the others and shows in the header only while it is pinned (heart in the launcher). **By default Settings is a favorite**, together with Routines: both stand pinned in the header. The launcher button now sits at the very right.
+- **Phone:** the header now carries **two** pinned buttons (before: one, plus the fixed gear). The dashed line in the edit mode of the launcher ("Phone header: only the top two favorites") moves below the second favorite.
+- The app **Settings** can **no longer be hidden** (padlock instead of the eye), because without the fixed gear there would be no way to the settings once it is hidden and not pinned. A "hidden" mark saved earlier is ignored.
+- **Existing saved favorites** get the Settings once as the second favorite (on the phone the header then looks as before: the first favorite and the settings); whoever unpins it keeps it that way. Without saved favorites the new default applies (Routines, Settings).
+- Red dot "Restart pending" (after an update): as before at the gear when **Settings is pinned**; **otherwise at the launcher button** (the label says "restart pending"). The card **Settings** in the launcher shows the red pill "Restart" in both cases.
+
 ## [2.87.0] - 2026-10-17
 
 View with "Save": one dialog "View" with two tabs; the panel gets sub-tabs "Default page" and "Updates".
 
-Includes the changes from 2.86.0.
+Not released; included in 2.88.0.
 
 ### Added
 
@@ -31,7 +45,7 @@ Includes the changes from 2.86.0.
 
 AI assessment: button "Remove".
 
-Not released; included in 2.87.0.
+Not released; included in 2.88.0.
 
 ### Added
 
@@ -3794,7 +3808,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.87.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.87.0
+[2.88.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.88.0
 [2.85.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.85.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0

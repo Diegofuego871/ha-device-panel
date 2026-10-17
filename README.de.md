@@ -186,14 +186,14 @@ Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den
 - **Seiten:** Routinen, Magic Push und das Protokoll dieser Integration, Seiten von Home Assistant (Automationen, Szenen, Skripte, Helfer, Geräte, Entitäten, Integrationen, Werkzeuge und mehr; die Verwaltungsseiten nur für Administratoren)
 - **Eigene Links:** eine Seite in Home Assistant oder ein externer Link, der in einem neuen Browser-Tab öffnet, auf Wunsch mit seinem Favicon als Symbol
 - **Ansicht und Einstellungen:** zwei Apps in der Gruppe "Device Panel" öffnen die Ansichtseinstellungen (Sortierung, Spalten, Filter-Chips) und die zentralen Einstellungen, so findet man alles an einem Ort; beide lassen sich ausblenden, weil auch die Knöpfe in der Kopfzeile dorthin führen
-- **Favoriten:** ein Herz markiert bis zu fünf Apps, die eigene Knöpfe in der Kopfzeile bekommen
+- **Favoriten:** ein Herz markiert bis zu fünf Apps, die eigene Knöpfe in der Kopfzeile bekommen (am Handy die ersten zwei); standardmässig sind es die Routinen und die Einstellungen. Das Zahnrad steht nicht mehr fest dort, sondern nur noch, wenn die App "Einstellungen" angeheftet ist; sie lässt sich nicht ausblenden. Steht ein Neustart aus, zeigt der Launcher-Knopf den roten Punkt, solange die Einstellungen nicht angeheftet sind
 - **Bearbeiten-Modus:** per Ziehen sortieren, Apps mit dem Auge ausblenden (Protokoll und Status bleiben sichtbar, mit Schloss), Raster oder Liste; alles wird pro Benutzer gespeichert
 - **Status:** eine App für Administratoren, die zeigt, ob die Teile der Integration laufen (Routinen, Ausfall-Überwachung, Batterie, Laden, Empfangsverlauf, Magic Push, Neue Geräte, Updates: "läuft", "verspätet" oder "steht"). Steht ein Teil, kommt ein Push (an das Standard-Ziel oder an ein Ziel, das du in der App wählst) und eine Entwarnung, wenn er wieder läuft; ein verspäteter oder stehender Teil hat einen Knopf, mit dem sich genau dieser Teil von Hand neu starten lässt. Ein roter Punkt am Launcher-Knopf, oder am Status-Knopf, wenn du ihn angeheftet hast, zeigt eine Störung; ein oranger Punkt zeigt, dass der Debug-Modus läuft. Grenze: Steht Home Assistant selbst, kann das niemand melden
 - **Protokoll:** zeigt, was die Meldungen entscheiden und warum eine nicht kam, mit Filter und Suche (die letzten 500 Einträge bleiben über Neustarts erhalten) und einem optionalen Debug-Modus (für 48 Stunden eingeschaltet, auch über Neustarts)
 
 ## Einstellungen im Panel
 
-Das Zahnrad öffnet alle Einstellungen auf Deutsch oder Englisch, in Abschnitten. Die Versionsleiste oben zeigt die installierte und die neueste Version und aktualisiert über HACS.
+Das Zahnrad (die angeheftete App "Einstellungen", oder der Launcher) öffnet alle Einstellungen auf Deutsch oder Englisch, in Abschnitten. Die Versionsleiste oben zeigt die installierte und die neueste Version und aktualisiert über HACS.
 
 | Geräte im Panel | Routinen | Panel |
 |---|---|---|
