@@ -16,6 +16,7 @@ der Reiter sind die echten Blöcke des heutigen Panels, nur umgesetzt.
 | `2-Ansicht-Filter-Chips.png` | Reiter "Filter-Chips": der Block aus den Einstellungen, global, nur für Administratoren |
 | `3-Einstellungen-Panel-Standardseite.png` | Einstellungen ohne "Ansicht"; "Panel" mit Unterreiter "Standardseite" |
 | `4-Einstellungen-Panel-Updates.png` | "Panel", Unterreiter "Updates": Versionszeile, Vorabversionen, Prüfung, automatische Installation |
+| `7-Symbol-dark.png`, `7-Symbol-light.png` | Symbol der Zeile "Sortierung & Ansicht" (Handy): A Zahnrad mit Auge in der Mitte, **B Auge mit kleinem Zahnrad (Empfehlung)**, C heute (Sortierpfeile) |
 | `5-Handy-Ansicht.png`, `6-Handy-Filter-Chips.png` | Handy: Blatt "Ansicht" mit denselben zwei Reitern |
 
 ## Offene Punkte
