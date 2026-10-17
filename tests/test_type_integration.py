@@ -102,3 +102,24 @@ def test_type_map_validation() -> None:
     for bad in ([], {"zha": "x"}, {"Z": "sensor"}, {"zha": 5}):
         with pytest.raises(vol.Invalid):
             type_map(bad)
+
+
+async def test_display_type_by_hand_and_by_integration(hass: HomeAssistant, hass_ws_client) -> None:
+    """Typ "Display" (2.83.0): es gibt keine Erkennung, er wird von Hand am Gerät oder pro Integration festgelegt."""
+    await _setup(hass, type_integrations={"other": "display"})
+    lamp = _light(hass, "Lampe")
+    screen = _light(hass, "Bildschirm", domain="other")
+    client = await hass_ws_client(hass)
+
+    devices = await _devices(client, 1)
+    assert devices["Lampe"]["type"] == "light"  # keine Erkennung als Display
+    assert (devices["Bildschirm"]["type"], devices["Bildschirm"]["type_integration"]) == ("display", "display")
+
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_device_type", "device_id": lamp.id, "device_type": "display"})
+    assert (await client.receive_json())["success"]
+    mine = (await _devices(client, 3))["Lampe"]
+    assert (mine["type"], mine["type_manual"]) == ("display", True)
+
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/set_device_type", "device_id": lamp.id, "device_type": "gibt_es_nicht"})
+    assert not (await client.receive_json())["success"]
+    assert screen.id != lamp.id

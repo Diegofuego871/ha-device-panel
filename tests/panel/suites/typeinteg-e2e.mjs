@@ -24,7 +24,7 @@ const TEXT = {
     switch: "Switch", outlet: "Outlet", two: "2 devices",
   },
 };
-const TYPES = ",hub,phone,network,climate,lock,cover,valve,vacuum,camera,alarm,media,fan,light,outlet,switch,motion,contact,safety,energy,sensor,button,other";
+const TYPES = ",hub,phone,network,climate,lock,cover,valve,vacuum,camera,alarm,media,display,fan,light,outlet,switch,motion,contact,safety,energy,sensor,button,other";
 
 for (const lang of ["de", "en"]) {
   const T = TEXT[lang];

@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.83.0] - 2026-10-17
+
+Neuer Gerätetyp "Display".
+
+### Hinzugefügt
+
+- Neuer Gerätetyp **Display** (Bildschirm-Symbol) für Anzeigen, zum Beispiel ein ESPHome-Display. Eine automatische Erkennung gibt es nicht (ein Display hat in Home Assistant keine eigene Entitätsart, ein Raten läge oft falsch): Den Typ legst du von Hand am Gerät fest (Popup, Reiter "Einstellungen") oder für eine ganze Integration (Einstellungen, "Gerätetypen"). Er erscheint wie die anderen Typen in der Liste, im Filter und bei den Ausschlüssen, auf Deutsch und Englisch. Die Reihenfolge der Typen: "Display" steht nach "Medien".
+
+### Geändert
+
+- Übersicht, Kachel "Gerade ausgefallen": Die Zeile unten ("Keine Warnungen") erscheint nicht mehr, solange Geräte ausgefallen sind und keines eine Warnung hat. Warnungen zählen nur Geräte, die online sind (schwacher Empfang, niedrige Batterie, instabil), darum las sich "Keine Warnungen" direkt unter einem Ausfall als Widerspruch. Mit Warnungen bleibt die Zeile; sind alle Geräte online, steht weiter "Keine Warnungen".
+
 ## [2.82.0] - 2026-10-17
 
 Geräte-Popup, Reiter "Entitäten": den Link zum Gerät kopieren.
@@ -3825,6 +3837,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.83.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.83.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0

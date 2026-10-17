@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.83.0, Gerätetyp "Display")
+
+- Wunsch des Nutzers (Screenshot Büro Display, Typ "Sonstiges"): die Typen kommen vom Panel (`const.DEVICE_TYPES`, Erkennung in `devices.device_type`), nicht von HA. Neu: "display" nach "media" (Backend, `TYPE_ORDER`/`TYPE_ICONS`/`typeDisplay` im Panel, `strings.json` + Übersetzungen, Simulator). Ohne automatische Erkennung (ESPHome-Displays haben `number`/`select`/`light`/`switch`, kein sicheres Merkmal); Wahl von Hand am Gerät oder pro Integration. Tests: `test_translations` (Panel gleich Backend), `test_type_integration`.
+- Ebenfalls in 2.83.0 (Wunsch des Nutzers, Screenshot der Kachel "Gerade ausgefallen" mit "Keine Warnungen" darunter, Entscheid: Zeile ausblenden): `_heroHtml` zeigt `warnLine` in der Ausfall-Kachel nur noch mit Warnungen; bei allen Geräten online bleibt "Keine Warnungen". Grund: `devWarn` zählt nur Geräte, die online sind.
+
 ## Stand (2.82.0, Link zum Gerät kopieren)
 
 - Wunsch des Nutzers (Screenshot Reiter Entitäten): ganz unten ein kopierbarer Link, der direkt zu dieser Geräteansicht führt, automatisch zusammengesetzt. Entscheide: nur im Reiter Entitäten, Adresse des Browsers; Frage, ob es in der App geht: zusätzlich "App-Link kopieren". Keine Mockups (Aufbau wie die Entitätenliste).

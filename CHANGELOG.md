@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.83.0] - 2026-10-17
+
+New device type "Display".
+
+### Added
+
+- New device type **Display** (screen symbol) for displays, for example an ESPHome display. There is no automatic detection (a display has no entity kind of its own in Home Assistant, so a guess would often be wrong): you set the type by hand on the device (pop-up, tab "Settings") or for a whole integration (settings, "Device types"). It shows in the list, in the filter and in the exclusions like the other types, in German and English. The order of the types: "Display" stands after "Media".
+
+### Changed
+
+- Overview, tile "Just offline": the line at the bottom ("No warnings") no longer shows while devices are offline and none has a warning. Warnings count only devices that are online (weak signal, low battery, unstable), so "No warnings" right under an outage read as a contradiction. With warnings the line stays; with all devices online it still reads "No warnings".
+
 ## [2.82.0] - 2026-10-17
 
 Pop-up of the device, tab "Entities": copy the link to the device.
@@ -3724,6 +3736,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.83.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.83.0
 [2.82.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.82.0
 [2.80.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.80.0
 [2.79.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.79.0

@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "248"
+PANEL_VERSION = "249"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -392,7 +392,7 @@ CONF_UPDATE_NOTIFY = "update_notify"
 # Gerätetypen für Liste, Popup und Ausschlüsse (devices.device_type). Die
 # Reihenfolge ist die Anzeigereihenfolge in den Einstellungen.
 DEVICE_TYPES = (
-    "hub", "phone", "network", "climate", "lock", "cover", "valve", "vacuum", "camera", "alarm", "media",
+    "hub", "phone", "network", "climate", "lock", "cover", "valve", "vacuum", "camera", "alarm", "media", "display",
     "fan", "light", "outlet", "switch", "motion", "contact", "safety", "energy", "sensor", "button", "other",
 )
 # Ausschlüsse (Optionen): Geräte dieser Integrationen bzw. Typen zeigt das
