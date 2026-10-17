@@ -259,7 +259,7 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     const titles = await ev(`return [...r.querySelectorAll("dialog.settings .set-sec-title")].map((e) => e.firstChild.textContent.trim()).join("|")`);
-    check(`[${tag}] Abschnitt "${T.sec}" zwischen Überwachung und Ansicht`, titles.includes(`${T.sec}|`) && titles.indexOf(T.sec) > titles.indexOf(lang === "de" ? "Überwachung" : "Monitoring") && titles.indexOf(T.sec) < titles.indexOf(T.look), titles);
+    check(`[${tag}] Abschnitt "${T.sec}" zwischen Überwachung und KI-Einschätzung`, titles.includes(`${T.sec}|`) && titles.indexOf(T.sec) > titles.indexOf(lang === "de" ? "Überwachung" : "Monitoring") && titles.indexOf(T.sec) < titles.indexOf(lang === "de" ? "KI-Einschätzung" : "AI assessment"), titles);
     await tap('[data-set="section"][data-id="routines"]');
     // Seit 2.23.1 steht die Sammlung aller Routinen im Fenster der Kopfzeile (Blitz, Suite routineall); hier nur noch die Optionen
     check(`[${tag}] Abschnitt "${T.sec}": nur Optionen, keine Sammlung aller Routinen mehr`, await wait(`const d = r.querySelector("dialog.settings"); return !!d.querySelector('input[data-opt="routines_pause"]') && !d.querySelector(".mg-dcard, .mg-card, [data-lsearch], [data-rt-all-zone]") && ![...d.querySelectorAll("[data-set]")].some((e) => e.dataset.set.startsWith("routine-"))`));
