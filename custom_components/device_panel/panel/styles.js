@@ -155,13 +155,16 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 .pchart .line.ok { stroke: var(--dp-success); }
 /* Easter Egg (seit 2.89.0): Herzschlag über dem Puls-Diagramm; das Diagramm tritt kurz zurück, die Linie wird von links aufgedeckt, dreimal */
 .pchart.ee .line, .pchart.ee .area { opacity: .25; }
-.ee-ecg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; animation: ee-reveal 1.7s linear 3 both, ee-fade 5.4s linear both; animation-delay: var(--ee-delay, 0s), var(--ee-delay, 0s); }
+.ee-ecg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; animation: ee-reveal 1.85s linear 4 both, ee-fade 7.4s linear both; animation-delay: var(--ee-delay, 0s), var(--ee-delay, 0s); }
 .ee-ecg path { fill: none; stroke: var(--dp-primary); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--dp-primary) 55%, transparent)); }
 .kt.ee .k svg { color: var(--dp-error); transform-origin: center; animation: ee-thump .85s ease-in-out infinite; }
 @keyframes ee-reveal { from { clip-path: inset(-12px 100% -12px 0); } to { clip-path: inset(-12px 0 -12px 0); } }
 @keyframes ee-fade { 0%, 88% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes ee-thump { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.18); } }
-@media (prefers-reduced-motion: reduce) { .ee-ecg { animation: ee-fade 5.4s linear both; animation-delay: var(--ee-delay, 0s); } .kt.ee .k svg { animation: none; } }
+/* Das Logo oben links als blaues Herz (seit 2.92.0): schlägt im Takt der Linie, drei Schläge je Durchlauf (bei 20, 53 und 86 % der 1,85 s) */
+.tb-main > svg.ee-heart { overflow: visible; transform-origin: center; animation: ee-beat 1.85s ease-in-out 4 both; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--dp-primary) 60%, transparent)); }
+@keyframes ee-beat { 0%, 14% { transform: scale(1); } 20% { transform: scale(1.32); } 26% { transform: scale(1); } 30% { transform: scale(1.16); } 36%, 47% { transform: scale(1); } 53% { transform: scale(1.32); } 59% { transform: scale(1); } 63% { transform: scale(1.16); } 69%, 80% { transform: scale(1); } 86% { transform: scale(1.32); } 92% { transform: scale(1); } 96% { transform: scale(1.16); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .tb-main > svg.ee-heart { animation: none; } .ee-ecg { animation: ee-fade 7.4s linear both; animation-delay: var(--ee-delay, 0s); } .kt.ee .k svg { animation: none; } }
 .pchart .imark { position: absolute; top: -4px; bottom: 0; width: 0; border-left: 1.5px dashed var(--dp-error); }
 .pchart .imark::before { content: ""; position: absolute; top: -3px; left: -5px; width: 8px; height: 8px; border-radius: 50%;
   background: var(--dp-error); box-shadow: 0 0 0 3px var(--dp-error-soft); }

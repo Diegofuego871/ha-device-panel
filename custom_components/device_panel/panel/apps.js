@@ -748,12 +748,12 @@ export class AppLauncher {
           <div class="ap-icons" data-f-pane="icon">${icons}</div>
           <div class="ap-favpane" data-f-pane="favicon" hidden>
             <div class="ap-favrow"><span class="ap-favbox" data-f-favimg></span>
-              <div class="ap-favctl"><button type="button" class="dlg-btn" data-ap="ffetch" data-f-fetch>${escape(this.t("appsFFetch"))}</button>
+              <div class="ap-favctl"><button type="button" class="dlg-btn" data-ap="ffetch" data-f-fetch>${mdi("reset", 18)}${escape(this.t("appsFFetch"))}</button>
                 <div class="ap-hint" data-f-favmsg></div></div></div></div></div>
         <div class="ap-prev"><div class="ap-tile" data-f-prev></div><p>${escape(this.t("appsFPrev"))}</p></div>
         <div class="ap-err" data-f-err role="alert" hidden></div>
       </div>
-      <div class="ap-acts"><button type="button" class="dlg-btn" data-ap="fclose">${escape(this.t("settingsCancel"))}</button><button type="button" class="dlg-btn primary" data-ap="fsave">${mdi("save", 18)}${escape(this.t("settingsSave"))}</button></div>`;
+      <div class="ap-acts"><button type="button" class="dlg-btn" data-ap="fclose">${mdi("close", 18)}${escape(this.t("settingsCancel"))}</button><button type="button" class="dlg-btn primary" data-ap="fsave">${mdi("save", 18)}${escape(this.t("settingsSave"))}</button></div>`;
     this._formSync();
   }
 
@@ -932,7 +932,7 @@ export class AppLauncher {
         return this.open(id);
       case "restart":
         // Immer mit Rückfrage; die sichere Antwort hat den Fokus
-        return this.host._askConfirm({ title: "restartTitle", note: "restartNote", no: "restartNo", yes: "restartYes" }, () => this.host._restartHa());
+        return this.host._askConfirm({ title: "restartTitle", note: "restartNote", no: "restartNo", yes: "restartYes", yesIcon: "power" }, () => this.host._restartHa());
       case "ext":
         // Verweis öffnet von selbst in einem neuen Tab; Fenster danach zu
         window.setTimeout(() => this.close(), 0);

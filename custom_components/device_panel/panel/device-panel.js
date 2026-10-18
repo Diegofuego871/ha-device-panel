@@ -253,6 +253,10 @@ const MDI = {
   alert: "M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z",
   pencil: "M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z",
   copy: "M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z",
+  trash: "M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z",
+  play: "M8,5.14V19.14L19,12.14L8,5.14Z",
+  arrowLeft: "M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z",
+  arrowRight: "M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z",
   close: "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",
   gear: "M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z",
   verOk: "M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2M10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z",
@@ -385,7 +389,7 @@ const LOGO = `<svg width="30" height="30" viewBox="22 22 212 212" aria-hidden="t
 // Kleines Logo für die Vorschau einer Push-Meldung.
 // Easter Egg (seit 2.89.0): Zahl der Klicks aufs Logo und Dauer des Herzschlags
 const EE_TAPS = 5;
-const EE_MS = 5400;
+const EE_MS = 7400;
 const LOGO_SMALL = LOGO.replace('width="30" height="30"', 'width="14" height="14"').replaceAll("dpg", "dpgs");
 // Inhalt einer Ausfall-Meldung in fester Reihenfolge (wie const.NOTIFY_FIELDS).
 // Zeiten der Auswahl "Ausgefallen nach" pro Integration (Minuten, 1 bis 1440).
@@ -1140,7 +1144,26 @@ class DevicePanel extends HTMLElement {
       // HACS meldet Fortschritt und neue Versionen über seine Update-Entität.
       if (this._settings) this._renderSettingsVersion();
       this._gearDot();
+      this._watchEntityStates();
     }
+  }
+
+  // Reiter "Schalter" und "Entitäten" des Geräte-Popups lesen den Zustand live aus hass.states. Das Popup baut sich aber nur beim Abfragen
+  // (alle 10 s) oder beim Reiterwechsel neu auf; wer in HAs Dialog schaltet und zurückkommt, sah deshalb den alten Zustand (behoben in
+  // 2.92.0). Darum: ändert sich Zustand oder Attribut einer Entität des offenen Geräts, wird das Popup sanft neu gezeichnet
+  // (sanft = nicht mitten in Berührung oder Eingabe, siehe _dlgBusy).
+  _watchEntityStates() {
+    if (!this._detailId || !["sw", "ent"].includes(this._devTab)) return;
+    const dlg = this.shadowRoot?.querySelector("dialog.device");
+    if (!dlg?.open) return;
+    const list = this._detail?.id === this._detailId ? this._detail.data?.entities || [] : [];
+    const states = this._hass?.states || {};
+    // Die Zeichenkette aus Zustand und Attributen: Helligkeit, Position und Ähnliches stehen hinter dem Zustand
+    const sig = list.map((e) => { const st = states[e.entity_id]; return st ? `${st.state}|${st.last_updated}` : ""; }).join("\n");
+    const key = `${this._detailId}\n${sig}`;
+    if (key === this._entSig) return;
+    this._entSig = key;
+    this._renderDevice(true);
   }
 
   // Roter Punkt an den Einstellungen (angeheftet am Knopf, sonst am Launcher), solange ein Update installiert ist und der Neustart noch aussteht (seit 2.25.0). Nötig ist die laufende
@@ -2598,7 +2621,7 @@ class DevicePanel extends HTMLElement {
           <div class="dlg-title"><h2>${escape(this._pk("Title"))}</h2><div class="dlg-sub">${escape(t("areaSubMobile"))}</div></div>
           <button type="button" class="dlg-close" data-area-done title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
         <div class="dlg-body">${search}<div class="alist"></div></div>
-        <div class="dlg-actions"><button type="button" class="dlg-btn" data-area-clear>${escape(this._pk("ShowAll"))}</button><button type="button" class="dlg-btn primary" data-area-done>${escape(t("areaDone"))}</button></div>`;
+        <div class="dlg-actions"><button type="button" class="dlg-btn" data-area-clear>${mdi("eye", 18)}${escape(this._pk("ShowAll"))}</button><button type="button" class="dlg-btn primary" data-area-done>${mdi("check", 18)}${escape(t("areaDone"))}</button></div>`;
       this._renderAreaList();
       if (!dlg.open) {
         if (typeof dlg.showModal === "function") dlg.showModal();
@@ -2931,10 +2954,34 @@ class DevicePanel extends HTMLElement {
     if (taps.length < EE_TAPS) return;
     this._eeAt = now;
     this._eeUntil = now + EE_MS;
+    this._heartLogo(true);
     this._render();
     window.clearTimeout(this._eeTimer);
-    this._eeTimer = window.setTimeout(() => this._render(), EE_MS + 100);
-    if (!this.shadowRoot.querySelector(".pchart.ee")) this._toast("💓");
+    this._eeTimer = window.setTimeout(() => {
+      this._heartLogo(false);
+      this._render();
+    }, EE_MS + 100);
+  }
+
+  // Seit 2.92.0 wird das Logo oben links zum blauen Herz, das im Takt der Linie schlägt (auch bei gescrolltem Diagramm sichtbar, auch ohne
+  // Kachel "Puls"). Das D verschwindet dabei; danach kommt das Logo unverändert zurück (Innenleben und viewBox werden gemerkt).
+  _heartLogo(on) {
+    const svg = this.shadowRoot.querySelector(".tb-main > svg");
+    if (!svg) return;
+    if (on) {
+      if (this._logoKeep === undefined) this._logoKeep = { html: svg.innerHTML, box: svg.getAttribute("viewBox") };
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.innerHTML = `<defs><linearGradient id="dpgh" x1="2" y1="3" x2="22" y2="21" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7ADFFD"/><stop offset=".5" stop-color="#22A9F9"/><stop offset="1" stop-color="#1C7DF9"/></linearGradient></defs><path d="${MDI.heart}" fill="url(#dpgh)"/>`;
+      // Neu starten: dieselbe Animation noch einmal (Klasse weg, Layout erzwingen, Klasse wieder dran)
+      svg.classList.remove("ee-heart");
+      void svg.getBoundingClientRect();
+      svg.classList.add("ee-heart");
+    } else if (this._logoKeep !== undefined) {
+      svg.classList.remove("ee-heart");
+      svg.setAttribute("viewBox", this._logoKeep.box);
+      svg.innerHTML = this._logoKeep.html;
+      this._logoKeep = undefined;
+    }
   }
 
   _heartOn() {
@@ -3109,7 +3156,7 @@ class DevicePanel extends HTMLElement {
       <div class="dlg-body"><div class="avail pwin">${this._pulseChartHtml(p, incidents, true, at)}${incidents.slice(0, 3).map((inc) => this._incidentHtml(inc)).join("")}</div>
         <p class="dlg-note small">${escape(t("pulseWinHint"))}</p>${pick}
         <h3>${escape(t("pulseWinList"))}</h3>${rows ? `<div class="plist">${rows}</div>` : `<p class="dlg-note">${escape(t("pulseNone"))}</p>`}</div>
-      <div class="dlg-actions"><button type="button" class="dlg-btn" data-pulse-close>${escape(t("close"))}</button></div>`;
+      <div class="dlg-actions"><button type="button" class="dlg-btn" data-pulse-close>${mdi("close", 18)}${escape(t("close"))}</button></div>`;
     const scroll = dlg.scrollTop;
     if (setHtml(dlg, html)) dlg.scrollTop = scroll;
   }
@@ -4007,7 +4054,7 @@ class DevicePanel extends HTMLElement {
 
   // Rückfrage "Änderungen verwerfen?" als Pop-up in der Mitte, über jedem Fenster (eigenes modales Fenster)
   _askDiscard(onYes) {
-    this._askConfirm({ title: "discardTitle", note: "discardNote", no: "discardNo", yes: "discardYes" }, onYes);
+    this._askConfirm({ title: "discardTitle", note: "discardNote", no: "discardNo", yes: "discardYes", noIcon: "pencil", yesIcon: "trash" }, onYes);
   }
 
   // Dieselbe Rückfrage für andere Entscheidungen (zum Beispiel "Home Assistant neu starten?"); keys: Textschlüssel
@@ -4019,7 +4066,7 @@ class DevicePanel extends HTMLElement {
     }
     this._discardYes = onYes;
     dlg.innerHTML = `<div class="dd-card" role="alertdialog" aria-labelledby="dd-t"><b id="dd-t">${escape(this._t(keys.title))}</b><small>${escape(this._t(keys.note))}</small>
-      <div class="dd-btns"><button type="button" class="dlg-btn" data-dd="no">${escape(this._t(keys.no))}</button><button type="button" class="dlg-btn danger" data-dd="yes">${escape(this._t(keys.yes))}</button></div></div>`;
+      <div class="dd-btns"><button type="button" class="dlg-btn" data-dd="no">${mdi(keys.noIcon || "close", 18)}${escape(this._t(keys.no))}</button><button type="button" class="dlg-btn danger" data-dd="yes">${mdi(keys.yesIcon || "check", 18)}${escape(this._t(keys.yes))}</button></div></div>`;
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
       else dlg.setAttribute("open", "");
@@ -4798,11 +4845,11 @@ class DevicePanel extends HTMLElement {
     const n = this._devChanges().length;
     if (n) {
       return `<div class="dlg-actions"><span class="set-count" role="status">${escape(this._t("settingsChanges", n))}</span>
-        <button type="button" class="dlg-btn" data-dlg="close">${escape(this._t("settingsCancel"))}</button>
+        <button type="button" class="dlg-btn" data-dlg="close">${mdi("close", 18)}${escape(this._t("settingsCancel"))}</button>
         <button type="button" class="dlg-btn primary" data-dlg="save" ${this._devSaving ? "disabled" : ""}>${mdi("save", 18)}${escape(this._devSaving ? this._t("settingsSaving") : this._t("settingsSave"))}</button></div>`;
     }
     return `<div class="dlg-actions two">${this._devSaved ? `<span class="set-count saved" role="status">${escape(this._t("settingsSavedShort"))}</span>` : ""}<button type="button" class="dlg-btn hide-btn" data-dlg="hide">${mdi("eyeOff", 18)}${escape(this._t("hideDevice"))}</button>
-          <button type="button" class="dlg-btn" data-dlg="close">${escape(this._t("close"))}</button></div>`;
+          <button type="button" class="dlg-btn" data-dlg="close">${mdi("close", 18)}${escape(this._t("close"))}</button></div>`;
   }
 
   _onDeviceClick(ev) {
@@ -5631,9 +5678,9 @@ class DevicePanel extends HTMLElement {
     const own = Boolean(d.ai_prompt);
     return `${head}<div class="aip"><div class="aip-h">${escape(t("aiPromptTitle"))} · <b>${escape(t(own ? "aiPromptOwn" : "aiPromptDefault"))}</b></div>
       <div class="aip-box" tabindex="0">${promptHtml(d.ai_prompt || st.data.ai_prompt_default || "")}</div>
-      <div class="aip-btns"><button type="button" class="dlg-btn primary" data-set="prompt-open">${escape(t("aiPromptEdit"))}</button>
-        <button type="button" class="dlg-btn" data-set="prompt-copy">${escape(t("aiPromptCopy"))}</button>
-        <button type="button" class="dlg-btn" data-set="prompt-default" ${own ? "" : "disabled"}>${escape(t("aiPromptReset"))}</button></div>
+      <div class="aip-btns"><button type="button" class="dlg-btn primary" data-set="prompt-open">${mdi("pencil", 18)}${escape(t("aiPromptEdit"))}</button>
+        <button type="button" class="dlg-btn" data-set="prompt-copy">${mdi("copy", 18)}${escape(t("aiPromptCopy"))}</button>
+        <button type="button" class="dlg-btn" data-set="prompt-default" ${own ? "" : "disabled"}>${mdi("reset", 18)}${escape(t("aiPromptReset"))}</button></div>
       <div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("aiPromptPrivacy"))}</p></div></div></div>`;
   }
 
@@ -5802,7 +5849,7 @@ class DevicePanel extends HTMLElement {
       body = `<p class="dlg-note">${escape(t("notesLoading"))}</p>`;
     } else if (n.error) {
       const msg = n.error === "rate_limit" ? t("verRateLimit") : n.error;
-      body = `<div class="dlg-error">${escape(t("notesError"))} ${escape(msg)}</div><div class="aip-btns"><button type="button" class="dlg-btn" data-notes="retry">${escape(t("notesRetry"))}</button></div>`;
+      body = `<div class="dlg-error">${escape(t("notesError"))} ${escape(msg)}</div><div class="aip-btns"><button type="button" class="dlg-btn" data-notes="retry">${mdi("reset", 18)}${escape(t("notesRetry"))}</button></div>`;
     } else {
       const entries = n.data?.entries || [];
       const lang = pickLang(this._hass);
@@ -5820,7 +5867,7 @@ class DevicePanel extends HTMLElement {
     const html = `<div class="dlg-head"><span class="dlg-avatar">${mdi("verUp", 24)}</span><div class="dlg-title"><h2>${escape(t("notesTitle"))}</h2><div class="dlg-sub">${escape(sub)}</div></div>
         <button type="button" class="dlg-close" data-notes="close" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body">${body}</div>
-      <div class="dlg-actions">${link}<button type="button" class="dlg-btn primary" data-notes="close">${escape(t("close"))}</button></div>`;
+      <div class="dlg-actions">${link}<button type="button" class="dlg-btn primary" data-notes="close">${mdi("close", 18)}${escape(t("close"))}</button></div>`;
     setHtml(dlg, html);
   }
 
@@ -5910,14 +5957,14 @@ class DevicePanel extends HTMLElement {
         <textarea class="pr-text" data-prompt-text spellcheck="false" rows="12" aria-label="${escape(t("promptTitle"))}">${escape(p.text)}</textarea>
         <div class="pr-count" data-prompt-count></div><div class="opt-error" data-prompt-error hidden></div>
         <div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("promptHeadline"))}</p></div></div>
-        <div class="aip-btns"><button type="button" class="dlg-btn" data-prompt="default">${escape(t("promptInsertDefault"))}</button>
-          <button type="button" class="dlg-btn" data-prompt="copy">${escape(t("aiPromptCopy"))}</button></div>`;
+        <div class="aip-btns"><button type="button" class="dlg-btn" data-prompt="default">${mdi("reset", 18)}${escape(t("promptInsertDefault"))}</button>
+          <button type="button" class="dlg-btn" data-prompt="copy">${mdi("copy", 18)}${escape(t("aiPromptCopy"))}</button></div>`;
     }
     const html = `<div class="dlg-head"><div class="dlg-title"><h2>${escape(t("promptTitle"))}</h2><div class="dlg-sub" data-prompt-sub>${escape(t(own ? "promptSubOwn" : "promptSubDefault"))}</div></div>
         <button type="button" class="dlg-close" data-prompt="cancel" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body"><div class="sub-tabs" role="tablist">${tabs}</div>${body}</div>
-      <div class="dlg-actions"><button type="button" class="dlg-btn" data-prompt="cancel">${escape(t("promptCancel"))}</button>
-        <button type="button" class="dlg-btn primary" data-prompt="apply">${escape(t("promptApply"))}</button></div>`;
+      <div class="dlg-actions"><button type="button" class="dlg-btn" data-prompt="cancel">${mdi("close", 18)}${escape(t("promptCancel"))}</button>
+        <button type="button" class="dlg-btn primary" data-prompt="apply">${mdi("check", 18)}${escape(t("promptApply"))}</button></div>`;
     // Das Textfeld ändert sich beim Tippen ohne Neuaufbau; darum immer neu schreiben.
     setHtml(dlg, "");
     setHtml(dlg, html);
@@ -6408,7 +6455,7 @@ class DevicePanel extends HTMLElement {
     const actions = `<div class="dlg-actions">
         <span class="set-count${saved ? " saved" : ""}" role="status">${changes.length ? escape(t("settingsChanges", changes.length)) : saved ? escape(t("settingsSavedShort")) : ""}</span>
         <button type="button" class="dlg-btn primary" data-set="save" ${canSave ? "" : "disabled"}>${mdi("save", 18)}${escape(st.saving ? t("settingsSaving") : t("settingsSave"))}</button>
-        <button type="button" class="dlg-btn" data-set="close">${escape(changes.length ? t("settingsCancel") : t("close"))}</button></div>`;
+        <button type="button" class="dlg-btn" data-set="close">${mdi("close", 18)}${escape(changes.length ? t("settingsCancel") : t("close"))}</button></div>`;
     // Die Versionszeile (.ver-slot) ändert sich oft (Prüfung, HACS) und wird
     // dann allein ersetzt (_renderSettingsVersion), nicht der ganze Dialog.
     const html = `${head}<div class="dlg-body">${body}</div>${actions}`;
@@ -8700,7 +8747,7 @@ class DevicePanel extends HTMLElement {
       count.classList.toggle("saved", !changes.length && Boolean(st.saved));
     }
     const cancel = dialog.querySelector('.dlg-actions [data-set="close"]');
-    if (cancel) cancel.textContent = changes.length ? this._t("settingsCancel") : this._t("close");
+    if (cancel) cancel.innerHTML = `${mdi("close", 18)}${escape(changes.length ? this._t("settingsCancel") : this._t("close"))}`;
     const save = dialog.querySelector('[data-set="save"]');
     if (save) save.disabled = st.saving || !changes.length || Object.keys(errors).length > 0;
     // Batterie pro Integration: Zeilen markieren, Fehlerzeile, globaler Wert als Platzhalter.

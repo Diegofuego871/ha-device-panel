@@ -410,7 +410,7 @@ export class StatusUi {
     const status = n ? t("settingsChanges", n) : saved ? t("settingsSavedShort") : "";
     foot.innerHTML = `<div class="dlg-actions"><span class="set-count${saved ? " saved" : ""}" role="status" data-st-count>${escape(status)}</span>
       <button type="button" class="dlg-btn primary" data-st-save ${n && !bad && !this.saving ? "" : "disabled"}>${this.h.mdi("save", 18)}${escape(this.saving ? t("settingsSaving") : t("settingsSave"))}</button>
-      ${n ? `<button type="button" class="dlg-btn" data-st-discard>${escape(t("discardYes"))}</button>` : `<button type="button" class="dlg-btn" data-st-close>${escape(t("close"))}</button>`}</div>`;
+      ${n ? `<button type="button" class="dlg-btn" data-st-discard>${this.h.mdi("close", 18)}${escape(t("discardYes"))}</button>` : `<button type="button" class="dlg-btn" data-st-close>${this.h.mdi("close", 18)}${escape(t("close"))}</button>`}</div>`;
   }
 
   targetLabel(x) {
@@ -506,8 +506,8 @@ export class StatusUi {
     const name = t(`stPart_${p.id}`);
     return `<div class="st-confirm mg-confirm"><b>${escape(t("stRestartAsk", name))}</b>
       <small>${escape(t("stRestartNote"))}${p.id === "routines" ? ` ${escape(t("stRestartNoteRoutines"))}` : ""}</small>
-      <div class="mg-btns small"><button type="button" class="dlg-btn" data-st-restart-no${busy ? " disabled" : ""}>${escape(t("rtCancel"))}</button>
-      <button type="button" class="dlg-btn primary" data-st-restart-yes="${escape(p.id)}"${busy ? " disabled" : ""}>${escape(t(busy ? "stRestartBusy" : "stRestartYes"))}</button></div></div>`;
+      <div class="mg-btns small"><button type="button" class="dlg-btn" data-st-restart-no${busy ? " disabled" : ""}>${this.h.mdi("close", 18)}${escape(t("rtCancel"))}</button>
+      <button type="button" class="dlg-btn primary" data-st-restart-yes="${escape(p.id)}"${busy ? " disabled" : ""}>${this.h.mdi("reset", 18)}${escape(t(busy ? "stRestartBusy" : "stRestartYes"))}</button></div></div>`;
   }
 
   zoneHtml() {
@@ -573,10 +573,10 @@ export class StatusUi {
     if (this.ui.enableAsk === m.id || this.ui.enabling === m.id) {
       const busy = this.ui.enabling === m.id;
       return `<div class="st-confirm mg-confirm" data-st-enable-confirm><b>${escape(t("stSysEnableAsk"))}</b><ul class="st-sys-list">${list}</ul><small>${escape(t("stSysEnableNote"))}</small>
-        <div class="mg-btns small"><button type="button" class="dlg-btn" data-st-enable-no${busy ? " disabled" : ""}>${escape(t("rtCancel"))}</button>
-        <button type="button" class="dlg-btn primary" data-st-enable="${escape(m.id)}"${this.ui.enabling ? " disabled" : ""}>${escape(t(busy ? "stSysEnabling" : "stSysEnableYes"))}</button></div></div>`;
+        <div class="mg-btns small"><button type="button" class="dlg-btn" data-st-enable-no${busy ? " disabled" : ""}>${this.h.mdi("close", 18)}${escape(t("rtCancel"))}</button>
+        <button type="button" class="dlg-btn primary" data-st-enable="${escape(m.id)}"${this.ui.enabling ? " disabled" : ""}>${this.h.mdi("power", 18)}${escape(t(busy ? "stSysEnabling" : "stSysEnableYes"))}</button></div></div>`;
     }
-    return `<ul class="st-sys-list">${list}</ul><div class="st-sys-act"><button type="button" class="dlg-btn" data-st-enable-ask="${escape(m.id)}"${this.ui.enabling ? " disabled" : ""}>${escape(t("stSysEnable"))}</button></div>`;
+    return `<ul class="st-sys-list">${list}</ul><div class="st-sys-act"><button type="button" class="dlg-btn" data-st-enable-ask="${escape(m.id)}"${this.ui.enabling ? " disabled" : ""}>${this.h.mdi("power", 18)}${escape(t("stSysEnable"))}</button></div>`;
   }
 
   metricHtml(m) {
@@ -601,7 +601,7 @@ export class StatusUi {
       // Ohne "System Monitor": sagen, wie man es hinzufügt (nicht zwingend, die Auswahl unten nimmt jeden Sensor)
       const noInteg = this.sys && this.sys.integrations && !this.sys.integrations.systemmonitor && !m.disabled?.length;
       body = `<p class="st-sys-note">${escape(t(m.disabled?.length ? "stSysOff" : noInteg ? "stSysNoInteg" : "stSysNone"))}</p>${this.enableHtml(m)}${
-        noInteg ? `<div class="st-sys-act"><button type="button" class="dlg-btn" data-st-add>${escape(t("stSysAdd"))}</button></div>` : ""
+        noInteg ? `<div class="st-sys-act"><button type="button" class="dlg-btn" data-st-add>${this.h.mdi("plus", 18)}${escape(t("stSysAdd"))}</button></div>` : ""
       }`;
     }
     else if (m.missing) body = `<p class="st-sys-note warn">${escape(t("stSysMissing"))}</p>`;

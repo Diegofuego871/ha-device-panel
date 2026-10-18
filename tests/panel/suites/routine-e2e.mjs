@@ -76,6 +76,7 @@ for (const lang of ["de", "en"]) {
     // --- Assistent: Schritt 1 ------------------------------------------------------------------------------------
     await tap('.rt-root [data-rt="add"]');
     check(`[${tag}] Fenster offen, Schritt 1`, await wait(`return r.querySelector("dialog.routine-dlg")?.open && r.querySelector("dialog.routine-dlg .mg-big")?.textContent === ${JSON.stringify(T.q1)}`) && (await text(`${win} .mg-stephead span`)) === T.step1);
+    check(`[${tag}] Schritt 1: "Abbrechen" und "Weiter" tragen ein Symbol, Schliessen-X oben`, await ev(`const d = r.querySelector("dialog.routine-dlg"); const has = (sel) => !!d.querySelector(sel + " svg"); return has('[data-rt="nav-cancel"]') && has('[data-rt="nav-next"]') && has('.dlg-close')`));
     check(`[${tag}] zwei schaltbare Entitäten, Weiter gesperrt`, (await ev(`return r.querySelectorAll("dialog.routine-dlg .mg-pick").length`)) === 2 && await disabled(nextBtn));
     await tap(`${win} .mg-pick[data-id="switch.plug"]`);
     check(`[${tag}] Steckdose gewählt, Aktion sichtbar, das Zurückschalten steht nicht mehr hier`, await wait(`return !r.querySelector('dialog.routine-dlg [data-rt="nav-next"]').disabled && r.querySelectorAll('dialog.routine-dlg [data-rt="action"]').length === 3 && !r.querySelector('dialog.routine-dlg [data-rt="bdur"]')`));

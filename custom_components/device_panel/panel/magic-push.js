@@ -783,7 +783,7 @@ export class MagicPush {
     const status = this.statusParts(r);
     const title = renaming
       ? `<div class="mg-t"><input class="mg-input" type="text" data-mg="rename-input" maxlength="${this.limit("name", 60)}" value="${esc(this.ui.renameValue)}" aria-label="${esc(t("mgRenameLabel"))}">
-          <div class="mg-btns small"><button type="button" class="dlg-btn" data-mg="rename-cancel">${esc(t("mgCancel"))}</button><button type="button" class="dlg-btn primary" data-mg="rename-save">${this.h.mdi("save", 18)}${esc(t("mgSave"))}</button></div></div>`
+          <div class="mg-btns small"><button type="button" class="dlg-btn" data-mg="rename-cancel">${this.h.mdi("close", 18)}${esc(t("mgCancel"))}</button><button type="button" class="dlg-btn primary" data-mg="rename-save">${this.h.mdi("save", 18)}${esc(t("mgSave"))}</button></div></div>`
       : `<div class="mg-t"><b>${esc(r.name)}</b><small>${esc(this.sentence(r))}</small><small class="mg-status">${status.join(" · ")}</small></div>`;
     const sw = `<label class="switch"><input type="checkbox" data-mg="toggle" data-id="${esc(r.id)}"${r.enabled ? " checked" : ""} aria-label="${esc(r.name)}"><span></span></label>`;
     let acts = "";
@@ -794,7 +794,7 @@ export class MagicPush {
     }
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("mgDeleteAsk", r.name))}</b><small>${esc(t("mgDeleteNote"))}</small>
-          <div class="mg-btns small"><button type="button" class="dlg-btn" data-mg="delete-no">${esc(t("mgCancel"))}</button><button type="button" class="dlg-btn danger" data-mg="delete-yes" data-id="${esc(r.id)}">${esc(t("mgDeleteYes"))}</button></div></div>`
+          <div class="mg-btns small"><button type="button" class="dlg-btn" data-mg="delete-no">${this.h.mdi("close", 18)}${esc(t("mgCancel"))}</button><button type="button" class="dlg-btn danger" data-mg="delete-yes" data-id="${esc(r.id)}">${this.h.mdi("trash", 18)}${esc(t("mgDeleteYes"))}</button></div></div>`
       : "";
     return `<div class="mg-card${r.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${emojiFor(e)}</span>${title}${renaming ? "" : sw}</div>${acts}${confirm}</div>`;
   }
@@ -948,7 +948,7 @@ export class MagicPush {
         <button type="button" class="linkbtn danger" data-mga="magic-delete" data-id="${esc(r.id)}">${esc(t("mgActDelete"))}</button></div>`;
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("mgDeleteAsk", r.name))}</b><small>${esc(t("mgDeleteNote"))}</small>
-          <div class="mg-btns small"><button type="button" class="dlg-btn" data-mga="magic-delete-no">${esc(t("mgCancel"))}</button><button type="button" class="dlg-btn danger" data-mga="magic-delete-yes" data-id="${esc(r.id)}">${esc(t("mgDeleteYes"))}</button></div></div>`
+          <div class="mg-btns small"><button type="button" class="dlg-btn" data-mga="magic-delete-no">${this.h.mdi("close", 18)}${esc(t("mgCancel"))}</button><button type="button" class="dlg-btn danger" data-mga="magic-delete-yes" data-id="${esc(r.id)}">${this.h.mdi("trash", 18)}${esc(t("mgDeleteYes"))}</button></div></div>`
       : "";
     return `<div class="mg-card${r.enabled ? "" : " off"}"><div class="mg-row"><span class="mg-ic" aria-hidden="true">${emojiFor(this.entityOf(r))}</span>
       <div class="mg-t"><b>${esc(r.name)}</b><small>${esc(this.sentence(r))}</small><small class="mg-status">${this.statusParts(r).join(" · ")}</small></div>${sw}</div>${acts}${confirm}</div>`;
@@ -1547,13 +1547,13 @@ export class MagicPush {
     else if (step === 4) body = this.step4Html();
     else body = this.step5Html();
     const last = step === STEPS;
-    const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-mg="${step === 1 ? "cancel" : "back"}">${esc(step === 1 ? t("mgCancel") : t("mgBack"))}</button>
-      ${last ? `<button type="button" class="dlg-btn primary" data-mg="save"${this.canNext() && !w.saving ? "" : " disabled"}>${this.h.mdi("save", 18)}${esc(t("mgSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-mg="next"${this.canNext() ? "" : " disabled"}>${esc(t("mgNext"))}</button>`}</div>`;
+    const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-mg="${step === 1 ? "cancel" : "back"}">${this.h.mdi(step === 1 ? "close" : "arrowLeft", 18)}${esc(step === 1 ? t("mgCancel") : t("mgBack"))}</button>
+      ${last ? `<button type="button" class="dlg-btn primary" data-mg="save"${this.canNext() && !w.saving ? "" : " disabled"}>${this.h.mdi("save", 18)}${esc(t("mgSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-mg="next"${this.canNext() ? "" : " disabled"}>${esc(t("mgNext"))}${this.h.mdi("arrowRight", 18)}</button>`}</div>`;
     // Rückfrage beim Schliessen als Pop-up in der Mitte des Fensters (seit 2.16.0); der Rest dahinter ist gesperrt (inert)
     const lock = w.confirmClose ? " inert" : "";
     const discard = w.confirmClose
       ? `<div class="mgw-ov"><div class="mgw-discard" role="alertdialog" aria-modal="true" aria-label="${esc(t("mgDiscardTitle"))}"><b>${esc(t("mgDiscardTitle"))}</b><small>${esc(t("mgDiscardNote"))}</small>
-      <div class="mg-btns"><button type="button" class="dlg-btn" data-mg="discard-no">${esc(t("mgDiscardNo"))}</button><button type="button" class="dlg-btn danger" data-mg="discard-yes">${esc(t("mgDiscardYes"))}</button></div></div></div>`
+      <div class="mg-btns"><button type="button" class="dlg-btn" data-mg="discard-no">${this.h.mdi("pencil", 18)}${esc(t("mgDiscardNo"))}</button><button type="button" class="dlg-btn danger" data-mg="discard-yes">${this.h.mdi("trash", 18)}${esc(t("mgDiscardYes"))}</button></div></div></div>`
       : "";
     const device = this.host._devices?.find((d) => d.id === this.deviceId)?.name || "";
     return `<div class="mgw-head"${lock}><div class="mgw-t"><b>${esc(w.editing ? t("mgEditing") : t("mgNew"))}</b>${device ? `<small>${esc(device)}</small>` : ""}</div>

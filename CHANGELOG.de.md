@@ -7,6 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.92.0] - 2026-10-18
+
+Symbole an allen Zurück-, Weiter-, Schliessen- und Abbrechen-Knöpfen; der Reiter "Schalter" bleibt aktuell; das Easter Egg ist jetzt ein pulsierendes Herz.
+
+### Hinzugefügt
+
+- **Symbole an allen Navigationsknöpfen.** "Zurück" (Pfeil links), "Weiter" (Pfeil rechts), "Schliessen" und "Abbrechen" (Kreuz) tragen jetzt ein Symbol im Geräte-Popup, in den Einstellungen, in den Fenstern von Status, Routinen und Magic Push (Assistenten, Rückfragen) und im Launcher, wie es "Speichern" (Diskette) und "Gerät ausblenden" (Auge) schon taten. Der Knopf, der in den Einstellungen zwischen "Abbrechen" und "Schliessen" wechselt, behält sein Symbol. Auch die übrigen Knöpfe der Fenster haben eines bekommen, **jeder Knopf in diesem Stil trägt also ein Symbol**: "Löschen" (Papierkorb), "Verwerfen" (Papierkorb), "Weiter bearbeiten" (Stift), "Fertig"/"Übernehmen"/"Einschalten" (Haken oder Ein-Aus), "Kopieren", "Bearbeiten", "Standard", "Erneut versuchen", "Jetzt ausführen", "System Monitor hinzufügen" und "Favicon laden". (Die kleinen Textlinks in Listen, etwa "Bearbeiten" oder "Löschen" auf einer Routinen-Karte, bleiben Text.)
+- **Easter Egg:** das Logo oben links wird jetzt zu einem **blauen, pulsierenden Herz** (das "D" verschwindet), das im Takt der Linie im Puls-Diagramm schlägt, also auch nach dem Hinunterscrollen sichtbar ist und auch ohne Puls-Kachel. Nach der Vorstellung kommt das Logo unverändert zurück.
+
+### Geändert
+
+- Das Easter Egg dauert **2 Sekunden länger** (7,4 statt 5,4 Sekunden, vier Durchläufe der Linie). Der kurze Hinweis 💓 ohne Puls-Kachel entfällt, das Herz ersetzt ihn.
+
+### Behoben
+
+- Geräte-Popup, Reiter **"Schalter"** und **"Entitäten"**: wer in HAs Dialog eine Entität schaltete und zurückkam, sah den alten Zustand, bis er den Reiter wechselte. Das Popup zeichnet sich jetzt neu, sobald Home Assistant einen neuen Zustand oder ein neues Attribut einer Entität des offenen Geräts meldet (sanft, nicht mitten in einer Berührung oder Eingabe).
+
 ## [2.91.0] - 2026-10-18
 
 "Erst melden nach" pro Gerät und pro Integration.
@@ -3942,6 +3959,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.92.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.0
 [2.91.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.91.0
 [2.90.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.90.0
 [2.89.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.89.0

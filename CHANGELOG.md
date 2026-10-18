@@ -7,6 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.92.0] - 2026-10-18
+
+Icons on all Back, Next, Close and Cancel buttons; the switches tab stays current; the easter egg is now a pulsing heart.
+
+### Added
+
+- **Icons on all navigation buttons.** "Back" (arrow left), "Next" (arrow right), "Close" and "Cancel" (cross) now carry a symbol in the pop-up of the device, the settings, the dialogs of Status, Routines and Magic Push (wizards, confirmations) and the launcher, like "Save" (disk) and "Hide device" (eye) already did. The label that switches between "Cancel" and "Close" in the settings keeps its symbol. The other buttons of the dialogs got one too, so that **every button in this style carries a symbol**: "Delete" (bin), "Discard" (bin), "Keep editing" (pencil), "Done"/"Apply"/"Switch on" (check or power), "Copy", "Edit", "Default", "Try again", "Run now", "Add System Monitor" and "Load favicon". (The small text links in lists, such as "Edit" or "Delete" on a routine card, stay text.)
+- **Easter egg:** the logo at the top left now turns into a **blue pulsing heart** (the "D" disappears) that beats in time with the line in the pulse chart, so it is visible after scrolling down too, and also without the pulse tile. After the show the logo comes back unchanged.
+
+### Changed
+
+- The easter egg lasts **2 seconds longer** (7.4 instead of 5.4 seconds, four passes of the line). The short 💓 note without a pulse tile is gone, the heart replaces it.
+
+### Fixed
+
+- Pop-up of the device, tabs **"Switches"** and **"Entities"**: after switching an entity in the dialog of Home Assistant and coming back, the old state stayed until the tab was changed. The pop-up now redraws as soon as Home Assistant reports a new state or attribute of one of the entities of the open device (gently, not in the middle of a touch or input).
+
 ## [2.91.0] - 2026-10-18
 
 "Report only after" per device and per integration.
@@ -3841,6 +3858,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.92.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.0
 [2.91.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.91.0
 [2.90.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.90.0
 [2.89.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.89.0

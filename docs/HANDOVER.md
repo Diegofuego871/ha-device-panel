@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.92.0, Symbole an Navigationsknöpfen, Herz-Easter-Egg, Schalter live)
+
+- Alle Knöpfe "Zurück" (`arrowLeft`), "Weiter" (`arrowRight`, nach dem Text), "Schliessen"/"Abbrechen" (`close`) tragen ein Symbol (Geräte-Popup, Einstellungen, Status, Routinen, Magic Push, Launcher); Rückfragen "Ja/Nein" (Löschen, Verwerfen) blieben unverändert. Der Knopf in den Einstellungen wechselt per `innerHTML` (nicht mehr `textContent`), sonst ginge das Symbol verloren.
+- Easter Egg: `_heartLogo(on)` tauscht das Innenleben und die viewBox des Logos (`.tb-main > svg`) gegen das blaue MDI-Herz (`ee-heart`, Animation `ee-beat` 1,85 s x 4, Schläge bei 20/53/86 %, im Takt der Linie `ee-reveal`); `EE_MS = 7400`. Danach kommt das Logo aus `_logoKeep` zurück.
+- `_watchEntityStates()` (in `set hass`): Reiter "Schalter" und "Entitäten" zeichnen sich neu, wenn sich Zustand oder `last_updated` einer Entität des offenen Geräts ändern. Test: `switchlive`.
+
 ## Stand (2.91.0, "Erst melden nach" pro Integration und Gerät)
 
 - Wunsch des Nutzers: "Erst melden nach" wie "Ausgefallen nach" auf allen drei Ebenen; nie kürzer als "Ausgefallen nach", mit Fehlermeldung statt stillem Verschieben. Wirksam: Gerät > Integration > global (`options_api.notify_delay_for`, Laufzeit `max(wert, ceil(offline/60))`). Neu: Option `notify_delay_integrations` (`notify_delay_map`, `notify_delay_conflicts` in `apply_values`), Geräteeinstellung `notify_delay` (`devices.py`: `async_notify_delay_error`, `device_notify_delay`, Zurücksetzen, Übersicht), WS `set_device_settings`/`reset_device_settings` mit `notify_delay`, `outage.py` (`_delay` je Gerät in `async_flush`/`_schedule`). Panel: Popup-Zeile `dev-delay`/`dev-delay-min`, Integrationsdetail `data-delay-mode`, `_settingsErrors().notify_delay_integrations`, Übersicht `ovrDelay*`. Die HA-Optionsfluss-Schemaliste (config_flow) wurde bewusst nicht erweitert. Tests: Suiten `notifydelay`, `notifydelay-integ`; Python-Tests (`test_availability`, `test_outage_notify`, `test_overrides`, `test_update_check`) geschrieben, in dieser Umgebung aber NICHT ausgeführt (pytest-homeassistant-custom-component nicht installierbar): zuerst in einer Umgebung mit HA laufen lassen.

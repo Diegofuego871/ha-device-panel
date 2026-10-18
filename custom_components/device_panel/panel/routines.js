@@ -522,7 +522,7 @@ export class RoutineUi {
          <button type="button" class="linkbtn danger" data-rt="delete" data-id="${esc(rt.id)}">${esc(t("rtActDelete"))}</button></span>`;
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("rtDeleteAsk", rt.name))}</b><small>${esc(t("rtDeleteNote"))}</small>
-          <div class="mg-btns small"><button type="button" class="dlg-btn" data-rt="delete-no">${esc(t("rtCancel"))}</button><button type="button" class="dlg-btn danger" data-rt="delete-yes" data-id="${esc(rt.id)}">${esc(t("rtDeleteYes"))}</button></div></div>`
+          <div class="mg-btns small"><button type="button" class="dlg-btn" data-rt="delete-no">${this.h.mdi("close", 18)}${esc(t("rtCancel"))}</button><button type="button" class="dlg-btn danger" data-rt="delete-yes" data-id="${esc(rt.id)}">${this.h.mdi("trash", 18)}${esc(t("rtDeleteYes"))}</button></div></div>`
       : "";
     return `<div class="rt-clock${rt.enabled ? "" : " off"}"><div class="top">${left}<span class="grow"></span>${sw}</div>
       <div class="name">${routineEmoji(domain)} ${esc(rt.name)}</div><div class="what">${what}</div>${days}
@@ -741,7 +741,7 @@ export class RoutineUi {
         <button type="button" class="linkbtn fav${this.isStar(rt.id) ? " on" : ""}" ${this.a(all, "routine-star")} data-id="${esc(rt.id)}" aria-pressed="${this.isStar(rt.id)}" title="${esc(t(this.isStar(rt.id) ? "rtFavRemove" : "rtFavAdd"))}" aria-label="${esc(t(this.isStar(rt.id) ? "rtFavRemove" : "rtFavAdd"))}">${this.h.mdi(this.isStar(rt.id) ? "heart" : "heartOutline", 20)}</button></div>`;
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("rtDeleteAsk", rt.name))}</b><small>${esc(t("rtDeleteNote"))}</small>
-          <div class="mg-btns small"><button type="button" class="dlg-btn" ${this.a(all, "routine-delete-no")}>${esc(t("rtCancel"))}</button><button type="button" class="dlg-btn danger" ${this.a(all, "routine-delete-yes")} data-id="${esc(rt.id)}">${esc(t("rtDeleteYes"))}</button></div></div>`
+          <div class="mg-btns small"><button type="button" class="dlg-btn" ${this.a(all, "routine-delete-no")}>${this.h.mdi("close", 18)}${esc(t("rtCancel"))}</button><button type="button" class="dlg-btn danger" ${this.a(all, "routine-delete-yes")} data-id="${esc(rt.id)}">${this.h.mdi("trash", 18)}${esc(t("rtDeleteYes"))}</button></div></div>`
       : "";
     // Ergebnis von "Ausführen" im Fenster mit allen Routinen (seit 2.74.0): direkt in der Karte, oben in einer langen Liste sähe man es nicht
     const ran = all.dlg && all.ran?.id === rt.id ? `<div class="${all.ran.ok ? "mg-flash" : "dlg-error"} rt-ran" role="status" data-rt-ran>${esc(all.ran.text)}</div>` : "";
@@ -1337,9 +1337,9 @@ export class RoutineUi {
     const body = [this.step0Html, this.step1Html, this.step2Html, this.step3Html, this.step4Html, this.stepOptsHtml, this.backStepHtml][step].call(this);
     const last = step === STEPS;
     const quick = last || step === 0 ? "" : `<button type="button" class="dlg-btn quick" data-rt="nav-quick"${this.canSaveAll() && !w.saving ? "" : " disabled"}>${this.h.mdi("save", 18)}${esc(w.saving ? t("rtSaving") : t("rtSave"))}</button>`;
-    const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-rt="${step === first ? "nav-cancel" : "nav-back"}">${esc(step === first ? t("rtCancel") : t("rtBack"))}</button>
+    const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-rt="${step === first ? "nav-cancel" : "nav-back"}">${this.h.mdi(step === first ? "close" : "arrowLeft", 18)}${esc(step === first ? t("rtCancel") : t("rtBack"))}</button>
       ${quick}
-      ${last ? `<button type="button" class="dlg-btn primary" data-rt="nav-save"${this.canNext() && !w.saving ? "" : " disabled"}>${this.h.mdi("save", 18)}${esc(w.saving ? t("rtSaving") : t("rtSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-rt="nav-next"${this.canNext() ? "" : " disabled"}>${esc(t("rtNext"))}</button>`}</div>`;
+      ${last ? `<button type="button" class="dlg-btn primary" data-rt="nav-save"${this.canNext() && !w.saving ? "" : " disabled"}>${this.h.mdi("save", 18)}${esc(w.saving ? t("rtSaving") : t("rtSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-rt="nav-next"${this.canNext() ? "" : " disabled"}>${esc(t("rtNext"))}${this.h.mdi("arrowRight", 18)}</button>`}</div>`;
     const device = (step > 0 || !w.pick) && this.deviceId ? (isHolder(this.deviceId) ? t(HOLDERS[this.deviceId].key) : this.host._devices?.find((x) => x.id === this.deviceId)?.name || w.devices?.find((x) => x.id === this.deviceId)?.name || "") : "";
     return `<div class="mgw-head"><div class="mgw-t"><b>${esc(w.editing ? t("rtEditing") : t("rtNew"))}</b>${device ? `<small>${esc(device)}</small>` : ""}</div>
         <button type="button" class="dlg-close" data-rt="close" title="${esc(t("close"))}" aria-label="${esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>
@@ -1425,7 +1425,7 @@ export class RoutineUi {
     const w = this.wiz;
     const row = w.tried?.busy
       ? `<span class="opt-short">${this.esc(this.t("rtTryBusy"))}</span>`
-      : `<button type="button" class="dlg-btn rt-try" data-rt="try">${this.esc(this.t("rtTryBtn"))}</button>${w.tried?.text ? `<span class="${w.tried.failed ? "opt-error" : "opt-short"}" role="status">${this.esc(w.tried.text)}</span>` : ""}`;
+      : `<button type="button" class="dlg-btn rt-try" data-rt="try">${this.h.mdi("play", 18)}${this.esc(this.t("rtTryBtn"))}</button>${w.tried?.text ? `<span class="${w.tried.failed ? "opt-error" : "opt-short"}" role="status">${this.esc(w.tried.text)}</span>` : ""}`;
     return `<p class="mg-note rt-result">${this.esc(this.t("rtResult", this.sentenceOf(this.draftRt(), e.name)))}</p>
       <div class="mg-testrow rt-tryrow">${row}</div><p class="mg-hint">${this.esc(this.t("rtTryNote"))}</p>`;
   }
