@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.97.0, angeheftete Kopfzeile der Einstellungs-Gruppen)
+
+- Wunsch des Nutzers: eine aufgeklappte Gruppe der Einstellungen heftet ihre Kopfzeile unter dem Dialog-Kopf an, bis die nächste Gruppe sie wegschiebt. CSS: `.set-sec.open > .set-sec-head { position: sticky; top: var(--set-head-h) }`; `.set-sec` nutzt `overflow: clip` (statt nur `hidden`), sonst klebt nichts. `--set-head-h` (Höhe von `.dlg-head`) setzt `_renderSettings`. Beim Schliessen einer Gruppe, deren Anfang oben aus dem Bild ist, holt der Handler `section` sie mit `scrollIntoView` an den Rand. Der Scroll-Behälter ist der Dialog selbst. Test: Suite `stickysec`. Bei Browsern ohne `overflow: clip` (vor Chrome 90, Safari 16) klebt nichts, sonst keine Folgen.
+
 ## Stand (2.96.0, Übersicht je Reiter, "Allgemein")
 
 - Wunsch des Nutzers: der Reiter "Übersicht" heisst "Allgemein" und zeigt die fünf Karten nicht mehr doppelt; jeder Meldungsreiter bekommt seine kleine Übersicht mit den Pillen. `_laneCard(tab, icon, cls, titleKey, inner, chips)` und `_laneChip` bauen die Karte (Kapitel, Zeitstrahl des Reiters mit Eingabefeldern, Pillen `data-set="chip"`); in Ausfall, Batterie, Laden, Neu und Updates (Zeitstrahl neu). `_monOverviewHtml` hat nur noch "Ziel der Meldungen" und "Ruhezeit". Entfallen: "Ändern", "Abweichend", `_monDiff`. Texte "Reiter Übersicht" heissen "Allgemein".

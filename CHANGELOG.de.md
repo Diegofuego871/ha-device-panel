@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.97.0] - 2026-10-18
+
+Die Kopfzeile einer geöffneten Einstellungs-Gruppe bleibt oben haften.
+
+### Hinzugefügt
+
+- **Einstellungen: die Kopfzeile einer aufgeklappten Gruppe bleibt unter dem Titel "Einstellungen" haften**, solange du durch ihren Inhalt scrollst, bis die nächste Gruppe sie wegschiebt (eine aufgeklappte nächste Gruppe heftet dann ihre eigene Kopfzeile an). Ein Tipp auf die angeheftete Kopfzeile schliesst die Gruppe, wo du auch bist. Zugeklappte Gruppen haften nicht. Nach dem Schliessen einer Gruppe, deren Anfang aus dem Bild gescrollt war, springt die Ansicht zu dieser Gruppe statt an eine zufällige Stelle.
+
 ## [2.96.0] - 2026-10-18
 
 Die Übersicht jeder Meldung zieht in ihren Reiter.
@@ -4026,6 +4034,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.97.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.97.0
 [2.96.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.96.0
 [2.95.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.1
 [2.95.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.0

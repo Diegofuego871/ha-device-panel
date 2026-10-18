@@ -537,7 +537,10 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
 .set-count.saved { color: var(--dp-success); font-weight: 500; }
 
 /* Einstellungen: aufklappbare Abschnitte (wie unifi_dynamic) */
-.set-sec { margin-top: 10px; border: 1px solid var(--dp-divider); border-radius: 14px; overflow: hidden; }
+.set-sec { margin-top: 10px; border: 1px solid var(--dp-divider); border-radius: 14px; overflow: hidden; overflow: clip; scroll-margin-top: var(--set-head-h, 0px); }
+/* Aufgeklappte Gruppe (seit 2.97.0): die Kopfzeile bleibt unter dem Dialog-Kopf haften, bis die Gruppe zu Ende ist und die nächste sie wegschiebt.
+   "overflow: clip" rundet die Ecken wie "hidden", macht die Gruppe aber nicht zum Scroll-Behälter (sonst klebt nichts). */
+.set-sec.open > .set-sec-head { position: sticky; top: var(--set-head-h, 0px); z-index: 3; }
 .set-sec-head { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: none; background: none; text-align: left; cursor: pointer; }
 .set-sec-head > span { flex: 1 1 auto; min-width: 0; }
 .set-sec-head:hover { background: var(--dp-hover); }

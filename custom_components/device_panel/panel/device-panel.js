@@ -6480,6 +6480,9 @@ class DevicePanel extends HTMLElement {
     const slot = dialog.querySelector(".ver-slot");
     if (slot) lastHtml.set(slot, this._verSlotHtml);
     dialog.scrollTop = scroll;
+    // Höhe des Dialog-Kopfes: Abstand, unter dem die Kopfzeile einer aufgeklappten Gruppe haftet
+    const headH = dialog.querySelector(".dlg-head")?.offsetHeight;
+    if (headH) dialog.style.setProperty("--set-head-h", `${headH}px`);
     this._applyListSearch(dialog);
     // Vorschau der Handy-Leiste einmal seitlich scrollen, damit die Haftkante
     // zu sehen ist; danach bleibt, was der Nutzer eingestellt hat.
@@ -8392,9 +8395,16 @@ class DevicePanel extends HTMLElement {
       } else if (action === "section" || action === "info") {
         const set = action === "section" ? st.open : st.info;
         const key = action === "section" ? btn.dataset.id : btn.dataset.key;
+        // Wird eine Gruppe geschlossen, deren Anfang oben aus dem Bild gescrollt ist (angeheftete Kopfzeile), springt die Ansicht sonst
+        // an eine zufällige Stelle: danach die Gruppe an den oberen Rand holen.
+        const dlg = btn.closest("dialog");
+        const sec = action === "section" ? btn.closest(".set-sec") : null;
+        const headBottom = (dlg?.querySelector(".dlg-head")?.getBoundingClientRect().bottom ?? 0) + 1;
+        const aboveView = Boolean(sec) && set.has(key) && sec.getBoundingClientRect().top < headBottom;
         if (set.has(key)) set.delete(key);
         else set.add(key);
         this._renderSettings();
+        if (aboveView) dlg.querySelector(`.set-sec-head[data-id="${key}"]`)?.closest(".set-sec")?.scrollIntoView({ block: "start" });
       } else if (action === "drag-reset") {
         if (!st.draft) return;
         // Standardreihenfolge: auch die Ausgangsfolge der Verbindungsarten leeren.

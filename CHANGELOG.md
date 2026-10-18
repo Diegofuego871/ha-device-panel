@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.97.0] - 2026-10-18
+
+The header of an open settings group stays pinned.
+
+### Added
+
+- **Settings: the header of an opened group stays pinned** below the title "Settings" while you scroll through its content, until the next group pushes it away (an opened next group pins its own header then). A tap on the pinned header closes the group, wherever you are. Closed groups do not pin. After closing a group whose start had scrolled out of view, the view jumps to that group instead of landing somewhere random.
+
 ## [2.96.0] - 2026-10-18
 
 The overview of each notification moves into its own tab.
@@ -3925,6 +3933,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.97.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.97.0
 [2.96.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.96.0
 [2.95.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.1
 [2.95.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.0
