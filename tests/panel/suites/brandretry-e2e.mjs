@@ -35,7 +35,8 @@ for (const mobile of [false, true]) {
   {
     const { ctx, ev, wait, logo, errors, tokenCalls } = await open("&brandsfail=2", { mobile });
     check(`[${tag}] zwei Token-Abfragen scheitern, die dritte klappt: Logo erscheint von selbst`, await wait(`return ${logo("d")}`, 20000) && (await tokenCalls()) === 3, `Abfragen: ${await tokenCalls()}`);
-    check(`[${tag}] Bild geladen`, await ev(`const i = r.querySelector('.dev[data-open="d"] .av img.brand'); return !!i && i.complete && i.naturalWidth > 0`));
+    // Das Element ist da, das Bild lädt noch (unter Last dauert es): darauf warten, nicht sofort prüfen
+    check(`[${tag}] Bild geladen`, await wait(`const i = r.querySelector('.dev[data-open="d"] .av img.brand'); return !!i && i.complete && i.naturalWidth > 0`, 15000));
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();
   }

@@ -43,7 +43,7 @@ for (const lang of ["de", "en"]) {
     await ev(`r.host._closeSettings()`);
 
     // Roter Punkt, Einstellungen angeheftet: am Knopf der Einstellungen, nicht am Launcher; die Karte im Launcher trägt die Pille
-    await ev(`r.host._versionState = () => ({ restart: true }); r.host._gearDot(true)`);
+    await ev(`const real = r.host.__realVersionState || (r.host.__realVersionState = r.host._versionState); r.host._versionState = () => { const x = real.call(r.host); return { ...x, restart: true, a: { ...x.a, installed_version: "9.9.9" } }; }; r.host._gearDot(true)`);
     check(`[${tag}] Neustart steht aus, angeheftet: Punkt am Knopf der Einstellungen (Beschriftung nennt "${T.restart}"), keiner am Launcher`, await ev(`const g = r.querySelector(".gear-btn"), a = r.querySelector(".apps-btn"); return g.classList.contains("has-dot") && g.getAttribute("aria-label").includes(${JSON.stringify(T.restart)}) && !a.classList.contains("has-dot")`));
     await openLauncher();
     check(`[${tag}] Launcher: die Karte "${T.settings}" trägt die Pille "${T.pill}"`, await ev(`const t = r.querySelector('${D} [data-ap="open"][data-id="settings"]'); return !!t && t.parentElement.textContent.includes(${JSON.stringify(T.pill)})`));
@@ -65,7 +65,7 @@ for (const lang of ["de", "en"]) {
     await ev(`r.host._closeSettings()`);
 
     // Punkt weg, wenn nichts mehr aussteht
-    await ev(`r.host._versionState = () => ({ restart: false }); r.host._gearDot(true)`);
+    await ev(`const real = r.host.__realVersionState || (r.host.__realVersionState = r.host._versionState); r.host._versionState = () => ({ ...real.call(r.host), restart: false }); r.host._gearDot(true)`);
     check(`[${tag}] nichts mehr offen: kein Punkt am Launcher-Knopf`, await ev(`return !r.querySelector(".apps-btn").classList.contains("has-dot")`));
 
     // Wieder anheften (Herz): zurück in der Kopfzeile; Handy: höchstens zwei angeheftete Knöpfe

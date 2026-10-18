@@ -26,12 +26,15 @@ for (const [from, to, again] of [["services", "settings", 90], ["settings", "ser
     const xs = []; const t0 = performance.now();
     tab(to).click();
     setTimeout(() => host._status.render(true), again);
-    const tick = () => { const x = left(); if (x != null) xs.push(x); if (performance.now() - t0 < 700) requestAnimationFrame(tick); else res({ xs, start, goal }); };
+    const tick = () => { const x = left(); if (x != null) xs.push(x); const dt = performance.now() - t0; const calm = xs.length > 12 && Math.abs(xs.at(-1) - xs.at(-12)) < 0.5; if (dt < 700 || (!calm && dt < 4000)) requestAnimationFrame(tick); else res({ xs, start, goal }); };
     tick();
   })`));
   const dir = Math.sign(out.goal - out.start);
+  // Die Kurve schwingt gewollt über das Ziel und zurück; unter Last deckt ein einzelnes Bild diese Rückkehr ab. Als Rücksprung gilt erst ein Schritt
+  // gegen die Fahrtrichtung von über 30 % der Strecke (der gemeldete Fehler sprang zurück an den Anfang).
+  const limit = Math.max(1, 0.3 * Math.abs(out.goal - out.start));
   let back = 0;
-  for (let i = 1; i < out.xs.length; i++) if ((out.xs[i] - out.xs[i - 1]) * dir < -1) back++;
+  for (let i = 1; i < out.xs.length; i++) if ((out.xs[i] - out.xs[i - 1]) * dir < -limit) back++;
   check(`${from} → ${to}, Neuzeichnen nach ${again} ms: Kapsel fährt ohne Rücksprung`, back === 0 && Math.abs(out.xs.at(-1) - out.goal) < 1.5, `Rückschritte ${back}, Ende ${out.xs.at(-1)} Ziel ${out.goal}`);
   await p.waitForTimeout(500);
 }

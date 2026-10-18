@@ -17,7 +17,14 @@ for (const mobile of [false, true]) {
   await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
   const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
   const handle = async (sel) => (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
-  const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
+  const tap = async (sel) => {
+    for (let versuch = 1; ; versuch++) {
+      const h = await handle(sel);
+      if (!h) throw new Error("fehlt: " + sel);
+      // Das Element kann zwischen Suchen und Tippen neu aufgebaut werden (Panel zeichnet neu): dann nochmals suchen
+      try { await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); return; } catch (err) { if (versuch >= 4 || !/not attached|not stable/.test(String(err))) throw err; }
+    }
+  };
   const wait = (c, ms = 5000) => f.waitForFunction(new Function(`const r=${R};` + c), null, { timeout: ms }).then(() => true, () => false);
   const h = (dlg) => ev(`const d=r.querySelector("dialog.${dlg}"); const b=d.getBoundingClientRect(); const a=d.querySelector(".dlg-actions"); const ab=a?a.getBoundingClientRect():null; return [Math.round(b.height), Math.round(b.bottom - (ab?.bottom ?? b.bottom))]`);
   const same = (name, list) => check(`[${tag}] ${name}: gleiche Höhe auf allen Reitern`, list.every((x) => x[0] === list[0][0]) && list[0][0] > 400, JSON.stringify(list));

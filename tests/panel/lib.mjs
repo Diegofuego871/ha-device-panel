@@ -1,6 +1,7 @@
 // Gemeinsame Einstellungen der Panel-Suiten.
 import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { chromium } from "playwright-core";
 
 // Chromium: eigener Pfad über CHROMIUM_PATH, sonst der von
 // "npx playwright-core install chromium" installierte Browser.
@@ -45,3 +46,45 @@ export async function savePending(frame, root) {
   const clicked = await frame.evaluate(new Function(`const r=${root}; const d=r.querySelector("dialog.device"); const b=d?.open && d.querySelector('[data-dlg="save"]:not([disabled])'); if (b) b.click(); return !!b;`));
   if (clicked) await frame.waitForFunction(new Function(`const r=${root}; return !!r.querySelector("dialog.device .set-count.saved") || !r.querySelector('dialog.device [data-dlg="save"]')`), null, { timeout: 5000 }).catch(() => {});
 }
+
+// Unter Last zeichnet das Panel Elemente zwischen "Handle holen" und "Tippen" neu ("not attached", "not stable", "intercepts pointer events").
+// Die Suiten holen ihre Handles selbst; damit nicht jede einen eigenen Wiederholer braucht, setzt der erste Start des Browsers einmalig eine
+// Wiederholung auf click/tap/scrollIntoViewIfNeeded. Ein abgehängtes Element wird über denselben evaluateHandle-Aufruf neu geholt.
+const RETRY = /not stable|intercepts pointer events|not attached/;
+const launch = chromium.launch.bind(chromium);
+const origin = new WeakMap();
+let patched = false;
+chromium.launch = async (...args) => {
+  const browser = await launch(...args);
+  if (!patched) {
+    patched = true;
+    const page = await browser.newPage();
+    const frame = page.mainFrame();
+    const fproto = Object.getPrototypeOf(frame);
+    const evalHandle = fproto.evaluateHandle;
+    fproto.evaluateHandle = async function (...a) {
+      const h = await evalHandle.apply(this, a);
+      const el = h.asElement();
+      if (el) origin.set(el, { frame: this, args: a });
+      return h;
+    };
+    const proto = Object.getPrototypeOf((await frame.evaluateHandle(() => document.body)).asElement());
+    for (const name of ["click", "tap", "scrollIntoViewIfNeeded"]) {
+      const orig = proto[name];
+      proto[name] = async function (...a) {
+        let el = this;
+        for (let i = 0; ; i++) {
+          try { return await orig.apply(el, a); }
+          catch (e) {
+            if (i >= 4 || !RETRY.test(e.message)) throw e;
+            await new Promise((r) => setTimeout(r, 150));
+            const o = origin.get(this);
+            if (/not attached/.test(e.message) && o) { const fresh = (await evalHandle.apply(o.frame, o.args)).asElement(); if (fresh) el = fresh; }
+          }
+        }
+      };
+    }
+    await page.close();
+  }
+  return browser;
+};

@@ -24,7 +24,7 @@ for (const mobile of [false, true]) {
     const f = await (await p.waitForSelector("#panel-frame")).contentFrame();
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
     const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
-    const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
+    const wait = (code, ms = 5000) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: ms }).then(() => true, () => false);
     // Avatar eines Geräts: Bild (Adresse) oder Icon
     const av = (id) => ev(`const a=r.querySelector('.dev[data-open="${id}"] .av'); return a ? { img: a.querySelector("img.brand")?.getAttribute("src") || null, svg: !!a.querySelector("svg"), dot: !!a.querySelector(".dot") } : null`);
 
@@ -59,7 +59,8 @@ for (const mobile of [false, true]) {
       const sb = await badge("shelly");
       const mb = await badge("matter");
       check(`[${tag}] Einstellungen: Shelly mit Logo, Matter (404) mit Buchstaben`, sb && sb.img === "/api/brands/integration/shelly/icon.png?token=sim-token" && mb && !mb.img && mb.text === "MA", JSON.stringify([sb, mb]));
-      check(`[${tag}] Logos in den Einstellungen laden`, await ev(`return [...r.querySelectorAll("dialog.settings .ibadge img")].every((i) => i.complete && i.naturalWidth > 0)`));
+      // Die Bilder laden noch, wenn die Elemente da sind (unter Last dauert es): darauf warten, nicht sofort prüfen
+      check(`[${tag}] Logos in den Einstellungen laden`, await wait(`const l = [...r.querySelectorAll("dialog.settings .ibadge img")]; return l.length > 0 && l.every((i) => i.complete && i.naturalWidth > 0)`, 15000));
       await ev(`r.querySelector('[data-set="section"][data-id="monitor"]').click()`);
       await ev(`r.querySelector('[data-set="tab"][data-key="integ"]').click()`);
       await wait(`return !!r.querySelector(".ilist")`);

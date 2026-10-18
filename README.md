@@ -13,6 +13,7 @@
 - **Battery overview with notifications:** a colored battery symbol on every device, a warning threshold (default 15 %), push or persistent notification, a history of up to 12 months with a forecast of how long the battery lasts, and a message when a device is fully charged
 - **Signal overview with warnings:** signal strength in dBm or LQI on every device, a warning threshold per connection type, a history with median and range, and for Bluetooth the receiver (adapter or proxy) a device is or was connected through
 - **Notifications on three levels:** set a default once, change it per integration, override it on a single device; every setting shows where its value comes from (graphic below)
+- **Quiet time:** notifications wait during the night (times per weekday, kinds selectable) and arrive afterwards as one summary or one by one
 - **Magic Push:** your own messages per device without an automation: pick a value, say when it should notify, write the text, done
 - **Routines:** switch an entity of a device at a time or by a trigger (any entity, with conditions like Magic Push) without an automation, switch back by time, duration or trigger, with a test button and a preview of the next runs
 - **Switches tab:** every device with something to switch shows it as tiles; a tap opens the Home Assistant controls (dimming, colour, position)
@@ -21,7 +22,7 @@
 - **App launcher and log:** one button for useful pages of Home Assistant and your own links, plus a log that shows what the notifications decide and why one did not come
 - **Optional AI assessment:** a guess at the cause on a button press, only with an AI task of Home Assistant
 - **Yours alone:** columns, sort order, filters, favorites and start page are saved per user, on phone and desktop alike
-- **Everything in the panel:** all settings, updates via HACS (also automatically), German and English
+- **Everything in the panel:** all settings, updates via HACS (also automatically), back up and restore of all settings, German and English
 
 ## Overview and device list
 
@@ -207,10 +208,23 @@ The gear (the pinned app "Settings", or the launcher) opens all settings in Germ
 - **View:** no longer in the settings but in the dialog "View" above the list (columns and sorting per user, filter chips for all); both tabs have their own "Save"
 - **Routines and AI assessment:** pause, catch-up window, recipient; AI task and prompt
 - **Status app:** whether the parts of the integration run, with push alerts and a restart button (also an alert when CPU, memory or disk reach a limit you set, default 99 %, each for a minimum duration you set, default 3 minutes); below, small graphs for CPU, memory and disk of Home Assistant (24 hours; the disk also 30 days, 6 months, 1 year), from the sensors of "System Monitor" or your own (chosen from a searchable list of sensor entities; switched-off sensors can be switched on with one button). Three tabs: "Services" (the parts), "System" (the graphs) and "Settings" (alerts, limits, sources; they only apply after "Save").
-- **Panel:** two sub-tabs. "General": the panel as your start page in Home Assistant (only for you). "Updates" (the version line with search and install stays at the very top of the settings): a check every time the settings are opened (at most once per minute), daily check at a set time, optional push, pre-releases and automatic installation via HACS (you only restart Home Assistant yourself)
+- **Panel:** two sub-tabs. "General": the panel as your start page in Home Assistant (only for you), and the chapter "Back up and restore" (see below). "Updates" (the version line with search and install stays at the very top of the settings): a check every time the settings are opened (at most once per minute), daily check at a set time, optional push, pre-releases and automatic installation via HACS (you only restart Home Assistant yourself)
 - **Saving:** changes in the pop-up and in the settings apply only with "Save"; closing with unsaved changes asks "Discard changes?"
 
-<p align="center"><img src="docs/screenshots/en/settings-monitor.png" alt="Settings: timeline of when a device counts as offline and when the push arrives" width="720"></p>
+<p align="center"><img src="docs/screenshots/en/settings-general.png" alt="Settings, tab General: target of the notifications and quiet time with times per weekday" width="720"></p>
+
+### Back up and restore
+
+Under "Panel" › "General" (below "Start page", administrators only) all settings can be saved to one file and restored later, for example after a new installation or to move them to another Home Assistant.
+
+| Back up and restore | Preview before restoring |
+|---|---|
+| <img src="docs/screenshots/en/settings-backup.png" alt="Chapter Back up and restore under Start page"> | <img src="docs/screenshots/en/backup-restore.png" alt="Preview: what changes, what stays, what is skipped, with notes for missing push targets and devices"> |
+
+- **What goes in:** you choose the parts: notifications and monitoring, panel and display, settings per device, AI assessment and, off by default, routines and Magic Push. No credentials and no tokens. "Copy" and "Paste text" are the way for the phone app, where saving a file does not always work.
+- **Preview first:** nothing is written before "Apply". The preview counts what changes, stays the same or is not applied, per part, with examples.
+- **What is missing is named:** unknown settings, values out of range, devices that do not exist here and routines or messages with a missing entity are skipped with the reason; a push target or integration that is gone is applied with a note.
+- **Undo:** the state before is kept (and, on request, saved as a file); "Undo" brings it back exactly.
 
 ## AI assessment (optional)
 

@@ -22,6 +22,18 @@ GITHUB: dict[str, tuple[Any, str | None]] = {}
 
 
 @pytest.fixture(autouse=True)
+def isolated_push_icons(tmp_path, monkeypatch):
+    """
+    Push-Icons je Test in einem eigenen Ordner. Sonst läge er im gemeinsamen Konfigurationsordner der Tests
+    (.storage/device_panel_icons): Dateien aus einem Test wären im nächsten noch da, und gleichzeitige Läufe
+    (zwei Aufrufe von pytest) stören sich gegenseitig.
+    """
+    import custom_components.device_panel as integration  # noqa: PLC0415 - wie die Testmodule, nicht beim Sammeln
+
+    monkeypatch.setattr(integration, "_icon_dir", lambda _hass: tmp_path / "push_icons")
+
+
+@pytest.fixture(autouse=True)
 def github_offline():
     """
     Kein echter Zugriff auf GitHub. Steht vor allen Fixtures, die hass

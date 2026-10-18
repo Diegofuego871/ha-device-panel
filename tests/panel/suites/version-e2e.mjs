@@ -71,16 +71,18 @@ for (const mobile of [false, true]) {
   check(`[${tag}] Versionszeile zuoberst`, await ev(`return r.querySelector("dialog.settings .dlg-body").firstElementChild.classList.contains("ver-slot")`));
 
   // 2. Prüfen -> neue Version auf GitHub; ohne HACS kein Knopf
-  await p.evaluate(() => { window.__version = { installed: "0.4.0", latest: "0.5.0" }; window.__versionDelay = 400; });
+  await p.evaluate(() => { window.__version = { installed: "0.4.0", latest: "0.5.0" }; window.__versionDelay = 1500; });
   const geo = () => ev(`const d=r.querySelector("dialog.settings").getBoundingClientRect(), v=r.querySelector("dialog.settings .ver").getBoundingClientRect(), bt=r.querySelector('[data-ver="check"]').getBoundingClientRect(); return {top:d.top, h:d.height, verH:v.height, btnW:bt.width}`);
   const before = await geo();
   await tap('[data-ver="check"]');
   await p.waitForTimeout(100);
-  t = await verText();
-  const during = await geo();
-  check(`[${tag}] Prüfung läuft: Spinner, gleiche Beschriftung`, t.includes("Suche nach Updates") && await ev(`return !!r.querySelector(".ver-spin") && r.querySelector('[data-ver="check"]').getAttribute("aria-busy")==="true"`), t);
+  // Alles in einem Aufruf lesen: ein Fenster von einer Sekunde kann sonst zwischen zwei Aufrufen unter Last verstreichen
+  const run = await ev(`const v = r.querySelector("dialog.settings .ver-slot"); return { t: (v?.innerText || "").replace(/\\s+/g, " ").trim(), spin: !!r.querySelector(".ver-spin"), busy: r.querySelector('[data-ver="check"]').getAttribute("aria-busy") === "true", geo: (() => { const d = r.querySelector("dialog.settings").getBoundingClientRect(), vv = r.querySelector("dialog.settings .ver").getBoundingClientRect(), bt = r.querySelector('[data-ver="check"]').getBoundingClientRect(); return { top: d.top, h: d.height, verH: vv.height, btnW: bt.width }; })() }`);
+  t = run.t;
+  const during = run.geo;
+  check(`[${tag}] Prüfung läuft: Spinner, gleiche Beschriftung`, t.includes("Suche nach Updates") && run.spin && run.busy, t);
   check(`[${tag}] Dialog und Zeile springen nicht`, before.top === during.top && before.h === during.h && before.verH === during.verH && Math.abs(before.btnW - during.btnW) < 1, JSON.stringify([before, during]));
-  await p.waitForTimeout(500);
+  await f.waitForFunction(new Function(`return ${R}.querySelector("dialog.settings .ver-slot")?.innerText.includes("0.5.0")`), null, { timeout: 15000 }).catch(() => {});
   t = await verText();
   check(`[${tag}] ohne HACS Update gefunden: Hinweis, Release Notes, kein Knopf`, t.includes("Version 0.5.0 verfügbar") && t.includes("Installation über HACS oder manuell") && t.includes("Release Notes") && !(await has('[data-ver="install"]')), t);
   // Release Notes im Fenster statt Link (seit 2.3.0, Einzelheiten in notes-e2e)

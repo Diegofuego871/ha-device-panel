@@ -5,7 +5,8 @@
 // übernehmen (README.md und README.de.md nennen sie; verlustfrei auf 256 Farben gebracht, das spart etwa 60 % Platz). Port 8950 muss frei sein.
 // Die Grafiken zum Meldungsprinzip stehen unter docs/graphics/ (node docs/graphics/render.mjs).
 import { chromium } from "playwright-core";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { launchOptions } from "./lib.mjs";
 import { startServer } from "./server.mjs";
@@ -18,13 +19,17 @@ const modes = process.env.SHOTS_MOBILE === "1" ? [true] : process.env.SHOTS_MOBI
 const server = await startServer(8950);
 const b = await chromium.launch(launchOptions);
 const R = `document.querySelector("device-panel").shadowRoot`;
+// Reiterleiste direkt unter die angeheftete Kopfzeile der aufgeklappten Gruppe scrollen (seit 2.97.0 klebt sie unter dem Dialog-Kopf)
+const SCROLL_TABS = `const d = r.querySelector("dialog.settings"); const t = d.querySelector(".mon-tabs"); const hb = d.querySelector(".dlg-head").getBoundingClientRect().bottom; const sh = d.querySelector(".set-sec.open > .set-sec-head")?.getBoundingClientRect().height || 0; d.scrollTop += t.getBoundingClientRect().top - hb - sh - 8;`;
 
 for (const lang of langs) {
   mkdirSync(`${root}${lang}`, { recursive: true });
   for (const mobile of modes) {
+    // Sprache des Browsers wie die des Panels: Uhrzeitfelder zeigen sonst "10:00 PM" statt "22:00"
+    const locale = lang === "de" ? "de-CH" : "en-GB";
     const ctx = await b.newContext(mobile
-      ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }
-      : { viewport: { width: 1280, height: 860 }, deviceScaleFactor: 1.5 });
+      ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, locale }
+      : { viewport: { width: 1280, height: 860 }, deviceScaleFactor: 1.5, locale });
     const p = await ctx.newPage();
     await p.goto(`http://127.0.0.1:8950/ha-sim.html?lang=${lang}&theme=${mobile ? "dark" : "light"}&nobrands=1`);
     const frameEl = await p.waitForSelector("#panel-frame");
@@ -110,16 +115,18 @@ for (const lang of langs) {
 
     // KI-Einschätzung: einschalten, Antwort im Pop-up
     await ev(`r.host._aiOn = true; r.host._renderDevice && 0`);
-    await p.evaluate(() => { window.__version = { installed: "2.41.2", latest: "2.41.2" }; window.__opts.notify_service = "notify.mobile_app_iphone"; });
+    await p.evaluate(() => { window.__version = { installed: "2.41.2", latest: "2.41.2" }; window.__opts.notify_service = "notify.mobile_app_iphone"; window.__opts.quiet_enabled = true; });
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     await tap('[data-set="section"][data-id="monitor"]');
     await wait(`return !!r.querySelector(".mon-tab")`);
-    await ev(`r.querySelector("dialog.settings .mon-tabs").scrollIntoView({ block: "start" })`);
-    await shotDlg("settings-monitor", "dialog.settings");
+    // Reiter "Allgemein": der Abschnitt "Ziel der Meldungen" steht unter der angehefteten Kopfzeile, darum mittig
+    await ev(`r.querySelector(".mon-body > .mon-grp").scrollIntoView({ block: "center" })`);
+    // Reiter "Allgemein" (seit 2.96.0): Ziel der Meldungen und Ruhezeit mit den Zeiten je Wochentag
+    await shotDlg("settings-general", "dialog.settings");
     await tap('.mon-tab[data-key="integ"]');
     await wait(`return !!r.querySelector(".ilist-row")`);
-    await ev(`r.querySelector("dialog.settings .mon-tabs").scrollIntoView({ block: "start" })`);
+    await ev(SCROLL_TABS);
     await shotDlg("settings-integrations", "dialog.settings");
     await tap('[data-set="section"][data-id="monitor"]');
     await tap('[data-set="section"][data-id="ai"]');
@@ -150,7 +157,7 @@ for (const lang of langs) {
       await tap(".gear-btn");
       await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
       if (!(await ev(`return r.querySelector('[data-set="section"][data-id="${section}"]')?.getAttribute("aria-expanded") === "true"`))) await tap(`[data-set="section"][data-id="${section}"]`);
-      if (tab) { await wait(`return !!r.querySelector(".mon-tab")`); await tap(`.mon-tab[data-key="${tab}"]`); await ev(`r.querySelector("dialog.settings .mon-tabs").scrollIntoView({ block: "start" })`); }
+      if (tab) { await wait(`return !!r.querySelector(".mon-tab")`); await tap(`.mon-tab[data-key="${tab}"]`); await ev(SCROLL_TABS); }
       await p.waitForTimeout(300);
     };
     // Erfundene Daten: Routine, Magic-Push-Meldungen, Ladevorgänge
@@ -185,6 +192,35 @@ for (const lang of langs) {
         await shotDlg(`settings-section-${id}`, "dialog.settings");
         await closeDialogs();
       }
+    });
+
+    // Sichern und wiederherstellen (seit 2.98.0): das Kapitel unter "Startseite" und die Vorschau der Wiederherstellung
+    await step("settings-backup", async () => {
+      await settingsOpen("updates");
+      await tap('[data-set="subtab"][data-group="panel"][data-key="pstart"]');
+      await wait(`return !!r.querySelector('[data-set="bk-export"]')`);
+      await ev(`r.querySelector('[data-set="section"][data-id="updates"]').scrollIntoView({ block: "start" })`);
+      await shotDlg("settings-backup", "dialog.settings");
+    });
+    await step("backup-restore", async () => {
+      await settingsOpen("updates");
+      await tap('[data-set="subtab"][data-group="panel"][data-key="pstart"]');
+      await wait(`return !!r.querySelector('[data-set="bk-import"]')`);
+      // Eine Sicherung mit Änderungen, einem fehlenden Push-Ziel und einer unbekannten Einstellung (erfundene Daten)
+      const file = JSON.parse(await f.evaluate(async () => JSON.stringify((await document.querySelector("device-panel").shadowRoot.host._hass.callWS({ type: "device_panel/backup_export", sections: ["monitor", "display", "devices", "ai"] })).file)));
+      file.sections.monitor.options.battery_low = 25;
+      file.sections.monitor.options.notify_group_min = 5;
+      file.sections.monitor.options.notify_service = "notify.mobile_app_altes_handy";
+      file.sections.monitor.options.charge_boost = true;
+      file.sections.devices.settings = { "dev-a": { battery: 30 }, "dev-zz": { battery: 10 } };
+      const path = `${tmpdir()}/device-panel-backup-shot.json`;
+      writeFileSync(path, JSON.stringify(file));
+      await tap('[data-set="bk-import"]');
+      await wait(`return !!r.querySelector("dialog.backup-dlg input[data-bk-file]")`);
+      await (await handle("dialog.backup-dlg input[data-bk-file]")).setInputFiles(path);
+      await wait(`return !!r.querySelector("dialog.backup-dlg .bk-sum")`);
+      await shotDlg("backup-restore", "dialog.backup-dlg");
+      await ev(`r.querySelector('dialog.backup-dlg [data-bk="close"]').click()`);
     });
 
     await step("launcher", async () => {
@@ -277,7 +313,7 @@ for (const lang of langs) {
       await wait(`return !!r.querySelector(".ilist-row")`);
       await tap(".ilist-row");
       await wait(`return !!r.querySelector('[data-set="isub"]')`);
-      await ev(`r.querySelector("dialog.settings .mon-tabs").scrollIntoView({ block: "start" })`);
+      await ev(SCROLL_TABS);
       await shotDlg("integ-detail", "dialog.settings");
     });
     await step("warnings", async () => {

@@ -35,7 +35,13 @@ for (const lang of ["de", "en"]) {
     await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
     const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
     const handle = async (sel) => (await f.evaluateHandle(new Function(`return ${R}.querySelector(${JSON.stringify(sel)})`))).asElement();
-    const tap = async (sel) => { const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel); await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); };
+    const tap = async (sel) => {
+      for (let i = 0; ; i++) {
+        const h = await handle(sel); if (!h) throw new Error("fehlt: " + sel);
+        try { await h.scrollIntoViewIfNeeded(); if (mobile) await h.tap(); else await h.click(); return; }
+        catch (e) { if (i >= 3 || !/not attached|not stable|intercepts/.test(e.message)) throw e; await new Promise((r) => setTimeout(r, 200)); }
+      }
+    };
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
     const range = async (r) => { await tap(`dialog.stat-dlg [data-stat="range"][data-range="${r}"]`); return wait(`return r.querySelector('dialog.stat-dlg [data-range="${r}"]')?.classList.contains("on") && !r.querySelector("dialog.stat-dlg .avail .dlg-note")?.textContent.includes("…")`); };

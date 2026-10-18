@@ -13,6 +13,7 @@
 - **Batterie-Übersicht mit Meldungen:** ein farbiges Batteriesymbol bei jedem Gerät, eine Warnschwelle (Standard 15 %), Push oder anhaltende Benachrichtigung, ein Verlauf bis 12 Monate mit Prognose, wie lange die Batterie hält, und eine Meldung, wenn ein Gerät voll geladen ist
 - **Empfangs-Übersicht mit Warnungen:** Empfang in dBm oder LQI bei jedem Gerät, eine Warnschwelle pro Verbindungsart, ein Verlauf mit Median und Spanne, und bei Bluetooth der Empfänger (Adapter oder Proxy), über den ein Gerät verbunden ist oder war
 - **Meldungen auf drei Ebenen:** einmal eine Vorgabe setzen, pro Integration ändern, auf einem einzelnen Gerät überschreiben; jede Einstellung zeigt, woher ihr Wert stammt (Grafik unten)
+- **Ruhezeit:** Meldungen warten in der Nacht (Zeiten je Wochentag, Arten wählbar) und kommen danach als Zusammenfassung oder einzeln
 - **Magic Push:** eigene Meldungen pro Gerät ohne Automation: einen Wert wählen, sagen, wann gemeldet wird, den Text schreiben, fertig
 - **Routinen:** eine Entität eines Geräts zu einer Zeit oder durch einen Auslöser (beliebige Entität, mit Bedingungen wie bei Magic Push) schalten, ohne Automation, zurückschalten per Zeit, Dauer oder Auslöser, mit Testknopf und Vorschau der nächsten Ausführungen
 - **Reiter Schalter:** jedes Gerät mit etwas Schaltbarem zeigt es als Kacheln; ein Tipp öffnet die Bedienung von Home Assistant (Dimmen, Farbe, Position)
@@ -21,7 +22,7 @@
 - **App-Launcher und Protokoll:** ein Knopf für nützliche Seiten von Home Assistant und eigene Links, dazu ein Protokoll, das zeigt, was die Meldungen entscheiden und warum eine nicht kam
 - **Optionale KI-Einschätzung:** eine Vermutung zur Ursache auf Knopfdruck, nur mit einer KI-Aufgabe von Home Assistant
 - **Ganz deine Ansicht:** Spalten, Sortierung, Filter, Favoriten und Startseite werden pro Benutzer gespeichert, auf Handy und Desktop
-- **Alles im Panel:** alle Einstellungen, Updates über HACS (auch automatisch), Deutsch und Englisch
+- **Alles im Panel:** alle Einstellungen, Updates über HACS (auch automatisch), Sichern und Wiederherstellen aller Einstellungen, Deutsch und Englisch
 
 ## Übersicht und Geräteliste
 
@@ -207,10 +208,23 @@ Das Zahnrad (die angeheftete App "Einstellungen", oder der Launcher) öffnet all
 - **Ansicht:** liegt nicht mehr in den Einstellungen, sondern im Dialog "Ansicht" über der Liste (Spalten und Sortierung pro Benutzer, Filter-Chips für alle); beide Reiter haben ein eigenes "Speichern"
 - **Routinen und KI-Einschätzung:** Pause, Nachhol-Fenster, Empfänger; KI-Aufgabe und Prompt
 - **Status-App:** ob die Teile der Integration laufen, mit Push-Meldung und Neustart-Knopf (auch eine Meldung, wenn CPU, Arbeitsspeicher oder Festplatte eine frei wählbare Grenze erreichen, Standard 99 %, je für eine frei wählbare Mindestdauer, Standard 3 Minuten); darunter kleine Grafiken zu CPU, Arbeitsspeicher und Festplatte von Home Assistant (24 Stunden; die Festplatte auch 30 Tage, 6 Monate, 1 Jahr), aus den Sensoren von "System Monitor" oder eigenen (aus einer durchsuchbaren Liste von Sensor-Entitäten gewählt; ausgeschaltete Sensoren lassen sich mit einem Knopf einschalten). Drei Reiter: "Dienste" (die Teile), "System" (die Grafiken) und "Einstellungen" (Meldungen, Grenzen, Quellen; sie gelten erst nach "Speichern").
-- **Panel:** zwei Unterreiter. "Allgemein": das Panel als deine Startseite in Home Assistant (gilt nur für dich). "Updates" (die Versionszeile mit Suchen und Installieren steht ganz oben in den Einstellungen): Prüfung bei jedem Öffnen der Einstellungen (höchstens einmal pro Minute), tägliche Prüfung zu einer festen Zeit, optionaler Push, Vorabversionen und automatische Installation über HACS (den Neustart von Home Assistant machst du selbst)
+- **Panel:** zwei Unterreiter. "Allgemein": das Panel als deine Startseite in Home Assistant (gilt nur für dich) und das Kapitel "Sichern und wiederherstellen" (siehe unten). "Updates" (die Versionszeile mit Suchen und Installieren steht ganz oben in den Einstellungen): Prüfung bei jedem Öffnen der Einstellungen (höchstens einmal pro Minute), tägliche Prüfung zu einer festen Zeit, optionaler Push, Vorabversionen und automatische Installation über HACS (den Neustart von Home Assistant machst du selbst)
 - **Speichern:** Änderungen im Pop-up und in den Einstellungen gelten erst mit "Speichern"; beim Schliessen mit ungespeicherten Änderungen fragt das Panel "Änderungen verwerfen?"
 
-<p align="center"><img src="docs/screenshots/de/settings-monitor.png" alt="Einstellungen: Zeitstrahl, wann ein Gerät als ausgefallen gilt und wann der Push kommt" width="720"></p>
+<p align="center"><img src="docs/screenshots/de/settings-general.png" alt="Einstellungen, Reiter Allgemein: Ziel der Meldungen und Ruhezeit mit Zeiten je Wochentag" width="720"></p>
+
+### Sichern und wiederherstellen
+
+Unter "Panel" › "Allgemein" (unter "Startseite", nur Administratoren) lassen sich alle Einstellungen in eine Datei sichern und später wiederherstellen, zum Beispiel nach einer Neuinstallation oder um sie in ein anderes Home Assistant zu übernehmen.
+
+| Sichern und wiederherstellen | Vorschau vor dem Wiederherstellen |
+|---|---|
+| <img src="docs/screenshots/de/settings-backup.png" alt="Kapitel Sichern und wiederherstellen unter Startseite"> | <img src="docs/screenshots/de/backup-restore.png" alt="Vorschau: was sich ändert, was bleibt, was übersprungen wird, mit Hinweisen zu fehlenden Push-Zielen und Geräten"> |
+
+- **Was hineinkommt:** du wählst die Teile: Meldungen und Überwachung, Panel und Anzeige, Einstellungen pro Gerät, KI-Einschätzung und, standardmässig aus, Routinen und Magic Push. Keine Zugangsdaten und keine Tokens. "Kopieren" und "Text einfügen" sind der Weg für die App auf dem Handy, wo das Speichern einer Datei nicht immer geht.
+- **Zuerst die Vorschau:** vor "Übernehmen" wird nichts geschrieben. Die Vorschau zählt, was sich ändert, gleich bleibt oder nicht übernommen wird, je Teil, mit Beispielen.
+- **Was fehlt, wird genannt:** unbekannte Einstellungen, Werte ausserhalb des Bereichs, Geräte, die es hier nicht gibt, und Routinen oder Meldungen mit fehlender Entität werden mit Grund übersprungen; ein Push-Ziel oder eine Integration, die es nicht mehr gibt, werden mit Hinweis übernommen.
+- **Rückgängig:** der Zustand vorher wird festgehalten (auf Wunsch auch als Datei gesichert); "Rückgängig" holt ihn genau zurück.
 
 ## KI-Einschätzung (optional)
 

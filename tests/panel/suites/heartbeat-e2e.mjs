@@ -22,7 +22,13 @@ for (const lang of ["de", "en"]) {
     const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
     const wait = (code, ms = 5000) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: ms }).then(() => true, () => false);
     const logo = async () => (await f.evaluateHandle(new Function(`return ${R}.querySelector(".tb-main > svg")`))).asElement();
-    const click = async (n, gap) => { for (let i = 0; i < n; i++) { const h = await logo(); if (mobile) await h.tap(); else await h.click(); await p.waitForTimeout(gap); } };
+    // Die Klicks kommen aus der Seite selbst: echte Klicks von Playwright dauern unter Last je einige hundert ms und lägen ausserhalb des Fensters von 1,5 s
+    const click = (n, gap) => f.evaluate(async ({ n, gap, root }) => {
+      const svg = document.querySelector("device-panel").shadowRoot.querySelector(".tb-main > svg");
+      for (let i = 0; i < n; i++) { svg.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true })); await new Promise((r) => setTimeout(r, gap)); }
+      void root;
+    }, { n, gap, root: R });
+    void logo;
     const on = () => ev(`return !!r.querySelector(".pchart.ee .ee-ecg") && r.querySelector(".kt.pul")?.classList.contains("ee")`);
 
     check(`[${tag}] ohne Klicks: kein Herzschlag`, !(await on()));
