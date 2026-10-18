@@ -18,7 +18,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from . import activity
+from . import activity, quiet
 from .ai_prompt import ai_prompt
 from .const import (
     BATTERY_FIELDS,
@@ -70,6 +70,10 @@ from .const import (
     CONF_NOTIFY_FIELDS,
     CONF_NOTIFY_GROUP,
     CONF_NOTIFY_GROUP_MIN,
+    CONF_QUIET_DAYS,
+    CONF_QUIET_ENABLED,
+    CONF_QUIET_MODE,
+    CONF_QUIET_TOPICS,
     DEFAULT_NOTIFY_GROUP_MIN,
     CONF_NOTIFY_ONLINE,
     CONF_NOTIFY_OUTAGE,
@@ -165,6 +169,7 @@ BOOL_OPTIONS: tuple[tuple[str, bool], ...] = (
     (CONF_NOTIFY_OUTAGE, False),
     (CONF_NOTIFY_ONLINE, False),
     (CONF_NOTIFY_GROUP, True),
+    (CONF_QUIET_ENABLED, False),
     (CONF_OUTAGE_PERSISTENT, False),
     (CONF_BATTERY_PUSH, False),
     (CONF_BATTERY_PERSISTENT, False),
@@ -617,6 +622,9 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_PERSISTENT_EXCLUDE): _domains,
         vol.Optional(CONF_BATTERY_PUSH_EXCLUDE): _domains,
         vol.Optional(CONF_NOTIFY_FIELDS): notify_fields,
+        vol.Optional(CONF_QUIET_DAYS): quiet.quiet_days,
+        vol.Optional(CONF_QUIET_TOPICS): quiet.quiet_topics,
+        vol.Optional(CONF_QUIET_MODE): quiet.quiet_mode,
         vol.Optional(CONF_BATTERY_FIELDS): battery_fields,
         vol.Optional(CONF_NEW_FIELDS): new_fields,
         vol.Optional(CONF_NEW_EXCLUDE): _domains,
@@ -679,6 +687,16 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     )
     for key in (CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE, CONF_NEW_EXCLUDE, CONF_CHARGE_INTEGRATIONS):
         values[key] = sorted({d for d in options.get(key) or [] if isinstance(d, str) and _DOMAIN_RE.match(d)})
+    # Ruhezeit (seit 2.95.0): ungültig gespeichert gilt der Standard
+    try:
+        values[CONF_QUIET_DAYS] = quiet.quiet_days(options.get(CONF_QUIET_DAYS)) if CONF_QUIET_DAYS in options else quiet.default_days()
+    except vol.Invalid:
+        values[CONF_QUIET_DAYS] = quiet.default_days()
+    try:
+        values[CONF_QUIET_TOPICS] = quiet.quiet_topics(options.get(CONF_QUIET_TOPICS)) if CONF_QUIET_TOPICS in options else list(quiet.DEFAULT_QUIET_TOPICS)
+    except vol.Invalid:
+        values[CONF_QUIET_TOPICS] = list(quiet.DEFAULT_QUIET_TOPICS)
+    values[CONF_QUIET_MODE] = options.get(CONF_QUIET_MODE) if options.get(CONF_QUIET_MODE) in quiet.QUIET_MODES else quiet.DEFAULT_QUIET_MODE
     fields = options.get(CONF_NOTIFY_FIELDS)
     values[CONF_NOTIFY_FIELDS] = (
         [f for f in NOTIFY_FIELDS if f in fields] if isinstance(fields, list) else list(DEFAULT_NOTIFY_FIELDS)

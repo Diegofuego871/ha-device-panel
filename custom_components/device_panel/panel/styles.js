@@ -775,6 +775,13 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .nf-note p { margin: 0; }
 .nf-note p + p { margin-top: 6px; color: var(--dp-text); }
 .nf-note.view-own { margin: 12px 0 14px; }
+/* Ruhezeit (seit 2.95.0): eine Zeile je Wochentag mit Schalter und zwei Uhrzeiten */
+.qd-list { margin-top: 8px; }
+.qd-row { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.qd-name { flex: 1 1 auto; min-width: 0; font-size: 14px; }
+.qd-times { display: flex; align-items: center; gap: 8px; }
+.qd-sep { color: var(--dp-text2); font-size: 13px; }
+.qd-row.off .qd-times { opacity: .45; }
 .nf-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; font-size: 14px; }
 .pv { margin-top: 12px; padding: 12px; border-radius: 14px; background: var(--dp-subtle); }
 .pv-k { margin-bottom: 8px; color: var(--dp-text2); font-size: 12px; }

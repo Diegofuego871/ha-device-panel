@@ -102,6 +102,7 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 
 - **Zwei Zeiten, nicht addiert:** "Ausgefallen nach" (Standard 2 Minuten) entscheidet, wann das Panel das Gerät als ausgefallen zeigt, "Erst melden nach" entscheidet, wann die Meldung kommt; beide laufen ab Beginn des Ausfalls, und die zweite kann nicht kürzer sein als die erste; beide lassen sich global, pro Integration und pro Gerät einstellen
 - **Eine Meldung pro Integration:** fallen mehrere Geräte einer Integration zusammen aus (Standard ab drei, einstellbar), kommt eine Meldung für diese Integration statt vieler; die Meldung wartet bis zu einer Minute auf weitere Geräte, die Rückkehr wird ebenso zusammengefasst
+- **Ruhezeit:** eine globale Ruhezeit mit eigenen Zeiten je Wochentag hält die gewählten Meldungsarten zurück (je Art wählbar, auch Magic Push und Status-App) und sendet sie danach als Zusammenfassung oder einzeln; kritische Magic-Push-Meldungen kommen immer sofort
 - **Wieder online:** "Wieder online" mit der Dauer des Ausfalls ersetzt die Ausfall-Meldung
 - **Knöpfe in der Meldung:** das Gerät im Panel öffnen oder das Gerät in der Companion-App 24 Stunden stumm schalten
 - **Anhaltende Benachrichtigung:** auf Wunsch zusätzlich eine Meldung in Home Assistant, solange Geräte ausgefallen sind, pro Integration

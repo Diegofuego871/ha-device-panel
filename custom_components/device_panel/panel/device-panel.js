@@ -404,6 +404,9 @@ const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
 // Inhalt der Meldung bei neuen Geräten (seit 1.24.0, const.NEW_FIELDS).
 const NEW_FIELDS = ["area", "integration", "connection", "model"];
 const UPDATE_KINDS = ["core", "addons", "hacs", "devices"];
+// Ruhezeit (seit 2.95.0): Meldungsarten, die sich zurückhalten lassen (wie im Backend, quiet.py), und die Vorgabe je Wochentag
+const QUIET_TOPICS = ["outage", "online", "battery", "charge", "new", "updates", "panelupdate", "routines", "status", "magic"];
+const QUIET_DAY_DEFAULT = { on: true, from: "22:00", to: "07:00" };
 // Abschnitt "Überwachung und Meldungen" (seit 0.34.0): Optionen je Reiter,
 // für den Punkt am Reiter und das Etikett "geändert" des Abschnitts.
 const MON_TAB_KEYS = {
@@ -413,6 +416,7 @@ const MON_TAB_KEYS = {
   battery: ["notify_service_battery", "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "emoji_battery", "reset_battery"],
   new: ["notify_service_new", "notify_new", "new_window", "new_persistent", "new_fields", "emoji_new"],
   updates: ["notify_service_updates", "notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include", "emoji_updates"],
+  quiet: ["quiet_enabled", "quiet_days", "quiet_mode", "quiet_topics"],
   sig: ["signal_low", "reset_signal"],
   integ: ["offline_after_integrations", "notify_delay_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
@@ -6139,6 +6143,7 @@ class DevicePanel extends HTMLElement {
       if (!Number.isInteger(v) || v < min || v > max) errors[key] = this._t("settingsRange", min, max);
     }
     if (st.draft.update_check_time && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(st.draft.update_check_time))) errors.update_check_time = this._t("timeError");
+    if (Array.isArray(st.draft.quiet_days) && st.draft.quiet_days.some((x) => x.on && !(/^([01]\d|2[0-3]):[0-5]\d$/.test(String(x.from || "")) && /^([01]\d|2[0-3]):[0-5]\d$/.test(String(x.to || ""))))) errors.quiet_days = this._t("timeError");
     if ("updates_time" in st.draft && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(st.draft.updates_time || ""))) errors.updates_time = this._t("timeError");
     if ("battery_push_time" in st.draft && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(st.draft.battery_push_time || ""))) {
       errors.battery_push_time = this._t("timeError");
@@ -6468,7 +6473,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.lsearch ? `[data-lsearch="${active.dataset.lsearch}"]` : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.delayMode ? `[data-delay-mode="${active.dataset.delayMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.emoji ? `[data-emoji="${active.dataset.emoji}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfullInteg ? `[data-cfull-integ="${active.dataset.cfullInteg}"]` : active.dataset.criseInteg ? `[data-crise-integ="${active.dataset.criseInteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.lsearch ? `[data-lsearch="${active.dataset.lsearch}"]` : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.delayMode ? `[data-delay-mode="${active.dataset.delayMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.emoji ? `[data-emoji="${active.dataset.emoji}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.qday !== undefined ? `[data-qday="${active.dataset.qday}"][data-qfield="${active.dataset.qfield}"]` : active.dataset.qdayOn !== undefined ? `[data-qday-on="${active.dataset.qdayOn}"]` : active.dataset.qtopic ? `[data-qtopic="${active.dataset.qtopic}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfullInteg ? `[data-cfull-integ="${active.dataset.cfullInteg}"]` : active.dataset.criseInteg ? `[data-crise-integ="${active.dataset.criseInteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -6726,7 +6731,7 @@ class DevicePanel extends HTMLElement {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
     const tab = MON_TAB_KEYS[st.tab] ? st.tab : "overview";
-    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["charge", "tabCharge"], ["new", "tabNew"], ["updates", "tabUpdates"], ["sig", "tabSignal"], ["integ", "tabInteg"]]
+    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["charge", "tabCharge"], ["new", "tabNew"], ["updates", "tabUpdates"], ["quiet", "tabQuiet"], ["sig", "tabSignal"], ["integ", "tabInteg"]]
       .map(([id, key]) => {
         const keys = MON_TAB_KEYS[id];
         // Punkt am Reiter: dort gibt es eine Änderung (blau) oder einen Fehler (rot).
@@ -6745,6 +6750,8 @@ class DevicePanel extends HTMLElement {
             ? this._monNewHtml(d, changes, errors, ui)
           : tab === "updates"
             ? this._monUpdatesHtml(d, changes, errors, ui)
+          : tab === "quiet"
+            ? this._monQuietHtml(d, changes, errors, ui)
           : tab === "sig"
             ? this._monSigHtml(d)
           : tab === "integ"
@@ -7616,6 +7623,39 @@ class DevicePanel extends HTMLElement {
     draft.updates_include = (draft.updates_include || []).filter((id) => !kind.has(id) || !kinds.has(kind.get(id)));
   }
 
+  // Reiter "Ruhezeit" (seit 2.95.0): ein globales Fenster je Wochentag; Meldungen der gewählten Arten
+  // werden gehalten und danach als Zusammenfassung oder einzeln gesendet (Backend: quiet.py).
+  _monQuietHtml(d, changes, errors, ui) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const on = Boolean(d.quiet_enabled);
+    let html = ui.row("quiet_enabled", t("optQuiet"), ui.sw("quiet_enabled", t("optQuiet")), t("optQuietShort"), null);
+    if (!on) return html;
+    const days = Array.isArray(d.quiet_days) && d.quiet_days.length === 7 ? d.quiet_days : Array.from({ length: 7 }, () => ({ ...QUIET_DAY_DEFAULT }));
+    const dayRows = days
+      .map((x, i) => {
+        const name = t(`qDay${i}`);
+        const bad = errors.quiet_days && (!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(x.from || "")) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(x.to || "")));
+        const time = (field, label) => `<span class="opt-input${bad ? " bad" : ""}"><input type="time" data-qday="${i}" data-qfield="${field}" value="${escape(x[field] || "")}"${x.on ? "" : " disabled"} aria-label="${escape(`${name}: ${label}`)}"></span>`;
+        return `<div class="qd-row${x.on ? "" : " off"}"><span class="qd-name">${escape(name)}</span>
+          <label class="switch"><input type="checkbox" data-qday-on="${i}" ${x.on ? "checked" : ""} aria-label="${escape(t("quietDayOn", name))}"><span></span></label>
+          <span class="qd-times">${time("from", t("quietFrom"))}<span class="qd-sep">${escape(t("quietTo"))}</span>${time("to", t("quietTo"))}</span></div>`;
+      })
+      .join("");
+    html += `<div class="opt${changes.has("quiet_days") ? " changed" : ""}${errors.quiet_days ? " invalid" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optQuietDays"))}</span>
+      <button type="button" class="lnk" data-set="quiet-all">${escape(t("quietAllDays"))}</button></div>
+      <div class="${errors.quiet_days ? "opt-error" : "opt-short"}">${escape(errors.quiet_days || t("optQuietDaysShort"))}</div>
+      <div class="qd-list">${dayRows}</div></div>`;
+    html += ui.row("quiet_mode", t("optQuietMode"), ui.select("quiet_mode", [["summary", t("quietModeSummary")], ["single", t("quietModeSingle")]], t("optQuietMode")), t(d.quiet_mode === "single" ? "optQuietModeShortSingle" : "optQuietModeShortSummary"), null);
+    const topics = new Set(d.quiet_topics || []);
+    const grid = QUIET_TOPICS.map(
+      (k) => `<label class="nf-item"><span>${escape(t(`qTopic_${k}`))}</span><span class="switch"><input type="checkbox" data-qtopic="${k}" ${topics.has(k) ? "checked" : ""} aria-label="${escape(t(`qTopic_${k}`))}"><span></span></span></label>`
+    ).join("");
+    html += `<div class="opt${changes.has("quiet_topics") ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("optQuietTopics"))}</span></div>
+      <div class="opt-short">${escape(t("optQuietTopicsShort"))}</div><div class="nf-grid">${grid}</div>
+      <div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("quietCriticalNote"))}</p></div></div></div>`;
+    return html;
+  }
+
   _monUpdatesHtml(d, changes, errors, ui) {
     const t = (k, ...a) => this._t(k, ...a);
     const target = this._hasTarget(d, "updates");
@@ -8405,6 +8445,12 @@ class DevicePanel extends HTMLElement {
           st.draft[key] = (st.draft[key] || []).filter((x) => x !== dom);
         }
         this._renderSettings();
+      } else if (action === "quiet-all") {
+        // Ruhezeit: die Zeiten des Montags für alle Wochentage übernehmen (ein/aus bleibt je Tag)
+        if (!st.draft || !Array.isArray(st.draft.quiet_days)) return;
+        const [first] = st.draft.quiet_days;
+        st.draft.quiet_days = st.draft.quiet_days.map((x) => ({ ...x, from: first.from, to: first.to }));
+        this._renderSettings();
       } else if (action === "check-time-auto") {
         // Uhrzeit der Prüfung zurück auf "automatisch"
         if (!st.draft) return;
@@ -8525,6 +8571,15 @@ class DevicePanel extends HTMLElement {
         const value = marks.join("").trim();
         st.draft[`emoji_${kind}`] = value === (st.data?.emoji_defaults?.[kind] || "") && value !== "" ? null : value;
         this._syncEmoji(kind);
+        this._updateSettingsMeta();
+        return;
+      }
+      if (st?.draft && el.type === "time" && el.dataset.qday !== undefined) {
+        // Ruhezeit: Start- oder Endzeit eines Wochentags (ohne Neuaufbau, der Fokus bleibt im Feld)
+        const days = (st.draft.quiet_days || []).map((x) => ({ ...x }));
+        const day = days[Number(el.dataset.qday)];
+        if (day) day[el.dataset.qfield] = el.value;
+        st.draft.quiet_days = days;
         this._updateSettingsMeta();
         return;
       }
@@ -8662,6 +8717,16 @@ class DevicePanel extends HTMLElement {
         if (el.checked) on.add(el.dataset.cinteg);
         else on.delete(el.dataset.cinteg);
         st.draft.charge_integrations = [...on].sort();
+      } else if (el.dataset.qdayOn !== undefined) {
+        // Ruhezeit: Wochentag ein- oder ausschalten (die Zeiten bleiben erhalten)
+        st.draft.quiet_days = (st.draft.quiet_days || []).map((x, i) => (i === Number(el.dataset.qdayOn) ? { ...x, on: el.checked } : x));
+        this._renderSettings();
+        return;
+      } else if (el.dataset.qtopic) {
+        const on = new Set(st.draft.quiet_topics || []);
+        if (el.checked) on.add(el.dataset.qtopic);
+        else on.delete(el.dataset.qtopic);
+        st.draft.quiet_topics = QUIET_TOPICS.filter((k) => on.has(k));
       } else if (el.dataset.ukind) {
         const on = new Set(st.draft.updates_kinds || []);
         if (el.checked) on.add(el.dataset.ukind);

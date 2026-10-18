@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.95.0] - 2026-10-18
+
+Quiet time: notifications wait during the night.
+
+### Added
+
+- New tab **"Quiet time"** in the settings ("Monitoring and notifications"). One global quiet time for all recipients, with its own **times per weekday** (from, to; the window may run past midnight, each day can be switched off, "Use Monday's times for all" copies the times). Default: every day 22:00 to 07:00.
+- **Which notifications wait** is selectable per kind: outages, back online, battery, charging, new devices, updates, panel update, routines, status app and Magic Push (everything except the status app by default). All other kinds arrive immediately. **Critical Magic Push** notifications always arrive immediately.
+- **After the quiet time** either **one summary** ("Quiet time is over: Outages 2 · Battery 1", with devices still offline, short outages and the other kinds) or **each notification separately** (selectable). In the separate mode a notification that was replaced in the meantime (same tag) is sent only once, and a device that came back is not announced as offline. At most 300 notifications are held.
+- Held notifications survive a restart of Home Assistant; when the quiet time has ended meanwhile, they are sent at startup. Changing the settings releases what no longer applies at once (quiet time off, kind deselected, window ended). The activity log shows what was held and released.
+
 ## [2.94.0] - 2026-10-18
 
 Outages are combined per integration.
@@ -24,6 +35,8 @@ Outages are combined per integration.
 ### Internal
 
 - The tests run in parallel (about 13 instead of 35 minutes; failed suites are repeated once and marked as unstable), a consistency test checks every "own setting per device" against the backend and the panel (`tests/test_consistency.py`, suite `consistency`), and the README screenshots show the current dialogs.
+
+Not released; included in 2.95.0.
 
 ## [2.93.0] - 2026-10-18
 
@@ -3892,7 +3905,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.94.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.94.0
+[2.95.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.0
 [2.93.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.93.0
 [2.92.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.1
 [2.92.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.0

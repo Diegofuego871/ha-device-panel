@@ -327,7 +327,8 @@ class OutageNotifier:
             icon = await push_icon.async_integration_icon(hass, i["domain"])
             data = push.notification_data(hass, f"{DOMAIN}_device_{i['id']}", url, actions, icon)
             await push.async_push(
-                hass, target, push.title(hass, opts, kind, f"{kind}_title", name=i["name"]), " · ".join(x for x in parts if x), data
+                hass, target, push.title(hass, opts, kind, f"{kind}_title", name=i["name"]), " · ".join(x for x in parts if x), data,
+                topic=kind, quiet={"label": i["name"], "since": None if online else i["value"]},
             )
 
     async def _async_push_group(self, opts: dict[str, Any], target: str, domain: str, members: list[dict[str, Any]], online: bool) -> None:
@@ -345,7 +346,10 @@ class OutageNotifier:
             hass, opts, "online" if online else "group", f"{kind}_title_integ", integration=members[0]["integration"] or domain, count=len(members)
         )
         data = push.notification_data(hass, f"{DOMAIN}_incident_{domain}", push.panel_url(), icon=await push_icon.async_integration_icon(hass, domain))
-        await push.async_push(hass, target, title, " · ".join(parts), data)
+        await push.async_push(
+            hass, target, title, " · ".join(parts), data,
+            topic=kind, quiet={"label": f"{members[0]['integration'] or domain} ({len(members)})", "since": None if online else min(i["value"] for i in members)},
+        )
 
     def _domain(self, dev: str) -> str:
         device = dr.async_get(self.hass).async_get(dev)

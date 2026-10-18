@@ -3,6 +3,14 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.95.0, Ruhezeit)
+
+- Wunsch des Nutzers: eine globale Ruhezeit (nicht pro Benutzer), Reiter "Ruhezeit" in "Überwachung und Meldungen", Zeiten je Wochentag, Meldungsarten wählbar (auch Status), danach Zusammenfassung oder einzeln. Kritische Magic-Push-Meldungen immer sofort. Mockups: `docs/mockups/quiet-v1/`.
+- Backend `quiet.py`: `QuietManager` (`hass.data[DATA_QUIET]`, Store `device_panel.quiet`), `hold(...)` wird früh in `push.async_push` gefragt (Parameter `topic`, `quiet`); alle Aufrufer übergeben `topic=`. `window_end(days, now)` rechnet das Fenster je Wochentag (über Mitternacht, nahtlos anschliessende Fenster zählen als eines). `_deliver`: Zusammenfassung (`build_summary`) oder einzeln (letzte Meldung je Tag). `async_options_changed` gibt frei, was nicht mehr gilt. `push` importiert `quiet` nur verzögert (`_push()`), sonst Zirkelimport mit `options_api`.
+- Optionen: `quiet_enabled`, `quiet_days` (7 Einträge `{on, from, to}`, Index 0 = Montag), `quiet_mode` (`summary`/`single`), `quiet_topics`. Nicht im Config-Flow.
+- Panel: `_monQuietHtml`, `QUIET_TOPICS`, Handler `data-qday`/`data-qday-on`/`data-qtopic`, `data-set="quiet-all"`; Simulator `quiet_*` mit Validierung; Suite `quiet`. Tests: `tests/test_quiet.py` (HA-Testzeitzone ist US/Pacific, Sprache Englisch).
+- Offen: Einstellungen sichern und wiederherstellen (Einstellungen › Panel), Mockups zuerst.
+
 ## Stand (2.94.0, Ausfälle pro Integration zusammenfassen)
 
 - Wunsch des Nutzers: bei Ausfall einer Integration nicht alle Geräte einzeln melden, sondern gruppiert pro Integration (nicht an Router oder Hub gebunden). `outage.py`: `_collect_outages` (Sammelzeit `GROUP_WAIT_SECONDS = 60` je Integration, sobald von ihr mindestens `notify_group_min` Geräte offline sind; einzelne Geräte warten nie), `_async_push` gruppiert je Integration (ab `notify_group_min`, Standard 3, Option 2 bis 20, auch im HA-Optionsfluss), `_async_push_group` (Titel `outage_title_integ`/`online_title_integ`, höchstens 6 Namen, "und N weitere", Beginn; Tag `device_panel_incident_<domain>`, die Rückkehr ersetzt den Ausfall), `_collect_back` (Rückkehrer warten auf weitere, bis kein gemeldetes Gerät der Integration mehr fehlt oder eine Minute). Sammelzeiten nur im Speicher: ein Neustart in dieser Minute verliert gepufferte Rückkehrer (kein Ausfall-Eintrag, nur die Rückkehr-Meldung). Tests: `test_outage_group.py`, `groupmin`-Suite; `test_outage`/`test_push_icon` angepasst (`async_block_till_done(wait_background_tasks=True)` nach dem Timer).

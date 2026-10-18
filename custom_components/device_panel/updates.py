@@ -232,6 +232,7 @@ class UpdateNotifier:
             await push.async_push(
                 hass, notify_target(opts, "updates"), push.title(hass, opts, "updates", "update_title"), self.message(items),
                 push.notification_data(hass, f"{DOMAIN}_updates", UPDATES_URL),
+                topic="updates",
             )
         for item in items:
             self._known[item["id"]] = {"v": item["latest"], "at": now}

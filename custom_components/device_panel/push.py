@@ -15,7 +15,7 @@ from homeassistant.exceptions import ServiceValidationError
 
 from . import activity
 from .options_api import emoji_for
-from .const import CLICK_DEVICE, DATA_PUSH_IMAGE, MUTE_ACTION_PREFIX, NOTIFY_NONE, PANEL_URL_PATH
+from .const import CLICK_DEVICE, DATA_PUSH_IMAGE, DATA_QUIET, MUTE_ACTION_PREFIX, NOTIFY_NONE, PANEL_URL_PATH
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,6 +45,20 @@ TEXTS: dict[str, dict[str, str]] = {
         "outage_title_integ": "{integration}: {count} Geräte ausgefallen",
         "online_title_integ": "{integration}: {count} Geräte wieder online",
         "group_more": "und {count} weitere",
+        "quiet_title": "🌙 Ruhezeit vorbei: {counts}",
+        "quiet_outage": "Ausfälle",
+        "quiet_online": "Wieder online",
+        "quiet_open": "Noch offen",
+        "quiet_short": "War kurz weg",
+        "quiet_back": "Wieder online",
+        "quiet_battery": "Batterie",
+        "quiet_charge": "Laden",
+        "quiet_new": "Neue Geräte",
+        "quiet_updates": "Updates",
+        "quiet_panelupdate": "Panel-Update",
+        "quiet_routines": "Routinen",
+        "quiet_status": "Status",
+        "quiet_magic": "Magic Push",
         "online_title": "Wieder online: {name}",
         "online_title_many": "Wieder online: {count} Geräte",
         "online_after": "nach {duration}",
@@ -162,6 +176,20 @@ TEXTS: dict[str, dict[str, str]] = {
         "outage_title_integ": "{integration}: {count} devices offline",
         "online_title_integ": "{integration}: {count} devices back online",
         "group_more": "and {count} more",
+        "quiet_title": "🌙 Quiet time is over: {counts}",
+        "quiet_outage": "Outages",
+        "quiet_online": "Back online",
+        "quiet_open": "Still open",
+        "quiet_short": "Was briefly gone",
+        "quiet_back": "Back online",
+        "quiet_battery": "Battery",
+        "quiet_charge": "Charging",
+        "quiet_new": "New devices",
+        "quiet_updates": "Updates",
+        "quiet_panelupdate": "Panel update",
+        "quiet_routines": "Routines",
+        "quiet_status": "Status",
+        "quiet_magic": "Magic Push",
         "online_title": "Back online: {name}",
         "online_title_many": "Back online: {count} devices",
         "online_after": "after {duration}",
@@ -389,7 +417,13 @@ async def async_live_clear(hass: HomeAssistant, target: str, tag: str) -> bool:
 
 
 async def async_push(
-    hass: HomeAssistant, target: str, title: str, message: str, data: dict[str, Any] | None = None
+    hass: HomeAssistant,
+    target: str,
+    title: str,
+    message: str,
+    data: dict[str, Any] | None = None,
+    topic: str | None = None,
+    quiet: dict[str, Any] | None = None,
 ) -> bool:
     """
     Sendet an einen notify-Dienst oder eine notify-Entität; True, wenn
@@ -403,6 +437,9 @@ async def async_push(
     if domain != "notify" or not object_id:
         activity.record(hass, "error", "push", "push_invalid", target)
         return False
+    # Ruhezeit (seit 2.95.0): zurückgehaltene Meldungen stellt das Ende der Ruhezeit zu ("topic" ist die Art, "quiet" Angaben für die Zusammenfassung)
+    if topic and (manager := hass.data.get(DATA_QUIET)) is not None and manager.hold(topic, target, title, message, data, quiet):
+        return True
     plain: dict[str, Any] = {"title": title, "message": message}
     if hass.services.has_service("notify", object_id):
         if data:

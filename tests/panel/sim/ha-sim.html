@@ -630,6 +630,7 @@
     offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, offline_after_integrations: {}, notify_delay_integrations: {}, battery_push: false, battery_persistent: false,
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
     exclude_integrations: [], exclude_types: [], exclude_devices: [], notify_service: "none", notify_service_outage: "", notify_service_battery: "", notify_service_charge: "", notify_service_new: "", notify_service_updates: "", notify_service_routines: "", notify_service_panelupdate: "", update_check_time: "", update_notify: false, notify_click_target: "panel",
+    quiet_enabled: false, quiet_mode: "summary", quiet_topics: ["outage", "online", "battery", "charge", "new", "updates", "panelupdate", "routines", "magic"], quiet_days: Array.from({ length: 7 }, () => ({ on: true, from: "22:00", to: "07:00" })),
     notify_outage: false, notify_online: false, notify_group: true, notify_group_min: 3, hide_chips: [], hide_connections: [], connection_order: [], chip_order: [], connection_integrations: {}, type_integrations: {},
     show_service_devices: false, show_disabled_devices: false, update_check: true, ai_assessment: false, ai_task_entity: "", ai_prompt: "",
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
@@ -844,6 +845,19 @@
         }
         if ("notify_click_target" in msg.values && !["panel", "device"].includes(msg.values.notify_click_target)) throw { code: "invalid_format", message: "click" };
         if ("battery_push_time" in msg.values && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(msg.values.battery_push_time))) throw { code: "invalid_format", message: "time" };
+        // Ruhezeit (2.95.0), wie quiet.py: sieben Tage mit Ein/Aus und HH:MM, Modus, bekannte Arten
+        if ("quiet_days" in msg.values) {
+          const v = msg.values.quiet_days;
+          const hhmm = /^([01]\d|2[0-3]):[0-5]\d$/;
+          if (!Array.isArray(v) || v.length !== 7 || v.some((x) => !x || typeof x.on !== "boolean" || !hhmm.test(String(x.from)) || !hhmm.test(String(x.to)))) throw { code: "invalid_format", message: "quiet_days" };
+        }
+        if ("quiet_mode" in msg.values && !["summary", "single"].includes(msg.values.quiet_mode)) throw { code: "invalid_format", message: "quiet_mode" };
+        if ("quiet_topics" in msg.values) {
+          const known = ["outage", "online", "battery", "charge", "new", "updates", "panelupdate", "routines", "status", "magic"];
+          const v = msg.values.quiet_topics;
+          if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "quiet_topics" };
+          msg.values.quiet_topics = known.filter((k) => v.includes(k));
+        }
         if ("battery_push_mode" in msg.values && !["instant", "daily"].includes(msg.values.battery_push_mode)) throw { code: "invalid_format", message: "mode" };
         if ("hide_chips" in msg.values) {
           // Wie options_api._chips: bekannte Schlüssel in fester Reihenfolge.

@@ -1,6 +1,6 @@
 // Magic Push als eigene App mit eigenem Fenster (2.75.0, vorher Reiter in den Einstellungen): zeigt alle Meldungen aller
 // Geräte, nach Gerät gruppiert; ein- und ausschalten, bearbeiten (öffnet das Fenster des Assistenten) und löschen mit
-// Rückfrage, aber keine neue anlegen. Dazu: in den Einstellungen gibt es den Reiter nicht mehr (acht Reiter). Deutsch und
+// Rückfrage, aber keine neue anlegen. Dazu: in den Einstellungen gibt es den Reiter nicht mehr (neun Reiter). Deutsch und
 // Englisch, Desktop und Handy, echte Klicks und Taps.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
@@ -65,9 +65,9 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="section"][data-id="monitor"]');
     await wait(`return !!r.querySelector("dialog.settings .mon-tabs")`);
     const tabs = await ev(`return [...r.querySelectorAll("dialog.settings .mon-tabs .mon-tab")].map(b => b.dataset.key).join()`);
-    check(`[${tag}] Einstellungen: acht Reiter, kein "Magic Push"`, tabs === "overview,outage,battery,charge,new,updates,sig,integ", tabs);
+    check(`[${tag}] Einstellungen: neun Reiter, kein "Magic Push"`, tabs === "overview,outage,battery,charge,new,updates,quiet,sig,integ", tabs);
     const cols = await ev(`return getComputedStyle(r.querySelector("dialog.settings .mon-tabs")).gridTemplateColumns.split(" ").length`);
-    check(`[${tag}] Reiterleiste: vier Spalten (zwei Zeilen)`, cols === 4, String(cols));
+    check(`[${tag}] Reiterleiste: fünf Spalten (Desktop) bzw. drei (Handy)`, cols === (tag.includes("mobile") ? 3 : 5), String(cols));
     check(`[${tag}] kein Reiter abgeschnitten`, await ev(`return [...r.querySelectorAll("dialog.settings .mon-tab")].every(b => b.scrollWidth <= b.clientWidth + 1)`));
     check(`[${tag}] Einstellungen: keine Magic-Push-Übersicht mehr`, !(await ev(`return !!r.querySelector('dialog.settings [data-mg-all-zone], dialog.settings [data-set^="magic-"]')`)));
     await tap('dialog.settings .dlg-actions [data-set="close"]');

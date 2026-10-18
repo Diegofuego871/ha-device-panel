@@ -7,6 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.95.0] - 2026-10-18
+
+Ruhezeit: Meldungen warten in der Nacht.
+
+### Hinzugefügt
+
+- Neuer Reiter **"Ruhezeit"** in den Einstellungen ("Überwachung und Meldungen"). Eine globale Ruhezeit für alle Empfänger, mit **Zeiten je Wochentag** (von, bis; das Fenster darf über Mitternacht reichen, jeder Tag lässt sich ausschalten, "Zeiten von Montag für alle" übernimmt die Zeiten). Standard: jeden Tag 22:00 bis 07:00.
+- **Welche Meldungen warten**, ist je Art wählbar: Ausfälle, wieder online, Batterie, Laden, neue Geräte, Updates, Panel-Update, Routinen, Status-App und Magic Push (standardmässig alles ausser der Status-App). Alle anderen Arten kommen sofort. **Kritische Magic-Push-Meldungen** kommen immer sofort.
+- **Nach der Ruhezeit** kommt entweder **eine Zusammenfassung** ("Ruhezeit vorbei: Ausfälle 2 · Batterie 1", mit noch ausgefallenen Geräten, kurzen Ausfällen und den übrigen Arten) oder **jede Meldung einzeln** (wählbar). Im Einzelmodus wird eine Meldung, die inzwischen ersetzt wurde (gleicher Tag), nur einmal gesendet, und ein Gerät, das zurück ist, wird nicht als ausgefallen gemeldet. Es werden höchstens 300 Meldungen gehalten.
+- Gehaltene Meldungen überstehen einen Neustart von Home Assistant; ist die Ruhezeit inzwischen vorbei, gehen sie beim Start hinaus. Eine Änderung der Einstellungen gibt sofort frei, was nicht mehr gilt (Ruhezeit aus, Art abgewählt, Fenster vorbei). Das Aktivitätsprotokoll zeigt, was gehalten und freigegeben wurde.
+
 ## [2.94.0] - 2026-10-18
 
 Ausfälle werden pro Integration zusammengefasst.
@@ -24,6 +35,8 @@ Ausfälle werden pro Integration zusammengefasst.
 ### Intern
 
 - Die Tests laufen parallel (rund 13 statt 35 Minuten; fehlgeschlagene Suiten werden einmal wiederholt und als instabil gekennzeichnet), ein Konsistenz-Test prüft jede "eigene Einstellung pro Gerät" gegen Backend und Panel (`tests/test_consistency.py`, Suite `consistency`), und die README-Screenshots zeigen die aktuellen Dialoge.
+
+Nicht veröffentlicht; enthalten in 2.95.0.
 
 ## [2.93.0] - 2026-10-18
 
@@ -3993,7 +4006,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.94.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.94.0
+[2.95.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.0
 [2.93.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.93.0
 [2.92.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.1
 [2.92.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.0

@@ -317,7 +317,7 @@ async def async_notify(hass: HomeAssistant, kind: str, latest: str, installed: s
     title = push.text(hass, f"panelupdate_{kind}_title", latest=latest, installed=installed or "?")
     message = push.text(hass, f"panelupdate_{kind}_text", latest=latest, installed=installed or "?")
     data = push.notification_data(hass, f"{DOMAIN}_panelupdate", f"/{PANEL_URL_PATH}")
-    if not await push.async_push(hass, target, title, message, data):
+    if not await push.async_push(hass, target, title, message, data, topic="panelupdate"):
         return False
     notified[kind] = latest
     await _panel_store(hass).async_save(dict(settings))

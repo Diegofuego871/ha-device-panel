@@ -33,6 +33,7 @@ from .battery_history import async_battery_history, battery_entity
 from .favicon import FaviconError, async_fetch_favicon
 from .outage import STORE_KEY as NOTIFY_STORE_KEY
 from .outage import OutageNotifier
+from .quiet import QuietManager
 from .signal_history import RANGES as SIGNAL_RANGES
 from .signal_history import STORAGE_KEY as SIGNAL_STORE_KEY
 from .signal_history import SignalLog, async_signal_history
@@ -76,6 +77,7 @@ from .const import (
     DATA_CONNECTION_OVERRIDES,
     DATA_DEVICE_SETTINGS,
     DATA_OUTAGE,
+    DATA_QUIET,
     DATA_PANEL_REGISTERED,
     DATA_PUSH_ICONS,
     DATA_PUSH_IMAGE,
@@ -160,6 +162,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         log = AvailabilityLog(hass)
         await log.async_start()
         hass.data[DATA_AVAILABILITY] = log
+    # Die Ruhezeit zuerst: alle Meldungen laufen durch push.async_push und werden dort gegebenenfalls zurückgehalten
+    if DATA_QUIET not in hass.data:
+        quiet_manager = QuietManager(hass)
+        await quiet_manager.async_start()
+        hass.data[DATA_QUIET] = quiet_manager
     if DATA_OUTAGE not in hass.data:
         notifier = OutageNotifier(hass, hass.data[DATA_AVAILABILITY])
         await notifier.async_start()
@@ -225,6 +232,9 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
     # Ausfälle: Verzögerung, Integrationen, anhaltende Benachrichtigung.
     if (notifier := hass.data.get(DATA_OUTAGE)) is not None:
         await notifier.async_options_changed()
+    # Ruhezeit: geänderte Zeiten oder Auswahl stellen Gehaltenes zu, wenn es nicht mehr gehalten wird.
+    if (quiet_manager := hass.data.get(DATA_QUIET)) is not None:
+        await quiet_manager.async_options_changed()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -232,6 +242,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         frontend.async_remove_panel(hass, PANEL_URL_PATH)
     if (notifier := hass.data.pop(DATA_OUTAGE, None)) is not None:
         await notifier.async_stop()
+    if (quiet_manager := hass.data.pop(DATA_QUIET, None)) is not None:
+        await quiet_manager.async_stop()
     if (log := hass.data.pop(DATA_AVAILABILITY, None)) is not None:
         await log.async_stop()
     if (new_devices := hass.data.pop(DATA_NEW, None)) is not None:

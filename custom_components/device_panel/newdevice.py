@@ -169,6 +169,7 @@ class NewDeviceNotifier:
                 push.notification_data(
                     hass, f"{DOMAIN}_new", push.panel_url(), icon=await push_icon.async_common_icon(hass, [i["domain"] for i in items])
                 ),
+                topic="new", quiet={"label": ", ".join(i["name"] for i in items)},
             )
             return
         item = items[0]
@@ -177,6 +178,7 @@ class NewDeviceNotifier:
         await push.async_push(
             hass, target, push.title(hass, opts, "new", "new_title", name=item["name"]), message,
             push.notification_data(hass, f"{DOMAIN}_new_{item['id']}", url, icon=await push_icon.async_integration_icon(hass, item["domain"])),
+            topic="new", quiet={"label": item["name"]},
         )
 
     def _update_persistent(self, items: list[dict[str, Any]]) -> None:

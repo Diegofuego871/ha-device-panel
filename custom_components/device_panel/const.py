@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "263"
+PANEL_VERSION = "264"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -305,6 +305,12 @@ CONF_NOTIFY_GROUP = "notify_group"
 # so lange, damit alle in einer Meldung stehen (ebenso bei der Rückkehr)
 GROUP_WAIT_SECONDS = 60
 DATA_OUTAGE = f"{DOMAIN}_outage"
+DATA_QUIET = f"{DOMAIN}_quiet"
+# Ruhezeit (seit 2.95.0, siehe quiet.py)
+CONF_QUIET_ENABLED = "quiet_enabled"
+CONF_QUIET_DAYS = "quiet_days"
+CONF_QUIET_MODE = "quiet_mode"
+CONF_QUIET_TOPICS = "quiet_topics"
 # Ausfall-Meldungen nach Bild 5 (docs/mockups/panel-v1), seit 0.20.0;
 # "Erst melden nach" (CONF_NOTIFY_DELAY) steht bei den Bereichen oben.
 # Inhalt der Meldung (der Name steht im Titel), in dieser Reihenfolge (wie

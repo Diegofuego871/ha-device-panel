@@ -1568,7 +1568,7 @@ class RoutineManager:
         icon = await push_icon.async_integration_icon(hass, primary_domain(hass, device)) if device is not None else None
         url = push.device_url(opts[CONF_NOTIFY_CLICK], device.id) if device is not None else push.panel_url()
         data = push.notification_data(hass, f"{DOMAIN}_routine_{routine.get('id', 'test')}", url, icon=icon)
-        return await push.async_push(hass, target, title, message, data)
+        return await push.async_push(hass, target, title, message, data, topic="routines")
 
     def preview_raw(self, raw: dict[str, Any]) -> dict[str, Any]:
         """Vorschau für einen Entwurf: Meldungstext, nächste Ausführungen und der Satz; Name darf fehlen."""

@@ -596,6 +596,7 @@ class ChargeNotifier:
                 hass, f"{DOMAIN}_charge_{dev}", push.device_url(opts[CONF_NOTIFY_CLICK], dev),
                 icon=await push_icon.async_integration_icon(hass, primary_domain(hass, device)),
             ),
+            topic="charge", quiet={"label": name},
         )
 
     async def _async_push(self, dev: str, done: dict[str, Any]) -> None:
@@ -612,4 +613,5 @@ class ChargeNotifier:
                 hass, f"{DOMAIN}_charge_{dev}", push.device_url(opts[CONF_NOTIFY_CLICK], dev),
                 icon=await push_icon.async_integration_icon(hass, primary_domain(hass, device)),
             ),
+            topic="charge", quiet={"label": name},
         )

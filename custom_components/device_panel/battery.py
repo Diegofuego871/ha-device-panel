@@ -312,7 +312,7 @@ class BatteryWatch:
             title = push.title(hass, opts, "battery", "battery_title_many", count=len(ordered))
             url = push.panel_url()
             icon = await push_icon.async_common_icon(hass, [self._domain(d) for d in ordered])
-            await push.async_push(hass, target, title, message, push.notification_data(hass, f"{DOMAIN}_battery", url, icon=icon))
+            await push.async_push(hass, target, title, message, push.notification_data(hass, f"{DOMAIN}_battery", url, icon=icon), topic="battery")
             return
         for dev in ordered:
             item = low[dev]
@@ -322,7 +322,7 @@ class BatteryWatch:
             url = push.device_url(opts[CONF_NOTIFY_CLICK], dev)
             icon = await push_icon.async_integration_icon(hass, self._domain(dev))
             data = push.notification_data(hass, f"{DOMAIN}_battery_{dev}", url, icon=icon)
-            await push.async_push(hass, target, push.title(hass, opts, "battery", "battery_title", name=item["name"]), message, data)
+            await push.async_push(hass, target, push.title(hass, opts, "battery", "battery_title", name=item["name"]), message, data, topic="battery", quiet={"label": f"{item['name']} ({level})" if level else item["name"]})
 
     def _update_persistent(self, opts: dict[str, Any], low: dict[str, dict[str, Any]], has_new: bool) -> None:
         hass = self.hass

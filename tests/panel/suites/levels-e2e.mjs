@@ -8,8 +8,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { integ: "Ausfall|Batterie|Laden|Neu|Empfang|Geräte", dev: "Ausfall|Batterie|Laden|Empfang", noBat: "Dieses Gerät meldet keinen Batteriestand.", noBatInteg: "Diese Integration hat keine Geräte mit Batterie.", glob: "Übersicht|Ausfall|Batterie|Laden|Neu|Updates|Empfang|Integrationen" },
-  en: { integ: "Outage|Battery|Charging|New|Signal|Devices", dev: "Outage|Battery|Charging|Signal", noBat: "This device does not report a battery level.", noBatInteg: "This integration has no devices with a battery.", glob: "Overview|Outage|Battery|Charging|New|Updates|Signal|Integrations" },
+  de: { integ: "Ausfall|Batterie|Laden|Neu|Empfang|Geräte", dev: "Ausfall|Batterie|Laden|Empfang", noBat: "Dieses Gerät meldet keinen Batteriestand.", noBatInteg: "Diese Integration hat keine Geräte mit Batterie.", glob: "Übersicht|Ausfall|Batterie|Laden|Neu|Updates|Ruhezeit|Empfang|Integrationen" },
+  en: { integ: "Outage|Battery|Charging|New|Signal|Devices", dev: "Outage|Battery|Charging|Signal", noBat: "This device does not report a battery level.", noBatInteg: "This integration has no devices with a battery.", glob: "Overview|Outage|Battery|Charging|New|Updates|Quiet time|Signal|Integrations" },
 };
 for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const T_ = T[lang];

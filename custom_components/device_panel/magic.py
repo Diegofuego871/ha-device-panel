@@ -1056,7 +1056,7 @@ class MagicPush:
         if critical:
             data.update(push.critical_data(rule["critical_volume"]))
         activity.record(hass, "info", "magic", code, rule["name"], rule["device_id"], title=title)
-        return await push.async_push(hass, target, title, message, data)
+        return await push.async_push(hass, target, title, message, data, topic="magic", quiet={"label": rule["name"]})
 
     async def async_test(self, raw: dict[str, Any], which: str = "main") -> bool:
         """Test: eine echte Meldung mit dem jetzigen Wert an den gewählten Empfänger."""

@@ -307,7 +307,7 @@ class StatusWatch:
             title = push.text(hass, "status_load_title", what=what, value=round(value))
             message = push.text(hass, "status_load_text", limit=limit, minutes=minutes, time=clock)
         data = push.notification_data(hass, f"device_panel_status_load_{kind}", push.panel_url(app="status", tab="system"))
-        await push.async_push(hass, target, title, message, data)
+        await push.async_push(hass, target, title, message, data, topic="status")
 
     @callback
     def _on_tick(self, _now: Any) -> None:
@@ -353,7 +353,7 @@ class StatusWatch:
             title, message = push.text(hass, "status_down_title", part=part), push.text(hass, "status_down_text", minutes=minutes, time=clock)
         # Eine Meldung je Teil: "läuft wieder" ersetzt "steht"
         data = push.notification_data(hass, f"device_panel_status_{key}", push.panel_url(app="status"))
-        await push.async_push(hass, target, title, message, data)
+        await push.async_push(hass, target, title, message, data, topic="status")
 
 
 # -- WebSocket ------------------------------------------------------------------
