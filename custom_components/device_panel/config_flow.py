@@ -60,6 +60,7 @@ from .const import (
     CONF_NOTIFY_EXCLUDE,
     CONF_NOTIFY_FIELDS,
     CONF_NOTIFY_GROUP,
+    CONF_NOTIFY_GROUP_MIN,
     CONF_NOTIFY_ONLINE,
     CONF_NOTIFY_OUTAGE,
     CONF_OUTAGE_PERSISTENT,
@@ -267,6 +268,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Required(CONF_NOTIFY_OUTAGE, default=values[CONF_NOTIFY_OUTAGE]): bool,
                     vol.Required(CONF_NOTIFY_ONLINE, default=values[CONF_NOTIFY_ONLINE]): bool,
                     vol.Required(CONF_NOTIFY_GROUP, default=values[CONF_NOTIFY_GROUP]): bool,
+                    vol.Required(CONF_NOTIFY_GROUP_MIN, default=values[CONF_NOTIFY_GROUP_MIN]): _number(CONF_NOTIFY_GROUP_MIN),
                     vol.Required(CONF_OUTAGE_PERSISTENT, default=values[CONF_OUTAGE_PERSISTENT]): bool,
                     vol.Optional(CONF_NOTIFY_FIELDS, default=values[CONF_NOTIFY_FIELDS]): SelectSelector(
                         SelectSelectorConfig(

@@ -426,7 +426,7 @@
     if (!["{facts}", ...PROMPT_GROUPS].some((v) => text.includes(v))) return "no_facts";
     return null;
   };
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [2, 80], charge_stall: [5, 120], routines_catch_up: [0, 60], status_cpu_limit: [1, 100], status_ram_limit: [1, 100], status_disk_limit: [1, 100], status_cpu_minutes: [1, 60], status_ram_minutes: [1, 60], status_disk_minutes: [1, 60] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], notify_group_min: [2, 20], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [2, 80], charge_stall: [5, 120], routines_catch_up: [0, 60], status_cpu_limit: [1, 100], status_ram_limit: [1, 100], status_disk_limit: [1, 100], status_cpu_minutes: [1, 60], status_ram_minutes: [1, 60], status_disk_minutes: [1, 60] };
   // Inhalt der Batterie-Meldung wie options_api.BATTERY_FIELDS (seit 0.34.0).
   const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
   // Inhalt der Meldung bei neuen Geräten wie const.NEW_FIELDS (seit 1.24.0).
@@ -630,7 +630,7 @@
     offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, offline_after_integrations: {}, notify_delay_integrations: {}, battery_push: false, battery_persistent: false,
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
     exclude_integrations: [], exclude_types: [], exclude_devices: [], notify_service: "none", notify_service_outage: "", notify_service_battery: "", notify_service_charge: "", notify_service_new: "", notify_service_updates: "", notify_service_routines: "", notify_service_panelupdate: "", update_check_time: "", update_notify: false, notify_click_target: "panel",
-    notify_outage: false, notify_online: false, notify_group: true, hide_chips: [], hide_connections: [], connection_order: [], chip_order: [], connection_integrations: {}, type_integrations: {},
+    notify_outage: false, notify_online: false, notify_group: true, notify_group_min: 3, hide_chips: [], hide_connections: [], connection_order: [], chip_order: [], connection_integrations: {}, type_integrations: {},
     show_service_devices: false, show_disabled_devices: false, update_check: true, ai_assessment: false, ai_task_entity: "", ai_prompt: "",
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],

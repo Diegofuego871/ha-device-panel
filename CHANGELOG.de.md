@@ -7,6 +7,24 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.94.0] - 2026-10-18
+
+Ausfälle werden pro Integration zusammengefasst.
+
+### Geändert
+
+- **Eine Meldung pro Integration** statt einer für alles, was zufällig im selben Moment ausfällt. Fallen mehrere Geräte **einer Integration** zusammen aus, kommt eine Meldung für diese Integration ("Zigbee Home Automation: 7 Geräte ausgefallen", mit den ersten sechs Namen, "und 1 weitere" und dem Beginn des Ausfalls). Weniger Geräte als die Schwelle kommen einzeln. Geräte anderer Integrationen werden nicht mehr in die gemeinsame Meldung gezogen; vorher blieb eine gemischte Gruppe eine gemischte Gruppe ohne klare Ursache.
+- Die erste Meldung einer Integration **wartet bis zu eine Minute**, bis auch die übrigen Geräte fällig sind, damit alle in einer Meldung stehen (ein einzelnes Gerät einer Integration wird nicht verzögert). **Wieder online** wird ebenso zusammengefasst: ist das letzte gemeldete Gerät der Integration zurück, oder nach einer Minute, kommt eine Meldung "Zigbee Home Automation: 7 Geräte wieder online" mit demselben Tag, sie **ersetzt** also die Ausfall-Meldung auf dem Handy.
+- Der Schalter "Sammelausfall zusammenfassen" heisst jetzt **"Ausfälle pro Integration zusammenfassen"**.
+
+### Hinzugefügt
+
+- Neue Einstellung **"Zusammenfassen ab"** (Einstellungen, "Überwachung und Meldungen" › "Ausfall", unter dem Schalter; 2 bis 20 Geräte, Standard 3). Sie steht auch in den Optionen der Integration in Home Assistant.
+
+### Intern
+
+- Die Tests laufen parallel (rund 13 statt 35 Minuten; fehlgeschlagene Suiten werden einmal wiederholt und als instabil gekennzeichnet), ein Konsistenz-Test prüft jede "eigene Einstellung pro Gerät" gegen Backend und Panel (`tests/test_consistency.py`, Suite `consistency`), und die README-Screenshots zeigen die aktuellen Dialoge.
+
 ## [2.93.0] - 2026-10-18
 
 Beim Ausblenden eines Geräts wird nachgefragt.
@@ -3975,6 +3993,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.94.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.94.0
 [2.93.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.93.0
 [2.92.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.1
 [2.92.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.0

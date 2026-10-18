@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.94.0, Ausfälle pro Integration zusammenfassen)
+
+- Wunsch des Nutzers: bei Ausfall einer Integration nicht alle Geräte einzeln melden, sondern gruppiert pro Integration (nicht an Router oder Hub gebunden). `outage.py`: `_collect_outages` (Sammelzeit `GROUP_WAIT_SECONDS = 60` je Integration, sobald von ihr mindestens `notify_group_min` Geräte offline sind; einzelne Geräte warten nie), `_async_push` gruppiert je Integration (ab `notify_group_min`, Standard 3, Option 2 bis 20, auch im HA-Optionsfluss), `_async_push_group` (Titel `outage_title_integ`/`online_title_integ`, höchstens 6 Namen, "und N weitere", Beginn; Tag `device_panel_incident_<domain>`, die Rückkehr ersetzt den Ausfall), `_collect_back` (Rückkehrer warten auf weitere, bis kein gemeldetes Gerät der Integration mehr fehlt oder eine Minute). Sammelzeiten nur im Speicher: ein Neustart in dieser Minute verliert gepufferte Rückkehrer (kein Ausfall-Eintrag, nur die Rückkehr-Meldung). Tests: `test_outage_group.py`, `groupmin`-Suite; `test_outage`/`test_push_icon` angepasst (`async_block_till_done(wait_background_tasks=True)` nach dem Timer).
+- Offen (Reihenfolge laut Nutzer): Ruhezeiten (global, Zusammenfassung nach der Ruhezeit, wählbar; kritische Meldungen sofort), dann Einstellungen sichern/wiederherstellen (Einstellungen › Panel). Mockups zuerst.
+
 ## Stand (Testlauf: parallel)
 
 - `tests/panel/run.mjs` startet die Suiten parallel (`PANEL_JOBS`, Standard: Kerne minus eins, höchstens 4; `PANEL_JOBS=1` wie früher nacheinander): voller Lauf rund 13 statt 35 Minuten. Der Server ist reiner Dateiserver, jeder Browser hält seinen Zustand. Fehlgeschlagene Suiten laufen am Ende einzeln noch einmal (`PANEL_RETRY=0` schaltet ab); bestehen sie, werden sie als "instabil" ausgewiesen, sonst gilt der Fehler. Beobachtet unter Last (6 Jobs): `brand`, `dlgheight`, `segjump`, `settingspin` sporadisch; bei 4 Jobs alle grün. `graphics-e2e` wartet bis zu 3 s, bis die Reiter-Kapsel steht (war sporadisch rot, auch ohne Last). `test_new_devices::test_nothing_when_off_and_only_after_switching_on` war einmal in der CI rot (2 statt 1 Meldung), lokal in 40 Läufen nie; Ursache nicht gefunden, beobachten.

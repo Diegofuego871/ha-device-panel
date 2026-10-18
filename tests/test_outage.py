@@ -120,14 +120,21 @@ async def test_group_outage(hass: HomeAssistant, setup, freezer) -> None:
     for light in lights:
         hass.states.async_set(light, "unavailable")
     await _tick(hass, setup, freezer, 3)
+    # Fällig, aber die Integration wartet die Sammelzeit auf weitere Geräte
+    assert calls == []
+    await _tick(hass, setup, freezer, 1.1)
+    await hass.async_block_till_done(wait_background_tasks=True)
     assert len(calls) == 1
-    assert calls[0].data["title"] == "🚨 Group outage: 3 devices"
-    assert calls[0].data["message"].startswith("Zigbee 0, Zigbee 1, Zigbee 2 · probably ")
+    assert calls[0].data["title"] == "🚨 Zigbee Home Automation: 3 devices offline"
+    assert calls[0].data["message"].startswith("Zigbee 0, Zigbee 1, Zigbee 2 · since ")
     assert calls[0].data["data"]["url"] == "/device-panel"
+    assert calls[0].data["data"]["tag"] == f"{DOMAIN}_incident_zha"
     for light in lights:
         hass.states.async_set(light, "on")
     await _tick(hass, setup, freezer, 1)
-    assert calls[1].data["title"] == "🟢 Back online: 3 devices"
+    # Alle zurück: eine Meldung, gleicher Tag (ersetzt die Ausfall-Meldung auf dem Handy)
+    assert calls[1].data["title"] == "🟢 Zigbee Home Automation: 3 devices back online"
+    assert calls[1].data["data"]["tag"] == f"{DOMAIN}_incident_zha"
     # Zusammenfassen aus: einzeln
     await _options(hass, notify_group=False)
     for light in lights:

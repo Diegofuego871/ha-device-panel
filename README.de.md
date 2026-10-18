@@ -49,7 +49,7 @@ Die Suche läuft über alle Spalten. Filter-Chips grenzen die Liste ein: Warnung
 
 Der Knopf "Ansicht" (Handy: die Zeile "Sortierung & Ansicht") öffnet einen Dialog mit zwei Reitern. "Spalten" (Handy: "Sortierung"): Spalten mit dem Auge ein- oder ausblenden, per Ziehen in jede Reihenfolge bringen, die Liste gruppieren oder als eine Liste zeigen; das gilt pro Benutzer, für Desktop und Handy getrennt. "Filter-Chips" (nur Administratoren): Chips ausblenden, umordnen und anheften, das gilt für alle Benutzer. Änderungen zeigt die Liste gleich, übernommen werden sie erst mit "Speichern"; beim Schliessen fragt das Panel "Änderungen verwerfen?". Ein Herz markiert Favoriten (eigener Chip), und in den Einstellungen unter "Panel" › "Allgemein" machst du das Panel zu deiner eigenen Startseite in Home Assistant (Browser und Companion-App).
 
-<p align="center"><img src="docs/screenshots/de/columns.png" alt="Dialog Anpassen mit Auge und Griff" width="560"></p>
+<p align="center"><img src="docs/screenshots/de/columns.png" alt="Dialog Ansicht mit den Reitern Spalten und Filter-Chips, Auge und Griff" width="560"></p>
 
 ## Alles zu einem Gerät
 
@@ -101,7 +101,7 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 <p align="center"><img src="docs/graphics/de/notification-flow.png" alt="Sechs Schritte vom Ausfall eines Geräts bis zur Meldung, mit der Ebene, die jeden Schritt entscheidet" width="900"></p>
 
 - **Zwei Zeiten, nicht addiert:** "Ausgefallen nach" (Standard 2 Minuten) entscheidet, wann das Panel das Gerät als ausgefallen zeigt, "Erst melden nach" entscheidet, wann die Meldung kommt; beide laufen ab Beginn des Ausfalls, und die zweite kann nicht kürzer sein als die erste; beide lassen sich global, pro Integration und pro Gerät einstellen
-- **Sammelmeldung:** ab drei Geräten gleichzeitig kommt eine Meldung mit der vermuteten Ursache statt vieler
+- **Eine Meldung pro Integration:** fallen mehrere Geräte einer Integration zusammen aus (Standard ab drei, einstellbar), kommt eine Meldung für diese Integration statt vieler; die Meldung wartet bis zu einer Minute auf weitere Geräte, die Rückkehr wird ebenso zusammengefasst
 - **Wieder online:** "Wieder online" mit der Dauer des Ausfalls ersetzt die Ausfall-Meldung
 - **Knöpfe in der Meldung:** das Gerät im Panel öffnen oder das Gerät in der Companion-App 24 Stunden stumm schalten
 - **Anhaltende Benachrichtigung:** auf Wunsch zusätzlich eine Meldung in Home Assistant, solange Geräte ausgefallen sind, pro Integration

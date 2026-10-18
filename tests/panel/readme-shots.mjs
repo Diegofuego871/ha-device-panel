@@ -177,8 +177,10 @@ for (const lang of langs) {
       }
     });
     await step("settings-section-", async () => {
-      for (const id of ["devices", "look", "routines", "updates"]) {
+      for (const id of ["devices", "routines", "updates"]) {
         await settingsOpen(id);
+        // Abschnitt "Panel": der Unterreiter "Updates" (tägliche Prüfung, Zeit, automatisch installieren, Erinnerung)
+        if (id === "updates" && (await handle('[data-set="subtab"][data-key="pupdates"]'))) await tap('[data-set="subtab"][data-key="pupdates"]');
         await ev(`r.querySelector('[data-set="section"][data-id="${id}"]').scrollIntoView({ block: "start" })`);
         await shotDlg(`settings-section-${id}`, "dialog.settings");
         await closeDialogs();
@@ -232,9 +234,14 @@ for (const lang of langs) {
       await shotDlg("magic-wizard", await ev(`return r.querySelector("dialog.magic-dlg") ? "dialog.magic-dlg" : "dialog.mg-dlg"`));
     });
     await step("columns", async () => {
+      // Seit 2.87.0: Dialog "Ansicht" (Reiter Spalten bzw. Sortierung) in den Einstellungen im Ansichtsmodus
       await tap(".view-btn");
-      await wait(`return r.querySelector("dialog.cols-dlg")?.open`);
-      await shotDlg("columns", "dialog.cols-dlg");
+      await wait(`return r.querySelector("dialog.settings")?.open`);
+      // Die Reiter ("Spalten", "Filter-Chips") erscheinen, sobald die Optionen geladen sind
+      await wait(`return r.querySelectorAll('dialog.settings [data-set="vtab"]').length >= 2`);
+      await ev(`const d = r.querySelector("dialog.settings"); d.scrollTop = 0; d.querySelectorAll("*").forEach((e) => { if (e.scrollTop) e.scrollTop = 0; })`);
+      await shotDlg("columns", "dialog.settings");
+      await closeDialogs();
     });
     // Das Bluetooth-Gerät wird als erreichbar gezeigt (im Simulator ist es ausgefallen), damit der Weg im Bild nicht leer wirkt
     await step("signal-via", async () => {

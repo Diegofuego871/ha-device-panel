@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "261"
+PANEL_VERSION = "263"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -104,6 +104,9 @@ MONITOR_OFF = "off"
 # gespeicherte kürzere Werte (auch 0 = "sobald ausgefallen") gelten als
 # "Ausgefallen nach" (options_api.values_from); neu Speichern lehnt sie ab.
 CONF_NOTIFY_DELAY = "notify_delay"
+# Ab so vielen Geräten derselben Integration eine gemeinsame Meldung (seit 2.94.0; vorher fest 3, ohne Bezug zur Integration)
+CONF_NOTIFY_GROUP_MIN = "notify_group_min"
+DEFAULT_NOTIFY_GROUP_MIN = 3
 DEFAULT_NOTIFY_DELAY = DEFAULT_OFFLINE_AFTER
 # Push bei neuen Geräten (seit 1.24.0): ein neues Gerät im Geräte-Register meldet
 # das Panel nach dem Sammelfenster (Minuten, CONF_NEW_WINDOW) in einer Meldung mit
@@ -206,6 +209,7 @@ INT_RANGES = {
     CONF_STARTUP_GRACE: (0, 30),
     CONF_BATTERY_LOW: (1, 50),
     CONF_NOTIFY_DELAY: (1, 60),
+    CONF_NOTIFY_GROUP_MIN: (2, 20),
     CONF_ROUTINES_CATCH_UP: (0, 60),
 }
 # Integrationen ohne Push bei schwacher Batterie (seit 0.34.0, Reiter
@@ -297,7 +301,9 @@ CONF_NOTIFY_CLICK = "notify_click_target"
 CONF_NOTIFY_OUTAGE = "notify_outage"
 CONF_NOTIFY_ONLINE = "notify_online"
 CONF_NOTIFY_GROUP = "notify_group"
-NOTIFY_GROUP_MIN = 3
+# Sammelzeit in Sekunden: fällt eine Integration aus, werden ihre Geräte innerhalb weniger Sekunden fällig; die erste Meldung wartet
+# so lange, damit alle in einer Meldung stehen (ebenso bei der Rückkehr)
+GROUP_WAIT_SECONDS = 60
 DATA_OUTAGE = f"{DOMAIN}_outage"
 # Ausfall-Meldungen nach Bild 5 (docs/mockups/panel-v1), seit 0.20.0;
 # "Erst melden nach" (CONF_NOTIFY_DELAY) steht bei den Bereichen oben.

@@ -7,6 +7,24 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.94.0] - 2026-10-18
+
+Outages are combined per integration.
+
+### Changed
+
+- **One notification per integration** instead of one for everything that happens to fail at the same moment. When several devices of **one integration** go offline together, one notification for that integration comes ("Zigbee Home Automation: 7 devices offline", with the first six names, "and 1 more" and the start of the outage). Fewer devices than the threshold are sent one by one. Devices of other integrations are no longer pulled into the combined message; before, a mixed group stayed a mixed group without a clear cause.
+- The first notification of an integration **waits up to one minute** for the other devices to become due, so they all stand in one message (a single device of an integration is not delayed). **Back online** is combined the same way: when the last notified device of the integration is back, or after one minute, one message "Zigbee Home Automation: 7 devices back online" comes with the same tag, so it **replaces** the outage message on the phone.
+- The switch "Combine group outages" is now called **"Combine outages per integration"**.
+
+### Added
+
+- New setting **"Combine from"** (settings, "Monitoring and notifications" › "Outage", below the switch; 2 to 20 devices, default 3). It is also in the options of the integration in Home Assistant.
+
+### Internal
+
+- The tests run in parallel (about 13 instead of 35 minutes; failed suites are repeated once and marked as unstable), a consistency test checks every "own setting per device" against the backend and the panel (`tests/test_consistency.py`, suite `consistency`), and the README screenshots show the current dialogs.
+
 ## [2.93.0] - 2026-10-18
 
 Hiding a device asks for confirmation.
@@ -3874,6 +3892,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.94.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.94.0
 [2.93.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.93.0
 [2.92.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.1
 [2.92.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.0

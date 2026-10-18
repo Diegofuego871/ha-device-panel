@@ -261,7 +261,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="section"][data-id="monitor"]');
     check(`[${tag}] Reiter "Übersicht" zuerst`, await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "overview" && r.querySelectorAll(".lane").length === 5`));
     await tab("outage");
-    check(`[${tag}] vier Zahlenfelder, zwei im Zeitstrahl`, (await ev(`return r.querySelectorAll('.set-sec-body input[type="number"]').length`)) === 4 && (await ev(`return [...r.querySelectorAll('.mtl input[type="number"]')].map(i=>i.dataset.opt).join()`)) === "offline_after,notify_delay");
+    check(`[${tag}] fünf Zahlenfelder (seit 2.94.0 mit "Zusammenfassen ab"), zwei im Zeitstrahl`, (await ev(`return r.querySelectorAll('.set-sec-body input[type="number"]').length`)) === 5 && (await ev(`return [...r.querySelectorAll('.mtl input[type="number"]')].map(i=>i.dataset.opt).join()`)) === "offline_after,notify_delay");
     check(`[${tag}] Feld im Zeitstrahl mit Titel und Einheit`, (await text('.ptl-row:has(input[data-opt="offline_after"]) .ptl-txt > b')) === T.offLabel && (await text('.ptl-row:has(input[data-opt="offline_after"]) .unit')) === T.unit);
     await typeIn('input[data-opt="offline_after"]', "0");
     check(`[${tag}] 0 ist ungültig`, await ev(`return r.querySelector('input[data-opt="offline_after"]').closest(".opt-input").classList.contains("bad")`) && (await text("[data-tl-error]")) === T.range, await text("[data-tl-error]"));

@@ -210,6 +210,10 @@ async def _outage(hass: HomeAssistant, log: Any, freezer, names: list[tuple[str,
     log.evaluate()
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
+    # Mehrere Geräte einer Integration warten die Sammelzeit auf weitere (seit 2.94.0)
+    freezer.tick(timedelta(seconds=61))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done(wait_background_tasks=True)
     return calls
 
 
@@ -239,5 +243,6 @@ async def test_group_outage_mixed_integrations_keeps_device_panel_icon(hass: Hom
     hass.data[DATA_PUSH_IMAGE] = PUSH_IMAGE_URL
     with patch.object(push_icon, "_async_download", AsyncMock(return_value=_png())):
         mixed = await _outage(hass, setup, freezer, [("A", "hue"), ("B", "zha"), ("C", "hue")])
-    assert len(mixed) == 1
-    assert mixed[0].data["data"]["icon_url"] == PUSH_IMAGE_URL
+    # Je Integration weniger als 3 Geräte (seit 2.94.0): drei einzelne Meldungen, jede mit dem Symbol ihrer Integration
+    assert len(mixed) == 3
+    assert {c.data["data"]["icon_url"] for c in mixed} == {f"{PUSH_ICON_URL_PATH}/hue.png", f"{PUSH_ICON_URL_PATH}/zha.png"}

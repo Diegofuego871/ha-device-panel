@@ -6,8 +6,10 @@ Ein Ausfall wird gemeldet, sobald das Protokoll ihn erkennt (also nach
 "Ausgefallen nach"), oder erst, wenn er "Erst melden nach" Minuten dauert;
 kürzere Aussetzer lösen dann weder Ausfall- noch Online-Meldung aus. Die
 Rückkehr kommt mit der Dauer des Ausfalls, nur für gemeldete Ausfälle.
-Werden mehrere Geräte zugleich fällig, kommt wahlweise eine Sammelmeldung
-mit vermuteter Ursache. Welche Geräte gerade als ausgefallen bekannt und
+Fallen mehrere Geräte derselben Integration zusammen aus (ab "Zusammenfassen
+ab", Standard 3), kommt wahlweise eine Meldung je Integration statt vieler
+einzelner (seit 2.94.0): die erste Meldung wartet eine Sammelzeit, bis alle
+Geräte der Integration fällig sind; ebenso die Rückkehr. Welche Geräte gerade als ausgefallen bekannt und
 welche davon gemeldet sind, steht in einer eigenen Datei: Ein Neustart
 meldet einen laufenden Ausfall nicht erneut, die Rückkehr kommt auch nach
 einem Neustart, und ein noch nicht fälliger Ausfall wird nach dem Start
@@ -43,6 +45,7 @@ from .const import (
     CONF_NOTIFY_EXCLUDE,
     CONF_NOTIFY_FIELDS,
     CONF_NOTIFY_GROUP,
+    CONF_NOTIFY_GROUP_MIN,
     CONF_NOTIFY_ONLINE,
     CONF_NOTIFY_OUTAGE,
     CONF_OUTAGE_PERSISTENT,
@@ -50,7 +53,7 @@ from .const import (
     DOMAIN,
     MUTE_ACTION_PREFIX,
     MUTE_HOURS,
-    NOTIFY_GROUP_MIN,
+    GROUP_WAIT_SECONDS,
     NOTIFY_NONE,
     PERSISTENT_OUTAGE_ID,
     STORAGE_VERSION,
@@ -61,6 +64,8 @@ from .options_api import notify_target, effective
 _LOGGER = logging.getLogger(__name__)
 
 STORE_KEY = f"{DOMAIN}.notify"
+# Namen in einer gemeinsamen Meldung, der Rest als "und N weitere"
+GROUP_NAMES_MAX = 6
 # Ereignis der Companion-App, wenn ein Knopf unter einer Meldung getippt wird.
 EVENT_ACTION = "mobile_app_notification_action"
 
@@ -86,6 +91,11 @@ class OutageNotifier:
         self._shown = False
         self._message: str | None = None
         self._refresh = True
+        # Sammelzeit je Integration (seit 2.94.0): Beginn des Wartens auf weitere Geräte derselben Integration (Ausfall) und
+        # Rückkehrer, die auf weitere warten; nur im Speicher (nach einem Neustart beginnt das Warten neu)
+        self._hold: dict[str, float] = {}
+        self._back: dict[str, list[tuple[str, float]]] = {}
+        self._back_at: dict[str, float] = {}
 
     @property
     def offline(self) -> dict[str, float]:
@@ -205,7 +215,8 @@ class OutageNotifier:
         opts = effective(self.hass)
         now = time.time()
         # "Erst melden nach" je Gerät (seit 2.91.0): eigenes, sonst das der Integration, sonst das globale
-        due = [(dev, start) for dev, start in self._offline.items() if dev not in self._notified and start + self._delay(opts, dev) <= now]
+        due_all = [(dev, start) for dev, start in self._offline.items() if dev not in self._notified and start + self._delay(opts, dev) <= now]
+        due = self._collect_outages(opts, due_all, now)
         if due:
             # Fällig heisst erledigt, auch wenn für das Gerät kein Push geht
             # (aus, stumm, Integration ohne Push): sonst käme er später.
@@ -216,8 +227,16 @@ class OutageNotifier:
         if notify_target(opts, "outage") != NOTIFY_NONE:
             if due and opts[CONF_NOTIFY_OUTAGE]:
                 await self._async_push(opts, [x for x in due if self._pushable(opts, x[0], now)], online=False)
-            if came_back and opts[CONF_NOTIFY_ONLINE]:
-                await self._async_push(opts, [x for x in came_back if self._pushable(opts, x[0], now)], online=True)
+            if opts[CONF_NOTIFY_ONLINE]:
+                ready = self._collect_back(opts, came_back or [], now)
+                if ready:
+                    await self._async_push(opts, [x for x in ready if self._pushable(opts, x[0], now)], online=True)
+            else:
+                self._back.clear()
+                self._back_at.clear()
+        else:
+            self._back.clear()
+            self._back_at.clear()
         self._update_persistent(opts, new_outage)
         self._schedule(opts, now)
 
@@ -252,7 +271,10 @@ class OutageNotifier:
         if self._timer is not None:
             self._timer()
             self._timer = None
-        pending = [start + self._delay(opts, dev) for dev, start in self._offline.items() if dev not in self._notified]
+        # Schon fällige, aber wartende Geräte (Sammelzeit) zählen nicht: für sie gilt der Termin der Sammelzeit
+        pending = [due for dev, start in self._offline.items() if dev not in self._notified and (due := start + self._delay(opts, dev)) > now]
+        pending += [began + GROUP_WAIT_SECONDS for began in self._hold.values()]
+        pending += [began + GROUP_WAIT_SECONDS for began in self._back_at.values()]
         if pending:
             self._timer = async_call_later(self.hass, max(1.0, min(pending) - now + 1), self._on_timer)
 
@@ -280,24 +302,19 @@ class OutageNotifier:
         if not info:
             return
         kind = "online" if online else "outage"
-        if opts[CONF_NOTIFY_GROUP] and len(info) >= NOTIFY_GROUP_MIN:
-            # Viele zugleich: eine Meldung, mit gemeinsamer Integration als
-            # vermutete Ursache.
-            domains = {i["domain"] for i in info}
-            parts = [", ".join(i["name"] for i in info)]
-            if not online and len(domains) == 1 and next(iter(domains)):
-                parts.append(push.text(hass, "outage_cause", integration=info[0]["integration"]))
-            await push.async_push(
-                hass,
-                target,
-                push.title(hass, opts, "online" if online else "group", f"{kind}_title_many", count=len(info)),
-                " · ".join(parts),
-                push.notification_data(
-                    hass, f"{DOMAIN}_incident", push.panel_url(), icon=await push_icon.async_common_icon(hass, list(domains))
-                ),
-            )
-            return
-        for i in info:
+        singles = info
+        if opts[CONF_NOTIFY_GROUP]:
+            # Je Integration eine Meldung, sobald genug Geräte zusammen sind; die übrigen kommen einzeln
+            by_domain: dict[str, list[dict[str, Any]]] = {}
+            for i in info:
+                by_domain.setdefault(i["domain"] or "", []).append(i)
+            singles = []
+            for domain, members in by_domain.items():
+                if domain and len(members) >= opts[CONF_NOTIFY_GROUP_MIN]:
+                    await self._async_push_group(opts, target, domain, members, online)
+                else:
+                    singles.extend(members)
+        for i in singles:
             url = push.device_url(opts[CONF_NOTIFY_CLICK], i["id"])
             if online:
                 parts = [push.text(hass, "online_after", duration=push.duration(hass, i["value"])), i["area"]]
@@ -312,6 +329,77 @@ class OutageNotifier:
             await push.async_push(
                 hass, target, push.title(hass, opts, kind, f"{kind}_title", name=i["name"]), " · ".join(x for x in parts if x), data
             )
+
+    async def _async_push_group(self, opts: dict[str, Any], target: str, domain: str, members: list[dict[str, Any]], online: bool) -> None:
+        """Eine Meldung für mehrere Geräte einer Integration (Ausfall oder Rückkehr); der gleiche Tag lässt die Rückkehr den Ausfall ersetzen."""
+        hass = self.hass
+        kind = "online" if online else "outage"
+        names = [i["name"] for i in members]
+        shown = ", ".join(names[:GROUP_NAMES_MAX])
+        if len(names) > GROUP_NAMES_MAX:
+            shown += " " + push.text(hass, "group_more", count=len(names) - GROUP_NAMES_MAX)
+        parts = [shown]
+        if not online:
+            parts.append(push.text(hass, "outage_since", time=_local_time(min(i["value"] for i in members))))
+        title = push.title(
+            hass, opts, "online" if online else "group", f"{kind}_title_integ", integration=members[0]["integration"] or domain, count=len(members)
+        )
+        data = push.notification_data(hass, f"{DOMAIN}_incident_{domain}", push.panel_url(), icon=await push_icon.async_integration_icon(hass, domain))
+        await push.async_push(hass, target, title, " · ".join(parts), data)
+
+    def _domain(self, dev: str) -> str:
+        device = dr.async_get(self.hass).async_get(dev)
+        return (primary_domain(self.hass, device) or "") if device is not None else ""
+
+    def _collect_outages(self, opts: dict[str, Any], due: list[tuple[str, float]], now: float) -> list[tuple[str, float]]:
+        """
+        Fällige Ausfälle, ohne die Geräte einer Integration, die noch auf weitere warten (Sammelzeit): sind von einer Integration
+        so viele Geräte ausgefallen, dass eine gemeinsame Meldung möglich wäre, beginnt mit dem ersten fälligen Gerät eine Sammelzeit.
+        """
+        if not opts[CONF_NOTIFY_GROUP]:
+            self._hold.clear()
+            return due
+        offline_per_domain: dict[str, int] = {}
+        for dev in self._offline:
+            domain = self._domain(dev)
+            if domain:
+                offline_per_domain[domain] = offline_per_domain.get(domain, 0) + 1
+        ready: list[tuple[str, float]] = []
+        waiting: set[str] = set()
+        for dev, start in due:
+            domain = self._domain(dev)
+            if domain and offline_per_domain.get(domain, 0) >= opts[CONF_NOTIFY_GROUP_MIN]:
+                began = self._hold.setdefault(domain, now)
+                if now - began < GROUP_WAIT_SECONDS:
+                    waiting.add(domain)
+                    continue
+            ready.append((dev, start))
+        for domain in list(self._hold):
+            if domain not in waiting:
+                del self._hold[domain]
+        return ready
+
+    def _collect_back(self, opts: dict[str, Any], came_back: list[tuple[str, float]], now: float) -> list[tuple[str, float]]:
+        """
+        Rückkehrer, die jetzt gemeldet werden: Kommen Geräte einer Integration zurück, deren Ausfall noch andere Geräte betrifft, warten
+        sie die Sammelzeit auf weitere (oder bis kein gemeldetes Gerät der Integration mehr fehlt), damit eine Meldung reicht.
+        """
+        if not opts[CONF_NOTIFY_GROUP]:
+            return came_back
+        ready: list[tuple[str, float]] = []
+        for dev, duration in came_back:
+            domain = self._domain(dev)
+            if domain:
+                self._back.setdefault(domain, []).append((dev, duration))
+                self._back_at.setdefault(domain, now)
+            else:
+                ready.append((dev, duration))
+        for domain in list(self._back):
+            missing = any(dev in self._notified and self._domain(dev) == domain for dev in self._offline)
+            if not missing or now - self._back_at[domain] >= GROUP_WAIT_SECONDS:
+                ready.extend(self._back.pop(domain))
+                del self._back_at[domain]
+        return ready
 
     def message_parts(self, opts: dict[str, Any], i: dict[str, Any]) -> list[str]:
         """Inhalt einer Ausfall-Meldung nach "Inhalt der Meldung", in fester Folge."""

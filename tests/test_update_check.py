@@ -152,6 +152,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "notify_outage": False,
         "notify_online": False,
         "notify_group": True,
+        "notify_group_min": 3,
         "notify_delay": 2,
         "notify_fields": ["area", "integration", "since"],
         "notify_exclude_integrations": [],
@@ -193,7 +194,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "battery_push_daily": "new",
     }
     assert result["limits"] == {
-        "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [1, 50], "notify_delay": [1, 60], "new_window": [1, 60], "updates_window": [1, 60], "charge_full": [50, 100], "charge_rise": [2, 80], "charge_stall": [5, 120], "routines_catch_up": [0, 60],
+        "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [1, 50], "notify_delay": [1, 60], "notify_group_min": [2, 20], "new_window": [1, 60], "updates_window": [1, 60], "charge_full": [50, 100], "charge_rise": [2, 80], "charge_stall": [5, 120], "routines_catch_up": [0, 60],
         "status_cpu_limit": [1, 100], "status_ram_limit": [1, 100], "status_disk_limit": [1, 100], "status_cpu_minutes": [1, 60], "status_ram_minutes": [1, 60], "status_disk_minutes": [1, 60],
     }
     assert set(result["panel"]) == {"prerelease", "prerelease_hacs", "auto_update"}
@@ -292,7 +293,7 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
     # Ausfall, Batterie, pro Integration), Ausschlüsse, Anzeige, KI, Updates.
     assert [str(k) for k in result["data_schema"].schema] == [
         "notify_service", "notify_click_target", "offline_after", "notify_delay", "flaky_outages", "startup_grace",
-        "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields",
+        "notify_outage", "notify_online", "notify_group", "notify_group_min", "outage_persistent", "notify_fields",
         "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields",
         "notify_charge", "charge_full", "charge_rise", "notify_charge_stop", "charge_stall", "charge_live", "charge_integrations",
         "notify_new", "new_window", "new_persistent", "new_fields",

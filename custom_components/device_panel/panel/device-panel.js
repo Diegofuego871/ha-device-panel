@@ -388,6 +388,10 @@ const CONN_MANUAL = Object.keys(CONN).filter((k) => k !== "unknown");
 const LOGO = `<svg width="30" height="30" viewBox="22 22 212 212" aria-hidden="true"><defs><linearGradient id="dpg" x1="28" y1="20" x2="228" y2="236" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7ADFFD"/><stop offset=".5" stop-color="#22A9F9"/><stop offset="1" stop-color="#1C7DF9"/></linearGradient></defs><path d="M60 44 H112 A84 84 0 0 1 112 212 H60 Z" fill="none" stroke="url(#dpg)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><path d="M86 128 H104 L118 94 L136 164 L150 128 H168" fill="none" stroke="url(#dpg)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 // Kleines Logo für die Vorschau einer Push-Meldung.
 // Easter Egg (seit 2.89.0): Zahl der Klicks aufs Logo und Dauer des Herzschlags
+// Arten "eigene Einstellung pro Gerät" (wie die Schlüssel von get_options.overrides): an einer Stelle, damit keine vergessen wird
+// (tests/panel/suites/consistency-e2e.mjs und tests/test_consistency.py prüfen das gegen das Backend)
+const RESET_KINDS = ["battery", "notify", "connection", "signal", "offline", "notify_delay", "charge"];
+const newResets = () => Object.fromEntries(RESET_KINDS.map((k) => [k, new Set()]));
 const EE_TAPS = 5;
 const EE_MS = 7400;
 const LOGO_SMALL = LOGO.replace('width="30" height="30"', 'width="14" height="14"').replaceAll("dpg", "dpgs");
@@ -404,7 +408,7 @@ const UPDATE_KINDS = ["core", "addons", "hacs", "devices"];
 // für den Punkt am Reiter und das Etikett "geändert" des Abschnitts.
 const MON_TAB_KEYS = {
   overview: ["notify_service", "notify_click_target"],
-  outage: ["notify_service_outage", "offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "emoji_outage", "emoji_group", "emoji_online", "reset_offline", "reset_notify_delay", "reset_notify"],
+  outage: ["notify_service_outage", "offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "notify_group_min", "outage_persistent", "notify_fields", "emoji_outage", "emoji_group", "emoji_online", "reset_offline", "reset_notify_delay", "reset_notify"],
   charge: ["notify_service_charge", "notify_charge", "charge_live", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations", "emoji_charge", "emoji_charge_stop", "reset_charge"],
   battery: ["notify_service_battery", "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "emoji_battery", "reset_battery"],
   new: ["notify_service_new", "notify_new", "new_window", "new_persistent", "new_fields", "emoji_new"],
@@ -5596,7 +5600,7 @@ class DevicePanel extends HTMLElement {
     // Wert zurückgeht (Variante A, docs/mockups/override-v1).
     this._settings = {
       loading: true, error: null, saveError: null, saving: false, data: null, draft: null, open: new Set(tab === "overview" ? [] : ["monitor"]), info: new Set(),
-      resets: { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set(), notify_delay: new Set(), charge: new Set() },
+      resets: newResets(),
       // Reiter von "Überwachung und Meldungen", gewählte Integration, Filter der Liste.
       tab, integ: null, integFilter: "all",
       // Reiter von "Geräte im Panel" und "Darstellung".
@@ -6103,15 +6107,7 @@ class DevicePanel extends HTMLElement {
   _settingsResetChanges() {
     const st = this._settings;
     if (!st?.resets) return [];
-    return [
-      ...[...st.resets.battery].map(() => "reset_battery"),
-      ...[...st.resets.notify].map(() => "reset_notify"),
-      ...[...st.resets.connection].map(() => "reset_connection"),
-      ...[...st.resets.signal].map(() => "reset_signal"),
-      ...[...st.resets.offline].map(() => "reset_offline"),
-      ...[...st.resets.notify_delay].map(() => "reset_notify_delay"),
-      ...[...st.resets.charge].map(() => "reset_charge"),
-    ];
+    return RESET_KINDS.flatMap((k) => [...st.resets[k]].map(() => `reset_${k}`));
   }
 
   _settingsChanges() {
@@ -7431,6 +7427,7 @@ class DevicePanel extends HTMLElement {
       ${ui.row("notify_outage", t("optOutage"), ui.sw("notify_outage", t("optOutage")), target || !d.notify_outage ? t("optOutageShort") : null, null, target || !d.notify_outage ? null : t("noTargetWarn"))}
       ${ui.row("notify_online", t("optOnline"), ui.sw("notify_online", t("optOnline")), t("optOnlineShort"), null)}
       ${ui.row("notify_group", t("optGroup"), ui.sw("notify_group", t("optGroup")), t("optGroupShort"), null)}
+      ${d.notify_group ? ui.row("notify_group_min", t("optGroupMin"), ui.num("notify_group_min", t("unitDevices"), t("optGroupMin")), t("optGroupMinShort"), null) : ""}
       ${ui.row("outage_persistent", t("optPersistent"), ui.sw("outage_persistent", t("optPersistent")), t("optOutagePersistentShort"), null)}
       ${this._notifyFieldsHtml(d, changes)}
       <div class="mon-grp">${escape(t("grpDiff"))}</div>
@@ -8887,7 +8884,7 @@ class DevicePanel extends HTMLElement {
     if (!st) return;
     const changes = this._settingsEntryChanges();
     const extra = this._settingsExtraChanges();
-    const resets = { battery: [...st.resets.battery], notify: [...st.resets.notify], connection: [...st.resets.connection], signal: [...st.resets.signal], offline: [...st.resets.offline], notify_delay: [...st.resets.notify_delay], charge: [...st.resets.charge] };
+    const resets = Object.fromEntries(RESET_KINDS.map((k) => [k, [...st.resets[k]]]));
     const anyReset = Object.values(resets).some((list) => list.length > 0);
     const viewChanged = this._viewChanged();
     if ((!changes.length && !extra.length && !anyReset && !viewChanged) || Object.keys(this._settingsErrors()).length) return;
@@ -8954,7 +8951,7 @@ class DevicePanel extends HTMLElement {
     if (data.panel) this._applyPanelSettings(data.panel);
     st.extraBase = this._extraBase();
     st.extra = { ...st.extraBase };
-    st.resets = { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set(), notify_delay: new Set(), charge: new Set() };
+    st.resets = newResets();
     st.saving = false;
     st.saved = true;
     this._renderSettings();
