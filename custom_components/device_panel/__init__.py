@@ -18,7 +18,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.storage import Store
 from homeassistant.loader import async_get_integration
 
-from . import activity, options_api, update_check, updates
+from . import activity, backup, options_api, update_check, updates
 from .availability import RANGES, AvailabilityLog
 from .availability import STORAGE_KEY as AVAILABILITY_STORE_KEY
 from .ai_memory import DATA_KEY as AI_MEMORY_DATA_KEY, STORE_KEY as AI_MEMORY_STORE_KEY
@@ -765,6 +765,41 @@ def _entry(hass: HomeAssistant) -> ConfigEntry | None:
     return next(iter(hass.config_entries.async_entries(DOMAIN)), None)
 
 
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/backup_export", vol.Required("sections"): [vol.In(backup.SECTIONS)]})
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_backup_export(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Sicherung der gewählten Bereiche (seit 2.98.0); das Panel speichert sie als Datei."""
+    file = await backup.async_export(hass, msg["sections"])
+    activity.record(hass, "debug", "system", "backup_exported", "Device Panel", sections=", ".join(file["sections"]))
+    connection.send_result(msg["id"], {"file": file})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/backup_import",
+        vol.Required("data"): dict,
+        vol.Optional("sections"): [vol.In(backup.SECTIONS)],
+        # Vorschau ohne Schreiben (Standard); "replace" stellt den Zustand der Sicherung genau her (Rückgängig)
+        vol.Optional("dry_run", default=True): bool,
+        vol.Optional("replace", default=False): bool,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def _ws_backup_import(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Sicherung wiederherstellen oder nur die Vorschau davon (seit 2.98.0)."""
+    try:
+        report = await backup.async_import(hass, msg["data"], msg.get("sections"), dry_run=msg["dry_run"], replace=msg["replace"])
+    except vol.Invalid as err:
+        connection.send_error(msg["id"], websocket_api.ERR_INVALID_FORMAT, str(err.msg))
+        return
+    if not msg["dry_run"]:
+        totals = report["totals"]
+        activity.record(hass, "info", "system", "backup_restored", "Device Panel", changed=totals["changed"], skipped=totals["skipped"])
+    connection.send_result(msg["id"], report)
+
+
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/get_options"})
 @websocket_api.require_admin
 @websocket_api.async_response
@@ -1176,6 +1211,8 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     for command in (*ROUTINE_COMMANDS, *STATUS_COMMANDS, *SYSTEM_COMMANDS):
         websocket_api.async_register_command(hass, command)
     websocket_api.async_register_command(hass, _ws_get_options)
+    websocket_api.async_register_command(hass, _ws_backup_export)
+    websocket_api.async_register_command(hass, _ws_backup_import)
     websocket_api.async_register_command(hass, _ws_set_options)
     websocket_api.async_register_command(hass, _ws_set_device_type)
     websocket_api.async_register_command(hass, _ws_set_device_connection)

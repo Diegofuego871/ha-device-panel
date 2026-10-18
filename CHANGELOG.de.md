@@ -7,6 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.98.0] - 2026-10-18
+
+Einstellungen sichern und wiederherstellen.
+
+### Hinzugefügt
+
+- **Einstellungen › Panel › Allgemein: neues Kapitel "Sichern und wiederherstellen"** unter "Startseite" (nur Administratoren, gilt für alle Benutzer). **"Sichern"** speichert die Einstellungen in eine Datei (`device-panel-JJJJ-MM-TT.json`); die Teile wählst du selbst: Meldungen und Überwachung, Panel und Anzeige, Einstellungen pro Gerät (eigene Werte, Typ, Verbindungsart, ausgeblendete Geräte), KI-Einschätzung und, standardmässig aus, Routinen und Magic Push (sie verweisen auf Entitäten und Geräte, die fehlen können). Die Datei enthält Push-Ziele, Geräte-IDs und freie Texte, aber keine Zugangsdaten und keine Tokens. **"Kopieren"** legt denselben Text in die Zwischenablage (für die App auf dem Handy, wo das Speichern einer Datei nicht immer geht).
+- **"Wiederherstellen"** liest so eine Datei (oder eingefügten Text) und zeigt zuerst eine **Vorschau**, ohne etwas zu schreiben: wie viele Werte sich ändern, gleich bleiben oder nicht übernommen werden, je Teil, mit einigen Beispielen. Geschrieben wird erst nach **"Übernehmen"**. Was die Datei nicht nennt, bleibt unverändert; es wird nichts gelöscht.
+- **Fehlendes wird gemeldet, nicht still ignoriert:** eine Einstellung, die es in dieser Version nicht gibt, ein Wert ausserhalb des Bereichs, eine Geräte-ID, die es hier nicht gibt, oder eine Routine bzw. Magic-Push-Meldung, deren Gerät oder Entität fehlt, werden **mit Grund übersprungen**; ein Push-Ziel, das es nicht mehr gibt, oder eine Integration, die nicht installiert ist, werden **mit Hinweis übernommen** (ohne Push-Ziel kommt kein Push, bis du es änderst).
+- **Rückgängig:** vor dem Wiederherstellen hält das Panel den jetzigen Zustand fest und kann ihn als Datei sichern ("Zustand vorher als Datei sichern", standardmässig an); **"Rückgängig"** im Ergebnisfenster stellt genau diesen Zustand wieder her (und entfernt, was die Wiederherstellung hinzugefügt hat), solange das Fenster offen ist. Dieselbe Datei stellt ihn später mit derselben Funktion wieder her.
+- Sichern und Wiederherstellen sind gesperrt, solange die Einstellungen ungespeicherte Änderungen haben.
+
+### Intern
+
+- Backend `backup.py` mit den Befehlen `device_panel/backup_export` und `device_panel/backup_import` (`dry_run` für die Vorschau, `replace` für Rückgängig); Routinen und Magic-Push-Meldungen behalten beim Wiederherstellen ihre IDs (keine Doppelten bei zweimaligem Einspielen). Tests: `tests/test_backup.py`, Suite `backup`.
+
 ## [2.97.0] - 2026-10-18
 
 Die Kopfzeile einer geöffneten Einstellungs-Gruppe bleibt oben haften.
@@ -4034,6 +4050,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.98.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.0
 [2.97.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.97.0
 [2.96.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.96.0
 [2.95.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.1

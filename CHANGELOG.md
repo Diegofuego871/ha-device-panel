@@ -7,6 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.98.0] - 2026-10-18
+
+Back up and restore settings.
+
+### Added
+
+- **Settings › Panel › General: new chapter "Back up and restore"** below "Start page" (administrators only, applies to all users). **"Back up"** saves the settings to a file (`device-panel-YYYY-MM-DD.json`); you choose the parts: notifications and monitoring, panel and display, settings per device (own values, type, connection type, hidden devices), AI assessment, and, off by default, routines and Magic Push (they refer to entities and devices that may be missing). The file contains push targets, device IDs and free texts, but no credentials and no tokens. **"Copy"** puts the same text on the clipboard (for the phone app, where saving a file does not always work).
+- **"Restore"** reads such a file (or pasted text) and first shows a **preview** without writing anything: how many values change, stay the same or are not applied, per part, with a few examples. Nothing is written before **"Apply"**. What the file does not mention stays unchanged; nothing is deleted.
+- **Missing things are reported, not ignored silently:** a setting that does not exist in this version, a value outside its range, a device ID that does not exist here, or a routine or Magic Push message whose device or entity is missing are **skipped with the reason**; a push target that no longer exists or an integration that is not installed is **applied with a note** (without a push target no push is sent until you change it).
+- **Undo:** before restoring, the panel takes the current state and can save it as a file ("Save the state before as a file", on by default); **"Undo"** in the result window restores exactly that state (also removes what the restore added) until you close the window. The same file restores it later with the same function.
+- Backup and restore are blocked while the settings have unsaved changes.
+
+### Internal
+
+- Backend `backup.py` with the commands `device_panel/backup_export` and `device_panel/backup_import` (`dry_run` for the preview, `replace` for undo); routines and Magic Push messages keep their IDs when restored (no duplicates when restoring twice). Tests: `tests/test_backup.py`, suite `backup`.
+
 ## [2.97.0] - 2026-10-18
 
 The header of an open settings group stays pinned.
@@ -3933,6 +3949,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.98.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.0
 [2.97.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.97.0
 [2.96.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.96.0
 [2.95.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.1

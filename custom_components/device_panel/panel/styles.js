@@ -778,6 +778,31 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .nf-note p { margin: 0; }
 .nf-note p + p { margin-top: 6px; color: var(--dp-text); }
 .nf-note.view-own { margin: 12px 0 14px; }
+/* Sichern und wiederherstellen (seit 2.98.0) */
+.bk-note { margin: 0 0 8px; }
+.bk-btns { display: flex; gap: 8px; margin: 10px 0 4px; }
+.bk-btns .dlg-btn { flex: 1 1 0; }
+.bk-file { cursor: pointer; width: 100%; box-sizing: border-box; }
+.bk-file.disabled { opacity: .45; pointer-events: none; }
+.bk-paste-toggle { display: block; margin: 10px 0 4px; }
+.bk-text { box-sizing: border-box; width: 100%; margin: 6px 0; padding: 10px; border: 1px solid var(--dp-divider); border-radius: 10px; background: var(--dp-bg); color: var(--dp-text); font: 12.5px/1.4 ui-monospace, Menlo, monospace; }
+.bk-sum { display: flex; gap: 8px; margin: 4px 0 10px; }
+.bk-tile { flex: 1 1 0; padding: 10px 4px; border-radius: 14px; background: var(--dp-subtle); text-align: center; }
+.bk-tile b { display: block; font-size: 22px; }
+.bk-tile span { color: var(--dp-text2); font-size: 11.5px; }
+.bk-tile .ok { color: var(--dp-success); } .bk-tile .wn { color: var(--dp-warning); }
+.bk-rw { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: start; padding: 9px 0; border-top: 1px solid var(--dp-divider); font-size: 14px; }
+.bk-rw:first-of-type { border-top: 0; }
+.bk-rw small { display: block; margin-top: 1px; color: var(--dp-text2); font-size: 12.5px; overflow-wrap: anywhere; }
+.bk-dot { width: 10px; height: 10px; margin: 5px 0 0 4px; border-radius: 50%; background: var(--dp-text3); }
+.bk-dot.on { background: var(--dp-success); }
+.bk-ic { display: grid; place-items: center; padding-top: 1px; }
+.bk-ic.w { color: var(--dp-warning); } .bk-ic.e { color: var(--dp-error); }
+.bk-badge { padding: 1px 8px; border-radius: 9px; background: var(--dp-subtle); color: var(--dp-text2); font-size: 11.5px; font-weight: 500; white-space: nowrap; }
+.bk-badge.g { background: var(--dp-success-soft); color: var(--dp-success); }
+.bk-badge.w { background: var(--dp-warning-soft); color: var(--dp-warning); }
+.bk-badge.e { background: var(--dp-error-soft); color: var(--dp-error); }
+.bk-h { margin-top: 16px; font-size: 15px; }
 /* Ruhezeit (seit 2.95.0): eine Zeile je Wochentag mit Schalter und zwei Uhrzeiten */
 .qd-list { margin-top: 8px; }
 .qd-row { display: flex; align-items: center; gap: 12px; min-height: 44px; }

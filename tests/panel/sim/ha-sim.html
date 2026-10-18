@@ -762,6 +762,63 @@
         if ("auto_update" in msg) window.__panelSettings.auto_update = msg.auto_update;
         return { ...window.__panelSettings };
       }
+      // Sichern und wiederherstellen (2.98.0): vereinfachter Nachbau von backup.py (Optionen und eine Beispiel-Geräteeinstellung)
+      if (msg.type === "device_panel/backup_export" || msg.type === "device_panel/backup_import") {
+        const AI = ["ai_assessment", "ai_prompt", "ai_task_entity"];
+        const DISPLAY = ["chip_order", "connection_integrations", "connection_order", "exclude_integrations", "exclude_types", "hide_chips", "hide_connections", "show_disabled_devices", "show_service_devices", "type_integrations"];
+        const ROUT = ["routines_catch_up", "routines_notify_error", "routines_pause", "notify_service_routines"];
+        const DEV = ["exclude_devices"];
+        const keysOf = (sec) => sec === "ai" ? AI : sec === "display" ? DISPLAY : sec === "devices" ? DEV : sec === "routines" ? ROUT : sec === "magic" ? [] : Object.keys(window.__opts).filter((k) => ![...AI, ...DISPLAY, ...DEV, ...ROUT].includes(k));
+        const SECS = ["monitor", "display", "devices", "ai", "routines", "magic"];
+        if (msg.type === "device_panel/backup_export") {
+          if (window.__backupFails) throw new Error(window.__backupFails);
+          const sections = {};
+          for (const sec of SECS.filter((x) => msg.sections.includes(x))) {
+            const body = {};
+            if (keysOf(sec).length) body.options = Object.fromEntries(keysOf(sec).filter((k) => k in window.__opts).map((k) => [k, JSON.parse(JSON.stringify(window.__opts[k]))]));
+            if (sec === "devices") Object.assign(body, { settings: JSON.parse(JSON.stringify(window.__bkDevices || {})), types: {}, connections: {}, names: {} });
+            if (sec === "routines" || sec === "magic") body.items = [];
+            sections[sec] = body;
+          }
+          return { file: { format: "device_panel_backup", format_version: 1, integration_version: "2.98.0", exported_at: new Date().toISOString(), sections } };
+        }
+        const d = msg.data;
+        if (!d || d.format !== "device_panel_backup" || !d.sections || typeof d.sections !== "object") throw { code: "invalid_format", message: "Keine Sicherung von Device Panel" };
+        if (!Number.isInteger(d.format_version) || d.format_version > 1) throw { code: "invalid_format", message: "Diese Sicherung stammt von einer neueren Version von Device Panel" };
+        const dry = msg.dry_run !== false;
+        const report = {};
+        const targets = new Set(NOTIFY_TARGETS.map((t) => t.value));
+        for (const sec of SECS) {
+          if (!(sec in d.sections) || (msg.sections && !msg.sections.includes(sec))) continue;
+          const body = d.sections[sec] || {};
+          const rep = { changed: 0, unchanged: 0, skipped: [], notes: [], examples: [] };
+          const mine = keysOf(sec);
+          const apply = {};
+          for (const [k, v] of Object.entries(body.options || {})) {
+            if (!(k in window.__opts)) { rep.skipped.push({ what: k, reason: "unknown" }); continue; }
+            if (!mine.includes(k)) continue;
+            if (LIMITS[k] && (!Number.isInteger(v) || v < LIMITS[k][0] || v > LIMITS[k][1])) { rep.skipped.push({ what: k, reason: `Ganze Zahl von ${LIMITS[k][0]} bis ${LIMITS[k][1]} erwartet` }); continue; }
+            if (k.startsWith("notify_service") && typeof v === "string" && v && v !== "none" && !targets.has(v)) rep.notes.push({ kind: "target", what: v });
+            if (JSON.stringify(v) === JSON.stringify(window.__opts[k])) { rep.unchanged++; continue; }
+            apply[k] = v;
+            rep.changed++;
+            if (rep.examples.length < 3) rep.examples.push({ what: k, old: window.__opts[k], new: v });
+          }
+          if (sec === "devices") {
+            const known = new Set(["dev-a", "dev-b"]);
+            const dev = {};
+            let unknown = 0;
+            for (const [id, vals] of Object.entries(body.settings || {})) { if (known.has(id)) { dev[id] = vals; rep.changed++; } else unknown++; }
+            if (unknown) rep.skipped.push({ what: "device", reason: "device_unknown", count: unknown, names: [] });
+            if (!dry) window.__bkDevices = msg.replace ? dev : { ...(window.__bkDevices || {}), ...dev };
+          }
+          if (!dry) Object.assign(window.__opts, apply);
+          report[sec] = rep;
+        }
+        const totals = { changed: 0, unchanged: 0, skipped: 0, notes: 0 };
+        for (const r of Object.values(report)) { totals.changed += r.changed; totals.unchanged += r.unchanged; totals.skipped += r.skipped.length; totals.notes += r.notes.length; }
+        return { sections: report, totals, file_version: d.integration_version, exported_at: d.exported_at };
+      }
       if (msg.type === "device_panel/get_options") {
         if (window.__getOptsFails) throw new Error("boom");
         await new Promise((r) => setTimeout(r, 40));

@@ -256,6 +256,8 @@ const MDI = {
   trash: "M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z",
   play: "M8,5.14V19.14L19,12.14L8,5.14Z",
   arrowLeft: "M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z",
+  download: "M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z",
+  upload: "M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z",
   arrowRight: "M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z",
   close: "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",
   gear: "M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z",
@@ -406,6 +408,9 @@ const NEW_FIELDS = ["area", "integration", "connection", "model"];
 const UPDATE_KINDS = ["core", "addons", "hacs", "devices"];
 // Ruhezeit (seit 2.95.0): Meldungsarten, die sich zurückhalten lassen (wie im Backend, quiet.py), und die Vorgabe je Wochentag
 const QUIET_TOPICS = ["outage", "online", "battery", "charge", "new", "updates", "panelupdate", "routines", "status", "magic"];
+// Sichern und wiederherstellen (seit 2.98.0): Bereiche der Sicherung wie im Backend (backup.py); Routinen und Magic Push standardmässig aus
+const BACKUP_SECTIONS = ["monitor", "display", "devices", "ai", "routines", "magic"];
+const BACKUP_DEFAULT = ["monitor", "display", "devices", "ai"];
 const QUIET_DAY_DEFAULT = { on: true, from: "22:00", to: "07:00" };
 // Abschnitt "Überwachung und Meldungen" (seit 0.34.0): Optionen je Reiter,
 // für den Punkt am Reiter und das Etikett "geändert" des Abschnitts.
@@ -1410,7 +1415,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="discard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="discard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     this._apps.bind(root);
@@ -1542,6 +1547,7 @@ class DevicePanel extends HTMLElement {
     this._status.bind(root.querySelector("dialog.status-dlg"));
     this._bindPrompt(root.querySelector("dialog.prompt-dlg"));
     this._bindNotes(root.querySelector("dialog.notes-dlg"));
+    this._bindBackup(root.querySelector("dialog.backup-dlg"));
     // Auf dem Handy gibt der Browser beim Schliessen eines Fensters den Fokus an die antippte Kachel zurück und zeigt dort einen
     // blauen Ring (zum Beispiel an der Kachel "Ausfall-Puls"). "close" steigt nicht auf, darum in der Einfangphase.
     root.addEventListener("close", () => this._blurOnTouch(), true);
@@ -5912,6 +5918,303 @@ class DevicePanel extends HTMLElement {
     });
   }
 
+  // --- Einstellungen sichern und wiederherstellen (seit 2.98.0, docs/mockups/backup-v1, A) ---------------------------------
+  // Kapitel unter "Startseite" (Panel › Allgemein): zwei Knöpfe. Mit ungespeicherten Änderungen gesperrt: die Wiederherstellung
+  // lädt die Einstellungen neu und würde den Entwurf verwerfen, die Sicherung enthielte ihn nicht.
+  _backupChapterHtml(dirty) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const off = dirty ? " disabled" : "";
+    return `<div class="set-title">${escape(t("ttlBackup"))}</div>
+      <div class="opt-short bk-note">${escape(t("bkNote"))}</div>
+      ${dirty ? `<div class="opt-warn">${mdi("alert", 14)}<span>${escape(t("bkUnsaved"))}</span></div>` : ""}
+      <div class="bk-btns"><button type="button" class="dlg-btn" data-set="bk-export"${off}>${mdi("download", 18)}${escape(t("bkBackup"))}</button>
+        <button type="button" class="dlg-btn" data-set="bk-import"${off}>${mdi("upload", 18)}${escape(t("bkRestore"))}</button></div>`;
+  }
+
+  _openBackup(mode) {
+    const dlg = this.shadowRoot.querySelector("dialog.backup-dlg");
+    if (!dlg || (this._settings && this._settingsChanges().length)) return;
+    this._bk = { mode, sections: new Set(BACKUP_DEFAULT), busy: false, error: null, status: null, file: null, fileName: "", preview: null, before: true, beforeName: "", snapshot: null, result: null, paste: false, text: "" };
+    this._renderBackup();
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+    this._blurOnTouch();
+    dlg.scrollTop = 0;
+  }
+
+  _closeBackup() {
+    const dlg = this.shadowRoot.querySelector("dialog.backup-dlg");
+    this._bk = null;
+    if (dlg?.open) {
+      if (typeof dlg.close === "function") dlg.close();
+      else dlg.removeAttribute("open");
+    }
+  }
+
+  _bkDate() {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+
+  // Datei zum Herunterladen anbieten (Blob); die Companion-App auf dem Handy kann das nicht immer: dort "Kopieren"
+  _downloadJson(obj, name) {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    this.shadowRoot.appendChild(a);
+    a.click();
+    window.setTimeout(() => {
+      URL.revokeObjectURL(url);
+      a.remove();
+    }, 1500);
+  }
+
+  async _bkExport(how) {
+    const b = this._bk;
+    if (!b || b.busy || !b.sections.size) return;
+    b.busy = true;
+    b.error = null;
+    b.status = null;
+    this._renderBackup();
+    try {
+      const res = await this._hass.callWS({ type: "device_panel/backup_export", sections: BACKUP_SECTIONS.filter((s) => b.sections.has(s)) });
+      if (this._bk !== b) return;
+      if (how === "copy") {
+        await navigator.clipboard.writeText(JSON.stringify(res.file, null, 2));
+        b.status = this._t("bkCopied");
+      } else {
+        this._downloadJson(res.file, `device-panel-${this._bkDate()}.json`);
+        b.status = this._t("bkSaved");
+      }
+    } catch (err) {
+      b.error = errText(err);
+    }
+    b.busy = false;
+    this._renderBackup();
+  }
+
+  // Datei oder eingefügten Text lesen und die Vorschau holen (schreibt nichts)
+  async _bkPreview(text, name) {
+    const b = this._bk;
+    if (!b || b.busy) return;
+    b.busy = true;
+    b.error = null;
+    this._renderBackup();
+    try {
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(this._t("bkBadFile"));
+      }
+      const res = await this._hass.callWS({ type: "device_panel/backup_import", data, dry_run: true });
+      if (this._bk !== b) return;
+      b.file = data;
+      b.fileName = name;
+      b.preview = res;
+      b.mode = "preview";
+    } catch (err) {
+      const msg = errText(err);
+      b.error = /Keine Sicherung|invalid_format/i.test(msg) ? this._t("bkBadFile") : msg;
+    }
+    b.busy = false;
+    this._renderBackup();
+  }
+
+  // Wiederherstellen: erst der Zustand vorher (im Speicher für "Rückgängig", auf Wunsch als Datei), dann schreiben
+  async _bkApply() {
+    const b = this._bk;
+    if (!b || b.busy || !b.preview) return;
+    b.busy = true;
+    b.error = null;
+    this._renderBackup();
+    try {
+      const sections = Object.keys(b.preview.sections);
+      b.snapshot = (await this._hass.callWS({ type: "device_panel/backup_export", sections })).file;
+      if (b.before) {
+        b.beforeName = `device-panel-vorher-${this._bkDate()}.json`;
+        this._downloadJson(b.snapshot, b.beforeName);
+      }
+      b.result = await this._hass.callWS({ type: "device_panel/backup_import", data: b.file, sections, dry_run: false });
+      b.mode = "done";
+      await this._bkRefresh();
+    } catch (err) {
+      b.error = errText(err);
+    }
+    if (this._bk === b) b.busy = false;
+    this._renderBackup();
+  }
+
+  // Rückgängig: den gesicherten Zustand vorher genau herstellen (auch Neues entfernen)
+  async _bkUndo() {
+    const b = this._bk;
+    if (!b || b.busy || !b.snapshot) return;
+    b.busy = true;
+    b.error = null;
+    this._renderBackup();
+    try {
+      await this._hass.callWS({ type: "device_panel/backup_import", data: b.snapshot, sections: Object.keys(b.snapshot.sections), dry_run: false, replace: true });
+      b.snapshot = null;
+      b.mode = "undone";
+      await this._bkRefresh();
+    } catch (err) {
+      b.error = errText(err);
+    }
+    if (this._bk === b) b.busy = false;
+    this._renderBackup();
+  }
+
+  // Nach dem Schreiben: Liste und Einstellungen mit dem neuen Stand des Backends neu laden
+  async _bkRefresh() {
+    this._fetch(true);
+    const st = this._settings;
+    if (st) await this._reloadSettings(st);
+  }
+
+  _bkSkipText(sk, sectionRep) {
+    const t = (k, ...a) => this._t(k, ...a);
+    if (sk.reason === "unknown") return [t("bkSkUnknown", sk.what), t("bkSkUnknownHint")];
+    if (sk.reason === "device_unknown") return [t("bkSkDevices", sk.count || 1), t("bkSkDevicesHint")];
+    if (sk.reason === "invalid") return [t("bkSkInvalid", sk.device ? `${sk.device}: ${sk.what}` : sk.what), t("bkSkInvalidHint")];
+    void sectionRep;
+    return [String(sk.what), String(sk.reason)];
+  }
+
+  _renderBackup() {
+    const dlg = this.shadowRoot.querySelector("dialog.backup-dlg");
+    const b = this._bk;
+    if (!dlg || !b) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const err = b.error ? `<div class="dlg-error">${escape(t("bkError"))} ${escape(b.error)}</div>` : "";
+    const btn = (data, icon, label, cls = "", extra = "") => `<button type="button" class="dlg-btn${cls ? ` ${cls}` : ""}" data-bk="${data}"${b.busy ? " disabled" : ""}${extra}>${mdi(icon, 18)}${escape(label)}</button>`;
+    const head = (icon, title, sub) => `<div class="dlg-head"><span class="dlg-avatar">${mdi(icon, 24)}</span><div class="dlg-title"><h2>${escape(title)}</h2><div class="dlg-sub">${escape(sub)}</div></div>
+        <button type="button" class="dlg-close" data-bk="close" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>`;
+    let html;
+    if (b.mode === "export") {
+      const rows = BACKUP_SECTIONS.map(
+        (s) => `<div class="opt"><div class="opt-line"><span class="opt-label">${escape(t(`bkSec_${s}`))}</span>
+          <label class="switch"><input type="checkbox" data-bk-sec="${s}" ${b.sections.has(s) ? "checked" : ""} aria-label="${escape(t(`bkSec_${s}`))}"><span></span></label></div>
+          <div class="opt-short">${escape(t(`bkSecShort_${s}`))}</div></div>`
+      ).join("");
+      html = `${head("download", t("bkExportTitle"), t("bkExportSub"))}<div class="dlg-body">${rows}
+        <div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("bkContains"))}</p></div></div>
+        <div class="dlg-note small">${escape(t("bkFileName"))}: <code>device-panel-${this._bkDate()}.json</code></div>
+        ${b.status ? `<div class="dlg-note" role="status">${escape(b.status)}</div>` : ""}${err}</div>
+        <div class="dlg-actions">${btn("close", "close", t("bkCancel"))}${btn("copy", "copy", t("bkCopy"), "", b.sections.size ? "" : " disabled")}${btn("save", "download", t("bkSave"), "primary", b.sections.size ? "" : " disabled")}</div>`;
+    } else if (b.mode === "import") {
+      html = `${head("upload", t("bkImportTitle"), t("bkPickSub"))}<div class="dlg-body">
+        <label class="dlg-btn bk-file${b.busy ? " disabled" : ""}">${mdi("upload", 18)}${escape(t("bkPick"))}<input type="file" accept="application/json,.json,text/plain" data-bk-file hidden></label>
+        <button type="button" class="lnk bk-paste-toggle" data-bk="paste">${escape(t("bkPaste"))}</button>
+        ${b.paste ? `<textarea class="bk-text" data-bk-text rows="6" placeholder="${escape(t("bkPasteHint"))}" aria-label="${escape(t("bkPaste"))}">${escape(b.text)}</textarea>
+          <div class="aip-btns">${btn("pastego", "check", t("bkPasteGo"), "primary")}</div>` : ""}
+        <div class="dlg-note small">${escape(t("bkPickNote"))}</div>${err}</div>
+        <div class="dlg-actions">${btn("close", "close", t("bkCancel"))}</div>`;
+    } else if (b.mode === "preview") {
+      const tot = b.preview.totals;
+      const rows = Object.entries(b.preview.sections)
+        .map(([s, r]) => {
+          const ex = r.examples[0];
+          const detail = [r.changed ? t("bkChangedN", r.changed) : t("bkNoChange"), ex ? `${ex.what}: ${ex.old} → ${ex.new}` : ""].filter(Boolean).join(" · ");
+          return `<div class="bk-rw"><span class="bk-dot${r.changed ? " on" : ""}"></span><div>${escape(t(`bkSec_${s}`))}<small>${escape(detail)}</small></div><span class="bk-badge${r.changed ? " g" : ""}">${r.changed}</span></div>`;
+        })
+        .join("");
+      const notes = [];
+      for (const r of Object.values(b.preview.sections)) {
+        for (const n of r.notes) notes.push(`<div class="bk-rw"><span class="bk-ic w">${mdi("alert", 15)}</span><div>${escape(t(`bkNote_${n.kind}`, n.what))}<small>${escape(t(`bkNoteHint_${n.kind}`))}</small></div><span class="bk-badge w">${escape(t(n.kind === "target" ? "bkBadgeWarn" : "bkBadgeHint"))}</span></div>`);
+        // Geräte-IDs, die es hier nicht gibt, je Bereich zu einer Zeile zusammenfassen
+        let devs = 0;
+        for (const sk of r.skipped) {
+          if (sk.reason === "device_unknown") {
+            devs += sk.count || 1;
+            continue;
+          }
+          const [title, hint] = this._bkSkipText(sk, r);
+          notes.push(`<div class="bk-rw"><span class="bk-ic e">${mdi("close", 15)}</span><div>${escape(title)}<small>${escape(hint)}</small></div><span class="bk-badge e">${escape(t("bkBadgeSkipped"))}</span></div>`);
+        }
+        if (devs) notes.push(`<div class="bk-rw"><span class="bk-ic e">${mdi("close", 15)}</span><div>${escape(t("bkSkDevices", devs))}<small>${escape(t("bkSkDevicesHint"))}</small></div><span class="bk-badge e">${escape(t("bkBadgeSkipped"))}</span></div>`);
+      }
+      const ver = b.preview.file_version ? t("bkPreviewSub", b.fileName, b.preview.file_version) : b.fileName;
+      html = `${head("upload", t("bkImportTitle"), ver)}<div class="dlg-body">
+        <div class="bk-sum"><div class="bk-tile"><b class="ok">${tot.changed}</b><span>${escape(t("bkTChanged"))}</span></div><div class="bk-tile"><b>${tot.unchanged}</b><span>${escape(t("bkTSame"))}</span></div><div class="bk-tile"><b class="wn">${tot.skipped}</b><span>${escape(t("bkTSkipped"))}</span></div></div>
+        ${rows}${notes.length ? `<div class="mon-grp bk-h">${escape(t("bkHeadNotes"))}</div>${notes.join("")}` : ""}
+        <div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("bkBefore"))}</span><label class="switch"><input type="checkbox" data-bk-before ${b.before ? "checked" : ""} aria-label="${escape(t("bkBefore"))}"><span></span></label></div><div class="opt-short">${escape(t("bkBeforeShort"))}</div></div>${err}</div>
+        <div class="dlg-actions">${btn("close", "close", t("bkCancel"))}${btn("apply", "check", tot.changed ? t("bkApply", tot.changed) : t("bkNothing"), "primary", tot.changed ? "" : " disabled")}</div>`;
+    } else if (b.mode === "done") {
+      const tot = b.result.totals;
+      const notes = Object.values(b.result.sections).reduce((n, r) => n + r.notes.length, 0);
+      html = `${head("check", t("bkDoneTitle"), t("bkDoneSub", tot.changed, tot.skipped))}<div class="dlg-body">
+        ${b.beforeName ? `<div class="dlg-note">${escape(t("bkBeforeSaved", b.beforeName))}</div>` : ""}
+        ${notes ? `<div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("bkDoneNotes", notes))}</p></div></div>` : ""}
+        <div class="dlg-note small">${escape(t("bkUndoNote"))}</div>${err}</div>
+        <div class="dlg-actions">${btn("undo", "reset", t("bkUndo"), "", b.snapshot ? "" : " disabled")}${btn("close", "close", t("close"), "primary")}</div>`;
+    } else {
+      html = `${head("reset", t("bkUndoneTitle"), t("bkUndoneSub"))}<div class="dlg-body">${err}</div>
+        <div class="dlg-actions">${btn("close", "close", t("close"), "primary")}</div>`;
+    }
+    setHtml(dlg, html);
+  }
+
+  _bindBackup(dlg) {
+    if (!dlg) return;
+    dlg.addEventListener("click", (ev) => {
+      if (ev.target === dlg) {
+        const r = dlg.getBoundingClientRect();
+        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closeBackup();
+        return;
+      }
+      const btn = ev.target.closest("[data-bk]");
+      const b = this._bk;
+      if (!btn || !b) return;
+      const act = btn.dataset.bk;
+      if (act === "close") this._closeBackup();
+      else if (act === "save") this._bkExport("file");
+      else if (act === "copy") this._bkExport("copy");
+      else if (act === "paste") {
+        b.paste = !b.paste;
+        this._renderBackup();
+      } else if (act === "pastego") {
+        b.text = dlg.querySelector("[data-bk-text]")?.value || "";
+        this._bkPreview(b.text, this._t("bkPasted"));
+      } else if (act === "apply") this._bkApply();
+      else if (act === "undo") this._bkUndo();
+    });
+    dlg.addEventListener("change", async (ev) => {
+      const b = this._bk;
+      const el = ev.target;
+      if (!b) return;
+      if (el.dataset.bkSec) {
+        if (el.checked) b.sections.add(el.dataset.bkSec);
+        else b.sections.delete(el.dataset.bkSec);
+        this._renderBackup();
+      } else if (el.dataset.bkBefore !== undefined) {
+        b.before = el.checked;
+      } else if (el.dataset.bkFile !== undefined && el.files?.[0]) {
+        const file = el.files[0];
+        let text = "";
+        try {
+          text = await file.text();
+        } catch (err) {
+          b.error = errText(err);
+          this._renderBackup();
+          return;
+        }
+        this._bkPreview(text, file.name);
+      }
+    });
+    dlg.addEventListener("input", (ev) => {
+      if (this._bk && ev.target.dataset.bkText !== undefined) this._bk.text = ev.target.value;
+    });
+    // Escape schliesst nur dieses Fenster, nicht die Einstellungen dahinter.
+    dlg.addEventListener("close", () => {
+      this._bk = null;
+    });
+  }
+
   _openPrompt() {
     const st = this._settings;
     const dlg = this.shadowRoot.querySelector("dialog.prompt-dlg");
@@ -8209,7 +8512,7 @@ class DevicePanel extends HTMLElement {
       updates:
         subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"]], panelTab) +
         (panelTab === "pstart"
-          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow()
+          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + this._backupChapterHtml(changes.size > 0)
           : row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
             checkTimeRow() +
             autoUpdateRow() +
@@ -8387,6 +8690,8 @@ class DevicePanel extends HTMLElement {
         const [first] = st.draft.quiet_days;
         st.draft.quiet_days = st.draft.quiet_days.map((x) => ({ ...x, from: first.from, to: first.to }));
         this._renderSettings();
+      } else if (action === "bk-export" || action === "bk-import") {
+        this._openBackup(action === "bk-export" ? "export" : "import");
       } else if (action === "check-time-auto") {
         // Uhrzeit der Prüfung zurück auf "automatisch"
         if (!st.draft) return;

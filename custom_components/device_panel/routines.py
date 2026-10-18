@@ -1056,10 +1056,10 @@ class RoutineManager:
         device = None if is_holder(routine["device_id"]) else dr.async_get(self.hass).async_get(routine["device_id"])
         return entity_label(routine["entity_id"], entry, device, state)[:NAME_MAX]
 
-    async def async_save_routine(self, raw: dict[str, Any]) -> dict[str, Any]:
-        """Routine anlegen oder ändern (mit id)."""
+    async def async_save_routine(self, raw: dict[str, Any], *, adopt_id: bool = False) -> dict[str, Any]:
+        """Routine anlegen oder ändern (mit id). adopt_id: eine unbekannte id bei einer neuen Routine übernehmen (Wiederherstellung einer Sicherung)."""
         existing = self._routines.get(raw.get("id", ""))
-        if raw.get("id") and existing is None:
+        if raw.get("id") and existing is None and not (adopt_id and _ID_RE.match(str(raw["id"]))):
             raise vol.Invalid("Routine nicht gefunden")
         routine = self.clean(raw, existing=existing)
         if existing is not None and existing["device_id"] != routine["device_id"]:
@@ -1069,7 +1069,7 @@ class RoutineManager:
                 raise vol.Invalid(f"Höchstens {MAX_TOTAL} Routinen insgesamt")
             if not is_holder(routine["device_id"]) and len(self.routines(routine["device_id"])) >= MAX_PER_DEVICE:
                 raise vol.Invalid(f"Höchstens {MAX_PER_DEVICE} Routinen pro Gerät")
-            routine["id"] = uuid.uuid4().hex[:12]
+            routine["id"] = str(raw["id"]) if adopt_id and raw.get("id") else uuid.uuid4().hex[:12]
         routine["created"] = existing["created"] if existing and "created" in existing else time.time()
         self._routines[routine["id"]] = routine
         rt = self.runtime(routine["id"])

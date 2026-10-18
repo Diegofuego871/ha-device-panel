@@ -761,11 +761,11 @@ class MagicPush:
     def runtime(self, rule_id: str) -> dict[str, Any]:
         return self._runtime.setdefault(rule_id, {"since": None, "fired": False, "last_sent": None, "last_fired": None})
 
-    async def async_save_rule(self, raw: dict[str, Any]) -> dict[str, Any]:
-        """Regel neu anlegen oder ändern (mit id)."""
+    async def async_save_rule(self, raw: dict[str, Any], *, adopt_id: bool = False) -> dict[str, Any]:
+        """Regel neu anlegen oder ändern (mit id). adopt_id: eine unbekannte id bei einer neuen Regel übernehmen (Wiederherstellung einer Sicherung)."""
         rule = clean_rule(self.hass, raw)
         existing = self._rules.get(rule.get("id", ""))
-        if "id" in rule and existing is None:
+        if "id" in rule and existing is None and not (adopt_id and _ID_RE.match(str(rule["id"]))):
             raise vol.Invalid("Meldung nicht gefunden")
         if existing is not None and existing["device_id"] != rule["device_id"]:
             raise vol.Invalid("Die Meldung gehört zu einem anderen Gerät")
@@ -774,7 +774,7 @@ class MagicPush:
                 raise vol.Invalid(f"Höchstens {MAX_TOTAL} Meldungen insgesamt")
             if len(self.rules(rule["device_id"])) >= MAX_PER_DEVICE:
                 raise vol.Invalid(f"Höchstens {MAX_PER_DEVICE} Meldungen pro Gerät")
-            rule["id"] = uuid.uuid4().hex[:12]
+            rule["id"] = str(rule["id"]) if adopt_id and rule.get("id") else uuid.uuid4().hex[:12]
         rule["created"] = existing["created"] if existing and "created" in existing else time.time()
         changed = existing is None or any(existing.get(k) != rule.get(k) for k in ("entity_id", "kind", "value", "reset_value", "conditions", "for_s", "repeat_s", "recover", "reset_for_s"))
         self._rules[rule["id"]] = rule

@@ -948,8 +948,8 @@ def delay_too_short(options: Mapping[str, Any]) -> bool:
     return delay < values_from(options)[CONF_OFFLINE_AFTER]
 
 
-def apply_values(hass: HomeAssistant, entry: ConfigEntry, values: dict[str, Any]) -> bool:
-    """Prüft und speichert Werte aus dem Panel; True, wenn sich etwas änderte."""
+def apply_values(hass: HomeAssistant, entry: ConfigEntry, values: dict[str, Any], *, dry_run: bool = False) -> bool:
+    """Prüft und speichert Werte aus dem Panel; True, wenn sich etwas änderte. dry_run: nur prüfen (für die Vorschau der Wiederherstellung)."""
     clean = PANEL_SCHEMA(values)
     options = {**entry.options, **clean}
     if (CONF_NOTIFY_DELAY in clean or CONF_OFFLINE_AFTER in clean) and delay_too_short(options):
@@ -971,6 +971,8 @@ def apply_values(hass: HomeAssistant, entry: ConfigEntry, values: dict[str, Any]
             )
     if options == dict(entry.options):
         return False
+    if dry_run:
+        return True
     # Debug-Protokoll: nur die Namen der geänderten Einstellungen, nie die Werte (Push-Ziele, Texte)
     keys = sorted(k for k in clean if entry.options.get(k) != options.get(k))
     hass.config_entries.async_update_entry(entry, options=options)
