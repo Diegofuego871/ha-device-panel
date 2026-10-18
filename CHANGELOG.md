@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.96.0] - 2026-10-18
+
+The overview of each notification moves into its own tab.
+
+### Changed
+
+- The tab **"Overview" is now called "General"** (settings, "Monitoring and notifications"). It no longer repeats the five cards of Outage, Battery, Charging, New and Updates, which also stood in the tabs, and keeps "Where notifications go" and "Quiet time".
+- Instead, **each of those tabs starts with its own small overview**: a card with the chapter (icon and title), the timeline and the **pills** (Push, Persistent, Back online, Group outage), as the overview showed them. The pills switch the notification at once, next to the switch in the same tab. The "Change" links and the "Differs" lines of the old cards are gone (the section "Exceptions" at the end of each tab stays). The tab Updates gained the timeline it lacked.
+- Texts that pointed to the tab "Overview" now say "General".
+- The way back from an integration to the list ("All integrations") is now a **real button** with an arrow (frame, same size and style as "Back" in the dialogs) instead of a small blue text link.
+
 ## [2.95.1] - 2026-10-18
 
 Quiet time moves into the overview; fewer kinds are held by default.
@@ -3914,6 +3925,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.96.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.96.0
 [2.95.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.1
 [2.95.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.0
 [2.93.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.93.0

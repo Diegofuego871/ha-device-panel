@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.96.0, Übersicht je Reiter, "Allgemein")
+
+- Wunsch des Nutzers: der Reiter "Übersicht" heisst "Allgemein" und zeigt die fünf Karten nicht mehr doppelt; jeder Meldungsreiter bekommt seine kleine Übersicht mit den Pillen. `_laneCard(tab, icon, cls, titleKey, inner, chips)` und `_laneChip` bauen die Karte (Kapitel, Zeitstrahl des Reiters mit Eingabefeldern, Pillen `data-set="chip"`); in Ausfall, Batterie, Laden, Neu und Updates (Zeitstrahl neu). `_monOverviewHtml` hat nur noch "Ziel der Meldungen" und "Ruhezeit". Entfallen: "Ändern", "Abweichend", `_monDiff`. Texte "Reiter Übersicht" heissen "Allgemein".
+- Tests angepasst: overview (neu geschrieben für die Karten je Reiter), graphics, newdevices, notify, settings. Der Ring "Meldung aus" der Ausfall-Balken gibt es im Reiter nicht (nur in der alten Übersicht); der Zeitstrahl im Reiter hat keine "Kein Push"-Marke bei Ausfall und Neu.
+
 ## Stand (2.95.1, Ruhezeit; 2.95.0 war der erste Stand mit eigenem Reiter)
 
 - Wunsch des Nutzers: eine globale Ruhezeit (nicht pro Benutzer), Abschnitt "Ruhezeit" ganz unten im Reiter "Übersicht" (nach "Ziel der Meldungen", kein eigener Reiter; `_monQuietHtml` wird von `_monOverviewHtml` aufgerufen), Zeiten je Wochentag, Meldungsarten wählbar (Standard: ohne Status-App, Magic Push und Routinen), danach Zusammenfassung oder einzeln. Kritische Magic-Push-Meldungen immer sofort. Mockups: `docs/mockups/quiet-v1/`.

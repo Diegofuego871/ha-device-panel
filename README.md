@@ -201,7 +201,7 @@ The gear (the pinned app "Settings", or the launcher) opens all settings in Germ
 | <img src="docs/screenshots/en/settings-section-devices.png" alt="Section Devices in the panel"> | <img src="docs/screenshots/en/settings-section-routines.png" alt="Section Routines"> | <img src="docs/screenshots/en/settings-section-updates.png" alt="Section Panel with daily check and automatic installation"> |
 
 - **Devices in the panel:** hide integrations, device types and single devices (hiding a device asks for confirmation first), set type and connection type per integration, see and reset devices with their own settings
-- **Monitoring and notifications:** the tabs Overview (a timeline per notification), Outage, Battery, Charging, New, Updates, Signal and Integrations
+- **Monitoring and notifications:** the tabs General (target of the notifications, quiet time), Outage, Battery, Charging, New, Updates, Signal and Integrations; each tab for a notification starts with a small overview (timeline and pills to switch it quickly)
 - **Exceptions:** every tab of "Monitoring and notifications" (except "New devices" for devices) ends with the integrations and devices that differ from the default, with a reset (also under "Devices in the panel" › "Device settings")
 - **View:** no longer in the settings but in the dialog "View" above the list (columns and sorting per user, filter chips for all); both tabs have their own "Save"
 - **Routines and AI assessment:** pause, catch-up window, recipient; AI task and prompt

@@ -48,15 +48,15 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     await tap('[data-set="section"][data-id="monitor"]');
-    await wait(`return !!r.querySelector(".lane")`);
+    await tab("new");
+    await wait(`return !!r.querySelector('.lane[data-lane="new"]')`);
 
-    // Übersicht: dritte Zeile "Neue Geräte" mit einem Balken, ohne Ziel "Kein Push"
-    check(`[${tag}] Übersicht: fünf Zeilen, "${T.lane}" mit Null "${T.zero}" und "${T.noPush}"`, (await ev(`return r.querySelectorAll(".lane").length`)) === 5 && (await text('[data-lane="new"] .lane-t')) === T.lane && (await text('[data-lane="new"] .ptl-zero span')) === T.zero && (await text('[data-lane="new"] .mk-off b')) === T.noPush && (await text('[data-lane="new"] .mk-off span')) === T.noTarget, await text('[data-lane="new"]'));
-    check(`[${tag}] Chips Push und Anhaltend aus`, (await ev(`return [...r.querySelectorAll('[data-lane="new"] .mon-chip')].map(c=>c.textContent.trim()+":"+c.getAttribute("aria-pressed")).join()`)) === `${T.push}:false,${T.pers}:false`);
+    // Reiter "Neu": Karte mit Kapitel und einem Balken (seit 2.96.0 hier statt in der Übersicht), Pillen aus
+    check(`[${tag}] Karte "${T.lane}" mit Null "${T.zero}"`, (await ev(`return r.querySelectorAll(".lane").length`)) === 1 && (await text('[data-lane="new"] .lane-t')) === T.lane && (await text('[data-lane="new"] .ptl-zero span')) === T.zero, await text('[data-lane="new"]'));
+    check(`[${tag}] Pillen Push und Anhaltend aus`, (await ev(`return [...r.querySelectorAll('[data-lane="new"] .mon-chip')].map(c=>c.textContent.trim()+":"+c.getAttribute("aria-pressed")).join()`)) === `${T.push}:false,${T.pers}:false`);
     check(`[${tag}] Reiter mit "${T.tab}" vor "Integrationen"`, (await ev(`return [...r.querySelectorAll(".mon-tab")].map(t=>t.dataset.key).join()`)) === "overview,outage,battery,charge,new,updates,sig,integ");
 
     // Reiter "Neu"
-    await tap('[data-lane="new"] [data-set="tab"][data-key="new"]');
     await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "new"`);
     check(`[${tag}] Zeitstrahl: Null "${T.zero}", Feld "${T.window}" mit 5 Min.`, (await text(".ptl-zero span")) === T.zero && (await text(".ptl-row b")) === T.window && (await ev(`return r.querySelector('input[data-opt="new_window"]').value`)) === "5");
     check(`[${tag}] Schalter "${T.optNotify}" aus, Inhalt "${T.fields}" ohne Vorschau`, !(await ev(`return r.querySelector('input[data-opt="notify_new"]').checked`)) && !(await ev(`return !!r.querySelector(".pv")`)) && (await ev(`return [...r.querySelectorAll(".opt-label")].some(x=>x.textContent.trim()===${JSON.stringify(T.fields)})`)));
@@ -82,11 +82,12 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] gespeichert: Optionen`, (await save()) && JSON.stringify((await setCalls()).at(-1)) === JSON.stringify({ notify_new: true, new_window: 10, new_persistent: true, new_fields: ["integration", "connection"] }), JSON.stringify((await setCalls()).at(-1)));
     check(`[${tag}] Punkt am Reiter weg, Tab-Zusammenfassung`, !(await ev(`return r.querySelector('.mon-tab[data-key="new"]').classList.contains("chg")`)));
 
-    // Übersicht: mit Ziel nach Wahl eines Ziels: Balken "10 Min." mit Push
+    // Mit Ziel (gewählt im Reiter Allgemein): Karte im Reiter "Neu" mit Push-Marke, Pille schaltbar
     await tab("overview");
     const target = await ev(`return [...r.querySelector('select[data-opt="notify_service"]').options].map(o=>o.value).find(v=>v.startsWith("notify.")) || ""`);
     await (await handle('select[data-opt="notify_service"]')).selectOption(target);
-    check(`[${tag}] Übersicht mit Ziel: Balken 10 Min., "${T.newPush}", Chips an`, await wait(`return r.querySelector('[data-lane="new"] .mk-p b')?.textContent === ${JSON.stringify(lang === "de" ? "10 Min." : "10 min")}`) && (await text('[data-lane="new"] .mk-p span')) === T.newPush && (await ev(`return [...r.querySelectorAll('[data-lane="new"] .mon-chip')].every(c=>c.getAttribute("aria-pressed")==="true")`)), await text('[data-lane="new"]'));
+    await tab("new");
+    check(`[${tag}] Neu mit Ziel: Pille Push an, Schalter folgt`, await wait(`return r.querySelector('[data-lane="new"] .mon-chip').getAttribute("aria-pressed") === "true" && r.querySelector('input[data-opt="notify_new"]').checked`), await text('[data-lane="new"]'));
 
     // Override pro Integration: Schalter im Detail
     await tab("integ");

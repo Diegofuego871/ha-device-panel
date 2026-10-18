@@ -17,12 +17,12 @@ const TEXT = {
     sum0: "Ausfall nach 2 Min., ohne Push · Batterie schwach ab 15 %, ohne Push",
     sumPush: "Ausfall nach 2 Min., Push nach 5 Min. · Batterie schwach ab 15 %, Push sofort",
     dev: "Dienst-Geräte und deaktivierte Geräte ausgeblendet", gotoLink: "Überwachung und Meldungen › Integrationen",
-    tabs: "Übersicht|Ausfall|Batterie|Laden|Neu|Updates|Empfang|Integrationen", filterAll: "Alle 9", filterOwn: (n) => `Abweichend ${n}`, std: "Standard", own: "Eigene",
+    tabs: "Allgemein|Ausfall|Batterie|Laden|Neu|Updates|Empfang|Integrationen", filterAll: "Alle 9", filterOwn: (n) => `Abweichend ${n}`, std: "Standard", own: "Eigene",
     zhaSub: "5 Geräte · 3 mit Batterie", noPush: "Ausfall ohne Push", noPers: "Ausfall ohne Anhaltend · Batterie ohne Push", unmon: "Nicht überwacht",
     diffInteg: "2 Integrationen", noPushMark: "Kein Push", noTarget: "kein Ziel gewählt", pushMark: "ausgefallen und Push",
     fields: "Bereich|Integration|Verbindungsart|Offline seit|Empfang zuletzt|Batterie zuletzt|Hersteller / Modell", title: "🔴 Ausgefallen: Temperatur Keller", fieldsLabel: "Inhalt der Ausfall-Meldung", noteBattery: "eigenen Inhalt im Reiter \"Batterie\"",
     since: /^seit \d\d:\d\d$/, battery: "Batterie 0 %", actions: "Öffnen|24 Std. stumm", invented: "-72 dBm|64 %", exampleNote: "Kursiv: Beispielwert", range: "Erlaubt: 1 bis 60",
-    outageShort: "Sobald \"Erst melden nach\" um ist, an das Ziel im Reiter \"Übersicht\".",
+    outageShort: "Sobald \"Erst melden nach\" um ist, an das Ziel im Reiter \"Allgemein\".",
     bFields: "Stand|Bereich|Integration|Hersteller / Modell", bTitle: "🪫 Batterie schwach: Temperatur Keller", bText: "0 % · Keller", bTextInteg: "0 % · Keller · BTHome",
     popBatPushOff: "Push für die Integration aus", muted: /^Stumm bis /, notifyOn: "Globale Einstellung",
     stdTarget: "Standard (notify.mobile_app_testhandy)", stdTargetNone: "Standard (kein Ziel)", recipient: "Empfänger",
@@ -31,12 +31,12 @@ const TEXT = {
     sum0: "Offline after 2 min, no push · Battery low from 15 %, no push",
     sumPush: "Offline after 2 min, push after 5 min · Battery low from 15 %, push right away",
     dev: "Service devices and disabled devices hidden", gotoLink: "Monitoring and notifications › Integrations",
-    tabs: "Overview|Outage|Battery|Charging|New|Updates|Signal|Integrations", filterAll: "All 9", filterOwn: (n) => `Differs ${n}`, std: "Default", own: "Own",
+    tabs: "General|Outage|Battery|Charging|New|Updates|Signal|Integrations", filterAll: "All 9", filterOwn: (n) => `Differs ${n}`, std: "Default", own: "Own",
     zhaSub: "5 devices · 3 with battery", noPush: "Outage: no push", noPers: "Outage: no persistent · Battery: no push", unmon: "Not monitored",
     diffInteg: "2 integrations", noPushMark: "No push", noTarget: "no target chosen", pushMark: "offline and push",
     fields: "Area|Integration|Connection type|Offline since|Last signal|Last battery level|Manufacturer / model", title: "🔴 Offline: Temperatur Keller", fieldsLabel: "Content of the outage notification", noteBattery: "own content in the tab \"Battery\"",
     since: /^since \d\d:\d\d( [AP]M)?$/, battery: "battery 0 %", actions: "Open|Mute 24 h", invented: "-72 dBm|64 %", exampleNote: "Italic: example value", range: "Allowed: 1 to 60",
-    outageShort: "Once \"Report only after\" has passed, to the target in the tab \"Overview\".",
+    outageShort: "Once \"Report only after\" has passed, to the target in the tab \"General\".",
     bFields: "Level|Area|Integration|Manufacturer / model", bTitle: "🪫 Low battery: Temperatur Keller", bText: "0 % · Keller", bTextInteg: "0 % · Keller · BTHome",
     popBatPushOff: "Push off for the integration", muted: /^Muted until /, notifyOn: "Global setting",
     stdTarget: "Default (notify.mobile_app_testhandy)", stdTargetNone: "Default (no target)", recipient: "Recipient",
@@ -119,14 +119,15 @@ for (const lang of ["de", "en"]) {
     await p.screenshot({ path: `${outDir}/notify-integ-${tag.replace("/", "-")}.png` });
     await back();
 
-    // Übersicht: Chips schalten, Zeitstrahl zeigt, was kommt
-    await tab("overview");
-    check(`[${tag}] Übersicht: ohne Ziel "${T.noPushMark}", Abweichungen`, (await text('[data-lane="outage"] .mk-off b')) === T.noPushMark && (await text('[data-lane="outage"] .mk-off span')) === T.noTarget && (await text('[data-lane="outage"] .lane-diff [data-filter="own"]')) === T.diffInteg, await text('[data-lane="outage"] .lane-diff'));
+    // Reiter Ausfall: Pille "Push" schaltet die Meldung (2.96.0: die Übersichtskarten stehen in den Reitern); Ziel im Reiter Allgemein
+    await tab("outage");
+    check(`[${tag}] Ausfall: Karte mit zwei Balken, Pillen aus`, (await ev(`return r.querySelectorAll('.lane[data-lane="outage"] .ptl-row').length`)) === 2 && (await ev(`return r.querySelector('[data-set="chip"][data-key="notify_outage"]').getAttribute("aria-pressed")`)) === "false");
     await tap('[data-set="chip"][data-key="notify_outage"]');
-    check(`[${tag}] Chip "Push" an`, await wait(`return r.querySelector('[data-set="chip"][data-key="notify_outage"]').getAttribute("aria-pressed") === "true"`));
+    check(`[${tag}] Pille "Push" an, Schalter folgt`, await wait(`return r.querySelector('[data-set="chip"][data-key="notify_outage"]').getAttribute("aria-pressed") === "true" && r.querySelector('input[data-opt="notify_outage"]').checked`));
+    await tab("overview");
     await pick('select[data-opt="notify_service"]', "notify.mobile_app_testhandy");
-    // Gleich lang (2 Min.): eine gemeinsame Marke "ausgefallen und Push".
-    check(`[${tag}] mit Ziel: zwei parallele Balken ab 0, beide 5 Min.`, await wait(`const rows=[...r.querySelectorAll('[data-lane="outage"] .ptl-row')]; return rows.length === 2 && rows[1].classList.contains("mk-p") && rows[0].querySelector("b").textContent === rows[1].querySelector("b").textContent && rows[0].style.getPropertyValue("--w") === rows[1].style.getPropertyValue("--w")`), await text('[data-lane="outage"] .mtl'));
+    await tab("outage");
+    check(`[${tag}] mit Ziel: zwei parallele Balken ab 0, gleich breit`, await wait(`const rows=[...r.querySelectorAll('.lane[data-lane="outage"] .ptl-row')]; return rows.length === 2 && rows[1].classList.contains("mk-p") && rows[0].style.getPropertyValue("--w") === rows[1].style.getPropertyValue("--w")`), await text('.lane[data-lane="outage"] .mtl'));
 
     // Ausfall: Inhalt, Vorschau, Erst melden nach
     await tab("outage");

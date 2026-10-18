@@ -26,7 +26,7 @@ const TEXT = {
     sumDisp: "Dienst-Geräte und deaktivierte Geräte ausgeblendet", sumDispDis: "Dienst-Geräte ausgeblendet · deaktivierte angezeigt",
     sumDispBoth: "Dienst-Geräte und deaktivierte Geräte angezeigt", grpDis: "Deaktiviert", ofTotal: "von 17", four: "4 Änderungen", five: "5 Änderungen",
    
-    noTarget: "Ohne Ziel kommt kein Push. Ziel wählen: Reiter \"Übersicht\".",
+    noTarget: "Ohne Ziel kommt kein Push. Ziel wählen: Reiter \"Allgemein\".",
     notifyNone: "Kein Ziel (keine Push-Meldungen)", entity: "notify.fernseher (Entität)",
     rangeBat: "Erlaubt: 1 bis 50",
    
@@ -34,7 +34,7 @@ const TEXT = {
     shortInstant: "Sobald ein Gerät unter die Warnschwelle fällt.", shortDaily: (t) => `Eine Sammelmeldung um ${t}; Ausfall-Meldungen betrifft das nicht.`, timeErr: "Uhrzeit HH:MM",
     dailyAll: "Alle schwachen Geräte",
    
-    outageShort: "Sobald \"Erst melden nach\" um ist, an das Ziel im Reiter \"Übersicht\".", eight: "8 Änderungen",
+    outageShort: "Sobald \"Erst melden nach\" um ist, an das Ziel im Reiter \"Allgemein\".", eight: "8 Änderungen",
     secMon: "Überwachung und Meldungen",
     sumMon: (m, d = null, bat = 15, push = null) => `Ausfall nach ${m} Min.${d ? `, Push nach ${d} Min.` : ", ohne Push"} · Batterie schwach ab ${bat} %${push ? `, Push ${push}` : ", ohne Push"}`,
     instant: "sofort",
@@ -63,7 +63,7 @@ const TEXT = {
     sumDisp: "Service devices and disabled devices hidden", sumDispDis: "Service devices hidden · disabled shown",
     sumDispBoth: "Service devices and disabled devices shown", grpDis: "Disabled", ofTotal: "of 17", four: "4 changes", five: "5 changes",
    
-    noTarget: "Without a target no push is sent. Choose a target: tab \"Overview\".",
+    noTarget: "Without a target no push is sent. Choose a target: tab \"General\".",
     notifyNone: "No target (no push notifications)", entity: "notify.fernseher (entity)",
     rangeBat: "Allowed: 1 to 50",
    
@@ -71,7 +71,7 @@ const TEXT = {
     shortInstant: "As soon as a device drops below the warning threshold.", shortDaily: (t) => `One summary at ${t}; outage notifications are not affected.`, timeErr: "Time HH:MM",
     dailyAll: "All devices with a low battery",
    
-    outageShort: "Once \"Report only after\" has passed, to the target in the tab \"Overview\".", eight: "8 changes",
+    outageShort: "Once \"Report only after\" has passed, to the target in the tab \"General\".", eight: "8 changes",
     secMon: "Monitoring and notifications",
     sumMon: (m, d = null, bat = 15, push = null) => `Offline after ${m} min${d ? `, push after ${d} min` : ", no push"} · Battery low from ${bat} %${push ? `, push ${push}` : ", no push"}`,
     instant: "right away",
@@ -259,7 +259,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Abschnitte (notify-v3)`, order === "devices,monitor,routines,ai,updates", order);
     check(`[${tag}] Überwachung und Meldungen zusammengefasst`, (await text('[data-id="monitor"] .set-sec-title')) === T.secMon && (await text('[data-id="monitor"] .set-sec-sum')) === T.sumMon(2), await text('[data-id="monitor"] .set-sec-sum'));
     await tap('[data-set="section"][data-id="monitor"]');
-    check(`[${tag}] Reiter "Übersicht" zuerst`, await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "overview" && r.querySelectorAll(".lane").length === 5`));
+    check(`[${tag}] Reiter "Allgemein" zuerst, ohne Übersichtskarten (die stehen seit 2.96.0 in den Reitern)`, await wait(`return r.querySelector('.mon-tab.on')?.dataset.key === "overview" && r.querySelectorAll(".lane").length === 0`));
     await tab("outage");
     check(`[${tag}] fünf Zahlenfelder (seit 2.94.0 mit "Zusammenfassen ab"), zwei im Zeitstrahl`, (await ev(`return r.querySelectorAll('.set-sec-body input[type="number"]').length`)) === 5 && (await ev(`return [...r.querySelectorAll('.mtl input[type="number"]')].map(i=>i.dataset.opt).join()`)) === "offline_after,notify_delay");
     check(`[${tag}] Feld im Zeitstrahl mit Titel und Einheit`, (await text('.ptl-row:has(input[data-opt="offline_after"]) .ptl-txt > b')) === T.offLabel && (await text('.ptl-row:has(input[data-opt="offline_after"]) .unit')) === T.unit);
@@ -341,11 +341,13 @@ for (const lang of ["de", "en"]) {
     await tab("overview");
     const opts = await ev(`return [...r.querySelectorAll('select[data-opt="notify_service"] option')].map(o=>o.textContent)`);
     check(`[${tag}] Push-Ziele mit Beschriftung`, opts.length === 4 && opts[0] === T.notifyNone && opts[3] === T.entity, JSON.stringify(opts));
-    check(`[${tag}] Übersicht: Hinweis ohne Ziel`, (await text(".opt-warn")) === T.noTarget, await text(".opt-warn"));
+    check(`[${tag}] Allgemein: Hinweis ohne Ziel`, (await text(".opt-warn")) === T.noTarget, await text(".opt-warn"));
     const sel = (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-opt="notify_service"]')`))).asElement();
     await sel.selectOption("notify.mobile_app_testhandy");
     check(`[${tag}] Ziel gewählt: Hinweis weg, Zusammenfassung`, await wait(`return !r.querySelector(".opt-warn")`) && (await text('[data-id="monitor"] .set-sec-sum')) === T.sumMon(2, null, 25, T.instant), await text('[data-id="monitor"] .set-sec-sum'));
-    check(`[${tag}] Übersicht: Batterie-Zeitstrahl "bis 25 %", Push sofort`, (await text('[data-lane="battery"] .mtl-bar + .mtl-mk b')) === T.tlLow(25) && (await text('[data-lane="battery"] .mk-p b')) === T.tlInstant, await text('[data-lane="battery"] .mtl'));
+    await tab("battery");
+    check(`[${tag}] Batterie-Karte: Schwelle 25 %, Push sofort`, (await ev(`return r.querySelector('.lane[data-lane="battery"] input[data-opt="battery_low"]').value`)) === "25" && (await text('[data-lane="battery"] .mk-p b')) === T.tlInstant, await text('[data-lane="battery"] .mtl'));
+    await tab("overview");
     const click = (await f.evaluateHandle(new Function(`return ${R}.querySelector('select[data-opt="notify_click_target"]')`))).asElement();
     await click.selectOption("device");
     check(`[${tag}] fünf Änderungen`, (await text(".set-count")) === T.five, await text(".set-count"));
@@ -406,7 +408,8 @@ for (const lang of ["de", "en"]) {
     await tab("overview");
     await pick('select[data-opt="notify_service"]', "notify.mobile_app_testhandy");
     check(`[${tag}] Zusammenfassung: Batterie täglich, Ausfall ohne Push`, await wait(`return r.querySelector('[data-id="monitor"] .set-sec-sum')?.textContent === ${JSON.stringify(T.sumMon(2, null, 15, T.daily("06:45")))}`), await text('[data-id="monitor"] .set-sec-sum'));
-    check(`[${tag}] Übersicht: Batterie täglich 06:45, alle schwachen`, (await text('[data-lane="battery"] .mk-p b')) === T.tlDaily("06:45") && (await text('[data-lane="battery"] .mk-p span')) === T.tlDailyAll, await text('[data-lane="battery"] .mtl'));
+    await tab("battery");
+    check(`[${tag}] Batterie-Karte: täglich 06:45, alle schwachen`, (await text('[data-lane="battery"] .mk-p b')) === T.tlDaily("06:45") && (await text('[data-lane="battery"] .mk-p span')) === T.tlDailyAll, await text('[data-lane="battery"] .mtl'));
     await tab("outage");
     check(`[${tag}] Ausfall: Kurzzeile`, (await short("notify_outage")) === `opt-short|${T.outageShort}`, await short("notify_outage"));
     check(`[${tag}] Standard: Ausfall und Online aus, Sammelausfall an`, (await ev(`return ["notify_outage","notify_online","notify_group"].map(k=>r.querySelector('input[data-opt="'+k+'"]').checked).join()`)) === "false,false,true");

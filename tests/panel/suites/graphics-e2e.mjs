@@ -38,16 +38,25 @@ for (const mobile of [false, true]) {
     const base = ptl ? g.querySelector(".ptl-track").getBoundingClientRect() : gb; const w = ptl ? base.width : gb.width;
     out.push(ends.map(e => Math.round(((e.left + e.width / 2 - base.left) / w) * 100)).join(",")); } return out;`;
   const geo = (sel) => ev(`const SEL = ${JSON.stringify(sel)};` + GEO);
-  const lanes = await geo(".lane .mtl");
+  // Seit 2.96.0 steht die Übersichtskarte jedes Reiters im Reiter selbst (Ausfall, Batterie, Laden, Neu, Updates)
+  const lanes = [];
+  for (const tab of ["outage", "battery", "charge", "new", "updates"]) {
+    await tap(`.mon-tab[data-key="${tab}"]`);
+    await wait(`return !!r.querySelector('.lane[data-lane="${tab}"] .mtl')`);
+    lanes.push(...(await geo(".lane .mtl")));
+  }
   // Das Ende ist der grösste Wert einer Grafik (Linie: letzte Marke, Balken: längster Balken); leere Grafiken zählen nicht
   const near80 = (list) => list.every((s) => s === "" || Math.abs(Math.max(...s.split(",").map(Number)) - 80) <= 3);
-  check(`[${tag}] Übersicht: letzte Marke jeder Linie bei etwa 80 %`, near80(lanes), lanes.join(" | "));
+  check(`[${tag}] Karten: letzte Marke jeder Linie bei etwa 80 %`, near80(lanes), lanes.join(" | "));
 
   // Linie endet vor dem Rand: rechte Kante der Linie bei 80 % der Breite
+  await tap('.mon-tab[data-key="battery"]');
+  await wait(`return !!r.querySelector('.lane[data-lane="battery"] .mtl-mk.mk-off i')`);
   check(`[${tag}] Linie endet bei 80 % der Breite`, await ev(`const g = r.querySelector('.lane[data-lane="battery"] .mtl'); const bar = g.querySelector(".mtl-bar").getBoundingClientRect(); const gb = g.getBoundingClientRect(); return Math.abs((bar.right - gb.left) / gb.width * 100 - 80) < 1.5`));
   // Meldung aus (2.0.8): grauer Ring mit Schrägstrich, auch bei den Balken am Ende der gestrichelten Linie
   check(`[${tag}] Meldung aus: Linie mit Ring und Schrägstrich (durchgezogener Rand), kein gestrichelter Ring`, await ev(`const i = r.querySelector('.lane[data-lane="battery"] .mtl-mk.mk-off i'); const c = getComputedStyle(i); const sl = getComputedStyle(i, "::before"); return !!i && c.borderStyle === "solid" && sl.content !== "none" && sl.transform !== "none"`));
-  check(`[${tag}] Meldung aus bei Balken (Ausfall): Ring am Ende der gestrichelten Linie`, await ev(`const row = r.querySelector('.lane[data-lane="outage"] .ptl-row.mk-off'); if (!row) return false; const i = row.querySelector(".ptl-track i"); const tr = row.querySelector(".ptl-track").getBoundingClientRect(); const b = i.getBoundingClientRect(); return getComputedStyle(i).display !== "none" && b.width > 8 && (b.right - tr.left) / tr.width > 0.7 && (b.right - tr.left) / tr.width <= 0.81 && getComputedStyle(i, "::before").content !== "none"`));
+  await tap('.mon-tab[data-key="outage"]');
+  await wait(`return !!r.querySelector('.lane[data-lane="outage"] .ptl-track')`);
   check(`[${tag}] Ausfall: Balken enden höchstens bei 80 %, Wert unter dem Ring`, await ev(`const g = r.querySelector('.lane[data-lane="outage"] .mtl'); const tr = g.querySelector(".ptl-track"); const tb = tr.getBoundingClientRect(); const ring = tr.querySelector("i").getBoundingClientRect(); const txt = tr.querySelector(".ptl-txt"); const x = txt.getBoundingClientRect(); return (ring.right - tb.left) / tb.width <= 0.81 && x.top >= ring.bottom - 1 && !!txt.querySelector("b")`));
 
   // Bearbeiten: Ausfall (zwei Balken mit Feldern), Batterie, Laden

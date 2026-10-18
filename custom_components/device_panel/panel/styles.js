@@ -846,7 +846,7 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .lane-ic.chg { background: color-mix(in srgb, var(--dp-tier3) 18%, transparent); color: var(--dp-tier3); }
 .lane-ic.upd { background: var(--dp-primary-soft); color: var(--dp-primary); }
 .lane-t { flex: 1; font-weight: 600; }
-.lane-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.lane-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .lane-diff { margin-top: 8px; color: var(--dp-text2); font-size: 12.5px; }
 .mon-chip { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 11px; border: 1px solid var(--dp-divider); border-radius: 14px;
   background: var(--dp-card); color: var(--dp-text2); font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; white-space: nowrap; }
@@ -924,10 +924,11 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .ilist-name small { display: block; color: var(--dp-text2); font-size: 12px; }
 .ilist-name small.ilist-diff.own { color: var(--dp-primary); }
 .ilist-name small.ilist-diff.unmon { color: var(--dp-warning); }
-.iback { display: inline-flex; align-items: center; gap: 2px; margin: 6px 0 4px -4px; padding: 4px 6px 4px 0; border: none; background: none; color: var(--dp-primary);
-  font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; }
-.iback svg { transform: rotate(180deg); }
-.iback:focus-visible { outline: 2px solid var(--dp-primary); border-radius: 6px; }
+/* Zurück zur Liste der Integrationen (seit 2.96.1): ein echter Knopf wie "Zurück" in den Dialogen, mit Pfeil */
+.iback { display: inline-flex; align-items: center; gap: 8px; height: 40px; margin: 8px 0 6px; padding: 0 16px 0 12px; border: 1px solid var(--dp-divider); border-radius: 12px; background: none;
+  color: var(--dp-primary); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+.iback:hover { background: var(--dp-hover); }
+.iback:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
 .ihead { display: flex; align-items: center; gap: 10px; margin: 2px 0 4px; }
 .ihead .ibadge { width: 38px; height: 38px; border-radius: 10px; font-size: 13px; }
 .ihead b { font-size: 16px; font-weight: 600; }

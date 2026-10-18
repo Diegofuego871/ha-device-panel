@@ -7,6 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.96.0] - 2026-10-18
+
+Die Übersicht jeder Meldung zieht in ihren Reiter.
+
+### Geändert
+
+- Der Reiter **"Übersicht" heisst jetzt "Allgemein"** (Einstellungen, "Überwachung und Meldungen"). Er wiederholt nicht mehr die fünf Karten von Ausfall, Batterie, Laden, Neu und Updates, die auch in den Reitern standen, und behält "Ziel der Meldungen" und "Ruhezeit".
+- Dafür **beginnt jeder dieser Reiter mit seiner eigenen kleinen Übersicht**: eine Karte mit dem Kapitel (Symbol und Titel), dem Zeitstrahl und den **Pillen** (Push, Anhaltend, Wieder online, Sammelausfall), wie sie die Übersicht zeigte. Die Pillen schalten die Meldung sofort, neben dem Schalter im selben Reiter. Die Links "Ändern" und die Zeilen "Abweichend" der alten Karten entfallen (der Abschnitt "Abweichungen" am Ende jedes Reiters bleibt). Der Reiter Updates hat dabei den Zeitstrahl bekommen, der ihm fehlte.
+- Texte, die auf den Reiter "Übersicht" verwiesen, sagen jetzt "Allgemein".
+- Der Weg zurück von einer Integration zur Liste ("Alle Integrationen") ist jetzt ein **echter Knopf** mit Pfeil (Rahmen, gleiche Grösse und Stil wie "Zurück" in den Dialogen) statt eines kleinen blauen Textlinks.
+
 ## [2.95.1] - 2026-10-18
 
 Die Ruhezeit zieht in die Übersicht um; standardmässig werden weniger Arten gehalten.
@@ -4015,6 +4026,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.96.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.96.0
 [2.95.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.1
 [2.95.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.0
 [2.93.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.93.0
