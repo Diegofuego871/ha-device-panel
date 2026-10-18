@@ -80,8 +80,13 @@ for (const mobile of [false, true]) {
   const g0 = await pillPos();
   // Lage der Kapsel in jedem Bild (requestAnimationFrame) während 700 ms nach dem Wechsel
   const seen = await ev(`return new Promise((res) => { const b = r.querySelector(${JSON.stringify(bar)}); const out = []; const t0 = performance.now(); r.querySelector('.mon-tab[data-key="charge"]').click(); const tick = () => { const q = b.querySelector(":scope > .seg-pill")?.getBoundingClientRect(); if (q) out.push([q.left, q.top]); if (performance.now() - t0 < 700) requestAnimationFrame(tick); else res(out); }; tick(); })`);
-  const g1 = await pillPos();
   const target = await ev(`const o = r.querySelector('.mon-tab[data-key="charge"]').getBoundingClientRect(); return [o.left, o.top]`);
+  // Bei hoher Last (parallele Läufe) landet die Kapsel später als nach 700 ms: bis zu 3 s warten, bis sie am Reiter steht
+  let g1 = await pillPos();
+  for (let i = 0; i < 30 && (Math.abs(g1[0] - target[0]) >= 1.5 || Math.abs(g1[1] - target[1]) >= 1.5); i++) {
+    await p.waitForTimeout(100);
+    g1 = await pillPos();
+  }
   const between = seen.some(([x, y]) => (Math.abs(x - g0[0]) > 4 || Math.abs(y - g0[1]) > 4) && (Math.abs(x - g1[0]) > 4 || Math.abs(y - g1[1]) > 4));
   check(`[${tag}] Reiter: Kapsel gleitet und landet am gewählten Reiter`, between && Math.abs(g1[0] - target[0]) < 1.5 && Math.abs(g1[1] - target[1]) < 1.5, JSON.stringify({ g0, g1, target, seen: seen.map((x) => x.map(Math.round).join(":")).join(" ") }));
 
