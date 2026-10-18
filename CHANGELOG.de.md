@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.92.1] - 2026-10-18
+
+Die Grafik im Geräte-Popup zeigt "Erst melden nach".
+
+### Behoben
+
+- Geräte-Popup, Reiter "Einstellungen", Abschnitt "Ausfall": die Grafik zeigt jetzt **zwei Balken** wie die in den Einstellungen, "Ausgefallen nach" und den Push "Erst melden nach" (eigener Wert des Geräts, sonst der Integration, sonst global; nie kürzer als der erste). Bisher zeigte das Popup nur den ersten Balken, die neue Einstellung aus 2.91.0 hatte am Gerät also keine Grafik. Ohne Push (stumm, ausgeschaltet, kein Ziel) nennt der zweite Balken den Grund.
+
 ## [2.92.0] - 2026-10-18
 
 Symbole an allen Zurück-, Weiter-, Schliessen- und Abbrechen-Knöpfen; der Reiter "Schalter" bleibt aktuell; das Easter Egg ist jetzt ein pulsierendes Herz.
@@ -3959,6 +3967,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.92.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.1
 [2.92.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.0
 [2.91.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.91.0
 [2.90.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.90.0

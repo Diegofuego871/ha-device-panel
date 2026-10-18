@@ -50,6 +50,18 @@ for (const lang of ["de", "en"]) {
     await p.keyboard.press("Tab");
     check(`[${tag}] 15 Min. gesendet`, await wait(`return r.host._devices.find((d) => d.id === "e").notify_delay_setting === 15`) && (await calls()).at(-1).notify_delay === 15, JSON.stringify((await calls()).at(-1)));
 
+    // Grafik im Reiter: zwei Balken, "Ausgefallen nach" und "Erst melden nach" (2.93.0); ohne Push nur einer mit Grund
+    const rowsOf = () => ev(`return [...r.querySelectorAll("dialog.device .ptl .ptl-row")].map((x) => x.className.replace("ptl-row","").trim() + ":" + x.querySelector("b").textContent.trim()).join("|")`);
+    await p.evaluate(() => { window.__opts.notify_service = "notify.familie"; window.__opts.notify_outage = true; });
+    await ev(`r.host._fetch(true)`);
+    await wait(`return r.host._devices.find((d) => d.id === "e").notify_default?.push === true`);
+    await (await handle('dialog.device [data-tab="ov"]')).click();
+    await (await handle('dialog.device [data-tab="set"]')).click();
+    await wait(`return r.querySelector('select[data-dlg="dev-delay"]')`);
+    const un = lang === "de" ? "Min." : "min";
+    check(`[${tag}] Grafik: Balken "Ausgefallen nach" und Push-Balken`, await wait(`return r.querySelectorAll("dialog.device .ptl .ptl-row").length === 2`), await rowsOf());
+    const r0 = await rowsOf();
+    check(`[${tag}] Push-Balken zeigt die eigene Meldezeit (15 ${un})`, r0.split("|")[1]?.includes("15"), r0);
     // Kürzer als "Ausgefallen nach" (Gerät: 30 Min.) wird abgelehnt
     await (await handle('select[data-dlg="dev-off"]')).selectOption("own");
     await ev(`const i=r.querySelector('input[data-dlg="dev-off-min"]'); i.focus(); i.select()`);

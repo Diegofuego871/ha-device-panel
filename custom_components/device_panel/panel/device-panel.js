@@ -4507,10 +4507,15 @@ class DevicePanel extends HTMLElement {
     const outTl =
       offEff === "off"
         ? this._ptlHtml([{ cls: "mk-off", title: t("offlineNone"), sub: t("tlDevNotMonitored"), w: 100 }])
-        : this._ptlHtml([
-            { title: t("offlineMin", offEff), sub: t("tlOffline"), w: 100 },
-            ...(silenced ? [{ cls: "mk-off", title: t("tlNoPush"), sub: t(d.notify_off ? "tlDevOff" : "tlDevMuted"), w: 100 }] : []),
-          ]);
+        : this._ptlHtml(
+            // Zwei Balken wie im Reiter der Einstellungen (seit 2.93.0): "Ausgefallen nach" und "Erst melden nach" (nie kürzer, siehe _outageRows)
+            this._outageRows(
+              offEff,
+              Number.isInteger(d.notify_delay_setting) ? d.notify_delay_setting : d.notify_delay_default?.minutes ?? 2,
+              !silenced && Boolean(nd.push),
+              silenced ? t(d.notify_off ? "tlDevOff" : "tlDevMuted") : nd.integration ? t("tlIntegOff") : t("tlNoTarget")
+            )
+          );
     const lowEff = mode === "off" ? "off" : mode === "own" ? setting : def.pct;
     const batTl = this._tlHtml([lowEff === "off" ? { at: 14, cls: "mk-off", title: t("devBatOff"), sub: "" } : { at: 14, title: t("tlLow", lowEff), sub: t("tlRed") }], "mtl-b");
     const cdv = d.charge_default || { on: false, integration: null };

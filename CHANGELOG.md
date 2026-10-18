@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.92.1] - 2026-10-18
+
+The device pop-up graphic shows "Report only after".
+
+### Fixed
+
+- Pop-up of the device, tab "Settings", section "Outage": the graphic now shows **two bars** like the one in the settings, "Offline after" and the push "Report only after" (own value of the device, else the integration, else global; never shorter than the first). Until now the pop-up showed only the first bar, so the new setting of 2.91.0 had no graphic on the device. Without push (muted, switched off, no target) the second bar gives the reason.
+
 ## [2.92.0] - 2026-10-18
 
 Icons on all Back, Next, Close and Cancel buttons; the switches tab stays current; the easter egg is now a pulsing heart.
@@ -3858,6 +3866,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.92.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.1
 [2.92.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.0
 [2.91.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.91.0
 [2.90.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.90.0
