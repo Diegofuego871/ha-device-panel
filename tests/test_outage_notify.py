@@ -87,6 +87,31 @@ async def test_delay_skips_short_outage(hass: HomeAssistant, setup, freezer) -> 
     assert [c.data["title"] for c in calls] == ["🔴 Offline: Lampe", "🟢 Back online: Lampe"]
 
 
+async def test_delay_per_device_and_integration(hass: HomeAssistant, setup, freezer) -> None:
+    """"Erst melden nach" je Gerät (seit 2.91.0): das eigene des Geräts geht vor der Integration und dem globalen Wert; Termin je Gerät."""
+    calls = async_mock_service(hass, "notify", "handy")
+    lamp = _device(hass, "Lampe")
+    light = _entity(hass, lamp, "light", "l", "on")
+    other = _device(hass, "Sensor", domain="zha")
+    sensor = _entity(hass, other, "binary_sensor", "s", "on")
+    await _options(hass, notify_service="notify.handy", notify_outage=True, notify_delay=3, notify_delay_integrations={"zha": 6})
+    await async_set_device_settings(hass, lamp.id, notify_delay=4)
+    setup.evaluate()
+    hass.states.async_set(light, "unavailable")
+    hass.states.async_set(sensor, "unavailable")
+    await _tick(hass, setup, freezer, 3)
+    # 3 Min. weg: beide ausgefallen (ab 2 Min.), noch keine Meldung (Lampe 4 Min., Sensor 6 Min.)
+    assert calls == []
+    freezer.tick(timedelta(minutes=1.5))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert [c.data["title"] for c in calls] == ["🔴 Offline: Lampe"]
+    freezer.tick(timedelta(minutes=2))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    assert [c.data["title"] for c in calls] == ["🔴 Offline: Lampe", "🔴 Offline: Sensor"]
+
+
 async def test_pending_outage_survives_restart(hass: HomeAssistant, hass_storage: dict[str, Any], freezer) -> None:
     calls = async_mock_service(hass, "notify", "handy")
     lamp = _device(hass, "Lampe")

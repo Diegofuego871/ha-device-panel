@@ -100,7 +100,7 @@ Everything that notifies you follows one principle: you set a default once, chan
 
 <p align="center"><img src="docs/graphics/en/notification-flow.png" alt="Six steps from the outage of a device to the notification, with the level that decides each step" width="900"></p>
 
-- **Two times, not added:** "Offline after" (default 2 minutes) decides when the panel shows the device as offline, "Report only after" decides when the notification is sent; both run from the start of the outage, and the second cannot be shorter than the first
+- **Two times, not added:** "Offline after" (default 2 minutes) decides when the panel shows the device as offline, "Report only after" decides when the notification is sent; both run from the start of the outage, and the second cannot be shorter than the first; both can be set globally, per integration and per device
 - **Group message:** from three devices at once there is one message with the likely cause instead of many
 - **Back online:** "Back online" with the duration of the outage replaces the outage message
 - **Buttons in the message:** open the device in the panel, or mute the device for 24 hours in the Companion app

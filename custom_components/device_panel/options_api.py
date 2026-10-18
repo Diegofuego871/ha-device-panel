@@ -113,6 +113,7 @@ from .const import (
     CONF_NOTIFY_SERVICE,
     NOTIFY_TOPICS,
     CONF_OFFLINE_AFTER,
+    CONF_NOTIFY_DELAY_INTEGRATIONS,
     CONF_OFFLINE_INTEGRATIONS,
     CONF_SHOW_DISABLED,
     CONF_SHOW_SERVICE,
@@ -566,6 +567,22 @@ def offline_map(value: Any) -> dict[str, int | str]:
     return dict(sorted(out.items()))
 
 
+def notify_delay_map(value: Any) -> dict[str, int]:
+    """Eigenes "Erst melden nach" {Domain: Minuten} (seit 2.91.0), Bereich wie "Ausgefallen nach" der Integration; "off" gibt es nicht."""
+    low, high = OFFLINE_INTEGRATION_RANGE
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise vol.Invalid("Zuordnung Integration → Minuten erwartet")
+    out: dict[str, int] = {}
+    for domain, minutes in value.items():
+        number = _whole(minutes)
+        if not isinstance(domain, str) or not _DOMAIN_RE.match(domain) or number is None or not low <= number <= high:
+            raise vol.Invalid(f"Integration → ganze Zahl von {low} bis {high} erwartet")
+        out[domain] = number
+    return dict(sorted(out.items()))
+
+
 def _whole(value: Any) -> int | None:
     """Ganze Zahl oder None. True/False zählen nicht (bool ist in Python ein int)."""
     if isinstance(value, bool) or not isinstance(value, (int, float)) or value != int(value):
@@ -623,6 +640,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_SIGNAL_LOW): signal_map,
         vol.Optional(CONF_SIGNAL_LOW_INTEGRATIONS): signal_integrations_map,
         vol.Optional(CONF_OFFLINE_INTEGRATIONS): offline_map,
+        vol.Optional(CONF_NOTIFY_DELAY_INTEGRATIONS): notify_delay_map,
         vol.Optional(CONF_NOTIFY_SERVICE): _notify_target,
         **{vol.Optional(key): _notify_override for key in NOTIFY_TOPICS.values()},
         vol.Optional(CONF_AI_TASK): _ai_task,
@@ -713,6 +731,10 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     except vol.Invalid:
         # Ungültig gespeichert: lieber überall der globale Wert als ein Fehler.
         values[CONF_OFFLINE_INTEGRATIONS] = {}
+    try:
+        values[CONF_NOTIFY_DELAY_INTEGRATIONS] = notify_delay_map(options.get(CONF_NOTIFY_DELAY_INTEGRATIONS))
+    except vol.Invalid:
+        values[CONF_NOTIFY_DELAY_INTEGRATIONS] = {}
     target = str(options.get(CONF_NOTIFY_SERVICE) or "").strip()
     values[CONF_NOTIFY_SERVICE] = target if _NOTIFY_RE.match(target) else NOTIFY_NONE
     # Eigenes Ziel je Reiter (seit 2.18.0): ungültig oder leer = das globale Ziel
@@ -849,6 +871,37 @@ def offline_after_for(opts: Mapping[str, Any], domain: str | None) -> float | No
     return None if value == MONITOR_OFF else value * 60
 
 
+def notify_delay_for(opts: Mapping[str, Any], domain: str | None, own: int | None = None, offline_after: float | None = None) -> int:
+    """
+    Wirksames "Erst melden nach" in Minuten (seit 2.91.0): eigenes des Geräts (own), sonst das der Integration, sonst das globale. Nie kürzer als
+    das wirksame "Ausgefallen nach" des Geräts (offline_after, Sekunden; None = nicht überwacht): der Push kommt frühestens, wenn das Gerät als
+    ausgefallen gilt.
+    """
+    if own is None:
+        own = (opts.get(CONF_NOTIFY_DELAY_INTEGRATIONS) or {}).get(domain) if domain else None
+    value = own if own is not None else opts[CONF_NOTIFY_DELAY]
+    if offline_after is not None:
+        value = max(value, -(-int(offline_after) // 60))
+    return value
+
+
+def notify_delay_conflicts(options: Mapping[str, Any], before: Mapping[str, Any]) -> list[str]:
+    """
+    Integrationen, bei denen ein eigenes "Erst melden nach" kürzer ist als das wirksame "Ausgefallen nach" der Integration (seit 2.91.0).
+    Geprüft werden nur Integrationen, deren Wert sich gegenüber dem Gespeicherten (before) ändert: ein früher gespeicherter Widerspruch
+    soll andere Änderungen nicht blockieren (zur Laufzeit gilt ohnehin der längere Wert, notify_delay_for).
+    """
+    now = values_from(options)
+    old = values_from(before)
+    bad = []
+    for domain, delay in now[CONF_NOTIFY_DELAY_INTEGRATIONS].items():
+        changed = delay != old[CONF_NOTIFY_DELAY_INTEGRATIONS].get(domain) or now[CONF_OFFLINE_INTEGRATIONS].get(domain) != old[CONF_OFFLINE_INTEGRATIONS].get(domain)
+        offline = offline_after_for(now, domain)
+        if changed and offline is not None and delay * 60 < offline:
+            bad.append(domain)
+    return bad
+
+
 def emoji_for(values: Mapping[str, Any], kind: str) -> str:
     """Wirksames Emoji einer Meldung (Standard, wenn nichts eingestellt ist); "" = keines."""
     own = values.get(EMOJI_KEYS[kind])
@@ -880,6 +933,10 @@ def apply_values(hass: HomeAssistant, entry: ConfigEntry, values: dict[str, Any]
     options = {**entry.options, **clean}
     if (CONF_NOTIFY_DELAY in clean or CONF_OFFLINE_AFTER in clean) and delay_too_short(options):
         raise vol.Invalid("\"Erst melden nach\" darf nicht kürzer sein als \"Ausgefallen nach\"", path=[CONF_NOTIFY_DELAY])
+    if (CONF_NOTIFY_DELAY_INTEGRATIONS in clean or CONF_OFFLINE_INTEGRATIONS in clean) and (bad := notify_delay_conflicts(options, entry.options)):
+        raise vol.Invalid(
+            f"\"Erst melden nach\" darf nicht kürzer sein als \"Ausgefallen nach\" ({', '.join(bad)})", path=[CONF_NOTIFY_DELAY_INTEGRATIONS]
+        )
     # KI-Einschätzung nur einschalten, wenn es eine KI-Aufgabe gibt (seit 2.38.0): sonst scheitert jeder Aufruf mit "no preferred entity".
     # Wer sie schon eingeschaltet hat, bleibt unberührt (sonst liesse sich nichts anderes mehr speichern, wenn die Aufgabe wegfällt).
     if clean.get(CONF_AI_ASSESSMENT) is True and entry.options.get(CONF_AI_ASSESSMENT) is not True:

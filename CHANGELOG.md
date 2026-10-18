@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.91.0] - 2026-10-18
+
+"Report only after" per device and per integration.
+
+### Added
+
+- **"Report only after"** (time from the start of an outage to the notification) can now be set **per integration** (settings, "Monitoring and notifications" › "Integrations", tab "Outage") and **per device** (pop-up, tab "Settings", next to "Offline after"), like "Offline after". The device wins over the integration, the integration over the global value; each row shows where the value comes from. The new setting counts as an own setting: tag at the device name, overview of deviations and reset in the settings.
+- The new value is **never shorter than "Offline after"** (on all three levels). Saving an own value that is too short gives an **error message** instead of shifting it silently. Without an own value the longer of the two applies at runtime.
+
+### Changed
+
+- The outage notification now waits per device for its own time (device, integration or global).
+
 ## [2.90.0] - 2026-10-17
 
 AI assessment: can be collapsed.
@@ -3828,6 +3841,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.91.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.91.0
 [2.90.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.90.0
 [2.89.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.89.0
 [2.88.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.88.0

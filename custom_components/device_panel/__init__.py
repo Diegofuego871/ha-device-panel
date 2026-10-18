@@ -118,6 +118,8 @@ from .devices import (
     async_set_device_settings,
     async_set_type_override,
     device_battery_threshold,
+    async_notify_delay_error,
+    valid_notify_delay_setting,
     valid_offline_setting,
     valid_signal_setting,
 )
@@ -858,6 +860,13 @@ def _offline_setting(value: Any) -> Any:
     return value
 
 
+def _notify_delay_setting(value: Any) -> Any:
+    """"Erst melden nach" des Geräts (seit 2.91.0): ganze Minuten von 1 bis 1440 (True zählt nicht als Zahl)."""
+    if not valid_notify_delay_setting(value):
+        raise vol.Invalid("ganze Minuten von 1 bis 1440 erwartet")
+    return value
+
+
 def _signal_setting(value: Any) -> Any:
     """Empfang-Warnung: "off" oder ganze Zahl (kein bool) im Bereich für dBm oder LQI."""
     if not valid_signal_setting(value):
@@ -882,6 +891,8 @@ def _signal_setting(value: Any) -> Any:
         # "Ausgefallen nach": None = Integration bzw. global, "off" = nicht
         # überwachen, Zahl = Minuten.
         vol.Optional("offline"): vol.Any(None, _offline_setting),
+        # "Erst melden nach" (seit 2.91.0): None = Integration bzw. global, Zahl = Minuten.
+        vol.Optional("notify_delay"): vol.Any(None, _notify_delay_setting),
         # Lademeldung (seit 1.30.0): None = Integration, True/False = am Gerät.
         vol.Optional("charge"): vol.Any(None, bool),
         # Eigenes "Voll ab" und eigener Anstieg der Lademeldung (seit 1.35.0): None = global.
@@ -903,7 +914,11 @@ async def _ws_set_device_settings(
     if dr.async_get(hass).async_get(msg["device_id"]) is None:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
         return
-    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live") if k in msg}
+    changes = {k: msg[k] for k in ("battery", "notify", "signal", "offline", "notify_delay", "charge", "charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live") if k in msg}
+    # "Erst melden nach" des Geräts nie kürzer als sein "Ausgefallen nach" (seit 2.91.0, wie global und pro Integration): Fehler, nichts gespeichert
+    if error := await async_notify_delay_error(hass, msg["device_id"], changes):
+        connection.send_error(msg["id"], websocket_api.ERR_INVALID_FORMAT, error)
+        return
     await async_set_device_settings(hass, msg["device_id"], **changes)
     device = dr.async_get(hass).async_get(msg["device_id"])
     activity.record(hass, "debug", "system", "device_settings_saved", (device.name_by_user or device.name or "") if device else "", msg["device_id"], keys=", ".join(sorted(changes)))
@@ -1069,6 +1084,8 @@ async def _ws_rename_device(
         vol.Optional("signal", default=[]): [str],
         # "Ausgefallen nach" des Geräts: zurück auf Integration bzw. global.
         vol.Optional("offline", default=[]): [str],
+        # "Erst melden nach" des Geräts (seit 2.91.0): zurück auf Integration bzw. global.
+        vol.Optional("notify_delay", default=[]): [str],
         # Lademeldung des Geräts: alle eigenen Werte zurück auf Integration bzw. global.
         vol.Optional("charge", default=[]): [str],
     }
@@ -1079,7 +1096,7 @@ async def _ws_reset_device_settings(
     hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
 ) -> None:
     """Einstellungen pro Gerät zurücksetzen, gibt die Zahl der Geräte zurück."""
-    done = await async_reset_device_settings(hass, msg["battery"], msg["notify"], msg["connection"], msg["signal"], msg["offline"], msg["charge"])
+    done = await async_reset_device_settings(hass, msg["battery"], msg["notify"], msg["connection"], msg["signal"], msg["offline"], msg["charge"], msg["notify_delay"])
     # Batterie-Warnung sofort nachführen (Push, anhaltende Benachrichtigung).
     if done["battery"] and (watch := hass.data.get(DATA_BATTERY)) is not None:
         await watch.async_check()

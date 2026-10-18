@@ -517,6 +517,7 @@
       connection: devices.filter((d) => d.id in window.__connOverrides).map((d) => ({ ...info(d), value: window.__connOverrides[d.id] })).sort(byName),
       signal: devices.filter((d) => d.id in s.signal).map((d) => ({ ...info(d), value: s.signal[d.id] })).sort(byName),
       offline: devices.filter((d) => d.id in s.offline).map((d) => ({ ...info(d), value: s.offline[d.id] })).sort(byName),
+      notify_delay: devices.filter((d) => d.id in s.notifyDelay).map((d) => ({ ...info(d), value: s.notifyDelay[d.id] })).sort(byName),
       // Wie das Backend (seit 2.78.0): alle eigenen Werte der Lademeldung eines Geräts
       charge: devices
         .map((d) => {
@@ -626,7 +627,7 @@
   };
   window.__statusSum = () => { const s = window.__statusSnap(Date.now() / 1000); return { problems: s.problems, down: s.down }; };
   window.__opts = {
-    offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, offline_after_integrations: {}, battery_push: false, battery_persistent: false,
+    offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, offline_after_integrations: {}, notify_delay_integrations: {}, battery_push: false, battery_persistent: false,
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
     exclude_integrations: [], exclude_types: [], exclude_devices: [], notify_service: "none", notify_service_outage: "", notify_service_battery: "", notify_service_charge: "", notify_service_new: "", notify_service_updates: "", notify_service_routines: "", notify_service_panelupdate: "", update_check_time: "", update_notify: false, notify_click_target: "panel",
     notify_outage: false, notify_online: false, notify_group: true, hide_chips: [], hide_connections: [], connection_order: [], chip_order: [], connection_integrations: {}, type_integrations: {},
@@ -642,7 +643,7 @@
   const EMOJI_DEFAULTS = { outage: "🔴", group: "🚨", online: "🟢", battery: "🪫", charge: "🔋", charge_stop: "🔌", new: "✨", updates: "⬆️" };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
-  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, charge: {}, chargeLive: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {} };
+  window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, notifyDelay: {}, charge: {}, chargeLive: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {} };
   window.__connOverrides = {};
   window.__names = {};
   const pushHass = () => {
@@ -813,7 +814,9 @@
           for (const key of ["charge", "chargeFull", "chargeRise", "chargeStall", "chargeStop", "chargeLive"]) if (id in s[key]) { delete s[key][id]; any = true; }
           if (any) charge++;
         }
-        return { battery, notify, connection, signal, offline, charge };
+        let notifyDelay = 0;
+        for (const id of new Set(msg.notify_delay || [])) if (id in s.notifyDelay) { delete s.notifyDelay[id]; notifyDelay++; }
+        return { battery, notify, connection, signal, offline, notify_delay: notifyDelay, charge };
       }
       if (msg.type === "device_panel/set_options") {
         if (window.__setOptsFails) throw new Error(window.__setOptsFails);
@@ -972,6 +975,24 @@
           const m = msg.values.offline_after_integrations;
           if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || (v !== "off" && (!Number.isInteger(v) || v < 1 || v > 1440)))) throw { code: "invalid_format", message: "offline map" };
         }
+        if ("notify_delay_integrations" in msg.values) {
+          // Wie options_api.notify_delay_map: Minuten 1 bis 1440, kein "off"
+          const m = msg.values.notify_delay_integrations;
+          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !Number.isInteger(v) || v < 1 || v > 1440)) throw { code: "invalid_format", message: "notify delay integrations" };
+        }
+        if ("notify_delay_integrations" in msg.values || "offline_after_integrations" in msg.values) {
+          // Wie options_api.notify_delay_conflicts: eigenes "Erst melden nach" der Integration nie kürzer als ihr "Ausgefallen nach" (nur geänderte)
+          const nowD = { ...window.__opts.notify_delay_integrations, ...(msg.values.notify_delay_integrations || {}) };
+          const dm = "notify_delay_integrations" in msg.values ? msg.values.notify_delay_integrations : window.__opts.notify_delay_integrations;
+          const om = "offline_after_integrations" in msg.values ? msg.values.offline_after_integrations : window.__opts.offline_after_integrations;
+          const bad = Object.entries(dm || {}).filter(([dom, v]) => {
+            const off = (om || {})[dom] ?? msg.values.offline_after ?? window.__opts.offline_after;
+            const changed = v !== (window.__opts.notify_delay_integrations || {})[dom] || (om || {})[dom] !== (window.__opts.offline_after_integrations || {})[dom];
+            return changed && off !== "off" && v < off;
+          });
+          void nowD;
+          if (bad.length) throw { code: "invalid_format", message: `"Erst melden nach" darf nicht kürzer sein als "Ausgefallen nach" (${bad.map((x) => x[0]).join(", ")})` };
+        }
         const changed = Object.keys(msg.values).some((k) => JSON.stringify(window.__opts[k]) !== JSON.stringify(msg.values[k]));
         Object.assign(window.__opts, msg.values);
         applyTypes();
@@ -980,6 +1001,15 @@
       if (msg.type === "device_panel/set_device_settings") {
         if (window.__devSetFails) throw new Error(window.__devSetFails);
         if (!window.__devices.find((x) => x.id === msg.device_id)) throw { code: "not_found", message: "device not found" };
+        {
+          // Wie devices.async_notify_delay_error: eigenes "Erst melden nach" nie kürzer als das wirksame "Ausgefallen nach" des Geräts
+          const dev = window.__devices.find((x) => x.id === msg.device_id);
+          const ownD = "notify_delay" in msg ? msg.notify_delay : window.__devSettings.notifyDelay[msg.device_id];
+          const ownO = "offline" in msg ? msg.offline : window.__devSettings.offline[msg.device_id];
+          const offM = window.__opts.offline_after_integrations || {};
+          const offMin = ownO === "off" ? null : Number.isInteger(ownO) ? ownO : offM[dev.integration?.domain] === "off" ? null : offM[dev.integration?.domain] ?? window.__opts.offline_after;
+          if (("notify_delay" in msg || "offline" in msg) && ownD != null && offMin != null && ownD < offMin) throw { code: "invalid_format", message: '"Erst melden nach" darf nicht kürzer sein als "Ausgefallen nach"' };
+        }
         const out = {};
         if ("battery" in msg) {
           const v = msg.battery;
@@ -995,6 +1025,14 @@
           if (v === null) delete window.__devSettings.offline[msg.device_id];
           else window.__devSettings.offline[msg.device_id] = v;
           out.offline = v;
+        }
+        if ("notify_delay" in msg) {
+          // Wie das Backend: Minuten 1..1440, nie kürzer als "Ausgefallen nach" des Geräts (nur bei eigenem Wert)
+          const v = msg.notify_delay;
+          if (!(v === null || (Number.isInteger(v) && v >= 1 && v <= 1440))) throw { code: "invalid_format", message: "notify_delay" };
+          if (v === null) delete window.__devSettings.notifyDelay[msg.device_id];
+          else window.__devSettings.notifyDelay[msg.device_id] = v;
+          out.notify_delay = v;
         }
         if ("signal" in msg) {
           // Wie das Backend: "off" oder dBm -110..-40 bzw. LQI 1..200.
@@ -1594,6 +1632,15 @@
             unmonitored: unmon(d),
             offline_after: unmon(d) ? null : offEff(d),
             offline_setting: devOff[d.id] ?? null,
+            // Wie das Backend (seit 2.91.0): wirksam (nie kürzer als "Ausgefallen nach"), eigener Wert, Standard
+            notify_delay: (() => {
+              const dm = window.__opts.notify_delay_integrations || {};
+              const v = window.__devSettings.notifyDelay[d.id] ?? dm[d.integration?.domain] ?? window.__opts.notify_delay;
+              const o = offEff(d);
+              return Number.isInteger(o) ? Math.max(v, o) : v;
+            })(),
+            notify_delay_setting: window.__devSettings.notifyDelay[d.id] ?? null,
+            notify_delay_default: { minutes: (window.__opts.notify_delay_integrations || {})[d.integration?.domain] ?? window.__opts.notify_delay, integration: d.integration?.domain in (window.__opts.notify_delay_integrations || {}) ? d.integration.domain : null, global: window.__opts.notify_delay },
             offline_default: { minutes: offMap[d.integration?.domain] ?? window.__opts.offline_after, integration: d.integration?.domain in offMap ? d.integration.domain : null, global: window.__opts.offline_after },
             notify_default: notifyDefault(d),
             flaky: !unmon(d) && Boolean(d.online && d.avail24 && d.avail24.outages >= flakyN),

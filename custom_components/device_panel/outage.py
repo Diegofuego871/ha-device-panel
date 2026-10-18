@@ -55,7 +55,7 @@ from .const import (
     PERSISTENT_OUTAGE_ID,
     STORAGE_VERSION,
 )
-from .devices import async_device_facts, async_mute_device, device_settings, notify_muted_until, primary_domain
+from .devices import async_device_facts, async_mute_device, device_notify_delay, device_settings, notify_muted_until, primary_domain
 from .options_api import notify_target, effective
 
 _LOGGER = logging.getLogger(__name__)
@@ -180,7 +180,7 @@ class OutageNotifier:
                     continue
                 self._offline[dev] = at
                 new_outage = True
-                self._debug(dev, "outage_seen", minutes=effective(self.hass)[CONF_NOTIFY_DELAY])
+                self._debug(dev, "outage_seen", minutes=self._delay(effective(self.hass), dev) // 60)
             elif state == ONLINE and dev in self._offline:
                 start = self._offline.pop(dev)
                 dirty = True
@@ -204,8 +204,8 @@ class OutageNotifier:
         """Fällige Ausfall-Meldungen, Online-Meldungen, anhaltende Benachrichtigung, nächster Termin."""
         opts = effective(self.hass)
         now = time.time()
-        delay = opts[CONF_NOTIFY_DELAY] * 60
-        due = [(dev, start) for dev, start in self._offline.items() if dev not in self._notified and start + delay <= now]
+        # "Erst melden nach" je Gerät (seit 2.91.0): eigenes, sonst das der Integration, sonst das globale
+        due = [(dev, start) for dev, start in self._offline.items() if dev not in self._notified and start + self._delay(opts, dev) <= now]
         if due:
             # Fällig heisst erledigt, auch wenn für das Gerät kein Push geht
             # (aus, stumm, Integration ohne Push): sonst käme er später.
@@ -219,7 +219,13 @@ class OutageNotifier:
             if came_back and opts[CONF_NOTIFY_ONLINE]:
                 await self._async_push(opts, [x for x in came_back if self._pushable(opts, x[0], now)], online=True)
         self._update_persistent(opts, new_outage)
-        self._schedule(delay, now)
+        self._schedule(opts, now)
+
+    def _delay(self, opts: dict[str, Any], dev: str) -> int:
+        """"Erst melden nach" des Geräts in Sekunden; ein Gerät, das es nicht mehr gibt, folgt dem globalen Wert."""
+        device = dr.async_get(self.hass).async_get(dev)
+        minutes = device_notify_delay(self.hass, opts, device) if device is not None else opts[CONF_NOTIFY_DELAY]
+        return int(minutes) * 60
 
     def _log_flush(self, opts: dict[str, Any], items: list[tuple[str, float]], online: bool, now: float) -> None:
         """Ins Protokoll: was mit einem fälligen Ausfall oder einer Rückkehr geschieht und warum (Meldung oder keine)."""
@@ -241,12 +247,12 @@ class OutageNotifier:
             activity.record(hass, "info", "outage", f"{kind}_{code}", name, dev, **args)
 
     @callback
-    def _schedule(self, delay: float, now: float) -> None:
+    def _schedule(self, opts: dict[str, Any], now: float) -> None:
         """Termin für den nächsten noch nicht fälligen Ausfall."""
         if self._timer is not None:
             self._timer()
             self._timer = None
-        pending = [start + delay for dev, start in self._offline.items() if dev not in self._notified]
+        pending = [start + self._delay(opts, dev) for dev, start in self._offline.items() if dev not in self._notified]
         if pending:
             self._timer = async_call_later(self.hass, max(1.0, min(pending) - now + 1), self._on_timer)
 

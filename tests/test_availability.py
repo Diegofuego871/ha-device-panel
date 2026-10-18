@@ -659,6 +659,60 @@ async def test_offline_after_per_device(hass: HomeAssistant, setup: Availability
         assert (await client.receive_json())["error"]["code"] == "invalid_format", bad
 
 
+async def test_notify_delay_per_integration_and_device(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client) -> None:
+    """"Erst melden nach" gibt es global, pro Integration und pro Gerät (seit 2.91.0): das Gerät geht vor, dann die Integration, dann global."""
+    lamp = _device(hass, "Lampe")
+    _entity(hass, lamp, "light", "l", "on")
+    other = _device(hass, "Sensor", domain="zha")
+    _entity(hass, other, "binary_sensor", "s", "on")
+    setup.evaluate()
+    assert (await _set_options(hass, hass_ws_client, {"notify_delay": 5}))["result"] == {"changed": True}
+    assert (await _set_options(hass, hass_ws_client, {"notify_delay_integrations": {"zha": 20}}))["result"] == {"changed": True}
+    devices = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}
+    assert devices["Lampe"]["notify_delay"] == 5 and devices["Lampe"]["notify_delay_default"] == {"minutes": 5, "integration": None, "global": 5}
+    assert devices["Sensor"]["notify_delay"] == 20 and devices["Sensor"]["notify_delay_default"] == {"minutes": 20, "integration": "zha", "global": 5}
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_device_settings", "device_id": other.id, "notify_delay": 30})
+    assert (await client.receive_json())["result"] == {"notify_delay": 30}
+    devices = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}
+    assert devices["Sensor"]["notify_delay"] == 30 and devices["Sensor"]["notify_delay_setting"] == 30
+    # Nie kürzer als "Ausgefallen nach" des Geräts: Fehler, nichts gespeichert
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_device_settings", "device_id": other.id, "offline": 60})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/set_device_settings", "device_id": lamp.id, "notify_delay": 1})
+    assert (await client.receive_json())["error"]["code"] == "invalid_format"
+    devices = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}
+    assert devices["Sensor"]["offline_setting"] is None and devices["Lampe"]["notify_delay_setting"] is None
+    # Gültige Werte; Prüfung der Form
+    for i, bad in enumerate((0, 1441, True, "off", 1.5), 10):
+        await client.send_json({"id": i, "type": f"{DOMAIN}/set_device_settings", "device_id": lamp.id, "notify_delay": bad})
+        assert (await client.receive_json())["error"]["code"] == "invalid_format", bad
+    # Zurücksetzen: das Gerät folgt wieder der Integration
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/reset_device_settings", "notify_delay": [other.id, "gibtsnicht"]})
+    assert (await client.receive_json())["result"]["notify_delay"] == 1
+    devices = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}
+    assert devices["Sensor"]["notify_delay"] == 20 and devices["Sensor"]["notify_delay_setting"] is None
+
+
+async def test_notify_delay_integration_is_checked(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client) -> None:
+    """Eigenes "Erst melden nach" der Integration nie kürzer als ihr "Ausgefallen nach"; Form wie bei "Ausgefallen nach"."""
+    for i, bad in enumerate(({"zha": 0}, {"zha": 1441}, {"zha": True}, {"zha": "off"}, {"Zha Böse": 5}, [], "x"), 1):
+        client = await hass_ws_client(hass)
+        await client.send_json({"id": i, "type": f"{DOMAIN}/set_options", "values": {"notify_delay_integrations": bad}})
+        assert (await client.receive_json())["error"]["code"] == "invalid_format", bad
+    await _set_options(hass, hass_ws_client, {"notify_delay": 10})
+    # Ausgefallen nach 30 > Erst melden nach 20: Fehler, in beiden Richtungen der Änderung
+    msg = await _set_options(hass, hass_ws_client, {"offline_after_integrations": {"zha": 30}, "notify_delay_integrations": {"zha": 20}})
+    assert msg["error"]["code"] == "invalid_format" and "zha" in msg["error"]["message"]
+    assert (await _set_options(hass, hass_ws_client, {"offline_after_integrations": {"zha": 30}}))["result"] == {"changed": True}
+    msg = await _set_options(hass, hass_ws_client, {"notify_delay_integrations": {"zha": 20}})
+    assert msg["error"]["code"] == "invalid_format"
+    assert (await _set_options(hass, hass_ws_client, {"notify_delay_integrations": {"zha": 45}}))["result"] == {"changed": True}
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 30, "type": f"{DOMAIN}/get_options"})
+    assert (await client.receive_json())["result"]["values"]["notify_delay_integrations"] == {"zha": 45}
+
+
 async def test_notify_default_origin(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client) -> None:
     """Herkunft der Meldungen: Push und Anhaltend je Integration (für das Popup)."""
     lamp = _device(hass, "Lampe")

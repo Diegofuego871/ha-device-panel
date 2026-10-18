@@ -400,13 +400,13 @@ const UPDATE_KINDS = ["core", "addons", "hacs", "devices"];
 // für den Punkt am Reiter und das Etikett "geändert" des Abschnitts.
 const MON_TAB_KEYS = {
   overview: ["notify_service", "notify_click_target"],
-  outage: ["notify_service_outage", "offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "emoji_outage", "emoji_group", "emoji_online", "reset_offline", "reset_notify"],
+  outage: ["notify_service_outage", "offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "outage_persistent", "notify_fields", "emoji_outage", "emoji_group", "emoji_online", "reset_offline", "reset_notify_delay", "reset_notify"],
   charge: ["notify_service_charge", "notify_charge", "charge_live", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations", "emoji_charge", "emoji_charge_stop", "reset_charge"],
   battery: ["notify_service_battery", "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "emoji_battery", "reset_battery"],
   new: ["notify_service_new", "notify_new", "new_window", "new_persistent", "new_fields", "emoji_new"],
   updates: ["notify_service_updates", "notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include", "emoji_updates"],
   sig: ["signal_low", "reset_signal"],
-  integ: ["offline_after_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
+  integ: ["offline_after_integrations", "notify_delay_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
 
 // Reiter der Abschnitte "Geräte im Panel" und "Darstellung" (seit 1.0.0,
@@ -526,7 +526,7 @@ const promptHtml = (text) => escape(text).replace(/\{(language|facts(?:_[a-z]+)?
 const CHARGE_FULL_PRESETS = [100, 95, 90, 80];
 const CHARGE_FULL_OWN_START = 85;
 const CHARGE_FULL_RANGE = [50, 100];
-const INTEG_OWN_MAPS = ["offline_after_integrations", "battery_low_integrations", "signal_low_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations"];
+const INTEG_OWN_MAPS = ["offline_after_integrations", "notify_delay_integrations", "battery_low_integrations", "signal_low_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations"];
 // Liste der Integrationen mit Lademeldung (seit 1.32.0 auch hier einstellbar): zurücksetzen = aus, der Standard.
 const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"];
 
@@ -677,6 +677,7 @@ const devOwnCount = (d) =>
     d.type_manual,
     d.connection_manual,
     d.offline_setting != null,
+    d.notify_delay_setting != null,
     d.battery_setting != null,
     d.signal_setting != null,
     d.charge_setting != null,
@@ -687,7 +688,7 @@ const devOwnCount = (d) =>
     d.charge_live_setting != null,
     d.notify_off || (d.notify_mute_until && Date.parse(d.notify_mute_until) > Date.now()),
   ].filter(Boolean).length;
-const hasOverride = (d) => d.offline_setting != null || d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual) || d.signal_setting != null;
+const hasOverride = (d) => d.offline_setting != null || d.notify_delay_setting != null || d.battery_setting != null || Boolean(d.notify_off) || Boolean(d.connection_manual) || d.signal_setting != null;
 
 const defaultView = () => ({
   sort: "default",
@@ -1667,6 +1668,23 @@ class DevicePanel extends HTMLElement {
         } else {
           this._offRangeError = null;
           this._setDeviceSettings(this._detailId, { offline: v });
+        }
+      } else if (el.matches?.('select[data-dlg="dev-delay"]')) {
+        // Eigene Zeit: mit dem bisher geltenden Wert beginnen (wirksames "Erst melden nach")
+        const d = this._devices.find((x) => x.id === this._detailId);
+        const start = [d?.notify_delay, d?.notify_delay_default?.minutes].find((v) => Number.isInteger(v)) ?? 2;
+        this._delayRangeError = null;
+        this._setDeviceSettings(this._detailId, { notify_delay: el.value === "own" ? start : null });
+      } else if (el.matches?.('input[data-dlg="dev-delay-min"]')) {
+        const v = Number(el.value);
+        const [min, max] = [1, 1440];
+        if (el.value === "" || !Number.isInteger(v) || v < min || v > max) {
+          this._delayRangeError = { value: el.value, message: this._t("settingsRange", min, max) };
+          this._devForce = true;
+          this._renderDevice();
+        } else {
+          this._delayRangeError = null;
+          this._setDeviceSettings(this._detailId, { notify_delay: v });
         }
       } else if (el.matches?.('select[data-dlg="dev-sig"]')) {
         // Eigene Schwelle: etwas unter dem heutigen Wert vorschlagen (5 dBm
@@ -3568,6 +3586,7 @@ class DevicePanel extends HTMLElement {
       `<span class="ovr ${cls}" role="img" title="${escape(label)}" aria-label="${escape(label)}">${mdi(icon, 12)}${text ? escape(text) : ""}</span>`;
     if (d.offline_setting === "off") out.push(tag("time-off", "timer", "", this._t("ovrTimeOffTip")));
     else if (Number.isInteger(d.offline_setting)) out.push(tag("time", "timer", this._t("offlineMin", d.offline_setting), this._t("ovrTimeOwnTip", this._t("offlineMin", d.offline_setting))));
+    if (Number.isInteger(d.notify_delay_setting)) out.push(tag("time", "bell", this._t("offlineMin", d.notify_delay_setting), this._t("ovrDelayOwnTip", this._t("offlineMin", d.notify_delay_setting))));
     const setting = d.battery_setting;
     if (setting === "off") out.push(tag("bat-off", "batteryOff", "", this._t("ovrBatOffTip")));
     else if (Number.isInteger(setting)) out.push(tag("bat", "battery", `${setting} %`, this._t("ovrBatOwnTip", setting, d.battery_default?.pct ?? 15)));
@@ -4063,6 +4082,7 @@ class DevicePanel extends HTMLElement {
     this._devRangeError = null;
     this._sigRangeError = null;
     this._offRangeError = null;
+    this._delayRangeError = null;
     this._chargeRangeError = null;
     this._chargeFullRangeError = null;
     this._chargeStallRangeError = null;
@@ -4249,6 +4269,30 @@ class DevicePanel extends HTMLElement {
             }`
           : ""
       }${origin(offMode !== "default", od.integration, offMode !== "default" || od.integration ? t("originDefaultWould", fmt(od.global)) : "", t("devOffShort"))}</div>`;
+    }
+    // "Erst melden nach" pro Gerät (seit 2.91.0): Standard der Integration bzw. global oder eigene Zeit; nie kürzer als "Ausgefallen nach"
+    {
+      const nd = d.notify_delay_default || { minutes: 2, integration: null, global: 2 };
+      const own = d.notify_delay_setting;
+      const dMode = Number.isInteger(own) ? "own" : "default";
+      const dRange = dMode === "own" ? this._delayRangeError : null;
+      const dLabel = nd.integration ? t("devDelayInteg", t("offlineMin", nd.minutes)) : t("devDelayGlobal", t("offlineMin", nd.minutes));
+      // Eigenes "Erst melden nach" kürzer als das wirksame "Ausgefallen nach" des Geräts: Fehler am Feld (der Server lehnt es ebenfalls ab)
+      const offEffective = d.offline_setting === "off" ? null : Number.isInteger(d.offline_setting) ? d.offline_setting : d.offline_default?.minutes ?? 2;
+      const short = dMode === "own" && Number.isInteger(offEffective) && own < offEffective ? { value: String(own), message: t("integDelayError", t("offlineMin", offEffective)) } : null;
+      const bad = dRange || short;
+      parts.out += `<div class="opt${dMode !== "default" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devDelay"))}</span>${sel(
+        "dev-delay",
+        [["default", dLabel], ["own", t("devDelayOwn")]],
+        dMode,
+        t("devDelay")
+      )}</div>${
+        dMode === "own"
+          ? `<div class="opt-line opt-sub"><span class="opt-label">${escape(t("devDelay"))}</span><span class="opt-input${bad ? " bad" : ""}"><input type="number" inputmode="numeric" step="1" min="1" max="1440" data-dlg="dev-delay-min" value="${escape(dRange ? dRange.value : own)}" aria-label="${escape(t("devDelay"))}"><span class="unit">${escape(t("minuteUnit"))}</span></span></div>${
+              bad ? `<div class="opt-error" data-dev-range>${escape(bad.message)}</div>` : ""
+            }`
+          : ""
+      }${origin(dMode !== "default", nd.integration, dMode !== "default" || nd.integration ? t("originDefaultWould", t("offlineMin", nd.global)) : "", t("devDelayShort"))}</div>`;
     }
     if (d.has_battery) {
       const integ = def.integration ? this._integrations[def.integration] || def.integration : null;
@@ -4442,7 +4486,7 @@ class DevicePanel extends HTMLElement {
       sig: hasSignal ? parts.sig : note("devNoSignal"),
     };
     const ownTab = {
-      out: d.offline_setting != null || silenced,
+      out: d.offline_setting != null || d.notify_delay_setting != null || silenced,
       bat: d.battery_setting != null,
       chg: [d.charge_setting, d.charge_full_setting, d.charge_rise_setting, d.charge_stall_setting, d.charge_stop_setting, d.charge_live_setting].some((v) => v != null),
       sig: d.signal_setting != null,
@@ -4648,6 +4692,7 @@ class DevicePanel extends HTMLElement {
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-charge-stall-val" && typing.value !== String(d.charge_stall_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-charge-full-val" && typing.value !== String(d.charge_full_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-off-min" && typing.value !== String(d.offline_setting)) return;
+    if (!this._devForce && d && typing?.dataset?.dlg === "dev-delay-min" && typing.value !== String(d.notify_delay_setting)) return;
     this._devForce = false;
     let html;
     if (!d) {
@@ -5495,7 +5540,7 @@ class DevicePanel extends HTMLElement {
     // Wert zurückgeht (Variante A, docs/mockups/override-v1).
     this._settings = {
       loading: true, error: null, saveError: null, saving: false, data: null, draft: null, open: new Set(tab === "overview" ? [] : ["monitor"]), info: new Set(),
-      resets: { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set(), charge: new Set() },
+      resets: { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set(), notify_delay: new Set(), charge: new Set() },
       // Reiter von "Überwachung und Meldungen", gewählte Integration, Filter der Liste.
       tab, integ: null, integFilter: "all",
       // Reiter von "Geräte im Panel" und "Darstellung".
@@ -6008,6 +6053,7 @@ class DevicePanel extends HTMLElement {
       ...[...st.resets.connection].map(() => "reset_connection"),
       ...[...st.resets.signal].map(() => "reset_signal"),
       ...[...st.resets.offline].map(() => "reset_offline"),
+      ...[...st.resets.notify_delay].map(() => "reset_notify_delay"),
       ...[...st.resets.charge].map(() => "reset_charge"),
     ];
   }
@@ -6052,6 +6098,17 @@ class DevicePanel extends HTMLElement {
     const sigInteg = sigBad.find((x) => x.dom);
     if (sigGlobal) errors.signal_low = this._t("settingsRange", ...sigGlobal.range);
     if (sigInteg) errors.signal_low_integrations = this._t("settingsRange", ...sigInteg.range);
+    // Eigenes "Erst melden nach" einer Integration nie kürzer als ihr wirksames "Ausgefallen nach" (seit 2.91.0): Fehler, Speichern gesperrt
+    {
+      const own = st.draft.notify_delay_integrations || {};
+      const offs = st.draft.offline_after_integrations || {};
+      const globalOff = errors.offline_after ? st.data.values.offline_after : st.draft.offline_after;
+      const bad = Object.entries(own).find(([dom, v]) => {
+        const off = offs[dom] === undefined ? globalOff : offs[dom];
+        return Number.isInteger(v) && Number.isInteger(off) && v < off;
+      });
+      if (bad) errors.notify_delay_integrations = this._t("integDelayError", this._t("offlineMin", Number.isInteger(offs[bad[0]]) ? offs[bad[0]] : globalOff));
+    }
     // "Erst melden nach" nie kürzer als "Ausgefallen nach" (seit 0.34.0,
     // Wunsch des Nutzers): vorher gilt ein Gerät nicht als ausgefallen.
     const { offline_after: oa, notify_delay: nd } = st.draft;
@@ -6278,7 +6335,7 @@ class DevicePanel extends HTMLElement {
     if (id === "devset") {
       // Geräte mit eigener Einstellung, die nicht zum Zurücksetzen markiert sind
       const st = this._settings;
-      return ["offline", "notify", "battery", "connection", "signal", "charge"].reduce((n, k) => n + (st?.data?.overrides?.[k] || []).filter((x) => !st.resets[k].has(x.id)).length, 0);
+      return ["offline", "notify_delay", "notify", "battery", "connection", "signal", "charge"].reduce((n, k) => n + (st?.data?.overrides?.[k] || []).filter((x) => !st.resets[k].has(x.id)).length, 0);
     }
     if (id === "integrations") return (d.exclude_integrations || []).length;
     if (id === "types") return (d.exclude_types || []).length;
@@ -6359,7 +6416,7 @@ class DevicePanel extends HTMLElement {
     const active = this.shadowRoot.activeElement;
     const focusSel = active && dialog.contains(active) && active.dataset
       ? active.dataset.set ? `[data-set="${active.dataset.set}"]${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ""}${active.dataset.key ? `[data-key="${active.dataset.key}"]` : ""}`
-        : active.dataset.lsearch ? `[data-lsearch="${active.dataset.lsearch}"]` : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.emoji ? `[data-emoji="${active.dataset.emoji}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfullInteg ? `[data-cfull-integ="${active.dataset.cfullInteg}"]` : active.dataset.criseInteg ? `[data-crise-integ="${active.dataset.criseInteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
+        : active.dataset.lsearch ? `[data-lsearch="${active.dataset.lsearch}"]` : active.dataset.opt ? `[data-opt="${active.dataset.opt}"]` : active.dataset.bat ? `[data-bat="${active.dataset.bat}"]` : active.dataset.batMode ? `[data-bat-mode="${active.dataset.batMode}"]` : active.dataset.sig ? `[data-sig="${active.dataset.sig}"]` : active.dataset.sigMode ? `[data-sig-mode="${active.dataset.sigMode}"]` : active.dataset.connInteg ? `[data-conn-integ="${active.dataset.connInteg}"]` : active.dataset.typeInteg ? `[data-type-integ="${active.dataset.typeInteg}"]` : active.dataset.offMode ? `[data-off-mode="${active.dataset.offMode}"]` : active.dataset.delayMode ? `[data-delay-mode="${active.dataset.delayMode}"]` : active.dataset.imon ? `[data-imon="${active.dataset.imon}"]` : active.dataset.list && active.dataset.value ? `[data-list="${active.dataset.list}"][data-value="${active.dataset.value}"]` : active.dataset.emoji ? `[data-emoji="${active.dataset.emoji}"]` : active.dataset.nfield ? `[data-nfield="${active.dataset.nfield}"]` : active.dataset.bfield ? `[data-bfield="${active.dataset.bfield}"]` : active.dataset.newfield ? `[data-newfield="${active.dataset.newfield}"]` : active.dataset.ukind ? `[data-ukind="${active.dataset.ukind}"]` : active.dataset.uitem ? `[data-uitem="${active.dataset.uitem}"]` : active.dataset.cinteg ? `[data-cinteg="${active.dataset.cinteg}"]` : active.dataset.cfullInteg ? `[data-cfull-integ="${active.dataset.cfullInteg}"]` : active.dataset.criseInteg ? `[data-crise-integ="${active.dataset.criseInteg}"]` : active.dataset.cfull !== undefined ? "[data-cfull]" : active.dataset.ver ? `[data-ver="${active.dataset.ver}"]` : null
       : null;
     if (!setHtml(dialog, html)) return;
     // Die Versionszeile wurde eben mit aufgebaut: als aktuell vermerken, sonst
@@ -6468,7 +6525,7 @@ class DevicePanel extends HTMLElement {
     const list = st.data.overrides?.[kind] || [];
     const marked = st.resets[kind];
     const all = list.length > 0 && list.every((x) => marked.has(x.id));
-    const pre = { battery: "ovrBat", notify: "ovrNotify", connection: "ovrConn", signal: "ovrSig", offline: "ovrTime", charge: "ovrCharge" }[kind];
+    const pre = { battery: "ovrBat", notify: "ovrNotify", connection: "ovrConn", signal: "ovrSig", offline: "ovrTime", notify_delay: "ovrDelay", charge: "ovrCharge" }[kind];
     const btn = list.length
       ? `<button type="button" class="ovr-all" data-set="ovr-all" data-key="${kind}" ${all ? "disabled" : ""}>${mdi("reset", 15)}${escape(t("ovrResetAll"))}</button>`
       : "";
@@ -6479,12 +6536,14 @@ class DevicePanel extends HTMLElement {
         ? t(CONN[x.value]?.key || "connUnknown")
         : kind === "offline"
           ? x.value === "off" ? t("offlineNone") : t("offlineMin", x.value)
+        : kind === "notify_delay"
+          ? t("offlineMin", x.value)
         : kind === "notify" || x.value === "off"
           ? t("ovrOff")
           : kind === "signal"
             ? t("ovrSigValue", sigLimitText(x.value))
             : `${x.value} %`;
-    const back = kind === "connection" ? t("ovrToAuto") : kind === "offline" || kind === "charge" ? t("ovrToInteg") : t("ovrToGlobal");
+    const back = kind === "connection" ? t("ovrToAuto") : kind === "offline" || kind === "notify_delay" || kind === "charge" ? t("ovrToInteg") : t("ovrToGlobal");
     const rows = list
       .map((x) => {
         const on = marked.has(x.id);
@@ -7128,6 +7187,7 @@ class DevicePanel extends HTMLElement {
     const hidden = new Set(d.exclude_integrations || []);
     const bat = new Map((cat.battery || []).map((b) => [b.domain, b.devices]));
     const offMap = d.offline_after_integrations || {};
+    const delayMap = d.notify_delay_integrations || {};
     const batMap = d.battery_low_integrations || {};
     const noPush = new Set(d.notify_exclude_integrations || []);
     const noPers = new Set(d.persistent_exclude_integrations || []);
@@ -7137,7 +7197,7 @@ class DevicePanel extends HTMLElement {
     const chargeOn = new Set(d.charge_integrations || []);
     const list = (cat.integrations || []).filter((i) => !hidden.has(i.domain)).map((i) => ({ domain: i.domain, name: i.name, devices: i.devices }));
     const known = new Set(list.map((x) => x.domain));
-    for (const dom of [...Object.keys(offMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush, ...noNew, ...chargeOn, ...Object.keys(d.charge_full_integrations || {}), ...Object.keys(d.charge_rise_integrations || {}), ...Object.keys(d.charge_stall_integrations || {}), ...Object.keys(d.charge_stop_integrations || {}), ...Object.keys(d.charge_live_integrations || {})]) {
+    for (const dom of [...Object.keys(offMap), ...Object.keys(delayMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush, ...noNew, ...chargeOn, ...Object.keys(d.charge_full_integrations || {}), ...Object.keys(d.charge_rise_integrations || {}), ...Object.keys(d.charge_stall_integrations || {}), ...Object.keys(d.charge_stop_integrations || {}), ...Object.keys(d.charge_live_integrations || {})]) {
       if (known.has(dom) || hidden.has(dom)) continue;
       known.add(dom);
       list.push({ domain: dom, name: this._integrations[dom] || dom, devices: 0 });
@@ -7147,7 +7207,8 @@ class DevicePanel extends HTMLElement {
       const b = batMap[x.domain];
       const unmon = off === "off";
       const flags = [noPush.has(x.domain) && t("diffNoPush"), noPers.has(x.domain) && t("diffNoPers")].filter(Boolean);
-      const out = Number.isInteger(off) || flags.length ? t("diffOutage", Number.isInteger(off) ? t("offlineMin", off) : null, flags) : null;
+      const dl = delayMap[x.domain];
+      const out = [Number.isInteger(off) || flags.length ? t("diffOutage", Number.isInteger(off) ? t("offlineMin", off) : null, flags) : "", Number.isInteger(dl) ? t("diffDelay", t("offlineMin", dl)) : ""].filter(Boolean).join(", ") || null;
       const batText = b !== undefined || noBatPush.has(x.domain) ? t("diffBattery", Number.isInteger(b) ? b : null, b === "off", noBatPush.has(x.domain)) : null;
       const sigCount = Object.keys(sigMap[x.domain] || {}).length;
       const sigDiff = sigCount ? t("diffSignal", sigCount) : null;
@@ -7172,7 +7233,7 @@ class DevicePanel extends HTMLElement {
       outI: items.filter((x) => x.unmon || x.out).length,
       batI: items.filter((x) => x.bat).length,
       newI: items.filter((x) => x.noNew).length,
-      outD: new Set([...(ov.offline || []), ...(ov.notify || [])].map((x) => x.id)).size,
+      outD: new Set([...(ov.offline || []), ...(ov.notify_delay || []), ...(ov.notify || [])].map((x) => x.id)).size,
       batD: (ov.battery || []).length,
     };
   }
@@ -7317,7 +7378,7 @@ class DevicePanel extends HTMLElement {
       ${ui.row("outage_persistent", t("optPersistent"), ui.sw("outage_persistent", t("optPersistent")), t("optOutagePersistentShort"), null)}
       ${this._notifyFieldsHtml(d, changes)}
       <div class="mon-grp">${escape(t("grpDiff"))}</div>
-      ${this._integDiffBox(d, "out")}${this._overridesHtml("offline")}${this._overridesHtml("notify")}`;
+      ${this._integDiffBox(d, "out")}${this._overridesHtml("offline")}${this._overridesHtml("notify_delay")}${this._overridesHtml("notify")}`;
   }
 
   _monBatteryHtml(d, changes, errors, ui) {
@@ -7637,12 +7698,15 @@ class DevicePanel extends HTMLElement {
     const saved = st.data.values;
     const offMap = d.offline_after_integrations || {};
     const batMap = d.battery_low_integrations || {};
+    const delayOwn = (d.notify_delay_integrations || {})[dom];
     const off = offMap[dom];
     const unmon = off === "off";
     const val = (k) => (errors[k] ? saved[k] : d[k]);
     const gOff = val("offline_after");
     const gDelay = val("notify_delay");
     const eff = Number.isInteger(off) ? off : gOff;
+    // "Erst melden nach" der Integration (seit 2.91.0): eigene Zeit oder die globale
+    const dEff = Number.isInteger(delayOwn) ? delayOwn : gDelay;
     const tgt = (topic) => this._hasTarget(d, topic);
     const has = (key) => (d[key] || []).includes(dom);
     const pushOn = tgt("outage") && d.notify_outage && !has("notify_exclude_integrations");
@@ -7660,8 +7724,8 @@ class DevicePanel extends HTMLElement {
     if (unmon) tl = `<div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("integUnmonInfo"))}</p></div></div>`;
     else {
       const reason = tgt("outage") ? t("tlSwitchedOff") : t("tlNoTarget");
-      const later = pushOn && gDelay < eff;
-      const rows = this._outageRows(eff, gDelay, pushOn, has("notify_exclude_integrations") && tgt("outage") && d.notify_outage ? t("tlIntegOff") : reason, later ? gDelay : null);
+      const later = pushOn && dEff < eff;
+      const rows = this._outageRows(eff, dEff, pushOn, has("notify_exclude_integrations") && tgt("outage") && d.notify_outage ? t("tlIntegOff") : reason, later ? dEff : null);
       tl = this._ptlHtml(rows) + (later ? `<div class="opt-short mtl-note">${escape(t("integPushLater", fmt(eff)))}</div>` : "");
     }
     // Ausgefallen nach: Standard oder feste Zeiten; "Nicht überwachen" ist der Schalter darüber.
@@ -7671,6 +7735,15 @@ class DevicePanel extends HTMLElement {
     const offOpts = [["default", t("integOffDefault", fmt(gOff))], ...mins.map((m) => [String(m), fmt(m)])]
       .map(([v, l]) => `<option value="${v}"${v === (Number.isInteger(off) ? String(off) : "default") ? " selected" : ""}>${escape(l)}</option>`)
       .join("");
+    // Erst melden nach: Standard oder feste Zeiten, gleiche Auswahl wie bei "Ausgefallen nach"
+    const dMins = [...OFFLINE_PRESETS];
+    if (Number.isInteger(delayOwn) && !dMins.includes(delayOwn)) dMins.push(delayOwn);
+    dMins.sort((a, b) => a - b);
+    const delayOpts = [["default", t("integOffDefault", fmt(gDelay))], ...dMins.map((m) => [String(m), fmt(m)])]
+      .map(([v, l]) => `<option value="${v}"${v === (Number.isInteger(delayOwn) ? String(delayOwn) : "default") ? " selected" : ""}>${escape(l)}</option>`)
+      .join("");
+    const delaySel = `<span class="opt-select"><select data-delay-mode="${escape(dom)}" ${unmon ? "disabled" : ""} aria-label="${escape(`${t("optDelay")}: ${item.name}`)}">${delayOpts}</select>${mdi("chevronDown", 18)}</span>`;
+    const delayErr = Number.isInteger(delayOwn) && Number.isInteger(eff) && delayOwn < eff ? t("integDelayError", fmt(eff)) : "";
     const offSel = `<span class="opt-select"><select data-off-mode="${escape(dom)}" ${unmon ? "disabled" : ""} aria-label="${escape(`${t("optOfflineAfter")}: ${item.name}`)}">${offOpts}</select>${mdi("chevronDown", 18)}</span>`;
     // Gleiche Reiter wie in den Einstellungen und im Geräte-Popup (seit 1.42.0): Ausfall | Batterie | Laden | Neu | Empfang | Geräte,
     // je Reiter die Grafik wie im globalen Reiter (hier mit den für die Integration wirksamen Werten).
@@ -7685,6 +7758,14 @@ class DevicePanel extends HTMLElement {
         origin(unmon), unmon ? "" : `<div class="opt-short">${escape(t("optMonitorShort"))}</div>`) +
       wrap(
         opt(!same(Number.isInteger(off) ? off : null, Number.isInteger((saved.offline_after_integrations || {})[dom]) ? saved.offline_after_integrations[dom] : null), t("optOfflineAfter"), offSel, origin(Number.isInteger(off), fmt(gOff))) +
+          opt(
+            !same(Number.isInteger(delayOwn) ? delayOwn : null, Number.isInteger((saved.notify_delay_integrations || {})[dom]) ? saved.notify_delay_integrations[dom] : null),
+            t("optDelay"),
+            delaySel,
+            origin(Number.isInteger(delayOwn), fmt(gDelay)),
+            delayErr ? `<div class="opt-error">${escape(delayErr)}</div>` : `<div class="opt-short">${escape(t("integDelayShort"))}</div>`,
+            delayErr ? " invalid" : ""
+          ) +
           listSw("notify_exclude_integrations", t("optPushOutage")) +
           (tgt("outage") && d.notify_outage ? "" : `<div class="opt-short mon-hint">${escape(t(tgt("outage") ? "integPushGlobalOff" : "noTargetWarn"))}</div>`) +
           listSw("persistent_exclude_integrations", t("optPersistent"))
@@ -7810,12 +7891,12 @@ class DevicePanel extends HTMLElement {
     const sigHtml = sigRows ? `<div class="opt-short sig-intro">${escape(t("sigIntegShort"))}</div>${sigRows}` : empty("integNoSignal");
     // Geräte der Integration mit eigener Einstellung, zum Zurücksetzen wie im Reiter.
     const ov = st.data.overrides || {};
-    const devs = ["offline", "notify", "battery", "charge"].flatMap((kind) => (ov[kind] || []).filter((x) => x.domain === dom).map((x) => ({ kind, x })));
+    const devs = ["offline", "notify_delay", "notify", "battery", "charge"].flatMap((kind) => (ov[kind] || []).filter((x) => x.domain === dom).map((x) => ({ kind, x })));
     const devsHtml = devs.length
       ? `<div class="ovr-list">${devs
           .map(({ kind, x }) => {
             const on = st.resets[kind].has(x.id);
-            const value = kind === "offline" ? (x.value === "off" ? t("ovrKindUnmon") : t("ovrKindOffline", fmt(x.value))) : kind === "notify" ? t("ovrKindNotify") : kind === "charge" ? this._chargeOwnText(x.value) : t("ovrKindBattery", x.value);
+            const value = kind === "offline" ? (x.value === "off" ? t("ovrKindUnmon") : t("ovrKindOffline", fmt(x.value))) : kind === "notify_delay" ? t("ovrKindDelay", fmt(x.value)) : kind === "notify" ? t("ovrKindNotify") : kind === "charge" ? this._chargeOwnText(x.value) : t("ovrKindBattery", x.value);
             const label = t(on ? "ovrUndo" : "ovrReset", x.name);
             return `<div class="ovr-row${on ? " reset" : ""}${kind === "charge" ? " long" : ""}"><span class="ovr-name">${escape(x.name)}${x.area ? `<small>${escape(x.area)}</small>` : ""}</span>
             <span class="ovr-val">${on ? `<s>${escape(value)}</s> ${escape(t("ovrToInteg"))}` : escape(value)}</span>
@@ -7823,10 +7904,10 @@ class DevicePanel extends HTMLElement {
           })
           .join("")}</div>`
       : empty("integNoDevs");
-    const anyOwn = off !== undefined || dom in batMap || chargeMaps.some((k) => dom in (d[k] || {})) || dom in (d.signal_low_integrations || {}) || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"].some(has);
+    const anyOwn = off !== undefined || delayOwn !== undefined || dom in batMap || chargeMaps.some((k) => dom in (d[k] || {})) || dom in (d.signal_low_integrations || {}) || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"].some(has);
     // Reiter: Punkt, wenn es dort eine eigene Einstellung der Integration gibt (Geräte: eigene der Geräte).
     const own = {
-      out: off !== undefined || has("notify_exclude_integrations") || has("persistent_exclude_integrations"),
+      out: off !== undefined || delayOwn !== undefined || has("notify_exclude_integrations") || has("persistent_exclude_integrations"),
       bat: dom in batMap || has("battery_push_exclude_integrations"),
       chg: has("charge_integrations") || chargeMaps.some((k) => dom in (d[k] || {})),
       new: has("new_exclude_integrations"),
@@ -8087,7 +8168,7 @@ class DevicePanel extends HTMLElement {
           : devTab === "devset"
             ? // Alle Geräte mit eigener Einstellung an einem Ort (seit 2.0.7); jede Liste steht auch beim jeweiligen Thema.
               `<div class="opt-short ex-intro">${escape(t("devSetIntro"))}</div>` +
-              ["offline", "notify", "battery", "connection", "signal", "charge"].map((k) => this._overridesHtml(k)).join("")
+              ["offline", "notify_delay", "notify", "battery", "connection", "signal", "charge"].map((k) => this._overridesHtml(k)).join("")
           : devTab === "devs"
             ? hiddenDevs.length
               ? exTable("exclude_devices", hiddenDevs, t("hiddenIntro"), false, null, t("hiddenShowAll"))
@@ -8452,6 +8533,14 @@ class DevicePanel extends HTMLElement {
         this._renderSettings();
         return;
       }
+      if (st?.draft && el.tagName === "SELECT" && el.dataset.delayMode) {
+        const own = { ...(st.draft.notify_delay_integrations || {}) };
+        if (el.value === "default") delete own[el.dataset.delayMode];
+        else own[el.dataset.delayMode] = Number(el.value);
+        st.draft.notify_delay_integrations = own;
+        this._renderSettings();
+        return;
+      }
       if (st?.draft && el.tagName === "SELECT" && el.dataset.sigMode) {
         const [dom, conn] = el.dataset.sigMode.split("|");
         if (el.value === "default") this._setSig(el.dataset.sigMode, undefined);
@@ -8742,7 +8831,7 @@ class DevicePanel extends HTMLElement {
     if (!st) return;
     const changes = this._settingsEntryChanges();
     const extra = this._settingsExtraChanges();
-    const resets = { battery: [...st.resets.battery], notify: [...st.resets.notify], connection: [...st.resets.connection], signal: [...st.resets.signal], offline: [...st.resets.offline], charge: [...st.resets.charge] };
+    const resets = { battery: [...st.resets.battery], notify: [...st.resets.notify], connection: [...st.resets.connection], signal: [...st.resets.signal], offline: [...st.resets.offline], notify_delay: [...st.resets.notify_delay], charge: [...st.resets.charge] };
     const anyReset = Object.values(resets).some((list) => list.length > 0);
     const viewChanged = this._viewChanged();
     if ((!changes.length && !extra.length && !anyReset && !viewChanged) || Object.keys(this._settingsErrors()).length) return;
@@ -8809,7 +8898,7 @@ class DevicePanel extends HTMLElement {
     if (data.panel) this._applyPanelSettings(data.panel);
     st.extraBase = this._extraBase();
     st.extra = { ...st.extraBase };
-    st.resets = { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set(), charge: new Set() };
+    st.resets = { battery: new Set(), notify: new Set(), connection: new Set(), signal: new Set(), offline: new Set(), notify_delay: new Set(), charge: new Set() };
     st.saving = false;
     st.saved = true;
     this._renderSettings();

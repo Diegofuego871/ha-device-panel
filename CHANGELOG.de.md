@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.91.0] - 2026-10-18
+
+"Erst melden nach" pro Gerät und pro Integration.
+
+### Hinzugefügt
+
+- **"Erst melden nach"** (Zeit vom Beginn eines Ausfalls bis zur Meldung) lässt sich jetzt **pro Integration** (Einstellungen, "Überwachung und Meldungen" › "Integrationen", Reiter "Ausfall") und **pro Gerät** (Pop-up, Reiter "Einstellungen", neben "Ausgefallen nach") einstellen, wie "Ausgefallen nach". Das Gerät geht vor der Integration, die Integration vor dem globalen Wert; jede Zeile zeigt, woher der Wert stammt. Die neue Einstellung zählt als eigene Einstellung: Marke am Gerätenamen, Übersicht der Abweichungen und Zurücksetzen in den Einstellungen.
+- Der neue Wert ist **nie kürzer als "Ausgefallen nach"** (auf allen drei Ebenen). Wer einen zu kurzen eigenen Wert speichert, bekommt eine **Fehlermeldung** statt einer stillen Verschiebung. Ohne eigenen Wert gilt zur Laufzeit der längere der beiden.
+
+### Geändert
+
+- Die Ausfall-Meldung wartet jetzt pro Gerät auf dessen eigene Zeit (Gerät, Integration oder global).
+
 ## [2.90.0] - 2026-10-17
 
 KI-Einschätzung: lässt sich zuklappen.
@@ -3929,6 +3942,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.91.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.91.0
 [2.90.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.90.0
 [2.89.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.89.0
 [2.88.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.88.0

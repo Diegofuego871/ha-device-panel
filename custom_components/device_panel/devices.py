@@ -55,6 +55,8 @@ from .const import (
     CONNECTION_MANUAL,
     DATA_CONNECTION_OVERRIDES,
     CONF_FLAKY_OUTAGES,
+    CONF_NOTIFY_DELAY,
+    CONF_NOTIFY_DELAY_INTEGRATIONS,
     CONF_OFFLINE_AFTER,
     CONF_OFFLINE_INTEGRATIONS,
     CONF_NOTIFY_EXCLUDE,
@@ -87,7 +89,7 @@ from .const import (
     CONF_TYPE_INTEGRATIONS,
 )
 from .labels import strip_address
-from .options_api import battery_threshold, effective, notify_target, offline_after_for, signal_default
+from .options_api import battery_threshold, effective, notify_delay_for, notify_target, offline_after_for, signal_default
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -383,6 +385,16 @@ def _offline_default(opts: dict[str, Any], domain: str | None) -> dict[str, Any]
         "minutes": own if own is not None else opts[CONF_OFFLINE_AFTER],
         "integration": domain if own is not None else None,
         "global": opts[CONF_OFFLINE_AFTER],
+    }
+
+
+def _notify_delay_default(opts: dict[str, Any], domain: str | None) -> dict[str, Any]:
+    """"Erst melden nach" ohne Einstellung des Geräts (seit 2.91.0): Minuten, dazu die Integration mit eigenem Wert."""
+    own = opts[CONF_NOTIFY_DELAY_INTEGRATIONS].get(domain) if domain else None
+    return {
+        "minutes": own if own is not None else opts[CONF_NOTIFY_DELAY],
+        "integration": domain if own is not None else None,
+        "global": opts[CONF_NOTIFY_DELAY],
     }
 
 
@@ -787,6 +799,8 @@ async def async_load_type_overrides(hass: HomeAssistant) -> None:
             "signal": {str(k): v for k, v in (stored.get("signal") or {}).items() if valid_signal_setting(v)},
             # "Ausgefallen nach" des Geräts: Minuten oder "off" (seit 0.31.0).
             "offline": {str(k): v for k, v in (stored.get("offline") or {}).items() if valid_offline_setting(v)},
+            # "Erst melden nach" des Geräts: ganze Minuten (seit 2.91.0).
+            "notify_delay": {str(k): v for k, v in (stored.get("notify_delay") or {}).items() if valid_notify_delay_setting(v)},
             # Lademeldung des Geräts: True/False, ohne Eintrag gilt die Integration (seit 1.30.0).
             "charge": {str(k): v for k, v in (stored.get("charge") or {}).items() if isinstance(v, bool)},
             # Eigenes "Voll ab" und eigener Anstieg des Geräts für die Lademeldung (seit 1.35.0).
@@ -817,6 +831,8 @@ async def _async_save_devices(hass: HomeAssistant) -> None:
         data["signal"] = dict(settings["signal"])
     if settings.get("offline"):
         data["offline"] = dict(settings["offline"])
+    if settings.get("notify_delay"):
+        data["notify_delay"] = dict(settings["notify_delay"])
     if settings.get("charge"):
         data["charge"] = dict(settings["charge"])
     for key in ("charge_full", "charge_rise", "charge_stall", "charge_stop", "charge_live"):
@@ -832,7 +848,7 @@ def device_settings(hass: HomeAssistant) -> dict[str, Any]:
     "notify_mute": {Gerät: bis}, "signal": {Gerät: Schwelle | "off"},
     "offline": {Gerät: Minuten | "off"}, "charge": {Gerät: bool}}.
     """
-    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}, "charge_live": {}}
+    return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "notify_delay": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}, "charge_live": {}}
 
 
 def valid_signal_setting(value: Any) -> bool:
@@ -850,6 +866,46 @@ def valid_offline_setting(value: Any) -> bool:
         return True
     low, high = OFFLINE_INTEGRATION_RANGE
     return isinstance(value, int) and not isinstance(value, bool) and low <= value <= high
+
+
+def valid_notify_delay_setting(value: Any) -> bool:
+    """"Erst melden nach" des Geräts (seit 2.91.0): ganze Minuten im Bereich der Integrationen."""
+    low, high = OFFLINE_INTEGRATION_RANGE
+    return isinstance(value, int) and not isinstance(value, bool) and low <= value <= high
+
+
+def device_notify_delay(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry) -> int:
+    """
+    Wirksames "Erst melden nach" eines Geräts in Minuten (seit 2.91.0): eigenes des Geräts, sonst das der Integration, sonst das globale;
+    nie kürzer als sein wirksames "Ausgefallen nach".
+    """
+    own = device_settings(hass).get("notify_delay", {}).get(device.id)
+    return notify_delay_for(opts, primary_domain(hass, device), own, device_offline_after(hass, opts, device))
+
+
+async def async_notify_delay_error(hass: HomeAssistant, device_id: str, changes: dict[str, Any]) -> str | None:
+    """
+    Fehlertext, wenn das eigene "Erst melden nach" des Geräts nach den Änderungen kürzer wäre als sein wirksames "Ausgefallen nach" (seit 2.91.0);
+    sonst None. Ohne eigenen Wert gilt zur Laufzeit der längere (notify_delay_for), das ist kein Fehler.
+    """
+    if "notify_delay" not in changes and "offline" not in changes:
+        return None
+    await async_load_type_overrides(hass)
+    settings = device_settings(hass)
+    own = changes["notify_delay"] if "notify_delay" in changes else settings.get("notify_delay", {}).get(device_id)
+    if own is None:
+        return None
+    offline = changes["offline"] if "offline" in changes else settings.get("offline", {}).get(device_id)
+    if offline == MONITOR_OFF:
+        return None
+    if isinstance(offline, int):
+        offline_seconds: float | None = offline * 60
+    else:
+        device = dr.async_get(hass).async_get(device_id)
+        offline_seconds = offline_after_for(effective(hass), primary_domain(hass, device) if device else None)
+    if offline_seconds is not None and own * 60 < offline_seconds:
+        return "\"Erst melden nach\" darf nicht kürzer sein als \"Ausgefallen nach\""
+    return None
 
 
 def device_offline_after(hass: HomeAssistant, opts: dict[str, Any], device: dr.DeviceEntry) -> float | None:
@@ -902,6 +958,7 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
     Prozent; notify=True/False (Ausfall- und Online-Meldungen);
     signal=None (Standard), "off" oder Schwelle "schwach unter";
     offline=None (Integration bzw. global), "off" oder Minuten;
+    notify_delay=None (Integration bzw. global) oder Minuten "Erst melden nach" (seit 2.91.0);
     charge=None (Integration), True/False (Lademeldung, seit 1.30.0);
     charge_full / charge_rise / charge_stall=None (Integration bzw. global) oder eigener Wert (seit 1.35.0, charge_stall seit 1.41.0);
     charge_stop=None (Integration bzw. global), True/False (Push bei beendeter Ladung, seit 1.41.0);
@@ -914,6 +971,11 @@ async def async_set_device_settings(hass: HomeAssistant, device_id: str, **chang
             settings.setdefault("offline", {}).pop(device_id, None)
         else:
             settings.setdefault("offline", {})[device_id] = changes["offline"]
+    if "notify_delay" in changes:
+        if changes["notify_delay"] is None:
+            settings.setdefault("notify_delay", {}).pop(device_id, None)
+        else:
+            settings.setdefault("notify_delay", {})[device_id] = changes["notify_delay"]
     if "charge" in changes:
         if changes["charge"] is None:
             settings.setdefault("charge", {}).pop(device_id, None)
@@ -967,6 +1029,7 @@ async def async_reset_device_settings(
     signal: list[str] | None = None,
     offline: list[str] | None = None,
     charge: list[str] | None = None,
+    notify_delay: list[str] | None = None,
 ) -> dict[str, int]:
     """
     Einstellungen mehrerer Geräte auf den globalen Wert zurück (Einstellungen,
@@ -989,14 +1052,24 @@ async def async_reset_device_settings(
     done_signal = sum(1 for dev in set(signal or []) if sig.pop(dev, None) is not None)
     off = settings.setdefault("offline", {})
     done_offline = sum(1 for dev in set(offline or []) if off.pop(dev, None) is not None)
+    delays = settings.setdefault("notify_delay", {})
+    done_delay = sum(1 for dev in set(notify_delay or []) if delays.pop(dev, None) is not None)
     done_charge = 0
     for dev in set(charge or []):
         # Ein Gerät zählt einmal, auch wenn mehrere seiner Lade-Werte wegfallen
         if sum(settings.setdefault(key, {}).pop(dev, None) is not None for key in CHARGE_SETTING_KEYS):
             done_charge += 1
-    if done_battery or done_notify or done_conn or done_signal or done_offline or done_charge:
+    if done_battery or done_notify or done_conn or done_signal or done_offline or done_delay or done_charge:
         await _async_save_devices(hass)
-    return {"battery": done_battery, "notify": done_notify, "connection": done_conn, "signal": done_signal, "offline": done_offline, "charge": done_charge}
+    return {
+        "battery": done_battery,
+        "notify": done_notify,
+        "connection": done_conn,
+        "signal": done_signal,
+        "offline": done_offline,
+        "notify_delay": done_delay,
+        "charge": done_charge,
+    }
 
 
 async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str, Any]]]:
@@ -1015,8 +1088,9 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
     items: dict[str, dict[str, Any]] = {}
     signal = settings.get("signal", {})
     offline = settings.get("offline", {})
+    notify_delay = settings.get("notify_delay", {})
     charge_devs = {dev for key in CHARGE_SETTING_KEYS for dev in settings.get(key, {})}
-    for dev in {*settings["battery"], *settings["notify_off"], *conns, *signal, *offline, *charge_devs}:
+    for dev in {*settings["battery"], *settings["notify_off"], *conns, *signal, *offline, *notify_delay, *charge_devs}:
         device = dev_reg.async_get(dev)
         if device is None:
             continue
@@ -1048,6 +1122,8 @@ async def async_device_overrides(hass: HomeAssistant) -> dict[str, list[dict[str
         "signal": sorted(({**items[dev], "value": value} for dev, value in signal.items() if dev in items), key=by_name),
         # "Ausgefallen nach" des Geräts (seit 0.31.0): "off" oder Minuten.
         "offline": sorted(({**items[dev], "value": value} for dev, value in offline.items() if dev in items), key=by_name),
+        # "Erst melden nach" des Geräts (seit 2.91.0): Minuten.
+        "notify_delay": sorted(({**items[dev], "value": value} for dev, value in notify_delay.items() if dev in items), key=by_name),
         # Lademeldung des Geräts (seit 2.78.0): alle eigenen Werte (an/aus, voll ab, Anstieg, Ende, Push bei Ende, Live)
         "charge": sorted(
             (
@@ -1297,6 +1373,10 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 # sie gälte, mit der Integration, falls sie einen eigenen Wert hat.
                 "offline_setting": device_settings(hass).get("offline", {}).get(device.id),
                 "offline_default": _offline_default(opts, primary.domain if primary else None),
+                # "Erst melden nach" (seit 2.91.0): wirksam in Minuten (nie kürzer als "Ausgefallen nach"), Einstellung des Geräts, ohne sie.
+                "notify_delay": notify_delay_for(opts, primary.domain if primary else None, device_settings(hass).get("notify_delay", {}).get(device.id), offline_after),
+                "notify_delay_setting": device_settings(hass).get("notify_delay", {}).get(device.id),
+                "notify_delay_default": _notify_delay_default(opts, primary.domain if primary else None),
                 # Ausfall-Meldungen ohne Einstellung des Geräts (Herkunft im Popup).
                 "notify_default": _notify_default(opts, primary.domain if primary else None),
                 # Beginn des Ausfalls, auch über Neustarts von HA (outage_start).

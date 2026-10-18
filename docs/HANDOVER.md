@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.91.0, "Erst melden nach" pro Integration und Gerät)
+
+- Wunsch des Nutzers: "Erst melden nach" wie "Ausgefallen nach" auf allen drei Ebenen; nie kürzer als "Ausgefallen nach", mit Fehlermeldung statt stillem Verschieben. Wirksam: Gerät > Integration > global (`options_api.notify_delay_for`, Laufzeit `max(wert, ceil(offline/60))`). Neu: Option `notify_delay_integrations` (`notify_delay_map`, `notify_delay_conflicts` in `apply_values`), Geräteeinstellung `notify_delay` (`devices.py`: `async_notify_delay_error`, `device_notify_delay`, Zurücksetzen, Übersicht), WS `set_device_settings`/`reset_device_settings` mit `notify_delay`, `outage.py` (`_delay` je Gerät in `async_flush`/`_schedule`). Panel: Popup-Zeile `dev-delay`/`dev-delay-min`, Integrationsdetail `data-delay-mode`, `_settingsErrors().notify_delay_integrations`, Übersicht `ovrDelay*`. Die HA-Optionsfluss-Schemaliste (config_flow) wurde bewusst nicht erweitert. Tests: Suiten `notifydelay`, `notifydelay-integ`; Python-Tests (`test_availability`, `test_outage_notify`, `test_overrides`, `test_update_check`) geschrieben, in dieser Umgebung aber NICHT ausgeführt (pytest-homeassistant-custom-component nicht installierbar): zuerst in einer Umgebung mit HA laufen lassen.
+
 ## Stand (2.90.0, KI-Einschätzung zuklappbar)
 
 - Wunsch des Nutzers (Screenshot Popup): die KI-Einschätzung lässt sich zuklappen, pro Benutzer gespeichert. `_aiHtml`: Kopfzeile `button.ai-head` (`data-dlg="ai-fold"`, `aria-expanded`), zugeklappt (`.ai-box.fold`) nur die Kopfzeile. Stand `this._aiFold`, gespeichert im Datensatz der Favoriten (`_favData().aiFold`, `FAV_KEY`, `_toggleAiFold`, `_setFavs`): lokal sofort, bei HA verzögert, der neuere Stand gewinnt. Test in `ai-e2e`.
