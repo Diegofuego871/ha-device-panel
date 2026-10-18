@@ -688,7 +688,7 @@ async def test_notify_delay_per_integration_and_device(hass: HomeAssistant, setu
         await client.send_json({"id": i, "type": f"{DOMAIN}/set_device_settings", "device_id": lamp.id, "notify_delay": bad})
         assert (await client.receive_json())["error"]["code"] == "invalid_format", bad
     # Zurücksetzen: das Gerät folgt wieder der Integration
-    await client.send_json({"id": 4, "type": f"{DOMAIN}/reset_device_settings", "notify_delay": [other.id, "gibtsnicht"]})
+    await client.send_json({"id": 40, "type": f"{DOMAIN}/reset_device_settings", "notify_delay": [other.id, "gibtsnicht"]})
     assert (await client.receive_json())["result"]["notify_delay"] == 1
     devices = {d["name"]: d for d in (await async_list_devices(hass, setup))["devices"]}
     assert devices["Sensor"]["notify_delay"] == 20 and devices["Sensor"]["notify_delay_setting"] is None
