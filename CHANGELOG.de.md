@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.95.1] - 2026-10-18
+
+Die Ruhezeit zieht in die Übersicht um; standardmässig werden weniger Arten gehalten.
+
+### Geändert
+
+- **"Ruhezeit" ist kein eigener Reiter mehr.** Sie steht jetzt als Abschnitt ganz unten im Reiter "Übersicht" der Einstellungen ("Überwachung und Meldungen"), nach "Ziel der Meldungen", mit demselben blauen Strich im Titel. Die Reiterleiste hat wieder acht Reiter.
+- **Standard der gehaltenen Arten:** Magic Push und Routinen sind jetzt standardmässig **aus**, wie die Status-App (standardmässig gehalten: Ausfälle, wieder online, Batterie, Laden, neue Geräte, Updates, Panel-Update). Bestehende Einstellungen der Ruhezeit bleiben wie gespeichert; bei neuen lassen sich die Arten einzeln zuschalten.
+
 ## [2.95.0] - 2026-10-18
 
 Ruhezeit: Meldungen warten in der Nacht.
@@ -4006,6 +4015,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.95.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.1
 [2.95.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.0
 [2.93.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.93.0
 [2.92.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.1

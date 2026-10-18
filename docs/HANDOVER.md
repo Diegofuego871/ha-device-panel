@@ -3,9 +3,9 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.95.0, Ruhezeit)
+## Stand (2.95.1, Ruhezeit; 2.95.0 war der erste Stand mit eigenem Reiter)
 
-- Wunsch des Nutzers: eine globale Ruhezeit (nicht pro Benutzer), Reiter "Ruhezeit" in "Überwachung und Meldungen", Zeiten je Wochentag, Meldungsarten wählbar (auch Status), danach Zusammenfassung oder einzeln. Kritische Magic-Push-Meldungen immer sofort. Mockups: `docs/mockups/quiet-v1/`.
+- Wunsch des Nutzers: eine globale Ruhezeit (nicht pro Benutzer), Abschnitt "Ruhezeit" ganz unten im Reiter "Übersicht" (nach "Ziel der Meldungen", kein eigener Reiter; `_monQuietHtml` wird von `_monOverviewHtml` aufgerufen), Zeiten je Wochentag, Meldungsarten wählbar (Standard: ohne Status-App, Magic Push und Routinen), danach Zusammenfassung oder einzeln. Kritische Magic-Push-Meldungen immer sofort. Mockups: `docs/mockups/quiet-v1/`.
 - Backend `quiet.py`: `QuietManager` (`hass.data[DATA_QUIET]`, Store `device_panel.quiet`), `hold(...)` wird früh in `push.async_push` gefragt (Parameter `topic`, `quiet`); alle Aufrufer übergeben `topic=`. `window_end(days, now)` rechnet das Fenster je Wochentag (über Mitternacht, nahtlos anschliessende Fenster zählen als eines). `_deliver`: Zusammenfassung (`build_summary`) oder einzeln (letzte Meldung je Tag). `async_options_changed` gibt frei, was nicht mehr gilt. `push` importiert `quiet` nur verzögert (`_push()`), sonst Zirkelimport mit `options_api`.
 - Optionen: `quiet_enabled`, `quiet_days` (7 Einträge `{on, from, to}`, Index 0 = Montag), `quiet_mode` (`summary`/`single`), `quiet_topics`. Nicht im Config-Flow.
 - Panel: `_monQuietHtml`, `QUIET_TOPICS`, Handler `data-qday`/`data-qday-on`/`data-qtopic`, `data-set="quiet-all"`; Simulator `quiet_*` mit Validierung; Suite `quiet`. Tests: `tests/test_quiet.py` (HA-Testzeitzone ist US/Pacific, Sprache Englisch).

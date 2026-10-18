@@ -36,8 +36,8 @@ def _push():
 STORE_KEY = f"{DOMAIN}.quiet"
 # Arten von Meldungen, die sich zurückhalten lassen ("online" ist die Rückkehr nach einem Ausfall)
 QUIET_TOPICS = ("outage", "online", "battery", "charge", "new", "updates", "panelupdate", "routines", "status", "magic")
-# Standard: alles ausser dem Watchdog "Status"
-DEFAULT_QUIET_TOPICS = tuple(t for t in QUIET_TOPICS if t != "status")
+# Standard: alles ausser Status-App, Magic Push und Routinen (die Nutzer wählen sie bewusst dazu)
+DEFAULT_QUIET_TOPICS = tuple(t for t in QUIET_TOPICS if t not in ("status", "magic", "routines"))
 QUIET_MODES = ("summary", "single")
 DEFAULT_QUIET_MODE = "summary"
 # Höchstens so viele gehaltene Meldungen (ältere fallen weg): ein Schutz gegen unbegrenztes Wachsen

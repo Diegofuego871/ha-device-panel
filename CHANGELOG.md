@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.95.1] - 2026-10-18
+
+Quiet time moves into the overview; fewer kinds are held by default.
+
+### Changed
+
+- **"Quiet time" is no longer a tab of its own.** It is now a section at the very bottom of the tab "Overview" in the settings ("Monitoring and notifications"), after "Where notifications go", with the same blue bar in the title. The tab bar has eight tabs again.
+- **Default of the held kinds:** Magic Push and routines are now **off** by default, like the status app (held by default: outages, back online, battery, charging, new devices, updates, panel update). Existing quiet-time settings stay as saved; new ones can be switched on one by one.
+
 ## [2.95.0] - 2026-10-18
 
 Quiet time: notifications wait during the night.
@@ -3905,6 +3914,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.95.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.1
 [2.95.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.95.0
 [2.93.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.93.0
 [2.92.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.1

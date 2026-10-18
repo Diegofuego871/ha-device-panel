@@ -410,13 +410,12 @@ const QUIET_DAY_DEFAULT = { on: true, from: "22:00", to: "07:00" };
 // Abschnitt "Überwachung und Meldungen" (seit 0.34.0): Optionen je Reiter,
 // für den Punkt am Reiter und das Etikett "geändert" des Abschnitts.
 const MON_TAB_KEYS = {
-  overview: ["notify_service", "notify_click_target"],
+  overview: ["notify_service", "notify_click_target", "quiet_enabled", "quiet_days", "quiet_mode", "quiet_topics"],
   outage: ["notify_service_outage", "offline_after", "notify_delay", "flaky_outages", "startup_grace", "notify_outage", "notify_online", "notify_group", "notify_group_min", "outage_persistent", "notify_fields", "emoji_outage", "emoji_group", "emoji_online", "reset_offline", "reset_notify_delay", "reset_notify"],
   charge: ["notify_service_charge", "notify_charge", "charge_live", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations", "emoji_charge", "emoji_charge_stop", "reset_charge"],
   battery: ["notify_service_battery", "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "emoji_battery", "reset_battery"],
   new: ["notify_service_new", "notify_new", "new_window", "new_persistent", "new_fields", "emoji_new"],
   updates: ["notify_service_updates", "notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include", "emoji_updates"],
-  quiet: ["quiet_enabled", "quiet_days", "quiet_mode", "quiet_topics"],
   sig: ["signal_low", "reset_signal"],
   integ: ["offline_after_integrations", "notify_delay_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
@@ -6731,7 +6730,7 @@ class DevicePanel extends HTMLElement {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
     const tab = MON_TAB_KEYS[st.tab] ? st.tab : "overview";
-    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["charge", "tabCharge"], ["new", "tabNew"], ["updates", "tabUpdates"], ["quiet", "tabQuiet"], ["sig", "tabSignal"], ["integ", "tabInteg"]]
+    const tabs = [["overview", "tabOverview"], ["outage", "tabOutage"], ["battery", "tabBattery"], ["charge", "tabCharge"], ["new", "tabNew"], ["updates", "tabUpdates"], ["sig", "tabSignal"], ["integ", "tabInteg"]]
       .map(([id, key]) => {
         const keys = MON_TAB_KEYS[id];
         // Punkt am Reiter: dort gibt es eine Änderung (blau) oder einen Fehler (rot).
@@ -6750,13 +6749,11 @@ class DevicePanel extends HTMLElement {
             ? this._monNewHtml(d, changes, errors, ui)
           : tab === "updates"
             ? this._monUpdatesHtml(d, changes, errors, ui)
-          : tab === "quiet"
-            ? this._monQuietHtml(d, changes, errors, ui)
           : tab === "sig"
             ? this._monSigHtml(d)
           : tab === "integ"
             ? this._monIntegHtml(d, changes, errors)
-            : this._monOverviewHtml(d, errors, ui);
+            : this._monOverviewHtml(d, errors, ui, changes);
     return `<div class="mon-tabs" role="tablist">${tabs}</div><div class="mon-body" role="tabpanel">${body}</div>`;
   }
 
@@ -7312,7 +7309,7 @@ class DevicePanel extends HTMLElement {
     return Boolean(target && target !== "none");
   }
 
-  _monOverviewHtml(d, errors, ui) {
+  _monOverviewHtml(d, errors, ui, changes) {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
     // Während der Eingabe ungültig: der gespeicherte Wert gilt weiter.
@@ -7398,7 +7395,9 @@ class DevicePanel extends HTMLElement {
       lane("update", "upd", t("laneUpdates"), "updates", updTl, chip("notify_updates", t("chipPush")), updDiff) +
       `<div class="mon-grp">${escape(t("grpTarget"))}</div>` +
       ui.row("notify_service", t("optNotifyTarget"), ui.select("notify_service", ui.targets, t("optNotifyTarget")), t("optNotifyTargetShort"), t("optNotifyTargetInfo"), warn) +
-      ui.row("notify_click_target", t("optClick"), ui.select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null)
+      ui.row("notify_click_target", t("optClick"), ui.select("notify_click_target", [["panel", t("clickPanel")], ["device", t("clickDevice")]], t("optClick")), t("optClickShort"), null) +
+      `<div class="mon-grp">${escape(t("grpQuiet"))}</div>` +
+      this._monQuietHtml(d, changes, errors, ui)
     );
   }
 

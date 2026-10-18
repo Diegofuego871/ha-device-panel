@@ -1,4 +1,4 @@
-// Ruhezeit (2.95.0): Reiter in "Überwachung und Meldungen" mit Schalter, Zeiten je Wochentag, Modus und Meldungsarten.
+// Ruhezeit (2.95.0): Abschnitt ganz unten im Reiter "Übersicht" (nach "Ziel der Meldungen") mit Schalter, Zeiten je Wochentag, Modus und Meldungsarten.
 // Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions } from "../lib.mjs";
@@ -7,7 +7,7 @@ const b = await chromium.launch(launchOptions);
 let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
-const TEXT = { de: { tab: "Ruhezeit", mon: "Montag" }, en: { tab: "Quiet time", mon: "Monday" } };
+const TEXT = { de: { tab: "Ruhezeit", mon: "Montag", prev: "Ziel der Meldungen" }, en: { tab: "Quiet time", mon: "Monday", prev: "Where notifications go" } };
 
 for (const lang of ["de", "en"]) {
   for (const mobile of [false, true]) {
@@ -30,14 +30,14 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     await tap('[data-set="section"][data-id="monitor"]');
-    check(`[${tag}] Reiter "${T.tab}"`, await wait(`return r.querySelector('.mon-tab[data-key="quiet"]')?.textContent.trim() === ${JSON.stringify(T.tab)}`));
-    await tap('.mon-tab[data-key="quiet"]');
+    check(`[${tag}] kein eigener Reiter, acht Reiter`, await wait(`return !r.querySelector('.mon-tab[data-key="quiet"]') && r.querySelectorAll("dialog.settings .mon-tab").length === 8`));
+    check(`[${tag}] Abschnitt "${T.tab}" zuletzt, nach "${T.prev}", mit blauem Strich`, await wait(`const g = [...r.querySelectorAll(".mon-body > .mon-grp")].map(x => x.textContent.trim()); return g.at(-1) === ${JSON.stringify(T.tab)} && g.at(-2) === ${JSON.stringify(T.prev)} && getComputedStyle([...r.querySelectorAll(".mon-body > .mon-grp")].at(-1), "::before").width === "4px"`));
     await wait(`return !!r.querySelector('input[data-opt="quiet_enabled"]')`);
     check(`[${tag}] aus: nur der Schalter`, await ev(`return !r.querySelector('[data-qday]') && !r.querySelector('[data-qtopic]')`));
     await tap('input[data-opt="quiet_enabled"]');
     check(`[${tag}] ein: sieben Tage, zehn Arten`, await wait(`return r.querySelectorAll('[data-qday-on]').length === 7 && r.querySelectorAll('[data-qtopic]').length === 10`));
     check(`[${tag}] Wochentag "${T.mon}"`, await ev(`return r.querySelector('.qd-row .qd-name').textContent.trim() === ${JSON.stringify(T.mon)}`));
-    check(`[${tag}] Standard: 22:00 bis 07:00, alle Arten ausser Status`, await ev(`const q = r.host._settings.draft; return q.quiet_days.every((x) => x.on && x.from === "22:00" && x.to === "07:00") && !q.quiet_topics.includes("status") && q.quiet_topics.length === 9`));
+    check(`[${tag}] Standard: 22:00 bis 07:00, ohne Status, Magic Push und Routinen`, await ev(`const q = r.host._settings.draft; return q.quiet_days.every((x) => x.on && x.from === "22:00" && x.to === "07:00") && q.quiet_topics.join() === "outage,online,battery,charge,new,updates,panelupdate"`));
     // Montag 23:30 bis 06:15
     const setTime = async (sel, val) => { const h = await handle(sel); await h.scrollIntoViewIfNeeded(); await h.fill(val); };
     await setTime('[data-qday="0"][data-qfield="from"]', "23:30");
@@ -54,9 +54,10 @@ for (const lang of ["de", "en"]) {
     await ev(`const s = r.querySelector('select[data-opt="quiet_mode"]'); s.value = "single"; s.dispatchEvent(new Event("change", { bubbles: true }))`);
     check(`[${tag}] Modus einzeln`, await wait(`return r.host._settings.draft.quiet_mode === "single"`));
     await tap('[data-qtopic="status"]');
+    await tap('[data-qtopic="magic"]');
     await tap('[data-qtopic="battery"]');
-    check(`[${tag}] Status an, Batterie aus`, await wait(`const t = r.host._settings.draft.quiet_topics; return t.includes("status") && !t.includes("battery") && t.length === 9`));
-    check(`[${tag}] Punkt am Reiter`, await ev(`return r.querySelector('.mon-tab[data-key="quiet"]').classList.contains("chg")`));
+    check(`[${tag}] Status und Magic Push an, Batterie aus`, await wait(`const t = r.host._settings.draft.quiet_topics; return t.includes("status") && t.includes("magic") && !t.includes("battery") && t.length === 8`));
+    check(`[${tag}] Punkt am Reiter "Übersicht"`, await ev(`return r.querySelector('.mon-tab[data-key="overview"]').classList.contains("chg")`));
     // Ungültige Zeit: Fehler, Speichern gesperrt
     await setTime('[data-qday="1"][data-qfield="from"]', "");
     check(`[${tag}] leere Zeit: Fehler`, await wait(`return !!r.host._settingsErrors().quiet_days`));

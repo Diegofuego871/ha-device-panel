@@ -156,7 +156,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         # Ruhezeit (seit 2.95.0): aus, jeden Tag 22:00 bis 07:00, alles ausser Status, Zusammenfassung
         "quiet_enabled": False,
         "quiet_mode": "summary",
-        "quiet_topics": ["outage", "online", "battery", "charge", "new", "updates", "panelupdate", "routines", "magic"],
+        "quiet_topics": ["outage", "online", "battery", "charge", "new", "updates", "panelupdate"],
         "quiet_days": [{"on": True, "from": "22:00", "to": "07:00"}] * 7,
         "notify_delay": 2,
         "notify_fields": ["area", "integration", "since"],
