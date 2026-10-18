@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.93.0] - 2026-10-18
+
+Beim Ausblenden eines Geräts wird nachgefragt.
+
+### Geändert
+
+- Geräte-Popup: **"Gerät ausblenden"** fragt jetzt zuerst nach ("Gerät ausblenden?", mit dem Hinweis, dass das Gerät für alle Benutzer verschwindet, nicht mehr überwacht wird und nichts mehr meldet). "Abbrechen" hat den Fokus und ändert nichts. Nach "Ausblenden" erscheint unten weiterhin der Hinweis "... ausgeblendet" mit **"Rückgängig"**, und in den Einstellungen lässt sich das Gerät wieder einblenden. Der Knopf liegt gleich neben "Schliessen" und war leicht aus Versehen getroffen.
+
 ## [2.92.1] - 2026-10-18
 
 Die Grafik im Geräte-Popup zeigt "Erst melden nach".
@@ -3967,6 +3975,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.93.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.93.0
 [2.92.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.1
 [2.92.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.0
 [2.91.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.91.0

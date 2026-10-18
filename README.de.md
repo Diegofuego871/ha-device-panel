@@ -199,7 +199,7 @@ Das Zahnrad (die angeheftete App "Einstellungen", oder der Launcher) öffnet all
 |---|---|---|
 | <img src="docs/screenshots/de/settings-section-devices.png" alt="Abschnitt Geräte im Panel"> | <img src="docs/screenshots/de/settings-section-routines.png" alt="Abschnitt Routine"> | <img src="docs/screenshots/de/settings-section-updates.png" alt="Abschnitt Panel mit täglicher Prüfung und automatischer Installation"> |
 
-- **Geräte im Panel:** Integrationen, Gerätetypen und einzelne Geräte ausblenden, Typ und Verbindungsart pro Integration festlegen, Geräte mit eigenen Einstellungen sehen und zurücksetzen
+- **Geräte im Panel:** Integrationen, Gerätetypen und einzelne Geräte ausblenden (ein Gerät erst nach Rückfrage), Typ und Verbindungsart pro Integration festlegen, Geräte mit eigenen Einstellungen sehen und zurücksetzen
 - **Überwachung und Meldungen:** die Reiter Übersicht (ein Zeitstrahl pro Meldung), Ausfall, Batterie, Laden, Neu, Updates, Empfang und Integrationen
 - **Abweichungen:** jeder Reiter von "Überwachung und Meldungen" (bei "Neue Geräte" ohne Geräte) endet mit den Integrationen und Geräten, die vom Standard abweichen, mit Zurücksetzen (auch unter "Geräte im Panel" › "Geräte-Einstellungen")
 - **Ansicht:** liegt nicht mehr in den Einstellungen, sondern im Dialog "Ansicht" über der Liste (Spalten und Sortierung pro Benutzer, Filter-Chips für alle); beide Reiter haben ein eigenes "Speichern"

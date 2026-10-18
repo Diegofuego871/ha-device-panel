@@ -4895,7 +4895,11 @@ class DevicePanel extends HTMLElement {
       this._devForce = true;
       this._renderDevice();
       this.shadowRoot.querySelector("dialog.device").scrollTop = 0;
-    } else if (action === "hide") this._hideDevice(this._detailId);
+    } else if (action === "hide") {
+      // Rückfrage (seit 2.93.0): der Knopf liegt nah an "Schliessen" und ist schnell aus Versehen getroffen; "Rückgängig" bleibt im Hinweis danach
+      const id = this._detailId;
+      this._askConfirm({ title: "hideAskTitle", note: "hideAskNote", no: "hideAskNo", yes: "hideAskYes", noIcon: "close", yesIcon: "eyeOff" }, () => this._hideDevice(id));
+    }
     else if (action === "ai") this._aiAssess(this._detailId);
     else if (action === "ai-ask") this._aiAsk(this._detailId, btn.dataset.q);
     else if (action === "ai-clear") this._aiClear(this._detailId);

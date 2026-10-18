@@ -11,13 +11,13 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
-    hide: "Gerät ausblenden", toast: "Fensterkontakt Küche ausgeblendet", undo: "Rückgängig", shown: "Fensterkontakt Küche wieder eingeblendet",
+    askTitle: "Gerät ausblenden?", hide: "Gerät ausblenden", toast: "Fensterkontakt Küche ausgeblendet", undo: "Rückgängig", shown: "Fensterkontakt Küche wieder eingeblendet",
     sec: "Geräte im Panel", tab: "Geräte", base: "Dienst-Geräte und deaktivierte Geräte ausgeblendet", sumOne: "1 Gerät ausgeblendet", sumTwo: "2 Geräte ausgeblendet",
     all: "Alle einblenden", sub: "Küche · Zigbee Home Automation", empty: 'Kein Gerät ausgeblendet. Ein Gerät blendest du in seinem Popup mit "Gerät ausblenden" aus.',
     error: "Ausblenden fehlgeschlagen: Speicher voll",
   },
   en: {
-    hide: "Hide device", toast: "Fensterkontakt Küche hidden", undo: "Undo", shown: "Fensterkontakt Küche shown again",
+    askTitle: "Hide device?", hide: "Hide device", toast: "Fensterkontakt Küche hidden", undo: "Undo", shown: "Fensterkontakt Küche shown again",
     sec: "Devices in the panel", tab: "Devices", base: "Service devices and disabled devices hidden", sumOne: "1 device hidden", sumTwo: "2 devices hidden",
     all: "Show all", sub: "Küche · Zigbee Home Automation", empty: 'No device is hidden. Hide a device in its pop-up with "Hide device".',
     error: "Could not hide the device: Speicher voll",
@@ -57,9 +57,16 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] beide Knöpfe gleich breit`, widths.length === 2 && Math.abs(widths[0] - widths[1]) <= 1, JSON.stringify(widths));
     await p.screenshot({ path: `${outDir}/hide-popup-${tag.replace("/", "-")}.png` });
 
+    // Rückfrage (seit 2.93.0): Abbrechen sendet nichts, das Popup bleibt offen
+    await p.evaluate(() => { window.__wsCalls.length = 0; });
+    await tap('dialog.device [data-dlg="hide"]');
+    check(`[${tag}] Rückfrage "${T.askTitle}" mit zwei Knöpfen mit Symbol`, await wait(`const c = r.querySelector(".dd-card"); return c?.querySelector("b")?.textContent === ${JSON.stringify(T.askTitle)} && c.querySelectorAll(".dlg-btn svg").length === 2`));
+    await tap('.dd-card [data-dd="no"]');
+    check(`[${tag}] Abbrechen: nichts gesendet, Popup offen, Gerät bleibt`, (await calls()) === "" && (await ev(`return r.querySelector("dialog.device").open`)) && (await hasRow("e")), await calls());
     // Fehler: Popup bleibt offen und nennt ihn
     await p.evaluate(() => (window.__hideFails = "Speicher voll"));
     await tap('dialog.device [data-dlg="hide"]');
+    await tap('.dd-card [data-dd="yes"]');
     check(`[${tag}] Fehler im Popup`, await wait(`return (r.querySelector("dialog.device .dlg-error")?.textContent || "").includes("Speicher voll")`), await text("dialog.device .dlg-error"));
     check(`[${tag}] Popup bleibt offen, Gerät bleibt`, (await ev(`return r.querySelector("dialog.device").open`)) && (await hasRow("e")));
     check(`[${tag}] Fehlertext`, (await text("dialog.device .dlg-error")) === T.error, await text("dialog.device .dlg-error"));
@@ -67,6 +74,7 @@ for (const lang of ["de", "en"]) {
 
     // Ausblenden: Popup zu, Zeile weg, Hinweis mit Rückgängig
     await tap('dialog.device [data-dlg="hide"]');
+    await tap('.dd-card [data-dd="yes"]');
     check(`[${tag}] Popup zu`, await wait(`return !r.querySelector("dialog.device").open`));
     check(`[${tag}] Gerät nicht mehr in der Liste`, !(await hasRow("e")) && (await ev(`return r.querySelectorAll(".dev").length`)) === total - 1);
     check(`[${tag}] Befehl gesendet`, (await calls()) === "e:true", await calls());
@@ -96,6 +104,7 @@ for (const lang of ["de", "en"]) {
       await tap(`.dev[data-open="${id}"]`);
       await wait(`return r.querySelector("dialog.device")?.open`);
       await tap('dialog.device [data-dlg="hide"]');
+    await tap('.dd-card [data-dd="yes"]');
       await wait(`return !r.querySelector('.dev[data-open="${id}"]')`);
     }
     await tap(".gear-btn");

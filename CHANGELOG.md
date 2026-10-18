@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.93.0] - 2026-10-18
+
+Hiding a device asks for confirmation.
+
+### Changed
+
+- Pop-up of the device: **"Hide device"** now asks first ("Hide device?", with the note that the device disappears for all users, is no longer monitored and sends no notifications). "Cancel" is focused and changes nothing. After "Hide" the note "... hidden" with **"Undo"** still appears at the bottom, and the device can still be shown again in the settings. The button sits right next to "Close" and was easy to hit by mistake.
+
 ## [2.92.1] - 2026-10-18
 
 The device pop-up graphic shows "Report only after".
@@ -3866,6 +3874,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.93.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.93.0
 [2.92.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.1
 [2.92.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.92.0
 [2.91.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.91.0
