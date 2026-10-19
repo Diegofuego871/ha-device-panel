@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.101.0, Härtung nach Sicherheitsprüfung)
+
+- Anlass: ein einmaliger Lauf des Cloudflare-Skills "security-audit" (Profil quick, nur Quellcode, Skill danach wieder deinstalliert). Ergebnis: nichts bestätigt, drei offene Hinweise (stumm schalten per Handy-Aktion ohne Absenderprüfung `outage.py:_on_action`; Gerätenamen ohne Markdown-Escaping in `newdevice.py`/`battery.py`/`outage.py`; Klima-Attribute ungeprüft in `routines.js:optHtml`) und eine Liste Härtungen. In 2.101.0 umgesetzt (Wahl des Nutzers) nur: Favicon (`favicon.is_local_target`, `_allowed`, Weiterleitungen von Hand in `_read`), HACS-Entität nur am Release-Link (`update_check.is_repo_url`, Panel `REPO_URL_RE`), Grössenlimits (`http_limit.read_limited`; GitHub-JSON 2 MB, Texte 1 MB, Brands-Icon 512 KB / 2048 px mit PNG-Kopfprüfung), Vorschau beim Wiederherstellen mit `detail` (Entität · Aktion, `backup._item_what`), CI mit `permissions: contents: read` und festem `pytest-homeassistant-custom-component==0.13.316`.
+- Noch offen (vom Nutzer nicht gewählt): die drei Hinweise oben, Aktionen und `hacs/action`, `hassfest` auf Commit-SHAs festlegen (die Repositories waren in der Session nicht freigegeben, SHAs nie raten), Name-Auflösung (DNS) beim Favicon.
+- Lokal testen: `uv venv --python 3.13 /tmp/hav` und `uv pip install --python /tmp/hav/bin/python pytest-homeassistant-custom-component pyflakes`.
+
 ## Stand (2.100.0, keine Eingriffe in HACS-Entitäten)
 
 - Rückmeldung eines Prüfers (bei UniFi Dynamic, gleicher Code hier): eine Integration darf die Entitäten einer anderen nicht aktivieren, deaktivieren oder schalten. Entfernt: `_enableHacsPrerelease`, `_disableHacsPrerelease`, `_loadHacsSwitch` (Registry-Liste), Knopf `hacs-enable`, Texte `verPreHintEnable`/`verPreEnable*`, Feld `prerelease_hacs` (Backend `set_panel`, `update_check.PANEL_DEFAULTS`). `_hacsPreReleaseSwitch()` liest nur noch `hass.entities`/`hass.states` (deaktiviert = aus) und liefert die Geräte-ID für den Link `hacs-device`.

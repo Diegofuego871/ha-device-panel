@@ -184,8 +184,18 @@ async def test_routines_and_magic_roundtrip(hass: HomeAssistant, setup) -> None:
     assert report["sections"]["routines"]["changed"] == 1 and report["sections"]["magic"]["changed"] == 1
     assert [r["id"] for r in hass.data[DATA_ROUTINES].routines()] == [routine["id"]]
     assert [r["id"] for r in hass.data[DATA_MAGIC].rules()] == [rule["id"]]
+    # Die Vorschau nennt, was der Eintrag tut (Entität und Aktion), nicht nur den Namen aus der Datei (2.101.0)
+    for section in ("routines", "magic"):
+        await_report = report["sections"][section]
+        assert await_report["changes"][0]["detail"] and await_report["examples"][0]["detail"] == await_report["changes"][0]["detail"]
+    assert report["sections"]["routines"]["changes"][0]["detail"] == f"{plug} · on"
+    assert report["sections"]["magic"]["changes"][0]["detail"] == f"{sensor.entity_id} · below 12.0"
     again = await backup.async_import(hass, file, ["routines", "magic"], dry_run=True)
     assert again["totals"]["changed"] == 0 and again["totals"]["skipped"] == 0 and again["sections"]["magic"]["unchanged"] == 1
+    # Ändert eine fremde Datei bei einer bestehenden Routine die Aktion, zeigt die Vorschau alt → neu
+    swapped = {**file, "sections": {"routines": {**file["sections"]["routines"], "items": [{**file["sections"]["routines"]["items"][0], "action": "off"}]}}}
+    changed = await backup.async_import(hass, swapped, ["routines"], dry_run=True)
+    assert changed["sections"]["routines"]["changes"][0]["detail"] == f"{plug} · on → {plug} · off"
     # Entität gibt es nicht mehr: übersprungen mit Grund, die übrigen bleiben
     hass.states.async_remove(sensor.entity_id)
     er.async_get(hass).async_remove(sensor.entity_id)

@@ -14,6 +14,7 @@ Neustart von Home Assistant bleibt immer Sache des Benutzers.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import random
 import re
@@ -30,6 +31,7 @@ from homeassistant.helpers.event import async_call_later, async_track_time_chang
 from homeassistant.helpers.storage import Store
 from homeassistant.loader import async_get_integration
 
+from .http_limit import read_limited
 from .const import (
     CONF_UPDATE_CHECK,
     CONF_UPDATE_CHECK_TIME,
@@ -98,6 +100,8 @@ RAW_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}"
 TAG_RELEASE_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/tags"
 NOTES_MAX = 15
 NOTES_MAX_BYTES = 1_000_000
+# Antwort der GitHub-API (Release-Angaben mit Text): grösser wird sie nicht, alles darüber wird verworfen.
+JSON_MAX_BYTES = 2_000_000
 _NOTES_KEY = f"{DOMAIN}_release_notes"
 # Versionsnummer, wie sie im URL-Pfad stehen darf (kommt vom Panel): Ziffern, Punkte, Vorabstufe.
 VERSION_ARG = re.compile(r"^v?\d{1,3}(\.\d{1,3}){0,2}([-.]?(a|b|rc|alpha|beta|pre)\.?\d{0,3})?\Z", re.IGNORECASE)
@@ -123,7 +127,10 @@ async def _async_get_json(hass: HomeAssistant, url: str) -> tuple[Any, str | Non
                 if resp.status in (403, 429) and resp.headers.get("X-RateLimit-Remaining") == "0":
                     return None, RATE_LIMIT
                 return None, f"HTTP {resp.status}"
-            return await resp.json(content_type=None), None
+            raw = await read_limited(resp, JSON_MAX_BYTES)
+            if raw is None:
+                return None, "too large"
+            return json.loads(raw), None
     except (asyncio.TimeoutError, ClientError, ValueError) as err:
         return None, str(err) or type(err).__name__
 
@@ -264,21 +271,26 @@ def auto_update_active(hass: HomeAssistant) -> bool:
     return bool(panel_settings(hass).get("auto_update")) and _enabled(hass)
 
 
+# Link auf dieses Repository auf GitHub, am Host verankert (ein fremder Host mit gleichem Pfad zählt nicht). Mit und ohne
+# Pfad dahinter: bei einer Installation von einem Stand statt von einem Release endet der Link ohne Schrägstrich.
+_REPO_URL_RE = re.compile(rf"^https://github\.com/{re.escape(GITHUB_REPO)}(?:[/?#]|$)", re.IGNORECASE)
+
+
+def is_repo_url(url: Any) -> bool:
+    """Gehört der Link zu diesem Repository auf GitHub?"""
+    return bool(_REPO_URL_RE.match(str(url or "").strip()))
+
+
 def _hacs_update_entity(hass: HomeAssistant) -> str | None:
-    """Update-Entität von HACS für dieses Repository: am Link des Releases, sonst am Titel (wie im Panel)."""
+    """Update-Entität von HACS für dieses Repository: erkannt am Link des Releases, nie am Titel oder an einer festen ID."""
     registry = er.async_get(hass)
-    fallback = None
     for entry in registry.entities.values():
         if entry.platform != "hacs" or entry.domain != "update" or entry.disabled_by is not None:
             continue
         state = hass.states.get(entry.entity_id)
-        if state is None:
-            continue
-        if f"/{GITHUB_REPO.lower()}/" in str(state.attributes.get("release_url") or "").lower():
+        if state is not None and is_repo_url(state.attributes.get("release_url")):
             return entry.entity_id
-        if fallback is None and str(state.attributes.get("title") or "").strip().lower() == "device panel":
-            fallback = entry.entity_id
-    return fallback
+    return None
 
 
 async def _async_hacs_refresh(hass: HomeAssistant) -> None:
@@ -538,8 +550,8 @@ async def _async_get_text(hass: HomeAssistant, url: str) -> tuple[str | None, st
         async with session.get(url, timeout=TIMEOUT) as resp:
             if resp.status >= 400:
                 return None, f"HTTP {resp.status}"
-            raw = await resp.content.read(NOTES_MAX_BYTES + 1)
-            if len(raw) > NOTES_MAX_BYTES:
+            raw = await read_limited(resp, NOTES_MAX_BYTES)
+            if raw is None:
                 return None, "too large"
             return raw.decode("utf-8", errors="replace"), None
     except (asyncio.TimeoutError, ClientError, ValueError) as err:

@@ -5,6 +5,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Die Tests brauchen nur Lesezugriff auf den Code (das Token bekommt keine Schreibrechte).
+permissions:
+  contents: read
+
 jobs:
   python:
     name: Python (Home Assistant)
@@ -24,7 +28,9 @@ jobs:
           node-version: "22"
 
       - name: Abhängigkeiten
-        run: pip install pytest-homeassistant-custom-component
+        # Feste Version: ein neuer Release der Test-Bibliothek ändert die Home-Assistant-Version unter den Tests nicht mehr
+        # unbemerkt. Zum Aktualisieren hier die Nummer anheben und die Tests laufen lassen.
+        run: pip install pytest-homeassistant-custom-component==0.13.316
 
       - name: Tests
         run: python -m pytest -q

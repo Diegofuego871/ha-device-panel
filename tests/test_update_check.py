@@ -799,3 +799,55 @@ async def test_daily_check_runs_at_the_set_time(hass: HomeAssistant, entry, gith
     hass.config_entries.async_update_entry(entry, options={**entry.options, "update_check_time": ""})
     update_check.async_reschedule_daily(hass)
     assert hass.data[update_check._TIME_KEY] == ""
+
+
+# -- Nur über das Repository (2.101.0) ---------------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("url", "ok"),
+    [
+        (f"https://github.com/{update_check.GITHUB_REPO}/releases/tag/v1.0.0", True),
+        (f"https://github.com/{update_check.GITHUB_REPO.lower()}/releases/tag/v1.0.0", True),
+        (f"https://github.com/{update_check.GITHUB_REPO}", True),  # Installation von einem Stand: Link ohne Pfad
+        (f"https://github.com/{update_check.GITHUB_REPO}/commit/abc", True),
+        (f"https://evil.example/{update_check.GITHUB_REPO}/releases", False),  # fremder Host, gleicher Pfad
+        (f"https://github.com.evil.example/{update_check.GITHUB_REPO}/", False),
+        (f"https://github.com/other/{update_check.GITHUB_REPO}/", False),
+        (f"https://github.com/{update_check.GITHUB_REPO}-fork/releases", False),
+        (f"http://github.com/{update_check.GITHUB_REPO}/", False),
+        ("", False), (None, False),
+    ],
+)
+def test_is_repo_url(url: Any, ok: bool) -> None:
+    assert update_check.is_repo_url(url) is ok
+
+
+async def test_hacs_entity_only_by_release_link(hass: HomeAssistant, entry) -> None:
+    """Der Titel "Device Panel" und die Entity-ID genügen nicht mehr: ohne Link zu diesem Repository wird nichts installiert."""
+    registry = er.async_get(hass)
+    other = registry.async_get_or_create("update", "hacs", "x1", suggested_object_id="device_panel_update")
+    hass.states.async_set(other.entity_id, "on", {"title": "Device Panel", "release_url": "https://github.com/someone/else/releases/tag/v1"})
+    assert update_check._hacs_update_entity(hass) is None
+    hass.states.async_set(other.entity_id, "on", {"title": "Device Panel"})  # HACS ohne Link (noch nicht geladen)
+    assert update_check._hacs_update_entity(hass) is None
+    mine = registry.async_get_or_create("update", "hacs", "x2", suggested_object_id="mine")
+    hass.states.async_set(mine.entity_id, "on", {"release_url": f"https://github.com/{update_check.GITHUB_REPO}/releases/tag/v1"})
+    assert update_check._hacs_update_entity(hass) == mine.entity_id
+
+
+async def test_github_json_over_the_limit_is_an_error(hass: HomeAssistant, aioclient_mock) -> None:
+    aioclient_mock.get(LATEST, content=b"[" + b"1," * (update_check.JSON_MAX_BYTES // 2) + b"1]")
+    data, error = await REAL_GET_JSON(hass, LATEST)
+    assert data is None and error == "too large"
+    aioclient_mock.clear_requests()
+    aioclient_mock.get(LATEST, json={"tag_name": "v1.2.3"})
+    assert await REAL_GET_JSON(hass, LATEST) == ({"tag_name": "v1.2.3"}, None)
+
+
+async def test_release_text_arrives_complete_and_is_capped(hass: HomeAssistant, aioclient_mock) -> None:
+    body = ("x" * 99 + "\n") * 5000  # rund 500 KB, mehrere Stücke
+    aioclient_mock.get("https://raw.example/a.md", text=body)
+    assert await update_check._async_get_text(hass, "https://raw.example/a.md") == (body, None)
+    aioclient_mock.get("https://raw.example/b.md", content=b"x" * (update_check.NOTES_MAX_BYTES + 1))
+    assert await update_check._async_get_text(hass, "https://raw.example/b.md") == (None, "too large")

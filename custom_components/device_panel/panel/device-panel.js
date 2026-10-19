@@ -105,6 +105,8 @@ const ZOOM_SHARE = 0.1;
 const OUTAGE_LIST_MAX = 10;
 // Repository für den Abgleich mit HACS (Update-Entität, Repository-Liste).
 const REPO = "diegofuego871/ha-device-panel";
+// Link auf dieses Repository auf GitHub, am Host verankert (wie update_check.is_repo_url im Backend)
+const REPO_URL_RE = /^https:\/\/github\.com\/diegofuego871\/ha-device-panel(?:[/?#]|$)/i;
 
 // innerHTML nur bei echter Änderung ersetzen; Vergleich mit dem zuletzt
 // gesetzten String, nie mit el.innerHTML (siehe LEARNINGS).
@@ -6159,7 +6161,7 @@ class DevicePanel extends HTMLElement {
     if (kind === "changed") {
       return secs
         .filter(([, r]) => r.changes?.length)
-        .map(([s, r]) => grp(s, r.changes.length, r.changes.map((c) => `<div class="bk-dv">${escape(label(c))}<small class="bk-diff"><s>${escape(this._bkVal(c.old))}</s> → <b>${escape(this._bkVal(c.new))}</b></small></div>`).join("")))
+        .map(([s, r]) => grp(s, r.changes.length, r.changes.map((c) => `<div class="bk-dv">${escape(label(c))}<small class="bk-diff"><s>${escape(this._bkVal(c.old))}</s> → <b>${escape(this._bkVal(c.new))}</b></small>${c.detail ? `<small class="bk-ent">${escape(c.detail)}</small>` : ""}</div>`).join("")))
         .join("");
     }
     if (kind === "same") {
@@ -6231,7 +6233,7 @@ class DevicePanel extends HTMLElement {
       const rows = Object.entries(b.preview.sections)
         .map(([s, r]) => {
           const ex = r.changes?.[0];
-          const detail = [r.changed ? t("bkChangedN", r.changed) : t("bkNoChange"), ex ? `${ex.device ? `${ex.device} · ` : ""}${this._bkKey(ex.what)}: ${this._bkVal(ex.old)} → ${this._bkVal(ex.new)}` : ""].filter(Boolean).join(" · ");
+          const detail = [r.changed ? t("bkChangedN", r.changed) : t("bkNoChange"), ex ? `${ex.device ? `${ex.device} · ` : ""}${this._bkKey(ex.what)}: ${this._bkVal(ex.old)} → ${this._bkVal(ex.new)}${ex.detail ? ` (${ex.detail})` : ""}` : ""].filter(Boolean).join(" · ");
           const go = r.changed ? ` data-bk="detail" data-kind="changed" data-sec="${s}" role="button" tabindex="0"` : "";
           return `<div class="bk-rw${r.changed ? " go" : ""}"${go}><span class="bk-dot${r.changed ? " on" : ""}"></span><div>${escape(t(`bkSec_${s}`))}<small>${escape(detail)}</small></div><span class="bk-badge${r.changed ? " g" : ""}">${r.changed}${r.changed ? " ›" : ""}</span></div>`;
         })
@@ -9424,22 +9426,18 @@ class DevicePanel extends HTMLElement {
   // GitHub (device_panel/version), so klappt die Prüfung auch ohne HACS.
   // Installieren geht nur über HACS (update.install).
 
-  // Update-Entität von HACS für dieses Repository. Erkannt am Link des
-  // Releases, sonst am Titel bzw. an der Entity-ID, nie an einer festen ID.
+  // Update-Entität von HACS für dieses Repository. Erkannt nur am Link des
+  // Releases (wie im Backend, update_check.is_repo_url), nie am Titel oder an
+  // einer festen Entity-ID.
   _hacsUpdateEntity() {
     const hass = this._hass;
     if (!hass || !hass.entities || !hass.states) return null;
-    let fallback = null;
     for (const e of Object.values(hass.entities)) {
       if (!e || e.platform !== "hacs" || !String(e.entity_id).startsWith("update.")) continue;
       const st = hass.states[e.entity_id];
-      if (!st) continue;
-      const a = st.attributes || {};
-      if (String(a.release_url || "").toLowerCase().includes(`/${REPO}/`)) return st;
-      const title = String(a.title || "").trim().toLowerCase();
-      if (!fallback && (title === "device panel" || e.entity_id === "update.device_panel_update")) fallback = st;
+      if (st && REPO_URL_RE.test(String((st.attributes || {}).release_url || "").trim())) return st;
     }
-    return fallback;
+    return null;
   }
 
   // Versionsvergleich wie im Backend (update_check.compare_versions):

@@ -14,6 +14,7 @@ geholt. Der Befehl ist nur für Administratoren (das Panel ist es ohnehin).
 from __future__ import annotations
 
 import base64
+import ipaddress
 import logging
 from html.parser import HTMLParser
 from urllib.parse import urljoin, urlsplit
@@ -30,6 +31,8 @@ MAX_BYTES = 100 * 1024
 MAX_PAGE_BYTES = 256 * 1024
 MAX_URL_LENGTH = 300
 MAX_CANDIDATES = 3
+MAX_REDIRECTS = 5
+_REDIRECT_CODES = (301, 302, 303, 307, 308)
 HEADERS = {"User-Agent": "Device Panel (Home Assistant)", "Accept": "text/html,image/*;q=0.8,*/*;q=0.5"}
 
 
@@ -48,6 +51,30 @@ def valid_url(url: str) -> str | None:
         return None
     parts = urlsplit(url)
     return url if parts.scheme in ("http", "https") and parts.hostname else None
+
+
+def is_local_target(host: str | None) -> bool:
+    """Loopback, Link-Local (dazu gehört die Cloud-Metadatenadresse 169.254.169.254) oder unbestimmte Adresse, auch "localhost"."""
+    host = (host or "").strip("[]").lower().rstrip(".")
+    if host == "localhost" or host.endswith(".localhost"):
+        return True
+    try:
+        ip = ipaddress.ip_address(host.split("%")[0])
+    except ValueError:
+        return False  # ein Name: ohne Namensauflösung nicht zu beurteilen
+    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped is not None:
+        ip = ip.ipv4_mapped
+    return ip.is_loopback or ip.is_link_local or ip.is_unspecified
+
+
+def _allowed(url: str, trusted_host: str | None) -> bool:
+    """
+    Darf diese Adresse abgerufen werden? Was die Seite selbst nennt (Symbol-Links, Weiterleitungen), geht nicht an Loopback
+    oder Link-Local, ausser die vom Benutzer eingegebene Adresse hat denselben Host (zum Beispiel ein Dienst auf localhost).
+    Ein privates Heimnetz (192.168.x.x, 10.x.x.x) bleibt erlaubt: dafür gibt es die Funktion.
+    """
+    host = urlsplit(url).hostname
+    return not is_local_target(host) or (host or "").lower() == (trusted_host or "").lower()
 
 
 def sniff(data: bytes) -> str | None:
@@ -102,24 +129,34 @@ def icon_links(html: str, base: str) -> list[str]:
         if href.startswith("data:"):
             continue
         full = urljoin(base, href)
-        if valid_url(full) and full not in out:
+        if valid_url(full) and full not in out and _allowed(full, urlsplit(base).hostname):
             out.append(full)
     return out[:MAX_CANDIDATES]
 
 
-async def _read(hass: HomeAssistant, url: str, limit: int) -> tuple[bytes, str, bool]:
-    """Bis limit Byte lesen; liefert (Daten, endgültige Adresse, abgeschnitten). Fehler: FaviconError."""
+async def _read(hass: HomeAssistant, url: str, limit: int, trusted_host: str | None = None) -> tuple[bytes, str, bool]:
+    """
+    Bis limit Byte lesen; liefert (Daten, endgültige Adresse, abgeschnitten). Fehler: FaviconError.
+    Weiterleitungen werden von Hand verfolgt (höchstens MAX_REDIRECTS), damit jedes Ziel geprüft wird (siehe _allowed).
+    """
     session = async_get_clientsession(hass, verify_ssl=False)
     try:
-        async with session.get(url, headers=HEADERS, timeout=ClientTimeout(total=REQUEST_TIMEOUT), allow_redirects=True) as resp:
-            if resp.status >= 400:
-                raise FaviconError("not_found" if resp.status == 404 else "unreachable")
-            data = bytearray()
-            async for chunk in resp.content.iter_chunked(8192):
-                data += chunk
-                if len(data) > limit:
-                    return bytes(data[:limit]), str(resp.url), True
-            return bytes(data), str(resp.url), False
+        for _hop in range(MAX_REDIRECTS + 1):
+            async with session.get(url, headers=HEADERS, timeout=ClientTimeout(total=REQUEST_TIMEOUT), allow_redirects=False) as resp:
+                if resp.status in _REDIRECT_CODES and (location := resp.headers.get("Location")):
+                    url = urljoin(url, location.strip())
+                    if valid_url(url) is None or not _allowed(url, trusted_host):
+                        raise FaviconError("unreachable")
+                    continue
+                if resp.status >= 400:
+                    raise FaviconError("not_found" if resp.status == 404 else "unreachable")
+                data = bytearray()
+                async for chunk in resp.content.iter_chunked(8192):
+                    data += chunk
+                    if len(data) > limit:
+                        return bytes(data[:limit]), str(resp.url), True
+                return bytes(data), str(resp.url), False
+        raise FaviconError("unreachable")  # zu viele Weiterleitungen
     except FaviconError:
         raise
     except (ClientError, TimeoutError, OSError, ValueError) as err:
@@ -133,11 +170,12 @@ async def async_fetch_favicon(hass: HomeAssistant, url: str) -> str:
     if page is None:
         raise FaviconError("invalid_url")
     origin = f"{urlsplit(page).scheme}://{urlsplit(page).netloc}"
+    trusted = urlsplit(page).hostname  # Host der eingegebenen Adresse: nur dieser darf auch lokal sein
     candidates: list[str] = []
     final = page
     reached = False
     try:
-        html, final, _cut = await _read(hass, page, MAX_PAGE_BYTES)
+        html, final, _cut = await _read(hass, page, MAX_PAGE_BYTES, trusted)
         reached = True
         candidates = icon_links(html.decode("utf-8", errors="ignore"), final)
     except FaviconError as err:
@@ -150,7 +188,7 @@ async def async_fetch_favicon(hass: HomeAssistant, url: str) -> str:
     too_large = False
     for candidate in candidates:
         try:
-            data, _url, cut = await _read(hass, candidate, MAX_BYTES)
+            data, _url, cut = await _read(hass, candidate, MAX_BYTES, trusted)
         except FaviconError as err:
             reached = reached or err.code == "not_found"
             continue

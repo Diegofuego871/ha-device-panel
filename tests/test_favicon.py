@@ -137,3 +137,73 @@ def test_no_credentials_sent() -> None:
     assert set(favicon.HEADERS) == {"User-Agent", "Accept"} and "Home Assistant" in favicon.HEADERS["User-Agent"]
 
 
+
+
+# -- Keine Loopback-/Link-Local-Ziele aus der Seite (2.101.0) ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("host", "local"),
+    [
+        ("127.0.0.1", True), ("127.1.2.3", True), ("localhost", True), ("LOCALHOST.", True), ("foo.localhost", True), ("[::1]", True),
+        ("169.254.169.254", True), ("169.254.1.1", True), ("fe80::1", True), ("0.0.0.0", True), ("::ffff:127.0.0.1", True),
+        ("192.168.1.1", False), ("10.0.0.5", False), ("172.16.0.1", False), ("router.local", False), ("nas.example", False), ("8.8.8.8", False),
+        ("", False), (None, False),
+    ],
+)
+def test_is_local_target(host: str | None, local: bool) -> None:
+    assert favicon.is_local_target(host) is local
+
+
+def test_icon_links_drop_local_targets_from_foreign_page() -> None:
+    html = (
+        '<link rel="icon" href="http://127.0.0.1:8123/api/x"><link rel="icon" href="http://169.254.169.254/latest/meta-data">'
+        '<link rel="icon" href="http://localhost/a.png"><link rel="icon" href="/ok.png">'
+    )
+    assert favicon.icon_links(html, "https://nas.example/") == ["https://nas.example/ok.png"]
+
+
+def test_icon_links_keep_local_host_the_user_entered() -> None:
+    """Gibt der Benutzer selbst localhost ein (Dienst auf demselben Rechner), bleibt dessen Symbol erlaubt; ein anderer lokaler Host nicht."""
+    html = '<link rel="icon" href="http://localhost:3000/a.png"><link rel="icon" href="http://127.0.0.1/b.png">'
+    assert favicon.icon_links(html, "http://localhost:3000/") == ["http://localhost:3000/a.png"]
+
+
+def test_icon_links_keep_private_network() -> None:
+    assert favicon.icon_links('<link rel="icon" href="http://192.168.1.1/f.ico">', "http://router.local/") == ["http://192.168.1.1/f.ico"]
+
+
+async def test_fetch_ignores_local_icon_link_of_foreign_page(hass: HomeAssistant, aioclient_mock) -> None:
+    aioclient_mock.get("https://x.example/", text='<head><link rel="icon" href="http://169.254.169.254/latest/meta-data"></head>')
+    aioclient_mock.get("https://x.example/favicon.ico", content=ICO)
+    assert await favicon.async_fetch_favicon(hass, "https://x.example/") == _uri("image/x-icon", ICO)
+    assert not [c for c in aioclient_mock.mock_calls if "169.254" in str(c[1])]
+
+
+async def test_fetch_refuses_redirect_to_local_target(hass: HomeAssistant, aioclient_mock) -> None:
+    aioclient_mock.get("https://x.example/", status=302, headers={"Location": "http://127.0.0.1:8123/"})
+    aioclient_mock.get("https://x.example/favicon.ico", status=302, headers={"Location": "http://169.254.169.254/"})
+    with pytest.raises(favicon.FaviconError) as err:
+        await favicon.async_fetch_favicon(hass, "https://x.example/")
+    assert err.value.code == "unreachable"
+    assert not [c for c in aioclient_mock.mock_calls if "127.0.0.1" in str(c[1]) or "169.254" in str(c[1])]
+
+
+async def test_fetch_follows_normal_redirect(hass: HomeAssistant, aioclient_mock) -> None:
+    aioclient_mock.get("http://router.local/", status=301, headers={"Location": "https://router.local/login"})
+    aioclient_mock.get("https://router.local/login", text='<head><link rel="icon" href="/f.png"></head>')
+    aioclient_mock.get("https://router.local/f.png", content=PNG)
+    assert await favicon.async_fetch_favicon(hass, "http://router.local/") == _uri("image/png", PNG)
+
+
+async def test_fetch_stops_after_too_many_redirects(hass: HomeAssistant, aioclient_mock) -> None:
+    aioclient_mock.get("https://x.example/", status=302, headers={"Location": "https://x.example/"})
+    aioclient_mock.get("https://x.example/favicon.ico", status=404)
+    with pytest.raises(favicon.FaviconError):
+        await favicon.async_fetch_favicon(hass, "https://x.example/")
+
+
+async def test_fetch_allows_the_local_host_the_user_entered(hass: HomeAssistant, aioclient_mock) -> None:
+    aioclient_mock.get("http://localhost:3000/", text="<html><head></head></html>")
+    aioclient_mock.get("http://localhost:3000/favicon.ico", content=ICO)
+    assert await favicon.async_fetch_favicon(hass, "http://localhost:3000/") == _uri("image/x-icon", ICO)

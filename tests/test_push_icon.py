@@ -103,9 +103,20 @@ async def test_without_registered_path(hass: HomeAssistant) -> None:
     assert await push_icon.async_integration_icon(hass, "hue") is None
 
 
-async def test_no_png_is_not_stored(hass: HomeAssistant, icons: Path) -> None:
+def _cdn(body: bytes, headers: dict[str, str] | None = None):
+    """Nachgebildete Sitzung des Icon-CDN: liefert body in Stücken, wie aiohttp."""
+
+    class Content:
+        async def iter_chunked(self, size: int):
+            for i in range(0, len(body), size):
+                yield body[i : i + size]
+
     class Response:
         status = 200
+
+        def __init__(self) -> None:
+            self.headers = headers or {}
+            self.content = Content()
 
         async def __aenter__(self) -> "Response":
             return self
@@ -113,17 +124,44 @@ async def test_no_png_is_not_stored(hass: HomeAssistant, icons: Path) -> None:
         async def __aexit__(self, *exc: Any) -> None:
             return None
 
-        async def read(self) -> bytes:
-            return b"<html>nicht gefunden</html>"
-
     class Session:
         def get(self, url: str) -> Response:
             assert url == "https://brands.home-assistant.io/_/hue/icon.png"
             return Response()
 
-    with patch.object(push_icon, "async_get_clientsession", return_value=Session()):
+    return Session()
+
+
+async def test_no_png_is_not_stored(hass: HomeAssistant, icons: Path) -> None:
+    with patch.object(push_icon, "async_get_clientsession", return_value=_cdn(b"<html>nicht gefunden</html>")):
         assert await push_icon.async_integration_icon(hass, "hue") is None
     assert not (icons / "hue.png").exists()
+
+
+async def test_normal_cdn_icon_is_stored(hass: HomeAssistant, icons: Path) -> None:
+    """Gegenprobe zu den Grenzen: ein normales Icon in mehreren Stücken kommt vollständig an."""
+    with patch.object(push_icon, "async_get_clientsession", return_value=_cdn(_png())):
+        assert await push_icon.async_integration_icon(hass, "hue") == f"{PUSH_ICON_URL_PATH}/hue.png"
+    assert (icons / "hue.png").exists()
+
+
+async def test_oversize_cdn_answer_is_dropped(hass: HomeAssistant, icons: Path) -> None:
+    """Über der Obergrenze (2.101.0): angekündigt über den Kopf oder tatsächlich gelesen, nichts wird gespeichert."""
+    big = _png() + b"\x00" * push_icon._MAX_BYTES
+    for session in (_cdn(_png(), {"Content-Length": str(len(big))}), _cdn(big)):
+        with patch.object(push_icon, "async_get_clientsession", return_value=session):
+            assert await push_icon._async_download(hass, "hue") is None
+    assert not (icons / "hue.png").exists()
+
+
+async def test_png_with_huge_area_is_not_decoded(hass: HomeAssistant, icons: Path) -> None:
+    """Klein in Byte, riesig in Pixel (Pillow-Bombe): der Kopf (IHDR) verrät es, es wird nicht entpackt."""
+    out = io.BytesIO()
+    Image.new("1", (20000, 20000)).save(out, "PNG")
+    assert len(out.getvalue()) < push_icon._MAX_BYTES
+    with patch.object(push_icon, "async_get_clientsession", return_value=_cdn(out.getvalue())):
+        assert await push_icon._async_download(hass, "hue") is None
+    assert push_icon._png_pixels_ok(_png(256)) and not push_icon._png_pixels_ok(b"\x89PNG\r\n\x1a\n" + b"\x00" * 4)
 
 
 async def test_common_icon_only_for_one_integration(hass: HomeAssistant, icons: Path) -> None:

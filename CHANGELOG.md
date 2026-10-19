@@ -7,6 +7,28 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.101.0] - 2026-10-19
+
+Hardening after a security review: fewer ways for outside data to reach internal addresses, size limits for answers from outside, and a clearer restore preview.
+
+### Security
+
+- **Favicon for external links:** what the page itself names (icon links, redirects) is no longer fetched when it points to the Home Assistant machine itself or to link-local addresses (`127.x`, `::1`, `localhost`, `169.254.x.x` including the cloud metadata address). Redirects are now followed by hand (at most 5) and every target is checked. The address you enter yourself is exempt (a service on `localhost` still works) and so are devices in your home network (`192.168.x.x`, `10.x.x.x`, router). A name that only resolves to such an address (DNS) is not caught: there is no name resolution before the request.
+- **Update entity in HACS:** it is recognised only by the link of its release to this repository on GitHub (anchored at the host `github.com`), no longer by the title "Device Panel" or the entity ID. This applies to the panel (button "Update") and to "Install updates automatically". If HACS has no release link yet (for example right after a start), the panel treats the entity as not found until HACS has loaded; the daily check tries again.
+- **Answers from outside are limited in size:** the answer of the GitHub API (version check, release texts) to 2 MB, the text files with the release notes to 1 MB (as before), the icon from the icon CDN of Home Assistant to 512 KB and 2048 × 2048 pixels (checked in the PNG header before decoding). Larger answers are dropped.
+
+### Added
+
+- **Restore, preview:** routines and Magic Push messages from a file show **what they do**, not only their name: entity and action (routines) or entity, condition and push target (Magic Push), in the section row and in the window "Will change"; for an existing entry as old → new. A file from someone else can no longer hide behind a harmless name.
+
+### Changed
+
+- **Release notes:** the changelog text is now read to the end in pieces. Before it was one read that returns only what has arrived so far; a truncated read was not observed, this is a precaution.
+
+### Internal
+
+- New module `http_limit.py` (`read_limited`). Tests: `test_favicon`, `test_update_check`, `test_push_icon`, `test_backup`, suite `backup`.
+
 ## [2.100.0] - 2026-10-19
 
 The panel no longer changes HACS entities.
@@ -4007,6 +4029,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.101.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.0
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0
 [2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0

@@ -7,6 +7,28 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.101.0] - 2026-10-19
+
+Härtung nach einer Sicherheitsprüfung: weniger Wege für fremde Daten zu internen Adressen, Grössenlimits für Antworten von aussen und eine klarere Vorschau beim Wiederherstellen.
+
+### Sicherheit
+
+- **Favicon für externe Links:** Was die Seite selbst nennt (Symbol-Links, Weiterleitungen), wird nicht mehr abgerufen, wenn es auf den Rechner von Home Assistant selbst oder auf Link-Local-Adressen zeigt (`127.x`, `::1`, `localhost`, `169.254.x.x` samt Cloud-Metadatenadresse). Weiterleitungen werden jetzt von Hand verfolgt (höchstens 5) und jedes Ziel geprüft. Die Adresse, die man selbst eingibt, ist ausgenommen (ein Dienst auf `localhost` geht weiter), ebenso Geräte im Heimnetz (`192.168.x.x`, `10.x.x.x`, Router). Ein Name, der erst per DNS auf eine solche Adresse zeigt, wird nicht erkannt: vor dem Abruf gibt es keine Namensauflösung.
+- **Update-Entität in HACS:** Sie wird nur noch am Link ihres Releases auf dieses Repository auf GitHub erkannt (am Host `github.com` verankert), nicht mehr am Titel "Device Panel" oder an der Entity-ID. Das gilt für das Panel (Knopf "Updaten") und für "Updates automatisch installieren". Hat HACS noch keinen Release-Link (zum Beispiel direkt nach dem Start), gilt die Entität im Panel als nicht gefunden, bis HACS geladen hat; die tägliche Prüfung versucht es erneut.
+- **Antworten von aussen sind in der Grösse begrenzt:** die Antwort der GitHub-API (Versionsprüfung, Release-Texte) auf 2 MB, die Textdateien der Release Notes auf 1 MB (wie bisher), das Icon vom Icon-CDN von Home Assistant auf 512 KB und 2048 × 2048 Pixel (im PNG-Kopf geprüft, bevor entpackt wird). Grössere Antworten werden verworfen.
+
+### Hinzugefügt
+
+- **Wiederherstellen, Vorschau:** Routinen und Magic-Push-Meldungen aus einer Datei zeigen, **was sie tun**, nicht nur ihren Namen: Entität und Aktion (Routinen) bzw. Entität, Bedingung und Push-Ziel (Magic Push), in der Bereichszeile und im Fenster "Werden geändert"; bei einem bestehenden Eintrag als alt → neu. Eine fremde Datei kann sich nicht mehr hinter einem harmlosen Namen verstecken.
+
+### Geändert
+
+- **Release Notes:** Der Text des Änderungsprotokolls wird jetzt stückweise bis zum Ende gelesen. Vorher war es ein einziges Lesen, das nur liefert, was bis dahin angekommen ist; ein verkürztes Lesen wurde nicht beobachtet, es ist eine Vorsichtsmassnahme.
+
+### Intern
+
+- Neues Modul `http_limit.py` (`read_limited`). Tests: `test_favicon`, `test_update_check`, `test_push_icon`, `test_backup`, Suite `backup`.
+
 ## [2.100.0] - 2026-10-19
 
 Das Panel ändert keine Entitäten von HACS mehr.
@@ -4108,6 +4130,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.101.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.0
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0
 [2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0

@@ -804,6 +804,15 @@
             if (rep.examples.length < 3) rep.examples.push({ what: k, old: window.__opts[k], new: v });
             rep.changes.push({ what: k, old: window.__opts[k], new: v });
           }
+          if (sec === "routines" || sec === "magic") {
+            // wie backup._items_part: jeder Eintrag mit dem, was er tut (Entität und Aktion bzw. Bedingung)
+            for (const it of body.items || []) {
+              const detail = sec === "routines" ? `${it.entity_id} · ${it.action}` : `${it.entity_id} · ${it.kind}${it.value != null ? ` ${it.value}` : ""}`;
+              rep.changed++;
+              if (rep.examples.length < 3) rep.examples.push({ what: it.name, old: "–", new: "neu", detail });
+              rep.changes.push({ what: it.name, old: "–", new: "neu", detail });
+            }
+          }
           if (sec === "devices") {
             const known = new Set(["dev-a", "dev-b"]);
             const dev = {};

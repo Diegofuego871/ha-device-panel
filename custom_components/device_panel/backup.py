@@ -105,6 +105,7 @@ _DEVICE_SETTING_KEYS = (
 _ITEMS_MAX = 400
 _EXAMPLES_MAX = 3
 _LIST_MAX = 500
+_DETAIL_MAX = 160
 
 
 def section_keys(section: str) -> set[str]:
@@ -212,12 +213,17 @@ def _empty() -> dict[str, Any]:
     return {"changed": 0, "unchanged": 0, "skipped": [], "notes": [], "examples": [], "changes": [], "same": []}
 
 
-def _example(rep: dict[str, Any], what: str, old: Any, new: Any, device: str | None = None) -> None:
-    """Eine Änderung festhalten: alle für das Detailfenster ("changes"), die ersten drei für die Vorschau ("examples")."""
+def _example(rep: dict[str, Any], what: str, old: Any, new: Any, device: str | None = None, detail: str | None = None) -> None:
+    """
+    Eine Änderung festhalten: alle für das Detailfenster ("changes"), die ersten drei für die Vorschau ("examples").
+    detail: bei Routinen und Magic Push, was der Eintrag tatsächlich tut (Entität und Aktion), damit nicht nur der Name
+    in der Datei entscheidet, was man bestätigt.
+    """
+    extra = {"detail": detail[:_DETAIL_MAX]} if detail else {}
     if len(rep["examples"]) < _EXAMPLES_MAX:
-        rep["examples"].append({"what": f"{device}: {what}" if device else what, "old": _short(old), "new": _short(new)})
+        rep["examples"].append({"what": f"{device}: {what}" if device else what, "old": _short(old), "new": _short(new), **extra})
     if len(rep["changes"]) < _LIST_MAX:
-        rep["changes"].append({"what": what, "old": _short(old), "new": _short(new), **({"device": device} if device else {})})
+        rep["changes"].append({"what": what, "old": _short(old), "new": _short(new), **({"device": device} if device else {}), **extra})
 
 
 def _same(rep: dict[str, Any], what: str, device: str | None = None) -> None:
@@ -429,6 +435,16 @@ async def _devices_part(hass: HomeAssistant, body: dict[str, Any], dry_run: bool
         await _async_save_devices(hass)
 
 
+def _item_what(kind: str, item: dict[str, Any]) -> str:
+    """Was ein Eintrag tut, aus der geprüften Fassung: Routine = Entität und Aktion, Magic Push = Entität, Bedingung, Push-Ziel."""
+    entity = str(item.get("entity_id") or "?")
+    if kind == "routines":
+        return f"{entity} · {item.get('action') or '?'}"
+    value = item.get("value")
+    cond = f"{item.get('kind') or '?'}" + (f" {value}" if value not in (None, "") else "")
+    return f"{entity} · {cond}" + (f" → {item['target']}" if item.get("target") else "")
+
+
 async def _items_part(hass: HomeAssistant, kind: str, items: Any, dry_run: bool, replace: bool, rep: dict[str, Any]) -> None:
     """Routinen (kind "routines") oder Magic-Push-Meldungen ("magic"): jede wird wie im Panel geprüft; was fehlt, wird übersprungen."""
     manager = hass.data.get(DATA_ROUTINES if kind == "routines" else DATA_MAGIC)
@@ -456,7 +472,11 @@ async def _items_part(hass: HomeAssistant, kind: str, items: Any, dry_run: bool,
             _same(rep, name)
             continue
         rep["changed"] += 1
-        _example(rep, name, "–" if existing is None else "geändert", "neu" if existing is None else "angepasst")
+        what_new = _item_what(kind, clean)
+        what_old = _item_what(kind, existing) if existing is not None else None
+        # Bei einer bestehenden Routine zeigt die Vorschau alt → neu, falls sich Entität oder Aktion ändern
+        detail = what_new if what_old in (None, what_new) else f"{what_old} → {what_new}"
+        _example(rep, name, "–" if existing is None else "geändert", "neu" if existing is None else "angepasst", detail=detail)
         if dry_run:
             continue
         try:

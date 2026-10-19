@@ -124,6 +124,18 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Rückgängig: Titel "${L.undone}", alter Zustand`, await wait(`return r.querySelector("dialog.backup-dlg h2")?.textContent === ${JSON.stringify(L.undone)}`) && (await p.evaluate(() => JSON.stringify([window.__opts.battery_low, window.__opts.notify_service]))) === before && (await p.evaluate(() => JSON.stringify(window.__bkDevices || {}))) === "{}");
     check(`[${tag}] Einstellungen zeigen wieder den alten Stand`, await wait(`return r.host._settings.draft.battery_low === ${JSON.parse(before)[0]}`));
     await tap('dialog.backup-dlg [data-bk="close"]');
+    // Routinen aus einer Datei: die Vorschau nennt Entität und Aktion, nicht nur den Namen (2.101.0)
+    const rtFile = { format: "device_panel_backup", format_version: 1, integration_version: "2.101.0", sections: { routines: { options: {}, items: [{ name: "Harmlos", entity_id: "lock.haustuer", action: "unlock", kind: "countdown" }] } } };
+    const rtPath = join(dir, `${tag.replace("/", "-")}-routinen.json`);
+    writeFileSync(rtPath, JSON.stringify(rtFile));
+    await tap('[data-set="bk-import"]');
+    await wait(`return !!r.querySelector("dialog.backup-dlg input[data-bk-file]")`);
+    await (await handle("dialog.backup-dlg input[data-bk-file]")).setInputFiles(rtPath);
+    check(`[${tag}] Routinen-Vorschau: Zeile nennt Entität und Aktion`, await wait(`const x = r.querySelector("dialog.backup-dlg .bk-rw small")?.textContent || ""; return x.includes("Harmlos") && x.includes("lock.haustuer · unlock")`), await text("dialog.backup-dlg .bk-rw"));
+    await tap('dialog.backup-dlg button.bk-tile[data-kind="changed"]');
+    check(`[${tag}] Routinen-Detailfenster: Name und darunter Entität · Aktion`, await wait(`const d = r.querySelector("dialog.backup-dlg .bk-dv"); return !!d && d.innerText.includes("Harmlos") && !!d.querySelector(".bk-ent") && d.querySelector(".bk-ent").textContent === "lock.haustuer · unlock"`));
+    await tap('dialog.backup-dlg [data-bk="back"]');
+    await tap('dialog.backup-dlg [data-bk="close"]');
     check(`[${tag}] keine Seitenfehler`, errors.length === 0, errors.join("; "));
     await ctx.close();
   }

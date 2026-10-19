@@ -29,6 +29,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.loader import async_get_integration
 
 from .const import BRAND_DIR, BRANDS_CDN_URL, DATA_PUSH_ICONS, PUSH_ICON_URL_PATH
+from .http_limit import read_limited
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,6 +39,9 @@ _DOMAIN = re.compile(r"^[a-z0-9_]+$")
 _SOURCE = "icon.png"
 # Wartezeit für das CDN: eine Meldung soll nicht lange auf ein Bild warten.
 _DOWNLOAD_TIMEOUT = 4
+# Das Icon-CDN liefert 256 Pixel breite Bilder (wenige KB); alles weit darüber ist kein Icon und wird nicht entpackt.
+_MAX_BYTES = 512 * 1024
+_MAX_SIDE = 2048
 # Nicht gefundene Icons erst nach dieser Zeit wieder versuchen (Netz weg,
 # CDN gestört), gefundene nach 30 Tagen auffrischen.
 _RETRY_SECONDS = 6 * 3600
@@ -71,6 +75,14 @@ def _prepare(raw: bytes) -> bytes:
 
 def _is_png(raw: bytes) -> bool:
     return raw.startswith(b"\x89PNG\r\n\x1a\n")
+
+
+def _png_pixels_ok(raw: bytes) -> bool:
+    """Breite und Höhe stehen im Kopf (IHDR): ein winziges PNG mit riesiger Fläche wird nicht entpackt (Pillow-Bombe)."""
+    if len(raw) < 24 or raw[12:16] != b"IHDR":
+        return False
+    width, height = int.from_bytes(raw[16:20], "big"), int.from_bytes(raw[20:24], "big")
+    return 0 < width <= _MAX_SIDE and 0 < height <= _MAX_SIDE
 
 
 def _read_own(path: Path, target: Path) -> bool:
@@ -115,11 +127,14 @@ async def _async_download(hass: HomeAssistant, domain: str) -> bytes | None:
             async with async_get_clientsession(hass).get(url) as response:
                 if response.status != 200:
                     return None
-                raw = await response.read()
+                raw = await read_limited(response, _MAX_BYTES)
     except Exception as err:  # noqa: BLE001 - das Icon ist nur Kosmetik
         _LOGGER.debug("Icon für %s nicht geladen (%s)", domain, err)
         return None
-    return raw if _is_png(raw) else None
+    if raw is None:
+        _LOGGER.debug("Icon für %s zu gross (über %d Byte)", domain, _MAX_BYTES)
+        return None
+    return raw if _is_png(raw) and _png_pixels_ok(raw) else None
 
 
 async def async_integration_icon(hass: HomeAssistant, domain: str | None) -> str | None:
