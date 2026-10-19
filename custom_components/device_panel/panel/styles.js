@@ -803,6 +803,12 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .bk-badge.w { background: var(--dp-warning-soft); color: var(--dp-warning); }
 .bk-badge.e { background: var(--dp-error-soft); color: var(--dp-error); }
 .bk-h { margin-top: 16px; font-size: 15px; }
+.bk-toggle { display: inline-block; margin-top: 4px; font-size: 13px; }
+.bk-devs { margin-top: 6px; padding: 2px 10px; border-radius: 12px; background: var(--dp-subtle); }
+.bk-dev { padding: 7px 0; border-top: 1px solid var(--dp-divider); }
+.bk-dev:first-child { border-top: 0; }
+.bk-dev b { font-weight: 500; font-size: 13.5px; }
+.bk-dev code { font-size: 11.5px; overflow-wrap: anywhere; }
 /* Ruhezeit (seit 2.95.0): eine Zeile je Wochentag mit Schalter und zwei Uhrzeiten */
 .qd-list { margin-top: 8px; }
 .qd-row { display: flex; align-items: center; gap: 12px; min-height: 44px; }

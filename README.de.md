@@ -224,6 +224,7 @@ Unter "Panel" › "Allgemein" (unter "Startseite", nur Administratoren) lassen s
 - **Was hineinkommt:** du wählst die Teile: Meldungen und Überwachung, Panel und Anzeige, Einstellungen pro Gerät, KI-Einschätzung und, standardmässig aus, Routinen und Magic Push. Keine Zugangsdaten und keine Tokens. "Kopieren" und "Text einfügen" sind der Weg für die App auf dem Handy, wo das Speichern einer Datei nicht immer geht.
 - **Zuerst die Vorschau:** vor "Übernehmen" wird nichts geschrieben. Die Vorschau zählt, was sich ändert, gleich bleibt oder nicht übernommen wird, je Teil, mit Beispielen.
 - **Was fehlt, wird genannt:** unbekannte Einstellungen, Werte ausserhalb des Bereichs, Geräte, die es hier nicht gibt, und Routinen oder Meldungen mit fehlender Entität werden mit Grund übersprungen; ein Push-Ziel oder eine Integration, die es nicht mehr gibt, werden mit Hinweis übernommen.
+- **Bericht:** "Geräte unbekannt" lässt sich öffnen: je Gerät der Name (falls die Datei ihn kennt), die ID und was betroffen ist. "Bericht kopieren" legt die ganze Liste in die Zwischenablage.
 - **Rückgängig:** der Zustand vorher wird festgehalten (auf Wunsch auch als Datei gesichert); "Rückgängig" holt ihn genau zurück.
 
 ## KI-Einschätzung (optional)

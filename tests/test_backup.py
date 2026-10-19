@@ -115,7 +115,8 @@ async def test_devices_import_and_replace(hass: HomeAssistant, setup) -> None:  
     assert hass.data[DATA_DEVICE_SETTINGS]["battery"] == {}  # nichts geschrieben
     rep = preview["sections"]["devices"]
     assert rep["changed"] == 4  # battery, notify, signal, Typ
-    assert any(s["reason"] == "device_unknown" and s.get("count") == 1 for s in rep["skipped"])
+    unknown = [s for s in rep["skipped"] if s["reason"] == "device_unknown"]
+    assert [(s["id"], s["parts"]) for s in unknown] == [("nichtda", ["battery"])] and unknown[0]["name"] is None
     assert any(s["what"] == "battery" and s["reason"] == "invalid" for s in rep["skipped"])
     await backup.async_import(hass, client_file, ["devices"], dry_run=False)
     assert hass.data[DATA_DEVICE_SETTINGS]["battery"] == {a.id: 30}
@@ -134,6 +135,29 @@ async def test_hidden_devices_must_exist(hass: HomeAssistant, setup) -> None:  #
     report = await backup.async_import(hass, file, ["devices"], dry_run=False)
     assert options_api.current_values(_entry(hass))["exclude_devices"] == [device.id]
     assert any(s["reason"] == "device_unknown" for s in report["sections"]["devices"]["skipped"])
+
+
+async def test_deleted_device_not_exported_and_report_names_devices(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    from custom_components.device_panel.devices import async_set_device_settings, async_set_type_override
+
+    gone, kept = _device(hass, "Gelöscht"), _device(hass, "Bleibt")
+    for d in (gone, kept):
+        await async_set_device_settings(hass, d.id, battery=30)
+        await async_set_type_override(hass, d.id, "light")
+    dr.async_get(hass).async_remove_device(gone.id)  # die Ablagen des Panels behalten die ID
+    file = await backup.async_export(hass, ["devices"])
+    body = file["sections"]["devices"]
+    assert set(body["settings"]) == {kept.id} and set(body["types"]) == {kept.id}
+    # Die eigene Sicherung lässt sich ohne "unbekannte" Geräte wiederherstellen
+    report = await backup.async_import(hass, file, ["devices"], dry_run=True)
+    assert not [s for s in report["sections"]["devices"]["skipped"] if s["reason"] == "device_unknown"]
+    # Eine fremde Datei: Name aus der Datei, betroffene Teile je Gerät
+    body["settings"][gone.id] = {"battery": 20, "notify": False}
+    body["types"][gone.id] = "light"
+    body["names"][gone.id] = "Gelöscht"
+    report = await backup.async_import(hass, file, ["devices"], dry_run=True)
+    unknown = [s for s in report["sections"]["devices"]["skipped"] if s["reason"] == "device_unknown"]
+    assert unknown == [{"what": "device", "reason": "device_unknown", "id": gone.id, "name": "Gelöscht", "parts": ["battery", "notify", "type"]}]
 
 
 async def test_routines_and_magic_roundtrip(hass: HomeAssistant, setup) -> None:  # noqa: F811

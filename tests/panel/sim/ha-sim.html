@@ -807,9 +807,9 @@
           if (sec === "devices") {
             const known = new Set(["dev-a", "dev-b"]);
             const dev = {};
-            let unknown = 0;
-            for (const [id, vals] of Object.entries(body.settings || {})) { if (known.has(id)) { dev[id] = vals; rep.changed++; } else unknown++; }
-            if (unknown) rep.skipped.push({ what: "device", reason: "device_unknown", count: unknown, names: [] });
+            for (const [id, vals] of Object.entries(body.settings || {})) {
+              if (known.has(id)) { dev[id] = vals; rep.changed++; } else rep.skipped.push({ what: "device", reason: "device_unknown", id, name: (body.names || {})[id] || null, parts: Object.keys(vals) });
+            }
             if (!dry) window.__bkDevices = msg.replace ? dev : { ...(window.__bkDevices || {}), ...dev };
           }
           if (!dry) Object.assign(window.__opts, apply);

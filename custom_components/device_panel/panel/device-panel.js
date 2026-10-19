@@ -5998,6 +5998,19 @@ class DevicePanel extends HTMLElement {
     this._renderBackup();
   }
 
+  async _bkCopyReport() {
+    const b = this._bk;
+    const report = b?.mode === "done" ? b.result : b?.preview;
+    if (!report) return;
+    try {
+      await navigator.clipboard.writeText(this._bkReportText(report, b.fileName));
+      b.status = this._t("bkReportCopied");
+    } catch (err) {
+      b.error = errText(err);
+    }
+    this._renderBackup();
+  }
+
   // Datei oder eingefügten Text lesen und die Vorschau holen (schreibt nichts)
   async _bkPreview(text, name) {
     const b = this._bk;
@@ -6085,6 +6098,61 @@ class DevicePanel extends HTMLElement {
     return [String(sk.what), String(sk.reason)];
   }
 
+  // Hinweise und übersprungene Einträge der Vorschau oder des Ergebnisses als Zeilen; Geräte, die es hier nicht gibt, stehen
+  // in einer aufklappbaren Zeile mit Name (falls die Datei ihn kennt), ID und den betroffenen Einstellungen
+  _bkIssues(report) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const row = (icon, cls, title, hint, badge, extra = "") =>
+      `<div class="bk-rw"><span class="bk-ic ${cls}">${mdi(icon, 15)}</span><div>${escape(title)}<small>${escape(hint)}</small>${extra}</div><span class="bk-badge ${cls}">${escape(badge)}</span></div>`;
+    const rows = [];
+    const devs = [];
+    for (const r of Object.values(report.sections)) {
+      for (const n of r.notes) rows.push(row("alert", "w", t(`bkNote_${n.kind}`, n.what), t(`bkNoteHint_${n.kind}`), t(n.kind === "target" ? "bkBadgeWarn" : "bkBadgeHint")));
+      for (const sk of r.skipped) {
+        if (sk.reason === "device_unknown") devs.push(sk);
+        else {
+          const [title, hint] = this._bkSkipText(sk, r);
+          rows.push(row("close", "e", title, hint, t("bkBadgeSkipped")));
+        }
+      }
+    }
+    if (devs.length) {
+      const open = Boolean(this._bk?.devOpen);
+      const lines = devs
+        .map((d) => `<div class="bk-dev"><b>${escape(d.name || t("bkDevNoName"))}</b><small><code>${escape(d.id)}</code>${d.parts?.length ? ` · ${escape(t("bkDevParts", d.parts.map((x) => t(`bkPart_${x}`)).join(", ")))}` : ""}</small></div>`)
+        .join("");
+      const extra = `<button type="button" class="lnk bk-toggle" data-bk="devs" aria-expanded="${open}">${escape(t(open ? "bkDevHide" : "bkDevShow"))}</button>${open ? `<div class="bk-devs">${lines}</div>` : ""}`;
+      rows.push(row("close", "e", t("bkSkDevices", devs.length), t("bkSkDevicesHint"), t("bkBadgeSkipped"), extra));
+    }
+    return rows;
+  }
+
+  _bkIssuesBlock(rows) {
+    if (!rows.length) return "";
+    const t = (k, ...a) => this._t(k, ...a);
+    return `<div class="mon-grp bk-h">${escape(t("bkHeadNotes"))}</div>${rows.join("")}
+      <button type="button" class="lnk bk-toggle" data-bk="report">${escape(t("bkReportCopy"))}</button>`;
+  }
+
+  // Der Bericht als Text (zum Kopieren): jede Zeile mit Name und ID, damit sich die Fehler prüfen lassen
+  _bkReportText(report, fileName) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const out = [`Device Panel · ${t("bkImportTitle")} · ${fileName || ""}`.trim(), ""];
+    for (const [section, r] of Object.entries(report.sections)) {
+      for (const n of r.notes) out.push(`[${t(`bkSec_${section}`)}] ${t(`bkNote_${n.kind}`, n.what)} (${t(`bkNoteHint_${n.kind}`)})`);
+      for (const sk of r.skipped) {
+        if (sk.reason === "device_unknown") {
+          const parts = sk.parts?.length ? ` · ${t("bkDevParts", sk.parts.map((x) => t(`bkPart_${x}`)).join(", "))}` : "";
+          out.push(`[${t(`bkSec_${section}`)}] ${t("bkSkDevices", 1)}: ${sk.name || t("bkDevNoName")} · ${sk.id}${parts}`);
+        } else {
+          const [title, hint] = this._bkSkipText(sk, r);
+          out.push(`[${t(`bkSec_${section}`)}] ${title} (${hint})`);
+        }
+      }
+    }
+    return out.join("\n");
+  }
+
   _renderBackup() {
     const dlg = this.shadowRoot.querySelector("dialog.backup-dlg");
     const b = this._bk;
@@ -6123,34 +6191,19 @@ class DevicePanel extends HTMLElement {
           return `<div class="bk-rw"><span class="bk-dot${r.changed ? " on" : ""}"></span><div>${escape(t(`bkSec_${s}`))}<small>${escape(detail)}</small></div><span class="bk-badge${r.changed ? " g" : ""}">${r.changed}</span></div>`;
         })
         .join("");
-      const notes = [];
-      for (const r of Object.values(b.preview.sections)) {
-        for (const n of r.notes) notes.push(`<div class="bk-rw"><span class="bk-ic w">${mdi("alert", 15)}</span><div>${escape(t(`bkNote_${n.kind}`, n.what))}<small>${escape(t(`bkNoteHint_${n.kind}`))}</small></div><span class="bk-badge w">${escape(t(n.kind === "target" ? "bkBadgeWarn" : "bkBadgeHint"))}</span></div>`);
-        // Geräte-IDs, die es hier nicht gibt, je Bereich zu einer Zeile zusammenfassen
-        let devs = 0;
-        for (const sk of r.skipped) {
-          if (sk.reason === "device_unknown") {
-            devs += sk.count || 1;
-            continue;
-          }
-          const [title, hint] = this._bkSkipText(sk, r);
-          notes.push(`<div class="bk-rw"><span class="bk-ic e">${mdi("close", 15)}</span><div>${escape(title)}<small>${escape(hint)}</small></div><span class="bk-badge e">${escape(t("bkBadgeSkipped"))}</span></div>`);
-        }
-        if (devs) notes.push(`<div class="bk-rw"><span class="bk-ic e">${mdi("close", 15)}</span><div>${escape(t("bkSkDevices", devs))}<small>${escape(t("bkSkDevicesHint"))}</small></div><span class="bk-badge e">${escape(t("bkBadgeSkipped"))}</span></div>`);
-      }
+      const notes = this._bkIssues(b.preview);
       const ver = b.preview.file_version ? t("bkPreviewSub", b.fileName, b.preview.file_version) : b.fileName;
       html = `${head("upload", t("bkImportTitle"), ver)}<div class="dlg-body">
         <div class="bk-sum"><div class="bk-tile"><b class="ok">${tot.changed}</b><span>${escape(t("bkTChanged"))}</span></div><div class="bk-tile"><b>${tot.unchanged}</b><span>${escape(t("bkTSame"))}</span></div><div class="bk-tile"><b class="wn">${tot.skipped}</b><span>${escape(t("bkTSkipped"))}</span></div></div>
-        ${rows}${notes.length ? `<div class="mon-grp bk-h">${escape(t("bkHeadNotes"))}</div>${notes.join("")}` : ""}
-        <div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("bkBefore"))}</span><label class="switch"><input type="checkbox" data-bk-before ${b.before ? "checked" : ""} aria-label="${escape(t("bkBefore"))}"><span></span></label></div><div class="opt-short">${escape(t("bkBeforeShort"))}</div></div>${err}</div>
+        ${rows}${this._bkIssuesBlock(notes)}
+        <div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("bkBefore"))}</span><label class="switch"><input type="checkbox" data-bk-before ${b.before ? "checked" : ""} aria-label="${escape(t("bkBefore"))}"><span></span></label></div><div class="opt-short">${escape(t("bkBeforeShort"))}</div></div>${b.status ? `<div class="dlg-note" role="status">${escape(b.status)}</div>` : ""}${err}</div>
         <div class="dlg-actions">${btn("close", "close", t("bkCancel"))}${btn("apply", "check", tot.changed ? t("bkApply", tot.changed) : t("bkNothing"), "primary", tot.changed ? "" : " disabled")}</div>`;
     } else if (b.mode === "done") {
       const tot = b.result.totals;
-      const notes = Object.values(b.result.sections).reduce((n, r) => n + r.notes.length, 0);
       html = `${head("check", t("bkDoneTitle"), t("bkDoneSub", tot.changed, tot.skipped))}<div class="dlg-body">
         ${b.beforeName ? `<div class="dlg-note">${escape(t("bkBeforeSaved", b.beforeName))}</div>` : ""}
-        ${notes ? `<div class="nf-note">${mdi("info", 16)}<div><p>${escape(t("bkDoneNotes", notes))}</p></div></div>` : ""}
-        <div class="dlg-note small">${escape(t("bkUndoNote"))}</div>${err}</div>
+        ${this._bkIssuesBlock(this._bkIssues(b.result))}
+        <div class="dlg-note small">${escape(t("bkUndoNote"))}</div>${b.status ? `<div class="dlg-note" role="status">${escape(b.status)}</div>` : ""}${err}</div>
         <div class="dlg-actions">${btn("undo", "reset", t("bkUndo"), "", b.snapshot ? "" : " disabled")}${btn("close", "close", t("close"), "primary")}</div>`;
     } else {
       html = `${head("reset", t("bkUndoneTitle"), t("bkUndoneSub"))}<div class="dlg-body">${err}</div>
@@ -6180,7 +6233,11 @@ class DevicePanel extends HTMLElement {
       } else if (act === "pastego") {
         b.text = dlg.querySelector("[data-bk-text]")?.value || "";
         this._bkPreview(b.text, this._t("bkPasted"));
-      } else if (act === "apply") this._bkApply();
+      } else if (act === "devs") {
+        b.devOpen = !b.devOpen;
+        this._renderBackup();
+      } else if (act === "report") this._bkCopyReport();
+      else if (act === "apply") this._bkApply();
       else if (act === "undo") this._bkUndo();
     });
     dlg.addEventListener("change", async (ev) => {

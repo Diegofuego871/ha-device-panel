@@ -224,6 +224,7 @@ Under "Panel" › "General" (below "Start page", administrators only) all settin
 - **What goes in:** you choose the parts: notifications and monitoring, panel and display, settings per device, AI assessment and, off by default, routines and Magic Push. No credentials and no tokens. "Copy" and "Paste text" are the way for the phone app, where saving a file does not always work.
 - **Preview first:** nothing is written before "Apply". The preview counts what changes, stays the same or is not applied, per part, with examples.
 - **What is missing is named:** unknown settings, values out of range, devices that do not exist here and routines or messages with a missing entity are skipped with the reason; a push target or integration that is gone is applied with a note.
+- **Report:** "devices unknown" can be opened: per device the name (if the file knows it), the ID and what it affects. "Copy report" puts the whole list on the clipboard.
 - **Undo:** the state before is kept (and, on request, saved as a file); "Undo" brings it back exactly.
 
 ## AI assessment (optional)

@@ -161,14 +161,20 @@ async def async_export(hass: HomeAssistant, sections: list[str]) -> dict[str, An
         if section == "devices":
             await async_load_type_overrides(hass)
             registry = dr.async_get(hass)
+            # Geräte, die es in Home Assistant nicht mehr gibt (gelöscht), bleiben in den Ablagen des Panels stehen;
+            # sie gehören nicht in die Sicherung, sonst meldet das Wiederherstellen sie als "unbekannt".
+            if CONF_EXCLUDE_DEVICES in body.get("options", {}):
+                body["options"][CONF_EXCLUDE_DEVICES] = [d for d in body["options"][CONF_EXCLUDE_DEVICES] if registry.async_get(d) is not None]
             settings: dict[str, dict[str, Any]] = {}
-            types = dict(type_overrides(hass))
-            connections = dict(connection_overrides(hass))
+            types = {d: v for d, v in type_overrides(hass).items() if registry.async_get(d) is not None}
+            connections = {d: v for d, v in connection_overrides(hass).items() if registry.async_get(d) is not None}
             ids = set(types) | set(connections) | set(device_settings(hass)["notify_off"])
             for key in _DEVICE_SETTING_KEYS:
                 if key != "notify":
                     ids |= set((device_settings(hass).get(key) or {}))
             for device_id in sorted(ids):
+                if registry.async_get(device_id) is None:
+                    continue
                 own = _current_device_settings(hass, device_id)
                 if own:
                     settings[device_id] = own
@@ -272,7 +278,7 @@ def _apply_options(hass: HomeAssistant, entry: Any, values: dict[str, Any], dry_
     return {}
 
 
-def _options_part(hass: HomeAssistant, entry: Any, section: str, file_options: Any, dry_run: bool, rep: dict[str, Any]) -> None:
+def _options_part(hass: HomeAssistant, entry: Any, section: str, file_options: Any, dry_run: bool, rep: dict[str, Any], names: dict[str, Any] | None = None) -> None:
     if entry is None or not isinstance(file_options, dict):
         return
     keys = section_keys(section)
@@ -293,7 +299,7 @@ def _options_part(hass: HomeAssistant, entry: Any, section: str, file_options: A
         known = [d for d in valid[CONF_EXCLUDE_DEVICES] if registry.async_get(d) is not None]
         for d in valid[CONF_EXCLUDE_DEVICES]:
             if d not in known:
-                rep["skipped"].append({"what": "device", "reason": "device_unknown", "id": d})
+                rep["skipped"].append({"what": "device", "reason": "device_unknown", "id": d, "name": (names or {}).get(d), "parts": ["exclude"]})
         valid[CONF_EXCLUDE_DEVICES] = known
     _reference_notes(hass, valid, rep)
     changed = {k: v for k, v in valid.items() if v != current.get(k)}
@@ -394,8 +400,11 @@ async def _devices_part(hass: HomeAssistant, body: dict[str, Any], dry_run: bool
             rep["changed"] += 1
             if not dry_run:
                 await setter(hass, device_id, value)
-    if unknown:
-        rep["skipped"].append({"what": "device", "reason": "device_unknown", "count": len(unknown), "names": [names.get(d, d) for d in unknown[:5]]})
+    for device_id in unknown:
+        incoming = file_settings.get(device_id) if isinstance(file_settings.get(device_id), dict) else {}
+        parts = [k for k in _DEVICE_SETTING_KEYS if k in incoming]
+        parts += [kind for kind, table in (("type", file_types), ("connection", file_conns)) if device_id in table]
+        rep["skipped"].append({"what": "device", "reason": "device_unknown", "id": device_id, "name": names.get(device_id), "parts": parts})
     if refresh and not dry_run:
         if (watch := hass.data.get(DATA_BATTERY)) is not None:
             await watch.async_check()
@@ -474,7 +483,7 @@ async def async_import(hass: HomeAssistant, data: Any, sections: list[str] | Non
             continue
         body = file_sections[section] if isinstance(file_sections[section], dict) else {}
         rep = _empty()
-        _options_part(hass, entry, section, body.get("options"), dry_run, rep)
+        _options_part(hass, entry, section, body.get("options"), dry_run, rep, body.get("names") if isinstance(body.get("names"), dict) else None)
         if section == "devices":
             await _devices_part(hass, body, dry_run, replace, rep)
         elif section in ("routines", "magic"):

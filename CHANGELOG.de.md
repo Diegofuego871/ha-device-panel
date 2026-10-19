@@ -9,11 +9,17 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.98.1] - 2026-10-19
 
-Einstellungen › Panel öffnet im linken Reiter.
+Einstellungen › Panel öffnet im linken Reiter; Wiederherstellen erklärt, was es überspringt.
 
 ### Behoben
 
 - **Einstellungen › Panel** öffnet jetzt im Reiter **"Allgemein"** (links) statt in "Updates" (rechts). Der gewählte Reiter bleibt erhalten, solange der Dialog offen bleibt.
+- **Wiederherstellen: eine Sicherung der eigenen Einstellungen meldet kein "Gerät unbekannt" mehr.** In Home Assistant gelöschte Geräte bleiben in den Ablagen des Panels stehen (Typ, Verbindungsart, Batterie und weitere Werte je Gerät) und kamen mit in die Sicherung; beim Wiederherstellen wurden sie als unbekannt übersprungen. Sie bleiben jetzt aus der Sicherung weg. Eine Datei von vor dieser Änderung meldet sie weiterhin, jetzt mit Angaben (siehe Geändert).
+
+### Geändert
+
+- **Wiederherstellen, Bericht:** die Zeile "N Geräte unbekannt" lässt sich öffnen (**"Geräte anzeigen"**): je Gerät der Name (falls die Datei ihn kennt), die ID und was betroffen ist (Batterie, Meldungen, Typ, ausgeblendet …). **"Bericht kopieren"** legt die ganze Liste (Übersprungenes und Hinweise, mit Namen und IDs) in die Zwischenablage. Der Bericht erscheint auch im Ergebnisfenster nach dem Wiederherstellen.
+- **Wiederherstellen, Schalter "Aktuelle Einstellungen vorher sichern"** (vorher "Zustand vorher als Datei sichern") mit klarerem Text: sichert den jetzigen Stand als Datei, bevor etwas überschrieben wird, damit sich die Wiederherstellung rückgängig machen lässt, auch später und nach dem Schliessen des Panels.
 
 ## [2.98.0] - 2026-10-18
 

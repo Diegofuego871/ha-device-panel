@@ -9,11 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.98.1] - 2026-10-19
 
-Settings › Panel opens on the left tab.
+Settings › Panel opens on the left tab; restoring explains what it skips.
 
 ### Fixed
 
 - **Settings › Panel** now opens on the tab **"General"** (left) instead of "Updates" (right). The tab you choose is still kept while the dialog stays open.
+- **Restore: a backup of your own settings no longer reports "device unknown".** Devices deleted in Home Assistant stay in the panel's own stores (type, connection type, battery and other values per device) and were written into the backup; on restore they were skipped as unknown. They are now left out of the backup. A file from before this change still reports them, now with details (see Changed).
+
+### Changed
+
+- **Restore, report:** the row "N devices unknown" can be opened (**"Show devices"**): per device the name (if the file knows it), the ID and what it affects (battery, notifications, type, hidden …). **"Copy report"** puts the whole list (skipped and notes, with names and IDs) on the clipboard. The report also appears in the result window after restoring.
+- **Restore, option "Save current settings first"** (was "Save the state before as a file") with a clearer text: it saves the current state as a file before anything is overwritten, so the restore can be undone later, even after closing the panel.
 
 ## [2.98.0] - 2026-10-18
 

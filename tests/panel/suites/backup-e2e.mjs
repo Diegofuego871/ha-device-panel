@@ -11,8 +11,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { ttl: "Sichern und wiederherstellen", exportTitle: "Einstellungen sichern", importTitle: "Wiederherstellen", done: "Wiederhergestellt", undone: "Rückgängig gemacht", bad: "keine sicherung" },
-  en: { ttl: "Back up and restore", exportTitle: "Back up settings", importTitle: "Restore", done: "Restored", undone: "Undone", bad: "not a device panel backup" },
+  de: { ttl: "Sichern und wiederherstellen", exportTitle: "Einstellungen sichern", importTitle: "Wiederherstellen", done: "Wiederhergestellt", undone: "Rückgängig gemacht", bad: "keine sicherung", devs2: "2 Geräte unbekannt", partBattery: "Batterie", partNotify: "Meldungen", noName: "Name unbekannt" },
+  en: { ttl: "Back up and restore", exportTitle: "Back up settings", importTitle: "Restore", done: "Restored", undone: "Undone", bad: "not a device panel backup", devs2: "2 devices unknown", partBattery: "Battery", partNotify: "Notifications", noName: "Name unknown" },
 };
 const dir = mkdtempSync(join(tmpdir(), "dp-backup-"));
 
@@ -72,7 +72,8 @@ for (const lang of ["de", "en"]) {
     file.sections.monitor.options.notify_service = "notify.mobile_app_alt";
     file.sections.monitor.options.charge_boost = true;
     file.sections.monitor.options.notify_group_min = 99;
-    file.sections.devices.settings = { "dev-a": { battery: 30 }, "dev-zz": { battery: 10 } };
+    file.sections.devices.settings = { "dev-a": { battery: 30 }, "dev-zz": { battery: 10, notify: false }, "dev-yy": { signal: -80 } };
+    file.sections.devices.names = { ...(file.sections.devices.names || {}), "dev-zz": "Altes Gerät" };
     const path = join(dir, `${tag.replace("/", "-")}-datei.json`);
     writeFileSync(path, JSON.stringify(file));
     const before = await p.evaluate(() => JSON.stringify([window.__opts.battery_low, window.__opts.notify_service]));
@@ -93,8 +94,17 @@ for (const lang of ["de", "en"]) {
     await (await handle("dialog.backup-dlg input[data-bk-file]")).setInputFiles(path);
     check(`[${tag}] Vorschau: 2 Werte ändern sich, Hinweise und Übersprungenes`, await wait(`return r.querySelectorAll("dialog.backup-dlg .bk-tile b")[0]?.textContent === "3" && r.querySelectorAll("dialog.backup-dlg .bk-badge.e").length >= 3 && r.querySelectorAll("dialog.backup-dlg .bk-badge.w").length === 1`), await text("dialog.backup-dlg .bk-sum"));
     check(`[${tag}] Vorschau: Bereichszeilen, Hinweis zum Push-Ziel`, (await ev(`return r.querySelectorAll("dialog.backup-dlg .bk-rw .bk-dot").length`)) === Object.keys(file.sections).length && (await text("dialog.backup-dlg .bk-ic.w + div")).includes("notify.mobile_app_alt"));
+    // Fehlerbericht: Geräte aufklappen (Name falls bekannt, ID, betroffene Einstellungen), Bericht kopieren
+    check(`[${tag}] Geräte unbekannt: Zeile zählt 2, Liste zu`, (await ev(`return r.querySelector('dialog.backup-dlg [data-bk="devs"]').closest(".bk-rw").innerText`)).includes(L.devs2) && (await ev(`return r.querySelectorAll("dialog.backup-dlg .bk-dev").length`)) === 0);
+    await tap('dialog.backup-dlg [data-bk="devs"]');
+    check(`[${tag}] Geräte unbekannt aufgeklappt: Name, ID und betroffene Einstellungen`, await wait(`const l = [...r.querySelectorAll("dialog.backup-dlg .bk-dev")].map((e) => e.innerText.replace(/\\s+/g, " ")); return l.length === 2 && l.some((x) => x.includes("Altes Gerät") && x.includes("dev-zz") && x.includes(${JSON.stringify(L.partBattery)}) && x.includes(${JSON.stringify(L.partNotify)})) && l.some((x) => x.includes(${JSON.stringify(L.noName)}) && x.includes("dev-yy"))`));
+    await f.evaluate(() => { window.__clip = null; Object.defineProperty(navigator, "clipboard", { value: { writeText: async (t) => { window.__clip = t; } }, configurable: true }); });
+    await tap('dialog.backup-dlg [data-bk="report"]');
+    check(`[${tag}] Bericht kopiert: enthält Namen, IDs und die Meldung`, await wait(`return !!window.__clip && window.__clip.includes("Altes Gerät") && window.__clip.includes("dev-zz") && window.__clip.includes("dev-yy") && !!r.querySelector("dialog.backup-dlg [role=status]")`));
+    await tap('dialog.backup-dlg [data-bk="devs"]');
+    check(`[${tag}] Geräteliste wieder zu`, await wait(`return r.querySelectorAll("dialog.backup-dlg .bk-dev").length === 0`));
     check(`[${tag}] Vorschau schreibt nichts`, (await p.evaluate(() => JSON.stringify([window.__opts.battery_low, window.__opts.notify_service]))) === before);
-    check(`[${tag}] "Zustand vorher sichern" standardmässig an`, await ev(`return r.querySelector("dialog.backup-dlg [data-bk-before]").checked`));
+    check(`[${tag}] "Aktuelle Einstellungen vorher sichern" standardmässig an`, await ev(`return r.querySelector("dialog.backup-dlg [data-bk-before]").checked`));
     const vor = await download(() => tap('dialog.backup-dlg [data-bk="apply"]'));
     check(`[${tag}] Datei vorher gesichert`, /vorher/.test(vor.name) && vor.json.sections.monitor.options.battery_low !== 25, vor.name);
     check(`[${tag}] wiederhergestellt: Titel, Werte im Backend`, await wait(`return r.querySelector("dialog.backup-dlg h2")?.textContent === ${JSON.stringify(L.done)}`) && (await p.evaluate(() => window.__opts.battery_low === 25 && window.__opts.notify_service === "notify.mobile_app_alt")));
