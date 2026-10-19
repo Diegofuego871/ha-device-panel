@@ -138,6 +138,7 @@ for (const lang of ["de", "en"]) {
 
     // Abschnitt aufklappen, Info, Schalter
     await tap('[data-set="section"][data-id="updates"]');
+    await tap('[data-set="subtab"][data-group="panel"][data-key="pupdates"]');
     check(`[${tag}] aufgeklappt`, (await text(".set-sec-body .opt-label")) === T.opt && (await text(".set-sec-body .opt-short")) === T.short);
     // Offener Abschnitt sichtbar abgesetzt: Kopf getönt und fett, Rand kräftiger
     const look = await ev(`const cs=(el)=>getComputedStyle(el); const o=r.querySelector(".set-sec.open"), c=r.querySelector(".set-sec:not(.open)");
@@ -167,6 +168,7 @@ for (const lang of ["de", "en"]) {
 
     // Speichern
     await tap('[data-set="section"][data-id="updates"]');
+    await tap('[data-set="subtab"][data-group="panel"][data-key="pupdates"]');
     await tap('.switch input[data-opt="update_check"]');
     await tap('[data-ver="prerelease"]');
     await tap('dialog.settings [data-set="save"]');
@@ -526,6 +528,7 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     await tap('[data-set="section"][data-id="updates"]');
+    await tap('[data-set="subtab"][data-group="panel"][data-key="pupdates"]');
     await tap('.switch input[data-opt="update_check"]');
     await tap('dialog.settings [data-set="save"]');
     check(`[${tag}] Speicherfehler angezeigt`, await wait(`return (r.querySelector("dialog.settings .dlg-error")?.textContent || "").includes("Keine Berechtigung")`) && (await text("dialog.settings .dlg-error")).startsWith(T.saveErr) && await isOpen());

@@ -8471,7 +8471,7 @@ class DevicePanel extends HTMLElement {
     const ttl = (key) => `<div class="set-title">${escape(t(key))}</div>`;
     const devTab = ["integrations", "types", "devs", "devset"].includes(st.sub?.devices) ? st.sub.devices : "integrations";
     // Abschnitt "Panel" (seit 2.87.0): Unterreiter "Allgemein" und "Updates"
-    const panelTab = st.sub?.panel === "pstart" ? "pstart" : "pupdates";
+    const panelTab = st.sub?.panel === "pupdates" ? "pupdates" : "pstart";
     // Reiter innerhalb eines Abschnitts; Zähler = ausgeblendete Einträge,
     // Punkt = Änderung im Entwurf (wie bei den Reitern der Überwachung).
     const subTabs = (group, items, cur = devTab) =>

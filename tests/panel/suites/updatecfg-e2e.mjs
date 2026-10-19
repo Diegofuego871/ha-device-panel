@@ -43,6 +43,7 @@ for (const lang of ["de", "en"]) {
     const openUpdates = async () => {
       if (!(await ev(`return r.querySelector("dialog.settings")?.open`))) { await tap(".gear-btn"); await wait(`return !!r.querySelector("dialog.settings .set-sec")`); }
       if ((await ev(`return r.querySelector('[data-set="section"][data-id="updates"]').getAttribute("aria-expanded")`)) !== "true") await tap('[data-set="section"][data-id="updates"]');
+      await tap('[data-set="subtab"][data-group="panel"][data-key="pupdates"]');
       return wait(`return !!r.querySelector('input[data-opt="update_check_time"]')`);
     };
 

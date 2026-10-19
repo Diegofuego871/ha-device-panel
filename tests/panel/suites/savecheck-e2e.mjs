@@ -153,6 +153,7 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     await tap('[data-set="section"][data-id="updates"]');
+    await tap('[data-set="subtab"][data-group="panel"][data-key="pupdates"]');
     await tap('.switch input[data-opt="update_check"]');
     for (const [name, close] of [["Abbrechen", async () => tap('dialog.settings .dlg-actions [data-set="close"]')], ["Kopf-X", async () => tap('dialog.settings .dlg-head [data-set="close"]')]]) {
       await close();

@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.98.1] - 2026-10-19
+
+Einstellungen › Panel öffnet im linken Reiter.
+
+### Behoben
+
+- **Einstellungen › Panel** öffnet jetzt im Reiter **"Allgemein"** (links) statt in "Updates" (rechts). Der gewählte Reiter bleibt erhalten, solange der Dialog offen bleibt.
+
 ## [2.98.0] - 2026-10-18
 
 Einstellungen sichern und wiederherstellen.
@@ -4050,6 +4058,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.98.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.1
 [2.98.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.0
 [2.97.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.97.0
 [2.96.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.96.0
