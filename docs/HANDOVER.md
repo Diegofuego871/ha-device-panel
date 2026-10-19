@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.100.0, keine Eingriffe in HACS-Entitäten)
+
+- Rückmeldung eines Prüfers (bei UniFi Dynamic, gleicher Code hier): eine Integration darf die Entitäten einer anderen nicht aktivieren, deaktivieren oder schalten. Entfernt: `_enableHacsPrerelease`, `_disableHacsPrerelease`, `_loadHacsSwitch` (Registry-Liste), Knopf `hacs-enable`, Texte `verPreHintEnable`/`verPreEnable*`, Feld `prerelease_hacs` (Backend `set_panel`, `update_check.PANEL_DEFAULTS`). `_hacsPreReleaseSwitch()` liest nur noch `hass.entities`/`hass.states` (deaktiviert = aus) und liefert die Geräte-ID für den Link `hacs-device`.
+- Weiter erlaubt und genutzt: `update.install` und `homeassistant.update_entity` auf der HACS-Update-Entität von Device Panel selbst, `hacs/repository/refresh` für das eigene Repository.
+
 ## Sicherheitsprüfung gegen eingeschleustes HTML (2.99.2)
 
 - `cd tests/panel && PANEL_JOBS=6 node xss-run.mjs` (optional `PANEL_XSS_OUT=/tmp/x.txt` für den Kontext jeder Fundstelle): Simulator mit vergifteten Texten (`PANEL_XSS=1` setzt `window.__XSS_MODE` in `sim/ha-sim.html`; die Antworten von `callWS` bekommen an Anzeige-Schlüsseln `"'><img src=x onerror=top.__xssHit(this)>` angehängt). Die Prüfungen der Suiten schlagen dabei erwartungsgemäss fehl, gezählt werden nur Treffer (`/__xss` am Server). Nach jeder Änderung an Texten, die als HTML gebaut werden, laufen lassen; Erwartung: "Keine Treffer".

@@ -54,6 +54,7 @@ for (const mobile of [false, true]) {
   const pushHass = () => p.evaluate(() => window.__pushHass());
   const services = () => p.evaluate(() => window.__services);
   const has = (sel) => ev(`return !!r.querySelector(${JSON.stringify(sel)})`);
+  const wait = (code, ms = 8000) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: ms }).then(() => true, () => false);
 
   // 0. Beim Öffnen der Einstellungen immer frisch bei GitHub nachsehen (2.64.0), nicht erst nach 6 Stunden und ohne HACS von sich aus neu zu laden
   await p.evaluate(() => { window.__wsCalls = []; window.__services = []; });
@@ -228,15 +229,17 @@ for (const mobile of [false, true]) {
   check(`[${tag}] Abfragelimit verständlich`, t.includes("GitHub-Abfragelimit") && !t.includes("rate_limit"), t);
   await p.evaluate(() => { window.__versionError = null; });
 
-  // 8. Vorabversion: violett, gesperrt bis "In HACS freischalten"
+  // 8. Vorabversion: violett, gesperrt, bis der Benutzer "Pre-release" im HACS-Gerät selbst einschaltet. Seit 2.99.3 ändert das Panel
+  // die Entitäten von HACS nie (kein Aktivieren in der Registry, kein Ein- oder Ausschalten); es zeigt nur den Weg zum HACS-Gerät.
   await ev(`${panel}._version = null`);
   await p.evaluate(() => {
     window.__version = { installed: "0.4.0", latest: "0.4.0" };
     window.__pre = "0.5.0b1";
-    window.__panelSettings = { prerelease: true, prerelease_hacs: null };
+    window.__panelSettings = { prerelease: true };
     window.__entReg = [{ entity_id: "switch.device_panel_pre_release", platform: "hacs", device_id: "hacs-dev-1", disabled_by: "integration", translation_key: "pre-release" }];
     window.__services = [];
-    window.__reloadDelay = 1200;
+    window.__wsCalls = [];
+    window.__nav = [];
   });
   await setHacs({ installed_version: "0.4.0", latest_version: "0.4.0" });
   await pushHass();
@@ -244,24 +247,30 @@ for (const mobile of [false, true]) {
   await p.waitForTimeout(5000);
   t = await verText();
   check(`[${tag}] Beta angeboten, violett mit Etikett`, t.includes("Version 0.5.0b1 verfügbar") && t.includes("Beta") && await has(".ver.beta .ver-tag"), t);
-  check(`[${tag}] Beta gesperrt mit Hinweis und Freischalten`, await ev(`const b=r.querySelector(".ver.beta .ver-btn.primary"); return !!b && b.disabled`) && t.includes("In HACS freischalten") && t.includes("HACS-Gerät öffnen"), t);
+  check(`[${tag}] Beta gesperrt, Hinweis mit Link zum HACS-Gerät, kein Knopf "Freischalten"`, await ev(`const b=r.querySelector(".ver.beta .ver-btn.primary"); return !!b && b.disabled`) && t.includes("Pre-release") && t.includes("HACS-Gerät öffnen") && !t.includes("freischalten") && !(await has('[data-ver="hacs-enable"]')), t);
   await p.screenshot({ path: `${outDir}/version-${tag}-beta.png` });
-  await tap('[data-ver="hacs-enable"]');
-  await p.waitForTimeout(300);
-  check(`[${tag}] Freischalten läuft`, (await verText()).includes("Wird freigeschaltet"), await verText());
-  await p.waitForTimeout(3500);
-  const calls = await p.evaluate(() => window.__wsCalls.filter((m) => m.type === "config/entity_registry/update" || m.type === "device_panel/set_panel"));
-  svc = await services();
-  check(`[${tag}] Entität aktiviert und eingeschaltet, vermerkt`, calls.some((m) => m.type === "config/entity_registry/update" && m.disabled_by === null) && svc.some((s) => s.domain === "switch" && s.service === "turn_on") && calls.some((m) => m.type === "device_panel/set_panel" && m.prerelease_hacs === "switch.device_panel_pre_release"), JSON.stringify(calls));
-  check(`[${tag}] danach Beta installierbar`, await ev(`const b=r.querySelector('.ver.beta [data-ver="install"]'); return !!b && !b.disabled`), await verText());
+  await tap('[data-ver="hacs-device"]');
+  await p.waitForTimeout(600);
+  check(`[${tag}] Link öffnet das HACS-Gerät`, (await p.evaluate(() => window.__nav)).some((u) => u.includes("/config/devices/device/hacs-dev-1")), JSON.stringify(await p.evaluate(() => window.__nav)));
+  // Der Benutzer schaltet "Pre-release" in HACS ein; HACS kennt danach die Beta
+  await p.evaluate(() => {
+    const ha = document.querySelector("home-assistant").hass;
+    ha.entities["switch.device_panel_pre_release"] = { entity_id: "switch.device_panel_pre_release", platform: "hacs", device_id: "hacs-dev-1", translation_key: "pre-release" };
+    ha.states["switch.device_panel_pre_release"] = { entity_id: "switch.device_panel_pre_release", state: "on", attributes: {} };
+  });
+  await setHacs({ installed_version: "0.4.0", latest_version: "0.5.0b1" });
+  await pushHass();
+  await open();
+  check(`[${tag}] mit "Pre-release" in HACS: Beta installierbar`, await wait(`const b=r.querySelector('.ver.beta [data-ver="install"]'); return !!b && !b.disabled`), await verText());
 
-  // 9. Vorabversionen aus + Speichern: HACS-Schalter wieder aus
+  // 9. Vorabversionen aus + Speichern: das Panel lässt den Schalter in HACS, wie er ist
   await p.evaluate(() => { window.__services = []; });
   await tap('[data-ver="prerelease"]');
   await tap('dialog.settings [data-set="save"]');
   await p.waitForTimeout(400);
   svc = await services();
-  check(`[${tag}] Vorabversionen aus: Schalter in HACS aus`, svc.some((s) => s.domain === "switch" && s.service === "turn_off" && s.data.entity_id === "switch.device_panel_pre_release") && (await p.evaluate(() => window.__panelSettings.prerelease)) === false, JSON.stringify(svc));
+  const regCalls = await p.evaluate(() => window.__wsCalls.filter((m) => m.type === "config/entity_registry/update" || m.type === "config/entity_registry/list"));
+  check(`[${tag}] Vorabversionen aus: gespeichert, keine Schalter- und keine Registry-Aufrufe an HACS`, (await p.evaluate(() => window.__panelSettings.prerelease)) === false && !svc.some((s) => s.domain === "switch") && regCalls.length === 0, JSON.stringify({ svc, regCalls }));
 
   check(`[${tag}] kein fehlender Text`, !(await ev(`return r.innerHTML.includes("undefined") || r.innerHTML.includes("NaN")`)));
   check(`[${tag}] keine JS-Fehler`, errors.length === 0, errors.join("; "));

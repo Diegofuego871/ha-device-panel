@@ -65,7 +65,7 @@ _TIME_KEY = f"{DOMAIN}_update_check_time"
 # selbst eingeschaltet hat (nur den schaltet es wieder aus).
 PANEL_DATA_KEY = f"{DOMAIN}_panel_settings"
 PANEL_STORE_KEY = f"{DOMAIN}.panel"
-PANEL_DEFAULTS: dict[str, Any] = {"prerelease": False, "prerelease_hacs": None, "auto_update": False, "notified": {}}
+PANEL_DEFAULTS: dict[str, Any] = {"prerelease": False, "auto_update": False, "notified": {}}
 RESTART_ISSUE_ID = "restart_required"
 # HACS braucht für Download und Entpacken etwas; danach gilt der Versuch als gescheitert.
 INSTALL_TIMEOUT = 300
@@ -464,7 +464,6 @@ async def async_load_panel_settings(hass: HomeAssistant) -> dict[str, Any]:
             prerelease = is_prerelease(await async_installed_version(hass))
         hass.data[PANEL_DATA_KEY] = {
             "prerelease": prerelease,
-            "prerelease_hacs": str(stored["prerelease_hacs"]) if stored.get("prerelease_hacs") else None,
             "auto_update": bool(stored.get("auto_update")),
             "notified": {k: str(v) for k, v in (stored.get("notified") or {}).items() if k in ("found", "done") and v},
         }
@@ -483,8 +482,6 @@ async def async_set_panel_settings(hass: HomeAssistant, values: dict[str, Any]) 
         current["prerelease"] = bool(values["prerelease"])
     if "auto_update" in values:
         current["auto_update"] = bool(values["auto_update"])
-    if "prerelease_hacs" in values:
-        current["prerelease_hacs"] = str(values["prerelease_hacs"]) if values["prerelease_hacs"] else None
     await _panel_store(hass).async_save(dict(current))
     return panel_settings(hass)
 

@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.100.0] - 2026-10-19
+
+The panel no longer changes HACS entities.
+
+### Changed
+
+- **Pre-releases: the panel no longer switches HACS's "Pre-release" switch.** The button "Enable in HACS" is gone: it enabled HACS's disabled "Pre-release" entity in the entity registry and switched it on, and switching "Show pre-releases" off switched it off again. An integration should not enable, disable or toggle another integration's entities. With a beta found and "Pre-release" off in HACS, "Update" stays locked as before and the note links to the HACS device ("Open HACS device"), where you enable and switch on "Pre-release" yourself; afterwards "Update" installs the beta. Switching "Show pre-releases" off leaves the switch in HACS as it is.
+- Unchanged: the daily check, "Update" and "Install updates automatically" still install through the HACS update entity of Device Panel itself.
+- The stored value `prerelease_hacs` (which switch the panel had turned on) is no longer used; `device_panel/set_panel` no longer accepts it.
+
 ## [2.99.2] - 2026-10-19
 
 Routine cards show entity names as text.
@@ -18,6 +28,8 @@ Routine cards show entity names as text.
 ### Internal
 
 - - New check `tests/panel/xss-run.mjs` (simulator mode `PANEL_XSS=1`): every displayed text from the backend (names, areas, models, labels, messages and more) gets a piece of HTML appended that closes attributes (`"` and `'`) and inserts an image with `onerror`; all 107 suites run against it and every place where such HTML takes effect is reported with its context. Before the fix: 104 hits, all in the routine card; after it: none.
+
+Not released; included in 2.100.0.
 
 ## [2.99.1] - 2026-10-19
 
@@ -3995,7 +4007,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.99.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.2
+[2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0
 [2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0
 [2.98.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.1

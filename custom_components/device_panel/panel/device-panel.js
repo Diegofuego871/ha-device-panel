@@ -838,7 +838,6 @@ class DevicePanel extends HTMLElement {
     this._settings = null;
     this._version = null;
     this._prerelease = false;
-    this._prereleaseHacs = null;
     this._narrowQuery = window.matchMedia(NARROW_QUERY);
     this._loadLocalView();
   }
@@ -6518,7 +6517,6 @@ class DevicePanel extends HTMLElement {
   _applyPanelSettings(panel) {
     if (!panel) return;
     this._prerelease = panel.prerelease === true;
-    this._prereleaseHacs = panel.prerelease_hacs || null;
     // Automatisch installieren (seit 2.22.0): wirkt nur zusammen mit der täglichen Prüfung
     this._autoUpdate = panel.auto_update === true;
   }
@@ -9344,9 +9342,6 @@ class DevicePanel extends HTMLElement {
       if (extra.includes("prerelease")) {
         const panel = await this._hass.callWS({ type: "device_panel/set_panel", prerelease: st.extra.prerelease });
         this._applyPanelSettings(panel);
-        // Ausgeschaltet: den HACS-Schalter zurücksetzen, falls das Panel ihn
-        // eingeschaltet hat.
-        if (!this._prerelease) await this._disableHacsPrerelease();
       }
       if (extra.includes("auto_update")) {
         const panel = await this._hass.callWS({ type: "device_panel/set_panel", auto_update: st.extra.auto_update });
@@ -9489,79 +9484,10 @@ class DevicePanel extends HTMLElement {
     const sw = Object.values(hass.entities).find(
       (e) => e && e.platform === "hacs" && e.device_id === deviceId && String(e.entity_id).startsWith("switch.") && /pre.?release/i.test(`${e.entity_id} ${e.translation_key || ""}`)
     );
-    // Deaktivierte Entitäten fehlen in hass.entities: dann gilt, was die
-    // Entity-Registry geliefert hat (_loadHacsSwitch).
-    const regSw = !sw && this._hacsSwitchReg && this._hacsSwitchReg.deviceId === deviceId ? this._hacsSwitchReg : null;
-    const entityId = sw ? sw.entity_id : regSw ? regSw.entityId : null;
-    const state = entityId ? hass.states[entityId] : null;
-    return { deviceId, entityId, on: Boolean(state && state.state === "on"), disabled: Boolean(!sw && regSw && regSw.disabled) };
-  }
-
-  async _loadHacsSwitch() {
-    const upd = this._hacsUpdateEntity();
-    const reg = upd && this._hass.entities && this._hass.entities[upd.entity_id];
-    if (!reg || !reg.device_id) return;
-    try {
-      const list = await this._hass.callWS({ type: "config/entity_registry/list" });
-      const e = (Array.isArray(list) ? list : []).find(
-        (x) => x && x.platform === "hacs" && x.device_id === reg.device_id && String(x.entity_id).startsWith("switch.") && /pre.?release/i.test(`${x.entity_id} ${x.translation_key || ""} ${x.original_name || ""}`)
-      );
-      this._hacsSwitchReg = e ? { deviceId: reg.device_id, entityId: e.entity_id, disabled: Boolean(e.disabled_by) } : null;
-    } catch (err) {
-      this._hacsSwitchReg = null;
-    }
-  }
-
-  // "In HACS freischalten": Entität aktivieren (falls nötig), warten, bis
-  // HA sie nach dem Neuladen von HACS freigibt (etwa 30 s), einschalten und
-  // HACS die Versionen neu laden lassen. Nur auf Knopfdruck.
-  async _enableHacsPrerelease() {
-    const v = (this._version = this._version || {});
-    const sw = this._hacsPreReleaseSwitch();
-    if (!sw || !sw.entityId) return;
-    v.hacsEnabling = true;
-    v.hacsError = null;
-    this._renderSettingsVersion();
-    try {
-      if (sw.disabled || !this._hass.states[sw.entityId]) {
-        await this._hass.callWS({ type: "config/entity_registry/update", entity_id: sw.entityId, disabled_by: null });
-        const until = Date.now() + 90000;
-        while (!this._hass.states[sw.entityId] && Date.now() < until) await new Promise((r) => setTimeout(r, 1000));
-        if (!this._hass.states[sw.entityId]) throw new Error(this._t("verPreEnableTimeout"));
-        this._hacsSwitchReg = { ...(this._hacsSwitchReg || {}), deviceId: sw.deviceId, entityId: sw.entityId, disabled: false };
-      }
-      await this._callService("switch", "turn_on", { entity_id: sw.entityId });
-      this._prereleaseHacs = sw.entityId;
-      await this._hass.callWS({ type: "device_panel/set_panel", prerelease_hacs: sw.entityId });
-      await this._refreshHacs();
-    } catch (err) {
-      v.hacsError = errText(err);
-    }
-    v.hacsEnabling = false;
-    this._renderSettingsVersion();
-    await this._loadVersion(false);
-  }
-
-  // Beim Ausschalten von "Vorabversionen anzeigen": den HACS-Schalter nur
-  // zurücksetzen, wenn das Panel ihn selbst eingeschaltet hat.
-  async _disableHacsPrerelease() {
-    const id = this._prereleaseHacs;
-    if (!id) return;
-    this._prereleaseHacs = null;
-    try {
-      await this._hass.callWS({ type: "device_panel/set_panel", prerelease_hacs: null });
-    } catch (err) {
-      // Nicht kritisch.
-    }
-    const st = this._hass.states[id];
-    if (st && st.state === "on") {
-      try {
-        await this._callService("switch", "turn_off", { entity_id: id });
-        await this._refreshHacs();
-      } catch (err) {
-        // Nicht kritisch: der Schalter bleibt dann in HACS an.
-      }
-    }
+    // Deaktiviert (Standard bei HACS) fehlt die Entität in hass.entities: dann ist sie aus. Das Panel ändert sie nie (seit 2.99.3):
+    // aktivieren und einschalten macht der Benutzer im HACS-Gerät (Link im Hinweis).
+    const state = sw ? hass.states[sw.entity_id] : null;
+    return { deviceId, entityId: sw ? sw.entity_id : null, on: Boolean(state && state.state === "on") };
   }
 
   // open: Prüfung beim Öffnen der Einstellungen. Wie auf Knopfdruck frisch bei GitHub (höchstens einmal pro Minute, der Server begrenzt es), aber ohne HACS
@@ -9624,7 +9550,6 @@ class DevicePanel extends HTMLElement {
       v.restartFrom = null;
     }
     if (v.data && v.data.error && !v.data.latest && !v.data.prerelease) v.error = v.data.error;
-    if (this._versionState().betaBlocked) await this._loadHacsSwitch();
     this._renderSettingsVersion();
     this._gearDot(true);
     // Automatisch installieren (seit 2.22.0, ab 2.23.0 bei jeder Erkennung): sobald eine neuere Version gefunden wird (Öffnen der
@@ -9784,13 +9709,8 @@ class DevicePanel extends HTMLElement {
         : betaBlocked
           ? `<button type="button" class="ver-btn primary" disabled>${mdi("verDownload", 16)}${escape(t("verUpdate"))}</button>`
           : "";
-      const canEnable = Boolean(preSwitch && preSwitch.entityId);
       const hint = betaBlocked
-        ? `<div class="ver-hint">${escape(t(canEnable ? "verPreHintEnable" : "verPreHint"))}${v.hacsError ? `<div class="ver-hint-err">${escape(t("verPreEnableError"))} ${escape(v.hacsError)}</div>` : ""}<div class="ver-hint-acts">${
-            canEnable
-              ? `<button type="button" class="ver-btn" data-ver="hacs-enable" ${v.hacsEnabling ? 'disabled aria-busy="true"' : ""}>${v.hacsEnabling ? `<span class="ver-spin"></span>${escape(t("verPreEnabling"))}` : `${mdi("flask", 16)}${escape(t("verPreEnable"))}`}</button>`
-              : ""
-          }${preSwitch && preSwitch.deviceId ? `<button type="button" class="ver-hint-link" data-ver="hacs-device" data-device-id="${escape(preSwitch.deviceId)}">${escape(t("verPreHintLink"))}</button>` : ""}</div></div>`
+        ? `<div class="ver-hint">${escape(t("verPreHint"))}<div class="ver-hint-acts">${preSwitch && preSwitch.deviceId ? `<button type="button" class="ver-hint-link" data-ver="hacs-device" data-device-id="${escape(preSwitch.deviceId)}">${escape(t("verPreHintLink"))}</button>` : ""}</div></div>`
         : "";
       const html = row(beta ? "upd beta" : "upd", beta ? "flask" : "verUp", t("verAvailable", latest), sub, `${notes}${checkBtn}${installBtn}`);
       // Etikett "Beta" in den Titel, Hinweis in den Kasten.
@@ -9824,8 +9744,6 @@ class DevicePanel extends HTMLElement {
       this._renderSettings();
     } else if (action === "notes") {
       this._openNotes();
-    } else if (action === "hacs-enable") {
-      await this._enableHacsPrerelease();
     } else if (action === "hacs-device") {
       const sw = this._hacsPreReleaseSwitch();
       if (sw && sw.deviceId) {

@@ -202,7 +202,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [1, 50], "notify_delay": [1, 60], "notify_group_min": [2, 20], "new_window": [1, 60], "updates_window": [1, 60], "charge_full": [50, 100], "charge_rise": [2, 80], "charge_stall": [5, 120], "routines_catch_up": [0, 60],
         "status_cpu_limit": [1, 100], "status_ram_limit": [1, 100], "status_disk_limit": [1, 100], "status_cpu_minutes": [1, 60], "status_ram_minutes": [1, 60], "status_disk_minutes": [1, 60],
     }
-    assert set(result["panel"]) == {"prerelease", "prerelease_hacs", "auto_update"}
+    assert set(result["panel"]) == {"prerelease", "auto_update"}
 
     await client.send_json({"id": 2, "type": f"{DOMAIN}/set_options", "values": {CONF_UPDATE_CHECK: False}})
     assert (await client.receive_json())["result"] == {"changed": True}
@@ -348,12 +348,22 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
 
 async def test_panel_settings_persist(hass: HomeAssistant, entry, hass_ws_client, hass_storage: dict[str, Any]) -> None:
     client = await hass_ws_client(hass)
-    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_panel", "prerelease": True, "prerelease_hacs": "switch.device_panel_pre_release"})
-    assert (await client.receive_json())["result"] == {"prerelease": True, "prerelease_hacs": "switch.device_panel_pre_release", "auto_update": False}
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_panel", "prerelease": True})
+    assert (await client.receive_json())["result"] == {"prerelease": True, "auto_update": False}
     stored = hass_storage[f"{DOMAIN}.panel"]["data"]
-    assert stored == {"prerelease": True, "prerelease_hacs": "switch.device_panel_pre_release", "auto_update": False, "notified": {}}
-    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_panel", "prerelease_hacs": None})
-    assert (await client.receive_json())["result"]["prerelease_hacs"] is None
+    assert stored == {"prerelease": True, "auto_update": False, "notified": {}}
+    # Seit 2.99.3 schaltet das Panel den HACS-Schalter "Pre-release" nicht mehr selbst: kein Feld dafür
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/set_panel", "prerelease_hacs": "switch.device_panel_pre_release"})
+    assert (await client.receive_json())["success"] is False
+
+
+async def test_old_prerelease_hacs_is_ignored(hass: HomeAssistant, hass_storage: dict[str, Any]) -> None:
+    # Ein Stand von früher (das Panel hatte den Schalter in HACS selbst eingeschaltet) wird beim Laden nicht mehr übernommen
+    from custom_components.device_panel import update_check
+
+    hass_storage[f"{DOMAIN}.panel"] = {"version": 1, "key": f"{DOMAIN}.panel", "data": {"prerelease": True, "prerelease_hacs": "switch.x_pre_release", "auto_update": False}}
+    settings = await update_check.async_load_panel_settings(hass)
+    assert "prerelease_hacs" not in settings and settings["prerelease"] is True
 
 
 async def test_prerelease_default_follows_installed(hass: HomeAssistant, entry) -> None:

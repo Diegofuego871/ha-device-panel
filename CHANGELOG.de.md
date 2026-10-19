@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.100.0] - 2026-10-19
+
+Das Panel ändert keine Entitäten von HACS mehr.
+
+### Geändert
+
+- **Vorabversionen: das Panel schaltet den HACS-Schalter "Pre-release" nicht mehr.** Der Knopf "In HACS freischalten" ist weg: er aktivierte die deaktivierte HACS-Entität "Pre-release" in der Entity-Registry und schaltete sie ein, und "Vorabversionen anzeigen" aus schaltete sie wieder aus. Eine Integration soll die Entitäten einer anderen nicht aktivieren, deaktivieren oder schalten. Bei einer gefundenen Beta und ausgeschaltetem "Pre-release" in HACS bleibt "Updaten" wie bisher gesperrt, der Hinweis führt zum HACS-Gerät ("HACS-Gerät öffnen"); dort aktivierst und schaltest du "Pre-release" selbst ein, danach installiert "Updaten" die Beta. "Vorabversionen anzeigen" aus lässt den Schalter in HACS, wie er ist.
+- Unverändert: die tägliche Prüfung, "Updaten" und "Updates automatisch installieren" installieren weiter über die HACS-Update-Entität von Device Panel selbst.
+- Der gespeicherte Wert `prerelease_hacs` (welchen Schalter das Panel eingeschaltet hatte) wird nicht mehr verwendet; `device_panel/set_panel` nimmt ihn nicht mehr an.
+
 ## [2.99.2] - 2026-10-19
 
 Routinen-Karten zeigen Entitätsnamen als Text.
@@ -18,6 +28,8 @@ Routinen-Karten zeigen Entitätsnamen als Text.
 ### Intern
 
 - - Neue Prüfung `tests/panel/xss-run.mjs` (Simulator-Modus `PANEL_XSS=1`): jeder angezeigte Text aus dem Backend (Namen, Bereiche, Modelle, Labels, Meldungen und mehr) bekommt ein Stück HTML angehängt, das Attribute schliesst (`"` und `'`) und ein Bild mit `onerror` einfügt; alle 107 Suiten laufen dagegen, jede Stelle, an der solches HTML wirkt, wird mit ihrem Kontext gemeldet. Vor der Korrektur: 104 Treffer, alle in der Routinen-Karte; danach: keine.
+
+Nicht veröffentlicht; enthalten in 2.100.0.
 
 ## [2.99.1] - 2026-10-19
 
@@ -4096,7 +4108,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.99.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.2
+[2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0
 [2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0
 [2.98.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.1
