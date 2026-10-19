@@ -27,7 +27,7 @@ Routinen-Karten zeigen Entitätsnamen als Text.
 
 ### Intern
 
-- - Neue Prüfung `tests/panel/xss-run.mjs` (Simulator-Modus `PANEL_XSS=1`): jeder angezeigte Text aus dem Backend (Namen, Bereiche, Modelle, Labels, Meldungen und mehr) bekommt ein Stück HTML angehängt, das Attribute schliesst (`"` und `'`) und ein Bild mit `onerror` einfügt; alle 107 Suiten laufen dagegen, jede Stelle, an der solches HTML wirkt, wird mit ihrem Kontext gemeldet. Vor der Korrektur: 104 Treffer, alle in der Routinen-Karte; danach: keine.
+- Neue Prüfung `tests/panel/xss-run.mjs` (Simulator-Modus `PANEL_XSS=1`): jeder angezeigte Text aus dem Backend (Namen, Bereiche, Modelle, Labels, Meldungen und mehr) bekommt ein Stück HTML angehängt, das Attribute schliesst (`"` und `'`) und ein Bild mit `onerror` einfügt; alle 107 Suiten laufen dagegen, jede Stelle, an der solches HTML wirkt, wird mit ihrem Kontext gemeldet. Vor der Korrektur: 104 Treffer, alle in der Routinen-Karte; danach: keine.
 
 Nicht veröffentlicht; enthalten in 2.100.0.
 

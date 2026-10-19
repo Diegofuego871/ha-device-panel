@@ -27,7 +27,7 @@ Routine cards show entity names as text.
 
 ### Internal
 
-- - New check `tests/panel/xss-run.mjs` (simulator mode `PANEL_XSS=1`): every displayed text from the backend (names, areas, models, labels, messages and more) gets a piece of HTML appended that closes attributes (`"` and `'`) and inserts an image with `onerror`; all 107 suites run against it and every place where such HTML takes effect is reported with its context. Before the fix: 104 hits, all in the routine card; after it: none.
+- New check `tests/panel/xss-run.mjs` (simulator mode `PANEL_XSS=1`): every displayed text from the backend (names, areas, models, labels, messages and more) gets a piece of HTML appended that closes attributes (`"` and `'`) and inserts an image with `onerror`; all 107 suites run against it and every place where such HTML takes effect is reported with its context. Before the fix: 104 hits, all in the routine card; after it: none.
 
 Not released; included in 2.100.0.
 
