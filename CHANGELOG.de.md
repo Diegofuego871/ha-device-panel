@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.99.0] - 2026-10-19
+
+Wiederherstellen: die Kacheln der Vorschau öffnen Detailfenster.
+
+### Hinzugefügt
+
+- **Wiederherstellen, Vorschau:** die drei Kacheln (**werden geändert**, **unverändert**, **nicht übernommen**) und die Bereichszeilen sind antippbar (Pfeil ›) und öffnen ein **Detailfenster** mit "Zurück zur Vorschau". **Werden geändert** listet alle Änderungen nach Bereich, je Einstellung alt → neu (Geräte mit Name, Einstellungen mit lesbaren Namen); ein Tipp auf eine Bereichszeile springt zu diesem Bereich. **Unverändert** listet die Werte, die schon so gelten. **Nicht übernommen** listet jeden übersprungenen Eintrag mit Grund, Geräte mit Name, ID und Betroffenem; dort steht auch **"Bericht kopieren"**. Vorher zeigte die Vorschau nur drei Beispiele und die übersprungenen Einträge als eine lange Liste.
+
+### Intern
+
+- Der Bericht des Wiederherstellens (`device_panel/backup_import`) liefert je Bereich die vollen Listen: `changes` (was, alt, neu, Gerät) und `same` (was, Gerät), je bis 500 Einträge, neben den Zählern und den drei Beispielen. Test `test_backup`, Suite `backup`.
+
 ## [2.98.1] - 2026-10-19
 
 Einstellungen › Panel öffnet im linken Reiter; Wiederherstellen erklärt, was es überspringt.
@@ -4064,6 +4076,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0
 [2.98.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.1
 [2.98.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.0
 [2.97.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.97.0

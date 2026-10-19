@@ -115,6 +115,9 @@ async def test_devices_import_and_replace(hass: HomeAssistant, setup) -> None:  
     assert hass.data[DATA_DEVICE_SETTINGS]["battery"] == {}  # nichts geschrieben
     rep = preview["sections"]["devices"]
     assert rep["changed"] == 4  # battery, notify, signal, Typ
+    # Detailfenster: alle Änderungen und alles Gleiche mit Gerätename
+    assert {(c["device"], c["what"]) for c in rep["changes"]} == {("Rauchmelder", "battery"), ("Rauchmelder", "notify"), ("Rauchmelder", "signal"), ("Rauchmelder", "type")}
+    assert len(rep["changes"]) == rep["changed"] and len(rep["same"]) == rep["unchanged"]
     unknown = [s for s in rep["skipped"] if s["reason"] == "device_unknown"]
     assert [(s["id"], s["parts"]) for s in unknown] == [("nichtda", ["battery"])] and unknown[0]["name"] is None
     assert any(s["what"] == "battery" and s["reason"] == "invalid" for s in rep["skipped"])

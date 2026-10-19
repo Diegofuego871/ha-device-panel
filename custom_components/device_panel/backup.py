@@ -104,6 +104,7 @@ _DEVICE_SETTING_KEYS = (
 )
 _ITEMS_MAX = 400
 _EXAMPLES_MAX = 3
+_LIST_MAX = 500
 
 
 def section_keys(section: str) -> set[str]:
@@ -208,12 +209,22 @@ async def async_export(hass: HomeAssistant, sections: list[str]) -> dict[str, An
 
 
 def _empty() -> dict[str, Any]:
-    return {"changed": 0, "unchanged": 0, "skipped": [], "notes": [], "examples": []}
+    return {"changed": 0, "unchanged": 0, "skipped": [], "notes": [], "examples": [], "changes": [], "same": []}
 
 
-def _example(rep: dict[str, Any], what: str, old: Any, new: Any) -> None:
+def _example(rep: dict[str, Any], what: str, old: Any, new: Any, device: str | None = None) -> None:
+    """Eine Änderung festhalten: alle für das Detailfenster ("changes"), die ersten drei für die Vorschau ("examples")."""
     if len(rep["examples"]) < _EXAMPLES_MAX:
-        rep["examples"].append({"what": what, "old": old, "new": new})
+        rep["examples"].append({"what": f"{device}: {what}" if device else what, "old": _short(old), "new": _short(new)})
+    if len(rep["changes"]) < _LIST_MAX:
+        rep["changes"].append({"what": what, "old": _short(old), "new": _short(new), **({"device": device} if device else {})})
+
+
+def _same(rep: dict[str, Any], what: str, device: str | None = None) -> None:
+    """Ein Wert, der schon so gilt (für das Detailfenster "unverändert")."""
+    rep["unchanged"] += 1
+    if len(rep["same"]) < _LIST_MAX:
+        rep["same"].append({"what": what, **({"device": device} if device else {})})
 
 
 def _short(value: Any) -> Any:
@@ -303,11 +314,13 @@ def _options_part(hass: HomeAssistant, entry: Any, section: str, file_options: A
         valid[CONF_EXCLUDE_DEVICES] = known
     _reference_notes(hass, valid, rep)
     changed = {k: v for k, v in valid.items() if v != current.get(k)}
-    rep["unchanged"] += len(valid) - len(changed)
+    for key in valid:
+        if key not in changed:
+            _same(rep, key)
     applied = _apply_options(hass, entry, changed, dry_run, rep)
     rep["changed"] += len(applied)
-    for key, value in list(applied.items())[:_EXAMPLES_MAX]:
-        _example(rep, key, _short(current.get(key)), _short(value))
+    for key, value in applied.items():
+        _example(rep, key, current.get(key), value)
 
 
 def _valid_device_setting(key: str, value: Any) -> bool:
@@ -368,7 +381,7 @@ async def _devices_part(hass: HomeAssistant, body: dict[str, Any], dry_run: bool
                 new = True
             if new == old or (new is None and old is None):
                 if key in incoming:
-                    rep["unchanged"] += 1
+                    _same(rep, key, names.get(device_id) or device_id)
                 continue
             changes[key] = new
         if (error := await async_notify_delay_error(hass, device_id, changes)):
@@ -378,7 +391,7 @@ async def _devices_part(hass: HomeAssistant, body: dict[str, Any], dry_run: bool
                     changes.pop(key)
         for key, new in changes.items():
             rep["changed"] += 1
-            _example(rep, f"{names.get(device_id, device_id)}: {key}", current.get(key, "–"), new)
+            _example(rep, key, current.get(key, "–"), new, names.get(device_id) or device_id)
         if changes and not dry_run:
             await async_set_device_settings(hass, device_id, **changes)
             refresh = refresh or bool({"battery", "charge", "charge_live"} & set(changes))
@@ -395,9 +408,10 @@ async def _devices_part(hass: HomeAssistant, body: dict[str, Any], dry_run: bool
                 continue
             if value == current_table.get(device_id):
                 if value is not None:
-                    rep["unchanged"] += 1
+                    _same(rep, kind, names.get(device_id) or device_id)
                 continue
             rep["changed"] += 1
+            _example(rep, kind, current_table.get(device_id, "–"), value if value is not None else "–", names.get(device_id) or device_id)
             if not dry_run:
                 await setter(hass, device_id, value)
     for device_id in unknown:
@@ -439,7 +453,7 @@ async def _items_part(hass: HomeAssistant, kind: str, items: Any, dry_run: bool,
         if item_id:
             wanted.add(item_id)
         if existing is not None and _strip(existing) == _strip({**clean, "id": item_id}):
-            rep["unchanged"] += 1
+            _same(rep, name)
             continue
         rep["changed"] += 1
         _example(rep, name, "–" if existing is None else "geändert", "neu" if existing is None else "angepasst")

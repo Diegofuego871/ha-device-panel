@@ -70,6 +70,8 @@ for (const lang of ["de", "en"]) {
       }
       await wait(`return !!r.querySelector('${win} [data-rt="c-pick"][data-id="${id}"]')`);
       await tap(`${win} [data-rt="c-pick"][data-id="${id}"]`);
+      // unter Last geht der Tipp bei einer Neuzeichnung verloren: dann noch einmal
+      if (!(await wait(`return !r.querySelector('${win} [data-rt="c-search"]')`)) && (await handle(`${win} [data-rt="c-pick"][data-id="${id}"]`))) await tap(`${win} [data-rt="c-pick"][data-id="${id}"]`);
       await wait(`return !r.querySelector('${win} [data-rt="c-search"]')`);
     };
 

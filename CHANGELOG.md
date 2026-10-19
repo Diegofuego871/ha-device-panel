@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.99.0] - 2026-10-19
+
+Restore: the preview tiles open detail windows.
+
+### Added
+
+- **Restore, preview:** the three tiles (**will change**, **unchanged**, **not applied**) and the section rows are tappable (arrow ›) and open a **detail window** with a "Back to the preview" button. **Will change** lists all changes by section, per setting old → new (devices with their name, settings with readable names); a tap on a section row jumps to that section. **Unchanged** lists the values that already apply. **Not applied** lists every skipped entry with its reason, devices with name, ID and what they affect; **"Copy report"** is there. Before, the preview showed only three examples and the skipped entries as one long list.
+
+### Internal
+
+- The restore report (`device_panel/backup_import`) now carries the full lists per section: `changes` (what, old, new, device) and `same` (what, device), each up to 500 entries, next to the counts and the three examples. Test `test_backup`, suite `backup`.
+
 ## [2.98.1] - 2026-10-19
 
 Settings › Panel opens on the left tab; restoring explains what it skips.
@@ -3963,6 +3975,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0
 [2.98.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.1
 [2.98.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.0
 [2.97.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.97.0

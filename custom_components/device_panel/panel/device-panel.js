@@ -6100,21 +6100,26 @@ class DevicePanel extends HTMLElement {
 
   // Hinweise und übersprungene Einträge der Vorschau oder des Ergebnisses als Zeilen; Geräte, die es hier nicht gibt, stehen
   // in einer aufklappbaren Zeile mit Name (falls die Datei ihn kennt), ID und den betroffenen Einstellungen
-  _bkIssues(report) {
+  _bkIssues(report, compact = false) {
     const t = (k, ...a) => this._t(k, ...a);
     const row = (icon, cls, title, hint, badge, extra = "") =>
       `<div class="bk-rw"><span class="bk-ic ${cls}">${mdi(icon, 15)}</span><div>${escape(title)}<small>${escape(hint)}</small>${extra}</div><span class="bk-badge ${cls}">${escape(badge)}</span></div>`;
     const rows = [];
     const devs = [];
+    let skippedN = 0;
     for (const r of Object.values(report.sections)) {
       for (const n of r.notes) rows.push(row("alert", "w", t(`bkNote_${n.kind}`, n.what), t(`bkNoteHint_${n.kind}`), t(n.kind === "target" ? "bkBadgeWarn" : "bkBadgeHint")));
       for (const sk of r.skipped) {
-        if (sk.reason === "device_unknown") devs.push(sk);
+        if (compact) skippedN++;
+        else if (sk.reason === "device_unknown") devs.push(sk);
         else {
           const [title, hint] = this._bkSkipText(sk, r);
           rows.push(row("close", "e", title, hint, t("bkBadgeSkipped")));
         }
       }
+    }
+    if (compact && skippedN) {
+      rows.push(`<div class="bk-rw go" data-bk="detail" data-kind="skipped" role="button" tabindex="0"><span class="bk-ic e">${mdi("close", 15)}</span><div>${escape(t("bkSkN", skippedN))}<small>${escape(t("bkSkNHint"))}</small></div><span class="bk-badge e">${escape(t("bkBadgeSkipped"))} ›</span></div>`);
     }
     if (devs.length) {
       const open = Boolean(this._bk?.devOpen);
@@ -6127,11 +6132,51 @@ class DevicePanel extends HTMLElement {
     return rows;
   }
 
-  _bkIssuesBlock(rows) {
+  _bkIssuesBlock(rows, withReport = true) {
     if (!rows.length) return "";
     const t = (k, ...a) => this._t(k, ...a);
     return `<div class="mon-grp bk-h">${escape(t("bkHeadNotes"))}</div>${rows.join("")}
-      <button type="button" class="lnk bk-toggle" data-bk="report">${escape(t("bkReportCopy"))}</button>`;
+      ${withReport ? `<button type="button" class="lnk bk-toggle" data-bk="report">${escape(t("bkReportCopy"))}</button>` : ""}`;
+  }
+
+  // Wert in der Detailansicht: Schalter als an/aus, Leeres als Strich
+  _bkVal(v) {
+    if (v === true) return this._t("bkOn");
+    if (v === false) return this._t("bkOff");
+    if (v === null || v === undefined || v === "") return "–";
+    return String(v);
+  }
+
+  _bkKey(key) {
+    return this._t("bkKeys")?.[key] || String(key).replace(/_/g, " ");
+  }
+
+  // Detailfenster zu einer Kachel: alle Änderungen (Alt → Neu), alles Gleiche oder alles Übersprungene mit Namen und IDs
+  _bkDetailHtml(report, kind) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const secs = Object.entries(report.sections);
+    const grp = (s, n, body) => `<div class="bk-g" data-bk-grp="${s}"><div class="mon-grp bk-h">${escape(t(`bkSec_${s}`))} (${n})</div>${body}</div>`;
+    const label = (c) => (c.device ? `${c.device} · ${this._bkKey(c.what)}` : this._bkKey(c.what));
+    if (kind === "changed") {
+      return secs
+        .filter(([, r]) => r.changes?.length)
+        .map(([s, r]) => grp(s, r.changes.length, r.changes.map((c) => `<div class="bk-dv">${escape(label(c))}<small class="bk-diff"><s>${escape(this._bkVal(c.old))}</s> → <b>${escape(this._bkVal(c.new))}</b></small></div>`).join("")))
+        .join("");
+    }
+    if (kind === "same") {
+      return secs
+        .filter(([, r]) => r.same?.length)
+        .map(([s, r]) => grp(s, r.unchanged, r.same.map((c) => `<div class="bk-dv">${escape(label(c))}</div>`).join("") + (r.unchanged > r.same.length ? `<div class="bk-dv"><small>${escape(t("bkMore", r.unchanged - r.same.length))}</small></div>` : "")))
+        .join("");
+    }
+    return `${this._bkIssues(report).join("")}`;
+  }
+
+  _bkDetailCount(report, kind) {
+    const secs = Object.values(report.sections);
+    if (kind === "changed") return secs.reduce((n, r) => n + r.changed, 0);
+    if (kind === "same") return secs.reduce((n, r) => n + r.unchanged, 0);
+    return secs.reduce((n, r) => n + r.skipped.length + r.notes.length, 0);
   }
 
   // Der Bericht als Text (zum Kopieren): jede Zeile mit Name und ID, damit sich die Fehler prüfen lassen
@@ -6186,18 +6231,29 @@ class DevicePanel extends HTMLElement {
       const tot = b.preview.totals;
       const rows = Object.entries(b.preview.sections)
         .map(([s, r]) => {
-          const ex = r.examples[0];
-          const detail = [r.changed ? t("bkChangedN", r.changed) : t("bkNoChange"), ex ? `${ex.what}: ${ex.old} → ${ex.new}` : ""].filter(Boolean).join(" · ");
-          return `<div class="bk-rw"><span class="bk-dot${r.changed ? " on" : ""}"></span><div>${escape(t(`bkSec_${s}`))}<small>${escape(detail)}</small></div><span class="bk-badge${r.changed ? " g" : ""}">${r.changed}</span></div>`;
+          const ex = r.changes?.[0];
+          const detail = [r.changed ? t("bkChangedN", r.changed) : t("bkNoChange"), ex ? `${ex.device ? `${ex.device} · ` : ""}${this._bkKey(ex.what)}: ${this._bkVal(ex.old)} → ${this._bkVal(ex.new)}` : ""].filter(Boolean).join(" · ");
+          const go = r.changed ? ` data-bk="detail" data-kind="changed" data-sec="${s}" role="button" tabindex="0"` : "";
+          return `<div class="bk-rw${r.changed ? " go" : ""}"${go}><span class="bk-dot${r.changed ? " on" : ""}"></span><div>${escape(t(`bkSec_${s}`))}<small>${escape(detail)}</small></div><span class="bk-badge${r.changed ? " g" : ""}">${r.changed}${r.changed ? " ›" : ""}</span></div>`;
         })
         .join("");
-      const notes = this._bkIssues(b.preview);
+      const notes = this._bkIssues(b.preview, true);
+      const tile = (kind, n, cls, label) =>
+        n ? `<button type="button" class="bk-tile go" data-bk="detail" data-kind="${kind}"><b class="${cls}">${n}</b><span>${escape(label)}</span></button>` : `<div class="bk-tile"><b class="${cls}">${n}</b><span>${escape(label)}</span></div>`;
       const ver = b.preview.file_version ? t("bkPreviewSub", b.fileName, b.preview.file_version) : b.fileName;
       html = `${head("upload", t("bkImportTitle"), ver)}<div class="dlg-body">
-        <div class="bk-sum"><div class="bk-tile"><b class="ok">${tot.changed}</b><span>${escape(t("bkTChanged"))}</span></div><div class="bk-tile"><b>${tot.unchanged}</b><span>${escape(t("bkTSame"))}</span></div><div class="bk-tile"><b class="wn">${tot.skipped}</b><span>${escape(t("bkTSkipped"))}</span></div></div>
-        ${rows}${this._bkIssuesBlock(notes)}
+        <div class="bk-sum">${tile("changed", tot.changed, "ok", t("bkTChanged"))}${tile("same", tot.unchanged, "", t("bkTSame"))}${tile("skipped", tot.skipped, "wn", t("bkTSkipped"))}</div>
+        ${rows}${this._bkIssuesBlock(notes, false)}
         <div class="opt"><div class="opt-line"><span class="opt-label">${escape(t("bkBefore"))}</span><label class="switch"><input type="checkbox" data-bk-before ${b.before ? "checked" : ""} aria-label="${escape(t("bkBefore"))}"><span></span></label></div><div class="opt-short">${escape(t("bkBeforeShort"))}</div></div>${b.status ? `<div class="dlg-note" role="status">${escape(b.status)}</div>` : ""}${err}</div>
         <div class="dlg-actions">${btn("close", "close", t("bkCancel"))}${btn("apply", "check", tot.changed ? t("bkApply", tot.changed) : t("bkNothing"), "primary", tot.changed ? "" : " disabled")}</div>`;
+    } else if (b.mode === "detail") {
+      const report = b.from === "done" ? b.result : b.preview;
+      const kind = b.detail.kind;
+      const n = this._bkDetailCount(report, kind);
+      const icon = kind === "changed" ? "check" : kind === "same" ? "info" : "close";
+      html = `${head(icon, t(`bkDet_${kind}`), t(`bkDetSub_${kind}`, n))}<div class="dlg-body bk-detail">${this._bkDetailHtml(report, kind)}
+        ${kind === "skipped" ? `<button type="button" class="lnk bk-toggle" data-bk="report">${escape(t("bkReportCopy"))}</button>` : ""}${b.status ? `<div class="dlg-note" role="status">${escape(b.status)}</div>` : ""}${err}</div>
+        <div class="dlg-actions">${btn("back", "arrowLeft", t("bkBack"), "primary")}</div>`;
     } else if (b.mode === "done") {
       const tot = b.result.totals;
       html = `${head("check", t("bkDoneTitle"), t("bkDoneSub", tot.changed, tot.skipped))}<div class="dlg-body">
@@ -6233,12 +6289,31 @@ class DevicePanel extends HTMLElement {
       } else if (act === "pastego") {
         b.text = dlg.querySelector("[data-bk-text]")?.value || "";
         this._bkPreview(b.text, this._t("bkPasted"));
+      } else if (act === "detail") {
+        b.from = b.mode;
+        b.detail = { kind: btn.dataset.kind, sec: btn.dataset.sec || null };
+        b.mode = "detail";
+        b.status = null;
+        if (b.detail.kind === "skipped") b.devOpen = true;
+        this._renderBackup();
+        if (b.detail.sec) dlg.querySelector(`[data-bk-grp="${b.detail.sec}"]`)?.scrollIntoView({ block: "start" });
+      } else if (act === "back") {
+        b.mode = b.from || "preview";
+        b.status = null;
+        this._renderBackup();
       } else if (act === "devs") {
         b.devOpen = !b.devOpen;
         this._renderBackup();
       } else if (act === "report") this._bkCopyReport();
       else if (act === "apply") this._bkApply();
       else if (act === "undo") this._bkUndo();
+    });
+    dlg.addEventListener("keydown", (ev) => {
+      const el = ev.target;
+      if ((ev.key === "Enter" || ev.key === " ") && el.matches?.('[role="button"][data-bk]')) {
+        ev.preventDefault();
+        el.click();
+      }
     });
     dlg.addEventListener("change", async (ev) => {
       const b = this._bk;

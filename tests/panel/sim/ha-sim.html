@@ -791,7 +791,7 @@
         for (const sec of SECS) {
           if (!(sec in d.sections) || (msg.sections && !msg.sections.includes(sec))) continue;
           const body = d.sections[sec] || {};
-          const rep = { changed: 0, unchanged: 0, skipped: [], notes: [], examples: [] };
+          const rep = { changed: 0, unchanged: 0, skipped: [], notes: [], examples: [], changes: [], same: [] };
           const mine = keysOf(sec);
           const apply = {};
           for (const [k, v] of Object.entries(body.options || {})) {
@@ -799,16 +799,17 @@
             if (!mine.includes(k)) continue;
             if (LIMITS[k] && (!Number.isInteger(v) || v < LIMITS[k][0] || v > LIMITS[k][1])) { rep.skipped.push({ what: k, reason: `Ganze Zahl von ${LIMITS[k][0]} bis ${LIMITS[k][1]} erwartet` }); continue; }
             if (k.startsWith("notify_service") && typeof v === "string" && v && v !== "none" && !targets.has(v)) rep.notes.push({ kind: "target", what: v });
-            if (JSON.stringify(v) === JSON.stringify(window.__opts[k])) { rep.unchanged++; continue; }
+            if (JSON.stringify(v) === JSON.stringify(window.__opts[k])) { rep.unchanged++; rep.same.push({ what: k }); continue; }
             apply[k] = v;
             rep.changed++;
             if (rep.examples.length < 3) rep.examples.push({ what: k, old: window.__opts[k], new: v });
+            rep.changes.push({ what: k, old: window.__opts[k], new: v });
           }
           if (sec === "devices") {
             const known = new Set(["dev-a", "dev-b"]);
             const dev = {};
             for (const [id, vals] of Object.entries(body.settings || {})) {
-              if (known.has(id)) { dev[id] = vals; rep.changed++; } else rep.skipped.push({ what: "device", reason: "device_unknown", id, name: (body.names || {})[id] || null, parts: Object.keys(vals) });
+              if (known.has(id)) { dev[id] = vals; rep.changed++; for (const [vk, vv] of Object.entries(vals)) rep.changes.push({ what: vk, old: "–", new: vv, device: id === "dev-a" ? "Rauchmelder Flur" : id }); } else rep.skipped.push({ what: "device", reason: "device_unknown", id, name: (body.names || {})[id] || null, parts: Object.keys(vals) });
             }
             if (!dry) window.__bkDevices = msg.replace ? dev : { ...(window.__bkDevices || {}), ...dev };
           }

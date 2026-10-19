@@ -40,12 +40,12 @@ for (const lang of ["de", "en"]) {
           if (mobile) await h.tap(); else await h.click();
           return;
         } catch (err) {
-          if (i >= 3 || !/not attached|detached/.test(String(err))) throw err;
+          if (i >= (/fehlt/.test(String(err)) ? 40 : 3) || !/not attached|detached|fehlt/.test(String(err))) throw err;
           await new Promise((r) => setTimeout(r, 150));
         }
       }
     };
-    const fill = async (sel, value) => { const h = await handle(sel); await h.scrollIntoViewIfNeeded(); await h.fill(value); };
+    const fill = async (sel, value) => { for (let i = 0; i < 50; i++) { const h = await handle(sel); if (h) { await h.scrollIntoViewIfNeeded(); await h.fill(value); return; } await new Promise((r) => setTimeout(r, 100)); } throw new Error("fehlt: " + sel); };
     const wait = (code) => f.waitForFunction(new Function(`const r=${R};` + code), null, { timeout: 5000 }).then(() => true, () => false);
     const text = (sel) => ev(`return (r.querySelector(${JSON.stringify(sel)})?.textContent || "").replace(/\\s+/g," ").trim()`);
     const calls = (type) => p.evaluate((t) => window.__wsCalls.filter((m) => m.type === `device_panel/${t}`), type);
@@ -119,7 +119,7 @@ for (const lang of ["de", "en"]) {
     await fill('input[data-mg="reset-value"]', "14");
     check(`[${tag}] Rücksetzwert 14: Hinweis, "Weiter" frei`, await wait(`return !r.querySelector('${W} [data-mg-zone="resethint"] .opt-error') && r.querySelector('${W} [data-mg-zone="resethint"]').textContent.includes("14") && r.querySelector('${W} [data-mg="next"]').disabled === false`));
     await tap('[data-mg="reset-step"][data-dir="1"]');
-    check(`[${tag}] Plus am Rücksetzwert`, (await ev(`return r.querySelector('${W} input[data-mg="reset-value"]').value`)) === "15");
+    check(`[${tag}] Plus am Rücksetzwert`, await wait(`return r.querySelector('${W} input[data-mg="reset-value"]').value === "15"`));
     await tap('[data-mg="reset-step"][data-dir="-1"]');
     check(`[${tag}] Diagramm: zweite Linie für den Rücksetzwert`, await wait(`return r.querySelectorAll('${W} svg.mg-spark line').length === 2`));
     await p.waitForTimeout(700);
@@ -371,6 +371,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-mg="add"]');
     check(`[${tag}] Schritt 1: "Freie Entität" ganz unten, zu`, (await ev(`const k=[...r.querySelectorAll('${W} .mg-pick')]; return k.at(-1)?.dataset.mg === "free-open" && !r.querySelector('${W} .mg-free')`)));
     await tap('[data-mg="free-open"]');
+    if (!(await wait(`return !!r.querySelector('input[data-mg="free-query"]')`))) await tap('[data-mg="free-open"]'); // unter Last geht der Tipp bei einer Neuzeichnung verloren
     check(`[${tag}] Suche öffnet mit Treffern aller Entitäten (auch fremder Geräte)`, await wait(`return r.querySelectorAll('${W} [data-mg="free-pick"]').length >= 6`));
     // Das Suchfeld scrollt nach oben, damit die Tastatur es nicht zudeckt (oben im Inhalt des Fensters, unter Kopf und Fortschritt)
     await p.waitForTimeout(900);
@@ -424,7 +425,9 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Bearbeiten: Bedingung der freien Entität ist offen`, await wait(`return (r.querySelector('${W} .mg-lcard.open .mg-t b')?.textContent || "") === "Absolute Feuchte berechnet"`));
     // Zustand als freie Entität (Regen): Entität der Bedingung ändern, Wörter der Entität, "ist"
     await tap('[data-mg="leaf-entity"]');
+    if (!(await wait(`return !!r.querySelector('[data-mg="free-open"]')`))) await tap('[data-mg="leaf-entity"]'); // unter Last geht der erste Tipp bei einer Neuzeichnung verloren
     await tap('[data-mg="free-open"]');
+    if (!(await wait(`return !!r.querySelector('input[data-mg="free-query"]')`))) await tap('[data-mg="free-open"]'); // unter Last geht der Tipp bei einer Neuzeichnung verloren
     await fill('input[data-mg="free-query"]', "regen");
     await wait(`return r.querySelectorAll('${W} [data-mg="free-pick"]').length === 1`);
     await tap('[data-mg="free-pick"][data-id="binary_sensor.garten_regen"]');

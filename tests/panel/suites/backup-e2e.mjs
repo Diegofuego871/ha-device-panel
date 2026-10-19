@@ -11,8 +11,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { ttl: "Sichern und wiederherstellen", exportTitle: "Einstellungen sichern", importTitle: "Wiederherstellen", done: "Wiederhergestellt", undone: "Rückgängig gemacht", bad: "keine sicherung", devs2: "2 Geräte unbekannt", partBattery: "Batterie", partNotify: "Meldungen", noName: "Name unbekannt" },
-  en: { ttl: "Back up and restore", exportTitle: "Back up settings", importTitle: "Restore", done: "Restored", undone: "Undone", bad: "not a device panel backup", devs2: "2 devices unknown", partBattery: "Battery", partNotify: "Notifications", noName: "Name unknown" },
+  de: { ttl: "Sichern und wiederherstellen", exportTitle: "Einstellungen sichern", importTitle: "Wiederherstellen", done: "Wiederhergestellt", undone: "Rückgängig gemacht", bad: "keine sicherung", devs2: "2 Geräte unbekannt", partBattery: "Batterie", partNotify: "Meldungen", noName: "Name unbekannt", detSkipped: "Nicht übernommen", detChanged: "Werden geändert", detSame: "Unverändert", keyBattery: "Batterie-Schwelle" },
+  en: { ttl: "Back up and restore", exportTitle: "Back up settings", importTitle: "Restore", done: "Restored", undone: "Undone", bad: "not a device panel backup", devs2: "2 devices unknown", partBattery: "Battery", partNotify: "Notifications", noName: "Name unknown", detSkipped: "Not applied", detChanged: "Will change", detSame: "Unchanged", keyBattery: "Battery threshold" },
 };
 const dir = mkdtempSync(join(tmpdir(), "dp-backup-"));
 
@@ -92,17 +92,26 @@ for (const lang of ["de", "en"]) {
     await tap('dialog.backup-dlg [data-bk="pastego"]');
     check(`[${tag}] eingefügter Unsinn: Fehlermeldung`, await wait(`return !!r.querySelector("dialog.backup-dlg .dlg-error")`));
     await (await handle("dialog.backup-dlg input[data-bk-file]")).setInputFiles(path);
-    check(`[${tag}] Vorschau: 2 Werte ändern sich, Hinweise und Übersprungenes`, await wait(`return r.querySelectorAll("dialog.backup-dlg .bk-tile b")[0]?.textContent === "3" && r.querySelectorAll("dialog.backup-dlg .bk-badge.e").length >= 3 && r.querySelectorAll("dialog.backup-dlg .bk-badge.w").length === 1`), await text("dialog.backup-dlg .bk-sum"));
+    check(`[${tag}] Vorschau: 2 Werte ändern sich, Hinweise und Übersprungenes`, await wait(`return r.querySelectorAll("dialog.backup-dlg .bk-tile b")[0]?.textContent === "3" && r.querySelectorAll("dialog.backup-dlg .bk-badge.e").length === 1 && r.querySelectorAll("dialog.backup-dlg .bk-tile b")[2]?.textContent === "4" && r.querySelectorAll("dialog.backup-dlg .bk-badge.w").length === 1`), await text("dialog.backup-dlg .bk-sum"));
     check(`[${tag}] Vorschau: Bereichszeilen, Hinweis zum Push-Ziel`, (await ev(`return r.querySelectorAll("dialog.backup-dlg .bk-rw .bk-dot").length`)) === Object.keys(file.sections).length && (await text("dialog.backup-dlg .bk-ic.w + div")).includes("notify.mobile_app_alt"));
-    // Fehlerbericht: Geräte aufklappen (Name falls bekannt, ID, betroffene Einstellungen), Bericht kopieren
-    check(`[${tag}] Geräte unbekannt: Zeile zählt 2, Liste zu`, (await ev(`return r.querySelector('dialog.backup-dlg [data-bk="devs"]').closest(".bk-rw").innerText`)).includes(L.devs2) && (await ev(`return r.querySelectorAll("dialog.backup-dlg .bk-dev").length`)) === 0);
-    await tap('dialog.backup-dlg [data-bk="devs"]');
-    check(`[${tag}] Geräte unbekannt aufgeklappt: Name, ID und betroffene Einstellungen`, await wait(`const l = [...r.querySelectorAll("dialog.backup-dlg .bk-dev")].map((e) => e.innerText.replace(/\\s+/g, " ")); return l.length === 2 && l.some((x) => x.includes("Altes Gerät") && x.includes("dev-zz") && x.includes(${JSON.stringify(L.partBattery)}) && x.includes(${JSON.stringify(L.partNotify)})) && l.some((x) => x.includes(${JSON.stringify(L.noName)}) && x.includes("dev-yy"))`));
+    // Kacheln antippbar: Detailfenster "Nicht übernommen" (Geräte mit Name, ID und betroffenen Einstellungen), "Geändert", "Unverändert"
+    check(`[${tag}] drei Kacheln antippbar, Zeile "Einträge" statt Einzelliste`, (await ev(`return r.querySelectorAll("dialog.backup-dlg button.bk-tile.go").length`)) === 3 && (await ev(`return r.querySelectorAll("dialog.backup-dlg .bk-dev").length`)) === 0 && !!(await handle('dialog.backup-dlg .bk-rw.go[data-kind="skipped"]')));
+    await tap('dialog.backup-dlg button.bk-tile[data-kind="skipped"]');
+    check(`[${tag}] Detailfenster "${L.detSkipped}": Geräte mit Name, ID und betroffenen Einstellungen`, await wait(`const l = [...r.querySelectorAll("dialog.backup-dlg .bk-dev")].map((e) => e.innerText.replace(/\\s+/g, " ")); return r.querySelector("dialog.backup-dlg h2").textContent === ${JSON.stringify(L.detSkipped)} && l.length === 2 && l.some((x) => x.includes("Altes Gerät") && x.includes("dev-zz") && x.includes(${JSON.stringify(L.partBattery)}) && x.includes(${JSON.stringify(L.partNotify)})) && l.some((x) => x.includes(${JSON.stringify(L.noName)}) && x.includes("dev-yy"))`));
     await f.evaluate(() => { window.__clip = null; Object.defineProperty(navigator, "clipboard", { value: { writeText: async (t) => { window.__clip = t; } }, configurable: true }); });
     await tap('dialog.backup-dlg [data-bk="report"]');
     check(`[${tag}] Bericht kopiert: enthält Namen, IDs und die Meldung`, await wait(`return !!window.__clip && window.__clip.includes("Altes Gerät") && window.__clip.includes("dev-zz") && window.__clip.includes("dev-yy") && !!r.querySelector("dialog.backup-dlg [role=status]")`));
-    await tap('dialog.backup-dlg [data-bk="devs"]');
-    check(`[${tag}] Geräteliste wieder zu`, await wait(`return r.querySelectorAll("dialog.backup-dlg .bk-dev").length === 0`));
+    await tap('dialog.backup-dlg [data-bk="back"]');
+    check(`[${tag}] Zurück zur Vorschau`, await wait(`return r.querySelector("dialog.backup-dlg h2").textContent === ${JSON.stringify(L.importTitle)} && !!r.querySelector('dialog.backup-dlg [data-bk="apply"]')`));
+    await tap('dialog.backup-dlg button.bk-tile[data-kind="changed"]');
+    check(`[${tag}] Detailfenster "${L.detChanged}": Bereiche, Alt → Neu, Geräte mit Namen, lesbare Bezeichnungen`, await wait(`const t = r.querySelector("dialog.backup-dlg .bk-detail").innerText; return r.querySelector("dialog.backup-dlg h2").textContent === ${JSON.stringify(L.detChanged)} && r.querySelectorAll("dialog.backup-dlg [data-bk-grp]").length >= 2 && t.includes(${JSON.stringify(L.keyBattery)}) && t.includes("25") && t.includes("Rauchmelder Flur") && !t.includes("battery_low")`));
+    await tap('dialog.backup-dlg [data-bk="back"]');
+    await tap('dialog.backup-dlg button.bk-tile[data-kind="same"]');
+    check(`[${tag}] Detailfenster "${L.detSame}" listet die gleichen Werte`, await wait(`return r.querySelector("dialog.backup-dlg h2").textContent === ${JSON.stringify(L.detSame)} && r.querySelectorAll("dialog.backup-dlg .bk-dv").length > 0`));
+    await tap('dialog.backup-dlg [data-bk="back"]');
+    await tap('dialog.backup-dlg .bk-rw.go[data-kind="changed"][data-sec="devices"]');
+    check(`[${tag}] Bereichszeile öffnet "${L.detChanged}" bei diesem Bereich`, await wait(`return r.querySelector("dialog.backup-dlg h2").textContent === ${JSON.stringify(L.detChanged)} && !!r.querySelector('dialog.backup-dlg [data-bk-grp="devices"]')`));
+    await tap('dialog.backup-dlg [data-bk="back"]');
     check(`[${tag}] Vorschau schreibt nichts`, (await p.evaluate(() => JSON.stringify([window.__opts.battery_low, window.__opts.notify_service]))) === before);
     check(`[${tag}] "Aktuelle Einstellungen vorher sichern" standardmässig an`, await ev(`return r.querySelector("dialog.backup-dlg [data-bk-before]").checked`));
     const vor = await download(() => tap('dialog.backup-dlg [data-bk="apply"]'));

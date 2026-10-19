@@ -804,6 +804,15 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .bk-badge.e { background: var(--dp-error-soft); color: var(--dp-error); }
 .bk-h { margin-top: 16px; font-size: 15px; }
 .bk-toggle { display: inline-block; margin-top: 4px; font-size: 13px; }
+.bk-tile.go { position: relative; border: 1px solid transparent; font: inherit; color: inherit; cursor: pointer; }
+.bk-tile.go::after { content: "›"; position: absolute; right: 8px; top: 4px; color: var(--dp-primary); font-size: 18px; line-height: 1; }
+.bk-tile.go:hover, .bk-tile.go:focus-visible { border-color: var(--dp-primary); outline: 0; }
+.bk-rw.go { cursor: pointer; }
+.bk-rw.go:hover, .bk-rw.go:focus-visible { background: var(--dp-subtle); outline: 0; border-radius: 10px; }
+.bk-dv { padding: 8px 0; border-top: 1px solid var(--dp-divider); font-size: 14px; overflow-wrap: anywhere; }
+.bk-dv small { display: block; margin-top: 1px; color: var(--dp-text2); font-size: 12.5px; }
+.bk-diff s { color: var(--dp-text3); } .bk-diff b { color: var(--dp-primary); font-weight: 500; }
+.bk-g .bk-h { margin-top: 12px; }
 .bk-devs { margin-top: 6px; padding: 2px 10px; border-radius: 12px; background: var(--dp-subtle); }
 .bk-dev { padding: 7px 0; border-top: 1px solid var(--dp-divider); }
 .bk-dev:first-child { border-top: 0; }
