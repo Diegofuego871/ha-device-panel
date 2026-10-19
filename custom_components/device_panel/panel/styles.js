@@ -164,7 +164,10 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 /* Das Logo oben links als blaues Herz (seit 2.92.0): schlägt im Takt der Linie, drei Schläge je Durchlauf (bei 20, 53 und 86 % der 1,85 s) */
 .tb-main > svg.ee-heart { overflow: visible; transform-origin: center; animation: ee-beat 1.85s ease-in-out 4 both; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--dp-primary) 60%, transparent)); }
 @keyframes ee-beat { 0%, 14% { transform: scale(1); } 20% { transform: scale(1.32); } 26% { transform: scale(1); } 30% { transform: scale(1.16); } 36%, 47% { transform: scale(1); } 53% { transform: scale(1.32); } 59% { transform: scale(1); } 63% { transform: scale(1.16); } 69%, 80% { transform: scale(1); } 86% { transform: scale(1.32); } 92% { transform: scale(1); } 96% { transform: scale(1.16); } 100% { transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) { .tb-main > svg.ee-heart { animation: none; } .ee-ecg { animation: ee-fade 7.4s linear both; animation-delay: var(--ee-delay, 0s); } .kt.ee .k svg { animation: none; } }
+/* Bei "Bewegung reduzieren" (Systemeinstellung, auf dem Desktop oft an) schlägt das Herz sanfter statt gar nicht (seit 2.99.1): der Nutzer löst es selbst
+   mit fünf Klicks aus, es dauert wenige Sekunden. Vorher stand es dort still und die Linie wurde nicht aufgedeckt. */
+@keyframes ee-beat-soft { 0%, 14% { transform: scale(1); } 20% { transform: scale(1.12); } 26% { transform: scale(1); } 30% { transform: scale(1.06); } 36%, 47% { transform: scale(1); } 53% { transform: scale(1.12); } 59% { transform: scale(1); } 63% { transform: scale(1.06); } 69%, 80% { transform: scale(1); } 86% { transform: scale(1.12); } 92% { transform: scale(1); } 96% { transform: scale(1.06); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .tb-main > svg.ee-heart { animation-name: ee-beat-soft; } .kt.ee .k svg { animation: none; } }
 .pchart .imark { position: absolute; top: -4px; bottom: 0; width: 0; border-left: 1.5px dashed var(--dp-error); }
 .pchart .imark::before { content: ""; position: absolute; top: -3px; left: -5px; width: 8px; height: 8px; border-radius: 50%;
   background: var(--dp-error); box-shadow: 0 0 0 3px var(--dp-error-soft); }

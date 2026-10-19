@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.99.1] - 2026-10-19
+
+The heart Easter egg also beats with "reduce motion" switched on.
+
+### Fixed
+
+- **Easter egg (five quick clicks on the logo):** with the system setting **"Reduce motion"** switched on (often the case on a desktop), the heart in the top left stood still and the line in the pulse chart was not drawn. The heart now beats **gently** (smaller) in that case, and the line is drawn as usual. Without that setting nothing changes.
+
 ## [2.99.0] - 2026-10-19
 
 Restore: the preview tiles open detail windows.
@@ -3975,6 +3983,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0
 [2.98.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.1
 [2.98.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.0

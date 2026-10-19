@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.99.1] - 2026-10-19
+
+Das Herz-Easter-Egg schlägt auch bei eingeschaltetem "Bewegung reduzieren".
+
+### Behoben
+
+- **Easter Egg (fünf schnelle Klicks aufs Logo):** bei eingeschalteter Systemeinstellung **"Bewegung reduzieren"** (auf dem Desktop oft der Fall) stand das Herz oben links still und die Linie im Puls-Diagramm wurde nicht aufgedeckt. Das Herz schlägt dann jetzt **sanft** (kleiner), die Linie wird wie sonst aufgedeckt. Ohne diese Einstellung ändert sich nichts.
+
 ## [2.99.0] - 2026-10-19
 
 Wiederherstellen: die Kacheln der Vorschau öffnen Detailfenster.
@@ -4076,6 +4084,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0
 [2.98.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.1
 [2.98.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.0

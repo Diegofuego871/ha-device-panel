@@ -56,6 +56,24 @@ for (const lang of ["de", "en"]) {
     await ctx.close();
   }
 }
+// "Bewegung reduzieren" (Systemeinstellung, auf dem Desktop oft an): das Herz oben links schlägt trotzdem (sanfter), die Linie wird aufgedeckt
+{
+  const ctx = await b.newContext({ viewport: { width: 1400, height: 1000 }, reducedMotion: "reduce" });
+  const p = await ctx.newPage();
+  await p.goto("http://127.0.0.1:8950/ha-sim.html?lang=de");
+  const f = await (await p.waitForSelector("#panel-frame")).contentFrame();
+  await f.waitForFunction(new Function(`return ${R}?.querySelectorAll(".dev").length > 1`), null, { timeout: 15000 });
+  const ev = (c) => f.evaluate(new Function(`const r=${R};` + c));
+  await f.evaluate(async ({ root }) => {
+    void root;
+    const svg = document.querySelector("device-panel").shadowRoot.querySelector(".tb-main > svg");
+    for (let i = 0; i < 5; i++) { svg.dispatchEvent(new MouseEvent("click", { bubbles: true, composed: true })); await new Promise((r) => setTimeout(r, 100)); }
+  }, { root: R });
+  await p.waitForTimeout(400);
+  check("[reduziert] Logo wird zum Herz und schlägt (sanfte Animation läuft)", await ev(`const s = r.querySelector(".tb-main > svg"); return s.classList.contains("ee-heart") && getComputedStyle(s).animationName === "ee-beat-soft" && s.getAnimations().length === 1`));
+  check("[reduziert] Linie im Diagramm wird aufgedeckt (Animation läuft)", await ev(`const e = r.querySelector(".ee-ecg"); return !!e && getComputedStyle(e).animationName.includes("ee-reveal")`));
+  await ctx.close();
+}
 await b.close();
 console.log(ok ? "ALL PASSED" : "SOME FAILED");
 process.exit(ok ? 0 : 1);
