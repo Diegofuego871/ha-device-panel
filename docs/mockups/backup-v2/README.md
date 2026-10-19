@@ -7,6 +7,7 @@ des Panels, erfundene Daten.
 | Bild | Inhalt |
 | --- | --- |
 | `1-detailfenster.png` | Heute, Variante A (Kachel öffnet ein eigenes Fenster) und das Fenster "Nicht übernommen" |
+| `3-geaendert.png` | Variante A: antippbare Bereichszeilen und das Fenster "Geändert" |
 | `2-alternativen.png` | B (Kachel filtert im selben Fenster), C (ein Fenster "Details" mit Reiterleiste, zwei Reiter gezeigt) |
 
 Neu rendern:

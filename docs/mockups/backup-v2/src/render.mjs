@@ -4,7 +4,7 @@ import { chromium } from "../../../../tests/panel/node_modules/playwright-core/i
 const dir = new URL("./", import.meta.url).pathname;
 const out = new URL("../", import.meta.url).pathname;
 const b = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
-for (const [src, name] of [["1", "1-detailfenster"], ["2", "2-alternativen"]]) {
+for (const [src, name] of [["1", "1-detailfenster"], ["2", "2-alternativen"], ["3", "3-geaendert"]]) {
   const p = await b.newPage({ viewport: { width: 1600, height: 900 }, deviceScaleFactor: 1.5 });
   await p.goto(`file://${dir}${src}.html`);
   const box = await p.evaluate(() => { const r = document.querySelector(".row").getBoundingClientRect(); return { w: Math.ceil(r.right + 24), h: Math.ceil(r.bottom + 24) }; });
