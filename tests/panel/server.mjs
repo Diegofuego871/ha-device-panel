@@ -36,13 +36,22 @@ function brand(url, res) {
   return true;
 }
 
+export const xssHits = [];
 export function startServer(port = 8950) {
   const server = createServer(async (req, res) => {
     if (brand(req.url, res)) return;
+    // Sicherheitsprüfung (PANEL_XSS=1): Treffer aus dem Simulator mitschreiben
+    if (req.url === "/__xss" && req.method === "POST") {
+      let body = "";
+      req.on("data", (c) => (body += c));
+      req.on("end", () => { xssHits.push(body); res.writeHead(204).end(); });
+      return;
+    }
     const file = resolve(req.url);
     try {
       if (!file) throw new Error("ungültiger Pfad");
-      const body = await readFile(file);
+      let body = await readFile(file);
+      if (process.env.PANEL_XSS && file.endsWith("ha-sim.html")) body = Buffer.from(String(body).replace("<head>", "<head><script>window.__XSS_MODE = 1;</script>"));
       res.writeHead(200, { "content-type": TYPES[extname(file)] || "application/octet-stream", "cache-control": "no-store" });
       res.end(body);
     } catch {

@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.99.2] - 2026-10-19
+
+Routine cards show entity names as text.
+
+### Security
+
+- **Routines, card in the list:** the line describing what the routine does ("Socket on, back off after 20 min.") put the **name of the entity** into the page as HTML instead of text. A name containing HTML (for example `"><img src=x onerror=…>`, set by an integration or a network device) could run code in the panel with the administrator's Home Assistant connection. The line is now escaped like all other texts. All other places were checked (see Internal).
+
+### Internal
+
+- - New check `tests/panel/xss-run.mjs` (simulator mode `PANEL_XSS=1`): every displayed text from the backend (names, areas, models, labels, messages and more) gets a piece of HTML appended that closes attributes (`"` and `'`) and inserts an image with `onerror`; all 107 suites run against it and every place where such HTML takes effect is reported with its context. Before the fix: 104 hits, all in the routine card; after it: none.
+
 ## [2.99.1] - 2026-10-19
 
 The heart Easter egg also beats with "reduce motion" switched on.
@@ -3983,6 +3995,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.99.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.2
 [2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0
 [2.98.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.1

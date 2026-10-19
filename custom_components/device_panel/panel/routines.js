@@ -503,7 +503,8 @@ export class RoutineUi {
       left = `<div class="time">${esc(rt.time || this.localTimeOf(rt))}${sub ? `<small>${esc(sub)}</small>` : ""}</div>`;
     }
     const sw = `<label class="switch"><input type="checkbox" data-rt="toggle" data-id="${esc(rt.id)}"${rt.enabled ? " checked" : ""} aria-label="${esc(rt.name)}"><span></span></label>`;
-    const what = `${this.sentenceOf(rt, name)}${rt.kind === "countdown" ? ` · ${t("rtOnceShort")}` : ""}${rt.push ? ` · 🔔 ${esc(rt.target ? this.niceTarget(rt.target) : t("rtTargetDefaultShort"))}` : ""}`;
+    // sentenceOf liefert Text (mit dem Namen der Entität), nicht HTML: hier escapen (seit 2.99.2, vorher als HTML eingesetzt)
+    const what = `${esc(this.sentenceOf(rt, name))}${rt.kind === "countdown" ? ` · ${esc(t("rtOnceShort"))}` : ""}${rt.push ? ` · 🔔 ${esc(rt.target ? this.niceTarget(rt.target) : t("rtTargetDefaultShort"))}` : ""}`;
     const days = rt.kind === "repeat" && (rt.repeat === "daily" || rt.repeat === "weekly")
       ? `<div class="rt-days">${WEEKDAYS.map((i) => `<i class="${rt.repeat === "daily" || (rt.weekdays || []).includes(i) ? "on" : ""}">${esc(this.wd(i))}</i>`).join("")}</div>`
       : "";

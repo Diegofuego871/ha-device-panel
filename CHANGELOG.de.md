@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.99.2] - 2026-10-19
+
+Routinen-Karten zeigen Entitätsnamen als Text.
+
+### Sicherheit
+
+- **Routinen, Karte in der Liste:** die Zeile, die beschreibt, was die Routine tut ("Steckdose einschalten, nach 20 Min. wieder aus"), setzte den **Namen der Entität** als HTML statt als Text in die Seite. Ein Name mit HTML darin (zum Beispiel `"><img src=x onerror=…>`, gesetzt von einer Integration oder einem Netzwerkgerät) konnte im Panel Code ausführen, mit der Home-Assistant-Verbindung des Administrators. Die Zeile wird jetzt wie alle anderen Texte escaped. Alle übrigen Stellen wurden geprüft (siehe Intern).
+
+### Intern
+
+- - Neue Prüfung `tests/panel/xss-run.mjs` (Simulator-Modus `PANEL_XSS=1`): jeder angezeigte Text aus dem Backend (Namen, Bereiche, Modelle, Labels, Meldungen und mehr) bekommt ein Stück HTML angehängt, das Attribute schliesst (`"` und `'`) und ein Bild mit `onerror` einfügt; alle 107 Suiten laufen dagegen, jede Stelle, an der solches HTML wirkt, wird mit ihrem Kontext gemeldet. Vor der Korrektur: 104 Treffer, alle in der Routinen-Karte; danach: keine.
+
 ## [2.99.1] - 2026-10-19
 
 Das Herz-Easter-Egg schlägt auch bei eingeschaltetem "Bewegung reduzieren".
@@ -4084,6 +4096,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.99.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.2
 [2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0
 [2.98.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.98.1

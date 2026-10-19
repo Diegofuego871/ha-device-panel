@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Sicherheitsprüfung gegen eingeschleustes HTML (2.99.2)
+
+- `cd tests/panel && PANEL_JOBS=6 node xss-run.mjs` (optional `PANEL_XSS_OUT=/tmp/x.txt` für den Kontext jeder Fundstelle): Simulator mit vergifteten Texten (`PANEL_XSS=1` setzt `window.__XSS_MODE` in `sim/ha-sim.html`; die Antworten von `callWS` bekommen an Anzeige-Schlüsseln `"'><img src=x onerror=top.__xssHit(this)>` angehängt). Die Prüfungen der Suiten schlagen dabei erwartungsgemäss fehl, gezählt werden nur Treffer (`/__xss` am Server). Nach jeder Änderung an Texten, die als HTML gebaut werden, laufen lassen; Erwartung: "Keine Treffer".
+- Regel: `escape()`/`esc()` ersetzt `& < > " '`; Hilfsfunktionen, die Text liefern (z. B. `sentenceOf`, `condText`, `whenText`), immer erst beim Einsetzen escapen.
+
 ## Stand (2.98.0, Einstellungen sichern und wiederherstellen)
 
 - Wunsch des Nutzers: Export und Import aller Einstellungen, Kapitel unter "Startseite" in Panel › Allgemein (Mockups `docs/mockups/backup-v1/`, Wahl: Kapitel A, Vorschau A, mit Rückgängig). Entscheide: Routinen und Magic Push als eigene Auswahl (standardmässig aus), fehlendes Push-Ziel übernehmen mit Warnung, Vorschau mit Bestätigung, ohne Zugangsdaten und Tokens.

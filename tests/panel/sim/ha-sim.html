@@ -1812,6 +1812,26 @@
       return {};
     },
   };
+  // Sicherheitsprüfung gegen eingeschleustes HTML (XSS): mit PANEL_XSS=1 (Server) oder ?xss=1 bekommt jeder angezeigte Text aus dem
+  // Backend (Namen, Bereiche, Modelle, Labels, Meldungstexte) ein Stück HTML angehängt, das Attribute schliesst ("') und ein Bild mit
+  // onerror einfügt. Wird es irgendwo als HTML statt als Text eingesetzt, meldet onerror den Treffer an den Server (/__xss).
+  if (window.__XSS_MODE || params.get("xss")) {
+    const P = `"'><img src=x onerror=top.__xssHit(this)>`;
+    const KEYS = new Set(["name", "name_by_user", "names", "area", "area_name", "model", "manufacturer", "integration_name", "title", "friendly_name", "label",
+      "sw_version", "hw_version", "via", "via_name", "original_name", "entity_name", "device_name", "text", "message", "summary", "notes", "floor", "floor_name",
+      "hub", "hub_name", "network", "network_name", "role", "detail", "reason", "what", "old", "new", "device", "assessment", "answer", "question", "release_notes",
+      "body", "note", "description", "unit", "unit_of_measurement", "source", "error", "status_text", "latest_version", "installed_version", "version"]);
+    const poison = (v, k) => {
+      if (Array.isArray(v)) return v.map((x) => poison(x, k));
+      if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([kk, vv]) => [kk, poison(vv, kk)]));
+      return typeof v === "string" && KEYS.has(k) && !v.includes(P) ? v + P : v;
+    };
+    window.__xssHits = 0;
+    window.__xssHit = (el) => { window.__xssHits++; const ctx = el && el.parentElement ? el.parentElement.outerHTML.slice(0, 600) : ""; fetch("/__xss", { method: "POST", body: ctx }).catch(() => {}); };
+    const ha = document.querySelector("home-assistant").hass;
+    const orig = ha.callWS;
+    ha.callWS = async (msg) => poison(await orig(msg), "");
+  }
   document.getElementById("panel-frame").src = "/device_panel/panel/panel.html?v=1";
 </script>
 </body>
