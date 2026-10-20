@@ -3,11 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.105.0, Grösse der Protokolle einstellbar)
+## Stand (2.105.1, Zurück unten, Kapitelreihenfolge; 2.105.0 Grösse der Protokolle einstellbar)
 
 - Wunsch des Nutzers: eine Einstellung für die Grösse der Protokolle. Entschieden: zwei getrennte Gruppen, je MB und Zahl der Einträge. Meldungen/Routinen: 30 MB gesamt, 5000 Einträge je Meldung oder Routine; Panel-Protokoll: 10 MB, 4000 Einträge (vorher fest 500). Keine Zeitgrenze mehr (die 12 Monate aus 2.104.0 entfallen). Bei Überschreitung fällt der älteste Eintrag weg (bei den MB über alle Meldungen/Routinen der älteste, Variante A).
 - Optionen `protocol_max_mb`, `protocol_max_entries`, `log_max_mb`, `log_max_entries` (`const.py`, `INT_RANGES`, `options_api.INT_OPTIONS`; nicht im Optionsdialog von HA wie die Status-Minuten). `Protocol.enforce()` (Zahl je Eintrag, dann Gesamtgrösse; `_bytes` je Meldung) und `activity.enforce()` (`log.bytes`); `__init__._async_options_updated` kürzt nach dem Speichern sofort. Grösse = Länge des gespeicherten JSON je Eintrag.
-- Panel: Kapitel "Protokolle" ganz unten in Panel › Allgemein (`protoChapter` in `_settingsBodyHtml`, Schlüssel in `SUB_TAB_KEYS.pstart`), Belegung über `device_panel/protocol_usage` (`_loadProtocolUsage`), Rückfrage vor dem Kürzen (`_protocolCuts`, `st.cutAsk`/`cutOk`, `data-set="cut-yes|cut-no"`). Protokollfenster: Zeitraum "Alle" (ohne `since`, der Server nimmt den ältesten Eintrag), Diagramm höchstens 399 Wochen.
+- Panel: Kapitel "Protokolle" in Panel › Allgemein, vor "Sichern und wiederherstellen" (das ganz am Schluss steht, Wunsch des Nutzers) (`protoChapter` in `_settingsBodyHtml`, Schlüssel in `SUB_TAB_KEYS.pstart`), Belegung über `device_panel/protocol_usage` (`_loadProtocolUsage`), Rückfrage vor dem Kürzen (`_protocolCuts`, `st.cutAsk`/`cutOk`, `data-set="cut-yes|cut-no"`). Protokollfenster: Zeitraum "Alle" (ohne `since`, der Server nimmt den ältesten Eintrag), Diagramm höchstens 399 Wochen.
 - Tests: `test_protocol` (Grenzen, Kürzen), `test_activity` (`test_limits_by_setting`), `test_update_check`, Suite `protocollimits`.
 
 ## Stand (2.104.0, Protokoll je Meldung und Routine; nicht veröffentlicht, enthalten in 2.105.0)

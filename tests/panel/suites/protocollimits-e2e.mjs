@@ -1,4 +1,4 @@
-// Einstellungen der Protokolle (2.105.0): Panel › Allgemein, neues Kapitel "Protokolle" ganz unten (nach "Sichern und Wiederherstellen"):
+// Einstellungen der Protokolle (2.105.0): Panel › Allgemein, neues Kapitel "Protokolle" ganz unten (vor "Sichern und Wiederherstellen"):
 // Grösse in MB und Einträge, je für Meldungen/Routinen und für das Panel-Protokoll, mit der Belegung. Zahlen ausserhalb des Bereichs
 // sperren "Speichern"; eine tiefere Grenze als die Belegung fragt vor dem Speichern (Kürzen ist endgültig). Dazu im Protokoll-Fenster der
 // Zeitraum "Alle" (ab dem ältesten Eintrag, auch über 12 Monate). Deutsch und Englisch, Desktop und Handy, echte Klicks und Taps.
@@ -56,8 +56,8 @@ for (const lang of ["de", "en"]) {
     await wait(`return !!r.querySelector("${S} .set-sec")`);
     await tap('[data-set="section"][data-id="updates"]');
     await wait(`return !!r.querySelector('${S} input[data-opt="protocol_max_mb"]')`);
-    check(`[${tag}] Panel › Allgemein: Kapitel "${T.chapter}" mit vier Feldern`, await ev(`const t = [...r.querySelectorAll("${S} .set-title")].map((e) => e.textContent.trim()); return t.at(-1) === ${JSON.stringify(T.chapter)} && ${JSON.stringify(KEYS)}.every((k) => !!r.querySelector('${S} input[data-opt="' + k + '"]'))`));
-    check(`[${tag}] ganz unten: nach "Sichern und Wiederherstellen"`, await ev(`const t = [...r.querySelectorAll("${S} .set-title")].map((e) => e.textContent.trim()); return t.length >= 3 && t.indexOf(${JSON.stringify(T.chapter)}) === t.length - 1`));
+    check(`[${tag}] Panel › Allgemein: Kapitel "${T.chapter}" mit vier Feldern`, await ev(`const t = [...r.querySelectorAll("${S} .set-title")].map((e) => e.textContent.trim()); return t.at(-2) === ${JSON.stringify(T.chapter)} && ${JSON.stringify(KEYS)}.every((k) => !!r.querySelector('${S} input[data-opt="' + k + '"]'))`));
+    check(`[${tag}] vor "Sichern und Wiederherstellen" (das steht ganz am Schluss)`, await ev(`const t = [...r.querySelectorAll("${S} .set-title")].map((e) => e.textContent.trim()); return t.length >= 3 && t.indexOf(${JSON.stringify(T.chapter)}) === t.length - 2`));
     check(`[${tag}] Standard: 30 MB, 5000 Einträge, 10 MB, 4000 Einträge`, await ev(`return ${JSON.stringify(KEYS)}.map((k) => r.querySelector('${S} input[data-opt="' + k + '"]').value).join() === "30,5000,10,4000"`));
     check(`[${tag}] Einheiten MB und Einträge am Feld`, await ev(`const u = [...r.querySelectorAll('${S} input[data-opt="protocol_max_mb"], ${S} input[data-opt="protocol_max_entries"]')].map((i) => i.parentElement.querySelector(".unit").textContent); return u[0] === "MB" && /Einträge|entries/.test(u[1])`));
     check(`[${tag}] Belegung steht in den Zeilen (4 MB / 40 Einträge, 2 MB / 300 Einträge, grösstes Protokoll 12)`, await wait(`const t = r.querySelector("${S} .set-sec-body").textContent; return t.includes("4") && t.includes("40") && t.includes("12") && t.includes("2") && t.includes("300") && t.includes(${JSON.stringify(T.used)})`));

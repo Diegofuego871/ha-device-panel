@@ -1685,6 +1685,7 @@ input.mg-pill { cursor: text; }
 .mg-badge { flex: none; min-width: 22px; height: 22px; padding: 0 7px; box-sizing: border-box; display: grid; place-items: center; border-radius: 99px; background: var(--dp-primary-soft); color: var(--dp-primary); font-size: 12px; font-weight: 600; }
 .mg-dcard .mg-card { margin: 0; padding: 12px 14px 12px 12px; border-radius: 0; background: none; border-top: 1px solid var(--dp-divider); }
 .mg-dfoot { padding: 8px 14px 10px 56px; border-top: 1px solid var(--dp-divider); font-size: 13px; }
+.mg-dfoot { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 24px; }
 .mg-devic { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--dp-subtle); color: var(--dp-text2); }
 .mg-devic.off { background: var(--dp-error-soft); color: var(--dp-error); }
 .mg-devoff { flex: none; padding: 1px 8px; border-radius: 99px; background: var(--dp-error-soft); color: var(--dp-error); font-size: 11.5px; font-weight: 500; }
@@ -2146,6 +2147,8 @@ button.pr-row:not(:disabled):hover { background: var(--dp-hover); }
 .pr-st.in { background: var(--dp-primary-soft); color: var(--dp-primary); }
 .pr-more { margin: 10px auto 0; display: flex; }
 [data-pr-foot] { flex-wrap: wrap; row-gap: 8px; }
+.pr-count { margin-left: 4px; }
+@media (max-width: 700px) { .pr-count { display: none; } }
 [data-pr-foot] .lg-btn { white-space: nowrap; }
 [data-pr-foot] .lg-btn:disabled { opacity: .45; cursor: default; }
 .pr-note { margin: 12px 2px 0; font-size: 12px; color: var(--dp-text2); }

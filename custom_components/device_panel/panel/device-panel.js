@@ -8733,7 +8733,7 @@ class DevicePanel extends HTMLElement {
       updates:
         subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"]], panelTab) +
         (panelTab === "pstart"
-          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + this._backupChapterHtml(changes.size > 0) + protoChapter()
+          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + protoChapter() + this._backupChapterHtml(changes.size > 0)
           : row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
             checkTimeRow() +
             autoUpdateRow() +

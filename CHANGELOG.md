@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.105.1] - 2026-10-20
+
+Log windows: "Back" at the bottom; settings chapters in a new order; more room in the device cards.
+
+### Changed
+
+- **Log windows (all views):** "Back" sits at the bottom left, in the footer, instead of the cross at the top right. In the trace, "Back" still goes to the table. On the phone the count of entries in the footer is hidden to make room.
+- **Settings, Panel › General:** the chapter "Back up and restore" is the last one again; "Logs" comes before it.
+- **Overviews, foot of a device card:** "Open device" and "Log of the device" have more room between them.
+
+### Internal
+
+- Suites `protocol`, `protocollimits` and `backup` adjusted.
+
 ## [2.105.0] - 2026-10-20
 
 The size of the logs is set in the settings; the log window can go back as far as there are entries.
@@ -4119,6 +4133,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.105.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.1
 [2.105.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.0
 [2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0
 [2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1

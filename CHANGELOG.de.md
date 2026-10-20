@@ -7,6 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.105.1] - 2026-10-20
+
+Protokollfenster: "Zurück" unten; Kapitel der Einstellungen in neuer Reihenfolge; mehr Platz in den Gerätekarten.
+
+### Geändert
+
+- **Protokollfenster (alle Ansichten):** "Zurück" steht unten links im Fuss statt des Kreuzes oben rechts. Im Trace führt "Zurück" weiter zur Tabelle. Auf dem Handy ist die Zahl der Einträge im Fuss ausgeblendet, damit der Platz reicht.
+- **Einstellungen, Panel › Allgemein:** das Kapitel "Sichern und wiederherstellen" steht wieder ganz am Schluss; "Protokolle" davor.
+- **Übersichten, Fuss einer Gerätekarte:** "Gerät öffnen" und "Protokoll des Geräts" haben mehr Abstand.
+
+### Intern
+
+- Suiten `protocol`, `protocollimits` und `backup` angepasst.
+
 ## [2.105.0] - 2026-10-20
 
 Die Grösse der Protokolle ist in den Einstellungen wählbar; das Protokollfenster geht so weit zurück, wie es Einträge gibt.
@@ -4220,6 +4234,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.105.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.1
 [2.105.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.0
 [2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0
 [2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1

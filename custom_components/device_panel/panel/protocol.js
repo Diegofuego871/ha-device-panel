@@ -217,8 +217,7 @@ export class ProtocolUi {
     const t = (k, ...a) => this.t(k, ...a);
     const icon = s.kind === "magic" ? "bell" : "timer";
     dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${this.h.mdi(icon, 28)}</span>
-        <div class="dlg-title"><h2>${this.esc(t("prTitle"))}</h2><div class="dlg-sub" data-pr-sub></div></div>
-        <button type="button" class="dlg-close" data-pr="close" title="${this.esc(t("close"))}" aria-label="${this.esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>
+        <div class="dlg-title"><h2>${this.esc(t("prTitle"))}</h2><div class="dlg-sub" data-pr-sub></div></div></div>
       <div class="lg-bar" data-pr-bar>
         <div data-pr-ranges></div>
         <div class="pr-dates" data-pr-dates></div>
@@ -473,7 +472,7 @@ export class ProtocolUi {
     }
     const d = s.data;
     const count = s.loading && !d ? t("prLoading") : d ? t("prShown", d.entries.length, this.num(d.total)) : "";
-    foot.innerHTML = `<span>${this.esc(count)}</span><span class="sp"></span>
+    foot.innerHTML = `<button type="button" class="lg-btn" data-pr="close">${mdi("arrowLeft", 16)}<span>${this.esc(t("prBack"))}</span></button><span class="pr-count">${this.esc(count)}</span><span class="sp"></span>
       <button type="button" class="lg-btn" data-pr="copy"${d?.entries?.length ? "" : " disabled"}>${mdi("copy", 16)}<span>${this.esc(s.flash || t("prCopyText"))}</span></button>`;
   }
 
