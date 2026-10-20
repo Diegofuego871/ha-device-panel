@@ -246,6 +246,10 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
     # Ruhezeit: geänderte Zeiten oder Auswahl stellen Gehaltenes zu, wenn es nicht mehr gehalten wird.
     if (quiet_manager := hass.data.get(DATA_QUIET)) is not None:
         await quiet_manager.async_options_changed()
+    # Grösse der Protokolle (seit 2.105.0): eine tiefere Grenze kürzt sofort
+    activity.apply_limits(hass)
+    if (protocol_log := hass.data.get(DATA_PROTOCOL)) is not None:
+        protocol_log.enforce()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

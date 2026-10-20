@@ -7,6 +7,27 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.105.0] - 2026-10-20
+
+The size of the logs is set in the settings; the log window can go back as far as there are entries.
+
+Includes the changes from 2.104.0 and 2.103.0.
+
+### Added
+
+- **Settings, Panel › General, new chapter "Logs"** (at the very bottom): how much the logs keep, as a **size in MB** and a **number of entries**, separately for **messages and routines** (default **30 MB**, **5000 entries per message or routine**) and for the **panel log** (default **10 MB**, **4000 entries**; before it was fixed at 500). The current use is shown next to each field. When a limit is reached, the **oldest entry** drops (for the MB of messages and routines the oldest over all of them). A **lower limit cuts at once**; if existing entries would be lost, the settings ask first ("Cut and save"), because it cannot be undone. The size is that of the stored JSON.
+- **Log window:** a new period **"All"** (from the oldest entry, also beyond 12 months); the chart goes per week and shows at most the newest 399 weeks. "Custom" after "All" starts with the dates of the oldest entry and today.
+- New command `device_panel/protocol_usage` (administrators only) for the use shown in the settings.
+
+### Changed
+
+- **No time limit any more:** the 12 months of 2.104.0 are gone; entries stay as long as the size and the number allow. The note below the log table names the limits in force.
+- **Panel log (activity log):** its limit is no longer a fixed 500 entries but the two settings; `device_panel/get_log` reports the number as `max`.
+
+### Internal
+
+- `protocol.Protocol.enforce()` / `usage()` / `limits()`, `activity.enforce()` / `apply_limits()` / `usage()`; the options listener applies the limits after saving. Options `protocol_max_mb`, `protocol_max_entries`, `log_max_mb`, `log_max_entries` (ranges 1–200, 100–100000, 1–200, 100–20000). Tests: `test_protocol`, `test_activity`, `test_update_check` adjusted; new suite `protocollimits`.
+
 ## [2.104.0] - 2026-10-20
 
 A log for every Magic Push message and every routine, with a chart and, for routines, a copyable trace.
@@ -24,6 +45,8 @@ Includes the changes from 2.103.0.
 
 - New `protocol.py` (storage, limits, query with key figures and buckets), `protocol_ws.py` (`device_panel/protocol_get`, administrators only), `panel/protocol.js` (window `dialog.proto-dlg`, same shell as the activity log). `push.async_push(outcome=…)` reports held back / sent / reason; `routines._async_call(trace=…)` records the steps. The log stays in memory over a reload of the integration (like the activity log), so entries waiting to be written are not lost when settings are saved.
 - Tests: `tests/test_protocol.py`, new suite `protocol`; simulator command `device_panel/protocol_get`.
+
+Not released; included in 2.105.0.
 
 ## [2.103.0] - 2026-10-20
 
@@ -4096,7 +4119,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.104.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.104.0
+[2.105.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.0
 [2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0
 [2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0

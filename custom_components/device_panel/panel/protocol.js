@@ -6,14 +6,16 @@
  * eine Zeile den Inhalt der Meldung, bei Routinen öffnet sie den Trace (jeder Schritt des Laufs, als Text kopierbar).
  *
  * Alle Zahlen, das Diagramm und die Tabelle kommen von device_panel/protocol_get (protocol.py); das Panel rechnet nichts nach.
- * Der Server beschneidet auf 366 Tage und 4000 Einträge je Meldung oder Routine.
+ * Der Server beschneidet nach den Einstellungen "Protokolle" (Panel › Allgemein): Grösse in MB und Einträge je Meldung oder Routine.
  */
 
+// "all": ab dem ältesten Eintrag (der Server kennt seit 2.105.0 keine Zeitgrenze mehr, nur noch Grösse und Zahl der Einträge)
 const RANGES = [
   ["7d", 7],
   ["30d", 30],
   ["6m", 183],
   ["12m", 366],
+  ["all", 0],
 ];
 const PAGE = 100;
 const LIMIT_MAX = 500;
@@ -161,6 +163,11 @@ export class ProtocolUi {
   span() {
     const s = this.s;
     const now = this.now();
+    if (s.range === "all") {
+      // Ohne Anfang: der Server nimmt den ältesten Eintrag; die Daten für "Eigener" kommen aus der letzten Antwort
+      const first = s.data?.oldest ?? now;
+      return { since: null, until: now, dates: { from: isoDay(first), to: isoDay(now) } };
+    }
     if (s.range === "own" && s.own) {
       const from = dayStart(s.own.from);
       const toStart = dayStart(s.own.to);
@@ -179,7 +186,7 @@ export class ProtocolUi {
     if (!s) return;
     const seq = ++s.seq;
     const { since, until } = this.span();
-    const msg = { type: "device_panel/protocol_get", kind: s.kind, since, until, limit: s.limit, filter: s.filter === "all" ? null : s.filter, q: s.q.trim() };
+    const msg = { type: "device_panel/protocol_get", kind: s.kind, ...(since === null ? {} : { since }), until, limit: s.limit, filter: s.filter === "all" ? null : s.filter, q: s.q.trim() };
     const wholeDevice = !s.itemId && !s.item;
     if (s.itemId || s.item) msg.item_id = s.itemId || s.item;
     else msg.device_id = s.deviceId;
@@ -251,7 +258,7 @@ export class ProtocolUi {
     const dlg = this.dlg;
     const t = (k, ...a) => this.t(k, ...a);
     if (!s || !dlg) return;
-    const labels = { "7d": "prR7d", "30d": "prR30d", "6m": "prR6m", "12m": "prR12m" };
+    const labels = { "7d": "prR7d", "30d": "prR30d", "6m": "prR6m", "12m": "prR12m", all: "prRAll" };
     const tabs = RANGES.map(([id]) => `<button type="button" class="sub-tab${s.range === id ? " on" : ""}" data-set="pr-range" data-pr="range" data-v="${id}">${this.esc(t(labels[id]))}</button>`);
     tabs.push(`<button type="button" class="sub-tab${s.range === "own" ? " on" : ""}" data-set="pr-range" data-pr="range" data-v="own">${this.esc(t("prROwn"))}</button>`);
     const ranges = dlg.querySelector("[data-pr-ranges]");
@@ -443,8 +450,7 @@ export class ProtocolUi {
     }
     const notes = [];
     if (d.oldest) notes.push(t("prOldest", this.host._fmtDateY(d.oldest)));
-    notes.push(t("prKeep", d.retention_days, this.num(d.max_entries)));
-    if (d.capped) notes.push(t("prCapped"));
+    notes.push(t("prKeep", this.num(d.max_mb), this.num(d.max_entries)));
     const err = s.error ? `<div class="dlg-error">${this.esc(t("prError", s.error))}</div>` : "";
     body.innerHTML = `${err}<div class="pr-kpis">${this.kpis(d)}</div>${this.chart(d)}
       <div class="pr-table" role="list">${rows ? this.head() + rows : ""}</div>${empty}${more}<p class="pr-note">${this.esc(notes.join(" "))}</p>`;

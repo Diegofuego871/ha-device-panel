@@ -1,7 +1,7 @@
 """
 Protokoll der Integration (seit 1.38.0, Knopf "Protokoll" im Panel): zeigt, was die Meldungen
 entscheiden und warum etwas nicht kam ("Lademeldung aus", "kein Push-Ziel", "stumm" …). Die
-Einträge liegen in einem Ringspeicher (die letzten MAX_ENTRIES). Seit 2.47.0 bleiben sie über
+Einträge liegen in einem Ringspeicher (seit 2.105.0 begrenzt durch die Einstellungen log_max_entries und log_max_mb, vorher fest 500). Seit 2.47.0 bleiben sie über
 Neustarts von Home Assistant erhalten (Wunsch des Nutzers: Debug-Einträge sollen einen Neustart
 überstehen, sonst fehlt genau der Verlauf davor); sie liegen mit dem Debug-Schalter in einer
 kleinen Datei, verzögert geschrieben. Debug-Einträge
@@ -18,6 +18,7 @@ unverändert; Zugangsdaten gibt es hier nie.
 
 from __future__ import annotations
 
+import json
 import logging
 import time
 from collections import deque
@@ -28,11 +29,10 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from .const import DATA_ACTIVITY, DOMAIN, STORAGE_VERSION
+from .const import CONF_LOG_ENTRIES, CONF_LOG_MB, DATA_ACTIVITY, DEFAULT_LOG_ENTRIES, DEFAULT_LOG_MB, DOMAIN, STORAGE_VERSION
 
 _LOGGER = logging.getLogger(__name__)
 
-MAX_ENTRIES = 500
 # So lange bleibt der Debug-Schalter an (auch über Neustarts), danach schaltet er sich aus.
 DEBUG_HOURS = 48
 STORE_KEY = f"{DOMAIN}.debug"
@@ -277,7 +277,9 @@ class ActivityLog:
     """Ringspeicher der Einträge; ein Eintrag ist ein Dict (siehe entry())."""
 
     def __init__(self) -> None:
-        self.entries: deque[dict[str, Any]] = deque(maxlen=MAX_ENTRIES)
+        self.entries: deque[dict[str, Any]] = deque()
+        # Grösse der Einträge im gespeicherten JSON in Byte
+        self.bytes = 0
         self.debug = False
         # Zeitpunkt (Unix), zu dem der Debug-Schalter ausläuft; None bei ausgeschaltetem Schalter
         self.debug_until: float | None = None
@@ -323,8 +325,48 @@ def record(hass: HomeAssistant, severity: str, cat: str, code: str, name: str = 
         "device_id": device_id,
     }
     log.entries.append(entry)
+    log.bytes += _size(entry)
+    enforce(hass)
     _save(hass)
     _LOGGER.log(_PY_LEVEL[severity], "%s: %s%s", name or cat, text, f" ({entry['detail']})" if entry["detail"] else "")
+
+
+def _size(entry: dict[str, Any]) -> int:
+    return len(json.dumps(entry, ensure_ascii=False, separators=(",", ":")).encode()) + 1
+
+
+def limits(hass: HomeAssistant) -> tuple[int, int]:
+    """(Obergrenze in Byte, Obergrenze in Einträgen) nach den Einstellungen; ohne Eintrag der Integration die Standards."""
+    from .options_api import effective  # noqa: PLC0415 (options_api meldet seinerseits hierher)
+
+    try:
+        opts = effective(hass)
+        return int(opts[CONF_LOG_MB]) * 1024 * 1024, int(opts[CONF_LOG_ENTRIES])
+    except Exception:  # noqa: BLE001 - das Protokoll darf nie an den Einstellungen scheitern
+        return DEFAULT_LOG_MB * 1024 * 1024, DEFAULT_LOG_ENTRIES
+
+
+def enforce(hass: HomeAssistant) -> bool:
+    """Grenzen anwenden: die ältesten Einträge fallen weg, bis Zahl und Grösse passen. True, wenn etwas wegfiel."""
+    log = get(hass)
+    max_bytes, max_entries = limits(hass)
+    dropped = False
+    while log.entries and (len(log.entries) > max_entries or log.bytes > max_bytes):
+        log.bytes -= _size(log.entries.popleft())
+        dropped = True
+    return dropped
+
+
+def apply_limits(hass: HomeAssistant) -> None:
+    """Nach dem Ändern der Einstellung: sofort kürzen und das Gekürzte merken."""
+    if enforce(hass):
+        _save(hass)
+
+
+def usage(hass: HomeAssistant) -> dict[str, int]:
+    """Belegung für die Einstellungen: Byte und Einträge."""
+    log = get(hass)
+    return {"bytes": max(0, log.bytes), "entries": len(log.entries)}
 
 
 def text(hass: HomeAssistant, code: str, **args: Any) -> str:
@@ -342,7 +384,7 @@ def snapshot(hass: HomeAssistant) -> dict[str, Any]:
         "debug": log.debug,
         "debug_until": log.debug_until if log.debug else None,
         "since": log.since,
-        "max": MAX_ENTRIES,
+        "max": limits(hass)[1],
     }
 
 
@@ -404,7 +446,7 @@ async def async_restore(hass: HomeAssistant) -> None:
         return
     log.restored = True
     data = await _store(hass, log).async_load() or {}
-    _restore_entries(log, data.get("entries"))
+    _restore_entries(hass, log, data.get("entries"))
     until = data.get("debug_until")
     if isinstance(until, (int, float)) and until > time.time():
         log.debug = True
@@ -414,8 +456,8 @@ async def async_restore(hass: HomeAssistant) -> None:
         record(hass, "info", "system", "debug_restored", "Device Panel", until=stamp)
 
 
-def _restore_entries(log: ActivityLog, stored: Any) -> None:
-    """Gemerkte Einträge vor die seit dem Start aufgezeichneten setzen (höchstens MAX_ENTRIES, die neuesten)."""
+def _restore_entries(hass: HomeAssistant, log: ActivityLog, stored: Any) -> None:
+    """Gemerkte Einträge vor die seit dem Start aufgezeichneten setzen (die neuesten, innerhalb der Grenzen)."""
     if not isinstance(stored, list):
         return
     keys = {"at", "level", "cat", "title", "text", "detail", "device_id"}
@@ -426,9 +468,12 @@ def _restore_entries(log: ActivityLog, stored: Any) -> None:
     ]
     if not old:
         return
-    merged = sorted([*old, *log.entries], key=lambda e: e["at"])[-MAX_ENTRIES:]
+    merged = sorted([*old, *log.entries], key=lambda e: e["at"])
     log.entries.clear()
     log.entries.extend(merged)
+    log.bytes = sum(_size(e) for e in merged)
+    enforce(hass)
+    merged = list(log.entries) or merged
     # "Seit" nennt den Beginn des Verlaufs, nicht den letzten Start
     log.since = min(log.since, merged[0]["at"])
 
@@ -441,5 +486,7 @@ async def async_forget(hass: HomeAssistant) -> None:
 
 
 def clear(hass: HomeAssistant) -> None:
-    get(hass).entries.clear()
+    log = get(hass)
+    log.entries.clear()
+    log.bytes = 0
     _save(hass)

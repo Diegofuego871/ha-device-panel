@@ -555,7 +555,7 @@ const SUB_TAB_KEYS = {
   devs: ["exclude_devices"],
   devset: ["reset_connection", "reset_signal", "reset_offline", "reset_notify", "reset_battery", "reset_charge"],
   chips: ["hide_chips", "hide_connections", "connection_order", "chip_order"],
-  pstart: ["start_panel"],
+  pstart: ["start_panel", "protocol_max_mb", "protocol_max_entries", "log_max_mb", "log_max_entries"],
   pupdates: ["update_check", "update_check_time", "update_notify", "notify_service_panelupdate", "prerelease", "auto_update"],
 };
 
@@ -5716,6 +5716,7 @@ class DevicePanel extends HTMLElement {
       // Vorabversionen (ganze Instanz) und Startseite (Benutzer) gelten wie alles andere erst mit "Speichern".
       st.extraBase = this._extraBase();
       st.extra = { ...st.extraBase };
+      if (!view) this._loadProtocolUsage(st);
     } catch (err) {
       if (this._settings !== st) return;
       st.error = errText(err);
@@ -8687,6 +8688,22 @@ class DevicePanel extends HTMLElement {
           return `<button type="button" role="tab" class="sub-tab${on ? " on" : ""}${mark}" data-set="subtab" data-group="${group}" data-key="${id}" aria-selected="${on}">${escape(t(key))}<span class="sub-n"${n ? "" : " hidden"}>${n}</span></button>`;
         })
         .join("")}</div>`;
+    // Kapitel "Protokolle" (seit 2.105.0) ganz unten in Panel › Allgemein: Grösse und Zahl der Einträge der beiden Protokolle
+    const protoChapter = () => {
+      const u = st.usage;
+      const used = (x) => (x ? t("usedText", this._fmtMb(x.bytes), (x.entries || 0).toLocaleString(this._locale())) : "");
+      const cut = this._protocolCuts();
+      const ask = st.cutAsk && cut.length
+        ? `<div class="opt-warn cut-ask">${mdi("alert", 14)}<span>${escape(t("cutAsk", cut.join(", ")))}</span></div>
+           <div class="bk-btns"><button type="button" class="dlg-btn" data-set="cut-no">${escape(t("cutNo"))}</button><button type="button" class="dlg-btn danger" data-set="cut-yes">${escape(t("cutYes"))}</button></div>`
+        : "";
+      return ttl("ttlLogs") + `<div class="opt-short bk-note">${escape(t("logsNote"))}</div>` +
+        row("protocol_max_mb", t("optProtoMb"), num("protocol_max_mb", t("unitMb"), t("optProtoMb")), t("optProtoMbShort", used(u?.protocol)), null) +
+        row("protocol_max_entries", t("optProtoEntries"), num("protocol_max_entries", t("unitEntries"), t("optProtoEntries")), t("optProtoEntriesShort", u?.protocol?.max_item || 0), null) +
+        row("log_max_mb", t("optLogMb"), num("log_max_mb", t("unitMb"), t("optLogMb")), t("optLogMbShort", used(u?.log)), null) +
+        row("log_max_entries", t("optLogEntries"), num("log_max_entries", t("unitEntries"), t("optLogEntries")), t("optLogEntriesShort", u?.log?.entries || 0), null) +
+        ask;
+    };
     const fields = {
       monitor: this._monitorHtml(d, changes, errors, ui),
       // Seit 1.0.0 (docs/mockups/content-v1, A): was bestimmt, welche Geräte
@@ -8716,7 +8733,7 @@ class DevicePanel extends HTMLElement {
       updates:
         subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"]], panelTab) +
         (panelTab === "pstart"
-          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + this._backupChapterHtml(changes.size > 0)
+          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + this._backupChapterHtml(changes.size > 0) + protoChapter()
           : row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
             checkTimeRow() +
             autoUpdateRow() +
@@ -8828,6 +8845,13 @@ class DevicePanel extends HTMLElement {
       const action = btn.dataset.set;
       if (action === "close") this._requestCloseSettings();
       else if (action === "save") this._saveSettings();
+      else if (action === "cut-no") {
+        st.cutAsk = false;
+        this._renderSettings();
+      } else if (action === "cut-yes") {
+        st.cutOk = true;
+        this._saveSettings();
+      }
       else if (action === "tab" || action === "goto" || action === "integ" || action === "ifilter") {
         // Reiter, Sprung aus Übersicht oder Abschnitt "Integrationen", Liste
         // und eine Integration (leer = zurück zur Liste).
@@ -9396,6 +9420,38 @@ class DevicePanel extends HTMLElement {
     }
   }
 
+  // MB mit einer Stelle: "0,3", unter 0,1 "< 0,1"
+  _fmtMb(bytes) {
+    const mb = (bytes || 0) / 1048576;
+    if (mb > 0 && mb < 0.1) return `< ${(0.1).toLocaleString(this._locale())}`;
+    return mb.toLocaleString(this._locale(), { maximumFractionDigits: 1 });
+  }
+
+  // Belegung der Protokolle für das Kapitel "Protokolle" (Panel › Allgemein); ohne Antwort bleibt die Zeile ohne Zahl
+  async _loadProtocolUsage(st) {
+    try {
+      const usage = await this._hass.callWS({ type: "device_panel/protocol_usage" });
+      if (this._settings !== st) return;
+      st.usage = usage;
+      this._renderSettings();
+    } catch {
+      // nur eine Anzeige: ohne sie fehlt die Zahl
+    }
+  }
+
+  // Welche Protokolle würden die neuen Grenzen kürzen? (Namen für die Rückfrage vor dem Speichern)
+  _protocolCuts() {
+    const st = this._settings;
+    const u = st?.usage;
+    const d = st?.draft;
+    if (!u || !d) return [];
+    const MB = 1048576;
+    const cuts = [];
+    if (Number.isInteger(d.protocol_max_mb) && Number.isInteger(d.protocol_max_entries) && (u.protocol.bytes > d.protocol_max_mb * MB || u.protocol.max_item > d.protocol_max_entries)) cuts.push(this._t("cutProto"));
+    if (Number.isInteger(d.log_max_mb) && Number.isInteger(d.log_max_entries) && (u.log.bytes > d.log_max_mb * MB || u.log.entries > d.log_max_entries)) cuts.push(this._t("cutLog"));
+    return cuts;
+  }
+
   async _saveSettings() {
     const st = this._settings;
     if (!st) return;
@@ -9405,6 +9461,17 @@ class DevicePanel extends HTMLElement {
     const anyReset = Object.values(resets).some((list) => list.length > 0);
     const viewChanged = this._viewChanged();
     if ((!changes.length && !extra.length && !anyReset && !viewChanged) || Object.keys(this._settingsErrors()).length) return;
+    // Tiefere Grenzen der Protokolle kürzen sofort und endgültig: erst fragen (die Rückfrage steht im Kapitel "Protokolle")
+    if (!st.cutOk && changes.some((k) => ["protocol_max_mb", "protocol_max_entries", "log_max_mb", "log_max_entries"].includes(k)) && this._protocolCuts().length) {
+      st.cutAsk = true;
+      st.sub = { ...st.sub, panel: "pstart" };
+      st.open.add("updates");
+      this._renderSettings();
+      this.shadowRoot.querySelector("dialog.settings .cut-ask")?.scrollIntoView?.({ block: "center" });
+      return;
+    }
+    st.cutAsk = false;
+    st.cutOk = false;
     st.saving = true;
     st.saveError = null;
     this._renderSettings();
@@ -9466,6 +9533,7 @@ class DevicePanel extends HTMLElement {
     st.extraBase = this._extraBase();
     st.extra = { ...st.extraBase };
     st.resets = newResets();
+    this._loadProtocolUsage(st);
     st.saving = false;
     st.saved = true;
     this._renderSettings();

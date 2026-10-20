@@ -109,7 +109,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Protokoll öffnet (Titel "${T.title}", Unterzeile = Name der Meldung)`, await wait(`const d = r.querySelector('${P}'); return d.open && d.querySelector("h2").textContent === ${JSON.stringify(T.title)} && d.querySelector("[data-pr-sub]").textContent === "Keller kalt"`));
     check(`[${tag}] Abfrage: kind magic, item_id, Zeitraum 30 Tage, Seite 100`, (await wait(`return !!r.querySelector('${P} .pr-kpis')`)) && (await calls()).some((c) => c.kind === "magic" && c.item_id === "r00000000001" && Math.abs((c.until - c.since) / DAY - 30) < 0.1 && c.limit === 100));
     check(`[${tag}] 30 Tage: zwei Einträge, Kennzahlen 2|1|1|0|1 Std.`, (await rows()) === 2 && /^2\|1\|1\|0\|1/.test(await kpis()), await kpis());
-    check(`[${tag}] Zeitraum-Leiste als Reiterleiste mit Kapsel, "30 T." gewählt`, await ev(`const bar = r.querySelector('${P} .sub-tabs'); return !!bar && !!bar.querySelector(".seg-pill") && bar.querySelector(".sub-tab.on").dataset.v === "30d" && bar.querySelectorAll(".sub-tab").length === 5`));
+    check(`[${tag}] Zeitraum-Leiste als Reiterleiste mit Kapsel, "30 T." gewählt`, await ev(`const bar = r.querySelector('${P} .sub-tabs'); return !!bar && !!bar.querySelector(".seg-pill") && bar.querySelector(".sub-tab.on").dataset.v === "30d" && bar.querySelectorAll(".sub-tab").length === 6`));
     check(`[${tag}] Diagramm: 30 Tagesbalken, zwei mit Inhalt`, await ev(`const bars = r.querySelectorAll('${P} .pr-bar'); return bars.length >= 30 && bars.length <= 32 && [...bars].filter((x) => x.querySelector(".pr-col")).length === 2`));
     // Zeile aufklappen: Inhalt der Meldung
     await tap(`${P} .pr-item .pr-row`);
@@ -121,7 +121,7 @@ for (const lang of ["de", "en"]) {
     await tap(`${P} .sub-tab[data-v="12m"]`);
     check(`[${tag}] 12 Mt.: fünf Einträge, Diagramm je Woche`, await wait(`return r.querySelectorAll('${P} .pr-item').length === 5 && r.querySelectorAll('${P} .pr-bar').length < 60 && r.querySelectorAll('${P} .pr-bar')[0].dataset.step === "week"`));
     check(`[${tag}] 12 Mt.: Fuss "${T.of(5, 5)}"`, await wait(`return r.querySelector('${P} [data-pr-foot]').textContent.includes(${JSON.stringify(T.of(5, 5))})`));
-    check(`[${tag}] Hinweis: Aufbewahrung 366 Tage, höchstens 4.000 Einträge`, /366/.test(await text(`${P} .pr-note`)) && /4[.,’' ]?000/.test(await text(`${P} .pr-note`)), await text(`${P} .pr-note`));
+    check(`[${tag}] Hinweis: höchstens 5000 Einträge und 30 MB, keine Zeitgrenze`, /5[.,’' ]?000/.test(await text(`${P} .pr-note`)) && /30 MB/.test(await text(`${P} .pr-note`)) && !/366|12 Monate|12 months/.test(await text(`${P} .pr-note`)), await text(`${P} .pr-note`));
     // Auswahl und Suche
     await tap(`${P} .chip[data-v="recovered"]`);
     check(`[${tag}] Auswahl "${T.recovered}": eine Zeile, Abfrage mit filter`, await wait(`return r.querySelectorAll('${P} .pr-item').length === 1`) && (await calls()).some((c) => c.filter === "recovered"));

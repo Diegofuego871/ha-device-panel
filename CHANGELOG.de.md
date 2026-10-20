@@ -7,6 +7,27 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.105.0] - 2026-10-20
+
+Die Grösse der Protokolle ist in den Einstellungen wählbar; das Protokollfenster geht so weit zurück, wie es Einträge gibt.
+
+Enthält die Änderungen von 2.104.0 und 2.103.0.
+
+### Hinzugefügt
+
+- **Einstellungen, Panel › Allgemein, neues Kapitel "Protokolle"** (ganz unten): wie viel die Protokolle behalten, als **Grösse in MB** und als **Zahl der Einträge**, getrennt für **Meldungen und Routinen** (Standard **30 MB**, **5000 Einträge je Meldung oder Routine**) und für das **Panel-Protokoll** (Standard **10 MB**, **4000 Einträge**; vorher fest 500). Daneben steht die aktuelle Belegung. Ist eine Grenze erreicht, fällt der **älteste Eintrag** weg (bei den MB der Meldungen und Routinen der älteste über alle). Eine **tiefere Grenze kürzt sofort**; gehen dabei vorhandene Einträge verloren, fragen die Einstellungen vorher ("Kürzen und speichern"), weil sich das nicht rückgängig machen lässt. Die Grösse ist die des gespeicherten JSON.
+- **Protokollfenster:** neuer Zeitraum **"Alle"** (ab dem ältesten Eintrag, auch über 12 Monate hinaus); das Diagramm geht je Woche und zeigt höchstens die neuesten 399 Wochen. "Eigener" nach "Alle" beginnt mit dem Datum des ältesten Eintrags und heute.
+- Neuer Befehl `device_panel/protocol_usage` (nur Administratoren) für die Belegung in den Einstellungen.
+
+### Geändert
+
+- **Keine Zeitgrenze mehr:** die 12 Monate aus 2.104.0 entfallen; Einträge bleiben, solange Grösse und Zahl es erlauben. Der Hinweis unter der Protokolltabelle nennt die geltenden Grenzen.
+- **Panel-Protokoll (Aktivitätsprotokoll):** seine Grenze ist nicht mehr fest 500 Einträge, sondern die zwei Einstellungen; `device_panel/get_log` meldet die Zahl als `max`.
+
+### Intern
+
+- `protocol.Protocol.enforce()` / `usage()` / `limits()`, `activity.enforce()` / `apply_limits()` / `usage()`; der Listener der Optionen wendet die Grenzen nach dem Speichern an. Optionen `protocol_max_mb`, `protocol_max_entries`, `log_max_mb`, `log_max_entries` (Bereiche 1–200, 100–100000, 1–200, 100–20000). Tests: `test_protocol`, `test_activity`, `test_update_check` angepasst; neue Suite `protocollimits`.
+
 ## [2.104.0] - 2026-10-20
 
 Ein Protokoll für jede Magic-Push-Meldung und jede Routine, mit Diagramm und bei Routinen einem kopierbaren Trace.
@@ -24,6 +45,8 @@ Enthält die Änderungen von 2.103.0.
 
 - Neu `protocol.py` (Speicher, Grenzen, Abfrage mit Kennzahlen und Balken), `protocol_ws.py` (`device_panel/protocol_get`, nur Administratoren), `panel/protocol.js` (Fenster `dialog.proto-dlg`, gleiche Hülle wie das Aktivitätsprotokoll). `push.async_push(outcome=…)` meldet zurückgehalten / gesendet / Grund; `routines._async_call(trace=…)` hält die Schritte fest. Das Protokoll bleibt beim Neuladen der Integration im Speicher (wie das Aktivitätsprotokoll), damit beim Speichern der Einstellungen nichts verloren geht, was noch auf das Schreiben wartet.
 - Tests: `tests/test_protocol.py`, neue Suite `protocol`; Befehl `device_panel/protocol_get` im Simulator.
+
+Nicht veröffentlicht; enthalten in 2.105.0.
 
 ## [2.103.0] - 2026-10-20
 
@@ -4197,7 +4220,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.104.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.104.0
+[2.105.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.0
 [2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0
 [2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0

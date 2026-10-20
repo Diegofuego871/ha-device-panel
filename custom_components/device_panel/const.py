@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "280"
+PANEL_VERSION = "281"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -274,6 +274,25 @@ INT_RANGES.update(
         CONF_STATUS_CPU_MINUTES: (1, 60),
         CONF_STATUS_RAM_MINUTES: (1, 60),
         CONF_STATUS_DISK_MINUTES: (1, 60),
+    }
+)
+# Grösse der Protokolle (seit 2.105.0, Panel › Allgemein › "Protokolle"): Meldungen und Routinen (protocol.py) und das Protokoll des Panels
+# (activity.py) je mit einer Obergrenze in MB und in Einträgen; ist eine erreicht, fallen die ältesten Einträge weg. Für Meldungen und
+# Routinen gilt die Zahl der Einträge je Meldung oder Routine, die MB für alle zusammen.
+CONF_PROTOCOL_MB = "protocol_max_mb"
+CONF_PROTOCOL_ENTRIES = "protocol_max_entries"
+CONF_LOG_MB = "log_max_mb"
+CONF_LOG_ENTRIES = "log_max_entries"
+DEFAULT_PROTOCOL_MB = 30
+DEFAULT_PROTOCOL_ENTRIES = 5000
+DEFAULT_LOG_MB = 10
+DEFAULT_LOG_ENTRIES = 4000
+INT_RANGES.update(
+    {
+        CONF_PROTOCOL_MB: (1, 200),
+        CONF_PROTOCOL_ENTRIES: (100, 100000),
+        CONF_LOG_MB: (1, 200),
+        CONF_LOG_ENTRIES: (100, 20000),
     }
 )
 # Umbenennung Timer → Routine (2.55.0): so hiessen die gespeicherten Optionen vorher; __init__ übernimmt sie beim Start einmal

@@ -9,7 +9,7 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
-from . import protocol
+from . import activity
 from .const import DATA_MAGIC, DATA_PROTOCOL, DATA_ROUTINES, DOMAIN
 
 PAGE_MAX = 500
@@ -48,7 +48,8 @@ def ws_protocol_get(hass: HomeAssistant, connection: websocket_api.ActiveConnect
         rows = manager.rules(msg["device_id"]) if msg["kind"] == "magic" else manager.routines(msg["device_id"])
     now = time.time()
     until = min(float(msg.get("until", now)), now + 86400)
-    since = max(float(msg.get("since", now - protocol.RETENTION_DAYS * 86400)), now - protocol.RETENTION_DAYS * 86400)
+    since = float(msg["since"]) if "since" in msg else None
+    limits = store.limits()
     result = store.query(
         msg["kind"],
         {row["id"]: row["name"] for row in rows},
@@ -61,8 +62,17 @@ def ws_protocol_get(hass: HomeAssistant, connection: websocket_api.ActiveConnect
     )
     connection.send_result(
         msg["id"],
-        {**result, "items": [{"id": row["id"], "name": row["name"], "entity_id": row.get("entity_id")} for row in rows], "since": since, "until": until, "now": now, "retention_days": protocol.RETENTION_DAYS, "max_entries": protocol.MAX_ENTRIES},
+        {**result, "items": [{"id": row["id"], "name": row["name"], "entity_id": row.get("entity_id")} for row in rows], "until": until, "now": now, "max_entries": limits[1], "max_mb": limits[0] // (1024 * 1024)},
     )
 
 
-COMMANDS = (ws_protocol_get,)
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/protocol_usage"})
+@websocket_api.require_admin
+@callback
+def ws_protocol_usage(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Belegung der Protokolle für Panel › Allgemein › Protokolle: Meldungen/Routinen und Protokoll des Panels (Byte und Einträge)."""
+    store = hass.data.get(DATA_PROTOCOL)
+    connection.send_result(msg["id"], {"protocol": store.usage() if store is not None else {"bytes": 0, "entries": 0, "items": 0, "max_item": 0}, "log": activity.usage(hass)})
+
+
+COMMANDS = (ws_protocol_get, ws_protocol_usage)

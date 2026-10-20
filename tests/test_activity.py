@@ -10,7 +10,7 @@ from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_mock_service
 
 from custom_components.device_panel import activity
-from custom_components.device_panel.const import DOMAIN
+from custom_components.device_panel.const import DEFAULT_LOG_ENTRIES, DOMAIN
 
 
 async def _setup(hass: HomeAssistant, **options: Any) -> MockConfigEntry:
@@ -47,10 +47,10 @@ async def test_record_ring_and_debug_switch(hass: HomeAssistant) -> None:
     entry = activity.snapshot(hass)["entries"][0]
     assert entry["level"] == "debug" and entry["cat"] == "charge" and entry["title"] == "A" and entry["device_id"] == "dev1"
     assert entry["text"] == "level 50 %, low point 40 %, full from 100 %, rise 20 points"  # Instanz auf Englisch
-    for i in range(activity.MAX_ENTRIES + 20):
+    for i in range(DEFAULT_LOG_ENTRIES + 20):
         activity.record(hass, "info", "system", "sys_start", str(i), version="1")
     snap = activity.snapshot(hass)
-    assert len(snap["entries"]) == activity.MAX_ENTRIES and snap["entries"][-1]["title"] == str(activity.MAX_ENTRIES + 19)
+    assert len(snap["entries"]) == DEFAULT_LOG_ENTRIES and snap["entries"][-1]["title"] == str(DEFAULT_LOG_ENTRIES + 19)
     activity.clear(hass)
     assert activity.snapshot(hass)["entries"] == [] and activity.snapshot(hass)["debug"] is True
 
@@ -111,7 +111,7 @@ async def test_startup_entry_and_ws(hass: HomeAssistant, hass_ws_client) -> None
     client = await hass_ws_client(hass)
     await client.send_json({"id": 1, "type": f"{DOMAIN}/get_log"})
     result = (await client.receive_json())["result"]
-    assert result["debug"] is False and result["max"] == activity.MAX_ENTRIES and result["entries"][0]["cat"] == "system"
+    assert result["debug"] is False and result["max"] == DEFAULT_LOG_ENTRIES and result["entries"][0]["cat"] == "system"
     await client.send_json({"id": 2, "type": f"{DOMAIN}/set_log", "debug": True})
     assert (await client.receive_json())["result"]["debug"] is True
     await client.send_json({"id": 3, "type": f"{DOMAIN}/clear_log"})
@@ -194,17 +194,17 @@ async def test_entries_survive_restart(hass: HomeAssistant, hass_storage: dict[s
     from custom_components.device_panel.const import DATA_ACTIVITY  # noqa: PLC0415
 
     activity.set_debug(hass, True)
-    for n in range(activity.MAX_ENTRIES + 20):
+    for n in range(DEFAULT_LOG_ENTRIES + 20):
         activity.record(hass, "debug", "charge", "charge_level", f"G{n}", None, level=n % 100, low=40, full=100, rise=20)
     activity.record(hass, "warning", "system", "debug_expired", "Device Panel", hours=48)
     # viele Einträge, aber nur ein Schreibvorgang nach der Verzögerung
     async_fire_time_changed(hass, dt_util.utcnow() + timedelta(seconds=activity.SAVE_DELAY + 1))
     await hass.async_block_till_done()
     stored = hass_storage[activity.STORE_KEY]["data"]["entries"]
-    assert len(stored) == activity.MAX_ENTRIES
+    assert len(stored) == DEFAULT_LOG_ENTRIES
     # Neustart: Arbeitsspeicher weg, Datei bleibt
     before = [(e["at"], e["title"]) for e in activity.snapshot(hass)["entries"]]
-    assert len(before) == activity.MAX_ENTRIES
+    assert len(before) == DEFAULT_LOG_ENTRIES
     hass.data.pop(DATA_ACTIVITY).cancel_expiry()
     await activity.async_restore(hass)
     snap = activity.snapshot(hass)
@@ -231,3 +231,25 @@ async def test_damaged_stored_entries_are_ignored(hass: HomeAssistant, hass_stor
     await activity.async_restore(hass)
     entries = activity.snapshot(hass)["entries"]
     assert [e["text"] for e in entries] == ["alt"]
+
+
+async def test_limits_by_setting(hass: HomeAssistant) -> None:
+    """2.105.0: Zahl und Grösse des Panel-Protokolls folgen den Einstellungen log_max_entries und log_max_mb; tiefere Grenzen kürzen sofort."""
+    entry = MockConfigEntry(domain=DOMAIN, title="Device Panel", options={"log_max_entries": 100, "log_max_mb": 1})
+    entry.add_to_hass(hass)
+    for i in range(150):
+        activity.record(hass, "info", "system", "sys_start", str(i), version="1")
+    snap = activity.snapshot(hass)
+    assert len(snap["entries"]) == 100 and snap["entries"][-1]["title"] == "149" and snap["max"] == 100
+    assert activity.usage(hass)["entries"] == 100 and 0 < activity.usage(hass)["bytes"] < 100 * 1024
+    # Grösse: lange Texte (Namen) füllen das MB vor der Zahl
+    hass.config_entries.async_update_entry(entry, options={"log_max_entries": 20000, "log_max_mb": 1})
+    for i in range(4000):
+        activity.record(hass, "info", "system", "sys_start", "n" * 500 + str(i), version="1")
+    assert activity.usage(hass)["bytes"] <= 1024 * 1024 and len(activity.snapshot(hass)["entries"]) < 4000
+    # tiefere Zahl: sofort gekürzt (so ruft es die Integration nach dem Speichern der Einstellung auf)
+    hass.config_entries.async_update_entry(entry, options={"log_max_entries": 100, "log_max_mb": 1})
+    activity.apply_limits(hass)
+    assert len(activity.snapshot(hass)["entries"]) == 100
+    activity.clear(hass)
+    assert activity.usage(hass) == {"bytes": 0, "entries": 0}

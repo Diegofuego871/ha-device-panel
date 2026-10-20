@@ -426,7 +426,7 @@
     if (!["{facts}", ...PROMPT_GROUPS].some((v) => text.includes(v))) return "no_facts";
     return null;
   };
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], notify_group_min: [2, 20], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [2, 80], charge_stall: [5, 120], routines_catch_up: [0, 60], status_cpu_limit: [1, 100], status_ram_limit: [1, 100], status_disk_limit: [1, 100], status_cpu_minutes: [1, 60], status_ram_minutes: [1, 60], status_disk_minutes: [1, 60] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], notify_group_min: [2, 20], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [2, 80], charge_stall: [5, 120], routines_catch_up: [0, 60], status_cpu_limit: [1, 100], status_ram_limit: [1, 100], status_disk_limit: [1, 100], status_cpu_minutes: [1, 60], status_ram_minutes: [1, 60], status_disk_minutes: [1, 60], protocol_max_mb: [1, 200], protocol_max_entries: [100, 100000], log_max_mb: [1, 200], log_max_entries: [100, 20000] };
   // Inhalt der Batterie-Meldung wie options_api.BATTERY_FIELDS (seit 0.34.0).
   const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
   // Inhalt der Meldung bei neuen Geräten wie const.NEW_FIELDS (seit 1.24.0).
@@ -636,7 +636,7 @@
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
-    routines_pause: false, routines_catch_up: 10, routines_notify_error: true, status_notify: true, notify_service_status: "", status_cpu_alert: true, status_ram_alert: true, status_disk_alert: true, status_cpu_limit: 99, status_ram_limit: 99, status_disk_limit: 99, status_cpu_minutes: 3, status_ram_minutes: 3, status_disk_minutes: 3, status_cpu_entity: "", status_ram_entity: "", status_disk_entity: "",
+    routines_pause: false, routines_catch_up: 10, protocol_max_mb: 30, protocol_max_entries: 5000, log_max_mb: 10, log_max_entries: 4000, routines_notify_error: true, status_notify: true, notify_service_status: "", status_cpu_alert: true, status_ram_alert: true, status_disk_alert: true, status_cpu_limit: 99, status_ram_limit: 99, status_disk_limit: 99, status_cpu_minutes: 3, status_ram_minutes: 3, status_disk_minutes: 3, status_cpu_entity: "", status_ram_entity: "", status_disk_entity: "",
     notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, notify_charge_stop: false, charge_stall: 15, charge_integrations: [], charge_full_integrations: {}, charge_rise_integrations: {}, charge_stall_integrations: {}, charge_stop_integrations: {}, charge_live: false, charge_live_integrations: {}, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
     // Emoji der Push-Meldungen: null = Standard (seit 2.2.0)
     emoji_outage: null, emoji_group: null, emoji_online: null, emoji_battery: null, emoji_charge: null, emoji_charge_stop: null, emoji_new: null, emoji_updates: null,
@@ -1207,6 +1207,13 @@
         const values = { "{language}": lang, "{facts}": facts, ...Object.fromEntries(PROMPT_GROUPS.map((g) => [g, g === "{facts_device}" ? device : "{}"])) };
         return { text: (draft || window.__opts.ai_prompt || AI_PROMPT_DEFAULT).replace(/\{[A-Za-z_][A-Za-z0-9_]*\}/g, (m) => values[m] ?? m) };
       }
+      // Belegung der Protokolle (2.105.0): window.__usage ({ protocol: {...}, log: {...} }) oder aus window.__protocol berechnet
+      if (msg.type === "device_panel/protocol_usage") {
+        if (window.__usageFails) throw new Error(window.__usageFails);
+        const all = Object.values(window.__protocol || {});
+        const bytes = all.reduce((n, l) => n + JSON.stringify(l).length, 0);
+        return window.__usage || { protocol: { bytes, entries: all.reduce((n, l) => n + l.length, 0), items: all.filter((l) => l.length).length, max_item: Math.max(0, ...all.map((l) => l.length)) }, log: { bytes: 20480, entries: 120 } };
+      }
       // Protokoll (2.104.0): Einträge je Meldung/Routine in window.__protocol ({ [id]: [Eintrag, ...] }), Abfrage wie protocol.py
       if (msg.type === "device_panel/protocol_get") {
         if (window.__protocolFails) throw new Error(window.__protocolFails);
@@ -1216,14 +1223,12 @@
         const mine = msg.item_id ? rows.filter((r) => r.id === msg.item_id) : rows.filter((r) => r.device_id === msg.device_id);
         if (msg.item_id && !mine.length) throw { code: "not_found", message: "item not found" };
         const now = Date.now() / 1000;
-        const since = Math.max(msg.since ?? now - 366 * 86400, now - 366 * 86400);
         const until = Math.min(msg.until ?? now, now + 86400);
         const scope = [];
         let oldest = null;
-        for (const r of mine) for (const e of store[r.id] || []) {
-          if (oldest === null || e.at < oldest) oldest = e.at;
-          if (e.at >= since && e.at <= until) scope.push({ ...e, id: r.id, name: r.name });
-        }
+        for (const r of mine) for (const e of store[r.id] || []) if (oldest === null || e.at < oldest) oldest = e.at;
+        const since = msg.since ?? (oldest !== null && oldest < until ? oldest : until);
+        for (const r of mine) for (const e of store[r.id] || []) if (e.at >= since && e.at <= until) scope.push({ ...e, id: r.id, name: r.name });
         scope.sort((a, b) => b.at - a.at);
         const counts = {};
         let longest = 0, lateOk = 0, lateN = 0;
@@ -1251,8 +1256,8 @@
         }
         return {
           counts, longest_s: longest || null, punctual: lateN ? Math.round((100 * lateOk) / lateN) : null, total: shown.length, all: scope.length,
-          entries: shown.slice(msg.offset || 0, (msg.offset || 0) + (msg.limit || 100)), step: week ? "week" : "day", buckets, oldest, capped: false,
-          items: mine.map((r) => ({ id: r.id, name: r.name, entity_id: r.entity_id })), since, until, now, retention_days: 366, max_entries: 4000,
+          entries: shown.slice(msg.offset || 0, (msg.offset || 0) + (msg.limit || 100)), step: week ? "week" : "day", buckets, oldest,
+          items: mine.map((r) => ({ id: r.id, name: r.name, entity_id: r.entity_id })), since, until, now, max_entries: window.__opts.protocol_max_entries, max_mb: window.__opts.protocol_max_mb,
         };
       }
       // Routine (2.21.0): Routine pro Gerät im Speicher der Seite, Prüfung und Zeitberechnung ungefähr wie im Backend

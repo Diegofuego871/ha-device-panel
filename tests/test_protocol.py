@@ -34,16 +34,57 @@ def test_clean_entry_shortens_and_drops_empty() -> None:
     assert set(entry) == {"at", "k", "title", "body"}
 
 
-async def test_add_trims_by_count_and_age(hass: HomeAssistant, monkeypatch: pytest.MonkeyPatch) -> None:
-    log = protocol.Protocol(hass)
-    monkeypatch.setattr(protocol, "MAX_ENTRIES", 5)
+async def test_add_trims_by_count_not_by_age(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    await _options(hass, protocol_max_entries=100)
+    log = hass.data[DATA_PROTOCOL]
     now = time.time()
-    log.add("a", {"at": now - 400 * DAY, "k": "fired"})
-    for i in range(8):
-        log.add("a", {"at": now - 100 + i, "k": "fired", "title": str(i)})
-    # zu alt entfällt, von den übrigen bleiben die neuesten 5
-    assert [e["title"] for e in log.entries("a")] == ["3", "4", "5", "6", "7"]
-    assert log.capped("a")
+    # Seit 2.105.0 gibt es keine Zeitgrenze: auch ein Eintrag von vor drei Jahren bleibt, solange Platz ist
+    log.add("a", {"at": now - 1100 * DAY, "k": "fired", "title": "alt"})
+    for i in range(120):
+        log.add("a", {"at": now - 1000 + i, "k": "fired", "title": str(i)})
+    assert len(log.entries("a")) == 100 and log.entries("a")[0]["title"] == "20" and log.entries("a")[-1]["title"] == "119"
+    # eine andere Meldung hat ihre eigene Zahl
+    log.add("b", {"at": now, "k": "fired", "title": "b"})
+    assert len(log.entries("b")) == 1
+    # tiefere Grenze: kürzt sofort, bei allen
+    hass.config_entries.async_update_entry(hass.config_entries.async_entries(DOMAIN)[0], options={**hass.config_entries.async_entries(DOMAIN)[0].options, "protocol_max_entries": 100})
+    log.enforce()
+    assert len(log.entries("a")) == 100
+
+
+async def test_size_limit_drops_oldest_across_items(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    await _options(hass, protocol_max_mb=1)
+    log = hass.data[DATA_PROTOCOL]
+    now = time.time()
+    big = "x" * 790
+    # a und b teilen sich 1 MB: je Eintrag rund 0,9 KB, zusammen weit mehr als 1 MB
+    for i in range(1500):
+        log.add("a" if i % 2 == 0 else "b", {"at": now - 5000 + i, "k": "fired", "title": f"t{i}", "body": big, "value": "v"})
+    usage = log.usage()
+    assert usage["bytes"] <= 1024 * 1024 and usage["entries"] < 1500 and usage["items"] == 2
+    # der älteste Eintrag über alle fällt zuerst weg: beide Meldungen verlieren vom Anfang, die neuesten bleiben
+    assert log.entries("a")[-1]["title"] == "t1498" and log.entries("b")[-1]["title"] == "t1499"
+    first_a, first_b = log.entries("a")[0]["at"], log.entries("b")[0]["at"]
+    assert abs(first_a - first_b) < 5
+    # eine kleinere Grenze wirkt auch ohne neuen Eintrag, wenn enforce() aufgerufen wird (so tut es die Einstellung)
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "protocol_max_mb": 1})
+    before = log.usage()["bytes"]
+    log.enforce()
+    assert log.usage()["bytes"] == before
+
+
+async def test_options_change_shrinks_immediately(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    log = hass.data[DATA_PROTOCOL]
+    now = time.time()
+    for i in range(300):
+        log.add("a", {"at": now - 1000 + i, "k": "fired", "title": str(i), "body": "y" * 500})
+    assert len(log.entries("a")) == 300
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    hass.config_entries.async_update_entry(entry, options={**entry.options, "protocol_max_entries": 100, "log_max_entries": 100})
+    await hass.async_block_till_done()
+    # der Listener der Integration wendet die neuen Grenzen an
+    assert len(log.entries("a")) == 100 and log.entries("a")[-1]["title"] == "299"
 
 
 async def test_persists_and_forgets(hass: HomeAssistant, hass_storage: dict[str, Any]) -> None:
@@ -215,9 +256,20 @@ async def test_websocket_command(hass: HomeAssistant, setup, hass_ws_client, has
         return await client.receive_json()
 
     call.n = 0
+
+    async def call_usage() -> dict[str, Any]:
+        call.n += 1
+        await client.send_json({"id": call.n, "type": f"{DOMAIN}/protocol_usage"})
+        return await client.receive_json()
+
     got = (await call(kind="routine", item_id=saved["id"]))["result"]
     assert got["total"] == 1 and got["entries"][0]["trace"] and got["items"][0]["name"] == "Gartenlicht"
-    assert got["retention_days"] == protocol.RETENTION_DAYS and got["max_entries"] == protocol.MAX_ENTRIES
+    assert got["max_entries"] == 5000 and got["max_mb"] == 30 and "retention_days" not in got
+    # ohne "since": alles ab dem ältesten Eintrag
+    everything = (await call(kind="routine", item_id=saved["id"]))["result"]
+    assert everything["since"] == everything["oldest"]
+    usage = (await call_usage())["result"]
+    assert usage["protocol"]["entries"] >= 1 and usage["protocol"]["bytes"] > 0 and usage["log"]["entries"] >= 1
     by_device = (await call(kind="routine", device_id=device.id, filter="manual"))["result"]
     assert by_device["total"] == 1 and by_device["entries"][0]["id"] == saved["id"]
     assert (await call(kind="routine", device_id=device.id, filter="failed"))["result"]["total"] == 0
