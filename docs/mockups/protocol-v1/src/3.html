@@ -1,0 +1,36 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="base.css"><link rel="stylesheet" href="extra.css">
+<div class="row">
+<div class="col"><div class="cap">3a · Protokoll einer Routine<small>Gleicher Aufbau wie bei Magic Push (Zeitraum, Diagramm, Tabelle), aber mit den Spalten einer Routine: Auslöser (Zeit, Auslöser-Entität, von Hand, Test), Ergebnis, Aktion und was zurückgeschaltet wurde. Statt des Meldungs-Inhalts öffnet die Zeile den <b>Trace</b> (rechts).</small></div>
+<div class="dlg w"><div class="hd"><span class="av">⚡</span><div><h2>Protokoll</h2><div class="s">Velo Ladestation · myStrom Werkbank Disporaum</div></div><span class="x">✕</span></div><div class="body">
+<div class="rng"><span class="chip">7 Tage</span><span class="chip">30 Tage</span><span class="chip">6 Monate</span><span class="chip on">12 Monate</span><span class="own">Eigener Zeitraum: <i>01.04.2026</i> – <i>20.10.2026</i></span></div>
+<div class="kpis"><div class="k"><b>41</b><span>Läufe</span></div><div class="k"><b>38</b><span>ausgeführt</span></div><div class="k"><b>2</b><span>verpasst</span></div><div class="k"><b>1</b><span>fehlgeschlagen</span></div><div class="k"><b>97 %</b><span>pünktlich (± 1 Min.)</span></div></div>
+<div class="bars"><i style="height:50%"></i><i style="height:50%"></i><i style="height:0"></i><i style="height:50%"></i><i style="height:100%"></i><i style="height:50%"></i><i style="height:0"></i><i style="height:50%"></i><i style="height:50%"></i><i style="height:50%"></i><i style="height:100%"></i><i style="height:50%"></i><i style="height:0"></i><i style="height:50%"></i><i style="height:50%"></i><i style="height:100%"></i><i style="height:50%"></i><i style="height:50%"></i><i style="height:0"></i><i style="height:50%"></i></div>
+<div class="axis"><span>Nov 2025</span><span>Feb</span><span>Mai</span><span>Aug</span><span>Okt 2026</span></div>
+<div class="fl"><span class="chip on">Alle</span><span class="chip">Ausgeführt</span><span class="chip">Zurückgeschaltet</span><span class="chip">Verpasst</span><span class="chip">Fehler</span><span class="chip">Von Hand</span></div>
+<table class="pt"><tr><th style="width:150px">Datum</th><th style="width:130px">Auslöser</th><th>Aktion</th><th style="width:140px">Ergebnis</th><th style="width:70px">Trace</th></tr>
+<tr class="open"><td>20.10.2026 · 10:30:02<small>heute</small></td><td>Zeit 10:30<small>2 s verspätet</small></td><td>einschalten<small>myStrom Werkbank Disporaum</small></td><td><span class="st ok">ausgeführt</span></td><td class="lnk">› öffnen</td></tr>
+<tr><td>20.10.2026 · 14:30:01</td><td>Zeit (Zurückschalten)</td><td>ausschalten<small>nach 4 Std.</small></td><td><span class="st ok">zurückgeschaltet</span></td><td class="lnk">›</td></tr>
+<tr><td>14.10.2026 · 10:30:00</td><td>Zeit 10:30</td><td>einschalten</td><td><span class="st wn">verpasst</span><small>HA war aus (45 Min. zu spät)</small></td><td class="lnk">›</td></tr>
+<tr><td>09.10.2026 · 16:02:44</td><td>Von Hand</td><td>einschalten</td><td><span class="st in">ausgeführt</span><small>Knopf "Ausführen"</small></td><td class="lnk">›</td></tr>
+<tr><td>01.10.2026 · 10:30:03</td><td>Zeit 10:30</td><td>einschalten</td><td><span class="st er">fehlgeschlagen</span><small>Gerät nicht erreichbar, 3 Versuche</small></td><td class="lnk">›</td></tr>
+</table></div><div class="acts"><div class="btn">⧉ Als Text kopieren</div><div class="btn pr">Schliessen</div></div></div></div>
+
+<div class="col"><div class="cap">3b · Trace eines Laufs (Detailfenster, mit "Kopieren")<small>Jeder Schritt in der Reihenfolge, wie die Routine ihn gegangen ist: Auslöser, Pause, Bedingungen, gemerkter Zustand, Dienstaufruf mit Ergebnis, geplantes Zurückschalten, Meldung. Der Knopf legt den ganzen Text in die Zwischenablage, damit du ihn weitergeben kannst (zum Beispiel für die Fehlersuche).</small></div>
+<div class="dlg m" style="width:520px"><div class="hd"><span class="av">⚡</span><div><h2>Trace</h2><div class="s">Velo Ladestation · 20.10.2026 10:30:02</div></div><span class="x">✕</span></div><div class="body">
+<div class="trace"><span class="mu">Routine</span> Velo Ladestation <span class="mu">(id 3f9a1c0d77be)</span>
+<span class="mu">Lauf</span>    20.10.2026 10:30:02 (Europe/Zurich)
+
+<span class="ok">1</span> Auslöser   Zeit 10:30, fällig 10:30:00, 2 s verspätet
+<span class="ok">2</span> Pause       Routinen nicht pausiert
+<span class="ok">3</span> Bedingungen keine
+<span class="ok">4</span> Zustand     switch.mystrom_werkbank = off (gemerkt)
+<span class="ok">5</span> Aufruf      switch.turn_on → switch.mystrom_werkbank
+                    Ergebnis ok in 0.3 s
+<span class="ok">6</span> Zurückschalten  geplant 14:30 (nach 4 Std.), wie "ausschalten"
+<span class="ok">7</span> Meldung     nicht gewünscht
+
+<span class="ok">Ergebnis: ausgeführt</span></div>
+<div class="btns" style="margin-top:10px"><span class="cp">⧉ Trace kopieren</span><span class="cp" style="color:var(--t2)">‹ Vorheriger</span><span class="cp" style="color:var(--t2)">Nächster ›</span></div>
+<div class="note">Beim Fehler: dieselben Schritte, der fehlgeschlagene in Rot mit Grund ("Gerät nicht erreichbar"), danach Wiederholungen mit Zeit.</div>
+</div></div></div>
+</div>
