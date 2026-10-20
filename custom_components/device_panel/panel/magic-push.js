@@ -1029,11 +1029,9 @@ export class MagicPush {
     return d;
   }
 
-  startWizard(rule = null) {
-    this.view = "wizard";
-    this.ui.flash = "";
-    this.ui.error = "";
-    this.wiz = {
+  // Zustand eines frischen Assistenten (Meldung bearbeiten oder neu)
+  makeWiz(rule = null) {
+    return {
       step: 1,
       editing: Boolean(rule),
       draft: rule ? this.draftFrom(rule) : this.newDraft(),
@@ -1050,6 +1048,13 @@ export class MagicPush {
       adding: null,
       leafHist: null,
     };
+  }
+
+  startWizard(rule = null) {
+    this.view = "wizard";
+    this.ui.flash = "";
+    this.ui.error = "";
+    this.wiz = this.makeWiz(rule);
     const leaves = this.leavesOf(this.wiz.draft);
     if (leaves.length === 1) this.wiz.cur = leaves[0].uid;
     // Stand beim Öffnen: ohne Änderung schliesst das Fenster ohne Rückfrage
@@ -1057,6 +1062,84 @@ export class MagicPush {
     this.paint();
     this.scrollTop();
     this.requestLeafHistory();
+  }
+
+  // Neue Meldung aus dem Fenster aller Meldungen (seit 2.102.0): derselbe Assistent mit einem Schritt mehr davor, der das Gerät wählt
+  startNewFromAll() {
+    this.reset();
+    this.standalone = true;
+    this.view = "wizard";
+    this.wiz = { ...this.makeWiz(), pick: true, step: 0, pickId: "", devQuery: "", loadingDev: false };
+    this.wiz.snap = JSON.stringify(this.wiz.draft);
+    this.paint();
+    this.scrollTop();
+  }
+
+  // Schritt 0 verlassen: Entitäten und Ziele des gewählten Geräts laden, dann weiter zu "Bedingungen". Ein anderes Gerät als
+  // zuvor beginnt den Entwurf von vorn (die Entitäten der Bedingungen gehören zum Gerät).
+  async chooseDevice() {
+    const w = this.wiz;
+    if (!w || !w.pick || !w.pickId || w.loadingDev) return;
+    w.loadingDev = true;
+    w.error = "";
+    this.paint();
+    try {
+      if (this.deviceId !== w.pickId || !this.data) {
+        const result = await this.host._hass.callWS({ type: "device_panel/magic_get", device_id: w.pickId });
+        if (this.wiz !== w) return;
+        this.deviceId = w.pickId;
+        this.data = result;
+        this.extra = {};
+        w.draft = this.newDraft();
+        w.free = { open: false, query: "", results: null, loading: false, error: "" };
+        w.cur = null;
+        w.adding = null;
+        w.leafHist = null;
+        w.snap = JSON.stringify(w.draft);
+      }
+    } catch (err) {
+      if (this.wiz !== w) return;
+      w.loadingDev = false;
+      w.error = this.t("mgLoadError", this.h.errText(err));
+      this.paint();
+      return;
+    }
+    w.loadingDev = false;
+    w.step = 1;
+    this.paint();
+    this.scrollTop();
+    this.requestLeafHistory();
+  }
+
+  // Schritt 0: die Geräte des Panels (ohne ausgeschaltete) mit Suche
+  deviceRows() {
+    const q = String(this.wiz?.devQuery || "").trim().toLowerCase();
+    return (this.host._devices || [])
+      .filter((d) => !d.disabled)
+      .map((d) => ({ id: d.id, name: d.name || d.id, sub: [d.area, d.integration?.name].filter(Boolean).join(" · "), type: d.type || "other" }))
+      .filter((x) => !q || `${x.name} ${x.sub}`.toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name, this.host._locale() || undefined, { sensitivity: "base" }));
+  }
+
+  step0Html() {
+    const esc = (v) => this.esc(v);
+    const w = this.wiz;
+    return `<p class="mg-note">${esc(this.t("mgPickDeviceNote"))}</p>
+      <label class="list-search" data-for="mg-devs">${this.h.mdi("search", 18)}<input type="search" data-mg="dev-search" value="${esc(w.devQuery)}" placeholder="${esc(this.t("listSearch"))}" aria-label="${esc(this.t("listSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this.host._fieldClearHtml("data-fc", "", w.devQuery)}</label>
+      <div data-mg-zone="devs">${this.devsHtml()}</div>`;
+  }
+
+  devsHtml() {
+    const esc = (v) => this.esc(v);
+    const rows = this.deviceRows();
+    if (!rows.length) return `<p class="mg-note mg-none">${esc(this.t("listSearchNone"))}</p>`;
+    return rows
+      .map((x) => {
+        const on = this.wiz.pickId === x.id;
+        return `<button type="button" class="mg-card mg-pick" data-mg="dev" data-id="${esc(x.id)}" role="radio" aria-checked="${on}">
+        <span class="mg-row"><span class="mg-devic" aria-hidden="true">${this.h.typeIcon(x.type, 18)}</span><span class="mg-t"><b>${esc(x.name)}</b>${x.sub ? `<small>${esc(x.sub)}</small>` : ""}</span><span class="mg-radio${on ? " on" : ""}"></span></span></button>`;
+      })
+      .join("");
   }
 
   closeWizard() {
@@ -1289,6 +1372,7 @@ export class MagicPush {
 
   canNext(step = this.wiz.step) {
     const d = this.wiz.draft;
+    if (step === 0) return Boolean(this.wiz.pickId) && !this.wiz.loadingDev;
     if (step === 1) {
       const leaves = this.leavesOf();
       return leaves.length > 0 && !this.wiz.adding && leaves.every((l) => this.leafValid(l));
@@ -1307,7 +1391,7 @@ export class MagicPush {
 
   goto(step) {
     const w = this.wiz;
-    if (step < 1 || step > STEPS || step === w.step) return;
+    if (step < (w.pick ? 0 : 1) || step > STEPS || step === w.step) return;
     // Vorwärts nur, wenn die Schritte davor vollständig sind.
     for (let s = w.step; s < step; s += 1) if (!this.canNext(s)) return;
     w.step = step;
@@ -1531,23 +1615,29 @@ export class MagicPush {
     const w = this.wiz;
     const step = w.step;
     const e = this.entity(w.draft.entity_id);
-    const bars = Array.from({ length: STEPS }, (_, i) => {
-      const n = i + 1;
+    // Aus der Übersicht kommt der Schritt "Gerät" davor (Schritt 0): die Zählung zeigt ihn als ersten von sechs
+    const off = w.pick ? 1 : 0;
+    const total = STEPS + off;
+    const bars = Array.from({ length: total }, (_, i) => {
+      const n = i + 1 - off;
       const on = n <= step ? " on" : "";
       const open = w.editing || n < step;
       return open
-        ? `<button type="button" class="mg-stp${on}" data-mg="goto" data-step="${n}" aria-label="${esc(`${t("mgStepOf", n, STEPS)}: ${t(`mgStepName_${n}`)}`)}"></button>`
+        ? `<button type="button" class="mg-stp${on}" data-mg="goto" data-step="${n}" aria-label="${esc(`${t("mgStepOf", n + off, total)}: ${t(`mgStepName_${n}`)}`)}"></button>`
         : `<span class="mg-stp${on}"></span>`;
     }).join("");
-    const where = step === 1 || !this.leavesOf().length ? t(`mgStepName_${step}`) : `${e ? `${emojiFor(e)} ${e.name}${this.leavesOf().length > 1 ? " +" : ""} · ` : ""}${t(`mgStepName_${step}`)}`;
+    const where = step <= 1 || !this.leavesOf().length ? t(`mgStepName_${step}`) : `${e ? `${emojiFor(e)} ${e.name}${this.leavesOf().length > 1 ? " +" : ""} · ` : ""}${t(`mgStepName_${step}`)}`;
     let body = "";
-    if (step === 1) body = this.step1Html();
+    if (step === 0) body = this.step0Html();
+    else if (step === 1) body = this.step1Html();
     else if (step === 2) body = this.step2Html();
     else if (step === 3) body = this.step3Html();
     else if (step === 4) body = this.step4Html();
     else body = this.step5Html();
     const last = step === STEPS;
-    const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-mg="${step === 1 ? "cancel" : "back"}">${this.h.mdi(step === 1 ? "close" : "arrowLeft", 18)}${esc(step === 1 ? t("mgCancel") : t("mgBack"))}</button>
+    // "Abbrechen" statt "Zurück" im ersten Schritt (mit Gerätewahl ist das Schritt 0) und beim Hinzufügen einer weiteren Bedingung
+    const cancels = w.pick ? step === 0 || (step === 1 && Boolean(w.adding) && this.leavesOf().length > 0) : step === 1;
+    const nav = `<div class="mg-btns"><button type="button" class="dlg-btn" data-mg="${cancels ? "cancel" : "back"}">${this.h.mdi(cancels ? "close" : "arrowLeft", 18)}${esc(cancels ? t("mgCancel") : t("mgBack"))}</button>
       ${last ? `<button type="button" class="dlg-btn primary" data-mg="save"${this.canNext() && !w.saving ? "" : " disabled"}>${this.h.mdi("save", 18)}${esc(t("mgSave"))}</button>` : `<button type="button" class="dlg-btn primary" data-mg="next"${this.canNext() ? "" : " disabled"}>${esc(t("mgNext"))}${this.h.mdi("arrowRight", 18)}</button>`}</div>`;
     // Rückfrage beim Schliessen als Pop-up in der Mitte des Fensters (seit 2.16.0); der Rest dahinter ist gesperrt (inert)
     const lock = w.confirmClose ? " inert" : "";
@@ -1558,7 +1648,7 @@ export class MagicPush {
     const device = this.host._devices?.find((d) => d.id === this.deviceId)?.name || "";
     return `<div class="mgw-head"${lock}><div class="mgw-t"><b>${esc(w.editing ? t("mgEditing") : t("mgNew"))}</b>${device ? `<small>${esc(device)}</small>` : ""}</div>
         <button type="button" class="dlg-close" data-mg="close" title="${esc(t("close"))}" aria-label="${esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>
-      <div class="mgw-prog"${lock}><div class="mg-stephead"><span>${esc(t("mgStepOf", step, STEPS))}</span><span>${esc(where)}</span></div>
+      <div class="mgw-prog"${lock}><div class="mg-stephead"><span>${esc(t("mgStepOf", step + off, total))}</span><span>${esc(where)}</span></div>
         <div class="mg-steps">${bars}</div></div>
       <div class="mgw-body"${lock}><div class="mgw-main"><div class="mg-big">${esc(t(step === 1 && !w.adding && this.leavesOf().length ? "mgQ_1b" : `mgQ_${step}`))}</div>
         ${body}
@@ -2175,7 +2265,12 @@ export class MagicPush {
         this.goto(this.wiz.step - 1);
         break;
       case "next":
-        this.goto(this.wiz.step + 1);
+        if (this.wiz.step === 0) this.chooseDevice();
+        else this.goto(this.wiz.step + 1);
+        break;
+      case "dev":
+        this.wiz.pickId = id;
+        this.paint();
         break;
       case "goto":
         this.goto(Number(el.dataset.step));
@@ -2338,7 +2433,11 @@ export class MagicPush {
     if (el.dataset.mgText) this.onText(el);
     else if (action === "value") this.setValue(el.value, true);
     else if (action === "reset-value") this.setReset(el.value, true);
-    else if (action === "free-query") {
+    else if (action === "dev-search") {
+      this.wiz.devQuery = el.value;
+      const zone = this.q('[data-mg-zone="devs"]');
+      if (zone) zone.innerHTML = this.devsHtml();
+    } else if (action === "free-query") {
       this.wiz.free.query = el.value;
       this.searchFree(el.value);
     }

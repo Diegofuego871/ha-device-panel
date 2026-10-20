@@ -7231,9 +7231,9 @@ class DevicePanel extends HTMLElement {
     const t = (k, ...a) => this._t(k, ...a);
     dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("flash", 28)}</span>
         <div class="dlg-title"><h2>${escape(t("rtAllTitle"))}</h2><div class="dlg-sub">${escape(t("rtAllSub"))}</div></div>
-        <button type="button" class="dlg-close dlg-add" data-rta="routine-add" title="${escape(t("rtAddBtn"))}" aria-label="${escape(t("rtAddBtn"))}">${mdi("plus", 18)}</button>
         <button type="button" class="dlg-close" data-rta-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
-      <div class="dlg-body"><div class="rt-all-wrap" data-rta-body></div></div>`;
+      <div class="dlg-body"><div class="rt-all-wrap" data-rta-body></div>
+        <div class="dlg-addbar"><button type="button" class="mg-add" data-rta="routine-add">${mdi("plus", 18)}${escape(t("rtAdd"))}</button></div></div>`;
     this._renderRtAll();
   }
 
@@ -7462,7 +7462,8 @@ class DevicePanel extends HTMLElement {
     dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("bell", 28)}</span>
         <div class="dlg-title"><h2>${escape(t("mgAllTitle"))}</h2><div class="dlg-sub">${escape(t("mgAllSub"))}</div></div>
         <button type="button" class="dlg-close" data-mga-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
-      <div class="dlg-body"><div class="rt-all-wrap" data-mga-body></div></div>`;
+      <div class="dlg-body"><div class="rt-all-wrap" data-mga-body></div>
+        <div class="dlg-addbar"><button type="button" class="mg-add" data-mga="magic-add">${mdi("plus", 18)}${escape(t("mgAdd"))}</button></div></div>`;
     this._renderMagicAll();
   }
 
@@ -7583,6 +7584,11 @@ class DevicePanel extends HTMLElement {
       const zone = dlg?.querySelector("[data-mg-all-zone]");
       if (zone) zone.innerHTML = this._magic.overviewListHtml(all, this._devices);
       if (dlg) this._mgAllStale(dlg);
+      return;
+    }
+    if (action === "magic-add") {
+      // Neue Meldung: der Assistent mit dem Schritt "Gerät" davor (seit 2.102.0), wie bei den Routinen
+      this._magic.startNewFromAll();
       return;
     }
     if (action === "magic-edit") {

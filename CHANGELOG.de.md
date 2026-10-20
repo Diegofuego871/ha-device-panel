@@ -7,6 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.102.0] - 2026-10-20
+
+Neue Magic-Push-Meldungen aus der Übersicht, und der Knopf "Neu" sitzt unten.
+
+### Hinzugefügt
+
+- **Magic Push, Übersicht:** Das Fenster mit allen Meldungen hat unten einen Knopf **"Neue Meldung"**, wie im Popup eines Geräts. Er öffnet denselben Assistenten mit einem Schritt mehr davor: **Gerät** (Schritt 1 von 6, mit Suche). "Weiter" lädt die Entitäten des Geräts, "Zurück" kehrt zur Wahl zurück (sie bleibt erhalten; mit demselben Gerät bleiben die Bedingungen, mit einem anderen beginnt der Entwurf von vorn), "Abbrechen" schliesst ohne Rückfrage. Danach ist alles wie im Popup des Geräts; die Meldung gehört zum gewählten Gerät.
+
+### Geändert
+
+- **Routinen und Magic Push, Übersicht:** Der Knopf für einen neuen Eintrag ist kein Plus mehr oben rechts, sondern der Knopf **"Neue Routine"** bzw. **"Neue Meldung"** unten, im Aussehen wie der im Popup des Geräts. Er bleibt beim Scrollen am unteren Rand des Fensters stehen und verschwindet so auch bei einer langen Liste nie. Die Texte der Fenster nennen ihn.
+
+### Intern
+
+- `startNewFromAll`, `chooseDevice` und Schritt 0 in `magic-push.js` (wie bei den Routinen); `.dlg-addbar` (haftend). Tests: neue Suite `magicadd`, `magicall` und `routineall` angepasst.
+
 ## [2.101.1] - 2026-10-20
 
 Namen in Benachrichtigungen von Home Assistant werden entschärft, Regler kommen mit unsinnigen Werten eines Geräts zurecht, und die Actions der CI sind festgelegt.
@@ -23,6 +39,8 @@ Namen in Benachrichtigungen von Home Assistant werden entschärft, Regler kommen
 ### Intern
 
 - `push.md_text`, `routines._finite`/`_bounds`/`_step` und `cleanSpec` in `routines.js`. Tests: `test_new_devices`, `test_battery`, `test_outage_notify`, `test_routine_options`, neue Suite `routineweird`.
+
+Nicht veröffentlicht; enthalten in 2.102.0.
 
 ## [2.101.0] - 2026-10-19
 
@@ -4149,7 +4167,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1
+[2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0
 [2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0

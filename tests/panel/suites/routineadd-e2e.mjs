@@ -8,8 +8,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { add: "Routine hinzufügen", q0: "Gerät, Gruppe oder Szene?", step: (n, t) => `Schritt ${n} von ${t}`, q1: "Was soll geschaltet werden?", cancel: "Abbrechen", back: "Zurück", next: "Weiter" },
-  en: { add: "Add routine", q0: "Device, group or scene?", step: (n, t) => `Step ${n} of ${t}`, q1: "What should be switched?", cancel: "Cancel", back: "Back", next: "Next" },
+  de: { add: "Neue Routine", q0: "Gerät, Gruppe oder Szene?", step: (n, t) => `Schritt ${n} von ${t}`, q1: "Was soll geschaltet werden?", cancel: "Abbrechen", back: "Zurück", next: "Weiter" },
+  en: { add: "New routine", q0: "Device, group or scene?", step: (n, t) => `Step ${n} of ${t}`, q1: "What should be switched?", cancel: "Cancel", back: "Back", next: "Next" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -38,7 +38,7 @@ for (const lang of ["de", "en"]) {
 
     await tap(".toolbar .rtall-btn");
     await wait(`return r.querySelector("dialog.rtall-dlg")?.open`);
-    check(`[${tag}] Fenster aller Routinen: Knopf "${T.add}" in der Kopfzeile, links vom Kreuz`, await ev(`const a = r.querySelector('dialog.rtall-dlg [data-rta="routine-add"]'); const c = r.querySelector("dialog.rtall-dlg [data-rta-close]"); return !!a && a.getAttribute("aria-label") === ${JSON.stringify(T.add)} && a.getBoundingClientRect().right <= c.getBoundingClientRect().left`));
+    check(`[${tag}] Fenster aller Routinen: Knopf "${T.add}" unten im Fenster (klebend), kein Plus im Kopf`, await ev(`const a = r.querySelector('dialog.rtall-dlg .dlg-addbar [data-rta="routine-add"]'); if (!a || r.querySelector("dialog.rtall-dlg .dlg-head [data-rta='routine-add']")) return false; const d = r.querySelector("dialog.rtall-dlg").getBoundingClientRect(), x = a.getBoundingClientRect(); return a.textContent.trim() === ${JSON.stringify(T.add)} && x.bottom <= d.bottom + 1 && x.top >= d.top`));
     await tap('dialog.rtall-dlg [data-rta="routine-add"]');
     check(`[${tag}] Assistent offen bei Schritt 1 von 6: "${T.q0}", sechs Segmente`, await wait(`const d = r.querySelector("${win}"); return d?.open && d.querySelector(".mg-big")?.textContent === ${JSON.stringify(T.q0)} && d.querySelector(".mg-stephead span")?.textContent === ${JSON.stringify(T.step(1, 6))} && d.querySelectorAll(".mg-stp").length === 6`));
     check(`[${tag}] Geräteliste: nur Geräte mit schaltbarer Entität, Weiter gesperrt, kein "Speichern"`, await wait(`const d = r.querySelector("${win}"); return d.querySelectorAll('[data-rt="dev"]').length > 3 && d.querySelector('[data-rt="nav-next"]').disabled && !d.querySelector('[data-rt="nav-quick"]') && d.querySelector('[data-rt="nav-cancel"]')`));

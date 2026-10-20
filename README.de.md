@@ -153,7 +153,7 @@ Eigene Meldungen pro Gerät ohne Automation, im Reiter "Magic Push" des Geräts.
 - **Empfänger:** jedes Notify-Ziel, auf Wunsch als kritische Mitteilung mit einer Lautstärke von 1 bis 10, und wie oft wiederholt wird
 - **Text:** Titel und Inhalt mit Variablen, die zum Wert passen (Name, Wert, Einheit, Schwelle, Bereich und mehr), mit Vorschau und einem Rückblick auf die letzten 24 Stunden vor dem Speichern
 - **Assistent:** öffnet in einem eigenen Fenster (Vollbild auf dem Handy), fünf Schritte: Bedingungen, wie lange, Versand, Text, Name
-- **Übersicht:** die App "Magic Push" (im Launcher) öffnet ein Fenster mit allen Meldungen aller Geräte, eine Karte pro Gerät, mit Suche und Filter
+- **Übersicht:** die App "Magic Push" (im Launcher) öffnet ein Fenster mit allen Meldungen aller Geräte, eine Karte pro Gerät, mit Suche und Filter; unten legt "Neue Meldung" eine neue an (zuerst das Gerät wählen, dann wie im Popup des Geräts)
 
 <p align="center"><img src="docs/screenshots/de/magic-wizard.png" alt="Magic-Push-Assistent, Schritt 1: Was soll überwacht werden" width="560"></p>
 

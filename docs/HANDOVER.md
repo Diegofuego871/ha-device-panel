@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.102.0, Magic Push aus der Übersicht, Knopf unten)
+
+- Wunsch des Nutzers: wie bei den Routinen lässt sich in der Magic-Push-Übersicht eine neue Meldung anlegen, mit dem Schritt "Gerät" davor (`magic-push.js`: `makeWiz`, `startNewFromAll`, `chooseDevice`, `step0Html`, `wiz.pick`/`wiz.step = 0`; Zählung im Kopf +1 bei `pick`; Geräteliste aus `host._devices` ohne ausgeschaltete). Statt des Plus oben rechts steht in beiden Übersichten (Routinen, Magic Push) der Knopf `.mg-add` in `.dlg-addbar` unten, `position: sticky` mit negativem `bottom` gleich dem Innenabstand des Fensters (sonst bleibt er über dem Rand stehen). Tests: Suite `magicadd` (neu), `magicall`, `routineall`.
+
 ## Stand (2.101.1, Namen in Benachrichtigungen, Regler, SHA-Pins)
 
 - Nachtrag zur Sicherheitsprüfung (Wunsch des Nutzers): `push.md_text` für Namen in den drei anhaltenden Benachrichtigungen; Regler-Werte (`routines._finite/_bounds/_step`, Panel `cleanSpec` in `entity()`); Actions in `.github/workflows` auf Commit-SHAs (Kommentar mit Version, `hacs/action` und `hassfest` am Stand von 2026-10-20 von `main` bzw. `master`). Die SHAs erneuert man von Hand (`git ls-remote --tags https://github.com/<repo>`), Dependabot ist nicht eingerichtet. Noch offen: Absenderprüfung bei "24 Std. stumm" (`outage.py:_on_action`).

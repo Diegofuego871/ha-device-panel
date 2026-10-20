@@ -499,7 +499,9 @@ dialog.status-dlg .dlg-title h2 { margin: 0; }
 /* Herz im Kopf des Geräte-Popups (seit 2.22.0): wie das Kreuz ein runder Knopf, rot sobald Favorit */
 .dlg-fav { flex: none; display: grid; place-items: center; width: 42px; height: 42px; margin-right: 8px; border: 1px solid var(--dp-divider); border-radius: 50%;
   background: var(--dp-card); color: var(--dp-text2); cursor: pointer; transition: color .2s ease, background .2s ease; }
-.dlg-add { margin-right: 8px; }
+/* Knopf "Neue Routine"/"Neue Meldung" unten im Fenster aller Einträge: klebt am unteren Rand, auch bei langer Liste */
+.dlg-addbar { position: sticky; bottom: -24px; z-index: 2; margin: 8px 0 -24px; padding: 10px 0 20px; background: var(--dp-card); background: color-mix(in srgb, var(--dp-card) 78%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.dlg-addbar .mg-add { margin-top: 0; }
 .dlg-fav:hover { background: var(--dp-hover); color: var(--dp-error); }
 .dlg-fav.on { color: var(--dp-error); }
 .dlg-fav:focus-visible { outline: 2px solid var(--dp-error); outline-offset: 1px; }
@@ -1396,6 +1398,7 @@ dialog.rtall-dlg::backdrop, dialog.mgall-dlg::backdrop, dialog.status-dlg::backd
 @media (max-width: 700px) {
   dialog.rtall-dlg, dialog.mgall-dlg, dialog.status-dlg { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; border-radius: 0; }
   .rtall-dlg .dlg-body, .mgall-dlg .dlg-body, .status-dlg .dlg-body { padding: 0 16px 20px; }
+  .rtall-dlg .dlg-addbar, .mgall-dlg .dlg-addbar { bottom: -20px; margin-bottom: -20px; padding-bottom: 16px; }
 }
 dialog.log-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); overflow: hidden;
   width: min(880px, calc(100vw - 48px)); height: min(1100px, calc(100% - 48px)); max-height: none; overscroll-behavior: contain; }

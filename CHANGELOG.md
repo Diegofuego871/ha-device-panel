@@ -7,6 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.102.0] - 2026-10-20
+
+New Magic Push messages from the overview, and the "new" button sits at the bottom.
+
+### Added
+
+- **Magic Push, overview:** the window with all messages now has a button **"New message"** at the bottom, like the one in the device pop-up. It opens the same assistant with one step more in front: **Device** (step 1 of 6, with search). "Next" loads the entities of the device, "Back" returns to the choice (it is kept; with the same device the conditions stay, with another one the draft starts afresh), "Cancel" closes without a question. Then everything is as in the device pop-up; the message belongs to the chosen device.
+
+### Changed
+
+- **Routines and Magic Push, overview:** the button for a new entry is no longer a plus at the top right but the button **"New routine"** or **"New message"** at the bottom, in the look of the one in the device pop-up. It stays at the bottom edge of the window while you scroll, so it never disappears with a long list. The texts of the windows name it.
+
+### Internal
+
+- `startNewFromAll`, `chooseDevice` and step 0 in `magic-push.js` (as for the routines); `.dlg-addbar` (sticky). Tests: new suite `magicadd`, `magicall` and `routineall` adjusted.
+
 ## [2.101.1] - 2026-10-20
 
 Names in Home Assistant notifications are escaped, sliders cope with odd values from a device, and the CI actions are pinned.
@@ -23,6 +39,8 @@ Names in Home Assistant notifications are escaped, sliders cope with odd values 
 ### Internal
 
 - `push.md_text`, `routines._finite`/`_bounds`/`_step` and `cleanSpec` in `routines.js`. Tests: `test_new_devices`, `test_battery`, `test_outage_notify`, `test_routine_options`, new suite `routineweird`.
+
+Not released; included in 2.102.0.
 
 ## [2.101.0] - 2026-10-19
 
@@ -4048,7 +4066,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1
+[2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0
 [2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0

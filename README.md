@@ -153,7 +153,7 @@ Your own notifications per device without an automation, in the tab "Magic Push"
 - **Recipient:** any notify target, optionally as a critical notification with a volume from 1 to 10, and how often to repeat
 - **Text:** title and content with variables that fit the value (name, value, unit, threshold, area and more), a preview and a look back at the last 24 hours before you save
 - **Assistant:** opens in its own window (full screen on the phone), five steps: conditions, how long, delivery, text, name
-- **Overview:** the app "Magic Push" (in the launcher) opens a window with all messages of all devices, one card per device, with search and filter
+- **Overview:** the app "Magic Push" (in the launcher) opens a window with all messages of all devices, one card per device, with search and filter; "New message" at the bottom adds one (choose the device first, then as in the device pop-up)
 
 <p align="center"><img src="docs/screenshots/en/magic-wizard.png" alt="Magic Push assistant, step 1: what should be monitored" width="560"></p>
 

@@ -1,6 +1,6 @@
 // Magic Push als eigene App mit eigenem Fenster (2.75.0, vorher Reiter in den Einstellungen): zeigt alle Meldungen aller
 // Geräte, nach Gerät gruppiert; ein- und ausschalten, bearbeiten (öffnet das Fenster des Assistenten) und löschen mit
-// Rückfrage, aber keine neue anlegen. Dazu: in den Einstellungen gibt es den Reiter nicht mehr (acht Reiter). Deutsch und
+// Rückfrage, neue Meldungen kommen seit 2.102.0 über das Plus (Suite magicadd). Dazu: in den Einstellungen gibt es den Reiter nicht mehr (acht Reiter). Deutsch und
 // Englisch, Desktop und Handy, echte Klicks und Taps.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
@@ -77,7 +77,7 @@ for (const lang of ["de", "en"]) {
     // Die App öffnet das eigene Fenster (über den Launcher: launcher-e2e)
     await ev(`r.host._openMagicAll()`);
     check(`[${tag}] Fenster "Magic Push" mit Titel und Untertitel`, await wait(`const d=r.querySelector("dialog.mgall-dlg"); return d?.open && d.querySelector("h2")?.textContent.trim() === "Magic Push" && !!d.querySelector(".dlg-sub")`));
-    check(`[${tag}] Fenster ohne Plus (neue Meldungen entstehen im Popup des Geräts)`, !(await ev(`return !!r.querySelector("dialog.mgall-dlg .dlg-add")`)));
+    check(`[${tag}] Fenster mit Knopf "Neue Meldung" unten ( seit 2.102.0; der Ablauf steht in magicadd-e2e)`, !!(await ev(`return !!r.querySelector('dialog.mgall-dlg .dlg-addbar .mg-add[data-mga="magic-add"]')`)));
 
     check(`[${tag}] Reiter zeigt Hinweis und Zahl`, await wait(`const t=r.querySelector('${body}')?.textContent || ""; return t.includes(${JSON.stringify(T.intro)}) && t.includes(${JSON.stringify(T.count)})`), await text(body));
     const heads = await ev(`return [...r.querySelectorAll('${body} .mg-dhead .mg-t b')].map(x => x.textContent.trim()).join("|")`);
