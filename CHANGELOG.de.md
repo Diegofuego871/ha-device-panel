@@ -7,6 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.108.0] - 2026-10-20
+
+Der Bluetooth-Empfang zeigt den stärksten Empfänger statt den, den Home Assistant gerade führt.
+
+### Geändert
+
+- **Bluetooth-Geräte, Empfang:** Alle Adapter und Bluetooth-Proxys hören gleichzeitig mit, aber Home Assistant behält den zuerst gewählten Empfänger und wechselt erst, wenn ein anderer deutlich stärker ist (oder der alte veraltet). Ein Gerät stand deshalb oft auf einem schwächeren Proxy, und der Wert sprang beim Wechsel. Das Panel liest jetzt die letzte Meldung **jedes** Empfängers und zeigt den **stärksten RSSI**, mit dem Namen des Empfängers, der ihn geliefert hat; Wert und Empfänger stammen immer aus derselben Meldung. Der **Empfangsverlauf** und der Weg "verbunden über" nutzen dieselbe Wahl und widersprechen der Liste also nie.
+- **Einzelheiten:** Es zählen nur Empfänger, die das Gerät kürzlich gehört haben (ihre letzte Meldung höchstens 60 Sekunden älter als die frischeste; ein Proxy, der das Gerät nicht mehr hört, behält keinen alten guten Wert). Der bisherige Empfänger bleibt, solange er höchstens 2 dB schwächer ist als der stärkste, damit der Name nicht zwischen zwei fast gleichen Proxys hin und her springt (und der Verlauf frei von Rauschen bleibt). Liefert HA keine Sicht je Empfänger, gilt wie bisher der Wert, den HA führt.
+- Wirkung: Der Empfang von Bluetooth-Geräten ist meist besser und ruhiger als vorher; Warnungen "Empfang schwach" erscheinen für sie seltener. Einzelne Werte schwanken weiter um einige dB, das ist das Funksignal selbst.
+
+### Intern
+
+- `devices._ble_best` (eine Stelle für Wert und Empfänger, genutzt von `_ble_signal` und `ble_receiver`), `_ble_stamps` (HA baut die Zeitpunkte bei jedem Zugriff neu auf, darum 5 s je Empfänger zwischengespeichert). Tests: neu `tests/test_ble_best.py`.
+
 ## [2.107.0] - 2026-10-20
 
 "Apps" und "Dashboards" von Home Assistant als Apps im Launcher, standardmässig ausgeblendet.
@@ -4275,6 +4289,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.108.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.108.0
 [2.107.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.107.0
 [2.106.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.1
 [2.106.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.0

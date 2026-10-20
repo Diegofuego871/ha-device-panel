@@ -53,6 +53,8 @@ from .const import (
     CONF_HIDE_CHIPS,
     CONF_HIDE_CONNECTIONS,
     CONNECTION_MANUAL,
+    DATA_BLE_BEST,
+    DATA_BLE_STAMPS,
     DATA_CONNECTION_OVERRIDES,
     CONF_FLAKY_OUTAGES,
     CONF_NOTIFY_DELAY,
@@ -307,41 +309,85 @@ def _zha_signal(hass: HomeAssistant, device_id: str) -> dict[str, Any] | None:
     return {"kind": "lqi", "value": lqi, "rssi": rssi} if lqi is not None else {"kind": "dbm", "value": rssi}
 
 
-def _ble_signal(hass: HomeAssistant, address: str) -> tuple[dict[str, Any] | None, str | None]:
-    """RSSI und Empfänger (Adapter oder Proxy) aus der Bluetooth-Integration."""
+# Bluetooth-Empfang (seit 2.108.0): der stärkste Empfänger, nicht der, den Home Assistant gerade führt. HA behält die zuletzt gewählte
+# Quelle, bis eine neue deutlich stärker ist (oder die alte veraltet): Das Gerät steht oft auf einem schwächeren Proxy, und beim Wechsel
+# springt der Wert. Alle Adapter und Proxys hören aber gleichzeitig mit; async_scanner_devices_by_address liefert ihre letzte Meldung.
+BLE_WINDOW_S = 60.0  # nur Empfänger, deren letzte Meldung höchstens so viel älter ist als die frischeste (selten sendende Geräte)
+BLE_KEEP_DB = 2  # der bisherige Empfänger bleibt, solange er höchstens so viel schwächer ist wie der stärkste (Rauschen, kein Hin und Her)
+_BLE_RSSI_MIN = -127  # "kein Wert" in HA
+BLE_STAMPS_TTL_S = 5.0
+
+
+def _ble_stamps(hass: HomeAssistant, scanner: Any, now: float) -> dict[str, float]:
+    """
+    Zeitpunkte der letzten Meldung je Adresse bei einem Empfänger. HA baut dieses Wörterbuch bei jedem Zugriff neu (alle Adressen des
+    Empfängers); bei vielen Geräten und Empfängern wäre das je Abfrage zu teuer, darum höchstens alle BLE_STAMPS_TTL_S Sekunden.
+    """
+    cache: dict[str, tuple[Any, float, dict[str, float]]] = hass.data.setdefault(DATA_BLE_STAMPS, {})
+    hit = cache.get(str(scanner.source))
+    if hit is not None and hit[0] is scanner and now - hit[1] < BLE_STAMPS_TTL_S:
+        return hit[2]
+    stamps = dict(getattr(scanner, "discovered_device_timestamps", None) or {})
+    cache[str(scanner.source)] = (scanner, now, stamps)
+    return stamps
+
+
+def _ble_best(hass: HomeAssistant, address: str) -> tuple[int, str, str] | None:
+    """
+    (RSSI, Quelle, Name) des Empfängers mit dem stärksten Wert unter allen, die das Gerät kürzlich gehört haben. Der bisherige Empfänger
+    bleibt, solange er höchstens BLE_KEEP_DB schwächer ist (stabiler Name im Verlauf, Wert und Empfänger stammen immer aus derselben
+    Meldung). Fehlt eine Einzelsicht, gilt wie bisher die Meldung, die Home Assistant führt. None: nie gehört oder Bluetooth nicht bereit.
+    """
     if "bluetooth" not in hass.config.components:
-        return None, None
-    try:
-        from homeassistant.components import bluetooth  # noqa: PLC0415
-
-        info = bluetooth.async_last_service_info(hass, address, connectable=False)
-        if info is None:
-            return None, None
-        scanner = bluetooth.async_scanner_by_source(hass, info.source)
-        via = strip_address(getattr(scanner, "name", None) or info.source)
-        return {"kind": "dbm", "value": info.rssi}, via
-    except Exception:  # noqa: BLE001
-        return None, None
-
-
-def ble_receiver(hass: HomeAssistant, device: dr.DeviceEntry) -> tuple[str, str] | None:
-    """
-    (Quelle, Name) des Empfängers, über den ein Bluetooth-Gerät gerade gemeldet wird (Adapter oder Proxy); die Quelle (Adresse) ist
-    stabil, der Name ist der Anzeigename. None: unbekannt (noch nie empfangen, Bluetooth nicht geladen). Seit 2.40.0 für den Verlauf.
-    """
-    address = next((c[1] for c in device.connections if c[0] == dr.CONNECTION_BLUETOOTH), None)
-    if not address or "bluetooth" not in hass.config.components:
         return None
     try:
         from homeassistant.components import bluetooth  # noqa: PLC0415
 
+        now = time.monotonic()
+        seen: list[tuple[float, int, str, str]] = []  # (Alter, RSSI, Quelle, Name)
+        for item in bluetooth.async_scanner_devices_by_address(hass, address, connectable=False):
+            rssi = getattr(item.advertisement, "rssi", None)
+            if not isinstance(rssi, (int, float)) or not _BLE_RSSI_MIN < rssi <= 0:
+                continue
+            stamp = _ble_stamps(hass, item.scanner, now).get(address)
+            age = max(0.0, now - stamp) if isinstance(stamp, (int, float)) else 0.0
+            source = str(item.scanner.source)
+            seen.append((age, int(rssi), source, str(getattr(item.scanner, "name", None) or source)))
+        if seen:
+            freshest = min(a for a, *_ in seen)
+            seen = [x for x in seen if x[0] - freshest <= BLE_WINDOW_S]
+            best = max(seen, key=lambda x: (x[1], -x[0]))
+            memory: dict[str, str] = hass.data.setdefault(DATA_BLE_BEST, {})
+            kept = next((x for x in seen if x[2] == memory.get(address)), None)
+            if kept is not None and kept[1] >= best[1] - BLE_KEEP_DB:
+                best = kept
+            memory[address] = best[2]
+            return best[1], best[2], best[3]
         info = bluetooth.async_last_service_info(hass, address, connectable=False)
         if info is None or not info.source:
             return None
         scanner = bluetooth.async_scanner_by_source(hass, info.source)
-        return str(info.source), str(getattr(scanner, "name", None) or info.source)
+        return info.rssi, str(info.source), str(getattr(scanner, "name", None) or info.source)
     except Exception:  # noqa: BLE001 - interne Schnittstelle von HA
         return None
+
+
+def _ble_signal(hass: HomeAssistant, address: str) -> tuple[dict[str, Any] | None, str | None]:
+    """RSSI des stärksten Empfängers (Adapter oder Proxy) und dessen Name aus der Bluetooth-Integration."""
+    best = _ble_best(hass, address)
+    if best is None:
+        return None, None
+    return {"kind": "dbm", "value": best[0]}, strip_address(best[2])
+
+
+def ble_receiver(hass: HomeAssistant, device: dr.DeviceEntry) -> tuple[str, str] | None:
+    """
+    (Quelle, Name) des Empfängers, über den ein Bluetooth-Gerät gerade am stärksten gehört wird (Adapter oder Proxy); die Quelle (Adresse)
+    ist stabil, der Name ist der Anzeigename. None: unbekannt (noch nie empfangen, Bluetooth nicht geladen). Seit 2.40.0 für den Verlauf.
+    """
+    address = next((c[1] for c in device.connections if c[0] == dr.CONNECTION_BLUETOOTH), None)
+    best = _ble_best(hass, address) if address else None
+    return (best[1], best[2]) if best else None
 
 
 def battery(

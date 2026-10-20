@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.108.0, Bluetooth: stärkster Empfänger)
+
+- Anlass: der Nutzer vermutete Schwankungen, weil mehrere Proxys gleichzeitig hören. Geprüft in `habluetooth/manager.py`: `async_last_service_info` liefert die von HA bevorzugte Meldung (wechselt erst bei `ADV_RSSI_SWITCH_THRESHOLD` dB Vorsprung oder veralteter alter Meldung), nicht die stärkste. Neu `devices._ble_best`: letzte Meldung jedes Empfängers (`async_scanner_devices_by_address`), nur frische (60 s zur frischesten), stärkster RSSI, bisheriger Empfänger bleibt bis 2 dB Unterschied (`hass.data[DATA_BLE_BEST]`), Rückfall auf `async_last_service_info`. `_ble_signal` und `ble_receiver` nutzen es gemeinsam (Wert und Empfänger aus derselben Meldung). Zeitpunkte (`discovered_device_timestamps`) baut HA bei jedem Zugriff neu: 5 s Zwischenspeicher (`DATA_BLE_STAMPS`).
+- Nicht an echter Hardware geprüft; Tests mit Ersatz-Integration (die echte `bluetooth` lässt sich in der Testumgebung wegen `aiousbwatcher` nicht laden).
+
 ## Stand (2.107.0, Apps und Dashboards im Launcher)
 
 - Neue Launcher-Apps `apps` (`/config/apps/installed`) und `dash` (`/config/lovelace/dashboards`), Pfade nach dem Frontend von HA geprüft (`ha-panel-config.ts`: Routen "apps", "lovelace"; `ha-config-apps`: Standardseite "installed"), Symbol und Farbe in `HA_LOOK`. Standardmässig aus: `HIDDEN_BY_DEFAULT`, Daten `v` 3 (neu und einmal für bestehende Daten in `hidden`). Achtung: Die Bedingung der alten Migration (Einstellungen als Favorit) lautet jetzt `v < 2`, sonst käme sie bei v 3 jedes Mal wieder.

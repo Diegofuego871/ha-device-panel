@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.108.0] - 2026-10-20
+
+Bluetooth reception shows the strongest receiver instead of the one Home Assistant happens to keep.
+
+### Changed
+
+- **Bluetooth devices, reception:** all adapters and Bluetooth proxies listen at the same time, but Home Assistant keeps the receiver it chose first and only switches when another one is clearly stronger (or the old one goes stale). So a device often stood on a weaker proxy, and the value jumped when HA switched. The panel now reads the last advertisement of **every** receiver and shows the **strongest RSSI**, with the name of the receiver that delivered it; value and receiver always come from the same advertisement. The **signal history** and the "connected via" path use the same choice, so they never contradict the list.
+- **Details:** only receivers that heard the device recently count (their last advertisement at most 60 seconds older than the freshest; a proxy that stopped hearing it does not keep an old good value). The previous receiver stays while it is at most 2 dB weaker than the strongest, so the name does not flip back and forth between two nearly equal proxies (and the history stays free of noise). Where HA gives no per-receiver view, it falls back to the value HA keeps, as before.
+- Effect: reception of Bluetooth devices is usually better and steadier than before; "Weak reception" warnings for them appear less often. Single readings still vary by a few dB, that is the radio itself.
+
+### Internal
+
+- `devices._ble_best` (one place for value and receiver, used by `_ble_signal` and `ble_receiver`), `_ble_stamps` (HA rebuilds the timestamps on every access, so they are cached for 5 s per receiver). Tests: new `tests/test_ble_best.py`.
+
 ## [2.107.0] - 2026-10-20
 
 "Apps" and "Dashboards" of Home Assistant as launcher apps, switched off by default.
@@ -4174,6 +4188,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.108.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.108.0
 [2.107.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.107.0
 [2.106.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.1
 [2.106.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.0

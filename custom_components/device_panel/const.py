@@ -400,6 +400,9 @@ DATA_SIGNAL = f"{DOMAIN}_signal"
 DATA_MAGIC = f"{DOMAIN}_magic"
 DATA_ROUTINES = f"{DOMAIN}_routines"
 DATA_PROTOCOL = f"{DOMAIN}_protocol"
+# Bluetooth: zuletzt gewählter stärkster Empfänger je Adresse (devices._ble_best)
+DATA_BLE_BEST = f"{DOMAIN}_ble_best"
+DATA_BLE_STAMPS = f"{DOMAIN}_ble_stamps"
 DATA_STATUS = f"{DOMAIN}_status"
 
 # Versionsprüfung (GitHub-Releases) und Abgleich mit HACS, wie unifi_dynamic.
