@@ -1592,6 +1592,7 @@ class DevicePanel extends HTMLElement {
     dlg.addEventListener("input", (ev) => {
       if (this._rename && ev.target.matches?.('input[data-dlg="rename-input"]')) this._rename.value = ev.target.value;
       if (ev.target.matches?.('input[data-dlg="ai-q"]')) this._aiDraft.set(this._detailId, ev.target.value);
+      if (ev.target.matches?.('input[data-dlg="dev-search"]')) this._devSearchInput(ev.target);
     });
     dlg.addEventListener("keydown", (ev) => {
       if (ev.target.matches?.('input[data-dlg="ai-q"]') && ev.key === "Enter" && !ev.isComposing) {
@@ -3911,6 +3912,7 @@ class DevicePanel extends HTMLElement {
     this._closeStat();
     this._detailId = id;
     this._devTab = tab;
+    this._devQ = { ent: "", sw: "" };
     this._devSub = "out";
     this._detail = null;
     this._magic.open(id);
@@ -4631,7 +4633,53 @@ class DevicePanel extends HTMLElement {
     return (cur?.data?.entities || []).filter((e) => DOMAIN_EMOJI[e.entity_id.split(".", 1)[0]]);
   }
 
+  // Suche in den Listen des Geräte-Popups (seit 2.103.0): Reiter "Schalter" und "Entitäten", ab 8 Einträgen. Der Suchtext liegt
+  // in this._devQ (je Reiter) und überlebt den Neuaufbau alle 10 s; getippt wird nur die Liste (data-dev-zone) neu gezeichnet.
+  _devSearchHtml(key, n) {
+    if (n < 8) return "";
+    const q = this._devQ?.[key] || "";
+    const ph = this._t("listSearch");
+    return `<label class="list-search" data-for="dev-${key}">${mdi("search", 18)}<input type="search" data-dlg="dev-search" data-key="${key}" value="${escape(q)}" placeholder="${escape(ph)}" aria-label="${escape(ph)}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="n">${escape(this._devSearchCount(key, n))}</span>${this._fieldClearHtml("data-fc", "", q)}</label>`;
+  }
+
+  _devSearchCount(key, total) {
+    const q = String(this._devQ?.[key] || "").trim();
+    if (!q) return "";
+    const d = this._devices.find((x) => x.id === this._detailId);
+    const n = d ? (key === "sw" ? this._switchEntities(d) : this._detail?.data?.entities || []).filter((e) => this._devMatch(e, q)).length : 0;
+    return this._t("listSearchOf", n, total);
+  }
+
+  // Treffer: Name, Entity-ID oder angezeigter Zustand enthält den Text
+  _devMatch(e, q) {
+    const needle = String(q || "").trim().toLowerCase();
+    if (!needle) return true;
+    return `${e.name} ${e.entity_id} ${this._formatState(e).text}`.toLowerCase().includes(needle);
+  }
+
+  _devSearchInput(el) {
+    const key = el.dataset.key;
+    if (!this._devQ || !["ent", "sw"].includes(key)) return;
+    this._devQ[key] = el.value;
+    const dlg = this.shadowRoot.querySelector("dialog.device");
+    const d = this._devices.find((x) => x.id === this._detailId);
+    const zone = dlg?.querySelector(`[data-dev-zone="${key}"]`);
+    if (!zone || !d) return;
+    const all = key === "sw" ? this._switchEntities(d) : this._detail?.data?.entities || [];
+    zone.innerHTML = key === "sw" ? this._switchGridHtml(all) : this._entListHtml(d);
+    const n = dlg.querySelector(`.list-search[data-for="dev-${key}"] .n`);
+    if (n) n.textContent = this._devSearchCount(key, all.length);
+    // Der Zwischenspeicher von setHtml kennt diese Änderung nicht
+    lastHtml.delete(dlg);
+  }
+
   _switchesHtml(list) {
+    return `${this._devSearchHtml("sw", list.length)}<div data-dev-zone="sw">${this._switchGridHtml(list)}</div>`;
+  }
+
+  _switchGridHtml(all) {
+    const list = all.filter((e) => this._devMatch(e, this._devQ?.sw));
+    if (!list.length) return `<p class="dlg-note mg-none">${escape(this._t("listSearchNone"))}</p>`;
     const cells = list.map((e) => {
       const domain = e.entity_id.split(".", 1)[0];
       const st = this._hass?.states?.[e.entity_id];
@@ -4656,6 +4704,14 @@ class DevicePanel extends HTMLElement {
     if (!cur || (!cur.data && cur.loading)) return { count: 0, html: `<p class="dlg-note">${escape(this._t("loadingDetail"))}</p>` };
     if (!cur.data) return { count: 0, html: `<div class="dlg-error">${escape(this._t("error"))} ${escape(cur.error || "")}</div>` };
     const list = cur.data.entities || [];
+    return { count: list.length, html: list.length ? `${this._devSearchHtml("ent", list.length)}<div data-dev-zone="ent">${this._entListHtml(d)}</div>` : "" };
+  }
+
+  // Die Liste der Entitäten (mit dem Suchtext des Reiters) und der Hinweis zum Lebenszeichen
+  _entListHtml(d) {
+    const all = this._detail?.data?.entities || [];
+    const list = all.filter((e) => this._devMatch(e, this._devQ?.ent));
+    if (!list.length) return `<p class="dlg-note mg-none">${escape(this._t("listSearchNone"))}</p>`;
     const items = list
       .map((e) => {
         const { text, bad } = this._formatState(e);
@@ -4667,7 +4723,7 @@ class DevicePanel extends HTMLElement {
       })
       .join("");
     const hint = list.some((e) => e.liveness) ? `<p class="dlg-note small">${escape(this._t("livenessHint"))}</p>` : "";
-    return { count: list.length, html: list.length ? `<ul class="entities">${items}</ul>${hint}` : "" };
+    return `<ul class="entities">${items}</ul>${hint}`;
   }
 
   // Link zu diesem Gerät (seit 2.82.0): öffnet das Popup über /device-panel?device=<id> (Deep-Link, siehe _openFromUrl).
@@ -4753,6 +4809,7 @@ class DevicePanel extends HTMLElement {
     if (!this._devForce && (this._magic.wizardOpen() || this._routines.wizardOpen())) return;
     if (!this._devForce && this._rename && typing?.dataset?.dlg === "rename-input") return;
     if (!this._devForce && typing?.dataset?.dlg === "ai-q" && typing.value) return;
+    if (!this._devForce && typing?.dataset?.dlg === "dev-search") return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-bat-pct" && typing.value !== String(d.battery_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-sig-val" && typing.value !== String(d.signal_setting)) return;
     if (!this._devForce && d && typing?.dataset?.dlg === "dev-charge-stall-val" && typing.value !== String(d.charge_stall_setting)) return;

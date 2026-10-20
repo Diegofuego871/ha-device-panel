@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.103.0, Suche im Geräte-Popup)
+
+- Wunsch des Nutzers (Gerät mit 329 Entitäten): Suchfeld in den Reitern "Schalter" und "Entitäten" des Geräte-Popups, ab 8 Einträgen, Regel "Suchfelder" (`<label class="list-search">`, `_fieldClearHtml("data-fc", …)`). Text in `this._devQ` ({ent, sw}, beim Öffnen eines Geräts leer); beim Tippen wird nur die Zone `[data-dev-zone]` neu gezeichnet (`_devSearchInput`), danach `lastHtml.delete(dlg)`; `_renderDevice` baut nicht neu auf, solange `data-dlg="dev-search"` den Fokus hat. Treffer: Name, Entity-ID, gezeigter Zustand. Test: Suite `devsearch`.
+
 ## Stand (2.102.0, Magic Push aus der Übersicht, Knopf unten)
 
 - Wunsch des Nutzers: wie bei den Routinen lässt sich in der Magic-Push-Übersicht eine neue Meldung anlegen, mit dem Schritt "Gerät" davor (`magic-push.js`: `makeWiz`, `startNewFromAll`, `chooseDevice`, `step0Html`, `wiz.pick`/`wiz.step = 0`; Zählung im Kopf +1 bei `pick`; Geräteliste aus `host._devices` ohne ausgeschaltete). Statt des Plus oben rechts steht in beiden Übersichten (Routinen, Magic Push) der Knopf `.mg-add` in `.dlg-addbar` unten, `position: sticky` mit negativem `bottom` gleich dem Innenabstand des Fensters (sonst bleibt er über dem Rand stehen). Tests: Suite `magicadd` (neu), `magicall`, `routineall`.

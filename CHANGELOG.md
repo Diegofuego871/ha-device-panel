@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.103.0] - 2026-10-20
+
+Search field in the device pop-up for "Switches" and "Entities".
+
+### Added
+
+- **Device pop-up, tabs "Switches" and "Entities":** from eight entries on there is a **search field** above the list (name, entity ID or the shown state; upper and lower case do not matter), with the cross to clear it, a counter "n of m" and the note "No matches". Both tabs have their own text. The text stays when you change the tab and while the pop-up refreshes; it starts empty for the next device. While the field has the focus, the pop-up does not refresh itself (as with the other input fields). With fewer than eight entries there is no field.
+
+### Internal
+
+- `_devSearchHtml`, `_devSearchInput`, `_devMatch`, `_entListHtml`, `_switchGridHtml` in `device-panel.js`; the text is kept in `_devQ`. Test: new suite `devsearch`.
+
 ## [2.102.0] - 2026-10-20
 
 New Magic Push messages from the overview, and the "new" button sits at the bottom.
@@ -4064,6 +4076,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.103.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.103.0
 [2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0
 [2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0

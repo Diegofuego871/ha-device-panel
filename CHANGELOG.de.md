@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.103.0] - 2026-10-20
+
+Suchfeld im Geräte-Popup bei "Schalter" und "Entitäten".
+
+### Hinzugefügt
+
+- **Geräte-Popup, Reiter "Schalter" und "Entitäten":** Ab acht Einträgen steht über der Liste ein **Suchfeld** (Name, Entitäts-ID oder der gezeigte Zustand; Gross- und Kleinschreibung egal), mit dem Kreuz zum Leeren, einem Zähler "n von m" und dem Hinweis "Keine Treffer". Beide Reiter haben ihren eigenen Text. Der Text bleibt beim Wechsel des Reiters und beim Auffrischen des Popups; beim nächsten Gerät beginnt er leer. Solange das Feld den Fokus hat, frischt sich das Popup nicht selbst auf (wie bei den anderen Eingabefeldern). Mit weniger als acht Einträgen gibt es kein Feld.
+
+### Intern
+
+- `_devSearchHtml`, `_devSearchInput`, `_devMatch`, `_entListHtml`, `_switchGridHtml` in `device-panel.js`; der Text liegt in `_devQ`. Test: neue Suite `devsearch`.
+
 ## [2.102.0] - 2026-10-20
 
 Neue Magic-Push-Meldungen aus der Übersicht, und der Knopf "Neu" sitzt unten.
@@ -4165,6 +4177,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.103.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.103.0
 [2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0
 [2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0
