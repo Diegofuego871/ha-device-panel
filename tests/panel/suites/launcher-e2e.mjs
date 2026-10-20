@@ -40,17 +40,19 @@ const TEXT = {
     fav: ["a", "b", "c", "d", "e", "f", "g", 5], hidden: ["x", 3], order: { ha: ["q", "q", "r"], evil: ["z"] }, layout: { desktop: "list", phone: "zzz" },
     custom: [{ id: "c1", name: " Kamera ", icon: "nope", url: "/lovelace/k", ext: false }, { id: "c2", name: "Böse", icon: "web", url: "javascript:alert(1)", ext: true }, { id: "", name: "x", url: "/a" }, null],
   });
-  check(`Bereinigen: höchstens ${MAX_FAV} Favoriten, nur Texte, keine Doppelten`, s.fav.length === MAX_FAV && s.fav.every((x) => typeof x === "string") && JSON.stringify(s.order.ha) === '["q","r"]' && !("evil" in s.order) && JSON.stringify(s.hidden) === '["x"]');
+  check(`Bereinigen: höchstens ${MAX_FAV} Favoriten, nur Texte, keine Doppelten`, s.fav.length === MAX_FAV && s.fav.every((x) => typeof x === "string") && JSON.stringify(s.order.ha) === '["q","r"]' && !("evil" in s.order) && JSON.stringify(s.hidden) === '["x","apps","dash"]');
   check("Bereinigen: Darstellung, unbekanntes Symbol, ungültige und leere eigene Apps",
     s.layout.desktop === "list" && s.layout.phone === "grid" && s.custom.length === 1 && s.custom[0].name === "Kamera" && s.custom[0].icon === "web");
   check("Bereinigen: ohne Angaben der Standard (Routine und Einstellungen sind Favoriten)", JSON.stringify(sanitizeApps(null).fav) === '["routine","settings"]' && sanitizeApps("x").custom.length === 0);
   // Umbenennung Timer → Routine (2.55.0): die App hiess vorher "timer"; Favoriten, Ausgeblendetes und Reihenfolge behalten sie
   const legacy = sanitizeApps({ fav: ["timer", "magic"], hidden: ["timer", "log"], order: { panel: ["log", "timer"] }, custom: [], layout: {}, updated: 1 });
-  check("Bereinigen: alte App \"timer\" heisst \"routine\" (Favorit, Ausgeblendetes, Reihenfolge)", JSON.stringify([legacy.fav, legacy.hidden, legacy.order.panel]) === JSON.stringify([["routine", "settings", "magic"], ["routine", "log"], ["log", "routine"]]), JSON.stringify(legacy));
+  check("Bereinigen: alte App \"timer\" heisst \"routine\" (Favorit, Ausgeblendetes, Reihenfolge)", JSON.stringify([legacy.fav, legacy.hidden, legacy.order.panel]) === JSON.stringify([["routine", "settings", "magic"], ["routine", "log", "apps", "dash"], ["log", "routine"]]), JSON.stringify(legacy));
   // 2.88.0: das Zahnrad steht nicht mehr fest in der Kopfzeile; bestehende Daten (ohne "v") bekommen die Einstellungen einmal als zweiten Favoriten,
   // Daten mit v 2 bleiben, wie sie sind (wer sie löst, behält es so); ohne Favoriten (leer) steht sie zuerst; Einstellungen sind nie ausgeblendet
-  check("Bereinigen: bestehende Daten (ohne v) heften die Einstellungen als zweiten Favoriten an", JSON.stringify(sanitizeApps({ fav: ["routine", "auto"] }).fav) === '["routine","settings","auto"]' && JSON.stringify(sanitizeApps({ fav: [] }).fav) === '["settings"]' && sanitizeApps({ fav: ["routine"] }).v === 2);
+  check("Bereinigen: bestehende Daten (ohne v) heften die Einstellungen als zweiten Favoriten an", JSON.stringify(sanitizeApps({ fav: ["routine", "auto"] }).fav) === '["routine","settings","auto"]' && JSON.stringify(sanitizeApps({ fav: [] }).fav) === '["settings"]' && sanitizeApps({ fav: ["routine"] }).v === 3);
   check("Bereinigen: v 2 bleibt unverändert (gelöste Einstellungen kommen nicht wieder)", JSON.stringify(sanitizeApps({ v: 2, fav: ["routine"] }).fav) === '["routine"]' && JSON.stringify(sanitizeApps({ fav: ["auto", "settings"] }).fav) === '["auto","settings"]');
+  check("Bereinigen: Apps und Dashboards sind standardmässig aus (neue Daten, bestehende einmal); wer sie einschaltet (v 3), behält das", JSON.stringify(sanitizeApps(null).hidden) === '["apps","dash"]' && JSON.stringify(sanitizeApps({ v: 2, hidden: ["x"] }).hidden) === '["x","apps","dash"]' && JSON.stringify(sanitizeApps({ v: 3, hidden: [] }).hidden) === "[]" && JSON.stringify(sanitizeApps({ v: 3, hidden: ["dash"] }).hidden) === '["dash"]');
+  check("Bereinigen: bestehende Daten ab v 2 behalten gelöste Favoriten (v 3 setzt die Einstellungen nicht wieder an)", JSON.stringify(sanitizeApps({ v: 3, fav: ["routine"] }).fav) === '["routine"]');
   check("Bereinigen: höchstens fünf Favoriten auch mit der Einstellungs-App", sanitizeApps({ fav: ["a", "b", "c", "d", "e"] }).fav.length === 5);
 }
 
@@ -276,7 +278,7 @@ for (const lang of ["de", "en"]) {
     const before = await data();
     await tap(`${D} [data-ap="reset"]`);
     d = await data();
-    check(`[${tag}] Zurücksetzen: Favoriten Routine und Einstellungen, nichts ausgeblendet, eigene Apps und Darstellung bleiben`, JSON.stringify(d.fav) === '["routine","settings"]' && d.hidden.length === 0 && d.custom.length === 2 && d.layout.desktop === before.layout.desktop && d.layout.phone === before.layout.phone && (await text(`${D} .ap-snack`)).startsWith(T.resetDone));
+    check(`[${tag}] Zurücksetzen: Favoriten Routine und Einstellungen, nichts ausgeblendet, eigene Apps und Darstellung bleiben`, JSON.stringify(d.fav) === '["routine","settings"]' && JSON.stringify(d.hidden) === '["apps","dash"]' && d.custom.length === 2 && d.layout.desktop === before.layout.desktop && d.layout.phone === before.layout.phone && (await text(`${D} .ap-snack`)).startsWith(T.resetDone));
     await tap(`${D} .ap-snack [data-ap="snack"]`);
     check(`[${tag}] Rückgängig stellt die Favoriten wieder her`, JSON.stringify((await data()).fav) === JSON.stringify(before.fav));
     await tap(`${D} [data-ap="reset"]`);

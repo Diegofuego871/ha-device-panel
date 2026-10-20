@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.107.0] - 2026-10-20
+
+"Apps" and "Dashboards" of Home Assistant as launcher apps, switched off by default.
+
+### Added
+
+- **App launcher:** two new pages of Home Assistant, **Apps** (Settings › Apps, `/config/apps/installed`) and **Dashboards** (`/config/lovelace/dashboards`), for administrators. They are **hidden by default**; you switch them on with the eye in edit mode (and can pin them as favourites like any other app). Existing settings get them as hidden once; whoever switches them on keeps that. "Reset" in edit mode hides them again.
+
+### Internal
+
+- Launcher data `v` 3 (`sanitizeApps`, `HIDDEN_BY_DEFAULT`); the one-time step of v 2 (pin the settings) now only runs for data older than v 2. Suite `launcher` extended.
+
 ## [2.106.1] - 2026-10-20
 
 The log asks before it is cleared.
@@ -4162,6 +4174,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.107.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.107.0
 [2.106.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.1
 [2.106.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.0
 [2.105.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.1

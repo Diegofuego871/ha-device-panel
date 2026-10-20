@@ -188,7 +188,7 @@ A button in the header opens a launcher with useful pages, in the symbols and co
 |---|---|
 | <img src="docs/screenshots/en/launcher.png" alt="App launcher with favorites, Device Panel and Home Assistant pages"> | <img src="docs/screenshots/en/log.png" alt="Log with entries of the notifications and a filter"> |
 
-- **Pages:** routines, Magic Push and the log of this integration, pages of Home Assistant (automations, scenes, scripts, helpers, devices, entities, integrations, tools and more; administrators only for the management pages)
+- **Pages:** routines, Magic Push and the log of this integration, pages of Home Assistant (automations, scenes, scripts, helpers, devices, entities, integrations, tools and more; "Apps" and "Dashboards" are available too but hidden until you switch them on in edit mode; administrators only for the management pages)
 - **Your own links:** a page in Home Assistant or an external link that opens in a new browser tab, with its favicon as icon if you like
 - **View and Settings:** two apps in the group "Device Panel" open the view settings (sorting, columns, filter chips) and the central settings, so everything is found in one place; both can be hidden because the header buttons lead there too
 - **Favorites:** a heart marks up to five apps that get their own buttons in the header (on the phone the first two); by default these are Routines and Settings. The gear no longer sits there permanently, only when the app "Settings" is pinned; it cannot be hidden. If a restart is pending, the launcher button shows the red dot as long as Settings is not pinned

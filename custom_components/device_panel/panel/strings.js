@@ -1158,6 +1158,8 @@ export const STRINGS = {
     app_hist: "Verlauf",
     app_book: "Logbuch",
     app_backup: "Backups",
+    app_apps: "Apps",
+    app_dash: "Dashboards",
     // Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1)
     logTitle: "Log",
     logSub: (max, since) => `Letzte ${max} Einträge${since ? ` seit ${since}` : ""} · bleiben nach einem Neustart erhalten`,
@@ -3321,6 +3323,8 @@ export const STRINGS = {
     app_hist: "History",
     app_book: "Logbook",
     app_backup: "Backups",
+    app_apps: "Apps",
+    app_dash: "Dashboards",
     // Log (since 1.38.0, docs/mockups/popup-tabs-log-v1, P1)
     logTitle: "Log",
     logSub: (max, since) => `Last ${max} entries${since ? ` since ${since}` : ""} · kept across restarts`,

@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.107.0, Apps und Dashboards im Launcher)
+
+- Neue Launcher-Apps `apps` (`/config/apps/installed`) und `dash` (`/config/lovelace/dashboards`), Pfade nach dem Frontend von HA geprüft (`ha-panel-config.ts`: Routen "apps", "lovelace"; `ha-config-apps`: Standardseite "installed"), Symbol und Farbe in `HA_LOOK`. Standardmässig aus: `HIDDEN_BY_DEFAULT`, Daten `v` 3 (neu und einmal für bestehende Daten in `hidden`). Achtung: Die Bedingung der alten Migration (Einstellungen als Favorit) lautet jetzt `v < 2`, sonst käme sie bei v 3 jedes Mal wieder.
+
 ## Stand (2.106.1, Rückfrage vor "Leeren" im Log)
 
 - "Leeren" im Log (`data-lg-reset`) fragt über `_askConfirm` ("Log leeren?", Texte `logClear*`); erst "Alle löschen" ruft `clear_log` auf.

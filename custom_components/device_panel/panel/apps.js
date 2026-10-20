@@ -47,7 +47,12 @@ const BUILTIN = [
   { id: "hist", group: "ha", icon: "history", path: "/history" },
   { id: "book", group: "ha", icon: "logbook", path: "/logbook" },
   { id: "backup", group: "ha", icon: "reset", path: "/config/backup", admin: true },
+  // Apps (vorher Add-ons) und Dashboards (seit 2.107.0): standardmässig ausgeblendet (HIDDEN_BY_DEFAULT), der Benutzer schaltet sie ein
+  { id: "apps", group: "ha", icon: "puzzle", path: "/config/apps/installed", admin: true },
+  { id: "dash", group: "ha", icon: "apps", path: "/config/lovelace/dashboards", admin: true },
 ];
+// Apps, die erst der Benutzer einschaltet: für neue Daten und einmal für bestehende (v3) in "hidden" eingetragen
+const HIDDEN_BY_DEFAULT = ["apps", "dash"];
 // Symbol und Farbe der Apps von Home Assistant, genau wie im Frontend von HA (home-assistant-frontend 20260930, Konfigurationsseiten:
 // iconPath und iconColor der jeweiligen Seite), damit der Launcher dasselbe Bild zeigt wie die Seite, auf die er verlinkt. Verlauf und
 // Logbuch haben dort keine Farbe (Seitenleiste): MDI chart-box und format-list-bulleted-type, Farben aus der HA-Palette.
@@ -62,6 +67,8 @@ const HA_LOOK = {
   integ: { c: "#2D338F", p: "M20.5,11H19V7C19,5.89 18.1,5 17,5H13V3.5A2.5,2.5 0 0,0 10.5,1A2.5,2.5 0 0,0 8,3.5V5H4A2,2 0 0,0 2,7V10.8H3.5C5,10.8 6.2,12 6.2,13.5C6.2,15 5,16.2 3.5,16.2H2V20A2,2 0 0,0 4,22H7.8V20.5C7.8,19 9,17.8 10.5,17.8C12,17.8 13.2,19 13.2,20.5V22H17A2,2 0 0,0 19,20V16H20.5A2.5,2.5 0 0,0 23,13.5A2.5,2.5 0 0,0 20.5,11Z" },
   area: { c: "#2D338F", p: "M12.5 7C12.5 5.89 13.39 5 14.5 5H18C19.1 5 20 5.9 20 7V9.16C18.84 9.57 18 10.67 18 11.97V14H12.5V7M6 11.96V14H11.5V7C11.5 5.89 10.61 5 9.5 5H6C4.9 5 4 5.9 4 7V9.15C5.16 9.56 6 10.67 6 11.96M20.66 10.03C19.68 10.19 19 11.12 19 12.12V15H5V12C5 10.9 4.11 10 3 10S1 10.9 1 12V17C1 18.1 1.9 19 3 19V21H5V19H19V21H21V19C22.1 19 23 18.1 23 17V12C23 10.79 21.91 9.82 20.66 10.03Z" },
   tools: { c: "#7A5AA6", p: "M2 19.63L13.43 8.2L12.72 7.5L14.14 6.07L12 3.89C13.2 2.7 15.09 2.7 16.27 3.89L19.87 7.5L18.45 8.91H21.29L22 9.62L18.45 13.21L17.74 12.5V9.62L16.27 11.04L15.56 10.33L4.13 21.76L2 19.63Z" },
+  apps: { c: "#F1C447", p: "M20.5,11H19V7C19,5.89 18.1,5 17,5H13V3.5A2.5,2.5 0 0,0 10.5,1A2.5,2.5 0 0,0 8,3.5V5H4A2,2 0 0,0 2,7V10.8H3.5C5,10.8 6.2,12 6.2,13.5C6.2,15 5,16.2 3.5,16.2H2V20A2,2 0 0,0 4,22H7.8V20.5C7.8,19 9,17.8 10.5,17.8C12,17.8 13.2,19 13.2,20.5V22H17A2,2 0 0,0 19,20V16H20.5A2.5,2.5 0 0,0 23,13.5A2.5,2.5 0 0,0 20.5,11Z" },
+  dash: { c: "#B1345C", p: "M13,3V9H21V3M13,21H21V11H13M3,21H11V15H3M3,13H11V3H3V13Z" },
   backup: { c: "#0D47A1", p: "M12,3A9,9 0 0,0 3,12H0L4,16L8,12H5A7,7 0 0,1 12,5A7,7 0 0,1 19,12A7,7 0 0,1 12,19C10.5,19 9.09,18.5 7.94,17.7L6.5,19.14C8.04,20.3 9.94,21 12,21A9,9 0 0,0 21,12A9,9 0 0,0 12,3M14,12A2,2 0 0,0 12,10A2,2 0 0,0 10,12A2,2 0 0,0 12,14A2,2 0 0,0 14,12Z" },
   hist: { c: "#3263C3", p: "M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M9 17H7V10H9V17M13 17H11V7H13V17M17 17H15V13H17V17Z" },
   book: { c: "#00838F", p: "M5,9.5L7.5,14H2.5L5,9.5M3,4H7V8H3V4M5,20A2,2 0 0,0 7,18A2,2 0 0,0 5,16A2,2 0 0,0 3,18A2,2 0 0,0 5,20M9,5V7H21V5H9M9,19H21V17H9V19M9,13H21V11H9V13Z" },
@@ -76,7 +83,7 @@ const FAVICON_RE = /^data:image\/(png|x-icon|gif|jpeg|webp|svg\+xml);base64,[A-Z
 export const isFavicon = (v) => typeof v === "string" && v.length <= FAVICON_MAX && FAVICON_RE.test(v);
 
 // v: Stand der Form; v2 (2.88.0) heftet die Einstellungen standardmässig an (einmal für bestehende Daten, siehe sanitizeApps)
-const defaults = () => ({ v: 2, fav: ["routine", "settings"], hidden: [], order: {}, custom: [], layout: { desktop: "grid", phone: "grid" }, updated: 0 });
+const defaults = () => ({ v: 3, fav: ["routine", "settings"], hidden: [...HIDDEN_BY_DEFAULT], order: {}, custom: [], layout: { desktop: "grid", phone: "grid" }, updated: 0 });
 // Umbenennung Timer → Routine (2.55.0): die App hiess vorher "timer"; Favoriten, Ausgeblendetes und Reihenfolge behalten sie
 const ids = (list, max) =>
   Array.isArray(list)
@@ -122,11 +129,14 @@ export function sanitizeApps(raw) {
   let fav = Array.isArray(raw.fav) ? ids(raw.fav, MAX_FAV) : d.fav;
   // Bestehende Daten (vor 2.88.0): das Zahnrad stand fest in der Kopfzeile; jetzt ist es ein Favorit. Einmal als zweiter eintragen
   // (am Handy bleibt so "erster Favorit und Einstellungen" wie bisher), später lässt es sich wieder lösen.
-  if (Array.isArray(raw.fav) && raw.v !== 2 && !fav.includes("settings")) fav = [...fav.slice(0, 1), "settings", ...fav.slice(1)].slice(0, MAX_FAV);
+  if (Array.isArray(raw.fav) && (Number(raw.v) || 0) < 2 && !fav.includes("settings")) fav = [...fav.slice(0, 1), "settings", ...fav.slice(1)].slice(0, MAX_FAV);
+  // v3 (2.107.0): Apps und Dashboards sind neu und standardmässig aus; bei bestehenden Daten einmal eintragen, später entscheidet der Benutzer
+  let hidden = ids(raw.hidden, 200);
+  if ((Number(raw.v) || 0) < 3) hidden = [...new Set([...hidden, ...HIDDEN_BY_DEFAULT])];
   return {
-    v: 2,
+    v: 3,
     fav,
-    hidden: ids(raw.hidden, 200),
+    hidden,
     order: Object.fromEntries(GROUPS.map((g) => [g, ids(raw.order?.[g], 200)])),
     custom,
     layout: { desktop: layout(raw.layout?.desktop), phone: layout(raw.layout?.phone) },

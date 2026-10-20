@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.107.0] - 2026-10-20
+
+"Apps" und "Dashboards" von Home Assistant als Apps im Launcher, standardmässig ausgeblendet.
+
+### Hinzugefügt
+
+- **App-Launcher:** zwei neue Seiten von Home Assistant, **Apps** (Einstellungen › Apps, `/config/apps/installed`) und **Dashboards** (`/config/lovelace/dashboards`), für Administratoren. Sie sind **standardmässig ausgeblendet**; mit dem Auge im Bearbeiten-Modus schaltest du sie ein (und kannst sie wie jede App als Favorit anheften). Bestehende Einstellungen bekommen sie einmal als ausgeblendet; wer sie einschaltet, behält das. "Zurücksetzen" im Bearbeiten-Modus blendet sie wieder aus.
+
+### Intern
+
+- Daten des Launchers `v` 3 (`sanitizeApps`, `HIDDEN_BY_DEFAULT`); der einmalige Schritt von v 2 (Einstellungen anheften) läuft nur noch für Daten älter als v 2. Suite `launcher` erweitert.
+
 ## [2.106.1] - 2026-10-20
 
 Das Log fragt, bevor es geleert wird.
@@ -4263,6 +4275,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.107.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.107.0
 [2.106.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.1
 [2.106.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.0
 [2.105.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.1
