@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.110.0, Launcher ohne "Alle"/"Weniger")
+
+- Wunsch des Nutzers: kein Umschalter, immer alle Apps, bei mehr scrollt das Fenster (`dialog.apps-dlg` hat `overflow:auto` und `max-height`). `ui.all`, Handler `all`, `.ap-more`, Texte `appsAll`/`appsLess` entfernt. 2.109.0 hatte noch keinen Tag und gilt als übersprungen (CHANGELOG: "Nicht veröffentlicht").
+
 ## Stand (2.109.0, Live-Zeile "Gerade gehört von" im Empfangsfenster)
 
 - `devices._ble_seen` (alle Empfänger: Alter, RSSI, Quelle, Name; ungültige Werte raus, neu auch 0 dBm: ein Platzhalter hätte als "stärkster" gegolten), `_ble_pick` (Wahl wie bisher), `ble_listeners` (für das Panel: Name ohne Adresse, RSSI, Alter in s, `used`). WS `device_panel/signal_listeners` (alle 5 s vom offenen Fenster, `LIVE_MS`, `_liveTick`, Timer stoppt beim Schliessen) und `listeners` im Ergebnis von `signal_history`. Panel `_liveHtml`, Texte `sigLive*`, Suite `signallive`.

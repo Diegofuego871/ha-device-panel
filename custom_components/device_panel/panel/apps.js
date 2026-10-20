@@ -402,7 +402,6 @@ export class AppLauncher {
     if (!dlg) return;
     this.ui.edit = false;
     this.ui.q = "";
-    this.ui.all = false;
     this.ui.snack = null;
     this.render();
     this._position();
@@ -604,19 +603,12 @@ export class AppLauncher {
       any = true;
     }
     for (const g of GROUPS) {
-      let items = this.group(g, false, !q).filter(match);
+      const items = this.group(g, false, !q).filter(match);
       // Eigene Apps legt man nur im Bearbeiten-Modus an: ohne Eintrag zum Zeigen fehlt auch der Abschnitt
       if (!items.length) continue;
       any = true;
-      let more = "";
-      if (g === "ha" && !q) {
-        const limit = this.narrow() ? 6 : 8;
-        if (items.length > limit) {
-          more = `<button type="button" class="ap-more" data-ap="all">${escape(this.ui.all ? this.t("appsLess") : this.t("appsAll", items.length))}</button>`;
-          if (!this.ui.all) items = items.slice(0, limit);
-        }
-      }
-      out += `<div class="ap-h">${escape(this._groupTitle(g))}${more}</div>`;
+      // Immer alle Apps: wird es mehr, scrollt das Fenster (seit 2.110.0 ohne Knopf "Alle"/"Weniger")
+      out += `<div class="ap-h">${escape(this._groupTitle(g))}</div>`;
       out += list ? `<div class="ap-rows">${items.map((a) => this._row(a)).join("")}</div>` : `<div class="ap-grid">${items.map((a) => this._tile(a)).join("")}</div>`;
     }
     if (!any) out += `<p class="ap-note">${escape(this.t("appsNone"))}</p>`;
@@ -972,9 +964,6 @@ export class AppLauncher {
         return this.close();
       case "layout":
         return this.setLayout(b.dataset.v);
-      case "all":
-        this.ui.all = !this.ui.all;
-        return this.render();
       case "add":
         return this.openForm();
       case "edit-app":

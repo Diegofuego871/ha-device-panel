@@ -1939,7 +1939,6 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-search .field-clear { margin-right: -6px; }
 .ap-hh { display: inline-flex; margin-left: 2px; color: var(--dp-error); }
 .ap-h { display: flex; align-items: center; gap: 6px; margin: 14px 4px 6px; color: var(--dp-text2); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; }
-.ap-more { margin-left: auto; padding: 4px 2px; border: 0; background: none; color: var(--dp-primary); font: inherit; font-size: 12.5px; letter-spacing: 0; text-transform: none; cursor: pointer; }
 .ap-note { margin: 6px 4px 0; color: var(--dp-text2); font-size: 12px; line-height: 1.4; }
 .ap-note.first { margin-top: 0; }
 .ap-note svg { vertical-align: -2px; }

@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.110.0] - 2026-10-20
+
+The app launcher always shows all apps.
+
+### Changed
+
+- **App launcher:** the group "Home Assistant" no longer ends after 6 (phone) or 8 (desktop) apps with a switch "All 12 ›" / "Fewer". All apps are always shown; with more apps the launcher **scrolls**. The button and its two texts are removed.
+
+### Internal
+
+- `_listHtml` in `apps.js` without limit, `ui.all`, handler `all`, `.ap-more` and the strings `appsAll`/`appsLess` removed. Tests: `launcher` (all 12 tiles, no button), `launchercol`.
+
 ## [2.109.0] - 2026-10-20
 
 The reception window of a Bluetooth device shows live which receivers hear it right now.
@@ -22,6 +34,8 @@ The reception window of a Bluetooth device shows live which receivers hear it ri
 ### Internal
 
 - `devices._ble_seen` (all receivers with age and RSSI), `_ble_pick` (the choice), new `ble_listeners`; WebSocket `device_panel/signal_listeners` (live line only, no history) and field `listeners` in `device_panel/signal_history`. Tests: `tests/test_ble_best.py`, `tests/test_signal_history.py`, new suite `signallive`.
+
+Not released; included in 2.110.0.
 
 ## [2.108.0] - 2026-10-20
 
@@ -4204,7 +4218,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.109.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.109.0
+[2.110.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.110.0
 [2.108.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.108.0
 [2.107.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.107.0
 [2.106.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.1

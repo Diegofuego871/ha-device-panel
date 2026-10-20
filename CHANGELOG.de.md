@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.110.0] - 2026-10-20
+
+Der App-Launcher zeigt immer alle Apps.
+
+### Geändert
+
+- **App-Launcher:** Die Gruppe "Home Assistant" endet nicht mehr nach 6 (Handy) oder 8 (Desktop) Apps mit dem Umschalter "Alle 12 ›" / "Weniger". Es werden immer alle Apps gezeigt; bei mehr Apps **scrollt** der Launcher. Der Knopf und seine zwei Texte entfallen.
+
+### Intern
+
+- `_listHtml` in `apps.js` ohne Grenze, `ui.all`, Handler `all`, `.ap-more` und die Texte `appsAll`/`appsLess` entfernt. Tests: `launcher` (alle 12 Kacheln, kein Knopf), `launchercol`.
+
 ## [2.109.0] - 2026-10-20
 
 Das Empfangsfenster eines Bluetooth-Geräts zeigt live, welche Empfänger es gerade hören.
@@ -22,6 +34,8 @@ Das Empfangsfenster eines Bluetooth-Geräts zeigt live, welche Empfänger es ger
 ### Intern
 
 - `devices._ble_seen` (alle Empfänger mit Alter und RSSI), `_ble_pick` (die Wahl), neu `ble_listeners`; WebSocket `device_panel/signal_listeners` (nur die Live-Zeile, ohne Verlauf) und Feld `listeners` in `device_panel/signal_history`. Tests: `tests/test_ble_best.py`, `tests/test_signal_history.py`, neue Suite `signallive`.
+
+Nicht veröffentlicht; enthalten in 2.110.0.
 
 ## [2.108.0] - 2026-10-20
 
@@ -4305,7 +4319,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.109.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.109.0
+[2.110.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.110.0
 [2.108.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.108.0
 [2.107.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.107.0
 [2.106.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.1

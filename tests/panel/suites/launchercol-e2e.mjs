@@ -60,7 +60,6 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Benutzerdaten angekommen (Favorit "Mein Link")`, await wait(`return r.host._apps?.data?.custom?.length === 2`));
     await tap(".apps-btn");
     await wait(`return r.querySelector("${D}")?.open`);
-    if (await ev(`return !!r.querySelector('${D} [data-ap="all"]')`)) await tap(`${D} [data-ap="all"]`);
     // Farbe und Symbol je App: Kreis in der Farbe, weisses Symbol
     const look = (id) => ev(`const ico = r.querySelector('${D} [data-id="${id}"] .ap-ico'); if (!ico) return null; const cs = getComputedStyle(ico); return { bg: cs.backgroundColor, fg: cs.color, d: ico.querySelector("svg path")?.getAttribute("d") || "", fi: !!ico.querySelector(".ap-fi"), own: ico.classList.contains("own") }`);
     for (const [id, [col, path]] of Object.entries(HA)) {
