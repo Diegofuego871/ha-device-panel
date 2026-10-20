@@ -7,6 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.106.0] - 2026-10-20
+
+One log window for Magic Push and routines, with tabs.
+
+### Added
+
+- **Log window:** at the top two tabs, **"Magic Push"** (left) and **"Routines"**, in one window. It opens on the tab it was opened from. The other tab shows the log of **all messages or routines of the same device** (with the choice of a single one); going back restores the first context (the single message or routine you came from). The period stays; filter, search and choice start afresh per tab.
+
+### Changed
+
+- **Panel log renamed "Log" (German; it was "Protokoll")** to tell it apart from the per-message and per-routine history. In English the history of a message, routine or device is now **"History"** (button "History", "History of the device"), the panel log stays "Log". Settings: "Panel log" rows say "Panel log", the chapter "Histories and log".
+- **Panel log, footer:** next to the number of entries the **size in MB** (for example "532 entries, 5 shown · 0.1 MB"). `device_panel/get_log` reports `bytes`.
+
+### Internal
+
+- Buttons "Log" on cards now carry the device (`data-device`) next to `data-id`, so the window knows the device of a single message or routine. `ProtocolUi.alt` holds the context of the other tab. Suite `protocol` extended.
+
 ## [2.105.1] - 2026-10-20
 
 Log windows: "Back" at the bottom; settings chapters in a new order; more room in the device cards.
@@ -4133,6 +4150,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.106.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.0
 [2.105.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.1
 [2.105.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.0
 [2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0

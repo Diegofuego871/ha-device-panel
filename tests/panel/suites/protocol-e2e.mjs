@@ -11,7 +11,7 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: { title: "Protokoll", device: "Protokoll des Geräts", all: "Alle Meldungen", allR: "Alle Routinen", recovered: "Wieder normal", copied: "Kopiert", err: "konnte nicht geladen werden", traceCopy: "Trace kopieren", of: (n, m) => `${n} von ${m} Einträgen`, back: "Zurück" },
-  en: { title: "Log", device: "Log of the device", all: "All messages", allR: "All routines", recovered: "Back to normal", copied: "Copied", err: "could not be loaded", traceCopy: "Copy trace", of: (n, m) => `${n} of ${m} entries`, back: "Back" },
+  en: { title: "History", device: "History of the device", all: "All messages", allR: "All routines", recovered: "Back to normal", copied: "Copied", err: "could not be loaded", traceCopy: "Copy trace", of: (n, m) => `${n} of ${m} entries`, back: "Back" },
 };
 const RULE = (id, device, name, entity, extra = {}) => ({ id, device_id: device, entity_id: entity, name, kind: "below", value: 12, for_s: 600, message: "Meldung {value}", body: "", recover: false, recover_message: "", recover_body: "", repeat_s: 0, target: null, enabled: true, critical: false, critical_volume: 10, reset_value: null, ...extra });
 const SEED = (id, device, name) => ({ id, device_id: device, entity_id: "switch.plug", name, action: "on", back_s: 14400, kind: "repeat", delay_s: null, date: null, time: "06:30", repeat: "daily", weekdays: null, mday: null, enabled: true, push: false, target: null, created: Date.now() / 1000 });
@@ -103,14 +103,15 @@ for (const lang of ["de", "en"]) {
     // --- Übersicht Magic Push: Knopf Protokoll bei der Karte ---
     await ev(`r.host._openMagicAll()`);
     await wait(`return r.querySelectorAll('dialog.mgall-dlg .mg-card').length >= 2`);
-    check(`[${tag}] Magic Push: Karte hat "${T.title}" neben Bearbeiten und Löschen`, await ev(`const a = r.querySelector('dialog.mgall-dlg .mg-card [data-proto="magic"][data-id="r00000000001"]'); return !!a && a.textContent.trim() === ${JSON.stringify(T.title === "Protokoll" ? "Protokoll" : "Log")} && a.closest(".mg-acts").querySelectorAll("button").length >= 3`));
+    check(`[${tag}] Magic Push: Karte hat "${T.title}" neben Bearbeiten und Löschen`, await ev(`const a = r.querySelector('dialog.mgall-dlg .mg-card [data-proto="magic"][data-id="r00000000001"]'); return !!a && a.textContent.trim() === ${JSON.stringify(T.title)} && a.closest(".mg-acts").querySelectorAll("button").length >= 3`));
     check(`[${tag}] Magic Push: je Gerät "${T.device} ›" im Fuss der Karte`, await ev(`return [...r.querySelectorAll('dialog.mgall-dlg .mg-dfoot [data-proto="magic"][data-device]')].some((x) => x.textContent.includes(${JSON.stringify(T.device)}))`));
     await tap('dialog.mgall-dlg [data-proto="magic"][data-id="r00000000001"]');
     check(`[${tag}] Protokoll öffnet (Titel "${T.title}", Unterzeile = Name der Meldung)`, await wait(`const d = r.querySelector('${P}'); return d.open && d.querySelector("h2").textContent === ${JSON.stringify(T.title)} && d.querySelector("[data-pr-sub]").textContent === "Keller kalt"`));
     check(`[${tag}] Kein Kreuz oben rechts; "${T.back}" unten links im Fuss (vor der Zahl der Einträge)`, await ev(`const d = r.querySelector('${P}'); const b = d.querySelector('[data-pr-foot] [data-pr="close"]'); const f = d.querySelector('[data-pr-foot]').getBoundingClientRect(); return !d.querySelector(".dlg-close") && !!b && b.textContent.trim() === ${JSON.stringify(T.back)} && b.getBoundingClientRect().left - f.left < 40 && b.getBoundingClientRect().left < d.querySelector('[data-pr="copy"]').getBoundingClientRect().left`));
+    check(`[${tag}] Reiter oben: "Magic Push" links, "Routinen" rechts, Magic Push gewählt, Kapsel vorhanden`, await ev(`const bar = r.querySelector('${P} [data-pr-kinds] .sub-tabs'); const t = [...bar.querySelectorAll(".sub-tab")]; return t.length === 2 && t[0].dataset.v === "magic" && t[0].textContent.trim() === "Magic Push" && t[1].dataset.v === "routine" && t[0].classList.contains("on") && !!bar.querySelector(".seg-pill") && r.querySelector('${P} .dlg-avatar svg') !== null`));
     check(`[${tag}] Abfrage: kind magic, item_id, Zeitraum 30 Tage, Seite 100`, (await wait(`return !!r.querySelector('${P} .pr-kpis')`)) && (await calls()).some((c) => c.kind === "magic" && c.item_id === "r00000000001" && Math.abs((c.until - c.since) / DAY - 30) < 0.1 && c.limit === 100));
     check(`[${tag}] 30 Tage: zwei Einträge, Kennzahlen 2|1|1|0|1 Std.`, (await rows()) === 2 && /^2\|1\|1\|0\|1/.test(await kpis()), await kpis());
-    check(`[${tag}] Zeitraum-Leiste als Reiterleiste mit Kapsel, "30 T." gewählt`, await ev(`const bar = r.querySelector('${P} .sub-tabs'); return !!bar && !!bar.querySelector(".seg-pill") && bar.querySelector(".sub-tab.on").dataset.v === "30d" && bar.querySelectorAll(".sub-tab").length === 6`));
+    check(`[${tag}] Zeitraum-Leiste als Reiterleiste mit Kapsel, "30 T." gewählt`, await ev(`const bar = r.querySelector('${P} [data-pr-ranges] .sub-tabs'); return !!bar && !!bar.querySelector(".seg-pill") && bar.querySelector(".sub-tab.on").dataset.v === "30d" && bar.querySelectorAll(".sub-tab").length === 6`));
     check(`[${tag}] Diagramm: 30 Tagesbalken, zwei mit Inhalt`, await ev(`const bars = r.querySelectorAll('${P} .pr-bar'); return bars.length >= 30 && bars.length <= 32 && [...bars].filter((x) => x.querySelector(".pr-col")).length === 2`));
     // Zeile aufklappen: Inhalt der Meldung
     await tap(`${P} .pr-item .pr-row`);
@@ -133,7 +134,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] X leert die Suche: wieder fünf Zeilen`, await wait(`return r.querySelectorAll('${P} .pr-item').length === 5 && r.querySelector('${P} input[data-pr-search]').value === ""`));
     // Tipp auf einen Balken: eigener Zeitraum dieser Woche
     await tap(`${P} .pr-bar:has(.pr-col)`);
-    check(`[${tag}] Balken antippen setzt "eigenen Zeitraum" (Reiter gewählt, zwei Datumsfelder)`, await wait(`const bar = r.querySelector('${P} .sub-tabs'); return bar.querySelector(".sub-tab.on").dataset.v === "own" && r.querySelectorAll('${P} input[type="date"]').length === 2`));
+    check(`[${tag}] Balken antippen setzt "eigenen Zeitraum" (Reiter gewählt, zwei Datumsfelder)`, await wait(`const bar = r.querySelector('${P} [data-pr-ranges] .sub-tabs'); return bar.querySelector(".sub-tab.on").dataset.v === "own" && r.querySelectorAll('${P} input[type="date"]').length === 2`));
     // Datumsfelder: die ganzen letzten 5 Tage
     await ev(`const d = new Date(Date.now() - 5 * 86400000); const iso = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); const i = r.querySelector('${P} input[data-pr-date="from"]'); i.value = iso; i.dispatchEvent(new Event("change", { bubbles: true }))`);
     check(`[${tag}] Eigener Zeitraum "von vor 5 Tagen": zwei Zeilen (3 und 2 Tage her)`, await wait(`return r.querySelectorAll('${P} .pr-item').length === 2`), String(await rows()));
@@ -159,6 +160,29 @@ for (const lang of ["de", "en"]) {
     await p.keyboard.press("Escape");
     check(`[${tag}] Escape schliesst nur das Protokoll, die Übersicht bleibt offen`, await wait(`return !r.querySelector('${P}').open && r.querySelector('dialog.mgall-dlg').open`));
     await ev(`r.host._closeMagicAll()`);
+
+    // --- Reiter Routinen im selben Fenster: Zusammenhang = alle Routinen des Geräts, zurück = die einzelne Meldung ---
+    await ev(`r.host._openMagicAll()`);
+    await wait(`return r.querySelectorAll('dialog.mgall-dlg .mg-card').length >= 2`);
+    await tap('dialog.mgall-dlg [data-proto="magic"][data-id="r00000000001"]');
+    await wait(`return r.querySelectorAll('${P} .pr-item').length === 2`);
+    await p.evaluate(() => { window.__protocolCalls = []; });
+    await tap(`${P} [data-pr-kinds] .sub-tab[data-v="routine"]`);
+    check(`[${tag}] Reiter "Routinen": Abfrage kind routine mit device_id des Geräts (ohne item_id), Unterzeile mit Gerätenamen`, (await wait(`return r.querySelectorAll('${P} .pr-item').length === 4 && r.querySelector('${P} [data-pr-kinds] .sub-tab.on').dataset.v === "routine"`)) && (await calls()).some((c) => c.kind === "routine" && c.device_id === "d" && !c.item_id) && (await text(`${P} [data-pr-sub]`)).length > 0, await text(`${P} [data-pr-sub]`));
+    check(`[${tag}] Reiter "Routinen": Kennzahlen und Filter der Routinen (6 Filter), Symbol wechselt, Suchfeld leer`, await ev(`return r.querySelector('${P} .pr-kpis').textContent.includes(${JSON.stringify(lang === "de" ? "Läufe" : "runs")}) && r.querySelector('${P} input[data-pr-search]').value === ""`));
+    await tap(`${P} [data-pr-kinds] .sub-tab[data-v="magic"]`);
+    check(`[${tag}] Zurück auf "Magic Push": wieder die einzelne Meldung (zwei Einträge, Unterzeile = Name)`, await wait(`return r.querySelectorAll('${P} .pr-item').length === 2 && r.querySelector('${P} [data-pr-sub]').textContent === "Keller kalt"`));
+    await closeProto();
+    await ev(`r.host._closeMagicAll()`);
+    // Aus der Routine geöffnet: Reiter "Routinen" gewählt
+    await ev(`r.host._openRtAll()`);
+    await wait(`return r.querySelectorAll('dialog.rtall-dlg .mg-card').length >= 1`);
+    await tap('dialog.rtall-dlg [data-proto="routine"][data-id="aaaaaaaaaaa1"]');
+    check(`[${tag}] Aus einer Routine geöffnet: Reiter "Routinen" gewählt, Magic Push links daneben`, await wait(`const t = [...r.querySelectorAll('${P} [data-pr-kinds] .sub-tab')]; return t.length === 2 && t[1].classList.contains("on") && r.querySelectorAll('${P} .pr-item').length === 4`));
+    await tap(`${P} [data-pr-kinds] .sub-tab[data-v="magic"]`);
+    check(`[${tag}] Reiter "Magic Push" aus der Routine: alle Meldungen des Geräts (3 Einträge, Auswahl der Meldungen)`, await wait(`return r.querySelectorAll('${P} .pr-item').length === 3 && r.querySelectorAll('${P} [data-pr-items] .chip').length === 3`));
+    await closeProto();
+    await ev(`r.host._closeRtAll()`);
 
     // --- Popup des Geräts: Magic Push ---
     await ev(`r.host._openDevice("d", "magic")`);

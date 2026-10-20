@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.106.0, ein Protokollfenster mit zwei Reitern; Namen)
+
+- Wunsch des Nutzers: im Protokollfenster oben Reiter "Magic Push" (links) und "Routinen"; das Fenster öffnet auf dem Reiter, von dem man kommt. Der andere Reiter zeigt alle Meldungen oder Routinen desselben Geräts (`ProtocolUi.alt`, Knöpfe tragen `data-device`), zurück stellt die einzelne Meldung wieder her. Reiter `.sub-tabs.mg-filter` mit `data-set="pr-kind"`; die Zeitraum-Leiste ist `[data-pr-ranges] .sub-tabs`.
+- Namen: das Protokoll des Panels (Aktivitätsprotokoll) heisst auf Deutsch jetzt "Log" (Launcher, Fenster, Einstellungen, README); das Protokoll einer Meldung/Routine bleibt "Protokoll", auf Englisch "History". Der Fuss des Logs zeigt die Grösse in MB (`get_log` meldet `bytes`).
+
 ## Stand (2.105.1, Zurück unten, Kapitelreihenfolge; 2.105.0 Grösse der Protokolle einstellbar)
 
 - Wunsch des Nutzers: eine Einstellung für die Grösse der Protokolle. Entschieden: zwei getrennte Gruppen, je MB und Zahl der Einträge. Meldungen/Routinen: 30 MB gesamt, 5000 Einträge je Meldung oder Routine; Panel-Protokoll: 10 MB, 4000 Einträge (vorher fest 500). Keine Zeitgrenze mehr (die 12 Monate aus 2.104.0 entfallen). Bei Überschreitung fällt der älteste Eintrag weg (bei den MB über alle Meldungen/Routinen der älteste, Variante A).

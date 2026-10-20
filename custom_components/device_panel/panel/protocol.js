@@ -5,6 +5,10 @@
  * bei langen Zeiträumen je Woche; ein Tipp auf einen Balken setzt den Zeitraum auf diesen Tag) und die Tabelle. Bei Magic Push zeigt
  * eine Zeile den Inhalt der Meldung, bei Routinen öffnet sie den Trace (jeder Schritt des Laufs, als Text kopierbar).
  *
+ * Seit 2.106.0 gibt es oben zwei Reiter "Magic Push" und "Routinen" (links Magic Push): ein Fenster für beides. Es öffnet auf dem Reiter,
+ * von dem aus es aufgerufen wurde; der andere Reiter zeigt das Protokoll aller Meldungen oder Routinen desselben Geräts, und der Wechsel
+ * zurück stellt den ersten Zusammenhang (eine einzelne Meldung oder Routine) wieder her.
+ *
  * Alle Zahlen, das Diagramm und die Tabelle kommen von device_panel/protocol_get (protocol.py); das Panel rechnet nichts nach.
  * Der Server beschneidet nach den Einstellungen "Protokolle" (Panel › Allgemein): Grösse in MB und Einträge je Meldung oder Routine.
  */
@@ -77,6 +81,8 @@ export class ProtocolUi {
       itemId,
       deviceId,
       name,
+      // Zusammenhang des anderen Reiters: alle Meldungen oder Routinen des Geräts (ohne Gerät gibt es nur einen Reiter)
+      alt: deviceId ? { [kind === "magic" ? "routine" : "magic"]: { itemId: "", deviceId, name: this.deviceName(deviceId) } } : {},
       range: "30d",
       own: null,
       filter: "all",
@@ -99,6 +105,13 @@ export class ProtocolUi {
       else dlg.setAttribute("open", "");
     }
     this.load();
+  }
+
+  // Name des Geräts (oder der Sammelstelle Szenen/Gruppen) für die Unterzeile
+  deviceName(id) {
+    if (id === "@scenes") return this.t("rtHolderScenes");
+    if (id === "@groups") return this.t("rtHolderGroups");
+    return this.host._devices?.find((d) => d.id === id)?.name || "";
   }
 
   close() {
@@ -219,6 +232,7 @@ export class ProtocolUi {
     dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${this.h.mdi(icon, 28)}</span>
         <div class="dlg-title"><h2>${this.esc(t("prTitle"))}</h2><div class="dlg-sub" data-pr-sub></div></div></div>
       <div class="lg-bar" data-pr-bar>
+        <div data-pr-kinds></div>
         <div data-pr-ranges></div>
         <div class="pr-dates" data-pr-dates></div>
         <label class="list-search lg-search">${this.h.mdi("search", 18)}<input type="search" data-pr-search placeholder="${this.esc(t("prSearch"))}" aria-label="${this.esc(t("prSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="100">${this.host._fieldClearHtml("data-fc", "", "")}</label>
@@ -257,6 +271,15 @@ export class ProtocolUi {
     const dlg = this.dlg;
     const t = (k, ...a) => this.t(k, ...a);
     if (!s || !dlg) return;
+    const kinds = dlg.querySelector("[data-pr-kinds]");
+    if (Object.keys(s.alt).length) {
+      const kindTab = (id, key) => `<button type="button" class="sub-tab${s.kind === id ? " on" : ""}" data-set="pr-kind" data-pr="kind" data-v="${id}">${this.esc(t(key))}</button>`;
+      kinds.hidden = false;
+      kinds.innerHTML = `<div class="sub-tabs mg-filter" role="group">${kindTab("magic", "mgTab")}${kindTab("routine", "rtTab")}</div>`;
+    } else {
+      kinds.hidden = true;
+      kinds.innerHTML = "";
+    }
     const labels = { "7d": "prR7d", "30d": "prR30d", "6m": "prR6m", "12m": "prR12m", all: "prRAll" };
     const tabs = RANGES.map(([id]) => `<button type="button" class="sub-tab${s.range === id ? " on" : ""}" data-set="pr-range" data-pr="range" data-v="${id}">${this.esc(t(labels[id]))}</button>`);
     tabs.push(`<button type="button" class="sub-tab${s.range === "own" ? " on" : ""}" data-set="pr-range" data-pr="range" data-v="own">${this.esc(t("prROwn"))}</button>`);
@@ -604,6 +627,17 @@ export class ProtocolUi {
       case "close":
         this.close();
         break;
+      case "kind": {
+        const next = s.alt[el.dataset.v];
+        if (!next || el.dataset.v === s.kind) break;
+        // Den bisherigen Zusammenhang merken: zurück gibt es wieder die einzelne Meldung oder Routine
+        s.alt[s.kind] = { itemId: s.itemId, deviceId: s.deviceId, name: s.name };
+        Object.assign(s, { kind: el.dataset.v, itemId: next.itemId, deviceId: next.deviceId, name: next.name, filter: "all", item: "", items: [], q: "", limit: PAGE, data: null, loading: true, error: null, view: "list", trace: 0, open: new Set() });
+        window.clearTimeout(this._searchTimer);
+        this.frame();
+        this.load();
+        break;
+      }
       case "reload":
         s.error = null;
         s.data = null;

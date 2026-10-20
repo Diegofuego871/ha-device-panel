@@ -557,7 +557,7 @@ export class RoutineUi {
       ? ""
       : `<span class="acts"><button type="button" class="linkbtn" data-rt="edit" data-id="${esc(rt.id)}">${esc(t("rtActEdit"))}</button>
          <button type="button" class="linkbtn" data-rt="run" data-id="${esc(rt.id)}"${this.ui.busy === rt.id ? " disabled" : ""}>${esc(t("rtActRun"))}</button>
-         <button type="button" class="linkbtn" data-proto="routine" data-id="${esc(rt.id)}" data-name="${esc(rt.name)}">${esc(t("prAct"))}</button>
+         <button type="button" class="linkbtn" data-proto="routine" data-id="${esc(rt.id)}" data-device="${esc(rt.device_id)}" data-name="${esc(rt.name)}">${esc(t("prAct"))}</button>
          <button type="button" class="linkbtn danger" data-rt="delete" data-id="${esc(rt.id)}">${esc(t("rtActDelete"))}</button></span>`;
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("rtDeleteAsk", rt.name))}</b><small>${esc(t("rtDeleteNote"))}</small>
@@ -776,7 +776,7 @@ export class RoutineUi {
       ? ""
       : `<div class="mg-acts"><button type="button" class="linkbtn" ${this.a(all, "routine-edit")} data-device="${esc(rt.device_id)}" data-id="${esc(rt.id)}">${esc(t("rtActEdit"))}</button>
         <button type="button" class="linkbtn" ${this.a(all, "routine-run")} data-id="${esc(rt.id)}"${(all.dlg ? all.busy : this.ui.busy) === rt.id ? " disabled" : ""}>${esc(t("rtActRun"))}</button>
-        <button type="button" class="linkbtn" data-proto="routine" data-id="${esc(rt.id)}" data-name="${esc(rt.name)}">${esc(t("prAct"))}</button>
+        <button type="button" class="linkbtn" data-proto="routine" data-id="${esc(rt.id)}" data-device="${esc(rt.device_id)}" data-name="${esc(rt.name)}">${esc(t("prAct"))}</button>
         <button type="button" class="linkbtn danger" ${this.a(all, "routine-delete")} data-id="${esc(rt.id)}">${esc(t("rtActDelete"))}</button>
         <button type="button" class="linkbtn fav${this.isStar(rt.id) ? " on" : ""}" ${this.a(all, "routine-star")} data-id="${esc(rt.id)}" aria-pressed="${this.isStar(rt.id)}" title="${esc(t(this.isStar(rt.id) ? "rtFavRemove" : "rtFavAdd"))}" aria-label="${esc(t(this.isStar(rt.id) ? "rtFavRemove" : "rtFavAdd"))}">${this.h.mdi(this.isStar(rt.id) ? "heart" : "heartOutline", 20)}</button></div>`;
     const confirm = confirming

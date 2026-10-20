@@ -3257,7 +3257,7 @@ class DevicePanel extends HTMLElement {
       const res = await this._callWithTimeout(msg, 10000);
       this._debugOn = Boolean(res.debug);
       this._apps.paintDots();
-      Object.assign(log, { entries: res.entries || [], debug: Boolean(res.debug), debugUntil: res.debug ? res.debug_until ?? null : null, since: res.since ?? null, max: res.max || 500, loaded: true, error: null });
+      Object.assign(log, { entries: res.entries || [], debug: Boolean(res.debug), debugUntil: res.debug ? res.debug_until ?? null : null, since: res.since ?? null, max: res.max || 500, bytes: res.bytes ?? null, loaded: true, error: null });
     } catch (err) {
       log.error = errText(err);
       log.loaded = true;
@@ -3382,7 +3382,7 @@ class DevicePanel extends HTMLElement {
     if (setHtml(list, body)) list.scrollTop = keep;
     const since = log.since ? this._fmtTime(log.since, false) : "";
     setHtml(dlg.querySelector('[data-lg="sub"]'), escape(t("logSub", log.max, since)));
-    setHtml(dlg.querySelector('[data-lg="count"]'), escape(t("logCount", log.entries.length, shown.length)));
+    setHtml(dlg.querySelector('[data-lg="count"]'), escape(t("logCount", log.entries.length, shown.length, log.bytes != null ? this._fmtMb(log.bytes) : "")));
   }
 
   _logText() {

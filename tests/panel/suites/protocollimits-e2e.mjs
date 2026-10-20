@@ -10,8 +10,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { chapter: "Protokolle", range: "Wert muss", cutYes: "Kürzen und speichern", cutNo: "Abbrechen", used: "Belegt", all: "Alle" },
-  en: { chapter: "Logs", range: "Value must", cutYes: "Cut and save", cutNo: "Cancel", used: "Used", all: "All" },
+  de: { chapter: "Protokolle und Log", range: "Wert muss", cutYes: "Kürzen und speichern", cutNo: "Abbrechen", used: "Belegt", all: "Alle" },
+  en: { chapter: "Histories and log", range: "Value must", cutYes: "Cut and save", cutNo: "Cancel", used: "Used", all: "All" },
 };
 const KEYS = ["protocol_max_mb", "protocol_max_entries", "log_max_mb", "log_max_entries"];
 const DAY = 86400;
@@ -104,7 +104,7 @@ for (const lang of ["de", "en"]) {
     }, [Date.now() / 1000]);
     await ev(`r.host._protocol.open({ kind: "magic", itemId: "r00000000001", name: "Keller kalt" })`);
     await wait(`return r.querySelectorAll("dialog.proto-dlg .pr-item").length === 1`);
-    check(`[${tag}] Zeitraum-Leiste: sechs Reiter, "${T.all}" dabei, Kapsel auf "30 T."`, await ev(`const bar = r.querySelector("dialog.proto-dlg .sub-tabs"); return bar.querySelectorAll(".sub-tab").length === 6 && !!bar.querySelector('[data-v="all"]') && bar.querySelector(".sub-tab.on").dataset.v === "30d" && !!bar.querySelector(".seg-pill")`));
+    check(`[${tag}] Zeitraum-Leiste: sechs Reiter, "${T.all}" dabei, Kapsel auf "30 T."`, await ev(`const bar = r.querySelector("dialog.proto-dlg [data-pr-ranges] .sub-tabs"); return bar.querySelectorAll(".sub-tab").length === 6 && !!bar.querySelector('[data-v="all"]') && bar.querySelector(".sub-tab.on").dataset.v === "30d" && !!bar.querySelector(".seg-pill")`));
     await tap('dialog.proto-dlg .sub-tab[data-v="12m"]');
     check(`[${tag}] 12 Mt.: nur der neue Eintrag`, await wait(`return r.querySelectorAll("dialog.proto-dlg .pr-item").length === 1`));
     await tap('dialog.proto-dlg .sub-tab[data-v="all"]');

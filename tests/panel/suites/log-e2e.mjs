@@ -8,8 +8,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { btn: "Protokoll", title: "Protokoll", levels: ["Alle", "Info", "Warnung", "Fehler"], levelsDebug: ["Alle", "Debug", "Info", "Warnung", "Fehler"], cats: ["Alle", "Laden", "Ausfall", "Batterie", "Push", "Magic Push", "Routinen", "Updates", "Neu", "System"], today: "Heute", yesterday: "Gestern",
-    none: "Keine Einträge für diesen Filter.", empty: "Noch keine Einträge.", count: "10 Einträge", countShown: "10 Einträge, 2 gezeigt", debug: "Debug-Einträge aufzeichnen", copied: "Kopiert", sub: "Letzte 500 Einträge", err: "Protokoll konnte nicht geladen werden:" },
+  de: { btn: "Log", title: "Log", levels: ["Alle", "Info", "Warnung", "Fehler"], levelsDebug: ["Alle", "Debug", "Info", "Warnung", "Fehler"], cats: ["Alle", "Laden", "Ausfall", "Batterie", "Push", "Magic Push", "Routinen", "Updates", "Neu", "System"], today: "Heute", yesterday: "Gestern",
+    none: "Keine Einträge für diesen Filter.", empty: "Noch keine Einträge.", count: "10 Einträge", countShown: "10 Einträge, 2 gezeigt", debug: "Debug-Einträge aufzeichnen", copied: "Kopiert", sub: "Letzte 500 Einträge", err: "Log konnte nicht geladen werden:" },
   en: { btn: "Log", title: "Log", levels: ["All", "Info", "Warning", "Error"], levelsDebug: ["All", "Debug", "Info", "Warning", "Error"], cats: ["All", "Charging", "Outage", "Battery", "Push", "Magic Push", "Routines", "Updates", "New", "System"], today: "Today", yesterday: "Yesterday",
     none: "No entries for this filter.", empty: "No entries yet.", count: "10 entries", countShown: "10 entries, 2 shown", debug: "Record debug entries", copied: "Copied", sub: "Last 500 entries", err: "Could not load the log:" },
 };
@@ -52,7 +52,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   if (mobile) check(`[${tag}] Handy: Fenster füllt den Bildschirm`, geo[0] === 0 && geo[1] === geo[4] && geo[2] === 0 && Math.abs(geo[3] - geo[5]) <= 1, JSON.stringify(geo));
   else check(`[${tag}] Desktop: Fenster gross (880 px breit wie Einstellungen, Geräte-Popup und Routine)`, geo[1] === 880 && geo[3] > 600, JSON.stringify(geo));
   check(`[${tag}] Untertitel`, (await text("dialog.log-dlg .dlg-sub")).startsWith(T_.sub), await text("dialog.log-dlg .dlg-sub"));
-  check(`[${tag}] zehn Einträge, Zähler im Fuss`, (await rows()) === 10 && (await text('dialog.log-dlg [data-lg="count"]')) === T_.count, await text('dialog.log-dlg [data-lg="count"]'));
+  check(`[${tag}] zehn Einträge, Zähler im Fuss`, (await rows()) === 10 && (await text('dialog.log-dlg [data-lg="count"]')).startsWith(`${T_.count} · `) && /MB$/.test(await text('dialog.log-dlg [data-lg="count"]')), await text('dialog.log-dlg [data-lg="count"]'));
   check(`[${tag}] Tage "${T_.today}" und "${T_.yesterday}"`, JSON.stringify((await texts("dialog.log-dlg .lg-day")).map((s) => s.toLowerCase())) === JSON.stringify([T_.today, T_.yesterday].map((s) => s.toLowerCase())), JSON.stringify(await texts("dialog.log-dlg .lg-day")));
   const first = await text("dialog.log-dlg .lg-row");
   check(`[${tag}] neuester Eintrag zuerst`, first.includes("Aqua10 Roller") && first.includes("charging: level 23 %"), first);
@@ -70,7 +70,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   // Filter Stufe, dann Bereich, kombiniert
   await tap('dialog.log-dlg [data-lg-level="warning"]');
   check(`[${tag}] Stufe Warnung: ein Eintrag`, (await wait(`return r.querySelectorAll("dialog.log-dlg .lg-row").length === 1`)) && (await text("dialog.log-dlg .lg-row")).includes("Türsensor Keller"));
-  check(`[${tag}] Fuss: gezeigt`, (await text('dialog.log-dlg [data-lg="count"]')) === (lang === "de" ? "10 Einträge, 1 gezeigt" : "10 entries, 1 shown"));
+  check(`[${tag}] Fuss: gezeigt`, (await text('dialog.log-dlg [data-lg="count"]')).startsWith(lang === "de" ? "10 Einträge, 1 gezeigt · " : "10 entries, 1 shown · "));
   await tap('dialog.log-dlg [data-lg-cat="push"]');
   check(`[${tag}] Warnung und Push: nichts, Hinweis`, (await wait(`return r.querySelectorAll("dialog.log-dlg .lg-row").length === 0`)) && (await text("dialog.log-dlg .lg-none")) === T_.none, await text("dialog.log-dlg .lg-none"));
   await tap('dialog.log-dlg [data-lg-level="all"]');

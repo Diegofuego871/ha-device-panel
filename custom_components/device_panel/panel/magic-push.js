@@ -790,7 +790,7 @@ export class MagicPush {
     let acts = "";
     if (!renaming && !confirming) {
       acts = `<div class="mg-acts"><button type="button" class="linkbtn" data-mg="edit" data-id="${esc(r.id)}">${esc(t("mgActEdit"))}</button>
-        <button type="button" class="linkbtn" data-proto="magic" data-id="${esc(r.id)}" data-name="${esc(r.name)}">${esc(t("prAct"))}</button>
+        <button type="button" class="linkbtn" data-proto="magic" data-id="${esc(r.id)}" data-device="${esc(r.device_id)}" data-name="${esc(r.name)}">${esc(t("prAct"))}</button>
         <button type="button" class="linkbtn" data-mg="rename" data-id="${esc(r.id)}">${esc(t("mgActRename"))}</button>
         <button type="button" class="linkbtn danger" data-mg="delete" data-id="${esc(r.id)}">${esc(t("mgActDelete"))}</button></div>`;
     }
@@ -947,7 +947,7 @@ export class MagicPush {
     const acts = confirming
       ? ""
       : `<div class="mg-acts"><button type="button" class="linkbtn" data-mga="magic-edit" data-device="${esc(r.device_id)}" data-id="${esc(r.id)}">${esc(t("mgActEdit"))}</button>
-        <button type="button" class="linkbtn" data-proto="magic" data-id="${esc(r.id)}" data-name="${esc(r.name)}">${esc(t("prAct"))}</button>
+        <button type="button" class="linkbtn" data-proto="magic" data-id="${esc(r.id)}" data-device="${esc(r.device_id)}" data-name="${esc(r.name)}">${esc(t("prAct"))}</button>
         <button type="button" class="linkbtn danger" data-mga="magic-delete" data-id="${esc(r.id)}">${esc(t("mgActDelete"))}</button></div>`;
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("mgDeleteAsk", r.name))}</b><small>${esc(t("mgDeleteNote"))}</small>

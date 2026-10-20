@@ -385,6 +385,7 @@ def snapshot(hass: HomeAssistant) -> dict[str, Any]:
         "debug_until": log.debug_until if log.debug else None,
         "since": log.since,
         "max": limits(hass)[1],
+        "bytes": max(0, log.bytes),
     }
 
 

@@ -19,7 +19,7 @@
 - **Reiter Schalter:** jedes Gerät mit etwas Schaltbarem zeigt es als Kacheln; ein Tipp öffnet die Bedienung von Home Assistant (Dimmen, Farbe, Position)
 - **Laden und Updates:** Chip "Lädt" mit Ladebalken, Push, wenn ein Gerät voll ist, Live-Aktivität (iPhone) oder Live-Update (Android 16) und eine Update-Erinnerung, die deine eigenen Automationen ersetzt
 - **Neue Geräte:** eine Markierung "Neu" und ein Chip für drei Tage, dazu ein optionaler Push mit allen neu erschienenen Geräten
-- **App-Launcher und Protokoll:** ein Knopf für nützliche Seiten von Home Assistant und eigene Links, dazu ein Protokoll, das zeigt, was die Meldungen entscheiden und warum eine nicht kam
+- **App-Launcher und Log:** ein Knopf für nützliche Seiten von Home Assistant und eigene Links, dazu ein Log, das zeigt, was die Meldungen entscheiden und warum eine nicht kam
 - **Optionale KI-Einschätzung:** eine Vermutung zur Ursache auf Knopfdruck, nur mit einer KI-Aufgabe von Home Assistant
 - **Ganz deine Ansicht:** Spalten, Sortierung, Filter, Favoriten und Startseite werden pro Benutzer gespeichert, auf Handy und Desktop
 - **Alles im Panel:** alle Einstellungen, Updates über HACS (auch automatisch), Sichern und Wiederherstellen aller Einstellungen, Deutsch und Englisch
@@ -154,7 +154,7 @@ Eigene Meldungen pro Gerät ohne Automation, im Reiter "Magic Push" des Geräts.
 - **Text:** Titel und Inhalt mit Variablen, die zum Wert passen (Name, Wert, Einheit, Schwelle, Bereich und mehr), mit Vorschau und einem Rückblick auf die letzten 24 Stunden vor dem Speichern
 - **Assistent:** öffnet in einem eigenen Fenster (Vollbild auf dem Handy), fünf Schritte: Bedingungen, wie lange, Versand, Text, Name
 - **Übersicht:** die App "Magic Push" (im Launcher) öffnet ein Fenster mit allen Meldungen aller Geräte, eine Karte pro Gerät, mit Suche und Filter; unten legt "Neue Meldung" eine neue an (zuerst das Gerät wählen, dann wie im Popup des Geräts)
-- **Protokoll:** "Protokoll" auf einer Karte (und "Protokoll des Geräts" im Geräte-Popup und in der Übersicht) listet jede Meldung: Datum, Art, Titel und Text, wie gesendet, Wert, Empfänger und was daraus wurde (gesendet, zurückgehalten, fehlgeschlagen). Zeitraum 7 Tage bis 12 Monate oder eigene Daten, Kennzahlen, ein Balkendiagramm (je Tag, bei langen Zeiträumen je Woche; ein Tipp auf einen Balken wählt den Tag), Auswahl, Suche und "Als Text kopieren". Aufbewahrt wird, solange Platz ist: höchstens 5000 Einträge je Meldung und 30 MB für alle zusammen (einstellbar)
+- **Protokoll:** "Protokoll" auf einer Karte (und "Protokoll des Geräts" im Geräte-Popup und in der Übersicht) öffnet ein Fenster für Magic Push und Routinen (zwei Reiter, es öffnet auf dem, von dem du kommst) und listet jede Meldung: Datum, Art, Titel und Text, wie gesendet, Wert, Empfänger und was daraus wurde (gesendet, zurückgehalten, fehlgeschlagen). Zeitraum 7 Tage bis 12 Monate oder eigene Daten, Kennzahlen, ein Balkendiagramm (je Tag, bei langen Zeiträumen je Woche; ein Tipp auf einen Balken wählt den Tag), Auswahl, Suche und "Als Text kopieren". Aufbewahrt wird, solange Platz ist: höchstens 5000 Einträge je Meldung und 30 MB für alle zusammen (einstellbar)
 
 <p align="center"><img src="docs/screenshots/de/magic-wizard.png" alt="Magic-Push-Assistent, Schritt 1: Was soll überwacht werden" width="560"></p>
 
@@ -180,11 +180,11 @@ Schaltet eine Entität eines Geräts einmalig oder nach Zeitplan, ohne Automatio
 
 <p align="center"><img src="docs/screenshots/de/routines-all.png" alt="Fenster mit allen Routinen, eine Karte pro Gerät" width="720"></p>
 
-## App-Launcher und Protokoll
+## App-Launcher und Log
 
 Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den Symbolen und Farben der Einstellungen von Home Assistant. Administratoren finden dort auch einen Ein/Aus-Knopf, der Home Assistant neu startet, immer nach einer Rückfrage.
 
-| App-Launcher | Protokoll |
+| App-Launcher | Log |
 |---|---|
 | <img src="docs/screenshots/de/launcher.png" alt="App-Launcher mit Favoriten, Device Panel und Seiten von Home Assistant"> | <img src="docs/screenshots/de/log.png" alt="Protokoll mit Einträgen der Meldungen und einem Filter"> |
 
@@ -194,7 +194,7 @@ Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den
 - **Favoriten:** ein Herz markiert bis zu fünf Apps, die eigene Knöpfe in der Kopfzeile bekommen (am Handy die ersten zwei); standardmässig sind es die Routinen und die Einstellungen. Das Zahnrad steht nicht mehr fest dort, sondern nur noch, wenn die App "Einstellungen" angeheftet ist; sie lässt sich nicht ausblenden. Steht ein Neustart aus, zeigt der Launcher-Knopf den roten Punkt, solange die Einstellungen nicht angeheftet sind
 - **Bearbeiten-Modus:** per Ziehen sortieren, Apps mit dem Auge ausblenden (Protokoll und Status bleiben sichtbar, mit Schloss), Raster oder Liste; alles wird pro Benutzer gespeichert
 - **Status:** eine App für Administratoren, die zeigt, ob die Teile der Integration laufen (Routinen, Ausfall-Überwachung, Batterie, Laden, Empfangsverlauf, Magic Push, Neue Geräte, Updates: "läuft", "verspätet" oder "steht"). Steht ein Teil, kommt ein Push (an das Standard-Ziel oder an ein Ziel, das du in der App wählst) und eine Entwarnung, wenn er wieder läuft; ein verspäteter oder stehender Teil hat einen Knopf, mit dem sich genau dieser Teil von Hand neu starten lässt. Ein roter Punkt am Launcher-Knopf, oder am Status-Knopf, wenn du ihn angeheftet hast, zeigt eine Störung; ein oranger Punkt zeigt, dass der Debug-Modus läuft. Grenze: Steht Home Assistant selbst, kann das niemand melden
-- **Protokoll:** zeigt, was die Meldungen entscheiden und warum eine nicht kam, mit Filter und Suche (die letzten 500 Einträge bleiben über Neustarts erhalten) und einem optionalen Debug-Modus (für 48 Stunden eingeschaltet, auch über Neustarts)
+- **Log:** zeigt, was die Meldungen entscheiden und warum eine nicht kam, mit Filter und Suche (die letzten 500 Einträge bleiben über Neustarts erhalten) und einem optionalen Debug-Modus (für 48 Stunden eingeschaltet, auch über Neustarts)
 
 ## Einstellungen im Panel
 

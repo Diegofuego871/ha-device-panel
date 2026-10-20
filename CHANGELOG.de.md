@@ -7,6 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.106.0] - 2026-10-20
+
+Ein Protokollfenster für Magic Push und Routinen, mit Reitern.
+
+### Hinzugefügt
+
+- **Protokollfenster:** oben zwei Reiter, **"Magic Push"** (links) und **"Routinen"**, in einem Fenster. Es öffnet auf dem Reiter, von dem aus es aufgerufen wurde. Der andere Reiter zeigt das Protokoll **aller Meldungen oder Routinen desselben Geräts** (mit der Auswahl einer einzelnen); beim Zurückwechseln gilt wieder der erste Zusammenhang (die einzelne Meldung oder Routine, von der man kam). Der Zeitraum bleibt; Auswahl, Suche und Wahl der Meldung beginnen je Reiter neu.
+
+### Geändert
+
+- **Das Protokoll des Panels heisst "Log"** (vorher "Protokoll"), damit es sich vom Protokoll einer Meldung oder Routine unterscheidet. Auf Englisch heisst das Protokoll einer Meldung, Routine oder eines Geräts jetzt **"History"** (Knopf "History", "History of the device"), das Panel-Log bleibt "Log". Einstellungen: Zeilen "Panel-Log", Kapitel "Protokolle und Log".
+- **Log, Fuss:** neben der Zahl der Einträge die **Grösse in MB** (zum Beispiel "532 Einträge, 5 gezeigt · 0,1 MB"). `device_panel/get_log` meldet `bytes`.
+
+### Intern
+
+- Die Knöpfe "Protokoll" auf den Karten tragen jetzt das Gerät (`data-device`) neben `data-id`, damit das Fenster das Gerät einer einzelnen Meldung oder Routine kennt. `ProtocolUi.alt` hält den Zusammenhang des anderen Reiters. Suite `protocol` erweitert.
+
 ## [2.105.1] - 2026-10-20
 
 Protokollfenster: "Zurück" unten; Kapitel der Einstellungen in neuer Reihenfolge; mehr Platz in den Gerätekarten.
@@ -4234,6 +4251,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.106.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.0
 [2.105.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.1
 [2.105.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.0
 [2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0
