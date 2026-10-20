@@ -36,7 +36,7 @@ from .outage import OutageNotifier
 from .quiet import QuietManager
 from .signal_history import RANGES as SIGNAL_RANGES
 from .signal_history import STORAGE_KEY as SIGNAL_STORE_KEY
-from .signal_history import SignalLog, async_signal_history
+from .signal_history import SignalLog, async_signal_history, async_signal_listeners
 from . import magic
 from .magic import STORE_KEY as MAGIC_STORE_KEY
 from .magic import MagicPush
@@ -676,6 +676,18 @@ async def _ws_magic_history(hass: HomeAssistant, connection: websocket_api.Activ
     connection.send_result(msg["id"], result)
 
 
+@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/signal_listeners", vol.Required("device_id"): str})
+@websocket_api.require_admin
+@websocket_api.callback
+def _ws_signal_listeners(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Wer das Bluetooth-Gerät gerade hört, für die Live-Zeile im Fenster "Empfang" (seit 2.109.0); das Panel fragt alle paar Sekunden."""
+    device = dr.async_get(hass).async_get(msg["device_id"])
+    if device is None:
+        connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "device not found")
+        return
+    connection.send_result(msg["id"], {"listeners": async_signal_listeners(hass, device)})
+
+
 @websocket_api.websocket_command(
     {
         vol.Required("type"): f"{DOMAIN}/signal_history",
@@ -1239,6 +1251,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_hide_device)
     websocket_api.async_register_command(hass, _ws_rename_device)
     websocket_api.async_register_command(hass, _ws_signal_history)
+    websocket_api.async_register_command(hass, _ws_signal_listeners)
     websocket_api.async_register_command(hass, _ws_get_log)
     websocket_api.async_register_command(hass, _ws_set_log)
     websocket_api.async_register_command(hass, _ws_clear_log)

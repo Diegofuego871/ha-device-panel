@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.109.0, Live-Zeile "Gerade gehört von" im Empfangsfenster)
+
+- `devices._ble_seen` (alle Empfänger: Alter, RSSI, Quelle, Name; ungültige Werte raus, neu auch 0 dBm: ein Platzhalter hätte als "stärkster" gegolten), `_ble_pick` (Wahl wie bisher), `ble_listeners` (für das Panel: Name ohne Adresse, RSSI, Alter in s, `used`). WS `device_panel/signal_listeners` (alle 5 s vom offenen Fenster, `LIVE_MS`, `_liveTick`, Timer stoppt beim Schliessen) und `listeners` im Ergebnis von `signal_history`. Panel `_liveHtml`, Texte `sigLive*`, Suite `signallive`.
+- Geprüft auf False Positives (Anfrage des Nutzers): "Empfang schwach" ist nur Anzeige (Chip, Warnzeile, KI-Fakt), es gibt keinen Push dafür; Ausfall-Meldungen hängen nicht am Empfang (`availability.py`/`outage.py` nutzen `signal_source` nicht). Die Anzeige beruht aber auf dem Einzelwert (`devSigLevel`): Schwankt er um die Schwelle (Standard -80 dBm), wechselt das Gerät zwischen schwach und nicht schwach. Offen, Entscheid des Nutzers: Glättung (Median der letzten Minuten aus `SignalLog`) für die Bewertung "schwach".
+
 ## Stand (2.108.0, Bluetooth: stärkster Empfänger)
 
 - Anlass: der Nutzer vermutete Schwankungen, weil mehrere Proxys gleichzeitig hören. Geprüft in `habluetooth/manager.py`: `async_last_service_info` liefert die von HA bevorzugte Meldung (wechselt erst bei `ADV_RSSI_SWITCH_THRESHOLD` dB Vorsprung oder veralteter alter Meldung), nicht die stärkste. Neu `devices._ble_best`: letzte Meldung jedes Empfängers (`async_scanner_devices_by_address`), nur frische (60 s zur frischesten), stärkster RSSI, bisheriger Empfänger bleibt bis 2 dB Unterschied (`hass.data[DATA_BLE_BEST]`), Rückfall auf `async_last_service_info`. `_ble_signal` und `ble_receiver` nutzen es gemeinsam (Wert und Empfänger aus derselben Meldung). Zeitpunkte (`discovered_device_timestamps`) baut HA bei jedem Zugriff neu: 5 s Zwischenspeicher (`DATA_BLE_STAMPS`).

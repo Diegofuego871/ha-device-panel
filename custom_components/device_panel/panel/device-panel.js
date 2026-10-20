@@ -23,6 +23,8 @@ const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_
 ]);
 
 const POLL_INTERVAL_MS = 10000;
+// Live-Zeile im Fenster "Empfang": alle paar Sekunden neu, damit das Alter der Meldungen stimmt
+const LIVE_MS = 5000;
 // Dauer-Anzeigen laufen weiter, ohne dafür neu abzufragen.
 const TICK_MS = 30000;
 // Logos der Integrationen (Brand-Dienst): Token alle 10 Min. erneuern, beim Aufwachen schon nach 5 Min.; ein gescheitertes Bild
@@ -1249,6 +1251,7 @@ class DevicePanel extends HTMLElement {
     window.clearInterval(this._timer);
     window.clearInterval(this._tick);
     window.clearInterval(this._logTimer);
+    window.clearInterval(this._liveTimer);
     window.clearTimeout(this._logRetry);
     window.clearTimeout(this._devRetry);
     window.clearInterval(this._brandTimer);
@@ -5208,6 +5211,8 @@ class DevicePanel extends HTMLElement {
     this._blurOnTouch();
     dlg.scrollTop = 0;
     this._loadHistory(true);
+    window.clearInterval(this._liveTimer);
+    this._liveTimer = this._statKind === "signal" ? window.setInterval(() => this._liveTick(), LIVE_MS) : null;
   }
 
   _statRanges() {
@@ -5222,6 +5227,8 @@ class DevicePanel extends HTMLElement {
   _closeStat() {
     const dlg = this.shadowRoot.querySelector("dialog.stat-dlg");
     this._statRange = null;
+    window.clearInterval(this._liveTimer);
+    this._liveTimer = null;
     this.removeAttribute("stat-open");
     if (dlg?.open) {
       if (typeof dlg.close === "function") dlg.close();
@@ -5429,7 +5436,8 @@ class DevicePanel extends HTMLElement {
     if (!h.data) return `<div class="dlg-error">${escape(t("error"))} ${escape(h.error || "")}</div>`;
     const { start, end, points = [], kind, source, bucket, first, current, reason, steady_since: steady, via } = h.data;
     const note = (text) => `<p class="dlg-note bh-src">${escape(text)}</p>`;
-    const viaBlock = via ? this._viaHtml(via, start, end, range, Boolean(points.length && kind)) : "";
+    // Live-Zeile vor dem Weg: beide gehören zu den Empfängern, die Zeile ist der Stand jetzt
+    const viaBlock = this._liveHtml(h.data.listeners) + (via ? this._viaHtml(via, start, end, range, Boolean(points.length && kind)) : "");
     // Sensor, den der Recorder nicht aufzeichnet (seit 0.26.0): das Panel zeichnet selbst auf.
     const why = reason === "not_recorded" ? ` ${t("sigSrcNotRecorded")}` : "";
     if (!points.length || !kind) {
@@ -5510,6 +5518,37 @@ class DevicePanel extends HTMLElement {
           ${band ? `<path class="sg-band" d="${band}"/>` : ""}<path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/></svg>${labels}</div>
         <div class="avail-ticks bh-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>${legend}</div>
       ${note(src)}${viaBlock}`;
+  }
+
+  // Live-Zeile (seit 2.109.0): welche Bluetooth-Empfänger das Gerät gerade hören, mit RSSI und Alter ihrer letzten Meldung. Der Empfänger,
+  // dessen Wert als Empfang zählt, ist fett. Das Alter läuft nicht von selbst weiter: _liveTick holt die Zeile alle paar Sekunden neu.
+  _liveHtml(rows) {
+    if (!Array.isArray(rows) || !rows.length) return "";
+    const t = (k, ...a) => this._t(k, ...a);
+    const items = rows
+      .map((r) => `<span class="${r.used ? "used" : ""}">${escape(r.name)} ${escape(sigText({ kind: "dbm", value: r.rssi }).replace(" ", "\u00a0"))} (${escape(t("sigLiveAgo", r.age))})</span>`)
+      .join(", ");
+    return `<p class="dlg-note sig-live" data-sig-live title="${escape(t("sigLiveHint"))}">${escape(t("sigLive"))}: ${items}</p>`;
+  }
+
+  _liveTick() {
+    const dlg = this.shadowRoot.querySelector("dialog.stat-dlg");
+    const id = this._detailId;
+    if (!dlg?.open || this._statKind !== "signal" || !id || !this._hass) {
+      window.clearInterval(this._liveTimer);
+      this._liveTimer = null;
+      return;
+    }
+    if (document.visibilityState === "hidden" || !this._hist?.data) return;
+    this._hass
+      .callWS({ type: "device_panel/signal_listeners", device_id: id })
+      .then((res) => {
+        // Antwort für ein anderes Gerät oder ein geschlossenes Fenster verwerfen
+        if (this._detailId !== id || this._statKind !== "signal" || !this._hist?.data) return;
+        this._hist.data.listeners = res.listeners || [];
+        this._renderStat();
+      })
+      .catch(() => {});
   }
 
   // Weg des Bluetooth-Empfangs (seit 2.40.0): Balken mit Abschnitten je Empfänger (Lücke

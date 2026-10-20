@@ -271,6 +271,14 @@
   // "not-recorded"/"not-recorded-empty" = Sensor, den der Recorder nicht
   // aufzeichnet, "steady" = Recorder ohne Zeile, Wert seit 3 Tagen gleich).
   window.__sigSource = null;
+  // Wer das Bluetooth-Gerät gerade hört (ble_listeners): stärkster zuerst, "used" = Empfänger des angezeigten Werts. __listeners überschreibt;
+  // jeder Abruf lässt das Alter um 5 s wachsen, damit die Live-Zeile im Test sichtbar weiterläuft.
+  let listenerCalls = 0;
+  function listenersFor(d) {
+    if (d.connection !== "ble") return [];
+    const rows = window.__listeners || [{ name: "Shelly Garage", rssi: -76, age: 8, used: true }, { name: "Storen Küche", rssi: -97, age: 3, used: false }];
+    return rows.map((r) => ({ ...r, age: r.age + 5 * listenerCalls }));
+  }
   // Weg des Bluetooth-Empfangs wie SignalLog.via_summary: Abschnitte [von, bis, Nr. | null], Empfänger mit Anteil und Ø, Wechsel (neueste zuerst).
   const VIA_NAMES = ["Storen Büro", "Proxy Garage", "Küche", "Bluetooth-Adapter (HA)"];
   function viaFor(range, start, end, points) {
@@ -329,7 +337,7 @@
         const spread = kind === "dbm" ? 3 + (seed % 4) : 10 + (seed % 15);
         points.push([t + bucket / 2, med, clamp(med - spread), clamp(med + Math.round(spread / 2))]);
       }
-      return { ...base, source: points.length ? "log" : "none", bucket, points, first, via: d.connection === "ble" && !window.__viaOff ? viaFor(range, start, end, points) : null };
+      return { ...base, source: points.length ? "log" : "none", bucket, points, first, via: d.connection === "ble" && !window.__viaOff ? viaFor(range, start, end, points) : null, listeners: listenersFor(d) };
     }
     const stats = range === "30d";
     const points = [];
@@ -1838,6 +1846,12 @@
         if (!d) throw { code: "not_found", message: "device not found" };
         if (!["24h", "7d", "30d"].includes(msg.range || "24h")) throw { code: "invalid_format", message: "range" };
         return signalHistory(d, msg.range || "24h");
+      }
+      if (msg.type === "device_panel/signal_listeners") {
+        const d = window.__devices.find((x) => x.id === msg.device_id);
+        if (!d) throw { code: "not_found", message: "device not found" };
+        listenerCalls += 1;
+        return { listeners: listenersFor(d) };
       }
       if (msg.type === "device_panel/battery_history") {
         const d = window.__devices.find((x) => x.id === msg.device_id);

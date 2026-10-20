@@ -254,3 +254,17 @@ async def test_sensor_excluded_from_recorder_is_logged(recorder_mock, hass: Home
     assert res["source"] == "log" and res["reason"] == "not_recorded" and res["points"][0][1] == -52
     res = (await _ws(client, 3, type=f"{DOMAIN}/signal_history", device_id=other.id, range="24h"))["result"]
     assert res["source"] == "history" and res["reason"] is None
+
+
+async def test_listeners_websocket(hass: HomeAssistant, hass_ws_client, monkeypatch) -> None:
+    """Live-Zeile (2.109.0): eigener Abruf ohne Verlauf; das Ergebnis des Verlaufs trägt die Zeile ebenfalls mit."""
+    await _setup(hass)
+    source = MockConfigEntry(domain="test")
+    source.add_to_hass(hass)
+    dev = dr.async_get(hass).async_get_or_create(config_entry_id=source.entry_id, identifiers={("test", "ble")}, name="Sensor")
+    rows = [{"name": "Shelly", "rssi": -76, "age": 8, "used": True}]
+    monkeypatch.setattr(signal_history, "ble_listeners", lambda _hass, _device: rows)
+    client = await hass_ws_client(hass)
+    assert (await _ws(client, 1, type=f"{DOMAIN}/signal_listeners", device_id=dev.id))["result"] == {"listeners": rows}
+    assert (await _ws(client, 2, type=f"{DOMAIN}/signal_history", device_id=dev.id))["result"]["listeners"] == rows
+    assert (await _ws(client, 3, type=f"{DOMAIN}/signal_listeners", device_id="weg"))["error"]["code"] == "not_found"

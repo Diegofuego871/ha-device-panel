@@ -7,6 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.109.0] - 2026-10-20
+
+The reception window of a Bluetooth device shows live which receivers hear it right now.
+
+### Added
+
+- **Reception window, live line (Bluetooth):** under the chart a line reads for example "Currently heard by: **Shelly Garage -76 dBm (8 s ago)**, Storen Küche -97 dBm (3 s ago)": every receiver (adapter or proxy) that has heard the device, with its latest RSSI and how fresh that report is, strongest first. The receiver whose value counts as the signal is bold. The line updates every 5 seconds while the window is open (the age keeps running). It shows at a glance whether a weak value comes from the device or only from one receiver that happens to hear it badly. Hint on hover or long press explains the bold entry. Nothing is shown for devices without a Bluetooth address or when no receiver hears the device.
+
+### Fixed
+
+- **Bluetooth reception, placeholder value:** a receiver reporting 0 dBm (a placeholder, not a measurement) counted as the "strongest" value and could be chosen over a real measurement. Values of 0 dBm and above are now ignored like "no value" (-127).
+
+### Internal
+
+- `devices._ble_seen` (all receivers with age and RSSI), `_ble_pick` (the choice), new `ble_listeners`; WebSocket `device_panel/signal_listeners` (live line only, no history) and field `listeners` in `device_panel/signal_history`. Tests: `tests/test_ble_best.py`, `tests/test_signal_history.py`, new suite `signallive`.
+
 ## [2.108.0] - 2026-10-20
 
 Bluetooth reception shows the strongest receiver instead of the one Home Assistant happens to keep.
@@ -4188,6 +4204,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.109.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.109.0
 [2.108.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.108.0
 [2.107.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.107.0
 [2.106.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.1

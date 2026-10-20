@@ -89,7 +89,8 @@ def test_previous_receiver_stays_while_within_the_tolerance(hass: HomeAssistant,
 
 
 def test_invalid_values_are_skipped_and_fallback_is_the_kept_advertisement(hass: HomeAssistant, ble) -> None:
-    ble["items"] = [_item(_scanner("AA:01", "A"), -127), _item(_scanner("AA:02", "B"), None), _item(_scanner("AA:03", "C"), 4)]
+    # 0 dBm ist ein Platzhalter, kein Messwert: er wäre sonst der "stärkste" und würde einen Empfänger ohne Messung wählen
+    ble["items"] = [_item(_scanner("AA:01", "A"), -127), _item(_scanner("AA:02", "B"), None), _item(_scanner("AA:03", "C"), 4), _item(_scanner("AA:04", "D"), 0)]
     ble["last"] = SimpleNamespace(source="AA:09", rssi=-77)
     ble["names"]["AA:09"] = SimpleNamespace(name="Adapter hci0")
     # Keine brauchbare Einzelsicht: wie bisher die Meldung, die HA führt
@@ -127,3 +128,32 @@ def test_timestamps_are_cached_briefly_per_scanner(hass: HomeAssistant, ble) -> 
     # Ein anderes Objekt mit derselben Quelle (Empfänger neu angelegt) liest neu
     other = _scanner("AA:01", "A", age=300)
     assert devices._ble_stamps(hass, other, time.monotonic())[ADDR] < time.monotonic() - 100
+
+
+def test_zero_dbm_does_not_beat_a_real_measurement(hass: HomeAssistant, ble) -> None:
+    ble["items"] = [_item(_scanner("AA:01", "Echt"), -83), _item(_scanner("AA:02", "Platzhalter"), 0)]
+    assert devices._ble_best(hass, ADDR) == (-83, "AA:01", "Echt")
+
+
+def test_listeners_list_every_receiver_strongest_first_with_age(hass: HomeAssistant, ble) -> None:
+    """Live-Zeile im Empfangs-Fenster (2.109.0): Name, RSSI, Alter in Sekunden, und welcher Empfänger zählt."""
+    shelly, store = _scanner("AA:01", "Shelly Garage (B0:A7:32:46:E3:C2)", age=8), _scanner("AA:02", "Storen Küche", age=3)
+    ble["items"] = [_item(store, -97), _item(shelly, -76)]
+    device = SimpleNamespace(connections={(dr.CONNECTION_BLUETOOTH, ADDR)})
+    rows = devices.ble_listeners(hass, device)
+    assert [(r["name"], r["rssi"], r["used"]) for r in rows] == [("Shelly Garage", -76, True), ("Storen Küche", -97, False)]
+    assert [r["age"] for r in rows] == [8, 3]
+    # Der gezählte Empfänger ist derselbe wie beim Wert in der Liste
+    assert devices._ble_best(hass, ADDR)[1] == "AA:01"
+    # Der bisherige bleibt in der Toleranz auch in der Live-Zeile "gezählt"
+    ble["items"] = [_item(store, -75), _item(shelly, -76)]
+    assert [r["used"] for r in devices.ble_listeners(hass, device)] == [False, True]
+
+
+def test_listeners_empty_without_address_view_or_bluetooth(hass: HomeAssistant, ble) -> None:
+    device = SimpleNamespace(connections={(dr.CONNECTION_BLUETOOTH, ADDR)})
+    assert devices.ble_listeners(hass, device) == []
+    assert devices.ble_listeners(hass, SimpleNamespace(connections={("mac", "aa:bb")})) == []
+    ble["items"] = [_item(_scanner("AA:01", "A"), -60)]
+    hass.config.components.remove("bluetooth")
+    assert devices.ble_listeners(hass, device) == []

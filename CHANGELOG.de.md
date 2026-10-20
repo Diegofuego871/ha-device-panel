@@ -7,6 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.109.0] - 2026-10-20
+
+Das Empfangsfenster eines Bluetooth-Geräts zeigt live, welche Empfänger es gerade hören.
+
+### Hinzugefügt
+
+- **Empfangsfenster, Live-Zeile (Bluetooth):** Unter dem Diagramm steht zum Beispiel "Gerade gehört von: **Shelly Garage -76 dBm (vor 8 s)**, Storen Küche -97 dBm (vor 3 s)": jeder Empfänger (Adapter oder Proxy), der das Gerät gehört hat, mit seinem letzten RSSI und der Frische dieser Meldung, der stärkste zuerst. Der Empfänger, dessen Wert als Empfang zählt, ist fett. Die Zeile aktualisiert sich alle 5 Sekunden, solange das Fenster offen ist (das Alter läuft weiter). So sieht man auf einen Blick, ob ein schwacher Wert vom Gerät kommt oder nur von einem Empfänger, der es zufällig schlecht hört. Ein Hinweis beim Darüberfahren oder langen Drücken erklärt den fetten Eintrag. Ohne Bluetooth-Adresse oder wenn kein Empfänger das Gerät hört, erscheint nichts.
+
+### Behoben
+
+- **Bluetooth-Empfang, Platzhalterwert:** Ein Empfänger, der 0 dBm meldet (ein Platzhalter, keine Messung), zählte als "stärkster" Wert und konnte einer echten Messung vorgezogen werden. Werte ab 0 dBm werden jetzt wie "kein Wert" (-127) ignoriert.
+
+### Intern
+
+- `devices._ble_seen` (alle Empfänger mit Alter und RSSI), `_ble_pick` (die Wahl), neu `ble_listeners`; WebSocket `device_panel/signal_listeners` (nur die Live-Zeile, ohne Verlauf) und Feld `listeners` in `device_panel/signal_history`. Tests: `tests/test_ble_best.py`, `tests/test_signal_history.py`, neue Suite `signallive`.
+
 ## [2.108.0] - 2026-10-20
 
 Der Bluetooth-Empfang zeigt den stärksten Empfänger statt den, den Home Assistant gerade führt.
@@ -4289,6 +4305,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.109.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.109.0
 [2.108.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.108.0
 [2.107.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.107.0
 [2.106.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.1

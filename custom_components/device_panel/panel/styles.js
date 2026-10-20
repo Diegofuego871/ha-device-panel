@@ -1205,6 +1205,8 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .avail-legend i.sg-span { background: color-mix(in srgb, var(--dp-primary) 22%, transparent); }
 .bh .avail-list .d { color: var(--dp-text2); }
 .bh-src { margin: 10px 2px 0; }
+.sig-live { margin: 10px 2px 0; }
+.sig-live .used { font-weight: 600; color: var(--primary-text-color); }
 .sv { margin: 16px 2px 4px; }
 .sv h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--dp-text); }
 .sv-bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: color-mix(in srgb, var(--dp-text) 8%, transparent); }

@@ -38,7 +38,7 @@ from .availability import ONLINE
 from .battery_history import STATS_FROM_DAYS, _history, _statistics, held, thin
 from .const import DATA_AVAILABILITY, DOMAIN, STORAGE_VERSION
 from .compat import device_entry_ids
-from .devices import ble_receiver, monitored_devices, signal_sensor, signal_source
+from .devices import ble_listeners, ble_receiver, monitored_devices, signal_sensor, signal_source
 from .labels import strip_address
 from .options_api import effective
 from .storage_util import PeriodicSaver
@@ -446,7 +446,14 @@ async def async_signal_history(
     if log is not None:
         # Weg: auch bei ausgefallenem Gerät ("war"), solange es einen gibt; der Mittelwert je Empfänger aus den Punkten, wo es welche gibt
         result["via"] = log.via_summary(device.id, range_key, now, result["points"])
+    # Wer das Gerät gerade hört (seit 2.109.0): leer ohne Bluetooth-Adresse oder wenn es niemand hört
+    result["listeners"] = ble_listeners(hass, device)
     return result
+
+
+def async_signal_listeners(hass: HomeAssistant, device: dr.DeviceEntry) -> list[dict[str, Any]]:
+    """Für die Live-Zeile: wer das Gerät gerade hört (ohne den Verlauf neu zu laden)."""
+    return ble_listeners(hass, device)
 
 
 async def _signal_points(hass: HomeAssistant, log: SignalLog | None, device: dr.DeviceEntry, range_key: str, now: float) -> dict[str, Any]:

@@ -332,6 +332,45 @@ def _ble_stamps(hass: HomeAssistant, scanner: Any, now: float) -> dict[str, floa
     return stamps
 
 
+def _ble_seen(hass: HomeAssistant, address: str) -> list[tuple[float, int, str, str]]:
+    """
+    Die letzte Meldung jedes Empfängers (Adapter oder Proxy) zu einem Gerät: (Alter in Sekunden, RSSI, Quelle, Name). Ungültige Werte
+    (kein Wert, 0 dBm, über 0) fallen weg: 0 wäre sonst der "stärkste" Wert und würde einen Empfänger ohne Messung wählen. Leer: nie
+    gehört, Bluetooth nicht bereit oder die Schnittstelle fehlt.
+    """
+    if "bluetooth" not in hass.config.components:
+        return []
+    try:
+        from homeassistant.components import bluetooth  # noqa: PLC0415
+
+        now = time.monotonic()
+        seen: list[tuple[float, int, str, str]] = []
+        for item in bluetooth.async_scanner_devices_by_address(hass, address, connectable=False):
+            rssi = getattr(item.advertisement, "rssi", None)
+            if not isinstance(rssi, (int, float)) or not _BLE_RSSI_MIN < rssi < 0:
+                continue
+            stamp = _ble_stamps(hass, item.scanner, now).get(address)
+            age = max(0.0, now - stamp) if isinstance(stamp, (int, float)) else 0.0
+            source = str(item.scanner.source)
+            seen.append((age, int(rssi), source, str(getattr(item.scanner, "name", None) or source)))
+        return seen
+    except Exception:  # noqa: BLE001 - interne Schnittstelle von HA
+        return []
+
+
+def _ble_pick(hass: HomeAssistant, address: str, seen: list[tuple[float, int, str, str]]) -> tuple[float, int, str, str]:
+    """Der gezählte Empfänger unter den Meldungen von _ble_seen: stärkster unter den frischen, der bisherige bleibt bei BLE_KEEP_DB."""
+    freshest = min(a for a, *_ in seen)
+    fresh = [x for x in seen if x[0] - freshest <= BLE_WINDOW_S]
+    best = max(fresh, key=lambda x: (x[1], -x[0]))
+    memory: dict[str, str] = hass.data.setdefault(DATA_BLE_BEST, {})
+    kept = next((x for x in fresh if x[2] == memory.get(address)), None)
+    if kept is not None and kept[1] >= best[1] - BLE_KEEP_DB:
+        best = kept
+    memory[address] = best[2]
+    return best
+
+
 def _ble_best(hass: HomeAssistant, address: str) -> tuple[int, str, str] | None:
     """
     (RSSI, Quelle, Name) des Empfängers mit dem stärksten Wert unter allen, die das Gerät kürzlich gehört haben. Der bisherige Empfänger
@@ -340,29 +379,12 @@ def _ble_best(hass: HomeAssistant, address: str) -> tuple[int, str, str] | None:
     """
     if "bluetooth" not in hass.config.components:
         return None
+    if seen := _ble_seen(hass, address):
+        best = _ble_pick(hass, address, seen)
+        return best[1], best[2], best[3]
     try:
         from homeassistant.components import bluetooth  # noqa: PLC0415
 
-        now = time.monotonic()
-        seen: list[tuple[float, int, str, str]] = []  # (Alter, RSSI, Quelle, Name)
-        for item in bluetooth.async_scanner_devices_by_address(hass, address, connectable=False):
-            rssi = getattr(item.advertisement, "rssi", None)
-            if not isinstance(rssi, (int, float)) or not _BLE_RSSI_MIN < rssi <= 0:
-                continue
-            stamp = _ble_stamps(hass, item.scanner, now).get(address)
-            age = max(0.0, now - stamp) if isinstance(stamp, (int, float)) else 0.0
-            source = str(item.scanner.source)
-            seen.append((age, int(rssi), source, str(getattr(item.scanner, "name", None) or source)))
-        if seen:
-            freshest = min(a for a, *_ in seen)
-            seen = [x for x in seen if x[0] - freshest <= BLE_WINDOW_S]
-            best = max(seen, key=lambda x: (x[1], -x[0]))
-            memory: dict[str, str] = hass.data.setdefault(DATA_BLE_BEST, {})
-            kept = next((x for x in seen if x[2] == memory.get(address)), None)
-            if kept is not None and kept[1] >= best[1] - BLE_KEEP_DB:
-                best = kept
-            memory[address] = best[2]
-            return best[1], best[2], best[3]
         info = bluetooth.async_last_service_info(hass, address, connectable=False)
         if info is None or not info.source:
             return None
@@ -370,6 +392,21 @@ def _ble_best(hass: HomeAssistant, address: str) -> tuple[int, str, str] | None:
         return info.rssi, str(info.source), str(getattr(scanner, "name", None) or info.source)
     except Exception:  # noqa: BLE001 - interne Schnittstelle von HA
         return None
+
+
+def ble_listeners(hass: HomeAssistant, device: dr.DeviceEntry) -> list[dict[str, Any]]:
+    """
+    Wer das Bluetooth-Gerät gerade hört (seit 2.109.0, für das Empfangs-Fenster): je Empfänger Name, RSSI und Alter der letzten Meldung in
+    Sekunden, der stärkste zuerst; "used" markiert den Empfänger, dessen Wert der angezeigte Empfang ist. Leer ohne Bluetooth-Adresse
+    oder ohne Einzelsicht.
+    """
+    address = next((c[1] for c in device.connections if c[0] == dr.CONNECTION_BLUETOOTH), None)
+    seen = _ble_seen(hass, address) if address else []
+    if not seen:
+        return []
+    used = _ble_pick(hass, address, seen)[2]
+    rows = sorted(seen, key=lambda x: (-x[1], x[0]))
+    return [{"name": strip_address(name), "rssi": rssi, "age": round(age), "used": source == used} for age, rssi, source, name in rows]
 
 
 def _ble_signal(hass: HomeAssistant, address: str) -> tuple[dict[str, Any] | None, str | None]:
