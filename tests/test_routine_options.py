@@ -371,3 +371,41 @@ async def test_hidden_entities_can_be_switched_but_disabled_ones_cannot(hass: Ho
     ids = {e["entity_id"] for e in routines.switchable_entities(hass, device.id)}
     assert ids == {shown, hidden}
     assert [d["entities"] for d in routines.switchable_devices(hass)] == [2]
+
+
+async def test_option_specs_survive_nonsense_attributes(hass: HomeAssistant) -> None:
+    """Komische Werte (Text, null, NaN, unendlich, min >= max, Schritt 0 oder zu gross) ergeben einen brauchbaren Regler (2.101.1)."""
+    import json
+
+    evil = '1" autofocus onfocus="window.__x=1'
+    cases = [
+        {"min_temp": "abc", "max_temp": None, "target_temp_step": evil},
+        {"min_temp": float("nan"), "max_temp": float("inf"), "target_temp_step": 0},
+        {"min_temp": 30, "max_temp": 10, "target_temp_step": -1},
+        {"min_temp": True, "max_temp": False, "target_temp_step": 99},
+        {"min_temp": 16, "max_temp": 28, "target_temp_step": "0.5"},
+        {},
+    ]
+    for attrs in cases:
+        hass.states.async_set("climate.t", "heat", {"supported_features": 1, "hvac_modes": [], **attrs})
+        (spec,) = routines.option_specs(hass.states.get("climate.t"), "°C")
+        json.dumps(spec, allow_nan=False)
+        assert all(isinstance(spec[k], (int, float)) and not isinstance(spec[k], bool) for k in ("min", "max", "step")), (attrs, spec)
+        assert spec["min"] < spec["max"] and 0 < spec["step"] <= spec["max"] - spec["min"], (attrs, spec)
+    hass.states.async_set("climate.t", "heat", {"supported_features": 1, "hvac_modes": [], "min_temp": 16, "max_temp": 28, "target_temp_step": "0.5"})
+    assert routines.option_specs(hass.states.get("climate.t"), "°C")[0] | {} == {"key": "temperature", "type": "temperature", "unit": "°C", "step": 0.5, "min": 16.0, "max": 28.0}
+    # Fahrenheit: eigene Standardgrenzen
+    hass.states.async_set("climate.t", "heat", {"supported_features": 1, "hvac_modes": [], "min_temp": "x"})
+    spec = routines.option_specs(hass.states.get("climate.t"), "°F")[0]
+    assert (spec["min"], spec["max"], spec["step"]) == (45, 95, 1)
+    # Lampe: Farbtemperatur mit Text oder vertauschten Grenzen darf die Beschreibung nicht abbrechen
+    for low, high in (("warm", "kalt"), (6500, 2000), (None, None), (float("nan"), 4000)):
+        hass.states.async_set("light.k", "on", {"supported_color_modes": ["color_temp"], "min_color_temp_kelvin": low, "max_color_temp_kelvin": high})
+        kelvin = next(x for x in routines.option_specs(hass.states.get("light.k")) if x["key"] == "color_temp_kelvin")
+        assert isinstance(kelvin["min"], int) and isinstance(kelvin["max"], int) and kelvin["min"] < kelvin["max"]
+    # Zahl-Entität
+    for attrs in ({"min": "a", "max": None, "step": evil}, {"min": 5, "max": 5, "step": 1}, {"min": float("inf"), "max": 3}, {"min": 0, "max": 10, "step": 50}):
+        hass.states.async_set("number.n", "3", {"unit_of_measurement": {"x": 1}, **attrs})
+        (spec,) = routines.option_specs(hass.states.get("number.n"))
+        json.dumps(spec, allow_nan=False)
+        assert isinstance(spec["unit"], str) and spec["min"] < spec["max"] and 0 < spec["step"] <= spec["max"] - spec["min"], (attrs, spec)

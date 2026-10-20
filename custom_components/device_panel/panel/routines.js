@@ -36,6 +36,30 @@ const UNITS = [60, 3600, 86400];
 const PREVIEW_DELAY_MS = 300;
 export const DOMAIN_EMOJI = { number: "🎚️", select: "🔽", switch: "🔌", light: "💡", fan: "🌀", cover: "🪟", lock: "🔒", valve: "🚿", siren: "🚨", humidifier: "💧", input_boolean: "🔘", climate: "🌡️", media_player: "🔊" };
 // Schnellwahl unter den Reglern (zusätzlich zu "Wie zuletzt")
+// Regler-Beschreibung vom Server auf brauchbare Zahlen bringen (seit 2.101.0): Eine Entität kann Unsinn melden (Text statt
+// Zahl, min grösser als max, Schritt 0). Der Regler fällt dann auf die üblichen Grenzen zurück, statt kaputt zu gehen.
+const SPEC_DEFAULTS = { percent: [0, 100, 1], number: [0, 100, 1], kelvin: [2000, 6500, 1], temperature: [7, 35, 0.5] };
+
+function finiteNumber(v, fallback) {
+  const ok = (typeof v === "number" || (typeof v === "string" && v.trim() !== "")) && Number.isFinite(Number(v));
+  return ok ? Number(v) : fallback;
+}
+
+function cleanSpec(spec) {
+  if (!spec || typeof spec !== "object") return spec;
+  const d = SPEC_DEFAULTS[spec.type];
+  if (d) {
+    let min = finiteNumber(spec.min, d[0]);
+    let max = finiteNumber(spec.max, d[1]);
+    if (!(min < max)) [min, max] = [d[0], d[1]];
+    let step = finiteNumber(spec.step, d[2]);
+    if (!(step > 0 && step <= max - min)) step = d[2];
+    return { ...spec, min, max, step };
+  }
+  if (spec.type === "choice" || spec.type === "pick") return { ...spec, values: Array.isArray(spec.values) ? spec.values.filter((v) => typeof v === "string") : [] };
+  return spec;
+}
+
 const QUICK = { brightness_pct: [25, 50, 100], percentage: [25, 50, 100], position: [0, 50, 100], volume_pct: [25, 50, 75] };
 // Farben zur Wahl: Name (Schlüssel rtCol_*), Anzeige, Wert für die Lampe
 const COLOURS = [
@@ -245,7 +269,13 @@ export class RoutineUi {
   }
 
   entity(id) {
-    return this.data?.entities.find((e) => e.entity_id === id) || null;
+    const e = this.data?.entities.find((x) => x.entity_id === id) || null;
+    // Die Regler-Beschreibungen einmal bereinigen (siehe cleanSpec); neu geladene Entitäten kommen wieder durch hierher
+    if (e && Array.isArray(e.options) && !e._specsClean) {
+      e.options = e.options.map(cleanSpec);
+      e._specsClean = true;
+    }
+    return e;
   }
 
   domainOf(entityId) {
@@ -1402,8 +1432,8 @@ export class RoutineUi {
     const shown = this.setText({ options: { value: v }, entity_id: e.entity_id });
     return `<div class="mg-k">${esc(t("rtSetValue"))}</div>
       <div class="to-k"><span>${esc(e.name)}</span><b data-rt-val="set">${esc(shown)}</b></div>
-      <input type="range" class="to-range" data-rt="setnum" min="${spec.min}" max="${spec.max}" step="${spec.step}" value="${v}" style="--fill:${fill.toFixed(1)}%" aria-label="${esc(t("rtSetValue"))}">
-      <div class="rt-setnum"><input type="number" class="mg-input" inputmode="decimal" data-rt="setnum" min="${spec.min}" max="${spec.max}" step="${spec.step}" value="${v}" aria-label="${esc(t("rtSetValue"))}">${spec.unit ? `<span>${esc(spec.unit)}</span>` : ""}</div>
+      <input type="range" class="to-range" data-rt="setnum" min="${esc(spec.min)}" max="${esc(spec.max)}" step="${esc(spec.step)}" value="${esc(v)}" style="--fill:${fill.toFixed(1)}%" aria-label="${esc(t("rtSetValue"))}">
+      <div class="rt-setnum"><input type="number" class="mg-input" inputmode="decimal" data-rt="setnum" min="${esc(spec.min)}" max="${esc(spec.max)}" step="${esc(spec.step)}" value="${esc(v)}" aria-label="${esc(t("rtSetValue"))}">${spec.unit ? `<span>${esc(spec.unit)}</span>` : ""}</div>
       <div class="opt-error" data-rt-err="set" ${this.setValid(d, e) ? "hidden" : ""}>${esc(t("rtSetRange", this.fmtNum(spec.min), this.fmtNum(spec.max)))}</div>`;
   }
 
@@ -1531,10 +1561,10 @@ export class RoutineUi {
     if (spec.type === "colour") return `${head}${this.coloursHtml()}`;
     let html = head;
     if (spec.type !== "choice") {
-      const shown = cur ?? Math.round((spec.min + spec.max) / 2);
-      const fill = ((shown - spec.min) / (spec.max - spec.min)) * 100;
+      const shown = finiteNumber(cur, Math.round((spec.min + spec.max) / 2));
+      const fill = Math.min(100, Math.max(0, ((shown - spec.min) / (spec.max - spec.min)) * 100));
       const step = spec.type === "temperature" ? spec.step || 0.5 : 1;
-      html += `<input type="range" class="to-range${spec.type === "kelvin" ? " kel" : ""}${cur === undefined ? " unset" : ""}" data-rt="opt" data-k="${esc(k)}" min="${spec.min}" max="${spec.max}" step="${step}" value="${shown}" style="--fill:${fill.toFixed(1)}%" aria-label="${esc(t(`rtOpt_${k}`))}">`;
+      html += `<input type="range" class="to-range${spec.type === "kelvin" ? " kel" : ""}${cur === undefined ? " unset" : ""}" data-rt="opt" data-k="${esc(k)}" min="${esc(spec.min)}" max="${esc(spec.max)}" step="${esc(step)}" value="${esc(shown)}" style="--fill:${fill.toFixed(1)}%" aria-label="${esc(t(`rtOpt_${k}`))}">`;
       if (spec.type === "kelvin") html += `<div class="to-ends"><span>${esc(t("rtKelvin_warm"))}</span><span>${esc(t("rtKelvin_cold"))}</span></div>`;
     }
     const none = cur === undefined && !(k === "color_temp_kelvin" && this.wiz.draft.options.rgb_color);

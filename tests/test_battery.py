@@ -404,3 +404,15 @@ async def test_debug_log_summary_only_on_change(hass: HomeAssistant, watch: Batt
     await watch.async_check()
     summaries = [e for e in activity.snapshot(hass)["entries"] if e["level"] == "debug" and e["cat"] == "battery"]
     assert len(summaries) == 1
+
+
+async def test_persistent_escapes_markdown_in_names(hass: HomeAssistant, watch: BatteryWatch) -> None:
+    dev = _device(hass, 'X](https://evil.example/p) ![i](https://evil.example/i.png) <b>x</b>\nzweite Zeile')
+    bat = _battery(hass, dev, "50")
+    await _options(hass, battery_persistent=True, notify_service="none")
+    hass.states.async_set(bat, "10")
+    await watch.async_check()
+    message = _persistent(hass)["message"]
+    assert "](https://evil" not in message and "![i]" not in message and "<b>" not in message
+    line = next(x for x in message.splitlines() if "zweite Zeile" in x)
+    assert line.startswith("- [") and f"(/device-panel?device={dev.id})" in line

@@ -184,3 +184,32 @@ async def test_options_from_panel(hass: HomeAssistant, hass_ws_client) -> None:
     await client.send_json({"id": 5, "type": f"{DOMAIN}/get_options"})
     result = (await client.receive_json())["result"]
     assert result["values"]["new_window"] == 10 and result["limits"]["new_window"] == [1, 60]
+
+
+# -- Markdown in Namen (2.101.1) ---------------------------------------------------------------------------------------------
+
+EVIL_NAME = "X](https://evil.example/p) ![i](https://evil.example/i.png) <b>x</b>\nzweite Zeile"
+
+
+def _no_injection(message: str) -> None:
+    """Der Name darf keinen Link, kein Bild, kein HTML und keine neue Zeile in die Meldung bringen."""
+    assert "](https://evil" not in message and "![i]" not in message and "<b>" not in message
+    line = next(x for x in message.splitlines() if "zweite Zeile" in x)
+    assert line.startswith("- [") and "(/device-panel?device=" in line
+
+
+def test_md_text() -> None:
+    from custom_components.device_panel import push
+
+    assert push.md_text("Steckdose Flur") == "Steckdose Flur"
+    assert push.md_text("a_b *c* [d](e) `f` <g> !h ~i |j &k \\l") == "a\\_b \\*c\\* \\[d\\]\\(e\\) \\`f\\` \\<g\\> \\!h \\~i \\|j \\&k \\\\l"
+    assert push.md_text("a\nb\r\n  c\td") == "a b c d" and push.md_text(None) == "" and push.md_text(5) == "5"
+
+
+async def test_persistent_notification_escapes_markdown_in_names(hass: HomeAssistant, freezer) -> None:
+    async_mock_service(hass, "notify", "handy")
+    await _setup(hass, notify_service="none", new_persistent=True)
+    _device(hass, EVIL_NAME)
+    await _wait(hass, freezer, 6)
+    message = persistent_notification._async_get_or_create_notifications(hass)[PERSISTENT_NEW_ID]["message"]
+    _no_injection(message)

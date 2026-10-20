@@ -7,6 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.101.1] - 2026-10-20
+
+Names in Home Assistant notifications are escaped, sliders cope with odd values from a device, and the CI actions are pinned.
+
+### Security
+
+- **Persistent notifications (new devices, low battery, devices offline):** device, area and integration names are inserted as plain text now. Markdown characters (`[ ] ( ) ! * _ ` < > ~ | & \`) get a backslash and line breaks become spaces. Before, a name like `X](https://…)` could add its own link or an image from another server to the notification, which every Home Assistant user sees. Names without such characters look as before. The push messages to the phone are plain text and unchanged.
+- **CI:** the actions in `.github/workflows` (`checkout`, `setup-python`, `setup-node`, `upload-artifact`, `hacs/action`, `hassfest`) are pinned to a commit instead of a movable tag or branch. The version stays in a comment next to the commit.
+
+### Fixed
+
+- **Routines, page "Options" (sliders):** a device can report odd values: text instead of a number, `null`, a lower limit above the upper one, a step of 0 or larger than the whole range. Temperature (climate), colour temperature (light) and number entities then got a broken slider, in the worst case the page failed to build. The values are now checked in the backend and again in the panel; if they are unusable, the usual limits apply (temperature 7 to 35 °C or 45 to 95 °F, step 0.5 or 1; colour temperature 2000 to 6500 K; number 0 to 100, step 1). Normal devices are not affected. The values in the markup are also escaped.
+
+### Internal
+
+- `push.md_text`, `routines._finite`/`_bounds`/`_step` and `cleanSpec` in `routines.js`. Tests: `test_new_devices`, `test_battery`, `test_outage_notify`, `test_routine_options`, new suite `routineweird`.
+
 ## [2.101.0] - 2026-10-19
 
 Hardening after a security review: fewer ways for outside data to reach internal addresses, size limits for answers from outside, and a clearer restore preview.
@@ -28,6 +45,8 @@ Hardening after a security review: fewer ways for outside data to reach internal
 ### Internal
 
 - New module `http_limit.py` (`read_limited`). Tests: `test_favicon`, `test_update_check`, `test_push_icon`, `test_backup`, suite `backup`.
+
+Not released; included in 2.101.1.
 
 ## [2.100.0] - 2026-10-19
 
@@ -4029,7 +4048,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.101.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.0
+[2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0
 [2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0

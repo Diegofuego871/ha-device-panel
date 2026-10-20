@@ -7,6 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.101.1] - 2026-10-20
+
+Namen in Benachrichtigungen von Home Assistant werden entschärft, Regler kommen mit unsinnigen Werten eines Geräts zurecht, und die Actions der CI sind festgelegt.
+
+### Sicherheit
+
+- **Anhaltende Benachrichtigungen (neue Geräte, Batterie schwach, Geräte ausgefallen):** Namen von Geräten, Bereichen und Integrationen werden als reiner Text eingesetzt. Zeichen mit Bedeutung für Markdown (`[ ] ( ) ! * _ ` < > ~ | & \`) bekommen einen Backslash, Zeilenumbrüche werden zu Leerzeichen. Vorher konnte ein Name wie `X](https://…)` einen eigenen Link oder ein Bild von einem fremden Server in die Meldung bringen, die jeder Benutzer von Home Assistant sieht. Namen ohne solche Zeichen sehen aus wie bisher. Die Push-Meldungen aufs Handy sind reiner Text und unverändert.
+- **CI:** Die Actions in `.github/workflows` (`checkout`, `setup-python`, `setup-node`, `upload-artifact`, `hacs/action`, `hassfest`) sind auf einen Commit festgelegt statt auf einen beweglichen Tag oder Zweig. Die Version steht als Kommentar daneben.
+
+### Behoben
+
+- **Routinen, Seite "Optionen" (Regler):** Ein Gerät kann unsinnige Werte melden: Text statt Zahl, `null`, eine untere Grenze über der oberen, einen Schritt von 0 oder grösser als der ganze Bereich. Bei Temperatur (Klima), Farbtemperatur (Licht) und Zahl-Entitäten entstand dann ein kaputter Regler, im schlimmsten Fall baute sich die Seite nicht auf. Die Werte werden jetzt im Backend und noch einmal im Panel geprüft; sind sie unbrauchbar, gelten die üblichen Grenzen (Temperatur 7 bis 35 °C bzw. 45 bis 95 °F, Schritt 0,5 bzw. 1; Farbtemperatur 2000 bis 6500 K; Zahl 0 bis 100, Schritt 1). Normale Geräte sind nicht betroffen. Auch die Werte im Markup werden escaped.
+
+### Intern
+
+- `push.md_text`, `routines._finite`/`_bounds`/`_step` und `cleanSpec` in `routines.js`. Tests: `test_new_devices`, `test_battery`, `test_outage_notify`, `test_routine_options`, neue Suite `routineweird`.
+
 ## [2.101.0] - 2026-10-19
 
 Härtung nach einer Sicherheitsprüfung: weniger Wege für fremde Daten zu internen Adressen, Grössenlimits für Antworten von aussen und eine klarere Vorschau beim Wiederherstellen.
@@ -28,6 +45,8 @@ Härtung nach einer Sicherheitsprüfung: weniger Wege für fremde Daten zu inter
 ### Intern
 
 - Neues Modul `http_limit.py` (`read_limited`). Tests: `test_favicon`, `test_update_check`, `test_push_icon`, `test_backup`, Suite `backup`.
+
+Nicht veröffentlicht; enthalten in 2.101.1.
 
 ## [2.100.0] - 2026-10-19
 
@@ -4130,7 +4149,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.101.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.0
+[2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0
 [2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0

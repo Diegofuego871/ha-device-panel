@@ -442,7 +442,7 @@ class OutageNotifier:
                     continue
                 name = device.name_by_user or device.name or dev
                 since = push.text(hass, "outage_persistent_since", time=_local_time(start))
-                lines.append((start, f"- [{name}]({push.panel_url(dev)}) · {since}"))
+                lines.append((start, f"- [{push.md_text(name)}]({push.panel_url(dev)}) · {since}"))
         if not lines:
             if self._shown:
                 persistent_notification.async_dismiss(hass, PERSISTENT_OUTAGE_ID)

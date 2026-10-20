@@ -189,7 +189,7 @@ class NewDeviceNotifier:
         known = {r["id"] for r in found}
         self._recent = (found + [r for r in self._recent if r["id"] not in known])[:NEW_RECENT_MAX]
         lines = [
-            "- " + " · ".join(x for x in (f"[{r['name']}]({push.panel_url(r['id'])})", r.get("integration"), r.get("area")) if x)
+            "- " + " · ".join(x for x in (f"[{push.md_text(r['name'])}]({push.panel_url(r['id'])})", push.md_text(r.get("integration")), push.md_text(r.get("area"))) if x)
             for r in self._recent
         ]
         message = "\n".join([push.text(hass, "new_persistent_intro"), "", *lines, "", push.text(hass, "new_persistent_outro")])

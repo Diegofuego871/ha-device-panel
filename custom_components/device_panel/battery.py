@@ -333,7 +333,7 @@ class BatteryWatch:
             return
         lines = [
             "- " + " · ".join(
-                x for x in (f"[{low[d]['name']}]({push.panel_url(d)})", self._level_text(low[d]["level"]), low[d]["area"]) if x
+                x for x in (f"[{push.md_text(low[d]['name'])}]({push.panel_url(d)})", self._level_text(low[d]["level"]), push.md_text(low[d]["area"])) if x
             )
             for d in self._order(low, list(low))
         ]

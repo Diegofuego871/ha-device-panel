@@ -38,6 +38,7 @@ from __future__ import annotations
 import asyncio
 import calendar
 import logging
+import math
 import re
 import time
 import uuid
@@ -287,6 +288,29 @@ def _features(state: State) -> int:
     return int(value) if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
+def _finite(value: Any, default: float) -> float:
+    """Endliche Zahl aus einem Attribut; Text, Wahrheitswerte, NaN und unendlich zählen nicht (dann gilt default)."""
+    if isinstance(value, bool):
+        return default
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    return number if math.isfinite(number) else default
+
+
+def _bounds(low: Any, high: Any, default_low: float, default_high: float) -> tuple[float, float]:
+    """Untere und obere Grenze; ist eine Angabe unbrauchbar oder min nicht kleiner als max, gelten beide Standardwerte."""
+    lo, hi = _finite(low, default_low), _finite(high, default_high)
+    return (lo, hi) if lo < hi else (default_low, default_high)
+
+
+def _step(value: Any, default: float, span: float) -> float:
+    """Schrittweite; null, negativ oder grösser als der ganze Bereich ergibt keinen brauchbaren Regler (dann default)."""
+    step = _finite(value, default)
+    return step if 0 < step <= span else default
+
+
 def option_specs(state: State | None, temperature_unit: str = "°C") -> list[dict[str, Any]]:
     """
     Was sich an dieser Entität einstellen lässt, als Beschreibung für das Panel (Schlüssel, Art, Grenzen). Leer, wenn nichts
@@ -301,9 +325,8 @@ def option_specs(state: State | None, temperature_unit: str = "°C") -> list[dic
         if modes - {"onoff"}:
             specs.append({"key": "brightness_pct", "type": "percent", "min": 1, "max": 100})
         if "color_temp" in modes:
-            low = attrs.get("min_color_temp_kelvin")
-            high = attrs.get("max_color_temp_kelvin")
-            specs.append({"key": "color_temp_kelvin", "type": "kelvin", "min": int(low) if low else 2000, "max": int(high) if high else 6500})
+            low, high = _bounds(attrs.get("min_color_temp_kelvin"), attrs.get("max_color_temp_kelvin"), 2000, 6500)
+            specs.append({"key": "color_temp_kelvin", "type": "kelvin", "min": int(low), "max": int(high)})
         if modes & {"hs", "xy", "rgb", "rgbw", "rgbww"}:
             specs.append({"key": "rgb_color", "type": "colour"})
     elif state.domain == "cover":
@@ -311,11 +334,10 @@ def option_specs(state: State | None, temperature_unit: str = "°C") -> list[dic
             specs.append({"key": "position", "type": "percent", "min": 0, "max": 100})
     elif state.domain == "climate":
         if feats & ClimateEntityFeature.TARGET_TEMPERATURE:
-            step = attrs.get("target_temp_step") or (0.5 if temperature_unit == "°C" else 1)
-            specs.append({
-                "key": "temperature", "type": "temperature", "unit": temperature_unit, "step": step,
-                "min": attrs.get("min_temp", 7), "max": attrs.get("max_temp", 35),
-            })
+            celsius = temperature_unit == "°C"
+            low, high = _bounds(attrs.get("min_temp"), attrs.get("max_temp"), 7 if celsius else 45, 35 if celsius else 95)
+            step = _step(attrs.get("target_temp_step"), 0.5 if celsius else 1, high - low)
+            specs.append({"key": "temperature", "type": "temperature", "unit": temperature_unit, "step": step, "min": low, "max": high})
         modes = [m for m in attrs.get("hvac_modes") or [] if m in _HVAC_MODES]
         if modes:
             specs.append({"key": "hvac_mode", "type": "choice", "values": modes})
@@ -326,12 +348,10 @@ def option_specs(state: State | None, temperature_unit: str = "°C") -> list[dic
         if feats & FanEntityFeature.SET_SPEED:
             specs.append({"key": "percentage", "type": "percent", "min": 1, "max": 100})
     elif state.domain == "number":
-        low, high = attrs.get("min"), attrs.get("max")
-        step = attrs.get("step")
+        low, high = _bounds(attrs.get("min"), attrs.get("max"), 0.0, 100.0)
         specs.append({
-            "key": "value", "type": "number", "unit": attrs.get("unit_of_measurement") or "",
-            "min": float(low) if isinstance(low, (int, float)) else 0.0, "max": float(high) if isinstance(high, (int, float)) else 100.0,
-            "step": float(step) if isinstance(step, (int, float)) and step > 0 else 1.0,
+            "key": "value", "type": "number", "unit": str(attrs.get("unit_of_measurement") or ""),
+            "min": low, "max": high, "step": _step(attrs.get("step"), 1.0, high - low),
         })
     elif state.domain == "select":
         values = [str(o) for o in attrs.get("options") or [] if isinstance(o, str)]

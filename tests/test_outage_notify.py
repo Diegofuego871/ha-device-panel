@@ -278,3 +278,16 @@ async def test_debug_log_follows_outage_and_options(hass: HomeAssistant, setup, 
     assert options_api.apply_values(hass, entry, {"notify_delay": 7})
     saved = [e for e in activity.snapshot(hass)["entries"] if e["level"] == "debug" and e["cat"] == "system"]
     assert saved and "notify_delay" in saved[-1]["text"] and "7" not in saved[-1]["text"].split(":", 1)[1]
+
+
+async def test_persistent_outage_escapes_markdown_in_names(hass: HomeAssistant, setup, freezer) -> None:
+    lamp = _device(hass, 'X](https://evil.example/p) ![i](https://evil.example/i.png) <b>x</b>\nzweite Zeile')
+    light = _entity(hass, lamp, "light", "l", "on")
+    await _options(hass, outage_persistent=True)
+    setup.evaluate()
+    hass.states.async_set(light, "unavailable")
+    await _tick(hass, setup, freezer, 3)
+    message = _persistent(hass)["message"]
+    assert "](https://evil" not in message and "![i]" not in message and "<b>" not in message
+    line = next(x for x in message.splitlines() if "zweite Zeile" in x)
+    assert line.startswith("- [") and f"(/device-panel?device={lamp.id})" in line

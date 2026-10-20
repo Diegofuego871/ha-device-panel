@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from typing import Any
 
 import voluptuous as vol
@@ -305,6 +306,18 @@ def language(hass: HomeAssistant) -> str:
     """Sprache der Instanz: "de" für de und de-*, sonst "en"."""
     lang = (hass.config.language or "").strip().lower()
     return "de" if lang == "de" or lang.startswith("de-") else "en"
+
+
+_MD_SPECIAL = re.compile(r"([\\`*_\[\]()<>!~|&])")
+
+
+def md_text(value: Any) -> str:
+    """
+    Namen für Markdown-Meldungen (persistente Benachrichtigung in Home Assistant): Zeilenumbrüche werden zu Leerzeichen,
+    Zeichen mit Bedeutung für Markdown bekommen einen Backslash. Sonst könnte ein Gerätename wie "x](https://…)" fremde Links
+    oder Bilder in die Meldung einschleusen. Für reinen Text (Push an das Handy) nicht nötig und nicht gedacht.
+    """
+    return _MD_SPECIAL.sub(r"\\\1", " ".join(str(value if value is not None else "").split()))
 
 
 def text(hass: HomeAssistant, key: str, **kwargs: Any) -> str:
