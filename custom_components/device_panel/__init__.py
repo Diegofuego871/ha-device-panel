@@ -43,6 +43,8 @@ from .magic import MagicPush
 from .magic_history import async_history as async_magic_history
 from .routines import STORE_KEY as ROUTINES_STORE_KEY
 from .routines import RoutineManager
+from .protocol import Protocol
+from .protocol_ws import COMMANDS as PROTOCOL_COMMANDS
 from .routines_ws import COMMANDS as ROUTINE_COMMANDS
 from .status import COMMANDS as STATUS_COMMANDS
 from .system_stats import COMMANDS as SYSTEM_COMMANDS
@@ -82,6 +84,7 @@ from .const import (
     DATA_PUSH_ICONS,
     DATA_PUSH_IMAGE,
     DATA_MAGIC,
+    DATA_PROTOCOL,
     DATA_ROUTINES,
     DATA_STATUS,
     DATA_SIGNAL,
@@ -191,6 +194,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         signal_log = SignalLog(hass)
         await signal_log.async_start()
         hass.data[DATA_SIGNAL] = signal_log
+    # Das Protokoll bleibt beim Entladen im Speicher (wie das Aktivitätsprotokoll): jedes Speichern der Einstellungen lädt die
+    # Integration neu, und ausstehende (verzögerte) Schreibvorgänge dürfen dabei nicht verloren gehen.
+    if DATA_PROTOCOL not in hass.data:
+        protocol_log = Protocol(hass)
+        await protocol_log.async_load()
+        hass.data[DATA_PROTOCOL] = protocol_log
     if DATA_MAGIC not in hass.data:
         magic_push = MagicPush(hass)
         await magic_push.async_start()
@@ -199,6 +208,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         routine_manager = RoutineManager(hass)
         await routine_manager.async_start()
         hass.data[DATA_ROUTINES] = routine_manager
+    # Protokolle von Meldungen und Routinen, die es nicht mehr gibt (zum Beispiel nach einer Wiederherstellung), entfernen
+    await hass.data[DATA_PROTOCOL].async_prune({r["id"] for r in hass.data[DATA_MAGIC].rules()} | {r["id"] for r in hass.data[DATA_ROUTINES].routines()})
     # Als Letzter: der Wächter prüft die anderen Teile (status.py)
     if DATA_STATUS not in hass.data:
         status_watch = StatusWatch(hass)
@@ -280,6 +291,10 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     das erst nach dem Entladen auf; dort wurde alles Ausstehende geschrieben.
     """
     await activity.async_forget(hass)
+    if (protocol_log := hass.data.pop(DATA_PROTOCOL, None)) is None:
+        protocol_log = Protocol(hass)
+        await protocol_log.async_load()
+    await protocol_log.async_remove_all()
     for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, MAGIC_STORE_KEY, ROUTINES_STORE_KEY, AI_MEMORY_STORE_KEY, update_check.PANEL_STORE_KEY):
         await Store(hass, STORAGE_VERSION, key).async_remove()
     # Heruntergeladene Icons der Meldungen; der statische Pfad bleibt bis zum
@@ -1207,7 +1222,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_set_panel)
     for command in (_ws_magic_get, _ws_magic_list, _ws_magic_entity_search, _ws_magic_save, _ws_magic_delete, _ws_magic_enable, _ws_magic_preview, _ws_magic_test, _ws_magic_history):
         websocket_api.async_register_command(hass, command)
-    for command in (*ROUTINE_COMMANDS, *STATUS_COMMANDS, *SYSTEM_COMMANDS):
+    for command in (*ROUTINE_COMMANDS, *PROTOCOL_COMMANDS, *STATUS_COMMANDS, *SYSTEM_COMMANDS):
         websocket_api.async_register_command(hass, command)
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_backup_export)

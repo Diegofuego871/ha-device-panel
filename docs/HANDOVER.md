@@ -3,7 +3,16 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.103.0, Suche im Geräte-Popup)
+## Stand (2.104.0, Protokoll je Meldung und Routine)
+
+- Wunsch des Nutzers, Mockups `docs/mockups/protocol-v1` (Variante A): Protokoll jeder Magic-Push-Meldung und jeder Routine als Tabelle mit Datum, Inhalt der Meldung, Diagramm und Datumsfilter, ausserdem "Protokoll des Geräts". Entscheide: 12 Monate, höchstens 4000 Einträge je Meldung oder Routine; bei Routinen zusätzlich ein kopierbarer Trace je Eintrag.
+- Backend: `protocol.py` (Klasse `Protocol`, ein `Store` je Meldung/Routine `device_panel.protocol_<id>` plus Index `device_panel.protocol_index`, `async_delay_save` 30 s, `query()` mit Kennzahlen, Balken je Tag oder Woche ab 120 Tagen, Auswahl, Suche), `protocol_ws.py` (`device_panel/protocol_get`, nur Admin). Haken: `magic.py::_async_send` → `_protocol` (Inhalt, Wert, Empfänger, Ergebnis aus `push.async_push(outcome=…)`; Dauer bei "wieder normal"), `routines.py` (`_async_fire`, `_async_revert`, `async_run_now`, `_async_call(trace=…)`, `_log`, `_trace_step`). Löschen einer Meldung/Routine löscht das Protokoll (`async_forget`), `async_prune` beim Start, `async_remove_entry` löscht alles. Das Protokoll bleibt beim Entladen in `hass.data[DATA_PROTOCOL]` (sonst ginge beim Speichern der Einstellungen, das neu lädt, verzögert Geschriebenes verloren).
+- Speicher (gemessen): Meldungseintrag ca. 250 Byte, Routinenlauf mit Trace ca. 650 Byte; Grenze 4000 Einträge ca. 1 MB bzw. 2,6 MB je Datei, Worst Case einer Meldung mit längsten Texten ca. 7 MB. Alle Dateien werden beim Start gelesen (kein Nachladen je Bedarf); jedes Schreiben schreibt die ganze Datei der betroffenen Meldung.
+- Panel: `panel/protocol.js` (`ProtocolUi`, Fenster `dialog.proto-dlg` mit den Klassen `log-dlg proto-dlg`, Reiterleiste `.sub-tabs.mg-filter` für den Zeitraum, Suchfeld mit `data-fc`), Einstieg über jeden Knopf mit `data-proto="magic|routine"` (`data-id` = eine Meldung/Routine, `data-device` = Gerät, `data-name`), Klick-Hörer am Panel-Root in `device-panel.js`. Strings `pr*` in `strings.js`, CSS `.pr-*` am Ende von `styles.js`.
+- Tests: `tests/test_protocol.py`, Suite `protocol` (172 Prüfungen), Simulator `device_panel/protocol_get` mit `window.__protocol`.
+- **Backlog:** Gesamt-Protokoll über alle Meldungen oder Routinen aller Geräte in einem Fenster (Vorschlag 4b der Mockups, vom Nutzer vorerst abgelehnt, nur vormerken); Protokoll nachladen je Bedarf (statt alle Dateien beim Start), falls der Speicher je einmal ein Thema wird.
+
+## Stand (2.103.0, Suche im Geräte-Popup; nicht veröffentlicht, enthalten in 2.104.0)
 
 - Wunsch des Nutzers (Gerät mit 329 Entitäten): Suchfeld in den Reitern "Schalter" und "Entitäten" des Geräte-Popups, ab 8 Einträgen, Regel "Suchfelder" (`<label class="list-search">`, `_fieldClearHtml("data-fc", …)`). Text in `this._devQ` ({ent, sw}, beim Öffnen eines Geräts leer); beim Tippen wird nur die Zone `[data-dev-zone]` neu gezeichnet (`_devSearchInput`), danach `lastHtml.delete(dlg)`; `_renderDevice` baut nicht neu auf, solange `data-dlg="dev-search"` den Fokus hat. Treffer: Name, Entity-ID, gezeigter Zustand. Test: Suite `devsearch`.
 

@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "279"
+PANEL_VERSION = "280"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -380,6 +380,7 @@ DATA_SIGNAL = f"{DOMAIN}_signal"
 # Magic Push (seit 2.6.0): Regeln pro Gerät, magic.py
 DATA_MAGIC = f"{DOMAIN}_magic"
 DATA_ROUTINES = f"{DOMAIN}_routines"
+DATA_PROTOCOL = f"{DOMAIN}_protocol"
 DATA_STATUS = f"{DOMAIN}_status"
 
 # Versionsprüfung (GitHub-Releases) und Abgleich mit HACS, wie unifi_dynamic.

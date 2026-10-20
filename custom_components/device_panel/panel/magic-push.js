@@ -749,6 +749,7 @@ export class MagicPush {
     }
     const rules = this.data.rules;
     if (!rules.length) html += `<p class="mg-empty">${esc(t("mgEmpty"))}</p>`;
+    if (rules.length) html += `<div class="pr-devlink"><button type="button" class="linkbtn" data-proto="magic" data-device="${esc(this.deviceId)}" data-name="${esc(this.host._devices?.find((d) => d.id === this.deviceId)?.name || "")}">${esc(t("prDeviceLink"))} ›</button></div>`;
     html += rules.map((r) => this.cardHtml(r)).join("");
     const full = rules.length >= this.limit("per_device", 20);
     html += full
@@ -789,6 +790,7 @@ export class MagicPush {
     let acts = "";
     if (!renaming && !confirming) {
       acts = `<div class="mg-acts"><button type="button" class="linkbtn" data-mg="edit" data-id="${esc(r.id)}">${esc(t("mgActEdit"))}</button>
+        <button type="button" class="linkbtn" data-proto="magic" data-id="${esc(r.id)}" data-name="${esc(r.name)}">${esc(t("prAct"))}</button>
         <button type="button" class="linkbtn" data-mg="rename" data-id="${esc(r.id)}">${esc(t("mgActRename"))}</button>
         <button type="button" class="linkbtn danger" data-mg="delete" data-id="${esc(r.id)}">${esc(t("mgActDelete"))}</button></div>`;
     }
@@ -930,7 +932,7 @@ export class MagicPush {
         <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span>${g.off && open ? `<span class="mg-devoff">${esc(t("statusOffline"))}</span>` : ""}<span class="mg-badge">${g.shown.length}</span>${this.chevHtml(open)}</button>`;
       if (open) {
         html += g.shown.map((r) => this.overviewCardHtml(r, all)).join("");
-        html += `<div class="mg-dfoot"><button type="button" class="linkbtn" data-mga="magic-device" data-device="${esc(g.id)}">${esc(t("mgAllOpenDevice"))} ›</button></div>`;
+        html += `<div class="mg-dfoot"><button type="button" class="linkbtn" data-mga="magic-device" data-device="${esc(g.id)}">${esc(t("mgAllOpenDevice"))} ›</button><button type="button" class="linkbtn" data-proto="magic" data-device="${esc(g.id)}" data-name="${esc(g.name)}">${esc(t("prDeviceLink"))} ›</button></div>`;
       }
       html += `</div>`;
     }
@@ -945,6 +947,7 @@ export class MagicPush {
     const acts = confirming
       ? ""
       : `<div class="mg-acts"><button type="button" class="linkbtn" data-mga="magic-edit" data-device="${esc(r.device_id)}" data-id="${esc(r.id)}">${esc(t("mgActEdit"))}</button>
+        <button type="button" class="linkbtn" data-proto="magic" data-id="${esc(r.id)}" data-name="${esc(r.name)}">${esc(t("prAct"))}</button>
         <button type="button" class="linkbtn danger" data-mga="magic-delete" data-id="${esc(r.id)}">${esc(t("mgActDelete"))}</button></div>`;
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("mgDeleteAsk", r.name))}</b><small>${esc(t("mgDeleteNote"))}</small>

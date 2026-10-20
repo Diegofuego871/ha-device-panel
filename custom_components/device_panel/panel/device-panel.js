@@ -12,13 +12,14 @@
  */
 
 const MODULE_VERSION = new URL(import.meta.url).search;
-const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_EMOJI }, { AppLauncher }, { StatusUi }] = await Promise.all([
+const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_EMOJI }, { AppLauncher }, { StatusUi }, { ProtocolUi }] = await Promise.all([
   import(`./strings.js${MODULE_VERSION}`),
   import(`./styles.js${MODULE_VERSION}`),
   import(`./magic-push.js${MODULE_VERSION}`),
   import(`./routines.js${MODULE_VERSION}`),
   import(`./apps.js${MODULE_VERSION}`),
   import(`./status-ui.js${MODULE_VERSION}`),
+  import(`./protocol.js${MODULE_VERSION}`),
 ]);
 
 const POLL_INTERVAL_MS = 10000;
@@ -814,6 +815,8 @@ class DevicePanel extends HTMLElement {
     // App-Launcher (seit 2.31.0): Knopf in der Kopfzeile, Favoriten, eigene Links (apps.js)
     this._apps = new AppLauncher(this, { escape, mdi });
     this._status = new StatusUi(this, { escape, mdi, errText });
+    // Protokoll einer Meldung oder Routine (seit 2.104.0): eigenes Fenster, geöffnet von den Knöpfen mit data-proto
+    this._protocol = new ProtocolUi(this, { escape, mdi, errText });
     this._aiOn = false;
     this._flakyOutages = 3;
     // Chips der Verbindungsart, die nicht erscheinen (Einstellung "Anzeige").
@@ -1416,7 +1419,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="discard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="discard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     this._apps.bind(root);
@@ -1546,6 +1549,12 @@ class DevicePanel extends HTMLElement {
     this._bindRtAll(root.querySelector("dialog.rtall-dlg"));
     this._bindMagicAll(root.querySelector("dialog.mgall-dlg"));
     this._status.bind(root.querySelector("dialog.status-dlg"));
+    this._protocol.bind(root.querySelector("dialog.proto-dlg"));
+    root.addEventListener("click", (ev) => {
+      const btn = ev.target.closest?.("[data-proto]");
+      if (!btn || btn.disabled || this._hass?.user?.is_admin === false) return;
+      this._protocol.open({ kind: btn.dataset.proto, itemId: btn.dataset.id || "", deviceId: btn.dataset.device || "", name: btn.dataset.name || "" });
+    });
     this._bindPrompt(root.querySelector("dialog.prompt-dlg"));
     this._bindNotes(root.querySelector("dialog.notes-dlg"));
     this._bindBackup(root.querySelector("dialog.backup-dlg"));

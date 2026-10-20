@@ -472,6 +472,12 @@ export class RoutineUi {
     this.startTick();
   }
 
+  // Name des Geräts (oder der Sammelstelle Szenen/Gruppen) für die Überschrift des Protokolls
+  deviceName() {
+    if (isHolder(this.deviceId)) return this.t(HOLDERS[this.deviceId].key);
+    return this.host._devices?.find((d) => d.id === this.deviceId)?.name || "";
+  }
+
   listHtml() {
     const esc = (v) => this.esc(v);
     const t = (k, ...a) => this.t(k, ...a);
@@ -486,6 +492,7 @@ export class RoutineUi {
     }
     const routines = this.data.routines;
     if (!routines.length) html += `<p class="mg-empty">${esc(this.data.entities.length ? t("rtEmpty") : t("rtNoEntities"))}</p>`;
+    if (routines.length) html += `<div class="pr-devlink"><button type="button" class="linkbtn" data-proto="routine" data-device="${esc(this.deviceId)}" data-name="${esc(this.deviceName())}">${esc(t("prDeviceLink"))} ›</button></div>`;
     html += routines.map((x) => this.clockHtml(x)).join("");
     const full = routines.length >= this.limit("per_device", 20);
     if (full) html += `<p class="mg-hint">${esc(t("rtLimit", this.limit("per_device", 20)))}</p>`;
@@ -550,6 +557,7 @@ export class RoutineUi {
       ? ""
       : `<span class="acts"><button type="button" class="linkbtn" data-rt="edit" data-id="${esc(rt.id)}">${esc(t("rtActEdit"))}</button>
          <button type="button" class="linkbtn" data-rt="run" data-id="${esc(rt.id)}"${this.ui.busy === rt.id ? " disabled" : ""}>${esc(t("rtActRun"))}</button>
+         <button type="button" class="linkbtn" data-proto="routine" data-id="${esc(rt.id)}" data-name="${esc(rt.name)}">${esc(t("prAct"))}</button>
          <button type="button" class="linkbtn danger" data-rt="delete" data-id="${esc(rt.id)}">${esc(t("rtActDelete"))}</button></span>`;
     const confirm = confirming
       ? `<div class="mg-confirm"><b>${esc(t("rtDeleteAsk", rt.name))}</b><small>${esc(t("rtDeleteNote"))}</small>
@@ -752,7 +760,7 @@ export class RoutineUi {
         <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span><span class="mg-badge">${g.shown.length}</span>${this.chevHtml(open)}</button>`;
       if (open) {
         html += g.shown.map((x) => this.overviewCardHtml(x, all)).join("");
-        if (!g.holder) html += `<div class="mg-dfoot"><button type="button" class="linkbtn" ${this.a(all, "routine-device")} data-device="${esc(g.id)}">${esc(t("rtAllOpenDevice"))} ›</button></div>`;
+        html += `<div class="mg-dfoot">${g.holder ? "" : `<button type="button" class="linkbtn" ${this.a(all, "routine-device")} data-device="${esc(g.id)}">${esc(t("rtAllOpenDevice"))} ›</button>`}<button type="button" class="linkbtn" data-proto="routine" data-device="${esc(g.id)}" data-name="${esc(g.name)}">${esc(t("prDeviceLink"))} ›</button></div>`;
       }
       html += `</div>`;
     }
@@ -768,6 +776,7 @@ export class RoutineUi {
       ? ""
       : `<div class="mg-acts"><button type="button" class="linkbtn" ${this.a(all, "routine-edit")} data-device="${esc(rt.device_id)}" data-id="${esc(rt.id)}">${esc(t("rtActEdit"))}</button>
         <button type="button" class="linkbtn" ${this.a(all, "routine-run")} data-id="${esc(rt.id)}"${(all.dlg ? all.busy : this.ui.busy) === rt.id ? " disabled" : ""}>${esc(t("rtActRun"))}</button>
+        <button type="button" class="linkbtn" data-proto="routine" data-id="${esc(rt.id)}" data-name="${esc(rt.name)}">${esc(t("prAct"))}</button>
         <button type="button" class="linkbtn danger" ${this.a(all, "routine-delete")} data-id="${esc(rt.id)}">${esc(t("rtActDelete"))}</button>
         <button type="button" class="linkbtn fav${this.isStar(rt.id) ? " on" : ""}" ${this.a(all, "routine-star")} data-id="${esc(rt.id)}" aria-pressed="${this.isStar(rt.id)}" title="${esc(t(this.isStar(rt.id) ? "rtFavRemove" : "rtFavAdd"))}" aria-label="${esc(t(this.isStar(rt.id) ? "rtFavRemove" : "rtFavAdd"))}">${this.h.mdi(this.isStar(rt.id) ? "heart" : "heartOutline", 20)}</button></div>`;
     const confirm = confirming

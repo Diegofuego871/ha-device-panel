@@ -7,6 +7,24 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.104.0] - 2026-10-20
+
+A log for every Magic Push message and every routine, with a chart and, for routines, a copyable trace.
+
+Includes the changes from 2.103.0.
+
+### Added
+
+- **Magic Push, log:** the button **"Log"** on a card (in the overview and in the device pop-up) opens a window with every message sent: date, kind (triggered, repeated, back to normal, test), **title and text as sent**, value, recipient and what became of it (sent, held back by the quiet time, failed with the reason, no recipient). On top: the period (**7 days, 30 days, 6 months, 12 months** or your own dates), key figures, a **bar chart** (per day, per week for periods over 120 days; a tap on a bar picks that day, a part in red marks problems), a choice (triggered, back to normal, test, held back, failed), a search over title, text and value, and **"Copy as text"**. A row opens the message as it was sent.
+- **Routines, log and trace:** the same window for a routine: date, trigger (time, trigger, by hand, switching back), action and result (executed, switched back, missed, paused, new attempt, failed with the reason), with key figures and the share of runs on time. A row opens the **trace**: every step in order (trigger and delay, time window, remembered state, call with the services, duration and state afterwards, planned switch back, message to the phone, result); failed steps in red. **"Copy trace"** puts it into the clipboard as text, "Newer" and "Older" move through the entries.
+- **Log of the device:** "Log of the device" in the device pop-up (tabs Magic Push and Routines) and in the footer of each device card in the overviews lists all messages or routines of the device in one table, with a choice of a single message or routine.
+- **Kept for:** 12 months, at most 4000 entries per message or routine (the oldest are dropped). Stored in a file of its own per message or routine (`.storage/device_panel.protocol_<id>`), written with a delay of 30 seconds and when Home Assistant stops. A typical message entry needs about 250 bytes, a routine run with its trace about 650 bytes; a message that fires a few times a month stays in the kilobytes, a routine that runs daily at about 0.5 MB after a year, the limit of 4000 entries at about 1 MB (messages) to 2.6 MB (routines with a trace). Deleting a message or routine deletes its log; removing the integration deletes all logs.
+
+### Internal
+
+- New `protocol.py` (storage, limits, query with key figures and buckets), `protocol_ws.py` (`device_panel/protocol_get`, administrators only), `panel/protocol.js` (window `dialog.proto-dlg`, same shell as the activity log). `push.async_push(outcome=…)` reports held back / sent / reason; `routines._async_call(trace=…)` records the steps. The log stays in memory over a reload of the integration (like the activity log), so entries waiting to be written are not lost when settings are saved.
+- Tests: `tests/test_protocol.py`, new suite `protocol`; simulator command `device_panel/protocol_get`.
+
 ## [2.103.0] - 2026-10-20
 
 Search field in the device pop-up for "Switches" and "Entities".
@@ -18,6 +36,8 @@ Search field in the device pop-up for "Switches" and "Entities".
 ### Internal
 
 - `_devSearchHtml`, `_devSearchInput`, `_devMatch`, `_entListHtml`, `_switchGridHtml` in `device-panel.js`; the text is kept in `_devQ`. Test: new suite `devsearch`.
+
+Not released; included in 2.104.0.
 
 ## [2.102.0] - 2026-10-20
 
@@ -4076,7 +4096,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.103.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.103.0
+[2.104.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.104.0
 [2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0
 [2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0

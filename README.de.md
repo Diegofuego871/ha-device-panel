@@ -154,6 +154,7 @@ Eigene Meldungen pro Gerät ohne Automation, im Reiter "Magic Push" des Geräts.
 - **Text:** Titel und Inhalt mit Variablen, die zum Wert passen (Name, Wert, Einheit, Schwelle, Bereich und mehr), mit Vorschau und einem Rückblick auf die letzten 24 Stunden vor dem Speichern
 - **Assistent:** öffnet in einem eigenen Fenster (Vollbild auf dem Handy), fünf Schritte: Bedingungen, wie lange, Versand, Text, Name
 - **Übersicht:** die App "Magic Push" (im Launcher) öffnet ein Fenster mit allen Meldungen aller Geräte, eine Karte pro Gerät, mit Suche und Filter; unten legt "Neue Meldung" eine neue an (zuerst das Gerät wählen, dann wie im Popup des Geräts)
+- **Protokoll:** "Protokoll" auf einer Karte (und "Protokoll des Geräts" im Geräte-Popup und in der Übersicht) listet jede Meldung: Datum, Art, Titel und Text, wie gesendet, Wert, Empfänger und was daraus wurde (gesendet, zurückgehalten, fehlgeschlagen). Zeitraum 7 Tage bis 12 Monate oder eigene Daten, Kennzahlen, ein Balkendiagramm (je Tag, bei langen Zeiträumen je Woche; ein Tipp auf einen Balken wählt den Tag), Auswahl, Suche und "Als Text kopieren". Aufbewahrt werden 12 Monate, höchstens 4000 Einträge je Meldung
 
 <p align="center"><img src="docs/screenshots/de/magic-wizard.png" alt="Magic-Push-Assistent, Schritt 1: Was soll überwacht werden" width="560"></p>
 
@@ -175,6 +176,7 @@ Schaltet eine Entität eines Geräts einmalig oder nach Zeitplan, ohne Automatio
 - **Erinnerung:** auf Wunsch ein Push im Moment des Schaltens, mit Vorschau und eigenem Empfänger
 - **Läuft in Home Assistant:** mit dessen Zeitzone, eine Routine löst also auch bei geschlossenem Panel und nach einem Neustart aus (innerhalb eines Nachhol-Fensters, das du festlegst), und "Alle Routinen pausieren" ist ein Schalter; ein Schaltbefehl ohne Antwort endet nach 45 Sekunden
 - **Übersicht:** der Blitz in der Kopfzeile (auch im Launcher) öffnet alle Routinen in einer Karte pro Gerät (Szenen und Gruppen ohne Gerät in eigenen Karten), mit Suche und Filter, bearbeiten, ausführen, ein- oder ausschalten, löschen und Favoriten; ganz oben der Schalter "Alle Routinen pausieren" (derselbe wie in den Einstellungen, gilt sofort)
+- **Protokoll und Trace:** "Protokoll" auf einer Karte (und "Protokoll des Geräts") listet jeden Lauf: Datum, Auslöser (Zeit, Auslöser, von Hand, Zurückschalten), Aktion und Ergebnis (ausgeführt, zurückgeschaltet, verpasst, pausiert, fehlgeschlagen). Gleicher Zeitraum, gleiches Diagramm, gleiche Auswahl und Suche wie bei Magic Push. Eine Zeile öffnet den **Trace**: jeder Schritt der Reihe nach (Auslöser und Verspätung, Zeitfenster, gemerkter Zustand, Aufruf mit Dauer und Ergebnis, geplantes Zurückschalten, Meldung), als Text kopierbar für die Fehlersuche. Aufbewahrt werden 12 Monate, höchstens 4000 Einträge je Routine
 
 <p align="center"><img src="docs/screenshots/de/routines-all.png" alt="Fenster mit allen Routinen, eine Karte pro Gerät" width="720"></p>
 

@@ -65,6 +65,7 @@ from .const import (
     CONF_ROUTINES_CATCH_UP,
     CONF_ROUTINES_NOTIFY_ERROR,
     CONF_ROUTINES_PAUSE,
+    DATA_PROTOCOL,
     DOMAIN,
     NOTIFY_NONE,
     STORAGE_VERSION,
@@ -848,6 +849,12 @@ def clean_when(routine: dict[str, Any], tz: Any, *, check_future: bool = True) -
     return routine
 
 
+def _trace_step(trace: list[dict[str, Any]] | None, step: str, **values: Any) -> None:
+    """Schritt im Ablauf (Trace) festhalten; Angaben ohne Wert entfallen. Das Panel macht daraus die Sätze."""
+    if trace is not None:
+        trace.append({"s": step, "v": {k: v for k, v in values.items() if v is not None}})
+
+
 class RoutineManager:
     """Alle Routinen: Speicher, Planung (ein Aufruf je Routine), Ausführen, Zurückschalten, Neustart."""
 
@@ -1114,6 +1121,8 @@ class RoutineManager:
         self._forget(routine_id)
         self._retrack()
         await self._store.async_save(self._data())
+        if (proto := self.hass.data.get(DATA_PROTOCOL)) is not None:
+            await proto.async_forget(routine_id)
         return True
 
     async def async_set_enabled(self, routine_id: str, enabled: bool) -> dict[str, Any] | None:
@@ -1203,24 +1212,33 @@ class RoutineManager:
         return max(float(effective(self.hass)[CONF_ROUTINES_CATCH_UP]) * 60.0, float(LATE_MIN_S))
 
     async def _async_call(
-        self, routine: dict[str, Any], action: str, *, options: dict[str, Any] | None = None, snapshot: dict[str, Any] | None = None
+        self,
+        routine: dict[str, Any],
+        action: str,
+        *,
+        options: dict[str, Any] | None = None,
+        snapshot: dict[str, Any] | None = None,
+        trace: list[dict[str, Any]] | None = None,
     ) -> tuple[bool, str | None]:
         """
         Entität schalten. Rückgabe (geschafft, Grund): Grund "unavailable" oder "error". Mit "options" wird eingeschaltet wie
         eingestellt, mit "snapshot" die gemerkte Szene wiederhergestellt (ist daraus nichts herzustellen, gilt "action").
         """
         state = self.hass.states.get(routine["entity_id"])
-        if state is None:
-            return False, "missing"
-        if state.state == "unavailable":
-            return False, "unavailable"
+        if state is None or state.state == "unavailable":
+            reason = "missing" if state is None else "unavailable"
+            _trace_step(trace, "call", ent=routine["entity_id"], state=None if state is None else state.state, err=reason)
+            return False, reason
         domain = routine["entity_id"].split(".", 1)[0]
         feats = _features(state)
         calls = restore_calls(domain, routine["entity_id"], snapshot, feats) if snapshot is not None else None
         if calls is None:
             calls = service_calls(domain, routine["entity_id"], action, options, feats)
             if not calls:
+                _trace_step(trace, "call", ent=routine["entity_id"], err="error")
                 return False, "error"
+        names = [f"{call_domain}.{service}" for call_domain, service, _data in calls]
+        started = time.monotonic()
         try:
             async with asyncio.timeout(CALL_TIMEOUT_S):
                 for i, (call_domain, service, data) in enumerate(calls):
@@ -1230,11 +1248,21 @@ class RoutineManager:
         except TimeoutError:
             # Das Gerät antwortet nicht: die Sperre frei geben, damit die anderen Routinen nicht mit hängen
             _LOGGER.warning("Routine '%s': %s antwortet nach %s Sekunden nicht", routine["name"], routine["entity_id"], CALL_TIMEOUT_S)
+            _trace_step(trace, "call", ent=routine["entity_id"], svc=names, ms=round((time.monotonic() - started) * 1000), err="timeout")
             return False, "timeout"
-        except Exception:  # noqa: BLE001 - eine Routine darf nie etwas anderes stören
+        except Exception as err:  # noqa: BLE001 - eine Routine darf nie etwas anderes stören
             _LOGGER.exception("Routine '%s': Schalten von %s fehlgeschlagen", routine["name"], routine["entity_id"])
+            _trace_step(trace, "call", ent=routine["entity_id"], svc=names, ms=round((time.monotonic() - started) * 1000), err=f"{type(err).__name__}: {err}")
             return False, "error"
+        _trace_step(trace, "call", ent=routine["entity_id"], svc=names, ms=round((time.monotonic() - started) * 1000), state=getattr(self.hass.states.get(routine["entity_id"]), "state", None))
         return True, None
+
+    def _log(self, routine: dict[str, Any], k: str, src: str, *, ok: bool, act: str | None = None, err: str | None = None, late: float | None = None, trace: list[dict[str, Any]] | None = None) -> None:
+        """Eintrag im Protokoll der Routine (seit 2.104.0); ein Fehler hier stört die Routine nie."""
+        proto = self.hass.data.get(DATA_PROTOCOL)
+        if proto is None or not routine.get("id"):
+            return
+        proto.add(routine["id"], {"k": k, "src": src, "ok": ok, "act": act, "ent": routine["entity_id"], "err": err, "late": round(late, 1) if late else None, "trace": trace})
 
     def _entity_name(self, routine: dict[str, Any]) -> str:
         return self.default_name(routine)
@@ -1269,35 +1297,53 @@ class RoutineManager:
         hass = self.hass
         name, device = routine["name"], log_device(routine)
         late = min(now, queued if queued is not None else now) - float(rt["due"])
+        src = "trigger" if routine["kind"] == "trigger" else "time"
+        trace: list[dict[str, Any]] = []
+        _trace_step(trace, "trigger", src=src, due=rt["due"], late=round(late, 1), grace=self._grace())
         if late > self._grace():
+            _trace_step(trace, "result", what="missed")
+            self._log(routine, "missed", src, ok=False, late=late, trace=trace)
             activity.record(hass, "warning", "routine", "routine_missed", name, device, minutes=int(late // 60))
             rt["last"] = {"at": now, "ok": False, "what": "missed", "reason": None}
             self._finish(routine, rt, now)
             return
         if effective(hass)[CONF_ROUTINES_PAUSE]:
+            _trace_step(trace, "result", what="paused")
+            self._log(routine, "paused", src, ok=False, trace=trace)
             activity.record(hass, "info", "routine", "routine_paused", name, device)
             rt["last"] = {"at": now, "ok": False, "what": "paused", "reason": None}
             self._finish(routine, rt, now)
             return
+        if routine["window"]:
+            _trace_step(trace, "window", window=routine["window"])
         scene = self._take_snapshot(routine, rt)
-        ok, reason = await self._async_call(routine, routine["action"], options=routine["options"])
+        if scene is not None:
+            _trace_step(trace, "snapshot", state=scene.get("state"))
+        ok, reason = await self._async_call(routine, routine["action"], options=routine["options"], trace=trace)
         if ok:
             rt["retry"] = 0
             rt["last"] = {"at": now, "ok": True, "what": "run", "reason": None}
             activity.record(hass, "info", "routine", "routine_run_scene" if routine["action"] == "activate" else "routine_run", name, device, entity=self._entity_name(routine), action=self._action_text(routine, routine["action"]))
             self._plan_revert(routine, rt, now, scene)
-            await self._async_notify(routine, ok=True, action=routine["action"])
+            _trace_step(trace, "revert_plan", kind=routine["back_kind"] if rt["revert_action"] else "none", due=rt["revert_due"], back=rt["revert_action"])
+            await self._async_notify(routine, ok=True, action=routine["action"], trace=trace)
+            _trace_step(trace, "result", what="run")
+            self._log(routine, "run", src, ok=True, act=routine["action"], late=late, trace=trace)
             self._finish(routine, rt, now)
             return
         if rt["retry"] < MAX_RETRY:
             rt["retry"] += 1
             rt["due"] = now + RETRY_S
             rt["last"] = {"at": now, "ok": False, "what": "retry", "reason": reason}
+            _trace_step(trace, "result", what="retry", count=rt["retry"], next=rt["due"])
+            self._log(routine, "retry", src, ok=False, act=routine["action"], err=reason, late=late, trace=trace)
             activity.record(hass, "warning", "routine", "routine_retry", name, device, entity=self._entity_name(routine), minutes=RETRY_S // 60, count=rt["retry"], max=MAX_RETRY)
             return
         rt["last"] = {"at": now, "ok": False, "what": "failed", "reason": reason}
         activity.record(hass, "error", "routine", "routine_failed", name, device, entity=self._entity_name(routine))
-        await self._async_notify(routine, ok=False, action=routine["action"], reason=reason or "error")
+        await self._async_notify(routine, ok=False, action=routine["action"], reason=reason or "error", trace=trace)
+        _trace_step(trace, "result", what="failed")
+        self._log(routine, "failed", src, ok=False, act=routine["action"], err=reason, late=late, trace=trace)
         self._finish(routine, rt, now)
 
     def _take_snapshot(self, routine: dict[str, Any], rt: dict[str, Any]) -> dict[str, Any] | None:
@@ -1361,24 +1407,34 @@ class RoutineManager:
             rt["revert_due"] = None
             return
         scene = rt["snapshot"] if routine["back_mode"] == "restore" else None
-        ok, reason = await self._async_call(routine, action, snapshot=scene)
+        trace: list[dict[str, Any]] = []
+        _trace_step(trace, "trigger", src="revert", due=rt["revert_due"], kind=routine["back_kind"])
+        if scene is not None:
+            _trace_step(trace, "snapshot", state=scene.get("state"))
+        ok, reason = await self._async_call(routine, action, snapshot=scene, trace=trace)
         if ok:
             rt.update(revert_due=None, revert_action=None, rretry=0, snapshot=None)
             self._end_done(routine)
             # Wurde die Szene wiederhergestellt, steht im Protokoll und in der Meldung "wie vorher" statt des Gegenstücks
             shown = "restore" if scene is not None and restore_calls(routine["entity_id"].split(".", 1)[0], routine["entity_id"], scene) is not None else action
             activity.record(hass, "info", "routine", "routine_revert", name, device, entity=self._entity_name(routine), action=self._action_text(routine, shown))
-            await self._async_notify(routine, ok=True, action=shown)
+            await self._async_notify(routine, ok=True, action=shown, trace=trace)
+            _trace_step(trace, "result", what="revert")
+            self._log(routine, "revert", "revert", ok=True, act=shown, trace=trace)
             return
         if rt["rretry"] < MAX_RETRY:
             rt["rretry"] += 1
             rt["revert_due"] = now + RETRY_S
+            _trace_step(trace, "result", what="retry", count=rt["rretry"], next=rt["revert_due"])
+            self._log(routine, "retry", "revert", ok=False, act=action, err=reason, trace=trace)
             activity.record(hass, "warning", "routine", "routine_retry", name, device, entity=self._entity_name(routine), minutes=RETRY_S // 60, count=rt["rretry"], max=MAX_RETRY)
             return
         rt.update(revert_due=None, revert_action=None, rretry=0, snapshot=None)
         self._end_done(routine)
         activity.record(hass, "error", "routine", "routine_failed", name, device, entity=self._entity_name(routine))
-        await self._async_notify(routine, ok=False, action=action, reason=reason or "error")
+        await self._async_notify(routine, ok=False, action=action, reason=reason or "error", trace=trace)
+        _trace_step(trace, "result", what="failed")
+        self._log(routine, "failed", "revert", ok=False, act=action, err=reason, trace=trace)
 
     async def async_run_now(self, routine_id: str) -> tuple[bool, str | None] | None:
         """Jetzt ausführen (Knopf): schaltet sofort, der Zeitplan bleibt wie er ist; ein Zurückschalten wird geplant."""
@@ -1388,17 +1444,26 @@ class RoutineManager:
         async with self._lock:
             rt = self.runtime(routine_id)
             now = time.time()
+            trace: list[dict[str, Any]] = []
+            _trace_step(trace, "trigger", src="manual")
             scene = self._take_snapshot(routine, rt)
-            ok, reason = await self._async_call(routine, routine["action"], options=routine["options"])
+            if scene is not None:
+                _trace_step(trace, "snapshot", state=scene.get("state"))
+            ok, reason = await self._async_call(routine, routine["action"], options=routine["options"], trace=trace)
             if ok:
                 activity.record(self.hass, "info", "routine", "routine_run_scene_manual" if routine["action"] == "activate" else "routine_run_manual", routine["name"], log_device(routine), entity=self._entity_name(routine), action=self._action_text(routine, routine["action"]))
                 rt["last"] = {"at": now, "ok": True, "what": "run", "reason": None}
                 self._plan_revert(routine, rt, now, scene)
-                await self._async_notify(routine, ok=True, action=routine["action"])
+                _trace_step(trace, "revert_plan", kind=routine["back_kind"] if rt["revert_action"] else "none", due=rt["revert_due"], back=rt["revert_action"])
+                await self._async_notify(routine, ok=True, action=routine["action"], trace=trace)
+                _trace_step(trace, "result", what="run")
+                self._log(routine, "run", "manual", ok=True, act=routine["action"], trace=trace)
             else:
                 activity.record(self.hass, "error", "routine", "routine_failed", routine["name"], log_device(routine), entity=self._entity_name(routine))
                 rt["last"] = {"at": now, "ok": False, "what": "failed", "reason": reason}
-                await self._async_notify(routine, ok=False, action=routine["action"], reason=reason or "error")
+                await self._async_notify(routine, ok=False, action=routine["action"], reason=reason or "error", trace=trace)
+                _trace_step(trace, "result", what="failed")
+                self._log(routine, "failed", "manual", ok=False, act=routine["action"], err=reason, trace=trace)
             self._arm(routine_id)
             self._save_now()
             return ok, reason
@@ -1565,17 +1630,18 @@ class RoutineManager:
         key = {"toggled": "routine_text_toggled", "activated": "routine_text_activated"}.get(word, "routine_text")
         return push.text(hass, "routine_title", name=routine["name"]), push.text(hass, key, entity=entity, result=push.text(hass, f"routine_res_{word}") if word != "toggled" else "", time=clock)
 
-    async def _async_notify(self, routine: dict[str, Any], *, ok: bool, action: str, reason: str = "error") -> None:
+    async def _async_notify(self, routine: dict[str, Any], *, ok: bool, action: str, reason: str = "error", trace: list[dict[str, Any]] | None = None) -> None:
         """Push nach dem Schalten (nur mit "Per Push melden") oder bei einem Fehler (auch ohne, wenn in den Einstellungen an)."""
         opts = effective(self.hass)
-        if ok and not routine["push"]:
-            return
-        if not ok and not routine["push"] and not opts[CONF_ROUTINES_NOTIFY_ERROR]:
+        if (ok and not routine["push"]) or (not ok and not routine["push"] and not opts[CONF_ROUTINES_NOTIFY_ERROR]):
+            _trace_step(trace, "notify", res="off")
             return
         title, message = self.texts(routine, action=action, ok=ok, reason=reason)
-        await self._async_send(routine, title, message)
+        outcome: dict[str, Any] = {}
+        sent = await self._async_send(routine, title, message, outcome)
+        _trace_step(trace, "notify", res="held" if outcome.get("held") else "sent" if sent else "failed", target=self.target(routine), title=title, err=outcome.get("err"))
 
-    async def _async_send(self, routine: dict[str, Any], title: str, message: str) -> bool:
+    async def _async_send(self, routine: dict[str, Any], title: str, message: str, outcome: dict[str, Any] | None = None) -> bool:
         hass = self.hass
         opts = effective(hass)
         target = self.target(routine)
@@ -1583,12 +1649,14 @@ class RoutineManager:
         device = None if holder else dr.async_get(hass).async_get(routine["device_id"])
         if target == NOTIFY_NONE or (device is None and not holder):
             activity.record(hass, "info", "routine", "routine_no_target", routine["name"], log_device(routine))
+            if outcome is not None:
+                outcome["err"] = "no_target"
             return False
         # Ohne Gerät (Szene, Gruppe) öffnet die Meldung das Panel, ohne Integrationsbild
         icon = await push_icon.async_integration_icon(hass, primary_domain(hass, device)) if device is not None else None
         url = push.device_url(opts[CONF_NOTIFY_CLICK], device.id) if device is not None else push.panel_url()
         data = push.notification_data(hass, f"{DOMAIN}_routine_{routine.get('id', 'test')}", url, icon=icon)
-        return await push.async_push(hass, target, title, message, data, topic="routines")
+        return await push.async_push(hass, target, title, message, data, topic="routines", outcome=outcome)
 
     def preview_raw(self, raw: dict[str, Any]) -> dict[str, Any]:
         """Vorschau für einen Entwurf: Meldungstext, nächste Ausführungen und der Satz; Name darf fehlen."""

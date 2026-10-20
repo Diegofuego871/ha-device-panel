@@ -437,6 +437,7 @@ async def async_push(
     data: dict[str, Any] | None = None,
     topic: str | None = None,
     quiet: dict[str, Any] | None = None,
+    outcome: dict[str, Any] | None = None,
 ) -> bool:
     """
     Sendet an einen notify-Dienst oder eine notify-Entität; True, wenn
@@ -444,14 +445,19 @@ async def async_push(
     "extra keys not allowed"), folgt ein zweiter Versuch ohne. Eine Meldung
     darf die Überwachung nie stören: Fehler werden nur protokolliert.
     """
+    # outcome (seit 2.104.0): der Aufrufer erfährt, was daraus wurde ("held" zurückgehalten, "sent" abgeschickt, "err" Grund), für das Protokoll
+    outcome = outcome if outcome is not None else {}
     if not target or target == NOTIFY_NONE:
+        outcome["err"] = "no_target"
         return False
     domain, _, object_id = target.partition(".")
     if domain != "notify" or not object_id:
         activity.record(hass, "error", "push", "push_invalid", target)
+        outcome["err"] = "invalid_target"
         return False
     # Ruhezeit (seit 2.95.0): zurückgehaltene Meldungen stellt das Ende der Ruhezeit zu ("topic" ist die Art, "quiet" Angaben für die Zusammenfassung)
     if topic and (manager := hass.data.get(DATA_QUIET)) is not None and manager.hold(topic, target, title, message, data, quiet):
+        outcome["held"] = True
         return True
     plain: dict[str, Any] = {"title": title, "message": message}
     if hass.services.has_service("notify", object_id):
@@ -462,6 +468,7 @@ async def async_push(
                 try:
                     await hass.services.async_call("notify", object_id, {**plain, "data": data}, blocking=True)
                     activity.record(hass, "info", "push", "push_sent", target, title=title)
+                    outcome["sent"] = True
                     return True
                 except _REJECTED as err:
                     _LOGGER.debug("Zusatzdaten abgelehnt (%s)", err)
@@ -476,20 +483,25 @@ async def async_push(
         try:
             await hass.services.async_call("notify", object_id, plain, blocking=True)
             activity.record(hass, "info", "push", "push_sent", target, title=title)
+            outcome["sent"] = True
             return True
-        except Exception:  # noqa: BLE001
+        except Exception as err:  # noqa: BLE001
             _LOGGER.exception("Push an '%s' fehlgeschlagen", target)
             activity.record(hass, "error", "push", "push_failed", target, title=title)
+            outcome["err"] = str(err) or type(err).__name__
             return False
     if hass.states.get(target) is not None and hass.services.has_service("notify", "send_message"):
         # notify-Entität: send_message kennt nur Titel und Text.
         try:
             await hass.services.async_call("notify", "send_message", {**plain, "entity_id": target}, blocking=True)
             activity.record(hass, "info", "push", "push_sent", target, title=title)
+            outcome["sent"] = True
             return True
-        except Exception:  # noqa: BLE001
+        except Exception as err:  # noqa: BLE001
             _LOGGER.exception("Push an '%s' fehlgeschlagen", target)
             activity.record(hass, "error", "push", "push_failed", target, title=title)
+            outcome["err"] = str(err) or type(err).__name__
             return False
     activity.record(hass, "error", "push", "push_missing", target, title=title)
+    outcome["err"] = "missing"
     return False

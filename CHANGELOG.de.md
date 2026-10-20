@@ -7,6 +7,24 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.104.0] - 2026-10-20
+
+Ein Protokoll für jede Magic-Push-Meldung und jede Routine, mit Diagramm und bei Routinen einem kopierbaren Trace.
+
+Enthält die Änderungen von 2.103.0.
+
+### Hinzugefügt
+
+- **Magic Push, Protokoll:** Der Knopf **"Protokoll"** auf einer Karte (in der Übersicht und im Geräte-Popup) öffnet ein Fenster mit jeder gesendeten Meldung: Datum, Art (ausgelöst, wiederholt, wieder normal, Test), **Titel und Text, wie gesendet**, Wert, Empfänger und was daraus wurde (gesendet, durch die Ruhezeit zurückgehalten, fehlgeschlagen mit Grund, kein Empfänger). Oben: der Zeitraum (**7 Tage, 30 Tage, 6 Monate, 12 Monate** oder eigene Daten), Kennzahlen, ein **Balkendiagramm** (je Tag, bei Zeiträumen über 120 Tagen je Woche; ein Tipp auf einen Balken wählt diesen Tag, ein roter Teil zeigt Probleme), eine Auswahl (ausgelöst, wieder normal, Test, zurückgehalten, fehlgeschlagen), eine Suche über Titel, Text und Wert und **"Als Text kopieren"**. Eine Zeile zeigt die Meldung, wie sie gesendet wurde.
+- **Routinen, Protokoll und Trace:** dasselbe Fenster für eine Routine: Datum, Auslöser (Zeit, Auslöser, von Hand, Zurückschalten), Aktion und Ergebnis (ausgeführt, zurückgeschaltet, verpasst, pausiert, neuer Versuch, fehlgeschlagen mit Grund), mit Kennzahlen und dem Anteil pünktlicher Läufe. Eine Zeile öffnet den **Trace**: jeder Schritt der Reihe nach (Auslöser und Verspätung, Zeitfenster, gemerkter Zustand, Aufruf mit den Diensten, Dauer und Zustand danach, geplantes Zurückschalten, Meldung aufs Handy, Ergebnis); fehlgeschlagene Schritte in Rot. **"Trace kopieren"** legt ihn als Text in die Zwischenablage, "Neuer" und "Älter" gehen durch die Einträge.
+- **Protokoll des Geräts:** "Protokoll des Geräts" im Geräte-Popup (Reiter Magic Push und Routinen) und im Fuss jeder Gerätekarte der Übersichten listet alle Meldungen oder Routinen des Geräts in einer Tabelle, mit einer Auswahl einzelner Meldungen oder Routinen.
+- **Aufbewahrt:** 12 Monate, höchstens 4000 Einträge je Meldung oder Routine (die ältesten fallen weg). Gespeichert in einer eigenen Datei je Meldung oder Routine (`.storage/device_panel.protocol_<id>`), geschrieben mit 30 Sekunden Verzögerung und beim Beenden von Home Assistant. Ein Meldungseintrag braucht etwa 250 Byte, ein Routinenlauf mit Trace etwa 650 Byte; eine Meldung, die einige Male im Monat auslöst, bleibt im Kilobyte-Bereich, eine täglich laufende Routine liegt nach einem Jahr bei etwa 0,5 MB, die Grenze von 4000 Einträgen bei etwa 1 MB (Meldungen) bis 2,6 MB (Routinen mit Trace). Wird eine Meldung oder Routine gelöscht, verschwindet ihr Protokoll; entfernt man die Integration, verschwinden alle Protokolle.
+
+### Intern
+
+- Neu `protocol.py` (Speicher, Grenzen, Abfrage mit Kennzahlen und Balken), `protocol_ws.py` (`device_panel/protocol_get`, nur Administratoren), `panel/protocol.js` (Fenster `dialog.proto-dlg`, gleiche Hülle wie das Aktivitätsprotokoll). `push.async_push(outcome=…)` meldet zurückgehalten / gesendet / Grund; `routines._async_call(trace=…)` hält die Schritte fest. Das Protokoll bleibt beim Neuladen der Integration im Speicher (wie das Aktivitätsprotokoll), damit beim Speichern der Einstellungen nichts verloren geht, was noch auf das Schreiben wartet.
+- Tests: `tests/test_protocol.py`, neue Suite `protocol`; Befehl `device_panel/protocol_get` im Simulator.
+
 ## [2.103.0] - 2026-10-20
 
 Suchfeld im Geräte-Popup bei "Schalter" und "Entitäten".
@@ -18,6 +36,8 @@ Suchfeld im Geräte-Popup bei "Schalter" und "Entitäten".
 ### Intern
 
 - `_devSearchHtml`, `_devSearchInput`, `_devMatch`, `_entListHtml`, `_switchGridHtml` in `device-panel.js`; der Text liegt in `_devQ`. Test: neue Suite `devsearch`.
+
+Nicht veröffentlicht; enthalten in 2.104.0.
 
 ## [2.102.0] - 2026-10-20
 
@@ -4177,7 +4197,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.103.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.103.0
+[2.104.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.104.0
 [2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0
 [2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0

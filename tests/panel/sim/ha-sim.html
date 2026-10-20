@@ -1207,6 +1207,54 @@
         const values = { "{language}": lang, "{facts}": facts, ...Object.fromEntries(PROMPT_GROUPS.map((g) => [g, g === "{facts_device}" ? device : "{}"])) };
         return { text: (draft || window.__opts.ai_prompt || AI_PROMPT_DEFAULT).replace(/\{[A-Za-z_][A-Za-z0-9_]*\}/g, (m) => values[m] ?? m) };
       }
+      // Protokoll (2.104.0): Einträge je Meldung/Routine in window.__protocol ({ [id]: [Eintrag, ...] }), Abfrage wie protocol.py
+      if (msg.type === "device_panel/protocol_get") {
+        if (window.__protocolFails) throw new Error(window.__protocolFails);
+        (window.__protocolCalls ||= []).push(msg);
+        const store = window.__protocol || {};
+        const rows = msg.kind === "magic" ? (window.__magic?.rules || []) : (window.__routines?.list || []);
+        const mine = msg.item_id ? rows.filter((r) => r.id === msg.item_id) : rows.filter((r) => r.device_id === msg.device_id);
+        if (msg.item_id && !mine.length) throw { code: "not_found", message: "item not found" };
+        const now = Date.now() / 1000;
+        const since = Math.max(msg.since ?? now - 366 * 86400, now - 366 * 86400);
+        const until = Math.min(msg.until ?? now, now + 86400);
+        const scope = [];
+        let oldest = null;
+        for (const r of mine) for (const e of store[r.id] || []) {
+          if (oldest === null || e.at < oldest) oldest = e.at;
+          if (e.at >= since && e.at <= until) scope.push({ ...e, id: r.id, name: r.name });
+        }
+        scope.sort((a, b) => b.at - a.at);
+        const counts = {};
+        let longest = 0, lateOk = 0, lateN = 0;
+        for (const e of scope) {
+          counts[e.k] = (counts[e.k] || 0) + 1;
+          if (msg.kind === "magic") { counts[`res_${e.res}`] = (counts[`res_${e.res}`] || 0) + 1; longest = Math.max(longest, e.dur || 0); }
+          else if (e.k === "run" && e.late != null) { lateN++; if (e.late <= 60) lateOk++; }
+        }
+        const checks = {
+          magic: { fired: (e) => e.k === "fired" || e.k === "repeat", recovered: (e) => e.k === "recovered", test: (e) => e.k === "test", held: (e) => e.res === "held", failed: (e) => e.res === "failed" || e.res === "no_target" },
+          routine: { run: (e) => e.k === "run" && e.src !== "manual", revert: (e) => e.k === "revert", missed: (e) => e.k === "missed" || e.k === "paused", failed: (e) => e.k === "failed", manual: (e) => e.src === "manual" },
+        }[msg.kind];
+        const check = checks[msg.filter];
+        const needle = String(msg.q || "").trim().toLowerCase();
+        const shown = scope.filter((e) => (!check || check(e)) && (!needle || `${e.title || ""} ${e.body || ""} ${e.err || ""} ${e.name} ${e.value || ""}`.toLowerCase().includes(needle)));
+        const week = (until - since) / 86400 > 120;
+        const day0 = new Date(since * 1000); day0.setHours(0, 0, 0, 0);
+        if (week) day0.setDate(day0.getDate() - ((day0.getDay() + 6) % 7));
+        const buckets = [];
+        for (let d = new Date(day0); d.getTime() / 1000 <= until && buckets.length < 400; d.setDate(d.getDate() + (week ? 7 : 1))) buckets.push({ t: d.getTime() / 1000, n: 0, bad: 0 });
+        for (const e of scope) {
+          let i = buckets.length - 1;
+          while (i > 0 && buckets[i].t > e.at) i--;
+          if (buckets[i] && buckets[i].t <= e.at) { buckets[i].n++; if (e.res === "failed" || e.res === "no_target" || e.k === "failed" || e.k === "missed") buckets[i].bad++; }
+        }
+        return {
+          counts, longest_s: longest || null, punctual: lateN ? Math.round((100 * lateOk) / lateN) : null, total: shown.length, all: scope.length,
+          entries: shown.slice(msg.offset || 0, (msg.offset || 0) + (msg.limit || 100)), step: week ? "week" : "day", buckets, oldest, capped: false,
+          items: mine.map((r) => ({ id: r.id, name: r.name, entity_id: r.entity_id })), since, until, now, retention_days: 366, max_entries: 4000,
+        };
+      }
       // Routine (2.21.0): Routine pro Gerät im Speicher der Seite, Prüfung und Zeitberechnung ungefähr wie im Backend
       if (typeof msg.type === "string" && msg.type.startsWith("device_panel/routine_")) {
         const T = (window.__routines ||= { list: [], seq: 1, runs: [], tests: [] });

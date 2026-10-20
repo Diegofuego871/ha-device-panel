@@ -44,7 +44,7 @@ from homeassistant.util import dt as dt_util
 
 from . import activity, push, push_icon
 from .compat import registry_devices
-from .const import DOMAIN, NOTIFY_NONE, STORAGE_VERSION
+from .const import DATA_PROTOCOL, DOMAIN, NOTIFY_NONE, STORAGE_VERSION
 from .devices import async_integration_info, primary_domain
 from .options_api import effective
 
@@ -793,6 +793,8 @@ class MagicPush:
         self._forget(rule_id)
         self._retrack()
         await self._store.async_save(self._data())
+        if (proto := self.hass.data.get(DATA_PROTOCOL)) is not None:
+            await proto.async_forget(rule_id)
         return True
 
     async def async_set_enabled(self, rule_id: str, enabled: bool) -> dict[str, Any] | None:
@@ -1019,7 +1021,7 @@ class MagicPush:
         if fired and rule["recover"]:
             ctx = self._context(rule, state, since=since, now=now)
             title = render(rule["recover_message"], ctx)
-            self.hass.async_create_task(self._async_send(rule, title, content(self.hass, rule, ctx, recovered=True), "magic_recovered", ctx))
+            self.hass.async_create_task(self._async_send(rule, title, content(self.hass, rule, ctx, recovered=True), "magic_recovered", ctx, dur=max(now - since, 0.0)))
 
     def _context(self, rule: dict[str, Any], state: State | None, *, since: float, now: float, old: str | None = None) -> dict[str, str]:
         ctx = context(self.hass, {**rule, "_integration": self._integration(rule)}, state, since=since, now=now, old=old)
@@ -1042,13 +1044,14 @@ class MagicPush:
     def target(self, rule: dict[str, Any]) -> str:
         return rule.get("target") or effective(self.hass)["notify_service"]
 
-    async def _async_send(self, rule: dict[str, Any], title: str, message: str, code: str, ctx: dict[str, str], *, critical: bool = False) -> bool:
+    async def _async_send(self, rule: dict[str, Any], title: str, message: str, code: str, ctx: dict[str, str], *, critical: bool = False, dur: float | None = None) -> bool:
         hass = self.hass
         opts = effective(hass)
         target = self.target(rule)
         device = dr.async_get(hass).async_get(rule["device_id"])
         if target == NOTIFY_NONE or device is None:
             activity.record(hass, "info", "magic", "magic_no_target", rule["name"], rule["device_id"])
+            self._protocol(rule, code, title, message, target, ctx, {"err": "no_target"}, False, dur, res="no_target")
             return False
         icon = await push_icon.async_integration_icon(hass, primary_domain(hass, device))
         data = push.notification_data(hass, f"{DOMAIN}_magic_{rule['id']}", push.device_url(opts["notify_click_target"], device.id), icon=icon)
@@ -1056,7 +1059,19 @@ class MagicPush:
         if critical:
             data.update(push.critical_data(rule["critical_volume"]))
         activity.record(hass, "info", "magic", code, rule["name"], rule["device_id"], title=title)
-        return await push.async_push(hass, target, title, message, data, topic="magic", quiet={"label": rule["name"]})
+        outcome: dict[str, Any] = {}
+        ok = await push.async_push(hass, target, title, message, data, topic="magic", quiet={"label": rule["name"]}, outcome=outcome)
+        self._protocol(rule, code, title, message, target, ctx, outcome, ok, dur)
+        return ok
+
+    def _protocol(self, rule: dict[str, Any], code: str, title: str, message: str, target: str, ctx: dict[str, str], outcome: dict[str, Any], ok: bool, dur: float | None = None, res: str | None = None) -> None:
+        """Eintrag im Protokoll der Meldung (seit 2.104.0): Inhalt, Wert, Empfänger und was daraus wurde."""
+        proto = self.hass.data.get(DATA_PROTOCOL)
+        if proto is None or not rule.get("id") or rule["id"] == "test":
+            return
+        res = res or ("held" if outcome.get("held") else "sent" if ok else "failed")
+        value = f"{ctx.get('value', '')} {ctx.get('unit', '')}".strip()
+        proto.add(rule["id"], {"k": code.removeprefix("magic_"), "res": res, "title": title, "body": message, "value": value, "target": target, "err": outcome.get("err"), "dur": dur})
 
     async def async_test(self, raw: dict[str, Any], which: str = "main") -> bool:
         """Test: eine echte Meldung mit dem jetzigen Wert an den gewählten Empfänger."""
