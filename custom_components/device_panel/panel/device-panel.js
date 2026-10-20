@@ -3431,7 +3431,8 @@ class DevicePanel extends HTMLElement {
           }, 1500);
         }
       } else if (el.matches("[data-lg-reset]")) {
-        await this._logCall({ type: "device_panel/clear_log" });
+        // Leeren ist endgültig (auch die gespeicherten Einträge): erst fragen
+        this._askConfirm({ title: "logClearTitle", note: "logClearNote", no: "logClearNo", yes: "logClearYes", noIcon: "close", yesIcon: "trash" }, () => this._logCall({ type: "device_panel/clear_log" }));
       } else if (el.matches("[data-lg-open]")) {
         // Das Geräte-Popup öffnet über dem Protokoll; schliesst es, ist man wieder im Protokoll.
         this._openDevice(el.dataset.lgOpen);

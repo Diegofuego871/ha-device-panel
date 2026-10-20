@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.106.1, Rückfrage vor "Leeren" im Log)
+
+- "Leeren" im Log (`data-lg-reset`) fragt über `_askConfirm` ("Log leeren?", Texte `logClear*`); erst "Alle löschen" ruft `clear_log` auf.
+
 ## Stand (2.106.0, ein Protokollfenster mit zwei Reitern; Namen)
 
 - Wunsch des Nutzers: im Protokollfenster oben Reiter "Magic Push" (links) und "Routinen"; das Fenster öffnet auf dem Reiter, von dem man kommt. Der andere Reiter zeigt alle Meldungen oder Routinen desselben Geräts (`ProtocolUi.alt`, Knöpfe tragen `data-device`), zurück stellt die einzelne Meldung wieder her. Reiter `.sub-tabs.mg-filter` mit `data-set="pr-kind"`; die Zeitraum-Leiste ist `[data-pr-ranges] .sub-tabs`.

@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.106.1] - 2026-10-20
+
+The log asks before it is cleared.
+
+### Changed
+
+- **Log, button "Clear":** a pop-up asks first "Clear the log?" (all entries are deleted, including the saved ones; this cannot be undone) with "Cancel" and "Delete all". Only "Delete all" clears.
+
+### Internal
+
+- Uses the common confirm pop-up (`_askConfirm`). Suite `log` extended.
+
 ## [2.106.0] - 2026-10-20
 
 One log window for Magic Push and routines, with tabs.
@@ -4150,6 +4162,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.106.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.1
 [2.106.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.0
 [2.105.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.1
 [2.105.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.0

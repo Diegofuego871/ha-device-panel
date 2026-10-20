@@ -9,9 +9,9 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
   de: { btn: "Log", title: "Log", levels: ["Alle", "Info", "Warnung", "Fehler"], levelsDebug: ["Alle", "Debug", "Info", "Warnung", "Fehler"], cats: ["Alle", "Laden", "Ausfall", "Batterie", "Push", "Magic Push", "Routinen", "Updates", "Neu", "System"], today: "Heute", yesterday: "Gestern",
-    none: "Keine Einträge für diesen Filter.", empty: "Noch keine Einträge.", count: "10 Einträge", countShown: "10 Einträge, 2 gezeigt", debug: "Debug-Einträge aufzeichnen", copied: "Kopiert", sub: "Letzte 500 Einträge", err: "Log konnte nicht geladen werden:" },
+    none: "Keine Einträge für diesen Filter.", empty: "Noch keine Einträge.", clearAsk: "Log leeren?", count: "10 Einträge", countShown: "10 Einträge, 2 gezeigt", debug: "Debug-Einträge aufzeichnen", copied: "Kopiert", sub: "Letzte 500 Einträge", err: "Log konnte nicht geladen werden:" },
   en: { btn: "Log", title: "Log", levels: ["All", "Info", "Warning", "Error"], levelsDebug: ["All", "Debug", "Info", "Warning", "Error"], cats: ["All", "Charging", "Outage", "Battery", "Push", "Magic Push", "Routines", "Updates", "New", "System"], today: "Today", yesterday: "Yesterday",
-    none: "No entries for this filter.", empty: "No entries yet.", count: "10 entries", countShown: "10 entries, 2 shown", debug: "Record debug entries", copied: "Copied", sub: "Last 500 entries", err: "Could not load the log:" },
+    none: "No entries for this filter.", empty: "No entries yet.", clearAsk: "Clear the log?", count: "10 entries", countShown: "10 entries, 2 shown", debug: "Record debug entries", copied: "Copied", sub: "Last 500 entries", err: "Could not load the log:" },
 };
 for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   const T_ = T[lang];
@@ -122,6 +122,12 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
 
   // Leeren
   await tap("dialog.log-dlg [data-lg-reset]");
+  check(`[${tag}] Leeren fragt zuerst: Pop-up mit "${T_.clearAsk}", noch nichts gelöscht`, (await wait(`const d = r.querySelector("dialog.discard-dlg"); return d.open && d.textContent.includes(${JSON.stringify(T_.clearAsk)}) && !!d.querySelector('[data-dd="no"]') && !!d.querySelector('[data-dd="yes"]')`)) && (await calls("device_panel/clear_log")).length === 0);
+  await tap('dialog.discard-dlg [data-dd="no"]');
+  check(`[${tag}] "Abbrechen": nichts gelöscht, Pop-up zu, Log bleibt offen`, (await wait(`return !r.querySelector("dialog.discard-dlg").open && r.querySelector("dialog.log-dlg").open`)) && (await calls("device_panel/clear_log")).length === 0);
+  await tap("dialog.log-dlg [data-lg-reset]");
+  await wait(`return r.querySelector("dialog.discard-dlg").open`);
+  await tap('dialog.discard-dlg [data-dd="yes"]');
   check(`[${tag}] Leeren: keine Einträge, Hinweis`, (await wait(`return r.querySelectorAll("dialog.log-dlg .lg-row").length === 0`)) && (await text("dialog.log-dlg .lg-none")) === T_.empty && (await calls("device_panel/clear_log")).length === 1);
 
   // Fehler beim Laden

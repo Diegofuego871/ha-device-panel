@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.106.1] - 2026-10-20
+
+Das Log fragt, bevor es geleert wird.
+
+### Geändert
+
+- **Log, Knopf "Leeren":** ein Pop-up fragt zuerst "Log leeren?" (alle Einträge werden gelöscht, auch die gespeicherten; das lässt sich nicht rückgängig machen) mit "Abbrechen" und "Alle löschen". Erst "Alle löschen" leert.
+
+### Intern
+
+- Nutzt das gemeinsame Rückfrage-Pop-up (`_askConfirm`). Suite `log` erweitert.
+
 ## [2.106.0] - 2026-10-20
 
 Ein Protokollfenster für Magic Push und Routinen, mit Reitern.
@@ -4251,6 +4263,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.106.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.1
 [2.106.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.0
 [2.105.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.1
 [2.105.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.105.0
