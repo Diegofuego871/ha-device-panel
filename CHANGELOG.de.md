@@ -40,8 +40,6 @@ Namen in Benachrichtigungen von Home Assistant werden entschärft, Regler kommen
 
 - `push.md_text`, `routines._finite`/`_bounds`/`_step` und `cleanSpec` in `routines.js`. Tests: `test_new_devices`, `test_battery`, `test_outage_notify`, `test_routine_options`, neue Suite `routineweird`.
 
-Nicht veröffentlicht; enthalten in 2.102.0.
-
 ## [2.101.0] - 2026-10-19
 
 Härtung nach einer Sicherheitsprüfung: weniger Wege für fremde Daten zu internen Adressen, Grössenlimits für Antworten von aussen und eine klarere Vorschau beim Wiederherstellen.
@@ -4168,6 +4166,7 @@ Erste Vorabversion.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0
+[2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0
 [2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0

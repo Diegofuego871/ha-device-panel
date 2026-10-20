@@ -40,8 +40,6 @@ Names in Home Assistant notifications are escaped, sliders cope with odd values 
 
 - `push.md_text`, `routines._finite`/`_bounds`/`_step` and `cleanSpec` in `routines.js`. Tests: `test_new_devices`, `test_battery`, `test_outage_notify`, `test_routine_options`, new suite `routineweird`.
 
-Not released; included in 2.102.0.
-
 ## [2.101.0] - 2026-10-19
 
 Hardening after a security review: fewer ways for outside data to reach internal addresses, size limits for answers from outside, and a clearer restore preview.
@@ -4067,6 +4065,7 @@ First pre-release.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
 [2.102.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.102.0
+[2.101.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.101.1
 [2.100.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.100.0
 [2.99.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.1
 [2.99.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.99.0
