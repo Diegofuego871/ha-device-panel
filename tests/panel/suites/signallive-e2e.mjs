@@ -1,6 +1,5 @@
-// Live-Zeile im Fenster "Empfang" (2.109.0): "Gerade gehört von: Shelly Garage -76 dBm (vor 8 s), Storen Küche -97 dBm (vor 3 s)". Der Empfänger,
-// dessen Wert zählt, ist fett; die Zeile läuft alle 5 Sekunden weiter (Alter wächst), ohne das Fenster neu aufzubauen; Zigbee und Geräte ohne
-// Einzelsicht zeigen nichts davon. Deutsch und Englisch, Desktop und Handy.
+// Karte "Empfänger" im Fenster "Empfang" (2.112.0, Mockup signal-layout-v1 A): je Empfänger Name, Marke "zählt", Stand jetzt (RSSI und Alter, alle 5 s neu),
+// Anteil und Ø im Zeitraum; Kacheln Jetzt/Median/Schlechtester/Bester; Hinweise hinter dem Info-Knopf. Zigbee zeigt keine Karte. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
 
@@ -9,8 +8,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { median: "Median der letzten 5 Minuten", head: "Gerade gehört von:", ago: (s) => `vor ${s} s`, agoMin: "vor 2 Min." },
-  en: { median: "median of the last 5 minutes", head: "Currently heard by:", ago: (s) => `${s} s ago`, agoMin: "2 min ago" },
+  de: { median: "Median der letzten 5 Minuten", now: (v, a) => `gerade ${v} · ${a}`, ago: (s) => `vor ${s} s`, agoMin: "vor 2 Min.", used: "✓ zählt", idle: "gerade nicht gehört", only: "Shelly Neu" },
+  en: { median: "median of the last 5 minutes", now: (v, a) => `now ${v} · ${a}`, ago: (s) => `${s} s ago`, agoMin: "2 min ago", used: "✓ counts", idle: "not heard right now", only: "Shelly Neu" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -47,35 +46,47 @@ for (const lang of ["de", "en"]) {
     const live = () => ev(`const l=r.querySelector("dialog.stat-dlg [data-sig-live]"); if(!l) return null; return { text: l.textContent.replace(/\\s+/g," ").trim(), used: [...l.querySelectorAll(".used")].map(x=>x.textContent.replace(/\\s+/g," ").trim()), title: l.title,
       weight: [...l.querySelectorAll("span")].map(x=>getComputedStyle(x).fontWeight) }`);
 
-    check(`[${tag}] Fenster "Empfang" des Bluetooth-Geräts öffnet`, await openSignal("a"));
-    let l = await live();
-    check(`[${tag}] Live-Zeile mit beiden Empfängern, stärkster zuerst`, l && l.text === `${T.head} Shelly Garage -76 dBm (${T.ago(8)}), Storen Küche -97 dBm (${T.ago(3)})`, JSON.stringify(l?.text));
-    check(`[${tag}] gezählter Empfänger fett, der andere nicht`, l && l.used.length === 1 && l.used[0].startsWith("Shelly Garage") && Number(l.weight[0]) >= 600 && Number(l.weight[1]) < 600, JSON.stringify([l?.used, l?.weight]));
-    check(`[${tag}] Erklärung als Hinweis`, l && l.title.length > 20, l?.title);
-    check(`[${tag}] Zeile steht unter dem Verlauf`, await ev(`const d=r.querySelector("dialog.stat-dlg"); const a=d.querySelector(".bh-src"), s=d.querySelector("[data-sig-live]"); return !!a && !!s && !!(a.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING)`));
+    await openSignal("a");
+    // Online, damit das Diagramm mit Verlauf da ist (Kacheln, Hinweise); offline gibt es keinen aktuellen Wert
+    await p.evaluate(() => { const d = window.__devices.find((x) => x.id === "a"); d.online = true; d.offline_since = null; d.since_at_least = false; });
+    check(`[${tag}] Fenster "Empfang" des Bluetooth-Geräts öffnet, mit Diagramm`, await openSignal("a") && await wait(`return !!r.querySelector("dialog.stat-dlg .bh-plot")`));
+    const row = (name) => ev(`const x = [...r.querySelectorAll("dialog.stat-dlg .sv-row")].find((e) => e.querySelector(".sv-nm b").textContent === ${JSON.stringify(name)}); if (!x) return null; return { sub: x.querySelector(".sv-nm small").textContent, ok: x.querySelector(".sv-ok")?.textContent || "", far: x.querySelector(".sv-far")?.textContent || "", off: x.classList.contains("off") }`);
+    let a = await row("Storen Büro"), c = await row("Küche");
+    check(`[${tag}] Empfänger-Zeile mit Stand jetzt: Wert und Alter`, a?.sub === T.now("-76 dBm", T.ago(8)) && c?.sub === T.now("-97 dBm", T.ago(3)), JSON.stringify([a?.sub, c?.sub]));
+    check(`[${tag}] gezählter Empfänger trägt die Marke, der andere nicht`, a?.ok === T.used && c?.ok === "", JSON.stringify([a?.ok, c?.ok]));
+    check(`[${tag}] Empfänger ohne frische Meldung: "${T.idle}", abgeblendet`, (await row("Proxy Garage"))?.sub === T.idle && (await row("Proxy Garage")).off === true);
+    check(`[${tag}] Hinweis zur Marke (Tooltip)`, await ev(`return (r.querySelector("dialog.stat-dlg .sv-ok")?.title || "").length > 20`));
+    check(`[${tag}] Karte steht unter dem Diagramm`, await ev(`const d=r.querySelector("dialog.stat-dlg"); const a=d.querySelector(".bh-plot"), s=d.querySelector(".sv"); return !!a && !!s && !!(a.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING)`));
     check(`[${tag}] nichts läuft über den Rand`, await ev(`const d=r.querySelector("dialog.stat-dlg .dlg-body"); return d.scrollWidth <= d.clientWidth + 1`));
     await p.screenshot({ path: `${outDir}/signallive-${tag.replace("/", "-")}.png` });
 
-    // Online (mit Verlauf im Diagramm): der Hinweis zur Glättung gehört zum Diagramm; offline gibt es keinen aktuellen Wert
-    await p.evaluate(() => { const d = window.__devices.find((x) => x.id === "a"); d.online = true; d.offline_since = null; d.since_at_least = false; });
-    check(`[${tag}] online: Fenster "Empfang" mit Diagramm`, await openSignal("a") && await wait(`return !!r.querySelector("dialog.stat-dlg .bh-plot")`));
-    check(`[${tag}] Hinweis: aktueller Wert und "schwach" beruhen auf dem Median der letzten 5 Minuten`, await ev(`return [...r.querySelectorAll("dialog.stat-dlg .bh-src")].some((n) => n.textContent.includes(${JSON.stringify(T.median)}))`));
+    // Hinweise einmal hinter dem Info-Knopf, eingeklappt
+    check(`[${tag}] Hinweise eingeklappt`, await ev(`const i = r.querySelector("dialog.stat-dlg [data-sig-info]"); return !!i && i.hidden && r.querySelector('dialog.stat-dlg [data-stat="sig-info"]').getAttribute("aria-expanded") === "false"`));
+    await tap('dialog.stat-dlg [data-stat="sig-info"]');
+    check(`[${tag}] Info-Knopf klappt die Hinweise auf (Quelle, Lücken, früherer Weg)`, await ev(`const i = r.querySelector("dialog.stat-dlg [data-sig-info]"); return !i.hidden && i.querySelectorAll("p").length >= 2 && !!i.querySelector(".sv-note") && r.querySelector('dialog.stat-dlg [data-stat="sig-info"]').getAttribute("aria-expanded") === "true"`));
+    await tap('dialog.stat-dlg [data-stat="sig-info"]');
+    check(`[${tag}] und wieder zu`, await ev(`return r.querySelector("dialog.stat-dlg [data-sig-info]").hidden`));
+
+    check(`[${tag}] Kacheln: Jetzt (mit Schwelle), Median, Schlechtester, Bester`, await ev(`const d=r.querySelector("dialog.stat-dlg"); return !!d.querySelector(".sg-tile.now .sg-cur svg") && !!d.querySelector(".sg-tile.now .lim") && d.querySelectorAll(".sg-row3 .sg-tile").length === 3`));
+    check(`[${tag}] Median-Hinweis steht in den Hinweisen`, await ev(`return [...r.querySelectorAll("dialog.stat-dlg [data-sig-info] .bh-src")].some((n) => n.textContent.includes(${JSON.stringify(T.median)}))`));
+    check(`[${tag}] "Ø 5 Min." an der Kachel "Jetzt"`, await ev(`return !!r.querySelector("dialog.stat-dlg .sg-tile.now small u")`));
 
     // Läuft weiter: nach einem Takt (5 s) ist das Alter um 5 Sekunden gewachsen
-    check(`[${tag}] Alter läuft weiter (alle 5 s neu geholt)`, await wait(`return r.querySelector("dialog.stat-dlg [data-sig-live]")?.textContent.includes(${JSON.stringify(T.ago(13))})`, 9000));
+    check(`[${tag}] Alter läuft weiter (alle 5 s neu geholt)`, await wait(`return [...r.querySelectorAll("dialog.stat-dlg .sv-row")].some((e) => e.textContent.includes(${JSON.stringify(T.ago(13))}))`, 9000));
 
-    // Über eine Minute: in Minuten
-    await p.evaluate(() => { window.__listeners = [{ name: "Shelly Garage", rssi: -76, age: 118, used: true }]; });
-    check(`[${tag}] ab 60 s in Minuten`, await wait(`return r.querySelector("dialog.stat-dlg [data-sig-live]")?.textContent.includes(${JSON.stringify(T.agoMin)})`, 12000));
+    // Über eine Minute: in Minuten; ein Empfänger, der nur live gehört wird (nicht im Weg), steht grau am Ende
+    await p.evaluate(() => { window.__listeners = [{ name: "Storen Büro", rssi: -76, age: 118, used: true }, { name: "Shelly Neu", rssi: -90, age: 4, used: false }]; });
+    check(`[${tag}] ab 60 s in Minuten`, await wait(`return [...r.querySelectorAll("dialog.stat-dlg .sv-row")].some((e) => e.textContent.includes(${JSON.stringify(T.agoMin)}))`, 12000));
+    check(`[${tag}] nur live gehörter Empfänger: graue Zeile am Ende ohne Anteil`, await ev(`const rows=[...r.querySelectorAll("dialog.stat-dlg .sv-row")]; const l=rows[rows.length-1]; return l.querySelector(".sv-nm b").textContent === ${JSON.stringify(T.only)} && l.querySelector(".sv-dot.none") && l.querySelector(".sv-sh b").textContent === "–"`));
 
-    // Niemand hört das Gerät (Einzelsicht fehlt): keine Zeile
+    // Niemand hört das Gerät gerade: die Zeilen bleiben (Weg im Zeitraum), ohne Stand jetzt und ohne Marke
     await p.evaluate(() => { window.__listeners = []; });
-    check(`[${tag}] ohne Empfänger verschwindet die Zeile`, await wait(`return !r.querySelector("dialog.stat-dlg [data-sig-live]")`, 12000));
+    check(`[${tag}] ohne Empfänger: alle Zeilen "${T.idle}", keine Marke`, await wait(`const rows=[...r.querySelectorAll("dialog.stat-dlg .sv-row")]; return rows.length === 3 && rows.every((e) => e.querySelector(".sv-nm small").textContent === ${JSON.stringify(T.idle)}) && !r.querySelector("dialog.stat-dlg .sv-ok")`, 12000));
     await p.evaluate(() => { delete window.__listeners; });
 
     // Zigbee: keine Live-Zeile
     check(`[${tag}] Zigbee-Gerät öffnet`, await openSignal("e"));
-    check(`[${tag}] Zigbee: keine Live-Zeile`, (await live()) === null);
+    check(`[${tag}] Zigbee: keine Empfänger-Karte`, await ev(`return !r.querySelector("dialog.stat-dlg .sv")`));
     check(`[${tag}] Zigbee ohne Glättung: kein Hinweis auf den Median`, await ev(`return ![...r.querySelectorAll("dialog.stat-dlg .bh-src")].some((n) => n.textContent.includes(${JSON.stringify(T.median)}))`));
 
     // Fenster zu: der Takt hört auf

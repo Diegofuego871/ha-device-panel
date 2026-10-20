@@ -7,6 +7,23 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.112.0] - 2026-10-20
+
+Das Empfangsfenster ist aufgeräumt: Kennzahlen als Kacheln, eine Karte "Empfänger", alle Hinweise hinter einem Info-Knopf.
+
+### Geändert
+
+- **Empfangsfenster (Mockup `signal-layout-v1`, Variante A):** Vorher standen sieben Textblöcke und drei Diagramme untereinander, die wichtigen Zahlen im Fliesstext. Jetzt:
+  - **Kacheln oben:** "Jetzt" (mit Stufe, "Ø 5 Min." und der Warnschwelle; die Schwelle wird gelb, wenn das Gerät schwach ist) und darunter "Median", "Schlechtester" und "Bester" des Zeitraums.
+  - **Diagramm** wie bisher, mit der Legende und einem **ⓘ-Knopf**: Er klappt die Hinweise einmal auf (Quelle der Aufzeichnung, "Wert und Warnung sind der Median der letzten 5 Minuten", Lücken, "der frühere Weg lässt sich nicht herstellen", Erklärung der Live-Werte). Vorher hatte jeder Abschnitt seinen eigenen Hinweis.
+  - **Eine Karte "Empfänger"** ersetzt "Gerade gehört von" und "Verbunden über": der Weg-Balken mit Zeiten, darunter je Empfänger eine Zeile mit Name, der Marke **"✓ zählt"** (sein Wert ist der Empfang), dem aktuellen Wert und Alter seiner letzten Meldung ("gerade -76 dBm · vor 8 s", alle 5 Sekunden neu), seinem Anteil und Ø im Zeitraum und der Marke **"⚠ 21 dB schwächer"** für einen Empfänger, über den der Empfang längere Zeit deutlich schlechter lief als über den Hauptempfänger (Einzelheiten als Tooltip; ersetzt den langen Textkasten). Empfänger, die gerade gehört werden, aber im Zeitraum nicht im Weg waren, stehen grau am Ende; Empfänger ohne frische Meldung sagen "gerade nicht gehört".
+  - **Letzte Wechsel** bleiben unter den Empfängern sichtbar.
+- Es ging nichts verloren: alle Werte, Notizen und Hinweise sind noch da, nur gruppiert.
+
+### Intern
+
+- `_signalHistHtml` (Kacheln, Hinweis-Bereich), neu `_receiversHtml` ersetzt `_liveHtml` und `_viaHtml`; Texte `sigNow`, `sigAvg5`, `sigMedian`, `sigWorst`, `sigBest`, `sigInfo`, `sigReceivers`, `sigScope`, `sigPct`, `sigUsed`, `sigWeaker`, `sigAvgShort`, `sigRowNow`, `sigRecvIdle` (entfernt: `sigFacts`, `sigLive`). Tests: Suite `signallive` (neu geschrieben), `signalvia`, `sighist` angepasst.
+
 ## [2.111.0] - 2026-10-20
 
 "Empfang schwach" und der Empfangswert beruhen auf dem Median der letzten Minuten statt auf der einzelnen Meldung.
@@ -4333,6 +4350,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.112.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.112.0
 [2.111.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.111.0
 [2.109.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.109.0
 [2.108.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.108.0

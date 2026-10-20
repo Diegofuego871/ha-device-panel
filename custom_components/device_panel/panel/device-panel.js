@@ -5436,15 +5436,17 @@ class DevicePanel extends HTMLElement {
     if (!h.data) return `<div class="dlg-error">${escape(t("error"))} ${escape(h.error || "")}</div>`;
     const { start, end, points = [], kind, source, bucket, first, current, reason, steady_since: steady, via, smoothed } = h.data;
     const note = (text) => `<p class="dlg-note bh-src">${escape(text)}</p>`;
-    // Live-Zeile vor dem Weg: beide gehören zu den Empfängern, die Zeile ist der Stand jetzt
-    const viaBlock = this._liveHtml(h.data.listeners) + (via ? this._viaHtml(via, start, end, range, Boolean(points.length && kind)) : "");
+    // Empfänger (seit 2.112.0, Mockup signal-layout-v1 A): Weg-Balken, Live-Werte und Anteil je Empfänger in einer Karte
+    const viaBlock = this._receiversHtml(via, h.data.listeners, start, end, range);
+    const listenersHint = h.data.listeners?.length ? note(t("sigLiveHint")) : "";
+    const viaNote = via ? `<p class="dlg-note sv-note">${escape(t("viaNote", this._fmtTime(via.since, true)))}</p>` : "";
     // Sensor, den der Recorder nicht aufzeichnet (seit 0.26.0): das Panel zeichnet selbst auf.
     const why = reason === "not_recorded" ? ` ${t("sigSrcNotRecorded")}` : "";
     if (!points.length || !kind) {
       // Aufzeichnung mit älteren Werten (z. B. seit Tagen ausgefallen): sagen, seit wann.
       const empty = why ? `${why.trim()} ${t("sigSrcSoon")}` : t("sigSrcLogEmpty");
       const text = bucket ? (first ? t("sigSrcLog", this._fmtTime(first, true)) + why : empty) : t("sigSrcNone");
-      return `<div class="avail"><p class="dlg-note">${escape(t("batNoData"))}</p></div>${note(text)}${viaBlock}`;
+      return `<div class="avail"><p class="dlg-note">${escape(t("batNoData"))}</p></div>${note(text)}${viaBlock}${viaNote}`;
     }
     const dbm = kind === "dbm";
     const med = points.map((p) => p[1]);
@@ -5503,9 +5505,8 @@ class DevicePanel extends HTMLElement {
       .join("");
     const sorted = [...med].sort((a, b) => a - b);
     const median = sorted[Math.floor(sorted.length / 2)];
-    const facts = t("sigFacts", fmt(median), fmt(Math.min(...lo)), fmt(Math.max(...hi)));
     const legend = bucket
-      ? `<div class="avail-legend"><span><i class="sg-med"></i>${escape(t("sigLegendMedian"))}</span><span><i class="sg-span"></i>${escape(t("sigLegendSpan"))}</span></div>`
+      ? `<span><i class="sg-med"></i>${escape(t("sigLegendMedian"))}</span><span><i class="sg-span"></i>${escape(t("sigLegendSpan"))}</span>`
       : "";
     // Der Recorder hatte im Zeitraum nichts: der Wert gilt seit seiner letzten Änderung.
     const held = steady ? ` ${t("histSteady", this._fmtTime(steady, true))}` : "";
@@ -5513,22 +5514,87 @@ class DevicePanel extends HTMLElement {
       source === "log"
         ? t("sigSrcLog", this._fmtTime(first ?? points[0][0], true)) + why
         : (source === "statistics" ? t("sigSrcStats") : range === "30d" ? t("sigSrcHistoryLong") : t("sigSrcHistory")) + held;
-    return `<div class="avail bh sg"><div class="avail-top"><span class="avail-pct sg-cur">${bars(sigLevel({ kind, value: cur }), current == null)}${escape(fmt(cur))}</span><span class="avail-facts">${escape(facts)}</span></div>
+    // Kennzahlen als Kacheln (seit 2.112.0): Jetzt (mit Stufe, Median der letzten 5 Minuten, Warnschwelle), Median, schlechtester, bester Wert
+    const level = sigLevel({ kind, value: cur });
+    const weakNow = showLimit && level === 1;
+    const tile = (label, value, cls = "") => `<div class="sg-tile ${cls}"><small>${escape(label)}</small><b>${value}</b></div>`;
+    const stats = `<div class="sg-stats">
+        <div class="sg-tile now${weakNow ? " weak" : ""}"><small>${escape(t("sigNow"))}${smoothed ? ` <u>${escape(t("sigAvg5"))}</u>` : ""}</small><b class="avail-pct sg-cur">${bars(level, current == null)}${escape(fmt(cur))}</b>${showLimit ? `<small class="lim">${escape(t("sigWeakLine", sigText({ kind, value: limit })))}</small>` : ""}</div>
+        <div class="sg-row3">${tile(t("sigMedian"), escape(fmt(median)))}${tile(t("sigWorst"), escape(fmt(Math.min(...lo))))}${tile(t("sigBest"), escape(fmt(Math.max(...hi))))}</div></div>`;
+    // Hinweise einmal, hinter dem Info-Knopf am Diagramm; im DOM immer da (Tests und Lesehilfen), nur eingeklappt
+    const info = `<div class="sg-info" data-sig-info${this._sigInfo ? "" : " hidden"}>${note(src)}${smoothed ? note(t("sigSmoothed")) : ""}${viaNote}${listenersHint}</div>`;
+    return `${stats}<div class="avail bh sg">
         <div class="bh-plot"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}${thr}
           ${band ? `<path class="sg-band" d="${band}"/>` : ""}<path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/></svg>${labels}</div>
-        <div class="avail-ticks bh-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>${legend}</div>
-      ${note(src)}${smoothed ? note(t("sigSmoothed")) : ""}${viaBlock}`;
+        <div class="avail-ticks bh-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>
+        <div class="avail-legend">${legend}<button type="button" class="sg-i" data-stat="sig-info" aria-expanded="${Boolean(this._sigInfo)}" title="${escape(t("sigInfo"))}" aria-label="${escape(t("sigInfo"))}">ⓘ</button></div></div>
+      ${info}${viaBlock}`;
   }
 
-  // Live-Zeile (seit 2.109.0): welche Bluetooth-Empfänger das Gerät gerade hören, mit RSSI und Alter ihrer letzten Meldung. Der Empfänger,
-  // dessen Wert als Empfang zählt, ist fett. Das Alter läuft nicht von selbst weiter: _liveTick holt die Zeile alle paar Sekunden neu.
-  _liveHtml(rows) {
-    if (!Array.isArray(rows) || !rows.length) return "";
+  // Karte "Empfänger" (seit 2.112.0, Mockup signal-layout-v1 A; vorher "Gerade gehört von" und "Verbunden über" getrennt): Balken des Wegs, je
+  // Empfänger eine Zeile mit Name, Marken ("zählt" = sein Wert ist der Empfang, "N dB schwächer" = lief längere Zeit deutlich schlechter als
+  // der Hauptempfänger), dem Stand jetzt (RSSI und Alter der letzten Meldung, alle paar Sekunden neu: _liveTick) sowie Anteil und Ø im Zeitraum;
+  // darunter die letzten Wechsel. Empfänger nur live (nicht im Weg) stehen grau am Ende, Empfänger nur im Weg zeigen "gerade nicht gehört".
+  _receiversHtml(via, listeners, start, end, range) {
     const t = (k, ...a) => this._t(k, ...a);
-    const items = rows
-      .map((r) => `<span class="${r.used ? "used" : ""}">${escape(r.name)} ${escape(sigText({ kind: "dbm", value: r.rssi }).replace(" ", "\u00a0"))} (${escape(t("sigLiveAgo", r.age))})</span>`)
-      .join(", ");
-    return `<p class="dlg-note sig-live" data-sig-live title="${escape(t("sigLiveHint"))}">${escape(t("sigLive"))}: ${items}</p>`;
+    const live = Array.isArray(listeners) ? listeners : [];
+    const hasVia = Boolean(via && end - start > 0 && via.segments?.length);
+    if (!hasVia && !live.length) return "";
+    const span = end - start;
+    const colour = (i) => VIA_COLORS[i % VIA_COLORS.length];
+    const receivers = hasVia ? via.receivers : [];
+    const name = (i) => receivers[i]?.name ?? "";
+    let bar = "";
+    let ticks = "";
+    if (hasVia) {
+      // Jeder Abschnitt steht an seiner Zeit (seit 2.49.0): was vor dem Beginn der Aufzeichnung liegt, bleibt links leer ("none"),
+      // damit "jetzt" auch bei einer jungen Aufzeichnung ganz rechts liegt und der Balken von rechts her wächst, nicht von links.
+      let cursor = start;
+      const blank = (to) => (to - cursor > span * 0.0005 ? `<i class="none" style="width:${(((to - cursor) / span) * 100).toFixed(3)}%"></i>` : "");
+      const parts = [];
+      for (const [a, b, i] of via.segments) {
+        parts.push(blank(a));
+        const width = (((b - a) / span) * 100).toFixed(3);
+        parts.push(i == null ? `<i class="gap" style="width:${width}%"></i>` : `<i style="width:${width}%;background:${colour(i)}" title="${escape(name(i))}"></i>`);
+        cursor = b;
+      }
+      parts.push(blank(end));
+      bar = parts.join("");
+      ticks = this._ticks(start, end, range)
+        .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
+        .join("");
+    }
+    // Hinweis auf einen weiter entfernten Empfänger (seit 2.50.0): lief der Empfang längere Zeit über einen Empfänger, der im Mittel
+    // deutlich schwächer war als der Hauptempfänger, erklärt das die Einbrüche im Verlauf. Beheben kann das Panel es nicht (Home Assistant wählt).
+    const rated = receivers.map((r, i) => ({ ...r, i })).filter((r) => r.avg != null);
+    const main = rated.reduce((best, r) => (!best || r.share > best.share ? r : best), null);
+    const far = new Map();
+    if (main) rated.filter((r) => r.i !== main.i && r.share >= VIA_FAR_SHARE && main.avg - r.avg >= VIA_FAR_DBM).sort((a, b) => b.share - a.share).slice(0, 2).forEach((r) => far.set(r.i, r));
+    const used = new Set();
+    const rowHtml = (dot, label, liveRow, shareHtml, extra = "") => {
+      const sub = liveRow
+        ? t("sigRowNow", sigText({ kind: "dbm", value: liveRow.rssi }), t("sigLiveAgo", liveRow.age))
+        : t("sigRecvIdle");
+      return `<div class="sv-row${liveRow ? "" : " off"}">${dot}<div class="sv-nm"><b>${escape(label)}</b>${liveRow?.used ? `<span class="sv-ok" title="${escape(t("sigLiveHint"))}">✓ ${escape(t("sigUsed"))}</span>` : ""}${extra}<small>${escape(sub)}</small></div>${shareHtml}</div>`;
+    };
+    let rows = "";
+    receivers.forEach((r, i) => {
+      const liveRow = live.find((l) => l.name === r.name);
+      if (liveRow) used.add(liveRow);
+      const f = far.get(i);
+      const warn = f ? `<span class="sv-far" title="${escape(t("viaFar", f.name, f.share, Math.round(f.avg), main.name, Math.round(main.avg), Math.round(main.avg - f.avg)))}">⚠ ${escape(t("sigWeaker", Math.round(main.avg - f.avg)))}</span>` : "";
+      const share = `<div class="sv-sh"><b>${escape(t("sigPct", r.share))}</b>${r.avg == null ? "" : `<small>${escape(t("sigAvgShort", Math.round(r.avg)))}</small>`}</div>`;
+      rows += rowHtml(`<i class="sv-dot" style="background:${colour(i)}"></i>`, r.name, liveRow, share, warn);
+    });
+    for (const l of live.filter((x) => !used.has(x))) rows += rowHtml(`<i class="sv-dot none"></i>`, l.name, l, `<div class="sv-sh"><b>–</b></div>`);
+    const dayOf = (at) => this._fmtTime(at, new Date(at * 1000).toDateString() !== new Date(end * 1000).toDateString());
+    const changes = hasVia
+      ? (via.changes || []).map(([at, from, to]) => `<p><span>${escape(dayOf(at))}</span><b>${escape(name(from))} → ${escape(name(to))}</b></p>`).join("")
+      : "";
+    const scope = hasVia ? `<small>${escape(t("sigScope", t("ranges")[range] || range))}</small>` : "";
+    return `<div class="sv sv-full"><div class="sv-top"><h3>${escape(t("sigReceivers"))}</h3>${scope}</div>${hasVia ? `<div class="sv-bar">${bar}</div>
+      <div class="avail-ticks sv-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>` : ""}
+      <div class="sv-leg" data-sig-live>${rows}</div>${changes ? `<div class="sv-chg"><h4>${escape(t("viaChanges"))}</h4>${changes}</div>` : ""}</div>`;
   }
 
   _liveTick() {
@@ -5549,55 +5615,6 @@ class DevicePanel extends HTMLElement {
         this._renderStat();
       })
       .catch(() => {});
-  }
-
-  // Weg des Bluetooth-Empfangs (seit 2.40.0): Balken mit Abschnitten je Empfänger (Lücke
-  // schraffiert), Legende mit Anteil und mittlerem Empfang, die letzten Wechsel. Die Farben
-  // folgen der Reihenfolge, in der die Empfänger zuerst auftraten; sie bleiben je Gerät stabil.
-  _viaHtml(via, start, end, range, aligned = true) {
-    const t = (k, ...a) => this._t(k, ...a);
-    const span = end - start;
-    if (!(span > 0) || !via.segments?.length) return "";
-    const colour = (i) => VIA_COLORS[i % VIA_COLORS.length];
-    const name = (i) => via.receivers[i]?.name ?? "";
-    // Jeder Abschnitt steht an seiner Zeit (seit 2.49.0): was vor dem Beginn der Aufzeichnung liegt, bleibt links leer ("none"),
-    // damit "jetzt" auch bei einer jungen Aufzeichnung ganz rechts liegt und der Balken von rechts her wächst, nicht von links.
-    let cursor = start;
-    const blank = (to) => (to - cursor > span * 0.0005 ? `<i class="none" style="width:${(((to - cursor) / span) * 100).toFixed(3)}%"></i>` : "");
-    const parts = [];
-    for (const [a, b, i] of via.segments) {
-      parts.push(blank(a));
-      const width = (((b - a) / span) * 100).toFixed(3);
-      parts.push(i == null ? `<i class="gap" style="width:${width}%"></i>` : `<i style="width:${width}%;background:${colour(i)}" title="${escape(name(i))}"></i>`);
-      cursor = b;
-    }
-    parts.push(blank(end));
-    const bar = parts.join("");
-    // Dieselben Zeitmarken wie im Verlauf darüber: Balken und Diagramm liegen auf gleicher Breite (seit 2.49.0), das Auge fährt senkrecht
-    const ticks = this._ticks(start, end, range)
-      .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
-      .join("");
-    const legend = via.receivers
-      .map((r, i) => `<div><i class="sv-dot" style="background:${colour(i)}"></i><b>${escape(r.name)}</b><span>${escape(t("viaShare", r.share, r.avg == null ? null : Math.round(r.avg)))}</span></div>`)
-      .join("");
-    // Hinweis auf einen weiter entfernten Empfänger (seit 2.50.0): lief der Empfang längere Zeit über einen Empfänger, der im Mittel
-    // deutlich schwächer war als der Hauptempfänger, erklärt das die Einbrüche im Verlauf. Beheben kann das Panel es nicht (Home Assistant wählt).
-    const rated = via.receivers.map((r, i) => ({ ...r, i })).filter((r) => r.avg != null);
-    const main = rated.reduce((best, r) => (!best || r.share > best.share ? r : best), null);
-    const far = main
-      ? rated.filter((r) => r.i !== main.i && r.share >= VIA_FAR_SHARE && main.avg - r.avg >= VIA_FAR_DBM).sort((a, b) => b.share - a.share).slice(0, 2)
-      : [];
-    const farHtml = far
-      .map((r) => `<p class="sv-far">${escape(t("viaFar", r.name, r.share, Math.round(r.avg), main.name, Math.round(main.avg), Math.round(main.avg - r.avg)))}</p>`)
-      .join("");
-    const dayOf = (at) => this._fmtTime(at, new Date(at * 1000).toDateString() !== new Date(end * 1000).toDateString());
-    const changes = (via.changes || [])
-      .map(([at, from, to]) => `<p><span>${escape(dayOf(at))}</span><b>${escape(name(from))} → ${escape(name(to))}</b></p>`)
-      .join("");
-    return `<div class="sv${aligned ? "" : " sv-full"}"><h3>${escape(t("viaTitle"))}</h3><div class="sv-bar">${bar}</div>
-      <div class="avail-ticks sv-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>
-      <div class="sv-leg">${legend}</div>${farHtml}${changes ? `<div class="sv-chg"><h4>${escape(t("viaChanges"))}</h4>${changes}</div>` : ""}
-      <p class="sv-note">${escape(t("viaNote", this._fmtTime(via.since, true)))}</p></div>`;
   }
 
   _daysHtml(days) {
@@ -5635,6 +5652,11 @@ class DevicePanel extends HTMLElement {
     const btn = ev.target.closest("[data-stat]");
     if (!btn) return;
     if (btn.dataset.stat === "close") this._closeStat();
+    else if (btn.dataset.stat === "sig-info") {
+      // Hinweise zum Empfang ein- und ausklappen (seit 2.112.0)
+      this._sigInfo = !this._sigInfo;
+      this._renderStat();
+    }
     else if (btn.dataset.stat === "range" && btn.dataset.range !== this._statRange) {
       this._statRange = btn.dataset.range;
       this._renderStat();
@@ -6830,7 +6852,7 @@ class DevicePanel extends HTMLElement {
             ? `<span class="opt-input${bad.has(conn) ? " bad" : ""}"><input type="number"${kind === "lqi" ? ' inputmode="numeric"' : ""} step="1" min="${min}" max="${max}" data-sig="${escape(id)}" value="${escape(own ?? "")}" placeholder="${escape(stdText)}" aria-label="${escape(`${aria} (${t("devSigLow")})`)}"><span class="unit">${kind === "lqi" ? "LQI" : "dBm"}</span></span>`
             : "";
         const origin = `<div class="opt-origin"><span class="origin ${mode !== "default" ? "own" : "std"}">${escape(t(mode !== "default" ? "originOwn" : "originStandard"))}</span>${mode !== "default" ? `<span>${escape(t("originDefaultWould", stdText))}</span>` : ""}</div>`;
-        const info = g ? t("sigRowInfo", g.devices, kind === "lqi") : t("sigRowNone");
+        const info = g ? t("sigRowInfo", g.devices, kind === "lqi") : t("sigRecvIdle");
         return `<div class="opt bat-row sig-row${changed ? " changed" : ""}${bad.has(conn) ? " invalid" : ""}"><div class="opt-line"><span class="opt-label">${escape(label)}</span><span class="bat-ctl">${select}${input}</span></div>
           <div class="opt-short">${escape(info)}</div>
           <div class="opt-error" data-sig-error="${escape(id)}" ${bad.has(conn) ? "" : "hidden"}>${bad.has(conn) ? escape(t("settingsRange", min, max)) : ""}</div>${origin}</div>`;

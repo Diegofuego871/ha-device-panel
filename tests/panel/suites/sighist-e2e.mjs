@@ -15,13 +15,13 @@ const TEXT = {
     title: "Empfang", ranges: ["24 Std.", "7 Tage", "30 Tage"], weak: "Schwach unter LQI 60", weakOwn: "Schwach unter -85 dBm", log: "Vom Panel aufgezeichnet, seit ",
     notRec: "Der Recorder zeichnet den Sensor nicht auf (in seiner Konfiguration ausgeschlossen), deshalb zeichnet ihn das Panel selbst auf.", soon: "Erste Werte nach wenigen Minuten.", steady: "Wert unverändert seit ",
     hist: "Aus dem Verlauf des Recorders (Sensor des Geräts).", stats: "Aus dem Recorder (Langzeitstatistik", empty: "Das Panel zeichnet den Empfang", none: "Für den Empfang dieses Geräts",
-    facts: /^Median LQI \d+ · schlechtester LQI \d+ · bester LQI \d+$/, legend: "Median|Spanne schlechtester bis bester Wert", noData: "Keine Daten für diesen Zeitraum.",
+    facts: /^MedianLQI \d+\|SchlechtesterLQI \d+\|BesterLQI \d+$/, legend: "Median|Spanne schlechtester bis bester Wert", noData: "Keine Daten für diesen Zeitraum.",
   },
   en: {
     title: "Signal", ranges: ["24 h", "7 days", "30 days"], weak: "Weak below LQI 60", weakOwn: "Weak below -85 dBm", log: "Recorded by the panel since ",
     notRec: "The recorder does not record the sensor (excluded in its configuration), so the panel records it itself.", soon: "First values after a few minutes.", steady: "Value unchanged since ",
     hist: "From the recorder history (sensor of the device).", stats: "From the recorder (long-term statistics", empty: "The panel records the signal", none: "There is no history for the signal",
-    facts: /^Median LQI \d+ · worst LQI \d+ · best LQI \d+$/, legend: "Median|Range from worst to best value", noData: "No data for this period.",
+    facts: /^MedianLQI \d+\|WorstLQI \d+\|BestLQI \d+$/, legend: "Median|Range from worst to best value", noData: "No data for this period.",
   },
 };
 
@@ -80,7 +80,8 @@ for (const lang of ["de", "en"]) {
     const ranges = await ev(`return [...r.querySelectorAll('dialog.stat-dlg [data-stat="range"]')].map(x=>x.textContent)`);
     check(`[${tag}] drei Zeiträume`, JSON.stringify(ranges) === JSON.stringify(T.ranges), JSON.stringify(ranges));
     check(`[${tag}] aktueller Wert mit Balken`, (await text("dialog.stat-dlg .sg-cur")) === "LQI 61" && (await ev(`return !!r.querySelector("dialog.stat-dlg .sg-cur svg")`)));
-    check(`[${tag}] Median, schlechtester, bester`, T.facts.test(await text("dialog.stat-dlg .avail-facts")), await text("dialog.stat-dlg .avail-facts"));
+    const tiles = () => ev(`return [...r.querySelectorAll("dialog.stat-dlg .sg-row3 .sg-tile")].map((x) => x.textContent.replace(/\\s+/g, " ").trim()).join("|")`);
+    check(`[${tag}] Median, schlechtester, bester`, T.facts.test(await tiles()), await tiles());
     check(`[${tag}] Spanne als Fläche, Legende`, (await ev(`return !!r.querySelector("dialog.stat-dlg path.sg-band")`)) && (await ev(`return [...r.querySelectorAll("dialog.stat-dlg .avail-legend span")].map(x=>x.textContent).join("|")`)) === T.legend);
     check(`[${tag}] Lücke vor 6 Std. unterbricht die Linie`, (await ev(`return (r.querySelector("dialog.stat-dlg path.bh-line").getAttribute("d").match(/M/g) || []).length`)) === 2);
     check(`[${tag}] Schwelle Standard`, (await text("dialog.stat-dlg .bh-thr-l")) === T.weak && (await ev(`return [...r.querySelectorAll("dialog.stat-dlg .bh-y")].map(x=>x.textContent).join("|")`)) === "255|128|0");
@@ -93,7 +94,7 @@ for (const lang of ["de", "en"]) {
     await ev(`r.host._fetch(true)`);
     await wait(`return r.host._devices.find(d=>d.id==="f")?.signal_setting === -85`);
     check(`[${tag}] WLAN-Gerät öffnet`, await openSignal("f"));
-    check(`[${tag}] Verlauf als Treppe, ohne Spanne`, (await ev(`return / H/.test(r.querySelector("dialog.stat-dlg path.bh-line").getAttribute("d")) && !r.querySelector("dialog.stat-dlg path.sg-band") && !r.querySelector("dialog.stat-dlg .avail-legend")`)));
+    check(`[${tag}] Verlauf als Treppe, ohne Spanne`, (await ev(`return / H/.test(r.querySelector("dialog.stat-dlg path.bh-line").getAttribute("d")) && !r.querySelector("dialog.stat-dlg path.sg-band") && !r.querySelector("dialog.stat-dlg .avail-legend .sg-med")`)));
     check(`[${tag}] Achse dBm, eigene Schwelle`, (await ev(`return [...r.querySelectorAll("dialog.stat-dlg .bh-y")].map(x=>x.textContent).join("|")`)).endsWith("|-100") && (await text("dialog.stat-dlg .bh-thr-l")) === T.weakOwn, await text("dialog.stat-dlg .bh-thr-l"));
     check(`[${tag}] Quelle: Verlauf des Recorders`, (await text("dialog.stat-dlg .bh-src")) === T.hist, await text("dialog.stat-dlg .bh-src"));
     await range("30d");

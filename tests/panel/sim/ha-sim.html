@@ -276,7 +276,7 @@
   let listenerCalls = 0;
   function listenersFor(d) {
     if (d.connection !== "ble") return [];
-    const rows = window.__listeners || [{ name: "Shelly Garage", rssi: -76, age: 8, used: true }, { name: "Storen Küche", rssi: -97, age: 3, used: false }];
+    const rows = window.__listeners || [{ name: "Storen Büro", rssi: -76, age: 8, used: true }, { name: "Küche", rssi: -97, age: 3, used: false }];
     return rows.map((r) => ({ ...r, age: r.age + 5 * listenerCalls }));
   }
   // Weg des Bluetooth-Empfangs wie SignalLog.via_summary: Abschnitte [von, bis, Nr. | null], Empfänger mit Anteil und Ø, Wechsel (neueste zuerst).

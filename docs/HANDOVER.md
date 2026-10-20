@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.112.0, Empfangsfenster neu geordnet, Mockup signal-layout-v1 A)
+
+- Entscheid des Nutzers: Variante A, "Letzte Wechsel" dauerhaft sichtbar (nicht eingeklappt). `_signalHistHtml`: Kacheln (`.sg-stats`: Jetzt mit `.lim` Schwelle/`weak`, Median/Schlechtester/Bester), Diagramm, Legende mit Info-Knopf (`data-stat="sig-info"`, Zustand `_sigInfo`; Hinweise in `.sg-info[hidden]`, immer im DOM: Quelle `.bh-src`, Median, `.sv-note`, Live-Hinweis). `_receiversHtml` ersetzt `_liveHtml`/`_viaHtml`: Balken + je Empfänger `.sv-row` (Marke `.sv-ok` "zählt", `.sv-far` "N dB schwächer" mit Tooltip aus `viaFar`, Stand jetzt aus `listeners`, Anteil/Ø), nur live gehörte Empfänger grau am Ende (`.sv-dot.none`), `.sv-chg`. Der Balken ist nicht mehr auf die Breite des Diagramms ausgerichtet (eigene Karte). Abgleich Live-Zeile und Weg über den Namen (beide ohne Adresse).
+- Vorsicht Texte: `sigRowNone` gab es schon (andere Bedeutung, Einstellungen); neu `sigRecvIdle`. README-Printscreens zum Empfangsfenster (`docs/screenshots`) zeigen noch das alte Layout und sind nicht neu aufgenommen.
+
 ## Stand (2.111.0, Glättung von "Empfang schwach")
 
 - Entscheid des Nutzers (nach Rückfrage): "schwach" und der Wert in Liste/Popup/KI am Median der letzten 5 Minuten statt am Einzelwert. `SignalLog.steady` (`_recent`: Rohwerte der letzten 300 s, nur im Speicher, ab 3 Messungen, Rest wie bisher; Lücke/Art-Wechsel/forget setzen zurück), `devices.signal_source(smooth=True)` (Standard) legt `value` = Median und `live` = Einzelwert; `signal_history.sample` liest `smooth=False` (sonst glättete die Aufzeichnung doppelt). Wirkt nur bei Geräten mit eigener Aufzeichnung (BLE, ZHA, nicht aufgezeichnete Sensoren). `signal_history` meldet `smoothed`, das Fenster zeigt den Hinweis `sigSmoothed`. Die Live-Zeile bleibt roh.

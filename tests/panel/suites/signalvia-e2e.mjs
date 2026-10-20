@@ -10,11 +10,11 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
-    title: "Verbunden über", changes: "Wechsel", now: "jetzt",
+    title: "Empfänger", changes: "Wechsel", now: "jetzt",
     share: /^\d+ % · Ø -\d+ dBm$/, note: "Vom Panel aufgezeichnet, seit ", noteEnd: "Lücken (schraffiert): Gerät nicht empfangen.",
   },
   en: {
-    title: "Connected via", changes: "Changes", now: "now",
+    title: "Receivers", changes: "Changes", now: "now",
     share: /^\d+% · avg -\d+ dBm$/, note: "Recorded by the panel since ", noteEnd: "Gaps (hatched): device not received.",
   },
 };
@@ -57,8 +57,8 @@ for (const lang of ["de", "en"]) {
       title: v.querySelector("h3").textContent, segs: segs.length, gaps: segs.filter(i=>i.classList.contains("gap")).length,
       width: segs.reduce((a,i)=>a+parseFloat(i.style.width),0), colors: new Set(segs.filter(i=>!i.classList.contains("gap")).map(i=>i.style.background)).size,
       axis: [...v.querySelectorAll(".sv-ticks span")].map(x=>x.textContent).join("|"), chartAxis: [...r.querySelectorAll("dialog.stat-dlg .bh-ticks span")].map(x=>x.textContent).join("|"),
-      edges: (() => { const b=v.querySelector(".sv-bar").getBoundingClientRect(), p=r.querySelector("dialog.stat-dlg .bh-plot")?.getBoundingClientRect(); if (!p) return null; return [Math.round((b.left-p.left)*10)/10, Math.round((b.right-p.right)*10)/10]; })(), legend: [...v.querySelectorAll(".sv-leg div")].map(d=>[d.querySelector("b").textContent, d.querySelector("span").textContent]),
-      dots: [...v.querySelectorAll(".sv-dot")].map(d=>d.style.background).join(), changes: v.querySelector(".sv-chg h4")?.textContent || null, rows: [...v.querySelectorAll(".sv-chg p")].map(x=>x.textContent.replace(/\\s+/g," ")), note: v.querySelector(".sv-note").textContent };`);
+      edges: (() => { const bb=v.querySelector(".sv-bar"); if (!bb) return null; const b=bb.getBoundingClientRect(), p=r.querySelector("dialog.stat-dlg .bh-plot")?.getBoundingClientRect(); if (!p) return null; return [Math.round((b.left-p.left)*10)/10, Math.round((b.right-p.right)*10)/10]; })(), legend: [...v.querySelectorAll(".sv-leg .sv-row")].map(d=>[d.querySelector(".sv-nm b").textContent, d.querySelector(".sv-sh b").textContent + " · " + d.querySelector(".sv-sh small").textContent]),
+      dots: [...v.querySelectorAll(".sv-row .sv-dot")].map(d=>d.style.background).join(), changes: v.querySelector(".sv-chg h4")?.textContent || null, rows: [...v.querySelectorAll(".sv-chg p")].map(x=>x.textContent.replace(/\\s+/g," ")), note: r.querySelector("dialog.stat-dlg .sv-note").textContent };`);
 
     // Bluetooth-Gerät: Weg im Fenster "Empfang"
     check(`[${tag}] Fenster "Empfang" des Bluetooth-Geräts öffnet`, await openSignal("a"));
@@ -91,7 +91,7 @@ for (const lang of ["de", "en"]) {
     // Bluetooth ohne aufgezeichneten Weg (zum Beispiel direkt nach dem Update): kein leerer Kasten
     await p.evaluate(() => { window.__viaOff = true; });
     check(`[${tag}] Bluetooth ohne Weg öffnet`, await openSignal("a"));
-    check(`[${tag}] ohne Weg: kein Abschnitt`, (await via()) === null);
+    check(`[${tag}] ohne Weg: nur die Live-Zeilen der Empfänger, kein Balken`, await ev(`return !!r.querySelector("dialog.stat-dlg .sv") && !r.querySelector("dialog.stat-dlg .sv .sv-bar") && r.querySelectorAll("dialog.stat-dlg .sv .sv-row").length === 2`));
     await p.evaluate(() => { window.__viaOff = false; });
 
     // Mit Verlauf darüber (Gerät online): der Balken liegt auf der Breite des Diagramms, gleiche Zeitmarken (seit 2.49.0)
@@ -99,23 +99,23 @@ for (const lang of ["de", "en"]) {
     for (const rg of ["24h", "7d", "30d"]) {
       check(`[${tag}] online, ${rg}: Fenster mit Verlauf und Weg`, (rg === "24h" ? await openSignal("a") : await range(rg)) && (await wait(`return !!r.querySelector("dialog.stat-dlg .bh-plot") && !!r.querySelector("dialog.stat-dlg .sv")`)));
       const al = await via();
-      check(`[${tag}] ${rg}: Balken auf der Breite des Diagramms (±1 px), gleiche Zeitmarken`, al && Math.abs(al.edges[0]) <= 1 && Math.abs(al.edges[1]) <= 1 && al.axis === al.chartAxis, JSON.stringify([al?.edges, al?.axis, al?.chartAxis]));
+      check(`[${tag}] ${rg}: eigene Karte "Empfänger" unter dem Diagramm (Balken über die ganze Karte), gleiche Zeitmarken`, al && al.edges !== null && al.axis === al.chartAxis && (await ev(`return !!r.querySelector("dialog.stat-dlg .sv.sv-full")`)), JSON.stringify([al?.axis, al?.chartAxis]));
       if (rg === "24h") await p.screenshot({ path: `${outDir}/signalvia-aligned-${tag.replace("/", "-")}.png` });
     }
 
     // Junge Aufzeichnung (seit 2.49.0): der Balken beginnt erst bei ihrem Beginn, davor bleibt es links leer, "jetzt" liegt rechts
     const young = await ev(`const h = r.host; const start = 1000, end = 2000;
-      const html = h._viaHtml({ receivers: [{ name: "A", share: 70, avg: -70 }, { name: "B", share: 30, avg: -80 }], segments: [[1600, 1800, 0], [1800, 2000, 1]], changes: [], since: 1600 }, start, end, "24h");
+      const html = h._receiversHtml({ receivers: [{ name: "A", share: 70, avg: -70 }, { name: "B", share: 30, avg: -80 }], segments: [[1600, 1800, 0], [1800, 2000, 1]], changes: [], since: 1600 }, [], start, end, "24h");
       const box = document.createElement("div"); box.innerHTML = html;
       const items = [...box.querySelectorAll(".sv-bar i")];
       return { classes: items.map((i) => i.className), widths: items.map((i) => parseFloat(i.style.width)), ticks: box.querySelectorAll(".sv-ticks span").length > 0 };`);
     check(`[${tag}] junge Aufzeichnung: links leer (60 %), dann zwei Abschnitte bis rechts, zusammen 100 %`, young.classes[0] === "none" && Math.abs(young.widths[0] - 60) < 0.1 && young.classes.length === 3 && Math.abs(young.widths.reduce((x, y) => x + y, 0) - 100) < 0.1, JSON.stringify(young));
-    const withGap = await ev(`const html = r.host._viaHtml({ receivers: [{ name: "A", share: 100, avg: -70 }], segments: [[1100, 1300, 0], [1300, 1500, null], [1500, 1900, 0]], changes: [], since: 1100 }, 1000, 2000, "24h");
+    const withGap = await ev(`const html = r.host._receiversHtml({ receivers: [{ name: "A", share: 100, avg: -70 }], segments: [[1100, 1300, 0], [1300, 1500, null], [1500, 1900, 0]], changes: [], since: 1100 }, [], 1000, 2000, "24h");
       const box = document.createElement("div"); box.innerHTML = html; return [...box.querySelectorAll(".sv-bar i")].map((i) => i.className + ":" + parseFloat(i.style.width)).join("|");`);
     check(`[${tag}] Abschnitte an ihrer Zeit: Anfang leer, Lücke schraffiert, Ende leer`, withGap === "none:10|:20|gap:20|:40|none:10", withGap);
 
     // Hinweis auf einen weiter entfernten Empfänger (seit 2.50.0)
-    const far = await ev(`const f = (rec) => { const box = document.createElement("div"); box.innerHTML = r.host._viaHtml({ receivers: rec, segments: [[1000, 2000, 0]], changes: [], since: 1000 }, 1000, 2000, "24h"); return [...box.querySelectorAll(".sv-far")].map((x) => x.textContent.trim()); };
+    const far = await ev(`const f = (rec) => { const box = document.createElement("div"); box.innerHTML = r.host._receiversHtml({ receivers: rec, segments: [[1000, 2000, 0]], changes: [], since: 1000 }, [], 1000, 2000, "24h"); return [...box.querySelectorAll(".sv-far")].map((x) => x.title.trim()); };
       return { yes: f([{ name: "Shelly Eingang EG Aussen", share: 87, avg: -77 }, { name: "Storen Küche", share: 13, avg: -97 }]), shortTime: f([{ name: "A", share: 95, avg: -77 }, { name: "B", share: 5, avg: -97 }]), small: f([{ name: "A", share: 60, avg: -77 }, { name: "B", share: 40, avg: -85 }]), noAvg: f([{ name: "A", share: 60, avg: null }, { name: "B", share: 40, avg: -97 }]), two: f([{ name: "A", share: 50, avg: -70 }, { name: "B", share: 30, avg: -90 }, { name: "C", share: 20, avg: -95 }]) };`);
     check(`[${tag}] Hinweis: weiter entfernter Empfänger (13 %, 20 dBm schwächer) wird genannt`, far.yes.length === 1 && far.yes[0].includes("Storen Küche") && far.yes[0].includes("Shelly Eingang EG Aussen") && far.yes[0].includes("13") && far.yes[0].includes("-97") && far.yes[0].includes("20"), JSON.stringify(far.yes));
     check(`[${tag}] Hinweis: nicht bei unter 10 % der Zeit, unter 10 dBm Unterschied oder ohne Mittelwert`, far.shortTime.length === 0 && far.small.length === 0 && far.noAvg.length === 0, JSON.stringify([far.shortTime, far.small, far.noAvg]));

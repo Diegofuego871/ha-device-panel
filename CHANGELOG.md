@@ -7,6 +7,23 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.112.0] - 2026-10-20
+
+The reception window is tidier: key figures as tiles, one card "Receivers", all notes behind one info button.
+
+### Changed
+
+- **Reception window (mockup `signal-layout-v1`, variant A):** before, seven blocks of text and three charts stood on top of each other, with the key numbers buried in running text. Now:
+  - **Tiles on top:** "Now" (with signal level, "avg 5 min" and the warning threshold; the threshold turns yellow when the device is weak) and below it "Median", "Worst" and "Best" of the period.
+  - **Chart** as before, with the legend and an **ⓘ button**: it unfolds the notes once (source of the recording, "value and warning are the median of the last 5 minutes", gaps, "the earlier path cannot be reconstructed", explanation of the live values). Before, every section had its own note.
+  - **One card "Receivers"** replaces "Currently heard by" and "Connected via": the path bar with times, then one row per receiver with its name, the mark **"✓ counts"** (its value is the signal), the current value and age of its latest report ("now -76 dBm · 8 s ago", renewed every 5 seconds), its share and average in the period, and the mark **"⚠ 21 dB weaker"** for a receiver that carried the signal for a longer time much weaker than the main receiver (details as tooltip; replaces the long text box). Receivers that are heard right now but were not on the path in the period are listed in grey at the end; receivers without a fresh report say "not heard right now".
+  - **Recent changes** stay visible below the receivers.
+- Nothing was dropped: all values, notes and hints are still there, only grouped.
+
+### Internal
+
+- `_signalHistHtml` (tiles, info panel), new `_receiversHtml` replaces `_liveHtml` and `_viaHtml`; strings `sigNow`, `sigAvg5`, `sigMedian`, `sigWorst`, `sigBest`, `sigInfo`, `sigReceivers`, `sigScope`, `sigPct`, `sigUsed`, `sigWeaker`, `sigAvgShort`, `sigRowNow`, `sigRecvIdle` (removed: `sigFacts`, `sigLive`). Tests: suites `signallive` (rewritten), `signalvia`, `sighist` adapted.
+
 ## [2.111.0] - 2026-10-20
 
 "Weak reception" and the reception value are based on the median of the last minutes instead of the single report.
@@ -4232,6 +4249,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.112.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.112.0
 [2.111.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.111.0
 [2.109.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.109.0
 [2.108.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.108.0
