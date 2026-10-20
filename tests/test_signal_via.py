@@ -148,7 +148,7 @@ async def test_sample_records_the_receiver_of_bluetooth_devices(hass: HomeAssist
     values: dict[str, Any] = {sensor.id: -72, wifi.id: -60}
     receivers: dict[str, Any] = {sensor.id: BUERO}
 
-    def fake_source(_hass, device, _entries, _domains):
+    def fake_source(_hass, device, _entries, _domains, smooth=True):
         # Beide aus der eigenen Aufzeichnung ("ble"); nur das Bluetooth-Gerät hat einen Empfänger
         return {"kind": "dbm", "value": values[device.id]}, None, "ble"
 

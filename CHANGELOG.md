@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.111.0] - 2026-10-20
+
+"Weak reception" and the reception value are based on the median of the last minutes instead of the single report.
+
+### Changed
+
+- **Reception (Bluetooth, ZHA and sensors the recorder does not log):** a single report swings by 10 dB and more (fading, several receivers, a proxy that only listens now and then). Judged on the single value, a device at the threshold (default -80 dBm) flipped between "weak" and "not weak" all the time, and "Weak reception" warnings appeared and disappeared without anything having changed. The **value in the list, the "weak" decision, the filter chip, the sorting, the warning reason and the AI facts** now use the **median of the last 5 minutes** (measurements of the panel's own recording plus the current value; from three measurements on, before that the single value). A real change shows after a few minutes, a single outlier no longer does. The reception window says so under the chart ("The current value and the "weak" warning are based on the median of the last 5 minutes"); the live line shows the single values of the receivers as before. The recorded history stays unchanged (it records the single values).
+- Not affected: Wi-Fi and other devices whose reception comes from a sensor of the recorder (their value is steady anyway).
+
+### Internal
+
+- `SignalLog.steady` (window `STEADY_WINDOW_S` 300 s, `STEADY_MIN` 3), `devices.signal_source(…, smooth=True)`; the recording reads the single value (`smooth=False`). The result of `signal_history` has `smoothed`. Tests: `tests/test_signal_history.py`, suite `signallive`.
+
 ## [2.110.0] - 2026-10-20
 
 The app launcher always shows all apps.
@@ -18,6 +31,8 @@ The app launcher always shows all apps.
 ### Internal
 
 - `_listHtml` in `apps.js` without limit, `ui.all`, handler `all`, `.ap-more` and the strings `appsAll`/`appsLess` removed. Tests: `launcher` (all 12 tiles, no button), `launchercol`.
+
+Not released; included in 2.111.0.
 
 ## [2.109.0] - 2026-10-20
 
@@ -35,7 +50,6 @@ The reception window of a Bluetooth device shows live which receivers hear it ri
 
 - `devices._ble_seen` (all receivers with age and RSSI), `_ble_pick` (the choice), new `ble_listeners`; WebSocket `device_panel/signal_listeners` (live line only, no history) and field `listeners` in `device_panel/signal_history`. Tests: `tests/test_ble_best.py`, `tests/test_signal_history.py`, new suite `signallive`.
 
-Not released; included in 2.110.0.
 
 ## [2.108.0] - 2026-10-20
 
@@ -4218,7 +4232,8 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.110.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.110.0
+[2.111.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.111.0
+[2.109.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.109.0
 [2.108.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.108.0
 [2.107.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.107.0
 [2.106.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.1

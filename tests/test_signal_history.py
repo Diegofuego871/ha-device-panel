@@ -110,7 +110,7 @@ async def test_logs_only_online_devices_without_sensor(hass: HomeAssistant, hass
     # Wie ZHA: Wert direkt aus der Integration, kein Sensor.
     values = {stick.id: -72, lamp.id: None}
 
-    def fake_source(_hass, device, _entries, _domains):
+    def fake_source(_hass, device, _entries, _domains, smooth=True):
         value = values.get(device.id)
         return ({"kind": "dbm", "value": value} if value is not None else None), None, ("zha" if value is not None else None)
 
@@ -268,3 +268,69 @@ async def test_listeners_websocket(hass: HomeAssistant, hass_ws_client, monkeypa
     assert (await _ws(client, 1, type=f"{DOMAIN}/signal_listeners", device_id=dev.id))["result"] == {"listeners": rows}
     assert (await _ws(client, 2, type=f"{DOMAIN}/signal_history", device_id=dev.id))["result"]["listeners"] == rows
     assert (await _ws(client, 3, type=f"{DOMAIN}/signal_listeners", device_id="weg"))["error"]["code"] == "not_found"
+
+
+# --- Glättung (2.111.0): Median der letzten Minuten statt Einzelwert ---------------------------------------------
+
+
+def test_steady_median_of_recent_measurements(hass: HomeAssistant) -> None:
+    log = SignalLog(hass)
+    t0 = 1_800_000_000.0
+    sig = lambda v: {"kind": "dbm", "value": v}  # noqa: E731
+    # Zu wenige Messungen: der Einzelwert gilt
+    log.record("a", "dbm", -75, t0)
+    log.record("a", "dbm", -76, t0 + 60)
+    assert log.steady("a", sig(-97), t0 + 90) == sig(-97)
+    # Ab drei Messungen: Median aus den Messungen und dem aktuellen Wert, der Einzelwert bleibt als "live"
+    log.record("a", "dbm", -74, t0 + 120)
+    assert log.steady("a", sig(-97), t0 + 150) == {"kind": "dbm", "value": -76, "live": -97}  # Median von -75, -76, -74, -97 = -75.5
+    # Entspricht der Median dem Wert: unverändert (kein "live")
+    assert log.steady("a", sig(-75), t0 + 150) == sig(-75)
+    # Ein einzelner Ausreisser nach unten macht ein Gerät nicht schwach (Schwelle -80)
+    assert log.steady("a", sig(-100), t0 + 150)["value"] > -80
+    # Anhaltend schwach: nach ein paar Minuten gilt es
+    for minute in range(3, 8):
+        log.record("a", "dbm", -95, t0 + minute * 60)
+    assert log.steady("a", sig(-96), t0 + 7 * 60 + 30)["value"] <= -90
+    # Die Messungen verfallen nach 5 Minuten; danach wieder der Einzelwert
+    assert log.steady("a", sig(-60), t0 + 3600) == sig(-60)
+
+
+def test_steady_resets_on_gap_kind_change_and_forget(hass: HomeAssistant) -> None:
+    log = SignalLog(hass)
+    t0 = 1_800_000_000.0
+    for minute in range(4):
+        log.record("a", "dbm", -70, t0 + minute * 60)
+    assert log.steady("a", {"kind": "dbm", "value": -95}, t0 + 200)["value"] == -70
+    # Andere Art: keine Mischung von dBm und LQI
+    assert log.steady("a", {"kind": "lqi", "value": 30}, t0 + 200) == {"kind": "lqi", "value": 30}
+    # Lücke (ausgefallen, nicht empfangen): die Glättung beginnt danach neu
+    log.note_gap("a", t0 + 210)
+    assert log.steady("a", {"kind": "dbm", "value": -95}, t0 + 220) == {"kind": "dbm", "value": -95}
+    for minute in range(4):
+        log.record("a", "dbm", -70, t0 + 300 + minute * 60)
+    log.forget("a")
+    assert log.steady("a", {"kind": "dbm", "value": -95}, t0 + 600) == {"kind": "dbm", "value": -95}
+
+
+async def test_signal_source_smooths_list_but_log_reads_raw(hass: HomeAssistant, hass_ws_client, monkeypatch) -> None:
+    from custom_components.device_panel import devices
+
+    await _setup(hass)
+    source = MockConfigEntry(domain="test")
+    source.add_to_hass(hass)
+    dev = dr.async_get(hass).async_get_or_create(config_entry_id=source.entry_id, identifiers={("test", "ble")}, name="Sensor")
+    monkeypatch.setattr(devices, "_ble_signal", lambda _hass, _addr: ({"kind": "dbm", "value": -97}, "Storen Küche"))
+    dr.async_get(hass).async_update_device(dev.id, merge_connections={(dr.CONNECTION_BLUETOOTH, "AA:BB:CC:DD:EE:FF")})
+    dev = dr.async_get(hass).async_get_device(identifiers={("test", "ble")})
+    log: SignalLog = hass.data[DATA_SIGNAL]
+    now = time.time()
+    for minute in range(4):
+        log.record(dev.id, "dbm", -74, now - 240 + minute * 60)
+    smooth, _via, src = devices.signal_source(hass, dev, [], {"test"})
+    raw, _via, _src = devices.signal_source(hass, dev, [], {"test"}, smooth=False)
+    assert src == "ble" and raw == {"kind": "dbm", "value": -97}
+    assert smooth["value"] == -74 and smooth["live"] == -97
+    client = await hass_ws_client(hass)
+    res = (await _ws(client, 1, type=f"{DOMAIN}/signal_history", device_id=dev.id))["result"]
+    assert res["current"] == -74 and res["smoothed"] is True

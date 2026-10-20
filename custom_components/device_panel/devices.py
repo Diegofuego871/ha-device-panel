@@ -54,6 +54,7 @@ from .const import (
     CONF_HIDE_CONNECTIONS,
     CONNECTION_MANUAL,
     DATA_BLE_BEST,
+    DATA_SIGNAL,
     DATA_BLE_STAMPS,
     DATA_CONNECTION_OVERRIDES,
     CONF_FLAKY_OUTAGES,
@@ -270,13 +271,15 @@ def signal_sensor(hass: HomeAssistant, entries: list[er.RegistryEntry]) -> tuple
 
 
 def signal_source(
-    hass: HomeAssistant, device: dr.DeviceEntry, entries: list[er.RegistryEntry], domains: list[str] | set[str]
+    hass: HomeAssistant, device: dr.DeviceEntry, entries: list[er.RegistryEntry], domains: list[str] | set[str], smooth: bool = True
 ) -> tuple[dict[str, Any] | None, str | None, str | None]:
     """
     (Empfang, Empfänger, Quelle) wie in der Liste: ZHA vor dem Sensor,
     Bluetooth (seit 2.41.2) vor dem Sensor des Geräts. Quelle ist die Entität
     des Sensors oder "zha" bzw. "ble" (Wert direkt aus der Integration, ohne
     Verlauf im Recorder; signal_history zeichnet ihn selbst auf).
+    Mit smooth (seit 2.111.0) gilt für Geräte mit eigener Aufzeichnung der Median der letzten Minuten statt des Einzelwerts
+    (SignalLog.steady); die Aufzeichnung selbst liest den Rohwert (smooth=False), sonst glättete sie doppelt.
     """
     signal, source = _signal_entity(hass, entries)
     via = None
@@ -290,6 +293,8 @@ def signal_source(
         live, via = _ble_signal(hass, ble)
         if live:
             signal, source = live, "ble"
+    if smooth and signal and signal.get("value") is not None and (log := hass.data.get(DATA_SIGNAL)) is not None:
+        signal = log.steady(device.id, signal)
     return signal, via, source
 
 

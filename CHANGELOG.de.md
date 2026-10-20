@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.111.0] - 2026-10-20
+
+"Empfang schwach" und der Empfangswert beruhen auf dem Median der letzten Minuten statt auf der einzelnen Meldung.
+
+### Geändert
+
+- **Empfang (Bluetooth, ZHA und Sensoren, die der Recorder nicht aufzeichnet):** Eine einzelne Meldung schwankt um 10 dB und mehr (Fading, mehrere Empfänger, ein Proxy, der nur zeitweise hört). Am Einzelwert gemessen wechselte ein Gerät an der Schwelle (Standard -80 dBm) ständig zwischen "schwach" und "nicht schwach", und Warnungen "Empfang schwach" erschienen und verschwanden, ohne dass sich etwas geändert hatte. Der **Wert in der Liste, die Entscheidung "schwach", der Filter-Chip, die Sortierung, der Grund der Warnung und die KI-Fakten** nutzen jetzt den **Median der letzten 5 Minuten** (Messungen der eigenen Aufzeichnung plus der aktuelle Wert; ab drei Messungen, vorher der Einzelwert). Eine echte Veränderung zeigt sich nach wenigen Minuten, ein einzelner Ausreisser nicht mehr. Das Empfangsfenster sagt es unter dem Diagramm ("Der aktuelle Wert und die Warnung "schwach" beruhen auf dem Median der letzten 5 Minuten"); die Live-Zeile zeigt die Einzelwerte der Empfänger wie bisher. Der aufgezeichnete Verlauf bleibt unverändert (er hält die Einzelwerte fest).
+- Nicht betroffen: WLAN und andere Geräte, deren Empfang aus einem Sensor des Recorders kommt (ihr Wert ist ohnehin ruhig).
+
+### Intern
+
+- `SignalLog.steady` (Fenster `STEADY_WINDOW_S` 300 s, `STEADY_MIN` 3), `devices.signal_source(…, smooth=True)`; die Aufzeichnung liest den Einzelwert (`smooth=False`). Das Ergebnis von `signal_history` hat `smoothed`. Tests: `tests/test_signal_history.py`, Suite `signallive`.
+
 ## [2.110.0] - 2026-10-20
 
 Der App-Launcher zeigt immer alle Apps.
@@ -18,6 +31,8 @@ Der App-Launcher zeigt immer alle Apps.
 ### Intern
 
 - `_listHtml` in `apps.js` ohne Grenze, `ui.all`, Handler `all`, `.ap-more` und die Texte `appsAll`/`appsLess` entfernt. Tests: `launcher` (alle 12 Kacheln, kein Knopf), `launchercol`.
+
+Nicht veröffentlicht; enthalten in 2.111.0.
 
 ## [2.109.0] - 2026-10-20
 
@@ -35,7 +50,6 @@ Das Empfangsfenster eines Bluetooth-Geräts zeigt live, welche Empfänger es ger
 
 - `devices._ble_seen` (alle Empfänger mit Alter und RSSI), `_ble_pick` (die Wahl), neu `ble_listeners`; WebSocket `device_panel/signal_listeners` (nur die Live-Zeile, ohne Verlauf) und Feld `listeners` in `device_panel/signal_history`. Tests: `tests/test_ble_best.py`, `tests/test_signal_history.py`, neue Suite `signallive`.
 
-Nicht veröffentlicht; enthalten in 2.110.0.
 
 ## [2.108.0] - 2026-10-20
 
@@ -4319,7 +4333,8 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.110.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.110.0
+[2.111.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.111.0
+[2.109.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.109.0
 [2.108.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.108.0
 [2.107.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.107.0
 [2.106.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.106.1

@@ -5434,7 +5434,7 @@ class DevicePanel extends HTMLElement {
     const key = this._histKey(range);
     if (!h || h.key !== key || (!h.data && h.loading)) return `<div class="avail"><p class="dlg-note">${escape(t("loadingDetail"))}</p></div>`;
     if (!h.data) return `<div class="dlg-error">${escape(t("error"))} ${escape(h.error || "")}</div>`;
-    const { start, end, points = [], kind, source, bucket, first, current, reason, steady_since: steady, via } = h.data;
+    const { start, end, points = [], kind, source, bucket, first, current, reason, steady_since: steady, via, smoothed } = h.data;
     const note = (text) => `<p class="dlg-note bh-src">${escape(text)}</p>`;
     // Live-Zeile vor dem Weg: beide gehören zu den Empfängern, die Zeile ist der Stand jetzt
     const viaBlock = this._liveHtml(h.data.listeners) + (via ? this._viaHtml(via, start, end, range, Boolean(points.length && kind)) : "");
@@ -5517,7 +5517,7 @@ class DevicePanel extends HTMLElement {
         <div class="bh-plot"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}${thr}
           ${band ? `<path class="sg-band" d="${band}"/>` : ""}<path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/></svg>${labels}</div>
         <div class="avail-ticks bh-ticks">${ticks}<span class="now-label">${escape(t("now"))}</span></div>${legend}</div>
-      ${note(src)}${viaBlock}`;
+      ${note(src)}${smoothed ? note(t("sigSmoothed")) : ""}${viaBlock}`;
   }
 
   // Live-Zeile (seit 2.109.0): welche Bluetooth-Empfänger das Gerät gerade hören, mit RSSI und Alter ihrer letzten Meldung. Der Empfänger,

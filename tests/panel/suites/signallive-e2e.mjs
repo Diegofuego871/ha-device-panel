@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { head: "Gerade gehört von:", ago: (s) => `vor ${s} s`, agoMin: "vor 2 Min." },
-  en: { head: "Currently heard by:", ago: (s) => `${s} s ago`, agoMin: "2 min ago" },
+  de: { median: "Median der letzten 5 Minuten", head: "Gerade gehört von:", ago: (s) => `vor ${s} s`, agoMin: "vor 2 Min." },
+  en: { median: "median of the last 5 minutes", head: "Currently heard by:", ago: (s) => `${s} s ago`, agoMin: "2 min ago" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -56,6 +56,11 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] nichts läuft über den Rand`, await ev(`const d=r.querySelector("dialog.stat-dlg .dlg-body"); return d.scrollWidth <= d.clientWidth + 1`));
     await p.screenshot({ path: `${outDir}/signallive-${tag.replace("/", "-")}.png` });
 
+    // Online (mit Verlauf im Diagramm): der Hinweis zur Glättung gehört zum Diagramm; offline gibt es keinen aktuellen Wert
+    await p.evaluate(() => { const d = window.__devices.find((x) => x.id === "a"); d.online = true; d.offline_since = null; d.since_at_least = false; });
+    check(`[${tag}] online: Fenster "Empfang" mit Diagramm`, await openSignal("a") && await wait(`return !!r.querySelector("dialog.stat-dlg .bh-plot")`));
+    check(`[${tag}] Hinweis: aktueller Wert und "schwach" beruhen auf dem Median der letzten 5 Minuten`, await ev(`return [...r.querySelectorAll("dialog.stat-dlg .bh-src")].some((n) => n.textContent.includes(${JSON.stringify(T.median)}))`));
+
     // Läuft weiter: nach einem Takt (5 s) ist das Alter um 5 Sekunden gewachsen
     check(`[${tag}] Alter läuft weiter (alle 5 s neu geholt)`, await wait(`return r.querySelector("dialog.stat-dlg [data-sig-live]")?.textContent.includes(${JSON.stringify(T.ago(13))})`, 9000));
 
@@ -71,6 +76,7 @@ for (const lang of ["de", "en"]) {
     // Zigbee: keine Live-Zeile
     check(`[${tag}] Zigbee-Gerät öffnet`, await openSignal("e"));
     check(`[${tag}] Zigbee: keine Live-Zeile`, (await live()) === null);
+    check(`[${tag}] Zigbee ohne Glättung: kein Hinweis auf den Median`, await ev(`return ![...r.querySelectorAll("dialog.stat-dlg .bh-src")].some((n) => n.textContent.includes(${JSON.stringify(T.median)}))`));
 
     // Fenster zu: der Takt hört auf
     await tap('dialog.stat-dlg [data-stat="close"]');

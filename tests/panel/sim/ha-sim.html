@@ -337,7 +337,7 @@
         const spread = kind === "dbm" ? 3 + (seed % 4) : 10 + (seed % 15);
         points.push([t + bucket / 2, med, clamp(med - spread), clamp(med + Math.round(spread / 2))]);
       }
-      return { ...base, source: points.length ? "log" : "none", bucket, points, first, via: d.connection === "ble" && !window.__viaOff ? viaFor(range, start, end, points) : null, listeners: listenersFor(d) };
+      return { ...base, source: points.length ? "log" : "none", bucket, points, first, via: d.connection === "ble" && !window.__viaOff ? viaFor(range, start, end, points) : null, listeners: listenersFor(d), smoothed: d.connection === "ble" };
     }
     const stats = range === "30d";
     const points = [];

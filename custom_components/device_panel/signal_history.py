@@ -62,6 +62,11 @@ VIA_KEEP = 31 * 86400
 VIA_CHANGES_MAX = 6
 # Quellen, die nur das Panel aufzeichnet.
 LOGGED = ("zha", "ble")
+# Glättung (seit 2.111.0): "schwach" und die Anzeige in Liste und Popup richten sich nach dem Median der letzten Minuten, nicht nach dem
+# Einzelwert. Der Empfang eines Funkgeräts schwankt von Meldung zu Meldung um 10 dB und mehr (Fading, mehrere Empfänger); am Einzelwert
+# wechselte ein Gerät an der Schwelle ständig zwischen schwach und nicht schwach. Erst ab STEADY_MIN Messungen im Fenster, sonst der Einzelwert.
+STEADY_WINDOW_S = 300
+STEADY_MIN = 3
 # Plausible Werte; alles andere ist ein Messfehler (z. B. 0 dBm, 127 dBm).
 DBM_RANGE = (-130.0, -1.0)
 LQI_RANGE = (0.0, 255.0)
@@ -124,6 +129,8 @@ class SignalLog:
         # Weg des Bluetooth-Empfangs: Wechsel pro Gerät [Zeit, Quelle|None] und die Anzeigenamen der Quellen
         self._via: dict[str, list[list[Any]]] = {}
         self._via_names: dict[str, str] = {}
+        # Rohwerte der letzten Minuten je Gerät [(Zeit, Wert)] für die Glättung; nur im Arbeitsspeicher
+        self._recent: dict[str, list[tuple[float, float]]] = {}
         self._unsub_tick: CALLBACK_TYPE | None = None
         self._unsub_started: CALLBACK_TYPE | None = None
 
@@ -223,7 +230,7 @@ class SignalLog:
                 wrote = self.note_gap(device.id, now) or wrote
                 continue
             domains = {e.domain for eid in device_entry_ids(device) if (e := self.hass.config_entries.async_get_entry(eid))}
-            signal, _via, source = signal_source(self.hass, device, entries, domains)
+            signal, _via, source = signal_source(self.hass, device, entries, domains, smooth=False)
             # Der Weg gilt für jedes Bluetooth-Gerät, auch wenn sein Empfang aus einem Sensor (Recorder) kommt; ohne Adresse ist er None und ohne Folgen
             wrote = self.note_via(device.id, ble_receiver(self.hass, device), now) or wrote
             if not signal or signal.get("value") is None:
@@ -243,6 +250,9 @@ class SignalLog:
             # Andere Art (z. B. Gerät neu angelernt): alter Verlauf passt nicht mehr.
             self.forget(dev)
         self._kind[dev] = kind
+        recent = [x for x in self._recent.get(dev, []) if now - x[0] <= STEADY_WINDOW_S]
+        recent.append((now, value))
+        self._recent[dev] = recent
         start = now - (now % BLOCK_SECONDS)
         current = self._open.get(dev)
         if current is not None and current[0] != start:
@@ -252,6 +262,20 @@ class SignalLog:
             current = [start, []]
             self._open[dev] = current
         current[1].append(value)
+
+    def steady(self, dev: str, signal: dict[str, Any], now: float | None = None) -> dict[str, Any]:
+        """
+        Empfang mit dem Median der letzten STEADY_WINDOW_S Sekunden (die Messungen der Aufzeichnung plus der aktuelle Wert); "live" trägt dann
+        den Einzelwert. Der Wert bleibt unverändert, wenn es zu wenige Messungen gibt, die Art nicht passt oder der Median dem Wert gleicht.
+        """
+        now = now if now is not None else time.time()
+        recent = [v for t, v in self._recent.get(dev, []) if now - t <= STEADY_WINDOW_S]
+        if len(recent) < STEADY_MIN or self._kind.get(dev) != signal.get("kind"):
+            return signal
+        value = round(statistics.median([*recent, float(signal["value"])]))
+        if value == signal["value"]:
+            return signal
+        return {**signal, "value": value, "live": signal["value"]}
 
     def note_via(self, dev: str, receiver: tuple[str, str] | None, now: float) -> bool:
         """Über welchen Empfänger das Gerät jetzt gemeldet wird; nur ein Wechsel wird gespeichert. True, wenn sich etwas änderte."""
@@ -268,6 +292,8 @@ class SignalLog:
 
     def note_gap(self, dev: str, now: float) -> bool:
         """Das Gerät wird nicht gemeldet (ausgefallen, nicht empfangen): Lücke im Weg, nur wenn es einen Weg gibt."""
+        # Ein Gerät ohne Empfang hat keinen "jüngsten Wert": die Glättung beginnt danach neu
+        self._recent.pop(dev, None)
         events = self._via.get(dev)
         if events and events[-1][1] is not None:
             events.append([round(now), None])
@@ -332,7 +358,7 @@ class SignalLog:
             self._kind.pop(dev)
 
     def forget(self, dev: str) -> None:
-        for store in (self._kind, self._blocks, self._hours, self._open, self._open_hour, self._via):
+        for store in (self._kind, self._blocks, self._hours, self._open, self._open_hour, self._via, self._recent):
             store.pop(dev, None)
 
     # -- Abfragen --------------------------------------------------------------
@@ -465,6 +491,8 @@ async def _signal_points(hass: HomeAssistant, log: SignalLog | None, device: dr.
     result: dict[str, Any] = {
         "kind": signal["kind"] if signal else None,
         "current": signal.get("value") if signal else None,
+        # Der aktuelle Wert ist der Median der letzten Minuten (SignalLog.steady), nicht der Einzelwert
+        "smoothed": bool(signal and "live" in signal),
         "source": "none",
         "entity_id": None,
         "start": start,

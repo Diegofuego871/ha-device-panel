@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.111.0, Glättung von "Empfang schwach")
+
+- Entscheid des Nutzers (nach Rückfrage): "schwach" und der Wert in Liste/Popup/KI am Median der letzten 5 Minuten statt am Einzelwert. `SignalLog.steady` (`_recent`: Rohwerte der letzten 300 s, nur im Speicher, ab 3 Messungen, Rest wie bisher; Lücke/Art-Wechsel/forget setzen zurück), `devices.signal_source(smooth=True)` (Standard) legt `value` = Median und `live` = Einzelwert; `signal_history.sample` liest `smooth=False` (sonst glättete die Aufzeichnung doppelt). Wirkt nur bei Geräten mit eigener Aufzeichnung (BLE, ZHA, nicht aufgezeichnete Sensoren). `signal_history` meldet `smoothed`, das Fenster zeigt den Hinweis `sigSmoothed`. Die Live-Zeile bleibt roh.
+- Tag-Lage: v2.109.0 ist getaggt (Commit c5d99b8); 2.110.0 (Launcher ohne "Alle") blieb ungetaggt und gilt als übersprungen.
+
 ## Stand (2.110.0, Launcher ohne "Alle"/"Weniger")
 
 - Wunsch des Nutzers: kein Umschalter, immer alle Apps, bei mehr scrollt das Fenster (`dialog.apps-dlg` hat `overflow:auto` und `max-height`). `ui.all`, Handler `all`, `.ap-more`, Texte `appsAll`/`appsLess` entfernt. 2.109.0 hatte noch keinen Tag und gilt als übersprungen (CHANGELOG: "Nicht veröffentlicht").
