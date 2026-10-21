@@ -1206,6 +1206,7 @@ export const STRINGS = {
     logCat_push: "Push",
     logCat_updates: "Updates",
     logCat_new: "Neu",
+    logCat_launcher: "Apps",
     logCat_system: "System",
     logCat_magic: "Magic Push",
     // Magic Push (seit 2.6.0): Reiter im Geräte-Popup, Liste und Assistent in fünf Schritten
@@ -3402,6 +3403,7 @@ export const STRINGS = {
     logCat_push: "Push",
     logCat_updates: "Updates",
     logCat_new: "New",
+    logCat_launcher: "Apps",
     logCat_system: "System",
     logCat_magic: "Magic Push",
     // Magic Push (since 2.6.0): tab in the device popup, list and a five-step wizard

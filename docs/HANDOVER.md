@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.115.0, Aktion: Fortschritt und Log)
+
+- Wunsch des Nutzers: beim Tipp Kreis mit Pfeilen bis der Befehl fertig ist, dann grüner Haken oder Rand, Ergebnis ins Log des Panels. `AppLauncher.runState[id]` ("running"/"ok"/"err", `_setRun`, 3 s), Symbol über `_icon` (Pfeile = `mdi("reset")` in `.ap-spin`), Klassen `run-*` an Kachel, Zeile, Symbol und Kopfzeilen-Knopf. Log: WS `device_panel/log_launcher_action` → `activity.record(…, "launcher", "launcher_run_ok|failed")`, Kategorie "Apps" (`logCat_launcher`) im Filter des Logs. Hinweis: Die Release Notes nennen kein HACS-Beispiel mehr (Wunsch des Nutzers); Beispiel jetzt `cover.open_cover`.
+
 ## Stand (2.114.0, Aktion: Dienst oder Befehl)
 
 - Wunsch des Nutzers: die Aktion soll auch das können, was der Knopf "Nach Updates suchen" früher bei HACS tat (Befehl `hacs/repository/refresh` der Oberfläche), ohne dass der Code HACS kennt. `homeassistant.update_entity` auf der HACS-Entität lädt nur HACS' bereits geladenen Stand neu (geprüft in `hacs/update.py`: kein `async_update`); einen öffentlichen HACS-Dienst zum Nachladen gibt es nach meiner Prüfung nicht. Die Repository-ID trägt der Benutzer von Hand ein (Zahl in der Adresse der HACS-Seite; die Gleichheit mit der `id` aus `hacs/repositories/list` ist nicht an echtem HACS geprüft).

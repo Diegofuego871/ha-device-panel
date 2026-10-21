@@ -679,7 +679,13 @@
         if (window.__wsFail === "text") throw new Error("Speicher voll");
         if (window.__wsFail === "hang") return new Promise(() => {});
       }
+      if (msg.type === "device_panel/log_launcher_action") {
+        (window.__launcherLog = window.__launcherLog || []).push({ name: msg.name, target: msg.target, ok: msg.ok, error: msg.error });
+        return null;
+      }
       if (msg.type === "call_service") {
+        // __serviceDelay (ms): der Aufruf dauert, damit der laufende Zustand sichtbar ist
+        if (window.__serviceDelay) await new Promise((r) => setTimeout(r, window.__serviceDelay));
         window.__services.push({ domain: msg.domain, service: msg.service, data: msg.service_data });
         if (window.__serviceFails) throw new Error(window.__serviceFails);
         const ha = document.querySelector("home-assistant").hass;

@@ -1977,6 +1977,15 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-ico.sm { width: 34px; height: 34px; }
 /* Eigene Apps ohne Favicon: Kreis in der Hauptfarbe, weisses Symbol (Apps von HA und des Panels tragen ihre Farbe als Stil) */
 .ap-ico.own { background: var(--dp-primary); color: #fff; }
+/* Aktion (seit 2.115.0): läuft (Pfeile drehen sich), fertig (grüner Haken, grüner Rand), fehlgeschlagen (rot) */
+.ap-spin { display: inline-flex; animation: ap-spin 0.9s linear infinite; }
+@keyframes ap-spin { to { transform: rotate(360deg); } }
+.ap-ico.run-ok, .rtall-btn.app-pin.run-ok { background: var(--dp-success); color: #fff; }
+.ap-ico.run-err, .rtall-btn.app-pin.run-err { background: var(--dp-error); color: #fff; }
+.ap-tile.run-ok, .ap-row.run-ok, .rtall-btn.app-pin.run-ok { box-shadow: inset 0 0 0 2px var(--dp-success); }
+.ap-tile.run-err, .ap-row.run-err, .rtall-btn.app-pin.run-err { box-shadow: inset 0 0 0 2px var(--dp-error); }
+.ap-tile.run-ok, .ap-tile.run-err, .ap-row.run-ok, .ap-row.run-err { border-radius: 14px; }
+@media (prefers-reduced-motion: reduce) { .ap-spin { animation-duration: 3s; } }
 .ap-a.dis { opacity: .35; cursor: default; }
 /* Pille "Debug" / "Störung" an der Kachel: oben in der Mitte, über dem Symbol (das Polster oben ist dafür 18 px; bei 7 px links überlappte sie das Symbol) */
 .ap-badge { position: absolute; top: 3px; left: 50%; transform: translateX(-50%); padding: 0 6px; border-radius: 99px; background: var(--dp-warning-soft); color: var(--dp-warning); font-size: 9.5px; line-height: 14px; font-weight: 600; white-space: nowrap; }

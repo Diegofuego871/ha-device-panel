@@ -1210,6 +1210,29 @@ async def _ws_fetch_favicon(hass: HomeAssistant, connection: websocket_api.Activ
     connection.send_result(msg["id"], {"icon": icon})
 
 
+_ACTION_TARGET = vol.All(str, vol.Match(r"^([a-z0-9_]+\.[a-z0-9_]+|[a-z0-9_]+(/[a-z0-9_]+)+)$"), vol.Length(max=80))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/log_launcher_action",
+        vol.Required("name"): vol.All(str, vol.Length(max=80)),
+        vol.Required("target"): _ACTION_TARGET,
+        vol.Required("ok"): bool,
+        vol.Optional("error", default=""): vol.All(str, vol.Length(max=300)),
+    }
+)
+@websocket_api.require_admin
+@callback
+def _ws_log_launcher_action(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
+    """Ergebnis einer Aktion im App-Launcher ins Log des Panels schreiben (seit 2.115.0): ausgeführt oder fehlgeschlagen mit Grund."""
+    if msg["ok"]:
+        activity.record(hass, "info", "launcher", "launcher_run_ok", msg["name"], None, target=msg["target"])
+    else:
+        activity.record(hass, "warning", "launcher", "launcher_run_failed", msg["name"], None, target=msg["target"], error=msg["error"] or "?")
+    connection.send_result(msg["id"])
+
+
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/clear_log"})
 @websocket_api.require_admin
 @callback
@@ -1255,3 +1278,4 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_get_log)
     websocket_api.async_register_command(hass, _ws_set_log)
     websocket_api.async_register_command(hass, _ws_clear_log)
+    websocket_api.async_register_command(hass, _ws_log_launcher_action)

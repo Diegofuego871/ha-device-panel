@@ -8,9 +8,9 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { btn: "Log", title: "Log", levels: ["Alle", "Info", "Warnung", "Fehler"], levelsDebug: ["Alle", "Debug", "Info", "Warnung", "Fehler"], cats: ["Alle", "Laden", "Ausfall", "Batterie", "Push", "Magic Push", "Routinen", "Updates", "Neu", "System"], today: "Heute", yesterday: "Gestern",
+  de: { btn: "Log", title: "Log", levels: ["Alle", "Info", "Warnung", "Fehler"], levelsDebug: ["Alle", "Debug", "Info", "Warnung", "Fehler"], cats: ["Alle", "Laden", "Ausfall", "Batterie", "Push", "Magic Push", "Routinen", "Updates", "Neu", "Apps", "System"], today: "Heute", yesterday: "Gestern",
     none: "Keine Einträge für diesen Filter.", empty: "Noch keine Einträge.", clearAsk: "Log leeren?", count: "10 Einträge", countShown: "10 Einträge, 2 gezeigt", debug: "Debug-Einträge aufzeichnen", copied: "Kopiert", sub: "Letzte 500 Einträge", err: "Log konnte nicht geladen werden:" },
-  en: { btn: "Log", title: "Log", levels: ["All", "Info", "Warning", "Error"], levelsDebug: ["All", "Debug", "Info", "Warning", "Error"], cats: ["All", "Charging", "Outage", "Battery", "Push", "Magic Push", "Routines", "Updates", "New", "System"], today: "Today", yesterday: "Yesterday",
+  en: { btn: "Log", title: "Log", levels: ["All", "Info", "Warning", "Error"], levelsDebug: ["All", "Debug", "Info", "Warning", "Error"], cats: ["All", "Charging", "Outage", "Battery", "Push", "Magic Push", "Routines", "Updates", "New", "Apps", "System"], today: "Today", yesterday: "Yesterday",
     none: "No entries for this filter.", empty: "No entries yet.", clearAsk: "Clear the log?", count: "10 entries", countShown: "10 entries, 2 shown", debug: "Record debug entries", copied: "Copied", sub: "Last 500 entries", err: "Could not load the log:" },
 };
 for (const lang of ["de", "en"]) for (const mobile of [false, true]) {

@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.115.0] - 2026-10-21
+
+Aktionen zeigen ihren Fortschritt und schreiben das Ergebnis ins Log.
+
+### Hinzugefügt
+
+- **Fortschrittsanzeige:** Solange eine Aktion läuft, wird ihr Symbol zu einem **Kreis mit drehenden Pfeilen** (im Launcher als Kachel oder Zeile und in der Kopfzeile, wenn sie ein Favorit ist). Ist der Dienst oder Befehl fertig, zeigt sich drei Sekunden lang ein **grüner Haken mit grünem Rand**, bei einem Fehler ein **rotes Kreuz mit rotem Rand**. Danach ist das gewohnte Symbol wieder da. Während sie läuft, bewirkt ein zweiter Tipp nichts. Ist im System "Bewegung reduzieren" eingestellt, drehen sich die Pfeile langsam.
+- **Eintrag im Log des Panels:** Jeder Lauf steht im Log (Kategorie "Apps"): "Aktion ausgeführt: `cover.open_cover`" als Information oder "Aktion fehlgeschlagen: `cover.open_cover`: Grund" als Warnung, mit dem Namen der App. Der Filter "Apps" im Log zeigt nur diese.
+
+### Intern
+
+- WebSocket `device_panel/log_launcher_action` (Administratoren; Name, Ziel als Dienst oder Befehl, Ergebnis, Fehler bis 300 Zeichen), Texte `launcher_run_ok` und `launcher_run_failed` in `activity.py`; `AppLauncher._setRun`/`runState`, CSS `.run-running|ok|err`. Tests: `test_activity.py`, Suite `launcheract` (Zustände, Log-Einträge), Simulator `__serviceDelay`.
+
 ## [2.114.0] - 2026-10-21
 
 Aktionen können auch einen Befehl der Oberfläche (WebSocket) senden, zum Beispiel damit HACS nach einer neuen Version sucht.
@@ -4398,6 +4411,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.115.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.115.0
 [2.114.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.114.0
 [2.113.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.113.0
 [2.112.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.112.0

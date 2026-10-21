@@ -3350,7 +3350,7 @@ class DevicePanel extends HTMLElement {
     if (log.debug || log.entries.some((e) => e.level === "debug")) levels.push(["debug", t("logLevel_debug"), count((e) => e.level === "debug" && inCat(e) && inText(e))]);
     for (const l of ["info", "warning", "error"]) levels.push([l, t(`logLevel_${l}`), count((e) => e.level === l && inCat(e) && inText(e))]);
     const cats = [["all", t("logAll"), count((e) => inLevel(e) && inText(e))]];
-    for (const c of ["charge", "outage", "battery", "push", "magic", "routine", "updates", "new", "system"]) cats.push([c, t(`logCat_${c}`), count((e) => e.cat === c && inLevel(e) && inText(e))]);
+    for (const c of ["charge", "outage", "battery", "push", "magic", "routine", "updates", "new", "launcher", "system"]) cats.push([c, t(`logCat_${c}`), count((e) => e.cat === c && inLevel(e) && inText(e))]);
     const dot = (l) => (l === "all" ? "" : `<span class="lg-dot ${l}"></span>`);
     const chip = (attr, [id, label, n], on) =>
       `<button type="button" class="chip${on === id ? " on" : ""}" ${attr}="${id}" aria-pressed="${on === id}">${dot(id)}<span>${escape(label)}</span><span class="n">${n}</span></button>`;

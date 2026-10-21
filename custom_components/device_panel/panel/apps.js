@@ -430,8 +430,24 @@ export class AppLauncher {
     else this._exec(a);
   }
 
+  // Zustand der Aktion für die Anzeige: "running" (Pfeile drehen sich), danach "ok" (grüner Haken und Rand) oder "err" (rot), nach 3 Sekunden wieder normal
+  _setRun(id, state) {
+    this.runState = this.runState || {};
+    window.clearTimeout(this._runTimers?.[id]);
+    this._runTimers = this._runTimers || {};
+    if (state) {
+      this.runState[id] = state;
+      if (state !== "running") this._runTimers[id] = window.setTimeout(() => this._setRun(id, null), 3000);
+    } else delete this.runState[id];
+    if (this.dlg?.open) this.render();
+    this.renderBar();
+  }
+
   async _exec(a) {
+    if (this.runState?.[a.id] === "running") return;
+    this._setRun(a.id, "running");
     let text;
+    let error = "";
     try {
       if (isCommand(a.svc.service)) {
         // Befehl der Oberfläche (WebSocket) mit den Rechten des Benutzers; "type" und "id" setzt der Befehl selbst
@@ -442,8 +458,12 @@ export class AppLauncher {
       }
       text = this.t("appsRunDone", a.name);
     } catch (err) {
-      text = this.t("appsRunFail", a.name, err?.message || err?.code || String(err));
+      error = String(err?.message || err?.code || err);
+      text = this.t("appsRunFail", a.name, error);
     }
+    this._setRun(a.id, error ? "err" : "ok");
+    // Ergebnis im Log des Panels festhalten (Antwort unwichtig: fehlt der Befehl, bleibt die Anzeige)
+    this.host._hass?.callWS({ type: "device_panel/log_launcher_action", name: a.name, target: a.svc.service, ok: !error, error: error.slice(0, 300) }).catch(() => {});
     // Das Fenster zeigt die Rückmeldung selbst (der Toast der Seite läge darunter); aus der Kopfzeile (Fenster zu) der Toast der Seite
     if (this.dlg?.open) this.snack(text);
     else this.host._toast(text);
@@ -525,7 +545,8 @@ export class AppLauncher {
         const label = escape(dot ? `${a.name} · ${this._dotWhy(a.id, dot)}` : a.name);
         const icon = this._icon(a, 22);
         // "gear-btn": der angeheftete Knopf der Einstellungen (seit 2.88.0 kein fester Knopf mehr; Tests und Stile kennen ihn so)
-        const cls = `rtall-btn app-pin${a.id === "settings" ? " gear-btn" : ""}${dot ? ` has-dot dot-${dot}` : ""}`;
+        const rs = this.runState?.[a.id];
+        const cls = `rtall-btn app-pin${a.id === "settings" ? " gear-btn" : ""}${dot ? ` has-dot dot-${dot}` : ""}${rs ? ` run-${rs}` : ""}`;
         return a.ext
           ? `<a class="${cls}" href="${escape(a.url)}" target="_blank" rel="noopener noreferrer" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</a>`
           : `<button type="button" class="${cls}" data-app-pin="${escape(a.id)}" title="${label}" aria-label="${label}">${icon}</button>`;
@@ -541,6 +562,9 @@ export class AppLauncher {
   // Symbol der App: das Favicon (eigene App mit externem Link), sonst das gewählte Symbol
   _icon(a, size) {
     const { escape, mdi } = this.h;
+    // Aktion läuft / fertig / fehlgeschlagen (seit 2.115.0): Kreis mit Pfeilen (dreht sich), grüner Haken, rotes Kreuz
+    const rs = this.runState?.[a.id];
+    if (rs) return rs === "running" ? `<span class="ap-spin">${mdi("reset", size)}</span>` : mdi(rs === "ok" ? "check" : "close", size);
     if (a.favicon) return `<img class="ap-fi" src="${escape(a.favicon)}" width="${size}" height="${size}" alt="" draggable="false">`;
     // Apps von HA: das Symbol von HA selbst (HA_LOOK), sonst das gewählte oder eigene Symbol
     if (a.look) return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="${a.look.p}"/></svg>`;
@@ -552,7 +576,8 @@ export class AppLauncher {
   _ico(a, size, sm = false) {
     const style = a.color && !a.favicon ? ` style="background:${a.color};color:#fff"` : "";
     const own = !a.color && !a.favicon ? " own" : "";
-    return `<span class="ap-ico${sm ? " sm" : ""}${own}"${style}>${this._icon(a, size)}</span>`;
+    const rs = this.runState?.[a.id];
+    return `<span class="ap-ico${sm ? " sm" : ""}${own}${rs ? ` run-${rs}` : ""}"${style}>${this._icon(a, size)}</span>`;
   }
 
   // Knopf oder Verweis einer App: externe Links sind <a> (neuer Tab, kein Zugriff auf das Panel), alles andere <button>
@@ -629,14 +654,16 @@ export class AppLauncher {
   _tile(a) {
     const { escape, mdi } = this.h;
     const pin = this.data.fav.includes(a.id);
-    return `<div class="ap-tile${pin ? " pin" : ""}">${this._main(a, "ap-main", `${this._ico(a, 22)}<span class="ap-nm">${escape(a.name)}</span>`)}
+    const rs = this.runState?.[a.id];
+    return `<div class="ap-tile${pin ? " pin" : ""}${rs ? ` run-${rs}` : ""}">${this._main(a, "ap-main", `${this._ico(a, 22)}<span class="ap-nm">${escape(a.name)}</span>`)}
       ${this._badge(a)}${a.ext ? `<span class="ap-ext" title="${escape(this.t("appsExtMark"))}">${mdi("link", 12)}</span>` : a.svc ? `<span class="ap-ext" title="${escape(this.t("appsActMark"))}">${mdi("bolt", 12)}</span>` : ""}</div>`;
   }
 
   _row(a) {
     const { escape, mdi } = this.h;
     const inner = `${this._ico(a, 20, true)}<span class="ap-t"><b>${escape(a.name)}${this._badge(a)}</b></span>${a.ext ? `<span class="ap-ext in" title="${escape(this.t("appsExtMark"))}">${mdi("link", 14)}</span>` : a.svc ? `<span class="ap-ext in" title="${escape(this.t("appsActMark"))}">${mdi("bolt", 14)}</span>` : ""}`;
-    return `<div class="ap-row">${this._main(a, "ap-main row", inner)}</div>`;
+    const rs = this.runState?.[a.id];
+    return `<div class="ap-row${rs ? ` run-${rs}` : ""}">${this._main(a, "ap-main row", inner)}</div>`;
   }
 
   _groupTitle(g) {

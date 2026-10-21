@@ -253,3 +253,28 @@ async def test_limits_by_setting(hass: HomeAssistant) -> None:
     assert len(activity.snapshot(hass)["entries"]) == 100
     activity.clear(hass)
     assert activity.usage(hass) == {"bytes": 0, "entries": 0}
+
+
+async def test_launcher_action_result_is_logged(hass: HomeAssistant, hass_ws_client, hass_admin_user) -> None:
+    """App-Launcher (2.115.0): das Ergebnis einer Aktion steht im Log (ausgeführt als Info, fehlgeschlagen als Warnung mit Grund)."""
+    from homeassistant.auth.const import GROUP_ID_USER  # noqa: PLC0415
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/log_launcher_action", "name": "Garage öffnen", "target": "cover.open_cover", "ok": True})
+    assert (await client.receive_json())["success"] is True
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/log_launcher_action", "name": "Neu laden", "target": "some/command", "ok": False, "error": "Speicher voll"})
+    assert (await client.receive_json())["success"] is True
+    entries = [e for e in activity.snapshot(hass)["entries"] if e["cat"] == "launcher"]
+    assert [(e["level"], e["title"]) for e in entries] == [("info", "Garage öffnen"), ("warning", "Neu laden")]
+    assert entries[0]["text"] == "action done: cover.open_cover"
+    assert entries[1]["text"] == "action failed: some/command: Speicher voll"
+    # Ungültiges Ziel (kein Dienst, kein Befehl) und fehlende Rechte
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/log_launcher_action", "name": "x", "target": "kein ziel", "ok": True})
+    assert (await client.receive_json())["success"] is False
+    user = await hass.auth.async_create_user("Mitglied", group_ids=[GROUP_ID_USER])
+    token = await hass.auth.async_create_refresh_token(user, "https://example.test")
+    member = await hass_ws_client(hass, hass.auth.async_create_access_token(token))
+    await member.send_json({"id": 1, "type": f"{DOMAIN}/log_launcher_action", "name": "x", "target": "a.b", "ok": True})
+    assert (await member.receive_json())["error"]["code"] == "unauthorized"
+    assert len([e for e in activity.snapshot(hass)["entries"] if e["cat"] == "launcher"]) == 2

@@ -91,8 +91,19 @@ for (const lang of ["de", "en"]) {
     // Ausführen: Tipp auf die Kachel ruft den Dienst auf, das Fenster bleibt offen und meldet es
     await tap(`${D} [data-ap="done"]`);
     check(`[${tag}] Kachel mit Marke "Aktion" in der normalen Ansicht`, await wait(`return !!r.querySelector('${D} .ap-tile:has([data-id="${appId}"]) .ap-ext')`));
-    await p.evaluate(() => { window.__services.length = 0; });
+    await p.evaluate(() => { window.__services.length = 0; window.__launcherLog = []; window.__serviceDelay = 1500; });
     await tap(`${D} [data-ap="open"][data-id="${appId}"]`);
+    // Während der Ausführung: Kreis mit Pfeilen, der sich dreht
+    check(`[${tag}] läuft: Kreis mit drehenden Pfeilen statt des Symbols`, await wait(`return !!r.querySelector('${D} .ap-tile.run-running:has([data-id="${appId}"]) .ap-spin svg')`, 1200));
+    check(`[${tag}] läuft: die Drehung ist eine Animation (kein Standbild)`, await ev(`const e = r.querySelector('${D} .ap-tile.run-running .ap-spin'); return !!e && getComputedStyle(e).animationName.includes("ap-spin")`));
+    await shot("running");
+    // Danach: grüner Haken und grüner Rand
+    check(`[${tag}] fertig: grüner Haken und grüner Rand an der Kachel`, await wait(`const t = r.querySelector('${D} .ap-tile.run-ok:has([data-id="${appId}"])'); return !!t && !t.querySelector(".ap-spin") && !!t.querySelector(".ap-ico.run-ok svg") && getComputedStyle(t).boxShadow !== "none"`, 4000));
+    await shot("ok-state");
+    check(`[${tag}] nach wenigen Sekunden wieder das gewohnte Symbol`, await wait(`return !r.querySelector('${D} .ap-tile[class*="run-"]') && !!r.querySelector('${D} .ap-tile:has([data-id="${appId}"]) .ap-ico:not([class*="run-"])')`, 5000));
+    await p.evaluate(() => { window.__serviceDelay = 0; });
+    const logged = await p.evaluate(() => window.__launcherLog);
+    check(`[${tag}] Ergebnis im Log des Panels festgehalten (Name, Dienst, ok)`, logged.length === 1 && logged[0].name === "Updates prüfen" && logged[0].target === "homeassistant.update_entity" && logged[0].ok === true && logged[0].error === "", JSON.stringify(logged));
     const calls = await services();
     check(`[${tag}] Tipp ruft den Dienst auf (homeassistant.update_entity mit den Daten), Fenster bleibt offen`, calls.length === 1 && calls[0].domain === "homeassistant" && calls[0].service === "update_entity" && JSON.stringify(calls[0].data) === '{"entity_id":"update.device_panel_update"}' && (await ev(`return r.querySelector("${D}").open`)), JSON.stringify(calls));
     check(`[${tag}] Rückmeldung unten im Fenster: ${T.done}`, (await wait(`return !!r.querySelector("${D} .ap-snack")`)) && (await snack()) === T.done, await snack());
@@ -101,6 +112,7 @@ for (const lang of ["de", "en"]) {
     // Fehler des Dienstes: Rückmeldung mit dem Grund
     await p.evaluate(() => { window.__serviceFails = "Speicher voll"; });
     await tap(`${D} [data-ap="open"][data-id="${appId}"]`);
+    check(`[${tag}] Fehler: roter Rand und rotes Kreuz, im Log als fehlgeschlagen mit Grund`, (await wait(`return !!r.querySelector('${D} .ap-tile.run-err:has([data-id="${appId}"]) .ap-ico.run-err')`, 3000)) && (await p.evaluate(() => window.__launcherLog.at(-1))).ok === false && (await p.evaluate(() => window.__launcherLog.at(-1))).error === "Speicher voll");
     check(`[${tag}] Fehler: ${T.fail}`, (await wait(`return (r.querySelector("${D} .ap-snack")?.textContent || "").includes("Speicher voll")`)) && (await snack()) === T.fail, await snack());
     await p.evaluate(() => { window.__serviceFails = ""; });
 
