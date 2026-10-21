@@ -142,6 +142,8 @@ for (const lang of ["de", "en"]) {
     // Kachel "Verfügbarkeit" (0.34.0, Variante B): Sind alle online, steht
     // gross 100 % wie der volle Ring; der Durchschnitt 24 Std. darunter
     // bleibt unter 100 %, weil es Unterbrüche gab.
+    // Auch die Daten des Simulators: sonst überschreibt die nächste Abfrage (alle 10 s, unter Last mitten im Test) den Stand wieder
+    await p.evaluate(() => { for (const d of window.__devices) if (d.online !== true) { d.online = true; d.offline_since = null; } });
     await ev(`for (const d of r.host._devices) if (d.online !== true) { d.online = true; d.offline_since = null; } r.host._render()`);
     const kpi = await ev(`return [r.querySelector(".hero .kt .pct").textContent, r.querySelector(".hero .kt .pavg")?.textContent || "", r.querySelector(".ringwrap .c").textContent.replace(/\\s+/g," ").trim()]`);
     check(`[${tag}] alle online: gross 100 % jetzt, darunter Ø 24 Std. unter 100 %`, kpi[0] === T.full + T.now && kpi[1].startsWith(T.avg + ": ") && !kpi[1].includes("100") && ((m) => m && m[1] === m[2])(kpi[2].match(/^(\d+)\D+(\d+)/)), JSON.stringify(kpi));

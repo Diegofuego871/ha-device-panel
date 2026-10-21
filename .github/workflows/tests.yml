@@ -13,6 +13,8 @@ jobs:
   python:
     name: Python (Home Assistant)
     runs-on: ubuntu-latest
+    # Ein Lauf dauert etwa 2 Minuten; hängt er, soll er nicht 6 Stunden Laufzeit verbrauchen
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -38,6 +40,8 @@ jobs:
   panel:
     name: Panel (Playwright)
     runs-on: ubuntu-latest
+    # Ein Lauf dauert etwa 15 Minuten; ein langsamer Runner (einmal 2 Std. 45 Min.) lässt Suiten sporadisch scheitern, ein Abbruch nach 60 Minuten meldet das früh
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: tests/panel
