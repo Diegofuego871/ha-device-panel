@@ -63,11 +63,15 @@ for (const lang of ["de", "en"]) {
     await tap(`${D} [data-ap="add"]`);
     await wait(`return r.querySelector("${F}")?.open`);
 
-    // Reiterleiste Symbol | Favicon: Favicon gesperrt, solange "Externer Link" aus ist
-    check(`[${tag}] Reiterleiste ${JSON.stringify(T.tabs)} mit Kapsel, "${T.tabs[0]}" gewählt, Favicon gesperrt (kein externer Link)`, (await wait(`return !!r.querySelector("${F} .sub-tabs .seg-pill")`)) && JSON.stringify(await ev(`return [...r.querySelectorAll('${F} [data-set="fsrc"]')].map((e) => e.textContent)`)) === JSON.stringify(T.tabs) && (await ev(`const t = [...r.querySelectorAll('${F} [data-set="fsrc"]')]; return t[0].classList.contains("on") && t[1].disabled && !t[1].classList.contains("on")`)));
+    // Reiterleiste Symbol | Favicon gibt es nur beim externen Link (seit 2.116.0): bei Seite und Aktion fehlt sie, es bleiben die Symbole
+    check(`[${tag}] Art "Seite": keine Wahl Symbol/Favicon, nur die Symbole`, await ev(`return r.querySelector('${F} [data-f-srctabs]').hidden && r.querySelector('${F} [data-f-srctabs]').offsetHeight === 0 && r.querySelector('${F} [data-f-pane="icon"]').offsetHeight > 0 && r.querySelector('${F} [data-f-pane="favicon"]').offsetHeight === 0`));
+    await tap(`${F} [data-set="fkind"][data-v="act"]`);
+    check(`[${tag}] Art "Aktion": ebenfalls keine Wahl Symbol/Favicon`, await ev(`return r.querySelector('${F} [data-f-srctabs]').hidden && r.querySelector('${F} [data-f-pane="icon"]').offsetHeight > 0`));
+    await tap(`${F} [data-set="fkind"][data-v="ext"]`);
+    // Reiterleiste Symbol | Favicon beim externen Link
+    check(`[${tag}] Art "Externer Link": Reiterleiste ${JSON.stringify(T.tabs)} mit Kapsel, "${T.tabs[0]}" gewählt, Favicon frei`, (await wait(`return !!r.querySelector("${F} .sub-tabs .seg-pill") && !r.querySelector('${F} [data-f-srctabs]').hidden`)) && JSON.stringify(await ev(`return [...r.querySelectorAll('${F} [data-set="fsrc"]')].map((e) => e.textContent)`)) === JSON.stringify(T.tabs) && (await ev(`const t = [...r.querySelectorAll('${F} [data-set="fsrc"]')]; return t[0].classList.contains("on") && !t[1].disabled && !t[1].classList.contains("on")`)));
     check(`[${tag}] Symbole sichtbar, Favicon-Bereich verborgen`, await ev(`return r.querySelector('${F} [data-f-pane="icon"]').offsetHeight > 0 && r.querySelector('${F} [data-f-pane="favicon"]').offsetHeight === 0`));
     await (await handle(`${F} [data-f="name"]`)).fill("Mein NAS");
-    await tap(`${F} [data-set="fkind"][data-v="ext"]`);
     check(`[${tag}] externer Link an: Reiter "Favicon" frei`, await ev(`return !r.querySelector('${F} [data-set="fsrc"][data-v="favicon"]').disabled`));
     await tap(`${F} [data-set="fsrc"][data-v="favicon"]`);
     check(`[${tag}] Reiter "Favicon": Bereich mit Knopf "${T.fetch}", Symbole verborgen`, await ev(`return r.querySelector('${F} [data-f-pane="favicon"]').offsetHeight > 0 && r.querySelector('${F} [data-f-pane="icon"]').offsetHeight === 0 && r.querySelector("${F} [data-f-fetch]").textContent === ${JSON.stringify(T.fetch)}`));
@@ -104,7 +108,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] wieder "${T.tabs[1]}": das geladene Bild ist noch da`, await ev(`return !!r.querySelector("${F} [data-f-favimg] img") && !!r.querySelector("${F} [data-f-prev] .ap-fi")`));
     // Externer Link aus (Art "Seite"): Favicon-Reiter gesperrt, zurück zum Symbol
     await tap(`${F} [data-set="fkind"][data-v="page"]`);
-    check(`[${tag}] externer Link aus: Reiter "Favicon" gesperrt, wieder "${T.tabs[0]}"`, await ev(`const t = [...r.querySelectorAll('${F} [data-set="fsrc"]')]; return t[1].disabled && t[0].classList.contains("on")`));
+    check(`[${tag}] externer Link aus: Wahl Symbol/Favicon weg, wieder die Symbole ("${T.tabs[0]}")`, await ev(`const t = [...r.querySelectorAll('${F} [data-set="fsrc"]')]; return r.querySelector('${F} [data-f-srctabs]').hidden && t[0].classList.contains("on") && r.querySelector('${F} [data-f-pane="icon"]').offsetHeight > 0`));
     await tap(`${F} [data-set="fkind"][data-v="ext"]`);
     await tap(`${F} [data-set="fsrc"][data-v="favicon"]`);
 

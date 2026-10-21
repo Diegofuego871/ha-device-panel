@@ -496,6 +496,15 @@ dialog.status-dlg .dlg-title h2 { margin: 0; }
 .dlg-close { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--dp-divider); border-radius: 50%;
   background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
 .dlg-close:hover { background: var(--dp-hover); color: var(--dp-text); }
+/* Aktionen im Kopf der Einstellungen (seit 2.116.0): runde Knöpfe wie der Schliessen-Knopf, mit einem Strich vom Schliessen-Knopf getrennt */
+.dlg-acts { flex: none; display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.dlg-acts:empty { display: none; }
+.dlg-act { flex: none; display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border: 1px solid var(--dp-divider); border-radius: 50%; background: var(--dp-card); color: var(--dp-primary); cursor: pointer; }
+.dlg-act:hover { background: var(--dp-hover); }
+.dlg-act.run-ok { background: var(--dp-success); border-color: var(--dp-success); color: #fff; }
+.dlg-act.run-err { background: var(--dp-error); border-color: var(--dp-error); color: #fff; }
+.dlg-act:disabled { cursor: progress; }
+.dlg-sep { flex: none; width: 1px; height: 26px; margin: 0 2px; background: var(--dp-divider); }
 /* Herz im Kopf des Geräte-Popups (seit 2.22.0): wie das Kreuz ein runder Knopf, rot sobald Favorit */
 .dlg-fav { flex: none; display: grid; place-items: center; width: 42px; height: 42px; margin-right: 8px; border: 1px solid var(--dp-divider); border-radius: 50%;
   background: var(--dp-card); color: var(--dp-text2); cursor: pointer; transition: color .2s ease, background .2s ease; }
@@ -878,6 +887,7 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .seg-pill.go { opacity: .8; }
 @media (prefers-reduced-motion: reduce) { .seg-pill, .mon-tab, .sub-tab { transition: none; } }
 .sub-tabs { margin: 12px 0 8px; }
+.sub-tabs[hidden] { display: none; }
 .sub-n { margin-left: 5px; font-size: 11.5px; font-weight: 500; color: var(--dp-text3); font-variant-numeric: tabular-nums; }
 .sub-n[hidden] { display: none; }
 .mon-tab.chg::after, .sub-tab.chg::after, .mon-tab.err::after { content: ""; position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--dp-primary); }
@@ -1395,7 +1405,7 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   dialog.settings[open] { display: flex; flex-direction: column; }
   dialog.settings[open] > * { flex-shrink: 0; }
   dialog.settings[open] > .dlg-body { flex-grow: 1; }
-  .toolbar .gear-btn, .toolbar .rtall-btn, .toolbar .apps-btn, .dlg-close, .dlg-fav { width: 38px; height: 38px; }
+  .toolbar .gear-btn, .toolbar .rtall-btn, .toolbar .apps-btn, .dlg-close, .dlg-act, .dlg-fav { width: 38px; height: 38px; }
   /* Handy: der Platz zwischen Suchfeld und Zahnrad bleibt wie vorher (Suchfeld nicht schmaler), nur gleichmässig geteilt: 8 + 7 px auf beiden Seiten */
   .toolbar .rtall-btn, .toolbar .apps-btn { margin: 0 3px; } /* Abstand zwischen den Knöpfen 14 px (Wunsch des Nutzers: war zu eng), das Suchfeld wird dafür schmaler */
   dialog.stat-dlg { height: 86%; max-height: 86%; }
@@ -1978,7 +1988,8 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 /* Eigene Apps ohne Favicon: Kreis in der Hauptfarbe, weisses Symbol (Apps von HA und des Panels tragen ihre Farbe als Stil) */
 .ap-ico.own { background: var(--dp-primary); color: #fff; }
 /* Aktion (seit 2.115.0): läuft (Pfeile drehen sich), fertig (grüner Haken, grüner Rand), fehlgeschlagen (rot) */
-.ap-spin { display: inline-flex; animation: ap-spin 0.9s linear infinite; }
+/* Die Pfeile des Symbols laufen gegen den Uhrzeigersinn: die Drehung auch (vorher rückwärts zur Pfeilrichtung) */
+.ap-spin { display: inline-flex; animation: ap-spin 0.9s linear infinite reverse; }
 @keyframes ap-spin { to { transform: rotate(360deg); } }
 .ap-ico.run-ok, .rtall-btn.app-pin.run-ok { background: var(--dp-success); color: #fff; }
 .ap-ico.run-err, .rtall-btn.app-pin.run-err { background: var(--dp-error); color: #fff; }

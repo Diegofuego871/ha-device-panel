@@ -189,7 +189,7 @@ A button in the header opens a launcher with useful pages, in the symbols and co
 | <img src="docs/screenshots/en/launcher.png" alt="App launcher with favorites, Device Panel and Home Assistant pages"> | <img src="docs/screenshots/en/log.png" alt="Log with entries of the notifications and a filter"> |
 
 - **Pages:** routines, Magic Push and the log of this integration, pages of Home Assistant (automations, scenes, scripts, helpers, devices, entities, integrations, tools and more; "Apps" and "Dashboards" are available too but hidden until you switch them on in edit mode; administrators only for the management pages)
-- **Your own links and actions:** a page in Home Assistant, an external link that opens in a new browser tab (with its favicon as icon if you like), or an **action** that calls a Home Assistant service or a command of the interface (JSON data, optionally with a question first); while it runs the symbol shows turning arrows, then a green check (or a red cross), and the result is written to the log
+- **Your own links and actions:** a page in Home Assistant, an external link that opens in a new browser tab (with its favicon as icon if you like), or an **action** that calls a Home Assistant service or a command of the interface (JSON data, optionally with a question first); optionally also as a button in the header of the settings; while it runs the symbol shows turning arrows, then a green check (or a red cross), and the result is written to the log
 - **View and Settings:** two apps in the group "Device Panel" open the view settings (sorting, columns, filter chips) and the central settings, so everything is found in one place; both can be hidden because the header buttons lead there too
 - **Favorites:** a heart marks up to five apps that get their own buttons in the header (on the phone the first two); by default these are Routines and Settings. The gear no longer sits there permanently, only when the app "Settings" is pinned; it cannot be hidden. If a restart is pending, the launcher button shows the red dot as long as Settings is not pinned
 - **Edit mode:** sort by dragging, hide apps with the eye (Log and Status stay visible, marked with a lock), grid or list; everything is saved per user
@@ -274,11 +274,17 @@ The same panel as cards, with the same pop-ups, windows and assistants in full s
 
 ## Installation
 
-### HACS (custom repository)
+### HACS
 
-1. HACS → ⋮ → Custom repositories → `https://github.com/Diegofuego871/ha-device-panel`, type "Integration".
-2. Install "Device Panel" and restart Home Assistant.
+Device Panel is in the default catalog of HACS.
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Diegofuego871&repository=ha-device-panel&category=integration)
+
+1. HACS → search for "Device Panel" (or use the blue button above, it opens the integration in your HACS).
+2. Download "Device Panel" and restart Home Assistant.
 3. Settings → Devices & services → Add integration → "Device Panel".
+
+Fallback, if the search does not find it (for example with an old HACS): HACS → ⋮ → Custom repositories → `https://github.com/Diegofuego871/ha-device-panel`, type "Integration".
 
 Updates: the settings (gear icon) show the installed and the newest version and update via HACS. Pre-releases (`b` or `rc` in the number) are optional: "Show pre-releases", then switch on "Pre-release" on the HACS device yourself (the note in the panel links there); the panel does not change HACS entities. Optionally "Install updates automatically" (needs the daily check): a found version is installed through HACS, you only restart Home Assistant yourself; a red dot on the gear shows that the restart is pending. While it works, the version bar in the settings shows a small "Auto" pill after the title. The daily check can run at a set time, and an optional push (once per version, recipient selectable) tells you about a found or installed version.
 

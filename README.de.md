@@ -189,7 +189,7 @@ Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den
 | <img src="docs/screenshots/de/launcher.png" alt="App-Launcher mit Favoriten, Device Panel und Seiten von Home Assistant"> | <img src="docs/screenshots/de/log.png" alt="Protokoll mit Einträgen der Meldungen und einem Filter"> |
 
 - **Seiten:** Routinen, Magic Push und das Protokoll dieser Integration, Seiten von Home Assistant (Automationen, Szenen, Skripte, Helfer, Geräte, Entitäten, Integrationen, Werkzeuge und mehr; "Apps" und "Dashboards" gibt es auch, sie sind aber ausgeblendet, bis du sie im Bearbeiten-Modus einschaltest; die Verwaltungsseiten nur für Administratoren)
-- **Eigene Links und Aktionen:** eine Seite in Home Assistant, ein externer Link, der in einem neuen Browser-Tab öffnet (auf Wunsch mit seinem Favicon als Symbol), oder eine **Aktion**, die einen Dienst von Home Assistant oder einen Befehl der Oberfläche aufruft (Daten als JSON, auf Wunsch mit Rückfrage); beim Ausführen zeigt das Symbol drehende Pfeile, danach einen grünen Haken (oder ein rotes Kreuz), und das Ergebnis steht im Log
+- **Eigene Links und Aktionen:** eine Seite in Home Assistant, ein externer Link, der in einem neuen Browser-Tab öffnet (auf Wunsch mit seinem Favicon als Symbol), oder eine **Aktion**, die einen Dienst von Home Assistant oder einen Befehl der Oberfläche aufruft (Daten als JSON, auf Wunsch mit Rückfrage); auf Wunsch auch als Knopf im Kopf der Einstellungen; beim Ausführen zeigt das Symbol drehende Pfeile, danach einen grünen Haken (oder ein rotes Kreuz), und das Ergebnis steht im Log
 - **Ansicht und Einstellungen:** zwei Apps in der Gruppe "Device Panel" öffnen die Ansichtseinstellungen (Sortierung, Spalten, Filter-Chips) und die zentralen Einstellungen, so findet man alles an einem Ort; beide lassen sich ausblenden, weil auch die Knöpfe in der Kopfzeile dorthin führen
 - **Favoriten:** ein Herz markiert bis zu fünf Apps, die eigene Knöpfe in der Kopfzeile bekommen (am Handy die ersten zwei); standardmässig sind es die Routinen und die Einstellungen. Das Zahnrad steht nicht mehr fest dort, sondern nur noch, wenn die App "Einstellungen" angeheftet ist; sie lässt sich nicht ausblenden. Steht ein Neustart aus, zeigt der Launcher-Knopf den roten Punkt, solange die Einstellungen nicht angeheftet sind
 - **Bearbeiten-Modus:** per Ziehen sortieren, Apps mit dem Auge ausblenden (Protokoll und Status bleiben sichtbar, mit Schloss), Raster oder Liste; alles wird pro Benutzer gespeichert
@@ -274,11 +274,17 @@ Dasselbe Panel als Karten, mit denselben Pop-ups, Fenstern und Assistenten im Vo
 
 ## Installation
 
-### HACS (benutzerdefiniertes Repository)
+### HACS
 
-1. HACS → ⋮ → Benutzerdefinierte Repositories → `https://github.com/Diegofuego871/ha-device-panel`, Typ "Integration".
-2. "Device Panel" installieren und Home Assistant neu starten.
+Device Panel steht im Standard-Katalog von HACS.
+
+[![Öffne deine Home-Assistant-Instanz und zeige ein Repository im Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Diegofuego871&repository=ha-device-panel&category=integration)
+
+1. HACS → nach "Device Panel" suchen (oder den blauen Knopf oben benutzen, er öffnet die Integration in deinem HACS).
+2. "Device Panel" herunterladen und Home Assistant neu starten.
 3. Einstellungen → Geräte & Dienste → Integration hinzufügen → "Device Panel".
+
+Ersatzweg, falls die Suche es nicht findet (zum Beispiel mit einem alten HACS): HACS → ⋮ → Benutzerdefinierte Repositories → `https://github.com/Diegofuego871/ha-device-panel`, Typ "Integration".
 
 Updates: Die Einstellungen (Zahnrad) zeigen die installierte und die neueste Version und aktualisieren über HACS. Vorabversionen (`b` oder `rc` in der Nummer) sind optional: "Vorabversionen anzeigen", danach im HACS-Gerät "Pre-release" selbst einschalten (der Hinweis im Panel führt dorthin); das Panel ändert keine Entitäten von HACS. Optional "Updates automatisch installieren" (braucht die tägliche Prüfung): Eine gefundene Version wird über HACS installiert, den Neustart von Home Assistant machst du selbst; ein roter Punkt am Zahnrad zeigt, dass der Neustart aussteht. Solange es arbeitet, zeigt die Versionsleiste in den Einstellungen nach dem Titel eine kleine "Auto"-Pille. Die tägliche Prüfung kann zu einer festen Uhrzeit laufen, und ein optionaler Push (einmal pro Version, Empfänger wählbar) meldet eine gefundene oder installierte Version.
 

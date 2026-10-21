@@ -7,6 +7,29 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.116.0] - 2026-10-21
+
+Mehr Symbole, ein Aktionsknopf im Kopf der Einstellungen; die Wahl "Symbol / Favicon" erscheint nur noch beim externen Link.
+
+### Hinzugefügt
+
+- **Aktion im Kopf der Einstellungen:** Eine Aktion hat ein neues Kontrollkästchen **"In den Einstellungen anzeigen"**. Mit ihm steht die Aktion als runder Knopf im **Kopf der Einstellungen, links vom Schliessen-Knopf und mit einem dünnen Strich von ihm getrennt**, sodass man sie direkt dort aufrufen kann (zum Beispiel einen Dienst, der beim Ändern der Einstellungen nützlich ist). Der Knopf zeigt denselben Fortschritt wie im Launcher (drehende Pfeile, danach grüner Haken oder rotes Kreuz; der Grund eines Fehlers als Hinweistext), fragt vorher, wenn man das eingeschaltet hat, und das Ergebnis steht im Log. **Nur eine Aktion** kann den Haken haben (am Handy fehlt der Platz für mehr): hat ihn schon eine andere, sagt das Kontrollkästchen es ("schon belegt durch …"), das Setzen wird mit einer Fehlermeldung abgelehnt, die diese Aktion nennt, ebenso das Speichern, und in gespeicherten Daten behält nur die erste den Haken. Die Einstellungen der Ansicht (Spalten, Sortierung) bekommen diese Knöpfe nicht.
+
+- **Mehr Symbole:** Das Formular einer eigenen App bietet **40 statt 16 Symbole**. Neu: Update, Download, Upload, Abspielen, Ein/Aus, Schloss, Wolke, WLAN, Glocke, Zahnrad, Verlauf, Neu laden, Glühbirne, Thermometer, Ventilator, Schild, Tür, Garage, Wasser, Feuer, Schlüssel, Rakete, Lautstärke und Saugroboter. Bestehende Apps behalten ihr Symbol.
+
+### Behoben
+
+- **Aktion, Fortschrittsanzeige:** Die drehenden Pfeile drehten **gegen** die Richtung ihrer Pfeilspitzen. Sie drehen jetzt gegen den Uhrzeigersinn, wie die Pfeile zeigen.
+
+### Geändert
+
+- **README, Installation:** Device Panel steht jetzt im **Standard-Katalog von HACS**. Der Abschnitt Installation beginnt mit der Suche nach "Device Panel" in HACS und dem blauen Knopf "Open your Home Assistant instance and open a repository inside HACS"; das benutzerdefinierte Repository bleibt als Ersatzweg.
+- **Formular einer eigenen App:** Die Wahl zwischen "Symbol" und "Favicon" gibt es **nur bei der Art "Externer Link"**. Bei "Seite" (vorher war der Reiter Favicon nur ausgegraut) und bei "Aktion" ist sie ganz ausgeblendet; die Symbole zur Auswahl bleiben. Ein Favicon ergibt nur bei einer Adresse ausserhalb von Home Assistant Sinn.
+
+### Intern
+
+- `svc.settings` (`checkAction`), `settingsActionsHtml`/`paintSettingsActions` in `apps.js`, `data-ap-actions` im Kopf der Einstellungen, `.dlg-act`/`.dlg-sep`; `APP_ICONS` in `apps.js` (40 Einträge), 12 neue Pfade in der Symboltabelle von `device-panel.js` (Material Design Icons), `data-f-srctabs` im Formular, `.sub-tabs[hidden]`; Suiten `launcherfav` und `launcheract` angepasst.
+
 ## [2.115.0] - 2026-10-21
 
 Aktionen zeigen ihren Fortschritt und schreiben das Ergebnis ins Log.
@@ -4411,6 +4434,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.116.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.0
 [2.115.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.115.0
 [2.114.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.114.0
 [2.113.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.113.0

@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.116.0, mehr Symbole, Favicon nur beim externen Link)
+
+- Device Panel ist offiziell im Standard-Katalog von HACS (Rückmeldung von frenck, PR gemerged): README Installation führt mit der Suche in HACS und dem Knopf `hacs_repository.svg` (my.home-assistant.io), das benutzerdefinierte Repository ist der Ersatzweg. Drehung der Pfeile (`.ap-spin`) läuft jetzt rückwärts (gegen den Uhrzeigersinn), passend zum Symbol "reset".
+
+- Wunsch des Nutzers: die Wahl Symbol/Favicon (`[data-f-srctabs]`) gibt es nur bei der Art "Externer Link" (vorher bei Seite nur gesperrt). Mehr Symbole für eigene Apps: `APP_ICONS` 40 (u. a. Update); neue Pfade in der Symboltabelle `MDI` von `device-panel.js` (aus Material Design Icons, `Templarian/MaterialDesign-SVG`). Die Funktion mit der Checkbox hat der Nutzer erst zurückgezogen, dann doch gewollt: Haken "In den Einstellungen anzeigen" an der Aktion (`svc.settings`) zeigt sie als runden Knopf im Kopf der Einstellungen, links vom Schliessen-Knopf, mit Strich (`.dlg-sep`) getrennt (`data-ap-actions` in `_renderSettings`, nicht in den Einstellungen der Ansicht). Zustand und Fehler-Tooltip über `runState`/`runError`. Nur eine Aktion darf den Haken haben (Platz am Handy): `settingsOwner`, Prüfung im Formular (Haken zurück, Fehlermeldung, Untertitel "schon belegt"), beim Speichern und in `sanitizeApps` (nur die erste behält ihn).
+
 ## Stand (2.115.0, Aktion: Fortschritt und Log)
 
 - Wunsch des Nutzers: beim Tipp Kreis mit Pfeilen bis der Befehl fertig ist, dann grüner Haken oder Rand, Ergebnis ins Log des Panels. `AppLauncher.runState[id]` ("running"/"ok"/"err", `_setRun`, 3 s), Symbol über `_icon` (Pfeile = `mdi("reset")` in `.ap-spin`), Klassen `run-*` an Kachel, Zeile, Symbol und Kopfzeilen-Knopf. Log: WS `device_panel/log_launcher_action` → `activity.record(…, "launcher", "launcher_run_ok|failed")`, Kategorie "Apps" (`logCat_launcher`) im Filter des Logs. Hinweis: Die Release Notes nennen kein HACS-Beispiel mehr (Wunsch des Nutzers); Beispiel jetzt `cover.open_cover`.

@@ -7,6 +7,29 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.116.0] - 2026-10-21
+
+More symbols and an action button in the header of the settings; the choice "Symbol / Favicon" only appears for an external link.
+
+### Added
+
+- **Action in the header of the settings:** an action app has a new check box **"Show in the settings"**. With it, the action appears as a round button in the **header of the settings, left of the close button and separated from it by a thin line**, so you can call it right there (for example a service that is useful while you change settings). The button shows the same progress as in the launcher (turning arrows, then green check or red cross; the reason of an error as tooltip), asks first if you switched that on, and the result goes to the log. **Only one action** can have the check mark (on a phone there is no room for more): if another one already has it, the check box says so ("already taken by …"), ticking it is refused with an error message naming that action, saving is refused too, and in stored data only the first keeps the mark. The settings of the view (columns, sorting) do not get these buttons.
+
+- **More symbols:** the form of an own app offers **40 instead of 16 symbols**. New: update, download, upload, play, power, lock, cloud, Wi-Fi, bell, gear, history, reload, light bulb, thermometer, fan, shield, door, garage, water, fire, key, rocket, volume and robot vacuum. Existing apps keep their symbol.
+
+### Fixed
+
+- **Action app, progress display:** the turning arrows turned **against** the direction of their arrow heads. They now turn counter-clockwise, like the arrows point.
+
+### Changed
+
+- **README, installation:** Device Panel is now in the **default catalog of HACS**. The installation section leads with the search for "Device Panel" in HACS and the blue "Open your Home Assistant instance and open a repository inside HACS" button; the custom repository stays as a fallback.
+- **Form of an own app:** the choice between "Symbol" and "Favicon" is shown **only for the type "External link"**. For "Page" (before: the Favicon tab was only greyed out) and for "Action" it is hidden completely; the symbols to choose from remain. A favicon only makes sense for an address outside Home Assistant.
+
+### Internal
+
+- `svc.settings` (`checkAction`), `settingsActionsHtml`/`paintSettingsActions` in `apps.js`, `data-ap-actions` in the settings header, `.dlg-act`/`.dlg-sep`; `APP_ICONS` in `apps.js` (40 entries), 12 new paths in the symbol table of `device-panel.js` (Material Design Icons), `data-f-srctabs` in the form, `.sub-tabs[hidden]`; suites `launcherfav` and `launcheract` adapted.
+
 ## [2.115.0] - 2026-10-21
 
 Action apps show their progress and write the result to the log.
@@ -4310,6 +4333,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.116.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.0
 [2.115.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.115.0
 [2.114.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.114.0
 [2.113.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.113.0

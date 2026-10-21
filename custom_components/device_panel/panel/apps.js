@@ -76,7 +76,12 @@ const HA_LOOK = {
   book: { c: "#00838F", p: "M5,9.5L7.5,14H2.5L5,9.5M3,4H7V8H3V4M5,20A2,2 0 0,0 7,18A2,2 0 0,0 5,16A2,2 0 0,0 3,18A2,2 0 0,0 5,20M9,5V7H21V5H9M9,19H21V17H9V19M9,13H21V11H9V13Z" },
 };
 const PANEL_COLOR = { routine: "#00838F", magic: "#8E24AA", log: "#4A5963", status: "#2E7D32", view: "#1E88E5", settings: "#8D6E63" };
-export const APP_ICONS = ["web", "home", "camera", "map", "bolt", "calendar", "bar", "wrench", "store", "desktop", "robot", "palette", "script", "devices", "shape", "tools"];
+// Symbole für eigene Apps (seit 2.116.0: 40 statt 16, dazu Update, Download, Licht, Schloss, Temperatur, Garage, Wasser, Feuer …); je 8 pro Reihe im Formular
+export const APP_ICONS = [
+  "web", "home", "camera", "map", "bolt", "calendar", "bar", "wrench", "store", "desktop", "robot", "palette", "script", "devices", "shape", "tools",
+  "update", "download", "upload", "play", "power", "lock", "cloud", "wifi", "bell", "gear", "history", "reset", "lightbulb", "thermometer", "fan", "shieldCheck",
+  "door", "garage", "water", "fire", "key", "rocket", "volume", "vacuum",
+];
 
 // Favicon einer eigenen App mit externem Link (seit 2.33.0): kleines Bild als Data-URI (base64), vom Server geholt (favicon.py).
 // Nur bekannte Bildarten, damit in den Benutzerdaten nie etwas anderes landet; höchstens FAVICON_MAX Zeichen (etwa 100 KB).
@@ -129,7 +134,8 @@ export function checkAction(raw) {
       return null;
     }
   }
-  return { service, data, confirm: raw.confirm === true };
+  // "settings" (seit 2.116.0): die Aktion steht auch als Knopf im Kopf der Einstellungen; nur gespeichert, wenn an
+  return { service, data, confirm: raw.confirm === true, ...(raw.settings === true ? { settings: true } : {}) };
 }
 
 // Gespeicherten Stand prüfen: nur bekannte Formen, alles andere fällt auf den Standard zurück.
@@ -154,6 +160,13 @@ export function sanitizeApps(raw) {
     })
     .filter(Boolean)
     .slice(0, MAX_CUSTOM);
+  // Im Kopf der Einstellungen ist nur eine Aktion möglich (am Handy fehlt der Platz für mehr): die erste behält den Haken
+  let settingsTaken = false;
+  for (const c of custom) {
+    if (!c.svc?.settings) continue;
+    if (settingsTaken) delete c.svc.settings;
+    settingsTaken = true;
+  }
   const layout = (v) => (v === "list" ? "list" : "grid");
   let fav = Array.isArray(raw.fav) ? ids(raw.fav, MAX_FAV) : d.fav;
   // Bestehende Daten (vor 2.88.0): das Zahnrad stand fest in der Kopfzeile; jetzt ist es ein Favorit. Einmal als zweiter eintragen
@@ -441,6 +454,34 @@ export class AppLauncher {
     } else delete this.runState[id];
     if (this.dlg?.open) this.render();
     this.renderBar();
+    this.paintSettingsActions();
+  }
+
+  // Knöpfe der Aktionen im Kopf der Einstellungen (seit 2.116.0, links vom Schliessen-Knopf, mit Strich getrennt): nur Aktionen mit dem Haken
+  // "In den Einstellungen anzeigen". Ohne solche bleibt der Kopf wie bisher.
+  // Die Aktion, die schon im Kopf der Einstellungen steht (ausser der eben bearbeiteten): es ist nur eine möglich
+  settingsOwner(exceptId = null) {
+    return this.data.custom.find((c) => c.svc?.settings && c.id !== exceptId) || null;
+  }
+
+  settingsActionsHtml() {
+    const { escape } = this.h;
+    if (!this._admin()) return "";
+    const apps = this._all().filter((a) => a.svc?.settings);
+    if (!apps.length) return "";
+    const buttons = apps
+      .map((a) => {
+        const rs = this.runState?.[a.id];
+        const title = rs === "err" && this.runError?.[a.id] ? `${a.name}: ${this.runError[a.id]}` : a.name;
+        return `<button type="button" class="dlg-act${rs ? ` run-${rs}` : ""}" data-ap-run="${escape(a.id)}" title="${escape(title)}" aria-label="${escape(title)}"${rs === "running" ? " disabled" : ""}>${this._icon(a, 20)}</button>`;
+      })
+      .join("");
+    return `${buttons}<span class="dlg-sep" aria-hidden="true"></span>`;
+  }
+
+  paintSettingsActions() {
+    const box = this.root?.querySelector("dialog.settings [data-ap-actions]");
+    if (box) box.innerHTML = this.settingsActionsHtml();
   }
 
   async _exec(a) {
@@ -461,6 +502,7 @@ export class AppLauncher {
       error = String(err?.message || err?.code || err);
       text = this.t("appsRunFail", a.name, error);
     }
+    (this.runError = this.runError || {})[a.id] = error;
     this._setRun(a.id, error ? "err" : "ok");
     // Ergebnis im Log des Panels festhalten (Antwort unwichtig: fehlt der Befehl, bleibt die Anzeige)
     this.host._hass?.callWS({ type: "device_panel/log_launcher_action", name: a.name, target: a.svc.service, ok: !error, error: error.slice(0, 300) }).catch(() => {});
@@ -784,8 +826,8 @@ export class AppLauncher {
     const c = id ? this.data.custom.find((x) => x.id === id) : null;
     // src: welches Bild die App zeigt, "icon" (gewähltes Symbol) oder "favicon" (nur bei externem Link, nach "Favicon laden")
     this.ui.form = c
-      ? { id: c.id, name: c.name, icon: c.icon, kind: c.svc ? "act" : c.ext ? "ext" : "page", ext: c.ext, url: c.url, svc: c.svc?.service || "", data: c.svc && Object.keys(c.svc.data || {}).length ? JSON.stringify(c.svc.data, null, 2) : "", confirm: Boolean(c.svc?.confirm), favicon: c.favicon || null, src: c.favicon ? "favicon" : "icon", busy: false, msg: "" }
-      : { id: null, name: "", icon: "web", kind: "page", ext: false, url: "", svc: "", data: "", confirm: false, favicon: null, src: "icon", busy: false, msg: "" };
+      ? { id: c.id, name: c.name, icon: c.icon, kind: c.svc ? "act" : c.ext ? "ext" : "page", ext: c.ext, url: c.url, svc: c.svc?.service || "", data: c.svc && Object.keys(c.svc.data || {}).length ? JSON.stringify(c.svc.data, null, 2) : "", confirm: Boolean(c.svc?.confirm), settings: Boolean(c.svc?.settings), favicon: c.favicon || null, src: c.favicon ? "favicon" : "icon", busy: false, msg: "" }
+      : { id: null, name: "", icon: "web", kind: "page", ext: false, url: "", svc: "", data: "", confirm: false, settings: false, favicon: null, src: "icon", busy: false, msg: "" };
     const dlg = this.fdlg;
     if (!dlg) return;
     this._renderForm();
@@ -802,6 +844,12 @@ export class AppLauncher {
     const dlg = this.fdlg;
     if (dlg?.open) dlg.close();
     this.ui.form = null;
+  }
+
+  // Untertitel des Hakens "In den Einstellungen anzeigen": sagt, wenn der Platz schon belegt ist
+  _settingsSub() {
+    const owner = this.settingsOwner(this.ui.form?.id || null);
+    return owner ? this.t("appsFSettingsTakenSub", owner.name) : this.t("appsFSettingsSub");
   }
 
   _formTexts() {
@@ -834,9 +882,10 @@ export class AppLauncher {
           <label class="ap-f"><span>${escape(this.t("appsFSvc"))}</span><input class="ap-in" data-f="svc" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="64" placeholder="homeassistant.update_entity  /  hacs/repository/refresh" value="${escape(f.svc)}"></label>
           <label class="ap-f"><span>${escape(this.t("appsFData"))}</span><textarea class="ap-in ap-ta" data-f="data" rows="4" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="${DATA_MAX}" placeholder='{"entity_id": "update.device_panel_update"}'>${escape(f.data)}</textarea></label>
           <div class="ap-hint">${escape(this.t("appsFActHint"))}</div>
-          <label class="ap-chk"><input type="checkbox" data-f="confirm"${f.confirm ? " checked" : ""}><span>${escape(this.t("appsFConfirm"))}<small>${escape(this.t("appsFConfirmSub"))}</small></span></label></div>
+          <label class="ap-chk"><input type="checkbox" data-f="confirm"${f.confirm ? " checked" : ""}><span>${escape(this.t("appsFConfirm"))}<small>${escape(this.t("appsFConfirmSub"))}</small></span></label>
+          <label class="ap-chk"><input type="checkbox" data-f="settings"${f.settings ? " checked" : ""}><span>${escape(this.t("appsFSettings"))}<small data-f-settings-sub>${escape(this._settingsSub())}</small></span></label></div>
         <div class="ap-f"><span>${escape(this.t("appsFIcon"))}</span>
-          <div class="sub-tabs" role="tablist" aria-label="${escape(this.t("appsFIcon"))}">
+          <div class="sub-tabs" role="tablist" data-f-srctabs aria-label="${escape(this.t("appsFIcon"))}">
             <button type="button" role="tab" class="sub-tab" data-set="fsrc" data-v="icon">${escape(this.t("appsFSrcIcon"))}</button>
             <button type="button" role="tab" class="sub-tab" data-set="fsrc" data-v="favicon">${escape(this.t("appsFSrcFav"))}</button></div>
           <div class="ap-icons" data-f-pane="icon">${icons}</div>
@@ -888,6 +937,8 @@ export class AppLauncher {
       b.setAttribute("aria-selected", String(on));
       if (b.dataset.v === "favicon") b.disabled = !f.ext;
     });
+    // Das Favicon gibt es nur beim externen Link (seit 2.116.0): bei Seite und Aktion fehlt die Wahl "Symbol / Favicon" ganz, es bleiben die Symbole
+    dlg.querySelector("[data-f-srctabs]").hidden = !f.ext;
     dlg.querySelector('[data-f-pane="icon"]').hidden = f.src !== "icon";
     dlg.querySelector('[data-f-pane="favicon"]').hidden = f.src !== "favicon";
     const { escape } = this.h;
@@ -951,7 +1002,9 @@ export class AppLauncher {
           return this._formError(this.t("appsFErrData"));
         }
       }
-      const svc = checkAction({ service: f.svc, data, confirm: f.confirm });
+      const owner = f.settings ? this.settingsOwner(f.id) : null;
+      if (owner) return this._formError(this.t("appsFSettingsTaken", owner.name));
+      const svc = checkAction({ service: f.svc, data, confirm: f.confirm, settings: f.settings });
       if (!svc) return this._formError(this.t(/^([a-z0-9_]+\.[a-z0-9_]+|[a-z0-9_]+(\/[a-z0-9_]+)+)$/.test(f.svc.trim()) ? "appsFErrData" : "appsFErrSvc"));
       app = { name, icon: f.icon, url: "", ext: false, svc };
     } else {
@@ -1035,6 +1088,17 @@ export class AppLauncher {
       else if (k === "svc") f.svc = ev.target.value;
       else if (k === "data") f.data = ev.target.value;
       else if (k === "confirm") f.confirm = ev.target.checked;
+      else if (k === "settings") {
+        // Nur eine Aktion im Kopf der Einstellungen: belegt, wird der Haken zurückgenommen und der Grund genannt
+        const owner = ev.target.checked ? this.settingsOwner(f.id) : null;
+        if (owner) {
+          ev.target.checked = false;
+          f.settings = false;
+          this._formError(this.t("appsFSettingsTaken", owner.name));
+          return;
+        }
+        f.settings = ev.target.checked;
+      }
       this._formError("");
       if (k === "url") this._formSync();
       else if (k === "name") this._formPreview();

@@ -30,6 +30,9 @@ const TEXT = {
   const s = sanitizeApps({ custom: [
     { id: "a1", name: "Neu laden", icon: "nope", url: "javascript:alert(1)", ext: true, svc: { service: "homeassistant.update_entity", data: { entity_id: "update.x" }, confirm: true } },
     { id: "a2", name: "Kaputt", icon: "bolt", svc: { service: "x" } }, { id: "a3", name: "Ohne", icon: "bolt", svc: "x" }] });
+  const two = sanitizeApps({ custom: [
+    { id: "x1", name: "Eins", icon: "bolt", svc: { service: "a.b", settings: true } }, { id: "x2", name: "Zwei", icon: "bolt", svc: { service: "a.c", settings: true } }, { id: "x3", name: "Drei", icon: "bolt", svc: { service: "a.d" } }] });
+  check("Bereinigen: nur die erste Aktion behält den Haken für den Kopf der Einstellungen", two.custom.length === 3 && two.custom[0].svc.settings === true && !("settings" in two.custom[1].svc) && !("settings" in two.custom[2].svc));
   check("Bereinigen: Aktion bleibt ohne Ziel und ohne Favicon (Symbol unbekannt: bolt), ungültige Aktionen entfallen",
     s.custom.length === 1 && s.custom[0].url === "" && s.custom[0].ext === false && s.custom[0].icon === "bolt" && s.custom[0].svc.confirm === true && !("favicon" in s.custom[0]));
 }
@@ -178,6 +181,69 @@ for (const lang of ["de", "en"]) {
     await p.waitForTimeout(400);
     const ws = await p.evaluate(() => window.__wsCalls.filter((m) => m.type === "hacs/repository/refresh"));
     check(`[${tag}] Befehl als WebSocket-Nachricht (type und Felder), kein Dienstaufruf`, ws.length === 1 && ws[0].repository === "987654" && (await services()).length === 0, JSON.stringify([ws, await services()]));
+    // Knopf im Kopf der Einstellungen (2.116.0): Haken "In den Einstellungen anzeigen" der Aktion
+    const SD = "dialog.settings";
+    await ev(`r.host._openSettings()`);
+    await wait(`return r.querySelector("${SD}")?.open`);
+    check(`[${tag}] Einstellungen: ohne den Haken kein Aktionsknopf im Kopf, kein Strich`, await ev(`return !r.querySelector("${SD} .dlg-head [data-ap-run]") && !r.querySelector("${SD} .dlg-head .dlg-sep")`));
+    await tap(`${SD} [data-set="close"]`);
+    await ev(`if (!r.querySelector("${D}").open) r.host._apps.openLauncher()`);
+    await wait(`return r.querySelector("${D}")?.open`);
+    await tap(`${D} [data-ap="edit"]`);
+    await tap(`${D} [data-ap="edit-app"][data-id="${appId}"]`);
+    await wait(`return r.querySelector("${F}")?.open`);
+    check(`[${tag}] Formular: Haken "In den Einstellungen anzeigen" (aus)`, await ev(`const c = r.querySelector('${F} [data-f="settings"]'); return !!c && !c.checked`));
+    await tap(`${F} [data-f="settings"]`);
+    await tap(`${F} [data-ap="fsave"]`);
+    check(`[${tag}] gespeichert mit settings: true`, (await wait(`return !r.querySelector("${F}").open`)) && (await data()).custom.find((c) => c.id === appId).svc.settings === true);
+    // Nur eine Aktion im Kopf der Einstellungen (am Handy fehlt der Platz): eine zweite Aktion darf den Haken nicht bekommen
+    await tap(`${D} [data-ap="add"]`);
+    await wait(`return r.querySelector("${F}")?.open`);
+    await (await handle(`${F} [data-f="name"]`)).fill("Zweite Aktion");
+    await tap(`${F} [data-set="fkind"][data-v="act"]`);
+    await (await handle(`${F} [data-f="svc"]`)).fill("light.turn_off");
+    check(`[${tag}] zweite Aktion: Haken zeigt, dass der Platz belegt ist ("Updates prüfen")`, (await text(`${F} [data-f-settings-sub]`)).includes("Updates prüfen") && (await text(`${F} [data-f-settings-sub]`)).length > 20, await text(`${F} [data-f-settings-sub]`));
+    await tap(`${F} [data-f="settings"]`);
+    check(`[${tag}] zweite Aktion: Haken wird zurückgenommen, Fehlermeldung nennt die belegende Aktion`, (await ev(`return !r.querySelector('${F} [data-f="settings"]').checked`)) && (await text(`${F} [data-f-err]`)).includes("Updates prüfen") && (await text(`${F} [data-f-err]`)).includes(lang === "de" ? "nur eine Aktion" : "Only one action"), await text(`${F} [data-f-err]`));
+    // Auch beim Speichern geprüft (falls der Haken anders gesetzt wurde)
+    await ev(`r.host._apps.ui.form.settings = true; r.host._apps.saveForm()`);
+    check(`[${tag}] zweite Aktion: Speichern mit dem Haken wird abgelehnt, nichts gespeichert`, (await text(`${F} [data-f-err]`)).includes("Updates prüfen") && (await data()).custom.filter((c) => c.svc?.settings).length === 1 && !(await data()).custom.some((c) => c.name === "Zweite Aktion"));
+    await tap(`${F} [data-ap="fclose"]`);
+    await tap(`${D} [data-ap="done"]`);
+    await ev(`r.host._apps.close()`);
+    await ev(`r.host._openSettings()`);
+    await wait(`return r.querySelector("${SD}")?.open`);
+    check(`[${tag}] Einstellungen: Aktionsknopf im Kopf, danach der Strich, danach der Schliessen-Knopf`, await ev(`const kids = [...r.querySelector("${SD} .dlg-head").children]; const i = kids.findIndex((k) => k.matches("[data-ap-actions]")); const box = kids[i]; const close = kids.findIndex((k) => k.matches('[data-set="close"]')); return i >= 0 && close === i + 1 && !!box.querySelector("[data-ap-run]") && box.lastElementChild.classList.contains("dlg-sep") && r.querySelector("${SD} .dlg-head [data-ap-run]").getAttribute("aria-label") === "Updates prüfen"`));
+    await shot("settings");
+    await p.evaluate(() => { window.__services.length = 0; window.__launcherLog = []; window.__serviceDelay = 1200; });
+    await tap(`${SD} [data-ap-run]`);
+    // Die App fragt vor dem Ausführen (Haken gesetzt): erst "Ausführen"
+    check(`[${tag}] Einstellungen: die Rückfrage der Aktion erscheint auch hier`, await wait(`return r.querySelector("dialog.discard-dlg")?.open`));
+    await tap(`dialog.discard-dlg [data-dd="yes"]`);
+    await wait(`return !!r.querySelector("${SD} .dlg-act.run-running .ap-spin")`, 1000);
+    check(`[${tag}] Einstellungen: läuft, Pfeile drehen sich, Knopf gesperrt`, (await ev(`const b = r.querySelector("${SD} .dlg-act"); return b.disabled && !!b.querySelector(".ap-spin")`)));
+    check(`[${tag}] Einstellungen: nach dem Lauf grüner Knopf mit Haken`, await wait(`return !!r.querySelector("${SD} .dlg-act.run-ok svg")`, 4000));
+    check(`[${tag}] Einstellungen: der Dienst wurde aufgerufen, das Ergebnis steht im Log`, (await services()).length === 1 && (await p.evaluate(() => window.__launcherLog)).length === 1);
+    await p.evaluate(() => { window.__serviceDelay = 0; });
+    await wait(`return !r.querySelector("${SD} .dlg-act.run-ok")`, 5000);
+    await tap(`${SD} [data-set="close"]`);
+    await wait(`return !r.querySelector("${SD}")?.open`);
+    // Die Einstellungen der Ansicht (Spalten, Sortierung) bekommen den Knopf nicht
+    await ev(`r.host._openView()`);
+    await wait(`return r.querySelector("${SD}")?.open`);
+    check(`[${tag}] Einstellungen der Ansicht: kein Aktionsknopf`, await ev(`return !r.querySelector("${SD} .dlg-head [data-ap-run]") && !r.querySelector("${SD} .dlg-head .dlg-sep")`));
+    await tap(`${SD} [data-set="close"]`);
+    await wait(`return !r.querySelector("${SD}")?.open`);
+
+    // Mehr Symbole (2.116.0): 40 zur Auswahl, darunter "Update"; ein neues Symbol erscheint in der Vorschau
+    await ev(`if (!r.querySelector("${D}").open) r.host._apps.openLauncher()`);
+    await wait(`return r.querySelector("${D}")?.open`);
+    await ev(`r.host._apps.openForm()`);
+    await wait(`return r.querySelector("${F}")?.open`);
+    check(`[${tag}] Formular: 40 Symbole, darunter Update, Glühbirne und Garage, alle mit Zeichnung`, await ev(`const b = [...r.querySelectorAll('${F} [data-ap="ficon"]')]; return b.length === 40 && ["update", "lightbulb", "garage"].every((k) => b.some((x) => x.dataset.icon === k)) && b.every((x) => (x.querySelector("svg path")?.getAttribute("d") || "").length > 20)`));
+    await tap(`${F} [data-ap="ficon"][data-icon="update"]`);
+    check(`[${tag}] Symbol "Update" gewählt: Vorschau zeigt es, Wahl hervorgehoben`, await ev(`const d = r.querySelector('${F} [data-ap="ficon"][data-icon="update"] svg path').getAttribute("d"); return r.querySelector('${F} [data-ap="ficon"][data-icon="update"]').classList.contains("on") && r.querySelector("${F} [data-f-prev] svg path").getAttribute("d") === d`));
+    await tap(`${F} [data-ap="fclose"]`);
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();
     async function shot(name = "form") { await p.screenshot({ path: `${outDir}/launcheract-${name}-${tag.replace("/", "-")}.png` }); }
