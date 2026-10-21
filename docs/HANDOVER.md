@@ -3,9 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.114.0, Aktion: Dienst oder Befehl)
+
+- Wunsch des Nutzers: die Aktion soll auch das können, was der Knopf "Nach Updates suchen" früher bei HACS tat (Befehl `hacs/repository/refresh` der Oberfläche), ohne dass der Code HACS kennt. `homeassistant.update_entity` auf der HACS-Entität lädt nur HACS' bereits geladenen Stand neu (geprüft in `hacs/update.py`: kein `async_update`); einen öffentlichen HACS-Dienst zum Nachladen gibt es nach meiner Prüfung nicht. Die Repository-ID trägt der Benutzer von Hand ein (Zahl in der Adresse der HACS-Seite; die Gleichheit mit der `id` aus `hacs/repositories/list` ist nicht an echtem HACS geprüft).
+
 ## Stand (2.113.0, Launcher: eigene App der Art "Aktion")
 
-- Wunsch des Nutzers (statt eines Knopfs im Panel für HACS): eigene Apps können einen Dienst aufrufen. Entscheide: frei (`bereich.dienst` plus JSON-Daten, Rechte des Benutzers), Rückfrage je App einstellbar (Standard aus), keine Vorlage. Daten: `custom[].svc = {service, data, confirm}` (`checkAction`; `url` leer, `ext` false); Formular-Reiter `data-set="fkind"` (page/ext/act) ersetzt das Kontrollkästchen `data-f="ext"`; Ausführen `AppLauncher.run/_exec` über `host._callService` (WS call_service), Rückmeldung `snack` (Fenster offen) sonst `host._toast`; Rückfrage über `host._askConfirm` (neu: `keys.args`). Marke: Blitz (`mdi("bolt")`) wie die Link-Marke.
+- Wunsch des Nutzers (statt eines Knopfs im Panel für HACS): eigene Apps können einen Dienst aufrufen. Entscheide: frei (`bereich.dienst` plus JSON-Daten, Rechte des Benutzers), Rückfrage je App einstellbar (Standard aus), keine Vorlage. Daten: `custom[].svc = {service, data, confirm}` (`checkAction`; `service` ist ein Dienst "bereich.dienst" oder ein WebSocket-Befehl "bereich/befehl" (`isCommand`: Schrägstrich), bei einem Befehl sind die Daten die Felder der Nachricht ohne `type`/`id`, ausgeführt über `host._hass.callWS`; `url` leer, `ext` false); Formular-Reiter `data-set="fkind"` (page/ext/act) ersetzt das Kontrollkästchen `data-f="ext"`; Ausführen `AppLauncher.run/_exec` über `host._callService` (WS call_service), Rückmeldung `snack` (Fenster offen) sonst `host._toast`; Rückfrage über `host._askConfirm` (neu: `keys.args`). Marke: Blitz (`mdi("bolt")`) wie die Link-Marke.
 - `_refreshHacs` im Browser ruft keine HACS-Befehle (`hacs/repositories/list`, `hacs/repository/refresh`) mehr auf, nur noch `homeassistant.update_entity` (Wunsch des Nutzers: Code sauber, wer will, legt sich die Aktion selbst an). Suite `version` prüft: keine `hacs/…`-Befehle.
 - Tag: 2.112.1 blieb ungetaggt und steckt in 2.113.0 (ein Release deckt die Anfrage der HACS-Prüfung ab).
 

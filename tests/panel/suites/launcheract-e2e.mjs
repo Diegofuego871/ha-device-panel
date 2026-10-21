@@ -9,10 +9,10 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { errSvc: 'Der Dienst braucht die Form "bereich.dienst", zum Beispiel homeassistant.update_entity.', errData: 'Die Daten müssen ein JSON-Objekt sein, zum Beispiel {"entity_id": "light.kueche"} (höchstens 2000 Zeichen).',
-    done: '"Updates prüfen" ausgeführt', fail: '"Updates prüfen" fehlgeschlagen: Speicher voll', askTitle: '"Updates prüfen" ausführen?', askNote: "Ruft den Dienst homeassistant.update_entity auf.", yes: "Ausführen", no: "Abbrechen", tabs: ["Seite", "Externer Link", "Aktion"] },
-  en: { errSvc: 'The service needs the form "domain.service", for example homeassistant.update_entity.', errData: 'The data must be a JSON object, for example {"entity_id": "light.kitchen"} (at most 2000 characters).',
-    done: '"Updates prüfen" done', fail: '"Updates prüfen" failed: Speicher voll', askTitle: 'Run "Updates prüfen"?', askNote: "Calls the service homeassistant.update_entity.", yes: "Run", no: "Cancel", tabs: ["Page", "External link", "Action"] },
+  de: { errSvc: 'Ein Dienst braucht die Form "bereich.dienst" (homeassistant.update_entity), ein Befehl die Form "bereich/befehl" (hacs/repository/refresh).', errData: 'Die Daten müssen ein JSON-Objekt sein, zum Beispiel {"entity_id": "light.kueche"} (höchstens 2000 Zeichen; bei einem Befehl ohne "type" und "id").',
+    done: '"Updates prüfen" ausgeführt', fail: '"Updates prüfen" fehlgeschlagen: Speicher voll', askTitle: '"Updates prüfen" ausführen?', askNote: "Ruft den Dienst homeassistant.update_entity auf.", cmdNote: "Führt den Befehl hacs/repository/refresh aus.", yes: "Ausführen", no: "Abbrechen", tabs: ["Seite", "Externer Link", "Aktion"] },
+  en: { errSvc: 'A service needs the form "domain.service" (homeassistant.update_entity), a command the form "area/command" (hacs/repository/refresh).', errData: 'The data must be a JSON object, for example {"entity_id": "light.kitchen"} (at most 2000 characters; for a command without "type" and "id").',
+    done: '"Updates prüfen" done', fail: '"Updates prüfen" failed: Speicher voll', askTitle: 'Run "Updates prüfen"?', askNote: "Calls the service homeassistant.update_entity.", cmdNote: "Runs the command hacs/repository/refresh.", yes: "Run", no: "Cancel", tabs: ["Page", "External link", "Action"] },
 };
 
 // Reine Funktionen: Aktion prüfen und gespeicherten Stand bereinigen
@@ -24,6 +24,9 @@ const TEXT = {
   check("Aktion: ungültiger Dienst, Daten kein Objekt oder zu gross werden abgelehnt",
     !checkAction({ service: "kein dienst" }) && !checkAction({ service: "a.b.c" }) && !checkAction({ service: "Light.Turn_on" }) && !checkAction({ service: "a.b", data: [1] }) && !checkAction({ service: "a.b", data: "x" })
     && !checkAction({ service: "a.b", data: { x: "y".repeat(2100) } }) && !checkAction(null) && !checkAction("a.b"));
+  check("Aktion: Befehl der Oberfläche bereich/befehl, Daten ohne type und id",
+    JSON.stringify(checkAction({ service: "hacs/repository/refresh", data: { repository: "123" } })) === '{"service":"hacs/repository/refresh","data":{"repository":"123"},"confirm":false}'
+    && !checkAction({ service: "hacs/repository/refresh", data: { type: "x" } }) && !checkAction({ service: "hacs/repository/refresh", data: { id: 5 } }) && !checkAction({ service: "hacs//refresh" }) && !checkAction({ service: "/hacs" }) && !checkAction({ service: "Hacs/Refresh" }));
   const s = sanitizeApps({ custom: [
     { id: "a1", name: "Neu laden", icon: "nope", url: "javascript:alert(1)", ext: true, svc: { service: "homeassistant.update_entity", data: { entity_id: "update.x" }, confirm: true } },
     { id: "a2", name: "Kaputt", icon: "bolt", svc: { service: "x" } }, { id: "a3", name: "Ohne", icon: "bolt", svc: "x" }] });
@@ -135,6 +138,34 @@ for (const lang of ["de", "en"]) {
 
     }
 
+    // Befehl der Oberfläche (WebSocket) statt Dienst: Feld "Dienst oder Befehl" mit Schrägstrich, Daten werden die Felder der Nachricht
+    await ev(`if (!r.querySelector("${D}").open) r.host._apps.openLauncher()`);
+    await wait(`return r.querySelector("${D}")?.open`);
+    await ev(`if (!r.host._apps.ui.edit) r.host._apps.ui.edit = false`);
+    await tap(`${D} [data-ap="edit"]`);
+    await tap(`${D} [data-ap="add"]`);
+    await wait(`return r.querySelector("${F}")?.open`);
+    await (await handle(`${F} [data-f="name"]`)).fill("HACS prüfen");
+    await tap(`${F} [data-set="fkind"][data-v="act"]`);
+    await (await handle(`${F} [data-f="svc"]`)).fill("hacs/repository/refresh");
+    await (await handle(`${F} [data-f="data"]`)).fill('{"type": "boese", "repository": "987654"}');
+    await tap(`${F} [data-ap="fsave"]`);
+    check(`[${tag}] Befehl mit "type" in den Daten: abgelehnt`, (await text(`${F} [data-f-err]`)) === T.errData, await text(`${F} [data-f-err]`));
+    await (await handle(`${F} [data-f="data"]`)).fill('{"repository": "987654"}');
+    await tap(`${F} [data-f="confirm"]`);
+    await tap(`${F} [data-ap="fsave"]`);
+    d = await data();
+    const cmd = d.custom.find((c) => c.name === "HACS prüfen");
+    check(`[${tag}] Befehl gespeichert (Dienst-Feld mit Schrägstrich), Rückfrage an`, !!cmd && cmd.svc.service === "hacs/repository/refresh" && cmd.svc.confirm === true && cmd.svc.data.repository === "987654");
+    await tap(`${D} [data-ap="done"]`);
+    await p.evaluate(() => { window.__services.length = 0; window.__wsCalls.length = 0; });
+    await tap(`${D} [data-ap="open"][data-id="${cmd.id}"]`);
+    await wait(`return r.querySelector("dialog.discard-dlg")?.open`);
+    check(`[${tag}] Rückfrage nennt den Befehl: ${T.cmdNote}`, (await text(`dialog.discard-dlg small`)) === T.cmdNote, await text(`dialog.discard-dlg small`));
+    await tap(`dialog.discard-dlg [data-dd="yes"]`);
+    await p.waitForTimeout(400);
+    const ws = await p.evaluate(() => window.__wsCalls.filter((m) => m.type === "hacs/repository/refresh"));
+    check(`[${tag}] Befehl als WebSocket-Nachricht (type und Felder), kein Dienstaufruf`, ws.length === 1 && ws[0].repository === "987654" && (await services()).length === 0, JSON.stringify([ws, await services()]));
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();
     async function shot(name = "form") { await p.screenshot({ path: `${outDir}/launcheract-${name}-${tag.replace("/", "-")}.png` }); }

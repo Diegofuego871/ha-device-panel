@@ -108,12 +108,15 @@ export function checkTarget(raw, ext) {
   return v.startsWith("/") && !v.startsWith("//") && !v.includes("\\") ? v : null;
 }
 
-// Aktion prüfen (seit 2.113.0): {service: "domain.service", data: {…}, confirm: bool}. Der Dienst nur in der Form "domain.service" (Kleinbuchstaben,
-// Ziffern, Unterstrich), die Daten ein einfaches Objekt (kein Feld, kein Text) in begrenzter Grösse. Gibt die bereinigte Aktion zurück, sonst null.
+// Aktion prüfen (seit 2.113.0): {service: "domain.service" oder "bereich/befehl", data: {…}, confirm: bool}. Ein Dienst von Home Assistant ("domain.service") oder
+// ein WebSocket-Befehl der Oberfläche ("bereich/befehl", Kleinbuchstaben, Ziffern, Unterstrich); bei einem Befehl sind die Daten die weiteren Felder der
+// Nachricht ("type" und "id" gehören dem Befehl selbst). Die Daten ein einfaches Objekt in begrenzter Grösse. Gibt die bereinigte Aktion zurück, sonst null.
+export const isCommand = (name) => String(name).includes("/");
 export function checkAction(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const service = String(raw.service ?? "").trim();
-  if (!/^[a-z0-9_]+\.[a-z0-9_]+$/.test(service) || service.length > 64) return null;
+  const isCmd = isCommand(service);
+  if (!(isCmd ? /^[a-z0-9_]+(\/[a-z0-9_]+)+$/ : /^[a-z0-9_]+\.[a-z0-9_]+$/).test(service) || service.length > 80) return null;
   let data = {};
   if (raw.data != null) {
     if (typeof raw.data !== "object" || Array.isArray(raw.data)) return null;
@@ -121,6 +124,7 @@ export function checkAction(raw) {
       const text = JSON.stringify(raw.data);
       if (text.length > DATA_MAX) return null;
       data = JSON.parse(text);
+      if (isCmd && ("type" in data || "id" in data)) return null;
     } catch {
       return null;
     }
@@ -422,15 +426,20 @@ export class AppLauncher {
   // Aktion ausführen (seit 2.113.0): mit Rückfrage, wenn der Benutzer sie bei der App eingeschaltet hat
   run(a) {
     if (!a?.svc) return;
-    if (a.svc.confirm) this.host._askConfirm({ title: "appsRunTitle", note: "appsRunNote", no: "appsRunNo", yes: "appsRunYes", args: [a.name, a.svc.service], noIcon: "close", yesIcon: "check" }, () => this._exec(a));
+    if (a.svc.confirm) this.host._askConfirm({ title: "appsRunTitle", note: isCommand(a.svc.service) ? "appsRunNoteCmd" : "appsRunNote", no: "appsRunNo", yes: "appsRunYes", args: [a.name, a.svc.service], noIcon: "close", yesIcon: "check" }, () => this._exec(a));
     else this._exec(a);
   }
 
   async _exec(a) {
-    const [domain, service] = a.svc.service.split(".");
     let text;
     try {
-      await this.host._callService(domain, service, a.svc.data || {});
+      if (isCommand(a.svc.service)) {
+        // Befehl der Oberfläche (WebSocket) mit den Rechten des Benutzers; "type" und "id" setzt der Befehl selbst
+        await this.host._hass.callWS({ ...(a.svc.data || {}), type: a.svc.service });
+      } else {
+        const [domain, service] = a.svc.service.split(".");
+        await this.host._callService(domain, service, a.svc.data || {});
+      }
       text = this.t("appsRunDone", a.name);
     } catch (err) {
       text = this.t("appsRunFail", a.name, err?.message || err?.code || String(err));
@@ -795,7 +804,7 @@ export class AppLauncher {
         <div data-f-sec="url"><label class="ap-f"><span data-f-label>${escape(tx.label)}</span><input class="ap-in" data-f="url" type="text" inputmode="url" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="${URL_MAX}" placeholder="${escape(tx.ph)}" value="${escape(f.url)}"></label>
           <div class="ap-hint" data-f-hint>${escape(tx.hint)}</div></div>
         <div data-f-sec="act" hidden>
-          <label class="ap-f"><span>${escape(this.t("appsFSvc"))}</span><input class="ap-in" data-f="svc" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="64" placeholder="homeassistant.update_entity" value="${escape(f.svc)}"></label>
+          <label class="ap-f"><span>${escape(this.t("appsFSvc"))}</span><input class="ap-in" data-f="svc" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="64" placeholder="homeassistant.update_entity  /  hacs/repository/refresh" value="${escape(f.svc)}"></label>
           <label class="ap-f"><span>${escape(this.t("appsFData"))}</span><textarea class="ap-in ap-ta" data-f="data" rows="4" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="${DATA_MAX}" placeholder='{"entity_id": "update.device_panel_update"}'>${escape(f.data)}</textarea></label>
           <div class="ap-hint">${escape(this.t("appsFActHint"))}</div>
           <label class="ap-chk"><input type="checkbox" data-f="confirm"${f.confirm ? " checked" : ""}><span>${escape(this.t("appsFConfirm"))}<small>${escape(this.t("appsFConfirmSub"))}</small></span></label></div>
@@ -916,7 +925,7 @@ export class AppLauncher {
         }
       }
       const svc = checkAction({ service: f.svc, data, confirm: f.confirm });
-      if (!svc) return this._formError(this.t(/^[a-z0-9_]+\.[a-z0-9_]+$/.test(f.svc.trim()) ? "appsFErrData" : "appsFErrSvc"));
+      if (!svc) return this._formError(this.t(/^([a-z0-9_]+\.[a-z0-9_]+|[a-z0-9_]+(\/[a-z0-9_]+)+)$/.test(f.svc.trim()) ? "appsFErrData" : "appsFErrSvc"));
       app = { name, icon: f.icon, url: "", ext: false, svc };
     } else {
       const url = checkTarget(f.url, f.ext);

@@ -7,6 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.114.0] - 2026-10-21
+
+Action apps can also send a command of the interface (WebSocket), for example to make HACS look for a new version.
+
+### Added
+
+- **Action app, "Service or command":** the field of an action app takes, besides a Home Assistant service (`domain.service`), a **command of the interface** as the panel itself uses them (`area/command`, for example `hacs/repository/refresh`). The data are then the fields of the message (without `type` and `id`, which belong to the command), for example `{"repository": "123456789"}`. It runs with your rights, with the question first if you switched it on. Typical use: a button that makes HACS look for a new version of Device Panel right away; the number is the one in the address of the HACS page of Device Panel. The code of the integration knows nothing of HACS for this; everyone creates the action themselves if they want it.
+
+### Changed
+
+- The hint and the error texts of the form name both forms (service and command); the question before running says "service" or "command".
+
+### Internal
+
+- `checkAction` knows both forms (`isCommand`: a slash), the command runs through `callWS`; tests: suite `launcheract` (command, `type`/`id` in the data rejected).
+
 ## [2.113.0] - 2026-10-21
 
 App launcher: a new type of own app, "Action", that calls a Home Assistant service.
@@ -4281,6 +4297,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.114.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.114.0
 [2.113.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.113.0
 [2.112.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.112.0
 [2.111.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.111.0

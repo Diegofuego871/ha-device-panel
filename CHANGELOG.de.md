@@ -7,6 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.114.0] - 2026-10-21
+
+Aktionen können auch einen Befehl der Oberfläche (WebSocket) senden, zum Beispiel damit HACS nach einer neuen Version sucht.
+
+### Hinzugefügt
+
+- **Aktion, "Dienst oder Befehl":** Das Feld einer Aktion nimmt neben einem Dienst von Home Assistant (`bereich.dienst`) auch einen **Befehl der Oberfläche** an, wie ihn das Panel selbst benutzt (`bereich/befehl`, zum Beispiel `hacs/repository/refresh`). Die Daten sind dann die Felder der Nachricht (ohne `type` und `id`, die gehören dem Befehl), zum Beispiel `{"repository": "123456789"}`. Es läuft mit Ihren Rechten, auf Wunsch mit Rückfrage. Typischer Einsatz: ein Knopf, der HACS sofort nach einer neuen Version von Device Panel suchen lässt; die Zahl steht in der Adresse der HACS-Seite von Device Panel. Der Code der Integration weiss dafür nichts von HACS; wer es will, legt sich die Aktion selbst an.
+
+### Geändert
+
+- Hinweis und Fehlertexte des Formulars nennen beide Formen (Dienst und Befehl); die Rückfrage vor dem Ausführen sagt "Dienst" oder "Befehl".
+
+### Intern
+
+- `checkAction` kennt beide Formen (`isCommand`: ein Schrägstrich), der Befehl läuft über `callWS`; Tests: Suite `launcheract` (Befehl, `type`/`id` in den Daten abgelehnt).
+
 ## [2.113.0] - 2026-10-21
 
 App-Launcher: eine neue Art eigener App, "Aktion", die einen Dienst von Home Assistant aufruft.
@@ -4382,6 +4398,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.114.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.114.0
 [2.113.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.113.0
 [2.112.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.112.0
 [2.111.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.111.0
