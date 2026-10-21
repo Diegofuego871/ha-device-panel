@@ -67,7 +67,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Reiterleiste ${JSON.stringify(T.tabs)} mit Kapsel, "${T.tabs[0]}" gewählt, Favicon gesperrt (kein externer Link)`, (await wait(`return !!r.querySelector("${F} .sub-tabs .seg-pill")`)) && JSON.stringify(await ev(`return [...r.querySelectorAll('${F} [data-set="fsrc"]')].map((e) => e.textContent)`)) === JSON.stringify(T.tabs) && (await ev(`const t = [...r.querySelectorAll('${F} [data-set="fsrc"]')]; return t[0].classList.contains("on") && t[1].disabled && !t[1].classList.contains("on")`)));
     check(`[${tag}] Symbole sichtbar, Favicon-Bereich verborgen`, await ev(`return r.querySelector('${F} [data-f-pane="icon"]').offsetHeight > 0 && r.querySelector('${F} [data-f-pane="favicon"]').offsetHeight === 0`));
     await (await handle(`${F} [data-f="name"]`)).fill("Mein NAS");
-    await tap(`${F} [data-f="ext"]`);
+    await tap(`${F} [data-set="fkind"][data-v="ext"]`);
     check(`[${tag}] externer Link an: Reiter "Favicon" frei`, await ev(`return !r.querySelector('${F} [data-set="fsrc"][data-v="favicon"]').disabled`));
     await tap(`${F} [data-set="fsrc"][data-v="favicon"]`);
     check(`[${tag}] Reiter "Favicon": Bereich mit Knopf "${T.fetch}", Symbole verborgen`, await ev(`return r.querySelector('${F} [data-f-pane="favicon"]').offsetHeight > 0 && r.querySelector('${F} [data-f-pane="icon"]').offsetHeight === 0 && r.querySelector("${F} [data-f-fetch]").textContent === ${JSON.stringify(T.fetch)}`));
@@ -102,10 +102,10 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] zurück zu "${T.tabs[0]}": Vorschau mit Symbol statt Bild`, await ev(`return !r.querySelector("${F} [data-f-prev] .ap-fi") && !!r.querySelector("${F} [data-f-prev] svg")`));
     await tap(`${F} [data-set="fsrc"][data-v="favicon"]`);
     check(`[${tag}] wieder "${T.tabs[1]}": das geladene Bild ist noch da`, await ev(`return !!r.querySelector("${F} [data-f-favimg] img") && !!r.querySelector("${F} [data-f-prev] .ap-fi")`));
-    // Externer Link aus: Favicon-Reiter gesperrt, zurück zum Symbol
-    await tap(`${F} [data-f="ext"]`);
+    // Externer Link aus (Art "Seite"): Favicon-Reiter gesperrt, zurück zum Symbol
+    await tap(`${F} [data-set="fkind"][data-v="page"]`);
     check(`[${tag}] externer Link aus: Reiter "Favicon" gesperrt, wieder "${T.tabs[0]}"`, await ev(`const t = [...r.querySelectorAll('${F} [data-set="fsrc"]')]; return t[1].disabled && t[0].classList.contains("on")`));
-    await tap(`${F} [data-f="ext"]`);
+    await tap(`${F} [data-set="fkind"][data-v="ext"]`);
     await tap(`${F} [data-set="fsrc"][data-v="favicon"]`);
 
     // Speichern: Favicon in den Benutzerdaten, statt des Symbols

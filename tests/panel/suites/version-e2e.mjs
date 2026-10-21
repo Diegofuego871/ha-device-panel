@@ -172,8 +172,9 @@ for (const mobile of [false, true]) {
   await p.waitForTimeout(5500);
   t = await verText();
   check(`[${tag}] HACS veraltet: kein Aktualisieren, Hinweis und Suchen`, t.includes("Version 0.5.0 verfügbar") && t.includes("HACS kennt diese Version noch nicht") && !(await has('[data-ver="install"]')) && await has('[data-ver="check"]'), t);
-  const refreshed = await p.evaluate(() => window.__wsCalls.filter((m) => m.type === "hacs/repository/refresh").map((m) => m.repository));
-  check(`[${tag}] HACS automatisch nachgeladen (Repository 987654)`, refreshed.includes("987654"), JSON.stringify(refreshed));
+  // Seit 2.113.0 nur noch der öffentliche Dienst: die Update-Entität wird neu geladen, die internen Befehle von HACS bleiben unberührt
+  const hacsCalls = await p.evaluate(() => ({ ws: window.__wsCalls.filter((m) => String(m.type).startsWith("hacs/")).length, update: window.__services.filter((s) => s.domain === "homeassistant" && s.service === "update_entity").length }));
+  check(`[${tag}] HACS: Update-Entität neu geladen, keine internen HACS-Befehle`, hacsCalls.ws === 0 && hacsCalls.update >= 1, JSON.stringify(hacsCalls));
 
   // 4b. Abgleich bringt die Version: direkt "Aktualisieren", nie der Hinweis
   await ev(`${panel}._version = null`);

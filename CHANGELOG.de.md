@@ -7,6 +7,24 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.113.0] - 2026-10-21
+
+App-Launcher: eine neue Art eigener App, "Aktion", die einen Dienst von Home Assistant aufruft.
+
+### Hinzugefügt
+
+- **Eigene App der Art "Aktion":** Neben "Seite" (in Home Assistant) und "Externer Link" hat das Formular einer eigenen App jetzt die Reiter **Seite | Externer Link | Aktion**. Eine Aktion ruft beim Antippen einen **Dienst von Home Assistant** auf, wie in einem Skript: Feld **Dienst** (`bereich.dienst`, zum Beispiel `homeassistant.update_entity`), Feld **Daten** (JSON-Objekt, zum Beispiel `{"entity_id": "update.device_panel_update"}`) und der Schalter **"Vor dem Ausführen nachfragen"** (standardmässig aus; mit ihm kommt zuerst eine Rückfrage). Der Dienst läuft mit **Ihren** Rechten. Das Ergebnis steht unten im Launcher ("… ausgeführt" oder "… fehlgeschlagen: Grund"), aus der Kopfzeile (Launcher zu) als Toast der Seite. Aktionen tragen eine kleine Blitz-Marke, zeigen im Bearbeiten-Modus ihren Dienst als Untertitel, lassen sich wie andere Apps als Favorit markieren und stehen dann in der Kopfzeile.
+- Typischer Einsatz: ein Knopf, der HACS nach einer neuen Version von Device Panel suchen lässt (`homeassistant.update_entity` auf der Update-Entität von HACS), nachdem das Panel selbst keine HACS-Interna mehr nutzt.
+
+### Geändert
+
+- Das Kontrollkästchen "Externer Link" des Formulars ist die Reiterleiste oben (gleiches Verhalten, ein Bedienelement für alle drei Arten).
+- **Knopf "Nach Updates suchen" (Einstellungen):** Er ruft im Browser ebenfalls keine internen Befehle von HACS mehr auf (`hacs/repositories/list`, `hacs/repository/refresh`; derselbe Typ Zugriff, den die HACS-Prüfung in der Integration beanstandet hat). Er lädt die Update-Entität von HACS über den öffentlichen Dienst `homeassistant.update_entity` neu; wer will, dass HACS sofort nachsieht, legt sich eine App der Art "Aktion" an (siehe oben).
+
+### Intern
+
+- `checkAction` und `sanitizeApps` in `apps.js` (Dienst nur `bereich.dienst`, Daten ein einfaches Objekt bis 2000 Zeichen, ungültige Aktionen entfallen), `AppLauncher.run`/`_exec`, `_askConfirm` nimmt Argumente für seine Texte. Tests: neue Suite `launcheract`, Suiten `launcher` und `launcherfav` angepasst.
+
 ## [2.112.1] - 2026-10-21
 
 Das automatische Update fasst die Interna von HACS nicht mehr an (Wunsch der HACS-Prüfung).
@@ -18,6 +36,8 @@ Das automatische Update fasst die Interna von HACS nicht mehr an (Wunsch der HAC
 ### Intern
 
 - `_async_hacs_refresh` aus `update_check.py` entfernt; der Test `test_auto_update_starts_as_soon_as_a_check_finds_a_version` prüft, dass das HACS-Objekt nie berührt wird.
+
+Nicht veröffentlicht; enthalten in 2.113.0.
 
 ## [2.112.0] - 2026-10-20
 
@@ -4362,7 +4382,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.112.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.112.1
+[2.113.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.113.0
 [2.112.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.112.0
 [2.111.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.111.0
 [2.109.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.109.0

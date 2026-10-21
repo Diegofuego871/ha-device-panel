@@ -7,6 +7,24 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.113.0] - 2026-10-21
+
+App launcher: a new type of own app, "Action", that calls a Home Assistant service.
+
+### Added
+
+- **Own app of type "Action":** besides "Page" (of Home Assistant) and "External link", the form for an own app has the tabs **Page | External link | Action**. An action app calls a **service of Home Assistant** when you tap it, as in a script: field **Service** (`domain.service`, for example `homeassistant.update_entity`), field **Data** (JSON object, for example `{"entity_id": "update.device_panel_update"}`) and the switch **"Ask before running"** (off by default; with it, a question comes first). The service runs with **your** rights. The result shows at the bottom of the launcher ("… done" or "… failed: reason"), from the header (launcher closed) as a toast of the page. Action apps carry a small bolt mark, show their service as subtitle in edit mode, can be marked as favourites like other apps and stand in the header.
+- Typical use: a button that makes HACS look for a new version of Device Panel (`homeassistant.update_entity` on the HACS update entity), now that the panel itself no longer uses HACS internals.
+
+### Changed
+
+- The check box "External link" of the form became the tab bar above (same behaviour, one control for all three types).
+- **Button "Check for updates" (settings):** it no longer calls the internal commands of HACS (`hacs/repositories/list`, `hacs/repository/refresh`) in the browser either (the same kind of access the HACS review objected to in the integration). It reloads the HACS update entity through the public service `homeassistant.update_entity`; whoever wants HACS to look right away creates an "Action" app (see above).
+
+### Internal
+
+- `checkAction` and `sanitizeApps` in `apps.js` (service only `domain.service`, data a plain object up to 2000 characters, invalid actions are dropped), `AppLauncher.run`/`_exec`, `_askConfirm` accepts arguments for its texts. Tests: new suite `launcheract`, suites `launcher` and `launcherfav` adapted.
+
 ## [2.112.1] - 2026-10-21
 
 The automatic update no longer touches HACS internals (request of the HACS review).
@@ -18,6 +36,8 @@ The automatic update no longer touches HACS internals (request of the HACS revie
 ### Internal
 
 - `_async_hacs_refresh` removed from `update_check.py`; test `test_auto_update_starts_as_soon_as_a_check_finds_a_version` checks that the HACS object is never touched.
+
+Not released; included in 2.113.0.
 
 ## [2.112.0] - 2026-10-20
 
@@ -4261,7 +4281,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.112.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.112.1
+[2.113.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.113.0
 [2.112.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.112.0
 [2.111.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.111.0
 [2.109.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.109.0

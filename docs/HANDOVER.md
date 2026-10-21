@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.113.0, Launcher: eigene App der Art "Aktion")
+
+- Wunsch des Nutzers (statt eines Knopfs im Panel für HACS): eigene Apps können einen Dienst aufrufen. Entscheide: frei (`bereich.dienst` plus JSON-Daten, Rechte des Benutzers), Rückfrage je App einstellbar (Standard aus), keine Vorlage. Daten: `custom[].svc = {service, data, confirm}` (`checkAction`; `url` leer, `ext` false); Formular-Reiter `data-set="fkind"` (page/ext/act) ersetzt das Kontrollkästchen `data-f="ext"`; Ausführen `AppLauncher.run/_exec` über `host._callService` (WS call_service), Rückmeldung `snack` (Fenster offen) sonst `host._toast`; Rückfrage über `host._askConfirm` (neu: `keys.args`). Marke: Blitz (`mdi("bolt")`) wie die Link-Marke.
+- `_refreshHacs` im Browser ruft keine HACS-Befehle (`hacs/repositories/list`, `hacs/repository/refresh`) mehr auf, nur noch `homeassistant.update_entity` (Wunsch des Nutzers: Code sauber, wer will, legt sich die Aktion selbst an). Suite `version` prüft: keine `hacs/…`-Befehle.
+- Tag: 2.112.1 blieb ungetaggt und steckt in 2.113.0 (ein Release deckt die Anfrage der HACS-Prüfung ab).
+
 ## Stand (2.112.1, HACS-Interna entfernt)
 
 - Rückmeldung der HACS-Prüfung (frenck, PR für die Aufnahme): `_async_hacs_refresh` (`hass.data["hacs"].repositories...update_repository`) ist privater Zustand von HACS und entfernt. `async_auto_install` nutzt nur `homeassistant.update_entity` auf der HACS-Update-Entität und `update.install`; neue Versionen erscheinen dadurch unter Umständen Stunden später (Absprache mit dem Prüfer: in Ordnung). Nach dem Release Prüfung neu anfordern.

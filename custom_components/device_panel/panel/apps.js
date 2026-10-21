@@ -18,6 +18,8 @@ const PHONE_PINS = 2;
 const MAX_CUSTOM = 30;
 const NAME_MAX = 40;
 const URL_MAX = 300;
+// Aktion (seit 2.113.0): Dienst "domain.service" und seine Daten als JSON; die Grösse der Daten ist begrenzt
+const DATA_MAX = 2000;
 const SAVE_DELAY_MS = 400;
 const GROUPS = ["panel", "ha", "own"];
 
@@ -106,6 +108,26 @@ export function checkTarget(raw, ext) {
   return v.startsWith("/") && !v.startsWith("//") && !v.includes("\\") ? v : null;
 }
 
+// Aktion prüfen (seit 2.113.0): {service: "domain.service", data: {…}, confirm: bool}. Der Dienst nur in der Form "domain.service" (Kleinbuchstaben,
+// Ziffern, Unterstrich), die Daten ein einfaches Objekt (kein Feld, kein Text) in begrenzter Grösse. Gibt die bereinigte Aktion zurück, sonst null.
+export function checkAction(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const service = String(raw.service ?? "").trim();
+  if (!/^[a-z0-9_]+\.[a-z0-9_]+$/.test(service) || service.length > 64) return null;
+  let data = {};
+  if (raw.data != null) {
+    if (typeof raw.data !== "object" || Array.isArray(raw.data)) return null;
+    try {
+      const text = JSON.stringify(raw.data);
+      if (text.length > DATA_MAX) return null;
+      data = JSON.parse(text);
+    } catch {
+      return null;
+    }
+  }
+  return { service, data, confirm: raw.confirm === true };
+}
+
 // Gespeicherten Stand prüfen: nur bekannte Formen, alles andere fällt auf den Standard zurück.
 export function sanitizeApps(raw) {
   const d = defaults();
@@ -113,10 +135,13 @@ export function sanitizeApps(raw) {
   const custom = (Array.isArray(raw.custom) ? raw.custom : [])
     .map((c) => {
       if (!c || typeof c !== "object") return null;
-      const ext = c.ext === true;
-      const url = checkTarget(c.url, ext);
       const name = String(c.name ?? "").trim().slice(0, NAME_MAX);
       const id = typeof c.id === "string" && c.id.length > 0 && c.id.length <= 64 ? c.id : null;
+      // Aktion (seit 2.113.0): ruft einen Dienst von Home Assistant auf; ohne Ziel (url leer), ohne Favicon
+      const svc = c.svc != null ? checkAction(c.svc) : null;
+      if (c.svc != null) return svc && name && id ? { id, name, icon: APP_ICONS.includes(c.icon) ? c.icon : "bolt", url: "", ext: false, svc } : null;
+      const ext = c.ext === true;
+      const url = checkTarget(c.url, ext);
       if (!url || !name || !id) return null;
       const app = { id, name, icon: APP_ICONS.includes(c.icon) ? c.icon : "web", url, ext };
       // Das Favicon gibt es nur bei externen Links
@@ -190,7 +215,7 @@ export class AppLauncher {
     const admin = this._admin();
     const t = (k) => this.t(k);
     const builtin = BUILTIN.filter((a) => admin || !a.admin).map((a) => ({ ...a, name: t(`app_${a.id}`), sub: a.path || t(`app_${a.id}_sub`) || "", look: HA_LOOK[a.id] || null, color: HA_LOOK[a.id]?.c || PANEL_COLOR[a.id] || null }));
-    const own = this.data.custom.map((c) => ({ id: c.id, group: "own", icon: c.icon, name: c.name, sub: c.url, url: c.url, ext: c.ext, favicon: c.favicon, custom: true }));
+    const own = this.data.custom.map((c) => ({ id: c.id, group: "own", icon: c.icon, name: c.name, sub: c.svc ? c.svc.service : c.url, url: c.url, ext: c.ext, svc: c.svc, favicon: c.favicon, custom: true }));
     return [...builtin, ...own];
   }
 
@@ -382,6 +407,8 @@ export class AppLauncher {
   open(id) {
     const a = this.app(id);
     if (!a || a.ext) return;
+    // Aktion (seit 2.113.0): Dienst aufrufen, das Fenster bleibt offen (die Rückmeldung steht unten darin)
+    if (a.svc) return this.run(a);
     this.close();
     if (a.act === "routine") this.host._openRtAll();
     else if (a.act === "magic") this.host._openMagicAll();
@@ -390,6 +417,27 @@ export class AppLauncher {
     else if (a.act === "view") this.host._openView();
     else if (a.act === "settings") this.host._openSettings();
     else if (a.path || a.url) this.host._navigate(a.path || a.url);
+  }
+
+  // Aktion ausführen (seit 2.113.0): mit Rückfrage, wenn der Benutzer sie bei der App eingeschaltet hat
+  run(a) {
+    if (!a?.svc) return;
+    if (a.svc.confirm) this.host._askConfirm({ title: "appsRunTitle", note: "appsRunNote", no: "appsRunNo", yes: "appsRunYes", args: [a.name, a.svc.service], noIcon: "close", yesIcon: "check" }, () => this._exec(a));
+    else this._exec(a);
+  }
+
+  async _exec(a) {
+    const [domain, service] = a.svc.service.split(".");
+    let text;
+    try {
+      await this.host._callService(domain, service, a.svc.data || {});
+      text = this.t("appsRunDone", a.name);
+    } catch (err) {
+      text = this.t("appsRunFail", a.name, err?.message || err?.code || String(err));
+    }
+    // Das Fenster zeigt die Rückmeldung selbst (der Toast der Seite läge darunter); aus der Kopfzeile (Fenster zu) der Toast der Seite
+    if (this.dlg?.open) this.snack(text);
+    else this.host._toast(text);
   }
 
   toggle() {
@@ -573,12 +621,12 @@ export class AppLauncher {
     const { escape, mdi } = this.h;
     const pin = this.data.fav.includes(a.id);
     return `<div class="ap-tile${pin ? " pin" : ""}">${this._main(a, "ap-main", `${this._ico(a, 22)}<span class="ap-nm">${escape(a.name)}</span>`)}
-      ${this._badge(a)}${a.ext ? `<span class="ap-ext" title="${escape(this.t("appsExtMark"))}">${mdi("link", 12)}</span>` : ""}</div>`;
+      ${this._badge(a)}${a.ext ? `<span class="ap-ext" title="${escape(this.t("appsExtMark"))}">${mdi("link", 12)}</span>` : a.svc ? `<span class="ap-ext" title="${escape(this.t("appsActMark"))}">${mdi("bolt", 12)}</span>` : ""}</div>`;
   }
 
   _row(a) {
     const { escape, mdi } = this.h;
-    const inner = `${this._ico(a, 20, true)}<span class="ap-t"><b>${escape(a.name)}${this._badge(a)}</b></span>${a.ext ? `<span class="ap-ext in" title="${escape(this.t("appsExtMark"))}">${mdi("link", 14)}</span>` : ""}`;
+    const inner = `${this._ico(a, 20, true)}<span class="ap-t"><b>${escape(a.name)}${this._badge(a)}</b></span>${a.ext ? `<span class="ap-ext in" title="${escape(this.t("appsExtMark"))}">${mdi("link", 14)}</span>` : a.svc ? `<span class="ap-ext in" title="${escape(this.t("appsActMark"))}">${mdi("bolt", 14)}</span>` : ""}`;
     return `<div class="ap-row">${this._main(a, "ap-main row", inner)}</div>`;
   }
 
@@ -631,7 +679,7 @@ export class AppLauncher {
       : "";
     return `<div class="ap-erow${hid ? " hid" : ""}" data-id="${escape(a.id)}" data-mark="${escape(this.t("appsPhoneMark"))}">
       <button type="button" class="ap-drag" data-ap-drag data-id="${escape(a.id)}" title="${escape(this.t("appsDragHint"))}" aria-label="${escape(this.t("appsDrag", a.name))}">${mdi("drag", 18)}</button>
-      ${this._ico(a, 18, true)}<span class="ap-t"><b>${escape(a.name)}${a.ext ? ` <span class="ap-ext in">${mdi("link", 12)}</span>` : ""}</b>${a.sub ? `<small>${escape(a.sub)}</small>` : ""}</span>
+      ${this._ico(a, 18, true)}<span class="ap-t"><b>${escape(a.name)}${a.ext ? ` <span class="ap-ext in">${mdi("link", 12)}</span>` : a.svc ? ` <span class="ap-ext in">${mdi("bolt", 12)}</span>` : ""}</b>${a.sub ? `<small>${escape(a.sub)}</small>` : ""}</span>
       ${eye}${heart}${own}</div>`;
   }
 
@@ -700,8 +748,8 @@ export class AppLauncher {
     const c = id ? this.data.custom.find((x) => x.id === id) : null;
     // src: welches Bild die App zeigt, "icon" (gewähltes Symbol) oder "favicon" (nur bei externem Link, nach "Favicon laden")
     this.ui.form = c
-      ? { id: c.id, name: c.name, icon: c.icon, ext: c.ext, url: c.url, favicon: c.favicon || null, src: c.favicon ? "favicon" : "icon", busy: false, msg: "" }
-      : { id: null, name: "", icon: "web", ext: false, url: "", favicon: null, src: "icon", busy: false, msg: "" };
+      ? { id: c.id, name: c.name, icon: c.icon, kind: c.svc ? "act" : c.ext ? "ext" : "page", ext: c.ext, url: c.url, svc: c.svc?.service || "", data: c.svc && Object.keys(c.svc.data || {}).length ? JSON.stringify(c.svc.data, null, 2) : "", confirm: Boolean(c.svc?.confirm), favicon: c.favicon || null, src: c.favicon ? "favicon" : "icon", busy: false, msg: "" }
+      : { id: null, name: "", icon: "web", kind: "page", ext: false, url: "", svc: "", data: "", confirm: false, favicon: null, src: "icon", busy: false, msg: "" };
     const dlg = this.fdlg;
     if (!dlg) return;
     this._renderForm();
@@ -722,6 +770,7 @@ export class AppLauncher {
 
   _formTexts() {
     const f = this.ui.form;
+    f.ext = f.kind === "ext";
     return {
       label: this.t(f.ext ? "appsFAddr" : "appsFPage"),
       hint: this.t(f.ext ? "appsFAddrHint" : "appsFPageHint"),
@@ -740,9 +789,16 @@ export class AppLauncher {
         <button type="button" class="ap-x show" data-ap="fclose" title="${escape(this.t("close"))}" aria-label="${escape(this.t("close"))}">${mdi("close", 18)}</button></div>
       <div class="ap-body">
         <label class="ap-f"><span>${escape(this.t("appsFName"))}</span><input class="ap-in" data-f="name" maxlength="${NAME_MAX}" value="${escape(f.name)}" autocomplete="off"></label>
-        <label class="ap-chk"><input type="checkbox" data-f="ext"${f.ext ? " checked" : ""}><span>${escape(this.t("appsFExt"))}<small>${escape(this.t("appsFExtSub"))}</small></span></label>
-        <label class="ap-f"><span data-f-label>${escape(tx.label)}</span><input class="ap-in" data-f="url" type="text" inputmode="url" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="${URL_MAX}" placeholder="${escape(tx.ph)}" value="${escape(f.url)}"></label>
-        <div class="ap-hint" data-f-hint>${escape(tx.hint)}</div>
+        <div class="ap-f"><span>${escape(this.t("appsFKind"))}</span>
+          <div class="sub-tabs" role="tablist" aria-label="${escape(this.t("appsFKind"))}">
+            ${[["page", "appsFKPage"], ["ext", "appsFKExt"], ["act", "appsFKAct"]].map(([v, k]) => `<button type="button" role="tab" class="sub-tab" data-set="fkind" data-v="${v}">${escape(this.t(k))}</button>`).join("")}</div></div>
+        <div data-f-sec="url"><label class="ap-f"><span data-f-label>${escape(tx.label)}</span><input class="ap-in" data-f="url" type="text" inputmode="url" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="${URL_MAX}" placeholder="${escape(tx.ph)}" value="${escape(f.url)}"></label>
+          <div class="ap-hint" data-f-hint>${escape(tx.hint)}</div></div>
+        <div data-f-sec="act" hidden>
+          <label class="ap-f"><span>${escape(this.t("appsFSvc"))}</span><input class="ap-in" data-f="svc" type="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="64" placeholder="homeassistant.update_entity" value="${escape(f.svc)}"></label>
+          <label class="ap-f"><span>${escape(this.t("appsFData"))}</span><textarea class="ap-in ap-ta" data-f="data" rows="4" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="${DATA_MAX}" placeholder='{"entity_id": "update.device_panel_update"}'>${escape(f.data)}</textarea></label>
+          <div class="ap-hint">${escape(this.t("appsFActHint"))}</div>
+          <label class="ap-chk"><input type="checkbox" data-f="confirm"${f.confirm ? " checked" : ""}><span>${escape(this.t("appsFConfirm"))}<small>${escape(this.t("appsFConfirmSub"))}</small></span></label></div>
         <div class="ap-f"><span>${escape(this.t("appsFIcon"))}</span>
           <div class="sub-tabs" role="tablist" aria-label="${escape(this.t("appsFIcon"))}">
             <button type="button" role="tab" class="sub-tab" data-set="fsrc" data-v="icon">${escape(this.t("appsFSrcIcon"))}</button>
@@ -764,7 +820,7 @@ export class AppLauncher {
     const f = this.ui.form;
     if (!el || !f) return;
     const { escape, mdi } = this.h;
-    el.innerHTML = `<span class="ap-main">${this._ico({ icon: f.icon, favicon: f.src === "favicon" ? f.favicon : null }, 22)}<span class="ap-nm">${escape(f.name.trim() || this.t("appsFName"))}</span></span>${f.ext ? `<span class="ap-ext">${mdi("link", 12)}</span>` : ""}`;
+    el.innerHTML = `<span class="ap-main">${this._ico({ icon: f.icon, favicon: f.src === "favicon" ? f.favicon : null }, 22)}<span class="ap-nm">${escape(f.name.trim() || this.t("appsFName"))}</span></span>${f.ext ? `<span class="ap-ext">${mdi("link", 12)}</span>` : f.kind === "act" ? `<span class="ap-ext">${mdi("bolt", 12)}</span>` : ""}`;
   }
 
   // Beschriftung, Hinweis und Vorschau nachführen, ohne das Fenster neu zu bauen (Fokus und Tastatur bleiben)
@@ -773,6 +829,13 @@ export class AppLauncher {
     const f = this.ui.form;
     if (!dlg || !f) return;
     const tx = this._formTexts();
+    dlg.querySelectorAll('[data-set="fkind"]').forEach((b) => {
+      const on = b.dataset.v === f.kind;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-selected", String(on));
+    });
+    dlg.querySelector('[data-f-sec="url"]').hidden = f.kind === "act";
+    dlg.querySelector('[data-f-sec="act"]').hidden = f.kind !== "act";
     dlg.querySelector("[data-f-label]").textContent = tx.label;
     dlg.querySelector("[data-f-hint]").textContent = tx.hint;
     dlg.querySelector('[data-f="url"]').placeholder = tx.ph;
@@ -840,11 +903,28 @@ export class AppLauncher {
     if (!f) return;
     const name = f.name.trim();
     if (!name) return this._formError(this.t("appsFErrName"));
-    const url = checkTarget(f.url, f.ext);
-    if (!url) return this._formError(this.t(f.ext ? "appsFErrExt" : "appsFErrPage"));
-    const useFav = f.ext && f.src === "favicon";
-    if (useFav && !isFavicon(f.favicon)) return this._formError(this.t("appsFErrFavNeed"));
-    const app = { name, icon: f.icon, url, ext: f.ext, ...(useFav ? { favicon: f.favicon } : {}) };
+    let app;
+    if (f.kind === "act") {
+      // Aktion: Dienst und Daten (JSON-Objekt) prüfen
+      let data = {};
+      const text = f.data.trim();
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          return this._formError(this.t("appsFErrData"));
+        }
+      }
+      const svc = checkAction({ service: f.svc, data, confirm: f.confirm });
+      if (!svc) return this._formError(this.t(/^[a-z0-9_]+\.[a-z0-9_]+$/.test(f.svc.trim()) ? "appsFErrData" : "appsFErrSvc"));
+      app = { name, icon: f.icon, url: "", ext: false, svc };
+    } else {
+      const url = checkTarget(f.url, f.ext);
+      if (!url) return this._formError(this.t(f.ext ? "appsFErrExt" : "appsFErrPage"));
+      const useFav = f.ext && f.src === "favicon";
+      if (useFav && !isFavicon(f.favicon)) return this._formError(this.t("appsFErrFavNeed"));
+      app = { name, icon: f.icon, url, ext: f.ext, ...(useFav ? { favicon: f.favicon } : {}) };
+    }
     if (f.id) this.data.custom = this.data.custom.map((c) => (c.id === f.id ? { id: c.id, ...app } : c));
     else {
       const id = `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -878,6 +958,18 @@ export class AppLauncher {
         if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this.closeForm();
         return;
       }
+      const kind = ev.target.closest('[data-set="fkind"]');
+      if (kind) {
+        if (this.ui.form) {
+          this.ui.form.kind = kind.dataset.v;
+          this.ui.form.ext = kind.dataset.v === "ext";
+          // Symbol "bolt" als Vorschlag bei einer neuen Aktion, solange noch keines gewählt wurde
+          if (kind.dataset.v === "act" && !this.ui.form.id && this.ui.form.icon === "web") this.ui.form.icon = "bolt";
+          this._formError("");
+          this._formSync();
+        }
+        return;
+      }
       const tab = ev.target.closest('[data-set="fsrc"]');
       if (tab) {
         if (!tab.disabled && this.ui.form) {
@@ -904,13 +996,15 @@ export class AppLauncher {
       if (!f || !k) return;
       if (k === "name") f.name = ev.target.value;
       else if (k === "url") f.url = ev.target.value;
-      else if (k === "ext") f.ext = ev.target.checked;
+      else if (k === "svc") f.svc = ev.target.value;
+      else if (k === "data") f.data = ev.target.value;
+      else if (k === "confirm") f.confirm = ev.target.checked;
       this._formError("");
-      if (k === "ext" || k === "url") this._formSync();
+      if (k === "url") this._formSync();
       else if (k === "name") this._formPreview();
     });
     fdlg.addEventListener("keydown", (ev) => {
-      if (ev.key === "Enter" && ev.target.matches("input[type=text], input:not([type])")) {
+      if (ev.key === "Enter" && ev.target.matches("input[type=text], input:not([type])") && !ev.target.matches('[data-f="data"]')) {
         ev.preventDefault();
         this.saveForm();
       }

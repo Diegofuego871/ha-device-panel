@@ -2099,6 +2099,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-ic { display: grid; place-items: center; height: 40px; padding: 0; border: 0; border-radius: 12px; background: var(--dp-subtle); color: var(--dp-text2); cursor: pointer; }
 .ap-ic.on { background: var(--dp-primary-soft); color: var(--dp-primary); box-shadow: inset 0 0 0 1.5px var(--dp-primary); }
 .ap-chk { display: flex; align-items: center; gap: 12px; min-height: 48px; margin-top: 10px; cursor: pointer; font-size: 14.5px; }
+.ap-ta { height: auto; min-height: 84px; padding: 10px 14px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.4; }
 .ap-chk input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--dp-primary); }
 .ap-chk small { display: block; color: var(--dp-text2); font-size: 12px; }
 .ap-hint { margin: 6px 2px 0; color: var(--dp-text2); font-size: 12px; line-height: 1.4; }

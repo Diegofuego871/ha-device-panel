@@ -4094,7 +4094,8 @@ class DevicePanel extends HTMLElement {
       return;
     }
     this._discardYes = onYes;
-    dlg.innerHTML = `<div class="dd-card" role="alertdialog" aria-labelledby="dd-t"><b id="dd-t">${escape(this._t(keys.title))}</b><small>${escape(this._t(keys.note))}</small>
+    const args = keys.args || [];
+    dlg.innerHTML = `<div class="dd-card" role="alertdialog" aria-labelledby="dd-t"><b id="dd-t">${escape(this._t(keys.title, ...args))}</b><small>${escape(this._t(keys.note, ...args))}</small>
       <div class="dd-btns"><button type="button" class="dlg-btn" data-dd="no">${mdi(keys.noIcon || "close", 18)}${escape(this._t(keys.no))}</button><button type="button" class="dlg-btn danger" data-dd="yes">${mdi(keys.yesIcon || "check", 18)}${escape(this._t(keys.yes))}</button></div></div>`;
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
@@ -9775,21 +9776,12 @@ class DevicePanel extends HTMLElement {
     return this._hass.callWS({ type: "call_service", domain, service, service_data: data });
   }
 
-  // HACS die Versionen des Repositories neu laden lassen (wie sein Menüpunkt
-  // "Informationen aktualisieren"), dann die Update-Entität. Alles
-  // bestmöglich: fehlt ein Befehl in einer HACS-Version, bleibt es beim
-  // Aktualisieren der Entität.
+  // Die Update-Entität von HACS neu laden lassen (öffentlicher Dienst homeassistant.update_entity). Die internen Befehle von HACS (Repository
+  // neu laden) werden nicht mehr aufgerufen (seit 2.113.0, Rückmeldung der HACS-Prüfung); HACS prüft selbst nur alle paar Stunden, wer es
+  // sofort will, legt sich in den Apps eine "Aktion" an (README).
   async _refreshHacs() {
     const hacs = this._hacsUpdateEntity();
     if (!hacs) return;
-    try {
-      const repos = await this._hass.callWS({ type: "hacs/repositories/list" });
-      const list = Array.isArray(repos) ? repos : (repos && repos.repositories) || [];
-      const repo = list.find((r) => String(r.full_name || "").toLowerCase() === REPO);
-      if (repo) await this._hass.callWS({ type: "hacs/repository/refresh", repository: String(repo.id) });
-    } catch (err) {
-      // Älteres oder neueres HACS ohne diese Befehle.
-    }
     try {
       await this._callService("homeassistant", "update_entity", { entity_id: hacs.entity_id });
     } catch (err) {

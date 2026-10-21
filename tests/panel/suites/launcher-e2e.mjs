@@ -208,7 +208,7 @@ for (const lang of ["de", "en"]) {
     await tap(`${D} [data-ap="edit"]`);
     await tap(`${D} [data-ap="add"]`);
     const F = "dialog.app-dlg";
-    check(`[${tag}] Formular "${T.formNew}": Kontrollkästchen aus, Beschriftung "${T.labelPage}"`, (await wait(`return r.querySelector("${F}")?.open`)) && (await text(`${F} .ap-title`)) === T.formNew && !(await ev(`return r.querySelector('${F} [data-f="ext"]').checked`)) && (await text(`${F} [data-f-label]`)) === T.labelPage);
+    check(`[${tag}] Formular "${T.formNew}": Art "Seite", Beschriftung "${T.labelPage}"`, (await wait(`return r.querySelector("${F}")?.open`)) && (await text(`${F} .ap-title`)) === T.formNew && (await ev(`return r.querySelector('${F} [data-set="fkind"][data-v="page"]').classList.contains("on")`)) && (await text(`${F} [data-f-label]`)) === T.labelPage);
     await tap(`${F} [data-ap="fsave"]`);
     check(`[${tag}] ohne Name: "${T.errName}"`, (await text(`${F} [data-f-err]`)) === T.errName);
     await (await handle(`${F} [data-f="name"]`)).fill("Kamera Eingang");
@@ -226,8 +226,8 @@ for (const lang of ["de", "en"]) {
     await tap(`${D} [data-ap="add"]`);
     await wait(`return r.querySelector("${F}")?.open`);
     await (await handle(`${F} [data-f="name"]`)).fill("Beispiel");
-    await tap(`${F} [data-f="ext"]`);
-    check(`[${tag}] Kontrollkästchen ein: Beschriftung "${T.labelAddr}", Hinweis auf neuen Tab, Marke in der Vorschau`, (await text(`${F} [data-f-label]`)) === T.labelAddr && (await text(`${F} [data-f-hint]`)).includes("https://") && (await ev(`return !!r.querySelector("${F} [data-f-prev] .ap-ext")`)));
+    await tap(`${F} [data-set="fkind"][data-v="ext"]`);
+    check(`[${tag}] Art "Externer Link": Beschriftung "${T.labelAddr}", Hinweis auf neuen Tab, Marke in der Vorschau`, (await text(`${F} [data-f-label]`)) === T.labelAddr && (await text(`${F} [data-f-hint]`)).includes("https://") && (await ev(`return !!r.querySelector("${F} [data-f-prev] .ap-ext")`)));
     await (await handle(`${F} [data-f="url"]`)).fill("javascript:alert(1)");
     await tap(`${F} [data-ap="fsave"]`);
     check(`[${tag}] javascript: wird abgelehnt: "${T.errExt}"`, (await text(`${F} [data-f-err]`)) === T.errExt && (await data()).custom.length === 1);
