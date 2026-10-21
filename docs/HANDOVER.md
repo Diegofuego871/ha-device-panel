@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.112.1, HACS-Interna entfernt)
+
+- Rückmeldung der HACS-Prüfung (frenck, PR für die Aufnahme): `_async_hacs_refresh` (`hass.data["hacs"].repositories...update_repository`) ist privater Zustand von HACS und entfernt. `async_auto_install` nutzt nur `homeassistant.update_entity` auf der HACS-Update-Entität und `update.install`; neue Versionen erscheinen dadurch unter Umständen Stunden später (Absprache mit dem Prüfer: in Ordnung). Nach dem Release Prüfung neu anfordern.
+
 ## Stand (2.112.0, Empfangsfenster neu geordnet, Mockup signal-layout-v1 A)
 
 - Entscheid des Nutzers: Variante A, "Letzte Wechsel" dauerhaft sichtbar (nicht eingeklappt). `_signalHistHtml`: Kacheln (`.sg-stats`: Jetzt mit `.lim` Schwelle/`weak`, Median/Schlechtester/Bester), Diagramm, Legende mit Info-Knopf (`data-stat="sig-info"`, Zustand `_sigInfo`; Hinweise in `.sg-info[hidden]`, immer im DOM: Quelle `.bh-src`, Median, `.sv-note`, Live-Hinweis). `_receiversHtml` ersetzt `_liveHtml`/`_viaHtml`: Balken + je Empfänger `.sv-row` (Marke `.sv-ok` "zählt", `.sv-far` "N dB schwächer" mit Tooltip aus `viaFar`, Stand jetzt aus `listeners`, Anteil/Ø), nur live gehörte Empfänger grau am Ende (`.sv-dot.none`), `.sv-chg`. Der Balken ist nicht mehr auf die Breite des Diagramms ausgerichtet (eigene Karte). Abgleich Live-Zeile und Weg über den Namen (beide ohne Adresse).
@@ -461,7 +465,7 @@ Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 ## Stand (2.23.1, Auto-Update bei jeder Erkennung)
 
 - 2.23.1: `update_check.async_refresh_issue` stösst bei einer neueren Version `async_auto_install` an (Start, tägliche Prüfung, WS `version`
-  beim Öffnen der Einstellungen); `async_auto_install` lädt vorher das HACS-Repository neu (`_async_hacs_refresh`, HACS-Interna
+  beim Öffnen der Einstellungen); `async_auto_install` lud vorher das HACS-Repository neu (`_async_hacs_refresh`, seit 2.112.1 entfernt, HACS-Interna
   `hass.data["hacs"].repositories.get_by_full_name(...).update_repository(force=True)`, bestmöglich). Panel: `_loadVersion` installiert bei
   jeder Erkennung, pro Version und Sitzung einmal (`v.autoTried`), mit "Nach Updates suchen" erneut. Nicht geprüft: echtes HACS.
 

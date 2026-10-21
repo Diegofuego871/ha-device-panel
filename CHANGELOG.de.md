@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.112.1] - 2026-10-21
+
+Das automatische Update fasst die Interna von HACS nicht mehr an (Wunsch der HACS-Prüfung).
+
+### Geändert
+
+- **Automatisches Update:** Vor der Installation liess die Integration HACS das Repository über dessen interne Objekte neu laden (`hass.data["hacs"]`). Das ist privater Zustand einer anderen Integration und kann mit jeder HACS-Version brechen. Es ist entfernt. Die Integration nutzt nur noch öffentliche Dienste von Home Assistant: `homeassistant.update_entity` auf der Update-Entität von HACS, danach `update.install`. Wirkung: HACS prüft nur alle paar Stunden auf neue Versionen; ein eben erschienenes Release kann deshalb einige Stunden länger brauchen, bis das automatische Update es sieht, die nächste tägliche Prüfung holt es.
+
+### Intern
+
+- `_async_hacs_refresh` aus `update_check.py` entfernt; der Test `test_auto_update_starts_as_soon_as_a_check_finds_a_version` prüft, dass das HACS-Objekt nie berührt wird.
+
 ## [2.112.0] - 2026-10-20
 
 Das Empfangsfenster ist aufgeräumt: Kennzahlen als Kacheln, eine Karte "Empfänger", alle Hinweise hinter einem Info-Knopf.
@@ -4350,6 +4362,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.112.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.112.1
 [2.112.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.112.0
 [2.111.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.111.0
 [2.109.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.109.0

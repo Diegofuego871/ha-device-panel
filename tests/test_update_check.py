@@ -663,25 +663,22 @@ async def test_set_panel_auto_update(hass: HomeAssistant, entry, hass_ws_client,
 
 async def test_auto_update_starts_as_soon_as_a_check_finds_a_version(hass: HomeAssistant, entry, github_offline) -> None:
     """Seit 2.23.0: jede Prüfung, die eine neuere Version findet, stösst die Installation an (nicht nur der tägliche Lauf)."""
-    from unittest.mock import AsyncMock, MagicMock
+    from unittest.mock import MagicMock
+
+    from pytest_homeassistant_custom_component.common import async_mock_service
 
     installed = await update_check.async_installed_version(hass)
     calls = await _auto_setup(hass, entry, github_offline)
     github_offline[LATEST] = (_release("v99.0.0"), None)
-    # HACS kennt die Version erst nach dem Neuladen des Repositories (hier: das Neuladen setzt sie)
-    entity = await _hacs_entity(hass, installed, installed)
-    repo = MagicMock()
-
-    async def refresh(**_kwargs: Any) -> None:
-        await _hacs_entity(hass, installed, "99.0.0")
-
-    repo.update_repository = AsyncMock(side_effect=refresh)
+    entity = await _hacs_entity(hass, installed, "99.0.0")
+    refreshed = async_mock_service(hass, "homeassistant", "update_entity")
+    # Die HACS-Interna bleiben unberührt (seit 2.112.1): nur öffentliche Dienste von Home Assistant
     hacs = MagicMock()
-    hacs.repositories.get_by_full_name.return_value = repo
     hass.data["hacs"] = hacs
     await update_check.async_refresh_issue(hass)
     await hass.async_block_till_done()
-    repo.update_repository.assert_awaited()
+    assert hacs.mock_calls == []
+    assert [c.data["entity_id"] for c in refreshed] == [entity]
     assert [c.data["entity_id"] for c in calls] == [entity]
     assert ir.async_get(hass).async_get_issue(DOMAIN, update_check.RESTART_ISSUE_ID) is not None
 

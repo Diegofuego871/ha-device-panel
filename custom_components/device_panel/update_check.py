@@ -293,21 +293,6 @@ def _hacs_update_entity(hass: HomeAssistant) -> str | None:
     return None
 
 
-async def _async_hacs_refresh(hass: HomeAssistant) -> None:
-    """
-    HACS die Versionen des Repositories neu laden lassen (wie "Informationen aktualisieren" im Panel). HACS prüft sonst nur alle
-    paar Stunden, und die Update-Entität kennt eine eben erschienene Version dann noch nicht. Bestmöglich: ohne diese
-    HACS-Interna (andere Version, kein HACS) bleibt es beim Aktualisieren der Entität.
-    """
-    try:
-        hacs = hass.data.get("hacs")
-        repo = hacs.repositories.get_by_full_name(GITHUB_REPO.lower()) if hacs is not None else None
-        if repo is not None:
-            await repo.update_repository(ignore_issues=True, force=True)
-    except Exception:  # noqa: BLE001 (nicht kritisch)
-        _LOGGER.debug("HACS-Repository konnte nicht aktualisiert werden", exc_info=True)
-
-
 async def async_notify(hass: HomeAssistant, kind: str, latest: str, installed: str | None) -> bool:
     """
     Push zum Panel-Update (seit 2.25.0), einmal pro Version und Art: "found" = neue Version gefunden, "done" = automatisch
@@ -354,9 +339,9 @@ async def async_auto_install(hass: HomeAssistant) -> bool:
         entity_id = _hacs_update_entity(hass)
         if entity_id is None:
             return False
-        await _async_hacs_refresh(hass)
         try:
-            # Danach die Entität selbst neu laden lassen
+            # Die Entität über den öffentlichen Dienst neu laden lassen; HACS prüft sonst nur alle paar Stunden, eine eben erschienene
+            # Version erscheint dann erst später (die HACS-Interna werden bewusst nicht angefasst)
             await hass.services.async_call("homeassistant", "update_entity", {"entity_id": entity_id}, blocking=True)
         except Exception:  # noqa: BLE001 (nicht kritisch: dann gilt der bisherige Stand von HACS)
             pass
