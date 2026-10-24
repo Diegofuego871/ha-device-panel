@@ -78,6 +78,14 @@ The battery history reaches back up to 12 months, with the battery change marked
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/battery.png" alt="Battery history with battery change, warning threshold and forecast" width="560"></p>
 
+### History of a device
+
+One window with everything about a device: outages and returns with the duration, battery, charging, reception, updates, new devices, push, Magic Push messages and routine runs, by day. Chips filter by kind, a tap on a Magic Push row shows the message and a tap on a routine row its trace. The tabs "Magic Push" and "Routines" keep their evaluation with key figures and chart. It opens with "History" in the quick row of the device pop-up, and from the header of the overviews of Magic Push and routines for all devices.
+
+| All (list by day) | Magic Push (evaluation) |
+|---|---|
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/devicelog.png" alt="History of a device: list by day with chips for outage, reception, updates, Magic Push and routines"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/devicelog-magic.png" alt="History of a device, tab Magic Push: key figures, bar chart and table"> |
+
 ### Settings per device
 
 Every device can override the defaults in the tab "Settings" of its pop-up: its own "offline after" time (or no monitoring), battery warning, signal warning, charging, and outage and online notifications switched off. Each row shows where the value comes from and what the default would be. A symbol next to the name in the list marks devices with their own settings.
@@ -214,6 +222,8 @@ The gear (the pinned app "Settings", or the launcher) opens all settings in Germ
 - **Saving:** changes in the pop-up and in the settings apply only with "Save"; closing with unsaved changes asks "Discard changes?"
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-general.png" alt="Settings, tab General: target of the notifications and quiet time with times per weekday" width="720"></p>
+
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-storage.png" alt="Settings, Panel, tab Storage: total, device histories with retention and limit, logs" width="720"></p>
 
 ### Back up and restore
 

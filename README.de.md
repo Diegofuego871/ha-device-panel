@@ -78,6 +78,14 @@ Der Batterie-Verlauf reicht bis zu 12 Monate zurück, mit markiertem Batteriewec
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/battery.png" alt="Batterie-Verlauf mit Batteriewechsel, Warnschwelle und Prognose" width="560"></p>
 
+### Protokoll eines Geräts
+
+Ein Fenster mit allem zu einem Gerät: Ausfälle und Rückkehr mit der Dauer, Batterie, Laden, Empfang, Updates, neue Geräte, Push, Meldungen von Magic Push und Läufe von Routinen, nach Tagen. Chips filtern nach Art, ein Tipp auf eine Magic-Push-Zeile zeigt die Meldung, ein Tipp auf eine Routine-Zeile ihren Trace. Die Reiter "Magic Push" und "Routinen" behalten ihre Auswertung mit Kennzahlen und Diagramm. Es öffnet mit "Protokoll" in der Schnellzeile des Geräte-Popups und über den Kopf der Übersichten von Magic Push und Routinen für alle Geräte.
+
+| Alles (Liste nach Tagen) | Magic Push (Auswertung) |
+|---|---|
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/devicelog.png" alt="Protokoll eines Geräts: Liste nach Tagen mit Chips für Ausfall, Empfang, Updates, Magic Push und Routinen"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/devicelog-magic.png" alt="Protokoll eines Geräts, Reiter Magic Push: Kennzahlen, Balkendiagramm und Tabelle"> |
+
 ### Einstellungen pro Gerät
 
 Jedes Gerät kann die Vorgaben im Reiter "Einstellungen" seines Pop-ups überschreiben: eine eigene "Ausgefallen nach"-Zeit (oder keine Überwachung), Batterie-Warnung, Empfang-Warnung, Laden und Ausfall- und Online-Meldungen ausgeschaltet. Jede Zeile zeigt, woher der Wert stammt und wie der Standard wäre. Ein Symbol neben dem Namen in der Liste markiert Geräte mit eigenen Einstellungen.
@@ -214,6 +222,8 @@ Das Zahnrad (die angeheftete App "Einstellungen", oder der Launcher) öffnet all
 - **Speichern:** Änderungen im Pop-up und in den Einstellungen gelten erst mit "Speichern"; beim Schliessen mit ungespeicherten Änderungen fragt das Panel "Änderungen verwerfen?"
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-general.png" alt="Einstellungen, Reiter Allgemein: Ziel der Meldungen und Ruhezeit mit Zeiten je Wochentag" width="720"></p>
+
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-storage.png" alt="Einstellungen, Panel, Reiter Speicher: Summe, Geräteverläufe mit Aufbewahrung und Grenze, Protokolle" width="720"></p>
 
 ### Sichern und wiederherstellen
 

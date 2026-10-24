@@ -269,6 +269,59 @@ for (const lang of langs) {
       await p.waitForTimeout(400);
       await shotDlg("magic-wizard", await ev(`return r.querySelector("dialog.magic-dlg") ? "dialog.magic-dlg" : "dialog.mg-dlg"`));
     });
+    // Protokoll des Geräts (2.118.0): erfundene Ereignisse, Meldungen und Läufe für das Gerät "d" (Reiter "Alles" und die Auswertung von Magic Push)
+    const seedDeviceLog = () => p.evaluate(() => {
+      const now = Date.now() / 1000;
+      const H = 3600;
+      const D = 86400;
+      const dev = (extra) => ({ dev: "d", dname: "Klimasensor Keller", ...extra });
+      window.__devlog = [
+        dev({ at: now - 2400, source: "avail", cat: "outage", k: "online", dur: 540 }),
+        dev({ at: now - 2400 - 540, source: "avail", cat: "outage", k: "offline" }),
+        dev({ at: now - 3 * H, source: "event", cat: "signal", level: "warning", title: "Steckdose Terrasse", text: window.__lang === "en" ? "reception weak: -86 dBm" : "Empfang schwach: -86 dBm", detail: window.__lang === "en" ? "threshold -80 dBm" : "Schwelle -80 dBm" }),
+        dev({ at: now - 1 * D - 6 * H, source: "event", cat: "signal", level: "info", title: "Steckdose Terrasse", text: window.__lang === "en" ? "reception back to normal: -74 dBm" : "Empfang wieder in Ordnung: -74 dBm", detail: window.__lang === "en" ? "threshold -80 dBm" : "Schwelle -80 dBm" }),
+        dev({ at: now - 2 * D - 2 * H, source: "avail", cat: "outage", k: "online", dur: 3 * H }),
+        dev({ at: now - 2 * D - 2 * H - 3 * H, source: "avail", cat: "outage", k: "offline" }),
+        dev({ at: now - 4 * D, source: "event", cat: "updates", level: "info", title: "Steckdose Terrasse", text: window.__lang === "en" ? "firmware 2.1.3 available" : "Firmware 2.1.3 verfügbar", detail: window.__lang === "en" ? "reminder sent" : "Erinnerung gesendet" }),
+      ];
+      const call = (state) => ({ s: "call", v: { ent: "switch.plug", svc: ["switch.turn_on"], ms: 300, state } });
+      window.__protocol = {
+        r00000000001: [
+          { at: now - 7 * H, k: "recovered", res: "sent", title: window.__lang === "en" ? "Basement warm again: 12.6 °C" : "Keller wieder warm: 12,6 °C", body: "", value: "12,6 °C", dur: 5400, target: "notify.mobile_app_iphone" },
+          { at: now - 9 * H, k: "fired", res: "sent", title: window.__lang === "en" ? "Basement is cold: 7.5 °C" : "Keller ist kalt: 7,5 °C", body: "Klimasensor Keller", value: "7,5 °C", target: "notify.mobile_app_iphone" },
+          { at: now - 3 * D, k: "fired", res: "held", title: window.__lang === "en" ? "Basement is cold: 7.9 °C" : "Keller ist kalt: 7,9 °C", body: "", value: "7,9 °C", target: "notify.mobile_app_iphone" },
+          { at: now - 9 * D, k: "fired", res: "sent", title: window.__lang === "en" ? "Basement is cold: 6.8 °C" : "Keller ist kalt: 6,8 °C", body: "", value: "6,8 °C", target: "notify.mobile_app_iphone" },
+        ],
+        r00000000002: [{ at: now - 1 * D - 1 * H, k: "fired", res: "sent", title: window.__lang === "en" ? "Air too humid: 66 %" : "Luft zu feucht: 66 %", body: "", value: "66 %", target: "notify.mobile_app_iphone" }],
+        aaaaaaaaaaa1: [
+          { at: now - 20 * H, k: "run", src: "time", ok: true, act: "on", ent: "switch.plug", late: 1.4, trace: [{ s: "trigger", v: { src: "time", due: now - 20 * H - 1.4, late: 1.4, grace: 900 } }, { s: "snapshot", v: { state: "off" } }, call("on"), { s: "result", v: { what: "run" } }] },
+          { at: now - 19 * H - 900, k: "revert", src: "revert", ok: true, act: "off", ent: "switch.plug", trace: [{ s: "trigger", v: { src: "revert", due: now - 19 * H - 900, kind: "duration" } }, call("off"), { s: "result", v: { what: "revert" } }] },
+          { at: now - 1 * D - 20 * H, k: "run", src: "time", ok: true, act: "on", ent: "switch.plug", late: 0.9, trace: [{ s: "trigger", v: { src: "time", due: now - D - 20 * H, late: 0.9, grace: 900 } }, call("on"), { s: "result", v: { what: "run" } }] },
+        ],
+      };
+    });
+    await step("devicelog", async () => {
+      await p.evaluate((l) => { window.__lang = l; }, lang);
+      await seedDeviceLog();
+      await open("d");
+      await tap('dialog.device .dlg-quick [data-proto="all"]');
+      await wait(`return r.querySelector("dialog.proto-dlg")?.open && r.querySelectorAll("dialog.proto-dlg .al-row").length >= 6`);
+      await shotDlg("devicelog", "dialog.proto-dlg");
+      // Die Auswertung von Magic Push im selben Fenster
+      await tap('dialog.proto-dlg [data-pr-kinds] .sub-tab[data-v="magic"]');
+      await wait(`return !!r.querySelector("dialog.proto-dlg .pr-chart")`);
+      await shotDlg("devicelog-magic", "dialog.proto-dlg");
+    });
+    // Speicher (2.117.0): drittes Reiter im Abschnitt "Panel"; erfundene Belegung
+    await step("settings-storage", async () => {
+      await p.evaluate(() => { const MB = 1048576; window.__usage = { protocol: { bytes: 3.1 * MB, entries: 640, items: 6, max_item: 212 }, log: { bytes: 2.6 * MB, entries: 603 } }; });
+      await settingsOpen("updates");
+      await tap('[data-set="subtab"][data-group="panel"][data-key="pstorage"]');
+      await wait(`return !!r.querySelector("dialog.settings .sto-big")`);
+      // Summe und Geräteverläufe sichtbar: unter dem angehefteten Kopf (Dialog-Kopf und Abschnitt) beginnen
+      await ev(`const d = r.querySelector("dialog.settings"); r.querySelector(".sto-total").scrollIntoView({ block: "start" }); d.scrollTop -= d.querySelector(".dlg-head").offsetHeight + 50`);
+      await shotDlg("settings-storage", "dialog.settings");
+    });
     await step("columns", async () => {
       // Seit 2.87.0: Dialog "Ansicht" (Reiter Spalten bzw. Sortierung) in den Einstellungen im Ansichtsmodus
       await tap(".view-btn");
