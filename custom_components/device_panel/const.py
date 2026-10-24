@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "293"
+PANEL_VERSION = "294"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -293,6 +293,24 @@ INT_RANGES.update(
         CONF_PROTOCOL_ENTRIES: (100, 100000),
         CONF_LOG_MB: (1, 200),
         CONF_LOG_ENTRIES: (100, 20000),
+    }
+)
+# Verläufe der Geräte (seit 2.117.0, Panel › Speicher): Aufbewahrung der Verfügbarkeit und des Empfangs in Tagen (das Panel zeigt höchstens
+# 30 Tage) und als Obergrenze in MB (Grösse des gespeicherten JSON); ist eine Grenze erreicht, fallen die ältesten Werte über alle Geräte weg.
+CONF_AVAIL_DAYS = "availability_keep_days"
+CONF_AVAIL_MB = "availability_max_mb"
+CONF_SIGNAL_DAYS = "signal_keep_days"
+CONF_SIGNAL_MB = "signal_max_mb"
+DEFAULT_AVAIL_DAYS = 31
+DEFAULT_AVAIL_MB = 10
+DEFAULT_SIGNAL_DAYS = 31
+DEFAULT_SIGNAL_MB = 20
+INT_RANGES.update(
+    {
+        CONF_AVAIL_DAYS: (7, 31),
+        CONF_AVAIL_MB: (1, 200),
+        CONF_SIGNAL_DAYS: (7, 31),
+        CONF_SIGNAL_MB: (1, 200),
     }
 )
 # Umbenennung Timer → Routine (2.55.0): so hiessen die gespeicherten Optionen vorher; __init__ übernimmt sie beim Start einmal

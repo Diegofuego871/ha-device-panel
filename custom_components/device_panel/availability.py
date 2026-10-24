@@ -25,6 +25,7 @@ Geräts aus dem Recorder nach (Merker "backfilled").
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import time
 from collections.abc import Callable
@@ -38,7 +39,7 @@ from homeassistant.helpers.event import async_call_later, async_track_time_inter
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_OFFLINE_AFTER, CONF_STARTUP_GRACE, DOMAIN
+from .const import CONF_AVAIL_DAYS, CONF_AVAIL_MB, CONF_OFFLINE_AFTER, CONF_STARTUP_GRACE, DOMAIN
 from .devices import device_back_since, device_down_since, device_offline_after, device_status, monitored_devices
 from .options_api import effective
 from .storage_util import PeriodicSaver
@@ -47,7 +48,6 @@ _LOGGER = logging.getLogger(__name__)
 
 STORAGE_VERSION = 1
 STORAGE_KEY = f"{DOMAIN}.availability"
-KEEP_DAYS = 31
 EVAL_INTERVAL = timedelta(seconds=30)
 # Spätestens alle 5 Min. schreiben; das gespeicherte Lebenszeichen zeigt nach
 # einem Absturz, bis wann HA sicher lief.
@@ -265,7 +265,7 @@ class AvailabilityLog:
         firsts = {dev: list(evs[0]) for dev, evs in self._events.items() if evs}
         try:
             found = await async_backfill(
-                self.hass, devices, firsts, now, KEEP_DAYS, offline_after, opts[CONF_STARTUP_GRACE] * 60
+                self.hass, devices, firsts, now, int(opts[CONF_AVAIL_DAYS]), offline_after, opts[CONF_STARTUP_GRACE] * 60
             )
         except Exception:  # noqa: BLE001
             # Nicht bei jedem Start erneut versuchen: ein Fehler hier wiederholt sich.
@@ -392,16 +392,52 @@ class AvailabilityLog:
         return lambda: self._listeners.remove(listener)
 
     def _prune(self, now: float, seen: set[str]) -> None:
-        cutoff = now - KEEP_DAYS * 86400
+        opts = effective(self.hass)
         dev_reg = dr.async_get(self.hass)
         for dev in list(self._events):
             if dev not in seen and dev_reg.async_get(dev) is None:
                 del self._events[dev]
-                continue
-            events = self._events[dev]
+        self._cut(now - int(opts[CONF_AVAIL_DAYS]) * 86400)
+        self._trim(int(opts[CONF_AVAIL_MB]) * 1048576)
+
+    def _cut(self, cutoff: float) -> None:
+        """Ereignisse vor "cutoff" weg; der letzte davor bleibt als Zustand zu Beginn des Zeitraums."""
+        for dev, events in self._events.items():
             old = [e for e in events if e[0] < cutoff]
             if old:
                 self._events[dev] = [[cutoff, old[-1][1]]] + [e for e in events if e[0] >= cutoff]
+
+    def size(self) -> int:
+        """Grösse der Ereignisse im gespeicherten JSON in Byte."""
+        return len(json.dumps(self._events, separators=(",", ":")).encode())
+
+    def _trim(self, max_bytes: int) -> None:
+        """Über der Grenze (MB): die ältesten Ereignisse über alle Geräte weglassen, bis es passt (Grenze in der Zeit, nicht je Gerät)."""
+        size = self.size()
+        if size <= max_bytes:
+            return
+        times = sorted(e[0] for events in self._events.values() for e in events)
+        # Grösse je Ereignis im Mittel; mit etwas Luft, damit das nächste Prüfen nicht gleich wieder kürzt
+        drop = min(len(times) - 1, int(len(times) * (size - max_bytes * 0.9) / size) + 1)
+        if drop > 0:
+            self._cut(times[drop])
+
+    @callback
+    def apply_limits(self) -> None:
+        """Eine tiefere Grenze (Tage oder MB) wirkt sofort (Einstellungen geändert)."""
+        opts = effective(self.hass)
+        self._cut(time.time() - int(opts[CONF_AVAIL_DAYS]) * 86400)
+        self._trim(int(opts[CONF_AVAIL_MB]) * 1048576)
+        self._saver.schedule()
+
+    def usage(self) -> dict[str, int]:
+        """Belegung für Panel › Speicher: Byte, Geräte und Tage des ältesten Ereignisses."""
+        first = min((events[0][0] for events in self._events.values() if events), default=None)
+        return {
+            "bytes": self.size(),
+            "devices": sum(1 for events in self._events.values() if events),
+            "days": max(0, int((time.time() - first) / 86400)) if first else 0,
+        }
 
     # --- Abfragen ----------------------------------------------------------
 

@@ -20,6 +20,7 @@ Zwei Quellen, je nachdem, woher der Wert in der Liste kommt
 
 from __future__ import annotations
 
+import json
 import logging
 import statistics
 import time
@@ -36,7 +37,7 @@ from homeassistant.util import dt as dt_util
 
 from .availability import ONLINE
 from .battery_history import STATS_FROM_DAYS, _history, _statistics, held, thin
-from .const import DATA_AVAILABILITY, DOMAIN, STORAGE_VERSION
+from .const import CONF_SIGNAL_DAYS, CONF_SIGNAL_MB, DATA_AVAILABILITY, DEFAULT_SIGNAL_DAYS, DOMAIN, STORAGE_VERSION
 from .compat import device_entry_ids
 from .devices import ble_listeners, ble_receiver, monitored_devices, signal_sensor, signal_source
 from .labels import strip_address
@@ -51,14 +52,15 @@ SAMPLE_INTERVAL = timedelta(seconds=60)
 BLOCK_SECONDS = 300
 HOUR_SECONDS = 3600
 KEEP_BLOCKS = 86400 + HOUR_SECONDS
-KEEP_HOURS = 31 * 86400
+# Standard der Aufbewahrung; seit 2.117.0 einstellbar (Panel › Speicher), die Stunden-Blöcke und der Weg folgen der Einstellung
+KEEP_HOURS = DEFAULT_SIGNAL_DAYS * 86400
 # Seltener als das Verfügbarkeitsprotokoll: ein verlorener Block nach einem
 # Absturz ist verschmerzbar, die Datei ist grösser.
 SAVE_DELAY = 900
 # Weg des Bluetooth-Empfangs (seit 2.40.0, Wunsch des Nutzers): über welchen Empfänger (Adapter oder Proxy) ein Gerät gemeldet wird. Gespeichert
 # werden nur die Wechsel [Zeit, Quelle] (None = Lücke: ausgefallen oder nicht empfangen), so lange wie die Stunden-Blöcke. Rückwirkend lässt
 # sich der Weg nicht herstellen, HA speichert ihn nirgends: er füllt sich ab dem Update.
-VIA_KEEP = 31 * 86400
+VIA_KEEP = DEFAULT_SIGNAL_DAYS * 86400
 VIA_CHANGES_MAX = 6
 # Quellen, die nur das Panel aufzeichnet.
 LOGGED = ("zha", "ble")
@@ -131,6 +133,7 @@ class SignalLog:
         self._via_names: dict[str, str] = {}
         # Rohwerte der letzten Minuten je Gerät [(Zeit, Wert)] für die Glättung; nur im Arbeitsspeicher
         self._recent: dict[str, list[tuple[float, float]]] = {}
+        self._trimmed_at = 0.0
         self._unsub_tick: CALLBACK_TYPE | None = None
         self._unsub_started: CALLBACK_TYPE | None = None
 
@@ -321,7 +324,7 @@ class SignalLog:
         if hour is not None and hour[1]:
             self._hours.setdefault(dev, []).append(_hour(hour[1], hour[0]))
 
-    def prune(self, now: float) -> None:
+    def prune(self, now: float, force: bool = False) -> None:
         # Abgelaufene laufende Blöcke und Stunden abschliessen, auch von
         # Geräten ohne neue Messung; sonst blieben sie "laufend".
         start = now - (now % BLOCK_SECONDS)
@@ -330,7 +333,9 @@ class SignalLog:
         hour_start = now - (now % HOUR_SECONDS)
         for dev in [d for d, h in self._open_hour.items() if h[0] != hour_start]:
             self._close_hour(dev)
-        for store, keep in ((self._blocks, KEEP_BLOCKS), (self._hours, KEEP_HOURS)):
+        opts = effective(self.hass)
+        keep_long = int(opts[CONF_SIGNAL_DAYS]) * 86400
+        for store, keep in ((self._blocks, KEEP_BLOCKS), (self._hours, keep_long)):
             limit = now - keep
             for dev in list(store):
                 kept = [b for b in store[dev] if b[0] >= limit]
@@ -339,7 +344,7 @@ class SignalLog:
                 else:
                     store.pop(dev)
         # Weg: ältere Wechsel weg, den letzten davor behalten (er gilt noch zu Beginn des Zeitraums); Namen nur der verwendeten Quellen
-        limit = now - VIA_KEEP
+        limit = now - keep_long
         for dev in list(self._via):
             events = self._via[dev]
             kept = [e for e in events if e[0] >= limit]
@@ -356,6 +361,48 @@ class SignalLog:
         self._via_names = {k: v for k, v in self._via_names.items() if k in used}
         for dev in [d for d in self._kind if d not in self._blocks and d not in self._hours and d not in self._open and d not in self._open_hour]:
             self._kind.pop(dev)
+        # Die Grösse nur stündlich prüfen (das JSON der ganzen Aufzeichnung zu bilden kostet), bei geänderter Einstellung sofort
+        if force or now - self._trimmed_at >= HOUR_SECONDS:
+            self._trimmed_at = now
+            self._trim(int(opts[CONF_SIGNAL_MB]) * 1048576)
+
+    def size(self) -> int:
+        """Grösse der gespeicherten Daten im JSON in Byte."""
+        return len(json.dumps(self.data(), separators=(",", ":")).encode())
+
+    def _trim(self, max_bytes: int) -> None:
+        """Über der Grenze (MB): die ältesten Stunden über alle Geräte weglassen (und die Wechsel des Wegs davor), bis es passt."""
+        size = self.size()
+        if size <= max_bytes:
+            return
+        times = sorted(b[0] for rows in self._hours.values() for b in rows)
+        if not times:
+            return
+        drop = min(len(times) - 1, int(len(times) * (size - max_bytes * 0.9) / size) + 1)
+        if drop <= 0:
+            return
+        cutoff = times[drop]
+        for dev in list(self._hours):
+            kept = [b for b in self._hours[dev] if b[0] >= cutoff]
+            if kept:
+                self._hours[dev] = kept
+            else:
+                self._hours.pop(dev)
+
+    def usage(self) -> dict[str, int]:
+        """Belegung für Panel › Speicher: Byte, Geräte und Tage der ältesten Stunde."""
+        first = min((rows[0][0] for rows in self._hours.values() if rows), default=None)
+        return {
+            "bytes": self.size(),
+            "devices": len(set(self._blocks) | set(self._hours)),
+            "days": max(0, int((time.time() - first) / 86400)) if first else 0,
+        }
+
+    @callback
+    def apply_limits(self) -> None:
+        """Eine tiefere Grenze (Tage oder MB) wirkt sofort (Einstellungen geändert)."""
+        self.prune(time.time(), force=True)
+        self._saver.schedule()
 
     def forget(self, dev: str) -> None:
         for store in (self._kind, self._blocks, self._hours, self._open, self._open_hour, self._via, self._recent):

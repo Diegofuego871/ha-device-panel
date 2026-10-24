@@ -569,7 +569,8 @@ const SUB_TAB_KEYS = {
   devs: ["exclude_devices"],
   devset: ["reset_connection", "reset_signal", "reset_offline", "reset_notify", "reset_battery", "reset_charge"],
   chips: ["hide_chips", "hide_connections", "connection_order", "chip_order"],
-  pstart: ["start_panel", "protocol_max_mb", "protocol_max_entries", "log_max_mb", "log_max_entries"],
+  pstart: ["start_panel"],
+  pstorage: ["protocol_max_mb", "protocol_max_entries", "log_max_mb", "log_max_entries", "availability_keep_days", "availability_max_mb", "signal_keep_days", "signal_max_mb"],
   pupdates: ["update_check", "update_check_time", "update_notify", "notify_service_panelupdate", "prerelease", "auto_update"],
 };
 
@@ -5791,7 +5792,7 @@ class DevicePanel extends HTMLElement {
       // Vorabversionen (ganze Instanz) und Startseite (Benutzer) gelten wie alles andere erst mit "Speichern".
       st.extraBase = this._extraBase();
       st.extra = { ...st.extraBase };
-      if (!view) this._loadProtocolUsage(st);
+      if (!view) this._loadStorageUsage(st);
     } catch (err) {
       if (this._settings !== st) return;
       st.error = errText(err);
@@ -6703,7 +6704,7 @@ class DevicePanel extends HTMLElement {
       ["monitor", Object.values(MON_TAB_KEYS).flat()],
       ["routines", ["routines_pause", "routines_catch_up", "notify_service_routines", "routines_notify_error"]],
       ["ai", ["ai_assessment", "ai_task_entity", "ai_prompt"]],
-      ["updates", [...SUB_TAB_KEYS.pstart, ...SUB_TAB_KEYS.pupdates]],
+      ["updates", [...SUB_TAB_KEYS.pstart, ...SUB_TAB_KEYS.pstorage, ...SUB_TAB_KEYS.pupdates]],
     ];
   }
 
@@ -6982,6 +6983,7 @@ class DevicePanel extends HTMLElement {
   _settingsSummary(id, d) {
     if (id === "updates") {
       if (this._settings?.sub?.panel === "pstart") return this._t((this._settings?.extra ? this._settings.extra.start_panel : this._startOn) ? "sumStartOn" : "sumStartOff");
+      if (this._settings?.sub?.panel === "pstorage") return this._settings?.usage ? this._t("sumStorage", this._fmtMb(this._storageTotal(this._settings.usage))) : this._t("subPanelStorage");
       const auto = Boolean(this._settings?.extra ? this._settings.extra.auto_update : this._autoUpdate);
       return this._t(d.update_check ? (auto ? "sumUpdatesAuto" : "sumUpdatesOn") : "sumUpdatesOff");
     }
@@ -8751,8 +8753,8 @@ class DevicePanel extends HTMLElement {
     // Titel eines neuen Themas (seit 1.43.0): überall derselbe grosse Stil (.set-title, wie .mon-grp)
     const ttl = (key) => `<div class="set-title">${escape(t(key))}</div>`;
     const devTab = ["integrations", "types", "devs", "devset"].includes(st.sub?.devices) ? st.sub.devices : "integrations";
-    // Abschnitt "Panel" (seit 2.87.0): Unterreiter "Allgemein" und "Updates"
-    const panelTab = st.sub?.panel === "pupdates" ? "pupdates" : "pstart";
+    // Abschnitt "Panel" (seit 2.87.0): Unterreiter "Allgemein" und "Updates", seit 2.117.0 dazu "Speicher"
+    const panelTab = ["pupdates", "pstorage"].includes(st.sub?.panel) ? st.sub.panel : "pstart";
     // Reiter innerhalb eines Abschnitts; Zähler = ausgeblendete Einträge,
     // Punkt = Änderung im Entwurf (wie bei den Reitern der Überwachung).
     const subTabs = (group, items, cur = devTab) =>
@@ -8764,21 +8766,63 @@ class DevicePanel extends HTMLElement {
           return `<button type="button" role="tab" class="sub-tab${on ? " on" : ""}${mark}" data-set="subtab" data-group="${group}" data-key="${id}" aria-selected="${on}">${escape(t(key))}<span class="sub-n"${n ? "" : " hidden"}>${n}</span></button>`;
         })
         .join("")}</div>`;
-    // Kapitel "Protokolle" (seit 2.105.0) ganz unten in Panel › Allgemein: Grösse und Zahl der Einträge der beiden Protokolle
-    const protoChapter = () => {
+    // Reiter "Speicher" (seit 2.117.0, docs/mockups/storage-devlog-v1, A): alles, was die Integration selbst speichert, mit der belegten Grösse und,
+    // wo es eine gibt, der Grenze. Die Zeilen "Grösse" und "Aufbewahrung" sind Felder der Einstellungen (Entwurf bis "Speichern").
+    const storageChapter = () => {
       const u = st.usage;
-      const used = (x) => (x ? t("usedText", this._fmtMb(x.bytes), (x.entries || 0).toLocaleString(this._locale())) : "");
+      const mb = (x) => this._fmtMb(x?.bytes || 0);
+      const n = (v) => (v || 0).toLocaleString(this._locale());
+      const usedText = (x) => (x ? t("usedText", mb(x), n(x.entries)) : "");
+      const histText = (x) => (x ? t("usedHist", mb(x), n(x.devices), n(x.days)) : "");
+      const meter = (x, limitMb) => {
+        if (!x || !(limitMb > 0)) return "";
+        const pct = Math.min(100, Math.round((x.bytes / (limitMb * 1048576)) * 100));
+        return `<div class="sto-meter" role="img" aria-label="${pct} %"><i class="${pct >= 90 ? "w" : ""}" style="width:${pct}%"></i></div>`;
+      };
+      // Zeile mit Belegung und Balken unter dem Hinweis (der Balken zeigt den Anteil an der Grenze im Entwurf)
+      const withMeter = (html, x, key) => html.replace(/(<div class="opt-short"[^>]*>[^<]*<\/div>)/, `$1${meter(x, Number(d[key]))}`);
       const cut = this._protocolCuts();
       const ask = st.cutAsk && cut.length
         ? `<div class="opt-warn cut-ask">${mdi("alert", 14)}<span>${escape(t("cutAsk", cut.join(", ")))}</span></div>
            <div class="bk-btns"><button type="button" class="dlg-btn" data-set="cut-no">${escape(t("cutNo"))}</button><button type="button" class="dlg-btn danger" data-set="cut-yes">${escape(t("cutYes"))}</button></div>`
         : "";
-      return ttl("ttlLogs") + `<div class="opt-short bk-note">${escape(t("logsNote"))}</div>` +
-        row("protocol_max_mb", t("optProtoMb"), num("protocol_max_mb", t("unitMb"), t("optProtoMb")), t("optProtoMbShort", used(u?.protocol)), null) +
+      // Gesamtbalken: die Grössen aller Daten, in fünf Gruppen
+      const other = u?.other || {};
+      const parts = u
+        ? [
+            ["l1", t("stoLegHist"), (u.availability?.bytes || 0) + (u.signal?.bytes || 0)],
+            ["l2", t("stoLegProto"), u.protocol?.bytes || 0],
+            ["l3", t("stoLegLog"), u.log?.bytes || 0],
+            ["l4", t("stoLegStates"), other.states || 0],
+            ["l5", t("stoLegOther"), (other.ai || 0) + (other.config || 0)],
+          ]
+        : [];
+      const total = parts.reduce((sum, p) => sum + p[2], 0);
+      const totalCard = u
+        ? `<div class="sto-total"><div class="sto-big">${escape(this._fmtMb(total))} MB <small>${escape(t("stoTotal"))}</small></div>
+            <div class="sto-seg" role="img" aria-label="${escape(t("stoTotal"))}">${parts.map(([c, , v]) => `<i class="${c}" style="flex:${Math.max(v, total ? 0.02 * total : 1)}"></i>`).join("")}</div>
+            <div class="sto-leg">${parts.map(([c, label, v]) => `<span class="${c}">${escape(label)} ${escape(this._fmtMb(v))}</span>`).join("")}</div></div>`
+        : "";
+      const otherRows = u
+        ? `<div class="sto-rows">${[["stoRowStates", other.states], ["stoRowAi", other.ai], ["stoRowConfig", other.config]]
+            .map(([k, v]) => `<div class="sto-row"><span>${escape(t(k))}</span><b>${escape(this._fmtMb(v || 0))} MB</b></div>`)
+            .join("")}</div>`
+        : "";
+      return totalCard +
+        ttl("ttlStoHist") + `<div class="opt-short bk-note">${escape(t("stoHistNote"))}</div>` +
+        row("availability_keep_days", t("optAvailDays"), num("availability_keep_days", t("unitDays"), t("optAvailDays")), t("optAvailDaysShort", histText(u?.availability)), null) +
+        withMeter(row("availability_max_mb", t("optAvailMb"), num("availability_max_mb", t("unitMb"), t("optAvailMb")), t("optAvailMbShort", mb(u?.availability)), null), u?.availability, "availability_max_mb") +
+        row("signal_keep_days", t("optSignalDays"), num("signal_keep_days", t("unitDays"), t("optSignalDays")), t("optSignalDaysShort", histText(u?.signal)), null) +
+        withMeter(row("signal_max_mb", t("optSignalMb"), num("signal_max_mb", t("unitMb"), t("optSignalMb")), t("optSignalMbShort", mb(u?.signal)), null), u?.signal, "signal_max_mb") +
+        `<div class="opt-short sto-batt">${escape(t("stoBattery"))}</div>` +
+        ttl("ttlLogs") + `<div class="opt-short bk-note">${escape(t("logsNote"))}</div>` +
+        withMeter(row("protocol_max_mb", t("optProtoMb"), num("protocol_max_mb", t("unitMb"), t("optProtoMb")), t("optProtoMbShort", usedText(u?.protocol)), null), u?.protocol, "protocol_max_mb") +
         row("protocol_max_entries", t("optProtoEntries"), num("protocol_max_entries", t("unitEntries"), t("optProtoEntries")), t("optProtoEntriesShort", u?.protocol?.max_item || 0), null) +
-        row("log_max_mb", t("optLogMb"), num("log_max_mb", t("unitMb"), t("optLogMb")), t("optLogMbShort", used(u?.log)), null) +
+        withMeter(row("log_max_mb", t("optLogMb"), num("log_max_mb", t("unitMb"), t("optLogMb")), t("optLogMbShort", usedText(u?.log)), null), u?.log, "log_max_mb") +
         row("log_max_entries", t("optLogEntries"), num("log_max_entries", t("unitEntries"), t("optLogEntries")), t("optLogEntriesShort", u?.log?.entries || 0), null) +
-        ask;
+        ask +
+        ttl("ttlStoOther") + `<div class="opt-short bk-note">${escape(t("stoOtherNote"))}</div>` + otherRows +
+        `<div class="opt-short sto-batt">${escape(t("stoFileNote"))}</div>`;
     };
     const fields = {
       monitor: this._monitorHtml(d, changes, errors, ui),
@@ -8807,9 +8851,11 @@ class DevicePanel extends HTMLElement {
       // Wie Geräte erscheinen, nicht ob (seit 1.0.0).
       // Allgemein (Startseite) und Updates des Panels (seit 2.87.0): die Startseite gilt nur für den Benutzer, alles andere für die Instanz; die Versionszeile steht oben ausserhalb
       updates:
-        subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"]], panelTab) +
+        subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"], ["pstorage", "subPanelStorage"]], panelTab) +
         (panelTab === "pstart"
-          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + protoChapter() + this._backupChapterHtml(changes.size > 0)
+          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + this._backupChapterHtml(changes.size > 0)
+          : panelTab === "pstorage"
+            ? storageChapter()
           : row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
             checkTimeRow() +
             autoUpdateRow() +
@@ -9509,10 +9555,10 @@ class DevicePanel extends HTMLElement {
     return mb.toLocaleString(this._locale(), { maximumFractionDigits: 1 });
   }
 
-  // Belegung der Protokolle für das Kapitel "Protokolle" (Panel › Allgemein); ohne Antwort bleibt die Zeile ohne Zahl
-  async _loadProtocolUsage(st) {
+  // Belegung aller Daten für Panel › Speicher; ohne Antwort bleibt die Zeile ohne Zahl
+  async _loadStorageUsage(st) {
     try {
-      const usage = await this._hass.callWS({ type: "device_panel/protocol_usage" });
+      const usage = await this._hass.callWS({ type: "device_panel/storage_usage" });
       if (this._settings !== st) return;
       st.usage = usage;
       this._renderSettings();
@@ -9521,7 +9567,12 @@ class DevicePanel extends HTMLElement {
     }
   }
 
-  // Welche Protokolle würden die neuen Grenzen kürzen? (Namen für die Rückfrage vor dem Speichern)
+  // Summe aller belegten Daten in Byte (Gesamtbalken und Zusammenfassung)
+  _storageTotal(u) {
+    return (u.availability?.bytes || 0) + (u.signal?.bytes || 0) + (u.protocol?.bytes || 0) + (u.log?.bytes || 0) + Object.values(u.other || {}).reduce((n, v) => n + v, 0);
+  }
+
+  // Welche Daten würden die neuen Grenzen kürzen? (Namen für die Rückfrage vor dem Speichern)
   _protocolCuts() {
     const st = this._settings;
     const u = st?.usage;
@@ -9531,6 +9582,12 @@ class DevicePanel extends HTMLElement {
     const cuts = [];
     if (Number.isInteger(d.protocol_max_mb) && Number.isInteger(d.protocol_max_entries) && (u.protocol.bytes > d.protocol_max_mb * MB || u.protocol.max_item > d.protocol_max_entries)) cuts.push(this._t("cutProto"));
     if (Number.isInteger(d.log_max_mb) && Number.isInteger(d.log_max_entries) && (u.log.bytes > d.log_max_mb * MB || u.log.entries > d.log_max_entries)) cuts.push(this._t("cutLog"));
+    // Verläufe: Tage (ältestes Ereignis) und MB
+    const hist = [["availability", "cutAvail"], ["signal", "cutSignal"]];
+    for (const [k, label] of hist) {
+      const x = u[k];
+      if (x && ((Number.isInteger(d[`${k}_max_mb`]) && x.bytes > d[`${k}_max_mb`] * MB) || (Number.isInteger(d[`${k}_keep_days`]) && x.days > d[`${k}_keep_days`]))) cuts.push(this._t(label));
+    }
     return cuts;
   }
 
@@ -9544,9 +9601,9 @@ class DevicePanel extends HTMLElement {
     const viewChanged = this._viewChanged();
     if ((!changes.length && !extra.length && !anyReset && !viewChanged) || Object.keys(this._settingsErrors()).length) return;
     // Tiefere Grenzen der Protokolle kürzen sofort und endgültig: erst fragen (die Rückfrage steht im Kapitel "Protokolle")
-    if (!st.cutOk && changes.some((k) => ["protocol_max_mb", "protocol_max_entries", "log_max_mb", "log_max_entries"].includes(k)) && this._protocolCuts().length) {
+    if (!st.cutOk && changes.some((k) => SUB_TAB_KEYS.pstorage.includes(k)) && this._protocolCuts().length) {
       st.cutAsk = true;
-      st.sub = { ...st.sub, panel: "pstart" };
+      st.sub = { ...st.sub, panel: "pstorage" };
       st.open.add("updates");
       this._renderSettings();
       this.shadowRoot.querySelector("dialog.settings .cut-ask")?.scrollIntoView?.({ block: "center" });
@@ -9615,7 +9672,7 @@ class DevicePanel extends HTMLElement {
     st.extraBase = this._extraBase();
     st.extra = { ...st.extraBase };
     st.resets = newResets();
-    this._loadProtocolUsage(st);
+    this._loadStorageUsage(st);
     st.saving = false;
     st.saved = true;
     this._renderSettings();

@@ -7,6 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.117.0] - 2026-10-24
+
+New tab "Storage" in the settings of the panel: everything the integration stores itself, with its size and limits.
+
+### Added
+
+- **Tab "Storage" (Settings › Panel, third tab after "General" and "Updates"):** at the top the total as a number and a bar in five parts (histories, message logs, panel log, states, other) with a legend. Below, chapter "Device histories", chapter "Logs" and chapter "Other data". Every line with a limit shows how much is used (size, devices, days) and a bar for the share of the limit; the bar turns yellow from 90 %. In the summary of the section: "Storage: 7,2 MB used".
+- **Device histories with limits:** availability and reception of all devices had a fixed retention of 31 days and no limit. Now each has a **retention in days** (7 to 31; the panel shows 30 days at most, so more would not be visible) and a **limit in MB** (defaults 31 days, 10 MB for availability and 20 MB for reception). When the limit in MB is reached, the oldest values of all devices are dropped (the state at the start of the period stays). A lower limit cuts at once when you save, after a question; the question names what is cut. The battery history has no storage of its own (recorder of Home Assistant); a note says so.
+- **Other data:** states of the messages, charging, new devices, updates and quiet time, the AI assessments, and routines, Magic Push, devices and panel in three lines with their size (no limit, they hardly grow).
+- New WebSocket command `device_panel/storage_usage` (administrators); it replaces `device_panel/protocol_usage` (which only knew the message logs and the panel log).
+
+### Changed
+
+- The chapter "Logs" (limits for message logs and panel log) moved from "General" to the new tab "Storage". Values and defaults are unchanged. "General" now has "Start page" and "Back up and restore".
+
 ## [2.116.1] - 2026-10-24
 
 The README shows its images and links in HACS.
@@ -4341,6 +4356,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.117.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.117.0
 [2.116.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.1
 [2.116.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.0
 [2.115.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.115.0

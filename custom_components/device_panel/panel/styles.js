@@ -888,6 +888,27 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 @media (prefers-reduced-motion: reduce) { .seg-pill, .mon-tab, .sub-tab { transition: none; } }
 .sub-tabs { margin: 12px 0 8px; }
 .sub-tabs[hidden] { display: none; }
+/* Speicher (2.117.0): Gesamtbalken, Belegung je Zeile, übrige Dateien */
+.sto-total { background: var(--dp-input); border-radius: 14px; padding: 12px 14px; margin: 4px 0 6px; }
+.sto-big { font-size: 24px; font-variant-numeric: tabular-nums; }
+.sto-big small { font-size: 13px; color: var(--dp-text2); margin-left: 4px; }
+.sto-seg { display: flex; gap: 2px; height: 12px; border-radius: 6px; overflow: hidden; margin: 8px 0 6px; }
+.sto-seg i { display: block; height: 100%; min-width: 3px; }
+.sto-leg { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--dp-text2); }
+.sto-leg span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; background: var(--c); }
+.sto-seg .l1, .sto-leg .l1 { --c: #37a6ee; background: var(--c); }
+.sto-seg .l2, .sto-leg .l2 { --c: #7c6cf0; background: var(--c); }
+.sto-seg .l3, .sto-leg .l3 { --c: #34c26b; background: var(--c); }
+.sto-seg .l4, .sto-leg .l4 { --c: #f5a30b; background: var(--c); }
+.sto-seg .l5, .sto-leg .l5 { --c: #8a8d93; background: var(--c); }
+.sto-leg span { background: none !important; }
+.sto-meter { height: 6px; border-radius: 4px; background: rgba(127, 127, 127, 0.22); overflow: hidden; margin-top: 6px; }
+.sto-meter i { display: block; height: 100%; border-radius: 4px; background: var(--dp-primary); }
+.sto-meter i.w { background: #f5a30b; }
+.sto-batt { margin: 10px 0 0; }
+.sto-rows { margin-top: 4px; }
+.sto-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--dp-divider); font-size: 14px; }
+.sto-row b { font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .sub-n { margin-left: 5px; font-size: 11.5px; font-weight: 500; color: var(--dp-text3); font-variant-numeric: tabular-nums; }
 .sub-n[hidden] { display: none; }
 .mon-tab.chg::after, .sub-tab.chg::after, .mon-tab.err::after { content: ""; position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--dp-primary); }

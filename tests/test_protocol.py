@@ -259,7 +259,7 @@ async def test_websocket_command(hass: HomeAssistant, setup, hass_ws_client, has
 
     async def call_usage() -> dict[str, Any]:
         call.n += 1
-        await client.send_json({"id": call.n, "type": f"{DOMAIN}/protocol_usage"})
+        await client.send_json({"id": call.n, "type": f"{DOMAIN}/storage_usage"})
         return await client.receive_json()
 
     got = (await call(kind="routine", item_id=saved["id"]))["result"]
@@ -270,6 +270,7 @@ async def test_websocket_command(hass: HomeAssistant, setup, hass_ws_client, has
     assert everything["since"] == everything["oldest"]
     usage = (await call_usage())["result"]
     assert usage["protocol"]["entries"] >= 1 and usage["protocol"]["bytes"] > 0 and usage["log"]["entries"] >= 1
+    assert set(usage["other"]) == {"states", "ai", "config"} and {"availability", "signal"} <= set(usage)
     by_device = (await call(kind="routine", device_id=device.id, filter="manual"))["result"]
     assert by_device["total"] == 1 and by_device["entries"][0]["id"] == saved["id"]
     assert (await call(kind="routine", device_id=device.id, filter="failed"))["result"]["total"] == 0

@@ -1,5 +1,6 @@
-// Einstellungen der Protokolle (2.105.0): Panel › Allgemein, neues Kapitel "Protokolle" ganz unten (vor "Sichern und Wiederherstellen"):
-// Grösse in MB und Einträge, je für Meldungen/Routinen und für das Panel-Protokoll, mit der Belegung. Zahlen ausserhalb des Bereichs
+// Einstellungen der Protokolle (2.105.0), seit 2.117.0 im dritten Reiter "Speicher" von Panel (vorher Allgemein): Grösse in MB und Einträge,
+// je für Meldungen/Routinen und für das Panel-Protokoll, mit der Belegung; dazu Aufbewahrung (Tage) und Grösse der Verläufe von Verfügbarkeit
+// und Empfang, der Gesamtbalken und die übrigen Dateien. Zahlen ausserhalb des Bereichs
 // sperren "Speichern"; eine tiefere Grenze als die Belegung fragt vor dem Speichern (Kürzen ist endgültig). Dazu im Protokoll-Fenster der
 // Zeitraum "Alle" (ab dem ältesten Eintrag, auch über 12 Monate). Deutsch und Englisch, Desktop und Handy, echte Klicks und Taps.
 import { chromium } from "playwright-core";
@@ -10,10 +11,11 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { chapter: "Protokolle und Log", range: "Wert muss", cutYes: "Kürzen und speichern", cutNo: "Abbrechen", used: "Belegt", all: "Alle" },
-  en: { chapter: "Histories and log", range: "Value must", cutYes: "Cut and save", cutNo: "Cancel", used: "Used", all: "All" },
+  de: { chapter: "Protokolle und Log", tab: "Speicher", hist: "Geräteverläufe", other: "Weitere Daten", range: "Wert muss", cutYes: "Kürzen und speichern", cutNo: "Abbrechen", used: "Belegt", all: "Alle" },
+  en: { chapter: "Histories and log", tab: "Storage", hist: "Device histories", other: "Other data", range: "Value must", cutYes: "Cut and save", cutNo: "Cancel", used: "Used", all: "All" },
 };
 const KEYS = ["protocol_max_mb", "protocol_max_entries", "log_max_mb", "log_max_entries"];
+const HIST = ["availability_keep_days", "availability_max_mb", "signal_keep_days", "signal_max_mb"];
 const DAY = 86400;
 
 for (const lang of ["de", "en"]) {
@@ -55,9 +57,16 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("${S} .set-sec")`);
     await tap('[data-set="section"][data-id="updates"]');
+    await wait(`return !!r.querySelector('${S} .sub-tab[data-key="pstorage"]')`);
+    check(`[${tag}] Panel hat drei Reiter: Allgemein, Updates, ${T.tab}`, await ev(`const t = [...r.querySelectorAll('${S} .sub-tab[data-group="panel"]')].map((e) => e.dataset.key); return t.join() === "pstart,pupdates,pstorage"`));
+    check(`[${tag}] unter Allgemein steht das Kapitel "${T.chapter}" nicht mehr`, await ev(`return ![...r.querySelectorAll("${S} .set-title")].some((e) => e.textContent.trim() === ${JSON.stringify(T.chapter)}) && !r.querySelector('${S} input[data-opt="protocol_max_mb"]')`));
+    await tap(`${S} .sub-tab[data-key="pstorage"]`);
     await wait(`return !!r.querySelector('${S} input[data-opt="protocol_max_mb"]')`);
-    check(`[${tag}] Panel › Allgemein: Kapitel "${T.chapter}" mit vier Feldern`, await ev(`const t = [...r.querySelectorAll("${S} .set-title")].map((e) => e.textContent.trim()); return t.at(-2) === ${JSON.stringify(T.chapter)} && ${JSON.stringify(KEYS)}.every((k) => !!r.querySelector('${S} input[data-opt="' + k + '"]'))`));
-    check(`[${tag}] vor "Sichern und Wiederherstellen" (das steht ganz am Schluss)`, await ev(`const t = [...r.querySelectorAll("${S} .set-title")].map((e) => e.textContent.trim()); return t.length >= 3 && t.indexOf(${JSON.stringify(T.chapter)}) === t.length - 2`));
+    check(`[${tag}] Reiter "${T.tab}": Kapitel "${T.hist}", "${T.chapter}" und "${T.other}" mit acht Feldern`, await ev(`const t = [...r.querySelectorAll("${S} .set-title")].map((e) => e.textContent.trim()); return t.join("|") === ${JSON.stringify([T.hist, T.chapter, T.other].join("|"))} && ${JSON.stringify([...KEYS, ...HIST])}.every((k) => !!r.querySelector('${S} input[data-opt="' + k + '"]'))`));
+    check(`[${tag}] Gesamtbalken: rund 13 MB (4 + 2,5 + 4 + 2 + 0,5 + 0,1 + 0,1)`, await ev(`const b = r.querySelector("${S} .sto-big"); const seg = r.querySelectorAll("${S} .sto-seg i").length; return !!b && /1[34][,.]\\d|1[34] MB/.test(b.textContent) && seg === 5 && r.querySelectorAll("${S} .sto-leg span").length === 5`), await ev(`return r.querySelector("${S} .sto-big")?.textContent`));
+    check(`[${tag}] Balken je Zeile (Verfügbarkeit 40 %, Empfang 13 %, Protokoll 13 %, Log 20 %)`, await ev(`const w = [...r.querySelectorAll("${S} .sto-meter i")].map((i) => parseInt(i.style.width)); return w.length === 4 && w.join() === "40,13,13,20"`), await ev(`return [...r.querySelectorAll("${S} .sto-meter i")].map((i) => i.style.width).join()`));
+    check(`[${tag}] Verläufe: 31 Tage / 10 MB, 31 Tage / 20 MB, Einheit Tage`, await ev(`return ${JSON.stringify(HIST)}.map((k) => r.querySelector('${S} input[data-opt="' + k + '"]').value).join() === "31,10,31,20" && /Tage|days/.test(r.querySelector('${S} input[data-opt="availability_keep_days"]').parentElement.querySelector(".unit").textContent)`));
+    check(`[${tag}] Weitere Daten: drei Zeilen, Batterie-Hinweis`, await ev(`return r.querySelectorAll("${S} .sto-row").length === 3 && r.querySelectorAll("${S} .sto-batt").length === 2`));
     check(`[${tag}] Standard: 30 MB, 5000 Einträge, 10 MB, 4000 Einträge`, await ev(`return ${JSON.stringify(KEYS)}.map((k) => r.querySelector('${S} input[data-opt="' + k + '"]').value).join() === "30,5000,10,4000"`));
     check(`[${tag}] Einheiten MB und Einträge am Feld`, await ev(`const u = [...r.querySelectorAll('${S} input[data-opt="protocol_max_mb"], ${S} input[data-opt="protocol_max_entries"]')].map((i) => i.parentElement.querySelector(".unit").textContent); return u[0] === "MB" && /Einträge|entries/.test(u[1])`));
     check(`[${tag}] Belegung steht in den Zeilen (4 MB / 40 Einträge, 2 MB / 300 Einträge, grösstes Protokoll 12)`, await wait(`const t = r.querySelector("${S} .set-sec-body").textContent; return t.includes("4") && t.includes("40") && t.includes("12") && t.includes("2") && t.includes("300") && t.includes(${JSON.stringify(T.used)})`));
@@ -89,6 +98,17 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelector("${S} .set-count.saved")`);
     const cut = (await calls("device_panel/set_options")).at(-1)?.values;
     check(`[${tag}] "${T.cutYes}": gespeichert (log_max_entries 100)`, cut && cut.log_max_entries === 100, JSON.stringify(cut));
+    // Verfügbarkeit: 7 Tage sind tiefer als die 31 Tage Verlauf: Rückfrage nennt "Verfügbarkeit", dann gespeichert
+    await fill(`${S} input[data-opt="availability_keep_days"]`, "7");
+    await tap(`${S} [data-set="save"]`);
+    check(`[${tag}] 7 Tage < 31 Tage Verlauf: Rückfrage nennt die Verfügbarkeit`, await wait(`const a = r.querySelector("${S} .cut-ask"); return !!a && /Verfügbarkeit|Availability/.test(a.textContent)`));
+    await tap(`${S} [data-set="cut-yes"]`);
+    await wait(`return r.querySelector("${S} .set-count.saved")`);
+    const keep = (await calls("device_panel/set_options")).at(-1)?.values;
+    check(`[${tag}] gespeichert: availability_keep_days 7`, keep && keep.availability_keep_days === 7, JSON.stringify(keep));
+    await fill(`${S} input[data-opt="signal_keep_days"]`, "40");
+    check(`[${tag}] 40 Tage: ausserhalb 7 bis 31, "Speichern" gesperrt`, await wait(`return r.querySelector('${S} .opt.invalid') && r.querySelector('${S} [data-set="save"]').disabled === true`));
+    await fill(`${S} input[data-opt="signal_keep_days"]`, "31");
     await tap(`${S} .dlg-actions [data-set="close"]`);
     await wait(`return !r.querySelector("${S}").open`);
 

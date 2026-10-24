@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.117.0] - 2026-10-24
+
+Neuer Reiter "Speicher" in den Einstellungen des Panels: alles, was die Integration selbst speichert, mit Grösse und Grenzen.
+
+### Hinzugefügt
+
+- **Reiter "Speicher" (Einstellungen › Panel, dritter Reiter nach "Allgemein" und "Updates"):** oben die Summe als Zahl und ein Balken in fünf Teilen (Verläufe, Protokolle, Panel-Log, Zustände, Übrige) mit Legende. Darunter das Kapitel "Geräteverläufe", das Kapitel "Protokolle und Log" und das Kapitel "Weitere Daten". Jede Zeile mit einer Grenze zeigt, wie viel belegt ist (Grösse, Geräte, Tage), und einen Balken für den Anteil an der Grenze; er wird ab 90 % gelb. In der Zusammenfassung des Abschnitts: "Speicher: 7,2 MB belegt".
+- **Geräteverläufe mit Grenzen:** Verfügbarkeit und Empfang aller Geräte hatten eine feste Aufbewahrung von 31 Tagen und keine Grenze. Jetzt hat jeder eine **Aufbewahrung in Tagen** (7 bis 31; das Panel zeigt höchstens 30 Tage, mehr wäre nicht zu sehen) und eine **Grenze in MB** (Standard 31 Tage, 10 MB für die Verfügbarkeit und 20 MB für den Empfang). Ist die Grenze in MB erreicht, fallen die ältesten Werte über alle Geräte weg (der Zustand zu Beginn des Zeitraums bleibt). Eine tiefere Grenze kürzt beim Speichern sofort, nach einer Rückfrage; sie nennt, was gekürzt wird. Der Batterie-Verlauf hat keinen eigenen Speicher (Rekorder von Home Assistant); ein Hinweis sagt das.
+- **Weitere Daten:** Zustände der Meldungen, des Ladens, der neuen Geräte, der Updates und der Ruhezeit, die KI-Einschätzungen sowie Routinen, Magic Push, Geräte und Panel in drei Zeilen mit ihrer Grösse (ohne Grenze, sie wachsen kaum).
+- Neuer WebSocket-Befehl `device_panel/storage_usage` (Administratoren); er ersetzt `device_panel/protocol_usage` (der nur die Protokolle der Meldungen und das Panel-Log kannte).
+
+### Geändert
+
+- Das Kapitel "Protokolle und Log" (Grenzen für die Protokolle der Meldungen und das Panel-Log) ist von "Allgemein" in den neuen Reiter "Speicher" gewandert. Werte und Standards sind unverändert. "Allgemein" hat jetzt "Startseite" und "Sichern und wiederherstellen".
+
 ## [2.116.1] - 2026-10-24
 
 Die README zeigt ihre Bilder und Links in HACS.
@@ -4442,6 +4457,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.117.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.117.0
 [2.116.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.1
 [2.116.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.0
 [2.115.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.115.0

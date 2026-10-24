@@ -1,7 +1,7 @@
 // Ansicht mit "Speichern" (2.87.0, docs/mockups/view-v3): Der Dialog "Ansicht" hat zwei Reiter, "Spalten" (Handy "Sortierung", pro Benutzer)
 // und "Filter-Chips" (für alle, nur Administratoren). Beide ändern nur einen Entwurf; "Speichern" schreibt die Chips an die Optionen und die
 // Ansicht in die Benutzerdaten, Schliessen mit Entwurf fragt nach. Ohne Administratorrecht gibt es nur den Reiter "Spalten" und keine
-// Optionen werden geladen. Der Abschnitt "Panel" der Einstellungen hat die Unterreiter "Allgemein" und "Updates". Alle Speichern-Knöpfe
+// Optionen werden geladen. Der Abschnitt "Panel" der Einstellungen hat die Unterreiter "Allgemein", "Updates" und "Speicher". Alle Speichern-Knöpfe
 // tragen das Disketten-Symbol. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { launchOptions } from "../lib.mjs";
@@ -11,8 +11,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { cols: "Spalten", sort: "Sortierung", chips: "Filter-Chips", global: "Gilt für alle Benutzer, nur Administratoren sehen diesen Reiter.", panel: "Panel", start: "Allgemein", upd: "Updates", two: "2 Änderungen" },
-  en: { cols: "Columns", sort: "Sorting", chips: "Filter chips", global: "Applies to all users; only administrators see this tab.", panel: "Panel", start: "General", upd: "Updates", two: "2 changes" },
+  de: { cols: "Spalten", sort: "Sortierung", chips: "Filter-Chips", global: "Gilt für alle Benutzer, nur Administratoren sehen diesen Reiter.", panel: "Panel", start: "Allgemein", upd: "Updates", sto: "Speicher", two: "2 Änderungen" },
+  en: { cols: "Columns", sort: "Sorting", chips: "Filter chips", global: "Applies to all users; only administrators see this tab.", panel: "Panel", start: "General", upd: "Updates", sto: "Storage", two: "2 changes" },
 };
 
 for (const lang of ["de", "en"]) {
@@ -69,12 +69,12 @@ for (const lang of ["de", "en"]) {
     await tap("dialog.discard-dlg [data-dd='yes']");
     check(`[${tag}] verworfen: Dialog zu, Ansicht wie gespeichert`, (await wait(`return !r.querySelector("${D}").open`)) && (await ev(`return JSON.stringify(r.host._view.${key})`)) === was);
 
-    // Einstellungen: Abschnitt "Panel" mit zwei Unterreitern, kein Abschnitt "Ansicht" mehr
+    // Einstellungen: Abschnitt "Panel" mit drei Unterreitern, kein Abschnitt "Ansicht" mehr
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("${D} .set-sec")`);
     check(`[${tag}] Abschnitt "${T.panel}", kein Abschnitt "Ansicht"`, (await text('[data-id="updates"] .set-sec-title')) === T.panel && !(await ev(`return !!r.querySelector('[data-id="look"]')`)));
     await tap('[data-set="section"][data-id="updates"]');
-    check(`[${tag}] Unterreiter "${T.start}" und "${T.upd}", Allgemein gewählt, Versionszeile ganz oben vor den Abschnitten`, (await ev(`return [...r.querySelectorAll('${D} .sub-tab[data-group="panel"]')].map((t) => t.firstChild.textContent.trim()).join("|")`)) === `${T.start}|${T.upd}` && (await ev(`return r.querySelector('${D} .sub-tab.on[data-group="panel"]').dataset.key`)) === "pstart" && (await ev(`return r.querySelector("${D} .dlg-body").firstElementChild.classList.contains("ver-slot")`)) && (await ev(`return !r.querySelector('${D} .sub-tab[data-key="pupdates"]').closest(".set-sec-body").querySelector(".ver-slot")`)));
+    check(`[${tag}] Unterreiter "${T.start}" und "${T.upd}", Allgemein gewählt, Versionszeile ganz oben vor den Abschnitten`, (await ev(`return [...r.querySelectorAll('${D} .sub-tab[data-group="panel"]')].map((t) => t.firstChild.textContent.trim()).join("|")`)) === `${T.start}|${T.upd}|${T.sto}` && (await ev(`return r.querySelector('${D} .sub-tab.on[data-group="panel"]').dataset.key`)) === "pstart" && (await ev(`return r.querySelector("${D} .dlg-body").firstElementChild.classList.contains("ver-slot")`)) && (await ev(`return !r.querySelector('${D} .sub-tab[data-key="pupdates"]').closest(".set-sec-body").querySelector(".ver-slot")`)));
     await tap(`${D} .sub-tab[data-key="pstart"]`);
     check(`[${tag}] "${T.start}": Schalter für die Startseite, die Versionszeile bleibt oben`, (await ev(`return !!r.querySelector("${D} input[data-start-panel]") && r.querySelector("${D} .dlg-body").firstElementChild.classList.contains("ver-slot")`)));
     await tap(`${D} .dlg-actions [data-set="close"]`);

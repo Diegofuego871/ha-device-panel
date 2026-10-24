@@ -9,7 +9,6 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
-from . import activity
 from .const import DATA_MAGIC, DATA_PROTOCOL, DATA_ROUTINES, DOMAIN
 
 PAGE_MAX = 500
@@ -66,13 +65,4 @@ def ws_protocol_get(hass: HomeAssistant, connection: websocket_api.ActiveConnect
     )
 
 
-@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/protocol_usage"})
-@websocket_api.require_admin
-@callback
-def ws_protocol_usage(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
-    """Belegung der Protokolle für Panel › Allgemein › Protokolle: Meldungen/Routinen und Protokoll des Panels (Byte und Einträge)."""
-    store = hass.data.get(DATA_PROTOCOL)
-    connection.send_result(msg["id"], {"protocol": store.usage() if store is not None else {"bytes": 0, "entries": 0, "items": 0, "max_item": 0}, "log": activity.usage(hass)})
-
-
-COMMANDS = (ws_protocol_get, ws_protocol_usage)
+COMMANDS = (ws_protocol_get,)

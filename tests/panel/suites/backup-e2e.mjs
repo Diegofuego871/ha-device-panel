@@ -1,4 +1,4 @@
-// Einstellungen sichern und wiederherstellen (2.98.0): Kapitel unter "Startseite" (Panel › Allgemein), Fenster "Sichern" mit Bereichen,
+// Einstellungen sichern und wiederherstellen (2.98.0): Kapitel unter "Startseite" (Panel › Allgemein; seit 2.117.0 steht "Protokolle und Log" im Reiter "Speicher"), Fenster "Sichern" mit Bereichen,
 // Vorschau, Übernehmen, Datei vorher, Rückgängig, ungültige Datei, eingefügter Text. Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
@@ -42,7 +42,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="subtab"][data-group="panel"][data-key="pstart"]');
     await wait(`return !!r.querySelector('[data-set="bk-export"]')`);
     const titles = await ev(`return [...r.querySelectorAll("dialog.settings .set-sec-body .set-title")].map(x => x.textContent.trim())`);
-    check(`[${tag}] Kapitel "${L.ttl}" unter "Startseite"`, titles.length === 3 && titles[2] === L.ttl, JSON.stringify(titles));
+    check(`[${tag}] Kapitel "${L.ttl}" unter "Startseite"`, titles.length === 2 && titles[1] === L.ttl, JSON.stringify(titles));
     check(`[${tag}] zwei Knöpfe mit Symbol, nicht gesperrt`, await ev(`const b = [...r.querySelectorAll('[data-set="bk-export"], [data-set="bk-import"]')]; return b.length === 2 && b.every((x) => !x.disabled && x.querySelector("svg"))`));
 
     // Ungespeicherte Änderung: beide Knöpfe gesperrt, mit Hinweis

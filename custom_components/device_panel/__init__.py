@@ -45,6 +45,7 @@ from .routines import STORE_KEY as ROUTINES_STORE_KEY
 from .routines import RoutineManager
 from .protocol import Protocol
 from .protocol_ws import COMMANDS as PROTOCOL_COMMANDS
+from .storage_ws import COMMANDS as STORAGE_COMMANDS
 from .routines_ws import COMMANDS as ROUTINE_COMMANDS
 from .status import COMMANDS as STATUS_COMMANDS
 from .system_stats import COMMANDS as SYSTEM_COMMANDS
@@ -250,6 +251,10 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
     activity.apply_limits(hass)
     if (protocol_log := hass.data.get(DATA_PROTOCOL)) is not None:
         protocol_log.enforce()
+    # Aufbewahrung der Verläufe von Verfügbarkeit und Empfang (seit 2.117.0)
+    for key in (DATA_AVAILABILITY, DATA_SIGNAL):
+        if (history := hass.data.get(key)) is not None:
+            history.apply_limits()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -1261,7 +1266,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_set_panel)
     for command in (_ws_magic_get, _ws_magic_list, _ws_magic_entity_search, _ws_magic_save, _ws_magic_delete, _ws_magic_enable, _ws_magic_preview, _ws_magic_test, _ws_magic_history):
         websocket_api.async_register_command(hass, command)
-    for command in (*ROUTINE_COMMANDS, *PROTOCOL_COMMANDS, *STATUS_COMMANDS, *SYSTEM_COMMANDS):
+    for command in (*ROUTINE_COMMANDS, *PROTOCOL_COMMANDS, *STORAGE_COMMANDS, *STATUS_COMMANDS, *SYSTEM_COMMANDS):
         websocket_api.async_register_command(hass, command)
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_backup_export)
