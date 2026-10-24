@@ -7,6 +7,25 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.122.0] - 2026-10-24
+
+Own entities: counts and states of the panel for automations and dashboards, with an error counter.
+
+### Added
+
+- **Service device "Device Panel" with entities** (calculated every 30 seconds from the list of the panel, written to the history only on change):
+  - **11 sensors:** devices active, hidden, offline, with warning, with battery, with low battery, charging, with weak reception, new and with an update, plus **"Errors (24 hours)"**. Each count carries the names of the devices as attribute `names` (at most 20, `more` counts the rest).
+  - **2 binary sensors:** **Outage** (at least one device is offline) and **Problem** (an error in the log or a part of the integration is not running).
+  - **Error counter:** counts the entries of level "error" in the panel log of the last 24 hours, with the last error as attributes. The new button **"Acknowledge errors"** sets it to zero; the log stays untouched.
+- Warnings are counted like in the panel (unstable, low battery, weak reception or no data); disabled and unmonitored devices do not count.
+- README (DE/EN): new section "Entities for automations".
+
+### Changed
+
+- The own service device is not listed in the device list of the panel (the sensors would count themselves).
+- The data file of the error counter (`device_panel.summary`) is removed together with the other files when the integration is removed.
+- `test_audit_fixes`: two routines due in the same second no longer expect a fixed order (they share one point in time).
+
 ## [2.121.0] - 2026-10-24
 
 The history symbol sits in the header of the device pop-up, a close button in every history window, and the charts use the whole screen on a phone.
@@ -17,6 +36,8 @@ The history symbol sits in the header of the device pop-up, a close button in ev
 - **History window:** an "X" at the top right in every view of the history (a device, Magic Push, routines); "Back" at the bottom left stays, both close the window.
 - **Device pop-up:** the button "History" moved from the quick row to the top right, to the left of the heart, with the same icon as in the overviews of Magic Push and routines. The quick row keeps only the two links that leave the panel ("Open device in HA", "Open integration in HA"); everything at the top opens a window inside the panel. On a phone the name in the header is one step smaller (21 instead of 24 px), so the three round buttons leave it more room.
 - **README:** the screenshots of the device pop-up were taken again (symbol in the header).
+
+Not released; included in 2.122.0.
 
 ## [2.120.0] - 2026-10-24
 
@@ -4415,7 +4436,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.121.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.121.0
+[2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0
 [2.120.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.120.0
 [2.119.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.119.0
 [2.118.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.118.0

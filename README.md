@@ -257,6 +257,15 @@ Off by default. On a button press the panel asks an AI task of Home Assistant fo
 - **Facts:** besides the device itself the AI sees the latest outages with time of day, the signal of the last 24 hours and 7 days, and for Bluetooth the receivers that heard the device (without addresses); it also knows whether a device is charged (robot vacuum, phone) or runs on batteries and talks about charging habits instead of battery life
 - **Without AI:** the panel names the likely common cause of group outages and calculates the battery forecast by itself
 
+## Entities for automations
+
+The integration creates its own service device **"Device Panel"** with entities, so you can use the numbers in automations and dashboards. They are calculated every 30 seconds from the same list as the panel and only written to the history when they change.
+
+- **Sensors (counts):** devices active, hidden, offline, with warning, with battery, with low battery, charging, with weak reception, new (last 3 days) and with an update. Every sensor carries the names of the devices as attribute `names` (at most 20, `more` counts the rest). A warning is counted like in the panel (unstable, low battery, weak reception or no data; an outage counts as outage, not as warning). Disabled and unmonitored devices are not counted.
+- **Binary sensors:** **Outage** (on when at least one device is offline) and **Problem** (on when there is an error in the log or a part of the integration is not running, see the status app).
+- **Error counter:** the sensor **"Errors (24 hours)"** counts the entries of level "error" in the panel log of the last 24 hours, with `last`, `last_category` and `last_at` as attributes. The button **"Acknowledge errors"** sets the counter to zero (the log stays untouched).
+- Entities you do not need, you can disable in Home Assistant as usual. The own service device does not appear in the device list of the panel.
+
 ## On the phone
 
 The same panel as cards, with the same pop-ups, windows and assistants in full screen.

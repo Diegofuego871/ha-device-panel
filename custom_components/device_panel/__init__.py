@@ -54,6 +54,7 @@ from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, a
 from .ai_prompt import DEFAULT_PROMPT
 from .const import (
     AI_PROMPT_MAX,
+    DATA_SUMMARY,
     CONF_STATUS_CPU_MINUTES,
     CONF_STATUS_DISK_MINUTES,
     CONF_STATUS_RAM_MINUTES,
@@ -110,6 +111,7 @@ from .const import (
     PUSH_STATIC_URL_PATH,
     STORAGE_VERSION,
 )
+from .summary import PLATFORMS, SUMMARY_STORE_KEY, SummaryCoordinator
 from .devices import (
     DEVICES_STORE_KEY,
     async_catalog,
@@ -216,6 +218,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         status_watch = StatusWatch(hass)
         await status_watch.async_start()
         hass.data[DATA_STATUS] = status_watch
+    # Eigene Entitäten (seit 2.122.0): ein Fehler hier darf das Panel nicht verhindern, die Entitäten bleiben dann nur nicht verfügbar
+    if DATA_SUMMARY not in hass.data:
+        summary_coordinator = SummaryCoordinator(hass, entry)
+        await summary_coordinator.async_load()
+        await summary_coordinator.async_refresh()
+        hass.data[DATA_SUMMARY] = summary_coordinator
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await update_check.async_load_panel_settings(hass)
     update_check.async_start_daily(hass)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
@@ -258,6 +267,9 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        return False
+    hass.data.pop(DATA_SUMMARY, None)
     if hass.data.pop(DATA_PANEL_REGISTERED, None):
         frontend.async_remove_panel(hass, PANEL_URL_PATH)
     if (notifier := hass.data.pop(DATA_OUTAGE, None)) is not None:
@@ -304,7 +316,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
         protocol_log = Protocol(hass)
         await protocol_log.async_load()
     await protocol_log.async_remove_all()
-    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, MAGIC_STORE_KEY, ROUTINES_STORE_KEY, AI_MEMORY_STORE_KEY, update_check.PANEL_STORE_KEY):
+    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, MAGIC_STORE_KEY, ROUTINES_STORE_KEY, AI_MEMORY_STORE_KEY, SUMMARY_STORE_KEY, update_check.PANEL_STORE_KEY):
         await Store(hass, STORAGE_VERSION, key).async_remove()
     # Heruntergeladene Icons der Meldungen; der statische Pfad bleibt bis zum
     # Neustart angemeldet, der Ordner wird bei Bedarf neu angelegt.

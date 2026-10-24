@@ -7,6 +7,25 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.122.0] - 2026-10-24
+
+Eigene Entitäten: Zähler und Zustände des Panels für Automationen und Dashboards, mit einem Fehlerzähler.
+
+### Hinzugefügt
+
+- **Dienst-Gerät "Device Panel" mit Entitäten** (alle 30 Sekunden aus der Liste des Panels berechnet, nur bei Änderung in den Verlauf geschrieben):
+  - **11 Sensoren:** Geräte aktiv, ausgeblendet, ausgefallen, mit Warnung, mit Batterie, mit schwacher Batterie, am Laden, mit schwachem Empfang, neu und mit Update, dazu **"Fehler (24 Stunden)"**. Jeder Zähler trägt die Namen der Geräte im Attribut `names` (höchstens 20, `more` zählt den Rest).
+  - **2 binäre Sensoren:** **Ausfall** (mindestens ein Gerät ist ausgefallen) und **Problem** (ein Fehler im Log oder ein Teil der Integration läuft nicht).
+  - **Fehlerzähler:** zählt die Einträge der Stufe "error" im Panel-Log der letzten 24 Stunden, mit dem letzten Fehler als Attributen. Der neue Knopf **"Fehler quittieren"** setzt ihn auf null; das Log bleibt unberührt.
+- Warnungen zählen wie im Panel (instabil, Batterie niedrig, schwacher Empfang oder keine Daten); deaktivierte und nicht überwachte Geräte zählen nicht.
+- README (DE/EN): neuer Abschnitt "Entitäten für Automationen".
+
+### Geändert
+
+- Das eigene Dienst-Gerät erscheint nicht in der Geräteliste des Panels (die Sensoren würden sich sonst selbst zählen).
+- Die Datei des Fehlerzählers (`device_panel.summary`) wird beim Entfernen der Integration mit den übrigen Dateien gelöscht.
+- `test_audit_fixes`: zwei Routinen, die in derselben Sekunde fällig sind, erwarten keine feste Reihenfolge mehr (sie teilen sich einen Zeitpunkt).
+
 ## [2.121.0] - 2026-10-24
 
 Das Protokoll-Symbol steht im Kopf des Geräte-Popups, jedes Protokoll-Fenster hat ein Kreuz, und die Verläufe nutzen am Handy den ganzen Bildschirm.
@@ -17,6 +36,8 @@ Das Protokoll-Symbol steht im Kopf des Geräte-Popups, jedes Protokoll-Fenster h
 - **Protokoll-Fenster:** oben rechts in jeder Ansicht des Protokolls (Gerät, Magic Push, Routinen) ein "X"; "Zurück" unten links bleibt, beide schliessen das Fenster.
 - **Geräte-Popup:** der Knopf "Protokoll" steht nicht mehr in der Schnellzeile, sondern oben rechts links vom Herz, mit demselben Symbol wie in den Übersichten von Magic Push und Routinen. Die Schnellzeile behält nur die zwei Links, die aus dem Panel führen ("Gerät in HA öffnen", "Integration in HA öffnen"); alles oben öffnet ein Fenster im Panel. Am Handy ist der Name im Kopf eine Stufe kleiner (21 statt 24 px), damit neben den drei runden Knöpfen mehr Platz bleibt.
 - **README:** die Printscreens des Geräte-Popups sind neu aufgenommen (Symbol im Kopf).
+
+Nicht veröffentlicht; enthalten in 2.122.0.
 
 ## [2.120.0] - 2026-10-24
 
@@ -4516,7 +4537,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.121.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.121.0
+[2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0
 [2.120.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.120.0
 [2.119.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.119.0
 [2.118.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.118.0

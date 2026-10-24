@@ -285,5 +285,55 @@
         "devices": "Geräte-Firmware"
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "devices_active": {
+        "name": "Geräte aktiv"
+      },
+      "devices_hidden": {
+        "name": "Geräte ausgeblendet"
+      },
+      "devices_offline": {
+        "name": "Geräte ausgefallen"
+      },
+      "devices_warning": {
+        "name": "Geräte mit Warnung"
+      },
+      "devices_battery": {
+        "name": "Geräte mit Batterie"
+      },
+      "devices_battery_low": {
+        "name": "Geräte mit schwacher Batterie"
+      },
+      "devices_charging": {
+        "name": "Geräte laden"
+      },
+      "devices_signal_weak": {
+        "name": "Geräte mit schwachem Empfang"
+      },
+      "devices_new": {
+        "name": "Neue Geräte"
+      },
+      "devices_updates": {
+        "name": "Geräte mit Update"
+      },
+      "errors": {
+        "name": "Fehler (24 Stunden)"
+      }
+    },
+    "binary_sensor": {
+      "outage": {
+        "name": "Ausfall"
+      },
+      "problem": {
+        "name": "Problem"
+      }
+    },
+    "button": {
+      "acknowledge_errors": {
+        "name": "Fehler quittieren"
+      }
+    }
   }
 }

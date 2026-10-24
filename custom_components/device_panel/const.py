@@ -422,6 +422,8 @@ DATA_PROTOCOL = f"{DOMAIN}_protocol"
 DATA_BLE_BEST = f"{DOMAIN}_ble_best"
 DATA_BLE_STAMPS = f"{DOMAIN}_ble_stamps"
 DATA_STATUS = f"{DOMAIN}_status"
+# Koordinator der eigenen Entitäten (seit 2.122.0, summary.py)
+DATA_SUMMARY = f"{DOMAIN}_summary"
 
 # Versionsprüfung (GitHub-Releases) und Abgleich mit HACS, wie unifi_dynamic.
 GITHUB_REPO = "Diegofuego871/ha-device-panel"

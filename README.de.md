@@ -257,6 +257,15 @@ Standardmässig aus. Auf Knopfdruck fragt das Panel eine KI-Aufgabe von Home Ass
 - **Fakten:** neben dem Gerät selbst sieht die KI die letzten Ausfälle mit Tageszeit, den Empfang der letzten 24 Stunden und 7 Tage und bei Bluetooth die Empfänger, die das Gerät gehört haben (ohne Adressen); sie weiss auch, ob ein Gerät geladen wird (Staubsauger-Roboter, Handy) oder mit Batterien läuft, und spricht dann über Ladegewohnheiten statt über Batterie-Laufzeit
 - **Ohne KI:** das Panel nennt die vermutete gemeinsame Ursache von Sammelausfällen und rechnet die Batterie-Prognose selbst
 
+## Entitäten für Automationen
+
+Die Integration legt ein eigenes Dienst-Gerät **"Device Panel"** mit Entitäten an, damit du die Zahlen in Automationen und Dashboards nutzen kannst. Sie werden alle 30 Sekunden aus derselben Liste wie im Panel berechnet und nur bei einer Änderung in den Verlauf geschrieben.
+
+- **Sensoren (Zähler):** Geräte aktiv, ausgeblendet, ausgefallen, mit Warnung, mit Batterie, mit schwacher Batterie, am Laden, mit schwachem Empfang, neu (letzte 3 Tage) und mit Update. Jeder Sensor trägt die Namen der Geräte im Attribut `names` (höchstens 20, `more` zählt den Rest). Eine Warnung zählt wie im Panel (instabil, Batterie niedrig, schwacher Empfang oder keine Daten; ein Ausfall zählt als Ausfall, nicht als Warnung). Deaktivierte und nicht überwachte Geräte zählen nicht.
+- **Binäre Sensoren:** **Ausfall** (an, wenn mindestens ein Gerät ausgefallen ist) und **Problem** (an bei einem Fehler im Log oder wenn ein Teil der Integration nicht läuft, siehe Status-App).
+- **Fehlerzähler:** der Sensor **"Fehler (24 Stunden)"** zählt die Einträge der Stufe "error" im Panel-Log der letzten 24 Stunden, mit `last`, `last_category` und `last_at` als Attributen. Der Knopf **"Fehler quittieren"** setzt den Zähler auf null (das Log bleibt unberührt).
+- Entitäten, die du nicht brauchst, deaktivierst du wie gewohnt in Home Assistant. Das eigene Dienst-Gerät erscheint nicht in der Geräteliste des Panels.
+
 ## Auf dem Handy
 
 Dasselbe Panel als Karten, mit denselben Pop-ups, Fenstern und Assistenten im Vollbild.

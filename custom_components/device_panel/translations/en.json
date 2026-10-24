@@ -285,5 +285,55 @@
         "devices": "Device firmware"
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "devices_active": {
+        "name": "Devices active"
+      },
+      "devices_hidden": {
+        "name": "Devices hidden"
+      },
+      "devices_offline": {
+        "name": "Devices offline"
+      },
+      "devices_warning": {
+        "name": "Devices with warning"
+      },
+      "devices_battery": {
+        "name": "Devices with battery"
+      },
+      "devices_battery_low": {
+        "name": "Devices with low battery"
+      },
+      "devices_charging": {
+        "name": "Devices charging"
+      },
+      "devices_signal_weak": {
+        "name": "Devices with weak reception"
+      },
+      "devices_new": {
+        "name": "New devices"
+      },
+      "devices_updates": {
+        "name": "Devices with update"
+      },
+      "errors": {
+        "name": "Errors (24 hours)"
+      }
+    },
+    "binary_sensor": {
+      "outage": {
+        "name": "Outage"
+      },
+      "problem": {
+        "name": "Problem"
+      }
+    },
+    "button": {
+      "acknowledge_errors": {
+        "name": "Acknowledge errors"
+      }
+    }
   }
 }

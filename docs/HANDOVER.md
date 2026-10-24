@@ -3,7 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.121.0, Protokoll-Symbol im Kopf; davor 2.120.0 Empfang als Ereignis)
+## Stand (2.122.0, eigene Entitäten; davor 2.121.0 Protokoll-Symbol im Kopf)
+
+- Eigene Entitäten (2.122.0): `summary.py` (Koordinator `SummaryCoordinator`, alle 30 s, `async_summary` rechnet aus `async_list_devices`; Warnung wie `devWarn` im Panel; Fehlerzähler = Einträge der Stufe "error" im Panel-Log der letzten 24 Std. seit dem Quittieren, `ack_at` in `device_panel.summary`), Plattformen `sensor.py` (11), `binary_sensor.py` (2: Ausfall, Problem), `button.py` (Fehler quittieren); Übersetzungen unter `entity` in strings.json = translations/en.json und de.json. Dienst-Gerät `(DOMAIN, "panel")` fehlt bewusst in `candidate_devices`. Einbindung in `__init__.py` (PLATFORMS, `DATA_SUMMARY`); Test `tests/test_summary.py`. Der Test `test_hanging_call_delays…` erwartet keine feste Reihenfolge zweier gleichzeitig fälliger Routinen mehr.
+- Noch offen, in dieser Reihenfolge (Entscheid des Nutzers, 2026-10-24): **2.123.0 Protokoll vereinen**: Log (`log-dlg`, `activity.py`) und Geräteprotokoll (`protocol.js`, `devicelog.py`) in ein Fenster; Einstiege Gerät (vorgefiltert), Übersicht (alles), Einstellungen "Log" (mit System und Stufen); Debug-Einträge hinter einen Schalter; eigene Aufbewahrung für Fehler. Vorher Mockup.
 
 - `SignalLog.watch(devices)` (`signal_history.py`) schreibt `signal_weak`/`signal_ok` ins Panel-Log (Kategorie `signal`, mit `device_id`): alle `WATCH_INTERVAL` = 5 Min. über `async_list_devices` (gleiche Rechnung wie die Liste und die KI: `devices.signal_limit`/`signal_weak`, vorher in `ai_assessment.py`), Wechsel erst nach `WATCH_CONFIRM` = 2 Prüfungen, erster Stand ohne Ereignis, ausgefallene Geräte behalten ihren Stand. Zustand nur im Arbeitsspeicher (nach einem Neustart beginnt jedes Gerät wieder ohne Ereignis). `devicelog.EVENT_CATS` und `FILTERS.all` im Panel kennen `signal`.
 - Test: `test_signal_history.py::test_watch_writes_weak_and_ok_events_after_two_checks`; Suiten `devicelog`, `log` angepasst.

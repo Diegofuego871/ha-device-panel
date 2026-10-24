@@ -47,12 +47,13 @@ async def test_hanging_call_delays_but_does_not_miss_other_routine(hass: HomeAss
     async_fire_time_changed(hass)
     for _ in range(20):
         await asyncio.sleep(0)
-    assert calls == [a]  # B wartet auf die Sperre
+    # Beide Routinen sind zur selben Sekunde fällig; welche zuerst die Sperre bekommt, ist offen (gleicher Zeitpunkt). Die andere wartet auf die Sperre.
+    assert len(calls) == 1 and calls[0] in (a, b)
     # A hängt länger als die Nachholzeit (Standard 10 Minuten): B darf deshalb nicht als verpasst gelten
     freezer.tick(timedelta(minutes=15))
     gate.set()
     await hass.async_block_till_done()
-    assert calls == [a, b]
+    assert sorted(calls) == sorted([a, b])
     assert manager.runtime(first["id"])["last"]["what"] == "run"
     assert manager.runtime(second["id"])["last"]["what"] == "run"
 
