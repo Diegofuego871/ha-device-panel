@@ -3,6 +3,14 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.118.0, Geräteprotokoll)
+
+- Entscheid des Nutzers (Mockups `docs/mockups/storage-devlog-v1`): Knopf in der Schnellzeile (A), Liste nach Tagen mit Chips (A), das alte Protokoll geht im neuen auf (Ja). Das Protokoll-Fenster (`panel/protocol.js`, `ProtocolUi`) hat jetzt immer drei Reiter `TABS` = Alles, Magic Push, Routinen; "Alles" (`kind: "all"`) ist die Liste je Tag (`allHtml`, `allRow`, `allText`), die beiden anderen behalten Kennzahlen, Diagramm, Tabelle, Trace. `alt` enthält die Zusammenhänge der beiden anderen Reiter (mit Gerät oder ohne = alle Geräte).
+- Backend `devicelog.py` (`query`), erreichbar über `device_panel/protocol_get` mit `kind: "all"`: Panel-Log-Einträge mit `device_id` (Kategorien `EVENT_CATS`, ohne Debug, System, Apps, Magic Push und Routinen, die kommen aus den Protokollen), Wechsel online/ausgefallen aus der Verfügbarkeit (`_avail_entries`: Lücken zählen nicht, der erste Eintrag ist nur der Anfang, Dauer bei "online"), Protokolle von Magic Push und Routinen. Das Feld `source` (event, avail, magic, routine) unterscheidet die Quellen; `src` ist bei Routinen der Auslöser des Laufs (nicht überschreiben). Ohne `device_id`: alle Geräte, mit `dname`. `magic` und `routine` ohne Meldung und Gerät: alle.
+- Zugänge: `data-proto="all"` in der Schnellzeile des Geräte-Popups (nur Administratoren), `_protoHeadBtn(kind)` im Kopf der Übersichten von Magic Push und Routinen (öffnet auf dem Reiter der Übersicht, ohne Gerät). Der Empfang kommt nicht vor (kein Ereignis; eine Idee für später: Übergang schwach/nicht schwach protokollieren).
+- Tests: `test_protocol.py::test_device_log_merges_all_sources`, Suite `devicelog`, `protocol`/`protocollimits` angepasst (Reiter, Bereichsleiste mit `[data-pr-ranges]` abgrenzen, weil der Kind-Reiter "Alles" auch `data-v="all"` trägt).
+- Als Nächstes (Wunsch des Nutzers): Verläufe bis 12 Monate (Verfügbarkeit, Empfang, Standard 1 Jahr, Filter 24 Std., 7, 30 Tage, 3, 6, 12 Monate wie bei der Batterie), Einstellung bis 365 Tage.
+
 ## Stand (2.117.0, Reiter "Speicher")
 
 - Wunsch des Nutzers (Mockups `docs/mockups/storage-devlog-v1`, Entscheid: Speicher A, Knopf A, Protokoll A): dritter Reiter "Speicher" in Einstellungen › Panel (`pstorage`, Funktion `storageChapter` in `_renderSettings`). Dorthin gewandert ist das Kapitel "Protokolle und Log" (`protocol_max_*`, `log_max_*`); "Allgemein" hat nur noch Startseite und Sichern/Wiederherstellen.

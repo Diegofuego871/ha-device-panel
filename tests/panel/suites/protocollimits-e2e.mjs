@@ -125,13 +125,13 @@ for (const lang of ["de", "en"]) {
     await ev(`r.host._protocol.open({ kind: "magic", itemId: "r00000000001", name: "Keller kalt" })`);
     await wait(`return r.querySelectorAll("dialog.proto-dlg .pr-item").length === 1`);
     check(`[${tag}] Zeitraum-Leiste: sechs Reiter, "${T.all}" dabei, Kapsel auf "30 T."`, await ev(`const bar = r.querySelector("dialog.proto-dlg [data-pr-ranges] .sub-tabs"); return bar.querySelectorAll(".sub-tab").length === 6 && !!bar.querySelector('[data-v="all"]') && bar.querySelector(".sub-tab.on").dataset.v === "30d" && !!bar.querySelector(".seg-pill")`));
-    await tap('dialog.proto-dlg .sub-tab[data-v="12m"]');
+    await tap('dialog.proto-dlg [data-pr-ranges] .sub-tab[data-v="12m"]');
     check(`[${tag}] 12 Mt.: nur der neue Eintrag`, await wait(`return r.querySelectorAll("dialog.proto-dlg .pr-item").length === 1`));
-    await tap('dialog.proto-dlg .sub-tab[data-v="all"]');
+    await tap('dialog.proto-dlg [data-pr-ranges] .sub-tab[data-v="all"]');
     check(`[${tag}] "${T.all}": alle drei Einträge, auch die von vor 900 Tagen; Abfrage ohne "since"`, (await wait(`return r.querySelectorAll("dialog.proto-dlg .pr-item").length === 3`)) && (await p.evaluate(() => window.__protocolCalls.at(-1))).since === undefined);
     check(`[${tag}] "${T.all}": Diagramm je Woche über den ganzen Zeitraum`, await ev(`const bars = r.querySelectorAll("dialog.proto-dlg .pr-bar"); return bars.length > 100 && bars.length <= 400 && bars[0].dataset.step === "week" && [...bars].filter((x) => x.querySelector(".pr-col")).length === 3`));
     check(`[${tag}] Hinweis nennt Grösse und Zahl der Grenzen (50 MB, 5000) ohne Zeitgrenze`, await ev(`const n = r.querySelector("dialog.proto-dlg .pr-note").textContent; return n.includes("50") && n.includes("5") && !/366|12 Monate|12 months/.test(n)`), await ev(`return r.querySelector("dialog.proto-dlg .pr-note").textContent`));
-    await tap('dialog.proto-dlg .sub-tab[data-v="own"]');
+    await tap('dialog.proto-dlg [data-pr-ranges] .sub-tab[data-v="own"]');
     check(`[${tag}] "Eigener" nach "${T.all}": Datum von = ältester Eintrag, alle drei Zeilen`, await wait(`const f = r.querySelector('dialog.proto-dlg input[data-pr-date="from"]'); return !!f && new Date(f.value).getTime() < Date.now() - 800 * 86400000 && r.querySelectorAll("dialog.proto-dlg .pr-item").length === 3`));
     await tap('dialog.proto-dlg [data-pr="close"]');
     check(`[${tag}] keine Seitenfehler`, errors.length === 0, errors.join("; "));

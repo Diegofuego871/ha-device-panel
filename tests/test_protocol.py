@@ -277,7 +277,9 @@ async def test_websocket_command(hass: HomeAssistant, setup, hass_ws_client, has
     # Zeitraum vor dem Eintrag
     assert (await call(kind="routine", item_id=saved["id"], since=1.0, until=2.0))["result"]["all"] == 0
     assert not (await call(kind="routine", item_id="0" * 12))["success"]
-    assert not (await call(kind="magic"))["success"]
+    # ohne Meldung und Gerät (seit 2.118.0): alle Meldungen, hier keine
+    assert (await call(kind="magic"))["result"]["total"] == 0
+    assert (await call(kind="routine"))["result"]["total"] == 1
     assert not (await call(kind="routine", item_id=saved["id"], limit=0))["success"]
     assert not (await call(kind="x", item_id=saved["id"]))["success"]
     assert not (await call(kind="routine", item_id=saved["id"], device_id=device.id))["success"]
@@ -303,3 +305,54 @@ async def test_survives_reload_and_remove_deletes_files(hass: HomeAssistant, set
     assert await hass.config_entries.async_remove(entry.entry_id) is not None
     await hass.async_block_till_done()
     assert "device_panel.protocol_abc123" not in hass_storage and protocol.INDEX_KEY not in hass_storage
+
+
+async def test_device_log_merges_all_sources(hass: HomeAssistant, setup, hass_ws_client, hass_admin_user) -> None:  # noqa: F811
+    """2.118.0: kind "all" führt Ereignisse, Verfügbarkeit, Magic Push und Routinen eines Geräts zusammen."""
+    import time
+
+    from custom_components.device_panel import activity
+    from custom_components.device_panel.const import DATA_AVAILABILITY
+
+    async_mock_service(hass, "switch", "turn_on")
+    manager = hass.data[DATA_ROUTINES]
+    device = _device(hass, "Steckdose")
+    other = _device(hass, "Lampe")
+    saved = await manager.async_save_routine(_raw(device, _switch(hass, device)))
+    await manager.async_run_now(saved["id"])
+    now = time.time()
+    # Verfügbarkeit: online, 10 Minuten ausgefallen, wieder online (der erste Eintrag ist nur der Anfang)
+    hass.data[DATA_AVAILABILITY]._events = {device.id: [[now - 3600, 1], [now - 1800, 0], [now - 1200, 1]], other.id: [[now - 900, 1], [now - 600, 0]]}
+    activity.record(hass, "info", "battery", "battery_new", "Steckdose", device.id, level="12 %")
+    activity.record(hass, "info", "battery", "battery_new", "Lampe", other.id, level="9 %")
+    activity.record(hass, "debug", "battery", "battery_check", devices=1, low=0, new=0)  # kein Gerät, kein Debug
+    activity.record(hass, "info", "system", "sys_start", version="1")  # gehört keinem Gerät
+    client = await hass_ws_client(hass)
+
+    async def call(**payload: Any) -> dict[str, Any]:
+        call.n += 1
+        await client.send_json({"id": call.n, "type": f"{DOMAIN}/protocol_get", "kind": "all", **payload})
+        return (await client.receive_json())["result"]
+
+    call.n = 0
+    one = await call(device_id=device.id)
+    kinds = [(e["source"], e["cat"], e.get("k")) for e in one["entries"]]
+    assert ("avail", "outage", "offline") in kinds and ("avail", "outage", "online") in kinds
+    online = next(e for e in one["entries"] if e.get("k") == "online")
+    assert round(online["dur"]) == 600 and online["dev"] == device.id
+    assert ("event", "battery", None) in kinds and ("routine", "routine", "run") in kinds
+    routine = next(e for e in one["entries"] if e["source"] == "routine")
+    assert routine["trace"] and routine["name"] == "Gartenlicht" and routine["id"] == saved["id"]
+    assert one["counts"] == {"outage": 2, "battery": 1, "routine": 1} and one["total"] == one["all"] == 4
+    assert all(e["at"] >= one["entries"][-1]["at"] for e in one["entries"]) and one["entries"][0]["at"] >= one["entries"][1]["at"]
+    # Auswahl und Suche; die Zahlen bleiben die des ganzen Zeitraums
+    only = await call(device_id=device.id, filter="battery")
+    assert only["total"] == 1 and only["counts"]["outage"] == 2
+    assert (await call(device_id=device.id, q="gartenlicht"))["total"] == 1
+    # ohne Gerät: alle Geräte, mit dem Namen des Geräts; ein Gerät ohne Wechsel zählt den ersten Eintrag nicht
+    everyone = await call()
+    assert everyone["counts"]["battery"] == 2 and everyone["counts"]["outage"] == 3
+    assert {e["dname"] for e in everyone["entries"] if e["source"] == "event"} == {"Steckdose", "Lampe"}
+    # Zeitraum und Seiten
+    assert (await call(device_id=device.id, since=now + 100))["all"] == 0
+    assert len((await call(device_id=device.id, limit=2))["entries"]) == 2 and (await call(device_id=device.id, limit=2, offset=3))["entries"][0]["at"] == one["entries"][3]["at"]

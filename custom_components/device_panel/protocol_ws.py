@@ -9,6 +9,7 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
+from . import devicelog
 from .const import DATA_MAGIC, DATA_PROTOCOL, DATA_ROUTINES, DOMAIN
 
 PAGE_MAX = 500
@@ -17,7 +18,7 @@ PAGE_MAX = 500
 @websocket_api.websocket_command(
     {
         vol.Required("type"): f"{DOMAIN}/protocol_get",
-        vol.Required("kind"): vol.In(["magic", "routine"]),
+        vol.Required("kind"): vol.In(["magic", "routine", "all"]),
         vol.Exclusive("item_id", "scope"): str,
         vol.Exclusive("device_id", "scope"): str,
         vol.Optional("since"): vol.Coerce(float),
@@ -31,10 +32,20 @@ PAGE_MAX = 500
 @websocket_api.require_admin
 @callback
 def ws_protocol_get(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
-    """Protokoll einer Meldung oder Routine ("item_id") oder aller eines Geräts ("device_id"); neueste zuerst."""
+    """
+    Protokoll einer Meldung oder Routine ("item_id"), aller eines Geräts ("device_id") oder aller überhaupt (ohne beides); neueste zuerst.
+    Mit kind "all" (seit 2.118.0, Geräteprotokoll) kommen alle Einträge des Geräts (oder aller Geräte) in einer Liste, siehe devicelog.py.
+    """
+    now = time.time()
+    until = min(float(msg.get("until", now)), now + 86400)
+    since = float(msg["since"]) if "since" in msg else None
+    if msg["kind"] == "all":
+        result = devicelog.query(hass, msg.get("device_id") or None, since=since, until=until, cat=msg.get("filter"), text=msg["q"], limit=msg["limit"], offset=msg["offset"])
+        connection.send_result(msg["id"], {**result, "until": until, "now": now})
+        return
     store = hass.data.get(DATA_PROTOCOL)
     manager = hass.data.get(DATA_MAGIC if msg["kind"] == "magic" else DATA_ROUTINES)
-    if store is None or manager is None or ("item_id" not in msg and "device_id" not in msg):
+    if store is None or manager is None:
         connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "protocol not available")
         return
     if "item_id" in msg:
@@ -44,10 +55,8 @@ def ws_protocol_get(hass: HomeAssistant, connection: websocket_api.ActiveConnect
             connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "item not found")
             return
     else:
-        rows = manager.rules(msg["device_id"]) if msg["kind"] == "magic" else manager.routines(msg["device_id"])
-    now = time.time()
-    until = min(float(msg.get("until", now)), now + 86400)
-    since = float(msg["since"]) if "since" in msg else None
+        device = msg.get("device_id") or None
+        rows = manager.rules(device) if msg["kind"] == "magic" else manager.routines(device)
     limits = store.limits()
     result = store.query(
         msg["kind"],

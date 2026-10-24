@@ -9,6 +9,10 @@
  * von dem aus es aufgerufen wurde; der andere Reiter zeigt das Protokoll aller Meldungen oder Routinen desselben Geräts, und der Wechsel
  * zurück stellt den ersten Zusammenhang (eine einzelne Meldung oder Routine) wieder her.
  *
+ * Seit 2.118.0 ist es das Geräteprotokoll: ein dritter, erster Reiter "Alles" führt alles zu einem Gerät (oder zu allen Geräten) in einer Liste nach
+ * Tagen zusammen (Ausfall, Batterie, Laden, Updates, neue Geräte, Push, Magic Push, Routinen; kind "all", siehe devicelog.py); die Reiter "Magic
+ * Push" und "Routinen" behalten ihre Auswertung (Kennzahlen, Diagramm, Tabelle, Trace). Es öffnet vom Geräte-Popup und von den Übersichten.
+ *
  * Alle Zahlen, das Diagramm und die Tabelle kommen von device_panel/protocol_get (protocol.py); das Panel rechnet nichts nach.
  * Der Server beschneidet nach den Einstellungen "Protokolle" (Panel › Allgemein): Grösse in MB und Einträge je Meldung oder Routine.
  */
@@ -21,11 +25,15 @@ const RANGES = [
   ["12m", 366],
   ["all", 0],
 ];
+// Reiter oben: Reihenfolge und Name der Texte
+const TABS = ["all", "magic", "routine"];
 const PAGE = 100;
 const LIMIT_MAX = 500;
 const DAY = 86400;
 const SEARCH_DELAY_MS = 250;
 const FILTERS = {
+  // Kategorien der Liste "Alles"; das Panel zeigt nur die, zu denen es im Zeitraum Einträge gibt
+  all: ["all", "outage", "battery", "charge", "updates", "new", "push", "magic", "routine"],
   magic: ["all", "fired", "recovered", "test", "held", "failed"],
   routine: ["all", "run", "revert", "missed", "failed", "manual"],
 };
@@ -74,15 +82,15 @@ export class ProtocolUi {
   // kind: "magic" oder "routine"; itemId: eine Meldung oder Routine; deviceId: alle des Geräts; name: Name des Eintrags oder Geräts
   open({ kind, itemId = "", deviceId = "", name = "" }) {
     const dlg = this.dlg;
-    if (!dlg || !FILTERS[kind] || (!itemId && !deviceId)) return;
+    if (!dlg || !FILTERS[kind]) return;
     window.clearTimeout(this._searchTimer);
     this.s = {
       kind,
       itemId,
       deviceId,
       name,
-      // Zusammenhang des anderen Reiters: alle Meldungen oder Routinen des Geräts (ohne Gerät gibt es nur einen Reiter)
-      alt: deviceId ? { [kind === "magic" ? "routine" : "magic"]: { itemId: "", deviceId, name: this.deviceName(deviceId) } } : {},
+      // Zusammenhang der anderen Reiter: alles, alle Meldungen oder alle Routinen des Geräts (ohne Gerät: aller Geräte)
+      alt: Object.fromEntries(TABS.filter((k) => k !== kind).map((k) => [k, { itemId: "", deviceId, name: deviceId ? this.deviceName(deviceId) : "" }])),
       range: "30d",
       own: null,
       filter: "all",
@@ -200,9 +208,9 @@ export class ProtocolUi {
     const seq = ++s.seq;
     const { since, until } = this.span();
     const msg = { type: "device_panel/protocol_get", kind: s.kind, ...(since === null ? {} : { since }), until, limit: s.limit, filter: s.filter === "all" ? null : s.filter, q: s.q.trim() };
-    const wholeDevice = !s.itemId && !s.item;
+    const wholeDevice = s.kind !== "all" && !s.itemId && !s.item && Boolean(s.deviceId);
     if (s.itemId || s.item) msg.item_id = s.itemId || s.item;
-    else msg.device_id = s.deviceId;
+    else if (s.deviceId) msg.device_id = s.deviceId;
     s.loading = true;
     this.renderFoot();
     try {
@@ -213,7 +221,8 @@ export class ProtocolUi {
       // Auswahl der Meldungen eines Geräts: die Liste der Antwort für das ganze Gerät merken
       const fresh = wholeDevice && JSON.stringify(s.items) !== JSON.stringify(r.items || []);
       if (wholeDevice) s.items = r.items || [];
-      if (fresh) this.renderBar();
+      // Liste "Alles": die Chips zeigen die Zahlen je Kategorie aus der Antwort
+      if (fresh || s.kind === "all") this.renderBar();
     } catch (err) {
       if (this.s !== s || seq !== s.seq) return;
       s.error = this.h.errText(err);
@@ -228,7 +237,7 @@ export class ProtocolUi {
     const dlg = this.dlg;
     const s = this.s;
     const t = (k, ...a) => this.t(k, ...a);
-    const icon = s.kind === "magic" ? "bell" : "timer";
+    const icon = s.kind === "all" ? "log" : s.kind === "magic" ? "bell" : "timer";
     dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${this.h.mdi(icon, 28)}</span>
         <div class="dlg-title"><h2>${this.esc(t("prTitle"))}</h2><div class="dlg-sub" data-pr-sub></div></div></div>
       <div class="lg-bar" data-pr-bar>
@@ -260,8 +269,8 @@ export class ProtocolUi {
     const sub = this.dlg.querySelector("[data-pr-sub]");
     const s = this.s;
     if (!sub) return;
-    let text = s.name;
-    if (s.deviceId && !s.itemId && s.items.length) text = `${s.name} · ${this.t(s.kind === "magic" ? "prItemsMagic" : "prItemsRoutine", s.items.length)}`;
+    let text = s.name || this.t("prAllDevices");
+    if (s.deviceId && !s.itemId && s.items.length && s.kind !== "all") text = `${s.name} · ${this.t(s.kind === "magic" ? "prItemsMagic" : "prItemsRoutine", s.items.length)}`;
     sub.textContent = text;
   }
 
@@ -272,14 +281,9 @@ export class ProtocolUi {
     const t = (k, ...a) => this.t(k, ...a);
     if (!s || !dlg) return;
     const kinds = dlg.querySelector("[data-pr-kinds]");
-    if (Object.keys(s.alt).length) {
-      const kindTab = (id, key) => `<button type="button" class="sub-tab${s.kind === id ? " on" : ""}" data-set="pr-kind" data-pr="kind" data-v="${id}">${this.esc(t(key))}</button>`;
-      kinds.hidden = false;
-      kinds.innerHTML = `<div class="sub-tabs mg-filter" role="group">${kindTab("magic", "mgTab")}${kindTab("routine", "rtTab")}</div>`;
-    } else {
-      kinds.hidden = true;
-      kinds.innerHTML = "";
-    }
+    const kindTab = (id, key) => `<button type="button" class="sub-tab${s.kind === id ? " on" : ""}" data-set="pr-kind" data-pr="kind" data-v="${id}">${this.esc(t(key))}</button>`;
+    kinds.hidden = false;
+    kinds.innerHTML = `<div class="sub-tabs mg-filter" role="group">${kindTab("all", "prTabAll")}${kindTab("magic", "mgTab")}${kindTab("routine", "rtTab")}</div>`;
     const labels = { "7d": "prR7d", "30d": "prR30d", "6m": "prR6m", "12m": "prR12m", all: "prRAll" };
     const tabs = RANGES.map(([id]) => `<button type="button" class="sub-tab${s.range === id ? " on" : ""}" data-set="pr-range" data-pr="range" data-v="${id}">${this.esc(t(labels[id]))}</button>`);
     tabs.push(`<button type="button" class="sub-tab${s.range === "own" ? " on" : ""}" data-set="pr-range" data-pr="range" data-v="own">${this.esc(t("prROwn"))}</button>`);
@@ -296,14 +300,17 @@ export class ProtocolUi {
       dates.hidden = true;
       dates.innerHTML = "";
     }
-    const chips = FILTERS[s.kind].map((id) => {
-      const label = t(`prF_${id}`);
+    // Liste "Alles": nur Kategorien mit Einträgen im Zeitraum (die Zahlen kommen vom Server), die gewählte bleibt immer
+    const counts = s.data?.counts || {};
+    const ids = s.kind === "all" ? FILTERS.all.filter((id) => id === "all" || counts[id] || s.filter === id) : FILTERS[s.kind];
+    const chips = ids.map((id) => {
+      const label = s.kind === "all" && id !== "all" ? `${t(`prC_${id}`)} ${this.num(counts[id] || 0)}` : t(`prF_${id}`);
       return `<button type="button" class="chip${s.filter === id ? " on" : ""}" data-pr="filter" data-v="${id}" aria-pressed="${s.filter === id}"><span>${this.esc(label)}</span></button>`;
     });
     dlg.querySelector("[data-pr-filters]").innerHTML = chips.join("");
     // Meldungen eines Geräts: zusätzlich die Auswahl der einzelnen Meldung oder Routine
     const items = dlg.querySelector("[data-pr-items]");
-    if (s.deviceId && !s.itemId && s.items.length > 1) {
+    if (s.kind !== "all" && s.deviceId && !s.itemId && s.items.length > 1) {
       const all = t(s.kind === "magic" ? "prAllMagic" : "prAllRoutines");
       items.hidden = false;
       items.innerHTML = [["", all], ...s.items.map((i) => [i.id, i.name])]
@@ -461,6 +468,10 @@ export class ProtocolUi {
       return;
     }
     const d = s.data;
+    if (s.kind === "all") {
+      body.innerHTML = this.allHtml(d);
+      return;
+    }
     const device = Boolean(s.deviceId && !s.itemId);
     const rows = (d.entries || []).map((e, i) => (s.kind === "magic" ? this.magicRow(e, i, device) : this.routineRow(e, i, device))).join("");
     const filtered = s.filter !== "all" || Boolean(s.q.trim());
@@ -478,6 +489,71 @@ export class ProtocolUi {
       <div class="pr-table" role="list">${rows ? this.head() + rows : ""}</div>${empty}${more}<p class="pr-note">${this.esc(notes.join(" "))}</p>`;
   }
 
+  // --- Liste "Alles" (Geräteprotokoll) ------------------------------------------------
+
+  // Text der Zeile je Quelle: [Titel, Zeile darunter]; Magic Push und Routinen zeigen ihre Ergebnisse wie in den eigenen Reitern
+  allText(e) {
+    const t = (k, ...a) => this.t(k, ...a);
+    if (e.source === "avail") {
+      const dur = e.k === "online" && e.dur ? t("prDur", this.host._fmtSeconds(e.dur)) : "";
+      return [t(e.k === "online" ? "prAvOnline" : "prAvOffline"), dur];
+    }
+    if (e.source === "magic") {
+      const [res] = this.magicResult(e);
+      return [e.title || e.name || "", [this.magicKind(e), res, e.value, e.target && e.res === "sent" ? `→ ${e.target}` : ""].filter(Boolean).join(" · ")];
+    }
+    if (e.source === "routine") {
+      const [res] = this.routineResult(e);
+      const err = e.err ? ` (${this.host._t(`rtReason_${e.err}`) || e.err})` : "";
+      return [[e.name, this.actText(e)].filter(Boolean).join(": "), [this.t(`prSrc_${e.src}`) || e.src || "", `${res}${err}`].filter(Boolean).join(" · ")];
+    }
+    return [e.text || "", e.detail || ""];
+  }
+
+  allRow(e, global) {
+    const s = this.s;
+    const [title, line] = this.allText(e);
+    const time = this.host._logTime(e);
+    const who = global && e.dname ? `<small>${this.esc(e.dname)}</small>` : "";
+    const cls = e.source === "event" && (e.level === "warning" || e.level === "error") ? ` ${e.level}` : "";
+    const pill = `<span class="lg-pill ${this.esc(e.cat)}">${this.esc(this.t(`prC_${e.cat}`))}</span>`;
+    const main = `<span class="lg-msg"><b>${this.esc(title)}</b>${line ? `<small>${this.esc(line)}</small>` : ""}${who}</span>`;
+    const head = `<span class="lg-rt">${this.esc(time)}</span><span>${pill}</span>${main}`;
+    if (e.source === "routine") return `<div class="pr-item" role="listitem"><button type="button" class="lg-row al-row${cls}" data-pr="trace" data-i="${s.data.entries.indexOf(e)}">${head}</button></div>`;
+    if (e.source === "magic") {
+      const key = `${e.id}|${e.at}`;
+      const open = s.open.has(key);
+      const body = String(e.body || "");
+      const msg = open && (e.title || body) ? `<div class="pr-msg"><b>${this.esc(e.title || "")}</b>${body ? `<span>${this.esc(body)}</span>` : ""}</div>` : "";
+      return `<div class="pr-item${open ? " open" : ""}" role="listitem"><button type="button" class="lg-row al-row${cls}" data-pr="row" data-key="${this.esc(key)}" aria-expanded="${open}">${head}</button>${msg}</div>`;
+    }
+    return `<div class="pr-item" role="listitem"><div class="lg-row al-row${cls}">${head}</div></div>`;
+  }
+
+  allHtml(d) {
+    const s = this.s;
+    const t = (k, ...a) => this.t(k, ...a);
+    const global = !s.deviceId;
+    let day = "";
+    const rows = (d.entries || [])
+      .map((e) => {
+        const label = this.host._logDay(e);
+        const head = label === day ? "" : `<div class="lg-day">${this.esc(label)}</div>`;
+        day = label;
+        return head + this.allRow(e, global);
+      })
+      .join("");
+    const filtered = s.filter !== "all" || Boolean(s.q.trim());
+    const empty = d.entries.length ? "" : `<p class="mg-empty">${this.esc(t(d.all || filtered ? "prEmpty" : "prNone"))}</p>`;
+    let more = "";
+    if (d.total > d.entries.length) {
+      more = d.entries.length >= LIMIT_MAX ? `<p class="mg-hint">${this.esc(t("prCutoff", LIMIT_MAX, this.num(d.total)))}</p>` : `<button type="button" class="qbtn pr-more" data-pr="more">${this.esc(t("prMore"))}</button>`;
+    }
+    const err = s.error ? `<div class="dlg-error">${this.esc(t("prError", s.error))}</div>` : "";
+    const note = d.oldest ? `<p class="pr-note">${this.esc(t("prOldest", this.host._fmtDateY(d.oldest)))} ${this.esc(t("prAllNote"))}</p>` : `<p class="pr-note">${this.esc(t("prAllNote"))}</p>`;
+    return `${err}<div class="pr-list" role="list">${rows}</div>${empty}${more}${note}`;
+  }
+
   renderFoot() {
     const s = this.s;
     const foot = this.dlg?.querySelector("[data-pr-foot]");
@@ -488,8 +564,8 @@ export class ProtocolUi {
       const n = s.data?.entries?.length || 0;
       foot.innerHTML = `<button type="button" class="lg-btn" data-pr="back">${mdi("arrowLeft", 16)}<span>${this.esc(t("prBack"))}</span></button>
         <span class="sp"></span>
-        <button type="button" class="lg-btn" data-pr="newer"${s.trace <= 0 ? " disabled" : ""}>${this.esc(t("prNewer"))}</button>
-        <button type="button" class="lg-btn" data-pr="older"${s.trace >= n - 1 ? " disabled" : ""}>${this.esc(t("prOlder"))}</button>
+        ${s.kind === "all" ? "" : `<button type="button" class="lg-btn" data-pr="newer"${s.trace <= 0 ? " disabled" : ""}>${this.esc(t("prNewer"))}</button>
+        <button type="button" class="lg-btn" data-pr="older"${s.trace >= n - 1 ? " disabled" : ""}>${this.esc(t("prOlder"))}</button>`}
         <button type="button" class="lg-btn" data-pr="copy-trace">${mdi("copy", 16)}<span>${this.esc(s.flash || t("prTraceCopy"))}</span></button>`;
       return;
     }
@@ -611,6 +687,10 @@ export class ProtocolUi {
     const rows = s.data?.entries || [];
     return rows
       .map((e) => {
+        if (s.kind === "all") {
+          const [title, line] = this.allText(e);
+          return [this.fmtStamp(e.at), this.t(`prC_${e.cat}`), e.dname || "", title, line].filter((x, i) => x || i < 2).join(" | ");
+        }
         if (s.kind === "magic") {
           const [res] = this.magicResult(e);
           return [this.fmtStamp(e.at), this.magicKind(e), e.name, e.title || "", e.body || "", res, e.value || "", e.err ? this.errText(e.err) : ""].filter((x, i) => x || i < 3).join(" | ");

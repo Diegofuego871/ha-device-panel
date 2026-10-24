@@ -7,6 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.118.0] - 2026-10-24
+
+The history window became the history of a device: everything about a device in one list, also from the overviews of Magic Push and routines.
+
+### Added
+
+- **Tab "All" in the history window:** one list by day (Today, Yesterday, date) with **everything about a device**: outages and returns with the duration (from the availability), battery, charging, updates, new devices, push, Magic Push messages and routine runs. Chips filter by kind and only show kinds that have entries in the period, with their number. Search over all texts. A tap on a Magic Push row opens the message as it was sent, a tap on a routine row its trace. Debug entries, the system and the apps are not in the list (they belong to no device). Reception does not appear yet (there is no event for it).
+- **Button "History" in the quick row of the device pop-up** (administrators), after "Open device in HA" and "Open integration page".
+- **Button "History" in the header of the overviews of Magic Push and routines** (left of the close button, separated by a line): it opens the history of all messages or all routines of all devices; the tab "All" then lists all devices, with the name of the device on each row.
+- New WebSocket kind `all` for `device_panel/protocol_get`, also without device (all devices); `magic` and `routine` without message or device now return those of all devices.
+
+### Changed
+
+- The history window now always has three tabs: **All**, **Magic Push** and **Routines**. They keep their evaluation (key figures, chart, table, trace). Before, there were two tabs, and only when the window was opened for a device.
+
 ## [2.117.0] - 2026-10-24
 
 New tab "Storage" in the settings of the panel: everything the integration stores itself, with its size and limits.
@@ -4356,6 +4371,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.118.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.118.0
 [2.117.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.117.0
 [2.116.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.1
 [2.116.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.0

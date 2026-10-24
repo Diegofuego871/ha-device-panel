@@ -1437,6 +1437,9 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   /* Handy: beide Knöpfe (Gerät, Integration) auf einer Zeile; bei sehr schmalem Fenster kürzt "…" den Text */
   .qbtn { padding: 0 12px; gap: 6px; min-width: 0; white-space: nowrap; }
   .qbtn .q-t { overflow: hidden; text-overflow: ellipsis; }
+  /* Geräteprotokoll (2.118.0): der dritte Knopf passt am Handy nicht mehr neben die beiden anderen und steht auf einer zweiten Zeile */
+  .dlg-quick { flex-wrap: wrap; }
+  .qbtn-log { flex: none; }
   .dlg-body { padding: 4px 16px 16px; }
   .dlg-actions { padding-left: 16px; padding-right: 16px; }
   .st-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -2207,6 +2210,14 @@ button.pr-row:not(:disabled):hover { background: var(--dp-hover); }
 .pr-msg { margin: 0 4px 8px; padding: 9px 12px; border: 1px solid var(--dp-divider); border-radius: 12px; background: var(--dp-card); font-size: 13px; word-break: break-word; }
 .pr-msg b { display: block; font-weight: 600; margin-bottom: 2px; }
 .pr-msg span { display: block; white-space: pre-wrap; color: var(--dp-text2); }
+/* Geräteprotokoll (2.118.0): Liste "Alles" im Protokoll-Fenster */
+.al-row { grid-template-columns: 62px 86px minmax(0, 1fr); }
+.al-row .lg-pill { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.lg-pill.magic, .lg-pill.routine { background: var(--dp-primary-soft); color: var(--dp-primary); }
+.lg-pill.updates, .lg-pill.new { background: var(--dp-subtle); color: var(--dp-text2); }
+button.al-row { border-bottom: 1px solid var(--dp-divider); }
+.pr-list .pr-item.open > .al-row { background: var(--dp-primary-soft); }
+@media (max-width: 700px) { .al-row { grid-template-columns: 52px minmax(0, 1fr); grid-template-areas: "rt cat" ". msg"; gap: 4px 10px; } .al-row > .lg-rt { grid-area: rt; } .al-row > span:nth-child(2) { grid-area: cat; } .al-row > .lg-msg { grid-area: msg; } }
 .pr-st { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 500; background: var(--dp-subtle); color: var(--dp-text2); }
 .pr-st.ok { background: var(--dp-success-soft); color: var(--dp-success); }
 .pr-st.wn { background: var(--dp-warning-soft); color: color-mix(in srgb, var(--dp-warning) 70%, var(--dp-text)); }

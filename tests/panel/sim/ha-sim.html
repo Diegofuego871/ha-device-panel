@@ -1233,8 +1233,24 @@
         if (window.__protocolFails) throw new Error(window.__protocolFails);
         (window.__protocolCalls ||= []).push(msg);
         const store = window.__protocol || {};
+        // Geräteprotokoll (2.118.0): kind "all" = window.__devlog (Ereignisse und Verfügbarkeit mit source/cat/dev) plus die Protokolle von Magic Push und Routinen
+        if (msg.kind === "all") {
+          const now0 = Date.now() / 1000;
+          const until0 = Math.min(msg.until ?? now0, now0 + 86400);
+          const dev = msg.device_id || null;
+          const extra = [];
+          for (const [kind, rowsOf] of [["magic", window.__magic?.rules || []], ["routine", window.__routines?.list || []]]) {
+            for (const r of rowsOf) if (!dev || r.device_id === dev) for (const e of store[r.id] || []) extra.push({ ...e, source: kind, cat: kind, dev: r.device_id, id: r.id, name: r.name });
+          }
+          const all = [...(window.__devlog || []).filter((e) => !dev || e.dev === dev), ...extra].filter((e) => e.at >= (msg.since ?? 0) && e.at <= until0).sort((a, b) => b.at - a.at);
+          const counts0 = {};
+          for (const e of all) counts0[e.cat] = (counts0[e.cat] || 0) + 1;
+          const needle0 = String(msg.q || "").trim().toLowerCase();
+          const shown0 = all.filter((e) => (!msg.filter || e.cat === msg.filter) && (!needle0 || JSON.stringify(e).toLowerCase().includes(needle0)));
+          return { counts: counts0, total: shown0.length, all: all.length, entries: shown0.slice(msg.offset || 0, (msg.offset || 0) + (msg.limit || 100)), oldest: all.length ? all[all.length - 1].at : null, until: until0, now: now0 };
+        }
         const rows = msg.kind === "magic" ? (window.__magic?.rules || []) : (window.__routines?.list || []);
-        const mine = msg.item_id ? rows.filter((r) => r.id === msg.item_id) : rows.filter((r) => r.device_id === msg.device_id);
+        const mine = msg.item_id ? rows.filter((r) => r.id === msg.item_id) : rows.filter((r) => !msg.device_id || r.device_id === msg.device_id);
         if (msg.item_id && !mine.length) throw { code: "not_found", message: "item not found" };
         const now = Date.now() / 1000;
         const until = Math.min(msg.until ?? now, now + 86400);

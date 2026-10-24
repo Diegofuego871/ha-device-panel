@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.118.0] - 2026-10-24
+
+Das Protokoll-Fenster ist zum Protokoll eines Geräts geworden: alles zu einem Gerät in einer Liste, auch aus den Übersichten von Magic Push und Routinen.
+
+### Hinzugefügt
+
+- **Reiter "Alles" im Protokoll-Fenster:** eine Liste nach Tagen (Heute, Gestern, Datum) mit **allem zu einem Gerät**: Ausfälle und Rückkehr mit der Dauer (aus der Verfügbarkeit), Batterie, Laden, Updates, neue Geräte, Push, Meldungen von Magic Push und Läufe von Routinen. Chips filtern nach Art und zeigen nur Arten, zu denen es im Zeitraum Einträge gibt, mit ihrer Zahl. Suche über alle Texte. Ein Tipp auf eine Magic-Push-Zeile zeigt die Meldung, wie sie gesendet wurde, ein Tipp auf eine Routine-Zeile ihren Trace. Debug-Einträge, das System und die Apps stehen nicht in der Liste (sie gehören keinem Gerät). Der Empfang erscheint noch nicht (es gibt dafür kein Ereignis).
+- **Knopf "Protokoll" in der Schnellzeile des Geräte-Popups** (Administratoren), nach "Gerät in HA öffnen" und "Integration öffnen".
+- **Knopf "Protokoll" im Kopf der Übersichten von Magic Push und Routinen** (links vom Schliessen-Knopf, mit Strich getrennt): er öffnet das Protokoll aller Meldungen oder aller Routinen aller Geräte; der Reiter "Alles" listet dann alle Geräte, mit dem Namen des Geräts in jeder Zeile.
+- Neue Art `all` im WebSocket-Befehl `device_panel/protocol_get`, auch ohne Gerät (alle Geräte); `magic` und `routine` ohne Meldung und Gerät liefern jetzt die aller Geräte.
+
+### Geändert
+
+- Das Protokoll-Fenster hat jetzt immer drei Reiter: **Alles**, **Magic Push** und **Routinen**. Sie behalten ihre Auswertung (Kennzahlen, Diagramm, Tabelle, Trace). Vorher gab es zwei Reiter, und nur, wenn das Fenster für ein Gerät geöffnet wurde.
+
 ## [2.117.0] - 2026-10-24
 
 Neuer Reiter "Speicher" in den Einstellungen des Panels: alles, was die Integration selbst speichert, mit Grösse und Grenzen.
@@ -4457,6 +4472,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.118.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.118.0
 [2.117.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.117.0
 [2.116.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.1
 [2.116.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.0

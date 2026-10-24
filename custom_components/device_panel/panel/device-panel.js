@@ -4916,7 +4916,7 @@ class DevicePanel extends HTMLElement {
           <div class="dlg-title">${this._nameHtml(d)}
             <div class="dlg-sub">${status}<span>${[this._t(typeKey(d.type)), d.area].filter(Boolean).map(escape).join(" · ")}</span></div>${whyHtml}</div>
           ${heart}${close}</div>
-        <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device">${mdi("open", 17)}<span class="q-t">${escape(this._t("openDevicePage"))}</span></button>${d.integration?.domain ? `<button type="button" class="qbtn" data-dlg="open-integration" data-domain="${escape(d.integration.domain)}">${mdi("open", 17)}<span class="q-t">${escape(this._t("openIntegPage"))}</span></button>` : ""}</div>
+        <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device">${mdi("open", 17)}<span class="q-t">${escape(this._t("openDevicePage"))}</span></button>${d.integration?.domain ? `<button type="button" class="qbtn" data-dlg="open-integration" data-domain="${escape(d.integration.domain)}">${mdi("open", 17)}<span class="q-t">${escape(this._t("openIntegPage"))}</span></button>` : ""}${this._viewAdmin() ? `<button type="button" class="qbtn qbtn-log" data-proto="all" data-device="${escape(d.id)}" data-name="${escape(d.name)}" title="${escape(this._t("prAct"))}" aria-label="${escape(this._t("prAct"))}">${mdi("log", 17)}<span class="q-t">${escape(this._t("prAct"))}</span></button>` : ""}</div>
         <div class="dev-tabs">${tabs}</div>
         <div class="dlg-body" role="tabpanel">${body}
           ${this._hideError ? `<div class="dlg-error">${escape(this._t("hideError"))} ${escape(this._hideError)}</div>` : ""}
@@ -7371,12 +7371,20 @@ class DevicePanel extends HTMLElement {
     }
   }
 
+  // Knopf "Protokoll" im Kopf der Gesamtübersichten (seit 2.118.0): öffnet das Protokoll aller Meldungen bzw. Routinen aller Geräte, mit dem
+  // Reiter "Alles" für die Liste über alle Geräte. Nur Administratoren (der Befehl verlangt es), links vom Schliessen-Knopf, mit Strich getrennt.
+  _protoHeadBtn(kind) {
+    if (!this._viewAdmin()) return "";
+    const label = this._t("prAct");
+    return `<span class="dlg-acts"><button type="button" class="dlg-act" data-proto="${kind}" data-device="" data-name="" title="${escape(label)}" aria-label="${escape(label)}">${mdi("log", 18)}</button><span class="dlg-sep"></span></span>`;
+  }
+
   _renderRtAllFrame() {
     const dlg = this.shadowRoot.querySelector("dialog.rtall-dlg");
     const t = (k, ...a) => this._t(k, ...a);
     dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("flash", 28)}</span>
         <div class="dlg-title"><h2>${escape(t("rtAllTitle"))}</h2><div class="dlg-sub">${escape(t("rtAllSub"))}</div></div>
-        <button type="button" class="dlg-close" data-rta-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+        ${this._protoHeadBtn("routine")}<button type="button" class="dlg-close" data-rta-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body"><div class="rt-all-wrap" data-rta-body></div>
         <div class="dlg-addbar"><button type="button" class="mg-add" data-rta="routine-add">${mdi("plus", 18)}${escape(t("rtAdd"))}</button></div></div>`;
     this._renderRtAll();
@@ -7606,7 +7614,7 @@ class DevicePanel extends HTMLElement {
     const t = (k, ...a) => this._t(k, ...a);
     dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("bell", 28)}</span>
         <div class="dlg-title"><h2>${escape(t("mgAllTitle"))}</h2><div class="dlg-sub">${escape(t("mgAllSub"))}</div></div>
-        <button type="button" class="dlg-close" data-mga-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+        ${this._protoHeadBtn("magic")}<button type="button" class="dlg-close" data-mga-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
       <div class="dlg-body"><div class="rt-all-wrap" data-mga-body></div>
         <div class="dlg-addbar"><button type="button" class="mg-add" data-mga="magic-add">${mdi("plus", 18)}${escape(t("mgAdd"))}</button></div></div>`;
     this._renderMagicAll();
