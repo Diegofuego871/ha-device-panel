@@ -90,15 +90,19 @@ dev_body_B = (
     + '</div>'
 )
 
+def row(ic, name, vals, on):
+    return f'<div class=li><div class=ic>{ic}</div><div class=nm>{name}<small>{vals}</small></div><div class="tg{" on" if on else ""}"></div></div>'
+
+
 notify_body = (
-    '<h1 style="font-size:21px">Wohin gehen die Meldungen?</h1><p>Ohne Ziel meldet das Panel nichts. Wähle deine Notify-Gruppe oder dein Handy.</p>'
-    '<div class=lab>Ziel</div><div class=sel><span>notify.group_diego_mobile</span><u>⌄</u></div><div class=lab>Das melden</div><div class=lst>'
-    + li('!', 'Ausfälle', 'wenn ein Gerät ausfällt', True)
-    + li('↺', 'Wieder online', 'mit der Dauer des Ausfalls', True)
-    + li('▯', 'Batterie schwach', 'unter 15 %, einmal am Tag um 08:00', True)
-    + li('✦', 'Neue Geräte', 'wenn Home Assistant ein Gerät findet', False)
-    + '</div><div class=two style="margin-top:12px"><div class=btn>Testmeldung senden</div></div>'
-    '<p style="font-size:12.5px;color:var(--t3);margin-top:8px">Weitere Meldungen (Laden, Updates, Routinen) stehen in den Einstellungen.</p>'
+    '<h1 style="font-size:21px">Welche Meldungen?</h1><p>Ohne Ziel meldet das Panel nichts. Wähle deine Notify-Gruppe oder dein Handy und die Arten, die du willst.</p>'
+    '<div class=lab>Ziel</div><div class=sel><span>notify.group_diego_mobile</span><u>⌄</u></div><div class=lab>Meldungen und jetzige Werte</div><div class=lst>'
+    + row('!', 'Ausgefallene Geräte', 'ausgefallen nach 2 Min. · Meldung nach 2 Min. · Rückkehr melden · ab 3 Geräten einer Integration gebündelt', True)
+    + row('▯', 'Niedrige Batterie', 'unter 15 % · sofort beim Unterschreiten', True)
+    + row('✦', 'Neue Geräte', 'gesammelt nach 5 Min. · Bereich und Integration in der Meldung', False)
+    + row('⚡', 'Voll geladen', 'ab 100 % · ein Anstieg um 20 Punkte erkennt das Laden', False)
+    + '</div><div class=two style="margin-top:10px"><div class=btn>Testmeldung senden</div></div>'
+    '<p style="font-size:12.5px;color:var(--t3);margin-top:8px">Die Werte änderst du später in den Einstellungen.</p>'
 )
 quiet_body = (
     '<h1 style="font-size:21px">Nachts Ruhe?</h1><p>Meldungen warten bis zum Morgen und kommen dann als eine Zusammenfassung. Kritische Meldungen von Magic Push kommen immer sofort.</p><div class=lst>'
@@ -108,7 +112,7 @@ quiet_body = (
 done_body = (
     '<div class=chk>✓</div><h1 style="font-size:21px">Fertig eingerichtet</h1><p>Das hast du eingestellt:</p>'
     '<div class=sum><div class=li><div class=nm>Integrationen</div><b>6 von 8</b></div><div class=li><div class=nm>Gerätetypen</div><b>5 von 7</b></div>'
-    '<div class=li><div class=nm>Geräte</div><b>69 von 73</b></div><div class=li><div class=nm>Meldungen an</div><b>notify.group_diego_mobile</b></div>'
+    '<div class=li><div class=nm>Geräte</div><b>69 von 73</b></div><div class=li><div class=nm>Meldungen an</div><b>notify.group_diego_mobile</b></div><div class=li><div class=nm>Meldungen</div><b>Ausfälle, Batterie</b></div>'
     '<div class=li><div class=nm>Ruhezeit</div><b>22:00 bis 07:00</b></div></div>'
     '<p style="margin-top:12px">Alles weitere steht in den Einstellungen. Den Assistenten startest du dort jederzeit neu: Einstellungen › Panel › Einrichtungsassistent.</p>'
 )
@@ -125,7 +129,7 @@ open('1.html', 'w').write(b)
 
 b = HEAD
 b += col('3 Geräte, B flache Liste mit Integrations-Chips', 'Eine Liste aller Geräte nach Name, Chips zum Eingrenzen. Übersichtlich bei wenigen Geräten, bei 80 oder mehr aber lang.', wz(3, TOT, 'Geräte', dev_body_B, BACK + NEXT))
-b += col('4 Meldungen', 'Der wichtigste Schritt: ohne Ziel kommt nichts an (Meldungen sind heute standardmässig aus). Ziel aus den Notify-Diensten von Home Assistant, dazu die vier wichtigsten Arten. Eine Testmeldung prüft das Ziel.', wz(4, TOT, 'Meldungen', notify_body, BACK + NEXT), True)
+b += col('4 Meldungen', 'Der wichtigste Schritt: ohne Ziel kommt nichts an (alle Meldungen sind heute standardmässig aus). Ziel aus den Notify-Diensten von Home Assistant, dazu nur ein Schalter je Art; darunter die jetzigen Werte, die man hier nicht ändert. "Ausgefallene Geräte" schaltet Ausfall und Rückkehr zusammen.', wz(4, TOT, 'Meldungen', notify_body, BACK + NEXT), True)
 b += col('5 Ruhezeit', 'Nur wenn ein Ziel gewählt ist. Ein Schalter und zwei Zeiten; Wochentage und Arten bleiben in den Einstellungen.', wz(5, TOT, 'Ruhezeit', quiet_body, BACK + NEXT))
 b += col('6 Fertig', 'Zusammenfassung mit den Zahlen. Gespeichert wird erst hier (ein Speichern am Schluss); Zurück ändert bis dahin nichts.', wz(6, TOT, 'Fertig', done_body, BACK + '<div class="btn p">Fertigstellen</div>'))
 b += '</div>'
