@@ -12,7 +12,7 @@
  */
 
 const MODULE_VERSION = new URL(import.meta.url).search;
-const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_EMOJI }, { AppLauncher }, { StatusUi }, { ProtocolUi }] = await Promise.all([
+const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_EMOJI }, { AppLauncher }, { StatusUi }, { ProtocolUi }, { WizardUi }] = await Promise.all([
   import(`./strings.js${MODULE_VERSION}`),
   import(`./styles.js${MODULE_VERSION}`),
   import(`./magic-push.js${MODULE_VERSION}`),
@@ -20,6 +20,7 @@ const [{ STRINGS, pickLang }, { PANEL_CSS }, { MagicPush }, { RoutineUi, DOMAIN_
   import(`./apps.js${MODULE_VERSION}`),
   import(`./status-ui.js${MODULE_VERSION}`),
   import(`./protocol.js${MODULE_VERSION}`),
+  import(`./wizard.js${MODULE_VERSION}`),
 ]);
 
 const POLL_INTERVAL_MS = 10000;
@@ -832,6 +833,8 @@ class DevicePanel extends HTMLElement {
     this._status = new StatusUi(this, { escape, mdi, errText });
     // Protokoll einer Meldung oder Routine (seit 2.104.0): eigenes Fenster, geöffnet von den Knöpfen mit data-proto
     this._protocol = new ProtocolUi(this, { escape, mdi, errText });
+    // Einrichtungsassistent (seit 2.135.0): poppt nach der Installation einmal auf, Kachel im Launcher bis zum ersten Abschluss (wizard.js)
+    this._wizard = new WizardUi(this, { escape, mdi, errText });
     this._aiOn = false;
     this._flakyOutages = 3;
     // Chips der Verbindungsart, die nicht erscheinen (Einstellung "Anzeige").
@@ -1434,7 +1437,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog><dialog class="wizard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     this._apps.bind(root);
@@ -1468,6 +1471,7 @@ class DevicePanel extends HTMLElement {
     this._bindSettings(root.querySelector("dialog.settings"));
     this._bindDiscard(root.querySelector("dialog.discard-dlg"));
     this._bindRename(root.querySelector("dialog.rename-dlg"));
+    this._wizard.bind(root.querySelector("dialog.wizard-dlg"));
     const search = root.querySelector(".search");
     const clear = root.querySelector(".search-clear");
     search.addEventListener("input", () => {
@@ -1839,6 +1843,7 @@ class DevicePanel extends HTMLElement {
       // Kopfzeile (seit 2.62.0): Debug-Modus und Störungen des Status für die Punkte am Launcher oder an den angehefteten Apps
       this._debugOn = result.debug === true;
       this._statusSum = result.status || { problems: 0, down: 0 };
+      this._wizardState = result.wizard || "done";
       this._apps.paintDots();
       this._incidents = result.incidents || [];
       const serverNow = Date.parse(result.now);
@@ -1849,6 +1854,8 @@ class DevicePanel extends HTMLElement {
       this._offline = false;
       this._retries = 0;
       this._deepPending = true;
+      // Frische Installation: der Assistent öffnet sich einmal von selbst (erst nach dem Zeichnen)
+      window.setTimeout(() => this._wizard.maybeAuto(), 0);
       // HA ist nach dem Neustart wieder da: laufende Version neu lesen.
       if (this._version?.restarting) this._loadVersion(false);
     } catch (err) {
@@ -3342,6 +3349,19 @@ class DevicePanel extends HTMLElement {
     const src = this._brandSrc(d.integration?.domain);
     const icon = src ? `<img class="brand" src="${escape(src)}" alt="" width="${size + 6}" height="${size + 6}" draggable="false">` : CONN[this._connOf(d)].icon(size);
     return `<div class="av ${cls}${src ? " has-brand" : ""}">${icon}<span class="dot"></span></div>`;
+  }
+
+  // Hilfen für den Einrichtungsassistenten (wizard.js)
+  _typeLabel(type) {
+    return this._t(typeKey(type));
+  }
+
+  _typeIcon(type, size = 18) {
+    return typeIcon(type, size);
+  }
+
+  _typeOrder() {
+    return TYPE_ORDER;
   }
 
   // Kennzeichen einer Integration in den Einstellungen (seit 1.23.0): ihr Logo, sonst
@@ -5938,6 +5958,17 @@ class DevicePanel extends HTMLElement {
       ${dirty ? `<div class="opt-warn">${mdi("alert", 14)}<span>${escape(t("bkUnsaved"))}</span></div>` : ""}
       <div class="bk-btns"><button type="button" class="dlg-btn" data-set="bk-export"${off}>${mdi("download", 18)}${escape(t("bkBackup"))}</button>
         <button type="button" class="dlg-btn" data-set="bk-import"${off}>${mdi("upload", 18)}${escape(t("bkRestore"))}</button></div>`;
+  }
+
+  // Kapitel "Einrichtungsassistent" (seit 2.135.0, Panel › Allgemein): erneut starten; nichts wird zurückgesetzt, die Felder zeigen den jetzigen Stand
+  _wizardChapterHtml(dirty) {
+    const t = (k, ...a) => this._t(k, ...a);
+    const at = Number(this._settings?.data?.values?.wizard_done_at) || 0;
+    return `<div class="set-title">${escape(t("ttlWizard"))}</div>
+      <div class="opt-short bk-note">${escape(t("wzSetNote"))}</div>
+      ${dirty ? `<div class="opt-warn">${mdi("alert", 14)}<span>${escape(t("wzSetUnsaved"))}</span></div>` : ""}
+      ${at ? `<div class="opt-short bk-note">${escape(t("wzSetDone", this._fmtDateY(at)))}</div>` : ""}
+      <div class="bk-btns"><button type="button" class="dlg-btn" data-set="wizard-start"${dirty ? " disabled" : ""}>${mdi("rocket", 18)}${escape(t("wzSetStart"))}</button></div>`;
   }
 
   _openBackup(mode) {
@@ -8739,7 +8770,7 @@ class DevicePanel extends HTMLElement {
       updates:
         subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"], ["pstorage", "subPanelStorage"]], panelTab) +
         (panelTab === "pstart"
-          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + this._backupChapterHtml(changes.size > 0)
+          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + this._backupChapterHtml(changes.size > 0) + this._wizardChapterHtml(changes.size > 0)
           : panelTab === "pstorage"
             ? storageChapter()
           : row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
@@ -8933,6 +8964,11 @@ class DevicePanel extends HTMLElement {
         const [first] = st.draft.quiet_days;
         st.draft.quiet_days = st.draft.quiet_days.map((x) => ({ ...x, from: first.from, to: first.to }));
         this._renderSettings();
+      } else if (action === "wizard-start") {
+        // Assistent neu starten (seit 2.135.0): die Einstellungen schliessen, die Felder des Assistenten zeigen den jetzigen Stand
+        if (this._settingsChanges().length) return;
+        this._closeSettings();
+        this._wizard.open("settings");
       } else if (action === "bk-export" || action === "bk-import") {
         this._openBackup(action === "bk-export" ? "export" : "import");
       } else if (action === "check-time-auto") {

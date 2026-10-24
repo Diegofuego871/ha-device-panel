@@ -71,6 +71,9 @@ from .const import (
     CONF_NOTIFY_GROUP,
     CONF_NOTIFY_GROUP_MIN,
     CONF_QUIET_DAYS,
+    CONF_WIZARD_DONE_AT,
+    CONF_WIZARD_STATE,
+    WIZARD_STATES,
     CONF_QUIET_ENABLED,
     CONF_QUIET_MODE,
     CONF_QUIET_TOPICS,
@@ -653,6 +656,8 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_BATTERY_PUSH_EXCLUDE): _domains,
         vol.Optional(CONF_NOTIFY_FIELDS): notify_fields,
         vol.Optional(CONF_QUIET_DAYS): quiet.quiet_days,
+        vol.Optional(CONF_WIZARD_STATE): vol.In(WIZARD_STATES),
+        vol.Optional(CONF_WIZARD_DONE_AT): vol.All(vol.Coerce(int), vol.Range(min=0)),
         vol.Optional(CONF_QUIET_TOPICS): quiet.quiet_topics,
         vol.Optional(CONF_QUIET_MODE): quiet.quiet_mode,
         vol.Optional(CONF_BATTERY_FIELDS): battery_fields,
@@ -726,6 +731,10 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
         values[CONF_QUIET_TOPICS] = quiet.quiet_topics(options.get(CONF_QUIET_TOPICS)) if CONF_QUIET_TOPICS in options else list(quiet.DEFAULT_QUIET_TOPICS)
     except vol.Invalid:
         values[CONF_QUIET_TOPICS] = list(quiet.DEFAULT_QUIET_TOPICS)
+    # Einrichtungsassistent (seit 2.135.0): ohne gültigen Wert gilt "done", damit bestehende Installationen kein Fenster bekommen
+    values[CONF_WIZARD_STATE] = options.get(CONF_WIZARD_STATE) if options.get(CONF_WIZARD_STATE) in WIZARD_STATES else "done"
+    done_at = _whole(options.get(CONF_WIZARD_DONE_AT))
+    values[CONF_WIZARD_DONE_AT] = done_at if done_at is not None and done_at >= 0 else 0
     values[CONF_QUIET_MODE] = options.get(CONF_QUIET_MODE) if options.get(CONF_QUIET_MODE) in quiet.QUIET_MODES else quiet.DEFAULT_QUIET_MODE
     fields = options.get(CONF_NOTIFY_FIELDS)
     values[CONF_NOTIFY_FIELDS] = (

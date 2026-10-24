@@ -48,6 +48,7 @@ from .protocol_ws import COMMANDS as PROTOCOL_COMMANDS
 from .storage_ws import COMMANDS as STORAGE_COMMANDS
 from .routines_ws import COMMANDS as ROUTINE_COMMANDS
 from .status import COMMANDS as STATUS_COMMANDS
+from .wizard import COMMANDS as WIZARD_COMMANDS
 from .system_stats import COMMANDS as SYSTEM_COMMANDS
 from .status import StatusWatch
 from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, async_ask, async_assess, async_clear, async_last, async_preview
@@ -1287,7 +1288,7 @@ def _async_register_websocket_commands(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, _ws_set_panel)
     for command in (_ws_magic_get, _ws_magic_list, _ws_magic_entity_search, _ws_magic_save, _ws_magic_delete, _ws_magic_enable, _ws_magic_preview, _ws_magic_test, _ws_magic_history):
         websocket_api.async_register_command(hass, command)
-    for command in (*ROUTINE_COMMANDS, *PROTOCOL_COMMANDS, *STORAGE_COMMANDS, *STATUS_COMMANDS, *SYSTEM_COMMANDS):
+    for command in (*ROUTINE_COMMANDS, *PROTOCOL_COMMANDS, *STORAGE_COMMANDS, *STATUS_COMMANDS, *SYSTEM_COMMANDS, *WIZARD_COMMANDS):
         websocket_api.async_register_command(hass, command)
     websocket_api.async_register_command(hass, _ws_get_options)
     websocket_api.async_register_command(hass, _ws_backup_export)

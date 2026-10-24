@@ -26,6 +26,8 @@ const GROUPS = ["panel", "ha", "own"];
 // Eingebaute Apps. act: Funktion des Panels, path: Seite von Home Assistant (admin: nur für Administratoren). Namen und Untertitel
 // stehen in strings.js (app_<id>, app_<id>_sub).
 const BUILTIN = [
+  // Einrichtung (seit 2.135.0): nur vorübergehend (temp), bis der Assistent zum ersten Mal beendet ist; nicht ausblendbar, nicht konfigurierbar
+  { id: "wizard", group: "panel", icon: "rocket", act: "wizard", admin: true, locked: true, temp: true },
   { id: "routine", group: "panel", icon: "flash", act: "routine" },
   { id: "magic", group: "panel", icon: "bell", act: "magic" },
   { id: "log", group: "panel", icon: "log", act: "log", locked: true },
@@ -231,7 +233,7 @@ export class AppLauncher {
   _all() {
     const admin = this._admin();
     const t = (k) => this.t(k);
-    const builtin = BUILTIN.filter((a) => admin || !a.admin).map((a) => ({ ...a, name: t(`app_${a.id}`), sub: a.path || t(`app_${a.id}_sub`) || "", look: HA_LOOK[a.id] || null, color: HA_LOOK[a.id]?.c || PANEL_COLOR[a.id] || null }));
+    const builtin = BUILTIN.filter((a) => (admin || !a.admin) && (!a.temp || this.host._wizard?.visible())).map((a) => ({ ...a, name: t(`app_${a.id}`), sub: a.path || t(`app_${a.id}_sub`) || "", look: HA_LOOK[a.id] || null, color: HA_LOOK[a.id]?.c || PANEL_COLOR[a.id] || null }));
     const own = this.data.custom.map((c) => ({ id: c.id, group: "own", icon: c.icon, name: c.name, sub: c.svc ? c.svc.service : c.url, url: c.url, ext: c.ext, svc: c.svc, favicon: c.favicon, custom: true }));
     return [...builtin, ...own];
   }
@@ -256,7 +258,8 @@ export class AppLauncher {
     const favIds = new Set(noFav ? this.favs().map((a) => a.id) : []);
     return items
       .map((a, i) => [a, i])
-      .sort((x, y) => rank(x[0]) - rank(y[0]) || x[1] - y[1])
+      // Vorübergehende Apps (Einrichtung) stehen zuoberst
+      .sort((x, y) => Boolean(y[0].temp) - Boolean(x[0].temp) || rank(x[0]) - rank(y[0]) || x[1] - y[1])
       .map(([a]) => a)
       .filter((a) => (withHidden || !this.isHidden(a)) && !(noFav && favIds.has(a.id)));
   }
@@ -431,6 +434,7 @@ export class AppLauncher {
     else if (a.act === "magic") this.host._openMagicAll();
     else if (a.act === "log") this.host._openLog();
     else if (a.act === "status") this.host._status.open();
+    else if (a.act === "wizard") this.host._wizard.open("app");
     else if (a.act === "view") this.host._openView();
     else if (a.act === "settings") this.host._openSettings();
     else if (a.path || a.url) this.host._navigate(a.path || a.url);
@@ -647,6 +651,7 @@ export class AppLauncher {
   // Grund des Punktes für Beschriftung und Hilfetext
   _dotWhy(id, level) {
     if (id === "settings") return this.t("settingsBtnRestart");
+    if (id === "wizard") return this.t("wizDot");
     return this.t(level === "bad" ? "appsDown" : "appsDebug");
   }
 
@@ -659,12 +664,16 @@ export class AppLauncher {
     const bad = (this.host._statusSum?.problems || 0) > 0 && this._admin();
     const restart = Boolean(this.host._gearRestart);
     const warn = Boolean(this.host._debugOn);
+    const setup = Boolean(this.host._wizard?.visible());
     // Grund für den Launcher-Knopf: der erste rote, sonst der orange
     const why = bad && !pinned.has("status") ? "status" : restart && !pinned.has("settings") ? "settings" : warn && !pinned.has("log") ? "log" : "";
+    // Einrichtung: orange, hinter allen Störungen; am eigenen Knopf, wenn angeheftet, sonst am Launcher-Knopf
+    const wiz = !why && setup && !pinned.has("wizard") ? "wizard" : "";
+    const why2 = why || wiz;
     return {
-      pins: { status: bad ? "bad" : "", settings: restart ? "bad" : "", log: warn ? "warn" : "" },
-      launcher: why === "log" ? "warn" : why ? "bad" : "",
-      why,
+      pins: { status: bad ? "bad" : "", settings: restart ? "bad" : "", log: warn ? "warn" : "", wizard: setup ? "warn" : "" },
+      launcher: why === "log" || wiz ? "warn" : why ? "bad" : "",
+      why: why2,
     };
   }
 
@@ -686,7 +695,7 @@ export class AppLauncher {
   paintDots() {
     this.renderBar();
     // Der offene Launcher zeigt die Pillen: nur neu zeichnen, wenn sich etwas geändert hat (sonst störte es das Bearbeiten und Suchen)
-    const key = JSON.stringify([this.dotLevels().pins, Boolean(this.host._gearRestart)]);
+    const key = JSON.stringify([this.dotLevels().pins, Boolean(this.host._gearRestart), Boolean(this.host._wizard?.visible())]);
     if (key !== this._dotKey) {
       this._dotKey = key;
       if (this.dlg?.open && !this.ui.edit) this.render();

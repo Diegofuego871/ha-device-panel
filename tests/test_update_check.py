@@ -112,6 +112,9 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         # Uhrzeit der Prüfung (leer = automatisch) und Push zum Panel-Update (seit 2.25.0)
         "update_check_time": "",
         "update_notify": False,
+        # Einrichtungsassistent (seit 2.135.0): ohne gespeicherten Wert gilt die Installation als eingerichtet
+        "wizard_state": "done",
+        "wizard_done_at": 0,
         "exclude_integrations": [],
         "exclude_types": [],
         "exclude_devices": [],

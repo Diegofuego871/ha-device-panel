@@ -47,6 +47,7 @@ from .const import (
     CONF_NOTIFY_CHARGE,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
+    CONF_WIZARD_STATE,
     CONF_CHIP_ORDER,
     CONF_CONNECTION_ORDER,
     CONF_CONNECTION_INTEGRATIONS,
@@ -1576,6 +1577,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         "incidents": [],
         # Für die Kopfzeile (seit 2.62.0): Debug-Modus und Störungen der Status-App, damit Punkte am Launcher oder an der angehefteten App stehen
         "debug": activity.get(hass).debug,
+        # Einrichtungsassistent (seit 2.135.0): Zustand für das Fenster, die Kachel und den Punkt im Launcher
+        "wizard": opts[CONF_WIZARD_STATE],
         "status": status_watch.summary() if (status_watch := hass.data.get(DATA_STATUS)) is not None else {"problems": 0, "down": 0},
         # Filter "Bereich": Bereiche und Etagen in der Reihenfolge, die man in
         # HA festlegt (Einstellungen → Bereiche, Etagen und Zonen).

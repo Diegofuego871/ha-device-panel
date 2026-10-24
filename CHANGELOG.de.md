@@ -7,6 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.135.0] - 2026-10-24
+
+Ein Einrichtungsassistent führt nach der Installation durch die Grundeinstellungen.
+
+### Hinzugefügt
+
+- **Einrichtungsassistent:** nach einer frischen Installation öffnet sich einmal ein Fenster in der Mitte (auf dem Handy als Vollbild). Schritte: Willkommen, Integrationen, Gerätetypen, Geräte (nach Integration gruppiert, aufklappbar, ein Schalter je Gruppe oder Gerät), Meldungen, Ruhezeit (nur mit Push-Ziel) und eine Zusammenfassung. Gespeichert wird erst mit "Fertigstellen" (ein `set_options`); wer mit Änderungen schliesst, wird vorher gefragt.
+- **Schritt "Meldungen":** Push-Ziel, ein Schalter je Art (ausgefallene Geräte mit Rückkehr, niedrige Batterie, neue Geräte, voll geladen) und je Zeile die jetzigen Werte, mit den Standardwerten vorausgefüllt und anpassbar ("Ausgefallen nach", "Melden nach", "Batterie schwach unter", "Neue Geräte sammeln", "Voll ab"), mit Prüfung der Bereiche und dass "Melden nach" nicht kürzer ist als "Ausgefallen nach". Ein Knopf sendet eine Testmeldung.
+- **"Jetzt nicht" und "Nicht mehr zeigen":** "Jetzt nicht" schliesst das Fenster; "Nicht mehr zeigen" beendet den Assistenten für immer.
+- **Launcher:** solange der Assistent nie beendet wurde, steht zuoberst in der Gruppe "Device Panel" die Kachel "Einrichtung" und am Launcher-Knopf ein oranger Punkt. Nicht einstellbar; weg nach "Fertigstellen" oder "Nicht mehr zeigen".
+- **Einstellungen › Panel › Allgemein:** neues Kapitel "Einrichtungsassistent" mit dem Knopf "Assistent starten" und dem Datum des letzten Abschlusses. Die Felder zeigen den jetzigen Stand, nichts wird zurückgesetzt. Wird der Assistent nicht beendet, kommen Kachel und Punkt zurück.
+- Neue Optionen `wizard_state` (`new`, `later`, `open`, `done`, `off`) und `wizard_done_at`: sie gelten für die ganze Installation, nur Administratoren ändern sie, sie stehen nicht in der Sicherungsdatei. Eine frische Installation startet mit `new`; bestehende Installationen gelten als `done` (kein Fenster, keine Kachel).
+- WebSocket `wizard_data` (alle infrage kommenden Geräte mit Integration, Typ und Bereich, ohne Ausschlüsse) und `wizard_test` (Testmeldung an ein `notify.*`-Ziel); `list_devices` liefert `wizard`.
+
 ## [2.134.1] - 2026-10-24
 
 Der Filter-Chip steht auch da, wenn das Gerät nur eine Routine oder Meldung hat.
@@ -4705,6 +4719,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.135.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.135.0
 [2.134.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.1
 [2.134.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.0
 [2.132.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.132.0

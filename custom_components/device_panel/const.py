@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "316"
+PANEL_VERSION = "317"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -501,7 +501,15 @@ CHIP_ORDER_LEGACY_BLOCK = "connections"
 # (Bereich und Z-Wave bleiben sichtbar, Entscheid des Nutzers). Sie stehen beim
 # Einrichten in den Optionen; bestehende Installationen behalten, was sie haben.
 # Die Standardfolge der Chips steht im Panel (chipOrder, ohne gespeicherte Folge).
+# Einrichtungsassistent (seit 2.135.0): Zustand für alle Administratoren. "new" frische Installation (das Fenster öffnet sich einmal von selbst),
+# "later" übersprungen (Kachel und Punkt im Launcher bleiben), "open" aus den Einstellungen neu gestartet, aber nicht beendet (Kachel und Punkt
+# kommen zurück), "done" abgeschlossen, "off" "Nicht mehr zeigen" (keine Kachel, kein Punkt). Bestehende Installationen haben keinen Wert und
+# gelten als "done": kein Fenster, keine Kachel.
+CONF_WIZARD_STATE = "wizard_state"
+WIZARD_STATES = ("new", "later", "open", "done", "off")
+CONF_WIZARD_DONE_AT = "wizard_done_at"
 NEW_INSTALL_OPTIONS = {
+    CONF_WIZARD_STATE: "new",
     CONF_NOTIFY_FIELDS: ["area", "integration", "connection", "since", "battery"],
     CONF_BATTERY_FIELDS: ["battery", "area", "integration"],
     CONF_HIDE_CHIPS: ["override"],

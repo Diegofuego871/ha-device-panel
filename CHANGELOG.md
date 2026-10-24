@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.135.0] - 2026-10-24
+
+A setup wizard leads through the basic settings after the installation.
+
+### Added
+
+- **Setup wizard:** after a fresh installation a window opens once in the middle (full screen on a phone). Steps: Welcome, Integrations, Device types, Devices (grouped by integration, expandable, one switch per group or device), Notifications, Quiet hours (only with a push target) and a summary. Nothing is saved until "Finish" (one `set_options`); closing with changes asks first.
+- **Step "Notifications":** push target, one switch per kind (failed devices with return, low battery, new devices, fully charged) and, per row, the current values filled in with the defaults and editable ("Failed after", "Notify after", "Battery low below", "Collect new devices", "Full from"), with a check of the ranges and of "Notify after" not shorter than "Failed after". A button sends a test message.
+- **"Not now" and "Don't show again":** "Not now" closes the window; "Don't show again" ends the wizard for good.
+- **Launcher:** until the wizard has been finished once, a tile "Setup" sits at the top of the group "Device Panel" and an orange dot on the launcher button. Not configurable; gone after "Finish" or "Don't show again".
+- **Settings › Panel › General:** new chapter "Setup wizard" with the button "Start wizard" and the date of the last completion. The fields show the current state, nothing is reset. If the wizard is not finished, the tile and the dot come back.
+- New option `wizard_state` (`new`, `later`, `open`, `done`, `off`) and `wizard_done_at`: they apply to the whole installation, only administrators change them, they are not part of the backup file. A fresh installation starts with `new`; existing installations count as `done` (no window, no tile).
+- WebSocket `wizard_data` (all candidate devices with integration, type and area, without exclusions) and `wizard_test` (test message to a `notify.*` target); `list_devices` returns `wizard`.
+
 ## [2.134.1] - 2026-10-24
 
 The filter chip also shows when the device has only one routine or message.
@@ -4604,6 +4618,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.135.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.135.0
 [2.134.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.1
 [2.134.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.0
 [2.132.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.132.0

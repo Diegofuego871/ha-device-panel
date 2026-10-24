@@ -83,7 +83,9 @@ _DISPLAY_KEYS = {
 }
 _DEVICE_KEYS = {CONF_EXCLUDE_DEVICES}
 _ROUTINE_KEYS = {"routines_catch_up", "routines_notify_error", "routines_pause", "notify_service_routines"}
-_SCHEMA_KEYS = {str(k.schema) for k in options_api.PANEL_SCHEMA.schema}
+# Der Zustand des Einrichtungsassistenten gehört zur Installation, nicht zu den Einstellungen: er steht nicht in der Sicherung
+_WIZARD_KEYS = {"wizard_state", "wizard_done_at"}
+_SCHEMA_KEYS = {str(k.schema) for k in options_api.PANEL_SCHEMA.schema} - _WIZARD_KEYS
 
 # Die vier Werte, die sich gegenseitig prüfen ("Erst melden nach" nie kürzer als "Ausgefallen nach")
 _DELAY_KEYS = {CONF_NOTIFY_DELAY, CONF_NOTIFY_DELAY_INTEGRATIONS, CONF_OFFLINE_AFTER, CONF_OFFLINE_INTEGRATIONS}
