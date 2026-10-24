@@ -159,6 +159,10 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 .ee-ecg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; animation: ee-reveal 1.85s linear 4 both, ee-fade 7.4s linear both; animation-delay: var(--ee-delay, 0s), var(--ee-delay, 0s); }
 .ee-ecg path { fill: none; stroke: var(--dp-primary); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--dp-primary) 55%, transparent)); }
 .kt.ee .k svg { color: var(--dp-error); transform-origin: center; animation: ee-thump .85s ease-in-out infinite; }
+/* Einrichtung (seit 2.140.1): die Rakete bebt leicht und hebt kurz ab, mit Pause dazwischen; ohne Bewegung bei reduzierter Animation */
+@keyframes wz-rocket { 0%, 55%, 100% { transform: translate(0, 0) rotate(0); } 60% { transform: translate(-0.7px, 0.5px) rotate(-3deg); } 65% { transform: translate(0.7px, -0.5px) rotate(3deg); } 70% { transform: translate(-0.6px, -1px) rotate(-2deg); } 75% { transform: translate(0.6px, -1.6px) rotate(2deg); } 82% { transform: translate(0, -1.8px) rotate(0); } 90% { transform: translate(0, -0.6px) rotate(0); } }
+.ap-ico.wiz svg { animation: wz-rocket 3.2s ease-in-out infinite; transform-origin: 50% 70%; }
+@media (prefers-reduced-motion: reduce) { .ap-ico.wiz svg { animation: none; } }
 @keyframes ee-reveal { from { clip-path: inset(-12px 100% -12px 0); } to { clip-path: inset(-12px 0 -12px 0); } }
 @keyframes ee-fade { 0%, 88% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes ee-thump { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.18); } }

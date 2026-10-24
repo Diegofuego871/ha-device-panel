@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.140.1] - 2026-10-24
+
+The rocket of the open setup trembles gently.
+
+### Changed
+
+- **Launcher, tile "Setup":** while the wizard is open, the rocket trembles and lifts off a little every few seconds, to remind you of the setup. No movement if the device is set to reduced animation.
+
 ## [2.140.0] - 2026-10-24
 
 The settings of an integration also cover its update notifications. Includes the changes from 2.139.1.
@@ -4729,6 +4737,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.140.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.1
 [2.140.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.0
 [2.139.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.139.0
 [2.138.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.1

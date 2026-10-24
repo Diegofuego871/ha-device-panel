@@ -623,7 +623,7 @@ export class AppLauncher {
     const style = a.color && !a.favicon ? ` style="background:${a.color};color:#fff"` : "";
     const own = !a.color && !a.favicon ? " own" : "";
     const rs = this.runState?.[a.id];
-    return `<span class="ap-ico${sm ? " sm" : ""}${own}${rs ? ` run-${rs}` : ""}"${style}>${this._icon(a, size)}</span>`;
+    return `<span class="ap-ico${sm ? " sm" : ""}${own}${rs ? ` run-${rs}` : ""}${a.id === "wizard" ? " wiz" : ""}"${style}>${this._icon(a, size)}</span>`;
   }
 
   // Knopf oder Verweis einer App: externe Links sind <a> (neuer Tab, kein Zugriff auf das Panel), alles andere <button>
