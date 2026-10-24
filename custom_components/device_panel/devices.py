@@ -1291,12 +1291,25 @@ async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
     opts = effective(hass)
     by_domain: dict[str, int] = {}
     by_type: dict[str, int] = {}
+    # Warum fehlen Geräte einer gezeigten Integration (seit 2.132.0): je Integration die Zahl der Geräte, die ein ausgeblendeter Typ oder
+    # eine einzelne Ausblendung verbirgt; sonst sieht man in den Einstellungen nur "3 Geräte" und in der Liste keines davon
+    ex_devices = set(opts[CONF_EXCLUDE_DEVICES])
+    ex_types = set(opts[CONF_EXCLUDE_TYPES])
+    ex_domains = set(opts[CONF_EXCLUDE_INTEGRATIONS])
+    hidden_by_type: dict[str, dict[str, int]] = {}
+    hidden_by_device: dict[str, int] = {}
     for device, entries in candidate_devices(hass, service=opts[CONF_SHOW_SERVICE], disabled=opts[CONF_SHOW_DISABLED]):
         primary = _primary_entry(hass, device)
         if primary:
             by_domain[primary.domain] = by_domain.get(primary.domain, 0) + 1
         kind = effective_type(hass, device, entries, hubs, opts[CONF_TYPE_INTEGRATIONS])[0]
         by_type[kind] = by_type.get(kind, 0) + 1
+        if primary and primary.domain not in ex_domains:
+            if device.id in ex_devices:
+                hidden_by_device[primary.domain] = hidden_by_device.get(primary.domain, 0) + 1
+            elif kind in ex_types:
+                types = hidden_by_type.setdefault(primary.domain, {})
+                types[kind] = types.get(kind, 0) + 1
     # Eigene Batterie-Schwelle: Integrationen mit Batteriegeräten unter den
     # überwachten Geräten (Ausblendungen gelten), dazu solche mit eigener
     # Schwelle ohne Geräte (damit sie sich zurücksetzen lässt).
@@ -1312,7 +1325,10 @@ async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
             item["weakest"] = level
     info = await async_integration_info(hass, set(by_domain) | set(bat))
     name = lambda d: info.get(d, {}).get("name", d)  # noqa: E731
-    integrations = [{"domain": d, "name": name(d), "devices": n} for d, n in by_domain.items()]
+    integrations = [
+        {"domain": d, "name": name(d), "devices": n, "hidden_by_type": hidden_by_type.get(d, {}), "hidden_by_device": hidden_by_device.get(d, 0)}
+        for d, n in by_domain.items()
+    ]
     integrations.sort(key=lambda x: (-x["devices"], str(x["name"]).lower()))
     battery_list = [{"domain": d, "name": name(d), **v} for d, v in bat.items()]
     battery_list.sort(key=lambda x: (-x["devices"], str(x["name"]).lower()))

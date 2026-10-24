@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.132.0, Grund für fehlende Geräte in den Einstellungen)
+
+- 2.132.0: `devices.async_catalog` liefert je Integration `hidden_by_type` ({Typ: Zahl}) und `hidden_by_device` (nur Geräte gezeigter Integrationen); `device-panel.js` hängt es an `sub` der Liste "Integrationen" (Texte `hiddenByType`, `hiddenByDevice`). Anlass: Apple TV (Typ "Medien" ausgeblendet) fehlte in der Liste, die Einstellungen sagten "3 Geräte". Tests: `test_availability.py::test_catalog_says_why_devices_are_hidden`, Suite `typeinteg`. Nicht gebaut: derselbe Hinweis in der Typen-Liste.
+
 ## Stand (2.131.0, Text-Link "Protokoll des Geräts" entfernt)
 
 - 2.131.0: in den Geräte-Reitern Routinen (`routines.js`) und Magic Push (`magic-push.js`) entfällt `.pr-devlink`, in den Übersichten der Link im Fuss `.mg-dfoot` (Text `prDeviceLink` entfernt); das Protokoll des Geräts öffnet der Knopf im Kopf. Offen, Vorschlag an den Nutzer: Chip der gewählten Meldung/Routine im Protokoll sichtbar machen (Auswahl-Chips auch bei geöffnetem Einzelprotokoll, "Alle" hebt den Filter auf); Mockup zuerst.

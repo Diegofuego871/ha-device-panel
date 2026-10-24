@@ -8463,7 +8463,14 @@ class DevicePanel extends HTMLElement {
     const integrations = (st.data.catalog?.integrations || []).map((i) => ({
       value: i.domain,
       label: i.name,
-      sub: t("devicesCount", i.devices),
+      // Warum Geräte einer gezeigten Integration fehlen (seit 2.132.0): ein ausgeblendeter Typ oder eine Einzel-Ausblendung
+      sub: [
+        t("devicesCount", i.devices),
+        Object.keys(i.hidden_by_type || {}).length
+          ? t("hiddenByType", Object.values(i.hidden_by_type).reduce((a, b) => a + b, 0), Object.keys(i.hidden_by_type).map((k) => t(typeKey(k))).join(", "))
+          : "",
+        i.hidden_by_device ? t("hiddenByDevice", i.hidden_by_device) : "",
+      ].filter(Boolean).join(" · "),
       badge: this._ibadge(i.domain, i.name),
     }));
     // Typ pro Integration (seit 1.25.0): Spalte neben "Anzeigen", gilt für alle

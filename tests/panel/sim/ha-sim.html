@@ -461,9 +461,16 @@
   function catalog() {
     const byDomain = {};
     const byType = {};
+    // Wie devices.async_catalog (2.132.0): je Integration, was ein ausgeblendeter Typ oder eine Einzel-Ausblendung verbirgt
+    const hiddenType = {};
+    const hiddenDev = {};
     for (const d of candidates()) {
-      byDomain[d.integration.domain] = (byDomain[d.integration.domain] || 0) + 1;
+      const dom = d.integration.domain;
+      byDomain[dom] = (byDomain[dom] || 0) + 1;
       byType[d.type] = (byType[d.type] || 0) + 1;
+      if (window.__opts.exclude_integrations.includes(dom)) continue;
+      if (window.__opts.exclude_devices.includes(d.id)) hiddenDev[dom] = (hiddenDev[dom] || 0) + 1;
+      else if (window.__opts.exclude_types.includes(d.type)) ((hiddenType[dom] ||= {})[d.type] = ((hiddenType[dom] || {})[d.type] || 0) + 1);
     }
     // Wie das Backend: Integrationen mit Batteriegeräten (gezeigt, nicht
     // deaktiviert), dazu eigene Schwellen ohne Geräte.
@@ -482,7 +489,7 @@
       .sort((a, b) => a.name.localeCompare(b.name));
     return {
       hidden_devices: hidden,
-      integrations: Object.entries(byDomain).map(([domain, n]) => ({ domain, name: integrations[domain] || domain, devices: n })).sort((a, b) => b.devices - a.devices || a.name.localeCompare(b.name)),
+      integrations: Object.entries(byDomain).map(([domain, n]) => ({ domain, name: integrations[domain] || domain, devices: n, hidden_by_type: hiddenType[domain] || {}, hidden_by_device: hiddenDev[domain] || 0 })).sort((a, b) => b.devices - a.devices || a.name.localeCompare(b.name)),
       types: TYPE_ORDER.map((t) => ({ type: t, devices: byType[t] || 0 })),
       // KI-Aufgaben von HA (erfunden); __aiTasks = [] für "keine".
       ai_tasks: window.__aiTasks || [{ value: "ai_task.openai", name: "OpenAI" }, { value: "ai_task.lokal", name: "Lokales Modell" }],

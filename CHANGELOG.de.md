@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.132.0] - 2026-10-24
+
+Die Einstellungen sagen jetzt, warum Geräte einer gezeigten Integration fehlen. Enthält die Änderungen von 2.130.0 und 2.131.0.
+
+### Hinzugefügt
+
+- **Grund für fehlende Geräte** (Einstellungen › Geräte im Panel › Integrationen): die Zeile unter einer Integration nennt, wie viele ihrer Geräte nicht sichtbar sind und warum, zum Beispiel "3 Geräte · 3 nicht sichtbar, Typ ausgeblendet: Medien" oder "1 einzeln ausgeblendet". Bisher stand dort nur "3 Geräte", und die Liste zeigte keines davon, weil der Schalter "Anzeigen" der Integration unabhängig von den ausgeblendeten Typen und den einzeln ausgeblendeten Geräten ist. Eine Integration, die selbst ausgeblendet ist, nennt keinen Grund (ihr Schalter sagt es schon).
+- Der WebSocket-Befehl `get_options` liefert `hidden_by_type` und `hidden_by_device` für jede Integration des Katalogs.
+
 ## [2.131.0] - 2026-10-24
 
 Der Text-Link "Protokoll des Geräts" entfällt in den Reitern "Routinen" und "Magic Push" eines Geräts. Enthält die Änderungen von 2.130.0.
@@ -18,6 +27,8 @@ Der Text-Link "Protokoll des Geräts" entfällt in den Reitern "Routinen" und "M
 ### Geändert
 
 - **Symbol "Zurücksetzen" gespiegelt** (seit 2.130.0): die Pfeile laufen im Uhrzeigersinn, eine laufende App dreht sich auch so.
+
+Nicht veröffentlicht; enthalten in 2.132.0.
 
 ## [2.130.0] - 2026-10-24
 
@@ -4666,7 +4677,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.131.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.131.0
+[2.132.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.132.0
 [2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0
 [2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0

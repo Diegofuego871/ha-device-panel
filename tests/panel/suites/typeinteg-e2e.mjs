@@ -16,12 +16,14 @@ const TEXT = {
     sumNone: "Dienst-Geräte und deaktivierte Geräte ausgeblendet", sumOne: "Typ für 1 Integration festgelegt · Dienst-Geräte und deaktivierte Geräte ausgeblendet",
     popAuto: "Automatisch: Steckdose", popInteg: "Wie Integration: Schalter", byInteg: "für die ganze Integration festgelegt", manual: "von Hand gesetzt",
     switch: "Schalter", outlet: "Steckdose", two: "2 Geräte",
+    hidType: "2 nicht sichtbar, Typ ausgeblendet: Steckdose", hidType1: "1 nicht sichtbar, Typ ausgeblendet: Steckdose", hidDev: "1 einzeln ausgeblendet",
   },
   en: {
     col: "Type", intro: 'The "Type" and "Connection type" columns apply to all devices of the integration', shelly: "2 devices · detected: 2 Outlet", autoOpt: "Automatic", one: "1 change",
     sumNone: "Service devices and disabled devices hidden", sumOne: "type set for 1 integration · Service devices and disabled devices hidden",
     popAuto: "Automatic: Outlet", popInteg: "Same as integration: Switch", byInteg: "set for the whole integration", manual: "set by hand",
     switch: "Switch", outlet: "Outlet", two: "2 devices",
+    hidType: "2 not visible, type hidden: Outlet", hidType1: "1 not visible, type hidden: Outlet", hidDev: "1 hidden one by one",
   },
 };
 const TYPES = ",hub,phone,network,climate,lock,cover,valve,vacuum,camera,alarm,media,display,fan,light,outlet,switch,motion,contact,safety,energy,sensor,button,other";
@@ -140,6 +142,19 @@ for (const lang of ["de", "en"]) {
     await open("d");
     check(`[${tag}] Popup: wieder erkannt`, await wait(`return r.querySelector('select[data-dlg="type"]')?.options[0].textContent === ${JSON.stringify(T.popAuto)}`) && !(await ev(`return r.querySelector('select[data-dlg="type"]').closest(".tile").textContent`)).includes(T.byInteg), await sel());
     await close();
+
+    // Warum fehlen Geräte (2.132.0): Typ "Steckdose" ausgeblendet, ein Shelly-Gerät zusätzlich einzeln
+    await p.evaluate(() => { window.__opts.exclude_types = ["outlet"]; });
+    await openInteg();
+    const why = await ev(`return r.querySelector('select[data-type-integ="shelly"]').closest(".ex-row").querySelector("small").textContent`);
+    check(`[${tag}] Integration nennt, was der ausgeblendete Typ verbirgt`, why.includes(T.hidType) && !why.includes(T.hidDev), why);
+    await closeSettings();
+    await p.evaluate(() => { window.__opts.exclude_devices = ["d"]; });
+    await openInteg();
+    const why2 = await ev(`return r.querySelector('select[data-type-integ="shelly"]').closest(".ex-row").querySelector("small").textContent`);
+    check(`[${tag}] und was einzeln ausgeblendet ist`, why2.includes(T.hidDev) && why2.includes(T.hidType1), why2);
+    await closeSettings();
+    await p.evaluate(() => { window.__opts.exclude_types = []; window.__opts.exclude_devices = []; });
 
     check(`[${tag}] kein fehlender Text`, !(await ev(`return r.innerHTML.includes("undefined") || r.innerHTML.includes("NaN")`)));
     check(`[${tag}] keine JS-Fehler`, errors.length === 0, errors.join("; "));

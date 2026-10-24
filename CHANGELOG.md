@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.132.0] - 2026-10-24
+
+The settings now say why devices of a shown integration are missing. Includes the changes from 2.130.0 and 2.131.0.
+
+### Added
+
+- **Reason for missing devices** (Settings › Devices in the panel › Integrations): the line under an integration says how many of its devices are not visible and why, for example "3 devices · 3 not visible, type hidden: Media" or "1 hidden one by one". Before, it only said "3 devices" and the list showed none of them, because the setting "Show" of the integration is separate from the hidden types and the hidden single devices. An integration that is hidden itself shows no reason (its switch says it).
+- The WebSocket command `get_options` returns `hidden_by_type` and `hidden_by_device` for every integration of the catalog.
+
 ## [2.131.0] - 2026-10-24
 
 The text link "History of the device" is gone from the tabs "Routines" and "Magic Push" of a device. Includes the changes from 2.130.0.
@@ -18,6 +27,8 @@ The text link "History of the device" is gone from the tabs "Routines" and "Magi
 ### Changed
 
 - **Symbol "reset" mirrored** (from 2.130.0): the arrows run clockwise, a running app spins the same way.
+
+Not released; included in 2.132.0.
 
 ## [2.130.0] - 2026-10-24
 
@@ -4565,7 +4576,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.131.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.131.0
+[2.132.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.132.0
 [2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0
 [2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0

@@ -483,6 +483,33 @@ async def test_type_override(hass: HomeAssistant, setup: AvailabilityLog, hass_w
     assert (await client.receive_json())["error"]["code"] == "not_found"
 
 
+async def test_catalog_says_why_devices_are_hidden(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client) -> None:
+    """Seit 2.132.0: die Integrationen der Einstellungen nennen, wie viele Geräte ein ausgeblendeter Typ oder eine Einzel-Ausblendung verbirgt."""
+    tv = _device(hass, "Wohnzimmer", domain="apple_tv")
+    _entity(hass, tv, "media_player", "tv1", "idle")
+    tv2 = _device(hass, "Schlafzimmer", domain="apple_tv")
+    _entity(hass, tv2, "media_player", "tv2", "idle")
+    remote = _device(hass, "Reserve", domain="apple_tv")
+    _entity(hass, remote, "switch", "sw", "on")
+    lamp = _device(hass, "Lampe", domain="hue")
+    _entity(hass, lamp, "light", "l", "on")
+    setup.evaluate()
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/set_options", "values": {"exclude_types": ["media"], "exclude_devices": [remote.id]}})
+    assert (await client.receive_json())["success"]
+    await client.send_json({"id": 2, "type": f"{DOMAIN}/get_options"})
+    by = {i["domain"]: i for i in (await client.receive_json())["result"]["catalog"]["integrations"]}
+    # Apple TV: drei Geräte, zwei wegen des Typs "media", eines einzeln ausgeblendet; Hue: nichts verborgen
+    assert by["apple_tv"]["devices"] == 3 and by["apple_tv"]["hidden_by_type"] == {"media": 2} and by["apple_tv"]["hidden_by_device"] == 1
+    assert by["hue"]["hidden_by_type"] == {} and by["hue"]["hidden_by_device"] == 0
+    # Eine ausgeschlossene Integration meldet keinen Grund (der Schalter der Integration sagt es schon)
+    await client.send_json({"id": 3, "type": f"{DOMAIN}/set_options", "values": {"exclude_integrations": ["apple_tv"]}})
+    assert (await client.receive_json())["success"]
+    await client.send_json({"id": 4, "type": f"{DOMAIN}/get_options"})
+    by = {i["domain"]: i for i in (await client.receive_json())["result"]["catalog"]["integrations"]}
+    assert by["apple_tv"]["hidden_by_type"] == {} and by["apple_tv"]["hidden_by_device"] == 0
+
+
 async def test_exclusions(hass: HomeAssistant, setup: AvailabilityLog, hass_ws_client, freezer) -> None:
     lamp = _device(hass, "Lampe", domain="hue")
     _entity(hass, lamp, "light", "l", "on")
