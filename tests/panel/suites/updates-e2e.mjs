@@ -84,6 +84,20 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] HACS aus: seine Einträge aus, als Ausnahme der Integration`, !(await on("device_panel_update")) && (await ev(`return r.host._settings.draft.updates_integrations_off.join() === "hacs"`)));
   await tap(integ("hacs"));
   check(`[${tag}] HACS wieder an: keine Ausnahme mehr`, (await on("device_panel_update")) && (await ev(`return r.host._settings.draft.updates_integrations_off.length === 0`)));
+  // Im Detail einer Integration (Reiter "Updates", 2.140.0): derselbe Schalter und ihre Einträge
+  await tap('.mon-tab[data-key="integ"]');
+  await wait(`return !!r.querySelector('[data-set="integ"][data-key="shelly"]')`);
+  await tap('[data-set="integ"][data-key="shelly"]');
+  await tap('[data-set="isub"][data-key="upd"]');
+  await wait(`return !!r.querySelector('input[data-uinteg="shelly"]')`);
+  check(`[${tag}] Integration Shelly, Reiter "Updates": Schalter aus, ein Eintrag (Shelly Plug) aus`, !(await isOn(integ("shelly"))) && !(await on("shelly_plug_fw")) && (await ev(`return r.querySelectorAll('input[data-uitem]').length`)) === 1);
+  await tap(integ("shelly"));
+  check(`[${tag}] Schalter an: Eintrag an, Ausnahme der Integration im Entwurf`, (await on("shelly_plug_fw")) && (await ev(`return r.host._settings.draft.updates_integrations_on.join() === "shelly"`)));
+  await tap('[data-set="integ-reset"]');
+  check(`[${tag}] "Auf Standard": Ausnahme weg, Schalter wieder aus`, (await ev(`return r.host._settings.draft.updates_integrations_on.length === 0`)) && !(await isOn(integ("shelly"))));
+  await tap('[data-set="integ"][data-key=""]');
+  await tap('.mon-tab[data-key="updates"]');
+  await wait(`return !!r.querySelector('input[data-uitem="update.mariadb_update"]')`);
   // Suche in der Liste
   await (await handle('input[data-lsearch="updates"]')).fill("maria");
   check(`[${tag}] Suche "maria": 1 Eintrag sichtbar`, await ev(`return [...r.querySelectorAll('.srch-rows[data-srch="updates"] .ex-row')].filter(e=>!e.hidden).length === 1`));

@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.140.0] - 2026-10-24
+
+The settings of an integration also cover its update notifications. Includes the changes from 2.139.1.
+
+### Added
+
+- **Settings › Integrations › (an integration) › tab "Updates":** the notification for updates of this integration as one switch (middle state with mixed kinds) and below its single updates with a switch each, the same choice and the same rules as in the tab "Updates" of "Monitoring and notifications" (entry before integration before kind). A note says when update notifications are off in general. "Reset to default" of the integration also clears this choice. For integrations without update entities the tab says so. Apps, Core and HACS (no devices) stay in the tab "Updates" of the monitoring.
+
 ## [2.139.1] - 2026-10-24
 
 On a tablet only the wide table moves sideways.
@@ -14,6 +22,8 @@ On a tablet only the wide table moves sideways.
 ### Fixed
 
 - **Wide table on a tablet (iPad):** when the table is wider than the window, only the table moves sideways now. The header cards, the filter chips and the footer stay in place; before, the whole page was dragged to the right with the table.
+
+Not released; included in 2.140.0.
 
 ## [2.139.0] - 2026-10-24
 
@@ -4719,7 +4729,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.139.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.139.1
+[2.140.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.0
 [2.139.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.139.0
 [2.138.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.1
 [2.138.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.0

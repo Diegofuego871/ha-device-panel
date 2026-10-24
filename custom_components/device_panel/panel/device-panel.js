@@ -8459,6 +8459,30 @@ class DevicePanel extends HTMLElement {
         `<label class="switch"><input type="checkbox" data-list="new_exclude_integrations" data-value="${escape(dom)}" ${has("new_exclude_integrations") ? "" : "checked"} aria-label="${escape(`${t("optNewNotify")}: ${item.name}`)}"><span></span></label>`,
         origin(has("new_exclude_integrations"))) +
       (tgt("new") && d.notify_new ? "" : `<div class="opt-short mon-hint">${escape(t(tgt("new") ? "integNewGlobalOff" : "noTargetWarn"))}</div>`);
+    // Updates (seit 2.140.0): Meldung bei Updates dieser Integration (die "Plattform" ihrer update-Entitäten) und ihre einzelnen Einträge;
+    // gleiche Schalter und Regeln wie in "Überwachung und Meldungen" › Updates (Eintrag vor Integration vor Art)
+    const updGroup = this._updPlatforms(st.data?.catalog?.updates || []).find((g) => g.platform === dom);
+    let updHtml = empty("integNoUpdates");
+    let updOwn = false;
+    if (updGroup) {
+      const state = this._updIntegState(d, updGroup);
+      const was = this._updIntegState(saved, updGroup);
+      const ids = new Set(updGroup.items.map((x) => x.id));
+      updOwn = (d.updates_integrations_on || []).includes(dom) || (d.updates_integrations_off || []).includes(dom) || [...(d.updates_exclude || []), ...(d.updates_include || [])].some((id) => ids.has(id));
+      const rows = updGroup.items
+        .map((x) => {
+          const on = this._updWanted(d, x);
+          const ver = x.available && x.installed && x.latest ? t("updItemOpen", x.installed, x.latest) : x.installed ? t("updItemVersion", x.installed) : "";
+          const mine = (d.updates_exclude || []).includes(x.id) || (d.updates_include || []).includes(x.id);
+          return `<div class="ex-row${on !== this._updWanted(saved, x) ? " changed" : ""}"><div class="ex-name">${escape(x.name)}${x.available ? `<span class="upd-dot" title="${escape(t("updItemOpenTip"))}"></span>` : ""}<small>${escape([t(`updKind_${x.kind}`), ver, mine ? t("originOwn") : ""].filter(Boolean).join(" · "))}</small></div>
+            <label class="switch"><input type="checkbox" data-uitem="${escape(x.id)}" ${on ? "checked" : ""} aria-label="${escape(`${t("optUpdNotify")}: ${x.name}`)}"><span></span></label></div>`;
+        })
+        .join("");
+      updHtml =
+        opt(state !== was, t("optUpdNotify"), `<label class="switch${state === "part" ? " part" : ""}"><input type="checkbox" data-uinteg="${escape(dom)}" ${state !== "off" ? "checked" : ""} aria-label="${escape(`${t("optUpdNotify")}: ${item.name}`)}"><span></span></label>`, origin(state !== this._updIntegState({ ...d, updates_integrations_on: [], updates_integrations_off: [] }, updGroup))) +
+        (tgt("updates") && d.notify_updates ? "" : `<div class="opt-short mon-hint">${escape(t(tgt("updates") ? "integUpdGlobalOff" : "noTargetWarn"))}</div>`) +
+        `<div class="mon-grp">${escape(t("grpUpdItems"))}</div><div class="opt-short">${escape(t("updItemsHint"))}</div><div class="ex-list">${rows}</div>`;
+    }
     // Empfang (seit 1.17.0): Warnschwelle je Funkart der Integration; gilt auch bei
     // "Nicht überwachen", weil sie nur die Markierung betrifft.
     const sigRows = this._sigRowsHtml(d, dom);
@@ -8485,19 +8509,20 @@ class DevicePanel extends HTMLElement {
       bat: dom in batMap || has("battery_push_exclude_integrations"),
       chg: has("charge_integrations") || chargeMaps.some((k) => dom in (d[k] || {})),
       new: has("new_exclude_integrations"),
+      upd: updOwn,
       sig: dom in (d.signal_low_integrations || {}),
       dev: devs.length > 0,
     };
-    const tabs = [["out", "tabOutage"], ["bat", "tabBattery"], ["chg", "tabCharge"], ["new", "tabNew"], ["sig", "tabSignal"], ["dev", "tabDevices"]];
+    const tabs = [["out", "tabOutage"], ["bat", "tabBattery"], ["chg", "tabCharge"], ["new", "tabNew"], ["upd", "tabUpdates"], ["sig", "tabSignal"], ["dev", "tabDevices"]];
     const cur = tabs.some(([id]) => id === st.sub?.integ) ? st.sub.integ : "out";
     const tabBar = `<div class="sub-tabs lvl-tabs" role="tablist">${tabs
       .map(([id, key]) => `<button type="button" role="tab" class="sub-tab${id === cur ? " on" : ""}${own[id] ? " chg" : ""}" data-set="isub" data-key="${id}" aria-selected="${id === cur}">${escape(t(key))}</button>`)
       .join("")}</div>`;
-    const bodies = { out: outHtml, bat: batHtml, chg: chgHtml, new: newHtml, sig: sigHtml, dev: devsHtml };
+    const bodies = { out: outHtml, bat: batHtml, chg: chgHtml, new: newHtml, upd: updHtml, sig: sigHtml, dev: devsHtml };
     return `<button type="button" class="iback" data-set="integ" data-key="">${mdi("arrowLeft", 18)}${escape(t("integBack"))}</button>
       <div class="ihead">${this._ibadge(dom, item.name)}<div><b>${escape(item.name)}</b><small>${escape(t("integDevs", item.devices, item.batDevices))}</small></div></div>
       ${tabBar}<div class="lvl-body" role="tabpanel">${bodies[cur]}</div>
-      <div class="integ-reset"><button type="button" class="ovr-all" data-set="integ-reset" data-key="${escape(dom)}" ${anyOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("integReset"))}</button></div>`;
+      <div class="integ-reset"><button type="button" class="ovr-all" data-set="integ-reset" data-key="${escape(dom)}" ${anyOwn || updOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("integReset"))}</button></div>`;
   }
 
   _settingsBodyHtml() {
@@ -9012,6 +9037,10 @@ class DevicePanel extends HTMLElement {
         for (const key of INTEG_OWN_LISTS) {
           st.draft[key] = (st.draft[key] || []).filter((x) => x !== dom);
         }
+        // Update-Meldungen dieser Integration (seit 2.140.0): die Wahl der Integration und die ihrer Einträge
+        for (const key of ["updates_integrations_on", "updates_integrations_off"]) st.draft[key] = (st.draft[key] || []).filter((x) => x !== dom);
+        const mine = new Set((st.data.catalog?.updates || []).filter((u) => u.platform === dom).map((u) => u.id));
+        for (const key of ["updates_exclude", "updates_include"]) st.draft[key] = (st.draft[key] || []).filter((id) => !mine.has(id));
         this._renderSettings();
       } else if (action === "quiet-all") {
         // Ruhezeit: die Zeiten des Montags für alle Wochentage übernehmen (ein/aus bleibt je Tag)

@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.140.0] - 2026-10-24
+
+Die Einstellungen einer Integration umfassen auch ihre Update-Meldungen. Enthält die Änderungen aus 2.139.1.
+
+### Hinzugefügt
+
+- **Einstellungen › Integrationen › (eine Integration) › Reiter "Updates":** die Meldung bei Updates dieser Integration als ein Schalter (Zwischenzustand bei gemischten Arten) und darunter ihre einzelnen Updates mit je einem Schalter, dieselbe Wahl und dieselben Regeln wie im Reiter "Updates" unter "Überwachung und Meldungen" (Eintrag vor Integration vor Art). Ein Hinweis sagt, wenn die Update-Meldung allgemein aus ist. "Auf Standard" der Integration setzt auch diese Wahl zurück. Bei Integrationen ohne update-Entitäten sagt der Reiter das. Apps, Core und HACS (ohne Geräte) bleiben im Reiter "Updates" der Überwachung.
+
 ## [2.139.1] - 2026-10-24
 
 Auf dem Tablet wandert nur noch die breite Tabelle seitlich.
@@ -14,6 +22,8 @@ Auf dem Tablet wandert nur noch die breite Tabelle seitlich.
 ### Behoben
 
 - **Breite Tabelle auf dem Tablet (iPad):** ist die Tabelle breiter als das Fenster, wandert beim seitlichen Verschieben nur noch die Tabelle. Die Kopf-Karten, die Filter-Chips und die Fusszeile bleiben stehen; vorher wurde die ganze Seite mit der Tabelle nach rechts gezogen.
+
+Nicht veröffentlicht; enthalten in 2.140.0.
 
 ## [2.139.0] - 2026-10-24
 
@@ -4820,7 +4830,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.139.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.139.1
+[2.140.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.0
 [2.139.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.139.0
 [2.138.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.1
 [2.138.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.0
