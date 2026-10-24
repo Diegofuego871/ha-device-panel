@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.130.0, Symbol "reset" gespiegelt)
+
+- 2.130.0: `MDI.reset` in `device-panel.js` ist `mdi:reload` waagrecht gespiegelt (Pfeile im Uhrzeigersinn); `.ap-spin` in `styles.js` dreht ohne `reverse`. Test: Suite `launcheract` (Pfad beginnt mit "M12,4C9.9", Richtung "normal"). Die README-Bilder zeigen noch die alte Richtung.
+
 ## Stand (2.129.0, sechs Zeiträume in der Status-App, "Alle" im Reiter System; davor 2.128.0 Zeitraum je Kurve, 2.127.0 Pfeile, 2.126.0 Diagramm in "Alles")
 
 - 2.129.0: `system_stats.RANGES` und `status-ui.js` `SYS_RANGES` = 24h/7d/30d/90d/180d/365d (Schlüssel wie `BAT_RANGES` im Panel; Texte `stSysRange_*`/`stSysAgo_*`); bis 7 Tage Verlauf, ab 30 Tagen Statistik, Hinweis `stSysNoStats` erst ab 30 Tagen. `protocol.js`: im Reiter "System" beginnt `s.range` auf "all" (`rangeBack` stellt beim Verlassen den vorherigen Zeitraum her); `magicRow` zeigt `.pr-arrow` bei Zeilen mit Text. Tests: `test_system_stats.py`, Suiten `statussystem`, `system`, `protocol`.

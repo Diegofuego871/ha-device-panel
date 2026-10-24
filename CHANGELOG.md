@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.130.0] - 2026-10-24
+
+The "reload" arrow runs clockwise everywhere and spins the same way.
+
+### Changed
+
+- **Symbol "reset" mirrored** (round arrow with a point at the top): the arrows now run **clockwise**, like the refresh symbol of the update check. It is used for the app "Backup" in the launcher and in its header button, for "Restore default" and "Reset" buttons (view, chip order, per-integration settings, AI prompt, backup undo) and for "Restart".
+- **App that is running** (launcher): the arrows spin clockwise, in the direction they point. Before, the symbol pointed counter-clockwise and spun the other way round.
+- README screenshots are not taken again; they show the old direction until the next time.
+
 ## [2.129.0] - 2026-10-24
 
 The Status app offers the same six periods as the device histories, the tab "System" of the history starts with "All", and Magic Push rows show an arrow.
@@ -4541,6 +4551,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.130.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.130.0
 [2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0
 [2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0

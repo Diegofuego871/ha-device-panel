@@ -2016,8 +2016,8 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 /* Eigene Apps ohne Favicon: Kreis in der Hauptfarbe, weisses Symbol (Apps von HA und des Panels tragen ihre Farbe als Stil) */
 .ap-ico.own { background: var(--dp-primary); color: #fff; }
 /* Aktion (seit 2.115.0): läuft (Pfeile drehen sich), fertig (grüner Haken, grüner Rand), fehlgeschlagen (rot) */
-/* Die Pfeile des Symbols laufen gegen den Uhrzeigersinn: die Drehung auch (vorher rückwärts zur Pfeilrichtung) */
-.ap-spin { display: inline-flex; animation: ap-spin 0.9s linear infinite reverse; }
+/* Die Pfeile des Symbols laufen im Uhrzeigersinn (seit 2.130.0 gespiegelt): die Drehung auch, in Pfeilrichtung */
+.ap-spin { display: inline-flex; animation: ap-spin 0.9s linear infinite; }
 @keyframes ap-spin { to { transform: rotate(360deg); } }
 .ap-ico.run-ok, .rtall-btn.app-pin.run-ok { background: var(--dp-success); color: #fff; }
 .ap-ico.run-err, .rtall-btn.app-pin.run-err { background: var(--dp-error); color: #fff; }

@@ -98,7 +98,8 @@ for (const lang of ["de", "en"]) {
     await tap(`${D} [data-ap="open"][data-id="${appId}"]`);
     // Während der Ausführung: Kreis mit Pfeilen, der sich dreht
     check(`[${tag}] läuft: Kreis mit drehenden Pfeilen statt des Symbols`, await wait(`return !!r.querySelector('${D} .ap-tile.run-running:has([data-id="${appId}"]) .ap-spin svg')`, 1200));
-    check(`[${tag}] läuft: die Drehung ist eine Animation (kein Standbild)`, await ev(`const e = r.querySelector('${D} .ap-tile.run-running .ap-spin'); return !!e && getComputedStyle(e).animationName.includes("ap-spin")`));
+    check(`[${tag}] läuft: die Drehung ist eine Animation (kein Standbild)`, await ev(`const e = r.querySelector('${D} .ap-tile.run-running .ap-spin'); return !!e && getComputedStyle(e).animationName.includes("ap-spin") && getComputedStyle(e).animationDirection === "normal"`));
+    check(`[${tag}] läuft: Pfeil im Uhrzeigersinn (Spitze rechts oben), Drehung im Uhrzeigersinn (nicht rückwärts)`, await ev(`const p = r.querySelector('${D} .ap-tile.run-running .ap-spin svg path'); return !!p && p.getAttribute("d").startsWith("M12,4C9.9") && getComputedStyle(r.querySelector('${D} .ap-tile.run-running .ap-spin')).animationDirection === "normal"`));
     await shot("running");
     // Danach: grüner Haken und grüner Rand
     check(`[${tag}] fertig: grüner Haken und grüner Rand an der Kachel`, await wait(`const t = r.querySelector('${D} .ap-tile.run-ok:has([data-id="${appId}"])'); return !!t && !t.querySelector(".ap-spin") && !!t.querySelector(".ap-ico.run-ok svg") && getComputedStyle(t).boxShadow !== "none"`, 4000));

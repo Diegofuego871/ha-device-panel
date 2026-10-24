@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.130.0] - 2026-10-24
+
+Der Pfeil "neu laden" läuft überall im Uhrzeigersinn und dreht sich auch so.
+
+### Geändert
+
+- **Symbol "Zurücksetzen" gespiegelt** (runder Pfeil mit Spitze oben): die Pfeile laufen jetzt **im Uhrzeigersinn**, wie das Aktualisieren-Symbol der Update-Prüfung. Es steht bei der App "Backup" im Launcher und in deren Knopf im Kopf, bei den Knöpfen "Standard wiederherstellen" und "Zurücksetzen" (Ansicht, Reihenfolge der Chips, Einstellungen je Integration, KI-Prompt, Rückgängig bei der Sicherung) und bei "Neustart".
+- **App, die gerade läuft** (Launcher): die Pfeile drehen sich im Uhrzeigersinn, in ihrer Pfeilrichtung. Vorher zeigte das Symbol gegen den Uhrzeigersinn und drehte sich andersherum.
+- Die Printscreens der README sind nicht neu aufgenommen; sie zeigen bis zum nächsten Mal die alte Richtung.
+
 ## [2.129.0] - 2026-10-24
 
 Die Status-App bietet dieselben sechs Zeiträume wie die Geräteverläufe, der Reiter "System" des Protokolls beginnt mit "Alle", und Zeilen von Magic Push zeigen einen Pfeil.
@@ -4642,6 +4652,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.130.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.130.0
 [2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0
 [2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0
