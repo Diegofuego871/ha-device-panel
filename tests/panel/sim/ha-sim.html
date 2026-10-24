@@ -501,7 +501,8 @@
     };
   }
   // Wie das Backend (devices.async_device_overrides): auch ausgeblendete Geräte, nach Name.
-  const upd = (id, name, kind, platform, installed, latest) => ({ id: `update.${id}`, name, kind, platform, installed, latest: latest || installed, available: Boolean(latest) });
+  const PLATFORM_NAMES = { hassio: "Home Assistant Supervisor", hacs: "HACS", shelly: "Shelly", hue: "Philips Hue" };
+  const upd = (id, name, kind, platform, installed, latest) => ({ id: `update.${id}`, name, kind, platform, platform_name: PLATFORM_NAMES[platform] || platform, installed, latest: latest || installed, available: Boolean(latest) });
   const UPDATE_ITEMS = [
     upd("home_assistant_core_update", "Home Assistant Core", "core", "hassio", "2026.10.2", "2026.10.3"),
     upd("home_assistant_operating_system_update", "Home Assistant Operating System", "core", "hassio", "16.2"),
@@ -652,7 +653,7 @@
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
     routines_pause: false, routines_catch_up: 10, protocol_max_mb: 30, protocol_max_entries: 5000, log_max_mb: 10, log_max_entries: 4000, availability_keep_days: 365, availability_max_mb: 20, signal_keep_days: 365, signal_max_mb: 50, push_keep_days: 365, push_max_mb: 10, routines_notify_error: true, status_notify: true, notify_service_status: "", status_cpu_alert: true, status_ram_alert: true, status_disk_alert: true, status_cpu_limit: 99, status_ram_limit: 99, status_disk_limit: 99, status_cpu_minutes: 3, status_ram_minutes: 3, status_disk_minutes: 3, status_cpu_entity: "", status_ram_entity: "", status_disk_entity: "",
-    notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, notify_charge_stop: false, charge_stall: 15, charge_integrations: [], charge_full_integrations: {}, charge_rise_integrations: {}, charge_stall_integrations: {}, charge_stop_integrations: {}, charge_live: false, charge_live_integrations: {}, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
+    notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, notify_charge_stop: false, charge_stall: 15, charge_integrations: [], charge_full_integrations: {}, charge_rise_integrations: {}, charge_stall_integrations: {}, charge_stop_integrations: {}, charge_live: false, charge_live_integrations: {}, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], updates_integrations_on: [], updates_integrations_off: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
     // Einrichtungsassistent (seit 2.135.0): per ?wizard=new|later|open|done|off, sonst abgeschlossen (bestehende Installation)
     wizard_state: params.get("wizard") || "done", wizard_done_at: 0, wizard_draft: null,
     // Emoji der Push-Meldungen: null = Standard (seit 2.2.0)
@@ -1016,6 +1017,13 @@
           const kinds = ["core", "addons", "hacs", "devices"];
           if (!Array.isArray(v) || v.some((x) => !kinds.includes(x))) throw { code: "invalid_format", message: "update kinds" };
           msg.values.updates_kinds = kinds.filter((x) => v.includes(x));
+        }
+        for (const key of ["updates_integrations_on", "updates_integrations_off"]) {
+          if (key in msg.values) {
+            const v = msg.values[key];
+            if (!Array.isArray(v) || v.some((x) => !/^[a-z0-9_]+$/.test(x))) throw { code: "invalid_format", message: key };
+            msg.values[key] = [...new Set(v)].sort();
+          }
         }
         for (const key of ["updates_exclude", "updates_include"]) {
           if (key in msg.values) {

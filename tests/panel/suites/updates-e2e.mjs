@@ -69,6 +69,21 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] MariaDB wieder an: keine eigene Wahl mehr`, (await wait(`return !r.querySelector('.ex-row:has(input[data-uitem="update.mariadb_update"]) small').textContent.includes(${JSON.stringify(T_.own)})`)) && (await on("mariadb_update")));
   await tap('input[data-uitem="update.mariadb_update"]');
   await wait(`return !r.querySelector('input[data-uitem="update.mariadb_update"]').checked`);
+  // Pro Integration (2.139.0): ein Schalter je Integration, Eintrag vor Integration vor Art
+  const integ = (p) => `input[data-uinteg="${p}"]`;
+  const isOn = (sel) => ev(`return r.querySelector(${JSON.stringify(sel)}).checked`);
+  check(`[${tag}] Pro Integration: Home Assistant, HACS an, Shelly und Hue (Geräte-Firmware) aus`, (await isOn(integ("hassio"))) && (await isOn(integ("hacs"))) && !(await isOn(integ("shelly"))) && !(await isOn(integ("hue"))));
+  await tap(integ("shelly"));
+  check(`[${tag}] Shelly an: sein Update in der Liste an, Vorschau folgt, im Entwurf als Ausnahme der Integration`, (await on("shelly_plug_fw")) && (await ev(`return r.host._settings.draft.updates_integrations_on.join() === "shelly" && r.host._settings.draft.updates_include.length === 0`)));
+  await tap('input[data-uitem="update.shelly_plug_fw"]');
+  check(`[${tag}] Eintrag mit eigener Wahl geht vor: Shelly Plug aus, Integration bleibt an`, !(await on("shelly_plug_fw")) && (await ev(`return r.host._settings.draft.updates_exclude.includes("update.shelly_plug_fw") && r.host._settings.draft.updates_integrations_on.join() === "shelly"`)));
+  await tap('input[data-uitem="update.shelly_plug_fw"]');
+  await tap(integ("shelly"));
+  check(`[${tag}] Shelly wieder aus: keine Ausnahmen mehr, nichts zu speichern`, await ev(`const d = r.host._settings.draft; return d.updates_integrations_on.length === 0 && d.updates_integrations_off.length === 0 && d.updates_exclude.length === 1 && d.updates_exclude[0] === "update.mariadb_update"`));
+  await tap(integ("hacs"));
+  check(`[${tag}] HACS aus: seine Einträge aus, als Ausnahme der Integration`, !(await on("device_panel_update")) && (await ev(`return r.host._settings.draft.updates_integrations_off.join() === "hacs"`)));
+  await tap(integ("hacs"));
+  check(`[${tag}] HACS wieder an: keine Ausnahme mehr`, (await on("device_panel_update")) && (await ev(`return r.host._settings.draft.updates_integrations_off.length === 0`)));
   // Suche in der Liste
   await (await handle('input[data-lsearch="updates"]')).fill("maria");
   check(`[${tag}] Suche "maria": 1 Eintrag sichtbar`, await ev(`return [...r.querySelectorAll('.srch-rows[data-srch="updates"] .ex-row')].filter(e=>!e.hidden).length === 1`));

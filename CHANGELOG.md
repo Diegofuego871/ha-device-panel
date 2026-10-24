@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.139.0] - 2026-10-24
+
+Update notifications can be set per integration, in the settings and in the setup wizard.
+
+### Added
+
+- **Update notifications per integration:** two new options `updates_integrations_on` and `updates_integrations_off` (the "platform" of the update entity, for example `hue`, `shelly`, `hacs`, `hassio`). Off notifies none of an integration's updates, on all of them, even if their kind (Home Assistant, apps, HACS, device firmware) is off. Order: the single entry first, then the integration, then the kind. Apps and Core belong to "Home Assistant Supervisor" (`hassio`), HACS updates to `hacs`, device firmware to the integration of the device.
+- **Settings › Monitoring and notifications › Updates:** new list "Per integration" above the list of single entries: one switch per integration with the number of its updates and how many are open; the middle state shows mixed kinds (Home Assistant: Core on, apps off). An entry with its own choice still goes first. Only deviations are stored: an integration that follows its kinds has no entry.
+- **Setup wizard, row "Updates":** an arrow opens the integrations with updates and, one level down, the single updates (name, versions), one switch each. Switching an integration sets all its updates; with a mixed choice it shows the middle state. The wizard stores the smallest set that matches (kinds above stay as they are; the integration if at least half of its updates are on, the rest as entries). Switching an update on also switches the notification on. The draft keeps the choice.
+- WebSocket `get_options`: the list `catalog.updates` now carries `platform_name` (display name of the integration).
+
 ## [2.138.1] - 2026-10-24
 
 The rows of the setup wizard open and close again.
@@ -4700,6 +4711,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.139.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.139.0
 [2.138.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.1
 [2.138.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.0
 [2.137.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.137.0

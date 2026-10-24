@@ -15,8 +15,8 @@
 
 const STATES_SHOWN = ["new", "later", "open"];
 const MSG_ROWS = ["outage", "battery", "new", "charge", "updates"];
-// Meldungsarten mit Einstellung je Integration (aufklappbar); die Updates gelten für das ganze System
-const PER_INTEGRATION = ["outage", "battery", "new", "charge"];
+// Meldungsarten mit Einstellung je Integration (aufklappbar); bei den Updates sind es die Integrationen der update-Entitäten (seit 2.139.0)
+const PER_INTEGRATION = ["outage", "battery", "new", "charge", "updates"];
 const MSG_ICON = { outage: "alert", battery: "battery", new: "sparkle", charge: "batteryCharging", updates: "download" };
 // Zahlen der Meldungen: Schlüssel der Option, Zeile, Beschriftung, Einheit
 const VALUES = {
@@ -137,6 +137,7 @@ export class WizardUi {
       // Je Gerät (seit 2.137.0): ausgeschaltet bei Ausfall und Batterie, eingeschaltet bei Voll geladen (Lademeldung: Gerät, sonst Integration)
       devOff: { outage: new Set(this.overrideIds("notify")), battery: new Set(this.overrideList("battery").filter((o) => o.value === "off").map((o) => o.id)) },
       chargeOn: this.chargeOnFrom(v),
+      updOn: this.updOnFrom(v),
     };
   }
 
@@ -147,6 +148,26 @@ export class WizardUi {
 
   overrideIds(key) {
     return this.overrideList(key).map((o) => o.id);
+  }
+
+  // update-Entitäten aus get_options (catalog.updates)
+  updateItems() {
+    return this.s?.opts?.catalog?.updates || [];
+  }
+
+  // Updates, die jetzt gemeldet werden: Eintrag vor Integration vor Art (wie updates.is_wanted)
+  updOnFrom(v) {
+    const ex = new Set(v.updates_exclude || []);
+    const inc = new Set(v.updates_include || []);
+    const off = new Set(v.updates_integrations_off || []);
+    const on = new Set(v.updates_integrations_on || []);
+    const kinds = new Set(v.updates_kinds || []);
+    const set = new Set();
+    for (const x of this.updateItems()) {
+      const wanted = ex.has(x.id) ? false : inc.has(x.id) ? true : off.has(x.platform) ? false : on.has(x.platform) ? true : kinds.has(x.kind);
+      if (wanted) set.add(x.id);
+    }
+    return set;
   }
 
   // Geräte mit Batterie, deren Lademeldung jetzt gilt: eigene Wahl am Gerät vor der Integration
@@ -163,7 +184,7 @@ export class WizardUi {
     return {
       exI: [...d.exI].sort(), exT: [...d.exT].sort(), exD: [...d.exD].sort(), target: d.target, on: { ...d.on }, v: { ...d.v }, quiet: { ...d.quiet },
       ex: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])),
-      devOff: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), chargeOn: [...d.chargeOn].sort(),
+      devOff: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), chargeOn: [...d.chargeOn].sort(), updOn: [...d.updOn].sort(),
     };
   }
 
@@ -186,6 +207,7 @@ export class WizardUi {
     const known = new Set(s.data.devices.map((i) => i.id));
     for (const id of Object.keys(d.devOff)) if (Array.isArray(x.devOff?.[id])) d.devOff[id] = new Set(list(x.devOff[id], known));
     if (Array.isArray(x.chargeOn)) d.chargeOn = new Set(list(x.chargeOn, known));
+    if (Array.isArray(x.updOn)) d.updOn = new Set(list(x.updOn, new Set(this.updateItems().map((u) => u.id))));
     s.hasDraft = true;
     s.savedDraft = JSON.stringify(saved);
     // Dort weitermachen, wo es aufhörte (die Ruhezeit nur mit Ziel)
@@ -205,7 +227,7 @@ export class WizardUi {
   }
 
   snapshot(d) {
-    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet, x: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), o: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), c: [...d.chargeOn].sort() };
+    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet, x: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), o: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), c: [...d.chargeOn].sort(), u: [...d.updOn].sort() };
   }
 
   dirty() {
@@ -298,6 +320,15 @@ export class WizardUi {
 
   // Integrationen einer Meldungsart nach dem Entwurf (nur die, die nach Schritt 1 bis 3 übrig sind; Batterie und Laden nur mit Batteriegeräten)
   rowIntegrations(id) {
+    if (id === "updates") {
+      const map = new Map();
+      for (const x of this.updateItems()) {
+        const p = x.platform || x.kind;
+        if (!map.has(p)) map.set(p, { domain: p, n: 0, name: x.platform_name || p });
+        map.get(p).n += 1;
+      }
+      return [...map.values()].sort((a, b) => b.n - a.n || String(a.name).toLowerCase().localeCompare(String(b.name).toLowerCase()));
+    }
     const { data } = this.s;
     const count = new Map();
     for (const x of this.chosen()) if (x.domain && (!["battery", "charge"].includes(id) || x.battery)) count.set(x.domain, (count.get(x.domain) || 0) + 1);
@@ -310,14 +341,22 @@ export class WizardUi {
   // Schalter der Integration: "on", "off" oder "part" (Voll geladen: nach ihren Geräten)
   integState(id, domain) {
     const { d } = this.s;
-    if (id !== "charge") return d.ex[id].has(domain) ? "off" : "on";
+    if (!["charge", "updates"].includes(id)) return d.ex[id].has(domain) ? "off" : "on";
     const devs = this.rowDevices(id, domain);
-    const on = devs.filter((x) => d.chargeOn.has(x.id)).length;
+    const set = id === "charge" ? d.chargeOn : d.updOn;
+    const on = devs.filter((x) => set.has(x.id)).length;
     return on === 0 ? "off" : on === devs.length ? "on" : "part";
   }
 
   // Geräte einer Integration unter einer Meldungsart (nach dem Entwurf; Batterie und Laden nur mit Batterie), nach Namen
   rowDevices(id, domain) {
+    if (id === "updates") {
+      // update-Entitäten einer Integration; unter "Bereich" steht die Version
+      return this.updateItems()
+        .filter((x) => (x.platform || x.kind) === domain)
+        .map((x) => ({ id: x.id, name: x.name, area: x.available && x.installed && x.latest ? `${x.installed} → ${x.latest}` : x.installed || "" }))
+        .sort((a, b) => String(a.name).toLowerCase().localeCompare(String(b.name).toLowerCase()));
+    }
     return this.chosen()
       .filter((x) => x.domain === domain && (!["battery", "charge"].includes(id) || x.battery))
       .sort((a, b) => String(a.name).toLowerCase().localeCompare(String(b.name).toLowerCase()));
@@ -325,7 +364,7 @@ export class WizardUi {
 
   devOn(id, devId) {
     const { d } = this.s;
-    return id === "charge" ? d.chargeOn.has(devId) : !d.devOff[id].has(devId);
+    return id === "charge" ? d.chargeOn.has(devId) : id === "updates" ? d.updOn.has(devId) : !d.devOff[id].has(devId);
   }
 
   // Zeilen mit Werten zum Anpassen: bei den Updates die Uhrzeit nur im Modus "einmal am Tag"
@@ -524,11 +563,11 @@ export class WizardUi {
             const state = this.integState(id, i.domain);
             const key = `${id}:${i.domain}`;
             const open = deep && this.s.openInt.has(key);
-            const chev = deep ? `<button type="button" class="wz-mx" data-wz-iopen="${escape(key)}" aria-expanded="${open}" title="${escape(this.t("wzMDevices"))}" aria-label="${escape(this.t("wzMDevices"))}"><span class="wz-chev${open ? " open" : ""}">${mdi("chevronRight", 16)}</span></button>` : "";
-            const head = `<div class="wz-li">${chev}${this.host._ibadge(i.domain, i.name)}<div class="wz-nm">${escape(i.name)}<small>${escape(this.t("devicesCount", i.n))}</small></div><label class="switch${state === "part" ? " part" : ""}"><input type="checkbox" data-wz-int="${id}" data-wz-dom="${escape(i.domain)}"${state !== "off" ? " checked" : ""}${none ? " disabled" : ""} aria-label="${escape(i.name)}"><span></span></label></div>`;
+            const chev = deep ? `<button type="button" class="wz-mx" data-wz-iopen="${escape(key)}" aria-expanded="${open}" title="${escape(this.t(id === "updates" ? "wzMUpdates" : "wzMDevices"))}" aria-label="${escape(this.t(id === "updates" ? "wzMUpdates" : "wzMDevices"))}"><span class="wz-chev${open ? " open" : ""}">${mdi("chevronRight", 16)}</span></button>` : "";
+            const head = `<div class="wz-li">${chev}${this.host._ibadge(i.domain, i.name)}<div class="wz-nm">${escape(i.name)}<small>${escape(id === "updates" ? this.t("updIntegCount", i.n) : this.t("devicesCount", i.n))}</small></div><label class="switch${state === "part" ? " part" : ""}"><input type="checkbox" data-wz-int="${id}" data-wz-dom="${escape(i.domain)}"${state !== "off" ? " checked" : ""}${none ? " disabled" : ""} aria-label="${escape(i.name)}"><span></span></label></div>`;
             if (!open) return head;
             // Bei ausgeschalteter Integration (Ausfall, Batterie) gelten die Geräte nicht: ausgegraut
-            const off = state === "off" && id !== "charge";
+            const off = state === "off" && !["charge", "updates"].includes(id);
             const devs = this.rowDevices(id, i.domain)
               .map((x) => `<div class="wz-li${off ? " dim" : ""}"><div class="wz-nm">${escape(x.name)}${x.area ? `<small>${escape(x.area)}</small>` : ""}</div><label class="switch"><input type="checkbox" data-wz-md="${id}" data-wz-id="${escape(x.id)}"${this.devOn(id, x.id) ? " checked" : ""}${none || off ? " disabled" : ""} aria-label="${escape(x.name)}"><span></span></label></div>`)
               .join("");
@@ -609,12 +648,13 @@ export class WizardUi {
     values.new_exclude_integrations = merge("new", base.new_exclude_integrations, excluded("new"));
     // Voll geladen: eine Integration gilt, wenn die Mehrheit ihrer Geräte an ist; die anderen Geräte bekommen eine eigene Wahl (siehe deviceCalls)
     values.charge_integrations = merge("charge", base.charge_integrations, this.chargeIntegrations());
+    Object.assign(values, this.updateLists());
     if (d.target !== "none") {
       values.quiet_enabled = d.quiet.on;
       if (d.quiet.on && d.quiet.uniform) values.quiet_days = Array.from({ length: 7 }, () => ({ on: true, from: d.quiet.from, to: d.quiet.to }));
     }
     // Ohne Ziel sind Meldungen und Ruhezeit nicht Teil der Wahl: nichts anfassen ausser dem Ziel
-    if (d.target === "none") for (const k of ["notify_outage", "notify_online", "battery_push", "notify_new", "notify_charge", "notify_updates", "notify_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"]) delete values[k];
+    if (d.target === "none") for (const k of ["notify_outage", "notify_online", "battery_push", "notify_new", "notify_charge", "notify_updates", "notify_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations", "updates_integrations_on", "updates_integrations_off", "updates_exclude", "updates_include"]) delete values[k];
     return values;
   }
 
@@ -626,6 +666,35 @@ export class WizardUi {
         return devs.filter((x) => this.s.d.chargeOn.has(x.id)).length * 2 >= devs.length && devs.some((x) => this.s.d.chargeOn.has(x.id));
       })
       .map((i) => i.domain);
+  }
+
+  // Update-Meldungen: je Integration (Plattform) an oder aus, je Eintrag nur, was davon abweicht; die Arten oben (updates_kinds) bleiben, wie sie sind.
+  // Gespeichert wird das Kleinste, das den Entwurf trifft: folgt alles seiner Art, steht nichts da.
+  updateLists() {
+    const { d, base } = this.s;
+    const kinds = new Set(base.updates_kinds || []);
+    const items = this.updateItems();
+    const plats = new Set(items.map((x) => x.platform || x.kind));
+    const ids = new Set(items.map((x) => x.id));
+    const on = (base.updates_integrations_on || []).filter((p) => !plats.has(p));
+    const off = (base.updates_integrations_off || []).filter((p) => !plats.has(p));
+    const exclude = (base.updates_exclude || []).filter((id) => !ids.has(id));
+    const include = (base.updates_include || []).filter((id) => !ids.has(id));
+    for (const p of plats) {
+      const group = items.filter((x) => (x.platform || x.kind) === p);
+      const want = (x) => d.updOn.has(x.id);
+      const count = group.filter(want).length;
+      const integ = count * 2 >= group.length;
+      // Eine Ausnahme für die Integration nur, wenn ihre Einträge sonst nicht der Art folgten
+      const needInteg = group.some((x) => kinds.has(x.kind) !== integ) && group.some((x) => want(x) !== kinds.has(x.kind));
+      if (needInteg) (integ ? on : off).push(p);
+      for (const x of group) {
+        const follows = needInteg ? integ : kinds.has(x.kind);
+        if (want(x) !== follows) (want(x) ? include : exclude).push(x.id);
+      }
+    }
+    const sort = (list) => [...new Set(list)].sort();
+    return { updates_integrations_on: sort(on), updates_integrations_off: sort(off), updates_exclude: sort(exclude), updates_include: sort(include) };
   }
 
   // Eigene Einstellungen je Gerät, die der Entwurf ändert (nur wirklich geänderte; Geräte ausserhalb der Wahl bleiben, wie sie sind).
@@ -756,24 +825,26 @@ export class WizardUi {
       } else if (el.matches("[data-wz-int]")) {
         const id = el.dataset.wzInt;
         const dom = el.dataset.wzDom;
-        if (id === "charge") {
-          // Die Integration setzt alle ihre Geräte mit Batterie; das schaltet die Meldung selbst mit ein
-          for (const x of this.rowDevices("charge", dom)) {
-            if (el.checked) d.chargeOn.add(x.id);
-            else d.chargeOn.delete(x.id);
+        if (id === "charge" || id === "updates") {
+          // Die Integration setzt alle ihre Einträge (Geräte mit Batterie, update-Entitäten); das schaltet die Meldung selbst mit ein
+          const set = id === "charge" ? d.chargeOn : d.updOn;
+          for (const x of this.rowDevices(id, dom)) {
+            if (el.checked) set.add(x.id);
+            else set.delete(x.id);
           }
-          if (el.checked) d.on.charge = true;
+          if (el.checked) d.on[id] = true;
         } else if (el.checked) d.ex[id].delete(dom);
         else d.ex[id].add(dom);
         this.render();
       } else if (el.matches("[data-wz-md]")) {
         const id = el.dataset.wzMd;
         const dev = el.dataset.wzId;
-        if (id === "charge") {
+        if (id === "charge" || id === "updates") {
+          const set = id === "charge" ? d.chargeOn : d.updOn;
           if (el.checked) {
-            d.chargeOn.add(dev);
-            d.on.charge = true;
-          } else d.chargeOn.delete(dev);
+            set.add(dev);
+            d.on[id] = true;
+          } else set.delete(dev);
         } else if (el.checked) d.devOff[id].delete(dev);
         else d.devOff[id].add(dev);
         this.render();

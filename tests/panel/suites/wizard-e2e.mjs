@@ -113,8 +113,16 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] "Voll geladen" an, ohne gewählte Integrationen: Hinweis "je Integration einschalten"`, await s.ev(`return !!r.querySelector("${s.D} .wz-hint")`));
       await s.tap(`${s.D} [data-wz-msg="charge"]`);
       // Je Meldungsart nach Integration einstellen (Pfeil), ohne Geräte-Ebene
-      check(`[${tag}] Pfeil an jeder der vier Zeilen, alle zu`, (await s.ev(`return r.querySelectorAll("${s.D} button[data-wz-mopen]").length`)) === 4 && (await s.ev(`return r.querySelectorAll("${s.D} .wz-msub").length`)) === 0);
-      check(`[${tag}] Updates hat keinen Pfeil (gilt für das ganze System)`, (await s.ev(`return !r.querySelector('${s.D} [data-wz-mopen="updates"]')`)));
+      check(`[${tag}] Pfeil an jeder der fünf Zeilen, alle zu`, (await s.ev(`return r.querySelectorAll("${s.D} button[data-wz-mopen]").length`)) === 5 && (await s.ev(`return r.querySelectorAll("${s.D} .wz-msub").length`)) === 0);
+      // Updates: Integrationen (Plattformen) und darunter die einzelnen Updates
+      await s.tap(`${s.D} [data-wz-mopen="updates"]`);
+      const updList = await s.ev(`return [...r.querySelectorAll('${s.D} [data-wz-int="updates"]')].map((i) => i.dataset.wzDom + ":" + i.closest(".switch").classList.contains("part") + ":" + i.checked)`);
+      check(`[${tag}] Updates aufgeklappt: Integrationen mit Update-Einträgen (Home Assistant "teils" nicht, HACS an, Geräte-Firmware aus)`, updList.length >= 4 && updList.includes("hassio:false:true") && updList.includes("hacs:false:true") && updList.includes("shelly:false:false") && updList.includes("hue:false:false"), updList.join());
+      await s.tap(`${s.D} [data-wz-int="updates"][data-wz-dom="shelly"]`);
+      await s.tap(`${s.D} [data-wz-iopen="updates:hassio"]`);
+      await s.tap(`${s.D} [data-wz-md="updates"][data-wz-id="update.mosquitto_update"]`);
+      check(`[${tag}] Shelly an, ein Add-on aus: Home Assistant "teils"`, await s.ev(`return r.host._wizard.integState("updates", "shelly") === "on" && r.host._wizard.integState("updates", "hassio") === "part" && !r.host._wizard.s.d.updOn.has("update.mosquitto_update")`));
+      await s.tap(`${s.D} [data-wz-mopen="updates"]`);
       // Alle Pfeile nacheinander auf und zu: der Assistent bleibt bedienbar
       for (const id of ["outage", "battery", "new", "charge"]) {
         await s.tap(`${s.D} [data-wz-mopen="${id}"]`);
@@ -160,7 +168,7 @@ for (const lang of ["de", "en"]) {
       await s.tap(`${s.D} [data-wz-iopen="charge:${chargeDom}"]`);
       await s.tap(`${s.D} [data-wz-mopen="charge"]`);
       await s.tap(`${s.D} [data-wz-mopen="outage"]`);
-      await s.tap(`${s.D} [data-wz-msg="updates"]`);
+      check(`[${tag}] Eine Update-Integration einzuschalten schaltet die Meldung mit ein`, await s.ev(`return r.host._wizard.s.d.on.updates === true`));
       await s.ev(`const i = r.querySelector('${s.D} [data-wz-v="updates_time"]'); i.value = "07:30"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
       check(`[${tag}] Ausgefallene Geräte und Batterie an`, await s.ev(`const d = r.host._wizard.s.d; return d.on.outage && d.on.battery && !d.on.new && d.on.charge`));
       // Prüfung: Melden nach < Ausgefallen nach, Bereich
@@ -190,7 +198,7 @@ for (const lang of ["de", "en"]) {
       await s.tap(`${s.D} [data-wz="finish"]`);
       check(`[${tag}] Fertigstellen: Fenster zu`, await s.closed());
       const saved = (await s.calls())[0] || {};
-      check(`[${tag}] ein einziges set_options mit Auswahl, Ziel, Meldungen, Werten`, (await s.calls()).length === 1 && saved.exclude_integrations?.join() === off && saved.exclude_types?.join() === types[0] && saved.exclude_devices?.join() === devs[0] && saved.notify_service === "notify.mobile_app_testhandy" && saved.notify_outage === true && saved.notify_online === true && saved.battery_push === true && saved.notify_new === false && saved.notify_updates === true && JSON.stringify(saved.charge_integrations) === JSON.stringify([chargeDom]) && saved.notify_exclude_integrations?.join() === outDom && saved.updates_time === "07:30" && !("offline_after" in saved) && saved.notify_delay === 6 && saved.battery_low === 20, JSON.stringify(saved));
+      check(`[${tag}] ein einziges set_options mit Auswahl, Ziel, Meldungen, Werten`, (await s.calls()).length === 1 && saved.exclude_integrations?.join() === off && saved.exclude_types?.join() === types[0] && saved.exclude_devices?.join() === devs[0] && saved.notify_service === "notify.mobile_app_testhandy" && saved.notify_outage === true && saved.notify_online === true && saved.battery_push === true && saved.notify_new === false && saved.notify_updates === true && saved.updates_integrations_on?.join() === "shelly" && saved.updates_exclude?.join() === "update.mosquitto_update" && saved.updates_include?.join() === "" && saved.updates_integrations_off?.join() === "" && JSON.stringify(saved.charge_integrations) === JSON.stringify([chargeDom]) && saved.notify_exclude_integrations?.join() === outDom && saved.updates_time === "07:30" && !("offline_after" in saved) && saved.notify_delay === 6 && saved.battery_low === 20, JSON.stringify(saved));
       check(`[${tag}] Ruhezeit gespeichert (sieben Tage 23:00 bis 07:00)`, saved.quiet_enabled === true && saved.quiet_days?.length === 7 && saved.quiet_days.every((d) => d.on && d.from === "23:00" && d.to === "07:00"));
       const devCalls = await s.p.evaluate(() => (window.__wsCalls || []).filter((m) => m.type === "device_panel/set_device_settings"));
       check(`[${tag}] Geräte: stumm bei Ausfall${chargeOffId ? " und Lademeldung aus am Gerät" : ""} als set_device_settings, vor dem Abschluss`, devCalls.some((c) => c.device_id === muteId && c.notify === false) && (!chargeOffId || devCalls.some((c) => c.device_id === chargeOffId && c.charge === false)) && devCalls.length === (chargeOffId ? 2 : 1) - (chargeOffId === muteId ? 1 : 0), JSON.stringify(devCalls));

@@ -41,6 +41,8 @@ from .const import (
     DEFAULT_CHARGE_STALL,
     CONF_UPDATES_EXCLUDE,
     CONF_UPDATES_INCLUDE,
+    CONF_UPDATES_INTEGRATIONS_OFF,
+    CONF_UPDATES_INTEGRATIONS_ON,
     CONF_UPDATES_KINDS,
     CONF_UPDATES_MODE,
     CONF_UPDATES_REPEAT,
@@ -688,6 +690,8 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_UPDATES_KINDS): update_kinds,
         vol.Optional(CONF_UPDATES_EXCLUDE): update_ids,
         vol.Optional(CONF_UPDATES_INCLUDE): update_ids,
+        vol.Optional(CONF_UPDATES_INTEGRATIONS_OFF): _domains,
+        vol.Optional(CONF_UPDATES_INTEGRATIONS_ON): _domains,
         vol.Optional(CONF_UPDATES_MODE): vol.In(UPDATES_MODES),
         vol.Optional(CONF_UPDATES_TIME): push_time,
         vol.Optional(CONF_UPDATE_CHECK_TIME): vol.Any("", None, push_time),
@@ -857,6 +861,8 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_UPDATES_KINDS] = [k for k in UPDATE_KINDS if k in kinds] if isinstance(kinds, list) else list(DEFAULT_UPDATES_KINDS)
     for key in (CONF_UPDATES_EXCLUDE, CONF_UPDATES_INCLUDE):
         values[key] = sorted({u for u in options.get(key) or [] if isinstance(u, str) and _UPDATE_ID_RE.match(u)})
+    for key in (CONF_UPDATES_INTEGRATIONS_OFF, CONF_UPDATES_INTEGRATIONS_ON):
+        values[key] = sorted({u for u in options.get(key) or [] if isinstance(u, str) and _DOMAIN_RE.match(u)})
     mode = options.get(CONF_UPDATES_MODE)
     values[CONF_UPDATES_MODE] = mode if mode in UPDATES_MODES else UPDATES_DAILY
     try:

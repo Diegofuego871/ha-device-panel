@@ -191,6 +191,12 @@ def test_is_wanted_and_option_values() -> None:
     assert is_wanted(opts, "update.b", "devices") is True
     assert is_wanted(opts, "update.c", "addons") is True
     assert is_wanted(opts, "update.d", "devices") is False
+    # Pro Integration (seit 2.139.0): Eintrag vor Integration vor Art
+    integ = values_from({"updates_integrations_off": ["hue"], "updates_integrations_on": ["shelly"], "updates_exclude": ["update.keep_off"], "updates_include": ["update.keep_on"]})
+    assert is_wanted(integ, "update.x", "hacs", "hue") is False and is_wanted(integ, "update.x", "devices", "shelly") is True
+    assert is_wanted(integ, "update.x", "devices", "other") is False and is_wanted(integ, "update.x", "hacs", "other") is True and is_wanted(integ, "update.x", "hacs") is True
+    assert is_wanted(integ, "update.keep_on", "devices", "hue") is True and is_wanted(integ, "update.keep_off", "devices", "shelly") is False
+    assert values_from({})["updates_integrations_on"] == [] and values_from({"updates_integrations_off": ["x", 3, "A b", "x"]})["updates_integrations_off"] == ["x"]
     assert values_from({})["updates_exclude"] == [] and values_from({})["updates_include"] == []
     assert values_from({"updates_exclude": ["x", "update.z", "update.z", 3]})["updates_exclude"] == ["update.z"]
     assert update_ids(["update.b", "update.a", "update.a"]) == ["update.a", "update.b"]

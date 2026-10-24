@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "333"
+PANEL_VERSION = "334"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -146,6 +146,10 @@ DEFAULT_UPDATES_KINDS = ("core", "addons", "hacs")
 # Aus: Entität gemeldet wird nie; An: wird gemeldet, auch wenn die Art aus ist.
 CONF_UPDATES_EXCLUDE = "updates_exclude"
 CONF_UPDATES_INCLUDE = "updates_include"
+# Ausnahmen pro Integration (seit 2.139.0, die "Plattform" der update-Entität: zum Beispiel "hue", "hacs", "hassio"): Aus meldet keines ihrer
+# Updates, An meldet alle, auch wenn die Art aus ist. Vorrang: Eintrag, dann Integration, dann Art.
+CONF_UPDATES_INTEGRATIONS_OFF = "updates_integrations_off"
+CONF_UPDATES_INTEGRATIONS_ON = "updates_integrations_on"
 # Offen gebliebenes Update erneut melden: nie, nach 3 oder nach 7 Tagen.
 CONF_UPDATES_REPEAT = "updates_repeat"
 UPDATES_REPEATS = {"never": 0, "3d": 3 * 86400, "7d": 7 * 86400}

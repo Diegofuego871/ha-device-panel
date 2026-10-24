@@ -26,6 +26,8 @@ from .const import (
     CONF_NOTIFY_UPDATES,
     CONF_UPDATES_EXCLUDE,
     CONF_UPDATES_INCLUDE,
+    CONF_UPDATES_INTEGRATIONS_OFF,
+    CONF_UPDATES_INTEGRATIONS_ON,
     CONF_UPDATES_KINDS,
     UPDATE_KINDS,
     CONF_UPDATES_MODE,
@@ -65,11 +67,15 @@ def update_kind(hass: HomeAssistant, entity_id: str) -> str:
     return "devices"
 
 
-def is_wanted(opts: dict[str, Any], entity_id: str, kind: str) -> bool:
-    """Ob ein Update gemeldet wird: Ausnahme pro Eintrag vor der Art."""
+def is_wanted(opts: dict[str, Any], entity_id: str, kind: str, platform: str | None = None) -> bool:
+    """Ob ein Update gemeldet wird: Ausnahme pro Eintrag vor der Ausnahme pro Integration (Plattform) vor der Art."""
     if entity_id in opts[CONF_UPDATES_EXCLUDE]:
         return False
     if entity_id in opts[CONF_UPDATES_INCLUDE]:
+        return True
+    if platform and platform in opts.get(CONF_UPDATES_INTEGRATIONS_OFF, ()):
+        return False
+    if platform and platform in opts.get(CONF_UPDATES_INTEGRATIONS_ON, ()):
         return True
     return kind in opts[CONF_UPDATES_KINDS]
 
@@ -208,7 +214,8 @@ class UpdateNotifier:
             if state.state != "on" or (only is not None and state.entity_id not in only):
                 continue
             item = _item(self.hass, state)
-            if not is_wanted(opts, item["id"], item["kind"]):
+            entry = er.async_get(self.hass).async_get(state.entity_id)
+            if not is_wanted(opts, item["id"], item["kind"], entry.platform if entry else None):
                 continue
             known = self._known.get(item["id"])
             if known is None or known["v"] != item["latest"] or (repeat and now - known["at"] >= repeat):

@@ -7,6 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.139.0] - 2026-10-24
+
+Update-Meldungen lassen sich pro Integration einstellen, in den Einstellungen und im Einrichtungsassistenten.
+
+### Hinzugefügt
+
+- **Update-Meldungen pro Integration:** zwei neue Optionen `updates_integrations_on` und `updates_integrations_off` (die "Plattform" der update-Entität, zum Beispiel `hue`, `shelly`, `hacs`, `hassio`). Aus meldet keines der Updates einer Integration, An alle, auch wenn ihre Art (Home Assistant, Apps, HACS, Geräte-Firmware) aus ist. Reihenfolge: zuerst der einzelne Eintrag, dann die Integration, dann die Art. Apps und Core gehören zu "Home Assistant Supervisor" (`hassio`), HACS-Updates zu `hacs`, Geräte-Firmware zur Integration des Geräts.
+- **Einstellungen › Überwachung und Meldungen › Updates:** neue Liste "Pro Integration" über der Liste der einzelnen Einträge: ein Schalter je Integration mit der Zahl ihrer Updates und wie viele offen sind; der Zwischenzustand zeigt gemischte Arten (Home Assistant: Core an, Apps aus). Ein Eintrag mit eigener Wahl geht weiterhin vor. Gespeichert werden nur Abweichungen: eine Integration, die ihren Arten folgt, hat keinen Eintrag.
+- **Einrichtungsassistent, Zeile "Updates":** ein Pfeil öffnet die Integrationen mit Updates und eine Ebene tiefer die einzelnen Updates (Name, Versionen), je ein Schalter. Die Integration setzt alle ihre Updates; bei gemischter Wahl zeigt sie den Zwischenzustand. Der Assistent speichert das Kleinste, das passt (die Arten oben bleiben, wie sie sind; die Integration, wenn mindestens die Hälfte ihrer Updates an ist, der Rest als Einträge). Ein Update einzuschalten schaltet die Meldung mit ein. Der Zwischenstand merkt sich die Wahl.
+- WebSocket `get_options`: die Liste `catalog.updates` trägt jetzt `platform_name` (Anzeigename der Integration).
+
 ## [2.138.1] - 2026-10-24
 
 Die Zeilen des Einrichtungsassistenten klappen wieder auf und zu.
@@ -4801,6 +4812,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.139.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.139.0
 [2.138.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.1
 [2.138.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.0
 [2.137.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.137.0

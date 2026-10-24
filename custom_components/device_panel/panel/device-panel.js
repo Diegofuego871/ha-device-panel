@@ -438,7 +438,7 @@ const MON_TAB_KEYS = {
   charge: ["notify_service_charge", "notify_charge", "charge_live", "charge_full", "charge_rise", "charge_stall", "notify_charge_stop", "charge_integrations", "emoji_charge", "emoji_charge_stop", "reset_charge"],
   battery: ["notify_service_battery", "battery_low", "battery_push", "battery_push_mode", "battery_push_time", "battery_push_daily", "battery_persistent", "battery_fields", "emoji_battery", "reset_battery"],
   new: ["notify_service_new", "notify_new", "new_window", "new_persistent", "new_fields", "emoji_new"],
-  updates: ["notify_service_updates", "notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include", "emoji_updates"],
+  updates: ["notify_service_updates", "notify_updates", "updates_mode", "updates_time", "updates_window", "updates_repeat", "updates_kinds", "updates_exclude", "updates_include", "updates_integrations_on", "updates_integrations_off", "emoji_updates"],
   sig: ["signal_low", "reset_signal"],
   integ: ["offline_after_integrations", "notify_delay_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations", "notify_exclude_integrations", "persistent_exclude_integrations", "battery_low_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "signal_low_integrations"],
 };
@@ -8033,10 +8033,52 @@ class DevicePanel extends HTMLElement {
   // Reiter "Updates" (seit 1.29.0, docs/mockups/charging-v1): Update-Erinnerung per Push, ersetzt
   // Automationen mit Zähler und Hilfsentität. Das Panel hört auf die update-Entitäten von HA.
   _normalizeUpdateItems(draft) {
-    const kind = new Map((this._settings.data?.catalog?.updates || []).map((u) => [u.id, u.kind]));
+    const items = this._settings.data?.catalog?.updates || [];
+    const kind = new Map(items.map((u) => [u.id, u.kind]));
+    const plat = new Map(items.map((u) => [u.id, u.platform]));
     const kinds = new Set(draft.updates_kinds || []);
-    draft.updates_exclude = (draft.updates_exclude || []).filter((id) => !kind.has(id) || kinds.has(kind.get(id)));
-    draft.updates_include = (draft.updates_include || []).filter((id) => !kind.has(id) || !kinds.has(kind.get(id)));
+    // Eine Ausnahme pro Integration (seit 2.139.0) geht der Art vor: Einträge dieser Integration folgen nicht mehr der Art
+    const own = new Set([...(draft.updates_integrations_on || []), ...(draft.updates_integrations_off || [])]);
+    const free = (id) => !kind.has(id) || !own.has(plat.get(id));
+    draft.updates_exclude = (draft.updates_exclude || []).filter((id) => !free(id) || !kind.has(id) || kinds.has(kind.get(id)));
+    draft.updates_include = (draft.updates_include || []).filter((id) => !free(id) || !kind.has(id) || !kinds.has(kind.get(id)));
+    // Ausnahmen pro Integration, die jetzt der Art entsprechen, sind überflüssig
+    for (const [key, want] of [["updates_integrations_on", true], ["updates_integrations_off", false]]) {
+      draft[key] = (draft[key] || []).filter((p) => {
+        const mine = items.filter((u) => u.platform === p);
+        return !mine.length || !mine.every((u) => kinds.has(u.kind) === want);
+      });
+    }
+  }
+
+  // Integrationen (Plattformen) mit update-Entitäten, nach Art und Namen (seit 2.139.0)
+  _updPlatforms(items) {
+    const order = new Map(UPDATE_KINDS.map((k, i) => [k, i]));
+    const map = new Map();
+    for (const x of items) {
+      const p = x.platform || x.kind;
+      if (!map.has(p)) map.set(p, { platform: p, name: x.platform_name || p, items: [] });
+      map.get(p).items.push(x);
+    }
+    return [...map.values()].sort((a, b) => (order.get(a.items[0].kind) ?? 9) - (order.get(b.items[0].kind) ?? 9) || String(a.name).toLowerCase().localeCompare(String(b.name).toLowerCase()));
+  }
+
+  // Wird dieses Update gemeldet: Eintrag vor Integration vor Art (wie updates.is_wanted)
+  _updWanted(v, x) {
+    if ((v.updates_exclude || []).includes(x.id)) return false;
+    if ((v.updates_include || []).includes(x.id)) return true;
+    if (x.platform && (v.updates_integrations_off || []).includes(x.platform)) return false;
+    if (x.platform && (v.updates_integrations_on || []).includes(x.platform)) return true;
+    return (v.updates_kinds || []).includes(x.kind);
+  }
+
+  // Schalter einer Integration: "on", "off" oder "part" (die Arten ihrer Einträge sind gemischt)
+  _updIntegState(v, group) {
+    if ((v.updates_integrations_off || []).includes(group.platform)) return "off";
+    if ((v.updates_integrations_on || []).includes(group.platform)) return "on";
+    const kinds = new Set(v.updates_kinds || []);
+    const on = group.items.filter((x) => kinds.has(x.kind)).length;
+    return on === 0 ? "off" : on === group.items.length ? "on" : "part";
   }
 
   // Reiter "Ruhezeit" (seit 2.95.0): ein globales Fenster je Wochentag; Meldungen der gewählten Arten
@@ -8088,7 +8130,7 @@ class DevicePanel extends HTMLElement {
     // umgeschaltet wird (Ausnahme pro Eintrag, `updates_exclude` / `updates_include`).
     const st = this._settings;
     const items = st.data?.catalog?.updates || [];
-    const wanted = (v, x) => (v.updates_exclude || []).includes(x.id) ? false : (v.updates_include || []).includes(x.id) ? true : (v.updates_kinds || []).includes(x.kind);
+    const wanted = (v, x) => this._updWanted(v, x);
     const saved = st.data.values;
     const rows = items
       .map((x) => {
@@ -8099,6 +8141,18 @@ class DevicePanel extends HTMLElement {
           <label class="switch"><input type="checkbox" data-uitem="${escape(x.id)}" ${on ? "checked" : ""} aria-label="${escape(`${t("optUpdNotify")}: ${x.name}`)}"><span></span></label></div>`;
       })
       .join("");
+    // Pro Integration (seit 2.139.0): ein Schalter je Integration, der Art und Plattform ihrer Einträge zusammenfasst; ein Eintrag mit eigener Wahl geht vor
+    const groups = this._updPlatforms(items);
+    const integRows = groups
+      .map((g) => {
+        const state = this._updIntegState(d, g);
+        const was = this._updIntegState(saved, g);
+        const open = g.items.filter((x) => x.available).length;
+        return `<div class="ex-row${state !== was ? " changed" : ""}">${this._ibadge(g.platform, g.name)}<div class="ex-name">${escape(g.name)}<small>${escape([t("updIntegCount", g.items.length), open ? t("updIntegOpen", open) : ""].filter(Boolean).join(" · "))}</small></div>
+          <label class="switch${state === "part" ? " part" : ""}"><input type="checkbox" data-uinteg="${escape(g.platform)}" ${state !== "off" ? "checked" : ""} aria-label="${escape(`${t("optUpdNotify")}: ${g.name}`)}"><span></span></label></div>`;
+      })
+      .join("");
+    const integ = groups.length ? `<div class="mon-grp">${escape(t("grpUpdInteg"))}</div><div class="opt-short">${escape(t("updIntegHint"))}</div><div class="ex-list">${integRows}</div>` : "";
     const list = items.length
       ? `<div class="mon-grp">${escape(t("grpUpdItems"))}</div><div class="opt-short">${escape(t("updItemsHint"))}</div>${this._searchHtml("updates", items.length)}
         <div class="srch-rows" data-srch="updates">${rows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>`
@@ -8140,6 +8194,7 @@ class DevicePanel extends HTMLElement {
       ${kindRows}
       ${this._emojiHtml(d, ["updates"], changes)}
       ${preview}
+      ${integ}
       ${list}`;
   }
 
@@ -9261,6 +9316,22 @@ class DevicePanel extends HTMLElement {
         st.draft.updates_kinds = UPDATE_KINDS.filter((k) => on.has(k));
         // Ausnahmen, die jetzt der Art entsprechen, sind überflüssig.
         this._normalizeUpdateItems(st.draft);
+      } else if (el.dataset.uinteg) {
+        // Integration umschalten: gleich wie ihre Arten = keine Ausnahme, sonst Ausnahme (Aus oder An)
+        const p = el.dataset.uinteg;
+        const group = this._updPlatforms(st.data.catalog?.updates || []).find((g) => g.platform === p);
+        const on = new Set(st.draft.updates_integrations_on || []);
+        const off = new Set(st.draft.updates_integrations_off || []);
+        on.delete(p);
+        off.delete(p);
+        const base = group ? this._updIntegState({ ...st.draft, updates_integrations_on: [], updates_integrations_off: [] }, group) : "off";
+        if ((el.checked ? "on" : "off") !== base) (el.checked ? on : off).add(p);
+        st.draft.updates_integrations_on = [...on].sort();
+        st.draft.updates_integrations_off = [...off].sort();
+        // Einträge dieser Integration folgen jetzt ihr: eigene Wahlen der Einträge, die dem Ergebnis entsprechen, sind überflüssig
+        const ids = new Set((group?.items || []).map((x) => x.id));
+        st.draft.updates_exclude = (st.draft.updates_exclude || []).filter((id) => !(ids.has(id) && !el.checked));
+        st.draft.updates_include = (st.draft.updates_include || []).filter((id) => !(ids.has(id) && el.checked));
       } else if (el.dataset.uitem) {
         // Eintrag umschalten: gleich wie die Art = keine Ausnahme, sonst Ausnahme (Aus oder An).
         const x = (st.data.catalog?.updates || []).find((u) => u.id === el.dataset.uitem);
@@ -9268,8 +9339,9 @@ class DevicePanel extends HTMLElement {
         const inc = new Set(st.draft.updates_include || []);
         ex.delete(el.dataset.uitem);
         inc.delete(el.dataset.uitem);
-        const kindOn = (st.draft.updates_kinds || []).includes(x?.kind);
-        if (el.checked !== kindOn) (el.checked ? inc : ex).add(el.dataset.uitem);
+        // Gleich wie das, was ohne eigene Wahl des Eintrags gilt (Integration, sonst Art), ist keine Ausnahme
+        const follows = x ? this._updWanted({ ...st.draft, updates_exclude: [], updates_include: [] }, x) : false;
+        if (el.checked !== follows) (el.checked ? inc : ex).add(el.dataset.uitem);
         st.draft.updates_exclude = [...ex].sort();
         st.draft.updates_include = [...inc].sort();
       } else if (el.dataset.nfield || el.dataset.bfield || el.dataset.newfield) {

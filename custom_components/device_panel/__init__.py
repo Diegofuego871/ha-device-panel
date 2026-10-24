@@ -119,6 +119,7 @@ from .devices import (
     DEVICES_STORE_KEY,
     async_catalog,
     async_device_detail,
+    async_integration_info,
     async_device_overrides,
     async_list_devices,
     async_load_type_overrides,
@@ -857,6 +858,16 @@ async def _ws_backup_import(hass: HomeAssistant, connection: websocket_api.Activ
     connection.send_result(msg["id"], report)
 
 
+async def _updates_catalog(hass: HomeAssistant) -> list[dict[str, Any]]:
+    """update-Entitäten für die Einstellungen und den Assistenten, mit dem Anzeigenamen ihrer Integration (Plattform)."""
+    items = updates.catalog(hass)
+    info = await async_integration_info(hass, {i["platform"] for i in items if i.get("platform")})
+    for item in items:
+        platform = item.get("platform")
+        item["platform_name"] = info.get(platform, {}).get("name", platform) if platform else None
+    return items
+
+
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/get_options"})
 @websocket_api.require_admin
 @websocket_api.async_response
@@ -878,7 +889,7 @@ async def _ws_get_options(
         {
             "values": options_api.current_values(entry),
             "panel": update_check.panel_settings(hass),
-            "catalog": {**await async_catalog(hass), "updates": updates.catalog(hass)},
+            "catalog": {**await async_catalog(hass), "updates": await _updates_catalog(hass)},
             "limits": options_api.limits(),
             "notify_targets": options_api.notify_targets(
                 hass,
