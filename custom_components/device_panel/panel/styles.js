@@ -97,7 +97,8 @@ button { font: inherit; color: inherit; }
 /* Kopf */
 /* Breite der ersten zwei Kacheln (Verfügbarkeit, Gerade ausgefallen): auch das Suchfeld endet dort (seit 2.36.0, siehe .tb-main) */
 :host { --hero-c1: 300px; --hero-c2: 380px; }
-.hero { display: grid; grid-template-columns: minmax(260px, var(--hero-c1)) minmax(300px, var(--hero-c2)) minmax(280px, 1fr); gap: 12px; }
+/* Kopf, Chips und Fuss bleiben beim seitlichen Verschieben der breiten Tabelle stehen (iPad): nur die Tabelle wandert */
+.hero { display: grid; grid-template-columns: minmax(260px, var(--hero-c1)) minmax(300px, var(--hero-c2)) minmax(280px, 1fr); gap: 12px; position: sticky; left: 0; }
 .kt { background: var(--dp-card); border-radius: 20px; padding: 16px 18px; border: 1px solid var(--dp-divider); position: relative; overflow: hidden; min-width: 0; }
 .kt .k { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--dp-text2); font-weight: 500; display: flex; align-items: center; gap: 8px; }
 .kt.ring { display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 16px; align-items: center; }
@@ -208,7 +209,7 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 .pnote.ok { color: var(--dp-success); }
 
 /* Chips */
-.chips { display: flex; align-items: center; gap: 8px; position: sticky; top: 44px; z-index: 5; margin: 0 -20px; padding: 14px 20px 12px; background: var(--dp-bg); flex-wrap: wrap; }
+.chips { display: flex; align-items: center; gap: 8px; position: sticky; top: 44px; left: -20px; z-index: 5; margin: 0 -20px; padding: 14px 20px 12px; background: var(--dp-bg); flex-wrap: wrap; }
 .chip { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; border-radius: 999px; background: var(--dp-card);
   border: 1px solid var(--dp-divider); font-size: 13px; white-space: nowrap; cursor: pointer; }
 .chip .n { color: var(--dp-text2); }
@@ -419,7 +420,7 @@ svg.strip .s1 { fill: var(--dp-error); }
 svg.strip .s2 { fill: var(--dp-bar-off); }
 .t3 { color: var(--dp-text3); }
 .note { color: var(--dp-text2); padding: 28px 18px; }
-.foot { display: flex; justify-content: space-between; gap: 12px; padding: 10px 6px 0; font-size: 12px; color: var(--dp-text2); }
+.foot { display: flex; justify-content: space-between; gap: 12px; position: sticky; left: 0; padding: 10px 6px 0; font-size: 12px; color: var(--dp-text2); }
 
 /* Handy: Karten statt Tabelle (Design C, Bild 7 / Variante B) */
 .cards .gh { margin: 14px 4px 6px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; font-weight: 600; color: var(--dp-text2); }
