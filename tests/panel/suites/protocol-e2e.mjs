@@ -188,8 +188,9 @@ for (const lang of ["de", "en"]) {
     // --- Popup des Geräts: Magic Push ---
     await ev(`r.host._openDevice("d", "magic")`);
     await wait(`return r.querySelector("dialog.device")?.open && r.querySelectorAll("dialog.device .mg-card").length === 2`);
-    check(`[${tag}] Popup: Karte hat "${T.title}", darüber "${T.device} ›"`, await ev(`return r.querySelectorAll('dialog.device .mg-card [data-proto="magic"]').length === 2 && !!r.querySelector('dialog.device .pr-devlink [data-proto="magic"][data-device="d"]')`));
-    await tap('dialog.device .pr-devlink [data-proto="magic"]');
+    check(`[${tag}] Popup: Karte hat "${T.title}", kein Text-Link "${T.device} ›" mehr (der Knopf im Kopf genügt)`, await ev(`return r.querySelectorAll('dialog.device .mg-card [data-proto="magic"]').length === 2 && !r.querySelector('dialog.device .pr-devlink, dialog.device [data-proto="magic"][data-device="d"]:not(.mg-card *)')`));
+    // Protokoll aller Meldungen des Geräts, wie es der Kopf-Knopf über den Reiter "Magic Push" öffnet
+    await ev(`r.host._protocol.open({ kind: "magic", deviceId: "d", name: "Gerät" })`);
     check(`[${tag}] Protokoll des Geräts: Unterzeile mit Gerät und Zahl, Auswahl "${T.all}" + zwei Meldungen`, await wait(`const c = [...r.querySelectorAll('${P} [data-pr-items] .chip')].map((x) => x.textContent.trim()); return c.length === 3 && c[0] === ${JSON.stringify(T.all)} && r.querySelector("[data-pr-sub]").textContent.includes("2")`));
     check(`[${tag}] Gerät, 30 Tage: drei Einträge beider Meldungen, Name der Meldung in der Zeile`, (await wait(`return r.querySelectorAll('${P} .pr-item').length === 3`)) && (await ev(`return r.querySelector('${P} .pr-item .c-main small')?.textContent.length > 0`)));
     check(`[${tag}] Abfrage mit device_id (ohne item_id)`, (await calls()).some((c) => c.device_id === "d" && !c.item_id));
@@ -239,7 +240,7 @@ for (const lang of ["de", "en"]) {
     // --- Popup des Geräts: Routinen ---
     await ev(`r.host._openDevice("d", "routine")`);
     await wait(`return r.querySelector("dialog.device")?.open && !!r.querySelector('dialog.device [data-proto="routine"]')`);
-    check(`[${tag}] Popup Routinen: "${T.device} ›" und "${T.title}" an der Karte`, await ev(`return !!r.querySelector('dialog.device .pr-devlink [data-proto="routine"][data-device="d"]') && !!r.querySelector('dialog.device .rt-clock [data-proto="routine"][data-id="aaaaaaaaaaa1"]')`));
+    check(`[${tag}] Popup Routinen: "${T.title}" an der Karte, kein Text-Link "${T.device} ›" mehr`, await ev(`return !r.querySelector('dialog.device .pr-devlink') && !!r.querySelector('dialog.device .rt-clock [data-proto="routine"][data-id="aaaaaaaaaaa1"]')`));
     await tap('dialog.device .rt-clock [data-proto="routine"][data-id="aaaaaaaaaaa1"]');
     check(`[${tag}] Protokoll der Routine aus dem Popup`, await wait(`return r.querySelector('${P}').open && r.querySelectorAll('${P} .pr-item').length === 4`));
     await closeProto();

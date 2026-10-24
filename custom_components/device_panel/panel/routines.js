@@ -492,7 +492,6 @@ export class RoutineUi {
     }
     const routines = this.data.routines;
     if (!routines.length) html += `<p class="mg-empty">${esc(this.data.entities.length ? t("rtEmpty") : t("rtNoEntities"))}</p>`;
-    if (routines.length) html += `<div class="pr-devlink"><button type="button" class="linkbtn" data-proto="routine" data-device="${esc(this.deviceId)}" data-name="${esc(this.deviceName())}">${esc(t("prDeviceLink"))} ›</button></div>`;
     html += routines.map((x) => this.clockHtml(x)).join("");
     const full = routines.length >= this.limit("per_device", 20);
     if (full) html += `<p class="mg-hint">${esc(t("rtLimit", this.limit("per_device", 20)))}</p>`;

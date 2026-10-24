@@ -749,7 +749,6 @@ export class MagicPush {
     }
     const rules = this.data.rules;
     if (!rules.length) html += `<p class="mg-empty">${esc(t("mgEmpty"))}</p>`;
-    if (rules.length) html += `<div class="pr-devlink"><button type="button" class="linkbtn" data-proto="magic" data-device="${esc(this.deviceId)}" data-name="${esc(this.host._devices?.find((d) => d.id === this.deviceId)?.name || "")}">${esc(t("prDeviceLink"))} ›</button></div>`;
     html += rules.map((r) => this.cardHtml(r)).join("");
     const full = rules.length >= this.limit("per_device", 20);
     html += full

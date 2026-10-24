@@ -2178,7 +2178,6 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 }
 @media (prefers-reduced-motion: no-preference) { .ap-tile, .ap-erow { transition: background .15s ease; } }
 /* Protokoll einer Meldung oder Routine (seit 2.104.0, docs/mockups/protocol-v1, Variante A): Hülle wie das Aktivitätsprotokoll (log-dlg) */
-.pr-devlink { margin: 2px 0 6px; text-align: right; }
 .lg-bar [hidden] { display: none; }
 .lg-bar[hidden] { display: none; }
 .pr-dates { display: flex; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--dp-text2); }

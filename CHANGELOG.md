@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.131.0] - 2026-10-24
+
+The text link "History of the device" is gone from the tabs "Routines" and "Magic Push" of a device. Includes the changes from 2.130.0.
+
+### Removed
+
+- **Text link "History of the device ›"** above the cards in the tabs "Routines" and "Magic Push" of the device pop-up. The round history button in the header of the pop-up does the same and is always there. The buttons "History" on the single cards and the links in the overviews stay.
+
+### Changed
+
+- **Symbol "reset" mirrored** (from 2.130.0): the arrows run clockwise, a running app spins the same way.
+
 ## [2.130.0] - 2026-10-24
 
 The "reload" arrow runs clockwise everywhere and spins the same way.
@@ -16,6 +28,8 @@ The "reload" arrow runs clockwise everywhere and spins the same way.
 - **Symbol "reset" mirrored** (round arrow with a point at the top): the arrows now run **clockwise**, like the refresh symbol of the update check. It is used for the app "Backup" in the launcher and in its header button, for "Restore default" and "Reset" buttons (view, chip order, per-integration settings, AI prompt, backup undo) and for "Restart".
 - **App that is running** (launcher): the arrows spin clockwise, in the direction they point. Before, the symbol pointed counter-clockwise and spun the other way round.
 - README screenshots are not taken again; they show the old direction until the next time.
+
+Not released; included in 2.131.0.
 
 ## [2.129.0] - 2026-10-24
 
@@ -4551,7 +4565,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.130.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.130.0
+[2.131.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.131.0
 [2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0
 [2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0

@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.131.0] - 2026-10-24
+
+Der Text-Link "Protokoll des Geräts" entfällt in den Reitern "Routinen" und "Magic Push" eines Geräts. Enthält die Änderungen von 2.130.0.
+
+### Entfernt
+
+- **Text-Link "Protokoll des Geräts ›"** über den Karten in den Reitern "Routinen" und "Magic Push" des Geräte-Popups. Der runde Protokoll-Knopf im Kopf des Popups tut dasselbe und ist immer da. Die Knöpfe "Protokoll" an den einzelnen Karten und die Links in den Übersichten bleiben.
+
+### Geändert
+
+- **Symbol "Zurücksetzen" gespiegelt** (seit 2.130.0): die Pfeile laufen im Uhrzeigersinn, eine laufende App dreht sich auch so.
+
 ## [2.130.0] - 2026-10-24
 
 Der Pfeil "neu laden" läuft überall im Uhrzeigersinn und dreht sich auch so.
@@ -16,6 +28,8 @@ Der Pfeil "neu laden" läuft überall im Uhrzeigersinn und dreht sich auch so.
 - **Symbol "Zurücksetzen" gespiegelt** (runder Pfeil mit Spitze oben): die Pfeile laufen jetzt **im Uhrzeigersinn**, wie das Aktualisieren-Symbol der Update-Prüfung. Es steht bei der App "Backup" im Launcher und in deren Knopf im Kopf, bei den Knöpfen "Standard wiederherstellen" und "Zurücksetzen" (Ansicht, Reihenfolge der Chips, Einstellungen je Integration, KI-Prompt, Rückgängig bei der Sicherung) und bei "Neustart".
 - **App, die gerade läuft** (Launcher): die Pfeile drehen sich im Uhrzeigersinn, in ihrer Pfeilrichtung. Vorher zeigte das Symbol gegen den Uhrzeigersinn und drehte sich andersherum.
 - Die Printscreens der README sind nicht neu aufgenommen; sie zeigen bis zum nächsten Mal die alte Richtung.
+
+Nicht veröffentlicht; enthalten in 2.131.0.
 
 ## [2.129.0] - 2026-10-24
 
@@ -4652,7 +4666,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.130.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.130.0
+[2.131.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.131.0
 [2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0
 [2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0

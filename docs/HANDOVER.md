@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.131.0, Text-Link "Protokoll des Geräts" entfernt)
+
+- 2.131.0: in den Geräte-Reitern Routinen (`routines.js`) und Magic Push (`magic-push.js`) entfällt `.pr-devlink`; das Protokoll des Geräts öffnet der Knopf im Kopf. Offen, Vorschlag an den Nutzer: Chip der gewählten Meldung/Routine im Protokoll sichtbar machen (Auswahl-Chips auch bei geöffnetem Einzelprotokoll, "Alle" hebt den Filter auf); Mockup zuerst.
+
 ## Stand (2.130.0, Symbol "reset" gespiegelt)
 
 - 2.130.0: `MDI.reset` in `device-panel.js` ist `mdi:reload` waagrecht gespiegelt (Pfeile im Uhrzeigersinn); `.ap-spin` in `styles.js` dreht ohne `reverse`. Test: Suite `launcheract` (Pfad beginnt mit "M12,4C9.9", Richtung "normal"). Die README-Bilder zeigen noch die alte Richtung.
