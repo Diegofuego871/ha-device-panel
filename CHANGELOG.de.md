@@ -9,10 +9,11 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.135.1] - 2026-10-24
 
-Der Knopf "Los geht's" des Einrichtungsassistenten ist gleich gross wie die anderen Knöpfe.
+Der Knopf "Los geht's" des Einrichtungsassistenten ist gleich gross wie die anderen Knöpfe, und die Logos haben keinen blauen Hintergrund.
 
 ### Behoben
 
+- **Einrichtungsassistent, Logos der Integrationen:** die Logos (Philips Hue, Shelly und andere) standen auf einer blauen Kachel wie die Buchstaben-Abzeichen. Sie stehen jetzt auf dem neutralen Grund, wie in den Einstellungen.
 - **Einrichtungsassistent, Willkommensseite:** der Knopf "Los geht's" wurde vom Layout flach gedrückt und wirkte viel kleiner als "Jetzt nicht" und "Nicht mehr zeigen". Alle drei Knöpfe sind jetzt 44 px hoch; "Los geht's" bleibt der gefüllte, einladendste Knopf über die ganze Breite.
 
 ## [2.135.0] - 2026-10-24

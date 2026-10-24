@@ -9,10 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.135.1] - 2026-10-24
 
-The button "Let's go" of the setup wizard has the same size as the other buttons.
+The button "Let's go" of the setup wizard has the same size as the other buttons, and the logos have no blue background.
 
 ### Fixed
 
+- **Setup wizard, logos of the integrations:** the logos (Philips Hue, Shelly and others) sat on a blue tile like the letter badges. They now sit on the neutral background, like in the settings.
 - **Setup wizard, welcome page:** the button "Let's go" was squeezed flat by the layout and looked much smaller than "Not now" and "Don't show again". All three buttons are now 44 px high; "Let's go" stays the filled, most inviting one across the full width.
 
 ## [2.135.0] - 2026-10-24
