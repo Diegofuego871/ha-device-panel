@@ -9,10 +9,11 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.135.1] - 2026-10-24
 
-Der Knopf "Los geht's" des Einrichtungsassistenten ist gleich gross wie die anderen Knöpfe, die Logos haben keinen blauen Hintergrund, und der Schritt "Meldungen" ist einfacher.
+Der Knopf "Los geht's" des Einrichtungsassistenten ist gleich gross wie die anderen Knöpfe, die Logos haben keinen blauen Hintergrund, der Schritt "Meldungen" ist einfacher, und die Kachel im Launcher zeigt eine orange Pille.
 
 ### Geändert
 
+- **Launcher, Kachel "Einrichtung":** solange der Assistent offen ist, trägt die Kachel eine orange Pille "Offen" (wie "Debug" am Protokoll), passend zum orangen Punkt am Launcher-Knopf.
 - **Einrichtungsassistent, Schritt "Meldungen":** bei den ausgefallenen Geräten wird nur noch "Melden nach" angeboten; "Ausgefallen nach" steht nicht mehr da, damit der Schritt einfach bleibt (es bleibt auf dem jetzigen Wert und lässt sich in den Einstellungen ändern). "Melden nach" darf weiterhin nicht kürzer sein; der Hinweis nennt den jetzigen Wert.
 
 ### Behoben

@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { start: "Los geht's", later: "Jetzt nicht", never: "Nicht mehr zeigen", next: "Weiter", back: "Zurück", finish: "Fertigstellen", tile: "Einrichtung", step2: "Schritt 2 von 5", ttl: "Einrichtungsassistent", startBtn: "Assistent starten", errDelay: "Melden nach darf nicht kürzer sein als \"Ausgefallen nach\" (jetzt 2 Min., einstellbar unter Einstellungen).", testOk: "Gesendet. Prüfe dein Gerät.", testFail: "Nicht gesendet. Prüfe das Ziel.", discard: "Einrichtung abbrechen?", snack: "Einrichtung gespeichert." },
-  en: { start: "Let's go", later: "Not now", never: "Don't show again", next: "Next", back: "Back", finish: "Finish", tile: "Setup", step2: "Step 2 of 5", ttl: "Setup wizard", startBtn: "Start wizard", errDelay: "Notify after must not be shorter than \"Failed after\" (now 2 min, adjustable in the settings).", testOk: "Sent. Check your device.", testFail: "Not sent. Check the target.", discard: "Cancel setup?", snack: "Setup saved." },
+  de: { start: "Los geht's", later: "Jetzt nicht", never: "Nicht mehr zeigen", next: "Weiter", back: "Zurück", finish: "Fertigstellen", tile: "Einrichtung", pill: "Offen", step2: "Schritt 2 von 5", ttl: "Einrichtungsassistent", startBtn: "Assistent starten", errDelay: "Melden nach darf nicht kürzer sein als \"Ausgefallen nach\" (jetzt 2 Min., einstellbar unter Einstellungen).", testOk: "Gesendet. Prüfe dein Gerät.", testFail: "Nicht gesendet. Prüfe das Ziel.", discard: "Einrichtung abbrechen?", snack: "Einrichtung gespeichert." },
+  en: { start: "Let's go", later: "Not now", never: "Don't show again", next: "Next", back: "Back", finish: "Finish", tile: "Setup", pill: "Open", step2: "Step 2 of 5", ttl: "Setup wizard", startBtn: "Start wizard", errDelay: "Notify after must not be shorter than \"Failed after\" (now 2 min, adjustable in the settings).", testOk: "Sent. Check your device.", testFail: "Not sent. Check the target.", discard: "Cancel setup?", snack: "Setup saved." },
 };
 
 for (const lang of ["de", "en"]) {
@@ -154,6 +154,7 @@ for (const lang of ["de", "en"]) {
       await s.tap(".apps-btn");
       await s.wait(`return r.querySelector("dialog.apps-dlg")?.open`);
       check(`[${tag}] Launcher: Kachel "${L.tile}" zuoberst in der Gruppe Device Panel`, (await s.ev(`const b = r.querySelector('dialog.apps-dlg [data-ap="open"][data-id="wizard"]'); const g = b?.closest(".ap-grid, .ap-list"); return g?.querySelector("[data-id]")?.dataset.id === "wizard" && g.previousElementSibling?.textContent.includes("Device Panel")`)));
+      check(`[${tag}] Kachel trägt die orange Pille "${L.pill}"`, (await s.ev(`return r.querySelector('dialog.apps-dlg [data-ap="open"][data-id="wizard"]').closest(".ap-tile, .ap-row")?.querySelector(".ap-badge")?.textContent.trim()`)) === L.pill);
       await s.tap('dialog.apps-dlg [data-ap="open"][data-id="wizard"]');
       check(`[${tag}] Kachel öffnet den Assistenten`, await s.opened());
       // Ein Kreuz nach Änderungen fragt nach

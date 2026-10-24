@@ -638,6 +638,8 @@ export class AppLauncher {
     const { escape } = this.h;
     // "Debug" (orange) am Protokoll bei laufendem Debug-Modus, "Störung" (rot) am Status, wenn ein Teil nicht läuft (seit 2.62.0)
     if (a.id === "log" && this.host._debugOn) return `<span class="ap-badge">${escape(this.t("appsDebug"))}</span>`;
+    // "Offen" (orange) an der Einrichtung, solange der Assistent nicht beendet ist (wie der orange Punkt am Launcher-Knopf, seit 2.135.1)
+    if (a.id === "wizard") return `<span class="ap-badge">${escape(this.t("wzBadge"))}</span>`;
     if (a.id === "status" && this.dotLevels().pins.status) return `<span class="ap-badge bad">${escape(this.t("appsDown"))}</span>`;
     // "Neustart" (rot) an den Einstellungen, solange der rote Punkt am Zahnrad der Kopfzeile steht (Neustart nach einem Update ausstehend, seit 2.85.0)
     if (a.id === "settings" && this.host._gearRestart) return `<span class="ap-badge bad">${escape(this.t("appsRestartPending"))}</span>`;
