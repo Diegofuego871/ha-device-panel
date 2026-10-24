@@ -176,3 +176,58 @@ def query(
         "entries": shown[offset : offset + limit],
         "oldest": min((e["at"] for e in scope), default=None),
     }
+
+
+def system_query(
+    hass: HomeAssistant,
+    *,
+    since: float | None,
+    until: float,
+    level: str | None = None,
+    cat: str | None = None,
+    text: str = "",
+    limit: int = 100,
+    offset: int = 0,
+) -> dict[str, Any]:
+    """
+    Reiter "System" (seit 2.125.0, früher das Fenster "Log"): die Einträge des Panel-Logs, die keinem Gerät gehören (Start, Fehler, KI, Push-Ziele,
+    Status-App, Launcher), dazu alle Debug-Einträge (auch die mit Gerät). Was ein Gerät betrifft, steht in der Liste "Alles". Neueste zuerst.
+    Die Zahlen je Stufe zählen nach Auswahl der Kategorie und Suche, die Zahlen je Kategorie nach Stufe und Suche (wie die Chips im Fenster).
+    """
+    log = activity.get(hass)
+    since_ts = since if since is not None else 0.0
+    scope = [
+        {"at": e["at"], "source": "system", "level": e.get("level", "info"), "cat": e.get("cat", "system"), "title": e.get("title", ""), "text": e.get("text", ""), "detail": e.get("detail", ""), "device_id": e.get("device_id")}
+        for e in log.entries
+        if since_ts <= e["at"] <= until and (e.get("level") == "debug" or not (e.get("device_id") or e.get("device_ids")))
+    ]
+    scope.sort(key=lambda e: e["at"], reverse=True)
+    needle = text.strip().lower()
+
+    def in_text(e: dict[str, Any]) -> bool:
+        return not needle or needle in f"{e['title']} {e['text']} {e['detail']} {e['cat']}".lower()
+
+    levels: dict[str, int] = {}
+    cats: dict[str, int] = {}
+    for e in scope:
+        if not in_text(e):
+            continue
+        if not cat or e["cat"] == cat:
+            levels[e["level"]] = levels.get(e["level"], 0) + 1
+        if not level or e["level"] == level:
+            cats[e["cat"]] = cats.get(e["cat"], 0) + 1
+    shown = [e for e in scope if (not level or e["level"] == level) and (not cat or e["cat"] == cat) and in_text(e)]
+    snap = activity.snapshot(hass)
+    return {
+        "levels": levels,
+        "cats": cats,
+        "total": len(shown),
+        "all": len(scope),
+        "entries": shown[offset : offset + limit],
+        "oldest": min((e["at"] for e in scope), default=None),
+        "debug": snap["debug"],
+        "debug_until": snap["debug_until"],
+        "since": snap["since"],
+        "max": snap["max"],
+        "bytes": snap["bytes"],
+    }

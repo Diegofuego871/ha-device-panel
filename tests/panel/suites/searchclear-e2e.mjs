@@ -80,9 +80,9 @@ for (const mobile of [false, true]) {
 
   // Protokoll
   await ev(`r.host._openLog()`);
-  await wait(`return r.querySelector("dialog.log-dlg")?.open && r.querySelector("dialog.log-dlg input[data-lg-search]")`);
-  await cycle("Protokoll", "dialog.log-dlg .list-search", "dialog.log-dlg input[data-lg-search]", "0");
-  await ev(`r.host._closeLog()`);
+  await wait(`return r.querySelector("dialog.proto-dlg")?.open && r.querySelector("dialog.proto-dlg input[data-pr-search]")`);
+  await cycle("Protokoll", "dialog.proto-dlg .list-search", "dialog.proto-dlg input[data-pr-search]", "0");
+  await ev(`r.host._protocol.close()`);
 
   // Suche der Übersicht
   const main = await ev(`const b = r.querySelector(".searchbox .search-clear"); return !!b`);

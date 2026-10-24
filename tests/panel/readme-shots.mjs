@@ -232,8 +232,10 @@ for (const lang of langs) {
       await tap(".apps-btn");
       await wait(`return r.querySelector("dialog.apps-dlg")?.open`);
       await tap('dialog.apps-dlg [data-ap="open"][data-id="log"]');
-      await wait(`return r.querySelector("dialog.log-dlg")?.open`);
-      await shotDlg("log", "dialog.log-dlg");
+      await wait(`return r.querySelector("dialog.proto-dlg")?.open`);
+      await tap('dialog.proto-dlg [data-pr="kind"][data-v="system"]');
+      await wait(`return r.querySelectorAll("dialog.proto-dlg .pr-list .lg-row").length > 0`);
+      await shotDlg("log", "dialog.proto-dlg");
     });
     await step("routines-all", async () => {
       await tap('.toolbar .app-pin[data-app-pin="routine"]');

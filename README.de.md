@@ -19,7 +19,7 @@
 - **Reiter Schalter:** jedes Gerät mit etwas Schaltbarem zeigt es als Kacheln; ein Tipp öffnet die Bedienung von Home Assistant (Dimmen, Farbe, Position)
 - **Laden und Updates:** Chip "Lädt" mit Ladebalken, Push, wenn ein Gerät voll ist, Live-Aktivität (iPhone) oder Live-Update (Android 16) und eine Update-Erinnerung, die deine eigenen Automationen ersetzt
 - **Neue Geräte:** eine Markierung "Neu" und ein Chip für drei Tage, dazu ein optionaler Push mit allen neu erschienenen Geräten
-- **App-Launcher und Log:** ein Knopf für nützliche Seiten von Home Assistant und eigene Links, dazu ein Log, das zeigt, was die Meldungen entscheiden und warum eine nicht kam
+- **App-Launcher und Protokoll:** ein Knopf für nützliche Seiten von Home Assistant und eigene Links, dazu das Protokoll mit einem Reiter "System", das zeigt, was die Meldungen entscheiden und warum eine nicht kam
 - **Optionale KI-Einschätzung:** eine Vermutung zur Ursache auf Knopfdruck, nur mit einer KI-Aufgabe von Home Assistant
 - **Ganz deine Ansicht:** Spalten, Sortierung, Filter, Favoriten und Startseite werden pro Benutzer gespeichert, auf Handy und Desktop
 - **Alles im Panel:** alle Einstellungen, Updates über HACS (auch automatisch), Sichern und Wiederherstellen aller Einstellungen, Deutsch und Englisch
@@ -190,13 +190,13 @@ Schaltet eine Entität eines Geräts einmalig oder nach Zeitplan, ohne Automatio
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/routines-all.png" alt="Fenster mit allen Routinen, eine Karte pro Gerät" width="720"></p>
 
-## App-Launcher und Log
+## App-Launcher und Protokoll
 
 Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den Symbolen und Farben der Einstellungen von Home Assistant. Administratoren finden dort auch einen Ein/Aus-Knopf, der Home Assistant neu startet, immer nach einer Rückfrage.
 
-| App-Launcher | Log |
+| App-Launcher | Protokoll, Reiter "System" |
 |---|---|
-| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/launcher.png" alt="App-Launcher mit Favoriten, Device Panel und Seiten von Home Assistant"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/log.png" alt="Protokoll mit Einträgen der Meldungen und einem Filter"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/launcher.png" alt="App-Launcher mit Favoriten, Device Panel und Seiten von Home Assistant"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/log.png" alt="Protokoll, Reiter System, mit Einträgen der Meldungen, einem Filter und dem Debug-Schalter"> |
 
 - **Seiten:** Routinen, Magic Push und das Protokoll dieser Integration, Seiten von Home Assistant (Automationen, Szenen, Skripte, Helfer, Geräte, Entitäten, Integrationen, Werkzeuge und mehr; "Apps" und "Dashboards" gibt es auch, sie sind aber ausgeblendet, bis du sie im Bearbeiten-Modus einschaltest; die Verwaltungsseiten nur für Administratoren)
 - **Eigene Links und Aktionen:** eine Seite in Home Assistant, ein externer Link, der in einem neuen Browser-Tab öffnet (auf Wunsch mit seinem Favicon als Symbol), oder eine **Aktion**, die einen Dienst von Home Assistant oder einen Befehl der Oberfläche aufruft (Daten als JSON, auf Wunsch mit Rückfrage); auf Wunsch auch als Knopf im Kopf der Einstellungen; beim Ausführen zeigt das Symbol drehende Pfeile, danach einen grünen Haken (oder ein rotes Kreuz), und das Ergebnis steht im Log
@@ -204,7 +204,7 @@ Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den
 - **Favoriten:** ein Herz markiert bis zu fünf Apps, die eigene Knöpfe in der Kopfzeile bekommen (am Handy die ersten zwei); standardmässig sind es die Routinen und die Einstellungen. Das Zahnrad steht nicht mehr fest dort, sondern nur noch, wenn die App "Einstellungen" angeheftet ist; sie lässt sich nicht ausblenden. Steht ein Neustart aus, zeigt der Launcher-Knopf den roten Punkt, solange die Einstellungen nicht angeheftet sind
 - **Bearbeiten-Modus:** per Ziehen sortieren, Apps mit dem Auge ausblenden (Protokoll und Status bleiben sichtbar, mit Schloss), Raster oder Liste; alles wird pro Benutzer gespeichert
 - **Status:** eine App für Administratoren, die zeigt, ob die Teile der Integration laufen (Routinen, Ausfall-Überwachung, Batterie, Laden, Empfangsverlauf, Magic Push, Neue Geräte, Updates: "läuft", "verspätet" oder "steht"). Steht ein Teil, kommt ein Push (an das Standard-Ziel oder an ein Ziel, das du in der App wählst) und eine Entwarnung, wenn er wieder läuft; ein verspäteter oder stehender Teil hat einen Knopf, mit dem sich genau dieser Teil von Hand neu starten lässt. Ein roter Punkt am Launcher-Knopf, oder am Status-Knopf, wenn du ihn angeheftet hast, zeigt eine Störung; ein oranger Punkt zeigt, dass der Debug-Modus läuft. Grenze: Steht Home Assistant selbst, kann das niemand melden
-- **Log:** zeigt, was die Meldungen entscheiden und warum eine nicht kam, mit Filter und Suche (die letzten 500 Einträge bleiben über Neustarts erhalten) und einem optionalen Debug-Modus (für 48 Stunden eingeschaltet, auch über Neustarts)
+- **Protokoll:** ein Fenster mit allem, egal wie du es öffnest: aus dem Launcher (App "Protokoll") über alle Geräte, aus dem Geräte-Popup für dieses Gerät, aus den Übersichten von Magic Push und Routinen und aus Einstellungen › Speicher auf dem Reiter "System". Vier Reiter: "Alles" (alles, was ein Gerät betrifft), "Magic Push", "Routinen" und **"System"** (Einträge ohne Gerät: Start, Fehler, KI, Push-Ziele, Status-App, Launcher; mit Chips für Stufe und Art, Suche, Kopieren und Leeren). Der **Debug-Modus** wird im Reiter "System" eingeschaltet (48 Stunden, auch über Neustarts; Debug-Einträge von Geräten erscheinen dort auch)
 
 ## Einstellungen im Panel
 

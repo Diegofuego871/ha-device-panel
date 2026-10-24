@@ -1233,6 +1233,25 @@
         if (window.__protocolFails) throw new Error(window.__protocolFails);
         (window.__protocolCalls ||= []).push(msg);
         const store = window.__protocol || {};
+        // Reiter "System" (2.125.0, vorher das Fenster "Log"): window.__log, nur Einträge ohne Gerät und alle Debug-Einträge, Zahlen je Stufe und Kategorie wie devicelog.system_query
+        if (msg.kind === "system") {
+          const log = window.__log;
+          const now0 = Date.now() / 1000;
+          const until0 = Math.min(msg.until ?? now0, now0 + 86400);
+          const scope = log.entries.filter((e) => e.at >= (msg.since ?? 0) && e.at <= until0 && (e.level === "debug" || !e.device_id)).map((e) => ({ ...e, source: "system" })).sort((x, y) => y.at - x.at);
+          const needle = (msg.q || "").trim().toLowerCase();
+          const inText = (e) => !needle || `${e.title} ${e.text} ${e.detail} ${e.cat}`.toLowerCase().includes(needle);
+          const levels = {};
+          const cats = {};
+          for (const e of scope) {
+            if (!inText(e)) continue;
+            if (!msg.cat || e.cat === msg.cat) levels[e.level] = (levels[e.level] || 0) + 1;
+            if (!msg.filter || e.level === msg.filter) cats[e.cat] = (cats[e.cat] || 0) + 1;
+          }
+          const shown = scope.filter((e) => (!msg.filter || e.level === msg.filter) && (!msg.cat || e.cat === msg.cat) && inText(e));
+          const off = msg.offset || 0;
+          return { levels, cats, total: shown.length, all: scope.length, entries: shown.slice(off, off + (msg.limit || 100)), oldest: scope.length ? scope[scope.length - 1].at : null, debug: log.debug, debug_until: log.debug ? log.until || Date.now() / 1000 + 48 * 3600 : null, since: log.since, max: 4000, bytes: JSON.stringify(log.entries).length, until: until0, now: now0 };
+        }
         // Geräteprotokoll (2.118.0): kind "all" = window.__devlog (Ereignisse und Verfügbarkeit mit source/cat/dev) plus die Protokolle von Magic Push und Routinen
         if (msg.kind === "all") {
           const now0 = Date.now() / 1000;

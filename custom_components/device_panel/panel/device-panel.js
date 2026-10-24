@@ -1262,7 +1262,6 @@ class DevicePanel extends HTMLElement {
     this._stickyObserver?.disconnect();
     window.clearInterval(this._timer);
     window.clearInterval(this._tick);
-    window.clearInterval(this._logTimer);
     window.clearInterval(this._liveTimer);
     window.clearTimeout(this._logRetry);
     window.clearTimeout(this._devRetry);
@@ -1434,7 +1433,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="discard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="discard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     this._apps.bind(root);
@@ -1560,7 +1559,6 @@ class DevicePanel extends HTMLElement {
     this._bindViewControls(root.querySelector("dialog.settings"));
     this._bindAreas(root.querySelector(".area-pop"), root.querySelector("dialog.area-sheet"));
     this._bindPulse(root.querySelector("dialog.pulse-dlg"));
-    this._bindLog(root.querySelector("dialog.log-dlg"));
     this._bindRtAll(root.querySelector("dialog.rtall-dlg"));
     this._bindMagicAll(root.querySelector("dialog.mgall-dlg"));
     this._status.bind(root.querySelector("dialog.status-dlg"));
@@ -3230,88 +3228,11 @@ class DevicePanel extends HTMLElement {
     });
   }
 
-  // --- Protokoll (seit 1.38.0, docs/mockups/popup-tabs-log-v1, P1) ----------------
-  // Eigener Knopf in der Kopfzeile, Fenster gross auf dem Desktop, auf dem Handy vollflächig. Die Einträge
-  // liegen in der Integration und bleiben über Neustarts erhalten (nur Administratoren); das Fenster fragt alle 4 Sekunden nach.
+  // --- Protokoll (seit 1.38.0 das Fenster "Log"; seit 2.125.0 ein Fenster mit dem Geräteprotokoll, Reiter "System", siehe protocol.js) ----------------
+  // Der Launcher (App "Protokoll") öffnet es über alle Geräte auf dem Reiter "Alles", die Einstellungen (Speicher) auf dem Reiter "System".
 
-  _logState() {
-    if (!this._log) {
-      this._log = { entries: [], debug: false, since: null, max: 500, loaded: false, error: null };
-      this._logUi = { q: "", level: "all", cat: "all" };
-    }
-    return this._log;
-  }
-
-  _openLog() {
-    const dlg = this.shadowRoot.querySelector("dialog.log-dlg");
-    if (!dlg) return;
-    this._logState();
-    this._renderLogFrame();
-    if (!dlg.open) {
-      if (typeof dlg.showModal === "function") dlg.showModal();
-      else dlg.setAttribute("open", "");
-    }
-    if (window.matchMedia?.(TOUCH_QUERY).matches) this.shadowRoot.activeElement?.blur();
-    this._fetchLog();
-    window.clearInterval(this._logTimer);
-    this._logTimer = window.setInterval(() => this._fetchLog(), 4000);
-  }
-
-  _closeLog() {
-    window.clearInterval(this._logTimer);
-    const dlg = this.shadowRoot.querySelector("dialog.log-dlg");
-    if (dlg?.open) {
-      if (typeof dlg.close === "function") dlg.close();
-      else dlg.removeAttribute("open");
-    }
-  }
-
-  async _logCall(msg, soft = false) {
-    const log = this._logState();
-    try {
-      const res = await this._callWithTimeout(msg, 10000);
-      this._debugOn = Boolean(res.debug);
-      this._apps.paintDots();
-      Object.assign(log, { entries: res.entries || [], debug: Boolean(res.debug), debugUntil: res.debug ? res.debug_until ?? null : null, since: res.since ?? null, max: res.max || 500, bytes: res.bytes ?? null, loaded: true, error: null });
-    } catch (err) {
-      log.error = errText(err);
-      log.loaded = true;
-    }
-    this._renderLogBody(soft);
-  }
-
-  _fetchLog() {
-    return this._logCall({ type: "device_panel/get_log" }, true);
-  }
-
-  // Fester Teil (Kopf, Suche, Chips, Fuss): wird nur beim Öffnen gebaut, damit die Eingabe beim Nachfragen bleibt.
-  _renderLogFrame() {
-    const dlg = this.shadowRoot.querySelector("dialog.log-dlg");
-    const t = (k, ...a) => this._t(k, ...a);
-    dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${mdi("log", 28)}</span>
-        <div class="dlg-title"><h2>${escape(t("logTitle"))}</h2><div class="dlg-sub" data-lg="sub"></div></div>
-        <button type="button" class="dlg-close" data-lg-close title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
-      <div class="lg-bar">
-        <label class="list-search lg-search">${mdi("search", 18)}<input type="search" data-lg-search value="${escape(this._logUi.q)}" placeholder="${escape(t("logSearch"))}" aria-label="${escape(t("logSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false">${this._fieldClearHtml("data-lg-clear", "", this._logUi.q)}</label>
-        <div class="lg-chips" data-lg="levels"></div>
-        <div class="lg-chips" data-lg="cats"></div>
-        <label class="lg-check" title="${escape(t("logDebugHint"))}"><input type="checkbox" data-lg-debug><span>${escape(t("logDebug"))}</span><small data-lg="dbuntil"></small></label>
-      </div>
-      <div class="lg-list" data-lg="list" role="list"></div>
-      <div class="lg-foot"><span data-lg="count"></span><span class="sp"></span>
-        <button type="button" class="lg-btn" data-lg-copy>${mdi("copy", 16)}<span>${escape(t("logCopy"))}</span></button>
-        <button type="button" class="lg-btn" data-lg-reset>${escape(t("logClear"))}</button></div>`;
-    this._renderLogBody();
-  }
-
-  _logFiltered() {
-    const log = this._logState();
-    const { q, level, cat } = this._logUi;
-    const needle = q.trim().toLocaleLowerCase();
-    return [...log.entries]
-      .filter((e) => (level === "all" || e.level === level) && (cat === "all" || e.cat === cat))
-      .filter((e) => !needle || `${e.title} ${e.text} ${e.detail} ${this._t(`logCat_${e.cat}`)}`.toLocaleLowerCase().includes(needle))
-      .sort((a, b) => b.at - a.at);
+  _openLog(kind = "all") {
+    this._protocol.open({ kind });
   }
 
   _logTime(e) {
@@ -3337,134 +3258,6 @@ class DevicePanel extends HTMLElement {
     } catch {
       return d.toISOString().slice(0, 10);
     }
-  }
-
-  // Wechselnder Teil: Chips mit Zahlen, Liste, Fuss. Schreibt nur, was sich geändert hat (setHtml).
-  _renderLogBody(soft = false) {
-    const dlg = this.shadowRoot.querySelector("dialog.log-dlg");
-    if (!dlg || !dlg.querySelector('[data-lg="list"]')) return;
-    // Beim Nachfragen nicht mitten in einer Wischbewegung neu aufbauen (siehe _dlgBusy).
-    if (soft && dlg.open && this._dlgBusy(dlg)) {
-      window.clearTimeout(this._logRetry);
-      this._logRetry = window.setTimeout(() => this._renderLogBody(true), 500);
-      return;
-    }
-    const t = (k, ...a) => this._t(k, ...a);
-    const log = this._logState();
-    const ui = this._logUi;
-    const inCat = (e) => ui.cat === "all" || e.cat === ui.cat;
-    const inLevel = (e) => ui.level === "all" || e.level === ui.level;
-    const needle = ui.q.trim().toLocaleLowerCase();
-    const inText = (e) => !needle || `${e.title} ${e.text} ${e.detail} ${t(`logCat_${e.cat}`)}`.toLocaleLowerCase().includes(needle);
-    // Zahlen der Chips: je Gruppe nach den übrigen Filtern
-    const count = (fn) => log.entries.filter(fn).length;
-    const levels = [["all", t("logAll"), count((e) => inCat(e) && inText(e))]];
-    if (log.debug || log.entries.some((e) => e.level === "debug")) levels.push(["debug", t("logLevel_debug"), count((e) => e.level === "debug" && inCat(e) && inText(e))]);
-    for (const l of ["info", "warning", "error"]) levels.push([l, t(`logLevel_${l}`), count((e) => e.level === l && inCat(e) && inText(e))]);
-    const cats = [["all", t("logAll"), count((e) => inLevel(e) && inText(e))]];
-    for (const c of ["charge", "outage", "battery", "signal", "push", "magic", "routine", "updates", "new", "launcher", "system"]) cats.push([c, t(`logCat_${c}`), count((e) => e.cat === c && inLevel(e) && inText(e))]);
-    const dot = (l) => (l === "all" ? "" : `<span class="lg-dot ${l}"></span>`);
-    const chip = (attr, [id, label, n], on) =>
-      `<button type="button" class="chip${on === id ? " on" : ""}" ${attr}="${id}" aria-pressed="${on === id}">${dot(id)}<span>${escape(label)}</span><span class="n">${n}</span></button>`;
-    const lv = dlg.querySelector('[data-lg="levels"]');
-    const ct = dlg.querySelector('[data-lg="cats"]');
-    setHtml(lv, levels.map((x) => chip("data-lg-level", x, ui.level)).join(""));
-    setHtml(ct, cats.map((x) => chip("data-lg-cat", x, ui.cat)).join(""));
-    const check = dlg.querySelector("[data-lg-debug]");
-    if (check.checked !== log.debug) check.checked = log.debug;
-    // Der Schalter läuft 48 Stunden (auch über Neustarts von HA): wann er sich ausschaltet
-    dlg.querySelector('[data-lg="dbuntil"]').textContent = log.debug && log.debugUntil ? t("logDebugUntil", this._fmtTime(log.debugUntil, true)) : t("logDebugFor");
-    const shown = this._logFiltered();
-    let body = "";
-    if (log.error) body += `<div class="dlg-error">${escape(t("logError"))} ${escape(log.error)}</div>`;
-    let day = "";
-    for (const e of shown) {
-      const d = this._logDay(e);
-      if (d !== day) {
-        day = d;
-        body += `<div class="lg-day" role="presentation">${escape(d)}</div>`;
-      }
-      const open = e.device_id && this._devices.some((x) => x.id === e.device_id);
-      const tag = open ? "button" : "div";
-      body += `<${tag}${open ? ` type="button" data-lg-open="${escape(e.device_id)}"` : ""} class="lg-row ${e.level}" role="listitem">
-        <span class="lg-rt">${escape(this._logTime(e))}</span><span class="lg-lv"><span class="lg-dot ${e.level}" title="${escape(t(`logLevel_${e.level}`))}"></span></span>
-        <span class="lg-cat"><span class="lg-pill ${e.cat}">${escape(t(`logCat_${e.cat}`))}</span></span>
-        <span class="lg-msg">${e.title ? `<b>${escape(e.title)}</b> · ` : ""}${escape(e.text)}${e.detail ? `<small>${escape(e.detail)}</small>` : ""}</span></${tag}>`;
-    }
-    if (!shown.length && log.loaded && !log.error) body += `<p class="dlg-note lg-none">${escape(t(log.entries.length ? "logNoneFilter" : "logNone"))}</p>`;
-    const list = dlg.querySelector('[data-lg="list"]');
-    const keep = list.scrollTop;
-    if (setHtml(list, body)) list.scrollTop = keep;
-    const since = log.since ? this._fmtTime(log.since, false) : "";
-    setHtml(dlg.querySelector('[data-lg="sub"]'), escape(t("logSub", log.max, since)));
-    setHtml(dlg.querySelector('[data-lg="count"]'), escape(t("logCount", log.entries.length, shown.length, log.bytes != null ? this._fmtMb(log.bytes) : "")));
-  }
-
-  _logText() {
-    const rows = this._logFiltered().reverse();
-    return rows
-      .map((e) => {
-        const d = new Date(e.at * 1000);
-        const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${d.toTimeString().slice(0, 8)}`;
-        return `${stamp} [${e.level.toUpperCase()}] [${this._t(`logCat_${e.cat}`)}] ${e.title ? `${e.title}: ` : ""}${e.text}${e.detail ? ` (${e.detail})` : ""}`;
-      })
-      .join("\n");
-  }
-
-  _bindLog(dlg) {
-    this._trackBusy(dlg);
-    const rerender = () => this._renderLogBody();
-    dlg.addEventListener("click", async (ev) => {
-      if (ev.target === dlg) {
-        const r = dlg.getBoundingClientRect();
-        if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._closeLog();
-        return;
-      }
-      const el = ev.target.closest("[data-lg-close],[data-lg-level],[data-lg-cat],[data-lg-clear],[data-lg-copy],[data-lg-reset],[data-lg-open]");
-      if (!el) return;
-      if (el.matches("[data-lg-close]")) this._closeLog();
-      else if (el.matches("[data-lg-level]")) {
-        this._logUi.level = el.dataset.lgLevel;
-        rerender();
-      } else if (el.matches("[data-lg-cat]")) {
-        this._logUi.cat = el.dataset.lgCat;
-        rerender();
-      } else if (el.matches("[data-lg-clear]")) {
-        this._logUi.q = "";
-        const input = dlg.querySelector("[data-lg-search]");
-        input.value = "";
-        el.hidden = true;
-        input.focus();
-        rerender();
-      } else if (el.matches("[data-lg-copy]")) {
-        const label = el.querySelector("span");
-        if (await this._copyText(this._logText(), null) && label) {
-          const old = label.textContent;
-          label.textContent = this._t("logCopied");
-          window.setTimeout(() => {
-            if (label.isConnected) label.textContent = old;
-          }, 1500);
-        }
-      } else if (el.matches("[data-lg-reset]")) {
-        // Leeren ist endgültig (auch die gespeicherten Einträge): erst fragen
-        this._askConfirm({ title: "logClearTitle", note: "logClearNote", no: "logClearNo", yes: "logClearYes", noIcon: "close", yesIcon: "trash" }, () => this._logCall({ type: "device_panel/clear_log" }));
-      } else if (el.matches("[data-lg-open]")) {
-        // Das Geräte-Popup öffnet über dem Protokoll; schliesst es, ist man wieder im Protokoll.
-        this._openDevice(el.dataset.lgOpen);
-      }
-    });
-    dlg.addEventListener("input", (ev) => {
-      if (ev.target.matches("[data-lg-search]")) {
-        this._logUi.q = ev.target.value;
-        const clear = dlg.querySelector("[data-lg-clear]");
-        if (clear) clear.hidden = !ev.target.value;
-        rerender();
-      }
-    });
-    dlg.addEventListener("change", (ev) => {
-      if (ev.target.matches("[data-lg-debug]")) this._logCall({ type: "device_panel/set_log", debug: ev.target.checked });
-    });
-    dlg.addEventListener("close", () => window.clearInterval(this._logTimer));
   }
 
   _chipsHtml(all) {
@@ -8836,6 +8629,8 @@ class DevicePanel extends HTMLElement {
         row("protocol_max_entries", t("optProtoEntries"), num("protocol_max_entries", t("unitEntries"), t("optProtoEntries")), t("optProtoEntriesShort", u?.protocol?.max_item || 0), null) +
         withMeter(row("log_max_mb", t("optLogMb"), num("log_max_mb", t("unitMb"), t("optLogMb")), t("optLogMbShort", usedText(u?.log)), null), u?.log, "log_max_mb") +
         row("log_max_entries", t("optLogEntries"), num("log_max_entries", t("unitEntries"), t("optLogEntries")), t("optLogEntriesShort", u?.log?.entries || 0), null) +
+        // Einstieg 4 (seit 2.125.0): das Panel-Log liest man im Protokoll, Reiter "System"
+        `<div class="bk-btns"><button type="button" class="dlg-btn" data-set="open-syslog">${mdi("log", 16)}<span>${escape(t("stoOpenLog"))}</span></button></div>` +
         ask +
         ttl("ttlStoOther") + `<div class="opt-short bk-note">${escape(t("stoOtherNote"))}</div>` + otherRows +
         `<div class="opt-short sto-batt">${escape(t("stoFileNote"))}</div>`;
@@ -8989,6 +8784,7 @@ class DevicePanel extends HTMLElement {
       const action = btn.dataset.set;
       if (action === "close") this._requestCloseSettings();
       else if (action === "save") this._saveSettings();
+      else if (action === "open-syslog") this._openLog("system");
       else if (action === "cut-no") {
         st.cutAsk = false;
         this._renderSettings();

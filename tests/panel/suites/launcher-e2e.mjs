@@ -139,9 +139,9 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Tipp auf "${T.auto}": Seite von HA, Launcher zu`, (await wait(`return !r.querySelector("${D}").open`)) && new URL(p.url()).pathname === "/config/automation/dashboard", p.url());
     await open();
     await tap(`${D} .ap-grid [data-ap="open"][data-id="log"]`);
-    check(`[${tag}] Protokoll öffnet (nur über den Launcher), Launcher zu`, (await wait(`return r.querySelector("dialog.log-dlg")?.open`)) && !(await ev(`return r.querySelector("${D}").open`)));
-    await tap("dialog.log-dlg [data-lg-close]");
-    await wait(`return !r.querySelector("dialog.log-dlg").open`);
+    check(`[${tag}] Protokoll öffnet (nur über den Launcher), Launcher zu`, (await wait(`return r.querySelector("dialog.proto-dlg")?.open`)) && !(await ev(`return r.querySelector("${D}").open`)));
+    await tap("dialog.proto-dlg [data-pr=\"close\"]");
+    await wait(`return !r.querySelector("dialog.proto-dlg").open`);
     await open();
     await tap(`${D} .ap-grid [data-ap="open"][data-id="magic"]`);
     check(`[${tag}] Magic Push: eigenes Fenster, keine Einstellungen`, await wait(`const m = r.querySelector("dialog.mgall-dlg"); return m?.open && !r.querySelector("dialog.settings").open && !r.querySelector("${D}").open`));

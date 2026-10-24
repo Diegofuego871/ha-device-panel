@@ -18,12 +18,13 @@ PAGE_MAX = 500
 @websocket_api.websocket_command(
     {
         vol.Required("type"): f"{DOMAIN}/protocol_get",
-        vol.Required("kind"): vol.In(["magic", "routine", "all"]),
+        vol.Required("kind"): vol.In(["magic", "routine", "all", "system"]),
         vol.Exclusive("item_id", "scope"): str,
         vol.Exclusive("device_id", "scope"): str,
         vol.Optional("since"): vol.Coerce(float),
         vol.Optional("until"): vol.Coerce(float),
         vol.Optional("filter"): vol.Any(None, str),
+        vol.Optional("cat"): vol.Any(None, str),
         vol.Optional("q", default=""): vol.All(str, vol.Length(max=100)),
         vol.Optional("limit", default=100): vol.All(int, vol.Range(min=1, max=PAGE_MAX)),
         vol.Optional("offset", default=0): vol.All(int, vol.Range(min=0)),
@@ -34,13 +35,17 @@ PAGE_MAX = 500
 def ws_protocol_get(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
     """
     Protokoll einer Meldung oder Routine ("item_id"), aller eines Geräts ("device_id") oder aller überhaupt (ohne beides); neueste zuerst.
-    Mit kind "all" (seit 2.118.0, Geräteprotokoll) kommen alle Einträge des Geräts (oder aller Geräte) in einer Liste, siehe devicelog.py.
+    Mit kind "system" (seit 2.125.0) kommen die Einträge ohne Gerät und das Debug-Log (Reiter "System"). Mit kind "all" (seit 2.118.0, Geräteprotokoll) kommen alle Einträge des Geräts (oder aller Geräte) in einer Liste, siehe devicelog.py.
     """
     now = time.time()
     until = min(float(msg.get("until", now)), now + 86400)
     since = float(msg["since"]) if "since" in msg else None
     if msg["kind"] == "all":
         result = devicelog.query(hass, msg.get("device_id") or None, since=since, until=until, cat=msg.get("filter"), text=msg["q"], limit=msg["limit"], offset=msg["offset"])
+        connection.send_result(msg["id"], {**result, "until": until, "now": now})
+        return
+    if msg["kind"] == "system":
+        result = devicelog.system_query(hass, since=since, until=until, level=msg.get("filter"), cat=msg.get("cat"), text=msg["q"], limit=msg["limit"], offset=msg["offset"])
         connection.send_result(msg["id"], {**result, "until": until, "now": now})
         return
     store = hass.data.get(DATA_PROTOCOL)

@@ -53,16 +53,19 @@ for (const mobile of [false, true]) {
   await wait(`return !!r.querySelector('dialog.apps-dlg [data-ap="open"][data-id="log"]')`);
   await p.waitForTimeout(600);
   await tap('dialog.apps-dlg [data-ap="open"][data-id="log"]');
-  await wait(`return r.querySelector("dialog.log-dlg")?.open && r.querySelectorAll("dialog.log-dlg .lg-row").length > 0`);
-  const rows = () => ev(`return r.querySelectorAll("dialog.log-dlg .lg-row").length`);
+  // Das Protokoll öffnet auf "Alles"; der Reiter "System" fragt alle 4 Sekunden nach (seit 2.125.0)
+  await wait(`return r.querySelector("dialog.proto-dlg")?.open && r.querySelector('dialog.proto-dlg [data-pr="kind"][data-v="system"]')`);
+  await tap('dialog.proto-dlg [data-pr="kind"][data-v="system"]');
+  await wait(`return r.querySelectorAll("dialog.proto-dlg .lg-row").length > 0`);
+  const rows = () => ev(`return r.querySelectorAll("dialog.proto-dlg .lg-row").length`);
   const n = await rows();
-  await ev(`r.querySelector('dialog.log-dlg [data-lg="list"]').dispatchEvent(new Event("scroll"))`);
+  await ev(`r.querySelector('dialog.proto-dlg [data-pr-body]').dispatchEvent(new Event("scroll"))`);
   await p.evaluate(() => { window.__log.entries.push({ at: Date.now() / 1000, level: "info", cat: "system", title: "Neu", text: "neuer Eintrag", detail: "", device_id: null }); });
-  await ev(`r.host._fetchLog()`);
+  await ev(`r.host._protocol.pollOnce()`);
   await p.waitForTimeout(500);
   check(`[${tag}] Protokoll: während des Wischens unverändert`, (await rows()) === n, `${n} -> ${await rows()}`);
-  check(`[${tag}] Protokoll: danach mit dem neuen Eintrag`, await wait(`return r.querySelectorAll("dialog.log-dlg .lg-row").length === ${n + 1}`, 6000), String(await rows()));
-  await tap("dialog.log-dlg [data-lg-close]");
+  check(`[${tag}] Protokoll: danach mit dem neuen Eintrag`, await wait(`return r.querySelectorAll("dialog.proto-dlg .lg-row").length === ${n + 1}`, 8000), String(await rows()));
+  await tap("dialog.proto-dlg [data-pr=\"close\"]");
   check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
   await ctx.close();
 }

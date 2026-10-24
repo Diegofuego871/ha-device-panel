@@ -26,7 +26,7 @@ const RANGES = [
   ["all", 0],
 ];
 // Reiter oben: Reihenfolge und Name der Texte
-const TABS = ["all", "magic", "routine"];
+const TABS = ["all", "magic", "routine", "system"];
 const PAGE = 100;
 const LIMIT_MAX = 500;
 const DAY = 86400;
@@ -36,7 +36,12 @@ const FILTERS = {
   all: ["all", "outage", "battery", "charge", "signal", "updates", "new", "push", "magic", "routine"],
   magic: ["all", "fired", "recovered", "test", "held", "failed"],
   routine: ["all", "run", "revert", "missed", "failed", "manual"],
+  // Stufen des Reiters "System" (Debug erscheint nur, wenn der Schalter an ist oder es Debug-Einträge gibt)
+  system: ["all", "error", "warning", "info", "debug"],
 };
+// Reihenfolge der Kategorien im Reiter "System"; unbekannte kommen danach
+const SYSTEM_CATS = ["system", "push", "launcher", "updates", "new", "charge", "outage", "battery", "signal", "magic", "routine"];
+const POLL_MS = 4000;
 // Schritte eines Trace, die einen Fehler oder ein Warnzeichen zeigen
 const BAD_RESULT = new Set(["failed", "retry", "missed"]);
 
@@ -84,6 +89,7 @@ export class ProtocolUi {
     const dlg = this.dlg;
     if (!dlg || !FILTERS[kind]) return;
     window.clearTimeout(this._searchTimer);
+    this.stopPoll();
     this.s = {
       kind,
       itemId,
@@ -112,7 +118,27 @@ export class ProtocolUi {
       if (typeof dlg.showModal === "function") dlg.showModal();
       else dlg.setAttribute("open", "");
     }
+    if (window.matchMedia?.("(pointer: coarse)").matches) this.host.shadowRoot.activeElement?.blur();
     this.load();
+    this.startPoll();
+  }
+
+  // Reiter "System": die Einträge ändern sich laufend (Debug), das Fenster fragt alle 4 Sekunden nach, nicht mitten in einer Berührung
+  startPoll() {
+    this.stopPoll();
+    if (this.s?.kind !== "system") return;
+    this._poll = window.setInterval(() => this.pollOnce(), POLL_MS);
+  }
+
+  pollOnce() {
+    const dlg = this.dlg;
+    if (!this.s || this.s.kind !== "system" || !dlg?.open || this.s.view !== "list" || this.host._dlgBusy?.(dlg)) return;
+    this.load(true);
+  }
+
+  stopPoll() {
+    window.clearInterval(this._poll);
+    this._poll = null;
   }
 
   // Name des Geräts (oder der Sammelstelle Szenen/Gruppen) für die Unterzeile
@@ -124,6 +150,7 @@ export class ProtocolUi {
 
   close() {
     window.clearTimeout(this._searchTimer);
+    this.stopPoll();
     const dlg = this.dlg;
     if (dlg?.open) {
       if (typeof dlg.close === "function") dlg.close();
@@ -132,6 +159,7 @@ export class ProtocolUi {
   }
 
   bind(dlg) {
+    this.host._trackBusy?.(dlg);
     dlg.addEventListener("click", (ev) => {
       if (ev.target === dlg) {
         const r = dlg.getBoundingClientRect();
@@ -157,6 +185,10 @@ export class ProtocolUi {
     dlg.addEventListener("change", (ev) => {
       const s = this.s;
       const el = ev.target;
+      if (s && el.matches?.("[data-pr-debug]")) {
+        this.setDebug(el.checked);
+        return;
+      }
       if (!s || !el.matches?.("[data-pr-date]")) return;
       const own = { ...(s.own || this.span().dates) };
       own[el.dataset.prDate] = el.value;
@@ -176,6 +208,20 @@ export class ProtocolUi {
         this.s = null;
       }
     });
+  }
+
+  async setDebug(on) {
+    const s = this.s;
+    if (!s) return;
+    try {
+      const r = await this.host._callWithTimeout({ type: "device_panel/set_log", debug: on }, 10000);
+      this.host._debugOn = Boolean(r.debug);
+      this.host._apps?.paintDots?.();
+      s.error = null;
+    } catch (err) {
+      s.error = this.h.errText(err);
+    }
+    this.load();
   }
 
   // --- Zeitraum ------------------------------------------------------------------
@@ -202,33 +248,46 @@ export class ProtocolUi {
 
   // --- Laden ---------------------------------------------------------------------
 
-  async load() {
+  async load(soft = false) {
     const s = this.s;
     if (!s) return;
     const seq = ++s.seq;
     const { since, until } = this.span();
     const msg = { type: "device_panel/protocol_get", kind: s.kind, ...(since === null ? {} : { since }), until, limit: s.limit, filter: s.filter === "all" ? null : s.filter, q: s.q.trim() };
-    const wholeDevice = s.kind !== "all" && !s.itemId && !s.item && Boolean(s.deviceId);
-    if (s.itemId || s.item) msg.item_id = s.itemId || s.item;
+    const wholeDevice = s.kind !== "all" && s.kind !== "system" && !s.itemId && !s.item && Boolean(s.deviceId);
+    if (s.kind === "system") {
+      // Kategorie des Reiters "System"; ohne Gerät und ohne Auswahl einer Meldung
+      if (s.item) msg.cat = s.item;
+    } else if (s.itemId || s.item) msg.item_id = s.itemId || s.item;
     else if (s.deviceId) msg.device_id = s.deviceId;
-    s.loading = true;
-    this.renderFoot();
+    if (!soft) {
+      s.loading = true;
+      this.renderFoot();
+    }
     try {
       const r = await this.host._hass.callWS(msg);
       if (this.s !== s || seq !== s.seq) return;
+      // Nachfrage ohne Änderung: nichts neu zeichnen (Auswahl und Scrollstand bleiben)
+      if (soft && s.data && JSON.stringify({ ...r, now: 0, until: 0 }) === s.stamp) return;
+      s.stamp = JSON.stringify({ ...r, now: 0, until: 0 });
       s.data = r;
       s.error = null;
+      if (s.kind === "system") this.host._debugOn = Boolean(r.debug);
       // Auswahl der Meldungen eines Geräts: die Liste der Antwort für das ganze Gerät merken
       const fresh = wholeDevice && JSON.stringify(s.items) !== JSON.stringify(r.items || []);
       if (wholeDevice) s.items = r.items || [];
-      // Liste "Alles": die Chips zeigen die Zahlen je Kategorie aus der Antwort
-      if (fresh || s.kind === "all") this.renderBar();
+      // Listen "Alles" und "System": die Chips zeigen die Zahlen aus der Antwort
+      if (fresh || s.kind === "all" || s.kind === "system") this.renderBar();
     } catch (err) {
       if (this.s !== s || seq !== s.seq) return;
+      if (soft) return;
       s.error = this.h.errText(err);
     }
     s.loading = false;
+    const body = this.dlg?.querySelector("[data-pr-body]");
+    const keep = soft && body ? body.scrollTop : null;
     this.render();
+    if (keep !== null) this.dlg.querySelector("[data-pr-body]").scrollTop = keep;
   }
 
   // --- Zeichnen ------------------------------------------------------------------
@@ -237,7 +296,7 @@ export class ProtocolUi {
     const dlg = this.dlg;
     const s = this.s;
     const t = (k, ...a) => this.t(k, ...a);
-    const icon = s.kind === "all" ? "log" : s.kind === "magic" ? "bell" : "timer";
+    const icon = s.kind === "all" || s.kind === "system" ? "log" : s.kind === "magic" ? "bell" : "timer";
     dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${this.h.mdi(icon, 28)}</span>
         <div class="dlg-title"><h2>${this.esc(t("prTitle"))}</h2><div class="dlg-sub" data-pr-sub></div></div>
         <button type="button" class="dlg-close" data-pr="close" title="${this.esc(t("close"))}" aria-label="${this.esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>
@@ -248,6 +307,7 @@ export class ProtocolUi {
         <label class="list-search lg-search">${this.h.mdi("search", 18)}<input type="search" data-pr-search placeholder="${this.esc(t("prSearch"))}" aria-label="${this.esc(t("prSearch"))}" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="100">${this.host._fieldClearHtml("data-fc", "", "")}</label>
         <div class="lg-chips" data-pr-filters></div>
         <div class="lg-chips" data-pr-items></div>
+        <label class="lg-check" data-pr-debug-row hidden></label>
       </div>
       <div class="lg-list pr-body" data-pr-body role="list"></div>
       <div class="lg-foot" data-pr-foot></div>`;
@@ -271,6 +331,11 @@ export class ProtocolUi {
     const s = this.s;
     if (!sub) return;
     let text = s.name || this.t("prAllDevices");
+    if (s.kind === "system") {
+      const since = s.data?.since ? this.host._fmtDateY(s.data.since) : "";
+      sub.textContent = this.t("prSystemSub", since);
+      return;
+    }
     if (s.deviceId && !s.itemId && s.items.length && s.kind !== "all") text = `${s.name} · ${this.t(s.kind === "magic" ? "prItemsMagic" : "prItemsRoutine", s.items.length)}`;
     sub.textContent = text;
   }
@@ -284,7 +349,7 @@ export class ProtocolUi {
     const kinds = dlg.querySelector("[data-pr-kinds]");
     const kindTab = (id, key) => `<button type="button" class="sub-tab${s.kind === id ? " on" : ""}" data-set="pr-kind" data-pr="kind" data-v="${id}">${this.esc(t(key))}</button>`;
     kinds.hidden = false;
-    kinds.innerHTML = `<div class="sub-tabs mg-filter" role="group">${kindTab("all", "prTabAll")}${kindTab("magic", "mgTab")}${kindTab("routine", "rtTab")}</div>`;
+    kinds.innerHTML = `<div class="sub-tabs mg-filter" role="group">${kindTab("all", "prTabAll")}${kindTab("magic", "mgTab")}${kindTab("routine", "rtTab")}${s.deviceId ? "" : kindTab("system", "prTabSystem")}</div>`;
     const labels = { "7d": "prR7d", "30d": "prR30d", "6m": "prR6m", "12m": "prR12m", all: "prRAll" };
     const tabs = RANGES.map(([id]) => `<button type="button" class="sub-tab${s.range === id ? " on" : ""}" data-set="pr-range" data-pr="range" data-v="${id}">${this.esc(t(labels[id]))}</button>`);
     tabs.push(`<button type="button" class="sub-tab${s.range === "own" ? " on" : ""}" data-set="pr-range" data-pr="range" data-v="own">${this.esc(t("prROwn"))}</button>`);
@@ -301,17 +366,40 @@ export class ProtocolUi {
       dates.hidden = true;
       dates.innerHTML = "";
     }
-    // Liste "Alles": nur Kategorien mit Einträgen im Zeitraum (die Zahlen kommen vom Server), die gewählte bleibt immer
+    // Listen "Alles" und "System": nur Kategorien mit Einträgen im Zeitraum (die Zahlen kommen vom Server), die gewählte bleibt immer
     const counts = s.data?.counts || {};
-    const ids = s.kind === "all" ? FILTERS.all.filter((id) => id === "all" || counts[id] || s.filter === id) : FILTERS[s.kind];
-    const chips = ids.map((id) => {
-      const label = s.kind === "all" && id !== "all" ? `${t(`prC_${id}`)} ${this.num(counts[id] || 0)}` : t(`prF_${id}`);
-      return `<button type="button" class="chip${s.filter === id ? " on" : ""}" data-pr="filter" data-v="${id}" aria-pressed="${s.filter === id}"><span>${this.esc(label)}</span></button>`;
-    });
-    dlg.querySelector("[data-pr-filters]").innerHTML = chips.join("");
+    const filterBox = dlg.querySelector("[data-pr-filters]");
+    if (s.kind === "system") {
+      const lv = s.data?.levels || {};
+      const levelIds = FILTERS.system.filter((id) => id !== "debug" || s.data?.debug || lv.debug || s.filter === "debug");
+      const total = Object.values(lv).reduce((n, v) => n + v, 0);
+      filterBox.innerHTML = levelIds
+        .map((id) => {
+          const n = id === "all" ? total : lv[id] || 0;
+          const dot = id === "all" ? "" : `<span class="lg-dot ${id}"></span>`;
+          return `<button type="button" class="chip${s.filter === id ? " on" : ""}" data-pr="filter" data-v="${id}" aria-pressed="${s.filter === id}">${dot}<span>${this.esc(id === "all" ? t("logAll") : t(`logLevel_${id}`))}</span><span class="n">${this.num(n)}</span></button>`;
+        })
+        .join("");
+    } else {
+      const ids = s.kind === "all" ? FILTERS.all.filter((id) => id === "all" || counts[id] || s.filter === id) : FILTERS[s.kind];
+      const chips = ids.map((id) => {
+        const label = s.kind === "all" && id !== "all" ? `${t(`prC_${id}`)} ${this.num(counts[id] || 0)}` : t(`prF_${id}`);
+        return `<button type="button" class="chip${s.filter === id ? " on" : ""}" data-pr="filter" data-v="${id}" aria-pressed="${s.filter === id}"><span>${this.esc(label)}</span></button>`;
+      });
+      filterBox.innerHTML = chips.join("");
+    }
+    this.renderDebug();
     // Meldungen eines Geräts: zusätzlich die Auswahl der einzelnen Meldung oder Routine
     const items = dlg.querySelector("[data-pr-items]");
-    if (s.kind !== "all" && s.deviceId && !s.itemId && s.items.length > 1) {
+    if (s.kind === "system") {
+      const cs = s.data?.cats || {};
+      const ids = [...SYSTEM_CATS, ...Object.keys(cs).filter((c) => !SYSTEM_CATS.includes(c))].filter((c) => cs[c] || s.item === c);
+      const total = Object.values(cs).reduce((n, v) => n + v, 0);
+      items.hidden = false;
+      items.innerHTML = [["", t("logAll"), total], ...ids.map((c) => [c, this.catLabel(c), cs[c] || 0])]
+        .map(([id, label, n]) => `<button type="button" class="chip${s.item === id ? " on" : ""}" data-pr="item" data-v="${this.esc(id)}" aria-pressed="${s.item === id}"><span>${this.esc(label)}</span><span class="n">${this.num(n)}</span></button>`)
+        .join("");
+    } else if (s.kind !== "all" && s.deviceId && !s.itemId && s.items.length > 1) {
       const all = t(s.kind === "magic" ? "prAllMagic" : "prAllRoutines");
       items.hidden = false;
       items.innerHTML = [["", all], ...s.items.map((i) => [i.id, i.name])]
@@ -321,6 +409,63 @@ export class ProtocolUi {
       items.hidden = true;
       items.innerHTML = "";
     }
+  }
+
+  catLabel(c) {
+    const v = this.t(`logCat_${c}`);
+    return v && v !== `logCat_${c}` ? v : c;
+  }
+
+  // Debug-Schalter (nur Reiter "System"): gilt für das ganze Panel, 48 Stunden, auch über Neustarts von Home Assistant
+  renderDebug() {
+    const row = this.dlg?.querySelector("[data-pr-debug-row]");
+    const s = this.s;
+    if (!row) return;
+    if (s.kind !== "system") {
+      row.hidden = true;
+      row.innerHTML = "";
+      return;
+    }
+    const d = s.data || {};
+    const t = (k, ...a) => this.t(k, ...a);
+    row.hidden = false;
+    row.title = t("logDebugHint");
+    const note = d.debug && d.debug_until ? t("logDebugUntil", this.host._fmtTime(d.debug_until, true)) : t("logDebugFor");
+    const html = `<input type="checkbox" data-pr-debug${d.debug ? " checked" : ""}><span>${this.esc(t("logDebug"))}</span><small>${this.esc(note)}</small>`;
+    if (row.innerHTML !== html) row.innerHTML = html;
+  }
+
+  // Zeile des Reiters "System": Zeit, Stufe, Kategorie, Text; mit Gerät ein Tipp öffnet das Gerät
+  sysRow(e) {
+    const t = (k, ...a) => this.t(k, ...a);
+    const open = e.device_id && this.host._devices?.some((x) => x.id === e.device_id);
+    const tag = open ? "button" : "div";
+    return `<${tag}${open ? ` type="button" data-pr="device" data-id="${this.esc(e.device_id)}"` : ""} class="lg-row ${this.esc(e.level)}" role="listitem">
+      <span class="lg-rt">${this.esc(this.host._logTime(e))}</span><span class="lg-lv"><span class="lg-dot ${this.esc(e.level)}" title="${this.esc(t(`logLevel_${e.level}`))}"></span></span>
+      <span class="lg-cat"><span class="lg-pill ${this.esc(e.cat)}">${this.esc(this.catLabel(e.cat))}</span></span>
+      <span class="lg-msg">${e.title ? `<b>${this.esc(e.title)}</b> · ` : ""}${this.esc(e.text)}${e.detail ? `<small>${this.esc(e.detail)}</small>` : ""}</span></${tag}>`;
+  }
+
+  systemHtml(d) {
+    const s = this.s;
+    const t = (k, ...a) => this.t(k, ...a);
+    let day = "";
+    const rows = (d.entries || [])
+      .map((e) => {
+        const label = this.host._logDay(e);
+        const head = label === day ? "" : `<div class="lg-day" role="presentation">${this.esc(label)}</div>`;
+        day = label;
+        return head + this.sysRow(e);
+      })
+      .join("");
+    const filtered = s.filter !== "all" || Boolean(s.item) || Boolean(s.q.trim());
+    const empty = d.entries.length ? "" : `<p class="dlg-note lg-none">${this.esc(t(d.all || filtered ? "logNoneFilter" : "logNone"))}</p>`;
+    let more = "";
+    if (d.total > d.entries.length) {
+      more = d.entries.length >= LIMIT_MAX ? `<p class="mg-hint">${this.esc(t("prCutoff", LIMIT_MAX, this.num(d.total)))}</p>` : `<button type="button" class="qbtn pr-more" data-pr="more">${this.esc(t("prMore"))}</button>`;
+    }
+    const err = s.error ? `<div class="dlg-error">${this.esc(t("prError", s.error))}</div>` : "";
+    return `${err}<div class="pr-list" role="list">${rows}</div>${empty}${more}<p class="pr-note">${this.esc(t("prSystemNote", this.num(d.max)))}</p>`;
   }
 
   fmtStamp(sec) {
@@ -473,6 +618,10 @@ export class ProtocolUi {
       body.innerHTML = this.allHtml(d);
       return;
     }
+    if (s.kind === "system") {
+      body.innerHTML = this.systemHtml(d);
+      return;
+    }
     const device = Boolean(s.deviceId && !s.itemId);
     const rows = (d.entries || []).map((e, i) => (s.kind === "magic" ? this.magicRow(e, i, device) : this.routineRow(e, i, device))).join("");
     const filtered = s.filter !== "all" || Boolean(s.q.trim());
@@ -587,7 +736,7 @@ export class ProtocolUi {
     const d = s.data;
     const count = s.loading && !d ? t("prLoading") : d ? t("prShown", d.entries.length, this.num(d.total)) : "";
     foot.innerHTML = `<button type="button" class="lg-btn" data-pr="close">${mdi("arrowLeft", 16)}<span>${this.esc(t("prBack"))}</span></button><span class="pr-count">${this.esc(count)}</span><span class="sp"></span>
-      <button type="button" class="lg-btn" data-pr="copy"${d?.entries?.length ? "" : " disabled"}>${mdi("copy", 16)}<span>${this.esc(s.flash || t("prCopyText"))}</span></button>`;
+      <button type="button" class="lg-btn" data-pr="copy"${d?.entries?.length ? "" : " disabled"}>${mdi("copy", 16)}<span>${this.esc(s.flash || t("prCopyText"))}</span></button>${s.kind === "system" ? `<button type="button" class="lg-btn" data-pr="clear-log">${this.esc(t("logClear"))}</button>` : ""}`;
   }
 
   // --- Trace ---------------------------------------------------------------------
@@ -702,6 +851,11 @@ export class ProtocolUi {
     const rows = s.data?.entries || [];
     return rows
       .map((e) => {
+        if (s.kind === "system") {
+          const d = new Date(e.at * 1000);
+          const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")} ${d.toTimeString().slice(0, 8)}`;
+          return `${stamp} [${e.level.toUpperCase()}] [${this.catLabel(e.cat)}] ${e.title ? `${e.title}: ` : ""}${e.text}${e.detail ? ` (${e.detail})` : ""}`;
+        }
         if (s.kind === "all") {
           const [title, line] = this.allText(e);
           return [this.fmtStamp(e.at), this.t(`prC_${e.cat}`), e.dname || "", title, line].filter((x, i) => x || i < 2).join(" | ");
@@ -731,6 +885,7 @@ export class ProtocolUi {
         window.clearTimeout(this._searchTimer);
         this.frame();
         this.load();
+        this.startPoll();
         break;
       }
       case "reload":
@@ -807,6 +962,21 @@ export class ProtocolUi {
         break;
       case "copy":
         if (await this.host._copyText(this.tableText(), null)) this.flash(this.t("prCopied"));
+        break;
+      case "device":
+        // Das Geräte-Popup öffnet über dem Protokoll; schliesst es, ist man wieder hier
+        this.host._openDevice(el.dataset.id);
+        break;
+      case "clear-log":
+        // Leeren ist endgültig (auch die gespeicherten Einträge): erst fragen
+        this.host._askConfirm({ title: "logClearTitle", note: "logClearNote", no: "logClearNo", yes: "logClearYes", noIcon: "close", yesIcon: "trash" }, async () => {
+          try {
+            await this.host._hass.callWS({ type: "device_panel/clear_log" });
+          } catch (err) {
+            s.error = this.h.errText(err);
+          }
+          this.load();
+        });
         break;
       case "copy-trace": {
         const e = s.data?.entries?.[s.trace];

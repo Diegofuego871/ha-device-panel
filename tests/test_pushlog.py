@@ -171,3 +171,35 @@ async def test_quiet_single_mode_keeps_devices_and_topic(hass: HomeAssistant, se
     await manager._deliver([item], {"quiet_mode": "single"})
     only = hass.data[DATA_PUSHLOG].items(dev.id, 0, time.time() + 5)
     assert len(only) == 1 and only[0]["p"]["topic"] == "battery"
+
+
+async def test_system_query_levels_cats_and_debug(hass: HomeAssistant, setup, hass_ws_client) -> None:  # noqa: F811
+    """Reiter "System" (2.125.0): Einträge ohne Gerät plus alle Debug-Einträge; Zahlen je Stufe und Kategorie wie die Chips."""
+    dev = _device(hass, "Lampe")
+    activity.record(hass, "info", "outage", "online_sent", "Lampe", dev.id, duration="9 Min.")  # gehört dem Gerät: nicht im System
+    activity.record(hass, "info", "system", "sys_start", "Device Panel", version="2.125.0")
+    activity.record(hass, "error", "system", "ai_failed", "Device Panel", reason="Zeit", detail="x", chars=1, task="ai_task.x")
+    activity.record(hass, "info", "push", "push_sent", "notify.handy", title="T")
+    activity.set_debug(hass, True)
+    activity.record(hass, "debug", "outage", "outage_seen", "Lampe", dev.id, minutes=5)  # Debug mit Gerät: im System
+    now = time.time() + 5
+    out = devicelog.system_query(hass, since=None, until=now)
+    assert out["all"] >= 5  # der Start der Einrichtung zählt mit
+    cats = {e["cat"] for e in out["entries"]}
+    assert "outage" in cats and all(e["cat"] != "outage" or e["level"] == "debug" for e in out["entries"])
+    assert out["levels"]["error"] == 1 and out["levels"]["debug"] == 1 and out["debug"] is True and out["debug_until"] > time.time()
+    # Stufe wählt: die Zahlen je Kategorie folgen ihr, die je Stufe nicht
+    err = devicelog.system_query(hass, since=None, until=now, level="error")
+    assert [e["level"] for e in err["entries"]] == ["error"] and err["cats"] == {"system": 1} and err["levels"]["info"] >= 2
+    # Kategorie wählt: die Zahlen je Stufe folgen ihr
+    push = devicelog.system_query(hass, since=None, until=now, cat="push")
+    assert push["total"] == 1 and push["levels"] == {"info": 1}
+    # Suche und Seite
+    assert devicelog.system_query(hass, since=None, until=now, text="handy")["total"] == 1
+    page = devicelog.system_query(hass, since=None, until=now, limit=2, offset=1)
+    assert len(page["entries"]) == 2 and page["total"] == out["total"]
+    # über den WebSocket (nur Administratoren)
+    client = await hass_ws_client(hass)
+    await client.send_json({"id": 1, "type": f"{DOMAIN}/protocol_get", "kind": "system", "filter": "error", "cat": "system"})
+    result = (await client.receive_json())["result"]
+    assert result["total"] == 1 and result["entries"][0]["source"] == "system" and "debug" in result and "until" in result

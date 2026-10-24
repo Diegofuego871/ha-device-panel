@@ -19,7 +19,7 @@
 - **Switches tab:** every device with something to switch shows it as tiles; a tap opens the Home Assistant controls (dimming, colour, position)
 - **Charging and updates:** "Charging" chip with a charge bar, push when a device is full, live activity (iPhone) or live update (Android 16), and an update reminder that replaces your own automations
 - **New devices:** a "New" mark and chip for three days, and an optional push with all devices that appeared
-- **App launcher and log:** one button for useful pages of Home Assistant and your own links, plus a log that shows what the notifications decide and why one did not come
+- **App launcher and history:** one button for useful pages of Home Assistant and your own links, plus the history with a tab "System" that shows what the notifications decide and why one did not come
 - **Optional AI assessment:** a guess at the cause on a button press, only with an AI task of Home Assistant
 - **Yours alone:** columns, sort order, filters, favorites and start page are saved per user, on phone and desktop alike
 - **Everything in the panel:** all settings, updates via HACS (also automatically), back up and restore of all settings, German and English
@@ -190,21 +190,21 @@ Switches an entity of a device once or on a schedule, without an automation.
 
 <p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/routines-all.png" alt="Window with all routines, one card per device" width="720"></p>
 
-## App launcher and log
+## App launcher and history
 
 A button in the header opens a launcher with useful pages, in the symbols and colors of the settings of Home Assistant. Administrators also find a power button there that restarts Home Assistant, always after a confirmation.
 
-| App launcher | Log |
+| App launcher | History, tab "System" |
 |---|---|
-| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/launcher.png" alt="App launcher with favorites, Device Panel and Home Assistant pages"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/log.png" alt="Log with entries of the notifications and a filter"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/launcher.png" alt="App launcher with favorites, Device Panel and Home Assistant pages"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/log.png" alt="History, tab System, with entries of the notifications, a filter and the debug switch"> |
 
-- **Pages:** routines, Magic Push and the log of this integration, pages of Home Assistant (automations, scenes, scripts, helpers, devices, entities, integrations, tools and more; "Apps" and "Dashboards" are available too but hidden until you switch them on in edit mode; administrators only for the management pages)
+- **Pages:** routines, Magic Push and the history of this integration, pages of Home Assistant (automations, scenes, scripts, helpers, devices, entities, integrations, tools and more; "Apps" and "Dashboards" are available too but hidden until you switch them on in edit mode; administrators only for the management pages)
 - **Your own links and actions:** a page in Home Assistant, an external link that opens in a new browser tab (with its favicon as icon if you like), or an **action** that calls a Home Assistant service or a command of the interface (JSON data, optionally with a question first); optionally also as a button in the header of the settings; while it runs the symbol shows turning arrows, then a green check (or a red cross), and the result is written to the log
 - **View and Settings:** two apps in the group "Device Panel" open the view settings (sorting, columns, filter chips) and the central settings, so everything is found in one place; both can be hidden because the header buttons lead there too
 - **Favorites:** a heart marks up to five apps that get their own buttons in the header (on the phone the first two); by default these are Routines and Settings. The gear no longer sits there permanently, only when the app "Settings" is pinned; it cannot be hidden. If a restart is pending, the launcher button shows the red dot as long as Settings is not pinned
-- **Edit mode:** sort by dragging, hide apps with the eye (Log and Status stay visible, marked with a lock), grid or list; everything is saved per user
+- **Edit mode:** sort by dragging, hide apps with the eye (History and Status stay visible, marked with a lock), grid or list; everything is saved per user
 - **Status:** an app for administrators that shows whether the parts of the integration are running (routines, outage monitoring, battery, charging, reception history, Magic Push, new devices, updates: "running", "late" or "stopped"). If a part stops, you get a push (to the default target, or to a target you choose in the app) and an all-clear when it runs again; a stopped or late part has a button to restart just that part by hand. A red dot on the launcher button, or on the Status button if you pinned it, shows a fault; an orange dot shows that debug mode is on. Limit: if Home Assistant itself stands still, nothing can report it
-- **Log:** shows what the notifications decide and why one did not come, with filter and search (the last 500 entries are kept across restarts), and an optional debug mode (switched on for 48 hours, also across restarts)
+- **History:** one window with everything, whichever way you open it: from the launcher (app "History") over all devices, from the device pop-up for that device, from the overviews of Magic Push and routines, and from Settings › Storage on the tab "System". Four tabs: "All" (everything that concerns a device), "Magic Push", "Routines" and **"System"** (entries without a device: start, errors, AI, push targets, status app, launcher; with chips for level and kind, search, copy and clear). The **debug mode** is switched on in the tab "System" (48 hours, also across restarts; debug entries of devices show up there too)
 
 ## Settings in the panel
 

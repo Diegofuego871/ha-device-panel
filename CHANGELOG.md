@@ -7,6 +7,27 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.125.0] - 2026-10-24
+
+One history instead of two windows: the window "Log" is now the tab "System" of the history, and the app "Log" is called "History".
+
+### Added
+
+- **Tab "System" in the history** (only over all devices, not on a device): the entries of the panel log without a device (start, errors, AI, push targets, status app, launcher) and **all debug entries**, with chips for **level** (error, warning, info, debug) and **kind**, search, period (7 days to 12 months), copy as text, clear (with a question first) and the entry opens its device. It asks again every 4 seconds, but not in the middle of a swipe.
+- **Debug mode in the tab "System":** the switch sits there, with the time it switches itself off (48 hours, also across restarts, as before). It applies to the whole panel.
+- **New entry:** Settings › Panel › Storage has a button "Open history (System)" in the chapter "Logs".
+- New WebSocket kind `system` for `device_panel/protocol_get` (administrators) with `filter` for the level and `cat` for the kind.
+
+### Changed
+
+- **The app "Log" in the launcher is called "History"** (German "Protokoll"), subtitle "with debug mode" stays. It opens the history over all devices on the tab "All". The internal id stays, so pinned apps and their order are kept. The symbol is the same as in the device pop-up and in the overviews.
+- The history window has four tabs: All, Magic Push, Routines, System. On a device and from a single message or routine there is no tab "System".
+- **README:** "App launcher and history" describes the one window and its entries.
+
+### Removed
+
+- The separate window "Log" (`dialog.log-dlg`, `get_log` in the panel). Debug mode, entries and limits are unchanged; nothing has to be migrated.
+
 ## [2.124.0] - 2026-10-24
 
 Sent notifications get their own storage with their own retention, and the summary after quiet time shows up for every device it names. Includes the changes from 2.123.0.
@@ -4473,6 +4494,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0
 [2.124.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.124.0
 [2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0
 [2.120.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.120.0

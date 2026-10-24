@@ -7,6 +7,27 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.125.0] - 2026-10-24
+
+Ein Protokoll statt zwei Fenstern: das Fenster "Log" ist jetzt der Reiter "System" des Protokolls, und die App "Log" heisst "Protokoll".
+
+### Hinzugefügt
+
+- **Reiter "System" im Protokoll** (nur über alle Geräte, nicht an einem Gerät): die Einträge des Panel-Logs ohne Gerät (Start, Fehler, KI, Push-Ziele, Status-App, Launcher) und **alle Debug-Einträge**, mit Chips für **Stufe** (Fehler, Warnung, Info, Debug) und **Art**, Suche, Zeitraum (7 Tage bis 12 Monate), Kopieren als Text, Leeren (mit Rückfrage) und ein Eintrag öffnet sein Gerät. Das Fenster fragt alle 4 Sekunden nach, nicht mitten in einer Wischbewegung.
+- **Debug-Modus im Reiter "System":** der Schalter steht dort, mit der Zeit, zu der er sich ausschaltet (48 Stunden, auch über Neustarts, wie bisher). Er gilt für das ganze Panel.
+- **Neuer Einstieg:** Einstellungen › Panel › Speicher hat im Kapitel "Protokolle und Log" einen Knopf "Protokoll öffnen (System)".
+- Neue Art `system` für `device_panel/protocol_get` (Administratoren), mit `filter` für die Stufe und `cat` für die Art.
+
+### Geändert
+
+- **Die App "Log" im Launcher heisst "Protokoll"** (EN "History"), der Untertitel "mit Debug-Modus" bleibt. Sie öffnet das Protokoll über alle Geräte auf dem Reiter "Alles". Die interne Kennung bleibt, angeheftete Apps und ihre Reihenfolge bleiben erhalten. Das Symbol ist dasselbe wie im Geräte-Popup und in den Übersichten.
+- Das Protokoll-Fenster hat vier Reiter: Alles, Magic Push, Routinen, System. An einem Gerät und von einer einzelnen Meldung oder Routine aus gibt es keinen Reiter "System".
+- **README:** "App-Launcher und Protokoll" beschreibt das eine Fenster und seine Einstiege.
+
+### Entfernt
+
+- Das eigene Fenster "Log" (`dialog.log-dlg`, `get_log` im Panel). Debug-Modus, Einträge und Grenzen sind unverändert; es muss nichts migriert werden.
+
 ## [2.124.0] - 2026-10-24
 
 Gesendete Meldungen haben einen eigenen Speicher mit eigener Aufbewahrung, und die Zusammenfassung nach der Ruhezeit erscheint bei jedem Gerät, das sie nennt. Enthält die Änderungen von 2.123.0.
@@ -4574,6 +4595,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0
 [2.124.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.124.0
 [2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0
 [2.120.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.120.0
