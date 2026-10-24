@@ -13,6 +13,7 @@ The setup wizard also asks about update notifications.
 
 ### Changed
 
+- **Setup wizard, row "Fully charged":** off by default, and the wizard no longer switches it on for all integrations with battery devices. The notification applies only to integrations you switch on one by one (best practice); with the row on and no integration chosen, a note says where (Settings › Battery › Charging).
 - **Setup wizard, step "Notifications":** the values under each row have no outline any more; the number sits large (18 px) in a quiet field on the right with its unit, and the button "Send test message" is as wide as the target field.
 
 ### Added

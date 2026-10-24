@@ -429,7 +429,8 @@ export class WizardUi {
           return `<label class="wz-v"><span>${escape(this.t(lab))}</span><input type="number" inputmode="numeric" min="${lo}" max="${hi}" step="1" data-wz-v="${key}" value="${escape(d.v[key])}"${none ? " disabled" : ""}><em>${escape(this.t(unit))}</em></label>`;
         })
         .join("");
-      return `<div class="wz-msg${d.on[id] && !none ? " on" : ""}"><div class="wz-li"><span class="wz-ic">${mdi(MSG_ICON[id], 18)}</span><div class="wz-nm">${escape(this.t(`wzM_${id}`))}<small>${escape(this.t(`wzM_${id}_s`))}</small></div>${this.toggle("data-wz-msg", id, d.on[id] && !none, this.t(`wzM_${id}`)).replace("<input", none ? "<input disabled" : "<input")}</div><div class="wz-vals">${vals}</div></div>`;
+      const hint = id === "charge" && d.on.charge && !none && !(this.s.base.charge_integrations || []).length ? `<p class="wz-p small wz-hint">${escape(this.t("wzChargeHint"))}</p>` : "";
+      return `<div class="wz-msg${d.on[id] && !none ? " on" : ""}"><div class="wz-li"><span class="wz-ic">${mdi(MSG_ICON[id], 18)}</span><div class="wz-nm">${escape(this.t(`wzM_${id}`))}<small>${escape(this.t(`wzM_${id}_s`))}</small></div>${this.toggle("data-wz-msg", id, d.on[id] && !none, this.t(`wzM_${id}`)).replace("<input", none ? "<input disabled" : "<input")}</div><div class="wz-vals">${vals}</div>${hint}</div>`;
     }).join("");
     return `<h2 class="wz-h2">${escape(this.t("wzMTitle"))}</h2><p class="wz-p">${escape(this.t("wzMText"))}</p>
       <div class="wz-lab">${escape(this.t("wzMTarget"))}</div><label class="wz-sel"><select data-wz-target aria-label="${escape(this.t("wzMTarget"))}">${targets}</select>${mdi("chevronDown", 18)}</label>
@@ -497,10 +498,8 @@ export class WizardUi {
     };
     // Uhrzeit der Update-Meldung nur, wenn sie im Assistenten zu sehen war
     if (d.on.updates && this.rowValues("updates").length && TIME_RE.test(String(d.v.updates_time))) values.updates_time = d.v.updates_time;
-    // Die Lademeldung gilt nur für Integrationen, die dafür gewählt sind: ohne Wahl alle mit Batteriegeräten
-    if (d.on.charge && !(base.charge_integrations || []).length) {
-      values.charge_integrations = (opts.catalog?.battery || []).map((b) => b.domain).filter((dom) => !d.exI.has(dom));
-    }
+    // Die Lademeldung gilt nur für Integrationen, die dafür gewählt sind (Best Practice: je Integration einschalten). Der Assistent wählt keine
+    // aus; charge_integrations bleibt, wie es ist, und ein Hinweis unter der Zeile sagt, wo man sie wählt.
     if (d.target !== "none") {
       values.quiet_enabled = d.quiet.on;
       if (d.quiet.on && d.quiet.uniform) values.quiet_days = Array.from({ length: 7 }, () => ({ on: true, from: d.quiet.from, to: d.quiet.to }));

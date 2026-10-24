@@ -13,6 +13,7 @@ Der Einrichtungsassistent fragt auch nach Meldungen für Updates.
 
 ### Geändert
 
+- **Einrichtungsassistent, Zeile "Voll geladen":** standardmässig aus, und der Assistent schaltet sie nicht mehr für alle Integrationen mit Batteriegeräten ein. Die Meldung gilt nur für Integrationen, die du einzeln einschaltest (Best Practice); steht die Zeile an und ist keine Integration gewählt, sagt ein Hinweis, wo (Einstellungen › Batterie › Laden).
 - **Einrichtungsassistent, Schritt "Meldungen":** die Werte unter jeder Zeile haben keine Umrandung mehr; die Zahl steht gross (18 px) in einem ruhigen Feld rechts mit ihrer Einheit, und der Knopf "Testmeldung senden" ist so breit wie das Zielfeld.
 
 ### Hinzugefügt

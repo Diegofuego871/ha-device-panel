@@ -108,6 +108,10 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Testmeldung gesendet: "${L.testOk}"`, (await s.wait(`return r.querySelector("${s.D} [data-wz-testres]").textContent.trim() === ${JSON.stringify(L.testOk)}`)) && (await s.p.evaluate(() => window.__wizardTests)).join() === "notify.fernseher,notify.mobile_app_testhandy");
       await s.tap(`${s.D} [data-wz-msg="outage"]`);
       await s.tap(`${s.D} [data-wz-msg="battery"]`);
+      check(`[${tag}] "Voll geladen" ist standardmässig aus, ohne Hinweis`, (await s.ev(`return r.host._wizard.s.d.on.charge === false && !r.querySelector("${s.D} .wz-hint")`)));
+      await s.tap(`${s.D} [data-wz-msg="charge"]`);
+      check(`[${tag}] "Voll geladen" an, ohne gewählte Integrationen: Hinweis "je Integration einschalten"`, await s.ev(`return !!r.querySelector("${s.D} .wz-hint")`));
+      await s.tap(`${s.D} [data-wz-msg="charge"]`);
       await s.tap(`${s.D} [data-wz-msg="updates"]`);
       await s.ev(`const i = r.querySelector('${s.D} [data-wz-v="updates_time"]'); i.value = "07:30"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
       check(`[${tag}] Ausgefallene Geräte und Batterie an`, await s.ev(`const d = r.host._wizard.s.d; return d.on.outage && d.on.battery && !d.on.new && !d.on.charge`));
@@ -138,7 +142,7 @@ for (const lang of ["de", "en"]) {
       await s.tap(`${s.D} [data-wz="finish"]`);
       check(`[${tag}] Fertigstellen: Fenster zu`, await s.closed());
       const saved = (await s.calls())[0] || {};
-      check(`[${tag}] ein einziges set_options mit Auswahl, Ziel, Meldungen, Werten`, (await s.calls()).length === 1 && saved.exclude_integrations?.join() === off && saved.exclude_types?.join() === types[0] && saved.exclude_devices?.join() === devs[0] && saved.notify_service === "notify.mobile_app_testhandy" && saved.notify_outage === true && saved.notify_online === true && saved.battery_push === true && saved.notify_new === false && saved.notify_updates === true && saved.updates_time === "07:30" && !("offline_after" in saved) && saved.notify_delay === 6 && saved.battery_low === 20, JSON.stringify(saved));
+      check(`[${tag}] ein einziges set_options mit Auswahl, Ziel, Meldungen, Werten`, (await s.calls()).length === 1 && saved.exclude_integrations?.join() === off && saved.exclude_types?.join() === types[0] && saved.exclude_devices?.join() === devs[0] && saved.notify_service === "notify.mobile_app_testhandy" && saved.notify_outage === true && saved.notify_online === true && saved.battery_push === true && saved.notify_new === false && saved.notify_updates === true && !("charge_integrations" in saved) && saved.updates_time === "07:30" && !("offline_after" in saved) && saved.notify_delay === 6 && saved.battery_low === 20, JSON.stringify(saved));
       check(`[${tag}] Ruhezeit gespeichert (sieben Tage 23:00 bis 07:00)`, saved.quiet_enabled === true && saved.quiet_days?.length === 7 && saved.quiet_days.every((d) => d.on && d.from === "23:00" && d.to === "07:00"));
       check(`[${tag}] Fertigstellen löscht den Zwischenstand`, saved.wizard_draft === null && (await s.p.evaluate(() => window.__opts.wizard_draft)) === null);
       check(`[${tag}] Zustand "done" mit Zeitpunkt`, saved.wizard_state === "done" && saved.wizard_done_at > 1_600_000_000 && (await s.state()) === "done");
