@@ -141,6 +141,9 @@ for (const lang of ["de", "en"]) {
     const cols = () => ev(`return [...r.querySelectorAll('${P} .pr-chart .pr-bar .pr-col')].length`);
     const allCols = await cols();
     check(`[${tag}] Diagramm: Balken je Tag, mindestens zwei Tage mit Einträgen, Störungen rot`, allCols >= 2 && (await ev(`return !!r.querySelector('${P} .pr-chart .pr-col i.bad') && r.querySelectorAll('${P} .pr-chart .pr-bar').length >= 29`)), String(allCols));
+    check(`[${tag}] Pfeil nur an antippbaren Zeilen (Magic Push, Routine, Meldung), nicht an den übrigen`, await ev(`const rows = [...r.querySelectorAll('${P} .al-row')]; const tappable = rows.filter((x) => x.dataset.pr); return tappable.length >= 3 && tappable.every((x) => x.classList.contains("has-chev") && !!x.querySelector(".al-chev")) && rows.filter((x) => !x.dataset.pr).every((x) => !x.querySelector(".al-chev"))`));
+    await ev(`r.querySelector('${P} .al-row[data-pr="trace"]').scrollIntoView({ block: "center" })`);
+    await p.screenshot({ path: `${outDir}/devicelog-arrows-${tag.replace("/", "-")}.png` });
     await ev(`r.querySelector('${P} [data-pr-body]').scrollTop = 0`);
     await p.screenshot({ path: `${outDir}/devicelog-chart-${tag.replace("/", "-")}.png` });
     await tap(`${P} [data-pr-filters] .chip[data-v="battery"]`);

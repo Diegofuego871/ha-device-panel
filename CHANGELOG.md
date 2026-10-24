@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.127.0] - 2026-10-24
+
+Entries of the history that can be tapped now show it with an arrow. Includes the changes from 2.126.0.
+
+### Changed
+
+- **Arrow at the end of tappable rows** in the history (tabs "All" and "System"): a down arrow (turns up when open) for a Magic Push message and for a sent notification, a right arrow for a routine run (opens its trace) and for an entry that opens its device. Plain entries have no arrow. Before, you had to know that these rows could be tapped.
+- **Chart in the tab "All"** (from 2.126.0): bars per day (per week for periods over 120 days), faults in red; it follows the chips and the search, a tap on a bar sets the period to that day.
+
 ## [2.126.0] - 2026-10-24
 
 The bar chart of Magic Push and routines is now also in the list "All" of the history.
@@ -19,6 +28,8 @@ The bar chart of Magic Push and routines is now also in the list "All" of the hi
 
 - WebSocket `protocol_get` with kind `all` returns `step` and `buckets` like the other kinds.
 - **README:** the section "History of a device" mentions the chart; the screenshots of the history were taken again.
+
+Not released; included in 2.127.0.
 
 ## [2.125.0] - 2026-10-24
 
@@ -4507,7 +4518,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.126.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.126.0
+[2.127.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.127.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0
 [2.124.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.124.0
 [2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0

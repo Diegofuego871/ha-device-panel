@@ -2222,6 +2222,11 @@ button.pr-row:not(:disabled):hover { background: var(--dp-hover); }
 .lg-pill.updates, .lg-pill.new { background: var(--dp-subtle); color: var(--dp-text2); }
 button.al-row { border-bottom: 1px solid var(--dp-divider); }
 .pr-list .pr-item.open > .al-row { background: var(--dp-primary-soft); }
+/* Pfeil am Ende antippbarer Zeilen im Protokoll (seit 2.127.0): aufklappbar nach unten (offen: nach oben), Ablauf oder Gerät nach rechts */
+.lg-row.has-chev { position: relative; padding-right: 36px; }
+.lg-row .al-chev { position: absolute; right: 8px; top: 50%; display: grid; place-items: center; width: 22px; height: 22px; margin-top: -11px; color: var(--dp-text2); transition: transform 0.15s ease; }
+.pr-item.open > .al-row .al-chev { transform: rotate(180deg); color: var(--dp-primary); }
+button.lg-row.has-chev:hover .al-chev { color: var(--dp-primary); }
 @media (max-width: 700px) { .al-row { grid-template-columns: 52px minmax(0, 1fr); grid-template-areas: "rt cat" ". msg"; gap: 4px 10px; } .al-row > .lg-rt { grid-area: rt; } .al-row > span:nth-child(2) { grid-area: cat; } .al-row > .lg-msg { grid-area: msg; } }
 .pr-st { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 500; background: var(--dp-subtle); color: var(--dp-text2); }
 .pr-st.ok { background: var(--dp-success-soft); color: var(--dp-success); }

@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.127.0] - 2026-10-24
+
+Einträge des Protokolls, die man antippen kann, zeigen das jetzt mit einem Pfeil. Enthält die Änderungen von 2.126.0.
+
+### Geändert
+
+- **Pfeil am Ende antippbarer Zeilen** im Protokoll (Reiter "Alles" und "System"): ein Pfeil nach unten (offen nach oben) bei einer Magic-Push-Meldung und bei einer gesendeten Meldung, ein Pfeil nach rechts bei einem Lauf einer Routine (öffnet den Ablauf) und bei einem Eintrag, der sein Gerät öffnet. Einfache Einträge haben keinen Pfeil. Bisher musste man wissen, dass diese Zeilen antippbar sind.
+- **Diagramm im Reiter "Alles"** (seit 2.126.0): Balken je Tag (bei Zeiträumen über 120 Tage je Woche), Störungen rot; es folgt den Chips und der Suche, ein Tipp auf einen Balken setzt den Zeitraum auf diesen Tag.
+
 ## [2.126.0] - 2026-10-24
 
 Das Balkendiagramm von Magic Push und Routinen steht jetzt auch in der Liste "Alles" des Protokolls.
@@ -19,6 +28,8 @@ Das Balkendiagramm von Magic Push und Routinen steht jetzt auch in der Liste "Al
 
 - WebSocket `protocol_get` mit Art `all` liefert `step` und `buckets` wie die anderen Arten.
 - **README:** der Abschnitt "Protokoll eines Geräts" nennt das Diagramm; die Printscreens des Protokolls sind neu aufgenommen.
+
+Nicht veröffentlicht; enthalten in 2.127.0.
 
 ## [2.125.0] - 2026-10-24
 
@@ -4608,7 +4619,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.126.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.126.0
+[2.127.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.127.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0
 [2.124.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.124.0
 [2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0

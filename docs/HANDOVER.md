@@ -3,7 +3,9 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.126.0, Diagramm in "Alles"; davor 2.125.0 Protokoll und Log vereint)
+## Stand (2.127.0, Pfeile an antippbaren Zeilen des Protokolls; davor 2.126.0 Diagramm in "Alles")
+
+- Pfeil an antippbaren Zeilen (2.127.0): `protocol.js` `allRow` (Klasse `has-chev`, `.al-chev`; aufklappbar chevronDown, offen gedreht; Routine und Gerät chevronRight) und `sysRow` (nur mit Gerät); CSS am Ende der Protokoll-Regeln in `styles.js`. Test: Suite `devicelog` ("Pfeil nur an antippbaren Zeilen").
 
 - Diagramm in der Liste "Alles" (2.126.0): `devicelog.query` liefert `step`/`buckets` aus den gezeigten Einträgen (`protocol._buckets` mit `is_bad`; Störung = Ausfall, Warnung/Fehler, fehlgeschlagene Meldung/Lauf); `protocol.js` `allHtml` zeichnet `chart(d)` (Balken, Tipp setzt den Zeitraum). Tests: `test_pushlog.py::test_devicelog_chart_follows_the_chip_and_marks_faults`, Suite `devicelog`.
 

@@ -440,10 +440,10 @@ export class ProtocolUi {
     const t = (k, ...a) => this.t(k, ...a);
     const open = e.device_id && this.host._devices?.some((x) => x.id === e.device_id);
     const tag = open ? "button" : "div";
-    return `<${tag}${open ? ` type="button" data-pr="device" data-id="${this.esc(e.device_id)}"` : ""} class="lg-row ${this.esc(e.level)}" role="listitem">
+    return `<${tag}${open ? ` type="button" data-pr="device" data-id="${this.esc(e.device_id)}"` : ""} class="lg-row${open ? " has-chev" : ""} ${this.esc(e.level)}" role="listitem">
       <span class="lg-rt">${this.esc(this.host._logTime(e))}</span><span class="lg-lv"><span class="lg-dot ${this.esc(e.level)}" title="${this.esc(t(`logLevel_${e.level}`))}"></span></span>
       <span class="lg-cat"><span class="lg-pill ${this.esc(e.cat)}">${this.esc(this.catLabel(e.cat))}</span></span>
-      <span class="lg-msg">${e.title ? `<b>${this.esc(e.title)}</b> · ` : ""}${this.esc(e.text)}${e.detail ? `<small>${this.esc(e.detail)}</small>` : ""}</span></${tag}>`;
+      <span class="lg-msg">${e.title ? `<b>${this.esc(e.title)}</b> · ` : ""}${this.esc(e.text)}${e.detail ? `<small>${this.esc(e.detail)}</small>` : ""}</span>${open ? `<span class="al-chev" aria-hidden="true">${this.h.mdi("chevronRight", 18)}</span>` : ""}</${tag}>`;
   }
 
   systemHtml(d) {
@@ -669,19 +669,21 @@ export class ProtocolUi {
     const pill = `<span class="lg-pill ${this.esc(e.cat)}">${this.esc(this.t(`prC_${e.cat}`))}</span>`;
     const main = `<span class="lg-msg"><b>${this.esc(title)}</b>${line ? `<small>${this.esc(line)}</small>` : ""}${who}</span>`;
     const head = `<span class="lg-rt">${this.esc(time)}</span><span>${pill}</span>${main}`;
-    if (e.source === "routine") return `<div class="pr-item" role="listitem"><button type="button" class="lg-row al-row${cls}" data-pr="trace" data-i="${s.data.entries.indexOf(e)}">${head}</button></div>`;
+    // Pfeil am Zeilenende (seit 2.127.0): zeigt, dass man die Zeile antippen kann; aufklappbar: nach unten (offen: nach oben), Ablauf oder Gerät: nach rechts
+    const arrow = (name) => `<span class="al-chev" aria-hidden="true">${this.h.mdi(name, 18)}</span>`;
+    if (e.source === "routine") return `<div class="pr-item" role="listitem"><button type="button" class="lg-row al-row has-chev${cls}" data-pr="trace" data-i="${s.data.entries.indexOf(e)}">${head}${arrow("chevronRight")}</button></div>`;
     if (e.source === "magic") {
       const key = `${e.id}|${e.at}`;
       const open = s.open.has(key);
       const body = String(e.body || "");
       const msg = open && (e.title || body) ? `<div class="pr-msg"><b>${this.esc(e.title || "")}</b>${body ? `<span>${this.esc(body)}</span>` : ""}</div>` : "";
-      return `<div class="pr-item${open ? " open" : ""}" role="listitem"><button type="button" class="lg-row al-row${cls}" data-pr="row" data-key="${this.esc(key)}" aria-expanded="${open}">${head}</button>${msg}</div>`;
+      return `<div class="pr-item${open ? " open" : ""}" role="listitem"><button type="button" class="lg-row al-row has-chev${cls}" data-pr="row" data-key="${this.esc(key)}" aria-expanded="${open}">${head}${arrow("chevronDown")}</button>${msg}</div>`;
     }
     if (e.push) {
       // Gesendete Meldung (seit 2.122.0): ein Tipp zeigt, an wen was ging und mit welchem Ergebnis
       const key = `push|${e.at}|${e.dev || ""}|${e.cat}`;
       const open = s.open.has(key);
-      return `<div class="pr-item${open ? " open" : ""}" role="listitem"><button type="button" class="lg-row al-row${cls}" data-pr="row" data-key="${this.esc(key)}" aria-expanded="${open}">${head}</button>${open ? this.pushHtml(e.push) : ""}</div>`;
+      return `<div class="pr-item${open ? " open" : ""}" role="listitem"><button type="button" class="lg-row al-row has-chev${cls}" data-pr="row" data-key="${this.esc(key)}" aria-expanded="${open}">${head}${arrow("chevronDown")}</button>${open ? this.pushHtml(e.push) : ""}</div>`;
     }
     return `<div class="pr-item" role="listitem"><div class="lg-row al-row${cls}">${head}</div></div>`;
   }
