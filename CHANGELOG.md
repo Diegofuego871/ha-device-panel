@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 The setup wizard also asks about update notifications.
 
+### Changed
+
+- **Setup wizard, step "Notifications":** the values under each row have no outline any more; the number sits large (18 px) in a quiet field on the right with its unit, and the button "Send test message" is as wide as the target field.
+
 ### Added
 
 - **Setup wizard, step "Notifications":** a fifth row "Updates" (new updates for Home Assistant, apps and HACS) with a switch; with the mode "once a day" the time of the notification can be set right there (default 09:00). Other modes (immediately, weekly) are set in the settings and stay as they are. Like the other rows it needs a push target, and an invalid time blocks "Next".

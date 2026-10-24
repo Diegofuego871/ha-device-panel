@@ -11,6 +11,10 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 Der Einrichtungsassistent fragt auch nach Meldungen für Updates.
 
+### Geändert
+
+- **Einrichtungsassistent, Schritt "Meldungen":** die Werte unter jeder Zeile haben keine Umrandung mehr; die Zahl steht gross (18 px) in einem ruhigen Feld rechts mit ihrer Einheit, und der Knopf "Testmeldung senden" ist so breit wie das Zielfeld.
+
 ### Hinzugefügt
 
 - **Einrichtungsassistent, Schritt "Meldungen":** eine fünfte Zeile "Updates" (neue Updates für Home Assistant, Apps und HACS) mit Schalter; im Modus "einmal am Tag" lässt sich die Uhrzeit der Meldung gleich dort einstellen (Standard 09:00). Andere Modi (sofort, wöchentlich) stellt man in den Einstellungen ein und bleiben, wie sie sind. Wie die anderen Zeilen braucht sie ein Push-Ziel, und eine ungültige Uhrzeit sperrt "Weiter".

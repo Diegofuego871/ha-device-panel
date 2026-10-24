@@ -2344,19 +2344,22 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-sel { position: relative; display: flex; align-items: center; border: 1px solid var(--dp-divider); border-radius: 12px; margin: 4px 0 10px; }
 .wz-sel select { appearance: none; flex: 1; min-width: 0; border: 0; background: transparent; color: inherit; font: inherit; font-size: 14.5px; padding: 12px 40px 12px 12px; cursor: pointer; }
 .wz-sel svg { position: absolute; right: 10px; pointer-events: none; }
-.wz-testrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
-.wz-testres { font-size: 12.5px; }
+.wz-testrow { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-bottom: 6px; }
+.wz-testrow .dlg-btn { width: 100%; }
+.wz-testres { font-size: 12.5px; text-align: center; min-height: 1em; }
 .wz-testres.ok { color: var(--dp-success); }
 .wz-testres.fail { color: var(--dp-error); }
 .wz-msg { border-top: 1px solid var(--dp-divider); padding: 2px 0 8px; }
 .wz-msg .wz-li { border-top: 0; }
-.wz-vals { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 0 0 0 46px; }
+/* Werte der Meldungen: keine Umrandung, die Zahl gross in einem ruhigen Feld */
+.wz-vals { display: flex; flex-direction: column; gap: 4px; margin: 0 0 4px 46px; }
 .wz-msg:not(.on) .wz-vals { opacity: .55; }
-.wz-v { display: flex; align-items: center; gap: 6px; font-size: 13px; border: 1px solid var(--dp-divider); border-radius: 10px; padding: 6px 10px; }
+.wz-v { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 2px 0; }
 .wz-v span { flex: 1; min-width: 0; }
-.wz-v input { width: 56px; border: 0; border-bottom: 1px solid var(--dp-divider); background: transparent; color: inherit; font: inherit; text-align: right; padding: 2px 0; }
-.wz-v input:focus { outline: none; border-bottom-color: var(--dp-primary); }
-.wz-v em { font-style: normal; color: color-mix(in srgb, var(--dp-text) 65%, transparent); font-size: 12px; }
+.wz-v input { width: 76px; border: 0; border-radius: 10px; background: var(--dp-subtle); color: var(--dp-text); font: inherit; font-size: 18px; font-weight: 500; text-align: right; padding: 8px 12px; }
+.wz-v input[type="time"] { width: auto; text-align: center; }
+.wz-v input:focus { outline: 2px solid var(--dp-primary); outline-offset: 0; }
+.wz-v em { font-style: normal; color: color-mix(in srgb, var(--dp-text) 65%, transparent); font-size: 13px; min-width: 30px; }
 .wz-err:empty { display: none; }
 .wz-times { display: flex; gap: 12px; margin: 10px 0 0 2px; }
 .wz-times label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; flex: 1; }
@@ -2370,6 +2373,5 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
   /* Ohne safe-area-inset-top: das Panel liegt unter der Kopfzeile von Home Assistant, der Rand ist dort schon berücksichtigt (wie bei den anderen Vollbild-Fenstern) */
   .wz-top { padding: 12px 12px 6px 16px; }
   .wz-stp { min-height: 38px; }
-  .wz-vals { margin-left: 0; }
 }
 `;
