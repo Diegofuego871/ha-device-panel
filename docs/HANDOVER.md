@@ -3,7 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.122.0, eigene Entitäten; davor 2.121.0 Protokoll-Symbol im Kopf)
+## Stand (2.123.0, Meldung im Protokoll eines Geräts; davor 2.122.0 eigene Entitäten)
+
+- Gesendete Meldungen im Geräteprotokoll (2.123.0): `push.async_push(..., devices=[...])` schreibt über `_journal` einen Eintrag der Kategorie "push" mit `push` {title, body (600), target, topic, res sent/held/failed/missing}, `code` und bei Sammelmeldungen `device_ids` (`activity.record(..., extra=...)`; `_restore_extras` behält sie über Neustarts). Aufrufer mit Geräten: outage (einzeln und Gruppe), battery, charge (2), newdevice (2); quiet.hold merkt `devices` und protokolliert "held". `devicelog._link_pushes` hängt an Einträge mit Code `*_sent` die Meldung desselben Geräts und Themas (PUSH_CATS) bis 15 Min. danach (Feld `push`); Panel: `protocol.js` `allRow`/`pushHtml` (aufklappbar wie Magic Push), Texte `prPushTo`, `prPushRes_*`. Tests: `tests/test_pushlog.py`, Suite `devicelog`.
+- 2.122.0 ist getaggt (Commit 22d2a9b); 2.123.0 baut darauf auf.
 
 - Eigene Entitäten (2.122.0): `summary.py` (Koordinator `SummaryCoordinator`, alle 30 s, `async_summary` rechnet aus `async_list_devices`; Warnung wie `devWarn` im Panel; Fehlerzähler = Einträge der Stufe "error" im Panel-Log der letzten 24 Std. seit dem Quittieren, `ack_at` in `device_panel.summary`), Plattformen `sensor.py` (11), `binary_sensor.py` (2: Ausfall, Problem), `button.py` (Fehler quittieren); Übersetzungen unter `entity` in strings.json = translations/en.json und de.json. Dienst-Gerät `(DOMAIN, "panel")` fehlt bewusst in `candidate_devices`. Einbindung in `__init__.py` (PLATFORMS, `DATA_SUMMARY`); Test `tests/test_summary.py`. Der Test `test_hanging_call_delays…` erwartet keine feste Reihenfolge zweier gleichzeitig fälliger Routinen mehr.
 - Noch offen, in dieser Reihenfolge (Entscheid des Nutzers, 2026-10-24): **2.123.0 Protokoll vereinen**: Log (`log-dlg`, `activity.py`) und Geräteprotokoll (`protocol.js`, `devicelog.py`) in ein Fenster; Einstiege Gerät (vorgefiltert), Übersicht (alles), Einstellungen "Log" (mit System und Stufen); Debug-Einträge hinter einen Schalter; eigene Aufbewahrung für Fehler. Vorher Mockup.

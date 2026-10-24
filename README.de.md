@@ -82,7 +82,7 @@ Der Batterie-Verlauf reicht bis zu 12 Monate zurück, mit markiertem Batteriewec
 
 ### Protokoll eines Geräts
 
-Ein Fenster mit allem zu einem Gerät: Ausfälle und Rückkehr mit der Dauer, Batterie, Laden, Empfang, Updates, neue Geräte, Push, Meldungen von Magic Push und Läufe von Routinen, nach Tagen. Chips filtern nach Art, ein Tipp auf eine Magic-Push-Zeile zeigt die Meldung, ein Tipp auf eine Routine-Zeile ihren Trace. Die Reiter "Magic Push" und "Routinen" behalten ihre Auswertung mit Kennzahlen und Diagramm. Es öffnet mit "Protokoll" oben rechts im Geräte-Popup und über den Kopf der Übersichten von Magic Push und Routinen für alle Geräte.
+Ein Fenster mit allem zu einem Gerät: Ausfälle und Rückkehr mit der Dauer, Batterie, Laden, Empfang, Updates, neue Geräte, Push, Meldungen von Magic Push und Läufe von Routinen, nach Tagen. Chips filtern nach Art, ein Tipp auf einen Eintrag wie "wieder online nach 9 Min.: Meldung wird gesendet" zeigt die gesendete Meldung (Titel, Text, Ziel und Ergebnis), ein Tipp auf eine Magic-Push-Zeile zeigt die Meldung, ein Tipp auf eine Routine-Zeile ihren Trace. Die Reiter "Magic Push" und "Routinen" behalten ihre Auswertung mit Kennzahlen und Diagramm. Es öffnet mit "Protokoll" oben rechts im Geräte-Popup und über den Kopf der Übersichten von Magic Push und Routinen für alle Geräte.
 
 | Alles (Liste nach Tagen) | Magic Push (Auswertung) |
 |---|---|

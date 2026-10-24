@@ -20,7 +20,7 @@ from .test_outage_notify import _device, _entity, _options, setup  # noqa: F401,
 def _state(hass: HomeAssistant, unique_suffix: str) -> str | None:
     """Zustand der Entität mit dieser eindeutigen Kennung (Teil nach der ID des Eintrags)."""
     ent_reg = er.async_get(hass)
-    entry = next((e for e in ent_reg.entities.values() if e.platform == DOMAIN and e.unique_id.endswith(f"_{unique_suffix}")), None)
+    entry = next((e for e in ent_reg.entities.values() if e.platform == DOMAIN and e.unique_id.split("_", 1)[1] == unique_suffix), None)
     assert entry is not None, unique_suffix
     state = hass.states.get(entry.entity_id)
     return state.state if state else None

@@ -156,7 +156,7 @@ class QuietManager:
             return None
         return window_end(opts["quiet_days"], dt_util.utcnow())
 
-    def hold(self, topic: str, target: str, title: str, message: str, data: dict[str, Any] | None, quiet: dict[str, Any] | None) -> bool:
+    def hold(self, topic: str, target: str, title: str, message: str, data: dict[str, Any] | None, quiet: dict[str, Any] | None, devices: list[str] | None = None) -> bool:
         """True, wenn die Meldung jetzt zurückgehalten wird (dann stellt sie das Ende der Ruhezeit zu)."""
         if topic not in QUIET_TOPICS or not target or target == NOTIFY_NONE or _is_critical(data):
             return False
@@ -166,11 +166,11 @@ class QuietManager:
         end = self._end(opts)
         if end is None:
             return False
-        item = {"topic": topic, "target": target, "title": title, "message": message, "data": data or {}, "at": dt_util.utcnow().timestamp(), "quiet": quiet or {}}
+        item = {"topic": topic, "target": target, "title": title, "message": message, "data": data or {}, "at": dt_util.utcnow().timestamp(), "quiet": quiet or {}, "devices": list(devices or [])}
         self._items.append(item)
         del self._items[:-QUEUE_MAX]
         self._save()
-        activity.record(self.hass, "info", "push", "push_held", target, title=title)
+        _push()._journal(self.hass, "info", "push_held", target, title, message, topic, devices, "held")
         self._schedule(end)
         return True
 
@@ -218,7 +218,7 @@ class QuietManager:
                 else:
                     plain.append(item)
             for item in sorted([*plain, *last.values()], key=lambda i: i["at"]):
-                await _push().async_push(hass, item["target"], item["title"], item["message"], item["data"] or None)
+                await _push().async_push(hass, item["target"], item["title"], item["message"], item["data"] or None, devices=item.get("devices") or None)
             return
         by_target: dict[str, list[dict[str, Any]]] = {}
         for item in items:

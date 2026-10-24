@@ -314,7 +314,9 @@ def get(hass: HomeAssistant) -> ActivityLog:
     return log
 
 
-def record(hass: HomeAssistant, severity: str, cat: str, code: str, name: str = "", device_id: str | None = None, **args: Any) -> None:
+def record(
+    hass: HomeAssistant, severity: str, cat: str, code: str, name: str = "", device_id: str | None = None, *, extra: dict[str, Any] | None = None, **args: Any
+) -> None:
     """
     Eintrag aufnehmen. severity debug nur bei eingeschaltetem Schalter, die übrigen immer. name ist der Name
     des Geräts oder Push-Ziels (fett im Fenster; die Parameter heissen name und severity, weil Texte eigene title und level brauchen), code wählt Text (und Detail "<code>_d") aus TEXTS.
@@ -335,7 +337,12 @@ def record(hass: HomeAssistant, severity: str, cat: str, code: str, name: str = 
         "text": text,
         "detail": detail.format(**args) if detail else "",
         "device_id": device_id,
+        # Der Code erlaubt dem Geräteprotokoll, "Meldung wird gesendet" mit der gesendeten Meldung zu verbinden (seit 2.122.0)
+        "code": code,
     }
+    if extra:
+        # Zusatzfelder (zum Beispiel "push" mit dem Inhalt einer gesendeten Meldung und "device_ids" bei Sammelmeldungen)
+        entry.update(extra)
     log.entries.append(entry)
     log.bytes += _size(entry)
     enforce(hass)
@@ -469,13 +476,27 @@ async def async_restore(hass: HomeAssistant) -> None:
         record(hass, "info", "system", "debug_restored", "Device Panel", until=stamp)
 
 
+def _restore_extras(e: dict[str, Any]) -> dict[str, Any]:
+    """Felder seit 2.122.0 (code, push, device_ids) aus der Datei übernehmen, wenn sie gültig aussehen."""
+    out: dict[str, Any] = {}
+    if isinstance(e.get("code"), str):
+        out["code"] = e["code"][:60]
+    push = e.get("push")
+    if isinstance(push, dict) and all(isinstance(push.get(k), str) for k in ("title", "body", "target", "topic", "res")):
+        out["push"] = {k: push[k] for k in ("title", "body", "target", "topic", "res")}
+    ids = e.get("device_ids")
+    if isinstance(ids, list):
+        out["device_ids"] = [i for i in ids if isinstance(i, str)][:50]
+    return out
+
+
 def _restore_entries(hass: HomeAssistant, log: ActivityLog, stored: Any) -> None:
     """Gemerkte Einträge vor die seit dem Start aufgezeichneten setzen (die neuesten, innerhalb der Grenzen)."""
     if not isinstance(stored, list):
         return
     keys = {"at", "level", "cat", "title", "text", "detail", "device_id"}
     old = [
-        {k: e.get(k, None if k == "device_id" else "") for k in keys}
+        {**{k: e.get(k, None if k == "device_id" else "") for k in keys}, **_restore_extras(e)}
         for e in stored
         if isinstance(e, dict) and isinstance(e.get("at"), (int, float)) and e.get("level") in LEVELS and isinstance(e.get("text"), str)
     ]

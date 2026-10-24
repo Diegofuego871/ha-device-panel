@@ -48,17 +48,47 @@ def _avail_entries(hass: HomeAssistant, device_ids: list[str], since: float, unt
     return out
 
 
+# Welche Art Meldung zu welcher Kategorie der Einträge gehört (Thema der Meldung → Kategorie), für die Verbindung "Meldung wird gesendet" → Inhalt
+PUSH_CATS = {"outage": "outage", "online": "outage", "battery": "battery", "charge": "charge", "new": "new"}
+# So lange nach dem Eintrag darf die Meldung folgen (Sammelzeit, Ruhezeit ausgenommen: dann steht die Meldung als eigene Zeile da)
+LINK_WINDOW_S = 900
+
+
 def _event_entries(hass: HomeAssistant, device: str | None, since: float, until: float) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for e in activity.get(hass).entries:
-        dev = e.get("device_id")
-        if not dev or e.get("cat") not in EVENT_CATS or e.get("level") == "debug":
+        if e.get("cat") not in EVENT_CATS or e.get("level") == "debug":
             continue
-        if device is not None and dev != device:
+        ids = e.get("device_ids") or ([e["device_id"]] if e.get("device_id") else [])
+        if not ids or not since <= e["at"] <= until:
             continue
-        if since <= e["at"] <= until:
-            out.append({"at": e["at"], "source": "event", "cat": e["cat"], "dev": dev, "level": e.get("level", "info"), "title": e.get("title", ""), "text": e.get("text", ""), "detail": e.get("detail", "")})
+        if device is not None and device not in ids:
+            continue
+        for dev in [device] if device is not None else ids:
+            entry = {"at": e["at"], "source": "event", "cat": e["cat"], "dev": dev, "level": e.get("level", "info"), "title": e.get("title", ""), "text": e.get("text", ""), "detail": e.get("detail", ""), "code": e.get("code", "")}
+            if isinstance(e.get("push"), dict):
+                entry["push"] = {**e["push"], "at": e["at"]}
+            out.append(entry)
     return out
+
+
+def _link_pushes(scope: list[dict[str, Any]]) -> None:
+    """
+    Einträge wie "wieder online nach 9 Min.: Meldung wird gesendet" bekommen die Meldung, die kurz danach für dasselbe Gerät hinausging (Feld "push"),
+    damit ein Tipp auf die Zeile zeigt, an wen was gesendet wurde. Die Meldung bleibt auch eine eigene Zeile.
+    """
+    pushes: dict[str, list[dict[str, Any]]] = {}
+    for e in scope:
+        if e["source"] == "event" and e["cat"] == "push" and e.get("push"):
+            pushes.setdefault(e["dev"], []).append(e)
+    for e in scope:
+        if e["source"] != "event" or e["cat"] == "push" or e.get("push") or not e.get("code", "").endswith("_sent"):
+            continue
+        for p in sorted(pushes.get(e["dev"], []), key=lambda x: x["at"]):
+            topic = PUSH_CATS.get(p["push"].get("topic", ""))
+            if topic == e["cat"] and 0 <= p["at"] - e["at"] <= LINK_WINDOW_S:
+                e["push"] = p["push"]
+                break
 
 
 def _protocol_entries(hass: HomeAssistant, device: str | None, since: float, until: float) -> list[dict[str, Any]]:
@@ -80,7 +110,8 @@ def _protocol_entries(hass: HomeAssistant, device: str | None, since: float, unt
 
 def _text(e: dict[str, Any]) -> str:
     keys = ("title", "text", "detail", "name", "body", "value", "err", "dname", "target")
-    return " ".join(str(e.get(k, "")) for k in keys).lower()
+    push = e.get("push") or {}
+    return (" ".join(str(e.get(k, "")) for k in keys) + " " + " ".join(str(push.get(k, "")) for k in ("title", "body", "target"))).lower()
 
 
 def query(
@@ -112,6 +143,7 @@ def query(
                 names[dev] = (entry.name_by_user or entry.name or "") if entry else ""
             if dev and names.get(dev):
                 e["dname"] = names[dev]
+    _link_pushes(scope)
     scope.sort(key=lambda e: e["at"], reverse=True)
     counts: dict[str, int] = {}
     for e in scope:

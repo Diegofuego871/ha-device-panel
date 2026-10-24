@@ -7,6 +7,20 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.123.0] - 2026-10-24
+
+Im Protokoll eines Geräts zeigt ein Tipp auf einen Eintrag die gesendete Meldung: an wen sie ging und was sie sagte.
+
+### Hinzugefügt
+
+- **Gesendete Meldungen im Protokoll eines Geräts:** jede Push-Meldung an ein Notify-Ziel wird jetzt mit **Titel, Text, Ziel und Ergebnis** protokolliert (gesendet, in der Ruhezeit zurückgehalten, fehlgeschlagen, Ziel fehlt). Das Protokoll zeigt sie als eigene Zeile (Chip "Push") und unter dem Eintrag, der sie ausgelöst hat: ein Tipp auf "wieder online nach 9 Min.: Meldung wird gesendet" (auch Ausfall, Batterie, Laden, neues Gerät) öffnet die Meldung, wie sie hinausging. Sammelmeldungen erscheinen bei jedem Gerät, das sie nennen. Die Suche findet auch den Text der Meldung.
+- Meldungen, die in der Ruhezeit zurückgehalten werden, kommen beim Zurückhalten mit den Geräten ins Protokoll.
+
+### Geändert
+
+- Einträge des Panel-Logs tragen jetzt den Code ihres Textes und bei Meldungen den Inhalt (`push`) und die Geräte (`device_ids`); beides bleibt über einen Neustart von Home Assistant erhalten. Der Text einer Meldung wird bei 600 Zeichen gekürzt.
+- **README:** der Abschnitt "Protokoll eines Geräts" nennt den Tipp auf einen Eintrag.
+
 ## [2.122.0] - 2026-10-24
 
 Eigene Entitäten: Zähler und Zustände des Panels für Automationen und Dashboards, mit einem Fehlerzähler.
@@ -4538,6 +4552,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.123.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.123.0
 [2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0
 [2.120.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.120.0
 [2.119.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.119.0

@@ -328,7 +328,7 @@ class OutageNotifier:
             data = push.notification_data(hass, f"{DOMAIN}_device_{i['id']}", url, actions, icon)
             await push.async_push(
                 hass, target, push.title(hass, opts, kind, f"{kind}_title", name=i["name"]), " · ".join(x for x in parts if x), data,
-                topic=kind, quiet={"label": i["name"], "since": None if online else i["value"]},
+                topic=kind, quiet={"label": i["name"], "since": None if online else i["value"]}, devices=[i["id"]],
             )
 
     async def _async_push_group(self, opts: dict[str, Any], target: str, domain: str, members: list[dict[str, Any]], online: bool) -> None:
@@ -349,6 +349,7 @@ class OutageNotifier:
         await push.async_push(
             hass, target, title, " · ".join(parts), data,
             topic=kind, quiet={"label": f"{members[0]['integration'] or domain} ({len(members)})", "since": None if online else min(i["value"] for i in members)},
+            devices=[i["id"] for i in members],
         )
 
     def _domain(self, dev: str) -> str:

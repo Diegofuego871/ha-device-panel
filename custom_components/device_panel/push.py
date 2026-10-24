@@ -429,6 +429,24 @@ async def async_live_clear(hass: HomeAssistant, target: str, tag: str) -> bool:
     return True
 
 
+PUSH_BODY_MAX = 600
+PUSH_DEVICES_MAX = 50
+
+
+def _journal(
+    hass: HomeAssistant, severity: str, code: str, target: str, title: str, message: str, topic: str | None, devices: list[str] | None, res: str
+) -> None:
+    """
+    Protokolleintrag zu einer Meldung (seit 2.122.0): was an wen ging und mit welchem Ergebnis ("sent", "held", "failed", "missing"), mit den Geräten,
+    damit das Geräteprotokoll die Meldung zeigen kann. Der Text wird gekürzt, das Protokoll ist kein Archiv.
+    """
+    ids = [d for d in (devices or []) if isinstance(d, str)][:PUSH_DEVICES_MAX]
+    extra: dict[str, Any] = {"push": {"title": title[:200], "body": message[:PUSH_BODY_MAX], "target": target, "topic": topic or "", "res": res}}
+    if len(ids) > 1:
+        extra["device_ids"] = ids
+    activity.record(hass, severity, "push", code, target, ids[0] if ids else None, extra=extra, title=title)
+
+
 async def async_push(
     hass: HomeAssistant,
     target: str,
@@ -438,6 +456,7 @@ async def async_push(
     topic: str | None = None,
     quiet: dict[str, Any] | None = None,
     outcome: dict[str, Any] | None = None,
+    devices: list[str] | None = None,
 ) -> bool:
     """
     Sendet an einen notify-Dienst oder eine notify-Entität; True, wenn
@@ -456,7 +475,7 @@ async def async_push(
         outcome["err"] = "invalid_target"
         return False
     # Ruhezeit (seit 2.95.0): zurückgehaltene Meldungen stellt das Ende der Ruhezeit zu ("topic" ist die Art, "quiet" Angaben für die Zusammenfassung)
-    if topic and (manager := hass.data.get(DATA_QUIET)) is not None and manager.hold(topic, target, title, message, data, quiet):
+    if topic and (manager := hass.data.get(DATA_QUIET)) is not None and manager.hold(topic, target, title, message, data, quiet, devices):
         outcome["held"] = True
         return True
     plain: dict[str, Any] = {"title": title, "message": message}
@@ -467,7 +486,7 @@ async def async_push(
             for attempt in (1, 2):
                 try:
                     await hass.services.async_call("notify", object_id, {**plain, "data": data}, blocking=True)
-                    activity.record(hass, "info", "push", "push_sent", target, title=title)
+                    _journal(hass, "info", "push_sent", target, title, message, topic, devices, "sent")
                     outcome["sent"] = True
                     return True
                 except _REJECTED as err:
@@ -482,26 +501,26 @@ async def async_push(
                         activity.record(hass, "debug", "push", "push_extra", target)
         try:
             await hass.services.async_call("notify", object_id, plain, blocking=True)
-            activity.record(hass, "info", "push", "push_sent", target, title=title)
+            _journal(hass, "info", "push_sent", target, title, message, topic, devices, "sent")
             outcome["sent"] = True
             return True
         except Exception as err:  # noqa: BLE001
             _LOGGER.exception("Push an '%s' fehlgeschlagen", target)
-            activity.record(hass, "error", "push", "push_failed", target, title=title)
+            _journal(hass, "error", "push_failed", target, title, message, topic, devices, "failed")
             outcome["err"] = str(err) or type(err).__name__
             return False
     if hass.states.get(target) is not None and hass.services.has_service("notify", "send_message"):
         # notify-Entität: send_message kennt nur Titel und Text.
         try:
             await hass.services.async_call("notify", "send_message", {**plain, "entity_id": target}, blocking=True)
-            activity.record(hass, "info", "push", "push_sent", target, title=title)
+            _journal(hass, "info", "push_sent", target, title, message, topic, devices, "sent")
             outcome["sent"] = True
             return True
         except Exception as err:  # noqa: BLE001
             _LOGGER.exception("Push an '%s' fehlgeschlagen", target)
-            activity.record(hass, "error", "push", "push_failed", target, title=title)
+            _journal(hass, "error", "push_failed", target, title, message, topic, devices, "failed")
             outcome["err"] = str(err) or type(err).__name__
             return False
-    activity.record(hass, "error", "push", "push_missing", target, title=title)
+    _journal(hass, "error", "push_missing", target, title, message, topic, devices, "missing")
     outcome["err"] = "missing"
     return False

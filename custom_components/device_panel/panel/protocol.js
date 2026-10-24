@@ -528,7 +528,21 @@ export class ProtocolUi {
       const msg = open && (e.title || body) ? `<div class="pr-msg"><b>${this.esc(e.title || "")}</b>${body ? `<span>${this.esc(body)}</span>` : ""}</div>` : "";
       return `<div class="pr-item${open ? " open" : ""}" role="listitem"><button type="button" class="lg-row al-row${cls}" data-pr="row" data-key="${this.esc(key)}" aria-expanded="${open}">${head}</button>${msg}</div>`;
     }
+    if (e.push) {
+      // Gesendete Meldung (seit 2.122.0): ein Tipp zeigt, an wen was ging und mit welchem Ergebnis
+      const key = `push|${e.at}|${e.dev || ""}|${e.cat}`;
+      const open = s.open.has(key);
+      return `<div class="pr-item${open ? " open" : ""}" role="listitem"><button type="button" class="lg-row al-row${cls}" data-pr="row" data-key="${this.esc(key)}" aria-expanded="${open}">${head}</button>${open ? this.pushHtml(e.push) : ""}</div>`;
+    }
     return `<div class="pr-item" role="listitem"><div class="lg-row al-row${cls}">${head}</div></div>`;
+  }
+
+  // Inhalt einer gesendeten Meldung: Titel, Text, Ziel und Ergebnis
+  pushHtml(p) {
+    const t = (k, ...a) => this.t(k, ...a);
+    const res = t(`prPushRes_${p.res}`) || p.res || "";
+    const line = [res, p.target ? t("prPushTo", p.target) : ""].filter(Boolean).join(" · ");
+    return `<div class="pr-msg"><b>${this.esc(p.title || "")}</b>${p.body ? `<span>${this.esc(p.body)}</span>` : ""}${line ? `<small>${this.esc(line)}</small>` : ""}</div>`;
   }
 
   allHtml(d) {
@@ -770,6 +784,8 @@ export class ProtocolUi {
         const scroll = this.dlg.querySelector("[data-pr-body]").scrollTop;
         this.renderBody();
         this.dlg.querySelector("[data-pr-body]").scrollTop = scroll;
+        // Geöffnet am unteren Rand: den Inhalt ins Bild holen, sonst bleibt er unter dem Fuss verborgen
+        if (s.open.has(key)) [...this.dlg.querySelectorAll(".pr-item.open")].find((it) => it.querySelector(`[data-key="${CSS.escape(key)}"]`))?.scrollIntoView({ block: "nearest" });
         break;
       }
       case "trace":

@@ -7,6 +7,20 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.123.0] - 2026-10-24
+
+In the history of a device a tap on an entry shows the push that was sent: to whom and what it said.
+
+### Added
+
+- **Sent notifications in the history of a device:** every push to a notify target is now logged with its **title, text, target and result** (sent, held in quiet time, failed, target missing). The history shows it as its own row (chip "Push") and under the entry that caused it: a tap on "back online after 9 min.: sending the notification" (also outage, battery, charging, new device) opens the push as it went out. Group notifications appear for each device they name. The search also finds the text of the notification.
+- Notifications held in quiet time are logged when they are held, with the devices.
+
+### Changed
+
+- Entries of the panel log now carry the code of their text and, for notifications, the content (`push`) and the devices (`device_ids`); both survive a restart of Home Assistant. Text of a notification is cut at 600 characters.
+- **README:** the section "History of a device" mentions the tap on an entry.
+
 ## [2.122.0] - 2026-10-24
 
 Own entities: counts and states of the panel for automations and dashboards, with an error counter.
@@ -4437,6 +4451,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.123.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.123.0
 [2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0
 [2.120.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.120.0
 [2.119.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.119.0

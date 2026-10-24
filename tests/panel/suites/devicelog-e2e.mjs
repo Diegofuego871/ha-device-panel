@@ -14,8 +14,8 @@ const TEXTS_OLD = {
   en: { title: "History", device: "History of the device", all: "All messages", allR: "All routines", recovered: "Back to normal", copied: "Copied", err: "could not be loaded", traceCopy: "Copy trace", of: (n, m) => `${n} of ${m} entries`, back: "Back" },
 };
 const TEXT = {
-  de: { title: "Protokoll", all: "Alles", devices: "Alle Geräte", outage: "Ausfall", battery: "Batterie", updates: "Updates", back: "Zurück" },
-  en: { title: "History", all: "All", devices: "All devices", outage: "Outage", battery: "Battery", updates: "Updates", back: "Back" },
+  de: { title: "Protokoll", all: "Alles", devices: "Alle Geräte", outage: "Ausfall", battery: "Batterie", updates: "Updates", back: "Zurück", pushSent: "gesendet" },
+  en: { title: "History", all: "All", devices: "All devices", outage: "Outage", battery: "Battery", updates: "Updates", back: "Back", pushSent: "sent" },
 };
 const RULE = (id, device, name, entity, extra = {}) => ({ id, device_id: device, entity_id: entity, name, kind: "below", value: 12, for_s: 600, message: "Meldung {value}", body: "", recover: false, recover_message: "", recover_body: "", repeat_s: 0, target: null, enabled: true, critical: false, critical_volume: 10, reset_value: null, ...extra });
 const SEED = (id, device, name) => ({ id, device_id: device, entity_id: "switch.plug", name, action: "on", back_s: 14400, kind: "repeat", delay_s: null, date: null, time: "06:30", repeat: "daily", weekdays: null, mday: null, enabled: true, push: false, target: null, created: Date.now() / 1000 });
@@ -59,7 +59,7 @@ const entries = (now) => ({
 const devlog = (now, lang) => [
   { at: now - 3600, source: "avail", cat: "outage", dev: "d", dname: "Klimasensor Keller", k: "offline" },
   { at: now - 3000, source: "avail", cat: "outage", dev: "d", dname: "Klimasensor Keller", k: "online", dur: 600 },
-  { at: now - 7200, source: "event", cat: "battery", dev: "d", dname: "Klimasensor Keller", level: "info", title: "Klimasensor Keller", text: "Batterie 14 %, unter 15 %", detail: "Warnung gesendet" },
+  { at: now - 7200, source: "event", cat: "battery", dev: "d", dname: "Klimasensor Keller", level: "info", title: "Klimasensor Keller", text: "Batterie 14 %, unter 15 %", detail: "Warnung gesendet", push: { at: now - 7200, title: "🪫 Batterie schwach: Klimasensor Keller", body: "14 % · Keller", target: "notify.mobile_app_dani_iphone", topic: "battery", res: "sent" } },
   { at: now - 2 * DAY, source: "event", cat: "charge", dev: "d", dname: "Klimasensor Keller", level: "info", title: "Klimasensor Keller", text: "Laden begonnen", detail: "" },
   { at: now - 4000, source: "event", cat: "signal", dev: "d", dname: "Klimasensor Keller", level: "warning", title: "Klimasensor Keller", text: lang === "de" ? "Empfang schwach: -86 dBm" : "reception weak: -86 dBm", detail: "Schwelle -80 dBm" },
   { at: now - 5400, source: "event", cat: "battery", dev: "h", dname: "Fenstersensor", level: "warning", title: "Fenstersensor", text: "Batterie 9 %", detail: "" },
@@ -126,6 +126,14 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Zahl am Chip (Ausfall 2, Batterie 1) und Gerät "h" ist nicht dabei`, await ev(`const c = (v) => r.querySelector('${P} [data-pr-filters] .chip[data-v="' + v + '"]').textContent.replace(/\\s+/g, " ").trim(); return /2$/.test(c("outage")) && /1$/.test(c("battery")) && !r.querySelector('${P} [data-pr-body]').textContent.includes("Fenstersensor")`));
     check(`[${tag}] Tage: Kopf "Heute" und "Gestern"`, await ev(`const d = [...r.querySelectorAll('${P} .lg-day')].map((x) => x.textContent.trim()); return d.length >= 3 && d[0] === r.host._t("logToday") && d.includes(r.host._t("logYesterday"))`));
     check(`[${tag}] neueste zuerst: oberste Zeile ist die Rückkehr (vor 50 Min.), "${T.outage}"-Pille`, await ev(`const row = r.querySelector('${P} .pr-item .al-row'); return !!row.querySelector(".lg-pill.outage") && row.textContent.includes("10")`));
+    // gesendete Meldung (2.122.0): ein Tipp auf den Eintrag mit Push zeigt Titel, Text, Ziel und Ergebnis
+    check(`[${tag}] Eintrag mit Meldung ist antippbar, Inhalt zunächst zu`, await ev(`const b = r.querySelector('${P} .al-row[data-key^="push|"]'); return !!b && b.getAttribute("aria-expanded") === "false" && !b.closest(".pr-item").querySelector(".pr-msg")`));
+    await tap(`${P} .al-row[data-key^="push|"]`);
+    const pushHtml = await wait(`return !!r.querySelector('${P} .al-row[data-key^="push|"]').closest(".pr-item").querySelector(".pr-msg")`) ? await ev(`return r.querySelector('${P} .al-row[data-key^="push|"]').closest(".pr-item").querySelector(".pr-msg").innerHTML`) : "";
+    check(`[${tag}] Meldung: Titel, Text, Ziel und "${T.pushSent}"`, pushHtml.includes("Batterie schwach") && pushHtml.includes("14 % · Keller") && pushHtml.includes("notify.mobile_app_dani_iphone") && pushHtml.includes(`<small>${T.pushSent}`), pushHtml);
+    await p.screenshot({ path: `${outDir}/devicelog-push-${tag.replace("/", "-")}.png` });
+    await tap(`${P} .al-row[data-key^="push|"]`);
+    check(`[${tag}] zweiter Tipp klappt die Meldung wieder zu`, await ev(`return !r.querySelector('${P} .al-row[data-key^="push|"]').closest(".pr-item").querySelector(".pr-msg")`));
     await p.screenshot({ path: `${outDir}/devicelog-${tag.replace("/", "-")}.png` });
 
     // --- Auswahl und Suche ---
