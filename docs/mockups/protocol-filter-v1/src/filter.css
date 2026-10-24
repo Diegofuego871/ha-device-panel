@@ -1,0 +1,5 @@
+.chips .cx{display:inline-flex;gap:4px;align-items:center}
+.sel{border:1px solid var(--div);border-radius:12px;padding:9px 12px;font-size:13.5px;color:var(--t2);margin:6px 0}.sel b{color:#fff;font-weight:500}
+.sheet{background:#232326;border:1px solid var(--div);border-radius:16px;padding:12px 12px 8px;margin:8px 0}.sheet h4{margin:0 0 8px;font-size:14px;font-weight:500}
+.arow{display:flex;gap:10px;align-items:center;padding:9px 4px;border-top:1px solid var(--div);font-size:14px}.arow i{font-style:normal;color:var(--t3);font-size:16px}.arow.on i{color:var(--p)}.arow u{margin-left:auto;text-decoration:none;color:var(--t3);font-size:12.5px}
+.sf{display:flex;justify-content:space-between;border-top:1px solid var(--div);padding:9px 4px 2px;color:var(--t2);font-size:12.5px}.sf .lk{color:var(--p)}
