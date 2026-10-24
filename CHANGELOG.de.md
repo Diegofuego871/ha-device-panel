@@ -21,6 +21,10 @@ Im Protokoll eines Geräts zeigt ein Tipp auf einen Eintrag die gesendete Meldun
 - Einträge des Panel-Logs tragen jetzt den Code ihres Textes und bei Meldungen den Inhalt (`push`) und die Geräte (`device_ids`); beides bleibt über einen Neustart von Home Assistant erhalten. Der Text einer Meldung wird bei 600 Zeichen gekürzt.
 - **README:** der Abschnitt "Protokoll eines Geräts" nennt den Tipp auf einen Eintrag.
 
+### Behoben
+
+- **Integration liess sich nicht einrichten (seit 2.122.0):** bei einem Gerät, dessen Kennung mehr als zwei Teile hat (zum Beispiel ein Shelly-Gerät), brach die Einrichtung mit "too many values to unpack (expected 2, got 3)" ab, das Panel startete nicht. Das Dienst-Gerät der Integration wird jetzt nur am ersten Teil der Kennung erkannt; die Kennungen im Detail eines Geräts werden genauso gelesen.
+
 ## [2.122.0] - 2026-10-24
 
 Eigene Entitäten: Zähler und Zustände des Panels für Automationen und Dashboards, mit einem Fehlerzähler.

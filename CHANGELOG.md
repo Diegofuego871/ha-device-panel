@@ -21,6 +21,10 @@ In the history of a device a tap on an entry shows the push that was sent: to wh
 - Entries of the panel log now carry the code of their text and, for notifications, the content (`push`) and the devices (`device_ids`); both survive a restart of Home Assistant. Text of a notification is cut at 600 characters.
 - **README:** the section "History of a device" mentions the tap on an entry.
 
+### Fixed
+
+- **Integration failed to set up (introduced in 2.122.0):** with a device whose identifier has more than two parts (for example a Shelly device) the setup stopped with "too many values to unpack (expected 2, got 3)", so the panel did not start. The service device of the integration is now recognised by the first part of the identifier only; the identifiers in the detail of a device are read the same way.
+
 ## [2.122.0] - 2026-10-24
 
 Own entities: counts and states of the panel for automations and dashboards, with an error counter.

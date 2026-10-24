@@ -685,7 +685,8 @@ def candidate_devices(
     ent_reg = er.async_get(hass)
     for device in registry_devices(dr.async_get(hass)):
         # Das eigene Dienst-Gerät (Entitäten der Integration, seit 2.122.0) gehört nicht in die Liste: sonst zählten die Sensoren sich selbst
-        if any(domain == DOMAIN for domain, _ident in device.identifiers):
+        # Kennungen können mehr als zwei Teile haben (zum Beispiel Shelly): nur der erste, die Integration, zählt
+        if any(ident[0] == DOMAIN for ident in device.identifiers):
             continue
         if device.entry_type == dr.DeviceEntryType.SERVICE and not service:
             continue
@@ -1650,7 +1651,7 @@ async def async_device_detail(hass: HomeAssistant, device_id: str, log: Any = No
         "id": device.id,
         "entities": entities,
         "config_entries": configs,
-        "identifiers": sorted(f"{a}: {b}" for a, b in device.identifiers)[:4],
+        "identifiers": sorted(f"{i[0]}: {i[1]}" for i in device.identifiers if len(i) >= 2)[:4],
         "stats": {
             "24h": log.device_summary(device.id, 86400, now) if log else None,
             "7d": log.device_summary(device.id, 7 * 86400, now) if log else None,

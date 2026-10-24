@@ -120,3 +120,17 @@ async def test_polls_every_interval(hass: HomeAssistant, setup) -> None:  # noqa
 async def test_list_has_no_own_device(hass: HomeAssistant, setup) -> None:  # noqa: F811
     listing = await async_list_devices(hass, setup)
     assert all(d["name"] != "Device Panel" for d in listing["devices"])
+
+
+async def test_identifiers_with_more_than_two_parts(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Eine Integration mit dreiteiliger Kennung (Shelly) liess die Einrichtung scheitern: "too many values to unpack"."""
+    from custom_components.device_panel.devices import async_device_detail, candidate_devices
+
+    device = _device(hass, "Shelly")
+    dr.async_get(hass).async_update_device(device.id, merge_identifiers={("shelly", "abc", "extra")})
+    _entity(hass, device, "switch", "s", "on")
+    assert [d.id for d, _ in candidate_devices(hass)] == [device.id]
+    await _refresh(hass)
+    assert _state(hass, "active") == "1"
+    detail = await async_device_detail(hass, device.id)
+    assert any(x.startswith("shelly: abc") for x in detail["identifiers"])
