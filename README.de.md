@@ -1,10 +1,10 @@
 # Device Panel
 
-[English](README.md)
+[English](https://github.com/Diegofuego871/ha-device-panel/blob/main/README.md)
 
 **Alle Geräte von Home Assistant auf einen Blick:** wer gerade ausgefallen ist, wie oft und wie lange Geräte ausfallen, wie voll die Batterien sind, wie gut der Empfang ist, und Meldungen, die du an einem Ort steuerst.
 
-<p align="center"><img src="docs/screenshots/de/overview.png" alt="Übersicht mit Verfügbarkeit, ausgefallenen Geräten, Ausfall-Puls und Geräteliste" width="900"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/overview.png" alt="Übersicht mit Verfügbarkeit, ausgefallenen Geräten, Ausfall-Puls und Geräteliste" width="900"></p>
 
 ## Die wichtigsten Funktionen
 
@@ -32,7 +32,7 @@ Oben steht, wie viele Geräte online sind, wer gerade ausgefallen ist, und der A
 
 Ausgefallene Geräte mit der Zeit, seit der sie weg sind, instabile Geräte (drei oder mehr Ausfälle in 24 Stunden) und der Ausfall-Puls. Ein Tipp auf den Puls listet die Geräte mit Ausfällen, ein Punkt im Puls zeigt, wer damals weg war. Fallen drei oder mehr Geräte gleichzeitig aus, nennt das Panel die vermutete gemeinsame Ursache, zum Beispiel die Integration oder ihren Hub.
 
-<p align="center"><img src="docs/screenshots/de/pulse.png" alt="Fenster mit dem Ausfall-Puls und den Geräten mit Ausfällen in 24 Stunden" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/pulse.png" alt="Fenster mit dem Ausfall-Puls und den Geräten mit Ausfällen in 24 Stunden" width="720"></p>
 
 ### Suchen, filtern, sortieren
 
@@ -40,29 +40,29 @@ Die Suche läuft über alle Spalten. Filter-Chips grenzen die Liste ein: Warnung
 
 | Warnungen | Batterie | Bereichsfilter |
 |---|---|---|
-| <img src="docs/screenshots/de/warnings.png" alt="Liste gefiltert mit dem Chip Warnungen"> | <img src="docs/screenshots/de/batteries.png" alt="Liste gefiltert mit dem Chip Batterie"> | <img src="docs/screenshots/de/area.png" alt="Bereichsfilter mit Etagen und Bereichen"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/warnings.png" alt="Liste gefiltert mit dem Chip Warnungen"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/batteries.png" alt="Liste gefiltert mit dem Chip Batterie"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/area.png" alt="Bereichsfilter mit Etagen und Bereichen"> |
 
 | Lädt | Neue Geräte |
 |---|---|
-| <img src="docs/screenshots/de/charging.png" alt="Liste gefiltert mit dem Chip Lädt, mit Ladebalken"> | <img src="docs/screenshots/de/new.png" alt="Liste gefiltert mit dem Chip Neu"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/charging.png" alt="Liste gefiltert mit dem Chip Lädt, mit Ladebalken"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/new.png" alt="Liste gefiltert mit dem Chip Neu"> |
 
 ### Deine eigene Ansicht
 
 Der Knopf "Ansicht" (Handy: die Zeile "Sortierung & Ansicht") öffnet einen Dialog mit zwei Reitern. "Spalten" (Handy: "Sortierung"): Spalten mit dem Auge ein- oder ausblenden, per Ziehen in jede Reihenfolge bringen, die Liste gruppieren oder als eine Liste zeigen; das gilt pro Benutzer, für Desktop und Handy getrennt. "Filter-Chips" (nur Administratoren): Chips ausblenden, umordnen und anheften, das gilt für alle Benutzer. Änderungen zeigt die Liste gleich, übernommen werden sie erst mit "Speichern"; beim Schliessen fragt das Panel "Änderungen verwerfen?". Ein Herz markiert Favoriten (eigener Chip), und in den Einstellungen unter "Panel" › "Allgemein" machst du das Panel zu deiner eigenen Startseite in Home Assistant (Browser und Companion-App).
 
-<p align="center"><img src="docs/screenshots/de/columns.png" alt="Dialog Ansicht mit den Reitern Spalten und Filter-Chips, Auge und Griff" width="560"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/columns.png" alt="Dialog Ansicht mit den Reitern Spalten und Filter-Chips, Auge und Griff" width="560"></p>
 
 ## Alles zu einem Gerät
 
 Ein Tipp auf ein Gerät öffnet ein Pop-up mit Verfügbarkeit, Ausfällen, Empfang und Batterie als Kacheln, dazu Verbindung, Integration, Hersteller, Modell, Software und alle Entitäten. Hat das Gerät etwas Schaltbares (Licht, Steckdose, Rollladen, Schloss, Klima und mehr), zeigt der zweite Reiter "Schalter" es als Kacheln mit Symbol und Zustand; ein Tipp öffnet die Bedienung von Home Assistant (Dimmen, Farbe, Position). Das Gerät lässt sich umbenennen (in Home Assistant, die Entitäts-IDs bleiben), als Favorit markieren, ausblenden und auf seiner Seite in Home Assistant öffnen. Das Popup hat Knöpfe, die die Geräteseite und die Seite der Integration in Home Assistant öffnen. Die Reiter "Schalter" und "Entitäten" haben ab acht Einträgen ein Suchfeld (Name, Entitäts-ID oder Zustand). Am Ende des Reiters "Entitäten" kopieren zwei Knöpfe den Link genau zu diesem Gerät (und einen App-Link für die Home-Assistant-App). Eine Warnung nennt ihren Grund im Kopf.
 
-<p align="center"><img src="docs/screenshots/de/popup.png" alt="Geräte-Pop-up mit Statistik, Verbindung und Gerätedetails" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/popup.png" alt="Geräte-Pop-up mit Statistik, Verbindung und Gerätedetails" width="720"></p>
 
 ### Statistik und Verlauf
 
 Jede Kachel öffnet ein Fenster mit 24 Stunden, 7 oder 30 Tagen. Die Verfügbarkeit zeigt jeden Ausfall mit Beginn, Ende und Dauer und die Ausfälle pro Tag.
 
-<p align="center"><img src="docs/screenshots/de/availability.png" alt="Verfügbarkeit über 7 Tage mit jedem Ausfall" width="560"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/availability.png" alt="Verfügbarkeit über 7 Tage mit jedem Ausfall" width="560"></p>
 
 ### Empfang und Bluetooth-Weg
 
@@ -70,19 +70,19 @@ Der Empfangsverlauf zeigt den Median als Linie und die Spanne vom schlechtesten 
 
 | Empfangsverlauf | Verbunden über (Bluetooth) |
 |---|---|
-| <img src="docs/screenshots/de/signal.png" alt="Empfangsverlauf mit Median, Spanne und Warnschwelle"> | <img src="docs/screenshots/de/signal-via.png" alt="Abschnitt Verbunden über mit Empfängern, Anteil und Wechseln"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/signal.png" alt="Empfangsverlauf mit Median, Spanne und Warnschwelle"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/signal-via.png" alt="Abschnitt Verbunden über mit Empfängern, Anteil und Wechseln"> |
 
 ### Batterie mit Prognose
 
 Der Batterie-Verlauf reicht bis zu 12 Monate zurück, mit markiertem Batteriewechsel. Die Prognose rechnet vom letzten Batteriewechsel (höchstens ein Jahr) bis zur Warnschwelle des Geräts und sagt, wie sicher sie ist.
 
-<p align="center"><img src="docs/screenshots/de/battery.png" alt="Batterie-Verlauf mit Batteriewechsel, Warnschwelle und Prognose" width="560"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/battery.png" alt="Batterie-Verlauf mit Batteriewechsel, Warnschwelle und Prognose" width="560"></p>
 
 ### Einstellungen pro Gerät
 
 Jedes Gerät kann die Vorgaben im Reiter "Einstellungen" seines Pop-ups überschreiben: eine eigene "Ausgefallen nach"-Zeit (oder keine Überwachung), Batterie-Warnung, Empfang-Warnung, Laden und Ausfall- und Online-Meldungen ausgeschaltet. Jede Zeile zeigt, woher der Wert stammt und wie der Standard wäre. Ein Symbol neben dem Namen in der Liste markiert Geräte mit eigenen Einstellungen.
 
-<p align="center"><img src="docs/screenshots/de/device-settings.png" alt="Geräte-Pop-up: Einstellungen für dieses Gerät mit eigener Zeit, eigener Batterie-Warnschwelle und Meldungen aus" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/device-settings.png" alt="Geräte-Pop-up: Einstellungen für dieses Gerät mit eigener Zeit, eigener Batterie-Warnschwelle und Meldungen aus" width="720"></p>
 
 ## Meldungen
 
@@ -90,7 +90,7 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 
 ### Das Prinzip
 
-<p align="center"><img src="docs/graphics/de/notification-levels.png" alt="Drei Ebenen Allgemein, Integration und Gerät mit einem Beispiel und einer Tabelle, was sich wo einstellen lässt" width="900"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/graphics/de/notification-levels.png" alt="Drei Ebenen Allgemein, Integration und Gerät mit einem Beispiel und einer Tabelle, was sich wo einstellen lässt" width="900"></p>
 
 - **Allgemein:** in den Einstellungen unter "Überwachung und Meldungen", die Vorgabe für alle Geräte
 - **Integration:** am selben Ort, Reiter "Integrationen": eine Liste aller Integrationen mit dem, was von der Vorgabe abweicht, und eine Detailseite pro Integration mit eigenen Reitern
@@ -99,7 +99,7 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 
 ### Vom Ausfall zur Meldung
 
-<p align="center"><img src="docs/graphics/de/notification-flow.png" alt="Sechs Schritte vom Ausfall eines Geräts bis zur Meldung, mit der Ebene, die jeden Schritt entscheidet" width="900"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/graphics/de/notification-flow.png" alt="Sechs Schritte vom Ausfall eines Geräts bis zur Meldung, mit der Ebene, die jeden Schritt entscheidet" width="900"></p>
 
 - **Zwei Zeiten, nicht addiert:** "Ausgefallen nach" (Standard 2 Minuten) entscheidet, wann das Panel das Gerät als ausgefallen zeigt, "Erst melden nach" entscheidet, wann die Meldung kommt; beide laufen ab Beginn des Ausfalls, und die zweite kann nicht kürzer sein als die erste; beide lassen sich global, pro Integration und pro Gerät einstellen
 - **Eine Meldung pro Integration:** fallen mehrere Geräte einer Integration zusammen aus (Standard ab drei, einstellbar), kommt eine Meldung für diese Integration statt vieler; die Meldung wartet bis zu einer Minute auf weitere Geräte, die Rückkehr wird ebenso zusammengefasst
@@ -111,7 +111,7 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 
 ### Wohin die Meldung geht
 
-<p align="center"><img src="docs/graphics/de/notification-targets.png" alt="Ein Push-Ziel für alles, ein eigenes Ziel pro Reiter, Magic Push und Routinen wählen ihren Empfänger selbst" width="900"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/graphics/de/notification-targets.png" alt="Ein Push-Ziel für alles, ein eigenes Ziel pro Reiter, Magic Push und Routinen wählen ihren Empfänger selbst" width="900"></p>
 
 - **Ein Push-Ziel:** ein Notify-Dienst, eine Gruppe oder eine Notify-Entität für alle Meldungen
 - **Eigenes Ziel pro Reiter:** Ausfall, Batterie, Laden, Neue Geräte, Updates, Panel-Updates und Routinen können je an einen anderen Empfänger senden
@@ -123,11 +123,11 @@ Jede Art hat in den Einstellungen einen eigenen Reiter. Ausfall, Batterie, Laden
 
 | Ausfall | Batterie | Laden |
 |---|---|---|
-| <img src="docs/screenshots/de/settings-outage.png" alt="Reiter Ausfall: Ausgefallen nach, Erst melden nach, Erkennung und Meldung"> | <img src="docs/screenshots/de/settings-battery.png" alt="Reiter Batterie: Warnschwelle und Push"> | <img src="docs/screenshots/de/settings-charge.png" alt="Reiter Laden: Anstieg, Voll ab, Meldung und Live-Aktivität"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-outage.png" alt="Reiter Ausfall: Ausgefallen nach, Erst melden nach, Erkennung und Meldung"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-battery.png" alt="Reiter Batterie: Warnschwelle und Push"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-charge.png" alt="Reiter Laden: Anstieg, Voll ab, Meldung und Live-Aktivität"> |
 
 | Neu | Updates | Empfang |
 |---|---|---|
-| <img src="docs/screenshots/de/settings-new.png" alt="Reiter Neu: Sammelfenster und Inhalt"> | <img src="docs/screenshots/de/settings-updates.png" alt="Reiter Updates: Update-Erinnerung"> | <img src="docs/screenshots/de/settings-sig.png" alt="Reiter Empfang: Warnschwelle pro Verbindungsart"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-new.png" alt="Reiter Neu: Sammelfenster und Inhalt"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-updates.png" alt="Reiter Updates: Update-Erinnerung"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-sig.png" alt="Reiter Empfang: Warnschwelle pro Verbindungsart"> |
 
 - **Ausfall und wieder online:** Push, anhaltende Benachrichtigung und Sammelmeldung, mit Beginn, Dauer, Bereich und Integration
 - **Batterie:** einmal pro Gerät beim Unterschreiten der Schwelle (Standard 15 %, von 1 bis 50 %), sofort oder als tägliche Sammelmeldung, mit einer anhaltenden Benachrichtigung aller betroffenen Geräte
@@ -138,15 +138,15 @@ Jede Art hat in den Einstellungen einen eigenen Reiter. Ausfall, Batterie, Laden
 - **Empfang:** eine Warnschwelle pro Verbindungsart, pro Integration und pro Gerät (Standard schwach unter -80 dBm oder LQI 61), auch abschaltbar
 - **Panel-Updates:** ein optionaler Push einmal pro Version, wenn eine neue Version des Panels gefunden oder installiert wird
 
-<p align="center"><img src="docs/screenshots/de/settings-integrations.png" alt="Einstellungen: Liste der Integrationen mit dem, was von den Vorgaben abweicht" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-integrations.png" alt="Einstellungen: Liste der Integrationen mit dem, was von den Vorgaben abweicht" width="720"></p>
 
-<p align="center"><img src="docs/screenshots/de/integ-detail.png" alt="Detail einer Integration mit Reitern für Ausfall, Batterie, Laden, Neu, Empfang und Geräte" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/integ-detail.png" alt="Detail einer Integration mit Reitern für Ausfall, Batterie, Laden, Neu, Empfang und Geräte" width="720"></p>
 
 ## Magic Push: eigene Meldungen
 
 Eigene Meldungen pro Gerät ohne Automation, im Reiter "Magic Push" des Geräts.
 
-<p align="center"><img src="docs/screenshots/de/magic-tab.png" alt="Reiter Magic Push eines Geräts mit zwei Meldungen" width="560"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/magic-tab.png" alt="Reiter Magic Push eines Geräts mit zwei Meldungen" width="560"></p>
 
 - **Jeder Wert:** einen Wert des Geräts wählen oder eine beliebige Entität von Home Assistant, die dem Gerät zugeordnet bleibt
 - **Wann:** über, unter, ist oder ändert sich; mehrere Bedingungen mit Und/Oder und Gruppen verknüpft; wie lange sie gelten muss; wie lange der Wert normal bleiben muss, bevor zurückgesetzt wird, und bei welchem Wert
@@ -156,9 +156,9 @@ Eigene Meldungen pro Gerät ohne Automation, im Reiter "Magic Push" des Geräts.
 - **Übersicht:** die App "Magic Push" (im Launcher) öffnet ein Fenster mit allen Meldungen aller Geräte, eine Karte pro Gerät, mit Suche und Filter; unten legt "Neue Meldung" eine neue an (zuerst das Gerät wählen, dann wie im Popup des Geräts)
 - **Protokoll:** "Protokoll" auf einer Karte (und "Protokoll des Geräts" im Geräte-Popup und in der Übersicht) öffnet ein Fenster für Magic Push und Routinen (zwei Reiter, es öffnet auf dem, von dem du kommst) und listet jede Meldung: Datum, Art, Titel und Text, wie gesendet, Wert, Empfänger und was daraus wurde (gesendet, zurückgehalten, fehlgeschlagen). Zeitraum 7 Tage bis 12 Monate oder eigene Daten, Kennzahlen, ein Balkendiagramm (je Tag, bei langen Zeiträumen je Woche; ein Tipp auf einen Balken wählt den Tag), Auswahl, Suche und "Als Text kopieren". Aufbewahrt wird, solange Platz ist: höchstens 5000 Einträge je Meldung und 30 MB für alle zusammen (einstellbar)
 
-<p align="center"><img src="docs/screenshots/de/magic-wizard.png" alt="Magic-Push-Assistent, Schritt 1: Was soll überwacht werden" width="560"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/magic-wizard.png" alt="Magic-Push-Assistent, Schritt 1: Was soll überwacht werden" width="560"></p>
 
-<p align="center"><img src="docs/screenshots/de/magic-all.png" alt="Fenster Magic Push: alle Meldungen aller Geräte, eine Karte pro Gerät" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/magic-all.png" alt="Fenster Magic Push: alle Meldungen aller Geräte, eine Karte pro Gerät" width="720"></p>
 
 ## Routinen
 
@@ -166,7 +166,7 @@ Schaltet eine Entität eines Geräts einmalig oder nach Zeitplan, ohne Automatio
 
 | Routinen eines Geräts | Assistent: wann |
 |---|---|
-| <img src="docs/screenshots/de/routine-tab.png" alt="Reiter Routinen eines Geräts mit einer Routine"> | <img src="docs/screenshots/de/routine-wizard.png" alt="Routinen-Assistent, Schritt 2: Wann soll geschaltet werden"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/routine-tab.png" alt="Reiter Routinen eines Geräts mit einer Routine"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/routine-wizard.png" alt="Routinen-Assistent, Schritt 2: Wann soll geschaltet werden"> |
 
 - **Was:** die Entität und die Aktion wählen (ein, aus, umschalten; **setzen** bei Zahlen und Auswahlen wie der Helligkeit eines Displays, das nur "wie vorher" zurückgeht), auf Wunsch nach einer Weile zurückschalten. Über die Übersicht "Alle Routinen" angelegt, heisst die erste Seite "Gerät, Gruppe oder Szene?": neben den Geräten stehen **Szenen** (Aktion "Aktivieren", nichts zum Zurückschalten) und **Gruppen** (zum Beispiel eine Lichtergruppe, verhält sich wie eine einzelne Lampe), beide ohne Gerät; die erste Seite listet jedes Gerät, jede Gruppe und jede Szene als eigene Zeile, mit einem Filter oben (Alle, Geräte, Gruppen, Szenen) und einer kleinen Pille an Gruppen und Szenen, und die Suche findet sie über ihren Namen; eine gewählte Szene braucht keine Seite "Was" mehr, eine gewählte Gruppe fragt nur noch nach der Aktion
 - **Optionen:** Kann die Entität beim Einschalten etwas einstellen, folgt eine eigene Seite: Licht Helligkeit, Farbtemperatur und Farbe; Rollladen Position; Klima Soll-Temperatur und Modus; Medien Lautstärke; Ventilator Stufe. Eine Vorschau zeigt das Ergebnis (die Lampe leuchtet in der gewählten Farbe), geschaltet wird damit nichts, und "Jetzt ausführen" probiert die echte Stärke; ohne Angabe bleibt alles "wie zuletzt"
@@ -178,7 +178,7 @@ Schaltet eine Entität eines Geräts einmalig oder nach Zeitplan, ohne Automatio
 - **Übersicht:** der Blitz in der Kopfzeile (auch im Launcher) öffnet alle Routinen in einer Karte pro Gerät (Szenen und Gruppen ohne Gerät in eigenen Karten), mit Suche und Filter, bearbeiten, ausführen, ein- oder ausschalten, löschen und Favoriten; ganz oben der Schalter "Alle Routinen pausieren" (derselbe wie in den Einstellungen, gilt sofort)
 - **Protokoll und Trace:** "Protokoll" auf einer Karte (und "Protokoll des Geräts") listet jeden Lauf: Datum, Auslöser (Zeit, Auslöser, von Hand, Zurückschalten), Aktion und Ergebnis (ausgeführt, zurückgeschaltet, verpasst, pausiert, fehlgeschlagen). Gleicher Zeitraum, gleiches Diagramm, gleiche Auswahl und Suche wie bei Magic Push. Eine Zeile öffnet den **Trace**: jeder Schritt der Reihe nach (Auslöser und Verspätung, Zeitfenster, gemerkter Zustand, Aufruf mit Dauer und Ergebnis, geplantes Zurückschalten, Meldung), als Text kopierbar für die Fehlersuche. Aufbewahrt wird, solange Platz ist: höchstens 5000 Einträge je Routine und 30 MB für alle zusammen (einstellbar)
 
-<p align="center"><img src="docs/screenshots/de/routines-all.png" alt="Fenster mit allen Routinen, eine Karte pro Gerät" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/routines-all.png" alt="Fenster mit allen Routinen, eine Karte pro Gerät" width="720"></p>
 
 ## App-Launcher und Log
 
@@ -186,7 +186,7 @@ Ein Knopf in der Kopfzeile öffnet einen Launcher mit nützlichen Seiten, in den
 
 | App-Launcher | Log |
 |---|---|
-| <img src="docs/screenshots/de/launcher.png" alt="App-Launcher mit Favoriten, Device Panel und Seiten von Home Assistant"> | <img src="docs/screenshots/de/log.png" alt="Protokoll mit Einträgen der Meldungen und einem Filter"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/launcher.png" alt="App-Launcher mit Favoriten, Device Panel und Seiten von Home Assistant"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/log.png" alt="Protokoll mit Einträgen der Meldungen und einem Filter"> |
 
 - **Seiten:** Routinen, Magic Push und das Protokoll dieser Integration, Seiten von Home Assistant (Automationen, Szenen, Skripte, Helfer, Geräte, Entitäten, Integrationen, Werkzeuge und mehr; "Apps" und "Dashboards" gibt es auch, sie sind aber ausgeblendet, bis du sie im Bearbeiten-Modus einschaltest; die Verwaltungsseiten nur für Administratoren)
 - **Eigene Links und Aktionen:** eine Seite in Home Assistant, ein externer Link, der in einem neuen Browser-Tab öffnet (auf Wunsch mit seinem Favicon als Symbol), oder eine **Aktion**, die einen Dienst von Home Assistant oder einen Befehl der Oberfläche aufruft (Daten als JSON, auf Wunsch mit Rückfrage); auf Wunsch auch als Knopf im Kopf der Einstellungen; beim Ausführen zeigt das Symbol drehende Pfeile, danach einen grünen Haken (oder ein rotes Kreuz), und das Ergebnis steht im Log
@@ -202,7 +202,7 @@ Das Zahnrad (die angeheftete App "Einstellungen", oder der Launcher) öffnet all
 
 | Geräte im Panel | Routinen | Panel |
 |---|---|---|
-| <img src="docs/screenshots/de/settings-section-devices.png" alt="Abschnitt Geräte im Panel"> | <img src="docs/screenshots/de/settings-section-routines.png" alt="Abschnitt Routine"> | <img src="docs/screenshots/de/settings-section-updates.png" alt="Abschnitt Panel mit täglicher Prüfung und automatischer Installation"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-section-devices.png" alt="Abschnitt Geräte im Panel"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-section-routines.png" alt="Abschnitt Routine"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-section-updates.png" alt="Abschnitt Panel mit täglicher Prüfung und automatischer Installation"> |
 
 - **Geräte im Panel:** Integrationen, Gerätetypen und einzelne Geräte ausblenden (ein Gerät erst nach Rückfrage), Typ und Verbindungsart pro Integration festlegen, Geräte mit eigenen Einstellungen sehen und zurücksetzen
 - **Überwachung und Meldungen:** die Reiter Allgemein (Ziel der Meldungen, Ruhezeit), Ausfall, Batterie, Laden, Neu, Updates, Empfang und Integrationen; jeder Reiter einer Meldung beginnt mit einer kleinen Übersicht (Zeitstrahl und Pillen zum schnellen Umschalten)
@@ -213,7 +213,7 @@ Das Zahnrad (die angeheftete App "Einstellungen", oder der Launcher) öffnet all
 - **Panel:** zwei Unterreiter. "Allgemein": das Panel als deine Startseite in Home Assistant (gilt nur für dich) das Kapitel **"Protokolle"**: wie viel die Protokolle behalten, als Grösse in MB und als Zahl der Einträge, einmal für Meldungen und Routinen (Standard 30 MB, 5000 Einträge je Meldung oder Routine) und einmal für das Panel-Protokoll (Standard 10 MB, 4000 Einträge), mit der aktuellen Belegung daneben. Ist eine Grenze erreicht, fallen die ältesten Einträge weg; eine tiefere Grenze kürzt sofort und fragt vorher. Ganz am Schluss das Kapitel "Sichern und wiederherstellen" (siehe unten). "Updates" (die Versionszeile mit Suchen und Installieren steht ganz oben in den Einstellungen): Prüfung bei jedem Öffnen der Einstellungen (höchstens einmal pro Minute), tägliche Prüfung zu einer festen Zeit, optionaler Push, Vorabversionen und automatische Installation über HACS (den Neustart von Home Assistant machst du selbst)
 - **Speichern:** Änderungen im Pop-up und in den Einstellungen gelten erst mit "Speichern"; beim Schliessen mit ungespeicherten Änderungen fragt das Panel "Änderungen verwerfen?"
 
-<p align="center"><img src="docs/screenshots/de/settings-general.png" alt="Einstellungen, Reiter Allgemein: Ziel der Meldungen und Ruhezeit mit Zeiten je Wochentag" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-general.png" alt="Einstellungen, Reiter Allgemein: Ziel der Meldungen und Ruhezeit mit Zeiten je Wochentag" width="720"></p>
 
 ### Sichern und wiederherstellen
 
@@ -221,7 +221,7 @@ Unter "Panel" › "Allgemein" (unter "Startseite", nur Administratoren) lassen s
 
 | Sichern und wiederherstellen | Vorschau vor dem Wiederherstellen |
 |---|---|
-| <img src="docs/screenshots/de/settings-backup.png" alt="Kapitel Sichern und wiederherstellen unter Startseite"> | <img src="docs/screenshots/de/backup-restore.png" alt="Vorschau: was sich ändert, was bleibt, was übersprungen wird, mit Hinweisen zu fehlenden Push-Zielen und Geräten"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-backup.png" alt="Kapitel Sichern und wiederherstellen unter Startseite"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/backup-restore.png" alt="Vorschau: was sich ändert, was bleibt, was übersprungen wird, mit Hinweisen zu fehlenden Push-Zielen und Geräten"> |
 
 - **Was hineinkommt:** du wählst die Teile: Meldungen und Überwachung, Panel und Anzeige, Einstellungen pro Gerät, KI-Einschätzung und, standardmässig aus, Routinen und Magic Push. Keine Zugangsdaten und keine Tokens. "Kopieren" und "Text einfügen" sind der Weg für die App auf dem Handy, wo das Speichern einer Datei nicht immer geht.
 - **Zuerst die Vorschau:** vor "Übernehmen" wird nichts geschrieben. Die Vorschau zählt, was sich ändert, gleich bleibt oder nicht übernommen wird, je Teil, mit Beispielen.
@@ -235,7 +235,7 @@ Standardmässig aus. Auf Knopfdruck fragt das Panel eine KI-Aufgabe von Home Ass
 
 | Antwort im Pop-up | Profi-Modus: Prompt |
 |---|---|
-| <img src="docs/screenshots/de/ai.png" alt="Geräte-Pop-up mit der KI-Einschätzung"> | <img src="docs/screenshots/de/settings-ai.png" alt="Einstellungen mit dem Prompt im Profi-Modus"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/ai.png" alt="Geräte-Pop-up mit der KI-Einschätzung"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/settings-ai.png" alt="Einstellungen mit dem Prompt im Profi-Modus"> |
 
 - **Profi-Modus:** der Prompt ist anpassbar, mit Gruppen von Fakten wie `{facts_area}` und `{facts_hub}`, und eine Vorschau zeigt den genauen Text
 - **Wenn es scheitert:** das Pop-up zeigt die Meldung der KI-Aufgabe, und das Protokoll hält den Grund fest, so lassen sich Kontingent, Schlüssel oder Modell als Ursache finden; eine leere Antwort bekommt einen zweiten Versuch, und eine vorübergehende Überlastung des Anbieters (zum Beispiel "503, high demand") wird zweimal wiederholt, bevor ein Fehler erscheint
@@ -251,11 +251,11 @@ Dasselbe Panel als Karten, mit denselben Pop-ups, Fenstern und Assistenten im Vo
 
 | Liste | Pop-up | Batterie |
 |---|---|---|
-| <img src="docs/screenshots/de/overview-mobile.png" alt="Handy: Karten" width="260"> | <img src="docs/screenshots/de/popup-mobile.png" alt="Handy: Pop-up" width="260"> | <img src="docs/screenshots/de/battery-mobile.png" alt="Handy: Batterie-Verlauf" width="260"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/overview-mobile.png" alt="Handy: Karten" width="260"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/popup-mobile.png" alt="Handy: Pop-up" width="260"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/battery-mobile.png" alt="Handy: Batterie-Verlauf" width="260"> |
 
 | Laden | Launcher | Routinen-Assistent | Magic Push |
 |---|---|---|---|
-| <img src="docs/screenshots/de/charging-mobile.png" alt="Handy: ladende Geräte" width="200"> | <img src="docs/screenshots/de/launcher-mobile.png" alt="Handy: App-Launcher" width="200"> | <img src="docs/screenshots/de/routine-wizard-mobile.png" alt="Handy: Routinen-Assistent" width="200"> | <img src="docs/screenshots/de/magic-wizard-mobile.png" alt="Handy: Magic-Push-Assistent" width="200"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/charging-mobile.png" alt="Handy: ladende Geräte" width="200"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/launcher-mobile.png" alt="Handy: App-Launcher" width="200"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/routine-wizard-mobile.png" alt="Handy: Routinen-Assistent" width="200"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/magic-wizard-mobile.png" alt="Handy: Magic-Push-Assistent" width="200"> |
 
 ## Gut zu wissen
 
@@ -303,8 +303,8 @@ Einstellungen → Geräte & Dienste → "Device Panel" → ⋮ → Löschen. Das
 
 ## Änderungsprotokoll
 
-Siehe [CHANGELOG.de.md](CHANGELOG.de.md).
+Siehe [CHANGELOG.de.md](https://github.com/Diegofuego871/ha-device-panel/blob/main/CHANGELOG.de.md).
 
 ## Lizenz
 
-MIT, siehe [LICENSE](LICENSE).
+MIT, siehe [LICENSE](https://github.com/Diegofuego871/ha-device-panel/blob/main/LICENSE).

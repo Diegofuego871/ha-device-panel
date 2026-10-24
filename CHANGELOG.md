@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.116.1] - 2026-10-24
+
+The README shows its images and links in HACS.
+
+### Fixed
+
+- **README in HACS:** when Device Panel was opened in HACS inside Home Assistant, **no image** showed (screenshots and graphics) and the link to the other language led nowhere. HACS renders the README on the address of Home Assistant and does not resolve relative paths such as `docs/screenshots/en/overview.png`. Images and links in `README.md` and `README.de.md` now use the full GitHub address. On GitHub itself nothing changes.
+
 ## [2.116.0] - 2026-10-21
 
 More symbols and an action button in the header of the settings; the choice "Symbol / Favicon" only appears for an external link.
@@ -4333,6 +4341,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.116.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.1
 [2.116.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.0
 [2.115.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.115.0
 [2.114.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.114.0

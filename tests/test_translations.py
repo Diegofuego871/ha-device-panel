@@ -134,8 +134,9 @@ def _structure(path: Path) -> list[str]:
 def test_docs_bilingual(en: str, de: str) -> None:
     """README und CHANGELOG gibt es in beiden Sprachen, gleich aufgebaut und gegenseitig verlinkt."""
     assert _structure(ROOT / en) == _structure(ROOT / de)
-    assert f"]({de})" in (ROOT / en).read_text(encoding="utf-8")
-    assert f"]({en})" in (ROOT / de).read_text(encoding="utf-8")
+    # Absolute Adressen: HACS zeigt die README in Home Assistant, relative Pfade liefen dort ins Leere
+    assert re.search(rf"\]\((\S*/)?{re.escape(de)}\)", (ROOT / en).read_text(encoding="utf-8"))
+    assert re.search(rf"\]\((\S*/)?{re.escape(en)}\)", (ROOT / de).read_text(encoding="utf-8"))
 
 
 def test_panel_device_types_match_backend() -> None:

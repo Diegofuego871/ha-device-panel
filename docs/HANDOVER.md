@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.116.1, README-Bilder in HACS)
+
+- Fehler: In HACS (innerhalb von Home Assistant) erschienen keine Bilder der README. HACS rendert die README auf der Adresse von Home Assistant, relative Pfade (`docs/screenshots/...`, `README.de.md`) laufen dort ins Leere (per HAR des Nutzers belegt: `hacs/repository/info` liefert den Markdown-Text unverändert). Seither sind alle Bilder und die Sprach-/CHANGELOG-/LICENSE-Links in beiden READMEs absolut (`raw.githubusercontent.com/.../main/docs/...`, `github.com/.../blob/main/...`). Neue Bilder und Links in der README immer absolut schreiben. `test_docs_bilingual` akzeptiert beide Formen.
+- Offen vom Nutzer gewünscht (noch nicht begonnen): dritter Reiter "Speicher" in Einstellungen › Panel (Abschnitt "Protokolle und Log" dorthin, plus Kapitel für die Geräteverläufe mit Grenze und Anzeige des belegten Speichers); Knopf für das Geräteprotokoll in der Geräteansicht (Mockups mit Platzvorschlägen); einheitliches Geräteprotokoll (Ausfall, Batterie, Laden, Update, Magic Push, Routinen) mit Filter. Symbol im HACS-Katalog: Brands-Eintrag nötig, Schritte noch zu klären.
+
 ## Stand (2.116.0, mehr Symbole, Favicon nur beim externen Link)
 
 - Device Panel ist offiziell im Standard-Katalog von HACS (Rückmeldung von frenck, PR gemerged): README Installation führt mit der Suche in HACS und dem Knopf `hacs_repository.svg` (my.home-assistant.io), das benutzerdefinierte Repository ist der Ersatzweg. Drehung der Pfeile (`.ap-spin`) läuft jetzt rückwärts (gegen den Uhrzeigersinn), passend zum Symbol "reset".

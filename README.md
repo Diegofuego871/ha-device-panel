@@ -1,10 +1,10 @@
 # Device Panel
 
-[Deutsch](README.de.md)
+[Deutsch](https://github.com/Diegofuego871/ha-device-panel/blob/main/README.de.md)
 
 **Every device in Home Assistant at a glance:** who is offline right now, how often and how long devices fail, how full the batteries are, how good the signal is, and notifications that you control from one place.
 
-<p align="center"><img src="docs/screenshots/en/overview.png" alt="Overview with availability, offline devices, outage pulse and device list" width="900"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/overview.png" alt="Overview with availability, offline devices, outage pulse and device list" width="900"></p>
 
 ## Key features
 
@@ -32,7 +32,7 @@ The top shows how many devices are online, who is offline right now and the outa
 
 Offline devices with the time they have been gone, unstable devices (three or more outages in 24 hours) and the outage pulse. Tapping the pulse lists the devices with outages, a point in the pulse shows who was gone then. When three or more devices fail at once, the panel names the likely common cause, for example the integration or its hub.
 
-<p align="center"><img src="docs/screenshots/en/pulse.png" alt="Window with the outage pulse and the devices with outages in 24 hours" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/pulse.png" alt="Window with the outage pulse and the devices with outages in 24 hours" width="720"></p>
 
 ### Search, filter, sort
 
@@ -40,29 +40,29 @@ Search runs over all columns. Filter chips narrow the list: warnings, offline, b
 
 | Warnings | Battery | Area filter |
 |---|---|---|
-| <img src="docs/screenshots/en/warnings.png" alt="List filtered by the chip Warnings"> | <img src="docs/screenshots/en/batteries.png" alt="List filtered by the chip Battery"> | <img src="docs/screenshots/en/area.png" alt="Area filter with floors and areas"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/warnings.png" alt="List filtered by the chip Warnings"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/batteries.png" alt="List filtered by the chip Battery"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/area.png" alt="Area filter with floors and areas"> |
 
 | Charging | New devices |
 |---|---|
-| <img src="docs/screenshots/en/charging.png" alt="List filtered by the chip Charging with charge bars"> | <img src="docs/screenshots/en/new.png" alt="List filtered by the chip New"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/charging.png" alt="List filtered by the chip Charging with charge bars"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/new.png" alt="List filtered by the chip New"> |
 
 ### Your own view
 
 The button "View" (phone: the row "Sorting & view") opens a dialog with two tabs. "Columns" (phone: "Sorting"): show or hide columns with the eye, drag them into any order, group the list or show it as one list; this applies per user, separately for desktop and phone. "Filter chips" (administrators only): hide, reorder and pin chips; this applies to all users. The list shows changes at once, but they only take effect with "Save"; on closing, the panel asks "Discard changes?". A heart marks favorites (own chip), and in the settings under "Panel" › "General" you can make the panel your own start page in Home Assistant (browser and Companion app).
 
-<p align="center"><img src="docs/screenshots/en/columns.png" alt="Dialog View with the tabs Columns and Filter chips, eye and drag handle" width="560"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/columns.png" alt="Dialog View with the tabs Columns and Filter chips, eye and drag handle" width="560"></p>
 
 ## Everything about one device
 
 A tap on a device opens a pop-up with availability, outages, signal and battery as tiles, plus connection, integration, manufacturer, model, software and all entities. If the device has something to switch (light, socket, shutter, lock, climate and more), the second tab "Switches" shows it as tiles with symbol and state; a tap opens the Home Assistant controls (dimming, colour, position). The device can be renamed (in Home Assistant, entity IDs stay), marked as a favorite, hidden, and opened on its page in Home Assistant. The pop-up has buttons to open the device page and the integration page in Home Assistant. The tabs "Switches" and "Entities" have a search field from eight entries on (name, entity ID or state). At the end of the tab "Entities" two buttons copy the link to exactly this device (and an app link for the Home Assistant app). A warning names its reason in the header.
 
-<p align="center"><img src="docs/screenshots/en/popup.png" alt="Device pop-up with statistics, connection and device details" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/popup.png" alt="Device pop-up with statistics, connection and device details" width="720"></p>
 
 ### Statistics and history
 
 Each tile opens a window with 24 hours, 7 or 30 days. Availability shows every outage with start, end and duration and the outages per day.
 
-<p align="center"><img src="docs/screenshots/en/availability.png" alt="Availability over 7 days with every outage" width="560"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/availability.png" alt="Availability over 7 days with every outage" width="560"></p>
 
 ### Signal and Bluetooth path
 
@@ -70,19 +70,19 @@ The signal history shows the median as a line and the range from worst to best v
 
 | Signal history | Connected via (Bluetooth) |
 |---|---|
-| <img src="docs/screenshots/en/signal.png" alt="Signal history with median, range and warning threshold"> | <img src="docs/screenshots/en/signal-via.png" alt="Section Connected via with receivers, share and switches"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/signal.png" alt="Signal history with median, range and warning threshold"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/signal-via.png" alt="Section Connected via with receivers, share and switches"> |
 
 ### Battery with forecast
 
 The battery history reaches back up to 12 months, with the battery change marked. The forecast calculates from the last battery change (at most one year) up to the warning threshold of the device, and says how sure it is.
 
-<p align="center"><img src="docs/screenshots/en/battery.png" alt="Battery history with battery change, warning threshold and forecast" width="560"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/battery.png" alt="Battery history with battery change, warning threshold and forecast" width="560"></p>
 
 ### Settings per device
 
 Every device can override the defaults in the tab "Settings" of its pop-up: its own "offline after" time (or no monitoring), battery warning, signal warning, charging, and outage and online notifications switched off. Each row shows where the value comes from and what the default would be. A symbol next to the name in the list marks devices with their own settings.
 
-<p align="center"><img src="docs/screenshots/en/device-settings.png" alt="Device pop-up: settings for this device with own time, own battery warning threshold and notifications off" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/device-settings.png" alt="Device pop-up: settings for this device with own time, own battery warning threshold and notifications off" width="720"></p>
 
 ## Notifications
 
@@ -90,7 +90,7 @@ Everything that notifies you follows one principle: you set a default once, chan
 
 ### The principle
 
-<p align="center"><img src="docs/graphics/en/notification-levels.png" alt="Three levels General, Integration and Device with an example and a table of what can be set where" width="900"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/graphics/en/notification-levels.png" alt="Three levels General, Integration and Device with an example and a table of what can be set where" width="900"></p>
 
 - **General:** in the settings under "Monitoring and notifications", the default for all devices
 - **Integration:** in the same place, tab "Integrations": a list of all integrations with what differs from the default, and a detail page per integration with its own tabs
@@ -99,7 +99,7 @@ Everything that notifies you follows one principle: you set a default once, chan
 
 ### From outage to notification
 
-<p align="center"><img src="docs/graphics/en/notification-flow.png" alt="Six steps from the outage of a device to the notification, with the level that decides each step" width="900"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/graphics/en/notification-flow.png" alt="Six steps from the outage of a device to the notification, with the level that decides each step" width="900"></p>
 
 - **Two times, not added:** "Offline after" (default 2 minutes) decides when the panel shows the device as offline, "Report only after" decides when the notification is sent; both run from the start of the outage, and the second cannot be shorter than the first; both can be set globally, per integration and per device
 - **One message per integration:** when several devices of one integration go offline together (default from three, adjustable), there is one message for that integration instead of many; the notification waits up to a minute for more devices, and the return is combined the same way
@@ -111,7 +111,7 @@ Everything that notifies you follows one principle: you set a default once, chan
 
 ### Where the notification goes
 
-<p align="center"><img src="docs/graphics/en/notification-targets.png" alt="One push target for everything, an own target per tab, Magic Push and routines choose their recipient themselves" width="900"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/graphics/en/notification-targets.png" alt="One push target for everything, an own target per tab, Magic Push and routines choose their recipient themselves" width="900"></p>
 
 - **One push target:** a notify service, group or notify entity for all messages
 - **Own target per tab:** outage, battery, charging, new devices, updates, panel updates and routines can each send to another recipient
@@ -123,11 +123,11 @@ Each kind has its own tab in the settings. Outage, battery, charging, new device
 
 | Outage | Battery | Charging |
 |---|---|---|
-| <img src="docs/screenshots/en/settings-outage.png" alt="Tab Outage: offline after, report only after, detection and message"> | <img src="docs/screenshots/en/settings-battery.png" alt="Tab Battery: warning threshold and push"> | <img src="docs/screenshots/en/settings-charge.png" alt="Tab Charging: rise, full from, notification and live activity"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-outage.png" alt="Tab Outage: offline after, report only after, detection and message"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-battery.png" alt="Tab Battery: warning threshold and push"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-charge.png" alt="Tab Charging: rise, full from, notification and live activity"> |
 
 | New | Updates | Signal |
 |---|---|---|
-| <img src="docs/screenshots/en/settings-new.png" alt="Tab New: collecting window and content"> | <img src="docs/screenshots/en/settings-updates.png" alt="Tab Updates: update reminder"> | <img src="docs/screenshots/en/settings-sig.png" alt="Tab Signal: warning threshold per connection type"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-new.png" alt="Tab New: collecting window and content"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-updates.png" alt="Tab Updates: update reminder"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-sig.png" alt="Tab Signal: warning threshold per connection type"> |
 
 - **Outage and back online:** push, persistent notification and group message, with start, duration, area and integration
 - **Battery:** once per device when it falls below the threshold (default 15 %, from 1 to 50 %), immediately or as a daily summary, with a persistent notification of all affected devices
@@ -138,15 +138,15 @@ Each kind has its own tab in the settings. Outage, battery, charging, new device
 - **Signal:** a warning threshold per connection type, per integration and per device (default weak below -80 dBm or LQI 61), also switchable off
 - **Panel updates:** an optional push once per version when a new version of the panel is found or installed
 
-<p align="center"><img src="docs/screenshots/en/settings-integrations.png" alt="Settings: list of integrations with what differs from the defaults" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-integrations.png" alt="Settings: list of integrations with what differs from the defaults" width="720"></p>
 
-<p align="center"><img src="docs/screenshots/en/integ-detail.png" alt="Detail of an integration with tabs for outage, battery, charging, new, signal and devices" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/integ-detail.png" alt="Detail of an integration with tabs for outage, battery, charging, new, signal and devices" width="720"></p>
 
 ## Magic Push: your own messages
 
 Your own notifications per device without an automation, in the tab "Magic Push" of the device.
 
-<p align="center"><img src="docs/screenshots/en/magic-tab.png" alt="Tab Magic Push of a device with two messages" width="560"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/magic-tab.png" alt="Tab Magic Push of a device with two messages" width="560"></p>
 
 - **Any value:** pick a value of the device, or any entity of Home Assistant that stays tied to the device
 - **When:** above, below, is, or changes; several conditions linked with And/Or and groups; for how long it must hold; how long it must stay normal before it resets, and at which value
@@ -156,9 +156,9 @@ Your own notifications per device without an automation, in the tab "Magic Push"
 - **Overview:** the app "Magic Push" (in the launcher) opens a window with all messages of all devices, one card per device, with search and filter; "New message" at the bottom adds one (choose the device first, then as in the device pop-up)
 - **History:** "History" on a card (and "History of the device" in the device pop-up and in the overview) opens one window for Magic Push and routines (two tabs, it opens on the one you came from) and lists every message: date, kind, title and text as it was sent, value, recipient and what became of it (sent, held back, failed). Period 7 days to 12 months or your own dates, key figures, a bar chart (per day, per week for long periods; a tap on a bar picks that day), choice, search and "Copy as text". Kept as long as there is room: at most 5000 entries per message and 30 MB for all together (adjustable)
 
-<p align="center"><img src="docs/screenshots/en/magic-wizard.png" alt="Magic Push assistant, step 1: what should be monitored" width="560"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/magic-wizard.png" alt="Magic Push assistant, step 1: what should be monitored" width="560"></p>
 
-<p align="center"><img src="docs/screenshots/en/magic-all.png" alt="Window Magic Push: all messages of all devices, one card per device" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/magic-all.png" alt="Window Magic Push: all messages of all devices, one card per device" width="720"></p>
 
 ## Routines
 
@@ -166,7 +166,7 @@ Switches an entity of a device once or on a schedule, without an automation.
 
 | Routines of a device | Assistant: when |
 |---|---|
-| <img src="docs/screenshots/en/routine-tab.png" alt="Tab Routines of a device with a routine"> | <img src="docs/screenshots/en/routine-wizard.png" alt="Routine assistant, step 2: when should it switch"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/routine-tab.png" alt="Tab Routines of a device with a routine"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/routine-wizard.png" alt="Routine assistant, step 2: when should it switch"> |
 
 - **What:** pick the entity and the action (on, off, toggle; **set** for numbers and selections such as the brightness of a display, which goes back only "as before"), optionally switch back after a while. Added through the overview "All routines", the first page is "Device, group or scene?": next to devices there are **scenes** (action "Activate", nothing to switch back) and **groups** (for example a light group, behaves like a single lamp), both without a device; the first page lists every device, group and scene as a row of its own, with a filter on top (All, Devices, Groups, Scenes) and a small pill on groups and scenes, and the search finds them by their name; a chosen scene needs no further page "What", a chosen group only asks for the action
 - **Options:** if the entity can be set when it is turned on, a page of its own follows: light brightness, colour temperature and colour; shutter position; climate target temperature and mode; media volume; fan speed. A preview shows the result (the lamp lights in the chosen colour), nothing is switched by it, and "Run now" tries the real strength; without a setting everything stays "as last used"
@@ -178,7 +178,7 @@ Switches an entity of a device once or on a schedule, without an automation.
 - **Overview:** the lightning bolt in the header (also in the launcher) opens all routines in one card per device (scenes and groups without a device in cards of their own), with search and filter, edit, run, switch on or off, delete and favorites; at the very top the switch "Pause all routines" (same as in the settings, applies at once)
 - **History and trace:** "History" on a card (and "History of the device") lists every run: date, trigger (time, trigger, by hand, switching back), action and result (executed, switched back, missed, paused, failed). Same period, chart, choice and search as for Magic Push. A row opens the **trace**: every step in order (trigger and delay, time window, remembered state, call with duration and result, planned switch back, message), copyable as text for troubleshooting. Kept as long as there is room: at most 5000 entries per routine and 30 MB for all together (adjustable)
 
-<p align="center"><img src="docs/screenshots/en/routines-all.png" alt="Window with all routines, one card per device" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/routines-all.png" alt="Window with all routines, one card per device" width="720"></p>
 
 ## App launcher and log
 
@@ -186,7 +186,7 @@ A button in the header opens a launcher with useful pages, in the symbols and co
 
 | App launcher | Log |
 |---|---|
-| <img src="docs/screenshots/en/launcher.png" alt="App launcher with favorites, Device Panel and Home Assistant pages"> | <img src="docs/screenshots/en/log.png" alt="Log with entries of the notifications and a filter"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/launcher.png" alt="App launcher with favorites, Device Panel and Home Assistant pages"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/log.png" alt="Log with entries of the notifications and a filter"> |
 
 - **Pages:** routines, Magic Push and the log of this integration, pages of Home Assistant (automations, scenes, scripts, helpers, devices, entities, integrations, tools and more; "Apps" and "Dashboards" are available too but hidden until you switch them on in edit mode; administrators only for the management pages)
 - **Your own links and actions:** a page in Home Assistant, an external link that opens in a new browser tab (with its favicon as icon if you like), or an **action** that calls a Home Assistant service or a command of the interface (JSON data, optionally with a question first); optionally also as a button in the header of the settings; while it runs the symbol shows turning arrows, then a green check (or a red cross), and the result is written to the log
@@ -202,7 +202,7 @@ The gear (the pinned app "Settings", or the launcher) opens all settings in Germ
 
 | Devices in the panel | Routines | Panel |
 |---|---|---|
-| <img src="docs/screenshots/en/settings-section-devices.png" alt="Section Devices in the panel"> | <img src="docs/screenshots/en/settings-section-routines.png" alt="Section Routines"> | <img src="docs/screenshots/en/settings-section-updates.png" alt="Section Panel with daily check and automatic installation"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-section-devices.png" alt="Section Devices in the panel"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-section-routines.png" alt="Section Routines"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-section-updates.png" alt="Section Panel with daily check and automatic installation"> |
 
 - **Devices in the panel:** hide integrations, device types and single devices (hiding a device asks for confirmation first), set type and connection type per integration, see and reset devices with their own settings
 - **Monitoring and notifications:** the tabs General (target of the notifications, quiet time), Outage, Battery, Charging, New, Updates, Signal and Integrations; each tab for a notification starts with a small overview (timeline and pills to switch it quickly)
@@ -213,7 +213,7 @@ The gear (the pinned app "Settings", or the launcher) opens all settings in Germ
 - **Panel:** two sub-tabs. "General": the panel as your start page in Home Assistant (only for you), the chapter **"Logs"**: how much the logs keep, as a size in MB and a number of entries, once for messages and routines (default 30 MB, 5000 entries per message or routine) and once for the panel log (default 10 MB, 4000 entries), with the current use next to it. When a limit is reached, the oldest entries are dropped; a lower limit cuts at once and asks first. At the very end the chapter "Back up and restore" (see below). "Updates" (the version line with search and install stays at the very top of the settings): a check every time the settings are opened (at most once per minute), daily check at a set time, optional push, pre-releases and automatic installation via HACS (you only restart Home Assistant yourself)
 - **Saving:** changes in the pop-up and in the settings apply only with "Save"; closing with unsaved changes asks "Discard changes?"
 
-<p align="center"><img src="docs/screenshots/en/settings-general.png" alt="Settings, tab General: target of the notifications and quiet time with times per weekday" width="720"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-general.png" alt="Settings, tab General: target of the notifications and quiet time with times per weekday" width="720"></p>
 
 ### Back up and restore
 
@@ -221,7 +221,7 @@ Under "Panel" › "General" (below "Start page", administrators only) all settin
 
 | Back up and restore | Preview before restoring |
 |---|---|
-| <img src="docs/screenshots/en/settings-backup.png" alt="Chapter Back up and restore under Start page"> | <img src="docs/screenshots/en/backup-restore.png" alt="Preview: what changes, what stays, what is skipped, with notes for missing push targets and devices"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-backup.png" alt="Chapter Back up and restore under Start page"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/backup-restore.png" alt="Preview: what changes, what stays, what is skipped, with notes for missing push targets and devices"> |
 
 - **What goes in:** you choose the parts: notifications and monitoring, panel and display, settings per device, AI assessment and, off by default, routines and Magic Push. No credentials and no tokens. "Copy" and "Paste text" are the way for the phone app, where saving a file does not always work.
 - **Preview first:** nothing is written before "Apply". The preview counts what changes, stays the same or is not applied, per part, with examples.
@@ -235,7 +235,7 @@ Off by default. On a button press the panel asks an AI task of Home Assistant fo
 
 | Answer in the pop-up | Expert mode: prompt |
 |---|---|
-| <img src="docs/screenshots/en/ai.png" alt="Device pop-up with the AI assessment"> | <img src="docs/screenshots/en/settings-ai.png" alt="Settings with the prompt in expert mode"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/ai.png" alt="Device pop-up with the AI assessment"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/settings-ai.png" alt="Settings with the prompt in expert mode"> |
 
 - **Expert mode:** the prompt is adjustable, with groups of facts such as `{facts_area}` and `{facts_hub}`, and a preview shows the exact text
 - **When it fails:** the pop-up shows the message of the AI task, and the log records the reason, so a quota, key or model problem can be found; an empty answer gets a second try, and a temporary overload of the provider (for example "503, high demand") is retried twice before an error is shown
@@ -251,11 +251,11 @@ The same panel as cards, with the same pop-ups, windows and assistants in full s
 
 | List | Pop-up | Battery |
 |---|---|---|
-| <img src="docs/screenshots/en/overview-mobile.png" alt="Phone: cards" width="260"> | <img src="docs/screenshots/en/popup-mobile.png" alt="Phone: pop-up" width="260"> | <img src="docs/screenshots/en/battery-mobile.png" alt="Phone: battery history" width="260"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/overview-mobile.png" alt="Phone: cards" width="260"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/popup-mobile.png" alt="Phone: pop-up" width="260"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/battery-mobile.png" alt="Phone: battery history" width="260"> |
 
 | Charging | Launcher | Routine assistant | Magic Push |
 |---|---|---|---|
-| <img src="docs/screenshots/en/charging-mobile.png" alt="Phone: charging devices" width="200"> | <img src="docs/screenshots/en/launcher-mobile.png" alt="Phone: app launcher" width="200"> | <img src="docs/screenshots/en/routine-wizard-mobile.png" alt="Phone: routine assistant" width="200"> | <img src="docs/screenshots/en/magic-wizard-mobile.png" alt="Phone: Magic Push assistant" width="200"> |
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/charging-mobile.png" alt="Phone: charging devices" width="200"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/launcher-mobile.png" alt="Phone: app launcher" width="200"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/routine-wizard-mobile.png" alt="Phone: routine assistant" width="200"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/magic-wizard-mobile.png" alt="Phone: Magic Push assistant" width="200"> |
 
 ## Good to know
 
@@ -303,8 +303,8 @@ Settings → Devices & services → "Device Panel" → ⋮ → Delete. This also
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md).
+See [CHANGELOG.md](https://github.com/Diegofuego871/ha-device-panel/blob/main/CHANGELOG.md).
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+MIT, see [LICENSE](https://github.com/Diegofuego871/ha-device-panel/blob/main/LICENSE).
