@@ -249,6 +249,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Popup Routinen: "${T.title}" an der Karte, kein Text-Link "${T.device} ›" mehr`, await ev(`return !r.querySelector('dialog.device .pr-devlink') && !!r.querySelector('dialog.device .rt-clock [data-proto="routine"][data-id="aaaaaaaaaaa1"]')`));
     await tap('dialog.device .rt-clock [data-proto="routine"][data-id="aaaaaaaaaaa1"]');
     check(`[${tag}] Protokoll der Routine aus dem Popup`, await wait(`return r.querySelector('${P}').open && r.querySelectorAll('${P} .pr-item').length === 4`));
+    // Auch bei nur einer Routine am Gerät steht der Filter als Chip da (Karte geöffnet), "Alle Routinen" hebt ihn auf
+    check(`[${tag}] Routine aus dem Popup: Chips "${T.allR}" und die Routine, die Routine gewählt (auch bei nur einer Routine am Gerät)`, await wait(`const c = [...r.querySelectorAll('${P} [data-pr-items] .chip')]; return c.length >= 2 && c[0].textContent.trim() === ${JSON.stringify(T.allR)} && c.some((x) => x.classList.contains("on") && x.dataset.v === "aaaaaaaaaaa1")`));
     await closeProto();
     check(`[${tag}] keine Seitenfehler`, errors.length === 0, errors.join("; "));
     await ctx.close();

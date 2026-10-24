@@ -106,6 +106,8 @@ export class ProtocolUi {
       filter: "all",
       item: kind === "magic" || kind === "routine" ? itemId : "",
       pickOpen: false,
+      // Von einer Karte geöffnet: die Chips stehen auch bei nur einem Eintrag da, damit man den Filter sieht und aufheben kann
+      keepChips: Boolean(itemId) && (kind === "magic" || kind === "routine"),
       items: [],
       q: "",
       limit: PAGE,
@@ -415,14 +417,14 @@ export class ProtocolUi {
       items.innerHTML = [["", t("logAll"), total], ...ids.map((c) => [c, this.catLabel(c), cs[c] || 0])]
         .map(([id, label, n]) => `<button type="button" class="chip${s.item === id ? " on" : ""}" data-pr="item" data-v="${this.esc(id)}" aria-pressed="${s.item === id}"><span>${this.esc(label)}</span><span class="n">${this.num(n)}</span></button>`)
         .join("");
-    } else if ((s.kind === "magic" || s.kind === "routine") && s.deviceId && s.items.length > 1) {
+    } else if ((s.kind === "magic" || s.kind === "routine") && s.deviceId && (s.items.length > 1 || (s.keepChips && s.items.length))) {
       // Am Gerät: "Alle ..." und je eine Meldung oder Routine; die gewählte ist markiert, ein Tipp auf "Alle" hebt den Filter auf
       const all = t(s.kind === "magic" ? "prAllMagic" : "prAllRoutines");
       items.hidden = false;
       items.innerHTML = [["", all], ...s.items.map((i) => [i.id, i.name])]
         .map(([id, label]) => `<button type="button" class="chip${s.item === id ? " on" : ""}" data-pr="item" data-v="${this.esc(id)}" aria-pressed="${s.item === id}"><span>${this.esc(label)}</span></button>`)
         .join("");
-    } else if ((s.kind === "magic" || s.kind === "routine") && !s.deviceId && (s.items.length > 1 || s.item)) {
+    } else if ((s.kind === "magic" || s.kind === "routine") && !s.deviceId && (s.items.length > 1 || s.item || (s.keepChips && s.items.length))) {
       // Über alle Geräte zu viele Namen für eine Chip-Reihe: ein Chip öffnet die Auswahl (wie "Integration" in der Geräteliste)
       const magic = s.kind === "magic";
       const cur = s.items.find((i) => i.id === s.item);

@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.134.1, Chips auch bei nur einem Eintrag)
+
+- 2.134.1: `s.keepChips` (gesetzt in `open`, wenn von einer Karte mit `itemId` geöffnet): die Chips stehen auch bei nur einem Eintrag da. Test: Suite `protocol` ("auch bei nur einer Routine am Gerät").
+
 ## Stand (2.134.0, Filter-Chips im Protokoll einer Routine oder Meldung)
 
 - 2.134.0 (Mockups `docs/mockups/protocol-filter-v1`, A/A): `protocol.js` kennt keinen festen `itemId` mehr; eine Meldung oder Routine von der Karte ist die Vorauswahl `s.item` im Bereich ihres Geräts (`open`), `load` sendet `device_id` plus `item_ids`; `s.items` kommt immer aus der Antwort (`items` = ganzer Bereich, mit `device_id`). Am Gerät Chips "Alle ..." plus je Eintrag (ab zwei Einträgen); ohne Gerät ein Chip `.pr-pick-chip` (`data-pr="pick"`) mit Liste `.pr-pick` darunter (Texte `prPickMagic`, `prPickRoutine`). Backend `protocol_ws.py`: `item_ids`. Nicht gebaut: Mehrfachwahl und Zahl der Läufe je Eintrag in der Liste. Tests: `test_protocol.py`, Suiten `protocol`, `devicelog`.

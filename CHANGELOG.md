@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.134.1] - 2026-10-24
+
+The filter chip also shows when the device has only one routine or message.
+
+### Fixed
+
+- **History of a card on a device with only one routine or message:** the chips of 2.134.0 stayed away because they appeared only from two entries on, so the filter was invisible again. When the history is opened from a card, the chips ("All routines" and the chosen routine, or "All messages" and the chosen message) now show even with a single entry, and "All ..." removes the filter.
+
 ## [2.134.0] - 2026-10-24
 
 The history of a single routine or message now shows its filter as a chip. Includes the changes from 2.133.0.
@@ -4596,6 +4604,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.134.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.1
 [2.134.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.0
 [2.132.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.132.0
 [2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0

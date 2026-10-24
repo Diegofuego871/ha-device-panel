@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.134.1] - 2026-10-24
+
+Der Filter-Chip steht auch da, wenn das Gerät nur eine Routine oder Meldung hat.
+
+### Behoben
+
+- **Protokoll einer Karte an einem Gerät mit nur einer Routine oder Meldung:** die Chips aus 2.134.0 blieben aus, weil sie erst ab zwei Einträgen erschienen; der Filter war damit wieder unsichtbar. Wird das Protokoll von einer Karte geöffnet, stehen die Chips ("Alle Routinen" und die gewählte Routine, bzw. "Alle Meldungen" und die gewählte Meldung) jetzt auch bei einem einzigen Eintrag da, und "Alle ..." hebt den Filter auf.
+
 ## [2.134.0] - 2026-10-24
 
 Das Protokoll einer einzelnen Routine oder Meldung zeigt seinen Filter jetzt als Chip. Enthält die Änderungen von 2.133.0.
@@ -4697,6 +4705,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.134.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.1
 [2.134.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.0
 [2.132.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.132.0
 [2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0
