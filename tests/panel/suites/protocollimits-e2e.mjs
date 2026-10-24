@@ -11,11 +11,11 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
-  de: { chapter: "Protokolle und Log", tab: "Speicher", hist: "Geräteverläufe", other: "Weitere Daten", range: "Wert muss", cutYes: "Kürzen und speichern", cutNo: "Abbrechen", used: "Belegt", all: "Alle" },
-  en: { chapter: "Histories and log", tab: "Storage", hist: "Device histories", other: "Other data", range: "Value must", cutYes: "Cut and save", cutNo: "Cancel", used: "Used", all: "All" },
+  de: { chapter: "Protokolle und Log", tab: "Speicher", hist: "Geräteverläufe", push: "Gesendete Meldungen", other: "Weitere Daten", range: "Wert muss", cutYes: "Kürzen und speichern", cutNo: "Abbrechen", used: "Belegt", all: "Alle" },
+  en: { chapter: "Histories and log", tab: "Storage", hist: "Device histories", push: "Sent notifications", other: "Other data", range: "Value must", cutYes: "Cut and save", cutNo: "Cancel", used: "Used", all: "All" },
 };
 const KEYS = ["protocol_max_mb", "protocol_max_entries", "log_max_mb", "log_max_entries"];
-const HIST = ["availability_keep_days", "availability_max_mb", "signal_keep_days", "signal_max_mb"];
+const HIST = ["availability_keep_days", "availability_max_mb", "signal_keep_days", "signal_max_mb", "push_keep_days", "push_max_mb"];
 const DAY = 86400;
 
 for (const lang of ["de", "en"]) {
@@ -62,10 +62,10 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] unter Allgemein steht das Kapitel "${T.chapter}" nicht mehr`, await ev(`return ![...r.querySelectorAll("${S} .set-title")].some((e) => e.textContent.trim() === ${JSON.stringify(T.chapter)}) && !r.querySelector('${S} input[data-opt="protocol_max_mb"]')`));
     await tap(`${S} .sub-tab[data-key="pstorage"]`);
     await wait(`return !!r.querySelector('${S} input[data-opt="protocol_max_mb"]')`);
-    check(`[${tag}] Reiter "${T.tab}": Kapitel "${T.hist}", "${T.chapter}" und "${T.other}" mit acht Feldern`, await ev(`const t = [...r.querySelectorAll("${S} .set-title")].map((e) => e.textContent.trim()); return t.join("|") === ${JSON.stringify([T.hist, T.chapter, T.other].join("|"))} && ${JSON.stringify([...KEYS, ...HIST])}.every((k) => !!r.querySelector('${S} input[data-opt="' + k + '"]'))`));
+    check(`[${tag}] Reiter "${T.tab}": Kapitel "${T.hist}", "${T.push}", "${T.chapter}" und "${T.other}" mit zehn Feldern`, await ev(`const t = [...r.querySelectorAll("${S} .set-title")].map((e) => e.textContent.trim()); return t.join("|") === ${JSON.stringify([T.hist, T.push, T.chapter, T.other].join("|"))} && ${JSON.stringify([...KEYS, ...HIST])}.every((k) => !!r.querySelector('${S} input[data-opt="' + k + '"]'))`));
     check(`[${tag}] Gesamtbalken: rund 13 MB (4 + 2,5 + 4 + 2 + 0,5 + 0,1 + 0,1)`, await ev(`const b = r.querySelector("${S} .sto-big"); const seg = r.querySelectorAll("${S} .sto-seg i").length; return !!b && /1[34][,.]\\d|1[34] MB/.test(b.textContent) && seg === 5 && r.querySelectorAll("${S} .sto-leg span").length === 5`), await ev(`return r.querySelector("${S} .sto-big")?.textContent`));
-    check(`[${tag}] Balken je Zeile (Verfügbarkeit 20 %, Empfang 5 %, Protokoll 13 %, Log 20 %)`, await ev(`const w = [...r.querySelectorAll("${S} .sto-meter i")].map((i) => parseInt(i.style.width)); return w.length === 4 && w.join() === "20,5,13,20"`), await ev(`return [...r.querySelectorAll("${S} .sto-meter i")].map((i) => i.style.width).join()`));
-    check(`[${tag}] Verläufe: 365 Tage / 20 MB, 365 Tage / 50 MB (Standard 1 Jahr), Einheit Tage`, await ev(`return ${JSON.stringify(HIST)}.map((k) => r.querySelector('${S} input[data-opt="' + k + '"]').value).join() === "365,20,365,50" && /Tage|days/.test(r.querySelector('${S} input[data-opt="availability_keep_days"]').parentElement.querySelector(".unit").textContent)`));
+    check(`[${tag}] Balken je Zeile (Verfügbarkeit 20 %, Empfang 5 %, Meldungen 4 %, Protokoll 13 %, Log 20 %)`, await ev(`const w = [...r.querySelectorAll("${S} .sto-meter i")].map((i) => parseInt(i.style.width)); return w.length === 5 && w.join() === "20,5,4,13,20"`), await ev(`return [...r.querySelectorAll("${S} .sto-meter i")].map((i) => i.style.width).join()`));
+    check(`[${tag}] Verläufe und Meldungen: 365 Tage / 20 MB, 365 Tage / 50 MB, 365 Tage / 10 MB (Standard 1 Jahr), Einheit Tage`, await ev(`return ${JSON.stringify(HIST)}.map((k) => r.querySelector('${S} input[data-opt="' + k + '"]').value).join() === "365,20,365,50,365,10" && /Tage|days/.test(r.querySelector('${S} input[data-opt="availability_keep_days"]').parentElement.querySelector(".unit").textContent)`));
     check(`[${tag}] Weitere Daten: drei Zeilen, Batterie-Hinweis`, await ev(`return r.querySelectorAll("${S} .sto-row").length === 3 && r.querySelectorAll("${S} .sto-batt").length === 2`));
     check(`[${tag}] Standard: 30 MB, 5000 Einträge, 10 MB, 4000 Einträge`, await ev(`return ${JSON.stringify(KEYS)}.map((k) => r.querySelector('${S} input[data-opt="' + k + '"]').value).join() === "30,5000,10,4000"`));
     check(`[${tag}] Einheiten MB und Einträge am Feld`, await ev(`const u = [...r.querySelectorAll('${S} input[data-opt="protocol_max_mb"], ${S} input[data-opt="protocol_max_entries"]')].map((i) => i.parentElement.querySelector(".unit").textContent); return u[0] === "MB" && /Einträge|entries/.test(u[1])`));

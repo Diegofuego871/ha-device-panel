@@ -16,10 +16,10 @@ from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant
 
 from . import activity
-from .const import DATA_AVAILABILITY, DATA_PROTOCOL, DATA_SIGNAL, DOMAIN
+from .const import DATA_AVAILABILITY, DATA_PROTOCOL, DATA_PUSHLOG, DATA_SIGNAL, DOMAIN
 
 # Dateien, die schon oben gezählt werden (Grösse des JSON, mit Grenze)
-COUNTED = ("availability", "signal", "debug")
+COUNTED = ("availability", "signal", "debug", "push_log")
 # Gruppe je Datei (Schlüssel ohne "device_panel."); alles Unbekannte zählt zu "states"
 GROUPS = {
     "ai": "ai",
@@ -57,6 +57,7 @@ async def ws_storage_usage(hass: HomeAssistant, connection: websocket_api.Active
     availability = hass.data.get(DATA_AVAILABILITY)
     signal = hass.data.get(DATA_SIGNAL)
     protocol = hass.data.get(DATA_PROTOCOL)
+    push_log = hass.data.get(DATA_PUSHLOG)
     other = await hass.async_add_executor_job(other_sizes, hass.config.path(".storage"))
     empty = {"bytes": 0, "devices": 0, "days": 0}
     connection.send_result(
@@ -64,6 +65,7 @@ async def ws_storage_usage(hass: HomeAssistant, connection: websocket_api.Active
         {
             "availability": availability.usage() if availability is not None else empty,
             "signal": signal.usage() if signal is not None else empty,
+            "push": push_log.usage() if push_log is not None else {**empty, "entries": 0},
             "protocol": protocol.usage() if protocol is not None else {"bytes": 0, "entries": 0, "items": 0, "max_item": 0},
             "log": activity.usage(hass),
             "other": other,

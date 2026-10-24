@@ -17,7 +17,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
 from . import activity
-from .const import DATA_AVAILABILITY, DATA_MAGIC, DATA_PROTOCOL, DATA_ROUTINES
+from .const import DATA_AVAILABILITY, DATA_MAGIC, DATA_PROTOCOL, DATA_PUSHLOG, DATA_ROUTINES
 
 # Kategorien des Panel-Logs, die ein Gerät betreffen können (Magic Push und Routinen kommen aus den Protokollen)
 EVENT_CATS = ("outage", "battery", "charge", "signal", "updates", "new", "push")
@@ -57,7 +57,8 @@ LINK_WINDOW_S = 900
 def _event_entries(hass: HomeAssistant, device: str | None, since: float, until: float) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for e in activity.get(hass).entries:
-        if e.get("cat") not in EVENT_CATS or e.get("level") == "debug":
+        # Meldungen ("push") kommen seit 2.124.0 aus dem eigenen Meldungsprotokoll (push_log.py), nicht aus dem Panel-Log
+        if e.get("cat") not in EVENT_CATS or e.get("cat") == "push" or e.get("level") == "debug":
             continue
         ids = e.get("device_ids") or ([e["device_id"]] if e.get("device_id") else [])
         if not ids or not since <= e["at"] <= until:
@@ -66,9 +67,27 @@ def _event_entries(hass: HomeAssistant, device: str | None, since: float, until:
             continue
         for dev in [device] if device is not None else ids:
             entry = {"at": e["at"], "source": "event", "cat": e["cat"], "dev": dev, "level": e.get("level", "info"), "title": e.get("title", ""), "text": e.get("text", ""), "detail": e.get("detail", ""), "code": e.get("code", "")}
-            if isinstance(e.get("push"), dict):
-                entry["push"] = {**e["push"], "at": e["at"]}
             out.append(entry)
+    return out
+
+
+def _push_entries(hass: HomeAssistant, device: str | None, since: float, until: float) -> list[dict[str, Any]]:
+    """Gesendete Meldungen aus dem Meldungsprotokoll: eine Zeile je Gerät, das die Meldung nennt."""
+    log = hass.data.get(DATA_PUSHLOG)
+    if log is None:
+        return []
+    out: list[dict[str, Any]] = []
+    for item in log.items(device, since, until):
+        p = item["p"]
+        code = f"push_{p['res']}"
+        failed = p["res"] in ("failed", "missing")
+        for dev in [device] if device is not None else item["devs"]:
+            out.append(
+                {
+                    "at": item["at"], "source": "event", "cat": "push", "dev": dev, "level": "error" if failed else "info", "title": p["target"],
+                    "text": activity.text(hass, code, title=p["title"]), "detail": "", "code": code, "push": {**p, "at": item["at"]},
+                }
+            )
     return out
 
 
@@ -133,7 +152,7 @@ def query(
     else:
         log = hass.data.get(DATA_AVAILABILITY)
         ids = list(getattr(log, "_events", {}))
-    scope = _avail_entries(hass, ids, since_ts, until) + _event_entries(hass, device, since_ts, until) + _protocol_entries(hass, device, since_ts, until)
+    scope = _avail_entries(hass, ids, since_ts, until) + _event_entries(hass, device, since_ts, until) + _push_entries(hass, device, since_ts, until) + _protocol_entries(hass, device, since_ts, until)
     if device is None:
         names: dict[str, str] = {}
         for e in scope:

@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "304"
+PANEL_VERSION = "305"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -301,16 +301,22 @@ CONF_AVAIL_DAYS = "availability_keep_days"
 CONF_AVAIL_MB = "availability_max_mb"
 CONF_SIGNAL_DAYS = "signal_keep_days"
 CONF_SIGNAL_MB = "signal_max_mb"
+CONF_PUSH_DAYS = "push_keep_days"
+CONF_PUSH_MB = "push_max_mb"
 DEFAULT_AVAIL_DAYS = 365
 DEFAULT_AVAIL_MB = 20
 DEFAULT_SIGNAL_DAYS = 365
 DEFAULT_SIGNAL_MB = 50
+DEFAULT_PUSH_DAYS = 365
+DEFAULT_PUSH_MB = 10
 INT_RANGES.update(
     {
         CONF_AVAIL_DAYS: (7, 365),
         CONF_AVAIL_MB: (1, 200),
         CONF_SIGNAL_DAYS: (7, 365),
         CONF_SIGNAL_MB: (1, 200),
+        CONF_PUSH_DAYS: (7, 365),
+        CONF_PUSH_MB: (1, 200),
     }
 )
 # Umbenennung Timer → Routine (2.55.0): so hiessen die gespeicherten Optionen vorher; __init__ übernimmt sie beim Start einmal
@@ -424,6 +430,8 @@ DATA_BLE_STAMPS = f"{DOMAIN}_ble_stamps"
 DATA_STATUS = f"{DOMAIN}_status"
 # Koordinator der eigenen Entitäten (seit 2.122.0, summary.py)
 DATA_SUMMARY = f"{DOMAIN}_summary"
+# Gesendete Meldungen mit eigener Aufbewahrung (seit 2.124.0, push_log.py)
+DATA_PUSHLOG = f"{DOMAIN}_push_log"
 
 # Versionsprüfung (GitHub-Releases) und Abgleich mit HACS, wie unifi_dynamic.
 GITHUB_REPO = "Diegofuego871/ha-device-panel"

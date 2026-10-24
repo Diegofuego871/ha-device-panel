@@ -54,6 +54,7 @@ from .ai_assessment import ASK_ANSWER_MAX, ASK_MAX, ASK_QUESTION_MAX, AiError, a
 from .ai_prompt import DEFAULT_PROMPT
 from .const import (
     AI_PROMPT_MAX,
+    DATA_PUSHLOG,
     DATA_SUMMARY,
     CONF_STATUS_CPU_MINUTES,
     CONF_STATUS_DISK_MINUTES,
@@ -111,6 +112,7 @@ from .const import (
     PUSH_STATIC_URL_PATH,
     STORAGE_VERSION,
 )
+from .push_log import PUSH_STORE_KEY, PushLog
 from .summary import PLATFORMS, SUMMARY_STORE_KEY, SummaryCoordinator
 from .devices import (
     DEVICES_STORE_KEY,
@@ -157,6 +159,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     integration = await async_get_integration(hass, DOMAIN)
     await activity.async_restore(hass)
     activity.record(hass, "info", "system", "sys_start", "Device Panel", version=str(integration.version))
+    # Meldungsprotokoll vor allen Meldungen (seit 2.124.0): auch die erste Meldung nach dem Start gehört hinein
+    if DATA_PUSHLOG not in hass.data:
+        push_log = PushLog(hass)
+        await push_log.async_start()
+        hass.data[DATA_PUSHLOG] = push_log
     await _async_register_push_path(hass)
     await _async_register_push_icons(hass)
     await _async_register_panel(hass)
@@ -261,7 +268,7 @@ async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> Non
     if (protocol_log := hass.data.get(DATA_PROTOCOL)) is not None:
         protocol_log.enforce()
     # Aufbewahrung der Verläufe von Verfügbarkeit und Empfang (seit 2.117.0)
-    for key in (DATA_AVAILABILITY, DATA_SIGNAL):
+    for key in (DATA_AVAILABILITY, DATA_SIGNAL, DATA_PUSHLOG):
         if (history := hass.data.get(key)) is not None:
             history.apply_limits()
 
@@ -292,6 +299,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await magic_push.async_stop()
     if (status_watch := hass.data.pop(DATA_STATUS, None)) is not None:
         await status_watch.async_stop()
+    if (push_log := hass.data.pop(DATA_PUSHLOG, None)) is not None:
+        await push_log.async_stop()
     if (routine_manager := hass.data.pop(DATA_ROUTINES, None)) is not None:
         await routine_manager.async_stop()
     update_check.async_stop_daily(hass)
@@ -316,7 +325,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
         protocol_log = Protocol(hass)
         await protocol_log.async_load()
     await protocol_log.async_remove_all()
-    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, MAGIC_STORE_KEY, ROUTINES_STORE_KEY, AI_MEMORY_STORE_KEY, SUMMARY_STORE_KEY, update_check.PANEL_STORE_KEY):
+    for key in (AVAILABILITY_STORE_KEY, DEVICES_STORE_KEY, NOTIFY_STORE_KEY, BATTERY_STORE_KEY, NEW_STORE_KEY, UPDATES_STORE_KEY, CHARGE_STORE_KEY, SIGNAL_STORE_KEY, MAGIC_STORE_KEY, ROUTINES_STORE_KEY, AI_MEMORY_STORE_KEY, SUMMARY_STORE_KEY, PUSH_STORE_KEY, update_check.PANEL_STORE_KEY):
         await Store(hass, STORAGE_VERSION, key).async_remove()
     # Heruntergeladene Icons der Meldungen; der statische Pfad bleibt bis zum
     # Neustart angemeldet, der Ordner wird bei Bedarf neu angelegt.

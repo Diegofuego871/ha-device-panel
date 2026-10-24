@@ -569,7 +569,7 @@ const SUB_TAB_KEYS = {
   devset: ["reset_connection", "reset_signal", "reset_offline", "reset_notify", "reset_battery", "reset_charge"],
   chips: ["hide_chips", "hide_connections", "connection_order", "chip_order"],
   pstart: ["start_panel"],
-  pstorage: ["protocol_max_mb", "protocol_max_entries", "log_max_mb", "log_max_entries", "availability_keep_days", "availability_max_mb", "signal_keep_days", "signal_max_mb"],
+  pstorage: ["protocol_max_mb", "protocol_max_entries", "log_max_mb", "log_max_entries", "availability_keep_days", "availability_max_mb", "signal_keep_days", "signal_max_mb", "push_keep_days", "push_max_mb"],
   pupdates: ["update_check", "update_check_time", "update_notify", "notify_service_panelupdate", "prerelease", "auto_update"],
 };
 
@@ -8785,6 +8785,7 @@ class DevicePanel extends HTMLElement {
       const mb = (x) => this._fmtMb(x?.bytes || 0);
       const n = (v) => (v || 0).toLocaleString(this._locale());
       const usedText = (x) => (x ? t("usedText", mb(x), n(x.entries)) : "");
+      const pushText = (x) => (x ? t("usedPush", mb(x), n(x.entries), n(x.days)) : "");
       const histText = (x) => (x ? t("usedHist", mb(x), n(x.devices), n(x.days)) : "");
       const meter = (x, limitMb) => {
         if (!x || !(limitMb > 0)) return "";
@@ -8803,7 +8804,7 @@ class DevicePanel extends HTMLElement {
       const parts = u
         ? [
             ["l1", t("stoLegHist"), (u.availability?.bytes || 0) + (u.signal?.bytes || 0)],
-            ["l2", t("stoLegProto"), u.protocol?.bytes || 0],
+            ["l2", t("stoLegProto"), (u.protocol?.bytes || 0) + (u.push?.bytes || 0)],
             ["l3", t("stoLegLog"), u.log?.bytes || 0],
             ["l4", t("stoLegStates"), other.states || 0],
             ["l5", t("stoLegOther"), (other.ai || 0) + (other.config || 0)],
@@ -8827,6 +8828,9 @@ class DevicePanel extends HTMLElement {
         row("signal_keep_days", t("optSignalDays"), num("signal_keep_days", t("unitDays"), t("optSignalDays")), t("optSignalDaysShort", histText(u?.signal)), null) +
         withMeter(row("signal_max_mb", t("optSignalMb"), num("signal_max_mb", t("unitMb"), t("optSignalMb")), t("optSignalMbShort", mb(u?.signal)), null), u?.signal, "signal_max_mb") +
         `<div class="opt-short sto-batt">${escape(t("stoBattery"))}</div>` +
+        ttl("ttlStoPush") + `<div class="opt-short bk-note">${escape(t("stoPushNote"))}</div>` +
+        row("push_keep_days", t("optPushDays"), num("push_keep_days", t("unitDays"), t("optPushDays")), t("optPushDaysShort", pushText(u?.push)), null) +
+        withMeter(row("push_max_mb", t("optPushMb"), num("push_max_mb", t("unitMb"), t("optPushMb")), t("optPushMbShort", mb(u?.push)), null), u?.push, "push_max_mb") +
         ttl("ttlLogs") + `<div class="opt-short bk-note">${escape(t("logsNote"))}</div>` +
         withMeter(row("protocol_max_mb", t("optProtoMb"), num("protocol_max_mb", t("unitMb"), t("optProtoMb")), t("optProtoMbShort", usedText(u?.protocol)), null), u?.protocol, "protocol_max_mb") +
         row("protocol_max_entries", t("optProtoEntries"), num("protocol_max_entries", t("unitEntries"), t("optProtoEntries")), t("optProtoEntriesShort", u?.protocol?.max_item || 0), null) +
@@ -9595,7 +9599,7 @@ class DevicePanel extends HTMLElement {
     if (Number.isInteger(d.protocol_max_mb) && Number.isInteger(d.protocol_max_entries) && (u.protocol.bytes > d.protocol_max_mb * MB || u.protocol.max_item > d.protocol_max_entries)) cuts.push(this._t("cutProto"));
     if (Number.isInteger(d.log_max_mb) && Number.isInteger(d.log_max_entries) && (u.log.bytes > d.log_max_mb * MB || u.log.entries > d.log_max_entries)) cuts.push(this._t("cutLog"));
     // Verläufe: Tage (ältestes Ereignis) und MB
-    const hist = [["availability", "cutAvail"], ["signal", "cutSignal"]];
+    const hist = [["availability", "cutAvail"], ["signal", "cutSignal"], ["push", "cutPush"]];
     for (const [k, label] of hist) {
       const x = u[k];
       if (x && ((Number.isInteger(d[`${k}_max_mb`]) && x.bytes > d[`${k}_max_mb`] * MB) || (Number.isInteger(d[`${k}_keep_days`]) && x.days > d[`${k}_keep_days`]))) cuts.push(this._t(label));

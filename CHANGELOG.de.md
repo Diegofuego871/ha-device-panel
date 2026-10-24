@@ -7,6 +7,22 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.124.0] - 2026-10-24
+
+Gesendete Meldungen haben einen eigenen Speicher mit eigener Aufbewahrung, und die Zusammenfassung nach der Ruhezeit erscheint bei jedem Gerät, das sie nennt. Enthält die Änderungen von 2.123.0.
+
+### Hinzugefügt
+
+- **Eigener Speicher für gesendete Meldungen** (Einstellungen › Panel › Speicher, neues Kapitel "Gesendete Meldungen"): **Aufbewahrung in Tagen** (7 bis 365, Standard 1 Jahr) und **Grenze in MB** (1 bis 200, Standard 10 MB), mit der belegten Grösse. Bisher lagen die Meldungen im Panel-Log, das für alles zusammen nur eine begrenzte Zahl Einträge behält; häufige Einträge verdrängten die Meldungen. Jetzt bleiben sie so lange, wie du einstellst. Eine tiefere Grenze kürzt beim Speichern sofort, nach der gewohnten Rückfrage. Der Gesamtbalken zählt sie zu den Protokollen.
+- Die Meldungen aus Version 2.123.0, die noch im Panel-Log stehen, werden einmalig in den neuen Speicher übernommen.
+
+### Geändert
+
+- **Zusammenfassung nach der Ruhezeit:** die Meldung, die zurückgehaltene Meldungen zustellt, kommt jetzt bei jedem Gerät der zurückgehaltenen Meldungen ins Protokoll (vorher gehörte sie keinem Gerät). Im Modus "einzeln" behalten die zugestellten Meldungen ihr Gerät und ihre Art, so sind sie wieder mit ihrem Eintrag im Protokoll verbunden.
+- Das Panel-Log behält nur eine Zeile je Meldung ("gesendet: Titel"); Titel, Text und Ziel stehen im Protokoll des Geräts.
+- Der WebSocket-Befehl `storage_usage` liefert `push` (Byte, Einträge, Geräte, Tage); neue Optionen `push_keep_days` und `push_max_mb`. Die Datei `device_panel.push_log` wird mit der Integration entfernt.
+- **README:** das Kapitel "Gesendete Meldungen" ist unter "Speicher" beschrieben.
+
 ## [2.123.0] - 2026-10-24
 
 Im Protokoll eines Geräts zeigt ein Tipp auf einen Eintrag die gesendete Meldung: an wen sie ging und was sie sagte.
@@ -24,6 +40,8 @@ Im Protokoll eines Geräts zeigt ein Tipp auf einen Eintrag die gesendete Meldun
 ### Behoben
 
 - **Integration liess sich nicht einrichten (seit 2.122.0):** bei einem Gerät, dessen Kennung mehr als zwei Teile hat (zum Beispiel ein Shelly-Gerät), brach die Einrichtung mit "too many values to unpack (expected 2, got 3)" ab, das Panel startete nicht. Das Dienst-Gerät der Integration wird jetzt nur am ersten Teil der Kennung erkannt; die Kennungen im Detail eines Geräts werden genauso gelesen.
+
+Nicht veröffentlicht; enthalten in 2.124.0.
 
 ## [2.122.0] - 2026-10-24
 
@@ -4556,7 +4574,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.123.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.123.0
+[2.124.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.124.0
 [2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0
 [2.120.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.120.0
 [2.119.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.119.0

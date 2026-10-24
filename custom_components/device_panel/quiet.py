@@ -218,7 +218,7 @@ class QuietManager:
                 else:
                     plain.append(item)
             for item in sorted([*plain, *last.values()], key=lambda i: i["at"]):
-                await _push().async_push(hass, item["target"], item["title"], item["message"], item["data"] or None, devices=item.get("devices") or None)
+                await _push().async_push(hass, item["target"], item["title"], item["message"], item["data"] or None, devices=item.get("devices") or None, log_topic=item.get("topic"))
             return
         by_target: dict[str, list[dict[str, Any]]] = {}
         for item in items:
@@ -226,7 +226,9 @@ class QuietManager:
         for target, group in by_target.items():
             title, message = build_summary(hass, group)
             data = _push().notification_data(hass, f"{DOMAIN}_quiet", _push().panel_url())
-            await _push().async_push(hass, target, title, message, data)
+            # Die Zusammenfassung gehört zu allen Geräten der zurückgehaltenen Meldungen (Meldungsprotokoll, seit 2.124.0)
+            devices = list(dict.fromkeys(d for item in group for d in item.get("devices") or []))
+            await _push().async_push(hass, target, title, message, data, devices=devices or None, log_topic="quiet")
         activity.record(hass, "info", "push", "quiet_released", "Device Panel", count=len(items))
 
 

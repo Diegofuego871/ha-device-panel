@@ -3,7 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.123.0, Meldung im Protokoll eines Geräts; davor 2.122.0 eigene Entitäten)
+## Stand (2.124.0, Meldungsprotokoll mit eigener Aufbewahrung; davor 2.123.0 Meldungen im Protokoll eines Geräts)
+
+- Meldungsprotokoll (2.124.0): `push_log.py` (`PushLog`, Datei `device_panel.push_log`, Optionen `push_keep_days` 7-365 Std. 365 und `push_max_mb` 1-200 Std. 10; Eintrag {at, devs, p{title, body, target, topic, res}}; Grenzen stündlich und bei `apply_limits`; einmalige Übernahme aus dem Panel-Log in `_from_activity`). `push._journal` schreibt die Zeile ins Panel-Log (ohne Inhalt) und, mit Geräten, in `hass.data[DATA_PUSHLOG]`; `devicelog._push_entries` liefert daraus die Zeilen (Kategorie "push", eine je Gerät); `_event_entries` überspringt "push". Ruhezeit: `quiet._deliver` reicht die Geräte (Zusammenfassung: alle Geräte, Thema "quiet"; einzeln: Geräte und `log_topic`). Panel: Kapitel "Gesendete Meldungen" im Reiter Speicher (`storageChapter`, `pushText`, Rückfrage `cutPush` in `_protocolCuts`, Balken zählt zu "Protokolle"); Tests `test_pushlog.py`, Suite `protocollimits`.
+- Davor (2.123.0, Fehler 2.122.0): Dienst-Gerät wird am ersten Teil der Kennung erkannt (Shelly hat dreiteilige Kennungen). 2.123.0 ist ohne Tag, im CHANGELOG "Nicht veröffentlicht; enthalten in 2.124.0".
 
 - Gesendete Meldungen im Geräteprotokoll (2.123.0): `push.async_push(..., devices=[...])` schreibt über `_journal` einen Eintrag der Kategorie "push" mit `push` {title, body (600), target, topic, res sent/held/failed/missing}, `code` und bei Sammelmeldungen `device_ids` (`activity.record(..., extra=...)`; `_restore_extras` behält sie über Neustarts). Aufrufer mit Geräten: outage (einzeln und Gruppe), battery, charge (2), newdevice (2); quiet.hold merkt `devices` und protokolliert "held". `devicelog._link_pushes` hängt an Einträge mit Code `*_sent` die Meldung desselben Geräts und Themas (PUSH_CATS) bis 15 Min. danach (Feld `push`); Panel: `protocol.js` `allRow`/`pushHtml` (aufklappbar wie Magic Push), Texte `prPushTo`, `prPushRes_*`. Tests: `tests/test_pushlog.py`, Suite `devicelog`.
 - 2.122.0 ist getaggt (Commit 22d2a9b); 2.123.0 baut darauf auf.

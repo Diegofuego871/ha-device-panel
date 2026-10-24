@@ -7,6 +7,22 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.124.0] - 2026-10-24
+
+Sent notifications get their own storage with their own retention, and the summary after quiet time shows up for every device it names. Includes the changes from 2.123.0.
+
+### Added
+
+- **Own storage for sent notifications** (Settings › Panel › Storage, new chapter "Sent notifications"): **retention in days** (7 to 365, default 1 year) and a **limit in MB** (1 to 200, default 10 MB), with the used size. Before, the notifications lived in the panel log, which keeps a limited number of entries for everything together; frequent entries pushed the notifications out. Now they stay as long as you set. A lower limit cuts at once when you save, after the usual question. The total bar counts them with the logs.
+- The notifications of version 2.123.0 still in the panel log are taken over once into the new storage.
+
+### Changed
+
+- **Summary after quiet time:** the notification that delivers the held messages is now logged for every device of the held messages (before it belonged to no device). In the mode "one by one" the delivered messages keep their device and kind, so they are linked to their entry in the history again.
+- The panel log keeps only a line per notification ("sent: title"); title, text and target are in the history of the device.
+- The WebSocket command `storage_usage` returns `push` (bytes, entries, devices, days); new options `push_keep_days` and `push_max_mb`. The file `device_panel.push_log` is removed with the integration.
+- **README:** the chapter "Sent notifications" is described under "Storage".
+
 ## [2.123.0] - 2026-10-24
 
 In the history of a device a tap on an entry shows the push that was sent: to whom and what it said.
@@ -24,6 +40,8 @@ In the history of a device a tap on an entry shows the push that was sent: to wh
 ### Fixed
 
 - **Integration failed to set up (introduced in 2.122.0):** with a device whose identifier has more than two parts (for example a Shelly device) the setup stopped with "too many values to unpack (expected 2, got 3)", so the panel did not start. The service device of the integration is now recognised by the first part of the identifier only; the identifiers in the detail of a device are read the same way.
+
+Not released; included in 2.124.0.
 
 ## [2.122.0] - 2026-10-24
 
@@ -4455,7 +4473,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.123.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.123.0
+[2.124.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.124.0
 [2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0
 [2.120.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.120.0
 [2.119.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.119.0

@@ -16,7 +16,7 @@ from homeassistant.exceptions import ServiceValidationError
 
 from . import activity
 from .options_api import emoji_for
-from .const import CLICK_DEVICE, DATA_PUSH_IMAGE, DATA_QUIET, MUTE_ACTION_PREFIX, NOTIFY_NONE, PANEL_URL_PATH
+from .const import CLICK_DEVICE, DATA_PUSH_IMAGE, DATA_PUSHLOG, DATA_QUIET, MUTE_ACTION_PREFIX, NOTIFY_NONE, PANEL_URL_PATH
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -429,22 +429,16 @@ async def async_live_clear(hass: HomeAssistant, target: str, tag: str) -> bool:
     return True
 
 
-PUSH_BODY_MAX = 600
-PUSH_DEVICES_MAX = 50
-
-
 def _journal(
     hass: HomeAssistant, severity: str, code: str, target: str, title: str, message: str, topic: str | None, devices: list[str] | None, res: str
 ) -> None:
     """
-    Protokolleintrag zu einer Meldung (seit 2.122.0): was an wen ging und mit welchem Ergebnis ("sent", "held", "failed", "missing"), mit den Geräten,
-    damit das Geräteprotokoll die Meldung zeigen kann. Der Text wird gekürzt, das Protokoll ist kein Archiv.
+    Zeile im Panel-Log zu einer Meldung und, mit Geräten, der Eintrag im Meldungsprotokoll (seit 2.124.0 mit eigener Aufbewahrung, push_log.py):
+    was an wen ging und mit welchem Ergebnis ("sent", "held", "failed", "missing"). Das Geräteprotokoll liest die Meldungen von dort.
     """
-    ids = [d for d in (devices or []) if isinstance(d, str)][:PUSH_DEVICES_MAX]
-    extra: dict[str, Any] = {"push": {"title": title[:200], "body": message[:PUSH_BODY_MAX], "target": target, "topic": topic or "", "res": res}}
-    if len(ids) > 1:
-        extra["device_ids"] = ids
-    activity.record(hass, severity, "push", code, target, ids[0] if ids else None, extra=extra, title=title)
+    activity.record(hass, severity, "push", code, target, title=title)
+    if devices and (log := hass.data.get(DATA_PUSHLOG)) is not None:
+        log.add(devices, title, message, target, topic or "", res)
 
 
 async def async_push(
@@ -457,6 +451,7 @@ async def async_push(
     quiet: dict[str, Any] | None = None,
     outcome: dict[str, Any] | None = None,
     devices: list[str] | None = None,
+    log_topic: str | None = None,
 ) -> bool:
     """
     Sendet an einen notify-Dienst oder eine notify-Entität; True, wenn
@@ -486,7 +481,7 @@ async def async_push(
             for attempt in (1, 2):
                 try:
                     await hass.services.async_call("notify", object_id, {**plain, "data": data}, blocking=True)
-                    _journal(hass, "info", "push_sent", target, title, message, topic, devices, "sent")
+                    _journal(hass, "info", "push_sent", target, title, message, topic or log_topic, devices, "sent")
                     outcome["sent"] = True
                     return True
                 except _REJECTED as err:
@@ -501,26 +496,26 @@ async def async_push(
                         activity.record(hass, "debug", "push", "push_extra", target)
         try:
             await hass.services.async_call("notify", object_id, plain, blocking=True)
-            _journal(hass, "info", "push_sent", target, title, message, topic, devices, "sent")
+            _journal(hass, "info", "push_sent", target, title, message, topic or log_topic, devices, "sent")
             outcome["sent"] = True
             return True
         except Exception as err:  # noqa: BLE001
             _LOGGER.exception("Push an '%s' fehlgeschlagen", target)
-            _journal(hass, "error", "push_failed", target, title, message, topic, devices, "failed")
+            _journal(hass, "error", "push_failed", target, title, message, topic or log_topic, devices, "failed")
             outcome["err"] = str(err) or type(err).__name__
             return False
     if hass.states.get(target) is not None and hass.services.has_service("notify", "send_message"):
         # notify-Entität: send_message kennt nur Titel und Text.
         try:
             await hass.services.async_call("notify", "send_message", {**plain, "entity_id": target}, blocking=True)
-            _journal(hass, "info", "push_sent", target, title, message, topic, devices, "sent")
+            _journal(hass, "info", "push_sent", target, title, message, topic or log_topic, devices, "sent")
             outcome["sent"] = True
             return True
         except Exception as err:  # noqa: BLE001
             _LOGGER.exception("Push an '%s' fehlgeschlagen", target)
-            _journal(hass, "error", "push_failed", target, title, message, topic, devices, "failed")
+            _journal(hass, "error", "push_failed", target, title, message, topic or log_topic, devices, "failed")
             outcome["err"] = str(err) or type(err).__name__
             return False
-    _journal(hass, "error", "push_missing", target, title, message, topic, devices, "missing")
+    _journal(hass, "error", "push_missing", target, title, message, topic or log_topic, devices, "missing")
     outcome["err"] = "missing"
     return False
