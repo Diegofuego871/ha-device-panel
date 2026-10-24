@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.133.0] - 2026-10-24
+
+Das Umbenennen eines Geräts öffnet am Handy ein eigenes Fenster.
+
+### Geändert
+
+- **Gerät umbenennen am Handy:** der Stift neben dem Namen öffnet jetzt ein kleines Fenster oben mit einem grossen Feld (die Tastatur verdeckt es nicht), dem Originalnamen mit "Zurücksetzen" und den Knöpfen "Abbrechen" und "Name speichern". Enter speichert, Escape oder das Kreuz bricht ab. Bisher sass das Feld im Kopf des Popups zwischen den runden Knöpfen und war zu klein. Am Desktop ändert sich nichts: das Feld bleibt im Kopf.
+
 ## [2.132.0] - 2026-10-24
 
 Die Einstellungen sagen jetzt, warum Geräte einer gezeigten Integration fehlen. Enthält die Änderungen von 2.130.0 und 2.131.0.
@@ -4677,6 +4685,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.133.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.133.0
 [2.132.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.132.0
 [2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0
 [2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0

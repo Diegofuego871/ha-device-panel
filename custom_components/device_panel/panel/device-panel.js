@@ -1434,7 +1434,7 @@ class DevicePanel extends HTMLElement {
       </div>
       <div class="area-pop" role="dialog" aria-label="${escape(this._t("areaTitle"))}" hidden></div>
       <div class="content"><div class="hstrip"></div><div class="hero"></div><div class="chips"></div><div class="viewline"></div><div class="list"></div><div class="foot"></div></div>
-      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="discard-dlg"></dialog>
+      <dialog class="device"></dialog><dialog class="magic-dlg"></dialog><dialog class="magic-dlg routine-dlg"></dialog><dialog class="stat-dlg"></dialog><dialog class="settings"></dialog><dialog class="area-sheet"></dialog><dialog class="pulse-dlg"></dialog><dialog class="log-dlg proto-dlg"></dialog><dialog class="apps-dlg"></dialog><dialog class="app-dlg"></dialog><dialog class="rtall-dlg"></dialog><dialog class="mgall-dlg"></dialog><dialog class="status-dlg"></dialog><dialog class="prompt-dlg"></dialog><dialog class="notes-dlg"></dialog><dialog class="notes-dlg backup-dlg"></dialog><dialog class="rename-dlg"></dialog><dialog class="discard-dlg"></dialog>
       <div class="toast" role="status" aria-live="polite" hidden></div>`;
     const root = this.shadowRoot;
     this._apps.bind(root);
@@ -1467,6 +1467,7 @@ class DevicePanel extends HTMLElement {
     });
     this._bindSettings(root.querySelector("dialog.settings"));
     this._bindDiscard(root.querySelector("dialog.discard-dlg"));
+    this._bindRename(root.querySelector("dialog.rename-dlg"));
     const search = root.querySelector(".search");
     const clear = root.querySelector(".search-clear");
     search.addEventListener("input", () => {
@@ -3959,6 +3960,7 @@ class DevicePanel extends HTMLElement {
     this._devSaved = false;
     this._devSaving = false;
     this._rename = null;
+    this._closeRenameSheet();
     this._hideError = null;
     this._connError = null;
     this._devSetError = null;
@@ -5683,7 +5685,8 @@ class DevicePanel extends HTMLElement {
   _nameHtml(d) {
     const t = (k, ...a) => this._t(k, ...a);
     const r = this._rename;
-    if (!r) {
+    // Am Handy läuft das Umbenennen in einem eigenen Fenster (r.sheet, seit 2.133.0): im Kopf bleibt der Name stehen
+    if (!r || r.sheet) {
       return `<h2><span>${escape(d.name)}</span><button type="button" class="dn-edit" data-dlg="rename" title="${escape(t("renameDevice"))}" aria-label="${escape(t("renameDevice"))}">${mdi("pencil", 16)}</button></h2>`;
     }
     const orig = d.name_original && d.name_custom ? `<div class="dn-orig">${escape(t("renameOriginal", d.name_original))} <button type="button" class="linkbtn" data-dlg="rename-reset"${r.busy ? " disabled" : ""}>${escape(t("renameReset"))}</button></div>` : "";
@@ -5697,18 +5700,79 @@ class DevicePanel extends HTMLElement {
   _renameStart() {
     const d = this._devices.find((x) => x.id === this._detailId);
     if (!d) return;
-    this._rename = { value: d.name, error: null, busy: false };
+    // Am Handy ein eigenes Fenster: im Kopf des Popups bliebe neben den runden Knöpfen kaum Platz für das Feld (seit 2.133.0)
+    const sheet = Boolean(this._narrowQuery?.matches);
+    this._rename = { value: d.name, error: null, busy: false, sheet };
     this._devForce = true;
     this._renderDevice();
-    const input = this.shadowRoot.querySelector('input[data-dlg="rename-input"]');
+    if (sheet) this._renderRenameSheet();
+    const input = this.shadowRoot.querySelector(sheet ? 'dialog.rename-dlg input[data-dlg="rename-input"]' : 'dialog.device input[data-dlg="rename-input"]');
     input?.focus();
     input?.select();
   }
 
   _renameCancel() {
     this._rename = null;
+    this._closeRenameSheet();
     this._devForce = true;
     this._renderDevice();
+  }
+
+  _closeRenameSheet() {
+    const dlg = this.shadowRoot.querySelector("dialog.rename-dlg");
+    if (dlg?.open) dlg.close();
+  }
+
+  // Fenster zum Umbenennen (Handy): Titel, grosses Feld, Originalname mit "Zurücksetzen", Abbrechen und Speichern
+  _renderRenameSheet() {
+    const dlg = this.shadowRoot.querySelector("dialog.rename-dlg");
+    const r = this._rename;
+    const d = this._devices.find((x) => x.id === this._detailId);
+    if (!dlg || !r?.sheet || !d) return;
+    const t = (k, ...a) => this._t(k, ...a);
+    const typing = this.shadowRoot.activeElement?.dataset?.dlg === "rename-input";
+    const orig = d.name_original && d.name_custom ? `<div class="dn-orig">${escape(t("renameOriginal", d.name_original))} <button type="button" class="linkbtn" data-rn="reset"${r.busy ? " disabled" : ""}>${escape(t("renameReset"))}</button></div>` : "";
+    const html = `<div class="dlg-head"><span class="dlg-avatar">${mdi("pencil", 28)}</span>
+        <div class="dlg-title"><h2>${escape(t("renameDevice"))}</h2><div class="dlg-sub">${escape(d.name)}</div></div>
+        <button type="button" class="dlg-close" data-rn="cancel" title="${escape(t("close"))}" aria-label="${escape(t("close"))}">${mdi("close", 18)}</button></div>
+      <div class="dlg-body"><input type="text" class="rn-input" data-dlg="rename-input" maxlength="255" value="${escape(r.value)}" aria-label="${escape(t("renameDevice"))}"${r.busy ? " disabled" : ""}>${orig}${
+        r.error ? `<div class="opt-error">${escape(t("renameError"))} ${escape(r.error)}</div>` : ""
+      }</div>
+      <div class="dlg-actions"><button type="button" class="dlg-btn" data-rn="cancel">${mdi("close", 18)}${escape(t("settingsCancel"))}</button>
+        <button type="button" class="dlg-btn primary" data-rn="save"${r.busy ? " disabled" : ""}>${mdi("check", 18)}${escape(t("renameSave"))}</button></div>`;
+    // Beim Tippen nicht neu aufbauen (Fokus und Tastatur blieben sonst nicht stehen)
+    if (!(typing && dlg.open && !r.error && !r.busy)) dlg.innerHTML = html;
+    if (!dlg.open) {
+      if (typeof dlg.showModal === "function") dlg.showModal();
+      else dlg.setAttribute("open", "");
+    }
+  }
+
+  _bindRename(dlg) {
+    if (!dlg) return;
+    dlg.addEventListener("input", (ev) => {
+      if (this._rename && ev.target.matches?.('input[data-dlg="rename-input"]')) this._rename.value = ev.target.value;
+    });
+    dlg.addEventListener("keydown", (ev) => {
+      if (ev.target.matches?.('input[data-dlg="rename-input"]') && ev.key === "Enter" && !ev.isComposing) {
+        ev.preventDefault();
+        this._renameSave(ev.target.value);
+      }
+    });
+    dlg.addEventListener("click", (ev) => {
+      if (ev.target === dlg) return;
+      const btn = ev.target.closest("[data-rn]");
+      if (!btn || btn.disabled) return;
+      if (btn.dataset.rn === "cancel") this._renameCancel();
+      else if (btn.dataset.rn === "save") this._renameSave(dlg.querySelector('input[data-dlg="rename-input"]')?.value ?? "");
+      else if (btn.dataset.rn === "reset") this._renameSave("");
+    });
+    // Escape: nur das Umbenennen verwerfen, das Popup bleibt offen
+    dlg.addEventListener("cancel", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      this._renameCancel();
+    });
   }
 
   // In Home Assistant umbenennen (name_by_user); leer = Name der Integration.
@@ -5722,16 +5786,19 @@ class DevicePanel extends HTMLElement {
     this._rename = { ...this._rename, value: name, busy: true, error: null };
     this._devForce = true;
     this._renderDevice();
+    this._renderRenameSheet();
     try {
       const res = await this._hass.callWS({ type: "device_panel/rename_device", device_id: id, name });
       d.name = res.name;
       d.name_custom = res.name_custom;
       this._rename = null;
+      this._closeRenameSheet();
     } catch (err) {
       this._rename = { ...this._rename, busy: false, error: errText(err) };
     }
     this._devForce = true;
     this._renderDevice();
+    this._renderRenameSheet();
     this._render();
     this._fetch(true);
   }

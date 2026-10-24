@@ -485,6 +485,14 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .dn-btn { flex: none; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid var(--dp-divider); border-radius: 50%; background: transparent; color: var(--dp-text2); cursor: pointer; }
 .dn-btn.ok { border-color: var(--dp-primary); background: var(--dp-primary); color: #fff; }
 .dn-btn:disabled, .dn-input:disabled { opacity: .55; cursor: default; }
+/* Umbenennen am Handy (seit 2.133.0): eigenes Fenster oben, damit die Tastatur das Feld nicht verdeckt */
+dialog.rename-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); width: min(480px, calc(100vw - 32px)); max-height: calc(100% - 48px); overflow: auto; clip-path: inset(0 round 22px); }
+dialog.rename-dlg::backdrop { background: rgba(0,0,0,0.5); }
+dialog.rename-dlg[open] { display: flex; flex-direction: column; margin: 0 auto auto; margin-top: calc(24px + env(safe-area-inset-top, 0px)); }
+dialog.rename-dlg .dlg-body { padding: 4px 22px 8px; }
+.rn-input { display: block; width: 100%; box-sizing: border-box; height: 52px; padding: 0 14px; border: 2px solid var(--dp-primary); border-radius: 14px; background: var(--dp-bg); color: var(--dp-text); font: inherit; font-size: 18px; }
+.rn-input:disabled { opacity: .55; }
+dialog.rename-dlg .dn-orig { margin: 10px 2px 4px; font-size: 14px; }
 .dn-orig { margin: 0 0 6px; color: var(--dp-text2); font-size: 12.5px; }
 .dlg-title h2 { margin: 2px 0 6px; font-size: 21px; font-weight: 500; overflow-wrap: anywhere; }
 .dlg-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; color: var(--dp-text2); font-size: 13px; }

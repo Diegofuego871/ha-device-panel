@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.133.0] - 2026-10-24
+
+Renaming a device opens its own window on a phone.
+
+### Changed
+
+- **Rename device on a phone:** the pencil next to the name now opens a small window at the top with a large field (the keyboard no longer covers it), the original name with "Reset", and the buttons "Cancel" and "Save name". Enter saves, Escape or the cross cancels. Before, the field sat in the header of the pop-up between the round buttons and was too small. On a desktop nothing changes: the field stays in the header.
+
 ## [2.132.0] - 2026-10-24
 
 The settings now say why devices of a shown integration are missing. Includes the changes from 2.130.0 and 2.131.0.
@@ -4576,6 +4584,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.133.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.133.0
 [2.132.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.132.0
 [2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0
 [2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0

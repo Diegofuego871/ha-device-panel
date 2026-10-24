@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.133.0, Umbenennen am Handy im eigenen Fenster)
+
+- 2.133.0: `_renameStart` setzt `_rename.sheet` bei schmaler Ansicht (`_narrowQuery`); `_renderRenameSheet`/`_bindRename`/`_closeRenameSheet` in `device-panel.js`, `dialog.rename-dlg` (Felder `.rn-input`, Knöpfe `data-rn="save|cancel|reset"`), `_nameHtml` zeigt dann den normalen Namen. Desktop unverändert (`.dn-form`). Test: Suite `rename` (am Handy eigenes Fenster, Feld mind. 48 px hoch und in der oberen Hälfte).
+
 ## Stand (2.132.0, Grund für fehlende Geräte in den Einstellungen)
 
 - 2.132.0: `devices.async_catalog` liefert je Integration `hidden_by_type` ({Typ: Zahl}) und `hidden_by_device` (nur Geräte gezeigter Integrationen); `device-panel.js` hängt es an `sub` der Liste "Integrationen" (Texte `hiddenByType`, `hiddenByDevice`). Anlass: Apple TV (Typ "Medien" ausgeblendet) fehlte in der Liste, die Einstellungen sagten "3 Geräte". Tests: `test_availability.py::test_catalog_says_why_devices_are_hidden`, Suite `typeinteg`. Nicht gebaut: derselbe Hinweis in der Typen-Liste.
