@@ -50,7 +50,9 @@ Die Suche läuft über alle Spalten. Filter-Chips grenzen die Liste ein: Warnung
 
 Der Knopf "Ansicht" (Handy: die Zeile "Sortierung & Ansicht") öffnet einen Dialog mit zwei Reitern. "Spalten" (Handy: "Sortierung"): Spalten mit dem Auge ein- oder ausblenden, per Ziehen in jede Reihenfolge bringen, die Liste gruppieren oder als eine Liste zeigen; das gilt pro Benutzer, für Desktop und Handy getrennt. "Filter-Chips" (nur Administratoren): Chips ausblenden, umordnen und anheften, das gilt für alle Benutzer. Änderungen zeigt die Liste gleich, übernommen werden sie erst mit "Speichern"; beim Schliessen fragt das Panel "Änderungen verwerfen?". Ein Herz markiert Favoriten (eigener Chip), und in den Einstellungen unter "Panel" › "Allgemein" machst du das Panel zu deiner eigenen Startseite in Home Assistant (Browser und Companion-App).
 
-<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/columns.png" alt="Dialog Ansicht mit den Reitern Spalten und Filter-Chips, Auge und Griff" width="560"></p>
+| Desktop | Handy |
+|---|---|
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/columns.png" alt="Dialog Ansicht mit den Reitern Spalten und Filter-Chips, Auge und Ziehgriff"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/de/columns-mobile.png" alt="Dialog Ansicht am Handy mit den Reitern Sortierung und Filter-Chips"> |
 
 ## Alles zu einem Gerät
 

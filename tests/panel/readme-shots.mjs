@@ -324,7 +324,8 @@ for (const lang of langs) {
     });
     await step("columns", async () => {
       // Seit 2.87.0: Dialog "Ansicht" (Reiter Spalten bzw. Sortierung) in den Einstellungen im Ansichtsmodus
-      await tap(".view-btn");
+      // Am Handy gibt es den Knopf der Werkzeugleiste nicht, dort öffnet die Zeile "Sortierung & Ansicht" den Dialog
+      await tap(mobile ? "[data-view-open]" : ".view-btn");
       await wait(`return r.querySelector("dialog.settings")?.open`);
       // Die Reiter ("Spalten", "Filter-Chips") erscheinen, sobald die Optionen geladen sind
       await wait(`return r.querySelectorAll('dialog.settings [data-set="vtab"]').length >= 2`);

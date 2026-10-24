@@ -19,7 +19,7 @@ Der Empfang im Protokoll eines Geräts: ein Eintrag, wenn ein Gerät schwach wir
 ### Geändert
 
 - Der Hinweis unter der Liste im Protokoll-Fenster sagt nicht mehr, dass der Empfang fehlt.
-- **README:** alle Printscreens sind mit der aktuellen Version neu aufgenommen (Zeiträume bis 12 Monate, neuer Knopf "Protokoll", neuer Reiter "Speicher"). Neue Bilder: das Protokoll eines Geräts (Liste nach Tagen und die Auswertung von Magic Push) und der Reiter "Speicher" in den Einstellungen; ein neuer Abschnitt "Protokoll eines Geräts" beschreibt sie.
+- **README:** alle Printscreens sind mit der aktuellen Version neu aufgenommen (Zeiträume bis 12 Monate, neuer Knopf "Protokoll", neuer Reiter "Speicher"). Neue Bilder: das Protokoll eines Geräts (Liste nach Tagen und die Auswertung von Magic Push) der Reiter "Speicher" in den Einstellungen und der Dialog "Ansicht" am Handy; ein neuer Abschnitt "Protokoll eines Geräts" beschreibt sie.
 
 ## [2.119.0] - 2026-10-24
 

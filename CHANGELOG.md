@@ -19,7 +19,7 @@ Reception in the history of a device: an entry when a device turns weak and when
 ### Changed
 
 - The note under the list in the history window no longer says that reception is missing.
-- **README:** all screenshots were taken again with the current version (periods up to 12 months, new button "History", new tab "Storage"). New pictures: the history of a device (list by day and the evaluation of Magic Push) and the tab "Storage" in the settings; a new section "History of a device" describes them.
+- **README:** all screenshots were taken again with the current version (periods up to 12 months, new button "History", new tab "Storage"). New pictures: the history of a device (list by day and the evaluation of Magic Push) the tab "Storage" in the settings and the dialog "View" on the phone; a new section "History of a device" describes them.
 
 ## [2.119.0] - 2026-10-24
 

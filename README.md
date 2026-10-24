@@ -50,7 +50,9 @@ Search runs over all columns. Filter chips narrow the list: warnings, offline, b
 
 The button "View" (phone: the row "Sorting & view") opens a dialog with two tabs. "Columns" (phone: "Sorting"): show or hide columns with the eye, drag them into any order, group the list or show it as one list; this applies per user, separately for desktop and phone. "Filter chips" (administrators only): hide, reorder and pin chips; this applies to all users. The list shows changes at once, but they only take effect with "Save"; on closing, the panel asks "Discard changes?". A heart marks favorites (own chip), and in the settings under "Panel" › "General" you can make the panel your own start page in Home Assistant (browser and Companion app).
 
-<p align="center"><img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/columns.png" alt="Dialog View with the tabs Columns and Filter chips, eye and drag handle" width="560"></p>
+| Desktop | Phone |
+|---|---|
+| <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/columns.png" alt="Dialog View with the tabs Columns and Filter chips, eye and drag handle"> | <img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/docs/screenshots/en/columns-mobile.png" alt="Dialog View on the phone with the tabs Sorting and Filter chips"> |
 
 ## Everything about one device
 
