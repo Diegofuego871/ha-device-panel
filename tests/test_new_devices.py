@@ -17,7 +17,8 @@ from custom_components.device_panel.const import DATA_NEW, DOMAIN, PERSISTENT_NE
 
 
 async def _setup(hass: HomeAssistant, **options: Any) -> MockConfigEntry:
-    entry = MockConfigEntry(domain=DOMAIN, title="Device Panel", options={"notify_service": "notify.handy", "notify_new": True, **options})
+    # Ohne die Status-Meldung: der Test springt mit der Uhr um Minuten, der Wächter meldete dann "Stillstand" und zählte als zweite Meldung (CI, sporadisch)
+    entry = MockConfigEntry(domain=DOMAIN, title="Device Panel", options={"notify_service": "notify.handy", "notify_new": True, "status_notify": False, **options})
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
