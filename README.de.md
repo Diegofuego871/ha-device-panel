@@ -1,6 +1,17 @@
+<img src="https://raw.githubusercontent.com/Diegofuego871/ha-device-panel/main/custom_components/device_panel/brand/icon@2x.png" alt="Device Panel" width="128" height="128">
+
 # Device Panel
 
 [English](https://github.com/Diegofuego871/ha-device-panel/blob/main/README.md)
+
+<p>
+<a href="https://hacs.xyz/"><img src="https://img.shields.io/badge/HACS-Custom-orange.svg" alt="HACS Custom"></a>
+<a href="https://github.com/Diegofuego871/ha-device-panel/releases"><img src="https://img.shields.io/github/v/release/Diegofuego871/ha-device-panel?label=Release" alt="Neuste Version"></a>
+<img src="https://img.shields.io/badge/Home%20Assistant-2024.12%2B-41BDF5.svg" alt="Home Assistant 2024.12+">
+<a href="https://github.com/Diegofuego871/ha-device-panel/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Diegofuego871/ha-device-panel?label=Lizenz" alt="Lizenz: MIT"></a>
+<a href="https://github.com/Diegofuego871/ha-device-panel/actions/workflows/tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/Diegofuego871/ha-device-panel/tests.yml?branch=main&label=Tests" alt="Tests"></a>
+<a href="https://github.com/Diegofuego871/ha-device-panel/actions/workflows/validate.yml"><img src="https://img.shields.io/github/actions/workflow/status/Diegofuego871/ha-device-panel/validate.yml?branch=main&label=HACS%20%2F%20hassfest" alt="HACS / hassfest"></a>
+</p>
 
 **Alle Geräte von Home Assistant auf einen Blick:** wer gerade ausgefallen ist, wie oft und wie lange Geräte ausfallen, wie voll die Batterien sind, wie gut der Empfang ist, und Meldungen, die du an einem Ort steuerst.
 
