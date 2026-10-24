@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.120.0] - 2026-10-24
+
+Reception in the history of a device: an entry when a device turns weak and when it is fine again.
+
+### Added
+
+- **Reception as an event:** the panel writes an entry to the log (category "Reception", with the device) when a device turns **weak** and when its reception is **fine again**, with the value and the threshold ("reception weak: -86 dBm", threshold -80 dBm). The check runs every 5 minutes with the same calculation as the list (median of the last 5 minutes, threshold of the device, integration or connection type); a change counts only after **two checks in a row**, so a value on the threshold does not write an entry every minute. The first state of a device is no event; an offline device keeps its state.
+- The entries appear in the history of the device (tab "All", chip "Reception") and in the log of the panel (filter "Reception").
+
+### Changed
+
+- The note under the list in the history window no longer says that reception is missing.
+
 ## [2.119.0] - 2026-10-24
 
 Availability and reception up to 12 months back, with the same periods as the battery.
@@ -4390,6 +4403,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.120.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.120.0
 [2.119.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.119.0
 [2.118.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.118.0
 [2.117.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.117.0

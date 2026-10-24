@@ -338,3 +338,45 @@ async def test_signal_source_smooths_list_but_log_reads_raw(hass: HomeAssistant,
     client = await hass_ws_client(hass)
     res = (await _ws(client, 1, type=f"{DOMAIN}/signal_history", device_id=dev.id))["result"]
     assert res["current"] == -74 and res["smoothed"] is True
+
+
+def test_watch_writes_weak_and_ok_events_after_two_checks(hass: HomeAssistant) -> None:
+    """2.120.0: Wechsel schwach/in Ordnung kommen ins Log (Kategorie "signal", mit Gerät), erst nach zwei gleichen Prüfungen; der erste Stand ist kein Ereignis."""
+    from custom_components.device_panel import activity
+
+    log = SignalLog(hass)
+
+    def device(value: float, **extra: Any) -> dict[str, Any]:
+        return {"id": "a", "name": "Steckdose", "online": True, "signal": {"kind": "dbm", "value": value}, **extra}
+
+    def events() -> list[dict[str, Any]]:
+        return [e for e in activity.get(hass).entries if e["cat"] == "signal"]
+
+    log.watch([device(-70)])  # erster Stand: kein Ereignis
+    log.watch([device(-85)])  # erste Abweichung: noch nicht
+    assert not events()
+    log.watch([device(-70)])  # zurück: die Abweichung verfällt
+    log.watch([device(-85)])
+    assert not events()
+    log.watch([device(-86)])  # zweite Prüfung hintereinander: Ereignis
+    assert [e["text"] for e in events()] == ["Empfang schwach: -86 dBm"] or [e["text"] for e in events()] == ["reception weak: -86 dBm"]
+    first = events()[0]
+    assert first["device_id"] == "a" and first["title"] == "Steckdose" and first["level"] == "warning" and "-80 dBm" in first["detail"]
+    log.watch([device(-86)])  # gleicher Stand: nichts Neues
+    assert len(events()) == 1
+    # ausgefallen: Stand bleibt, kein Ereignis
+    log.watch([device(-60, online=False)])
+    log.watch([device(-60, online=False)])
+    assert len(events()) == 1
+    log.watch([device(-60)])
+    log.watch([device(-60)])
+    assert len(events()) == 2 and events()[1]["level"] == "info"
+    # eigene Schwelle des Geräts und "off": Wert -85 ist bei Schwelle -90 nicht schwach, bei "off" nie
+    log.watch([device(-85, signal_setting=-90)])
+    log.watch([device(-95, signal_setting="off")])
+    assert len(events()) == 2
+    # LQI mit Standard (60 und darunter)
+    log.watch([{"id": "b", "name": "Lampe", "online": True, "signal": {"kind": "lqi", "value": 120}}])
+    log.watch([{"id": "b", "name": "Lampe", "online": True, "signal": {"kind": "lqi", "value": 55}}] * 1)
+    log.watch([{"id": "b", "name": "Lampe", "online": True, "signal": {"kind": "lqi", "value": 55}}])
+    assert len(events()) == 3 and "LQI 55" in events()[2]["text"] and "LQI 60" in events()[2]["detail"]

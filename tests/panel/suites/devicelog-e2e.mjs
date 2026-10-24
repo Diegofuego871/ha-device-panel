@@ -56,11 +56,12 @@ const entries = (now) => ({
 
 
 // Einträge von Ereignissen und Verfügbarkeit (Gerät "d"; ein Eintrag eines anderen Geräts "h")
-const devlog = (now) => [
+const devlog = (now, lang) => [
   { at: now - 3600, source: "avail", cat: "outage", dev: "d", dname: "Klimasensor Keller", k: "offline" },
   { at: now - 3000, source: "avail", cat: "outage", dev: "d", dname: "Klimasensor Keller", k: "online", dur: 600 },
   { at: now - 7200, source: "event", cat: "battery", dev: "d", dname: "Klimasensor Keller", level: "info", title: "Klimasensor Keller", text: "Batterie 14 %, unter 15 %", detail: "Warnung gesendet" },
   { at: now - 2 * DAY, source: "event", cat: "charge", dev: "d", dname: "Klimasensor Keller", level: "info", title: "Klimasensor Keller", text: "Laden begonnen", detail: "" },
+  { at: now - 4000, source: "event", cat: "signal", dev: "d", dname: "Klimasensor Keller", level: "warning", title: "Klimasensor Keller", text: lang === "de" ? "Empfang schwach: -86 dBm" : "reception weak: -86 dBm", detail: "Schwelle -80 dBm" },
   { at: now - 5400, source: "event", cat: "battery", dev: "h", dname: "Fenstersensor", level: "warning", title: "Fenstersensor", text: "Batterie 9 %", detail: "" },
 ];
 
@@ -109,7 +110,7 @@ for (const lang of ["de", "en"]) {
       [RULE("r00000000001", "d", "Keller kalt", "sensor.temp"), RULE("r00000000002", "d", "Feuchte hoch", "sensor.abs_humidity", { kind: "above", value: 10 }), RULE("r00000000003", "h", "Fenster offen", "binary_sensor.window", { kind: "is", value: "on" })],
       SEED("aaaaaaaaaaa1", "d", "Bewässerung"),
       entries(Date.now() / 1000),
-      devlog(Date.now() / 1000),
+      devlog(Date.now() / 1000, lang),
     ]);
     await ev(`r.host._copyText = async (t) => { window.__copied = t; return true; }`);
 
@@ -119,8 +120,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Schnellzeile: dritter Knopf "${T.title}" nach "Gerät in HA" und "Integration"`, await ev(`const q = [...r.querySelectorAll("dialog.device .dlg-quick .qbtn")]; const l = q.at(-1); return q.length >= 2 && l.dataset.proto === "all" && l.dataset.device === "d" && l.textContent.trim() === ${JSON.stringify(T.title)} && !!l.querySelector("svg")`));
     await tap('dialog.device .dlg-quick [data-proto="all"]');
     check(`[${tag}] Fenster öffnet auf "${T.all}", Titel "${T.title}", Unterzeile = Gerät`, await wait(`const d = r.querySelector('${P}'); const t = [...d.querySelectorAll("[data-pr-kinds] .sub-tab")]; return d.open && d.querySelector("h2").textContent === ${JSON.stringify(T.title)} && t.length === 3 && t[0].dataset.v === "all" && t[0].classList.contains("on") && d.querySelector("[data-pr-sub]").textContent === r.host._devices.find((x) => x.id === "d").name && d.querySelectorAll(".pr-item").length > 0`));
-    // 30 Tage: Ausfall 2, Batterie 1, Laden 1 (vor 2 Tagen), Magic Push 3 (zwei von Meldung 1, eine von Meldung 2), Routinen 4 (vor 1, 1, 9 und 16 Tagen); ohne Updates und ohne Neu
-    check(`[${tag}] Chips nur mit Einträgen: Alle, Ausfall, Batterie, Laden, Magic Push, Routine (kein "${T.updates}")`, (await wait(`return r.querySelectorAll('${P} [data-pr-filters] .chip').length === 6`)) && (await chips()) === "all,outage,battery,charge,magic,routine");
+    // 30 Tage: Ausfall 2, Batterie 1, Laden 1 (vor 2 Tagen), Empfang 1, Magic Push 3 (zwei von Meldung 1, eine von Meldung 2), Routinen 4 (vor 1, 1, 9 und 16 Tagen); ohne Updates und ohne Neu
+    check(`[${tag}] Chips nur mit Einträgen: Alle, Ausfall, Batterie, Laden, Empfang, Magic Push, Routine (kein "${T.updates}")`, (await wait(`return r.querySelectorAll('${P} [data-pr-filters] .chip').length === 7`)) && (await chips()) === "all,outage,battery,charge,signal,magic,routine");
     check(`[${tag}] Zahl am Chip (Ausfall 2, Batterie 1) und Gerät "h" ist nicht dabei`, await ev(`const c = (v) => r.querySelector('${P} [data-pr-filters] .chip[data-v="' + v + '"]').textContent.replace(/\\s+/g, " ").trim(); return /2$/.test(c("outage")) && /1$/.test(c("battery")) && !r.querySelector('${P} [data-pr-body]').textContent.includes("Fenstersensor")`));
     check(`[${tag}] Tage: Kopf "Heute" und "Gestern"`, await ev(`const d = [...r.querySelectorAll('${P} .lg-day')].map((x) => x.textContent.trim()); return d.length >= 3 && d[0] === r.host._t("logToday") && d.includes(r.host._t("logYesterday"))`));
     check(`[${tag}] neueste zuerst: oberste Zeile ist die Rückkehr (vor 50 Min.), "${T.outage}"-Pille`, await ev(`const row = r.querySelector('${P} .pr-item .al-row'); return !!row.querySelector(".lg-pill.outage") && row.textContent.includes("10")`));

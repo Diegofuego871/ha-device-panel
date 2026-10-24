@@ -29,13 +29,13 @@ from homeassistant.util import dt as dt_util
 from . import activity
 from .ai_prompt import DEFAULT_PROMPT, GROUP_PLACEHOLDERS, render_prompt
 from .labels import strip_address
-from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK, DATA_SIGNAL, SIGNAL_OFF, SIGNAL_WEAK_DBM, SIGNAL_WEAK_LQI
+from .const import AI_TIMEOUT, CONF_AI_ASSESSMENT, CONF_AI_PROMPT, CONF_AI_TASK, DATA_SIGNAL
 from .battery_history import async_battery_history, battery_entity
 from . import ai_memory
 from .battery_guard import get as battery_guard
 from .charge import ChargeNotifier
 from .compat import device_entry_ids
-from .devices import async_list_devices, device_battery_threshold
+from .devices import async_list_devices, device_battery_threshold, signal_limit, signal_weak  # noqa: F401 (signal_weak: von Tests und anderen gelesen)
 from .options_api import effective
 
 # Höchstens so viele andere ausgefallene Geräte der Integration in den Fakten.
@@ -74,25 +74,6 @@ class AiError(Exception):
 
 def _minutes(seconds: float | None) -> int | None:
     return None if seconds is None else int(round(seconds / 60))
-
-
-def _signal_limit(d: dict[str, Any]) -> Any:
-    """Wirksame Empfang-Warnung (seit 1.17.0): das Gerät, sonst die Integration oder der globale Wert."""
-    own = d.get("signal_setting")
-    return own if own is not None else (d.get("signal_default") or {}).get("value")
-
-
-def signal_weak(signal: dict[str, Any], setting: Any) -> bool:
-    """
-    Schwacher Empfang wie im Panel (devSigLevel): Empfang-Warnung "off" ist nie
-    schwach, eine eigene Schwelle heisst "schwach unter X", sonst der Standard.
-    """
-    value = signal["value"]
-    if setting == SIGNAL_OFF:
-        return False
-    if isinstance(setting, int) and not isinstance(setting, bool):
-        return value < setting
-    return value < SIGNAL_WEAK_DBM if signal.get("kind") == "dbm" else value <= SIGNAL_WEAK_LQI
 
 
 def _since(d: dict[str, Any]) -> float | None:
@@ -251,7 +232,7 @@ def _peer(d: dict[str, Any], now: float, names: dict[str, str], ref: float | Non
             item["went_offline_within_5_min_of_this_device"] = abs(at - ref) <= SAME_TIME_SECONDS
     if (signal := d.get("signal")) and signal.get("value") is not None:
         item["signal_value"] = signal["value"]
-        item["signal_weak"] = signal_weak(signal, _signal_limit(d))
+        item["signal_weak"] = signal_weak(signal, signal_limit(d))
     if (battery := d.get("battery")) and battery.get("level") is not None:
         item["battery_percent"] = battery["level"]
         item["battery_low"] = bool(battery.get("low"))
@@ -264,7 +245,7 @@ def _peer_rank(d: dict[str, Any]) -> tuple[Any, ...]:
     """Auffällige zuerst: ausgefallen (längste zuerst), instabil, schwacher Empfang oder Batterie, dann nach Name."""
     at = _since(d)
     sig = d.get("signal") or {}
-    weak = sig.get("value") is not None and signal_weak(sig, _signal_limit(d))
+    weak = sig.get("value") is not None and signal_weak(sig, signal_limit(d))
     low = bool((d.get("battery") or {}).get("low"))
     tier = 0 if at is not None else 1 if d.get("flaky") else 2 if weak or low else 3
     return (tier, at if at is not None else 0, d["name"].lower())
@@ -343,7 +324,7 @@ def build_facts(device: dict[str, Any], result: dict[str, Any], now: float, extr
     if (signal := device.get("signal")) and signal.get("value") is not None:
         # "weak" wie im Panel, mit der Empfang-Warnung des Geräts (seit 1.4.0):
         # Die KI braucht keine Schwellen, und ein akzeptierter Empfang zählt.
-        setting = _signal_limit(device)
+        setting = signal_limit(device)
         facts["signal"] = {"kind": signal.get("kind"), "value": signal["value"], "weak": signal_weak(signal, setting)}
         if setting is not None:
             # Vom Besitzer gesetzt: am Gerät, für die Integration oder global (seit 1.17.0).

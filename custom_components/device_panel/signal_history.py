@@ -35,11 +35,12 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
+from . import activity
 from .availability import ONLINE
 from .battery_history import STATS_FROM_DAYS, _history, _statistics, held, thin
-from .const import CONF_SIGNAL_DAYS, CONF_SIGNAL_MB, DATA_AVAILABILITY, DEFAULT_SIGNAL_DAYS, DOMAIN, STORAGE_VERSION
+from .const import CONF_SIGNAL_DAYS, CONF_SIGNAL_MB, DATA_AVAILABILITY, DEFAULT_SIGNAL_DAYS, DOMAIN, SIGNAL_WEAK_DBM, SIGNAL_WEAK_LQI, STORAGE_VERSION
 from .compat import device_entry_ids
-from .devices import ble_listeners, ble_receiver, monitored_devices, signal_sensor, signal_source
+from .devices import ble_listeners, ble_receiver, monitored_devices, signal_limit, signal_sensor, signal_source, signal_weak
 from .labels import strip_address
 from .options_api import effective
 from .storage_util import PeriodicSaver
@@ -51,6 +52,11 @@ STORAGE_KEY = f"{DOMAIN}.signal"
 RANGES = {"24h": 86400, "7d": 7 * 86400, "30d": 30 * 86400, "90d": 90 * 86400, "180d": 180 * 86400, "365d": 365 * 86400}
 DAY_SECONDS = 86400
 SAMPLE_INTERVAL = timedelta(seconds=60)
+# Ereignisse "Empfang schwach" und "wieder in Ordnung" (seit 2.120.0, Geräteprotokoll): alle 5 Minuten die Liste der Geräte prüfen (dieselbe Rechnung wie
+# das Panel: Median der letzten 5 Minuten, Schwelle des Geräts, der Integration oder der Verbindungsart); ein Wechsel zählt erst, wenn er bei zwei
+# Prüfungen hintereinander gilt (mindestens 5 Minuten), damit ein Wert an der Schwelle nicht jede Minute ein Ereignis schreibt.
+WATCH_INTERVAL = timedelta(minutes=5)
+WATCH_CONFIRM = 2
 BLOCK_SECONDS = 300
 HOUR_SECONDS = 3600
 KEEP_BLOCKS = 86400 + HOUR_SECONDS
@@ -152,6 +158,10 @@ class SignalLog:
         # Rohwerte der letzten Minuten je Gerät [(Zeit, Wert)] für die Glättung; nur im Arbeitsspeicher
         self._recent: dict[str, list[tuple[float, float]]] = {}
         self._trimmed_at = 0.0
+        # Empfang-Ereignisse: zuletzt gemeldeter Stand je Gerät (schwach ja/nein) und die Zahl gleicher abweichender Prüfungen
+        self._weak: dict[str, bool] = {}
+        self._weak_pending: dict[str, int] = {}
+        self._unsub_watch: CALLBACK_TYPE | None = None
         self._unsub_tick: CALLBACK_TYPE | None = None
         self._unsub_started: CALLBACK_TYPE | None = None
 
@@ -170,6 +180,9 @@ class SignalLog:
             self._unsub_started = self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, self._on_started)
 
     async def async_stop(self) -> None:
+        if self._unsub_watch is not None:
+            self._unsub_watch()
+            self._unsub_watch = None
         if self._unsub_tick is not None:
             self._unsub_tick()
             self._unsub_tick = None
@@ -186,10 +199,58 @@ class SignalLog:
     @callback
     def _start_ticking(self) -> None:
         self._unsub_tick = async_track_time_interval(self.hass, self._async_tick, SAMPLE_INTERVAL)
+        self._unsub_watch = async_track_time_interval(self.hass, self._async_watch, WATCH_INTERVAL)
 
     async def _async_tick(self, _now: Any) -> None:
         self.last_tick = time.time()  # Lebenszeichen für die Status-App (status.py)
         self.sample()
+
+    async def _async_watch(self, _now: Any) -> None:
+        from .devices import async_list_devices  # noqa: PLC0415
+
+        try:
+            data = await async_list_devices(self.hass, self.hass.data.get(DATA_AVAILABILITY))
+        except Exception:  # noqa: BLE001
+            _LOGGER.debug("Empfang-Ereignisse: Geräteliste nicht lesbar", exc_info=True)
+            return
+        self.watch(data.get("devices", []))
+
+    @staticmethod
+    def _sig_text(kind: str | None, value: float) -> str:
+        return f"{round(value)} dBm" if kind == "dbm" else f"LQI {round(value)}"
+
+    def watch(self, devices: list[dict[str, Any]]) -> None:
+        """
+        Wechsel zwischen "schwach" und "in Ordnung" ins Log schreiben (Kategorie "signal", mit Gerät). Der erste Stand eines Geräts ist kein
+        Ereignis; ein ausgefallenes Gerät oder eines ohne Wert behält seinen Stand.
+        """
+        for device in devices:
+            dev = device.get("id")
+            sig = device.get("signal")
+            if not dev or device.get("online") is not True or not sig or sig.get("value") is None:
+                self._weak_pending.pop(dev, None)
+                continue
+            limit = signal_limit(device)
+            weak = signal_weak(sig, limit)
+            known = self._weak.get(dev)
+            if known is None:
+                self._weak[dev] = weak
+                continue
+            if weak == known:
+                self._weak_pending.pop(dev, None)
+                continue
+            count = self._weak_pending.get(dev, 0) + 1
+            if count < WATCH_CONFIRM:
+                self._weak_pending[dev] = count
+                continue
+            self._weak[dev] = weak
+            self._weak_pending.pop(dev, None)
+            kind = sig.get("kind")
+            if isinstance(limit, int) and not isinstance(limit, bool):
+                shown = self._sig_text(kind, limit)
+            else:
+                shown = self._sig_text(kind, SIGNAL_WEAK_DBM if kind == "dbm" else SIGNAL_WEAK_LQI)
+            activity.record(self.hass, "warning" if weak else "info", "signal", "signal_weak" if weak else "signal_ok", device.get("name", ""), dev, value=self._sig_text(kind, sig["value"]), limit=shown)
 
     def load(self, stored: dict[str, Any], now: float) -> None:
         def rows(raw: Any) -> dict[str, list[list[float]]]:
@@ -444,7 +505,7 @@ class SignalLog:
         self._saver.schedule()
 
     def forget(self, dev: str) -> None:
-        for store in (self._kind, self._blocks, self._hours, self._days, self._open, self._open_hour, self._via, self._recent):
+        for store in (self._kind, self._blocks, self._hours, self._days, self._open, self._open_hour, self._via, self._recent, self._weak, self._weak_pending):
             store.pop(dev, None)
 
     # -- Abfragen --------------------------------------------------------------

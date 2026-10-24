@@ -33,7 +33,7 @@ const DAY = 86400;
 const SEARCH_DELAY_MS = 250;
 const FILTERS = {
   // Kategorien der Liste "Alles"; das Panel zeigt nur die, zu denen es im Zeitraum Einträge gibt
-  all: ["all", "outage", "battery", "charge", "updates", "new", "push", "magic", "routine"],
+  all: ["all", "outage", "battery", "charge", "signal", "updates", "new", "push", "magic", "routine"],
   magic: ["all", "fired", "recovered", "test", "held", "failed"],
   routine: ["all", "run", "revert", "missed", "failed", "manual"],
 };

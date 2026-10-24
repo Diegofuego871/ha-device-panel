@@ -1,7 +1,7 @@
 """
 Geräteprotokoll (seit 2.118.0): alles zu einem Gerät (oder zu allen) in einer Liste, neueste zuerst.
 
-Quellen: die Ereignisse des Panel-Logs mit Gerät (Ausfall, Batterie, Laden, Updates, neue Geräte, Push), die Wechsel online/ausgefallen aus der
+Quellen: die Ereignisse des Panel-Logs mit Gerät (Ausfall, Batterie, Laden, Empfang seit 2.120.0, Updates, neue Geräte, Push), die Wechsel online/ausgefallen aus der
 Verfügbarkeit (mit Dauer), die Protokolle von Magic Push und Routinen. Das Panel-Log führt Magic Push und Routinen auch; sie zählen hier nur
 aus ihren eigenen Protokollen (reicher: Inhalt der Meldung, Trace). Debug-Einträge, Einträge des Systems und der Apps gehören keinem Gerät.
 
@@ -20,8 +20,8 @@ from . import activity
 from .const import DATA_AVAILABILITY, DATA_MAGIC, DATA_PROTOCOL, DATA_ROUTINES
 
 # Kategorien des Panel-Logs, die ein Gerät betreffen können (Magic Push und Routinen kommen aus den Protokollen)
-EVENT_CATS = ("outage", "battery", "charge", "updates", "new", "push")
-CATS = ("outage", "battery", "charge", "updates", "new", "push", "magic", "routine")
+EVENT_CATS = ("outage", "battery", "charge", "signal", "updates", "new", "push")
+CATS = ("outage", "battery", "charge", "signal", "updates", "new", "push", "magic", "routine")
 
 
 def _avail_entries(hass: HomeAssistant, device_ids: list[str], since: float, until: float) -> list[dict[str, Any]]:

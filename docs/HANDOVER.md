@@ -3,6 +3,12 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.120.0, Empfang als Ereignis)
+
+- `SignalLog.watch(devices)` (`signal_history.py`) schreibt `signal_weak`/`signal_ok` ins Panel-Log (Kategorie `signal`, mit `device_id`): alle `WATCH_INTERVAL` = 5 Min. über `async_list_devices` (gleiche Rechnung wie die Liste und die KI: `devices.signal_limit`/`signal_weak`, vorher in `ai_assessment.py`), Wechsel erst nach `WATCH_CONFIRM` = 2 Prüfungen, erster Stand ohne Ereignis, ausgefallene Geräte behalten ihren Stand. Zustand nur im Arbeitsspeicher (nach einem Neustart beginnt jedes Gerät wieder ohne Ereignis). `devicelog.EVENT_CATS` und `FILTERS.all` im Panel kennen `signal`.
+- Test: `test_signal_history.py::test_watch_writes_weak_and_ok_events_after_two_checks`; Suiten `devicelog`, `log` angepasst.
+- Als Nächstes (Wunsch des Nutzers): alle Screenshots der README neu aufnehmen (neues Protokoll-Fenster, Reiter "Speicher", Empfangsfenster mit den neuen Zeiträumen, Geräte-Popup mit dem Knopf "Protokoll").
+
 ## Stand (2.119.0, Verläufe bis 12 Monate)
 
 - Wunsch des Nutzers: alle Verläufe 12 Monate, Zeiträume wie bei der Batterie (24 Std., 7, 30 Tage, 3, 6, 12 Monate), Standard 1 Jahr. `availability.RANGES` und `signal_history.RANGES` kennen jetzt `90d`, `180d`, `365d`; das Panel nutzt für Verfügbarkeit, Empfang und Batterie dieselbe Liste (`BAT_RANGES`, `_statRanges`). Aufbewahrung `availability_keep_days`/`signal_keep_days` 7 bis 365 (Standard 365), MB-Grenzen Standard 20 und 50.

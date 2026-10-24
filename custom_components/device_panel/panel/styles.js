@@ -2214,7 +2214,7 @@ button.pr-row:not(:disabled):hover { background: var(--dp-hover); }
 /* Geräteprotokoll (2.118.0): Liste "Alles" im Protokoll-Fenster */
 .al-row { grid-template-columns: 62px 86px minmax(0, 1fr); }
 .al-row .lg-pill { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-.lg-pill.magic, .lg-pill.routine { background: var(--dp-primary-soft); color: var(--dp-primary); }
+.lg-pill.magic, .lg-pill.routine, .lg-pill.signal { background: var(--dp-primary-soft); color: var(--dp-primary); }
 .lg-pill.updates, .lg-pill.new { background: var(--dp-subtle); color: var(--dp-text2); }
 button.al-row { border-bottom: 1px solid var(--dp-divider); }
 .pr-list .pr-item.open > .al-row { background: var(--dp-primary-soft); }

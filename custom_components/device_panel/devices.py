@@ -87,6 +87,8 @@ from .const import (
     SIGNAL_DBM_RANGE,
     SIGNAL_LQI_RANGE,
     SIGNAL_OFF,
+    SIGNAL_WEAK_DBM,
+    SIGNAL_WEAK_LQI,
     NEW_DEVICE_DAYS,
     CONF_EXCLUDE_DEVICES,
     CONF_TYPE_INTEGRATIONS,
@@ -937,6 +939,25 @@ def device_settings(hass: HomeAssistant) -> dict[str, Any]:
     "offline": {Gerät: Minuten | "off"}, "charge": {Gerät: bool}}.
     """
     return hass.data.get(DATA_DEVICE_SETTINGS) or {"battery": {}, "notify_off": set(), "notify_mute": {}, "signal": {}, "offline": {}, "notify_delay": {}, "charge": {}, "charge_full": {}, "charge_rise": {}, "charge_stall": {}, "charge_stop": {}, "charge_live": {}}
+
+
+def signal_limit(d: dict[str, Any]) -> Any:
+    """Wirksame Empfang-Warnung (seit 1.17.0): das Gerät, sonst die Integration oder der globale Wert."""
+    own = d.get("signal_setting")
+    return own if own is not None else (d.get("signal_default") or {}).get("value")
+
+
+def signal_weak(signal: dict[str, Any], setting: Any) -> bool:
+    """
+    Schwacher Empfang wie im Panel (devSigLevel; seit 2.120.0 hier, für die KI und das Geräteprotokoll): Empfang-Warnung "off" ist nie
+    schwach, eine eigene Schwelle heisst "schwach unter X", sonst der Standard.
+    """
+    value = signal["value"]
+    if setting == SIGNAL_OFF:
+        return False
+    if isinstance(setting, int) and not isinstance(setting, bool):
+        return value < setting
+    return value < SIGNAL_WEAK_DBM if signal.get("kind") == "dbm" else value <= SIGNAL_WEAK_LQI
 
 
 def valid_signal_setting(value: Any) -> bool:

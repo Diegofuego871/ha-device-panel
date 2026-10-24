@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.120.0] - 2026-10-24
+
+Der Empfang im Protokoll eines Geräts: ein Eintrag, wenn ein Gerät schwach wird und wenn es wieder in Ordnung ist.
+
+### Hinzugefügt
+
+- **Empfang als Ereignis:** das Panel schreibt einen Eintrag ins Log (Kategorie "Empfang", mit Gerät), wenn ein Gerät **schwach** wird und wenn sein Empfang **wieder in Ordnung** ist, mit Wert und Schwelle ("Empfang schwach: -86 dBm", Schwelle -80 dBm). Die Prüfung läuft alle 5 Minuten mit derselben Rechnung wie die Liste (Median der letzten 5 Minuten, Schwelle des Geräts, der Integration oder der Verbindungsart); ein Wechsel zählt erst nach **zwei Prüfungen hintereinander**, damit ein Wert an der Schwelle nicht jede Minute einen Eintrag schreibt. Der erste Stand eines Geräts ist kein Ereignis; ein ausgefallenes Gerät behält seinen Stand.
+- Die Einträge erscheinen im Protokoll des Geräts (Reiter "Alles", Chip "Empfang") und im Log des Panels (Filter "Empfang").
+
+### Geändert
+
+- Der Hinweis unter der Liste im Protokoll-Fenster sagt nicht mehr, dass der Empfang fehlt.
+
 ## [2.119.0] - 2026-10-24
 
 Verfügbarkeit und Empfang bis 12 Monate zurück, mit denselben Zeiträumen wie bei der Batterie.
@@ -4491,6 +4504,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.120.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.120.0
 [2.119.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.119.0
 [2.118.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.118.0
 [2.117.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.117.0
