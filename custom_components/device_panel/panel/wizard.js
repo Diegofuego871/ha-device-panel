@@ -15,7 +15,8 @@ const MSG_ROWS = ["outage", "battery", "new", "charge"];
 const MSG_ICON = { outage: "alert", battery: "battery", new: "sparkle", charge: "batteryCharging" };
 // Zahlen der Meldungen: Schlüssel der Option, Zeile, Beschriftung, Einheit
 const VALUES = {
-  outage: [["offline_after", "wzVOffline", "wzVMin"], ["notify_delay", "wzVDelay", "wzVMin"]],
+  // "Ausgefallen nach" (offline_after) bleibt hier weg, damit es einfach bleibt; "Melden nach" darf aber nicht darunter liegen
+  outage: [["notify_delay", "wzVDelay", "wzVMin"]],
   battery: [["battery_low", "wzVBattery", "wzVPercent"]],
   new: [["new_window", "wzVNew", "wzVMin"]],
   charge: [["charge_full", "wzVFull", "wzVPercent"]],
@@ -212,7 +213,8 @@ export class WizardUi {
       const n = num(key);
       if (!(n >= lo && n <= hi)) return this.t("wzErrRange", this.t(this.valueLabel(key)), lo, hi);
     }
-    if (num("notify_delay") < num("offline_after")) return this.t("wzErrDelay");
+    const detect = Number(s.base.offline_after);
+    if (num("notify_delay") < detect) return this.t("wzErrDelay", detect);
     return "";
   }
 

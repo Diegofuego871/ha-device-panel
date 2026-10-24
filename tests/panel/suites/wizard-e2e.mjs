@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { start: "Los geht's", later: "Jetzt nicht", never: "Nicht mehr zeigen", next: "Weiter", back: "Zurück", finish: "Fertigstellen", tile: "Einrichtung", step2: "Schritt 2 von 5", ttl: "Einrichtungsassistent", startBtn: "Assistent starten", errDelay: "Melden nach darf nicht kleiner sein als Ausgefallen nach.", testOk: "Gesendet. Prüfe dein Gerät.", testFail: "Nicht gesendet. Prüfe das Ziel.", discard: "Einrichtung abbrechen?", snack: "Einrichtung gespeichert." },
-  en: { start: "Let's go", later: "Not now", never: "Don't show again", next: "Next", back: "Back", finish: "Finish", tile: "Setup", step2: "Step 2 of 5", ttl: "Setup wizard", startBtn: "Start wizard", errDelay: "Notify after must not be shorter than Failed after.", testOk: "Sent. Check your device.", testFail: "Not sent. Check the target.", discard: "Cancel setup?", snack: "Setup saved." },
+  de: { start: "Los geht's", later: "Jetzt nicht", never: "Nicht mehr zeigen", next: "Weiter", back: "Zurück", finish: "Fertigstellen", tile: "Einrichtung", step2: "Schritt 2 von 5", ttl: "Einrichtungsassistent", startBtn: "Assistent starten", errDelay: "Melden nach darf nicht kürzer sein als \"Ausgefallen nach\" (jetzt 2 Min., einstellbar unter Einstellungen).", testOk: "Gesendet. Prüfe dein Gerät.", testFail: "Nicht gesendet. Prüfe das Ziel.", discard: "Einrichtung abbrechen?", snack: "Einrichtung gespeichert." },
+  en: { start: "Let's go", later: "Not now", never: "Don't show again", next: "Next", back: "Back", finish: "Finish", tile: "Setup", step2: "Step 2 of 5", ttl: "Setup wizard", startBtn: "Start wizard", errDelay: "Notify after must not be shorter than \"Failed after\" (now 2 min, adjustable in the settings).", testOk: "Sent. Check your device.", testFail: "Not sent. Check the target.", discard: "Cancel setup?", snack: "Setup saved." },
 };
 
 for (const lang of ["de", "en"]) {
@@ -98,7 +98,7 @@ for (const lang of ["de", "en"]) {
       await s.wait(`return r.host._wizard.s.step === "messages"`);
       check(`[${tag}] Meldungen: ohne Ziel sind Schalter und Werte gesperrt, kein Ruhezeit-Schritt`, (await s.ev(`return [...r.querySelectorAll("${s.D} [data-wz-msg], ${s.D} [data-wz-v]")].every((i) => i.disabled)`)) && (await s.ev(`return r.host._wizard.steps().length`)) === 5);
       check(`[${tag}] Zeilen: Ausgefallene Geräte, Batterie, Neue Geräte, Voll geladen`, (await s.ev(`return r.querySelectorAll("${s.D} .wz-msg").length`)) === 4);
-      check(`[${tag}] Werte vorausgefüllt mit den jetzigen Einstellungen`, JSON.stringify(await s.ev(`return [...r.querySelectorAll("${s.D} [data-wz-v]")].map((i) => i.dataset.wzV + "=" + i.value)`)) === JSON.stringify(["offline_after=2", "notify_delay=2", "battery_low=15", "new_window=5", "charge_full=100"]));
+      check(`[${tag}] Werte vorausgefüllt mit den jetzigen Einstellungen`, JSON.stringify(await s.ev(`return [...r.querySelectorAll("${s.D} [data-wz-v]")].map((i) => i.dataset.wzV + "=" + i.value)`)) === JSON.stringify(["notify_delay=2", "battery_low=15", "new_window=5", "charge_full=100"]));
       await s.ev(`const sel = r.querySelector("${s.D} [data-wz-target]"); sel.value = "notify.fernseher"; sel.dispatchEvent(new Event("change", { bubbles: true }))`);
       check(`[${tag}] Ziel gewählt: Werte frei, Testmeldung da, Ruhezeit-Schritt kommt dazu`, (await s.ev(`return [...r.querySelectorAll("${s.D} [data-wz-v]")].every((i) => !i.disabled)`)) && (await s.ev(`return r.host._wizard.steps().length`)) === 6 && !!(await s.handle(`${s.D} [data-wz="test"]`)));
       await s.tap(`${s.D} [data-wz="test"]`);
@@ -111,8 +111,8 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Ausgefallene Geräte und Batterie an`, await s.ev(`const d = r.host._wizard.s.d; return d.on.outage && d.on.battery && !d.on.new && !d.on.charge`));
       // Prüfung: Melden nach < Ausgefallen nach, Bereich
       const setVal = (k, v) => s.ev(`const i = r.querySelector('${s.D} [data-wz-v="${k}"]'); i.value = ${JSON.stringify(String(v))}; i.dispatchEvent(new Event("input", { bubbles: true }))`);
-      await setVal("offline_after", 5);
-      check(`[${tag}] Melden nach < Ausgefallen nach: Fehlertext, Weiter gesperrt`, ((await s.text(`${s.D} [data-wz-err]`)) === L.errDelay) && (await s.ev(`return r.querySelector('${s.D} .wz-ft [data-wz="next"]').disabled`)));
+      await setVal("notify_delay", 1);
+      check(`[${tag}] Melden nach unter "Ausgefallen nach": Fehlertext mit dem jetzigen Wert, Weiter gesperrt`, ((await s.text(`${s.D} [data-wz-err]`)) === L.errDelay) && (await s.ev(`return r.querySelector('${s.D} .wz-ft [data-wz="next"]').disabled`)));
       await setVal("notify_delay", 6);
       check(`[${tag}] gültig: Fehler weg, Weiter frei`, ((await s.text(`${s.D} [data-wz-err]`)) === "") && !(await s.ev(`return r.querySelector('${s.D} .wz-ft [data-wz="next"]').disabled`)));
       await setVal("battery_low", 80);
@@ -136,7 +136,7 @@ for (const lang of ["de", "en"]) {
       await s.tap(`${s.D} [data-wz="finish"]`);
       check(`[${tag}] Fertigstellen: Fenster zu`, await s.closed());
       const saved = (await s.calls())[0] || {};
-      check(`[${tag}] ein einziges set_options mit Auswahl, Ziel, Meldungen, Werten`, (await s.calls()).length === 1 && saved.exclude_integrations?.join() === off && saved.exclude_types?.join() === types[0] && saved.exclude_devices?.join() === devs[0] && saved.notify_service === "notify.mobile_app_testhandy" && saved.notify_outage === true && saved.notify_online === true && saved.battery_push === true && saved.notify_new === false && saved.offline_after === 5 && saved.notify_delay === 6 && saved.battery_low === 20, JSON.stringify(saved));
+      check(`[${tag}] ein einziges set_options mit Auswahl, Ziel, Meldungen, Werten`, (await s.calls()).length === 1 && saved.exclude_integrations?.join() === off && saved.exclude_types?.join() === types[0] && saved.exclude_devices?.join() === devs[0] && saved.notify_service === "notify.mobile_app_testhandy" && saved.notify_outage === true && saved.notify_online === true && saved.battery_push === true && saved.notify_new === false && !("offline_after" in saved) && saved.notify_delay === 6 && saved.battery_low === 20, JSON.stringify(saved));
       check(`[${tag}] Ruhezeit gespeichert (sieben Tage 23:00 bis 07:00)`, saved.quiet_enabled === true && saved.quiet_days?.length === 7 && saved.quiet_days.every((d) => d.on && d.from === "23:00" && d.to === "07:00"));
       check(`[${tag}] Zustand "done" mit Zeitpunkt`, saved.wizard_state === "done" && saved.wizard_done_at > 1_600_000_000 && (await s.state()) === "done");
       check(`[${tag}] Kachel und Punkt weg`, !(await s.tileShown()) && !(await s.launcherDot()));

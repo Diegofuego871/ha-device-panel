@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.135.1] - 2026-10-24
 
-The button "Let's go" of the setup wizard has the same size as the other buttons, and the logos have no blue background.
+The button "Let's go" of the setup wizard has the same size as the other buttons, the logos have no blue background, and the step "Notifications" is simpler.
+
+### Changed
+
+- **Setup wizard, step "Notifications":** only "Notify after" is offered for failed devices; "Failed after" is no longer shown, to keep the step simple (it stays at its current value and can be changed in the settings). "Notify after" still must not be shorter than it; the note names the current value.
 
 ### Fixed
 
