@@ -13,7 +13,7 @@ The text link "History of the device" is gone from the tabs "Routines" and "Magi
 
 ### Removed
 
-- **Text link "History of the device ›"** above the cards in the tabs "Routines" and "Magic Push" of the device pop-up. The round history button in the header of the pop-up does the same and is always there. The buttons "History" on the single cards and the links in the overviews stay.
+- **Text link "History of the device ›"** above the cards in the tabs "Routines" and "Magic Push" of the device pop-up, and in the foot of every device in the overviews of Magic Push and routines (there "Open device ›" stays). The round history button in the header does the same and is always there. The buttons "History" on the single cards stay.
 
 ### Changed
 

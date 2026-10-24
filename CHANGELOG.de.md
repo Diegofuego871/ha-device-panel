@@ -13,7 +13,7 @@ Der Text-Link "Protokoll des Geräts" entfällt in den Reitern "Routinen" und "M
 
 ### Entfernt
 
-- **Text-Link "Protokoll des Geräts ›"** über den Karten in den Reitern "Routinen" und "Magic Push" des Geräte-Popups. Der runde Protokoll-Knopf im Kopf des Popups tut dasselbe und ist immer da. Die Knöpfe "Protokoll" an den einzelnen Karten und die Links in den Übersichten bleiben.
+- **Text-Link "Protokoll des Geräts ›"** über den Karten in den Reitern "Routinen" und "Magic Push" des Geräte-Popups und im Fuss jedes Geräts in den Übersichten von Magic Push und Routinen (dort bleibt "Gerät öffnen ›"). Der runde Protokoll-Knopf im Kopf tut dasselbe und ist immer da. Die Knöpfe "Protokoll" an den einzelnen Karten bleiben.
 
 ### Geändert
 

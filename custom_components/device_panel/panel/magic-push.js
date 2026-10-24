@@ -931,7 +931,7 @@ export class MagicPush {
         <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span>${g.off && open ? `<span class="mg-devoff">${esc(t("statusOffline"))}</span>` : ""}<span class="mg-badge">${g.shown.length}</span>${this.chevHtml(open)}</button>`;
       if (open) {
         html += g.shown.map((r) => this.overviewCardHtml(r, all)).join("");
-        html += `<div class="mg-dfoot"><button type="button" class="linkbtn" data-mga="magic-device" data-device="${esc(g.id)}">${esc(t("mgAllOpenDevice"))} ›</button><button type="button" class="linkbtn" data-proto="magic" data-device="${esc(g.id)}" data-name="${esc(g.name)}">${esc(t("prDeviceLink"))} ›</button></div>`;
+        html += `<div class="mg-dfoot"><button type="button" class="linkbtn" data-mga="magic-device" data-device="${esc(g.id)}">${esc(t("mgAllOpenDevice"))} ›</button></div>`;
       }
       html += `</div>`;
     }

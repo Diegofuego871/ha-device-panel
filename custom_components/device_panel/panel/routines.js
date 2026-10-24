@@ -759,7 +759,8 @@ export class RoutineUi {
         <span class="mg-t"><b>${esc(g.name)}</b>${sum}</span><span class="mg-badge">${g.shown.length}</span>${this.chevHtml(open)}</button>`;
       if (open) {
         html += g.shown.map((x) => this.overviewCardHtml(x, all)).join("");
-        html += `<div class="mg-dfoot">${g.holder ? "" : `<button type="button" class="linkbtn" ${this.a(all, "routine-device")} data-device="${esc(g.id)}">${esc(t("rtAllOpenDevice"))} ›</button>`}<button type="button" class="linkbtn" data-proto="routine" data-device="${esc(g.id)}" data-name="${esc(g.name)}">${esc(t("prDeviceLink"))} ›</button></div>`;
+        // Das Protokoll des Geräts öffnet der Knopf im Kopf; ohne "Gerät öffnen" (Halter, kein Gerät) bleibt der Fuss ganz weg
+        if (!g.holder) html += `<div class="mg-dfoot"><button type="button" class="linkbtn" ${this.a(all, "routine-device")} data-device="${esc(g.id)}">${esc(t("rtAllOpenDevice"))} ›</button></div>`;
       }
       html += `</div>`;
     }
