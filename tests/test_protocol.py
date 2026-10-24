@@ -289,6 +289,16 @@ async def test_websocket_command(hass: HomeAssistant, setup, hass_ws_client, has
     assert not (await call(kind="routine", item_id=saved["id"], limit=0))["success"]
     assert not (await call(kind="x", item_id=saved["id"]))["success"]
     assert not (await call(kind="routine", item_id=saved["id"], device_id=device.id))["success"]
+    # Seit 2.134.0: item_ids wählt innerhalb von Gerät oder allen Geräten, "items" nennt weiter alle des Bereichs (mit device_id)
+    other = await manager.async_save_routine(_raw(device, _switch(hass, device)))
+    both = (await call(kind="routine", device_id=device.id))["result"]
+    assert {i["id"] for i in both["items"]} == {saved["id"], other["id"]} and all(i["device_id"] == device.id for i in both["items"])
+    one = (await call(kind="routine", device_id=device.id, item_ids=[saved["id"]]))["result"]
+    assert {i["id"] for i in one["items"]} == {saved["id"], other["id"]} and {e["id"] for e in one["entries"]} <= {saved["id"]} and one["total"] == 1
+    everywhere = (await call(kind="routine", item_ids=[saved["id"]]))["result"]
+    assert everywhere["total"] == 1 and len(everywhere["items"]) == 2
+    assert not (await call(kind="routine", device_id=device.id, item_ids=["0" * 12]))["success"]
+    assert not (await call(kind="routine", item_id=saved["id"], device_id=device.id, item_ids=[saved["id"]]))["success"]
 
 
 async def test_survives_reload_and_remove_deletes_files(hass: HomeAssistant, setup, hass_storage: dict[str, Any], freezer) -> None:  # noqa: F811

@@ -7,6 +7,16 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.134.0] - 2026-10-24
+
+Das Protokoll einer einzelnen Routine oder Meldung zeigt seinen Filter jetzt als Chip. Enthält die Änderungen von 2.133.0.
+
+### Geändert
+
+- **Protokoll einer Routine oder Meldung, am Gerät:** ein Tipp auf "Protokoll" an einer Karte öffnet das Protokoll des **Geräts** mit dieser Routine oder Meldung schon als Chip gewählt. Die Chips "Alle Routinen" und je eine pro Routine (bzw. "Alle Meldungen" und je eine pro Meldung) sind immer da; ein Tipp auf "Alle ..." hebt den Filter auf, ein Tipp auf eine andere wechselt. Die Unterzeile nennt das Gerät und die Zahl. Bisher stand der Filter nur als Name in der Unterzeile und liess sich nicht ändern, ohne das Fenster zu schliessen. Ein Gerät mit nur einer Routine oder Meldung hat keine Chips.
+- **Protokoll über alle Geräte** (Reiter "Magic Push" und "Routinen"): ein Chip "Meldung" bzw. "Routine" öffnet darunter eine Liste mit "Alle Meldungen/Routinen" und jedem Eintrag mit seinem Gerät; die gewählte steht auf dem Chip. Eine Auswahl auf einmal (keine Mehrfachwahl).
+- WebSocket `protocol_get`: neu `item_ids` (eine Auswahl innerhalb von `device_id` oder über alle Geräte); `items` nennt immer alle Einträge dieses Bereichs und trägt jetzt `device_id`. `item_id` funktioniert weiter.
+
 ## [2.133.0] - 2026-10-24
 
 Das Umbenennen eines Geräts öffnet am Handy ein eigenes Fenster.
@@ -14,6 +24,8 @@ Das Umbenennen eines Geräts öffnet am Handy ein eigenes Fenster.
 ### Geändert
 
 - **Gerät umbenennen am Handy:** der Stift neben dem Namen öffnet jetzt ein kleines Fenster oben mit einem grossen Feld (die Tastatur verdeckt es nicht), dem Originalnamen mit "Zurücksetzen" und den Knöpfen "Abbrechen" und "Name speichern". Enter speichert, Escape oder das Kreuz bricht ab. Bisher sass das Feld im Kopf des Popups zwischen den runden Knöpfen und war zu klein. Am Desktop ändert sich nichts: das Feld bleibt im Kopf.
+
+Nicht veröffentlicht; enthalten in 2.134.0.
 
 ## [2.132.0] - 2026-10-24
 
@@ -4685,7 +4697,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.133.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.133.0
+[2.134.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.0
 [2.132.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.132.0
 [2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0
 [2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0

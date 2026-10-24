@@ -7,6 +7,16 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.134.0] - 2026-10-24
+
+The history of a single routine or message now shows its filter as a chip. Includes the changes from 2.133.0.
+
+### Changed
+
+- **History of a routine or message, on a device:** a tap on "History" on a card opens the history of the **device** with that routine or message already chosen as a chip. The chips "All routines" and one per routine (or "All messages" and one per message) are always there; a tap on "All ..." removes the filter, a tap on another one switches. The subtitle names the device and the number. Before, the filter showed only as the name in the subtitle and could not be changed without closing the window. A device with only one routine or message has no chips.
+- **History over all devices** (tabs "Magic Push" and "Routines"): a chip "Message" or "Routine" opens a list under it with "All messages/routines" and every entry with its device; the chosen one shows on the chip. One entry at a time (no multiple choice).
+- WebSocket `protocol_get`: new `item_ids` (a choice inside `device_id` or over all devices); `items` always lists every entry of that scope and now carries `device_id`. `item_id` still works.
+
 ## [2.133.0] - 2026-10-24
 
 Renaming a device opens its own window on a phone.
@@ -14,6 +24,8 @@ Renaming a device opens its own window on a phone.
 ### Changed
 
 - **Rename device on a phone:** the pencil next to the name now opens a small window at the top with a large field (the keyboard no longer covers it), the original name with "Reset", and the buttons "Cancel" and "Save name". Enter saves, Escape or the cross cancels. Before, the field sat in the header of the pop-up between the round buttons and was too small. On a desktop nothing changes: the field stays in the header.
+
+Not released; included in 2.134.0.
 
 ## [2.132.0] - 2026-10-24
 
@@ -4584,7 +4596,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.133.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.133.0
+[2.134.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.0
 [2.132.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.132.0
 [2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0
 [2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0

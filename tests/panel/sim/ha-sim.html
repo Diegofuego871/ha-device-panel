@@ -1289,8 +1289,10 @@
           return { step: week0 ? "week" : "day", buckets: buckets0, counts: counts0, total: shown0.length, all: all.length, entries: shown0.slice(msg.offset || 0, (msg.offset || 0) + (msg.limit || 100)), oldest: all.length ? all[all.length - 1].at : null, until: until0, now: now0 };
         }
         const rows = msg.kind === "magic" ? (window.__magic?.rules || []) : (window.__routines?.list || []);
-        const mine = msg.item_id ? rows.filter((r) => r.id === msg.item_id) : rows.filter((r) => !msg.device_id || r.device_id === msg.device_id);
-        if (msg.item_id && !mine.length) throw { code: "not_found", message: "item not found" };
+        const inScope = rows.filter((r) => !msg.device_id || r.device_id === msg.device_id);
+        // Wie protocol_ws (2.134.0): item_ids wählt innerhalb des Bereichs, "items" nennt weiter alle des Bereichs
+        const mine = msg.item_id ? rows.filter((r) => r.id === msg.item_id) : msg.item_ids?.length ? inScope.filter((r) => msg.item_ids.includes(r.id)) : inScope;
+        if ((msg.item_id || msg.item_ids?.length) && !mine.length) throw { code: "not_found", message: "item not found" };
         const now = Date.now() / 1000;
         const until = Math.min(msg.until ?? now, now + 86400);
         const scope = [];
@@ -1326,7 +1328,7 @@
         return {
           counts, longest_s: longest || null, punctual: lateN ? Math.round((100 * lateOk) / lateN) : null, total: shown.length, all: scope.length,
           entries: shown.slice(msg.offset || 0, (msg.offset || 0) + (msg.limit || 100)), step: week ? "week" : "day", buckets, oldest,
-          items: mine.map((r) => ({ id: r.id, name: r.name, entity_id: r.entity_id })), since, until, now, max_entries: window.__opts.protocol_max_entries, max_mb: window.__opts.protocol_max_mb,
+          items: (msg.item_id ? mine : inScope).map((r) => ({ id: r.id, name: r.name, entity_id: r.entity_id, device_id: r.device_id })), since, until, now, max_entries: window.__opts.protocol_max_entries, max_mb: window.__opts.protocol_max_mb,
         };
       }
       // Routine (2.21.0): Routine pro Gerät im Speicher der Seite, Prüfung und Zeitberechnung ungefähr wie im Backend

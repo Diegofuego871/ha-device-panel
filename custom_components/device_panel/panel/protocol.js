@@ -90,9 +90,11 @@ export class ProtocolUi {
     if (!dlg || !FILTERS[kind]) return;
     window.clearTimeout(this._searchTimer);
     this.stopPoll();
+    // Seit 2.134.0 ist eine Meldung oder Routine von der Karte nur eine Vorauswahl (s.item) im Bereich ihres Geräts: die Chips zeigen sie
+    // und lassen den Filter aufheben oder wechseln (docs/mockups/protocol-filter-v1)
     this.s = {
       kind,
-      itemId,
+      itemId: "",
       deviceId,
       name,
       // Zusammenhang der anderen Reiter: alles, alle Meldungen oder alle Routinen des Geräts (ohne Gerät: aller Geräte)
@@ -102,7 +104,8 @@ export class ProtocolUi {
       rangeBack: "30d",
       own: null,
       filter: "all",
-      item: "",
+      item: kind === "magic" || kind === "routine" ? itemId : "",
+      pickOpen: false,
       items: [],
       q: "",
       limit: PAGE,
@@ -256,12 +259,14 @@ export class ProtocolUi {
     const seq = ++s.seq;
     const { since, until } = this.span();
     const msg = { type: "device_panel/protocol_get", kind: s.kind, ...(since === null ? {} : { since }), until, limit: s.limit, filter: s.filter === "all" ? null : s.filter, q: s.q.trim() };
-    const wholeDevice = s.kind !== "all" && s.kind !== "system" && !s.itemId && !s.item && Boolean(s.deviceId);
+    const items = s.kind === "magic" || s.kind === "routine";
     if (s.kind === "system") {
       // Kategorie des Reiters "System"; ohne Gerät und ohne Auswahl einer Meldung
       if (s.item) msg.cat = s.item;
-    } else if (s.itemId || s.item) msg.item_id = s.itemId || s.item;
-    else if (s.deviceId) msg.device_id = s.deviceId;
+    } else {
+      if (s.deviceId) msg.device_id = s.deviceId;
+      if (items && s.item) msg.item_ids = [s.item];
+    }
     if (!soft) {
       s.loading = true;
       this.renderFoot();
@@ -275,14 +280,20 @@ export class ProtocolUi {
       s.data = r;
       s.error = null;
       if (s.kind === "system") this.host._debugOn = Boolean(r.debug);
-      // Auswahl der Meldungen eines Geräts: die Liste der Antwort für das ganze Gerät merken
-      const fresh = wholeDevice && JSON.stringify(s.items) !== JSON.stringify(r.items || []);
-      if (wholeDevice) s.items = r.items || [];
+      // Auswahl der Meldungen oder Routinen: die Liste des ganzen Bereichs (Gerät oder alle Geräte) aus der Antwort merken
+      const fresh = items && JSON.stringify(s.items) !== JSON.stringify(r.items || []);
+      if (items) s.items = r.items || [];
       // Listen "Alles" und "System": die Chips zeigen die Zahlen aus der Antwort
       if (fresh || s.kind === "all" || s.kind === "system") this.renderBar();
     } catch (err) {
       if (this.s !== s || seq !== s.seq) return;
       if (soft) return;
+      // Die gewählte Meldung oder Routine gibt es nicht mehr: Auswahl aufheben und neu laden
+      if (items && s.item && /not.?found/i.test(`${err?.code || ""} ${err?.message || ""}`)) {
+        s.item = "";
+        this.renderBar();
+        return this.load();
+      }
       s.error = this.h.errText(err);
     }
     s.loading = false;
@@ -338,7 +349,10 @@ export class ProtocolUi {
       sub.textContent = this.t("prSystemSub", since);
       return;
     }
-    if (s.deviceId && !s.itemId && s.items.length && s.kind !== "all") text = `${s.name} · ${this.t(s.kind === "magic" ? "prItemsMagic" : "prItemsRoutine", s.items.length)}`;
+    if (s.kind === "magic" || s.kind === "routine") {
+      const base = s.deviceId ? this.deviceName(s.deviceId) || s.name || this.t("prAllDevices") : this.t("prAllDevices");
+      text = s.items.length ? `${base} · ${this.t(s.kind === "magic" ? "prItemsMagic" : "prItemsRoutine", s.items.length)}` : base;
+    }
     sub.textContent = text;
   }
 
@@ -401,12 +415,23 @@ export class ProtocolUi {
       items.innerHTML = [["", t("logAll"), total], ...ids.map((c) => [c, this.catLabel(c), cs[c] || 0])]
         .map(([id, label, n]) => `<button type="button" class="chip${s.item === id ? " on" : ""}" data-pr="item" data-v="${this.esc(id)}" aria-pressed="${s.item === id}"><span>${this.esc(label)}</span><span class="n">${this.num(n)}</span></button>`)
         .join("");
-    } else if (s.kind !== "all" && s.deviceId && !s.itemId && s.items.length > 1) {
+    } else if ((s.kind === "magic" || s.kind === "routine") && s.deviceId && s.items.length > 1) {
+      // Am Gerät: "Alle ..." und je eine Meldung oder Routine; die gewählte ist markiert, ein Tipp auf "Alle" hebt den Filter auf
       const all = t(s.kind === "magic" ? "prAllMagic" : "prAllRoutines");
       items.hidden = false;
       items.innerHTML = [["", all], ...s.items.map((i) => [i.id, i.name])]
         .map(([id, label]) => `<button type="button" class="chip${s.item === id ? " on" : ""}" data-pr="item" data-v="${this.esc(id)}" aria-pressed="${s.item === id}"><span>${this.esc(label)}</span></button>`)
         .join("");
+    } else if ((s.kind === "magic" || s.kind === "routine") && !s.deviceId && (s.items.length > 1 || s.item)) {
+      // Über alle Geräte zu viele Namen für eine Chip-Reihe: ein Chip öffnet die Auswahl (wie "Integration" in der Geräteliste)
+      const magic = s.kind === "magic";
+      const cur = s.items.find((i) => i.id === s.item);
+      const label = cur ? `${t(magic ? "prPickMagic" : "prPickRoutine")}: ${cur.name}` : t(magic ? "prPickMagic" : "prPickRoutine");
+      const rows = [["", t(magic ? "prAllMagic" : "prAllRoutines"), ""], ...s.items.map((i) => [i.id, i.name, this.deviceName(i.device_id)])]
+        .map(([id, name, dev]) => `<button type="button" class="pr-pick-row${s.item === id ? " on" : ""}" role="option" aria-selected="${s.item === id}" data-pr="item" data-v="${this.esc(id)}"><span class="pr-pick-box">${s.item === id ? this.h.mdi("check", 14) : ""}</span><span class="pr-pick-name">${this.esc(name)}${dev ? `<small>${this.esc(dev)}</small>` : ""}</span></button>`)
+        .join("");
+      items.hidden = false;
+      items.innerHTML = `<div class="pr-pick-wrap"><button type="button" class="chip pr-pick-chip${s.item ? " on" : ""}" data-pr="pick" aria-haspopup="listbox" aria-expanded="${s.pickOpen}"><span>${this.esc(label)}</span>${this.h.mdi("chevronDown", 15)}</button>${s.pickOpen ? `<div class="pr-pick" role="listbox">${rows}</div>` : ""}</div>`;
     } else {
       items.hidden = true;
       items.innerHTML = "";
@@ -624,7 +649,7 @@ export class ProtocolUi {
       body.innerHTML = this.systemHtml(d);
       return;
     }
-    const device = Boolean(s.deviceId && !s.itemId);
+    const device = Boolean(s.deviceId && !s.item);
     const rows = (d.entries || []).map((e, i) => (s.kind === "magic" ? this.magicRow(e, i, device) : this.routineRow(e, i, device))).join("");
     const filtered = s.filter !== "all" || Boolean(s.q.trim());
     let empty = "";
@@ -884,11 +909,11 @@ export class ProtocolUi {
         const next = s.alt[el.dataset.v];
         if (!next || el.dataset.v === s.kind) break;
         // Den bisherigen Zusammenhang merken: zurück gibt es wieder die einzelne Meldung oder Routine
-        s.alt[s.kind] = { itemId: s.itemId, deviceId: s.deviceId, name: s.name };
+        s.alt[s.kind] = { itemId: s.kind === "magic" || s.kind === "routine" ? s.item : "", deviceId: s.deviceId, name: s.name };
         // "System" beginnt mit "Alle"; beim Verlassen kommt der vorherige Zeitraum zurück
         if (el.dataset.v === "system") Object.assign(s, { rangeBack: s.range, range: "all" });
         else if (s.kind === "system") s.range = s.rangeBack || "30d";
-        Object.assign(s, { kind: el.dataset.v, itemId: next.itemId, deviceId: next.deviceId, name: next.name, filter: "all", item: "", items: [], q: "", limit: PAGE, data: null, loading: true, error: null, view: "list", trace: 0, open: new Set() });
+        Object.assign(s, { kind: el.dataset.v, itemId: "", deviceId: next.deviceId, name: next.name, filter: "all", item: el.dataset.v === "magic" || el.dataset.v === "routine" ? next.itemId : "", pickOpen: false, items: [], q: "", limit: PAGE, data: null, loading: true, error: null, view: "list", trace: 0, open: new Set() });
         window.clearTimeout(this._searchTimer);
         this.frame();
         this.load();
@@ -929,8 +954,13 @@ export class ProtocolUi {
         this.renderBar();
         this.load();
         break;
+      case "pick":
+        s.pickOpen = !s.pickOpen;
+        this.renderBar();
+        break;
       case "item":
         s.item = el.dataset.v;
+        s.pickOpen = false;
         s.limit = PAGE;
         this.renderBar();
         this.load();

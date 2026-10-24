@@ -1479,6 +1479,19 @@ dialog.log-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .lg-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
 .lg-chips::-webkit-scrollbar { display: none; }
 .lg-chips .chip { height: 30px; font-size: 12.5px; flex: none; }
+/* Auswahl "Meldung" / "Routine" über alle Geräte (seit 2.134.0): Chip mit Liste darunter, über die ganze Breite */
+.lg-chips:has(.pr-pick-wrap) { overflow: visible; display: block; }
+.pr-pick-wrap { width: 100%; }
+.pr-pick-chip { display: inline-flex; align-items: center; gap: 4px; }
+.pr-pick { margin: 8px 0 4px; max-height: 260px; overflow: auto; border: 1px solid var(--dp-divider); border-radius: 14px; background: var(--dp-card); }
+.pr-pick-row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 6px 12px; border: 0; border-bottom: 1px solid var(--dp-divider); background: transparent; color: var(--dp-text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.pr-pick-row:last-child { border-bottom: 0; }
+.pr-pick-row:hover { background: var(--dp-hover); }
+.pr-pick-row.on { color: var(--dp-primary); }
+.pr-pick-box { flex: none; display: grid; place-items: center; width: 20px; height: 20px; border: 1.5px solid var(--dp-divider); border-radius: 6px; }
+.pr-pick-row.on .pr-pick-box { border-color: var(--dp-primary); }
+.pr-pick-name { flex: 1; min-width: 0; }
+.pr-pick-name small { display: block; color: var(--dp-text2); font-size: 12px; }
 .lg-chips .chip.on { background: var(--dp-primary-soft); border-color: var(--dp-primary); color: var(--dp-primary); }
 /* "Alle" bleibt beim seitlichen Scrollen stehen; deckend, damit die vorbeiziehenden Chips nicht durchscheinen (der Schatten füllt die Lücke) */
 .lg-chips .chip:first-child { position: sticky; left: 0; z-index: 1; background-color: var(--dp-card); box-shadow: 6px 0 0 var(--dp-card); }

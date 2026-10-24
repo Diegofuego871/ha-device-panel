@@ -3,6 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.134.0, Filter-Chips im Protokoll einer Routine oder Meldung)
+
+- 2.134.0 (Mockups `docs/mockups/protocol-filter-v1`, A/A): `protocol.js` kennt keinen festen `itemId` mehr; eine Meldung oder Routine von der Karte ist die Vorauswahl `s.item` im Bereich ihres Geräts (`open`), `load` sendet `device_id` plus `item_ids`; `s.items` kommt immer aus der Antwort (`items` = ganzer Bereich, mit `device_id`). Am Gerät Chips "Alle ..." plus je Eintrag (ab zwei Einträgen); ohne Gerät ein Chip `.pr-pick-chip` (`data-pr="pick"`) mit Liste `.pr-pick` darunter (Texte `prPickMagic`, `prPickRoutine`). Backend `protocol_ws.py`: `item_ids`. Nicht gebaut: Mehrfachwahl und Zahl der Läufe je Eintrag in der Liste. Tests: `test_protocol.py`, Suiten `protocol`, `devicelog`.
+- Ältere "Offen"-Punkte zur Filter-Auswahl (Chip für die gewählte Meldung) sind damit erledigt.
+
 ## Stand (2.133.0, Umbenennen am Handy im eigenen Fenster)
 
 - 2.133.0: `_renameStart` setzt `_rename.sheet` bei schmaler Ansicht (`_narrowQuery`); `_renderRenameSheet`/`_bindRename`/`_closeRenameSheet` in `device-panel.js`, `dialog.rename-dlg` (Felder `.rn-input`, Knöpfe `data-rn="save|cancel|reset"`), `_nameHtml` zeigt dann den normalen Namen. Desktop unverändert (`.dn-form`). Test: Suite `rename` (am Handy eigenes Fenster, Feld mind. 48 px hoch und in der oberen Hälfte).

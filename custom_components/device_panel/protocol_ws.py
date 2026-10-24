@@ -21,6 +21,8 @@ PAGE_MAX = 500
         vol.Required("kind"): vol.In(["magic", "routine", "all", "system"]),
         vol.Exclusive("item_id", "scope"): str,
         vol.Exclusive("device_id", "scope"): str,
+        # Seit 2.134.0: eine Auswahl innerhalb von Gerät oder allen Geräten (der Filter-Chip im Protokoll); "items" nennt weiter alle des Bereichs
+        vol.Optional("item_ids"): vol.All([str], vol.Length(max=50)),
         vol.Optional("since"): vol.Coerce(float),
         vol.Optional("until"): vol.Coerce(float),
         vol.Optional("filter"): vol.Any(None, str),
@@ -59,9 +61,17 @@ def ws_protocol_get(hass: HomeAssistant, connection: websocket_api.ActiveConnect
         if not rows:
             connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "item not found")
             return
+        scope_rows = rows
     else:
         device = msg.get("device_id") or None
-        rows = manager.rules(device) if msg["kind"] == "magic" else manager.routines(device)
+        scope_rows = manager.rules(device) if msg["kind"] == "magic" else manager.routines(device)
+        rows = scope_rows
+        if msg.get("item_ids"):
+            wanted = set(msg["item_ids"])
+            rows = [row for row in scope_rows if row["id"] in wanted]
+            if not rows:
+                connection.send_error(msg["id"], websocket_api.ERR_NOT_FOUND, "item not found")
+                return
     limits = store.limits()
     result = store.query(
         msg["kind"],
@@ -75,7 +85,7 @@ def ws_protocol_get(hass: HomeAssistant, connection: websocket_api.ActiveConnect
     )
     connection.send_result(
         msg["id"],
-        {**result, "items": [{"id": row["id"], "name": row["name"], "entity_id": row.get("entity_id")} for row in rows], "until": until, "now": now, "max_entries": limits[1], "max_mb": limits[0] // (1024 * 1024)},
+        {**result, "items": [{"id": row["id"], "name": row["name"], "entity_id": row.get("entity_id"), "device_id": row.get("device_id")} for row in scope_rows], "until": until, "now": now, "max_entries": limits[1], "max_mb": limits[0] // (1024 * 1024)},
     )
 
 

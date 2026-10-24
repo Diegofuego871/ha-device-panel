@@ -14,8 +14,8 @@ const TEXTS_OLD = {
   en: { title: "History", device: "History of the device", all: "All messages", allR: "All routines", recovered: "Back to normal", copied: "Copied", err: "could not be loaded", traceCopy: "Copy trace", of: (n, m) => `${n} of ${m} entries`, back: "Back" },
 };
 const TEXT = {
-  de: { title: "Protokoll", all: "Alles", devices: "Alle Geräte", outage: "Ausfall", battery: "Batterie", updates: "Updates", back: "Zurück", pushSent: "gesendet" },
-  en: { title: "History", all: "All", devices: "All devices", outage: "Outage", battery: "Battery", updates: "Updates", back: "Back", pushSent: "sent" },
+  de: { title: "Protokoll", all: "Alles", devices: "Alle Geräte", pickMagic: "Meldung", outage: "Ausfall", battery: "Batterie", updates: "Updates", back: "Zurück", pushSent: "gesendet" },
+  en: { title: "History", all: "All", devices: "All devices", pickMagic: "Message", outage: "Outage", battery: "Battery", updates: "Updates", back: "Back", pushSent: "sent" },
 };
 const RULE = (id, device, name, entity, extra = {}) => ({ id, device_id: device, entity_id: entity, name, kind: "below", value: 12, for_s: 600, message: "Meldung {value}", body: "", recover: false, recover_message: "", recover_body: "", repeat_s: 0, target: null, enabled: true, critical: false, critical_volume: 10, reset_value: null, ...extra });
 const SEED = (id, device, name) => ({ id, device_id: device, entity_id: "switch.plug", name, action: "on", back_s: 14400, kind: "repeat", delay_s: null, date: null, time: "06:30", repeat: "daily", weekdays: null, mday: null, enabled: true, push: false, target: null, created: Date.now() / 1000 });
@@ -183,7 +183,18 @@ for (const lang of ["de", "en"]) {
     await wait(`return r.querySelectorAll('dialog.mgall-dlg .mg-card').length >= 2`);
     check(`[${tag}] Magic Push (Übersicht): Knopf "${T.title}" im Kopf links vom Schliessen-Knopf, mit Strich`, await ev(`const h = r.querySelector('dialog.mgall-dlg .dlg-head'); const a = h.querySelector('.dlg-acts .dlg-act[data-proto="magic"]'); const c = h.querySelector(".dlg-close"); return !!a && !!h.querySelector(".dlg-acts .dlg-sep") && a.getBoundingClientRect().right <= c.getBoundingClientRect().left && a.getAttribute("aria-label") === ${JSON.stringify(T.title)} && a.dataset.device === "" && Math.abs((a.getBoundingClientRect().top + a.getBoundingClientRect().bottom) / 2 - (c.getBoundingClientRect().top + c.getBoundingClientRect().bottom) / 2) < 0.6`));
     await tap('dialog.mgall-dlg .dlg-act[data-proto="magic"]');
-    check(`[${tag}] öffnet auf "Magic Push", Unterzeile "${T.devices}", Einträge aller Meldungen (3 im Zeitraum)`, await wait(`const d = r.querySelector('${P}'); const t = [...d.querySelectorAll("[data-pr-kinds] .sub-tab")]; return d.open && t[1].classList.contains("on") && d.querySelector("[data-pr-sub]").textContent === ${JSON.stringify(T.devices)} && d.querySelectorAll(".pr-item").length === 3`));
+    check(`[${tag}] öffnet auf "Magic Push", Unterzeile "${T.devices}", Einträge aller Meldungen (3 im Zeitraum)`, await wait(`const d = r.querySelector('${P}'); const t = [...d.querySelectorAll("[data-pr-kinds] .sub-tab")]; return d.open && t[1].classList.contains("on") && d.querySelector("[data-pr-sub]").textContent.startsWith(${JSON.stringify(T.devices)}) && d.querySelectorAll(".pr-item").length === 3`));
+    // Über alle Geräte: ein Chip "Meldung" öffnet die Auswahl (seit 2.134.0), "Alle Meldungen" hebt auf
+    check(`[${tag}] Über alle Geräte: Chip "${T.pickMagic}" statt einer Chip-Reihe, Liste zu`, await wait(`const c = r.querySelector('${P} [data-pr-items] .pr-pick-chip'); return !!c && c.textContent.trim() === ${JSON.stringify(T.pickMagic)} && !r.querySelector('${P} .pr-pick')`));
+    await tap(`${P} [data-pr-items] .pr-pick-chip`);
+    check(`[${tag}] Chip öffnet die Auswahl: "Alle Meldungen" und jede Meldung mit ihrem Gerät`, await wait(`const rows = [...r.querySelectorAll('${P} .pr-pick-row')]; return rows.length >= 3 && rows[0].dataset.v === "" && rows[0].classList.contains("on") && rows.slice(1).some((x) => x.querySelector("small")?.textContent.length > 0)`));
+    await p.screenshot({ path: `${outDir}/protocol-pick-${tag.replace("/", "-")}.png` });
+    await p.evaluate(() => { window.__protocolCalls = []; });
+    await tap(`${P} .pr-pick-row:nth-child(2)`);
+    check(`[${tag}] Meldung gewählt: Liste zu, Chip nennt sie, Abfrage mit item_ids, weniger Einträge`, await wait(`const c = r.querySelector('${P} .pr-pick-chip'); return !r.querySelector('${P} .pr-pick') && c.classList.contains("on") && c.textContent.includes(": ") && r.querySelectorAll(".pr-item").length < 3`) && (await p.evaluate(() => (window.__protocolCalls || []).some((c) => c.item_ids?.length === 1 && !c.device_id))));
+    await tap(`${P} [data-pr-items] .pr-pick-chip`);
+    await tap(`${P} .pr-pick-row:nth-child(1)`);
+    check(`[${tag}] "Alle Meldungen" hebt auf: wieder drei Einträge, Chip ohne Auswahl`, await wait(`const c = r.querySelector('${P} .pr-pick-chip'); return !c.classList.contains("on") && r.querySelectorAll(".pr-item").length === 3`));
     await tap(`${P} [data-pr-kinds] .sub-tab[data-v="all"]`);
     check(`[${tag}] Reiter "${T.all}" ohne Gerät: Zeilen mit dem Namen des Geräts, auch das zweite Gerät`, await wait(`const t = r.querySelector('${P} [data-pr-body]').textContent; return t.includes("Fenstersensor") && t.includes("Klimasensor Keller") && r.querySelectorAll('${P} .al-row').length > 6`));
     await closeProto();
