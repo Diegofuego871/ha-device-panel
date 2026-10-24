@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.136.1] - 2026-10-24
+
+The buttons of the setup wizard have icons, like in the routine wizard.
+
+### Changed
+
+- **Setup wizard, buttons:** "Back" has an arrow to the left, "Next" and "Let's go" an arrow to the right, "Finish" a check mark.
+
 ## [2.136.0] - 2026-10-24
 
 The setup wizard remembers where you stopped. Includes the changes from 2.135.1.
@@ -4655,6 +4663,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.136.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.1
 [2.136.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.0
 [2.135.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.135.0
 [2.134.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.1

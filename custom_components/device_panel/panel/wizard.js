@@ -284,7 +284,7 @@ export class WizardUi {
     } else if (s.step === "welcome") {
       top = `<div class="wz-top"><div class="wz-stp"><span></span>${close}</div></div>`;
       body = this.welcomeHtml();
-      foot = `<div class="wz-welcome-ft"><button type="button" class="dlg-btn primary" data-wz="start">${escape(t("wzStart"))}</button>
+      foot = `<div class="wz-welcome-ft"><button type="button" class="dlg-btn primary" data-wz="start">${escape(t("wzStart"))}${mdi("arrowRight", 18)}</button>
         <div class="wz-ft2"><button type="button" class="dlg-btn" data-wz="later">${escape(t("wzLater"))}</button><button type="button" class="dlg-btn" data-wz="never">${escape(t("wzNever"))}</button></div>${s.hasDraft ? `<button type="button" class="dlg-btn" data-wz="reset">${escape(t("wzReset"))}</button>` : ""}</div>`;
     } else {
       const list = this.steps();
@@ -293,8 +293,8 @@ export class WizardUi {
       top = `<div class="wz-top"><div class="wz-stp"><span><b>${escape(t("wzStep", n, list.length))}</b> · ${escape(t(`wzS_${s.step}`))}</span>${close}</div><div class="wz-prog"><i style="width:${pct}%"></i></div></div>`;
       body = this[`${s.step}Html`]();
       const last = s.step === "done";
-      foot = `<button type="button" class="dlg-btn" data-wz="back"${s.busy ? " disabled" : ""}>${escape(t("wzBack"))}</button>
-        <button type="button" class="dlg-btn primary" data-wz="${last ? "finish" : "next"}"${s.busy || this.invalid() ? " disabled" : ""}>${escape(t(last ? (s.busy ? "wzSaving" : "wzFinish") : "wzNext"))}</button>`;
+      foot = `<button type="button" class="dlg-btn" data-wz="back"${s.busy ? " disabled" : ""}>${mdi("arrowLeft", 18)}${escape(t("wzBack"))}</button>
+        <button type="button" class="dlg-btn primary" data-wz="${last ? "finish" : "next"}"${s.busy || this.invalid() ? " disabled" : ""}>${last ? mdi("check", 18) : ""}${escape(t(last ? (s.busy ? "wzSaving" : "wzFinish") : "wzNext"))}${last ? "" : mdi("arrowRight", 18)}</button>`;
     }
     dlg.innerHTML = `${top}<div class="wz-bd" data-wz-body>${body}</div><div class="wz-ft">${foot}</div>`;
   }

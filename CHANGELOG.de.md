@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.136.1] - 2026-10-24
+
+Die Knöpfe des Einrichtungsassistenten haben Symbole, wie im Routinen-Assistenten.
+
+### Geändert
+
+- **Einrichtungsassistent, Knöpfe:** "Zurück" hat einen Pfeil nach links, "Weiter" und "Los geht's" einen Pfeil nach rechts, "Fertigstellen" ein Häkchen.
+
 ## [2.136.0] - 2026-10-24
 
 Der Einrichtungsassistent merkt sich, wo du aufgehört hast. Enthält die Änderungen aus 2.135.1.
@@ -4756,6 +4764,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.136.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.1
 [2.136.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.0
 [2.135.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.135.0
 [2.134.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.1
