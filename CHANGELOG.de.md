@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.119.0] - 2026-10-24
+
+Verfügbarkeit und Empfang bis 12 Monate zurück, mit denselben Zeiträumen wie bei der Batterie.
+
+### Added
+
+- **Zeiträume 3, 6 und 12 Monate** in den Fenstern **Verfügbarkeit** und **Empfang** (wie bei der Batterie: 24 Std., 7 Tage, 30 Tage, 3, 6 und 12 Monate). Die Verfügbarkeit zeigt den Zeitstrahl, jeden Unterbruch und die Säulen je Tag über den ganzen Zeitraum; der Empfang Tageswerte (Median, schlechtester und bester Wert je Tag).
+- **Empfang als Tageswerte:** Stundenwerte bleiben 31 Tage; was älter ist, wird je Tag zu einem Wert (Median, schlechtester, bester) zusammengefasst und bis zur eingestellten Aufbewahrung behalten. So bleibt der Speicher klein: ein Jahr eines Geräts braucht rund 15 KB.
+
+### Changed
+
+- **Aufbewahrung bis 365 Tage, Standard 1 Jahr** (Einstellungen › Panel › Speicher, Kapitel "Geräteverläufe"): vorher 7 bis 31 Tage, Standard 31. Die Grenze in MB ist neu 20 MB für die Verfügbarkeit und 50 MB für den Empfang (vorher 10 und 20). Eigene Werte bleiben unverändert.
+- Der Hinweis zur Aufbewahrung sagt nicht mehr "höchstens 30 Tage".
+- Die Verläufe wachsen ab diesem Update über die bisherigen 31 Tage hinaus. Was schon gelöscht wurde, lässt sich nicht herstellen (der Recorder von Home Assistant behält standardmässig nur zehn Tage).
+
 ## [2.118.0] - 2026-10-24
 
 Das Protokoll-Fenster ist zum Protokoll eines Geräts geworden: alles zu einem Gerät in einer Liste, auch aus den Übersichten von Magic Push und Routinen.
@@ -4472,6 +4487,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.119.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.119.0
 [2.118.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.118.0
 [2.117.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.117.0
 [2.116.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.1

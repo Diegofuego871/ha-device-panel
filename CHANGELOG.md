@@ -7,6 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.119.0] - 2026-10-24
+
+Availability and reception up to 12 months back, with the same periods as the battery.
+
+### Added
+
+- **Periods 3, 6 and 12 months** in the windows **Availability** and **Reception** (like the battery: 24 hours, 7 days, 30 days, 3, 6 and 12 months). Availability shows the timeline, every outage and the bars per day over the whole period; reception shows daily values (median, worst and best value per day).
+- **Reception as daily values:** hourly values stay for 31 days; older ones are condensed to one value per day (median, worst, best) and kept up to the retention you set. That keeps the storage small: one year of a device takes about 15 KB.
+
+### Changed
+
+- **Retention up to 365 days, default 1 year** (Settings › Panel › Storage, chapter "Device histories"): before 7 to 31 days, default 31. The limit in MB is now 20 MB for availability and 50 MB for reception (before 10 and 20). Values you set yourself stay as they are.
+- The note on retention no longer says "30 days at most".
+- The histories grow beyond the 31 days kept so far from this update on. Values that were already deleted cannot be restored (the recorder of Home Assistant keeps only ten days by default).
+
 ## [2.118.0] - 2026-10-24
 
 The history window became the history of a device: everything about a device in one list, also from the overviews of Magic Push and routines.
@@ -4371,6 +4386,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.119.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.119.0
 [2.118.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.118.0
 [2.117.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.117.0
 [2.116.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.116.1

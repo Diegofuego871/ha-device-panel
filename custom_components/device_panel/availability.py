@@ -55,7 +55,8 @@ SAVE_DELAY = 300
 # Sammelausfall: so viele Geräte innert dieser Zeit.
 INCIDENT_MIN = 3
 INCIDENT_WINDOW = 120
-RANGES = {"24h": 86400, "7d": 7 * 86400, "30d": 30 * 86400}
+# Zeiträume wie bei der Batterie (seit 2.119.0): 24 Std., 7 und 30 Tage, 3, 6 und 12 Monate
+RANGES = {"24h": 86400, "7d": 7 * 86400, "30d": 30 * 86400, "90d": 90 * 86400, "180d": 180 * 86400, "365d": 365 * 86400}
 # Nachfüllen aus dem Recorder so lange nach dem Start: nicht mitten in die
 # Last des Hochfahrens.
 BACKFILL_DELAY = 120

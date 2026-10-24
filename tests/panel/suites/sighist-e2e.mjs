@@ -12,13 +12,13 @@ const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"
 const R = `document.querySelector("device-panel").shadowRoot`;
 const TEXT = {
   de: {
-    title: "Empfang", ranges: ["24 Std.", "7 Tage", "30 Tage"], weak: "Schwach unter LQI 60", weakOwn: "Schwach unter -85 dBm", log: "Vom Panel aufgezeichnet, seit ",
+    title: "Empfang", ranges: ["24 Std.", "7 Tage", "30 Tage", "3 Monate", "6 Monate", "12 Monate"], weak: "Schwach unter LQI 60", weakOwn: "Schwach unter -85 dBm", log: "Vom Panel aufgezeichnet, seit ",
     notRec: "Der Recorder zeichnet den Sensor nicht auf (in seiner Konfiguration ausgeschlossen), deshalb zeichnet ihn das Panel selbst auf.", soon: "Erste Werte nach wenigen Minuten.", steady: "Wert unverändert seit ",
     hist: "Aus dem Verlauf des Recorders (Sensor des Geräts).", stats: "Aus dem Recorder (Langzeitstatistik", empty: "Das Panel zeichnet den Empfang", none: "Für den Empfang dieses Geräts",
     facts: /^MedianLQI \d+\|SchlechtesterLQI \d+\|BesterLQI \d+$/, legend: "Median|Spanne schlechtester bis bester Wert", noData: "Keine Daten für diesen Zeitraum.",
   },
   en: {
-    title: "Signal", ranges: ["24 h", "7 days", "30 days"], weak: "Weak below LQI 60", weakOwn: "Weak below -85 dBm", log: "Recorded by the panel since ",
+    title: "Signal", ranges: ["24 h", "7 days", "30 days", "3 months", "6 months", "12 months"], weak: "Weak below LQI 60", weakOwn: "Weak below -85 dBm", log: "Recorded by the panel since ",
     notRec: "The recorder does not record the sensor (excluded in its configuration), so the panel records it itself.", soon: "First values after a few minutes.", steady: "Value unchanged since ",
     hist: "From the recorder history (sensor of the device).", stats: "From the recorder (long-term statistics", empty: "The panel records the signal", none: "There is no history for the signal",
     facts: /^MedianLQI \d+\|WorstLQI \d+\|BestLQI \d+$/, legend: "Median|Range from worst to best value", noData: "No data for this period.",
@@ -78,7 +78,7 @@ for (const lang of ["de", "en"]) {
     const tile = await ev(`const t=r.querySelector('dialog.device .st-tile[data-kind="signal"]'); return [t.tagName, !!t.querySelector(".chev")]`);
     check(`[${tag}] Kachel ist Knopf mit Pfeil`, tile[0] === "BUTTON" && tile[1], JSON.stringify(tile));
     const ranges = await ev(`return [...r.querySelectorAll('dialog.stat-dlg [data-stat="range"]')].map(x=>x.textContent)`);
-    check(`[${tag}] drei Zeiträume`, JSON.stringify(ranges) === JSON.stringify(T.ranges), JSON.stringify(ranges));
+    check(`[${tag}] sechs Zeiträume (seit 2.119.0 wie bei der Batterie)`, JSON.stringify(ranges) === JSON.stringify(T.ranges), JSON.stringify(ranges));
     check(`[${tag}] aktueller Wert mit Balken`, (await text("dialog.stat-dlg .sg-cur")) === "LQI 61" && (await ev(`return !!r.querySelector("dialog.stat-dlg .sg-cur svg")`)));
     const tiles = () => ev(`return [...r.querySelectorAll("dialog.stat-dlg .sg-row3 .sg-tile")].map((x) => x.textContent.replace(/\\s+/g, " ").trim()).join("|")`);
     check(`[${tag}] Median, schlechtester, bester`, T.facts.test(await tiles()), await tiles());
@@ -88,6 +88,10 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Quelle: Aufzeichnung seit`, (await text("dialog.stat-dlg .bh-src")).startsWith(T.log), await text("dialog.stat-dlg .bh-src"));
     await p.screenshot({ path: `${outDir}/sighist-log-${tag.replace("/", "-")}.png` });
     check(`[${tag}] 7 Tage`, (await range("7d")) && (await calls()).at(-1) === "e:7d" && (await ev(`return !!r.querySelector("dialog.stat-dlg path.sg-band")`)));
+    // 3, 6 und 12 Monate (2.119.0): Tageswerte, Monate auf der Achse
+    check(`[${tag}] 12 Monate: Anfrage 365d, Spanne und Monatsmarken`, (await range("365d")) && (await calls()).at(-1) === "e:365d" && (await ev(`return !!r.querySelector("dialog.stat-dlg path.sg-band") && r.querySelectorAll("dialog.stat-dlg .bh-ticks span:not(.now-label)").length >= 3`)));
+    check(`[${tag}] 3 Monate: Anfrage 90d`, (await range("90d")) && (await calls()).at(-1) === "e:90d");
+    await range("7d");
 
     // WLAN: Recorder; eigene Schwelle des Geräts
     await p.evaluate(() => { window.__devSettings.signal.f = -85; });

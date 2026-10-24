@@ -49,9 +49,13 @@ def test_blocks_hours_and_gaps(hass: HomeAssistant) -> None:
     assert log.history("a", "24h", now + 10)[0][-1] == [t0 + 3 * HOUR_SECONDS, -60, -60, -60]
     log.record("a", "lqi", 120, now + 20)
     assert log.kind("a") == "lqi" and len(log.history("a", "24h", now + 20)[0]) == 1
-    # Nach 31 Tagen ist alles weg, die Art auch.
+    # Nach 31 Tagen sind die Stunden weg; seit 2.119.0 bleibt der Tag als Tageswert (Aufbewahrung 365 Tage), die Art auch.
     log.prune(now + 32 * 86400)
-    assert log.history("a", "30d", now + 32 * 86400)[0] == [] and log.kind("a") is None
+    assert log.history("a", "30d", now + 32 * 86400)[0] == [] and log.kind("a") == "lqi"
+    assert len(log.history("a", "365d", now + 32 * 86400)[0]) == 1
+    # Nach einem Jahr ist alles weg, die Art auch.
+    log.prune(now + 367 * 86400)
+    assert log.history("a", "365d", now + 367 * 86400)[0] == [] and log.kind("a") is None
 
 
 def test_load_survives_restart(hass: HomeAssistant) -> None:

@@ -99,7 +99,6 @@ const MATTER_REFRESH_MS = 3600000;
 // Popup: Entitäten und Kurzstatistik höchstens 30 s alt, Verlauf 60 s.
 const DETAIL_MAX_AGE_MS = 30000;
 const HISTORY_MAX_AGE_MS = 60000;
-const RANGES = ["24h", "7d", "30d"];
 // Batterie-Verlauf (seit 0.22.0, docs/mockups/battery-history-v1, A): dazu 3 Monate.
 const BAT_RANGES = ["24h", "7d", "30d", "90d", "180d", "365d"];
 // Kaum Daten im Zeitraum (neu installiert): Zeitstrahl erst ab dem ersten
@@ -5229,8 +5228,9 @@ class DevicePanel extends HTMLElement {
     this._liveTimer = this._statKind === "signal" ? window.setInterval(() => this._liveTick(), LIVE_MS) : null;
   }
 
+  // Zeiträume (seit 2.119.0 für Verfügbarkeit, Empfang und Batterie gleich): 24 Std., 7 und 30 Tage, 3, 6 und 12 Monate
   _statRanges() {
-    return this._statKind === "battery" ? BAT_RANGES : RANGES;
+    return BAT_RANGES;
   }
 
   // Schlüssel des geladenen Verlaufs: Art, Gerät, Zeitraum.

@@ -106,7 +106,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] X schliesst nur das Fenster`, await wait(`return !r.querySelector("dialog.stat-dlg").open && r.querySelector("dialog.device").open`));
     // Verfügbarkeit weiter wie bisher
     await tap('dialog.device [data-dlg="stat"][data-range="24h"][data-kind="avail"]');
-    check(`[${tag}] Verfügbarkeit unverändert`, await wait(`return r.querySelector("dialog.stat-dlg")?.open && !!r.querySelector("dialog.stat-dlg .avail-bar")`) && (await ev(`return r.querySelectorAll('dialog.stat-dlg [data-stat="range"]').length`)) === 3);
+    check(`[${tag}] Verfügbarkeit unverändert`, await wait(`return r.querySelector("dialog.stat-dlg")?.open && !!r.querySelector("dialog.stat-dlg .avail-bar")`) && (await ev(`return r.querySelectorAll('dialog.stat-dlg [data-stat="range"]').length`)) === 6);
 
     check(`[${tag}] keine Skriptfehler`, errors.length === 0, errors.join(" | "));
     await ctx.close();

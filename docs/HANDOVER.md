@@ -3,6 +3,13 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.119.0, Verläufe bis 12 Monate)
+
+- Wunsch des Nutzers: alle Verläufe 12 Monate, Zeiträume wie bei der Batterie (24 Std., 7, 30 Tage, 3, 6, 12 Monate), Standard 1 Jahr. `availability.RANGES` und `signal_history.RANGES` kennen jetzt `90d`, `180d`, `365d`; das Panel nutzt für Verfügbarkeit, Empfang und Batterie dieselbe Liste (`BAT_RANGES`, `_statRanges`). Aufbewahrung `availability_keep_days`/`signal_keep_days` 7 bis 365 (Standard 365), MB-Grenzen Standard 20 und 50.
+- Empfang (`signal_history.py`): Stunden bleiben `KEEP_HOURS` = 31 Tage (oder die kürzere Aufbewahrung); ältere ganze UTC-Tage werden in `prune` zu Tageswerten `_days` ([Start, Median der Mediane, schlechtester, bester], je Gerät, im Speicher unter `"days"`). `history()` liefert für 3, 6, 12 Monate Tageswerte (Bucket 86400; jüngste Tage aus den Stunden), sonst wie bisher. `_trim` (MB) kürzt Stunden und Tage über alle Geräte; die Grösse wird nur stündlich geprüft. Verfügbarkeit: die Ereignisliste bleibt wie sie ist (wenige Einträge), `history()` rechnet 365 Tage.
+- Nicht nachfüllbar: was vor dem Update schon gelöscht war (älter als 31 Tage), ist weg (Recorder behält standardmässig 10 Tage; das Nachfüllen der Verfügbarkeit läuft nur einmal je Instanz).
+- Tests: `test_storage_limits.py` (Tageswerte, 12 Monate), `test_signal_history.py` (31 Tage → Tageswert, nach einem Jahr weg), Suiten `popup`, `sighist`, `battery`, `protocollimits` angepasst.
+
 ## Stand (2.118.0, Geräteprotokoll)
 
 - Entscheid des Nutzers (Mockups `docs/mockups/storage-devlog-v1`): Knopf in der Schnellzeile (A), Liste nach Tagen mit Chips (A), das alte Protokoll geht im neuen auf (Ja). Das Protokoll-Fenster (`panel/protocol.js`, `ProtocolUi`) hat jetzt immer drei Reiter `TABS` = Alles, Magic Push, Routinen; "Alles" (`kind: "all"`) ist die Liste je Tag (`allHtml`, `allRow`, `allText`), die beiden anderen behalten Kennzahlen, Diagramm, Tabelle, Trace. `alt` enthält die Zusammenhänge der beiden anderen Reiter (mit Gerät oder ohne = alle Geräte).

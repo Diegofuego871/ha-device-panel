@@ -163,7 +163,7 @@
       return off > 0 ? 1 : none > size / 2 ? 2 : 0;
     });
   }
-  const RANGES = { "24h": D, "7d": 7 * D, "30d": 30 * D };
+  const RANGES = { "24h": D, "7d": 7 * D, "30d": 30 * D, "90d": 90 * D, "180d": 180 * D, "365d": 365 * D };
   function availHistory(id, range) {
     const end = Date.now() / 1000;
     const span = RANGES[range];
@@ -282,7 +282,7 @@
   // Weg des Bluetooth-Empfangs wie SignalLog.via_summary: Abschnitte [von, bis, Nr. | null], Empfänger mit Anteil und Ø, Wechsel (neueste zuerst).
   const VIA_NAMES = ["Storen Büro", "Proxy Garage", "Küche", "Bluetooth-Adapter (HA)"];
   function viaFor(range, start, end, points) {
-    const plan = { "24h": [[22, 0], [8, 1], [38, 0], [4, null], [28, 2]], "7d": [[40, 0], [6, 1], [18, 2], [3, null], [26, 0], [7, 3]], "30d": [[55, 0], [12, 2], [4, null], [20, 0], [9, 3]] }[range];
+    const plan = { "24h": [[22, 0], [8, 1], [38, 0], [4, null], [28, 2]], "7d": [[40, 0], [6, 1], [18, 2], [3, null], [26, 0], [7, 3]], "30d": [[55, 0], [12, 2], [4, null], [20, 0], [9, 3]] }[["90d", "180d", "365d"].includes(range) ? "30d" : range];
     const segments = [];
     let at = start;
     for (const [w, k] of plan) {
@@ -306,7 +306,7 @@
     };
   }
   function signalHistory(d, range) {
-    const span = { "24h": 1, "7d": 7, "30d": 30 }[range] * D;
+    const span = { "24h": 1, "7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365 }[range] * D;
     const end = Date.now() / 1000;
     const start = end - span;
     const sig = d.signal;
@@ -325,7 +325,7 @@
     const wave = (t) => Math.sin(t / 7200 + seed) * (kind === "dbm" ? 4 : 18) + Math.sin(t / 900 + seed * 2) * (kind === "dbm" ? 2 : 8);
     const clamp = (v) => (kind === "dbm" ? Math.max(-110, Math.min(-30, v)) : Math.max(1, Math.min(255, v)));
     if (logged) {
-      const bucket = range === "24h" ? 300 : 3600;
+      const bucket = range === "24h" ? 300 : ["90d", "180d", "365d"].includes(range) ? 86400 : 3600;
       if (forced === "log-empty" || forced === "not-recorded-empty") return { ...base, bucket };
       const points = [];
       // Aufzeichnung seit 9 Tagen; offline: nichts seit dem Ausfall; eine Lücke vor 6 Std.
@@ -339,7 +339,7 @@
       }
       return { ...base, source: points.length ? "log" : "none", bucket, points, first, via: d.connection === "ble" && !window.__viaOff ? viaFor(range, start, end, points) : null, listeners: listenersFor(d), smoothed: d.connection === "ble" };
     }
-    const stats = range === "30d";
+    const stats = ["30d", "90d", "180d", "365d"].includes(range);
     const points = [];
     if (stats) {
       // Stundenmittel: nur die langsame Welle (die schnelle mittelt sich weg).
@@ -434,7 +434,7 @@
     if (!["{facts}", ...PROMPT_GROUPS].some((v) => text.includes(v))) return "no_facts";
     return null;
   };
-  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], notify_group_min: [2, 20], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [2, 80], charge_stall: [5, 120], routines_catch_up: [0, 60], status_cpu_limit: [1, 100], status_ram_limit: [1, 100], status_disk_limit: [1, 100], status_cpu_minutes: [1, 60], status_ram_minutes: [1, 60], status_disk_minutes: [1, 60], protocol_max_mb: [1, 200], protocol_max_entries: [100, 100000], log_max_mb: [1, 200], log_max_entries: [100, 20000], availability_keep_days: [7, 31], availability_max_mb: [1, 200], signal_keep_days: [7, 31], signal_max_mb: [1, 200] };
+  const LIMITS = { offline_after: [1, 60], flaky_outages: [2, 50], startup_grace: [0, 30], battery_low: [1, 50], notify_delay: [1, 60], notify_group_min: [2, 20], new_window: [1, 60], updates_window: [1, 60], charge_full: [50, 100], charge_rise: [2, 80], charge_stall: [5, 120], routines_catch_up: [0, 60], status_cpu_limit: [1, 100], status_ram_limit: [1, 100], status_disk_limit: [1, 100], status_cpu_minutes: [1, 60], status_ram_minutes: [1, 60], status_disk_minutes: [1, 60], protocol_max_mb: [1, 200], protocol_max_entries: [100, 100000], log_max_mb: [1, 200], log_max_entries: [100, 20000], availability_keep_days: [7, 365], availability_max_mb: [1, 200], signal_keep_days: [7, 365], signal_max_mb: [1, 200] };
   // Inhalt der Batterie-Meldung wie options_api.BATTERY_FIELDS (seit 0.34.0).
   const BATTERY_FIELDS = ["battery", "area", "integration", "model"];
   // Inhalt der Meldung bei neuen Geräten wie const.NEW_FIELDS (seit 1.24.0).
@@ -644,7 +644,7 @@
     notify_delay: 2, notify_fields: ["area", "integration", "since"], notify_exclude_integrations: [], persistent_exclude_integrations: [],
     outage_persistent: false, battery_push_exclude_integrations: [], battery_fields: ["battery", "area"],
     signal_low: {}, signal_low_integrations: {},
-    routines_pause: false, routines_catch_up: 10, protocol_max_mb: 30, protocol_max_entries: 5000, log_max_mb: 10, log_max_entries: 4000, availability_keep_days: 31, availability_max_mb: 10, signal_keep_days: 31, signal_max_mb: 20, routines_notify_error: true, status_notify: true, notify_service_status: "", status_cpu_alert: true, status_ram_alert: true, status_disk_alert: true, status_cpu_limit: 99, status_ram_limit: 99, status_disk_limit: 99, status_cpu_minutes: 3, status_ram_minutes: 3, status_disk_minutes: 3, status_cpu_entity: "", status_ram_entity: "", status_disk_entity: "",
+    routines_pause: false, routines_catch_up: 10, protocol_max_mb: 30, protocol_max_entries: 5000, log_max_mb: 10, log_max_entries: 4000, availability_keep_days: 365, availability_max_mb: 20, signal_keep_days: 365, signal_max_mb: 50, routines_notify_error: true, status_notify: true, notify_service_status: "", status_cpu_alert: true, status_ram_alert: true, status_disk_alert: true, status_cpu_limit: 99, status_ram_limit: 99, status_disk_limit: 99, status_cpu_minutes: 3, status_ram_minutes: 3, status_disk_minutes: 3, status_cpu_entity: "", status_ram_entity: "", status_disk_entity: "",
     notify_new: false, new_window: 5, notify_charge: false, charge_full: 100, charge_rise: 20, notify_charge_stop: false, charge_stall: 15, charge_integrations: [], charge_full_integrations: {}, charge_rise_integrations: {}, charge_stall_integrations: {}, charge_stop_integrations: {}, charge_live: false, charge_live_integrations: {}, notify_updates: false, updates_mode: "daily", updates_time: "09:00", updates_window: 5, updates_repeat: "never", updates_kinds: ["core", "addons", "hacs"], updates_exclude: [], updates_include: [], new_persistent: false, new_fields: ["area", "integration"], new_exclude_integrations: [],
     // Emoji der Push-Meldungen: null = Standard (seit 2.2.0)
     emoji_outage: null, emoji_group: null, emoji_online: null, emoji_battery: null, emoji_charge: null, emoji_charge_stop: null, emoji_new: null, emoji_updates: null,
@@ -1866,7 +1866,7 @@
       if (msg.type === "device_panel/signal_history") {
         const d = window.__devices.find((x) => x.id === msg.device_id);
         if (!d) throw { code: "not_found", message: "device not found" };
-        if (!["24h", "7d", "30d"].includes(msg.range || "24h")) throw { code: "invalid_format", message: "range" };
+        if (!["24h", "7d", "30d", "90d", "180d", "365d"].includes(msg.range || "24h")) throw { code: "invalid_format", message: "range" };
         return signalHistory(d, msg.range || "24h");
       }
       if (msg.type === "device_panel/signal_listeners") {

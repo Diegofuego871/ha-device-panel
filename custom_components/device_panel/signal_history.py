@@ -47,20 +47,23 @@ from .storage_util import PeriodicSaver
 _LOGGER = logging.getLogger(__name__)
 
 STORAGE_KEY = f"{DOMAIN}.signal"
-RANGES = {"24h": 86400, "7d": 7 * 86400, "30d": 30 * 86400}
+# Zeiträume wie bei der Batterie (seit 2.119.0); ab 90 Tagen zeigt das Fenster Tageswerte statt Stundenwerte
+RANGES = {"24h": 86400, "7d": 7 * 86400, "30d": 30 * 86400, "90d": 90 * 86400, "180d": 180 * 86400, "365d": 365 * 86400}
+DAY_SECONDS = 86400
 SAMPLE_INTERVAL = timedelta(seconds=60)
 BLOCK_SECONDS = 300
 HOUR_SECONDS = 3600
 KEEP_BLOCKS = 86400 + HOUR_SECONDS
-# Standard der Aufbewahrung; seit 2.117.0 einstellbar (Panel › Speicher), die Stunden-Blöcke und der Weg folgen der Einstellung
-KEEP_HOURS = DEFAULT_SIGNAL_DAYS * 86400
+# Stundenwerte bleiben so lange (oder so lange, wie die Aufbewahrung der Einstellung ist, wenn sie kürzer ist); was älter ist, wird zu Tageswerten
+# (seit 2.119.0), die bis zur eingestellten Aufbewahrung (Panel › Speicher, bis 12 Monate) bleiben. Der Weg folgt der Aufbewahrung.
+KEEP_HOURS = 31 * 86400
 # Seltener als das Verfügbarkeitsprotokoll: ein verlorener Block nach einem
 # Absturz ist verschmerzbar, die Datei ist grösser.
 SAVE_DELAY = 900
 # Weg des Bluetooth-Empfangs (seit 2.40.0, Wunsch des Nutzers): über welchen Empfänger (Adapter oder Proxy) ein Gerät gemeldet wird. Gespeichert
 # werden nur die Wechsel [Zeit, Quelle] (None = Lücke: ausgefallen oder nicht empfangen), so lange wie die Stunden-Blöcke. Rückwirkend lässt
 # sich der Weg nicht herstellen, HA speichert ihn nirgends: er füllt sich ab dem Update.
-VIA_KEEP = DEFAULT_SIGNAL_DAYS * 86400
+VIA_KEEP = DEFAULT_SIGNAL_DAYS * 86400  # Standard der Aufbewahrung
 VIA_CHANGES_MAX = 6
 # Quellen, die nur das Panel aufzeichnet.
 LOGGED = ("zha", "ble")
@@ -110,6 +113,19 @@ def _block(values: list[float], start: float) -> list[float]:
     return [round(start), round(statistics.median(values), 1), round(min(values), 1), round(max(values), 1)]
 
 
+def _day(rows: list[list[float]], start: float) -> list[float]:
+    """Tag aus seinen Stunden (oder Tagen): [Start, Median der Mediane, Schlechtester, Bester]."""
+    return [round(start), round(statistics.median(b[1] for b in rows), 1), min(b[2] for b in rows), max(b[3] for b in rows)]
+
+
+def _daily(rows: list[list[float]]) -> list[list[float]]:
+    """Stundenwerte zu Tageswerten (UTC-Tage), aufsteigend."""
+    groups: dict[int, list[list[float]]] = {}
+    for row in rows:
+        groups.setdefault(int(row[0] // DAY_SECONDS), []).append(row)
+    return [_day(groups[k], k * DAY_SECONDS) for k in sorted(groups)]
+
+
 def _hour(blocks: list[list[float]], start: float) -> list[float]:
     """Stunde aus ihren 5-Minuten-Blöcken."""
     return [round(start), round(statistics.median(b[1] for b in blocks), 1), min(b[2] for b in blocks), max(b[3] for b in blocks)]
@@ -125,6 +141,8 @@ class SignalLog:
         self._kind: dict[str, str] = {}
         self._blocks: dict[str, list[list[float]]] = {}
         self._hours: dict[str, list[list[float]]] = {}
+        # Tageswerte (seit 2.119.0): Stunden, die älter als KEEP_HOURS sind, als [Start, Median, Schlechtester, Bester] je UTC-Tag
+        self._days: dict[str, list[list[float]]] = {}
         # Laufender Block pro Gerät: [Start, Werte]; laufende Stunde: [Start, Blöcke].
         self._open: dict[str, list[Any]] = {}
         self._open_hour: dict[str, list[Any]] = {}
@@ -184,6 +202,7 @@ class SignalLog:
         self._kind = {str(k): v for k, v in (stored.get("kind") or {}).items() if v in ("dbm", "lqi")}
         self._blocks = rows(stored.get("blocks"))
         self._hours = rows(stored.get("hours"))
+        self._days = rows(stored.get("days"))
         self._open = {
             str(dev): [o[0], [float(v) for v in o[1]]]
             for dev, o in (stored.get("open") or {}).items()
@@ -210,7 +229,7 @@ class SignalLog:
 
     def data(self) -> dict[str, Any]:
         return {
-            "kind": self._kind, "blocks": self._blocks, "hours": self._hours, "open": self._open, "open_hours": self._open_hour,
+            "kind": self._kind, "blocks": self._blocks, "hours": self._hours, "days": self._days, "open": self._open, "open_hours": self._open_hour,
             "via": self._via, "via_names": self._via_names,
         }
 
@@ -335,14 +354,33 @@ class SignalLog:
             self._close_hour(dev)
         opts = effective(self.hass)
         keep_long = int(opts[CONF_SIGNAL_DAYS]) * 86400
-        for store, keep in ((self._blocks, KEEP_BLOCKS), (self._hours, keep_long)):
-            limit = now - keep
-            for dev in list(store):
-                kept = [b for b in store[dev] if b[0] >= limit]
-                if kept:
-                    store[dev] = kept
-                else:
-                    store.pop(dev)
+        for dev in list(self._blocks):
+            kept = [b for b in self._blocks[dev] if b[0] >= now - KEEP_BLOCKS]
+            if kept:
+                self._blocks[dev] = kept
+            else:
+                self._blocks.pop(dev)
+        # Stunden: bis KEEP_HOURS (oder der kürzeren Aufbewahrung); die älteren ganzen UTC-Tage gehen als Tageswerte weiter, wenn die Aufbewahrung länger ist
+        fine = min(keep_long, KEEP_HOURS)
+        cut = now - fine
+        cut -= cut % DAY_SECONDS
+        for dev in list(self._hours):
+            old = [b for b in self._hours[dev] if b[0] < cut]
+            kept = [b for b in self._hours[dev] if b[0] >= cut]
+            if old and keep_long > KEEP_HOURS:
+                folded = _daily(old)
+                have = {row[0] for row in self._days.get(dev, [])}
+                self._days[dev] = sorted(self._days.get(dev, []) + [row for row in folded if row[0] not in have])
+            if kept:
+                self._hours[dev] = kept
+            else:
+                self._hours.pop(dev)
+        for dev in list(self._days):
+            kept = [b for b in self._days[dev] if b[0] + DAY_SECONDS > now - keep_long]
+            if kept:
+                self._days[dev] = kept
+            else:
+                self._days.pop(dev)
         # Weg: ältere Wechsel weg, den letzten davor behalten (er gilt noch zu Beginn des Zeitraums); Namen nur der verwendeten Quellen
         limit = now - keep_long
         for dev in list(self._via):
@@ -359,7 +397,7 @@ class SignalLog:
                 self._via.pop(dev)
         used = {e[1] for events in self._via.values() for e in events if e[1]}
         self._via_names = {k: v for k, v in self._via_names.items() if k in used}
-        for dev in [d for d in self._kind if d not in self._blocks and d not in self._hours and d not in self._open and d not in self._open_hour]:
+        for dev in [d for d in self._kind if d not in self._blocks and d not in self._hours and d not in self._days and d not in self._open and d not in self._open_hour]:
             self._kind.pop(dev)
         # Die Grösse nur stündlich prüfen (das JSON der ganzen Aufzeichnung zu bilden kostet), bei geänderter Einstellung sofort
         if force or now - self._trimmed_at >= HOUR_SECONDS:
@@ -371,30 +409,31 @@ class SignalLog:
         return len(json.dumps(self.data(), separators=(",", ":")).encode())
 
     def _trim(self, max_bytes: int) -> None:
-        """Über der Grenze (MB): die ältesten Stunden über alle Geräte weglassen (und die Wechsel des Wegs davor), bis es passt."""
+        """Über der Grenze (MB): die ältesten Stunden und Tage über alle Geräte weglassen, bis es passt."""
         size = self.size()
         if size <= max_bytes:
             return
-        times = sorted(b[0] for rows in self._hours.values() for b in rows)
+        times = sorted(b[0] for store in (self._hours, self._days) for rows in store.values() for b in rows)
         if not times:
             return
         drop = min(len(times) - 1, int(len(times) * (size - max_bytes * 0.9) / size) + 1)
         if drop <= 0:
             return
         cutoff = times[drop]
-        for dev in list(self._hours):
-            kept = [b for b in self._hours[dev] if b[0] >= cutoff]
-            if kept:
-                self._hours[dev] = kept
-            else:
-                self._hours.pop(dev)
+        for store in (self._hours, self._days):
+            for dev in list(store):
+                kept = [b for b in store[dev] if b[0] >= cutoff]
+                if kept:
+                    store[dev] = kept
+                else:
+                    store.pop(dev)
 
     def usage(self) -> dict[str, int]:
         """Belegung für Panel › Speicher: Byte, Geräte und Tage der ältesten Stunde."""
-        first = min((rows[0][0] for rows in self._hours.values() if rows), default=None)
+        first = min((rows[0][0] for store in (self._hours, self._days) for rows in store.values() if rows), default=None)
         return {
             "bytes": self.size(),
-            "devices": len(set(self._blocks) | set(self._hours)),
+            "devices": len(set(self._blocks) | set(self._hours) | set(self._days)),
             "days": max(0, int((time.time() - first) / 86400)) if first else 0,
         }
 
@@ -405,7 +444,7 @@ class SignalLog:
         self._saver.schedule()
 
     def forget(self, dev: str) -> None:
-        for store in (self._kind, self._blocks, self._hours, self._open, self._open_hour, self._via, self._recent):
+        for store in (self._kind, self._blocks, self._hours, self._days, self._open, self._open_hour, self._via, self._recent):
             store.pop(dev, None)
 
     # -- Abfragen --------------------------------------------------------------
@@ -426,6 +465,7 @@ class SignalLog:
                 out.append(open_block)
             return out, BLOCK_SECONDS
         out = [b for b in self._hours.get(dev, []) if b[0] >= limit]
+        long = span > RANGES["30d"]
         hour = self._open_hour.get(dev)
         blocks = list(hour[1]) if hour else []
         hour_start = hour[0] if hour else None
@@ -438,6 +478,12 @@ class SignalLog:
             blocks.append(open_block)
         if blocks and hour_start is not None and hour_start >= limit:
             out.append(_hour(blocks, hour_start))
+        if long:
+            # 3, 6, 12 Monate (seit 2.119.0): Tageswerte, die älteren aus dem Speicher, die jüngsten aus den Stunden
+            older = [d for d in self._days.get(dev, []) if d[0] + DAY_SECONDS > limit]
+            fresh = _daily(out)
+            have = {d[0] for d in fresh}
+            return sorted([d for d in older if d[0] not in have] + fresh), DAY_SECONDS
         return out, HOUR_SECONDS
 
     def via_summary(self, dev: str, range_key: str, now: float | None = None, points: list[list[float]] | None = None) -> dict[str, Any] | None:
@@ -502,7 +548,7 @@ class SignalLog:
 
     def first(self, dev: str) -> float | None:
         """Beginn der Aufzeichnung für das Gerät (ältester Block)."""
-        starts = [rows[0][0] for rows in (self._hours.get(dev), self._blocks.get(dev)) if rows]
+        starts = [rows[0][0] for rows in (self._days.get(dev), self._hours.get(dev), self._blocks.get(dev)) if rows]
         if (hour := self._open_hour.get(dev)) and hour[1]:
             starts.append(hour[1][0][0])
         if (current := self._open.get(dev)) and current[1]:

@@ -145,7 +145,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "status_disk_limit": 99,
         "status_cpu_minutes": 3, "status_ram_minutes": 3, "status_disk_minutes": 3,
         "protocol_max_mb": 30, "protocol_max_entries": 5000, "log_max_mb": 10, "log_max_entries": 4000,
-        "availability_keep_days": 31, "availability_max_mb": 10, "signal_keep_days": 31, "signal_max_mb": 20,
+        "availability_keep_days": 365, "availability_max_mb": 20, "signal_keep_days": 365, "signal_max_mb": 50,
         "ai_prompt": "",
         "battery_push": False,
         "battery_persistent": False,
@@ -204,7 +204,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "offline_after": [1, 60], "flaky_outages": [2, 50], "startup_grace": [0, 30], "battery_low": [1, 50], "notify_delay": [1, 60], "notify_group_min": [2, 20], "new_window": [1, 60], "updates_window": [1, 60], "charge_full": [50, 100], "charge_rise": [2, 80], "charge_stall": [5, 120], "routines_catch_up": [0, 60],
         "status_cpu_limit": [1, 100], "status_ram_limit": [1, 100], "status_disk_limit": [1, 100], "status_cpu_minutes": [1, 60], "status_ram_minutes": [1, 60], "status_disk_minutes": [1, 60],
         "protocol_max_mb": [1, 200], "protocol_max_entries": [100, 100000], "log_max_mb": [1, 200], "log_max_entries": [100, 20000],
-        "availability_keep_days": [7, 31], "availability_max_mb": [1, 200], "signal_keep_days": [7, 31], "signal_max_mb": [1, 200],
+        "availability_keep_days": [7, 365], "availability_max_mb": [1, 200], "signal_keep_days": [7, 365], "signal_max_mb": [1, 200],
     }
     assert set(result["panel"]) == {"prerelease", "auto_update"}
 
@@ -273,9 +273,9 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
 
 
 async def test_history_limits_from_panel(hass: HomeAssistant, entry, hass_ws_client, github_offline) -> None:
-    """2.117.0: Aufbewahrung (7 bis 31 Tage) und Grösse (1 bis 200 MB) der Verläufe von Verfügbarkeit und Empfang."""
+    """2.117.0: Aufbewahrung (seit 2.119.0 7 bis 365 Tage) und Grösse (1 bis 200 MB) der Verläufe von Verfügbarkeit und Empfang."""
     client = await hass_ws_client(hass)
-    for n, values in enumerate(({"availability_keep_days": 40}, {"signal_max_mb": 0}, {"signal_keep_days": 6}), start=1):
+    for n, values in enumerate(({"availability_keep_days": 400}, {"signal_max_mb": 0}, {"signal_keep_days": 6}), start=1):
         await client.send_json({"id": n, "type": f"{DOMAIN}/set_options", "values": values})
         assert (await client.receive_json())["error"]["code"] == "invalid_format"
     await client.send_json({"id": 4, "type": f"{DOMAIN}/set_options", "values": {"availability_keep_days": 7, "signal_max_mb": 50}})

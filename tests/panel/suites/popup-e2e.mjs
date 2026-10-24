@@ -20,7 +20,7 @@ const TEXT = {
     tile24: ["Verfügbarkeit 24 Std.", "90,2%", "2 Unterbrüche · längster 2 Std. 14 Min."],
     tile7: ["Unterbrüche 7 Tage", "3", "zusammen 2 Std. 41 Min."], signal: ["Empfang", "LQI 38", "schwach"], battery: ["Batterie", "8%", "niedrig"],
     update: "Update auf 2.2.0 verfügbar", live: "Lebenszeichen", unavailable: "nicht verfügbar", liveHint: "Markierte Entitäten zeigen, ob das Gerät lebt.",
-    statTitle: "Verfügbarkeit", ranges: ["24 Std.", "7 Tage", "30 Tage"], pct24: "90,2%",
+    statTitle: "Verfügbarkeit", ranges: ["24 Std.", "7 Tage", "30 Tage", "3 Monate", "6 Monate", "12 Monate"], pct24: "90,2%",
     facts24: ["2 Unterbrüche", "zusammen 2 Std. 21 Min.", "längster 2 Std. 14 Min."], ongoing: "läuft", dur: "2 Std. 14 Min.", dur47: "47 Min.", one24: "1 Unterbruch", now: "jetzt",
     legend: ["Online", "Ausgefallen"], tip: "Ausgefallen", days: "Unterbrüche pro Tag", today: "heute", out30: "4 Unterbrüche",
     retry: "wartet auf neuen Versuch", pillA: "Ausgefallen seit ≥ 3 T. 4 Std.", always: "keine Unterbrüche", since: "Daten seit", none: "Keine Daten",
@@ -34,7 +34,7 @@ const TEXT = {
     tile24: ["Availability 24 h", "90.2%", "2 outages · longest 2 h 14 min"],
     tile7: ["Outages 7 days", "3", "2 h 41 min in total"], signal: ["Signal", "LQI 38", "weak"], battery: ["Battery", "8%", "low"],
     update: "Update to 2.2.0 available", live: "Sign of life", unavailable: "unavailable", liveHint: "Marked entities show whether the device is alive.",
-    statTitle: "Availability", ranges: ["24 h", "7 days", "30 days"], pct24: "90.2%",
+    statTitle: "Availability", ranges: ["24 h", "7 days", "30 days", "3 months", "6 months", "12 months"], pct24: "90.2%",
     facts24: ["2 outages", "2 h 21 min in total", "longest 2 h 14 min"], ongoing: "ongoing", dur: "2 h 14 min", dur47: "47 min", one24: "1 outage", now: "now",
     legend: ["Online", "Offline"], tip: "Offline", days: "Outages per day", today: "today", out30: "4 outages",
     retry: "waiting to retry", pillA: "Offline for ≥ 3 d 4 h", always: "no outages", since: "data since", none: "No data",
@@ -130,6 +130,11 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] X des Popups ausgeblendet`, (await ev(`return getComputedStyle(r.querySelector('dialog.device .dlg-close')).visibility`)) === "hidden");
     check(`[${tag}] Titel und Gerät`, (await text("dialog.stat-dlg h2")) === T.statTitle && (await text("dialog.stat-dlg .dlg-sub")) === "Bewegungsmelder Flur");
     check(`[${tag}] Zeitraum-Schalter`, JSON.stringify(await texts('[data-stat="range"]')) === JSON.stringify(T.ranges) && (await text('[data-stat="range"].on')) === T.ranges[0]);
+    // 12 Monate (2.119.0): Anfrage mit 365d, ein Balken je Tag im Verlauf der Unterbrüche; danach zurück auf 24 Stunden
+    await tap('dialog.stat-dlg [data-stat="range"][data-range="365d"]');
+    check(`[${tag}] 12 Monate: Anfrage 365d, 365 Tage-Balken`, (await wait(`return r.querySelectorAll("dialog.stat-dlg .days i").length === 365`)) && (await calls("device_panel/availability")).at(-1)?.range === "365d");
+    await tap('dialog.stat-dlg [data-stat="range"][data-range="24h"]');
+    await wait(`return !!r.querySelector("dialog.stat-dlg .avail-pct") && r.querySelector('dialog.stat-dlg [data-stat="range"].on').dataset.range === "24h"`);
     check(`[${tag}] Verlauf geladen`, await wait(`return !!r.querySelector("dialog.stat-dlg .avail-pct")`));
     const hist = await calls("device_panel/availability");
     check(`[${tag}] Verlauf per WebSocket`, hist.at(-1)?.device_id === "b" && hist.at(-1)?.range === "24h", JSON.stringify(hist));

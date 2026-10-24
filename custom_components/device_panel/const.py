@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "295"
+PANEL_VERSION = "296"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -295,21 +295,21 @@ INT_RANGES.update(
         CONF_LOG_ENTRIES: (100, 20000),
     }
 )
-# Verläufe der Geräte (seit 2.117.0, Panel › Speicher): Aufbewahrung der Verfügbarkeit und des Empfangs in Tagen (das Panel zeigt höchstens
-# 30 Tage) und als Obergrenze in MB (Grösse des gespeicherten JSON); ist eine Grenze erreicht, fallen die ältesten Werte über alle Geräte weg.
+# Verläufe der Geräte (seit 2.117.0, Panel › Speicher): Aufbewahrung der Verfügbarkeit und des Empfangs in Tagen (seit 2.119.0 bis 12 Monate, Standard
+# 1 Jahr; vorher 7 bis 31 Tage, Standard 31) und als Obergrenze in MB (Grösse des gespeicherten JSON); ist eine Grenze erreicht, fallen die ältesten Werte über alle Geräte weg.
 CONF_AVAIL_DAYS = "availability_keep_days"
 CONF_AVAIL_MB = "availability_max_mb"
 CONF_SIGNAL_DAYS = "signal_keep_days"
 CONF_SIGNAL_MB = "signal_max_mb"
-DEFAULT_AVAIL_DAYS = 31
-DEFAULT_AVAIL_MB = 10
-DEFAULT_SIGNAL_DAYS = 31
-DEFAULT_SIGNAL_MB = 20
+DEFAULT_AVAIL_DAYS = 365
+DEFAULT_AVAIL_MB = 20
+DEFAULT_SIGNAL_DAYS = 365
+DEFAULT_SIGNAL_MB = 50
 INT_RANGES.update(
     {
-        CONF_AVAIL_DAYS: (7, 31),
+        CONF_AVAIL_DAYS: (7, 365),
         CONF_AVAIL_MB: (1, 200),
-        CONF_SIGNAL_DAYS: (7, 31),
+        CONF_SIGNAL_DAYS: (7, 365),
         CONF_SIGNAL_MB: (1, 200),
     }
 )
