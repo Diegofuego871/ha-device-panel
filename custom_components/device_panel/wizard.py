@@ -4,7 +4,7 @@ Einrichtungsassistent (seit 2.135.0): die Daten für die Schritte und die Testme
 Der Zustand (CONF_WIZARD_STATE) liegt in den Optionen und gilt für alle Administratoren; das Panel liest ihn aus der Liste und schreibt ihn mit
 set_options. Hier stehen nur die zwei Befehle, die der Assistent zusätzlich braucht:
 
-- wizard_data: alle Geräte, die überhaupt in Frage kommen, mit Integration, Typ und Bereich, ohne dass Ausschlüsse abgezogen sind. Der Assistent
+- wizard_data: alle Geräte, die überhaupt in Frage kommen, mit Integration, Typ, Bereich und Batterie (ja/nein), ohne dass Ausschlüsse abgezogen sind. Der Assistent
   rechnet damit die Zahlen jedes Schritts selbst nach seinem Entwurf (eine abgewählte Integration lässt sich so auch wieder anwählen).
 - wizard_test: eine Testmeldung an ein Push-Ziel, damit man sieht, ob es ankommt.
 """
@@ -20,7 +20,7 @@ from homeassistant.helpers import area_registry as ar
 
 from . import push
 from .const import CONF_SHOW_DISABLED, CONF_SHOW_SERVICE, CONF_TYPE_INTEGRATIONS, DOMAIN
-from .devices import _primary_entry, async_integration_info, candidate_devices, effective_type, hub_ids
+from .devices import _primary_entry, async_integration_info, candidate_devices, effective_type, has_battery, hub_ids
 from .options_api import _NOTIFY_RE, effective
 
 
@@ -45,6 +45,8 @@ async def ws_wizard_data(hass: HomeAssistant, connection: websocket_api.ActiveCo
                 "domain": domain,
                 "type": effective_type(hass, device, entries, hubs, opts[CONF_TYPE_INTEGRATIONS])[0],
                 "area": area.name if area else "",
+                # Für die Lade- und Batteriemeldung je Integration: nur Geräte mit Batterie zählen
+                "battery": has_battery(hass, entries),
             }
         )
         counts[domain] = counts.get(domain, 0) + 1

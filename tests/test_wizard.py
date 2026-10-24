@@ -80,15 +80,20 @@ async def test_wizard_data(hass: HomeAssistant, setup, hass_ws_client) -> None: 
     dr.async_get(hass).async_update_device(tv.id, area_id=area.id)
     lamp = _device(hass, "Lampe", "hue", "light")
     other = _device(hass, "Stehlampe", "hue", "light")
+    cell = _device(hass, "Taster", "hue", "sensor")
+    cell_entity = next(e for e in er.async_entries_for_device(er.async_get(hass), cell.id))
+    hass.states.async_set(cell_entity.entity_id, "80", {"device_class": "battery", "unit_of_measurement": "%"})
     client = await hass_ws_client(hass)
     # Ausschlüsse ändern die Antwort nicht (der Assistent rechnet selbst nach seinem Entwurf)
     assert (await _ws(client, 1, type=f"{DOMAIN}/set_options", values={"exclude_integrations": ["apple_tv"], "exclude_types": ["light"], "exclude_devices": [other.id]}))["success"]
     data = (await _ws(client, 2, type=f"{DOMAIN}/wizard_data"))["result"]
     by = {i["domain"]: i for i in data["integrations"]}
-    assert by["hue"]["devices"] == 2 and by["apple_tv"]["devices"] == 1
+    assert by["hue"]["devices"] == 3 and by["apple_tv"]["devices"] == 1
     devices = {d["name"]: d for d in data["devices"]}
     assert devices["Fernseher"]["type"] == "media" and devices["Fernseher"]["area"] == "Wohnzimmer" and devices["Fernseher"]["domain"] == "apple_tv"
     assert devices["Lampe"]["id"] == lamp.id and devices["Lampe"]["type"] == "light" and devices["Lampe"]["area"] == ""
+    # Batterie (ja/nein) je Gerät, für die Lade- und Batteriemeldung je Integration im Assistenten
+    assert devices["Taster"]["battery"] is True and devices["Lampe"]["battery"] is False
     assert [d["name"] for d in data["devices"]] == sorted((d["name"] for d in data["devices"]), key=str.lower)
 
 

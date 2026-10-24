@@ -84,7 +84,7 @@ export class WizardUi {
     const dlg = this.dlg;
     if (!dlg || this.host._hass?.user?.is_admin === false) return;
     this._auto = true;
-    this.s = { step: "welcome", source, loading: true, error: "", busy: false, d: null, base: null, data: null, opts: null, test: "", q: { integ: "", dev: "" }, open: new Set(), start: 0 };
+    this.s = { step: "welcome", source, loading: true, error: "", busy: false, d: null, base: null, data: null, opts: null, test: "", q: { integ: "", dev: "" }, open: new Set(), openMsg: new Set(), start: 0 };
     this.render();
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
@@ -130,12 +130,18 @@ export class WizardUi {
       on: { outage: Boolean(v.notify_outage), battery: Boolean(v.battery_push), new: Boolean(v.notify_new), charge: Boolean(v.notify_charge), updates: Boolean(v.notify_updates) },
       v: Object.fromEntries(VALUE_KEYS.map((k) => [k, String(v[k])])),
       quiet: { on: Boolean(v.quiet_enabled), from: first.from || "22:00", to: first.to || "07:00", uniform },
+      // Je Meldungsart die Integrationen (seit 2.137.0): Ausfall, Batterie und Neue Geräte schliessen aus, Voll geladen schliesst ein
+      ex: { outage: new Set(v.notify_exclude_integrations || []), battery: new Set(v.battery_push_exclude_integrations || []), new: new Set(v.new_exclude_integrations || []) },
+      charge: new Set(v.charge_integrations || []),
     };
   }
 
   // Entwurf für die Option wizard_draft (Mengen als Listen)
   serialize(d) {
-    return { exI: [...d.exI].sort(), exT: [...d.exT].sort(), exD: [...d.exD].sort(), target: d.target, on: { ...d.on }, v: { ...d.v }, quiet: { ...d.quiet } };
+    return {
+      exI: [...d.exI].sort(), exT: [...d.exT].sort(), exD: [...d.exD].sort(), target: d.target, on: { ...d.on }, v: { ...d.v }, quiet: { ...d.quiet },
+      ex: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), charge: [...d.charge].sort(),
+    };
   }
 
   // Zwischenstand einlesen und auf das prüfen, was es heute gibt (Geräte, Integrationen und Ziele können weggefallen sein)
@@ -153,6 +159,8 @@ export class WizardUi {
     for (const k of VALUE_KEYS) if (typeof x.v?.[k] === "string" && x.v[k].length <= 6) d.v[k] = x.v[k];
     if (typeof x.quiet?.on === "boolean") d.quiet.on = x.quiet.on;
     for (const k of ["from", "to"]) if (/^([01]\d|2[0-3]):[0-5]\d$/.test(String(x.quiet?.[k]))) d.quiet[k] = x.quiet[k];
+    for (const id of Object.keys(d.ex)) if (Array.isArray(x.ex?.[id])) d.ex[id] = new Set(list(x.ex[id]));
+    if (Array.isArray(x.charge)) d.charge = new Set(list(x.charge));
     s.hasDraft = true;
     s.savedDraft = JSON.stringify(saved);
     // Dort weitermachen, wo es aufhörte (die Ruhezeit nur mit Ziel)
@@ -172,7 +180,7 @@ export class WizardUi {
   }
 
   snapshot(d) {
-    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet };
+    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet, x: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), c: [...d.charge].sort() };
   }
 
   dirty() {
@@ -263,6 +271,22 @@ export class WizardUi {
     return "";
   }
 
+  // Integrationen einer Meldungsart nach dem Entwurf (nur die, die nach Schritt 1 bis 3 übrig sind; Batterie und Laden nur mit Batteriegeräten)
+  rowIntegrations(id) {
+    const { data } = this.s;
+    const count = new Map();
+    for (const x of this.chosen()) if (x.domain && (!["battery", "charge"].includes(id) || x.battery)) count.set(x.domain, (count.get(x.domain) || 0) + 1);
+    const names = Object.fromEntries(data.integrations.map((i) => [i.domain, i.name]));
+    return [...count.entries()]
+      .map(([domain, n]) => ({ domain, n, name: names[domain] || domain }))
+      .sort((a, b) => b.n - a.n || String(a.name).toLowerCase().localeCompare(String(b.name).toLowerCase()));
+  }
+
+  integOn(id, domain) {
+    const { d } = this.s;
+    return id === "charge" ? d.charge.has(domain) : !d.ex[id].has(domain);
+  }
+
   // Zeilen mit Werten zum Anpassen: bei den Updates die Uhrzeit nur im Modus "einmal am Tag"
   rowValues(id) {
     const mode = this.s?.base?.updates_mode;
@@ -307,7 +331,12 @@ export class WizardUi {
       foot = `<button type="button" class="dlg-btn" data-wz="back"${s.busy ? " disabled" : ""}>${mdi("arrowLeft", 18)}${escape(t("wzBack"))}</button>
         <button type="button" class="dlg-btn primary" data-wz="${last ? "finish" : "next"}"${s.busy || this.invalid() ? " disabled" : ""}>${last ? mdi("check", 18) : ""}${escape(t(last ? (s.busy ? "wzSaving" : "wzFinish") : "wzNext"))}${last ? "" : mdi("arrowRight", 18)}</button>`;
     }
+    // Beim Neuzeichnen im selben Schritt bleibt die Lage (ein Schalter weiter unten springt nicht nach oben)
+    const keep = s.drawnStep === s.step ? dlg.querySelector("[data-wz-body]")?.scrollTop || 0 : 0;
     dlg.innerHTML = `${top}<div class="wz-bd" data-wz-body>${body}</div><div class="wz-ft">${foot}</div>`;
+    const bd = dlg.querySelector("[data-wz-body]");
+    if (bd && keep) bd.scrollTop = keep;
+    s.drawnStep = s.step;
   }
 
   welcomeHtml() {
@@ -429,8 +458,11 @@ export class WizardUi {
           return `<label class="wz-v"><span>${escape(this.t(lab))}</span><input type="number" inputmode="numeric" min="${lo}" max="${hi}" step="1" data-wz-v="${key}" value="${escape(d.v[key])}"${none ? " disabled" : ""}><em>${escape(this.t(unit))}</em></label>`;
         })
         .join("");
-      const hint = id === "charge" && d.on.charge && !none && !(this.s.base.charge_integrations || []).length ? `<p class="wz-p small wz-hint">${escape(this.t("wzChargeHint"))}</p>` : "";
-      return `<div class="wz-msg${d.on[id] && !none ? " on" : ""}"><div class="wz-li"><span class="wz-ic">${mdi(MSG_ICON[id], 18)}</span><div class="wz-nm">${escape(this.t(`wzM_${id}`))}<small>${escape(this.t(`wzM_${id}_s`))}</small></div>${this.toggle("data-wz-msg", id, d.on[id] && !none, this.t(`wzM_${id}`)).replace("<input", none ? "<input disabled" : "<input")}</div><div class="wz-vals">${vals}</div>${hint}</div>`;
+      const open = this.s.openMsg.has(id);
+      const list = open ? this.integListMsgHtml(id, none) : "";
+      const hint = id === "charge" && d.on.charge && !none && !d.charge.size ? `<p class="wz-p small wz-hint">${escape(this.t("wzChargeHint"))}</p>` : "";
+      const chev = `<button type="button" class="wz-mx" data-wz-mopen="${id}" aria-expanded="${open}" title="${escape(this.t("wzMInteg"))}" aria-label="${escape(this.t("wzMInteg"))}"><span class="wz-chev${open ? " open" : ""}">${mdi("chevronRight", 16)}</span></button>`;
+      return `<div class="wz-msg${d.on[id] && !none ? " on" : ""}"><div class="wz-li">${chev}<span class="wz-ic">${mdi(MSG_ICON[id], 18)}</span><div class="wz-nm">${escape(this.t(`wzM_${id}`))}<small>${escape(this.t(`wzM_${id}_s`))}</small></div>${this.toggle("data-wz-msg", id, d.on[id] && !none, this.t(`wzM_${id}`)).replace("<input", none ? "<input disabled" : "<input")}</div><div class="wz-vals">${vals}</div>${hint}${list}</div>`;
     }).join("");
     return `<h2 class="wz-h2">${escape(this.t("wzMTitle"))}</h2><p class="wz-p">${escape(this.t("wzMText"))}</p>
       <div class="wz-lab">${escape(this.t("wzMTarget"))}</div><label class="wz-sel"><select data-wz-target aria-label="${escape(this.t("wzMTarget"))}">${targets}</select>${mdi("chevronDown", 18)}</label>
@@ -438,6 +470,18 @@ export class WizardUi {
       <div class="wz-lab">${escape(this.t("wzMRows"))}</div>${rows}
       <div class="opt-error wz-err" data-wz-err role="alert">${escape(this.invalid())}</div>
       <p class="wz-p small">${escape(this.t("wzMLater"))}</p>`;
+  }
+
+  // Aufgeklappt: die Integrationen der Meldungsart, je ein Schalter
+  integListMsgHtml(id, none) {
+    const { escape } = this.h;
+    const rows = this.rowIntegrations(id);
+    const body = rows.length
+      ? rows
+          .map((i) => `<div class="wz-li">${this.host._ibadge(i.domain, i.name)}<div class="wz-nm">${escape(i.name)}<small>${escape(this.t("devicesCount", i.n))}</small></div><label class="switch"><input type="checkbox" data-wz-int="${id}" data-wz-dom="${escape(i.domain)}"${this.integOn(id, i.domain) ? " checked" : ""}${none ? " disabled" : ""} aria-label="${escape(i.name)}"><span></span></label></div>`)
+          .join("")
+      : `<p class="wz-p small">${escape(this.t("wzMNoInteg"))}</p>`;
+    return `<div class="wz-sub wz-msub"><p class="wz-p small">${escape(this.t(`wzMSub_${id}`))}</p>${body}</div>`;
   }
 
   testText() {
@@ -498,14 +542,23 @@ export class WizardUi {
     };
     // Uhrzeit der Update-Meldung nur, wenn sie im Assistenten zu sehen war
     if (d.on.updates && this.rowValues("updates").length && TIME_RE.test(String(d.v.updates_time))) values.updates_time = d.v.updates_time;
-    // Die Lademeldung gilt nur für Integrationen, die dafür gewählt sind (Best Practice: je Integration einschalten). Der Assistent wählt keine
-    // aus; charge_integrations bleibt, wie es ist, und ein Hinweis unter der Zeile sagt, wo man sie wählt.
+    // Je Meldungsart die Integrationen: was der Assistent zeigt, ersetzt die Wahl; Integrationen, die er nicht zeigt, bleiben, wie sie sind.
+    // Die Lademeldung gilt nur für gewählte Integrationen (Best Practice: je Integration einschalten); ohne Wahl meldet sie nichts.
+    const merge = (id, saved, selected) => {
+      const shown = new Set(this.rowIntegrations(id).map((i) => i.domain));
+      return [...new Set([...(saved || []).filter((dom) => !shown.has(dom)), ...selected.filter((dom) => shown.has(dom))])].sort();
+    };
+    const excluded = (id) => this.rowIntegrations(id).map((i) => i.domain).filter((dom) => d.ex[id].has(dom));
+    values.notify_exclude_integrations = merge("outage", base.notify_exclude_integrations, excluded("outage"));
+    values.battery_push_exclude_integrations = merge("battery", base.battery_push_exclude_integrations, excluded("battery"));
+    values.new_exclude_integrations = merge("new", base.new_exclude_integrations, excluded("new"));
+    values.charge_integrations = merge("charge", base.charge_integrations, [...d.charge]);
     if (d.target !== "none") {
       values.quiet_enabled = d.quiet.on;
       if (d.quiet.on && d.quiet.uniform) values.quiet_days = Array.from({ length: 7 }, () => ({ on: true, from: d.quiet.from, to: d.quiet.to }));
     }
     // Ohne Ziel sind Meldungen und Ruhezeit nicht Teil der Wahl: nichts anfassen ausser dem Ziel
-    if (d.target === "none") for (const k of ["notify_outage", "notify_online", "battery_push", "notify_new", "notify_charge", "notify_updates"]) delete values[k];
+    if (d.target === "none") for (const k of ["notify_outage", "notify_online", "battery_push", "notify_new", "notify_charge", "notify_updates", "notify_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"]) delete values[k];
     return values;
   }
 
@@ -548,6 +601,14 @@ export class WizardUi {
         this.refreshList();
         return;
       }
+      const mopen = ev.target.closest?.("[data-wz-mopen]");
+      if (mopen && this.s) {
+        const id = mopen.dataset.wzMopen;
+        if (this.s.openMsg.has(id)) this.s.openMsg.delete(id);
+        else this.s.openMsg.add(id);
+        this.render();
+        return;
+      }
       const btn = ev.target.closest?.("[data-wz]");
       if (!btn || btn.disabled || !this.s) return;
       const a = btn.dataset.wz;
@@ -582,6 +643,17 @@ export class WizardUi {
       } else if (el.matches("[data-wz-group]")) {
         for (const x of this.afterTypes().filter((y) => y.domain === el.dataset.wzGroup)) flip(d.exD, x.id, el.checked);
         this.refreshList();
+      } else if (el.matches("[data-wz-int]")) {
+        const id = el.dataset.wzInt;
+        const dom = el.dataset.wzDom;
+        if (id === "charge") {
+          if (el.checked) d.charge.add(dom);
+          else d.charge.delete(dom);
+          // Eine Integration einzuschalten schaltet die Meldung selbst mit ein
+          if (el.checked) d.on.charge = true;
+        } else if (el.checked) d.ex[id].delete(dom);
+        else d.ex[id].add(dom);
+        this.render();
       } else if (el.matches("[data-wz-msg]")) {
         d.on[el.dataset.wzMsg] = el.checked;
         this.render();

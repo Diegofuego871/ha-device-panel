@@ -13,6 +13,7 @@ The setup wizard also asks about update notifications.
 
 ### Changed
 
+- **Setup wizard, step "Notifications":** an arrow on the rows "Failed devices", "Low battery", "New devices" and "Fully charged" opens the integrations of that kind, one switch each (no device level). For the first three everything is on and you switch integrations off (these are the settings per integration "Push", "Battery push" and "New devices"); for "Fully charged" everything is off and you switch integrations on, which also switches the notification on. Only integrations that are left after the earlier steps are listed, for battery and charging only those with battery devices. What the wizard does not show stays as it is. New in the WebSocket `wizard_data`: `battery` per device. A switch further down no longer jumps the window back to the top.
 - **Setup wizard, row "Fully charged":** off by default, and the wizard no longer switches it on for all integrations with battery devices. The notification applies only to integrations you switch on one by one (best practice); with the row on and no integration chosen, a note says where (Settings › Battery › Charging).
 - **Setup wizard, step "Notifications":** the values under each row have no outline any more; the number sits large (18 px) in a quiet field on the right with its unit, and the button "Send test message" is as wide as the target field.
 

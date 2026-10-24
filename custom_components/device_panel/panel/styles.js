@@ -2336,6 +2336,9 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-gn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wz-cn { color: color-mix(in srgb, var(--dp-text) 65%, transparent); font-size: 12.5px; margin-right: 6px; white-space: nowrap; }
 .wz-li .ibadge.has-img, .wz-gh .ibadge.has-img { background: var(--dp-subtle); }
+.wz-mx { flex: none; display: inline-grid; place-items: center; width: 28px; height: 34px; margin-right: -6px; border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0; }
+.wz-msub { margin: 0 0 6px 46px; }
+.wz-msub > .wz-p { margin: 4px 0; }
 .wz-sub { margin-left: 26px; border-left: 2px solid var(--dp-divider); padding-left: 10px; }
 .wz-sub .wz-li { padding: 7px 2px; }
 .wz-sub .wz-nm { font-size: 14px; }

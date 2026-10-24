@@ -13,6 +13,7 @@ Der Einrichtungsassistent fragt auch nach Meldungen für Updates.
 
 ### Geändert
 
+- **Einrichtungsassistent, Schritt "Meldungen":** ein Pfeil an den Zeilen "Ausgefallene Geräte", "Niedrige Batterie", "Neue Geräte" und "Voll geladen" öffnet die Integrationen dieser Art, je ein Schalter (keine Geräte-Ebene). Bei den ersten drei ist alles an und du schaltest Integrationen aus (das sind die Einstellungen pro Integration "Push", "Batterie-Push" und "Neue Geräte"); bei "Voll geladen" ist alles aus und du schaltest Integrationen ein, was die Meldung gleich mit einschaltet. Aufgelistet sind nur Integrationen, die nach den früheren Schritten übrig sind, bei Batterie und Laden nur die mit Batteriegeräten. Was der Assistent nicht zeigt, bleibt, wie es ist. Neu im WebSocket `wizard_data`: `battery` je Gerät. Ein Schalter weiter unten springt nicht mehr an den Anfang des Fensters zurück.
 - **Einrichtungsassistent, Zeile "Voll geladen":** standardmässig aus, und der Assistent schaltet sie nicht mehr für alle Integrationen mit Batteriegeräten ein. Die Meldung gilt nur für Integrationen, die du einzeln einschaltest (Best Practice); steht die Zeile an und ist keine Integration gewählt, sagt ein Hinweis, wo (Einstellungen › Batterie › Laden).
 - **Einrichtungsassistent, Schritt "Meldungen":** die Werte unter jeder Zeile haben keine Umrandung mehr; die Zahl steht gross (18 px) in einem ruhigen Feld rechts mit ihrer Einheit, und der Knopf "Testmeldung senden" ist so breit wie das Zielfeld.
 
