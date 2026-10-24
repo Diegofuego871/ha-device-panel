@@ -234,7 +234,7 @@ export class WizardUi {
     let top = "";
     let body = "";
     let foot = "";
-    const close = `<button type="button" class="wz-x" data-wz="close" title="${escape(t("wzClose"))}" aria-label="${escape(t("wzClose"))}">${mdi("close", 18)}</button>`;
+    const close = `<button type="button" class="dlg-close" data-wz="close" title="${escape(t("wzClose"))}" aria-label="${escape(t("wzClose"))}">${mdi("close", 18)}</button>`;
     if (s.loading || s.error || !s.d) {
       body = s.error
         ? `<div class="dlg-error">${escape(t("wzLoadError"))} ${escape(s.error)}</div>`
@@ -250,7 +250,7 @@ export class WizardUi {
       const list = this.steps();
       const n = list.indexOf(s.step) + 1;
       const pct = Math.round((100 * n) / list.length);
-      top = `<div class="wz-top"><div class="wz-prog"><i style="width:${pct}%"></i></div><div class="wz-stp"><span><b>${escape(t("wzStep", n, list.length))}</b> · ${escape(t(`wzS_${s.step}`))}</span>${close}</div></div>`;
+      top = `<div class="wz-top"><div class="wz-stp"><span><b>${escape(t("wzStep", n, list.length))}</b> · ${escape(t(`wzS_${s.step}`))}</span>${close}</div><div class="wz-prog"><i style="width:${pct}%"></i></div></div>`;
       body = this[`${s.step}Html`]();
       const last = s.step === "done";
       foot = `<button type="button" class="dlg-btn" data-wz="back"${s.busy ? " disabled" : ""}>${escape(t("wzBack"))}</button>

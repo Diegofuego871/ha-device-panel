@@ -13,6 +13,7 @@ Der Knopf "Los geht's" des Einrichtungsassistenten ist gleich gross wie die ande
 
 ### Geändert
 
+- **Einrichtungsassistent, Schliessen-Knopf:** das Kreuz ist das Standard-Kreuz (feiner Kreis) und sitzt ganz oben rechts wie in den anderen Fenstern; der Fortschrittsbalken steht darunter.
 - **Launcher, Kachel "Einrichtung":** solange der Assistent offen ist, trägt die Kachel eine orange Pille "Offen" (wie "Debug" am Protokoll), passend zum orangen Punkt am Launcher-Knopf.
 - **Einrichtungsassistent, Schritt "Meldungen":** bei den ausgefallenen Geräten wird nur noch "Melden nach" angeboten; "Ausgefallen nach" steht nicht mehr da, damit der Schritt einfach bleibt (es bleibt auf dem jetzigen Wert und lässt sich in den Einstellungen ändern). "Melden nach" darf weiterhin nicht kürzer sein; der Hinweis nennt den jetzigen Wert.
 

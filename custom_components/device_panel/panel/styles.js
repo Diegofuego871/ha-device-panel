@@ -2296,13 +2296,13 @@ button.lg-row.has-chev:hover .al-chev { color: var(--dp-primary); }
 dialog.wizard-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); width: min(640px, calc(100vw - 32px)); height: min(640px, calc(100% - 48px)); max-height: calc(100% - 48px); overflow: hidden; margin: auto; }
 dialog.wizard-dlg::backdrop { background: rgba(0,0,0,0.5); }
 dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
-.wz-top { padding: 16px 20px 6px; flex: none; }
-.wz-prog { height: 5px; border-radius: 3px; background: var(--dp-bar-off); overflow: hidden; }
+/* Kopf wie bei den anderen Fenstern: das Standard-Kreuz (.dlg-close) ganz oben rechts, darunter der Fortschritt */
+.wz-top { padding: 20px 16px 6px 22px; flex: none; }
+.wz-prog { margin-top: 8px; height: 5px; border-radius: 3px; background: var(--dp-bar-off); overflow: hidden; }
 .wz-prog i { display: block; height: 100%; background: var(--dp-primary); border-radius: 3px; transition: width .25s; }
-.wz-stp { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 32px; color: color-mix(in srgb, var(--dp-text) 65%, transparent); font-size: 12.5px; margin-top: 4px; }
+.wz-stp { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 42px; color: color-mix(in srgb, var(--dp-text) 65%, transparent); font-size: 12.5px; }
 .wz-stp b { color: var(--dp-text); font-weight: 500; }
-.wz-x { display: inline-grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; margin-left: auto; }
-.wz-x:hover { background: var(--dp-hover); }
+.wz-stp .dlg-close { margin-left: auto; }
 .wz-bd { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 20px 12px; }
 .wz-ft { display: flex; gap: 10px; padding: 12px 20px 16px; border-top: 1px solid var(--dp-divider); flex: none; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 .wz-ft .dlg-btn { flex: 1; justify-content: center; }
@@ -2365,7 +2365,8 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-val { color: var(--dp-primary); font-weight: 500; font-size: 14px; text-align: right; max-width: 60%; }
 @media (max-width: 600px) {
   dialog.wizard-dlg { width: 100%; height: 100%; max-width: 100%; max-height: 100%; margin: 0; border-radius: 0; }
-  .wz-top { padding-top: calc(12px + env(safe-area-inset-top, 0px)); }
+  .wz-top { padding: calc(12px + env(safe-area-inset-top, 0px)) 12px 6px 16px; }
+  .wz-stp { min-height: 38px; }
   .wz-vals { margin-left: 0; }
 }
 `;

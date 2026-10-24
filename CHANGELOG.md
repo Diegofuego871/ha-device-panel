@@ -13,6 +13,7 @@ The button "Let's go" of the setup wizard has the same size as the other buttons
 
 ### Changed
 
+- **Setup wizard, close button:** the cross is the standard one (thin circle) and sits at the very top right, like in the other windows; the progress bar is below it.
 - **Launcher, tile "Setup":** while the wizard is open, the tile carries an orange pill "Open" (like "Debug" on the log), matching the orange dot on the launcher button.
 - **Setup wizard, step "Notifications":** only "Notify after" is offered for failed devices; "Failed after" is no longer shown, to keep the step simple (it stays at its current value and can be changed in the settings). "Notify after" still must not be shorter than it; the note names the current value.
 
