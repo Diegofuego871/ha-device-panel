@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [2.136.1] - 2026-10-24
 
-The buttons of the setup wizard have icons, like in the routine wizard.
+The buttons of the setup wizard have icons, like in the routine wizard, and the empty space on top is gone on a phone.
+
+### Fixed
+
+- **Setup wizard on a phone:** a large empty space above the step line is gone. The wizard added the safe area of the phone on top, although the panel already sits below the header of Home Assistant; the cross is now as close to the top as in the other full-screen windows.
 
 ### Changed
 

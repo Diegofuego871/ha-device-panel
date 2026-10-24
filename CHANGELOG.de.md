@@ -9,7 +9,11 @@ die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [2.136.1] - 2026-10-24
 
-Die Knöpfe des Einrichtungsassistenten haben Symbole, wie im Routinen-Assistenten.
+Die Knöpfe des Einrichtungsassistenten haben Symbole, wie im Routinen-Assistenten, und der leere Platz oben am Handy ist weg.
+
+### Behoben
+
+- **Einrichtungsassistent am Handy:** ein grosser leerer Platz über der Schrittzeile ist weg. Der Assistent rechnete den sicheren Bereich des Handys oben dazu, obwohl das Panel schon unter der Kopfzeile von Home Assistant liegt; das Kreuz sitzt jetzt so weit oben wie in den anderen Vollbild-Fenstern.
 
 ### Geändert
 

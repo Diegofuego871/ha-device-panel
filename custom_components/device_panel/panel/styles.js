@@ -2365,7 +2365,8 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-val { color: var(--dp-primary); font-weight: 500; font-size: 14px; text-align: right; max-width: 60%; }
 @media (max-width: 600px) {
   dialog.wizard-dlg { width: 100%; height: 100%; max-width: 100%; max-height: 100%; margin: 0; border-radius: 0; }
-  .wz-top { padding: calc(12px + env(safe-area-inset-top, 0px)) 12px 6px 16px; }
+  /* Ohne safe-area-inset-top: das Panel liegt unter der Kopfzeile von Home Assistant, der Rand ist dort schon berücksichtigt (wie bei den anderen Vollbild-Fenstern) */
+  .wz-top { padding: 12px 12px 6px 16px; }
   .wz-stp { min-height: 38px; }
   .wz-vals { margin-left: 0; }
 }
