@@ -123,6 +123,12 @@ def test_query_counts_buckets_and_filters(hass: HomeAssistant) -> None:
     assert log.query("magic", {"r": "Keller"}, since=now - 7 * DAY, until=now, filter_="failed")["total"] == 1
     assert log.query("magic", {"r": "Keller"}, since=now - 7 * DAY, until=now, text="warm")["total"] == 1
     assert log.query("magic", {"r": "Keller"}, since=now - 7 * DAY, until=now, limit=1, offset=2)["entries"][0]["res"] == "sent"
+    # das Diagramm folgt dem Filter und dem Suchtext (seit 2.122.0), die Zahlen oben bleiben beim ganzen Zeitraum
+    failed = log.query("magic", {"r": "Keller"}, since=now - 7 * DAY, until=now, filter_="failed")
+    assert sum(b["n"] for b in failed["buckets"]) == 1 and sum(b["bad"] for b in failed["buckets"]) == 1 and failed["all"] == 3
+    recovered = log.query("magic", {"r": "Keller"}, since=now - 7 * DAY, until=now, filter_="recovered")
+    assert sum(b["n"] for b in recovered["buckets"]) == 1 and sum(b["bad"] for b in recovered["buckets"]) == 0
+    assert sum(b["n"] for b in log.query("magic", {"r": "Keller"}, since=now - 7 * DAY, until=now, text="warm")["buckets"]) == 1
     # langer Zeitraum: je Woche
     long = log.query("magic", {"r": "Keller"}, since=now - 300 * DAY, until=now)
     assert long["step"] == "week" and len(long["buckets"]) < 60 and sum(b["n"] for b in long["buckets"]) == 4

@@ -23,6 +23,7 @@ Own entities: counts and states of the panel for automations and dashboards, wit
 ### Changed
 
 - The own service device is not listed in the device list of the panel (the sensors would count themselves).
+- **History window (Magic Push, routines):** the chart now follows the filter chips and the search, like the list below (before it always showed all entries of the period; the key figures above stay for the whole period).
 - The data file of the error counter (`device_panel.summary`) is removed together with the other files when the integration is removed.
 - `test_audit_fixes`: two routines due in the same second no longer expect a fixed order (they share one point in time).
 

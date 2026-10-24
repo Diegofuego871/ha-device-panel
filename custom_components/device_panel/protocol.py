@@ -219,8 +219,8 @@ class Protocol:
         offset: int = 0,
     ) -> dict[str, Any]:
         """
-        Einträge der Meldungen oder Routinen "items" ({id: Name}) im Zeitraum, neueste zuerst. Zahlen und Diagramm gelten für den ganzen
-        Zeitraum, die Tabelle zusätzlich für Auswahl und Suchtext. Ohne "since" gilt alles ab dem ältesten Eintrag.
+        Einträge der Meldungen oder Routinen "items" ({id: Name}) im Zeitraum, neueste zuerst. Die Zahlen gelten für den ganzen
+        Zeitraum, Tabelle und Diagramm zusätzlich für Auswahl, Filter und Suchtext (seit 2.122.0 auch das Diagramm). Ohne "since" gilt alles ab dem ältesten Eintrag.
         """
         tz = dt_util.get_default_time_zone()
         oldest = min((e["at"] for item_id in items for e in self._data.get(item_id, [])), default=None)
@@ -261,7 +261,7 @@ class Protocol:
             "all": len(scope),
             "entries": shown[offset : offset + limit],
             "step": "week" if step_days == 7 else "day",
-            "buckets": _buckets(scope, max(since, until - CHART_WEEKS_MAX * 7 * 86400) if step_days == 7 else since, until, step_days, tz),
+            "buckets": _buckets(shown, max(since, until - CHART_WEEKS_MAX * 7 * 86400) if step_days == 7 else since, until, step_days, tz),
             "oldest": oldest,
             "since": since,
         }

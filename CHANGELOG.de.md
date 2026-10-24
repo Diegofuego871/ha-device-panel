@@ -23,6 +23,7 @@ Eigene Entitäten: Zähler und Zustände des Panels für Automationen und Dashbo
 ### Geändert
 
 - Das eigene Dienst-Gerät erscheint nicht in der Geräteliste des Panels (die Sensoren würden sich sonst selbst zählen).
+- **Protokoll-Fenster (Magic Push, Routinen):** das Diagramm folgt jetzt den Filter-Chips und der Suche, wie die Liste darunter (vorher zeigte es immer alle Einträge des Zeitraums; die Kennzahlen oben bleiben beim ganzen Zeitraum).
 - Die Datei des Fehlerzählers (`device_panel.summary`) wird beim Entfernen der Integration mit den übrigen Dateien gelöscht.
 - `test_audit_fixes`: zwei Routinen, die in derselben Sekunde fällig sind, erwarten keine feste Reihenfolge mehr (sie teilen sich einen Zeitpunkt).
 
