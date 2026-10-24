@@ -137,8 +137,15 @@ for (const lang of ["de", "en"]) {
     await p.screenshot({ path: `${outDir}/devicelog-${tag.replace("/", "-")}.png` });
 
     // --- Auswahl und Suche ---
+    // Diagramm in "Alles" (2.126.0): Balken je Tag, Störungen rot, folgt dem Chip; ein Tipp auf einen Balken setzt den Zeitraum auf diesen Tag
+    const cols = () => ev(`return [...r.querySelectorAll('${P} .pr-chart .pr-bar .pr-col')].length`);
+    const allCols = await cols();
+    check(`[${tag}] Diagramm: Balken je Tag, mindestens zwei Tage mit Einträgen, Störungen rot`, allCols >= 2 && (await ev(`return !!r.querySelector('${P} .pr-chart .pr-col i.bad') && r.querySelectorAll('${P} .pr-chart .pr-bar').length >= 29`)), String(allCols));
+    await ev(`r.querySelector('${P} [data-pr-body]').scrollTop = 0`);
+    await p.screenshot({ path: `${outDir}/devicelog-chart-${tag.replace("/", "-")}.png` });
     await tap(`${P} [data-pr-filters] .chip[data-v="battery"]`);
     check(`[${tag}] Chip Batterie: eine Zeile mit Text und Zeile darunter`, (await wait(`return r.querySelectorAll('${P} .pr-item').length === 1`)) && (await ev(`const t = r.querySelector('${P} .pr-item').textContent; return t.includes("14") && t.includes(${JSON.stringify(lang === "de" ? "Warnung gesendet" : "Warnung gesendet")})`)));
+    check(`[${tag}] Diagramm folgt dem Chip Batterie: ein Balken mit Eintrag`, (await cols()) === 1, String(await cols()));
     await tap(`${P} [data-pr-filters] .chip[data-v="all"]`);
     await wait(`return r.querySelectorAll('${P} .pr-item').length > 3`);
     await ev(`const i = r.querySelector('${P} [data-pr-search]'); i.value = "feuchte"; i.dispatchEvent(new Event("input", { bubbles: true }))`);

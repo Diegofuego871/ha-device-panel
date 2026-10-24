@@ -7,6 +7,19 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.126.0] - 2026-10-24
+
+Das Balkendiagramm von Magic Push und Routinen steht jetzt auch in der Liste "Alles" des Protokolls.
+
+### Hinzugefügt
+
+- **Diagramm im Reiter "Alles":** Balken je Tag (bei Zeiträumen über 120 Tage je Woche), Störungen (Ausfall, Warnung, Fehler, fehlgeschlagene Meldung oder Lauf) rot. Es folgt den Chips und der Suche wie die Liste darunter, und ein Tipp auf einen Balken setzt den Zeitraum auf diesen Tag. Über alle Geräte zählt es alle.
+
+### Geändert
+
+- WebSocket `protocol_get` mit Art `all` liefert `step` und `buckets` wie die anderen Arten.
+- **README:** der Abschnitt "Protokoll eines Geräts" nennt das Diagramm; die Printscreens des Protokolls sind neu aufgenommen.
+
 ## [2.125.0] - 2026-10-24
 
 Ein Protokoll statt zwei Fenstern: das Fenster "Log" ist jetzt der Reiter "System" des Protokolls, und die App "Log" heisst "Protokoll".
@@ -4595,6 +4608,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.126.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.126.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0
 [2.124.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.124.0
 [2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0

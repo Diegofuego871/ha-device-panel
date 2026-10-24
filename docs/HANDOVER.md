@@ -3,7 +3,9 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.125.0, Protokoll und Log vereint; davor 2.124.0 Meldungsprotokoll)
+## Stand (2.126.0, Diagramm in "Alles"; davor 2.125.0 Protokoll und Log vereint)
+
+- Diagramm in der Liste "Alles" (2.126.0): `devicelog.query` liefert `step`/`buckets` aus den gezeigten Einträgen (`protocol._buckets` mit `is_bad`; Störung = Ausfall, Warnung/Fehler, fehlgeschlagene Meldung/Lauf); `protocol.js` `allHtml` zeichnet `chart(d)` (Balken, Tipp setzt den Zeitraum). Tests: `test_pushlog.py::test_devicelog_chart_follows_the_chip_and_marks_faults`, Suite `devicelog`.
 
 - Protokoll und Log in einem Fenster (2.125.0, Mockups `docs/mockups/protocol-merge-v1`, A/A): `protocol.js` hat vier Reiter (`TABS` all/magic/routine/system; "System" nur ohne `deviceId`). Reiter "System": `protocol_get` kind "system" -> `devicelog.system_query` (Einträge des Panel-Logs ohne Gerät und alle Debug-Einträge; Zahlen je Stufe und Kategorie wie die Chips; `filter` = Stufe, neues `cat`); Chips Stufe (`data-pr-filters`) und Kategorie (`data-pr-items`), Debug-Zeile (`data-pr-debug-row`, Schalter ruft `device_panel/set_log`), Leeren (`clear_log`, mit `_askConfirm`), Nachfrage alle 4 s (`startPoll`/`pollOnce`, nicht bei `_dlgBusy`). Das alte Fenster `_renderLogFrame`/`_bindLog`/`get_log`-Polling im Panel ist entfernt (`get_log`/`set_log`/`clear_log` bleiben im Backend); `_openLog(kind="all")` öffnet das Protokoll; App-Kennung `log` bleibt, Texte `app_log` = "Protokoll"/"History". Einstellungen › Speicher: Knopf `data-set="open-syslog"` öffnet den Reiter "System". Tests: Suite `system` (ersetzt `log`), `busy`, `launcher`, `searchclear` angepasst; `test_pushlog.py::test_system_query_levels_cats_and_debug`.
 - Davor: 2.124.0 (Meldungsprotokoll `push_log.py`, getaggt), 2.123.0 (Shelly-Fehler, ohne Tag), 2.122.0 (Sensoren, getaggt).

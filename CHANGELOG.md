@@ -7,6 +7,19 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.126.0] - 2026-10-24
+
+The bar chart of Magic Push and routines is now also in the list "All" of the history.
+
+### Added
+
+- **Chart in the tab "All":** bars per day (per week for periods over 120 days), faults (outage, warning, error, failed push or run) in red. It follows the chips and the search, like the list below, and a tap on a bar sets the period to that day. Over all devices it counts all of them.
+
+### Changed
+
+- WebSocket `protocol_get` with kind `all` returns `step` and `buckets` like the other kinds.
+- **README:** the section "History of a device" mentions the chart; the screenshots of the history were taken again.
+
 ## [2.125.0] - 2026-10-24
 
 One history instead of two windows: the window "Log" is now the tab "System" of the history, and the app "Log" is called "History".
@@ -4494,6 +4507,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.126.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.126.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0
 [2.124.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.124.0
 [2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0

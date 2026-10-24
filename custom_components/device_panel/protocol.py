@@ -267,7 +267,7 @@ class Protocol:
         }
 
 
-def _buckets(scope: list[dict[str, Any]], since: float, until: float, step_days: int, tz: Any) -> list[dict[str, Any]]:
+def _buckets(scope: list[dict[str, Any]], since: float, until: float, step_days: int, tz: Any, is_bad: Any = None) -> list[dict[str, Any]]:
     """Dichte Liste der Tage (oder Wochen ab Montag) im Zeitraum mit der Zahl der Einträge und der davon problematischen."""
     first = dt_util.as_local(dt_util.utc_from_timestamp(since)).astimezone(tz).replace(hour=0, minute=0, second=0, microsecond=0)
     if step_days == 7:
@@ -286,6 +286,6 @@ def _buckets(scope: list[dict[str, Any]], since: float, until: float, step_days:
         i = bisect.bisect_right(keys, e["at"]) - 1
         if 0 <= i < len(out):
             out[i]["n"] += 1
-            if e.get("res") in ("failed", "no_target") or e.get("k") in ("failed", "missed"):
+            if (is_bad(e) if is_bad is not None else e.get("res") in ("failed", "no_target") or e.get("k") in ("failed", "missed")):
                 out[i]["bad"] += 1
     return out

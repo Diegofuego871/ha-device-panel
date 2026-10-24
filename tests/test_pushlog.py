@@ -203,3 +203,20 @@ async def test_system_query_levels_cats_and_debug(hass: HomeAssistant, setup, ha
     await client.send_json({"id": 1, "type": f"{DOMAIN}/protocol_get", "kind": "system", "filter": "error", "cat": "system"})
     result = (await client.receive_json())["result"]
     assert result["total"] == 1 and result["entries"][0]["source"] == "system" and "debug" in result and "until" in result
+
+
+async def test_devicelog_chart_follows_the_chip_and_marks_faults(hass: HomeAssistant, setup) -> None:  # noqa: F811
+    """Diagramm in "Alles" (2.126.0): Einträge je Tag der gezeigten Liste, Störungen (Ausfall, Warnung, Fehler) als "bad"."""
+    from custom_components.device_panel.const import DATA_AVAILABILITY
+
+    dev = _device(hass, "Lampe")
+    now = time.time()
+    hass.data[DATA_AVAILABILITY]._events = {dev.id: [[now - 5 * 86400, 1], [now - 2 * 86400, 0], [now - 2 * 86400 + 600, 1]]}
+    activity.record(hass, "warning", "battery", "battery_new", "Lampe", dev.id, level="9 %")
+    out = devicelog.query(hass, dev.id, since=now - 7 * 86400, until=now + 5)
+    assert out["step"] == "day" and sum(b["n"] for b in out["buckets"]) == out["total"] == 3
+    assert sum(b["bad"] for b in out["buckets"]) == 2  # Ausfall und Warnung; die Rückkehr zählt nicht
+    only = devicelog.query(hass, dev.id, since=now - 7 * 86400, until=now + 5, cat="battery")
+    assert sum(b["n"] for b in only["buckets"]) == 1 and sum(b["bad"] for b in only["buckets"]) == 1
+    long = devicelog.query(hass, dev.id, since=None, until=now + 5)
+    assert long["step"] == "day" and long["buckets"]

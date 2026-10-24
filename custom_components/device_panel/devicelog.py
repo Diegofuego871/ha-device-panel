@@ -15,9 +15,11 @@ from typing import Any
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
+from homeassistant.util import dt as dt_util
 
 from . import activity
 from .const import DATA_AVAILABILITY, DATA_MAGIC, DATA_PROTOCOL, DATA_PUSHLOG, DATA_ROUTINES
+from .protocol import CHART_WEEKS_MAX, WEEK_FROM_DAYS, _buckets
 
 # Kategorien des Panel-Logs, die ein Gerät betreffen können (Magic Push und Routinen kommen aus den Protokollen)
 EVENT_CATS = ("outage", "battery", "charge", "signal", "updates", "new", "push")
@@ -133,6 +135,18 @@ def _text(e: dict[str, Any]) -> str:
     return (" ".join(str(e.get(k, "")) for k in keys) + " " + " ".join(str(push.get(k, "")) for k in ("title", "body", "target"))).lower()
 
 
+def _is_bad(e: dict[str, Any]) -> bool:
+    """Eintrag für das Diagramm als Störung zählen: Warnung oder Fehler, Ausfall, fehlgeschlagene Meldung, verpasster oder fehlgeschlagener Lauf."""
+    if e.get("source") == "avail":
+        return e.get("k") == "offline"
+    return (
+        e.get("level") in ("warning", "error")
+        or e.get("res") in ("failed", "no_target", "missing")
+        or e.get("k") in ("failed", "missed")
+        or (e.get("push") or {}).get("res") in ("failed", "missing")
+    )
+
+
 def query(
     hass: HomeAssistant,
     device: str | None,
@@ -169,7 +183,14 @@ def query(
         counts[e["cat"]] = counts.get(e["cat"], 0) + 1
     needle = text.strip().lower()
     shown = [e for e in scope if (not cat or e["cat"] == cat) and (not needle or needle in _text(e))]
+    # Diagramm (seit 2.126.0): Einträge je Tag (bei langen Zeiträumen je Woche) der gezeigten Liste, also nach Auswahl und Suche; ohne Anfang ab dem ältesten
+    first = since if since is not None else min((e["at"] for e in scope), default=until)
+    tz = dt_util.get_default_time_zone()
+    step_days = 7 if (until - first) / 86400 > WEEK_FROM_DAYS else 1
+    buckets = _buckets(shown, max(first, until - CHART_WEEKS_MAX * 7 * 86400) if step_days == 7 else first, until, step_days, tz, _is_bad)
     return {
+        "step": "week" if step_days == 7 else "day",
+        "buckets": buckets,
         "counts": counts,
         "total": len(shown),
         "all": len(scope),

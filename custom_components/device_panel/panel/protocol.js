@@ -715,7 +715,7 @@ export class ProtocolUi {
     }
     const err = s.error ? `<div class="dlg-error">${this.esc(t("prError", s.error))}</div>` : "";
     const note = d.oldest ? `<p class="pr-note">${this.esc(t("prOldest", this.host._fmtDateY(d.oldest)))} ${this.esc(t("prAllNote"))}</p>` : `<p class="pr-note">${this.esc(t("prAllNote"))}</p>`;
-    return `${err}<div class="pr-list" role="list">${rows}</div>${empty}${more}${note}`;
+    return `${err}${this.chart(d)}<div class="pr-list" role="list">${rows}</div>${empty}${more}${note}`;
   }
 
   renderFoot() {

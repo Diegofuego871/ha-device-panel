@@ -82,7 +82,7 @@ The battery history reaches back up to 12 months, with the battery change marked
 
 ### History of a device
 
-One window with everything about a device: outages and returns with the duration, battery, charging, reception, updates, new devices, push, Magic Push messages and routine runs, by day. Chips filter by kind, a tap on a Magic Push row shows the message, a tap on a routine row its trace, and a tap on an entry like "back online after 9 min.: sending the notification" shows the push that went out (title, text, target and result). The tabs "Magic Push" and "Routines" keep their evaluation with key figures and chart. It opens with "History" at the top right of the device pop-up, and from the header of the overviews of Magic Push and routines for all devices.
+One window with everything about a device: outages and returns with the duration, battery, charging, reception, updates, new devices, push, Magic Push messages and routine runs, by day. A bar chart shows the entries per day (per week for long periods, faults in red) and follows the chips and the search; a tap on a bar sets the period to that day. Chips filter by kind, a tap on a Magic Push row shows the message, a tap on a routine row its trace, and a tap on an entry like "back online after 9 min.: sending the notification" shows the push that went out (title, text, target and result). The tabs "Magic Push" and "Routines" keep their evaluation with key figures and chart. It opens with "History" at the top right of the device pop-up, and from the header of the overviews of Magic Push and routines for all devices.
 
 | All (list by day) | Magic Push (evaluation) |
 |---|---|

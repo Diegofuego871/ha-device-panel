@@ -1266,7 +1266,20 @@
           for (const e of all) counts0[e.cat] = (counts0[e.cat] || 0) + 1;
           const needle0 = String(msg.q || "").trim().toLowerCase();
           const shown0 = all.filter((e) => (!msg.filter || e.cat === msg.filter) && (!needle0 || JSON.stringify(e).toLowerCase().includes(needle0)));
-          return { counts: counts0, total: shown0.length, all: all.length, entries: shown0.slice(msg.offset || 0, (msg.offset || 0) + (msg.limit || 100)), oldest: all.length ? all[all.length - 1].at : null, until: until0, now: now0 };
+          // Diagramm (2.126.0): Einträge der gezeigten Liste je Tag, bei langen Zeiträumen je Woche (wie devicelog.query)
+          const first0 = msg.since ?? (all.length ? all[all.length - 1].at : until0);
+          const week0 = (until0 - first0) / 86400 > 120;
+          const d0 = new Date(first0 * 1000); d0.setHours(0, 0, 0, 0);
+          if (week0) d0.setDate(d0.getDate() - ((d0.getDay() + 6) % 7));
+          const buckets0 = [];
+          for (let d = new Date(d0); d.getTime() / 1000 <= until0 && buckets0.length < 400; d.setDate(d.getDate() + (week0 ? 7 : 1))) buckets0.push({ t: d.getTime() / 1000, n: 0, bad: 0 });
+          const bad0 = (e) => (e.source === "avail" ? e.k === "offline" : e.level === "warning" || e.level === "error" || e.res === "failed" || e.k === "failed" || e.k === "missed");
+          for (const e of shown0) {
+            let i = -1;
+            for (let k = 0; k < buckets0.length && buckets0[k].t <= e.at; k++) i = k;
+            if (i >= 0) { buckets0[i].n++; if (bad0(e)) buckets0[i].bad++; }
+          }
+          return { step: week0 ? "week" : "day", buckets: buckets0, counts: counts0, total: shown0.length, all: all.length, entries: shown0.slice(msg.offset || 0, (msg.offset || 0) + (msg.limit || 100)), oldest: all.length ? all[all.length - 1].at : null, until: until0, now: now0 };
         }
         const rows = msg.kind === "magic" ? (window.__magic?.rules || []) : (window.__routines?.list || []);
         const mine = msg.item_id ? rows.filter((r) => r.id === msg.item_id) : rows.filter((r) => !msg.device_id || r.device_id === msg.device_id);
