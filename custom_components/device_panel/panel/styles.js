@@ -2308,9 +2308,9 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-ft .dlg-btn { flex: 1; justify-content: center; }
 .wz-ft .dlg-btn.primary { flex: 1.6; }
 .wz-welcome-ft { display: flex; flex-direction: column; gap: 8px; width: 100%; }
-.wz-welcome-ft .dlg-btn { justify-content: center; }
+.wz-welcome-ft .dlg-btn { flex: none; min-height: 44px; justify-content: center; }
 .wz-ft2 { display: flex; gap: 8px; }
-.wz-ft2 .dlg-btn { flex: 1; }
+.wz-ft2 .dlg-btn { flex: 1; min-height: 44px; justify-content: center; }
 .wz-hero { width: 76px; height: 76px; border-radius: 22px; background: var(--dp-primary-soft); color: var(--dp-primary); display: grid; place-items: center; margin: 20px 0 6px; }
 .wz-h { font-size: 23px; font-weight: 500; margin: 12px 0 6px; }
 .wz-h2 { font-size: 20px; font-weight: 500; margin: 12px 0 6px; }

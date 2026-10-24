@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.135.1] - 2026-10-24
+
+Der Knopf "Los geht's" des Einrichtungsassistenten ist gleich gross wie die anderen Knöpfe.
+
+### Behoben
+
+- **Einrichtungsassistent, Willkommensseite:** der Knopf "Los geht's" wurde vom Layout flach gedrückt und wirkte viel kleiner als "Jetzt nicht" und "Nicht mehr zeigen". Alle drei Knöpfe sind jetzt 44 px hoch; "Los geht's" bleibt der gefüllte, einladendste Knopf über die ganze Breite.
+
 ## [2.135.0] - 2026-10-24
 
 Ein Einrichtungsassistent führt nach der Installation durch die Grundeinstellungen.
@@ -4719,6 +4727,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.135.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.135.1
 [2.135.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.135.0
 [2.134.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.1
 [2.134.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.0
