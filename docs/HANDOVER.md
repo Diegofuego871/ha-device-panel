@@ -3,6 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
+## Stand (2.136.0, Zwischenstand des Assistenten)
+
+- 2.136.0: Option `wizard_draft` (`{step, d}`, `options_api.wizard_draft`, höchstens 200 000 Zeichen, nicht in der Sicherung): `wizard.js` speichert in `go()` und `close()` (`persist`), liest in `load()` (`restore`, prüft gegen heutige Geräte, Integrationen, Ziele) und macht beim Schritt weiter; "Fertigstellen" und "Nicht mehr zeigen" löschen ihn; `resetDraft` ("Entwurf verwerfen" auf der Willkommensseite). Keine Rückfrage beim Schliessen mehr (`wzDiscard*` entfernt). 2.135.1 ohne Tag, mit "Nicht veröffentlicht" im CHANGELOG. Test: `test_wizard.py::test_draft_...`, Suite `wizard`.
+
 ## Stand (2.135.0, Einrichtungsassistent)
 
 - 2.135.0 (Mockups `docs/mockups/wizard-v1`, Geräteliste A): `panel/wizard.js` (`WizardUi`, Entwurf `s.d`, gespeichert wird nur mit "Fertigstellen" in einem `set_options`), `wizard.py` (WS `wizard_data`, `wizard_test`), Zustand `wizard_state` (`new`, `later`, `open`, `done`, `off`) und `wizard_done_at` in den Optionen (`options_api.py`, nicht in der Sicherung, `backup._WIZARD_KEYS`). Frische Installation: `NEW_INSTALL_OPTIONS` setzt `new`; ohne Wert gilt `done` (bestehende Installationen). Das Fenster öffnet sich bei `new` einmal von selbst (`maybeAuto` im `_fetch`); Kachel `wizard` (`temp`, `locked`, nur Admin) und oranger Punkt (`apps.js`, `dotLevels`) bei `new`, `later`, `open`. Neustart: Einstellungen › Panel › Allgemein (`_wizardChapterHtml`, `data-set="wizard-start"`). Ruhezeit-Schritt nur mit Push-Ziel (5 oder 6 Schritte). Die Ruhezeit des Assistenten schreibt sieben gleiche Tage; sind die Wochentage verschieden, bleibt sie unverändert. Tests: `tests/test_wizard.py`, Suite `wizard`; Simulator `?wizard=new|later|open|done|off`.

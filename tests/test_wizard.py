@@ -103,3 +103,21 @@ async def test_wizard_test_message(hass: HomeAssistant, setup, hass_ws_client) -
     assert missing["success"] and missing["result"] == {"sent": False}
     assert not (await _ws(client, 3, type=f"{DOMAIN}/wizard_test", target="light.kueche"))["success"]
     assert not (await _ws(client, 4, type=f"{DOMAIN}/wizard_test", target="none"))["success"]
+
+
+async def test_draft_is_stored_cleared_and_validated(hass: HomeAssistant, setup, hass_ws_client) -> None:  # noqa: F811
+    """Zwischenstand (2.136.0): Schritt und Entwurf bleiben, ohne etwas anzuwenden; "None" löscht; Unsinn und Übergrösse werden abgelehnt."""
+    client = await hass_ws_client(hass)
+    assert (await _ws(client, 1, type=f"{DOMAIN}/get_options"))["result"]["values"]["wizard_draft"] is None
+    draft = {"step": "devices", "d": {"exI": ["hue"], "exT": [], "exD": ["abc"], "target": "notify.handy", "on": {"outage": True}, "v": {"notify_delay": "3"}, "quiet": {"on": False}}}
+    assert (await _ws(client, 2, type=f"{DOMAIN}/set_options", values={"wizard_draft": draft}))["success"]
+    values = (await _ws(client, 3, type=f"{DOMAIN}/get_options"))["result"]["values"]
+    assert values["wizard_draft"] == draft
+    # angewendet wird nichts
+    assert values["exclude_integrations"] == [] and values["notify_service"] == "none" and values["notify_delay"] == 2
+    for n, bad in enumerate(({"step": "nirgends", "d": {}}, {"step": "types"}, {"step": "types", "d": []}, "text", {"step": "types", "d": {"x": "a" * 250_000}}), start=4):
+        assert not (await _ws(client, n, type=f"{DOMAIN}/set_options", values={"wizard_draft": bad}))["success"]
+    assert (await _ws(client, 20, type=f"{DOMAIN}/get_options"))["result"]["values"]["wizard_draft"] == draft
+    assert (await _ws(client, 21, type=f"{DOMAIN}/set_options", values={"wizard_draft": None}))["success"]
+    assert (await _ws(client, 22, type=f"{DOMAIN}/get_options"))["result"]["values"]["wizard_draft"] is None
+    assert "wizard_draft" not in backup._SCHEMA_KEYS

@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { start: "Los geht's", later: "Jetzt nicht", never: "Nicht mehr zeigen", next: "Weiter", back: "Zurück", finish: "Fertigstellen", tile: "Einrichtung", pill: "Offen", step2: "Schritt 2 von 5", ttl: "Einrichtungsassistent", startBtn: "Assistent starten", errDelay: "Melden nach darf nicht kürzer sein als \"Ausgefallen nach\" (jetzt 2 Min., einstellbar unter Einstellungen).", testOk: "Gesendet. Prüfe dein Gerät.", testFail: "Nicht gesendet. Prüfe das Ziel.", discard: "Einrichtung abbrechen?", snack: "Einrichtung gespeichert." },
-  en: { start: "Let's go", later: "Not now", never: "Don't show again", next: "Next", back: "Back", finish: "Finish", tile: "Setup", pill: "Open", step2: "Step 2 of 5", ttl: "Setup wizard", startBtn: "Start wizard", errDelay: "Notify after must not be shorter than \"Failed after\" (now 2 min, adjustable in the settings).", testOk: "Sent. Check your device.", testFail: "Not sent. Check the target.", discard: "Cancel setup?", snack: "Setup saved." },
+  de: { start: "Los geht's", later: "Jetzt nicht", never: "Nicht mehr zeigen", next: "Weiter", back: "Zurück", finish: "Fertigstellen", tile: "Einrichtung", pill: "Offen", step2: "Schritt 2 von 5", ttl: "Einrichtungsassistent", startBtn: "Assistent starten", errDelay: "Melden nach darf nicht kürzer sein als \"Ausgefallen nach\" (jetzt 2 Min., einstellbar unter Einstellungen).", testOk: "Gesendet. Prüfe dein Gerät.", testFail: "Nicht gesendet. Prüfe das Ziel.", reset: "Entwurf verwerfen", snack: "Einrichtung gespeichert." },
+  en: { start: "Let's go", later: "Not now", never: "Don't show again", next: "Next", back: "Back", finish: "Finish", tile: "Setup", pill: "Open", step2: "Step 2 of 5", ttl: "Setup wizard", startBtn: "Start wizard", errDelay: "Notify after must not be shorter than \"Failed after\" (now 2 min, adjustable in the settings).", testOk: "Sent. Check your device.", testFail: "Not sent. Check the target.", reset: "Discard draft", snack: "Setup saved." },
 };
 
 for (const lang of ["de", "en"]) {
@@ -138,6 +138,7 @@ for (const lang of ["de", "en"]) {
       const saved = (await s.calls())[0] || {};
       check(`[${tag}] ein einziges set_options mit Auswahl, Ziel, Meldungen, Werten`, (await s.calls()).length === 1 && saved.exclude_integrations?.join() === off && saved.exclude_types?.join() === types[0] && saved.exclude_devices?.join() === devs[0] && saved.notify_service === "notify.mobile_app_testhandy" && saved.notify_outage === true && saved.notify_online === true && saved.battery_push === true && saved.notify_new === false && !("offline_after" in saved) && saved.notify_delay === 6 && saved.battery_low === 20, JSON.stringify(saved));
       check(`[${tag}] Ruhezeit gespeichert (sieben Tage 23:00 bis 07:00)`, saved.quiet_enabled === true && saved.quiet_days?.length === 7 && saved.quiet_days.every((d) => d.on && d.from === "23:00" && d.to === "07:00"));
+      check(`[${tag}] Fertigstellen löscht den Zwischenstand`, saved.wizard_draft === null && (await s.p.evaluate(() => window.__opts.wizard_draft)) === null);
       check(`[${tag}] Zustand "done" mit Zeitpunkt`, saved.wizard_state === "done" && saved.wizard_done_at > 1_600_000_000 && (await s.state()) === "done");
       check(`[${tag}] Kachel und Punkt weg`, !(await s.tileShown()) && !(await s.launcherDot()));
       await s.p.close();
@@ -157,19 +158,32 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Kachel trägt die orange Pille "${L.pill}"`, (await s.ev(`return r.querySelector('dialog.apps-dlg [data-ap="open"][data-id="wizard"]').closest(".ap-tile, .ap-row")?.querySelector(".ap-badge")?.textContent.trim()`)) === L.pill);
       await s.tap('dialog.apps-dlg [data-ap="open"][data-id="wizard"]');
       check(`[${tag}] Kachel öffnet den Assistenten`, await s.opened());
-      // Ein Kreuz nach Änderungen fragt nach
+      // Zwischenstand (2.136.0): Schritt und Entwurf bleiben beim Schliessen, ohne Rückfrage und ohne etwas anzuwenden
       await s.tap(`${s.D} [data-wz="start"]`);
       await s.wait(`return r.host._wizard.s.step === "integrations"`);
       const first = await s.ev(`return r.querySelector("${s.D} [data-wz-integ]").dataset.wzInteg`);
       await s.tap(`${s.D} [data-wz-integ="${first}"]`);
+      await s.tap(`${s.D} [data-wz="next"]`);
+      await s.wait(`return r.host._wizard.s.step === "types"`);
+      check(`[${tag}] nach dem Schritt ist der Zwischenstand gespeichert (Schritt "types")`, await s.wait(`return true`) && (await s.p.waitForFunction(() => window.__opts.wizard_draft?.step === "types", null, { timeout: 5000 }).then(() => true, () => false)));
+      const typ = await s.ev(`return r.querySelector("${s.D} [data-wz-type]").dataset.wzType`);
+      await s.tap(`${s.D} [data-wz-type="${typ}"]`);
       await s.tap(`${s.D} [data-wz="close"]`);
-      check(`[${tag}] Kreuz mit Änderungen: Rückfrage "${L.discard}"`, await s.wait(`return r.querySelector("dialog.discard-dlg")?.open && r.querySelector("dialog.discard-dlg").textContent.includes(${JSON.stringify(L.discard)})`));
-      await s.tap('dialog.discard-dlg [data-dd="no"]');
-      check(`[${tag}] "Weitermachen": Assistent bleibt offen mit Entwurf`, (await s.ev(`return r.querySelector("${s.D}").open && r.host._wizard.s.d.exI.has(${JSON.stringify(first)})`)));
+      check(`[${tag}] Kreuz: ohne Rückfrage zu, nichts angewendet, Zustand bleibt "later"`, (await s.closed()) && !(await s.ev(`return r.querySelector("dialog.discard-dlg").open`)) && (await s.calls()).length === 0 && (await s.state()) === "later");
+      const draft = await s.p.evaluate(() => window.__opts.wizard_draft);
+      check(`[${tag}] Zwischenstand enthält Schritt, Integration und Typ`, draft?.step === "types" && draft.d.exI.includes(first) && draft.d.exT.includes(typ), JSON.stringify(draft));
+      await s.tap(".apps-btn");
+      await s.wait(`return r.querySelector("dialog.apps-dlg")?.open`);
+      await s.tap('dialog.apps-dlg [data-ap="open"][data-id="wizard"]');
+      check(`[${tag}] erneut gestartet: gleich im Schritt "types", Auswahl noch da`, (await s.opened()) && (await s.step()) === "types" && (await s.ev(`const d = r.host._wizard.s.d; return d.exI.has(${JSON.stringify(first)}) && d.exT.has(${JSON.stringify(typ)})`)) && !(await s.ev(`return r.querySelector('${s.D} [data-wz-type="${typ}"]').checked`)));
+      await s.tap(`${s.D} [data-wz="back"]`);
+      await s.tap(`${s.D} [data-wz="back"]`);
+      await s.wait(`return r.host._wizard.s.step === "welcome"`);
+      check(`[${tag}] Willkommen zeigt "${L.reset}"`, (await s.text(`${s.D} [data-wz="reset"]`)) === L.reset);
+      await s.tap(`${s.D} [data-wz="reset"]`);
+      check(`[${tag}] Entwurf verwerfen: Auswahl zurück auf den Stand, Zwischenstand gelöscht`, (await s.ev(`const d = r.host._wizard.s.d; return d.exI.size === 0 && d.exT.size === 0 && !r.querySelector('${s.D} [data-wz="reset"]')`)) && (await s.p.waitForFunction(() => window.__opts.wizard_draft === null, null, { timeout: 5000 }).then(() => true, () => false)));
       await s.tap(`${s.D} [data-wz="close"]`);
-      await s.wait(`return r.querySelector("dialog.discard-dlg")?.open`);
-      await s.tap('dialog.discard-dlg [data-dd="yes"]');
-      check(`[${tag}] "Abbrechen": zu, nichts gespeichert, Zustand bleibt "later"`, (await s.closed()) && (await s.calls()).length === 0 && (await s.state()) === "later");
+      check(`[${tag}] zu, nichts angewendet, Zustand bleibt "later"`, (await s.closed()) && (await s.calls()).length === 0 && (await s.state()) === "later");
       await s.p.close();
     }
 

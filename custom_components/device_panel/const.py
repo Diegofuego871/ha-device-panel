@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "322"
+PANEL_VERSION = "323"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -508,6 +508,11 @@ CHIP_ORDER_LEGACY_BLOCK = "connections"
 CONF_WIZARD_STATE = "wizard_state"
 WIZARD_STATES = ("new", "later", "open", "done", "off")
 CONF_WIZARD_DONE_AT = "wizard_done_at"
+# Zwischenstand des Assistenten (seit 2.136.0): Schritt und Entwurf, damit ein abgebrochener Assistent beim nächsten Start dort weitermacht.
+# Er wird nicht angewendet; "Fertigstellen" und "Nicht mehr zeigen" löschen ihn.
+CONF_WIZARD_DRAFT = "wizard_draft"
+WIZARD_DRAFT_STEPS = ("welcome", "integrations", "types", "devices", "messages", "quiet", "done")
+WIZARD_DRAFT_MAX_CHARS = 200_000
 NEW_INSTALL_OPTIONS = {
     CONF_WIZARD_STATE: "new",
     CONF_NOTIFY_FIELDS: ["area", "integration", "connection", "since", "battery"],

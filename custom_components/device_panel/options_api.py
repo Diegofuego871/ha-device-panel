@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import Any
 
+import json
 import re
 import unicodedata
 
@@ -72,7 +73,10 @@ from .const import (
     CONF_NOTIFY_GROUP_MIN,
     CONF_QUIET_DAYS,
     CONF_WIZARD_DONE_AT,
+    CONF_WIZARD_DRAFT,
     CONF_WIZARD_STATE,
+    WIZARD_DRAFT_MAX_CHARS,
+    WIZARD_DRAFT_STEPS,
     WIZARD_STATES,
     CONF_QUIET_ENABLED,
     CONF_QUIET_MODE,
@@ -315,6 +319,22 @@ def _domains(value: Any) -> list[str]:
     if not isinstance(value, list) or not all(isinstance(v, str) and _DOMAIN_RE.match(v) for v in value):
         raise vol.Invalid("Liste von Integrationen (Domains) erwartet")
     return sorted(set(value))
+
+
+def wizard_draft(value: Any) -> dict[str, Any] | None:
+    """Zwischenstand des Einrichtungsassistenten: None (keiner) oder {"step": Schritt, "d": Entwurf}. Das Panel baut den Entwurf; hier nur die Form und die Grösse."""
+    if value is None or value == {}:
+        return None
+    if not isinstance(value, dict) or value.get("step") not in WIZARD_DRAFT_STEPS or not isinstance(value.get("d"), dict):
+        raise vol.Invalid("invalid wizard draft")
+    clean = {"step": value["step"], "d": value["d"]}
+    try:
+        size = len(json.dumps(clean, ensure_ascii=False))
+    except (TypeError, ValueError) as err:
+        raise vol.Invalid("invalid wizard draft") from err
+    if size > WIZARD_DRAFT_MAX_CHARS:
+        raise vol.Invalid("wizard draft too large")
+    return clean
 
 
 def device_ids(value: Any) -> list[str]:
@@ -658,6 +678,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_QUIET_DAYS): quiet.quiet_days,
         vol.Optional(CONF_WIZARD_STATE): vol.In(WIZARD_STATES),
         vol.Optional(CONF_WIZARD_DONE_AT): vol.All(vol.Coerce(int), vol.Range(min=0)),
+        vol.Optional(CONF_WIZARD_DRAFT): wizard_draft,
         vol.Optional(CONF_QUIET_TOPICS): quiet.quiet_topics,
         vol.Optional(CONF_QUIET_MODE): quiet.quiet_mode,
         vol.Optional(CONF_BATTERY_FIELDS): battery_fields,
@@ -735,6 +756,10 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_WIZARD_STATE] = options.get(CONF_WIZARD_STATE) if options.get(CONF_WIZARD_STATE) in WIZARD_STATES else "done"
     done_at = _whole(options.get(CONF_WIZARD_DONE_AT))
     values[CONF_WIZARD_DONE_AT] = done_at if done_at is not None and done_at >= 0 else 0
+    try:
+        values[CONF_WIZARD_DRAFT] = wizard_draft(options.get(CONF_WIZARD_DRAFT))
+    except vol.Invalid:
+        values[CONF_WIZARD_DRAFT] = None
     values[CONF_QUIET_MODE] = options.get(CONF_QUIET_MODE) if options.get(CONF_QUIET_MODE) in quiet.QUIET_MODES else quiet.DEFAULT_QUIET_MODE
     fields = options.get(CONF_NOTIFY_FIELDS)
     values[CONF_NOTIFY_FIELDS] = (

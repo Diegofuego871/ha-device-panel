@@ -5,6 +5,9 @@
  * (ein set_options), bis dahin ändert sich nichts. Die Zahlen jedes Schritts rechnet das Panel selbst nach dem Entwurf (wizard_data
  * liefert alle Kandidaten ohne abgezogene Ausschlüsse).
  *
+ * Zwischenstand (seit 2.136.0): bei jedem Schrittwechsel und beim Schliessen liegt der Entwurf samt Schritt in der Option wizard_draft (für alle
+ * Administratoren, wird nicht angewendet). Der nächste Start macht dort weiter; "Fertigstellen" und "Nicht mehr zeigen" löschen ihn.
+ *
  * Zustand (wizard_state, für alle Administratoren): "new" frisch installiert (das Fenster öffnet sich einmal von selbst), "later" übersprungen
  * (Kachel und Punkt im Launcher bleiben), "open" aus den Einstellungen neu gestartet und nicht beendet (Kachel und Punkt kommen zurück), "done"
  * abgeschlossen, "off" "Nicht mehr zeigen". Bestehende Installationen gelten als "done".
@@ -102,6 +105,7 @@ export class WizardUi {
       s.base = opts.values;
       s.d = this.draftFrom(opts.values);
       s.start = JSON.stringify(this.snapshot(s.d));
+      this.restore(opts.values.wizard_draft);
     } catch (err) {
       if (this.s !== s) return;
       s.error = this.h.errText(err);
@@ -125,6 +129,44 @@ export class WizardUi {
     };
   }
 
+  // Entwurf für die Option wizard_draft (Mengen als Listen)
+  serialize(d) {
+    return { exI: [...d.exI].sort(), exT: [...d.exT].sort(), exD: [...d.exD].sort(), target: d.target, on: { ...d.on }, v: { ...d.v }, quiet: { ...d.quiet } };
+  }
+
+  // Zwischenstand einlesen und auf das prüfen, was es heute gibt (Geräte, Integrationen und Ziele können weggefallen sein)
+  restore(saved) {
+    const s = this.s;
+    if (!saved?.d || typeof saved.step !== "string") return;
+    const d = s.d;
+    const x = saved.d;
+    const list = (v, known) => (Array.isArray(v) ? v.filter((i) => typeof i === "string" && (!known || known.has(i))) : []);
+    d.exI = new Set(list(x.exI, new Set(s.data.integrations.map((i) => i.domain))));
+    d.exT = new Set(list(x.exT));
+    d.exD = new Set(list(x.exD, new Set(s.data.devices.map((i) => i.id))));
+    if (typeof x.target === "string" && (s.opts.notify_targets || []).some((t) => t.value === x.target)) d.target = x.target;
+    for (const id of MSG_ROWS) if (typeof x.on?.[id] === "boolean") d.on[id] = x.on[id];
+    for (const k of VALUE_KEYS) if (typeof x.v?.[k] === "string" && x.v[k].length <= 6) d.v[k] = x.v[k];
+    if (typeof x.quiet?.on === "boolean") d.quiet.on = x.quiet.on;
+    for (const k of ["from", "to"]) if (/^([01]\d|2[0-3]):[0-5]\d$/.test(String(x.quiet?.[k]))) d.quiet[k] = x.quiet[k];
+    s.hasDraft = true;
+    s.savedDraft = JSON.stringify(saved);
+    // Dort weitermachen, wo es aufhörte (die Ruhezeit nur mit Ziel)
+    s.step = [...this.steps(), "welcome"].includes(saved.step) ? saved.step : "integrations";
+  }
+
+  // Zwischenstand speichern (ohne zu warten; ein Fehler stört den Ablauf nicht). Auf der Willkommensseite ohne Änderung gibt es nichts zu merken
+  persist() {
+    const s = this.s;
+    if (!s?.d || (s.step === "welcome" && !this.dirty() && !s.hasDraft)) return;
+    const draft = { step: s.step, d: this.serialize(s.d) };
+    const text = JSON.stringify(draft);
+    if (text === s.savedDraft) return;
+    s.savedDraft = text;
+    s.hasDraft = true;
+    this.host._hass.callWS({ type: "device_panel/set_options", values: { wizard_draft: draft } }).catch(() => {});
+  }
+
   snapshot(d) {
     return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet };
   }
@@ -134,16 +176,13 @@ export class WizardUi {
     return Boolean(s?.d) && JSON.stringify(this.snapshot(s.d)) !== s.start;
   }
 
-  // X, Escape: ein geänderter Entwurf geht verloren, darum vorher fragen; ein ungeöffneter "new" wird zu "later" (das Fenster kommt nicht von selbst wieder)
+  // X, Escape: der Zwischenstand bleibt, darum keine Rückfrage
   requestClose() {
-    if (this.dirty() && this.s.step !== "welcome") {
-      this.host._askConfirm({ title: "wzDiscardTitle", note: "wzDiscardNote", no: "wzDiscardNo", yes: "wzDiscardYes", noIcon: "pencil", yesIcon: "close" }, () => this.close());
-      return;
-    }
     this.close();
   }
 
   close() {
+    this.persist();
     const dlg = this.dlg;
     if (dlg?.open) dlg.close();
     this.s = null;
@@ -163,6 +202,7 @@ export class WizardUi {
     if (!s || s.loading) return;
     s.step = step;
     s.test = "";
+    this.persist();
     this.render();
     const body = this.dlg?.querySelector("[data-wz-body]");
     if (body) body.scrollTop = 0;
@@ -245,7 +285,7 @@ export class WizardUi {
       top = `<div class="wz-top"><div class="wz-stp"><span></span>${close}</div></div>`;
       body = this.welcomeHtml();
       foot = `<div class="wz-welcome-ft"><button type="button" class="dlg-btn primary" data-wz="start">${escape(t("wzStart"))}</button>
-        <div class="wz-ft2"><button type="button" class="dlg-btn" data-wz="later">${escape(t("wzLater"))}</button><button type="button" class="dlg-btn" data-wz="never">${escape(t("wzNever"))}</button></div></div>`;
+        <div class="wz-ft2"><button type="button" class="dlg-btn" data-wz="later">${escape(t("wzLater"))}</button><button type="button" class="dlg-btn" data-wz="never">${escape(t("wzNever"))}</button></div>${s.hasDraft ? `<button type="button" class="dlg-btn" data-wz="reset">${escape(t("wzReset"))}</button>` : ""}</div>`;
     } else {
       const list = this.steps();
       const n = list.indexOf(s.step) + 1;
@@ -439,6 +479,7 @@ export class WizardUi {
       notify_charge: d.on.charge,
       ...Object.fromEntries(VALUE_KEYS.map((k) => [k, n(k)])),
       wizard_state: "done",
+      wizard_draft: null,
       wizard_done_at: Math.floor(Date.now() / 1000),
     };
     // Die Lademeldung gilt nur für Integrationen, die dafür gewählt sind: ohne Wahl alle mit Batteriegeräten
@@ -500,10 +541,11 @@ export class WizardUi {
       else if (a === "start" || a === "next") this.next();
       else if (a === "back") this.back();
       else if (a === "later") this.close();
+      else if (a === "reset") this.resetDraft();
       else if (a === "never") {
         this.dlg?.close();
         this.s = null;
-        this.setState("off");
+        this.setState("off", { wizard_draft: null });
       } else if (a === "finish") this.finish();
       else if (a === "retry") this.load();
       else if (a === "test") this.test();
@@ -562,6 +604,18 @@ export class WizardUi {
       ev.preventDefault();
       this.requestClose();
     });
+  }
+
+  // Entwurf verwerfen: zurück auf den jetzigen Stand der Einstellungen
+  resetDraft() {
+    const s = this.s;
+    if (!s?.base) return;
+    s.d = this.draftFrom(s.base);
+    s.start = JSON.stringify(this.snapshot(s.d));
+    s.hasDraft = false;
+    s.savedDraft = "";
+    this.host._hass.callWS({ type: "device_panel/set_options", values: { wizard_draft: null } }).catch(() => {});
+    this.render();
   }
 
   // Liste und Zahlen neu, ohne das Suchfeld anzufassen (Fokus und Bildlauf bleiben)

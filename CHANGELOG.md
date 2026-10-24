@@ -7,6 +7,26 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.136.0] - 2026-10-24
+
+The setup wizard remembers where you stopped. Includes the changes from 2.135.1.
+
+### Added
+
+- **Setup wizard, intermediate state:** at every step change and when the window is closed (cross, Escape, "Not now"), the step and your choices are stored (option `wizard_draft`, for all administrators). The next start (tile, settings, or the automatic opening) continues at that step with your choices; nothing is applied until "Finish". Closing no longer asks "Cancel setup?". On the welcome page (reached with "Back") the button "Discard draft" returns to the current state of the settings. "Finish" and "Don't show again" delete the intermediate state. The state is not part of the backup file; the draft is checked against the current devices, integrations and targets when it is read.
+- WebSocket `set_options` accepts `wizard_draft` (`{"step", "d"}` or `null`, at most 200,000 characters); `get_options` returns it.
+
+### Changed
+
+- **Launcher, tile "Setup":** while the wizard is open, the tile carries an orange pill "Open" (like "Debug" on the log), matching the orange dot on the launcher button.
+- **Setup wizard, close button:** the cross is the standard one (thin circle) and sits at the very top right, like in the other windows; the progress bar is below it.
+- **Setup wizard, step "Notifications":** only "Notify after" is offered for failed devices; "Failed after" is no longer shown, to keep the step simple (it stays at its current value and can be changed in the settings). "Notify after" still must not be shorter than it; the note names the current value.
+
+### Fixed
+
+- **Setup wizard, logos of the integrations:** the logos (Philips Hue, Shelly and others) sat on a blue tile like the letter badges. They now sit on the neutral background, like in the settings.
+- **Setup wizard, welcome page:** the button "Let's go" was squeezed flat by the layout and looked much smaller than "Not now" and "Don't show again". All three buttons are now 44 px high; "Let's go" stays the filled, most inviting one across the full width.
+
 ## [2.135.1] - 2026-10-24
 
 The button "Let's go" of the setup wizard has the same size as the other buttons, the logos have no blue background, the step "Notifications" is simpler, and the launcher tile shows an orange pill.
@@ -21,6 +41,8 @@ The button "Let's go" of the setup wizard has the same size as the other buttons
 
 - **Setup wizard, logos of the integrations:** the logos (Philips Hue, Shelly and others) sat on a blue tile like the letter badges. They now sit on the neutral background, like in the settings.
 - **Setup wizard, welcome page:** the button "Let's go" was squeezed flat by the layout and looked much smaller than "Not now" and "Don't show again". All three buttons are now 44 px high; "Let's go" stays the filled, most inviting one across the full width.
+
+Not released; included in 2.136.0.
 
 ## [2.135.0] - 2026-10-24
 
@@ -4633,7 +4655,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.135.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.135.1
+[2.136.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.0
 [2.135.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.135.0
 [2.134.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.1
 [2.134.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.0

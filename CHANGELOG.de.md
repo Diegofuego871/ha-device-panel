@@ -7,6 +7,26 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.136.0] - 2026-10-24
+
+Der Einrichtungsassistent merkt sich, wo du aufgehört hast. Enthält die Änderungen aus 2.135.1.
+
+### Hinzugefügt
+
+- **Einrichtungsassistent, Zwischenstand:** bei jedem Schrittwechsel und beim Schliessen des Fensters (Kreuz, Escape, "Jetzt nicht") werden Schritt und Auswahl gespeichert (Option `wizard_draft`, für alle Administratoren). Der nächste Start (Kachel, Einstellungen oder das automatische Öffnen) macht bei diesem Schritt mit deiner Auswahl weiter; angewendet wird erst mit "Fertigstellen". Beim Schliessen kommt keine Rückfrage "Einrichtung abbrechen?" mehr. Auf der Willkommensseite (mit "Zurück" erreichbar) bringt der Knopf "Entwurf verwerfen" zurück auf den jetzigen Stand der Einstellungen. "Fertigstellen" und "Nicht mehr zeigen" löschen den Zwischenstand. Er steht nicht in der Sicherungsdatei; beim Einlesen wird er gegen die heutigen Geräte, Integrationen und Ziele geprüft.
+- WebSocket `set_options` nimmt `wizard_draft` an (`{"step", "d"}` oder `null`, höchstens 200 000 Zeichen); `get_options` liefert ihn.
+
+### Geändert
+
+- **Launcher, Kachel "Einrichtung":** solange der Assistent offen ist, trägt die Kachel eine orange Pille "Offen" (wie "Debug" am Protokoll), passend zum orangen Punkt am Launcher-Knopf.
+- **Einrichtungsassistent, Schliessen-Knopf:** das Kreuz ist das Standard-Kreuz (feiner Kreis) und sitzt ganz oben rechts wie in den anderen Fenstern; der Fortschrittsbalken steht darunter.
+- **Einrichtungsassistent, Schritt "Meldungen":** bei den ausgefallenen Geräten wird nur noch "Melden nach" angeboten; "Ausgefallen nach" steht nicht mehr da, damit der Schritt einfach bleibt (es bleibt auf dem jetzigen Wert und lässt sich in den Einstellungen ändern). "Melden nach" darf weiterhin nicht kürzer sein; der Hinweis nennt den jetzigen Wert.
+
+### Behoben
+
+- **Einrichtungsassistent, Logos der Integrationen:** die Logos (Philips Hue, Shelly und andere) standen auf einer blauen Kachel wie die Buchstaben-Abzeichen. Sie stehen jetzt auf dem neutralen Grund, wie in den Einstellungen.
+- **Einrichtungsassistent, Willkommensseite:** der Knopf "Los geht's" wurde vom Layout flach gedrückt und wirkte viel kleiner als "Jetzt nicht" und "Nicht mehr zeigen". Alle drei Knöpfe sind jetzt 44 px hoch; "Los geht's" bleibt der gefüllte, einladendste Knopf über die ganze Breite.
+
 ## [2.135.1] - 2026-10-24
 
 Der Knopf "Los geht's" des Einrichtungsassistenten ist gleich gross wie die anderen Knöpfe, die Logos haben keinen blauen Hintergrund, der Schritt "Meldungen" ist einfacher, und die Kachel im Launcher zeigt eine orange Pille.
@@ -21,6 +41,8 @@ Der Knopf "Los geht's" des Einrichtungsassistenten ist gleich gross wie die ande
 
 - **Einrichtungsassistent, Logos der Integrationen:** die Logos (Philips Hue, Shelly und andere) standen auf einer blauen Kachel wie die Buchstaben-Abzeichen. Sie stehen jetzt auf dem neutralen Grund, wie in den Einstellungen.
 - **Einrichtungsassistent, Willkommensseite:** der Knopf "Los geht's" wurde vom Layout flach gedrückt und wirkte viel kleiner als "Jetzt nicht" und "Nicht mehr zeigen". Alle drei Knöpfe sind jetzt 44 px hoch; "Los geht's" bleibt der gefüllte, einladendste Knopf über die ganze Breite.
+
+Nicht veröffentlicht; enthalten in 2.136.0.
 
 ## [2.135.0] - 2026-10-24
 
@@ -4734,7 +4756,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.135.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.135.1
+[2.136.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.0
 [2.135.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.135.0
 [2.134.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.1
 [2.134.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.134.0

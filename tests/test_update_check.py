@@ -115,6 +115,7 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         # Einrichtungsassistent (seit 2.135.0): ohne gespeicherten Wert gilt die Installation als eingerichtet
         "wizard_state": "done",
         "wizard_done_at": 0,
+        "wizard_draft": None,
         "exclude_integrations": [],
         "exclude_types": [],
         "exclude_devices": [],
