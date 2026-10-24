@@ -41,7 +41,7 @@ _LOGGER = logging.getLogger(__name__)
 
 KINDS = ("cpu", "ram", "disk")
 OPTION_OF = {"cpu": CONF_STATUS_CPU_ENTITY, "ram": CONF_STATUS_RAM_ENTITY, "disk": CONF_STATUS_DISK_ENTITY}
-# Zeitraum der Festplatte in Tagen; CPU und Arbeitsspeicher sind immer 24h
+# Zeitraum in Tagen; seit 2.128.0 wählt man ihn für jede der drei Kurven (vorher nur für die Festplatte, CPU und Arbeitsspeicher waren immer 24h)
 RANGES = {"24h": 1, "30d": 30, "6m": 180, "1y": 365}
 STATS_FROM_DAYS = 30
 DAILY_FROM_DAYS = 180
@@ -465,25 +465,36 @@ async def async_metric(hass: HomeAssistant, kind: str, own: str, days: int, now:
     return out
 
 
-async def async_system(hass: HomeAssistant, range_key: str, now: float | None = None) -> dict[str, Any]:
-    """Alle drei Kurven plus die Sensoren zur Auswahl. range_key gilt nur für die Festplatte."""
+async def async_system(hass: HomeAssistant, range_key: str, now: float | None = None, ranges: dict[str, str] | None = None) -> dict[str, Any]:
+    """
+    Alle drei Kurven plus die Sensoren zur Auswahl. ranges wählt den Zeitraum je Kurve (cpu, ram, disk); ohne Angabe gilt range_key nur für die
+    Festplatte (ältere Panels) und die beiden anderen sind 24 Stunden.
+    """
     now = now if now is not None else time.time()
     opts = effective(hass)
     metrics = []
+    chosen: dict[str, str] = {}
     for kind in KINDS:
-        days = RANGES.get(range_key, 1) if kind == "disk" else 1
-        metrics.append(await async_metric(hass, kind, str(opts.get(OPTION_OF[kind]) or ""), days, now))
+        key = (ranges or {}).get(kind) or (range_key if kind == "disk" else "24h")
+        chosen[kind] = key if key in RANGES else "24h"
+        metrics.append(await async_metric(hass, kind, str(opts.get(OPTION_OF[kind]) or ""), RANGES[chosen[kind]], now))
     # Ob die Integrationen eingerichtet sind: ohne "System Monitor" sagt die App, wie man es hinzufügt (nicht zwingend, es gibt die Auswahl)
     integrations = {"systemmonitor": bool(hass.config_entries.async_entries("systemmonitor")), "hassio": "hassio" in hass.config.components}
-    return {"range": range_key if range_key in RANGES else "24h", "metrics": metrics, "candidates": candidates(hass), "integrations": integrations}
+    return {"range": chosen["disk"], "ranges": chosen, "metrics": metrics, "candidates": candidates(hass), "integrations": integrations}
 
 
-@websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/status_system", vol.Optional("range", default="24h"): vol.In(tuple(RANGES))})
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): f"{DOMAIN}/status_system",
+        vol.Optional("range", default="24h"): vol.In(tuple(RANGES)),
+        vol.Optional("ranges"): {vol.In(KINDS): vol.In(tuple(RANGES))},
+    }
+)
 @websocket_api.require_admin
 @websocket_api.async_response
 async def ws_status_system(hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]) -> None:
     """CPU, Arbeitsspeicher und Festplatte für die Status-App (Administratoren)."""
-    connection.send_result(msg["id"], await async_system(hass, msg["range"]))
+    connection.send_result(msg["id"], await async_system(hass, msg["range"], ranges=msg.get("ranges")))
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/status_system_enable", vol.Required("kind"): vol.In(KINDS)})

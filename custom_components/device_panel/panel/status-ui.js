@@ -36,7 +36,8 @@ export class StatusUi {
     // System: Antwort von status_system, Zeitraum der Festplatte, Zähler für das Nachladen
     this.sys = null;
     this.sysError = null;
-    this.range = "24h";
+    // Zeitraum je Kurve (seit 2.128.0): bisher gab es ihn nur für die Festplatte
+    this.ranges = { cpu: "24h", ram: "24h", disk: "24h" };
     this._ticks = 0;
     // Neustart von Hand (seit 2.63.0): confirm = Teil mit offener Rückfrage, busy = Teil, der gerade neu startet, flash = Hinweis danach
     this.ui = { confirm: null, busy: null, flash: "", flashTimer: null, pick: null, pickQ: "", enabled: {}, enabling: null, enableAsk: null, tab: "services", saved: false, saveError: "" };
@@ -151,8 +152,9 @@ export class StatusUi {
       if (choose) return this.choose(choose.dataset.stKind, choose.dataset.stChoose);
       const range = ev.target.closest("[data-st-range]");
       if (range) {
-        if (SYS_RANGES.includes(range.dataset.stRange) && range.dataset.stRange !== this.range) {
-          this.range = range.dataset.stRange;
+        const kind = range.dataset.stKind;
+        if (this.ranges[kind] && SYS_RANGES.includes(range.dataset.stRange) && range.dataset.stRange !== this.ranges[kind]) {
+          this.ranges = { ...this.ranges, [kind]: range.dataset.stRange };
           this.loadSystem();
         }
         return;
@@ -214,12 +216,12 @@ export class StatusUi {
     this.render();
   }
 
-  // CPU, Arbeitsspeicher, Festplatte (status_system); der Zeitraum gilt nur für die Festplatte
+  // CPU, Arbeitsspeicher, Festplatte (status_system); jede Kurve hat ihren Zeitraum
   async loadSystem() {
-    const range = this.range;
+    const ranges = this.ranges;
     try {
-      const res = await this.host._hass.callWS({ type: "device_panel/status_system", range });
-      if (range !== this.range) return;
+      const res = await this.host._hass.callWS({ type: "device_panel/status_system", range: ranges.disk, ranges });
+      if (ranges !== this.ranges) return;
       this.sys = res;
       this.sysError = null;
       // "Eingeschaltet"-Hinweis nur, solange die Sensoren noch fehlen; sind sie da (oder fehlt nichts mehr), gilt er nicht mehr
@@ -583,7 +585,7 @@ export class StatusUi {
     const { escape } = this.h;
     const t = (k, ...a) => this.t(k, ...a);
     const title = t(`stSys${m.id[0].toUpperCase()}${m.id.slice(1)}`);
-    const range = m.id === "disk" ? this.range : "24h";
+    const range = this.ranges[m.id] || "24h";
     const scope = m.scope === "own" ? m.name : m.scope === "none" ? "" : t(`stSysScope_${m.scope}`);
     const absolute = m.mode === "absolute";
     const val =
@@ -592,10 +594,7 @@ export class StatusUi {
         : absolute
           ? `<span class="st-sys-val">${escape(this.num(m.current))}<small>${escape(m.unit)}</small></span>`
           : `<span class="st-sys-val">${escape(String(Math.round(m.current)))}<small>%</small></span>`;
-    const tabs =
-      m.id === "disk"
-        ? `<div class="sub-tabs" role="tablist">${SYS_RANGES.map((k) => `<button type="button" role="tab" class="sub-tab${k === this.range ? " on" : ""}" data-st-range="${k}" aria-selected="${k === this.range}">${escape(t(`stSysRange_${k}`))}</button>`).join("")}</div>`
-        : "";
+    const tabs = `<div class="sub-tabs" role="tablist">${SYS_RANGES.map((k) => `<button type="button" role="tab" class="sub-tab${k === range ? " on" : ""}" data-st-range="${k}" data-st-kind="${escape(m.id)}" aria-selected="${k === range}">${escape(t(`stSysRange_${k}`))}</button>`).join("")}</div>`;
     let body;
     if (!m.entity_id) {
       // Ohne "System Monitor": sagen, wie man es hinzufügt (nicht zwingend, die Auswahl unten nimmt jeden Sensor)

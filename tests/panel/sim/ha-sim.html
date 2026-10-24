@@ -1741,7 +1741,10 @@
         if (window.__systemFails) throw new Error(window.__systemFails);
         const now = Date.now() / 1000;
         const range = msg.range || "24h";
-        const days = { "24h": 1, "30d": 30, "6m": 180, "1y": 365 }[range];
+        const dayOf = { "24h": 1, "30d": 30, "6m": 180, "1y": 365 };
+        // Je Kurve ein eigener Zeitraum (msg.ranges); ohne Angabe: Festplatte nach range, die anderen 24 Std.
+        const rg = (k) => (msg.ranges && msg.ranges[k]) || (k === "disk" ? range : "24h");
+        const days = dayOf[range];
         const curve = (n, f, d) => Array.from({ length: n }, (_, i) => [now - d * 86400 + (i / (n - 1)) * d * 86400, f(i / (n - 1))]);
         const own = (k) => window.__opts[`status_${k}_entity`] || "";
         const off = Boolean(window.__systemOff);
@@ -1766,10 +1769,11 @@
         const filler = Array.from({ length: 90 }, (_, i) => ({ entity_id: `sensor.fuellung_${i + 1}`, name: `Füllung ${String(i + 1).padStart(2, "0")}`, unit: "%", pref: true }));
         return {
           range,
+          ranges: { cpu: rg("cpu"), ram: rg("ram"), disk: rg("disk") },
           integrations: { systemmonitor: !window.__systemNoInteg, hassio: false },
           metrics: [
-            mk("cpu", "host", "Prozessornutzung", "sensor.system_monitor_processor_use", 1, (x) => 14 + 12 * Math.sin(x * 14) + (x > 0.8 && x < 0.86 ? 55 : 0), 17, "history"),
-            mk("ram", "host", "Arbeitsspeicher", "sensor.system_monitor_memory_use_percent", 1, (x) => 52 + 6 * Math.sin(x * 5), 54, "history"),
+            mk("cpu", "host", "Prozessornutzung", "sensor.system_monitor_processor_use", dayOf[rg("cpu")], (x) => 14 + 12 * Math.sin(x * 14) + (x > 0.8 && x < 0.86 ? 55 : 0), 17, rg("cpu") === "24h" ? "history" : "statistics"),
+            mk("ram", "host", "Arbeitsspeicher", "sensor.system_monitor_memory_use_percent", dayOf[rg("ram")], (x) => 52 + 6 * Math.sin(x * 5), 54, rg("ram") === "24h" ? "history" : "statistics"),
             disk,
           ],
           candidates: [

@@ -3,7 +3,9 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.127.0, Pfeile an antippbaren Zeilen des Protokolls; davor 2.126.0 Diagramm in "Alles")
+## Stand (2.128.0, Zeitraum je Kurve in der Status-App; davor 2.127.0 Pfeile, 2.126.0 Diagramm in "Alles")
+
+- Zeitraum je Kurve (2.128.0): `status-ui.js` `this.ranges = {cpu, ram, disk}`, jede Karte hat die Reiterleiste (`data-st-range` + `data-st-kind`; Kapsel-Schlüssel `st-range-<kind>` in `device-panel.js`); `system_stats.async_system(..., ranges=)` wählt je Kurve den Zeitraum (ohne Angabe: Festplatte nach `range`, CPU/RAM 24h), WS `status_system` nimmt `ranges`. Tests: `test_system_stats.py`, Suite `statussystem`. Offen: ob die Status-Zeiträume an die sechs der Geräteverläufe (24 Std., 7 Tage, 30 Tage, 3/6/12 Monate) angeglichen werden sollen.
 
 - Pfeil an antippbaren Zeilen (2.127.0): `protocol.js` `allRow` (Klasse `has-chev`, `.al-chev`; aufklappbar chevronDown, offen gedreht; Routine und Gerät chevronRight) und `sysRow` (nur mit Gerät); CSS am Ende der Protokoll-Regeln in `styles.js`. Test: Suite `devicelog` ("Pfeil nur an antippbaren Zeilen").
 

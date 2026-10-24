@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.128.0] - 2026-10-24
+
+Jede Kurve der Status-App hat ihre eigenen Knöpfe für den Zeitraum. Enthält die Änderungen von 2.126.0 und 2.127.0.
+
+### Geändert
+
+- **Status-App, Reiter "System":** CPU und Arbeitsspeicher haben jetzt dieselben Knöpfe für den Zeitraum wie die Festplatte (24 Stunden, 30 Tage, 6 Monate, 1 Jahr). Jede Kurve behält ihren eigenen Zeitraum, die anderen bleiben unverändert. Bisher liess sich nur die Festplatte umschalten, CPU und Arbeitsspeicher standen fest auf 24 Stunden. Ältere Zeiträume stammen aus der Langzeitstatistik von Home Assistant; ohne sie zeigt die Kurve nur, was der Rekorder noch hat, mit dem bekannten Hinweis.
+- WebSocket `status_system` nimmt ein optionales `ranges` (`cpu`, `ram`, `disk`, je `24h`, `30d`, `6m` oder `1y`) und liefert es je Kurve zurück; `range` setzt weiter die Festplatte und gilt auch ohne `ranges`.
+
 ## [2.127.0] - 2026-10-24
 
 Einträge des Protokolls, die man antippen kann, zeigen das jetzt mit einem Pfeil. Enthält die Änderungen von 2.126.0.
@@ -15,6 +24,8 @@ Einträge des Protokolls, die man antippen kann, zeigen das jetzt mit einem Pfei
 
 - **Pfeil am Ende antippbarer Zeilen** im Protokoll (Reiter "Alles" und "System"): ein Pfeil nach unten (offen nach oben) bei einer Magic-Push-Meldung und bei einer gesendeten Meldung, ein Pfeil nach rechts bei einem Lauf einer Routine (öffnet den Ablauf) und bei einem Eintrag, der sein Gerät öffnet. Einfache Einträge haben keinen Pfeil. Bisher musste man wissen, dass diese Zeilen antippbar sind.
 - **Diagramm im Reiter "Alles"** (seit 2.126.0): Balken je Tag (bei Zeiträumen über 120 Tage je Woche), Störungen rot; es folgt den Chips und der Suche, ein Tipp auf einen Balken setzt den Zeitraum auf diesen Tag.
+
+Nicht veröffentlicht; enthalten in 2.128.0.
 
 ## [2.126.0] - 2026-10-24
 
@@ -4619,7 +4630,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.127.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.127.0
+[2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0
 [2.124.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.124.0
 [2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0

@@ -161,6 +161,10 @@ async def test_history_for_cpu_and_statistics_for_the_disk(recorder_mock, hass: 
     assert month["source"] == "statistics" and month["days"] == 30 and len(month["points"]) <= 300
     half = (await _ws(client, 4, type=f"{DOMAIN}/status_system", range="6m"))["result"]["metrics"][2]
     assert half["days"] == 180 and half["source"] == "statistics"
+    # Je Kurve ein eigener Zeitraum: CPU 30 Tage, Festplatte 24 Std.; unbekannte Werte werden abgelehnt
+    mixed = (await _ws(client, 5, type=f"{DOMAIN}/status_system", range="24h", ranges={"cpu": "30d", "disk": "24h"}))["result"]
+    assert mixed["ranges"] == {"cpu": "30d", "ram": "24h", "disk": "24h"} and mixed["metrics"][0]["days"] == 30 and mixed["metrics"][1]["days"] == 1
+    assert not (await _ws(client, 6, type=f"{DOMAIN}/status_system", range="24h", ranges={"cpu": "3d"}))["success"]
 
 
 async def test_own_sensor_choice_and_validation(hass: HomeAssistant, hass_ws_client) -> None:

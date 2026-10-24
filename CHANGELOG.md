@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.128.0] - 2026-10-24
+
+Every curve of the Status app has its own period buttons. Includes the changes from 2.126.0 and 2.127.0.
+
+### Changed
+
+- **Status app, tab "System":** CPU and memory now have the same buttons for the period as the disk (24 hours, 30 days, 6 months, 1 year). Each curve keeps its own period, the others stay as they are. Before, only the disk could be switched and CPU and memory were fixed at 24 hours. Older periods come from the long-term statistics of Home Assistant; without them the curve shows only what the recorder still has, with the usual note.
+- WebSocket `status_system` takes an optional `ranges` (`cpu`, `ram`, `disk`, each `24h`, `30d`, `6m` or `1y`) and returns it per curve; `range` still sets the disk and stays valid without `ranges`.
+
 ## [2.127.0] - 2026-10-24
 
 Entries of the history that can be tapped now show it with an arrow. Includes the changes from 2.126.0.
@@ -15,6 +24,8 @@ Entries of the history that can be tapped now show it with an arrow. Includes th
 
 - **Arrow at the end of tappable rows** in the history (tabs "All" and "System"): a down arrow (turns up when open) for a Magic Push message and for a sent notification, a right arrow for a routine run (opens its trace) and for an entry that opens its device. Plain entries have no arrow. Before, you had to know that these rows could be tapped.
 - **Chart in the tab "All"** (from 2.126.0): bars per day (per week for periods over 120 days), faults in red; it follows the chips and the search, a tap on a bar sets the period to that day.
+
+Not released; included in 2.128.0.
 
 ## [2.126.0] - 2026-10-24
 
@@ -4518,7 +4529,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.127.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.127.0
+[2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0
 [2.124.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.124.0
 [2.122.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.122.0
