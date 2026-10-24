@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.138.1] - 2026-10-24
+
+The rows of the setup wizard open and close again.
+
+### Fixed
+
+- **Setup wizard, step "Notifications":** the row "Updates" had an arrow too, although there is no setting per integration for it. A tap broke the step: the row could not be opened and all other arrows stopped working too. "Updates" has no arrow now (an empty place keeps the rows aligned); the arrows of the other four rows open and close in any order.
+
 ## [2.138.0] - 2026-10-24
 
 The setup wizard goes down to single devices: one switch per integration or per device.
@@ -4692,6 +4700,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.138.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.1
 [2.138.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.0
 [2.137.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.137.0
 [2.136.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.1

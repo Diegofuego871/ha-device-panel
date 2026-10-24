@@ -113,7 +113,17 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] "Voll geladen" an, ohne gewählte Integrationen: Hinweis "je Integration einschalten"`, await s.ev(`return !!r.querySelector("${s.D} .wz-hint")`));
       await s.tap(`${s.D} [data-wz-msg="charge"]`);
       // Je Meldungsart nach Integration einstellen (Pfeil), ohne Geräte-Ebene
-      check(`[${tag}] Pfeil an jeder der vier Zeilen, alle zu`, (await s.ev(`return r.querySelectorAll("${s.D} [data-wz-mopen]").length`)) === 5 && (await s.ev(`return r.querySelectorAll("${s.D} .wz-msub").length`)) === 0);
+      check(`[${tag}] Pfeil an jeder der vier Zeilen, alle zu`, (await s.ev(`return r.querySelectorAll("${s.D} button[data-wz-mopen]").length`)) === 4 && (await s.ev(`return r.querySelectorAll("${s.D} .wz-msub").length`)) === 0);
+      check(`[${tag}] Updates hat keinen Pfeil (gilt für das ganze System)`, (await s.ev(`return !r.querySelector('${s.D} [data-wz-mopen="updates"]')`)));
+      // Alle Pfeile nacheinander auf und zu: der Assistent bleibt bedienbar
+      for (const id of ["outage", "battery", "new", "charge"]) {
+        await s.tap(`${s.D} [data-wz-mopen="${id}"]`);
+        check(`[${tag}] Pfeil "${id}" klappt auf`, await s.ev(`return !!r.querySelector('${s.D} [data-wz-int="${id}"]')`));
+      }
+      for (const id of ["new", "battery"]) await s.tap(`${s.D} [data-wz-mopen="${id}"]`);
+      check(`[${tag}] nach dem Auf- und Zuklappen reagiert die Seite weiter`, await s.ev(`return !r.querySelector('${s.D} [data-wz-int="new"]') && !r.querySelector('${s.D} [data-wz-int="battery"]') && !!r.querySelector('${s.D} [data-wz-int="charge"]')`));
+      await s.tap(`${s.D} [data-wz-mopen="outage"]`);
+      await s.tap(`${s.D} [data-wz-mopen="charge"]`);
       await s.tap(`${s.D} [data-wz-mopen="charge"]`);
       const chargeList = await s.ev(`return [...r.querySelectorAll('${s.D} [data-wz-int="charge"]')].map((i) => i.dataset.wzDom + ":" + i.checked)`);
       check(`[${tag}] Voll geladen aufgeklappt: nur Integrationen mit Batteriegeräten, alle aus`, chargeList.length >= 1 && chargeList.every((x) => x.endsWith(":false")), chargeList.join());

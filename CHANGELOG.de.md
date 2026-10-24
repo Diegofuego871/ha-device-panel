@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.138.1] - 2026-10-24
+
+Die Zeilen des Einrichtungsassistenten klappen wieder auf und zu.
+
+### Behoben
+
+- **Einrichtungsassistent, Schritt "Meldungen":** die Zeile "Updates" hatte auch einen Pfeil, obwohl es dafür keine Einstellung pro Integration gibt. Ein Tipp darauf brachte den Schritt durcheinander: die Zeile liess sich nicht öffnen, und alle anderen Pfeile reagierten auch nicht mehr. "Updates" hat jetzt keinen Pfeil (ein leerer Platz hält die Zeilen ausgerichtet); die Pfeile der anderen vier Zeilen öffnen und schliessen in beliebiger Reihenfolge.
+
 ## [2.138.0] - 2026-10-24
 
 Der Einrichtungsassistent geht bis zu den einzelnen Geräten: ein Schalter pro Integration oder pro Gerät.
@@ -4793,6 +4801,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.138.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.1
 [2.138.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.0
 [2.137.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.137.0
 [2.136.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.1

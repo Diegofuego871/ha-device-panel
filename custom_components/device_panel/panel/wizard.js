@@ -15,6 +15,8 @@
 
 const STATES_SHOWN = ["new", "later", "open"];
 const MSG_ROWS = ["outage", "battery", "new", "charge", "updates"];
+// Meldungsarten mit Einstellung je Integration (aufklappbar); die Updates gelten für das ganze System
+const PER_INTEGRATION = ["outage", "battery", "new", "charge"];
 const MSG_ICON = { outage: "alert", battery: "battery", new: "sparkle", charge: "batteryCharging", updates: "download" };
 // Zahlen der Meldungen: Schlüssel der Option, Zeile, Beschriftung, Einheit
 const VALUES = {
@@ -497,10 +499,10 @@ export class WizardUi {
           return `<label class="wz-v"><span>${escape(this.t(lab))}</span><input type="number" inputmode="numeric" min="${lo}" max="${hi}" step="1" data-wz-v="${key}" value="${escape(d.v[key])}"${none ? " disabled" : ""}><em>${escape(this.t(unit))}</em></label>`;
         })
         .join("");
-      const open = this.s.openMsg.has(id);
+      const open = PER_INTEGRATION.includes(id) && this.s.openMsg.has(id);
       const list = open ? this.integListMsgHtml(id, none) : "";
       const hint = id === "charge" && d.on.charge && !none && !this.rowIntegrations("charge").some((i) => this.integState("charge", i.domain) !== "off") ? `<p class="wz-p small wz-hint">${escape(this.t("wzChargeHint"))}</p>` : "";
-      const chev = `<button type="button" class="wz-mx" data-wz-mopen="${id}" aria-expanded="${open}" title="${escape(this.t("wzMInteg"))}" aria-label="${escape(this.t("wzMInteg"))}"><span class="wz-chev${open ? " open" : ""}">${mdi("chevronRight", 16)}</span></button>`;
+      const chev = !PER_INTEGRATION.includes(id) ? `<span class="wz-mx"></span>` : `<button type="button" class="wz-mx" data-wz-mopen="${id}" aria-expanded="${open}" title="${escape(this.t("wzMInteg"))}" aria-label="${escape(this.t("wzMInteg"))}"><span class="wz-chev${open ? " open" : ""}">${mdi("chevronRight", 16)}</span></button>`;
       return `<div class="wz-msg${d.on[id] && !none ? " on" : ""}"><div class="wz-li">${chev}<span class="wz-ic">${mdi(MSG_ICON[id], 18)}</span><div class="wz-nm">${escape(this.t(`wzM_${id}`))}<small>${escape(this.t(`wzM_${id}_s`))}</small></div>${this.toggle("data-wz-msg", id, d.on[id] && !none, this.t(`wzM_${id}`)).replace("<input", none ? "<input disabled" : "<input")}</div><div class="wz-vals">${vals}</div>${hint}${list}</div>`;
     }).join("");
     return `<h2 class="wz-h2">${escape(this.t("wzMTitle"))}</h2><p class="wz-p">${escape(this.t("wzMText"))}</p>
