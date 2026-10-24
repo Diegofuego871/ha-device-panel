@@ -7,6 +7,15 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.138.0] - 2026-10-24
+
+Der Einrichtungsassistent geht bis zu den einzelnen Geräten: ein Schalter pro Integration oder pro Gerät.
+
+### Hinzugefügt
+
+- **Einrichtungsassistent, Schritt "Meldungen", Geräte-Ebene:** unter "Ausgefallene Geräte", "Niedrige Batterie" und "Voll geladen" lässt sich jede Integration noch einmal aufklappen (Pfeil) und listet ihre Geräte (bei Batterie und Laden nur Geräte mit Batterie), je ein Schalter, keine Werte. "Ausgefallene Geräte": ein ausgeschaltetes Gerät bekommt keine Ausfall- und Rückkehr-Meldung (die Geräte-Einstellung "Meldungen"). "Niedrige Batterie": ein ausgeschaltetes Gerät bekommt keine Batterie-Warnung (Geräte-Einstellung "Batterie" = aus; eine eigene Schwelle bleibt, wie sie ist). "Voll geladen": der Schalter der Integration setzt alle ihre Geräte; bei gemischter Wahl zeigt der Integrations-Schalter den Zwischenzustand, und der Assistent speichert die Integration (wenn mindestens die Hälfte der Geräte an ist) mit den übrigen Geräten einzeln ausgeschaltet, sonst die eingeschalteten Geräte einzeln. "Neue Geräte" hat keine Geräte-Ebene. Geräte einer ausgeschalteten Integration sind ausgegraut.
+- Die Geräte-Einstellungen werden zuerst geschrieben, ein `set_device_settings` je geändertem Gerät, und erst danach schliesst der Assistent ab; scheitert ein Aufruf, bleibt er offen und lässt sich wiederholen. Geschrieben werden nur Geräte, die sich wirklich ändern; Geräte ausserhalb der Wahl bleiben, wie sie sind. Der Zwischenstand merkt sich die Gerätewahl.
+
 ## [2.137.0] - 2026-10-24
 
 Der Einrichtungsassistent fragt auch nach Meldungen für Updates.
@@ -4784,6 +4793,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.138.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.0
 [2.137.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.137.0
 [2.136.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.1
 [2.136.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.0

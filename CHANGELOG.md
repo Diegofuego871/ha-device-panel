@@ -7,6 +7,15 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.138.0] - 2026-10-24
+
+The setup wizard goes down to single devices: one switch per integration or per device.
+
+### Added
+
+- **Setup wizard, step "Notifications", device level:** under "Failed devices", "Low battery" and "Fully charged" every integration opens once more (arrow) and lists its devices (for battery and charging only devices with a battery), one switch each, no values. "Failed devices": a device that is off gets no outage and return notification (the device setting "Notifications"). "Low battery": a device that is off gets no battery warning (device setting "Battery" = off; an own threshold stays as it is). "Fully charged": the switch of the integration sets all its devices; with a mixed choice the integration switch shows the middle state, and the wizard stores the integration (if at least half of the devices are on) with the other devices switched off one by one, or the devices that are on one by one. "New devices" has no device level. Devices of an integration that is off are greyed out.
+- The device settings are written first, one `set_device_settings` per changed device, and only then the wizard is finished; if one call fails, the wizard stays open and can be repeated. Only devices that really change are written; devices outside the choice stay as they are. The draft (intermediate state) keeps the device choice.
+
 ## [2.137.0] - 2026-10-24
 
 The setup wizard also asks about update notifications.
@@ -4683,6 +4692,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.138.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.138.0
 [2.137.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.137.0
 [2.136.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.1
 [2.136.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.0

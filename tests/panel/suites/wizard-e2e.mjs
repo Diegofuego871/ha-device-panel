@@ -119,13 +119,35 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Voll geladen aufgeklappt: nur Integrationen mit Batteriegeräten, alle aus`, chargeList.length >= 1 && chargeList.every((x) => x.endsWith(":false")), chargeList.join());
       const chargeDom = chargeList[0].split(":")[0];
       await s.tap(`${s.D} [data-wz-int="charge"][data-wz-dom="${chargeDom}"]`);
-      check(`[${tag}] Integration einschalten schaltet die Meldung mit ein, Hinweis weg`, await s.ev(`const d = r.host._wizard.s.d; return d.charge.has(${JSON.stringify(chargeDom)}) && d.on.charge && !r.querySelector("${s.D} .wz-hint")`));
+      check(`[${tag}] Integration einschalten schaltet die Meldung mit ein, Hinweis weg`, await s.ev(`const d = r.host._wizard.s.d; return r.host._wizard.integState("charge", ${JSON.stringify(chargeDom)}) === "on" && d.on.charge && !r.querySelector("${s.D} .wz-hint")`));
       await s.tap(`${s.D} [data-wz-mopen="outage"]`);
       const outList = await s.ev(`return [...r.querySelectorAll('${s.D} [data-wz-int="outage"]')].map((i) => i.dataset.wzDom + ":" + i.checked)`);
       check(`[${tag}] Ausgefallene Geräte aufgeklappt: alle Integrationen der Auswahl, alle an`, outList.length >= 2 && outList.every((x) => x.endsWith(":true")), outList.join());
       const outDom = outList[0].split(":")[0];
       await s.tap(`${s.D} [data-wz-int="outage"][data-wz-dom="${outDom}"]`);
       check(`[${tag}] Integration abgewählt, die Zeile bleibt offen`, (await s.ev(`return r.host._wizard.s.d.ex.outage.has(${JSON.stringify(outDom)}) && !!r.querySelector('${s.D} [data-wz-int="outage"]')`)));
+      // Eine Ebene tiefer: die Geräte einer Integration (Ausfall, Batterie, Laden), ein Schalter je Gerät
+      check(`[${tag}] "Neue Geräte" hat keine Geräte-Ebene`, !(await s.ev(`return !!r.querySelector('${s.D} [data-wz-iopen^="new:"]')`)));
+      await s.tap(`${s.D} [data-wz-iopen="outage:${outDom}"]`);
+      check(`[${tag}] Geräte einer abgeschalteten Integration sind ausgegraut`, await s.ev(`const l = [...r.querySelectorAll('${s.D} [data-wz-md="outage"]')]; return l.length >= 1 && l.every((i) => i.disabled)`));
+      await s.tap(`${s.D} [data-wz-iopen="outage:${outDom}"]`);
+      const outDom2 = outList[1].split(":")[0];
+      await s.tap(`${s.D} [data-wz-iopen="outage:${outDom2}"]`);
+      const outDevs = await s.ev(`return [...r.querySelectorAll('${s.D} [data-wz-md="outage"]')].map((i) => i.dataset.wzId + ":" + i.checked)`);
+      check(`[${tag}] Ausgefallene Geräte, Integration aufgeklappt: Geräte mit Schalter, alle an`, outDevs.length >= 1 && outDevs.every((x) => x.endsWith(":true")), outDevs.join());
+      const muteId = outDevs[0].split(":")[0];
+      await s.tap(`${s.D} [data-wz-md="outage"][data-wz-id="${muteId}"]`);
+      check(`[${tag}] Gerät ausgeschaltet (Entwurf), noch nichts gespeichert`, (await s.ev(`return r.host._wizard.s.d.devOff.outage.has(${JSON.stringify(muteId)})`)) && (await s.p.evaluate(() => (window.__wsCalls || []).filter((m) => m.type === "device_panel/set_device_settings").length)) === 0);
+      await s.tap(`${s.D} [data-wz-iopen="outage:${outDom2}"]`);
+      await s.tap(`${s.D} [data-wz-iopen="charge:${chargeDom}"]`);
+      const chDevs = await s.ev(`return [...r.querySelectorAll('${s.D} [data-wz-md="charge"]')].map((i) => i.dataset.wzId + ":" + i.checked)`);
+      check(`[${tag}] Voll geladen, Integration aufgeklappt: nur Geräte mit Batterie, alle an`, chDevs.length >= 1 && chDevs.every((x) => x.endsWith(":true")), chDevs.join());
+      const chargeOffId = chDevs.length >= 2 ? chDevs[0].split(":")[0] : null;
+      if (chargeOffId) {
+        await s.tap(`${s.D} [data-wz-md="charge"][data-wz-id="${chargeOffId}"]`);
+        check(`[${tag}] ein Gerät aus: Schalter der Integration "teils"`, await s.ev(`return r.host._wizard.integState("charge", ${JSON.stringify(chargeDom)}) === "part" && r.querySelector('${s.D} [data-wz-int="charge"][data-wz-dom="${chargeDom}"]').closest(".switch").classList.contains("part")`));
+      }
+      await s.tap(`${s.D} [data-wz-iopen="charge:${chargeDom}"]`);
       await s.tap(`${s.D} [data-wz-mopen="charge"]`);
       await s.tap(`${s.D} [data-wz-mopen="outage"]`);
       await s.tap(`${s.D} [data-wz-msg="updates"]`);
@@ -160,6 +182,8 @@ for (const lang of ["de", "en"]) {
       const saved = (await s.calls())[0] || {};
       check(`[${tag}] ein einziges set_options mit Auswahl, Ziel, Meldungen, Werten`, (await s.calls()).length === 1 && saved.exclude_integrations?.join() === off && saved.exclude_types?.join() === types[0] && saved.exclude_devices?.join() === devs[0] && saved.notify_service === "notify.mobile_app_testhandy" && saved.notify_outage === true && saved.notify_online === true && saved.battery_push === true && saved.notify_new === false && saved.notify_updates === true && JSON.stringify(saved.charge_integrations) === JSON.stringify([chargeDom]) && saved.notify_exclude_integrations?.join() === outDom && saved.updates_time === "07:30" && !("offline_after" in saved) && saved.notify_delay === 6 && saved.battery_low === 20, JSON.stringify(saved));
       check(`[${tag}] Ruhezeit gespeichert (sieben Tage 23:00 bis 07:00)`, saved.quiet_enabled === true && saved.quiet_days?.length === 7 && saved.quiet_days.every((d) => d.on && d.from === "23:00" && d.to === "07:00"));
+      const devCalls = await s.p.evaluate(() => (window.__wsCalls || []).filter((m) => m.type === "device_panel/set_device_settings"));
+      check(`[${tag}] Geräte: stumm bei Ausfall${chargeOffId ? " und Lademeldung aus am Gerät" : ""} als set_device_settings, vor dem Abschluss`, devCalls.some((c) => c.device_id === muteId && c.notify === false) && (!chargeOffId || devCalls.some((c) => c.device_id === chargeOffId && c.charge === false)) && devCalls.length === (chargeOffId ? 2 : 1) - (chargeOffId === muteId ? 1 : 0), JSON.stringify(devCalls));
       check(`[${tag}] Fertigstellen löscht den Zwischenstand`, saved.wizard_draft === null && (await s.p.evaluate(() => window.__opts.wizard_draft)) === null);
       check(`[${tag}] Zustand "done" mit Zeitpunkt`, saved.wizard_state === "done" && saved.wizard_done_at > 1_600_000_000 && (await s.state()) === "done");
       check(`[${tag}] Kachel und Punkt weg`, !(await s.tileShown()) && !(await s.launcherDot()));

@@ -84,7 +84,7 @@ export class WizardUi {
     const dlg = this.dlg;
     if (!dlg || this.host._hass?.user?.is_admin === false) return;
     this._auto = true;
-    this.s = { step: "welcome", source, loading: true, error: "", busy: false, d: null, base: null, data: null, opts: null, test: "", q: { integ: "", dev: "" }, open: new Set(), openMsg: new Set(), start: 0 };
+    this.s = { step: "welcome", source, loading: true, error: "", busy: false, d: null, base: null, data: null, opts: null, test: "", q: { integ: "", dev: "" }, open: new Set(), openMsg: new Set(), openInt: new Set(), start: 0 };
     this.render();
     if (!dlg.open) {
       if (typeof dlg.showModal === "function") dlg.showModal();
@@ -132,15 +132,36 @@ export class WizardUi {
       quiet: { on: Boolean(v.quiet_enabled), from: first.from || "22:00", to: first.to || "07:00", uniform },
       // Je Meldungsart die Integrationen (seit 2.137.0): Ausfall, Batterie und Neue Geräte schliessen aus, Voll geladen schliesst ein
       ex: { outage: new Set(v.notify_exclude_integrations || []), battery: new Set(v.battery_push_exclude_integrations || []), new: new Set(v.new_exclude_integrations || []) },
-      charge: new Set(v.charge_integrations || []),
+      // Je Gerät (seit 2.137.0): ausgeschaltet bei Ausfall und Batterie, eingeschaltet bei Voll geladen (Lademeldung: Gerät, sonst Integration)
+      devOff: { outage: new Set(this.overrideIds("notify")), battery: new Set(this.overrideList("battery").filter((o) => o.value === "off").map((o) => o.id)) },
+      chargeOn: this.chargeOnFrom(v),
     };
+  }
+
+  // Eigene Einstellungen je Gerät aus get_options (overrides): Liste oder leer
+  overrideList(key) {
+    return this.s?.opts?.overrides?.[key] || [];
+  }
+
+  overrideIds(key) {
+    return this.overrideList(key).map((o) => o.id);
+  }
+
+  // Geräte mit Batterie, deren Lademeldung jetzt gilt: eigene Wahl am Gerät vor der Integration
+  chargeOnFrom(v) {
+    const own = new Map(this.overrideList("charge").filter((o) => typeof o.value?.on === "boolean").map((o) => [o.id, o.value.on]));
+    const inte = new Set(v.charge_integrations || []);
+    const on = new Set();
+    for (const x of this.s?.data?.devices || []) if (x.battery && (own.has(x.id) ? own.get(x.id) : inte.has(x.domain))) on.add(x.id);
+    return on;
   }
 
   // Entwurf für die Option wizard_draft (Mengen als Listen)
   serialize(d) {
     return {
       exI: [...d.exI].sort(), exT: [...d.exT].sort(), exD: [...d.exD].sort(), target: d.target, on: { ...d.on }, v: { ...d.v }, quiet: { ...d.quiet },
-      ex: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), charge: [...d.charge].sort(),
+      ex: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])),
+      devOff: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), chargeOn: [...d.chargeOn].sort(),
     };
   }
 
@@ -160,7 +181,9 @@ export class WizardUi {
     if (typeof x.quiet?.on === "boolean") d.quiet.on = x.quiet.on;
     for (const k of ["from", "to"]) if (/^([01]\d|2[0-3]):[0-5]\d$/.test(String(x.quiet?.[k]))) d.quiet[k] = x.quiet[k];
     for (const id of Object.keys(d.ex)) if (Array.isArray(x.ex?.[id])) d.ex[id] = new Set(list(x.ex[id]));
-    if (Array.isArray(x.charge)) d.charge = new Set(list(x.charge));
+    const known = new Set(s.data.devices.map((i) => i.id));
+    for (const id of Object.keys(d.devOff)) if (Array.isArray(x.devOff?.[id])) d.devOff[id] = new Set(list(x.devOff[id], known));
+    if (Array.isArray(x.chargeOn)) d.chargeOn = new Set(list(x.chargeOn, known));
     s.hasDraft = true;
     s.savedDraft = JSON.stringify(saved);
     // Dort weitermachen, wo es aufhörte (die Ruhezeit nur mit Ziel)
@@ -180,7 +203,7 @@ export class WizardUi {
   }
 
   snapshot(d) {
-    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet, x: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), c: [...d.charge].sort() };
+    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet, x: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), o: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), c: [...d.chargeOn].sort() };
   }
 
   dirty() {
@@ -282,9 +305,25 @@ export class WizardUi {
       .sort((a, b) => b.n - a.n || String(a.name).toLowerCase().localeCompare(String(b.name).toLowerCase()));
   }
 
-  integOn(id, domain) {
+  // Schalter der Integration: "on", "off" oder "part" (Voll geladen: nach ihren Geräten)
+  integState(id, domain) {
     const { d } = this.s;
-    return id === "charge" ? d.charge.has(domain) : !d.ex[id].has(domain);
+    if (id !== "charge") return d.ex[id].has(domain) ? "off" : "on";
+    const devs = this.rowDevices(id, domain);
+    const on = devs.filter((x) => d.chargeOn.has(x.id)).length;
+    return on === 0 ? "off" : on === devs.length ? "on" : "part";
+  }
+
+  // Geräte einer Integration unter einer Meldungsart (nach dem Entwurf; Batterie und Laden nur mit Batterie), nach Namen
+  rowDevices(id, domain) {
+    return this.chosen()
+      .filter((x) => x.domain === domain && (!["battery", "charge"].includes(id) || x.battery))
+      .sort((a, b) => String(a.name).toLowerCase().localeCompare(String(b.name).toLowerCase()));
+  }
+
+  devOn(id, devId) {
+    const { d } = this.s;
+    return id === "charge" ? d.chargeOn.has(devId) : !d.devOff[id].has(devId);
   }
 
   // Zeilen mit Werten zum Anpassen: bei den Updates die Uhrzeit nur im Modus "einmal am Tag"
@@ -460,7 +499,7 @@ export class WizardUi {
         .join("");
       const open = this.s.openMsg.has(id);
       const list = open ? this.integListMsgHtml(id, none) : "";
-      const hint = id === "charge" && d.on.charge && !none && !d.charge.size ? `<p class="wz-p small wz-hint">${escape(this.t("wzChargeHint"))}</p>` : "";
+      const hint = id === "charge" && d.on.charge && !none && !this.rowIntegrations("charge").some((i) => this.integState("charge", i.domain) !== "off") ? `<p class="wz-p small wz-hint">${escape(this.t("wzChargeHint"))}</p>` : "";
       const chev = `<button type="button" class="wz-mx" data-wz-mopen="${id}" aria-expanded="${open}" title="${escape(this.t("wzMInteg"))}" aria-label="${escape(this.t("wzMInteg"))}"><span class="wz-chev${open ? " open" : ""}">${mdi("chevronRight", 16)}</span></button>`;
       return `<div class="wz-msg${d.on[id] && !none ? " on" : ""}"><div class="wz-li">${chev}<span class="wz-ic">${mdi(MSG_ICON[id], 18)}</span><div class="wz-nm">${escape(this.t(`wzM_${id}`))}<small>${escape(this.t(`wzM_${id}_s`))}</small></div>${this.toggle("data-wz-msg", id, d.on[id] && !none, this.t(`wzM_${id}`)).replace("<input", none ? "<input disabled" : "<input")}</div><div class="wz-vals">${vals}</div>${hint}${list}</div>`;
     }).join("");
@@ -472,13 +511,27 @@ export class WizardUi {
       <p class="wz-p small">${escape(this.t("wzMLater"))}</p>`;
   }
 
-  // Aufgeklappt: die Integrationen der Meldungsart, je ein Schalter
+  // Aufgeklappt: die Integrationen der Meldungsart, je ein Schalter; Ausfall, Batterie und Laden lassen sich weiter bis zu den Geräten aufklappen
   integListMsgHtml(id, none) {
-    const { escape } = this.h;
+    const { escape, mdi } = this.h;
     const rows = this.rowIntegrations(id);
+    const deep = id !== "new";
     const body = rows.length
       ? rows
-          .map((i) => `<div class="wz-li">${this.host._ibadge(i.domain, i.name)}<div class="wz-nm">${escape(i.name)}<small>${escape(this.t("devicesCount", i.n))}</small></div><label class="switch"><input type="checkbox" data-wz-int="${id}" data-wz-dom="${escape(i.domain)}"${this.integOn(id, i.domain) ? " checked" : ""}${none ? " disabled" : ""} aria-label="${escape(i.name)}"><span></span></label></div>`)
+          .map((i) => {
+            const state = this.integState(id, i.domain);
+            const key = `${id}:${i.domain}`;
+            const open = deep && this.s.openInt.has(key);
+            const chev = deep ? `<button type="button" class="wz-mx" data-wz-iopen="${escape(key)}" aria-expanded="${open}" title="${escape(this.t("wzMDevices"))}" aria-label="${escape(this.t("wzMDevices"))}"><span class="wz-chev${open ? " open" : ""}">${mdi("chevronRight", 16)}</span></button>` : "";
+            const head = `<div class="wz-li">${chev}${this.host._ibadge(i.domain, i.name)}<div class="wz-nm">${escape(i.name)}<small>${escape(this.t("devicesCount", i.n))}</small></div><label class="switch${state === "part" ? " part" : ""}"><input type="checkbox" data-wz-int="${id}" data-wz-dom="${escape(i.domain)}"${state !== "off" ? " checked" : ""}${none ? " disabled" : ""} aria-label="${escape(i.name)}"><span></span></label></div>`;
+            if (!open) return head;
+            // Bei ausgeschalteter Integration (Ausfall, Batterie) gelten die Geräte nicht: ausgegraut
+            const off = state === "off" && id !== "charge";
+            const devs = this.rowDevices(id, i.domain)
+              .map((x) => `<div class="wz-li${off ? " dim" : ""}"><div class="wz-nm">${escape(x.name)}${x.area ? `<small>${escape(x.area)}</small>` : ""}</div><label class="switch"><input type="checkbox" data-wz-md="${id}" data-wz-id="${escape(x.id)}"${this.devOn(id, x.id) ? " checked" : ""}${none || off ? " disabled" : ""} aria-label="${escape(x.name)}"><span></span></label></div>`)
+              .join("");
+            return `${head}<div class="wz-sub wz-dsub">${devs}</div>`;
+          })
           .join("")
       : `<p class="wz-p small">${escape(this.t("wzMNoInteg"))}</p>`;
     return `<div class="wz-sub wz-msub"><p class="wz-p small">${escape(this.t(`wzMSub_${id}`))}</p>${body}</div>`;
@@ -552,7 +605,8 @@ export class WizardUi {
     values.notify_exclude_integrations = merge("outage", base.notify_exclude_integrations, excluded("outage"));
     values.battery_push_exclude_integrations = merge("battery", base.battery_push_exclude_integrations, excluded("battery"));
     values.new_exclude_integrations = merge("new", base.new_exclude_integrations, excluded("new"));
-    values.charge_integrations = merge("charge", base.charge_integrations, [...d.charge]);
+    // Voll geladen: eine Integration gilt, wenn die Mehrheit ihrer Geräte an ist; die anderen Geräte bekommen eine eigene Wahl (siehe deviceCalls)
+    values.charge_integrations = merge("charge", base.charge_integrations, this.chargeIntegrations());
     if (d.target !== "none") {
       values.quiet_enabled = d.quiet.on;
       if (d.quiet.on && d.quiet.uniform) values.quiet_days = Array.from({ length: 7 }, () => ({ on: true, from: d.quiet.from, to: d.quiet.to }));
@@ -562,6 +616,50 @@ export class WizardUi {
     return values;
   }
 
+  // Integrationen mit Batteriegeräten, deren Lademeldung gilt: alle Geräte an oder mindestens die Hälfte (der Rest wird am Gerät ausgeschaltet)
+  chargeIntegrations() {
+    return this.rowIntegrations("charge")
+      .filter((i) => {
+        const devs = this.rowDevices("charge", i.domain);
+        return devs.filter((x) => this.s.d.chargeOn.has(x.id)).length * 2 >= devs.length && devs.some((x) => this.s.d.chargeOn.has(x.id));
+      })
+      .map((i) => i.domain);
+  }
+
+  // Eigene Einstellungen je Gerät, die der Entwurf ändert (nur wirklich geänderte; Geräte ausserhalb der Wahl bleiben, wie sie sind).
+  // Ergebnis: Liste von Änderungen für set_device_settings; leer ohne Push-Ziel.
+  deviceCalls() {
+    const { d, opts } = this.s;
+    if (d.target === "none") return [];
+    const calls = new Map();
+    const set = (id, change) => calls.set(id, { ...(calls.get(id) || {}), device_id: id, ...change });
+    const baseOff = new Set((opts.overrides?.notify || []).map((o) => o.id));
+    const baseBat = new Set((opts.overrides?.battery || []).filter((o) => o.value === "off").map((o) => o.id));
+    const baseCharge = new Map((opts.overrides?.charge || []).filter((o) => typeof o.value?.on === "boolean").map((o) => [o.id, o.value.on]));
+    for (const x of this.chosen()) {
+      const off = d.devOff.outage.has(x.id);
+      if (off && !baseOff.has(x.id)) set(x.id, { notify: false });
+      else if (!off && baseOff.has(x.id)) set(x.id, { notify: true });
+      if (x.battery) {
+        const boff = d.devOff.battery.has(x.id);
+        if (boff && !baseBat.has(x.id)) set(x.id, { battery: "off" });
+        else if (!boff && baseBat.has(x.id)) set(x.id, { battery: null });
+      }
+    }
+    // Lademeldung: Gerät an/aus gegen die Integration (siehe chargeIntegrations)
+    const included = new Set(this.chargeIntegrations());
+    for (const i of this.rowIntegrations("charge")) {
+      for (const x of this.rowDevices("charge", i.domain)) {
+        const on = d.chargeOn.has(x.id);
+        // gewünschte eigene Wahl: keine, wenn das Gerät der Integration folgt
+        const want = on === included.has(i.domain) ? null : on;
+        const has = baseCharge.has(x.id) ? baseCharge.get(x.id) : null;
+        if (want !== has) set(x.id, { charge: want });
+      }
+    }
+    return [...calls.values()];
+  }
+
   async finish() {
     const s = this.s;
     if (!s || s.busy) return;
@@ -569,6 +667,8 @@ export class WizardUi {
     s.saveError = "";
     this.render();
     try {
+      // Erst die Geräte, dann der Abschluss: scheitert ein Aufruf, bleibt der Assistent offen und lässt sich wiederholen
+      for (const call of this.deviceCalls()) await this.host._hass.callWS({ type: "device_panel/set_device_settings", ...call });
       await this.host._hass.callWS({ type: "device_panel/set_options", values: this.values() });
     } catch (err) {
       s.busy = false;
@@ -606,6 +706,14 @@ export class WizardUi {
         const id = mopen.dataset.wzMopen;
         if (this.s.openMsg.has(id)) this.s.openMsg.delete(id);
         else this.s.openMsg.add(id);
+        this.render();
+        return;
+      }
+      const iopen = ev.target.closest?.("[data-wz-iopen]");
+      if (iopen && this.s) {
+        const key = iopen.dataset.wzIopen;
+        if (this.s.openInt.has(key)) this.s.openInt.delete(key);
+        else this.s.openInt.add(key);
         this.render();
         return;
       }
@@ -647,12 +755,25 @@ export class WizardUi {
         const id = el.dataset.wzInt;
         const dom = el.dataset.wzDom;
         if (id === "charge") {
-          if (el.checked) d.charge.add(dom);
-          else d.charge.delete(dom);
-          // Eine Integration einzuschalten schaltet die Meldung selbst mit ein
+          // Die Integration setzt alle ihre Geräte mit Batterie; das schaltet die Meldung selbst mit ein
+          for (const x of this.rowDevices("charge", dom)) {
+            if (el.checked) d.chargeOn.add(x.id);
+            else d.chargeOn.delete(x.id);
+          }
           if (el.checked) d.on.charge = true;
         } else if (el.checked) d.ex[id].delete(dom);
         else d.ex[id].add(dom);
+        this.render();
+      } else if (el.matches("[data-wz-md]")) {
+        const id = el.dataset.wzMd;
+        const dev = el.dataset.wzId;
+        if (id === "charge") {
+          if (el.checked) {
+            d.chargeOn.add(dev);
+            d.on.charge = true;
+          } else d.chargeOn.delete(dev);
+        } else if (el.checked) d.devOff[id].delete(dev);
+        else d.devOff[id].add(dev);
         this.render();
       } else if (el.matches("[data-wz-msg]")) {
         d.on[el.dataset.wzMsg] = el.checked;
