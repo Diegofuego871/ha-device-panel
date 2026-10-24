@@ -285,7 +285,7 @@ export class WizardUi {
       top = `<div class="wz-top"><div class="wz-stp"><span></span>${close}</div></div>`;
       body = this.welcomeHtml();
       foot = `<div class="wz-welcome-ft"><button type="button" class="dlg-btn primary" data-wz="start">${escape(t("wzStart"))}${mdi("arrowRight", 18)}</button>
-        <div class="wz-ft2"><button type="button" class="dlg-btn" data-wz="later">${escape(t("wzLater"))}</button><button type="button" class="dlg-btn" data-wz="never">${escape(t("wzNever"))}</button></div>${s.hasDraft ? `<button type="button" class="dlg-btn" data-wz="reset">${escape(t("wzReset"))}</button>` : ""}</div>`;
+        <div class="wz-ft2"><button type="button" class="dlg-btn" data-wz="later">${mdi("close", 18)}${escape(t("wzLater"))}</button><button type="button" class="dlg-btn" data-wz="never">${mdi("eyeOff", 18)}${escape(t("wzNever"))}</button>${s.hasDraft ? `<button type="button" class="dlg-btn wz-reset" data-wz="reset">${mdi("reset", 18)}${escape(t("wzReset"))}</button>` : ""}</div></div>`;
     } else {
       const list = this.steps();
       const n = list.indexOf(s.step) + 1;

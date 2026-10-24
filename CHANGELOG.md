@@ -13,6 +13,7 @@ The buttons of the setup wizard have icons, like in the routine wizard, and the 
 
 ### Fixed
 
+- **Setup wizard, welcome page:** the three secondary buttons ("Not now", "Don't show again", "Discard draft") look alike now and have icons; "Let's go" has an arrow.
 - **Setup wizard on a phone:** a large empty space above the step line is gone. The wizard added the safe area of the phone on top, although the panel already sits below the header of Home Assistant; the cross is now as close to the top as in the other full-screen windows.
 
 ### Changed

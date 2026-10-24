@@ -13,6 +13,7 @@ Die Knöpfe des Einrichtungsassistenten haben Symbole, wie im Routinen-Assistent
 
 ### Behoben
 
+- **Einrichtungsassistent, Willkommensseite:** die drei Zweitknöpfe ("Jetzt nicht", "Nicht mehr zeigen", "Entwurf verwerfen") sehen jetzt gleich aus und haben Symbole; "Los geht's" hat einen Pfeil.
 - **Einrichtungsassistent am Handy:** ein grosser leerer Platz über der Schrittzeile ist weg. Der Assistent rechnete den sicheren Bereich des Handys oben dazu, obwohl das Panel schon unter der Kopfzeile von Home Assistant liegt; das Kreuz sitzt jetzt so weit oben wie in den anderen Vollbild-Fenstern.
 
 ### Geändert
