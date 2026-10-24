@@ -153,18 +153,22 @@ async def test_history_for_cpu_and_statistics_for_the_disk(recorder_mock, hass: 
     assert cpu_m["source"] == "history" and cpu_m["days"] == 1 and cpu_m["max"] == 90 and cpu_m["current"] == 12
     assert {p[1] for p in cpu_m["points"]} >= {30, 90, 12}
     # CPU bleibt bei 24 Std., auch wenn die Festplatte einen längeren Zeitraum zeigt
-    year = (await _ws(client, 2, type=f"{DOMAIN}/status_system", range="1y"))["result"]
-    assert year["range"] == "1y" and year["metrics"][0]["days"] == 1 and year["metrics"][2]["days"] == 365
+    year = (await _ws(client, 2, type=f"{DOMAIN}/status_system", range="365d"))["result"]
+    assert year["range"] == "365d" and year["metrics"][0]["days"] == 1 and year["metrics"][2]["days"] == 365
     d = year["metrics"][2]
     assert d["source"] == "statistics" and 195 <= len(d["points"]) <= 202 and d["current"] == 60 and d["max"] >= 59
     month = (await _ws(client, 3, type=f"{DOMAIN}/status_system", range="30d"))["result"]["metrics"][2]
     assert month["source"] == "statistics" and month["days"] == 30 and len(month["points"]) <= 300
-    half = (await _ws(client, 4, type=f"{DOMAIN}/status_system", range="6m"))["result"]["metrics"][2]
+    half = (await _ws(client, 4, type=f"{DOMAIN}/status_system", range="180d"))["result"]["metrics"][2]
     assert half["days"] == 180 and half["source"] == "statistics"
+    # Neu seit 2.129.0: 7 Tage aus dem Verlauf, 3 Monate aus der Statistik
+    week = (await _ws(client, 5, type=f"{DOMAIN}/status_system", range="7d"))["result"]["metrics"][2]
+    quarter = (await _ws(client, 6, type=f"{DOMAIN}/status_system", range="90d"))["result"]["metrics"][2]
+    assert week["days"] == 7 and week["source"] != "statistics" and quarter["days"] == 90 and quarter["source"] == "statistics"
     # Je Kurve ein eigener Zeitraum: CPU 30 Tage, Festplatte 24 Std.; unbekannte Werte werden abgelehnt
-    mixed = (await _ws(client, 5, type=f"{DOMAIN}/status_system", range="24h", ranges={"cpu": "30d", "disk": "24h"}))["result"]
+    mixed = (await _ws(client, 7, type=f"{DOMAIN}/status_system", range="24h", ranges={"cpu": "30d", "disk": "24h"}))["result"]
     assert mixed["ranges"] == {"cpu": "30d", "ram": "24h", "disk": "24h"} and mixed["metrics"][0]["days"] == 30 and mixed["metrics"][1]["days"] == 1
-    assert not (await _ws(client, 6, type=f"{DOMAIN}/status_system", range="24h", ranges={"cpu": "3d"}))["success"]
+    assert not (await _ws(client, 8, type=f"{DOMAIN}/status_system", range="24h", ranges={"cpu": "3d"}))["success"]
 
 
 async def test_own_sensor_choice_and_validation(hass: HomeAssistant, hass_ws_client) -> None:

@@ -1741,7 +1741,7 @@
         if (window.__systemFails) throw new Error(window.__systemFails);
         const now = Date.now() / 1000;
         const range = msg.range || "24h";
-        const dayOf = { "24h": 1, "30d": 30, "6m": 180, "1y": 365 };
+        const dayOf = { "24h": 1, "7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365 };
         // Je Kurve ein eigener Zeitraum (msg.ranges); ohne Angabe: Festplatte nach range, die anderen 24 Std.
         const rg = (k) => (msg.ranges && msg.ranges[k]) || (k === "disk" ? range : "24h");
         const days = dayOf[range];
@@ -1756,7 +1756,7 @@
           return { ...base(id, d), entity_id: entity, name, scope: own(id) ? "own" : scope, current: cur, avg: Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10, max: Math.round(Math.max(...vals) * 10) / 10,
             source, points: pts.map(([t, v]) => [t, Math.round(v * 10) / 10]) };
         };
-        const diskSource = range === "24h" ? "history" : window.__systemNoStats ? "history" : "statistics";
+        const diskSource = ["24h", "7d"].includes(range) ? "history" : window.__systemNoStats ? "history" : "statistics";
         let disk = { ...mk("disk", "host", "Festplatte /", "sensor.system_monitor_disk_use_percent", days, (x) => 38 + 22 * x, 60, diskSource), size: window.__systemNoSize ? null : { used: 318.4, free: 212.3, total: 530.7, unit: "GiB" } };
         if (window.__systemNoSize) disk.disabled = [{ entity_id: "sensor.system_monitor_belegter_massenspeicher", name: "Belegter Massenspeicher /" }, { entity_id: "sensor.system_monitor_freier_massenspeicher", name: "Freier Massenspeicher /" }];
         // Nur "belegt" in Gigabyte (wie auf der Instanz des Nutzers): die Karte zeigt Gigabyte statt Prozent
@@ -1772,8 +1772,8 @@
           ranges: { cpu: rg("cpu"), ram: rg("ram"), disk: rg("disk") },
           integrations: { systemmonitor: !window.__systemNoInteg, hassio: false },
           metrics: [
-            mk("cpu", "host", "Prozessornutzung", "sensor.system_monitor_processor_use", dayOf[rg("cpu")], (x) => 14 + 12 * Math.sin(x * 14) + (x > 0.8 && x < 0.86 ? 55 : 0), 17, rg("cpu") === "24h" ? "history" : "statistics"),
-            mk("ram", "host", "Arbeitsspeicher", "sensor.system_monitor_memory_use_percent", dayOf[rg("ram")], (x) => 52 + 6 * Math.sin(x * 5), 54, rg("ram") === "24h" ? "history" : "statistics"),
+            mk("cpu", "host", "Prozessornutzung", "sensor.system_monitor_processor_use", dayOf[rg("cpu")], (x) => 14 + 12 * Math.sin(x * 14) + (x > 0.8 && x < 0.86 ? 55 : 0), 17, ["24h", "7d"].includes(rg("cpu")) ? "history" : "statistics"),
+            mk("ram", "host", "Arbeitsspeicher", "sensor.system_monitor_memory_use_percent", dayOf[rg("ram")], (x) => 52 + 6 * Math.sin(x * 5), 54, ["24h", "7d"].includes(rg("ram")) ? "history" : "statistics"),
             disk,
           ],
           candidates: [

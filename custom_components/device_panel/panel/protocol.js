@@ -97,7 +97,9 @@ export class ProtocolUi {
       name,
       // Zusammenhang der anderen Reiter: alles, alle Meldungen oder alle Routinen des Geräts (ohne Gerät: aller Geräte)
       alt: Object.fromEntries(TABS.filter((k) => k !== kind).map((k) => [k, { itemId: "", deviceId, name: deviceId ? this.deviceName(deviceId) : "" }])),
-      range: "30d",
+      // Im Reiter "System" steht der Zeitraum auf "Alle" (seit 2.129.0), die anderen auf 30 Tage; beim Wechsel merkt sich das Fenster den bisherigen
+      range: kind === "system" ? "all" : "30d",
+      rangeBack: "30d",
       own: null,
       filter: "all",
       item: "",
@@ -575,7 +577,7 @@ export class ProtocolUi {
         <span class="c-kind"><span class="pr-st ${e.k === "recovered" ? "ok" : e.k === "test" ? "in" : "wn"}">${this.esc(this.magicKind(e))}</span></span>
         <span class="c-main"><b>${this.esc(e.title || e.name || "")}</b>${extra.length ? `<small>${extra.join(" · ")}</small>` : ""}</span>
         <span class="c-res"><span class="pr-st ${tone}">${this.esc(res)}</span>${target}${err}</span>
-        <span class="c-val">${this.esc(e.value || "–")}</span></button>${msg}</div>`;
+        <span class="c-val${hasMsg ? " has-arrow" : ""}"><span>${this.esc(e.value || "–")}</span>${hasMsg ? `<span class="pr-arrow" aria-hidden="true">${this.h.mdi("chevronDown", 18)}</span>` : ""}</span></button>${msg}</div>`;
   }
 
   routineRow(e, i, device) {
@@ -883,6 +885,9 @@ export class ProtocolUi {
         if (!next || el.dataset.v === s.kind) break;
         // Den bisherigen Zusammenhang merken: zurück gibt es wieder die einzelne Meldung oder Routine
         s.alt[s.kind] = { itemId: s.itemId, deviceId: s.deviceId, name: s.name };
+        // "System" beginnt mit "Alle"; beim Verlassen kommt der vorherige Zeitraum zurück
+        if (el.dataset.v === "system") Object.assign(s, { rangeBack: s.range, range: "all" });
+        else if (s.kind === "system") s.range = s.rangeBack || "30d";
         Object.assign(s, { kind: el.dataset.v, itemId: next.itemId, deviceId: next.deviceId, name: next.name, filter: "all", item: "", items: [], q: "", limit: PAGE, data: null, loading: true, error: null, view: "list", trace: 0, open: new Set() });
         window.clearTimeout(this._searchTimer);
         this.frame();

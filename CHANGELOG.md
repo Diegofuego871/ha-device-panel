@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.129.0] - 2026-10-24
+
+The Status app offers the same six periods as the device histories, the tab "System" of the history starts with "All", and Magic Push rows show an arrow.
+
+### Changed
+
+- **Status app, tab "System":** every curve (CPU, memory, disk) now has the six periods of the battery history: **24 hours, 7 days, 30 days, 3 months, 6 months, 12 months** (before four: 24 hours, 30 days, 6 months, 1 year). On a phone the six buttons use two rows. Up to 7 days the curve comes from the history of the recorder, from 30 days on from the long-term statistics; the note about missing statistics shows only from 30 days on.
+- WebSocket `status_system`: `range` and `ranges` now take `24h`, `7d`, `30d`, `90d`, `180d` or `365d` (the same keys as the battery history); the old keys `6m` and `1y` are gone. The panel sends the new ones, so nothing has to be migrated.
+- **History, tab "System":** the period starts on **"All"** (before 30 days), so the entries of the whole retention are there at once. The other tabs keep 30 days; going back from "System" restores the period you had.
+- **History, tab "Magic Push":** a row with a message text shows an arrow next to the value (turns up when open), like the rows in the tab "All". Rows without text have no arrow. The arrow in the table of routines was already there.
+- **README:** the Status app describes the six periods.
+
 ## [2.128.0] - 2026-10-24
 
 Every curve of the Status app has its own period buttons. Includes the changes from 2.126.0 and 2.127.0.
@@ -4529,6 +4541,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0
 [2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0
 [2.124.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.124.0

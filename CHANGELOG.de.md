@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.129.0] - 2026-10-24
+
+Die Status-App bietet dieselben sechs Zeiträume wie die Geräteverläufe, der Reiter "System" des Protokolls beginnt mit "Alle", und Zeilen von Magic Push zeigen einen Pfeil.
+
+### Geändert
+
+- **Status-App, Reiter "System":** jede Kurve (CPU, Arbeitsspeicher, Festplatte) hat jetzt die sechs Zeiträume des Batterie-Verlaufs: **24 Stunden, 7 Tage, 30 Tage, 3 Monate, 6 Monate, 12 Monate** (vorher vier: 24 Stunden, 30 Tage, 6 Monate, 1 Jahr). Auf dem Handy brauchen die sechs Knöpfe zwei Zeilen. Bis 7 Tage kommt die Kurve aus dem Verlauf des Rekorders, ab 30 Tagen aus der Langzeitstatistik; der Hinweis auf fehlende Statistik erscheint erst ab 30 Tagen.
+- WebSocket `status_system`: `range` und `ranges` nehmen jetzt `24h`, `7d`, `30d`, `90d`, `180d` oder `365d` (dieselben Schlüssel wie der Batterie-Verlauf); die alten Schlüssel `6m` und `1y` entfallen. Das Panel schickt die neuen, nichts ist zu migrieren.
+- **Protokoll, Reiter "System":** der Zeitraum beginnt auf **"Alle"** (vorher 30 Tage), damit die Einträge der ganzen Aufbewahrung sofort da sind. Die anderen Reiter behalten 30 Tage; der Rückweg aus "System" stellt den bisherigen Zeitraum wieder her.
+- **Protokoll, Reiter "Magic Push":** eine Zeile mit Meldungstext zeigt neben dem Wert einen Pfeil (offen nach oben), wie die Zeilen im Reiter "Alles". Zeilen ohne Text haben keinen Pfeil. Der Pfeil in der Tabelle der Routinen war schon da.
+- **README:** die Status-App beschreibt die sechs Zeiträume.
+
 ## [2.128.0] - 2026-10-24
 
 Jede Kurve der Status-App hat ihre eigenen Knöpfe für den Zeitraum. Enthält die Änderungen von 2.126.0 und 2.127.0.
@@ -4630,6 +4642,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.129.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.129.0
 [2.128.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.128.0
 [2.125.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.125.0
 [2.124.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.124.0

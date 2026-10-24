@@ -112,6 +112,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Abfrage: kind magic, item_id, Zeitraum 30 Tage, Seite 100`, (await wait(`return !!r.querySelector('${P} .pr-kpis')`)) && (await calls()).some((c) => c.kind === "magic" && c.item_id === "r00000000001" && Math.abs((c.until - c.since) / DAY - 30) < 0.1 && c.limit === 100));
     check(`[${tag}] 30 Tage: zwei Einträge, Kennzahlen 2|1|1|0|1 Std.`, (await rows()) === 2 && /^2\|1\|1\|0\|1/.test(await kpis()), await kpis());
     check(`[${tag}] Zeitraum-Leiste als Reiterleiste mit Kapsel, "30 T." gewählt`, await ev(`const bar = r.querySelector('${P} [data-pr-ranges] .sub-tabs'); return !!bar && !!bar.querySelector(".seg-pill") && bar.querySelector(".sub-tab.on").dataset.v === "30d" && bar.querySelectorAll(".sub-tab").length === 6`));
+    check(`[${tag}] Magic Push: Pfeil nur an Zeilen mit Meldungstext (aufklappbar)`, await ev(`const rows = [...r.querySelectorAll('${P} button.pr-row[data-pr="row"]')]; return rows.length > 0 && rows.every((x) => !x.disabled === !!x.querySelector(".pr-arrow"))`));
     check(`[${tag}] Diagramm: 30 Tagesbalken, zwei mit Inhalt`, await ev(`const bars = r.querySelectorAll('${P} .pr-bar'); return bars.length >= 30 && bars.length <= 32 && [...bars].filter((x) => x.querySelector(".pr-col")).length === 2`));
     // Zeile aufklappen: Inhalt der Meldung
     await tap(`${P} .pr-item .pr-row`);

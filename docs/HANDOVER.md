@@ -3,10 +3,10 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.128.0, Zeitraum je Kurve in der Status-App; davor 2.127.0 Pfeile, 2.126.0 Diagramm in "Alles")
+## Stand (2.129.0, sechs Zeiträume in der Status-App, "Alle" im Reiter System; davor 2.128.0 Zeitraum je Kurve, 2.127.0 Pfeile, 2.126.0 Diagramm in "Alles")
 
-- Zeitraum je Kurve (2.128.0): `status-ui.js` `this.ranges = {cpu, ram, disk}`, jede Karte hat die Reiterleiste (`data-st-range` + `data-st-kind`; Kapsel-Schlüssel `st-range-<kind>` in `device-panel.js`); `system_stats.async_system(..., ranges=)` wählt je Kurve den Zeitraum (ohne Angabe: Festplatte nach `range`, CPU/RAM 24h), WS `status_system` nimmt `ranges`. Tests: `test_system_stats.py`, Suite `statussystem`. Offen: ob die Status-Zeiträume an die sechs der Geräteverläufe (24 Std., 7 Tage, 30 Tage, 3/6/12 Monate) angeglichen werden sollen.
-
+- 2.129.0: `system_stats.RANGES` und `status-ui.js` `SYS_RANGES` = 24h/7d/30d/90d/180d/365d (Schlüssel wie `BAT_RANGES` im Panel; Texte `stSysRange_*`/`stSysAgo_*`); bis 7 Tage Verlauf, ab 30 Tagen Statistik, Hinweis `stSysNoStats` erst ab 30 Tagen. `protocol.js`: im Reiter "System" beginnt `s.range` auf "all" (`rangeBack` stellt beim Verlassen den vorherigen Zeitraum her); `magicRow` zeigt `.pr-arrow` bei Zeilen mit Text. Tests: `test_system_stats.py`, Suiten `statussystem`, `system`, `protocol`.
+- Zeitraum je Kurve (2.128.0): `status-ui.js` `this.ranges = {cpu, ram, disk}`, jede Karte hat die Reiterleiste (`data-st-range` + `data-st-kind`; Kapsel-Schlüssel `st-range-<kind>` in `device-panel.js`); `system_stats.async_system(..., ranges=)` wählt je Kurve den Zeitraum (ohne Angabe: Festplatte nach `range`, CPU/RAM 24h), WS `status_system` nimmt `ranges`.
 - Pfeil an antippbaren Zeilen (2.127.0): `protocol.js` `allRow` (Klasse `has-chev`, `.al-chev`; aufklappbar chevronDown, offen gedreht; Routine und Gerät chevronRight) und `sysRow` (nur mit Gerät); CSS am Ende der Protokoll-Regeln in `styles.js`. Test: Suite `devicelog` ("Pfeil nur an antippbaren Zeilen").
 
 - Diagramm in der Liste "Alles" (2.126.0): `devicelog.query` liefert `step`/`buckets` aus den gezeigten Einträgen (`protocol._buckets` mit `is_bad`; Störung = Ausfall, Warnung/Fehler, fehlgeschlagene Meldung/Lauf); `protocol.js` `allHtml` zeichnet `chart(d)` (Balken, Tipp setzt den Zeitraum). Tests: `test_pushlog.py::test_devicelog_chart_follows_the_chip_and_marks_faults`, Suite `devicelog`.

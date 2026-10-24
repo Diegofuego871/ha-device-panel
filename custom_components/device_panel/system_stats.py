@@ -41,8 +41,9 @@ _LOGGER = logging.getLogger(__name__)
 
 KINDS = ("cpu", "ram", "disk")
 OPTION_OF = {"cpu": CONF_STATUS_CPU_ENTITY, "ram": CONF_STATUS_RAM_ENTITY, "disk": CONF_STATUS_DISK_ENTITY}
-# Zeitraum in Tagen; seit 2.128.0 wählt man ihn für jede der drei Kurven (vorher nur für die Festplatte, CPU und Arbeitsspeicher waren immer 24h)
-RANGES = {"24h": 1, "30d": 30, "6m": 180, "1y": 365}
+# Zeitraum in Tagen, mit denselben Schlüsseln wie der Batterie-Verlauf der Geräte; seit 2.129.0 wählt man ihn für jede der drei Kurven
+# (vorher nur für die Festplatte, CPU und Arbeitsspeicher waren immer 24h)
+RANGES = {"24h": 1, "7d": 7, "30d": 30, "90d": 90, "180d": 180, "365d": 365}
 STATS_FROM_DAYS = 30
 DAILY_FROM_DAYS = 180
 # So viele Punkte zeichnet eine kleine Grafik sinnvoll

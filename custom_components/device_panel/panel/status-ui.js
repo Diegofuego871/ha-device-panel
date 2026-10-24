@@ -12,7 +12,7 @@
 const REFRESH_MS = 10000;
 // Systemwerte (CPU, RAM, Festplatte): alle 60 Sekunden neu, nicht bei jedem Takt des Fensters
 const SYS_EVERY = 6;
-const SYS_RANGES = ["24h", "30d", "6m", "1y"];
+const SYS_RANGES = ["24h", "7d", "30d", "90d", "180d", "365d"];
 // Höchstens so viele Sensoren zeigt die Auswahl auf einmal (der Rest folgt nach der Eingabe)
 const PICK_MAX = 60;
 const LOAD_KINDS = ["cpu", "ram", "disk"];
@@ -554,9 +554,9 @@ export class StatusUi {
     return `<div class="st-sys-plot" data-st-plot="${escape(m.id)}"><svg class="bh-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">${grid}<path class="bh-area" d="${area}"/><path class="bh-line" d="${line}" vector-effect="non-scaling-stroke"/></svg>${labels}</div>${tickRow}`;
   }
 
-  // Marken des Zeitstrahls je Zeitraum (die Hilfsfunktion des Panels kennt 24h, 30d, 180d und 365d)
+  // Marken des Zeitstrahls je Zeitraum (die Hilfsfunktion des Panels kennt 24h, 7d, 30d, 90d, 180d und 365d)
   ticks(m) {
-    const mode = { 1: "24h", 30: "30d", 180: "180d", 365: "365d" }[m.days] || "24h";
+    const mode = { 1: "24h", 7: "7d", 30: "30d", 90: "90d", 180: "180d", 365: "365d" }[m.days] || "24h";
     return this.host._ticks?.(m.start, m.end, mode) || [];
   }
 
@@ -611,7 +611,7 @@ export class StatusUi {
       const stats =
         m.avg != null && m.max != null ? (absolute ? t("stSysAvgMaxUnit", this.num(m.avg), this.num(m.max), m.unit) : t("stSysAvgMax", Math.round(m.avg), Math.round(m.max))) : "";
       body = `${this.plotHtml(m)}<div class="st-sys-foot"><span>${escape(t(`stSysAgo_${range}`))}</span><span class="mid">${escape(stats)}</span></div>
-        ${range !== "24h" && m.source !== "statistics" ? `<p class="st-sys-note">${escape(t("stSysNoStats"))}</p>` : ""}`;
+        ${!["24h", "7d"].includes(range) && m.source !== "statistics" ? `<p class="st-sys-note">${escape(t("stSysNoStats"))}</p>` : ""}`;
     }
     // Festplatte: wie viel das in Gigabyte ist (seit 2.69.0), sonst ein Hinweis, welche Sensoren dazu fehlen
     const sz = m.size;

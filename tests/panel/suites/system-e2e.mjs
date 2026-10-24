@@ -50,6 +50,16 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   // --- Reiter "System" ---
   await tap(`${D} [data-pr="kind"][data-v="system"]`);
   check(`[${tag}] System: nur Einträge ohne Gerät (vier), Unterzeile`, (await wait(`return r.querySelectorAll("${D} .pr-list .lg-row").length === 4`)) && (await text(`${D} [data-pr-sub]`)).startsWith(T_.sub), `${await sysRows()} / ${await text(`${D} [data-pr-sub]`)}`);
+  check(`[${tag}] System: Zeitraum steht auf "Alle", auf "Alles" wieder auf "30 Tage"`, await (async () => {
+    const on = () => ev(`return r.querySelector('${D} [data-pr-ranges] .sub-tab.on')?.dataset.v`);
+    const inSystem = await on() === "all";
+    await tap(`${D} [data-pr="kind"][data-v="all"]`);
+    await wait(`return r.querySelector('${D} [data-pr="kind"].on')?.dataset.v === "all"`);
+    const inAll = await on() === "30d";
+    await tap(`${D} [data-pr="kind"][data-v="system"]`);
+    await wait(`return r.querySelectorAll("${D} .pr-list .lg-row").length === 4`);
+    return inSystem && inAll && await on() === "all";
+  })());
   check(`[${tag}] Chips Stufe`, JSON.stringify(await chipLabels("[data-pr-filters]")) === JSON.stringify(T_.levels), JSON.stringify(await chipLabels("[data-pr-filters]")));
   check(`[${tag}] Chips Kategorie`, JSON.stringify(await chipLabels("[data-pr-items]")) === JSON.stringify(T_.cats), JSON.stringify(await chipLabels("[data-pr-items]")));
   check(`[${tag}] Zahlen: Fehler 1, Info 3; Push 2`, (await text(`${D} [data-pr-filters] [data-v="error"] .n`)) === "1" && (await text(`${D} [data-pr-filters] [data-v="info"] .n`)) === "3" && (await text(`${D} [data-pr-items] [data-v="push"] .n`)) === "2");

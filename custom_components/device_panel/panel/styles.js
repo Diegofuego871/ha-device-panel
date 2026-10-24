@@ -2209,6 +2209,11 @@ button.pr-row:not(:disabled):hover { background: var(--dp-hover); }
 .pr-row .c-main b { font-weight: 600; word-break: break-word; }
 .pr-row .c-val { color: var(--dp-text2); }
 .pr-row .pr-go { text-align: right; color: var(--dp-text3); }
+/* Meldungen mit Text lassen sich aufklappen: Pfeil neben dem Wert, offen nach oben (wie in der Liste "Alles") */
+.pr-row .c-val.has-arrow { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.pr-row .pr-arrow { display: grid; place-items: center; flex: none; color: var(--dp-text2); transition: transform 0.15s ease; }
+.pr-item.open > .pr-row .pr-arrow { transform: rotate(180deg); color: var(--dp-primary); }
+button.pr-row:hover .pr-arrow { color: var(--dp-primary); }
 .pr-head { position: sticky; top: 0; z-index: 1; background: var(--dp-card); padding: 8px 4px 6px; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--dp-text2); }
 .pr-item.open > .pr-row { background: var(--dp-primary-soft); }
 .pr-msg { margin: 0 4px 8px; padding: 9px 12px; border: 1px solid var(--dp-divider); border-radius: 12px; background: var(--dp-card); font-size: 13px; word-break: break-word; }
@@ -2263,6 +2268,7 @@ button.lg-row.has-chev:hover .al-chev { color: var(--dp-primary); }
   .pr-row .c-main { grid-area: main; }
   .pr-row .c-res { grid-area: res; }
   .pr-row .c-val { grid-area: val; text-align: right; }
+  .pr-row .c-val.has-arrow { justify-content: flex-end; }
   .tr-line { grid-template-columns: 20px minmax(0, 1fr); grid-template-areas: "n l" ". t"; gap: 2px 8px; }
   .tr-n { grid-area: n; } .tr-l { grid-area: l; } .tr-t { grid-area: t; }
 }
