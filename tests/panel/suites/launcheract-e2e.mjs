@@ -214,6 +214,7 @@ for (const lang of ["de", "en"]) {
     await ev(`r.host._openSettings()`);
     await wait(`return r.querySelector("${SD}")?.open`);
     check(`[${tag}] Einstellungen: Aktionsknopf im Kopf, danach der Strich, danach der Schliessen-Knopf`, await ev(`const kids = [...r.querySelector("${SD} .dlg-head").children]; const i = kids.findIndex((k) => k.matches("[data-ap-actions]")); const box = kids[i]; const close = kids.findIndex((k) => k.matches('[data-set="close"]')); return i >= 0 && close === i + 1 && !!box.querySelector("[data-ap-run]") && box.lastElementChild.classList.contains("dlg-sep") && r.querySelector("${SD} .dlg-head [data-ap-run]").getAttribute("aria-label") === "Updates prüfen"`));
+    check(`[${tag}] Einstellungen: Aktionsknopf und Schliessen-Knopf gleich hoch (Mitte auf derselben Höhe)`, await ev(`const a = r.querySelector("${SD} .dlg-head [data-ap-run]").getBoundingClientRect(), c = r.querySelector("${SD} .dlg-head .dlg-close, ${SD} .dlg-head [data-set=close]").getBoundingClientRect(); return Math.abs((a.top + a.bottom) / 2 - (c.top + c.bottom) / 2) < 0.6 && Math.abs(a.height - c.height) < 0.6`), await ev(`const a = r.querySelector("${SD} .dlg-head [data-ap-run]").getBoundingClientRect(), c = r.querySelector("${SD} .dlg-head .dlg-close, ${SD} .dlg-head [data-set=close]").getBoundingClientRect(); return [a.top, a.bottom, c.top, c.bottom].join()`));
     await shot("settings");
     await p.evaluate(() => { window.__services.length = 0; window.__launcherLog = []; window.__serviceDelay = 1200; });
     await tap(`${SD} [data-ap-run]`);

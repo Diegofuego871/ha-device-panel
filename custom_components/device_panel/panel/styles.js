@@ -1432,7 +1432,8 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   .dlg-head { padding: 18px 12px 12px 16px; }
   /* Vollbild-Fenster (Einstellungen, Protokoll, Routinen): das Kreuz sitzt auf gleicher Höhe wie der Zahnrad-Knopf der Übersicht (12 px vom oberen Rand) */
-  dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close, dialog.mgall-dlg .dlg-head .dlg-close, dialog.status-dlg .dlg-head .dlg-close { margin-top: -6px; }
+  dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close, dialog.mgall-dlg .dlg-head .dlg-close, dialog.status-dlg .dlg-head .dlg-close,
+  dialog.settings .dlg-head .dlg-acts, dialog.rtall-dlg .dlg-head .dlg-acts, dialog.mgall-dlg .dlg-head .dlg-acts { margin-top: -6px; }
   .dlg-quick { padding: 0 16px 14px; flex-wrap: nowrap; gap: 6px; }
   /* Handy: beide Knöpfe (Gerät, Integration) auf einer Zeile; bei sehr schmalem Fenster kürzt "…" den Text */
   .qbtn { padding: 0 12px; gap: 6px; min-width: 0; white-space: nowrap; }

@@ -22,6 +22,10 @@ Availability and reception up to 12 months back, with the same periods as the ba
 - The note on retention no longer says "30 days at most".
 - The histories grow beyond the 31 days kept so far from this update on. Values that were already deleted cannot be restored (the recorder of Home Assistant keeps only ten days by default).
 
+### Fixed
+
+- **Phone, header of the settings and of the overviews:** the round action button (and the new button "History") sat a few pixels higher than the close button. Both are now on the same line.
+
 ## [2.118.0] - 2026-10-24
 
 The history window became the history of a device: everything about a device in one list, also from the overviews of Magic Push and routines.

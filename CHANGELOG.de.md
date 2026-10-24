@@ -22,6 +22,10 @@ Verfügbarkeit und Empfang bis 12 Monate zurück, mit denselben Zeiträumen wie 
 - Der Hinweis zur Aufbewahrung sagt nicht mehr "höchstens 30 Tage".
 - Die Verläufe wachsen ab diesem Update über die bisherigen 31 Tage hinaus. Was schon gelöscht wurde, lässt sich nicht herstellen (der Recorder von Home Assistant behält standardmässig nur zehn Tage).
 
+### Behoben
+
+- **Handy, Kopf der Einstellungen und der Übersichten:** der runde Aktionsknopf (und der neue Knopf "Protokoll") sass einige Pixel höher als der Schliessen-Knopf. Beide stehen jetzt auf einer Linie.
+
 ## [2.118.0] - 2026-10-24
 
 Das Protokoll-Fenster ist zum Protokoll eines Geräts geworden: alles zu einem Gerät in einer Liste, auch aus den Übersichten von Magic Push und Routinen.
