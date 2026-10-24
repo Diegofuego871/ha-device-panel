@@ -239,7 +239,8 @@ export class ProtocolUi {
     const t = (k, ...a) => this.t(k, ...a);
     const icon = s.kind === "all" ? "log" : s.kind === "magic" ? "bell" : "timer";
     dlg.innerHTML = `<div class="dlg-head"><span class="dlg-avatar">${this.h.mdi(icon, 28)}</span>
-        <div class="dlg-title"><h2>${this.esc(t("prTitle"))}</h2><div class="dlg-sub" data-pr-sub></div></div></div>
+        <div class="dlg-title"><h2>${this.esc(t("prTitle"))}</h2><div class="dlg-sub" data-pr-sub></div></div>
+        <button type="button" class="dlg-close" data-pr="close" title="${this.esc(t("close"))}" aria-label="${this.esc(t("close"))}">${this.h.mdi("close", 18)}</button></div>
       <div class="lg-bar" data-pr-bar>
         <div data-pr-kinds></div>
         <div data-pr-ranges></div>

@@ -114,11 +114,12 @@ for (const lang of ["de", "en"]) {
     ]);
     await ev(`r.host._copyText = async (t) => { window.__copied = t; return true; }`);
 
-    // --- Geräte-Popup: Knopf in der Schnellzeile ---
+    // --- Geräte-Popup: Protokoll-Symbol im Kopf ---
     await ev(`r.host._openDevice("d")`);
     await wait(`return !!r.querySelector('dialog.device .dlg-quick')`);
-    check(`[${tag}] Schnellzeile: dritter Knopf "${T.title}" nach "Gerät in HA" und "Integration"`, await ev(`const q = [...r.querySelectorAll("dialog.device .dlg-quick .qbtn")]; const l = q.at(-1); return q.length >= 2 && l.dataset.proto === "all" && l.dataset.device === "d" && l.textContent.trim() === ${JSON.stringify(T.title)} && !!l.querySelector("svg")`));
-    await tap('dialog.device .dlg-quick [data-proto="all"]');
+    check(`[${tag}] Kopf: Protokoll-Symbol "${T.title}" links vom Herz, nicht mehr in der Schnellzeile`, await ev(`const h = r.querySelector("dialog.device .dlg-head"); const b = h.querySelector('[data-proto="all"]'); const f = h.querySelector(".dlg-fav"); return !!b && b.dataset.device === "d" && b.getBoundingClientRect().right <= f.getBoundingClientRect().left && !r.querySelector('dialog.device .dlg-quick [data-proto]') && r.querySelectorAll("dialog.device .dlg-quick .qbtn").length === 2`));
+    check(`[${tag}] Name im Kopf: ${mobile ? "am Handy 21 px (eine Stufe kleiner)" : "am Desktop unverändert 24 px"}`, await ev(`return getComputedStyle(r.querySelector("dialog.device .dlg-title h2")).fontSize === ${JSON.stringify(mobile ? "21px" : "24px")}`));
+    await tap('dialog.device .dlg-head [data-proto="all"]');
     check(`[${tag}] Fenster öffnet auf "${T.all}", Titel "${T.title}", Unterzeile = Gerät`, await wait(`const d = r.querySelector('${P}'); const t = [...d.querySelectorAll("[data-pr-kinds] .sub-tab")]; return d.open && d.querySelector("h2").textContent === ${JSON.stringify(T.title)} && t.length === 3 && t[0].dataset.v === "all" && t[0].classList.contains("on") && d.querySelector("[data-pr-sub]").textContent === r.host._devices.find((x) => x.id === "d").name && d.querySelectorAll(".pr-item").length > 0`));
     // 30 Tage: Ausfall 2, Batterie 1, Laden 1 (vor 2 Tagen), Empfang 1, Magic Push 3 (zwei von Meldung 1, eine von Meldung 2), Routinen 4 (vor 1, 1, 9 und 16 Tagen); ohne Updates und ohne Neu
     check(`[${tag}] Chips nur mit Einträgen: Alle, Ausfall, Batterie, Laden, Empfang, Magic Push, Routine (kein "${T.updates}")`, (await wait(`return r.querySelectorAll('${P} [data-pr-filters] .chip').length === 7`)) && (await chips()) === "all,outage,battery,charge,signal,magic,routine");

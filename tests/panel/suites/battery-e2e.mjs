@@ -53,6 +53,7 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Kachel "Batterie" antippbar`, JSON.stringify(tile) === JSON.stringify(["BUTTON", T.hint, true]), JSON.stringify(tile));
     await tap('dialog.device .st-tile[data-kind="battery"]');
     check(`[${tag}] Fenster "Batterie", 30 Tage`, await wait(`return r.querySelector("dialog.stat-dlg")?.open && !!r.querySelector("dialog.stat-dlg .bh-svg")`) && (await text("dialog.stat-dlg h2")) === T.title && (await calls()).at(-1) === "e:30d");
+    check(`[${tag}] Fenster ${mobile ? "ganz oben am Bildschirmrand (Vollbild)" : "bleibt ein Fenster mit Rand"}`, await ev(`const b = r.querySelector("dialog.stat-dlg").getBoundingClientRect(); return ${mobile} ? b.top === 0 && b.left === 0 && Math.round(b.height) === innerHeight && Math.round(b.width) === innerWidth : b.top > 0 && b.height < innerHeight`));
     const ranges = await ev(`return [...r.querySelectorAll('dialog.stat-dlg [data-stat="range"]')].map(x=>x.textContent)`);
     check(`[${tag}] sechs Zeiträume`, JSON.stringify(ranges) === JSON.stringify(T.ranges), JSON.stringify(ranges));
     check(`[${tag}] 30 Tage: tiefster/höchster, Langzeitstatistik`, T.minmax.test(await text("dialog.stat-dlg .avail-facts")) && (await text("dialog.stat-dlg .bh-src")).startsWith(T.stats), `${await text("dialog.stat-dlg .avail-facts")} / ${await text("dialog.stat-dlg .bh-src")}`);

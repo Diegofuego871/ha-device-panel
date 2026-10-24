@@ -501,6 +501,7 @@ dialog.status-dlg .dlg-title h2 { margin: 0; }
 .dlg-acts:empty { display: none; }
 .dlg-act { flex: none; display: grid; place-items: center; width: 42px; height: 42px; padding: 0; border: 1px solid var(--dp-divider); border-radius: 50%; background: var(--dp-card); color: var(--dp-primary); cursor: pointer; }
 .dlg-act:hover { background: var(--dp-hover); }
+.dlg-head-log { margin-right: 8px; }
 .dlg-act.run-ok { background: var(--dp-success); border-color: var(--dp-success); color: #fff; }
 .dlg-act.run-err { background: var(--dp-error); border-color: var(--dp-error); color: #fff; }
 .dlg-act:disabled { cursor: progress; }
@@ -1431,6 +1432,8 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   .toolbar .rtall-btn, .toolbar .apps-btn { margin: 0 3px; } /* Abstand zwischen den Knöpfen 14 px (Wunsch des Nutzers: war zu eng), das Suchfeld wird dafür schmaler */
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   .dlg-head { padding: 18px 12px 12px 16px; }
+  /* Geräte-Popup am Handy: Name eine Stufe kleiner (24 → 21 px), damit neben Protokoll, Herz und Kreuz mehr Platz bleibt (seit 2.121.0) */
+  dialog.device .dlg-title h2 { font-size: 21px; }
   /* Vollbild-Fenster (Einstellungen, Protokoll, Routinen): das Kreuz sitzt auf gleicher Höhe wie der Zahnrad-Knopf der Übersicht (12 px vom oberen Rand) */
   dialog.settings .dlg-head .dlg-close, dialog.log-dlg .dlg-head .dlg-close, dialog.rtall-dlg .dlg-head .dlg-close, dialog.mgall-dlg .dlg-head .dlg-close, dialog.status-dlg .dlg-head .dlg-close,
   dialog.settings .dlg-head .dlg-acts, dialog.rtall-dlg .dlg-head .dlg-acts, dialog.mgall-dlg .dlg-head .dlg-acts { margin-top: -6px; }
@@ -1438,9 +1441,6 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   /* Handy: beide Knöpfe (Gerät, Integration) auf einer Zeile; bei sehr schmalem Fenster kürzt "…" den Text */
   .qbtn { padding: 0 12px; gap: 6px; min-width: 0; white-space: nowrap; }
   .qbtn .q-t { overflow: hidden; text-overflow: ellipsis; }
-  /* Geräteprotokoll (2.118.0): der dritte Knopf passt am Handy nicht mehr neben die beiden anderen und steht auf einer zweiten Zeile */
-  .dlg-quick { flex-wrap: wrap; }
-  .qbtn-log { flex: none; }
   .dlg-body { padding: 4px 16px 16px; }
   .dlg-actions { padding-left: 16px; padding-right: 16px; }
   .st-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1527,6 +1527,9 @@ dialog.device[open] > .dlg-body, dialog.settings[open] > .dlg-body, dialog.stat-
   dialog.stat-dlg { height: 86%; max-height: 86%; }
   /* Einstellungen, Ansicht und Geräte-Popup auf dem Handy als Vollbild (seit 2.24.0, Wunsch des Nutzers) */
   dialog.settings, dialog.device { height: 100%; max-height: 100%; margin: 0; border-radius: 0; clip-path: none; }
+  /* Verlaufsfenster (Batterie, Verfügbarkeit, Empfang) ebenfalls ganz oben am Rand statt als Blatt (seit 2.121.0, Wunsch des Nutzers) */
+  dialog.stat-dlg { height: 100%; max-height: 100%; margin: 0; border-radius: 0; clip-path: none; }
+  dialog.stat-dlg .dlg-head .dlg-close { margin-top: -6px; }
 }
 
 /* Material (seit 2.0.0b1, Wunsch des Nutzers, Variante B aus docs/mockups/apple-design-v1): Geräte-Popup, Einstellungen und Protokoll sind

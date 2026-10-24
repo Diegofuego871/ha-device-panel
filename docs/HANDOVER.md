@@ -3,10 +3,11 @@
 Einstieg für jede neue Claude-Code-Session. Zuerst diese Datei lesen, dann
 `CLAUDE.md`, `docs/CONCEPT.md`, `docs/LEARNINGS.md`, `docs/DESIGN.md`.
 
-## Stand (2.120.0, Empfang als Ereignis)
+## Stand (2.121.0, Protokoll-Symbol im Kopf; davor 2.120.0 Empfang als Ereignis)
 
 - `SignalLog.watch(devices)` (`signal_history.py`) schreibt `signal_weak`/`signal_ok` ins Panel-Log (Kategorie `signal`, mit `device_id`): alle `WATCH_INTERVAL` = 5 Min. über `async_list_devices` (gleiche Rechnung wie die Liste und die KI: `devices.signal_limit`/`signal_weak`, vorher in `ai_assessment.py`), Wechsel erst nach `WATCH_CONFIRM` = 2 Prüfungen, erster Stand ohne Ereignis, ausgefallene Geräte behalten ihren Stand. Zustand nur im Arbeitsspeicher (nach einem Neustart beginnt jedes Gerät wieder ohne Ereignis). `devicelog.EVENT_CATS` und `FILTERS.all` im Panel kennen `signal`.
 - Test: `test_signal_history.py::test_watch_writes_weak_and_ok_events_after_two_checks`; Suiten `devicelog`, `log` angepasst.
+- Geräte-Popup (2.121.0): das Protokoll-Symbol (`dlg-act dlg-head-log`, `data-proto="all"`) steht im Kopf links vom Herz; die Schnellzeile `.dlg-quick` hat nur die zwei Links "Gerät in HA öffnen"/"Integration in HA öffnen" (Konzept: unten Links aus dem Panel, oben Fenster im Panel). Protokoll-Fenster und Verlaufsfenster (`stat-dlg`) haben am Handy ein Kreuz bzw. Vollbild.
 - README-Printscreens neu (ohne Versionswechsel, in 2.120.0): `tests/panel/readme-shots.mjs` hat neue Schritte `devicelog` (Reiter Alles und Magic Push des Protokoll-Fensters, erfundene Einträge für das Gerät "d" über `window.__devlog`/`__protocol`) und `settings-storage` (erfundene Belegung über `window.__usage`). Ablauf: `SHOTS_OUT=/tmp/shots node readme-shots.mjs`, danach nur die in README.md/README.de.md genannten Dateien auf 256 Farben bringen (PIL `quantize`) und nach `docs/screenshots/{de,en}/` kopieren (Skript siehe Verlauf dieser Sitzung: Muster `docs/screenshots/(de|en)/<name>.png` aus beiden READMEs lesen). Der Schritt `columns` läuft am Handy über `[data-view-open]` (die Zeile "Sortierung & Ansicht"); `columns-mobile.png` steht neben `columns.png` in der README.
 
 ## Stand (2.119.0, Verläufe bis 12 Monate)

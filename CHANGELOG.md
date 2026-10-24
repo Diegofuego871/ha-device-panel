@@ -7,6 +7,17 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.121.0] - 2026-10-24
+
+The history symbol sits in the header of the device pop-up, a close button in every history window, and the charts use the whole screen on a phone.
+
+### Changed
+
+- **Charts of a device on a phone** (battery, availability, reception): the window now sits at the very top of the screen instead of a sheet with a gap above it, so the chart gets more room. On desktop nothing changes.
+- **History window:** an "X" at the top right in every view of the history (a device, Magic Push, routines); "Back" at the bottom left stays, both close the window.
+- **Device pop-up:** the button "History" moved from the quick row to the top right, to the left of the heart, with the same icon as in the overviews of Magic Push and routines. The quick row keeps only the two links that leave the panel ("Open device in HA", "Open integration in HA"); everything at the top opens a window inside the panel. On a phone the name in the header is one step smaller (21 instead of 24 px), so the three round buttons leave it more room.
+- **README:** the screenshots of the device pop-up were taken again (symbol in the header).
+
 ## [2.120.0] - 2026-10-24
 
 Reception in the history of a device: an entry when a device turns weak and when it is fine again.
@@ -4404,6 +4415,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.121.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.121.0
 [2.120.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.120.0
 [2.119.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.119.0
 [2.118.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.118.0

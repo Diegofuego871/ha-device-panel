@@ -304,7 +304,7 @@ for (const lang of langs) {
       await p.evaluate((l) => { window.__lang = l; }, lang);
       await seedDeviceLog();
       await open("d");
-      await tap('dialog.device .dlg-quick [data-proto="all"]');
+      await tap('dialog.device .dlg-head [data-proto="all"]');
       await wait(`return r.querySelector("dialog.proto-dlg")?.open && r.querySelectorAll("dialog.proto-dlg .al-row").length >= 6`);
       await shotDlg("devicelog", "dialog.proto-dlg");
       // Die Auswertung von Magic Push im selben Fenster

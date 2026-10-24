@@ -4828,6 +4828,10 @@ class DevicePanel extends HTMLElement {
     const heart = d
       ? `<button type="button" class="dlg-fav${d.fav ? " on" : ""}" data-dlg="fav" aria-pressed="${Boolean(d.fav)}" title="${escape(favLabel)}" aria-label="${escape(favLabel)}">${mdi(d.fav ? "heart" : "heartOutline", 18)}</button>`
       : "";
+    // Protokoll des Geräts (seit 2.121.0): dasselbe Symbol wie in den Übersichten, links vom Herz; Links aus dem Panel stehen unten, Fenster öffnen oben
+    const logBtn = d && this._viewAdmin()
+      ? `<button type="button" class="dlg-act dlg-head-log" data-proto="all" data-device="${escape(d.id)}" data-name="${escape(d.name)}" title="${escape(this._t("prAct"))}" aria-label="${escape(this._t("prAct"))}">${mdi("log", 18)}</button>`
+      : "";
     // Eigene Schwelle wird gerade getippt: nicht neu aufbauen, sonst ginge die
     // Eingabe beim nächsten Abfragen (alle 10 s) verloren.
     const typing = this.shadowRoot.activeElement;
@@ -4914,8 +4918,8 @@ class DevicePanel extends HTMLElement {
       html = `<div class="dlg-head"><span class="dlg-avatar ${avatar}">${typeIcon(d.type, 28)}</span>
           <div class="dlg-title">${this._nameHtml(d)}
             <div class="dlg-sub">${status}<span>${[this._t(typeKey(d.type)), d.area].filter(Boolean).map(escape).join(" · ")}</span></div>${whyHtml}</div>
-          ${heart}${close}</div>
-        <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device">${mdi("open", 17)}<span class="q-t">${escape(this._t("openDevicePage"))}</span></button>${d.integration?.domain ? `<button type="button" class="qbtn" data-dlg="open-integration" data-domain="${escape(d.integration.domain)}">${mdi("open", 17)}<span class="q-t">${escape(this._t("openIntegPage"))}</span></button>` : ""}${this._viewAdmin() ? `<button type="button" class="qbtn qbtn-log" data-proto="all" data-device="${escape(d.id)}" data-name="${escape(d.name)}" title="${escape(this._t("prAct"))}" aria-label="${escape(this._t("prAct"))}">${mdi("log", 17)}<span class="q-t">${escape(this._t("prAct"))}</span></button>` : ""}</div>
+          ${logBtn}${heart}${close}</div>
+        <div class="dlg-quick"><button type="button" class="qbtn" data-dlg="open-device">${mdi("open", 17)}<span class="q-t">${escape(this._t("openDevicePage"))}</span></button>${d.integration?.domain ? `<button type="button" class="qbtn" data-dlg="open-integration" data-domain="${escape(d.integration.domain)}">${mdi("open", 17)}<span class="q-t">${escape(this._t("openIntegPage"))}</span></button>` : ""}</div>
         <div class="dev-tabs">${tabs}</div>
         <div class="dlg-body" role="tabpanel">${body}
           ${this._hideError ? `<div class="dlg-error">${escape(this._t("hideError"))} ${escape(this._hideError)}</div>` : ""}

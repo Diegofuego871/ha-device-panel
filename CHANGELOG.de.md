@@ -7,6 +7,17 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.121.0] - 2026-10-24
+
+Das Protokoll-Symbol steht im Kopf des Geräte-Popups, jedes Protokoll-Fenster hat ein Kreuz, und die Verläufe nutzen am Handy den ganzen Bildschirm.
+
+### Geändert
+
+- **Verläufe eines Geräts am Handy** (Batterie, Verfügbarkeit, Empfang): das Fenster steht jetzt ganz oben am Bildschirmrand statt als Blatt mit Abstand darüber, so bleibt mehr Platz für die Grafik. Am Desktop ändert sich nichts.
+- **Protokoll-Fenster:** oben rechts in jeder Ansicht des Protokolls (Gerät, Magic Push, Routinen) ein "X"; "Zurück" unten links bleibt, beide schliessen das Fenster.
+- **Geräte-Popup:** der Knopf "Protokoll" steht nicht mehr in der Schnellzeile, sondern oben rechts links vom Herz, mit demselben Symbol wie in den Übersichten von Magic Push und Routinen. Die Schnellzeile behält nur die zwei Links, die aus dem Panel führen ("Gerät in HA öffnen", "Integration in HA öffnen"); alles oben öffnet ein Fenster im Panel. Am Handy ist der Name im Kopf eine Stufe kleiner (21 statt 24 px), damit neben den drei runden Knöpfen mehr Platz bleibt.
+- **README:** die Printscreens des Geräte-Popups sind neu aufgenommen (Symbol im Kopf).
+
 ## [2.120.0] - 2026-10-24
 
 Der Empfang im Protokoll eines Geräts: ein Eintrag, wenn ein Gerät schwach wird und wenn es wieder in Ordnung ist.
@@ -4505,6 +4516,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.121.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.121.0
 [2.120.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.120.0
 [2.119.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.119.0
 [2.118.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.118.0
