@@ -14,8 +14,8 @@
  */
 
 const STATES_SHOWN = ["new", "later", "open"];
-const MSG_ROWS = ["outage", "battery", "new", "charge"];
-const MSG_ICON = { outage: "alert", battery: "battery", new: "sparkle", charge: "batteryCharging" };
+const MSG_ROWS = ["outage", "battery", "new", "charge", "updates"];
+const MSG_ICON = { outage: "alert", battery: "battery", new: "sparkle", charge: "batteryCharging", updates: "download" };
 // Zahlen der Meldungen: Schlüssel der Option, Zeile, Beschriftung, Einheit
 const VALUES = {
   // "Ausgefallen nach" (offline_after) bleibt hier weg, damit es einfach bleibt; "Melden nach" darf aber nicht darunter liegen
@@ -23,8 +23,12 @@ const VALUES = {
   battery: [["battery_low", "wzVBattery", "wzVPercent"]],
   new: [["new_window", "wzVNew", "wzVMin"]],
   charge: [["charge_full", "wzVFull", "wzVPercent"]],
+  // Updates: die Uhrzeit nur bei "einmal am Tag" (die anderen Arten stellt man in den Einstellungen)
+  updates: [["updates_time", "wzVTime", "", "time"]],
 };
 const VALUE_KEYS = Object.values(VALUES).flatMap((rows) => rows.map(([key]) => key));
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const isTime = (key) => key === "updates_time";
 // Geräte einer Integration, die schon beim Öffnen aufgeklappt sind: keine (die Liste bleibt kurz)
 const SEARCH_MIN = 8;
 
@@ -123,7 +127,7 @@ export class WizardUi {
       exT: new Set(v.exclude_types || []),
       exD: new Set(v.exclude_devices || []),
       target: v.notify_service || "none",
-      on: { outage: Boolean(v.notify_outage), battery: Boolean(v.battery_push), new: Boolean(v.notify_new), charge: Boolean(v.notify_charge) },
+      on: { outage: Boolean(v.notify_outage), battery: Boolean(v.battery_push), new: Boolean(v.notify_new), charge: Boolean(v.notify_charge), updates: Boolean(v.notify_updates) },
       v: Object.fromEntries(VALUE_KEYS.map((k) => [k, String(v[k])])),
       quiet: { on: Boolean(v.quiet_enabled), from: first.from || "22:00", to: first.to || "07:00", uniform },
     };
@@ -248,14 +252,21 @@ export class WizardUi {
     if (s?.step !== "messages" || !s.d) return "";
     const limits = s.opts.limits || {};
     const num = (k) => (/^\d+$/.test(String(s.d.v[k]).trim()) ? Number(s.d.v[k]) : NaN);
-    for (const key of VALUE_KEYS) {
+    for (const key of VALUE_KEYS.filter((k) => !isTime(k))) {
       const [lo, hi] = limits[key] || [1, 999];
       const n = num(key);
       if (!(n >= lo && n <= hi)) return this.t("wzErrRange", this.t(this.valueLabel(key)), lo, hi);
     }
     const detect = Number(s.base.offline_after);
+    if (this.rowValues("updates").length && !TIME_RE.test(String(s.d.v.updates_time))) return this.t("wzErrTime");
     if (num("notify_delay") < detect) return this.t("wzErrDelay", detect);
     return "";
+  }
+
+  // Zeilen mit Werten zum Anpassen: bei den Updates die Uhrzeit nur im Modus "einmal am Tag"
+  rowValues(id) {
+    const mode = this.s?.base?.updates_mode;
+    return VALUES[id].filter(([key]) => key !== "updates_time" || mode === "daily");
   }
 
   valueLabel(key) {
@@ -411,8 +422,9 @@ export class WizardUi {
     const label = (x) => (x.kind === "none" ? this.t("wzMNoTarget") : x.kind === "missing" ? `${x.value} (${this.t("wzMissing")})` : x.value);
     const targets = (opts.notify_targets || []).map((x) => `<option value="${escape(x.value)}"${x.value === d.target ? " selected" : ""}>${escape(label(x))}</option>`).join("");
     const rows = MSG_ROWS.map((id) => {
-      const vals = VALUES[id]
+      const vals = this.rowValues(id)
         .map(([key, lab, unit]) => {
+          if (isTime(key)) return `<label class="wz-v"><span>${escape(this.t(lab))}</span><input type="time" data-wz-v="${key}" value="${escape(d.v[key])}"${none ? " disabled" : ""}></label>`;
           const [lo, hi] = opts.limits?.[key] || [1, 999];
           return `<label class="wz-v"><span>${escape(this.t(lab))}</span><input type="number" inputmode="numeric" min="${lo}" max="${hi}" step="1" data-wz-v="${key}" value="${escape(d.v[key])}"${none ? " disabled" : ""}><em>${escape(this.t(unit))}</em></label>`;
         })
@@ -477,11 +489,14 @@ export class WizardUi {
       battery_push: d.on.battery,
       notify_new: d.on.new,
       notify_charge: d.on.charge,
-      ...Object.fromEntries(VALUE_KEYS.map((k) => [k, n(k)])),
+      notify_updates: d.on.updates,
+      ...Object.fromEntries(VALUE_KEYS.filter((k) => !isTime(k)).map((k) => [k, n(k)])),
       wizard_state: "done",
       wizard_draft: null,
       wizard_done_at: Math.floor(Date.now() / 1000),
     };
+    // Uhrzeit der Update-Meldung nur, wenn sie im Assistenten zu sehen war
+    if (d.on.updates && this.rowValues("updates").length && TIME_RE.test(String(d.v.updates_time))) values.updates_time = d.v.updates_time;
     // Die Lademeldung gilt nur für Integrationen, die dafür gewählt sind: ohne Wahl alle mit Batteriegeräten
     if (d.on.charge && !(base.charge_integrations || []).length) {
       values.charge_integrations = (opts.catalog?.battery || []).map((b) => b.domain).filter((dom) => !d.exI.has(dom));
@@ -491,7 +506,7 @@ export class WizardUi {
       if (d.quiet.on && d.quiet.uniform) values.quiet_days = Array.from({ length: 7 }, () => ({ on: true, from: d.quiet.from, to: d.quiet.to }));
     }
     // Ohne Ziel sind Meldungen und Ruhezeit nicht Teil der Wahl: nichts anfassen ausser dem Ziel
-    if (d.target === "none") for (const k of ["notify_outage", "notify_online", "battery_push", "notify_new", "notify_charge"]) delete values[k];
+    if (d.target === "none") for (const k of ["notify_outage", "notify_online", "battery_push", "notify_new", "notify_charge", "notify_updates"]) delete values[k];
     return values;
   }
 

@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.137.0] - 2026-10-24
+
+The setup wizard also asks about update notifications.
+
+### Added
+
+- **Setup wizard, step "Notifications":** a fifth row "Updates" (new updates for Home Assistant, apps and HACS) with a switch; with the mode "once a day" the time of the notification can be set right there (default 09:00). Other modes (immediately, weekly) are set in the settings and stay as they are. Like the other rows it needs a push target, and an invalid time blocks "Next".
+
 ## [2.136.1] - 2026-10-24
 
 The buttons of the setup wizard have icons, like in the routine wizard, and the empty space on top is gone on a phone.
@@ -4669,6 +4677,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.137.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.137.0
 [2.136.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.1
 [2.136.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.0
 [2.135.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.135.0

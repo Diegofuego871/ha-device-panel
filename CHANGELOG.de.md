@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.137.0] - 2026-10-24
+
+Der Einrichtungsassistent fragt auch nach Meldungen für Updates.
+
+### Hinzugefügt
+
+- **Einrichtungsassistent, Schritt "Meldungen":** eine fünfte Zeile "Updates" (neue Updates für Home Assistant, Apps und HACS) mit Schalter; im Modus "einmal am Tag" lässt sich die Uhrzeit der Meldung gleich dort einstellen (Standard 09:00). Andere Modi (sofort, wöchentlich) stellt man in den Einstellungen ein und bleiben, wie sie sind. Wie die anderen Zeilen braucht sie ein Push-Ziel, und eine ungültige Uhrzeit sperrt "Weiter".
+
 ## [2.136.1] - 2026-10-24
 
 Die Knöpfe des Einrichtungsassistenten haben Symbole, wie im Routinen-Assistenten, und der leere Platz oben am Handy ist weg.
@@ -4770,6 +4778,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.137.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.137.0
 [2.136.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.1
 [2.136.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.136.0
 [2.135.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.135.0
