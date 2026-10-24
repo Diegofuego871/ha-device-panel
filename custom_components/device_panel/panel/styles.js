@@ -2306,7 +2306,6 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-bd { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 20px 12px; }
 .wz-ft { display: flex; gap: 10px; padding: 12px 20px 16px; border-top: 1px solid var(--dp-divider); flex: none; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 .wz-ft .dlg-btn { flex: 1; justify-content: center; }
-.wz-ft .dlg-btn.primary { flex: 1.6; }
 .wz-welcome-ft { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 .wz-welcome-ft .dlg-btn { flex: none; min-height: 44px; justify-content: center; }
 /* Zweitknöpfe: zwei gleich breite nebeneinander, "Entwurf verwerfen" (falls da) darunter über die ganze Breite, alle im selben Stil mit Symbol */
