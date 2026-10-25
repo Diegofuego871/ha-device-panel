@@ -16,6 +16,10 @@ A device that is down still shows its last battery level.
 - **Battery of a failed device:** when a device is down, its battery sensor reports "unavailable" and the panel showed nothing. Now the overview of the popup shows a tile "Battery" with the last value before the failure ("22 % · last value 47 min ago"), and the column "Battery" in the list the same, both dimmed. The value comes from the history of the recorder (the last 10 days, a query is kept for 10 minutes, only for devices that are down). It is for display only: no low-battery warning, no push and no chip "Battery low" come from it, and there is no history tile. New field `battery_last` (`level`, `at`) in `list_devices`.
 - **Setup wizard, rows "Low battery" and "Fully charged":** in the device level, every device shows its current battery level in small type behind the area ("Kitchen · 64 %"), in the same line, so the row does not get taller. WebSocket `wizard_data`: each device now carries `battery_level` (percent or `null`).
 
+### Changed
+
+- **Setup wizard, step "Notifications":** the row "Fully charged" now stands right below "Low battery", because they belong together. Order: Failed devices, Low battery, Fully charged, New devices, Updates.
+
 ## [2.144.0] - 2026-10-25
 
 One style for every arrow that opens something.

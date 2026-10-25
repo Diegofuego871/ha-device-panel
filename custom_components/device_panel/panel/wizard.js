@@ -14,7 +14,7 @@
  */
 
 const STATES_SHOWN = ["new", "later", "open"];
-const MSG_ROWS = ["outage", "battery", "new", "charge", "updates"];
+const MSG_ROWS = ["outage", "battery", "charge", "new", "updates"];
 // Meldungsarten mit Einstellung je Integration (aufklappbar); bei den Updates sind es die Integrationen der update-Entitäten (seit 2.139.0)
 const PER_INTEGRATION = ["outage", "battery", "new", "charge", "updates"];
 const MSG_ICON = { outage: "alert", battery: "battery", new: "sparkle", charge: "batteryCharging", updates: "download" };

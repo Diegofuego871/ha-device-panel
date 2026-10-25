@@ -16,6 +16,10 @@ Ein ausgefallenes Gerät zeigt weiter seinen letzten Batteriestand.
 - **Batterie eines ausgefallenen Geräts:** fällt ein Gerät aus, meldet sein Batteriesensor "nicht verfügbar", und das Panel zeigte nichts. Jetzt zeigt die Übersicht des Popups eine Kachel "Batterie" mit dem letzten Wert vor dem Ausfall ("22 % · letzter Stand vor 47 Min."), und die Spalte "Batterie" in der Liste ebenso, beides gedämpft. Der Wert kommt aus dem Verlauf des Recorders (die letzten 10 Tage, eine Abfrage gilt 10 Minuten, nur für Geräte, die ausgefallen sind). Er dient nur der Anzeige: daraus entstehen keine Warnung bei schwacher Batterie, kein Push und kein Treffer im Chip "Batterie schwach", und es gibt keine Verlaufskachel. Neues Feld `battery_last` (`level`, `at`) in `list_devices`.
 - **Einrichtungsassistent, Zeilen "Niedrige Batterie" und "Voll geladen":** in der Geräte-Ebene zeigt jedes Gerät seinen aktuellen Batteriestand klein hinter dem Bereich ("Küche · 64 %"), in derselben Zeile, damit sie nicht höher wird. WebSocket `wizard_data`: jedes Gerät trägt neu `battery_level` (Prozent oder `null`).
 
+### Geändert
+
+- **Einrichtungsassistent, Schritt "Meldungen":** die Zeile "Voll geladen" steht jetzt direkt unter "Niedrige Batterie", weil sie zusammengehören. Reihenfolge: Ausgefallene Geräte, Niedrige Batterie, Voll geladen, Neue Geräte, Updates.
+
 ## [2.144.0] - 2026-10-25
 
 Ein Stil für jeden Pfeil, der etwas öffnet.

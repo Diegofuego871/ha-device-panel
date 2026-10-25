@@ -99,7 +99,7 @@ for (const lang of ["de", "en"]) {
       await s.wait(`return r.host._wizard.s.step === "messages"`);
       check(`[${tag}] Meldungen: ohne Ziel sind Schalter und Werte gesperrt, kein Ruhezeit-Schritt`, (await s.ev(`return [...r.querySelectorAll("${s.D} [data-wz-msg], ${s.D} [data-wz-v]")].every((i) => i.disabled)`)) && (await s.ev(`return r.host._wizard.steps().length`)) === 5);
       check(`[${tag}] Zeilen: Ausgefallene Geräte, Batterie, Neue Geräte, Voll geladen, Updates`, (await s.ev(`return r.querySelectorAll("${s.D} .wz-msg").length`)) === 5);
-      check(`[${tag}] Werte vorausgefüllt mit den jetzigen Einstellungen`, JSON.stringify(await s.ev(`return [...r.querySelectorAll("${s.D} [data-wz-v]")].map((i) => i.dataset.wzV + "=" + i.value)`)) === JSON.stringify(["notify_delay=2", "battery_low=15", "new_window=5", "charge_full=100", "updates_time=09:00"]));
+      check(`[${tag}] Werte vorausgefüllt mit den jetzigen Einstellungen`, JSON.stringify(await s.ev(`return [...r.querySelectorAll("${s.D} [data-wz-v]")].map((i) => i.dataset.wzV + "=" + i.value)`)) === JSON.stringify(["notify_delay=2", "battery_low=15", "charge_full=100", "new_window=5", "updates_time=09:00"]));
       await s.ev(`const sel = r.querySelector("${s.D} [data-wz-target]"); sel.value = "notify.fernseher"; sel.dispatchEvent(new Event("change", { bubbles: true }))`);
       check(`[${tag}] Ziel gewählt: Werte frei, Testmeldung da, Ruhezeit-Schritt kommt dazu`, (await s.ev(`return [...r.querySelectorAll("${s.D} [data-wz-v]")].every((i) => !i.disabled)`)) && (await s.ev(`return r.host._wizard.steps().length`)) === 6 && !!(await s.handle(`${s.D} [data-wz="test"]`)));
       await s.tap(`${s.D} [data-wz="test"]`);
