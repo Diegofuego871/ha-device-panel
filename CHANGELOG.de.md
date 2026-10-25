@@ -13,7 +13,11 @@ Die Akzentfarbe des Panels ist wählbar.
 
 ### Hinzugefügt
 
-- **Akzentfarbe:** Einstellungen › Panel › Allgemein hat ein neues Kapitel "Akzentfarbe" mit "Home Assistant" (folgt dem Theme, wie bisher) und acht Farben: Himmelblau, Ozeanblau, Türkis, Indigo, Rosa, Orange, Rot und Graphit. Die Farbe gilt sofort, ohne "Speichern", und nur für dich (gespeichert mit deiner Ansicht in den Benutzerdaten von Home Assistant, dazu eine lokale Kopie). Sie färbt Knöpfe, Schalter, Pfeile, Chips und Links; die Schrift auf hellen Farben (Orange, Graphit) ist dunkel. Die Statusfarben (online, Ausfall, Warnung, KI) bleiben. Mockup: `docs/mockups/accent-v1`.
+- **Akzentfarbe:** Einstellungen › Panel › Allgemein hat ein neues Kapitel "Akzentfarbe" mit "Home Assistant" (folgt dem Theme, wie bisher) und neun Farben: Himmelblau, Ozeanblau, Türkis, Indigo, Rosa, Orange, Rot, Tannengrün und Graphit. Die Farbe gilt sofort, ohne "Speichern", und nur für dich (gespeichert mit deiner Ansicht in den Benutzerdaten von Home Assistant, dazu eine lokale Kopie). Sie färbt Knöpfe, Schalter, Pfeile, Chips und Links; die Schrift auf hellen Farben (Orange, Graphit) ist dunkel. Die Statusfarben (online, Ausfall, Warnung, KI) bleiben. Mockup: `docs/mockups/accent-v1`.
+
+### Geändert
+
+- **Symbol "Kreispfeil":** der Kreis des Pfeils (App-Logo und jeder Knopf "Zurücksetzen", "Entwurf verwerfen" und Neustart) ist jetzt geschlossen, mit der Pfeilspitze oben. Vorher hatte er unten rechts einen Unterbruch.
 
 ## [2.145.0] - 2026-10-25
 

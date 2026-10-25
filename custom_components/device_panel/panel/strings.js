@@ -1882,6 +1882,7 @@ export const STRINGS = {
     accent_pink: "Rosa",
     accent_orange: "Orange",
     accent_red: "Rot",
+    accent_forest: "Tannengrün",
     accent_graphite: "Graphit",
     // Einrichtungsassistent (seit 2.135.0)
     app_wizard: "Einrichtung",
@@ -4293,6 +4294,7 @@ export const STRINGS = {
     accent_pink: "Pink",
     accent_orange: "Orange",
     accent_red: "Red",
+    accent_forest: "Forest green",
     accent_graphite: "Graphite",
     // Setup wizard (since 2.135.0)
     app_wizard: "Setup",

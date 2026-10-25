@@ -1,4 +1,4 @@
-// Akzentfarbe (2.146.0): Einstellungen › Panel › Allgemein, "Home Assistant" plus acht Farben, gilt sofort und nur für den Benutzer
+// Akzentfarbe (2.146.0): Einstellungen › Panel › Allgemein, "Home Assistant" plus neun Farben, gilt sofort und nur für den Benutzer
 // (Ansichts-Benutzerdaten und lokale Kopie), Schrift auf der Farbe, Rückkehr zu "Home Assistant", übersteht ein Neuladen.
 // Deutsch und Englisch, Desktop und Handy.
 import { chromium } from "playwright-core";
@@ -39,7 +39,7 @@ for (const lang of ["de", "en"]) {
     await tap('[data-set="subtab"][data-group="panel"][data-key="pstart"]');
     await wait(`return !!r.querySelector("[data-accent]")`);
     const names = await ev(`return [...r.querySelectorAll("[data-accent]")].map((x) => x.textContent.trim())`);
-    check(`[${tag}] Kapitel "${L.ttl}": "${L.ha}" plus acht Farben`, names.length === 9 && names[0] === L.ha, names.join());
+    check(`[${tag}] Kapitel "${L.ttl}": "${L.ha}" plus neun Farben`, names.length === 10 && names[0] === L.ha, names.join());
     check(`[${tag}] Standard: "${L.ha}" gewählt, keine eigene Farbe`, (await ev(`return r.querySelector('[data-accent=""]').classList.contains("on")`)) && (await accent()) === "|");
 
     await tap('[data-accent="teal"]');
@@ -48,6 +48,8 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Knopf "Speichern" in Türkis`, used === "rgb(0, 172, 193)", used);
     await tap('[data-accent="graphite"]');
     check(`[${tag}] Graphit: dunkle Schrift auf der Farbe`, (await accent()) === "#90a4ae|#10222b");
+    await tap('[data-accent="forest"]');
+    check(`[${tag}] Tannengrün: dunkles Grün mit weisser Schrift`, (await accent()) === "#2e8b57|#fff");
     await tap('[data-accent="orange"]');
     check(`[${tag}] Orange: dunkle Schrift, Statusfarben bleiben`, (await accent()) === "#fb8c00|#1f1300" && (await ev(`return getComputedStyle(r.host).getPropertyValue("--dp-error").trim() !== "" `)));
     await p.screenshot({ path: `${outDir}/accent-${lang}-${mobile ? "mobile" : "desktop"}.png` });

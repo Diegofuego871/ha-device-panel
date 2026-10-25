@@ -13,7 +13,11 @@ The accent colour of the panel can be chosen.
 
 ### Added
 
-- **Accent colour:** Settings › Panel › General has a new chapter "Accent colour" with "Home Assistant" (follows the theme, as before) and eight colours: sky blue, ocean blue, teal, indigo, pink, orange, red and graphite. The colour applies at once, without "Save", and only to you (stored with your view in the user data of Home Assistant, with a local copy). It colours buttons, switches, arrows, chips and links; the text on light colours (orange, graphite) is dark. The status colours (online, outage, warning, AI) stay. Mockup: `docs/mockups/accent-v1`.
+- **Accent colour:** Settings › Panel › General has a new chapter "Accent colour" with "Home Assistant" (follows the theme, as before) and nine colours: sky blue, ocean blue, teal, indigo, pink, orange, red, forest green and graphite. The colour applies at once, without "Save", and only to you (stored with your view in the user data of Home Assistant, with a local copy). It colours buttons, switches, arrows, chips and links; the text on light colours (orange, graphite) is dark. The status colours (online, outage, warning, AI) stay. Mockup: `docs/mockups/accent-v1`.
+
+### Changed
+
+- **Icon "circular arrow":** the circle of the arrow (app logo and every "Reset", "Discard draft" and restart button) is now closed, with the arrowhead on top. Before, it had a cut at the bottom right.
 
 ## [2.145.0] - 2026-10-25
 

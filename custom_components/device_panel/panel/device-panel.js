@@ -274,7 +274,8 @@ const MDI = {
   flask: "M5,19A1,1 0 0,0 6,20H18A1,1 0 0,0 19,19C19,18.79 18.93,18.59 18.82,18.43L13,8.35V4H11V8.35L5.18,18.43C5.07,18.59 5,18.79 5,19M6,22A3,3 0 0,1 3,19C3,18.4 3.18,17.84 3.5,17.37L9,7.81V6A1,1 0 0,1 8,5V4A2,2 0 0,1 10,2H14A2,2 0 0,1 16,4V5A1,1 0 0,1 15,6V7.81L20.5,17.37C20.82,17.84 21,18.4 21,19A3,3 0 0,1 18,22H6M13,16L14.34,14.66L16.27,18H7.73L10.39,13.39L13,16M12.5,12A0.5,0.5 0 0,1 13,12.5A0.5,0.5 0 0,1 12.5,13A0.5,0.5 0 0,1 12,12.5A0.5,0.5 0 0,1 12.5,12Z",
   power: "M16.56,5.44L15.11,6.89C16.84,7.94 18,9.83 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12C6,9.83 7.16,7.94 8.88,6.88L7.44,5.44C5.36,6.88 4,9.28 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12C20,9.28 18.64,6.88 16.56,5.44M13,3H11V13H13",
   // "reset" ist das Symbol von mdi:reload waagrecht gespiegelt: der Pfeil läuft im Uhrzeigersinn, wie das Aktualisieren-Symbol und wie er sich dreht (seit 2.130.0)
-  reset: "M12,4C9.9,4,7.9,4.8,6.4,6.3C3.3,9.4,3.3,14.5,6.4,17.6C8.2,19.5,10.7,20.2,13.1,19.9L12.6,17.9C10.9,18.1,9.1,17.5,7.8,16.2C5.5,13.9,5.5,10.1,7.8,7.7C8.9,6.6,10.5,6,12,6V10.6L17,5.6L12,0.6V4M17.7,17.6C20.3,15,20.7,11,18.9,7.9L17.4,9.4C18.5,11.6,18.1,14.4,16.2,16.2C15.7,16.7,15.1,17.1,14.4,17.4L15,19.4C16,19,16.9,18.4,17.7,17.6Z",
+  // Ein geschlossener Ring mit Pfeilspitze oben, ohne Lücke (seit 2.146.0; vorher mit Unterbruch unten rechts)
+  reset: "M20,13A8,8 0 1 1 4,13A8,8 0 1 1 20,13ZM18,13A6,6 0 1 0 6,13A6,6 0 1 0 18,13ZM11,1.5L17,6L11,10.5Z",
   info: "M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
   cols: "M16,5V18H21V5M4,18H9V5H4M10,18H15V5H10V18Z",
   log: "M4,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M4,6V18H20V6H4M6,8H18V10H6V8M6,11H18V13H6V11M6,14H14V16H6V14Z",
@@ -776,7 +777,7 @@ function sanitizeView(raw) {
 }
 
 // Akzentfarbe (seit 2.146.0, Einstellungen › Panel › Allgemein, docs/mockups/accent-v1): pro Benutzer, ersetzt die Farbe aus Home Assistant.
-// "on" ist die Schriftfarbe auf der Farbe (helle Farben bekommen dunkle Schrift). Grün steht für "online", Rot und Orange auch für Ausfall und
+// "on" ist die Schriftfarbe auf der Farbe (helle Farben bekommen dunkle Schrift). Grün (Tannengrün) steht für "online", Rot und Orange auch für Ausfall und
 // Warnung: die Statusfarben bleiben davon unberührt.
 const ACCENTS = [
   { id: "sky", color: "#03a9f4", on: "#fff" },
@@ -786,6 +787,7 @@ const ACCENTS = [
   { id: "pink", color: "#ec407a", on: "#fff" },
   { id: "orange", color: "#fb8c00", on: "#1f1300" },
   { id: "red", color: "#e53935", on: "#fff" },
+  { id: "forest", color: "#2e8b57", on: "#fff" },
   { id: "graphite", color: "#90a4ae", on: "#10222b" },
 ];
 
