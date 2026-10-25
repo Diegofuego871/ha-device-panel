@@ -115,6 +115,8 @@ button { font: inherit; color: inherit; }
   13% { transform: scale(1.3); opacity: 1; }
   18%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 8px transparent; }
 }
+:host([data-anim="off"]) .gear-btn.has-dot::before, :host([data-anim="off"]) .apps-btn.has-dot::before, :host([data-anim="off"]) .app-pin.has-dot::before { animation: none; opacity: 0; }
+:host([data-anim="off"]) .gear-btn.has-dot::after, :host([data-anim="off"]) .apps-btn.has-dot::after, :host([data-anim="off"]) .app-pin.has-dot::after { animation: none; }
 @media (prefers-reduced-motion: reduce) {
   .gear-btn.has-dot::before, .apps-btn.has-dot::before, .app-pin.has-dot::before { animation: none; opacity: 0; }
   .gear-btn.has-dot::after, .apps-btn.has-dot::after, .app-pin.has-dot::after { animation: none; }
@@ -184,6 +186,7 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 .pchart .pdot { position: absolute; z-index: 2; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 7px 2px currentColor; pointer-events: none; opacity: 0;
   animation-duration: 10s; animation-timing-function: linear; animation-iteration-count: infinite; animation-delay: 0s; }
 @media (prefers-reduced-motion: reduce) { .pchart .pdot { display: none; } }
+:host([data-anim="off"]) .pchart .pdot { display: none; }
 .pchart .base { stroke: var(--dp-divider); stroke-width: 1; }
 .pchart .area { fill: var(--dp-error-soft); }
 .pchart .line { fill: none; stroke: var(--dp-error); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }

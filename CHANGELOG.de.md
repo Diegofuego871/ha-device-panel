@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.151.0] - 2026-10-25
+
+Animationen lassen sich ausschalten.
+
+### Hinzugefügt
+
+- **Einstellung "Animationen anzeigen":** Einstellungen › Panel › Allgemein hat ein neues Kapitel "Animationen" mit einem Schalter, standardmässig an. Aus stehen der Messpunkt auf dem Ausfall-Puls und die Sternschnuppe am Punkt der Knöpfe (Launcher, angeheftete Apps, Zahnrad) still; der Punkt selbst bleibt. Die Wahl ist ein Entwurf wie alles in den Einstellungen (erst "Speichern" ändert etwas) und gilt nur für dich (bei deiner Ansicht in den Benutzerdaten von Home Assistant, mit lokaler Kopie).
+
+### Behoben
+
+- **Messpunkt blitzte am Ende auf:** beim Aufbau des Ausfall-Pulses (Seite laden, neue Daten) sprang der Punkt mitten in seinen Lauf und blitzte teils kurz am Linienende auf. Ein neuer Punkt wartet jetzt unsichtbar auf die nächsten vollen 10 Sekunden des gemeinsamen Takts und startet dann am Anfang der Linie. (Aus 2.150.1, die nicht veröffentlicht wurde.)
+
 ## [2.150.1] - 2026-10-25
 
 Der Messpunkt blitzt beim Aufbau des Ausfall-Pulses nicht mehr auf.
@@ -14,6 +26,8 @@ Der Messpunkt blitzt beim Aufbau des Ausfall-Pulses nicht mehr auf.
 ### Behoben
 
 - **Messpunkt blitzte am Ende auf:** beim Aufbau des Ausfall-Pulses (Seite laden, neue Daten) sprang der Punkt mitten in seinen Lauf und blitzte teils kurz am Linienende auf. Ein neuer Punkt wartet jetzt unsichtbar auf die nächsten vollen 10 Sekunden des gemeinsamen Takts und startet dann am Anfang der Linie.
+
+Nicht veröffentlicht; enthalten in 2.151.0.
 
 ## [2.150.0] - 2026-10-25
 
@@ -4976,7 +4990,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.150.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.150.1
+[2.151.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.151.0
 [2.150.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.150.0
 [2.149.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.149.0
 [2.148.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.148.0

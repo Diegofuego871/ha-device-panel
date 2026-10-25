@@ -7,6 +7,18 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.151.0] - 2026-10-25
+
+Animations can be switched off.
+
+### Added
+
+- **Setting "Show animations":** Settings › Panel › General has a new chapter "Animations" with a switch, on by default. Off, the measuring dot on the outage pulse and the shooting star at the dot of the buttons (launcher, pinned apps, settings gear) stand still; the dot itself stays. The choice is a draft like everything else in the settings (nothing changes until "Save") and applies only to you (stored with your view in the user data of Home Assistant, with a local copy).
+
+### Fixed
+
+- **Measuring dot flashing at the end:** when the outage pulse was built (page load or new data), the dot jumped into the middle of its run and sometimes flashed briefly at the end of the line. A new dot now waits invisibly for the next full 10 seconds of the shared beat and then starts at the beginning of the line. (From 2.150.1, which was not released.)
+
 ## [2.150.1] - 2026-10-25
 
 The measuring dot no longer flashes when the outage pulse is built.
@@ -14,6 +26,8 @@ The measuring dot no longer flashes when the outage pulse is built.
 ### Fixed
 
 - **Measuring dot flashing at the end:** when the outage pulse was built (page load or new data), the dot jumped into the middle of its run and sometimes flashed briefly at the end of the line. A new dot now waits invisibly for the next full 10 seconds of the shared beat and then starts at the beginning of the line.
+
+Not released; included in 2.151.0.
 
 ## [2.150.0] - 2026-10-25
 
@@ -4875,7 +4889,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.150.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.150.1
+[2.151.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.151.0
 [2.150.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.150.0
 [2.149.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.149.0
 [2.148.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.148.0

@@ -814,7 +814,7 @@ const ACCENTS = [
 
 function sanitizeViews(raw) {
   const r = raw && typeof raw === "object" ? raw : {};
-  return { desktop: sanitizeView(r.desktop), mobile: sanitizeView(r.mobile), updated: Number(r.updated) || 0, accent: ACCENTS.some((a) => a.id === r.accent) ? r.accent : "" };
+  return { desktop: sanitizeView(r.desktop), mobile: sanitizeView(r.mobile), updated: Number(r.updated) || 0, accent: ACCENTS.some((a) => a.id === r.accent) ? r.accent : "", anim: r.anim !== false };
 }
 
 // Hinweis-Chips: Schlüssel, CSS-Klasse, Symbol, Text und Bedingung.
@@ -1142,6 +1142,8 @@ class DevicePanel extends HTMLElement {
     this._viewUpdated = v.updated;
     this._accent = v.accent;
     this._applyAccent();
+    this._anim = v.anim;
+    this._applyAnim();
   }
 
   // Akzentfarbe des Benutzers auf das Panel legen; leer = die Farbe von Home Assistant
@@ -1156,6 +1158,19 @@ class DevicePanel extends HTMLElement {
     }
   }
 
+  // Animationen (Messpunkt des Ausfall-Pulses, Sternschnuppe am Punkt) pro Benutzer ein- oder ausschalten (seit 2.151.0, Standard: an);
+  // die Stile prüfen das Attribut am Host
+  _applyAnim() {
+    if (this._anim === false) this.setAttribute("data-anim", "off");
+    else this.removeAttribute("data-anim");
+  }
+
+  _setAnim(on) {
+    this._anim = on !== false;
+    this._applyAnim();
+    this._saveView();
+  }
+
   _setAccent(id) {
     this._accent = ACCENTS.some((a) => a.id === id) ? id : "";
     this._applyAccent();
@@ -1163,7 +1178,7 @@ class DevicePanel extends HTMLElement {
   }
 
   _viewData() {
-    return { desktop: this._views.desktop, mobile: this._views.mobile, updated: this._viewUpdated, accent: this._accent || "" };
+    return { desktop: this._views.desktop, mobile: this._views.mobile, updated: this._viewUpdated, accent: this._accent || "", anim: this._anim !== false };
   }
 
   // Nach jeder Änderung: lokal sofort, an HA verzögert und gebündelt.
@@ -5645,7 +5660,7 @@ class DevicePanel extends HTMLElement {
 
   // Stand der Panel-Einstellungen, die nicht zu den Optionen gehören (Vorabversionen, automatisch installieren, Startseite)
   _extraBase() {
-    return { prerelease: Boolean(this._prerelease), auto_update: Boolean(this._autoUpdate), start_panel: Boolean(this._startOn), accent: this._accent || "" };
+    return { prerelease: Boolean(this._prerelease), auto_update: Boolean(this._autoUpdate), start_panel: Boolean(this._startOn), accent: this._accent || "", anim: this._anim !== false };
   }
 
   async _openSettings(tab = "overview") {
@@ -8638,6 +8653,13 @@ class DevicePanel extends HTMLElement {
       const sw = (id, color, label) => `<button type="button" class="accent-sw${cur === id ? " on" : ""}" data-accent="${id}" aria-pressed="${cur === id}" style="--a:${color}"><i></i><span>${escape(label)}</span></button>`;
       return `<div class="accent-grid${accChanged ? " changed" : ""}" role="group" aria-label="${escape(t("ttlAccent"))}">${sw("", "var(--primary-color, #03a9f4)", t("accentHa"))}${ACCENTS.map((a) => sw(a.id, a.color, t(`accent_${a.id}`))).join("")}</div><div class="opt-short">${escape(t("accentShort"))}</div>`;
     };
+    // Animationen (seit 2.151.0): Benutzereinstellung, Entwurf in st.extra.anim, gespeichert mit "Speichern"
+    const animRow = () => {
+      const on = st.extra ? st.extra.anim !== false : this._anim !== false;
+      const changed = Boolean(st.extra) && st.extra.anim !== st.extraBase.anim;
+      const control = `<label class="switch"><input type="checkbox" data-anim-set ${on ? "checked" : ""}${st.extra ? "" : " disabled"} aria-label="${escape(t("optAnim"))}"><span></span></label>`;
+      return row("anim", t("optAnim"), control, t("optAnimShort"), null).replace('class="opt', changed ? 'class="opt changed' : 'class="opt');
+    };
     const startRow = () => {
       const on = Boolean(st.extra ? st.extra.start_panel : this._startOn);
       const changed = Boolean(st.extra) && st.extra.start_panel !== st.extraBase.start_panel;
@@ -8941,7 +8963,7 @@ class DevicePanel extends HTMLElement {
       updates:
         subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"], ["pstorage", "subPanelStorage"]], panelTab) +
         (panelTab === "pstart"
-          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + ttl("ttlAccent") + accentRow() + this._backupChapterHtml(changes.size > 0) + this._wizardChapterHtml(changes.size > 0)
+          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + ttl("ttlAccent") + accentRow() + ttl("ttlAnim") + animRow() + this._backupChapterHtml(changes.size > 0) + this._wizardChapterHtml(changes.size > 0)
           : panelTab === "pstorage"
             ? storageChapter()
           : row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
@@ -9493,6 +9515,8 @@ class DevicePanel extends HTMLElement {
         st.draft.offline_after_integrations = own;
       } else if (el.dataset.startPanel !== undefined) {
         if (st.extra) st.extra.start_panel = el.checked;
+      } else if (el.dataset.animSet !== undefined) {
+        if (st.extra) st.extra.anim = el.checked;
       } else if (el.dataset.autoUpdate !== undefined) {
         if (st.extra) st.extra.auto_update = el.checked;
       } else if (el.dataset.opt) st.draft[el.dataset.opt] = el.checked;
@@ -9753,6 +9777,7 @@ class DevicePanel extends HTMLElement {
       }
       if (extra.includes("start_panel")) await this._saveStartPanel(st.extra.start_panel);
       if (extra.includes("accent")) this._setAccent(st.extra.accent);
+      if (extra.includes("anim")) this._setAnim(st.extra.anim);
       if (anyReset) await this._hass.callWS({ type: "device_panel/reset_device_settings", ...resets });
       // Ansicht (pro Benutzer): erst jetzt speichern, die Liste zeigt sie schon
       if (viewChanged) {
