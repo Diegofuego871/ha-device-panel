@@ -119,6 +119,8 @@ async def test_options_from_panel_and_issue_follows(hass: HomeAssistant, entry, 
         "exclude_integrations": [],
         "exclude_types": [],
         "exclude_devices": [],
+        # Eingerichtete Labels (seit 2.155.0)
+        "labels": [],
         "offline_after": 2,
         "flaky_outages": 3,
         "startup_grace": 5,

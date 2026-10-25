@@ -24,6 +24,7 @@
 - **Battery overview with notifications:** a colored battery symbol on every device, a warning threshold (default 15 %), push or persistent notification, a history of up to 12 months with a forecast of how long the battery lasts, and a message when a device is fully charged
 - **Signal overview with warnings:** signal strength in dBm or LQI on every device, a warning threshold per connection type, a history with median and range, and for Bluetooth the receiver (adapter or proxy) a device is or was connected through
 - **Notifications on three levels:** set a default once, change it per integration, override it on a single device; every setting shows where its value comes from (graphic below)
+- **Labels:** devices that carry a Home Assistant label are set together (for example "often offline" without monitoring); a label sits between the device and the integration, and has its own filter chip
 - **Quiet time:** notifications wait during the night (times per weekday, kinds selectable) and arrive afterwards as one summary or one by one
 - **Magic Push:** your own messages per device without an automation: pick a value, say when it should notify, write the text, done
 - **Routines:** switch an entity of a device at a time or by a trigger (any entity, with conditions like Magic Push) without an automation, switch back by time, duration or trigger, with a test button and a preview of the next runs
@@ -115,6 +116,7 @@ Everything that notifies you follows one principle: you set a default once, chan
 
 - **General:** in the settings under "Monitoring and notifications", the default for all devices
 - **Integration:** in the same place, tab "Integrations": a list of all integrations with what differs from the default, and a detail page per integration with its own tabs
+- **Label (optional):** in the settings, section "Labels": a Home Assistant label gets the same tabs as an integration and applies to all devices that carry it, before the integration and after the device. With several labels the strictest one applies ("Do not monitor", then the longer time or the lower threshold)
 - **Device:** in the pop-up of the device, tab "Settings": only this device, with the origin of every value
 - **Origin:** every setting says where it comes from (default, integration or device), and a chip "Own setting" filters devices that have their own values; in the settings they can be reset one by one or all at once
 

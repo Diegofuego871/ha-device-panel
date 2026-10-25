@@ -252,6 +252,7 @@
       "options": {
         "area": "Area",
         "integration": "Integration",
+        "label": "Label",
         "offline": "Offline",
         "problems": "Warnings",
         "batteries": "Battery",

@@ -252,6 +252,7 @@
       "options": {
         "area": "Bereich",
         "integration": "Integration",
+        "label": "Label",
         "offline": "Ausgefallen",
         "problems": "Warnungen",
         "batteries": "Batterie",

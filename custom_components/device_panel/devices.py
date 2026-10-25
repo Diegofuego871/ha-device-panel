@@ -96,6 +96,7 @@ from .const import (
     CONF_TYPE_INTEGRATIONS,
 )
 from .labels import strip_address
+from .scope import configured_labels, first, is_label_key, label_list, listed, lowest, off_wins, pick, scope_of, strictest_time
 from .options_api import battery_threshold, effective, notify_delay_for, notify_target, offline_after_for, signal_default
 
 _LOGGER = logging.getLogger(__name__)
@@ -492,20 +493,21 @@ def battery(
 
 def _offline_default(opts: dict[str, Any], domain: str | None) -> dict[str, Any]:
     """"Ausgefallen nach" ohne Einstellung des Geräts: Minuten oder "off", dazu die Integration mit eigenem Wert."""
-    own = opts[CONF_OFFLINE_INTEGRATIONS].get(domain) if domain else None
+    source, own = pick(opts[CONF_OFFLINE_INTEGRATIONS], domain, strictest_time)
     return {
         "minutes": own if own is not None else opts[CONF_OFFLINE_AFTER],
-        "integration": domain if own is not None else None,
+        # Woher der Wert kommt: die Integration (Domain) oder ein Label ("label:<ID>", seit 2.155.0)
+        "integration": source if own is not None else None,
         "global": opts[CONF_OFFLINE_AFTER],
     }
 
 
 def _notify_delay_default(opts: dict[str, Any], domain: str | None) -> dict[str, Any]:
     """"Erst melden nach" ohne Einstellung des Geräts (seit 2.91.0): Minuten, dazu die Integration mit eigenem Wert."""
-    own = opts[CONF_NOTIFY_DELAY_INTEGRATIONS].get(domain) if domain else None
+    source, own = pick(opts[CONF_NOTIFY_DELAY_INTEGRATIONS], domain, strictest_time)
     return {
         "minutes": own if own is not None else opts[CONF_NOTIFY_DELAY],
-        "integration": domain if own is not None else None,
+        "integration": source if own is not None else None,
         "global": opts[CONF_NOTIFY_DELAY],
     }
 
@@ -517,12 +519,12 @@ def _notify_default(opts: dict[str, Any], domain: str | None) -> dict[str, Any]:
     von den globalen Schaltern abweicht.
     """
     push_on = notify_target(opts, "outage") != NOTIFY_NONE and (opts[CONF_NOTIFY_OUTAGE] or opts[CONF_NOTIFY_ONLINE])
-    ex_push = bool(domain) and domain in opts[CONF_NOTIFY_EXCLUDE]
-    ex_pers = bool(domain) and domain in opts[CONF_PERSISTENT_EXCLUDE]
+    ex_push = listed(opts[CONF_NOTIFY_EXCLUDE], domain)
+    ex_pers = listed(opts[CONF_PERSISTENT_EXCLUDE], domain)
     return {
         "push": bool(push_on) and not ex_push,
         "persistent": bool(opts[CONF_OUTAGE_PERSISTENT]) and not ex_pers,
-        "integration": domain if ex_push or ex_pers else None,
+        "integration": ex_push or ex_pers or None,
     }
 
 
@@ -535,10 +537,10 @@ def _battery_fields(
     """
     threshold = device_battery_threshold(hass, opts, device)
     info = battery(hass, entries, threshold if threshold is not None else -1)
-    own = opts[CONF_BATTERY_LOW_INTEGRATIONS].get(domain) if domain else None
-    # Push bei schwacher Batterie: global an und nicht für die Integration aus
+    own_source, own = pick(opts[CONF_BATTERY_LOW_INTEGRATIONS], domain, lowest)
+    # Push bei schwacher Batterie: global an und nicht für die Integration (oder ein Label) aus
     # (seit 0.34.0); "push_integration" nennt sie, wenn sie ihn ausschaltet.
-    push_off = bool(domain) and domain in opts[CONF_BATTERY_PUSH_EXCLUDE]
+    push_off = listed(opts[CONF_BATTERY_PUSH_EXCLUDE], domain)
     return {
         # Warnung aus: Stand ja, "schwach" nie.
         "battery": {**info, "low": False} if info and threshold is None else info,
@@ -546,9 +548,9 @@ def _battery_fields(
         "battery_setting": device_settings(hass)["battery"].get(device.id),
         "battery_default": {
             "pct": own if own is not None else opts[CONF_BATTERY_LOW],
-            "integration": domain if own is not None else None,
+            "integration": own_source if own is not None else None,
             "push": bool(opts[CONF_BATTERY_PUSH]) and notify_target(opts, "battery") != NOTIFY_NONE and not push_off,
-            "push_integration": domain if push_off else None,
+            "push_integration": push_off,
         },
     }
 
@@ -564,13 +566,13 @@ def charge_values(opts: dict[str, Any], domain: str | None) -> tuple[int, int, s
     "Voll ab" und Anstieg ohne Wahl am Gerät: die der Integration, sonst die globalen. Dazu je die
     Integration, wenn der Wert von ihr kommt (für die Herkunft im Popup).
     """
-    full = (opts.get(CONF_CHARGE_FULL_INTEGRATIONS) or {}).get(domain) if domain else None
-    rise = (opts.get(CONF_CHARGE_RISE_INTEGRATIONS) or {}).get(domain) if domain else None
+    full_source, full = pick(opts.get(CONF_CHARGE_FULL_INTEGRATIONS), domain, first)
+    rise_source, rise = pick(opts.get(CONF_CHARGE_RISE_INTEGRATIONS), domain, first)
     return (
         opts[CONF_CHARGE_FULL] if full is None else full,
         opts[CONF_CHARGE_RISE] if rise is None else rise,
-        domain if full is not None else None,
-        domain if rise is not None else None,
+        full_source if full is not None else None,
+        rise_source if rise is not None else None,
     )
 
 
@@ -579,20 +581,20 @@ def charge_stop_values(opts: dict[str, Any], domain: str | None) -> tuple[int, b
     "Ladung beendet nach" (Minuten) und Push bei beendeter Ladung ohne Wahl am Gerät: die der Integration, sonst die
     globalen (seit 1.41.0). Dazu je die Integration, wenn der Wert von ihr kommt (für die Herkunft im Popup).
     """
-    stall = (opts.get(CONF_CHARGE_STALL_INTEGRATIONS) or {}).get(domain) if domain else None
-    stop = (opts.get(CONF_CHARGE_STOP_INTEGRATIONS) or {}).get(domain) if domain else None
+    stall_source, stall = pick(opts.get(CONF_CHARGE_STALL_INTEGRATIONS), domain, first)
+    stop_source, stop = pick(opts.get(CONF_CHARGE_STOP_INTEGRATIONS), domain, off_wins)
     return (
         opts[CONF_CHARGE_STALL] if stall is None else stall,
         bool(opts[CONF_NOTIFY_CHARGE_STOP]) if stop is None else stop,
-        domain if stall is not None else None,
-        domain if stop is not None else None,
+        stall_source if stall is not None else None,
+        stop_source if stop is not None else None,
     )
 
 
 def charge_live_value(opts: dict[str, Any], domain: str | None) -> tuple[bool, str | None]:
     """Live-Aktivität beim Laden ohne Wahl am Gerät: die der Integration, sonst die globale (seit 2.19.0), dazu die Integration."""
-    own = (opts.get(CONF_CHARGE_LIVE_INTEGRATIONS) or {}).get(domain) if domain else None
-    return (bool(opts[CONF_CHARGE_LIVE]) if own is None else own, domain if own is not None else None)
+    source, own = pick(opts.get(CONF_CHARGE_LIVE_INTEGRATIONS), domain, off_wins)
+    return (bool(opts[CONF_CHARGE_LIVE]) if own is None else own, source if own is not None else None)
 
 
 def device_charge_opts(hass: HomeAssistant, opts: dict[str, Any], device_id: str) -> dict[str, Any]:
@@ -849,13 +851,18 @@ def device_type(hass: HomeAssistant, device: dr.DeviceEntry, entries: list[er.Re
     return "other"
 
 
-def integration_type(hass: HomeAssistant, device: dr.DeviceEntry, integ: dict[str, str] | None = None) -> str | None:
-    """Typ, den die Integration des Geräts festlegt (seit 1.25.0), sonst None."""
+def integration_type_source(hass: HomeAssistant, device: dr.DeviceEntry, integ: dict[str, str] | None = None) -> tuple[str | None, str | None]:
+    """(Schlüssel, Typ), den ein Label oder die Integration des Geräts festlegt (Label seit 2.155.0), sonst (None, None)."""
     own = integ if integ is not None else effective(hass)[CONF_TYPE_INTEGRATIONS]
-    if not own or not (primary := _primary_entry(hass, device)):
-        return None
-    kind = own.get(primary.domain)
-    return kind if kind in DEVICE_TYPES else None
+    if not own or not (domain := primary_domain(hass, device)):
+        return None, None
+    source, kind = pick(own, scope_of(hass, device, domain), first)
+    return (source, kind) if kind in DEVICE_TYPES else (None, None)
+
+
+def integration_type(hass: HomeAssistant, device: dr.DeviceEntry, integ: dict[str, str] | None = None) -> str | None:
+    """Typ, den die Integration (oder ein Label) des Geräts festlegt (seit 1.25.0), sonst None."""
+    return integration_type_source(hass, device, integ)[1]
 
 
 def effective_type(
@@ -1320,8 +1327,11 @@ async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
     ex_domains = set(opts[CONF_EXCLUDE_INTEGRATIONS])
     hidden_by_type: dict[str, dict[str, int]] = {}
     hidden_by_device: dict[str, int] = {}
+    label_counts: dict[str, int] = {}
     for device, entries in candidate_devices(hass, service=opts[CONF_SHOW_SERVICE], disabled=opts[CONF_SHOW_DISABLED]):
         primary = _primary_entry(hass, device)
+        for label_id in getattr(device, "labels", None) or ():
+            label_counts[label_id] = label_counts.get(label_id, 0) + 1
         if primary:
             by_domain[primary.domain] = by_domain.get(primary.domain, 0) + 1
         kind = effective_type(hass, device, entries, hubs, opts[CONF_TYPE_INTEGRATIONS])[0]
@@ -1336,7 +1346,8 @@ async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
     # überwachten Geräten (Ausblendungen gelten), dazu solche mit eigener
     # Schwelle ohne Geräte (damit sie sich zurücksetzen lässt).
     own = opts[CONF_BATTERY_LOW_INTEGRATIONS]
-    bat: dict[str, dict[str, Any]] = {d: {"devices": 0, "weakest": None} for d in own}
+    # Schwellen von Labels ("label:<ID>") stehen in derselben Zuordnung, gehören aber nicht in die Liste der Integrationen
+    bat: dict[str, dict[str, Any]] = {d: {"devices": 0, "weakest": None} for d in own if not is_label_key(d)}
     for device, entries in monitored_devices(hass, opts):
         if not has_battery(hass, entries) or not (primary := _primary_entry(hass, device)):
             continue
@@ -1360,6 +1371,8 @@ async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
         "integrations": integrations,
         "types": [{"type": t, "devices": by_type.get(t, 0)} for t in DEVICE_TYPES],
         "battery": battery_list,
+        # Labels von Home Assistant mit Zahl der Geräte (seit 2.155.0), dazu die eingerichteten
+        "labels": label_list(hass, label_counts, keep=configured_labels(hass)),
         "hidden_devices": await async_hidden_devices(hass, opts),
         # KI-Aufgaben von Home Assistant zur Auswahl (Einstellungen, "KI-Einschätzung").
         "ai_tasks": sorted(
@@ -1368,6 +1381,15 @@ async def async_catalog(hass: HomeAssistant) -> dict[str, Any]:
         # Lässt sich die KI-Einschätzung einschalten? Nur mit einer KI-Aufgabe (seit 2.38.0, siehe ai_assessment.ai_ready).
         "ai_ready": ai_ready(hass, opts.get(CONF_AI_TASK)),
     }
+
+
+def _label_counts(devices: list[dict[str, Any]]) -> dict[str, int]:
+    """Geräte je Label unter den gezeigten Geräten."""
+    counts: dict[str, int] = {}
+    for dev in devices:
+        for label_id in dev["labels"]:
+            counts[label_id] = counts.get(label_id, 0) + 1
+    return counts
 
 
 def area_catalog(hass: HomeAssistant) -> dict[str, list[dict[str, Any]]]:
@@ -1432,9 +1454,12 @@ def _primary_entry(hass: HomeAssistant, device: dr.DeviceEntry):
 
 
 def primary_domain(hass: HomeAssistant, device: dr.DeviceEntry) -> str | None:
-    """Integration, nach der Ausschlüsse und eigene Batterie-Schwellen gehen."""
+    """
+    Integration, nach der Ausschlüsse und eigene Batterie-Schwellen gehen. Trägt das Gerät eingerichtete Labels, ist es ein Scope (ein String
+    mit der Domain und den Schlüsseln der Labels, seit 2.155.0): die Auflösung der Einstellungen schaut zuerst auf die Labels.
+    """
     primary = _primary_entry(hass, device)
-    return primary.domain if primary else None
+    return scope_of(hass, device, primary.domain) if primary else None
 
 
 async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, Any]:
@@ -1466,7 +1491,8 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         area = area_reg.async_get_area(device.area_id) if device.area_id else None
         disabled = bool(device.disabled_by)
         primary = _primary_entry(hass, device)
-        # "Ausgefallen nach": Gerät, Integration oder global; None = nicht überwacht.
+        scope = primary_domain(hass, device)
+        # "Ausgefallen nach": Gerät, Label, Integration oder global; None = nicht überwacht.
         offline_after = device_offline_after(hass, opts, device)
         unmonitored = offline_after is None
         # Deaktiviert oder nicht überwacht: kein Status, keine Ausfälle.
@@ -1483,7 +1509,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         if log is not None:
             summary = log.device_summary(device.id, 86400, now_ts)
             avail = {**(summary or {}), "strip": log.device_strip(device.id, now_ts), "down": log.down_now(device.id, now_ts) or online is False} if summary else None
-        bat_fields = _battery_fields(hass, opts, device, entries, primary.domain if primary else None)
+        bat_fields = _battery_fields(hass, opts, device, entries, scope)
         # Ausgefallen: der Sensor meldet "nicht verfügbar", die Batterie fehlt. Dann der letzte Stand vor dem Ausfall, nur zur Anzeige
         # (keine Warnung, kein Push daraus).
         battery_last = None
@@ -1492,7 +1518,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         auto_conn = _connection(device, domains, entries, signal, iot_classes)
         manual_conn = connection_overrides(hass).get(device.id)
         # Pro Integration festgelegt (nach der primären Integration, wie die Batterie).
-        integ_conn = opts[CONF_CONNECTION_INTEGRATIONS].get(primary.domain) if primary else None
+        integ_conn_source, integ_conn = pick(opts[CONF_CONNECTION_INTEGRATIONS], scope, first)
         devices.append(
             {
                 "id": device.id,
@@ -1509,10 +1535,14 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "hw_version": device.hw_version,
                 "integrations": domains,
                 "integration": {"domain": primary.domain, "title": primary.title} if primary else None,
+                # Labels des Geräts (IDs, seit 2.155.0), für den Filter und die Einstellungen pro Label
+                "labels": sorted(getattr(device, "labels", None) or ()),
                 **dict(zip(("type", "type_auto"), effective_type(hass, device, entries, hubs, opts[CONF_TYPE_INTEGRATIONS]))),
                 "type_manual": device.id in type_overrides(hass),
                 # Typ der Integration (seit 1.25.0), wenn dort einer festgelegt ist.
                 "type_integration": integration_type(hass, device, opts[CONF_TYPE_INTEGRATIONS]),
+                # Woher: Domain der Integration oder "label:<ID>" (seit 2.155.0)
+                "type_integration_source": integration_type_source(hass, device, opts[CONF_TYPE_INTEGRATIONS])[0],
                 "entities": len(entries),
                 "online": online,
                 "disabled": disabled,
@@ -1524,13 +1554,13 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 # Einstellung des Geräts (None, "off" oder Minuten) und was ohne
                 # sie gälte, mit der Integration, falls sie einen eigenen Wert hat.
                 "offline_setting": device_settings(hass).get("offline", {}).get(device.id),
-                "offline_default": _offline_default(opts, primary.domain if primary else None),
+                "offline_default": _offline_default(opts, scope),
                 # "Erst melden nach" (seit 2.91.0): wirksam in Minuten (nie kürzer als "Ausgefallen nach"), Einstellung des Geräts, ohne sie.
-                "notify_delay": notify_delay_for(opts, primary.domain if primary else None, device_settings(hass).get("notify_delay", {}).get(device.id), offline_after),
+                "notify_delay": notify_delay_for(opts, scope, device_settings(hass).get("notify_delay", {}).get(device.id), offline_after),
                 "notify_delay_setting": device_settings(hass).get("notify_delay", {}).get(device.id),
-                "notify_delay_default": _notify_delay_default(opts, primary.domain if primary else None),
+                "notify_delay_default": _notify_delay_default(opts, scope),
                 # Ausfall-Meldungen ohne Einstellung des Geräts (Herkunft im Popup).
-                "notify_default": _notify_default(opts, primary.domain if primary else None),
+                "notify_default": _notify_default(opts, scope),
                 # Beginn des Ausfalls, auch über Neustarts von HA (outage_start).
                 "offline_since": since.isoformat() if since else None,
                 # Beginn nicht bekannt (HA lief nicht): Dauer ist "mindestens".
@@ -1540,6 +1570,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "connection": manual_conn or integ_conn or auto_conn,
                 "connection_auto": auto_conn,
                 "connection_integration": integ_conn,
+                "connection_integration_source": integ_conn_source if integ_conn else None,
                 "connection_manual": manual_conn is not None,
                 # Angelegt in HA; Geräte aus der Zeit vor HA 2024.7 haben 1970
                 # und gelten nie als neu.
@@ -1550,7 +1581,7 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "signal_setting": device_settings(hass).get("signal", {}).get(device.id),
                 # Was ohne Einstellung des Geräts gilt (seit 1.17.0): Wert und
                 # Herkunft ("integration", "global" oder None = fester Standard).
-                "signal_default": signal_default(opts, primary.domain if primary else None, manual_conn or integ_conn or auto_conn or "unknown", signal),
+                "signal_default": signal_default(opts, scope, manual_conn or integ_conn or auto_conn or "unknown", signal),
                 "via": via,
                 **bat_fields,
                 "battery_last": battery_last,
@@ -1566,11 +1597,11 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
                 "charge_live_setting": device_settings(hass).get("charge_live", {}).get(device.id),
                 "charge_default": {
                     # Ohne Wahl am Gerät: Wert der Integration, sonst global (full_integration/rise_integration nennen sie).
-                    **dict(zip(("full", "rise", "full_integration", "rise_integration"), charge_values(opts, primary.domain if primary else None))),
-                    **dict(zip(("stall", "stop", "stall_integration", "stop_integration"), charge_stop_values(opts, primary.domain if primary else None))),
-                    **dict(zip(("live", "live_integration"), charge_live_value(opts, primary.domain if primary else None))),
-                    "on": bool(opts[CONF_NOTIFY_CHARGE]) and bool(primary) and primary.domain in opts[CONF_CHARGE_INTEGRATIONS],
-                    "integration": primary.domain if primary and primary.domain in opts[CONF_CHARGE_INTEGRATIONS] else None,
+                    **dict(zip(("full", "rise", "full_integration", "rise_integration"), charge_values(opts, scope))),
+                    **dict(zip(("stall", "stop", "stall_integration", "stop_integration"), charge_stop_values(opts, scope))),
+                    **dict(zip(("live", "live_integration"), charge_live_value(opts, scope))),
+                    "on": bool(opts[CONF_NOTIFY_CHARGE]) and bool(listed(opts[CONF_CHARGE_INTEGRATIONS], scope)),
+                    "integration": listed(opts[CONF_CHARGE_INTEGRATIONS], scope),
                 },
                 "notify_mute_until": _iso(notify_muted_until(hass, device.id)),
                 # Lädt gerade (seit 1.35.0): Ladeanzeige des Geräts oder Anstieg des Stands.
@@ -1606,6 +1637,10 @@ async def async_list_devices(hass: HomeAssistant, log: Any = None) -> dict[str, 
         # Filter "Bereich": Bereiche und Etagen in der Reihenfolge, die man in
         # HA festlegt (Einstellungen → Bereiche, Etagen und Zonen).
         **area_catalog(hass),
+        # Filter "Label" (seit 2.155.0): Labels, die mindestens ein gezeigtes Gerät trägt
+        "labels": label_list(hass, _label_counts(devices)),
+        # Eingerichtete Labels in der Reihenfolge des Benutzers (für die Herkunft im Popup)
+        "label_order": configured_labels(hass),
     }
     if log is not None:
         # Nur die gezeigten, überwachten Geräte: ausgeschlossene und
@@ -1641,7 +1676,7 @@ async def async_device_facts(hass: HomeAssistant, device: dr.DeviceEntry, opts: 
     signal, _via, _source = signal_source(hass, device, entries, domains)
     primary = _primary_entry(hass, device)
     auto = _connection(device, domains, entries, signal, {d: i["iot_class"] for d, i in info.items()})
-    integ = opts[CONF_CONNECTION_INTEGRATIONS].get(primary.domain) if primary else None
+    integ = pick(opts[CONF_CONNECTION_INTEGRATIONS], scope_of(hass, device, primary_domain(hass, device)), first)[1]
     area = ar.async_get(hass).async_get_area(device.area_id) if device.area_id else None
     return {
         "area": area.name if area else None,

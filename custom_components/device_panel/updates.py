@@ -42,6 +42,7 @@ from .const import (
     UPDATES_WEEKLY,
 )
 from .options_api import notify_target, effective
+from .scope import entity_label_keys
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -67,11 +68,18 @@ def update_kind(hass: HomeAssistant, entity_id: str) -> str:
     return "devices"
 
 
-def is_wanted(opts: dict[str, Any], entity_id: str, kind: str, platform: str | None = None) -> bool:
-    """Ob ein Update gemeldet wird: Ausnahme pro Eintrag vor der Ausnahme pro Integration (Plattform) vor der Art."""
+def is_wanted(opts: dict[str, Any], entity_id: str, kind: str, platform: str | None = None, labels: tuple[str, ...] = ()) -> bool:
+    """
+    Ob ein Update gemeldet wird: Ausnahme pro Eintrag vor dem Label des Geräts (seit 2.155.0, aus vor ein) vor der Ausnahme pro Integration
+    (Plattform) vor der Art.
+    """
     if entity_id in opts[CONF_UPDATES_EXCLUDE]:
         return False
     if entity_id in opts[CONF_UPDATES_INCLUDE]:
+        return True
+    if any(k in opts.get(CONF_UPDATES_INTEGRATIONS_OFF, ()) for k in labels):
+        return False
+    if any(k in opts.get(CONF_UPDATES_INTEGRATIONS_ON, ()) for k in labels):
         return True
     if platform and platform in opts.get(CONF_UPDATES_INTEGRATIONS_OFF, ()):
         return False
@@ -215,7 +223,7 @@ class UpdateNotifier:
                 continue
             item = _item(self.hass, state)
             entry = er.async_get(self.hass).async_get(state.entity_id)
-            if not is_wanted(opts, item["id"], item["kind"], entry.platform if entry else None):
+            if not is_wanted(opts, item["id"], item["kind"], entry.platform if entry else None, entity_label_keys(self.hass, entry)):
                 continue
             known = self._known.get(item["id"])
             if known is None or known["v"] != item["latest"] or (repeat and now - known["at"] >= repeat):

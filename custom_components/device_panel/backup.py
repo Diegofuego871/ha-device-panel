@@ -20,6 +20,7 @@ from homeassistant.helpers import entity_registry as er
 from . import options_api
 from .const import (
     BATTERY_OFF,
+    LABEL_PREFIX,
     CONF_AI_ASSESSMENT,
     CONF_AI_PROMPT,
     CONF_AI_TASK,
@@ -261,7 +262,7 @@ def _reference_notes(hass: HomeAssistant, values: dict[str, Any], rep: dict[str,
         if not key.endswith("_integrations") and key != CONF_EXCLUDE_INTEGRATIONS:
             continue
         for domain in (value.keys() if isinstance(value, dict) else value if isinstance(value, list) else []):
-            if isinstance(domain, str) and domain not in domains and domain not in seen:
+            if isinstance(domain, str) and not domain.startswith(LABEL_PREFIX) and domain not in domains and domain not in seen:
                 seen.add(domain)
                 rep["notes"].append({"kind": "integration", "what": domain})
     registry = er.async_get(hass)

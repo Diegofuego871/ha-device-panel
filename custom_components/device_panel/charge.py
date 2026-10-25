@@ -51,6 +51,7 @@ from .const import (
     STORAGE_VERSION,
 )
 from .devices import device_charge_opts, device_settings, monitored_devices, primary_domain
+from .scope import listed
 from .options_api import notify_target, effective
 
 _LOGGER = logging.getLogger(__name__)
@@ -165,7 +166,7 @@ class ChargeNotifier:
         if own is not None:
             return bool(own)
         domain = primary_domain(hass, device)
-        return bool(domain) and domain in opts[CONF_CHARGE_INTEGRATIONS]
+        return bool(listed(opts[CONF_CHARGE_INTEGRATIONS], domain))
 
     @staticmethod
     def rechargeable(opts: dict[str, Any], hass: HomeAssistant, device: dr.DeviceEntry) -> bool:

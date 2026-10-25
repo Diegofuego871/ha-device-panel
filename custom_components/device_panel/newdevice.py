@@ -39,6 +39,7 @@ from .const import (
     STORAGE_VERSION,
 )
 from .devices import async_device_facts, primary_domain, shown_devices
+from .scope import listed
 from .options_api import notify_target, effective
 
 _LOGGER = logging.getLogger(__name__)
@@ -133,7 +134,7 @@ class NewDeviceNotifier:
         items: list[dict[str, Any]] = []
         for dev in ids:
             device = shown.get(dev)
-            if device is None or primary_domain(hass, device) in excluded:
+            if device is None or listed(excluded, primary_domain(hass, device)):
                 continue
             items.append({"id": dev, "name": device.name_by_user or device.name or dev, **await async_device_facts(hass, device, opts)})
         if not items:

@@ -74,7 +74,7 @@ for (const lang of ["de", "en"]) {
 
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
-    check(`[${tag}] Abschnitt "Überwachung und Meldungen" zuerst, Zusammenfassung`, (await ev(`return [...r.querySelectorAll(".set-sec-head")].map(h=>h.dataset.id).join()`)) === "devices,monitor,routines,ai,updates" && (await sum("monitor")) === T.sum0, await sum("monitor"));
+    check(`[${tag}] Abschnitt "Überwachung und Meldungen" zuerst, Zusammenfassung`, (await ev(`return [...r.querySelectorAll(".set-sec-head")].map(h=>h.dataset.id).join()`)) === "devices,monitor,labels,routines,ai,updates" && (await sum("monitor")) === T.sum0, await sum("monitor"));
     check(`[${tag}] Geräte im Panel: Integrationen nur noch Anzeigen`, (await sum("devices")) === T.dev, await sum("devices"));
 
     // Abschnitt "Integrationen": Verweis springt in den Reiter "Integrationen"

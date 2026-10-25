@@ -33,6 +33,7 @@ from .devices import (
     hub_ids,
 )
 from .options_api import _NOTIFY_RE, effective
+from .scope import configured_labels, label_list
 from .system_stats import current_percent
 
 
@@ -48,6 +49,7 @@ async def ws_wizard_data(hass: HomeAssistant, connection: websocket_api.ActiveCo
     log = hass.data.get(DATA_AVAILABILITY)
     devices: list[dict[str, Any]] = []
     counts: dict[str, int] = {}
+    label_counts: dict[str, int] = {}
     for device, entries in candidate_devices(hass, service=opts[CONF_SHOW_SERVICE], disabled=opts[CONF_SHOW_DISABLED]):
         primary = _primary_entry(hass, device)
         domain = primary.domain if primary else ""
@@ -67,16 +69,22 @@ async def ws_wizard_data(hass: HomeAssistant, connection: websocket_api.ActiveCo
                 # Aktueller Stand in Prozent (None ohne Zahl, auch bei ausgefallenen Geräten), klein hinter dem Bereich in den Zeilen Batterie und Laden
                 "battery_level": (battery(hass, entries) or {}).get("level"),
                 "down": online is False,
+                # Labels des Geräts (IDs, seit 2.155.0): der Schritt "Labels" richtet Einstellungen pro Label ein
+                "labels": sorted(getattr(device, "labels", None) or ()),
             }
         )
         counts[domain] = counts.get(domain, 0) + 1
+        for label_id in getattr(device, "labels", None) or ():
+            label_counts[label_id] = label_counts.get(label_id, 0) + 1
     info = await async_integration_info(hass, {d for d in counts if d})
     integrations = [{"domain": d, "name": info.get(d, {}).get("name", d), "devices": n} for d, n in counts.items() if d]
     integrations.sort(key=lambda x: (-x["devices"], str(x["name"]).lower()))
     devices.sort(key=lambda d: str(d["name"]).lower())
     # Aktuelle Auslastung in Prozent für die Meldung bei hoher Auslastung (None: kein Prozentwert, dann gibt es dort keine Meldung)
     status = {kind: current_percent(hass, kind) for kind in ("cpu", "ram", "disk")}
-    connection.send_result(msg["id"], {"integrations": integrations, "devices": devices, "status": status})
+    # Labels von Home Assistant mit mindestens einem Gerät, dazu die schon eingerichteten (seit 2.155.0)
+    labels = label_list(hass, label_counts, keep=configured_labels(hass))
+    connection.send_result(msg["id"], {"integrations": integrations, "devices": devices, "status": status, "labels": labels})
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/wizard_test", vol.Required("target"): str})

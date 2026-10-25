@@ -52,6 +52,7 @@ from .const import (
     STORAGE_VERSION,
 )
 from .devices import async_device_facts, battery, device_battery_threshold, device_settings, monitored_devices, primary_domain
+from .scope import listed
 from .options_api import notify_target, effective
 
 _LOGGER = logging.getLogger(__name__)
@@ -287,7 +288,7 @@ class BatteryWatch:
         if not excluded:
             return True
         device = dr.async_get(self.hass).async_get(dev)
-        return device is None or primary_domain(self.hass, device) not in excluded
+        return device is None or not listed(excluded, primary_domain(self.hass, device))
 
     def _domain(self, dev: str) -> str | None:
         """Integration des Geräts, für das Icon der Meldung."""

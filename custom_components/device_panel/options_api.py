@@ -20,6 +20,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from . import activity, quiet
+from .scope import label_keys, lowest, pick, strictest_time
 from .ai_prompt import ai_prompt
 from .const import (
     BATTERY_FIELDS,
@@ -107,6 +108,7 @@ from .const import (
     CONF_BATTERY_PERSISTENT,
     CONF_BATTERY_PUSH,
     CONF_EXCLUDE_DEVICES,
+    CONF_LABELS,
     CONF_EXCLUDE_INTEGRATIONS,
     CONF_EXCLUDE_TYPES,
     CONF_CONNECTION_INTEGRATIONS,
@@ -251,7 +253,10 @@ INT_OPTIONS: tuple[tuple[str, int], ...] = (
     (CONF_PUSH_MB, DEFAULT_PUSH_MB),
 )
 
-_DOMAIN_RE = re.compile(r"^[a-z0-9_]+$")
+# Schlüssel der Zuordnungen und Listen pro Integration: eine Integration (Domain) oder ein Label ("label:<ID>", seit 2.155.0)
+_DOMAIN_RE = re.compile(r"^(?:[a-z0-9_]+|label:[a-z0-9_-]{1,64})$")
+# Label-IDs von HA (Slug des Namens)
+_LABEL_RE = re.compile(r"^[a-z0-9_-]{1,64}$")
 # Geräte-IDs von HA: Hex (uuid4().hex); etwas weiter gefasst für Tests.
 _DEVICE_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 _UPDATE_ID_RE = re.compile(r"^update\.[a-z0-9_]+$")
@@ -337,6 +342,13 @@ def wizard_draft(value: Any) -> dict[str, Any] | None:
     if size > WIZARD_DRAFT_MAX_CHARS:
         raise vol.Invalid("wizard draft too large")
     return clean
+
+
+def label_ids(value: Any) -> list[str]:
+    """Eingerichtete Labels (IDs) in der Reihenfolge des Benutzers, ohne Doppelte (seit 2.155.0)."""
+    if not isinstance(value, list) or not all(isinstance(v, str) and _LABEL_RE.match(v) for v in value):
+        raise vol.Invalid("Liste von Label-IDs erwartet")
+    return list(dict.fromkeys(value))
 
 
 def device_ids(value: Any) -> list[str]:
@@ -673,6 +685,7 @@ PANEL_SCHEMA = vol.Schema(
         vol.Optional(CONF_EXCLUDE_INTEGRATIONS): _domains,
         vol.Optional(CONF_EXCLUDE_TYPES): _types,
         vol.Optional(CONF_EXCLUDE_DEVICES): device_ids,
+        vol.Optional(CONF_LABELS): label_ids,
         vol.Optional(CONF_NOTIFY_EXCLUDE): _domains,
         vol.Optional(CONF_PERSISTENT_EXCLUDE): _domains,
         vol.Optional(CONF_BATTERY_PUSH_EXCLUDE): _domains,
@@ -745,6 +758,7 @@ def values_from(options: Mapping[str, Any]) -> dict[str, Any]:
     values[CONF_EXCLUDE_DEVICES] = sorted(
         {d for d in options.get(CONF_EXCLUDE_DEVICES) or [] if isinstance(d, str) and _DEVICE_RE.match(d)}
     )
+    values[CONF_LABELS] = list(dict.fromkeys(d for d in options.get(CONF_LABELS) or [] if isinstance(d, str) and _LABEL_RE.match(d)))
     for key in (CONF_NOTIFY_EXCLUDE, CONF_PERSISTENT_EXCLUDE, CONF_BATTERY_PUSH_EXCLUDE, CONF_NEW_EXCLUDE, CONF_CHARGE_INTEGRATIONS):
         values[key] = sorted({d for d in options.get(key) or [] if isinstance(d, str) and _DOMAIN_RE.match(d)})
     # Ruhezeit (seit 2.95.0): ungültig gespeichert gilt der Standard
@@ -935,30 +949,40 @@ def signal_default(
     negativ, LQI positiv); sonst zählt die nächste Stufe.
     """
     kind = (signal or {}).get("kind")
+    per = opts.get(CONF_SIGNAL_LOW_INTEGRATIONS) or {}
+
+    def fits(value: Any) -> bool:
+        return value == SIGNAL_OFF or kind is None or (value < 0) == (kind == "dbm")
+
+    # Labels des Geräts (seit 2.155.0): das strengste (aus, sonst die tiefere Schwelle), vor der Integration
+    found = [(k, per[k][connection]) for k in label_keys(domain) if connection and k in per and connection in per[k] and fits(per[k][connection])]
+    if found:
+        key, value = lowest(found)
+        return {"value": value, "source": "label", "label": key}
     tables = (
-        ("integration", (opts.get(CONF_SIGNAL_LOW_INTEGRATIONS) or {}).get(domain) or {} if domain else {}),
+        ("integration", per.get(domain) or {} if domain else {}),
         ("global", opts.get(CONF_SIGNAL_LOW) or {}),
     )
     for source, table in tables:
         value = table.get(connection) if connection else None
         if value is None:
             continue
-        if value == SIGNAL_OFF or kind is None or (value < 0) == (kind == "dbm"):
+        if fits(value):
             return {"value": value, "source": source}
     return {"value": None, "source": None}
 
 
 def battery_threshold(opts: Mapping[str, Any], domain: str | None) -> int | None:
     """Wirksame Schwelle für ein Gerät der Integration domain; None = Warnung aus."""
-    own = opts.get(CONF_BATTERY_LOW_INTEGRATIONS) or {}
-    value = own.get(domain, opts[CONF_BATTERY_LOW]) if domain else opts[CONF_BATTERY_LOW]
+    _key, own = pick(opts.get(CONF_BATTERY_LOW_INTEGRATIONS), domain, lowest)
+    value = opts[CONF_BATTERY_LOW] if own is None else own
     return None if value == BATTERY_OFF else value
 
 
 def offline_after_for(opts: Mapping[str, Any], domain: str | None) -> float | None:
     """Wirksames "Ausgefallen nach" in Sekunden für ein Gerät der Integration; None = nicht überwacht."""
-    own = opts.get(CONF_OFFLINE_INTEGRATIONS) or {}
-    value = own.get(domain, opts[CONF_OFFLINE_AFTER]) if domain else opts[CONF_OFFLINE_AFTER]
+    _key, own = pick(opts.get(CONF_OFFLINE_INTEGRATIONS), domain, strictest_time)
+    value = opts[CONF_OFFLINE_AFTER] if own is None else own
     return None if value == MONITOR_OFF else value * 60
 
 
@@ -969,7 +993,7 @@ def notify_delay_for(opts: Mapping[str, Any], domain: str | None, own: int | Non
     ausgefallen gilt.
     """
     if own is None:
-        own = (opts.get(CONF_NOTIFY_DELAY_INTEGRATIONS) or {}).get(domain) if domain else None
+        _key, own = pick(opts.get(CONF_NOTIFY_DELAY_INTEGRATIONS), domain, strictest_time)
     value = own if own is not None else opts[CONF_NOTIFY_DELAY]
     if offline_after is not None:
         value = max(value, -(-int(offline_after) // 60))

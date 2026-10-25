@@ -279,6 +279,7 @@ function releaseMarkdownHtml(markdown) {
 // --- Symbole (Material Design Icons als Pfad, Funkarten als Strichzeichnung)
 const MDI = {
   plus: "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z",
+  tag: "M21.41,11.58L12.41,2.58C12.05,2.22 11.55,2 11,2H4C2.9,2 2,2.9 2,4V11C2,11.55 2.22,12.05 2.59,12.42L11.59,21.42C11.95,21.78 12.45,22 13,22C13.55,22 14.05,21.78 14.41,21.41L21.41,14.41C21.78,14.05 22,13.55 22,13C22,12.45 21.77,11.94 21.41,11.58M13,20L4,11V4H11L20,13M6.5,5A1.5,1.5 0 0,1 8,6.5A1.5,1.5 0 0,1 6.5,8A1.5,1.5 0 0,1 5,6.5A1.5,1.5 0 0,1 6.5,5Z",
   search: "M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z",
   wifi: "M12,21L15.6,16.2C14.6,15.45 13.35,15 12,15C10.65,15 9.4,15.45 8.4,16.2L12,21M12,3C7.95,3 4.21,4.34 1.2,6.6L3,9C5.5,7.12 8.62,6 12,6C15.38,6 18.5,7.12 21,9L22.8,6.6C19.79,4.34 16.05,3 12,3M12,9C9.3,9 6.81,9.89 4.8,11.4L6.6,13.8C8.1,12.67 9.97,12 12,12C14.03,12 15.9,12.67 17.4,13.8L19.2,11.4C17.19,9.89 14.7,9 12,9Z",
   ble: "M14.88,16.29L13,18.17V14.41M13,5.83L14.88,7.71L13,9.58M17.71,7.71L12,2H11V9.58L6.41,5L5,6.41L10.59,12L5,17.58L6.41,19L11,14.41V22H12L17.71,16.29L13.41,12L17.71,7.71Z",
@@ -494,21 +495,21 @@ const RESTART_WAIT_MS = 5 * 60 * 1000;
 // Übrige Filter-Chips, die sich ausblenden lassen (seit 1.11.0, wie const.CHIP_KEYS):
 // Schlüssel, Symbol. Die Texte stehen in strings.js (chipOther).
 const CHIP_OTHER = [
-  ["area", "home"], ["integration", "puzzle"], ["offline", "closeCircle"], ["problems", "alert"], ["batteries", "battery"], ["battery", "battery"],
+  ["area", "home"], ["integration", "puzzle"], ["label", "tag"], ["offline", "closeCircle"], ["problems", "alert"], ["batteries", "battery"], ["battery", "battery"],
   ["signal", "signal"], ["update", "update"], ["override", "tune"], ["new", "sparkle"], ["charging", "batteryCharging"], ["favorites", "heart"],
 ];
 // Reihenfolge aller Chips über der Liste (seit 1.13.0, seit 1.14.0 eine Folge,
 // wie const.CHIP_ORDER_KEYS): "all", jede Verbindungsart und die übrigen Chips.
-const CHIP_TAIL = CHIP_OTHER.map(([k]) => k).filter((k) => k !== "area" && k !== "integration");
+const CHIP_TAIL = CHIP_OTHER.map(([k]) => k).filter((k) => k !== "area" && k !== "integration" && k !== "label");
 // Art eines Chips für die Trenner der Leiste: zwei Chips verschiedener Art
 // trennt eine feine Linie. Auswahlfenster (Bereich, Integration), "Alle" mit den
 // Verbindungsarten (genau eine aktiv) und "Nur Probleme" mit den Hinweisen.
-const chipKind = (key) => (key === "area" || key === "integration" ? "scope" : key === "all" || key in CONN ? "conn" : "tail");
+const chipKind = (key) => (key === "area" || key === "integration" || key === "label" ? "scope" : key === "all" || key in CONN ? "conn" : "tail");
 // Standardfolge ohne gespeicherte Folge (seit 1.18.0, nach dem Bildschirmfoto des
 // Nutzers): "Alle" ist angeheftet, dann die Hinweise, dann die Verbindungsarten,
 // hinten die seltenen Chips.
 const CHIP_DEFAULT = [
-  "all", "pin", "favorites", "integration", "new", "offline", "problems", "battery", "batteries", "charging", "area",
+  "all", "pin", "favorites", "integration", "label", "new", "offline", "problems", "battery", "batteries", "charging", "area",
   "thread", "wifi", "ble", "zigbee", "ethernet", "cloud", "matter", "network", "unknown", "zwave",
   "signal", "update", "override",
 ];
@@ -519,11 +520,11 @@ const CHIP_DEFAULT = [
 // übrige fehlende Chips folgen am Ende in der Standardfolge.
 function chipOrder(order, connOrder, counts) {
   const types = orderConns(Object.keys(CONN).map((k) => [k, (counts && counts.get(k)) || 0]), connOrder).map(([k]) => k);
-  const known = ["pin", "area", "integration", "all", ...Object.keys(CONN), ...CHIP_TAIL];
+  const known = ["pin", "area", "integration", "label", "all", ...Object.keys(CONN), ...CHIP_TAIL];
   const out = (order || []).filter((k, i, a) => known.includes(k) && a.indexOf(k) === i);
   if (!out.length) {
     // Nur eine eigene Folge der Verbindungsarten aus 1.12.0 (ohne chip_order) behält ihre Anordnung.
-    if ((connOrder || []).length) return ["pin", "area", "integration", "all", "favorites", ...types, ...CHIP_TAIL.filter((k) => k !== "favorites")];
+    if ((connOrder || []).length) return ["pin", "area", "integration", "label", "all", "favorites", ...types, ...CHIP_TAIL.filter((k) => k !== "favorites")];
     return [...CHIP_DEFAULT];
   }
   const missing = types.filter((k) => !out.includes(k));
@@ -540,7 +541,9 @@ function chipOrder(order, connOrder, counts) {
     const a = out.indexOf("all"), p = out.indexOf("pin");
     out.splice(p > a && a >= 0 ? p + 1 : a >= 0 ? a + 1 : Math.max(p + 1, 0), 0, "favorites");
   }
-  const full = [...out, ...["area", "integration", "all", ...CHIP_TAIL].filter((k) => !out.includes(k))];
+  // Der Chip "Label" (seit 2.155.0) fehlt in älteren Folgen: gleich hinter "Integration"
+  if (!out.includes("label")) out.splice(out.includes("integration") ? out.indexOf("integration") + 1 : out.length, 0, "label");
+  const full = [...out, ...["area", "integration", "label", "all", ...CHIP_TAIL].filter((k) => !out.includes(k))];
   // Der Anheft-Marker fehlt in Folgen vor 1.15.0: ganz vorn, nichts angeheftet.
   return full.includes("pin") ? full : ["pin", ...full];
 }
@@ -597,6 +600,10 @@ const CHARGE_FULL_RANGE = [50, 100];
 const INTEG_OWN_MAPS = ["offline_after_integrations", "notify_delay_integrations", "battery_low_integrations", "signal_low_integrations", "charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations"];
 // Liste der Integrationen mit Lademeldung (seit 1.32.0 auch hier einstellbar): zurücksetzen = aus, der Standard.
 const INTEG_OWN_LISTS = ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"];
+
+// Label-Schlüssel in den Zuordnungen pro Integration ("label:<ID>", seit 2.155.0)
+const LABEL_PREFIX = "label:";
+const isLabelKey = (key) => typeof key === "string" && key.startsWith(LABEL_PREFIX);
 
 const SUB_TAB_KEYS = {
   integrations: ["exclude_integrations", "type_integrations", "connection_integrations"],
@@ -774,6 +781,8 @@ const defaultView = () => ({
   areas: [],
   // Filter "Integration" (seit 1.9.0): Domains der Integrationen, AREA_NONE = ohne Integration.
   integs: [],
+  // Filter "Label" (seit 2.155.0): IDs der Labels von Home Assistant, AREA_NONE = ohne Label.
+  labels: [],
 });
 
 // Pseudo-Bereich für Geräte ohne Bereich (eine echte Bereichs-ID beginnt nie
@@ -806,6 +815,7 @@ function sanitizeView(raw) {
     hint: HINTS.some((h) => h.key === raw.hint) ? raw.hint : null,
     areas: Array.isArray(raw.areas) ? [...new Set(raw.areas.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 64))].sort().slice(0, 500) : [],
     integs: Array.isArray(raw.integs) ? [...new Set(raw.integs.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 64))].sort().slice(0, 500) : [],
+    labels: Array.isArray(raw.labels) ? [...new Set(raw.labels.filter((x) => typeof x === "string" && x.length > 0 && x.length <= 64))].sort().slice(0, 500) : [],
   };
 }
 
@@ -854,6 +864,8 @@ class DevicePanel extends HTMLElement {
     this._favDirty = false;
     this._favLoaded = false;
     this._integrations = {};
+    this._labels = [];
+    this._labelOrder = [];
     this._offset = 0;
     this._serverNow = null;
     this._fetchedAt = null;
@@ -1600,6 +1612,10 @@ class DevicePanel extends HTMLElement {
         this._setIntegs([]);
         return;
       }
+      if (ev.target.closest("[data-label-clear]")) {
+        this._setLabels([]);
+        return;
+      }
       if (ev.target.closest("[data-pulse-open]")) {
         this._openPulse();
         return;
@@ -1609,10 +1625,10 @@ class DevicePanel extends HTMLElement {
         content.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
-      const pick = ev.target.closest("[data-area-open],[data-integ-open]");
+      const pick = ev.target.closest("[data-area-open],[data-integ-open],[data-label-open]");
       if (pick) {
         // Gleiche Auswahl erneut: zu; die andere: erst zu, dann deren Auswahl auf.
-        const kind = pick.hasAttribute("data-integ-open") ? "integ" : "area";
+        const kind = pick.hasAttribute("data-label-open") ? "label" : pick.hasAttribute("data-integ-open") ? "integ" : "area";
         const same = this._areaOpen && this._pickKind === kind;
         if (this._areaOpen) this._closeAreas();
         if (!same) this._openAreas(kind);
@@ -1640,6 +1656,7 @@ class DevicePanel extends HTMLElement {
         this._hint = null;
         this._view.areas = [];
         this._view.integs = [];
+        this._view.labels = [];
       } else if (el.dataset.conn) this._conn = this._conn === el.dataset.conn ? "all" : el.dataset.conn;
       else if (el.dataset.problems !== undefined) this._problems = !this._problems;
       else if (el.dataset.offline !== undefined) this._offlineOnly = !this._offlineOnly;
@@ -1914,6 +1931,9 @@ class DevicePanel extends HTMLElement {
       this._applyFavs();
       this._reapplyDevDraft();
       this._integrations = result.integrations || {};
+      // Labels (seit 2.155.0): die mit Geräten im Panel, dazu die eingerichteten in der Reihenfolge des Benutzers
+      this._labels = Array.isArray(result.labels) ? result.labels : [];
+      this._labelOrder = Array.isArray(result.label_order) ? result.label_order : [];
       this._flakyOutages = result.flaky_outages || 3;
       this._batteryLow = result.battery_low;
       this._aiOn = result.ai_assessment === true;
@@ -2245,6 +2265,10 @@ class DevicePanel extends HTMLElement {
       this._view.integs = [];
       changed = true;
     }
+    if (hide.has("label") && (this._view.labels || []).length) {
+      this._view.labels = [];
+      changed = true;
+    }
     if (changed) this._saveView();
   }
 
@@ -2295,13 +2319,33 @@ class DevicePanel extends HTMLElement {
     return !sel || sel.has(this._integId(d));
   }
 
-  // Bereich und Integration zusammen bilden den Umfang von Liste und Kopf.
+  // Filter "Label" (seit 2.155.0, Wunsch des Nutzers): nach den Labels von Home Assistant am Gerät; mehrere gewählte zählen als "oder",
+  // AREA_NONE sind Geräte ohne Label. Ein Label, das es nicht mehr gibt (oder ohne Geräte im Panel), fällt still weg.
+  _labelSel() {
+    const picked = this._view.labels || [];
+    if (this._labelSelFor?.[0] !== picked || this._labelSelFor[1] !== this._devices) {
+      const known = new Set([AREA_NONE, ...this._devices.flatMap((d) => d.labels || [])]);
+      const sel = picked.filter((id) => known.has(id));
+      this._labelSelFor = [picked, this._devices];
+      this._labelSelSet = sel.length ? new Set(sel) : null;
+    }
+    return this._labelSelSet;
+  }
+
+  _labelPass(d) {
+    const sel = this._labelSel();
+    if (!sel) return true;
+    const mine = d.labels || [];
+    return mine.length ? mine.some((id) => sel.has(id)) : sel.has(AREA_NONE);
+  }
+
+  // Bereich, Integration und Label zusammen bilden den Umfang von Liste und Kopf.
   _scopePass(d) {
-    return this._areaPass(d) && this._integPass(d);
+    return this._areaPass(d) && this._integPass(d) && this._labelPass(d);
   }
 
   _scoped() {
-    return Boolean(this._areaSel() || this._integSel());
+    return Boolean(this._areaSel() || this._integSel() || this._labelSel());
   }
 
   // Einzelne Filter: Die Zahl auf einem Chip zählt mit allen übrigen Filtern
@@ -2325,7 +2369,8 @@ class DevicePanel extends HTMLElement {
   _searchPass(d) {
     if (!this._search) return true;
     const integs = (d.integrations || []).map((dom) => this._integrations[dom] || dom);
-    return [d.name, d.area, d.manufacturer, d.model, d.sw_version, ...integs, d.integration?.title, this._t(typeKey(d.type)), this._t(CONN[this._connOf(d)].key), d.via]
+    const labels = (d.labels || []).map((id) => this._labelInfo(id)?.name || id);
+    return [d.name, d.area, d.manufacturer, d.model, d.sw_version, ...integs, ...labels, d.integration?.title, this._t(typeKey(d.type)), this._t(CONN[this._connOf(d)].key), d.via]
       .join(" ")
       .toLowerCase()
       .includes(this._search);
@@ -2627,22 +2672,27 @@ class DevicePanel extends HTMLElement {
     this._setView({ integs: [...new Set(list)].sort() });
   }
 
+  _setLabels(list) {
+    this._setView({ labels: [...new Set(list)].sort() });
+  }
+
   // Die offene Auswahl: Gruppen, gewählte IDs, Setzen und Textschlüssel.
   _pickGroups() {
-    return this._pickKind === "integ" ? this._integGroups() : this._areaGroups();
+    return this._pickKind === "label" ? this._labelGroups() : this._pickKind === "integ" ? this._integGroups() : this._areaGroups();
   }
 
   _pickPicked() {
-    return new Set((this._pickKind === "integ" ? this._view.integs : this._view.areas) || []);
+    return new Set((this._pickKind === "label" ? this._view.labels : this._pickKind === "integ" ? this._view.integs : this._view.areas) || []);
   }
 
   _setPick(list) {
-    if (this._pickKind === "integ") this._setIntegs(list);
+    if (this._pickKind === "label") this._setLabels(list);
+    else if (this._pickKind === "integ") this._setIntegs(list);
     else this._setAreas(list);
   }
 
   _pk(suffix) {
-    return this._t(`${this._pickKind === "integ" ? "integ" : "area"}${suffix}`);
+    return this._t(`${this._pickKind === "label" ? "label" : this._pickKind === "integ" ? "integ" : "area"}${suffix}`);
   }
 
   // Etagen mit ihren Bereichen in der Reihenfolge aus HA (Einstellungen →
@@ -2655,7 +2705,7 @@ class DevicePanel extends HTMLElement {
     for (const d of this._devices) {
       const id = d.area_id || AREA_NONE;
       total.set(id, (total.get(id) || 0) + 1);
-      if (this._integPass(d) && this._connPass(d) && this._problemPass(d) && this._hintPass(d, this._hint) && this._searchPass(d)) count.set(id, (count.get(id) || 0) + 1);
+      if (this._integPass(d) && this._labelPass(d) && this._connPass(d) && this._problemPass(d) && this._hintPass(d, this._hint) && this._searchPass(d)) count.set(id, (count.get(id) || 0) + 1);
     }
     const picked = new Set(this._view.areas || []);
     const show = (id) => total.has(id) || picked.has(id);
@@ -2692,7 +2742,7 @@ class DevicePanel extends HTMLElement {
     for (const d of this._devices) {
       const id = this._integId(d);
       total.add(id);
-      if (this._areaPass(d) && this._connPass(d) && this._problemPass(d) && this._hintPass(d, this._hint) && this._searchPass(d)) count.set(id, (count.get(id) || 0) + 1);
+      if (this._areaPass(d) && this._labelPass(d) && this._connPass(d) && this._problemPass(d) && this._hintPass(d, this._hint) && this._searchPass(d)) count.set(id, (count.get(id) || 0) + 1);
     }
     const picked = new Set(this._view.integs || []);
     const items = [...total, ...picked.keys()]
@@ -2723,6 +2773,46 @@ class DevicePanel extends HTMLElement {
     return `<span class="chip area integ on"><button type="button" class="area-open" data-integ-open aria-haspopup="dialog" aria-expanded="${open}" title="${escape(`${this._t("integChip")}: ${label}`)}">${mdi("puzzle", 15)}<span class="al">${escape(label)}</span> <span class="n">${n}</span></button><button type="button" class="area-x" data-integ-clear title="${escape(this._t("integClear"))}" aria-label="${escape(this._t("integClear"))}">${mdi("close", 13)}</button></span>`;
   }
 
+  // Labels mit Geräten (oder gewählte) alphabetisch, zuletzt "Ohne Label"; die Zahl zählt mit den übrigen Filtern (seit 2.155.0).
+  _labelGroups() {
+    const total = new Set();
+    const count = new Map();
+    for (const d of this._devices) {
+      const ids = (d.labels || []).length ? d.labels : [AREA_NONE];
+      const pass = this._areaPass(d) && this._integPass(d) && this._connPass(d) && this._problemPass(d) && this._hintPass(d, this._hint) && this._searchPass(d);
+      for (const id of ids) {
+        total.add(id);
+        if (pass) count.set(id, (count.get(id) || 0) + 1);
+      }
+    }
+    const picked = new Set(this._view.labels || []);
+    const items = [...new Set([...total, ...picked])]
+      .filter((id) => id !== AREA_NONE)
+      .map((id) => ({ id, name: this._labelInfo(id)?.name || id, n: count.get(id) || 0 }))
+      .sort((a, b) => a.name.localeCompare(b.name, this._locale()));
+    if (total.has(AREA_NONE) && items.length) items.push({ id: AREA_NONE, name: this._t("labelFilterNone"), n: count.get(AREA_NONE) || 0 });
+    return items.length ? [{ key: "loose", name: null, items }] : [];
+  }
+
+  _labelFilterLabel(sel, groups) {
+    const names = groups.flatMap((g) => g.items).filter((x) => sel.has(x.id)).map((x) => x.name);
+    return names.length && names.length <= 2 && names.length === sel.size ? names.join(", ") : this._t("labelMany", sel.size);
+  }
+
+  // Chip "Label" (seit 2.155.0): nur sichtbar, wenn es mindestens ein Label mit Geräten gibt (oder der Filter aktiv ist)
+  _labelChipHtml(all) {
+    if (this._hideChips.has("label")) return "";
+    const sel = this._labelSel();
+    const open = this._areaOpen && this._pickKind === "label";
+    if (!sel) {
+      if (!all.some((d) => (d.labels || []).length)) return "";
+      return `<button type="button" class="chip area lab${open ? " open" : ""}" data-label-open aria-haspopup="dialog" aria-expanded="${open}">${mdi("tag", 15)}<span>${escape(this._t("labelChip"))}</span>${mdi("chevronDown", 15)}</button>`;
+    }
+    const label = this._labelFilterLabel(sel, this._labelGroups());
+    const n = all.filter((d) => this._matches(d)).length;
+    return `<span class="chip area lab on"><button type="button" class="area-open" data-label-open aria-haspopup="dialog" aria-expanded="${open}" title="${escape(`${this._t("labelChip")}: ${label}`)}">${mdi("tag", 15)}<span class="al">${escape(label)}</span> <span class="n">${n}</span></button><button type="button" class="area-x" data-label-clear title="${escape(this._t("labelClear"))}" aria-label="${escape(this._t("labelClear"))}">${mdi("close", 13)}</button></span>`;
+  }
+
   _areaChipHtml(all) {
     if (this._hideChips.has("area")) return "";
     const sel = this._areaSel();
@@ -2743,7 +2833,7 @@ class DevicePanel extends HTMLElement {
     this._pickKind = kind;
     const mobile = this._narrowQuery.matches;
     const t = (k, ...a) => this._t(k, ...a);
-    const icon = kind === "integ" ? "puzzle" : "home";
+    const icon = kind === "label" ? "tag" : kind === "integ" ? "puzzle" : "home";
     const many = this._pickGroups().reduce((a, g) => a + g.items.length, 0) > 8;
     const search = many
       ? `<label class="area-search">${mdi("search", 16)}<input type="search" data-area-search placeholder="${escape(this._pk("Search"))}" aria-label="${escape(this._pk("Search"))}">${this._fieldClearHtml("data-area-search-clear", "", "")}</label>`
@@ -2780,7 +2870,7 @@ class DevicePanel extends HTMLElement {
   // hinaus (der Chip steht nach dem Kopf oft weit unten); die Liste scrollt.
   _placeAreas() {
     const pop = this.shadowRoot.querySelector(".area-pop");
-    const chip = this.shadowRoot.querySelector(this._pickKind === "integ" ? ".chips .chip.integ" : ".chips .chip.area:not(.integ)");
+    const chip = this.shadowRoot.querySelector(this._pickKind === "label" ? ".chips .chip.lab" : this._pickKind === "integ" ? ".chips .chip.integ" : ".chips .chip.area:not(.integ):not(.lab)");
     if (!pop || pop.hidden || !chip) return;
     const b = chip.getBoundingClientRect();
     const width = pop.offsetWidth;
@@ -2838,7 +2928,7 @@ class DevicePanel extends HTMLElement {
     const chosen = all.reduce((n, g) => n + g.items.filter((x) => picked.has(x.id)).length, 0);
     const foot = this.shadowRoot.querySelector(".area-pop .afoot");
     if (foot && !this._narrowQuery.matches) {
-      setHtml(foot, `<span>${escape(this._t(this._pickKind === "integ" ? "integCount" : "areaCount", chosen, known))}</span><button type="button" class="vlink" data-area-clear ${chosen ? "" : "disabled"}>${escape(this._pk("ShowAll"))}</button>`);
+      setHtml(foot, `<span>${escape(this._t(this._pickKind === "label" ? "labelCount" : this._pickKind === "integ" ? "integCount" : "areaCount", chosen, known))}</span><button type="button" class="vlink" data-area-clear ${chosen ? "" : "disabled"}>${escape(this._pk("ShowAll"))}</button>`);
     }
     const clear = this.shadowRoot.querySelector("dialog.area-sheet .dlg-actions [data-area-clear]");
     if (clear) clear.disabled = !chosen;
@@ -2913,7 +3003,7 @@ class DevicePanel extends HTMLElement {
     (this.ownerDocument?.defaultView || window).addEventListener("keydown", (ev) => {
       if (ev.key === "Escape" && this._areaOpen && !this._narrowQuery.matches) {
         this._closeAreas();
-        this.shadowRoot.querySelector(this._pickKind === "integ" ? ".chips [data-integ-open]" : ".chips [data-area-open]")?.focus();
+        this.shadowRoot.querySelector(this._pickKind === "label" ? ".chips [data-label-open]" : this._pickKind === "integ" ? ".chips [data-integ-open]" : ".chips [data-area-open]")?.focus();
       }
     });
   }
@@ -3386,6 +3476,7 @@ class DevicePanel extends HTMLElement {
     const parts = new Map();
     parts.set("area", this._areaChipHtml(all));
     parts.set("integration", this._integChipHtml(all));
+    parts.set("label", this._labelChipHtml(all));
     // "Alle" ist nur ohne jeden Filter aktiv; die Zahl zeigt wie überall, was
     // nach dem Antippen erscheint: alle Geräte (mit der Suche).
     const none = this._conn === "all" && !this._problems && !this._offlineOnly && !this._hint && !this._scoped();
@@ -3466,6 +3557,8 @@ class DevicePanel extends HTMLElement {
   // Kennzeichen einer Integration in den Einstellungen (seit 1.23.0): ihr Logo, sonst
   // die Anfangsbuchstaben auf farbigem Grund.
   _ibadge(domain, name) {
+    // Label (seit 2.155.0): Tag-Symbol statt Logo
+    if (isLabelKey(domain)) return `<span class="ibadge lbl" style="--h:${hue(domain)}">${mdi("tag", 15)}</span>`;
     const src = this._brandSrc(domain);
     return src
       ? `<span class="ibadge has-img"><img src="${escape(src)}" alt="" width="22" height="22" draggable="false"></span>`
@@ -4198,17 +4291,17 @@ class DevicePanel extends HTMLElement {
     const auto = this._connAuto(d);
     // Ohne Wahl am Gerät gilt die Integration, wenn dort eine festgelegt ist.
     const integ = d.connection_integration && CONN[d.connection_integration] ? d.connection_integration : null;
-    const autoText = integ ? this._t("connAutoInteg", this._t(CONN[integ].key)) : this._t("typeAuto", this._t(CONN[auto].key));
+    const autoText = integ ? this._via(d.connection_integration_source, this._t("connAutoInteg", this._t(CONN[integ].key))) : this._t("typeAuto", this._t(CONN[auto].key));
     const opts = [`<option value="" ${d.connection_manual ? "" : "selected"}>${escape(autoText)}</option>`]
       .concat(CONN_MANUAL.map((k) => `<option value="${k}" ${d.connection_manual && d.connection === k ? "selected" : ""}>${escape(this._t(CONN[k].key))}</option>`))
       .join("");
     if (!edit) {
       return `<span class="typ-ro">${CONN[type].icon(16)}<span>${escape(this._t(CONN[type].key))}</span></span>${
-        d.connection_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t("connByInteg"))}</small>` : ""
+        d.connection_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t(isLabelKey(d.connection_integration_source) ? "connByLabel" : "connByInteg"))}</small>` : ""
       }`;
     }
     return `<label class="typ-sel">${CONN[type].icon(16)}<select data-dlg="conn" aria-label="${escape(this._t("connType"))}">${opts}</select>${mdi("chevronDown", 18)}</label>${
-      d.connection_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t("connByInteg"))}</small>` : ""
+      d.connection_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t(isLabelKey(d.connection_integration_source) ? "connByLabel" : "connByInteg"))}</small>` : ""
     }${this._connError ? `<small class="warn">${escape(this._t("connSaveError"))} ${escape(this._connError)}</small>` : ""}`;
   }
 
@@ -4259,8 +4352,8 @@ class DevicePanel extends HTMLElement {
     // Etikett (Standard / Integration / Gerät) und was ohne die Wahl am Gerät
     // gälte; der Tooltip trägt die ausführliche Erklärung.
     const origin = (own, integKey, text, tip) => {
-      const name = integKey ? this._integrations[integKey] || integKey : null;
-      const [cls, label] = own ? ["own", t("originDevice")] : name ? ["integ", t("originIntegration", name)] : ["std", t("originStandard")];
+      const name = integKey ? this._scopeName(integKey) : null;
+      const [cls, label] = own ? ["own", t("originDevice")] : name ? ["integ", t(isLabelKey(integKey) ? "originLabel" : "originIntegration", name)] : ["std", t("originStandard")];
       return `<div class="opt-origin"><span class="origin ${cls}"${tip ? ` title="${escape(tip)}"` : ""}>${escape(label)}</span><span>${escape(text)}</span></div>`;
     };
     // "Ausgefallen nach" pro Gerät (Punkt 7): Standard der Integration, eigene
@@ -4271,7 +4364,7 @@ class DevicePanel extends HTMLElement {
       const own = d.offline_setting;
       const offMode = own === "off" ? "off" : Number.isInteger(own) ? "own" : "default";
       const offRange = offMode === "own" ? this._offRangeError : null;
-      const defLabel = od.integration ? t("devOffInteg", fmt(od.minutes)) : t("devOffGlobal", fmt(od.minutes));
+      const defLabel = od.integration ? this._via(od.integration, t("devOffInteg", fmt(od.minutes))) : t("devOffGlobal", fmt(od.minutes));
       parts.out += `<div class="opt${offMode !== "default" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devOffline"))}</span>${sel(
         "dev-off",
         [["default", defLabel], ["own", t("devOffOwn")], ["off", t("devOffNone")]],
@@ -4291,7 +4384,7 @@ class DevicePanel extends HTMLElement {
       const own = d.notify_delay_setting;
       const dMode = Number.isInteger(own) ? "own" : "default";
       const dRange = dMode === "own" ? this._delayRangeError : null;
-      const dLabel = nd.integration ? t("devDelayInteg", t("offlineMin", nd.minutes)) : t("devDelayGlobal", t("offlineMin", nd.minutes));
+      const dLabel = nd.integration ? this._via(nd.integration, t("devDelayInteg", t("offlineMin", nd.minutes))) : t("devDelayGlobal", t("offlineMin", nd.minutes));
       // Eigenes "Erst melden nach" kürzer als das wirksame "Ausgefallen nach" des Geräts: Fehler am Feld (der Server lehnt es ebenfalls ab)
       const offEffective = d.offline_setting === "off" ? null : Number.isInteger(d.offline_setting) ? d.offline_setting : d.offline_default?.minutes ?? 2;
       const short = dMode === "own" && Number.isInteger(offEffective) && own < offEffective ? { value: String(own), message: t("integDelayError", t("offlineMin", offEffective)) } : null;
@@ -4313,7 +4406,7 @@ class DevicePanel extends HTMLElement {
       const integ = def.integration ? this._integrations[def.integration] || def.integration : null;
       parts.bat += `<div class="opt${mode !== "default" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devBattery"))}</span>${sel(
         "dev-bat",
-        [["default", def.integration ? t("devBatInteg", def.pct) : t("devBatDefault", def.pct)], ["own", t("devBatOwn")], ["off", t("devBatOff")]],
+        [["default", def.integration ? this._via(def.integration, t("devBatInteg", def.pct)) : t("devBatDefault", def.pct)], ["own", t("devBatOwn")], ["off", t("devBatOff")]],
         mode,
         t("devBattery")
       )}</div>${
@@ -4343,8 +4436,8 @@ class DevicePanel extends HTMLElement {
       const sdef = d.signal_default || { value: null, source: null };
       const std = sdef.value === "off" ? t("sigOffWord") : sigText({ kind: lqi ? "lqi" : "dbm", value: Number.isInteger(sdef.value) ? sdef.value : sigStd(lqi ? "lqi" : "dbm") });
       const defLabel =
-        sdef.source === "integration"
-          ? sdef.value === "off" ? t("devSigIntegOff") : t("devSigInteg", std)
+        sdef.source === "integration" || sdef.source === "label"
+          ? this._via(sdef.source === "label" ? sdef.label : "", sdef.value === "off" ? t("devSigIntegOff") : t("devSigInteg", std))
           : sdef.value === "off" ? t("devSigDefaultOff") : t("devSigDefault", std);
       const [min, max] = lqi ? SIG_LQI_RANGE : SIG_DBM_RANGE;
       const range = sigMode === "own" ? this._sigRangeError : null;
@@ -4361,7 +4454,7 @@ class DevicePanel extends HTMLElement {
               range ? `<div class="opt-error" data-dev-range>${escape(range.message)}</div>` : ""
             }`
           : ""
-      }${origin(sigMode !== "default", sdef.source === "integration" ? d.integration?.domain : null, sigMode !== "default" ? t("originDefaultWould", std) : "", t("devSigShort", d.signal?.value != null ? sigText(d.signal) : null))}</div>`;
+      }${origin(sigMode !== "default", sdef.source === "integration" ? d.integration?.domain : sdef.source === "label" ? sdef.label : null, sigMode !== "default" ? t("originDefaultWould", std) : "", t("devSigShort", d.signal?.value != null ? sigText(d.signal) : null))}</div>`;
     }
     // Lademeldung (seit 1.30.0): Push, sobald das Gerät voll geladen ist; ohne Wahl gilt die Integration.
     if (d.battery?.level != null) {
@@ -4395,7 +4488,7 @@ class DevicePanel extends HTMLElement {
         const fullErr = fullMode === "own" ? this._chargeFullRangeError : null;
         parts.chg += `<div class="opt${fullSet != null ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeFull"))}</span>${sel(
           "dev-charge-full",
-          [["default", cd.full_integration ? t("devChargeFullInteg", gFull) : t("devChargeFullGlobal", gFull)], ...CHARGE_FULL_PRESETS.map((v) => [String(v), `${v} %`]), ["own", t("chargeFullOwn")]],
+          [["default", cd.full_integration ? this._via(cd.full_integration, t("devChargeFullInteg", gFull)) : t("devChargeFullGlobal", gFull)], ...CHARGE_FULL_PRESETS.map((v) => [String(v), `${v} %`]), ["own", t("chargeFullOwn")]],
           fullMode,
           t("devChargeFull")
         )}</div>${
@@ -4409,7 +4502,7 @@ class DevicePanel extends HTMLElement {
         const riseErr = riseMode === "own" ? this._chargeRangeError : null;
         parts.chg += `<div class="opt${riseMode === "own" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeRise"))}</span>${sel(
           "dev-charge-rise",
-          [["default", cd.rise_integration ? t("devChargeRiseInteg", gRise) : t("devChargeRiseGlobal", gRise)], ["own", t("devChargeRiseOwn")]],
+          [["default", cd.rise_integration ? this._via(cd.rise_integration, t("devChargeRiseInteg", gRise)) : t("devChargeRiseGlobal", gRise)], ["own", t("devChargeRiseOwn")]],
           riseMode,
           t("devChargeRise")
         )}</div>${
@@ -4426,7 +4519,7 @@ class DevicePanel extends HTMLElement {
         const stallErr = stallMode === "own" ? this._chargeStallRangeError : null;
         parts.chg += `<div class="opt${stallMode === "own" ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devChargeStall"))}</span>${sel(
           "dev-charge-stall",
-          [["default", cd.stall_integration ? t("devChargeStallInteg", gStall) : t("devChargeStallGlobal", gStall)], ["own", t("devChargeStallOwn")]],
+          [["default", cd.stall_integration ? this._via(cd.stall_integration, t("devChargeStallInteg", gStall)) : t("devChargeStallGlobal", gStall)], ["own", t("devChargeStallOwn")]],
           stallMode,
           t("devChargeStall")
         )}</div>${
@@ -4453,7 +4546,7 @@ class DevicePanel extends HTMLElement {
     // "Globale Einstellung" oder "Aus" hebt es auf.
     const muted = d.notify_mute_until && Date.parse(d.notify_mute_until) > Date.now() ? Date.parse(d.notify_mute_until) / 1000 : null;
     const nd = d.notify_default || { push: false, persistent: false, integration: null };
-    const notifyOpts = [["on", nd.integration ? t("devNotifyInteg") : t("devNotifyOn")], ...(muted ? [["mute", t("devNotifyMuted", this._fmtTime(muted, true))]] : []), ["off", t("devNotifyOff")]];
+    const notifyOpts = [["on", nd.integration ? this._via(nd.integration, t("devNotifyInteg")) : t("devNotifyOn")], ...(muted ? [["mute", t("devNotifyMuted", this._fmtTime(muted, true))]] : []), ["off", t("devNotifyOff")]];
     parts.out += `<div class="opt${d.notify_off || muted ? " changed" : ""}"><div class="opt-line"><span class="opt-label">${escape(t("devNotify"))}</span>${sel(
       "dev-notify",
       notifyOpts,
@@ -4529,17 +4622,17 @@ class DevicePanel extends HTMLElement {
     // die Erkennung danebenliegt). Gilt sofort, ohne "Speichern".
     // Ohne Wahl am Gerät gilt die Integration, wenn dort ein Typ festgelegt ist.
     const integ = !d.type_manual && d.type_integration && TYPE_ICONS[d.type_integration] ? d.type_integration : null;
-    const autoText = integ ? this._t("typeAutoInteg", this._t(typeKey(integ))) : this._t("typeAuto", this._t(typeKey(d.type_auto || d.type)));
+    const autoText = integ ? this._via(d.type_integration_source, this._t("typeAutoInteg", this._t(typeKey(integ)))) : this._t("typeAuto", this._t(typeKey(d.type_auto || d.type)));
     const opts = [`<option value="" ${d.type_manual ? "" : "selected"}>${escape(autoText)}</option>`]
       .concat(TYPE_ORDER.map((k) => `<option value="${k}" ${d.type_manual && d.type === k ? "selected" : ""}>${escape(this._t(typeKey(k)))}</option>`))
       .join("");
     if (!edit) {
       return `<span class="typ-ro">${typeIcon(d.type, 16)}<span>${escape(this._t(typeKey(d.type)))}</span></span>${
-        d.type_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t("typeByInteg"))}</small>` : ""
+        d.type_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t(isLabelKey(d.type_integration_source) ? "typeByLabel" : "typeByInteg"))}</small>` : ""
       }`;
     }
     return `<label class="typ-sel">${typeIcon(d.type, 16)}<select data-dlg="type" aria-label="${escape(this._t("typeLabel"))}">${opts}</select>${mdi("chevronDown", 18)}</label>${
-      d.type_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t("typeByInteg"))}</small>` : ""
+      d.type_manual ? `<small>${escape(this._t("typeManual"))}</small>` : integ ? `<small>${escape(this._t(isLabelKey(d.type_integration_source) ? "typeByLabel" : "typeByInteg"))}</small>` : ""
     }${this._typeError ? `<small class="warn">${escape(this._t("typeSaveError"))} ${escape(this._typeError)}</small>` : ""}`;
   }
 
@@ -5684,7 +5777,7 @@ class DevicePanel extends HTMLElement {
       loading: true, error: null, saveError: null, saving: false, data: null, draft: null, open: new Set(tab === "overview" ? [] : ["monitor"]), info: new Set(),
       resets: newResets(),
       // Reiter von "Überwachung und Meldungen", gewählte Integration, Filter der Liste.
-      tab, integ: null, integFilter: "all",
+      tab, integ: null, integFilter: "all", label: null, labelPick: false,
       // Reiter von "Geräte im Panel" und "Darstellung".
       sub: { devices: "integrations", integ: "out" },
     };
@@ -6677,9 +6770,9 @@ class DevicePanel extends HTMLElement {
     if (!st || !st.draft) return [];
     // Listen (Ausschlüsse) und Zuordnungen (Batterie pro Integration) nach
     // Inhalt vergleichen, nicht nach Referenz oder Reihenfolge.
-    // Ausnahme: die Reihenfolge der Chips, bei ihr zählt genau die Folge.
+    // Ausnahme: die Reihenfolge der Chips und der Labels, bei ihr zählt genau die Folge.
     const norm = (v) => (Array.isArray(v) ? [...v].sort() : v && typeof v === "object" ? Object.entries(v).sort() : v);
-    const same = (k, a, b) => (k === "connection_order" || k === "chip_order" ? JSON.stringify(a || []) === JSON.stringify(b || []) : JSON.stringify(norm(a)) === JSON.stringify(norm(b)));
+    const same = (k, a, b) => (k === "connection_order" || k === "chip_order" || k === "labels" ? JSON.stringify(a || []) === JSON.stringify(b || []) : JSON.stringify(norm(a)) === JSON.stringify(norm(b)));
     return Object.keys(st.draft).filter((k) => !same(k, st.draft[k], st.data.values[k]));
   }
 
@@ -6708,6 +6801,7 @@ class DevicePanel extends HTMLElement {
     return [
       ["devices", ["show_service_devices", "show_disabled_devices", ...SUB_TAB_KEYS.integrations, ...SUB_TAB_KEYS.types, ...SUB_TAB_KEYS.devs, ...SUB_TAB_KEYS.devset]],
       ["monitor", Object.values(MON_TAB_KEYS).flat()],
+      ["labels", ["labels", ...MON_TAB_KEYS.integ]],
       ["routines", ["routines_pause", "routines_catch_up", "notify_service_routines", "routines_notify_error"]],
       ["ai", ["ai_assessment", "ai_task_entity", "ai_prompt"]],
       ["updates", [...SUB_TAB_KEYS.pstart, ...SUB_TAB_KEYS.pstorage, ...SUB_TAB_KEYS.pupdates]],
@@ -6778,7 +6872,9 @@ class DevicePanel extends HTMLElement {
       // bleibt "matter", auch wenn der Chip "Thread" zeigt).
       const conn = CONN[dev.connection] ? dev.connection : "unknown";
       const dom = dev.integration?.domain;
-      for (const key of dom ? [conn, `${dom}|${conn}`] : [conn]) {
+      // Labels des Geräts (seit 2.155.0): eigene Gruppen "label:<ID>|<Art>"
+      const keys = [conn, ...(dom ? [`${dom}|${conn}`] : []), ...(dev.labels || []).map((id) => `${LABEL_PREFIX}${id}|${conn}`)];
+      for (const key of keys) {
         const g = out.get(key) || { devices: 0, kinds: new Map() };
         g.devices += 1;
         g.kinds.set(kind, (g.kinds.get(kind) || 0) + 1);
@@ -6847,7 +6943,7 @@ class DevicePanel extends HTMLElement {
     const conns = new Set([...Object.keys(table), ...Object.keys(saved)]);
     for (const key of groups.keys()) if (dom ? key.startsWith(prefix) : !key.includes("|")) conns.add(key.slice(prefix.length));
     const bad = new Set(this._sigInvalid().filter((x) => x.dom === (dom || "")).map((x) => x.conn));
-    const name = dom ? this._integrations[dom] || dom : "";
+    const name = dom ? this._scopeName(dom) : "";
     const list = [...conns].sort((a, b) => (groups.get(prefix + b)?.devices || 0) - (groups.get(prefix + a)?.devices || 0) || a.localeCompare(b));
     return list
       .map((conn) => {
@@ -6933,6 +7029,8 @@ class DevicePanel extends HTMLElement {
     parts.set("area", !hideChips.has("area") && this._areas.length ? pill(`${mdi("home", 15)}<span>${escape(t("areaChip"))}</span>${mdi("chevronDown", 15)}`) : "");
     const integs = new Set(devs.map((x) => this._integId(x)));
     parts.set("integration", !hideChips.has("integration") && integs.size >= 2 ? pill(`${mdi("puzzle", 15)}<span>${escape(t("integChip"))}</span>${mdi("chevronDown", 15)}`) : "");
+    // Chip "Label" (seit 2.155.0): nur mit mindestens einem Label an einem Gerät
+    parts.set("label", !hideChips.has("label") && devs.some((x) => (x.labels || []).length) ? pill(`${mdi("tag", 15)}<span>${escape(t("labelChip"))}</span>${mdi("chevronDown", 15)}`) : "");
     parts.set("all", pill(`<span>${escape(t("all"))}</span> <span class="n">${devs.length}</span>`, "on"));
     for (const key of Object.keys(CONN)) {
       parts.set(key, counts.get(key) && !hideConn.has(key) ? pill(`${CONN[key].icon(15)}<span>${escape(t(CONN[key].key))}</span> <span class="n">${counts.get(key)}</span>`) : "");
@@ -6998,6 +7096,10 @@ class DevicePanel extends HTMLElement {
       const base = d.ai_assessment ? this._t("sumAiOn", task?.name || d.ai_task_entity || "") : this._t("sumAiOff");
       return d.ai_prompt ? `${base} · ${this._t("sumAiPrompt")}` : base;
     }
+    if (id === "labels") {
+      const n = (d.labels || []).length;
+      return n ? this._t("sumLabels", n) : this._t("sumLabelsNone");
+    }
     if (id === "routines") {
       return this._t(d.routines_pause ? "sumRoutinesPaused" : "sumRoutinesIdle");
     }
@@ -7018,8 +7120,8 @@ class DevicePanel extends HTMLElement {
     }
     if (id === "devices") {
       const hidden = ["integrations", "types", "devs"].map((k) => this._subCount(k, d));
-      const typed = Object.keys(d.type_integrations || {}).length;
-      const conn = Object.keys(d.connection_integrations || {}).length;
+      const typed = Object.keys(d.type_integrations || {}).filter((k) => !isLabelKey(k)).length;
+      const conn = Object.keys(d.connection_integrations || {}).filter((k) => !isLabelKey(k)).length;
       return (hidden.some(Boolean) ? `${this._t("sumDevHidden", ...hidden)} · ` : "") + (typed ? `${this._t("sumTypeInteg", typed)} · ` : "") + (conn ? `${this._t("sumConnInteg", conn)} · ` : "") + this._t("sumDisplay", Boolean(d.show_service_devices), Boolean(d.show_disabled_devices));
     }
     return "";
@@ -7839,10 +7941,30 @@ class DevicePanel extends HTMLElement {
     return Boolean(d) && !errors.offline_after && Number.isInteger(d.offline_after) && Number.isInteger(d.notify_delay) && d.notify_delay < d.offline_after;
   }
 
+  // Text "Wie Integration …" einer Herkunft aus einem Label (Schlüssel "label:<ID>") zu "Wie Label …" (seit 2.155.0)
+  _via(src, text) {
+    return isLabelKey(src) ? text.replace(/Wie Integration|Same as integration|Like integration/, this._t("sameAsLabel")) : text;
+  }
+
+  // Labels (seit 2.155.0): Angaben zu einem Label aus den Einstellungen (Katalog) oder der Geräteliste
+  _labelList() {
+    return this._settings?.data?.catalog?.labels || this._labels || [];
+  }
+
+  _labelInfo(id) {
+    return this._labelList().find((x) => x.id === id) || (this._labels || []).find((x) => x.id === id) || null;
+  }
+
+  // Name einer Integration oder eines Labels ("label:<ID>"); ein Label, das es in Home Assistant nicht mehr gibt, zeigt seine ID
+  _scopeName(key) {
+    if (isLabelKey(key)) return this._labelInfo(key.slice(LABEL_PREFIX.length))?.name || key.slice(LABEL_PREFIX.length);
+    return this._integrations[key] || key;
+  }
+
   // Integrationen für den Reiter "Integrationen": gezeigte aus dem Katalog,
   // dazu solche mit eigener Einstellung ohne Geräte (zum Zurücksetzen). Je
   // Integration, was vom Standard abweicht, als kurze Texte.
-  _integItems(d) {
+  _integItems(d, labels = false) {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
     const cat = st.data?.catalog || {};
@@ -7857,10 +7979,13 @@ class DevicePanel extends HTMLElement {
     const sigMap = d.signal_low_integrations || {};
     const noNew = new Set(d.new_exclude_integrations || []);
     const chargeOn = new Set(d.charge_integrations || []);
-    const list = (cat.integrations || []).filter((i) => !hidden.has(i.domain)).map((i) => ({ domain: i.domain, name: i.name, devices: i.devices }));
+    // Die Liste der Labels (seit 2.155.0) nimmt dieselben Zuordnungen mit dem Schlüssel "label:<ID>"; die der Integrationen lässt sie weg
+    const list = labels
+      ? (d.labels || []).map((id) => ({ domain: `${LABEL_PREFIX}${id}`, name: this._scopeName(`${LABEL_PREFIX}${id}`), devices: this._labelInfo(id)?.devices || 0, label: true }))
+      : (cat.integrations || []).filter((i) => !hidden.has(i.domain)).map((i) => ({ domain: i.domain, name: i.name, devices: i.devices }));
     const known = new Set(list.map((x) => x.domain));
     for (const dom of [...Object.keys(offMap), ...Object.keys(delayMap), ...Object.keys(batMap), ...Object.keys(sigMap), ...noPush, ...noPers, ...noBatPush, ...noNew, ...chargeOn, ...Object.keys(d.charge_full_integrations || {}), ...Object.keys(d.charge_rise_integrations || {}), ...Object.keys(d.charge_stall_integrations || {}), ...Object.keys(d.charge_stop_integrations || {}), ...Object.keys(d.charge_live_integrations || {})]) {
-      if (known.has(dom) || hidden.has(dom)) continue;
+      if (known.has(dom) || hidden.has(dom) || isLabelKey(dom) !== labels) continue;
       known.add(dom);
       list.push({ domain: dom, name: this._integrations[dom] || dom, devices: 0 });
     }
@@ -7883,7 +8008,7 @@ class DevicePanel extends HTMLElement {
       const chargeVals = [cf != null ? t("diffChargeFull", cf) : "", cr != null ? t("diffChargeRise", cr) : "", cs != null ? t("diffChargeStall", cs) : "", cp != null ? t("diffChargeStop", cp) : "", cl != null ? t("diffChargeLive", cl) : ""].filter(Boolean);
       const chargeDiff = chargeOn.has(x.domain) ? t("diffCharge") + (chargeVals.length ? ` (${chargeVals.join(", ")})` : "") : cl != null ? t("diffChargeLive", cl) : null;
       const diff = unmon ? t("integUnmon") : [out, batText, chargeDiff, newDiff, sigDiff].filter(Boolean).join(" · ");
-      return { ...x, batDevices: bat.get(x.domain) || 0, unmon, out, bat: batText, chg: chargeDiff, noNew: noNew.has(x.domain), sig: sigDiff, own: Boolean(unmon || out || batText || chargeDiff || newDiff || sigDiff), diff };
+      return { ...x, batDevices: x.label ? x.devices : bat.get(x.domain) || 0, unmon, out, bat: batText, chg: chargeDiff, noNew: noNew.has(x.domain), sig: sigDiff, own: Boolean(unmon || out || batText || chargeDiff || newDiff || sigDiff), diff };
     });
   }
 
@@ -8053,7 +8178,7 @@ class DevicePanel extends HTMLElement {
     const on = new Set(d.charge_integrations || []);
     const saved = new Set(st.data.values.charge_integrations || []);
     const items = (st.data.catalog?.battery || []).map((x) => ({ domain: x.domain, name: x.name, devices: x.devices }));
-    for (const dom of [...on, ...saved]) if (!items.some((x) => x.domain === dom)) items.push({ domain: dom, name: this._integrations[dom] || dom, devices: 0 });
+    for (const dom of [...on, ...saved]) if (!isLabelKey(dom) && !items.some((x) => x.domain === dom)) items.push({ domain: dom, name: this._integrations[dom] || dom, devices: 0 });
     const rows = items
       .map((x) => `<div class="ex-row${on.has(x.domain) !== saved.has(x.domain) ? " changed" : ""}">${this._ibadge(x.domain, x.name)}<div class="ex-name">${escape(x.name)}<small>${escape(t("chargeIntegSub", x.devices))}</small></div>
         <label class="switch"><input type="checkbox" data-cinteg="${escape(x.domain)}" ${on.has(x.domain) ? "checked" : ""} aria-label="${escape(`${t("optCharge")}: ${x.name}`)}"><span></span></label></div>`)
@@ -8381,7 +8506,8 @@ class DevicePanel extends HTMLElement {
   _integDetailHtml(d, dom, errors) {
     const st = this._settings;
     const t = (k, ...a) => this._t(k, ...a);
-    const item = this._integItems(d).find((x) => x.domain === dom) || { domain: dom, name: this._integrations[dom] || dom, devices: 0, batDevices: 0 };
+    const isLabel = isLabelKey(dom);
+    const item = this._integItems(d, isLabel).find((x) => x.domain === dom) || { domain: dom, name: this._scopeName(dom), devices: 0, batDevices: 0, label: isLabel };
     const saved = st.data.values;
     const offMap = d.offline_after_integrations || {};
     const batMap = d.battery_low_integrations || {};
@@ -8459,7 +8585,7 @@ class DevicePanel extends HTMLElement {
       );
     // Batterie und Laden: nur sinnvoll mit Batteriegeräten oder eigener Einstellung (zum Zurücksetzen).
     const chargeMaps = ["charge_full_integrations", "charge_rise_integrations", "charge_stall_integrations", "charge_stop_integrations", "charge_live_integrations"];
-    const hasBat = Boolean(item.batDevices || dom in batMap || has("battery_push_exclude_integrations") || has("charge_integrations") || chargeMaps.some((k) => dom in (d[k] || {})));
+    const hasBat = Boolean(item.batDevices || isLabel || dom in batMap || has("battery_push_exclude_integrations") || has("charge_integrations") || chargeMaps.some((k) => dom in (d[k] || {})));
     const b = batMap[dom];
     const mode = b === "off" ? "off" : b === undefined ? "default" : "own";
     const std = val("battery_low");
@@ -8577,7 +8703,19 @@ class DevicePanel extends HTMLElement {
     const updGroup = this._updPlatforms(st.data?.catalog?.updates || []).find((g) => g.platform === dom);
     let updHtml = empty("integNoUpdates");
     let updOwn = false;
-    if (updGroup) {
+    if (isLabel) {
+      // Label (seit 2.155.0): Update-Meldung für alle Geräte des Labels: nach Art (Standard), immer oder nie
+      const ownState = (v) => ((v.updates_integrations_off || []).includes(dom) ? "off" : (v.updates_integrations_on || []).includes(dom) ? "on" : "default");
+      const cur = ownState(d);
+      updOwn = cur !== "default";
+      updHtml =
+        opt(cur !== ownState(saved), t("optUpdNotify"),
+          `<span class="opt-select"><select data-ulabel="${escape(dom)}" aria-label="${escape(`${t("optUpdNotify")}: ${item.name}`)}">${[["default", t("labelUpdDefault")], ["on", t("devChargeOn")], ["off", t("devChargeOff")]]
+            .map(([v, l]) => `<option value="${v}"${v === cur ? " selected" : ""}>${escape(l)}</option>`)
+            .join("")}</select>${mdi("chevronDown", 18)}</span>`,
+          origin(updOwn), `<div class="opt-short">${escape(t("labelUpdShort"))}</div>`) +
+        (tgt("updates") && d.notify_updates ? "" : `<div class="opt-short mon-hint">${escape(t(tgt("updates") ? "integUpdGlobalOff" : "noTargetWarn"))}</div>`);
+    } else if (updGroup) {
       const state = this._updIntegState(d, updGroup);
       const was = this._updIntegState(saved, updGroup);
       const ids = new Set(updGroup.items.map((x) => x.id));
@@ -8615,7 +8753,19 @@ class DevicePanel extends HTMLElement {
           })
           .join("")}</div>`
       : empty("integNoDevs");
-    const anyOwn = off !== undefined || delayOwn !== undefined || dom in batMap || chargeMaps.some((k) => dom in (d[k] || {})) || dom in (d.signal_low_integrations || {}) || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"].some(has);
+    // Typ und Verbindungsart des Labels (seit 2.155.0): gelten für alle Geräte mit dem Label statt der Erkennung (Integration < Label < Gerät)
+    const typeOwn = (d.type_integrations || {})[dom] || "";
+    const connOwn = (d.connection_integrations || {})[dom] || "";
+    const typeSel = (attr, own, saved0, opts, label) =>
+      opt(own !== (saved0 || ""), label,
+        `<span class="opt-select"><select ${attr}="${escape(dom)}" aria-label="${escape(`${label}: ${item.name}`)}">${opts.map(([v, l]) => `<option value="${v}"${v === own ? " selected" : ""}>${escape(l)}</option>`).join("")}</select>${mdi("chevronDown", 18)}</span>`,
+        origin(Boolean(own)));
+    const kindHtml = isLabel
+      ? `<div class="opt-short">${escape(t("labelTypeShort"))}</div>` +
+        typeSel("data-type-integ", typeOwn, (saved.type_integrations || {})[dom], [["", t("connIntegAuto")], ...TYPE_ORDER.map((k) => [k, t(typeKey(k))])], t("typeLabel")) +
+        typeSel("data-conn-integ", connOwn, (saved.connection_integrations || {})[dom], [["", t("connIntegAuto")], ...CONN_MANUAL.map((k) => [k, t(CONN[k].key)])], t("connType"))
+      : "";
+    const anyOwn = (isLabel && Boolean(typeOwn || connOwn)) || off !== undefined || delayOwn !== undefined || dom in batMap || chargeMaps.some((k) => dom in (d[k] || {})) || dom in (d.signal_low_integrations || {}) || ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"].some(has);
     // Reiter: Punkt, wenn es dort eine eigene Einstellung der Integration gibt (Geräte: eigene der Geräte).
     const own = {
       out: off !== undefined || delayOwn !== undefined || has("notify_exclude_integrations") || has("persistent_exclude_integrations"),
@@ -8625,17 +8775,88 @@ class DevicePanel extends HTMLElement {
       upd: updOwn,
       sig: dom in (d.signal_low_integrations || {}),
       dev: devs.length > 0,
+      kind: Boolean(typeOwn || connOwn),
     };
-    const tabs = [["out", "tabOutage"], ["bat", "tabBattery"], ["chg", "tabCharge"], ["new", "tabNew"], ["upd", "tabUpdates"], ["sig", "tabSignal"], ["dev", "tabDevices"]];
+    const tabs = [["out", "tabOutage"], ["bat", "tabBattery"], ["chg", "tabCharge"], ["new", "tabNew"], ["upd", "tabUpdates"], ["sig", "tabSignal"], isLabel ? ["kind", "tabKind"] : ["dev", "tabDevices"]];
     const cur = tabs.some(([id]) => id === st.sub?.integ) ? st.sub.integ : "out";
     const tabBar = `<div class="sub-tabs lvl-tabs" role="tablist">${tabs
       .map(([id, key]) => `<button type="button" role="tab" class="sub-tab${id === cur ? " on" : ""}${own[id] ? " chg" : ""}" data-set="isub" data-key="${id}" aria-selected="${id === cur}">${escape(t(key))}</button>`)
       .join("")}</div>`;
-    const bodies = { out: outHtml, bat: batHtml, chg: chgHtml, new: newHtml, upd: updHtml, sig: sigHtml, dev: devsHtml };
-    return `<button type="button" class="iback" data-set="integ" data-key="">${mdi("arrowLeft", 18)}${escape(t("integBack"))}</button>
-      <div class="ihead">${this._ibadge(dom, item.name)}<div><b>${escape(item.name)}</b><small>${escape(t("integDevs", item.devices, item.batDevices))}</small></div></div>
+    const bodies = { out: outHtml, bat: batHtml, chg: chgHtml, new: newHtml, upd: updHtml, sig: sigHtml, dev: devsHtml, kind: kindHtml };
+    // Label: Rangfolge, Reihenfolge in der Liste und Entfernen (die Labels in Home Assistant bleiben unberührt)
+    const labelId = isLabel ? dom.slice(LABEL_PREFIX.length) : "";
+    const pos = isLabel ? (d.labels || []).indexOf(labelId) : -1;
+    const labelFoot = isLabel
+      ? `<div class="opt-short label-rank">${escape(t("labelRank"))}</div><div class="opt-short label-rank">${escape(t("labelMulti"))}</div>
+        <div class="label-acts"><button type="button" class="ovr-all" data-set="label-move" data-key="${escape(labelId)}" data-dir="-1" ${pos > 0 ? "" : "disabled"}>${mdi("arrowUp", 15)}${escape(t("labelMoveUp"))}</button>
+          <button type="button" class="ovr-all" data-set="label-move" data-key="${escape(labelId)}" data-dir="1" ${pos >= 0 && pos < (d.labels || []).length - 1 ? "" : "disabled"}>${mdi("arrowDown", 15)}${escape(t("labelMoveDown"))}</button>
+          <button type="button" class="ovr-all danger" data-set="label-remove" data-key="${escape(labelId)}">${mdi("close", 15)}${escape(t("labelRemove"))}</button></div>
+        <div class="opt-short">${escape(t("labelRemoveShort"))}</div>`
+      : "";
+    const sub = isLabel ? t("labelDevs", item.devices) : t("integDevs", item.devices, item.batDevices);
+    return `<button type="button" class="iback" data-set="${isLabel ? "label" : "integ"}" data-key="">${mdi("arrowLeft", 18)}${escape(t(isLabel ? "labelBack" : "integBack"))}</button>
+      <div class="ihead">${this._ibadge(dom, item.name)}<div><b>${escape(item.name)}</b><small>${escape(sub)}${isLabel && this._labelInfo(labelId)?.missing ? ` · ${escape(t("labelMissing"))}` : ""}</small></div></div>
       ${tabBar}<div class="lvl-body" role="tabpanel">${bodies[cur]}</div>
-      <div class="integ-reset"><button type="button" class="ovr-all" data-set="integ-reset" data-key="${escape(dom)}" ${anyOwn || updOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("integReset"))}</button></div>`;
+      <div class="integ-reset"><button type="button" class="ovr-all" data-set="integ-reset" data-key="${escape(dom)}" ${anyOwn || updOwn ? "" : "disabled"}>${mdi("reset", 15)}${escape(t("integReset"))}</button></div>${labelFoot}`;
+  }
+
+  // Alles einer Integration oder eines Labels auf den Standard (beim Speichern)
+  _resetScope(dom) {
+    const st = this._settings;
+    for (const key of INTEG_OWN_MAPS) {
+      const own = { ...(st.draft[key] || {}) };
+      delete own[dom];
+      st.draft[key] = own;
+    }
+    for (const key of INTEG_OWN_LISTS) {
+      st.draft[key] = (st.draft[key] || []).filter((x) => x !== dom);
+    }
+    // Update-Meldungen dieser Integration (seit 2.140.0): die Wahl der Integration und die ihrer Einträge
+    for (const key of ["updates_integrations_on", "updates_integrations_off"]) st.draft[key] = (st.draft[key] || []).filter((x) => x !== dom);
+    const mine = new Set((st.data.catalog?.updates || []).filter((u) => u.platform === dom).map((u) => u.id));
+    for (const key of ["updates_exclude", "updates_include"]) st.draft[key] = (st.draft[key] || []).filter((id) => !mine.has(id));
+    // Typ und Verbindungsart eines Labels (seit 2.155.0) haben keinen eigenen Reiter-Abschnitt der Integrationen
+    if (isLabelKey(dom)) {
+      for (const key of ["type_integrations", "connection_integrations"]) {
+        const own = { ...(st.draft[key] || {}) };
+        delete own[dom];
+        st.draft[key] = own;
+      }
+    }
+  }
+
+  // Abschnitt "Labels" (seit 2.155.0): Liste der eingerichteten Labels mit Plus zum Hinzufügen; ein Label öffnet dieselben Einstellungen
+  // wie eine Integration (Rangfolge: Gerät vor Label vor Integration vor Global).
+  _labelsHtml(d, errors) {
+    const st = this._settings;
+    const t = (k, ...a) => this._t(k, ...a);
+    if (st.label) return this._integDetailHtml(d, st.label, errors);
+    const items = this._integItems(d, true);
+    const savedItems = new Map(this._integItems(st.data.values, true).map((x) => [x.domain, x.diff]));
+    const rows = items
+      .map((x) => {
+        const id = x.domain.slice(LABEL_PREFIX.length);
+        const changed = savedItems.get(x.domain) !== x.diff;
+        const missing = this._labelInfo(id)?.missing;
+        return `<button type="button" class="ilist-row${changed ? " changed" : ""}" data-set="label" data-key="${escape(id)}">${this._ibadge(x.domain, x.name)}
+          <span class="ilist-name">${escape(x.name)}<small>${escape(t("labelDevs", x.devices))}${missing ? ` · ${escape(t("labelMissing"))}` : ""}</small><small class="ilist-diff${x.unmon ? " unmon" : x.own ? " own" : ""}">${escape(x.own ? x.diff : t("integStandard"))}</small></span><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button>`;
+      })
+      .join("");
+    const have = new Set(d.labels || []);
+    const free = this._labelList().filter((x) => !x.missing && !have.has(x.id));
+    const pickRows = free
+      .map((x) => `<button type="button" class="ilist-row" data-set="label-pick" data-key="${escape(x.id)}">${this._ibadge(`${LABEL_PREFIX}${x.id}`, x.name)}
+          <span class="ilist-name">${escape(x.name)}<small>${escape(t("labelDevs", x.devices))}</small></span><span class="cbtn" aria-hidden="true">${mdi("plus", 16)}</span></button>`)
+      .join("");
+    const picker = st.labelPick
+      ? `<div class="label-pick"><div class="mon-grp">${escape(t("labelPickTitle"))}</div>
+          ${this._searchHtml("labelpick", free.length)}
+          ${free.length ? `<div class="ilist srch-rows" data-srch="labelpick">${pickRows}<div class="srch-none opt-short" hidden>${escape(t("listSearchNone"))}</div></div>` : `<div class="opt-short mon-empty">${escape(t("labelPickNone"))}</div>`}
+          <div class="opt-short">${escape(t("labelPickHint"))}</div></div>`
+      : "";
+    return `<div class="opt-short mon-intro">${escape(t("labelsIntro"))}</div>
+      ${rows ? `<div class="ilist">${rows}</div>` : `<div class="opt-short mon-empty">${escape(t("labelNone"))}</div>`}
+      <button type="button" class="label-add${st.labelPick ? " on" : ""}" data-set="label-add" aria-expanded="${Boolean(st.labelPick)}">${mdi("plus", 16)}<span>${escape(t("labelAdd"))}</span></button>${picker}`;
   }
 
   _settingsBodyHtml() {
@@ -8797,7 +9018,7 @@ class DevicePanel extends HTMLElement {
       [...(typeInfo.get(dom) || [])].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${n} ${t(typeKey(k))}`).join(", ");
     for (const i of integrations) if (detected(i.value)) i.sub = `${i.sub} · ${t("typeIntegDetected", detected(i.value))}`;
     for (const dom of Object.keys({ ...typeOwn, ...typeSaved })) {
-      if (integrations.some((x) => x.value === dom)) continue;
+      if (isLabelKey(dom) || integrations.some((x) => x.value === dom)) continue;
       const label = this._integrations[dom] || dom;
       integrations.push({ value: dom, label, sub: t("typesEmpty"), badge: this._ibadge(dom, label) });
     }
@@ -8820,7 +9041,7 @@ class DevicePanel extends HTMLElement {
     const connDetected = (dom) =>
       [...(connInfo.get(dom) || [])].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, n]) => `${n} ${t(CONN[k].key)}`).join(", ");
     for (const dom of Object.keys({ ...connOwn, ...connSaved })) {
-      if (integrations.some((x) => x.value === dom)) continue;
+      if (isLabelKey(dom) || integrations.some((x) => x.value === dom)) continue;
       const label = this._integrations[dom] || dom;
       integrations.push({ value: dom, label, sub: t("typesEmpty"), badge: this._ibadge(dom, label) });
     }
@@ -9030,6 +9251,7 @@ class DevicePanel extends HTMLElement {
           : "") +
         ttl("ttlAiPrompt") +
         this._aiPromptHtml(d, changes.has("ai_prompt")),
+      labels: this._labelsHtml(d, errors),
       routines:
         row("routines_pause", t("optRoutinesPause"), sw("routines_pause", t("optRoutinesPause")), t("optRoutinesPauseShort"), null) +
         row("routines_catch_up", t("optRoutinesCatchUp"), num("routines_catch_up", t("minuteUnit"), t("optRoutinesCatchUp")), t("optRoutinesCatchUpShort"), null) +
@@ -9037,7 +9259,7 @@ class DevicePanel extends HTMLElement {
         row("routines_notify_error", t("optRoutinesNotifyError"), sw("routines_notify_error", t("optRoutinesNotifyError")), t("optRoutinesNotifyErrorShort"), t("optRoutinesNotifyErrorInfo")),
     };
     const titles = {
-      devices: "secDevices", monitor: "secMonitor", routines: "secRoutines", ai: "secAiSettings", updates: "secPanel",
+      devices: "secDevices", monitor: "secMonitor", labels: "secLabels", routines: "secRoutines", ai: "secAiSettings", updates: "secPanel",
     };
     // Dialog "Ansicht": nur der Block der Filter-Chips (Rahmen und Reiter baut _viewBodyHtml)
     if (st.mode === "view") return fields.chips;
@@ -9140,6 +9362,36 @@ class DevicePanel extends HTMLElement {
         this._renderSettings();
         // Neuer Inhalt beginnt oben: die Reiter ins Bild, wenn sie darüber liegen.
         if (action !== "ifilter") this.shadowRoot.querySelector("dialog.settings .mon-tabs")?.scrollIntoView({ block: action === "goto" ? "start" : "nearest" });
+      } else if (action === "label" || action === "label-add" || action === "label-pick" || action === "label-move" || action === "label-remove") {
+        // Abschnitt "Labels" (seit 2.155.0): öffnen (leer = Liste), Auswahl eines Labels, Reihenfolge, entfernen
+        if (!st.draft) return;
+        const id = btn.dataset.key;
+        if (action === "label") {
+          if ((id ? `${LABEL_PREFIX}${id}` : null) !== st.label) st.sub.integ = "out";
+          st.label = id ? `${LABEL_PREFIX}${id}` : null;
+        } else if (action === "label-add") {
+          st.labelPick = !st.labelPick;
+        } else if (action === "label-pick") {
+          const ids = [...(st.draft.labels || [])];
+          if (!ids.includes(id)) ids.push(id);
+          st.draft.labels = ids;
+          st.labelPick = false;
+          st.sub.integ = "out";
+          st.label = `${LABEL_PREFIX}${id}`;
+        } else if (action === "label-move") {
+          const ids = [...(st.draft.labels || [])];
+          const at = ids.indexOf(id);
+          const to = at + Number(btn.dataset.dir);
+          if (at < 0 || to < 0 || to >= ids.length) return;
+          [ids[at], ids[to]] = [ids[to], ids[at]];
+          st.draft.labels = ids;
+        } else {
+          // Entfernen: alle Einstellungen des Labels fallen weg (Home Assistant bleibt unberührt)
+          this._resetScope(`${LABEL_PREFIX}${id}`);
+          st.draft.labels = (st.draft.labels || []).filter((x) => x !== id);
+          st.label = null;
+        }
+        this._renderSettings();
       } else if (action === "subtab") {
         st.sub[btn.dataset.group] = btn.dataset.key;
         this._renderSettings();
@@ -9167,25 +9419,14 @@ class DevicePanel extends HTMLElement {
         this._renderSettings();
       } else if (action === "integ-reset-all") {
         if (!st.draft) return;
-        for (const key of INTEG_OWN_MAPS) st.draft[key] = {};
-        for (const key of INTEG_OWN_LISTS) st.draft[key] = [];
+        // Die Einstellungen der Labels (Schlüssel "label:<ID>") bleiben: sie haben ihren eigenen Abschnitt
+        for (const key of INTEG_OWN_MAPS) st.draft[key] = Object.fromEntries(Object.entries(st.draft[key] || {}).filter(([k]) => isLabelKey(k)));
+        for (const key of INTEG_OWN_LISTS) st.draft[key] = (st.draft[key] || []).filter(isLabelKey);
         this._renderSettings();
       } else if (action === "integ-reset") {
         // Alles einer Integration auf den Standard (beim Speichern).
         if (!st.draft) return;
-        const dom = btn.dataset.key;
-        for (const key of INTEG_OWN_MAPS) {
-          const own = { ...(st.draft[key] || {}) };
-          delete own[dom];
-          st.draft[key] = own;
-        }
-        for (const key of INTEG_OWN_LISTS) {
-          st.draft[key] = (st.draft[key] || []).filter((x) => x !== dom);
-        }
-        // Update-Meldungen dieser Integration (seit 2.140.0): die Wahl der Integration und die ihrer Einträge
-        for (const key of ["updates_integrations_on", "updates_integrations_off"]) st.draft[key] = (st.draft[key] || []).filter((x) => x !== dom);
-        const mine = new Set((st.data.catalog?.updates || []).filter((u) => u.platform === dom).map((u) => u.id));
-        for (const key of ["updates_exclude", "updates_include"]) st.draft[key] = (st.draft[key] || []).filter((id) => !mine.has(id));
+        this._resetScope(btn.dataset.key);
         this._renderSettings();
       } else if (action === "quiet-all") {
         // Ruhezeit: die Zeiten des Montags für alle Wochentage übernehmen (ein/aus bleibt je Tag)
@@ -9378,6 +9619,18 @@ class DevicePanel extends HTMLElement {
         if (el.value) own[el.dataset.connInteg] = el.value;
         else delete own[el.dataset.connInteg];
         st.draft.connection_integrations = own;
+        this._renderSettings();
+        return;
+      }
+      if (st?.draft && el.tagName === "SELECT" && el.dataset.ulabel) {
+        // Update-Meldung eines Labels (seit 2.155.0): Standard (nach Art), immer oder nie
+        const p = el.dataset.ulabel;
+        const on = new Set((st.draft.updates_integrations_on || []).filter((x) => x !== p));
+        const off = new Set((st.draft.updates_integrations_off || []).filter((x) => x !== p));
+        if (el.value === "on") on.add(p);
+        else if (el.value === "off") off.add(p);
+        st.draft.updates_integrations_on = [...on].sort();
+        st.draft.updates_integrations_off = [...off].sort();
         this._renderSettings();
         return;
       }

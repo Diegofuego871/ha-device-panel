@@ -7,6 +7,21 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.155.0] - 2026-10-25
+
+Labels: Geräte mit einem Label aus Home Assistant lassen sich gemeinsam einstellen, von "oft offline" nicht mehr überwachten Geräten bis zu einer gemeinsamen Batterie-Schwelle.
+
+### Hinzugefügt
+
+- **Einstellungen › Labels:** ein neuer Abschnitt neben "Überwachung und Meldungen". Das Plus wählt ein Label aus Home Assistant (nur Labels, die an mindestens einem Gerät hängen); geöffnet zeigt es dieselben Reiter wie eine Integration: Ausfall, Batterie, Laden, Neu, Updates, Empfang und Typ (Typ und Verbindungsart). Die Liste behält die Reihenfolge, die man ihr gibt ("Nach oben" / "Nach unten"); "Label entfernen" löscht alle Einstellungen des Labels (beim Speichern) und lässt Home Assistant unberührt.
+- **Rangfolge:** Gerät › Label › Integration › Global. Eine Wahl am Gerät gilt immer. Trägt ein Gerät mehrere Labels, gilt das strengste: zuerst "Nicht überwachen", sonst die längere Zeit oder die tiefere Schwelle; bei nicht Vergleichbarem (Typ, Verbindungsart, Meldung an oder aus) zählt das Label weiter oben in der Liste. Im Geräte-Popup sagt die Auswahl "Wie Label (...)", und die Herkunft zeigt "Label <Name>".
+- **Filter-Chip "Label":** wie "Bereich" und "Integration", mit Mehrfachauswahl, Zahlen, Suche, "Ohne Label" und folgendem Kopf. Er erscheint nur, solange mindestens ein Gerät ein Label trägt, und lässt sich wie alle Chips ausblenden und verschieben (Einstellungen › Geräte im Panel › Filter-Chips, und in den Ansichtseinstellungen der Tabelle).
+- **Einrichtungsassistent, Seite "Labels":** vor "Ruhezeit und System", nur wenn Home Assistant ein Label an einem Gerät kennt. Eine Auswahl wählt das Label; seine Karte bietet Überwachung, "Ausgefallen nach", "Erst melden nach", die Batterie-Schwelle und die Meldungen (Ausfall, Batterie, Voll geladen, Neue Geräte, Updates) wie bei einer Integration.
+
+### Geändert
+
+- **Typ und Verbindungsart pro Integration** beachten jetzt auch Labels (ein Label am Gerät geht vor der Integration); die Gerätedaten nennen die Quelle in `type_integration_source` und `connection_integration_source`.
+
 ## [2.154.2] - 2026-10-25
 
 "Alle umschalten" verschwindet, solange in einer Liste gesucht wird.
@@ -5041,6 +5056,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.155.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.0
 [2.154.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.2
 [2.154.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.1
 [2.154.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.0

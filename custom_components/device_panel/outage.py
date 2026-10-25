@@ -59,6 +59,7 @@ from .const import (
     STORAGE_VERSION,
 )
 from .devices import async_device_facts, async_mute_device, device_notify_delay, device_settings, notify_muted_until, primary_domain
+from .scope import listed
 from .options_api import notify_target, effective
 
 _LOGGER = logging.getLogger(__name__)
@@ -287,7 +288,7 @@ class OutageNotifier:
         if dev in device_settings(self.hass)["notify_off"] or notify_muted_until(self.hass, dev, now):
             return False
         device = dr.async_get(self.hass).async_get(dev)
-        return device is not None and primary_domain(self.hass, device) not in opts[CONF_NOTIFY_EXCLUDE]
+        return device is not None and not listed(opts[CONF_NOTIFY_EXCLUDE], primary_domain(self.hass, device))
 
     async def _async_push(self, opts: dict[str, Any], items: list[tuple[str, float]], online: bool) -> None:
         hass = self.hass
@@ -439,7 +440,7 @@ class OutageNotifier:
         if opts[CONF_OUTAGE_PERSISTENT]:
             for dev, start in self._offline.items():
                 device = dev_reg.async_get(dev)
-                if device is None or dev in off or primary_domain(hass, device) in opts[CONF_PERSISTENT_EXCLUDE]:
+                if device is None or dev in off or listed(opts[CONF_PERSISTENT_EXCLUDE], primary_domain(hass, device)):
                     continue
                 name = device.name_by_user or device.name or dev
                 since = push.text(hass, "outage_persistent_since", time=_local_time(start))

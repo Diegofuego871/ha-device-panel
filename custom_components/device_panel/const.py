@@ -13,7 +13,7 @@ PANEL_HTML_FILE = "panel.html"
 STATIC_URL_PATH = f"/{DOMAIN}"
 PANEL_STATIC_URL_PATH = f"{STATIC_URL_PATH}/panel"
 # Cache-Buster: bei jeder Änderung unter panel/ von Hand erhöhen.
-PANEL_VERSION = "364"
+PANEL_VERSION = "365"
 PANEL_PAGE_URL = f"{PANEL_STATIC_URL_PATH}/{PANEL_HTML_FILE}?v={PANEL_VERSION}"
 
 # Mitgeliefertes Bild für Push-Meldungen (Companion-App, "icon_url"), wie in
@@ -486,7 +486,8 @@ CONF_HIDE_CHIPS = "hide_chips"
 # Seit 1.16.0: "offline" ("Ausgefallen", nur ausgefallene Geräte) und "problems"
 # ("Warnungen": instabil, Batterie niedrig, schwacher Empfang, keine Daten, ohne
 # Ausfälle; der Schlüssel blieb, damit gespeicherte Einstellungen gültig bleiben).
-CHIP_KEYS = ("area", "integration", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites")
+# Seit 2.155.0: "label" (Filter "Label", wie "Bereich" und "Integration" eine Auswahl; nur da, wenn es in Home Assistant ein Label mit Geräten gibt).
+CHIP_KEYS = ("area", "integration", "label", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites")
 CONNECTION_TYPES = ("zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown")
 # Reihenfolge aller Chips über der Liste (seit 1.13.0, seit 1.14.0 eine Folge):
 # "all" und jede Verbindungsart sind Einträge wie die übrigen Chips. Leer =
@@ -498,7 +499,7 @@ CONF_CHIP_ORDER = "chip_order"
 # "pin" (seit 1.15.0) ist kein Chip, sondern der Anheft-Marker: Die sichtbaren
 # Chips davor bleiben auf dem Handy beim seitlichen Scrollen der Leiste links
 # stehen. Ganz vorn (Standard) = nichts angeheftet.
-CHIP_ORDER_KEYS = (*CHIP_KEYS[:2], "all", *CONNECTION_TYPES, *CHIP_KEYS[2:], "pin")
+CHIP_ORDER_KEYS = (*CHIP_KEYS[:3], "all", *CONNECTION_TYPES, *CHIP_KEYS[3:], "pin")
 CHIP_ORDER_LEGACY_BLOCK = "connections"
 # Startwerte einer neuen Installation (seit 1.18.0, nach dem Bildschirmfoto des
 # Nutzers): Inhalt der Meldungen und der ausgeblendete Chip "Eigene Einstellung"
@@ -515,7 +516,7 @@ CONF_WIZARD_DONE_AT = "wizard_done_at"
 # Zwischenstand des Assistenten (seit 2.136.0): Schritt und Entwurf, damit ein abgebrochener Assistent beim nächsten Start dort weitermacht.
 # Er wird nicht angewendet; "Fertigstellen" und "Nicht mehr zeigen" löschen ihn.
 CONF_WIZARD_DRAFT = "wizard_draft"
-WIZARD_DRAFT_STEPS = ("welcome", "integrations", "types", "devices", "messages", "quiet", "done")
+WIZARD_DRAFT_STEPS = ("welcome", "integrations", "types", "devices", "messages", "labels", "quiet", "done")
 WIZARD_DRAFT_MAX_CHARS = 200_000
 NEW_INSTALL_OPTIONS = {
     CONF_WIZARD_STATE: "new",
@@ -537,3 +538,10 @@ CONF_CONNECTION_INTEGRATIONS = "connection_integrations"
 CONF_TYPE_INTEGRATIONS = "type_integrations"
 # Von Hand gesetzte Gerätetypen (eigene Datei, eine Instanz pro HA).
 DATA_TYPE_OVERRIDES = f"{DOMAIN}_type_overrides"
+
+# Labels (seit 2.155.0): eigene Einstellungen für alle Geräte mit einem Label aus Home Assistant. CONF_LABELS ist die Liste der eingerichteten Labels
+# (IDs, in der Reihenfolge, die der Benutzer festlegt). Die Einstellungen eines Labels stehen in denselben Zuordnungen und Listen wie die der
+# Integrationen, unter dem Schlüssel "label:<ID>" (LABEL_PREFIX). Rangfolge: Gerät, Label, Integration, global. Hat ein Gerät mehrere eingerichtete
+# Labels, gilt das strengste (nicht überwachen vor einer Zeit, die längere Zeit, aus vor an), bei allem anderen das Label weiter oben in der Liste.
+CONF_LABELS = "labels"
+LABEL_PREFIX = "label:"

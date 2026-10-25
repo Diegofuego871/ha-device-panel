@@ -1078,6 +1078,17 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .sig-intro { margin-bottom: 4px; }
 .opt.changed > .opt-line .bat-ctl .opt-input:not(.bad), .opt.changed > .opt-line .bat-ctl .opt-select select { border-color: var(--dp-primary); box-shadow: inset 0 0 0 1px var(--dp-primary); }
 .integ-reset { margin: 14px 0 4px; }
+/* Labels (seit 2.155.0): Kennzeichen, Hinzufügen, Rangfolge und Reihenfolge im Detail */
+.ibadge.lbl { background: hsl(var(--h, 210) 45% 42%); }
+.label-add { display: inline-flex; align-items: center; gap: 8px; height: 40px; margin: 10px 0 4px; padding: 0 16px 0 12px; border: 1px dashed var(--dp-primary); border-radius: 12px; background: none;
+  color: var(--dp-primary); font: inherit; font-weight: 600; cursor: pointer; }
+.label-add:hover, .label-add.on { background: var(--dp-hover); }
+.label-add:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
+.label-pick { margin-top: 8px; }
+.label-rank { margin-top: 10px; }
+.label-acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 6px; }
+.ovr-all.danger { border-color: var(--dp-error); color: var(--dp-error); }
+.ovr-all.danger svg { color: var(--dp-error); }
 /* Profi-Modus der KI-Einschätzung (seit 1.2.0, docs/mockups/ai-v1, A) */
 .aip { margin: 4px 0 8px; }
 .aip-h { font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--dp-text2); margin: 8px 0 6px; }
@@ -2408,6 +2419,16 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-sel { position: relative; display: flex; align-items: center; border: 1px solid var(--dp-divider); border-radius: 12px; margin: 4px 0 10px; }
 .wz-sel select { appearance: none; flex: 1; min-width: 0; border: 0; background: transparent; color: inherit; font: inherit; font-size: 14.5px; padding: 12px 40px 12px 12px; cursor: pointer; }
 .wz-sel svg { position: absolute; right: 10px; pointer-events: none; }
+/* Schritt "Labels" (seit 2.155.0): schmale Auswahl in der Zeile, Zeile eines eingerichteten Labels, Karte des gewählten */
+.wz-sel.wz-sel-s { flex: none; width: 168px; margin: 0; }
+.wz-sel.wz-sel-s select { padding: 8px 34px 8px 10px; font-size: 13.5px; }
+.wz-lrow { width: 100%; border: 1px solid var(--dp-divider); border-radius: 12px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; margin: 4px 0; }
+.wz-lrow.on { border-color: var(--dp-primary); }
+.wz-lrow:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
+.wz-lcard { margin-top: 12px; }
+.wz-lcard .dim { opacity: .5; pointer-events: none; }
+.wz-lrm { flex: none; height: 32px; padding: 0 10px; }
+@media (max-width: 480px) { .wz-sel.wz-sel-s { width: 132px; } }
 .wz-testrow { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-bottom: 6px; }
 .wz-testrow .dlg-btn { width: 100%; }
 .wz-testres { font-size: 12.5px; text-align: center; min-height: 1em; }

@@ -458,6 +458,25 @@
       d.type_manual = Boolean(d.type_man);
     }
   }
+  // Wie scope.label_list: Labels mit Zahl der Geräten (nur mit Geräten und die eingerichteten), nach Name
+  window.__labelList = (counts, keep = []) => {
+    const known = new Map(window.__labels.map((l) => [l.id, l]));
+    const out = [...known.values()].filter((l) => counts[l.id] || keep.includes(l.id)).map((l) => ({ id: l.id, name: l.name, icon: null, color: null, devices: counts[l.id] || 0, missing: false }));
+    out.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+    for (const id of keep) if (!known.has(id)) out.push({ id, name: id, icon: null, color: null, devices: counts[id] || 0, missing: true });
+    return out;
+  };
+  // Die Schlüssel der eingerichteten Labels eines Geräts (Reihenfolge der Einrichtung), wie scope.scope_of
+  window.__devLabelKeys = (d) => (window.__opts.labels || []).filter((id) => (window.__devLabels[d.id] || []).includes(id)).map((id) => `label:${id}`);
+  // Wert aus einer Zuordnung: Label des Geräts (combine bei mehreren), sonst die Integration; [Schlüssel, Wert]
+  window.__scopePick = (map, d, combine) => {
+    const found = window.__devLabelKeys(d).filter((k) => k in (map || {})).map((k) => [k, map[k]]);
+    if (found.length) return combine(found);
+    const dom = d.integration?.domain;
+    return dom && dom in (map || {}) ? [dom, map[dom]] : [null, undefined];
+  };
+  window.__strictestTime = (found) => found.find(([, v]) => v === "off") || found.reduce((a, b) => (b[1] > a[1] ? b : a));
+  window.__lowest = (found) => found.find(([, v]) => v === "off") || found.reduce((a, b) => (b[1] < a[1] ? b : a));
   function catalog() {
     const byDomain = {};
     const byType = {};
@@ -487,7 +506,10 @@
       .filter(Boolean)
       .map((d) => ({ id: d.id, name: d.name, type: d.type, area: d.area, integration: integrations[d.integration?.domain] || d.integration?.domain || null }))
       .sort((a, b) => a.name.localeCompare(b.name));
+    const labelCounts = {};
+    for (const d of shown()) for (const id of window.__devLabels[d.id] || []) labelCounts[id] = (labelCounts[id] || 0) + 1;
     return {
+      labels: window.__labelList(labelCounts, window.__opts.labels),
       hidden_devices: hidden,
       integrations: Object.entries(byDomain).map(([domain, n]) => ({ domain, name: integrations[domain] || domain, devices: n, hidden_by_type: hiddenType[domain] || {}, hidden_by_device: hiddenDev[domain] || 0 })).sort((a, b) => b.devices - a.devices || a.name.localeCompare(b.name)),
       types: TYPE_ORDER.map((t) => ({ type: t, devices: byType[t] || 0 })),
@@ -643,7 +665,7 @@
   };
   window.__statusSum = () => { const s = window.__statusSnap(Date.now() / 1000); return { problems: s.problems, down: s.down }; };
   window.__opts = {
-    offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, offline_after_integrations: {}, notify_delay_integrations: {}, battery_push: false, battery_persistent: false,
+    labels: [], offline_after: 2, flaky_outages: 3, startup_grace: 5, battery_low: 15, battery_low_integrations: {}, offline_after_integrations: {}, notify_delay_integrations: {}, battery_push: false, battery_persistent: false,
     battery_push_mode: "instant", battery_push_time: "08:00", battery_push_daily: "new",
     exclude_integrations: [], exclude_types: [], exclude_devices: [], notify_service: "none", notify_service_outage: "", notify_service_battery: "", notify_service_charge: "", notify_service_new: "", notify_service_updates: "", notify_service_routines: "", notify_service_panelupdate: "", update_check_time: "", update_notify: false, notify_click_target: "panel",
     quiet_enabled: false, quiet_mode: "summary", quiet_topics: ["outage", "online", "battery", "charge", "new", "updates", "panelupdate"], quiet_days: Array.from({ length: 7 }, () => ({ on: true, from: "22:00", to: "07:00" })),
@@ -659,11 +681,16 @@
     // Emoji der Push-Meldungen: null = Standard (seit 2.2.0)
     emoji_outage: null, emoji_group: null, emoji_online: null, emoji_battery: null, emoji_charge: null, emoji_charge_stop: null, emoji_new: null, emoji_updates: null,
   };
+  // Schlüssel der Zuordnungen pro Integration: Domain oder Label ("label:<ID>", seit 2.155.0), wie options_api._DOMAIN_RE
+  const KEY_RE = /^(?:[a-z0-9_]+|label:[a-z0-9_-]{1,64})$/;
   const EMOJI_DEFAULTS = { outage: "🔴", group: "🚨", online: "🟢", battery: "🪫", charge: "🔋", charge_stop: "🔌", new: "✨", updates: "⬆️" };
   window.__services = [];
   // Einstellungen pro Gerät (Batterie, Meldungen), wie .storage/device_panel.devices.
   window.__devSettings = { battery: {}, notifyOff: new Set(), mute: {}, signal: {}, offline: {}, notifyDelay: {}, charge: {}, chargeLive: {}, chargeFull: {}, chargeRise: {}, chargeStall: {}, chargeStop: {} };
   window.__connOverrides = {};
+  // Labels von Home Assistant (seit 2.155.0): window.__labels = [{ id, name }], window.__devLabels = { Geräte-ID: [Label-IDs] }
+  window.__labels = [];
+  window.__devLabels = {};
   window.__names = {};
   const pushHass = () => {
     const ha = document.querySelector("home-assistant").hass;
@@ -910,13 +937,15 @@
         return { battery, notify, connection, signal, offline, notify_delay: notifyDelay, charge };
       }
       if (msg.type === "device_panel/wizard_data") {
+        const labelCounts = {};
+        for (const d of candidates()) for (const id of window.__devLabels[d.id] || []) labelCounts[id] = (labelCounts[id] || 0) + 1;
         // Wie wizard.ws_wizard_data: alle Kandidaten ohne abgezogene Ausschlüsse
-        const list = candidates().map((d) => ({ id: d.id, name: d.name, domain: d.integration?.domain || "", type: d.type, area: d.area || "", battery: Boolean(d.battery), battery_level: d.battery?.level ?? null, down: d.online === false })).sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+        const list = candidates().map((d) => ({ id: d.id, name: d.name, domain: d.integration?.domain || "", type: d.type, area: d.area || "", battery: Boolean(d.battery), battery_level: d.battery?.level ?? null, down: d.online === false, labels: [...(window.__devLabels[d.id] || [])].sort() })).sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
         const count = {};
         for (const d of list) if (d.domain) count[d.domain] = (count[d.domain] || 0) + 1;
         const integrations = Object.entries(count).map(([domain, devices]) => ({ domain, name: TITLES[domain] || domain, devices })).sort((a, b) => b.devices - a.devices || a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
         // Aktuelle Auslastung wie wizard.ws_wizard_data (Festplatte ohne Prozentwert fehlt)
-        return { integrations, devices: list, status: { cpu: 23.4, ram: 61.2, disk: window.__noDiskPercent ? null : 48.6 } };
+        return { integrations, devices: list, status: { cpu: 23.4, ram: 61.2, disk: window.__noDiskPercent ? null : 48.6 }, labels: window.__labelList(labelCounts, window.__opts.labels) };
       }
       if (msg.type === "device_panel/wizard_test") {
         if (!/^notify\.[a-z0-9_]+$/.test(msg.target)) throw { code: "invalid_format", message: "target" };
@@ -965,9 +994,15 @@
           msg.values.quiet_topics = known.filter((k) => v.includes(k));
         }
         if ("battery_push_mode" in msg.values && !["instant", "daily"].includes(msg.values.battery_push_mode)) throw { code: "invalid_format", message: "mode" };
+        if ("labels" in msg.values) {
+          // Wie options_api.label_ids: IDs der eingerichteten Labels, ohne Doppelte, Reihenfolge bleibt
+          const v = msg.values.labels;
+          if (!Array.isArray(v) || v.some((x) => typeof x !== "string" || !/^[a-z0-9_-]{1,64}$/.test(x))) throw { code: "invalid_format", message: "labels" };
+          msg.values.labels = [...new Set(v)];
+        }
         if ("hide_chips" in msg.values) {
           // Wie options_api._chips: bekannte Schlüssel in fester Reihenfolge.
-          const known = ["area", "integration", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites"];
+          const known = ["area", "integration", "label", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites"];
           const v = msg.values.hide_chips;
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "chips" };
           msg.values.hide_chips = known.filter((k) => v.includes(k));
@@ -985,7 +1020,7 @@
           msg.values.connection_order = [...new Set(v)];
         }
         if ("chip_order" in msg.values) {
-          const known = ["area", "integration", "all", "zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites", "pin"];
+          const known = ["area", "integration", "label", "all", "zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud", "unknown", "offline", "problems", "batteries", "battery", "signal", "update", "override", "new", "charging", "favorites", "pin"];
           const v = msg.values.chip_order;
           if (!Array.isArray(v) || v.some((x) => !known.includes(x))) throw { code: "invalid_format", message: "chip order" };
           msg.values.chip_order = [...new Set(v)];
@@ -993,25 +1028,25 @@
         if ("connection_integrations" in msg.values) {
           const m = msg.values.connection_integrations;
           const kinds = ["zigbee", "thread", "zwave", "matter", "ble", "wifi", "ethernet", "network", "cloud"];
-          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !kinds.includes(v))) throw { code: "invalid_format", message: "connection map" };
+          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !KEY_RE.test(k) || !kinds.includes(v))) throw { code: "invalid_format", message: "connection map" };
         }
         if ("type_integrations" in msg.values) {
           const m = msg.values.type_integrations;
-          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !TYPE_ORDER.includes(v))) throw { code: "invalid_format", message: "type map" };
+          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !KEY_RE.test(k) || !TYPE_ORDER.includes(v))) throw { code: "invalid_format", message: "type map" };
         }
         for (const [key, lo, hi] of [["charge_full_integrations", 50, 100], ["charge_rise_integrations", 2, 80], ["charge_stall_integrations", 5, 120]]) {
           if (key in msg.values) {
             const v = msg.values[key];
-            if (!v || typeof v !== "object" || Array.isArray(v) || Object.entries(v).some(([k, n]) => !/^[a-z0-9_]+$/.test(k) || !Number.isInteger(n) || n < lo || n > hi)) throw { code: "invalid_format", message: key };
+            if (!v || typeof v !== "object" || Array.isArray(v) || Object.entries(v).some(([k, n]) => !KEY_RE.test(k) || !Number.isInteger(n) || n < lo || n > hi)) throw { code: "invalid_format", message: key };
           }
         }
         if ("charge_stop_integrations" in msg.values) {
           const v = msg.values.charge_stop_integrations;
-          if (!v || typeof v !== "object" || Array.isArray(v) || Object.entries(v).some(([k, b]) => !/^[a-z0-9_]+$/.test(k) || typeof b !== "boolean")) throw { code: "invalid_format", message: "charge_stop_integrations" };
+          if (!v || typeof v !== "object" || Array.isArray(v) || Object.entries(v).some(([k, b]) => !KEY_RE.test(k) || typeof b !== "boolean")) throw { code: "invalid_format", message: "charge_stop_integrations" };
         }
         if ("charge_live_integrations" in msg.values) {
           const v = msg.values.charge_live_integrations;
-          if (!v || typeof v !== "object" || Array.isArray(v) || Object.entries(v).some(([k, b]) => !/^[a-z0-9_]+$/.test(k) || typeof b !== "boolean")) throw { code: "invalid_format", message: "charge_live_integrations" };
+          if (!v || typeof v !== "object" || Array.isArray(v) || Object.entries(v).some(([k, b]) => !KEY_RE.test(k) || typeof b !== "boolean")) throw { code: "invalid_format", message: "charge_live_integrations" };
         }
         if ("updates_kinds" in msg.values) {
           const v = msg.values.updates_kinds;
@@ -1022,7 +1057,7 @@
         for (const key of ["updates_integrations_on", "updates_integrations_off"]) {
           if (key in msg.values) {
             const v = msg.values[key];
-            if (!Array.isArray(v) || v.some((x) => !/^[a-z0-9_]+$/.test(x))) throw { code: "invalid_format", message: key };
+            if (!Array.isArray(v) || v.some((x) => !KEY_RE.test(x))) throw { code: "invalid_format", message: key };
             msg.values[key] = [...new Set(v)].sort();
           }
         }
@@ -1074,12 +1109,12 @@
         }
         for (const key of ["notify_exclude_integrations", "persistent_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations"]) {
           const v = msg.values[key];
-          if (key in msg.values && (!Array.isArray(v) || v.some((x) => !/^[a-z0-9_]+$/.test(x)))) throw { code: "invalid_format", message: key };
+          if (key in msg.values && (!Array.isArray(v) || v.some((x) => !KEY_RE.test(x)))) throw { code: "invalid_format", message: key };
           if (key in msg.values) msg.values[key] = [...new Set(v)].sort();
         }
         if ("battery_low_integrations" in msg.values) {
           const m = msg.values.battery_low_integrations;
-          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || (v !== "off" && (!Number.isInteger(v) || v < 1 || v > 50)))) throw { code: "invalid_format", message: "battery map" };
+          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !KEY_RE.test(k) || (v !== "off" && (!Number.isInteger(v) || v < 1 || v > 50)))) throw { code: "invalid_format", message: "battery map" };
         }
         // Wie options_api.signal_map / signal_integrations_map (seit 1.17.0): Verbindungsart ->
         // "off" oder Zahl (dBm -110..-40, LQI 1..200); je Integration verschachtelt, leere fallen weg.
@@ -1093,19 +1128,19 @@
           if ("signal_low" in msg.values) msg.values.signal_low = sigMap(msg.values.signal_low);
           if ("signal_low_integrations" in msg.values) {
             const m = msg.values.signal_low_integrations;
-            if (!m || typeof m !== "object" || Array.isArray(m) || Object.keys(m).some((k) => !/^[a-z0-9_]+$/.test(k))) throw { code: "invalid_format", message: "signal integrations" };
+            if (!m || typeof m !== "object" || Array.isArray(m) || Object.keys(m).some((k) => !KEY_RE.test(k))) throw { code: "invalid_format", message: "signal integrations" };
             msg.values.signal_low_integrations = Object.fromEntries(Object.entries(m).map(([k, v]) => [k, sigMap(v)]).filter(([, v]) => Object.keys(v).length).sort());
           }
         }
         if ("offline_after_integrations" in msg.values) {
           // Wie options_api.offline_map: Minuten 1 bis 1440 oder "off".
           const m = msg.values.offline_after_integrations;
-          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || (v !== "off" && (!Number.isInteger(v) || v < 1 || v > 1440)))) throw { code: "invalid_format", message: "offline map" };
+          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !KEY_RE.test(k) || (v !== "off" && (!Number.isInteger(v) || v < 1 || v > 1440)))) throw { code: "invalid_format", message: "offline map" };
         }
         if ("notify_delay_integrations" in msg.values) {
           // Wie options_api.notify_delay_map: Minuten 1 bis 1440, kein "off"
           const m = msg.values.notify_delay_integrations;
-          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !/^[a-z0-9_]+$/.test(k) || !Number.isInteger(v) || v < 1 || v > 1440)) throw { code: "invalid_format", message: "notify delay integrations" };
+          if (!m || typeof m !== "object" || Array.isArray(m) || Object.entries(m).some(([k, v]) => !KEY_RE.test(k) || !Number.isInteger(v) || v < 1 || v > 1440)) throw { code: "invalid_format", message: "notify delay integrations" };
         }
         if ("notify_delay_integrations" in msg.values || "offline_after_integrations" in msg.values) {
           // Wie options_api.notify_delay_conflicts: eigenes "Erst melden nach" der Integration nie kürzer als ihr "Ausgefallen nach" (nur geänderte)
@@ -1837,7 +1872,7 @@
           const setting = window.__devSettings.battery[d.id];
           if (!b || b.level == null) return b;
           if (setting === "off") return { ...b, low: false };
-          const threshold = Number.isInteger(setting) ? setting : own[dom] ?? batLow;
+          const threshold = Number.isInteger(setting) ? setting : window.__scopePick(own, d, window.__lowest)[1] ?? batLow;
           // Warnung für die Integration aus: Stand ja, "schwach" nie.
           if (threshold === "off") return { ...b, low: false };
           return { ...b, low: b.level <= threshold };
@@ -1847,7 +1882,7 @@
         const offMap = window.__opts.offline_after_integrations || {};
         const devOff = window.__devSettings.offline;
         // Gerät vor Integration vor global (wie devices.device_offline_after)
-        const offEff = (d) => (d.id in devOff ? devOff[d.id] : offMap[d.integration?.domain] ?? window.__opts.offline_after);
+        const offEff = (d) => (d.id in devOff ? devOff[d.id] : window.__scopePick(offMap, d, window.__strictestTime)[1] ?? window.__opts.offline_after);
         const unmon = (d) => offEff(d) === "off" && !d.disabled;
         const notifyDefault = (d) => {
           const dom = d.integration?.domain;
@@ -1860,6 +1895,7 @@
           devices: shown().map((d) => ({
             ...d,
             name: window.__names[d.id] || d.name,
+            labels: [...(window.__devLabels[d.id] || [])].sort(),
             name_original: d.name,
             name_custom: window.__names[d.id] || null,
             ...(unmon(d) ? { online: null, offline_since: null, since_at_least: false } : {}),
@@ -1869,21 +1905,21 @@
             // Wie das Backend (seit 2.91.0): wirksam (nie kürzer als "Ausgefallen nach"), eigener Wert, Standard
             notify_delay: (() => {
               const dm = window.__opts.notify_delay_integrations || {};
-              const v = window.__devSettings.notifyDelay[d.id] ?? dm[d.integration?.domain] ?? window.__opts.notify_delay;
+              const v = window.__devSettings.notifyDelay[d.id] ?? window.__scopePick(dm, d, window.__strictestTime)[1] ?? window.__opts.notify_delay;
               const o = offEff(d);
               return Number.isInteger(o) ? Math.max(v, o) : v;
             })(),
             notify_delay_setting: window.__devSettings.notifyDelay[d.id] ?? null,
-            notify_delay_default: { minutes: (window.__opts.notify_delay_integrations || {})[d.integration?.domain] ?? window.__opts.notify_delay, integration: d.integration?.domain in (window.__opts.notify_delay_integrations || {}) ? d.integration.domain : null, global: window.__opts.notify_delay },
-            offline_default: { minutes: offMap[d.integration?.domain] ?? window.__opts.offline_after, integration: d.integration?.domain in offMap ? d.integration.domain : null, global: window.__opts.offline_after },
+            notify_delay_default: (() => { const [k, v] = window.__scopePick(window.__opts.notify_delay_integrations || {}, d, window.__strictestTime); return { minutes: v ?? window.__opts.notify_delay, integration: k, global: window.__opts.notify_delay }; })(),
+            offline_default: (() => { const [k, v] = window.__scopePick(offMap, d, window.__strictestTime); return { minutes: v ?? window.__opts.offline_after, integration: k, global: window.__opts.offline_after }; })(),
             notify_default: notifyDefault(d),
             flaky: !unmon(d) && Boolean(d.online && d.avail24 && d.avail24.outages >= flakyN),
             battery: bat(d),
             has_battery: Boolean(d.battery),
             battery_setting: window.__devSettings.battery[d.id] ?? null,
             battery_default: {
-              pct: own[d.integration?.domain] ?? batLow,
-              integration: own[d.integration?.domain] != null ? d.integration.domain : null,
+              pct: window.__scopePick(own, d, window.__lowest)[1] ?? batLow,
+              integration: window.__scopePick(own, d, window.__lowest)[1] != null ? window.__scopePick(own, d, window.__lowest)[0] : null,
               // Wie devices._battery_fields (seit 0.34.0): Push pro Integration aus.
               push: Boolean(window.__opts.battery_push) && window.__opts.notify_service !== "none" && !(window.__opts.battery_push_exclude_integrations || []).includes(d.integration?.domain),
               push_integration: (window.__opts.battery_push_exclude_integrations || []).includes(d.integration?.domain) ? d.integration.domain : null,
@@ -1923,6 +1959,7 @@
           integrations, now: new Date().toISOString(), offline_after: window.__opts.offline_after * 60, battery_low: batLow,
           flaky_outages: flakyN, hide_chips: [...window.__opts.hide_chips], hide_connections: [...window.__opts.hide_connections], connection_order: [...window.__opts.connection_order], chip_order: [...window.__opts.chip_order], pulse: pulse(), incidents,
           areas: window.__areas.map((a) => ({ ...a })), floors: window.__floors.map((f) => ({ ...f })),
+          labels: window.__labelList(Object.fromEntries(window.__labels.map((l) => [l.id, shown().filter((d) => (window.__devLabels[d.id] || []).includes(l.id)).length]))), label_order: [...(window.__opts.labels || [])],
         };
         // Langsame Antwort mit dem Stand vom Beginn der Abfrage (wie HA bei
         // vielen Geräten): für den Wettlauf mit einer Änderung im Popup.

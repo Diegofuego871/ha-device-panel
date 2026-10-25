@@ -7,6 +7,21 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.155.0] - 2026-10-25
+
+Labels: devices that carry a Home Assistant label can be set together, from "often offline" devices that are no longer monitored to a shared battery threshold.
+
+### Added
+
+- **Settings › Labels:** a new section next to "Monitoring and notifications". The plus button picks a label from Home Assistant (only labels that sit on at least one device); opening it shows the same tabs as an integration: Outage, Battery, Charging, New, Updates, Signal and Type (type and connection type). The list keeps the order you give it ("Move up" / "Move down"); "Remove label" deletes all settings of the label (when saving) and leaves Home Assistant untouched.
+- **Order of precedence:** device › label › integration › global. A choice on the device always wins. If a device carries several labels, the strictest one applies: "Do not monitor" first, otherwise the longer time or the lower threshold; for things that cannot be compared (type, connection type, notification on or off) the label higher up in the list counts. In the device pop-up the drop-down says "Same as label (...)" and the origin shows "Label <name>".
+- **Filter chip "Label":** like "Area" and "Integration", with multi-select, counts, search, "No label" and a header that follows. It only appears while at least one device carries a label, can be hidden and moved like all other chips (Settings › Devices in the panel › Filter chips, and in the table view settings).
+- **Setup wizard, page "Labels":** before "Quiet hours and system", only if Home Assistant knows a label on a device. A drop-down picks the label; its card offers monitoring, "Offline after", "Report after", the battery threshold and the notifications (outage, battery, charged, new devices, updates) as for an integration.
+
+### Changed
+
+- **Type and connection type per integration** now also take labels into account (a label on the device comes before the integration); the device payload names the source in `type_integration_source` and `connection_integration_source`.
+
 ## [2.154.2] - 2026-10-25
 
 "Toggle all" disappears while you search a list.
@@ -4940,6 +4955,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.155.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.155.0
 [2.154.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.2
 [2.154.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.1
 [2.154.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.0

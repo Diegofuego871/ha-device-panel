@@ -1,7 +1,7 @@
 /**
  * Einrichtungsassistent (seit 2.135.0, docs/mockups/wizard-v1): führt einmalig durch die Grundkonfiguration. Am Handy ein Vollbild,
  * am Desktop ein Popup in der Mitte. Schritte: Willkommen, Integrationen, Gerätetypen, Geräte, Meldungen (Ziel, Arten und ihre
- * wichtigsten Werte), Ruhezeit (nur mit Ziel), Fertig. Alles ist ein Entwurf (this.s.d); gespeichert wird erst mit "Fertigstellen"
+ * wichtigsten Werte), Labels (nur wenn es Labels gibt, seit 2.155.0), Ruhezeit (nur mit Ziel), Fertig. Alles ist ein Entwurf (this.s.d); gespeichert wird erst mit "Fertigstellen"
  * (ein set_options), bis dahin ändert sich nichts. Die Zahlen jedes Schritts rechnet das Panel selbst nach dem Entwurf (wizard_data
  * liefert alle Kandidaten ohne abgezogene Ausschlüsse).
  *
@@ -32,6 +32,11 @@ const VALUES = {
 const SYS_KINDS = ["cpu", "ram", "disk"];
 const sysKey = (kind, part) => `status_${kind}_${part}`;
 const VALUE_KEYS = Object.values(VALUES).flatMap((rows) => rows.map(([key]) => key));
+// Labels (seit 2.155.0): Schlüssel in den Zuordnungen pro Integration, feste Zeiten zur Auswahl wie in den Einstellungen
+const LABEL_PREFIX = "label:";
+const LABEL_TIMES = [1, 2, 5, 10, 15, 30, 60, 120, 360, 720, 1440];
+const LABEL_MAPS = ["offline_after_integrations", "notify_delay_integrations", "battery_low_integrations"];
+const LABEL_LISTS = ["notify_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations", "updates_integrations_on", "updates_integrations_off"];
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const isTime = (key) => key === "updates_time";
 // Geräte einer Integration, die schon beim Öffnen aufgeklappt sind: keine (die Liste bleibt kurz)
@@ -142,7 +147,34 @@ export class WizardUi {
       devOff: { outage: new Set(this.overrideIds("notify")), battery: new Set(this.overrideList("battery").filter((o) => o.value === "off").map((o) => o.id)) },
       chargeOn: this.chargeOnFrom(v),
       updOn: this.updOnFrom(v),
+      lab: this.labelsFrom(v),
     };
+  }
+
+  // Einstellungen der Labels (seit 2.155.0) aus den Optionen: je Label ein Eintrag mit denselben Wahlen wie bei einer Integration.
+  // Leere Zeichenfolgen bedeuten Standard; mon = überwachen, push/batPush/newPush = Meldung an, charge = Lademeldung, upd = Standard, an oder aus.
+  labelsFrom(v) {
+    const ids = [...(v.labels || [])];
+    const map = (key, id) => (v[key] || {})[`${LABEL_PREFIX}${id}`];
+    const has = (key, id) => (v[key] || []).includes(`${LABEL_PREFIX}${id}`);
+    const cfg = {};
+    for (const id of ids) {
+      const off = map("offline_after_integrations", id);
+      const delay = map("notify_delay_integrations", id);
+      const bat = map("battery_low_integrations", id);
+      cfg[id] = {
+        mon: off !== "off",
+        after: Number.isInteger(off) ? String(off) : "",
+        delay: Number.isInteger(delay) ? String(delay) : "",
+        bat: bat === "off" ? "off" : Number.isInteger(bat) ? String(bat) : "",
+        push: !has("notify_exclude_integrations", id),
+        batPush: !has("battery_push_exclude_integrations", id),
+        newPush: !has("new_exclude_integrations", id),
+        charge: has("charge_integrations", id),
+        upd: has("updates_integrations_off", id) ? "off" : has("updates_integrations_on", id) ? "on" : "default",
+      };
+    }
+    return { ids, cfg };
   }
 
   // Eigene Einstellungen je Gerät aus get_options (overrides): Liste oder leer
@@ -187,6 +219,7 @@ export class WizardUi {
   serialize(d) {
     return {
       exI: [...d.exI].sort(), exT: [...d.exT].sort(), exD: [...d.exD].sort(), target: d.target, on: { ...d.on }, v: { ...d.v }, quiet: { ...d.quiet }, sys: Object.fromEntries(Object.entries(d.sys).map(([k, x]) => [k, { ...x }])),
+      lab: { ids: [...d.lab.ids], cfg: Object.fromEntries(Object.entries(d.lab.cfg).map(([k, x]) => [k, { ...x }])) },
       ex: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])),
       devOff: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), chargeOn: [...d.chargeOn].sort(), updOn: [...d.updOn].sort(),
     };
@@ -217,6 +250,29 @@ export class WizardUi {
     for (const id of Object.keys(d.devOff)) if (Array.isArray(x.devOff?.[id])) d.devOff[id] = new Set(list(x.devOff[id], known));
     if (Array.isArray(x.chargeOn)) d.chargeOn = new Set(list(x.chargeOn, known));
     if (Array.isArray(x.updOn)) d.updOn = new Set(list(x.updOn, new Set(this.updateItems().map((u) => u.id))));
+    // Labels: nur solche, die es in Home Assistant noch gibt oder die schon eingerichtet waren
+    if (Array.isArray(x.lab?.ids)) {
+      const known = new Set([...(s.data.labels || []).map((l) => l.id), ...d.lab.ids]);
+      const ids = list(x.lab.ids, known);
+      const cfg = {};
+      for (const id of ids) {
+        const base = d.lab.cfg[id] || this.labelDefault();
+        const y = x.lab.cfg?.[id] || {};
+        const text = (v, ok) => (typeof v === "string" && v.length <= 6 && ok(v) ? v : null);
+        cfg[id] = {
+          mon: typeof y.mon === "boolean" ? y.mon : base.mon,
+          after: text(y.after, (v) => v === "" || /^\d+$/.test(v)) ?? base.after,
+          delay: text(y.delay, (v) => v === "" || /^\d+$/.test(v)) ?? base.delay,
+          bat: text(y.bat, (v) => v === "" || v === "off" || /^\d+$/.test(v)) ?? base.bat,
+          push: typeof y.push === "boolean" ? y.push : base.push,
+          batPush: typeof y.batPush === "boolean" ? y.batPush : base.batPush,
+          newPush: typeof y.newPush === "boolean" ? y.newPush : base.newPush,
+          charge: typeof y.charge === "boolean" ? y.charge : base.charge,
+          upd: ["default", "on", "off"].includes(y.upd) ? y.upd : base.upd,
+        };
+      }
+      d.lab = { ids, cfg };
+    }
     s.hasDraft = true;
     s.savedDraft = JSON.stringify(saved);
     // Dort weitermachen, wo es aufhörte (die Ruhezeit nur mit Ziel)
@@ -236,7 +292,7 @@ export class WizardUi {
   }
 
   snapshot(d) {
-    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet, y: d.sys, x: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), o: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), c: [...d.chargeOn].sort(), u: [...d.updOn].sort() };
+    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet, y: d.sys, x: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), o: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), c: [...d.chargeOn].sort(), u: [...d.updOn].sort(), l: d.lab };
   }
 
   dirty() {
@@ -275,7 +331,20 @@ export class WizardUi {
   // Reihenfolge ohne "welcome": die Ruhezeit nur mit Ziel
   steps() {
     const d = this.s?.d;
-    return ["integrations", "types", "devices", "messages", ...(d && d.target !== "none" ? ["quiet"] : []), "done"];
+    return ["integrations", "types", "devices", "messages", ...(this.hasLabels() ? ["labels"] : []), ...(d && d.target !== "none" ? ["quiet"] : []), "done"];
+  }
+
+  // Die Seite "Labels" gibt es nur, wenn Home Assistant mindestens ein Label an einem Gerät kennt (oder schon eines eingerichtet ist)
+  hasLabels() {
+    return Boolean(this.s?.data?.labels?.length);
+  }
+
+  labelDefault() {
+    return { mon: true, after: "", delay: "", bat: "", push: true, batPush: true, newPush: true, charge: false, upd: "default" };
+  }
+
+  labelName(id) {
+    return (this.s.data.labels || []).find((l) => l.id === id)?.name || id;
   }
 
   go(step) {
@@ -327,6 +396,7 @@ export class WizardUi {
   invalid() {
     const s = this.s;
     if (s?.step === "quiet" && s.d) return this.sysInvalid();
+    if (s?.step === "labels" && s.d) return this.labelsInvalid();
     if (s?.step !== "messages" || !s.d) return "";
     const limits = s.opts.limits || {};
     const num = (k) => (/^\d+$/.test(String(s.d.v[k]).trim()) ? Number(s.d.v[k]) : NaN);
@@ -338,6 +408,25 @@ export class WizardUi {
     const detect = Number(s.base.offline_after);
     if (this.rowValues("updates").length && !TIME_RE.test(String(s.d.v.updates_time))) return this.t("wzErrTime");
     if (num("notify_delay") < detect) return this.t("wzErrDelay", detect);
+    return "";
+  }
+
+  // Fehler der Label-Werte: "Erst melden nach" nicht kürzer als "Ausgefallen nach" des Labels (sonst das globale), Batterie im Bereich
+  labelsInvalid() {
+    const { d, opts, base } = this.s;
+    const limits = opts.limits || {};
+    for (const id of d.lab.ids) {
+      const c = d.lab.cfg[id];
+      const name = this.labelName(id);
+      for (const [key, raw, label] of [["offline_after", c.after, "optOfflineAfter"], ["notify_delay", c.delay, "optDelay"], ["battery_low", c.bat === "off" ? "" : c.bat, "optBatteryLow"]]) {
+        if (raw === "") continue;
+        const [lo, hi] = limits[key] || [1, 1440];
+        const n = Number(raw);
+        if (!(/^\d+$/.test(raw) && n >= lo && n <= hi)) return this.t("wzErrRange", `${name}: ${this.t(label)}`, lo, hi);
+      }
+      const detect = c.after !== "" ? Number(c.after) : Number(base.offline_after);
+      if (c.mon && c.delay !== "" && Number(c.delay) < detect) return `${name}: ${this.t("wzErrDelay", detect)}`;
+    }
     return "";
   }
 
@@ -639,6 +728,62 @@ export class WizardUi {
     return r === "ok" ? this.t("wzTestOk") : r === "fail" ? this.t("wzTestFail") : r === "busy" ? this.t("wzTestBusy") : "";
   }
 
+  // Schritt "Labels" (seit 2.155.0, vor der Ruhezeit): ein Label aus Home Assistant wählen und dafür dieselben Wahlen treffen wie bei einer Integration.
+  // Ein Label gilt für alle Geräte, die es tragen, vor der Integration und vor den globalen Werten; das Gerät geht immer vor.
+  labelsHtml() {
+    const { escape, mdi } = this.h;
+    const { d, data } = this.s;
+    const none = d.target === "none";
+    const t = (k, ...a) => this.t(k, ...a);
+    const sel = this.s.labSel && d.lab.cfg[this.s.labSel] ? this.s.labSel : "";
+    const options = [`<option value=""${sel ? "" : " selected"}>${escape(t("wzLPick"))}</option>`]
+      .concat((data.labels || []).map((l) => `<option value="${escape(l.id)}"${l.id === sel ? " selected" : ""}>${escape(`${d.lab.cfg[l.id] ? "✓ " : ""}${l.name} (${t("labelDevs", l.devices)})`)}</option>`))
+      .join("");
+    const diff = (id) => {
+      const c = d.lab.cfg[id];
+      const parts = [!c.mon && t("integUnmon"), c.after !== "" && t("offlineMin", Number(c.after)), c.delay !== "" && t("diffDelay", t("offlineMin", Number(c.delay))), c.bat === "off" ? t("devBatOff") : c.bat !== "" && `${c.bat} %`,
+        !c.push && t("diffNoPush"), !c.batPush && t("optBatPush"), !c.newPush && t("diffNoNew"), c.charge && t("diffCharge"), c.upd !== "default" && `${t("optUpdNotify")}: ${t(c.upd === "on" ? "devChargeOn" : "devChargeOff")}`].filter(Boolean);
+      return parts.length ? parts.join(" · ") : t("integStandard");
+    };
+    const list = d.lab.ids.length
+      ? d.lab.ids.map((id) => `<button type="button" class="wz-li wz-lrow${id === sel ? " on" : ""}" data-wz-lsel="${escape(id)}">${this.host._ibadge(`${LABEL_PREFIX}${id}`, this.labelName(id))}<div class="wz-nm">${escape(this.labelName(id))}<small>${escape(diff(id))}</small></div><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button>`).join("")
+      : "";
+    return `<h2 class="wz-h2">${escape(t("wzLTitle"))}</h2><p class="wz-p">${escape(t("wzLText"))}</p>
+      <div class="wz-lab">${escape(t("wzLChoose"))}</div><label class="wz-sel"><select data-wz-lab aria-label="${escape(t("wzLChoose"))}">${options}</select>${mdi("chevronDown", 18)}</label>
+      ${list ? `<div class="wz-lab">${escape(t("wzLDone"))}</div>${list}` : ""}
+      ${sel ? this.labelCardHtml(sel, none) : ""}
+      <div class="opt-error wz-err" data-wz-err role="alert">${escape(this.labelsInvalid())}</div>
+      <p class="wz-p small">${escape(t("wzLLater"))}</p>`;
+  }
+
+  // Die Wahlen eines Labels: überwachen und Zeiten, die Meldungen, Batterie, Updates (ohne Ziel sind die Meldungen aus)
+  labelCardHtml(id, none) {
+    const { escape, mdi } = this.h;
+    const t = (k, ...a) => this.t(k, ...a);
+    const c = this.s.d.lab.cfg[id];
+    const sw = (field, on, label, off = false) => `<label class="switch"><input type="checkbox" data-wz-lc="${escape(id)}" data-wz-lf="${field}"${on ? " checked" : ""}${off ? " disabled" : ""} aria-label="${escape(label)}"><span></span></label>`;
+    const timeSel = (field, label, value, std) => {
+      const times = [...new Set([...LABEL_TIMES, ...(value !== "" ? [Number(value)] : [])])].sort((a, b) => a - b);
+      return `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="${field}" aria-label="${escape(label)}"${c.mon ? "" : " disabled"}><option value=""${value === "" ? " selected" : ""}>${escape(std)}</option>${times.map((m) => `<option value="${m}"${String(m) === value ? " selected" : ""}>${escape(t("offlineMin", m))}</option>`).join("")}</select>${mdi("chevronDown", 18)}</label>`;
+    };
+    const row = (icon, title, sub, control) => `<div class="wz-li"><span class="wz-ic">${mdi(icon, 18)}</span><div class="wz-nm">${escape(title)}${sub ? `<small>${escape(sub)}</small>` : ""}</div>${control}</div>`;
+    const batValues = [...new Set([10, 15, 20, 25, 30, ...(/^\d+$/.test(c.bat) ? [Number(c.bat)] : [])])].sort((a, b) => a - b);
+    const batSel = `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="bat" aria-label="${escape(t("optBatteryLow"))}"><option value=""${c.bat === "" ? " selected" : ""}>${escape(t("wzLStd"))}</option>${batValues.map((v) => `<option value="${v}"${String(v) === c.bat ? " selected" : ""}>${v} %</option>`).join("")}<option value="off"${c.bat === "off" ? " selected" : ""}>${escape(t("devBatOff"))}</option></select>${mdi("chevronDown", 18)}</label>`;
+    const updSel = `<label class="wz-sel wz-sel-s"><select data-wz-lc="${escape(id)}" data-wz-lf="upd" aria-label="${escape(t("optUpdNotify"))}"${none ? " disabled" : ""}><option value="default"${c.upd === "default" ? " selected" : ""}>${escape(t("labelUpdDefault"))}</option><option value="on"${c.upd === "on" ? " selected" : ""}>${escape(t("devChargeOn"))}</option><option value="off"${c.upd === "off" ? " selected" : ""}>${escape(t("devChargeOff"))}</option></select>${mdi("chevronDown", 18)}</label>`;
+    const dim = c.mon ? "" : " dim";
+    return `<div class="wz-msg on wz-lcard"><div class="wz-li">${this.host._ibadge(`${LABEL_PREFIX}${id}`, this.labelName(id))}<div class="wz-nm">${escape(this.labelName(id))}<small>${escape(t("labelDevs", (this.s.data.labels.find((l) => l.id === id) || {}).devices || 0))}</small></div><button type="button" class="dlg-btn wz-lrm" data-wz-lrm="${escape(id)}">${mdi("close", 16)}${escape(t("wzLRemove"))}</button></div>
+      ${row("eye", t("optMonitor"), t("wzLMonSub"), sw("mon", c.mon, t("optMonitor")))}
+      <div class="${dim.trim()}">${row("pulse", t("optOfflineAfter"), "", timeSel("after", t("optOfflineAfter"), c.after, t("wzLStd")))}
+      ${row("timer", t("optDelay"), "", timeSel("delay", t("optDelay"), c.delay, t("wzLStd")))}
+      ${row("alert", t("wzM_outage"), "", sw("push", c.push, t("wzM_outage"), none || !c.mon))}
+      ${row("battery", t("optBatteryLow"), "", batSel)}
+      ${row("battery", t("wzM_battery"), "", sw("batPush", c.batPush, t("wzM_battery"), none))}
+      ${row("batteryCharging", t("wzM_charge"), "", sw("charge", c.charge, t("wzM_charge"), none))}</div>
+      ${row("sparkle", t("wzM_new"), "", sw("newPush", c.newPush, t("wzM_new"), none))}
+      ${row("download", t("wzM_updates"), "", updSel)}
+      ${none ? `<p class="wz-p small">${escape(t("wzMNoTargetHint"))}</p>` : ""}</div>`;
+  }
+
   // Schritt 5: Ruhezeit (nur mit Ziel)
   quietHtml() {
     const { escape } = this.h;
@@ -684,10 +829,11 @@ export class WizardUi {
     const target = d.target === "none" ? t("wzNone") : d.target;
     const row = (a, b) => `<div class="wz-li"><div class="wz-nm">${escape(a)}</div><b class="wz-val">${escape(b)}</b></div>`;
     const quiet = d.target === "none" ? "" : row(t("wzSumQuiet"), d.quiet.on ? (d.quiet.uniform ? `${d.quiet.from} – ${d.quiet.to}` : t("wzQCustomShort")) : t("wzOff"));
+    const labelsRow = this.hasLabels() ? row(t("wzSumLabels"), d.lab.ids.length ? d.lab.ids.map((id) => this.labelName(id)).join(", ") : t("wzNone")) : "";
     const sysKinds = d.target === "none" ? [] : this.sysShown();
     const system = sysKinds.length ? row(t("wzSumSystem"), sysKinds.some((k) => d.sys[k].on) ? sysKinds.filter((k) => d.sys[k].on).map((k) => `${t(`stSys${k[0].toUpperCase()}${k.slice(1)}`).replace(/ \(.*\)/, "")} ${d.sys[k].limit} %`).join(", ") : t("wzOff")) : "";
     return `<div class="wz-check">${mdi("check", 30)}</div><h2 class="wz-h2">${escape(t("wzDoneTitle"))}</h2><p class="wz-p">${escape(t("wzDoneText"))}</p>
-      <div class="wz-sum">${row(t("wzSumInteg"), t("wzOf", data.integrations.length - d.exI.size, data.integrations.length))}${row(t("wzSumTypes"), t("wzOf", typesOn, types.size))}${row(t("wzSumDevices"), t("wzOf", this.chosen().length, this.afterTypes().length))}${row(t("wzSumTarget"), target)}${row(t("wzSumMsgs"), msgs.length ? msgs.join(", ") : t("wzNone"))}${quiet}${system}</div>
+      <div class="wz-sum">${row(t("wzSumInteg"), t("wzOf", data.integrations.length - d.exI.size, data.integrations.length))}${row(t("wzSumTypes"), t("wzOf", typesOn, types.size))}${row(t("wzSumDevices"), t("wzOf", this.chosen().length, this.afterTypes().length))}${row(t("wzSumTarget"), target)}${row(t("wzSumMsgs"), msgs.length ? msgs.join(", ") : t("wzNone"))}${labelsRow}${quiet}${system}</div>
       ${this.s.saveError ? `<div class="dlg-error">${escape(t("wzSaveError"))} ${escape(this.s.saveError)}</div>` : ""}
       <p class="wz-p">${escape(t("wzDoneFoot"))}</p>`;
   }
@@ -729,6 +875,7 @@ export class WizardUi {
     // Voll geladen: eine Integration gilt, wenn die Mehrheit ihrer Geräte an ist; die anderen Geräte bekommen eine eigene Wahl (siehe deviceCalls)
     values.charge_integrations = merge("charge", base.charge_integrations, this.chargeIntegrations());
     Object.assign(values, this.updateLists());
+    if (this.hasLabels()) Object.assign(values, this.labelValues(values));
     if (d.target !== "none") {
       values.quiet_enabled = d.quiet.on;
       if (d.quiet.on && d.quiet.uniform) values.quiet_days = Array.from({ length: 7 }, () => ({ on: true, from: d.quiet.from, to: d.quiet.to }));
@@ -745,6 +892,34 @@ export class WizardUi {
     // Ohne Ziel sind Meldungen und Ruhezeit nicht Teil der Wahl: nichts anfassen ausser dem Ziel
     if (d.target === "none") for (const k of ["notify_outage", "notify_online", "battery_push", "notify_new", "notify_charge", "notify_updates", "notify_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations", "updates_integrations_on", "updates_integrations_off", "updates_exclude", "updates_include"]) delete values[k];
     return values;
+  }
+
+  // Die Einstellungen der Labels (seit 2.155.0) in die Zuordnungen und Listen pro Integration: was der Assistent zeigt, ersetzt die Wahl der Labels,
+  // die er kennt (eingerichtete und gewählte); andere Schlüssel bleiben. Nur was vom Standard abweicht, wird geschrieben.
+  labelValues(values) {
+    const { d, base } = this.s;
+    const managed = new Set([...(base.labels || []), ...d.lab.ids].map((id) => `${LABEL_PREFIX}${id}`));
+    const out = { labels: [...d.lab.ids] };
+    const maps = Object.fromEntries(LABEL_MAPS.map((k) => [k, Object.fromEntries(Object.entries(values[k] ?? base[k] ?? {}).filter(([key]) => !managed.has(key)))]));
+    const lists = Object.fromEntries(LABEL_LISTS.map((k) => [k, (values[k] ?? base[k] ?? []).filter((key) => !managed.has(key))]));
+    for (const id of d.lab.ids) {
+      const c = d.lab.cfg[id];
+      const key = `${LABEL_PREFIX}${id}`;
+      if (!c.mon) maps.offline_after_integrations[key] = "off";
+      else if (c.after !== "") maps.offline_after_integrations[key] = Number(c.after);
+      if (c.delay !== "") maps.notify_delay_integrations[key] = Number(c.delay);
+      if (c.bat === "off") maps.battery_low_integrations[key] = "off";
+      else if (c.bat !== "") maps.battery_low_integrations[key] = Number(c.bat);
+      if (!c.push) lists.notify_exclude_integrations.push(key);
+      if (!c.batPush) lists.battery_push_exclude_integrations.push(key);
+      if (!c.newPush) lists.new_exclude_integrations.push(key);
+      if (c.charge) lists.charge_integrations.push(key);
+      if (c.upd === "on") lists.updates_integrations_on.push(key);
+      if (c.upd === "off") lists.updates_integrations_off.push(key);
+    }
+    for (const k of LABEL_MAPS) out[k] = Object.fromEntries(Object.entries(maps[k]).sort(([a], [b]) => a.localeCompare(b)));
+    for (const k of LABEL_LISTS) out[k] = [...new Set(lists[k])].sort();
+    return out;
   }
 
   // Integrationen mit Batteriegeräten, deren Lademeldung gilt: alle Geräte an oder mindestens die Hälfte (der Rest wird am Gerät ausgeschaltet)
@@ -894,6 +1069,23 @@ export class WizardUi {
       else if (a === "retry") this.load();
       else if (a === "test") this.test();
     });
+    // Schritt "Labels": ein Label der Liste öffnen oder entfernen (Entwurf)
+    dlg.addEventListener("click", (ev) => {
+      const s = this.s;
+      if (!s?.d) return;
+      const open = ev.target.closest?.("[data-wz-lsel]");
+      const rm = ev.target.closest?.("[data-wz-lrm]");
+      if (open) {
+        s.labSel = open.dataset.wzLsel;
+        this.render();
+      } else if (rm) {
+        const id = rm.dataset.wzLrm;
+        s.d.lab.ids = s.d.lab.ids.filter((x) => x !== id);
+        delete s.d.lab.cfg[id];
+        s.labSel = "";
+        this.render();
+      }
+    });
     dlg.addEventListener("change", (ev) => {
       const s = this.s;
       const el = ev.target;
@@ -937,6 +1129,20 @@ export class WizardUi {
           } else set.delete(dev);
         } else if (el.checked) d.devOff[id].delete(dev);
         else d.devOff[id].add(dev);
+        this.render();
+      } else if (el.matches("[data-wz-lab]")) {
+        // Ein Label wählen: es ist damit eingerichtet (ohne Wahl gilt der Standard)
+        const id = el.value;
+        s.labSel = id;
+        if (id && !d.lab.cfg[id]) {
+          d.lab.ids.push(id);
+          d.lab.cfg[id] = this.labelDefault();
+        }
+        this.render();
+      } else if (el.matches("[data-wz-lc]")) {
+        const c = d.lab.cfg[el.dataset.wzLc];
+        const field = el.dataset.wzLf;
+        if (c && field in c) c[field] = el.type === "checkbox" ? el.checked : el.value;
         this.render();
       } else if (el.matches("[data-wz-msg]")) {
         d.on[el.dataset.wzMsg] = el.checked;

@@ -24,6 +24,7 @@
 - **Batterie-Übersicht mit Meldungen:** ein farbiges Batteriesymbol bei jedem Gerät, eine Warnschwelle (Standard 15 %), Push oder anhaltende Benachrichtigung, ein Verlauf bis 12 Monate mit Prognose, wie lange die Batterie hält, und eine Meldung, wenn ein Gerät voll geladen ist
 - **Empfangs-Übersicht mit Warnungen:** Empfang in dBm oder LQI bei jedem Gerät, eine Warnschwelle pro Verbindungsart, ein Verlauf mit Median und Spanne, und bei Bluetooth der Empfänger (Adapter oder Proxy), über den ein Gerät verbunden ist oder war
 - **Meldungen auf drei Ebenen:** einmal eine Vorgabe setzen, pro Integration ändern, auf einem einzelnen Gerät überschreiben; jede Einstellung zeigt, woher ihr Wert stammt (Grafik unten)
+- **Labels:** Geräte mit einem Label aus Home Assistant werden gemeinsam eingestellt (zum Beispiel "oft offline" ohne Überwachung); ein Label steht zwischen Gerät und Integration und hat einen eigenen Filter-Chip
 - **Ruhezeit:** Meldungen warten in der Nacht (Zeiten je Wochentag, Arten wählbar) und kommen danach als Zusammenfassung oder einzeln
 - **Magic Push:** eigene Meldungen pro Gerät ohne Automation: einen Wert wählen, sagen, wann gemeldet wird, den Text schreiben, fertig
 - **Routinen:** eine Entität eines Geräts zu einer Zeit oder durch einen Auslöser (beliebige Entität, mit Bedingungen wie bei Magic Push) schalten, ohne Automation, zurückschalten per Zeit, Dauer oder Auslöser, mit Testknopf und Vorschau der nächsten Ausführungen
@@ -115,6 +116,7 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 
 - **Allgemein:** in den Einstellungen unter "Überwachung und Meldungen", die Vorgabe für alle Geräte
 - **Integration:** am selben Ort, Reiter "Integrationen": eine Liste aller Integrationen mit dem, was von der Vorgabe abweicht, und eine Detailseite pro Integration mit eigenen Reitern
+- **Label (optional):** in den Einstellungen im Abschnitt "Labels": ein Label aus Home Assistant bekommt dieselben Reiter wie eine Integration und gilt für alle Geräte, die es tragen, vor der Integration und nach dem Gerät. Bei mehreren Labels gilt das strengste ("Nicht überwachen", dann die längere Zeit oder die tiefere Schwelle)
 - **Gerät:** im Pop-up des Geräts, Reiter "Einstellungen": nur dieses Gerät, mit der Herkunft jedes Werts
 - **Herkunft:** jede Einstellung sagt, woher sie stammt (Standard, Integration oder Gerät), und ein Chip "Eigene Einstellung" filtert Geräte mit eigenen Werten; in den Einstellungen lassen sie sich einzeln oder alle auf einmal zurücksetzen
 

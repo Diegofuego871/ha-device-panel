@@ -48,7 +48,7 @@ for (const lang of ["de", "en"]) {
     const bar = () => ev(`return [...r.querySelectorAll(".chips .chip, .chips .vsep")].map((c) => c.classList.contains("vsep") ? "|" : c.dataset.conn || c.dataset.hint || (c.hasAttribute("data-problems") ? "problems" : c.hasAttribute("data-offline") ? "offline" : c.classList.contains("integ") ? "integration" : c.classList.contains("area") ? "area" : "?")).join()`);
     const barTexts = () => ev(`return [...r.querySelectorAll(".chips .chip, .chips .vsep")].map((c) => c.classList.contains("vsep") ? "|" : c.textContent.replace(/\\s+/g," ").trim()).join("#")`);
     const prevTexts = () => ev(`return [...r.querySelectorAll(".chip-prev-pills > *")].map((c) => c.classList.contains("vsep") ? "|" : c.textContent.replace(/\\s+/g," ").trim()).join("#")`);
-    const rowOrder = () => ev(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join()`);
+    const rowOrder = () => ev(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).filter(k=>k!=="label").join()`);
     const sel = (key) => `.drag-list[data-drag-list="chip_order"] [data-key="${key}"]`;
     const openChips = async () => {
       await ev(`if (r.querySelector("dialog.settings")?.open) r.querySelector('dialog.settings [data-set="close"]').click()`);
@@ -111,17 +111,17 @@ for (const lang of ["de", "en"]) {
 
     // 2. "Alle" hinter die Hinweise ziehen: Trenner zwischen den Arten
     await drag(sel("all"), sel("area"));
-    const m1 = "pin,favorites,integration,new,offline,problems,battery,batteries,charging,all,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override";
-    check(`[${tag}] "Alle" nach hinten gezogen`, await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === ${JSON.stringify(m1)}`), await rowOrder());
+    const m1 = "pin,favorites,integration,label,new,offline,problems,battery,batteries,charging,all,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override";
+    check(`[${tag}] "Alle" nach hinten gezogen`, await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).filter(k=>k!=="label").join() === ${JSON.stringify(m1.replace(",label", ""))}`), await rowOrder());
     check(`[${tag}] als Änderung, Zusammenfassung, Knopf "${T.reset}"`, (await text(".set-count")) === T.one && (await ev(`return !!r.querySelector('.sub-tab[data-key="chips"].chg')`)) && (await text('[data-set="drag-reset"]')) === T.reset, await text(".set-count"));
     check(`[${tag}] Vorschau folgt der Folge: "${T.fixed}" hinter den Hinweisen`, await wait(`return [...r.querySelectorAll(".chip-prev-pills > *")].map((c) => c.classList.contains("vsep") ? "|" : c.textContent.replace(/\\s+/g," ").trim()).join("#").includes(${JSON.stringify(`#|#${T.fixed} 16#|#`)})`), await prevTexts());
     if (!mobile) {
       // Pfeiltaste: "Update" eins nach unten, der Fokus bleibt am Griff
       await (await handle(sel("update"))).focus();
       await p.keyboard.press("ArrowDown");
-      check(`[${tag}] Pfeiltaste verschiebt, Fokus bleibt`, (await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === "pin,favorites,integration,new,offline,problems,battery,batteries,charging,all,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,override,update"`)) && (await ev(`return r.activeElement?.dataset.key === "update"`)), await rowOrder());
+      check(`[${tag}] Pfeiltaste verschiebt, Fokus bleibt`, (await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).filter(k=>k!=="label").join() === "pin,favorites,integration,new,offline,problems,battery,batteries,charging,all,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,override,update"`)) && (await ev(`return r.activeElement?.dataset.key === "update"`)), await rowOrder());
       await p.keyboard.press("ArrowUp");
-      await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === ${JSON.stringify(m1)}`);
+      await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).filter(k=>k!=="label").join() === ${JSON.stringify(m1.replace(",label", ""))}`);
     }
     await ev(`r.querySelector(".chip-prev").scrollIntoView({ block: "start" })`);
     await p.screenshot({ path: `${outDir}/chiporder-settings-${tag.replace("/", "-")}.png` });
@@ -135,8 +135,8 @@ for (const lang of ["de", "en"]) {
       await openChips();
       await drag(sel("batteries"), sel("integration"));
       await drag(sel("zigbee"), sel("signal"));
-      const m2 = "pin,favorites,batteries,integration,new,offline,problems,battery,charging,all,area,thread,wifi,ble,ethernet,cloud,matter,network,unknown,zwave,zigbee,signal,update,override";
-      check(`[${tag}] Batterie ganz vorn, Zigbee hinter den Verbindungsarten`, await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === ${JSON.stringify(m2)}`), await rowOrder());
+      const m2 = "pin,favorites,batteries,integration,label,new,offline,problems,battery,charging,all,area,thread,wifi,ble,ethernet,cloud,matter,network,unknown,zwave,zigbee,signal,update,override";
+      check(`[${tag}] Batterie ganz vorn, Zigbee hinter den Verbindungsarten`, await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).filter(k=>k!=="label").join() === ${JSON.stringify(m2.replace(",label", ""))}`), await rowOrder());
       check(`[${tag}] gespeichert`, (await save()) && JSON.stringify((await lastSet())?.chip_order) === JSON.stringify(m2.split(",")), JSON.stringify(await lastSet()));
       const b2 = await bar();
       check(`[${tag}] Leiste: Batterie zuerst, Zigbee am Ende der Verbindungsarten`, b2.startsWith("favorites,batteries,|,integration,|,new") && b2.includes("zwave,zigbee,|,signal"), b2);
@@ -166,13 +166,14 @@ for (const lang of ["de", "en"]) {
     check(`[${tag}] Linie ohne Schalter, mit Etikett`, await ev(`const row=r.querySelector(".pin-line"); return !row.querySelector("input") && row.querySelector(".pin-tab span:last-child").textContent.trim() === ${JSON.stringify(T.pin)}`));
     await (await handle(sel("pin"))).focus();
     await p.keyboard.press("ArrowDown");
-    check(`[${tag}] Linie eins nach unten (Pfeiltaste, hinter Integration)`, (await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === "all,favorites,pin,integration,new,offline,problems,battery,batteries,charging,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override"`)) && (await ev(`return r.activeElement?.dataset.key === "pin"`)), await rowOrder());
+    check(`[${tag}] Linie eins nach unten (Pfeiltaste, hinter Integration)`, (await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).filter(k=>k!=="label").join() === "all,favorites,pin,integration,new,offline,problems,battery,batteries,charging,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override"`)) && (await ev(`return r.activeElement?.dataset.key === "pin"`)), await rowOrder());
     // Alle, Integration, Neu und Ausgefallen anheften: Linie noch zwei nach unten
     await p.keyboard.press("ArrowDown");
     await p.keyboard.press("ArrowDown");
-    await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === "all,favorites,integration,new,pin,offline,problems,battery,batteries,charging,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override"`);
+    await p.keyboard.press("ArrowDown");
+    await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).filter(k=>k!=="label").join() === "all,favorites,integration,new,pin,offline,problems,battery,batteries,charging,area,thread,wifi,ble,zigbee,ethernet,cloud,matter,network,unknown,zwave,signal,update,override"`);
     check(`[${tag}] Vorschau: Pin-Zeichen an der Kante, Handy-Leiste mit Haftgruppe`, (await ev(`return !!r.querySelector(".chip-prev-pills .chip-prev-pin") && !!r.querySelector(".chip-prev-strip .chip-pin")`)) && (await text(".chip-prev-t.phone")) === T.phone, await text(".chip-prev-t.phone"));
-    check(`[${tag}] gespeichert mit Marker`, (await save()) && JSON.stringify((await lastSet())?.chip_order?.slice(0, 6)) === JSON.stringify(["all", "favorites", "integration", "new", "pin", "offline"]), JSON.stringify(await lastSet()));
+    check(`[${tag}] gespeichert mit Marker`, (await save()) && JSON.stringify((await lastSet())?.chip_order?.slice(0, 6)) === JSON.stringify(["all", "favorites", "integration", "label", "new", "pin"]), JSON.stringify(await lastSet()));
     const grp = () => ev(`const g=r.querySelector(".chips .chip-pin"); if (!g) return null; return { n: g.querySelectorAll(".chip").length, vsep: g.querySelectorAll(".vsep").length, next: g.nextElementSibling?.className || "", w: g.offsetWidth, wide: g.classList.contains("too-wide"), cls: g.parentElement.className }`);
     const g1 = await grp();
     check(`[${tag}] Leiste: vier Chips in der Haftgruppe (Alle, Favoriten, Integration, Neu), keine Linie an der Kante`, g1 && g1.n === 4 && !g1.next.includes("vsep") && !(await ev(`return !!r.querySelector(".chips .chip-pin + .vsep")`)), JSON.stringify(g1));
@@ -181,8 +182,8 @@ for (const lang of ["de", "en"]) {
       // Nur "Alle" angeheftet (Standard): Marker wieder hinter "Alle" (Pfeiltaste hoch)
       await openChips();
       await (await handle(sel("pin"))).focus();
-      for (let i = 0; i < 3; i++) await p.keyboard.press("ArrowUp");
-      await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).join() === ${JSON.stringify(DEFAULT)}`);
+      for (let i = 0; i < 4; i++) await p.keyboard.press("ArrowUp");
+      await wait(`return [...r.querySelectorAll('.drag-list[data-drag-list="chip_order"] [data-set="drag"]')].map(b=>b.dataset.key).filter(k=>k!=="label").join() === ${JSON.stringify(DEFAULT)}`);
       check(`[${tag}] Marker wieder hinter "Alle": Standardfolge, leer im Entwurf`, (await rowOrder()) === DEFAULT && (await ev(`return r.host._settings.draft.chip_order.length === 0`)), await rowOrder());
       check(`[${tag}] gespeichert`, await save());
       const g2 = await grp();
@@ -207,7 +208,7 @@ for (const lang of ["de", "en"]) {
       await openChips();
       await drag(sel("area"), sel("integration"));
       await (await handle(sel("area"))).focus();
-      for (let i = 0; i < 7; i++) await p.keyboard.press("ArrowDown");
+      for (let i = 0; i < 8; i++) await p.keyboard.press("ArrowDown");
       check(`[${tag}] von Hand zurück: Standardfolge, kein Zurücksetzen-Knopf, leer im Entwurf`, (await rowOrder()) === DEFAULT && !(await ev(`return !!r.querySelector('[data-set="drag-reset"]')`)) && (await ev(`return r.host._settings.draft.chip_order.length === 0`)), await rowOrder());
       await tap('dialog.settings .dlg-actions [data-set="close"]');
     }
