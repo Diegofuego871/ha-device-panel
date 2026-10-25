@@ -7109,6 +7109,9 @@ class DevicePanel extends HTMLElement {
       }
       const none = wrap.querySelector(".srch-none");
       if (none) none.hidden = !q || n > 0;
+      // "Alle umschalten" steht vor der Liste und schaltet auch die ausgeblendeten Zeilen: mit Suche weg, sonst sieht man nicht, was man umschaltet (seit 2.154.2)
+      const all = wrap.previousElementSibling;
+      if (all?.matches(".ex-all")) all.hidden = Boolean(q);
       const cnt = root.querySelector(`.list-search[data-for="${key}"] .n`);
       if (cnt) cnt.textContent = q ? this._t("listSearchOf", n, rows.length) : "";
       const x = root.querySelector(`[data-lclear="${key}"]`);

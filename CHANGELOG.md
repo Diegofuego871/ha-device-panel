@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.154.2] - 2026-10-25
+
+"Toggle all" disappears while you search a list.
+
+### Fixed
+
+- **"Toggle all" with a search:** in the lists of the settings with a search field (integrations and device types in "Devices in the panel"), the row "Toggle all" now disappears as soon as something is typed in the search. It also switched the rows that the search hides, so you could not see what you were switching. Without a search it is back.
+
 ## [2.154.1] - 2026-10-25
 
 The hint under "System load" names the right place, and the spinning arrow turns around its own axis.
@@ -4932,6 +4940,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.154.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.2
 [2.154.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.1
 [2.154.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.0
 [2.152.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.152.0

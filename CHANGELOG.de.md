@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.154.2] - 2026-10-25
+
+"Alle umschalten" verschwindet, solange in einer Liste gesucht wird.
+
+### Behoben
+
+- **"Alle umschalten" mit Suche:** in den Listen der Einstellungen mit Suchfeld (Integrationen und Gerätetypen unter "Geräte im Panel") verschwindet die Zeile "Alle umschalten", sobald etwas in der Suche steht. Sie schaltete auch die Zeilen, die die Suche ausblendet, man sah also nicht, was man umschaltet. Ohne Suche ist sie wieder da.
+
 ## [2.154.1] - 2026-10-25
 
 Der Hinweis unter "Systemauslastung" nennt die richtige Stelle, und der drehende Pfeil dreht sich um die eigene Achse.
@@ -5033,6 +5041,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.154.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.2
 [2.154.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.1
 [2.154.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.0
 [2.152.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.152.0

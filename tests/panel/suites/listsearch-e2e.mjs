@@ -34,6 +34,9 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   await type("exclude_integrations", "shelly");
   check(`[${tag}] filtert: eine Zeile, Trefferzahl`, (await visible("exclude_integrations")) === 1 && (await count("exclude_integrations")) === T[lang].of, `${await visible("exclude_integrations")} / ${await count("exclude_integrations")}`);
   await ev(`r.querySelector('.srch-rows[data-srch="exclude_integrations"] input[type=checkbox]:not([hidden])') ; 0`);
+  // "Alle umschalten" ist mit Suche weg (es schaltete auch die ausgeblendeten Zeilen), ohne Suche da (seit 2.154.2)
+  const allHidden = () => ev(`const a = r.querySelector('.srch-rows[data-srch="exclude_integrations"]').previousElementSibling; return a.classList.contains("ex-all") ? [a.hidden, getComputedStyle(a).display === "none"] : null`);
+  check(`[${tag}] mit Suche: "Alle umschalten" ausgeblendet`, JSON.stringify(await allHidden()) === "[true,true]", JSON.stringify(await allHidden()));
   // Neuaufbau (Schalter umlegen): Filter bleibt
   await tap('input[data-list="exclude_integrations"][data-value="shelly"]');
   check(`[${tag}] nach Neuaufbau noch gefiltert`, (await visible("exclude_integrations")) === 1 && await ev(`return r.querySelector('input[data-lsearch="exclude_integrations"]').value === "shelly"`));
@@ -45,6 +48,7 @@ for (const lang of ["de", "en"]) for (const mobile of [false, true]) {
   check(`[${tag}] Suchfeld mit Eingabe: X sichtbar`, await ev(`const x=r.querySelector('[data-lclear="exclude_integrations"]'); return !!x && !x.hidden`));
   await tap('[data-lclear="exclude_integrations"]');
   check(`[${tag}] X leert: alles sichtbar, Zähler weg, X weg`, (await visible("exclude_integrations")) === 9 && (await count("exclude_integrations")) === "" && (await ev(`return r.querySelector('input[data-lsearch="exclude_integrations"]').value === "" && r.querySelector('[data-lclear="exclude_integrations"]').hidden`)));
+  check(`[${tag}] ohne Suche: "Alle umschalten" wieder da`, JSON.stringify(await allHidden()) === "[false,false]", JSON.stringify(await allHidden()));
   await type("exclude_integrations", "zig");
   await type("exclude_integrations", "");
   check(`[${tag}] von Hand geleert: X weg`, await ev(`return r.querySelector('[data-lclear="exclude_integrations"]').hidden`));

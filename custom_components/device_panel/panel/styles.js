@@ -821,6 +821,7 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .field-clear:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 1px; }
 .field-clear[hidden] { display: none; }
 .srch-rows [hidden] { display: none !important; }
+.ex-row.ex-all[hidden] { display: none; }
 /* Integrationen mit "Anzeigen", "Push", "Anhaltend" (Bild 5) */
 .ex-col { flex: none; display: flex; justify-content: center; width: 72px; }
 .ex-head.multi { justify-content: flex-start; }
