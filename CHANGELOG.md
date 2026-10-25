@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.154.1] - 2026-10-25
+
+The hint under "System load" in the setup wizard names the right place.
+
+### Fixed
+
+- **Setup wizard, step "Quiet hours and system":** the text under "System load" said "The recipient is the target from above", but nothing "above" is a target (that choice is made in the step "Notifications"). It now says: "It goes to the target you chose in the step "Notifications"."
+
 ## [2.154.0] - 2026-10-25
 
 Every green in the panel is the same fir green.
@@ -4923,6 +4931,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.154.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.1
 [2.154.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.0
 [2.152.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.152.0
 [2.151.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.151.0

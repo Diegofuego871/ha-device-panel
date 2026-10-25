@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.154.1] - 2026-10-25
+
+Der Hinweis unter "Systemauslastung" im Einrichtungsassistenten nennt die richtige Stelle.
+
+### Behoben
+
+- **Einrichtungsassistent, Schritt "Ruhezeit und System":** der Text unter "Systemauslastung" sagte "Der Empfänger ist das Ziel von oben", aber oben steht kein Ziel (die Wahl liegt im Schritt "Meldungen"). Jetzt steht dort: "Sie geht an das Ziel, das du im Schritt "Meldungen" gewählt hast."
+
 ## [2.154.0] - 2026-10-25
 
 Jedes Grün im Panel ist dasselbe Tannengrün.
@@ -5024,6 +5032,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.154.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.1
 [2.154.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.154.0
 [2.152.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.152.0
 [2.151.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.151.0
