@@ -1,0 +1,43 @@
+<!doctype html><html lang="de"><meta charset="utf-8"><title>Pfeile Variante B</title>
+<style>
+:root{--bg:#1c1c1c;--card:#262626;--tx:#e6e6e6;--tx2:#9a9a9a;--pri:#03a9f4;--soft:rgba(3,169,244,.16);--line:#3a3a3a}
+*{box-sizing:border-box}body{margin:0;background:#0d0d0d;font:15px/1.35 Roboto,Arial,sans-serif;color:var(--tx);padding:24px;display:flex;gap:24px;align-items:flex-start}
+.ph{width:390px;background:var(--bg);border-radius:28px;padding:18px 16px 22px;border:1px solid #333}
+h2{margin:0 0 4px;font-size:13px;color:var(--tx2);font-weight:500;letter-spacing:.04em}
+.cap{font-size:12px;color:#7d7d7d;margin:0 0 14px}
+.rb{display:inline-grid;place-items:center;width:30px;height:30px;border:1.5px solid var(--pri);border-radius:50%;background:var(--soft);color:var(--pri);flex:none}
+.rb svg{width:20px;height:20px;fill:currentColor;stroke:currentColor;stroke-width:1.4px}
+.plain{color:#8a8a8a;display:inline-grid}.plain svg{width:20px;height:20px;fill:currentColor}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;position:relative;min-height:84px}
+.tile small{color:var(--tx2)}.tile b{font-size:26px;font-weight:500;display:block}
+.tile .rb{position:absolute;right:8px;bottom:8px}
+.ki{background:#2d2547;border:1px solid #5b4b9c;border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:14px;color:#c9b8ff}
+.ki span{flex:1;font-weight:500}.ki .rb{border-color:#a58bff;background:rgba(165,139,255,.18);color:#a58bff}
+.sec{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center}
+.sec span{flex:1;font-size:16px}
+.grp{background:#2c2c2c;border-radius:16px;padding:12px;display:flex;align-items:center;gap:10px}
+.grp div{flex:1}.grp b{color:var(--pri);font-weight:500;display:block}.grp small{color:var(--tx2)}
+.cnt{width:30px;height:30px;border-radius:50%;background:rgba(3,169,244,.25);color:var(--pri);display:grid;place-items:center;font-size:13px}
+.note{margin-top:14px;font-size:12px;color:#7d7d7d;border-top:1px solid var(--line);padding-top:10px}
+.sel{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;color:var(--tx);margin-top:10px}
+</style>
+<body>
+<section class="ph"><h2>GERÄTE-POPUP</h2><p class="cap">Variante B: Kacheln und KI-Zeile mit rundem Knopf</p>
+<div class="tiles"><div class="tile"><small>Verfügbarkeit 24 Std.</small><b>100 %</b><small>keine Unterbrüche</small><span class="rb"><svg viewBox="0 0 24 24"><path d="M8.59 16.58 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></span></div>
+<div class="tile"><small>Unterbrüche 7 Tage</small><b>0</b><small>keine Unterbrüche</small><span class="rb"><svg viewBox="0 0 24 24"><path d="M8.59 16.58 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></span></div></div>
+<div class="ki"><span>✦ KI-Einschätzung</span><span class="rb"><svg viewBox="0 0 24 24"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></span></div>
+<div class="note">Dropdowns bleiben wie bisher:<div class="sel"><span>Standard (notify.group_…)</span><span class="plain"><svg viewBox="0 0 24 24"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></span></div></div></section>
+
+<section class="ph"><h2>EINSTELLUNGEN</h2><p class="cap">Variante B: Abschnitte mit rundem Knopf</p>
+<div class="sec"><span>Geräte im Panel</span><span class="rb"><svg viewBox="0 0 24 24"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></span></div>
+<div class="sec"><span>Überwachung und Meldungen</span><span class="rb"><svg viewBox="0 0 24 24"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></span></div>
+<div class="sec"><span>Routinen</span><span class="rb"><svg viewBox="0 0 24 24"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></span></div>
+<div class="sec"><span>KI-Einschätzung</span><span class="rb"><svg viewBox="0 0 24 24"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></span></div>
+<div class="sec"><span>Panel</span><span class="rb"><svg viewBox="0 0 24 24"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></span></div></section>
+
+<section class="ph"><h2>ROUTINEN</h2><p class="cap">Variante B: Gruppe mit rundem Knopf; lange Listen unverändert</p>
+<div class="grp"><div><b>myStrom Werkbank Disporaum</b><small>1 Routine · 1 aus</small></div><span class="cnt">1</span><span class="rb"><svg viewBox="0 0 24 24"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></span></div>
+<div class="note">Unverändert bleiben lange Listen mit sehr vielen Zeilen (Geräteliste im Panel, Protokoll): dort würde ein Kreis je Zeile die Seite unruhig machen.<div style="margin-top:10px;display:flex;justify-content:space-between;color:#cfcfcf"><span>Eve Türe Wohnzimmer</span><span class="plain"><svg viewBox="0 0 24 24"><path d="M8.59 16.58 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></span></div>
+<div style="margin-top:10px;display:flex;justify-content:space-between;color:#cfcfcf"><span>Aloe Vera Büro</span><span class="plain"><svg viewBox="0 0 24 24"><path d="M8.59 16.58 13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></span></div></div></section>
+</body></html>
