@@ -23,7 +23,7 @@
 - **Verfügbarkeit pro Gerät:** Statistik für 24 Stunden, 7 und 30 Tage sowie 3, 6 und 12 Monate mit jedem Ausfall und seiner Dauer, bis zu 12 Monate (Standard) in einem eigenen Protokoll, auch über Neustarts
 - **Batterie-Übersicht mit Meldungen:** ein farbiges Batteriesymbol bei jedem Gerät, eine Warnschwelle (Standard 15 %), Push oder anhaltende Benachrichtigung, ein Verlauf bis 12 Monate mit Prognose, wie lange die Batterie hält, und eine Meldung, wenn ein Gerät voll geladen ist
 - **Empfangs-Übersicht mit Warnungen:** Empfang in dBm oder LQI bei jedem Gerät, eine Warnschwelle pro Verbindungsart, ein Verlauf mit Median und Spanne, und bei Bluetooth der Empfänger (Adapter oder Proxy), über den ein Gerät verbunden ist oder war
-- **Meldungen auf drei Ebenen:** einmal eine Vorgabe setzen, pro Integration ändern, auf einem einzelnen Gerät überschreiben; jede Einstellung zeigt, woher ihr Wert stammt (Grafik unten)
+- **Meldungen auf drei Ebenen:** einmal eine Vorgabe setzen, pro Integration (oder pro Label) ändern, auf einem einzelnen Gerät überschreiben; jede Einstellung zeigt, woher ihr Wert stammt (Grafik unten)
 - **Labels:** Geräte mit einem Label aus Home Assistant werden gemeinsam eingestellt (zum Beispiel "oft offline" ohne Überwachung); ein Label steht zwischen Gerät und Integration und hat einen eigenen Filter-Chip
 - **Ruhezeit:** Meldungen warten in der Nacht (Zeiten je Wochentag, Arten wählbar) und kommen danach als Zusammenfassung oder einzeln
 - **Magic Push:** eigene Meldungen pro Gerät ohne Automation: einen Wert wählen, sagen, wann gemeldet wird, den Text schreiben, fertig
@@ -48,7 +48,7 @@ Ausgefallene Geräte mit der Zeit, seit der sie weg sind, instabile Geräte (dre
 
 ### Suchen, filtern, sortieren
 
-Die Suche läuft über alle Spalten. Filter-Chips grenzen die Liste ein: Warnungen, ausgefallen, Batterie, lädt, neue Geräte, Geräte mit eigenen Einstellungen, Favoriten, jede Verbindungsart, dazu ein Bereichs- und ein Integrationsfilter, die sich mit den Chips kombinieren lassen. Ausgeblendete Geräte, Integrationen und Gerätetypen werden weder gezeigt noch überwacht. Die Akzentfarbe des Panels ist pro Benutzer wählbar (Einstellungen › Panel › Allgemein): Home Assistant oder eine von neun Farben. Die Animationen (Messpunkt auf dem Ausfall-Puls, Sternschnuppe am Punkt der Knöpfe) sind standardmässig an und lassen sich dort ebenfalls ausschalten.
+Die Suche läuft über alle Spalten. Filter-Chips grenzen die Liste ein: Warnungen, ausgefallen, Batterie, lädt, neue Geräte, Geräte mit eigenen Einstellungen, Favoriten, jede Verbindungsart, dazu ein Bereichs-, ein Integrations- und ein Label-Filter (nur solange ein Gerät ein Label trägt), die sich mit den Chips kombinieren lassen. Ausgeblendete Geräte, Integrationen und Gerätetypen werden weder gezeigt noch überwacht. Die Akzentfarbe des Panels ist pro Benutzer wählbar (Einstellungen › Panel › Allgemein): Home Assistant oder eine von neun Farben. Die Animationen (Messpunkt auf dem Ausfall-Puls, Sternschnuppe am Punkt der Knöpfe) sind standardmässig an und lassen sich dort ebenfalls ausschalten.
 
 | Warnungen | Batterie | Bereichsfilter |
 |---|---|---|
@@ -108,7 +108,7 @@ Jedes Gerät kann die Vorgaben im Reiter "Einstellungen" seines Pop-ups übersch
 
 ## Meldungen
 
-Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgabe, änderst sie für alle Geräte einer Integration und überschreibst sie bei Bedarf auf einem einzelnen Gerät. Die genauere Ebene gewinnt.
+Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgabe, änderst sie für alle Geräte einer Integration (oder eines Labels) und überschreibst sie bei Bedarf auf einem einzelnen Gerät. Die genauere Ebene gewinnt; ein Label steht zwischen Gerät und Integration.
 
 ### Das Prinzip
 
@@ -118,7 +118,17 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 - **Integration:** am selben Ort, Reiter "Integrationen": eine Liste aller Integrationen mit dem, was von der Vorgabe abweicht, und eine Detailseite pro Integration mit eigenen Reitern
 - **Label (optional):** in den Einstellungen unter "Überwachung und Meldungen", Reiter "Labels" (neben "Integrationen"): ein Label aus Home Assistant bekommt dieselben Reiter wie eine Integration und gilt für alle Geräte, die es tragen, vor der Integration und nach dem Gerät. Bei mehreren Labels gilt das strengste ("Nicht überwachen", dann die längere Zeit oder die tiefere Schwelle)
 - **Gerät:** im Pop-up des Geräts, Reiter "Einstellungen": nur dieses Gerät, mit der Herkunft jedes Werts
-- **Herkunft:** jede Einstellung sagt, woher sie stammt (Standard, Integration oder Gerät), und ein Chip "Eigene Einstellung" filtert Geräte mit eigenen Werten; in den Einstellungen lassen sie sich einzeln oder alle auf einmal zurücksetzen
+- **Herkunft:** jede Einstellung sagt, woher sie stammt (Standard, Integration, Label oder Gerät), und ein Chip "Eigene Einstellung" filtert Geräte mit eigenen Werten; in den Einstellungen lassen sie sich einzeln oder alle auf einmal zurücksetzen
+
+### Labels
+
+Labels sind die Labels, die du Geräten in Home Assistant gibst (Einstellungen › Bereiche, Labels & Zonen). Sie fassen Geräte über Integrationen hinweg zusammen, zum Beispiel "oft offline" für Geräte, die keine Meldung auslösen sollen.
+
+- **Einrichten:** Einstellungen › Überwachung und Meldungen › Reiter "Labels": das Plus wählt ein Label (nur Labels, die an mindestens einem Gerät hängen); die Detailseite hat die Reiter einer Integration, dazu "Updates" und "Typ"
+- **Rangfolge:** Gerät › Label › Integration › Global; eine Wahl am Gerät gilt immer
+- **Mehrere Labels:** das strengste gilt: zuerst "Nicht überwachen", sonst die längere Zeit oder die tiefere Schwelle; bei Typ, Verbindungsart und Meldung an oder aus zählt das Label weiter oben in der Liste (verschieben mit "Nach oben" / "Nach unten")
+- **Im Panel:** der Filter-Chip "Label" (Mehrfachauswahl, "Ohne Label", kombinierbar mit den anderen Filtern) erscheint, sobald ein Gerät ein Label trägt; das Pop-up eines Geräts zeigt "Wie Label" und die Herkunft "Label <Name>"
+- **Nur Geräte:** Labels an Geräten zählen, Labels an Entitäten nicht; "Label entfernen" löscht die Einstellungen des Labels und lässt Home Assistant unberührt
 
 ### Vom Ausfall zur Meldung
 
@@ -142,7 +152,7 @@ Alles, was dich benachrichtigt, folgt einem Prinzip: Du setzt einmal eine Vorgab
 
 ### Die Arten von Meldungen
 
-Jede Art hat in den Einstellungen einen eigenen Reiter. Ausfall, Batterie, Laden, Neue Geräte und Empfang sind auch Reiter jeder Integration, und Ausfall, Batterie, Laden und Empfang Reiter jedes Geräts (ein Gerät zeigt nur die Reiter, für die es etwas gibt: ohne Batterie entfallen "Batterie" und "Laden", ohne Empfangswert "Empfang"), damit die drei Ebenen für jede davon gelten.
+Jede Art hat in den Einstellungen einen eigenen Reiter. Ausfall, Batterie, Laden, Neue Geräte und Empfang sind auch Reiter jeder Integration, und Ausfall, Batterie, Laden und Empfang Reiter jedes Geräts (ein Gerät zeigt nur die Reiter, für die es etwas gibt: ohne Batterie entfallen "Batterie" und "Laden", ohne Empfangswert "Empfang"), damit die drei Ebenen für jede davon gelten. Ein Label hat dieselben Reiter wie eine Integration, dazu "Updates" und "Typ".
 
 | Ausfall | Batterie | Laden |
 |---|---|---|
@@ -244,7 +254,7 @@ Das Zahnrad (die angeheftete App "Einstellungen", oder der Launcher) öffnet all
 
 Nach einer frischen Installation öffnet sich einmal ein Fenster in der Mitte des Panels (auf dem Handy als Vollbild) und führt durch die Grundeinstellungen. Angewendet wird erst im letzten Schritt mit "Fertigstellen"; schliesst du zwischendurch, bleiben Schritt und Auswahl erhalten, und der nächste Start macht dort weiter.
 
-- **Schritte:** Willkommen, Integrationen (abwählen, was du nicht brauchst), Gerätetypen, Geräte (nach Integration gruppiert, aufklappbar, ein Schalter je Gruppe oder Gerät), Meldungen, Ruhezeit und System (erst mit gewähltem Push-Ziel; die Ruhezeit und die Meldung bei hoher Auslastung von CPU, RAM und Festplatte mit aktuellem Wert, Grenze und Mindestdauer) und eine Zusammenfassung.
+- **Schritte:** Willkommen, Integrationen (abwählen, was du nicht brauchst), Gerätetypen, Geräte (nach Integration gruppiert, aufklappbar, ein Schalter je Gruppe oder Gerät), Meldungen, Labels (nur wenn ein Gerät ein Label aus Home Assistant trägt: ein Label wählen und Überwachung, Zeiten, Batterie-Schwelle und Meldungen für alle seine Geräte einstellen), Ruhezeit und System (erst mit gewähltem Push-Ziel; die Ruhezeit und die Meldung bei hoher Auslastung von CPU, RAM und Festplatte mit aktuellem Wert, Grenze und Mindestdauer) und eine Zusammenfassung.
 - **Meldungen:** das Push-Ziel wählen (Notify-Gruppe oder -Dienst), ein Schalter je Art (ausgefallene Geräte mit Rückkehr, niedrige Batterie, neue Geräte, voll geladen, Updates) und je Zeile die jetzigen Werte, mit den Standardwerten vorausgefüllt und gleich anpassbar: "Melden nach" (Minuten), "Batterie schwach unter" (%), "Neue Geräte sammeln" (Minuten), "Voll ab" (%), Uhrzeit der Update-Meldung. Ein Pfeil an einer Zeile öffnet die Integrationen dieser Art: bei ausgefallenen Geräten, niedriger Batterie und neuen Geräten schaltest du einzelne aus, bei "Voll geladen" (standardmässig aus, Best Practice) einzelne ein. Ausgefallene Geräte, niedrige Batterie und "Voll geladen" lassen sich noch einmal bis zu den einzelnen Geräten aufklappen, je ein Schalter; bei "Updates" listet der Pfeil die Integrationen mit Updates und darunter die einzelnen Updates. In den Einstellungen steht dieselbe Wahl pro Integration als Liste über den einzelnen Einträgen (Reiter Updates) und als Reiter "Updates" im Detail jeder Integration. Ein Knopf sendet eine Testmeldung. Falsche Werte (ausserhalb des Bereichs, "Melden nach" kürzer als das eingestellte "Ausgefallen nach", das der Assistent nicht anbietet) sperren "Weiter" mit einem Hinweis.
 - **Überspringen:** "Jetzt nicht" schliesst das Fenster und merkt sich deinen Stand ("Entwurf verwerfen" auf der Willkommensseite beginnt neu); "Nicht mehr zeigen" beendet es für immer. Ab Schritt 1 fragt das Kreuz, welches von beiden du willst. Solange der Assistent nie beendet wurde, zeigt der Launcher zuoberst in der Gruppe "Device Panel" die Kachel "Einrichtung" und am Launcher-Knopf einen orangen Punkt (nicht einstellbar, weg nach "Fertigstellen" oder "Nicht mehr zeigen").
 - **Später wieder:** Einstellungen › Panel › Allgemein › "Einrichtungsassistent" startet ihn neu. Die Felder zeigen den jetzigen Stand, nichts wird zurückgesetzt. Wird er nicht beendet, kommen Kachel und Punkt zurück. Nur für Administratoren; der Zustand gilt für die ganze Installation, bestehende Installationen gelten als abgeschlossen (kein Fenster, keine Kachel).
@@ -302,16 +312,16 @@ Dasselbe Panel als Karten, mit denselben Pop-ups, Fenstern und Assistenten im Vo
 
 ## Gut zu wissen
 
-- Ein Gerät gilt nach 2 Minuten ohne Lebenszeichen als ausgefallen (einstellbar, pro Integration und pro Gerät).
-- Ein Empfang gilt als schwach unter -80 dBm oder LQI 61. Die Warnschwelle lässt sich pro Verbindungsart, allgemein, pro Integration und pro Gerät einstellen oder abschalten.
+- Ein Gerät gilt nach 2 Minuten ohne Lebenszeichen als ausgefallen (einstellbar, pro Integration, pro Label und pro Gerät).
+- Ein Empfang gilt als schwach unter -80 dBm oder LQI 61. Die Warnschwelle lässt sich pro Verbindungsart, allgemein, pro Integration, pro Label und pro Gerät einstellen oder abschalten.
 - Ein Ausfall dauert, bis Home Assistant das Gerät wieder online sieht, auch über Neustarts. "Mindestens" (≥) heisst: Der Beginn ist nicht bekannt.
 - Das Verfügbarkeitsprotokoll umfasst standardmässig 12 Monate (einstellbar, 7 bis 365 Tage) in einer eigenen Datei, nicht im Recorder. Was vor dem Update schon gelöscht war (älter als 31 Tage), lässt sich nicht nachfüllen; der Recorder behält standardmässig nur zehn Tage. Zeit, in der Home Assistant nicht lief, zählt als "keine Daten".
-- Ausgeblendete Geräte, Integrationen und Gerätetypen werden weder gezeigt noch überwacht. Jeder Filter-Chip lässt sich in den Einstellungen ausblenden und umordnen.
-- Batterie-Warnung von 1 bis 50 % (Standard 15 %), pro Integration und pro Gerät. Ein unglaubwürdig schneller Abfall (zum Beispiel 76 % auf 2 % in wenigen Minuten, ein Messfehler mancher Sensoren) wird gehalten, bis eine spätere Meldung ihn bestätigt; schnell leere Akkus wie ein Staubsauger gelten sofort. Es ist nichts einzustellen.
-- Gerätetyp und Verbindungsart werden automatisch erkannt. Du kannst beides pro Integration korrigieren; ein von Hand am Gerät gesetzter Wert geht vor. Der Typ gilt nur im Panel, nicht in Home Assistant.
+- Ausgeblendete Geräte, Integrationen und Gerätetypen werden weder gezeigt noch überwacht. Jeder Filter-Chip (Bereich, Integration, Label und die übrigen) lässt sich in den Einstellungen ausblenden und umordnen.
+- Batterie-Warnung von 1 bis 50 % (Standard 15 %), pro Integration, pro Label und pro Gerät. Ein unglaubwürdig schneller Abfall (zum Beispiel 76 % auf 2 % in wenigen Minuten, ein Messfehler mancher Sensoren) wird gehalten, bis eine spätere Meldung ihn bestätigt; schnell leere Akkus wie ein Staubsauger gelten sofort. Es ist nichts einzustellen.
+- Gerätetyp und Verbindungsart werden automatisch erkannt. Du kannst beides pro Integration oder pro Label korrigieren; ein von Hand am Gerät gesetzter Wert geht vor. Der Typ gilt nur im Panel, nicht in Home Assistant.
 - Der Empfangsverlauf kommt aus dem Recorder oder, bei ZHA, Bluetooth und nicht aufgezeichneten Sensoren, vom Panel selbst.
 - Bluetooth-Geräte zeigen den Live-Empfang von Bluetooth (bester Empfänger), nicht den Wert ihres eigenen Empfangs-Sensors. Den Weg "Verbunden über" zeichnet das Panel ab dem Update auf; frühere Wege lassen sich nicht nachträglich herstellen.
-- Jede Einstellung zeigt, woher sie stammt: Standard, Integration oder Gerät.
+- Jede Einstellung zeigt, woher sie stammt: Standard, Integration, Label oder Gerät.
 - Nichts Sicherheitsrelevantes (Tokens, Schlüssel) wird je im Panel angezeigt.
 - Alle Printscreens in dieser Datei zeigen erfundene Daten.
 

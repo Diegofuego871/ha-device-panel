@@ -23,7 +23,7 @@
 - **Availability per device:** statistics for 24 hours, 7 and 30 days and 3, 6 and 12 months with every outage and its duration, kept for up to 12 months (default) in its own log, also across restarts
 - **Battery overview with notifications:** a colored battery symbol on every device, a warning threshold (default 15 %), push or persistent notification, a history of up to 12 months with a forecast of how long the battery lasts, and a message when a device is fully charged
 - **Signal overview with warnings:** signal strength in dBm or LQI on every device, a warning threshold per connection type, a history with median and range, and for Bluetooth the receiver (adapter or proxy) a device is or was connected through
-- **Notifications on three levels:** set a default once, change it per integration, override it on a single device; every setting shows where its value comes from (graphic below)
+- **Notifications on three levels:** set a default once, change it per integration (or per label), override it on a single device; every setting shows where its value comes from (graphic below)
 - **Labels:** devices that carry a Home Assistant label are set together (for example "often offline" without monitoring); a label sits between the device and the integration, and has its own filter chip
 - **Quiet time:** notifications wait during the night (times per weekday, kinds selectable) and arrive afterwards as one summary or one by one
 - **Magic Push:** your own messages per device without an automation: pick a value, say when it should notify, write the text, done
@@ -48,7 +48,7 @@ Offline devices with the time they have been gone, unstable devices (three or mo
 
 ### Search, filter, sort
 
-Search runs over all columns. Filter chips narrow the list: warnings, offline, battery, charging, new devices, devices with their own settings, favorites, each connection type, and an area and an integration filter that combine with the chips. Hidden devices, integrations and device types are neither shown nor monitored. The accent colour of the panel can be chosen per user (Settings › Panel › General): Home Assistant or one of nine colours. The animations (measuring dot on the outage pulse, shooting star at the dot of the buttons) are on by default and can be switched off there as well.
+Search runs over all columns. Filter chips narrow the list: warnings, offline, battery, charging, new devices, devices with their own settings, favorites, each connection type, and an area, an integration and a label filter (only while a device carries a label) that combine with the chips. Hidden devices, integrations and device types are neither shown nor monitored. The accent colour of the panel can be chosen per user (Settings › Panel › General): Home Assistant or one of nine colours. The animations (measuring dot on the outage pulse, shooting star at the dot of the buttons) are on by default and can be switched off there as well.
 
 | Warnings | Battery | Area filter |
 |---|---|---|
@@ -108,7 +108,7 @@ Every device can override the defaults in the tab "Settings" of its pop-up: its 
 
 ## Notifications
 
-Everything that notifies you follows one principle: you set a default once, change it for all devices of an integration, and override it on a single device where needed. The more specific level wins.
+Everything that notifies you follows one principle: you set a default once, change it for all devices of an integration (or of a label), and override it on a single device where needed. The more specific level wins; a label sits between the device and the integration.
 
 ### The principle
 
@@ -118,7 +118,17 @@ Everything that notifies you follows one principle: you set a default once, chan
 - **Integration:** in the same place, tab "Integrations": a list of all integrations with what differs from the default, and a detail page per integration with its own tabs
 - **Label (optional):** in the settings under "Monitoring and notifications", tab "Labels" (next to "Integrations"): a Home Assistant label gets the same tabs as an integration and applies to all devices that carry it, before the integration and after the device. With several labels the strictest one applies ("Do not monitor", then the longer time or the lower threshold)
 - **Device:** in the pop-up of the device, tab "Settings": only this device, with the origin of every value
-- **Origin:** every setting says where it comes from (default, integration or device), and a chip "Own setting" filters devices that have their own values; in the settings they can be reset one by one or all at once
+- **Origin:** every setting says where it comes from (default, integration, label or device), and a chip "Own setting" filters devices that have their own values; in the settings they can be reset one by one or all at once
+
+### Labels
+
+Labels are the labels you give devices in Home Assistant (Settings › Areas, labels & zones). They group devices across integrations, for example "often offline" for devices that should not trigger alerts.
+
+- **Set up:** Settings › Monitoring and notifications › tab "Labels": the plus button picks a label (only labels that sit on at least one device); the detail page has the tabs of an integration plus "Updates" and "Type"
+- **Order of precedence:** device › label › integration › global; a choice on the device always wins
+- **Several labels:** the strictest applies: "Do not monitor" first, otherwise the longer time or the lower threshold; for type, connection type and notifications on or off, the label higher up in the list counts (move with "Move up" / "Move down")
+- **In the panel:** the filter chip "Label" (multi-select, "No label", combines with the other filters) appears as soon as a device carries a label; the pop-up of a device shows "Same as label" and the origin "Label <name>"
+- **Only devices:** labels on devices count, labels on entities do not; "Remove label" deletes the settings of the label and leaves Home Assistant untouched
 
 ### From outage to notification
 
@@ -142,7 +152,7 @@ Everything that notifies you follows one principle: you set a default once, chan
 
 ### The kinds of notifications
 
-Each kind has its own tab in the settings. Outage, battery, charging, new devices and signal are also tabs of every integration, and outage, battery, charging and signal tabs of every device (a device only shows the tabs it has something for: without a battery there is no battery or charging tab, without a signal reading no signal tab), so the three levels apply to each of them.
+Each kind has its own tab in the settings. Outage, battery, charging, new devices and signal are also tabs of every integration, and outage, battery, charging and signal tabs of every device (a device only shows the tabs it has something for: without a battery there is no battery or charging tab, without a signal reading no signal tab), so the three levels apply to each of them. A label has the same tabs as an integration, plus "Updates" and "Type".
 
 | Outage | Battery | Charging |
 |---|---|---|
@@ -244,7 +254,7 @@ The gear (the pinned app "Settings", or the launcher) opens all settings in Germ
 
 After a fresh installation a window opens once in the middle of the panel (full screen on a phone) and leads through the basic settings. Nothing is applied until the last step, "Finish"; if you close in between, your step and choices are kept and the next start continues there.
 
-- **Steps:** Welcome, Integrations (switch off what you do not need), Device types, Devices (grouped by integration, expandable, one switch per group or device), Notifications, Quiet hours and system (only once a push target is chosen; the quiet hours plus the notification for high load of CPU, RAM and disk with the current value, limit and minimum duration) and a summary.
+- **Steps:** Welcome, Integrations (switch off what you do not need), Device types, Devices (grouped by integration, expandable, one switch per group or device), Notifications, Labels (only if a device carries a Home Assistant label: pick a label and set monitoring, times, battery threshold and notifications for all its devices), Quiet hours and system (only once a push target is chosen; the quiet hours plus the notification for high load of CPU, RAM and disk with the current value, limit and minimum duration) and a summary.
 - **Notifications:** choose the push target (notify group or service), one switch per kind (failed devices with return, low battery, new devices, fully charged, updates) and, per row, the current values already filled in with the defaults and editable on the spot: "Notify after" (minutes), "Battery low below" (%), "Collect new devices" (minutes), "Full from" (%), the time of the update notification. An arrow on a row opens the integrations of that kind: switch some off for failed devices, low battery and new devices, or on for "Fully charged" (off by default, best practice). Failed devices, low battery and fully charged open once more down to the single devices, one switch each; under "Updates" the arrow lists the integrations with updates and, below, the single updates. In the settings the same choice per integration is a list above the single entries (tab Updates) and a tab "Updates" in the detail of every integration. A button sends a test message. Wrong values (out of range, "Notify after" shorter than the set "Failed after", which the wizard does not offer) block "Next" with a note.
 - **Skip:** "Not now" closes the window and keeps your place ("Discard draft" on the welcome page starts over); "Don't show again" ends it for good. From step 1 on, the cross asks which of the two you want. Until the wizard has been finished once, the launcher shows a tile "Setup" at the top of the group "Device Panel" and an orange dot on the launcher button (not configurable, gone after "Finish" or "Don't show again").
 - **Again later:** Settings › Panel › General › "Setup wizard" starts it again. The fields show the current state, nothing is reset. Closed without finishing, the tile and the dot come back. Administrators only; the state applies to the whole installation, existing installations count as finished (no window, no tile).
@@ -302,16 +312,16 @@ The same panel as cards, with the same pop-ups, windows and assistants in full s
 
 ## Good to know
 
-- A device counts as offline after 2 minutes without a sign of life (adjustable, per integration and per device).
-- A signal counts as weak below -80 dBm or LQI 61. The warning threshold can be set per connection type, globally, per integration and per device, or switched off.
+- A device counts as offline after 2 minutes without a sign of life (adjustable, per integration, per label and per device).
+- A signal counts as weak below -80 dBm or LQI 61. The warning threshold can be set per connection type, globally, per integration, per label and per device, or switched off.
 - An outage lasts until Home Assistant sees the device online again, also across restarts. "At least" (≥) means the start is not known.
 - The availability log covers 12 months by default (adjustable, 7 to 365 days) in its own file, not the recorder. Values deleted before the update (older than 31 days) cannot be filled in; the recorder only keeps ten days by default. Time while Home Assistant was not running counts as "no data".
-- Hidden devices, integrations and device types are neither shown nor monitored. Every filter chip can be hidden and reordered in the settings.
-- Battery warning from 1 to 50 % (default 15 %), per integration and per device. An implausibly fast drop (for example 76 % to 2 % within minutes, a measurement error of some sensors) is held until a later report confirms it; fast-draining batteries such as a vacuum cleaner count at once. Nothing to set.
-- Device type and connection type are detected automatically. You can fix either per integration; a value set by hand on the device comes first. The type only applies in the panel, not in Home Assistant.
+- Hidden devices, integrations and device types are neither shown nor monitored. Every filter chip (area, integration, label and the others) can be hidden and reordered in the settings.
+- Battery warning from 1 to 50 % (default 15 %), per integration, per label and per device. An implausibly fast drop (for example 76 % to 2 % within minutes, a measurement error of some sensors) is held until a later report confirms it; fast-draining batteries such as a vacuum cleaner count at once. Nothing to set.
+- Device type and connection type are detected automatically. You can fix either per integration or per label; a value set by hand on the device comes first. The type only applies in the panel, not in Home Assistant.
 - Signal history comes from the recorder or, for ZHA, Bluetooth and unrecorded sensors, from the panel itself.
 - Bluetooth devices show the live signal of Bluetooth (best receiver), not the value of their own signal sensor. The path "Connected via" is recorded by the panel from the update on; earlier paths cannot be reconstructed.
-- Every setting shows where it comes from: default, integration or device.
+- Every setting shows where it comes from: default, integration, label or device.
 - Nothing security-relevant (tokens, keys) is ever shown in the panel.
 - All screenshots in this file show invented data.
 
