@@ -30,7 +30,7 @@ for (const lang of ["de", "en"]) {
     await tap(".gear-btn");
     await wait(`return !!r.querySelector("dialog.settings .set-sec")`);
     await tap('[data-set="section"][data-id="monitor"]');
-    check(`[${tag}] kein eigener Reiter, acht Reiter`, await wait(`return !r.querySelector('.mon-tab[data-key="quiet"]') && r.querySelectorAll("dialog.settings .mon-tab").length === 8`));
+    check(`[${tag}] kein eigener Reiter, neun Reiter`, await wait(`return !r.querySelector('.mon-tab[data-key="quiet"]') && r.querySelectorAll("dialog.settings .mon-tab").length === 9`));
     check(`[${tag}] Abschnitt "${T.tab}" zuletzt, nach "${T.prev}", mit blauem Strich`, await wait(`const g = [...r.querySelectorAll(".mon-body > .mon-grp")].map(x => x.textContent.trim()); return g.at(-1) === ${JSON.stringify(T.tab)} && g.at(-2) === ${JSON.stringify(T.prev)} && getComputedStyle([...r.querySelectorAll(".mon-body > .mon-grp")].at(-1), "::before").width === "4px"`));
     await wait(`return !!r.querySelector('input[data-opt="quiet_enabled"]')`);
     check(`[${tag}] aus: nur der Schalter`, await ev(`return !r.querySelector('[data-qday]') && !r.querySelector('[data-qtopic]')`));
