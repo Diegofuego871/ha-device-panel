@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.148.0] - 2026-10-25
+
+Ein Messpunkt läuft über den Ausfall-Puls.
+
+### Hinzugefügt
+
+- **Messpunkt auf dem Ausfall-Puls:** alle 15 Sekunden fährt ein kleiner Punkt von links nach rechts der Linie des Ausfall-Pulses entlang, wie die Herzfrequenzmessung im Spital. Er liegt genau auf der Kurve, hat die Farbe der Linie (grün, wenn alles läuft, rot bei einem Ausfall) und leuchtet leicht. Zwischen den Fahrten ist er unsichtbar. Bei "Bewegung reduzieren" bewegt sich nichts; solange das Herzschlag-Easter-Egg läuft, ruht der Punkt.
+
 ## [2.147.0] - 2026-10-25
 
 Ein Knopf mit Punkt bekommt eine Sternschnuppe.
@@ -4943,6 +4951,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.148.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.148.0
 [2.147.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.147.0
 [2.146.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.146.0
 [2.145.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.145.0

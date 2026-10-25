@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.148.0] - 2026-10-25
+
+A measuring dot runs along the outage pulse.
+
+### Added
+
+- **Measuring dot on the outage pulse:** every 15 seconds a small dot travels along the line of the outage pulse from left to right, like the heart-rate monitor in a hospital. It sits exactly on the curve, has the colour of the line (green when all is well, red at an outage) and glows slightly. Between the runs it is invisible. Nothing moves if the device is set to reduced motion; while the heartbeat easter egg runs, the dot rests.
+
 ## [2.147.0] - 2026-10-25
 
 A button with a dot gets a shooting star.
@@ -4842,6 +4850,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.148.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.148.0
 [2.147.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.147.0
 [2.146.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.146.0
 [2.145.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.145.0

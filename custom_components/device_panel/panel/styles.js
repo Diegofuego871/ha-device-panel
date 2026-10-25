@@ -179,6 +179,10 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 .kt.pul .k svg { color: var(--dp-text2); }
 .pchart { position: relative; height: 84px; margin-top: 12px; }
 .pchart svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+/* Messpunkt auf der Kurve (seit 2.148.0): alle 15 s einmal von links nach rechts; Keyframes mit den Punkten der Kurve stehen im HTML (device-panel.js) */
+.pchart .pdot { position: absolute; z-index: 2; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 7px 2px currentColor; pointer-events: none; opacity: 0;
+  animation-duration: 15s; animation-timing-function: linear; animation-iteration-count: infinite; animation-delay: 2s; }
+@media (prefers-reduced-motion: reduce) { .pchart .pdot { display: none; } }
 .pchart .base { stroke: var(--dp-divider); stroke-width: 1; }
 .pchart .area { fill: var(--dp-error-soft); }
 .pchart .line { fill: none; stroke: var(--dp-error); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }

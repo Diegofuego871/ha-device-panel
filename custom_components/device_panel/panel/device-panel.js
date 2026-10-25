@@ -3129,9 +3129,20 @@ class DevicePanel extends HTMLElement {
       .map((tk) => `<span class="${tk.minor ? "minor" : ""}" style="left:${tk.pos.toFixed(2)}%">${escape(tk.label)}</span>`)
       .join("");
     const beat = !tap && this._heartOn() ? this._heartbeatSvg(W, H) : "";
+    // Messpunkt (seit 2.148.0, wie der Monitor im Spital): alle 15 Sekunden fährt ein kleiner Punkt auf der Linie von links nach rechts (3,4 Sekunden),
+    // Farbe wie die Linie; reine CSS-Animation mit den Punkten der Kurve in Prozent (die Kurve ist gestreckt), ohne Bewegung bei reduzierter Bewegung
+    let dot = "";
+    if (n > 1 && !beat) {
+      const RUN = 3.4;
+      const CYCLE = 15;
+      const frames = p.map((v, i) => `${((((i + 0.5) / n) * RUN) / CYCLE * 100).toFixed(2)}%{left:${(((i + 0.5) / n) * 100).toFixed(2)}%;top:${((Number(y(v)) / H) * 100).toFixed(2)}%;color:var(${v > 0 ? "--dp-error" : "--dp-success"})}`);
+      const name = `pd${[...frames.join("")].reduce((h, c) => (Math.imul(h, 31) + c.charCodeAt(0)) >>> 0, 7).toString(36)}`;
+      const end = (((n - 0.5) / n) * RUN) / CYCLE * 100;
+      dot = `<style>@keyframes ${name}{0%{opacity:0;${frames[0].slice(frames[0].indexOf("{") + 1, -1)}}0.4%{opacity:1}${frames.join("")}${(end + 0.8).toFixed(2)}%{opacity:1}${(end + 1.6).toFixed(2)}%,100%{opacity:0;left:${(((n - 0.5) / n) * 100).toFixed(2)}%;top:${((Number(y(p[n - 1])) / H) * 100).toFixed(2)}%}}</style><i class="pdot" style="animation-name:${name}" aria-hidden="true"></i>`;
+    }
     return `<div class="pchart${max ? "" : " quiet"}${beat ? " ee" : ""}"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="${tap ? "false" : "true"}">
         <line class="base" x1="0" x2="${W}" y1="${H - 0.5}" y2="${H - 0.5}" vector-effect="non-scaling-stroke"/>
-        ${areas}${lines}${hits}</svg>${beat}${marks}</div>
+        ${areas}${lines}${hits}</svg>${beat}${marks}${dot}</div>
       <div class="pticks">${ticks}<span class="now-label">${escape(this._t("now"))}</span></div>`;
   }
 
