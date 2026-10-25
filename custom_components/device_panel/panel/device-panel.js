@@ -2952,7 +2952,7 @@ class DevicePanel extends HTMLElement {
   // Gehört das Gerät zum Abschnitt i des Pulses? Der letzte Abschnitt ist der
   // Stand jetzt: nur Geräte, die gerade ausgefallen sind (availability.pulse).
   _inPulse(d, i, n) {
-    return d.avail24?.strip?.[i] === 1 && (i < n - 1 || d.avail24.down === true);
+    return d.avail24?.strip?.[i] === 1 && (i < n - 1 || d.avail24.down === true) || (i === n - 1 && d.online === false);
   }
 
   // Puls für den Kopf: ohne Bereichsfilter vom Backend, sonst aus den

@@ -525,18 +525,28 @@ class AvailabilityLog:
         segs = segments(self.events(device_id), now - 86400, now)
         return bool(segs) and segs[-1][2] == OFFLINE and self._open(segs[-1][1], now)
 
-    def pulse(self, now: float | None = None, buckets: int = 48, only: set[str] | None = None) -> list[int]:
+    def pulse(
+        self,
+        now: float | None = None,
+        buckets: int = 48,
+        only: set[str] | None = None,
+        down_now: set[str] | None = None,
+    ) -> list[int]:
         """
         Zahl der Geräte mit Unterbruch je Abschnitt der letzten 24 Std. Ein
         Bild wie die Balken: was HA beobachtet hat, Lücken ohne Daten zählen
         nicht. Der letzte Abschnitt (rechter Rand) zeigt den Stand jetzt: nur
         Geräte, die gerade ausgefallen sind. Sonst bliebe die Kurve bis zu
-        30 Min. nach der Rückkehr eines Geräts oben (2.1.0).
+        30 Min. nach der Rückkehr eines Geräts oben (2.1.0). down_now: Geräte,
+        die jetzt ausgefallen sind, auch wenn das Protokoll nach einem Neustart
+        noch eine Lücke hat (Ausfall erst nach der Anlaufphase eingetragen);
+        sonst fiele die Kurve ganz rechts auf null, obwohl der Ausfall läuft.
         """
         now = now if now is not None else time.time()
         start = now - 86400
         size = 86400 / buckets
         counts = [0] * buckets
+        in_last: set[str] = set()
         for dev, events in self._events.items():
             if only is not None and dev not in only:
                 continue
@@ -554,6 +564,11 @@ class AvailabilityLog:
                 hit.update(range(first, last + 1))
             for i in hit:
                 counts[i] += 1
+            if buckets - 1 in hit:
+                in_last.add(dev)
+        for dev in down_now or ():
+            if (only is None or dev in only) and dev not in in_last:
+                counts[-1] += 1
         return counts
 
     def incidents(self, now: float | None = None, seconds: float = 86400, only: set[str] | None = None) -> list[dict[str, Any]]:

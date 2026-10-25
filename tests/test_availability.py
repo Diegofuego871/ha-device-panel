@@ -847,3 +847,22 @@ async def test_number_options_are_checked(hass: HomeAssistant, setup: Availabili
 
     values = current_values(entry)
     assert values["flaky_outages"] == 3 and values["offline_after"] == 2
+
+
+async def test_pulse_end_counts_down_device_in_restart_gap(hass: HomeAssistant, setup: AvailabilityLog, freezer) -> None:
+    """Nach einem Neustart steht im Protokoll eine Lücke; ein laufender Ausfall zählt am rechten Rand trotzdem (sonst fällt die Kurve auf null)."""
+    dev = _device(hass, "Türsensor")
+    light = _entity(hass, dev, "light", "l", "on")
+    setup.evaluate()
+    hass.states.async_set(light, "unavailable")
+    freezer.tick(timedelta(hours=3))
+    now = time.time()
+    # Protokoll wie nach dem Neustart: Ausfall, dann die Lücke vom Herunterfahren, ein neuer Ausfall folgt erst nach der Anlaufphase
+    setup._events[dev.id] = [[now - 7200, 1], [now - 3600, 0], [now - 60, None]]
+    assert setup.pulse(now)[-1] == 0
+    assert setup.pulse(now, down_now={dev.id})[-1] == 1
+    assert setup.pulse(now, only=set(), down_now={dev.id})[-1] == 0
+    result = await async_list_devices(hass, setup)
+    data = next(d for d in result["devices"] if d["id"] == dev.id)
+    assert data["online"] is False and data["avail24"]["down"] is True
+    assert result["pulse"][-1] == 1

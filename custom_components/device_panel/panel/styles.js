@@ -2346,7 +2346,11 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-gn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wz-cn { color: color-mix(in srgb, var(--dp-text) 65%, transparent); font-size: 12.5px; margin-right: 6px; white-space: nowrap; }
 .wz-li .ibadge.has-img, .wz-gh .ibadge.has-img { background: var(--dp-subtle); }
-.wz-mx { flex: none; display: inline-grid; place-items: center; width: 28px; height: 34px; margin-right: -6px; border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0; }
+.wz-mx { flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; margin-right: -2px; border: 1.5px solid var(--dp-primary); border-radius: 50%; background: var(--dp-primary-soft); color: var(--dp-primary); cursor: pointer; padding: 0; }
+.wz-mx .wz-chev { color: var(--dp-primary); }
+.wz-mx .wz-chev svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.4px; }
+.wz-mx:hover { background: color-mix(in srgb, var(--dp-primary) 26%, transparent); }
+span.wz-mx { border: 0; background: transparent; }
 .wz-msub { margin: 0 0 6px 46px; }
 .wz-dsub { margin-left: 34px; }
 .wz-down { display: inline-flex; align-items: center; gap: 5px; font-style: normal; font-weight: 600; color: var(--dp-error); }

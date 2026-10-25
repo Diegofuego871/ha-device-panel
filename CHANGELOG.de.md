@@ -7,6 +7,18 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.142.1] - 2026-10-25
+
+Der Ausfall-Puls fällt nach einem Neustart am rechten Rand nicht mehr auf null.
+
+### Geändert
+
+- **Einrichtungsassistent, Schritt "Meldungen":** die Pfeile, die die Integrationen und ihre Geräte aufklappen, sind jetzt runde Knöpfe mit blauem Rand und grösserem Pfeil und fallen damit auf.
+
+### Behoben
+
+- **Ausfall-Puls nach einem Neustart:** war ein Gerät noch ausgefallen und das Protokoll hatte wegen des Neustarts eine Lücke (der Ausfall wird erst nach der Anlaufphase eingetragen), fiel die Kurve am rechten Rand auf null, obwohl das Gerät ausgefallen war. Der rechte Rand zählt jetzt auch Geräte, die gerade ausgefallen sind, im Kopf wie mit Bereichsfilter, gleich wie die Kachel "Gerade ausgefallen".
+
 ## [2.142.0] - 2026-10-25
 
 Der Einrichtungsassistent zeigt, welche Geräte gerade ausgefallen sind.
@@ -4862,6 +4874,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.142.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.1
 [2.142.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.0
 [2.141.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.141.0
 [2.140.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.2
