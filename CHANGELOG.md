@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.141.0] - 2026-10-25
+
+Closing the setup wizard in the middle asks what should happen next.
+
+### Changed
+
+- **Setup wizard:** the cross (and Escape) from step 1 on now opens a short prompt with "Not now" and "Don't show again". Your progress is kept either way until you discard it. Tapping outside the prompt or Escape returns to the wizard. On the welcome page nothing changes, it has both choices already.
+
 ## [2.140.2] - 2026-10-25
 
 Test fix only; no change in function.
@@ -4745,6 +4753,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.141.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.141.0
 [2.140.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.2
 [2.140.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.1
 [2.140.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.0

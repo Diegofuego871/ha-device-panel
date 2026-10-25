@@ -233,7 +233,12 @@ for (const lang of ["de", "en"]) {
       const typ = await s.ev(`return r.querySelector("${s.D} [data-wz-type]").dataset.wzType`);
       await s.tap(`${s.D} [data-wz-type="${typ}"]`);
       await s.tap(`${s.D} [data-wz="close"]`);
-      check(`[${tag}] Kreuz: ohne Rückfrage zu, nichts angewendet, Zustand bleibt "later"`, (await s.closed()) && !(await s.ev(`return r.querySelector("dialog.discard-dlg").open`)) && (await s.calls()).length === 0 && (await s.state()) === "later");
+      check(`[${tag}] Kreuz ab Schritt 1: Rückfrage mit "${L.later}" und "${L.never}", Fenster bleibt offen`, !(await s.closed()) && (await s.ev(`return !!r.querySelector("${s.D} .wz-ask [data-wz='later']") && !!r.querySelector("${s.D} .wz-ask [data-wz='never']")`)));
+      await s.p.keyboard.press("Escape");
+      check(`[${tag}] Escape schliesst nur die Rückfrage`, !(await s.closed()) && !(await s.ev(`return !!r.querySelector("${s.D} .wz-ask")`)));
+      await s.tap(`${s.D} [data-wz="close"]`);
+      await s.tap(`${s.D} .wz-ask [data-wz="later"]`);
+      check(`[${tag}] "${L.later}": ohne weitere Rückfrage, nichts angewendet, Zustand bleibt "later"`, (await s.closed()) && !(await s.ev(`return r.querySelector("dialog.discard-dlg").open`)) && (await s.calls()).length === 0 && (await s.state()) === "later");
       const draft = await s.p.evaluate(() => window.__opts.wizard_draft);
       check(`[${tag}] Zwischenstand enthält Schritt, Integration und Typ`, draft?.step === "types" && draft.d.exI.includes(first) && draft.d.exT.includes(typ), JSON.stringify(draft));
       await s.tap(".apps-btn");
@@ -248,6 +253,18 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Entwurf verwerfen: Auswahl zurück auf den Stand, Zwischenstand gelöscht`, (await s.ev(`const d = r.host._wizard.s.d; return d.exI.size === 0 && d.exT.size === 0 && !r.querySelector('${s.D} [data-wz="reset"]')`)) && (await s.p.waitForFunction(() => window.__opts.wizard_draft === null, null, { timeout: 5000 }).then(() => true, () => false)));
       await s.tap(`${s.D} [data-wz="close"]`);
       check(`[${tag}] zu, nichts angewendet, Zustand bleibt "later"`, (await s.closed()) && (await s.calls()).length === 0 && (await s.state()) === "later");
+      await s.p.close();
+    }
+
+    // --- Kreuz ab Schritt 1 -> Rückfrage -> "Nicht mehr zeigen": Zustand "off", Zwischenstand gelöscht
+    {
+      const s = await session("new");
+      await s.opened();
+      await s.tap(`${s.D} [data-wz="start"]`);
+      await s.wait(`return r.host._wizard.s.step === "integrations"`);
+      await s.tap(`${s.D} [data-wz="close"]`);
+      await s.tap(`${s.D} .wz-ask [data-wz="never"]`);
+      check(`[${tag}] Rückfrage "${L.never}": zu, Zustand "off", kein Zwischenstand`, (await s.closed()) && (await s.wait(`return r.host._wizardState === "off"`)) && (await s.state()) === "off" && (await s.p.evaluate(() => window.__opts.wizard_draft ?? null)) === null);
       await s.p.close();
     }
 

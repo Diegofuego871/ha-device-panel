@@ -235,9 +235,22 @@ export class WizardUi {
     return Boolean(s?.d) && JSON.stringify(this.snapshot(s.d)) !== s.start;
   }
 
-  // X, Escape: der Zwischenstand bleibt, darum keine Rückfrage
+  // X, Escape: ab Schritt 1 fragt ein Hinweis nach "Jetzt nicht" oder "Nicht mehr zeigen" (der Zwischenstand bleibt in beiden
+  // Fällen bis zum Verwerfen); auf der Willkommensseite und beim Laden gibt es diese Wahl schon bzw. nichts zu verlieren
   requestClose() {
+    const s = this.s;
+    if (s?.d && s.step !== "welcome" && !s.loading && !s.error) {
+      s.ask = !s.ask;
+      this.render();
+      return;
+    }
     this.close();
+  }
+
+  never() {
+    this.dlg?.close();
+    this.s = null;
+    this.setState("off", { wizard_draft: null });
   }
 
   close() {
@@ -413,7 +426,11 @@ export class WizardUi {
     }
     // Beim Neuzeichnen im selben Schritt bleibt die Lage (ein Schalter weiter unten springt nicht nach oben)
     const keep = s.drawnStep === s.step ? dlg.querySelector("[data-wz-body]")?.scrollTop || 0 : 0;
-    dlg.innerHTML = `${top}<div class="wz-bd" data-wz-body>${body}</div><div class="wz-ft">${foot}</div>`;
+    const ask = s.ask && s.d && s.step !== "welcome"
+      ? `<div class="wz-ask" data-wz="ask-no" role="alertdialog" aria-label="${escape(t("wzAskTitle"))}"><div class="wz-ask-c" data-wz-stop><b>${escape(t("wzAskTitle"))}</b><p>${escape(t("wzAskText"))}</p>
+        <button type="button" class="dlg-btn" data-wz="later">${mdi("close", 18)}${escape(t("wzLater"))}</button><button type="button" class="dlg-btn" data-wz="never">${mdi("eyeOff", 18)}${escape(t("wzNever"))}</button></div></div>`
+      : "";
+    dlg.innerHTML = `${top}<div class="wz-bd" data-wz-body>${body}</div><div class="wz-ft">${foot}</div>${ask}`;
     const bd = dlg.querySelector("[data-wz-body]");
     if (bd && keep) bd.scrollTop = keep;
     s.drawnStep = s.step;
@@ -788,19 +805,20 @@ export class WizardUi {
         this.render();
         return;
       }
+      if (ev.target.closest?.("[data-wz-stop]") && !ev.target.closest("[data-wz]")) return;
       const btn = ev.target.closest?.("[data-wz]");
       if (!btn || btn.disabled || !this.s) return;
       const a = btn.dataset.wz;
       if (a === "close") this.requestClose();
       else if (a === "start" || a === "next") this.next();
       else if (a === "back") this.back();
-      else if (a === "later") this.close();
+      else if (a === "ask-no") {
+        this.s.ask = false;
+        this.render();
+      } else if (a === "later") this.close();
       else if (a === "reset") this.resetDraft();
-      else if (a === "never") {
-        this.dlg?.close();
-        this.s = null;
-        this.setState("off", { wizard_draft: null });
-      } else if (a === "finish") this.finish();
+      else if (a === "never") this.never();
+      else if (a === "finish") this.finish();
       else if (a === "retry") this.load();
       else if (a === "test") this.test();
     });

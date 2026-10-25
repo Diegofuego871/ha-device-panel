@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.141.0] - 2026-10-25
+
+Wer den Einrichtungsassistenten mittendrin schliesst, wird gefragt, wie es weitergehen soll.
+
+### Geändert
+
+- **Einrichtungsassistent:** das Kreuz (und Escape) öffnet ab Schritt 1 eine kurze Rückfrage mit "Jetzt nicht" und "Nicht mehr zeigen". Der Zwischenstand bleibt in beiden Fällen bis zum Verwerfen erhalten. Ein Tipp neben die Rückfrage oder Escape führt zurück in den Assistenten. Auf der Willkommensseite ändert sich nichts, dort gibt es beide Wahlen schon.
+
 ## [2.140.2] - 2026-10-25
 
 Nur Testkorrektur; keine funktionale Änderung.
@@ -4846,6 +4854,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.141.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.141.0
 [2.140.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.2
 [2.140.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.1
 [2.140.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.0

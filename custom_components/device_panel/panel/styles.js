@@ -2302,6 +2302,11 @@ dialog.wizard-dlg { padding: 0; border: none; border-radius: 22px; background: v
 dialog.wizard-dlg::backdrop { background: rgba(0,0,0,0.5); }
 dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 /* Kopf wie bei den anderen Fenstern: das Standard-Kreuz (.dlg-close) ganz oben rechts, darunter der Fortschritt */
+.wz-ask { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0,0,0,0.45); }
+.wz-ask-c { width: min(360px, 100%); background: var(--dp-card); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 8px; box-shadow: var(--dp-shadow); }
+.wz-ask-c b { font-size: 17px; }
+.wz-ask-c p { margin: 0 0 8px; color: var(--dp-muted, inherit); font-size: 14px; line-height: 1.4; }
+.wz-ask-c .dlg-btn { flex: none; min-height: 44px; justify-content: center; }
 .wz-top { padding: 20px 16px 6px 22px; flex: none; }
 .wz-prog { margin-top: 8px; height: 5px; border-radius: 3px; background: var(--dp-bar-off); overflow: hidden; }
 .wz-prog i { display: block; height: 100%; background: var(--dp-primary); border-radius: 3px; transition: width .25s; }
