@@ -9,8 +9,8 @@ let ok = true;
 const check = (l, c, i = "") => { ok &&= !!c; console.log(`${c ? "PASS" : "FAIL"} ${l}${i ? " - " + i : ""}`); };
 const R = `document.querySelector("device-panel").shadowRoot`;
 const T = {
-  de: { down: "gerade ausgefallen", start: "Los geht's", later: "Jetzt nicht", never: "Nicht mehr zeigen", next: "Weiter", back: "Zurück", finish: "Fertigstellen", tile: "Einrichtung", pill: "Offen", step2: "Schritt 2 von 5", ttl: "Einrichtungsassistent", startBtn: "Assistent starten", errDelay: "Melden nach darf nicht kürzer sein als \"Ausgefallen nach\" (jetzt 2 Min., einstellbar unter Einstellungen).", testOk: "Gesendet. Prüfe dein Gerät.", testFail: "Nicht gesendet. Prüfe das Ziel.", reset: "Entwurf verwerfen", snack: "Einrichtung gespeichert." },
-  en: { down: "currently down", start: "Let's go", later: "Not now", never: "Don't show again", next: "Next", back: "Back", finish: "Finish", tile: "Setup", pill: "Open", step2: "Step 2 of 5", ttl: "Setup wizard", startBtn: "Start wizard", errDelay: "Notify after must not be shorter than \"Failed after\" (now 2 min, adjustable in the settings).", testOk: "Sent. Check your device.", testFail: "Not sent. Check the target.", reset: "Discard draft", snack: "Setup saved." },
+  de: { down: "gerade ausgefallen", sysTitle: "Systemauslastung", sumSystem: "Systemauslastung", sysNow: (n) => `jetzt ${n} %`, start: "Los geht's", later: "Jetzt nicht", never: "Nicht mehr zeigen", next: "Weiter", back: "Zurück", finish: "Fertigstellen", tile: "Einrichtung", pill: "Offen", step2: "Schritt 2 von 5", ttl: "Einrichtungsassistent", startBtn: "Assistent starten", errDelay: "Melden nach darf nicht kürzer sein als \"Ausgefallen nach\" (jetzt 2 Min., einstellbar unter Einstellungen).", testOk: "Gesendet. Prüfe dein Gerät.", testFail: "Nicht gesendet. Prüfe das Ziel.", reset: "Entwurf verwerfen", snack: "Einrichtung gespeichert." },
+  en: { down: "currently down", sysTitle: "System load", sumSystem: "System load", sysNow: (n) => `now ${n} %`, start: "Let's go", later: "Not now", never: "Don't show again", next: "Next", back: "Back", finish: "Finish", tile: "Setup", pill: "Open", step2: "Step 2 of 5", ttl: "Setup wizard", startBtn: "Start wizard", errDelay: "Notify after must not be shorter than \"Failed after\" (now 2 min, adjustable in the settings).", testOk: "Sent. Check your device.", testFail: "Not sent. Check the target.", reset: "Discard draft", snack: "Setup saved." },
 };
 
 for (const lang of ["de", "en"]) {
@@ -194,9 +194,21 @@ for (const lang of ["de", "en"]) {
       await s.ev(`const i = r.querySelector('${s.D} [data-wz-time="from"]'); i.value = "23:00"; i.dispatchEvent(new Event("change", { bubbles: true }))`);
       check(`[${tag}] Ruhezeit an, Von 23:00`, await s.ev(`const q = r.host._wizard.s.d.quiet; return q.on && q.from === "23:00" && q.to === "07:00"`));
 
+      // Systemauslastung unter der Ruhezeit: drei Arten mit aktuellem Wert, Standardwerte der Status-App; kein Empfänger, kein Stillstand
+      check(`[${tag}] System: drei Zeilen mit aktuellem Wert (${L.sysNow(23)}), ohne Empfänger und Stillstand`, (await s.ev(`return r.querySelectorAll("${s.D} [data-wz-syson]").length`)) === 3 && (await s.text(`${s.D} .wz-h2b`)) === L.sysTitle && (await s.ev(`return r.querySelector("${s.D} [data-wz-syson=cpu]").closest(".wz-msg").innerText`)).includes(L.sysNow(23)) && !(await s.ev(`return !!r.querySelector("${s.D} select, ${s.D} [data-wz-target]")`)));
+      check(`[${tag}] System: Standardwerte (Grenze 99, Mindestdauer 3) und alle an`, await s.ev(`const y = r.host._wizard.s.d.sys; return ["cpu","ram","disk"].every((k) => y[k].on && y[k].limit === "99" && y[k].min === "3")`));
+      await s.shot("5b-system");
+      await s.ev(`const i = r.querySelector('${s.D} [data-wz-sys="cpu"][data-wz-part="limit"]'); i.value = "80"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
+      await s.ev(`const i = r.querySelector('${s.D} [data-wz-sys="disk"][data-wz-part="min"]'); i.value = "99"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
+      check(`[${tag}] System: Mindestdauer 99 ist ungültig, Weiter gesperrt, Fehlertext da`, (await s.ev(`return r.querySelector('${s.D} .wz-ft [data-wz="next"]').disabled`)) && (await s.text(`${s.D} [data-wz-err]`)).length > 0);
+      await s.ev(`const i = r.querySelector('${s.D} [data-wz-sys="disk"][data-wz-part="min"]'); i.value = "30"; i.dispatchEvent(new Event("input", { bubbles: true }))`);
+      await s.tap(`${s.D} [data-wz-syson="ram"]`);
+      check(`[${tag}] System: Arbeitsspeicher aus (Werte gesperrt), Weiter wieder frei`, (await s.ev(`return r.host._wizard.s.d.sys.ram.on === false && r.querySelector('${s.D} [data-wz-sys="ram"][data-wz-part="limit"]').disabled && !r.querySelector('${s.D} .wz-ft [data-wz="next"]').disabled`)));
+
       // Schritt 6: Zusammenfassung; erst jetzt wird gespeichert
       await s.tap(`${s.D} [data-wz="next"]`);
       await s.wait(`return r.host._wizard.s.step === "done"`);
+      check(`[${tag}] Zusammenfassung zeigt Systemauslastung`, (await s.text(`${s.D} .wz-sum`)).includes(L.sumSystem));
       check(`[${tag}] Zusammenfassung mit Ziel und Meldungen`, (await s.text(`${s.D} .wz-sum`)).includes("notify.mobile_app_testhandy"));
       check(`[${tag}] bis hierher nichts gespeichert (Zustand weiter "new")`, (await s.calls()).length === 0 && (await s.state()) === "new");
       await s.shot("6-done");
@@ -204,6 +216,7 @@ for (const lang of ["de", "en"]) {
       check(`[${tag}] Fertigstellen: Fenster zu`, await s.closed());
       const saved = (await s.calls())[0] || {};
       check(`[${tag}] ein einziges set_options mit Auswahl, Ziel, Meldungen, Werten`, (await s.calls()).length === 1 && saved.exclude_integrations?.join() === off && saved.exclude_types?.join() === types[0] && saved.exclude_devices?.join() === devs[0] && saved.notify_service === "notify.mobile_app_testhandy" && saved.notify_outage === true && saved.notify_online === true && saved.battery_push === true && saved.notify_new === false && saved.notify_updates === true && saved.updates_integrations_on?.join() === "shelly" && saved.updates_exclude?.join() === "update.mosquitto_update" && saved.updates_include?.join() === "" && saved.updates_integrations_off?.join() === "" && JSON.stringify(saved.charge_integrations) === JSON.stringify([chargeDom]) && saved.notify_exclude_integrations?.join() === outDom && saved.updates_time === "07:30" && !("offline_after" in saved) && saved.notify_delay === 6 && saved.battery_low === 20, JSON.stringify(saved));
+      check(`[${tag}] System gespeichert: CPU 80 %/3 Min., RAM aus, Festplatte 99 %/30 Min.`, saved.status_cpu_alert === true && saved.status_cpu_limit === 80 && saved.status_cpu_minutes === 3 && saved.status_ram_alert === false && !("status_ram_limit" in saved) && saved.status_disk_alert === true && saved.status_disk_limit === 99 && saved.status_disk_minutes === 30 && !("status_notify" in saved) && !("notify_service_status" in saved));
       check(`[${tag}] Ruhezeit gespeichert (sieben Tage 23:00 bis 07:00)`, saved.quiet_enabled === true && saved.quiet_days?.length === 7 && saved.quiet_days.every((d) => d.on && d.from === "23:00" && d.to === "07:00"));
       const devCalls = await s.p.evaluate(() => (window.__wsCalls || []).filter((m) => m.type === "device_panel/set_device_settings"));
       check(`[${tag}] Geräte: stumm bei Ausfall${chargeOffId ? " und Lademeldung aus am Gerät" : ""} als set_device_settings, vor dem Abschluss`, devCalls.some((c) => c.device_id === muteId && c.notify === false) && (!chargeOffId || devCalls.some((c) => c.device_id === chargeOffId && c.charge === false)) && devCalls.length === (chargeOffId ? 2 : 1) - (chargeOffId === muteId ? 1 : 0), JSON.stringify(devCalls));

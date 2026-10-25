@@ -32,6 +32,7 @@ from .devices import (
     hub_ids,
 )
 from .options_api import _NOTIFY_RE, effective
+from .system_stats import current_percent
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/wizard_data"})
@@ -70,7 +71,9 @@ async def ws_wizard_data(hass: HomeAssistant, connection: websocket_api.ActiveCo
     integrations = [{"domain": d, "name": info.get(d, {}).get("name", d), "devices": n} for d, n in counts.items() if d]
     integrations.sort(key=lambda x: (-x["devices"], str(x["name"]).lower()))
     devices.sort(key=lambda d: str(d["name"]).lower())
-    connection.send_result(msg["id"], {"integrations": integrations, "devices": devices})
+    # Aktuelle Auslastung in Prozent für die Meldung bei hoher Auslastung (None: kein Prozentwert, dann gibt es dort keine Meldung)
+    status = {kind: current_percent(hass, kind) for kind in ("cpu", "ram", "disk")}
+    connection.send_result(msg["id"], {"integrations": integrations, "devices": devices, "status": status})
 
 
 @websocket_api.websocket_command({vol.Required("type"): f"{DOMAIN}/wizard_test", vol.Required("target"): str})

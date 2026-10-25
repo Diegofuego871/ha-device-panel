@@ -28,6 +28,9 @@ const VALUES = {
   // Updates: die Uhrzeit nur bei "einmal am Tag" (die anderen Arten stellt man in den Einstellungen)
   updates: [["updates_time", "wzVTime", "", "time"]],
 };
+// Systemauslastung (seit 2.143.0, Schritt "Ruhezeit und System"): je Art Schalter, Grenze in Prozent und Mindestdauer in Minuten (Optionen der Status-App)
+const SYS_KINDS = ["cpu", "ram", "disk"];
+const sysKey = (kind, part) => `status_${kind}_${part}`;
 const VALUE_KEYS = Object.values(VALUES).flatMap((rows) => rows.map(([key]) => key));
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const isTime = (key) => key === "updates_time";
@@ -132,6 +135,7 @@ export class WizardUi {
       on: { outage: Boolean(v.notify_outage), battery: Boolean(v.battery_push), new: Boolean(v.notify_new), charge: Boolean(v.notify_charge), updates: Boolean(v.notify_updates) },
       v: Object.fromEntries(VALUE_KEYS.map((k) => [k, String(v[k])])),
       quiet: { on: Boolean(v.quiet_enabled), from: first.from || "22:00", to: first.to || "07:00", uniform },
+      sys: Object.fromEntries(SYS_KINDS.map((k) => [k, { on: Boolean(v[sysKey(k, "alert")]), limit: String(v[sysKey(k, "limit")]), min: String(v[sysKey(k, "minutes")]) }])),
       // Je Meldungsart die Integrationen (seit 2.137.0): Ausfall, Batterie und Neue Geräte schliessen aus, Voll geladen schliesst ein
       ex: { outage: new Set(v.notify_exclude_integrations || []), battery: new Set(v.battery_push_exclude_integrations || []), new: new Set(v.new_exclude_integrations || []) },
       // Je Gerät (seit 2.137.0): ausgeschaltet bei Ausfall und Batterie, eingeschaltet bei Voll geladen (Lademeldung: Gerät, sonst Integration)
@@ -182,7 +186,7 @@ export class WizardUi {
   // Entwurf für die Option wizard_draft (Mengen als Listen)
   serialize(d) {
     return {
-      exI: [...d.exI].sort(), exT: [...d.exT].sort(), exD: [...d.exD].sort(), target: d.target, on: { ...d.on }, v: { ...d.v }, quiet: { ...d.quiet },
+      exI: [...d.exI].sort(), exT: [...d.exT].sort(), exD: [...d.exD].sort(), target: d.target, on: { ...d.on }, v: { ...d.v }, quiet: { ...d.quiet }, sys: Object.fromEntries(Object.entries(d.sys).map(([k, x]) => [k, { ...x }])),
       ex: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])),
       devOff: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), chargeOn: [...d.chargeOn].sort(), updOn: [...d.updOn].sort(),
     };
@@ -203,6 +207,11 @@ export class WizardUi {
     for (const k of VALUE_KEYS) if (typeof x.v?.[k] === "string" && x.v[k].length <= 6) d.v[k] = x.v[k];
     if (typeof x.quiet?.on === "boolean") d.quiet.on = x.quiet.on;
     for (const k of ["from", "to"]) if (/^([01]\d|2[0-3]):[0-5]\d$/.test(String(x.quiet?.[k]))) d.quiet[k] = x.quiet[k];
+    for (const k of SYS_KINDS) {
+      const y = x.sys?.[k];
+      if (typeof y?.on === "boolean") d.sys[k].on = y.on;
+      for (const f of ["limit", "min"]) if (typeof y?.[f] === "string" && y[f].length <= 6) d.sys[k][f] = y[f];
+    }
     for (const id of Object.keys(d.ex)) if (Array.isArray(x.ex?.[id])) d.ex[id] = new Set(list(x.ex[id]));
     const known = new Set(s.data.devices.map((i) => i.id));
     for (const id of Object.keys(d.devOff)) if (Array.isArray(x.devOff?.[id])) d.devOff[id] = new Set(list(x.devOff[id], known));
@@ -227,7 +236,7 @@ export class WizardUi {
   }
 
   snapshot(d) {
-    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet, x: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), o: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), c: [...d.chargeOn].sort(), u: [...d.updOn].sort() };
+    return { i: [...d.exI].sort(), t: [...d.exT].sort(), d: [...d.exD].sort(), target: d.target, on: d.on, v: d.v, q: d.quiet, y: d.sys, x: Object.fromEntries(Object.entries(d.ex).map(([k, set]) => [k, [...set].sort()])), o: Object.fromEntries(Object.entries(d.devOff).map(([k, set]) => [k, [...set].sort()])), c: [...d.chargeOn].sort(), u: [...d.updOn].sort() };
   }
 
   dirty() {
@@ -317,6 +326,7 @@ export class WizardUi {
   // Fehler der Meldungs-Zahlen: Text oder ""
   invalid() {
     const s = this.s;
+    if (s?.step === "quiet" && s.d) return this.sysInvalid();
     if (s?.step !== "messages" || !s.d) return "";
     const limits = s.opts.limits || {};
     const num = (k) => (/^\d+$/.test(String(s.d.v[k]).trim()) ? Number(s.d.v[k]) : NaN);
@@ -329,6 +339,25 @@ export class WizardUi {
     if (this.rowValues("updates").length && !TIME_RE.test(String(s.d.v.updates_time))) return this.t("wzErrTime");
     if (num("notify_delay") < detect) return this.t("wzErrDelay", detect);
     return "";
+  }
+
+  // Fehler der Systemwerte (Grenze, Mindestdauer) der angezeigten Arten: Text oder ""
+  sysInvalid() {
+    const { d, opts } = this.s;
+    for (const k of this.sysShown()) {
+      for (const [part, def, label] of [["limit", [1, 100], "wzSysLimit"], ["minutes", [1, 60], "wzSysMin"]]) {
+        const [lo, hi] = opts.limits?.[sysKey(k, part)] || def;
+        const raw = String(d.sys[k][part === "limit" ? "limit" : "min"]).trim();
+        if (d.sys[k].on && !(/^\d+$/.test(raw) && Number(raw) >= lo && Number(raw) <= hi)) return this.t("wzErrRange", `${this.t(`stSys${k[0].toUpperCase()}${k.slice(1)}`)}: ${this.t(label)}`, lo, hi);
+      }
+    }
+    return "";
+  }
+
+  // Arten mit einem aktuellen Wert in Prozent; ohne ihn gäbe es keine Meldung (kein Sensor oder nur Gigabyte ohne Gesamtgrösse)
+  sysShown() {
+    const cur = this.s.data?.status || {};
+    return SYS_KINDS.filter((k) => typeof cur[k] === "number");
   }
 
   // Integrationen einer Meldungsart nach dem Entwurf (nur die, die nach Schritt 1 bis 3 übrig sind; Batterie und Laden nur mit Batteriegeräten)
@@ -609,7 +638,29 @@ export class WizardUi {
       ? `<div class="wz-times"><label>${escape(this.t("wzQFrom"))}<input type="time" data-wz-time="from" value="${escape(q.from)}"${q.on ? "" : " disabled"}></label><label>${escape(this.t("wzQTo"))}<input type="time" data-wz-time="to" value="${escape(q.to)}"${q.on ? "" : " disabled"}></label></div>`
       : `<p class="wz-p small">${escape(this.t("wzQCustom"))}</p>`;
     return `<h2 class="wz-h2">${escape(this.t("wzQTitle"))}</h2><p class="wz-p">${escape(this.t("wzQText"))}</p>
-      <div class="wz-li">${this.h.mdi("bellOff", 18).replace("<svg", '<svg class="wz-ic-svg"')}<div class="wz-nm">${escape(this.t("wzQUse"))}<small>${escape(this.t("wzQUseSub"))}</small></div>${this.toggle("data-wz-quiet", "on", q.on, this.t("wzQUse"))}</div>${q.on ? fields : ""}`;
+      <div class="wz-li">${this.h.mdi("bellOff", 18).replace("<svg", '<svg class="wz-ic-svg"')}<div class="wz-nm">${escape(this.t("wzQUse"))}<small>${escape(this.t("wzQUseSub"))}</small></div>${this.toggle("data-wz-quiet", "on", q.on, this.t("wzQUse"))}</div>${q.on ? fields : ""}${this.sysHtml()}`;
+  }
+
+  // Unter der Ruhezeit: Meldung bei hoher Auslastung von Prozessor, Arbeitsspeicher und Festplatte mit dem aktuellen Wert, der Grenze und der
+  // Mindestdauer (die Werte der Status-App); der Empfänger und "Bei Stillstand melden" bleiben bei ihren Standards und fehlen hier
+  sysHtml() {
+    const kinds = this.sysShown();
+    if (!kinds.length) return "";
+    const { escape, mdi } = this.h;
+    const { d, opts, data } = this.s;
+    const rows = kinds
+      .map((k) => {
+        const name = this.t(`stSys${k[0].toUpperCase()}${k.slice(1)}`);
+        const x = d.sys[k];
+        const [lo, hi] = opts.limits?.[sysKey(k, "limit")] || [1, 100];
+        const [mlo, mhi] = opts.limits?.[sysKey(k, "minutes")] || [1, 60];
+        const vals = `<label class="wz-v"><span>${escape(this.t("wzSysLimit"))}</span><input type="number" inputmode="numeric" min="${lo}" max="${hi}" step="1" data-wz-sys="${k}" data-wz-part="limit" value="${escape(x.limit)}"${x.on ? "" : " disabled"}><em>%</em></label>
+          <label class="wz-v"><span>${escape(this.t("wzSysMin"))}</span><input type="number" inputmode="numeric" min="${mlo}" max="${mhi}" step="1" data-wz-sys="${k}" data-wz-part="min" value="${escape(x.min)}"${x.on ? "" : " disabled"}><em>${escape(this.t("stLoadMinUnit"))}</em></label>`;
+        return `<div class="wz-msg${x.on ? " on" : ""}"><div class="wz-li"><span class="wz-ic">${mdi("pulse", 18)}</span><div class="wz-nm">${escape(name)}<small>${escape(this.t("wzSysNow", Math.round(data.status[k])))}</small></div>${this.toggle("data-wz-syson", k, x.on, name)}</div><div class="wz-vals">${vals}</div></div>`;
+      })
+      .join("");
+    return `<h2 class="wz-h2 wz-h2b">${escape(this.t("wzSysTitle"))}</h2><p class="wz-p">${escape(this.t("wzSysText"))}</p>${rows}
+      <div class="opt-error wz-err" data-wz-err role="alert">${escape(this.sysInvalid())}</div>`;
   }
 
   // Schritt 6: Zusammenfassung
@@ -623,8 +674,10 @@ export class WizardUi {
     const target = d.target === "none" ? t("wzNone") : d.target;
     const row = (a, b) => `<div class="wz-li"><div class="wz-nm">${escape(a)}</div><b class="wz-val">${escape(b)}</b></div>`;
     const quiet = d.target === "none" ? "" : row(t("wzSumQuiet"), d.quiet.on ? (d.quiet.uniform ? `${d.quiet.from} – ${d.quiet.to}` : t("wzQCustomShort")) : t("wzOff"));
+    const sysKinds = d.target === "none" ? [] : this.sysShown();
+    const system = sysKinds.length ? row(t("wzSumSystem"), sysKinds.some((k) => d.sys[k].on) ? sysKinds.filter((k) => d.sys[k].on).map((k) => `${t(`stSys${k[0].toUpperCase()}${k.slice(1)}`).replace(/ \(.*\)/, "")} ${d.sys[k].limit} %`).join(", ") : t("wzOff")) : "";
     return `<div class="wz-check">${mdi("check", 30)}</div><h2 class="wz-h2">${escape(t("wzDoneTitle"))}</h2><p class="wz-p">${escape(t("wzDoneText"))}</p>
-      <div class="wz-sum">${row(t("wzSumInteg"), t("wzOf", data.integrations.length - d.exI.size, data.integrations.length))}${row(t("wzSumTypes"), t("wzOf", typesOn, types.size))}${row(t("wzSumDevices"), t("wzOf", this.chosen().length, this.afterTypes().length))}${row(t("wzSumTarget"), target)}${row(t("wzSumMsgs"), msgs.length ? msgs.join(", ") : t("wzNone"))}${quiet}</div>
+      <div class="wz-sum">${row(t("wzSumInteg"), t("wzOf", data.integrations.length - d.exI.size, data.integrations.length))}${row(t("wzSumTypes"), t("wzOf", typesOn, types.size))}${row(t("wzSumDevices"), t("wzOf", this.chosen().length, this.afterTypes().length))}${row(t("wzSumTarget"), target)}${row(t("wzSumMsgs"), msgs.length ? msgs.join(", ") : t("wzNone"))}${quiet}${system}</div>
       ${this.s.saveError ? `<div class="dlg-error">${escape(t("wzSaveError"))} ${escape(this.s.saveError)}</div>` : ""}
       <p class="wz-p">${escape(t("wzDoneFoot"))}</p>`;
   }
@@ -669,6 +722,15 @@ export class WizardUi {
     if (d.target !== "none") {
       values.quiet_enabled = d.quiet.on;
       if (d.quiet.on && d.quiet.uniform) values.quiet_days = Array.from({ length: 7 }, () => ({ on: true, from: d.quiet.from, to: d.quiet.to }));
+      // Systemauslastung: nur die Arten, die der Assistent zeigte; Grenze und Mindestdauer nur bei eingeschalteter Meldung (sonst bleiben die Werte)
+      for (const k of this.sysShown()) {
+        const x = d.sys[k];
+        values[sysKey(k, "alert")] = x.on;
+        if (x.on) {
+          values[sysKey(k, "limit")] = Number(x.limit);
+          values[sysKey(k, "minutes")] = Number(x.min);
+        }
+      }
     }
     // Ohne Ziel sind Meldungen und Ruhezeit nicht Teil der Wahl: nichts anfassen ausser dem Ziel
     if (d.target === "none") for (const k of ["notify_outage", "notify_online", "battery_push", "notify_new", "notify_charge", "notify_updates", "notify_exclude_integrations", "battery_push_exclude_integrations", "new_exclude_integrations", "charge_integrations", "updates_integrations_on", "updates_integrations_off", "updates_exclude", "updates_include"]) delete values[k];
@@ -876,6 +938,9 @@ export class WizardUi {
       } else if (el.matches("[data-wz-quiet]")) {
         d.quiet.on = el.checked;
         this.render();
+      } else if (el.matches("[data-wz-syson]")) {
+        d.sys[el.dataset.wzSyson].on = el.checked;
+        this.render();
       } else if (el.matches("[data-wz-time]")) {
         d.quiet[el.dataset.wzTime] = el.value || d.quiet[el.dataset.wzTime];
       }
@@ -887,6 +952,13 @@ export class WizardUi {
       if (el.matches("[data-wz-v]")) {
         s.d.v[el.dataset.wzV] = el.value;
         // Nur Fehlerzeile und Weiter neu setzen, damit die Eingabe ihren Fokus behält
+        const err = this.invalid();
+        const line = dlg.querySelector("[data-wz-err]");
+        if (line) line.textContent = err;
+        const next = dlg.querySelector('.wz-ft [data-wz="next"]');
+        if (next) next.disabled = Boolean(err);
+      } else if (el.matches("[data-wz-sys]")) {
+        s.d.sys[el.dataset.wzSys][el.dataset.wzPart] = el.value;
         const err = this.invalid();
         const line = dlg.querySelector("[data-wz-err]");
         if (line) line.textContent = err;

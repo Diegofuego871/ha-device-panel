@@ -2373,6 +2373,7 @@ span.wz-mx { border: 0; background: transparent; }
 .wz-msg { border-top: 1px solid var(--dp-divider); padding: 2px 0 8px; }
 .wz-msg .wz-li { border-top: 0; }
 /* Werte der Meldungen: keine Umrandung, die Zahl gross in einem ruhigen Feld */
+.wz-h2b { margin-top: 26px; }
 .wz-vals { display: flex; flex-direction: column; gap: 4px; margin: 0 0 4px 46px; }
 .wz-msg:not(.on) .wz-vals { opacity: .55; }
 .wz-v { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 2px 0; }

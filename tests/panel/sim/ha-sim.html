@@ -915,7 +915,8 @@
         const count = {};
         for (const d of list) if (d.domain) count[d.domain] = (count[d.domain] || 0) + 1;
         const integrations = Object.entries(count).map(([domain, devices]) => ({ domain, name: TITLES[domain] || domain, devices })).sort((a, b) => b.devices - a.devices || a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
-        return { integrations, devices: list };
+        // Aktuelle Auslastung wie wizard.ws_wizard_data (Festplatte ohne Prozentwert fehlt)
+        return { integrations, devices: list, status: { cpu: 23.4, ram: 61.2, disk: window.__noDiskPercent ? null : 48.6 } };
       }
       if (msg.type === "device_panel/wizard_test") {
         if (!/^notify\.[a-z0-9_]+$/.test(msg.target)) throw { code: "invalid_format", message: "target" };

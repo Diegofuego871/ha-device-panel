@@ -97,9 +97,14 @@ async def test_wizard_data(hass: HomeAssistant, setup, hass_ws_client) -> None: 
     assert devices["Taster"]["battery"] is True and devices["Lampe"]["battery"] is False
     assert [d["name"] for d in data["devices"]] == sorted((d["name"] for d in data["devices"]), key=str.lower)
     # Gerade ausgefallen (für den Hinweis in der Zeile "Ausfall"): ohne Ausfall nie, sonst nach device_status
+    # Aktuelle Auslastung für die Systemmeldungen: ohne Sensor kein Wert, mit einem Prozent-Sensor der gerundete Stand
+    assert data["status"] == {"cpu": None, "ram": None, "disk": None}
+    hass.states.async_set("sensor.cpu_test", "23.4", {"unit_of_measurement": "%"})
+    assert (await _ws(client, 4, type=f"{DOMAIN}/set_options", values={"status_cpu_entity": "sensor.cpu_test"}))["success"]
+    assert (await _ws(client, 5, type=f"{DOMAIN}/wizard_data"))["result"]["status"]["cpu"] == 23.4
     assert not any(d["down"] for d in data["devices"])
     with patch("custom_components.device_panel.wizard.live_status", return_value=(False, None)):
-        down = (await _ws(client, 3, type=f"{DOMAIN}/wizard_data"))["result"]
+        down = (await _ws(client, 6, type=f"{DOMAIN}/wizard_data"))["result"]
     assert all(d["down"] is True for d in down["devices"])
 
 

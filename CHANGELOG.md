@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.143.0] - 2026-10-25
+
+The setup wizard also asks about the system load notifications.
+
+### Added
+
+- **Setup wizard, step 5 "Quiet hours and system":** below the quiet hours, the notification for high load of the processor (CPU), the memory (RAM) and the disk. Each row shows the current value ("now 23 %"), one switch, and the current limit (default 99 %) and minimum duration (default 3 min) to adjust. A kind without a percentage value (no sensor, or gigabytes without a total) is not shown. The recipient (the target from step 4) and "Notify on standstill" are not offered; they stay as they are. The summary shows the choice. Saved with "Finish" as the options `status_*_alert`, `status_*_limit` and `status_*_minutes`. WebSocket `wizard_data`: new field `status` (current percent per kind or `null`).
+
 ## [2.142.1] - 2026-10-25
 
 The outage pulse no longer drops to zero at the right edge after a restart.
@@ -19,6 +27,8 @@ The outage pulse no longer drops to zero at the right edge after a restart.
 
 - **Outage pulse after a restart:** while a device was still down and the log had a gap from the restart (the outage is only entered after the start-up phase), the curve fell to zero at the right edge although the device was down. The right edge now also counts devices that are down right now, in the header and with an area filter, the same as the tile "Down right now".
 - **Setup wizard, "currently down":** right after a restart, a device that was still down was not marked, because the wizard only looked at the live state and not at the log like the list does. The wizard now uses the same rule as the list.
+
+Not released; included in 2.143.0.
 
 ## [2.142.0] - 2026-10-25
 
@@ -4774,7 +4784,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.142.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.1
+[2.143.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.0
 [2.142.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.0
 [2.141.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.141.0
 [2.140.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.2

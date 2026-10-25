@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.143.0] - 2026-10-25
+
+Der Einrichtungsassistent fragt auch nach den Meldungen zur Systemauslastung.
+
+### Hinzugefügt
+
+- **Einrichtungsassistent, Schritt 5 "Ruhezeit und System":** unter der Ruhezeit die Meldung bei hoher Auslastung von Prozessor (CPU), Arbeitsspeicher (RAM) und Festplatte. Jede Zeile zeigt den aktuellen Wert ("jetzt 23 %"), einen Schalter und die jetzige Grenze (Standard 99 %) und Mindestdauer (Standard 3 Min.) zum Anpassen. Eine Art ohne Prozentwert (kein Sensor, oder Gigabyte ohne Gesamtgrösse) erscheint nicht. Der Empfänger (das Ziel aus Schritt 4) und "Bei Stillstand melden" werden nicht angeboten; sie bleiben, wie sie sind. Die Zusammenfassung zeigt die Wahl. Gespeichert wird mit "Fertigstellen" als die Optionen `status_*_alert`, `status_*_limit` und `status_*_minutes`. WebSocket `wizard_data`: neues Feld `status` (aktueller Prozentwert je Art oder `null`).
+
 ## [2.142.1] - 2026-10-25
 
 Der Ausfall-Puls fällt nach einem Neustart am rechten Rand nicht mehr auf null.
@@ -19,6 +27,8 @@ Der Ausfall-Puls fällt nach einem Neustart am rechten Rand nicht mehr auf null.
 
 - **Ausfall-Puls nach einem Neustart:** war ein Gerät noch ausgefallen und das Protokoll hatte wegen des Neustarts eine Lücke (der Ausfall wird erst nach der Anlaufphase eingetragen), fiel die Kurve am rechten Rand auf null, obwohl das Gerät ausgefallen war. Der rechte Rand zählt jetzt auch Geräte, die gerade ausgefallen sind, im Kopf wie mit Bereichsfilter, gleich wie die Kachel "Gerade ausgefallen".
 - **Einrichtungsassistent, "gerade ausgefallen":** kurz nach einem Neustart wurde ein Gerät, das noch ausgefallen war, nicht markiert, weil der Assistent nur den Live-Zustand ansah und nicht wie die Liste das Protokoll. Der Assistent nutzt jetzt dieselbe Regel wie die Liste.
+
+Nicht veröffentlicht; enthalten in 2.143.0.
 
 ## [2.142.0] - 2026-10-25
 
@@ -4875,7 +4885,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.142.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.1
+[2.143.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.0
 [2.142.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.0
 [2.141.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.141.0
 [2.140.2]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.140.2
