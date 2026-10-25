@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.147.0] - 2026-10-25
+
+A button with a dot gets a shooting star.
+
+### Added
+
+- **Shooting star at the dot:** every 8 seconds a small point of light with a tail runs once around the button that carries a dot (launcher button, pinned apps, settings gear: failure of the status, restart pending, debug mode, setup open). The dot breathes briefly when the light arrives. The light has the colour of the dot (red or orange); the buttons start at different times. Nothing moves if the device is set to reduced motion. Mockup: `docs/mockups/shootingstar-v1`.
+
 ## [2.146.0] - 2026-10-25
 
 The accent colour of the panel can be chosen.
@@ -4829,6 +4837,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.147.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.147.0
 [2.146.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.146.0
 [2.145.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.145.0
 [2.143.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.0

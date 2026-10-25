@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.147.0] - 2026-10-25
+
+Ein Knopf mit Punkt bekommt eine Sternschnuppe.
+
+### Hinzugefügt
+
+- **Sternschnuppe am Punkt:** alle 8 Sekunden läuft ein kleiner Lichtpunkt mit Schweif einmal um den Knopf, der einen Punkt trägt (Launcher-Knopf, angeheftete Apps, Zahnrad: Störung des Status, Neustart steht aus, Debug-Modus, Einrichtung offen). Der Punkt atmet kurz, wenn das Licht ankommt. Das Licht hat die Farbe des Punkts (rot oder orange); die Knöpfe starten zu verschiedenen Zeiten. Bei "Bewegung reduzieren" bewegt sich nichts. Mockup: `docs/mockups/shootingstar-v1`.
+
 ## [2.146.0] - 2026-10-25
 
 Die Akzentfarbe des Panels ist wählbar.
@@ -4930,6 +4938,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.147.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.147.0
 [2.146.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.146.0
 [2.145.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.145.0
 [2.143.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.0

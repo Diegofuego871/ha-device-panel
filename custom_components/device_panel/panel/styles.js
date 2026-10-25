@@ -89,6 +89,35 @@ button { font: inherit; color: inherit; }
 .apps-btn, .app-pin { position: relative; }
 .apps-btn.has-dot::after, .app-pin.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-bg); }
 .apps-btn.dot-warn::after, .app-pin.dot-warn::after { background: var(--dp-warning); }
+/* Sternschnuppe (seit 2.147.0, docs/mockups/shootingstar-v1, A): alle 8 Sekunden läuft ein Lichtpunkt mit Schweif einmal auf der Linie um den Knopf
+   mit Punkt (Launcher, angeheftete Apps, Zahnrad), und der Punkt atmet kurz, wenn er wieder ankommt. Farbe wie der Punkt (rot, bei Orange orange).
+   Ohne Bewegung bei "Bewegung reduzieren". Die Knöpfe starten versetzt, damit nicht alle zugleich laufen. */
+.gear-btn.has-dot, .apps-btn.has-dot, .app-pin.has-dot { --cm: var(--dp-error); --cd: 1s; }
+.apps-btn.has-dot.dot-warn, .app-pin.has-dot.dot-warn { --cm: var(--dp-warning); }
+.app-pin.has-dot { --cd: 3.5s; }
+.gear-btn.has-dot { --cd: 5.5s; }
+.gear-btn.has-dot::before, .apps-btn.has-dot::before, .app-pin.has-dot::before { content: ""; position: absolute; inset: -1px; border-radius: 50%; pointer-events: none; opacity: 0;
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 240deg, color-mix(in srgb, var(--cm) 14%, transparent) 240deg, color-mix(in srgb, var(--cm) 92%, #fff) 354deg, #fff3e0 358deg, transparent 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  animation: dp-comet 8s linear var(--cd) infinite; }
+.gear-btn.has-dot::after, .apps-btn.has-dot::after, .app-pin.has-dot::after { animation: dp-land 8s ease-out var(--cd) infinite; }
+@keyframes dp-comet {
+  0% { transform: rotate(45deg); opacity: 0; }
+  1.5% { opacity: 1; }
+  4% { transform: rotate(95deg); }
+  11% { transform: rotate(330deg); opacity: 1; }
+  14.5% { transform: rotate(405deg); opacity: 1; }
+  16%, 100% { transform: rotate(412deg); opacity: 0; }
+}
+@keyframes dp-land {
+  0%, 13% { box-shadow: 0 0 0 0 transparent; }
+  15% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--cm) 70%, transparent); }
+  22%, 100% { box-shadow: 0 0 0 8px transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gear-btn.has-dot::before, .apps-btn.has-dot::before, .app-pin.has-dot::before { animation: none; opacity: 0; }
+  .gear-btn.has-dot::after, .apps-btn.has-dot::after, .app-pin.has-dot::after { animation: none; }
+}
 .gear-btn:hover, .rtall-btn:hover, .apps-btn:hover { background: var(--dp-hover); color: var(--dp-text); }
 .apps-btn.on { background: var(--dp-primary-soft); border-color: transparent; color: var(--dp-primary); }
 .content { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 0 20px 16px; }
