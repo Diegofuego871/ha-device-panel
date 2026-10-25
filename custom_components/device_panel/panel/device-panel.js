@@ -2902,7 +2902,7 @@ class DevicePanel extends HTMLElement {
     // Widerspruch, obwohl Warnungen nur Geräte zählen, die online sind.
     const warn = all.filter(devWarn).length;
     const warnLine = warn
-      ? `<button type="button" class="kwarn" data-warn-open aria-label="${escape(this._t("warnOpen"))}"><span class="w-ic">${mdi("alert", 16)}</span><span><b>${warn}</b><span class="w-long"> ${escape(this._t("warnDevices", warn))}</span><span class="w-short"> ${escape(this._t("warnShort", warn))}</span></span><span class="w-go">${mdi("chevronRight", 18)}</span></button>`
+      ? `<button type="button" class="kwarn" data-warn-open aria-label="${escape(this._t("warnOpen"))}"><span class="w-ic">${mdi("alert", 16)}</span><span><b>${warn}</b><span class="w-long"> ${escape(this._t("warnDevices", warn))}</span><span class="w-short"> ${escape(this._t("warnShort", warn))}</span></span><span class="w-go"><span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></span></button>`
       : `<div class="kwarn none"><span class="w-ic">${mdi("check", 16)}</span><span>${escape(this._t("warnNone"))}</span></div>`;
     const off = offline.length
       ? `<div class="kt err offl"><div class="k"><span class="pulse"></span>${escape(this._t("offlineNow"))}${this._scopeHtml()}</div>
@@ -2933,7 +2933,7 @@ class DevicePanel extends HTMLElement {
     const state = offline.length
       ? `<span class="e"><i></i>${escape(this._t("linesOffline", offline.length))}</span>`
       : `<span class="ok">${escape(this._t("allOnline"))}</span>`;
-    return `<button type="button" class="hs-in" data-hs-top aria-label="${escape(this._t("stripTop"))}"><b>${online}</b><span>${escape(this._t("ofTotal", all.length))}</span>${state}${this._scopeHtml()}<span class="hs-up">${mdi("chevronDown", 18)}</span></button>`;
+    return `<button type="button" class="hs-in" data-hs-top aria-label="${escape(this._t("stripTop"))}"><b>${online}</b><span>${escape(this._t("ofTotal", all.length))}</span>${state}${this._scopeHtml()}<span class="hs-up"><span class="cbtn" aria-hidden="true">${mdi("chevronDown", 16)}</span></span></button>`;
   }
 
   // Mit Filter "Bereich": Name der Auswahl hinter dem Titel einer Kachel.
@@ -3127,7 +3127,7 @@ class DevicePanel extends HTMLElement {
     // Mit Unterbrüchen öffnet die Kachel das Fenster mit den Geräten
     // (seit 0.26.0, docs/mockups/pulse-v1, A).
     const open = affected ? ` tap" data-pulse-open role="button" tabindex="0" aria-label="${escape(this._t("pulseOpen"))}` : "";
-    return `<div class="kt pul${this._heartOn() ? " ee" : ""}${open}"><div class="k">${mdi("pulse", 16)}${escape(this._t("pulseTitle"))}${this._scopeHtml()}${affected ? `<span class="kchev">${mdi("chevron", 16)}</span>` : ""}</div>
+    return `<div class="kt pul${this._heartOn() ? " ee" : ""}${open}"><div class="k">${mdi("pulse", 16)}${escape(this._t("pulseTitle"))}${this._scopeHtml()}${affected ? `<span class="kchev"><span class="cbtn" aria-hidden="true">${mdi("chevron", 16)}</span></span>` : ""}</div>
       ${this._pulseChartHtml(p, incidents)}${note}</div>`;
   }
 
@@ -4023,7 +4023,7 @@ class DevicePanel extends HTMLElement {
 
   _statTile(range, label, valueHtml, sub, kind = "avail", bad = false, warn = false, extra = "") {
     return `<button type="button" class="st-tile${warn ? " warned" : ""}" data-dlg="stat" data-range="${range}" data-kind="${kind}">
-      <span class="st-k">${escape(label)}</span><span class="st-v${bad ? " bad" : ""}">${valueHtml}</span>${extra}<span class="st-sub">${escape(sub)}</span>${mdi("chevron", 16).replace('class="ic"', 'class="ic chev"')}</button>`;
+      <span class="st-k">${escape(label)}</span><span class="st-v${bad ? " bad" : ""}">${valueHtml}</span>${extra}<span class="st-sub">${escape(sub)}</span><span class="cbtn chev" aria-hidden="true">${mdi("chevron", 16)}</span></button>`;
   }
 
   _staticTile(label, valueHtml, sub, bad = false, warn = false) {
@@ -4853,7 +4853,7 @@ class DevicePanel extends HTMLElement {
     // Zuklappbar (seit 2.90.0): die Kopfzeile ist der Knopf, zugeklappt bleibt nur sie; der Stand gehört dem Benutzer
     const fold = Boolean(this._aiFold);
     const label = escape(t(fold ? "aiExpand" : "aiCollapse"));
-    return `<div class="ai-box${fold ? " fold" : ""}"><button type="button" class="ai-head" data-dlg="ai-fold" aria-expanded="${!fold}" title="${label}" aria-label="${label}">${mdi("sparkle", 16)}<h3>${escape(t("secAiSettings"))}</h3>${source && !fold ? `<small>${escape(source)}</small>` : ""}<span class="ai-chev">${mdi("chevronDown", 18)}</span></button>${fold ? "" : body}</div>`;
+    return `<div class="ai-box${fold ? " fold" : ""}"><button type="button" class="ai-head" data-dlg="ai-fold" aria-expanded="${!fold}" title="${label}" aria-label="${label}">${mdi("sparkle", 16)}<h3>${escape(t("secAiSettings"))}</h3>${source && !fold ? `<small>${escape(source)}</small>` : ""}<span class="ai-chev"><span class="cbtn" aria-hidden="true">${mdi("chevronDown", 16)}</span></span></button>${fold ? "" : body}</div>`;
   }
 
   // Rückfragen zur Einschätzung (seit 2.48.0, docs/mockups/ai-ask-v1, A und B kombiniert): bisherige Fragen und Antworten,
@@ -8250,7 +8250,7 @@ class DevicePanel extends HTMLElement {
       .map((x) => {
         const changed = savedItems.get(x.domain) !== x.diff;
         return `<button type="button" class="ilist-row${changed ? " changed" : ""}" data-set="integ" data-key="${escape(x.domain)}">${this._ibadge(x.domain, x.name)}
-          <span class="ilist-name">${escape(x.name)}<small>${escape(t("integDevs", x.devices, x.batDevices))}</small><small class="ilist-diff${x.unmon ? " unmon" : x.own ? " own" : ""}">${escape(x.own ? x.diff : t("integStandard"))}</small></span>${mdi("chevron", 18)}</button>`;
+          <span class="ilist-name">${escape(x.name)}<small>${escape(t("integDevs", x.devices, x.batDevices))}</small><small class="ilist-diff${x.unmon ? " unmon" : x.own ? " own" : ""}">${escape(x.own ? x.diff : t("integStandard"))}</small></span><span class="cbtn" aria-hidden="true">${mdi("chevron", 16)}</span></button>`;
       })
       .join("");
     // Alle Abweichungen der Integrationen auf einmal zurück auf den Standard
@@ -8881,7 +8881,7 @@ class DevicePanel extends HTMLElement {
         // Ohne KI-Aufgabe (in Home Assistant unter "KI-Vorschläge" gewählt oder hier) lässt sich die Funktion nicht einschalten (seit 2.38.0);
         // schon Eingeschaltetes bleibt, mit Hinweis. Der Link führt zu /config/ai.
         row("ai_assessment", t("optAi"), sw("ai_assessment", t("optAi"), aiBlocked), t("optAiShort"), t("optAiInfo"), aiReady ? null : t(d.ai_assessment ? "aiLost" : "aiNotReady")) +
-        `<div class="opt-link"><button type="button" class="set-link" data-ai-open>${escape(t("aiOpenHa"))}${mdi("chevronRight", 16)}</button></div>` +
+        `<div class="opt-link"><button type="button" class="set-link" data-ai-open>${escape(t("aiOpenHa"))}<span class="cbtn" aria-hidden="true">${mdi("chevronRight", 16)}</span></button></div>` +
         (d.ai_assessment
           ? ttl("ttlAiTask") + row(
               "ai_task_entity",
@@ -8916,7 +8916,7 @@ class DevicePanel extends HTMLElement {
           return `<section class="set-sec${open ? " open" : ""}">
             <button type="button" class="set-sec-head" data-set="section" data-id="${id}" aria-expanded="${open}">
               <span><span class="set-sec-title">${escape(t(titles[id]))}${changed ? `<span class="set-badge">${escape(t("settingsChanged"))}</span>` : ""}</span>
-              <span class="set-sec-sum">${escape(this._settingsSummary(id, d))}</span></span>${mdi("chevronDown", 20)}</button>
+              <span class="set-sec-sum">${escape(this._settingsSummary(id, d))}</span></span><span class="cbtn" aria-hidden="true">${mdi("chevronDown", 16)}</span></button>
             ${open ? `<div class="set-sec-body">${fields[id]}</div>` : ""}</section>`;
         })
         .join("") +

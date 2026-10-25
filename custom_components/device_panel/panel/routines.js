@@ -795,7 +795,7 @@ export class RoutineUi {
   }
 
   chevHtml(open) {
-    return `<span class="mg-lchev${open ? " up" : ""}" aria-hidden="true">${this.h.mdi("chevronDown", 24)}</span>`;
+    return `<span class="mg-lchev${open ? " up" : ""}" aria-hidden="true"><span class="cbtn">${this.h.mdi("chevronDown", 16)}</span></span>`;
   }
 
   // --- Aktionen auf Routinen (Popup und Übersicht) ------------------------------

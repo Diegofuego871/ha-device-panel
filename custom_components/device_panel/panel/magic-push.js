@@ -1734,7 +1734,7 @@ export class MagicPush {
   // Eine Bedingung: Kopf (Name, Satz, jetziger Wert) und, wenn offen, der Editor
   // Pfeil zum Auf- und Zuklappen, überall gleich (Bedingungen, Empfänger, freie Entität, Geräte-Karten): nach unten, offen nach oben
   chevHtml(open) {
-    return `<span class="mg-lchev${open ? " up" : ""}" aria-hidden="true">${this.h.mdi("chevronDown", 24)}</span>`;
+    return `<span class="mg-lchev${open ? " up" : ""}" aria-hidden="true"><span class="cbtn">${this.h.mdi("chevronDown", 16)}</span></span>`;
   }
 
   leafHtml(lf) {

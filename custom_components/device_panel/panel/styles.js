@@ -128,7 +128,7 @@ button.kwarn:hover { background: var(--dp-subtle); }
 button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
 .kwarn .w-ic { display: inline-flex; color: var(--dp-warning); }
 .kwarn b { font-weight: 600; font-variant-numeric: tabular-nums; }
-.kwarn .w-go { margin-left: auto; display: inline-flex; color: var(--dp-text3); }
+.kwarn .w-go { margin-left: auto; display: inline-flex; }
 .kwarn.none { color: var(--dp-text2); }
 .kwarn.none .w-ic { color: var(--dp-success); }
 .kt .top { display: flex; align-items: flex-end; gap: 12px; margin: 6px 0 8px; }
@@ -187,7 +187,7 @@ button.kwarn:focus-visible { outline: 2px solid var(--dp-primary); outline-offse
 .kt.pul.tap { cursor: pointer; }
 .kt.pul.tap:hover { border-color: color-mix(in srgb, var(--dp-primary) 45%, var(--dp-divider)); }
 .kt.pul.tap:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
-.kt .k .kchev { display: inline-flex; margin-left: auto; color: var(--dp-text3); }
+.kt .k .kchev { display: inline-flex; margin-left: auto; }
 .pnote.plink { display: flex; align-items: center; gap: 2px; color: var(--dp-primary); font-weight: 500; }
 .pwin { padding: 12px 14px 8px; }
 .pwin .pchart { height: 130px; }
@@ -324,7 +324,7 @@ th.sorted .th-sort svg { opacity: 1; }
 .hs-in .e i { width: 8px; height: 8px; border-radius: 50%; background: var(--dp-error); }
 .hs-in .ok { color: var(--dp-success); font-weight: 500; }
 .hs-in .scope { min-width: 0; overflow: hidden; color: var(--dp-primary); text-overflow: ellipsis; white-space: nowrap; }
-.hs-in .hs-up { margin-left: auto; display: inline-flex; color: var(--dp-text2); transform: rotate(180deg); }
+.hs-in .hs-up { margin-left: auto; display: inline-flex; transform: rotate(180deg); }
 .content.hs-on .hs-in { display: flex; }
 .vpills { display: flex; flex-wrap: wrap; gap: 8px; }
 .vpill { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: 1px solid var(--dp-divider); border-radius: 999px;
@@ -570,10 +570,10 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
    "overflow: clip" rundet die Ecken wie "hidden", macht die Gruppe aber nicht zum Scroll-Behälter (sonst klebt nichts). */
 .set-sec.open > .set-sec-head { position: sticky; top: var(--set-head-h, 0px); z-index: 3; }
 .set-sec-head { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: none; background: none; text-align: left; cursor: pointer; }
-.set-sec-head > span { flex: 1 1 auto; min-width: 0; }
+.set-sec-head > span:not(.cbtn) { flex: 1 1 auto; min-width: 0; }
 .set-sec-head:hover { background: var(--dp-hover); }
-.set-sec-head > svg { color: var(--dp-text2); transition: transform .15s; }
-.set-sec.open .set-sec-head > svg { transform: rotate(180deg); }
+.set-sec-head > .cbtn { transition: transform .15s; }
+.set-sec.open .set-sec-head > .cbtn { transform: rotate(180deg); }
 .set-sec-title { display: flex; align-items: center; gap: 8px; font-weight: 500; }
 .set-sec-sum { display: block; margin-top: 1px; overflow: hidden; color: var(--dp-text2); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .set-badge { margin-left: 8px; padding: 0 8px; border-radius: 99px; background: var(--dp-primary-soft); color: var(--dp-primary); font-size: 11px; font-weight: 400; }
@@ -599,6 +599,7 @@ dialog.discard-dlg::backdrop { background: rgba(0,0,0,0.55); }
   background: color-mix(in srgb, #7c4dff 7%, var(--dp-card)); }
 .ai-head { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: color-mix(in srgb, #7c4dff 20%, var(--dp-card)); color: var(--dp-text); }
 .ai-head svg { flex: none; color: #7c4dff; }
+.ai-head .cbtn { border-color: #7c4dff; background: color-mix(in srgb, #7c4dff 18%, transparent); color: #7c4dff; }
 .dlg-body .ai-head h3 { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0; text-transform: none; color: inherit; }
 button.ai-head { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; }
 button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px; }
@@ -1013,7 +1014,7 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .ilist-row:hover { background: var(--dp-hover); }
 .ilist-row:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: -2px; }
 .ilist-row.changed { box-shadow: inset 3px 0 0 var(--dp-primary); }
-.ilist-row > svg { flex: none; color: var(--dp-text3); }
+.ilist-row > .cbtn { flex: none; }
 .ilist-name { flex: 1; min-width: 0; font-size: 14px; }
 .ilist-name small { display: block; color: var(--dp-text2); font-size: 12px; }
 .ilist-name small.ilist-diff.own { color: var(--dp-primary); }
@@ -1156,7 +1157,7 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
 .st-tile.warned { border-color: var(--dp-warning); box-shadow: 0 0 0 1px var(--dp-warning) inset; background: color-mix(in srgb, var(--dp-warning) 10%, var(--dp-card)); }
 .st-tile.warned::after { content: ""; position: absolute; top: 8px; right: 10px; width: 9px; height: 9px; border-radius: 50%; background: var(--dp-warning); }
 .st-tile.static:hover { border-color: var(--dp-divider); }
-.st-tile > .chev { position: absolute; right: 6px; bottom: 7px; color: var(--dp-text3); }
+.st-tile > .chev { position: absolute; right: 10px; bottom: 10px; }
 .st-k { max-width: 100%; overflow: hidden; color: var(--dp-text2); font-size: 12px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
 .st-v { display: inline-flex; align-items: center; gap: 6px; font-size: 18px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .st-v small { color: var(--dp-text2); font-size: 12px; font-weight: 400; }
@@ -1398,7 +1399,7 @@ button.ver-link { border: none; background: none; font: inherit; font-size: 13px
   .olist button:nth-child(n+3) { display: none; }
   .olist .more-long { display: none; }
   .olist .more-short { display: block; font-size: 12px; }
-  .kwarn { margin: auto -12px -12px; padding: 9px 12px; font-size: 12.5px; }
+  .kwarn { margin: auto -12px -12px; padding: 7px 12px; font-size: 12.5px; }
   .kwarn .w-long { display: none; }
   .kwarn .w-short { display: inline; }
   /* Ausfall-Puls: schlanke Zeile mit Titel, Zusammenfassung (oder Titel des Sammelausfalls) und Kurve */
@@ -2343,16 +2344,16 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 .wz-gh { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; padding: 9px 2px; border: 0; background: transparent; color: inherit; font: inherit; font-size: 14.5px; text-align: left; cursor: pointer; }
 .wz-chev { display: inline-grid; color: color-mix(in srgb, var(--dp-text) 55%, transparent); transition: transform .15s; }
 .wz-chev.open { transform: rotate(90deg); }
+.wz-mx .wz-chev, .wz-gh .wz-chev { display: inline-grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--dp-primary); border-radius: 50%; background: var(--dp-primary-soft); color: var(--dp-primary); }
+.wz-mx .wz-chev svg, .wz-gh .wz-chev svg { width: 16px; height: 16px; fill: currentColor; }
+.wz-mx:hover .wz-chev { background: color-mix(in srgb, var(--dp-primary) 26%, transparent); }
+/* Pfeil-Knopf (Regel "Pfeile", seit 2.144.0): jeder Pfeil, der eine Zeile, Kachel oder einen Abschnitt öffnet oder weiterspringt; immer 24 px, rund, blauer Rand (KI-Zeile violett). Nicht für Dropdowns und Auswahlfelder und nicht für lange Listen (Protokoll). */
+.cbtn { display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; border: 1px solid var(--dp-primary); border-radius: 50%; background: var(--dp-primary-soft); color: var(--dp-primary); vertical-align: middle; }
+.cbtn svg { width: 16px; height: 16px; fill: currentColor; }
 .wz-gn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wz-cn { color: color-mix(in srgb, var(--dp-text) 65%, transparent); font-size: 12.5px; margin-right: 6px; white-space: nowrap; }
 .wz-li .ibadge.has-img, .wz-gh .ibadge.has-img { background: var(--dp-subtle); }
-.wz-mx { flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; margin-right: -2px; border: 1.5px solid var(--dp-primary); border-radius: 50%; background: var(--dp-primary-soft); color: var(--dp-primary); cursor: pointer; padding: 0; }
-.wz-mx .wz-chev { color: var(--dp-primary); }
-.wz-mx .wz-chev svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.4px; }
-.wz-gh .wz-chev { place-items: center; width: 30px; height: 30px; border: 1.5px solid var(--dp-primary); border-radius: 50%; background: var(--dp-primary-soft); color: var(--dp-primary); }
-.wz-gh .wz-chev svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 1.4px; }
-.wz-mx:hover { background: color-mix(in srgb, var(--dp-primary) 26%, transparent); }
-span.wz-mx { border: 0; background: transparent; }
+.wz-mx { flex: none; display: inline-grid; place-items: center; width: 24px; height: 24px; margin-right: 2px; padding: 0; border: 0; background: transparent; cursor: pointer; }
 .wz-msub { margin: 0 0 6px 46px; }
 .wz-dsub { margin-left: 34px; }
 .wz-down { display: inline-flex; align-items: center; gap: 5px; font-style: normal; font-weight: 600; color: var(--dp-error); }

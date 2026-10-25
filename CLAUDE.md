@@ -59,6 +59,14 @@ Bereich. Vorbild in Aufbau, Arbeitsweise und Design ist die Integration
   im Feld steht; die zwei Hörer in `device-panel.js` (`input` und `click` auf `[data-fc]`) leeren das Feld, lösen `input` aus und lassen den Fokus im Feld.
   Kein eigener Handler und keine eigene Gestaltung je Feld; die Hauptsuche (`.search-clear`) und die Bereichssuche haben ihr eigenes bestehendes X.
 
+## Design-Regel: Pfeile
+
+- Jeder Pfeil, der eine Zeile, Kachel oder einen Abschnitt öffnet oder weiterspringt, ist ein Pfeil-Knopf: `<span class="cbtn">${mdi("chevronRight", 16)}</span>`
+  (Klasse `.cbtn` in `styles.js`: rund, immer 24 px, Pfeil 16 px, blauer Rand und heller Grund; in der KI-Zeile violett). Nie eigene Grösse,
+  Farbe oder Form je Stelle; drehen (auf/zu) tut der umgebende Rahmen, nicht der Knopf allein.
+- Ausnahmen: Dropdowns und Auswahlfelder (`<select>`, Chips "Integration" und "Bereich", Sortierung, Auswahl-Knöpfe) behalten ihren kleinen Pfeil;
+  ebenso Zeilen sehr langer Listen (Protokoll), damit die Seite ruhig bleibt. Mockup: `docs/mockups/chevron-v1`.
+
 ## Git und Releases
 
 - Nur auf `main` pushen, keine weiteren Branches. Gilt auch, wenn die

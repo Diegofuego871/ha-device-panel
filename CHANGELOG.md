@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.144.0] - 2026-10-25
+
+One style for every arrow that opens something.
+
+### Changed
+
+- **Arrows:** every arrow that opens a row, tile or section, or jumps on, is now the same small round button (24 px, blue border; violet in the AI row). Applies to the tiles "Availability" and "Interruptions" and the arrow of "Warnings" and "Outage pulse", the top strip of the header, the AI assessment, the sections in the settings, the list "Per integration", the link to Home Assistant, the groups in the routines and in Magic Push, and the integrations and devices in the setup wizard. Unchanged: dropdowns and selection fields (including the chips "Integration" and "Area") and the rows of the long log list. The rule is in CLAUDE.md.
+
 ## [2.143.1] - 2026-10-25
 
 The arrows in step 3 of the setup wizard look like those in step 4.
@@ -14,6 +22,8 @@ The arrows in step 3 of the setup wizard look like those in step 4.
 ### Changed
 
 - **Setup wizard, step "Devices":** the arrow that opens an integration is now the same round button with a blue border as in the step "Notifications".
+
+Not released; included in 2.144.0.
 
 ## [2.143.0] - 2026-10-25
 
@@ -4792,7 +4802,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.143.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.1
+[2.144.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.144.0
 [2.143.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.0
 [2.142.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.0
 [2.141.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.141.0

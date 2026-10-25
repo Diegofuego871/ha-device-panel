@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.144.0] - 2026-10-25
+
+Ein Stil für jeden Pfeil, der etwas öffnet.
+
+### Geändert
+
+- **Pfeile:** jeder Pfeil, der eine Zeile, Kachel oder einen Abschnitt öffnet oder weiterspringt, ist jetzt derselbe kleine runde Knopf (24 px, blauer Rand; in der KI-Zeile violett). Gilt für die Kacheln "Verfügbarkeit" und "Unterbrüche" sowie den Pfeil bei "Warnungen" und "Ausfall-Puls", die obere Zeile im Kopf, die KI-Einschätzung, die Abschnitte der Einstellungen, die Liste "Pro Integration", den Link zu Home Assistant, die Gruppen in den Routinen und in Magic Push sowie die Integrationen und Geräte im Einrichtungsassistenten. Unverändert: Dropdowns und Auswahlfelder (auch die Chips "Integration" und "Bereich") und die Zeilen der langen Protokoll-Liste. Die Regel steht in CLAUDE.md.
+
 ## [2.143.1] - 2026-10-25
 
 Die Pfeile in Schritt 3 des Einrichtungsassistenten sehen aus wie die in Schritt 4.
@@ -14,6 +22,8 @@ Die Pfeile in Schritt 3 des Einrichtungsassistenten sehen aus wie die in Schritt
 ### Geändert
 
 - **Einrichtungsassistent, Schritt "Geräte":** der Pfeil, der eine Integration aufklappt, ist jetzt derselbe runde Knopf mit blauem Rand wie im Schritt "Meldungen".
+
+Nicht veröffentlicht; enthalten in 2.144.0.
 
 ## [2.143.0] - 2026-10-25
 
@@ -4893,7 +4903,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
-[2.143.1]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.1
+[2.144.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.144.0
 [2.143.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.0
 [2.142.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.0
 [2.141.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.141.0
