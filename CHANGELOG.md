@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.149.0] - 2026-10-25
+
+The dot itself becomes the shooting star.
+
+### Changed
+
+- **Shooting star:** the dot no longer glows twice (once as a dot, once as the light). Every 8 seconds the dot vanishes from its place, darts once around the button with a tail and changing speed, arrives slightly enlarged with a ring and settles back to its size. Nothing moves if the device is set to reduced motion.
+
 ## [2.148.0] - 2026-10-25
 
 A measuring dot runs along the outage pulse.
@@ -4850,6 +4858,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.149.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.149.0
 [2.148.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.148.0
 [2.147.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.147.0
 [2.146.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.146.0

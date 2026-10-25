@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.149.0] - 2026-10-25
+
+Der Punkt selbst wird zur Sternschnuppe.
+
+### Geändert
+
+- **Sternschnuppe:** der Punkt leuchtet nicht mehr doppelt (einmal als Punkt, einmal als Licht). Alle 8 Sekunden verschwindet der Punkt an seinem Platz, huscht mit Schweif und wechselndem Tempo einmal um den Knopf, kommt kurz vergrössert mit einem Ring wieder an und setzt sich auf seine Grösse zurück. Bei "Bewegung reduzieren" bewegt sich nichts.
+
 ## [2.148.0] - 2026-10-25
 
 Ein Messpunkt läuft über den Ausfall-Puls.
@@ -4951,6 +4959,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.149.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.149.0
 [2.148.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.148.0
 [2.147.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.147.0
 [2.146.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.146.0

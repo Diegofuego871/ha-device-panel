@@ -1,4 +1,4 @@
-// Sternschnuppe am Knopf mit Punkt (2.147.0): Launcher-Knopf mit Punkt bekommt den Schweif (Animation dp-comet) und der Punkt atmet (dp-land);
+// Sternschnuppe am Knopf mit Punkt (2.147.0): Launcher-Knopf mit Punkt bekommt den Schweif (Animation dp-comet) und der Punkt selbst fliegt (dp-land: weg, beim Ankommen gross);
 // ohne Punkt nichts; bei "Bewegung reduzieren" keine Animation. Farbe folgt dem Punkt (orange bei Debug, rot bei Neustart).
 import { chromium } from "playwright-core";
 import { launchOptions, outDir } from "../lib.mjs";
@@ -36,6 +36,14 @@ for (const reduce of [false, true]) {
       await ev(`r.getAnimations().filter((x) => x.animationName === "dp-comet").forEach((x) => { x.pause(); x.currentTime = 1000 + 700; })`);
       const op = await ev(`return getComputedStyle(r.querySelector(".apps-btn"), "::before").opacity`);
       check(`[${tag}] mitten im Lauf sichtbar (Deckkraft 1)`, Number(op) === 1, op);
+      // Der Punkt ist die Sternschnuppe (2.149.0): im Flug unsichtbar, beim Ankommen gross, dann wieder normal
+      const dotAt = (t) => ev(`r.getAnimations().filter((x) => x.animationName === "dp-land").forEach((x) => { x.pause(); x.currentTime = ${t}; }); const cs = getComputedStyle(r.querySelector(".apps-btn"), "::after"); return [+cs.opacity, new DOMMatrix(cs.transform).a]`);
+      const fly = await dotAt(1000 + 0.08 * 8000), land = await dotAt(1000 + 0.15 * 8000), rest = await dotAt(1000 + 0.6 * 8000);
+      check(`[${tag}] im Flug ist der Punkt weg (leuchtet nicht zugleich)`, fly[0] === 0, JSON.stringify(fly));
+      check(`[${tag}] beim Ankommen kurz grösser`, land[0] === 1 && land[1] > 1.5, JSON.stringify(land));
+      check(`[${tag}] danach wieder normal gross und sichtbar`, rest[0] === 1 && rest[1] === 1, JSON.stringify(rest));
+      await ev(`r.getAnimations().filter((x) => x.animationName === "dp-comet").forEach((x) => { x.currentTime = 1000 + 0.12 * 8000; })`);
+      await dotAt(1000 + 0.12 * 8000);
       await p.screenshot({ path: `${outDir}/comet-${mobile ? "mobile" : "desktop"}.png` });
     }
     // Punkt aus: Schweif weg

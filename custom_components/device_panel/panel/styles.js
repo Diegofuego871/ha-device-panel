@@ -89,8 +89,8 @@ button { font: inherit; color: inherit; }
 .apps-btn, .app-pin { position: relative; }
 .apps-btn.has-dot::after, .app-pin.has-dot::after { content: ""; position: absolute; top: 3px; right: 3px; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--dp-error); border: 2px solid var(--dp-bg); }
 .apps-btn.dot-warn::after, .app-pin.dot-warn::after { background: var(--dp-warning); }
-/* Sternschnuppe (seit 2.147.0, docs/mockups/shootingstar-v1, A): alle 8 Sekunden läuft ein Lichtpunkt mit Schweif einmal auf der Linie um den Knopf
-   mit Punkt (Launcher, angeheftete Apps, Zahnrad), und der Punkt atmet kurz, wenn er wieder ankommt. Farbe wie der Punkt (rot, bei Orange orange).
+/* Sternschnuppe (seit 2.147.0, docs/mockups/shootingstar-v1, A; seit 2.149.0 ist der Punkt selbst die Sternschnuppe): alle 8 Sekunden löst sich der Punkt vom Knopf mit Punkt
+   (Launcher, angeheftete Apps, Zahnrad), huscht mit Schweif und wechselndem Tempo einmal um die Linie und setzt sich kurz vergrössert wieder hin. Farbe wie der Punkt (rot, bei Orange orange).
    Ohne Bewegung bei "Bewegung reduzieren". Die Knöpfe starten versetzt, damit nicht alle zugleich laufen. */
 .gear-btn.has-dot, .apps-btn.has-dot, .app-pin.has-dot { --cm: var(--dp-error); --cd: 1s; }
 .apps-btn.has-dot.dot-warn, .app-pin.has-dot.dot-warn { --cm: var(--dp-warning); }
@@ -102,17 +102,23 @@ button { font: inherit; color: inherit; }
   animation: dp-comet 8s linear var(--cd) infinite; }
 .gear-btn.has-dot::after, .apps-btn.has-dot::after, .app-pin.has-dot::after { animation: dp-land 8s ease-out var(--cd) infinite; }
 @keyframes dp-comet {
-  0% { transform: rotate(45deg); opacity: 0; }
-  1.5% { opacity: 1; }
-  4% { transform: rotate(95deg); }
-  11% { transform: rotate(330deg); opacity: 1; }
+  0% { transform: rotate(45deg); opacity: 0; animation-timing-function: ease-in; }
+  1.5% { transform: rotate(52deg); opacity: 1; animation-timing-function: ease-in; }
+  4% { transform: rotate(95deg); animation-timing-function: ease-out; }
+  8% { transform: rotate(250deg); animation-timing-function: ease-in-out; }
+  9.5% { transform: rotate(262deg); animation-timing-function: ease-in; }
+  12% { transform: rotate(352deg); opacity: 1; animation-timing-function: ease-out; }
   14.5% { transform: rotate(405deg); opacity: 1; }
   16%, 100% { transform: rotate(412deg); opacity: 0; }
 }
+/* Der Punkt selbst ist die Sternschnuppe: er verschwindet, wenn sie losfliegt (kein zweites Leuchten am alten Platz),
+   erscheint beim Ankommen kurz vergrössert mit Ring und setzt sich dann wieder auf seine Grösse. */
 @keyframes dp-land {
-  0%, 13% { box-shadow: 0 0 0 0 transparent; }
-  15% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--cm) 70%, transparent); }
-  22%, 100% { box-shadow: 0 0 0 8px transparent; }
+  0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 transparent; }
+  1.5%, 14% { transform: scale(0.3); opacity: 0; box-shadow: 0 0 0 0 transparent; }
+  15% { transform: scale(1.6); opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--cm) 70%, transparent); }
+  18% { transform: scale(1.3); opacity: 1; }
+  23%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 8px transparent; }
 }
 @media (prefers-reduced-motion: reduce) {
   .gear-btn.has-dot::before, .apps-btn.has-dot::before, .app-pin.has-dot::before { animation: none; opacity: 0; }
