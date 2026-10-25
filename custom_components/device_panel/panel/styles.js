@@ -15,6 +15,7 @@ export const PANEL_CSS = `
   --dp-text3: var(--disabled-text-color, #9e9e9e);
   --dp-divider: var(--divider-color, rgba(0,0,0,0.12));
   --dp-primary: var(--primary-color, #03a9f4);
+  --dp-on-primary: #fff;
   --dp-success: var(--success-color, #43a047);
   --dp-warning: var(--warning-color, #ff9800);
   --dp-error: var(--error-color, #db4437);
@@ -488,7 +489,7 @@ dialog.stat-dlg::backdrop { background: rgba(0,0,0,0.7); -webkit-backdrop-filter
 .dn-form { display: flex; align-items: center; gap: 6px; margin: 0 0 6px; }
 .dn-input { flex: 1 1 auto; min-width: 0; height: 38px; padding: 0 12px; border: 1px solid var(--dp-primary); border-radius: 10px; background: var(--dp-bg); color: var(--dp-text); font: inherit; font-size: 16px; }
 .dn-btn { flex: none; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid var(--dp-divider); border-radius: 50%; background: transparent; color: var(--dp-text2); cursor: pointer; }
-.dn-btn.ok { border-color: var(--dp-primary); background: var(--dp-primary); color: #fff; }
+.dn-btn.ok { border-color: var(--dp-primary); background: var(--dp-primary); color: var(--dp-on-primary, #fff); }
 .dn-btn:disabled, .dn-input:disabled { opacity: .55; cursor: default; }
 /* Umbenennen am Handy (seit 2.133.0): eigenes Fenster oben, damit die Tastatur das Feld nicht verdeckt */
 dialog.rename-dlg { padding: 0; border: none; border-radius: 22px; background: var(--dp-card); color: var(--dp-text); box-shadow: var(--dp-shadow); width: min(480px, calc(100vw - 32px)); max-height: calc(100% - 48px); overflow: auto; clip-path: inset(0 round 22px); }
@@ -549,7 +550,7 @@ dialog.status-dlg .dlg-title h2 { margin: 0; }
 .dlg-btn { flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 18px;
   border-radius: 12px; border: 1px solid var(--dp-divider); background: none; font-size: 14px; cursor: pointer; }
 .dlg-btn:hover { background: var(--dp-hover); }
-.dlg-btn.primary { border-color: var(--dp-primary); background: var(--dp-primary); color: #fff; font-weight: 500; }
+.dlg-btn.primary { border-color: var(--dp-primary); background: var(--dp-primary); color: var(--dp-on-primary, #fff); font-weight: 500; }
 .dlg-btn.primary:hover { background: color-mix(in srgb, var(--dp-primary) 88%, #000); }
 .dlg-btn:disabled { opacity: .45; cursor: default; }
 /* Rückfrage "Änderungen verwerfen?" (seit 2.20.0): eigenes modales Fenster in der Mitte, über jedem anderen Fenster */
@@ -754,7 +755,7 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .chip-prev-pills { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .chip-prev-pills .chip { height: 28px; padding: 0 10px; font-size: 12.5px; pointer-events: none; }
 .chip-prev-t.phone { margin-top: 12px; }
-.chip-prev-pin { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: var(--dp-primary); color: #fff; }
+.chip-prev-pin { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 999px; background: var(--dp-primary); color: var(--dp-on-primary, #fff); }
 /* isolation: Die Haftgruppe (sticky, z-index 2) bleibt in der Vorschau und deckt beim Scrollen den Dialog-Kopf nicht ab. */
 .chip-prev-strip { isolation: isolate; display: flex; align-items: center; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -12px; padding: 4px 12px 6px; }
 .chip-prev-strip::-webkit-scrollbar { display: none; }
@@ -764,7 +765,7 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .ex-row.pin-line { display: block; position: relative; min-height: 0; height: 34px; padding: 0; margin: 2px 0; border: none; }
 .pin-line::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px dashed var(--dp-primary); }
 .pin-tab { position: absolute; left: 0; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px 0 4px;
-  border-radius: 999px; background: var(--dp-primary); color: #fff; font-size: 12.5px; font-weight: 600; }
+  border-radius: 999px; background: var(--dp-primary); color: var(--dp-on-primary, #fff); font-size: 12.5px; font-weight: 600; }
 .pin-tab .drag-h { width: 24px; height: 28px; margin: 0; background: none; color: rgba(255,255,255,.85); }
 .pin-tab .drag-h svg { color: inherit; }
 .ex-row.ex-all { padding: 6px 10px; margin: 0 -8px 2px; border: none; border-radius: 10px; background: var(--dp-subtle); color: var(--dp-text2); min-height: 40px; }
@@ -945,7 +946,7 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .lane-diff { margin-top: 8px; color: var(--dp-text2); font-size: 12.5px; }
 .mon-chip { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 11px; border: 1px solid var(--dp-divider); border-radius: 14px;
   background: var(--dp-card); color: var(--dp-text2); font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; white-space: nowrap; }
-.mon-chip.on { border-color: var(--dp-primary); background: var(--dp-primary); color: #fff; }
+.mon-chip.on { border-color: var(--dp-primary); background: var(--dp-primary); color: var(--dp-on-primary, #fff); }
 .mon-chip:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
 .mtl { position: relative; height: 84px; margin: 8px 12px 2px; }
 .mtl.mtl-e { height: 102px; }
@@ -1091,7 +1092,7 @@ button.ai-head:focus-visible { outline: 2px solid #7c4dff; outline-offset: -2px;
 .ver-btn:hover:not(:disabled) { background: var(--dp-hover); }
 .ver-btn:disabled { cursor: default; }
 .ver-btn.icon { justify-content: center; width: 34px; padding: 0; }
-.ver-btn.primary { border-color: var(--dp-primary); background: var(--dp-primary); color: #fff; font-weight: 500; }
+.ver-btn.primary { border-color: var(--dp-primary); background: var(--dp-primary); color: var(--dp-on-primary, #fff); font-weight: 500; }
 .ver-btn.warn { border-color: var(--dp-warning); background: var(--dp-warning); color: #fff; font-weight: 500; }
 /* Hover darf die Farbe der Hauptknöpfe nicht durch Grau ersetzen. */
 .ver-btn.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--dp-primary) 88%, #000); }
@@ -1898,7 +1899,7 @@ dialog.magic-dlg[open] > .mgw-body.two { display: flex; gap: 22px; overflow: hid
 .rt-wd { display: flex; gap: 6px; margin-top: 6px; }
 .rt-wd button { flex: 1; max-width: 44px; height: 44px; border: none; border-radius: 50%; font: inherit; font-size: 13.5px; color: var(--dp-text); cursor: pointer;
   background: color-mix(in srgb, var(--dp-text) 7%, var(--dp-card)); }
-.rt-wd button.on { background: var(--dp-primary); color: #fff; font-weight: 600; }
+.rt-wd button.on { background: var(--dp-primary); color: var(--dp-on-primary, #fff); font-weight: 600; }
 .rt-wd button:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
 .rt-timein, .rt-datein { box-sizing: border-box; height: 46px; font-size: 20px; font-variant-numeric: tabular-nums; }
 .rt-timein { width: 160px; }
@@ -2018,7 +2019,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-link:hover { background: var(--dp-primary-soft); }
 .ap-pw { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; color: var(--dp-text2); cursor: pointer; }
 .ap-pw:hover { background: var(--dp-hover); color: var(--dp-error); }
-.ap-done { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--dp-primary); color: #fff; font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; }
+.ap-done { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--dp-primary); color: var(--dp-on-primary, #fff); font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; }
 .ap-x { display: none; place-items: center; flex: none; width: 36px; height: 36px; border: 1px solid var(--dp-divider); border-radius: 50%; background: var(--dp-card); color: var(--dp-text2); cursor: pointer; }
 .ap-x.show { display: grid; }
 .ap-body { padding: 0 14px 14px; }
@@ -2041,7 +2042,7 @@ dialog.app-dlg::backdrop { background: rgba(0,0,0,0.5); }
 .ap-ico { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--dp-primary-soft); color: var(--dp-primary); }
 .ap-ico.sm { width: 34px; height: 34px; }
 /* Eigene Apps ohne Favicon: Kreis in der Hauptfarbe, weisses Symbol (Apps von HA und des Panels tragen ihre Farbe als Stil) */
-.ap-ico.own { background: var(--dp-primary); color: #fff; }
+.ap-ico.own { background: var(--dp-primary); color: var(--dp-on-primary, #fff); }
 /* Aktion (seit 2.115.0): läuft (Pfeile drehen sich), fertig (grüner Haken, grüner Rand), fehlgeschlagen (rot) */
 /* Die Pfeile des Symbols laufen im Uhrzeigersinn (seit 2.130.0 gespiegelt): die Drehung auch, in Pfeilrichtung */
 .ap-spin { display: inline-flex; animation: ap-spin 0.9s linear infinite; }
@@ -2378,6 +2379,12 @@ dialog.wizard-dlg[open] { display: flex; flex-direction: column; }
 /* Werte der Meldungen: keine Umrandung, die Zahl gross in einem ruhigen Feld */
 .st-tile.stale .st-v { opacity: .6; }
 .bat.stale { opacity: .6; }
+.accent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; margin: 6px 0 4px; }
+.accent-sw { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px; border: 1px solid var(--dp-divider); border-radius: 12px; background: var(--dp-card); color: var(--dp-text); font: inherit; font-size: 13.5px; cursor: pointer; text-align: left; }
+.accent-sw i { flex: none; width: 16px; height: 16px; border-radius: 50%; background: var(--a); }
+.accent-sw:hover { background: var(--dp-hover); }
+.accent-sw.on { border-color: var(--a); box-shadow: inset 0 0 0 1px var(--a); font-weight: 600; }
+.accent-sw:focus-visible { outline: 2px solid var(--dp-primary); outline-offset: 2px; }
 .wz-h2b { margin-top: 26px; }
 .wz-vals { display: flex; flex-direction: column; gap: 4px; margin: 0 0 4px 46px; }
 .wz-msg:not(.on) .wz-vals { opacity: .55; }

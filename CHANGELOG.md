@@ -7,6 +7,14 @@ All notable changes to this integration are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.146.0] - 2026-10-25
+
+The accent colour of the panel can be chosen.
+
+### Added
+
+- **Accent colour:** Settings › Panel › General has a new chapter "Accent colour" with "Home Assistant" (follows the theme, as before) and eight colours: sky blue, ocean blue, teal, indigo, pink, orange, red and graphite. The colour applies at once, without "Save", and only to you (stored with your view in the user data of Home Assistant, with a local copy). It colours buttons, switches, arrows, chips and links; the text on light colours (orange, graphite) is dark. The status colours (online, outage, warning, AI) stay. Mockup: `docs/mockups/accent-v1`.
+
 ## [2.145.0] - 2026-10-25
 
 A device that is down still shows its last battery level.
@@ -4817,6 +4825,7 @@ First pre-release.
   GitHub Actions for HACS/hassfest validation and tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.146.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.146.0
 [2.145.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.145.0
 [2.143.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.0
 [2.142.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.0

@@ -775,9 +775,23 @@ function sanitizeView(raw) {
   };
 }
 
+// Akzentfarbe (seit 2.146.0, Einstellungen › Panel › Allgemein, docs/mockups/accent-v1): pro Benutzer, ersetzt die Farbe aus Home Assistant.
+// "on" ist die Schriftfarbe auf der Farbe (helle Farben bekommen dunkle Schrift). Grün steht für "online", Rot und Orange auch für Ausfall und
+// Warnung: die Statusfarben bleiben davon unberührt.
+const ACCENTS = [
+  { id: "sky", color: "#03a9f4", on: "#fff" },
+  { id: "ocean", color: "#1e88e5", on: "#fff" },
+  { id: "teal", color: "#00acc1", on: "#fff" },
+  { id: "indigo", color: "#6f7fd8", on: "#fff" },
+  { id: "pink", color: "#ec407a", on: "#fff" },
+  { id: "orange", color: "#fb8c00", on: "#1f1300" },
+  { id: "red", color: "#e53935", on: "#fff" },
+  { id: "graphite", color: "#90a4ae", on: "#10222b" },
+];
+
 function sanitizeViews(raw) {
   const r = raw && typeof raw === "object" ? raw : {};
-  return { desktop: sanitizeView(r.desktop), mobile: sanitizeView(r.mobile), updated: Number(r.updated) || 0 };
+  return { desktop: sanitizeView(r.desktop), mobile: sanitizeView(r.mobile), updated: Number(r.updated) || 0, accent: ACCENTS.some((a) => a.id === r.accent) ? r.accent : "" };
 }
 
 // Hinweis-Chips: Schlüssel, CSS-Klasse, Symbol, Text und Bedingung.
@@ -1103,10 +1117,30 @@ class DevicePanel extends HTMLElement {
     const v = sanitizeViews(raw);
     this._views = { desktop: v.desktop, mobile: v.mobile };
     this._viewUpdated = v.updated;
+    this._accent = v.accent;
+    this._applyAccent();
+  }
+
+  // Akzentfarbe des Benutzers auf das Panel legen; leer = die Farbe von Home Assistant
+  _applyAccent() {
+    const a = ACCENTS.find((x) => x.id === this._accent);
+    if (a) {
+      this.style.setProperty("--dp-primary", a.color);
+      this.style.setProperty("--dp-on-primary", a.on);
+    } else {
+      this.style.removeProperty("--dp-primary");
+      this.style.removeProperty("--dp-on-primary");
+    }
+  }
+
+  _setAccent(id) {
+    this._accent = ACCENTS.some((a) => a.id === id) ? id : "";
+    this._applyAccent();
+    this._saveView();
   }
 
   _viewData() {
-    return { desktop: this._views.desktop, mobile: this._views.mobile, updated: this._viewUpdated };
+    return { desktop: this._views.desktop, mobile: this._views.mobile, updated: this._viewUpdated, accent: this._accent || "" };
   }
 
   // Nach jeder Änderung: lokal sofort, an HA verzögert und gebündelt.
@@ -8558,6 +8592,12 @@ class DevicePanel extends HTMLElement {
         ${info && st.info.has(key) ? `<div class="opt-info">${escape(info)}</div>` : ""}</div>`;
     };
     // Startseite: Benutzereinstellung (Benutzerdaten von HA); der Entwurf steht in st.extra, gespeichert wird mit "Speichern"
+    // Akzentfarbe (seit 2.146.0): "Home Assistant" folgt dem Theme, dazu acht Farben; gilt sofort und nur für diesen Benutzer
+    const accentRow = () => {
+      const cur = this._accent || "";
+      const sw = (id, color, label) => `<button type="button" class="accent-sw${cur === id ? " on" : ""}" data-accent="${id}" aria-pressed="${cur === id}" style="--a:${color}"><i></i><span>${escape(label)}</span></button>`;
+      return `<div class="accent-grid" role="group" aria-label="${escape(t("ttlAccent"))}">${sw("", "var(--primary-color, #03a9f4)", t("accentHa"))}${ACCENTS.map((a) => sw(a.id, a.color, t(`accent_${a.id}`))).join("")}</div><div class="opt-short">${escape(t("accentShort"))}</div>`;
+    };
     const startRow = () => {
       const on = Boolean(st.extra ? st.extra.start_panel : this._startOn);
       const changed = Boolean(st.extra) && st.extra.start_panel !== st.extraBase.start_panel;
@@ -8861,7 +8901,7 @@ class DevicePanel extends HTMLElement {
       updates:
         subTabs("panel", [["pstart", "subPanelStart"], ["pupdates", "subPanelUpdates"], ["pstorage", "subPanelStorage"]], panelTab) +
         (panelTab === "pstart"
-          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + this._backupChapterHtml(changes.size > 0) + this._wizardChapterHtml(changes.size > 0)
+          ? `<div class="nf-note view-own">${mdi("info", 16)}<div><p>${escape(t("startOwnNote"))}</p></div></div>` + ttl("ttlStart") + startRow() + ttl("ttlAccent") + accentRow() + this._backupChapterHtml(changes.size > 0) + this._wizardChapterHtml(changes.size > 0)
           : panelTab === "pstorage"
             ? storageChapter()
           : row("update_check", t("optUpdateCheck"), sw("update_check", t("optUpdateCheck")), t("optUpdateCheckShort"), t("optUpdateCheckInfo")) +
@@ -8973,6 +9013,16 @@ class DevicePanel extends HTMLElement {
       if (ev.target === dialog) {
         const r = dialog.getBoundingClientRect();
         if (ev.clientY < r.top || ev.clientY > r.bottom || ev.clientX < r.left || ev.clientX > r.right) this._requestCloseSettings();
+        return;
+      }
+      const accent = ev.target.closest("[data-accent]");
+      if (accent) {
+        this._setAccent(accent.dataset.accent);
+        for (const b of dialog.querySelectorAll("[data-accent]")) {
+          const on = b.dataset.accent === (this._accent || "");
+          b.classList.toggle("on", on);
+          b.setAttribute("aria-pressed", String(on));
+        }
         return;
       }
       const btn = ev.target.closest("[data-set]");

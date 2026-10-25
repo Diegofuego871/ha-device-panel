@@ -7,6 +7,14 @@ Alle nennenswerten Änderungen an dieser Integration stehen in dieser Datei.
 Das Format folgt [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionsnummern folgen [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.146.0] - 2026-10-25
+
+Die Akzentfarbe des Panels ist wählbar.
+
+### Hinzugefügt
+
+- **Akzentfarbe:** Einstellungen › Panel › Allgemein hat ein neues Kapitel "Akzentfarbe" mit "Home Assistant" (folgt dem Theme, wie bisher) und acht Farben: Himmelblau, Ozeanblau, Türkis, Indigo, Rosa, Orange, Rot und Graphit. Die Farbe gilt sofort, ohne "Speichern", und nur für dich (gespeichert mit deiner Ansicht in den Benutzerdaten von Home Assistant, dazu eine lokale Kopie). Sie färbt Knöpfe, Schalter, Pfeile, Chips und Links; die Schrift auf hellen Farben (Orange, Graphit) ist dunkel. Die Statusfarben (online, Ausfall, Warnung, KI) bleiben. Mockup: `docs/mockups/accent-v1`.
+
 ## [2.145.0] - 2026-10-25
 
 Ein ausgefallenes Gerät zeigt weiter seinen letzten Batteriestand.
@@ -4918,6 +4926,7 @@ Erste Vorabversion.
   GitHub Actions für die Prüfungen von HACS und hassfest sowie die Tests.
 
 [2.6.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.6.0
+[2.146.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.146.0
 [2.145.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.145.0
 [2.143.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.143.0
 [2.142.0]: https://github.com/Diegofuego871/ha-device-panel/releases/tag/v2.142.0
